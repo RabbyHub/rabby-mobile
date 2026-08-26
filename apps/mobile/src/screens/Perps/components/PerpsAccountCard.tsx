@@ -362,19 +362,27 @@ export const PerpsAccountCard: React.FC = () => {
                   )}
                 </View>
               </View>
-              {!isChartExpanded && (
-                <Pressable
-                  disabled={!canExpandChart}
-                  onPress={() => toggleChart(true)}
-                  style={styles.sparklineWrap}>
-                  <PerpsPortfolioChart
-                    data={portfolioData}
-                    isEmpty={isPortfolioEmpty || !portfolioData}
-                    expanded={false}
-                    width={0}
+              {!isChartExpanded &&
+                (portfolioViewState === 'loading' ? (
+                  <Skeleton
+                    width={140}
+                    height={60}
+                    style={styles.sparklineSkeleton}
+                    LinearGradientComponent={LoadingLinear}
                   />
-                </Pressable>
-              )}
+                ) : (
+                  <Pressable
+                    disabled={!canExpandChart}
+                    onPress={() => toggleChart(true)}
+                    style={styles.sparklineWrap}>
+                    <PerpsPortfolioChart
+                      data={portfolioData}
+                      isEmpty={isPortfolioEmpty || !portfolioData}
+                      expanded={false}
+                      width={0}
+                    />
+                  </Pressable>
+                ))}
             </View>
             {isChartExpanded && (
               <TouchableOpacity
@@ -596,6 +604,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 140,
     height: 60,
     marginTop: 12,
+  },
+  sparklineSkeleton: {
+    marginTop: 12,
+    borderRadius: 8,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-3'],
   },
   collapseBtn: {
     position: 'absolute',
