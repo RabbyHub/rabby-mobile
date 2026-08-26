@@ -38,6 +38,14 @@ export type PerpsProTpSlValidationError = {
   leg?: PerpsProTpSlLegKind;
 };
 
+export type PerpsProFrozenAttachedTpSlValidationError = {
+  code: Extract<
+    PerpsProTpSlValidationErrorCode,
+    'invalidDirection' | 'invalidTrigger'
+  >;
+  leg?: PerpsProTpSlLegKind;
+};
+
 export type PerpsProEvaluatedTpSlLeg = {
   estimatedPnl: string;
   estimatedRoi: string;
@@ -329,8 +337,8 @@ export const validatePerpsProFrozenAttachedTpSl = ({
 }: {
   attached: Pick<PerpsProAttachedTpSlEvaluation, 'side' | 'sl' | 'tp'>;
   expectedEntryPrice: string;
-}): PerpsProTpSlValidationError[] => {
-  const errors: PerpsProTpSlValidationError[] = [];
+}): PerpsProFrozenAttachedTpSlValidationError[] => {
+  const errors: PerpsProFrozenAttachedTpSlValidationError[] = [];
   const entry = positive(expectedEntryPrice);
   if (!entry || (!attached.tp && !attached.sl)) {
     return [{ code: 'invalidTrigger' }];

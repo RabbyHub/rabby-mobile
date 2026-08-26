@@ -1,4 +1,3 @@
-import type { L2Book } from '@rabby-wallet/hyperliquid-sdk';
 import { act, renderHook } from '@testing-library/react-native';
 
 import type { PerpsAttachedTpSlJournalEntry } from '@/core/services/perpsService';
@@ -114,11 +113,6 @@ jest.mock('../actions/openOrderWithAttachedTpSl', () => ({
           .filter(Boolean),
       ),
     ].join('\n') || undefined,
-  getPerpsProAttachedTpSlPositionIdentity: () => ({
-    entryPx: '',
-    marginUsed: '',
-    szi: '0',
-  }),
   validatePerpsProAttachedTpSlCommand: (...args: unknown[]) =>
     mockValidate(...args),
 }));
@@ -171,20 +165,11 @@ const market = {
   marketKey: 'BTC:USDC',
 } as PerpsProMarket;
 
-const book: L2Book = {
-  coin: 'BTC',
-  levels: [[{ n: 1, px: '100', sz: '10' }], [{ n: 1, px: '101', sz: '10' }]],
-  time: 1,
-};
-
 const renderExecution = () => {
   const refreshActiveAssetData = jest.fn(async () => undefined);
   const hook = renderHook(() =>
     usePerpsProAttachedTpSlExecution({
       active: false,
-      bboBook: book,
-      bboSessionKey: 'BTC:1',
-      bboStatus: 'ready',
       market,
       refreshActiveAssetData,
     }),
@@ -196,6 +181,7 @@ describe('usePerpsProAttachedTpSlExecution', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     state.hasPermission = true;
+    state.currentClearinghouseState.assetPositions.length = 0;
     mockGetJournal.mockResolvedValue([journal]);
     mockExecute.mockResolvedValue({ kind: 'fullAccepted' });
     mockReconcile.mockResolvedValue({
@@ -209,6 +195,9 @@ describe('usePerpsProAttachedTpSlExecution', () => {
     const order: string[] = [];
     mockEnsureApproval.mockImplementationOnce(async () => {
       order.push('approval');
+      state.currentClearinghouseState.assetPositions.push({
+        position: { entryPx: '105', marginUsed: '10', szi: '-0.5' },
+      } as never);
     });
     const ensureLeverage = jest.fn(async () => {
       order.push('leverage');
@@ -237,7 +226,11 @@ describe('usePerpsProAttachedTpSlExecution', () => {
     expect(refreshActiveAssetData).toHaveBeenCalledTimes(1);
     expect(
       mockValidate.mock.calls.every(
-        ([, context]) => !('liquidationPrice' in context),
+        ([, context]) =>
+          !('book' in context) &&
+          !('bookSessionKey' in context) &&
+          !('bookStatus' in context) &&
+          !('positionIdentity' in context),
       ),
     ).toBe(true);
   });

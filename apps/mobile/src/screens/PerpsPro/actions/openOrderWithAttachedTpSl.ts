@@ -2,7 +2,6 @@ import {
   ExchangeClient,
   InfoClient,
   type Cloid,
-  type L2Book,
   type NormalTpslBatchResult,
   type NormalTpslCloids,
   type NormalTpslLimitOrderParams,
@@ -21,16 +20,11 @@ import {
   type PerpsRuntimeSnapshot,
 } from '@/hooks/perps/runtime/perpsRuntimeState';
 
-import {
-  estimatePerpsProMarketFill,
-  type PerpsProMarketFillEstimateError,
-} from '../model/marketFillEstimate';
 import type { PerpsProOrderReviewFacts } from '../model/orderReview';
 import type { PerpsProTradeAmountUnit } from '../model/trade';
 import {
   validatePerpsProFrozenAttachedTpSl,
   type PerpsProAttachedTpSlEvaluation,
-  type PerpsProTpSlValidationErrorCode,
 } from '../model/tpsl';
 import type { PerpsProOpenOrderCommand } from './openOrder';
 import {
@@ -41,17 +35,10 @@ import {
   type AttachedTpSlJournalDependencies,
 } from './attachedTpSlJournal';
 
-export type PerpsProAttachedTpSlPositionIdentity = {
-  entryPx: string;
-  marginUsed: string;
-  szi: string;
-};
-
 export type PerpsProAttachedTpSlMarketSnapshot = {
-  bookTime: number;
+  entrySource: 'fullL2' | 'limit' | 'midFallback';
   expectedEntryPrice: string;
   normalizedBaseSize: string;
-  sessionKey: string;
 };
 
 export type PerpsProAttachedTpSlReviewFacts = PerpsProOrderReviewFacts & {
@@ -78,7 +65,6 @@ export type PerpsProAttachedTpSlCommand = {
   marketSnapshot: PerpsProAttachedTpSlMarketSnapshot;
   parent: PerpsProAttachedTpSlParentCommand;
   parentFingerprint: string;
-  positionIdentity: PerpsProAttachedTpSlPositionIdentity;
   reviewFacts: PerpsProAttachedTpSlReviewFacts;
   runtimeGeneration: number;
   runtimeIdentity: string;
@@ -88,25 +74,20 @@ export type PerpsProAttachedTpSlCommand = {
 export type PerpsProAttachedTpSlGuardContext = {
   accountRuntime: PerpsAccountRuntimeContext;
   active: boolean;
-  book: L2Book | null;
-  bookSessionKey: string | null;
-  bookStatus: 'error' | 'idle' | 'loading' | 'ready' | 'stale';
   coin: string;
   dexId: string;
   hasPermission: boolean;
   marketKey: string | null;
-  positionIdentity: PerpsProAttachedTpSlPositionIdentity;
   runtime: PerpsRuntimeSnapshot;
 };
 
 export type PerpsProAttachedTpSlGuardFailureReason =
-  | PerpsProMarketFillEstimateError
-  | PerpsProTpSlValidationErrorCode
   | 'accountOrRuntime'
-  | 'bookIdentity'
   | 'commandIdentity'
   | 'expectedEntryPrice'
-  | 'marketOrPosition'
+  | 'invalidDirection'
+  | 'invalidTrigger'
+  | 'marketIdentity'
   | 'normalizedBaseSize'
   | 'regionRestricted';
 
@@ -181,14 +162,6 @@ const createCloid = (uuid: () => string): Cloid => {
   return `0x${value}`;
 };
 
-export const getPerpsProAttachedTpSlPositionIdentity = (
-  position?: { entryPx?: string; marginUsed?: string; szi?: string } | null,
-): PerpsProAttachedTpSlPositionIdentity => ({
-  entryPx: position?.entryPx ?? '',
-  marginUsed: position?.marginUsed ?? '',
-  szi: position?.szi ?? '0',
-});
-
 const getParentFingerprint = (parent: PerpsProOpenOrderCommand) =>
   JSON.stringify([
     parent.account.address.toLowerCase(),
@@ -217,7 +190,6 @@ export const buildPerpsProAttachedTpSlCommand = ({
   midPrice = markPrice,
   marketSnapshot,
   parent,
-  position,
   pxDecimals,
   quoteAsset,
   runtime,
@@ -240,7 +212,6 @@ export const buildPerpsProAttachedTpSlCommand = ({
   midPrice?: string;
   marketSnapshot: PerpsProAttachedTpSlMarketSnapshot;
   parent: PerpsProOpenOrderCommand;
-  position?: { entryPx?: string; marginUsed?: string; szi?: string } | null;
   pxDecimals: number;
   quoteAsset: string;
   runtime: PerpsRuntimeSnapshot;
@@ -265,7 +236,11 @@ export const buildPerpsProAttachedTpSlCommand = ({
     !new BigNumber(attached.expectedEntryPrice).eq(
       marketSnapshot.expectedEntryPrice,
     ) ||
-    !new BigNumber(marketSnapshot.normalizedBaseSize).eq(parent.baseSize)
+    !new BigNumber(marketSnapshot.normalizedBaseSize).eq(parent.baseSize) ||
+    (attachedParent.execution.kind === 'limit'
+      ? marketSnapshot.entrySource !== 'limit'
+      : marketSnapshot.entrySource !== 'fullL2' &&
+        marketSnapshot.entrySource !== 'midFallback')
   ) {
     throw new Error('Attached TP/SL evaluation does not match the parent');
   }
@@ -290,9 +265,6 @@ export const buildPerpsProAttachedTpSlCommand = ({
     marketSnapshot: Object.freeze({ ...marketSnapshot }),
     parent: attachedParent,
     parentFingerprint: getParentFingerprint(attachedParent),
-    positionIdentity: Object.freeze(
-      getPerpsProAttachedTpSlPositionIdentity(position),
-    ),
     reviewFacts: Object.freeze({
       amountUnit,
       displayBase,
@@ -322,14 +294,6 @@ export const buildPerpsProAttachedTpSlCommand = ({
   });
 };
 
-const samePositionIdentity = (
-  left: PerpsProAttachedTpSlPositionIdentity,
-  right: PerpsProAttachedTpSlPositionIdentity,
-) =>
-  left.entryPx === right.entryPx &&
-  left.marginUsed === right.marginUsed &&
-  left.szi === right.szi;
-
 export const validatePerpsProAttachedTpSlCommand = (
   command: PerpsProAttachedTpSlCommand,
   context: PerpsProAttachedTpSlGuardContext,
@@ -345,7 +309,6 @@ export const validatePerpsProAttachedTpSlCommand = (
     !Object.isFrozen(command.parent) ||
     !Object.isFrozen(command.parent.account) ||
     !Object.isFrozen(command.parent.execution) ||
-    !Object.isFrozen(command.positionIdentity) ||
     !Object.isFrozen(command.reviewFacts)
   ) {
     return { ok: false, reason: 'commandIdentity' };
@@ -370,19 +333,9 @@ export const validatePerpsProAttachedTpSlCommand = (
   if (
     context.marketKey !== command.parent.marketKey ||
     context.coin !== command.parent.coin ||
-    context.dexId !== command.parent.dexId ||
-    !samePositionIdentity(context.positionIdentity, command.positionIdentity)
+    context.dexId !== command.parent.dexId
   ) {
-    return { ok: false, reason: 'marketOrPosition' };
-  }
-  if (
-    context.bookStatus !== 'ready' ||
-    !context.book ||
-    context.bookSessionKey !== command.marketSnapshot.sessionKey ||
-    context.book.coin !== command.parent.coin ||
-    context.book.time < command.marketSnapshot.bookTime
-  ) {
-    return { ok: false, reason: 'bookIdentity' };
+    return { ok: false, reason: 'marketIdentity' };
   }
   if (
     !new BigNumber(command.parent.baseSize).eq(
@@ -391,29 +344,25 @@ export const validatePerpsProAttachedTpSlCommand = (
   ) {
     return { ok: false, reason: 'normalizedBaseSize' };
   }
-  let expectedEntryPrice: string;
-  if (command.parent.execution.kind === 'market') {
-    const estimate = estimatePerpsProMarketFill({
-      amount: command.parent.baseSize,
-      amountUnit: 'base',
-      book: context.book,
-      coin: command.parent.coin,
-      sessionKey: context.bookSessionKey,
-      side: command.parent.side,
-      status: context.bookStatus,
-      szDecimals: command.reviewFacts.szDecimals,
-    });
-    if (!estimate.ok) return { ok: false, reason: estimate.error };
-    expectedEntryPrice = estimate.estimate.expectedEntryPrice;
-  } else {
+  const expectedEntryPrice = command.marketSnapshot.expectedEntryPrice;
+  if (
+    !positive(expectedEntryPrice) ||
+    !new BigNumber(command.attached.expectedEntryPrice).eq(expectedEntryPrice)
+  ) {
+    return { ok: false, reason: 'expectedEntryPrice' };
+  }
+  if (command.parent.execution.kind === 'limit') {
     if (
-      !new BigNumber(command.parent.execution.limitPrice).eq(
-        command.marketSnapshot.expectedEntryPrice,
-      )
+      command.marketSnapshot.entrySource !== 'limit' ||
+      !new BigNumber(command.parent.execution.limitPrice).eq(expectedEntryPrice)
     ) {
       return { ok: false, reason: 'expectedEntryPrice' };
     }
-    expectedEntryPrice = command.parent.execution.limitPrice;
+  } else if (
+    command.marketSnapshot.entrySource !== 'fullL2' &&
+    command.marketSnapshot.entrySource !== 'midFallback'
+  ) {
+    return { ok: false, reason: 'expectedEntryPrice' };
   }
   const errors = validatePerpsProFrozenAttachedTpSl({
     attached: command.attached,

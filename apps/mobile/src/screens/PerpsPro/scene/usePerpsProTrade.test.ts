@@ -46,7 +46,7 @@ const mockMarketOrderOpen = jest.fn(async () => ({
 const mockShowToast = jest.fn();
 const mockSetTpSlMode = jest.fn(async () => undefined);
 const mockCalLiquidationPrice = jest.fn((..._args: unknown[]) => 50);
-const mockExecuteAttached = jest.fn(async () => ({
+const mockExecuteAttached = jest.fn(async (..._args: unknown[]) => ({
   kind: 'fullAccepted' as const,
   reconciliationErrors: [],
   refreshErrors: [],
@@ -1189,7 +1189,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
 
     expect(mockExecuteAttached).toHaveBeenCalledWith(
       expect.objectContaining({
-        parent: expect.objectContaining({ baseSize: '5.94', side: 'buy' }),
+        parent: expect.objectContaining({ baseSize: '6', side: 'buy' }),
       }),
       expect.any(Function),
     );
@@ -1476,7 +1476,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(hook.result.current.form.amount).toBe('12');
   });
 
-  it('freezes direction-specific L2 facts and delegates to the real execution boundary', async () => {
+  it('freezes ordinary Amount size plus full-L2 risk entry and delegates to execution', async () => {
     const refreshActiveAssetData = jest.fn(async () => undefined);
     const hook = renderHook(() =>
       usePerpsProTrade({
@@ -1508,14 +1508,17 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(hook.result.current.review).toMatchObject({
       attached: {
         expectedEntryPrice: '101',
-        normalizedBaseSize: '1',
+        normalizedBaseSize: '1.01',
         side: 'buy',
         sl: { triggerPrice: '90' },
         tp: { triggerPrice: '110' },
       },
-      marketSnapshot: { bookTime: 123, sessionKey: 'BTC:1' },
+      marketSnapshot: {
+        entrySource: 'fullL2',
+        expectedEntryPrice: '101',
+      },
       parent: {
-        baseSize: '1',
+        baseSize: '1.01',
         execution: {
           kind: 'market',
           slippageReferenceMidPrice: '100',
@@ -1717,22 +1720,22 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
 
       expect(mockShowToast).not.toHaveBeenCalled();
       expect(hook.result.current.review).toMatchObject({
-        attached: { normalizedBaseSize: '0.99' },
-        parent: { baseSize: '0.99', side: 'buy' },
+        attached: { normalizedBaseSize: '1' },
+        parent: { baseSize: '1', side: 'buy' },
         type: 'openOrderWithAttachedTpSl',
       });
     },
   );
 
-  it('submits attached TP/SL Limit directly when Limit confirmation is disabled', async () => {
+  it('submits attached TP/SL Limit without an L2 snapshot when confirmation is disabled', async () => {
     mockGetSkipConfirmation.mockResolvedValueOnce(true);
     const hook = renderHook(() =>
       usePerpsProTrade({
         activeAssetData,
-        bboBook: book,
-        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
-        bboSessionKey: 'BTC:1',
-        bboStatus: 'ready',
+        bboBook: null,
+        bboPrices: { asks1: null, asks5: null, bids1: null, bids5: null },
+        bboSessionKey: null,
+        bboStatus: 'loading',
         executionActive: true,
         leveragePending: false,
         market,
@@ -1751,6 +1754,17 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
 
     expect(mockGetSkipConfirmation).toHaveBeenCalledWith('limit');
     expect(mockExecuteAttached).toHaveBeenCalledTimes(1);
+    expect(mockExecuteAttached.mock.calls[0]?.[0]).toMatchObject({
+      marketSnapshot: {
+        entrySource: 'limit',
+        expectedEntryPrice: '100',
+        normalizedBaseSize: '1',
+      },
+      parent: {
+        baseSize: '1',
+        execution: { kind: 'limit', limitPrice: '100' },
+      },
+    });
     expect(hook.result.current.review).toBeNull();
     expect(mockSetSkipConfirmation).not.toHaveBeenCalled();
     act(() => hook.result.current.setOrderType('market'));
@@ -2082,19 +2096,14 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(hook.result.current.estimatedLiquidation).toBeNull();
   });
 
-  it('fails an attached Market review when full L2 coverage is unavailable', async () => {
+  it('falls back to Mid for an attached Market review when L2 is unavailable', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
         activeAssetData,
-        bboBook: book,
-        bboPrices: {
-          asks1: '101',
-          asks5: null,
-          bids1: '99',
-          bids5: null,
-        },
-        bboSessionKey: 'BTC:1',
-        bboStatus: 'ready',
+        bboBook: null,
+        bboPrices: { asks1: null, asks5: null, bids1: null, bids5: null },
+        bboSessionKey: null,
+        bboStatus: 'loading',
         executionActive: true,
         leveragePending: false,
         market,
@@ -2102,17 +2111,30 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
         updateLeverageRequest: jest.fn(async () => true),
       }),
     );
-    act(() => hook.result.current.setAmount('2000'));
+    act(() => hook.result.current.setAmount('100'));
     act(() => hook.result.current.tpSl.setRawMagnitude('tp', '110'));
     act(() => hook.result.current.tpSl.setEnabled(true));
     await act(async () => hook.result.current.requestReview('buy'));
 
-    expect(hook.result.current.review).toBeNull();
-    expect(hook.result.current.tpSl).not.toHaveProperty('submitErrors');
-    expect(mockShowToast).toHaveBeenCalledWith(
-      'page.perps.pro.trade.tpSlError.insufficientDepth',
-      'error',
-    );
+    expect(mockShowToast).not.toHaveBeenCalled();
+    expect(hook.result.current.review).toMatchObject({
+      attached: {
+        expectedEntryPrice: '100',
+        normalizedBaseSize: '1',
+      },
+      marketSnapshot: {
+        entrySource: 'midFallback',
+        expectedEntryPrice: '100',
+        normalizedBaseSize: '1',
+      },
+      parent: {
+        baseSize: '1',
+        execution: {
+          kind: 'market',
+          slippageReferenceMidPrice: '100',
+        },
+      },
+    });
     expect(mockEnsureApproval).not.toHaveBeenCalled();
   });
 

@@ -50,7 +50,6 @@ import {
   resolvePerpsProMarginModeDisabledReason,
   type PerpsProLeverageConfiguration,
 } from '../model/leverage';
-import { estimatePerpsProMarketFill } from '../model/marketFillEstimate';
 import { resolvePerpsProMarketOrderProjection } from '../model/marketOrderProjection';
 import type { PerpsProMarket } from '../model/market';
 import type { PerpsProOrderReviewFacts } from '../model/orderReview';
@@ -205,38 +204,10 @@ export const usePerpsProTrade = ({
       if (reason === 'regionRestricted') {
         return t('page.perps.regionNotSupport');
       }
-      if (reason === 'insufficientDepth') {
-        return tpSlErrorText({ code: reason }, { side });
-      }
-      if (
-        reason === 'bookIdentity' ||
-        reason === 'bookStale' ||
-        reason === 'bookUnavailable' ||
-        reason === 'invalidLevel' ||
-        reason === 'marketMismatch'
-      ) {
-        return tpSlErrorText({ code: 'marketBookUnavailable' }, { side });
-      }
-      if (
-        reason === 'invalidAmount' ||
-        reason === 'normalizedBaseSize' ||
-        reason === 'zeroNormalizedSize'
-      ) {
+      if (reason === 'normalizedBaseSize') {
         return tpSlErrorText({ code: 'invalidOrderAmount' }, { side });
       }
-      if (
-        reason === 'atLeastOneRequired' ||
-        reason === 'bboUnsupported' ||
-        reason === 'conditionalUnsupported' ||
-        reason === 'invalidDirection' ||
-        reason === 'invalidInput' ||
-        reason === 'invalidOrderAmount' ||
-        reason === 'invalidTrigger' ||
-        reason === 'iocUnsupported' ||
-        reason === 'marketBookUnavailable' ||
-        reason === 'nonPositiveTrigger' ||
-        reason === 'reduceOnlyUnsupported'
-      ) {
+      if (reason === 'invalidDirection' || reason === 'invalidTrigger') {
         return tpSlErrorText({ code: reason, leg }, { side });
       }
       return t('page.perps.pro.trade.contextChanged');
@@ -362,9 +333,6 @@ export const usePerpsProTrade = ({
       : null;
   const { execute: executeAttachedTpSl } = usePerpsProAttachedTpSlExecution({
     active: executionActive,
-    bboBook,
-    bboSessionKey,
-    bboStatus,
     market,
     refreshActiveAssetData,
   });
@@ -1348,20 +1316,17 @@ export const usePerpsProTrade = ({
       }
       const commandForm = getCommandForm(side);
       if (commandForm.orderType === 'market') {
-        const result = estimatePerpsProMarketFill({
-          amount: commandForm.amount,
-          amountUnit: commandForm.amountUnit,
-          book: bboBook,
-          coin: market.canonicalCoin,
-          sessionKey: bboSessionKey,
-          side,
-          status: bboStatus,
-          szDecimals: market.marketData.szDecimals,
-        });
-        return result.ok
+        const projection = getSideMarketOrderProjection(side);
+        if (!projection) return null;
+        const expectedEntryPrice =
+          projection.source === 'fullL2'
+            ? projection.estimatedEntryPrice
+            : projection.slippageReferenceMidPrice;
+        const validExpectedEntryPrice = positive(expectedEntryPrice);
+        return validExpectedEntryPrice
           ? {
-              baseSize: result.estimate.baseSize,
-              expectedEntryPrice: result.estimate.expectedEntryPrice,
+              baseSize: projection.baseSize,
+              expectedEntryPrice: validExpectedEntryPrice.toFixed(),
             }
           : null;
       }
@@ -1379,12 +1344,10 @@ export const usePerpsProTrade = ({
         : null;
     },
     [
-      bboBook,
-      bboSessionKey,
-      bboStatus,
       form.bboEnabled,
       form.orderType,
       getCommandForm,
+      getSideMarketOrderProjection,
       market,
     ],
   );
@@ -1458,8 +1421,8 @@ export const usePerpsProTrade = ({
       ) {
         throw new Error(t('page.perps.pro.trade.contextChanged'));
       }
-      const plainMarketProjection =
-        commandForm.orderType === 'market' && !hasAttached
+      const marketProjection =
+        commandForm.orderType === 'market'
           ? getSideMarketOrderProjection(side)
           : null;
       let expectedEntryPrice =
@@ -1480,8 +1443,8 @@ export const usePerpsProTrade = ({
         marginMode,
         markPrice: market.marketData.markPx,
         marketFillRiskEntryPrice:
-          plainMarketProjection?.source === 'fullL2'
-            ? plainMarketProjection.estimatedEntryPrice
+          marketProjection?.source === 'fullL2'
+            ? marketProjection.estimatedEntryPrice
             : null,
         maxLeverage: market.marketData.maxLeverage,
         midPrice: liveMidPrice,
@@ -1497,52 +1460,26 @@ export const usePerpsProTrade = ({
           >
         | undefined;
       if (hasAttached && commandForm.orderType === 'market') {
-        const estimate = estimatePerpsProMarketFill({
-          amount: commandForm.amount,
-          amountUnit: commandForm.amountUnit,
-          book: bboBook,
-          coin: market.canonicalCoin,
-          sessionKey: bboSessionKey,
-          side,
-          status: bboStatus,
-          szDecimals: market.marketData.szDecimals,
-        });
-        if (!estimate.ok) {
-          const error = {
-            code:
-              estimate.error === 'insufficientDepth'
-                ? ('insufficientDepth' as const)
-                : estimate.error === 'invalidAmount' ||
-                  estimate.error === 'zeroNormalizedSize'
-                ? ('invalidOrderAmount' as const)
-                : ('marketBookUnavailable' as const),
-          };
-          const errorContext = { side };
-          throw new Error(tpSlErrorText(error, errorContext));
+        if (!marketProjection) {
+          throw new Error(t('page.perps.pro.trade.contextChanged'));
         }
-        expectedEntryPrice = estimate.estimate.expectedEntryPrice;
+        const projectedEntryPrice =
+          marketProjection.source === 'fullL2'
+            ? marketProjection.estimatedEntryPrice
+            : marketProjection.slippageReferenceMidPrice;
+        const validProjectedEntryPrice = positive(projectedEntryPrice);
+        if (!validProjectedEntryPrice) {
+          throw new Error(t('page.perps.pro.trade.contextChanged'));
+        }
+        expectedEntryPrice = validProjectedEntryPrice.toFixed();
         marketSnapshot = {
-          bookTime: estimate.estimate.bookTime,
-          expectedEntryPrice: estimate.estimate.expectedEntryPrice,
-          sessionKey: estimate.estimate.sessionKey,
+          entrySource: marketProjection.source,
+          expectedEntryPrice,
         };
       } else if (hasAttached) {
-        if (
-          bboStatus !== 'ready' ||
-          !bboBook ||
-          !bboSessionKey ||
-          bboBook.coin !== market.canonicalCoin ||
-          !Number.isFinite(bboBook.time) ||
-          bboBook.time <= 0
-        ) {
-          const error = { code: 'marketBookUnavailable' as const };
-          const errorContext = { side };
-          throw new Error(tpSlErrorText(error, errorContext));
-        }
         marketSnapshot = {
-          bookTime: bboBook.time,
+          entrySource: 'limit',
           expectedEntryPrice: commandForm.limitPrice,
-          sessionKey: bboSessionKey,
         };
       }
       const parentForm = hasAttached
@@ -1553,10 +1490,6 @@ export const usePerpsProTrade = ({
         : commandForm;
       const command = buildPerpsProOpenOrderCommand({
         account: accountFacts.account,
-        amountReferencePrice:
-          hasAttached && commandForm.orderType === 'market'
-            ? expectedEntryPrice
-            : undefined,
         bboPrice: getBboPrice(side),
         bboSessionKey,
         coin: market.canonicalCoin,
@@ -1646,7 +1579,6 @@ export const usePerpsProTrade = ({
           normalizedBaseSize: command.baseSize,
         },
         parent: command,
-        position: currentPosition,
         pxDecimals: market.marketData.pxDecimals,
         quoteAsset: market.quoteAsset,
         runtime: getPerpsRuntimeSnapshot(),
@@ -1656,9 +1588,7 @@ export const usePerpsProTrade = ({
     },
     [
       accountFacts.account,
-      bboBook,
       bboSessionKey,
-      bboStatus,
       currentPosition,
       crossMarginAvailableAfterMaintenance,
       form,

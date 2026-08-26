@@ -1,4 +1,3 @@
-import type { L2Book } from '@rabby-wallet/hyperliquid-sdk';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { perpsServiceApi } from '@/core/serviceApi/perps';
@@ -18,7 +17,6 @@ import type { PerpsProMarket } from '../model/market';
 import {
   executePerpsProAttachedTpSl,
   getPerpsProAttachedTpSlBatchError,
-  getPerpsProAttachedTpSlPositionIdentity,
   validatePerpsProAttachedTpSlCommand,
   type PerpsProAttachedTpSlCommand,
   type PerpsProAttachedTpSlGuardContext,
@@ -74,62 +72,36 @@ const getResultServerError = (result: PerpsProAttachedTpSlResult) => {
 
 export const usePerpsProAttachedTpSlExecution = ({
   active,
-  bboBook,
-  bboSessionKey,
-  bboStatus,
   market,
   refreshActiveAssetData,
 }: {
   active: boolean;
-  bboBook: L2Book | null;
-  bboSessionKey: string | null;
-  bboStatus: 'error' | 'idle' | 'loading' | 'ready' | 'stale';
   market: PerpsProMarket | null;
   refreshActiveAssetData: () => Promise<unknown>;
 }) => {
   const latestRef = useRef({
     active,
-    bboBook,
-    bboSessionKey,
-    bboStatus,
     market,
   });
   latestRef.current = {
     active,
-    bboBook,
-    bboSessionKey,
-    bboStatus,
     market,
   };
   const recoveryInFlightRef = useRef<Promise<void> | null>(null);
 
-  const getGuardContext = useCallback(
-    (
-      command: PerpsProAttachedTpSlCommand,
-    ): PerpsProAttachedTpSlGuardContext => {
-      const latest = latestRef.current;
-      const state = perpsStore.getState();
-      const currentPosition =
-        state.currentClearinghouseState?.assetPositions.find(
-          item => item.position.coin === command.parent.coin,
-        )?.position ?? null;
-      return {
-        accountRuntime: getPerpsAccountRuntimeContext(),
-        active: latest.active,
-        book: latest.bboBook,
-        bookSessionKey: latest.bboSessionKey,
-        bookStatus: latest.bboStatus,
-        coin: latest.market?.canonicalCoin ?? '',
-        dexId: latest.market?.marketData.dexId ?? '',
-        hasPermission: state.hasPermission,
-        marketKey: latest.market?.marketKey ?? null,
-        positionIdentity:
-          getPerpsProAttachedTpSlPositionIdentity(currentPosition),
-        runtime: getPerpsRuntimeSnapshot(),
-      };
-    },
-    [],
-  );
+  const getGuardContext = useCallback((): PerpsProAttachedTpSlGuardContext => {
+    const latest = latestRef.current;
+    const state = perpsStore.getState();
+    return {
+      accountRuntime: getPerpsAccountRuntimeContext(),
+      active: latest.active,
+      coin: latest.market?.canonicalCoin ?? '',
+      dexId: latest.market?.marketData.dexId ?? '',
+      hasPermission: state.hasPermission,
+      marketKey: latest.market?.marketKey ?? null,
+      runtime: getPerpsRuntimeSnapshot(),
+    };
+  }, []);
 
   const refreshCurrentAccount = useCallback(
     async (entry: PerpsAttachedTpSlJournalEntry) => {
@@ -226,7 +198,7 @@ export const usePerpsProAttachedTpSlExecution = ({
     ): Promise<PerpsProAttachedTpSlFinalOutcome> => {
       const empty = { reconciliationErrors: [], refreshErrors: [] };
       const guard = () =>
-        validatePerpsProAttachedTpSlCommand(command, getGuardContext(command));
+        validatePerpsProAttachedTpSlCommand(command, getGuardContext());
       const guardFailure = () => {
         const result = guard();
         return result.ok
@@ -265,8 +237,9 @@ export const usePerpsProAttachedTpSlExecution = ({
         }
         const postLeverageGuardFailure = guardFailure();
         if (postLeverageGuardFailure) return postLeverageGuardFailure;
-        const result = await executePerpsProAttachedTpSl(command, () =>
-          getGuardContext(command),
+        const result = await executePerpsProAttachedTpSl(
+          command,
+          getGuardContext,
         );
         const serverError = getResultServerError(result);
         if (

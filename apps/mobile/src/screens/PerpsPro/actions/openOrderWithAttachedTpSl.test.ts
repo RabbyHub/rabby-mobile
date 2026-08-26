@@ -1,7 +1,4 @@
-import type {
-  L2Book,
-  NormalTpslBatchResult,
-} from '@rabby-wallet/hyperliquid-sdk';
+import type { NormalTpslBatchResult } from '@rabby-wallet/hyperliquid-sdk';
 
 jest.mock('@/core/apis/perps', () => ({
   apisPerps: { getPerpsSDK: jest.fn() },
@@ -15,7 +12,6 @@ import {
   buildPerpsProAttachedTpSlCommand,
   executePerpsProAttachedTpSl,
   getPerpsProAttachedTpSlBatchError,
-  getPerpsProAttachedTpSlPositionIdentity,
   validatePerpsProAttachedTpSlCommand,
   type PerpsProAttachedTpSlGuardContext,
 } from './openOrderWithAttachedTpSl';
@@ -67,12 +63,6 @@ const attached = (
   ...overrides,
 });
 
-const book = (ask = '101'): L2Book => ({
-  coin: 'BTC',
-  levels: [[{ n: 1, px: '100', sz: '10' }], [{ n: 1, px: ask, sz: '10' }]],
-  time: 10,
-});
-
 const accountRuntime = {
   account: {
     address: '0xabc',
@@ -117,13 +107,11 @@ const build = (
     markPrice: '100',
     maxLeverage: 50,
     marketSnapshot: {
-      bookTime: 10,
+      entrySource: 'fullL2',
       expectedEntryPrice: '101',
       normalizedBaseSize: '2',
-      sessionKey: 'BTC:1',
     },
     parent: parent(),
-    position: null,
     pxDecimals: 2,
     quoteAsset: 'USDC',
     runtime,
@@ -138,14 +126,10 @@ const guardContext = (
 ): PerpsProAttachedTpSlGuardContext => ({
   accountRuntime,
   active: true,
-  book: book(),
-  bookSessionKey: 'BTC:1',
-  bookStatus: 'ready',
   coin: 'BTC',
   dexId: '',
   hasPermission: true,
   marketKey: 'BTC:USDC',
-  positionIdentity: getPerpsProAttachedTpSlPositionIdentity(null),
   runtime,
   ...overrides,
 });
@@ -246,8 +230,10 @@ describe('Perps Pro attached TP/SL command and executor', () => {
     });
   });
 
-  it('fails closed for identity or depth changes but accepts safe VWAP movement', () => {
+  it('guards only stable runtime, market, permission, and frozen TP/SL facts', () => {
     const command = build();
+    expect(guardContext()).not.toHaveProperty('book');
+    expect(guardContext()).not.toHaveProperty('positionIdentity');
     expect(
       validatePerpsProAttachedTpSlCommand(command, guardContext()),
     ).toEqual({ ok: true });
@@ -260,27 +246,34 @@ describe('Perps Pro attached TP/SL command and executor', () => {
     expect(
       validatePerpsProAttachedTpSlCommand(
         command,
-        guardContext({ bookSessionKey: 'BTC:2' }),
+        guardContext({ marketKey: 'ETH:USDC' }),
       ),
-    ).toMatchObject({ ok: false, reason: 'bookIdentity' });
+    ).toMatchObject({ ok: false, reason: 'marketIdentity' });
+    const invalidEntrySource = Object.freeze({
+      ...command,
+      marketSnapshot: Object.freeze({
+        ...command.marketSnapshot,
+        entrySource: 'unexpected' as never,
+      }),
+    });
+    expect(
+      validatePerpsProAttachedTpSlCommand(invalidEntrySource, guardContext()),
+    ).toMatchObject({ ok: false, reason: 'expectedEntryPrice' });
+    const invalidFrozenDirection = build({
+      attached: attached({
+        tp: {
+          ...attached().tp!,
+          rawMagnitude: '100',
+          triggerPrice: '100',
+        },
+      }),
+    });
     expect(
       validatePerpsProAttachedTpSlCommand(
-        command,
-        guardContext({ book: book('102') }),
-      ),
-    ).toEqual({ ok: true });
-    expect(
-      validatePerpsProAttachedTpSlCommand(
-        command,
-        guardContext({ book: book('111') }),
+        invalidFrozenDirection,
+        guardContext(),
       ),
     ).toMatchObject({ leg: 'tp', ok: false, reason: 'invalidDirection' });
-    expect(
-      validatePerpsProAttachedTpSlCommand(
-        command,
-        guardContext({ book: { ...book(), levels: [[], []] } }),
-      ),
-    ).toMatchObject({ ok: false, reason: 'bookUnavailable' });
   });
 
   it('extracts and deduplicates raw server errors by batch leg role', () => {
@@ -394,19 +387,9 @@ describe('Perps Pro attached TP/SL command and executor', () => {
     });
   });
 
-  it('keeps child size equal to the frozen parent when opening against an opposite position', async () => {
-    const oppositePosition = {
-      entryPx: '105',
-      marginUsed: '10',
-      szi: '-0.5',
-    };
-    const command = build({ position: oppositePosition });
+  it('keeps child size equal to the frozen parent without freezing a position snapshot', async () => {
+    const command = build();
     const setup = createDependencies(command);
-    setup.dependencies.getGuardContext = () =>
-      guardContext({
-        positionIdentity:
-          getPerpsProAttachedTpSlPositionIdentity(oppositePosition),
-      });
 
     await expect(
       executePerpsProAttachedTpSl(
@@ -416,6 +399,7 @@ describe('Perps Pro attached TP/SL command and executor', () => {
       ),
     ).resolves.toMatchObject({ kind: 'fullAccepted' });
     expect(command.attached.normalizedBaseSize).toBe('2');
+    expect(command).not.toHaveProperty('positionIdentity');
     expect(setup.marketOrder).toHaveBeenCalledWith(
       expect.objectContaining({
         isBuy: true,
@@ -452,10 +436,9 @@ describe('Perps Pro attached TP/SL command and executor', () => {
   it('maps a GTC Limit parent without using the legacy API', async () => {
     const command = build({
       marketSnapshot: {
-        bookTime: 10,
+        entrySource: 'limit',
         expectedEntryPrice: '99',
         normalizedBaseSize: '2',
-        sessionKey: 'BTC:1',
       },
       parent: parent({ kind: 'limit', limitPrice: '99', tif: 'Gtc' }),
       attached: attached({ expectedEntryPrice: '99' }),
@@ -472,23 +455,17 @@ describe('Perps Pro attached TP/SL command and executor', () => {
     );
     expect(setup.marketOrder).not.toHaveBeenCalled();
     expect(
-      validatePerpsProAttachedTpSlCommand(
-        command,
-        guardContext({
-          book: {
-            ...book(),
-            levels: [
-              [{ n: 1, px: '98', sz: '0.01' }],
-              [{ n: 1, px: '100', sz: '0.01' }],
-            ],
-          },
-        }),
-      ),
+      validatePerpsProAttachedTpSlCommand(command, guardContext()),
     ).toEqual({ ok: true });
   });
 
   it('sends a crossing ALO parent to Hyperliquid for authoritative validation', async () => {
     const command = build({
+      marketSnapshot: {
+        entrySource: 'limit',
+        expectedEntryPrice: '101',
+        normalizedBaseSize: '2',
+      },
       parent: parent({ kind: 'limit', limitPrice: '101', tif: 'Alo' }),
     });
     const setup = createDependencies(command);

@@ -187,14 +187,12 @@ const attached: PerpsProAttachedTpSlCommand = {
   },
   commandId: 'command-1',
   marketSnapshot: {
-    bookTime: 1,
+    entrySource: 'limit',
     expectedEntryPrice: '100',
     normalizedBaseSize: '1',
-    sessionKey: 'BTC:1',
   },
   parent,
   parentFingerprint: 'parent-1',
-  positionIdentity: { entryPx: '', marginUsed: '', szi: '0' },
   reviewFacts: {
     ...reviewFacts,
     expectedEntryPrice: '100',
