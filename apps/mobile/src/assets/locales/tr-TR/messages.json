@@ -2523,7 +2523,18 @@
         "loginDesc": "Mevcut adresle giriş yapın ve Perps işlemine başlamak için fon yatırın.",
         "learnBtn": "Perps hakkında bilgi edinin",
         "learnMore": "Daha Fazla Bilgi Edinin",
-        "addFunds": "Fon ekle"
+        "addFunds": "Fon ekle",
+        "portfolioValue": "Portföy Değeri",
+        "manualAccount": "Manuel Hesap",
+        "unifiedAccount": "Birleşik Hesap",
+        "portfolioMarginAccount": "Portföy Marjini",
+        "manualAccountDesc": "Spot ve her Perps DEX'i ayrı bakiyelere sahiptir; çapraz marjin her DEX içinde bağımsız olarak yönetilir.",
+        "unifiedAccountDesc": "Her teminat varlığının, aynı teminatı kullanan Spot ve çapraz marjinli Perps arasında paylaşılan tek bir bakiyesi vardır.",
+        "portfolioMarginAccountDesc": "Uygun Spot varlıklar ve Perps, daha yüksek sermaye verimliliği için tek bir portföyde birleştirilir.",
+        "breakdownPerps": "Perps",
+        "breakdownSpot": "Spot",
+        "breakdownOtherAssets": "Diğer Varlıklar",
+        "breakdownNetOtherAssets": "Net Diğer Varlıklar"
       },
       "PerpsGuidePopup": {
         "step4Title": "Kaldıraç Ayarlama",
@@ -2846,7 +2857,10 @@
         "closedPnl": "Kapalı PNL",
         "total": "Toplam",
         "receive": "Alım",
-        "rabbyFeeTipsV2": "Rabby ücreti: 0.02%"
+        "rabbyFeeTipsV2": "Rabby ücreti: 0.02%",
+        "estReceive": "Tah. Alım",
+        "estClosedPnl": "Tah. Kapalı PNL",
+        "limitClosePlacedToast": "Limit Kapatma {{direction}} {{coin}}: {{size}} büyüklük ${{price}} fiyattan yerleştirildi"
       },
       "PerpsOpenPositionPopup": {
         "title": "{{coin}} Pozisyonu Aç",

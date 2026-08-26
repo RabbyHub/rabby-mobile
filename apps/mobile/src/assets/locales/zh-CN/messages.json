@@ -2680,7 +2680,18 @@
         "learnBtn": "了解永续合约",
         "loginDesc": "使用当前地址登录并充值资金，即可开始交易永续合约",
         "learnMore": "了解更多",
-        "addFunds": "充值资金"
+        "addFunds": "充值资金",
+        "portfolioValue": "账户总价值",
+        "manualAccount": "手动账户",
+        "unifiedAccount": "统一账户",
+        "portfolioMarginAccount": "组合保证金账户",
+        "manualAccountDesc": "现货与各个永续 DEX 拥有独立余额，全仓保证金在每个 DEX 内单独管理。",
+        "unifiedAccountDesc": "每种抵押资产仅有一个余额，由现货和使用相同抵押品的全仓永续合约共享。",
+        "portfolioMarginAccountDesc": "符合条件的现货资产与永续合约合并至同一投资组合，以提升资金效率。",
+        "breakdownPerps": "永续合约",
+        "breakdownSpot": "现货",
+        "breakdownOtherAssets": "其他资产",
+        "breakdownNetOtherAssets": "其他资产净值"
       },
       "PerpsGuidePopup": {
         "step5Title": "强平",
@@ -3003,7 +3014,10 @@
         "receive": "收到",
         "minimumWarning": "最低比例为 {{percent}}%",
         "total": "总计",
-        "rabbyFeeTipsV2": "Rabby 手续费：0.02%"
+        "rabbyFeeTipsV2": "Rabby 手续费：0.02%",
+        "estReceive": "预计收到",
+        "estClosedPnl": "预计平仓盈亏",
+        "limitClosePlacedToast": "限价平仓 {{direction}} {{coin}}：数量 {{size}}，已按 ${{price}} 挂单"
       },
       "PerpsOpenPositionPopup": {
         "title": "开 {{coin}} 仓位",

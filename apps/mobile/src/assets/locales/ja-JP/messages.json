@@ -2576,7 +2576,18 @@
         "loginDesc": "アドレスでログインして資金を入金すると、無期限先物の取引を開始できます。",
         "learnBtn": "無期限先物について学ぶ",
         "learnMore": "詳しく見る",
-        "addFunds": "資金を追加"
+        "addFunds": "資金を追加",
+        "portfolioValue": "ポートフォリオ価値",
+        "manualAccount": "マニュアルアカウント",
+        "unifiedAccount": "統合アカウント",
+        "portfolioMarginAccount": "ポートフォリオマージン",
+        "manualAccountDesc": "現物と各無期限先物DEXの残高は別々に管理され、クロスマージンは各DEX内で独立して管理されます。",
+        "unifiedAccountDesc": "各担保資産は単一の残高を持ち、同じ担保を使用する現物とクロスマージンの無期限先物で共有されます。",
+        "portfolioMarginAccountDesc": "対象となる現物資産と無期限先物を1つのポートフォリオにまとめ、資金効率を高めます。",
+        "breakdownPerps": "無期限先物",
+        "breakdownSpot": "現物",
+        "breakdownOtherAssets": "その他の資産",
+        "breakdownNetOtherAssets": "その他の資産（純額）"
       },
       "PerpsGuidePopup": {
         "step5Title": "清算",
@@ -2899,7 +2910,10 @@
         "closedPnl": "決済損益",
         "minimumWarning": "最小額は {{percent}}% です",
         "receive": "受取額",
-        "rabbyFeeTipsV2": "Rabby手数料: 0.02%"
+        "rabbyFeeTipsV2": "Rabby手数料: 0.02%",
+        "estReceive": "予想受取額",
+        "estClosedPnl": "予想決済損益",
+        "limitClosePlacedToast": "指値決済 {{direction}} {{coin}}：数量 {{size}} を ${{price}} で発注しました"
       },
       "PerpsOpenPositionPopup": {
         "title": "{{coin}}ポジションを建てる",

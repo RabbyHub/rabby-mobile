@@ -2887,7 +2887,18 @@
         "loginBtn": "Iniciar sessão para negociar Perps",
         "learnBtn": "Saiba mais sobre Perps",
         "addFunds": "Adicionar fundos",
-        "learnMore": "Saber mais"
+        "learnMore": "Saber mais",
+        "portfolioValue": "Valor do portefólio",
+        "manualAccount": "Conta manual",
+        "unifiedAccount": "Conta unificada",
+        "portfolioMarginAccount": "Margem de portefólio",
+        "manualAccountDesc": "O Spot e cada DEX de Perps têm saldos separados, com a margem cruzada gerida de forma independente em cada DEX.",
+        "unifiedAccountDesc": "Cada ativo de colateral tem um único saldo partilhado entre o Spot e os Perps de margem cruzada que usam o mesmo colateral.",
+        "portfolioMarginAccountDesc": "Os ativos Spot elegíveis e os Perps são combinados num único portefólio para maior eficiência de capital.",
+        "breakdownPerps": "Perps",
+        "breakdownSpot": "Spot",
+        "breakdownOtherAssets": "Outros ativos",
+        "breakdownNetOtherAssets": "Outros ativos líquidos"
       },
       "PerpsGuidePopup": {
         "step1Title": "Domine os futuros perpétuos",
@@ -3232,7 +3243,10 @@
         "closedPnl": "PNL fechado",
         "amount": "Montante",
         "minimumWarning": "O montante mínimo é {{percent}}%",
-        "rabbyFeeTipsV2": "Taxa Rabby: 0,02%"
+        "rabbyFeeTipsV2": "Taxa Rabby: 0,02%",
+        "estReceive": "Receção est.",
+        "estClosedPnl": "PNL fechado est.",
+        "limitClosePlacedToast": "Fecho limite {{direction}} {{coin}}: tamanho {{size}} colocado a ${{price}}"
       },
       "PerpsOpenPositionPopup": {
         "title": "Abrir posição de {{coin}}",
