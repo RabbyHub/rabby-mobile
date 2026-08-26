@@ -6,6 +6,9 @@ jest.mock('@/databases/entities/portocolItem', () => ({
     batchMultiAddressProtocolsByResourceIds: jest.fn(async () => []),
     batchQueryProtocols: jest.fn(async () => []),
     getDefaultProtocolsByAddresses: jest.fn(async () => ({})),
+    getExpirationByOwners: jest.fn(async (addresses: string[]) =>
+      Object.fromEntries(addresses.map(address => [address, true])),
+    ),
     isExpired: jest.fn(async () => true),
   },
 }));

@@ -41,7 +41,10 @@ export type AssetDataLoadDiagnosticTrace = {
   fail: (details?: AssetDataLoadTraceDetails) => void;
 };
 
-const MAX_RECORDS = 160;
+// High-cardinality refreshes fan out across several resource domains. Keep
+// enough non-production history to retain the dispatch phases that precede
+// their remote completions.
+const MAX_RECORDS = 512;
 const records = isNonProductionDiagnosticsEnabled
   ? ([] as AssetDataLoadDiagnosticRecord[])
   : null;

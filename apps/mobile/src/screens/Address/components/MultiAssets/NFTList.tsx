@@ -113,22 +113,46 @@ const NftResourceRow = React.memo(
     getAccountByAddress(address: string): KeyringAccountWithAlias | undefined;
     onPress: (item: NftItemWithCollection) => void;
   }) => {
-    const nft = useActivityStore(
-      nftEntityResourceStore.useStore,
-      state => (row.type === 'nft' ? state.valueMap[row.nftId] : undefined),
-      Object.is,
-      { storeLabel: 'home-multi-assets-nft-entities' },
+    if (row.type === 'collection') {
+      return (
+        <NftCollectionResourceRow
+          collectionId={row.collectionId}
+          rowStyle={rowStyle}
+          loaderStyle={loaderStyle}
+          getAccountByAddress={getAccountByAddress}
+          onPress={onPress}
+        />
+      );
+    }
+
+    return (
+      <NftEntityResourceRow
+        nftId={row.nftId}
+        rowStyle={rowStyle}
+        loaderStyle={loaderStyle}
+        getAccountByAddress={getAccountByAddress}
+        onPress={onPress}
+      />
     );
-    const collection = useActivityStore(
-      nftCollectionResourceStore.useStore,
-      state =>
-        row.type === 'collection'
-          ? state.valueMap[row.collectionId]
-          : undefined,
-      Object.is,
-      { storeLabel: 'home-multi-assets-nft-collections' },
-    );
-    const rawItem = row.type === 'collection' ? collection : nft;
+  },
+);
+
+type NftResolvedResourceRowProps = {
+  rawItem?: NftItemWithCollection;
+  rowStyle: ViewStyle;
+  loaderStyle: ViewStyle;
+  getAccountByAddress(address: string): KeyringAccountWithAlias | undefined;
+  onPress: (item: NftItemWithCollection) => void;
+};
+
+const NftResolvedResourceRow = React.memo(
+  ({
+    rawItem,
+    rowStyle,
+    loaderStyle,
+    getAccountByAddress,
+    onPress,
+  }: NftResolvedResourceRowProps) => {
     const collectionAddress =
       rawItem && 'address' in rawItem && typeof rawItem.address === 'string'
         ? rawItem.address
@@ -162,6 +186,45 @@ const NftResourceRow = React.memo(
         onPress={() => onPress(item)}
       />
     );
+  },
+);
+
+const NftEntityResourceRow = React.memo(
+  ({
+    nftId,
+    ...props
+  }: Omit<NftResolvedResourceRowProps, 'rawItem'> & {
+    nftId: Extract<NftAssetsIndexRow, { type: 'nft' }>['nftId'];
+  }) => {
+    const nft = useActivityStore(
+      nftEntityResourceStore.useStore,
+      state => state.valueMap[nftId],
+      Object.is,
+      { storeLabel: 'home-multi-assets-nft-entities' },
+    );
+
+    return <NftResolvedResourceRow {...props} rawItem={nft} />;
+  },
+);
+
+const NftCollectionResourceRow = React.memo(
+  ({
+    collectionId,
+    ...props
+  }: Omit<NftResolvedResourceRowProps, 'rawItem'> & {
+    collectionId: Extract<
+      NftAssetsIndexRow,
+      { type: 'collection' }
+    >['collectionId'];
+  }) => {
+    const collection = useActivityStore(
+      nftCollectionResourceStore.useStore,
+      state => state.valueMap[collectionId],
+      Object.is,
+      { storeLabel: 'home-multi-assets-nft-collections' },
+    );
+
+    return <NftResolvedResourceRow {...props} rawItem={collection} />;
   },
 );
 

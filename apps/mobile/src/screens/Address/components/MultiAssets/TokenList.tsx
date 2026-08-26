@@ -102,54 +102,90 @@ const TOKEN_LIST_RENDER_BATCH_SIZE = 6;
 const TOKEN_LIST_WINDOW_SIZE = 7;
 const TOKEN_LIST_BATCHING_PERIOD_MS = 32;
 
-const TokenResourceRow = React.memo(
+type TokenResourceRowCommonProps = {
+  tokenDisplayMode: string;
+  getAccountByAddress(address?: string): KeyringAccountWithAlias | undefined;
+  style?: ViewStyle;
+  hideChainLogo?: boolean;
+};
+
+const TokenEntityResourceRow = React.memo(
   ({
-    row,
+    tokenId,
     tokenDisplayMode,
     getAccountByAddress,
     onTokenPress,
-    onGroupPress,
     style,
     hideChainLogo,
-  }: {
-    row: TokenAssetsIndexRow;
-    tokenDisplayMode: string;
-    getAccountByAddress(address?: string): KeyringAccountWithAlias | undefined;
+  }: TokenResourceRowCommonProps & {
+    tokenId: Extract<TokenAssetsIndexRow, { type: 'token' }>['tokenId'];
     onTokenPress(token: ITokenItem): void;
-    onGroupPress(group: TokenGroupResourceValue): void;
-    style?: ViewStyle;
-    hideChainLogo?: boolean;
   }) => {
-    const tokenId = row.type === 'token' ? row.tokenId : undefined;
-    const groupId = row.type === 'group' ? row.groupId : undefined;
     const token = useActivityStore(
       tokenEntityResourceStore.useStore,
-      state => (tokenId ? state.valueMap[tokenId] : undefined),
+      state => state.valueMap[tokenId],
       Object.is,
       { storeLabel: 'home-multi-assets-token-entities' },
     );
+    const account =
+      tokenDisplayMode === 'byAddress' && token
+        ? getAccountByAddress(token.owner_addr)
+        : undefined;
+
+    const handlePress = useCallback(() => {
+      if (token) {
+        onTokenPress(token);
+      }
+    }, [onTokenPress, token]);
+
+    if (!token) {
+      return <MemoizedItemLoader />;
+    }
+
+    return (
+      <MemoizedTokenRow
+        data={token}
+        onTokenPress={handlePress}
+        logoSize={40}
+        style={style}
+        chainLogoSize={18}
+        hideChainLogo={hideChainLogo}
+        account={account}
+        scene="portfolio"
+      />
+    );
+  },
+);
+
+const TokenGroupResourceRow = React.memo(
+  ({
+    groupId,
+    tokenDisplayMode,
+    getAccountByAddress,
+    onGroupPress,
+    style,
+    hideChainLogo,
+  }: TokenResourceRowCommonProps & {
+    groupId: Extract<TokenAssetsIndexRow, { type: 'group' }>['groupId'];
+    onGroupPress(group: TokenGroupResourceValue): void;
+  }) => {
     const group = useActivityStore(
       tokenGroupResourceStore.useStore,
-      state => (groupId ? state.valueMap[groupId] : undefined),
+      state => state.valueMap[groupId],
       Object.is,
       { storeLabel: 'home-multi-assets-token-groups' },
     );
-    const data = row.type === 'group' ? group?.summary : token;
+    const data = group?.summary;
     const account =
       tokenDisplayMode === 'byAddress' && data
         ? getAccountByAddress(data.owner_addr)
         : undefined;
 
     const handlePress = useCallback(() => {
-      if (!data) {
-        return;
-      }
-      if (row.type === 'group' && group) {
+      if (group) {
         onGroupPress(group);
-        return;
       }
-      onTokenPress(data);
-    }, [data, group, onGroupPress, onTokenPress, row]);
+    }, [group, onGroupPress]);
 
     if (!data) {
       return <MemoizedItemLoader />;
@@ -165,6 +201,46 @@ const TokenResourceRow = React.memo(
         hideChainLogo={hideChainLogo}
         account={account}
         scene="portfolio"
+      />
+    );
+  },
+);
+
+const TokenResourceRow = React.memo(
+  ({
+    row,
+    tokenDisplayMode,
+    getAccountByAddress,
+    onTokenPress,
+    onGroupPress,
+    style,
+    hideChainLogo,
+  }: TokenResourceRowCommonProps & {
+    row: TokenAssetsIndexRow;
+    onTokenPress(token: ITokenItem): void;
+    onGroupPress(group: TokenGroupResourceValue): void;
+  }) => {
+    if (row.type === 'group') {
+      return (
+        <TokenGroupResourceRow
+          groupId={row.groupId}
+          tokenDisplayMode={tokenDisplayMode}
+          getAccountByAddress={getAccountByAddress}
+          onGroupPress={onGroupPress}
+          style={style}
+          hideChainLogo={hideChainLogo}
+        />
+      );
+    }
+
+    return (
+      <TokenEntityResourceRow
+        tokenId={row.tokenId}
+        tokenDisplayMode={tokenDisplayMode}
+        getAccountByAddress={getAccountByAddress}
+        onTokenPress={onTokenPress}
+        style={style}
+        hideChainLogo={hideChainLogo}
       />
     );
   },
@@ -243,11 +319,14 @@ export const TokenList = () => {
     typeof createGlobalBottomSheetModal2024
   > | null>(null);
 
-  const tokenDisplayMode = useActivityStore(
+  const { tokenDisplayMode, isLoading } = useActivityStore(
     useTokenList,
-    state => state.tokenDisplayMode,
+    useShallow(state => ({
+      tokenDisplayMode: state.tokenDisplayMode,
+      isLoading: state.isLoading,
+    })),
     Object.is,
-    { storeLabel: 'home-multi-assets-token-preferences' },
+    { storeLabel: 'home-multi-assets-token-runtime' },
   );
 
   const getAccountByAddress = useFindAccountByAddress(myTop10Accounts);
@@ -384,12 +463,6 @@ export const TokenList = () => {
     [additionalCoreUsdValue],
   );
 
-  const isLoading = useActivityStore(
-    useTokenList,
-    state => state.isLoading,
-    Object.is,
-    { storeLabel: 'home-multi-assets-token-loading' },
-  );
   // LP availability only controls the additional-token selector. Until the
   // currently selected segments contain rows, the list still has no visible
   // data and must remain in its loading/empty state.

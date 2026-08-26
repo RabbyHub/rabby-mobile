@@ -69,6 +69,29 @@ describe('user-visible JS work scheduling', () => {
     expect(callback).not.toHaveBeenCalled();
   });
 
+  it('resolves promise waiters after visible work and the quiet window', async () => {
+    const activity = loadModule();
+    const release = activity.beginUserVisibleJsWork('token-load');
+    const resolved = jest.fn();
+
+    void activity
+      .waitForUserVisibleJsWorkToSettle({ quietMs: 100 })
+      .then(resolved);
+
+    jest.advanceTimersByTime(500);
+    await Promise.resolve();
+    expect(resolved).not.toHaveBeenCalled();
+
+    release();
+    jest.advanceTimersByTime(99);
+    await Promise.resolve();
+    expect(resolved).not.toHaveBeenCalled();
+
+    jest.advanceTimersByTime(1);
+    await Promise.resolve();
+    expect(resolved).toHaveBeenCalledTimes(1);
+  });
+
   it('publishes active work snapshots and stops after unsubscribe', () => {
     const activity = loadModule();
     const listener = jest.fn();

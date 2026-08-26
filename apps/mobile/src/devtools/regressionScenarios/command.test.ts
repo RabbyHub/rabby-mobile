@@ -29,7 +29,7 @@ describe('regression scenario command', () => {
 
   it('parses the non-production high-cardinality fixture scenario', () => {
     const result = parseRegressionScenarioCommand(
-      `${BASE_URL}&scenario=high-cardinality-assets&action=start&runId=high-cardinality-run&fixture=watch-addresses-a&addressCount=50`,
+      `${BASE_URL}&scenario=high-cardinality-assets&action=start&runId=high-cardinality-run&fixture=watch-addresses-a&addressCount=50&configureSelection=true`,
     );
 
     expect(result).toEqual({
@@ -39,6 +39,7 @@ describe('regression scenario command', () => {
         fixture: 'watch-addresses-a',
         params: {
           addressCount: '50',
+          configureSelection: 'true',
         },
       }),
     });

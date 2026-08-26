@@ -1,12 +1,13 @@
-type CooperativeWorkClock = {
+export type CooperativeWorkClock = {
   now: () => number;
   yieldToHost: () => Promise<void>;
 };
 
-type MapWithJsBudgetOptions = {
+export type MapWithJsBudgetOptions = {
   budgetMs?: number;
   minimumItemsPerSlice?: number;
   shouldContinue?: () => boolean;
+  onYield?: (sliceDurationMs: number) => void;
   clock?: CooperativeWorkClock;
 };
 
@@ -34,14 +35,15 @@ export async function forEachWithJsBudget<TInput>(
 
     visitItem(input[index]!, index);
     const completedInSlice = (index + 1) % minimumItemsPerSlice;
-    if (
-      completedInSlice !== 0 ||
-      index === input.length - 1 ||
-      clock.now() - sliceStartedAt < budgetMs
-    ) {
+    if (completedInSlice !== 0 || index === input.length - 1) {
+      continue;
+    }
+    const sliceDurationMs = clock.now() - sliceStartedAt;
+    if (sliceDurationMs < budgetMs) {
       continue;
     }
 
+    options.onYield?.(sliceDurationMs);
     await clock.yieldToHost();
     if (options.shouldContinue && !options.shouldContinue()) {
       return false;
@@ -74,14 +76,15 @@ export async function mapWithJsBudget<TInput, TOutput>(
 
     output[index] = mapItem(input[index]!, index);
     const completedInSlice = (index + 1) % minimumItemsPerSlice;
-    if (
-      completedInSlice !== 0 ||
-      index === input.length - 1 ||
-      clock.now() - sliceStartedAt < budgetMs
-    ) {
+    if (completedInSlice !== 0 || index === input.length - 1) {
+      continue;
+    }
+    const sliceDurationMs = clock.now() - sliceStartedAt;
+    if (sliceDurationMs < budgetMs) {
       continue;
     }
 
+    options.onYield?.(sliceDurationMs);
     await clock.yieldToHost();
     if (options.shouldContinue && !options.shouldContinue()) {
       return null;

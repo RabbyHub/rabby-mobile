@@ -14,9 +14,11 @@ import { TokenItemEntity } from './entities/tokenitem';
 import { TOKEN_PROJECTION_RESOURCE_ID_INDEX_NAME } from './tokenProjectionResourceId';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from './constant';
 import { ReplaceTokenCacheTable1786867200000 } from './migrations/20260816';
+import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 
 const OWNER = '0xAbCd';
 const OTHER_OWNER = '0xDeF0';
+const MISSING_OWNER = '0x0000000000000000000000000000000000000000';
 
 const tokenResourceId = (owner: string, chain: string, id: string) =>
   `${owner.toLowerCase()}:${chain.toLowerCase()}:${id.toLowerCase()}`;
@@ -220,6 +222,69 @@ describe('asset projection resource lookups', () => {
         owner_addr: OWNER,
       }),
     ]);
+  });
+
+  it('resolves Token and DeFi expiration for multiple owners in one query shape', async () => {
+    dataSource = await createMemoryAppDataSource();
+    const now = Date.now();
+
+    const freshToken = new TokenItemEntity();
+    TokenItemEntity.fillEntity(
+      freshToken,
+      OWNER.toLowerCase(),
+      createToken('fresh-token'),
+    );
+    freshToken._local_updated_at = now;
+    const staleToken = new TokenItemEntity();
+    TokenItemEntity.fillEntity(
+      staleToken,
+      OTHER_OWNER.toLowerCase(),
+      createToken('stale-token'),
+    );
+    staleToken._local_updated_at = now - ASSET_EXPIRED_TIME - 1;
+
+    const freshProtocol = new ProtocolItemEntity();
+    ProtocolItemEntity.fillEntity(
+      freshProtocol,
+      OWNER.toLowerCase(),
+      createProtocol('fresh-protocol'),
+    );
+    freshProtocol._local_updated_at = now;
+    const staleProtocol = new ProtocolItemEntity();
+    ProtocolItemEntity.fillEntity(
+      staleProtocol,
+      OTHER_OWNER.toLowerCase(),
+      createProtocol('stale-protocol'),
+    );
+    staleProtocol._local_updated_at = now - ASSET_EXPIRED_TIME - 1;
+
+    await dataSource
+      .getRepository(TokenItemEntity)
+      .save([freshToken, staleToken]);
+    await dataSource
+      .getRepository(ProtocolItemEntity)
+      .save([freshProtocol, staleProtocol]);
+
+    expect(
+      await TokenItemEntity.getExpirationByOwners(
+        [OWNER, OTHER_OWNER, MISSING_OWNER, OWNER.toLowerCase()],
+        dataSource,
+      ),
+    ).toEqual({
+      [OWNER.toLowerCase()]: false,
+      [OTHER_OWNER.toLowerCase()]: true,
+      [MISSING_OWNER]: true,
+    });
+    expect(
+      await ProtocolItemEntity.getExpirationByOwners(
+        [OWNER, OTHER_OWNER, MISSING_OWNER],
+        dataSource,
+      ),
+    ).toEqual({
+      [OWNER.toLowerCase()]: false,
+      [OTHER_OWNER.toLowerCase()]: true,
+      [MISSING_OWNER]: true,
+    });
   });
 
   it('deduplicates resource keys and leaves unrelated cache rows untouched', async () => {

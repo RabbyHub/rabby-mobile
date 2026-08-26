@@ -34,6 +34,8 @@ import {
 import {
   getHomeAssetSelectionSettings,
   isHomeAssetSelectionExperimentEnabled,
+  setHomeAssetTopN,
+  setIncludeWatchAddressesInHomeAssetSelection,
 } from '@/hooks/appSettings';
 import { ensureAccountBalanceSelectionLifecycle } from '@/store/balanceAccountSelection';
 import { HOME_ASSET_TOP_N_OPTIONS } from '@/constant/homeAssetSelection';
@@ -744,6 +746,7 @@ async function openHomeAssets(
     >;
   },
 ) {
+  options?.performanceProbe?.markPhase('home-reset-to-overview');
   resetToHome();
   await context.waitForRoute(RootNames.Home);
   // The production pull-down handler is intentionally available only on the
@@ -790,11 +793,47 @@ async function openHomeAssets(
 
     if (options?.triggerManualRefresh) {
       options.performanceProbe?.markPhase('home-manual-refresh-handler');
+      const manualRefreshStartedAt = Date.now();
       const timing = await runRegressionScenarioComponentAction(
         context.command.runId,
         'home.manual-pulldown-refresh',
         10_000,
       );
+      const manualRefreshSettledAt = Date.now();
+      const manualRefreshRecords =
+        getAssetDataLoadDiagnosticsSnapshot().records.filter(
+          record =>
+            record.id > assetDataLoadCursor &&
+            record.domain === 'home-manual-refresh' &&
+            record.timestamp >= manualRefreshStartedAt &&
+            record.timestamp <= manualRefreshSettledAt,
+        );
+      const tokenDispatch = manualRefreshRecords.find(
+        record => record.phase === 'token-refresh-dispatched',
+      );
+      const protocolDispatch = manualRefreshRecords.find(
+        record => record.phase === 'protocol-refresh-dispatched',
+      );
+      const visibleAssetsDispatched = !!tokenDispatch && !!protocolDispatch;
+      context.report('assertion', {
+        assertion: 'home-visible-assets-dispatched-during-refresh-handler',
+        passed: visibleAssetsDispatched,
+        dispatchElapsedMs: protocolDispatch
+          ? protocolDispatch.timestamp - manualRefreshStartedAt
+          : null,
+        tokenDispatchElapsedMs: tokenDispatch
+          ? tokenDispatch.timestamp - manualRefreshStartedAt
+          : null,
+        protocolDispatchElapsedMs: protocolDispatch
+          ? protocolDispatch.timestamp - manualRefreshStartedAt
+          : null,
+        handlerMs: timing.handlerMs,
+      });
+      if (!visibleAssetsDispatched) {
+        throw new Error(
+          'Home Token and DeFi refreshes were not both dispatched before the manual refresh handler settled',
+        );
+      }
       options.performanceProbe?.recordAction(
         'home.manual-pulldown-refresh',
         timing,
@@ -1036,6 +1075,19 @@ async function openHighCardinalityAssets(
   });
   context.report('fixture-removed');
 
+  const configureSelection = parseScenarioBoolean(
+    context.command.params.configureSelection,
+  );
+  if (configureSelection) {
+    setHomeAssetTopN(requestedAddressCount);
+    setIncludeWatchAddressesInHomeAssetSelection(true);
+    context.report('action-completed', {
+      action: 'configure-home-asset-selection',
+      homeAssetTopN: requestedAddressCount,
+      includeWatchAddresses: true,
+    });
+  }
+
   const requestedSettings = getHomeAssetSelectionSettings();
   if (!requestedSettings.includeWatchAddresses) {
     throw new Error(
@@ -1118,6 +1170,39 @@ async function runHighCardinalityAssetsProbe(
       ? 120_000
       : 60_000;
   const probe = createRegressionScenarioPerformanceProbe();
+  const profileWholeProbe =
+    context.command.params.profileScope?.toLowerCase() === 'probe';
+  const fullProbeProfile = profileWholeProbe
+    ? await startMainRuntimeProfile(context, {
+        label: 'high-cardinality-assets-probe',
+        observeMs: 10_000,
+        filePrefix: 'rabby-high-cardinality-assets-main',
+      })
+    : null;
+  let didFinalizeFullProbeProfile = false;
+  const finalizeFullProbeProfile = async () => {
+    if (!fullProbeProfile || didFinalizeFullProbeProfile) {
+      return;
+    }
+
+    didFinalizeFullProbeProfile = true;
+    const profileResult = await fullProbeProfile.session.stop();
+    fullProbeProfile.restoreWorker();
+    context.report('perf-mark', {
+      label: 'high-cardinality-assets-probe',
+      mark: 'main-runtime-profile-saved',
+      durationMs: profileResult.durationMs,
+      profilePath: profileResult.profilePath || '',
+      androidProfilePath: profileResult.androidProfilePath || '',
+      error: profileResult.error || '',
+    });
+    if (!profileResult.profilePath) {
+      throw new Error(
+        profileResult.error ||
+          'High-cardinality assets Hermes profile was not saved',
+      );
+    }
+  };
   try {
     const visualReadyStartedAt = Date.now();
     await openHomeAssets(context, {
@@ -1132,7 +1217,7 @@ async function runHighCardinalityAssetsProbe(
             }
           : undefined,
       assetDataLoadStartTimeoutMs,
-      profileTabIndex: 1,
+      profileTabIndex: profileWholeProbe ? undefined : 1,
       performanceProbe: probe,
     });
     probe.markPhase('home-wait-defi-renderable');
@@ -1145,6 +1230,7 @@ async function runHighCardinalityAssetsProbe(
       'home.defi-renderable',
       Date.now() - visualReadyStartedAt,
     );
+    await finalizeFullProbeProfile();
 
     if (
       parseScenarioBoolean(
@@ -1231,6 +1317,7 @@ async function runHighCardinalityAssetsProbe(
       );
     }
   } finally {
+    await finalizeFullProbeProfile();
     probe.markPhase('complete');
     context.report('perf-mark', {
       mark: 'high-cardinality-assets-performance-summary',

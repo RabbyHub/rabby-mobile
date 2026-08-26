@@ -122,3 +122,10 @@ export const runAfterUserVisibleJsWorkSettles = (
     waiters.delete(waiter.id);
   };
 };
+
+export const waitForUserVisibleJsWorkToSettle = (
+  options: { quietMs?: number } = {},
+) =>
+  new Promise<void>(resolve => {
+    runAfterUserVisibleJsWorkSettles(resolve, options);
+  });

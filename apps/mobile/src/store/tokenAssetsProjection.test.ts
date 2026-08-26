@@ -19,6 +19,9 @@ jest.mock('@/databases/entities/tokenitem', () => ({
     batchMultiAddressTokens: jest.fn(async () => []),
     batchMultiAddressTokensByResourceIds: jest.fn(async () => []),
     batchQueryNoCoreTokens: jest.fn(async () => []),
+    getExpirationByOwners: jest.fn(async (addresses: string[]) =>
+      Object.fromEntries(addresses.map(address => [address, true])),
+    ),
     isExpired: jest.fn(async () => true),
   },
 }));
@@ -744,7 +747,9 @@ describe('single-address token assets projection', () => {
   it('uses a fresh Home projection without hydrating the full token map', async () => {
     const visibleToken = createToken('visible-token', { usd_value: 20 });
     const visibleTokenId = buildTokenEntityId(visibleToken);
-    mockedTokenItemEntity.isExpired.mockResolvedValue(false);
+    mockedTokenItemEntity.getExpirationByOwners.mockResolvedValueOnce({
+      [NORMALIZED_ADDRESS]: false,
+    });
     mockedRestoreAssetProjection.mockResolvedValueOnce({
       rows: [{ type: 'token', id: visibleTokenId }],
       groups: [],
@@ -816,7 +821,9 @@ describe('single-address token assets projection', () => {
 
   it('falls back to full local hydration when the Home projection is missing', async () => {
     const cached = createToken('cached', { usd_value: 20 });
-    mockedTokenItemEntity.isExpired.mockResolvedValue(false);
+    mockedTokenItemEntity.getExpirationByOwners.mockResolvedValueOnce({
+      [NORMALIZED_ADDRESS]: false,
+    });
     mockedTokenItemEntity.batchMultiAddressTokens.mockResolvedValueOnce([
       cached,
     ] as never);

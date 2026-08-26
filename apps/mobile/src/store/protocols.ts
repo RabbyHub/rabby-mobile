@@ -714,14 +714,8 @@ const isDataExpired = async (address: string) => {
   return isExpired;
 };
 
-const getDataExpirationByAddress = async (addresses: string[]) =>
-  Object.fromEntries(
-    await Promise.all(
-      addresses.map(
-        async address => [address, await isDataExpired(address)] as const,
-      ),
-    ),
-  ) as Record<string, boolean>;
+const getDataExpirationByAddress = (addresses: string[]) =>
+  ProtocolItemEntity.getExpirationByOwners(addresses);
 
 const buildAppChainProtocolMap = async (
   addresses: string[],

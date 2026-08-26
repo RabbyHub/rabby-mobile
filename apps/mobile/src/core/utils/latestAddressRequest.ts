@@ -82,6 +82,22 @@ export class LatestAddressRequest {
     );
   }
 
+  createCurrentGuard(
+    ticket: LatestAddressRequestTicket,
+    addresses: string[] = Array.from(ticket.revisionByAddress.keys()),
+  ) {
+    const revisions = normalizeAddresses(addresses).map(address => ({
+      key: this.getKey(address, ticket.source),
+      revision: ticket.revisionByAddress.get(address),
+    }));
+
+    return () =>
+      revisions.every(
+        ({ key, revision }) =>
+          revision !== undefined && this.revisionByKey.get(key) === revision,
+      );
+  }
+
   getCurrentAddresses(ticket: LatestAddressRequestTicket) {
     return Array.from(ticket.revisionByAddress.keys()).filter(address =>
       this.isCurrent(ticket, address),

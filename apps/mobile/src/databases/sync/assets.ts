@@ -13,11 +13,7 @@ import type {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { SwapTradeList } from '@rabby-wallet/rabby-api/dist/types';
 import { ProtocolItemEntity } from '../entities/portocolItem';
-import {
-  EMPTY_NFT_ITEM,
-  EMPTY_PROTOCOL_ITEM,
-  EMPTY_TOKEN_ITEM,
-} from '@/constant/assets';
+import { EMPTY_NFT_ITEM, EMPTY_PROTOCOL_ITEM } from '@/constant/assets';
 import { BalanceEntity } from '../entities/balance';
 import { batchSaveWithPQueueAndTransaction, BeforeEmitFn } from './_task';
 import { appOrmEvents } from './_event';
@@ -42,6 +38,7 @@ import {
   makeSyncAbortError,
   registerSyncAbortHandler,
 } from './abort';
+import { buildTokenEntitiesCooperatively } from './tokenEntityBuild';
 
 export { patchSingleToken } from './token';
 
@@ -169,6 +166,9 @@ async function flushPendingBalanceSyncs() {
         waitTaskDoneReturn: true,
         noNeedAbort: true,
         skipEmit: true,
+        // The remote balance is already authoritative in memory. Persisting
+        // its cache must yield to projection publication and visible rendering.
+        priority: 'normal',
       },
     );
 
@@ -220,37 +220,6 @@ async function prepareAppDataSourceWithDiag(
     entityName,
     durationMs: Date.now() - startedAt,
   });
-}
-
-function normalizeTokenInput(_tokens: TokenItem[] | ITokenItem[]) {
-  const data = [..._tokens];
-  if (data.length === 0) {
-    data.push(EMPTY_TOKEN_ITEM);
-  }
-
-  return data.sort((a, b) =>
-    b.is_core === a.is_core ? 0 : b.is_core ? 1 : -1,
-  );
-}
-
-function buildTokenEntities(
-  address: string,
-  _tokens: TokenItem[] | ITokenItem[],
-  syncTimestamp: number,
-) {
-  const tokens = normalizeTokenInput(_tokens);
-  const tokenItems = tokens.map(raw => {
-    const tokenItem = new TokenItemEntity();
-    TokenItemEntity.fillEntity(tokenItem, address, raw);
-    tokenItem._local_updated_at = syncTimestamp;
-
-    return tokenItem;
-  });
-
-  return {
-    tokens,
-    tokenItems,
-  };
 }
 
 function emitTokenSyncResult(
@@ -330,17 +299,35 @@ async function persistPendingTokenSyncs(
     syncTimestamp = Date.now();
     const entityBuildStartedAt = Date.now();
     let rawCount = 0;
+    let entityBuildYieldCount = 0;
+    let entityBuildYieldedWorkMs = 0;
+    let entityBuildMaxSliceMs = 0;
 
-    pendingEntries.forEach(([address, item]) => {
-      const { tokens, tokenItems } = buildTokenEntities(
+    for (const [address, item] of pendingEntries) {
+      const result = await buildTokenEntitiesCooperatively(
         address,
         item.tokens,
         syncTimestamp,
+        {
+          shouldContinue: () => !isSyncAbortVersionStale(abortVersion),
+          onYield: sliceDurationMs => {
+            entityBuildYieldCount += 1;
+            entityBuildYieldedWorkMs += sliceDurationMs;
+            entityBuildMaxSliceMs = Math.max(
+              entityBuildMaxSliceMs,
+              sliceDurationMs,
+            );
+          },
+        },
       );
+      if (!result) {
+        return;
+      }
+      const { tokens, tokenItems } = result;
       rawCount += tokens.length;
       tokenItemsByAddress.set(address, tokenItems);
       allTokenItems.push(...tokenItems);
-    });
+    }
 
     traceEntityBuild(
       'token',
@@ -349,6 +336,15 @@ async function persistPendingTokenSyncs(
       rawCount,
       allTokenItems.length,
     );
+    traceStartupDiagnostic('db', 'entity_build_schedule', {
+      taskFor: 'token',
+      entityName: TokenItemEntity.name,
+      entityCount: allTokenItems.length,
+      strategy: 'cooperative',
+      yieldCount: entityBuildYieldCount,
+      yieldedWorkMs: entityBuildYieldedWorkMs,
+      maxSliceMs: entityBuildMaxSliceMs,
+    });
 
     if (isSyncAbortVersionStale(abortVersion)) {
       return;
@@ -672,6 +668,7 @@ export async function syncRemoteHistory(
       concurrency: 1,
       delayBetweenTasks: 1.5 * 1e3,
       noNeedAbort: true,
+      waitTaskDoneReturn: true,
       beforeEmit: ctx => {
         if (ctx.taskFor === 'all-history') {
           setTimeout(() => {

@@ -39,10 +39,7 @@ import {
   EMPTY_HOME_CURVE_LIST,
   getHomeCurveProjectionList,
   isHomeProjectionWaitingForValue,
-  useHome24hProjection,
-  useHomeAccountProjection,
-  useHomeBalanceProjection,
-  useHomeCurveProjection,
+  useHomePortfolioProjection,
 } from '@/store/homePortfolio';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -156,29 +153,26 @@ export const MultiChart = memo(function MultiChart({
   onPressWalletList?: () => void;
 } & RNViewProps) {
   const { styles } = useTheme2024({ getStyle });
-  const { curveAvailability, curveList } = useHomeCurveProjection(
+  const {
+    curveAvailability,
+    curveList,
+    matteredAccountLength,
+    isPendingMatteredAccountLength,
+    balanceAvailability,
+    totalBalance,
+    changeAvailability,
+    changeData,
+  } = useHomePortfolioProjection(
     useShallow(state => ({
-      curveAvailability: state.availability,
-      curveList: getHomeCurveProjectionList(state),
-    })),
-  );
-  const { matteredAccountLength, isPendingMatteredAccountLength } =
-    useHomeAccountProjection(
-      useShallow(state => ({
-        matteredAccountLength: state.matteredAccountLength,
-        isPendingMatteredAccountLength: state.isPendingMatteredAccountLength,
-      })),
-    );
-  const { balanceAvailability, totalBalance } = useHomeBalanceProjection(
-    useShallow(state => ({
-      balanceAvailability: state.availability,
-      totalBalance: state.value?.totalBalance || 0,
-    })),
-  );
-  const { changeAvailability, changeData } = useHome24hProjection(
-    useShallow(state => ({
-      changeAvailability: state.availability,
-      changeData: state.value || EMPTY_CHANGE_DATA,
+      curveAvailability: state.curve.availability,
+      curveList: getHomeCurveProjectionList(state.curve),
+      matteredAccountLength: state.account.matteredAccountLength,
+      isPendingMatteredAccountLength:
+        state.account.isPendingMatteredAccountLength,
+      balanceAvailability: state.balance.availability,
+      totalBalance: state.balance.value?.totalBalance || 0,
+      changeAvailability: state.change24h.availability,
+      changeData: state.change24h.value || EMPTY_CHANGE_DATA,
     })),
   );
   const startupReady = useHomeStartupReady();

@@ -32,6 +32,7 @@ import {
 } from '../tokenProjectionResourceId';
 
 const PROJECTION_RESOURCE_QUERY_BATCH_SIZE = 200;
+const EXPIRATION_OWNER_QUERY_BATCH_SIZE = 200;
 
 const RawAmountTransformer = {
   to: (val: any) => columnConverter.numberToString(val),
@@ -685,21 +686,57 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     );
   }
 
-  static async isExpired(owner_addr: string) {
-    await prepareAppDataSource();
-
-    const repo = this.getRepository();
-    const result = await repo
-      .createQueryBuilder('tokenitem')
-      .select('MIN(tokenitem._local_updated_at)', 'minUpdatedAt')
-      .where('tokenitem.owner_addr = :owner_addr', { owner_addr })
-      .getRawOne();
-
-    if (!result.minUpdatedAt) {
-      return true;
+  static async getExpirationByOwners(
+    ownerAddresses: string[],
+    dataSource?: DataSource,
+  ) {
+    const normalizedOwners = Array.from(
+      new Set(ownerAddresses.map(owner => owner.toLowerCase())),
+    );
+    const expirationByOwner: Record<string, boolean> = Object.fromEntries(
+      normalizedOwners.map(owner => [owner, true]),
+    );
+    if (!normalizedOwners.length) {
+      return expirationByOwner;
     }
-    const firstUpdateTime = parseInt(result.minUpdatedAt, 10);
-    return Date.now() - firstUpdateTime > ASSET_EXPIRED_TIME;
+
+    const repo = dataSource
+      ? dataSource.getRepository(TokenItemEntity)
+      : (await prepareAppDataSource(), this.getRepository());
+    const now = Date.now();
+    for (
+      let start = 0;
+      start < normalizedOwners.length;
+      start += EXPIRATION_OWNER_QUERY_BATCH_SIZE
+    ) {
+      const owners = normalizedOwners.slice(
+        start,
+        start + EXPIRATION_OWNER_QUERY_BATCH_SIZE,
+      );
+      const rows = await repo
+        .createQueryBuilder('tokenitem')
+        .select('tokenitem.owner_addr', 'ownerAddr')
+        .addSelect('MIN(tokenitem._local_updated_at)', 'minUpdatedAt')
+        .where('tokenitem.owner_addr IN (:...owners)', { owners })
+        .groupBy('tokenitem.owner_addr')
+        .getRawMany<{ ownerAddr: string; minUpdatedAt: string | number }>();
+
+      rows.forEach(row => {
+        const owner = row.ownerAddr.toLowerCase();
+        const firstUpdateTime = Number(row.minUpdatedAt);
+        expirationByOwner[owner] =
+          !Number.isFinite(firstUpdateTime) ||
+          now - firstUpdateTime > ASSET_EXPIRED_TIME;
+      });
+    }
+
+    return expirationByOwner;
+  }
+
+  static async isExpired(owner_addr: string) {
+    const owner = owner_addr.toLowerCase();
+    const expirationByOwner = await this.getExpirationByOwners([owner]);
+    return expirationByOwner[owner];
   }
 
   static async willExpired(owner_addr: string, offest?: number) {

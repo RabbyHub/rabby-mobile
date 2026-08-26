@@ -15,8 +15,20 @@ export const ASSET_PROJECTION_GENERATIONS_TO_KEEP = 3;
 
 // Projection rows have six persisted columns. Keep one insert below SQLite's
 // conservative 999-variable limit while preserving one transaction per generation.
-const ASSET_PROJECTION_INSERT_BATCH_SIZE = 100;
+export const ASSET_PROJECTION_INSERT_BATCH_SIZE = 100;
 const ASSET_PROJECTION_GROUP_QUERY_BATCH_SIZE = 200;
+
+export type AssetProjectionPersistMetrics = {
+  itemBatchCount: number;
+  itemBuildMs: number;
+  itemInsertMs: number;
+  groupItemCount: number;
+  groupBatchCount: number;
+  groupBuildMs: number;
+  groupInsertMs: number;
+  maxBatchBuildMs: number;
+  maxBatchInsertMs: number;
+};
 
 export type AssetProjectionRow = {
   type: AssetProjectionRowType;
@@ -81,6 +93,15 @@ type RestoreAssetProjectionOptions = {
   ruleVersion?: number;
   kind?: AssetProjectionKind;
   scene?: AssetProjectionScene;
+  onPhase?: (
+    phase:
+      | 'snapshot-candidates-read'
+      | 'integrity-counted'
+      | 'metadata-read'
+      | 'rows-read',
+    durationMs: number,
+    details?: Record<string, number>,
+  ) => void;
   selectRowRanges?: (
     snapshot: AssetProjectionSnapshotInfo,
   ) => AssetProjectionRowRange[] | null | undefined;
@@ -123,19 +144,42 @@ const parseMetadata = (metadataJson: string) => {
   }
 };
 
-const insertInBatches = async <T>(
-  values: readonly T[],
+const createEmptyPersistMetrics = (): AssetProjectionPersistMetrics => ({
+  itemBatchCount: 0,
+  itemBuildMs: 0,
+  itemInsertMs: 0,
+  groupItemCount: 0,
+  groupBatchCount: 0,
+  groupBuildMs: 0,
+  groupInsertMs: 0,
+  maxBatchBuildMs: 0,
+  maxBatchInsertMs: 0,
+});
+
+const recordProjectionBatch = async <T>(
+  buildBatch: () => T[],
   insert: (batch: T[]) => Promise<unknown>,
+  metrics: AssetProjectionPersistMetrics,
+  kind: 'item' | 'group',
 ) => {
-  for (
-    let start = 0;
-    start < values.length;
-    start += ASSET_PROJECTION_INSERT_BATCH_SIZE
-  ) {
-    await insert(
-      values.slice(start, start + ASSET_PROJECTION_INSERT_BATCH_SIZE),
-    );
+  const buildStartedAt = Date.now();
+  const batch = buildBatch();
+  const buildMs = Date.now() - buildStartedAt;
+  const insertStartedAt = Date.now();
+  await insert(batch);
+  const insertMs = Date.now() - insertStartedAt;
+
+  if (kind === 'item') {
+    metrics.itemBatchCount += 1;
+    metrics.itemBuildMs += buildMs;
+    metrics.itemInsertMs += insertMs;
+  } else {
+    metrics.groupBatchCount += 1;
+    metrics.groupBuildMs += buildMs;
+    metrics.groupInsertMs += insertMs;
   }
+  metrics.maxBatchBuildMs = Math.max(metrics.maxBatchBuildMs, buildMs);
+  metrics.maxBatchInsertMs = Math.max(metrics.maxBatchInsertMs, insertMs);
 };
 
 const normalizeRowRanges = (
@@ -318,47 +362,89 @@ export async function persistAssetProjection(
       })
       .getRawOne<{ maxGeneration?: number | string | null }>();
     const generation = Number(rawGeneration?.maxGeneration || 0) + 1;
+    const metrics = createEmptyPersistMetrics();
 
-    const items = input.rows.map((row, position) =>
-      itemRepository.create({
-        _db_id: AssetProjectionItemEntity.buildDbId(
-          input.projectionKey,
-          generation,
-          position,
-        ),
-        projection_key: input.projectionKey,
-        generation,
-        position,
-        row_type: row.type,
-        row_id: row.id,
-      }),
-    );
-    if (items.length) {
-      await insertInBatches(items, batch => itemRepository.insert(batch));
-    }
-
-    const groupItems = (input.groups || []).flatMap(group =>
-      group.memberIds.map((memberId, position) =>
-        groupItemRepository.create({
-          _db_id: AssetProjectionGroupItemEntity.buildDbId(
-            input.projectionKey,
-            generation,
-            group.id,
-            position,
-          ),
-          projection_key: input.projectionKey,
-          generation,
-          group_id: group.id,
-          position,
-          member_id: memberId,
-        }),
-      ),
-    );
-    if (groupItems.length) {
-      await insertInBatches(groupItems, batch =>
-        groupItemRepository.insert(batch),
+    for (
+      let start = 0;
+      start < input.rows.length;
+      start += ASSET_PROJECTION_INSERT_BATCH_SIZE
+    ) {
+      const end = Math.min(
+        start + ASSET_PROJECTION_INSERT_BATCH_SIZE,
+        input.rows.length,
+      );
+      await recordProjectionBatch(
+        () => {
+          const batch = new Array<AssetProjectionItemEntity>(end - start);
+          for (let position = start; position < end; position += 1) {
+            const row = input.rows[position]!;
+            batch[position - start] = itemRepository.create({
+              _db_id: AssetProjectionItemEntity.buildDbId(
+                input.projectionKey,
+                generation,
+                position,
+              ),
+              projection_key: input.projectionKey,
+              generation,
+              position,
+              row_type: row.type,
+              row_id: row.id,
+            });
+          }
+          return batch;
+        },
+        batch => itemRepository.insert(batch),
+        metrics,
+        'item',
       );
     }
+
+    const groupBatch: Array<{
+      groupId: string;
+      position: number;
+      memberId: string;
+    }> = [];
+    const flushGroupBatch = async () => {
+      if (!groupBatch.length) {
+        return;
+      }
+      const pendingBatch = groupBatch.splice(0, groupBatch.length);
+      await recordProjectionBatch(
+        () =>
+          pendingBatch.map(item =>
+            groupItemRepository.create({
+              _db_id: AssetProjectionGroupItemEntity.buildDbId(
+                input.projectionKey,
+                generation,
+                item.groupId,
+                item.position,
+              ),
+              projection_key: input.projectionKey,
+              generation,
+              group_id: item.groupId,
+              position: item.position,
+              member_id: item.memberId,
+            }),
+          ),
+        batch => groupItemRepository.insert(batch),
+        metrics,
+        'group',
+      );
+    };
+    for (const group of input.groups || []) {
+      for (let position = 0; position < group.memberIds.length; position += 1) {
+        groupBatch.push({
+          groupId: group.id,
+          position,
+          memberId: group.memberIds[position]!,
+        });
+        metrics.groupItemCount += 1;
+        if (groupBatch.length === ASSET_PROJECTION_INSERT_BATCH_SIZE) {
+          await flushGroupBatch();
+        }
+      }
+    }
+    await flushGroupBatch();
 
     // Keep serialization inside the transaction: a malformed metadata value
     // must roll back item rows rather than leave an unpublished generation.
@@ -375,14 +461,14 @@ export async function persistAssetProjection(
         projection_kind: input.kind,
         scene: input.scene,
         rule_version: ruleVersion,
-        item_count: items.length,
-        group_item_count: groupItems.length,
+        item_count: input.rows.length,
+        group_item_count: metrics.groupItemCount,
         metadata_json: metadataJson,
         committed_at: committedAt,
       }),
     );
 
-    return { generation, committedAt };
+    return { generation, committedAt, metrics };
   });
 }
 
@@ -396,22 +482,55 @@ export async function restoreLatestAssetProjection(
   const snapshotRepository = source.getRepository(
     AssetProjectionSnapshotEntity,
   );
-  const snapshots = await snapshotRepository.find({
-    where: {
-      projection_key: projectionKey,
-      rule_version: ruleVersion,
-      ...(options.kind ? { projection_kind: options.kind } : {}),
-      ...(options.scene ? { scene: options.scene } : {}),
-    },
-    order: { generation: 'DESC' },
-    take: ASSET_PROJECTION_GENERATIONS_TO_KEEP,
-  });
+  const candidateReadStartedAt = Date.now();
+  const candidateQuery = snapshotRepository
+    .createQueryBuilder('snapshot')
+    .select([
+      'snapshot._db_id',
+      'snapshot.projection_key',
+      'snapshot.generation',
+      'snapshot.projection_kind',
+      'snapshot.scene',
+      'snapshot.rule_version',
+      'snapshot.item_count',
+      'snapshot.group_item_count',
+      'snapshot.committed_at',
+    ])
+    .where('snapshot.projection_key = :projectionKey', { projectionKey })
+    .andWhere('snapshot.rule_version = :ruleVersion', { ruleVersion })
+    .orderBy('snapshot.generation', 'DESC')
+    .take(ASSET_PROJECTION_GENERATIONS_TO_KEEP);
+  if (options.kind) {
+    candidateQuery.andWhere('snapshot.projection_kind = :kind', {
+      kind: options.kind,
+    });
+  }
+  if (options.scene) {
+    candidateQuery.andWhere('snapshot.scene = :scene', {
+      scene: options.scene,
+    });
+  }
+  const candidates = await candidateQuery.getMany();
+  options.onPhase?.(
+    'snapshot-candidates-read',
+    Date.now() - candidateReadStartedAt,
+  );
 
-  for (const snapshot of snapshots) {
+  for (const snapshot of candidates) {
+    const integrityCountStartedAt = Date.now();
     const counts = await countProjectionRows(
       source,
       projectionKey,
       snapshot.generation,
+    );
+    options.onPhase?.(
+      'integrity-counted',
+      Date.now() - integrityCountStartedAt,
+      {
+        generation: snapshot.generation,
+        itemCount: counts.itemCount,
+        groupItemCount: counts.groupItemCount,
+      },
     );
     if (
       counts.itemCount !== snapshot.item_count ||
@@ -420,7 +539,18 @@ export async function restoreLatestAssetProjection(
       continue;
     }
 
-    const metadata = parseMetadata(snapshot.metadata_json);
+    const metadataReadStartedAt = Date.now();
+    const metadataRow = await snapshotRepository
+      .createQueryBuilder('snapshot')
+      .select('snapshot.metadata_json', 'metadataJson')
+      .where('snapshot._db_id = :dbId', { dbId: snapshot._db_id })
+      .getRawOne<{ metadataJson?: string }>();
+    options.onPhase?.('metadata-read', Date.now() - metadataReadStartedAt, {
+      generation: snapshot.generation,
+    });
+    const metadata = metadataRow?.metadataJson
+      ? parseMetadata(metadataRow.metadataJson)
+      : null;
     if (!metadata) {
       continue;
     }
@@ -442,6 +572,7 @@ export async function restoreLatestAssetProjection(
     if (!rowRanges) {
       continue;
     }
+    const rowsReadStartedAt = Date.now();
     const restoredRows = await readProjectionRows(
       source,
       projectionKey,
@@ -449,6 +580,11 @@ export async function restoreLatestAssetProjection(
       rowRanges,
       selectedRanges === undefined,
     );
+    options.onPhase?.('rows-read', Date.now() - rowsReadStartedAt, {
+      generation: snapshot.generation,
+      rowCount: restoredRows.rows.length,
+      groupCount: restoredRows.groups.length,
+    });
     if (
       restoredRows.rows.length !==
       rowRanges.reduce((total, range) => total + range.count, 0)

@@ -136,6 +136,7 @@ export type RegressionScenarioEventName =
   | 'scenario-failed'
   | 'precondition-ready'
   | 'action-started'
+  | 'action-completed'
   | 'postcondition-ready'
   | 'screen-mounted'
   | 'screen-visible'

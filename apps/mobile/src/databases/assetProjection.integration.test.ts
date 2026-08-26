@@ -251,6 +251,43 @@ describe('asset projection persistence', () => {
     });
   });
 
+  it('round-trips rows and groups across multiple write batches', async () => {
+    dataSource = await createMemoryAppDataSource();
+    const rows = Array.from({ length: 205 }, (_, index) => ({
+      type: 'token' as const,
+      id: `token-${index}`,
+    }));
+    const groups = [
+      {
+        id: 'group-large',
+        memberIds: Array.from({ length: 203 }, (_, index) => `member-${index}`),
+      },
+    ];
+
+    const persisted = await persistAssetProjection(
+      {
+        projectionKey: 'token::multi::multiple-batches',
+        kind: 'token',
+        scene: 'multi-address',
+        rows,
+        groups,
+      },
+      dataSource,
+    );
+    const restored = await restoreLatestAssetProjection(
+      'token::multi::multiple-batches',
+      { kind: 'token', scene: 'multi-address' },
+      dataSource,
+    );
+
+    expect(persisted.metrics).toMatchObject({
+      itemBatchCount: 3,
+      groupItemCount: 203,
+      groupBatchCount: 3,
+    });
+    expect(restored).toMatchObject({ rows, groups });
+  });
+
   it('restores an initial row range without hydrating the remaining projection', async () => {
     dataSource = await createMemoryAppDataSource();
     const rows = [

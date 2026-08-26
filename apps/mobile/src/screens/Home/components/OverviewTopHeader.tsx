@@ -55,9 +55,7 @@ import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerTe
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import {
   isHomeProjectionWaitingForValue,
-  useHome24hProjection,
-  useHomeBalanceProjection,
-  useHomeRefreshProjection,
+  useHomePortfolioProjection,
 } from '@/store/homePortfolio';
 
 const EMPTY_CHANGE_DATA = {
@@ -74,22 +72,22 @@ const handleSwitchToTokenTab = (index: number) => {
 export function TabsTopHeader(): JSX.Element {
   const focusedTab = useValueFromSharedValue(apisHomeTabIndex.svTabName);
 
-  const { balanceAvailability, totalBalance } = useHomeBalanceProjection(
+  const {
+    balanceAvailability,
+    totalBalance,
+    changeAvailability,
+    changeData,
+    changeActivity,
+    isAnyRemoteRefreshing,
+  } = useHomePortfolioProjection(
     useShallow(state => ({
-      balanceAvailability: state.availability,
-      totalBalance: state.value?.totalBalance || 0,
+      balanceAvailability: state.balance.availability,
+      totalBalance: state.balance.value?.totalBalance || 0,
+      changeAvailability: state.change24h.availability,
+      changeData: state.change24h.value || EMPTY_CHANGE_DATA,
+      changeActivity: state.change24h.activity,
+      isAnyRemoteRefreshing: state.refresh.isAnyRemoteRefreshing,
     })),
-  );
-  const { changeAvailability, changeData, changeActivity } =
-    useHome24hProjection(
-      useShallow(state => ({
-        changeAvailability: state.availability,
-        changeData: state.value || EMPTY_CHANGE_DATA,
-        changeActivity: state.activity,
-      })),
-    );
-  const isAnyRemoteRefreshing = useHomeRefreshProjection(
-    state => state.isAnyRemoteRefreshing,
   );
   const showBalanceLoadingWithoutLocal =
     isHomeProjectionWaitingForValue(balanceAvailability);
@@ -116,8 +114,12 @@ export function TabsTopHeader(): JSX.Element {
     }
   });
   const { currency } = useCurrency();
-  const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
-  const setTokenDisplayMode = useTokenList(s => s.setTokenDisplayMode);
+  const { tokenDisplayMode, setTokenDisplayMode } = useTokenList(
+    useShallow(state => ({
+      tokenDisplayMode: state.tokenDisplayMode,
+      setTokenDisplayMode: state.setTokenDisplayMode,
+    })),
+  );
 
   const showRightArea = useMemo(() => {
     return focusedTab !== HomeTabName.token;

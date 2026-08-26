@@ -1,6 +1,7 @@
 import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 import { OPSQLiteEvents } from '@/core/databases/op-sqlite/events';
 import {
+  ASSET_PROJECTION_INSERT_BATCH_SIZE,
   ASSET_PROJECTION_GENERATIONS_TO_KEEP,
   cleanupAssetProjectionGenerations,
   persistAssetProjection,
@@ -81,14 +82,19 @@ export const scheduleAssetProjectionPersistence = (
     0,
   );
   const rowCount = input.rows.length + groupItemCount;
+  const totalBatches = Math.max(
+    1,
+    Math.ceil(input.rows.length / ASSET_PROJECTION_INSERT_BATCH_SIZE) +
+      Math.ceil(groupItemCount / ASSET_PROJECTION_INSERT_BATCH_SIZE),
+  );
   const { taskId, promise } = submitSyncTask({
     key: `asset-projection:${projectionKey}`,
     taskFor: 'asset-projection',
     owner: projectionKey,
     entityName: AssetProjectionSnapshotEntity.name,
     rowCount,
-    batchSize: Math.max(1, rowCount),
-    totalBatches: 1,
+    batchSize: ASSET_PROJECTION_INSERT_BATCH_SIZE,
+    totalBatches,
     priority: 'low',
     signal: controller.signal,
     runner: async ctx => {
@@ -103,6 +109,12 @@ export const scheduleAssetProjectionPersistence = (
         ...persistInput,
         projectionKey,
       });
+      traceStartupDiagnostic('asset_projection', 'persist_metrics', {
+        kind: input.kind,
+        scene: input.scene,
+        rowCount,
+        ...persisted.metrics,
+      });
       ensureNotAborted(controller.signal);
       ctx.setStage('cleanup_projection_generations', {
         generation: persisted.generation,
@@ -113,7 +125,7 @@ export const scheduleAssetProjectionPersistence = (
       );
       persistedProjectionFingerprints.set(projectionKey, fingerprint);
       ctx.markBatch({
-        round: 0,
+        round: totalBatches - 1,
         count: rowCount,
         durationMs: Date.now() - startedAt,
       });
@@ -150,6 +162,15 @@ export const restoreAssetProjection = async (
     selectRowRanges?: (
       snapshot: AssetProjectionSnapshotInfo,
     ) => AssetProjectionRowRange[] | null | undefined;
+    onPhase?: (
+      phase:
+        | 'snapshot-candidates-read'
+        | 'integrity-counted'
+        | 'metadata-read'
+        | 'rows-read',
+      durationMs: number,
+      details?: Record<string, number>,
+    ) => void;
   } = {},
 ) => {
   const projectionKey = buildAssetProjectionStorageKey(identity);
@@ -158,6 +179,7 @@ export const restoreAssetProjection = async (
     scene: identity.scene,
     ruleVersion: options.ruleVersion,
     selectRowRanges: options.selectRowRanges,
+    onPhase: options.onPhase,
   });
 };
 

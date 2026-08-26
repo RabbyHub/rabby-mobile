@@ -354,14 +354,8 @@ const isDataExpired = async (address: string) => {
   return isExpired;
 };
 
-const getDataExpirationByAddress = async (addresses: string[]) =>
-  Object.fromEntries(
-    await Promise.all(
-      addresses.map(
-        async address => [address, await isDataExpired(address)] as const,
-      ),
-    ),
-  ) as Record<string, boolean>;
+const getDataExpirationByAddress = (addresses: string[]) =>
+  TokenItemEntity.getExpirationByOwners(addresses);
 
 const normalizeAddress = (address: string) => address.toLowerCase();
 
@@ -2927,6 +2921,9 @@ const restoreTokenAssetsProjectionIfEmpty = (
       },
       {
         ruleVersion: TOKEN_ASSET_PROJECTION_RULE_VERSION,
+        onPhase: (phase, durationMs, details) => {
+          trace.mark(`restore-${phase}`, { durationMs, ...details });
+        },
         selectRowRanges: snapshot => {
           if (
             snapshot.metadata.entityRestoreMode !==
@@ -4379,11 +4376,13 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
           isCurrentRequest()
             ? tokenAddressRequests.getCurrentAddresses(addressRequest)
             : [];
-        const areAddressesCurrent = (targetAddresses: string[]) => {
-          const currentAddressSet = new Set(getCurrentAddresses());
-          return targetAddresses.every(address =>
-            currentAddressSet.has(normalizeAddress(address)),
-          );
+        const createAddressesCurrentGuard = (targetAddresses: string[]) => {
+          const isAddressRequestCurrent =
+            tokenAddressRequests.createCurrentGuard(
+              addressRequest,
+              targetAddresses,
+            );
+          return () => isCurrentRequest() && isAddressRequestCurrent();
         };
         const isForceRequested = () => force || ticket.isForceRequested();
         const projectionRestorePromise =
@@ -4588,6 +4587,9 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
           );
 
           if (cacheApplicableAddresses.length) {
+            const isCacheRuntimeSyncCurrent = createAddressesCurrentGuard(
+              cacheApplicableAddresses,
+            );
             const mergedCacheTokenMap = { ...latestTokenListMap };
             cacheApplicableAddresses.forEach(address => {
               mergedCacheTokenMap[address] = cacheTokenMap[address] || [];
@@ -4600,8 +4602,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
                 {
                   markTokenListMapSynced: true,
                   markPersistencePending: true,
-                  shouldContinue: () =>
-                    areAddressesCurrent(cacheApplicableAddresses),
+                  shouldContinue: isCacheRuntimeSyncCurrent,
                 },
               );
             if (cacheRuntimeSync.applied) {
@@ -4744,6 +4745,9 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             remoteApplicableAddresses,
             applicableRealTimeTokenMap,
           );
+          const isRemoteRuntimeSyncCurrent = createAddressesCurrentGuard(
+            remoteApplicableAddresses,
+          );
           const runtimeSync =
             await syncTokenRuntimeStoresFromTokenListMapCooperatively(
               nextTokenListMap,
@@ -4752,8 +4756,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
               {
                 markTokenListMapSynced: true,
                 markPersistencePending: true,
-                shouldContinue: () =>
-                  areAddressesCurrent(remoteApplicableAddresses),
+                shouldContinue: isRemoteRuntimeSyncCurrent,
               },
             );
           if (!runtimeSync.applied) {
