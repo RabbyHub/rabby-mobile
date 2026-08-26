@@ -158,32 +158,11 @@ export const validateGasPriceRange = (tx: Tx) => {
   return true;
 };
 
-export const convert1559ToLegacy = tx => {
-  return {
-    chainId: tx.chainId,
-    from: tx.from,
-    to: tx.to,
-    value: tx.value,
-    data: tx.data,
-    gas: tx.gas,
-    gasPrice: tx.maxFeePerGas,
-    nonce: tx.nonce,
-  };
-};
-
-export const convertLegacyTo1559 = (tx: Tx) => {
-  return {
-    chainId: tx.chainId,
-    from: tx.from,
-    to: tx.to,
-    value: tx.value,
-    data: tx.data,
-    gas: tx.gas,
-    maxFeePerGas: tx.gasPrice,
-    maxPriorityFeePerGas: tx.gasPrice,
-    nonce: tx.nonce,
-  };
-};
+export {
+  applySelectedGasToTx,
+  convert1559ToLegacy,
+  convertLegacyTo1559,
+} from './transactionGas';
 
 export function getKRCategoryByType(type?: string) {
   return KEYRING_CATEGORY_MAP[type as any] || null;
