@@ -1,6 +1,9 @@
 {
   "references": [
     {
+      "path": "./packages/asset-sync-worker-core/tsconfig.build.json"
+    },
+    {
       "path": "./packages/base-utils/tsconfig.build.json"
     },
     {

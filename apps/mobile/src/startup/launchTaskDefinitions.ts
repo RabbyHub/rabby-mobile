@@ -41,6 +41,18 @@ export function createLaunchTaskDefinitions(
 ): LaunchTaskDefinition[] {
   return [
     {
+      taskKey: 'assetSyncPersistenceQueueRecovery',
+      run: async () => {
+        const { startAssetSyncPersistenceQueueRecovery } =
+          await loadLaunchModule(
+            'assetSyncPersistenceQueueRecovery',
+            'perfs/assetSyncPersistenceQueue',
+            loaders.assetSyncPersistenceQueueRecovery,
+          );
+        startAssetSyncPersistenceQueueRecovery();
+      },
+    },
+    {
       taskKey: 'lockUnlockEventBridge',
       run: async () => {
         const { startLockUnlockEventBridge } = await loadLaunchModule(

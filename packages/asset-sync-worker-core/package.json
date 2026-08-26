@@ -1,0 +1,27 @@
+{
+  "name": "@rabby-wallet/asset-sync-worker-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Runtime-neutral asset synchronization contracts for Rabby Mobile worker runtimes",
+  "main": "./dist/index.js",
+  "react-native": "./src/index.ts",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "test": "jest --reporters=jest-silent-reporter",
+    "test:clean": "jest --clearCache",
+    "test:verbose": "jest --verbose"
+  },
+  "devDependencies": {
+    "@types/jest": "^27.4.1",
+    "deepmerge": "^4.2.2",
+    "jest": "^27.5.1",
+    "ts-jest": "^27.1.4",
+    "typescript": "5.7.3"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

@@ -136,6 +136,7 @@ type ScreenshotSettings = {
   enablePerpsWatchAddress: boolean;
   homeAssetTopN: HomeAssetTopN;
   includeWatchAddressesInHomeAssetSelection: boolean;
+  workerTokenAssetSyncEnabled: boolean;
   screenE2EEnabled: boolean;
 };
 const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
@@ -164,6 +165,7 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     enablePerpsWatchAddress: false,
     homeAssetTopN: DEFAULT_HOME_ASSET_TOP_N,
     includeWatchAddressesInHomeAssetSelection: false,
+    workerTokenAssetSyncEnabled: false,
     screenE2EEnabled: false,
   },
 );
@@ -188,6 +190,8 @@ export const storeApiExpSettingData = {
   getHomeAssetSelectionSettings,
   setHomeAssetTopN,
   setIncludeWatchAddressesInHomeAssetSelection,
+  getWorkerTokenAssetSyncEnabled,
+  setWorkerTokenAssetSyncEnabled,
   getScreenE2EEnabled: () =>
     isNonPublicProductionEnv &&
     experimentalSettingsStore.getState().screenE2EEnabled,
@@ -210,6 +214,38 @@ export const storeApiExpSettingData = {
       .timeTipAboutSeedPhraseAndPrivateKey;
   },
 };
+
+export function getWorkerTokenAssetSyncEnabled() {
+  return (
+    isNonPublicProductionEnv &&
+    experimentalSettingsStore.getState().workerTokenAssetSyncEnabled
+  );
+}
+
+export function setWorkerTokenAssetSyncEnabled(enabled: boolean) {
+  if (!isNonPublicProductionEnv) {
+    return false;
+  }
+  setExpSettingData(prev => ({
+    ...prev,
+    workerTokenAssetSyncEnabled: enabled,
+  }));
+  return enabled;
+}
+
+export function useWorkerTokenAssetSyncEnabled() {
+  const persistedEnabled = experimentalSettingsStore(
+    state => state.workerTokenAssetSyncEnabled,
+  );
+  const setEnabled = useCallback((enabled: boolean) => {
+    return setWorkerTokenAssetSyncEnabled(enabled);
+  }, []);
+
+  return {
+    enabled: isNonPublicProductionEnv && persistedEnabled,
+    setEnabled,
+  };
+}
 
 export function useScreenE2EEnabled() {
   const screenE2EEnabled = experimentalSettingsStore(

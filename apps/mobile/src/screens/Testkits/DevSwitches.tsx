@@ -24,7 +24,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { NextInput } from '@/components2024/Form/Input';
 import { RcIconCorrectCC } from '@/assets/icons/common';
-import { RcIconScannerCC } from '@/assets/icons/address';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import {
@@ -50,6 +49,7 @@ import {
   useToastOpenApiHttpErrorStatus,
   useToggleShowAutoLockCountdown,
   useWideScreenDebugPanelSetting,
+  useWorkerTokenAssetSyncEnabled,
   WIDE_SCREEN_DEBUG_PANEL_MIN_ALLOWED_WIDTH,
   WIDE_SCREEN_DEBUG_PANEL_WIDTH,
 } from '@/hooks/appSettings';
@@ -1660,7 +1660,6 @@ function DevSwitchHomeAssetSelection() {
     setTopN,
     setIncludeWatchAddresses,
   } = useHomeAssetSelectionSettings();
-
   return (
     <View style={styles.showCaseRowsContainer}>
       <View style={styles.secondarySectionHeader}>
@@ -1694,7 +1693,6 @@ function DevSwitchHomeAssetSelection() {
             : 'Use owned addresses only (default)'}
         </Text>
       </TouchableOpacity>
-
       <View
         style={[
           styles.secondarySectionContent,
@@ -1718,6 +1716,48 @@ function DevSwitchHomeAssetSelection() {
             (includeWatchAddresses ? ' with Watch addresses.' : '.')
           : 'Production-compatible default: Top 10 owned addresses.'}{' '}
         Production builds always keep the default policy.
+      </Text>
+    </View>
+  );
+}
+
+function DevSwitchWorkerTokenAssetSync() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { enabled, setEnabled } = useWorkerTokenAssetSyncEnabled();
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <RcCode
+          width={24}
+          height={24}
+          color={styles.secondarySectionTitle.color}
+        />
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          Worker Token Sync
+        </Text>
+      </View>
+      <TouchableOpacity
+        style={styles.switchRowWrapper}
+        onPress={() => setEnabled(!enabled)}>
+        <AppSwitch2024
+          value={enabled}
+          onPress={event => event.stopPropagation()}
+          onValueChange={setEnabled}
+        />
+        <Text style={styles.switchLabel}>
+          {enabled
+            ? 'Fetch and persist Token snapshots on the Worker JS thread'
+            : 'Use the main JS thread for Token synchronization (default)'}
+        </Text>
+      </TouchableOpacity>
+      <Text style={[styles.metaLabel, { marginTop: 4 }]}>
+        Test-only persisted switch. Worker failures fall back to the existing
+        main-thread path.
       </Text>
     </View>
   );
@@ -1973,6 +2013,7 @@ function DevSwitches(): JSX.Element {
 
         <Text style={styles.areaTitle}>Asset Scale</Text>
         <DevSwitchHomeAssetSelection />
+        <DevSwitchWorkerTokenAssetSync />
 
         <Text style={styles.areaTitle}>Lifecycle E2E</Text>
         <DevSwitchRegressionScenarioE2E />

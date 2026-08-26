@@ -4,6 +4,7 @@ import {
   subscribeOnlineConfig,
 } from '@/core/config/online';
 import { Thread, ThreadError } from '@/core/native/RNThread';
+import { isNonPublicProductionEnv } from '@/constant';
 
 // relative path from the app bundle root
 export const workerThread = new Thread('worker-src/worker.thread.js');
@@ -11,6 +12,11 @@ let workerThreadStartPromise: Promise<number> | null = null;
 let didSubscribeOnlineConfig = false;
 let workerThreadDeferredStartTimer: ReturnType<typeof setTimeout> | null = null;
 let workerThreadStartRequestPromise: Promise<void> | null = null;
+let workerRuntimeInitializationPromise: Promise<void> | null = null;
+let didSubscribeWorkerLoggingSettings = false;
+let didReportWorkerRuntimeInfo = false;
+
+const shouldReportWorkerRuntimeInfo = __DEV__ || isNonPublicProductionEnv;
 
 function getStartupProfilerWorkerDelayMs() {
   const deferWorkerUntil = Number(
@@ -32,15 +38,76 @@ export function isWorkerThreadRunning() {
   return workerThread.isRunning;
 }
 
+async function synchronizeWorkerLoggingPolicy(reason: string) {
+  if (!workerThread.isRunning) {
+    return;
+  }
+
+  const loggingSettings = await import('@/utils/logging/settings');
+
+  if (!didSubscribeWorkerLoggingSettings) {
+    didSubscribeWorkerLoggingSettings = true;
+    loggingSettings.subscribeAppLogFileSettings(() => {
+      void initializeWorkerRuntimeAfterStart('local_setting_update');
+    });
+  }
+
+  await workerThread.remoteCall(
+    'logging:configure',
+    {
+      captureConsole: loggingSettings.getEffectiveConsoleCaptureEnabled(),
+      writeToFile: loggingSettings.getEffectiveFileLoggingEnabled(),
+    },
+    { timeout: 5000 },
+  );
+
+  if (shouldReportWorkerRuntimeInfo && !didReportWorkerRuntimeInfo) {
+    const runtimeInfo = await workerThread.remoteCall(
+      '@runtimeInfo',
+      undefined,
+      { timeout: 5000 },
+    );
+    didReportWorkerRuntimeInfo = true;
+    console.info('[AssetWorker] runtime ready', {
+      reason,
+      ...runtimeInfo,
+    });
+  }
+}
+
+function initializeWorkerRuntimeAfterStart(reason: string) {
+  if (!workerRuntimeInitializationPromise) {
+    workerRuntimeInitializationPromise = synchronizeWorkerLoggingPolicy(reason)
+      .catch(error => {
+        console.warn('[AssetWorker] runtime initialization failed', {
+          reason,
+          message: error instanceof Error ? error.message : String(error),
+        });
+      })
+      .finally(() => {
+        workerRuntimeInitializationPromise = null;
+      });
+  }
+
+  return workerRuntimeInitializationPromise;
+}
+
 function startWorkerThreadOnce() {
   if (workerThread.isRunning) {
     return Promise.resolve();
   }
 
   if (!workerThreadStartPromise) {
-    workerThreadStartPromise = workerThread.start().finally(() => {
-      workerThreadStartPromise = null;
-    });
+    workerThreadStartPromise = workerThread
+      .start()
+      .then(threadId => {
+        didReportWorkerRuntimeInfo = false;
+        void initializeWorkerRuntimeAfterStart('thread_started');
+        return threadId;
+      })
+      .finally(() => {
+        workerThreadStartPromise = null;
+      });
   }
 
   return workerThreadStartPromise.then(() => undefined);
@@ -80,8 +147,22 @@ function subscribeWorkerThreadOnlineConfig() {
 
   didSubscribeOnlineConfig = true;
   subscribeOnlineConfig(() => {
-    void startWorkerThreadIfEnabled('online_config_update');
+    void startWorkerThreadIfEnabled('online_config_update').then(() =>
+      initializeWorkerRuntimeAfterStart('online_config_update'),
+    );
   });
+}
+
+export async function finalizeWorkerAppLogs() {
+  if (!workerThread.isRunning) {
+    return null;
+  }
+
+  const result = await workerThread.remoteCall('logging:finalize', undefined, {
+    timeout: 10000,
+  });
+
+  return result?.archivePath || null;
 }
 
 export function requestComputationThreadStart(reason = 'manual') {

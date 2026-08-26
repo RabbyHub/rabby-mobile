@@ -27,6 +27,23 @@ describe('regression scenario command', () => {
     });
   });
 
+  it('parses the non-production high-cardinality fixture scenario', () => {
+    const result = parseRegressionScenarioCommand(
+      `${BASE_URL}&scenario=high-cardinality-assets&action=start&runId=high-cardinality-run&fixture=watch-addresses-a&addressCount=50`,
+    );
+
+    expect(result).toEqual({
+      matched: true,
+      command: expect.objectContaining({
+        scenario: 'high-cardinality-assets',
+        fixture: 'watch-addresses-a',
+        params: {
+          addressCount: '50',
+        },
+      }),
+    });
+  });
+
   it.each(['password', 'privateKey', 'mnemonic', 'seed_phrase'])(
     'rejects the sensitive query key %s',
     key => {
@@ -72,11 +89,12 @@ describe('regression scenario command', () => {
 
   it('redacts sensitive and nested URL fields from logs', () => {
     const sanitized = sanitizeLinkForLogging(
-      `${BASE_URL}&scenario=dapp-browser&runId=run-4&url=https%3A%2F%2Fexample.com%2Fprivate&fixturePath=%2Ftmp%2Ffixture`,
+      `${BASE_URL}&scenario=dapp-browser&runId=run-4&url=https%3A%2F%2Fexample.com%2Fprivate&host=https%3A%2F%2Foffice-api.example.test&fixturePath=%2Ftmp%2Ffixture`,
     );
 
     expect(sanitized).not.toContain('/tmp/fixture');
     expect(sanitized).not.toContain('example.com');
+    expect(sanitized).not.toContain('office-api.example.test');
     expect(sanitized).toContain('%3Credacted%3E');
   });
 });

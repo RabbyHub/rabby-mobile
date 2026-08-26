@@ -25,6 +25,14 @@ export const mergeAddressListSnapshots = <TItem>(
   ...completeAddressListSnapshots(addresses, snapshots),
 });
 
+export const getAddressesWithoutListSnapshot = <TItem>(
+  addresses: string[],
+  snapshots: AddressListSnapshotMap<TItem>,
+) =>
+  normalizeSnapshotAddresses(addresses).filter(
+    address => !Object.prototype.hasOwnProperty.call(snapshots, address),
+  );
+
 type AddressListSnapshotHydratorOptions<TItem> = {
   load: (
     addresses: string[],
@@ -106,8 +114,84 @@ export const createAddressListSnapshotHydrator = <TItem>({
     await Promise.all(Array.from(new Set(requests)));
   };
 
+  const refresh = async (addresses: string[]) => {
+    const normalizedAddresses = normalizeSnapshotAddresses(addresses);
+    if (!normalizedAddresses.length) {
+      return;
+    }
+
+    const activeAddresses = normalizedAddresses.filter(address =>
+      inFlightByAddress.has(address),
+    );
+    invalidate(normalizedAddresses);
+    await hydrate(normalizedAddresses);
+
+    if (activeAddresses.length) {
+      await hydrate(activeAddresses);
+    }
+  };
+
   return {
     hydrate,
     invalidate,
+    refresh,
   };
+};
+
+type AddressListCommitBatcherOptions = {
+  apply(addresses: string[]): Promise<void>;
+  delayMs?: number;
+};
+
+type AddressListCommitWaiter = {
+  resolve(): void;
+  reject(error: unknown): void;
+};
+
+/** Publish a burst of address commits through one database read/store update. */
+export const createAddressListCommitBatcher = ({
+  apply,
+  delayMs = 16,
+}: AddressListCommitBatcherOptions) => {
+  let pendingAddresses = new Set<string>();
+  let pendingWaiters: AddressListCommitWaiter[] = [];
+  let timer: ReturnType<typeof setTimeout> | undefined;
+
+  const schedule = () => {
+    if (timer) {
+      return;
+    }
+    timer = setTimeout(async () => {
+      timer = undefined;
+      const addresses = Array.from(pendingAddresses);
+      const waiters = pendingWaiters;
+      pendingAddresses = new Set();
+      pendingWaiters = [];
+      try {
+        await apply(addresses);
+        waiters.forEach(waiter => waiter.resolve());
+      } catch (error) {
+        waiters.forEach(waiter => waiter.reject(error));
+      } finally {
+        if (pendingAddresses.size) {
+          schedule();
+        }
+      }
+    }, delayMs);
+  };
+
+  const enqueue = (addresses: string[]) => {
+    const normalizedAddresses = normalizeSnapshotAddresses(addresses);
+    if (!normalizedAddresses.length) {
+      return Promise.resolve();
+    }
+    normalizedAddresses.forEach(address => pendingAddresses.add(address));
+    const result = new Promise<void>((resolve, reject) => {
+      pendingWaiters.push({ resolve, reject });
+    });
+    schedule();
+    return result;
+  };
+
+  return { enqueue };
 };

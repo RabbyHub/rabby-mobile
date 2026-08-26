@@ -12,6 +12,8 @@ import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.react.modules.i18nmanager.I18nUtil
 
 import com.facebook.react.modules.network.OkHttpClientProvider;
+import com.reactnativemmkv.MmkvPackage
+import com.rnfs.RNFSPackage
 
 
 class MainApplication : Application(), ReactApplication {
@@ -27,7 +29,7 @@ class MainApplication : Application(), ReactApplication {
               add(RNTimeChangedPackage())
               add(RNHelpersPackage())
               add(RNFileHelpersPackage())
-              add(RNThreadPackage())
+              add(RNThreadPackage(MmkvPackage(), RNFSPackage()))
             }
 
         override fun getJSMainModuleName(): String = "index"

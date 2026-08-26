@@ -9,8 +9,11 @@ import * as customTestnet from '@/core/serviceApi/customTestnet';
 import * as deferredServiceApi from '@/core/serviceApi/createDeferredServiceApi';
 import * as syncChain from '@/core/serviceApi/syncChain';
 import * as homePreSplashLocalState from '@/setup-home-pre-splash-state';
+import * as assetSyncPersistenceQueue from '@/perfs/assetSyncPersistenceQueue';
 
 export const launchTaskLoaders = {
+  assetSyncPersistenceQueueRecovery: () =>
+    Promise.resolve(assetSyncPersistenceQueue),
   appSettingsAutoLockHydrate: () => Promise.resolve(appSettings),
   appTimeoutAutoLockHydrate: () => Promise.resolve(appTimeout),
   biometricsSystemAuthAvailability: () => Promise.resolve(biometrics),

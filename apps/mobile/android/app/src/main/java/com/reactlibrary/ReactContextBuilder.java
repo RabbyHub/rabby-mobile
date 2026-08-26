@@ -15,6 +15,7 @@ import com.facebook.react.bridge.JavaScriptExecutor;
 import com.facebook.react.bridge.JSExceptionHandler;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.ReactInstanceManager;
+import com.facebook.react.bridge.queue.MessageQueueThreadSpec;
 import com.facebook.react.bridge.queue.ReactQueueConfigurationSpec;
 import com.facebook.react.devsupport.interfaces.DevSupportManager;
 import com.facebook.soloader.SoLoader;
@@ -61,7 +62,7 @@ public class ReactContextBuilder {
         String appName = Uri.encode(parentContext.getPackageName());
         String deviceName = Uri.encode(getFriendlyDeviceName());
 
-        hermesExecutorFactory.setDebuggerName(appName + "|" + deviceName);
+        hermesExecutorFactory.setDebuggerName(appName + "|" + deviceName + "|AssetWorker");
 
         return hermesExecutorFactory;
         // try {
@@ -91,7 +92,10 @@ public class ReactContextBuilder {
         addNativeModules(nativeRegistryBuilder);
 
         CatalystInstanceImpl.Builder catalystInstanceBuilder = new CatalystInstanceImpl.Builder()
-                .setReactQueueConfigurationSpec(ReactQueueConfigurationSpec.createDefault())
+                .setReactQueueConfigurationSpec(
+                        new ReactQueueConfigurationSpec(
+                                MessageQueueThreadSpec.newBackgroundThreadSpec("assetwkr_nm"),
+                                MessageQueueThreadSpec.newBackgroundThreadSpec("assetwkr_js")))
                 .setJSExecutor(jsExecutor)
                 .setRegistry(nativeRegistryBuilder.build())
                 .setJSBundleLoader(jsBundleLoader)
