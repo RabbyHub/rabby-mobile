@@ -20,6 +20,9 @@ const mockPerpsState = {
   currentPerpsAccount: mockAccount,
   hasPermission: true,
   isUserDataReady: true,
+  marketDataMap: {
+    BTC: { dexId: '', midPx: '100' },
+  },
   openOrders: [],
   spotState: {
     tokenToAvailableAfterMaintenance: null as [number, string][] | null,

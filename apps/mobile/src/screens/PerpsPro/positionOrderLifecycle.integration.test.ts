@@ -145,6 +145,7 @@ describe('Perps Pro position and order lifecycle integration', () => {
       });
       const dependencies: ClosePositionDependencies = {
         getCurrentAccount: () => account,
+        getLiveMidPrice: () => '60100',
         getLiveSignedSize: () => sourcePositions[0]?.position.szi ?? null,
         limitClose: submitted,
         marketClose: submitted,

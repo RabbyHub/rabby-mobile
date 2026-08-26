@@ -42,6 +42,7 @@ export interface PerpsClosePositionResult {
 
 export interface ClosePositionDependencies {
   getCurrentAccount: () => Pick<Account, 'address' | 'type'> | null;
+  getLiveMidPrice: (coin: string) => string | null;
   getLiveSignedSize: (coin: string) => string | null;
   limitClose: (params: {
     builder: typeof PERPS_BUILDER_INFO;
@@ -199,6 +200,32 @@ export const buildPerpsClosePositionCommand = ({
   });
 };
 
+export const finalizePerpsMarketClosePositionCommand = (
+  command: PerpsClosePositionCommand,
+  midPrice: string,
+): PerpsClosePositionCommand => {
+  const mid = decimal(midPrice);
+  if (command.orderType !== 'market' || !mid?.gt(0)) {
+    throw new Error('Market Mid price is unavailable');
+  }
+  const amountValidation = validatePerpsCloseAmount({
+    expectedPositionSize: command.expectedPositionSize,
+    referencePrice: mid.toFixed(),
+    size: command.size,
+  });
+  if (amountValidation.kind === 'invalid') {
+    throw new Error(
+      amountValidation.reason === 'belowMinimumNotional'
+        ? PERPS_CLOSE_MINIMUM_NOTIONAL_ERROR
+        : 'Invalid Perps close amount',
+    );
+  }
+  return Object.freeze({
+    ...command,
+    midPrice: mid.toFixed(),
+  });
+};
+
 const getLiveSignedSize = (coin: string) => {
   const position = perpsStore
     .getState()
@@ -210,6 +237,8 @@ const getLiveSignedSize = (coin: string) => {
 
 const defaultDependencies: ClosePositionDependencies = {
   getCurrentAccount: () => perpsStore.getState().currentPerpsAccount,
+  getLiveMidPrice: coin =>
+    perpsStore.getState().marketDataMap[coin]?.midPx ?? null,
   getLiveSignedSize,
   limitClose: async params => {
     const exchange = apisPerps.getPerpsSDK().exchange;
@@ -255,26 +284,48 @@ export const executePerpsClosePosition = async (
   ) {
     return { kind: 'staleContext' };
   }
+  let executableCommand = command;
+  if (command.orderType === 'market') {
+    const liveMidPrice = dependencies.getLiveMidPrice(command.coin);
+    if (!decimal(liveMidPrice)?.gt(0)) {
+      return { kind: 'staleContext' };
+    }
+    try {
+      executableCommand = finalizePerpsMarketClosePositionCommand(
+        command,
+        liveMidPrice ?? '',
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return {
+        error: message,
+        failureReason: isPerpsCloseMinimumNotionalError(message)
+          ? 'minimumNotional'
+          : 'requestFailed',
+        kind: 'failed',
+      };
+    }
+  }
   try {
-    const isBuy = command.direction === 'short';
+    const isBuy = executableCommand.direction === 'short';
     const response =
-      command.orderType === 'limit'
+      executableCommand.orderType === 'limit'
         ? await dependencies.limitClose({
             builder: PERPS_BUILDER_INFO,
-            coin: command.coin,
+            coin: executableCommand.coin,
             isBuy,
-            limitPx: command.limitPrice || '',
+            limitPx: executableCommand.limitPrice || '',
             reduceOnly: true,
-            size: command.size,
+            size: executableCommand.size,
             tif: PERPS_LIMIT_TIF_DEFAULT,
           })
         : await dependencies.marketClose({
             builder: PERPS_BUILDER_INFO,
-            coin: command.coin,
+            coin: executableCommand.coin,
             isBuy,
-            midPx: command.midPrice,
+            midPx: executableCommand.midPrice,
             reduceOnly: true,
-            size: command.size,
+            size: executableCommand.size,
           });
     const status = (
       response as {

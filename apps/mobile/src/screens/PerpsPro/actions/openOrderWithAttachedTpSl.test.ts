@@ -11,6 +11,7 @@ import type { PerpsProOpenOrderCommand } from './openOrder';
 import {
   buildPerpsProAttachedTpSlCommand,
   executePerpsProAttachedTpSl,
+  finalizePerpsProAttachedTpSlMarketCommand,
   getPerpsProAttachedTpSlBatchError,
   validatePerpsProAttachedTpSlCommand,
   type PerpsProAttachedTpSlGuardContext,
@@ -318,6 +319,26 @@ describe('Perps Pro attached TP/SL command and executor', () => {
         guardContext({ hasPermission: false }),
       ),
     ).toEqual({ ok: false, reason: 'regionRestricted' });
+  });
+
+  it('late-binds the attached Market parent Mid and its journal fingerprint', () => {
+    const command = build();
+    const finalized = finalizePerpsProAttachedTpSlMarketCommand(command, '90');
+
+    expect(finalized.parent.execution).toEqual({
+      kind: 'market',
+      slippageReferenceMidPrice: '90',
+    });
+    expect(finalized.parent.baseSize).toBe(command.parent.baseSize);
+    expect(finalized.attached).toBe(command.attached);
+    expect(finalized.cloids).toBe(command.cloids);
+    expect(finalized.commandId).toBe(command.commandId);
+    expect(finalized.marketSnapshot).toBe(command.marketSnapshot);
+    expect(finalized.reviewFacts).toBe(command.reviewFacts);
+    expect(finalized.parentFingerprint).not.toBe(command.parentFingerprint);
+    expect(Object.isFrozen(finalized)).toBe(true);
+    expect(Object.isFrozen(finalized.parent)).toBe(true);
+    expect(Object.isFrozen(finalized.parent.execution)).toBe(true);
   });
 
   it('removes prepared state if permission changes before SDK dispatch', async () => {

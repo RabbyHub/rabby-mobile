@@ -174,6 +174,28 @@ const getParentFingerprint = (parent: PerpsProOpenOrderCommand) =>
     parent.execution,
   ]);
 
+export const finalizePerpsProAttachedTpSlMarketCommand = (
+  command: PerpsProAttachedTpSlCommand,
+  midPrice: string,
+): PerpsProAttachedTpSlCommand => {
+  const mid = positive(midPrice);
+  if (command.parent.execution.kind !== 'market' || !mid) {
+    throw new Error('Market Mid price is unavailable');
+  }
+  const parent: PerpsProAttachedTpSlParentCommand = Object.freeze({
+    ...command.parent,
+    execution: Object.freeze({
+      kind: 'market' as const,
+      slippageReferenceMidPrice: mid.toFixed(),
+    }),
+  });
+  return Object.freeze({
+    ...command,
+    parent,
+    parentFingerprint: getParentFingerprint(parent),
+  });
+};
+
 export const buildPerpsProAttachedTpSlCommand = ({
   accountRuntime,
   amountUnit,

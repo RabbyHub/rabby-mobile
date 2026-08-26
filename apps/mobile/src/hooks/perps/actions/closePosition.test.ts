@@ -9,6 +9,7 @@ jest.mock('@/hooks/perps/usePerpsStore', () => ({
 import {
   buildPerpsClosePositionCommand,
   executePerpsClosePosition,
+  finalizePerpsMarketClosePositionCommand,
   PERPS_CLOSE_MINIMUM_NOTIONAL_ERROR,
   validatePerpsCloseAmount,
   type ClosePositionDependencies,
@@ -32,6 +33,7 @@ const dependencies = (
   overrides: Partial<ClosePositionDependencies> = {},
 ): ClosePositionDependencies => ({
   getCurrentAccount: () => account,
+  getLiveMidPrice: () => '100',
   getLiveSignedSize: () => '1.2345',
   limitClose: jest.fn(),
   marketClose: jest.fn(async () => ({
@@ -59,6 +61,32 @@ describe('Perps close position action', () => {
         size: '0.6172',
       }),
     );
+  });
+
+  it('late-binds the latest Mid without changing the frozen close size', async () => {
+    const deps = dependencies({ getLiveMidPrice: () => '90' });
+    const frozen = command();
+    const finalized = finalizePerpsMarketClosePositionCommand(frozen, '90');
+
+    expect(finalized).toMatchObject({
+      midPrice: '90',
+      size: frozen.size,
+    });
+    expect(Object.isFrozen(finalized)).toBe(true);
+
+    await executePerpsClosePosition(frozen, deps);
+    expect(deps.marketClose).toHaveBeenCalledWith(
+      expect.objectContaining({ midPx: '90', size: frozen.size }),
+    );
+  });
+
+  it('fails closed when the latest Market Mid is unavailable', async () => {
+    const deps = dependencies({ getLiveMidPrice: () => null });
+
+    await expect(executePerpsClosePosition(command(), deps)).resolves.toEqual({
+      kind: 'staleContext',
+    });
+    expect(deps.marketClose).not.toHaveBeenCalled();
   });
 
   it('submits a GTC reduce-only limit close and refreshes open orders', async () => {

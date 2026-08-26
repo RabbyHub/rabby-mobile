@@ -39,6 +39,7 @@ const state = {
     BTC: {
       dexId: '',
       markPx: '100',
+      midPx: '100',
       maxLeverage: 50,
       pxDecimals: 2,
       quoteAsset: 'USDC',
@@ -99,6 +100,23 @@ jest.mock('@/hooks/perps/usePerpsStore', () => {
 
 jest.mock('../actions/openOrderWithAttachedTpSl', () => ({
   executePerpsProAttachedTpSl: (...args: unknown[]) => mockExecute(...args),
+  finalizePerpsProAttachedTpSlMarketCommand: (
+    value: PerpsProAttachedTpSlCommand,
+    midPrice: string,
+  ) => {
+    const parent = Object.freeze({
+      ...value.parent,
+      execution: Object.freeze({
+        kind: 'market' as const,
+        slippageReferenceMidPrice: midPrice,
+      }),
+    });
+    return Object.freeze({
+      ...value,
+      parent,
+      parentFingerprint: `market:${midPrice}`,
+    });
+  },
   getPerpsProAttachedTpSlBatchError: (
     batch: { legs?: Array<{ error?: string; kind: string; role: string }> },
     roles?: Set<string>,
@@ -181,6 +199,7 @@ describe('usePerpsProAttachedTpSlExecution', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     state.hasPermission = true;
+    state.marketDataMap.BTC.midPx = '100';
     state.currentClearinghouseState.assetPositions.length = 0;
     mockGetJournal.mockResolvedValue([journal]);
     mockExecute.mockResolvedValue({ kind: 'fullAccepted' });
@@ -233,6 +252,32 @@ describe('usePerpsProAttachedTpSlExecution', () => {
           !('positionIdentity' in context),
       ),
     ).toBe(true);
+  });
+
+  it('reads the attached Market Mid after leverage and before dispatch', async () => {
+    const ensureLeverage = jest.fn(async () => {
+      state.marketDataMap.BTC.midPx = '90';
+      return 'success' as const;
+    });
+    const { hook } = renderExecution();
+
+    await act(async () => {
+      await hook.result.current.execute(command, ensureLeverage);
+    });
+
+    expect(mockExecute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        parent: expect.objectContaining({
+          baseSize: '1',
+          execution: {
+            kind: 'market',
+            slippageReferenceMidPrice: '90',
+          },
+        }),
+        parentFingerprint: 'market:90',
+      }),
+      expect.any(Function),
+    );
   });
 
   it('stops on explicit approval cancellation without dispatching', async () => {
