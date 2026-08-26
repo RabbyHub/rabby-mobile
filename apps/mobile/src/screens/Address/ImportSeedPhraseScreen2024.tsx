@@ -308,6 +308,7 @@ export const ImportSeedPhraseScreen2024 = () => {
 
   React.useEffect(() => {
     if (scanner.text) {
+      setError(undefined);
       setMnemonics(scanner.text);
       scanner.clear();
     }
