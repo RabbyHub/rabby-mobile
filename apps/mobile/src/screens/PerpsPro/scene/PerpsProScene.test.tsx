@@ -218,6 +218,16 @@ jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
 
+jest.mock(
+  '@/screens/PerpsShared/components/PerpsPortfolioBreakdownExplanation',
+  () => ({
+    useShowPerpsPortfolioBreakdown: () => ({
+      hasNonPerpsAssets: false,
+      showPortfolioBreakdown: jest.fn(),
+    }),
+  }),
+);
+
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
     const colors2024 = new Proxy(
