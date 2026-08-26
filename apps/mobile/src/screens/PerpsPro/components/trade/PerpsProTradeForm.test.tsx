@@ -51,6 +51,12 @@ jest.mock('@/assets2024/icons/perps/PerpsProAvailableAdd.svg', () => {
   return (props: object) => ReactModule.createElement(View, props);
 });
 
+jest.mock('@/assets2024/icons/perps/PerpsProAvailableSwap.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) => ReactModule.createElement(View, props);
+});
+
 jest.mock('@/assets2024/icons/perps/PerpsProPrecisionCaret.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -943,7 +949,14 @@ describe('PerpsProTradeForm order matrix', () => {
       />,
     );
 
-    expect(screen.getByText('swap')).toBeTruthy();
+    expect(
+      screen.getByTestId('perps-pro-trade-available-swap').props,
+    ).toMatchObject({
+      color: 'neutral-title-1',
+      height: 16,
+      width: 16,
+    });
+    expect(screen.queryByText('swap')).toBeNull();
     fireEvent.press(screen.getByTestId('perps-pro-trade-available-deposit'));
     expect(onAddFunds).toHaveBeenCalledTimes(1);
   });

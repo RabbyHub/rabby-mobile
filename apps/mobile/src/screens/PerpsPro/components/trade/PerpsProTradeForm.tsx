@@ -1,4 +1,5 @@
 import RcIconAvailableAdd from '@/assets2024/icons/perps/PerpsProAvailableAdd.svg';
+import RcIconAvailableSwap from '@/assets2024/icons/perps/PerpsProAvailableSwap.svg';
 import { Text, type TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -290,9 +291,12 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
           }
           trailing={
             addFundsMode === 'swap' ? (
-              <Text style={styles.swapAction}>
-                {t('page.perps.PerpsDepositCard.swap')}
-              </Text>
+              <RcIconAvailableSwap
+                color={colors2024['neutral-title-1']}
+                height={16}
+                testID="perps-pro-trade-available-swap"
+                width={16}
+              />
             ) : (
               <RcIconAvailableAdd
                 color={colors2024['neutral-title-1']}
@@ -503,13 +507,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   doubleRow: { flexDirection: 'row', gap: 8 },
   flexItem: { flex: 1, minWidth: 0 },
   optionsGroup: { gap: 8 },
-  swapAction: {
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
-  },
   convertedAmount: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro',
