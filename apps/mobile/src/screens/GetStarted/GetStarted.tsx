@@ -39,6 +39,7 @@ import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { Text } from '@/components/Typography';
 import ChevronRightSmallCC from '@/assets/icons/common/chevron-right-small-cc.svg';
 import { E2E_ID } from '@/constant/e2e';
+import { IS_LOCAL_STORAGE_EXPORT_ENABLED } from '@/constant/env';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 import { promptLocalStorageArchiveShare } from '@/utils/promptLocalStorageArchive';
@@ -66,7 +67,7 @@ const HeroIllustration = ({ isLight }: { isLight: boolean }) => {
   const heroHeight = Math.ceil(SCREEN_WIDTH * HERO_ASPECT_RATIO);
 
   const handleAnimationTap = useCallback(() => {
-    if (!isNonPublicProductionEnv || !animationCompletedRef.current) {
+    if (!IS_LOCAL_STORAGE_EXPORT_ENABLED || !animationCompletedRef.current) {
       return;
     }
 
@@ -91,7 +92,7 @@ const HeroIllustration = ({ isLight }: { isLight: boolean }) => {
       <TouchableOpacity
         activeOpacity={1}
         onPress={handleAnimationTap}
-        disabled={!isNonPublicProductionEnv}>
+        disabled={!IS_LOCAL_STORAGE_EXPORT_ENABLED}>
         <Lottie
           source={isLight ? StartScreenAnimation : StartScreenAnimationDark}
           style={[styles.heroBackground, { height: heroHeight }]}

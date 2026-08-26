@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   InteractionManager,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import * as Yup from 'yup';
 
@@ -36,6 +37,7 @@ import {
   APP_VERSIONS,
   APPLICATION_ID,
 } from '@/constant';
+import { IS_LOCAL_STORAGE_EXPORT_ENABLED } from '@/constant/env';
 import {
   KEYCHAIN_ERROR_CODES,
   RequestGenericPurpose,
@@ -85,6 +87,7 @@ import {
 } from './authState';
 import { setSyncSchedulerCriticalMode } from '@/databases/sync/scheduler';
 import type { RegressionScenarioEventName } from '@/devtools/regressionScenarios/contracts';
+import { promptLocalStorageArchiveShare } from '@/utils/promptLocalStorageArchive';
 
 export type UnlockRegressionScenarioProps = {
   regressionScenario?: {
@@ -140,6 +143,8 @@ const BiometricsIconSize = 76;
 const UNLOCK_SCREEN_WARMUP_DELAY_MS = 250;
 const POST_UNLOCK_WARMUP_DELAY_MS = 800;
 const POST_UNLOCK_UI_READY_DELAY_MS = 350;
+const LOCAL_STORAGE_EXPORT_TAP_COUNT = 10;
+const LOCAL_STORAGE_EXPORT_TAP_INTERVAL_MS = 500;
 
 const unlockWarmupsStateRef = {
   promise: null as Promise<void> | null,
@@ -443,6 +448,27 @@ export default function UnlockScreen({
   const { t } = useTranslation();
 
   const RcRabbyLogo = isLight ? RcRabbyLogoLight : RcRabbyLogoDark;
+  const rapidLogoTapRef = React.useRef({ count: 0, lastTappedAt: 0 });
+  const handleLogoTap = useCallback(() => {
+    if (!IS_LOCAL_STORAGE_EXPORT_ENABLED) {
+      return;
+    }
+
+    const now = Date.now();
+    const isRapidTap =
+      now - rapidLogoTapRef.current.lastTappedAt <=
+      LOCAL_STORAGE_EXPORT_TAP_INTERVAL_MS;
+    const count = isRapidTap ? rapidLogoTapRef.current.count + 1 : 1;
+
+    rapidLogoTapRef.current = { count, lastTappedAt: now };
+
+    if (count < LOCAL_STORAGE_EXPORT_TAP_COUNT) {
+      return;
+    }
+
+    rapidLogoTapRef.current = { count: 0, lastTappedAt: 0 };
+    promptLocalStorageArchiveShare();
+  }, []);
   const navigation = useRabbyAppNavigation();
   const { params } = useRoute<GetRootScreenRouteProp<'Unlock'>>();
   const {
@@ -977,7 +1003,13 @@ export default function UnlockScreen({
         style={styles.innerContainer}
         keyboardVerticalOffset={-80}>
         <View style={styles.topContainer}>
-          <RcRabbyLogo style={styles.logo} width={125} height={134} />
+          <TouchableOpacity
+            style={styles.logo}
+            disabled={!IS_LOCAL_STORAGE_EXPORT_ENABLED}
+            activeOpacity={1}
+            onPress={handleLogoTap}>
+            <RcRabbyLogo width={125} height={134} />
+          </TouchableOpacity>
         </View>
         <View style={styles.bodyContainer}>
           {usingPassword ? (

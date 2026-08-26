@@ -25,7 +25,18 @@ on:
         required: true
         type: boolean
         default: false
+      ENABLE_LOCAL_STORAGE_EXPORT:
+        description: 'Enable hidden local-storage export gestures in this build'
+        required: true
+        type: boolean
+        default: false
   workflow_call:
+    inputs:
+      ENABLE_LOCAL_STORAGE_EXPORT:
+        description: 'Enable hidden local-storage export gestures in this build'
+        required: false
+        type: boolean
+        default: false
     secrets:
       RABBY_MOBILE_ANDROID_KEY_STORE:
         required: true
@@ -139,6 +150,7 @@ jobs:
           RABBY_ROBOT_LARK_APP_ID: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
           RABBY_ROBOT_LARK_APP_SECRET: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
           RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64: ${{ secrets.RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64 }}
+          RABBY_MOBILE_ENABLE_LOCAL_STORAGE_EXPORT: ${{ inputs.ENABLE_LOCAL_STORAGE_EXPORT }}
           buildchannel: ${{ inputs.buildchannel }}
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
           # see more details on https://docs.github.com/en/actions/learn-github-actions/contexts#github-context

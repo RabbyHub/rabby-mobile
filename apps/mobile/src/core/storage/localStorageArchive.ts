@@ -1,8 +1,9 @@
 import RNFS from '@rabby-wallet/react-native-fs';
 
-import { isNonPublicProductionEnv } from '@/constant';
+import { IS_LOCAL_STORAGE_EXPORT_ENABLED } from '@/constant/env';
 import { getRabbyAppDbName, getRabbyAppDbPath } from '@/databases/constant';
 import { APP_DOCUMENT_LIKE_PATH, MMKV_ROOT_PATH } from '@/core/utils/appFS';
+import { prepareLatestAppLogArchiveForSharing } from '@/utils/logging/archiveShare';
 import { shareLocalFile } from '@/utils/shareLocalFile';
 import { ALL_KNOWN_MMKV_INSTANCES, keyringMMKV } from './mmkvInstances';
 
@@ -262,34 +263,47 @@ export type LocalStorageArchiveShareResult = {
   mmkvDumpCount: number;
   mmkvDumpKeyCount: number;
   keyringStartupDiagnosticFileCount: number;
+  appLogArchiveCount: number;
 };
 
 /**
- * Non-production, user-confirmed export of the raw MMKV and SQLite files.
- * The archive intentionally includes SQLite WAL companions and every current
- * MMKV-root file so native storage type corruption can be inspected offline.
+ * Non-production, user-confirmed export of raw local storage and app logs.
+ * The archive intentionally includes SQLite WAL companions, every current
+ * MMKV-root file, and the same latest app-log ZIP used by the log share action.
  */
 export async function shareCurrentLocalStorageArchive(): Promise<LocalStorageArchiveShareResult> {
-  if (!isNonPublicProductionEnv) {
-    throw new Error(
-      'Local storage export is unavailable in production builds.',
-    );
+  if (!IS_LOCAL_STORAGE_EXPORT_ENABLED) {
+    throw new Error('Local storage export is unavailable in this build.');
   }
 
   if (!isNativeZipArchiveAvailable()) {
     throw new Error('Native ZIP export is unavailable in this build.');
   }
 
-  const [mmkvEntries, sqliteEntries, keyringStartupDiagnosticEntries] =
-    await Promise.all([
-      collectMMKVArchiveEntries(),
-      collectSQLiteArchiveEntries(),
-      collectKeyringStartupDiagnosticArchiveEntries(),
-    ]);
+  const [
+    mmkvEntries,
+    sqliteEntries,
+    keyringStartupDiagnosticEntries,
+    latestAppLogArchive,
+  ] = await Promise.all([
+    collectMMKVArchiveEntries(),
+    collectSQLiteArchiveEntries(),
+    collectKeyringStartupDiagnosticArchiveEntries(),
+    prepareLatestAppLogArchiveForSharing(),
+  ]);
+  const appLogEntries = latestAppLogArchive
+    ? [
+        {
+          sourcePath: latestAppLogArchive.path,
+          archivePath: `app-logs/${latestAppLogArchive.name}`,
+        },
+      ]
+    : [];
   const entries = [
     ...mmkvEntries,
     ...sqliteEntries,
     ...keyringStartupDiagnosticEntries,
+    ...appLogEntries,
   ];
 
   if (entries.length === 0) {
@@ -301,6 +315,7 @@ export async function shareCurrentLocalStorageArchive(): Promise<LocalStorageArc
   const fileName = `rabby-local-storage-${timestamp}.zip`;
   const archivePath = `${archiveDir}/${fileName}`;
   let rawMMKVDumpPaths: string[] = [];
+  const appLogCleanupPaths = latestAppLogArchive?.cleanupPaths || [];
 
   await RNFS.mkdir(archiveDir, {
     NSURLIsExcludedFromBackupKey: true,
@@ -318,8 +333,8 @@ export async function shareCurrentLocalStorageArchive(): Promise<LocalStorageArc
       mimeType: ARCHIVE_MIME_TYPE,
       title: 'Share local storage archive',
       subject: fileName,
-      message: 'Rabby local MMKV and SQLite diagnostic archive',
-      cleanupPaths: [archivePath, ...rawMMKVDumpPaths],
+      message: 'Rabby local storage and app log diagnostic archive',
+      cleanupPaths: [archivePath, ...rawMMKVDumpPaths, ...appLogCleanupPaths],
     });
 
     return {
@@ -328,14 +343,17 @@ export async function shareCurrentLocalStorageArchive(): Promise<LocalStorageArc
       mmkvDumpCount: rawMMKVDumps.storageCount,
       mmkvDumpKeyCount: rawMMKVDumps.totalKeyCount,
       keyringStartupDiagnosticFileCount: keyringStartupDiagnosticEntries.length,
+      appLogArchiveCount: appLogEntries.length,
     };
   } catch (error) {
     await Promise.allSettled(
-      [archivePath, ...rawMMKVDumpPaths].map(async path => {
-        if (await RNFS.exists(path)) {
-          await RNFS.unlink(path);
-        }
-      }),
+      [archivePath, ...rawMMKVDumpPaths, ...appLogCleanupPaths].map(
+        async path => {
+          if (await RNFS.exists(path)) {
+            await RNFS.unlink(path);
+          }
+        },
+      ),
     );
 
     throw error;
