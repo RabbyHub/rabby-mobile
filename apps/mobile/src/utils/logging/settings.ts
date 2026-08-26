@@ -1,6 +1,9 @@
 import { useCallback } from 'react';
 import { zustandByMMKV } from '@/core/storage/mmkv';
-import { APP_RUNTIME_ENV } from '@/constant/env';
+import {
+  APP_RUNTIME_ENV,
+  IS_LOCAL_STORAGE_EXPORT_ENABLED,
+} from '@/constant/env';
 import { isNonPublicProductionEnv } from '@/constant';
 import { getOnlineConfig } from '@/core/config/online';
 import {
@@ -79,6 +82,7 @@ export function getEffectiveFileLoggingEnabled() {
     runtimeEnv: policyEnv,
     localEnabled: getLocalFileLoggingEnabled(policyEnv),
     prodOnlineEnabled: getProdOnlineLoggingEnabled(),
+    diagnosticExportEnabled: IS_LOCAL_STORAGE_EXPORT_ENABLED,
   });
 }
 
@@ -89,6 +93,7 @@ export function getEffectiveConsoleCaptureEnabled() {
     runtimeEnv: policyEnv,
     localEnabled: getLocalFileLoggingEnabled(policyEnv),
     prodOnlineEnabled: getProdOnlineLoggingEnabled(),
+    diagnosticExportEnabled: IS_LOCAL_STORAGE_EXPORT_ENABLED,
   });
 }
 
@@ -120,9 +125,11 @@ export function useAppLogFileSwitch() {
 
   const effectiveEnabled = getEffectiveFileLoggingEnabled();
   const consoleCaptureEnabled = getEffectiveConsoleCaptureEnabled();
-  const localDefaultEnabled = getDefaultLocalAppFileLoggingEnabled(policyEnv);
-  const canToggle = policyEnv !== 'production';
-  const isOnlineControlled = policyEnv === 'production';
+  const isBuildForced = IS_LOCAL_STORAGE_EXPORT_ENABLED;
+  const localDefaultEnabled =
+    isBuildForced || getDefaultLocalAppFileLoggingEnabled(policyEnv);
+  const canToggle = !isBuildForced && policyEnv !== 'production';
+  const isOnlineControlled = !isBuildForced && policyEnv === 'production';
 
   const onToggle = useCallback(
     (nextValue?: boolean) => {
@@ -139,6 +146,7 @@ export function useAppLogFileSwitch() {
     policyEnv,
     canToggle,
     isOnlineControlled,
+    isBuildForced,
     effectiveEnabled,
     consoleCaptureEnabled,
     localDefaultEnabled,

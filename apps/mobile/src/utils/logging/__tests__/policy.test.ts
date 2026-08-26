@@ -83,6 +83,18 @@ describe('logging policy', () => {
     ).toBe(true);
   });
 
+  it('forces file logging and console capture in diagnostic export builds', () => {
+    const options = {
+      runtimeEnv: 'production',
+      localEnabled: false,
+      prodOnlineEnabled: false,
+      diagnosticExportEnabled: true,
+    };
+
+    expect(resolveAppFileLoggingEnabled(options)).toBe(true);
+    expect(resolveConsoleCaptureEnabled(options)).toBe(true);
+  });
+
   it('uses the same policy to decide whether console capture is active', () => {
     expect(
       resolveConsoleCaptureEnabled({

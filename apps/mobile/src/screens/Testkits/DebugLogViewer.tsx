@@ -785,6 +785,7 @@ export default function DebugLogViewerScreen(): JSX.Element {
     canToggle,
     consoleCaptureEnabled,
     effectiveEnabled,
+    isBuildForced,
     isOnlineControlled,
     localDefaultEnabled,
     localFileLoggingEnabled,
@@ -1313,7 +1314,7 @@ export default function DebugLogViewerScreen(): JSX.Element {
 
         <Section
           title="Logging Policy"
-          description="Keep this enabled before running the write/flush/finalize flow. Development defaults on, regression defaults off until enabled, and production follows online config only.">
+          description="Keep this enabled before running the write/flush/finalize flow. Diagnostic-export builds force logging on; otherwise development defaults on, regression defaults off until enabled, and production follows online config only.">
           <View style={styles.policyRow}>
             <View style={styles.policyTextBlock}>
               <Text style={styles.policyLabel}>Effective file logging</Text>
@@ -1361,7 +1362,9 @@ export default function DebugLogViewerScreen(): JSX.Element {
           </View>
 
           <Text style={styles.sectionHint}>
-            {isOnlineControlled
+            {isBuildForced
+              ? 'This build forces console capture and app file logging so diagnostic exports contain recent logs.'
+              : isOnlineControlled
               ? `Production is controlled by onlineConfig: ${APP_FILE_LOGGING_ONLINE_SWITCH}`
               : `${localPolicyHint} Console capture follows the same policy.`}
           </Text>

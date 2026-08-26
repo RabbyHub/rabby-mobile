@@ -649,6 +649,7 @@ function DevSwitchAboutAppLogging() {
   const {
     canToggle,
     effectiveEnabled,
+    isBuildForced,
     isOnlineControlled,
     localDefaultEnabled,
     policyEnv,
@@ -666,7 +667,9 @@ function DevSwitchAboutAppLogging() {
     refreshSnapshot();
   }, [effectiveEnabled, refreshSnapshot]);
 
-  const statusText = canToggle
+  const statusText = isBuildForced
+    ? 'This build forces console capture and app file logging for diagnostic export'
+    : canToggle
     ? effectiveEnabled
       ? `${
           policyEnv === 'development' ? 'Development' : 'Regression'
