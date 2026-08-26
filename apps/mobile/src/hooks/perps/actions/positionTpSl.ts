@@ -10,6 +10,8 @@ import {
 import type { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 import BigNumber from 'bignumber.js';
 
+import { isPerpsProPriceProtocolValid } from '@/utils/perpsPriceProtocol';
+
 import { isSamePerpsActionAccount } from './accountGuard';
 import { isPerpsActionUserCancelled } from './actionError';
 
@@ -92,17 +94,6 @@ const finiteDecimal = (value: unknown) => {
   return result.isFinite() ? result : null;
 };
 
-const normalizePrice = (value: string, pxDecimals: number) => {
-  const price = finiteDecimal(value);
-  if (!price?.gt(0) || !Number.isSafeInteger(pxDecimals) || pxDecimals < 0) {
-    return null;
-  }
-  const normalized = price
-    .decimalPlaces(pxDecimals, BigNumber.ROUND_DOWN)
-    .toFixed();
-  return new BigNumber(normalized).gt(0) ? normalized : null;
-};
-
 const normalizeSize = (value: string, szDecimals: number) => {
   const size = finiteDecimal(value);
   if (!size?.gt(0) || !Number.isSafeInteger(szDecimals) || szDecimals < 0) {
@@ -138,7 +129,6 @@ export const buildPerpsPositionTpSlCommand = ({
   expectedPositionSize,
   legs,
   markPrice,
-  pxDecimals,
   scope,
   szDecimals,
 }: Omit<PerpsPositionTpSlCommand, 'legs' | 'type'> & {
@@ -177,7 +167,12 @@ export const buildPerpsPositionTpSlCommand = ({
       throw new Error('Duplicate Position TP/SL side');
     }
     seenKinds.add(leg.kind);
-    const triggerPrice = normalizePrice(leg.triggerPrice, pxDecimals);
+    const triggerPrice = isPerpsProPriceProtocolValid(
+      leg.triggerPrice,
+      szDecimals,
+    )
+      ? leg.triggerPrice
+      : null;
     if (
       !triggerPrice ||
       !isTriggerValidForMark({
@@ -204,6 +199,7 @@ export const buildPerpsPositionTpSlCommand = ({
     ) {
       throw new Error('Invalid partial Position TP/SL amount');
     }
+    const expectedTriggerPrice = finiteDecimal(leg.expectedOrder?.triggerPrice);
     const expectedOrder = leg.expectedOrder
       ? {
           execution: 'market' as const,
@@ -212,10 +208,9 @@ export const buildPerpsPositionTpSlCommand = ({
             szDecimals,
           ),
           side: leg.expectedOrder.side,
-          triggerPrice: normalizePrice(
-            leg.expectedOrder.triggerPrice,
-            pxDecimals,
-          ),
+          triggerPrice: expectedTriggerPrice?.gt(0)
+            ? expectedTriggerPrice.toFixed()
+            : null,
         }
       : undefined;
     if (

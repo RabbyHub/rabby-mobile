@@ -281,6 +281,21 @@ describe('Perps Pro open order edit sheets', () => {
 
     fireEvent.changeText(
       screen.getByLabelText('page.perps.pro.openOrders.price'),
+      '0000',
+    );
+    expect(
+      screen.getByLabelText('page.perps.pro.openOrders.price').props.value,
+    ).toBe('0000');
+    fireEvent.changeText(
+      screen.getByLabelText('page.perps.pro.openOrders.price'),
+      '50000',
+    );
+    expect(
+      screen.getByLabelText('page.perps.pro.openOrders.price').props.value,
+    ).toBe('50000');
+
+    fireEvent.changeText(
+      screen.getByLabelText('page.perps.pro.openOrders.price'),
       '100',
     );
     expect(

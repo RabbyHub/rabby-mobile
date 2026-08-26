@@ -1,6 +1,11 @@
 import type { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 import BigNumber from 'bignumber.js';
 
+import {
+  isPerpsProPriceProtocolValid,
+  normalizePerpsProCalculatedPrice,
+} from '@/utils/perpsPriceProtocol';
+
 import type { PerpsOpenOrderTopology } from './openOrderTopology';
 
 export type PerpsPositionTpSlKind = 'takeProfit' | 'stopLoss';
@@ -332,14 +337,14 @@ export const calculatePositionTpSlTriggerFromRoi = ({
   entryPrice,
   kind,
   leverage,
-  pxDecimals,
+  szDecimals,
   roiPercent,
 }: {
   direction: 'long' | 'short';
   entryPrice: string | null;
   kind: PerpsPositionTpSlKind;
   leverage: number;
-  pxDecimals: number;
+  szDecimals: number;
   roiPercent: string;
 }) => {
   const entry = finiteDecimal(entryPrice);
@@ -349,8 +354,8 @@ export const calculatePositionTpSlTriggerFromRoi = ({
     !roi?.gt(0) ||
     !Number.isFinite(leverage) ||
     leverage <= 0 ||
-    !Number.isSafeInteger(pxDecimals) ||
-    pxDecimals < 0
+    !Number.isSafeInteger(szDecimals) ||
+    szDecimals < 0
   ) {
     return null;
   }
@@ -363,7 +368,7 @@ export const calculatePositionTpSlTriggerFromRoi = ({
   if (!trigger.gt(0)) {
     return null;
   }
-  return trigger.decimalPlaces(pxDecimals, BigNumber.ROUND_DOWN).toFixed();
+  return normalizePerpsProCalculatedPrice(trigger, szDecimals);
 };
 
 export const calculatePositionTpSlTriggerFromPnl = ({
@@ -371,14 +376,14 @@ export const calculatePositionTpSlTriggerFromPnl = ({
   entryPrice,
   kind,
   pnl,
-  pxDecimals,
+  szDecimals,
   size,
 }: {
   direction: 'long' | 'short';
   entryPrice: string | null;
   kind: PerpsPositionTpSlKind;
   pnl: string;
-  pxDecimals: number;
+  szDecimals: number;
   size: string;
 }) => {
   const entry = finiteDecimal(entryPrice);
@@ -388,8 +393,8 @@ export const calculatePositionTpSlTriggerFromPnl = ({
     !entry?.gt(0) ||
     !targetPnl?.gt(0) ||
     !amount?.gt(0) ||
-    !Number.isSafeInteger(pxDecimals) ||
-    pxDecimals < 0
+    !Number.isSafeInteger(szDecimals) ||
+    szDecimals < 0
   ) {
     return null;
   }
@@ -401,7 +406,7 @@ export const calculatePositionTpSlTriggerFromPnl = ({
   if (!trigger.gt(0)) {
     return null;
   }
-  return trigger.decimalPlaces(pxDecimals, BigNumber.ROUND_DOWN).toFixed();
+  return normalizePerpsProCalculatedPrice(trigger, szDecimals);
 };
 
 export type PerpsPositionTpSlTriggerValidation =
@@ -459,6 +464,7 @@ export const validateFullPositionTpSlFormTrigger = ({
   liquidationPrice,
   markPrice,
   rawMagnitude,
+  szDecimals,
   triggerPrice,
 }: {
   direction: 'long' | 'short';
@@ -467,6 +473,7 @@ export const validateFullPositionTpSlFormTrigger = ({
   liquidationPrice: string | null;
   markPrice: string | null;
   rawMagnitude: string;
+  szDecimals: number;
   triggerPrice: string;
 }): PerpsPositionTpSlFormTriggerValidation => {
   const trigger = finiteDecimal(triggerPrice);
@@ -499,7 +506,11 @@ export const validateFullPositionTpSlFormTrigger = ({
   }
 
   const mark = finiteDecimal(markPrice);
-  if (!trigger?.gt(0) || !mark?.gt(0)) {
+  if (
+    !trigger?.gt(0) ||
+    !mark?.gt(0) ||
+    !isPerpsProPriceProtocolValid(triggerPrice, szDecimals)
+  ) {
     return {
       kind: 'invalid',
       reason:
@@ -542,18 +553,20 @@ export const validateFullPositionTpSlFormTrigger = ({
     }
   }
 
-  return { kind: 'valid', normalized: trigger.toString() };
+  return { kind: 'valid', normalized: triggerPrice };
 };
 
 export const validatePositionTpSlTrigger = ({
   direction,
   kind,
   markPrice,
+  szDecimals,
   triggerPrice,
 }: {
   direction: 'long' | 'short';
   kind: PerpsPositionTpSlKind;
   markPrice: string | null;
+  szDecimals: number;
   triggerPrice: string;
 }): PerpsPositionTpSlTriggerValidation => {
   if (!triggerPrice.trim()) {
@@ -561,7 +574,11 @@ export const validatePositionTpSlTrigger = ({
   }
   const mark = finiteDecimal(markPrice);
   const trigger = finiteDecimal(triggerPrice);
-  if (!mark?.gt(0) || !trigger?.gt(0)) {
+  if (
+    !mark?.gt(0) ||
+    !trigger?.gt(0) ||
+    !isPerpsProPriceProtocolValid(triggerPrice, szDecimals)
+  ) {
     return { kind: 'invalid' };
   }
   const shouldBeAbove =
@@ -570,7 +587,7 @@ export const validatePositionTpSlTrigger = ({
   if (shouldBeAbove ? trigger.lte(mark) : trigger.gte(mark)) {
     return { kind: 'invalid' };
   }
-  return { kind: 'valid', normalized: trigger.toString() };
+  return { kind: 'valid', normalized: triggerPrice };
 };
 
 export type PerpsPositionTpSlAmountValidation =

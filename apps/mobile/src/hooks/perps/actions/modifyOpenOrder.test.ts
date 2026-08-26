@@ -47,7 +47,7 @@ const command = () =>
     dexId: '',
     expectedLimitPrice: '50000',
     expectedRemainingSize: '0.004',
-    limitPrice: '51000.129',
+    limitPrice: '51000',
     marketKey: 'hyperliquid::BTC',
     oid: 7,
     pxDecimals: 2,
@@ -116,7 +116,7 @@ const dependencies = (
 });
 
 describe('Perps modify open order action', () => {
-  it('freezes a complete replacement and rounds down to market precision', () => {
+  it('freezes a complete replacement with a protocol-valid price', () => {
     expect(command()).toMatchObject({
       expected: {
         kind: 'limit',
@@ -126,7 +126,7 @@ describe('Perps modify open order action', () => {
         side: 'sell',
         tif: 'Alo',
       },
-      replacement: { baseSize: '0.00345', limitPrice: '51000.12' },
+      replacement: { baseSize: '0.00345', limitPrice: '51000' },
       type: 'modifyOpenOrder',
     });
   });
@@ -139,7 +139,7 @@ describe('Perps modify open order action', () => {
     expect(deps.modifyOrder).toHaveBeenCalledWith({
       coin: 'BTC',
       isBuy: false,
-      limitPx: '51000.12',
+      limitPx: '51000',
       oid: 7,
       orderType: { limit: { tif: 'Alo' } },
       reduceOnly: true,
@@ -147,6 +147,27 @@ describe('Perps modify open order action', () => {
     });
     expect(deps.refreshOpenOrders).toHaveBeenCalledWith('');
     expect(deps.refreshClearinghouse).toHaveBeenCalledWith('');
+  });
+
+  it('rejects a replacement price that was not canonicalized by the editor', () => {
+    expect(() =>
+      buildPerpsModifyOpenOrderCommand({
+        account,
+        baseSize: '0.003456',
+        coin: 'BTC',
+        dexId: '',
+        expectedLimitPrice: '50000',
+        expectedRemainingSize: '0.004',
+        limitPrice: '51000.129',
+        marketKey: 'hyperliquid::BTC',
+        oid: 7,
+        pxDecimals: 2,
+        reduceOnly: true,
+        side: 'sell',
+        szDecimals: 5,
+        tif: 'Alo',
+      }),
+    ).toThrow('Invalid open order modification');
   });
 
   it('modifies an opening Trigger Market directly and preserves its protection ratio', async () => {

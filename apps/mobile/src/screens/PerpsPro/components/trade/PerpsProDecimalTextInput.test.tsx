@@ -2,6 +2,10 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { TextInput as RNTextInput } from 'react-native';
 
+import {
+  sanitizePerpsProPriceEditingInput,
+  sanitizePerpsProPriceInput,
+} from '../../model/trade';
 import { PerpsProDecimalTextInput } from './PerpsProDecimalTextInput';
 
 const mockSetNativeProps = jest.fn();
@@ -178,6 +182,60 @@ describe('PerpsProDecimalTextInput', () => {
 
     expect(onChangeText).toHaveBeenCalledWith('40');
     expect(mockSetNativeProps).toHaveBeenCalledWith({ text: '40' });
+  });
+
+  it('preserves a zero suffix while replacing the first price digit', () => {
+    const onChangeText = jest.fn();
+    render(
+      <PerpsProDecimalTextInput
+        canonicalizeValueOnBlur={value => sanitizePerpsProPriceInput(value, 1)}
+        maxDecimals={5}
+        normalizeValue={value => sanitizePerpsProPriceEditingInput(value, 1)}
+        onChangeText={onChangeText}
+        preserveIntegerZeroRun
+        testID="decimal-input"
+        value="60000"
+      />,
+    );
+    const input = screen.getByTestId('decimal-input');
+
+    fireEvent(input, 'selectionChange', {
+      nativeEvent: { selection: { end: 1, start: 1 } },
+    });
+    mockSetNativeProps.mockClear();
+    fireEvent.changeText(input, '0000');
+
+    expect(onChangeText).toHaveBeenLastCalledWith('0000');
+    expect(screen.getByTestId('decimal-input').props.value).toBe('0000');
+    expect(mockSetNativeProps).not.toHaveBeenCalledWith({ text: '0' });
+
+    fireEvent.changeText(input, '50000');
+
+    expect(onChangeText).toHaveBeenLastCalledWith('50000');
+    expect(screen.getByTestId('decimal-input').props.value).toBe('50000');
+  });
+
+  it('canonicalizes a preserved zero run when price editing blurs', () => {
+    const onChangeText = jest.fn();
+    render(
+      <PerpsProDecimalTextInput
+        canonicalizeValueOnBlur={value => sanitizePerpsProPriceInput(value, 1)}
+        maxDecimals={5}
+        normalizeValue={value => sanitizePerpsProPriceEditingInput(value, 1)}
+        onChangeText={onChangeText}
+        preserveIntegerZeroRun
+        testID="decimal-input"
+        value="60000"
+      />,
+    );
+    const input = screen.getByTestId('decimal-input');
+
+    fireEvent.changeText(input, '0000');
+    fireEvent(input, 'blur', { nativeEvent: {} });
+
+    expect(onChangeText.mock.calls.slice(-2)).toEqual([['0000'], ['0']]);
+    expect(screen.getByTestId('decimal-input').props.value).toBe('0');
+    expect(mockSetNativeProps).toHaveBeenLastCalledWith({ text: '0' });
   });
 
   it('holds the initial cursor after the current value until editing starts', () => {

@@ -4,6 +4,10 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
+import {
+  sanitizePerpsProPriceEditingInput,
+  sanitizePerpsProPriceInput,
+} from '../../model/trade';
 import { resolvePerpsProFieldBackground } from '../common/perpsProVisual';
 import { PerpsProSelectCaret } from '../common/PerpsProSelectCaret';
 import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
@@ -26,6 +30,7 @@ export const PerpsProPositionTpSlInput: React.FC<{
   negative?: boolean;
   onChangeText: (value: string) => void;
   onPressMode?: () => void;
+  priceSzDecimals?: number;
   testID: string;
   unit?: string;
   value: string;
@@ -39,12 +44,23 @@ export const PerpsProPositionTpSlInput: React.FC<{
     negative = false,
     onChangeText,
     onPressMode,
+    priceSzDecimals,
     testID,
     unit,
     value,
   }) => {
     const { colors2024, styles } = useTheme2024({ getStyle });
     const [focused, setFocused] = useState(false);
+    const normalizePriceValue = React.useCallback(
+      (nextValue: string) =>
+        sanitizePerpsProPriceEditingInput(nextValue, priceSzDecimals ?? 0),
+      [priceSzDecimals],
+    );
+    const canonicalizePriceValue = React.useCallback(
+      (nextValue: string) =>
+        sanitizePerpsProPriceInput(nextValue, priceSzDecimals ?? 0),
+      [priceSzDecimals],
+    );
     const showFloatingLabel = focused || !!value;
     const showNegativePrefix = negative && !!value;
     const displayValue = `${
@@ -97,9 +113,16 @@ export const PerpsProPositionTpSlInput: React.FC<{
             inputComponent={PerpsProPositionTpSlBottomSheetTextInput}
             maxFontSizeMultiplier={1.2}
             maxDecimals={maxDecimals}
+            normalizeValue={
+              priceSzDecimals == null ? undefined : normalizePriceValue
+            }
             onBlur={() => setFocused(false)}
             onChangeText={onChangeText}
             onFocus={() => setFocused(true)}
+            canonicalizeValueOnBlur={
+              priceSzDecimals == null ? undefined : canonicalizePriceValue
+            }
+            preserveIntegerZeroRun={priceSzDecimals != null}
             selectionColor={colors2024['brand-default']}
             style={[
               styles.input,

@@ -206,7 +206,7 @@ describe('Perps Pro position TP/SL model', () => {
         entryPrice: '100',
         kind: 'stopLoss',
         leverage: 20,
-        pxDecimals: 2,
+        szDecimals: 2,
         roiPercent: '100',
       }),
     ).toBe('105');
@@ -219,7 +219,7 @@ describe('Perps Pro position TP/SL model', () => {
         entryPrice: '100',
         kind: 'takeProfit',
         pnl: '10',
-        pxDecimals: 2,
+        szDecimals: 2,
         size: '2',
       }),
     ).toBe('105');
@@ -229,7 +229,7 @@ describe('Perps Pro position TP/SL model', () => {
         entryPrice: '100',
         kind: 'stopLoss',
         pnl: '10',
-        pxDecimals: 2,
+        szDecimals: 2,
         size: '2',
       }),
     ).toBe('105');
@@ -239,7 +239,7 @@ describe('Perps Pro position TP/SL model', () => {
         entryPrice: '100',
         kind: 'stopLoss',
         pnl: '300',
-        pxDecimals: 2,
+        szDecimals: 2,
         size: '2',
       }),
     ).toBeNull();
@@ -268,6 +268,7 @@ describe('Perps Pro position TP/SL model', () => {
         direction: 'long',
         kind: 'takeProfit',
         markPrice: '100',
+        szDecimals: 2,
         triggerPrice: '101',
       }),
     ).toEqual({ kind: 'valid', normalized: '101' });
@@ -276,6 +277,7 @@ describe('Perps Pro position TP/SL model', () => {
         direction: 'long',
         kind: 'stopLoss',
         markPrice: '100',
+        szDecimals: 2,
         triggerPrice: '101',
       }),
     ).toEqual({ kind: 'invalid' });
@@ -284,6 +286,7 @@ describe('Perps Pro position TP/SL model', () => {
         direction: 'short',
         kind: 'takeProfit',
         markPrice: '100',
+        szDecimals: 2,
         triggerPrice: '99',
       }),
     ).toEqual({ kind: 'valid', normalized: '99' });
@@ -292,6 +295,7 @@ describe('Perps Pro position TP/SL model', () => {
         direction: 'short',
         kind: 'stopLoss',
         markPrice: '100',
+        szDecimals: 2,
         triggerPrice: '101',
       }),
     ).toEqual({ kind: 'valid', normalized: '101' });
@@ -341,6 +345,7 @@ describe('Perps Pro position TP/SL model', () => {
         liquidationPrice: '80',
         markPrice: '100',
         rawMagnitude: '',
+        szDecimals: 2,
         triggerPrice: '90',
         ...overrides,
       });

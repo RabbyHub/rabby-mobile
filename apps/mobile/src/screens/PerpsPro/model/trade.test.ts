@@ -10,6 +10,7 @@ import {
   resolvePerpsProMinimumOrderAmount,
   resolvePerpsProTradeAmount,
   sanitizePerpsProDecimalInput,
+  sanitizePerpsProPriceEditingInput,
   sanitizePerpsProPriceInput,
 } from './trade';
 
@@ -257,6 +258,10 @@ describe('Perps Pro trade model', () => {
     expect(sanitizePerpsProPriceInput('123456.7', 1)).toBe('123456');
     expect(sanitizePerpsProPriceInput('78930.0', 1)).toBe('78930');
     expect(sanitizePerpsProPriceInput('01,23456', 1)).toBe('1.2345');
+    expect(sanitizePerpsProPriceEditingInput('0000', 1)).toBe('0000');
+    expect(sanitizePerpsProPriceEditingInput('00001', 1)).toBe('1');
+    expect(sanitizePerpsProPriceEditingInput('0000.5', 1)).toBe('0.5');
+    expect(sanitizePerpsProPriceInput('0000', 1)).toBe('0');
   });
 
   it('validates only complete canonical protocol prices', () => {

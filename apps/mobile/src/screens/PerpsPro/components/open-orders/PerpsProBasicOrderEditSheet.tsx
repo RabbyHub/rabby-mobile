@@ -18,7 +18,11 @@ import {
   resolveBasicOrderEditBaseSize,
   type PerpsProBasicOrderEditDraft,
 } from '../../model/openOrderEdit';
-import { getPerpsProAmountInputDecimals } from '../../model/trade';
+import {
+  getPerpsProAmountInputDecimals,
+  getPerpsProPriceInputMaxDecimals,
+  isPerpsProPriceProtocolValid,
+} from '../../model/trade';
 import {
   getPerpsProBottomSheetChromeStyles,
   PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
@@ -46,11 +50,7 @@ export const PerpsProBasicOrderEditSheet: React.FC<{
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const dismissKeyboardThen = usePerpsProDismissKeyboard();
-  const initialPrice = editor.order.executionPrice
-    ? new BigNumber(editor.order.executionPrice)
-        .decimalPlaces(editor.market.pxDecimals, BigNumber.ROUND_DOWN)
-        .toFixed(editor.market.pxDecimals)
-    : '';
+  const initialPrice = editor.order.executionPrice || '';
   const [price, setPrice] = useState(initialPrice);
   const [manualAmount, setManualAmount] = useState('');
   const [amountTouched, setAmountTouched] = useState(false);
@@ -109,13 +109,24 @@ export const PerpsProBasicOrderEditSheet: React.FC<{
   const canReview = useMemo(() => {
     const nextPrice = new BigNumber(price || Number.NaN);
     const nextSize = new BigNumber(baseSize || Number.NaN);
-    if (!nextPrice.isFinite() || !nextPrice.gt(0) || !nextSize.gt(0)) {
+    if (
+      !nextPrice.isFinite() ||
+      !nextPrice.gt(0) ||
+      !nextSize.gt(0) ||
+      !isPerpsProPriceProtocolValid(price, editor.market.szDecimals)
+    ) {
       return false;
     }
     return (
       !nextPrice.eq(initialPrice) || !nextSize.eq(editor.order.remainingSize)
     );
-  }, [baseSize, editor.order.remainingSize, initialPrice, price]);
+  }, [
+    baseSize,
+    editor.market.szDecimals,
+    editor.order.remainingSize,
+    initialPrice,
+    price,
+  ]);
 
   return (
     <AppBottomSheetModal
@@ -152,8 +163,11 @@ export const PerpsProBasicOrderEditSheet: React.FC<{
                 editor.market.pxDecimals,
               )}`}
               label={t('page.perps.pro.openOrders.price')}
-              maxDecimals={editor.market.pxDecimals}
+              maxDecimals={getPerpsProPriceInputMaxDecimals(
+                editor.market.szDecimals,
+              )}
               onChangeText={setPrice}
+              priceSzDecimals={editor.market.szDecimals}
               testID="perps-pro-basic-order-edit-price"
               unit={editor.market.quoteAsset}
               value={price}

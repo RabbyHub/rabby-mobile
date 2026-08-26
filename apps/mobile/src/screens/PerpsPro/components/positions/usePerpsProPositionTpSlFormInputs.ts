@@ -26,8 +26,8 @@ type SideInputCalculationContext = {
   entryPrice: string | null;
   kind: PerpsPositionTpSlKind;
   leverage: number;
-  pxDecimals: number;
   size: string | null;
+  szDecimals: number;
 };
 
 const formatDerivedMagnitude = (value: string | null) => {
@@ -77,8 +77,8 @@ const calculateTriggerFromMode = (
         entryPrice: context.entryPrice,
         kind: context.kind,
         pnl: rawMagnitude,
-        pxDecimals: context.pxDecimals,
         size: context.size || '',
+        szDecimals: context.szDecimals,
       }) || ''
     );
   }
@@ -88,8 +88,8 @@ const calculateTriggerFromMode = (
       entryPrice: context.entryPrice,
       kind: context.kind,
       leverage: context.leverage,
-      pxDecimals: context.pxDecimals,
       roiPercent: rawMagnitude,
+      szDecimals: context.szDecimals,
     }) || ''
   );
 };
@@ -142,9 +142,9 @@ export const usePerpsProPositionTpSlFormInputs = ({
   initialStopLoss,
   initialTakeProfit,
   leverage,
-  pxDecimals,
   preferredModes,
   sideSize,
+  szDecimals,
 }: {
   direction: 'long' | 'short';
   entryPrice: string | null;
@@ -152,9 +152,9 @@ export const usePerpsProPositionTpSlFormInputs = ({
   initialStopLoss: string;
   initialTakeProfit: string;
   leverage: number;
-  pxDecimals: number;
   preferredModes: Record<'sl' | 'tp', PerpsProPositionTpSlMode>;
   sideSize: string | null;
+  szDecimals: number;
 }) => {
   const createContext = useCallback(
     (kind: PerpsPositionTpSlKind, size: string | null) => ({
@@ -162,10 +162,10 @@ export const usePerpsProPositionTpSlFormInputs = ({
       entryPrice,
       kind,
       leverage,
-      pxDecimals,
       size,
+      szDecimals,
     }),
-    [direction, entryPrice, leverage, pxDecimals],
+    [direction, entryPrice, leverage, szDecimals],
   );
   const [takeProfit, setTakeProfit] = useState(() =>
     createSideInputDraft(

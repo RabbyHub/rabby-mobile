@@ -259,13 +259,15 @@ describe('Perps Pro attached TP/SL command and executor', () => {
     expect(
       validatePerpsProAttachedTpSlCommand(invalidEntrySource, guardContext()),
     ).toMatchObject({ ok: false, reason: 'expectedEntryPrice' });
-    const invalidFrozenDirection = build({
-      attached: attached({
-        tp: {
-          ...attached().tp!,
+    const invalidFrozenDirection = Object.freeze({
+      ...command,
+      attached: Object.freeze({
+        ...command.attached,
+        tp: Object.freeze({
+          ...command.attached.tp!,
           rawMagnitude: '100',
           triggerPrice: '100',
-        },
+        }),
       }),
     });
     expect(

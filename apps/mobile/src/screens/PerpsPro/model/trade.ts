@@ -1,5 +1,14 @@
 import BigNumber from 'bignumber.js';
 
+export {
+  getPerpsProPriceInputMaxDecimals,
+  isPerpsProPriceProtocolValid,
+  sanitizePerpsProDecimalEditingInput,
+  sanitizePerpsProDecimalInput,
+  sanitizePerpsProPriceEditingInput,
+  sanitizePerpsProPriceInput,
+} from '@/utils/perpsPriceProtocol';
+
 import type { PerpsProBboStrategy } from './bbo';
 import {
   createPerpsProAttachedTpSlDraft,
@@ -79,78 +88,6 @@ export const getPerpsProReduceOnlyAvailability = ({
     hasPosition,
     sellUnavailable: reduceOnly && !canSellToReduce,
   };
-};
-
-export const sanitizePerpsProDecimalInput = (
-  value: string,
-  maxDecimals: number,
-) => {
-  const normalized = value.replace(/,/g, '.').replace(/[^\d.]/g, '');
-  const [integer = '', ...fractionParts] = normalized.split('.');
-  const fraction = fractionParts.join('').slice(0, Math.max(0, maxDecimals));
-  const hasDecimal = normalized.includes('.') && maxDecimals > 0;
-  const integerValue =
-    integer.replace(/^0+(?=\d)/, '') || (hasDecimal ? '0' : '');
-  return hasDecimal ? `${integerValue}.${fraction}` : integerValue;
-};
-
-const PERPS_PRO_MAX_PRICE_DECIMALS = 6;
-const PERPS_PRO_MAX_PRICE_SIGNIFICANT_FIGURES = 5;
-
-export const getPerpsProPriceInputMaxDecimals = (szDecimals: number) =>
-  Number.isSafeInteger(szDecimals) && szDecimals >= 0
-    ? Math.max(0, PERPS_PRO_MAX_PRICE_DECIMALS - szDecimals)
-    : 0;
-
-/**
- * Hyperliquid prices allow at most five significant figures and at most
- * `6 - szDecimals` fractional digits. Integer prices remain unrestricted.
- * The sanitizer preserves incomplete editing states such as `0.`.
- */
-export const sanitizePerpsProPriceInput = (
-  value: string,
-  szDecimals: number,
-) => {
-  const normalized = sanitizePerpsProDecimalInput(
-    value,
-    getPerpsProPriceInputMaxDecimals(szDecimals),
-  );
-  if (!normalized.includes('.')) {
-    return normalized;
-  }
-  const preservesIncompleteDecimal = normalized.endsWith('.');
-  const [integer, fraction = ''] = normalized.split('.');
-  let acceptedFraction = '';
-  for (const digit of fraction) {
-    const significantDigits = `${integer}${acceptedFraction}${digit}`.replace(
-      /^0+/u,
-      '',
-    );
-    if (significantDigits.length > PERPS_PRO_MAX_PRICE_SIGNIFICANT_FIGURES) {
-      break;
-    }
-    acceptedFraction += digit;
-  }
-  return acceptedFraction || preservesIncompleteDecimal
-    ? `${integer}.${acceptedFraction}`
-    : integer;
-};
-
-export const isPerpsProPriceProtocolValid = (
-  value: string,
-  szDecimals: number,
-) => {
-  if (
-    !Number.isSafeInteger(szDecimals) ||
-    szDecimals < 0 ||
-    !/^(?:0|[1-9]\d*)(?:\.\d+)?$/u.test(value)
-  ) {
-    return false;
-  }
-  return (
-    sanitizePerpsProPriceInput(value, szDecimals) === value &&
-    !!decimal(value)?.gt(0)
-  );
 };
 
 export const resolvePerpsProTradeAmount = ({

@@ -113,6 +113,14 @@ describe('Perps position TP/SL action', () => {
     ).toThrow('Invalid Position TP/SL trigger price');
   });
 
+  it('rejects a direct trigger that violates Hyperliquid price precision', () => {
+    expect(() =>
+      command({
+        legs: [{ kind: 'takeProfit', size: '0.5', triggerPrice: '110.123' }],
+      }),
+    ).toThrow('Invalid Position TP/SL trigger price');
+  });
+
   it('strictly cancels before creating and passes 8% slippage', async () => {
     const callOrder: string[] = [];
     const deps = dependencies({

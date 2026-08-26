@@ -244,6 +244,14 @@ export const buildPerpsProAttachedTpSlCommand = ({
   ) {
     throw new Error('Attached TP/SL evaluation does not match the parent');
   }
+  const attachedErrors = validatePerpsProFrozenAttachedTpSl({
+    attached,
+    expectedEntryPrice: attached.expectedEntryPrice,
+    szDecimals,
+  });
+  if (attachedErrors.length > 0) {
+    throw new Error('Attached TP/SL trigger price is invalid');
+  }
   if (
     !isSamePerpsActionAccount(accountRuntime.account, parent.account) ||
     !accountRuntime.isInitialized ||
@@ -367,6 +375,7 @@ export const validatePerpsProAttachedTpSlCommand = (
   const errors = validatePerpsProFrozenAttachedTpSl({
     attached: command.attached,
     expectedEntryPrice,
+    szDecimals: command.reviewFacts.szDecimals,
   });
   return errors.length > 0
     ? {

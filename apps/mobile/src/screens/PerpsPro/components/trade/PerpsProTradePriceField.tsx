@@ -18,6 +18,7 @@ export { PERPS_PRO_PRICE_FILL_ANIMATION } from './usePerpsProPriceFillAnimation'
 const suffixFontStyle = getPerpsProTradeSelectFontStyle(Platform.OS);
 
 type PerpsProTradePriceFieldProps = {
+  canonicalizeValueOnBlur?: (value: string) => string;
   editable?: boolean;
   fillRevision?: number;
   label: string;
@@ -35,6 +36,7 @@ type PerpsProTradePriceFieldProps = {
 export const PerpsProTradePriceField = React.memo(
   React.forwardRef<TextInput, PerpsProTradePriceFieldProps>((props, ref) => {
     const {
+      canonicalizeValueOnBlur,
       editable = true,
       fillRevision = 0,
       label,
@@ -87,12 +89,14 @@ export const PerpsProTradePriceField = React.memo(
             )}
             <PerpsProDecimalTextInput
               accessibilityLabel={label}
+              canonicalizeValueOnBlur={canonicalizeValueOnBlur}
               cursorColor={colors2024['brand-default']}
               editable={editable}
               inputComponent={PerpsProAnimatedPriceTextInput}
               maxFontSizeMultiplier={1.2}
               maxDecimals={maxDecimals}
               normalizeValue={normalizeValue}
+              preserveIntegerZeroRun
               ref={ref}
               onBlur={() => setFocused(false)}
               onChangeText={onChangeText}

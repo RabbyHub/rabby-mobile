@@ -84,6 +84,7 @@ import {
   resolvePerpsProMinimumOrderAmount,
   resolvePerpsProTradeAmount,
   sanitizePerpsProDecimalInput,
+  sanitizePerpsProPriceEditingInput,
   sanitizePerpsProPriceInput,
   type PerpsProConditionalExecution,
   type PerpsProTradeAmountSource,
@@ -539,7 +540,7 @@ export const usePerpsProTrade = ({
       field: 'conditionalLimitPrice' | 'limitPrice' | 'triggerPrice',
       value: string,
     ) => {
-      const price = sanitizePerpsProPriceInput(
+      const price = sanitizePerpsProPriceEditingInput(
         value,
         market?.marketData.szDecimals ?? 0,
       );
@@ -607,14 +608,9 @@ export const usePerpsProTrade = ({
       const normalizedPrice =
         price == null
           ? ''
-          : field === 'limitPrice' || field === 'triggerPrice'
-          ? sanitizePerpsProPriceInput(
+          : sanitizePerpsProPriceInput(
               price,
               market?.marketData.szDecimals ?? 0,
-            )
-          : sanitizePerpsProDecimalInput(
-              price,
-              market?.marketData.pxDecimals ?? 2,
             );
       if (!positive(normalizedPrice)) {
         return 'invalidPrice';
@@ -640,12 +636,7 @@ export const usePerpsProTrade = ({
       });
       return 'accepted';
     },
-    [
-      market?.marketData.pxDecimals,
-      market?.marketData.szDecimals,
-      patchForm,
-      setPrice,
-    ],
+    [market?.marketData.szDecimals, patchForm, setPrice],
   );
   const applyOrderType = useCallback(
     (orderType: PerpsProTradeOrderType) => {

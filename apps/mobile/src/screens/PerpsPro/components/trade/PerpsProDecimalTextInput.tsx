@@ -6,7 +6,7 @@ import type {
   TextInputSelectionChangeEventData,
 } from 'react-native';
 
-import { sanitizePerpsProDecimalInput } from '../../model/trade';
+import { sanitizePerpsProDecimalEditingInput } from '../../model/trade';
 import { resolvePerpsProEmptyInputSelection } from '../common/perpsProInputSelection';
 
 const UNRESTRICTED_TEXT_INPUT_MAX_LENGTH = 2147483647;
@@ -28,11 +28,13 @@ type PerpsProDecimalTextInputProps = Omit<
   inputComponent?: React.ElementType<
     TextInputProps & React.RefAttributes<TextInput>
   >;
+  canonicalizeValueOnBlur?: (value: string) => string;
   inputMode?: TextInputProps['inputMode'];
   keyboardType?: TextInputProps['keyboardType'];
   maxDecimals: number;
   normalizeValue?: (value: string) => string;
   onChangeText: (value: string) => void;
+  preserveIntegerZeroRun?: boolean;
   value: string;
 };
 
@@ -40,6 +42,7 @@ export const PerpsProDecimalTextInput = React.memo(
   React.forwardRef<TextInput, PerpsProDecimalTextInputProps>(
     (
       {
+        canonicalizeValueOnBlur,
         focusCursorAtEnd = false,
         focusCursorAtEndMode = 'untilChange',
         inputComponent: InputComponent = TextInput,
@@ -52,6 +55,7 @@ export const PerpsProDecimalTextInput = React.memo(
         onFocus,
         onKeyPress,
         onTouchStart,
+        preserveIntegerZeroRun = false,
         value,
         ...inputProps
       },
@@ -113,9 +117,10 @@ export const PerpsProDecimalTextInput = React.memo(
       const handleChangeText = useCallback(
         (nextValue: string) => {
           releaseForcedCursor();
-          const sanitizedValue = sanitizePerpsProDecimalInput(
+          const sanitizedValue = sanitizePerpsProDecimalEditingInput(
             nextValue,
             maxDecimals,
+            preserveIntegerZeroRun,
           );
           const normalizedValue = normalizeValue
             ? normalizeValue(sanitizedValue)
@@ -136,6 +141,7 @@ export const PerpsProDecimalTextInput = React.memo(
           maxDecimals,
           normalizeValue,
           onChangeText,
+          preserveIntegerZeroRun,
           releaseForcedCursor,
         ],
       );
@@ -165,9 +171,23 @@ export const PerpsProDecimalTextInput = React.memo(
         event => {
           isFocusedRef.current = false;
           releaseForcedCursor();
+          const canonicalValue = canonicalizeValueOnBlur
+            ? canonicalizeValueOnBlur(inputValue)
+            : inputValue;
+          if (canonicalValue !== inputValue) {
+            inputRef.current?.setNativeProps?.({ text: canonicalValue });
+            setInputValue(canonicalValue);
+            onChangeText(canonicalValue);
+          }
           onBlur?.(event);
         },
-        [onBlur, releaseForcedCursor],
+        [
+          canonicalizeValueOnBlur,
+          inputValue,
+          onBlur,
+          onChangeText,
+          releaseForcedCursor,
+        ],
       );
 
       const handleKeyPress = useCallback<

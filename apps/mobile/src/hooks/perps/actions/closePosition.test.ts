@@ -93,20 +93,23 @@ describe('Perps close position action', () => {
     expect(deps.refreshClearinghouse).toHaveBeenCalled();
   });
 
-  it('normalizes a limit price to the market price precision', () => {
-    const limit = buildPerpsClosePositionCommand({
-      account,
-      coin: 'BTC',
-      direction: 'long',
-      expectedPositionSize: '1',
-      limitPrice: '101.239',
-      midPrice: '100',
-      orderType: 'limit',
-      pxDecimals: 2,
-      size: '1',
-      szDecimals: 4,
-    });
-    expect(limit.limitPrice).toBe('101.23');
+  it('accepts only a protocol-canonical limit price from the editor', () => {
+    const buildLimit = (limitPrice: string) =>
+      buildPerpsClosePositionCommand({
+        account,
+        coin: 'BTC',
+        direction: 'long',
+        expectedPositionSize: '1',
+        limitPrice,
+        midPrice: '100',
+        orderType: 'limit',
+        pxDecimals: 2,
+        size: '1',
+        szDecimals: 4,
+      });
+
+    expect(buildLimit('101.23').limitPrice).toBe('101.23');
+    expect(() => buildLimit('101.239')).toThrow('Invalid Perps limit price');
   });
 
   it('rejects a partial close below $10 after size normalization', () => {

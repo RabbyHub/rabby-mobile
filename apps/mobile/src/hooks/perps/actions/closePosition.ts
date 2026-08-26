@@ -13,6 +13,8 @@ import {
 } from '@/hooks/perps/usePerpsStore';
 import BigNumber from 'bignumber.js';
 
+import { isPerpsProPriceProtocolValid } from '@/utils/perpsPriceProtocol';
+
 import { isSamePerpsActionAccount } from './accountGuard';
 import { isPerpsActionUserCancelled } from './actionError';
 
@@ -130,7 +132,6 @@ export const buildPerpsClosePositionCommand = ({
   midPrice,
   orderType,
   size,
-  pxDecimals,
   szDecimals,
 }: Omit<PerpsClosePositionCommand, 'size' | 'type'> & {
   size: string;
@@ -147,8 +148,6 @@ export const buildPerpsClosePositionCommand = ({
   if (
     !Number.isSafeInteger(szDecimals) ||
     szDecimals < 0 ||
-    !Number.isSafeInteger(pxDecimals) ||
-    pxDecimals < 0 ||
     !expected ||
     expected.lte(0) ||
     !requested ||
@@ -165,18 +164,14 @@ export const buildPerpsClosePositionCommand = ({
   if (new BigNumber(normalizedSize).lte(0)) {
     throw new Error('Perps close amount is below size precision');
   }
-  const normalizedLimit = decimal(limitPrice);
-  if (orderType === 'limit' && (!normalizedLimit || normalizedLimit.lte(0))) {
-    throw new Error('Invalid Perps limit price');
-  }
-  const normalizedLimitPrice = normalizedLimit
-    ?.decimalPlaces(pxDecimals, BigNumber.ROUND_DOWN)
-    .toFixed();
-  if (
+  const normalizedLimitPrice =
     orderType === 'limit' &&
-    (!normalizedLimitPrice || new BigNumber(normalizedLimitPrice).lte(0))
-  ) {
-    throw new Error('Perps limit price is below price precision');
+    limitPrice &&
+    isPerpsProPriceProtocolValid(limitPrice, szDecimals)
+      ? limitPrice
+      : null;
+  if (orderType === 'limit' && !normalizedLimitPrice) {
+    throw new Error('Invalid Perps limit price');
   }
   const amountValidation = validatePerpsCloseAmount({
     expectedPositionSize: expected.toFixed(),

@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import type { PerpsProBboStrategy } from '../../model/bbo';
 import {
   getPerpsProPriceInputMaxDecimals,
+  sanitizePerpsProPriceEditingInput,
   sanitizePerpsProPriceInput,
   type PerpsProTradeTif,
 } from '../../model/trade';
@@ -85,7 +86,12 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
   const priceSzDecimals = market?.marketData.szDecimals ?? 0;
   const priceInputMaxDecimals =
     getPerpsProPriceInputMaxDecimals(priceSzDecimals);
-  const normalizePriceInput = useCallback(
+  const normalizePriceEditingInput = useCallback(
+    (value: string) =>
+      sanitizePerpsProPriceEditingInput(value, priceSzDecimals),
+    [priceSzDecimals],
+  );
+  const canonicalizePriceInput = useCallback(
     (value: string) => sanitizePerpsProPriceInput(value, priceSzDecimals),
     [priceSzDecimals],
   );
@@ -185,8 +191,9 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
                   : 0
               }
               label={`${t('page.perps.pro.trade.price')}(${quoteAsset})`}
+              canonicalizeValueOnBlur={canonicalizePriceInput}
               maxDecimals={priceInputMaxDecimals}
-              normalizeValue={normalizePriceInput}
+              normalizeValue={normalizePriceEditingInput}
               onChangeText={value => controller.setPrice('limitPrice', value)}
               onPressSuffix={
                 form.attachedTpSl.enabled || form.tif !== 'Gtc'
@@ -208,8 +215,9 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
                   : 0
               }
               label={`${t('page.perps.pro.trade.triggerPrice')}(${quoteAsset})`}
+              canonicalizeValueOnBlur={canonicalizePriceInput}
               maxDecimals={priceInputMaxDecimals}
-              normalizeValue={normalizePriceInput}
+              normalizeValue={normalizePriceEditingInput}
               onChangeText={value => controller.setPrice('triggerPrice', value)}
               ref={triggerPriceInputRef}
               value={form.triggerPrice}
@@ -223,8 +231,9 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
                   ? `${t('page.perps.pro.trade.price')}(${quoteAsset})`
                   : t('page.perps.pro.trade.marketPrice')
               }
+              canonicalizeValueOnBlur={canonicalizePriceInput}
               maxDecimals={priceInputMaxDecimals}
-              normalizeValue={normalizePriceInput}
+              normalizeValue={normalizePriceEditingInput}
               onChangeText={value =>
                 controller.setPrice('conditionalLimitPrice', value)
               }
@@ -321,6 +330,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
             draft={form.attachedTpSl}
             pxDecimals={market?.marketData.pxDecimals ?? 2}
             quoteAsset={quoteAsset}
+            szDecimals={priceSzDecimals}
             slFillRevision={
               controller.priceFillFeedback?.field === 'sl'
                 ? controller.priceFillFeedback.revision

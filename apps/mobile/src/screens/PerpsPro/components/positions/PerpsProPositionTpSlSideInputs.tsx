@@ -15,6 +15,7 @@ import {
   type PerpsPositionTpSlKind,
   type PerpsPositionTpSlMarketSnapshot,
 } from '../../model/positionTpSl';
+import { getPerpsProPriceInputMaxDecimals } from '../../model/trade';
 import {
   formatPerpsProPrice,
   formatPerpsProSignedDecimal,
@@ -109,8 +110,9 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
             disabled={disabled}
             invalid={highlightInvalidFields && showError}
             label={triggerLabel}
-            maxDecimals={market.pxDecimals}
+            maxDecimals={getPerpsProPriceInputMaxDecimals(market.szDecimals)}
             onChangeText={onChangeTrigger}
+            priceSzDecimals={market.szDecimals}
             testID={`perps-pro-position-tpsl-${kind}-price`}
             value={value}
           />
