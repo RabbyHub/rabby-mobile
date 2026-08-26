@@ -5,7 +5,11 @@ import {
 } from '@rabby-wallet/asset-sync-worker-core';
 
 import { createWorkerTokenAssetApi } from './openApi';
-import { workerTokenSnapshotPersistence } from './nativeTokenPersistence';
+import {
+  acknowledgeAssetSyncPersistenceTask,
+  workerTokenSnapshotPersistence,
+} from './nativeTokenPersistence';
+import { ThreadSelf } from '../utils/ThreadSelf';
 
 const cancelledRequestIds = new Set<string>();
 let activeRuntime:
@@ -35,6 +39,12 @@ function getCoordinator(bootstrap: AssetSyncWorkerBootstrap) {
         addressConcurrency: 6,
         chainConcurrency: 15,
         isCancelled: requestId => cancelledRequestIds.has(requestId),
+        onAddressCompletion: completion => {
+          ThreadSelf.postMessage({
+            type: 'assetSync:completion',
+            data: completion,
+          });
+        },
       }),
     };
   }
@@ -56,3 +66,5 @@ export function cancelAssetSyncInWorker(requestId: string) {
   cancelledRequestIds.add(requestId);
   return true;
 }
+
+export { acknowledgeAssetSyncPersistenceTask };

@@ -353,6 +353,16 @@ export const STARTUP_TASKS = {
     fallbackMs: 5000,
     budgetMs: 24,
   }),
+  assetSyncPersistenceQueueRecovery: defineStartupTask({
+    label: 'assetSync.persistenceQueueRecovery',
+    owner: 'home-assets',
+    reason:
+      'resume durable Worker asset persistence tasks after Home is usable without opening SQLite when the queue is empty',
+    stage: 'homePostStartupReady',
+    priority: 'normal',
+    fallbackMs: 5000,
+    budgetMs: 20,
+  }),
   readableAccountStoresIdleWarmup: defineStartupTask({
     label: 'readableAccountStores.idleWarmup',
     owner: 'home-assets',

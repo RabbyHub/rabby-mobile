@@ -211,10 +211,13 @@ export function makeTokenCacheRows(
   ownerAddress: string,
   tokens: WorkerTokenInput[],
   syncTimestamp: number,
+  options?: { includeEmptySentinel?: boolean },
 ) {
   const filteredTokens = tokens.filter(isPersistableWorkerToken);
   const normalizedTokens = filteredTokens.length
     ? filteredTokens
+    : options?.includeEmptySentinel === false
+    ? []
     : [makeEmptyTokenInput()];
   return normalizedTokens.map(token =>
     makeTokenCacheRow(ownerAddress, token, syncTimestamp),

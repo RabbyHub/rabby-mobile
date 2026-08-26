@@ -26,10 +26,14 @@ export type TokenAssetApi = {
 
 export type TokenSnapshotPersistence = {
   commitTokenSnapshot(input: {
+    requestId: string;
     address: string;
     syncTimestamp: number;
+    replacementScope: 'address' | 'chains';
+    chainIds: string[];
+    failedChainIds: string[];
     rows: TokenCacheRow[];
-  }): Promise<{ rowCount: number; applied: boolean }>;
+  }): Promise<{ rowCount: number; applied: boolean; committedAt: number }>;
 };
 
 type CoordinatorOptions = {
@@ -39,6 +43,7 @@ type CoordinatorOptions = {
   addressConcurrency?: number;
   chainConcurrency?: number;
   isCancelled?: (requestId: string) => boolean;
+  onAddressCompletion?: (receipt: TokenAddressSyncReceipt) => void;
 };
 
 /** Create a shared concurrency limiter for worker-side network requests. */
@@ -130,6 +135,22 @@ function errorCode(error: unknown) {
   return 'asset_sync_unknown_error';
 }
 
+function makeAddressReceipt(
+  request: TokenAssetSyncRequest,
+  input: Omit<
+    TokenAddressSyncReceipt,
+    'schemaVersion' | 'requestId' | 'kind' | 'generation'
+  >,
+): TokenAddressSyncReceipt {
+  return {
+    schemaVersion: ASSET_SYNC_WORKER_SCHEMA_VERSION,
+    requestId: request.requestId,
+    kind: 'token',
+    generation: request.issuedAt,
+    ...input,
+  };
+}
+
 /** Create the isolated token synchronization coordinator. */
 export function createTokenAssetSyncCoordinator({
   api,
@@ -138,6 +159,7 @@ export function createTokenAssetSyncCoordinator({
   addressConcurrency = 6,
   chainConcurrency = 15,
   isCancelled = () => false,
+  onAddressCompletion = () => undefined,
 }: CoordinatorOptions) {
   const inFlight = new Map<string, Promise<TokenAssetSyncReceipt>>();
   const runChainRequest = createConcurrencyLimiter(chainConcurrency);
@@ -148,13 +170,19 @@ export function createTokenAssetSyncCoordinator({
   ): Promise<TokenAddressSyncReceipt> => {
     const address = rawAddress.toLowerCase();
     if (isCancelled(request.requestId)) {
-      return {
+      return makeAddressReceipt(request, {
         address,
+        success: false,
         outcome: 'cancelled',
+        committedAt: 0,
+        replacementScope: 'address',
         chainIds: [],
         failedChainIds: [],
         committedRowCount: 0,
-      };
+        superseded: false,
+        stage: 'cancelled',
+        errorCode: 'asset_sync_cancelled',
+      });
     }
 
     let chainIds: string[] = [];
@@ -163,14 +191,19 @@ export function createTokenAssetSyncCoordinator({
         new Set((await api.usedChainList(address)).map(chain => chain.id)),
       ).filter(Boolean);
     } catch (error) {
-      return {
+      return makeAddressReceipt(request, {
         address,
+        success: false,
         outcome: 'failed',
-        chainIds,
+        committedAt: 0,
+        replacementScope: 'address',
+        chainIds: [],
         failedChainIds: [],
         committedRowCount: 0,
+        superseded: false,
+        stage: 'used-chain-list',
         errorCode: errorCode(error),
-      };
+      });
     }
 
     const chainResults = await mapWithConcurrency(
@@ -191,56 +224,88 @@ export function createTokenAssetSyncCoordinator({
     );
 
     if (isCancelled(request.requestId)) {
-      return {
+      return makeAddressReceipt(request, {
         address,
+        success: false,
         outcome: 'cancelled',
-        chainIds,
+        committedAt: 0,
+        replacementScope: 'address',
+        chainIds: [],
         failedChainIds,
         committedRowCount: 0,
-      };
+        superseded: false,
+        stage: 'cancelled',
+        errorCode: 'asset_sync_cancelled',
+      });
     }
 
-    // Never replace an address-wide snapshot with an incomplete chain set.
-    if (failedChainIds.length) {
-      return {
-        address,
-        outcome: 'partial',
-        chainIds,
-        failedChainIds,
-        committedRowCount: 0,
-        errorCode: 'asset_sync_partial_chain_failure',
-      };
-    }
-
-    const tokens = chainResults.flatMap(result =>
-      result.status === 'fulfilled' ? result.value.tokens : [],
+    const fulfilledChainSnapshots = chainResults.flatMap(result =>
+      result.status === 'fulfilled' ? [result.value] : [],
     );
+    const successfulChainIds = fulfilledChainSnapshots.map(
+      snapshot => snapshot.chainId,
+    );
+
+    if (failedChainIds.length && !successfulChainIds.length) {
+      return makeAddressReceipt(request, {
+        address,
+        success: false,
+        outcome: 'failed',
+        committedAt: 0,
+        replacementScope: 'chains',
+        chainIds: [],
+        failedChainIds,
+        committedRowCount: 0,
+        superseded: false,
+        stage: 'chain-fetch',
+        errorCode: 'asset_sync_all_chains_failed',
+      });
+    }
+
+    const tokens = fulfilledChainSnapshots.flatMap(snapshot => snapshot.tokens);
     const syncTimestamp = request.issuedAt;
+    const replacementScope = failedChainIds.length ? 'chains' : 'address';
     try {
       const commit = await persistence.commitTokenSnapshot({
+        requestId: request.requestId,
         address,
         syncTimestamp,
-        rows: makeTokenCacheRows(address, tokens, syncTimestamp),
+        replacementScope,
+        chainIds: successfulChainIds,
+        failedChainIds,
+        rows: makeTokenCacheRows(address, tokens, syncTimestamp, {
+          includeEmptySentinel: replacementScope === 'address',
+        }),
       });
-      return {
+      return makeAddressReceipt(request, {
         address,
-        outcome: 'complete',
-        chainIds,
-        failedChainIds: [],
+        success: true,
+        outcome: failedChainIds.length ? 'partial' : 'complete',
+        committedAt: commit.committedAt,
+        replacementScope,
+        chainIds: successfulChainIds,
+        failedChainIds,
         committedRowCount: commit.rowCount,
-        ...(commit.applied
-          ? { committedAt: syncTimestamp }
-          : { superseded: true }),
-      };
+        superseded: !commit.applied,
+        stage: commit.applied ? 'committed' : 'superseded',
+        errorCode: failedChainIds.length
+          ? 'asset_sync_partial_chain_failure'
+          : '',
+      });
     } catch (error) {
-      return {
+      return makeAddressReceipt(request, {
         address,
+        success: false,
         outcome: 'failed',
-        chainIds,
-        failedChainIds: [],
+        committedAt: 0,
+        replacementScope,
+        chainIds: [],
+        failedChainIds: chainIds,
         committedRowCount: 0,
+        superseded: false,
+        stage: 'commit',
         errorCode: errorCode(error),
-      };
+      });
     }
   };
 
@@ -252,22 +317,40 @@ export function createTokenAssetSyncCoordinator({
     const addresses = Array.from(
       new Set(request.addresses.map(address => address.toLowerCase())),
     ).filter(Boolean);
+    const settleAddress = async (address: string) => {
+      let receipt: TokenAddressSyncReceipt;
+      try {
+        receipt = await syncAddress(request, address);
+      } catch (error) {
+        receipt = makeAddressReceipt(request, {
+          address,
+          success: false,
+          outcome: 'failed',
+          committedAt: 0,
+          replacementScope: 'address',
+          chainIds: [],
+          failedChainIds: [],
+          committedRowCount: 0,
+          superseded: false,
+          stage: 'coordinator',
+          errorCode: errorCode(error),
+        });
+      }
+      try {
+        onAddressCompletion(receipt);
+      } catch {
+        // Completion delivery is redundant with the aggregate response.
+      }
+      return receipt;
+    };
     const receipts = (
-      await mapWithConcurrency(addresses, addressConcurrency, address =>
-        syncAddress(request, address),
-      )
-    ).map((result, index) =>
-      result.status === 'fulfilled'
-        ? result.value
-        : ({
-            address: addresses[index],
-            outcome: 'failed',
-            chainIds: [],
-            failedChainIds: [],
-            committedRowCount: 0,
-            errorCode: errorCode(result.reason),
-          } satisfies TokenAddressSyncReceipt),
-    );
+      await mapWithConcurrency(addresses, addressConcurrency, settleAddress)
+    ).map(result => {
+      if (result.status === 'fulfilled') {
+        return result.value;
+      }
+      throw result.reason;
+    });
     return {
       schemaVersion: ASSET_SYNC_WORKER_SCHEMA_VERSION,
       requestId: request.requestId,

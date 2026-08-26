@@ -41,10 +41,15 @@ import { AddressBatchRefreshCoordinator } from '@/core/utils/addressBatchRefresh
 import { LatestAsyncRequest } from '@/core/utils/latestAsyncRequest';
 import { LatestAddressRequest } from '@/core/utils/latestAddressRequest';
 import {
+  createAddressListCommitBatcher,
   createAddressListSnapshotHydrator,
   getAddressesWithoutListSnapshot,
   mergeAddressListSnapshots,
 } from './_addressListSnapshot';
+import {
+  buildTokenAssetSyncRetryPlan,
+  type AssetSyncCompletion,
+} from '@rabby-wallet/asset-sync-worker-core';
 import type { RestoredAssetProjection } from '@/databases/assetProjection';
 import {
   isAssetProjectionPersistenceActive,
@@ -65,6 +70,7 @@ import {
   type AddressPersistenceTicket,
 } from './tokenProjectionPersistenceGate';
 import { trySyncTokenAssetsOnWorker } from '@/perfs/assetSyncWorker';
+import { registerAssetSyncCompletionHandler } from '@/perfs/assetSyncCompletion';
 
 export type { ITokenItem, TokenAssetsResult } from '@/types/assets';
 
@@ -3627,43 +3633,55 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             addresses: lowerAddresses,
             force: isForceRequested(),
           });
-          if (workerReceipt?.outcome === 'complete') {
-            const workerApplicableAddresses = getCurrentAddresses();
-            if (!workerApplicableAddresses.length) {
-              trace.finish({ path: 'stale-after-worker-remote' });
-              return;
-            }
-            tokenCacheHydrator.invalidate(workerApplicableAddresses);
-            await tokenCacheHydrator.hydrate(workerApplicableAddresses);
-            if (!isCurrentRequest()) {
-              trace.finish({ path: 'stale-after-worker-hydrate' });
-              return;
-            }
+          const workerApplicableAddresses = getCurrentAddresses();
+          if (!workerApplicableAddresses.length) {
+            trace.finish({ path: 'stale-after-worker-remote' });
+            return;
+          }
+          const workerRetryPlan = buildTokenAssetSyncRetryPlan(
+            workerApplicableAddresses,
+            workerReceipt,
+          );
+          const workerRetryPlanByAddress = new Map(
+            workerRetryPlan.map(plan => [plan.address, plan]),
+          );
+          const fallbackAddresses = workerRetryPlan.map(plan => plan.address);
+          const workerCompleteAddresses = workerApplicableAddresses.filter(
+            address => !workerRetryPlanByAddress.has(address),
+          );
+          const workerPartialRetryAddressCount = workerRetryPlan.filter(
+            plan => plan.chainIds !== null,
+          ).length;
+
+          if (workerReceipt) {
+            trace.mark(
+              fallbackAddresses.length
+                ? 'worker-remote-fallback'
+                : 'worker-remote-completed',
+              {
+                outcome: workerReceipt.outcome,
+                completeAddressCount: workerCompleteAddresses.length,
+                partialAddressCount: workerPartialRetryAddressCount,
+                fallbackAddressCount: fallbackAddresses.length,
+                committedRowCount: workerReceipt.addresses.reduce(
+                  (count, address) => count + address.committedRowCount,
+                  0,
+                ),
+                durationMs: workerReceipt.finishedAt - workerReceipt.startedAt,
+              },
+            );
+          }
+
+          if (!fallbackAddresses.length) {
             set(state => ({
               sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
                 state.sourceSnapshotReadyByAddress,
-                workerApplicableAddresses,
+                workerCompleteAddresses,
               ),
               isLoading: false,
             }));
-            trace.mark('worker-remote-completed', {
-              addressCount: workerApplicableAddresses.length,
-              committedRowCount: workerReceipt.addresses.reduce(
-                (count, address) => count + address.committedRowCount,
-                0,
-              ),
-              durationMs: workerReceipt.finishedAt - workerReceipt.startedAt,
-            });
             trace.finish({ path: 'cache-then-worker-remote' });
             return;
-          }
-          if (workerReceipt) {
-            trace.mark('worker-remote-fallback', {
-              outcome: workerReceipt.outcome,
-              completeAddressCount: workerReceipt.addresses.filter(
-                address => address.outcome === 'complete',
-              ).length,
-            });
           }
 
           const realTimeTokenMap: Record<string, ITokenItem[]> = {};
@@ -3674,14 +3692,21 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
           let usedChainListSucceededAddressCount = 0;
           let requestedChainCount = 0;
           trace.mark('remote-address-requests-dispatched', {
-            addressCount: lowerAddresses.length,
+            addressCount: fallbackAddresses.length,
+            partialRetryAddressCount: workerPartialRetryAddressCount,
             chainConcurrency: 15,
           });
           const remoteAddressResults = await Promise.allSettled(
-            lowerAddresses.map(async address => {
-              const chains = await openapi.usedChainList(address);
-              const chainIdList = chains.map(item => item.id);
-              usedChainListSucceededAddressCount += 1;
+            fallbackAddresses.map(async address => {
+              const retryChainIds =
+                workerRetryPlanByAddress.get(address)?.chainIds ?? null;
+              const chainIdList =
+                retryChainIds !== null
+                  ? retryChainIds
+                  : (await openapi.usedChainList(address)).map(item => item.id);
+              if (retryChainIds === null) {
+                usedChainListSucceededAddressCount += 1;
+              }
               requestedChainCount += chainIdList.length;
               const res = await Promise.allSettled(
                 chainIdList.map(async serverId => {
@@ -3747,7 +3772,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             }),
           );
           trace.mark('remote-addresses-settled', {
-            addressCount: lowerAddresses.length,
+            addressCount: fallbackAddresses.length,
             succeededAddressCount: remoteAddressResults.filter(
               result => result.status === 'fulfilled',
             ).length,
@@ -4155,6 +4180,62 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
     }
   },
 }));
+
+const pendingWorkerTokenCompletions = new Map<string, AssetSyncCompletion>();
+
+const workerTokenCommitBatcher = createAddressListCommitBatcher({
+  apply: async addresses => {
+    const completions = addresses.flatMap(address => {
+      const completion = pendingWorkerTokenCompletions.get(address);
+      return completion ? [completion] : [];
+    });
+    if (!completions.length) {
+      return;
+    }
+
+    await tokenCacheHydrator.refresh(
+      completions.map(completion => completion.address),
+    );
+
+    const completeAddresses = completions.flatMap(completion =>
+      completion.outcome === 'complete' && !completion.superseded
+        ? [completion.address]
+        : [],
+    );
+    if (completeAddresses.length) {
+      tokenListStore.setState(state => ({
+        sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+          state.sourceSnapshotReadyByAddress,
+          completeAddresses,
+        ),
+      }));
+    }
+
+    completions.forEach(completion => {
+      if (
+        pendingWorkerTokenCompletions.get(completion.address) === completion
+      ) {
+        pendingWorkerTokenCompletions.delete(completion.address);
+      }
+    });
+  },
+});
+
+const applyWorkerTokenCompletion = (completion: AssetSyncCompletion) => {
+  const address = normalizeAddress(completion.address);
+  const previous = pendingWorkerTokenCompletions.get(address);
+  if (
+    !previous ||
+    completion.generation > previous.generation ||
+    (completion.generation === previous.generation &&
+      completion.committedAt >= previous.committedAt)
+  ) {
+    pendingWorkerTokenCompletions.set(address, completion);
+  }
+  return workerTokenCommitBatcher.enqueue([address]);
+};
+
+registerAssetSyncCompletionHandler('token', applyWorkerTokenCompletion);
 
 const patchSingleTokenInStore = (address: string, token: ITokenItem) => {
   const normalizedAddress = normalizeAddress(address);

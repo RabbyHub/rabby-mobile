@@ -1,5 +1,6 @@
 import {
   completeAddressListSnapshots,
+  createAddressListCommitBatcher,
   createAddressListSnapshotHydrator,
   getAddressesWithoutListSnapshot,
   mergeAddressListSnapshots,
@@ -98,5 +99,54 @@ describe('address list snapshots', () => {
     await hydration;
 
     expect(apply).toHaveBeenCalledWith({ '0xb': ['cached-b'] }, ['0xb']);
+  });
+
+  it('guarantees a fresh read when a commit arrives during hydration', async () => {
+    const stale = deferred<Record<string, string[]>>();
+    const fresh = deferred<Record<string, string[]>>();
+    const load = jest
+      .fn<Promise<Record<string, string[]>>, [string[]]>()
+      .mockImplementationOnce(() => stale.promise)
+      .mockImplementationOnce(() => fresh.promise);
+    const apply = jest.fn();
+    const hydrator = createAddressListSnapshotHydrator({ load, apply });
+
+    const initialHydration = hydrator.hydrate(['0xA']);
+    await Promise.resolve();
+    const refresh = hydrator.refresh(['0xA']);
+    stale.resolve({ '0xa': ['stale'] });
+    await initialHydration;
+    for (let flush = 0; flush < 5 && load.mock.calls.length < 2; flush += 1) {
+      await Promise.resolve();
+    }
+
+    expect(load).toHaveBeenNthCalledWith(2, ['0xa']);
+    expect(apply).not.toHaveBeenCalled();
+
+    fresh.resolve({ '0xa': ['fresh'] });
+    await refresh;
+    expect(apply).toHaveBeenCalledWith({ '0xa': ['fresh'] }, ['0xa']);
+  });
+
+  it('batches a burst of committed addresses into one apply', async () => {
+    jest.useFakeTimers();
+    try {
+      const applied = deferred<void>();
+      const apply = jest.fn(() => applied.promise);
+      const batcher = createAddressListCommitBatcher({ apply, delayMs: 10 });
+
+      const first = batcher.enqueue(['0xA', '0xB']);
+      const second = batcher.enqueue(['0xB', '0xC']);
+      jest.runOnlyPendingTimers();
+      await Promise.resolve();
+
+      expect(apply).toHaveBeenCalledTimes(1);
+      expect(apply).toHaveBeenCalledWith(['0xa', '0xb', '0xc']);
+
+      applied.resolve();
+      await Promise.all([first, second]);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

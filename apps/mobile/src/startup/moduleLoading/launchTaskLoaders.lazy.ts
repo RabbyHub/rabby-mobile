@@ -1,6 +1,8 @@
 import type { LaunchTaskLoaderCatalog } from './launchTaskContracts';
 
 export const launchTaskLoaders = {
+  assetSyncPersistenceQueueRecovery: () =>
+    import('@/perfs/assetSyncPersistenceQueue'),
   appSettingsAutoLockHydrate: () => import('@/hooks/appSettings'),
   appTimeoutAutoLockHydrate: () => import('@/hooks/appTimeout'),
   biometricsSystemAuthAvailability: () => import('@/hooks/biometrics'),

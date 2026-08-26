@@ -73,6 +73,10 @@ export async function prepareAppDataSource() {
 }
 
 export async function clearAppDataSource() {
+  const { clearAssetSyncPersistenceQueue } = await import(
+    '@/perfs/assetSyncPersistenceQueue'
+  );
+  await clearAssetSyncPersistenceQueue();
   const appDataSource = await prepareAppDataSource();
 
   // await appDataSource.dropDatabase();
@@ -111,6 +115,10 @@ export async function dropAppDataSourceAndQuitApp({
   let appDataSource: DataSource | null = null;
 
   try {
+    const { clearAssetSyncPersistenceQueue } = await import(
+      '@/perfs/assetSyncPersistenceQueue'
+    );
+    await clearAssetSyncPersistenceQueue();
     appDataSource = await prepareAppDataSource();
     await appDataSource.dropDatabase();
     await appDataSource.query('VACUUM');

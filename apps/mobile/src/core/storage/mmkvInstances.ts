@@ -1,4 +1,5 @@
 import { MMKV } from 'react-native-mmkv';
+import { ASSET_SYNC_PERSISTENCE_QUEUE_STORAGE_ID } from '@rabby-wallet/asset-sync-worker-core';
 import { MMKV_FILE_NAMES } from './mmkvConstants';
 
 export const appMMKV = new MMKV({
@@ -50,6 +51,10 @@ export const lendingDataCacheMMKV = new MMKV({
   id: MMKV_FILE_NAMES.LENDING_DATA_CACHE,
 });
 
+export const assetSyncPersistenceQueueMMKV = new MMKV({
+  id: ASSET_SYNC_PERSISTENCE_QUEUE_STORAGE_ID,
+});
+
 export const ALL_KNOWN_MMKV_INSTANCES = {
   [MMKV_FILE_NAMES.DEFAULT]: appMMKV,
   [MMKV_FILE_NAMES.KEYCHAIN]: keychainMMKV,
@@ -62,4 +67,5 @@ export const ALL_KNOWN_MMKV_INSTANCES = {
   [MMKV_FILE_NAMES.TESTNET_BALANCE]: testnetBalanceMMKV,
   [MMKV_FILE_NAMES.WALLETCONNECT]: walletConnectMMKV,
   [MMKV_FILE_NAMES.LENDING_DATA_CACHE]: lendingDataCacheMMKV,
+  [ASSET_SYNC_PERSISTENCE_QUEUE_STORAGE_ID]: assetSyncPersistenceQueueMMKV,
 } as const;

@@ -9,6 +9,9 @@ export type LaunchTaskLoaderCatalog = {
   appTimeoutAutoLockHydrate: LaunchTaskModuleLoader<{
     startAppTimeoutAutoLockHydration: () => unknown | Promise<unknown>;
   }>;
+  assetSyncPersistenceQueueRecovery: LaunchTaskModuleLoader<{
+    startAssetSyncPersistenceQueueRecovery: () => unknown;
+  }>;
   biometricsSystemAuthAvailability: LaunchTaskModuleLoader<{
     startBiometricsSystemAuthAvailabilityHydration: () => unknown;
   }>;

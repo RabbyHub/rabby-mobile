@@ -41,6 +41,7 @@ import {
   useAppLogFileSwitch,
 } from '@/utils/logging/settings';
 import { APP_LOG_ROOT_PATH, logger } from '@/utils/logger';
+import { finalizeWorkerAppLogs } from '@/perfs/thread';
 import { createGetStyles2024 } from '@/utils/styles';
 
 type LoggerSnapshot = ReturnType<typeof logger.getState>;
@@ -977,11 +978,16 @@ export default function DebugLogViewerScreen(): JSX.Element {
     setBusyKey('finalize');
     try {
       await logger.flush();
-      const finalPath = await logger.finalizeArchive();
+      const [finalPath, workerFinalPath] = await Promise.all([
+        logger.finalizeArchive(),
+        finalizeWorkerAppLogs(),
+      ]);
 
-      if (finalPath) {
-        await waitForFileReady(finalPath);
-      }
+      await Promise.all(
+        [finalPath, workerFinalPath]
+          .filter((path): path is string => !!path)
+          .map(waitForFileReady),
+      );
 
       let nextSnapshot = await refreshSnapshot();
 
@@ -995,8 +1001,13 @@ export default function DebugLogViewerScreen(): JSX.Element {
         nextSnapshot = await refreshSnapshot();
       }
 
-      if (finalPath) {
-        markSuccess(`Log zip ready: ${finalPath.split('/').pop()}`);
+      if (finalPath || workerFinalPath) {
+        markSuccess(
+          `Log zip ready: ${[finalPath, workerFinalPath]
+            .filter((path): path is string => !!path)
+            .map(path => path.split('/').pop())
+            .join(', ')}`,
+        );
       } else {
         markInfo('No active archive to finalize');
       }

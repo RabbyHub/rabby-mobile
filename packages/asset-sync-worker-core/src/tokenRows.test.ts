@@ -48,6 +48,14 @@ describe('token cache rows', () => {
     );
   });
 
+  it('does not create an address-wide sentinel for a partial chain commit', () => {
+    expect(
+      makeTokenCacheRows('0xabc', [], 123, {
+        includeEmptySentinel: false,
+      }),
+    ).toEqual([]);
+  });
+
   it('filters suspicious tokens before deciding whether to persist an empty snapshot', () => {
     const [row] = makeTokenCacheRows(
       '0xabc',

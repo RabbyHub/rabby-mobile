@@ -34,6 +34,36 @@ type WorkerDuplexDefs = {
       }
     >;
   };
+  runtimeInfo: {
+    post: WorkerReq<'@runtimeInfo'>;
+    response: WorkerResponse<
+      '@runtimeInfo',
+      import('./_polyfills').WorkerRuntimeCapabilitySnapshot
+    >;
+  };
+  logging_configure: {
+    post: WorkerReq<'logging:configure'> & {
+      captureConsole: boolean;
+      writeToFile: boolean;
+    };
+    response: WorkerResponse<
+      'logging:configure',
+      {
+        archivePrefix: string;
+        captureConsole: boolean;
+        writeToFile: boolean;
+      }
+    >;
+  };
+  logging_finalize: {
+    post: WorkerReq<'logging:finalize'>;
+    response: WorkerResponse<
+      'logging:finalize',
+      {
+        archivePath: string | null;
+      }
+    >;
+  };
   // '_error': {
   //   post: WorkerReq<'@error'> & {
   //     data?: any;
@@ -67,6 +97,17 @@ type WorkerDuplexDefs = {
       'assetSync:cancel',
       {
         cancelled: boolean;
+      }
+    >;
+  };
+  assetSync_persistenceAck: {
+    post: WorkerReq<'assetSync:persistence-ack'> & {
+      ack: import('@rabby-wallet/asset-sync-worker-core').AssetSyncPersistenceAck;
+    };
+    response: WorkerResponse<
+      'assetSync:persistence-ack',
+      {
+        accepted: boolean;
       }
     >;
   };
@@ -132,6 +173,18 @@ type WorkerSend = {
       time: number;
     })
   | WorkerMsg<'@notifyReceivedReq'>
+  | WorkerMsg<
+      'assetSync:completion',
+      {
+        data: import('@rabby-wallet/asset-sync-worker-core').AssetSyncCompletion;
+      }
+    >
+  | WorkerMsg<
+      'assetSync:persistence-task-ready',
+      {
+        taskId: string;
+      }
+    >
   | WorkerMsg<
       '@errorReq',
       {

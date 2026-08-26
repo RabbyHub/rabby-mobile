@@ -70,6 +70,10 @@ jest.mock('react-native-mmkv', () => {
 
     trim = jest.fn();
 
+    sync = jest.fn();
+
+    reload = jest.fn();
+
     addOnValueChangedListener = listener => {
       this.store.listeners.add(listener);
       return {
