@@ -174,16 +174,10 @@ export function formatProTooltipTime(
   time: number,
   interval: PerpsProChartConfig['interval'],
 ): string {
-  const date = new Date(time * 1000);
-  const month = MONTHS[date.getMonth()];
-  const day = String(date.getDate()).padStart(2, '0');
-  const dateLabel = `${day} ${month}`;
-  if (interval === '1d' || interval === '1w' || interval === '1M') {
-    return dateLabel;
-  }
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${dateLabel} ${hours}:${minutes}`;
+  return formatTime(
+    time,
+    interval === '1d' || interval === '1w' || interval === '1M',
+  );
 }
 
 export type PerpsProTooltipMetrics = {
