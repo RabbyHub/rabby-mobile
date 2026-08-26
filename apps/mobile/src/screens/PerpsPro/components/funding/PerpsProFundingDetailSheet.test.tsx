@@ -217,7 +217,7 @@ describe('PerpsProFundingDetailSheet', () => {
       'Next Funding\nRate / Annualized',
     );
     expect(messages.page.perps.pro.funding.explanation).toBe(
-      '* The payment rate exchanged between the long and short positions for the next funding. If the funding rate is positive, longs pay shorts. If negative, shorts pay longs.',
+      'The funding rate is used to calculate periodic payments between long and short position holders. When the funding rate is positive, longs pay shorts; when it is negative, shorts pay longs. The annualized rate is calculated using simple annualization.',
     );
   });
 });
