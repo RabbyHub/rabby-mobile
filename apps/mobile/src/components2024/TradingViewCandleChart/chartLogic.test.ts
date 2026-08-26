@@ -18,6 +18,7 @@ const {
   formatYTime,
   getInitialVisibleLogicalRange,
   getPrependedCandleCount,
+  getPerpsProCrosshairTimeLabelLeft,
   getPerpsProLatestCandleClose,
   getPerpsProTooltipMaxWidth,
   getPerpsProTooltipPlacement,
@@ -227,6 +228,14 @@ describe('Perps Pro local chart calculations', () => {
     expect(clampPerpsProCrosshairCoordinate(-100, 200)).toBe(24);
     expect(clampPerpsProCrosshairCoordinate(100, 200)).toBe(100);
     expect(clampPerpsProCrosshairCoordinate(300, 200)).toBe(168);
+  });
+
+  it('keeps the Pro time label centered on the crosshair within the chart', () => {
+    expect(getPerpsProCrosshairTimeLabelLeft(160, 120, 320)).toBe(100);
+    expect(getPerpsProCrosshairTimeLabelLeft(10, 120, 320)).toBe(0);
+    expect(getPerpsProCrosshairTimeLabelLeft(310, 120, 320)).toBe(200);
+    expect(getPerpsProCrosshairTimeLabelLeft(160, 400, 320)).toBe(0);
+    expect(getPerpsProCrosshairTimeLabelLeft(NaN, 120, 320)).toBeNull();
   });
 
   it('allows future whitespace while keeping at least five candles visible', () => {

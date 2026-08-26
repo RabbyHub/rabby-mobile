@@ -275,6 +275,24 @@ export function clampPerpsProCrosshairCoordinate(
   return Math.min(Math.max(coordinate, minimum), Math.max(minimum, maximum));
 }
 
+export function getPerpsProCrosshairTimeLabelLeft(
+  coordinate: number,
+  labelWidth: number,
+  containerWidth: number,
+) {
+  if (
+    !Number.isFinite(coordinate) ||
+    !Number.isFinite(labelWidth) ||
+    !Number.isFinite(containerWidth)
+  ) {
+    return null;
+  }
+  const safeLabelWidth = Math.max(0, labelWidth);
+  const safeContainerWidth = Math.max(0, containerWidth);
+  const maximumLeft = Math.max(0, safeContainerWidth - safeLabelWidth);
+  return Math.min(Math.max(0, coordinate - safeLabelWidth / 2), maximumLeft);
+}
+
 export type LogicalRange = { from: number; to: number };
 
 const getPerpsProFutureMaximumFrom = (
