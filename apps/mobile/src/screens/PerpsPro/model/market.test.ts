@@ -11,6 +11,7 @@ import {
   getNextPerpsProSort,
   normalizePerpsProMarketSourceTag,
   reconcilePerpsProMarkets,
+  resolvePerpsProMarketPresentation,
   searchPerpsProMarkets,
   sortPerpsProMarkets,
 } from './market';
@@ -58,6 +59,36 @@ describe('Perps Pro market model', () => {
       fullName: 'Apple',
       marketKey: 'xyz::xyz:AAPL',
       sourceTag: 'xyz',
+    });
+  });
+
+  it('renders a HIP-3 canonical fallback without leaking routing identity or guessing quote', () => {
+    expect(resolvePerpsProMarketPresentation('hyna:BTC')).toEqual({
+      displayBase: 'BTC',
+      displayPair: 'BTC',
+      metadataReady: false,
+      quoteAsset: null,
+      sourceTag: 'hyna',
+    });
+  });
+
+  it('upgrades the HIP-3 fallback to the exact metadata-backed pair', () => {
+    expect(
+      resolvePerpsProMarketPresentation(
+        'hyna:BTC',
+        createMarketData({
+          dexId: 'hyna',
+          displayName: 'BTC',
+          name: 'hyna:BTC',
+          quoteAsset: 'USDE',
+        }),
+      ),
+    ).toEqual({
+      displayBase: 'BTC',
+      displayPair: 'BTCUSDE',
+      metadataReady: true,
+      quoteAsset: 'USDE',
+      sourceTag: 'hyna',
     });
   });
 

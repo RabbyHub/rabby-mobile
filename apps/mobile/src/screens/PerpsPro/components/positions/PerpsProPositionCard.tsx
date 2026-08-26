@@ -41,6 +41,9 @@ const SIZE_UNIT_HIT_SLOP = {
   top: 14,
 } as const;
 
+const withOptionalUnit = (label: string, unit: string | null) =>
+  unit ? `${label} (${unit})` : label;
+
 const PositionAction: React.FC<{
   label: string;
   onPress?: () => void;
@@ -97,7 +100,7 @@ export const PerpsProPositionCard: React.FC<{
     const pnl = Number(position.pnl);
     const roi = Number(position.roiRatio);
     const size = getPerpsPositionDisplaySize(position, sizeUnit);
-    const sizeAsset =
+    const sizeAsset: string | null =
       sizeUnit === 'quote' ? market.quoteAsset : market.displayBase;
     const displaySize =
       sizeUnit === 'quote'
@@ -221,7 +224,10 @@ export const PerpsProPositionCard: React.FC<{
               accessibilityLabel={t('page.perps.pro.positions.pnl')}
               onPress={() => openFieldExplanation('pnl')}
               style={styles.label}>
-              {t('page.perps.pro.positions.pnl')} ({market.quoteAsset})
+              {withOptionalUnit(
+                t('page.perps.pro.positions.pnl'),
+                market.quoteAsset,
+              )}
             </PerpsProDottedUnderlineText>
             <Text style={pnlStyle}>{displayPnl}</Text>
           </View>
@@ -242,13 +248,16 @@ export const PerpsProPositionCard: React.FC<{
             <Pressable
               accessibilityLabel={t('page.perps.pro.positions.switchSizeUnit')}
               accessibilityRole="button"
-              accessibilityValue={{ text: sizeAsset }}
+              accessibilityValue={{ text: sizeAsset || undefined }}
               hitSlop={SIZE_UNIT_HIT_SLOP}
               onPress={toggleSizeUnit}
               style={styles.labelWithIcon}
               testID={`perps-pro-position-unit-${position.key}`}>
               <Text style={styles.label}>
-                {t('page.perps.pro.positions.size')} ({sizeAsset})
+                {withOptionalUnit(
+                  t('page.perps.pro.positions.size'),
+                  sizeAsset,
+                )}
               </Text>
               <View pointerEvents="none" style={styles.unitSwitch}>
                 <RcIconSwitchUnit
@@ -263,7 +272,10 @@ export const PerpsProPositionCard: React.FC<{
           </View>
           <View style={styles.secondColumn}>
             <Text style={styles.label}>
-              {t('page.perps.pro.positions.margin')} ({market.quoteAsset})
+              {withOptionalUnit(
+                t('page.perps.pro.positions.margin'),
+                market.quoteAsset,
+              )}
             </Text>
             <View style={styles.marginValueRow}>
               <Text style={styles.marginValue}>
@@ -346,7 +358,10 @@ export const PerpsProPositionCard: React.FC<{
         <View style={styles.threeColumns}>
           <View style={styles.firstColumn}>
             <Text style={styles.label}>
-              {t('page.perps.pro.positions.entry')} ({market.quoteAsset})
+              {withOptionalUnit(
+                t('page.perps.pro.positions.entry'),
+                market.quoteAsset,
+              )}
             </Text>
             <Text style={styles.value}>
               {formatPerpsProPrice(position.entryPrice, market.pxDecimals)}
@@ -354,7 +369,10 @@ export const PerpsProPositionCard: React.FC<{
           </View>
           <View style={styles.secondColumn}>
             <Text style={styles.label}>
-              {t('page.perps.pro.positions.mark')} ({market.quoteAsset})
+              {withOptionalUnit(
+                t('page.perps.pro.positions.mark'),
+                market.quoteAsset,
+              )}
             </Text>
             <Text style={styles.value}>
               {formatPerpsProPrice(market.markPrice, market.pxDecimals)}
@@ -374,7 +392,10 @@ export const PerpsProPositionCard: React.FC<{
               containerStyle={styles.rightDottedLabel}
               onPress={() => openFieldExplanation('liquidationPrice')}
               style={styles.label}>
-              {t('page.perps.pro.positions.liquidation')} ({market.quoteAsset})
+              {withOptionalUnit(
+                t('page.perps.pro.positions.liquidation'),
+                market.quoteAsset,
+              )}
             </PerpsProDottedUnderlineText>
           </View>
         </View>

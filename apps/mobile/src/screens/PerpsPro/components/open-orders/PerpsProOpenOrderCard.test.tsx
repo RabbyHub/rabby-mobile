@@ -2,6 +2,26 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
+type MockMarketIdentity = {
+  displayBase: string;
+  displayPair: string;
+  metadataReady: boolean;
+  pxDecimals: number | undefined;
+  quoteAsset: 'USDC' | 'USDE' | null;
+  sourceTag: string | null;
+  szDecimals: number | undefined;
+};
+const mockReadyMarket: MockMarketIdentity = {
+  displayBase: 'BTC',
+  displayPair: 'BTCUSDC',
+  metadataReady: true,
+  pxDecimals: 2,
+  quoteAsset: 'USDC',
+  sourceTag: 'xyz',
+  szDecimals: 3,
+};
+let mockMarketIdentity: MockMarketIdentity = mockReadyMarket;
+
 jest.mock('@/assets2024/icons/perps/IconPerpEdit.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -45,14 +65,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 jest.mock('../../scene/usePerpsProMarketIdentity', () => ({
-  usePerpsProMarketIdentity: () => ({
-    displayBase: 'BTC',
-    displayPair: 'BTCUSDC',
-    pxDecimals: 2,
-    quoteAsset: 'USDC',
-    sourceTag: 'xyz',
-    szDecimals: 3,
-  }),
+  usePerpsProMarketIdentity: () => mockMarketIdentity,
 }));
 
 import type { PerpsOpenOrderViewModel } from '../../model/openOrder';
@@ -93,6 +106,61 @@ const order = (
 });
 
 describe('PerpsProOpenOrderCard', () => {
+  beforeEach(() => {
+    mockMarketIdentity = mockReadyMarket;
+  });
+
+  it('keeps HIP-3 routing identity out of labels until quote metadata arrives', () => {
+    mockMarketIdentity = {
+      displayBase: 'BTC',
+      displayPair: 'BTC',
+      metadataReady: false,
+      pxDecimals: undefined,
+      quoteAsset: null,
+      sourceTag: 'hyna',
+      szDecimals: undefined,
+    };
+    const onPressMarket = jest.fn();
+    const value = order({
+      coin: 'hyna:BTC',
+      key: 'basic:hyna:BTC:1',
+    });
+    const view = render(
+      <PerpsProOpenOrderCard
+        cancelPending={false}
+        onCancel={jest.fn()}
+        onPressMarket={onPressMarket}
+        order={value}
+      />,
+    );
+
+    expect(screen.getByText('BTC')).toBeTruthy();
+    expect(screen.getByText('hyna')).toBeTruthy();
+    expect(screen.queryByText('hyna:BTC')).toBeNull();
+    expect(screen.getByText('Filled / Amount')).toBeTruthy();
+    fireEvent.press(
+      screen.getByTestId('perps-pro-order-market-basic:hyna:BTC:1'),
+    );
+    expect(onPressMarket).toHaveBeenCalledWith('hyna:BTC');
+
+    mockMarketIdentity = {
+      ...mockReadyMarket,
+      displayPair: 'BTCUSDE',
+      quoteAsset: 'USDE',
+      sourceTag: 'hyna',
+    };
+    view.rerender(
+      <PerpsProOpenOrderCard
+        cancelPending={false}
+        onCancel={jest.fn()}
+        onPressMarket={onPressMarket}
+        order={value}
+      />,
+    );
+    expect(screen.getByText('BTCUSDE')).toBeTruthy();
+    expect(screen.getByText('Filled / Amount (USDE)')).toBeTruthy();
+  });
+
   it('opens the market represented by the pair label', () => {
     const onPressMarket = jest.fn();
     render(
