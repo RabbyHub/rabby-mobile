@@ -10,18 +10,9 @@ import {
 import PQueue from 'p-queue';
 import { prepareAppDataSource } from '../imports';
 import type { TxHistoryResult } from '@rabby-wallet/rabby-api/dist/types';
+import { waitForUserVisibleJsWorkToSettle } from '@/core/utils/userVisibleJsWork';
 
 const USE_REALTIME_API_DURATION = 24 * 5 * 60 * 60 * 1000; // use async history api if user not opened app in 5 days
-
-const waitQueueFinished = (q: PQueue) => {
-  return new Promise(resolve => {
-    q.on('empty', () => {
-      if (q.pending <= 0) {
-        resolve(null);
-      }
-    });
-  });
-};
 
 const isSyncingRef = {
   current: false,
@@ -109,7 +100,7 @@ const synHistoryInRealTimeApi = async (
           res.history_list.length,
         );
         // if (res.history_list.length) {
-        syncRemoteHistory(address, res);
+        await syncRemoteHistory(address, res);
         // }
         console.debug(
           'synHistoryInRealTimeApi CUSTOM_LOGGER:=>: No more history',
@@ -129,8 +120,8 @@ const synHistoryInRealTimeApi = async (
           'add length:',
           res.history_list.length,
         );
-        syncRemoteHistory(address, res);
-        synHistoryInRealTimeApi(address, latestTime, lastItemTime);
+        await syncRemoteHistory(address, res);
+        await synHistoryInRealTimeApi(address, latestTime, lastItemTime);
       }
     }
     !start_time &&
@@ -159,7 +150,7 @@ const syncUserAllHistory = async (
 
     if (forceUseRealTime) {
       // use other fetch api
-      synHistoryInRealTimeApi(address, latestTime, start_time);
+      await synHistoryInRealTimeApi(address, latestTime, start_time);
       return;
     }
 
@@ -196,7 +187,7 @@ const syncUserAllHistory = async (
           res.history_list.length,
         );
         if (res.history_list.length) {
-          syncRemoteHistory(address, res);
+          await syncRemoteHistory(address, res);
         }
         console.debug(
           '🔍syncUserAllHistory CUSTOM_LOGGER:=>: No more history',
@@ -216,8 +207,13 @@ const syncUserAllHistory = async (
           'add length:',
           res.history_list.length,
         );
-        syncRemoteHistory(address, res);
-        syncUserAllHistory(address, lastItemTime, latestTime, forceUseRealTime);
+        await syncRemoteHistory(address, res);
+        await syncUserAllHistory(
+          address,
+          lastItemTime,
+          latestTime,
+          forceUseRealTime,
+        );
       }
     }
     !start_time &&
@@ -259,6 +255,7 @@ export const syncTop10History = async (
       await HistoryItemEntity.clear();
     }
     const queue = new PQueue({
+      concurrency: 2,
       interval: 2000,
       intervalCap: 5,
     });
@@ -277,6 +274,7 @@ export const syncTop10History = async (
         );
         queue.add(async () => {
           try {
+            await waitForUserVisibleJsWorkToSettle({ quietMs: 100 });
             await syncUserAllHistory(address, 0, 0, isUseRealTimeApi);
           } catch (error) {
             console.error(
@@ -289,7 +287,7 @@ export const syncTop10History = async (
       }
     }
     if (queue.size > 0) {
-      await waitQueueFinished(queue);
+      await queue.onIdle();
     }
   } finally {
     isSyncingRef.current = false;
@@ -304,6 +302,7 @@ export const syncMultiAddressesHistory = async (addresses: string[]) => {
 
   console.log('syncMultiAccountsHistory CUSTOM_LOGGER:=>: Fetching action');
   const queue = new PQueue({
+    concurrency: 2,
     interval: 2000,
     intervalCap: 5,
   });
@@ -315,6 +314,7 @@ export const syncMultiAddressesHistory = async (addresses: string[]) => {
     updateHistoryTimeSingleAddress(address);
     queue.add(async () => {
       try {
+        await waitForUserVisibleJsWorkToSettle({ quietMs: 100 });
         await Promise.all([
           syncUserAllHistory(address, 0, 0, isUserRealTimeApi),
         ]);
@@ -330,7 +330,7 @@ export const syncMultiAddressesHistory = async (addresses: string[]) => {
     });
   }
   if (queue.size > 0) {
-    await waitQueueFinished(queue);
+    await queue.onIdle();
   }
 };
 

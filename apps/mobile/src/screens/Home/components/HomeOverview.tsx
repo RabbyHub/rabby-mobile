@@ -13,6 +13,7 @@ import RcIconMarketCC from '@/assets2024/icons/home/IconMarketCC.svg';
 import RcIconConvertDustCC from '@/assets2024/icons/home/IconDustCC.svg';
 
 import { RootNames } from '@/constant/layout';
+import { useRegressionScenarioComponentAction } from '@/devtools/regressionScenarios/react';
 import { useTheme2024 } from '@/hooks/theme';
 import { useAppLanguage } from '@/hooks/lang';
 import {
@@ -82,6 +83,7 @@ import {
   ITEM_LAYOUT_PADDING_HORIZONTAL,
 } from '@/constant/home';
 import { perfEvents } from '@/core/utils/perf';
+import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
 import {
   beginFeatureActivation,
   markFeatureActivation,
@@ -92,6 +94,7 @@ import {
 } from '@/core/utils/homeStartupReady';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { scheduleStartupTask } from '@/core/utils/startupScheduler';
+import { beginUserVisibleJsWork } from '@/core/utils/userVisibleJsWork';
 import { syncTop10History } from '@/databases/hooks/history';
 import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
 import { useFetchCexInfo } from '@/hooks/useAddrDesc';
@@ -1017,25 +1020,56 @@ export const HomeOverview = React.memo(() => {
     });
   }, [triggerUpdate]);
 
-  const refreshManualHomeBackgroundData = useCallback(async () => {
-    // update at background
+  const refreshManualHomeDeferredData = useCallback(() => {
     forceUpdateApprovalAlertCounts();
     apisLending.fetchLendingData();
     const forceRefresh = true;
     void currencyServiceApi.syncCurrencyList(forceRefresh).catch(error => {
       console.error('[HomeOverview] refresh currency list failed', error);
     });
-
-    const top10Addresses = getSelectedBalanceAddressesSnapshot();
-    if (!top10Addresses.length) {
-      return;
-    }
-    syncTop10History(top10Addresses, forceRefresh);
-
-    // refresh token/protocol list
-    useTokenList.getState().batchGetTokenList(top10Addresses, forceRefresh);
-    useProtocol.getState().batchGetProtocols(top10Addresses, forceRefresh);
   }, []);
+
+  const refreshManualHomeAssetData = useCallback(
+    async (onDispatch?: (kind: 'token' | 'protocol') => void) => {
+      // Let the refresh gesture and loading state commit before starting the
+      // high-cardinality asset requests.
+      await sleep(0);
+      const top10Addresses = getSelectedBalanceAddressesSnapshot();
+      if (!top10Addresses.length) {
+        refreshManualHomeDeferredData();
+        return;
+      }
+      const forceRefresh = true;
+      const releaseVisibleAssetRefresh = beginUserVisibleJsWork(
+        'home:manual-asset-refresh',
+      );
+      const tokenRefresh = useTokenList
+        .getState()
+        .batchGetTokenList(top10Addresses, forceRefresh);
+      onDispatch?.('token');
+
+      const protocolRefresh = useProtocol
+        .getState()
+        .batchGetProtocols(top10Addresses, forceRefresh);
+      onDispatch?.('protocol');
+      const visibleAssetRefresh = Promise.allSettled([
+        tokenRefresh,
+        protocolRefresh,
+      ]);
+
+      // The remaining Home requests do not gate visible assets. Give the asset
+      // dispatch one more turn before starting them so they cannot occupy the
+      // same JS frame as the pull-down gesture.
+      await sleep(0);
+      refreshManualHomeDeferredData();
+
+      void visibleAssetRefresh.finally(() => {
+        releaseVisibleAssetRefresh();
+        void syncTop10History(top10Addresses, forceRefresh);
+      });
+    },
+    [refreshManualHomeDeferredData],
+  );
 
   const onRefresh = useCallback(async () => {
     if (!couldDoRefresh()) {
@@ -1043,11 +1077,15 @@ export const HomeOverview = React.memo(() => {
     }
 
     perfEvents.emit('HOME_WILL_BE_REFRESHED_MANUALLY');
-    return Promise.all([
+    const foregroundRefresh = Promise.all([
       refreshManualBalance(),
       checkGasAccountAddressesEligibility(true),
-    ]).finally(refreshManualHomeBackgroundData);
-  }, [refreshManualBalance, refreshManualHomeBackgroundData]);
+    ]);
+    void refreshManualHomeAssetData().catch(error => {
+      console.error('[HomeOverview] refresh visible assets failed', error);
+    });
+    return foregroundRefresh;
+  }, [refreshManualBalance, refreshManualHomeAssetData]);
 
   // 只有手动刷新需要检查跳跃数字是否和刷新前是否一致
   const handleManualPulldownRefresh = useCallback(async () => {
@@ -1055,16 +1093,55 @@ export const HomeOverview = React.memo(() => {
       return;
     }
 
+    const refreshTrace = beginAssetDataLoadDiagnostic(
+      'home-manual-refresh',
+      'home',
+    );
+    refreshTrace.mark('perf-event-dispatch-started');
     perfEvents.emit('HOME_WILL_BE_REFRESHED_MANUALLY');
+    refreshTrace.mark('perf-event-dispatched');
+
+    refreshTrace.mark('balance-refresh-dispatch-started');
     const balanceRefresh = refreshManualBalance();
+    refreshTrace.mark('balance-refresh-dispatched');
+
+    refreshTrace.mark('gas-account-refresh-dispatch-started');
     const gasAccountRefresh = checkGasAccountAddressesEligibility(true);
+    refreshTrace.mark('gas-account-refresh-dispatched');
+    refreshTrace.mark('foreground-requests-dispatched');
+    refreshTrace.mark('asset-refresh-scheduled');
+    const assetRefreshDispatch = refreshManualHomeAssetData(kind => {
+      refreshTrace.mark(`${kind}-refresh-dispatched`);
+    });
+    void assetRefreshDispatch.then(
+      () => refreshTrace.mark('asset-refresh-dispatched'),
+      () => refreshTrace.mark('asset-refresh-dispatch-failed'),
+    );
+    void balanceRefresh.then(
+      () => refreshTrace.mark('balance-refresh-settled'),
+      () => refreshTrace.mark('balance-refresh-failed'),
+    );
+    void gasAccountRefresh.then(
+      () => refreshTrace.mark('gas-account-refresh-settled'),
+      () => refreshTrace.mark('gas-account-refresh-failed'),
+    );
     const fullRefresh = Promise.all([
       balanceRefresh,
       gasAccountRefresh,
-    ]).finally(refreshManualHomeBackgroundData);
-    const safeFullRefresh = fullRefresh.catch(error => {
-      console.error('Refresh failed:', error);
+      assetRefreshDispatch,
+    ]).finally(() => {
+      refreshTrace.mark('foreground-requests-settled');
     });
+    const safeFullRefresh = fullRefresh.then(
+      () => {
+        refreshTrace.mark('asset-refresh-dispatched');
+        refreshTrace.finish({ path: 'manual-refresh-dispatched' });
+      },
+      error => {
+        refreshTrace.fail({ phase: 'manual-refresh' });
+        console.error('Refresh failed:', error);
+      },
+    );
 
     withAnimatedTickerRefreshNudge(() =>
       Promise.race([balanceRefresh, sleep(3000)]),
@@ -1072,7 +1149,14 @@ export const HomeOverview = React.memo(() => {
       console.error('Refresh balance failed:', error);
     });
     await Promise.race([safeFullRefresh, sleep(3000)]);
-  }, [refreshManualBalance, refreshManualHomeBackgroundData]);
+  }, [refreshManualBalance, refreshManualHomeAssetData]);
+
+  // Regression scenarios call the same refresh path as the native pull-down
+  // control. The production alias is a no-op, so this has no release behavior.
+  useRegressionScenarioComponentAction(
+    'home.manual-pulldown-refresh',
+    handleManualPulldownRefresh,
+  );
 
   // const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
   const handlePressMarket = useCallback(() => {

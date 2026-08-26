@@ -6,6 +6,7 @@ import { syncRemoteNFTs } from '@/databases/sync/assets';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
 import type { DisplayNftItem } from '@/types/assets';
 import { getSelectedBalanceAddressesSnapshot } from './balance';
+import { isHomeAssetSelectionExperimentEnabled } from '@/hooks/appSettings';
 import { ResourceBaseStore } from './_resourceBase';
 import type { ObservableResourceValueSource } from './_resourceFlow';
 import {
@@ -61,12 +62,22 @@ export {
 const normalizeAddresses = (addresses: string[]) =>
   Array.from(new Set(addresses.map(address => address.toLowerCase())));
 
+async function getSelectedBalanceAddressesOrTop10Fallback() {
+  const selectedAddresses = getSelectedBalanceAddressesSnapshot();
+  if (selectedAddresses.length || isHomeAssetSelectionExperimentEnabled()) {
+    return selectedAddresses;
+  }
+
+  return (await getTop10MyAccounts()).top10Addresses;
+}
+
 type NftListComputedState = {
   multiNftsIndexCache: Record<string, NftAssetsIndexResult>;
   singleNftsIndexCache: Record<string, NftAssetsIndexResult>;
   multiNftsAvailabilityByKey: Record<string, AssetProjectionAvailability>;
   singleNftsAvailabilityByKey: Record<string, AssetProjectionAvailability>;
   registerMultiNfts(addresses: string[], chainServerId?: string): string;
+  setMultiNftsProjectionActive(key: string, active: boolean): void;
   registerSingleNfts(address: string, chainServerId?: string): string;
 };
 
@@ -349,6 +360,9 @@ const singleNftsCacheOrder: string[] = [];
 const multiNftsCacheOrder: string[] = [];
 const singleNftCollectionIds = new Map<string, Set<NftCollectionId>>();
 const multiNftCollectionIds = new Map<string, Set<NftCollectionId>>();
+const activeMultiNftsProjectionKeys = new Map<string, boolean>();
+const dirtyMultiNftsProjectionKeys = new Set<string>();
+let multiNftsProjectionFlushScheduled = false;
 
 const getSingleNftList = (
   nftsMap: Record<string, DisplayNftItem[]>,
@@ -396,6 +410,8 @@ const removeSingleNftsCacheKey = (key: string) => {
 
 const removeMultiNftsCacheKey = (key: string) => {
   removeNftsCacheKey(key, multiNftsCacheParams, multiNftCollectionIds);
+  activeMultiNftsProjectionKeys.delete(key);
+  dirtyMultiNftsProjectionKeys.delete(key);
 };
 
 const touchSingleNftsCache = (
@@ -677,6 +693,11 @@ const restoreNftProjectionIfEmpty = (
           },
         },
   );
+  const trace = beginAssetDataLoadDiagnostic(
+    'asset-projection-nft-restore',
+    scene,
+    { addressCount: addresses.length },
+  );
 
   const request = (async () => {
     const restored = await restoreAssetProjection({
@@ -685,8 +706,10 @@ const restoreNftProjectionIfEmpty = (
       scene,
     });
     if (!restored) {
+      trace.finish({ reason: 'projection-missing' });
       return;
     }
+    trace.mark('projection-restored', { itemCount: restored.rows.length });
 
     const requiredNftIds = new Set<NftEntityId>();
     restored.rows.forEach(row => {
@@ -697,8 +720,16 @@ const restoreNftProjectionIfEmpty = (
     restored.groups.forEach(group => {
       group.memberIds.forEach(id => requiredNftIds.add(id as NftEntityId));
     });
-    if (requiredNftIds.size) {
-      const cachedNfts = await NFTItemEntity.batchMultAddressNFTs(addresses);
+    const missingNftIds = Array.from(requiredNftIds).filter(
+      nftId => !nftEntityResourceStore.getValue(nftId),
+    );
+    trace.mark('entity-selection-ready', { itemCount: requiredNftIds.size });
+    if (missingNftIds.length) {
+      trace.mark('entity-query-started', { itemCount: missingNftIds.length });
+      const cachedNfts = await NFTItemEntity.batchMultiAddressNFTsByResourceIds(
+        missingNftIds,
+      );
+      trace.mark('entity-query-finished', { itemCount: cachedNfts.length });
       const latestParamsBeforeHydrate =
         scene === 'single-address'
           ? singleNftsCacheParams.get(key)
@@ -713,6 +744,7 @@ const restoreNftProjectionIfEmpty = (
         resultBeforeHydrate !== startedResult ||
         nftListStore.getState().nftsMap !== startedSourceMap
       ) {
+        trace.finish({ reason: 'state-changed-before-entity-publish' });
         return;
       }
       const missingNfts = cachedNfts
@@ -728,10 +760,12 @@ const restoreNftProjectionIfEmpty = (
           );
         }) as CombinedNftItem[];
       nftEntityResourceStore.upsertNfts(missingNfts, 'hydrate');
+      trace.mark('entities-published', { itemCount: missingNfts.length });
     }
 
     const projection = buildRestoredNftProjection(restored);
     if (!projection) {
+      trace.finish({ reason: 'projection-invalid' });
       return;
     }
 
@@ -749,6 +783,7 @@ const restoreNftProjectionIfEmpty = (
       currentResult !== startedResult ||
       nftListStore.getState().nftsMap !== startedSourceMap
     ) {
+      trace.finish({ reason: 'state-changed-before-projection-publish' });
       return;
     }
 
@@ -784,8 +819,10 @@ const restoreNftProjectionIfEmpty = (
         },
       }));
     }
+    trace.finish({ itemCount: projection.result.rows.length });
   })()
     .catch(error => {
+      trace.fail({ reason: 'restore-error' });
       console.error('[nftProjection] restore failed', error);
     })
     .finally(() => {
@@ -963,6 +1000,45 @@ const updateMultiNftsIndex = (
   }
 };
 
+const isMultiNftsProjectionActive = (key: string) =>
+  activeMultiNftsProjectionKeys.get(key) !== false;
+
+const scheduleDirtyMultiNftsProjectionFlush = () => {
+  if (
+    multiNftsProjectionFlushScheduled ||
+    !Array.from(dirtyMultiNftsProjectionKeys).some(isMultiNftsProjectionActive)
+  ) {
+    return;
+  }
+
+  multiNftsProjectionFlushScheduled = true;
+  const flush = () => {
+    multiNftsProjectionFlushScheduled = false;
+    const nftsMap = nftListStore.getState().nftsMap;
+    const keys = Array.from(dirtyMultiNftsProjectionKeys).filter(
+      key => isMultiNftsProjectionActive(key) && multiNftsCacheParams.has(key),
+    );
+
+    keys.forEach(key => {
+      dirtyMultiNftsProjectionKeys.delete(key);
+      updateMultiNftsIndex(key, nftsMap);
+    });
+
+    if (
+      Array.from(dirtyMultiNftsProjectionKeys).some(isMultiNftsProjectionActive)
+    ) {
+      scheduleDirtyMultiNftsProjectionFlush();
+    }
+  };
+
+  setTimeout(flush, 0);
+};
+
+const invalidateMultiNftsProjection = (key: string) => {
+  dirtyMultiNftsProjectionKeys.add(key);
+  scheduleDirtyMultiNftsProjectionFlush();
+};
+
 export const useNftListComputedStore = zCreate<NftListComputedState>(set => ({
   multiNftsIndexCache: {},
   singleNftsIndexCache: {},
@@ -980,7 +1056,12 @@ export const useNftListComputedStore = zCreate<NftListComputedState>(set => ({
       nftsMap,
       normalizedAddresses,
     );
-    updateMultiNftsIndex(key, nftsMap);
+    if (isMultiNftsProjectionActive(key)) {
+      dirtyMultiNftsProjectionKeys.delete(key);
+      updateMultiNftsIndex(key, nftsMap);
+    } else {
+      dirtyMultiNftsProjectionKeys.add(key);
+    }
 
     if (removedKey) {
       set(state => {
@@ -995,6 +1076,12 @@ export const useNftListComputedStore = zCreate<NftListComputedState>(set => ({
       });
     }
     return key;
+  },
+  setMultiNftsProjectionActive(key, active) {
+    activeMultiNftsProjectionKeys.set(key, active);
+    if (active && dirtyMultiNftsProjectionKeys.has(key)) {
+      scheduleDirtyMultiNftsProjectionFlush();
+    }
   },
   registerSingleNfts(address, chainServerId) {
     const normalizedAddress = address.toLowerCase();
@@ -1475,7 +1562,8 @@ const nftListStore = zCreate<NFTListState>((set, get) => ({
     const invocationRevision = nftAddressRequests.issueRevision();
     const isCurrentRequest = () => multiAddressNftRequests.isCurrent(requestId);
     const addresses = normalizeAddresses(
-      options?.realTimeAddresses || (await getTop10MyAccounts()).top10Addresses,
+      options?.realTimeAddresses ||
+        (await getSelectedBalanceAddressesOrTop10Fallback()),
     );
     const addressTickets = new Map(
       addresses.map(address => [
@@ -1573,7 +1661,8 @@ const nftListStore = zCreate<NFTListState>((set, get) => ({
 
   async getCacheTop10NFTs(options) {
     const addresses =
-      options?.realTimeAddresses || (await getTop10MyAccounts()).top10Addresses;
+      options?.realTimeAddresses ||
+      (await getSelectedBalanceAddressesOrTop10Fallback());
 
     get().clearUnusedNFTs(addresses);
 
@@ -1720,7 +1809,7 @@ nftListStore.subscribe(state => {
     });
     multiNftsCacheParams.forEach((params, key) => {
       if (params.addresses.some(address => changedAddresses.has(address))) {
-        updateMultiNftsIndex(key, state.nftsMap);
+        invalidateMultiNftsProjection(key);
       }
     });
   }

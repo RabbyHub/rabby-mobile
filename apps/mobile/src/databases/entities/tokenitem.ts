@@ -8,7 +8,9 @@ import {
   Not,
   MoreThan,
   Raw,
+  Index,
 } from 'typeorm/browser';
+import type { DataSource } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import {
   columnConverter,
@@ -24,6 +26,13 @@ import type { ITokenItem } from '@/types/assets';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
 import { ParseEntity } from '@/core/utils/typeorm';
+import {
+  buildTokenProjectionResourceId,
+  TOKEN_PROJECTION_RESOURCE_ID_INDEX_NAME,
+} from '../tokenProjectionResourceId';
+
+const PROJECTION_RESOURCE_QUERY_BATCH_SIZE = 200;
+const EXPIRATION_OWNER_QUERY_BATCH_SIZE = 200;
 
 const RawAmountTransformer = {
   to: (val: any) => columnConverter.numberToString(val),
@@ -32,7 +41,11 @@ const RawAmountTransformer = {
 
 @ParseEntity()
 @Entity(ORM_TABLE_NAMES.cache_tokenitem)
+@Index(TOKEN_PROJECTION_RESOURCE_ID_INDEX_NAME, ['projection_resource_id'])
 export class TokenItemEntity extends EntityAddressAssetBase {
+  @Column('text', { default: '', select: false })
+  projection_resource_id!: string;
+
   // content_type
   @Column('text', { default: '' })
   content_type: TokenItem['content_type'];
@@ -206,6 +219,11 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     e.launchpad = input.launchpad ?? null;
     e.asset = input.asset ?? null;
     e.market_status = input.market_status ?? '';
+    e.projection_resource_id = buildTokenProjectionResourceId(
+      e.owner_addr,
+      e.chain,
+      e.id,
+    );
 
     e.makeDbId();
   }
@@ -352,6 +370,57 @@ export class TokenItemEntity extends EntityAddressAssetBase {
           cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
         }))
     );
+  }
+
+  /**
+   * Restores only the token resources referenced by a persisted projection.
+   *
+   * The projection identifier intentionally excludes `inner_id`, so this
+   * returns every matching cache row just like the former address-wide read.
+   */
+  static async batchMultiAddressTokensByResourceIds(
+    resourceIds: string[],
+    dataSource?: DataSource,
+  ) {
+    const repo = dataSource
+      ? dataSource.getRepository(TokenItemEntity)
+      : (await prepareAppDataSource(), this.getRepository());
+
+    const normalizedResourceIds = Array.from(
+      new Set(resourceIds.map(resourceId => resourceId.toLowerCase())),
+    ).filter(Boolean);
+    if (!normalizedResourceIds.length) {
+      return [];
+    }
+
+    const tokens: TokenItemEntity[] = [];
+
+    for (
+      let start = 0;
+      start < normalizedResourceIds.length;
+      start += PROJECTION_RESOURCE_QUERY_BATCH_SIZE
+    ) {
+      const resourceIdChunk = normalizedResourceIds.slice(
+        start,
+        start + PROJECTION_RESOURCE_QUERY_BATCH_SIZE,
+      );
+      const rows = await repo
+        .createQueryBuilder('tokenitem')
+        .where('tokenitem.projection_resource_id IN (:...resourceIds)', {
+          resourceIds: resourceIdChunk,
+        })
+        .andWhere('tokenitem.id != :emptyTokenId', {
+          emptyTokenId: EMPTY_TOKEN_ITEM_ID,
+        })
+        .andWhere('tokenitem.amount > :amount', { amount: 0 })
+        .getMany();
+      tokens.push(...rows);
+    }
+
+    return tokens.map(token => ({
+      ...token,
+      cex_ids: columnConverter.jsonStringToObj(token.cex_ids),
+    }));
   }
 
   static async getDefaultTokensByAddresses(
@@ -617,21 +686,57 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     );
   }
 
-  static async isExpired(owner_addr: string) {
-    await prepareAppDataSource();
-
-    const repo = this.getRepository();
-    const result = await repo
-      .createQueryBuilder('tokenitem')
-      .select('MIN(tokenitem._local_updated_at)', 'minUpdatedAt')
-      .where('tokenitem.owner_addr = :owner_addr', { owner_addr })
-      .getRawOne();
-
-    if (!result.minUpdatedAt) {
-      return true;
+  static async getExpirationByOwners(
+    ownerAddresses: string[],
+    dataSource?: DataSource,
+  ) {
+    const normalizedOwners = Array.from(
+      new Set(ownerAddresses.map(owner => owner.toLowerCase())),
+    );
+    const expirationByOwner: Record<string, boolean> = Object.fromEntries(
+      normalizedOwners.map(owner => [owner, true]),
+    );
+    if (!normalizedOwners.length) {
+      return expirationByOwner;
     }
-    const firstUpdateTime = parseInt(result.minUpdatedAt, 10);
-    return Date.now() - firstUpdateTime > ASSET_EXPIRED_TIME;
+
+    const repo = dataSource
+      ? dataSource.getRepository(TokenItemEntity)
+      : (await prepareAppDataSource(), this.getRepository());
+    const now = Date.now();
+    for (
+      let start = 0;
+      start < normalizedOwners.length;
+      start += EXPIRATION_OWNER_QUERY_BATCH_SIZE
+    ) {
+      const owners = normalizedOwners.slice(
+        start,
+        start + EXPIRATION_OWNER_QUERY_BATCH_SIZE,
+      );
+      const rows = await repo
+        .createQueryBuilder('tokenitem')
+        .select('tokenitem.owner_addr', 'ownerAddr')
+        .addSelect('MIN(tokenitem._local_updated_at)', 'minUpdatedAt')
+        .where('tokenitem.owner_addr IN (:...owners)', { owners })
+        .groupBy('tokenitem.owner_addr')
+        .getRawMany<{ ownerAddr: string; minUpdatedAt: string | number }>();
+
+      rows.forEach(row => {
+        const owner = row.ownerAddr.toLowerCase();
+        const firstUpdateTime = Number(row.minUpdatedAt);
+        expirationByOwner[owner] =
+          !Number.isFinite(firstUpdateTime) ||
+          now - firstUpdateTime > ASSET_EXPIRED_TIME;
+      });
+    }
+
+    return expirationByOwner;
+  }
+
+  static async isExpired(owner_addr: string) {
+    const owner = owner_addr.toLowerCase();
+    const expirationByOwner = await this.getExpirationByOwners([owner]);
+    return expirationByOwner[owner];
   }
 
   static async willExpired(owner_addr: string, offest?: number) {

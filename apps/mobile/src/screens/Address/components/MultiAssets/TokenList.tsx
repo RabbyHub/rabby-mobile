@@ -47,7 +47,6 @@ import useTokenList, {
   tokenEntityResourceStore,
   tokenGroupResourceStore,
   useTokenAssetsIndexStore,
-  useTokenIndexStore,
 } from '@/store/tokens';
 import { useFindAccountByAddress, useIsFocusedCurrentTab } from './hooks/share';
 import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
@@ -75,9 +74,13 @@ import { AccountOverview } from '@/screens/Home/components/AccountOverview';
 import { useIsFocused } from '@react-navigation/native';
 import { apiCustomTestnet } from '@/core/apis';
 import { toast } from '@/components2024/Toast';
-import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
+import {
+  useRegressionScenario,
+  useRegressionScenarioComponentAction,
+} from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { IS_ANDROID } from '@/core/native/utils';
+import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
 import { formatNetworth } from '@/utils/math';
 import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 import {
@@ -87,6 +90,7 @@ import {
   type TokenProjectionSectionSpec,
 } from '@/screens/Home/components/TokenProjectionSectionList';
 import { resolveAssetProjectionViewState } from '@/store/assetProjectionAvailability';
+import { useUserVisibleJsWork } from '@/hooks/useUserVisibleJsWork';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -98,54 +102,90 @@ const TOKEN_LIST_RENDER_BATCH_SIZE = 6;
 const TOKEN_LIST_WINDOW_SIZE = 7;
 const TOKEN_LIST_BATCHING_PERIOD_MS = 32;
 
-const TokenResourceRow = React.memo(
+type TokenResourceRowCommonProps = {
+  tokenDisplayMode: string;
+  getAccountByAddress(address?: string): KeyringAccountWithAlias | undefined;
+  style?: ViewStyle;
+  hideChainLogo?: boolean;
+};
+
+const TokenEntityResourceRow = React.memo(
   ({
-    row,
+    tokenId,
     tokenDisplayMode,
     getAccountByAddress,
     onTokenPress,
-    onGroupPress,
     style,
     hideChainLogo,
-  }: {
-    row: TokenAssetsIndexRow;
-    tokenDisplayMode: string;
-    getAccountByAddress(address?: string): KeyringAccountWithAlias | undefined;
+  }: TokenResourceRowCommonProps & {
+    tokenId: Extract<TokenAssetsIndexRow, { type: 'token' }>['tokenId'];
     onTokenPress(token: ITokenItem): void;
-    onGroupPress(group: TokenGroupResourceValue): void;
-    style?: ViewStyle;
-    hideChainLogo?: boolean;
   }) => {
-    const tokenId = row.type === 'token' ? row.tokenId : undefined;
-    const groupId = row.type === 'group' ? row.groupId : undefined;
     const token = useActivityStore(
       tokenEntityResourceStore.useStore,
-      state => (tokenId ? state.valueMap[tokenId] : undefined),
+      state => state.valueMap[tokenId],
       Object.is,
       { storeLabel: 'home-multi-assets-token-entities' },
     );
+    const account =
+      tokenDisplayMode === 'byAddress' && token
+        ? getAccountByAddress(token.owner_addr)
+        : undefined;
+
+    const handlePress = useCallback(() => {
+      if (token) {
+        onTokenPress(token);
+      }
+    }, [onTokenPress, token]);
+
+    if (!token) {
+      return <MemoizedItemLoader />;
+    }
+
+    return (
+      <MemoizedTokenRow
+        data={token}
+        onTokenPress={handlePress}
+        logoSize={40}
+        style={style}
+        chainLogoSize={18}
+        hideChainLogo={hideChainLogo}
+        account={account}
+        scene="portfolio"
+      />
+    );
+  },
+);
+
+const TokenGroupResourceRow = React.memo(
+  ({
+    groupId,
+    tokenDisplayMode,
+    getAccountByAddress,
+    onGroupPress,
+    style,
+    hideChainLogo,
+  }: TokenResourceRowCommonProps & {
+    groupId: Extract<TokenAssetsIndexRow, { type: 'group' }>['groupId'];
+    onGroupPress(group: TokenGroupResourceValue): void;
+  }) => {
     const group = useActivityStore(
       tokenGroupResourceStore.useStore,
-      state => (groupId ? state.valueMap[groupId] : undefined),
+      state => state.valueMap[groupId],
       Object.is,
       { storeLabel: 'home-multi-assets-token-groups' },
     );
-    const data = row.type === 'group' ? group?.summary : token;
+    const data = group?.summary;
     const account =
       tokenDisplayMode === 'byAddress' && data
         ? getAccountByAddress(data.owner_addr)
         : undefined;
 
     const handlePress = useCallback(() => {
-      if (!data) {
-        return;
-      }
-      if (row.type === 'group' && group) {
+      if (group) {
         onGroupPress(group);
-        return;
       }
-      onTokenPress(data);
-    }, [data, group, onGroupPress, onTokenPress, row]);
+    }, [group, onGroupPress]);
 
     if (!data) {
       return <MemoizedItemLoader />;
@@ -161,6 +201,46 @@ const TokenResourceRow = React.memo(
         hideChainLogo={hideChainLogo}
         account={account}
         scene="portfolio"
+      />
+    );
+  },
+);
+
+const TokenResourceRow = React.memo(
+  ({
+    row,
+    tokenDisplayMode,
+    getAccountByAddress,
+    onTokenPress,
+    onGroupPress,
+    style,
+    hideChainLogo,
+  }: TokenResourceRowCommonProps & {
+    row: TokenAssetsIndexRow;
+    onTokenPress(token: ITokenItem): void;
+    onGroupPress(group: TokenGroupResourceValue): void;
+  }) => {
+    if (row.type === 'group') {
+      return (
+        <TokenGroupResourceRow
+          groupId={row.groupId}
+          tokenDisplayMode={tokenDisplayMode}
+          getAccountByAddress={getAccountByAddress}
+          onGroupPress={onGroupPress}
+          style={style}
+          hideChainLogo={hideChainLogo}
+        />
+      );
+    }
+
+    return (
+      <TokenEntityResourceRow
+        tokenId={row.tokenId}
+        tokenDisplayMode={tokenDisplayMode}
+        getAccountByAddress={getAccountByAddress}
+        onTokenPress={onTokenPress}
+        style={style}
+        hideChainLogo={hideChainLogo}
       />
     );
   },
@@ -222,7 +302,10 @@ export const TokenList = () => {
   const regressionScenarioReport = regressionScenario.active
     ? regressionScenario.report
     : null;
-  const { myTop10Addresses } = useHomeAssetAccountInfo();
+  const isHomeAssetRegressionScenario =
+    regressionScenarioId === 'home-assets' ||
+    regressionScenarioId === 'high-cardinality-assets';
+  const { myTop10Accounts, myTop10Addresses } = useHomeAssetAccountInfo();
   const selectedChainItem = useSelectedChainItem();
   const chain = useMemo(() => {
     return selectedChainItem?.chain;
@@ -236,14 +319,17 @@ export const TokenList = () => {
     typeof createGlobalBottomSheetModal2024
   > | null>(null);
 
-  const tokenDisplayMode = useActivityStore(
+  const { tokenDisplayMode, isLoading } = useActivityStore(
     useTokenList,
-    state => state.tokenDisplayMode,
+    useShallow(state => ({
+      tokenDisplayMode: state.tokenDisplayMode,
+      isLoading: state.isLoading,
+    })),
     Object.is,
-    { storeLabel: 'home-multi-assets-token-preferences' },
+    { storeLabel: 'home-multi-assets-token-runtime' },
   );
 
-  const getAccountByAddress = useFindAccountByAddress();
+  const getAccountByAddress = useFindAccountByAddress(myTop10Accounts);
   const {
     sections: customTestnetSections,
     hydrationState: customTestnetHydrationState,
@@ -297,21 +383,26 @@ export const TokenList = () => {
     [myTop10Addresses, chain, tokenDisplayMode],
   );
 
-  useEffect(() => {
-    useTokenIndexStore
-      .getState()
-      .syncFromTokenListMap(
-        useTokenList.getState().tokenListMap,
-        myTop10Addresses,
-      );
-  }, [myTop10Addresses]);
-
   useLayoutEffect(() => {
-    useTokenAssetsIndexStore.getState().ensureMultiAssetsResult({
-      addresses: myTop10Addresses,
-      chainServerId: chain,
-      isLpTokenEnabled: false,
-      tokenDisplayMode,
+    const trace = beginAssetDataLoadDiagnostic(
+      'multi-address-token-projection',
+      myTop10Addresses.join('|'),
+      {
+        addressCount: myTop10Addresses.length,
+        chainServerId: chain || 'all',
+        tokenDisplayMode,
+      },
+    );
+    const projectionKey = useTokenAssetsIndexStore
+      .getState()
+      .ensureMultiAssetsResult({
+        addresses: myTop10Addresses,
+        chainServerId: chain,
+        isLpTokenEnabled: false,
+        tokenDisplayMode,
+      });
+    trace.finish({
+      projectionKeyMatches: projectionKey === multiAssetsKey,
     });
   }, [chain, multiAssetsKey, myTop10Addresses, tokenDisplayMode]);
 
@@ -372,12 +463,6 @@ export const TokenList = () => {
     [additionalCoreUsdValue],
   );
 
-  const isLoading = useActivityStore(
-    useTokenList,
-    state => state.isLoading,
-    Object.is,
-    { storeLabel: 'home-multi-assets-token-loading' },
-  );
   // LP availability only controls the additional-token selector. Until the
   // currently selected segments contain rows, the list still has no visible
   // data and must remain in its loading/empty state.
@@ -397,18 +482,26 @@ export const TokenList = () => {
   const isTokenListDisplayLoading =
     tokenProjectionViewState === 'loading' ||
     (isCustomTestnetSnapshotPending && projectedTokenCount === 0);
+  useUserVisibleJsWork(
+    isScreenFocused && isFocusing && (isLoading || isTokenListDisplayLoading),
+    'home-token-visible-load',
+  );
 
   useEffect(() => {
-    batchGetTokenList(myTop10Addresses);
-  }, [myTop10Addresses]);
+    batchGetTokenList(myTop10Addresses, false, {
+      preferredMultiAssetsProjectionKey: multiAssetsKey,
+    });
+  }, [multiAssetsKey, myTop10Addresses]);
 
   const handleForeground = useCallback(() => {
     if (isLoading || !isFocusing || !myTop10Addresses) {
       return;
     }
     triggerUpdate(false);
-    batchGetTokenList(myTop10Addresses);
-  }, [isFocusing, isLoading, myTop10Addresses, triggerUpdate]);
+    batchGetTokenList(myTop10Addresses, false, {
+      preferredMultiAssetsProjectionKey: multiAssetsKey,
+    });
+  }, [isFocusing, isLoading, multiAssetsKey, myTop10Addresses, triggerUpdate]);
 
   useAppForeground({
     enabled: isFocusing,
@@ -424,7 +517,7 @@ export const TokenList = () => {
   useEffect(() => {
     if (
       !regressionScenarioActive ||
-      regressionScenarioId !== 'home-assets' ||
+      !isHomeAssetRegressionScenario ||
       !regressionScenarioRunId ||
       !regressionScenarioReport ||
       !isFocused
@@ -455,7 +548,7 @@ export const TokenList = () => {
     isFocused,
     projectedTokenCount,
     regressionScenarioActive,
-    regressionScenarioId,
+    isHomeAssetRegressionScenario,
     regressionScenarioReport,
     regressionScenarioRunId,
     tokenProjectionAvailability,
@@ -465,7 +558,7 @@ export const TokenList = () => {
   useEffect(() => {
     if (
       !regressionScenarioActive ||
-      regressionScenarioId !== 'home-assets' ||
+      !isHomeAssetRegressionScenario ||
       !isFocused
     ) {
       return;
@@ -479,7 +572,7 @@ export const TokenList = () => {
     isFocused,
     multiAssetsKey,
     regressionScenarioActive,
-    regressionScenarioId,
+    isHomeAssetRegressionScenario,
     regressionScenarioRunId,
   ]);
 
@@ -754,6 +847,77 @@ export const TokenList = () => {
     setShowAllTokens(visible => !visible);
   }, [handleLpTokenEnabledChange, showAllTokens]);
 
+  const expandAdditionalTokensForRegression = useCallback(() => {
+    if (!showAllTokens) {
+      handleToggleAdditionalTokens();
+    }
+  }, [handleToggleAdditionalTokens, showAllTokens]);
+  const collapseAdditionalTokensForRegression = useCallback(() => {
+    if (showAllTokens) {
+      handleToggleAdditionalTokens();
+    }
+  }, [handleToggleAdditionalTokens, showAllTokens]);
+  const enableLpTokensForRegression = useCallback(() => {
+    handleLpTokenEnabledChange(true);
+  }, [handleLpTokenEnabledChange]);
+
+  useRegressionScenarioComponentAction(
+    'home-assets.expand-additional-tokens',
+    expandAdditionalTokensForRegression,
+  );
+  useRegressionScenarioComponentAction(
+    'home-assets.collapse-additional-tokens',
+    collapseAdditionalTokensForRegression,
+  );
+  useRegressionScenarioComponentAction(
+    'home-assets.enable-lp-tokens',
+    enableLpTokensForRegression,
+  );
+
+  const lastExpandedRegressionModeRef = useRef<'default' | 'lp' | null>(null);
+  useEffect(() => {
+    if (
+      !regressionScenarioActive ||
+      regressionScenarioId !== 'high-cardinality-assets' ||
+      !regressionScenarioReport ||
+      !isFocused ||
+      !showAllTokens
+    ) {
+      lastExpandedRegressionModeRef.current = null;
+      return;
+    }
+
+    const mode = isLpTokenEnabled ? 'lp' : 'default';
+    if (
+      lastExpandedRegressionModeRef.current === mode ||
+      selectedAdditionalTokenCount === 0
+    ) {
+      return;
+    }
+    lastExpandedRegressionModeRef.current = mode;
+    regressionScenarioReport('assertion', {
+      assertion:
+        mode === 'lp'
+          ? 'high-cardinality-token-lp-expanded'
+          : 'high-cardinality-token-additional-expanded',
+      passed: true,
+      mode,
+      additionalTokenCount: selectedAdditionalTokenCount,
+      primaryTokenCount,
+      projectedTokenCount,
+    });
+  }, [
+    isFocused,
+    isLpTokenEnabled,
+    primaryTokenCount,
+    projectedTokenCount,
+    regressionScenarioActive,
+    regressionScenarioId,
+    regressionScenarioReport,
+    selectedAdditionalTokenCount,
+    showAllTokens,
+  ]);
+
   const emptyAssetsText = useMemo(
     () =>
       t('page.singleHome.sectionHeader.NoData', {
@@ -1012,6 +1176,7 @@ export const TokenList = () => {
         sectionSpecs={sectionSpecs}
         ListComponent={TabsSectionList}
         storeLabel="home-multi-assets-token-section-list"
+        userVisible={isScreenFocused && isFocusing}
         style={[
           styles.container,
           pulldownRefreshReturns.scrollableStyle.container,

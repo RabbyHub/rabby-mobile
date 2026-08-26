@@ -1,8 +1,20 @@
 function loadStartupScheduler() {
   const markStartupTaskDiagnostic = jest.fn();
+  const runAfterHomePostStartupReady = jest.fn(
+    (
+      _callback: () => void,
+      _options?: { label?: string; fallbackMs?: number },
+    ) => jest.fn(),
+  );
   const runAfterHomeEntryReady = jest.fn();
   const runAfterHomeContentReady = jest.fn();
+  const runAfterInteractions = jest.fn((_callback: () => void) => ({
+    cancel: jest.fn(),
+  }));
 
+  jest.doMock('react-native', () => ({
+    InteractionManager: { runAfterInteractions },
+  }));
   jest.doMock('./diagnosticEnv', () => ({
     isNonProductionDiagnosticsEnabled: true,
   }));
@@ -10,7 +22,7 @@ function loadStartupScheduler() {
     traceAndroidInstant: jest.fn(),
   }));
   jest.doMock('./homeStartupReady', () => ({
-    runAfterHomePostStartupReady: jest.fn(),
+    runAfterHomePostStartupReady,
     traceHomeStartupReady: jest.fn(),
   }));
   jest.doMock('./homeStartupMilestones', () => ({
@@ -29,13 +41,18 @@ function loadStartupScheduler() {
     scheduler:
       require('./startupScheduler') as typeof import('./startupScheduler'),
     markStartupTaskDiagnostic,
+    runAfterHomePostStartupReady,
     runAfterHomeEntryReady,
     runAfterHomeContentReady,
+    runAfterInteractions,
+    userVisibleJsWork:
+      require('./userVisibleJsWork') as typeof import('./userVisibleJsWork'),
   };
 }
 
 describe('startup scheduler timing diagnostics', () => {
   afterEach(() => {
+    jest.useRealTimers();
     jest.restoreAllMocks();
     jest.resetModules();
     jest.clearAllMocks();
@@ -134,4 +151,36 @@ describe('startup scheduler timing diagnostics', () => {
       expect(task).toHaveBeenCalledTimes(1);
     },
   );
+
+  it('keeps idle startup work behind active visible JS work', () => {
+    jest.useFakeTimers();
+    const loaded = loadStartupScheduler();
+    const task = jest.fn();
+    const releaseVisibleWork =
+      loaded.userVisibleJsWork.beginUserVisibleJsWork('token-load');
+
+    loaded.scheduler.scheduleStartupTask(task, {
+      stage: 'homePostStartupIdle',
+      label: 'idle-warmup',
+    });
+    loaded.runAfterHomePostStartupReady.mock.calls[0]?.[0]();
+
+    expect(loaded.runAfterInteractions).not.toHaveBeenCalled();
+    releaseVisibleWork();
+    jest.advanceTimersByTime(249);
+    expect(loaded.runAfterInteractions).not.toHaveBeenCalled();
+    jest.advanceTimersByTime(1);
+    expect(loaded.runAfterInteractions).toHaveBeenCalledTimes(1);
+
+    const releaseSecondVisibleWork =
+      loaded.userVisibleJsWork.beginUserVisibleJsWork('projection-hydration');
+    loaded.runAfterInteractions.mock.calls[0]?.[0]();
+    expect(task).not.toHaveBeenCalled();
+
+    releaseSecondVisibleWork();
+    jest.advanceTimersByTime(250);
+    expect(loaded.runAfterInteractions).toHaveBeenCalledTimes(2);
+    loaded.runAfterInteractions.mock.calls[1]?.[0]();
+    expect(task).toHaveBeenCalledTimes(1);
+  });
 });

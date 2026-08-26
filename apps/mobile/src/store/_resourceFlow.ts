@@ -45,10 +45,36 @@ export type ObservableResourceState<TValue> = {
   metaMap: Record<string, ObservableResourceMeta>;
 };
 
+export function didResourceLoadingStateChange(
+  previousMetaMap: Record<string, ObservableResourceMeta>,
+  nextMetaMap: Record<string, ObservableResourceMeta>,
+  resourceKeys: string[],
+) {
+  return resourceKeys.some(resourceKey => {
+    const previous = previousMetaMap[resourceKey];
+    const next = nextMetaMap[resourceKey];
+
+    return (
+      !!previous?.isHydrating !== !!next?.isHydrating ||
+      !!previous?.isFetchingRemote !== !!next?.isFetchingRemote
+    );
+  });
+}
+
 type ResourceLifecycleOptions = {
   requestId?: string;
   localTargets?: ResourceLocalTarget[];
   detail?: Record<string, unknown>;
+};
+
+type RemoteFetchBatchEntry = {
+  resourceKey: string;
+  options?: Omit<ResourceLifecycleOptions, 'requestId'>;
+};
+
+type RemoteValueBatchEntry<TValue> = RemoteFetchBatchEntry & {
+  requestId: string;
+  value: TValue;
 };
 
 function pickPersistDiagnosticDetail(options?: ResourceLifecycleOptions) {
@@ -316,6 +342,61 @@ export class ObservableResourceStore<TValue> extends BaseStore<
     return requestId;
   };
 
+  startRemoteFetchBatch = (entries: RemoteFetchBatchEntry[]) => {
+    if (!entries.length) {
+      return [];
+    }
+
+    const requests = entries.map(entry => ({
+      ...entry,
+      requestId: `${this.family}:${entry.resourceKey}:remote:${++this
+        .requestSequence}`,
+    }));
+
+    this.setState(prev => {
+      const nextMetaMap = {
+        ...prev.metaMap,
+      };
+
+      requests.forEach(({ resourceKey, requestId, options }) => {
+        const localTargets = options?.localTargets || [];
+        const prevMeta =
+          nextMetaMap[resourceKey] ||
+          createDefaultMeta(this.family, resourceKey, localTargets);
+
+        nextMetaMap[resourceKey] = {
+          ...prevMeta,
+          isFetchingRemote: true,
+          activeRemoteRequestId: requestId,
+          localTargets: mergeLocalTargets(prevMeta.localTargets, localTargets),
+          lastError:
+            prevMeta.lastError?.phase === 'remote'
+              ? undefined
+              : prevMeta.lastError,
+        };
+      });
+
+      return {
+        metaMap: nextMetaMap,
+      };
+    });
+
+    requests.forEach(({ resourceKey, requestId, options }) => {
+      const localTargets = options?.localTargets || [];
+      this.syncDebugSnapshot(resourceKey);
+      recordResourceFlowTrace({
+        family: this.family,
+        resourceKey,
+        type: 'remote_fetch_started',
+        requestId,
+        localTargets,
+        detail: options?.detail,
+      });
+    });
+
+    return requests;
+  };
+
   markRemoteFetchStartedWithRequestId = (
     resourceKey: string,
     requestId: string,
@@ -425,6 +506,98 @@ export class ObservableResourceStore<TValue> extends BaseStore<
     });
 
     return true;
+  };
+
+  applyRemoteValueBatch = (entries: RemoteValueBatchEntry<TValue>[]) => {
+    if (!entries.length) {
+      return [];
+    }
+
+    const applied = entries.map(() => false);
+    const staleTargets = entries.map(() => [] as ResourceLocalTarget[]);
+    const now = Date.now();
+
+    this.setState(prev => {
+      let changed = false;
+      const nextValueMap = {
+        ...prev.valueMap,
+      };
+      const nextMetaMap = {
+        ...prev.metaMap,
+      };
+
+      entries.forEach((entry, index) => {
+        const localTargets = entry.options?.localTargets || [];
+        const prevMeta =
+          nextMetaMap[entry.resourceKey] ||
+          createDefaultMeta(this.family, entry.resourceKey, localTargets);
+
+        if (
+          prevMeta.activeRemoteRequestId &&
+          prevMeta.activeRemoteRequestId !== entry.requestId
+        ) {
+          staleTargets[index] = mergeLocalTargets(
+            prevMeta.localTargets,
+            localTargets,
+          );
+          return;
+        }
+
+        applied[index] = true;
+        changed = true;
+        nextValueMap[entry.resourceKey] = entry.value;
+        nextMetaMap[entry.resourceKey] = {
+          ...prevMeta,
+          hasValue: true,
+          version: prevMeta.version + 1,
+          sourceOfCurrentValue: 'remote',
+          isFetchingRemote: false,
+          activeRemoteRequestId: undefined,
+          localTargets: mergeLocalTargets(prevMeta.localTargets, localTargets),
+          lastRemoteAt: now,
+          lastError:
+            prevMeta.lastError?.phase === 'remote'
+              ? undefined
+              : prevMeta.lastError,
+        };
+      });
+
+      if (!changed) {
+        return prev;
+      }
+
+      return {
+        valueMap: nextValueMap,
+        metaMap: nextMetaMap,
+      };
+    });
+
+    entries.forEach((entry, index) => {
+      const localTargets = entry.options?.localTargets || [];
+      if (!applied[index]) {
+        recordResourceFlowTrace({
+          family: this.family,
+          resourceKey: entry.resourceKey,
+          type: 'remote_fetch_ignored_stale',
+          requestId: entry.requestId,
+          localTargets: staleTargets[index],
+          detail: entry.options?.detail,
+        });
+        return;
+      }
+
+      this.syncDebugSnapshot(entry.resourceKey);
+      recordResourceFlowTrace({
+        family: this.family,
+        resourceKey: entry.resourceKey,
+        type: 'remote_fetch_succeeded',
+        requestId: entry.requestId,
+        localTargets,
+        detail: entry.options?.detail,
+      });
+    });
+
+    return applied;
   };
 
   queuePersist = (resourceKey: string, options?: ResourceLifecycleOptions) => {

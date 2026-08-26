@@ -10,7 +10,13 @@ import {
   runAfterHomeContentReady,
   runAfterHomeEntryReady,
 } from './homeStartupMilestones';
+import {
+  getUserVisibleJsWorkSnapshot,
+  runAfterUserVisibleJsWorkSettles,
+} from './userVisibleJsWork';
 import { markStartupRuntimePhase } from '@/startup/runtimeDiagnostics';
+
+const USER_VISIBLE_JS_WORK_QUIET_MS = 250;
 
 export type StartupTaskStage =
   | 'registration'
@@ -323,6 +329,8 @@ function scheduleHomePostStartupIdle<T>(
   let interactionHandle: ReturnType<
     typeof InteractionManager.runAfterInteractions
   > | null = null;
+  let cancelUserVisibleWorkWait: (() => void) | null = null;
+  let wasDeferredByUserVisibleWork = false;
 
   const executeIdleTask = () => {
     markStartupRuntimePhase('home', 'idle', options.label || 'idle_task');
@@ -336,25 +344,61 @@ function scheduleHomePostStartupIdle<T>(
       }
 
       const scheduleIdleTask = () => {
-        interactionHandle = InteractionManager.runAfterInteractions(() => {
-          if (disposed) {
-            return;
-          }
+        if (disposed) {
+          return;
+        }
+        const workSnapshot = getUserVisibleJsWorkSnapshot();
+        if (workSnapshot.activeCount > 0) {
+          wasDeferredByUserVisibleWork = true;
+          traceStartupTask('defer_user_visible_work', options, {
+            activeCount: workSnapshot.activeCount,
+            activeLabels: workSnapshot.labels.join(','),
+          });
+        }
+        cancelUserVisibleWorkWait = runAfterUserVisibleJsWorkSettles(
+          () => {
+            cancelUserVisibleWorkWait = null;
+            if (disposed) {
+              return;
+            }
+            if (wasDeferredByUserVisibleWork) {
+              wasDeferredByUserVisibleWork = false;
+              traceStartupTask('resume_after_user_visible_work', options);
+            }
 
-          if (typeof requestIdleCallback === 'function') {
-            idleId = requestIdleCallback(
-              () => {
-                if (!disposed) {
-                  executeIdleTask();
-                }
-              },
-              { timeout: options.idleTimeoutMs ?? 5000 },
-            );
-            return;
-          }
+            interactionHandle = InteractionManager.runAfterInteractions(() => {
+              interactionHandle = null;
+              if (disposed) {
+                return;
+              }
+              if (getUserVisibleJsWorkSnapshot().activeCount > 0) {
+                scheduleIdleTask();
+                return;
+              }
 
-          executeIdleTask();
-        });
+              if (typeof requestIdleCallback === 'function') {
+                idleId = requestIdleCallback(
+                  () => {
+                    idleId = null;
+                    if (disposed) {
+                      return;
+                    }
+                    if (getUserVisibleJsWorkSnapshot().activeCount > 0) {
+                      scheduleIdleTask();
+                      return;
+                    }
+                    executeIdleTask();
+                  },
+                  { timeout: options.idleTimeoutMs ?? 5000 },
+                );
+                return;
+              }
+
+              executeIdleTask();
+            });
+          },
+          { quietMs: USER_VISIBLE_JS_WORK_QUIET_MS },
+        );
       };
 
       if (options.delayMs && options.delayMs > 0) {
@@ -374,6 +418,7 @@ function scheduleHomePostStartupIdle<T>(
     cancel: () => {
       disposed = true;
       cancelHomePostStartupReady();
+      cancelUserVisibleWorkWait?.();
       interactionHandle?.cancel?.();
       if (timeoutId) {
         clearTimeout(timeoutId);

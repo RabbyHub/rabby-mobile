@@ -1,23 +1,16 @@
 import { filterMyAccounts } from '@/core/apis/account';
 import { getHomeAssetSelectionSettings } from '@/hooks/appSettings';
-import { zCreate } from '@/core/utils/reexports';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import accountStore from '@/store/account';
 import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
 import { balance24hStore, scene24hBalanceStore } from '@/store/balance24h';
 import { addressCurve24hStore, sceneCurve24hStore } from '@/store/curve24h';
 import type { ResourceFlowState } from '@/store/_resourceBase';
+import { didResourceLoadingStateChange } from '@/store/_resourceFlow';
+import { buildHomeCurveProjection, type HomeCurveProjection } from './curve';
 import {
-  areHomeCurveProjectionsEqual,
-  buildHomeCurveProjection,
-  type HomeCurveProjection,
-} from './curve';
-import {
-  areHome24hProjectionsEqual,
-  areHomeBalanceProjectionsEqual,
   buildHome24hProjection,
   buildHomeBalanceProjection,
-  createInitialHomeAccountProjection,
   getHomeSelectionSignature,
   reduceHomeAccountProjection,
   type Home24hProjection,
@@ -25,84 +18,20 @@ import {
   type HomeBalanceProjection,
   type HomeProjectionResourceFlow,
 } from './model';
+import { type HomeRefreshProjection } from './refresh';
+import type { HomeContentReadinessProjection } from './readiness';
 import {
-  createInitialHomeContentReadinessProjection,
-  reduceHomeContentReadinessProjection,
-  type HomeContentReadinessProjection,
-} from './readiness';
-import {
-  areHomeRefreshProjectionsEqual,
-  buildHomeRefreshProjection,
-  type HomeRefreshProjection,
-} from './refresh';
+  createHomePortfolioProjectionStore,
+  syncHomePortfolioProjectionStore,
+  type HomePortfolioProjectionBuilders,
+  type HomePortfolioProjectionState,
+} from './projectionState';
 import {
   createHomeProjectionScheduler,
   type HomeProjectionSyncPlan,
 } from './scheduler';
 
-const EMPTY_ACTIVITY = {
-  isHydrating: false,
-  isFetchingRemote: false,
-  isComputing: false,
-  isActive: false,
-  activeAddresses: [],
-};
-
-const EMPTY_BALANCE_PROJECTION: HomeBalanceProjection = {
-  availability: 'unresolved',
-  selectionSignature: '',
-  selectionGeneration: 0,
-  sourceAddresses: [],
-  missingAddresses: [],
-  activity: EMPTY_ACTIVITY,
-};
-
-const EMPTY_24H_PROJECTION: Home24hProjection = {
-  availability: 'unresolved',
-  selectionSignature: '',
-  selectionGeneration: 0,
-  sourceAddresses: [],
-  missingAddresses: [],
-  activity: EMPTY_ACTIVITY,
-};
-
-const EMPTY_CURVE_PROJECTION: HomeCurveProjection = {
-  availability: 'unresolved',
-  selectionSignature: '',
-  selectionGeneration: 0,
-  sourceAddresses: [],
-  missingAddresses: [],
-  activity: EMPTY_ACTIVITY,
-};
-
-const EMPTY_REFRESH_PROJECTION: HomeRefreshProjection = {
-  selectionSignature: '',
-  selectionGeneration: 0,
-  isBalanceFetchingRemote: false,
-  is24hChangeFetchingRemote: false,
-  isCurveFetchingRemote: false,
-  isAnyRemoteRefreshing: false,
-};
-
-const homeAccountProjectionStore = zCreate<HomeAccountProjection>(() =>
-  createInitialHomeAccountProjection(),
-);
-const homeBalanceProjectionStore = zCreate<HomeBalanceProjection>(
-  () => EMPTY_BALANCE_PROJECTION,
-);
-const home24hProjectionStore = zCreate<Home24hProjection>(
-  () => EMPTY_24H_PROJECTION,
-);
-const homeCurveProjectionStore = zCreate<HomeCurveProjection>(
-  () => EMPTY_CURVE_PROJECTION,
-);
-const homeRefreshProjectionStore = zCreate<HomeRefreshProjection>(
-  () => EMPTY_REFRESH_PROJECTION,
-);
-const homeContentReadinessProjectionStore =
-  zCreate<HomeContentReadinessProjection>(() =>
-    createInitialHomeContentReadinessProjection(),
-  );
+const homePortfolioProjectionStore = createHomePortfolioProjectionStore();
 
 function toProjectionFlow(flow: ResourceFlowState) {
   return {
@@ -121,34 +50,31 @@ function buildFlowMap(
   }, {} as Record<string, HomeProjectionResourceFlow>);
 }
 
-function syncHomeAccountProjection() {
+function buildNextHomeAccountProjection(previous: HomeAccountProjection) {
   const balanceState = balanceAccountsStore.getState();
   const accountsState = accountStore.getState();
   const canUseFetchedAccountLength =
     !balanceState.hasResolvedMatteredAccountLength &&
     accountsState.hasFetchedAccounts;
 
-  homeAccountProjectionStore.setState(previous =>
-    reduceHomeAccountProjection(previous, {
-      selectedAddresses: balanceState.selectedAddresses,
-      hasResolvedSelection: balanceState.hasResolvedSelection,
-      matteredAccountLength: canUseFetchedAccountLength
-        ? getHomeAssetSelectionSettings().includeWatchAddresses
-          ? accountsState.accounts.length
-          : filterMyAccounts(accountsState.accounts).length
-        : balanceState.matteredAccountLength,
-      hasResolvedMatteredAccountLength:
-        balanceState.hasResolvedMatteredAccountLength ||
-        canUseFetchedAccountLength,
-      hasFetchedAccounts: accountsState.hasFetchedAccounts,
-      isFetchingAccounts: accountsState.isFetchingAccounts,
-    }),
-  );
+  return reduceHomeAccountProjection(previous, {
+    selectedAddresses: balanceState.selectedAddresses,
+    hasResolvedSelection: balanceState.hasResolvedSelection,
+    matteredAccountLength: canUseFetchedAccountLength
+      ? getHomeAssetSelectionSettings().includeWatchAddresses
+        ? accountsState.accounts.length
+        : filterMyAccounts(accountsState.accounts).length
+      : balanceState.matteredAccountLength,
+    hasResolvedMatteredAccountLength:
+      balanceState.hasResolvedMatteredAccountLength ||
+      canUseFetchedAccountLength,
+    hasFetchedAccounts: accountsState.hasFetchedAccounts,
+    isFetchingAccounts: accountsState.isFetchingAccounts,
+  });
 }
 
-function syncHomeBalanceProjection() {
-  const account = homeAccountProjectionStore.getState();
-  const next = buildHomeBalanceProjection({
+function buildNextHomeBalanceProjection(account: HomeAccountProjection) {
+  return buildHomeBalanceProjection({
     account,
     valueMap: addressBalanceStore.getAddressValueMap(),
     flowMap: buildFlowMap(
@@ -156,14 +82,9 @@ function syncHomeBalanceProjection() {
       addressBalanceStore.getAddressFlowState,
     ),
   });
-
-  homeBalanceProjectionStore.setState(previous =>
-    areHomeBalanceProjectionsEqual(previous, next) ? previous : next,
-  );
 }
 
-function syncHome24hProjection() {
-  const account = homeAccountProjectionStore.getState();
+function buildNextHome24hProjection(account: HomeAccountProjection) {
   const sceneState = scene24hBalanceStore.getState();
   const isCurrentSelectionComputing =
     getHomeSelectionSignature(sceneState.addresses.Home) ===
@@ -194,7 +115,7 @@ function syncHome24hProjection() {
     });
   }
 
-  const next = buildHome24hProjection({
+  return buildHome24hProjection({
     account,
     currentBalanceMap: addressBalanceStore.getAddressValueMap(),
     previousBalanceMap: balance24hStore.getAddress24hBalanceMap(),
@@ -202,16 +123,11 @@ function syncHome24hProjection() {
     previousFlowMap,
     isComputing: isCurrentSelectionComputing,
   });
-
-  home24hProjectionStore.setState(previous =>
-    areHome24hProjectionsEqual(previous, next) ? previous : next,
-  );
 }
 
-function syncHomeCurveProjection() {
-  const account = homeAccountProjectionStore.getState();
+function buildNextHomeCurveProjection(account: HomeAccountProjection) {
   const sceneState = sceneCurve24hStore.getState();
-  const next = buildHomeCurveProjection({
+  return buildHomeCurveProjection({
     account,
     sceneAddresses: sceneState.addresses.Home,
     list: sceneState.combinedData.Home.list,
@@ -223,53 +139,21 @@ function syncHomeCurveProjection() {
     isSceneLoading: sceneState.sceneLoading.Home,
     isSceneComputing: sceneState.sceneComputing.Home,
   });
-
-  homeCurveProjectionStore.setState(previous =>
-    areHomeCurveProjectionsEqual(previous, next) ? previous : next,
-  );
 }
 
-function syncHomeRefreshProjection() {
-  const next = buildHomeRefreshProjection({
-    balance: homeBalanceProjectionStore.getState(),
-    change24h: home24hProjectionStore.getState(),
-    curve: homeCurveProjectionStore.getState(),
-  });
-
-  homeRefreshProjectionStore.setState(previous =>
-    areHomeRefreshProjectionsEqual(previous, next) ? previous : next,
-  );
-}
-
-function syncHomeContentReadinessProjection() {
-  homeContentReadinessProjectionStore.setState(previous =>
-    reduceHomeContentReadinessProjection(previous, {
-      account: homeAccountProjectionStore.getState(),
-      balance: homeBalanceProjectionStore.getState(),
-      change24h: home24hProjectionStore.getState(),
-    }),
-  );
-}
-
-function syncProjectionCoordinators() {
-  syncHomeRefreshProjection();
-  syncHomeContentReadinessProjection();
-}
+const homeProjectionBuilders: HomePortfolioProjectionBuilders = {
+  account: buildNextHomeAccountProjection,
+  balance: buildNextHomeBalanceProjection,
+  change24h: buildNextHome24hProjection,
+  curve: buildNextHomeCurveProjection,
+};
 
 function flushHomeProjectionSyncPlan(plan: HomeProjectionSyncPlan) {
-  if (plan.account) {
-    syncHomeAccountProjection();
-  }
-  if (plan.balance) {
-    syncHomeBalanceProjection();
-  }
-  if (plan.change24h) {
-    syncHome24hProjection();
-  }
-  if (plan.curve) {
-    syncHomeCurveProjection();
-  }
-  syncProjectionCoordinators();
+  syncHomePortfolioProjectionStore(
+    homePortfolioProjectionStore,
+    plan,
+    homeProjectionBuilders,
+  );
 }
 
 const homeProjectionScheduler = createHomeProjectionScheduler({
@@ -291,7 +175,19 @@ export function ensureHomeProjectionLifecycle() {
   accountStore.subscribe(() => {
     homeProjectionScheduler.schedule('account');
   });
-  addressBalanceStore.subscribe(() => {
+  addressBalanceStore.subscribe((state, previousState) => {
+    const addresses = homePortfolioProjectionStore.getState().account.addresses;
+    if (
+      state.valueMap === previousState.valueMap &&
+      !didResourceLoadingStateChange(
+        previousState.metaMap,
+        state.metaMap,
+        addresses,
+      )
+    ) {
+      return;
+    }
+
     homeProjectionScheduler.schedule('balance', 'change24h');
   });
   balance24hStore.subscribe(() => {
@@ -314,8 +210,20 @@ export function useHomeAccountProjection<T>(
   selector: (state: HomeAccountProjection) => T,
 ) {
   ensureHomeProjectionLifecycle();
-  return useActivityStore(homeAccountProjectionStore, selector, Object.is, {
-    storeLabel: 'home-account-projection',
+  return useActivityStore(
+    homePortfolioProjectionStore,
+    state => selector(state.account),
+    Object.is,
+    { storeLabel: 'home-portfolio-projections' },
+  );
+}
+
+export function useHomePortfolioProjection<T>(
+  selector: (state: HomePortfolioProjectionState) => T,
+) {
+  ensureHomeProjectionLifecycle();
+  return useActivityStore(homePortfolioProjectionStore, selector, Object.is, {
+    storeLabel: 'home-portfolio-projections',
   });
 }
 
@@ -323,36 +231,48 @@ export function useHomeBalanceProjection<T>(
   selector: (state: HomeBalanceProjection) => T,
 ) {
   ensureHomeProjectionLifecycle();
-  return useActivityStore(homeBalanceProjectionStore, selector, Object.is, {
-    storeLabel: 'home-balance-projection',
-  });
+  return useActivityStore(
+    homePortfolioProjectionStore,
+    state => selector(state.balance),
+    Object.is,
+    { storeLabel: 'home-portfolio-projections' },
+  );
 }
 
 export function useHome24hProjection<T>(
   selector: (state: Home24hProjection) => T,
 ) {
   ensureHomeProjectionLifecycle();
-  return useActivityStore(home24hProjectionStore, selector, Object.is, {
-    storeLabel: 'home-24h-projection',
-  });
+  return useActivityStore(
+    homePortfolioProjectionStore,
+    state => selector(state.change24h),
+    Object.is,
+    { storeLabel: 'home-portfolio-projections' },
+  );
 }
 
 export function useHomeCurveProjection<T>(
   selector: (state: HomeCurveProjection) => T,
 ) {
   ensureHomeProjectionLifecycle();
-  return useActivityStore(homeCurveProjectionStore, selector, Object.is, {
-    storeLabel: 'home-curve-projection',
-  });
+  return useActivityStore(
+    homePortfolioProjectionStore,
+    state => selector(state.curve),
+    Object.is,
+    { storeLabel: 'home-portfolio-projections' },
+  );
 }
 
 export function useHomeRefreshProjection<T>(
   selector: (state: HomeRefreshProjection) => T,
 ) {
   ensureHomeProjectionLifecycle();
-  return useActivityStore(homeRefreshProjectionStore, selector, Object.is, {
-    storeLabel: 'home-refresh-projection',
-  });
+  return useActivityStore(
+    homePortfolioProjectionStore,
+    state => selector(state.refresh),
+    Object.is,
+    { storeLabel: 'home-portfolio-projections' },
+  );
 }
 
 export function useHomeContentReadinessProjection<T>(
@@ -360,39 +280,39 @@ export function useHomeContentReadinessProjection<T>(
 ) {
   ensureHomeProjectionLifecycle();
   return useActivityStore(
-    homeContentReadinessProjectionStore,
-    selector,
+    homePortfolioProjectionStore,
+    state => selector(state.contentReadiness),
     Object.is,
-    { storeLabel: 'home-content-readiness-projection' },
+    { storeLabel: 'home-portfolio-projections' },
   );
 }
 
 export function getHomeAccountProjection() {
   ensureHomeProjectionLifecycle();
-  return homeAccountProjectionStore.getState();
+  return homePortfolioProjectionStore.getState().account;
 }
 
 export function getHomeBalanceProjection() {
   ensureHomeProjectionLifecycle();
-  return homeBalanceProjectionStore.getState();
+  return homePortfolioProjectionStore.getState().balance;
 }
 
 export function getHome24hProjection() {
   ensureHomeProjectionLifecycle();
-  return home24hProjectionStore.getState();
+  return homePortfolioProjectionStore.getState().change24h;
 }
 
 export function getHomeCurveProjection() {
   ensureHomeProjectionLifecycle();
-  return homeCurveProjectionStore.getState();
+  return homePortfolioProjectionStore.getState().curve;
 }
 
 export function getHomeRefreshProjection() {
   ensureHomeProjectionLifecycle();
-  return homeRefreshProjectionStore.getState();
+  return homePortfolioProjectionStore.getState().refresh;
 }
 
 export function getHomeContentReadinessProjection() {
   ensureHomeProjectionLifecycle();
-  return homeContentReadinessProjectionStore.getState();
+  return homePortfolioProjectionStore.getState().contentReadiness;
 }

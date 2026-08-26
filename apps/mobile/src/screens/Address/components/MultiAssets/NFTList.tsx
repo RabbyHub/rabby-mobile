@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 
 import {
   ASSETS_ITEM_HEIGHT_NEW,
@@ -72,6 +73,7 @@ import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 import { resolveAssetProjectionViewState } from '@/store/assetProjectionAvailability';
 import { useShallow } from 'zustand/react/shallow';
+import { useUserVisibleJsWork } from '@/hooks/useUserVisibleJsWork';
 
 const NFT_LIST_INITIAL_RENDER_COUNT = 10;
 const NFT_LIST_RENDER_BATCH_SIZE = 8;
@@ -111,22 +113,46 @@ const NftResourceRow = React.memo(
     getAccountByAddress(address: string): KeyringAccountWithAlias | undefined;
     onPress: (item: NftItemWithCollection) => void;
   }) => {
-    const nft = useActivityStore(
-      nftEntityResourceStore.useStore,
-      state => (row.type === 'nft' ? state.valueMap[row.nftId] : undefined),
-      Object.is,
-      { storeLabel: 'home-multi-assets-nft-entities' },
+    if (row.type === 'collection') {
+      return (
+        <NftCollectionResourceRow
+          collectionId={row.collectionId}
+          rowStyle={rowStyle}
+          loaderStyle={loaderStyle}
+          getAccountByAddress={getAccountByAddress}
+          onPress={onPress}
+        />
+      );
+    }
+
+    return (
+      <NftEntityResourceRow
+        nftId={row.nftId}
+        rowStyle={rowStyle}
+        loaderStyle={loaderStyle}
+        getAccountByAddress={getAccountByAddress}
+        onPress={onPress}
+      />
     );
-    const collection = useActivityStore(
-      nftCollectionResourceStore.useStore,
-      state =>
-        row.type === 'collection'
-          ? state.valueMap[row.collectionId]
-          : undefined,
-      Object.is,
-      { storeLabel: 'home-multi-assets-nft-collections' },
-    );
-    const rawItem = row.type === 'collection' ? collection : nft;
+  },
+);
+
+type NftResolvedResourceRowProps = {
+  rawItem?: NftItemWithCollection;
+  rowStyle: ViewStyle;
+  loaderStyle: ViewStyle;
+  getAccountByAddress(address: string): KeyringAccountWithAlias | undefined;
+  onPress: (item: NftItemWithCollection) => void;
+};
+
+const NftResolvedResourceRow = React.memo(
+  ({
+    rawItem,
+    rowStyle,
+    loaderStyle,
+    getAccountByAddress,
+    onPress,
+  }: NftResolvedResourceRowProps) => {
     const collectionAddress =
       rawItem && 'address' in rawItem && typeof rawItem.address === 'string'
         ? rawItem.address
@@ -163,6 +189,45 @@ const NftResourceRow = React.memo(
   },
 );
 
+const NftEntityResourceRow = React.memo(
+  ({
+    nftId,
+    ...props
+  }: Omit<NftResolvedResourceRowProps, 'rawItem'> & {
+    nftId: Extract<NftAssetsIndexRow, { type: 'nft' }>['nftId'];
+  }) => {
+    const nft = useActivityStore(
+      nftEntityResourceStore.useStore,
+      state => state.valueMap[nftId],
+      Object.is,
+      { storeLabel: 'home-multi-assets-nft-entities' },
+    );
+
+    return <NftResolvedResourceRow {...props} rawItem={nft} />;
+  },
+);
+
+const NftCollectionResourceRow = React.memo(
+  ({
+    collectionId,
+    ...props
+  }: Omit<NftResolvedResourceRowProps, 'rawItem'> & {
+    collectionId: Extract<
+      NftAssetsIndexRow,
+      { type: 'collection' }
+    >['collectionId'];
+  }) => {
+    const collection = useActivityStore(
+      nftCollectionResourceStore.useStore,
+      state => state.valueMap[collectionId],
+      Object.is,
+      { storeLabel: 'home-multi-assets-nft-collections' },
+    );
+
+    return <NftResolvedResourceRow {...props} rawItem={collection} />;
+  },
+);
+
 const getNftListItemId = (item: NftListItem) => {
   if (item.type === 'nft' || item.type === 'collection') {
     return `nft-row/${getNftAssetsIndexRowKey(item)}`;
@@ -184,14 +249,16 @@ const NFTListInner = () => {
   const regressionScenarioReport = regressionScenario.active
     ? regressionScenario.report
     : null;
-  const { myTop10Addresses } = useHomeAssetAccountInfo();
+  const { myTop10Accounts, myTop10Addresses } = useHomeAssetAccountInfo();
   const [showAllNfts, setShowAllNfts] = useState(false);
 
   const selectedChainItem = useSelectedChainItem();
   const chain = selectedChainItem?.chain;
 
-  const getAccountByAddress = useFindAccountByAddress();
+  const getAccountByAddress = useFindAccountByAddress(myTop10Accounts);
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.nft);
+  const isScreenFocused = useIsFocused();
+  const isProjectionActive = isScreenFocused && isFocusing;
 
   useScrollToTopOnChainChange({
     chain,
@@ -233,6 +300,10 @@ const NFTListInner = () => {
     availability: nftProjection.availability,
     hasData: nftRowCount > 0,
   });
+  useUserVisibleJsWork(
+    isProjectionActive && (isLoading || nftProjectionViewState === 'loading'),
+    'home-nft-visible-load',
+  );
 
   const dataList = useMemo(() => {
     const defaultRows = nftIndex.rows.slice(0, nftIndex.defaultVisibleRowCount);
@@ -347,6 +418,18 @@ const NFTListInner = () => {
     scenarioReadyCheckTick,
     nftIndex.rows.length,
   ]);
+
+  useEffect(() => {
+    useNftListComputedStore
+      .getState()
+      .setMultiNftsProjectionActive(multiNftsKey, isProjectionActive);
+
+    return () => {
+      useNftListComputedStore
+        .getState()
+        .setMultiNftsProjectionActive(multiNftsKey, false);
+    };
+  }, [isProjectionActive, multiNftsKey]);
 
   useEffect(() => {
     useNftListComputedStore

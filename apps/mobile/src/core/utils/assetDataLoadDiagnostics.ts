@@ -1,13 +1,21 @@
 import { isNonProductionDiagnosticsEnabled } from './diagnosticEnv';
 
 export type AssetDataLoadDiagnosticDomain =
+  | 'home-manual-refresh'
+  | 'home-balance-refresh'
   | 'single-address-token'
   | 'single-address-nft'
   | 'single-address-warmup'
   | 'multi-address-token'
+  | 'multi-address-token-projection'
   | 'token-runtime-sync'
   | 'multi-address-protocol'
-  | 'multi-address-nft';
+  | 'multi-address-nft'
+  | 'token-cache-hydrate'
+  | 'asset-projection-token-restore'
+  | 'asset-projection-token-segment-hydrate'
+  | 'asset-projection-protocol-restore'
+  | 'asset-projection-nft-restore';
 
 type AssetDataLoadDiagnosticValue = string | number | boolean | null;
 
@@ -23,11 +31,20 @@ export type AssetDataLoadDiagnosticRecord = {
   details?: Readonly<Record<string, AssetDataLoadDiagnosticValue>>;
 };
 
-type AssetDataLoadTraceDetails = Readonly<
+export type AssetDataLoadTraceDetails = Readonly<
   Record<string, AssetDataLoadDiagnosticValue | undefined>
 >;
 
-const MAX_RECORDS = 160;
+export type AssetDataLoadDiagnosticTrace = {
+  mark: (phase: string, details?: AssetDataLoadTraceDetails) => void;
+  finish: (details?: AssetDataLoadTraceDetails) => void;
+  fail: (details?: AssetDataLoadTraceDetails) => void;
+};
+
+// High-cardinality refreshes fan out across several resource domains. Keep
+// enough non-production history to retain the dispatch phases that precede
+// their remote completions.
+const MAX_RECORDS = 512;
 const records = isNonProductionDiagnosticsEnabled
   ? ([] as AssetDataLoadDiagnosticRecord[])
   : null;
@@ -50,7 +67,7 @@ export function beginAssetDataLoadDiagnostic(
   domain: AssetDataLoadDiagnosticDomain,
   address: string,
   details?: AssetDataLoadTraceDetails,
-) {
+): AssetDataLoadDiagnosticTrace {
   if (!records) {
     return {
       mark: (_phase: string, _details?: AssetDataLoadTraceDetails) => {},

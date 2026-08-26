@@ -34,8 +34,82 @@ describe('store/_resourceFlow', () => {
     });
   });
 
+  it('publishes batched remote lifecycle changes once per phase', () => {
+    const {
+      ObservableResourceStore,
+    }: typeof import('./_resourceFlow') = require('./_resourceFlow');
+
+    const store = new ObservableResourceStore<number>('test-resource');
+    const listener = jest.fn();
+    const unsubscribe = store.subscribe(listener);
+    const requests = store.startRemoteFetchBatch([
+      { resourceKey: 'foo' },
+      { resourceKey: 'bar' },
+      { resourceKey: 'baz' },
+    ]);
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(requests).toHaveLength(3);
+    expect(requests.map(request => store.getMeta(request.resourceKey))).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ isFetchingRemote: true }),
+        expect.objectContaining({ isFetchingRemote: true }),
+        expect.objectContaining({ isFetchingRemote: true }),
+      ]),
+    );
+
+    const applied = store.applyRemoteValueBatch(
+      requests.map((request, index) => ({
+        ...request,
+        value: index + 1,
+      })),
+    );
+
+    expect(applied).toEqual([true, true, true]);
+    expect(listener).toHaveBeenCalledTimes(2);
+    expect(store.getValueMap()).toEqual({
+      foo: 1,
+      bar: 2,
+      baz: 3,
+    });
+    unsubscribe();
+  });
+
+  it('rejects stale entries independently within a remote value batch', () => {
+    const {
+      ObservableResourceStore,
+    }: typeof import('./_resourceFlow') = require('./_resourceFlow');
+
+    const store = new ObservableResourceStore<number>('test-resource');
+    const [fooRequest, barRequest] = store.startRemoteFetchBatch([
+      { resourceKey: 'foo' },
+      { resourceKey: 'bar' },
+    ]);
+    const newerFooRequest = store.startRemoteFetch('foo');
+
+    expect(
+      store.applyRemoteValueBatch([
+        { ...fooRequest, value: 1 },
+        { ...barRequest, value: 2 },
+      ]),
+    ).toEqual([false, true]);
+    expect(store.getValue('foo')).toBeUndefined();
+    expect(store.getValue('bar')).toBe(2);
+    expect(store.getMeta('foo')).toMatchObject({
+      activeRemoteRequestId: newerFooRequest,
+      isFetchingRemote: true,
+      version: 0,
+    });
+    expect(store.getMeta('bar')).toMatchObject({
+      activeRemoteRequestId: undefined,
+      isFetchingRemote: false,
+      version: 1,
+    });
+  });
+
   it('marks persist lifecycle in background without blocking memory writes', async () => {
     const {
+      didResourceLoadingStateChange,
       ObservableResourceStore,
     }: typeof import('./_resourceFlow') = require('./_resourceFlow');
 
@@ -52,6 +126,7 @@ describe('store/_resourceFlow', () => {
       persistStatus: 'queued',
       sourceOfCurrentValue: 'hydrate',
     });
+    const queuedMetaMap = store.getMetaMap();
 
     await flushMicrotasks();
 
@@ -60,5 +135,32 @@ describe('store/_resourceFlow', () => {
       persistStatus: 'success',
       lastPersistAt: expect.any(Number),
     });
+    expect(
+      didResourceLoadingStateChange(queuedMetaMap, store.getMetaMap(), ['foo']),
+    ).toBe(false);
+  });
+
+  it('detects loading changes while ignoring persistence-only metadata', () => {
+    const {
+      didResourceLoadingStateChange,
+      ObservableResourceStore,
+    }: typeof import('./_resourceFlow') = require('./_resourceFlow');
+
+    const store = new ObservableResourceStore<number>('test-resource');
+    store.applyHydratedValue('foo', 1);
+    const hydratedMetaMap = store.getMetaMap();
+
+    store.queuePersist('foo');
+    expect(
+      didResourceLoadingStateChange(hydratedMetaMap, store.getMetaMap(), [
+        'foo',
+      ]),
+    ).toBe(false);
+
+    const queuedMetaMap = store.getMetaMap();
+    store.startRemoteFetch('foo');
+    expect(
+      didResourceLoadingStateChange(queuedMetaMap, store.getMetaMap(), ['foo']),
+    ).toBe(true);
   });
 });

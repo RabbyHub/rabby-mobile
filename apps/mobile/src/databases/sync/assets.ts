@@ -13,11 +13,7 @@ import type {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { SwapTradeList } from '@rabby-wallet/rabby-api/dist/types';
 import { ProtocolItemEntity } from '../entities/portocolItem';
-import {
-  EMPTY_NFT_ITEM,
-  EMPTY_PROTOCOL_ITEM,
-  EMPTY_TOKEN_ITEM,
-} from '@/constant/assets';
+import { EMPTY_NFT_ITEM, EMPTY_PROTOCOL_ITEM } from '@/constant/assets';
 import { BalanceEntity } from '../entities/balance';
 import { batchSaveWithPQueueAndTransaction, BeforeEmitFn } from './_task';
 import { appOrmEvents } from './_event';
@@ -42,6 +38,7 @@ import {
   makeSyncAbortError,
   registerSyncAbortHandler,
 } from './abort';
+import { buildTokenEntitiesCooperatively } from './tokenEntityBuild';
 
 export { patchSingleToken } from './token';
 
@@ -62,11 +59,12 @@ const pendingBalanceSyncs: PendingBalanceSync[] = [];
 let pendingBalanceFlushTimer: ReturnType<typeof setTimeout> | null = null;
 
 type PendingTokenSyncRequest = {
-  resolve: () => void;
+  resolve: (success: boolean) => void;
 };
 
 type PendingTokenAddressSync = {
   tokens: TokenItem[] | ITokenItem[];
+  cleanupStale: boolean;
   requests: PendingTokenSyncRequest[];
 };
 
@@ -103,7 +101,7 @@ function abortPendingAssetSyncs(reason: string) {
   pendingTokenSyncs.clear();
 
   rejectBalanceSyncRequests(pendingBalance, error);
-  resolveTokenSyncRequests(pendingToken);
+  resolveTokenSyncRequests(pendingToken, false);
 
   if (pendingBalanceCount || pendingTokenAddressCount) {
     traceStartupDiagnostic('db', 'pending_asset_sync_abort', {
@@ -168,6 +166,9 @@ async function flushPendingBalanceSyncs() {
         waitTaskDoneReturn: true,
         noNeedAbort: true,
         skipEmit: true,
+        // The remote balance is already authoritative in memory. Persisting
+        // its cache must yield to projection publication and visible rendering.
+        priority: 'normal',
       },
     );
 
@@ -221,37 +222,6 @@ async function prepareAppDataSourceWithDiag(
   });
 }
 
-function normalizeTokenInput(_tokens: TokenItem[] | ITokenItem[]) {
-  const data = [..._tokens];
-  if (data.length === 0) {
-    data.push(EMPTY_TOKEN_ITEM);
-  }
-
-  return data.sort((a, b) =>
-    b.is_core === a.is_core ? 0 : b.is_core ? 1 : -1,
-  );
-}
-
-function buildTokenEntities(
-  address: string,
-  _tokens: TokenItem[] | ITokenItem[],
-  syncTimestamp: number,
-) {
-  const tokens = normalizeTokenInput(_tokens);
-  const tokenItems = tokens.map(raw => {
-    const tokenItem = new TokenItemEntity();
-    TokenItemEntity.fillEntity(tokenItem, address, raw);
-    tokenItem._local_updated_at = syncTimestamp;
-
-    return tokenItem;
-  });
-
-  return {
-    tokens,
-    tokenItems,
-  };
-}
-
 function emitTokenSyncResult(
   owner_addr: string,
   count: number,
@@ -274,10 +244,13 @@ function cloneTokenInput(tokens: TokenItem[] | ITokenItem[]) {
   return tokens.slice() as TokenItem[] | ITokenItem[];
 }
 
-function resolveTokenSyncRequests(pending: PendingTokenAddressSync[]) {
+function resolveTokenSyncRequests(
+  pending: PendingTokenAddressSync[],
+  success: boolean,
+) {
   pending.forEach(item => {
     item.requests.forEach(request => {
-      request.resolve();
+      request.resolve(success);
     });
   });
 }
@@ -300,7 +273,7 @@ async function persistPendingTokenSyncs(
   const addresses = pendingEntries.map(([address]) => address);
   const pending = pendingEntries.map(([, item]) => item);
   if (!addresses.length) {
-    resolveTokenSyncRequests(pending);
+    resolveTokenSyncRequests(pending, true);
     return;
   }
 
@@ -314,6 +287,7 @@ async function persistPendingTokenSyncs(
   });
 
   let syncTimestamp = Date.now();
+  let success = false;
   const tokenItemsByAddress = new Map<string, TokenItemEntity[]>();
   const allTokenItems: TokenItemEntity[] = [];
 
@@ -325,17 +299,35 @@ async function persistPendingTokenSyncs(
     syncTimestamp = Date.now();
     const entityBuildStartedAt = Date.now();
     let rawCount = 0;
+    let entityBuildYieldCount = 0;
+    let entityBuildYieldedWorkMs = 0;
+    let entityBuildMaxSliceMs = 0;
 
-    pendingEntries.forEach(([address, item]) => {
-      const { tokens, tokenItems } = buildTokenEntities(
+    for (const [address, item] of pendingEntries) {
+      const result = await buildTokenEntitiesCooperatively(
         address,
         item.tokens,
         syncTimestamp,
+        {
+          shouldContinue: () => !isSyncAbortVersionStale(abortVersion),
+          onYield: sliceDurationMs => {
+            entityBuildYieldCount += 1;
+            entityBuildYieldedWorkMs += sliceDurationMs;
+            entityBuildMaxSliceMs = Math.max(
+              entityBuildMaxSliceMs,
+              sliceDurationMs,
+            );
+          },
+        },
       );
+      if (!result) {
+        return;
+      }
+      const { tokens, tokenItems } = result;
       rawCount += tokens.length;
       tokenItemsByAddress.set(address, tokenItems);
       allTokenItems.push(...tokenItems);
-    });
+    }
 
     traceEntityBuild(
       'token',
@@ -344,6 +336,15 @@ async function persistPendingTokenSyncs(
       rawCount,
       allTokenItems.length,
     );
+    traceStartupDiagnostic('db', 'entity_build_schedule', {
+      taskFor: 'token',
+      entityName: TokenItemEntity.name,
+      entityCount: allTokenItems.length,
+      strategy: 'cooperative',
+      yieldCount: entityBuildYieldCount,
+      yieldedWorkMs: entityBuildYieldedWorkMs,
+      maxSliceMs: entityBuildMaxSliceMs,
+    });
 
     if (isSyncAbortVersionStale(abortVersion)) {
       return;
@@ -367,8 +368,10 @@ async function persistPendingTokenSyncs(
         skipEmit: true,
         afterBatches: async () => {
           await Promise.all(
-            addresses.map(address =>
-              TokenItemEntity.cleanupStaleTokens(address, syncTimestamp),
+            pendingEntries.flatMap(([address, item]) =>
+              item.cleanupStale
+                ? [TokenItemEntity.cleanupStaleTokens(address, syncTimestamp)]
+                : [],
             ),
           );
         },
@@ -394,6 +397,7 @@ async function persistPendingTokenSyncs(
         true,
       );
     });
+    success = true;
     console.debug(`[${taskKey}] multi-address batch upsert tasks completed`);
   } catch (error) {
     addresses.forEach(address => {
@@ -405,7 +409,7 @@ async function persistPendingTokenSyncs(
     });
     console.error('Batch upsert failed:', error);
   } finally {
-    resolveTokenSyncRequests(pending);
+    resolveTokenSyncRequests(pending, success);
   }
 }
 
@@ -430,15 +434,22 @@ async function flushPendingTokenSyncs() {
   await tokenFlushInFlight;
 }
 
-function enqueueTokenSync(address: string, tokens: TokenItem[] | ITokenItem[]) {
-  return new Promise<void>(resolve => {
+function enqueueTokenSync(
+  address: string,
+  tokens: TokenItem[] | ITokenItem[],
+  options: { cleanupStale?: boolean } = {},
+) {
+  return new Promise<boolean>(resolve => {
+    const cleanupStale = options.cleanupStale !== false;
     const pending = pendingTokenSyncs.get(address);
     if (pending) {
       pending.tokens = cloneTokenInput(tokens);
+      pending.cleanupStale = cleanupStale;
       pending.requests.push({ resolve });
     } else {
       pendingTokenSyncs.set(address, {
         tokens: cloneTokenInput(tokens),
+        cleanupStale,
         requests: [{ resolve }],
       });
     }
@@ -497,8 +508,9 @@ function emitProtocolSyncResult(
 export async function syncRemoteTokens(
   address: string,
   _tokens: TokenItem[] | ITokenItem[],
+  options: { cleanupStale?: boolean } = {},
 ) {
-  await enqueueTokenSync(address.toLowerCase(), _tokens);
+  return enqueueTokenSync(address.toLowerCase(), _tokens, options);
 }
 
 export async function syncRemoteTokensForAddresses(
@@ -506,14 +518,15 @@ export async function syncRemoteTokensForAddresses(
 ) {
   const entries = Object.entries(tokenMap);
   if (!entries.length) {
-    return;
+    return true;
   }
 
-  await Promise.all(
+  const results = await Promise.all(
     entries.map(([rawAddress, tokens]) =>
       enqueueTokenSync(rawAddress.toLowerCase(), tokens || []),
     ),
   );
+  return results.every(Boolean);
 }
 
 export async function syncRemoteTokensAmount(
@@ -655,6 +668,7 @@ export async function syncRemoteHistory(
       concurrency: 1,
       delayBetweenTasks: 1.5 * 1e3,
       noNeedAbort: true,
+      waitTaskDoneReturn: true,
       beforeEmit: ctx => {
         if (ctx.taskFor === 'all-history') {
           setTimeout(() => {

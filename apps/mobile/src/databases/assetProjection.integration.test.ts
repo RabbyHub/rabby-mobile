@@ -4,6 +4,7 @@ import { createMemoryAppDataSource } from '../../test-support/database/createMem
 import {
   cleanupAssetProjectionGenerations,
   persistAssetProjection,
+  restoreAssetProjectionGenerationRows,
   restoreLatestAssetProjection,
   type PersistAssetProjectionInput,
 } from './assetProjection';
@@ -250,6 +251,210 @@ describe('asset projection persistence', () => {
     });
   });
 
+  it('round-trips rows and groups across multiple write batches', async () => {
+    dataSource = await createMemoryAppDataSource();
+    const rows = Array.from({ length: 205 }, (_, index) => ({
+      type: 'token' as const,
+      id: `token-${index}`,
+    }));
+    const groups = [
+      {
+        id: 'group-large',
+        memberIds: Array.from({ length: 203 }, (_, index) => `member-${index}`),
+      },
+    ];
+
+    const persisted = await persistAssetProjection(
+      {
+        projectionKey: 'token::multi::multiple-batches',
+        kind: 'token',
+        scene: 'multi-address',
+        rows,
+        groups,
+      },
+      dataSource,
+    );
+    const restored = await restoreLatestAssetProjection(
+      'token::multi::multiple-batches',
+      { kind: 'token', scene: 'multi-address' },
+      dataSource,
+    );
+
+    expect(persisted.metrics).toMatchObject({
+      itemBatchCount: 3,
+      groupItemCount: 203,
+      groupBatchCount: 3,
+    });
+    expect(restored).toMatchObject({ rows, groups });
+  });
+
+  it('restores an initial row range without hydrating the remaining projection', async () => {
+    dataSource = await createMemoryAppDataSource();
+    const rows = [
+      { type: 'token' as const, id: 'token-a' },
+      { type: 'token-group' as const, id: 'group-primary' },
+      { type: 'token' as const, id: 'token-b' },
+      { type: 'token-group' as const, id: 'group-deferred' },
+      { type: 'token' as const, id: 'token-c' },
+    ];
+    await persistAssetProjection(
+      {
+        projectionKey: PROJECTION_KEY,
+        kind: 'token',
+        scene: 'single-address',
+        rows,
+        groups: [
+          {
+            id: 'group-primary',
+            memberIds: ['primary-a', 'primary-b'],
+          },
+          {
+            id: 'group-deferred',
+            memberIds: ['deferred-a', 'deferred-b'],
+          },
+        ],
+        metadata: { primaryRowCount: 2 },
+      },
+      dataSource,
+    );
+
+    const restored = await restoreLatestAssetProjection(
+      PROJECTION_KEY,
+      {
+        kind: 'token',
+        scene: 'single-address',
+        selectRowRanges: snapshot => [
+          {
+            offset: 0,
+            count: snapshot.metadata.primaryRowCount as number,
+          },
+        ],
+      },
+      dataSource,
+    );
+
+    expect(restored).toMatchObject({
+      generation: 1,
+      totalRowCount: rows.length,
+      loadedRowRanges: [{ offset: 0, count: 2 }],
+      rows: rows.slice(0, 2),
+      groups: [
+        {
+          id: 'group-primary',
+          memberIds: ['primary-a', 'primary-b'],
+        },
+      ],
+    });
+  });
+
+  it('loads a deferred range from the exact committed generation', async () => {
+    dataSource = await createMemoryAppDataSource();
+    const rows = [
+      { type: 'token' as const, id: 'token-a' },
+      { type: 'token' as const, id: 'token-b' },
+      { type: 'token-group' as const, id: 'group-deferred' },
+      { type: 'token' as const, id: 'token-c' },
+    ];
+    await persistAssetProjection(
+      {
+        projectionKey: PROJECTION_KEY,
+        kind: 'token',
+        scene: 'single-address',
+        rows,
+        groups: [
+          {
+            id: 'group-deferred',
+            memberIds: ['deferred-a', 'deferred-b'],
+          },
+        ],
+      },
+      dataSource,
+    );
+
+    await expect(
+      restoreAssetProjectionGenerationRows(
+        PROJECTION_KEY,
+        1,
+        [{ offset: 2, count: 2 }],
+        dataSource,
+      ),
+    ).resolves.toMatchObject({
+      generation: 1,
+      loadedRowRanges: [{ offset: 2, count: 2 }],
+      rows: rows.slice(2),
+      groups: [
+        {
+          id: 'group-deferred',
+          memberIds: ['deferred-a', 'deferred-b'],
+        },
+      ],
+    });
+  });
+
+  it('rejects a deferred range after its generation becomes incomplete', async () => {
+    dataSource = await createMemoryAppDataSource();
+    await persistAssetProjection(
+      {
+        projectionKey: PROJECTION_KEY,
+        kind: 'token',
+        scene: 'single-address',
+        rows: [
+          { type: 'token', id: 'token-a' },
+          { type: 'token', id: 'token-b' },
+        ],
+      },
+      dataSource,
+    );
+    await dataSource.getRepository(AssetProjectionItemEntity).delete({
+      projection_key: PROJECTION_KEY,
+      generation: 1,
+      position: 1,
+    });
+
+    await expect(
+      restoreAssetProjectionGenerationRows(
+        PROJECTION_KEY,
+        1,
+        [{ offset: 0, count: 1 }],
+        dataSource,
+      ),
+    ).resolves.toBeNull();
+  });
+
+  it('persists large rows and group members below SQLite variable limits', async () => {
+    dataSource = await createMemoryAppDataSource();
+    const rows = Array.from({ length: 200 }, (_, index) => ({
+      type: 'token' as const,
+      id: `token-${index}`,
+    }));
+    const memberIds = Array.from(
+      { length: 200 },
+      (_, index) => `group-member-${index}`,
+    );
+
+    await persistAssetProjection(
+      {
+        projectionKey: 'token::multi::large-projection',
+        kind: 'token',
+        scene: 'multi-address',
+        rows,
+        groups: [{ id: 'large-token-group', memberIds }],
+      },
+      dataSource,
+    );
+
+    await expect(
+      restoreLatestAssetProjection(
+        'token::multi::large-projection',
+        { kind: 'token', scene: 'multi-address' },
+        dataSource,
+      ),
+    ).resolves.toMatchObject({
+      rows,
+      groups: [{ id: 'large-token-group', memberIds }],
+    });
+  });
+
   it('rolls back unpublished rows when snapshot creation fails', async () => {
     dataSource = await createMemoryAppDataSource();
     const circularMetadata: Record<string, unknown> = {};
@@ -279,6 +484,65 @@ describe('asset projection persistence', () => {
     ).resolves.toBe(0);
   });
 
+  it('commits projection prerequisites and snapshot atomically', async () => {
+    dataSource = await createMemoryAppDataSource();
+    await dataSource.query(
+      'CREATE TABLE projection_prerequisite (id text PRIMARY KEY NOT NULL)',
+    );
+
+    await expect(
+      persistAssetProjection(
+        {
+          projectionKey: PROJECTION_KEY,
+          kind: 'token',
+          scene: 'single-address',
+          rows: [{ type: 'token', id: 'token-a' }],
+          prepareTransaction: async manager => {
+            await manager.query(
+              'INSERT INTO projection_prerequisite (id) VALUES (?)',
+              ['required-token-a'],
+            );
+          },
+        },
+        dataSource,
+      ),
+    ).resolves.toMatchObject({ generation: 1 });
+    await expect(
+      dataSource.query('SELECT id FROM projection_prerequisite'),
+    ).resolves.toEqual([{ id: 'required-token-a' }]);
+
+    await expect(
+      persistAssetProjection(
+        {
+          projectionKey: 'token::single::failed-prerequisite',
+          kind: 'token',
+          scene: 'single-address',
+          rows: [{ type: 'token', id: 'token-b' }],
+          prepareTransaction: async manager => {
+            await manager.query(
+              'INSERT INTO projection_prerequisite (id) VALUES (?)',
+              ['required-token-b'],
+            );
+            throw new Error('prerequisite failed');
+          },
+        },
+        dataSource,
+      ),
+    ).rejects.toThrow('prerequisite failed');
+    await expect(
+      dataSource.query(
+        'SELECT id FROM projection_prerequisite ORDER BY id ASC',
+      ),
+    ).resolves.toEqual([{ id: 'required-token-a' }]);
+    await expect(
+      restoreLatestAssetProjection(
+        'token::single::failed-prerequisite',
+        {},
+        dataSource,
+      ),
+    ).resolves.toBeNull();
+  });
+
   it('keeps only the latest three complete generations', async () => {
     dataSource = await createMemoryAppDataSource();
     for (let generation = 1; generation <= 5; generation += 1) {
@@ -305,6 +569,25 @@ describe('asset projection persistence', () => {
       .getRepository(AssetProjectionSnapshotEntity)
       .find({ order: { generation: 'DESC' } });
     expect(snapshots.map(snapshot => snapshot.generation)).toEqual([5, 4, 3]);
+    await expect(
+      restoreAssetProjectionGenerationRows(
+        PROJECTION_KEY,
+        1,
+        [{ offset: 0, count: 1 }],
+        dataSource,
+      ),
+    ).resolves.toBeNull();
+    await expect(
+      restoreAssetProjectionGenerationRows(
+        PROJECTION_KEY,
+        3,
+        [{ offset: 0, count: 1 }],
+        dataSource,
+      ),
+    ).resolves.toMatchObject({
+      generation: 3,
+      rows: [{ type: 'token', id: 'token-3' }],
+    });
     await expect(
       restoreLatestAssetProjection(PROJECTION_KEY, {}, dataSource),
     ).resolves.toMatchObject({

@@ -9,7 +9,7 @@ import {
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { browserApis } from './browser/useBrowser';
 import useMount from 'react-use/lib/useMount';
-import { toastWithIcon } from '@/components2024/Toast';
+import { toast, toastWithIcon } from '@/components2024/Toast';
 import { RcIconInfoForToast } from '@/screens/Unlock/icons';
 import {
   getRabbyLockInfo,
@@ -28,7 +28,7 @@ import {
   pairWalletConnectUri,
   parseWalletConnectUriFromLink,
 } from '@/core/walletconnect';
-import { isNonPublicProductionEnv } from '@/constant';
+import { INITIAL_OPENAPI_URL, isNonPublicProductionEnv } from '@/constant';
 import { RootNames } from '@/constant/layout';
 import { navigationRef } from '@/utils/navigation';
 import { dropAppDataSourceAndQuitApp } from '@/databases/imports';
@@ -46,6 +46,12 @@ import {
   parseRegressionScenarioLink,
   sanitizeLinkForLogging,
 } from '@/devtools/regressionScenarios/runtime';
+import {
+  BACKEND_API_HOST_DEBUG_COMMAND,
+  parseBackendApiHostDebugCommand,
+  type BackendApiHostDebugCommandParseResult,
+} from '@/core/backendApiHost';
+import { setOpenApiHost } from '@/core/request';
 
 const nextAppLinkRef = {
   current: '' as string,
@@ -73,6 +79,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-sync-all-history'
     | 'debug-db-sync-policy'
     | 'debug-lending'
+    | 'debug-backend-api-host'
     | 'regression-scenario';
   dappUrl?: string;
   uri?: string;
@@ -94,6 +101,7 @@ type OnParseUrlAndProcessAction = (payload: {
     action: 'open' | 'refresh' | 'probe';
     market?: string;
   };
+  debugBackendApiHost?: BackendApiHostDebugCommandParseResult;
   regressionScenarioCommand?: RegressionScenarioCommand | null;
   regressionScenarioError?: string;
 }) => void;
@@ -315,6 +323,19 @@ function parseNonProductionMaintenanceLink(appLink: string) {
         action: action as 'open' | 'refresh' | 'probe',
         market: urlInfo.searchParams.get('market') || undefined,
       },
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  if (
+    rabbyGoCmd === BACKEND_API_HOST_DEBUG_COMMAND ||
+    target === BACKEND_API_HOST_DEBUG_COMMAND
+  ) {
+    return {
+      type: 'debug-backend-api-host',
+      debugBackendApiHost: parseBackendApiHostDebugCommand(
+        urlInfo.searchParams,
+        INITIAL_OPENAPI_URL,
+      ),
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -592,6 +613,32 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
               error,
             },
           );
+        });
+      break;
+    case 'debug-backend-api-host':
+      if (!isNonPublicProductionEnv || !payload.debugBackendApiHost) {
+        return;
+      }
+      const backendApiHostParseResult = payload.debugBackendApiHost;
+      if ('error' in backendApiHostParseResult) {
+        toast.error(backendApiHostParseResult.error);
+        return;
+      }
+      const backendApiHostCommand = backendApiHostParseResult.command;
+      setOpenApiHost(backendApiHostCommand.host)
+        .then(() => {
+          toast.success(
+            backendApiHostCommand.action === 'reset'
+              ? 'Backend API host restored'
+              : 'Backend API host updated',
+          );
+        })
+        .catch(error => {
+          console.error(
+            '[useUniversalLinkOnTop] Backend API host update failed',
+            error,
+          );
+          toast.error('Backend API host update failed');
         });
       break;
     case 'regression-scenario':

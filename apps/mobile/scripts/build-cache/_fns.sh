@@ -560,7 +560,7 @@ build_cache_use_gradle_home_cache_key() {
   local_home_dir=$(build_cache_gradle_local_home_dir "$key")
   local_home_link="${RABBY_MOBILE_TURBO_WORK_ROOT}/gradle-user-home"
 
-  mkdir -p "$(dirname "$local_home_dir")" "$RABBY_MOBILE_TURBO_WORK_ROOT"
+  mkdir -p "$local_home_dir" "$RABBY_MOBILE_TURBO_WORK_ROOT"
   rm -rf "$local_home_link"
   ln -s "$local_home_dir" "$local_home_link"
 
@@ -572,11 +572,11 @@ build_cache_restore_android_gradle_state() {
   build_cache_init_env
   cache_key=$(build_cache_compute_gradle_cache_key)
 
-  if build_cache_should_write_gradle_proxy_properties; then
-    build_cache_write_gradle_proxy_properties
-  fi
-
   if ! build_cache_enabled; then
+    mkdir -p "$GRADLE_USER_HOME"
+    if build_cache_should_write_gradle_proxy_properties; then
+      build_cache_write_gradle_proxy_properties
+    fi
     if build_cache_stable_env_enabled; then
       build_cache_seed_gradle_wrapper_from_global
       build_cache_seed_gradle_dependency_cache_from_global
@@ -585,6 +585,9 @@ build_cache_restore_android_gradle_state() {
   fi
 
   build_cache_use_gradle_home_cache_key "$cache_key"
+  if build_cache_should_write_gradle_proxy_properties; then
+    build_cache_write_gradle_proxy_properties
+  fi
 
   if build_cache_layer_restore_prefers_remote; then
     build_cache_restore_local_dir_from_remote "$cache_key" || true

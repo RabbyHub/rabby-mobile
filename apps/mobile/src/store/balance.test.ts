@@ -48,11 +48,19 @@ describe('store/balance', () => {
         },
       },
     }));
+    jest.doMock('@/hooks/appSettings', () => ({
+      getHomeAssetSelectionSettings: () => ({
+        topN: 10,
+        includeWatchAddresses: false,
+      }),
+      isHomeAssetSelectionExperimentEnabled: () => false,
+    }));
     jest.doMock('@/core/utils/reexports', () => {
       const { create } = require('zustand');
+      const { mutative } = require('zustand-mutative');
       return {
         zCreate: create,
-        zMutative: <T>(input: T) => input,
+        zMutative: mutative,
       };
     });
     jest.doMock('@/databases/entities/balance', () => ({
@@ -113,6 +121,34 @@ describe('store/balance', () => {
     }));
 
     balanceModule = require('./balance');
+  });
+
+  it('commits account selection snapshots without a Mutative raw-return warning', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation();
+
+    balanceModule.commitAccountBalanceSelectionSnapshot(
+      {
+        selectedAccounts: [
+          {
+            address: '0xABCD',
+            type: 'SimpleKeyring',
+          },
+        ],
+        selectedAddresses: ['0xabcd'],
+        matteredAccountLength: 1,
+      },
+      {
+        source: 'accounts_changed',
+      },
+    );
+
+    expect(warn).not.toHaveBeenCalledWith(
+      expect.stringContaining(
+        'return value does not contain any draft of the base state',
+      ),
+    );
+
+    warn.mockRestore();
   });
 
   it('hydrates missing address memory from persisted sqlite cache first', async () => {
@@ -269,6 +305,52 @@ describe('store/balance', () => {
       persistStatus: 'success',
       hasValue: true,
     });
+  });
+
+  it('publishes a multi-address remote balance result as one value update', async () => {
+    mockKeyringServiceGetAllAddresses.mockResolvedValue([
+      {
+        address: '0xAAAA',
+        type: 'SimpleKeyring',
+      },
+      {
+        address: '0xBBBB',
+        type: 'SimpleKeyring',
+      },
+    ]);
+    mockBatchGetAppChains.mockResolvedValue(undefined);
+    mockGetAppChainTotalUsdValue.mockReturnValue(0);
+    mockOpenapiGetTotalBalanceV2.mockImplementation(
+      ({ address }: { address: string }) =>
+        Promise.resolve({
+          total_usd_value: address === '0xaaaa' ? 10 : 20,
+          chain_list: [],
+        }),
+    );
+
+    let valuePublicationCount = 0;
+    const unsubscribe = balanceModule.default.subscribe((state, prev) => {
+      if (state.valueMap !== prev.valueMap) {
+        valuePublicationCount += 1;
+      }
+    });
+
+    await balanceModule.default.batchGetTotalBalance(
+      ['0xAAAA', '0xBBBB'],
+      true,
+    );
+
+    expect(valuePublicationCount).toBe(1);
+    expect(balanceModule.default.getAddressValue('0xaaaa')).toMatchObject({
+      evmBalance: 10,
+      totalBalance: 10,
+    });
+    expect(balanceModule.default.getAddressValue('0xbbbb')).toMatchObject({
+      evmBalance: 20,
+      totalBalance: 20,
+    });
+    unsubscribe();
+    await flushResourceFlowPersist();
   });
 
   it('recomputes total balance when appchain value changes after balance hydrate', async () => {

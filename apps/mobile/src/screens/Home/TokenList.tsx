@@ -876,6 +876,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
         sectionSpecs={sectionSpecs}
         ListComponent={Tabs.SectionList}
         storeLabel="single-address-token-section-list"
+        userVisible={isScreenFocused && isFocused}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         initialNumToRender={TOKEN_LIST_INITIAL_RENDER_COUNT}

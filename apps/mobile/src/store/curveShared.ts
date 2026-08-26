@@ -199,38 +199,37 @@ export function combineMultiCurve(curves: CurveList[]) {
 
   const startTime = curves[0]?.[0]?.timestamp ?? 0;
   const interval = 30 * 60;
-  const windows: CurveList = Array(48)
-    .fill(null)
-    .map((_, index) => ({
-      timestamp: startTime + index * interval,
-      usd_value: 0,
-    }));
+  const windowCount = 48;
+  const windowSums = Array(windowCount).fill(0) as number[];
 
-  const result = windows.map(window => {
-    const windowStart = window.timestamp;
-    const windowEnd = windowStart + interval;
-    let sum = 0;
-    let count = 0;
+  curves.forEach(addressData => {
+    const latestPoints = Array(windowCount).fill(undefined) as Array<
+      CurveList[number] | undefined
+    >;
 
-    curves.forEach(addressData => {
-      const pointsInWindow = addressData.filter(
-        point => point.timestamp >= windowStart && point.timestamp < windowEnd,
-      );
+    addressData.forEach(point => {
+      const windowIndex = Math.floor((point.timestamp - startTime) / interval);
+      if (windowIndex < 0 || windowIndex >= windowCount) {
+        return;
+      }
 
-      if (pointsInWindow.length > 0) {
-        const latestPoint = pointsInWindow.reduce((latest, current) =>
-          current.timestamp > latest.timestamp ? current : latest,
-        );
-        sum += latestPoint.usd_value;
-        count++;
+      const current = latestPoints[windowIndex];
+      if (!current || point.timestamp > current.timestamp) {
+        latestPoints[windowIndex] = point;
       }
     });
 
-    return {
-      timestamp: windowEnd,
-      usd_value: count > 0 ? sum : 0,
-    };
+    latestPoints.forEach((point, index) => {
+      if (point) {
+        windowSums[index] += point.usd_value;
+      }
+    });
   });
+
+  const result: CurveList = windowSums.map((usdValue, index) => ({
+    timestamp: startTime + (index + 1) * interval,
+    usd_value: usdValue,
+  }));
 
   const firstPoints = curves.map(data => data[0]);
   const lastPoints = curves.map(data => data[data.length - 1]);
@@ -250,7 +249,7 @@ export function combineMultiCurve(curves: CurveList[]) {
   };
 
   result[result.length - 1] = {
-    timestamp: startTime + (48 - 1) * interval,
+    timestamp: startTime + (windowCount - 1) * interval,
     usd_value: lastSum,
   };
 

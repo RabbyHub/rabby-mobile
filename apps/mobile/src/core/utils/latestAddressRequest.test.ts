@@ -68,4 +68,27 @@ describe('LatestAddressRequest', () => {
     expect(requests.activate(earlier)).toEqual([]);
     expect(requests.isCurrent(newer, '0xA')).toBe(true);
   });
+
+  it('compiles an address guard that invalidates only overlapping work', () => {
+    const requests = new LatestAddressRequest();
+    const active = requests.begin(['0xA', '0xB']);
+    const guardA = requests.createCurrentGuard(active, ['0xA']);
+    const guardB = requests.createCurrentGuard(active, ['0xB']);
+
+    expect(guardA()).toBe(true);
+    expect(guardB()).toBe(true);
+
+    requests.begin(['0xB']);
+
+    expect(guardA()).toBe(true);
+    expect(guardB()).toBe(false);
+  });
+
+  it('normalizes and rejects addresses outside the guarded ticket', () => {
+    const requests = new LatestAddressRequest();
+    const active = requests.begin(['0xA']);
+
+    expect(requests.createCurrentGuard(active, ['0xA', '0xa'])()).toBe(true);
+    expect(requests.createCurrentGuard(active, ['0xB'])()).toBe(false);
+  });
 });

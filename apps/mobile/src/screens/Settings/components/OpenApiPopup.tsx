@@ -4,7 +4,8 @@ import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { toast } from '@/components2024/Toast';
 import { INITIAL_OPENAPI_URL } from '@/constant';
-import { openapi } from '@/core/request';
+import { normalizeBackendApiHost } from '@/core/backendApiHost';
+import { openapi, setOpenApiHost } from '@/core/request';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
@@ -24,12 +25,16 @@ export const OpenApiPopup: React.FC<{
   const modalRef = useRef<AppBottomSheetModal>(null);
   const [host, setHost] = useState(openapi.getHost());
 
-  const handleConfirm = useMemoizedFn(() => {
-    const v = host.trim();
-    if (/^https?:\/\//.test(v)) {
-      openapi.setHost(v);
-      toast.success('Success');
-      onClose?.();
+  const handleConfirm = useMemoizedFn(async () => {
+    const v = normalizeBackendApiHost(host);
+    if (v) {
+      try {
+        await setOpenApiHost(v);
+        toast.success('Success');
+        onClose?.();
+      } catch {
+        toast.error('Failed to update backend service URL');
+      }
     } else {
       toast.error('Please input invalid url');
     }
