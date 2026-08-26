@@ -6,11 +6,11 @@ export const waitPurchaseUpdated = async () => {
   return new Promise<Purchase>((resolve, reject) =>
     eventBus.once(EVENTS.PURCHASE_UPDATED, ({ data, error }) => {
       devLog('purchase updated', data, error);
-      if (error) {
-        reject(error);
-      } else {
-        resolve(data);
+      if (error || !data) {
+        reject(error ?? new Error('Purchase update missing data'));
+        return;
       }
+      resolve(data);
     }),
   );
 };

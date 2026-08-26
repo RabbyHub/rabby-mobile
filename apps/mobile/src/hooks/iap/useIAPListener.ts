@@ -69,8 +69,8 @@ export const useIAPListener = () => {
 
         purchaseErrorSubscription = purchaseErrorListener(error => {
           // payment error
-          error;
           devLog('purchaseErrorListener', error);
+          eventBus.emit(EVENTS.PURCHASE_UPDATED, { error });
         });
       } catch (error: any) {
         devLog('initConnection error', error);
