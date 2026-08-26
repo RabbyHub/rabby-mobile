@@ -2533,7 +2533,18 @@
         "learnBtn": "En savoir plus sur les Perps",
         "loginDesc": "Connectez-vous avec l’adresse actuelle et déposez des fonds pour commencer à trader des Perps.",
         "addFunds": "Ajouter des fonds",
-        "learnMore": "En savoir plus"
+        "learnMore": "En savoir plus",
+        "portfolioValue": "Valeur du portefeuille",
+        "manualAccount": "Compte manuel",
+        "unifiedAccount": "Compte unifié",
+        "portfolioMarginAccount": "Marge de portefeuille",
+        "manualAccountDesc": "Le Spot et chaque DEX de Perps ont des soldes séparés, la marge croisée étant gérée indépendamment au sein de chaque DEX.",
+        "unifiedAccountDesc": "Chaque actif de collatéral dispose d'un solde unique partagé entre le Spot et les Perps en marge croisée utilisant le même collatéral.",
+        "portfolioMarginAccountDesc": "Les actifs Spot éligibles et les Perps sont combinés dans un même portefeuille pour une meilleure efficacité du capital.",
+        "breakdownPerps": "Perps",
+        "breakdownSpot": "Spot",
+        "breakdownOtherAssets": "Autres actifs",
+        "breakdownNetOtherAssets": "Autres actifs nets"
       },
       "PerpsGuidePopup": {
         "step5Title": "Liquidation",
@@ -2856,7 +2867,10 @@
         "closedPnl": "PNL clôturé ",
         "minimumWarning": "Le montant minimum est de {{percent}}%",
         "total": "Total",
-        "rabbyFeeTipsV2": "Frais Rabby : 0,02 %"
+        "rabbyFeeTipsV2": "Frais Rabby : 0,02 %",
+        "estReceive": "Réception est.",
+        "estClosedPnl": "PNL clôturé est.",
+        "limitClosePlacedToast": "Clôture limite {{direction}} {{coin}} : taille {{size}} placée à ${{price}}"
       },
       "PerpsOpenPositionPopup": {
         "title": "Ouvrir une position {{coin}}",

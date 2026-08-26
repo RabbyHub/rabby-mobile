@@ -180,14 +180,6 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
     setSelectedCoin(coin);
   });
 
-  const handleSwapPress = useMemoizedFn(async () => {
-    await handleActionApproveStatus({ isHideToast: true });
-    setPopupState(prev => ({
-      ...prev,
-      isShowSwapPopup: true,
-    }));
-  });
-
   const handleCloseRiskPopup = useMemoizedFn(() => {
     setSelectedCoin(null);
   });
@@ -293,7 +285,7 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
               refreshControl={
                 <RefreshControl refreshing={false} onRefresh={onRefresh} />
               }>
-              <PerpsAccountCard onSwapPress={handleSwapPress} />
+              <PerpsAccountCard />
               <PerpsPositionSection
                 handleShowRiskPopup={handleShowRiskPopup}
                 handleCloseRiskPopup={handleCloseRiskPopup}
