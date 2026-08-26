@@ -22,6 +22,8 @@ const {
   getPerpsProTooltipMaxWidth,
   getPerpsProTooltipPlacement,
   getPerpsProTooltipMetrics,
+  isPerpsProFutureLogicalRangeAtBoundary,
+  shouldBlockPerpsProFutureTouchMove,
   shiftLogicalRangeForPrependedCandles,
 } =
   require('../../../../mobile-local-pages/src/pages/tradingview-candle-chart/chart-logic') as typeof import('../../../../mobile-local-pages/src/pages/tradingview-candle-chart/chart-logic');
@@ -235,6 +237,47 @@ describe('Perps Pro local chart calculations', () => {
     expect(constrainPerpsProFutureLogicalRange({ from: 3, to: 43 }, 3)).toEqual(
       { from: 0, to: 40 },
     );
+  });
+
+  it('blocks only continued outward horizontal touch at the Pro future boundary', () => {
+    expect(
+      isPerpsProFutureLogicalRangeAtBoundary({ from: 95, to: 135 }, 100),
+    ).toBe(true);
+    expect(
+      isPerpsProFutureLogicalRangeAtBoundary({ from: 94, to: 134 }, 100),
+    ).toBe(false);
+    expect(
+      shouldBlockPerpsProFutureTouchMove({
+        atFutureBoundary: true,
+        deltaX: -4,
+        deltaY: 1,
+        isHorizontalScroll: true,
+      }),
+    ).toBe(true);
+    expect(
+      shouldBlockPerpsProFutureTouchMove({
+        atFutureBoundary: true,
+        deltaX: 4,
+        deltaY: 1,
+        isHorizontalScroll: true,
+      }),
+    ).toBe(false);
+    expect(
+      shouldBlockPerpsProFutureTouchMove({
+        atFutureBoundary: true,
+        deltaX: -1,
+        deltaY: 4,
+        isHorizontalScroll: true,
+      }),
+    ).toBe(false);
+    expect(
+      shouldBlockPerpsProFutureTouchMove({
+        atFutureBoundary: true,
+        deltaX: -4,
+        deltaY: 1,
+        isHorizontalScroll: false,
+      }),
+    ).toBe(false);
   });
 
   it('counts prepended candles so a history merge can preserve the viewport', () => {

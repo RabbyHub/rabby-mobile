@@ -42,7 +42,9 @@ import {
   getPerpsProTooltipMaxWidth,
   getPerpsProTooltipPlacement,
   getPerpsProTooltipMetrics,
+  isPerpsProFutureLogicalRangeAtBoundary,
   PERPS_PRO_PRICE_SCALE_MARGINS,
+  shouldBlockPerpsProFutureTouchMove,
   shiftLogicalRangeForPrependedCandles,
 } from './chart-logic';
 import { ThemeColors2024 } from '@rabby-wallet/base-utils/src/isomorphic/theme-colors';
@@ -1141,8 +1143,63 @@ function updateTooltipContent(param: any) {
 let pendingVisibleLogicalRange: { from: number; to: number } | null = null;
 let visibleLogicalRangeFrameId: number | null = null;
 let isApplyingVisibleLogicalRange = false;
+let perpsProTouchPoint: { x: number; y: number } | null = null;
+let perpsProTouchStartRange: { from: number; to: number } | null = null;
+let isPerpsProHorizontalTouchScroll = false;
+let isPerpsProFutureTouchBoundary = false;
 let lastOlderCandlesRequestKey: string | null = null;
 let exhaustedHistoryIdentity: string | null = null;
+
+function resetPerpsProTouchBoundaryGesture() {
+  perpsProTouchPoint = null;
+  perpsProTouchStartRange = null;
+  isPerpsProHorizontalTouchScroll = false;
+  isPerpsProFutureTouchBoundary = false;
+}
+
+function handlePerpsProBoundaryTouchStart(event: TouchEvent) {
+  if (!chartState.proConfig || event.touches.length !== 1) {
+    resetPerpsProTouchBoundaryGesture();
+    return;
+  }
+  const touch = event.touches[0];
+  perpsProTouchPoint = { x: touch.clientX, y: touch.clientY };
+  perpsProTouchStartRange =
+    chartState.chart?.timeScale().getVisibleLogicalRange() ?? null;
+  isPerpsProHorizontalTouchScroll = false;
+  isPerpsProFutureTouchBoundary = isPerpsProFutureLogicalRangeAtBoundary(
+    perpsProTouchStartRange,
+    chartState.currentData.length,
+  );
+}
+
+function handlePerpsProBoundaryTouchMove(event: TouchEvent) {
+  if (!chartState.proConfig || event.touches.length !== 1) {
+    resetPerpsProTouchBoundaryGesture();
+    return;
+  }
+  if (!perpsProTouchPoint) {
+    return;
+  }
+  const touch = event.touches[0];
+  const deltaX = touch.clientX - perpsProTouchPoint.x;
+  const deltaY = touch.clientY - perpsProTouchPoint.y;
+  perpsProTouchPoint = { x: touch.clientX, y: touch.clientY };
+  if (deltaX > 0) {
+    isPerpsProFutureTouchBoundary = false;
+  }
+  if (
+    shouldBlockPerpsProFutureTouchMove({
+      atFutureBoundary: isPerpsProFutureTouchBoundary,
+      deltaX,
+      deltaY,
+      isHorizontalScroll: isPerpsProHorizontalTouchScroll,
+    })
+  ) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }
+}
 
 function scheduleConstrainedPerpsProLogicalRange(range: {
   from: number;
@@ -1215,6 +1272,18 @@ function handleVisibleLogicalRangeChange(
   schedulePerpsProCrosshairLabelRender();
   if (!range || !chartState.proConfig) {
     return;
+  }
+  if (perpsProTouchPoint && perpsProTouchStartRange) {
+    if (
+      Math.abs(range.from - perpsProTouchStartRange.from) > 0.0001 ||
+      Math.abs(range.to - perpsProTouchStartRange.to) > 0.0001
+    ) {
+      isPerpsProHorizontalTouchScroll = true;
+    }
+    isPerpsProFutureTouchBoundary = isPerpsProFutureLogicalRangeAtBoundary(
+      range,
+      chartState.currentData.length,
+    );
   }
   if (!isApplyingVisibleLogicalRange) {
     scheduleConstrainedPerpsProLogicalRange(range);
@@ -1387,6 +1456,10 @@ function applyPerpsProChartOptions(config: PerpsProChartConfig) {
     },
     trackingMode: {
       exitMode: TrackingModeExitMode.OnNextTap,
+    },
+    kineticScroll: {
+      mouse: false,
+      touch: false,
     },
     rightPriceScale: {
       scaleMargins: {
@@ -1603,6 +1676,7 @@ function handleSetCandlestickData(
     applyPerpsProChartOptions(chartState.proConfig);
   } else {
     chartState.chart.applyOptions({
+      kineticScroll: { mouse: false, touch: true },
       timeScale: { fixRightEdge: true },
     });
   }
@@ -1918,6 +1992,23 @@ function init() {
   // Add event listeners
   window.addEventListener('messageFromRN', handleMessage as EventListener);
   window.addEventListener('resize', handleResize);
+  containerEl.addEventListener('touchstart', handlePerpsProBoundaryTouchStart, {
+    capture: true,
+    passive: true,
+  });
+  containerEl.addEventListener('touchmove', handlePerpsProBoundaryTouchMove, {
+    capture: true,
+    passive: false,
+  });
+  containerEl.addEventListener('touchend', resetPerpsProTouchBoundaryGesture, {
+    capture: true,
+    passive: true,
+  });
+  containerEl.addEventListener(
+    'touchcancel',
+    resetPerpsProTouchBoundaryGesture,
+    { capture: true, passive: true },
+  );
 
   // Request runtime info (theme, i18n) from RN
   postMessageToRN({ type: 'GET_RUNTIME_INFO' });
@@ -1934,6 +2025,26 @@ window.addEventListener('beforeunload', () => {
   }
   window.removeEventListener('messageFromRN', handleMessage as EventListener);
   window.removeEventListener('resize', handleResize);
+  containerEl.removeEventListener(
+    'touchstart',
+    handlePerpsProBoundaryTouchStart,
+    true,
+  );
+  containerEl.removeEventListener(
+    'touchmove',
+    handlePerpsProBoundaryTouchMove,
+    true,
+  );
+  containerEl.removeEventListener(
+    'touchend',
+    resetPerpsProTouchBoundaryGesture,
+    true,
+  );
+  containerEl.removeEventListener(
+    'touchcancel',
+    resetPerpsProTouchBoundaryGesture,
+    true,
+  );
   if (chartState.chart) {
     chartState.chart.remove();
   }

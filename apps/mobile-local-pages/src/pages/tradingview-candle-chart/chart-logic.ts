@@ -283,16 +283,59 @@ export function clampPerpsProCrosshairCoordinate(
 
 export type LogicalRange = { from: number; to: number };
 
+const getPerpsProFutureMaximumFrom = (
+  dataLength: number,
+  minimumVisibleBars: number,
+) => {
+  const safeDataLength = Math.max(0, Math.floor(dataLength));
+  const safeMinimumVisibleBars = Math.max(1, Math.floor(minimumVisibleBars));
+  return Math.max(
+    0,
+    safeDataLength - Math.min(safeDataLength, safeMinimumVisibleBars),
+  );
+};
+
+export function isPerpsProFutureLogicalRangeAtBoundary(
+  range: LogicalRange | null,
+  dataLength: number,
+  minimumVisibleBars = 5,
+): boolean {
+  return (
+    !!range &&
+    Number.isFinite(range.from) &&
+    range.from >=
+      getPerpsProFutureMaximumFrom(dataLength, minimumVisibleBars) - 0.0001
+  );
+}
+
+export function shouldBlockPerpsProFutureTouchMove({
+  atFutureBoundary,
+  deltaX,
+  deltaY,
+  isHorizontalScroll,
+}: {
+  atFutureBoundary: boolean;
+  deltaX: number;
+  deltaY: number;
+  isHorizontalScroll: boolean;
+}): boolean {
+  return (
+    atFutureBoundary &&
+    isHorizontalScroll &&
+    deltaX < 0 &&
+    Math.abs(deltaX) >= Math.abs(deltaY)
+  );
+}
+
 export function constrainPerpsProFutureLogicalRange(
   range: LogicalRange,
   dataLength: number,
   minimumVisibleBars = 5,
 ): LogicalRange {
   const safeDataLength = Math.max(0, Math.floor(dataLength));
-  const safeMinimumVisibleBars = Math.max(1, Math.floor(minimumVisibleBars));
-  const maximumFrom = Math.max(
-    0,
-    safeDataLength - Math.min(safeDataLength, safeMinimumVisibleBars),
+  const maximumFrom = getPerpsProFutureMaximumFrom(
+    dataLength,
+    minimumVisibleBars,
   );
   if (!Number.isFinite(range.from) || !Number.isFinite(range.to)) {
     return range;
