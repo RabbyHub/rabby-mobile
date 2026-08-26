@@ -33,7 +33,7 @@ import {
   getLatestPortfolioValue,
   isPortfolioAllZero,
 } from '@/hooks/perps/perpsPortfolio';
-import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import { fetchSpotMeta, perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { useShowTipsPopup } from '@/hooks/useTipsPopup';
 import { Text } from '@/components/Typography';
@@ -114,13 +114,19 @@ export const PerpsAccountCard: React.FC = () => {
   const portfolioEntry = usePerpsPortfolio(currentAddress);
   const isFocused = useIsFocused();
 
-  // Poll while the Perps screen is focused; the store dedupes and keeps a
-  // short TTL, so focus flaps do not cause request bursts.
+  // Poll while the Perps screen is focused. The big PV number is WS-driven
+  // now — this poll feeds what only the portfolio API has: the 24H change
+  // row (pnlHistory), the chart series' growing tail, and the PV fallback
+  // used until the WS slices are ready. The store dedupes and keeps a short
+  // TTL, so focus flaps do not cause request bursts.
   useEffect(() => {
     if (!currentAddress || !isFocused) {
       return;
     }
     fetchPerpsPortfolio(currentAddress);
+    // The live PV needs the spot pricing index; only Pro used to fetch it
+    // (idempotent: cached after the first success, in-flight deduped).
+    fetchSpotMeta();
     const timer = setInterval(() => {
       if (AppState.currentState === 'active') {
         fetchPerpsPortfolio(currentAddress, { force: true });

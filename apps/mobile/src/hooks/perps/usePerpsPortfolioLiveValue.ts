@@ -24,7 +24,14 @@ export const usePerpsPortfolioLiveValue = (): number | null => {
       const isSpotCollateral =
         s.userAbstraction === UserAbstractionResp.unifiedAccount ||
         s.userAbstraction === UserAbstractionResp.portfolioMargin;
-      if (!s.isSpotStateReady || (!isSpotCollateral && !s.isUserDataReady)) {
+      // Without spotMeta the spot pricing index cannot resolve non-USDC
+      // assets (not even USDT0/USDH) and the value would silently miss most
+      // of the spot side — fall back to the portfolio API instead.
+      if (
+        !s.spotMeta ||
+        !s.isSpotStateReady ||
+        (!isSpotCollateral && !s.isUserDataReady)
+      ) {
         return null;
       }
       const spotValue =
