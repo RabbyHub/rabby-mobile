@@ -1,3 +1,5 @@
+/* eslint-disable jsdoc/require-param, jsdoc/require-returns */
+
 import type {
   TokenAddressSyncReceipt,
   TokenAssetSyncReceipt,
@@ -14,7 +16,7 @@ import {
 } from './tokenRows';
 
 export type TokenAssetApi = {
-  usedChainList(address: string): Promise<Array<{ id: string }>>;
+  usedChainList(address: string): Promise<{ id: string }[]>;
   listToken(
     address: string,
     chainId: string,
@@ -27,17 +29,53 @@ export type TokenSnapshotPersistence = {
     address: string;
     syncTimestamp: number;
     rows: TokenCacheRow[];
-  }): Promise<{ rowCount: number }>;
+  }): Promise<{ rowCount: number; applied: boolean }>;
 };
 
 type CoordinatorOptions = {
   api: TokenAssetApi;
   persistence: TokenSnapshotPersistence;
   now?: () => number;
+  addressConcurrency?: number;
   chainConcurrency?: number;
   isCancelled?: (requestId: string) => boolean;
 };
 
+/** Create a shared concurrency limiter for worker-side network requests. */
+function createConcurrencyLimiter(concurrency: number) {
+  const pending: (() => void)[] = [];
+  let activeCount = 0;
+  const limit = Math.max(1, concurrency);
+
+  const acquire = () =>
+    new Promise<void>(resolve => {
+      const reserveAndResolve = () => {
+        activeCount += 1;
+        resolve();
+      };
+      if (activeCount < limit) {
+        reserveAndResolve();
+      } else {
+        pending.push(reserveAndResolve);
+      }
+    });
+
+  const release = () => {
+    activeCount -= 1;
+    pending.shift()?.();
+  };
+
+  return async <T>(task: () => Promise<T>) => {
+    await acquire();
+    try {
+      return await task();
+    } finally {
+      release();
+    }
+  };
+}
+
+/** Map values concurrently while preserving their original result order. */
 async function mapWithConcurrency<T, R>(
   values: T[],
   concurrency: number,
@@ -50,7 +88,8 @@ async function mapWithConcurrency<T, R>(
     { length: Math.min(Math.max(1, concurrency), values.length) },
     async () => {
       while (cursor < values.length) {
-        const index = cursor++;
+        const index = cursor;
+        cursor += 1;
         try {
           results[index] = {
             status: 'fulfilled',
@@ -67,6 +106,7 @@ async function mapWithConcurrency<T, R>(
   return results;
 }
 
+/** Aggregate address-level receipts into one request-level outcome. */
 function aggregateOutcome(
   receipts: TokenAddressSyncReceipt[],
 ): TokenAssetSyncReceipt['outcome'] {
@@ -82,6 +122,7 @@ function aggregateOutcome(
   return 'partial';
 }
 
+/** Convert an arbitrary worker failure into a bounded receipt error code. */
 function errorCode(error: unknown) {
   if (error instanceof Error && error.message) {
     return error.message.slice(0, 120);
@@ -89,14 +130,17 @@ function errorCode(error: unknown) {
   return 'asset_sync_unknown_error';
 }
 
+/** Create the isolated token synchronization coordinator. */
 export function createTokenAssetSyncCoordinator({
   api,
   persistence,
   now = Date.now,
-  chainConcurrency = 8,
+  addressConcurrency = 6,
+  chainConcurrency = 15,
   isCancelled = () => false,
 }: CoordinatorOptions) {
   const inFlight = new Map<string, Promise<TokenAssetSyncReceipt>>();
+  const runChainRequest = createConcurrencyLimiter(chainConcurrency);
 
   const syncAddress = async (
     request: TokenAssetSyncRequest,
@@ -131,10 +175,15 @@ export function createTokenAssetSyncCoordinator({
 
     const chainResults = await mapWithConcurrency(
       chainIds,
-      chainConcurrency,
+      chainIds.length || 1,
       async chainId => ({
         chainId,
-        tokens: await api.listToken(address, chainId, true),
+        tokens: await runChainRequest(async () => {
+          if (isCancelled(request.requestId)) {
+            throw new Error('asset_sync_cancelled');
+          }
+          return api.listToken(address, chainId, true);
+        }),
       }),
     );
     const failedChainIds = chainResults.flatMap((result, index) =>
@@ -166,7 +215,7 @@ export function createTokenAssetSyncCoordinator({
     const tokens = chainResults.flatMap(result =>
       result.status === 'fulfilled' ? result.value.tokens : [],
     );
-    const syncTimestamp = now();
+    const syncTimestamp = request.issuedAt;
     try {
       const commit = await persistence.commitTokenSnapshot({
         address,
@@ -179,7 +228,9 @@ export function createTokenAssetSyncCoordinator({
         chainIds,
         failedChainIds: [],
         committedRowCount: commit.rowCount,
-        committedAt: syncTimestamp,
+        ...(commit.applied
+          ? { committedAt: syncTimestamp }
+          : { superseded: true }),
       };
     } catch (error) {
       return {
@@ -201,8 +252,21 @@ export function createTokenAssetSyncCoordinator({
     const addresses = Array.from(
       new Set(request.addresses.map(address => address.toLowerCase())),
     ).filter(Boolean);
-    const receipts = await Promise.all(
-      addresses.map(address => syncAddress(request, address)),
+    const receipts = (
+      await mapWithConcurrency(addresses, addressConcurrency, address =>
+        syncAddress(request, address),
+      )
+    ).map((result, index) =>
+      result.status === 'fulfilled'
+        ? result.value
+        : ({
+            address: addresses[index],
+            outcome: 'failed',
+            chainIds: [],
+            failedChainIds: [],
+            committedRowCount: 0,
+            errorCode: errorCode(result.reason),
+          } satisfies TokenAddressSyncReceipt),
     );
     return {
       schemaVersion: ASSET_SYNC_WORKER_SCHEMA_VERSION,

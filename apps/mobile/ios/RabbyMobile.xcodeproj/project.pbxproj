@@ -35,6 +35,7 @@
 		62F658AD5D35470FBE7DF799 /* SF-Pro-Rounded-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 5B9880A4659D4B78872720D4 /* SF-Pro-Rounded-Bold.otf */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		A435C93C4EB14CC4B4CB98D0 /* BuildFile in Resources */ = {isa = PBXBuildFile; };
+		A57E700130D1000000000001 /* WorkerAssetStore.m in Sources */ = {isa = PBXBuildFile; fileRef = A57E700230D1000000000001 /* WorkerAssetStore.m */; };
 		A9D2208BFEB74DE8946F4B97 /* vconsole.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 370EA128F5694C408EE79381 /* vconsole.min.js */; };
 		ACB2DE2D2B72015F00A5516C /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = ACB2DE2C2B72015F00A5516C /* GoogleService-Info.plist */; };
 		AFC5B63787113E4A1E28D98C /* Pods_RabbyMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B5BE4C088335CB76F76458F0 /* Pods_RabbyMobile.framework */; };
@@ -116,6 +117,8 @@
 		88C933734903F821FA0C5573 /* Pods_RabbyMobileNotification.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RabbyMobileNotification.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		89C6BE57DB24E9ADA2F236DE /* Pods-RabbyMobile-RabbyMobileTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile-RabbyMobileTests.release.xcconfig"; path = "Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests.release.xcconfig"; sourceTree = "<group>"; };
 		A4836FAFC22B499AAA2E435D /* SF-Pro-Rounded-Medium.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "SF-Pro-Rounded-Medium.otf"; path = "../assets/fonts/SF-Pro-Rounded-Medium.otf"; sourceTree = "<group>"; };
+		A57E700230D1000000000001 /* WorkerAssetStore.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = WorkerAssetStore.m; sourceTree = "<group>"; };
+		A57E700330D1000000000001 /* WorkerAssetStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WorkerAssetStore.h; sourceTree = "<group>"; };
 		A8D4D12C2C7EFDA1002B827D /* RabbyMobile.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = RabbyMobile.entitlements; path = RabbyMobile/RabbyMobile.entitlements; sourceTree = "<group>"; };
 		ACB2DE2C2B72015F00A5516C /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		B5BE4C088335CB76F76458F0 /* Pods_RabbyMobile.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RabbyMobile.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -171,6 +174,8 @@
 				018EF41A2EFBCDE8001A2361 /* RNThread.m */,
 				018EF41B2EFBCDE8001A2361 /* ThreadSelfModule.h */,
 				018EF41C2EFBCDE8001A2361 /* ThreadSelfModule.m */,
+				A57E700330D1000000000001 /* WorkerAssetStore.h */,
+				A57E700230D1000000000001 /* WorkerAssetStore.m */,
 			);
 			name = Thread;
 			path = RabbyMobile/Thread;
@@ -624,6 +629,7 @@
 			files = (
 				018EF41E2EFBCDE8001A2361 /* RNThread.m in Sources */,
 				018EF41F2EFBCDE8001A2361 /* ThreadSelfModule.m in Sources */,
+				A57E700130D1000000000001 /* WorkerAssetStore.m in Sources */,
 				01BBE0162C3879380033D12B /* UIImage+ImageEffects.m in Sources */,
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
 				01EF41AA2C36CB00009D8053 /* ReactNativeSecurity.mm in Sources */,

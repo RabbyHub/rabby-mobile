@@ -15,6 +15,9 @@ describe('token cache rows', () => {
           inner_id: 'position',
           amount: 2.5,
           price: 3,
+          usd_value: 999,
+          fdv: 4,
+          identity: { fdv: 5 },
           raw_amount: '250',
           cex_ids: ['binance'],
           launchpad: { id: 'launchpad' },
@@ -28,6 +31,8 @@ describe('token cache rows', () => {
     expect(row.projection_resource_id).toBe('0xabc:eth:token');
     expect(row.amount).toBe(2.5 * LEGACY_REAL_STORAGE_RATIO);
     expect(row.price).toBe(3 * LEGACY_REAL_STORAGE_RATIO);
+    expect(row.usd_value).toBe(7.5);
+    expect(row.fdv).toBe(5);
     expect(row.raw_amount).toBe('250');
     expect(row.cex_ids).toBe('["binance"]');
     expect(row.launchpad).toBe('{"id":"launchpad"}');
@@ -41,5 +46,21 @@ describe('token cache rows', () => {
     expect(row._db_id).toBe(
       `0xabc-${EMPTY_TOKEN_ITEM_ID}-${EMPTY_TOKEN_ITEM_ID}`,
     );
+  });
+
+  it('filters suspicious tokens before deciding whether to persist an empty snapshot', () => {
+    const [row] = makeTokenCacheRows(
+      '0xabc',
+      [
+        {
+          id: 'suspicious-token',
+          chain: 'eth',
+          is_suspicious: true,
+        },
+      ],
+      123,
+    );
+
+    expect(row.id).toBe(EMPTY_TOKEN_ITEM_ID);
   });
 });

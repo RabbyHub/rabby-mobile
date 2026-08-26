@@ -8,6 +8,10 @@ import {
 import './_setup';
 import { ThreadSelf, threadSelfEE } from './utils/ThreadSelf';
 import { stringUtils } from '@rabby-wallet/base-utils';
+import {
+  cancelAssetSyncInWorker,
+  syncTokenAssetsInWorker,
+} from './asset-sync/runtime';
 
 // // send a message, strings only
 // ThreadSelf.postMessage('hello');
@@ -16,6 +20,38 @@ threadSelfEE.addListener('msgToThread', message => {
   const msgData = stringUtils.safeParseJSON(message) as null | WorkerDuplexPost;
 
   switch (msgData?.type) {
+    case 'assetSync:token': {
+      void syncTokenAssetsInWorker(msgData.request)
+        .then(receipt => {
+          ThreadSelf.postMessage({
+            type: 'response:assetSync:token',
+            reqid: msgData.reqid,
+            data: receipt,
+          });
+        })
+        .catch(error => {
+          ThreadSelf.postMessage({
+            type: 'response:assetSync:token',
+            reqid: msgData.reqid,
+            errorCode: 'asset_sync_worker_failed',
+            error:
+              error instanceof Error
+                ? error.message
+                : 'Worker asset sync failed',
+          });
+        });
+      break;
+    }
+    case 'assetSync:cancel': {
+      ThreadSelf.postMessage({
+        type: 'response:assetSync:cancel',
+        reqid: msgData.reqid,
+        data: {
+          cancelled: cancelAssetSyncInWorker(msgData.requestId),
+        },
+      });
+      break;
+    }
     case 'formatReserves': {
       const result = formatReserves(msgData.data);
 

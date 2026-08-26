@@ -50,6 +50,26 @@ type WorkerDuplexDefs = {
     };
     response: WorkerResponse<'plus', number>;
   };
+  assetSync_token: {
+    post: WorkerReq<'assetSync:token'> & {
+      request: import('@rabby-wallet/asset-sync-worker-core').TokenAssetSyncRequest;
+    };
+    response: WorkerResponse<
+      'assetSync:token',
+      import('@rabby-wallet/asset-sync-worker-core').TokenAssetSyncReceipt
+    >;
+  };
+  assetSync_cancel: {
+    post: WorkerReq<'assetSync:cancel'> & {
+      requestId: string;
+    };
+    response: WorkerResponse<
+      'assetSync:cancel',
+      {
+        cancelled: boolean;
+      }
+    >;
+  };
   aave_formatReserves: {
     post: WorkerReq<'formatReserves'> & {
       data: Parameters<typeof import('@aave/math-utils').formatReserves>[0];

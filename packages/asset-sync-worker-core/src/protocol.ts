@@ -1,3 +1,5 @@
+/* eslint-disable jsdoc/require-param */
+
 export const ASSET_SYNC_WORKER_SCHEMA_VERSION = 1 as const;
 
 export type AssetSyncWorkerBootstrap = {
@@ -24,6 +26,7 @@ export type TokenAddressSyncReceipt = {
   failedChainIds: string[];
   committedRowCount: number;
   committedAt?: number;
+  superseded?: boolean;
   errorCode?: string;
 };
 
@@ -37,6 +40,7 @@ export type TokenAssetSyncReceipt = {
   addresses: TokenAddressSyncReceipt[];
 };
 
+/** Validate the versioned token-sync request at the worker boundary. */
 export function assertTokenAssetSyncRequest(
   value: TokenAssetSyncRequest,
 ): void {
@@ -51,5 +55,8 @@ export function assertTokenAssetSyncRequest(
   }
   if (!value.bootstrap?.host || !value.bootstrap.clientVersion) {
     throw new Error('asset_sync_bootstrap_invalid');
+  }
+  if (!Number.isFinite(value.issuedAt) || value.issuedAt <= 0) {
+    throw new Error('asset_sync_generation_invalid');
   }
 }

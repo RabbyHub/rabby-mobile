@@ -49,6 +49,7 @@ import {
   useToastOpenApiHttpErrorStatus,
   useToggleShowAutoLockCountdown,
   useWideScreenDebugPanelSetting,
+  useWorkerTokenAssetSyncEnabled,
   WIDE_SCREEN_DEBUG_PANEL_MIN_ALLOWED_WIDTH,
   WIDE_SCREEN_DEBUG_PANEL_WIDTH,
 } from '@/hooks/appSettings';
@@ -1720,6 +1721,48 @@ function DevSwitchHomeAssetSelection() {
   );
 }
 
+function DevSwitchWorkerTokenAssetSync() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { enabled, setEnabled } = useWorkerTokenAssetSyncEnabled();
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <RcCode
+          width={24}
+          height={24}
+          color={styles.secondarySectionTitle.color}
+        />
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          Worker Token Sync
+        </Text>
+      </View>
+      <TouchableOpacity
+        style={styles.switchRowWrapper}
+        onPress={() => setEnabled(!enabled)}>
+        <AppSwitch2024
+          value={enabled}
+          onPress={event => event.stopPropagation()}
+          onValueChange={setEnabled}
+        />
+        <Text style={styles.switchLabel}>
+          {enabled
+            ? 'Fetch and persist Token snapshots on the Worker JS thread'
+            : 'Use the main JS thread for Token synchronization (default)'}
+        </Text>
+      </TouchableOpacity>
+      <Text style={[styles.metaLabel, { marginTop: 4 }]}>
+        Test-only persisted switch. Worker failures fall back to the existing
+        main-thread path.
+      </Text>
+    </View>
+  );
+}
+
 function DevSwitchRegressionScenarioE2E() {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { screenE2EEnabled, setScreenE2EEnabled } = useScreenE2EEnabled();
@@ -1970,6 +2013,7 @@ function DevSwitches(): JSX.Element {
 
         <Text style={styles.areaTitle}>Asset Scale</Text>
         <DevSwitchHomeAssetSelection />
+        <DevSwitchWorkerTokenAssetSync />
 
         <Text style={styles.areaTitle}>Lifecycle E2E</Text>
         <DevSwitchRegressionScenarioE2E />

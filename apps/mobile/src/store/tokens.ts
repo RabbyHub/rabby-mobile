@@ -64,6 +64,7 @@ import {
   TokenProjectionPersistenceGate,
   type AddressPersistenceTicket,
 } from './tokenProjectionPersistenceGate';
+import { trySyncTokenAssetsOnWorker } from '@/perfs/assetSyncWorker';
 
 export type { ITokenItem, TokenAssetsResult } from '@/types/assets';
 
@@ -3619,6 +3620,49 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
           } else {
             trace.mark('cache-store-skipped', {
               reason: 'memory-snapshot-retained',
+            });
+          }
+
+          const workerReceipt = await trySyncTokenAssetsOnWorker({
+            addresses: lowerAddresses,
+            force: isForceRequested(),
+          });
+          if (workerReceipt?.outcome === 'complete') {
+            const workerApplicableAddresses = getCurrentAddresses();
+            if (!workerApplicableAddresses.length) {
+              trace.finish({ path: 'stale-after-worker-remote' });
+              return;
+            }
+            tokenCacheHydrator.invalidate(workerApplicableAddresses);
+            await tokenCacheHydrator.hydrate(workerApplicableAddresses);
+            if (!isCurrentRequest()) {
+              trace.finish({ path: 'stale-after-worker-hydrate' });
+              return;
+            }
+            set(state => ({
+              sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+                state.sourceSnapshotReadyByAddress,
+                workerApplicableAddresses,
+              ),
+              isLoading: false,
+            }));
+            trace.mark('worker-remote-completed', {
+              addressCount: workerApplicableAddresses.length,
+              committedRowCount: workerReceipt.addresses.reduce(
+                (count, address) => count + address.committedRowCount,
+                0,
+              ),
+              durationMs: workerReceipt.finishedAt - workerReceipt.startedAt,
+            });
+            trace.finish({ path: 'cache-then-worker-remote' });
+            return;
+          }
+          if (workerReceipt) {
+            trace.mark('worker-remote-fallback', {
+              outcome: workerReceipt.outcome,
+              completeAddressCount: workerReceipt.addresses.filter(
+                address => address.outcome === 'complete',
+              ).length,
             });
           }
 
