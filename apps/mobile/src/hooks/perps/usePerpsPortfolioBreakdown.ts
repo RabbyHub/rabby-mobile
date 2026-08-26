@@ -11,12 +11,16 @@ export type PerpsBreakdownMode = 'manual' | 'unified' | 'portfolioMargin';
 /**
  * Amounts for the "Portfolio Value" breakdown popup (spec 2026-08-25).
  *
- * - manual: Perps = aggregated perps equity (marginSummary.accountValue),
- *   Spot = USD value of all spot assets.
- * - unified / portfolio margin: Perps = Σ position.marginUsed — the same
- *   per-position number the Positions list right below the card shows —
- *   and the second row ("Other Assets" / "Net Other Assets") is defined as
- *   Portfolio Value − Perps so the two rows always sum to the displayed PV.
+ * Perps row (all modes): aggregated `marginSummary.accountValue` — the
+ * perps-side net equity summed across every dex (HIP-3 sub-dex positions
+ * included). Verified 2026-08-25 on a unified test account: this equals all
+ * margins plus ALL unrealized pnl — Σ position.marginUsed would miss
+ * cross-margin pnl (a cross position's marginUsed is only its requirement,
+ * while an isolated position's floats with its pnl).
+ *
+ * Second row: manual "Spot" = USD value of all spot assets; unified /
+ * portfolio margin ("Other Assets" / "Net Other Assets") = Portfolio Value −
+ * Perps, so the two rows always sum to the displayed PV.
  *
  * Values are computed lazily from a store snapshot at press time: subscribing
  * to spotAssetCtxs would re-render the card on every spot price tick just to
@@ -27,12 +31,12 @@ export const computePortfolioBreakdownValues = (
   portfolioValue: number,
 ): { perpsValue: number; secondaryValue: number } => {
   const state = perpsStore.getState();
+  const perpsValue =
+    Number(state.currentClearinghouseState?.marginSummary?.accountValue) || 0;
 
   if (mode === 'manual') {
     return {
-      perpsValue:
-        Number(state.currentClearinghouseState?.marginSummary?.accountValue) ||
-        0,
+      perpsValue,
       secondaryValue:
         Number(
           computeSpotPortfolioValue(
@@ -44,11 +48,6 @@ export const computePortfolioBreakdownValues = (
     };
   }
 
-  const perpsValue = (
-    state.currentClearinghouseState?.assetPositions || []
-  ).reduce((acc, asset) => {
-    return acc + (Number(asset.position?.marginUsed) || 0);
-  }, 0);
   return { perpsValue, secondaryValue: portfolioValue - perpsValue };
 };
 

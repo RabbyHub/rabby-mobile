@@ -155,7 +155,6 @@ export const toChartPoints = (
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
 
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = [
   'Jan',
   'Feb',
@@ -172,23 +171,14 @@ const MONTHS = [
 ];
 
 /**
- * Tooltip time in the same style as the Perps candle chart hover
- * (`formatTime` in mobile-local-pages/.../tradingview-candle-chart), device
- * local time. The 1D window sits inside the last 24h, so its points show the
- * clock time only ("14:30"); week/month/allTime (day-level and coarser)
- * points show the date without time ("Mon 25 Aug '26").
+ * Tooltip time, identical for every period (2026-08-25 spec), device local
+ * time: "Aug 25, 14:00".
  */
-export const formatPortfolioTooltipTime = (
-  ts: number,
-  period: PortfolioPeriodKey,
-): string => {
+export const formatPortfolioTooltipTime = (ts: number): string => {
   const d = new Date(ts);
-  if (period === 'day') {
-    return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-  }
-  return `${DAYS[d.getDay()]} ${pad2(d.getDate())} ${
-    MONTHS[d.getMonth()]
-  } '${String(d.getFullYear()).slice(-2)}`;
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${pad2(d.getHours())}:${pad2(
+    d.getMinutes(),
+  )}`;
 };
 
 /**

@@ -22,6 +22,7 @@ import { useIsFocused } from '@react-navigation/native';
 import { Skeleton } from '@rneui/base';
 import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
+import { usePerpsPortfolioLiveValue } from '@/hooks/perps/usePerpsPortfolioLiveValue';
 import {
   fetchPerpsPortfolio,
   usePerpsPortfolio,
@@ -31,7 +32,7 @@ import {
   getLatestPortfolioValue,
   isPortfolioAllZero,
 } from '@/hooks/perps/perpsPortfolio';
-import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import { fetchSpotMeta, perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { Text } from '@/components/Typography';
 import ImgLearnMore from '@/assets2024/icons/perps/ImgLearnMore.png';
@@ -42,8 +43,11 @@ import RcIconPortfolioPlusCC from '@/assets2024/icons/perps/IconPortfolioPlusCC.
 import RcIconPortfolioMinusCC from '@/assets2024/icons/perps/IconPortfolioMinusCC.svg';
 import { apisPerps } from '@/core/apis';
 import BigNumber from 'bignumber.js';
+import TickerTexts, { TickItem } from '@/components/Animated/TickerText';
 import Animated, {
   Easing,
+  Extrapolation,
+  interpolate,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -79,13 +83,19 @@ export const PerpsAccountCard: React.FC = () => {
   const portfolioEntry = usePerpsPortfolio(currentAddress);
   const isFocused = useIsFocused();
 
-  // Poll while the Perps screen is focused; the store dedupes and keeps a
-  // short TTL, so focus flaps do not cause request bursts.
+  // Poll while the Perps screen is focused. The big PV number is WS-driven
+  // now — this poll feeds what only the portfolio API has: the 24H change
+  // row (pnlHistory), the chart series' growing tail, and the PV fallback
+  // used until the WS slices are ready. The store dedupes and keeps a short
+  // TTL, so focus flaps do not cause request bursts.
   useEffect(() => {
     if (!currentAddress || !isFocused) {
       return;
     }
     fetchPerpsPortfolio(currentAddress);
+    // The live PV needs the spot pricing index; only Pro used to fetch it
+    // (idempotent: cached after the first success, in-flight deduped).
+    fetchSpotMeta();
     const timer = setInterval(() => {
       if (AppState.currentState === 'active') {
         fetchPerpsPortfolio(currentAddress, { force: true });
@@ -136,6 +146,11 @@ export const PerpsAccountCard: React.FC = () => {
     () => (portfolioData ? getLatestPortfolioValue(portfolioData) : null),
     [portfolioData],
   );
+  // Live WS-computed value ticks in real time (Pro-panel basis); the
+  // portfolio API's near-realtime last point covers the gap until the WS
+  // slices are ready.
+  const liveValue = usePerpsPortfolioLiveValue();
+  const displayValue = liveValue ?? portfolioValue;
   const change24h = useMemo(
     () => (portfolioData ? compute24hChange(portfolioData) : null),
     [portfolioData],
@@ -168,8 +183,9 @@ export const PerpsAccountCard: React.FC = () => {
   const toggleChart = useMemoizedFn((next: boolean) => {
     setIsChartExpanded(next);
     expandProgress.value = withTiming(next ? 1 : 0, {
-      duration: 200,
-      easing: Easing.inOut(Easing.ease),
+      duration: 300,
+      // Material's standard curve — quick start, soft landing.
+      easing: Easing.bezier(0.4, 0, 0.2, 1),
     });
     if (next) {
       setRenderExpandedChart(true);
@@ -179,13 +195,20 @@ export const PerpsAccountCard: React.FC = () => {
     if (isChartExpanded || !renderExpandedChart) {
       return;
     }
-    const timer = setTimeout(() => setRenderExpandedChart(false), 200);
+    const timer = setTimeout(() => setRenderExpandedChart(false), 300);
     return () => clearTimeout(timer);
   }, [isChartExpanded, renderExpandedChart]);
 
   const expandedBlockStyle = useAnimatedStyle(() => ({
     height: expandProgress.value * EXPANDED_BLOCK_HEIGHT,
-    opacity: expandProgress.value,
+    // Fade the content in after the height is mostly there (and out first
+    // on collapse) — height and opacity moving in lockstep reads as abrupt.
+    opacity: interpolate(
+      expandProgress.value,
+      [0, 0.4, 1],
+      [0, 0.1, 1],
+      Extrapolation.CLAMP,
+    ),
   }));
 
   const canExpandChart = !!portfolioData && !isPortfolioEmpty;
@@ -238,9 +261,7 @@ export const PerpsAccountCard: React.FC = () => {
                   {hasNonPerpsAssets && (
                     <TouchableOpacity
                       hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
-                      onPress={() =>
-                        showPortfolioBreakdown(portfolioValue || 0)
-                      }>
+                      onPress={() => showPortfolioBreakdown(displayValue || 0)}>
                       <RcIconPortfolioInfoCC
                         width={16}
                         height={16}
@@ -257,14 +278,21 @@ export const PerpsAccountCard: React.FC = () => {
                     LinearGradientComponent={LoadingLinear}
                   />
                 ) : portfolioViewState === 'zero' ? (
-                  <Text style={styles.portfolioValue}>0</Text>
-                ) : (
-                  <Text style={styles.portfolioValue}>
-                    {'$'}
-                    {splitNumberByStep(
-                      new BigNumber(portfolioValue || 0).toFixed(2),
-                    )}
+                  <Text style={[styles.portfolioValue, styles.valueSlot]}>
+                    0
                   </Text>
+                ) : (
+                  <TickerTexts
+                    // Keep spacing OUT of textStyle: TickerText measures each
+                    // glyph and margins corrupt its scroll windows.
+                    containerStyle={styles.valueSlot}
+                    textStyle={styles.portfolioValue}
+                    duration={750}>
+                    <TickItem rotateItems={['$']}>{'$'}</TickItem>
+                    {splitNumberByStep(
+                      new BigNumber(displayValue || 0).toFixed(2),
+                    )}
+                  </TickerTexts>
                 )}
                 <View style={styles.changeRow}>
                   {portfolioViewState === 'loading' ? (
@@ -497,6 +525,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 28,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
+  },
+  valueSlot: {
     marginTop: 8,
   },
   valueSkeleton: {
