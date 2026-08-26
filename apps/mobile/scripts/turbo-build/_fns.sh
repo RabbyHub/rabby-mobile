@@ -316,7 +316,13 @@ turbo_init_env() {
 
     turbo_prepare_gradle_proxy_env
 
-    if turbo_should_write_gradle_proxy_properties; then
+    # A cache-enabled Android build activates its keyed Gradle home later in
+    # build_cache_restore_android_gradle_state. Writing before that point can
+    # follow a stale or dangling work-root symlink.
+    if turbo_should_write_gradle_proxy_properties && {
+      ! turbo_build_enabled ||
+        [ -n "${RABBY_MOBILE_TURBO_GRADLE_HOME_OVERRIDE:-}" ]
+    }; then
       turbo_write_gradle_proxy_properties
     fi
   fi
@@ -1041,7 +1047,7 @@ turbo_use_gradle_home_cache_key() {
   local_home_dir=$(turbo_gradle_local_home_dir "$key")
   local_home_link="${RABBY_MOBILE_TURBO_WORK_ROOT}/gradle-user-home"
 
-  mkdir -p "$(dirname "$local_home_dir")" "$RABBY_MOBILE_TURBO_WORK_ROOT"
+  mkdir -p "$local_home_dir" "$RABBY_MOBILE_TURBO_WORK_ROOT"
   rm -rf "$local_home_link"
   ln -s "$local_home_dir" "$local_home_link"
 
