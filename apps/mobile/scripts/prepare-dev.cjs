@@ -100,7 +100,9 @@ function run(command, args, options = {}) {
     env: process.env,
     stdio: 'inherit',
     // Windows requires shell to execute .cmd files (Node CVE-2024-27980 fix)
-    shell: process.platform === 'win32',
+    shell:
+      process.platform === 'win32' &&
+      path.extname(command).toLowerCase() === '.cmd',
   });
 
   if (result.error) {
