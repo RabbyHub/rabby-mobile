@@ -27,6 +27,10 @@ on:
         required: false
         type: string
         default: ''
+      ASC_PREFLIGHT_ONLY:
+        required: true
+        type: boolean
+        default: false
   workflow_call:
     secrets:
       KEYCHAIN_PASS:
@@ -264,7 +268,12 @@ jobs:
           RABBY_MOBILE_ASC_API_PRIVATE_KEY_BASE64: ${{ secrets.RABBY_MOBILE_ASC_API_PRIVATE_KEY_BASE64 }}
           RABBY_MOBILE_ASC_API_BUNDLE_ID: com.debank.rabby-mobile
 
+      - name: Stop after ASC preflight
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.ASC_PREFLIGHT_ONLY == true }}
+        run: echo "ASC preflight-only mode enabled; skipping dependency install and app build."
+
       - name: Install dependencies && Build app
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.ASC_PREFLIGHT_ONLY != true }}
         run: |
           unset MATCH_GIT_BASIC_AUTHORIZATION
           cd apps/mobile;
