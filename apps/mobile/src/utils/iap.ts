@@ -1,4 +1,4 @@
-import { Purchase } from 'react-native-iap';
+import type { Purchase } from 'react-native-iap';
 import { eventBus, EVENTS } from './events';
 import { devLog } from './logger';
 
