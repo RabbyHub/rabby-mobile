@@ -2644,7 +2644,18 @@
         "loginBtn": "Đăng nhập để giao dịch Perps",
         "loginDesc": "Đăng nhập bằng địa chỉ hiện tại và nạp tiền để bắt đầu giao dịch Perps.",
         "addFunds": "Nạp tiền",
-        "learnMore": "Tìm hiểu thêm"
+        "learnMore": "Tìm hiểu thêm",
+        "portfolioValue": "Giá trị danh mục",
+        "manualAccount": "Tài khoản thủ công",
+        "unifiedAccount": "Tài khoản hợp nhất",
+        "portfolioMarginAccount": "Ký quỹ danh mục",
+        "manualAccountDesc": "Spot và mỗi DEX Perps có số dư riêng, với ký quỹ chéo được quản lý độc lập trong từng DEX.",
+        "unifiedAccountDesc": "Mỗi tài sản thế chấp có một số dư duy nhất, dùng chung giữa Spot và Perps ký quỹ chéo sử dụng cùng loại thế chấp.",
+        "portfolioMarginAccountDesc": "Các tài sản Spot đủ điều kiện và Perps được gộp vào một danh mục để tăng hiệu quả sử dụng vốn.",
+        "breakdownPerps": "Perps",
+        "breakdownSpot": "Spot",
+        "breakdownOtherAssets": "Tài sản khác",
+        "breakdownNetOtherAssets": "Tài sản khác ròng"
       },
       "PerpsGuidePopup": {
         "step5Title": "Thanh lý",
@@ -2967,7 +2978,10 @@
         "amount": "Số lượng",
         "confirm": "Xác nhận",
         "minimumWarning": "Số tiền tối thiểu là {{percent}}%",
-        "rabbyFeeTipsV2": "Phí Rabby: 0.02%"
+        "rabbyFeeTipsV2": "Phí Rabby: 0.02%",
+        "estReceive": "Nhận ước tính",
+        "estClosedPnl": "PNL đã chốt ước tính",
+        "limitClosePlacedToast": "Đóng lệnh Limit {{direction}} {{coin}}: khối lượng {{size}} đã đặt tại ${{price}}"
       },
       "PerpsOpenPositionPopup": {
         "title": "Mở Vị Thế {{coin}}",

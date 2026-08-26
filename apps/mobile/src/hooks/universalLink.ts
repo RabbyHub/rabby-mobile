@@ -59,6 +59,7 @@ import {
 import { apisHomeTabIndex, UnlockUIManager } from './navigation';
 import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 import { switchSceneCurrentAccount } from './accountsSwitcher';
+import { navigateToPerpsHome } from '@/hooks/perps/navigation/navigateToPreferredPerps';
 
 const nextAppLinkRef = {
   current: '' as string,
@@ -586,6 +587,18 @@ function resetExistingHomeFlowToOverview() {
 
 async function openRabbyGoTarget(target: RabbyGoTarget) {
   if (!resetExistingHomeFlowToOverview()) {
+    return;
+  }
+
+  if (target === 'perps') {
+    await navigateToPerpsHome({
+      navigation: {
+        push: (...[name, params]) => {
+          navigationRef.dispatch(StackActions.push(name, params));
+        },
+      },
+      source: 'universal-link',
+    });
     return;
   }
 

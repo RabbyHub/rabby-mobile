@@ -1,4 +1,7 @@
-import { HyperliquidSDK } from '@rabby-wallet/hyperliquid-sdk';
+import {
+  ExternalSignUserCancelledError,
+  HyperliquidSDK,
+} from '@rabby-wallet/hyperliquid-sdk';
 import { perpsServiceApi } from '@/core/serviceApi/perps';
 import { withWalletUnlock } from '@/utils/walletUnlockGuard';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
@@ -6,6 +9,7 @@ import { apisKeyring } from './keyring';
 import { PERPS_AGENT_NAME } from '@/constant/perps';
 import type { Account } from '../startupServices/preference';
 import type { ApproveSignatures } from '@/core/services/perpsService';
+import { isWalletUnlockCancelled } from '@/utils/walletUnlockError';
 import {
   installPerpsSdkTimeoutReport,
   attachPerpsWsReconnectReport,
@@ -137,10 +141,21 @@ class ApisPerps {
    */
   private makePerpsExternalSign =
     (account: Account) =>
-    async (typedData: any): Promise<string> =>
-      apisKeyring.signTypedData(account.type, account.address, typedData, {
-        version: 'V4',
-      });
+    async (typedData: any): Promise<string> => {
+      try {
+        return await apisKeyring.signTypedData(
+          account.type,
+          account.address,
+          typedData,
+          { version: 'V4' },
+        );
+      } catch (error) {
+        if (isWalletUnlockCancelled(error)) {
+          throw new ExternalSignUserCancelledError();
+        }
+        throw error;
+      }
+    };
 
   // Configure the SDK's signing identity for an account. NO top-level
   // withWalletUnlock: self-sign just installs the signer (reads no key), staying

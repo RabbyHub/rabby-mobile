@@ -24,6 +24,7 @@ jest.mock('axios', () => {
     const handlers = [];
 
     return {
+      eject: jest.fn(),
       handlers,
       use: jest.fn((fulfilled, rejected) => {
         handlers.push({ fulfilled, rejected });
@@ -31,24 +32,29 @@ jest.mock('axios', () => {
       }),
     };
   };
-  const createInstance = () => ({
-    defaults: {},
+  const createClient = () => ({
+    defaults: { headers: { common: {} } },
+    delete: jest.fn(async () => ({ data: {} })),
     get: jest.fn(async () => ({ data: {} })),
-    post: jest.fn(async () => ({ data: {} })),
     interceptors: {
       request: createInterceptorManager(),
       response: createInterceptorManager(),
     },
+    patch: jest.fn(async () => ({ data: {} })),
+    post: jest.fn(async () => ({ data: {} })),
+    put: jest.fn(async () => ({ data: {} })),
+    request: jest.fn(async () => ({ data: {} })),
   });
+  const client = createClient();
   const axios = {
-    create: jest.fn(createInstance),
-    get: jest.fn(async () => ({ data: {} })),
+    ...client,
+    create: jest.fn(createClient),
+    isAxiosError: jest.fn(() => false),
   };
-
   return {
     __esModule: true,
-    default: axios,
     ...axios,
+    default: axios,
   };
 });
 

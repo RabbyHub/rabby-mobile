@@ -2789,7 +2789,18 @@
         "depositBtn": "ฝากเงิน",
         "loginDesc": "เข้าสู่ระบบด้วยที่อยู่ปัจจุบันและฝากเงินเพื่อเริ่มเทรด Perps",
         "learnMore": "เรียนรู้เพิ่มเติม",
-        "addFunds": "เติมเงิน"
+        "addFunds": "เติมเงิน",
+        "portfolioValue": "มูลค่าพอร์ตโฟลิโอ",
+        "manualAccount": "บัญชีแบบแมนนวล",
+        "unifiedAccount": "บัญชีแบบรวม",
+        "portfolioMarginAccount": "มาร์จิ้นพอร์ตโฟลิโอ",
+        "manualAccountDesc": "Spot และ DEX ของ Perps แต่ละแห่งมียอดคงเหลือแยกกัน โดย Cross Margin จะถูกจัดการอย่างอิสระภายในแต่ละ DEX",
+        "unifiedAccountDesc": "สินทรัพย์หลักประกันแต่ละรายการมียอดคงเหลือเดียว ใช้ร่วมกันระหว่าง Spot และ Perps แบบ Cross Margin ที่ใช้หลักประกันเดียวกัน",
+        "portfolioMarginAccountDesc": "สินทรัพย์ Spot ที่เข้าเงื่อนไขและ Perps จะถูกรวมไว้ในพอร์ตโฟลิโอเดียวเพื่อเพิ่มประสิทธิภาพของเงินทุน",
+        "breakdownPerps": "Perps",
+        "breakdownSpot": "Spot",
+        "breakdownOtherAssets": "สินทรัพย์อื่น ๆ",
+        "breakdownNetOtherAssets": "สินทรัพย์อื่น ๆ สุทธิ"
       },
       "PerpsGuidePopup": {
         "step3Title": "Short",
@@ -3112,7 +3123,10 @@
         "minimumWarning": "จำนวนขั้นต่ำคือ {{percent}}%",
         "receive": "รับ",
         "closedPnl": "PNL จากการปิดโพซิชัน",
-        "rabbyFeeTipsV2": "ค่าธรรมเนียม Rabby: 0.02%"
+        "rabbyFeeTipsV2": "ค่าธรรมเนียม Rabby: 0.02%",
+        "estReceive": "รับโดยประมาณ",
+        "estClosedPnl": "PNL จากการปิดโพซิชันโดยประมาณ",
+        "limitClosePlacedToast": "ปิดโพซิชันแบบ Limit {{direction}} {{coin}}: ขนาด {{size}} ตั้งไว้ที่ ${{price}}"
       },
       "PerpsOpenPositionPopup": {
         "title": "เปิดโพซิชัน {{coin}}",

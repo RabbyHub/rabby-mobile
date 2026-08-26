@@ -9,7 +9,12 @@ import { bytesToHex, publicToAddress, hexToBytes } from '@ethereumjs/util';
 import { SendApproveParams } from '@rabby-wallet/hyperliquid-sdk';
 import { getRandomBytesSync } from 'ethereum-cryptography/random.js';
 import { secp256k1 } from 'ethereum-cryptography/secp256k1.js';
-import { CANDLE_MENU_KEY_V2 } from '@/constant/perps';
+import {
+  DEFAULT_PERPS_CANDLE_INTERVAL,
+  isPerpsCandleInterval,
+  normalizePerpsCandleInterval,
+  type PerpsCandleInterval,
+} from '@/constant/perps';
 import type { Account } from '@/types/account';
 
 type KeyringCrypto = {
@@ -37,6 +42,268 @@ export type ApproveSignatures = (SendApproveParams & {
   type: 'approveAgent' | 'approveBuilderFee';
 })[];
 
+export type PerpsViewMode = 'simple' | 'pro';
+export type PerpsViewModePreference = {
+  hasVisitedPro: boolean;
+  viewMode: PerpsViewMode;
+};
+export type PerpsProInfoTab = 'account' | 'positions' | 'openOrders';
+export type PerpsProInfoTabPreference = {
+  activeInfoTab: PerpsProInfoTab;
+  hasUserSelectedInfoTab: boolean;
+};
+export type PerpsProTradeAmountUnit = 'base' | 'quote';
+export type PerpsProTradeOrderType = 'conditional' | 'limit' | 'market';
+export type PerpsProOpenOrderEditCategory = 'basic' | 'conditional';
+export type PerpsProOpeningTpSlMode = 'pnl' | 'price' | 'roi';
+export type PerpsProPositionTpSlMode = 'pnl' | 'roi';
+export type PerpsProTpSlModeLeg = 'sl' | 'tp';
+export type PerpsProTpSlModePreferences = {
+  opening: Record<PerpsProTpSlModeLeg, PerpsProOpeningTpSlMode>;
+  position: Record<PerpsProTpSlModeLeg, PerpsProPositionTpSlMode>;
+};
+export type PerpsProTpSlModePreferenceSelection =
+  | {
+      leg: PerpsProTpSlModeLeg;
+      mode: PerpsProOpeningTpSlMode;
+      surface: 'opening';
+    }
+  | {
+      leg: PerpsProTpSlModeLeg;
+      mode: PerpsProPositionTpSlMode;
+      surface: 'position';
+    };
+
+export type PerpsProPreferences = {
+  version: number;
+  viewMode: PerpsViewMode;
+  hasVisitedPro: boolean;
+  activeInfoTab: PerpsProInfoTab;
+  hasUserSelectedInfoTab: boolean;
+  skipLimitCloseDoubleConfirmation: boolean;
+  skipMarketCloseDoubleConfirmation: boolean;
+  skipPositionTpSlDoubleConfirmation: boolean;
+  skipOpenOrderEditConfirmationByCategory: Record<
+    PerpsProOpenOrderEditCategory,
+    boolean
+  >;
+  tradeAmountUnit: PerpsProTradeAmountUnit;
+  tradeOrderType: PerpsProTradeOrderType;
+  skipTradeConfirmationByOrderType: Record<PerpsProTradeOrderType, boolean>;
+  tpSlModePreferences: PerpsProTpSlModePreferences;
+  [key: string]: unknown;
+};
+
+const PERPS_PRO_PREFERENCES_VERSION = 12;
+const MIN_READABLE_PERPS_PRO_PREFERENCES_VERSION = 1;
+const PERPS_PRO_INFO_TAB_SELECTION_VERSION = 11;
+const DEFAULT_PERPS_PRO_TP_SL_MODE_PREFERENCES: PerpsProTpSlModePreferences = {
+  opening: { sl: 'price', tp: 'price' },
+  position: { sl: 'pnl', tp: 'pnl' },
+};
+const DEFAULT_PERPS_PRO_PREFERENCES: PerpsProPreferences = {
+  version: PERPS_PRO_PREFERENCES_VERSION,
+  viewMode: 'simple',
+  hasVisitedPro: false,
+  activeInfoTab: 'account',
+  hasUserSelectedInfoTab: false,
+  skipLimitCloseDoubleConfirmation: false,
+  skipMarketCloseDoubleConfirmation: false,
+  skipPositionTpSlDoubleConfirmation: false,
+  skipOpenOrderEditConfirmationByCategory: {
+    basic: false,
+    conditional: false,
+  },
+  tradeAmountUnit: 'quote',
+  tradeOrderType: 'market',
+  skipTradeConfirmationByOrderType: {
+    conditional: false,
+    limit: false,
+    market: false,
+  },
+  tpSlModePreferences: DEFAULT_PERPS_PRO_TP_SL_MODE_PREFERENCES,
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  !!value && typeof value === 'object' && !Array.isArray(value);
+
+type ReadableProPreferences = Record<string, unknown> & {
+  version: number;
+};
+
+const hasReadableProPreferences = (
+  value: unknown,
+): value is ReadableProPreferences =>
+  isRecord(value) &&
+  typeof value.version === 'number' &&
+  Number.isFinite(value.version) &&
+  value.version >= MIN_READABLE_PERPS_PRO_PREFERENCES_VERSION;
+
+const normalizePerpsViewMode = (value: unknown): PerpsViewMode => {
+  if (!hasReadableProPreferences(value)) {
+    return 'simple';
+  }
+  return value.viewMode === 'simple' || value.viewMode === 'pro'
+    ? value.viewMode
+    : 'simple';
+};
+
+const normalizeHasVisitedPro = (value: unknown) => {
+  if (!hasReadableProPreferences(value)) {
+    return false;
+  }
+  if (typeof value.hasVisitedPro === 'boolean') {
+    return value.hasVisitedPro;
+  }
+  return normalizePerpsViewMode(value) === 'pro';
+};
+
+const normalizePerpsProInfoTab = (value: unknown): PerpsProInfoTab => {
+  if (!hasReadableProPreferences(value)) {
+    return 'account';
+  }
+  return value.activeInfoTab === 'account' ||
+    value.activeInfoTab === 'positions' ||
+    value.activeInfoTab === 'openOrders'
+    ? value.activeInfoTab
+    : 'account';
+};
+
+const normalizeHasUserSelectedInfoTab = (value: unknown) =>
+  hasReadableProPreferences(value) &&
+  value.version >= PERPS_PRO_INFO_TAB_SELECTION_VERSION &&
+  value.hasUserSelectedInfoTab === true;
+
+const normalizeSkipLimitCloseDoubleConfirmation = (value: unknown) =>
+  hasReadableProPreferences(value) &&
+  value.skipLimitCloseDoubleConfirmation === true;
+
+const normalizeSkipMarketCloseDoubleConfirmation = (value: unknown) =>
+  hasReadableProPreferences(value) &&
+  value.skipMarketCloseDoubleConfirmation === true;
+
+const normalizeSkipPositionTpSlDoubleConfirmation = (value: unknown) =>
+  hasReadableProPreferences(value) &&
+  value.skipPositionTpSlDoubleConfirmation === true;
+
+const normalizeSkipOpenOrderEditConfirmationByCategory = (
+  value: unknown,
+): Record<PerpsProOpenOrderEditCategory, boolean> => {
+  const source =
+    hasReadableProPreferences(value) &&
+    isRecord(value.skipOpenOrderEditConfirmationByCategory)
+      ? value.skipOpenOrderEditConfirmationByCategory
+      : {};
+  return {
+    basic: source.basic === true,
+    conditional: source.conditional === true,
+  };
+};
+
+const normalizePerpsProTradeAmountUnit = (
+  value: unknown,
+): PerpsProTradeAmountUnit =>
+  hasReadableProPreferences(value) && value.tradeAmountUnit === 'base'
+    ? 'base'
+    : 'quote';
+
+const normalizePerpsProTradeOrderType = (
+  value: unknown,
+): PerpsProTradeOrderType =>
+  hasReadableProPreferences(value) &&
+  (value.tradeOrderType === 'market' ||
+    value.tradeOrderType === 'limit' ||
+    value.tradeOrderType === 'conditional')
+    ? value.tradeOrderType
+    : 'market';
+
+const normalizeSkipTradeConfirmationByOrderType = (
+  value: unknown,
+): Record<PerpsProTradeOrderType, boolean> => {
+  const source =
+    hasReadableProPreferences(value) &&
+    isRecord(value.skipTradeConfirmationByOrderType)
+      ? value.skipTradeConfirmationByOrderType
+      : {};
+  return {
+    conditional: source.conditional === true,
+    limit: source.limit === true,
+    market: source.market === true,
+  };
+};
+
+const normalizePerpsProTpSlModePreferences = (
+  value: unknown,
+): PerpsProTpSlModePreferences => {
+  const source =
+    hasReadableProPreferences(value) && isRecord(value.tpSlModePreferences)
+      ? value.tpSlModePreferences
+      : {};
+  const opening = isRecord(source.opening) ? source.opening : {};
+  const position = isRecord(source.position) ? source.position : {};
+  const openingMode = (mode: unknown): PerpsProOpeningTpSlMode =>
+    mode === 'pnl' || mode === 'roi' || mode === 'price' ? mode : 'price';
+  const positionMode = (mode: unknown): PerpsProPositionTpSlMode =>
+    mode === 'roi' ? 'roi' : 'pnl';
+  return {
+    opening: {
+      sl: openingMode(opening.sl),
+      tp: openingMode(opening.tp),
+    },
+    position: {
+      sl: positionMode(position.sl),
+      tp: positionMode(position.tp),
+    },
+  };
+};
+
+const removeLegacyBookPrecision = (value: ReadableProPreferences) => {
+  const nextValue = { ...value };
+  delete nextValue.bookPrecisionByMarket;
+  return nextValue;
+};
+
+const getWritableProPreferences = (
+  value: unknown,
+): PerpsProPreferences & Record<string, unknown> => {
+  if (!hasReadableProPreferences(value)) {
+    return { ...DEFAULT_PERPS_PRO_PREFERENCES };
+  }
+  const writableValue =
+    value.version < PERPS_PRO_PREFERENCES_VERSION
+      ? removeLegacyBookPrecision(value)
+      : value;
+  return {
+    ...writableValue,
+    version: Math.max(value.version, PERPS_PRO_PREFERENCES_VERSION),
+    viewMode: normalizePerpsViewMode(value),
+    hasVisitedPro: normalizeHasVisitedPro(value),
+    activeInfoTab: normalizePerpsProInfoTab(value),
+    hasUserSelectedInfoTab: normalizeHasUserSelectedInfoTab(value),
+    skipLimitCloseDoubleConfirmation:
+      normalizeSkipLimitCloseDoubleConfirmation(value),
+    skipMarketCloseDoubleConfirmation:
+      normalizeSkipMarketCloseDoubleConfirmation(value),
+    skipPositionTpSlDoubleConfirmation:
+      normalizeSkipPositionTpSlDoubleConfirmation(value),
+    skipOpenOrderEditConfirmationByCategory:
+      normalizeSkipOpenOrderEditConfirmationByCategory(value),
+    tradeAmountUnit: normalizePerpsProTradeAmountUnit(value),
+    tradeOrderType: normalizePerpsProTradeOrderType(value),
+    skipTradeConfirmationByOrderType:
+      normalizeSkipTradeConfirmationByOrderType(value),
+    tpSlModePreferences: normalizePerpsProTpSlModePreferences(value),
+  } as PerpsProPreferences & Record<string, unknown>;
+};
+
+const migrateLegacyProPreferences = (
+  value: unknown,
+): PerpsProPreferences | null =>
+  hasReadableProPreferences(value) &&
+  value.version < PERPS_PRO_PREFERENCES_VERSION
+    ? getWritableProPreferences(value)
+    : null;
+
 export interface PerpsServiceStore {
   agentVaults: string; // encrypted JSON string of {[address: string]: string}
   agentPreferences: {
@@ -57,8 +324,9 @@ export interface PerpsServiceStore {
     };
   };
   favoriteMarkets: string[];
-  selectedKlineInterval: CANDLE_MENU_KEY_V2;
+  selectedKlineInterval: PerpsCandleInterval;
   marginModeByCoin: Record<string, 'cross' | 'isolated'>;
+  proPreferences: PerpsProPreferences;
 }
 export interface PerpsServiceMemoryState {
   agentWallets: {
@@ -75,6 +343,348 @@ export interface PerpsMarketDataCache<TItem = unknown> {
   list: TItem[];
 }
 
+export type PerpsAttachedTpSlJournalOutcome =
+  | 'childRejected'
+  | 'fullAccepted'
+  | 'partial'
+  | 'prepared'
+  | 'unknown';
+
+export type PerpsAttachedTpSlJournalLeg = {
+  acceptance?: 'filled' | 'resting';
+  cloid: `0x${string}`;
+  error?: string;
+  kind: 'accepted' | 'rejected' | 'unresolved';
+  oid?: number;
+  role: 'parent' | 'stopLoss' | 'takeProfit';
+  status?: string;
+};
+
+export type PerpsAttachedTpSlJournalEntry = {
+  accountAddress: string;
+  accountType: string;
+  cloids: {
+    parent: `0x${string}`;
+    stopLoss?: `0x${string}`;
+    takeProfit?: `0x${string}`;
+  };
+  coin: string;
+  commandId: string;
+  createdAt: number;
+  dexId: string;
+  legs: PerpsAttachedTpSlJournalLeg[];
+  marketKey: string;
+  outcome: PerpsAttachedTpSlJournalOutcome;
+  parentFingerprint: string;
+  parentSide: 'buy' | 'sell';
+  transport?: {
+    error?: string;
+    nonce?: number;
+    phase?: 'dispatched' | 'notDispatched' | 'response';
+  };
+  updatedAt: number;
+  version: 1;
+};
+
+type PerpsAttachedTpSlJournal = {
+  entries: PerpsAttachedTpSlJournalEntry[];
+  version: 1;
+};
+
+export type PerpsFundingJournalStatus = 'confirmed' | 'failed' | 'pending';
+
+type PerpsFundingJournalEntryCommon = {
+  accountAddress: string;
+  accountType: string;
+  amount: string;
+  asset: string;
+  createdAt: number;
+  direction: 'deposit' | 'withdraw';
+  fundingRoute?: 'direct' | 'provider';
+  localType: 'deposit' | 'receive' | 'withdraw';
+  operationId: string;
+  settlementAmount: string;
+  sourceChainId?: string;
+  sourceTokenId?: string;
+  status: PerpsFundingJournalStatus;
+  updatedAt: number;
+};
+
+type PerpsFundingJournalEntryV1 = PerpsFundingJournalEntryCommon & {
+  sourceHash: string;
+  version: 1;
+};
+
+export type PerpsFundingJournalEntry = PerpsFundingJournalEntryCommon & {
+  providerSettlementIdentity?: {
+    hash: string;
+    kind: 'hyperliquidLedgerHash';
+  };
+  settlementIdentity?: {
+    kind: 'hyperliquidNonce';
+    nonce: number;
+  };
+  sourceIdentity?: {
+    hash: string;
+    kind: 'evmTransactionHash';
+  };
+  version: 2;
+};
+
+type PerpsFundingJournal = {
+  entries: PerpsFundingJournalEntry[];
+  version: 2;
+};
+
+type PerpsFundingJournalV1 = {
+  entries: PerpsFundingJournalEntryV1[];
+  version: 1;
+};
+
+const PERPS_FUNDING_JOURNAL_LIMIT = 5000;
+
+const isPerpsFundingJournalEntry = (
+  value: unknown,
+): value is PerpsFundingJournalEntry =>
+  isRecord(value) &&
+  value.version === 2 &&
+  typeof value.operationId === 'string' &&
+  value.operationId.length > 0 &&
+  typeof value.accountAddress === 'string' &&
+  value.accountAddress.length > 0 &&
+  typeof value.accountType === 'string' &&
+  value.accountType.length > 0 &&
+  (value.direction === 'deposit' || value.direction === 'withdraw') &&
+  (value.localType === 'deposit' ||
+    value.localType === 'receive' ||
+    value.localType === 'withdraw') &&
+  (value.status === 'confirmed' ||
+    value.status === 'failed' ||
+    value.status === 'pending') &&
+  typeof value.asset === 'string' &&
+  value.asset.length > 0 &&
+  typeof value.amount === 'string' &&
+  value.amount.length > 0 &&
+  typeof value.settlementAmount === 'string' &&
+  value.settlementAmount.length > 0 &&
+  (value.fundingRoute === undefined ||
+    value.fundingRoute === 'direct' ||
+    value.fundingRoute === 'provider') &&
+  (value.providerSettlementIdentity === undefined ||
+    (isRecord(value.providerSettlementIdentity) &&
+      value.providerSettlementIdentity.kind === 'hyperliquidLedgerHash' &&
+      typeof value.providerSettlementIdentity.hash === 'string' &&
+      value.providerSettlementIdentity.hash.length > 0)) &&
+  (value.sourceIdentity === undefined ||
+    (isRecord(value.sourceIdentity) &&
+      value.sourceIdentity.kind === 'evmTransactionHash' &&
+      typeof value.sourceIdentity.hash === 'string' &&
+      value.sourceIdentity.hash.length > 0)) &&
+  (value.settlementIdentity === undefined ||
+    (isRecord(value.settlementIdentity) &&
+      value.settlementIdentity.kind === 'hyperliquidNonce' &&
+      typeof value.settlementIdentity.nonce === 'number' &&
+      Number.isSafeInteger(value.settlementIdentity.nonce) &&
+      value.settlementIdentity.nonce > 0)) &&
+  (value.sourceIdentity !== undefined ||
+    value.settlementIdentity !== undefined) &&
+  (value.sourceChainId === undefined ||
+    typeof value.sourceChainId === 'string') &&
+  (value.sourceTokenId === undefined ||
+    typeof value.sourceTokenId === 'string') &&
+  typeof value.createdAt === 'number' &&
+  Number.isFinite(value.createdAt) &&
+  value.createdAt >= 0 &&
+  typeof value.updatedAt === 'number' &&
+  Number.isFinite(value.updatedAt) &&
+  value.updatedAt >= value.createdAt;
+
+const isPerpsFundingJournal = (value: unknown): value is PerpsFundingJournal =>
+  isRecord(value) &&
+  value.version === 2 &&
+  Array.isArray(value.entries) &&
+  value.entries.length <= PERPS_FUNDING_JOURNAL_LIMIT &&
+  value.entries.every(isPerpsFundingJournalEntry) &&
+  new Set(value.entries.map(entry => entry.operationId)).size ===
+    value.entries.length;
+
+const isPerpsFundingJournalEntryV1 = (
+  value: unknown,
+): value is PerpsFundingJournalEntryV1 =>
+  isRecord(value) &&
+  value.version === 1 &&
+  typeof value.operationId === 'string' &&
+  value.operationId.length > 0 &&
+  typeof value.accountAddress === 'string' &&
+  value.accountAddress.length > 0 &&
+  typeof value.accountType === 'string' &&
+  value.accountType.length > 0 &&
+  (value.direction === 'deposit' || value.direction === 'withdraw') &&
+  (value.localType === 'deposit' ||
+    value.localType === 'receive' ||
+    value.localType === 'withdraw') &&
+  (value.status === 'confirmed' ||
+    value.status === 'failed' ||
+    value.status === 'pending') &&
+  typeof value.asset === 'string' &&
+  value.asset.length > 0 &&
+  typeof value.amount === 'string' &&
+  value.amount.length > 0 &&
+  typeof value.settlementAmount === 'string' &&
+  value.settlementAmount.length > 0 &&
+  typeof value.sourceHash === 'string' &&
+  value.sourceHash.length > 0 &&
+  (value.sourceChainId === undefined ||
+    typeof value.sourceChainId === 'string') &&
+  (value.sourceTokenId === undefined ||
+    typeof value.sourceTokenId === 'string') &&
+  typeof value.createdAt === 'number' &&
+  Number.isFinite(value.createdAt) &&
+  value.createdAt >= 0 &&
+  typeof value.updatedAt === 'number' &&
+  Number.isFinite(value.updatedAt) &&
+  value.updatedAt >= value.createdAt;
+
+const isPerpsFundingJournalV1 = (
+  value: unknown,
+): value is PerpsFundingJournalV1 =>
+  isRecord(value) &&
+  value.version === 1 &&
+  Array.isArray(value.entries) &&
+  value.entries.length <= PERPS_FUNDING_JOURNAL_LIMIT &&
+  value.entries.every(isPerpsFundingJournalEntryV1) &&
+  new Set(value.entries.map(entry => entry.operationId)).size ===
+    value.entries.length;
+
+const migratePerpsFundingJournalEntry = (
+  entry: PerpsFundingJournalEntryV1,
+): PerpsFundingJournalEntry => {
+  const { sourceHash, version: _version, ...common } = entry;
+  return {
+    ...common,
+    sourceIdentity: {
+      hash: sourceHash,
+      kind: 'evmTransactionHash',
+    },
+    version: 2,
+  };
+};
+
+const ATTACHED_TP_SL_CLOID_PATTERN = /^0x[0-9a-f]{32}$/u;
+
+const isAttachedTpSlCloid = (value: unknown): value is `0x${string}` =>
+  typeof value === 'string' && ATTACHED_TP_SL_CLOID_PATTERN.test(value);
+
+const isAttachedTpSlJournalLeg = (
+  value: unknown,
+): value is PerpsAttachedTpSlJournalLeg =>
+  isRecord(value) &&
+  isAttachedTpSlCloid(value.cloid) &&
+  (value.kind === 'accepted' ||
+    value.kind === 'rejected' ||
+    value.kind === 'unresolved') &&
+  (value.role === 'parent' ||
+    value.role === 'stopLoss' ||
+    value.role === 'takeProfit') &&
+  (value.acceptance === undefined ||
+    value.acceptance === 'filled' ||
+    value.acceptance === 'resting') &&
+  (value.error === undefined || typeof value.error === 'string') &&
+  (value.oid === undefined ||
+    (typeof value.oid === 'number' &&
+      Number.isSafeInteger(value.oid) &&
+      value.oid >= 0)) &&
+  (value.status === undefined || typeof value.status === 'string');
+
+const isPerpsAttachedTpSlJournalEntry = (
+  value: unknown,
+): value is PerpsAttachedTpSlJournalEntry => {
+  if (
+    !isRecord(value) ||
+    value.version !== 1 ||
+    typeof value.commandId !== 'string' ||
+    value.commandId.length === 0 ||
+    typeof value.parentFingerprint !== 'string' ||
+    value.parentFingerprint.length === 0 ||
+    typeof value.accountAddress !== 'string' ||
+    value.accountAddress.length === 0 ||
+    typeof value.accountType !== 'string' ||
+    value.accountType.length === 0 ||
+    typeof value.marketKey !== 'string' ||
+    value.marketKey.length === 0 ||
+    typeof value.coin !== 'string' ||
+    value.coin.length === 0 ||
+    typeof value.dexId !== 'string' ||
+    !isRecord(value.cloids) ||
+    !isAttachedTpSlCloid(value.cloids.parent) ||
+    (value.cloids.takeProfit !== undefined &&
+      !isAttachedTpSlCloid(value.cloids.takeProfit)) ||
+    (value.cloids.stopLoss !== undefined &&
+      !isAttachedTpSlCloid(value.cloids.stopLoss)) ||
+    (value.cloids.takeProfit === undefined &&
+      value.cloids.stopLoss === undefined) ||
+    !Array.isArray(value.legs) ||
+    !value.legs.every(isAttachedTpSlJournalLeg) ||
+    (value.outcome !== 'childRejected' &&
+      value.outcome !== 'fullAccepted' &&
+      value.outcome !== 'partial' &&
+      value.outcome !== 'prepared' &&
+      value.outcome !== 'unknown') ||
+    (value.parentSide !== 'buy' && value.parentSide !== 'sell') ||
+    typeof value.createdAt !== 'number' ||
+    !Number.isFinite(value.createdAt) ||
+    value.createdAt < 0 ||
+    typeof value.updatedAt !== 'number' ||
+    !Number.isFinite(value.updatedAt) ||
+    value.updatedAt < value.createdAt
+  ) {
+    return false;
+  }
+  const roleCloids = {
+    parent: value.cloids.parent,
+    stopLoss: value.cloids.stopLoss,
+    takeProfit: value.cloids.takeProfit,
+  };
+  const roles = new Set<string>();
+  for (const leg of value.legs) {
+    if (roles.has(leg.role) || roleCloids[leg.role] !== leg.cloid) {
+      return false;
+    }
+    roles.add(leg.role);
+  }
+  return (
+    value.transport === undefined ||
+    (isRecord(value.transport) &&
+      (value.transport.error === undefined ||
+        typeof value.transport.error === 'string') &&
+      (value.transport.nonce === undefined ||
+        (typeof value.transport.nonce === 'number' &&
+          Number.isSafeInteger(value.transport.nonce) &&
+          value.transport.nonce >= 0)) &&
+      (value.transport.phase === undefined ||
+        value.transport.phase === 'dispatched' ||
+        value.transport.phase === 'notDispatched' ||
+        value.transport.phase === 'response'))
+  );
+};
+
+const isPerpsAttachedTpSlJournal = (
+  value: unknown,
+): value is PerpsAttachedTpSlJournal => {
+  if (
+    !isRecord(value) ||
+    value.version !== 1 ||
+    !Array.isArray(value.entries) ||
+    !value.entries.every(isPerpsAttachedTpSlJournalEntry)
+  ) {
+    return false;
+  }
+  return (
+    new Set(value.entries.map(entry => entry.commandId)).size ===
+    value.entries.length
+  );
+};
+
 export class PerpsService extends StoreServiceBase<
   PerpsServiceStore,
   APP_STORE_NAMES.perps
@@ -83,6 +693,8 @@ export class PerpsService extends StoreServiceBase<
   // clone + rewrite) and must own its own key — the perps store proxy
   // rewrites its whole object and would clobber foreign fields.
   private marketCacheStorage?: StorageAdapaterOptions['storageAdapter'];
+  private attachedTpSlJournalStorage?: StorageAdapaterOptions['storageAdapter'];
+  private fundingJournalStorage?: StorageAdapaterOptions['storageAdapter'];
   private keyringCrypto: KeyringCrypto;
   private agentWalletUnlockVersion = 0;
   private memoryState: PerpsServiceMemoryState = {
@@ -106,14 +718,25 @@ export class PerpsService extends StoreServiceBase<
         hasShownPerpsGuidePopup: false,
         hasClosedLearnMoreCard: false,
         favoriteMarkets: [],
-        selectedKlineInterval: CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES,
+        selectedKlineInterval: DEFAULT_PERPS_CANDLE_INTERVAL,
         marginModeByCoin: {},
+        proPreferences: DEFAULT_PERPS_PRO_PREFERENCES,
       },
       { storageAdapter: options?.storageAdapter },
     );
     this.keyringCrypto = options.keyringCrypto;
     this.marketCacheStorage = options?.storageAdapter;
+    this.attachedTpSlJournalStorage = options?.storageAdapter;
+    this.fundingJournalStorage = options?.storageAdapter;
     this.memoryState.agentWallets = {};
+    const migratedProPreferences = migrateLegacyProPreferences(
+      this.store.proPreferences,
+    );
+    if (migratedProPreferences) {
+      this.mutateStore(draft => {
+        draft.proPreferences = migratedProPreferences;
+      });
+    }
   }
 
   getMarketDataCache = <TItem = unknown>() => {
@@ -133,6 +756,104 @@ export class PerpsService extends StoreServiceBase<
     } catch (error) {
       console.error('Failed to write perps market cache:', error);
     }
+  };
+
+  getPerpsAttachedTpSlJournal = (): PerpsAttachedTpSlJournalEntry[] => {
+    const value = this.attachedTpSlJournalStorage?.getItem(
+      APP_STORE_NAMES.perpsAttachedTpSlJournal,
+    );
+    if (value == null) return [];
+    if (!isPerpsAttachedTpSlJournal(value)) {
+      throw new Error('Attached TP/SL journal is invalid');
+    }
+    return value.entries;
+  };
+
+  upsertPerpsAttachedTpSlJournalEntry = (
+    entry: PerpsAttachedTpSlJournalEntry,
+  ) => {
+    if (!isPerpsAttachedTpSlJournal({ entries: [entry], version: 1 })) {
+      throw new Error('Attached TP/SL journal entry is invalid');
+    }
+    const entries = this.getPerpsAttachedTpSlJournal();
+    this.attachedTpSlJournalStorage?.setItem(
+      APP_STORE_NAMES.perpsAttachedTpSlJournal,
+      {
+        entries: [
+          ...entries.filter(item => item.commandId !== entry.commandId),
+          entry,
+        ],
+        version: 1,
+      } satisfies PerpsAttachedTpSlJournal,
+    );
+  };
+
+  removePerpsAttachedTpSlJournalEntry = (commandId: string) => {
+    const entries = this.getPerpsAttachedTpSlJournal().filter(
+      entry => entry.commandId !== commandId,
+    );
+    if (entries.length === 0) {
+      this.attachedTpSlJournalStorage?.removeItem(
+        APP_STORE_NAMES.perpsAttachedTpSlJournal,
+      );
+      return;
+    }
+    this.attachedTpSlJournalStorage?.setItem(
+      APP_STORE_NAMES.perpsAttachedTpSlJournal,
+      { entries, version: 1 } satisfies PerpsAttachedTpSlJournal,
+    );
+  };
+
+  getPerpsFundingJournal = (): PerpsFundingJournalEntry[] => {
+    const value = this.fundingJournalStorage?.getItem(
+      APP_STORE_NAMES.perpsFundingJournal,
+    );
+    if (value == null) return [];
+    if (isPerpsFundingJournal(value)) {
+      return value.entries;
+    }
+    if (isPerpsFundingJournalV1(value)) {
+      return value.entries.map(migratePerpsFundingJournalEntry);
+    }
+    throw new Error('Perps funding journal is invalid');
+  };
+
+  upsertPerpsFundingJournalEntry = (entry: PerpsFundingJournalEntry) => {
+    if (!isPerpsFundingJournalEntry(entry)) {
+      throw new Error('Perps funding journal entry is invalid');
+    }
+    const entries = [
+      ...this.getPerpsFundingJournal().filter(
+        item => item.operationId !== entry.operationId,
+      ),
+      entry,
+    ]
+      .sort(
+        (left, right) =>
+          right.updatedAt - left.updatedAt ||
+          left.operationId.localeCompare(right.operationId),
+      )
+      .slice(0, PERPS_FUNDING_JOURNAL_LIMIT);
+    this.fundingJournalStorage?.setItem(APP_STORE_NAMES.perpsFundingJournal, {
+      entries,
+      version: 2,
+    } satisfies PerpsFundingJournal);
+  };
+
+  removePerpsFundingJournalEntry = (operationId: string) => {
+    const entries = this.getPerpsFundingJournal().filter(
+      entry => entry.operationId !== operationId,
+    );
+    if (entries.length === 0) {
+      this.fundingJournalStorage?.removeItem(
+        APP_STORE_NAMES.perpsFundingJournal,
+      );
+      return;
+    }
+    this.fundingJournalStorage?.setItem(APP_STORE_NAMES.perpsFundingJournal, {
+      entries,
+      version: 2,
+    } satisfies PerpsFundingJournal);
   };
 
   getFavoriteMarkets = async () => {
@@ -168,6 +889,250 @@ export class PerpsService extends StoreServiceBase<
     });
   };
 
+  getPerpsViewMode = async (): Promise<PerpsViewMode> => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+
+    return normalizePerpsViewMode(this.store.proPreferences);
+  };
+
+  getPerpsViewModePreference = async (): Promise<PerpsViewModePreference> => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+
+    return {
+      hasVisitedPro: normalizeHasVisitedPro(this.store.proPreferences),
+      viewMode: normalizePerpsViewMode(this.store.proPreferences),
+    };
+  };
+
+  setPerpsViewMode = async (viewMode: PerpsViewMode) => {
+    const currentPreferences: unknown = this.store.proPreferences;
+    this.mutateStore(draft => {
+      draft.proPreferences = {
+        ...getWritableProPreferences(currentPreferences),
+        ...(viewMode === 'pro' ? { hasVisitedPro: true } : {}),
+        viewMode,
+      };
+    });
+  };
+
+  getPerpsProInfoTab = async (): Promise<PerpsProInfoTab> => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+
+    return normalizePerpsProInfoTab(this.store.proPreferences);
+  };
+
+  getPerpsProInfoTabPreference =
+    async (): Promise<PerpsProInfoTabPreference> => {
+      if (!this.store) {
+        throw new Error('PerpsService not initialized');
+      }
+
+      return {
+        activeInfoTab: normalizePerpsProInfoTab(this.store.proPreferences),
+        hasUserSelectedInfoTab: normalizeHasUserSelectedInfoTab(
+          this.store.proPreferences,
+        ),
+      };
+    };
+
+  setPerpsProInfoTab = async (activeInfoTab: PerpsProInfoTab) => {
+    const currentPreferences: unknown = this.store.proPreferences;
+    this.mutateStore(draft => {
+      draft.proPreferences = {
+        ...getWritableProPreferences(currentPreferences),
+        activeInfoTab,
+        hasUserSelectedInfoTab: true,
+      };
+    });
+  };
+
+  getSkipPerpsProLimitCloseConfirmation = async () => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    return normalizeSkipLimitCloseDoubleConfirmation(this.store.proPreferences);
+  };
+
+  setSkipPerpsProLimitCloseConfirmation = async (value: boolean) => {
+    const currentPreferences: unknown = this.store.proPreferences;
+    this.mutateStore(draft => {
+      draft.proPreferences = {
+        ...getWritableProPreferences(currentPreferences),
+        skipLimitCloseDoubleConfirmation: value === true,
+      };
+    });
+  };
+
+  getSkipPerpsProMarketCloseConfirmation = async () => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    return normalizeSkipMarketCloseDoubleConfirmation(
+      this.store.proPreferences,
+    );
+  };
+
+  setSkipPerpsProMarketCloseConfirmation = async (value: boolean) => {
+    const currentPreferences: unknown = this.store.proPreferences;
+    this.mutateStore(draft => {
+      draft.proPreferences = {
+        ...getWritableProPreferences(currentPreferences),
+        skipMarketCloseDoubleConfirmation: value === true,
+      };
+    });
+  };
+
+  getSkipPerpsProPositionTpSlConfirmation = async () => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    return normalizeSkipPositionTpSlDoubleConfirmation(
+      this.store.proPreferences,
+    );
+  };
+
+  setSkipPerpsProPositionTpSlConfirmation = async (value: boolean) => {
+    const currentPreferences: unknown = this.store.proPreferences;
+    this.mutateStore(draft => {
+      draft.proPreferences = {
+        ...getWritableProPreferences(currentPreferences),
+        skipPositionTpSlDoubleConfirmation: value === true,
+      };
+    });
+  };
+
+  getSkipPerpsProOpenOrderEditConfirmation = async (
+    category: PerpsProOpenOrderEditCategory,
+  ) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    return normalizeSkipOpenOrderEditConfirmationByCategory(
+      this.store.proPreferences,
+    )[category];
+  };
+
+  setSkipPerpsProOpenOrderEditConfirmation = async (
+    category: PerpsProOpenOrderEditCategory,
+    value: boolean,
+  ) => {
+    const current = getWritableProPreferences(this.store.proPreferences);
+    this.mutateStore(draft => {
+      draft.proPreferences = {
+        ...current,
+        skipOpenOrderEditConfirmationByCategory: {
+          ...normalizeSkipOpenOrderEditConfirmationByCategory(current),
+          [category]: value === true,
+        },
+      };
+    });
+  };
+
+  getPerpsProTradeAmountUnit = async (): Promise<PerpsProTradeAmountUnit> => {
+    if (!this.store) throw new Error('PerpsService not initialized');
+    return normalizePerpsProTradeAmountUnit(this.store.proPreferences);
+  };
+
+  setPerpsProTradeAmountUnit = async (value: PerpsProTradeAmountUnit) => {
+    const currentPreferences: unknown = this.store.proPreferences;
+    this.mutateStore(draft => {
+      draft.proPreferences = {
+        ...getWritableProPreferences(currentPreferences),
+        tradeAmountUnit: value === 'base' ? 'base' : 'quote',
+      };
+    });
+  };
+
+  getPerpsProTradeOrderType = async (): Promise<PerpsProTradeOrderType> => {
+    if (!this.store) throw new Error('PerpsService not initialized');
+    return normalizePerpsProTradeOrderType(this.store.proPreferences);
+  };
+
+  setPerpsProTradeOrderType = async (value: PerpsProTradeOrderType) => {
+    if (value !== 'market' && value !== 'limit' && value !== 'conditional') {
+      throw new Error('Invalid Perps Pro trade order type');
+    }
+    const currentPreferences: unknown = this.store.proPreferences;
+    this.mutateStore(draft => {
+      draft.proPreferences = {
+        ...getWritableProPreferences(currentPreferences),
+        tradeOrderType: value,
+      };
+    });
+  };
+
+  getSkipPerpsProTradeConfirmation = async (
+    orderType: PerpsProTradeOrderType,
+  ) => {
+    if (!this.store) throw new Error('PerpsService not initialized');
+    return normalizeSkipTradeConfirmationByOrderType(this.store.proPreferences)[
+      orderType
+    ];
+  };
+
+  setSkipPerpsProTradeConfirmation = async (
+    orderType: PerpsProTradeOrderType,
+    value: boolean,
+  ) => {
+    const current = getWritableProPreferences(this.store.proPreferences);
+    this.mutateStore(draft => {
+      draft.proPreferences = {
+        ...current,
+        skipTradeConfirmationByOrderType: {
+          ...normalizeSkipTradeConfirmationByOrderType(current),
+          [orderType]: value === true,
+        },
+      };
+    });
+  };
+
+  getPerpsProTpSlModePreferences =
+    async (): Promise<PerpsProTpSlModePreferences> => {
+      if (!this.store) throw new Error('PerpsService not initialized');
+      return cloneDeep(
+        normalizePerpsProTpSlModePreferences(this.store.proPreferences),
+      );
+    };
+
+  setPerpsProTpSlModePreference = async (
+    selection: PerpsProTpSlModePreferenceSelection,
+  ) => {
+    const { leg, mode, surface } = selection;
+    const validMode =
+      surface === 'opening'
+        ? mode === 'price' || mode === 'pnl' || mode === 'roi'
+        : surface === 'position'
+        ? mode === 'pnl' || mode === 'roi'
+        : false;
+    if (
+      (surface !== 'opening' && surface !== 'position') ||
+      (leg !== 'tp' && leg !== 'sl') ||
+      !validMode
+    ) {
+      throw new Error('Invalid Perps Pro TP/SL mode preference');
+    }
+    const current = getWritableProPreferences(this.store.proPreferences);
+    const currentModes = normalizePerpsProTpSlModePreferences(current);
+    this.mutateStore(draft => {
+      draft.proPreferences = {
+        ...current,
+        tpSlModePreferences: {
+          ...currentModes,
+          [surface]: {
+            ...currentModes[surface],
+            [leg]: mode,
+          },
+        },
+      };
+    });
+  };
+
   setHasDoneNewUserProcess = async (hasDone: boolean) => {
     this.mutateStore(draft => {
       draft.hasDoneNewUserProcess = hasDone;
@@ -198,14 +1163,24 @@ export class PerpsService extends StoreServiceBase<
     return this.store.hasClosedLearnMoreCard;
   };
 
-  setSelectedKlineInterval = async (value: CANDLE_MENU_KEY_V2) => {
+  setSelectedKlineInterval = async (value: PerpsCandleInterval) => {
+    if (!isPerpsCandleInterval(value)) {
+      throw new Error('Invalid Perps candle interval');
+    }
     this.mutateStore(draft => {
       draft.selectedKlineInterval = value;
     });
   };
 
   getSelectedKlineInterval = async () => {
-    return this.store.selectedKlineInterval;
+    const storedValue = this.store.selectedKlineInterval;
+    const normalizedValue = normalizePerpsCandleInterval(storedValue);
+    if (storedValue !== normalizedValue) {
+      this.mutateStore(draft => {
+        draft.selectedKlineInterval = normalizedValue;
+      });
+    }
+    return normalizedValue;
   };
 
   setSendApproveAfterDeposit = async (

@@ -3,6 +3,14 @@ const mockTestOpenapiGetComplexProtocolList = jest.fn();
 const mockOpenapiGetProtocol = jest.fn();
 const mockTestOpenapiGetProtocol = jest.fn();
 const mockPQueueAdd = jest.fn((fn: () => unknown) => fn());
+const mockComplexProtocolListQueueAdd = jest.fn((fn: () => unknown) => fn());
+
+jest.mock('p-queue', () => ({
+  __esModule: true,
+  default: jest.fn().mockImplementation(() => ({
+    add: (...args: unknown[]) => mockComplexProtocolListQueueAdd(...args),
+  })),
+}));
 
 jest.mock('@/core/request', () => ({
   openapi: {
@@ -53,7 +61,7 @@ describe('core/apis/portfolio', () => {
     jest.restoreAllMocks();
   });
 
-  it('loads mainnet and testnet portfolio snapshots through the shared queue', async () => {
+  it('loads mainnet and testnet portfolio snapshots through the dedicated queue', async () => {
     await expect(loadPortfolioSnapshot('0xabc')).resolves.toEqual([
       'mainnet-snapshot',
     ]);
@@ -61,7 +69,8 @@ describe('core/apis/portfolio', () => {
       'testnet-snapshot',
     ]);
 
-    expect(mockPQueueAdd).toHaveBeenCalledTimes(2);
+    expect(mockComplexProtocolListQueueAdd).toHaveBeenCalledTimes(2);
+    expect(mockPQueueAdd).not.toHaveBeenCalled();
     expect(mockOpenapiGetComplexProtocolList).toHaveBeenCalledWith('0xabc');
     expect(mockTestOpenapiGetComplexProtocolList).toHaveBeenCalledWith('0xabc');
   });
