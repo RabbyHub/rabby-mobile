@@ -5,6 +5,7 @@ import {
   formatPositionMarginTarget,
   projectPositionLiquidationPrice,
   resolvePositionMarginAvailable,
+  resolvePositionMarginCurrentRisk,
   validatePositionMarginTarget,
 } from './positionMargin';
 
@@ -305,6 +306,42 @@ describe('positionMargin', () => {
         tiers,
       }),
     ).toEqual({ liquidationDistance: '1', liquidationPrice: '0' });
+  });
+
+  it('keeps a positive server liquidation price authoritative', () => {
+    expect(
+      resolvePositionMarginCurrentRisk({
+        direction: 'long',
+        liquidationPrice: '80',
+        margin: '200',
+        markPrice: '100',
+        positionSize: '1',
+        tiers,
+      }),
+    ).toEqual({ liquidationDistance: '0.2', liquidationPrice: '80' });
+  });
+
+  it('only synthesizes a missing current liquidation price when it proves the long zero floor', () => {
+    expect(
+      resolvePositionMarginCurrentRisk({
+        direction: 'long',
+        liquidationPrice: null,
+        margin: '200',
+        markPrice: '100',
+        positionSize: '1',
+        tiers,
+      }),
+    ).toEqual({ liquidationDistance: '1', liquidationPrice: '0' });
+    expect(
+      resolvePositionMarginCurrentRisk({
+        direction: 'long',
+        liquidationPrice: null,
+        margin: '20',
+        markPrice: '100',
+        positionSize: '1',
+        tiers,
+      }),
+    ).toBeNull();
   });
 
   it('fails closed for malformed or non-self-consistent tier facts', () => {

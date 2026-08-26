@@ -214,6 +214,45 @@ describe('usePerpsProManageMargin', () => {
     });
   });
 
+  it('matches the UNITREE noCross range and proves the missing long liquidation floor', () => {
+    mockPerpsState.currentClearinghouseState = {
+      ...mockPerpsState.currentClearinghouseState,
+      assetPositions: [
+        {
+          position: {
+            ...createRawPosition().position,
+            entryPx: '88.376',
+            liquidationPx: null,
+            marginUsed: '30.15',
+            szi: '0.13',
+          },
+        },
+      ],
+      perDexSummaries: { '': { withdrawable: '14.61' } },
+    };
+    mockPerpsState.marketDataMap.BTC.markPx = '88.673';
+    mockPerpsState.marketDataMap.BTC.marginMode = 'noCross';
+    mockPerpsState.marketDataMap.BTC.onlyIsolated = true;
+
+    const hook = renderHook(() => usePerpsProManageMargin());
+    act(() =>
+      hook.result.current.open({
+        ...position,
+        baseSize: '0.13',
+        entryPrice: '88.376',
+        margin: '30.15',
+      }),
+    );
+
+    expect(hook.result.current.view).toMatchObject({
+      currentLiquidationDistance: '1',
+      currentLiquidationPrice: '0',
+      projectedLiquidationDistance: '1',
+      projectedLiquidationPrice: '0',
+      range: { displayMin: '1.26', max: '44.76', min: '1.26' },
+    });
+  });
+
   it('keeps rounded current margin as a no-op endpoint without changing risk', () => {
     replaceRawPosition('0.324', '0.0018');
     mockPerpsState.marketDataMap.BTC.markPx = '7652.7';

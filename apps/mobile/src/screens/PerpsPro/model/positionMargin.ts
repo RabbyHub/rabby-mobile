@@ -278,3 +278,43 @@ export const buildPositionMarginRiskProjection = ({
     ? { liquidationDistance: distance.toFixed(), liquidationPrice }
     : null;
 };
+
+export const resolvePositionMarginCurrentRisk = ({
+  direction,
+  liquidationPrice,
+  margin,
+  markPrice,
+  positionSize,
+  tiers,
+}: {
+  direction: PerpsPositionDirection;
+  liquidationPrice: unknown;
+  margin: unknown;
+  markPrice: unknown;
+  positionSize: unknown;
+  tiers: readonly PerpsMaintenanceMarginTier[];
+}): { liquidationDistance: string; liquidationPrice: string } | null => {
+  const serverLiquidationPrice = positiveDecimal(liquidationPrice);
+  if (serverLiquidationPrice) {
+    const liquidationDistance = calculateLiquidationDistance({
+      direction,
+      liquidationPrice: serverLiquidationPrice.toFixed(),
+      markPrice: decimal(markPrice)?.toFixed() ?? null,
+    });
+    return liquidationDistance == null
+      ? null
+      : {
+          liquidationDistance,
+          liquidationPrice: serverLiquidationPrice.toFixed(),
+        };
+  }
+
+  const localProjection = buildPositionMarginRiskProjection({
+    direction,
+    margin,
+    markPrice,
+    positionSize,
+    tiers,
+  });
+  return localProjection?.liquidationPrice === '0' ? localProjection : null;
+};
