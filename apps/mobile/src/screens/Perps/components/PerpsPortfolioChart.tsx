@@ -1,11 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Pressable, View } from 'react-native';
 import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import Animated, {
   useAnimatedProps,
   useAnimatedStyle,
   useSharedValue,
+  withTiming,
 } from 'react-native-reanimated';
 
 import { AnimateableText, Text } from '@/components/Typography';
@@ -45,11 +46,21 @@ export type PerpsPortfolioChartProps = {
   width: number;
 };
 
-const TOOLTIP_X_GUTTER = 8;
+const TOOLTIP_X_GUTTER = 4;
 const TOOLTIP_TAIL_H = 5;
 const TOOLTIP_TAIL_W = 12;
 // Distance between the tail tip and the cursor point.
 const TOOLTIP_POINT_GAP = 6;
+// Keep the tail clear of the bubble's rounded corners (radius 12), otherwise
+// a gap opens between the tail and the curved edge.
+const TOOLTIP_TAIL_MARGIN = 12;
+const CROSSHAIR_OUTER = 12;
+// The dot's visual center stops at the chart edge instead of sliding out.
+const clampCursorX = (x: number, chartWidth: number) => {
+  'worklet';
+  const half = CROSSHAIR_OUTER / 2;
+  return Math.min(Math.max(x, half), Math.max(chartWidth - half, half));
+};
 
 /**
  * Self-positioned cursor tooltip. LineChart.Tooltip clamps itself inside the
@@ -85,8 +96,9 @@ const PortfolioTooltip = ({
     if (!bw || !bh || !chartWidth) {
       return { opacity: 0 };
     }
+    const targetX = clampCursorX(currentX.value, chartWidth);
     const left = Math.min(
-      Math.max(currentX.value - bw / 2, TOOLTIP_X_GUTTER),
+      Math.max(targetX - bw / 2, TOOLTIP_X_GUTTER),
       chartWidth - bw - TOOLTIP_X_GUTTER,
     );
     const flipBelow =
@@ -109,15 +121,16 @@ const PortfolioTooltip = ({
     if (!bw || !bh || !chartWidth) {
       return { opacity: 0, left: 0 };
     }
+    const targetX = clampCursorX(currentX.value, chartWidth);
     const left = Math.min(
-      Math.max(currentX.value - bw / 2, TOOLTIP_X_GUTTER),
+      Math.max(targetX - bw / 2, TOOLTIP_X_GUTTER),
       chartWidth - bw - TOOLTIP_X_GUTTER,
     );
     const flipBelow =
       currentY.value < bh + TOOLTIP_TAIL_H + TOOLTIP_POINT_GAP + 2;
     const tailLeft = Math.min(
-      Math.max(currentX.value - left - TOOLTIP_TAIL_W / 2, 8),
-      Math.max(bw - TOOLTIP_TAIL_W - 8, 8),
+      Math.max(targetX - left - TOOLTIP_TAIL_W / 2, TOOLTIP_TAIL_MARGIN),
+      Math.max(bw - TOOLTIP_TAIL_W - TOOLTIP_TAIL_MARGIN, TOOLTIP_TAIL_MARGIN),
     );
     return { opacity: flipBelow === pointsDown ? 0 : 1, left: tailLeft };
   };
@@ -139,6 +152,131 @@ const PortfolioTooltip = ({
       <Animated.View style={[styles.tooltipTailDown, tailDownStyle]} />
       <Animated.View style={[styles.tooltipTailUp, tailUpStyle]} />
     </Animated.View>
+  );
+};
+
+/**
+ * Cursor dot whose visual center stops at the chart edge instead of sliding
+ * half-out of it. Overrides the crosshair wrapper's own transform (style
+ * arrays: last transform wins). MUST be rendered inside <LineChart>: the
+ * derived currentY needs the chart's dimensions context (outside it, the
+ * path is missing and currentY reads -1, pinning the dot to the top).
+ */
+const ClampedCrosshair = ({ chartWidth }: { chartWidth: number }) => {
+  const { currentX, currentY, isActive } = LineChart.useChart();
+  const crosshairClampStyle = useAnimatedStyle(() => {
+    const half = CROSSHAIR_OUTER / 2;
+    return {
+      transform: [
+        { translateX: clampCursorX(currentX.value, chartWidth) - half },
+        { translateY: currentY.value - half },
+        { scale: withTiming(isActive.value ? 1 : 0, { duration: 120 }) },
+      ],
+    };
+  }, [chartWidth]);
+
+  return (
+    <LineChart.CursorCrosshair
+      color={PERPS_CHART_LINE_COLOR}
+      outerSize={CROSSHAIR_OUTER}
+      size={8}
+      crosshairWrapperProps={{ style: crosshairClampStyle }}
+      // Without a press threshold the cursor's LongPressGestureHandler
+      // (minDurationMs=0) claims every touch and the page cannot be scrolled
+      // from the chart area; 150ms keeps quick swipes as scrolls and
+      // press-and-hold as cursor moves.
+      minDurationMs={150}
+    />
+  );
+};
+
+/**
+ * Expanded chart body. Lives inside LineChart.Provider so it can drive the
+ * cursor shared values for the tap interaction: a single tap snaps the
+ * cursor to the nearest point and auto-hides it after 2s (a long-press still
+ * works as the continuous cursor). The clip wrapper keeps the crosshair dot
+ * from bleeding past the chart bounds at the edges.
+ */
+const ExpandedChartBody = ({
+  points,
+  width,
+  isEmpty,
+  timeTexts,
+  valueTexts,
+  cursorLineColor,
+}: {
+  points: { timestamp: number; value: number }[];
+  width: number;
+  isEmpty: boolean;
+  timeTexts: string[];
+  valueTexts: string[];
+  cursorLineColor: string;
+}) => {
+  const { styles } = useTheme2024({ getStyle });
+  const { currentX, currentIndex, isActive } = LineChart.useChart();
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+  useEffect(() => () => clearTimeout(tapTimerRef.current), []);
+
+  const handleTap = (locationX: number) => {
+    if (isEmpty || points.length < 2 || !width) {
+      return;
+    }
+    // Same x mapping as wagmi's path: timestamps scaled linearly to [0, width].
+    const t0 = points[0].timestamp;
+    const span = points[points.length - 1].timestamp - t0 || 1;
+    let nearest = 0;
+    let nearestDist = Infinity;
+    for (let i = 0; i < points.length; i++) {
+      const x = ((points[i].timestamp - t0) / span) * width;
+      const dist = Math.abs(x - locationX);
+      if (dist < nearestDist) {
+        nearestDist = dist;
+        nearest = i;
+      }
+    }
+    const snappedX = ((points[nearest].timestamp - t0) / span) * width;
+    currentIndex.value = nearest;
+    currentX.value = snappedX;
+    isActive.value = true;
+    clearTimeout(tapTimerRef.current);
+    tapTimerRef.current = setTimeout(() => {
+      // Skip the auto-hide if a long-press has moved the cursor meanwhile.
+      if (Math.abs(currentX.value - snappedX) < 0.5) {
+        isActive.value = false;
+        currentIndex.value = -1;
+      }
+    }, 2_000);
+  };
+
+  return (
+    <Pressable onPress={e => handleTap(e.nativeEvent.locationX)}>
+      <View style={styles.chartClip}>
+        <LineChart
+          width={width}
+          height={EXPANDED_CHART_HEIGHT}
+          shape={d3Shape.curveLinear}>
+          <LineChart.Path
+            color={PERPS_CHART_LINE_COLOR}
+            width={1.5}
+            showInactivePath={false}>
+            <LineChart.Gradient color={PERPS_CHART_LINE_COLOR} />
+          </LineChart.Path>
+          {!isEmpty && (
+            <>
+              <LineChart.CursorLine color={cursorLineColor} />
+              <ClampedCrosshair chartWidth={width} />
+              <PortfolioTooltip
+                timeTexts={timeTexts}
+                valueTexts={valueTexts}
+                chartWidth={width}
+              />
+            </>
+          )}
+        </LineChart>
+      </View>
+    </Pressable>
   );
 };
 
@@ -185,12 +323,10 @@ export const PerpsPortfolioChart: React.FC<PerpsPortfolioChartProps> = ({
       return { timeTexts: [], valueTexts: [] };
     }
     return {
-      timeTexts: points.map(p =>
-        formatPortfolioTooltipTime(p.timestamp, activePeriod),
-      ),
+      timeTexts: points.map(p => formatPortfolioTooltipTime(p.timestamp)),
       valueTexts: points.map(p => `$${splitNumberByStep(p.value.toFixed(2))}`),
     };
-  }, [points, activePeriod, expanded]);
+  }, [points, expanded]);
 
   if (!expanded) {
     return (
@@ -213,37 +349,14 @@ export const PerpsPortfolioChart: React.FC<PerpsPortfolioChartProps> = ({
   return (
     <View>
       <LineChart.Provider data={points}>
-        <LineChart
+        <ExpandedChartBody
+          points={points}
           width={width}
-          height={EXPANDED_CHART_HEIGHT}
-          shape={d3Shape.curveLinear}>
-          <LineChart.Path
-            color={PERPS_CHART_LINE_COLOR}
-            width={1.5}
-            showInactivePath={false}>
-            <LineChart.Gradient color={PERPS_CHART_LINE_COLOR} />
-          </LineChart.Path>
-          {!isEmpty && (
-            <>
-              <LineChart.CursorLine color={colors2024['neutral-line']} />
-              <LineChart.CursorCrosshair
-                color={PERPS_CHART_LINE_COLOR}
-                outerSize={12}
-                size={8}
-                // Without a press threshold the cursor's LongPressGestureHandler
-                // (minDurationMs=0) claims every touch and the page cannot be
-                // scrolled from the chart area; 150ms keeps quick swipes as
-                // scrolls and press-and-hold as cursor moves.
-                minDurationMs={150}
-              />
-              <PortfolioTooltip
-                timeTexts={timeTexts}
-                valueTexts={valueTexts}
-                chartWidth={width}
-              />
-            </>
-          )}
-        </LineChart>
+          isEmpty={isEmpty}
+          timeTexts={timeTexts}
+          valueTexts={valueTexts}
+          cursorLineColor={colors2024['neutral-line']}
+        />
       </LineChart.Provider>
       <View style={styles.tabRow}>
         {PERIOD_TABS.map(tab => {
@@ -265,6 +378,9 @@ export const PerpsPortfolioChart: React.FC<PerpsPortfolioChartProps> = ({
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  chartClip: {
+    overflow: 'hidden',
+  },
   tabRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -309,7 +425,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   tooltipTailDown: {
     position: 'absolute',
-    bottom: -5,
+    bottom: -4,
     width: 0,
     height: 0,
     borderLeftWidth: 6,
@@ -321,7 +437,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   tooltipTailUp: {
     position: 'absolute',
-    top: -5,
+    top: -4,
     width: 0,
     height: 0,
     borderLeftWidth: 6,

@@ -200,19 +200,13 @@ describe('toChartPoints', () => {
 describe('formatPortfolioTooltipTime', () => {
   // Timestamps are built through the local-time Date constructor so the
   // expected strings hold in any timezone the test machine runs in.
-  const ts = new Date(2026, 7, 13, 8, 5).getTime(); // 2026-08-13 08:05 local, a Thursday
-
-  it('formats day-period points as clock time only (the window is within 24h)', () => {
-    expect(formatPortfolioTooltipTime(ts, 'day')).toBe('08:05');
-  });
-
-  it('formats coarser periods without the clock time', () => {
-    expect(formatPortfolioTooltipTime(ts, 'week')).toBe("Thu 13 Aug '26");
-    expect(formatPortfolioTooltipTime(ts, 'month')).toBe("Thu 13 Aug '26");
-    const lastYear = new Date(2025, 0, 5, 12, 0).getTime(); // a Sunday
-    expect(formatPortfolioTooltipTime(lastYear, 'allTime')).toBe(
-      "Sun 05 Jan '25",
-    );
+  it('formats every point as "MMM D, HH:mm" regardless of period', () => {
+    expect(
+      formatPortfolioTooltipTime(new Date(2026, 7, 13, 8, 5).getTime()),
+    ).toBe('Aug 13, 08:05');
+    expect(
+      formatPortfolioTooltipTime(new Date(2025, 0, 5, 14, 0).getTime()),
+    ).toBe('Jan 5, 14:00');
   });
 });
 

@@ -23,6 +23,7 @@ import { Skeleton } from '@rneui/base';
 import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
 import { usePerpsPortfolioBreakdown } from '@/hooks/perps/usePerpsPortfolioBreakdown';
+import { usePerpsPortfolioLiveValue } from '@/hooks/perps/usePerpsPortfolioLiveValue';
 import {
   fetchPerpsPortfolio,
   usePerpsPortfolio,
@@ -44,6 +45,7 @@ import RcIconPortfolioPlusCC from '@/assets2024/icons/perps/IconPortfolioPlusCC.
 import RcIconPortfolioMinusCC from '@/assets2024/icons/perps/IconPortfolioMinusCC.svg';
 import { apisPerps } from '@/core/apis';
 import BigNumber from 'bignumber.js';
+import TickerTexts, { TickItem } from '@/components/Animated/TickerText';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -167,6 +169,11 @@ export const PerpsAccountCard: React.FC = () => {
     () => (portfolioData ? getLatestPortfolioValue(portfolioData) : null),
     [portfolioData],
   );
+  // Live WS-computed value ticks in real time (Pro-panel basis); the
+  // portfolio API's near-realtime last point covers the gap until the WS
+  // slices are ready.
+  const liveValue = usePerpsPortfolioLiveValue();
+  const displayValue = liveValue ?? portfolioValue;
   const change24h = useMemo(
     () => (portfolioData ? compute24hChange(portfolioData) : null),
     [portfolioData],
@@ -229,7 +236,7 @@ export const PerpsAccountCard: React.FC = () => {
 
   const handleShowBreakdown = useMemoizedFn(() => {
     const { perpsValue, secondaryValue } = getBreakdownValues(
-      portfolioValue || 0,
+      displayValue || 0,
     );
     const descKey = {
       manual: 'page.perps.PerpsCard.manualAccountDesc',
@@ -325,14 +332,21 @@ export const PerpsAccountCard: React.FC = () => {
                     LinearGradientComponent={LoadingLinear}
                   />
                 ) : portfolioViewState === 'zero' ? (
-                  <Text style={styles.portfolioValue}>0</Text>
-                ) : (
-                  <Text style={styles.portfolioValue}>
-                    {'$'}
-                    {splitNumberByStep(
-                      new BigNumber(portfolioValue || 0).toFixed(2),
-                    )}
+                  <Text style={[styles.portfolioValue, styles.valueSlot]}>
+                    0
                   </Text>
+                ) : (
+                  <TickerTexts
+                    // Keep spacing OUT of textStyle: TickerText measures each
+                    // glyph and margins corrupt its scroll windows.
+                    containerStyle={styles.valueSlot}
+                    textStyle={styles.portfolioValue}
+                    duration={750}>
+                    <TickItem rotateItems={['$']}>{'$'}</TickItem>
+                    {splitNumberByStep(
+                      new BigNumber(displayValue || 0).toFixed(2),
+                    )}
+                  </TickerTexts>
                 )}
                 <View style={styles.changeRow}>
                   {portfolioViewState === 'loading' ? (
@@ -565,6 +579,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 28,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
+  },
+  valueSlot: {
     marginTop: 8,
   },
   valueSkeleton: {
