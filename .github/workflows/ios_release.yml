@@ -31,6 +31,10 @@ on:
         required: true
         type: boolean
         default: false
+      IOS_SIGNING_EXPORT_PREFLIGHT_ONLY:
+        required: true
+        type: boolean
+        default: false
   workflow_call:
     secrets:
       KEYCHAIN_PASS:
@@ -122,6 +126,7 @@ jobs:
         run: corepack enable
 
       - name: Preflight App Store Connect API key
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.IOS_SIGNING_EXPORT_PREFLIGHT_ONLY != true || inputs.ASC_PREFLIGHT_ONLY == true }}
         run: |
           node <<'NODE'
           const crypto = require('crypto');
@@ -269,11 +274,35 @@ jobs:
           RABBY_MOBILE_ASC_API_BUNDLE_ID: com.debank.rabby-mobile
 
       - name: Stop after ASC preflight
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.ASC_PREFLIGHT_ONLY == true }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.ASC_PREFLIGHT_ONLY == true && inputs.IOS_SIGNING_EXPORT_PREFLIGHT_ONLY != true }}
         run: echo "ASC preflight-only mode enabled; skipping dependency install and app build."
 
+      - name: Preflight iOS signing export
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.IOS_SIGNING_EXPORT_PREFLIGHT_ONLY == true }}
+        run: |
+          unset MATCH_GIT_BASIC_AUTHORIZATION
+
+          if [ "$INPUT_MOBILE_LOC" != "mobile-local" ]; then
+            RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS="$KEYCHAIN_PASS"
+          fi
+          if [ -n "${RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS:-}" ]; then
+            security unlock-keychain -p "$RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS" login.keychain
+          else
+            echo "RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS is not set; assuming keychain is already unlocked."
+          fi
+
+          cd apps/mobile
+          ./scripts/ci/ios-signing-export-preflight.sh
+        env:
+          KEYCHAIN_PASS: ${{ secrets.KEYCHAIN_PASS }}
+          MATCH_PASSWORD: ${{ secrets.RABBY_MOBILE_MATCH_PASSWORD }}
+          RABBY_MOBILE_MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.RABBY_MOBILE_MATCH_GIT_BASIC_AUTHORIZATION }}
+          RABBY_MOBILE_IOS_SIGNING_PREFLIGHT_ARCHIVE_S3_URI: ${{ secrets.RABBY_MOBILE_IOS_SIGNING_PREFLIGHT_ARCHIVE_S3_URI }}
+          RABBY_MOBILE_IOS_SIGNING_PREFLIGHT_ARCHIVE_SHA256: ${{ secrets.RABBY_MOBILE_IOS_SIGNING_PREFLIGHT_ARCHIVE_SHA256 }}
+          INPUT_MOBILE_LOC: ${{ inputs.macos_machine_location }}
+
       - name: Install dependencies && Build app
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.ASC_PREFLIGHT_ONLY != true }}
+        if: ${{ github.event_name != 'workflow_dispatch' || (inputs.ASC_PREFLIGHT_ONLY != true && inputs.IOS_SIGNING_EXPORT_PREFLIGHT_ONLY != true) }}
         run: |
           unset MATCH_GIT_BASIC_AUTHORIZATION
           cd apps/mobile;
