@@ -180,7 +180,7 @@ describe('usePerpsProOpenOrderEdit', () => {
         limitPrice: '100',
         reduceOnly: false,
         remainingSize: '0.5',
-        side: 'buy',
+        side: input.side,
         tif: 'Gtc',
       },
       marketKey: 'hyperliquid::BTC',
@@ -576,5 +576,31 @@ describe('usePerpsProOpenOrderEdit', () => {
 
     expect(mockShowToast).toHaveBeenCalledTimes(1);
     expect(mockShowToast).toHaveBeenCalledWith('Invalid TP/SL price.', 'error');
+  });
+
+  it('maps a known ALO modify rejection without hiding unknown server details', async () => {
+    mockExecuteModify.mockResolvedValue({
+      failureReason: 'requestFailed',
+      kind: 'failed',
+      error:
+        'Post only order would have immediately matched, bbo was 99@100. asset=0',
+    });
+    const hook = renderHook(() =>
+      usePerpsProOpenOrderEdit('account-a', 'base'),
+    );
+    await act(async () => hook.result.current.open(basicOrder));
+    await act(async () => {
+      await hook.result.current.requestBasicReview({
+        amount: '0.5',
+        amountTouched: false,
+        price: '120',
+      });
+    });
+    await act(async () => hook.result.current.confirm());
+
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.orderError.aloBuyWouldMatch',
+      'error',
+    );
   });
 });

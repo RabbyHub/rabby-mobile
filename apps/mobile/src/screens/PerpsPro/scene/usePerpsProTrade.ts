@@ -106,6 +106,7 @@ import {
   getPerpsProTpSlErrorText,
   type PerpsProTpSlErrorContext,
 } from '../utils/tpSlError';
+import { getPerpsProOrderErrorText } from '../utils/orderError';
 import {
   clearPerpsProTpSlForMarketChange,
   usePerpsProTpSl,
@@ -176,6 +177,11 @@ export const usePerpsProTrade = ({
   ) => Promise<boolean>;
 }) => {
   const { t } = useTranslation();
+  const orderErrorText = useCallback(
+    (message: string, side: PerpsProTradeSide) =>
+      getPerpsProOrderErrorText({ message, side, t }),
+    [t],
+  );
   const tpSlErrorText = useCallback(
     (error: PerpsProTpSlValidationError, context: PerpsProTpSlErrorContext) =>
       getPerpsProTpSlErrorText({
@@ -1936,7 +1942,13 @@ export const usePerpsProTrade = ({
       } catch (error) {
         if (isPerpsActionUserCancelled(error)) return;
         const message = error instanceof Error ? error.message : String(error);
-        showToast(message || t('page.perps.pro.trade.orderFailed'), 'error');
+        showToast(
+          orderErrorText(
+            message || t('page.perps.pro.trade.orderFailed'),
+            command.side,
+          ),
+          'error',
+        );
         Sentry.captureException(
           error instanceof Error ? error : new Error(message),
           {
@@ -1952,6 +1964,7 @@ export const usePerpsProTrade = ({
       accountFacts.account,
       accountIdentity,
       market,
+      orderErrorText,
       patchForm,
       refreshActiveAssetData,
       resolveLeverageExecutionReadiness,
@@ -2043,25 +2056,34 @@ export const usePerpsProTrade = ({
           return;
         }
         if (result.kind === 'requestFailed') {
+          const error = result.error
+            ? orderErrorText(result.error, command.parent.side)
+            : t('page.perps.pro.trade.orderFailed');
           showToast(
             result.reason === 'unresolvedSubmission'
               ? t('page.perps.pro.trade.attachedTpSlUnresolved')
-              : result.error || t('page.perps.pro.trade.orderFailed'),
+              : error,
             'error',
           );
           return;
         }
         if (result.kind === 'parentRejected') {
           showToast(
-            result.error ||
-              t('page.perps.pro.trade.attachedTpSlParentRejected'),
+            result.error
+              ? orderErrorText(result.error, command.parent.side)
+              : t('page.perps.pro.trade.attachedTpSlParentRejected'),
             'error',
           );
           return;
         }
         if (result.kind === 'unknownOutcome') {
           showToast(
-            [result.error, t('page.perps.pro.trade.attachedTpSlUnknown')]
+            [
+              result.error
+                ? orderErrorText(result.error, command.parent.side)
+                : undefined,
+              t('page.perps.pro.trade.attachedTpSlUnknown'),
+            ]
               .filter(Boolean)
               .join('\n'),
             'error',
@@ -2071,7 +2093,12 @@ export const usePerpsProTrade = ({
         }
         if (result.kind === 'childRejected') {
           showToast(
-            [result.error, t('page.perps.pro.trade.attachedTpSlChildRejected')]
+            [
+              result.error
+                ? orderErrorText(result.error, command.parent.side)
+                : undefined,
+              t('page.perps.pro.trade.attachedTpSlChildRejected'),
+            ]
               .filter(Boolean)
               .join('\n'),
             'error',
@@ -2108,7 +2135,13 @@ export const usePerpsProTrade = ({
         setReview(null);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        showToast(message || t('page.perps.pro.trade.orderFailed'), 'error');
+        showToast(
+          orderErrorText(
+            message || t('page.perps.pro.trade.orderFailed'),
+            command.parent.side,
+          ),
+          'error',
+        );
         Sentry.captureException(
           error instanceof Error ? error : new Error(message),
           { extra: { scene: 'Perps Pro attached TP/SL order' } },
@@ -2122,6 +2155,7 @@ export const usePerpsProTrade = ({
       attachedGuardErrorText,
       ensureAttachedLeverage,
       executeAttachedTpSl,
+      orderErrorText,
       patchForm,
       t,
       tpSlModePreferences.opening,

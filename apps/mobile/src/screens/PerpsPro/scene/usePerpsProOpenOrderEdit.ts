@@ -34,6 +34,7 @@ import {
 } from '../model/openOrderEdit';
 import type { PerpsPositionViewModel } from '../model/position';
 import type { PerpsProTradeAmountUnit } from '../model/trade';
+import { getPerpsProOrderErrorText } from '../utils/orderError';
 
 type CommonEditorState = {
   account: Account;
@@ -359,7 +360,11 @@ export const usePerpsProOpenOrderEdit = (
         }
         if (await handleKnownActionError(result.error || '')) return;
         showToast(
-          result.error || t('page.perps.pro.openOrders.editFailed'),
+          getPerpsProOrderErrorText({
+            message: result.error || t('page.perps.pro.openOrders.editFailed'),
+            side: reviewSnapshot.command.expected.side,
+            t,
+          }),
           'error',
         );
         setReview(null);
@@ -368,7 +373,11 @@ export const usePerpsProOpenOrderEdit = (
         const message = getErrorMessage(error);
         if (await handleKnownActionError(message)) return;
         showToast(
-          message || t('page.perps.pro.openOrders.editFailed'),
+          getPerpsProOrderErrorText({
+            message: message || t('page.perps.pro.openOrders.editFailed'),
+            side: editorSnapshot.order.side,
+            t,
+          }),
           'error',
         );
         Sentry.captureException(

@@ -830,6 +830,50 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     );
     expect(mockShowToast).toHaveBeenCalledWith(serverError, 'error');
   });
+  it('maps a known ALO rejection after the server remains authoritative', async () => {
+    mockLimitOrderOpen.mockResolvedValueOnce({
+      response: {
+        data: {
+          statuses: [
+            {
+              error:
+                'Post only order would have immediately matched, bbo was 99@100. asset=0',
+            },
+          ],
+        },
+      },
+      status: 'ok',
+    });
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.setOrderType('limit'));
+    act(() => hook.result.current.setTif('Alo'));
+    act(() => hook.result.current.setPrice('limitPrice', '100'));
+    act(() => hook.result.current.setAmount('100'));
+    await act(async () => hook.result.current.requestReview('buy'));
+    await act(async () => hook.result.current.confirmReview());
+
+    expect(mockLimitOrderOpen).toHaveBeenCalledWith(
+      expect.objectContaining({ isBuy: true, tif: 'Alo' }),
+    );
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.orderError.aloBuyWouldMatch',
+      'error',
+    );
+  });
 
   it('keeps TIF visible state mutually exclusive with BBO', () => {
     const hook = renderHook(() =>
@@ -1095,6 +1139,44 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       expect.any(Function),
     );
     expect(mockShowToast).toHaveBeenCalledWith(serverError, 'error');
+  });
+
+  it('maps a known ALO parent rejection for an attached TP/SL order', async () => {
+    mockExecuteAttached.mockResolvedValueOnce({
+      error: 'Alo order price must be lower than best ask price',
+      kind: 'parentRejected',
+      reconciliationErrors: [],
+      refreshErrors: [],
+    });
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData,
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.setOrderType('limit'));
+    act(() => hook.result.current.setTif('Alo'));
+    act(() => hook.result.current.setPrice('limitPrice', '100'));
+    act(() => hook.result.current.setAmount('100'));
+    act(() => hook.result.current.tpSl.setRawMagnitude('tp', '110'));
+    act(() => hook.result.current.tpSl.setEnabled(true));
+    await act(async () => hook.result.current.requestReview('buy'));
+    await act(async () => hook.result.current.confirmReview());
+
+    expect(mockExecuteAttached).toHaveBeenCalled();
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.orderError.aloBuyWouldMatch',
+      'error',
+    );
   });
 
   it('keeps shared overflow as a direction-neutral local click guard', async () => {
