@@ -7,6 +7,7 @@ import {
   calculateLiquidationDistance,
   type PerpsPositionDirection,
 } from './position';
+import { projectPerpsProLiquidationPrice } from './liquidation';
 
 const TARGET_DECIMALS = 2;
 const WIRE_DECIMALS = 6;
@@ -232,63 +233,13 @@ export const projectPositionLiquidationPrice = ({
   positionSize: unknown;
   tiers: readonly PerpsMaintenanceMarginTier[];
 }): string | null => {
-  const mark = positiveDecimal(markPrice);
-  const size = nonZeroAbsoluteDecimal(positionSize);
-  const targetMargin = nonNegativeDecimal(margin);
-  if (!mark || !size || !targetMargin || !Array.isArray(tiers)) {
-    return null;
-  }
-  const side = direction === 'long' ? new BigNumber(1) : new BigNumber(-1);
-
-  for (let index = 0; index < tiers.length; index += 1) {
-    const tier = tiers[index];
-    const lowerBound = nonNegativeDecimal(tier?.lowerBound);
-    const nextLowerBound =
-      index + 1 < tiers.length
-        ? nonNegativeDecimal(tiers[index + 1]?.lowerBound)
-        : null;
-    const rate = positiveDecimal(tier?.maintenanceMarginRate);
-    const deduction = nonNegativeDecimal(tier?.maintenanceDeduction);
-    if (
-      !lowerBound ||
-      !rate ||
-      !deduction ||
-      (index + 1 < tiers.length && !nextLowerBound)
-    ) {
-      return null;
-    }
-    const denominator = new BigNumber(1).minus(rate.multipliedBy(side));
-    if (denominator.isZero()) {
-      return null;
-    }
-    const currentMaintenance = size
-      .multipliedBy(mark)
-      .multipliedBy(rate)
-      .minus(deduction);
-    const candidate = mark.minus(
-      side
-        .multipliedBy(targetMargin.minus(currentMaintenance))
-        .dividedBy(size)
-        .dividedBy(denominator),
-    );
-    if (!candidate.isFinite()) {
-      continue;
-    }
-    if (candidate.lte(0)) {
-      if (direction === 'long' && lowerBound.isZero()) {
-        return '0';
-      }
-      continue;
-    }
-    const candidateNotional = size.multipliedBy(candidate);
-    if (
-      candidateNotional.gte(lowerBound) &&
-      (!nextLowerBound || candidateNotional.lt(nextLowerBound))
-    ) {
-      return candidate.toFixed();
-    }
-  }
-  return null;
+  return projectPerpsProLiquidationPrice({
+    direction,
+    margin,
+    positionSize,
+    referencePrice: markPrice,
+    tiers,
+  });
 };
 
 export const buildPositionMarginRiskProjection = ({

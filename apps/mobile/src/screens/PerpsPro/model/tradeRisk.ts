@@ -1,5 +1,12 @@
 import BigNumber from 'bignumber.js';
 
+import {
+  calculatePerpsMaintenanceMargin,
+  type PerpsMaintenanceMarginTier,
+} from '@/utils/perpsMargin';
+
+import { projectPerpsProLiquidationPrice } from './liquidation';
+
 export type PerpsProProjectedTradeRisk = {
   gap: number;
   liquidationPrice: string;
@@ -35,6 +42,7 @@ export const resolvePerpsProProjectedTradeRiskOutcome = ({
   currentPosition,
   entryPrice,
   leverage,
+  maintenanceMarginTiers,
   marginMode,
   markPrice,
   maxLeverage,
@@ -59,6 +67,7 @@ export const resolvePerpsProProjectedTradeRiskOutcome = ({
   } | null;
   entryPrice: string;
   leverage: number;
+  maintenanceMarginTiers?: readonly PerpsMaintenanceMarginTier[];
   marginMode: 'cross' | 'isolated';
   markPrice: string;
   maxLeverage: number;
@@ -108,47 +117,83 @@ export const resolvePerpsProProjectedTradeRiskOutcome = ({
   const reportedCurrentNotional = new BigNumber(
     currentPosition?.positionValue ?? Number.NaN,
   ).abs();
+  const hasMaintenanceMarginTiers =
+    Array.isArray(maintenanceMarginTiers) && maintenanceMarginTiers.length > 0;
+  const currentMaintenanceNotional =
+    reportedCurrentNotional.isFinite() && reportedCurrentNotional.gt(0)
+      ? reportedCurrentNotional
+      : currentSize.multipliedBy(mark);
   // Cross available-after-maintenance already excludes the current position's
   // maintenance. Restore it here so the calculator replaces it with the
   // projected position maintenance instead of charging both positions.
+  const tieredCurrentMaintenance =
+    currentSize.gt(0) && hasMaintenanceMarginTiers
+      ? calculatePerpsMaintenanceMargin({
+          positionNotional: currentMaintenanceNotional,
+          tiers: maintenanceMarginTiers,
+        })
+      : null;
+  if (
+    currentSize.gt(0) &&
+    hasMaintenanceMarginTiers &&
+    tieredCurrentMaintenance == null
+  ) {
+    return { kind: 'unavailable', reason: 'calculation' };
+  }
   const currentMaintenance = currentSize.gt(0)
-    ? (reportedCurrentNotional.isFinite() && reportedCurrentNotional.gt(0)
-        ? reportedCurrentNotional
-        : currentSize.multipliedBy(mark)
-      ).dividedBy(maxLeverageValue.multipliedBy(2))
+    ? hasMaintenanceMarginTiers
+      ? new BigNumber(tieredCurrentMaintenance ?? Number.NaN)
+      : currentMaintenanceNotional.dividedBy(maxLeverageValue.multipliedBy(2))
     : new BigNumber(0);
+  const crossRiskMargin = new BigNumber(
+    crossMarginAvailableAfterMaintenance ?? Number.NaN,
+  ).plus(currentMaintenance);
+  const projectedInitialMargin = notional.dividedBy(leverageValue);
+  // Hyperliquid's web estimator still projects a valid liquidation price when
+  // the typed size exceeds today's available balance. Model that display-only
+  // top-up to the order's initial-margin requirement without changing Max or
+  // submission eligibility.
   const margin =
     marginMode === 'cross'
-      ? new BigNumber(crossMarginAvailableAfterMaintenance ?? Number.NaN).plus(
-          currentMaintenance,
-        )
+      ? crossRiskMargin.isFinite()
+        ? BigNumber.max(crossRiskMargin, projectedInitialMargin)
+        : crossRiskMargin
       : sameDirection
       ? new BigNumber(currentPosition?.marginUsed ?? 0).plus(
           orderSize.multipliedBy(entry).dividedBy(leverageValue),
         )
-      : notional.dividedBy(leverageValue);
+      : projectedInitialMargin;
   if (!margin.isFinite() || margin.lte(0)) {
     return { kind: 'unavailable', reason: 'margin' };
   }
 
-  const liquidation = calculateLiquidationPrice(
-    projectedEntry.toNumber(),
-    margin.toNumber(),
-    side === 'buy' ? 'Long' : 'Short',
-    projectedSize.toNumber(),
-    notional.toNumber(),
-    maxLeverage,
-  );
-  if (!Number.isFinite(liquidation)) {
+  const liquidationValue = hasMaintenanceMarginTiers
+    ? projectPerpsProLiquidationPrice({
+        direction: side === 'buy' ? 'long' : 'short',
+        margin,
+        positionSize: projectedSize,
+        referencePrice: projectedEntry,
+        tiers: maintenanceMarginTiers,
+      })
+    : calculateLiquidationPrice(
+        projectedEntry.toNumber(),
+        margin.toNumber(),
+        side === 'buy' ? 'Long' : 'Short',
+        projectedSize.toNumber(),
+        notional.toNumber(),
+        maxLeverage,
+      );
+  const liquidation = new BigNumber(liquidationValue ?? Number.NaN);
+  if (!liquidation.isFinite()) {
     return { kind: 'unavailable', reason: 'calculation' };
   }
-  if (liquidation <= 0) return { kind: 'noPositivePrice' };
+  if (liquidation.lte(0)) return { kind: 'noPositivePrice' };
 
   return {
     kind: 'price',
     risk: {
-      gap: new BigNumber(liquidation).minus(mark).dividedBy(mark).toNumber(),
-      liquidationPrice: new BigNumber(liquidation).toFixed(pxDecimals),
+      gap: liquidation.minus(mark).dividedBy(mark).toNumber(),
+      liquidationPrice: liquidation.toFixed(pxDecimals),
       projectedEntryPrice: projectedEntry.toFixed(),
       projectedSize: projectedSize.toFixed(),
     },

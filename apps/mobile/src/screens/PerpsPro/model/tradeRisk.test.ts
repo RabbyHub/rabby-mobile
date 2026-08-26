@@ -97,6 +97,52 @@ describe('resolvePerpsProProjectedTradeRisk', () => {
     );
   });
 
+  it('matches the large BTC web estimator by projecting display-only initial margin', () => {
+    const maintenanceMarginTiers = [
+      {
+        lowerBound: '0',
+        maintenanceDeduction: '0',
+        maintenanceMarginRate: '0.0125',
+        maxLeverage: 40,
+      },
+    ];
+
+    const long = resolve({
+      baseSize: '20',
+      crossMarginAvailableAfterMaintenance: '23.59',
+      entryPrice: '78930.5',
+      leverage: 17,
+      maintenanceMarginTiers,
+      marginMode: 'cross',
+      markPrice: '78930.5',
+      maxLeverage: 40,
+      pxDecimals: 0,
+      side: 'buy',
+    });
+    const short = resolve({
+      baseSize: '20',
+      crossMarginAvailableAfterMaintenance: '27.10',
+      entryPrice: '78894.5',
+      leverage: 17,
+      maintenanceMarginTiers,
+      marginMode: 'cross',
+      markPrice: '78894.5',
+      maxLeverage: 40,
+      pxDecimals: 0,
+      side: 'sell',
+    });
+
+    expect(long).toMatchObject({
+      liquidationPrice: '75228',
+      projectedSize: '20',
+    });
+    expect(short).toMatchObject({
+      liquidationPrice: '82504',
+      projectedSize: '20',
+    });
+    expect(calculateLiquidationPrice).not.toHaveBeenCalled();
+  });
+
   it('replaces current target maintenance when projecting cross-position growth', () => {
     resolve({
       currentPosition: {
