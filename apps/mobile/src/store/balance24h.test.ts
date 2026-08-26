@@ -52,14 +52,6 @@ describe('store/balance24h', () => {
     jest.doMock('@/utils/number', () => ({
       formatUsdValue: jest.fn(() => '$1'),
     }));
-    jest.doMock('@/core/apis/account', () => ({
-      getTop10MyAccounts: (...args: unknown[]) =>
-        mockGetTop10MyAccounts(...args),
-    }));
-    jest.doMock('@/hooks/appSettings', () => ({
-      isHomeAssetSelectionExperimentEnabled: (...args: unknown[]) =>
-        mockIsHomeAssetSelectionExperimentEnabled(...args),
-    }));
     jest.doMock('@/core/services', () => ({
       keyringService: {
         on: jest.fn(),
@@ -70,6 +62,14 @@ describe('store/balance24h', () => {
       perfEvents: {
         emit: (...args: unknown[]) => mockPerfEmit(...args),
       },
+    }));
+    jest.doMock('@/core/apis/account', () => ({
+      getTop10MyAccounts: (...args: unknown[]) =>
+        mockGetTop10MyAccounts(...args),
+    }));
+    jest.doMock('@/hooks/appSettings', () => ({
+      isHomeAssetSelectionExperimentEnabled: (...args: unknown[]) =>
+        mockIsHomeAssetSelectionExperimentEnabled(...args),
     }));
     jest.doMock('./balance', () => ({
       __esModule: true,
@@ -204,6 +204,30 @@ describe('store/balance24h', () => {
 
     expect(mockGetTop10MyAccounts).not.toHaveBeenCalled();
     expect(mockFetch24hBalance).not.toHaveBeenCalled();
+  });
+
+  it('uses the active balance selection when a scene refresh has no explicit addresses', async () => {
+    mockGetSelectedBalanceAddressesSnapshot.mockReturnValue([
+      '0xselected-a',
+      '0xselected-b',
+    ]);
+    mockGetBalance24hCache.mockReturnValue(null);
+    mockFetch24hBalance.mockResolvedValue({
+      data: { total_usd_value: 1 },
+      updateTime: 1,
+    });
+
+    await balance24hModule.scene24hBalanceStore.refreshCombinedDataForScene(
+      'Home',
+      {
+        reason: 'manual_refresh',
+      },
+    );
+
+    expect(mockFetch24hBalance.mock.calls.map(([address]) => address)).toEqual([
+      '0xselected-a',
+      '0xselected-b',
+    ]);
   });
 
   it('updates in-memory cache before scheduling persistence when fetching fresh data', async () => {

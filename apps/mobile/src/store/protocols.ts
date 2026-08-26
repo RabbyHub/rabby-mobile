@@ -19,6 +19,7 @@ import { getSelectedBalanceAddressesSnapshot } from './balance';
 import { ResourceBaseStore } from './_resourceBase';
 import type { ObservableResourceValueSource } from './_resourceFlow';
 import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
+import { AddressBatchRefreshCoordinator } from '@/core/utils/addressBatchRefreshCoordinator';
 import { LatestAsyncRequest } from '@/core/utils/latestAsyncRequest';
 import { LatestAddressRequest } from '@/core/utils/latestAddressRequest';
 import {
@@ -92,6 +93,7 @@ type ProtocolListComputedState = {
 const COMPUTED_CACHE_LIMIT = 10;
 const PROTOCOL_ENTITY_RESOURCE_FAMILY = 'protocol.entity';
 const multiAddressProtocolRequests = new LatestAsyncRequest();
+const multiAddressProtocolBatchRefreshes = new AddressBatchRefreshCoordinator();
 const protocolAddressRequests = new LatestAddressRequest();
 
 const normalizeAddresses = (addresses: string[]) =>
@@ -449,6 +451,11 @@ const restoreProtocolProjectionIfEmpty = (
           },
         },
   );
+  const trace = beginAssetDataLoadDiagnostic(
+    'asset-projection-protocol-restore',
+    scene,
+    { addressCount: addresses.length },
+  );
 
   const request = (async () => {
     const restored = await restoreAssetProjection({
@@ -457,18 +464,43 @@ const restoreProtocolProjectionIfEmpty = (
       scene,
     });
     if (!restored) {
+      trace.finish({ reason: 'projection-missing' });
       return;
     }
+    trace.mark('projection-restored', { itemCount: restored.rows.length });
     const requiredProtocolIds = new Set<ProtocolEntityId>();
     for (const row of restored.rows) {
       if (row.type !== 'protocol') {
+        trace.finish({ reason: 'projection-invalid' });
         return;
       }
       requiredProtocolIds.add(row.id as ProtocolEntityId);
     }
 
-    if (requiredProtocolIds.size) {
-      const cachedProtocolMap = await loadProtocolSnapshots(addresses);
+    const missingProtocolIds = Array.from(requiredProtocolIds).filter(
+      protocolId => !protocolEntityResourceStore.getValue(protocolId),
+    );
+    trace.mark('entity-selection-ready', {
+      itemCount: requiredProtocolIds.size,
+    });
+    if (missingProtocolIds.length) {
+      trace.mark('entity-query-started', {
+        itemCount: missingProtocolIds.length,
+      });
+      const [cachedProtocols, cachedAppChainMap] = await Promise.all([
+        ProtocolItemEntity.batchMultiAddressProtocolsByResourceIds(
+          missingProtocolIds,
+        ),
+        AppChainEntity.queryByProtocolResourceIds(missingProtocolIds),
+      ]);
+      trace.mark('entity-query-finished', {
+        itemCount:
+          cachedProtocols.length +
+          Object.values(cachedAppChainMap).reduce(
+            (count, appChains) => count + appChains.length,
+            0,
+          ),
+      });
       const latestParamsBeforeHydrate =
         scene === 'single-address'
           ? singleProtocolsCacheParams.get(key)
@@ -483,27 +515,37 @@ const restoreProtocolProjectionIfEmpty = (
         resultBeforeHydrate !== startedResult ||
         useProtocolListStore.getState().protocolMap !== startedSourceMap
       ) {
+        trace.finish({ reason: 'state-changed-before-entity-publish' });
         return;
       }
-      const missingProtocols = getProtocolListFromProtocolMap(
-        cachedProtocolMap,
-      ).filter(protocol => {
-        const protocolId = buildProtocolEntityId(protocol);
-        return (
-          requiredProtocolIds.has(protocolId) &&
-          !protocolEntityResourceStore.getValue(protocolId)
-        );
-      });
+      const cachedAppChainProtocols = Object.entries(cachedAppChainMap).flatMap(
+        ([owner, appChains]) =>
+          appChains.map(appChain =>
+            complexProtocol2ProtocolItem(formatAppChain(appChain), owner),
+          ),
+      );
+      const missingProtocols = cachedProtocols
+        .concat(cachedAppChainProtocols)
+        .filter(protocol => {
+          const protocolId = buildProtocolEntityId(protocol);
+          return (
+            requiredProtocolIds.has(protocolId) &&
+            !protocolEntityResourceStore.getValue(protocolId)
+          );
+        });
       protocolEntityResourceStore.upsertProtocols(missingProtocols, 'hydrate');
+      trace.mark('entities-published', { itemCount: missingProtocols.length });
     }
 
     const protocolIds: ProtocolEntityId[] = [];
     for (const row of restored.rows) {
       if (row.type !== 'protocol') {
+        trace.finish({ reason: 'projection-invalid' });
         return;
       }
       const protocolId = row.id as ProtocolEntityId;
       if (!protocolEntityResourceStore.getValue(protocolId)) {
+        trace.finish({ reason: 'projection-entity-missing' });
         return;
       }
       protocolIds.push(protocolId);
@@ -523,6 +565,7 @@ const restoreProtocolProjectionIfEmpty = (
       currentResult !== startedResult ||
       useProtocolListStore.getState().protocolMap !== startedSourceMap
     ) {
+      trace.finish({ reason: 'state-changed-before-projection-publish' });
       return;
     }
 
@@ -536,6 +579,7 @@ const restoreProtocolProjectionIfEmpty = (
       defaultVisibleProtocolCount > protocolIds.length ||
       typeof foldedProtocolUsdValue !== 'string'
     ) {
+      trace.finish({ reason: 'projection-invalid' });
       return;
     }
 
@@ -567,8 +611,10 @@ const restoreProtocolProjectionIfEmpty = (
             },
           },
     );
+    trace.finish({ itemCount: protocolIds.length });
   })()
     .catch(error => {
+      trace.fail({ reason: 'restore-error' });
       console.error('[protocolProjection] restore failed', error);
     })
     .finally(() => {
@@ -772,185 +818,212 @@ export const useProtocolListStore = zCreate<ProtocolListState>((set, get) => ({
     });
   },
   async batchGetProtocols(addresses, force = false) {
-    const requestId = multiAddressProtocolRequests.next();
     const lowerAddresses = Array.from(
       new Set(addresses.map(item => item.toLowerCase())),
     );
-    const addressRequest = protocolAddressRequests.reserve(lowerAddresses);
-    const isCurrentRequest = () =>
-      multiAddressProtocolRequests.isCurrent(requestId);
-    const getCurrentAddresses = () =>
-      isCurrentRequest()
-        ? protocolAddressRequests.getCurrentAddresses(addressRequest)
-        : [];
-    if (!lowerAddresses.length) {
-      set(() => ({ isLoading: true }));
-      await new Promise(resolve => setTimeout(resolve, 0));
-      if (isCurrentRequest()) {
-        set(() => ({
-          protocolMap: {},
-          sourceSnapshotReadyByAddress: {},
-          isLoading: false,
-        }));
-      }
-      return;
-    }
-    const trace = beginAssetDataLoadDiagnostic(
-      'multi-address-protocol',
-      lowerAddresses.join('|'),
-      {
-        addressCount: lowerAddresses.length,
-        force,
-      },
-    );
-
-    try {
-      let confirmedLocalAddresses: string[] = [];
-      if (!force) {
-        const expirationByAddress = await getDataExpirationByAddress(
-          lowerAddresses,
-        );
-        const isExpired = Object.values(expirationByAddress).some(Boolean);
-        confirmedLocalAddresses = lowerAddresses.filter(
-          address => !expirationByAddress[address],
-        );
-        trace.mark('expiry-resolved', { isExpired });
-        if (!isExpired) {
-          const hasMemorySnapshot = lowerAddresses.every(address =>
-            Object.prototype.hasOwnProperty.call(get().protocolMap, address),
-          );
-          if (!hasMemorySnapshot) {
-            await protocolCacheHydrator.hydrate(lowerAddresses);
+    return multiAddressProtocolBatchRefreshes.run(
+      lowerAddresses,
+      force,
+      async ticket => {
+        const requestId = multiAddressProtocolRequests.next();
+        const addressRequest = protocolAddressRequests.reserve(lowerAddresses);
+        const isCurrentRequest = () =>
+          multiAddressProtocolRequests.isCurrent(requestId);
+        const getCurrentAddresses = () =>
+          isCurrentRequest()
+            ? protocolAddressRequests.getCurrentAddresses(addressRequest)
+            : [];
+        const isForceRequested = () => force || ticket.isForceRequested();
+        if (!lowerAddresses.length) {
+          set(() => ({ isLoading: true }));
+          await new Promise(resolve => setTimeout(resolve, 0));
+          if (isCurrentRequest()) {
+            set(() => ({
+              protocolMap: {},
+              sourceSnapshotReadyByAddress: {},
+              isLoading: false,
+            }));
           }
-          set(state => ({
-            sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
-              state.sourceSnapshotReadyByAddress,
-              confirmedLocalAddresses,
-            ),
-          }));
-          const protocolMap = get().protocolMap;
-          trace.mark('local-db-loaded', {
-            itemCount: lowerAddresses.reduce(
-              (count, address) => count + (protocolMap[address]?.length || 0),
+          return;
+        }
+        const trace = beginAssetDataLoadDiagnostic(
+          'multi-address-protocol',
+          lowerAddresses.join('|'),
+          {
+            addressCount: lowerAddresses.length,
+            force,
+          },
+        );
+
+        try {
+          let confirmedLocalAddresses: string[] = [];
+          if (!isForceRequested()) {
+            const expirationByAddress = await getDataExpirationByAddress(
+              lowerAddresses,
+            );
+            const isExpired = Object.values(expirationByAddress).some(Boolean);
+            confirmedLocalAddresses = lowerAddresses.filter(
+              address => !expirationByAddress[address],
+            );
+            trace.mark('expiry-resolved', { isExpired });
+            if (!isExpired && !isForceRequested()) {
+              const hasMemorySnapshot = lowerAddresses.every(address =>
+                Object.prototype.hasOwnProperty.call(
+                  get().protocolMap,
+                  address,
+                ),
+              );
+              if (!hasMemorySnapshot) {
+                await protocolCacheHydrator.hydrate(lowerAddresses);
+              }
+              set(state => ({
+                sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+                  state.sourceSnapshotReadyByAddress,
+                  confirmedLocalAddresses,
+                ),
+              }));
+              const protocolMap = get().protocolMap;
+              trace.mark('local-db-loaded', {
+                itemCount: lowerAddresses.reduce(
+                  (count, address) =>
+                    count + (protocolMap[address]?.length || 0),
+                  0,
+                ),
+              });
+              reportLendingUserStatusOnce({
+                addresses: lowerAddresses,
+                protocolMap,
+              });
+              trace.finish({ path: 'local-db' });
+              return;
+            }
+            if (!isExpired) {
+              confirmedLocalAddresses = [];
+              trace.mark('force-refresh-coalesced');
+            }
+          }
+
+          if (
+            !isCurrentRequest() ||
+            !protocolAddressRequests.activate(addressRequest).length
+          ) {
+            trace.finish({ path: 'stale-before-remote' });
+            return;
+          }
+          protocolCacheHydrator.invalidate(lowerAddresses);
+          set(() => ({ isLoading: true }));
+
+          trace.mark('remote-address-requests-dispatched', {
+            addressCount: lowerAddresses.length,
+          });
+          const remoteProtocolsPromise = loadProtocolsForAddresses(
+            lowerAddresses,
+            isForceRequested(),
+          ).then(
+            result => ({ status: 'fulfilled' as const, result }),
+            error => ({ status: 'rejected' as const, error }),
+          );
+          const currentProtocolMap = get().protocolMap;
+          const hasMemorySnapshot = lowerAddresses.every(address =>
+            Object.prototype.hasOwnProperty.call(currentProtocolMap, address),
+          );
+
+          if (!force && !hasMemorySnapshot) {
+            await protocolCacheHydrator.hydrate(lowerAddresses);
+            const localProtocolMap = get().protocolMap;
+            trace.mark('stale-local-db-loaded', {
+              itemCount: lowerAddresses.reduce(
+                (count, address) =>
+                  count + (localProtocolMap[address]?.length || 0),
+                0,
+              ),
+            });
+            if (isCurrentRequest()) {
+              trace.mark('stale-local-store-published');
+            }
+          } else {
+            trace.mark('memory-snapshot-retained', {
+              hasMemorySnapshot,
+            });
+          }
+          if (confirmedLocalAddresses.length) {
+            set(state => ({
+              sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+                state.sourceSnapshotReadyByAddress,
+                confirmedLocalAddresses,
+              ),
+            }));
+          }
+
+          const remoteProtocols = await remoteProtocolsPromise;
+          if (remoteProtocols.status === 'rejected') {
+            throw remoteProtocols.error;
+          }
+          const { protocolMap: resultMap, remoteProtocolMap } =
+            remoteProtocols.result;
+          trace.mark('remote-response-completed', {
+            itemCount: Object.values(resultMap).reduce(
+              (count, protocols) => count + protocols.length,
               0,
             ),
           });
-          reportLendingUserStatusOnce({
-            addresses: lowerAddresses,
-            protocolMap,
+          const currentAddresses = getCurrentAddresses();
+          if (!currentAddresses.length) {
+            trace.finish({ path: 'stale-after-remote' });
+            return;
+          }
+          const applicableProtocolMap = Object.fromEntries(
+            currentAddresses.map(address => [
+              address,
+              resultMap[address] || [],
+            ]),
+          );
+          const applicableRemoteProtocolMap = Object.fromEntries(
+            currentAddresses
+              .filter(address =>
+                Object.prototype.hasOwnProperty.call(
+                  remoteProtocolMap,
+                  address,
+                ),
+              )
+              .map(address => [address, remoteProtocolMap[address]]),
+          );
+          const nextProtocolMap = mergeAddressListSnapshots(
+            get().protocolMap,
+            currentAddresses,
+            applicableProtocolMap,
+          );
+          protocolEntityResourceStore.syncFromProtocolMap(
+            nextProtocolMap,
+            'remote',
+          );
+          protocolCacheHydrator.invalidate(currentAddresses);
+          set(state => ({
+            protocolMap: nextProtocolMap,
+            sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
+              state.sourceSnapshotReadyByAddress,
+              currentAddresses,
+            ),
+          }));
+          trace.mark('remote-store-published', {
+            addressCount: currentAddresses.length,
           });
-          trace.finish({ path: 'local-db' });
-          return;
+          void syncRemoteProtocolsForAddresses(applicableRemoteProtocolMap);
+          reportLendingUserStatusOnce({
+            addresses: currentAddresses,
+            protocolMap: applicableProtocolMap,
+          });
+          trace.finish({ path: 'local-then-remote' });
+        } catch (error) {
+          trace.fail({ phase: 'load' });
+          throw error;
+        } finally {
+          if (isCurrentRequest()) {
+            set(() => ({ isLoading: false }));
+          }
         }
-      }
-
-      if (
-        !isCurrentRequest() ||
-        !protocolAddressRequests.activate(addressRequest).length
-      ) {
-        trace.finish({ path: 'stale-before-remote' });
-        return;
-      }
-      protocolCacheHydrator.invalidate(lowerAddresses);
-      set(() => ({ isLoading: true }));
-
-      const remoteProtocolsPromise = loadProtocolsForAddresses(
-        lowerAddresses,
-        force,
-      ).then(
-        result => ({ status: 'fulfilled' as const, result }),
-        error => ({ status: 'rejected' as const, error }),
-      );
-      const currentProtocolMap = get().protocolMap;
-      const hasMemorySnapshot = lowerAddresses.every(address =>
-        Object.prototype.hasOwnProperty.call(currentProtocolMap, address),
-      );
-
-      if (!force && !hasMemorySnapshot) {
-        await protocolCacheHydrator.hydrate(lowerAddresses);
-        const localProtocolMap = get().protocolMap;
-        trace.mark('stale-local-db-loaded', {
-          itemCount: lowerAddresses.reduce(
-            (count, address) =>
-              count + (localProtocolMap[address]?.length || 0),
-            0,
-          ),
-        });
-        if (isCurrentRequest()) {
-          trace.mark('stale-local-store-published');
-        }
-      } else {
-        trace.mark('memory-snapshot-retained', {
-          hasMemorySnapshot,
-        });
-      }
-      if (confirmedLocalAddresses.length) {
-        set(state => ({
-          sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
-            state.sourceSnapshotReadyByAddress,
-            confirmedLocalAddresses,
-          ),
-        }));
-      }
-
-      const remoteProtocols = await remoteProtocolsPromise;
-      if (remoteProtocols.status === 'rejected') {
-        throw remoteProtocols.error;
-      }
-      const { protocolMap: resultMap, remoteProtocolMap } =
-        remoteProtocols.result;
-      trace.mark('remote-response-completed', {
-        itemCount: Object.values(resultMap).reduce(
-          (count, protocols) => count + protocols.length,
-          0,
-        ),
-      });
-      const currentAddresses = getCurrentAddresses();
-      if (!currentAddresses.length) {
-        trace.finish({ path: 'stale-after-remote' });
-        return;
-      }
-      const applicableProtocolMap = Object.fromEntries(
-        currentAddresses.map(address => [address, resultMap[address] || []]),
-      );
-      const applicableRemoteProtocolMap = Object.fromEntries(
-        currentAddresses
-          .filter(address =>
-            Object.prototype.hasOwnProperty.call(remoteProtocolMap, address),
-          )
-          .map(address => [address, remoteProtocolMap[address]]),
-      );
-      const nextProtocolMap = mergeAddressListSnapshots(
-        get().protocolMap,
-        currentAddresses,
-        applicableProtocolMap,
-      );
-      protocolEntityResourceStore.syncFromProtocolMap(
-        nextProtocolMap,
-        'remote',
-      );
-      protocolCacheHydrator.invalidate(currentAddresses);
-      set(state => ({
-        protocolMap: nextProtocolMap,
-        sourceSnapshotReadyByAddress: markAssetSourceSnapshotsReady(
-          state.sourceSnapshotReadyByAddress,
-          currentAddresses,
-        ),
-      }));
-      void syncRemoteProtocolsForAddresses(applicableRemoteProtocolMap);
-      reportLendingUserStatusOnce({
-        addresses: currentAddresses,
-        protocolMap: applicableProtocolMap,
-      });
-      trace.finish({ path: 'local-then-remote' });
-    } catch (error) {
-      trace.fail({ phase: 'load' });
-      throw error;
-    } finally {
-      if (isCurrentRequest()) {
-        set(() => ({ isLoading: false }));
-      }
-    }
+      },
+    );
   },
   async getProtocols(address, force = false) {
     if (!address) {

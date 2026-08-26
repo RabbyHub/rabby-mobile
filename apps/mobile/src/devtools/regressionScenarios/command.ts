@@ -262,6 +262,7 @@ export function sanitizeLinkForLogging(appLink: string) {
     'wc',
     'dapp',
     'url',
+    'host',
     'fixturepath',
   ]);
   const redactedParams = new URLSearchParams();

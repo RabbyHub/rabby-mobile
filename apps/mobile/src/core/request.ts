@@ -5,6 +5,7 @@ import { gS } from '@rabby-wallet/rabby-sign-bvm/es/sign-rabby';
 import { APP_VERSIONS } from '@/constant';
 import { openApiStore } from './storage/openapiStore';
 import { instrumentOpenApiRequestDiagnostics } from '@/utils/openapiRequestDiagnostics';
+import { normalizeBackendApiHost } from './backendApiHost';
 
 const SIGN_HDS = [
   'x-api-ts',
@@ -44,6 +45,17 @@ export const openapi = new OpenApiService({
 });
 openapi.initSync();
 instrumentOpenApiRequestDiagnostics(openapi, 'openapi');
+
+export async function setOpenApiHost(host: string) {
+  const normalizedHost = normalizeBackendApiHost(host);
+  if (!normalizedHost) {
+    throw new Error('Invalid backend API host');
+  }
+
+  await openapi.setHost(normalizedHost);
+  openApiStore.persistStoreImmediately();
+  return normalizedHost;
+}
 
 // TODO: REMOVE ME
 export const testOpenapi = new OpenApiService({
