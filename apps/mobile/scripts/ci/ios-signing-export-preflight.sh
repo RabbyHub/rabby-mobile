@@ -87,11 +87,11 @@ rm -rf "$work_dir"
 mkdir -p "$work_dir"
 
 log "download fixture archive from configured S3 URI"
-aws_args=()
 if [ "${DISABLE_AWS_CLI_HTTPS_VALIDATION:-false}" = "true" ]; then
-  aws_args+=(--no-verify-ssl)
+  aws --no-verify-ssl s3 cp "$fixture_s3_uri" "$archive_zip" --only-show-errors
+else
+  aws s3 cp "$fixture_s3_uri" "$archive_zip" --only-show-errors
 fi
-aws "${aws_args[@]}" s3 cp "$fixture_s3_uri" "$archive_zip" --only-show-errors
 
 actual_sha256="$(shasum -a 256 "$archive_zip" | awk '{print tolower($1)}')"
 assert_equal "fixture sha256" "$expected_sha256" "$actual_sha256"
