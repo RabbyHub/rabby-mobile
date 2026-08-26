@@ -21,6 +21,10 @@ export type PerpsModifyOpenOrderKind =
   | 'triggerLimit'
   | 'triggerMarket';
 export type PerpsModifyOpenOrderTriggerKind = 'stopLoss' | 'takeProfit';
+export type PerpsModifyOpenOrderStaleReason =
+  | 'accountOrDexChanged'
+  | 'orderChanged'
+  | 'orderClosed';
 
 type PerpsModifyOpenOrderWireType =
   | { limit: { tif: PerpsModifyOpenOrderTif } }
@@ -60,24 +64,33 @@ export type PerpsModifyOpenOrderCommand = {
   type: 'modifyOpenOrder';
 };
 
-export type PerpsModifyOpenOrderResult = {
+type PerpsModifyOpenOrderResultBase = {
   error?: string;
   failureReason?: 'regionRestricted' | 'requestFailed' | 'userCancelled';
-  kind:
-    | 'failed'
-    | 'filled'
-    | 'resting'
-    | 'staleContext'
-    | 'unknownOutcome'
-    | 'updated';
   oid?: number;
   refreshError?: string;
 };
 
+export type PerpsModifyOpenOrderResult =
+  | (PerpsModifyOpenOrderResultBase & {
+      kind: 'failed' | 'filled' | 'resting' | 'unknownOutcome' | 'updated';
+      latestOrder?: never;
+      staleReason?: never;
+    })
+  | (PerpsModifyOpenOrderResultBase & {
+      kind: 'staleContext';
+      latestOrder?: never;
+      staleReason: Exclude<PerpsModifyOpenOrderStaleReason, 'orderChanged'>;
+    })
+  | (PerpsModifyOpenOrderResultBase & {
+      kind: 'staleContext';
+      latestOrder: OpenOrder;
+      staleReason: 'orderChanged';
+    });
+
 export type PerpsModifyOpenOrderDependencies = {
   getCurrentAccount: () => Pick<Account, 'address' | 'type'> | null;
   getCurrentDex: (coin: string) => string;
-  getLiveOpenOrders: () => readonly OpenOrder[];
   getOrderStatus: (
     oid: number,
     address: string,
@@ -300,7 +313,6 @@ const getExchange = () => {
 const defaultDependencies: PerpsModifyOpenOrderDependencies = {
   getCurrentAccount: () => perpsStore.getState().currentPerpsAccount,
   getCurrentDex: coin => getDexByCoin(coin),
-  getLiveOpenOrders: () => perpsStore.getState().openOrders,
   getOrderStatus: (oid, address) =>
     apisPerps.getPerpsSDK().info.getOrderStatus(oid, address),
   hasPermission: () => perpsStore.getState().hasPermission,
@@ -348,14 +360,6 @@ const hasExpectedOrder = (
         ))
   );
 };
-
-const hasExpectedOrderStatus = (
-  command: PerpsModifyOpenOrderCommand,
-  response: OrderStatusResponse,
-) =>
-  response.status === 'order' &&
-  response.order.status === 'open' &&
-  hasExpectedOrder(command, [response.order.order as OpenOrder]);
 
 const isUnknownOutcomeError = (error: unknown) => {
   const message = error instanceof Error ? error.message : String(error);
@@ -470,30 +474,40 @@ export const executePerpsModifyOpenOrder = async (
   if (!dependencies.hasPermission()) {
     return { failureReason: 'regionRestricted', kind: 'failed' };
   }
-  if (
-    !hasBaseContext(command, dependencies, sceneGuard) ||
-    !hasExpectedOrder(command, dependencies.getLiveOpenOrders())
-  ) {
-    return { kind: 'staleContext' };
+  if (!hasBaseContext(command, dependencies, sceneGuard)) {
+    return {
+      kind: 'staleContext',
+      staleReason: 'accountOrDexChanged',
+    };
   }
-  let status: OrderStatusResponse;
+  let status: OrderStatusResponse | null = null;
   try {
     status = await dependencies.getOrderStatus(
       command.oid,
       command.account.address,
     );
-  } catch (error) {
+  } catch {
+    // A failed public preflight is not proof that the order is stale. The
+    // authenticated modify endpoint remains authoritative for submission.
+  }
+  if (!hasBaseContext(command, dependencies, sceneGuard)) {
     return {
-      error: error instanceof Error ? error.message : String(error),
-      failureReason: 'requestFailed',
-      kind: 'failed',
+      kind: 'staleContext',
+      staleReason: 'accountOrDexChanged',
     };
   }
-  if (
-    !hasBaseContext(command, dependencies, sceneGuard) ||
-    !hasExpectedOrderStatus(command, status)
-  ) {
-    return { kind: 'staleContext' };
+  if (status?.status === 'order') {
+    if (status.order.status !== 'open') {
+      return { kind: 'staleContext', staleReason: 'orderClosed' };
+    }
+    const latestOrder = status.order.order as OpenOrder;
+    if (!hasExpectedOrder(command, [latestOrder])) {
+      return {
+        kind: 'staleContext',
+        latestOrder,
+        staleReason: 'orderChanged',
+      };
+    }
   }
   try {
     if (!dependencies.hasPermission()) {
@@ -509,9 +523,6 @@ export const executePerpsModifyOpenOrder = async (
       sz: command.replacement.baseSize,
     });
     const outcome = parseModifyOrderResponse(response);
-    if (!hasBaseContext(command, dependencies, sceneGuard)) {
-      return { kind: 'staleContext' };
-    }
     if (outcome.kind === 'failed') {
       return { ...outcome, failureReason: 'requestFailed' };
     }

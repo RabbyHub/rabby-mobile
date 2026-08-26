@@ -3006,6 +3006,8 @@
           "editUnavailable": "This order type cannot be edited here.",
           "invalidEdit": "Review the new price and amount.",
           "editContextChanged": "The account or order changed. Review again.",
+          "editOrderChanged": "The order changed. Review the updated order.",
+          "editOrderClosed": "This order is no longer open.",
           "editSubmitted": "Order updated.",
           "editFailed": "Failed to update order.",
           "editUnknown": "The update outcome is unknown. Check Open Orders and Positions before retrying.",

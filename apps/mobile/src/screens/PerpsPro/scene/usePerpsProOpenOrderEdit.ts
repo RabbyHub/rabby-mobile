@@ -67,24 +67,34 @@ const getOrderIdentity = (
   order: Pick<PerpsOpenOrderViewModel, 'coin' | 'oid'>,
 ) => `${order.coin}\u0000${order.oid}`;
 
-const equalDecimal = (left: string | null, right: string | null) =>
-  left === right ||
-  (!!left && !!right && new BigNumber(left).eq(new BigNumber(right)));
-
-const hasSameEditableFingerprint = (
-  left: PerpsOpenOrderViewModel,
-  right: PerpsOpenOrderViewModel,
-) =>
-  left.editKind === right.editKind &&
-  left.orderType === right.orderType &&
-  left.side === right.side &&
-  left.reduceOnly === right.reduceOnly &&
-  left.isPositionTpsl === right.isPositionTpsl &&
-  left.tif === right.tif &&
-  left.cloid === right.cloid &&
-  equalDecimal(left.limitPrice, right.limitPrice) &&
-  equalDecimal(left.triggerPrice, right.triggerPrice) &&
-  equalDecimal(left.remainingSize, right.remainingSize);
+const buildEditorState = ({
+  account,
+  amountUnit,
+  market,
+  order,
+  position,
+}: CommonEditorState & { position?: PerpsPositionViewModel | null }) => {
+  if (order.editKind === 'limit' && order.executionPrice) {
+    return {
+      account: { ...account },
+      amountUnit,
+      category: 'basic' as const,
+      market,
+      order: { ...order },
+    };
+  }
+  if (order.editKind && order.editKind !== 'limit') {
+    return {
+      account: { ...account },
+      amountUnit,
+      category: 'conditional' as const,
+      market,
+      order: { ...order },
+      position: position ? { ...position } : null,
+    };
+  }
+  return null;
+};
 
 export const usePerpsProOpenOrderEdit = (
   accountIdentity: string,
@@ -162,7 +172,7 @@ export const usePerpsProOpenOrderEdit = (
       }
       const session = sessionRef.current;
       openRequestRef.current = true;
-      let verifiedOrder: PerpsOpenOrderViewModel;
+      let verifiedOrder = order;
       try {
         const status = await apisPerps
           .getPerpsSDK()
@@ -176,32 +186,31 @@ export const usePerpsProOpenOrderEdit = (
         ) {
           return;
         }
-        if (status.status !== 'order' || status.order.status !== 'open') {
-          markUnavailable(order);
+        if (status.status === 'order') {
+          if (status.order.status !== 'open') {
+            markUnavailable(order);
+            showToast(t('page.perps.pro.openOrders.editOrderClosed'), 'error');
+            return;
+          }
+          verifiedOrder = buildPerpsOpenOrderViewModel(
+            status.order.order as OpenOrder,
+          );
+        }
+        if (getOrderIdentity(order) !== getOrderIdentity(verifiedOrder)) {
           showToast(t('page.perps.pro.openOrders.editContextChanged'), 'error');
           return;
         }
-        verifiedOrder = buildPerpsOpenOrderViewModel(
-          status.order.order as OpenOrder,
-        );
-        if (!verifiedOrder.editKind) {
-          markUnavailable(order);
-          showToast(t('page.perps.pro.openOrders.editUnavailable'), 'error');
-          return;
-        }
-        if (!hasSameEditableFingerprint(order, verifiedOrder)) {
-          showToast(t('page.perps.pro.openOrders.editContextChanged'), 'error');
-          return;
-        }
-      } catch (error) {
-        const message = getErrorMessage(error);
-        showToast(
-          message || t('page.perps.pro.openOrders.editFailed'),
-          'error',
-        );
-        return;
+      } catch {
+        // Public orderStatus is a best-effort preflight. A transport failure is
+        // not proof that the Store order is stale, so final submit remains
+        // available to the authenticated modify endpoint.
       } finally {
         openRequestRef.current = false;
+      }
+      if (!verifiedOrder.editKind) {
+        markUnavailable(order);
+        showToast(t('page.perps.pro.openOrders.editUnavailable'), 'error');
+        return;
       }
       const descriptor = buildPerpsProMarketDescriptor(marketData);
       const market: PerpsProOpenOrderEditMarketSnapshot = {
@@ -215,25 +224,13 @@ export const usePerpsProOpenOrderEdit = (
         sourceTag: descriptor.sourceTag,
         szDecimals: marketData.szDecimals,
       };
-      let next: PerpsProOpenOrderEditEditorState | null = null;
-      if (verifiedOrder.editKind === 'limit' && verifiedOrder.executionPrice) {
-        next = {
-          account: { ...account },
-          amountUnit: tradeAmountUnit,
-          category: 'basic',
-          market,
-          order: { ...verifiedOrder },
-        };
-      } else if (verifiedOrder.editKind !== 'limit') {
-        next = {
-          account: { ...account },
-          amountUnit: tradeAmountUnit,
-          category: 'conditional',
-          market,
-          order: { ...verifiedOrder },
-          position: position ? { ...position } : null,
-        };
-      }
+      const next = buildEditorState({
+        account,
+        amountUnit: tradeAmountUnit,
+        market,
+        order: verifiedOrder,
+        position,
+      });
       if (!next) {
         showToast(t('page.perps.pro.openOrders.editUnavailable'), 'error');
         return;
@@ -298,8 +295,46 @@ export const usePerpsProOpenOrderEdit = (
           return;
         }
         if (result.kind === 'staleContext') {
+          if (result.staleReason === 'orderClosed') {
+            markUnavailable(editorSnapshot.order);
+            showToast(t('page.perps.pro.openOrders.editOrderClosed'), 'error');
+            finish();
+            return;
+          }
+          if (result.staleReason === 'orderChanged') {
+            const latestOrder = buildPerpsOpenOrderViewModel(
+              result.latestOrder,
+            );
+            const nextEditor =
+              getOrderIdentity(latestOrder) ===
+              getOrderIdentity(editorSnapshot.order)
+                ? buildEditorState({
+                    account: editorSnapshot.account,
+                    amountUnit: editorSnapshot.amountUnit,
+                    market: editorSnapshot.market,
+                    order: latestOrder,
+                    position:
+                      editorSnapshot.category === 'conditional'
+                        ? editorSnapshot.position
+                        : null,
+                  })
+                : null;
+            if (nextEditor) {
+              setSkipConfirmation(false);
+              setReview(null);
+              setEditor(nextEditor);
+              showToast(
+                t('page.perps.pro.openOrders.editOrderChanged'),
+                'error',
+              );
+              return;
+            }
+            markUnavailable(editorSnapshot.order);
+            showToast(t('page.perps.pro.openOrders.editUnavailable'), 'error');
+            finish();
+            return;
+          }
           showToast(t('page.perps.pro.openOrders.editContextChanged'), 'error');
-          markUnavailable(editorSnapshot.order);
           finish();
           return;
         }

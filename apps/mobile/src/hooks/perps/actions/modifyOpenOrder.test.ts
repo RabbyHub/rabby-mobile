@@ -97,7 +97,6 @@ const dependencies = (
 ): PerpsModifyOpenOrderDependencies => ({
   getCurrentAccount: () => account,
   getCurrentDex: () => '',
-  getLiveOpenOrders: () => [liveOrder],
   getOrderStatus: jest.fn(async () => ({
     order: {
       order: liveOrder,
@@ -152,7 +151,6 @@ describe('Perps modify open order action', () => {
 
   it('modifies an opening Trigger Market directly and preserves its protection ratio', async () => {
     const deps = dependencies({
-      getLiveOpenOrders: () => [triggerMarketOrder],
       getOrderStatus: jest.fn(async () => ({
         order: {
           order: triggerMarketOrder,
@@ -252,21 +250,37 @@ describe('Perps modify open order action', () => {
     expect(deps.refreshClearinghouse).not.toHaveBeenCalled();
   });
 
-  it('fails stale before signing when the live remaining size changed', async () => {
+  it('returns the authoritative latest order when its remaining size changed', async () => {
+    const latestOrder = { ...liveOrder, sz: '0.0039' };
     const deps = dependencies({
-      getLiveOpenOrders: () => [{ ...liveOrder, sz: '0.0039' }],
+      getOrderStatus: jest.fn(async () => ({
+        order: {
+          order: latestOrder,
+          status: 'open',
+          statusTimestamp: 2,
+        },
+        status: 'order',
+      })),
     });
     await expect(executePerpsModifyOpenOrder(command(), deps)).resolves.toEqual(
-      { kind: 'staleContext' },
+      {
+        kind: 'staleContext',
+        latestOrder,
+        staleReason: 'orderChanged',
+      },
     );
     expect(deps.modifyOrder).not.toHaveBeenCalled();
   });
 
   it('fails stale before signing when orderStatus exposes attached children', async () => {
+    const latestOrder = {
+      ...liveOrder,
+      children: [{ ...liveOrder, oid: 8 }],
+    };
     const deps = dependencies({
       getOrderStatus: jest.fn(async () => ({
         order: {
-          order: { ...liveOrder, children: [{ ...liveOrder, oid: 8 }] },
+          order: latestOrder,
           status: 'open',
           statusTimestamp: 1,
         },
@@ -274,23 +288,73 @@ describe('Perps modify open order action', () => {
       })),
     });
     await expect(executePerpsModifyOpenOrder(command(), deps)).resolves.toEqual(
-      { kind: 'staleContext' },
+      {
+        kind: 'staleContext',
+        latestOrder,
+        staleReason: 'orderChanged',
+      },
     );
     expect(deps.modifyOrder).not.toHaveBeenCalled();
   });
 
-  it('matches the frozen order by coin and oid when ids overlap across markets', async () => {
+  it('lets the authenticated modify endpoint decide after unknownOid', async () => {
     const deps = dependencies({
-      getLiveOpenOrders: () => [
-        { ...liveOrder, coin: 'ETH', sz: '9' },
-        liveOrder,
-      ],
+      getOrderStatus: jest.fn(async () => ({ status: 'unknownOid' })),
     });
 
     await expect(executePerpsModifyOpenOrder(command(), deps)).resolves.toEqual(
       { kind: 'updated', refreshError: undefined },
     );
     expect(deps.modifyOrder).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets the authenticated modify endpoint decide after orderStatus transport failure', async () => {
+    const deps = dependencies({
+      getOrderStatus: jest.fn(async () => {
+        throw new Error('failed to fetch order status');
+      }),
+    });
+
+    await expect(executePerpsModifyOpenOrder(command(), deps)).resolves.toEqual(
+      { kind: 'updated', refreshError: undefined },
+    );
+    expect(deps.modifyOrder).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not submit an order that orderStatus says is no longer open', async () => {
+    const deps = dependencies({
+      getOrderStatus: jest.fn(async () => ({
+        order: {
+          order: liveOrder,
+          status: 'canceled',
+          statusTimestamp: 2,
+        },
+        status: 'order',
+      })),
+    });
+
+    await expect(executePerpsModifyOpenOrder(command(), deps)).resolves.toEqual(
+      { kind: 'staleContext', staleReason: 'orderClosed' },
+    );
+    expect(deps.modifyOrder).not.toHaveBeenCalled();
+  });
+
+  it('preserves a known server acceptance after dispatch even if the account changes', async () => {
+    let currentAccount = account;
+    const deps = dependencies({
+      getCurrentAccount: () => currentAccount,
+      modifyOrder: jest.fn(async () => {
+        currentAccount = {
+          ...account,
+          address: '0x0000000000000000000000000000000000000002',
+        };
+        return { response: { type: 'default' }, status: 'ok' };
+      }),
+    });
+
+    await expect(executePerpsModifyOpenOrder(command(), deps)).resolves.toEqual(
+      { kind: 'updated', refreshError: undefined },
+    );
   });
 
   it('refreshes both position and orders when the replacement fills', async () => {

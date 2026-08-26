@@ -117,11 +117,7 @@ describe('Perps Pro open order edit lifecycle integration', () => {
     const dependencies: PerpsModifyOpenOrderDependencies = {
       getCurrentAccount: () => account,
       getCurrentDex: () => '',
-      getLiveOpenOrders: () => [liveOrder],
-      getOrderStatus: async () => ({
-        order: { order: liveOrder, status: 'open', statusTimestamp: 1 },
-        status: 'order',
-      }),
+      getOrderStatus: async () => ({ status: 'unknownOid' }),
       hasPermission: () => true,
       modifyOrder,
       refreshClearinghouse: jest.fn(),
@@ -226,7 +222,6 @@ describe('Perps Pro open order edit lifecycle integration', () => {
     const dependencies: PerpsModifyOpenOrderDependencies = {
       getCurrentAccount: () => account,
       getCurrentDex: () => '',
-      getLiveOpenOrders: () => [liveOrder],
       getOrderStatus: async () => ({
         order: { order: liveOrder, status: 'open', statusTimestamp: 1 },
         status: 'order',

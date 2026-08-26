@@ -421,6 +421,140 @@ describe('usePerpsProOpenOrderEdit', () => {
     expect(hook.result.current.isEditUnavailable(basicOrder)).toBe(true);
   });
 
+  it('opens with the authoritative orderStatus values when the Store snapshot is behind', async () => {
+    mockGetOrderStatus.mockResolvedValueOnce({
+      order: {
+        order: {
+          ...basicOrder,
+          children: [],
+          limitPx: '105',
+          origSz: '1',
+          side: 'B',
+          sz: '0.4',
+          triggerPx: '0',
+        },
+        status: 'open',
+        statusTimestamp: 2,
+      },
+      status: 'order',
+    });
+    const hook = renderHook(() =>
+      usePerpsProOpenOrderEdit('account-a', 'base'),
+    );
+    await act(async () => hook.result.current.open(basicOrder));
+
+    expect(hook.result.current.editor?.order).toMatchObject({
+      limitPrice: '105',
+      remainingSize: '0.4',
+    });
+    expect(mockShowToast).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['unknownOid', () => Promise.resolve({ status: 'unknownOid' })],
+    [
+      'transport failure',
+      () => Promise.reject(new Error('failed to fetch order status')),
+    ],
+  ])('keeps editing available after %s preflight', async (_name, response) => {
+    mockGetOrderStatus.mockImplementationOnce(response);
+    const hook = renderHook(() =>
+      usePerpsProOpenOrderEdit('account-a', 'base'),
+    );
+    await act(async () => hook.result.current.open(basicOrder));
+
+    expect(hook.result.current.editor?.order).toMatchObject({ oid: 1 });
+    expect(mockShowToast).not.toHaveBeenCalled();
+  });
+
+  it('hides an order that orderStatus says is no longer open', async () => {
+    mockGetOrderStatus.mockResolvedValueOnce({
+      order: {
+        order: basicOrder,
+        status: 'canceled',
+        statusTimestamp: 2,
+      },
+      status: 'order',
+    });
+    const hook = renderHook(() =>
+      usePerpsProOpenOrderEdit('account-a', 'base'),
+    );
+    await act(async () => hook.result.current.open(basicOrder));
+
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.openOrders.editOrderClosed',
+      'error',
+    );
+    expect(hook.result.current.editor).toBeNull();
+    expect(hook.result.current.isEditUnavailable(basicOrder)).toBe(true);
+  });
+
+  it('rebases the editor and requires confirmation again when preflight finds a changed order', async () => {
+    const latestOrder = {
+      ...basicOrder,
+      children: [],
+      limitPx: '101',
+      origSz: '1',
+      side: 'B',
+      sz: '0.4',
+      triggerPx: '0',
+    };
+    mockExecuteModify.mockResolvedValueOnce({
+      kind: 'staleContext',
+      latestOrder,
+      staleReason: 'orderChanged',
+    });
+    const hook = renderHook(() =>
+      usePerpsProOpenOrderEdit('account-a', 'base'),
+    );
+    await act(async () => hook.result.current.open(basicOrder));
+    await act(async () => {
+      await hook.result.current.requestBasicReview({
+        amount: '0.5',
+        amountTouched: false,
+        price: '120',
+      });
+    });
+    await act(async () => hook.result.current.confirm());
+
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.openOrders.editOrderChanged',
+      'error',
+    );
+    expect(hook.result.current.review).toBeNull();
+    expect(hook.result.current.editor?.order).toMatchObject({
+      limitPrice: '101',
+      remainingSize: '0.4',
+    });
+    expect(hook.result.current.isEditUnavailable(basicOrder)).toBe(false);
+  });
+
+  it('closes the editor when final preflight finds the order closed', async () => {
+    mockExecuteModify.mockResolvedValueOnce({
+      kind: 'staleContext',
+      staleReason: 'orderClosed',
+    });
+    const hook = renderHook(() =>
+      usePerpsProOpenOrderEdit('account-a', 'base'),
+    );
+    await act(async () => hook.result.current.open(basicOrder));
+    await act(async () => {
+      await hook.result.current.requestBasicReview({
+        amount: '0.5',
+        amountTouched: false,
+        price: '120',
+      });
+    });
+    await act(async () => hook.result.current.confirm());
+
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.openOrders.editOrderClosed',
+      'error',
+    );
+    expect(hook.result.current.editor).toBeNull();
+    expect(hook.result.current.review).toBeNull();
+  });
+
   it('shows one explicit backend Conditional error without canceling the order', async () => {
     mockExecuteModify.mockResolvedValue({
       failureReason: 'requestFailed',
