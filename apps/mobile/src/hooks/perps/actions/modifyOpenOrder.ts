@@ -27,8 +27,8 @@ type PerpsModifyOpenOrderWireType =
   | {
       trigger: {
         isMarket: boolean;
-        tpsl: 'sl' | 'tp';
         triggerPx: string;
+        tpsl: 'sl' | 'tp';
       };
     };
 
@@ -256,8 +256,10 @@ export const buildPerpsModifyOpenOrderCommand = ({
       : {
           trigger: {
             isMarket: editKind === 'triggerMarket',
-            tpsl: triggerKind === 'takeProfit' ? 'tp' : 'sl',
+            // Hyperliquid signs the msgpack insertion order. Keep the
+            // protocol-canonical isMarket -> triggerPx -> tpsl sequence.
             triggerPx: normalizedTrigger!,
+            tpsl: triggerKind === 'takeProfit' ? 'tp' : 'sl',
           },
         };
   return Object.freeze({

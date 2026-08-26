@@ -173,11 +173,19 @@ describe('Perps modify open order action', () => {
         baseSize: '0.5',
         limitPrice: '110.4',
         orderType: {
-          trigger: { isMarket: true, tpsl: 'tp', triggerPx: '120' },
+          trigger: { isMarket: true, triggerPx: '120', tpsl: 'tp' },
         },
         triggerPrice: '120',
       },
     });
+    const trigger = triggerCommand().replacement.orderType as {
+      trigger: Record<string, unknown>;
+    };
+    expect(Object.keys(trigger.trigger)).toEqual([
+      'isMarket',
+      'triggerPx',
+      'tpsl',
+    ]);
     await expect(
       executePerpsModifyOpenOrder(triggerCommand(), deps),
     ).resolves.toEqual({ kind: 'updated', refreshError: undefined });
@@ -187,7 +195,7 @@ describe('Perps modify open order action', () => {
       limitPx: '110.4',
       oid: 9,
       orderType: {
-        trigger: { isMarket: true, tpsl: 'tp', triggerPx: '120' },
+        trigger: { isMarket: true, triggerPx: '120', tpsl: 'tp' },
       },
       reduceOnly: false,
       sz: '0.5',
@@ -223,7 +231,7 @@ describe('Perps modify open order action', () => {
         baseSize: '0',
         limitPrice: '91',
         orderType: {
-          trigger: { isMarket: false, tpsl: 'sl', triggerPx: '96' },
+          trigger: { isMarket: false, triggerPx: '96', tpsl: 'sl' },
         },
       },
     });
