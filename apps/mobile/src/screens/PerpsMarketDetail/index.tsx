@@ -142,7 +142,8 @@ export const PerpsMarketDetailScreen = () => {
   //   // eslint-disable-next-line react-hooks/exhaustive-deps
   // }, []);
 
-  const { activeAssetCtx, activeAssetData } = useActiveAssetSubscription(coin);
+  const { activeAssetCtx, activeAssetData, refreshActiveAssetData } =
+    useActiveAssetSubscription(coin);
 
   const [positionDirection, setPositionDirection] = React.useState<
     'Long' | 'Short'
@@ -639,6 +640,8 @@ export const PerpsMarketDetailScreen = () => {
       />
       <PerpsOpenPositionPopup
         activeAssetCtx={activeAssetCtx}
+        activeAssetData={activeAssetData}
+        refreshActiveAssetData={refreshActiveAssetData}
         currentAssetCtx={currentAssetCtx}
         marketDataItem={currentAssetCtx}
         visible={openPositionVisible}
@@ -762,6 +765,8 @@ export const PerpsMarketDetailScreen = () => {
           markPrice={markPrice}
           direction={positionData?.direction as 'Long' | 'Short'}
           positionSize={positionData?.size.toString() || '0'}
+          entryPrice={positionData?.entryPrice || 0}
+          positionValue={positionData?.positionValue || 0}
           szDecimals={currentAssetCtx?.szDecimals || 0}
           pxDecimals={currentAssetCtx?.pxDecimals || 2}
           leverage={positionData?.leverage || 1}

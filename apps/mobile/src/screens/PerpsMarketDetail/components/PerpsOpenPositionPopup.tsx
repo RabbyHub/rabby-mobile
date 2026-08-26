@@ -60,13 +60,18 @@ import {
 import { PerpEditTpSlPriceTag } from './PerpEditTpSlPriceTag';
 import { PerpEditLimitPriceTag } from './PerpEditLimitPriceTag';
 import { useMarketSlippage } from '../hooks/useMarketSlippage';
+import { useCrossMarginAvailableAfterMaintenance } from '../hooks/useCrossMarginAvailable';
 import { PerpsSlider } from './PerpsSlider';
-import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
+import {
+  WsActiveAssetCtx,
+  WsActiveAssetData,
+} from '@rabby-wallet/hyperliquid-sdk';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
 import IconOrderTypeSwitch from '@/assets2024/icons/perps/IconOrderTypeSwitch.svg';
 import { PerpMarginModePopup } from './PerpMarginModePopup';
 import { useShallow } from 'zustand/shallow';
-import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
+import { resolvePerpsProProjectedTradeRisk } from '@/screens/PerpsPro/model/tradeRisk';
+import { usePerpsProLeverageUpdate } from '@/screens/PerpsPro/scene/usePerpsProLeverageUpdate';
 import { showToast } from '@/hooks/perps/showToast';
 import { stats } from '@/utils/stats';
 import { APP_VERSIONS } from '@/constant';
@@ -95,6 +100,8 @@ export const PerpsOpenPositionPopup: React.FC<{
   onConfirm: () => void;
   marketDataItem?: MarketData;
   activeAssetCtx?: WsActiveAssetCtx['ctx'] | null;
+  activeAssetData?: WsActiveAssetData | null;
+  refreshActiveAssetData: () => Promise<unknown>;
   currentAssetCtx?: MarketData | null;
   handleOpenPosition: (params: {
     coin: string;
@@ -136,6 +143,8 @@ export const PerpsOpenPositionPopup: React.FC<{
   maxNtlValue,
   marketDataItem,
   activeAssetCtx,
+  activeAssetData,
+  refreshActiveAssetData,
   currentAssetCtx,
   quoteAsset = 'USDC',
   onDepositPress,
@@ -150,11 +159,18 @@ export const PerpsOpenPositionPopup: React.FC<{
     getStyle: getStyle,
   });
 
-  const { accountValue, crossMaintenanceMarginUsed } = usePerpsAccount();
+  // 对齐 Pro:全仓可用保证金按账户模式(unified/标准/PM)解析;
+  // 弹窗隐藏时冻结订阅,避免热数据帧唤醒隐藏子树
+  const crossMarginAvailableAfterMaintenance =
+    useCrossMarginAvailableAfterMaintenance({
+      dexId: currentAssetCtx?.dexId ?? '',
+      quoteAsset,
+      enabled: !!visible,
+    });
 
-  const crossMargin = React.useMemo(() => {
-    return Number(accountValue) - Number(crossMaintenanceMarginUsed || 0);
-  }, [accountValue, crossMaintenanceMarginUsed]);
+  const { update: updateLeverageRequest } = usePerpsProLeverageUpdate({
+    refreshActiveAssetData,
+  });
 
   const { t } = useTranslation();
   const [isReviewMode, setIsReviewMode] = React.useState(false);
@@ -182,6 +198,21 @@ export const PerpsOpenPositionPopup: React.FC<{
     React.useState<PerpsOpenOrderType>('market');
   const [limitPx, setLimitPx] = React.useState<string>('');
   const leverageInputRef = useRef<TextInput>(null);
+
+  const clampLeverage = useMemoizedFn((value: number) =>
+    Math.min(leverageRang[1], Math.max(leverageRang[0], Math.round(value))),
+  );
+
+  // activeAsset 订阅流里后端记录的该币对杠杆/保证金模式
+  const backendLeverage = activeAssetData?.leverage;
+  const backendMarginMode =
+    backendLeverage?.type === 'cross' || backendLeverage?.type === 'isolated'
+      ? backendLeverage.type
+      : undefined;
+  const backendLeverageValue =
+    Number(backendLeverage?.value) > 0
+      ? Number(backendLeverage?.value)
+      : undefined;
 
   const displayName = currentAssetCtx?.displayName || coin;
 
@@ -258,29 +289,46 @@ export const PerpsOpenPositionPopup: React.FC<{
     [orderType, limitPx, direction, markPrice],
   );
 
-  // 计算预估清算价格
+  // 计算预估清算价格;全仓分支复用 Pro 的推导逻辑。
+  // 返回 0/"0.00" 表示暂无有效估算,确认页会展示为 "-"
   const estimatedLiquidationPrice = React.useMemo(() => {
     const entryPx = isMarketable ? markPrice : effectivePx;
-    if (!entryPx || !leverage) {
+    if (!visible || !entryPx || !leverage) {
       return 0;
     }
 
-    const realMargin = selectedMarginMode === 'cross' ? crossMargin : margin;
-
     const maxLeverage = leverageRang[1];
+    if (selectedMarginMode === 'cross') {
+      const risk = resolvePerpsProProjectedTradeRisk({
+        baseSize: tradeSize,
+        calculateLiquidationPrice: calLiquidationPrice,
+        crossMarginAvailableAfterMaintenance,
+        currentPosition: null,
+        entryPrice: String(entryPx),
+        leverage,
+        marginMode: 'cross',
+        markPrice: String(markPrice || entryPx),
+        maxLeverage,
+        pxDecimals,
+        side: direction === 'Long' ? 'buy' : 'sell',
+      });
+      return risk?.liquidationPrice ?? (0).toFixed(pxDecimals);
+    }
+
     return calLiquidationPrice(
       entryPx,
-      Number(realMargin),
+      Number(margin),
       direction,
       Number(tradeSize),
       Number(tradeSize) * entryPx,
       maxLeverage,
     ).toFixed(pxDecimals);
   }, [
+    visible,
     isMarketable,
     markPrice,
     effectivePx,
-    crossMargin,
+    crossMarginAvailableAfterMaintenance,
     selectedMarginMode,
     leverage,
     leverageRang,
@@ -446,19 +494,33 @@ export const PerpsOpenPositionPopup: React.FC<{
       availableBalance > 2
         ? setMargin(Math.round(availableBalance / 2).toString())
         : setMargin('');
-      setLeverage(leverageRang[1]);
+      // 杠杆只在初始化时取一次后端记录的值,无则默认最大杠杆
+      setLeverage(
+        backendLeverageValue
+          ? clampLeverage(backendLeverageValue)
+          : leverageRang[1],
+      );
       resetInitValue();
       setIsReviewMode(false);
       setOrderType('market');
-      // 不允许 cross 时强制 isolated；否则读取按币对持久化的选择，默认 isolated
+      // 不允许 cross 时强制 isolated；否则优先后端记录的模式,
+      // 其次按币对持久化的选择,默认 isolated
       const persisted = perpsStore.getState().marginModeByCoin[coin];
       const nextMode: 'cross' | 'isolated' = marketDataItem?.onlyIsolated
         ? 'isolated'
-        : persisted ?? 'isolated';
+        : backendMarginMode ?? persisted ?? 'isolated';
       setSelectedMarginMode(nextMode);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
+
+  // 保证金模式立即生效后以后端值为准,订阅流更新时持续同步
+  React.useEffect(() => {
+    if (!visible || !backendMarginMode || marketDataItem?.onlyIsolated) {
+      return;
+    }
+    setSelectedMarginMode(backendMarginMode);
+  }, [visible, backendMarginMode, marketDataItem?.onlyIsolated]);
 
   useEffect(() => {
     setSelectedDirection(_direction);
@@ -1106,10 +1168,33 @@ export const PerpsOpenPositionPopup: React.FC<{
         onClose={() => {
           setIsShowMarginModePopup(false);
         }}
-        onConfirm={(mode: 'cross' | 'isolated') => {
+        onConfirm={async (mode: 'cross' | 'isolated') => {
           setIsShowMarginModePopup(false);
-          setSelectedMarginMode(mode);
-          setMarginModeForCoin(coin, mode);
+          if (mode === selectedMarginMode) {
+            return;
+          }
+          if (!currentPerpsAccount) {
+            return;
+          }
+          // 立即向后端提交保证金模式(对齐 Pro),成功后才更新本地选择;
+          // 杠杆优先用后端已记录的值,避免把弹窗本地草稿杠杆写回交易所
+          const requestLeverage = clampLeverage(
+            backendLeverageValue || selectedLeverage || 1,
+          );
+          const success = await updateLeverageRequest({
+            account: currentPerpsAccount,
+            action: 'marginMode',
+            coin,
+            currentIsCross: selectedMarginMode === 'cross',
+            currentLeverage: requestLeverage,
+            isCross: mode === 'cross',
+            leverage: requestLeverage,
+            maxLeverage: leverageRang[1],
+          });
+          if (success) {
+            setSelectedMarginMode(mode);
+            setMarginModeForCoin(coin, mode);
+          }
         }}
       />
     </>
