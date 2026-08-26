@@ -48,6 +48,8 @@ import BigNumber from 'bignumber.js';
 import TickerTexts, { TickItem } from '@/components/Animated/TickerText';
 import Animated, {
   Easing,
+  Extrapolation,
+  interpolate,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -206,8 +208,9 @@ export const PerpsAccountCard: React.FC = () => {
   const toggleChart = useMemoizedFn((next: boolean) => {
     setIsChartExpanded(next);
     expandProgress.value = withTiming(next ? 1 : 0, {
-      duration: 200,
-      easing: Easing.inOut(Easing.ease),
+      duration: 300,
+      // Material's standard curve — quick start, soft landing.
+      easing: Easing.bezier(0.4, 0, 0.2, 1),
     });
     if (next) {
       setRenderExpandedChart(true);
@@ -217,13 +220,20 @@ export const PerpsAccountCard: React.FC = () => {
     if (isChartExpanded || !renderExpandedChart) {
       return;
     }
-    const timer = setTimeout(() => setRenderExpandedChart(false), 200);
+    const timer = setTimeout(() => setRenderExpandedChart(false), 300);
     return () => clearTimeout(timer);
   }, [isChartExpanded, renderExpandedChart]);
 
   const expandedBlockStyle = useAnimatedStyle(() => ({
     height: expandProgress.value * EXPANDED_BLOCK_HEIGHT,
-    opacity: expandProgress.value,
+    // Fade the content in after the height is mostly there (and out first
+    // on collapse) — height and opacity moving in lockstep reads as abrupt.
+    opacity: interpolate(
+      expandProgress.value,
+      [0, 0.4, 1],
+      [0, 0.1, 1],
+      Extrapolation.CLAMP,
+    ),
   }));
 
   const canExpandChart = !!portfolioData && !isPortfolioEmpty;
