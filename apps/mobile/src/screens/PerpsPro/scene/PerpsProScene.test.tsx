@@ -850,6 +850,11 @@ describe('PerpsProScene market loading states', () => {
     expect(
       screen.getByTestId('perps-pro-trade-scroll-bridge').props.scrollEnabled,
     ).toBe(true);
+    expect(
+      screen.getByTestId('perps-pro-scroll-account', {
+        includeHiddenElements: true,
+      }),
+    ).toBeOnTheScreen();
   });
 
   it('observes a new touch without taking ownership from child gestures', () => {
@@ -1162,6 +1167,11 @@ describe('PerpsProScene market loading states', () => {
 
     const scroll = screen.getByTestId('perps-pro-scroll');
     expect(scroll.props.scrollEnabled).toBe(false);
+    expect(
+      screen.queryByTestId('perps-pro-scroll-positions', {
+        includeHiddenElements: true,
+      }),
+    ).toBeNull();
     expect(
       screen.getByTestId('perps-pro-trade-scroll-bridge').props.scrollEnabled,
     ).toBe(false);

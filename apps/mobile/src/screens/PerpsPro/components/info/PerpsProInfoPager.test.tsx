@@ -96,6 +96,7 @@ const createScrollBridge = (
 const renderPager = ({
   activeTab = 'positions',
   authorizeNativePageGestures = false,
+  keepAllTabsMounted = false,
   nativeVerticalScrollEnabled = true,
   onActivateOffset = jest.fn(),
   onPageDragStart = jest.fn(),
@@ -107,6 +108,7 @@ const renderPager = ({
 }: {
   activeTab?: PerpsProInfoTab;
   authorizeNativePageGestures?: boolean;
+  keepAllTabsMounted?: boolean;
   nativeVerticalScrollEnabled?: boolean;
   onActivateOffset?: jest.Mock;
   onPageDragStart?: jest.Mock;
@@ -127,6 +129,7 @@ const renderPager = ({
       }}
       data={data}
       getActiveScrollOffset={() => 500}
+      keepAllTabsMounted={keepAllTabsMounted}
       nativeVerticalScrollEnabled={nativeVerticalScrollEnabled}
       onActivateOffset={onActivateOffset}
       onActiveScroll={jest.fn()}
@@ -184,6 +187,28 @@ describe('PerpsProInfoPager', () => {
       importantForAccessibility: 'no-hide-descendants',
       pointerEvents: 'none',
     });
+  });
+
+  it('keeps every iOS list mounted so preparation cannot miss a detached target', () => {
+    const scrollBridge = createScrollBridge();
+    renderPager({ keepAllTabsMounted: true, scrollBridge });
+
+    expect(screen.getByTestId('position-row')).toBeTruthy();
+    expect(
+      screen.getByTestId('open-order-row', { includeHiddenElements: true }),
+    ).toBeTruthy();
+    expect(
+      screen.getByTestId('account-row', { includeHiddenElements: true }),
+    ).toBeTruthy();
+    expect(screen.getByTestId('perps-pro-scroll').props.scrollEnabled).toBe(
+      true,
+    );
+    expect(
+      screen.getByTestId('perps-pro-scroll-account', {
+        includeHiddenElements: true,
+      }).props.scrollEnabled,
+    ).toBe(false);
+    expect(scrollBridge.targets[2].ref).toHaveBeenCalledWith(expect.anything());
   });
 
   it('keeps Android list virtualization while delegating vertical touch input', () => {
@@ -533,6 +558,11 @@ describe('PerpsProInfoPager', () => {
     expect([...getPreparedPerpsProInfoTabs('positions', null)]).toEqual([
       'positions',
       'openOrders',
+    ]);
+    expect([...getPreparedPerpsProInfoTabs('positions', null, true)]).toEqual([
+      'positions',
+      'openOrders',
+      'account',
     ]);
   });
 
