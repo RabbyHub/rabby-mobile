@@ -477,14 +477,20 @@ export const PerpsAccountCard: React.FC = () => {
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   // Shadow lives on its own wrapper: `overflow: 'hidden'` (needed to clip
   // the lower strip's corners) would clip the iOS shadow if they shared a view.
+  // Light mode only — the grayish blur is LIGHTER than a dark page and shows
+  // up as a pale halo around the bottom corners in dark mode.
   cardShadow: {
     borderRadius: 14,
-    backgroundColor: isLight ? '#FEFEFE' : colors2024['neutral-bg-1'],
-    shadowColor: '#37383F',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.06,
-    shadowRadius: 30,
-    elevation: 4,
+    backgroundColor: isLight ? '#FEFEFE' : 'transparent',
+    ...(isLight
+      ? {
+          shadowColor: '#37383F',
+          shadowOffset: { width: 0, height: 12 },
+          shadowOpacity: 0.06,
+          shadowRadius: 30,
+          elevation: 4,
+        }
+      : null),
   },
   card: {
     borderRadius: 14,
