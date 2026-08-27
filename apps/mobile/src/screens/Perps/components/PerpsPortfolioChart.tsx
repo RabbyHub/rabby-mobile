@@ -3,6 +3,7 @@ import { Pressable, View } from 'react-native';
 import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import Animated, {
+  Easing,
   useAnimatedProps,
   useAnimatedStyle,
   useSharedValue,
@@ -191,6 +192,47 @@ const ClampedCrosshair = ({ chartWidth }: { chartWidth: number }) => {
 };
 
 /**
+ * Collapsed mini chart with the same draw-on reveal as the expanded chart.
+ * Mount-triggered: it replays when the card first shows data and every time
+ * the chart collapses back (the card remounts this instance).
+ */
+const SparklineChart = ({
+  points,
+}: {
+  points: { timestamp: number; value: number }[];
+}) => {
+  const { styles } = useTheme2024({ getStyle });
+  const drawProgress = useSharedValue(0);
+  useEffect(() => {
+    drawProgress.value = withTiming(1, {
+      duration: 1000,
+      easing: Easing.bezier(0.4, 0, 0.2, 1),
+    });
+  }, [drawProgress]);
+  const drawStyle = useAnimatedStyle(() => ({
+    width: drawProgress.value * SPARKLINE_WIDTH,
+  }));
+
+  return (
+    <LineChart.Provider data={points}>
+      <Animated.View style={[styles.chartClip, drawStyle]}>
+        <LineChart
+          width={SPARKLINE_WIDTH}
+          height={SPARKLINE_HEIGHT}
+          shape={d3Shape.curveMonotoneX}>
+          <LineChart.Path
+            color={PERPS_CHART_LINE_COLOR}
+            width={1.5}
+            showInactivePath={false}>
+            <LineChart.Gradient color={PERPS_CHART_LINE_COLOR} />
+          </LineChart.Path>
+        </LineChart>
+      </Animated.View>
+    </LineChart.Provider>
+  );
+};
+
+/**
  * Expanded chart body. Lives inside LineChart.Provider so it can drive the
  * cursor shared values for the tap interaction: a single tap snaps the
  * cursor to the nearest point and auto-hides it after 2s (a long-press still
@@ -219,24 +261,39 @@ const ExpandedChartBody = ({
   );
   useEffect(() => () => clearTimeout(tapTimerRef.current), []);
 
+  // Draw-on effect: the clip window sweeps left -> right, revealing the line
+  // and its gradient. The parent keys this component by period, so every
+  // expand AND every period switch remounts it — drawProgress starts at 0 on
+  // the very first frame (resetting it in an effect would run after commit
+  // and let the new curve flash at full width for one frame).
+  const drawProgress = useSharedValue(0);
+  useEffect(() => {
+    drawProgress.value = withTiming(1, {
+      duration: 600,
+      easing: Easing.bezier(0.4, 0, 0.2, 1),
+    });
+  }, [drawProgress]);
+  const drawStyle = useAnimatedStyle(
+    () => ({
+      width: drawProgress.value * width,
+    }),
+    [width],
+  );
+
   const handleTap = (locationX: number) => {
     if (isEmpty || points.length < 2 || !width) {
       return;
     }
-    // Same x mapping as wagmi's path: timestamps scaled linearly to [0, width].
-    const t0 = points[0].timestamp;
-    const span = points[points.length - 1].timestamp - t0 || 1;
-    let nearest = 0;
-    let nearestDist = Infinity;
-    for (let i = 0; i < points.length; i++) {
-      const x = ((points[i].timestamp - t0) / span) * width;
-      const dist = Math.abs(x - locationX);
-      if (dist < nearestDist) {
-        nearestDist = dist;
-        nearest = i;
-      }
-    }
-    const snappedX = ((points[nearest].timestamp - t0) / span) * width;
+    // Same x mapping as wagmi's path: WITHOUT an xDomain it spaces points
+    // EVENLY BY INDEX (timestamps are ignored), scaleLinear [0, len-1] ->
+    // [0, width]. A timestamp-based mapping drifts wherever the sampling
+    // interval is irregular — worst at both ends of the day series.
+    const step = width / (points.length - 1);
+    const nearest = Math.min(
+      Math.max(Math.round(locationX / step), 0),
+      points.length - 1,
+    );
+    const snappedX = nearest * step;
     currentIndex.value = nearest;
     currentX.value = snappedX;
     isActive.value = true;
@@ -252,15 +309,20 @@ const ExpandedChartBody = ({
 
   return (
     <Pressable onPress={e => handleTap(e.nativeEvent.locationX)}>
-      <View style={styles.chartClip}>
+      <Animated.View style={[styles.chartClip, drawStyle]}>
         <LineChart
           width={width}
           height={EXPANDED_CHART_HEIGHT}
-          shape={d3Shape.curveLinear}>
+          shape={d3Shape.curveMonotoneX}>
           <LineChart.Path
             color={PERPS_CHART_LINE_COLOR}
             width={1.5}
-            showInactivePath={false}>
+            showInactivePath={false}
+            // No shape morphing: on a period switch the old path would still
+            // be interpolating toward the new one while the draw-on sweep
+            // reveals it, making the left end flicker vertically. The reveal
+            // is the only animation.
+            pathProps={{ isTransitionEnabled: false }}>
             <LineChart.Gradient color={PERPS_CHART_LINE_COLOR} />
           </LineChart.Path>
           {!isEmpty && (
@@ -275,7 +337,7 @@ const ExpandedChartBody = ({
             </>
           )}
         </LineChart>
-      </View>
+      </Animated.View>
     </Pressable>
   );
 };
@@ -306,12 +368,10 @@ export const PerpsPortfolioChart: React.FC<PerpsPortfolioChartProps> = ({
     if (!chartPoints.length) {
       return FLAT_ZERO_POINTS;
     }
-    if (chartPoints.length === 1) {
+    const [only] = chartPoints;
+    if (chartPoints.length === 1 && only) {
       // wagmi-charts needs at least 2 points to draw a path.
-      return [
-        chartPoints[0],
-        { ...chartPoints[0], timestamp: chartPoints[0].timestamp + 1 },
-      ];
+      return [only, { ...only, timestamp: only.timestamp + 1 }];
     }
     return chartPoints;
   }, [data, isEmpty, activePeriod]);
@@ -329,27 +389,16 @@ export const PerpsPortfolioChart: React.FC<PerpsPortfolioChartProps> = ({
   }, [points, expanded]);
 
   if (!expanded) {
-    return (
-      <LineChart.Provider data={points}>
-        <LineChart
-          width={SPARKLINE_WIDTH}
-          height={SPARKLINE_HEIGHT}
-          shape={d3Shape.curveLinear}>
-          <LineChart.Path
-            color={PERPS_CHART_LINE_COLOR}
-            width={1.5}
-            showInactivePath={false}>
-            <LineChart.Gradient color={PERPS_CHART_LINE_COLOR} />
-          </LineChart.Path>
-        </LineChart>
-      </LineChart.Provider>
-    );
+    return <SparklineChart points={points} />;
   }
 
   return (
     <View>
       <LineChart.Provider data={points}>
         <ExpandedChartBody
+          // Remount per period: the draw-on progress restarts from 0 before
+          // the new curve's first frame, so it never flashes at full width.
+          key={activePeriod}
           points={points}
           width={width}
           isEmpty={isEmpty}
