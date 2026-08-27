@@ -58,8 +58,38 @@ const isProviderOperation = (
   (item.fundingRoute === 'provider' ||
     (item.fundingRoute === undefined && isLegacyProviderOperation(item)));
 
-const isProviderPending = (item: AccountHistoryItem) =>
-  item.status === 'pending' && isProviderOperation(item);
+/**
+ * A `receive` operation is credited to the account by a third party — a bridge
+ * provider, or the HyperEVM deposit contract. Its local identity is the source
+ * chain's transaction hash while the ledger row carries Hyperliquid's own
+ * action hash, so the two can never be equal and correlation is the only way
+ * to bind them. Direct `deposit` operations keep exact-hash matching:
+ * Hyperliquid echoes the very same source transaction hash on the deposit row.
+ *
+ * This is deliberately wider than `isProviderOperation`: HyperEVM deposits are
+ * `receive` operations on the `direct` route, so keying off the provider route
+ * left them with no matching path at all and they stayed pending forever.
+ */
+const isCorrelationOnlyOperation = (item: Pick<AccountHistoryItem, 'type'>) =>
+  item.type === 'receive';
+
+const isCorrelationPending = (item: AccountHistoryItem) =>
+  item.status === 'pending' && isCorrelationOnlyOperation(item);
+
+/**
+ * How long an operation may stay unmatched before its local record is dropped.
+ * Every funding route settles far inside this window (HyperEVM in seconds, the
+ * Arbitrum bridge in about a minute, provider bridges in a few), so anything
+ * still unmatched here will not match later — and keeping it spins the pending
+ * indicator forever. The ledger row already carries the money, so history stays
+ * correct without the local record; only its source-chain metadata is lost.
+ */
+const PENDING_FUNDING_TTL_MS = 30 * 60 * 1000;
+
+const isExpiredPendingOperation = (item: AccountHistoryItem, now?: number) =>
+  now !== undefined &&
+  item.status === 'pending' &&
+  now - item.time > PENDING_FUNDING_TTL_MS;
 
 /**
  * A provider ledger row describes the settled asset (normally USDC), while
@@ -160,26 +190,30 @@ export const matchPerpsFundingHistory = ({
     });
   });
 
-  const providerPendingIndexesByOperationId = new Map<string, number[]>();
+  const correlationPendingIndexesByOperationId = new Map<string, number[]>();
   localHistory.forEach((local, localIndex) => {
     if (
       !local.operationId ||
       confirmedLocalIndexes.has(localIndex) ||
-      !isProviderPending(local)
+      !isCorrelationPending(local)
     ) {
       return;
     }
-    const indexes = providerPendingIndexesByOperationId.get(local.operationId);
+    const indexes = correlationPendingIndexesByOperationId.get(
+      local.operationId,
+    );
     if (indexes) {
       indexes.push(localIndex);
     } else {
-      providerPendingIndexesByOperationId.set(local.operationId, [localIndex]);
+      correlationPendingIndexesByOperationId.set(local.operationId, [
+        localIndex,
+      ]);
     }
   });
 
-  if (providerPendingIndexesByOperationId.size === 1) {
+  if (correlationPendingIndexesByOperationId.size === 1) {
     const [operationId, localIndexes] = [
-      ...providerPendingIndexesByOperationId.entries(),
+      ...correlationPendingIndexesByOperationId.entries(),
     ][0];
     const metadataLocalIndex = localIndexes[0];
     const local = localHistory[metadataLocalIndex];
@@ -192,8 +226,18 @@ export const matchPerpsFundingHistory = ({
       );
     });
 
-    if (eligibleRemote.length === 1) {
-      const [{ index: remoteIndex, item: remote }] = eligibleRemote;
+    // Exactly one operation is outstanding, so the earliest ledger credit at
+    // or after it started is its settlement. Demanding a single eligible row
+    // instead — the previous rule — collapsed as soon as any unrelated
+    // transfer landed in the same window, leaving the operation pending
+    // forever with no way back.
+    const [settlement] = [...eligibleRemote].sort(
+      (left, right) =>
+        left.item.time - right.item.time || left.index - right.index,
+    );
+
+    if (settlement) {
+      const { index: remoteIndex, item: remote } = settlement;
       const hash = normalizeProviderLedgerHash(remote.hash);
       if (hash) {
         localIndexes.forEach(localIndex => {
@@ -223,10 +267,16 @@ export const matchPerpsFundingHistory = ({
 
 export const reconcilePerpsFundingHistory = ({
   localHistory,
+  now,
   observation,
   remoteHistory,
 }: {
   localHistory: readonly AccountHistoryItem[];
+  /**
+   * Clock for the pending TTL. Omit to keep every unmatched operation — read
+   * paths that only render a snapshot should not expire anything.
+   */
+  now?: number;
   observation: PerpsFundingHistoryObservation;
   remoteHistory: readonly AccountHistoryItem[];
 }): {
@@ -281,7 +331,9 @@ export const reconcilePerpsFundingHistory = ({
     confirmedOperationIds: matches.confirmedOperationIds,
     history,
     local: localHistory.filter(
-      (_item, index) => !matches.confirmedLocalIndexes.has(index),
+      (item, index) =>
+        !matches.confirmedLocalIndexes.has(index) &&
+        !isExpiredPendingOperation(item, now),
     ),
   };
 };
