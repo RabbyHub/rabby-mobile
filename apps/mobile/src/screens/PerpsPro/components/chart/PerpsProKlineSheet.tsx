@@ -77,8 +77,17 @@ const PerpsProKlineChart: React.FC<{
   interval: PerpsCandleInterval;
   market: PerpsProMarket;
   onLoadOlder: () => Promise<PerpsCandleHistoryLoadResult>;
+  onPriceScaleAutoScaleChange: (autoScale: boolean) => void;
   visible: boolean;
-}> = ({ chartRef, feed, interval, market, onLoadOlder, visible }) => {
+}> = ({
+  chartRef,
+  feed,
+  interval,
+  market,
+  onLoadOlder,
+  onPriceScaleAutoScaleChange,
+  visible,
+}) => {
   const { colors2024 } = useTheme2024();
   const lastSentRef = useRef<{
     identity: string;
@@ -281,6 +290,7 @@ const PerpsProKlineChart: React.FC<{
         onChartError={handleChartError}
         onChartReady={handleChartReady}
         onDataApplied={handleDataApplied}
+        onPriceScaleAutoScaleChange={onPriceScaleAutoScaleChange}
         onRequestOlderCandles={handleRequestOlderCandles}
         variant="perps-pro"
       />
@@ -303,6 +313,10 @@ export const PerpsProKlineSheet: React.FC<{
   visible = true,
 }) => {
   const chartRef = useRef<TradingViewChartRef>(null);
+  const [priceScaleState, setPriceScaleState] = useState({
+    autoScale: true,
+    marketKey: market.marketKey,
+  });
   const { colors2024, styles: themedStyles } = useTheme2024({
     getStyle,
   });
@@ -342,6 +356,24 @@ export const PerpsProKlineSheet: React.FC<{
   const handleResetPriceScale = useCallback(() => {
     chartRef.current?.resetPriceScale();
   }, []);
+  const handlePriceScaleAutoScaleChange = useCallback(
+    (autoScale: boolean) => {
+      setPriceScaleState(previous => {
+        if (
+          previous.marketKey === market.marketKey &&
+          previous.autoScale === autoScale
+        ) {
+          return previous;
+        }
+        return { autoScale, marketKey: market.marketKey };
+      });
+    },
+    [market.marketKey],
+  );
+  const priceScaleAutoScale =
+    priceScaleState.marketKey === market.marketKey
+      ? priceScaleState.autoScale
+      : true;
 
   useEffect(() => {
     if (!visible) {
@@ -383,6 +415,7 @@ export const PerpsProKlineSheet: React.FC<{
             interval={kline.interval}
             onResetPriceScale={handleResetPriceScale}
             onSelect={kline.selectInterval}
+            showPriceScaleReset={!priceScaleAutoScale}
           />
           <PerpsProKlineChart
             key={market.marketKey}
@@ -391,6 +424,7 @@ export const PerpsProKlineSheet: React.FC<{
             interval={kline.interval}
             market={market}
             onLoadOlder={kline.loadOlder}
+            onPriceScaleAutoScaleChange={handlePriceScaleAutoScaleChange}
             visible={visible}
           />
           <View style={themedStyles.footer} testID="perps-pro-kline-footer" />

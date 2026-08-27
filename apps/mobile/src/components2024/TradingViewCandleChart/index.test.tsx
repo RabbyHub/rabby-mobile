@@ -63,7 +63,7 @@ const TradingViewCandleChart = require('./index')
   .default as typeof import('./index').default;
 
 const markChartReady = ({
-  perpsProKlineProtocolVersion = 2,
+  perpsProKlineProtocolVersion = 3,
   supportsDataAppliedAck = true,
 }: {
   perpsProKlineProtocolVersion?: number | null;
@@ -194,7 +194,7 @@ describe('TradingViewCandleChart protocol compatibility', () => {
     expect(onChartError).toHaveBeenCalledTimes(1);
     expect(consoleError).toHaveBeenCalledWith(
       'TradingViewChart: Perps Pro K-line protocol mismatch',
-      { actualVersion: null, requiredVersion: 2 },
+      { actualVersion: null, requiredVersion: 3 },
     );
     consoleError.mockRestore();
   });
@@ -499,6 +499,67 @@ describe('TradingViewCandleChart protocol compatibility', () => {
       type: 'TRADINGVIEW_MESSAGE',
       data: { type: 'RESET_PERPS_PRO_PRICE_SCALE' },
     });
+  });
+
+  it('publishes valid Pro price-scale state and ignores malformed values', () => {
+    const onPriceScaleAutoScaleChange = jest.fn();
+    render(
+      <TradingViewCandleChart
+        height={184}
+        onPriceScaleAutoScaleChange={onPriceScaleAutoScaleChange}
+        variant="perps-pro"
+      />,
+    );
+    markChartReady();
+    expect(onPriceScaleAutoScaleChange).toHaveBeenLastCalledWith(true);
+
+    const props = mockLocalWebViewProps.mock.calls.at(-1)?.[0];
+    act(() => {
+      props.onMessage({
+        nativeEvent: {
+          data: JSON.stringify({
+            type: 'PERPS_PRO_PRICE_SCALE_AUTO_SCALE_CHANGED',
+            autoScale: false,
+          }),
+        },
+      });
+      props.onMessage({
+        nativeEvent: {
+          data: JSON.stringify({
+            type: 'PERPS_PRO_PRICE_SCALE_AUTO_SCALE_CHANGED',
+            autoScale: 'false',
+          }),
+        },
+      });
+    });
+
+    expect(onPriceScaleAutoScaleChange).toHaveBeenCalledTimes(2);
+    expect(onPriceScaleAutoScaleChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('does not publish Pro price-scale state to a legacy chart consumer', () => {
+    const onPriceScaleAutoScaleChange = jest.fn();
+    render(
+      <TradingViewCandleChart
+        height={184}
+        onPriceScaleAutoScaleChange={onPriceScaleAutoScaleChange}
+      />,
+    );
+    markChartReady({ perpsProKlineProtocolVersion: null });
+    const props = mockLocalWebViewProps.mock.calls.at(-1)?.[0];
+
+    act(() => {
+      props.onMessage({
+        nativeEvent: {
+          data: JSON.stringify({
+            type: 'PERPS_PRO_PRICE_SCALE_AUTO_SCALE_CHANGED',
+            autoScale: false,
+          }),
+        },
+      });
+    });
+
+    expect(onPriceScaleAutoScaleChange).not.toHaveBeenCalled();
   });
 
   it('does not expose the retired Perps Pro reference-price bridge', () => {

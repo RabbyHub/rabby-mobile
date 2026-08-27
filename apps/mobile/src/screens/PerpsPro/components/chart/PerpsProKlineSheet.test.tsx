@@ -53,6 +53,7 @@ jest.mock('@/components2024/TradingViewCandleChart', () => {
             identity: string;
             revision: number;
           }) => void;
+          onPriceScaleAutoScaleChange?: (autoScale: boolean) => void;
           onRequestOlderCandles?: (request: {
             earliestTime: number;
             identity: string;
@@ -296,10 +297,9 @@ describe('PerpsProKlineSheet', () => {
       height: PERPS_PRO_KLINE_CHART_HEIGHT,
       variant: 'perps-pro',
     });
-    act(() => {
-      mockToolbarProps.mock.calls.at(-1)?.[0].onResetPriceScale();
+    expect(mockToolbarProps.mock.calls.at(-1)?.[0]).toMatchObject({
+      showPriceScaleReset: false,
     });
-    expect(mockResetPriceScale).toHaveBeenCalledTimes(1);
 
     const backdrop = props.backdropComponent({});
     expect(backdrop.props).toMatchObject({
@@ -310,6 +310,61 @@ describe('PerpsProKlineSheet', () => {
 
     act(() => props.onChange(-1));
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows reset only while the local chart reports manual price scaling', () => {
+    render(<PerpsProKlineSheet enabled market={market} onClose={jest.fn()} />);
+    const chartProps = mockTradingViewProps.mock.calls.at(-1)?.[0];
+
+    expect(mockToolbarProps.mock.calls.at(-1)?.[0]).toMatchObject({
+      showPriceScaleReset: false,
+    });
+
+    act(() => chartProps.onPriceScaleAutoScaleChange(false));
+    expect(mockToolbarProps.mock.calls.at(-1)?.[0]).toMatchObject({
+      showPriceScaleReset: true,
+    });
+
+    act(() => {
+      mockToolbarProps.mock.calls.at(-1)?.[0].onResetPriceScale();
+    });
+    expect(mockResetPriceScale).toHaveBeenCalledTimes(1);
+
+    act(() => chartProps.onPriceScaleAutoScaleChange(true));
+    expect(mockToolbarProps.mock.calls.at(-1)?.[0]).toMatchObject({
+      showPriceScaleReset: false,
+    });
+  });
+
+  it('hides stale reset state immediately when the market changes', () => {
+    const view = render(
+      <PerpsProKlineSheet enabled market={market} onClose={jest.fn()} />,
+    );
+    act(() => {
+      mockTradingViewProps.mock.calls
+        .at(-1)?.[0]
+        .onPriceScaleAutoScaleChange(false);
+    });
+    expect(mockToolbarProps.mock.calls.at(-1)?.[0]).toMatchObject({
+      showPriceScaleReset: true,
+    });
+
+    view.rerender(
+      <PerpsProKlineSheet
+        enabled
+        market={{
+          ...market,
+          canonicalCoin: 'ETH',
+          displayBase: 'ETH',
+          marketKey: 'hyperliquid::ETH',
+        }}
+        onClose={jest.fn()}
+      />,
+    );
+
+    expect(mockToolbarProps.mock.calls.at(-1)?.[0]).toMatchObject({
+      showPriceScaleReset: false,
+    });
   });
 
   it('loads older candles only for the current visible Pro identity', async () => {

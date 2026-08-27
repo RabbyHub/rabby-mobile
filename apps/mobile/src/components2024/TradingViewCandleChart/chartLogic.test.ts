@@ -20,6 +20,7 @@ const {
   getPrependedCandleCount,
   getPerpsProCrosshairTimeLabelLeft,
   getPerpsProLatestCandleClose,
+  getPerpsProPriceScaleAutoScale,
   getPerpsProTooltipMaxWidth,
   getPerpsProTooltipPlacement,
   getPerpsProTooltipMetrics,
@@ -246,6 +247,20 @@ describe('Perps Pro local chart calculations', () => {
     });
     expect(setAutoScale).toHaveBeenCalledWith(true);
     expect(resetPerpsProPriceScale(null)).toBe(false);
+  });
+
+  it('reads whether the Pro price scale is still in automatic mode', () => {
+    expect(
+      getPerpsProPriceScaleAutoScale({
+        priceScale: () => ({ options: () => ({ autoScale: true }) }),
+      }),
+    ).toBe(true);
+    expect(
+      getPerpsProPriceScaleAutoScale({
+        priceScale: () => ({ options: () => ({ autoScale: false }) }),
+      }),
+    ).toBe(false);
+    expect(getPerpsProPriceScaleAutoScale(null)).toBe(true);
   });
 
   it('keeps the Pro time label centered on the crosshair within the chart', () => {

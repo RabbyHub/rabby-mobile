@@ -19,14 +19,22 @@ type ItemLayout = {
 };
 
 export const PERPS_PRO_KLINE_TOOLBAR_HEIGHT = 22;
+export const PERPS_PRO_KLINE_RESET_SLOT_WIDTH = 32;
 
 export const PerpsProKlineToolbar: React.FC<{
   disabled?: boolean;
   interval: PerpsCandleInterval;
   onResetPriceScale: () => void;
   onSelect: (interval: PerpsCandleInterval) => void;
+  showPriceScaleReset?: boolean;
 }> = React.memo(
-  ({ disabled = false, interval, onResetPriceScale, onSelect }) => {
+  ({
+    disabled = false,
+    interval,
+    onResetPriceScale,
+    onSelect,
+    showPriceScaleReset = false,
+  }) => {
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
     const scrollRef = useRef<ScrollView>(null);
@@ -110,21 +118,27 @@ export const PerpsProKlineToolbar: React.FC<{
             );
           })}
         </ScrollView>
-        <Pressable
-          accessibilityLabel={t('page.perps.pro.chart.resetPriceScale')}
-          accessibilityRole="button"
-          accessibilityState={{ disabled }}
-          disabled={disabled}
-          hitSlop={8}
-          onPress={onResetPriceScale}
-          style={styles.resetButton}
-          testID="perps-pro-kline-reset-price-scale">
-          <RcIconResetScale
-            color={colors2024['neutral-body']}
-            height={16}
-            width={16}
-          />
-        </Pressable>
+        <View
+          style={styles.resetSlot}
+          testID="perps-pro-kline-reset-price-scale-slot">
+          {showPriceScaleReset ? (
+            <Pressable
+              accessibilityLabel={t('page.perps.pro.chart.resetPriceScale')}
+              accessibilityRole="button"
+              accessibilityState={{ disabled }}
+              disabled={disabled}
+              hitSlop={8}
+              onPress={onResetPriceScale}
+              style={styles.resetButton}
+              testID="perps-pro-kline-reset-price-scale">
+              <RcIconResetScale
+                color={colors2024['neutral-body']}
+                height={16}
+                width={16}
+              />
+            </Pressable>
+          ) : null}
+        </View>
       </View>
     );
   },
@@ -167,7 +181,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     height: PERPS_PRO_KLINE_TOOLBAR_HEIGHT,
     justifyContent: 'center',
-    marginRight: 8,
     width: 24,
+  },
+  resetSlot: {
+    flexShrink: 0,
+    height: PERPS_PRO_KLINE_TOOLBAR_HEIGHT,
+    width: PERPS_PRO_KLINE_RESET_SLOT_WIDTH,
   },
 }));

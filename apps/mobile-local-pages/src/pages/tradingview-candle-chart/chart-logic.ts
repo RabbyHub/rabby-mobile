@@ -284,6 +284,20 @@ type PerpsProPriceScaleResetTarget = {
   };
 };
 
+type PerpsProPriceScaleStateTarget = {
+  priceScale: () => {
+    options: () => {
+      autoScale: boolean;
+    };
+  };
+};
+
+export function getPerpsProPriceScaleAutoScale(
+  series: PerpsProPriceScaleStateTarget | null,
+): boolean {
+  return series?.priceScale().options().autoScale ?? true;
+}
+
 export function resetPerpsProPriceScale(
   series: PerpsProPriceScaleResetTarget | null,
 ): boolean {

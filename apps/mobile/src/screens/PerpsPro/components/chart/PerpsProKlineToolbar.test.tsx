@@ -9,7 +9,10 @@ import { StyleSheet } from 'react-native';
 
 import { PERPS_PRO_CANDLE_INTERVAL_OPTIONS } from '@/hooks/perps/candles/interval';
 
-import { PerpsProKlineToolbar } from './PerpsProKlineToolbar';
+import {
+  PERPS_PRO_KLINE_RESET_SLOT_WIDTH,
+  PerpsProKlineToolbar,
+} from './PerpsProKlineToolbar';
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
@@ -56,6 +59,7 @@ describe('PerpsProKlineToolbar', () => {
         interval="15m"
         onResetPriceScale={onResetPriceScale}
         onSelect={onSelect}
+        showPriceScaleReset
       />,
     );
 
@@ -101,6 +105,27 @@ describe('PerpsProKlineToolbar', () => {
     expect(onResetPriceScale).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps the reset slot stable while hiding the unused control', () => {
+    render(
+      <PerpsProKlineToolbar
+        interval="15m"
+        onResetPriceScale={jest.fn()}
+        onSelect={jest.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByTestId('perps-pro-kline-reset-price-scale'),
+    ).toBeNull();
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-kline-reset-price-scale-slot').props
+          .style,
+      ),
+    ).toMatchObject({ width: PERPS_PRO_KLINE_RESET_SLOT_WIDTH });
+  });
+
   it('renders uppercase long-period labels and emits canonical values', () => {
     const onSelect = jest.fn();
     render(
@@ -137,6 +162,7 @@ describe('PerpsProKlineToolbar', () => {
         interval="15m"
         onResetPriceScale={jest.fn()}
         onSelect={onSelect}
+        showPriceScaleReset
       />,
     );
 

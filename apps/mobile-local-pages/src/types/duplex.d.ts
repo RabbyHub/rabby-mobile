@@ -186,6 +186,13 @@ type DuplexDefs = {
     };
     receive: never;
   };
+  TradingView_PerpsProPriceScaleAutoScaleChanged: {
+    post: {
+      type: 'PERPS_PRO_PRICE_SCALE_AUTO_SCALE_CHANGED';
+      autoScale: boolean;
+    };
+    receive: never;
+  };
   TradingView_RequestOlderCandles: {
     post: {
       type: 'REQUEST_OLDER_CANDLES';
