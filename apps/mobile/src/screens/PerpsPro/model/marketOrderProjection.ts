@@ -28,12 +28,12 @@ export type PerpsProMarketOrderProjection =
     };
 
 /**
- * Risk displays follow the executable projection when the book can fill the
- * whole order, and otherwise use the same Mid anchor already frozen for the
- * Market command. The fallback stays explicitly tagged as `midFallback`; it
- * is never presented as a VWAP estimate.
+ * Expected-entry displays follow the executable projection when the book can
+ * fill the whole order, and otherwise use the same Mid anchor already frozen
+ * for the Market command. Liquidation risk deliberately does not use this
+ * value; it owns a separate marginal-clearing-price projection.
  */
-export const resolvePerpsProMarketRiskEntryPrice = (
+export const resolvePerpsProMarketExpectedEntryPrice = (
   projection: PerpsProMarketOrderProjection | null | undefined,
 ): string | null => {
   if (!projection) {
@@ -53,7 +53,7 @@ const positive = (value: unknown) => {
 
 /**
  * Separates the two prices used by a Market order:
- * - full-L2 VWAP estimates the directional fill for UI risk/cost projection;
+ * - full-L2 VWAP estimates the directional fill for expected-entry/cost;
  * - Mid remains the SDK slippage-protection anchor.
  *
  * The canonical base size is supplied by the existing Amount path so this
