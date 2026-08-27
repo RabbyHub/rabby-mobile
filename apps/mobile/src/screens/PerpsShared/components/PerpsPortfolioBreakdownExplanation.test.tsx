@@ -10,6 +10,7 @@ const mockGetBreakdownValues = jest.fn(() => ({
   perpsValue: 39.96,
   secondaryValue: 221.6,
 }));
+let mockIsFocused = true;
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
@@ -17,6 +18,10 @@ jest.mock('@/components/Typography', () => ({
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
+}));
+
+jest.mock('@react-navigation/native', () => ({
+  useIsFocused: () => mockIsFocused,
 }));
 
 jest.mock('@/hooks/perps/usePerpsPortfolioBreakdown', () => ({
@@ -61,7 +66,9 @@ const TipsPopupStateProbe = () => {
       <Pressable onPress={hideTipsPopup} testID="close-portfolio-breakdown" />
       <Text testID="portfolio-breakdown-state">
         {state.visible
-          ? `${state.title}:${state.bgType}:${state.buttonType}`
+          ? `${state.title}:${state.bgType}:${state.buttonType}:${
+              state.owner
+            }:${String(state.enablePanDownToClose)}`
           : 'closed'}
       </Text>
       {state.visible && React.isValidElement(state.desc) ? state.desc : null}
@@ -70,6 +77,10 @@ const TipsPopupStateProbe = () => {
 };
 
 describe('Perps Portfolio Value breakdown integration', () => {
+  beforeEach(() => {
+    mockIsFocused = true;
+  });
+
   it('publishes the shared Simple/Pro breakdown through the real Tips atom', () => {
     render(
       <View>
@@ -82,7 +93,7 @@ describe('Perps Portfolio Value breakdown integration', () => {
 
     expect(mockGetBreakdownValues).toHaveBeenCalledWith(261.56);
     expect(screen.getByTestId('portfolio-breakdown-state')).toHaveTextContent(
-      'page.perps.PerpsCard.unifiedAccount:bg0:hyperliquid',
+      'page.perps.PerpsCard.unifiedAccount:bg0:hyperliquid:perps-portfolio-breakdown:true',
     );
     expect(
       screen.getByText('page.perps.PerpsCard.unifiedAccountDesc'),
@@ -97,5 +108,31 @@ describe('Perps Portfolio Value breakdown integration', () => {
     expect(screen.getByText('$221.60')).toBeTruthy();
 
     fireEvent.press(screen.getByTestId('close-portfolio-breakdown'));
+  });
+
+  it('dismisses its owned popup when the screen loses focus', () => {
+    const view = render(
+      <View>
+        <PortfolioBreakdownTrigger />
+        <TipsPopupStateProbe />
+      </View>,
+    );
+
+    fireEvent.press(screen.getByTestId('open-portfolio-breakdown'));
+    expect(
+      screen.getByTestId('portfolio-breakdown-state'),
+    ).not.toHaveTextContent('closed');
+
+    mockIsFocused = false;
+    view.rerender(
+      <View>
+        <PortfolioBreakdownTrigger />
+        <TipsPopupStateProbe />
+      </View>,
+    );
+
+    expect(screen.getByTestId('portfolio-breakdown-state')).toHaveTextContent(
+      'closed',
+    );
   });
 });

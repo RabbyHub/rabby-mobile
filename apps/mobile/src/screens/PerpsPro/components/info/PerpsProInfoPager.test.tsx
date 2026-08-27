@@ -2,7 +2,10 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { View } from 'react-native';
 import type { PerpsProInfoTab } from '@/core/services/perpsService';
-import type { PerpsProInfoScrollBridgeController } from './usePerpsProInfoScrollBridge';
+import {
+  PERPS_PRO_INFO_TOUCH_INTENT,
+  type PerpsProInfoScrollBridgeController,
+} from './usePerpsProInfoScrollBridge';
 
 const mockSetPage = jest.fn();
 const mockSetPageWithoutAnimation = jest.fn();
@@ -71,8 +74,28 @@ const data = {
   openOrders: [{ key: 'open-order-row' }],
 };
 
+const createScrollBridge = (
+  offsets: readonly [number, number, number] = [0, 0, 0],
+) => {
+  const shared = <T,>(value: T) => ({ value });
+  return {
+    activeIndex: shared(0),
+    epoch: shared(0),
+    horizontalTouchSessionId: shared(0),
+    pageGestureActive: shared(false),
+    touchIntent: shared(PERPS_PRO_INFO_TOUCH_INTENT.idle),
+    touchSessionId: shared(0),
+    targets: offsets.map(offset => ({
+      maxOffset: shared(0),
+      offset: shared(offset),
+      ref: jest.fn(),
+    })),
+  } as unknown as PerpsProInfoScrollBridgeController;
+};
+
 const renderPager = ({
   activeTab = 'positions',
+  authorizeNativePageGestures = false,
   nativeVerticalScrollEnabled = true,
   onActivateOffset = jest.fn(),
   onPageDragStart = jest.fn(),
@@ -83,6 +106,7 @@ const renderPager = ({
   scrollBridge,
 }: {
   activeTab?: PerpsProInfoTab;
+  authorizeNativePageGestures?: boolean;
   nativeVerticalScrollEnabled?: boolean;
   onActivateOffset?: jest.Mock;
   onPageDragStart?: jest.Mock;
@@ -95,6 +119,7 @@ const renderPager = ({
   render(
     <PerpsProInfoPager
       activeTab={activeTab}
+      authorizeNativePageGestures={authorizeNativePageGestures}
       contentContainerStyle={{
         account: {},
         positions: {},
@@ -162,17 +187,7 @@ describe('PerpsProInfoPager', () => {
   });
 
   it('keeps Android list virtualization while delegating vertical touch input', () => {
-    const shared = <T,>(value: T) => ({ value });
-    const scrollBridge = {
-      activeIndex: shared(0),
-      epoch: shared(0),
-      pageGestureActive: shared(false),
-      targets: [0, 1, 2].map(() => ({
-        maxOffset: shared(0),
-        offset: shared(0),
-        ref: jest.fn(),
-      })),
-    } as unknown as PerpsProInfoScrollBridgeController;
+    const scrollBridge = createScrollBridge();
     renderPager({ nativeVerticalScrollEnabled: false, scrollBridge });
 
     const activeScroll = screen.getByTestId('perps-pro-scroll');
@@ -191,11 +206,13 @@ describe('PerpsProInfoPager', () => {
     const onPageDragStart = jest.fn();
     const onPagePreview = jest.fn();
     const onPageSelected = jest.fn();
+    const scrollBridge = createScrollBridge([500, 125, 0]);
     renderPager({
       onActivateOffset,
       onPageDragStart,
       onPagePreview,
       onPageSelected,
+      scrollBridge,
     });
 
     fireEvent(
@@ -210,7 +227,7 @@ describe('PerpsProInfoPager', () => {
     fireEvent(screen.getByTestId('perps-pro-info-pager'), 'pageSelected', {
       nativeEvent: { position: 1 },
     });
-    expect(onActivateOffset).toHaveBeenCalledWith(400);
+    expect(onActivateOffset).toHaveBeenCalledWith(125);
     expect(onPagePreview).not.toHaveBeenCalled();
     expect(onPageSelected).toHaveBeenCalledWith('openOrders');
   });
@@ -222,7 +239,7 @@ describe('PerpsProInfoPager', () => {
     const pager = screen.getByTestId('perps-pro-info-pager');
 
     fireEvent(pager, 'pageScroll', {
-      nativeEvent: { offset: 0.5, position: 0 },
+      nativeEvent: { offset: 0.55, position: 0 },
     });
     expect(onPagePreview).not.toHaveBeenCalled();
 
@@ -235,7 +252,7 @@ describe('PerpsProInfoPager', () => {
     expect(onPagePreview).not.toHaveBeenCalled();
 
     fireEvent(pager, 'pageScroll', {
-      nativeEvent: { offset: 0.5, position: 0 },
+      nativeEvent: { offset: 0.55, position: 0 },
     });
     expect(onPagePreview).toHaveBeenLastCalledWith('openOrders');
     expect(onPageSelected).not.toHaveBeenCalled();
@@ -249,7 +266,7 @@ describe('PerpsProInfoPager', () => {
       nativeEvent: { pageScrollState: 'settling' },
     });
     fireEvent(pager, 'pageScroll', {
-      nativeEvent: { offset: 0.49, position: 0 },
+      nativeEvent: { offset: 0.45, position: 0 },
     });
     expect(onPagePreview).toHaveBeenLastCalledWith('positions');
 
@@ -260,7 +277,7 @@ describe('PerpsProInfoPager', () => {
     expect(onPageSelected).not.toHaveBeenCalled();
 
     fireEvent(pager, 'pageScroll', {
-      nativeEvent: { offset: 0.5, position: 0 },
+      nativeEvent: { offset: 0.55, position: 0 },
     });
     expect(onPagePreview).toHaveBeenLastCalledWith('positions');
 
@@ -268,7 +285,7 @@ describe('PerpsProInfoPager', () => {
       nativeEvent: { pageScrollState: 'dragging' },
     });
     fireEvent(pager, 'pageScroll', {
-      nativeEvent: { offset: 0.5, position: 0 },
+      nativeEvent: { offset: 0.55, position: 0 },
     });
     expect(onPagePreview).toHaveBeenLastCalledWith('openOrders');
   });
@@ -283,7 +300,7 @@ describe('PerpsProInfoPager', () => {
       nativeEvent: { pageScrollState: 'dragging' },
     });
     fireEvent(pager, 'pageScroll', {
-      nativeEvent: { offset: 0.5, position: 0 },
+      nativeEvent: { offset: 0.55, position: 0 },
     });
     expect(onPagePreview).toHaveBeenLastCalledWith('openOrders');
 
@@ -292,7 +309,7 @@ describe('PerpsProInfoPager', () => {
     expect(mockSetPageWithoutAnimation).toHaveBeenCalledWith(2);
 
     fireEvent(pager, 'pageScroll', {
-      nativeEvent: { offset: 0.5, position: 1 },
+      nativeEvent: { offset: 0.55, position: 1 },
     });
     expect(onPagePreview).toHaveBeenLastCalledWith(null);
   });
@@ -307,13 +324,13 @@ describe('PerpsProInfoPager', () => {
       nativeEvent: { pageScrollState: 'dragging' },
     });
     fireEvent(pager, 'pageScroll', {
-      nativeEvent: { offset: 0.5, position: 0 },
+      nativeEvent: { offset: 0.55, position: 0 },
     });
     expect(onPagePreview).toHaveBeenLastCalledWith('openOrders');
 
     mockQueueRunOnJS = true;
     fireEvent(pager, 'pageScroll', {
-      nativeEvent: { offset: 0.49, position: 0 },
+      nativeEvent: { offset: 0.45, position: 0 },
     });
     fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
     expect(onPageSelected).toHaveBeenCalledWith('openOrders');
@@ -332,7 +349,7 @@ describe('PerpsProInfoPager', () => {
       nativeEvent: { pageScrollState: 'dragging' },
     });
     fireEvent(pager, 'pageScroll', {
-      nativeEvent: { offset: 0.5, position: 0 },
+      nativeEvent: { offset: 0.55, position: 0 },
     });
     expect(onPagePreview.mock.calls).toEqual([['openOrders']]);
 
@@ -358,7 +375,7 @@ describe('PerpsProInfoPager', () => {
       nativeEvent: { pageScrollState: 'dragging' },
     });
     fireEvent(pager, 'pageScroll', {
-      nativeEvent: { offset: 0.5, position: 0 },
+      nativeEvent: { offset: 0.55, position: 0 },
     });
     mockQueueRunOnJS = true;
     fireEvent(pager, 'pageScrollStateChanged', {
@@ -381,13 +398,109 @@ describe('PerpsProInfoPager', () => {
       nativeEvent: { pageScrollState: 'dragging' },
     });
     fireEvent(pager, 'pageScroll', {
-      nativeEvent: { offset: 0.5, position: 0 },
+      nativeEvent: { offset: 0.55, position: 0 },
     });
     expect(onPagePreview).toHaveBeenLastCalledWith('openOrders');
 
     fireEvent(pager, 'pageSelected', { nativeEvent: { position: 0 } });
     expect(onPagePreview).toHaveBeenLastCalledWith(null);
     expect(onPageSelected).not.toHaveBeenCalled();
+  });
+
+  it('rejects an Android native selection without horizontal touch intent', () => {
+    const onActivateOffset = jest.fn();
+    const onPageSelected = jest.fn();
+    const scrollBridge = createScrollBridge();
+    scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.pending;
+    scrollBridge.touchSessionId.value = 1;
+    renderPager({
+      authorizeNativePageGestures: true,
+      onActivateOffset,
+      onPageSelected,
+      scrollBridge,
+    });
+
+    fireEvent(screen.getByTestId('perps-pro-info-pager'), 'pageSelected', {
+      nativeEvent: { position: 1 },
+    });
+
+    expect(mockSetPageWithoutAnimation).toHaveBeenCalledWith(0);
+    expect(onActivateOffset).not.toHaveBeenCalled();
+    expect(onPageSelected).not.toHaveBeenCalled();
+    expect(scrollBridge.activeIndex.value).toBe(0);
+    expect(scrollBridge.touchIntent.value).toBe(
+      PERPS_PRO_INFO_TOUCH_INTENT.idle,
+    );
+  });
+
+  it('commits an Android selection authorized by the current horizontal touch', () => {
+    const onPageSelected = jest.fn();
+    const scrollBridge = createScrollBridge();
+    scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.horizontal;
+    scrollBridge.touchSessionId.value = 3;
+    scrollBridge.horizontalTouchSessionId.value = 3;
+    renderPager({
+      authorizeNativePageGestures: true,
+      onPageSelected,
+      scrollBridge,
+    });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'dragging' },
+    });
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.55, position: 0 },
+    });
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+
+    expect(onPageSelected).toHaveBeenCalledWith('openOrders');
+    expect(mockSetPageWithoutAnimation).not.toHaveBeenCalled();
+    expect(scrollBridge.activeIndex.value).toBe(1);
+  });
+
+  it('invalidates prior Android authorization when a new touch begins', () => {
+    const onPageSelected = jest.fn();
+    const scrollBridge = createScrollBridge();
+    scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.horizontal;
+    scrollBridge.touchSessionId.value = 7;
+    scrollBridge.horizontalTouchSessionId.value = 7;
+    renderPager({
+      authorizeNativePageGestures: true,
+      onPageSelected,
+      scrollBridge,
+    });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'dragging' },
+    });
+    scrollBridge.touchSessionId.value = 8;
+    scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.pending;
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+
+    expect(onPageSelected).not.toHaveBeenCalled();
+    expect(mockSetPageWithoutAnimation).toHaveBeenCalledWith(0);
+  });
+
+  it('allows an Android programmatic page command without touch authorization', () => {
+    const onPageSelected = jest.fn();
+    const ref = React.createRef<PerpsProInfoPagerHandle>();
+    const scrollBridge = createScrollBridge();
+    renderPager({
+      authorizeNativePageGestures: true,
+      onPageSelected,
+      ref,
+      requestedTab: 'account',
+      scrollBridge,
+    });
+
+    act(() => ref.current?.setPage('account'));
+    fireEvent(screen.getByTestId('perps-pro-info-pager'), 'pageSelected', {
+      nativeEvent: { position: 2 },
+    });
+
+    expect(onPageSelected).toHaveBeenCalledWith('account');
   });
 
   it('mounts and jumps directly to a requested non-adjacent tab', () => {
@@ -424,17 +537,7 @@ describe('PerpsProInfoPager', () => {
   });
 
   it('publishes native list bounds and invalidates the trade bridge on page changes', () => {
-    const shared = <T,>(value: T) => ({ value });
-    const scrollBridge = {
-      activeIndex: shared(0),
-      epoch: shared(0),
-      pageGestureActive: shared(false),
-      targets: [0, 1, 2].map(() => ({
-        maxOffset: shared(0),
-        offset: shared(0),
-        ref: jest.fn(),
-      })),
-    } as unknown as PerpsProInfoScrollBridgeController;
+    const scrollBridge = createScrollBridge();
     renderPager({ scrollBridge });
     const scroll = screen.getByTestId('perps-pro-scroll');
 

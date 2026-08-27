@@ -10,6 +10,7 @@ import { BottomSheetView } from '@gorhom/bottom-sheet';
 import type { FundingHistoryItem } from '@rabby-wallet/hyperliquid-sdk';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -37,6 +38,34 @@ type FundingHistoryState = {
   status: 'loading' | 'ready' | 'error';
 };
 
+export const PERPS_PRO_FUNDING_SHEET_HEIGHT = 380;
+export const PERPS_PRO_FUNDING_ERROR_SHEET_HEIGHT = 408;
+export const PERPS_PRO_FUNDING_SHEET_MIN_BOTTOM_PADDING = 24;
+
+export const getPerpsProFundingDetailSheetLayout = ({
+  bottomInset,
+  hasHistoryError,
+}: {
+  bottomInset: number;
+  hasHistoryError: boolean;
+}) => {
+  const normalizedBottomInset =
+    Number.isFinite(bottomInset) && bottomInset > 0 ? bottomInset : 0;
+  const bottomPadding = Math.max(
+    PERPS_PRO_FUNDING_SHEET_MIN_BOTTOM_PADDING,
+    normalizedBottomInset,
+  );
+  const baseHeight = hasHistoryError
+    ? PERPS_PRO_FUNDING_ERROR_SHEET_HEIGHT
+    : PERPS_PRO_FUNDING_SHEET_HEIGHT;
+
+  return {
+    bottomPadding,
+    snapPoint:
+      baseHeight + bottomPadding - PERPS_PRO_FUNDING_SHEET_MIN_BOTTOM_PADDING,
+  };
+};
+
 const FundingValueRow: React.FC<{
   label: string;
   value: string;
@@ -57,6 +86,7 @@ export const PerpsProFundingDetailSheet: React.FC<{
   serverClock: PerpsServerClockSample | null;
 }> = ({ market, onClose, serverClock }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
+  const { bottom: bottomInset } = useSafeAreaInsets();
   const { t } = useTranslation();
   const modalRef = useRef<AppBottomSheetModal>(null);
   usePerpsProSheetNavigationRegistration({ active: true, dismiss: onClose });
@@ -146,13 +176,17 @@ export const PerpsProFundingDetailSheet: React.FC<{
       : estimatedFunding >= 0
       ? styles.positive
       : styles.negative;
+  const sheetLayout = getPerpsProFundingDetailSheetLayout({
+    bottomInset,
+    hasHistoryError: Boolean(historyState.error),
+  });
 
   return (
     <AppBottomSheetModal
       enableDynamicSizing={false}
       onDismiss={onClose}
       ref={modalRef}
-      snapPoints={[historyState.error ? 358 : 330]}
+      snapPoints={[sheetLayout.snapPoint]}
       {...makeBottomSheetProps({
         colors: colors2024,
         linearGradientType: 'bg1',
@@ -161,7 +195,8 @@ export const PerpsProFundingDetailSheet: React.FC<{
       handleIndicatorStyle={styles.handleIndicator}
       handleStyle={styles.handle}
       style={styles.modal}>
-      <BottomSheetView style={styles.sheet}>
+      <BottomSheetView
+        style={[styles.sheet, { paddingBottom: sheetLayout.bottomPadding }]}>
         <Text style={styles.title}>{t('page.perps.pro.funding.title')}</Text>
         <View style={styles.values} testID="perps-pro-funding-values">
           <FundingValueRow

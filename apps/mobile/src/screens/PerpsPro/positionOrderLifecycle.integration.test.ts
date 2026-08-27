@@ -124,7 +124,19 @@ describe('Perps Pro position and order lifecycle integration', () => {
         orderType === 'market'
           ? {
               status: 'ok',
-              response: { data: { statuses: [{ filled: { oid: 71 } }] } },
+              response: {
+                data: {
+                  statuses: [
+                    {
+                      filled: {
+                        avgPx: '60100',
+                        oid: 71,
+                        totalSz: position!.baseSize,
+                      },
+                    },
+                  ],
+                },
+              },
             }
           : {
               status: 'ok',
@@ -140,6 +152,10 @@ describe('Perps Pro position and order lifecycle integration', () => {
         midPrice: '60000',
         orderType,
         pxDecimals: 2,
+        reportingFacts: {
+          leverage: position!.leverage,
+          marginMode: position!.marginMode,
+        },
         size: position!.baseSize,
         szDecimals: 5,
       });

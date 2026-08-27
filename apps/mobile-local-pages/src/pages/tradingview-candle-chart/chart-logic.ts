@@ -275,6 +275,43 @@ export const PERPS_PRO_PRICE_SCALE_MARGINS = {
   bottom: 0.16,
 } as const;
 
+type PerpsProPriceScaleResetTarget = {
+  priceScale: () => {
+    applyOptions: (options: {
+      scaleMargins: { top: number; bottom: number };
+    }) => void;
+    setAutoScale: (autoScale: boolean) => void;
+  };
+};
+
+type PerpsProPriceScaleStateTarget = {
+  priceScale: () => {
+    options: () => {
+      autoScale: boolean;
+    };
+  };
+};
+
+export function getPerpsProPriceScaleAutoScale(
+  series: PerpsProPriceScaleStateTarget | null,
+): boolean {
+  return series?.priceScale().options().autoScale ?? true;
+}
+
+export function resetPerpsProPriceScale(
+  series: PerpsProPriceScaleResetTarget | null,
+): boolean {
+  if (!series) {
+    return false;
+  }
+  const priceScale = series.priceScale();
+  priceScale.applyOptions({
+    scaleMargins: { ...PERPS_PRO_PRICE_SCALE_MARGINS },
+  });
+  priceScale.setAutoScale(true);
+  return true;
+}
+
 export function clampPerpsProCrosshairCoordinate(
   coordinate: number,
   chartHeight: number,

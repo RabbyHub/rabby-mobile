@@ -1,5 +1,7 @@
 import type { PerpsQuoteAsset } from '@/constant/perps';
+import { createStoreActivityScope } from '@/core/state/storeActivity';
 import { usePerpsFundingActions } from '@/hooks/perps/funding/usePerpsFundingActions';
+import { StoreActivityProvider } from '@/hooks/storeActivity/StoreActivityProvider';
 import { PerpsDepositPopup } from '@/screens/Perps/components/PerpsDepositPopup';
 import { PerpsSpotSwapPopup } from '@/screens/Perps/components/PerpsSpotSwapPopup';
 import { PerpsWithdrawPopup } from '@/screens/Perps/components/PerpsWithdrawPopup';
@@ -7,6 +9,30 @@ import { useMemoizedFn } from 'ahooks';
 import React from 'react';
 
 export type PerpsProFundingMode = 'deposit' | 'withdraw' | 'swap';
+
+const PerpsProScopedWithdrawPopup: React.FC<
+  React.ComponentProps<typeof PerpsWithdrawPopup>
+> = props => {
+  const [activityScope] = React.useState(() =>
+    createStoreActivityScope({
+      active: true,
+      label: 'perps-pro-withdraw-popup',
+    }),
+  );
+
+  React.useEffect(
+    () => () => {
+      activityScope.dispose();
+    },
+    [activityScope],
+  );
+
+  return (
+    <StoreActivityProvider scope={activityScope}>
+      <PerpsWithdrawPopup {...props} />
+    </StoreActivityProvider>
+  );
+};
 
 export const PerpsProFundingOverlay: React.FC<{
   depositFromSwapVisible: boolean;
@@ -51,7 +77,7 @@ export const PerpsProFundingOverlay: React.FC<{
 
   if (mode === 'withdraw') {
     return (
-      <PerpsWithdrawPopup
+      <PerpsProScopedWithdrawPopup
         onClose={onClose}
         onWithdraw={handleWithdrawAndClose}
         visible

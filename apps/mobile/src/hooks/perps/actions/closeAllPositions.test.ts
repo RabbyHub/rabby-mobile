@@ -57,7 +57,12 @@ const dependencies = (
   closeAllPositions: jest.fn(async () => ({
     status: 'ok',
     response: {
-      data: { statuses: [{ filled: { oid: 1 } }, { filled: { oid: 2 } }] },
+      data: {
+        statuses: [
+          { filled: { avgPx: '100', oid: 1, totalSz: '1' } },
+          { filled: { avgPx: '50', oid: 2, totalSz: '2' } },
+        ],
+      },
     },
   })),
   getCurrentAccount: () => account,
@@ -114,7 +119,10 @@ describe('Perps close all positions action', () => {
           status: 'ok',
           response: {
             data: {
-              statuses: [{ filled: { oid: 1 } }, { filled: { oid: 2 } }],
+              statuses: [
+                { filled: { avgPx: '100', oid: 1, totalSz: '1' } },
+                { filled: { avgPx: '50', oid: 2, totalSz: '2' } },
+              ],
             },
           },
         };
@@ -128,7 +136,26 @@ describe('Perps close all positions action', () => {
     );
 
     await expect(executePerpsCloseAllPositions(command, deps)).resolves.toEqual(
-      { kind: 'success', refreshError: undefined },
+      {
+        confirmedFills: [
+          {
+            coin: 'BTC',
+            oid: 1,
+            price: '100',
+            signedSize: '1',
+            size: '1',
+          },
+          {
+            coin: 'ETH',
+            oid: 2,
+            price: '50',
+            signedSize: '-2',
+            size: '2',
+          },
+        ],
+        kind: 'success',
+        refreshError: undefined,
+      },
     );
     expect(events).toEqual(['cancel', 'close']);
     expect(deps.cancelOrders).toHaveBeenCalledWith(
@@ -255,7 +282,7 @@ describe('Perps close all positions action', () => {
         response: {
           data: {
             statuses: [
-              { filled: { oid: 1 } },
+              { filled: { avgPx: '100', oid: 1, totalSz: '1' } },
               { error: 'insufficient liquidity' },
             ],
           },
@@ -268,11 +295,68 @@ describe('Perps close all positions action', () => {
         deps,
       ),
     ).resolves.toMatchObject({
+      confirmedFills: [
+        {
+          coin: 'BTC',
+          oid: 1,
+          price: '100',
+          signedSize: '1',
+          size: '1',
+        },
+      ],
       error: 'insufficient liquidity',
       kind: 'failed',
       stage: 'closePositions',
     });
     expect(deps.refreshAllOpenOrders).toHaveBeenCalledTimes(1);
     expect(deps.refreshAllClearinghouse).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves server fills when the account changes after submission', async () => {
+    let currentAccount: typeof account | null = account;
+    const deps = dependencies({
+      closeAllPositions: jest.fn(async () => {
+        currentAccount = null;
+        return {
+          status: 'ok',
+          response: {
+            data: {
+              statuses: [
+                { filled: { avgPx: '100', oid: 1, totalSz: '1' } },
+                { filled: { avgPx: '50', oid: 2, totalSz: '2' } },
+              ],
+            },
+          },
+        };
+      }),
+      getCurrentAccount: () => currentAccount,
+    });
+
+    await expect(
+      executePerpsCloseAllPositions(
+        buildPerpsCloseAllPositionsCommand(account, state, []),
+        deps,
+      ),
+    ).resolves.toMatchObject({
+      confirmedFills: [
+        {
+          coin: 'BTC',
+          oid: 1,
+          price: '100',
+          signedSize: '1',
+          size: '1',
+        },
+        {
+          coin: 'ETH',
+          oid: 2,
+          price: '50',
+          signedSize: '-2',
+          size: '2',
+        },
+      ],
+      kind: 'staleContext',
+    });
+    expect(deps.refreshAllOpenOrders).not.toHaveBeenCalled();
+    expect(deps.refreshAllClearinghouse).not.toHaveBeenCalled();
   });
 });

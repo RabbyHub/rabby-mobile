@@ -402,14 +402,14 @@ describe('PerpsProPositionTpSlSheet', () => {
     });
     const reaction = mockAnimatedReactions.at(-1)!;
     act(() => {
-      sheetProps.animatedPosition.value = 146;
+      sheetProps.animatedPosition.value = 99;
       reaction.react(reaction.prepare());
     });
     expect(mockAnimationFrameCallback).toBeNull();
     expect(mockScrollToEnd).not.toHaveBeenCalled();
 
     act(() => {
-      sheetProps.animatedPosition.value = 147;
+      sheetProps.animatedPosition.value = 100;
       reaction.react(reaction.prepare());
     });
     expect(mockScrollToEnd).not.toHaveBeenCalled();

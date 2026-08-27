@@ -1,6 +1,7 @@
 import { useEnsurePerpsRuntime } from '@/hooks/perps/runtime/useEnsurePerpsRuntime';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import { useHideTipsPopup, useIsTipsPopupVisible } from '@/hooks/useTipsPopup';
 import { perpsServiceApi } from '@/core/serviceApi/perps';
 import { IS_IOS } from '@/core/native/utils';
 import { useRoute } from '@react-navigation/native';
@@ -11,6 +12,7 @@ import type { LayoutChangeEvent } from 'react-native';
 import { RootNames } from '@/constant/layout';
 import type { TransactionNavigatorParamList } from '@/navigation-type';
 import { PerpsProScreen } from '../PerpsPro';
+import { PERPS_PORTFOLIO_BREAKDOWN_TIPS_OWNER } from '../PerpsShared/constants';
 import { buildPerpsProMarkets } from '../PerpsPro/model/market';
 import { resolveInitialPerpsProMarket } from '../PerpsPro/model/resolveInitialMarket';
 import { getPerpsProMarketSession } from '../PerpsPro/session/perpsProMarketSession';
@@ -41,6 +43,12 @@ export const PerpsOriginScreen = () => {
   );
   const hasShownGuideRef = useRef(true);
   const [showGuideEntryPopup, setShowGuideEntryPopup] = useState(false);
+  const portfolioBreakdownVisible = useIsTipsPopupVisible(
+    PERPS_PORTFOLIO_BREAKDOWN_TIPS_OWNER,
+  );
+  const hidePortfolioBreakdown = useHideTipsPopup(
+    PERPS_PORTFOLIO_BREAKDOWN_TIPS_OWNER,
+  );
 
   useEffect(() => {
     if (IS_IOS || fromSource !== 'homePagePositionList') {
@@ -56,18 +64,38 @@ export const PerpsOriginScreen = () => {
       });
   }, [fromSource]);
 
-  useEffect(() => {
-    if (IS_IOS || fromSource !== 'homePagePositionList') {
-      return;
-    }
-    return navigation.addListener('beforeRemove', event => {
-      if (hasShownGuideRef.current) {
-        return;
-      }
-      event.preventDefault();
-      setShowGuideEntryPopup(true);
-    });
-  }, [fromSource, navigation]);
+  useEffect(
+    () =>
+      navigation.addListener('beforeRemove', event => {
+        if (portfolioBreakdownVisible) {
+          event.preventDefault();
+          hidePortfolioBreakdown();
+          return;
+        }
+        if (
+          IS_IOS ||
+          fromSource !== 'homePagePositionList' ||
+          hasShownGuideRef.current
+        ) {
+          return;
+        }
+        event.preventDefault();
+        setShowGuideEntryPopup(true);
+      }),
+    [fromSource, hidePortfolioBreakdown, navigation, portfolioBreakdownVisible],
+  );
+
+  useEffect(
+    () => navigation.addListener('blur', hidePortfolioBreakdown),
+    [hidePortfolioBreakdown, navigation],
+  );
+
+  useEffect(
+    () => () => {
+      hidePortfolioBreakdown();
+    },
+    [hidePortfolioBreakdown],
+  );
 
   const closeGuideEntryPopup = useCallback(() => {
     void perpsServiceApi.setHasShownPerpsGuidePopup(true).catch(error => {
@@ -140,6 +168,7 @@ export const PerpsOriginScreen = () => {
   useEffect(() => cancelProIntent, [cancelProIntent]);
 
   const switchToPro = useCallback(() => {
+    hidePortfolioBreakdown();
     proIntentCommittedRef.current = true;
     if (!proIntentCancelRef.current) {
       startProIntent();
@@ -150,12 +179,13 @@ export const PerpsOriginScreen = () => {
         cancelProIntent();
       }
     });
-  }, [cancelProIntent, setViewMode, startProIntent]);
+  }, [cancelProIntent, hidePortfolioBreakdown, setViewMode, startProIntent]);
 
   const switchToSimple = useCallback(() => {
+    hidePortfolioBreakdown();
     cancelProIntent();
     setViewMode('simple');
-  }, [cancelProIntent, setViewMode]);
+  }, [cancelProIntent, hidePortfolioBreakdown, setViewMode]);
 
   const captureRegionAlertLayout = useCallback((event: LayoutChangeEvent) => {
     const height = Math.ceil(event.nativeEvent.layout.height);

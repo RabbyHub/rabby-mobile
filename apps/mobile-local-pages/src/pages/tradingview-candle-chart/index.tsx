@@ -40,12 +40,14 @@ import {
   getPrependedCandleCount,
   getPerpsProCrosshairTimeLabelLeft,
   getPerpsProLatestCandleClose,
+  getPerpsProPriceScaleAutoScale,
   getPerpsProTooltipMaxWidth,
   getPerpsProTooltipPlacement,
   getPerpsProTooltipMetrics,
   isPerpsProFutureLogicalRangeAtBoundary,
   PERPS_PRO_CROSSHAIR_LABEL_LAYOUT,
   PERPS_PRO_PRICE_SCALE_MARGINS,
+  resetPerpsProPriceScale,
   shouldBlockPerpsProFutureTouchMove,
   shiftLogicalRangeForPrependedCandles,
 } from './chart-logic';
@@ -242,7 +244,7 @@ const chartState = createChartState();
 chartState.colors = { ...getChartColors() };
 chartState.description = { ...defaultDescription };
 
-const PERPS_PRO_KLINE_PROTOCOL_VERSION = 1;
+const PERPS_PRO_KLINE_PROTOCOL_VERSION = 3;
 const PERPS_PRO_FONT_FAMILY =
   '"SF Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 const candleByTime = new Map<number, TradingViewCandlestickData>();
@@ -1222,12 +1224,46 @@ let isPerpsProHorizontalTouchScroll = false;
 let isPerpsProFutureTouchBoundary = false;
 let lastOlderCandlesRequestKey: string | null = null;
 let exhaustedHistoryIdentity: string | null = null;
+let perpsProPriceScaleStateFrameId: number | null = null;
+let lastPublishedPerpsProPriceScaleAutoScale: boolean | null = null;
+
+function publishPerpsProPriceScaleAutoScale() {
+  if (!chartState.proConfig) {
+    return;
+  }
+  const autoScale = getPerpsProPriceScaleAutoScale(
+    chartState.candlestickSeries,
+  );
+  if (autoScale === lastPublishedPerpsProPriceScaleAutoScale) {
+    return;
+  }
+  lastPublishedPerpsProPriceScaleAutoScale = autoScale;
+  postMessageToRN({
+    type: 'PERPS_PRO_PRICE_SCALE_AUTO_SCALE_CHANGED',
+    autoScale,
+  });
+}
+
+function schedulePerpsProPriceScaleAutoScalePublish() {
+  if (!chartState.proConfig || perpsProPriceScaleStateFrameId != null) {
+    return;
+  }
+  perpsProPriceScaleStateFrameId = window.requestAnimationFrame(() => {
+    perpsProPriceScaleStateFrameId = null;
+    publishPerpsProPriceScaleAutoScale();
+  });
+}
 
 function resetPerpsProTouchBoundaryGesture() {
   perpsProTouchPoint = null;
   perpsProTouchStartRange = null;
   isPerpsProHorizontalTouchScroll = false;
   isPerpsProFutureTouchBoundary = false;
+}
+
+function handlePerpsProTouchGestureEnd() {
+  resetPerpsProTouchBoundaryGesture();
+  schedulePerpsProPriceScaleAutoScalePublish();
 }
 
 function handlePerpsProBoundaryTouchStart(event: TouchEvent) {
@@ -1548,6 +1584,15 @@ function applyPerpsProChartOptions(config: PerpsProChartConfig) {
   });
 }
 
+function handleResetPerpsProPriceScale() {
+  if (!chartState.proConfig) {
+    return;
+  }
+  if (resetPerpsProPriceScale(chartState.candlestickSeries)) {
+    publishPerpsProPriceScaleAutoScale();
+  }
+}
+
 // Create candlestick series
 function createCandlestickSeries() {
   if (!chartState.chart) return null;
@@ -1733,6 +1778,13 @@ function handleSetCandlestickData(
   chartState.noTime = !!message.noTime;
   clearPerpsProCrosshair();
   chartState.proConfig = message.proConfig ?? null;
+  if (!chartState.proConfig) {
+    if (perpsProPriceScaleStateFrameId != null) {
+      window.cancelAnimationFrame(perpsProPriceScaleStateFrameId);
+      perpsProPriceScaleStateFrameId = null;
+    }
+    lastPublishedPerpsProPriceScaleAutoScale = null;
+  }
   if (chartState.tooltip) {
     if (chartState.proConfig) {
       chartState.tooltip.style.fontFamily = PERPS_PRO_FONT_FAMILY;
@@ -1838,6 +1890,7 @@ function handleSetCandlestickData(
                 chartState.proConfig.initialVisibleBars,
               ),
         );
+      publishPerpsProPriceScaleAutoScale();
     } else if (message.fitContent) {
       chartState.chart.timeScale().fitContent();
     }
@@ -2034,6 +2087,9 @@ function handleMessage(event: CustomEvent) {
             clearPerpsProCrosshair();
           }
           break;
+        case 'RESET_PERPS_PRO_PRICE_SCALE':
+          handleResetPerpsProPriceScale();
+          break;
         case 'UPDATE_THEME':
           handleUpdateTheme(tvMessage.colors, tvMessage.description);
           break;
@@ -2082,15 +2138,14 @@ function init() {
     capture: true,
     passive: false,
   });
-  containerEl.addEventListener('touchend', resetPerpsProTouchBoundaryGesture, {
+  containerEl.addEventListener('touchend', handlePerpsProTouchGestureEnd, {
     capture: true,
     passive: true,
   });
-  containerEl.addEventListener(
-    'touchcancel',
-    resetPerpsProTouchBoundaryGesture,
-    { capture: true, passive: true },
-  );
+  containerEl.addEventListener('touchcancel', handlePerpsProTouchGestureEnd, {
+    capture: true,
+    passive: true,
+  });
 
   // Request runtime info (theme, i18n) from RN
   postMessageToRN({ type: 'GET_RUNTIME_INFO' });
@@ -2104,6 +2159,10 @@ window.addEventListener('beforeunload', () => {
   cancelPendingPerpsProCrosshairMarker();
   if (visibleLogicalRangeFrameId != null) {
     window.cancelAnimationFrame(visibleLogicalRangeFrameId);
+  }
+  if (perpsProPriceScaleStateFrameId != null) {
+    window.cancelAnimationFrame(perpsProPriceScaleStateFrameId);
+    perpsProPriceScaleStateFrameId = null;
   }
   window.removeEventListener('messageFromRN', handleMessage as EventListener);
   window.removeEventListener('resize', handleResize);
@@ -2119,12 +2178,12 @@ window.addEventListener('beforeunload', () => {
   );
   containerEl.removeEventListener(
     'touchend',
-    resetPerpsProTouchBoundaryGesture,
+    handlePerpsProTouchGestureEnd,
     true,
   );
   containerEl.removeEventListener(
     'touchcancel',
-    resetPerpsProTouchBoundaryGesture,
+    handlePerpsProTouchGestureEnd,
     true,
   );
   if (chartState.chart) {

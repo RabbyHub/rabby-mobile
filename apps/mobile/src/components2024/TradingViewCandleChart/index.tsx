@@ -31,6 +31,7 @@ interface ChartProps {
   onChartReady?: () => void;
   onChartError?: () => void;
   onDataApplied?: (data: CandleDataApplied) => void;
+  onPriceScaleAutoScaleChange?: (autoScale: boolean) => void;
   onRequestOlderCandles?: (request: OlderCandlesRequest) => void;
   style?: StyleProp<ViewStyle>;
   backGroundColor?: string;
@@ -59,12 +60,13 @@ export interface TradingViewChartRef {
   completeOlderCandlesRequest: (
     request: OlderCandlesRequest & { outcome: 'exhausted' | 'retry' },
   ) => void;
+  resetPriceScale: () => void;
   setData: (data: CandleData) => void;
   updateCandleData: (data: CandleStick) => void;
   updateTPSLPriceLines: (data: TPSLPriceLines) => void;
 }
 
-const PERPS_PRO_KLINE_PROTOCOL_VERSION = 1;
+const PERPS_PRO_KLINE_PROTOCOL_VERSION = 3;
 const PERPS_PRO_KLINE_PROTOCOL_ERROR =
   'Perps Pro K-line resource protocol mismatch';
 
@@ -120,6 +122,7 @@ const TradingViewCandleChart = ({
   onChartReady,
   onChartError,
   onDataApplied,
+  onPriceScaleAutoScaleChange,
   onRequestOlderCandles,
   backGroundColor,
   variant,
@@ -269,6 +272,7 @@ const TradingViewCandleChart = ({
             ) {
               supportsDataAppliedAckRef.current = false;
               setIsChartReady(false);
+              onPriceScaleAutoScaleChange?.(true);
               if (
                 !protocolReloadAttemptedRef.current &&
                 typeof localWebViewRef.current?.reload === 'function'
@@ -296,6 +300,9 @@ const TradingViewCandleChart = ({
             supportsDataAppliedAckRef.current =
               message.capabilities?.candleDataAppliedAck === true;
             setIsChartReady(true);
+            if (variant === 'perps-pro') {
+              onPriceScaleAutoScaleChange?.(true);
+            }
             onChartReady?.();
             break;
           }
@@ -325,6 +332,14 @@ const TradingViewCandleChart = ({
               });
             }
             break;
+          case 'PERPS_PRO_PRICE_SCALE_AUTO_SCALE_CHANGED':
+            if (
+              variant === 'perps-pro' &&
+              typeof message.autoScale === 'boolean'
+            ) {
+              onPriceScaleAutoScaleChange?.(message.autoScale);
+            }
+            break;
           default:
             break;
         }
@@ -340,6 +355,7 @@ const TradingViewCandleChart = ({
       onChartReady,
       onChartError,
       onDataApplied,
+      onPriceScaleAutoScaleChange,
       onRequestOlderCandles,
       variant,
     ],
@@ -352,10 +368,18 @@ const TradingViewCandleChart = ({
         event.nativeEvent?.description || 'WebView error occurred';
       cancelPendingLegacyApplied();
       setWebViewError(errorDescription);
+      if (variant === 'perps-pro') {
+        onPriceScaleAutoScaleChange?.(true);
+      }
       onChartError?.();
       console.error('WebView error:', event.nativeEvent);
     },
-    [cancelPendingLegacyApplied, onChartError],
+    [
+      cancelPendingLegacyApplied,
+      onChartError,
+      onPriceScaleAutoScaleChange,
+      variant,
+    ],
   );
 
   // Imperative API
@@ -450,6 +474,18 @@ const TradingViewCandleChart = ({
     });
   }, [isChartReady]);
 
+  const handleResetPriceScale = useCallback(() => {
+    if (variant !== 'perps-pro' || !isChartReady || !localWebViewRef.current) {
+      return;
+    }
+    localWebViewRef.current.sendMessage?.({
+      type: 'TRADINGVIEW_MESSAGE',
+      data: {
+        type: 'RESET_PERPS_PRO_PRICE_SCALE',
+      },
+    });
+  }, [isChartReady, variant]);
+
   const handleCompleteOlderCandlesRequest = useCallback(
     (request: OlderCandlesRequest & { outcome: 'exhausted' | 'retry' }) => {
       if (!isChartReady || !localWebViewRef.current) {
@@ -469,6 +505,7 @@ const TradingViewCandleChart = ({
   useImperativeHandle(ref, () => ({
     clearCrosshair: handleClearCrosshair,
     completeOlderCandlesRequest: handleCompleteOlderCandlesRequest,
+    resetPriceScale: handleResetPriceScale,
     setData: handleSetData,
     updateCandleData: handleUpdateCandleData,
     updateTPSLPriceLines: handleUpdateTPSLPriceLines,
@@ -495,12 +532,15 @@ const TradingViewCandleChart = ({
           protocolErrorReportedRef.current = false;
           setWebViewKey(k => k + 1);
           setIsChartReady(false);
+          if (variant === 'perps-pro') {
+            onPriceScaleAutoScaleChange?.(true);
+          }
         }
         appStateRef = nextAppState;
       },
     );
     return () => subscription.remove();
-  }, [cancelPendingLegacyApplied]);
+  }, [cancelPendingLegacyApplied, onPriceScaleAutoScaleChange, variant]);
 
   if (webViewError) {
     if (variant === 'perps-pro') {

@@ -9,6 +9,8 @@ type TipsPopupState = {
   title: string;
   desc: string | React.ReactNode;
   owner?: string;
+  /** Opts this popup into the bottom sheet's pan-down dismissal gesture. */
+  enablePanDownToClose?: boolean;
   /** Sheet background; defaults to 'bg1'. */
   bgType?: 'bg0' | 'bg1';
   buttonStyle?: StyleProp<ViewStyle>;

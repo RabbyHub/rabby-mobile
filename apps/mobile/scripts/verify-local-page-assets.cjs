@@ -11,6 +11,7 @@ const REQUIRED_CHART_CAPABILITIES = [
   'CANDLE_DATA_APPLIED',
   'CHART_READY',
   'REQUEST_OLDER_CANDLES',
+  'PERPS_PRO_PRICE_SCALE_AUTO_SCALE_CHANGED',
   'candleDataAppliedAck',
   'perpsProKlineProtocolVersion',
 ];

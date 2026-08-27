@@ -110,6 +110,35 @@ jest.mock('react-native-reanimated', () => {
   };
 });
 
+jest.mock('./usePerpsProAndroidScenePresentation', () => ({
+  usePerpsProAndroidScenePresentation: ({
+    infoTabsAnchorY,
+    marketNaturalAnchorY,
+    sceneLeadInHeight,
+  }: {
+    infoTabsAnchorY: number;
+    marketNaturalAnchorY: number;
+    sceneLeadInHeight: number;
+  }) => ({
+    headerAnimatedStyle: {
+      opacity: 1,
+      transform: [{ translateY: 0 }],
+    },
+    infoTabsAnimatedStyle: {
+      transform: [{ translateY: infoTabsAnchorY }],
+    },
+    marketAnimatedStyle: {
+      transform: [{ translateY: marketNaturalAnchorY }],
+    },
+    regionAlertAnimatedStyle: {
+      transform: [{ translateY: marketNaturalAnchorY }],
+    },
+    tradeAnimatedStyle: {
+      transform: [{ translateY: sceneLeadInHeight }],
+    },
+  }),
+}));
+
 jest.mock('@/screens/Perps/components/PerpsRegionAlert', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -1204,7 +1233,7 @@ describe('PerpsProScene market loading states', () => {
       nativeEvent: { pageScrollState: 'dragging' },
     });
     fireEvent(pager, 'pageScroll', {
-      nativeEvent: { offset: 0.49, position: 1 },
+      nativeEvent: { offset: 0.45, position: 1 },
     });
     expect(
       screen.getByTestId('perps-pro-info-tab-openOrders').props
@@ -1213,7 +1242,7 @@ describe('PerpsProScene market loading states', () => {
     expect(setActiveInfoTab).not.toHaveBeenCalled();
 
     fireEvent(pager, 'pageScroll', {
-      nativeEvent: { offset: 0.51, position: 1 },
+      nativeEvent: { offset: 0.55, position: 1 },
     });
     expect(
       screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
@@ -1223,7 +1252,7 @@ describe('PerpsProScene market loading states', () => {
       nativeEvent: { pageScrollState: 'settling' },
     });
     fireEvent(pager, 'pageScroll', {
-      nativeEvent: { offset: 0.49, position: 1 },
+      nativeEvent: { offset: 0.45, position: 1 },
     });
     expect(
       screen.getByTestId('perps-pro-info-tab-openOrders').props

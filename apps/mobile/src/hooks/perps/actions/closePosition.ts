@@ -17,6 +17,7 @@ import { isPerpsProPriceProtocolValid } from '@/utils/perpsPriceProtocol';
 
 import { isSamePerpsActionAccount } from './accountGuard';
 import { isPerpsActionUserCancelled } from './actionError';
+import type { PerpsConfirmedOrder } from './confirmedOrder';
 
 export type PerpsCloseOrderType = 'limit' | 'market';
 
@@ -28,11 +29,16 @@ export interface PerpsClosePositionCommand {
   limitPrice: string | null;
   midPrice: string;
   orderType: PerpsCloseOrderType;
+  reportingFacts: Readonly<{
+    leverage: number;
+    marginMode: 'cross' | 'isolated';
+  }>;
   size: string;
   type: 'closePosition';
 }
 
 export interface PerpsClosePositionResult {
+  confirmed?: PerpsConfirmedOrder;
   error?: string;
   failureReason?: 'minimumNotional' | 'requestFailed' | 'userCancelled';
   kind: 'failed' | 'filled' | 'resting' | 'staleContext';
@@ -132,6 +138,7 @@ export const buildPerpsClosePositionCommand = ({
   limitPrice,
   midPrice,
   orderType,
+  reportingFacts,
   size,
   szDecimals,
 }: Omit<PerpsClosePositionCommand, 'size' | 'type'> & {
@@ -195,6 +202,7 @@ export const buildPerpsClosePositionCommand = ({
     limitPrice: orderType === 'limit' ? normalizedLimitPrice ?? null : null,
     midPrice: mid.toFixed(),
     orderType,
+    reportingFacts: Object.freeze({ ...reportingFacts }),
     size: normalizedSize,
     type: 'closePosition' as const,
   });
@@ -335,23 +343,45 @@ export const executePerpsClosePosition = async (
     )?.response?.data?.statuses?.[0] as
       | {
           error?: string;
-          filled?: { oid?: number };
+          filled?: {
+            avgPx?: string;
+            oid?: number;
+            totalSz?: string;
+          };
           resting?: { oid?: number };
         }
       | undefined;
     if ((response as { status?: unknown })?.status !== 'ok' || status?.error) {
       throw new Error(status?.error || 'Hyperliquid rejected close order');
     }
+    const confirmed: PerpsConfirmedOrder | undefined = status?.filled
+      ? Object.freeze({
+          acceptance: 'filled' as const,
+          oid: status.filled.oid,
+          price: status.filled.avgPx ?? '',
+          size: status.filled.totalSz ?? '',
+        })
+      : status?.resting
+      ? Object.freeze({
+          acceptance: 'resting' as const,
+          oid: status.resting.oid,
+          price:
+            executableCommand.orderType === 'limit'
+              ? executableCommand.limitPrice ?? ''
+              : executableCommand.midPrice,
+          size: executableCommand.size,
+        })
+      : undefined;
     if (
       !isSamePerpsActionAccount(
         dependencies.getCurrentAccount(),
         command.account,
       )
     ) {
-      return { kind: 'staleContext' };
+      return { confirmed, kind: 'staleContext' };
     }
-    const kind = status?.filled ? 'filled' : status?.resting ? 'resting' : null;
-    if (!kind) throw new Error('Missing Hyperliquid close order status');
+    if (!confirmed) throw new Error('Missing Hyperliquid close order status');
+    const kind = confirmed.acceptance;
     let refreshError: string | undefined;
     try {
       const dex = dependencies.resolveDex(command.coin);
@@ -370,11 +400,12 @@ export const executePerpsClosePosition = async (
         command.account,
       )
     ) {
-      return { kind: 'staleContext', refreshError };
+      return { confirmed, kind: 'staleContext', refreshError };
     }
     return {
+      confirmed,
       kind,
-      oid: status?.[kind]?.oid,
+      oid: confirmed.oid,
       refreshError,
     };
   } catch (error) {

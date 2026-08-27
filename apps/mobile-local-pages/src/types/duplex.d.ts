@@ -106,6 +106,9 @@ type DuplexDefs = {
             type: 'CLEAR_CROSSHAIR';
           }
         | {
+            type: 'RESET_PERPS_PRO_PRICE_SCALE';
+          }
+        | {
             type: 'COMPLETE_OLDER_CANDLES_REQUEST';
             earliestTime: number;
             identity: string;
@@ -180,6 +183,13 @@ type DuplexDefs = {
       type: 'CANDLE_DATA_APPLIED';
       identity: string;
       revision: number;
+    };
+    receive: never;
+  };
+  TradingView_PerpsProPriceScaleAutoScaleChanged: {
+    post: {
+      type: 'PERPS_PRO_PRICE_SCALE_AUTO_SCALE_CHANGED';
+      autoScale: boolean;
     };
     receive: never;
   };

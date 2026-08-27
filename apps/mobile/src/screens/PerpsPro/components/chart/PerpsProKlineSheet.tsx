@@ -72,14 +72,23 @@ const getPriceDecimals = (decimals: number) => {
 };
 
 const PerpsProKlineChart: React.FC<{
+  chartRef: React.RefObject<TradingViewChartRef | null>;
   feed: PerpsCandleFeedSnapshot;
   interval: PerpsCandleInterval;
   market: PerpsProMarket;
   onLoadOlder: () => Promise<PerpsCandleHistoryLoadResult>;
+  onPriceScaleAutoScaleChange: (autoScale: boolean) => void;
   visible: boolean;
-}> = ({ feed, interval, market, onLoadOlder, visible }) => {
+}> = ({
+  chartRef,
+  feed,
+  interval,
+  market,
+  onLoadOlder,
+  onPriceScaleAutoScaleChange,
+  visible,
+}) => {
   const { colors2024 } = useTheme2024();
-  const chartRef = useRef<TradingViewChartRef>(null);
   const lastSentRef = useRef<{
     identity: string;
     readyVersion: number;
@@ -197,6 +206,7 @@ const PerpsProKlineChart: React.FC<{
     candles,
     chartData,
     chartFailed,
+    chartRef,
     feed.identity,
     feed.status,
     feed.updateType,
@@ -221,7 +231,7 @@ const PerpsProKlineChart: React.FC<{
         outcome: result === 'exhausted' ? 'exhausted' : 'retry',
       });
     },
-    [feed.identity, onLoadOlder, visible],
+    [chartRef, feed.identity, onLoadOlder, visible],
   );
 
   const hasDisplayedSnapshot =
@@ -251,14 +261,14 @@ const PerpsProKlineChart: React.FC<{
     }
     chartRef.current?.clearCrosshair();
     lastClearedIdentityRef.current = feed.identity;
-  }, [feed.identity, isIntervalSwitchLoading]);
+  }, [chartRef, feed.identity, isIntervalSwitchLoading]);
 
   useEffect(() => {
     if (visible) {
       return;
     }
     chartRef.current?.clearCrosshair();
-  }, [visible]);
+  }, [chartRef, visible]);
 
   const showSkeleton =
     chartFailed ||
@@ -280,6 +290,7 @@ const PerpsProKlineChart: React.FC<{
         onChartError={handleChartError}
         onChartReady={handleChartReady}
         onDataApplied={handleDataApplied}
+        onPriceScaleAutoScaleChange={onPriceScaleAutoScaleChange}
         onRequestOlderCandles={handleRequestOlderCandles}
         variant="perps-pro"
       />
@@ -301,6 +312,11 @@ export const PerpsProKlineSheet: React.FC<{
   preloadEnabled = enabled,
   visible = true,
 }) => {
+  const chartRef = useRef<TradingViewChartRef>(null);
+  const [priceScaleState, setPriceScaleState] = useState({
+    autoScale: true,
+    marketKey: market.marketKey,
+  });
   const { colors2024, styles: themedStyles } = useTheme2024({
     getStyle,
   });
@@ -337,6 +353,27 @@ export const PerpsProKlineSheet: React.FC<{
     },
     [onClose, visible],
   );
+  const handleResetPriceScale = useCallback(() => {
+    chartRef.current?.resetPriceScale();
+  }, []);
+  const handlePriceScaleAutoScaleChange = useCallback(
+    (autoScale: boolean) => {
+      setPriceScaleState(previous => {
+        if (
+          previous.marketKey === market.marketKey &&
+          previous.autoScale === autoScale
+        ) {
+          return previous;
+        }
+        return { autoScale, marketKey: market.marketKey };
+      });
+    },
+    [market.marketKey],
+  );
+  const priceScaleAutoScale =
+    priceScaleState.marketKey === market.marketKey
+      ? priceScaleState.autoScale
+      : true;
 
   useEffect(() => {
     if (!visible) {
@@ -376,14 +413,18 @@ export const PerpsProKlineSheet: React.FC<{
           <PerpsProKlineToolbar
             disabled={!kline.hydrated}
             interval={kline.interval}
+            onResetPriceScale={handleResetPriceScale}
             onSelect={kline.selectInterval}
+            showPriceScaleReset={!priceScaleAutoScale}
           />
           <PerpsProKlineChart
             key={market.marketKey}
+            chartRef={chartRef}
             feed={kline.feed}
             interval={kline.interval}
             market={market}
             onLoadOlder={kline.loadOlder}
+            onPriceScaleAutoScaleChange={handlePriceScaleAutoScaleChange}
             visible={visible}
           />
           <View style={themedStyles.footer} testID="perps-pro-kline-footer" />

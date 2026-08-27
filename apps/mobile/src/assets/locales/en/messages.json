@@ -2787,7 +2787,8 @@
           }
         },
         "chart": {
-          "open": "Open chart"
+          "open": "Open chart",
+          "resetPriceScale": "Reset chart price scale"
         },
         "account": {
           "disabledFrame": "Account actions are not available in this phase",

@@ -1,8 +1,8 @@
 import type { L2Book } from '@rabby-wallet/hyperliquid-sdk';
 
 import {
+  resolvePerpsProMarketExpectedEntryPrice,
   resolvePerpsProMarketOrderProjection,
-  resolvePerpsProMarketRiskEntryPrice,
 } from './marketOrderProjection';
 
 const book: L2Book = {
@@ -118,7 +118,7 @@ describe('resolvePerpsProMarketOrderProjection', () => {
       szDecimals: 3,
     });
 
-    expect(resolvePerpsProMarketRiskEntryPrice(projection)).toBe(
+    expect(resolvePerpsProMarketExpectedEntryPrice(projection)).toBe(
       '509.31304347826086956522',
     );
   });
@@ -141,7 +141,9 @@ describe('resolvePerpsProMarketOrderProjection', () => {
         fillError: 'insufficientDepth',
         source: 'midFallback',
       });
-      expect(resolvePerpsProMarketRiskEntryPrice(projection)).toBe('509.15');
+      expect(resolvePerpsProMarketExpectedEntryPrice(projection)).toBe(
+        '509.15',
+      );
     },
   );
 });
