@@ -1,10 +1,17 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 
+import {
+  getTopPerpsProSheetNavigationRegistration,
+  requestDismissPerpsProSheet,
+  resetPerpsProSheetNavigationGuardForTests,
+} from './components/common/perpsProSheetNavigationRegistry';
 import { PerpsProScreen } from './index';
 
 const mockSetOptions = jest.fn();
 const mockPush = jest.fn();
+const mockHidePortfolioBreakdown = jest.fn();
+let mockPortfolioBreakdownVisible = false;
 
 jest.mock(
   '@/screens/PerpsProHistory/repository/perpsProHistoryRepository',
@@ -43,6 +50,11 @@ jest.mock('@/hooks/navigation', () => {
     }),
   };
 });
+
+jest.mock('@/hooks/useTipsPopup', () => ({
+  useHideTipsPopup: () => mockHidePortfolioBreakdown,
+  useIsTipsPopupVisible: () => mockPortfolioBreakdownVisible,
+}));
 
 jest.mock('./scene/PerpsProScene', () => {
   const ReactModule = require('react');
@@ -95,6 +107,8 @@ jest.mock('./scene/PerpsProScene', () => {
 describe('PerpsProScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockPortfolioBreakdownVisible = false;
+    resetPerpsProSheetNavigationGuardForTests();
   });
 
   it('delegates mode and History actions while the outer route owns the header', () => {
@@ -147,5 +161,17 @@ describe('PerpsProScreen', () => {
       params: { initialTab: 'transaction' },
       screen: 'PerpsProHistory',
     });
+  });
+
+  it('registers the owned Portfolio breakdown as the top Pro sheet', () => {
+    mockPortfolioBreakdownVisible = true;
+    render(
+      <PerpsProScreen isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    const registration = getTopPerpsProSheetNavigationRegistration();
+    expect(registration).not.toBeNull();
+    requestDismissPerpsProSheet(registration!, 'edge');
+    expect(mockHidePortfolioBreakdown).toHaveBeenCalledTimes(1);
   });
 });

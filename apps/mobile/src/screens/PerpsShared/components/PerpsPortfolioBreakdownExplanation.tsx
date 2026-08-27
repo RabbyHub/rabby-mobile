@@ -9,6 +9,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
+import { PERPS_PORTFOLIO_BREAKDOWN_TIPS_OWNER } from '../constants';
+
 export const PerpsPortfolioBreakdownExplanationContent: React.FC<{
   desc: string;
   rows: { label: string; value: number }[];
@@ -74,6 +76,8 @@ export const useShowPerpsPortfolioBreakdown = () => {
         />
       ),
       buttonType: 'hyperliquid',
+      enablePanDownToClose: true,
+      owner: PERPS_PORTFOLIO_BREAKDOWN_TIPS_OWNER,
     });
   });
 

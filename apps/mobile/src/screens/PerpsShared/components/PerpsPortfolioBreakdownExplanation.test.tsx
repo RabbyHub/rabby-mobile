@@ -61,7 +61,9 @@ const TipsPopupStateProbe = () => {
       <Pressable onPress={hideTipsPopup} testID="close-portfolio-breakdown" />
       <Text testID="portfolio-breakdown-state">
         {state.visible
-          ? `${state.title}:${state.bgType}:${state.buttonType}`
+          ? `${state.title}:${state.bgType}:${state.buttonType}:${
+              state.owner
+            }:${String(state.enablePanDownToClose)}`
           : 'closed'}
       </Text>
       {state.visible && React.isValidElement(state.desc) ? state.desc : null}
@@ -82,7 +84,7 @@ describe('Perps Portfolio Value breakdown integration', () => {
 
     expect(mockGetBreakdownValues).toHaveBeenCalledWith(261.56);
     expect(screen.getByTestId('portfolio-breakdown-state')).toHaveTextContent(
-      'page.perps.PerpsCard.unifiedAccount:bg0:hyperliquid',
+      'page.perps.PerpsCard.unifiedAccount:bg0:hyperliquid:perps-portfolio-breakdown:true',
     );
     expect(
       screen.getByText('page.perps.PerpsCard.unifiedAccountDesc'),
