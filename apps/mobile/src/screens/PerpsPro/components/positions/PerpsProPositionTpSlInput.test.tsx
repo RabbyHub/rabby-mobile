@@ -3,6 +3,7 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 
 const mockDecimalProps = jest.fn();
+const mockInputFocus = jest.fn();
 
 jest.mock('@/assets2024/icons/perps/PerpsProPrecisionCaret.svg', () => {
   const ReactModule = require('react');
@@ -29,10 +30,15 @@ jest.mock('../trade/PerpsProDecimalTextInput', () => {
   const ReactModule = require('react');
   const { TextInput } = require('react-native');
   return {
-    PerpsProDecimalTextInput: (props: object) => {
-      mockDecimalProps(props);
-      return ReactModule.createElement(TextInput, props);
-    },
+    PerpsProDecimalTextInput: ReactModule.forwardRef(
+      (props: object, forwardedRef: React.Ref<unknown>) => {
+        mockDecimalProps(props);
+        ReactModule.useImperativeHandle(forwardedRef, () => ({
+          focus: mockInputFocus,
+        }));
+        return ReactModule.createElement(TextInput, props);
+      },
+    ),
   };
 });
 
@@ -106,6 +112,7 @@ describe('PerpsProPositionTpSlInput', () => {
     expect(mockDecimalProps.mock.lastCall?.[0]).toMatchObject({
       focusCursorAtEnd: true,
       focusCursorAtEndMode: 'initialFocus',
+      pointerEvents: 'none',
     });
   });
 
@@ -141,9 +148,14 @@ describe('PerpsProPositionTpSlInput', () => {
     expect(StyleSheet.flatten(screen.getByTestId('field').props.style)).toEqual(
       expect.objectContaining({ color: 'transparent' }),
     );
+    expect(screen.getByTestId('field').props.pointerEvents).toBe('none');
+
+    fireEvent.press(screen.getByTestId('field-focus-proxy'));
+    expect(mockInputFocus).toHaveBeenCalledTimes(1);
 
     fireEvent(screen.getByTestId('field'), 'focus');
     expect(screen.queryByTestId('field-formatted-value')).toBeNull();
+    expect(screen.getByTestId('field').props.pointerEvents).toBe('auto');
     expect(StyleSheet.flatten(screen.getByTestId('field').props.style)).toEqual(
       expect.objectContaining({ color: 'neutral-title-1' }),
     );

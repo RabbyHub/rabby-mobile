@@ -417,6 +417,40 @@ describe('Perps Pro open order edit sheets', () => {
     ).toBe('20');
   });
 
+  it('locks Confirm immediately during review construction without dimming or replacing the Conditional slider', () => {
+    render(
+      <PerpsProConditionalOrderEditSheet
+        coveredByReview={false}
+        editor={conditionalEditor}
+        onClose={jest.fn()}
+        onReview={jest.fn()}
+        position={position}
+        reviewRequesting
+        visible
+      />,
+    );
+
+    expect(mockModalProps).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        backdropProps: { pressBehavior: 'none' },
+        enablePanDownToClose: false,
+      }),
+    );
+    expect(
+      screen.getByTestId('perps-pro-conditional-order-edit-confirm').props
+        .accessibilityState,
+    ).toMatchObject({ disabled: true });
+    expect(screen.getByTestId('perps-pro-slider').props).toMatchObject({
+      dimWhenDisabled: false,
+      disabled: true,
+      value: 100,
+    });
+    expect(
+      screen.getByLabelText('page.perps.pro.openOrders.triggerPrice').props
+        .value,
+    ).toBe('110');
+  });
+
   it('renders Conditional Limit with editable Trigger and Limit prices', () => {
     const onReview = jest.fn();
     render(
@@ -531,6 +565,14 @@ describe('Perps Pro open order edit sheets', () => {
         snapPoints: [542],
       }),
     );
+    expect(
+      screen.getByTestId('perps-pro-conditional-order-edit-confirm').props
+        .accessibilityState,
+    ).toMatchObject({ disabled: true });
+    expect(screen.getByTestId('perps-pro-slider').props).toMatchObject({
+      dimWhenDisabled: false,
+      disabled: true,
+    });
     unmount();
 
     const review = {

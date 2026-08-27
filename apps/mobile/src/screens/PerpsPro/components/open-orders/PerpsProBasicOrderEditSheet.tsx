@@ -44,8 +44,17 @@ export const PerpsProBasicOrderEditSheet: React.FC<{
   editor: Extract<PerpsProOpenOrderEditEditorState, { category: 'basic' }>;
   onClose: () => void;
   onReview: (draft: PerpsProBasicOrderEditDraft) => void;
+  reviewRequesting?: boolean;
   visible: boolean;
-}> = React.memo(({ coveredByReview, editor, onClose, onReview, visible }) => {
+}> = React.memo(props => {
+  const {
+    coveredByReview,
+    editor,
+    onClose,
+    onReview,
+    reviewRequesting = false,
+    visible,
+  } = props;
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -54,10 +63,11 @@ export const PerpsProBasicOrderEditSheet: React.FC<{
   const [price, setPrice] = useState(initialPrice);
   const [manualAmount, setManualAmount] = useState('');
   const [amountTouched, setAmountTouched] = useState(false);
+  const interactionLocked = coveredByReview || reviewRequesting;
   usePerpsProSheetNavigationRegistration({
     active: visible,
     dismiss: onClose,
-    dismissible: !coveredByReview,
+    dismissible: !interactionLocked,
   });
   useRegisterBlockingModal(MODAL_ID, visible);
 
@@ -136,10 +146,10 @@ export const PerpsProBasicOrderEditSheet: React.FC<{
         linearGradientType: 'bg1',
       })}
       android_keyboardInputMode="adjustPan"
-      backdropProps={{ pressBehavior: coveredByReview ? 'none' : 'close' }}
+      backdropProps={{ pressBehavior: interactionLocked ? 'none' : 'close' }}
       backgroundStyle={styles.background}
       enableDynamicSizing={false}
-      enablePanDownToClose={!coveredByReview}
+      enablePanDownToClose={!interactionLocked}
       handleIndicatorStyle={styles.handleIndicator}
       handleStyle={styles.handle}
       keyboardBehavior="interactive"
@@ -149,6 +159,7 @@ export const PerpsProBasicOrderEditSheet: React.FC<{
       style={styles.modal}>
       <BottomSheetView>
         <AutoLockView
+          pointerEvents={interactionLocked ? 'none' : 'auto'}
           style={styles.container}
           testID="perps-pro-basic-order-edit-content">
           <PerpsProOpenOrderEditHeader
@@ -203,7 +214,7 @@ export const PerpsProBasicOrderEditSheet: React.FC<{
             testID="perps-pro-basic-order-edit-footer">
             <Button
               buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
-              disabled={!canReview || coveredByReview}
+              disabled={!canReview || interactionLocked}
               height={BOTTOM_BUTTON_COMPACT_HEIGHT}
               onPress={() =>
                 dismissKeyboardThen(() =>

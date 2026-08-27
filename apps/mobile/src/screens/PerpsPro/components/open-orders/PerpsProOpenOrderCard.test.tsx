@@ -68,6 +68,10 @@ jest.mock('../../scene/usePerpsProMarketIdentity', () => ({
   usePerpsProMarketIdentity: () => mockMarketIdentity,
 }));
 
+jest.mock('../loading/PerpsProSkeletonBlock', () => ({
+  PerpsProSkeletonBlock: require('react-native').View,
+}));
+
 import type { PerpsOpenOrderViewModel } from '../../model/openOrder';
 import { PerpsProOpenOrderCard } from './PerpsProOpenOrderCard';
 
@@ -134,7 +138,10 @@ describe('PerpsProOpenOrderCard', () => {
       />,
     );
 
-    expect(screen.getByText('BTC')).toBeTruthy();
+    expect(screen.queryByText('BTC')).toBeNull();
+    expect(
+      screen.getByTestId('perps-pro-order-market-basic:hyna:BTC:1-skeleton'),
+    ).toBeTruthy();
     expect(screen.getByText('hyna')).toBeTruthy();
     expect(screen.queryByText('hyna:BTC')).toBeNull();
     expect(screen.getByText('Filled / Amount')).toBeTruthy();
@@ -158,6 +165,9 @@ describe('PerpsProOpenOrderCard', () => {
       />,
     );
     expect(screen.getByText('BTCUSDE')).toBeTruthy();
+    expect(
+      screen.queryByTestId('perps-pro-order-market-basic:hyna:BTC:1-skeleton'),
+    ).toBeNull();
     expect(screen.getByText('Filled / Amount (USDE)')).toBeTruthy();
   });
 

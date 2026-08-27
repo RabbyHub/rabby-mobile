@@ -27,6 +27,7 @@ import {
   formatPerpsProVariableDecimal,
 } from '../../utils/format';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
+import { PerpsProMarketPair } from '../common/PerpsProMarketPair';
 import {
   getPerpsProSemanticTagContainerStyle,
   getPerpsProSemanticTagTextStyle,
@@ -173,17 +174,16 @@ export const PerpsProPositionCard: React.FC<{
               {isLong ? 'B' : 'S'}
             </Text>
           </View>
-          <Pressable
-            accessibilityLabel={market.displayPair}
-            accessibilityRole="button"
-            disabled={!onPressMarket}
-            onPress={() => onPressMarket?.(position.coin)}
+          <PerpsProMarketPair
+            metadataReady={market.metadataReady}
+            onPress={
+              onPressMarket ? () => onPressMarket(position.coin) : undefined
+            }
             style={styles.marketButton}
-            testID={`perps-pro-position-market-${position.key}`}>
-            <Text numberOfLines={1} style={styles.coin}>
-              {market.displayPair}
-            </Text>
-          </Pressable>
+            testID={`perps-pro-position-market-${position.key}`}
+            textStyle={styles.coin}
+            value={market.displayPair}
+          />
           {market.sourceTag ? (
             <View
               style={styles.sourceTag}

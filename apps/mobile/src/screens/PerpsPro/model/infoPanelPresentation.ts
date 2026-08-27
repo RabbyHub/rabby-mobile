@@ -72,14 +72,33 @@ export const resolvePerpsProInfoTabPresentation = ({
   };
 };
 
-export const isPerpsProCollectionAuthoritativelyEmpty = ({
+export type PerpsProCollectionPresentation =
+  | 'unresolved'
+  | 'authoritativeEmpty'
+  | 'filteredEmpty'
+  | 'populated';
+
+export const resolvePerpsProCollectionPresentation = ({
   hasAccount,
   runtimeReady,
   sourceReady,
   totalCount,
+  visibleCount,
 }: {
   hasAccount: boolean;
   runtimeReady: boolean;
   sourceReady: boolean;
   totalCount: number;
-}) => hasAccount && runtimeReady && sourceReady && totalCount === 0;
+  visibleCount: number;
+}): PerpsProCollectionPresentation => {
+  if (!hasAccount || !runtimeReady) {
+    return 'unresolved';
+  }
+  if (visibleCount > 0) {
+    return 'populated';
+  }
+  if (!sourceReady) {
+    return 'unresolved';
+  }
+  return totalCount === 0 ? 'authoritativeEmpty' : 'filteredEmpty';
+};

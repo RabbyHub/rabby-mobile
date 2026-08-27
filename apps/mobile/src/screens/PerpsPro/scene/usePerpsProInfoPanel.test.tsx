@@ -111,7 +111,22 @@ jest.mock('../model/openOrder', () => ({
 }));
 
 jest.mock('../model/infoPanelPresentation', () => ({
-  isPerpsProCollectionAuthoritativelyEmpty: () => false,
+  resolvePerpsProCollectionPresentation: ({
+    sourceReady,
+    totalCount,
+    visibleCount,
+  }: {
+    sourceReady: boolean;
+    totalCount: number;
+    visibleCount: number;
+  }) =>
+    visibleCount > 0
+      ? 'populated'
+      : !sourceReady
+      ? 'unresolved'
+      : totalCount === 0
+      ? 'authoritativeEmpty'
+      : 'filteredEmpty',
   resolvePerpsProInfoTabPresentation: () => ({
     activeInfoTab: 'positions',
     automaticSelection: null,

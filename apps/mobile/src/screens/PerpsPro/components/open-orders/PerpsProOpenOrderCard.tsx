@@ -20,6 +20,7 @@ import {
   getPerpsProSemanticTagTextStyle,
   PERPS_PRO_LIGHT_NEUTRAL_TAG_BACKGROUND,
 } from '../common/perpsProSemanticTagStyles';
+import { PerpsProMarketPair } from '../common/PerpsProMarketPair';
 
 const EDITABLE_VALUE_HIT_SLOP = {
   bottom: 4,
@@ -134,17 +135,16 @@ export const PerpsProOpenOrderCard: React.FC<{
         <View style={styles.header}>
           <View style={styles.identity}>
             <View style={styles.titleRow}>
-              <Pressable
-                accessibilityLabel={market.displayPair}
-                accessibilityRole="button"
-                disabled={!onPressMarket}
-                onPress={() => onPressMarket?.(order.coin)}
+              <PerpsProMarketPair
+                metadataReady={market.metadataReady}
+                onPress={
+                  onPressMarket ? () => onPressMarket(order.coin) : undefined
+                }
                 style={styles.marketButton}
-                testID={`perps-pro-order-market-${order.key}`}>
-                <Text numberOfLines={1} style={styles.coin}>
-                  {market.displayPair}
-                </Text>
-              </Pressable>
+                testID={`perps-pro-order-market-${order.key}`}
+                textStyle={styles.coin}
+                value={market.displayPair}
+              />
               {market.sourceTag ? (
                 <View
                   style={styles.sourceTag}
