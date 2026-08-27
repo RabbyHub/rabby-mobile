@@ -31,12 +31,21 @@ export interface PerpsCloseAllPositionsCommand {
 }
 
 export interface PerpsCloseAllPositionsResult {
+  confirmedFills?: readonly PerpsCloseAllConfirmedFill[];
   error?: string;
   failureReason?: 'requestFailed' | 'userCancelled';
   kind: 'failed' | 'staleContext' | 'success';
   refreshError?: string;
   stage?: 'cancelTpSl' | 'closePositions';
 }
+
+export type PerpsCloseAllConfirmedFill = Readonly<{
+  coin: string;
+  oid?: number;
+  price: string;
+  signedSize: string;
+  size: string;
+}>;
 
 export interface CloseAllPositionsDependencies {
   cancelOrders: (
@@ -302,6 +311,7 @@ export const executePerpsCloseAllPositions = async (
   }
 
   try {
+    const submittedPositions = getClosablePositions(liveCloseState);
     const response = await dependencies.closeAllPositions(
       liveCloseState,
       0.08,
@@ -312,6 +322,34 @@ export const executePerpsCloseAllPositions = async (
       status?: unknown;
     };
     const statuses = responseShape.response?.data?.statuses ?? [];
+    const confirmedFills: readonly PerpsCloseAllConfirmedFill[] =
+      responseShape.status === 'ok'
+        ? Object.freeze(
+            statuses.flatMap((status, index) => {
+              const filled = (
+                status as {
+                  filled?: {
+                    avgPx?: string;
+                    oid?: number;
+                    totalSz?: string;
+                  };
+                }
+              )?.filled;
+              const position = submittedPositions[index];
+              return filled && position
+                ? [
+                    Object.freeze({
+                      coin: position.coin,
+                      oid: filled.oid,
+                      price: filled.avgPx ?? '',
+                      signedSize: position.signedSize,
+                      size: filled.totalSz ?? '',
+                    }),
+                  ]
+                : [];
+            }),
+          )
+        : [];
     const filledCount = statuses.filter(
       status => !!(status as { filled?: unknown })?.filled,
     ).length;
@@ -325,7 +363,7 @@ export const executePerpsCloseAllPositions = async (
         command.account,
       )
     ) {
-      return { kind: 'staleContext' };
+      return { confirmedFills, kind: 'staleContext' };
     }
 
     const refreshError = await refreshSnapshots(dependencies);
@@ -335,6 +373,7 @@ export const executePerpsCloseAllPositions = async (
       filledCount !== command.positions.length
     ) {
       return {
+        confirmedFills,
         error: firstError || 'Not all Hyperliquid positions were filled',
         failureReason: 'requestFailed',
         kind: 'failed',
@@ -342,7 +381,7 @@ export const executePerpsCloseAllPositions = async (
         stage: 'closePositions',
       };
     }
-    return { kind: 'success', refreshError };
+    return { confirmedFills, kind: 'success', refreshError };
   } catch (error) {
     const refreshError = await refreshSnapshots(dependencies);
     return {

@@ -61,7 +61,11 @@ const dependencies = (
   })),
   marketOrder: jest.fn(async () => ({
     status: 'ok',
-    response: { data: { statuses: [{ filled: { oid: 1 } }] } },
+    response: {
+      data: {
+        statuses: [{ filled: { avgPx: '63100', oid: 1, totalSz: '0.001' } }],
+      },
+    },
   })),
   refreshClearinghouse: jest.fn(),
   refreshOpenOrders: jest.fn(),
@@ -435,6 +439,12 @@ describe('Perps Pro open order action', () => {
     await expect(
       executePerpsProOpenOrder(build(), deps),
     ).resolves.toMatchObject({
+      confirmed: {
+        acceptance: 'filled',
+        oid: 1,
+        price: '63100',
+        size: '0.001',
+      },
       kind: 'filled',
       oid: 1,
     });
@@ -450,6 +460,43 @@ describe('Perps Pro open order action', () => {
       kind: 'staleContext',
     });
     expect(deps.marketOrder).not.toHaveBeenCalled();
+  });
+
+  it('preserves server acceptance when the account changes after submission', async () => {
+    let currentAccount: typeof account | null = account;
+    const deps = dependencies({
+      getCurrentAccount: () => currentAccount,
+      marketOrder: jest.fn(async () => {
+        currentAccount = null;
+        return {
+          status: 'ok',
+          response: {
+            data: {
+              statuses: [
+                {
+                  filled: {
+                    avgPx: '63100',
+                    oid: 1,
+                    totalSz: '0.001',
+                  },
+                },
+              ],
+            },
+          },
+        };
+      }),
+    });
+
+    await expect(executePerpsProOpenOrder(build(), deps)).resolves.toEqual({
+      confirmed: {
+        acceptance: 'filled',
+        oid: 1,
+        price: '63100',
+        size: '0.001',
+      },
+      kind: 'staleContext',
+    });
+    expect(deps.refreshClearinghouse).not.toHaveBeenCalled();
   });
 
   it('blocks a region-restricted Trade Form before the SDK call', async () => {

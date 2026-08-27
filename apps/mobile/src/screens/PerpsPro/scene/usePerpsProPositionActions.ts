@@ -19,6 +19,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsPositionViewModel } from '../model/position';
+import { reportPerpsProClosePositionHistory } from '../analytics/manualTradeHistory';
 import {
   buildPerpsProMarketDescriptor,
   buildPerpsProMarketKey,
@@ -219,11 +220,16 @@ export const usePerpsProPositionActions = ({
           midPrice: draft.midPrice,
           orderType: draft.orderType,
           pxDecimals: closeEditor.market.pxDecimals,
+          reportingFacts: {
+            leverage: closeEditor.position.leverage,
+            marginMode: closeEditor.position.marginMode,
+          },
           size: draft.size,
           szDecimals: closeEditor.market.szDecimals,
         });
         await ensurePerpsActionApproval(closeEditor.account);
         const result = await executePerpsClosePosition(command);
+        reportPerpsProClosePositionHistory(command, result.confirmed);
         if (result.failureReason === 'userCancelled') return;
         if (result.kind === 'staleContext') {
           showToast(t('page.perps.pro.positions.closeContextChanged'), 'error');

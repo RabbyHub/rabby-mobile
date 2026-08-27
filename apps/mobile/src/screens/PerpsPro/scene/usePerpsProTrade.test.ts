@@ -43,14 +43,26 @@ const mockLimitOrderOpen = jest.fn(async () => ({
   status: 'ok',
 }));
 const mockMarketOrderOpen = jest.fn(async () => ({
-  response: { data: { statuses: [{ filled: { oid: 1 } }] } },
+  response: {
+    data: {
+      statuses: [{ filled: { avgPx: '101', oid: 1, totalSz: '1' } }],
+    },
+  },
   status: 'ok',
 }));
+const mockReportAttachedParentHistory = jest.fn();
+const mockReportOpenOrderHistory = jest.fn();
 const mockShowToast = jest.fn();
 const mockSetTpSlMode = jest.fn(async () => undefined);
 const mockCalLiquidationPrice = jest.fn((..._args: unknown[]) => 50);
 const mockResolvePerpsProMarketLiquidationRisk = jest.fn();
 const mockExecuteAttached = jest.fn(async (..._args: unknown[]) => ({
+  confirmedParent: {
+    acceptance: 'filled' as const,
+    oid: 1,
+    price: '101',
+    size: '1.01',
+  },
   kind: 'fullAccepted' as const,
   reconciliationErrors: [],
   refreshErrors: [],
@@ -192,6 +204,13 @@ jest.mock('@/utils/perps', () => ({
   ) => marginMode || (onlyIsolated ? 'strictIsolated' : 'normal'),
 }));
 
+jest.mock('../analytics/manualTradeHistory', () => ({
+  reportPerpsProAttachedParentHistory: (...args: unknown[]) =>
+    mockReportAttachedParentHistory(...args),
+  reportPerpsProOpenOrderHistory: (...args: unknown[]) =>
+    mockReportOpenOrderHistory(...args),
+}));
+
 jest.mock('../model/marketLiquidationProjection', () => {
   const actual = jest.requireActual<
     typeof import('../model/marketLiquidationProjection')
@@ -317,7 +336,11 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       status: 'ok',
     });
     mockMarketOrderOpen.mockResolvedValue({
-      response: { data: { statuses: [{ filled: { oid: 1 } }] } },
+      response: {
+        data: {
+          statuses: [{ filled: { avgPx: '101', oid: 1, totalSz: '1' } }],
+        },
+      },
       status: 'ok',
     });
     mockPerpsState.isUserDataReady = true;
@@ -825,6 +848,21 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
 
     expect(mockLimitOrderOpen).toHaveBeenCalledWith(
       expect.objectContaining({ limitPx: '102', tif: 'Gtc' }),
+    );
+    expect(mockReportOpenOrderHistory).toHaveBeenCalledWith(
+      expect.objectContaining({
+        execution: expect.objectContaining({
+          kind: 'limit',
+          limitPrice: '102',
+        }),
+        orderType: 'limit',
+      }),
+      {
+        acceptance: 'resting',
+        oid: 2,
+        price: '102',
+        size: '1.01',
+      },
     );
   });
 
@@ -1569,6 +1607,17 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(mockExecuteAttached).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'openOrderWithAttachedTpSl' }),
       expect.any(Function),
+    );
+    expect(mockReportAttachedParentHistory).toHaveBeenCalledWith(
+      expect.objectContaining({
+        parent: expect.objectContaining({ side: 'buy' }),
+      }),
+      {
+        acceptance: 'filled',
+        oid: 1,
+        price: '101',
+        size: '1.01',
+      },
     );
     expect(mockEnsureApproval).not.toHaveBeenCalled();
     expect(mockGetPerpsSdk).not.toHaveBeenCalled();

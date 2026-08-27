@@ -4,6 +4,7 @@ import { perpsServiceApi } from '@/core/serviceApi/perps';
 import { isSamePerpsActionAccount } from '@/hooks/perps/actions/accountGuard';
 import { isPerpsActionUserCancelled } from '@/hooks/perps/actions/actionError';
 import { ensurePerpsActionApproval } from '@/hooks/perps/actions/perpsActionApproval';
+import type { PerpsConfirmedOrder } from '@/hooks/perps/actions/confirmedOrder';
 import { getPerpsRuntimeSnapshot } from '@/hooks/perps/runtime/perpsRuntimeState';
 import {
   fetchClearinghouseStateHttp,
@@ -27,6 +28,7 @@ import {
 import { reconcilePerpsProAttachedTpSl } from '../actions/reconcileAttachedTpSl';
 
 export type PerpsProAttachedTpSlFinalOutcome = {
+  confirmedParent?: PerpsConfirmedOrder;
   error?: string;
   kind: PerpsProAttachedTpSlResult['kind'];
   leg?: 'sl' | 'tp';
@@ -69,6 +71,80 @@ const getResultServerError = (result: PerpsProAttachedTpSlResult) => {
     return getPerpsProAttachedTpSlBatchError(result.batch, CHILD_ROLES);
   }
   return getPerpsProAttachedTpSlBatchError(result.batch);
+};
+
+const getConfirmedParent = (
+  command: PerpsProAttachedTpSlCommand,
+  result: PerpsProAttachedTpSlResult,
+): PerpsConfirmedOrder | undefined => {
+  if (!('batch' in result) || !result.batch || !('legs' in result.batch)) {
+    return undefined;
+  }
+  const parent = result.batch.legs.find(leg => leg.role === 'parent');
+  if (!parent || parent.kind !== 'accepted') return undefined;
+  const rawStatus =
+    typeof parent.rawStatus === 'object' && parent.rawStatus !== null
+      ? (parent.rawStatus as {
+          filled?: { avgPx?: unknown; totalSz?: unknown };
+        })
+      : null;
+  const fallbackPrice =
+    command.parent.execution.kind === 'market'
+      ? command.parent.execution.slippageReferenceMidPrice
+      : command.parent.execution.limitPrice;
+  return Object.freeze({
+    acceptance: parent.acceptance,
+    oid: parent.oid,
+    price:
+      parent.acceptance === 'filled'
+        ? typeof rawStatus?.filled?.avgPx === 'string'
+          ? rawStatus.filled.avgPx
+          : ''
+        : fallbackPrice,
+    size:
+      parent.acceptance === 'filled'
+        ? typeof rawStatus?.filled?.totalSz === 'string'
+          ? rawStatus.filled.totalSz
+          : ''
+        : command.parent.baseSize,
+  });
+};
+
+const getReconciledConfirmedParent = (
+  command: PerpsProAttachedTpSlCommand,
+  reconciliation: Awaited<ReturnType<typeof reconcilePerpsProAttachedTpSl>>,
+): PerpsConfirmedOrder | undefined => {
+  const parent = reconciliation.legs.find(leg => leg.role === 'parent');
+  if (
+    !parent ||
+    parent.kind !== 'accepted' ||
+    !parent.acceptance ||
+    parent.oid === undefined
+  ) {
+    return undefined;
+  }
+  if (parent.acceptance === 'filled') {
+    const fill = reconciliation.fills.find(
+      item => item.oid === parent.oid && item.coin === command.parent.coin,
+    );
+    return fill
+      ? Object.freeze({
+          acceptance: 'filled' as const,
+          oid: parent.oid,
+          price: fill.px,
+          size: fill.sz,
+        })
+      : undefined;
+  }
+  return Object.freeze({
+    acceptance: 'resting' as const,
+    oid: parent.oid,
+    price:
+      command.parent.execution.kind === 'market'
+        ? command.parent.execution.slippageReferenceMidPrice
+        : command.parent.execution.limitPrice,
+    size: command.parent.baseSize,
+  });
 };
 
 export const usePerpsProAttachedTpSlExecution = ({
@@ -153,7 +229,7 @@ export const usePerpsProAttachedTpSlExecution = ({
       const refreshErrors = await refreshCurrentAccount(entry);
       return {
         finalKind,
-        reconciliationErrors: reconciliation.errors,
+        reconciliation,
         refreshErrors,
       };
     },
@@ -198,6 +274,7 @@ export const usePerpsProAttachedTpSlExecution = ({
       ensureLeverage: EnsurePerpsProAttachedTpSlLeverage,
     ): Promise<PerpsProAttachedTpSlFinalOutcome> => {
       const empty = { reconciliationErrors: [], refreshErrors: [] };
+      let confirmedParent: PerpsConfirmedOrder | undefined;
       const guardFailure = (candidate: PerpsProAttachedTpSlCommand) => {
         const result = validatePerpsProAttachedTpSlCommand(
           candidate,
@@ -269,6 +346,7 @@ export const usePerpsProAttachedTpSlExecution = ({
           executableCommand,
           getGuardContext,
         );
+        confirmedParent = getConfirmedParent(executableCommand, result);
         const serverError = getResultServerError(result);
         if (
           result.kind !== 'fullAccepted' &&
@@ -278,6 +356,7 @@ export const usePerpsProAttachedTpSlExecution = ({
         ) {
           return {
             ...empty,
+            confirmedParent,
             error:
               ('error' in result ? result.error : undefined) ?? serverError,
             kind: result.kind,
@@ -292,13 +371,23 @@ export const usePerpsProAttachedTpSlExecution = ({
           await perpsServiceApi.getPerpsAttachedTpSlJournal()
         ).find(item => item.commandId === executableCommand.commandId);
         if (!entry) {
-          return { ...empty, error: serverError, kind: result.kind };
+          return {
+            ...empty,
+            confirmedParent,
+            error: serverError,
+            kind: result.kind,
+          };
         }
         const reconciled = await reconcileEntry(entry, result.kind);
+        confirmedParent ??= getReconciledConfirmedParent(
+          executableCommand,
+          reconciled.reconciliation,
+        );
         return {
+          confirmedParent,
           error: ('error' in result ? result.error : undefined) ?? serverError,
           kind: reconciled.finalKind,
-          reconciliationErrors: reconciled.reconciliationErrors,
+          reconciliationErrors: reconciled.reconciliation.errors,
           refreshErrors: reconciled.refreshErrors,
         } as PerpsProAttachedTpSlFinalOutcome;
       } catch (error) {
@@ -307,6 +396,7 @@ export const usePerpsProAttachedTpSlExecution = ({
         }
         return {
           ...empty,
+          confirmedParent,
           error: error instanceof Error ? error.message : String(error),
           kind: 'requestFailed',
         };

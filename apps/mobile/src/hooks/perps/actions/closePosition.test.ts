@@ -26,6 +26,7 @@ const command = () =>
     midPrice: '100',
     orderType: 'market',
     pxDecimals: 2,
+    reportingFacts: { leverage: 5, marginMode: 'cross' },
     size: '0.61729',
     szDecimals: 4,
   });
@@ -38,7 +39,11 @@ const dependencies = (
   limitClose: jest.fn(),
   marketClose: jest.fn(async () => ({
     status: 'ok',
-    response: { data: { statuses: [{ filled: { oid: 1 } }] } },
+    response: {
+      data: {
+        statuses: [{ filled: { avgPx: '99', oid: 1, totalSz: '0.6172' } }],
+      },
+    },
   })),
   refreshClearinghouse: jest.fn(),
   refreshOpenOrders: jest.fn(),
@@ -50,6 +55,12 @@ describe('Perps close position action', () => {
   it('rounds size down and always submits a reduce-only opposite-side market order', async () => {
     const deps = dependencies();
     await expect(executePerpsClosePosition(command(), deps)).resolves.toEqual({
+      confirmed: {
+        acceptance: 'filled',
+        oid: 1,
+        price: '99',
+        size: '0.6172',
+      },
       kind: 'filled',
       oid: 1,
       refreshError: undefined,
@@ -105,11 +116,18 @@ describe('Perps close position action', () => {
       midPrice: '100',
       orderType: 'limit',
       pxDecimals: 2,
+      reportingFacts: { leverage: 3, marginMode: 'isolated' },
       size: '2',
       szDecimals: 4,
     });
     deps.getLiveSignedSize = () => '-2';
     await expect(executePerpsClosePosition(limit, deps)).resolves.toEqual({
+      confirmed: {
+        acceptance: 'resting',
+        oid: 9,
+        price: '101',
+        size: '2',
+      },
       kind: 'resting',
       oid: 9,
       refreshError: undefined,
@@ -132,6 +150,7 @@ describe('Perps close position action', () => {
         midPrice: '100',
         orderType: 'limit',
         pxDecimals: 2,
+        reportingFacts: { leverage: 5, marginMode: 'cross' },
         size: '1',
         szDecimals: 4,
       });
@@ -158,6 +177,7 @@ describe('Perps close position action', () => {
         midPrice: '100',
         orderType: 'market',
         pxDecimals: 2,
+        reportingFacts: { leverage: 5, marginMode: 'cross' },
         size: '0.09999',
         szDecimals: 4,
       }),
@@ -175,6 +195,7 @@ describe('Perps close position action', () => {
         midPrice: '100',
         orderType: 'market',
         pxDecimals: 2,
+        reportingFacts: { leverage: 5, marginMode: 'cross' },
         size: '0.05',
         szDecimals: 4,
       }).size,
@@ -201,5 +222,38 @@ describe('Perps close position action', () => {
       kind: 'staleContext',
     });
     expect(deps.marketClose).not.toHaveBeenCalled();
+  });
+
+  it('preserves server acceptance when the account changes after submission', async () => {
+    let currentAccount: typeof account | null = account;
+    const deps = dependencies({
+      getCurrentAccount: () => currentAccount,
+      marketClose: jest.fn(async () => {
+        currentAccount = null;
+        return {
+          status: 'ok',
+          response: {
+            data: {
+              statuses: [
+                {
+                  filled: { avgPx: '99', oid: 1, totalSz: '0.6172' },
+                },
+              ],
+            },
+          },
+        };
+      }),
+    });
+
+    await expect(executePerpsClosePosition(command(), deps)).resolves.toEqual({
+      confirmed: {
+        acceptance: 'filled',
+        oid: 1,
+        price: '99',
+        size: '0.6172',
+      },
+      kind: 'staleContext',
+    });
+    expect(deps.refreshClearinghouse).not.toHaveBeenCalled();
   });
 });

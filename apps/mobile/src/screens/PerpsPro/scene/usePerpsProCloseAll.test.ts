@@ -4,6 +4,7 @@ const mockBuildCommand = jest.fn();
 const mockExecute = jest.fn();
 const mockEnsureApproval = jest.fn();
 const mockGetState = jest.fn();
+const mockReportCloseAllHistory = jest.fn();
 
 jest.mock('@/hooks/perps/actions/actionError', () => ({
   isPerpsActionUserCancelled: () => false,
@@ -28,6 +29,10 @@ jest.mock('@/hooks/perps/usePerpsStore', () => ({
 jest.mock('@sentry/react-native', () => ({ captureException: jest.fn() }));
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
+}));
+jest.mock('../analytics/manualTradeHistory', () => ({
+  reportPerpsProCloseAllHistory: (...args: unknown[]) =>
+    mockReportCloseAllHistory(...args),
 }));
 
 import { usePerpsProCloseAll } from './usePerpsProCloseAll';
@@ -70,11 +75,34 @@ describe('usePerpsProCloseAll', () => {
     expect(hook.result.current.confirmation).toBe(confirmation);
 
     await act(async () => {
-      resolveExecution?.({ kind: 'success', legs: [] });
+      resolveExecution?.({
+        confirmedFills: [
+          {
+            coin: 'BTC',
+            oid: 1,
+            price: '100',
+            signedSize: '1',
+            size: '1',
+          },
+        ],
+        kind: 'success',
+      });
       await Promise.resolve();
     });
 
     expect(hook.result.current.pending).toBe(false);
     expect(hook.result.current.confirmation).toBeNull();
+    expect(mockReportCloseAllHistory).toHaveBeenCalledWith(
+      { type: 'closeAllPositions' },
+      [
+        {
+          coin: 'BTC',
+          oid: 1,
+          price: '100',
+          signedSize: '1',
+          size: '1',
+        },
+      ],
+    );
   });
 });

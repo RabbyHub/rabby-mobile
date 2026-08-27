@@ -6,7 +6,17 @@ const mockGetSkipLimitConfirmation = jest.fn(async () => false);
 const mockGetSkipMarketConfirmation = jest.fn(async () => false);
 const mockSetSkipLimitConfirmation = jest.fn(async () => undefined);
 const mockSetSkipMarketConfirmation = jest.fn(async () => undefined);
-const mockExecuteClose = jest.fn(async () => ({ kind: 'filled' as const }));
+const mockConfirmedClose = {
+  acceptance: 'filled' as const,
+  oid: 1,
+  price: '100',
+  size: '0.1',
+};
+const mockExecuteClose = jest.fn(async () => ({
+  confirmed: mockConfirmedClose,
+  kind: 'filled' as const,
+}));
+const mockReportClosePositionHistory = jest.fn();
 
 jest.mock('@/core/apis/perps', () => ({ apisPerps: {} }));
 jest.mock('@/core/serviceApi/perps', () => ({
@@ -58,6 +68,10 @@ jest.mock('../model/market', () => ({
     sourceTag: null,
   }),
 }));
+jest.mock('../analytics/manualTradeHistory', () => ({
+  reportPerpsProClosePositionHistory: (...args: unknown[]) =>
+    mockReportClosePositionHistory(...args),
+}));
 
 import type { PerpsPositionViewModel } from '../model/position';
 import type { PerpsProCloseDraft } from '../model/positionAction';
@@ -72,6 +86,8 @@ const position = {
   coin: 'BTC',
   direction: 'long',
   key: 'BTC',
+  leverage: 5,
+  marginMode: 'cross',
 } as PerpsPositionViewModel;
 const draft = (size: string): PerpsProCloseDraft => ({
   inputSource: 'slider',
@@ -88,7 +104,10 @@ describe('usePerpsProPositionActions close validation', () => {
     jest.clearAllMocks();
     mockGetSkipLimitConfirmation.mockResolvedValue(false);
     mockGetSkipMarketConfirmation.mockResolvedValue(false);
-    mockExecuteClose.mockResolvedValue({ kind: 'filled' });
+    mockExecuteClose.mockResolvedValue({
+      confirmed: mockConfirmedClose,
+      kind: 'filled',
+    });
     mockGetState.mockReturnValue({
       currentPerpsAccount: account,
       marketDataMap: {
@@ -226,6 +245,13 @@ describe('usePerpsProPositionActions close validation', () => {
     expect(mockSetSkipMarketConfirmation).toHaveBeenCalledWith(true);
     expect(mockSetSkipLimitConfirmation).not.toHaveBeenCalled();
     expect(mockExecuteClose).toHaveBeenCalledTimes(1);
+    expect(mockReportClosePositionHistory).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderType: 'market',
+        reportingFacts: { leverage: 5, marginMode: 'cross' },
+      }),
+      mockConfirmedClose,
+    );
   });
 
   it('does not persist a checked Market preference when review is cancelled', async () => {
