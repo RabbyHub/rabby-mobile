@@ -172,13 +172,19 @@ const MONTHS = [
 
 /**
  * Tooltip time, identical for every period (2026-08-25 spec), device local
- * time: "Aug 25, 14:00".
+ * time: "Aug 25, 14:00" — points from a previous year lead with it:
+ * "2025 Aug 25, 14:00".
  */
-export const formatPortfolioTooltipTime = (ts: number): string => {
+export const formatPortfolioTooltipTime = (
+  ts: number,
+  now: Date = new Date(),
+): string => {
   const d = new Date(ts);
-  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${pad2(d.getHours())}:${pad2(
-    d.getMinutes(),
-  )}`;
+  const year =
+    d.getFullYear() === now.getFullYear() ? '' : `${d.getFullYear()} `;
+  return `${year}${MONTHS[d.getMonth()]} ${d.getDate()}, ${pad2(
+    d.getHours(),
+  )}:${pad2(d.getMinutes())}`;
 };
 
 /**

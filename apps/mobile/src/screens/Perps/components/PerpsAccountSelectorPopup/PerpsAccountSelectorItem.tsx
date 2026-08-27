@@ -5,7 +5,7 @@ import { isSameAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import { ellipsisAddress } from '@/utils/address';
-import { formatUsdValue, splitNumberByStep } from '@/utils/number';
+import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import React, { useMemo } from 'react';
@@ -14,6 +14,9 @@ import { ActivityIndicator, TouchableOpacity, View } from 'react-native';
 import { ClearinghouseState } from '@rabby-wallet/hyperliquid-sdk';
 import { Text } from '@/components/Typography';
 import { getBottomButtonBottomOffset } from '@/constant/layout';
+import { getLatestPortfolioValue } from '@/hooks/perps/perpsPortfolio';
+import { usePerpsPortfolio } from '@/hooks/perps/usePerpsPortfolioStore';
+import { usePerpsPortfolioLiveValue } from '@/hooks/perps/usePerpsPortfolioLiveValue';
 
 export const PerpsAccountSelectorItem: React.FC<{
   account: KeyringAccountWithAlias;
@@ -23,6 +26,8 @@ export const PerpsAccountSelectorItem: React.FC<{
   tmpSelectAccount?: KeyringAccountWithAlias | null;
   lastUsedAccount?: KeyringAccountWithAlias | null;
   currentAccount?: KeyringAccountWithAlias | null;
+  /** perpsStore's current account — the only row the WS live value describes */
+  currentPerpsAddress?: string | null;
   checkIconPosition?: 'name' | 'right';
 }> = ({
   account,
@@ -32,6 +37,7 @@ export const PerpsAccountSelectorItem: React.FC<{
   tmpSelectAccount,
   lastUsedAccount,
   currentAccount,
+  currentPerpsAddress,
   checkIconPosition = 'name',
 }) => {
   const { t } = useTranslation();
@@ -48,13 +54,31 @@ export const PerpsAccountSelectorItem: React.FC<{
     return info?.assetPositions?.length || 0;
   }, [info]);
 
-  const withdrawable = useMemo(() => {
-    return Number(info?.withdrawable || 0);
-  }, [info]);
+  // Portfolio Value, same basis as the account card: the row's portfolio
+  // entry (REST last point) upgraded to the WS live value on the one row that
+  // is the current perps account.
+  const portfolioEntry = usePerpsPortfolio(account.address);
+  const isCurrentPerpsAddress = isSameAddress(
+    account.address,
+    currentPerpsAddress || '',
+  );
+  const liveValue = usePerpsPortfolioLiveValue(isCurrentPerpsAddress);
+  const portfolioValue = useMemo(() => {
+    if (isCurrentPerpsAddress && liveValue != null) {
+      return liveValue;
+    }
+    const cachedValue = portfolioEntry?.data
+      ? getLatestPortfolioValue(portfolioEntry.data)
+      : null;
+    if (cachedValue != null) {
+      return cachedValue;
+    }
+    return Number(info?.withdrawable || 0) || 0;
+  }, [info?.withdrawable, isCurrentPerpsAddress, liveValue, portfolioEntry]);
 
   const shouldShowPerpsInfo = useMemo(() => {
-    return positionCount > 0 || withdrawable > 0;
-  }, [positionCount, withdrawable]);
+    return positionCount > 0 || (portfolioValue ?? 0) > 0;
+  }, [positionCount, portfolioValue]);
 
   const isCurrent = useMemo(() => {
     return isSameAccount(account, currentAccount);
@@ -140,9 +164,12 @@ export const PerpsAccountSelectorItem: React.FC<{
                 {checkIconPosition === 'right' ? statusNode : null}
                 {shouldShowPerpsInfo ? (
                   <View style={styles.perpsInfo}>
-                    <Text style={styles.perpsUsdValue}>
-                      {formatUsdValue(withdrawable || 0)}
-                    </Text>
+                    {portfolioValue != null ? (
+                      <Text style={styles.perpsUsdValue}>
+                        {'$'}
+                        {splitNumberByStep(portfolioValue.toFixed(2))}
+                      </Text>
+                    ) : null}
                     {positionCount > 0 ? (
                       <Text style={styles.positionCountText}>
                         {t(

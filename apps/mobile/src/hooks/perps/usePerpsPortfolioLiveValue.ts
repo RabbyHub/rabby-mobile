@@ -16,11 +16,18 @@ import { perpsStore } from './usePerpsStore';
  * portfolio API's last point. The selector returns a single cent-rounded
  * number so price ticks only re-render subscribers when the displayed value
  * actually moves.
+ *
+ * The value is only meaningful for the CURRENT perps account (the WS slices
+ * belong to it). Callers rendering many rows pass `enabled: false` for other
+ * addresses — the selector then pins to null so ticks never re-render them.
  */
-export const usePerpsPortfolioLiveValue = (): number | null => {
+export const usePerpsPortfolioLiveValue = (enabled = true): number | null => {
   return useActivityStore(
     perpsStore,
     s => {
+      if (!enabled) {
+        return null;
+      }
       const isSpotCollateral =
         s.userAbstraction === UserAbstractionResp.unifiedAccount ||
         s.userAbstraction === UserAbstractionResp.portfolioMargin;

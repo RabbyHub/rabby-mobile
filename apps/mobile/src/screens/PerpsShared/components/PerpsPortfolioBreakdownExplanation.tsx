@@ -1,11 +1,12 @@
 import { Text } from '@/components/Typography';
 import { usePerpsPortfolioBreakdown } from '@/hooks/perps/usePerpsPortfolioBreakdown';
 import { useTheme2024 } from '@/hooks/theme';
-import { useShowTipsPopup } from '@/hooks/useTipsPopup';
+import { useHideTipsPopup, useShowTipsPopup } from '@/hooks/useTipsPopup';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
+import { useIsFocused } from '@react-navigation/native';
 import { useMemoizedFn } from 'ahooks';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
@@ -39,8 +40,20 @@ export const PerpsPortfolioBreakdownExplanationContent: React.FC<{
 export const useShowPerpsPortfolioBreakdown = () => {
   const { t } = useTranslation();
   const showTipsPopup = useShowTipsPopup();
+  const hideTipsPopup = useHideTipsPopup(PERPS_PORTFOLIO_BREAKDOWN_TIPS_OWNER);
   const { hasNonPerpsAssets, breakdownMode, getBreakdownValues } =
     usePerpsPortfolioBreakdown();
+
+  // The tips sheet lives on the global navigation layer — it does NOT go
+  // away when this screen is popped (e.g. iOS edge-swipe back). Close our
+  // own popup (owner-scoped) on blur and on unmount.
+  const isFocused = useIsFocused();
+  useEffect(() => {
+    if (!isFocused) {
+      hideTipsPopup();
+    }
+    return () => hideTipsPopup();
+  }, [isFocused, hideTipsPopup]);
 
   const showPortfolioBreakdown = useMemoizedFn((portfolioValue: number) => {
     const { perpsValue, secondaryValue } = getBreakdownValues(portfolioValue);
@@ -84,7 +97,7 @@ export const useShowPerpsPortfolioBreakdown = () => {
   return { hasNonPerpsAssets, showPortfolioBreakdown };
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   breakdownContainer: {
     marginTop: 8,
     gap: 16,
@@ -98,7 +111,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
   },
   breakdownCard: {
-    backgroundColor: colors2024['neutral-bg-1'],
+    // Light: white card on the sheet's gray bg-0 (Figma). Dark: bg-1 is
+    // nearly identical to bg-0 and the card disappears — step up to bg-2.
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 4,
