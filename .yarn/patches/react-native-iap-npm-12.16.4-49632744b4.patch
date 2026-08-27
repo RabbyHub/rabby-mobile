@@ -1,13 +1,65 @@
+diff --git a/android/gradle.properties b/android/gradle.properties
+index 05492267ec7850694bc273caf3b112afccfb62f0..671bee216f0a97b73b0408ddb77d997d112e1066 100644
+--- a/android/gradle.properties
++++ b/android/gradle.properties
+@@ -9 +9 @@ RNIap_amazonSdkVersion=3.0.7
+-RNIap_playBillingSdkVersion=7.0.0
++RNIap_playBillingSdkVersion=8.0.0
 diff --git a/android/src/play/java/com/dooboolab/rniap/RNIapModule.kt b/android/src/play/java/com/dooboolab/rniap/RNIapModule.kt
-index 54ca6969c543f5826d77b4ff8cdfcf960cbb5ffa..9adc51f592dd20bbc48516d380b1c07f0a7fbafc 100644
+index 54ca6969c543f5826d77b4ff8cdfcf960cbb5ffa..8b0a14f84e21bdf1c06928ad6414d9f59e70f754 100644
 --- a/android/src/play/java/com/dooboolab/rniap/RNIapModule.kt
 +++ b/android/src/play/java/com/dooboolab/rniap/RNIapModule.kt
-@@ -461,7 +461,7 @@ class RNIapModule(
-         isOfferPersonalized: Boolean, // New parameter in V5
-         promise: Promise,
-     ) {
+@@ -15,0 +16 @@ import com.android.billingclient.api.GetBillingConfigParams.Builder
++import com.android.billingclient.api.PendingPurchasesParams
+@@ -18 +18,0 @@ import com.android.billingclient.api.Purchase
+-import com.android.billingclient.api.PurchaseHistoryRecord
+@@ -21 +20,0 @@ import com.android.billingclient.api.QueryProductDetailsParams
+-import com.android.billingclient.api.QueryPurchaseHistoryParams
+@@ -45 +44,4 @@ class RNIapModule(
+-    private val builder: BillingClient.Builder = BillingClient.newBuilder(reactContext).enablePendingPurchases(),
++    private val builder: BillingClient.Builder =
++        BillingClient.newBuilder(reactContext).enablePendingPurchases(
++            PendingPurchasesParams.newBuilder().enableOneTimeProducts().build(),
++        ),
+@@ -278 +280 @@ class RNIapModule(
+-            billingClient.queryProductDetailsAsync(params) { billingResult, skuDetailsList ->
++            billingClient.queryProductDetailsAsync(params) { billingResult, queryProductDetailsResult ->
+@@ -282 +284 @@ class RNIapModule(
+-                for (skuDetails in skuDetailsList) {
++                for (skuDetails in queryProductDetailsResult.productDetailsList) {
+@@ -421,28 +423,4 @@ class RNIapModule(
+-            billingClient.queryPurchaseHistoryAsync(
+-                QueryPurchaseHistoryParams
+-                    .newBuilder()
+-                    .setProductType(
+-                        if (type == "subs") BillingClient.ProductType.SUBS else BillingClient.ProductType.INAPP,
+-                    ).build(),
+-            ) { billingResult: BillingResult, purchaseHistoryRecordList: MutableList<PurchaseHistoryRecord>? ->
+-
+-                if (!isValidResult(billingResult, promise)) return@queryPurchaseHistoryAsync
+-
+-                Log.d(TAG, purchaseHistoryRecordList.toString())
+-                val items = Arguments.createArray()
+-                purchaseHistoryRecordList?.forEach { purchase ->
+-                    val item = Arguments.createMap()
+-                    item.putString("productId", purchase.products[0])
+-                    val products = Arguments.createArray()
+-                    purchase.products.forEach { products.pushString(it) }
+-                    item.putArray("productIds", products)
+-                    item.putDouble("transactionDate", purchase.purchaseTime.toDouble())
+-                    item.putString("transactionReceipt", purchase.originalJson)
+-                    item.putString("purchaseToken", purchase.purchaseToken)
+-                    item.putString("dataAndroid", purchase.originalJson)
+-                    item.putString("signatureAndroid", purchase.signature)
+-                    item.putString("developerPayload", purchase.developerPayload.orEmpty())
+-                    items.pushMap(item)
+-                }
+-                promise.safeResolve(items)
+-            }
++            promise.safeReject(
++                "E_NOT_SUPPORTED",
++                "getPurchaseHistoryByType is unavailable with Google Play Billing Library 8.",
++            )
+@@ -464 +442 @@ class RNIapModule(
 -        val activity = currentActivity
 +        val activity = getReactApplicationContext().getCurrentActivity()
-         if (activity == null) {
-             promise.safeReject(PromiseUtils.E_UNKNOWN, "getCurrentActivity returned null")
-             return
