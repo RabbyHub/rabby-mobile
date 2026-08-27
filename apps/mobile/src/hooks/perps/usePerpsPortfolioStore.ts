@@ -39,7 +39,10 @@ const setEntry = (address: string, entry: PortfolioEntry) => {
 
 export const fetchPerpsPortfolio = async (
   address: string,
-  opts?: { force?: boolean },
+  // maxAgeMs widens the freshness window beyond the default TTL — e.g. the
+  // account selector treats a 5-minute-old series as fresh enough, while the
+  // account card's poll still forces through.
+  opts?: { force?: boolean; maxAgeMs?: number },
 ): Promise<void> => {
   const key = address?.toLowerCase();
   if (!key) {
@@ -50,7 +53,11 @@ export const fetchPerpsPortfolio = async (
     return existing;
   }
   const prev = perpsPortfolioStore.getState().portfolioMap[key];
-  if (!opts?.force && prev && Date.now() - prev.updatedAt < FRESH_TTL_MS) {
+  if (
+    !opts?.force &&
+    prev &&
+    Date.now() - prev.updatedAt < (opts?.maxAgeMs ?? FRESH_TTL_MS)
+  ) {
     return;
   }
   // Only publish a loading entry when there is nothing to show yet — a
