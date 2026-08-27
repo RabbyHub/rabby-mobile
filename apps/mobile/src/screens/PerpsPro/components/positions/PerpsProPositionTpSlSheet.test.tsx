@@ -549,7 +549,7 @@ describe('PerpsProPositionTpSlSheet', () => {
     });
   });
 
-  it('keeps the Position form mounted while confirmed orders refresh behind review', () => {
+  it('keeps the Position form and displayed order stable through review replacement refreshes', () => {
     const initialPositionOrder = order(10, '110', '1', 'position');
     const refreshedPositionOrder = order(11, '112', '1', 'position');
     const baseProps = {
@@ -576,14 +576,18 @@ describe('PerpsProPositionTpSlSheet', () => {
     rerender(
       <PerpsProPositionTpSlSheet
         {...baseProps}
-        coveredByReview
-        pending
+        coveredByReview={false}
+        pending={false}
         position={{ ...position, tpslOrders: [] }}
+        reviewRequesting
       />,
     );
     expect(mockFormProps.mock.lastCall?.[0]).toMatchObject({
       instanceId: initialInstanceId,
-      position: expect.objectContaining({ tpslOrders: [] }),
+      pending: true,
+      position: expect.objectContaining({
+        tpslOrders: [initialPositionOrder],
+      }),
     });
 
     rerender(
@@ -592,9 +596,13 @@ describe('PerpsProPositionTpSlSheet', () => {
         coveredByReview
         pending
         position={{ ...position, tpslOrders: [refreshedPositionOrder] }}
+        submissionPending
       />,
     );
     expect(mockFormProps.mock.lastCall?.[0].instanceId).toBe(initialInstanceId);
+    expect(mockFormProps.mock.lastCall?.[0].position.tpslOrders).toEqual([
+      initialPositionOrder,
+    ]);
 
     rerender(
       <PerpsProPositionTpSlSheet
@@ -607,6 +615,45 @@ describe('PerpsProPositionTpSlSheet', () => {
     expect(mockFormProps.mock.lastCall?.[0].instanceId).not.toBe(
       initialInstanceId,
     );
+    expect(mockFormProps.mock.lastCall?.[0].position.tpslOrders).toEqual([
+      refreshedPositionOrder,
+    ]);
+  });
+
+  it('keeps direct cancellation on live Position order presentation', () => {
+    const initialPositionOrder = order(10, '110', '1', 'position');
+    const baseProps = {
+      amountUnit: 'base' as const,
+      cancelingOids: [10],
+      confirmedCancelledOids: [],
+      coveredByReview: false,
+      defaultTab: 'position' as const,
+      market,
+      onCancelOrder: jest.fn(),
+      onClose: jest.fn(),
+      onReview: jest.fn(),
+      pending: false,
+      visible: true,
+    };
+    const { rerender } = render(
+      <PerpsProPositionTpSlSheet
+        {...baseProps}
+        position={{ ...position, tpslOrders: [initialPositionOrder] }}
+      />,
+    );
+
+    rerender(
+      <PerpsProPositionTpSlSheet
+        {...baseProps}
+        pending
+        position={{ ...position, tpslOrders: [] }}
+      />,
+    );
+
+    expect(mockFormProps.mock.lastCall?.[0]).toMatchObject({
+      pending: true,
+      position: expect.objectContaining({ tpslOrders: [] }),
+    });
   });
 
   it('returns a successful Add or Modify settlement to the refreshed root list', () => {

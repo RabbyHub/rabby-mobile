@@ -105,7 +105,21 @@ export function getPerpsProLatestCandleClose(
     : null;
 }
 
-const PERPS_PRO_PRICE_SCALE_WIDTH = 66;
+export const PERPS_PRO_CROSSHAIR_LABEL_LAYOUT = {
+  borderRadius: 6,
+  fontSize: 12,
+  fontWeight: 510,
+  lineHeight: 16,
+  paddingHorizontal: 6,
+  paddingVertical: 4,
+  priceSingleRowHeight: 24,
+  priceTwoRowHeight: 42,
+  priceWidth: 66,
+  rowGap: 2,
+  timeHeight: 24,
+} as const;
+
+const PERPS_PRO_PRICE_SCALE_WIDTH = PERPS_PRO_CROSSHAIR_LABEL_LAYOUT.priceWidth;
 const PERPS_PRO_TOOLTIP_GAP = 8;
 const PERPS_PRO_TOOLTIP_EDGE_INSET = 8;
 

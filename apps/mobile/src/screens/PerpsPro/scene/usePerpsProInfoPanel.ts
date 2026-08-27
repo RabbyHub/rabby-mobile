@@ -32,7 +32,7 @@ import {
 } from '../model/openOrder';
 import { buildPerpsOpenOrderTopology } from '../model/openOrderTopology';
 import {
-  isPerpsProCollectionAuthoritativelyEmpty,
+  resolvePerpsProCollectionPresentation,
   resolvePerpsProInfoTabPresentation,
   type PerpsProAutomaticInfoTabSelection,
 } from '../model/infoPanelPresentation';
@@ -348,17 +348,19 @@ export const usePerpsProInfoPanel = (
     allOpenOrdersCount: openOrderCounts.basic + openOrderCounts.conditional,
     allPositionsCount: allPositions.length,
     allPositionsByCoin,
-    openOrdersEmpty: isPerpsProCollectionAuthoritativelyEmpty({
+    openOrderCollectionPresentation: resolvePerpsProCollectionPresentation({
       hasAccount: !!facts.currentAccount,
       runtimeReady: runtime.status === 'ready',
       sourceReady: facts.isOpenOrdersReady,
       totalCount: facts.openOrders.length,
+      visibleCount: openOrders.length,
     }),
-    positionsEmpty: isPerpsProCollectionAuthoritativelyEmpty({
+    positionCollectionPresentation: resolvePerpsProCollectionPresentation({
       hasAccount: !!facts.currentAccount,
       runtimeReady: runtime.status === 'ready',
       sourceReady: facts.isUserDataReady,
       totalCount: allPositions.length,
+      visibleCount: positions.length,
     }),
     hideOtherOpenOrderSymbols,
     hideOtherPositionSymbols,

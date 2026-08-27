@@ -362,14 +362,22 @@ describe('usePerpsProPositionTpSl', () => {
     };
     act(() => hook.result.current.open(position, 'partial'));
 
+    let first: Promise<void>;
+    let duplicate: Promise<void>;
+    act(() => {
+      first = hook.result.current.requestReview(draft);
+      duplicate = hook.result.current.requestReview(draft);
+    });
+    expect(hook.result.current.reviewRequesting).toBe(true);
+    expect(hook.result.current.pending).toBe(false);
+
     await act(async () => {
-      const first = hook.result.current.requestReview(draft);
-      const duplicate = hook.result.current.requestReview(draft);
       resolvePreference?.(false);
-      await Promise.all([first, duplicate]);
+      await Promise.all([first!, duplicate!]);
     });
 
     expect(mockBuildPositionTpSl).toHaveBeenCalledTimes(1);
+    expect(hook.result.current.reviewRequesting).toBe(false);
     expect(hook.result.current.review).not.toBeNull();
   });
 

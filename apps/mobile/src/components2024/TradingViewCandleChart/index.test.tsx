@@ -39,12 +39,8 @@ jest.mock('@/core/utils/linking', () => ({
 
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
-    const colors2024 = new Proxy(
-      {},
-      {
-        get: (_target, key) => String(key),
-      },
-    );
+    const { ThemeColors2024 } = require('@rabby-wallet/base-utils');
+    const colors2024 = ThemeColors2024[mockIsLight ? 'light' : 'dark'];
     return {
       colors2024,
       isLight: mockIsLight,
@@ -114,8 +110,8 @@ describe('TradingViewCandleChart protocol compatibility', () => {
     markChartReady();
 
     expect(getLastThemeMessage().data.colors.crosshairLabel).toEqual({
-      background: 'neutral-body',
-      text: 'neutral-InvertHighlight',
+      background: 'rgba(211, 216, 224, 1)',
+      text: 'rgba(0, 0, 0, 1)',
     });
   });
 
@@ -125,8 +121,8 @@ describe('TradingViewCandleChart protocol compatibility', () => {
     markChartReady();
 
     expect(getLastThemeMessage().data.colors.crosshairLabel).toEqual({
-      background: 'neutral-black',
-      text: 'neutral-InvertHighlight',
+      background: 'rgba(0, 0, 0, 1)',
+      text: 'rgba(255, 255, 255, 1)',
     });
   });
 
@@ -135,8 +131,8 @@ describe('TradingViewCandleChart protocol compatibility', () => {
     markChartReady({ perpsProKlineProtocolVersion: null });
 
     expect(getLastThemeMessage().data.colors.crosshairLabel).toEqual({
-      background: 'neutral-black',
-      text: 'neutral-InvertHighlight',
+      background: 'rgba(0, 0, 0, 1)',
+      text: 'rgba(255, 255, 255, 1)',
     });
   });
 

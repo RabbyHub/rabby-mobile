@@ -113,6 +113,7 @@ export const usePerpsProOpenOrderEdit = (
     null,
   );
   const [pending, setPending] = useState(false);
+  const [reviewRequesting, setReviewRequesting] = useState(false);
   const [skipConfirmation, setSkipConfirmation] = useState(false);
   const [unavailableOrderKeys, setUnavailableOrderKeys] = useState<
     ReadonlySet<string>
@@ -126,6 +127,7 @@ export const usePerpsProOpenOrderEdit = (
     setEditor(null);
     setReview(null);
     setPending(false);
+    setReviewRequesting(false);
     setSkipConfirmation(false);
     setUnavailableOrderKeys(new Set());
     return () => {
@@ -237,6 +239,8 @@ export const usePerpsProOpenOrderEdit = (
         return;
       }
       sessionRef.current += 1;
+      reviewRequestRef.current = false;
+      setReviewRequesting(false);
       setSkipConfirmation(false);
       setReview(null);
       setEditor(next);
@@ -245,8 +249,9 @@ export const usePerpsProOpenOrderEdit = (
   );
 
   const close = useCallback(() => {
-    if (!pendingRef.current && !review) {
+    if (!pendingRef.current && !reviewRequestRef.current && !review) {
       sessionRef.current += 1;
+      setReviewRequesting(false);
       setEditor(null);
       setSkipConfirmation(false);
     }
@@ -261,6 +266,8 @@ export const usePerpsProOpenOrderEdit = (
 
   const finish = useCallback(() => {
     sessionRef.current += 1;
+    reviewRequestRef.current = false;
+    setReviewRequesting(false);
     setReview(null);
     setEditor(null);
     setSkipConfirmation(false);
@@ -437,7 +444,9 @@ export const usePerpsProOpenOrderEdit = (
       ) {
         return;
       }
+      const session = sessionRef.current;
       reviewRequestRef.current = true;
+      setReviewRequesting(true);
       try {
         const baseSize = resolveBasicOrderEditBaseSize({
           amountUnit: editor.amountUnit,
@@ -489,7 +498,10 @@ export const usePerpsProOpenOrderEdit = (
           'error',
         );
       } finally {
-        reviewRequestRef.current = false;
+        if (sessionRef.current === session) {
+          reviewRequestRef.current = false;
+          setReviewRequesting(false);
+        }
       }
     },
     [editor, stageReview, t],
@@ -510,7 +522,9 @@ export const usePerpsProOpenOrderEdit = (
       ) {
         return;
       }
+      const session = sessionRef.current;
       reviewRequestRef.current = true;
+      setReviewRequesting(true);
       try {
         const command = buildPerpsModifyOpenOrderCommand({
           account: editor.account,
@@ -568,7 +582,10 @@ export const usePerpsProOpenOrderEdit = (
           'error',
         );
       } finally {
-        reviewRequestRef.current = false;
+        if (sessionRef.current === session) {
+          reviewRequestRef.current = false;
+          setReviewRequesting(false);
+        }
       }
     },
     [editor, stageReview, t],
@@ -605,6 +622,7 @@ export const usePerpsProOpenOrderEdit = (
     requestBasicReview,
     requestConditionalReview,
     review,
+    reviewRequesting,
     skipConfirmation,
     toggleSkipConfirmation,
   };

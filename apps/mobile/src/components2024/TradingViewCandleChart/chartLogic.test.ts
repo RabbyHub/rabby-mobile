@@ -24,6 +24,7 @@ const {
   getPerpsProTooltipPlacement,
   getPerpsProTooltipMetrics,
   isPerpsProFutureLogicalRangeAtBoundary,
+  PERPS_PRO_CROSSHAIR_LABEL_LAYOUT,
   shouldBlockPerpsProFutureTouchMove,
   shiftLogicalRangeForPrependedCandles,
 } =
@@ -236,6 +237,22 @@ describe('Perps Pro local chart calculations', () => {
     expect(getPerpsProCrosshairTimeLabelLeft(310, 120, 320)).toBe(200);
     expect(getPerpsProCrosshairTimeLabelLeft(160, 400, 320)).toBe(0);
     expect(getPerpsProCrosshairTimeLabelLeft(NaN, 120, 320)).toBeNull();
+  });
+
+  it('keeps both Pro crosshair labels on the approved Figma geometry', () => {
+    expect(PERPS_PRO_CROSSHAIR_LABEL_LAYOUT).toEqual({
+      borderRadius: 6,
+      fontSize: 12,
+      fontWeight: 510,
+      lineHeight: 16,
+      paddingHorizontal: 6,
+      paddingVertical: 4,
+      priceSingleRowHeight: 24,
+      priceTwoRowHeight: 42,
+      priceWidth: 66,
+      rowGap: 2,
+      timeHeight: 24,
+    });
   });
 
   it('allows future whitespace while keeping at least five candles visible', () => {
