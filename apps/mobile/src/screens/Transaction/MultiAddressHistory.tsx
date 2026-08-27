@@ -26,7 +26,7 @@ import {
 import PQueue from 'p-queue';
 import { last, unionBy, orderBy, debounce } from 'lodash';
 import { View } from 'react-native';
-import { useFocusEffect, useRoute } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import type { TxHistoryResult } from '@rabby-wallet/rabby-api/dist/types';
 import { HistoryList } from './components/HistoryGroupList';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
@@ -63,6 +63,7 @@ import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
 import { Text } from '@/components/Typography';
 import type { HistoryDisplayItem } from '@/types/history';
 import { isSupportDBAccount } from '@/utils/account';
+import { useSyncSafeHistoryOnFocus } from './hooks/useSyncSafeHistoryOnFocus';
 
 export type { HistoryDisplayItem } from '@/types/history';
 
@@ -116,6 +117,12 @@ function HistoryContent({
   const isSupportAccount =
     isSceneUsingAllAccounts || isSupportDBAccount(finalSceneCurrentAccount);
   const isNeedFetchFromApi = isInTokenDetail || !isSupportAccount;
+  const safeHistorySyncAddress = useSyncSafeHistoryOnFocus({
+    account: finalSceneCurrentAccount,
+    isInTokenDetail,
+    isSceneUsingAllAccounts,
+    isTestnet,
+  });
 
   const mergeDataWithDeduplication = useMemoizedFn(
     (
@@ -422,7 +429,12 @@ function HistoryContent({
   });
 
   useEffect(() => {
-    if (dbData.length === 0 && !isSceneUsingAllAccounts && firstFetchDone) {
+    if (
+      dbData.length === 0 &&
+      !isSceneUsingAllAccounts &&
+      firstFetchDone &&
+      !safeHistorySyncAddress
+    ) {
       syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
     }
   }, [
@@ -430,6 +442,7 @@ function HistoryContent({
     isSceneUsingAllAccounts,
     firstFetchDone,
     finalSceneCurrentAccount?.address,
+    safeHistorySyncAddress,
   ]);
   const {
     data: fetchApiData,
