@@ -56,12 +56,11 @@ const TOOLTIP_POINT_GAP = 6;
 // a gap opens between the tail and the curved edge.
 const TOOLTIP_TAIL_MARGIN = 12;
 const CROSSHAIR_OUTER = 12;
-// The dot's visual center stops at the chart edge instead of sliding out.
-const clampCursorX = (x: number, chartWidth: number) => {
-  'worklet';
-  const half = CROSSHAIR_OUTER / 2;
-  return Math.min(Math.max(x, half), Math.max(chartWidth - half, half));
-};
+// The plot area is inset by half the cursor dot on each side, so the dot on
+// the first/last point still lands fully inside the container. Geometry, not
+// clipping: Android's `overflow: 'hidden'` does not reliably clip children
+// that are positioned with a transform (which the crosshair is).
+const CURSOR_INSET = CROSSHAIR_OUTER / 2;
 
 /**
  * Self-positioned cursor tooltip. LineChart.Tooltip clamps itself inside the
@@ -97,7 +96,7 @@ const PortfolioTooltip = ({
     if (!bw || !bh || !chartWidth) {
       return { opacity: 0 };
     }
-    const targetX = clampCursorX(currentX.value, chartWidth);
+    const targetX = currentX.value;
     const left = Math.min(
       Math.max(targetX - bw / 2, TOOLTIP_X_GUTTER),
       chartWidth - bw - TOOLTIP_X_GUTTER,
@@ -122,7 +121,7 @@ const PortfolioTooltip = ({
     if (!bw || !bh || !chartWidth) {
       return { opacity: 0, left: 0 };
     }
-    const targetX = clampCursorX(currentX.value, chartWidth);
+    const targetX = currentX.value;
     const left = Math.min(
       Math.max(targetX - bw / 2, TOOLTIP_X_GUTTER),
       chartWidth - bw - TOOLTIP_X_GUTTER,
@@ -135,9 +134,9 @@ const PortfolioTooltip = ({
     );
     return { opacity: flipBelow === pointsDown ? 0 : 1, left: tailLeft };
   };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   const tailDownStyle = useAnimatedStyle(makeTailStyle(true), [chartWidth]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   const tailUpStyle = useAnimatedStyle(makeTailStyle(false), [chartWidth]);
 
   return (
@@ -153,41 +152,6 @@ const PortfolioTooltip = ({
       <Animated.View style={[styles.tooltipTailDown, tailDownStyle]} />
       <Animated.View style={[styles.tooltipTailUp, tailUpStyle]} />
     </Animated.View>
-  );
-};
-
-/**
- * Cursor dot whose visual center stops at the chart edge instead of sliding
- * half-out of it. Overrides the crosshair wrapper's own transform (style
- * arrays: last transform wins). MUST be rendered inside <LineChart>: the
- * derived currentY needs the chart's dimensions context (outside it, the
- * path is missing and currentY reads -1, pinning the dot to the top).
- */
-const ClampedCrosshair = ({ chartWidth }: { chartWidth: number }) => {
-  const { currentX, currentY, isActive } = LineChart.useChart();
-  const crosshairClampStyle = useAnimatedStyle(() => {
-    const half = CROSSHAIR_OUTER / 2;
-    return {
-      transform: [
-        { translateX: clampCursorX(currentX.value, chartWidth) - half },
-        { translateY: currentY.value - half },
-        { scale: withTiming(isActive.value ? 1 : 0, { duration: 120 }) },
-      ],
-    };
-  }, [chartWidth]);
-
-  return (
-    <LineChart.CursorCrosshair
-      color={PERPS_CHART_LINE_COLOR}
-      outerSize={CROSSHAIR_OUTER}
-      size={8}
-      crosshairWrapperProps={{ style: crosshairClampStyle }}
-      // Without a press threshold the cursor's LongPressGestureHandler
-      // (minDurationMs=0) claims every touch and the page cannot be scrolled
-      // from the chart area; 150ms keeps quick swipes as scrolls and
-      // press-and-hold as cursor moves.
-      minDurationMs={150}
-    />
   );
 };
 
@@ -261,6 +225,8 @@ const ExpandedChartBody = ({
   );
   useEffect(() => () => clearTimeout(tapTimerRef.current), []);
 
+  const plotWidth = Math.max(width - CURSOR_INSET * 2, 0);
+
   // Draw-on effect: the clip window sweeps left -> right, revealing the line
   // and its gradient. The parent keys this component by period, so every
   // expand AND every period switch remounts it — drawProgress starts at 0 on
@@ -281,16 +247,17 @@ const ExpandedChartBody = ({
   );
 
   const handleTap = (locationX: number) => {
-    if (isEmpty || points.length < 2 || !width) {
+    if (isEmpty || points.length < 2 || plotWidth <= 0) {
       return;
     }
     // Same x mapping as wagmi's path: WITHOUT an xDomain it spaces points
     // EVENLY BY INDEX (timestamps are ignored), scaleLinear [0, len-1] ->
-    // [0, width]. A timestamp-based mapping drifts wherever the sampling
+    // [0, plotWidth]. A timestamp-based mapping drifts wherever the sampling
     // interval is irregular — worst at both ends of the day series.
-    const step = width / (points.length - 1);
+    // locationX is relative to the pressable, so drop the plot's inset.
+    const step = plotWidth / (points.length - 1);
     const nearest = Math.min(
-      Math.max(Math.round(locationX / step), 0),
+      Math.max(Math.round((locationX - CURSOR_INSET) / step), 0),
       points.length - 1,
     );
     const snappedX = nearest * step;
@@ -309,34 +276,47 @@ const ExpandedChartBody = ({
 
   return (
     <Pressable onPress={e => handleTap(e.nativeEvent.locationX)}>
+      {/* The reveal clip spans the FULL width (insets included) so it never
+          cuts the cursor dot once the sweep has finished. */}
       <Animated.View style={[styles.chartClip, drawStyle]}>
-        <LineChart
-          width={width}
-          height={EXPANDED_CHART_HEIGHT}
-          shape={d3Shape.curveMonotoneX}>
-          <LineChart.Path
-            color={PERPS_CHART_LINE_COLOR}
-            width={1.5}
-            showInactivePath={false}
-            // No shape morphing: on a period switch the old path would still
-            // be interpolating toward the new one while the draw-on sweep
-            // reveals it, making the left end flicker vertically. The reveal
-            // is the only animation.
-            pathProps={{ isTransitionEnabled: false }}>
-            <LineChart.Gradient color={PERPS_CHART_LINE_COLOR} />
-          </LineChart.Path>
-          {!isEmpty && (
-            <>
-              <LineChart.CursorLine color={cursorLineColor} />
-              <ClampedCrosshair chartWidth={width} />
-              <PortfolioTooltip
-                timeTexts={timeTexts}
-                valueTexts={valueTexts}
-                chartWidth={width}
-              />
-            </>
-          )}
-        </LineChart>
+        <View style={styles.plotInset}>
+          <LineChart
+            width={plotWidth}
+            height={EXPANDED_CHART_HEIGHT}
+            shape={d3Shape.curveMonotoneX}>
+            <LineChart.Path
+              color={PERPS_CHART_LINE_COLOR}
+              width={1.5}
+              showInactivePath={false}
+              // No shape morphing: on a period switch the old path would still
+              // be interpolating toward the new one while the draw-on sweep
+              // reveals it, making the left end flicker vertically. The reveal
+              // is the only animation.
+              pathProps={{ isTransitionEnabled: false }}>
+              <LineChart.Gradient color={PERPS_CHART_LINE_COLOR} />
+            </LineChart.Path>
+            {!isEmpty && (
+              <>
+                <LineChart.CursorLine color={cursorLineColor} />
+                <LineChart.CursorCrosshair
+                  color={PERPS_CHART_LINE_COLOR}
+                  outerSize={CROSSHAIR_OUTER}
+                  size={8}
+                  // Without a press threshold the cursor's LongPressGestureHandler
+                  // (minDurationMs=0) claims every touch and the page cannot be
+                  // scrolled from the chart area; 150ms keeps quick swipes as
+                  // scrolls and press-and-hold as cursor moves.
+                  minDurationMs={150}
+                />
+                <PortfolioTooltip
+                  timeTexts={timeTexts}
+                  valueTexts={valueTexts}
+                  chartWidth={plotWidth}
+                />
+              </>
+            )}
+          </LineChart>
+        </View>
       </Animated.View>
     </Pressable>
   );
@@ -429,6 +409,9 @@ export const PerpsPortfolioChart: React.FC<PerpsPortfolioChartProps> = ({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   chartClip: {
     overflow: 'hidden',
+  },
+  plotInset: {
+    paddingHorizontal: CURSOR_INSET,
   },
   tabRow: {
     flexDirection: 'row',

@@ -1498,9 +1498,13 @@ export const reconcilePerpsFundingHistoryObservation = ({
   remoteWrite?: PerpsFundingRemoteWrite;
 }) => {
   let confirmations: PerpsFundingConfirmation[] = [];
+  // Read the clock once: the updater can run more than once per commit, and a
+  // drifting `now` would make the TTL cut non-deterministic within one write.
+  const now = Date.now();
   setPerpsState(prev => {
     const reconciled = reconcilePerpsFundingHistory({
       localHistory: localHistory ?? prev.localLoadingHistory,
+      now,
       observation,
       remoteHistory: confirmedHistory,
     });
@@ -2354,6 +2358,7 @@ export const usePerpsStore = () => {
   const setLocalLoadingHistory = useMemoizedFn(
     (payload: AccountHistoryItem[], isReset: boolean = false) => {
       let confirmations: PerpsFundingConfirmation[] = [];
+      const now = Date.now();
       setPerpsState(prev => {
         if (isReset) {
           return { ...prev, localLoadingHistory: payload };
@@ -2363,6 +2368,7 @@ export const usePerpsStore = () => {
         // the already-settled operation is never reinserted as pending.
         const reconciled = reconcilePerpsFundingHistory({
           localHistory: [...payload, ...prev.localLoadingHistory],
+          now,
           observation: 'baseline',
           remoteHistory: prev.userAccountHistory,
         });

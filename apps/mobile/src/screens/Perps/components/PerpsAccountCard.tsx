@@ -57,6 +57,10 @@ import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/
 import { PerpsPortfolioChart } from './PerpsPortfolioChart';
 import { useMemoizedFn } from 'ahooks';
 import { useShowPerpsPortfolioBreakdown } from '@/screens/PerpsShared/components/PerpsPortfolioBreakdownExplanation';
+import PendingTx from '@/screens/Bridge/components/PendingTx';
+import { getPerpsPendingFundingCount } from '@/hooks/perps/funding/fundingJournal';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { RootNames } from '@/constant/layout';
 
 const PERPS_TEAL = '#23C0B0';
 const PERPS_BTN_BG = 'rgba(80, 210, 193, 0.10)';
@@ -68,6 +72,7 @@ export const PerpsAccountCard: React.FC = () => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const [popupState, setPopupState] = usePerpsPopupState();
+  const navigation = useRabbyAppNavigation();
 
   const { availableBalance, accountValue, isUnifiedAccount } =
     usePerpsAccount();
@@ -77,6 +82,15 @@ export const PerpsAccountCard: React.FC = () => {
   const currentAddress = useActivityStore(
     perpsStore,
     s => s.currentPerpsAccount?.address,
+    Object.is,
+    { storeLabel: 'perps-account-card' },
+  );
+
+  // Deposits/withdrawals still in flight. Same signal the released header pill
+  // and the Pro info panel read, so the entries never disagree on the count.
+  const pendingFundingCount = useActivityStore(
+    perpsStore,
+    s => getPerpsPendingFundingCount(s.localLoadingHistory),
     Object.is,
     { storeLabel: 'perps-account-card' },
   );
@@ -243,6 +257,11 @@ export const PerpsAccountCard: React.FC = () => {
   const openWithdraw = useCallback(() => {
     setPopupState(prev => ({ ...prev, isShowWithdrawPopup: true }));
   }, [setPopupState]);
+  const openHistory = useCallback(() => {
+    navigation.push(RootNames.StackTransaction, {
+      screen: RootNames.PerpsHistory,
+    });
+  }, [navigation]);
 
   return (
     <>
@@ -333,7 +352,7 @@ export const PerpsAccountCard: React.FC = () => {
                           ? '+0%(+$0.00)'
                           : change24hText}
                       </Text>
-                      <Text style={styles.changeTimeText}>24H</Text>
+                      <Text style={styles.changeTimeText}>24H PNL</Text>
                     </>
                   )}
                 </View>
@@ -387,16 +406,26 @@ export const PerpsAccountCard: React.FC = () => {
           </View>
           <View style={styles.lowerSection}>
             <View style={styles.lowerRow}>
-              <View style={styles.availableLeft}>
-                <Text style={styles.availableLabel}>
-                  {t('page.perps.PerpsCard.available')}
-                </Text>
-                <Text style={styles.availableValue}>
-                  {'$'}
-                  {splitNumberByStep(
-                    new BigNumber(availableBalance || 0).toFixed(2),
-                  )}
-                </Text>
+              <View style={styles.lowerLeft}>
+                <View style={styles.availableLeft}>
+                  <Text style={styles.availableLabel}>
+                    {t('page.perps.PerpsCard.available')}
+                  </Text>
+                  <Text style={styles.availableValue}>
+                    {'$'}
+                    {splitNumberByStep(
+                      new BigNumber(availableBalance || 0).toFixed(2),
+                    )}
+                  </Text>
+                </View>
+                {/* History is reachable from here only while funding is in
+                    flight — no idle entry point, per the design. */}
+                {pendingFundingCount > 0 && (
+                  <PendingTx
+                    number={pendingFundingCount}
+                    onClick={openHistory}
+                  />
+                )}
               </View>
               {Number(availableBalance) === 0 ? (
                 <TouchableOpacity
@@ -632,9 +661,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  // Holds the Available block plus the pending-funding pill. It takes the
+  // row's free space so `justifyContent: 'space-between'` still pins the
+  // deposit/withdraw buttons to the right edge.
+  lowerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    minWidth: 0,
+    gap: 12,
+  },
   availableLeft: {
     flexDirection: 'column',
-    flex: 1,
+    flexShrink: 1,
     minWidth: 0,
   },
   availableLabel: {
