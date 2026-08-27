@@ -200,13 +200,18 @@ describe('toChartPoints', () => {
 describe('formatPortfolioTooltipTime', () => {
   // Timestamps are built through the local-time Date constructor so the
   // expected strings hold in any timezone the test machine runs in.
-  it('formats every point as "MMM D, HH:mm" regardless of period', () => {
+  const now = new Date(2026, 7, 27);
+
+  it('formats current-year points as "MMM D, HH:mm"', () => {
     expect(
-      formatPortfolioTooltipTime(new Date(2026, 7, 13, 8, 5).getTime()),
+      formatPortfolioTooltipTime(new Date(2026, 7, 13, 8, 5).getTime(), now),
     ).toBe('Aug 13, 08:05');
+  });
+
+  it('leads with the year for points from previous years', () => {
     expect(
-      formatPortfolioTooltipTime(new Date(2025, 0, 5, 14, 0).getTime()),
-    ).toBe('Jan 5, 14:00');
+      formatPortfolioTooltipTime(new Date(2025, 0, 5, 14, 0).getTime(), now),
+    ).toBe('2025 Jan 5, 14:00');
   });
 });
 

@@ -1,13 +1,16 @@
 import { Text } from '@/components/Typography';
 import { usePerpsPortfolioBreakdown } from '@/hooks/perps/usePerpsPortfolioBreakdown';
 import { useTheme2024 } from '@/hooks/theme';
-import { useShowTipsPopup } from '@/hooks/useTipsPopup';
+import { useHideTipsPopup, useShowTipsPopup } from '@/hooks/useTipsPopup';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
+import { useIsFocused } from '@react-navigation/native';
 import { useMemoizedFn } from 'ahooks';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
+
+const TIPS_OWNER = 'perpsPortfolioBreakdown';
 
 export const PerpsPortfolioBreakdownExplanationContent: React.FC<{
   desc: string;
@@ -37,8 +40,20 @@ export const PerpsPortfolioBreakdownExplanationContent: React.FC<{
 export const useShowPerpsPortfolioBreakdown = () => {
   const { t } = useTranslation();
   const showTipsPopup = useShowTipsPopup();
+  const hideTipsPopup = useHideTipsPopup(TIPS_OWNER);
   const { hasNonPerpsAssets, breakdownMode, getBreakdownValues } =
     usePerpsPortfolioBreakdown();
+
+  // The tips sheet lives on the global navigation layer — it does NOT go
+  // away when this screen is popped (e.g. iOS edge-swipe back). Close our
+  // own popup (owner-scoped) on blur and on unmount.
+  const isFocused = useIsFocused();
+  useEffect(() => {
+    if (!isFocused) {
+      hideTipsPopup();
+    }
+    return () => hideTipsPopup();
+  }, [isFocused, hideTipsPopup]);
 
   const showPortfolioBreakdown = useMemoizedFn((portfolioValue: number) => {
     const { perpsValue, secondaryValue } = getBreakdownValues(portfolioValue);
@@ -60,6 +75,7 @@ export const useShowPerpsPortfolioBreakdown = () => {
 
     showTipsPopup({
       title: t(titleKey),
+      owner: TIPS_OWNER,
       bgType: 'bg0',
       desc: (
         <PerpsPortfolioBreakdownExplanationContent

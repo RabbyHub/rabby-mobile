@@ -620,6 +620,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     minHeight: 56,
     paddingHorizontal: 16,
     paddingVertical: 8,
+    // Round its own bottom corners (outer radius 14 minus the 2px border):
+    // iOS clips children of a bordered rounded view along the OUTER path, so
+    // without these the brighter bg-2 bleeds past the border's inner edge at
+    // the bottom corners — visible as thin bright arcs in dark mode.
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
   },
   lowerRow: {
     flexDirection: 'row',
