@@ -32,9 +32,11 @@ import Reanimated, {
 import { usePerpsProPagerPreviewSession } from '../common/usePerpsProPagerPreviewSession';
 
 import { PERPS_PRO_INFO_TABS } from './perpsProInfoTabOrder';
+import { getPerpsProInfoPagerPreviewPosition } from './perpsProInfoPagerPreview';
 import {
   getPerpsProInfoScrollTarget,
   interruptPerpsProInfoScrollBridge,
+  PERPS_PRO_INFO_TOUCH_INTENT,
   type PerpsProInfoScrollBridgeController,
 } from './usePerpsProInfoScrollBridge';
 
@@ -94,12 +96,13 @@ export type PerpsProInfoPagerHandle = {
 
 type PerpsProInfoPagerProps<Row> = {
   activeTab: PerpsProInfoTab;
+  authorizeNativePageGestures?: boolean;
   contentContainerStyle: Record<PerpsProInfoTab, StyleProp<ViewStyle>>;
   data: Record<PerpsProInfoTab, readonly Row[]>;
   getActiveScrollOffset: () => number;
   nativeVerticalScrollEnabled?: boolean;
   onActivateOffset: (offset: number) => void;
-  onActiveScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  onActiveScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onLayout: (event: LayoutChangeEvent) => void;
   onPageDragStart: () => void;
   onPagePreview: (tab: PerpsProInfoTab | null) => void;
@@ -116,9 +119,25 @@ type PerpsProInfoListHandle = {
   scrollToOffset: (params: { animated?: boolean; offset: number }) => void;
 };
 
+const isPerpsProInfoHorizontalTouchAuthorized = (
+  controller?: PerpsProInfoScrollBridgeController,
+) => {
+  'worklet';
+  if (!controller) {
+    return false;
+  }
+  const touchSessionId = controller.touchSessionId.value;
+  return (
+    controller.touchIntent.value === PERPS_PRO_INFO_TOUCH_INTENT.horizontal &&
+    touchSessionId > 0 &&
+    controller.horizontalTouchSessionId.value === touchSessionId
+  );
+};
+
 const PerpsProInfoPagerInner = <Row,>(
   {
     activeTab,
+    authorizeNativePageGestures = false,
     contentContainerStyle,
     data,
     getActiveScrollOffset,
@@ -142,7 +161,7 @@ const PerpsProInfoPagerInner = <Row,>(
   const listRefs = useRef<
     Partial<Record<PerpsProInfoTab, PerpsProInfoListHandle | null>>
   >({});
-  const offsetsRef = useRef<Record<PerpsProInfoTab, number>>({
+  const desiredOffsetsRef = useRef<Record<PerpsProInfoTab, number>>({
     account: 0,
     positions: 0,
     openOrders: 0,
@@ -158,6 +177,11 @@ const PerpsProInfoPagerInner = <Row,>(
     openOrders: 0,
   });
   const selectedIndexRef = useRef(PERPS_PRO_INFO_TABS.indexOf(activeTab));
+  const programmaticTargetIndexRef = useRef<number | null>(null);
+  const pendingActiveCorrectionRef = useRef<{
+    offset: number;
+    tab: PerpsProInfoTab;
+  } | null>(null);
   const settledPagePosition = useSharedValue(selectedIndexRef.current);
   const isPreviewGestureActive = useSharedValue(false);
   const previewGestureSessionId = useSharedValue(0);
@@ -169,12 +193,12 @@ const PerpsProInfoPagerInner = <Row,>(
     [activeTab, requestedTab],
   );
 
-  const recordOffset = useCallback(
+  const recordDesiredOffset = useCallback(
     (tab: PerpsProInfoTab, rawOffset: number) => {
       if (!Number.isFinite(rawOffset)) {
         return;
       }
-      offsetsRef.current[tab] = Math.max(0, rawOffset);
+      desiredOffsetsRef.current[tab] = Math.max(0, rawOffset);
     },
     [],
   );
@@ -196,10 +220,41 @@ const PerpsProInfoPagerInner = <Row,>(
     [scrollBridge],
   );
 
+  const applyPendingActiveCorrection = useCallback(
+    (tab: PerpsProInfoTab) => {
+      const pending = pendingActiveCorrectionRef.current;
+      if (
+        !pending ||
+        pending.tab !== tab ||
+        activeTabRef.current !== tab ||
+        !listRefs.current[tab] ||
+        contentHeightsRef.current[tab] <= 0 ||
+        viewportHeightsRef.current[tab] <= 0
+      ) {
+        return;
+      }
+
+      const maxOffset = Math.max(
+        0,
+        contentHeightsRef.current[tab] - viewportHeightsRef.current[tab],
+      );
+      const offset = Math.min(Math.max(pending.offset, 0), maxOffset);
+      pendingActiveCorrectionRef.current = null;
+      recordDesiredOffset(tab, offset);
+      listRefs.current[tab]?.scrollToOffset({ animated: false, offset });
+    },
+    [recordDesiredOffset],
+  );
+
   const preparePages = useCallback(() => {
     const currentTab = activeTabRef.current;
-    const activeOffset = Math.max(0, getActiveScrollOffset());
-    recordOffset(currentTab, activeOffset);
+    const nativeActiveOffset =
+      scrollBridge?.targets[selectedIndexRef.current]?.offset.value;
+    const rawActiveOffset = Number.isFinite(nativeActiveOffset)
+      ? nativeActiveOffset
+      : getActiveScrollOffset();
+    const activeOffset = Math.max(0, rawActiveOffset ?? 0);
+    recordDesiredOffset(currentTab, activeOffset);
 
     for (const tab of PERPS_PRO_INFO_TABS) {
       if (tab === currentTab) {
@@ -208,12 +263,12 @@ const PerpsProInfoPagerInner = <Row,>(
       const offset = getPerpsProInfoPagePreparedOffset({
         activeOffset,
         stickyOffset,
-        storedOffset: offsetsRef.current[tab],
+        storedOffset: desiredOffsetsRef.current[tab],
       });
-      recordOffset(tab, offset);
+      recordDesiredOffset(tab, offset);
       listRefs.current[tab]?.scrollToOffset({ animated: false, offset });
     }
-  }, [getActiveScrollOffset, recordOffset, stickyOffset]);
+  }, [getActiveScrollOffset, recordDesiredOffset, scrollBridge, stickyOffset]);
 
   const publishPagePreview = useCallback(
     (position: number | null) => {
@@ -245,8 +300,10 @@ const PerpsProInfoPagerInner = <Row,>(
       clearPagePreview();
       const targetIndex = PERPS_PRO_INFO_TABS.indexOf(tab);
       if (targetIndex < 0 || targetIndex === selectedIndexRef.current) {
+        programmaticTargetIndexRef.current = null;
         return;
       }
+      programmaticTargetIndexRef.current = targetIndex;
       if (scrollBridge) {
         scrollBridge.epoch.value += 1;
         scrollBridge.pageGestureActive.value = true;
@@ -268,11 +325,11 @@ const PerpsProInfoPagerInner = <Row,>(
       if (scrollBridge) {
         scrollBridge.epoch.value += 1;
       }
-      recordOffset(tab, offset);
+      recordDesiredOffset(tab, offset);
       listRefs.current[tab]?.scrollToOffset({ animated, offset });
       onActivateOffset(offset);
     },
-    [onActivateOffset, recordOffset, scrollBridge],
+    [onActivateOffset, recordDesiredOffset, scrollBridge],
   );
 
   useImperativeHandle(
@@ -299,6 +356,7 @@ const PerpsProInfoPagerInner = <Row,>(
     selectedIndexRef.current = activeIndex;
     settledPagePosition.value = activeIndex;
     previewPagePosition.value = activeIndex;
+    programmaticTargetIndexRef.current = activeIndex;
     pagerRef.current?.setPageWithoutAnimation(activeIndex);
   }, [
     activeTab,
@@ -308,6 +366,10 @@ const PerpsProInfoPagerInner = <Row,>(
     settledPagePosition,
   ]);
 
+  useEffect(() => {
+    applyPendingActiveCorrection(activeTab);
+  }, [activeTab, applyPendingActiveCorrection]);
+
   const handlePageSelected = useCallback(
     (event: PagerViewOnPageSelectedEvent) => {
       const position = event.nativeEvent.position;
@@ -316,25 +378,60 @@ const PerpsProInfoPagerInner = <Row,>(
         return;
       }
       const changed = position !== selectedIndexRef.current;
+      const sessionId = previewGestureSessionId.value;
+      const programmaticAuthorized =
+        programmaticTargetIndexRef.current === position;
+      const gestureAuthorized =
+        !authorizeNativePageGestures ||
+        isPerpsProInfoHorizontalTouchAuthorized(scrollBridge);
+
+      if (changed && !programmaticAuthorized && !gestureAuthorized) {
+        isPreviewGestureActive.value = false;
+        previewPagePosition.value = settledPagePosition.value;
+        finishPreviewSession(sessionId, true);
+        if (scrollBridge) {
+          scrollBridge.pageGestureActive.value = false;
+          scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.idle;
+          scrollBridge.horizontalTouchSessionId.value = 0;
+        }
+        pagerRef.current?.setPageWithoutAnimation(selectedIndexRef.current);
+        return;
+      }
+
       const shouldCommit = changed || tab !== activeTabRef.current;
       if (scrollBridge) {
         scrollBridge.activeIndex.value = position;
         scrollBridge.epoch.value += 1;
         scrollBridge.pageGestureActive.value = false;
+        scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.idle;
+        scrollBridge.horizontalTouchSessionId.value = 0;
       }
-      const sessionId = previewGestureSessionId.value;
       isPreviewGestureActive.value = false;
       settledPagePosition.value = position;
       previewPagePosition.value = position;
       finishPreviewSession(sessionId, !shouldCommit);
       selectedIndexRef.current = position;
-      const offset = offsetsRef.current[tab];
-      onActivateOffset(offset);
+      if (programmaticAuthorized) {
+        programmaticTargetIndexRef.current = null;
+      }
+
+      const rawActualOffset =
+        scrollBridge?.targets[position]?.offset.value ?? 0;
+      const actualOffset = Number.isFinite(rawActualOffset)
+        ? Math.max(0, rawActualOffset)
+        : 0;
+      const desiredOffset = desiredOffsetsRef.current[tab];
+      pendingActiveCorrectionRef.current =
+        Math.abs(desiredOffset - actualOffset) > 0.5
+          ? { offset: desiredOffset, tab }
+          : null;
+      onActivateOffset(actualOffset);
       if (shouldCommit) {
         onPageSelected(tab);
       }
     },
     [
+      authorizeNativePageGestures,
       isPreviewGestureActive,
       onActivateOffset,
       onPageSelected,
@@ -361,6 +458,12 @@ const PerpsProInfoPagerInner = <Row,>(
         'worklet';
         if (event.pageScrollState === 'dragging') {
           if (isPreviewGestureActive.value) {
+            return;
+          }
+          if (
+            authorizeNativePageGestures &&
+            !isPerpsProInfoHorizontalTouchAuthorized(scrollBridge)
+          ) {
             return;
           }
           const sessionId = previewGestureSessionId.value + 1;
@@ -394,15 +497,28 @@ const PerpsProInfoPagerInner = <Row,>(
     event => {
       'worklet';
       if (!isPreviewGestureActive.value) {
-        return;
+        if (
+          !authorizeNativePageGestures ||
+          !isPerpsProInfoHorizontalTouchAuthorized(scrollBridge)
+        ) {
+          return;
+        }
+        const sessionId = previewGestureSessionId.value + 1;
+        previewGestureSessionId.value = sessionId;
+        isPreviewGestureActive.value = true;
+        if (scrollBridge) {
+          scrollBridge.epoch.value += 1;
+          scrollBridge.pageGestureActive.value = true;
+        }
+        previewPagePosition.value = settledPagePosition.value;
+        runOnJS(beginPageDrag)(sessionId);
       }
-      const nextPosition = Math.max(
-        0,
-        Math.min(
-          PERPS_PRO_INFO_TABS.length - 1,
-          Math.round(event.position + event.offset),
-        ),
-      );
+      const nextPosition = getPerpsProInfoPagerPreviewPosition({
+        maximumPosition: PERPS_PRO_INFO_TABS.length - 1,
+        pagePosition: event.position + event.offset,
+        previewPosition: previewPagePosition.value,
+        settledPosition: settledPagePosition.value,
+      });
       if (nextPosition === previewPagePosition.value) {
         return;
       }
@@ -415,16 +531,17 @@ const PerpsProInfoPagerInner = <Row,>(
 
   const recordScrollEnd = useCallback(
     (tab: PerpsProInfoTab, event: NativeSyntheticEvent<NativeScrollEvent>) =>
-      recordOffset(tab, event.nativeEvent.contentOffset.y),
-    [recordOffset],
+      recordDesiredOffset(tab, event.nativeEvent.contentOffset.y),
+    [recordDesiredOffset],
   );
 
   const recordContentHeight = useCallback(
     (tab: PerpsProInfoTab, height: number) => {
       contentHeightsRef.current[tab] = Math.max(0, height);
       updateBridgeMaxOffset(tab);
+      applyPendingActiveCorrection(tab);
     },
-    [updateBridgeMaxOffset],
+    [applyPendingActiveCorrection, updateBridgeMaxOffset],
   );
 
   const recordViewportHeight = useCallback(
@@ -434,11 +551,12 @@ const PerpsProInfoPagerInner = <Row,>(
         event.nativeEvent.layout.height,
       );
       updateBridgeMaxOffset(tab);
+      applyPendingActiveCorrection(tab);
       if (active) {
         onLayout(event);
       }
     },
-    [onLayout, updateBridgeMaxOffset],
+    [applyPendingActiveCorrection, onLayout, updateBridgeMaxOffset],
   );
 
   return (
@@ -491,6 +609,7 @@ const PerpsProInfoPagerInner = <Row,>(
                       list as never,
                     );
                   }
+                  applyPendingActiveCorrection(tab);
                 }}
                 renderItem={renderItem}
                 scrollEnabled={active && nativeVerticalScrollEnabled}

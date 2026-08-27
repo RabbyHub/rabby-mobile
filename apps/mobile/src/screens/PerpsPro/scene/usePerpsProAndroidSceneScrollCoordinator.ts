@@ -9,6 +9,7 @@ import {
 
 import {
   getPerpsProInfoBridgeOffset,
+  PERPS_PRO_INFO_TOUCH_INTENT,
   scrollPerpsProInfoBridgeTarget,
   type PerpsProInfoScrollBridgeController,
 } from '../components/info/usePerpsProInfoScrollBridge';
@@ -77,7 +78,6 @@ export const usePerpsProAndroidSceneScrollCoordinator = ({
           enabled: false,
           epoch: -1,
           maxOffset: 0,
-          pageGestureActive: false,
           targetOffset: 0,
         };
       }
@@ -88,7 +88,6 @@ export const usePerpsProAndroidSceneScrollCoordinator = ({
         enabled,
         epoch: controller.epoch.value,
         maxOffset: target?.maxOffset.value ?? 0,
-        pageGestureActive: controller.pageGestureActive.value,
         targetOffset: target?.offset.value ?? 0,
       };
     },
@@ -96,7 +95,6 @@ export const usePerpsProAndroidSceneScrollCoordinator = ({
       if (
         sessionActive.value &&
         (!state.enabled ||
-          state.pageGestureActive ||
           state.activeIndex !== sessionTargetIndex.value ||
           state.epoch !== sessionEpoch.value)
       ) {
@@ -174,6 +172,9 @@ export const usePerpsProAndroidSceneScrollCoordinator = ({
           cancelAnimation(driverOffset);
           sessionActive.value = false;
           touchIntentState.value = 0;
+          controller.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.pending;
+          controller.touchSessionId.value += 1;
+          controller.horizontalTouchSessionId.value = 0;
           driverOffset.value = visualOffset.value;
           controller.epoch.value += 1;
 
@@ -186,6 +187,7 @@ export const usePerpsProAndroidSceneScrollCoordinator = ({
             !controller.targets[index]
           ) {
             touchIntentState.value = -1;
+            controller.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.idle;
             stateManager.fail();
             return;
           }
@@ -200,8 +202,9 @@ export const usePerpsProAndroidSceneScrollCoordinator = ({
             return;
           }
           const touch = event.allTouches[0];
-          if (!touch || controller.pageGestureActive.value) {
+          if (!touch) {
             touchIntentState.value = -1;
+            controller.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.idle;
             stateManager.fail();
             return;
           }
@@ -212,9 +215,14 @@ export const usePerpsProAndroidSceneScrollCoordinator = ({
           });
           if (intent === 'fail') {
             touchIntentState.value = -1;
+            controller.touchIntent.value =
+              PERPS_PRO_INFO_TOUCH_INTENT.horizontal;
+            controller.horizontalTouchSessionId.value =
+              controller.touchSessionId.value;
             stateManager.fail();
           } else if (intent === 'activate') {
             touchIntentState.value = 1;
+            controller.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.vertical;
             stateManager.activate();
           }
         })
@@ -222,7 +230,11 @@ export const usePerpsProAndroidSceneScrollCoordinator = ({
           'worklet';
           const index = controller.activeIndex.value;
           const target = controller.targets[index];
-          if (!target || controller.pageGestureActive.value) {
+          if (
+            !target ||
+            controller.touchIntent.value !==
+              PERPS_PRO_INFO_TOUCH_INTENT.vertical
+          ) {
             sessionActive.value = false;
             return;
           }
@@ -247,7 +259,6 @@ export const usePerpsProAndroidSceneScrollCoordinator = ({
           const target = controller.targets[sessionTargetIndex.value];
           if (
             !target ||
-            controller.pageGestureActive.value ||
             controller.activeIndex.value !== sessionTargetIndex.value ||
             controller.epoch.value !== sessionEpoch.value
           ) {
@@ -314,6 +325,12 @@ export const usePerpsProAndroidSceneScrollCoordinator = ({
           if (!success) {
             cancelAnimation(driverOffset);
             sessionActive.value = false;
+          }
+          if (
+            controller.touchIntent.value !==
+            PERPS_PRO_INFO_TOUCH_INTENT.horizontal
+          ) {
+            controller.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.idle;
           }
           touchIntentState.value = -1;
         }),

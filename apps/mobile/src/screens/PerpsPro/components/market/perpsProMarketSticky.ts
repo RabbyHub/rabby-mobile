@@ -18,7 +18,10 @@ export const getPerpsProMarketTop = ({
   headerMarketTop: number;
   naturalAnchorY: number;
   scrollY: number;
-}) => Math.max(naturalAnchorY - scrollY, headerMarketTop);
+}) => {
+  'worklet';
+  return Math.max(naturalAnchorY - scrollY, headerMarketTop);
+};
 
 export const getPerpsProRestrictedMarketTop = ({
   headerMarketTop,
@@ -26,7 +29,10 @@ export const getPerpsProRestrictedMarketTop = ({
 }: {
   headerMarketTop: number;
   regionAlertExtent: number;
-}) => headerMarketTop + regionAlertExtent;
+}) => {
+  'worklet';
+  return headerMarketTop + regionAlertExtent;
+};
 
 export const createPerpsProRestrictedMarketTranslateY = ({
   headerMarketTranslateY,

@@ -9,8 +9,8 @@ import {
 import { PERPS_PRO_HEADER_HEIGHT } from './constants';
 
 export const PERPS_PRO_HEADER_SCROLL_THRESHOLD = 12;
-const PERPS_PRO_HEADER_TOP_TOLERANCE = 1;
-const PERPS_PRO_HEADER_ANIMATION_MS = 160;
+export const PERPS_PRO_HEADER_TOP_TOLERANCE = 1;
+export const PERPS_PRO_HEADER_ANIMATION_MS = 160;
 
 export type PerpsProHeaderScrollState = {
   accumulatedDelta: number;
@@ -28,6 +28,7 @@ export const getPerpsProHeaderGeometry = (
   rawOffset: number,
   rawVisibilityProgress: number,
 ): PerpsProHeaderGeometry => {
+  'worklet';
   const offset = Number.isFinite(rawOffset)
     ? Math.min(Math.max(rawOffset, 0), PERPS_PRO_HEADER_HEIGHT)
     : 0;
@@ -47,6 +48,7 @@ export const getNextPerpsProHeaderScrollState = (
   state: PerpsProHeaderScrollState,
   rawOffset: number,
 ): PerpsProHeaderScrollState => {
+  'worklet';
   if (!Number.isFinite(rawOffset)) {
     return state;
   }

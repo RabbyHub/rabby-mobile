@@ -78,7 +78,10 @@ export const getPerpsProInfoTabsTop = ({
   anchorY: number;
   marketTranslateY: number;
   scrollY: number;
-}) => Math.max(anchorY - scrollY, marketTranslateY + 40);
+}) => {
+  'worklet';
+  return Math.max(anchorY - scrollY, marketTranslateY + 40);
+};
 
 export const createPerpsProInfoTabsTranslateY = ({
   anchorY,

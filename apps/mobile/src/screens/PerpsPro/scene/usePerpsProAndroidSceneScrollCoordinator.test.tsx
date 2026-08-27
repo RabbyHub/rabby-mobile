@@ -52,7 +52,10 @@ jest.mock('react-native-reanimated', () => {
   };
 });
 
-import type { PerpsProInfoScrollBridgeController } from '../components/info/usePerpsProInfoScrollBridge';
+import {
+  PERPS_PRO_INFO_TOUCH_INTENT,
+  type PerpsProInfoScrollBridgeController,
+} from '../components/info/usePerpsProInfoScrollBridge';
 import {
   getPerpsProAndroidSceneScrollIntent,
   getPerpsProAndroidSceneScrollVelocity,
@@ -64,7 +67,10 @@ const createController = () => {
   return {
     activeIndex: shared(0),
     epoch: shared(0),
+    horizontalTouchSessionId: shared(0),
     pageGestureActive: shared(false),
+    touchIntent: shared(PERPS_PRO_INFO_TOUCH_INTENT.idle),
+    touchSessionId: shared(0),
     targets: [0, 1, 2].map(index => ({
       maxOffset: shared(300),
       offset: shared(index === 0 ? 100 : 0),
@@ -117,6 +123,10 @@ describe('usePerpsProAndroidSceneScrollCoordinator', () => {
       mockGestureHandlers.onTouchesMove(touch(22, 196), stateManager);
     });
     expect(controller.epoch.value).toBe(1);
+    expect(controller.touchSessionId.value).toBe(1);
+    expect(controller.touchIntent.value).toBe(
+      PERPS_PRO_INFO_TOUCH_INTENT.pending,
+    );
     expect(mockCancelAnimation).toHaveBeenCalled();
     expect(stateManager.activate).not.toHaveBeenCalled();
     expect(stateManager.fail).not.toHaveBeenCalled();
@@ -126,6 +136,9 @@ describe('usePerpsProAndroidSceneScrollCoordinator', () => {
       mockGestureHandlers.onTouchesMove(touch(22, 188), stateManager);
     });
     expect(stateManager.activate).toHaveBeenCalledTimes(1);
+    expect(controller.touchIntent.value).toBe(
+      PERPS_PRO_INFO_TOUCH_INTENT.vertical,
+    );
   });
 
   it('uses one shared offset for the active list and Trade surface', () => {
@@ -138,6 +151,10 @@ describe('usePerpsProAndroidSceneScrollCoordinator', () => {
       const synchronizationReaction = mockAnimatedReactions[0];
       synchronizationReaction.react(synchronizationReaction.prepare());
       mockGestureHandlers.onTouchesDown(touch(20, 200), {
+        activate: jest.fn(),
+        fail: jest.fn(),
+      });
+      mockGestureHandlers.onTouchesMove(touch(20, 188), {
         activate: jest.fn(),
         fail: jest.fn(),
       });
@@ -201,6 +218,10 @@ describe('usePerpsProAndroidSceneScrollCoordinator', () => {
         activate: jest.fn(),
         fail: jest.fn(),
       });
+      mockGestureHandlers.onTouchesMove(touch(20, 188), {
+        activate: jest.fn(),
+        fail: jest.fn(),
+      });
       mockGestureHandlers.onStart({ absoluteY: 190 });
       mockGestureHandlers.onEnd({ velocityY: -600 });
     });
@@ -250,6 +271,29 @@ describe('usePerpsProAndroidSceneScrollCoordinator', () => {
     });
 
     expect(stateManager.fail).toHaveBeenCalledTimes(1);
+    expect(controller.touchIntent.value).toBe(PERPS_PRO_INFO_TOUCH_INTENT.idle);
     expect(mockScrollTo).not.toHaveBeenCalled();
+  });
+
+  it('authorizes the pager only after horizontal intent wins', () => {
+    const controller = createController();
+    renderHook(() =>
+      usePerpsProAndroidSceneScrollCoordinator({ controller, enabled: true }),
+    );
+    const stateManager = { activate: jest.fn(), fail: jest.fn() };
+
+    act(() => {
+      mockGestureHandlers.onTouchesDown(touch(20, 200), stateManager);
+      mockGestureHandlers.onTouchesMove(touch(32, 202), stateManager);
+    });
+
+    expect(stateManager.activate).not.toHaveBeenCalled();
+    expect(stateManager.fail).toHaveBeenCalledTimes(1);
+    expect(controller.touchIntent.value).toBe(
+      PERPS_PRO_INFO_TOUCH_INTENT.horizontal,
+    );
+    expect(controller.horizontalTouchSessionId.value).toBe(
+      controller.touchSessionId.value,
+    );
   });
 });
