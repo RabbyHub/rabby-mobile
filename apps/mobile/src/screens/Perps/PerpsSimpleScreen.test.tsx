@@ -57,6 +57,10 @@ jest.mock('@/hooks/theme', () => ({
   }),
 }));
 
+jest.mock('@react-navigation/native', () => ({
+  useIsFocused: () => true,
+}));
+
 jest.mock('@/hooks/navigation', () => ({
   useRabbyAppNavigation: () => ({}),
 }));
@@ -95,6 +99,14 @@ jest.mock('@/hooks/perps/usePerpsStore', () => {
   perpsStore.getState = () => state;
   return { perpsStore };
 });
+
+jest.mock('@/hooks/perps/runtime/usePerpsRuntimeStatus', () => ({
+  usePerpsRuntimeStatus: () => ({ retry: jest.fn(), status: 'ready' }),
+}));
+
+jest.mock('@/hooks/perps/funding/usePerpsFundingHistoryJournal', () => ({
+  usePerpsFundingHistoryJournal: jest.fn(),
+}));
 
 jest.mock('@/core/utils/startupDiagnostics', () => ({
   traceStartupDiagnostic: jest.fn(),

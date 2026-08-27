@@ -4,6 +4,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  AppState,
+  type AppStateStatus,
   RefreshControl,
   ScrollView,
   TouchableOpacity,
@@ -11,6 +13,7 @@ import {
   type LayoutChangeEvent,
   useWindowDimensions,
 } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components2024/Button';
 import { PerpsAccountCard } from './components/PerpsAccountCard';
@@ -48,6 +51,8 @@ import { APP_VERSIONS } from '@/constant';
 import BigNumber from 'bignumber.js';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
+import { usePerpsFundingHistoryJournal } from '@/hooks/perps/funding/usePerpsFundingHistoryJournal';
+import { usePerpsRuntimeStatus } from '@/hooks/perps/runtime/usePerpsRuntimeStatus';
 
 export type PerpsSimpleScreenProps = {
   isModeSwitching: boolean;
@@ -94,6 +99,24 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
     handleSafeSetReference,
     setInitialized,
   } = usePerpsState();
+
+  // Settles the pending deposit/withdraw pill on the account card: marks items
+  // failed once their source tx fails, and polls the ledger until they clear.
+  // Gated exactly like Pro (usePerpsProScene's `fundingHistoryEnabled`) — the
+  // ledger poll has no AppState guard of its own, so without this it would keep
+  // firing in the background and while the screen is covered.
+  const isFocused = useIsFocused();
+  const runtime = usePerpsRuntimeStatus();
+  const [appState, setAppState] = useState<AppStateStatus>(
+    AppState.currentState,
+  );
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', setAppState);
+    return () => subscription.remove();
+  }, []);
+  usePerpsFundingHistoryJournal({
+    enabled: runtime.status === 'ready' && isFocused && appState === 'active',
+  });
 
   useEffect(() => {
     traceStartupDiagnostic('perps', 'screen_mounted');

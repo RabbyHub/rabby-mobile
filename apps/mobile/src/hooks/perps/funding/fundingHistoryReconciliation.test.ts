@@ -132,7 +132,11 @@ describe('funding history reconciliation', () => {
     expect(result.local).toHaveLength(2);
   });
 
-  it('keeps the pending operation when two newer successes are eligible', () => {
+  // Previously this demanded a single eligible row and gave up otherwise, so
+  // any unrelated transfer landing in the same window pinned the operation as
+  // pending forever. With one outstanding operation the earliest credit at or
+  // after it started is its settlement.
+  it('correlates the earliest eligible success when several are newer', () => {
     const result = reconcilePerpsFundingHistory({
       localHistory: [providerPending()],
       observation: 'baseline',
@@ -142,8 +146,16 @@ describe('funding history reconciliation', () => {
       ],
     });
 
-    expect(result.confirmations).toEqual([]);
-    expect(result.local).toHaveLength(1);
+    expect(result.confirmations).toEqual([
+      {
+        operationId: 'operation-1',
+        providerSettlementIdentity: {
+          hash: '0xsecond-ledger',
+          kind: 'hyperliquidLedgerHash',
+        },
+      },
+    ]);
+    expect(result.local).toEqual([]);
   });
 
   it.each([
@@ -161,11 +173,35 @@ describe('funding history reconciliation', () => {
     expect(result.local).toHaveLength(1);
   });
 
-  it('does not treat a direct HyperEVM receive as provider fallback', () => {
+  // A HyperEVM deposit is credited by the deposit contract, so its ledger row
+  // carries Hyperliquid's action hash while the local record holds the
+  // HyperEVM transaction hash — the two can never be equal. Correlation is the
+  // only path, and gating it on the provider route (as this once did) left the
+  // operation pending forever.
+  it('correlates a direct HyperEVM receive that can never match on hash', () => {
     const result = reconcilePerpsFundingHistory({
       localHistory: [providerPending({ fundingRoute: 'direct' })],
       observation: 'incremental',
       remoteHistory: [providerSuccess()],
+    });
+
+    expect(result.confirmedOperationIds).toEqual(['operation-1']);
+    expect(result.local).toEqual([]);
+  });
+
+  it('does not correlate a direct deposit, whose ledger row echoes its hash', () => {
+    const result = reconcilePerpsFundingHistory({
+      localHistory: [item({ fundingRoute: 'direct', type: 'deposit' })],
+      observation: 'incremental',
+      remoteHistory: [
+        item({
+          hash: '0xunrelated',
+          operationId: undefined,
+          status: 'success',
+          time: 200,
+          type: 'deposit',
+        }),
+      ],
     });
 
     expect(result.confirmations).toEqual([]);
@@ -186,6 +222,65 @@ describe('funding history reconciliation', () => {
     });
 
     expect(result.confirmedOperationIds).toEqual(['operation-1']);
+  });
+
+  describe('pending TTL', () => {
+    const TTL_MS = 30 * 60 * 1000;
+
+    it('drops an unmatched pending operation once it outlives the window', () => {
+      const result = reconcilePerpsFundingHistory({
+        localHistory: [providerPending()],
+        now: 100 + TTL_MS + 1,
+        observation: 'baseline',
+        remoteHistory: [],
+      });
+
+      expect(result.local).toEqual([]);
+    });
+
+    it('keeps an unmatched pending operation inside the window', () => {
+      const result = reconcilePerpsFundingHistory({
+        localHistory: [providerPending()],
+        now: 100 + TTL_MS,
+        observation: 'baseline',
+        remoteHistory: [],
+      });
+
+      expect(result.local).toHaveLength(1);
+    });
+
+    it('expires nothing when no clock is supplied', () => {
+      const result = reconcilePerpsFundingHistory({
+        localHistory: [providerPending()],
+        observation: 'baseline',
+        remoteHistory: [],
+      });
+
+      expect(result.local).toHaveLength(1);
+    });
+
+    it('leaves a settled operation resolved rather than expired', () => {
+      const result = reconcilePerpsFundingHistory({
+        localHistory: [providerPending()],
+        now: 100 + TTL_MS + 1,
+        observation: 'baseline',
+        remoteHistory: [providerSuccess()],
+      });
+
+      expect(result.confirmedOperationIds).toEqual(['operation-1']);
+      expect(result.local).toEqual([]);
+    });
+
+    it('never expires a failed operation the user still needs to see', () => {
+      const result = reconcilePerpsFundingHistory({
+        localHistory: [providerPending({ status: 'failed' })],
+        now: 100 + TTL_MS + 1,
+        observation: 'baseline',
+        remoteHistory: [],
+      });
+
+      expect(result.local).toHaveLength(1);
+    });
   });
 
   it('never turns a source-failed operation into success', () => {
