@@ -1,6 +1,6 @@
 import { RcIconCloseCC } from '@/assets/icons/common';
 import { useTheme2024 } from '@/hooks/theme';
-import { formatUsdValue, splitNumberByStep } from '@/utils/number';
+import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, {
   useCallback,
@@ -22,7 +22,6 @@ import { useIsFocused } from '@react-navigation/native';
 import { Skeleton } from '@rneui/base';
 import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
-import { usePerpsPortfolioBreakdown } from '@/hooks/perps/usePerpsPortfolioBreakdown';
 import { usePerpsPortfolioLiveValue } from '@/hooks/perps/usePerpsPortfolioLiveValue';
 import {
   fetchPerpsPortfolio,
@@ -35,7 +34,6 @@ import {
 } from '@/hooks/perps/perpsPortfolio';
 import { fetchSpotMeta, perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
-import { useShowTipsPopup } from '@/hooks/useTipsPopup';
 import { Text } from '@/components/Typography';
 import ImgLearnMore from '@/assets2024/icons/perps/ImgLearnMore.png';
 import RcIconLearnArrow from '@/assets2024/icons/perps/IconLearnArrow.svg';
@@ -57,6 +55,7 @@ import Animated, {
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 import { PerpsPortfolioChart } from './PerpsPortfolioChart';
 import { useMemoizedFn } from 'ahooks';
+import { useShowPerpsPortfolioBreakdown } from '@/screens/PerpsShared/components/PerpsPortfolioBreakdownExplanation';
 
 const PERPS_TEAL = '#23C0B0';
 const PERPS_BTN_BG = 'rgba(80, 210, 193, 0.10)';
@@ -64,45 +63,15 @@ const PERPS_BTN_BG = 'rgba(80, 210, 193, 0.10)';
 // chart 120 + tab row (16 + 4 margin) + top margin 16
 const EXPANDED_BLOCK_HEIGHT = 156;
 
-const BreakdownContent = ({
-  desc,
-  rows,
-}: {
-  desc: string;
-  rows: { label: string; value: number }[];
-}) => {
-  const { styles } = useTheme2024({ getStyle });
-  return (
-    <View style={styles.breakdownContainer}>
-      <Text style={styles.breakdownDesc}>{desc}</Text>
-      <View style={styles.breakdownCard}>
-        {rows.map(row => (
-          <View key={row.label} style={styles.breakdownRow}>
-            <Text style={styles.breakdownLabel}>{row.label}</Text>
-            <Text style={styles.breakdownValue}>
-              {formatUsdValue(row.value)}
-            </Text>
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-};
-
 export const PerpsAccountCard: React.FC = () => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const [popupState, setPopupState] = usePerpsPopupState();
-  const showTipsPopup = useShowTipsPopup();
 
-  const {
-    availableBalance,
-    accountValue,
-    isUnifiedAccount,
-    isPortfolioMargin,
-  } = usePerpsAccount();
-  const { hasNonPerpsAssets, breakdownMode, getBreakdownValues } =
-    usePerpsPortfolioBreakdown();
+  const { availableBalance, accountValue, isUnifiedAccount } =
+    usePerpsAccount();
+  const { hasNonPerpsAssets, showPortfolioBreakdown } =
+    useShowPerpsPortfolioBreakdown();
 
   const currentAddress = useActivityStore(
     perpsStore,
@@ -244,45 +213,6 @@ export const PerpsAccountCard: React.FC = () => {
 
   const canExpandChart = !!portfolioData && !isPortfolioEmpty;
 
-  const accountTypeTitle = isPortfolioMargin
-    ? t('page.perps.PerpsCard.portfolioMarginAccount')
-    : isUnifiedAccount
-    ? t('page.perps.PerpsCard.unifiedAccount')
-    : t('page.perps.PerpsCard.manualAccount');
-
-  const handleShowBreakdown = useMemoizedFn(() => {
-    const { perpsValue, secondaryValue } = getBreakdownValues(
-      displayValue || 0,
-    );
-    const descKey = {
-      manual: 'page.perps.PerpsCard.manualAccountDesc',
-      unified: 'page.perps.PerpsCard.unifiedAccountDesc',
-      portfolioMargin: 'page.perps.PerpsCard.portfolioMarginAccountDesc',
-    }[breakdownMode];
-    const secondaryLabelKey = {
-      manual: 'page.perps.PerpsCard.breakdownSpot',
-      unified: 'page.perps.PerpsCard.breakdownOtherAssets',
-      portfolioMargin: 'page.perps.PerpsCard.breakdownNetOtherAssets',
-    }[breakdownMode];
-    showTipsPopup({
-      title: accountTypeTitle,
-      bgType: 'bg0',
-      desc: (
-        <BreakdownContent
-          desc={t(descKey)}
-          rows={[
-            {
-              label: t('page.perps.PerpsCard.breakdownPerps'),
-              value: perpsValue,
-            },
-            { label: t(secondaryLabelKey), value: secondaryValue },
-          ]}
-        />
-      ),
-      buttonType: 'hyperliquid',
-    });
-  });
-
   const isNewUser = useMemo(() => {
     return (
       Number(availableBalance) === 0 && accountValue === 0 && !isUnifiedAccount
@@ -331,7 +261,7 @@ export const PerpsAccountCard: React.FC = () => {
                   {hasNonPerpsAssets && (
                     <TouchableOpacity
                       hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
-                      onPress={handleShowBreakdown}>
+                      onPress={() => showPortfolioBreakdown(displayValue || 0)}>
                       <RcIconPortfolioInfoCC
                         width={16}
                         height={16}
@@ -720,44 +650,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     lineHeight: 20,
     color: PERPS_TEAL,
-  },
-  breakdownContainer: {
-    marginTop: 8,
-    gap: 16,
-  },
-  breakdownDesc: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '400',
-    color: colors2024['neutral-secondary'],
-    textAlign: 'center',
-  },
-  breakdownCard: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 4,
-  },
-  breakdownRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-  },
-  breakdownLabel: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    color: colors2024['neutral-secondary'],
-  },
-  breakdownValue: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-    color: colors2024['neutral-title-1'],
   },
   learnCard: {
     borderRadius: 16,

@@ -145,6 +145,7 @@ describe('Perps Pro position and order lifecycle integration', () => {
       });
       const dependencies: ClosePositionDependencies = {
         getCurrentAccount: () => account,
+        getLiveMidPrice: () => '60100',
         getLiveSignedSize: () => sourcePositions[0]?.position.szi ?? null,
         limitClose: submitted,
         marketClose: submitted,
@@ -266,6 +267,38 @@ describe('Perps Pro position and order lifecycle integration', () => {
       conditional: 0,
       unsupported: 0,
     });
+  });
+
+  it('projects one resting order through partial fills without changing its UI identity', () => {
+    const snapshots: OpenOrder[][] = [
+      [makeOrder({ oid: 21, origSz: '5', sz: '5' })],
+      [makeOrder({ oid: 21, origSz: '5', sz: '3' })],
+      [makeOrder({ oid: 21, origSz: '5', sz: '1' })],
+      [],
+    ];
+
+    const projected = snapshots.map(buildPerpsOpenOrders);
+
+    expect(projected.slice(0, 3).map(orders => orders.length)).toEqual([
+      1, 1, 1,
+    ]);
+    expect(projected.slice(0, 3).map(orders => orders[0]?.key)).toEqual([
+      'basic:BTC:21',
+      'basic:BTC:21',
+      'basic:BTC:21',
+    ]);
+    expect(
+      projected.slice(0, 3).map(orders => ({
+        filledRatio: orders[0]?.filledRatio,
+        filledSize: orders[0]?.filledSize,
+        remainingSize: orders[0]?.remainingSize,
+      })),
+    ).toEqual([
+      { filledRatio: '0', filledSize: '0', remainingSize: '5' },
+      { filledRatio: '0.4', filledSize: '2', remainingSize: '3' },
+      { filledRatio: '0.8', filledSize: '4', remainingSize: '1' },
+    ]);
+    expect(projected[3]).toEqual([]);
   });
 
   it('converges a strict cancel-then-create partial TP replacement into the Position projection', async () => {

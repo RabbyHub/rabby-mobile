@@ -39,9 +39,8 @@ const CONTENT_HEIGHT = SHEET_HEIGHT - 40;
 const formatManageMarginLiquidationPrice = (
   value: string | null,
   pxDecimals: number,
-  allowProjectedFloor = false,
 ) => {
-  if (allowProjectedFloor && value === '0') {
+  if (value === '0') {
     return '0';
   }
   const formatted = formatPerpsProPrice(value, pxDecimals);
@@ -145,7 +144,6 @@ export const PerpsProManageMarginSheet: React.FC<{
     const projectedLiq = formatManageMarginLiquidationPrice(
       displayView.projectedLiquidationPrice,
       displayView.pxDecimals,
-      true,
     );
 
     return (

@@ -16,21 +16,28 @@ import React, {
   useMemo,
   useRef,
   useState,
+  type PropsWithChildren,
 } from 'react';
 import {
   Animated,
   AppState,
   Keyboard,
+  Platform,
   Pressable,
   useWindowDimensions,
   View,
   type AppStateStatus,
   type LayoutChangeEvent,
   type ListRenderItem,
+  type StyleProp,
   type ViewStyle,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Reanimated, {
+  useAnimatedStyle,
+  type SharedValue,
+} from 'react-native-reanimated';
 
 import { PerpsProAccountAssetRow } from '../components/account/PerpsProAccountAssetRow';
 import { PerpsProAccountState } from '../components/account/PerpsProAccountState';
@@ -131,6 +138,7 @@ import { usePerpsProLeverageUpdate } from './usePerpsProLeverageUpdate';
 import { usePerpsProManageMargin } from './usePerpsProManageMargin';
 import { usePerpsProTrade } from './usePerpsProTrade';
 import { usePerpsProTransfer } from './usePerpsProTransfer';
+import { usePerpsProAndroidSceneScrollCoordinator } from './usePerpsProAndroidSceneScrollCoordinator';
 import { usePerpsFundingHistoryJournal } from '@/hooks/perps/funding/usePerpsFundingHistoryJournal';
 
 type PerpsProSceneRow =
@@ -163,6 +171,29 @@ type FundingOverlayState =
 const PERPS_PRO_SCENE_BASE_LEAD_IN_HEIGHT =
   PERPS_PRO_HEADER_HEIGHT + PERPS_PRO_MARKET_BAR_HEIGHT;
 const PERPS_PRO_REGION_ALERT_BOTTOM_SPACING = 4;
+
+const PerpsProAndroidTradeOverlay: React.FC<
+  PropsWithChildren<{
+    leadInHeight: number;
+    scrollOffset: SharedValue<number>;
+    style: StyleProp<ViewStyle>;
+  }>
+> = ({ children, leadInHeight, scrollOffset, style }) => {
+  const animatedStyle = useAnimatedStyle(
+    () => ({
+      transform: [{ translateY: leadInHeight - scrollOffset.value }],
+    }),
+    [leadInHeight],
+  );
+
+  return (
+    <Reanimated.View
+      style={[style, animatedStyle]}
+      testID="perps-pro-trade-overlay">
+      {children}
+    </Reanimated.View>
+  );
+};
 
 const isReusableRegionAlertLayout = ({
   containerWidth,
@@ -262,6 +293,10 @@ export const PerpsProScene: React.FC<{
   const infoScrollBridge = usePerpsProInfoScrollBridge(
     info.activeInfoTab ?? 'account',
   );
+  const androidScrollCoordinator = usePerpsProAndroidSceneScrollCoordinator({
+    controller: infoScrollBridge,
+    enabled: Platform.OS === 'android' && info.activeInfoTab != null,
+  });
   const infoScrollInterruptionGesture = useMemo(
     () =>
       Gesture.Manual().onTouchesDown((_event, stateManager) => {
@@ -271,6 +306,10 @@ export const PerpsProScene: React.FC<{
       }),
     [infoScrollBridge],
   );
+  const sceneScrollGesture =
+    Platform.OS === 'android'
+      ? androidScrollCoordinator.gesture
+      : infoScrollInterruptionGesture;
   const marketSelectorRef = useRef<PerpsProMarketSelectorHandle>(null);
   const infoPagerRef = useRef<PerpsProInfoPagerHandle>(null);
   const [klineOpen, setKlineOpen] = useState(false);
@@ -1031,10 +1070,18 @@ export const PerpsProScene: React.FC<{
       onPress={openMarketSelector}
     />
   );
+  const tradeOverlayContent = (
+    <PerpsProTradeScrollBridge
+      controller={infoScrollBridge}
+      enabled={info.activeInfoTab != null}
+      height={tradeRowHeight}>
+      {renderTrade()}
+    </PerpsProTradeScrollBridge>
+  );
 
   return (
     <PerpsProFieldExplanationProvider>
-      <GestureDetector gesture={infoScrollInterruptionGesture}>
+      <GestureDetector gesture={sceneScrollGesture}>
         <View collapsable={false} style={styles.container}>
           {info.activeInfoTab ? (
             <PerpsProInfoPager
@@ -1042,6 +1089,7 @@ export const PerpsProScene: React.FC<{
               contentContainerStyle={scrollContentStyles}
               data={rowsByTab}
               getActiveScrollOffset={headerCollapse.getScrollOffset}
+              nativeVerticalScrollEnabled={Platform.OS !== 'android'}
               onActivateOffset={headerCollapse.syncScrollOffset}
               onActiveScroll={headerCollapse.onScroll}
               onLayout={updateScrollViewportHeight}
@@ -1057,19 +1105,23 @@ export const PerpsProScene: React.FC<{
               style={styles.scroll}
             />
           ) : null}
-          <Animated.View
-            style={[
-              styles.tradeOverlay,
-              { transform: [{ translateY: tradeTranslateY }] },
-            ]}
-            testID="perps-pro-trade-overlay">
-            <PerpsProTradeScrollBridge
-              controller={infoScrollBridge}
-              enabled={info.activeInfoTab != null}
-              height={tradeRowHeight}>
-              {renderTrade()}
-            </PerpsProTradeScrollBridge>
-          </Animated.View>
+          {Platform.OS === 'android' ? (
+            <PerpsProAndroidTradeOverlay
+              leadInHeight={sceneLeadInHeight}
+              scrollOffset={androidScrollCoordinator.visualOffset}
+              style={styles.tradeOverlay}>
+              {tradeOverlayContent}
+            </PerpsProAndroidTradeOverlay>
+          ) : (
+            <Animated.View
+              style={[
+                styles.tradeOverlay,
+                { transform: [{ translateY: tradeTranslateY }] },
+              ]}
+              testID="perps-pro-trade-overlay">
+              {tradeOverlayContent}
+            </Animated.View>
+          )}
           <Animated.View
             style={[
               styles.headerClip,

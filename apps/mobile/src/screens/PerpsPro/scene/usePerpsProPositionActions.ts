@@ -141,7 +141,7 @@ export const usePerpsProPositionActions = ({
         return;
       }
       const markPrice = marketData.markPx;
-      const midPrice = marketData.midPx || markPrice;
+      const midPrice = marketData.midPx;
       if (!markPrice || !midPrice) {
         showToast(t('page.perps.pro.positions.closeFailed'), 'error');
         return;
@@ -288,8 +288,8 @@ export const usePerpsProPositionActions = ({
       const marketData =
         perpsStore.getState().marketDataMap[closeEditor.position.coin];
       const markPrice = marketData?.markPx;
-      const midPrice = marketData?.midPx || markPrice;
-      if (!midPrice || (draft.orderType === 'market' && !markPrice)) {
+      const midPrice = marketData?.midPx;
+      if (!midPrice || !markPrice) {
         showToast(t('page.perps.pro.positions.closeFailed'), 'error');
         return null;
       }
@@ -313,7 +313,7 @@ export const usePerpsProPositionActions = ({
         ...draft,
         midPrice,
         referencePrice:
-          draft.orderType === 'market' ? markPrice || '' : draft.referencePrice,
+          draft.orderType === 'market' ? markPrice : draft.referencePrice,
       };
     },
     [closeEditor, showMinimumCloseAmountToast, t],

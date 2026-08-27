@@ -103,6 +103,10 @@ describe('PerpsProPositionTpSlInput', () => {
     expect(mockDecimalProps.mock.lastCall?.[0].inputComponent).toBe(
       PerpsProPositionTpSlBottomSheetTextInput,
     );
+    expect(mockDecimalProps.mock.lastCall?.[0]).toMatchObject({
+      focusCursorAtEnd: true,
+      focusCursorAtEndMode: 'initialFocus',
+    });
   });
 
   it('uses the centered empty label and reveals raw editable input only while focused', () => {
@@ -160,5 +164,26 @@ describe('PerpsProPositionTpSlInput', () => {
     );
 
     expect(screen.getByText('−30')).toBeTruthy();
+  });
+
+  it('keeps integer zero runs only for price editing and canonicalizes them on blur', () => {
+    render(
+      <PerpsProPositionTpSlInput
+        accessibilityLabel="Trigger Price"
+        disabled={false}
+        label="Trigger Price"
+        maxDecimals={3}
+        onChangeText={jest.fn()}
+        priceSzDecimals={3}
+        testID="field"
+        value="60000"
+      />,
+    );
+
+    const decimalProps = mockDecimalProps.mock.lastCall?.[0];
+    expect(decimalProps).toMatchObject({ preserveIntegerZeroRun: true });
+    expect(decimalProps.normalizeValue('0000')).toBe('0000');
+    expect(decimalProps.normalizeValue('50000')).toBe('50000');
+    expect(decimalProps.canonicalizeValueOnBlur('0000')).toBe('0');
   });
 });

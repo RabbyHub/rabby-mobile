@@ -279,6 +279,28 @@ describe('PerpsProClosePositionSheet', () => {
     );
   });
 
+  it('preserves a Limit price zero run while editing and accepts the replacement prefix', async () => {
+    render(
+      <PerpsProClosePositionSheet
+        amountUnit="base"
+        market={market}
+        onClose={jest.fn()}
+        onReview={jest.fn()}
+        position={position}
+        visible
+      />,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-close-market-price-field'));
+    await waitFor(() =>
+      expect(screen.getByLabelText('Price').props.value).toBe('60001'),
+    );
+    fireEvent.changeText(screen.getByLabelText('Price'), '0000');
+    expect(screen.getByLabelText('Price').props.value).toBe('0000');
+    fireEvent.changeText(screen.getByLabelText('Price'), '50000');
+    expect(screen.getByLabelText('Price').props.value).toBe('50000');
+  });
+
   it('omits the source tag for native markets', () => {
     render(
       <PerpsProClosePositionSheet

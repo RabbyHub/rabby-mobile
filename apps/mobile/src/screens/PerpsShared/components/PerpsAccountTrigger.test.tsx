@@ -14,6 +14,30 @@ jest.mock('@/assets2024/icons/perps/PerpsHeaderAccountCaret.svg', () => {
     });
 });
 
+jest.mock('@/components/Icons/CaretArrowIconCC', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    CaretArrowIconCC: (props: object) =>
+      ReactModule.createElement(View, {
+        ...props,
+        testID: 'wallet-account-caret',
+      }),
+  };
+});
+
+jest.mock('@/components2024/WalletIcon/WalletIcon', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    WalletIcon: (props: object) =>
+      ReactModule.createElement(View, {
+        ...props,
+        testID: 'wallet-account-icon',
+      }),
+  };
+});
+
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
@@ -68,5 +92,54 @@ describe('PerpsAccountTrigger', () => {
     );
     fireEvent.press(screen.getByTestId('perps-account-trigger'));
     expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('matches the standard wallet selector without changing the compact variant', () => {
+    render(
+      <PerpsAccountTrigger
+        address="0x1234567890123456789012345678901234567890"
+        brandName="metamask"
+        expanded
+        label="Wallet alias"
+        onPress={jest.fn()}
+        variant="wallet"
+      />,
+    );
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-account-trigger').props.style,
+      ),
+    ).toMatchObject({
+      backgroundColor: 'neutral-bg-5',
+      borderRadius: 8,
+      flexShrink: 1,
+      gap: 4,
+      height: 32,
+      maxWidth: 180,
+      paddingHorizontal: 8,
+      paddingVertical: 6,
+    });
+    const walletLabelStyle = StyleSheet.flatten(
+      screen.getByText('Wallet alias').props.style,
+    );
+    expect(walletLabelStyle).toMatchObject({
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      fontWeight: '500',
+      lineHeight: 18,
+    });
+    expect(walletLabelStyle).not.toHaveProperty('includeFontPadding');
+    expect(screen.getByTestId('wallet-account-icon').props).toMatchObject({
+      address: '0x1234567890123456789012345678901234567890',
+      height: 18,
+      type: 'metamask',
+      width: 18,
+    });
+    expect(screen.getByTestId('wallet-account-caret').props).toMatchObject({
+      height: 14,
+      lineColor: 'neutral-title-1',
+      width: 14,
+    });
   });
 });

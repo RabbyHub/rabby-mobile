@@ -100,27 +100,31 @@ export const PerpsProHistoryList: React.FC<{
       keyExtractor={item => item.key}
       ListEmptyComponent={<PerpsProHistoryEmpty />}
       ListFooterComponent={
-        state.loadingEarlier || state.loadEarlierError ? (
+        state.loadingEarlier ? (
+          <View
+            style={styles.loadingFooter}
+            testID="perps-pro-history-loading-footer">
+            <ActivityIndicator
+              accessibilityLabel={t('page.perps.pro.history.loadingMore')}
+              accessibilityState={{ busy: true }}
+              color={colors2024['neutral-body']}
+              size="small"
+              style={styles.loadingIndicator}
+            />
+          </View>
+        ) : state.loadEarlierError ? (
           <View style={styles.footer}>
-            {state.loadingEarlier ? (
-              <ActivityIndicator
-                accessibilityLabel={t('page.perps.pro.history.loadingMore')}
-                accessibilityState={{ busy: true }}
-                color={colors2024['blue-default']}
-              />
-            ) : (
-              <Pressable
-                accessibilityRole="button"
-                onPress={onLoadEarlier}
-                style={({ pressed }) => [
-                  styles.footerButton,
-                  pressed && styles.buttonPressed,
-                ]}>
-                <Text style={styles.footerText}>
-                  {t('page.perps.pro.common.retry')}
-                </Text>
-              </Pressable>
-            )}
+            <Pressable
+              accessibilityRole="button"
+              onPress={onLoadEarlier}
+              style={({ pressed }) => [
+                styles.footerButton,
+                pressed && styles.buttonPressed,
+              ]}>
+              <Text style={styles.footerText}>
+                {t('page.perps.pro.common.retry')}
+              </Text>
+            </Pressable>
           </View>
         ) : null
       }
@@ -154,6 +158,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     height: 64,
     justifyContent: 'center',
+  },
+  loadingFooter: {
+    alignItems: 'center',
+    display: 'flex',
+    height: 40,
+    justifyContent: 'center',
+    width: '100%',
+  },
+  loadingIndicator: {
+    paddingBottom: 10,
   },
   footerButton: {
     alignItems: 'center',

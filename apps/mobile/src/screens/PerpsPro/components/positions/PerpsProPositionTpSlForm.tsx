@@ -224,9 +224,9 @@ export const PerpsProPositionTpSlForm: React.FC<{
       initialStopLoss,
       initialTakeProfit,
       leverage: position.leverage,
-      pxDecimals: market.pxDecimals,
       preferredModes: tpSlModePreferences.position,
       sideSize,
+      szDecimals: market.szDecimals,
     });
     const amountValidation =
       mode === 'position'
@@ -310,6 +310,7 @@ export const PerpsProPositionTpSlForm: React.FC<{
               liquidationPrice: position.liquidationPrice,
               markPrice,
               rawMagnitude: input.rawMagnitude,
+              szDecimals: market.szDecimals,
               triggerPrice: value,
             })
           : null;
@@ -328,6 +329,7 @@ export const PerpsProPositionTpSlForm: React.FC<{
               direction: position.direction,
               kind,
               markPrice,
+              szDecimals: market.szDecimals,
               triggerPrice: value,
             }));
       return {
@@ -569,6 +571,7 @@ export const PerpsProPositionTpSlForm: React.FC<{
               onStartShouldSetResponderCapture={handleAmountSliderTouchCapture}
               testID="perps-pro-position-tpsl-amount-slider-section">
               <PerpsProSlider
+                dimWhenDisabled={false}
                 disabled={pending}
                 maximumValue={100}
                 minimumValue={0}

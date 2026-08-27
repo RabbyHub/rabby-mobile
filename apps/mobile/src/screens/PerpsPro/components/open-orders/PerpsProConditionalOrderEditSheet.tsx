@@ -25,6 +25,8 @@ import {
 } from '../common/perpsProVisual';
 import {
   getPerpsProAmountInputDecimals,
+  getPerpsProPriceInputMaxDecimals,
+  isPerpsProPriceProtocolValid,
   resolvePerpsProTradeAmount,
 } from '../../model/trade';
 import type { PerpsProOpenOrderEditEditorState } from '../../scene/usePerpsProOpenOrderEdit';
@@ -178,7 +180,10 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
     const canReview =
       triggerValue.isFinite() &&
       triggerValue.gt(0) &&
+      isPerpsProPriceProtocolValid(triggerPrice, editor.market.szDecimals) &&
       (!isTriggerLimit || (limitValue.isFinite() && limitValue.gt(0))) &&
+      (!isTriggerLimit ||
+        isPerpsProPriceProtocolValid(limitPrice, editor.market.szDecimals)) &&
       sizeValue.isFinite() &&
       (sizeValue.gt(0) || (isPositionSize && sizeValue.isZero())) &&
       (!sizeValue.eq(initialSize) ||
@@ -240,8 +245,11 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
                   editor.market.pxDecimals,
                 )}`}
                 label={t('page.perps.pro.openOrders.triggerPrice')}
-                maxDecimals={editor.market.pxDecimals}
+                maxDecimals={getPerpsProPriceInputMaxDecimals(
+                  editor.market.szDecimals,
+                )}
                 onChangeText={setTriggerPrice}
+                priceSzDecimals={editor.market.szDecimals}
                 testID="perps-pro-conditional-order-edit-trigger"
                 unit={editor.market.quoteAsset}
                 value={triggerPrice}
@@ -254,8 +262,11 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
                     editor.market.pxDecimals,
                   )}`}
                   label={t('page.perps.pro.openOrders.limitPrice')}
-                  maxDecimals={editor.market.pxDecimals}
+                  maxDecimals={getPerpsProPriceInputMaxDecimals(
+                    editor.market.szDecimals,
+                  )}
                   onChangeText={setLimitPrice}
+                  priceSzDecimals={editor.market.szDecimals}
                   testID="perps-pro-conditional-order-edit-limit"
                   unit={editor.market.quoteAsset}
                   value={limitPrice}

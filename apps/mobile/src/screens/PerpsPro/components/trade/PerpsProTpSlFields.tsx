@@ -8,6 +8,7 @@ import type {
   PerpsProAttachedTpSlDraft,
   PerpsProTpSlLegKind,
 } from '../../model/tpsl';
+import { getPerpsProPriceInputMaxDecimals } from '../../model/trade';
 import type { PerpsProTpSlController } from '../../scene/usePerpsProTpSl';
 import { usePerpsProDismissKeyboard } from '../common/usePerpsProDismissKeyboard';
 import { PerpsProTpSlInput } from './PerpsProTpSlInput';
@@ -20,6 +21,7 @@ type PerpsProTpSlFieldsProps = {
   draft: PerpsProAttachedTpSlDraft;
   pxDecimals: number;
   quoteAsset: string;
+  szDecimals?: number;
   slFillRevision?: number;
   tpFillRevision?: number;
 };
@@ -30,6 +32,7 @@ const PerpsProTpSlFieldsComponent = (props: PerpsProTpSlFieldsProps) => {
     draft,
     pxDecimals,
     quoteAsset,
+    szDecimals,
     slFillRevision,
     tpFillRevision,
   } = props;
@@ -70,7 +73,13 @@ const PerpsProTpSlFieldsComponent = (props: PerpsProTpSlFieldsProps) => {
               }
               kind="tp"
               label={t('page.perps.pro.trade.takeProfit')}
-              maxDecimals={draft.tp.mode === 'price' ? pxDecimals : 2}
+              maxDecimals={
+                draft.tp.mode === 'price' && szDecimals != null
+                  ? getPerpsProPriceInputMaxDecimals(szDecimals)
+                  : draft.tp.mode === 'price'
+                  ? pxDecimals
+                  : 2
+              }
               mode={draft.tp.mode}
               onBlur={() => controller.blurFocusedLeg('tp')}
               onChangeText={value => controller.setRawMagnitude('tp', value)}
@@ -80,6 +89,7 @@ const PerpsProTpSlFieldsComponent = (props: PerpsProTpSlFieldsProps) => {
                 dismissKeyboardThen(() => setModeSheet('tp'));
               }}
               quoteAsset={quoteAsset}
+              priceSzDecimals={szDecimals}
               value={draft.tp.rawMagnitude}
             />
           </View>
@@ -99,7 +109,13 @@ const PerpsProTpSlFieldsComponent = (props: PerpsProTpSlFieldsProps) => {
               }
               kind="sl"
               label={t('page.perps.pro.trade.stopLoss')}
-              maxDecimals={draft.sl.mode === 'price' ? pxDecimals : 2}
+              maxDecimals={
+                draft.sl.mode === 'price' && szDecimals != null
+                  ? getPerpsProPriceInputMaxDecimals(szDecimals)
+                  : draft.sl.mode === 'price'
+                  ? pxDecimals
+                  : 2
+              }
               mode={draft.sl.mode}
               onBlur={() => controller.blurFocusedLeg('sl')}
               onChangeText={value => controller.setRawMagnitude('sl', value)}
@@ -109,6 +125,7 @@ const PerpsProTpSlFieldsComponent = (props: PerpsProTpSlFieldsProps) => {
                 dismissKeyboardThen(() => setModeSheet('sl'));
               }}
               quoteAsset={quoteAsset}
+              priceSzDecimals={szDecimals}
               value={draft.sl.rawMagnitude}
             />
           </View>

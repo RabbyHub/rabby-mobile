@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { Keyboard, StyleSheet } from 'react-native';
+import { Keyboard, Platform, StyleSheet } from 'react-native';
 
 const mockBottomSheetProps = jest.fn();
 const mockDismiss = jest.fn();
@@ -11,6 +11,25 @@ const mockOpenFieldExplanation = jest.fn();
 const mockScrollToEnd = jest.fn();
 const mockKeyboardListeners = new Map<string, () => void>();
 let mockAnimationFrameCallback: FrameRequestCallback | null = null;
+let mockNextFormInstanceId = 0;
+let mockAnimatedReactions: Array<{
+  prepare: () => unknown;
+  react: (value: any) => void;
+}> = [];
+
+jest.mock('react-native-reanimated', () => {
+  const ReactModule = require('react');
+  return {
+    runOnJS: (callback: (...args: unknown[]) => unknown) => callback,
+    useAnimatedReaction: (
+      prepare: () => unknown,
+      react: (value: any) => void,
+    ) => {
+      mockAnimatedReactions.push({ prepare, react });
+    },
+    useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
+  };
+});
 
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
   __esModule: true,
@@ -143,12 +162,9 @@ jest.mock('./PerpsProPositionTpSlForm', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return {
-    PerpsProPositionTpSlForm: (props: {
-      minimumHeight: number;
-      mode: string;
-      presentation: string;
-    }) => {
-      mockFormProps(props);
+    PerpsProPositionTpSlForm: (props: any) => {
+      const [instanceId] = ReactModule.useState(() => ++mockNextFormInstanceId);
+      mockFormProps({ ...props, instanceId });
       return ReactModule.createElement(View, {
         testID: `tpsl-form-${props.mode}`,
       });
@@ -164,14 +180,15 @@ const order = (
   oid: number,
   triggerPrice: string,
   remainingSize: string,
+  scope: PerpsPositionTpSlOrderViewModel['scope'] = 'partial',
 ): PerpsPositionTpSlOrderViewModel => ({
   execution: 'market',
-  key: `partial:${oid}`,
+  key: `${scope}:${oid}`,
   kind: 'takeProfit',
   oid,
   originalSize: remainingSize,
   remainingSize,
-  scope: 'partial',
+  scope,
   side: 'A',
   timestamp: oid,
   triggerPrice,
@@ -208,8 +225,14 @@ const market = {
 describe('PerpsProPositionTpSlSheet', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockAnimatedReactions = [];
+    mockNextFormInstanceId = 0;
     mockKeyboardListeners.clear();
     mockAnimationFrameCallback = null;
+    Object.defineProperty(Platform, 'OS', {
+      configurable: true,
+      value: 'ios',
+    });
     jest
       .spyOn(Keyboard, 'addListener')
       .mockImplementation((eventName, listener) => {
@@ -349,6 +372,54 @@ describe('PerpsProPositionTpSlSheet', () => {
     expect(mockKeyboardListeners.size).toBe(0);
   });
 
+  it('waits for the Android sheet to restore before scrolling Confirm into view', () => {
+    Object.defineProperty(Platform, 'OS', {
+      configurable: true,
+      value: 'android',
+    });
+    render(
+      <PerpsProPositionTpSlSheet
+        amountUnit="base"
+        cancelingOids={[]}
+        confirmedCancelledOids={[]}
+        coveredByReview={false}
+        defaultTab="position"
+        market={market}
+        onCancelOrder={jest.fn()}
+        onClose={jest.fn()}
+        onReview={jest.fn()}
+        pending={false}
+        position={position}
+        visible
+      />,
+    );
+
+    const sheetProps = mockBottomSheetProps.mock.lastCall?.[0];
+    act(() => {
+      sheetProps.onChange(0, 100);
+      mockKeyboardListeners.get('keyboardDidShow')?.();
+      mockKeyboardListeners.get('keyboardDidHide')?.();
+    });
+    const reaction = mockAnimatedReactions.at(-1)!;
+    act(() => {
+      sheetProps.animatedPosition.value = 146;
+      reaction.react(reaction.prepare());
+    });
+    expect(mockAnimationFrameCallback).toBeNull();
+    expect(mockScrollToEnd).not.toHaveBeenCalled();
+
+    act(() => {
+      sheetProps.animatedPosition.value = 147;
+      reaction.react(reaction.prepare());
+    });
+    expect(mockScrollToEnd).not.toHaveBeenCalled();
+    act(() => {
+      mockAnimationFrameCallback?.(0);
+    });
+    expect(mockScrollToEnd).toHaveBeenCalledTimes(1);
+    expect(mockScrollToEnd).toHaveBeenCalledWith({ animated: false });
+  });
+
   it('keeps the right-aligned Unfilled column single-line so long content extends left', () => {
     render(
       <PerpsProPositionTpSlSheet
@@ -476,6 +547,66 @@ describe('PerpsProPositionTpSlSheet', () => {
       minimumHeight: 486,
       presentation: 'tab',
     });
+  });
+
+  it('keeps the Position form mounted while confirmed orders refresh behind review', () => {
+    const initialPositionOrder = order(10, '110', '1', 'position');
+    const refreshedPositionOrder = order(11, '112', '1', 'position');
+    const baseProps = {
+      amountUnit: 'base' as const,
+      cancelingOids: [],
+      confirmedCancelledOids: [],
+      defaultTab: 'position' as const,
+      market,
+      onCancelOrder: jest.fn(),
+      onClose: jest.fn(),
+      onReview: jest.fn(),
+      visible: true,
+    };
+    const { rerender } = render(
+      <PerpsProPositionTpSlSheet
+        {...baseProps}
+        coveredByReview={false}
+        pending={false}
+        position={{ ...position, tpslOrders: [initialPositionOrder] }}
+      />,
+    );
+    const initialInstanceId = mockFormProps.mock.lastCall?.[0].instanceId;
+
+    rerender(
+      <PerpsProPositionTpSlSheet
+        {...baseProps}
+        coveredByReview
+        pending
+        position={{ ...position, tpslOrders: [] }}
+      />,
+    );
+    expect(mockFormProps.mock.lastCall?.[0]).toMatchObject({
+      instanceId: initialInstanceId,
+      position: expect.objectContaining({ tpslOrders: [] }),
+    });
+
+    rerender(
+      <PerpsProPositionTpSlSheet
+        {...baseProps}
+        coveredByReview
+        pending
+        position={{ ...position, tpslOrders: [refreshedPositionOrder] }}
+      />,
+    );
+    expect(mockFormProps.mock.lastCall?.[0].instanceId).toBe(initialInstanceId);
+
+    rerender(
+      <PerpsProPositionTpSlSheet
+        {...baseProps}
+        coveredByReview={false}
+        pending={false}
+        position={{ ...position, tpslOrders: [refreshedPositionOrder] }}
+      />,
+    );
+    expect(mockFormProps.mock.lastCall?.[0].instanceId).not.toBe(
+      initialInstanceId,
+    );
   });
 
   it('returns a successful Add or Modify settlement to the refreshed root list', () => {

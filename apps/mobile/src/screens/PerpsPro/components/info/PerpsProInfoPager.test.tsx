@@ -73,6 +73,7 @@ const data = {
 
 const renderPager = ({
   activeTab = 'positions',
+  nativeVerticalScrollEnabled = true,
   onActivateOffset = jest.fn(),
   onPageDragStart = jest.fn(),
   onPagePreview = jest.fn(),
@@ -82,6 +83,7 @@ const renderPager = ({
   scrollBridge,
 }: {
   activeTab?: PerpsProInfoTab;
+  nativeVerticalScrollEnabled?: boolean;
   onActivateOffset?: jest.Mock;
   onPageDragStart?: jest.Mock;
   onPagePreview?: jest.Mock;
@@ -100,6 +102,7 @@ const renderPager = ({
       }}
       data={data}
       getActiveScrollOffset={() => 500}
+      nativeVerticalScrollEnabled={nativeVerticalScrollEnabled}
       onActivateOffset={onActivateOffset}
       onActiveScroll={jest.fn()}
       onLayout={jest.fn()}
@@ -156,6 +159,31 @@ describe('PerpsProInfoPager', () => {
       importantForAccessibility: 'no-hide-descendants',
       pointerEvents: 'none',
     });
+  });
+
+  it('keeps Android list virtualization while delegating vertical touch input', () => {
+    const shared = <T,>(value: T) => ({ value });
+    const scrollBridge = {
+      activeIndex: shared(0),
+      epoch: shared(0),
+      pageGestureActive: shared(false),
+      targets: [0, 1, 2].map(() => ({
+        maxOffset: shared(0),
+        offset: shared(0),
+        ref: jest.fn(),
+      })),
+    } as unknown as PerpsProInfoScrollBridgeController;
+    renderPager({ nativeVerticalScrollEnabled: false, scrollBridge });
+
+    const activeScroll = screen.getByTestId('perps-pro-scroll');
+    expect(activeScroll.props.scrollEnabled).toBe(false);
+    const initialEpoch = scrollBridge.epoch.value;
+    fireEvent(activeScroll, 'scrollBeginDrag');
+    expect(scrollBridge.epoch.value).toBe(initialEpoch);
+    expect(screen.getByTestId('position-row')).toBeTruthy();
+    expect(
+      screen.getByTestId('open-order-row', { includeHiddenElements: true }),
+    ).toBeTruthy();
   });
 
   it('prepares offsets at the sticky boundary and commits only on selection', () => {

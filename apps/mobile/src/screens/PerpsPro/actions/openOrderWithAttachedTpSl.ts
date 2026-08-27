@@ -174,6 +174,28 @@ const getParentFingerprint = (parent: PerpsProOpenOrderCommand) =>
     parent.execution,
   ]);
 
+export const finalizePerpsProAttachedTpSlMarketCommand = (
+  command: PerpsProAttachedTpSlCommand,
+  midPrice: string,
+): PerpsProAttachedTpSlCommand => {
+  const mid = positive(midPrice);
+  if (command.parent.execution.kind !== 'market' || !mid) {
+    throw new Error('Market Mid price is unavailable');
+  }
+  const parent: PerpsProAttachedTpSlParentCommand = Object.freeze({
+    ...command.parent,
+    execution: Object.freeze({
+      kind: 'market' as const,
+      slippageReferenceMidPrice: mid.toFixed(),
+    }),
+  });
+  return Object.freeze({
+    ...command,
+    parent,
+    parentFingerprint: getParentFingerprint(parent),
+  });
+};
+
 export const buildPerpsProAttachedTpSlCommand = ({
   accountRuntime,
   amountUnit,
@@ -243,6 +265,14 @@ export const buildPerpsProAttachedTpSlCommand = ({
         marketSnapshot.entrySource !== 'midFallback')
   ) {
     throw new Error('Attached TP/SL evaluation does not match the parent');
+  }
+  const attachedErrors = validatePerpsProFrozenAttachedTpSl({
+    attached,
+    expectedEntryPrice: attached.expectedEntryPrice,
+    szDecimals,
+  });
+  if (attachedErrors.length > 0) {
+    throw new Error('Attached TP/SL trigger price is invalid');
   }
   if (
     !isSamePerpsActionAccount(accountRuntime.account, parent.account) ||
@@ -367,6 +397,7 @@ export const validatePerpsProAttachedTpSlCommand = (
   const errors = validatePerpsProFrozenAttachedTpSl({
     attached: command.attached,
     expectedEntryPrice,
+    szDecimals: command.reviewFacts.szDecimals,
   });
   return errors.length > 0
     ? {

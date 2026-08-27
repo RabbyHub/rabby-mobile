@@ -1,7 +1,6 @@
 import { act, renderHook } from '@testing-library/react-native';
 
 const mockCancelAnimation = jest.fn();
-const mockDispatchCommand = jest.fn();
 const mockScrollTo = jest.fn();
 const mockWithDecay = jest.fn((..._args: unknown[]) => 150);
 let mockAnimatedReactions: Array<{
@@ -41,7 +40,6 @@ jest.mock('react-native-reanimated', () => {
   const ReactModule = require('react');
   return {
     cancelAnimation: (...args: unknown[]) => mockCancelAnimation(...args),
-    dispatchCommand: (...args: unknown[]) => mockDispatchCommand(...args),
     scrollTo: (...args: unknown[]) => mockScrollTo(...args),
     useAnimatedReaction: (
       prepare: () => unknown,
@@ -54,12 +52,12 @@ jest.mock('react-native-reanimated', () => {
   };
 });
 
-import type { PerpsProInfoScrollBridgeController } from '../info/usePerpsProInfoScrollBridge';
+import type { PerpsProInfoScrollBridgeController } from '../components/info/usePerpsProInfoScrollBridge';
 import {
-  getPerpsProAndroidTradeScrollIntent,
-  getPerpsProAndroidTradeScrollVelocity,
-  usePerpsProAndroidTradeScrollDriver,
-} from './usePerpsProAndroidTradeScrollDriver';
+  getPerpsProAndroidSceneScrollIntent,
+  getPerpsProAndroidSceneScrollVelocity,
+  usePerpsProAndroidSceneScrollCoordinator,
+} from './usePerpsProAndroidSceneScrollCoordinator';
 
 const createController = () => {
   const shared = <T,>(value: T) => ({ value });
@@ -79,7 +77,7 @@ const touch = (absoluteX: number, absoluteY: number) => ({
   allTouches: [{ absoluteX, absoluteY }],
 });
 
-describe('usePerpsProAndroidTradeScrollDriver', () => {
+describe('usePerpsProAndroidSceneScrollCoordinator', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockAnimatedReactions = [];
@@ -87,27 +85,27 @@ describe('usePerpsProAndroidTradeScrollDriver', () => {
   });
 
   it('keeps sub-slop movement pending and gives horizontal intent away', () => {
-    expect(getPerpsProAndroidTradeScrollIntent({ deltaX: 2, deltaY: 4 })).toBe(
+    expect(getPerpsProAndroidSceneScrollIntent({ deltaX: 2, deltaY: 4 })).toBe(
       'pending',
     );
-    expect(getPerpsProAndroidTradeScrollIntent({ deltaX: 12, deltaY: 4 })).toBe(
+    expect(getPerpsProAndroidSceneScrollIntent({ deltaX: 12, deltaY: 4 })).toBe(
       'fail',
     );
     expect(
-      getPerpsProAndroidTradeScrollIntent({ deltaX: 4, deltaY: -12 }),
+      getPerpsProAndroidSceneScrollIntent({ deltaX: 4, deltaY: -12 }),
     ).toBe('activate');
     expect(
-      getPerpsProAndroidTradeScrollIntent({
+      getPerpsProAndroidSceneScrollIntent({
         deltaX: Number.NaN,
         deltaY: Number.POSITIVE_INFINITY,
       }),
     ).toBe('pending');
   });
 
-  it('does not activate for a stationary touch and activates only after vertical slop', () => {
+  it('interrupts prior decay on touch-down without queuing a target command', () => {
     const controller = createController();
     renderHook(() =>
-      usePerpsProAndroidTradeScrollDriver({ controller, enabled: true }),
+      usePerpsProAndroidSceneScrollCoordinator({ controller, enabled: true }),
     );
     const stateManager = {
       activate: jest.fn(),
@@ -118,29 +116,27 @@ describe('usePerpsProAndroidTradeScrollDriver', () => {
       mockGestureHandlers.onTouchesDown(touch(20, 200), stateManager);
       mockGestureHandlers.onTouchesMove(touch(22, 196), stateManager);
     });
+    expect(controller.epoch.value).toBe(1);
+    expect(mockCancelAnimation).toHaveBeenCalled();
     expect(stateManager.activate).not.toHaveBeenCalled();
     expect(stateManager.fail).not.toHaveBeenCalled();
-    expect(mockDispatchCommand).toHaveBeenCalledWith(
-      controller.targets[0].ref,
-      'scrollTo',
-      [0, 100, false],
-    );
+    expect(mockScrollTo).not.toHaveBeenCalled();
 
     act(() => {
       mockGestureHandlers.onTouchesMove(touch(22, 188), stateManager);
-      mockGestureHandlers.onTouchesMove(touch(60, 187), stateManager);
     });
     expect(stateManager.activate).toHaveBeenCalledTimes(1);
-    expect(stateManager.fail).not.toHaveBeenCalled();
   });
 
-  it('mirrors stable absolute-Y deltas and stops after its epoch is invalidated', () => {
+  it('uses one shared offset for the active list and Trade surface', () => {
     const controller = createController();
-    renderHook(() =>
-      usePerpsProAndroidTradeScrollDriver({ controller, enabled: true }),
+    const { result } = renderHook(() =>
+      usePerpsProAndroidSceneScrollCoordinator({ controller, enabled: true }),
     );
 
     act(() => {
+      const synchronizationReaction = mockAnimatedReactions[0];
+      synchronizationReaction.react(synchronizationReaction.prepare());
       mockGestureHandlers.onTouchesDown(touch(20, 200), {
         activate: jest.fn(),
         fail: jest.fn(),
@@ -156,11 +152,12 @@ describe('usePerpsProAndroidTradeScrollDriver', () => {
       120,
       false,
     );
+    expect(result.current.visualOffset.value).toBe(120);
 
     controller.epoch.value += 1;
     act(() => {
-      const invalidationReaction = mockAnimatedReactions[0];
-      invalidationReaction.react(invalidationReaction.prepare());
+      const synchronizationReaction = mockAnimatedReactions[0];
+      synchronizationReaction.react(synchronizationReaction.prepare());
       mockGestureHandlers.onUpdate({ absoluteY: 150 });
       const offsetReaction = mockAnimatedReactions[1];
       offsetReaction.react(offsetReaction.prepare());
@@ -169,13 +166,37 @@ describe('usePerpsProAndroidTradeScrollDriver', () => {
     expect(mockScrollTo).toHaveBeenCalledTimes(1);
   });
 
+  it('follows external and selected-page offsets outside a gesture session', () => {
+    const controller = createController();
+    const { result } = renderHook(() =>
+      usePerpsProAndroidSceneScrollCoordinator({ controller, enabled: true }),
+    );
+
+    controller.targets[0].offset.value = 180;
+    act(() => {
+      const synchronizationReaction = mockAnimatedReactions[0];
+      synchronizationReaction.react(synchronizationReaction.prepare());
+    });
+    expect(result.current.visualOffset.value).toBe(180);
+
+    controller.activeIndex.value = 1;
+    controller.targets[1].offset.value = 75;
+    act(() => {
+      const synchronizationReaction = mockAnimatedReactions[0];
+      synchronizationReaction.react(synchronizationReaction.prepare());
+    });
+    expect(result.current.visualOffset.value).toBe(75);
+  });
+
   it('maps finger velocity to bounded forward decay', () => {
     const controller = createController();
     renderHook(() =>
-      usePerpsProAndroidTradeScrollDriver({ controller, enabled: true }),
+      usePerpsProAndroidSceneScrollCoordinator({ controller, enabled: true }),
     );
 
     act(() => {
+      const synchronizationReaction = mockAnimatedReactions[0];
+      synchronizationReaction.react(synchronizationReaction.prepare());
       mockGestureHandlers.onTouchesDown(touch(20, 200), {
         activate: jest.fn(),
         fail: jest.fn(),
@@ -187,15 +208,40 @@ describe('usePerpsProAndroidTradeScrollDriver', () => {
       { clamp: [0, 300], velocity: 600 },
       expect.any(Function),
     );
-    expect(getPerpsProAndroidTradeScrollVelocity(600)).toBe(-600);
-    expect(getPerpsProAndroidTradeScrollVelocity(Number.NaN)).toBe(0);
+    expect(getPerpsProAndroidSceneScrollVelocity(600)).toBe(-600);
+    expect(getPerpsProAndroidSceneScrollVelocity(Number.NaN)).toBe(0);
+  });
+
+  it('holds the last visible offset while a new touch is still pending', () => {
+    const controller = createController();
+    const { result } = renderHook(() =>
+      usePerpsProAndroidSceneScrollCoordinator({ controller, enabled: true }),
+    );
+    const synchronizationReaction = mockAnimatedReactions[0];
+
+    act(() => {
+      synchronizationReaction.react(synchronizationReaction.prepare());
+    });
+    expect(result.current.visualOffset.value).toBe(100);
+
+    controller.targets[0].offset.value = 92;
+    act(() => {
+      mockGestureHandlers.onTouchesDown(touch(20, 200), {
+        activate: jest.fn(),
+        fail: jest.fn(),
+      });
+      synchronizationReaction.react(synchronizationReaction.prepare());
+    });
+
+    expect(result.current.visualOffset.value).toBe(100);
+    expect(mockScrollTo).not.toHaveBeenCalled();
   });
 
   it('fails before activation while the horizontal pager owns the gesture', () => {
     const controller = createController();
     controller.pageGestureActive.value = true;
     renderHook(() =>
-      usePerpsProAndroidTradeScrollDriver({ controller, enabled: true }),
+      usePerpsProAndroidSceneScrollCoordinator({ controller, enabled: true }),
     );
     const stateManager = { activate: jest.fn(), fail: jest.fn() };
 
@@ -204,6 +250,6 @@ describe('usePerpsProAndroidTradeScrollDriver', () => {
     });
 
     expect(stateManager.fail).toHaveBeenCalledTimes(1);
-    expect(mockDispatchCommand).not.toHaveBeenCalled();
+    expect(mockScrollTo).not.toHaveBeenCalled();
   });
 });

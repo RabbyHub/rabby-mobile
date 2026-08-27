@@ -2,7 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
-const mockOpenFieldExplanation = jest.fn();
+const mockShowPortfolioBreakdown = jest.fn();
+let mockHasNonPerpsAssets = true;
 
 jest.mock('@/assets2024/icons/perps/IconUSDC.svg', () => {
   const ReactModule = require('react');
@@ -12,41 +13,32 @@ jest.mock('@/assets2024/icons/perps/IconUSDC.svg', () => {
 jest.mock('@/assets2024/icons/perps/IconUSDE.svg', () => () => null);
 jest.mock('@/assets2024/icons/perps/IconUSDH.svg', () => () => null);
 jest.mock('@/assets2024/icons/perps/IconUSDT.svg', () => () => null);
+jest.mock('@/assets2024/icons/perps/IconPortfolioInfoCC.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) => ReactModule.createElement(View, props);
+});
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
     const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
-    return { styles: getStyle({ colors2024 }) };
+    return { colors2024, styles: getStyle({ colors2024 }) };
   },
 }));
 jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
 }));
-jest.mock('../common/PerpsProFieldExplanationContext', () => ({
-  usePerpsProFieldExplanation: () => mockOpenFieldExplanation,
-}));
-jest.mock('../common/PerpsProDottedUnderlineText', () => {
-  const ReactModule = require('react');
-  const { Pressable, Text } = require('react-native');
-  return {
-    PerpsProDottedUnderlineText: ({
-      children,
-      onPress,
-      testID,
-    }: {
-      children: React.ReactNode;
-      onPress: () => void;
-      testID: string;
-    }) =>
-      ReactModule.createElement(
-        Pressable,
-        { onPress, testID },
-        ReactModule.createElement(Text, null, children),
-      ),
-  };
-});
+jest.mock(
+  '@/screens/PerpsShared/components/PerpsPortfolioBreakdownExplanation',
+  () => ({
+    useShowPerpsPortfolioBreakdown: () => ({
+      hasNonPerpsAssets: mockHasNonPerpsAssets,
+      showPortfolioBreakdown: mockShowPortfolioBreakdown,
+    }),
+  }),
+);
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) =>
@@ -55,7 +47,7 @@ jest.mock('react-i18next', () => ({
         'page.perps.pro.account.deposit': 'Deposit',
         'page.perps.pro.account.perpsAccountSummary': 'Perps Account Summary',
         'page.perps.pro.account.spot': 'Spot',
-        'page.perps.pro.account.totalValue': 'Total Value',
+        'page.perps.PerpsCard.portfolioValue': 'Portfolio Value',
         'page.perps.pro.account.transfer': 'Transfer',
         'page.perps.pro.account.unrealizedPnl': 'Unrealized PNL',
         'page.perps.pro.account.withdraw': 'Withdraw',
@@ -99,9 +91,10 @@ const spotUsdc = {
 describe('Perps Pro account visual contract', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockHasNonPerpsAssets = true;
   });
 
-  it('shows only Total Value and Unrealized PNL in the summary for now', () => {
+  it('shows only Portfolio Value and Unrealized PNL in the summary for now', () => {
     render(
       <PerpsProAccountSummary
         account={account}
@@ -110,7 +103,7 @@ describe('Perps Pro account visual contract', () => {
       />,
     );
 
-    expect(screen.getByText('Total Value')).toBeTruthy();
+    expect(screen.getByText('Portfolio Value')).toBeTruthy();
     expect(screen.getByText('Unrealized PNL')).toBeTruthy();
     expect(screen.queryByText('Perps Account Summary')).toBeNull();
     expect(screen.queryByText('Cross Margin Ratio')).toBeNull();
@@ -137,7 +130,7 @@ describe('Perps Pro account visual contract', () => {
     });
     expect(
       StyleSheet.flatten(
-        screen.getByText('Total Value').parent?.parent?.props.style,
+        screen.getByText('Portfolio Value').parent?.parent?.props.style,
       ),
     ).toMatchObject({ gap: 4 });
     expect(
@@ -146,31 +139,36 @@ describe('Perps Pro account visual contract', () => {
       ),
     ).toMatchObject({ alignItems: 'flex-end', gap: 4 });
 
-    const buttons = screen.getAllByRole('button');
-    expect(StyleSheet.flatten(buttons[0].props.style)).toMatchObject({
-      height: 34,
-    });
-    expect(StyleSheet.flatten(buttons[1].props.style)).toMatchObject({
-      height: 34,
-    });
+    const actionButtons = screen
+      .getAllByRole('button')
+      .filter(button => StyleSheet.flatten(button.props.style)?.height === 34);
+    expect(actionButtons).toHaveLength(2);
     const actionRow = screen.getByTestId('perps-pro-account-summary')
       .children[1] as { props: { style?: object } };
     expect(StyleSheet.flatten(actionRow.props.style)).toMatchObject({ gap: 8 });
   });
 
-  it('explains Total Value only for a Unified Account', () => {
-    const screen = render(
-      <PerpsProAccountSummary
-        account={{ ...account, mode: 'unified' }}
-        onDeposit={jest.fn()}
-        onWithdraw={jest.fn()}
-      />,
-    );
+  it.each(['standard', 'unified', 'portfolioMargin'] as const)(
+    'reuses the Portfolio Value breakdown for %s accounts',
+    mode => {
+      render(
+        <PerpsProAccountSummary
+          account={{ ...account, mode }}
+          onDeposit={jest.fn()}
+          onWithdraw={jest.fn()}
+        />,
+      );
 
-    fireEvent.press(screen.getByTestId('perps-pro-total-value-explanation'));
-    expect(mockOpenFieldExplanation).toHaveBeenCalledWith('totalValue');
+      fireEvent.press(
+        screen.getByTestId('perps-pro-portfolio-value-breakdown'),
+      );
+      expect(mockShowPortfolioBreakdown).toHaveBeenCalledWith(190);
+    },
+  );
 
-    screen.rerender(
+  it('hides the breakdown trigger when the account has no non-Perps assets', () => {
+    mockHasNonPerpsAssets = false;
+    render(
       <PerpsProAccountSummary
         account={account}
         onDeposit={jest.fn()}
@@ -178,7 +176,7 @@ describe('Perps Pro account visual contract', () => {
       />,
     );
     expect(
-      screen.queryByTestId('perps-pro-total-value-explanation'),
+      screen.queryByTestId('perps-pro-portfolio-value-breakdown'),
     ).toBeNull();
   });
 

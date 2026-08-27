@@ -28,6 +28,9 @@ const EDITABLE_VALUE_HIT_SLOP = {
   top: 4,
 };
 
+const withOptionalUnit = (label: string, unit: string | null) =>
+  unit ? `${label} (${unit})` : label;
+
 const CancelButton: React.FC<{
   onPress: () => void;
   pending: boolean;
@@ -110,7 +113,7 @@ export const PerpsProOpenOrderCard: React.FC<{
       formatPerpsProDecimal(value, market.szDecimals);
     const displayQuoteAmount = (value: string | null) =>
       formatPerpsProDecimal(value, 2);
-    const amountLabel =
+    const amountLabel: string | null =
       amountUnit === 'base' ? market.displayBase : market.quoteAsset;
     const displayAmount = (base: string, quote: string | null) =>
       amountUnit === 'base'
@@ -205,8 +208,12 @@ export const PerpsProOpenOrderCard: React.FC<{
             <>
               <View style={styles.detailRow}>
                 <Text style={styles.label}>
-                  {t('page.perps.pro.openOrders.filled')} /{' '}
-                  {t('page.perps.pro.openOrders.amount')} ({amountLabel})
+                  {withOptionalUnit(
+                    `${t('page.perps.pro.openOrders.filled')} / ${t(
+                      'page.perps.pro.openOrders.amount',
+                    )}`,
+                    amountLabel,
+                  )}
                 </Text>
                 <Text style={styles.detailValue}>
                   {displayAmount(order.filledSize, order.filledQuote)} /{' '}
@@ -230,7 +237,10 @@ export const PerpsProOpenOrderCard: React.FC<{
             <>
               <View style={styles.detailRow}>
                 <Text style={styles.label}>
-                  {t('page.perps.pro.openOrders.amount')} ({amountLabel})
+                  {withOptionalUnit(
+                    t('page.perps.pro.openOrders.amount'),
+                    amountLabel,
+                  )}
                 </Text>
                 <Text style={styles.detailValue}>
                   {displayAmount(order.amountBase, order.displayAmountQuote)}

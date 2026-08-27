@@ -265,19 +265,19 @@ describe('PerpsProManageMarginSheet', () => {
     expect(screen.queryByText('- → -')).toBeNull();
   });
 
-  it('renders only the projected liquidation floor as zero and 100%', () => {
+  it('renders current and projected liquidation floors as zero and 100%', () => {
     renderSheet({
       view: {
         ...baseView,
-        currentLiquidationDistance: null,
+        currentLiquidationDistance: '1',
         currentLiquidationPrice: '0',
         projectedLiquidationDistance: '1',
         projectedLiquidationPrice: '0',
       },
     });
 
-    expect(screen.getByText('-- → 0')).toBeTruthy();
-    expect(screen.getByText('-- → 100.00%')).toBeTruthy();
+    expect(screen.getByText('0 → 0')).toBeTruthy();
+    expect(screen.getByText('100.00% → 100.00%')).toBeTruthy();
   });
 
   it('sanitizes decimal input and wires Min, Max, slider, and confirm actions', () => {

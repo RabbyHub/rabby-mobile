@@ -174,16 +174,10 @@ export function formatProTooltipTime(
   time: number,
   interval: PerpsProChartConfig['interval'],
 ): string {
-  const date = new Date(time * 1000);
-  const month = MONTHS[date.getMonth()];
-  const day = String(date.getDate()).padStart(2, '0');
-  const dateLabel = `${day} ${month}`;
-  if (interval === '1d' || interval === '1w' || interval === '1M') {
-    return dateLabel;
-  }
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${dateLabel} ${hours}:${minutes}`;
+  return formatTime(
+    time,
+    interval === '1d' || interval === '1w' || interval === '1M',
+  );
 }
 
 export type PerpsProTooltipMetrics = {
@@ -279,6 +273,24 @@ export function clampPerpsProCrosshairCoordinate(
   const minimum = safeHeight * Math.max(0, Math.min(1, margins.top));
   const maximum = safeHeight * (1 - Math.max(0, Math.min(1, margins.bottom)));
   return Math.min(Math.max(coordinate, minimum), Math.max(minimum, maximum));
+}
+
+export function getPerpsProCrosshairTimeLabelLeft(
+  coordinate: number,
+  labelWidth: number,
+  containerWidth: number,
+) {
+  if (
+    !Number.isFinite(coordinate) ||
+    !Number.isFinite(labelWidth) ||
+    !Number.isFinite(containerWidth)
+  ) {
+    return null;
+  }
+  const safeLabelWidth = Math.max(0, labelWidth);
+  const safeContainerWidth = Math.max(0, containerWidth);
+  const maximumLeft = Math.max(0, safeContainerWidth - safeLabelWidth);
+  return Math.min(Math.max(0, coordinate - safeLabelWidth / 2), maximumLeft);
 }
 
 export type LogicalRange = { from: number; to: number };

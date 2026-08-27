@@ -47,8 +47,11 @@ export const PerpsProHeader: React.FC<{
 
   return (
     <PerpsHeader
+      accountAddress={account?.address}
+      accountBrandName={account?.brandName}
       accountExpanded={popupState.isShowLoginPopup}
       accountLabel={accountLabel}
+      accountTriggerVariant="wallet"
       activeMode="pro"
       isModeSwitching={isModeSwitching}
       onPressAccount={account ? handlePressAccount : undefined}

@@ -1,14 +1,14 @@
 import { Text } from '@/components/Typography';
+import RcIconPortfolioInfoCC from '@/assets2024/icons/perps/IconPortfolioInfoCC.svg';
 import { useTheme2024 } from '@/hooks/theme';
+import { useShowPerpsPortfolioBreakdown } from '@/screens/PerpsShared/components/PerpsPortfolioBreakdownExplanation';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsAccountViewModel } from '../../model/account';
 import { formatPerpsProUsdValue } from '../../utils/format';
-import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
-import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 
 interface PerpsProAccountSummaryProps {
   account: PerpsAccountViewModel;
@@ -18,29 +18,36 @@ interface PerpsProAccountSummaryProps {
 
 export const PerpsProAccountSummary: React.FC<PerpsProAccountSummaryProps> =
   React.memo(({ account, onDeposit, onWithdraw }) => {
-    const { styles } = useTheme2024({ getStyle });
+    const { colors2024, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
-    const openFieldExplanation = usePerpsProFieldExplanation();
+    const { hasNonPerpsAssets, showPortfolioBreakdown } =
+      useShowPerpsPortfolioBreakdown();
     const pnl = Number(account.unrealizedPnl);
-    const totalValueLabel = t('page.perps.pro.account.totalValue');
+    const portfolioValueLabel = t('page.perps.PerpsCard.portfolioValue');
 
     return (
       <View style={styles.container} testID="perps-pro-account-summary">
         <View style={styles.summary}>
           <View style={styles.summaryColumn}>
-            {account.mode === 'unified' ? (
-              <PerpsProDottedUnderlineText
-                accessibilityLabel={t(
-                  'page.perps.pro.fieldExplanations.totalValue.title',
-                )}
-                onPress={() => openFieldExplanation('totalValue')}
-                style={styles.label}
-                testID="perps-pro-total-value-explanation">
-                {totalValueLabel}
-              </PerpsProDottedUnderlineText>
-            ) : (
-              <Text style={styles.label}>{totalValueLabel}</Text>
-            )}
+            <View style={styles.labelRow}>
+              <Text style={styles.label}>{portfolioValueLabel}</Text>
+              {hasNonPerpsAssets ? (
+                <TouchableOpacity
+                  accessibilityLabel={portfolioValueLabel}
+                  accessibilityRole="button"
+                  hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
+                  onPress={() =>
+                    showPortfolioBreakdown(Number(account.primaryValue))
+                  }
+                  testID="perps-pro-portfolio-value-breakdown">
+                  <RcIconPortfolioInfoCC
+                    color={colors2024['neutral-foot']}
+                    height={16}
+                    width={16}
+                  />
+                </TouchableOpacity>
+              ) : null}
+            </View>
             <Text style={styles.primaryValue}>
               {formatPerpsProUsdValue(account.primaryValue)}
             </Text>
@@ -114,6 +121,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
+  },
+  labelRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
   },
   primaryValue: {
     color: colors2024['neutral-title-1'],

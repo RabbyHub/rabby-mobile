@@ -18,6 +18,7 @@ const {
   formatYTime,
   getInitialVisibleLogicalRange,
   getPrependedCandleCount,
+  getPerpsProCrosshairTimeLabelLeft,
   getPerpsProLatestCandleClose,
   getPerpsProTooltipMaxWidth,
   getPerpsProTooltipPlacement,
@@ -176,9 +177,12 @@ describe('Perps Pro local chart calculations', () => {
     },
   );
 
-  it('uses the x-axis date label and keeps interval-specific local time', () => {
+  it('keeps compact x-axis ticks while matching Simple interactive local time', () => {
     const time = Date.UTC(2026, 6, 30, 1, 2) / 1000;
     const localDate = new Date(time * 1000);
+    const weekday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][
+      localDate.getDay()
+    ];
     const month = [
       'Jan',
       'Feb',
@@ -194,17 +198,19 @@ describe('Perps Pro local chart calculations', () => {
       'Dec',
     ][localDate.getMonth()];
     const day = String(localDate.getDate()).padStart(2, '0');
+    const year = String(localDate.getFullYear()).slice(-2);
     const hours = String(localDate.getHours()).padStart(2, '0');
     const minutes = String(localDate.getMinutes()).padStart(2, '0');
     const dateLabel = `${day} ${month}`;
+    const interactiveDateLabel = `${weekday} ${dateLabel} '${year}`;
 
     expect(formatYTime(time, 2)).toBe(dateLabel);
     expect(formatProTooltipTime(time, '15m')).toBe(
-      `${dateLabel} ${hours}:${minutes}`,
+      `${interactiveDateLabel} ${hours}:${minutes}`,
     );
-    expect(formatProTooltipTime(time, '1d')).toBe(dateLabel);
-    expect(formatProTooltipTime(time, '1w')).toBe(dateLabel);
-    expect(formatProTooltipTime(time, '1M')).toBe(dateLabel);
+    expect(formatProTooltipTime(time, '1d')).toBe(interactiveDateLabel);
+    expect(formatProTooltipTime(time, '1w')).toBe(interactiveDateLabel);
+    expect(formatProTooltipTime(time, '1M')).toBe(interactiveDateLabel);
   });
 
   it('opens the initial logical range on at most the latest 40 candles', () => {
@@ -222,6 +228,14 @@ describe('Perps Pro local chart calculations', () => {
     expect(clampPerpsProCrosshairCoordinate(-100, 200)).toBe(24);
     expect(clampPerpsProCrosshairCoordinate(100, 200)).toBe(100);
     expect(clampPerpsProCrosshairCoordinate(300, 200)).toBe(168);
+  });
+
+  it('keeps the Pro time label centered on the crosshair within the chart', () => {
+    expect(getPerpsProCrosshairTimeLabelLeft(160, 120, 320)).toBe(100);
+    expect(getPerpsProCrosshairTimeLabelLeft(10, 120, 320)).toBe(0);
+    expect(getPerpsProCrosshairTimeLabelLeft(310, 120, 320)).toBe(200);
+    expect(getPerpsProCrosshairTimeLabelLeft(160, 400, 320)).toBe(0);
+    expect(getPerpsProCrosshairTimeLabelLeft(NaN, 120, 320)).toBeNull();
   });
 
   it('allows future whitespace while keeping at least five candles visible', () => {

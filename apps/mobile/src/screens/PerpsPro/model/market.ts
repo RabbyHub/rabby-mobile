@@ -30,6 +30,14 @@ export type PerpsProMarketDescriptor = Pick<
   | 'sourceTag'
 >;
 
+export type PerpsProMarketPresentation = Pick<
+  PerpsProMarketDescriptor,
+  'displayBase' | 'displayPair' | 'sourceTag'
+> & {
+  metadataReady: boolean;
+  quoteAsset: MarketData['quoteAsset'] | null;
+};
+
 export type PerpsProCategory = {
   id: string;
   label: string;
@@ -76,8 +84,22 @@ const compareCaseText = (left: string, right: string) =>
   PERPS_PRO_CASE_COLLATOR?.compare(left, right) ??
   left.localeCompare(right, 'en', { sensitivity: 'case' });
 
+const getCanonicalMarketIdentity = (coin: string) => {
+  const separatorIndex = coin.indexOf(':');
+  if (separatorIndex < 0) {
+    return {
+      displayBase: coin.trim(),
+      sourceTag: null,
+    };
+  }
+  return {
+    displayBase: coin.slice(separatorIndex + 1).trim() || coin.trim(),
+    sourceTag: normalizePerpsProMarketSourceTag(coin.slice(0, separatorIndex)),
+  };
+};
+
 const formatCanonicalBase = (coin: string) =>
-  coin.includes(':') ? coin.split(':')[1] || '' : coin;
+  getCanonicalMarketIdentity(coin).displayBase;
 
 const toFiniteNumber = (value: string | number | undefined) => {
   if (value === '' || value == null) {
@@ -133,6 +155,37 @@ export const buildPerpsProMarketDescriptor = (
     marketKey: buildPerpsProMarketKey(marketData.dexId, marketData.name),
     quoteAsset: marketData.quoteAsset,
     sourceTag: normalizePerpsProMarketSourceTag(marketData.dexId),
+  };
+};
+
+/**
+ * Resolves presentation-only market identity without guessing quote metadata.
+ * HIP-3 canonical coins use `dex:base` for routing/subscription identity. When
+ * market metadata has not hydrated yet, only the base and source are known;
+ * the quote must remain absent until the matching Meta payload arrives.
+ */
+export const resolvePerpsProMarketPresentation = (
+  canonicalCoin: string,
+  marketData?: MarketData,
+): PerpsProMarketPresentation => {
+  if (marketData) {
+    const descriptor = buildPerpsProMarketDescriptor(marketData);
+    return {
+      displayBase: descriptor.displayBase,
+      displayPair: descriptor.displayPair,
+      metadataReady: true,
+      quoteAsset: descriptor.quoteAsset,
+      sourceTag: descriptor.sourceTag,
+    };
+  }
+
+  const fallback = getCanonicalMarketIdentity(canonicalCoin);
+  return {
+    displayBase: fallback.displayBase,
+    displayPair: fallback.displayBase,
+    metadataReady: false,
+    quoteAsset: null,
+    sourceTag: fallback.sourceTag,
   };
 };
 

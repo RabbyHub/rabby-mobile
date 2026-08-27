@@ -73,8 +73,11 @@ export const PerpsSimpleHeader: React.FC<{
 
     return (
       <PerpsHeader
+        accountAddress={account?.address}
+        accountBrandName={account?.brandName}
         accountExpanded={popupState.isShowLoginPopup}
         accountLabel={accountLabel}
+        accountTriggerVariant="wallet"
         activeMode="simple"
         extendProHitAreaRight
         isModeSwitching={isModeSwitching}

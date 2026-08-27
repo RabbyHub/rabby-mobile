@@ -8,7 +8,10 @@ import {
   type PerpsProTpSlLegKind,
   type PerpsProTpSlMode,
 } from '../model/tpsl';
-import { sanitizePerpsProDecimalInput } from '../model/trade';
+import {
+  sanitizePerpsProDecimalInput,
+  sanitizePerpsProPriceEditingInput,
+} from '../model/trade';
 
 export type PerpsProTpSlPreviewFacts = {
   baseSize: string;
@@ -37,7 +40,6 @@ export const usePerpsProTpSl = ({
   onFocusChange,
   onModeChange,
   order,
-  pxDecimals,
   previewFacts,
   szDecimals,
 }: {
@@ -131,16 +133,19 @@ export const usePerpsProTpSl = ({
 
   const setRawMagnitude = useCallback(
     (kind: PerpsProTpSlLegKind, value: string) => {
-      const maxDecimals = draft[kind].mode === 'price' ? pxDecimals : 2;
+      const mode = draft[kind].mode;
       onChange({
         ...draft,
         [kind]: {
           ...draft[kind],
-          rawMagnitude: sanitizePerpsProDecimalInput(value, maxDecimals),
+          rawMagnitude:
+            mode === 'price'
+              ? sanitizePerpsProPriceEditingInput(value, szDecimals)
+              : sanitizePerpsProDecimalInput(value, 2),
         },
       });
     },
-    [draft, onChange, pxDecimals],
+    [draft, onChange, szDecimals],
   );
 
   const previews = useMemo(() => {

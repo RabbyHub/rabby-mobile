@@ -2618,7 +2618,7 @@
           "shortPaysLong": "Short Pays Long",
           "noPayment": "No Payment",
           "historyUnavailable": "Previous funding rate is temporarily unavailable.",
-          "explanation": "* The payment rate exchanged between the long and short positions for the next funding. If the funding rate is positive, longs pay shorts. If negative, shorts pay longs."
+          "explanation": "The funding rate is used to calculate periodic payments between long and short position holders. When the funding rate is positive, longs pay shorts; when it is negative, shorts pay longs. The annualized rate is calculated using simple annualization."
         },
         "orderBook": {
           "price": "Price",
@@ -3304,7 +3304,9 @@
         "activatedAddress": "Activated",
         "hyperliquidBalance": "Perps Balance",
         "notActivatedAddress": "Not Activated",
-        "noPosition": "No Position"
+        "noPosition": "No Position",
+        "positionCount_one": "{{count}} Position",
+        "positionCount_other": "{{count}} Positions"
       },
       "invitePopup": {
         "title": "Save on Hyperliquid Fees",

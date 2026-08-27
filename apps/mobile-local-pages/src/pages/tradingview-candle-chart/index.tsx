@@ -38,6 +38,7 @@ import {
   formatTime,
   getInitialVisibleLogicalRange,
   getPrependedCandleCount,
+  getPerpsProCrosshairTimeLabelLeft,
   getPerpsProLatestCandleClose,
   getPerpsProTooltipMaxWidth,
   getPerpsProTooltipPlacement,
@@ -80,7 +81,9 @@ function getChartColors(
       value: colors2024['neutral-title-1'],
     },
     crosshairLabel: {
-      background: colors2024['neutral-black'],
+      background: isLight
+        ? colors2024['neutral-black']
+        : colors2024['neutral-body'],
       text: colors2024['neutral-InvertHighlight'],
     },
   };
@@ -454,6 +457,7 @@ proCrosshairLabel.style.boxSizing = 'border-box';
 proCrosshairLabel.style.width = '66px';
 proCrosshairLabel.style.minHeight = '42px';
 proCrosshairLabel.style.padding = '4px 6px';
+proCrosshairLabel.style.border = '0';
 proCrosshairLabel.style.borderRadius = '6px';
 proCrosshairLabel.style.pointerEvents = 'none';
 proCrosshairLabel.style.fontFamily = PERPS_PRO_FONT_FAMILY;
@@ -464,6 +468,26 @@ proCrosshairLabel.style.textAlign = 'right';
 proCrosshairLabel.style.whiteSpace = 'nowrap';
 proCrosshairLabel.style.zIndex = '15';
 containerEl.appendChild(proCrosshairLabel);
+
+const proCrosshairTimeLabel = document.createElement('div');
+proCrosshairTimeLabel.style.position = 'absolute';
+proCrosshairTimeLabel.style.bottom = '0';
+proCrosshairTimeLabel.style.display = 'none';
+proCrosshairTimeLabel.style.visibility = 'hidden';
+proCrosshairTimeLabel.style.boxSizing = 'border-box';
+proCrosshairTimeLabel.style.minHeight = '24px';
+proCrosshairTimeLabel.style.padding = '4px 6px';
+proCrosshairTimeLabel.style.border = '0';
+proCrosshairTimeLabel.style.borderRadius = '6px';
+proCrosshairTimeLabel.style.pointerEvents = 'none';
+proCrosshairTimeLabel.style.fontFamily = PERPS_PRO_FONT_FAMILY;
+proCrosshairTimeLabel.style.fontSize = '12px';
+proCrosshairTimeLabel.style.fontWeight = '500';
+proCrosshairTimeLabel.style.lineHeight = '16px';
+proCrosshairTimeLabel.style.textAlign = 'center';
+proCrosshairTimeLabel.style.whiteSpace = 'nowrap';
+proCrosshairTimeLabel.style.zIndex = '15';
+containerEl.appendChild(proCrosshairTimeLabel);
 
 let proCrosshairLabelRows: {
   change: HTMLDivElement;
@@ -488,6 +512,40 @@ function ensurePerpsProCrosshairLabelRows() {
 
 function hidePerpsProCrosshairLabel() {
   proCrosshairLabel.style.display = 'none';
+}
+
+function hidePerpsProCrosshairTimeLabel() {
+  proCrosshairTimeLabel.style.display = 'none';
+  proCrosshairTimeLabel.style.visibility = 'hidden';
+}
+
+function renderPerpsProCrosshairTimeLabel(time: number) {
+  const config = chartState.proConfig;
+  const colors = chartState.colors;
+  const pointX = chartState.chart?.timeScale().timeToCoordinate(time);
+  if (!config || !colors || pointX == null || !Number.isFinite(pointX)) {
+    hidePerpsProCrosshairTimeLabel();
+    return;
+  }
+  proCrosshairTimeLabel.textContent = formatProTooltipTime(
+    time,
+    config.interval,
+  );
+  proCrosshairTimeLabel.style.background = colors.crosshairLabel.background;
+  proCrosshairTimeLabel.style.color = colors.crosshairLabel.text;
+  proCrosshairTimeLabel.style.visibility = 'hidden';
+  proCrosshairTimeLabel.style.display = 'block';
+  const left = getPerpsProCrosshairTimeLabelLeft(
+    pointX,
+    proCrosshairTimeLabel.offsetWidth,
+    containerEl.clientWidth,
+  );
+  if (left == null) {
+    hidePerpsProCrosshairTimeLabel();
+    return;
+  }
+  proCrosshairTimeLabel.style.left = `${left}px`;
+  proCrosshairTimeLabel.style.visibility = 'visible';
 }
 
 function renderPerpsProCrosshairLabel(price: number) {
@@ -551,16 +609,22 @@ function schedulePerpsProCrosshairLabelRender() {
     !chartState.proConfig ||
     !chartState.crosshairActive ||
     chartState.selectedPrice == null ||
+    chartState.selectedTime == null ||
     proCrosshairLabelFrameId != null
   ) {
     return;
   }
   proCrosshairLabelFrameId = window.requestAnimationFrame(() => {
     proCrosshairLabelFrameId = null;
-    if (!chartState.crosshairActive || chartState.selectedPrice == null) {
+    if (
+      !chartState.crosshairActive ||
+      chartState.selectedPrice == null ||
+      chartState.selectedTime == null
+    ) {
       return;
     }
     renderPerpsProCrosshairLabel(chartState.selectedPrice);
+    renderPerpsProCrosshairTimeLabel(chartState.selectedTime);
   });
 }
 
@@ -627,6 +691,7 @@ function clearPerpsProCrosshair() {
     chartState.tooltip.style.display = 'none';
   }
   hidePerpsProCrosshairLabel();
+  hidePerpsProCrosshairTimeLabel();
   updateMaLegend();
 }
 
@@ -765,6 +830,7 @@ function hidePerpsProCrosshairSelection() {
     chartState.tooltip.style.display = 'none';
   }
   hidePerpsProCrosshairLabel();
+  hidePerpsProCrosshairTimeLabel();
   updateMaLegend();
 }
 
@@ -779,6 +845,7 @@ function applyPerpsProCrosshairSelection(
   updateMaLegend(selection.time);
   renderPerpsProTooltip(candle, selection.pointX);
   renderPerpsProCrosshairLabel(selection.price);
+  renderPerpsProCrosshairTimeLabel(selection.time);
   schedulePerpsProCrosshairMarker(selection.time, selection.price);
 }
 
@@ -1444,6 +1511,9 @@ function applyPerpsProChartOptions(config: PerpsProChartConfig) {
   chartState.chart.applyOptions({
     crosshair: {
       mode: CrosshairMode.Normal,
+      vertLine: {
+        labelVisible: false,
+      },
       horzLine: {
         labelVisible: false,
       },
@@ -1676,6 +1746,10 @@ function handleSetCandlestickData(
     applyPerpsProChartOptions(chartState.proConfig);
   } else {
     chartState.chart.applyOptions({
+      crosshair: {
+        vertLine: { labelVisible: true },
+        horzLine: { labelVisible: true },
+      },
       kineticScroll: { mouse: false, touch: true },
       timeScale: { fixRightEdge: true },
     });
@@ -1858,6 +1932,8 @@ function handleUpdateTheme(colors: ChartColors, description: ChartDescription) {
   }
   proCrosshairLabel.style.background = colors.crosshairLabel.background;
   proCrosshairLabel.style.color = colors.crosshairLabel.text;
+  proCrosshairTimeLabel.style.background = colors.crosshairLabel.background;
+  proCrosshairTimeLabel.style.color = colors.crosshairLabel.text;
   ([7, 25, 99] as const).forEach(period => {
     chartState.maSeries[period]?.applyOptions({
       color: colors.ma[period],
