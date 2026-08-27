@@ -25,6 +25,8 @@ const {
   getPerpsProTooltipMetrics,
   isPerpsProFutureLogicalRangeAtBoundary,
   PERPS_PRO_CROSSHAIR_LABEL_LAYOUT,
+  PERPS_PRO_PRICE_SCALE_MARGINS,
+  resetPerpsProPriceScale,
   shouldBlockPerpsProFutureTouchMove,
   shiftLogicalRangeForPrependedCandles,
 } =
@@ -229,6 +231,21 @@ describe('Perps Pro local chart calculations', () => {
     expect(clampPerpsProCrosshairCoordinate(-100, 200)).toBe(24);
     expect(clampPerpsProCrosshairCoordinate(100, 200)).toBe(100);
     expect(clampPerpsProCrosshairCoordinate(300, 200)).toBe(168);
+  });
+
+  it('restores Pro autoscale and its approved margins without touching time scale', () => {
+    const applyOptions = jest.fn();
+    const setAutoScale = jest.fn();
+    const series = {
+      priceScale: () => ({ applyOptions, setAutoScale }),
+    };
+
+    expect(resetPerpsProPriceScale(series)).toBe(true);
+    expect(applyOptions).toHaveBeenCalledWith({
+      scaleMargins: PERPS_PRO_PRICE_SCALE_MARGINS,
+    });
+    expect(setAutoScale).toHaveBeenCalledWith(true);
+    expect(resetPerpsProPriceScale(null)).toBe(false);
   });
 
   it('keeps the Pro time label centered on the crosshair within the chart', () => {

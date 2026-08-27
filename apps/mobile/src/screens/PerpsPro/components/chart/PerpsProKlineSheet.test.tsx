@@ -17,6 +17,7 @@ const mockChartMount = jest.fn();
 const mockChartUnmount = jest.fn();
 const mockCompleteOlderCandlesRequest = jest.fn();
 const mockSetData = jest.fn();
+const mockResetPriceScale = jest.fn();
 const mockTradingViewProps = jest.fn();
 const mockUpdateCandleData = jest.fn();
 const mockToolbarProps = jest.fn();
@@ -67,6 +68,7 @@ jest.mock('@/components2024/TradingViewCandleChart', () => {
         ReactModule.useImperativeHandle(ref, () => ({
           clearCrosshair: mockClearCrosshair,
           completeOlderCandlesRequest: mockCompleteOlderCandlesRequest,
+          resetPriceScale: mockResetPriceScale,
           setData: (data: { identity: string; revision: number }) => {
             mockSetData(data);
             mockLastDataDelivery = {
@@ -294,6 +296,10 @@ describe('PerpsProKlineSheet', () => {
       height: PERPS_PRO_KLINE_CHART_HEIGHT,
       variant: 'perps-pro',
     });
+    act(() => {
+      mockToolbarProps.mock.calls.at(-1)?.[0].onResetPriceScale();
+    });
+    expect(mockResetPriceScale).toHaveBeenCalledTimes(1);
 
     const backdrop = props.backdropComponent({});
     expect(backdrop.props).toMatchObject({

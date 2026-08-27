@@ -46,6 +46,7 @@ import {
   isPerpsProFutureLogicalRangeAtBoundary,
   PERPS_PRO_CROSSHAIR_LABEL_LAYOUT,
   PERPS_PRO_PRICE_SCALE_MARGINS,
+  resetPerpsProPriceScale,
   shouldBlockPerpsProFutureTouchMove,
   shiftLogicalRangeForPrependedCandles,
 } from './chart-logic';
@@ -242,7 +243,7 @@ const chartState = createChartState();
 chartState.colors = { ...getChartColors() };
 chartState.description = { ...defaultDescription };
 
-const PERPS_PRO_KLINE_PROTOCOL_VERSION = 1;
+const PERPS_PRO_KLINE_PROTOCOL_VERSION = 2;
 const PERPS_PRO_FONT_FAMILY =
   '"SF Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 const candleByTime = new Map<number, TradingViewCandlestickData>();
@@ -1548,6 +1549,13 @@ function applyPerpsProChartOptions(config: PerpsProChartConfig) {
   });
 }
 
+function handleResetPerpsProPriceScale() {
+  if (!chartState.proConfig) {
+    return;
+  }
+  resetPerpsProPriceScale(chartState.candlestickSeries);
+}
+
 // Create candlestick series
 function createCandlestickSeries() {
   if (!chartState.chart) return null;
@@ -2033,6 +2041,9 @@ function handleMessage(event: CustomEvent) {
           if (chartState.proConfig) {
             clearPerpsProCrosshair();
           }
+          break;
+        case 'RESET_PERPS_PRO_PRICE_SCALE':
+          handleResetPerpsProPriceScale();
           break;
         case 'UPDATE_THEME':
           handleUpdateTheme(tvMessage.colors, tvMessage.description);

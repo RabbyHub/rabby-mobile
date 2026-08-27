@@ -63,7 +63,7 @@ const TradingViewCandleChart = require('./index')
   .default as typeof import('./index').default;
 
 const markChartReady = ({
-  perpsProKlineProtocolVersion = 1,
+  perpsProKlineProtocolVersion = 2,
   supportsDataAppliedAck = true,
 }: {
   perpsProKlineProtocolVersion?: number | null;
@@ -194,7 +194,7 @@ describe('TradingViewCandleChart protocol compatibility', () => {
     expect(onChartError).toHaveBeenCalledTimes(1);
     expect(consoleError).toHaveBeenCalledWith(
       'TradingViewChart: Perps Pro K-line protocol mismatch',
-      { actualVersion: null, requiredVersion: 1 },
+      { actualVersion: null, requiredVersion: 2 },
     );
     consoleError.mockRestore();
   });
@@ -469,6 +469,35 @@ describe('TradingViewCandleChart protocol compatibility', () => {
       data: {
         type: 'CLEAR_CROSSHAIR',
       },
+    });
+  });
+
+  it('resets only the ready Pro price scale through the additive bridge command', () => {
+    const chartRef = React.createRef<TradingViewChartRef>();
+    render(
+      <TradingViewCandleChart
+        ref={chartRef}
+        height={184}
+        variant="perps-pro"
+      />,
+    );
+
+    act(() => {
+      chartRef.current?.resetPriceScale();
+    });
+    expect(
+      mockSendMessage.mock.calls.some(
+        call => call[0].data?.type === 'RESET_PERPS_PRO_PRICE_SCALE',
+      ),
+    ).toBe(false);
+
+    markChartReady();
+    act(() => {
+      chartRef.current?.resetPriceScale();
+    });
+    expect(mockSendMessage).toHaveBeenCalledWith({
+      type: 'TRADINGVIEW_MESSAGE',
+      data: { type: 'RESET_PERPS_PRO_PRICE_SCALE' },
     });
   });
 

@@ -106,6 +106,9 @@ type DuplexDefs = {
             type: 'CLEAR_CROSSHAIR';
           }
         | {
+            type: 'RESET_PERPS_PRO_PRICE_SCALE';
+          }
+        | {
             type: 'COMPLETE_OLDER_CANDLES_REQUEST';
             earliestTime: number;
             identity: string;

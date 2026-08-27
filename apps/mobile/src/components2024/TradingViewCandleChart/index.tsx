@@ -59,12 +59,13 @@ export interface TradingViewChartRef {
   completeOlderCandlesRequest: (
     request: OlderCandlesRequest & { outcome: 'exhausted' | 'retry' },
   ) => void;
+  resetPriceScale: () => void;
   setData: (data: CandleData) => void;
   updateCandleData: (data: CandleStick) => void;
   updateTPSLPriceLines: (data: TPSLPriceLines) => void;
 }
 
-const PERPS_PRO_KLINE_PROTOCOL_VERSION = 1;
+const PERPS_PRO_KLINE_PROTOCOL_VERSION = 2;
 const PERPS_PRO_KLINE_PROTOCOL_ERROR =
   'Perps Pro K-line resource protocol mismatch';
 
@@ -450,6 +451,18 @@ const TradingViewCandleChart = ({
     });
   }, [isChartReady]);
 
+  const handleResetPriceScale = useCallback(() => {
+    if (variant !== 'perps-pro' || !isChartReady || !localWebViewRef.current) {
+      return;
+    }
+    localWebViewRef.current.sendMessage?.({
+      type: 'TRADINGVIEW_MESSAGE',
+      data: {
+        type: 'RESET_PERPS_PRO_PRICE_SCALE',
+      },
+    });
+  }, [isChartReady, variant]);
+
   const handleCompleteOlderCandlesRequest = useCallback(
     (request: OlderCandlesRequest & { outcome: 'exhausted' | 'retry' }) => {
       if (!isChartReady || !localWebViewRef.current) {
@@ -469,6 +482,7 @@ const TradingViewCandleChart = ({
   useImperativeHandle(ref, () => ({
     clearCrosshair: handleClearCrosshair,
     completeOlderCandlesRequest: handleCompleteOlderCandlesRequest,
+    resetPriceScale: handleResetPriceScale,
     setData: handleSetData,
     updateCandleData: handleUpdateCandleData,
     updateTPSLPriceLines: handleUpdateTPSLPriceLines,
