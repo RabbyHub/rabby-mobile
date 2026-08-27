@@ -43,12 +43,13 @@ import RcIconPortfolioPlusCC from '@/assets2024/icons/perps/IconPortfolioPlusCC.
 import RcIconPortfolioMinusCC from '@/assets2024/icons/perps/IconPortfolioMinusCC.svg';
 import { apisPerps } from '@/core/apis';
 import BigNumber from 'bignumber.js';
-import TickerTexts, { TickItem } from '@/components/Animated/TickerText';
+import AnimatedTickerText from '@/components/Animated/AnimatedTickerText';
 import Animated, {
   Easing,
   Extrapolation,
   interpolate,
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
@@ -151,6 +152,14 @@ export const PerpsAccountCard: React.FC = () => {
   // slices are ready.
   const liveValue = usePerpsPortfolioLiveValue();
   const displayValue = liveValue ?? portfolioValue;
+  const displayValueText = useMemo(
+    () => `$${splitNumberByStep(new BigNumber(displayValue || 0).toFixed(2))}`,
+    [displayValue],
+  );
+  const displayValueSV = useDerivedValue(
+    () => displayValueText,
+    [displayValueText],
+  );
   const change24h = useMemo(
     () => (portfolioData ? compute24hChange(portfolioData) : null),
     [portfolioData],
@@ -282,17 +291,24 @@ export const PerpsAccountCard: React.FC = () => {
                     0
                   </Text>
                 ) : (
-                  <TickerTexts
-                    // Keep spacing OUT of textStyle: TickerText measures each
-                    // glyph and margins corrupt its scroll windows.
-                    containerStyle={styles.valueSlot}
-                    textStyle={styles.portfolioValue}
-                    duration={750}>
-                    <TickItem rotateItems={['$']}>{'$'}</TickItem>
-                    {splitNumberByStep(
-                      new BigNumber(displayValue || 0).toFixed(2),
-                    )}
-                  </TickerTexts>
+                  <AnimatedTickerText
+                    value={displayValueSV}
+                    lineHeight={28}
+                    duration={750}
+                    maxLength={18}
+                    animateWidth={false}
+                    style={styles.portfolioValueTicker}
+                    containerProps={{ style: styles.valueSlot }}
+                    // "$999,999.99" (6 integer digits) is 11 chars — stays at
+                    // 24. Every extra char steps down 1pt (7 digits -> 22, the
+                    // spec's "past 6 digits, minus 2"), floored at 18.
+                    fontSizeByLength={{
+                      maxFontSize: 24,
+                      minFontSize: 18,
+                      threshold: 11,
+                      step: 1,
+                    }}
+                  />
                 )}
                 <View style={styles.changeRow}>
                   {portfolioViewState === 'loading' ? (
@@ -530,6 +546,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 24,
     lineHeight: 28,
     fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+  },
+  // For AnimatedTickerText: fontSize/lineHeight come from its own props
+  // (fontSizeByLength + lineHeight) — keep them out of the style.
+  portfolioValueTicker: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
     color: colors2024['neutral-title-1'],
   },
   valueSlot: {

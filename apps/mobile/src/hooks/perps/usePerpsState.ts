@@ -183,7 +183,10 @@ export const usePerpsState = (
       opts?: { skipDeletePopup?: boolean },
     ) => {
       // self-sign: master signs its own orders, there is no agent to expire.
-      if (apisPerps.isSelfSignPerpsAccount(account.type)) {
+      if (
+        apisPerps.isSelfSignPerpsAccount(account.type) ||
+        account.type === KEYRING_CLASS.WATCH
+      ) {
         return { isExpired: false };
       }
       const sdk = apisPerps.getPerpsSDK();

@@ -80,7 +80,7 @@ export const useShowPerpsPortfolioBreakdown = () => {
   return { hasNonPerpsAssets, showPortfolioBreakdown };
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   breakdownContainer: {
     marginTop: 8,
     gap: 16,
@@ -94,7 +94,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
   },
   breakdownCard: {
-    backgroundColor: colors2024['neutral-bg-1'],
+    // Light: white card on the sheet's gray bg-0 (Figma). Dark: bg-1 is
+    // nearly identical to bg-0 and the card disappears — step up to bg-2.
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 4,
