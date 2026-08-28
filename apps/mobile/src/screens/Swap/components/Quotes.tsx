@@ -24,6 +24,7 @@ import {
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { IS_ANDROID } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
+import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoundary';
 
 interface QuotesProps
   extends Omit<
@@ -332,19 +333,22 @@ export const QuoteList = (props: QuotesProps) => {
   });
 
   useEffect(() => {
-    if (loading) {
-      Animated.loop(
-        Animated.timing(spinValue, {
-          toValue: 1,
-          duration: 1600,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        }),
-      ).start();
-    } else {
+    if (!visible || !loading) {
       spinValue.resetAnimation();
+      return;
     }
-  }, [loading, spinValue]);
+
+    const animation = Animated.loop(
+      Animated.timing(spinValue, {
+        toValue: 1,
+        duration: 1600,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [loading, spinValue, visible]);
 
   return (
     <AppBottomSheetModal
@@ -368,7 +372,9 @@ export const QuoteList = (props: QuotesProps) => {
         </Text>
 
         <BottomSheetScrollView style={styles.flex1}>
-          <Quotes {...props} />
+          <RenderActivityBoundary active={visible} label="swap-quotes-modal">
+            <Quotes {...props} />
+          </RenderActivityBoundary>
           <View style={{ height: IS_ANDROID ? 40 : 20 }} />
         </BottomSheetScrollView>
       </View>

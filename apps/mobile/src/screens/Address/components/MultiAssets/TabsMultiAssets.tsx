@@ -21,7 +21,7 @@ import { ProtocolList } from './ProtocolList';
 import { TokenList } from './TokenList';
 import { IS_IOS } from '@/core/native/utils';
 import { HomeOverview } from '@/screens/Home/components/HomeOverview';
-import { StoreActivityBoundary } from '@/hooks/storeActivity/StoreActivityBoundary';
+import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoundary';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 
 export const TAB_HEADER_FULL_HEIGHT =
@@ -138,14 +138,15 @@ const HomeTabActivityBoundary = ({
   }, [active, focusedTab, isScreenFocused, name, regressionScenario]);
 
   return (
-    <StoreActivityBoundary active={active} label={`home-multi-assets-${name}`}>
+    <RenderActivityBoundary active={active} label={`home-multi-assets-${name}`}>
       {children}
-    </StoreActivityBoundary>
+    </RenderActivityBoundary>
   );
 };
 
 export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const isScreenFocused = useIsFocused();
 
   const handleTabChange = useCallback(
     ({ prevIndex, index }: { prevIndex: number; index: number }) => {
@@ -165,7 +166,11 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
 
   return (
     <View style={styles.container}>
-      <TabsTopHeader />
+      <RenderActivityBoundary
+        active={isScreenFocused}
+        label="home-multi-assets-header">
+        <TabsTopHeader />
+      </RenderActivityBoundary>
       <HomeCustomMaterialTabBar />
       <MultiAssetsContainer
         ref={homeTabScrollerRef}
