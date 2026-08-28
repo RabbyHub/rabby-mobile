@@ -672,7 +672,6 @@ export async function syncRemoteHistory(
       concurrency: 1,
       delayBetweenTasks: 1.5 * 1e3,
       noNeedAbort: true,
-      waitTaskDoneReturn: true,
       beforeEmit: ctx => {
         if (ctx.taskFor === 'all-history') {
           setTimeout(() => {
