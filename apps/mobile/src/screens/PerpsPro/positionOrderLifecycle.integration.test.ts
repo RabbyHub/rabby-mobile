@@ -1,4 +1,8 @@
-import type { AssetPosition, OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
+import type {
+  AssetPosition,
+  ClearinghouseState,
+  OpenOrder,
+} from '@rabby-wallet/hyperliquid-sdk';
 
 jest.mock('@ledgerhq/react-native-hw-transport-ble', () => ({
   __esModule: true,
@@ -7,6 +11,7 @@ jest.mock('@ledgerhq/react-native-hw-transport-ble', () => ({
 
 import type { Account } from '@/core/startupServices/preference';
 import type { CancelOrdersDependencies } from '@/hooks/perps/actions/cancelOrders';
+import type { CloseAllPositionsDependencies } from '@/hooks/perps/actions/closeAllPositions';
 import type { ClosePositionDependencies } from '@/hooks/perps/actions/closePosition';
 import type { UpdateLeverageDependencies } from '@/hooks/perps/actions/updateLeverage';
 import type { PositionTpSlDependencies } from '@/hooks/perps/actions/positionTpSl';
@@ -20,6 +25,8 @@ import { buildPositionTpSlSummary } from './model/positionTpSl';
 
 let buildPerpsCancelOrdersCommand: typeof import('@/hooks/perps/actions/cancelOrders').buildPerpsCancelOrdersCommand;
 let executePerpsCancelOrders: typeof import('@/hooks/perps/actions/cancelOrders').executePerpsCancelOrders;
+let buildPerpsCloseAllPositionsCommand: typeof import('@/hooks/perps/actions/closeAllPositions').buildPerpsCloseAllPositionsCommand;
+let executePerpsCloseAllPositions: typeof import('@/hooks/perps/actions/closeAllPositions').executePerpsCloseAllPositions;
 let buildPerpsClosePositionCommand: typeof import('@/hooks/perps/actions/closePosition').buildPerpsClosePositionCommand;
 let executePerpsClosePosition: typeof import('@/hooks/perps/actions/closePosition').executePerpsClosePosition;
 let buildPerpsUpdateLeverageCommand: typeof import('@/hooks/perps/actions/updateLeverage').buildPerpsUpdateLeverageCommand;
@@ -76,16 +83,26 @@ describe('Perps Pro position and order lifecycle integration', () => {
   beforeAll(async () => {
     jest.useFakeTimers();
     try {
-      const [cancelOrders, closePosition, updateLeverage, positionTpSl] =
-        await Promise.all([
-          import('@/hooks/perps/actions/cancelOrders'),
-          import('@/hooks/perps/actions/closePosition'),
-          import('@/hooks/perps/actions/updateLeverage'),
-          import('@/hooks/perps/actions/positionTpSl'),
-        ]);
+      const [
+        cancelOrders,
+        closeAllPositions,
+        closePosition,
+        updateLeverage,
+        positionTpSl,
+      ] = await Promise.all([
+        import('@/hooks/perps/actions/cancelOrders'),
+        import('@/hooks/perps/actions/closeAllPositions'),
+        import('@/hooks/perps/actions/closePosition'),
+        import('@/hooks/perps/actions/updateLeverage'),
+        import('@/hooks/perps/actions/positionTpSl'),
+      ]);
       buildPerpsCancelOrdersCommand =
         cancelOrders.buildPerpsCancelOrdersCommand;
       executePerpsCancelOrders = cancelOrders.executePerpsCancelOrders;
+      buildPerpsCloseAllPositionsCommand =
+        closeAllPositions.buildPerpsCloseAllPositionsCommand;
+      executePerpsCloseAllPositions =
+        closeAllPositions.executePerpsCloseAllPositions;
       buildPerpsClosePositionCommand =
         closePosition.buildPerpsClosePositionCommand;
       executePerpsClosePosition = closePosition.executePerpsClosePosition;
@@ -251,6 +268,80 @@ describe('Perps Pro position and order lifecycle integration', () => {
       expect.objectContaining({ limitPx: '798', reduceOnly: true }),
     );
     expect(buildPerpsPositions(sourcePositions, [])).toHaveLength(1);
+  });
+
+  it('keeps TP/SL protection while a Close All IOC leg only partially fills', async () => {
+    let sourcePositions = [makePosition({ szi: '0.025' })];
+    const dormantAttached = makeOrder({
+      isTrigger: true,
+      oid: 22,
+      orderType: 'Take Profit Market',
+      origSz: '0.01',
+      reduceOnly: true,
+      side: 'A',
+      sz: '0.01',
+      triggerCondition: 'Price above 62000',
+      triggerPx: '62000',
+    });
+    const openingParent = makeOrder({
+      children: [dormantAttached],
+      oid: 21,
+      origSz: '0.01',
+      side: 'B',
+      sz: '0.01',
+    });
+    const activeProtection = makeOrder({
+      isPositionTpsl: true,
+      isTrigger: true,
+      oid: 31,
+      orderType: 'Stop Market',
+      origSz: '0',
+      reduceOnly: true,
+      side: 'A',
+      sz: '0',
+      triggerCondition: 'Price below 55000',
+      triggerPx: '55000',
+    });
+    const sourceOrders = [dormantAttached, openingParent, activeProtection];
+    const readState = () =>
+      ({ assetPositions: sourcePositions } as unknown as ClearinghouseState);
+    const before = buildPerpsPositions(sourcePositions, sourceOrders)[0]!;
+    const command = buildPerpsCloseAllPositionsCommand(account, readState());
+    const closeAllPositions = jest.fn(async () => ({
+      status: 'ok',
+      response: {
+        data: {
+          statuses: [{ filled: { avgPx: '60100', oid: 81, totalSz: '0.01' } }],
+        },
+      },
+    }));
+    const dependencies: CloseAllPositionsDependencies = {
+      closeAllPositions,
+      getCurrentAccount: () => account,
+      getCurrentClearinghouseState: readState,
+      refreshAllClearinghouse: async () => {
+        sourcePositions = [makePosition({ szi: '0.015' })];
+      },
+      refreshAllOpenOrders: jest.fn(),
+    };
+
+    expect(before.tpslOrders).toEqual([
+      expect.objectContaining({ oid: 31, scope: 'position' }),
+    ]);
+    await expect(
+      executePerpsCloseAllPositions(command, dependencies),
+    ).resolves.toMatchObject({
+      confirmedFills: [
+        expect.objectContaining({ coin: 'BTC', oid: 81, size: '0.01' }),
+      ],
+      error: 'BTC was filled 0.01 of 0.025',
+      kind: 'failed',
+    });
+    expect(closeAllPositions).toHaveBeenCalledTimes(1);
+    expect(sourceOrders.map(order => order.oid)).toEqual([22, 21, 31]);
+    expect(
+      buildPerpsPositions(sourcePositions, sourceOrders)[0]?.tpslOrders,
+    ).toEqual([expect.objectContaining({ oid: 31, scope: 'position' })]);
   });
 
   it('converges a leverage command back into the position projection', async () => {

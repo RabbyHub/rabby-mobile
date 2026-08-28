@@ -5,10 +5,7 @@ jest.mock('@/hooks/perps/usePerpsStore', () => ({
   perpsStore: { getState: jest.fn(() => ({})) },
 }));
 
-import type {
-  ClearinghouseState,
-  OpenOrder,
-} from '@rabby-wallet/hyperliquid-sdk';
+import type { ClearinghouseState } from '@rabby-wallet/hyperliquid-sdk';
 
 import {
   buildPerpsCloseAllPositionsCommand,
@@ -23,117 +20,53 @@ const state = {
     { position: { coin: 'ETH', szi: '-2' } },
   ],
 } as unknown as ClearinghouseState;
+const emptyState = { assetPositions: [] } as unknown as ClearinghouseState;
 
-const openOrder = (
-  oid: number,
-  overrides: Partial<OpenOrder> = {},
-): OpenOrder =>
-  ({
-    children: [],
-    coin: 'BTC',
-    isPositionTpsl: true,
-    isTrigger: true,
-    limitPx: '100',
-    oid,
-    orderType: 'Take Profit Market',
-    origSz: '1',
-    reduceOnly: true,
-    side: 'A',
-    sz: '1',
-    tif: null,
-    timestamp: oid,
-    triggerCondition: 'markPx above 100',
-    triggerPx: '100',
-    ...overrides,
-  } as OpenOrder);
+const successfulResponse = {
+  status: 'ok',
+  response: {
+    data: {
+      statuses: [
+        { filled: { avgPx: '100', oid: 1, totalSz: '1' } },
+        { filled: { avgPx: '50', oid: 2, totalSz: '2' } },
+      ],
+    },
+  },
+};
 
 const dependencies = (
   overrides: Partial<CloseAllPositionsDependencies> = {},
-): CloseAllPositionsDependencies => ({
-  cancelOrders: jest.fn(async command => ({
-    items: command.orders.map(order => ({ ...order, status: 'success' })),
-    kind: 'success',
-  })),
-  closeAllPositions: jest.fn(async () => ({
-    status: 'ok',
-    response: {
-      data: {
-        statuses: [
-          { filled: { avgPx: '100', oid: 1, totalSz: '1' } },
-          { filled: { avgPx: '50', oid: 2, totalSz: '2' } },
-        ],
-      },
-    },
-  })),
-  getCurrentAccount: () => account,
-  getCurrentClearinghouseState: () => state,
-  getCurrentOpenOrders: () => [],
-  refreshAllClearinghouse: jest.fn(),
-  refreshAllOpenOrders: jest.fn(),
-  ...overrides,
-});
+): CloseAllPositionsDependencies => {
+  let liveState = state;
+  return {
+    closeAllPositions: jest.fn(async () => successfulResponse),
+    getCurrentAccount: () => account,
+    getCurrentClearinghouseState: () => liveState,
+    refreshAllClearinghouse: jest.fn(async () => {
+      liveState = emptyState;
+    }),
+    refreshAllOpenOrders: jest.fn(),
+    ...overrides,
+  };
+};
 
 describe('Perps close all positions action', () => {
-  it('freezes only active reduce-only trigger orders for current position coins', () => {
-    const dormantAttached = openOrder(6, { isPositionTpsl: false });
-    const orders = [
-      openOrder(1),
-      openOrder(2, { isPositionTpsl: false }),
-      openOrder(3, { isTrigger: false, orderType: 'Limit' }),
-      openOrder(4, { coin: 'SOL' }),
-      openOrder(5, {
-        children: [dormantAttached],
-        isPositionTpsl: false,
-        isTrigger: false,
-        orderType: 'Limit',
-        reduceOnly: false,
-      }),
-    ];
+  it('freezes only the account and non-zero position snapshot', () => {
+    const command = buildPerpsCloseAllPositionsCommand(account, state);
 
-    const command = buildPerpsCloseAllPositionsCommand(account, state, orders);
-
-    expect(command.tpSlOrders).toEqual([
-      { coin: 'BTC', oid: 1 },
-      { coin: 'BTC', oid: 2 },
+    expect(command.positions).toEqual([
+      { coin: 'BTC', signedSize: '1' },
+      { coin: 'ETH', signedSize: '-2' },
     ]);
+    expect(command).not.toHaveProperty('tpSlOrders');
+    expect(Object.isFrozen(command)).toBe(true);
+    expect(Object.isFrozen(command.clearinghouseState)).toBe(true);
+    expect(Object.isFrozen(command.positions)).toBe(true);
   });
 
-  it('cancels associated TP/SL before submitting the 8% close batch', async () => {
-    const events: string[] = [];
-    let liveOrders = [openOrder(1), openOrder(2, { isPositionTpsl: false })];
-    const deps = dependencies({
-      cancelOrders: jest.fn(async command => {
-        events.push('cancel');
-        liveOrders = [];
-        return {
-          items: command.orders.map(order => ({
-            ...order,
-            status: 'success' as const,
-          })),
-          kind: 'success',
-        };
-      }),
-      closeAllPositions: jest.fn(async () => {
-        events.push('close');
-        return {
-          status: 'ok',
-          response: {
-            data: {
-              statuses: [
-                { filled: { avgPx: '100', oid: 1, totalSz: '1' } },
-                { filled: { avgPx: '50', oid: 2, totalSz: '2' } },
-              ],
-            },
-          },
-        };
-      }),
-      getCurrentOpenOrders: () => liveOrders,
-    });
-    const command = buildPerpsCloseAllPositionsCommand(
-      account,
-      state,
-      liveOrders,
-    );
+  it('submits one 8% close batch without issuing a cancel request', async () => {
+    const deps = dependencies();
+    const command = buildPerpsCloseAllPositionsCommand(account, state);
 
     await expect(executePerpsCloseAllPositions(command, deps)).resolves.toEqual(
       {
@@ -157,141 +90,83 @@ describe('Perps close all positions action', () => {
         refreshError: undefined,
       },
     );
-    expect(events).toEqual(['cancel', 'close']);
-    expect(deps.cancelOrders).toHaveBeenCalledWith(
-      expect.objectContaining({ orders: command.tpSlOrders }),
-    );
     expect(deps.closeAllPositions).toHaveBeenCalledWith(
-      state,
+      command.clearinghouseState,
       0.08,
       expect.objectContaining({ address: expect.any(String) }),
     );
-    expect(deps.refreshAllOpenOrders).toHaveBeenCalledTimes(2);
-    expect(deps.refreshAllClearinghouse).toHaveBeenCalledTimes(2);
-  });
-
-  it('preserves normal orders and skips cancellation when no associated TP/SL exists', async () => {
-    const normalOrders = [
-      openOrder(3, {
-        isPositionTpsl: false,
-        isTrigger: false,
-        orderType: 'Limit',
-        reduceOnly: false,
-      }),
-    ];
-    const deps = dependencies({ getCurrentOpenOrders: () => normalOrders });
-    const command = buildPerpsCloseAllPositionsCommand(
-      account,
-      state,
-      normalOrders,
-    );
-
-    await executePerpsCloseAllPositions(command, deps);
-
-    expect(command.tpSlOrders).toEqual([]);
-    expect(deps.cancelOrders).not.toHaveBeenCalled();
-    expect(deps.closeAllPositions).toHaveBeenCalledTimes(1);
-  });
-
-  it('rejects a changed position or TP/SL snapshot before signing', async () => {
-    const target = openOrder(1);
-    const changedPositionDeps = dependencies({
-      getCurrentClearinghouseState: () =>
-        ({
-          assetPositions: [{ position: { coin: 'BTC', szi: '0.5' } }],
-        } as unknown as ClearinghouseState),
-      getCurrentOpenOrders: () => [target],
-    });
-    const command = buildPerpsCloseAllPositionsCommand(account, state, [
-      target,
-    ]);
-    await expect(
-      executePerpsCloseAllPositions(command, changedPositionDeps),
-    ).resolves.toEqual({ kind: 'staleContext' });
-    expect(changedPositionDeps.cancelOrders).not.toHaveBeenCalled();
-
-    const changedOrderDeps = dependencies({ getCurrentOpenOrders: () => [] });
-    await expect(
-      executePerpsCloseAllPositions(command, changedOrderDeps),
-    ).resolves.toEqual({ kind: 'staleContext' });
-    expect(changedOrderDeps.cancelOrders).not.toHaveBeenCalled();
-  });
-
-  it('does not close positions after partial TP/SL cancellation', async () => {
-    const target = openOrder(1);
-    const deps = dependencies({
-      cancelOrders: jest.fn(async () => ({
-        items: [
-          {
-            coin: 'BTC',
-            error: 'cancel rejected',
-            oid: 1,
-            status: 'failed',
-          },
-        ],
-        kind: 'failed',
-      })),
-      getCurrentOpenOrders: () => [target],
-    });
-
-    await expect(
-      executePerpsCloseAllPositions(
-        buildPerpsCloseAllPositionsCommand(account, state, [target]),
-        deps,
-      ),
-    ).resolves.toMatchObject({
-      error: 'cancel rejected',
-      kind: 'failed',
-      stage: 'cancelTpSl',
-    });
-    expect(deps.closeAllPositions).not.toHaveBeenCalled();
     expect(deps.refreshAllOpenOrders).toHaveBeenCalledTimes(1);
     expect(deps.refreshAllClearinghouse).toHaveBeenCalledTimes(1);
   });
 
-  it('stops before close when a new associated TP/SL appears after cancellation', async () => {
-    const target = openOrder(1);
-    let liveOrders = [target];
+  it('rejects a changed position snapshot before signing', async () => {
     const deps = dependencies({
-      cancelOrders: jest.fn(async command => {
-        liveOrders = [openOrder(2)];
-        return {
-          items: command.orders.map(order => ({
-            ...order,
-            status: 'success' as const,
-          })),
-          kind: 'success',
-        };
-      }),
-      getCurrentOpenOrders: () => liveOrders,
+      getCurrentClearinghouseState: () =>
+        ({
+          assetPositions: [{ position: { coin: 'BTC', szi: '0.5' } }],
+        } as unknown as ClearinghouseState),
     });
 
     await expect(
       executePerpsCloseAllPositions(
-        buildPerpsCloseAllPositionsCommand(account, state, [target]),
+        buildPerpsCloseAllPositionsCommand(account, state),
         deps,
       ),
     ).resolves.toEqual({ kind: 'staleContext' });
     expect(deps.closeAllPositions).not.toHaveBeenCalled();
+    expect(deps.refreshAllOpenOrders).not.toHaveBeenCalled();
+    expect(deps.refreshAllClearinghouse).not.toHaveBeenCalled();
   });
 
-  it('reports failure and refreshes both snapshots after a partial batch fill', async () => {
+  it('keeps every authoritative server rejection instead of replacing it with a generic error', async () => {
     const deps = dependencies({
       closeAllPositions: jest.fn(async () => ({
         status: 'ok',
         response: {
           data: {
             statuses: [
-              { filled: { avgPx: '100', oid: 1, totalSz: '1' } },
-              { error: 'insufficient liquidity' },
+              { error: 'Insufficient margin to place order.' },
+              { error: 'Order price too far from oracle' },
             ],
           },
         },
       })),
     });
+
     await expect(
       executePerpsCloseAllPositions(
-        buildPerpsCloseAllPositionsCommand(account, state, []),
+        buildPerpsCloseAllPositionsCommand(account, state),
+        deps,
+      ),
+    ).resolves.toMatchObject({
+      confirmedFills: [],
+      error:
+        'Insufficient margin to place order.\nOrder price too far from oracle',
+      failureReason: 'requestFailed',
+      kind: 'failed',
+    });
+    expect(deps.refreshAllOpenOrders).toHaveBeenCalledTimes(1);
+    expect(deps.refreshAllClearinghouse).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not report success when a filled status covers only part of the submitted size', async () => {
+    const deps = dependencies({
+      closeAllPositions: jest.fn(async () => ({
+        status: 'ok',
+        response: {
+          data: {
+            statuses: [
+              { filled: { avgPx: '100', oid: 1, totalSz: '0.4' } },
+              { filled: { avgPx: '50', oid: 2, totalSz: '2' } },
+            ],
+          },
+        },
+      })),
+    });
+
+    await expect(
+      executePerpsCloseAllPositions(
+        buildPerpsCloseAllPositionsCommand(account, state),
         deps,
       ),
     ).resolves.toMatchObject({
@@ -301,12 +176,91 @@ describe('Perps close all positions action', () => {
           oid: 1,
           price: '100',
           signedSize: '1',
-          size: '1',
+          size: '0.4',
+        },
+        {
+          coin: 'ETH',
+          oid: 2,
+          price: '50',
+          signedSize: '-2',
+          size: '2',
         },
       ],
-      error: 'insufficient liquidity',
+      error: 'BTC was filled 0.4 of 1',
       kind: 'failed',
-      stage: 'closePositions',
+    });
+  });
+
+  it('requires the refreshed target positions to be zero before reporting success', async () => {
+    const deps = dependencies({
+      getCurrentClearinghouseState: () => state,
+      refreshAllClearinghouse: jest.fn(),
+    });
+
+    await expect(
+      executePerpsCloseAllPositions(
+        buildPerpsCloseAllPositionsCommand(account, state),
+        deps,
+      ),
+    ).resolves.toMatchObject({
+      error:
+        'BTC position remains open (1) after close request\nETH position remains open (2) after close request',
+      kind: 'failed',
+    });
+  });
+
+  it('reports an unknown outcome when the authoritative position refresh fails', async () => {
+    const deps = dependencies({
+      refreshAllClearinghouse: jest.fn(async () => {
+        throw new Error('clearinghouse refresh unavailable');
+      }),
+    });
+
+    await expect(
+      executePerpsCloseAllPositions(
+        buildPerpsCloseAllPositionsCommand(account, state),
+        deps,
+      ),
+    ).resolves.toMatchObject({
+      error: 'clearinghouse refresh unavailable',
+      kind: 'unknownOutcome',
+      refreshError: 'clearinghouse refresh unavailable',
+    });
+  });
+
+  it('keeps a verified close successful when only the Open Orders refresh fails', async () => {
+    const deps = dependencies({
+      refreshAllOpenOrders: jest.fn(async () => {
+        throw new Error('open orders refresh unavailable');
+      }),
+    });
+
+    await expect(
+      executePerpsCloseAllPositions(
+        buildPerpsCloseAllPositionsCommand(account, state),
+        deps,
+      ),
+    ).resolves.toMatchObject({
+      kind: 'success',
+      refreshError: 'open orders refresh unavailable',
+    });
+  });
+
+  it('treats a transport failure as unknown and refreshes before returning', async () => {
+    const deps = dependencies({
+      closeAllPositions: jest.fn(async () => {
+        throw new Error('Network request failed');
+      }),
+    });
+
+    await expect(
+      executePerpsCloseAllPositions(
+        buildPerpsCloseAllPositionsCommand(account, state),
+        deps,
+      ),
+    ).resolves.toMatchObject({
+      error: 'Network request failed',
+      kind: 'unknownOutcome',
     });
     expect(deps.refreshAllOpenOrders).toHaveBeenCalledTimes(1);
     expect(deps.refreshAllClearinghouse).toHaveBeenCalledTimes(1);
@@ -317,24 +271,14 @@ describe('Perps close all positions action', () => {
     const deps = dependencies({
       closeAllPositions: jest.fn(async () => {
         currentAccount = null;
-        return {
-          status: 'ok',
-          response: {
-            data: {
-              statuses: [
-                { filled: { avgPx: '100', oid: 1, totalSz: '1' } },
-                { filled: { avgPx: '50', oid: 2, totalSz: '2' } },
-              ],
-            },
-          },
-        };
+        return successfulResponse;
       }),
       getCurrentAccount: () => currentAccount,
     });
 
     await expect(
       executePerpsCloseAllPositions(
-        buildPerpsCloseAllPositionsCommand(account, state, []),
+        buildPerpsCloseAllPositionsCommand(account, state),
         deps,
       ),
     ).resolves.toMatchObject({
