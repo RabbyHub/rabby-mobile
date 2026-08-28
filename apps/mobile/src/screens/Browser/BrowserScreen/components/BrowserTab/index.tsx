@@ -601,7 +601,11 @@ export const BrowserTab = ({
                 webviewRef={webviewRef}
                 webviewIdRef={webviewIdRef}
                 siteInfoRefs={{ urlRef, titleRef, iconRef }}>
-                {({ onLoadStart, onMessage: onWebViewMessage }) =>
+                {({
+                  bridgeHardenScript,
+                  onLoadStart,
+                  onMessage: onWebViewMessage,
+                }) =>
                   !url ||
                   !/^https?:\/\//.test(url) ||
                   !entryScriptWeb3Loaded ? null : (
@@ -643,6 +647,10 @@ export const BrowserTab = ({
                         injectedJavaScriptBeforeContentLoadedBuiltinScriptIds={
                           beforeContentLoadedBuiltinScriptIds
                         }
+                        injectedJavaScriptBeforeContentLoaded={`${bridgeHardenScript}\n${
+                          webviewProps?.injectedJavaScriptBeforeContentLoaded ??
+                          ''
+                        }`}
                         injectedJavaScriptBeforeContentLoadedForMainFrameOnly={
                           true
                         }

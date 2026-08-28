@@ -169,19 +169,22 @@ function DappWebViewCore({
     documentEndBuiltinScriptIds,
   } = useJavaScriptBeforeContentLoaded();
 
-  const { onLoadStart: onBridgeLoadStart, onMessage: onBridgeMessage } =
-    useSetupWebviewWithServices({
-      dappOrigin,
-      webviewRef,
-      webviewIdRef,
-      siteInfoRefs: {
-        urlRef,
-        titleRef,
-        iconRef,
-      },
-      isFromMobileInnerDapp: true,
-      coreServices,
-    });
+  const {
+    bridgeHardenScript,
+    onLoadStart: onBridgeLoadStart,
+    onMessage: onBridgeMessage,
+  } = useSetupWebviewWithServices({
+    dappOrigin,
+    webviewRef,
+    webviewIdRef,
+    siteInfoRefs: {
+      urlRef,
+      titleRef,
+      iconRef,
+    },
+    isFromMobileInnerDapp: true,
+    coreServices,
+  });
 
   const resolvedUrl = useMemo(() => {
     if (embedHtml) return undefined;
@@ -209,6 +212,8 @@ function DappWebViewCore({
     onLoadProgress: webviewOnLoadProgress,
     onShouldStartLoadWithRequest: webviewOnShouldStartLoadWithRequest,
     onMessage: webviewOnMessage,
+    injectedJavaScriptBeforeContentLoaded:
+      webviewInjectedJavaScriptBeforeContentLoaded,
     onError: webviewOnError,
     onOpenWindow: webviewOnOpenWindow,
     onNavigationStateChange: webviewOnNavigationStateChange,
@@ -380,8 +385,12 @@ function DappWebViewCore({
         NonNullable<WebViewProps['onShouldStartLoadWithRequest']>
       >[0],
     ) => {
-      const shouldStart =
-        checkShouldStartLoadingWithRequestForDappWebView(event);
+      const shouldStart = checkShouldStartLoadingWithRequestForDappWebView(
+        event,
+        {
+          isFromMobileInnerDapp: true,
+        },
+      );
       const extraResult = onShouldStartLoadWithRequest?.(event);
       const propsResult = webviewOnShouldStartLoadWithRequest?.(event);
       const shouldStartWithExtra =
@@ -531,6 +540,9 @@ function DappWebViewCore({
         injectedJavaScriptBeforeContentLoadedBuiltinScriptIds={
           beforeContentLoadedBuiltinScriptIds
         }
+        injectedJavaScriptBeforeContentLoaded={`${bridgeHardenScript}\n${
+          webviewInjectedJavaScriptBeforeContentLoaded ?? ''
+        }`}
         injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
         injectedJavaScriptBuiltinScriptIds={documentEndBuiltinScriptIds}
         injectedJavaScript={autoRunnerInjected}

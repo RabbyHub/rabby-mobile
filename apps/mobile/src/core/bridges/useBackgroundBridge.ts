@@ -7,7 +7,12 @@ import type { WebViewNavigation } from 'react-native-webview';
 import { type BackgroundBridgeServices } from './backgroundBridgeServices';
 import { createDappBySession } from '@/core/utils/createDappBySession';
 import { useRefState } from '@/hooks/common/useRefState';
-import { RABBY_DECLARED_PREFIX } from '@rabby-wallet/rn-webview-bridge';
+import {
+  BRIDGE_FRAME_CAPABILITY_KEY,
+  BRIDGE_FRAME_PAYLOAD_KEY,
+  JSBridgeHarden,
+  RABBY_DECLARED_PREFIX,
+} from '@rabby-wallet/rn-webview-bridge';
 
 export const BLANK_PAGE = 'about:blank';
 export const BLANK_RABBY_PAGE = 'about:rabby';
@@ -29,6 +34,11 @@ type WebViewDataPayload<P = any> = {
   type: string;
   name?: string;
   payload?: P;
+};
+
+type WebViewCapabilityEnvelope = {
+  [BRIDGE_FRAME_CAPABILITY_KEY]?: unknown;
+  [BRIDGE_FRAME_PAYLOAD_KEY]?: unknown;
 };
 
 export type SetupWebviewParams = {
@@ -55,6 +65,25 @@ export function useSetupWebviewWithServices({
 }) {
   const { setRefState: putBackgroundBridge, stateRef: currentBridgeRef } =
     useRefState<BackgroundBridge | null>(null);
+  const bridgeFrameCapabilityRef = useRef<{
+    value: string;
+    injectedJavaScript: string;
+  } | null>(null);
+
+  if (!bridgeFrameCapabilityRef.current) {
+    const randomBytes = new Uint8Array(32);
+    crypto.getRandomValues(randomBytes);
+    const value = Array.from(randomBytes, byte =>
+      byte.toString(16).padStart(2, '0'),
+    ).join('');
+
+    bridgeFrameCapabilityRef.current = {
+      value,
+      injectedJavaScript: JSBridgeHarden(value),
+    };
+  }
+
+  const bridgeFrameCapability = bridgeFrameCapabilityRef.current;
 
   const destroyCurrentBridge = useCallback(() => {
     if (currentBridgeRef.current) {
@@ -128,12 +157,42 @@ export function useSetupWebviewWithServices({
       try {
         fromData =
           typeof fromData === 'string' ? JSON.parse(fromData) : fromData;
-        if (!fromData || (!fromData.type && !fromData.name)) {
+        const hasCapabilityEnvelope =
+          fromData != null &&
+          typeof fromData === 'object' &&
+          Object.prototype.hasOwnProperty.call(
+            fromData,
+            BRIDGE_FRAME_CAPABILITY_KEY,
+          ) &&
+          Object.prototype.hasOwnProperty.call(
+            fromData,
+            BRIDGE_FRAME_PAYLOAD_KEY,
+          );
+        const capabilityEnvelope = hasCapabilityEnvelope
+          ? (fromData as WebViewCapabilityEnvelope)
+          : null;
+        const messageData = capabilityEnvelope
+          ? capabilityEnvelope[BRIDGE_FRAME_PAYLOAD_KEY]
+          : fromData;
+
+        if (
+          !messageData ||
+          typeof messageData !== 'object' ||
+          (!(messageData as WebViewDataPayload).type &&
+            !(messageData as WebViewDataPayload).name)
+        ) {
           return;
         }
 
-        const data = fromData as WebViewDataPayload;
+        const data = messageData as WebViewDataPayload;
         if (data.name) {
+          if (
+            capabilityEnvelope?.[BRIDGE_FRAME_CAPABILITY_KEY] !==
+            bridgeFrameCapability.value
+          ) {
+            return;
+          }
+
           const msgOrigin =
             typeof (data as any).origin === 'string'
               ? (data as any).origin
@@ -168,7 +227,12 @@ export function useSetupWebviewWithServices({
         console.error(e, `Browser::onMessage on ${urlRef.current}`);
       }
     },
-    [currentBridgeRef, onRabbyDeclaredMessage, urlRef],
+    [
+      bridgeFrameCapability.value,
+      currentBridgeRef,
+      onRabbyDeclaredMessage,
+      urlRef,
+    ],
   );
 
   const changeUrl = useCallback(
@@ -247,6 +311,7 @@ export function useSetupWebviewWithServices({
   }, [destroyCurrentBridge]);
 
   return {
+    bridgeHardenScript: bridgeFrameCapability.injectedJavaScript,
     onLoadStart,
     onMessage,
   };
