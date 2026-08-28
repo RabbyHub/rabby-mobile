@@ -28,6 +28,7 @@ import {
   perpsStore,
   usePerpsStore,
   fetchUserAbstraction,
+  invalidateUserAbstractionCache,
   subscribeToUserData,
 } from './usePerpsStore';
 import * as Sentry from '@sentry/react-native';
@@ -338,9 +339,13 @@ export const usePerpsState = (
         void handleSafeSetDexAbstraction();
       } finally {
         // need fetch setAbstraction
-        setTimeout(() => {
-          void fetchUserAbstraction(account).catch(() => undefined);
-        }, 100);
+        // The mode just changed: drop the cached value first so a failed
+        // refetch cannot restore the pre-change one.
+        void invalidateUserAbstractionCache(account.address).finally(() => {
+          setTimeout(() => {
+            void fetchUserAbstraction(account).catch(() => undefined);
+          }, 100);
+        });
       }
     },
     [handleSafeSetDexAbstraction],
@@ -834,10 +839,12 @@ export const usePerpsState = (
         throw new Error('Hyperliquid rejected Unified Account configuration');
       }
 
-      // Refresh account state
-      setTimeout(() => {
-        void fetchUserAbstraction(account).catch(() => undefined);
-      }, 100);
+      // Refresh account state (drop the stale cached mode first).
+      void invalidateUserAbstractionCache(account.address).finally(() => {
+        setTimeout(() => {
+          void fetchUserAbstraction(account).catch(() => undefined);
+        }, 100);
+      });
       showToast('Unified Account enabled', 'success');
       return true;
     } catch (error: any) {

@@ -6,6 +6,7 @@ import { useCallback, useMemo } from 'react';
 import { perpsStore } from './usePerpsStore';
 import { useShallow } from 'zustand/react/shallow';
 import { getSpotBalanceKey } from '@/utils/perps';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 export const usePerpsAccount = () => {
@@ -18,6 +19,12 @@ export const usePerpsAccount = () => {
     spotBalances,
     spotBalancesMap,
     tokenToAvailableAfterMaintenance,
+    hasAccount,
+    currentAddress,
+    userAbstractionReady,
+    userAbstractionCachedAddress,
+    isSpotStateReady,
+    isUserDataReady,
   } = useActivityStore(
     perpsStore,
     useShallow(s => ({
@@ -33,6 +40,13 @@ export const usePerpsAccount = () => {
       spotBalancesMap: s.spotState.balancesMap,
       tokenToAvailableAfterMaintenance:
         s.spotState.tokenToAvailableAfterMaintenance,
+
+      hasAccount: !!s.currentPerpsAccount,
+      currentAddress: s.currentPerpsAccount?.address,
+      userAbstractionReady: s.userAbstractionReady,
+      userAbstractionCachedAddress: s.userAbstractionCachedAddress,
+      isSpotStateReady: s.isSpotStateReady,
+      isUserDataReady: s.isUserDataReady,
     })),
     Object.is,
     { storeLabel: 'perps-account' },
@@ -109,6 +123,49 @@ export const usePerpsAccount = () => {
     perpsWithdrawable,
   ]);
 
+  // `userAbstraction` initialises to `default` (manual), so an account whose
+  // mode has not resolved yet — or whose fetch failed — is silently treated
+  // as manual and its available balance reads as the perps-side withdrawable
+  // (0 for a unified account that keeps everything on the spot side). Callers
+  // must not render a resolved "$0" until this is true; same guard the Home
+  // PnL widget uses.
+  const isAvailableBalanceReady = useMemo(() => {
+    if (!hasAccount) {
+      return true;
+    }
+    // Known = resolved from the network this session, or restored from the
+    // MMKV cache for this very address.
+    const isModeKnown =
+      userAbstractionReady ||
+      (!!userAbstractionCachedAddress &&
+        !!currentAddress &&
+        isSameAddress(userAbstractionCachedAddress, currentAddress));
+    if (!isModeKnown) {
+      return false;
+    }
+    // Match each mode to the slices its number actually reads:
+    // PM   -> spot only (server-computed net free margin);
+    // unified -> BOTH, it sums spot USDC and the perps withdrawable, so spot
+    //            landing first would publish a partial balance;
+    // manual  -> perps only.
+    if (isPortfolioMargin) {
+      return isSpotStateReady;
+    }
+    if (isUnifiedAccount) {
+      return isSpotStateReady && isUserDataReady;
+    }
+    return isUserDataReady;
+  }, [
+    hasAccount,
+    currentAddress,
+    userAbstractionReady,
+    userAbstractionCachedAddress,
+    isPortfolioMargin,
+    isUnifiedAccount,
+    isSpotStateReady,
+    isUserDataReady,
+  ]);
+
   const getSpotBalance = useCallback(
     (coin: string) => {
       const balance = spotBalancesMap[getSpotBalanceKey(coin)];
@@ -139,6 +196,7 @@ export const usePerpsAccount = () => {
   return {
     accountValue,
     availableBalance,
+    isAvailableBalanceReady,
     crossMaintenanceMarginUsed,
     isUnifiedAccount,
     isPortfolioMargin,

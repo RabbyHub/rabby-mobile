@@ -326,6 +326,10 @@ export interface PerpsServiceStore {
   favoriteMarkets: string[];
   selectedKlineInterval: PerpsCandleInterval;
   marginModeByCoin: Record<string, 'cross' | 'isolated'>;
+  // Account abstraction mode per (lowercased) master address. It changes only
+  // when the user opts into Unified Account / Portfolio Margin, so the cached
+  // value is a safe fallback while the network value is in flight or failed.
+  userAbstractionByAddress: Record<string, string>;
   proPreferences: PerpsProPreferences;
 }
 export interface PerpsServiceMemoryState {
@@ -720,6 +724,7 @@ export class PerpsService extends StoreServiceBase<
         favoriteMarkets: [],
         selectedKlineInterval: DEFAULT_PERPS_CANDLE_INTERVAL,
         marginModeByCoin: {},
+        userAbstractionByAddress: {},
         proPreferences: DEFAULT_PERPS_PRO_PREFERENCES,
       },
       { storageAdapter: options?.storageAdapter },
@@ -762,7 +767,9 @@ export class PerpsService extends StoreServiceBase<
     const value = this.attachedTpSlJournalStorage?.getItem(
       APP_STORE_NAMES.perpsAttachedTpSlJournal,
     );
-    if (value == null) return [];
+    if (value == null) {
+      return [];
+    }
     if (!isPerpsAttachedTpSlJournal(value)) {
       throw new Error('Attached TP/SL journal is invalid');
     }
@@ -808,7 +815,9 @@ export class PerpsService extends StoreServiceBase<
     const value = this.fundingJournalStorage?.getItem(
       APP_STORE_NAMES.perpsFundingJournal,
     );
-    if (value == null) return [];
+    if (value == null) {
+      return [];
+    }
     if (isPerpsFundingJournal(value)) {
       return value.entries;
     }
@@ -886,6 +895,36 @@ export class PerpsService extends StoreServiceBase<
   setMarginModeForCoin = async (coin: string, mode: 'cross' | 'isolated') => {
     this.mutateStore(draft => {
       draft.marginModeByCoin[coin] = mode;
+    });
+  };
+
+  getUserAbstractionForAddress = async (address: string) => {
+    if (!address) {
+      return null;
+    }
+    return this.store.userAbstractionByAddress?.[address.toLowerCase()] ?? null;
+  };
+
+  setUserAbstractionForAddress = async (address: string, value: string) => {
+    if (!address || !value) {
+      return;
+    }
+    this.mutateStore(draft => {
+      draft.userAbstractionByAddress = {
+        ...(draft.userAbstractionByAddress || {}),
+        [address.toLowerCase()]: value,
+      };
+    });
+  };
+
+  clearUserAbstractionForAddress = async (address: string) => {
+    if (!address) {
+      return;
+    }
+    this.mutateStore(draft => {
+      const next = { ...(draft.userAbstractionByAddress || {}) };
+      delete next[address.toLowerCase()];
+      draft.userAbstractionByAddress = next;
     });
   };
 
@@ -1035,7 +1074,9 @@ export class PerpsService extends StoreServiceBase<
   };
 
   getPerpsProTradeAmountUnit = async (): Promise<PerpsProTradeAmountUnit> => {
-    if (!this.store) throw new Error('PerpsService not initialized');
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
     return normalizePerpsProTradeAmountUnit(this.store.proPreferences);
   };
 
@@ -1050,7 +1091,9 @@ export class PerpsService extends StoreServiceBase<
   };
 
   getPerpsProTradeOrderType = async (): Promise<PerpsProTradeOrderType> => {
-    if (!this.store) throw new Error('PerpsService not initialized');
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
     return normalizePerpsProTradeOrderType(this.store.proPreferences);
   };
 
@@ -1070,7 +1113,9 @@ export class PerpsService extends StoreServiceBase<
   getSkipPerpsProTradeConfirmation = async (
     orderType: PerpsProTradeOrderType,
   ) => {
-    if (!this.store) throw new Error('PerpsService not initialized');
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
     return normalizeSkipTradeConfirmationByOrderType(this.store.proPreferences)[
       orderType
     ];
@@ -1094,7 +1139,9 @@ export class PerpsService extends StoreServiceBase<
 
   getPerpsProTpSlModePreferences =
     async (): Promise<PerpsProTpSlModePreferences> => {
-      if (!this.store) throw new Error('PerpsService not initialized');
+      if (!this.store) {
+        throw new Error('PerpsService not initialized');
+      }
       return cloneDeep(
         normalizePerpsProTpSlModePreferences(this.store.proPreferences),
       );
