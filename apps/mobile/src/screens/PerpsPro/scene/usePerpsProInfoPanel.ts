@@ -22,7 +22,6 @@ import {
   buildPerpsAccountViewModel,
   getPerpsAccountMarginRatio,
   getSpotPriceDependencyKeys,
-  resolvePerpsAccountMode,
 } from '../model/account';
 import {
   buildPerpsOpenOrdersFromTopology,
@@ -117,7 +116,6 @@ export const usePerpsProInfoPanel = (
     return result;
   }, [marketFactSignatures]);
 
-  const accountMode = resolvePerpsAccountMode(facts.userAbstraction);
   const accountPagePrepared =
     preferences.activeInfoTab !== 'openOrders' ||
     requestedInfoTab === 'account';
@@ -159,13 +157,11 @@ export const usePerpsProInfoPanel = (
     if (
       accountPagePrepared &&
       facts.currentAccount &&
-      accountMode !== 'standard' &&
       facts.spotMetaStatus === 'idle'
     ) {
       fetchSpotMeta();
     }
   }, [
-    accountMode,
     accountPagePrepared,
     facts.currentAccount,
     facts.spotMetaStatus,
@@ -293,12 +289,7 @@ export const usePerpsProInfoPanel = (
     if (runtime.status === 'error') {
       return 'error';
     }
-    const requiresSpotMeta = accountMode !== 'standard';
-    if (
-      requiresSpotMeta &&
-      facts.spotMetaStatus === 'error' &&
-      !facts.spotMeta
-    ) {
+    if (facts.spotMetaStatus === 'error' && !facts.spotMeta) {
       return 'error';
     }
     if (
@@ -306,7 +297,7 @@ export const usePerpsProInfoPanel = (
       !facts.isUserDataReady ||
       !facts.isSpotStateReady ||
       !facts.userAbstractionReady ||
-      (requiresSpotMeta && !facts.spotMeta)
+      !facts.spotMeta
     ) {
       return 'loading';
     }
@@ -316,7 +307,6 @@ export const usePerpsProInfoPanel = (
     return 'ready';
   }, [
     account,
-    accountMode,
     facts.currentAccount,
     facts.isSpotStateReady,
     facts.isUserDataReady,
@@ -331,10 +321,8 @@ export const usePerpsProInfoPanel = (
       runtime.retry();
     }
     fetchMarketData();
-    if (accountMode !== 'standard') {
-      fetchSpotMeta(true);
-    }
-  }, [accountMode, fetchMarketData, fetchSpotMeta, runtime]);
+    fetchSpotMeta(true);
+  }, [fetchMarketData, fetchSpotMeta, runtime]);
 
   return {
     account,

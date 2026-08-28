@@ -1,7 +1,7 @@
 import { UserAbstractionResp } from '@rabby-wallet/hyperliquid-sdk';
 
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
-import { computeSpotPortfolioValue } from '@/screens/PerpsPro/model/accountPricing';
+import { computePerpsPortfolioValue } from '@/screens/PerpsPro/model/accountPricing';
 import { perpsStore } from './usePerpsStore';
 
 /**
@@ -41,19 +41,16 @@ export const usePerpsPortfolioLiveValue = (enabled = true): number | null => {
       ) {
         return null;
       }
-      const spotValue =
-        Number(
-          computeSpotPortfolioValue(
-            s.spotState.rawBalances,
-            s.spotAssetCtxs,
-            s.spotMeta,
-          ).value,
-        ) || 0;
-      const total = isSpotCollateral
-        ? spotValue
-        : spotValue +
-          (Number(s.currentClearinghouseState?.marginSummary?.accountValue) ||
-            0);
+      const total = Number(
+        computePerpsPortfolioValue({
+          balances: s.spotState.rawBalances,
+          includePerpsAccountValue: !isSpotCollateral,
+          perpsAccountValue:
+            s.currentClearinghouseState?.marginSummary?.accountValue,
+          spotAssetCtxs: s.spotAssetCtxs,
+          spotMeta: s.spotMeta,
+        }).value,
+      );
       return Math.round(total * 100) / 100;
     },
     Object.is,

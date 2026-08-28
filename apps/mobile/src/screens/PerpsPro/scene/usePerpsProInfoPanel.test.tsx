@@ -148,6 +148,33 @@ const { usePerpsProInfoPanel } =
 describe('usePerpsProInfoPanel symbol filters', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockPerpsState.spotMeta = null;
+    mockPerpsState.spotMetaStatus = 'ready';
+  });
+
+  it('requires and fetches Spot Meta for a Standard account', () => {
+    mockPerpsState.spotMetaStatus = 'idle';
+    const hook = renderHook(() => usePerpsProInfoPanel('BTC'));
+
+    expect(mockFetchSpotMeta).toHaveBeenCalledTimes(1);
+    expect(hook.result.current.accountState).toBe('loading');
+
+    act(() => {
+      mockPerpsState.spotMeta = { tokens: [], universe: [] };
+      mockPerpsState.spotMetaStatus = 'success';
+      hook.rerender({});
+    });
+
+    expect(hook.result.current.accountState).toBe('ready');
+  });
+
+  it('retries Spot Meta for a Standard account', () => {
+    const hook = renderHook(() => usePerpsProInfoPanel('BTC'));
+
+    act(() => hook.result.current.retryAccount());
+
+    expect(mockFetchMarketData).toHaveBeenCalledTimes(1);
+    expect(mockFetchSpotMeta).toHaveBeenCalledWith(true);
   });
 
   it('owns independent Position and Open Orders filters without narrowing shared facts', () => {
