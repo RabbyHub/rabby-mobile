@@ -77,6 +77,29 @@ export function getRegressionScenarioRuntimeSnapshot() {
   return snapshot;
 }
 
+export function findPassingRegressionScenarioAssertion(
+  runId: string,
+  assertion: string,
+  afterTimestamp = 0,
+) {
+  return [...snapshot.events].reverse().find(event => {
+    const data = event.data as
+      | {
+          assertion?: unknown;
+          passed?: unknown;
+        }
+      | undefined;
+
+    return (
+      event.runId === runId &&
+      event.name === 'assertion' &&
+      event.timestamp >= afterTimestamp &&
+      data?.assertion === assertion &&
+      data?.passed === true
+    );
+  });
+}
+
 export function getRegressionScenarioRuntimeControlSnapshot() {
   return controlSnapshot;
 }
