@@ -10,7 +10,6 @@ import {
   InMemoryLogViewer,
   DevDataContactService,
   DevDataSQLite,
-  DevWatchAddressFixtureImport,
   DevDataKeychain,
   DevDataKeyringVault,
   DevDataWhitelist,
@@ -118,17 +117,6 @@ export function TestkitsNavigator() {
       />
 
       <Stack.Screen name={RootNames.DevDataSQLite} component={DevDataSQLite} />
-      <Stack.Screen
-        name={RootNames.DevWatchAddressFixtureImport}
-        component={DevWatchAddressFixtureImport}
-        options={mergeScreenOptions2024([
-          {
-            headerShown: true,
-            headerTitle: 'Benchmark Watch addresses',
-            title: 'Benchmark Watch addresses',
-          },
-        ])}
-      />
       <Stack.Screen
         name={RootNames.DevDataKeychain}
         component={DevDataKeychain}

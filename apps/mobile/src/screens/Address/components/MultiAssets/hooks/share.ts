@@ -6,7 +6,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { useLoadAssets } from '@/screens/Search/useAssets';
 import { useHomeAssetAccountInfo } from '../hooks';
 import type { HomeTabName as TabName } from '@/hooks/navigation';
-import { type KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
+import { useMyAccounts } from '@/hooks/account';
 import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
 import { findAccountByPriority } from '@/utils/account';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
@@ -30,20 +30,17 @@ export const useIsFocusedCurrentTab = (tabName: TabName) => {
   return { isFocused, isFocusing };
 };
 
-export const useFindAccountByAddress = (
-  preferredAccounts?: KeyringAccountWithAlias[],
-) => {
+export const useFindAccountByAddress = () => {
   const { accounts } = useMyAccounts();
-  const candidateAccounts = preferredAccounts ?? accounts;
 
   const getAccountByAddress = useCallback(
     (address: string) => {
-      const _accounts = candidateAccounts.filter(account =>
+      const _accounts = accounts.filter(account =>
         isSameAddress(account?.address, address),
       );
       return findAccountByPriority(_accounts);
     },
-    [candidateAccounts],
+    [accounts],
   );
   return getAccountByAddress;
 };

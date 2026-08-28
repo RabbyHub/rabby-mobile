@@ -119,13 +119,6 @@ describe('regression scenario performance probe', () => {
           { phase: 'initial', count: 0, totalMs: 0, maxMs: 0 },
           { phase: 'expand-list', count: 1, totalMs: 190, maxMs: 190 },
         ],
-        largestJsGaps: [
-          {
-            elapsedMs: 190,
-            gapMs: 190,
-            phase: 'expand-list',
-          },
-        ],
         actions: {
           'list.expand': { waitMs: 3, handlerMs: 8, totalMs: 11 },
         },

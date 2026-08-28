@@ -22,8 +22,8 @@ import {
   delay,
   ensureScenarioWalletUnlocked,
   getScenarioAccounts,
+  parseScenarioBoolean,
   pushNestedScreen,
-  startMainRuntimeProfile,
   startScenarioPerformanceWindow,
 } from './utils';
 
@@ -599,6 +599,97 @@ async function openGasAccount(context: RegressionScenarioExecutionContext) {
     assertion: 'gas-account-opened',
     passed: true,
   });
+}
+
+async function startMainRuntimeProfile(
+  context: RegressionScenarioExecutionContext,
+  {
+    label,
+    observeMs,
+    filePrefix,
+    enabledByDefault = false,
+  }: {
+    label: string;
+    observeMs: number;
+    filePrefix: string;
+    enabledByDefault?: boolean;
+  },
+) {
+  const profileMode = context.command.params.hermesProfile;
+  const shouldProfile =
+    profileMode?.toLowerCase() === 'main' ||
+    parseScenarioBoolean(profileMode, enabledByDefault);
+  if (!shouldProfile) {
+    return null;
+  }
+
+  const profiler = await import('@/core/utils/hermesStartupProfiler');
+  const profileWaitMs = Math.min(
+    Math.max(Number(context.command.params.profileWaitMs || 12_000), 0),
+    15_000,
+  );
+  const waitStartedAt = Date.now();
+  while (
+    profiler.isHermesProfilerSessionActive() &&
+    Date.now() - waitStartedAt < profileWaitMs
+  ) {
+    await delay(100);
+  }
+  if (profiler.isHermesProfilerSessionActive()) {
+    throw new Error('Hermes profiler is still occupied by another session');
+  }
+
+  const computationThread = await import('@/perfs/thread');
+  const workerWasRunning = computationThread.workerThread.isRunning;
+  const reasonLabel = label.replace(/[^a-z0-9]+/gi, '_').toLowerCase();
+  if (workerWasRunning) {
+    context.report('perf-mark', {
+      label,
+      mark: 'main-runtime-profile-worker-stop-start',
+    });
+    await computationThread.workerThread.terminate();
+    await delay(250);
+    context.report('perf-mark', {
+      label,
+      mark: 'main-runtime-profile-worker-stopped',
+    });
+  }
+
+  const session = profiler.startHermesProfilerSession({
+    label: `${label}-${context.command.runId}`,
+    expectedDurationMs: Math.min(Math.max(observeMs, 0), 10_000) + 4000,
+    filePrefix: `${filePrefix}-${context.command.runId}`,
+    includePlatformProfile: parseScenarioBoolean(
+      context.command.params.platformProfile,
+      true,
+    ),
+  });
+
+  if (!session) {
+    if (workerWasRunning) {
+      computationThread.requestComputationThreadStart(
+        `${reasonLabel}_profile_start_failed`,
+      );
+    }
+    throw new Error(`Unable to start ${label} Hermes profile`);
+  }
+
+  context.report('perf-mark', {
+    label,
+    mark: 'main-runtime-profile-started',
+    workerWasRunning,
+  });
+
+  return {
+    session,
+    restoreWorker() {
+      if (workerWasRunning) {
+        computationThread.requestComputationThreadStart(
+          `${reasonLabel}_profile_complete`,
+        );
+      }
+    },
+  };
 }
 
 async function openSendEntry(context: RegressionScenarioExecutionContext) {

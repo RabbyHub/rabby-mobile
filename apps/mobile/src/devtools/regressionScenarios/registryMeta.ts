@@ -2,7 +2,7 @@ import type { RegressionScenarioId, RegressionScreenId } from './contracts';
 
 export type RegressionScenarioMetadata = {
   id: RegressionScenarioId;
-  kind: 'core' | 'focused' | 'experimental';
+  kind: 'core' | 'focused';
   screens: readonly RegressionScreenId[];
   requiresFixture: boolean;
   description: string;
@@ -55,14 +55,6 @@ export const REGRESSION_SCENARIO_METADATA = Object.freeze<
     screens: ['Home'],
     requiresFixture: false,
     description: 'Open Home and visit the Token, DeFi, and NFT asset tabs.',
-  },
-  'high-cardinality-assets': {
-    id: 'high-cardinality-assets',
-    kind: 'experimental',
-    screens: ['Home'],
-    requiresFixture: true,
-    description:
-      'Import a bounded Watch-address fixture through the normal address API and exercise Home asset loading with the configured non-production Top-N selection policy.',
   },
   'single-address': {
     id: 'single-address',

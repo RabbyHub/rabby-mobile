@@ -13,7 +13,6 @@ const SCENARIO_MODULE_LOADERS: Record<
   'lock-unlock': () => import('./scenarios/wallet'),
   'address-switch': () => import('./scenarios/coreNavigation'),
   'home-assets': () => import('./scenarios/coreNavigation'),
-  'high-cardinality-assets': () => import('./scenarios/coreNavigation'),
   'single-address': () => import('./scenarios/coreNavigation'),
   'token-detail': () => import('./scenarios/coreNavigation'),
   'send-receive': () => import('./scenarios/coreNavigation'),

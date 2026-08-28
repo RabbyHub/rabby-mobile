@@ -44,9 +44,6 @@ function loadAddressModule({
   const mockAddNewAccount = jest.fn().mockResolvedValue({
     address: '0xwatch',
   });
-  const mockAddNewWatchAccounts = jest
-    .fn()
-    .mockResolvedValue(['0xwatch-1', '0xwatch-2']);
   const mockRemoveAccount = jest.fn().mockResolvedValue(undefined);
   const mockHasAddress = jest.fn().mockResolvedValue(hasAddress);
   const mockGetAllVisibleAccountsArray = jest
@@ -116,8 +113,6 @@ function loadAddressModule({
   jest.doMock('@/core/serviceApi/keyring', () => ({
     keyringServiceApi: {
       addNewAccount: (...args: unknown[]) => mockAddNewAccount(...args),
-      addNewWatchAccounts: (...args: unknown[]) =>
-        mockAddNewWatchAccounts(...args),
       getAllVisibleAccountsArray: (...args: unknown[]) =>
         mockGetAllVisibleAccountsArray(...args),
       hasAddress: (...args: unknown[]) => mockHasAddress(...args),
@@ -166,7 +161,6 @@ function loadAddressModule({
     },
     keyringService: {
       addNewAccount: mockAddNewAccount,
-      addNewWatchAccounts: mockAddNewWatchAccounts,
       getAllVisibleAccountsArray: mockGetAllVisibleAccountsArray,
       hasAddress: mockHasAddress,
       removeAccount: mockRemoveAccount,
@@ -198,7 +192,6 @@ function loadAddressModule({
     ...addressModule,
     mocks: {
       mockAddNewAccount,
-      mockAddNewWatchAccounts,
       mockBroadcastEvent,
       mockDisconnectWalletConnectSessionsForRemovedAccount,
       mockGetAllVisibleAccountsArray,
@@ -243,20 +236,6 @@ describe('core/apis/address', () => {
     );
     expect(mocks.mockAddNewAccount).toHaveBeenCalledWith(
       mocks.mockWatchKeyring,
-    );
-    expect(mocks.mockInitCurrentAccount).toHaveBeenCalledTimes(1);
-  });
-
-  it('adds watch addresses in one service operation', async () => {
-    const { addWatchAddresses, mocks } = loadAddressModule();
-
-    await expect(
-      addWatchAddresses(['0xwatch-1', '0xwatch-2']),
-    ).resolves.toEqual(['0xwatch-1', '0xwatch-2']);
-
-    expect(mocks.mockAddNewWatchAccounts).toHaveBeenCalledWith(
-      mocks.mockWatchKeyring,
-      ['0xwatch-1', '0xwatch-2'],
     );
     expect(mocks.mockInitCurrentAccount).toHaveBeenCalledTimes(1);
   });
