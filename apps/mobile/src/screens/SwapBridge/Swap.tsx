@@ -107,11 +107,7 @@ import { stats } from '@/utils/stats';
 import { Text } from '@/components/Typography';
 import { storeApiExpSettingData } from '@/hooks/appSettings';
 import type { FormAmountMode } from '@/utils/form';
-import {
-  FormValuesOnSubmit,
-  createAmountComparer,
-  shouldIgnoreAmountChangeInMaxMode,
-} from '@/utils/form';
+import { FormValuesOnSubmit, createAmountComparer } from '@/utils/form';
 import { useMiniSignerEffectPause } from '@/hooks/useMiniSignerEffectPause';
 import {
   hasQuotePollingPauseReason,
@@ -422,7 +418,7 @@ const Swap = ({
   );
 
   const switchPreferMEV = useMemoizedFn((bool: boolean) => {
-    void swapServiceApi.setSwapPreferMEVGuarded(bool).catch(error => {
+    swapServiceApi.setSwapPreferMEVGuarded(bool).catch(error => {
       console.error('[Swap] persist MEV preference failed', error);
     });
     mutatePreferMEVGuarded(bool);
@@ -471,9 +467,9 @@ const Swap = ({
       return;
     }
     initialActivationHandledRef.current = true;
-    void setReportActionTs(
-      REPORT_TIMEOUT_ACTION_KEY.CLICK_GO_SWAP_SERVICE,
-    ).catch(console.error);
+    setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_GO_SWAP_SERVICE).catch(
+      console.error,
+    );
 
     if (!navState?.chainEnum) {
       return;
@@ -1324,12 +1320,9 @@ const Swap = ({
               action: createSwapTxAction,
             });
           }
-          void setReportActionTs(
-            REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_CONFIRM,
-            {
-              chain: chainServerId,
-            },
-          ).catch(console.error);
+          setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_CONFIRM, {
+            chain: chainServerId,
+          }).catch(console.error);
           if (currentIsCopyTrading) {
             matomoRequestEvent({
               category: 'CopyTrading',
@@ -1364,12 +1357,9 @@ const Swap = ({
     } else {
       gotoSwap();
     }
-    void setReportActionTs(
-      REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_OR_APPROVE_BTN,
-      {
-        chain: chainServerId,
-      },
-    ).catch(console.error);
+    setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_OR_APPROVE_BTN, {
+      chain: chainServerId,
+    }).catch(console.error);
   });
 
   const amountAvailable = useMemo(

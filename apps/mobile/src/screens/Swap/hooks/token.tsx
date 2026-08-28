@@ -430,6 +430,7 @@ export const useTokenPair = ({
   );
 
   const [payAmount, setPayAmount] = useState('');
+  const [quoteList, setQuotesList] = useState<TDexQuoteData[]>([]);
 
   const [feeRate] = useState<FeeProps['fee']>('0');
 
@@ -599,6 +600,15 @@ export const useTokenPair = ({
 
   const setReceiveToken = useCallback(
     (token: TokenItem | undefined) => {
+      const isSameToken =
+        (!token && !receiveToken) ||
+        (!!token &&
+          !!receiveToken &&
+          token.chain === receiveToken.chain &&
+          isSameAddress(token.id, receiveToken.id));
+      if (!isSameToken) {
+        setQuotesList([]);
+      }
       _setReceiveToken(token);
       if (token) {
         if (token?.low_credit_score) {
@@ -607,7 +617,7 @@ export const useTokenPair = ({
         }
       }
     },
-    [_setReceiveToken, setLowCreditToken, setLowCreditVisible],
+    [_setReceiveToken, receiveToken, setLowCreditToken, setLowCreditVisible],
   );
 
   const [bestQuoteDex, setBestQuoteDex] = useState<string>('');
@@ -850,6 +860,9 @@ export const useTokenPair = ({
       if (!/^\d*(\.\d*)?$/.test(v)) {
         return;
       }
+      if (v !== payAmount) {
+        setQuotesList([]);
+      }
       setPayAmount(v);
       if (payToken) {
         const slider = v
@@ -868,7 +881,7 @@ export const useTokenPair = ({
       setUseGasPrice(false);
       setSwapUseSlider(false);
     },
-    [payToken, setUseGasPrice],
+    [payAmount, payToken, setUseGasPrice],
   );
 
   const isStableCoin = useMemo(() => {
@@ -945,7 +958,6 @@ export const useTokenPair = ({
     }
   }, [autoSlippage, autoSlippageValue, setSlippage]);
 
-  const [quoteList, setQuotesList] = useState<TDexQuoteData[]>([]);
   const pendingQuoteUpdatesRef = useRef(new Map<string, TDexQuoteData>());
   const quoteFlushFrameRef = useRef<number | null>(null);
   const fetchIdRef = useRef(0);
@@ -1105,6 +1117,7 @@ export const useTokenPair = ({
 
   useLayoutEffect(() => {
     if (!active) {
+      setQuotesList([]);
       return;
     }
     fetchIdRef.current += 1;
@@ -1341,6 +1354,7 @@ export const useTokenPair = ({
 
     setUseGasPrice(false);
     const fullAmount = tokenAmountBn(payToken);
+    let nextPayAmount = fullAmount.toString(10);
     if (
       payTokenIsGasToken &&
       gasTokenDecimals !== undefined &&
@@ -1355,12 +1369,15 @@ export const useTokenPair = ({
       if (!val.lt(0)) {
         setUseGasPrice(true);
       }
-      setPayAmount(val.lt(0) ? fullAmount.toString(10) : val.toString(10));
-      return;
+      nextPayAmount = val.lt(0) ? fullAmount.toString(10) : val.toString(10);
     }
 
-    setPayAmount(fullAmount.toString(10));
+    if (nextPayAmount !== payAmount) {
+      setQuotesList([]);
+      setPayAmount(nextPayAmount);
+    }
   }, [
+    payAmount,
     payToken,
     payTokenIsGasToken,
     gasTokenDecimals,
@@ -1422,14 +1439,16 @@ export const useTokenPair = ({
           .div(100)
           .times(tokenAmountBn(payToken));
         const isTooSmall = newAmountBn.lt(0.0001);
-        setPayAmount(
-          isTooSmall
-            ? newAmountBn.toString(10)
-            : new BigNumber(newAmountBn.toFixed(4, 1)).toString(10),
-        );
+        const nextPayAmount = isTooSmall
+          ? newAmountBn.toString(10)
+          : new BigNumber(newAmountBn.toFixed(4, 1)).toString(10);
+        if (nextPayAmount !== payAmount) {
+          setQuotesList([]);
+          setPayAmount(nextPayAmount);
+        }
       }
     },
-    [handleSlider100, payToken],
+    [handleSlider100, payAmount, payToken],
   );
 
   /* slider end*/
