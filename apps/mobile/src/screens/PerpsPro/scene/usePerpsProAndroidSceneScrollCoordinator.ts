@@ -7,6 +7,8 @@ import {
   withDecay,
 } from 'react-native-reanimated';
 
+import { usePerpsProAndroidCoordinatorProbe } from '@/devtools/perpsProPagerProbe/coordinator';
+
 import {
   getPerpsProInfoBridgeOffset,
   PERPS_PRO_INFO_TOUCH_INTENT,
@@ -160,6 +162,17 @@ export const usePerpsProAndroidSceneScrollCoordinator = ({
     },
     [controller],
   );
+
+  usePerpsProAndroidCoordinatorProbe({
+    controller,
+    driverOffset,
+    enabled,
+    sessionActive,
+    sessionEpoch,
+    sessionTargetIndex,
+    touchIntentState,
+    visualOffset,
+  });
 
   const gesture = useMemo(
     () =>

@@ -54,6 +54,9 @@ interface NativeModulesStatic {
       title?: string;
       subject?: string;
     }): Promise<void>;
+    getPerpsProPagerProbeSnapshot?(
+      reactTag: number,
+    ): Promise<Record<string, boolean | number | string | null>>;
     /**
      * @description try to set a file to not be backed up by iCloud
      * @param filePath
