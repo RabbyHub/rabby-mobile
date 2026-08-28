@@ -65,17 +65,47 @@ describe('Perps Pro open order topology', () => {
     ).toEqual([4]);
   });
 
-  it('deduplicates repeated order ids before either projection consumes them', () => {
+  it.each(['childrenFirst', 'parentFirst'] as const)(
+    'normalizes repeated normalTpsl children when the server returns %s',
+    orderKind => {
+      const outerChildren = [order({ oid: 2 }), order({ oid: 3 })];
+      const parent = order({
+        children: [order({ oid: 2 }), order({ oid: 3 })],
+        oid: 10,
+      });
+      const topology = buildPerpsOpenOrderTopology(
+        orderKind === 'childrenFirst'
+          ? [...outerChildren, parent]
+          : [parent, ...outerChildren],
+      );
+
+      expect(topology.nodes.map(node => node.order.oid)).toEqual([10, 2, 3]);
+      expect(
+        topology.nodes.map(({ isTopLevel, order: item, parentOid }) => ({
+          isTopLevel,
+          oid: item.oid,
+          parentOid,
+        })),
+      ).toEqual([
+        { isTopLevel: true, oid: 10, parentOid: null },
+        { isTopLevel: false, oid: 2, parentOid: 10 },
+        { isTopLevel: false, oid: 3, parentOid: 10 },
+      ]);
+      expect(
+        topology.topLevelNodesByCoin.get('BTC')?.map(node => node.order.oid),
+      ).toEqual([10]);
+    },
+  );
+
+  it('keeps a standalone fixed-size trigger top-level beside grouped children', () => {
     const topology = buildPerpsOpenOrderTopology([
-      order({ children: [order({ oid: 2 })], oid: 1 }),
       order({ oid: 2 }),
+      order({ oid: 4 }),
+      order({ children: [order({ oid: 2 })], oid: 10 }),
     ]);
 
-    expect(topology.nodes.map(node => node.order.oid)).toEqual([1, 2]);
-    expect(topology.nodes[1]).toMatchObject({
-      isTopLevel: false,
-      parentOid: 1,
-      rootParentOid: 1,
-    });
+    expect(
+      topology.topLevelNodesByCoin.get('BTC')?.map(node => node.order.oid),
+    ).toEqual([4, 10]);
   });
 });

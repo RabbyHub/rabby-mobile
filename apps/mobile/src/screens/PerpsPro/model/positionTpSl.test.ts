@@ -46,13 +46,13 @@ const collect = (
   );
 
 describe('Perps Pro position TP/SL model', () => {
-  it('classifies active top-level full and fixed-size orders but excludes attached children', () => {
-    const attachedChild = order({ oid: 3, triggerPx: '73000' });
+  it('classifies active full and fixed-size orders but excludes children-first attached duplicates', () => {
     const result = collect([
       order({ oid: 1 }),
       order({ isPositionTpsl: true, oid: 2, sz: '0' }),
+      order({ oid: 3, triggerPx: '73000' }),
       order({
-        children: [attachedChild],
+        children: [order({ oid: 3, triggerPx: '73000' })],
         isTrigger: false,
         oid: 10,
         orderType: 'Limit',
@@ -85,6 +85,45 @@ describe('Perps Pro position TP/SL model', () => {
 
     expect(collect(orders, 'long').map(item => item.oid)).toEqual([1]);
     expect(collect(orders, 'short').map(item => item.oid)).toEqual([2, 3]);
+  });
+
+  it('does not attach an unfilled short parent TP/SL to an existing short position', () => {
+    const takeProfit = order({
+      oid: 21,
+      side: 'B',
+      triggerPx: '59000',
+    });
+    const stopLoss = order({
+      oid: 22,
+      orderType: 'Stop Market',
+      side: 'B',
+      triggerPx: '61000',
+    });
+    const result = collect(
+      [
+        takeProfit,
+        stopLoss,
+        order({
+          children: [
+            order({ oid: 21, side: 'B', triggerPx: '59000' }),
+            order({
+              oid: 22,
+              orderType: 'Stop Market',
+              side: 'B',
+              triggerPx: '61000',
+            }),
+          ],
+          isTrigger: false,
+          oid: 20,
+          orderType: 'Limit',
+          reduceOnly: false,
+          side: 'A',
+        }),
+      ],
+      'short',
+    );
+
+    expect(result).toEqual([]);
   });
 
   it('counts independent partial TP and SL and selects each nearest Mark order', () => {

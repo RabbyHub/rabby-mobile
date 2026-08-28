@@ -79,10 +79,6 @@ import {
   decidePerpsMarketRefresh,
   fetchPerpsRemoteList,
 } from './marketDataRefresh';
-import {
-  createPerpsOpenOrdersInvalidationCoordinator,
-  type PerpsOpenOrdersInvalidationCoordinator,
-} from './openOrdersInvalidation';
 
 export type { AccountHistoryItem } from './funding/types';
 
@@ -135,50 +131,9 @@ const toCachedMarketData = (item: MarketData): MarketData => ({
 // Key '' === hyper native dex.
 const dexClearinghouseStatesCache = new Map<string, ClearinghouseState>();
 
-// Per-dex frontendOpenOrders snapshots. This richer HTTP response is the only
-// topology authority because it includes parent/child TP/SL metadata that the
-// ordinary openOrders WebSocket payload omits.
+// Per-dex openOrders. openOrders has no server-side time, so HTTP simply
+// overwrites the matching bucket; WS pushes overwrite all buckets.
 const dexOpenOrdersCache = new Map<string, OpenOrder[]>();
-const dexOpenOrdersRequestRevision = new Map<string, number>();
-const wsOpenOrdersFingerprintByDex = new Map<string, string>();
-let openOrdersInvalidationCoordinator: PerpsOpenOrdersInvalidationCoordinator;
-
-const resetOpenOrdersInvalidation = () => {
-  wsOpenOrdersFingerprintByDex.clear();
-  openOrdersInvalidationCoordinator.reset();
-};
-
-const getWsOpenOrdersFingerprint = (orders: readonly OpenOrder[]) =>
-  JSON.stringify(
-    orders
-      .map(order => [
-        order.oid,
-        order.coin,
-        order.cloid,
-        order.isPositionTpsl,
-        order.isTrigger,
-        order.limitPx,
-        order.orderType,
-        order.origSz,
-        order.reduceOnly,
-        order.side,
-        order.sz,
-        order.timestamp,
-        order.tif,
-        order.triggerCondition,
-        order.triggerPx,
-      ])
-      .sort((left, right) => Number(left[0]) - Number(right[0])),
-  );
-
-const getWsOpenOrdersDex = (order: OpenOrder, marketDataMap: MarketDataMap) => {
-  const knownDex = marketDataMap[order.coin]?.dexId;
-  if (knownDex !== undefined) {
-    return knownDex;
-  }
-  const separatorIndex = order.coin.indexOf(':');
-  return separatorIndex > 0 ? order.coin.slice(0, separatorIndex) : '';
-};
 
 // HIP-3 dex roster, populated lazily by fetchMarketData.
 let perpDexsCache: PerpDexsResponse | null = null;
@@ -292,6 +247,12 @@ export interface PerpsState {
   approveSignatures: ApproveSignatures;
   userFills: WsFill[];
   userAccountHistory: AccountHistoryItem[];
+  /**
+   * Pending funding operations that outlived the presentation TTL. They stay
+   * available to strict ledger/source reconciliation but are never published
+   * to History UI or counted by pending indicators.
+   */
+  hiddenLocalFundingHistory: AccountHistoryItem[];
   localLoadingHistory: AccountHistoryItem[];
   wsSubscriptions: (() => void)[];
   pollingTimer: NodeJS.Timeout | null;
@@ -355,6 +316,7 @@ export const initialState: PerpsState = {
   marketData: [],
   maintenanceMarginTiersByCoin: {},
   userAccountHistory: [],
+  hiddenLocalFundingHistory: [],
   localLoadingHistory: [],
   marketDataMap: {},
   marketDataStatus: 'idle',
@@ -571,7 +533,6 @@ function stopHomeSpotSubscription() {
 
 function stopAccountSubscriptions() {
   activeUserDataSubscription = null;
-  resetOpenOrdersInvalidation();
   stopHomeSpotSubscription();
   setPerpsState(prev => {
     prev.wsSubscriptions.forEach(unsubscribe => {
@@ -735,6 +696,9 @@ const setCurrentPerpsAccount = (payload: Account) => {
         ? prev.userAbstraction
         : UserAbstractionResp.default,
       userAccountHistory: sameAccount ? prev.userAccountHistory : [],
+      hiddenLocalFundingHistory: sameAccount
+        ? prev.hiddenLocalFundingHistory
+        : [],
       localLoadingHistory: sameAccount ? prev.localLoadingHistory : [],
       // Fills are merged (not overwritten) on WS snapshots, so a stale
       // account's list must be cleared explicitly on switch.
@@ -1322,6 +1286,7 @@ const resetAccountState = () => {
     userAbstraction: UserAbstractionResp.default,
     userAbstractionOwnerAddress: null,
     userAccountHistory: [],
+    hiddenLocalFundingHistory: [],
     localLoadingHistory: [],
     userFills: [],
     perpFee: 0.00045,
@@ -1523,9 +1488,13 @@ export const confirmPerpsFundingOperations = (
     const localLoadingHistory = prev.localLoadingHistory.filter(
       item => !item.operationId || !operationIdSet.has(item.operationId),
     );
-    return localLoadingHistory.length === prev.localLoadingHistory.length
+    const hiddenLocalFundingHistory = prev.hiddenLocalFundingHistory.filter(
+      item => !item.operationId || !operationIdSet.has(item.operationId),
+    );
+    return localLoadingHistory.length === prev.localLoadingHistory.length &&
+      hiddenLocalFundingHistory.length === prev.hiddenLocalFundingHistory.length
       ? prev
-      : { ...prev, localLoadingHistory };
+      : { ...prev, hiddenLocalFundingHistory, localLoadingHistory };
   });
   confirmations.forEach(confirmation => {
     void confirmPerpsFundingJournalEntry(confirmation);
@@ -1549,7 +1518,10 @@ export const reconcilePerpsFundingHistoryObservation = ({
   const now = Date.now();
   setPerpsState(prev => {
     const reconciled = reconcilePerpsFundingHistory({
-      localHistory: localHistory ?? prev.localLoadingHistory,
+      localHistory: localHistory ?? [
+        ...prev.localLoadingHistory,
+        ...prev.hiddenLocalFundingHistory,
+      ],
       now,
       observation,
       remoteHistory: confirmedHistory,
@@ -1563,6 +1535,7 @@ export const reconcilePerpsFundingHistoryObservation = ({
         : prev.userAccountHistory;
     return {
       ...prev,
+      hiddenLocalFundingHistory: reconciled.hiddenLocal,
       localLoadingHistory: reconciled.local,
       userAccountHistory,
     };
@@ -1895,38 +1868,30 @@ export const subscribeToUserData = (account: Account) => {
       ) {
         return;
       }
-      // The ordinary WS payload is an invalidation signal only. It omits the
-      // frontend parent/child metadata required to distinguish position TP/SL
-      // from attached TP/SL belonging to an unfilled parent order.
+      // Bucket by dex so a single-dex HTTP refresh can overwrite just its
+      // bucket without losing other dexes' orders.
       const marketDataMap = perpsStore.getState().marketDataMap;
-      const wsBuckets = new Map<string, OpenOrder[]>();
+      const buckets = new Map<string, OpenOrder[]>();
       for (const order of orders) {
-        const dex = getWsOpenOrdersDex(order, marketDataMap);
-        const bucket = wsBuckets.get(dex);
-        if (bucket) {
-          bucket.push(order);
+        const dexName = marketDataMap[order.coin]?.dexId ?? '';
+        const list = buckets.get(dexName);
+        if (list) {
+          list.push(order);
         } else {
-          wsBuckets.set(dex, [order]);
+          buckets.set(dexName, [order]);
         }
       }
-      const knownDexes = new Set([
-        ...dexOpenOrdersCache.keys(),
-        ...wsOpenOrdersFingerprintByDex.keys(),
-        ...wsBuckets.keys(),
-      ]);
-      const affectedDexes = new Set<string>();
-      for (const dex of knownDexes) {
-        const fingerprint = getWsOpenOrdersFingerprint(
-          wsBuckets.get(dex) ?? [],
-        );
-        if (wsOpenOrdersFingerprintByDex.get(dex) !== fingerprint) {
-          affectedDexes.add(dex);
-        }
-        wsOpenOrdersFingerprintByDex.set(dex, fingerprint);
+      dexOpenOrdersCache.clear();
+      for (const [dexName, list] of buckets) {
+        dexOpenOrdersCache.set(dexName, list);
       }
-      if (affectedDexes.size > 0) {
-        openOrdersInvalidationCoordinator.invalidate(address, affectedDexes);
-      }
+
+      setPerpsState(prev =>
+        prev.currentPerpsAccount &&
+        isSameAddress(prev.currentPerpsAccount.address, address)
+          ? { ...prev, isOpenOrdersReady: true, openOrders: orders }
+          : prev,
+      );
     },
   );
 
@@ -2107,10 +2072,7 @@ export const fetchSpotStateHttp = async (expectedAddress?: string) => {
 const fetchAndCacheOpenOrdersForDex = async (
   dex: string,
   expectedAddress: string,
-  expectedGeneration = openOrdersInvalidationCoordinator.getGeneration(),
 ): Promise<boolean> => {
-  const revision = (dexOpenOrdersRequestRevision.get(dex) ?? 0) + 1;
-  dexOpenOrdersRequestRevision.set(dex, revision);
   const sdk = apisPerps.getPerpsSDK();
   let orders: OpenOrder[];
   try {
@@ -2122,11 +2084,7 @@ const fetchAndCacheOpenOrdersForDex = async (
     console.error('[fetchPositionOpenOrdersHttp] failed', dex, e);
     return false;
   }
-  if (
-    expectedGeneration !== openOrdersInvalidationCoordinator.getGeneration() ||
-    dexOpenOrdersRequestRevision.get(dex) !== revision ||
-    !isCurrentPerpsAccountAddress(expectedAddress)
-  ) {
+  if (!isCurrentPerpsAccountAddress(expectedAddress)) {
     return false;
   }
   dexOpenOrdersCache.set(dex, orders);
@@ -2153,15 +2111,8 @@ const flushAggregatedOpenOrders = (
   );
 };
 
-openOrdersInvalidationCoordinator =
-  createPerpsOpenOrdersInvalidationCoordinator({
-    fetchDex: fetchAndCacheOpenOrdersForDex,
-    flush: address => flushAggregatedOpenOrders(address, true),
-    isCurrentAddress: isCurrentPerpsAccountAddress,
-  });
-
-// No server-side time guard for frontendOpenOrders. Per-dex request revisions
-// prevent an older HTTP response from overwriting a newer authoritative one.
+// No server-side time guard for openOrders: callers fire this after the
+// SDK has confirmed the mutating action, and WS reconciles any drift quickly.
 export const fetchPositionOpenOrdersHttp = async (dex: string) => {
   const account = perpsStore.getState().currentPerpsAccount;
   if (!account?.address) {
@@ -2429,13 +2380,21 @@ export const usePerpsStore = () => {
       const now = Date.now();
       setPerpsState(prev => {
         if (isReset) {
-          return { ...prev, localLoadingHistory: payload };
+          return {
+            ...prev,
+            hiddenLocalFundingHistory: [],
+            localLoadingHistory: payload,
+          };
         }
         // A ledger event may arrive before the signing flow persists its local
         // pending item. Re-run the same exact-first/baseline reconciliation so
         // the already-settled operation is never reinserted as pending.
         const reconciled = reconcilePerpsFundingHistory({
-          localHistory: [...payload, ...prev.localLoadingHistory],
+          localHistory: [
+            ...payload,
+            ...prev.localLoadingHistory,
+            ...prev.hiddenLocalFundingHistory,
+          ],
           now,
           observation: 'baseline',
           remoteHistory: prev.userAccountHistory,
@@ -2443,6 +2402,7 @@ export const usePerpsStore = () => {
         confirmations = reconciled.confirmations;
         return {
           ...prev,
+          hiddenLocalFundingHistory: reconciled.hiddenLocal,
           localLoadingHistory: reconciled.local,
           userAccountHistory: reconciled.history,
         };
@@ -2479,7 +2439,6 @@ export const usePerpsStore = () => {
     // the previous account's sub-dex data still in the cache.
     if (!canReuseSubscription) {
       dexClearinghouseStatesCache.clear();
-      resetOpenOrdersInvalidation();
       dexOpenOrdersCache.clear();
     }
     apisPerps.setPerpsCurrentAccount(account);
@@ -2518,6 +2477,7 @@ export const usePerpsStore = () => {
           ? prev.userAbstractionOwnerAddress
           : null,
         localLoadingHistory: [],
+        hiddenLocalFundingHistory: [],
         userFills: sameAccount ? prev.userFills : [],
       };
     });

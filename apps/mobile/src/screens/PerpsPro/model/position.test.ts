@@ -115,9 +115,11 @@ describe('Perps Pro position model', () => {
     });
   });
 
-  it('collects active position and fixed-size TP/SL but excludes nested pending children', () => {
+  it('collects active position TP/SL but excludes children-first pending duplicates', () => {
     const orders = [
       makeOrder({ oid: 3, orderType: 'Stop Market', triggerPx: '50000' }),
+      makeOrder({ oid: 1, triggerPx: '70000' }),
+      makeOrder({ oid: 2, triggerPx: '65000' }),
       makeOrder({
         children: [
           makeOrder({ oid: 1, triggerPx: '70000' }),
