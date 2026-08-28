@@ -28,9 +28,17 @@ function loadPerpsModule({ isUnlocked = true }: { isUnlocked?: boolean } = {}) {
   const mockSetSelectedKlineInterval = jest.fn();
   const mockSetSendApproveAfterDeposit = jest.fn();
   const mockUpdateAgentWalletPreference = jest.fn();
+  const mockInstallPerpsSdkTimeoutReport = jest.fn();
+  const mockAttachPerpsWsReconnectReport = jest.fn();
 
   jest.doMock('@rabby-wallet/hyperliquid-sdk', () => ({
     HyperliquidSDK: mockHyperliquidSDK,
+  }));
+  // Covered by perpsSdkNetworkReport.test.ts; the fake SDK above has no
+  // HttpClient / ws event API for the real module to hook into.
+  jest.doMock('./perpsSdkNetworkReport', () => ({
+    installPerpsSdkTimeoutReport: mockInstallPerpsSdkTimeoutReport,
+    attachPerpsWsReconnectReport: mockAttachPerpsWsReconnectReport,
   }));
   jest.doMock('@/core/apis/lock', () => ({
     isUnlocked: (...args: unknown[]) => mockIsUnlocked(...args),
@@ -66,10 +74,12 @@ function loadPerpsModule({ isUnlocked = true }: { isUnlocked?: boolean } = {}) {
   return {
     apisPerps,
     mocks: {
+      mockAttachPerpsWsReconnectReport,
       mockCreateAgentWallet,
       mockDisconnect,
       mockGetAgentWallet,
       mockHyperliquidSDK,
+      mockInstallPerpsSdkTimeoutReport,
       mockIsUnlocked,
     },
   };
@@ -92,6 +102,10 @@ describe('core/apis/perps', () => {
       isTestnet: false,
       timeout: 10000,
     });
+    expect(mocks.mockInstallPerpsSdkTimeoutReport).toHaveBeenCalledTimes(1);
+    expect(mocks.mockAttachPerpsWsReconnectReport).toHaveBeenCalledWith(
+      firstSDK.ws,
+    );
 
     apisPerps.destroyPerpsSDK();
     expect(mocks.mockDisconnect).toHaveBeenCalledTimes(1);
@@ -99,6 +113,12 @@ describe('core/apis/perps', () => {
     const recreatedSDK = apisPerps.getPerpsSDK();
     expect(recreatedSDK).not.toBe(firstSDK);
     expect(mocks.mockHyperliquidSDK).toHaveBeenCalledTimes(2);
+    // A rebuilt SDK owns a fresh WebSocketClient, so the outage listener must
+    // be attached again.
+    expect(mocks.mockAttachPerpsWsReconnectReport).toHaveBeenCalledTimes(2);
+    expect(mocks.mockAttachPerpsWsReconnectReport).toHaveBeenLastCalledWith(
+      recreatedSDK.ws,
+    );
   });
 
   it('requires an unlocked wallet before creating an agent wallet', async () => {
