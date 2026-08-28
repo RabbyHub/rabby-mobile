@@ -160,6 +160,7 @@ export const ImportSeedPhraseScreen = () => {
 
   React.useEffect(() => {
     if (scanner.text) {
+      setError(undefined);
       setMnemonics(scanner.text);
       scanner.clear();
     }

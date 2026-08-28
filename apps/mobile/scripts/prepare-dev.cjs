@@ -103,6 +103,10 @@ function run(command, args, options = {}) {
     cwd: options.cwd || MOBILE_DIR,
     env: process.env,
     stdio: 'inherit',
+    // Windows requires shell to execute .cmd files (Node CVE-2024-27980 fix)
+    shell:
+      process.platform === 'win32' &&
+      path.extname(command).toLowerCase() === '.cmd',
   });
 
   if (result.error) {

@@ -32,6 +32,7 @@ import {
   type KeychainBusinessApi,
   type KeychainBusinessRequestResult,
   type KeychainDebugState,
+  type KeychainEntryState,
   type KeychainSupportedBiometryType,
   type SecureKeyChainInstance,
 } from './keychainCommon';
@@ -63,6 +64,7 @@ export {
   type KeychainBusinessApi,
   type KeychainBusinessRequestResult,
   type KeychainDebugState,
+  type KeychainEntryState,
   type KeychainSupportedBiometryType,
   type SecureKeyChainInstance,
 };
@@ -305,6 +307,10 @@ export const isPasscodeAuthAvailable = () =>
 export const getKeychainDebugState = (
   ...args: Parameters<typeof apisKeychainV8_2_0.getKeychainDebugState>
 ) => getCurrentKeychainApi().getKeychainDebugState(...args);
+
+export const getKeychainEntryState = (
+  ...args: Parameters<typeof apisKeychainV8_2_0.getKeychainEntryState>
+) => getCurrentKeychainApi().getKeychainEntryState(...args);
 
 export const debugRemoveCurrentCipherStorageMarker = (
   ...args: Parameters<

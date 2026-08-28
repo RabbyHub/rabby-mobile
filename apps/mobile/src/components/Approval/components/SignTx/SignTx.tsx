@@ -7,9 +7,9 @@ import { intToHex } from '@/utils/number';
 import {
   calcMaxPriorityFee,
   validateGasPriceRange,
-  convertLegacyTo1559,
   is7702Tx,
 } from '@/utils/transaction';
+import { applySelectedGasToTx } from '@/utils/transactionGas';
 import type { Chain } from '@/constant/chains';
 import {
   KEYRING_CATEGORY_MAP,
@@ -150,6 +150,7 @@ import {
   isTempoChain,
   listTempoFeeTokenOptionsFromCache,
   loadTempoFeeTokenOptionsState,
+  shouldUseTempoTransaction,
 } from '@/utils/tempo';
 import tokenListStore from '@/store/tokens';
 
@@ -1838,26 +1839,19 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
 
       setSelectedGas(gas);
       setSupport1559(is1559);
-      if (is1559) {
-        const is7702 = is7702Tx(tx as any);
-        setTx(
-          omit(
-            {
-              ...convertLegacyTo1559({
-                ...tx,
-                gasPrice: intToHex(gas.price),
-              }),
-              authorizationList: (tx as any).authorizationList,
-            },
-            is7702 ? [] : ['authorizationList'],
-          ) as any,
-        );
-      } else {
-        setTx({
-          ...tx,
+      setTx(prev =>
+        applySelectedGasToTx({
+          tx: prev,
           gasPrice: intToHex(gas.price),
-        });
-      }
+          support1559: is1559,
+          enable7702: is7702Tx(prev as any),
+          isTempoTransaction: shouldUseTempoTransaction({
+            tx: prev as unknown as Record<string, unknown>,
+            chainServerId: chain.serverId,
+            accountType: currentAccount.type,
+          }),
+        }),
+      );
       setInited(true);
     } catch (e: any) {
       console.error(e);

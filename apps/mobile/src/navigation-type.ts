@@ -181,6 +181,7 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevUIScreenContainerShowCase]?: {};
   [RootNames.DevUIDapps]?: {};
   [RootNames.DevDataSQLite]?: {};
+  [RootNames.DevWatchAddressFixtureImport]?: {};
   [RootNames.DevDataKeychain]?: {};
   [RootNames.DevDataKeyringVault]?: {};
   [RootNames.DevDataContactService]?: {};
@@ -191,7 +192,9 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevCapabilityFile]?: {
     tab?: 'overview' | 'debug';
   };
-  [RootNames.DevSwitches]?: {};
+  [RootNames.DevSwitches]?: {
+    appLaunchLock?: boolean;
+  };
   [RootNames.DevPerf]?: {};
   [RootNames.DebugLogViewer]?: {};
   [RootNames.StartupPerformanceLogViewer]?: {};
