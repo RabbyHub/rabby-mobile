@@ -338,6 +338,7 @@ export const usePerpsProInfoPanel = (
 
   return {
     account,
+    currentAccount: facts.currentAccount,
     accountIdentity: facts.currentAccount
       ? `${facts.currentAccount.address.toLowerCase()}:${
           facts.currentAccount.type
@@ -376,5 +377,7 @@ export const usePerpsProInfoPanel = (
     setHideOtherOpenOrderSymbols,
     setHideOtherPositionSymbols,
     setOpenOrderCategory,
+    userAbstraction: facts.userAbstraction,
+    userAbstractionReady: facts.userAbstractionReady,
   };
 };

@@ -457,7 +457,7 @@ export const usePerpsPosition = () => {
 
   const handleStableCoinOrder = useMemoizedFn(
     async (params: PerpsStableCoinOrderParams) =>
-      executePerpsStableCoinOrder(params),
+      executePerpsStableCoinOrder(currentPerpsAccount, params),
   );
 
   // One multiOrder of reduce-only IOC limits — one signature for all positions.

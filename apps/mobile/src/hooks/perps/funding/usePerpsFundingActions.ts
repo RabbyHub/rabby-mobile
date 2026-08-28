@@ -43,7 +43,8 @@ export const usePerpsFundingActions = () => {
   );
 
   const handleStableCoinOrder = useMemoizedFn(
-    (params: PerpsStableCoinOrderParams) => executePerpsStableCoinOrder(params),
+    (params: PerpsStableCoinOrderParams) =>
+      executePerpsStableCoinOrder(currentPerpsAccount, params),
   );
 
   return {

@@ -14,7 +14,6 @@ import { sendRequest } from '@/core/apis/sendRequest';
 import type { Account } from '@/core/startupServices/preference';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { UserAbstraction } from '@rabby-wallet/hyperliquid-sdk';
 import { formatSpotState } from '@/utils/perps';
 import { useMemoizedFn } from 'ahooks';
 import { useCallback, useMemo, useRef } from 'react';
@@ -46,11 +45,9 @@ import { executePerpsWithdraw } from './funding/perpsWithdraw';
 import { isSamePerpsFundingAccount } from './funding/accountGuard';
 import { ensurePerpsActionApproval } from './actions/perpsActionApproval';
 import { setPerpsAgentUnifiedAccount } from './actions/setAgentUnifiedAccount';
+import { executeEnablePerpsUnifiedAccount } from './actions/enableUnifiedAccount';
 
-type SignActionType =
-  | 'approveAgent'
-  | 'approveBuilderFee'
-  | 'userSetAbstraction';
+type SignActionType = 'approveAgent' | 'approveBuilderFee';
 
 interface SignAction {
   action: any;
@@ -799,45 +796,7 @@ export const usePerpsState = (
       return false;
     }
     try {
-      const sdk = apisPerps.getPerpsSDK();
-
-      // Step 1: Prepare typed data for master wallet signing
-      const prepared = sdk.exchange?.prepareUserSetAbstraction({
-        user: account.address,
-        abstraction: UserAbstraction.UNIFIED_ACCOUNT,
-      });
-      if (!prepared) {
-        console.error('Failed to prepare unified account request');
-        return false;
-      }
-
-      // Step 2: Sign with master wallet
-      const signAction: SignAction = {
-        action: {
-          domain: prepared.domain,
-          types: prepared.types,
-          primaryType: prepared.primaryType,
-          message: prepared.message,
-        },
-        type: 'userSetAbstraction',
-        signature: '',
-      };
-      await executeSignatures([signAction], account);
-
-      // Step 3: Send signed request
-      const response = await sdk.exchange?.sendUserSetAbstraction({
-        action: prepared.message,
-        nonce: prepared.nonce,
-        signature: signAction.signature,
-      });
-      if (response?.status !== 'ok') {
-        throw new Error('Hyperliquid rejected Unified Account configuration');
-      }
-
-      // Refresh account state
-      setTimeout(() => {
-        void fetchUserAbstraction(account).catch(() => undefined);
-      }, 100);
+      await executeEnablePerpsUnifiedAccount(account);
       showToast('Unified Account enabled', 'success');
       return true;
     } catch (error: any) {

@@ -22,6 +22,8 @@ const mockOrderBookRender = jest.fn();
 const mockOrderBookProps = jest.fn();
 const mockTradeFormProps = jest.fn();
 const mockFundingOverlayProps = jest.fn();
+const mockEnableUnifiedProps = jest.fn();
+const mockExecuteEnableUnified = jest.fn(async () => undefined);
 const mockConfirmCancelAll = jest.fn();
 const mockConfirmCancelOrder = jest.fn();
 const mockRequestCloseAll = jest.fn();
@@ -163,6 +165,32 @@ jest.mock('@/hooks/perps/subscriptions/useActiveAssetSubscription', () => ({
 jest.mock('@/hooks/perps/funding/usePerpsFundingHistoryJournal', () => ({
   usePerpsFundingHistoryJournal: jest.fn(),
 }));
+
+jest.mock('@/hooks/perps/actions/actionError', () => ({
+  isPerpsActionUserCancelled: () => false,
+}));
+
+jest.mock('@/hooks/perps/actions/enableUnifiedAccount', () => ({
+  executeEnablePerpsUnifiedAccount: (...args: unknown[]) =>
+    mockExecuteEnableUnified(...args),
+  isPerpsUnifiedCollateralMode: (value: string) =>
+    value === 'unifiedAccount' || value === 'portfolioMargin',
+}));
+
+jest.mock('@/hooks/perps/showToast', () => ({ showToast: jest.fn() }));
+
+jest.mock('@/screens/Perps/components/EnableUnifiedAccountPopup', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    EnableUnifiedAccountPopup: (props: object) => {
+      mockEnableUnifiedProps(props);
+      return ReactModule.createElement(View, {
+        testID: 'enable-unified-account-popup',
+      });
+    },
+  };
+});
 
 jest.mock('@/hooks/navigation', () => ({
   useRabbyAppNavigation: () => ({ setOptions: jest.fn() }),
@@ -696,6 +724,7 @@ const createInfoState = (overrides: Record<string, unknown> = {}) => {
     allOpenOrdersCount: 0,
     allPositionsCount: 0,
     allPositionsByCoin: new Map(),
+    currentAccount: null,
     hideOtherOpenOrderSymbols: false,
     hideOtherPositionSymbols: false,
     openOrderCategory: 'basic',
@@ -715,6 +744,8 @@ const createInfoState = (overrides: Record<string, unknown> = {}) => {
     setHideOtherOpenOrderSymbols: jest.fn(),
     setHideOtherPositionSymbols: jest.fn(),
     setOpenOrderCategory: jest.fn(),
+    userAbstraction: 'default',
+    userAbstractionReady: false,
     ...overrides,
   };
 };
@@ -1002,6 +1033,9 @@ describe('PerpsProScene market loading states', () => {
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
         account: { assets: [], mode: 'unified' },
+        currentAccount: { address: '0x1', type: 'PrivateKeyring' },
+        userAbstraction: 'unifiedAccount',
+        userAbstractionReady: true,
       }),
     );
     mockUsePerpsProScene.mockReturnValue(
@@ -1024,6 +1058,49 @@ describe('PerpsProScene market loading states', () => {
       addFundsMode: 'swap',
     });
     act(() => mockTradeFormProps.mock.lastCall?.[0].onAddFunds());
+    expect(mockFundingOverlayProps.mock.lastCall?.[0]).toMatchObject({
+      mode: 'swap',
+      targetAsset: 'USDE',
+    });
+  });
+
+  it('prompts a standard account to enable Unified Account before USDE Swap', async () => {
+    const account = { address: '0x1', type: 'PrivateKeyring' };
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        currentAccount: account,
+        userAbstraction: 'default',
+        userAbstractionReady: true,
+      }),
+    );
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'DOGE-USDE',
+          marketKey: 'hyperliquid::DOGE-USDE',
+          marketData: { maxLeverage: 10, onlyIsolated: false },
+          quoteAsset: 'USDE',
+        },
+        tradeConfigurationReady: true,
+      }),
+    );
+
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    expect(mockTradeFormProps.mock.lastCall?.[0]).toMatchObject({
+      addFundsMode: 'swap',
+    });
+    act(() => mockTradeFormProps.mock.lastCall?.[0].onAddFunds());
+    expect(mockEnableUnifiedProps.mock.lastCall?.[0]).toMatchObject({
+      visible: true,
+    });
+
+    await act(async () => {
+      await mockEnableUnifiedProps.mock.lastCall?.[0].onConfirm();
+    });
+    expect(mockExecuteEnableUnified).toHaveBeenCalledWith(account);
     expect(mockFundingOverlayProps.mock.lastCall?.[0]).toMatchObject({
       mode: 'swap',
       targetAsset: 'USDE',

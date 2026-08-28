@@ -3,12 +3,19 @@ import type { PerpsQuoteAsset } from '@/constant/perps';
 import type { PerpsProInfoTab } from '@/core/services/perpsService';
 import { useTheme2024 } from '@/hooks/theme';
 import { useActiveAssetSubscription } from '@/hooks/perps/subscriptions/useActiveAssetSubscription';
+import { isPerpsActionUserCancelled } from '@/hooks/perps/actions/actionError';
+import {
+  executeEnablePerpsUnifiedAccount,
+  isPerpsUnifiedCollateralMode,
+} from '@/hooks/perps/actions/enableUnifiedAccount';
+import { showToast } from '@/hooks/perps/showToast';
 import {
   PERPS_REGION_ALERT_HEADER_SPACING,
   PERPS_REGION_ALERT_HORIZONTAL_MARGIN,
   PerpsRegionAlert,
   type PerpsRegionAlertLayout,
 } from '@/screens/Perps/components/PerpsRegionAlert';
+import { EnableUnifiedAccountPopup } from '@/screens/Perps/components/EnableUnifiedAccountPopup';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, {
   useCallback,
@@ -292,6 +299,8 @@ export const PerpsProScene: React.FC<{
   );
   const [fundingOverlay, setFundingOverlay] =
     useState<FundingOverlayState | null>(null);
+  const [unifiedEnableTarget, setUnifiedEnableTarget] =
+    useState<PerpsQuoteAsset | null>(null);
   const [mainColumnHeight, setMainColumnHeight] = useState(
     PERPS_PRO_MAIN_COLUMN_HEIGHT,
   );
@@ -309,6 +318,7 @@ export const PerpsProScene: React.FC<{
     }
     fundingAccountIdentityRef.current = info.accountIdentity;
     setFundingOverlay(null);
+    setUnifiedEnableTarget(null);
   }, [info.accountIdentity]);
   const dismissKeyboardThen = usePerpsProDismissKeyboard();
   const getOrderBookPriceIntent = trade.getOrderBookPriceIntent;
@@ -370,25 +380,60 @@ export const PerpsProScene: React.FC<{
   const tradeAddFundsAction = useMemo(
     () =>
       resolvePerpsProTradeAddFundsAction({
-        accountMode: info.account.mode,
         quoteAsset: scene.currentMarket?.quoteAsset ?? 'USDC',
       }),
-    [info.account.mode, scene.currentMarket?.quoteAsset],
+    [scene.currentMarket?.quoteAsset],
   );
   const openTradeAddFunds = useCallback(() => {
     if (tradeAddFundsAction.mode === 'swap') {
-      setFundingOverlay({
-        depositVisible: false,
-        mode: 'swap',
-        targetAsset: tradeAddFundsAction.targetAsset,
-      });
+      if (!info.currentAccount || !info.userAbstractionReady) {
+        return;
+      }
+      if (!isPerpsUnifiedCollateralMode(info.userAbstraction)) {
+        setUnifiedEnableTarget(tradeAddFundsAction.targetAsset);
+        return;
+      }
+      openSwap(tradeAddFundsAction.targetAsset);
       return;
     }
     setFundingOverlay({
       mode: 'deposit',
       targetAsset: tradeAddFundsAction.targetAsset,
     });
-  }, [tradeAddFundsAction]);
+  }, [
+    info.currentAccount,
+    info.userAbstraction,
+    info.userAbstractionReady,
+    openSwap,
+    tradeAddFundsAction,
+  ]);
+  const closeUnifiedEnable = useCallback(() => {
+    setUnifiedEnableTarget(null);
+  }, []);
+  const confirmUnifiedEnable = useCallback(async () => {
+    const account = info.currentAccount;
+    const targetAsset = unifiedEnableTarget;
+    if (!account || !targetAsset) {
+      setUnifiedEnableTarget(null);
+      return;
+    }
+    try {
+      await executeEnablePerpsUnifiedAccount(account);
+      setUnifiedEnableTarget(null);
+      showToast('Unified Account enabled', 'success');
+      openSwap(targetAsset);
+    } catch (error) {
+      if (isPerpsActionUserCancelled(error)) {
+        return;
+      }
+      showToast(
+        error instanceof Error
+          ? error.message
+          : 'Failed to enable Unified Account',
+        'error',
+      );
+    }
+  }, [info.currentAccount, openSwap, unifiedEnableTarget]);
   const openMarketSelector = useCallback(
     () => dismissKeyboardThen(() => marketSelectorRef.current?.present()),
     [dismissKeyboardThen],
@@ -1211,6 +1256,11 @@ export const PerpsProScene: React.FC<{
         ref={marketSelectorRef}
       />
       <PerpsProAccountSelectorLayer />
+      <EnableUnifiedAccountPopup
+        visible={!!unifiedEnableTarget}
+        onClose={closeUnifiedEnable}
+        onConfirm={confirmUnifiedEnable}
+      />
       {scene.currentMarket ? (
         <PerpsProSheetNavigationBoundary
           active={klineOpen}
