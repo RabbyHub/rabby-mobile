@@ -13,18 +13,20 @@ import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 const mockHandleDeposit = jest.fn();
 const mockHandleStableCoinOrder = jest.fn();
 const mockHandleWithdraw = jest.fn(async () => true);
+const mockUsePerpsFundingActions = jest.fn((_options?: unknown) => ({
+  currentPerpsAccount: { address: '0x1', type: 'SimpleKeyring' },
+  handleDeposit: mockHandleDeposit,
+  handleStableCoinOrder: mockHandleStableCoinOrder,
+  handleWithdraw: mockHandleWithdraw,
+}));
 let mockDepositPopupProps: Record<string, unknown> | null = null;
 let mockSwapPopupProps: Record<string, unknown> | null = null;
 const mockWithdrawBalanceStore = createStore(() => ({ availableBalance: 0 }));
 const mockWithdrawBalanceRenders: number[] = [];
 
 jest.mock('@/hooks/perps/funding/usePerpsFundingActions', () => ({
-  usePerpsFundingActions: () => ({
-    currentPerpsAccount: { address: '0x1', type: 'SimpleKeyring' },
-    handleDeposit: mockHandleDeposit,
-    handleStableCoinOrder: mockHandleStableCoinOrder,
-    handleWithdraw: mockHandleWithdraw,
-  }),
+  usePerpsFundingActions: (...args: unknown[]) =>
+    mockUsePerpsFundingActions(...args),
 }));
 
 jest.mock('@/screens/Perps/components/PerpsDepositPopup', () => {
@@ -152,14 +154,23 @@ describe('PerpsProFundingOverlay', () => {
     expect(mockWithdrawBalanceRenders[0]).toBe(42);
   });
 
-  it('also closes after a handled withdraw failure, matching Simple', async () => {
+  it('opts Pro into live mode validation', () => {
+    renderOverlay('withdraw');
+
+    expect(mockUsePerpsFundingActions).toHaveBeenCalledWith({
+      withdrawModeValidation: 'live',
+    });
+  });
+
+  it('keeps the Pro withdraw popup open after a handled failure', async () => {
     mockHandleWithdraw.mockResolvedValueOnce(false);
     const onClose = jest.fn();
     renderOverlay('withdraw', onClose);
 
     fireEvent.press(screen.getByTestId('withdraw-popup'));
 
-    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(mockHandleWithdraw).toHaveBeenCalledTimes(1));
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it('opens USDC as an editable Pro-only swap source', () => {

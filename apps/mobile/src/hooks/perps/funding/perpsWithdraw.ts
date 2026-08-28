@@ -4,6 +4,7 @@ import {
 } from '@/constant/perps';
 import { apisPerps } from '@/core/apis/perps';
 import type { Account } from '@/core/startupServices/preference';
+import { UserAbstractionResp } from '@rabby-wallet/hyperliquid-sdk';
 
 import { showToast } from '../showToast';
 import {
@@ -24,9 +25,27 @@ interface ExecutePerpsWithdrawParams {
   isAccountCurrent?: (account: Account) => boolean;
   isHypeWithdraw?: boolean;
   isSpotCollateralMode?: boolean;
+  /**
+   * Pro-only action guard. Legacy/Simple callers omit it and preserve the
+   * existing cached-mode behavior.
+   */
+  queryLiveUserAbstraction?: () => Promise<UserAbstractionResp | null>;
   targetAsset?: PerpsWithdrawTarget;
   setLocalLoadingHistory: SetLocalLoadingHistory;
 }
+
+const isSpotCollateralUserAbstraction = (value: UserAbstractionResp) =>
+  value === UserAbstractionResp.unifiedAccount ||
+  value === UserAbstractionResp.portfolioMargin;
+
+const assertLiveUserAbstraction = (
+  value: UserAbstractionResp | null,
+): UserAbstractionResp => {
+  if (value === null) {
+    throw new Error('Withdraw failed');
+  }
+  return value;
+};
 
 export const executePerpsWithdraw = async ({
   account,
@@ -34,6 +53,7 @@ export const executePerpsWithdraw = async ({
   isAccountCurrent,
   isHypeWithdraw = false,
   isSpotCollateralMode = false,
+  queryLiveUserAbstraction,
   targetAsset = 'USDC',
   setLocalLoadingHistory,
 }: ExecutePerpsWithdrawParams): Promise<boolean> => {
@@ -59,13 +79,19 @@ export const executePerpsWithdraw = async ({
 
     const tokenId = HYPE_SEND_ASSET_TOKEN_MAP[targetAsset];
     const hyperDestination = HYPE_EVM_BRIDGE_ADDRESS_MAP[targetAsset];
+    const preparedUserAbstraction = queryLiveUserAbstraction
+      ? assertLiveUserAbstraction(await queryLiveUserAbstraction())
+      : null;
+    const resolvedSpotCollateralMode = preparedUserAbstraction
+      ? isSpotCollateralUserAbstraction(preparedUserAbstraction)
+      : isSpotCollateralMode;
 
     const action = isHypeWithdraw
       ? sdk.exchange.prepareSendAsset({
           destination: hyperDestination,
           amount: amount.toString(),
           token: tokenId,
-          sourceDex: isSpotCollateralMode ? 'spot' : '',
+          sourceDex: resolvedSpotCollateralMode ? 'spot' : '',
           destinationDex: 'spot',
         })
       : sdk.exchange.prepareWithdraw({
@@ -84,6 +110,15 @@ export const executePerpsWithdraw = async ({
       action,
       miniSignError: new Error('Withdraw failed'),
     });
+
+    if (queryLiveUserAbstraction) {
+      const submissionUserAbstraction = assertLiveUserAbstraction(
+        await queryLiveUserAbstraction(),
+      );
+      if (submissionUserAbstraction !== preparedUserAbstraction) {
+        throw new Error('Withdraw failed');
+      }
+    }
 
     const res = isHypeWithdraw
       ? await sdk.exchange.sendSendAsset({
