@@ -197,17 +197,20 @@ public class KeychainModule extends ReactContextBaseJavaModule {
     return instance;
   }
 
-  /** cipher (crypto api) warming up logic. force java load classes and intializations. */
+  /**
+   * Warm provider classes without mutating the Android KeyStore.
+   *
+   * Generating or probing a synthetic secure-hardware key here serializes with
+   * the first real credential read on some devices. That makes the first
+   * biometric prompt wait for an unrelated background key-generation request.
+   */
   private void internalWarmingBestCipher() {
     try {
       final long startTime = System.nanoTime();
 
       Log.v(KEYCHAIN_MODULE, "warming up started at " + startTime);
       final CipherStorageBase best = (CipherStorageBase) getCipherStorageForCurrentAPILevel();
-      final Cipher instance = best.getCachedInstance();
-      final boolean isSecure = best.supportsSecureHardware();
-      final SecurityLevel requiredLevel = isSecure ? SecurityLevel.SECURE_HARDWARE : SecurityLevel.SECURE_SOFTWARE;
-      best.generateKeyAndStoreUnderAlias(WARMING_UP_ALIAS, requiredLevel, false);
+      best.getCachedInstance();
       best.getKeyStoreAndLoad();
 
       Log.v(KEYCHAIN_MODULE, "warming up takes: " +
@@ -606,6 +609,25 @@ public class KeychainModule extends ReactContextBaseJavaModule {
     } catch (Throwable fail) {
       Log.e(KEYCHAIN_MODULE, fail.getMessage(), fail);
 
+      promise.reject(Errors.E_UNKNOWN_ERROR, fail);
+    }
+  }
+
+  @ReactMethod
+  public void getGenericPasswordEntryStateForOptions(@Nullable final ReadableMap options,
+                                                     @NonNull final Promise promise) {
+    try {
+      final String service = getServiceOrDefault(options);
+      final PrefsStorage.DebugEntry entry = prefsStorage.getDebugEntry(service);
+      final WritableMap result = Arguments.createMap();
+
+      result.putString(Maps.SERVICE, entry.service);
+      result.putBoolean("hasEntry", entry.hasEntry);
+      result.putBoolean("hasUsername", entry.hasUsername);
+      result.putBoolean("hasPassword", entry.hasPassword);
+      promise.resolve(result);
+    } catch (Throwable fail) {
+      Log.e(KEYCHAIN_MODULE, fail.getMessage(), fail);
       promise.reject(Errors.E_UNKNOWN_ERROR, fail);
     }
   }
