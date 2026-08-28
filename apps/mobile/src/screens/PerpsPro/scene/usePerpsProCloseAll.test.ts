@@ -5,6 +5,7 @@ const mockExecute = jest.fn();
 const mockEnsureApproval = jest.fn();
 const mockGetState = jest.fn();
 const mockReportCloseAllHistory = jest.fn();
+const mockEnsureUnlock = jest.fn(async () => true);
 
 jest.mock('@/hooks/perps/actions/actionError', () => ({
   isPerpsActionUserCancelled: () => false,
@@ -25,6 +26,9 @@ jest.mock('@/hooks/perps/perpsActionError', () => ({
 jest.mock('@/hooks/perps/showToast', () => ({ showToast: jest.fn() }));
 jest.mock('@/hooks/perps/usePerpsStore', () => ({
   perpsStore: { getState: () => mockGetState() },
+}));
+jest.mock('@/utils/walletUnlock', () => ({
+  ensureWalletUnlockedForAction: () => mockEnsureUnlock(),
 }));
 jest.mock('@sentry/react-native', () => ({ captureException: jest.fn() }));
 jest.mock('react-i18next', () => ({
@@ -54,6 +58,31 @@ describe('usePerpsProCloseAll', () => {
     });
   });
 
+  it('finishes password unlock before mounting the native confirmation modal', async () => {
+    let resolveUnlock: ((value: boolean) => void) | undefined;
+    mockEnsureUnlock.mockReturnValueOnce(
+      new Promise(resolve => {
+        resolveUnlock = resolve;
+      }),
+    );
+    const hook = renderHook(() => usePerpsProCloseAll('account-a'));
+
+    act(() => {
+      void hook.result.current.requestCloseAll();
+    });
+
+    expect(hook.result.current.confirmation).toBeNull();
+    expect(mockBuildCommand).not.toHaveBeenCalled();
+
+    await act(async () => {
+      resolveUnlock?.(true);
+      await Promise.resolve();
+    });
+
+    expect(mockEnsureApproval).toHaveBeenCalledTimes(1);
+    expect(hook.result.current.confirmation).not.toBeNull();
+  });
+
   it('keeps the confirmation mounted and pending until execution and refresh settle', async () => {
     let resolveExecution: ((value: unknown) => void) | null = null;
     mockExecute.mockReturnValue(
@@ -63,9 +92,12 @@ describe('usePerpsProCloseAll', () => {
     );
     const hook = renderHook(() => usePerpsProCloseAll('account-a'));
 
-    act(() => hook.result.current.requestCloseAll());
+    await act(async () => hook.result.current.requestCloseAll());
     const confirmation = hook.result.current.confirmation;
     expect(confirmation).not.toBeNull();
+    expect(mockEnsureUnlock).toHaveBeenCalledTimes(1);
+    expect(mockEnsureApproval).toHaveBeenCalledTimes(1);
+    expect(mockBuildCommand).toHaveBeenCalledTimes(1);
 
     act(() => hook.result.current.confirmCloseAll());
     expect(hook.result.current.pending).toBe(true);
