@@ -25,35 +25,46 @@ interface Props {
   needToTokenMarketInfo?: boolean;
   isCustomTestnetToken?: boolean;
 }
+
+type GotoTokenDetailOptions = Pick<
+  Props,
+  'token' | 'type' | 'needToTokenMarketInfo' | 'isCustomTestnetToken'
+>;
+
+export const gotoTokenDetail = ({
+  token,
+  type,
+  needToTokenMarketInfo,
+  isCustomTestnetToken,
+}: GotoTokenDetailOptions) => {
+  Keyboard.dismiss();
+  const currentAccount = storeApiAccountsSwitcher.getSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  }).finalSceneCurrentAccount;
+  if (needToTokenMarketInfo) {
+    navigateDeprecated(RootNames.TokenMarketInfo, {
+      token: tokenItemToITokenItem(token, ''),
+      needUseCacheToken: true,
+      tokenSelectType: type,
+      account: currentAccount,
+    });
+    return;
+  }
+  navigateDeprecated(RootNames.TokenDetail, {
+    token: tokenItemToITokenItem(token, ''),
+    needUseCacheToken: true,
+    tokenSelectType: type,
+    account: currentAccount,
+    isCustomTestnetToken,
+  });
+};
+
 export const TokenItemContextMenu: React.FC<Props> = props => {
   const { children, token, type, needToTokenMarketInfo, isCustomTestnetToken } =
     props;
 
   const handlePress = () => {
     toggleUserTokenPinned(token);
-  };
-
-  const gotoTokenDetail = () => {
-    Keyboard.dismiss();
-    const currentAccount = storeApiAccountsSwitcher.getSceneAccountInfo({
-      forScene: 'MakeTransactionAbout',
-    }).finalSceneCurrentAccount;
-    if (needToTokenMarketInfo) {
-      navigateDeprecated(RootNames.TokenMarketInfo, {
-        token: tokenItemToITokenItem(token, ''),
-        needUseCacheToken: true,
-        tokenSelectType: type,
-        account: currentAccount,
-      });
-      return;
-    }
-    navigateDeprecated(RootNames.TokenDetail, {
-      token: tokenItemToITokenItem(token, ''),
-      needUseCacheToken: true,
-      tokenSelectType: type,
-      account: currentAccount,
-      isCustomTestnetToken,
-    });
   };
 
   const getMenuConfig = (): MenuConfig => {
@@ -87,7 +98,12 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
         key: 'detail',
         androidIconName: 'ic_rabby_menu_more',
         action() {
-          gotoTokenDetail();
+          gotoTokenDetail({
+            token,
+            type,
+            needToTokenMarketInfo,
+            isCustomTestnetToken,
+          });
         },
       },
     ];
