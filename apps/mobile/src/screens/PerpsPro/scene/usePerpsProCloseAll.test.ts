@@ -6,6 +6,7 @@ const mockEnsureApproval = jest.fn();
 const mockGetState = jest.fn();
 const mockReportCloseAllHistory = jest.fn();
 const mockEnsureUnlock = jest.fn(async () => true);
+const mockShowToast = jest.fn();
 
 jest.mock('@/hooks/perps/actions/actionError', () => ({
   isPerpsActionUserCancelled: () => false,
@@ -23,7 +24,9 @@ jest.mock('@/hooks/perps/perpsActionError', () => ({
   judgeIsBuilderFeeNeedApprove: () => false,
   judgeIsUserAgentIsExpired: async () => false,
 }));
-jest.mock('@/hooks/perps/showToast', () => ({ showToast: jest.fn() }));
+jest.mock('@/hooks/perps/showToast', () => ({
+  showToast: (...args: unknown[]) => mockShowToast(...args),
+}));
 jest.mock('@/hooks/perps/usePerpsStore', () => ({
   perpsStore: { getState: () => mockGetState() },
 }));
@@ -45,6 +48,7 @@ describe('usePerpsProCloseAll', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockBuildCommand.mockReturnValue({ type: 'closeAllPositions' });
+    mockExecute.mockResolvedValue({ confirmedFills: [], kind: 'success' });
     mockEnsureApproval.mockResolvedValue(undefined);
     mockGetState.mockReturnValue({
       currentClearinghouseState: {
@@ -98,6 +102,14 @@ describe('usePerpsProCloseAll', () => {
     expect(mockEnsureUnlock).toHaveBeenCalledTimes(1);
     expect(mockEnsureApproval).toHaveBeenCalledTimes(1);
     expect(mockBuildCommand).toHaveBeenCalledTimes(1);
+    expect(mockBuildCommand).toHaveBeenCalledWith(
+      expect.objectContaining({
+        address: '0x1111111111111111111111111111111111111111',
+      }),
+      expect.objectContaining({
+        assetPositions: [{ position: { szi: '1' } }],
+      }),
+    );
 
     act(() => hook.result.current.confirmCloseAll());
     expect(hook.result.current.pending).toBe(true);
@@ -135,6 +147,45 @@ describe('usePerpsProCloseAll', () => {
           size: '1',
         },
       ],
+    );
+  });
+
+  it('shows an authoritative server rejection instead of the generic close-all error', async () => {
+    mockExecute.mockResolvedValueOnce({
+      error: 'Order price too far from oracle',
+      failureReason: 'requestFailed',
+      kind: 'failed',
+    });
+    const hook = renderHook(() => usePerpsProCloseAll('account-a'));
+
+    await act(async () => hook.result.current.requestCloseAll());
+    await act(async () => {
+      hook.result.current.confirmCloseAll();
+      await Promise.resolve();
+    });
+
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'Order price too far from oracle',
+      'error',
+    );
+  });
+
+  it('uses the existing reconciliation guidance for an unknown transport outcome', async () => {
+    mockExecute.mockResolvedValueOnce({
+      error: 'Network request failed',
+      kind: 'unknownOutcome',
+    });
+    const hook = renderHook(() => usePerpsProCloseAll('account-a'));
+
+    await act(async () => hook.result.current.requestCloseAll());
+    await act(async () => {
+      hook.result.current.confirmCloseAll();
+      await Promise.resolve();
+    });
+
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.trade.unknownOutcome',
+      'error',
     );
   });
 });

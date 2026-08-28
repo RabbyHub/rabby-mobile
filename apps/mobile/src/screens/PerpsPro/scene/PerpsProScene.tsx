@@ -65,6 +65,7 @@ import { usePerpsProHeaderCollapse } from '../components/header/usePerpsProHeade
 import { PERPS_PRO_HEADER_HEIGHT } from '../components/header/constants';
 import { PerpsProInfoTabs } from '../components/info/PerpsProInfoTabs';
 import {
+  PERPS_PRO_INFO_TABS,
   PerpsProInfoPager,
   type PerpsProInfoPagerHandle,
 } from '../components/info/PerpsProInfoPager';
@@ -1057,10 +1058,15 @@ export const PerpsProScene: React.FC<{
   );
   const displayedInfoTab =
     requestedInfoTab ?? previewInfoTab ?? info.activeInfoTab;
-  // iOS can select the next native page before React has mounted a
-  // conditionally prepared FlatList. Keep all three native list refs stable so
-  // preparePages can apply the shared offset before the page becomes active.
-  const keepAllInfoTabListsMounted = Platform.OS === 'ios';
+  // Both native pagers can select or reattach a page before a conditionally
+  // prepared FlatList is ready. Keep all three list refs stable so preparePages
+  // can apply the shared offset before the page becomes active.
+  const keepAllInfoTabListsMounted = true;
+  // Android ViewPager2 otherwise uses its device-dependent RecyclerView cache.
+  // Retain this fixed three-page set to prevent a page from being rebound with
+  // native scrollY=0 while the shared scene offset still points at its lead-in.
+  const infoPagerOffscreenPageLimit =
+    Platform.OS === 'android' ? PERPS_PRO_INFO_TABS.length - 1 : undefined;
   const cancelInfoTabRequest = useCallback(() => {
     if (infoTabRequestFrameRef.current == null) {
       return;
@@ -1163,6 +1169,7 @@ export const PerpsProScene: React.FC<{
               getActiveScrollOffset={headerCollapse.getScrollOffset}
               keepAllTabsMounted={keepAllInfoTabListsMounted}
               nativeVerticalScrollEnabled={Platform.OS !== 'android'}
+              offscreenPageLimit={infoPagerOffscreenPageLimit}
               onActivateOffset={headerCollapse.syncScrollOffset}
               onActiveScroll={
                 Platform.OS === 'android' ? undefined : headerCollapse.onScroll

@@ -98,6 +98,7 @@ const renderPager = ({
   authorizeNativePageGestures = false,
   keepAllTabsMounted = false,
   nativeVerticalScrollEnabled = true,
+  offscreenPageLimit,
   onActivateOffset = jest.fn(),
   onPageDragStart = jest.fn(),
   onPagePreview = jest.fn(),
@@ -110,6 +111,7 @@ const renderPager = ({
   authorizeNativePageGestures?: boolean;
   keepAllTabsMounted?: boolean;
   nativeVerticalScrollEnabled?: boolean;
+  offscreenPageLimit?: number;
   onActivateOffset?: jest.Mock;
   onPageDragStart?: jest.Mock;
   onPagePreview?: jest.Mock;
@@ -131,6 +133,7 @@ const renderPager = ({
       getActiveScrollOffset={() => 500}
       keepAllTabsMounted={keepAllTabsMounted}
       nativeVerticalScrollEnabled={nativeVerticalScrollEnabled}
+      offscreenPageLimit={offscreenPageLimit}
       onActivateOffset={onActivateOffset}
       onActiveScroll={jest.fn()}
       onLayout={jest.fn()}
@@ -189,7 +192,7 @@ describe('PerpsProInfoPager', () => {
     });
   });
 
-  it('keeps every iOS list mounted so preparation cannot miss a detached target', () => {
+  it('keeps every list mounted so preparation cannot miss a detached target', () => {
     const scrollBridge = createScrollBridge();
     renderPager({ keepAllTabsMounted: true, scrollBridge });
 
@@ -211,7 +214,20 @@ describe('PerpsProInfoPager', () => {
     expect(scrollBridge.targets[2].ref).toHaveBeenCalledWith(expect.anything());
   });
 
-  it('keeps Android list virtualization while delegating vertical touch input', () => {
+  it('forwards Android native page retention without changing the default', () => {
+    const defaultPager = renderPager();
+    expect(
+      screen.getByTestId('perps-pro-info-pager').props.offscreenPageLimit,
+    ).toBeUndefined();
+    defaultPager.unmount();
+
+    renderPager({ offscreenPageLimit: 2 });
+    expect(
+      screen.getByTestId('perps-pro-info-pager').props.offscreenPageLimit,
+    ).toBe(2);
+  });
+
+  it('keeps adjacent-only mounting available while delegating vertical touch input', () => {
     const scrollBridge = createScrollBridge();
     renderPager({ nativeVerticalScrollEnabled: false, scrollBridge });
 

@@ -78,7 +78,6 @@ export const usePerpsProCloseAll = (accountIdentity: string) => {
         command: buildPerpsCloseAllPositionsCommand(
           requestedAccount,
           latestState.currentClearinghouseState,
-          latestState.openOrders,
         ),
       });
     } catch (error) {
@@ -122,6 +121,17 @@ export const usePerpsProCloseAll = (accountIdentity: string) => {
           );
           return;
         }
+        if (result.kind === 'unknownOutcome') {
+          if (result.refreshError) {
+            Sentry.captureException(
+              new Error(
+                `Perps Pro close all reconciliation failed: ${result.refreshError}`,
+              ),
+            );
+          }
+          showToast(t('page.perps.pro.trade.unknownOutcome'), 'error');
+          return;
+        }
         if (result.kind === 'failed') {
           if (
             (result.error && (await judgeIsUserAgentIsExpired(result.error))) ||
@@ -129,7 +139,10 @@ export const usePerpsProCloseAll = (accountIdentity: string) => {
           ) {
             return;
           }
-          showToast(t('page.perps.pro.positions.closeAllFailed'), 'error');
+          showToast(
+            result.error || t('page.perps.pro.positions.closeAllFailed'),
+            'error',
+          );
           Sentry.captureException(
             new Error(`Perps Pro close all failed: ${result.error}`),
           );
@@ -154,7 +167,10 @@ export const usePerpsProCloseAll = (accountIdentity: string) => {
         ) {
           return;
         }
-        showToast(t('page.perps.pro.positions.closeAllFailed'), 'error');
+        showToast(
+          message || t('page.perps.pro.positions.closeAllFailed'),
+          'error',
+        );
         Sentry.captureException(
           error instanceof Error ? error : new Error(message),
           { extra: { scene: 'Perps Pro close all positions' } },
