@@ -1,13 +1,10 @@
-import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import {
+  PERPS_AGENT_NAME,
   PERPS_BUILD_FEE_RECEIVE_ADDRESS,
   PERPS_REFERENCE_CODE,
 } from '@/constant/perps';
-import { apisKeyring } from '@/core/apis/keyring';
 import { apisPerps } from '@/core/apis/perps';
-import { sendRequest } from '@/core/apis/sendRequest';
 import type { Account } from '@/core/startupServices/preference';
-import { miniSignTypedData } from '@/hooks/useMiniSignTypedData';
 import {
   fetchUserAbstraction,
   perpsStore,
@@ -15,11 +12,11 @@ import {
   setAccountNeedApproveBuilderFee,
 } from '@/hooks/perps/usePerpsStore';
 import { sleep } from '@/utils/async';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 import { isSamePerpsActionAccount } from './accountGuard';
-import { PerpsActionUserCancelledError } from './actionError';
 import { setPerpsAgentUnifiedAccount } from './setAgentUnifiedAccount';
+import { signPerpsTypedDataActions } from './perpsTypedDataSignatures';
 
 type ApprovalAction = {
   action: any;
@@ -41,56 +38,72 @@ const assertCurrentAccount = (expectedAccount: Account) => {
   }
 };
 
-const executeApprovalSignatures = async (
-  actions: ApprovalAction[],
+export type PerpsActionApprovalRequirements = Readonly<{
+  builderFee?: boolean;
+  forceRemoteCheck?: boolean;
+}>;
+
+const AGENT_EXPIRY_SAFETY_WINDOW_MS = 24 * 60 * 60 * 1000;
+const REMOTE_APPROVAL_STATUS_TTL_MS = 30_000;
+
+type RemoteApprovalStatus = Readonly<{
+  agentExpired: boolean;
+  builderFeeApproved: boolean;
+}>;
+
+const remoteApprovalStatusCache = new Map<
+  string,
+  { checkedAt: number; status: RemoteApprovalStatus }
+>();
+
+const remoteStatusKey = (
   account: Account,
-) => {
-  const isLocalWallet =
-    account.type === KEYRING_CLASS.PRIVATE_KEY ||
-    account.type === KEYRING_CLASS.MNEMONIC;
-  const useMiniApprovalSign =
-    account.type === KEYRING_CLASS.HARDWARE.ONEKEY ||
-    account.type === KEYRING_CLASS.HARDWARE.LEDGER;
+  agentAddress: string,
+  builderFee: boolean,
+) => `${accountKey(account)}:${agentAddress.toLowerCase()}:${builderFee}`;
 
-  if (useMiniApprovalSign) {
-    try {
-      const results = await miniSignTypedData({
-        account,
-        txs: actions.map(item => ({
-          data: item.action,
-          from: account.address,
-          version: 'V4',
-        })),
-      });
-      results.forEach((item, index) => {
-        const action = actions[index];
-        if (action) {
-          action.signature = item.txHash;
-        }
-      });
-      return;
-    } catch {
-      throw new PerpsActionUserCancelledError();
-    }
+const fetchRemoteApprovalStatus = async ({
+  account,
+  agentAddress,
+  builderFee,
+  forceRemoteCheck,
+}: {
+  account: Account;
+  agentAddress: string;
+  builderFee: boolean;
+  forceRemoteCheck: boolean;
+}): Promise<RemoteApprovalStatus> => {
+  const key = remoteStatusKey(account, agentAddress, builderFee);
+  const cached = remoteApprovalStatusCache.get(key);
+  if (
+    !forceRemoteCheck &&
+    cached &&
+    Date.now() - cached.checkedAt < REMOTE_APPROVAL_STATUS_TTL_MS
+  ) {
+    return cached.status;
   }
 
-  for (const item of actions) {
-    item.signature = isLocalWallet
-      ? await apisKeyring.signTypedData(
-          account.type,
+  const sdk = apisPerps.getPerpsSDK();
+  const [extraAgents, maxBuilderFee] = await Promise.all([
+    sdk.info.extraAgents(account.address),
+    builderFee
+      ? sdk.info.getMaxBuilderFee(
+          PERPS_BUILD_FEE_RECEIVE_ADDRESS,
           account.address,
-          item.action,
-          { version: 'V4' },
         )
-      : await sendRequest({
-          account,
-          data: {
-            method: 'eth_signTypedDataV4',
-            params: [account.address, JSON.stringify(item.action)],
-          },
-          session: INTERNAL_REQUEST_SESSION,
-        });
-  }
+      : Promise.resolve('not-required'),
+  ]);
+  const agent = extraAgents.find(item =>
+    isSameAddress(item.address, agentAddress),
+  );
+  const status = {
+    agentExpired:
+      !agent?.validUntil ||
+      agent.validUntil < Date.now() + AGENT_EXPIRY_SAFETY_WINDOW_MS,
+    builderFeeApproved: !builderFee || !!maxBuilderFee,
+  };
+  remoteApprovalStatusCache.set(key, { checkedAt: Date.now(), status });
+  return status;
 };
 
 const applyApprovalActions = async (actions: ApprovalAction[]) => {
@@ -158,7 +171,10 @@ const syncPostApprovalConfiguration = async (account: Account) => {
   }, 100);
 };
 
-const runApproval = async (expectedAccount: Account) => {
+const runApproval = async (
+  expectedAccount: Account,
+  requirements: PerpsActionApprovalRequirements,
+) => {
   assertCurrentAccount(expectedAccount);
   const state = perpsStore.getState();
   const sdk = apisPerps.getPerpsSDK();
@@ -167,13 +183,67 @@ const runApproval = async (expectedAccount: Account) => {
     throw new Error('Hyperliquid exchange client unavailable');
   }
 
-  const signer = await apisPerps.applyPerpsSigner(expectedAccount);
+  let signer = await apisPerps.applyPerpsSigner(expectedAccount);
   assertCurrentAccount(expectedAccount);
+
+  const requiresBuilderFee = requirements.builderFee !== false;
+  let remoteStatus: RemoteApprovalStatus = {
+    agentExpired: false,
+    builderFeeApproved: !requiresBuilderFee,
+  };
+  if (!signer.isSelfSign) {
+    remoteStatus = await fetchRemoteApprovalStatus({
+      account: expectedAccount,
+      agentAddress: signer.agentAddress,
+      builderFee: requiresBuilderFee,
+      forceRemoteCheck: requirements.forceRemoteCheck === true,
+    });
+    assertCurrentAccount(expectedAccount);
+
+    if (remoteStatus.agentExpired && !signer.isCreate) {
+      const extraAgents = await sdk.info.extraAgents(expectedAccount.address);
+      assertCurrentAccount(expectedAccount);
+      const hasReplaceableAgentName = extraAgents.some(
+        agent => agent.name === PERPS_AGENT_NAME,
+      );
+      if (!hasReplaceableAgentName && extraAgents.length >= 3) {
+        setAccountNeedApproveAgent(true);
+        throw new Error('Agent limit reached');
+      }
+      const nextAgent = await apisPerps.createPerpsAgentWallet(
+        expectedAccount.address,
+      );
+      assertCurrentAccount(expectedAccount);
+      apisPerps.initPerpsAgentAccount(
+        expectedAccount.address,
+        nextAgent.vault,
+        nextAgent.agentAddress,
+      );
+      signer = {
+        agentAddress: nextAgent.agentAddress,
+        isCreate: true,
+        isSelfSign: false,
+      };
+      remoteApprovalStatusCache.clear();
+    }
+  } else if (requiresBuilderFee) {
+    const maxBuilderFee = await sdk.info.getMaxBuilderFee(
+      PERPS_BUILD_FEE_RECEIVE_ADDRESS,
+      expectedAccount.address,
+    );
+    remoteStatus = {
+      agentExpired: false,
+      builderFeeApproved: !!maxBuilderFee,
+    };
+    assertCurrentAccount(expectedAccount);
+  }
 
   const actions: ApprovalAction[] = [];
   if (
     !signer.isSelfSign &&
-    (state.accountNeedApproveAgent || signer.isCreate)
+    (state.accountNeedApproveAgent ||
+      signer.isCreate ||
+      remoteStatus.agentExpired)
   ) {
     actions.push({
       action: exchange.prepareApproveAgent(),
@@ -181,7 +251,10 @@ const runApproval = async (expectedAccount: Account) => {
       type: 'approveAgent',
     });
   }
-  if (state.accountNeedApproveBuilderFee) {
+  if (
+    requiresBuilderFee &&
+    (state.accountNeedApproveBuilderFee || !remoteStatus.builderFeeApproved)
+  ) {
     await sleep(10);
     actions.push({
       action: exchange.prepareApproveBuilderFee({
@@ -199,34 +272,51 @@ const runApproval = async (expectedAccount: Account) => {
     return;
   }
 
-  await executeApprovalSignatures(actions, expectedAccount);
+  await signPerpsTypedDataActions(actions, expectedAccount);
   assertCurrentAccount(expectedAccount);
   await applyApprovalActions(actions);
   await sleep(100);
   assertCurrentAccount(expectedAccount);
   setAccountNeedApproveAgent(false);
-  setAccountNeedApproveBuilderFee(false);
+  if (requiresBuilderFee) {
+    setAccountNeedApproveBuilderFee(false);
+  }
+  remoteApprovalStatusCache.clear();
   void syncPostApprovalConfiguration(expectedAccount);
 };
 
-let activeApproval: { accountKey: string; promise: Promise<void> } | undefined;
+let activeApproval:
+  | {
+      accountKey: string;
+      builderFee: boolean;
+      promise: Promise<void>;
+    }
+  | undefined;
 
-export const ensurePerpsActionApproval = async (expectedAccount: Account) => {
+export const ensurePerpsActionApproval = async (
+  expectedAccount: Account,
+  requirements: PerpsActionApprovalRequirements = {},
+) => {
   const key = accountKey(expectedAccount);
+  const builderFee = requirements.builderFee !== false;
   if (activeApproval) {
     const active = activeApproval;
     await active.promise;
     assertCurrentAccount(expectedAccount);
-    if (active.accountKey === key) {
+    if (active.accountKey === key && (!builderFee || active.builderFee)) {
       return;
     }
   }
 
-  const promise = runApproval(expectedAccount).finally(() => {
+  const promise = runApproval(expectedAccount, requirements).finally(() => {
     if (activeApproval?.promise === promise) {
       activeApproval = undefined;
     }
   });
-  activeApproval = { accountKey: key, promise };
+  activeApproval = { accountKey: key, builderFee, promise };
   return promise;
+};
+
+export const invalidatePerpsActionApprovalCache = () => {
+  remoteApprovalStatusCache.clear();
 };

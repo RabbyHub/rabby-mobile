@@ -1,8 +1,15 @@
 import type { StorageAdapater } from '@rabby-wallet/persist-store';
 
 import type { Account } from '@/core/startupServices/preference';
-import { createPerpsFundingOperation } from '@/hooks/perps/funding/fundingHistory';
+import {
+  createPerpsFundingOperation,
+  mapPerpsFundingJournalEntryToHistory,
+} from '@/hooks/perps/funding/fundingHistory';
 import { applyPerpsFundingConfirmationToJournalEntry } from '@/hooks/perps/funding/fundingJournal';
+import {
+  PERPS_FUNDING_PENDING_VISIBILITY_TTL_MS,
+  reconcilePerpsFundingHistory,
+} from '@/hooks/perps/funding/fundingHistoryReconciliation';
 import { mergePerpsProLocalTransactionHistory } from '@/screens/PerpsProHistory/model/localTransactionHistory';
 import { mapPerpsProTransactionHistoryFact } from '@/screens/PerpsProHistory/model/transactionHistory';
 import type { PerpsProLedgerFact } from '@/screens/PerpsProHistory/types';
@@ -129,5 +136,77 @@ describe('Perps Pro funding history correlation integration', () => {
         status: 'success',
       }),
     ]);
+  });
+
+  it('hides an expired persisted pending after restart but keeps it strictly reconcilable', () => {
+    const storage = createMemoryStorage();
+    const service = new PerpsService({
+      keyringCrypto,
+      storageAdapter: storage,
+    });
+    const createdAt = 1786895703000;
+    const operation = createPerpsFundingOperation({
+      account,
+      fundingRoute: 'provider',
+      history: {
+        amount: '6',
+        asset: 'USDT',
+        settlementAmount: '5.974031',
+        sourceChainId: 'eth',
+        sourceTokenId: '0xusdt',
+      },
+      identity: { sourceHash: '0xsource' },
+      localType: 'receive',
+      time: createdAt,
+    });
+    expect(operation).not.toBeNull();
+    service.upsertPerpsFundingJournalEntry(operation!.journalEntry);
+
+    const recreated = new PerpsService({
+      keyringCrypto,
+      storageAdapter: storage,
+    });
+    const hydratedPending = recreated
+      .getPerpsFundingJournal()
+      .map(mapPerpsFundingJournalEntryToHistory);
+    const expired = reconcilePerpsFundingHistory({
+      localHistory: hydratedPending,
+      now: createdAt + PERPS_FUNDING_PENDING_VISIBILITY_TTL_MS,
+      observation: 'baseline',
+      remoteHistory: [],
+    });
+
+    expect(expired.local).toEqual([]);
+    expect(expired.hiddenLocal).toHaveLength(1);
+    expect(recreated.getPerpsFundingJournal()[0]?.status).toBe('pending');
+
+    const providerSuccess = {
+      ...operation!.historyItem,
+      amount: '5.974031',
+      asset: 'USDC',
+      assetAmountSource: 'explicit' as const,
+      hash: providerSettlementFact.hash,
+      operationId: undefined,
+      status: 'success' as const,
+      time: providerSettlementFact.time,
+    };
+    const settled = reconcilePerpsFundingHistory({
+      localHistory: expired.hiddenLocal,
+      now: createdAt + PERPS_FUNDING_PENDING_VISIBILITY_TTL_MS + 1,
+      observation: 'baseline',
+      remoteHistory: [providerSuccess],
+    });
+
+    expect(settled.confirmations).toEqual([
+      {
+        operationId: operation!.journalEntry.operationId,
+        providerSettlementIdentity: {
+          hash: providerSettlementFact.hash,
+          kind: 'hyperliquidLedgerHash',
+        },
+      },
+    ]);
+    expect(settled.local).toEqual([]);
+    expect(settled.hiddenLocal).toEqual([]);
   });
 });

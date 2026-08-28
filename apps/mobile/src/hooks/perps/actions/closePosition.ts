@@ -41,7 +41,7 @@ export interface PerpsClosePositionResult {
   confirmed?: PerpsConfirmedOrder;
   error?: string;
   failureReason?: 'minimumNotional' | 'requestFailed' | 'userCancelled';
-  kind: 'failed' | 'filled' | 'resting' | 'staleContext';
+  kind: 'failed' | 'filled' | 'resting' | 'staleContext' | 'unknownOutcome';
   oid?: number;
   refreshError?: string;
 }
@@ -276,6 +276,13 @@ const isPositionSnapshotCurrent = (
   );
 };
 
+const isUnknownOutcomeError = (error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error);
+  return /timeout|network request failed|failed to fetch|connection/i.test(
+    message,
+  );
+};
+
 export const executePerpsClosePosition = async (
   command: PerpsClosePositionCommand,
   dependencies: ClosePositionDependencies = defaultDependencies,
@@ -410,11 +417,36 @@ export const executePerpsClosePosition = async (
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    if (isPerpsActionUserCancelled(error)) {
+      return {
+        error: message,
+        failureReason: 'userCancelled',
+        kind: 'failed',
+      };
+    }
+    if (isUnknownOutcomeError(error)) {
+      let refreshError: string | undefined;
+      try {
+        const dex = dependencies.resolveDex(command.coin);
+        await Promise.all([
+          dependencies.refreshClearinghouse(dex),
+          dependencies.refreshOpenOrders(dex),
+        ]);
+      } catch (refreshFailure) {
+        refreshError =
+          refreshFailure instanceof Error
+            ? refreshFailure.message
+            : String(refreshFailure);
+      }
+      return {
+        error: message,
+        kind: 'unknownOutcome',
+        refreshError,
+      };
+    }
     return {
       error: message,
-      failureReason: isPerpsActionUserCancelled(error)
-        ? 'userCancelled'
-        : isPerpsCloseMinimumNotionalError(message)
+      failureReason: isPerpsCloseMinimumNotionalError(message)
         ? 'minimumNotional'
         : 'requestFailed',
       kind: 'failed',

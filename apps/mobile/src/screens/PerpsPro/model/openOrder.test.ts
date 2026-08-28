@@ -200,6 +200,13 @@ describe('Perps Pro open order model', () => {
       }),
       makeOrder({ oid: 8, tif: 'Ioc' }),
       makeOrder({
+        isTrigger: true,
+        oid: 7,
+        orderType: 'Take Profit Market',
+        reduceOnly: true,
+        triggerPx: '60000',
+      }),
+      makeOrder({
         children: [
           makeOrder({
             isTrigger: true,

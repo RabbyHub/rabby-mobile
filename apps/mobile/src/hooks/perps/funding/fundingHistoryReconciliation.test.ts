@@ -1,5 +1,8 @@
 import type { AccountHistoryItem } from './types';
-import { reconcilePerpsFundingHistory } from './fundingHistoryReconciliation';
+import {
+  PERPS_FUNDING_PENDING_VISIBILITY_TTL_MS,
+  reconcilePerpsFundingHistory,
+} from './fundingHistoryReconciliation';
 
 const item = (
   overrides: Partial<AccountHistoryItem> = {},
@@ -132,11 +135,7 @@ describe('funding history reconciliation', () => {
     expect(result.local).toHaveLength(2);
   });
 
-  // Previously this demanded a single eligible row and gave up otherwise, so
-  // any unrelated transfer landing in the same window pinned the operation as
-  // pending forever. With one outstanding operation the earliest credit at or
-  // after it started is its settlement.
-  it('correlates the earliest eligible success when several are newer', () => {
+  it('keeps correlation pending when several compatible successes are newer', () => {
     const result = reconcilePerpsFundingHistory({
       localHistory: [providerPending()],
       observation: 'baseline',
@@ -146,16 +145,8 @@ describe('funding history reconciliation', () => {
       ],
     });
 
-    expect(result.confirmations).toEqual([
-      {
-        operationId: 'operation-1',
-        providerSettlementIdentity: {
-          hash: '0xsecond-ledger',
-          kind: 'hyperliquidLedgerHash',
-        },
-      },
-    ]);
-    expect(result.local).toEqual([]);
+    expect(result.confirmations).toEqual([]);
+    expect(result.local).toHaveLength(1);
   });
 
   it.each([
@@ -225,20 +216,9 @@ describe('funding history reconciliation', () => {
   });
 
   describe('pending TTL', () => {
-    const TTL_MS = 30 * 60 * 1000;
+    const TTL_MS = PERPS_FUNDING_PENDING_VISIBILITY_TTL_MS;
 
-    it('drops an unmatched pending operation once it outlives the window', () => {
-      const result = reconcilePerpsFundingHistory({
-        localHistory: [providerPending()],
-        now: 100 + TTL_MS + 1,
-        observation: 'baseline',
-        remoteHistory: [],
-      });
-
-      expect(result.local).toEqual([]);
-    });
-
-    it('keeps an unmatched pending operation inside the window', () => {
+    it('hides an unmatched pending operation at the 15 minute deadline', () => {
       const result = reconcilePerpsFundingHistory({
         localHistory: [providerPending()],
         now: 100 + TTL_MS,
@@ -246,7 +226,20 @@ describe('funding history reconciliation', () => {
         remoteHistory: [],
       });
 
+      expect(result.local).toEqual([]);
+      expect(result.hiddenLocal).toEqual([providerPending()]);
+    });
+
+    it('keeps an unmatched pending operation before the deadline', () => {
+      const result = reconcilePerpsFundingHistory({
+        localHistory: [providerPending()],
+        now: 100 + TTL_MS - 1,
+        observation: 'baseline',
+        remoteHistory: [],
+      });
+
       expect(result.local).toHaveLength(1);
+      expect(result.hiddenLocal).toEqual([]);
     });
 
     it('expires nothing when no clock is supplied', () => {
@@ -257,6 +250,7 @@ describe('funding history reconciliation', () => {
       });
 
       expect(result.local).toHaveLength(1);
+      expect(result.hiddenLocal).toEqual([]);
     });
 
     it('leaves a settled operation resolved rather than expired', () => {
@@ -269,6 +263,7 @@ describe('funding history reconciliation', () => {
 
       expect(result.confirmedOperationIds).toEqual(['operation-1']);
       expect(result.local).toEqual([]);
+      expect(result.hiddenLocal).toEqual([]);
     });
 
     it('never expires a failed operation the user still needs to see', () => {
@@ -280,6 +275,27 @@ describe('funding history reconciliation', () => {
       });
 
       expect(result.local).toHaveLength(1);
+      expect(result.hiddenLocal).toEqual([]);
+    });
+
+    it('keeps an expired pending operation available for later strict reconciliation', () => {
+      const expired = reconcilePerpsFundingHistory({
+        localHistory: [providerPending()],
+        now: 100 + TTL_MS + 1,
+        observation: 'baseline',
+        remoteHistory: [],
+      });
+
+      const settled = reconcilePerpsFundingHistory({
+        localHistory: expired.hiddenLocal,
+        now: 100 + TTL_MS + 2,
+        observation: 'baseline',
+        remoteHistory: [providerSuccess()],
+      });
+
+      expect(settled.confirmedOperationIds).toEqual(['operation-1']);
+      expect(settled.local).toEqual([]);
+      expect(settled.hiddenLocal).toEqual([]);
     });
   });
 

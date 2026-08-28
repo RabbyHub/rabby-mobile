@@ -357,7 +357,9 @@ export const usePerpsProManageMargin = () => {
     pendingRef.current = true;
     setPending(true);
     try {
-      await ensurePerpsActionApproval(openingAccount as Account);
+      await ensurePerpsActionApproval(openingAccount as Account, {
+        builderFee: false,
+      });
       const beforeRefresh = perpsStore.getState();
       const beforeRefreshAccount = beforeRefresh.currentPerpsAccount;
       const beforeRefreshMarket =

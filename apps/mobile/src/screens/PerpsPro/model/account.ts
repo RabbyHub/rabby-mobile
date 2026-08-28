@@ -20,6 +20,7 @@ import {
   ACCOUNT_ZERO as ZERO,
   accountDecimal as decimal,
   computeLtvAdjustedPortfolioValue,
+  computePerpsPortfolioValue,
   computeSpotPortfolioValue,
   computeTotalCollateralBalance,
   resolveSpotUsdcPrice,
@@ -28,6 +29,7 @@ import {
 
 export {
   computeLtvAdjustedPortfolioValue,
+  computePerpsPortfolioValue,
   computeSpotPortfolioValue,
   computeTotalCollateralBalance,
   getSpotPriceDependencyKeys,
@@ -362,11 +364,13 @@ export const buildPerpsAccountViewModel = (
   const maintenanceMargin = decimal(
     clearinghouse?.crossMaintenanceMarginUsed,
   ).toString();
-  const portfolio = computeSpotPortfolioValue(
-    input.spotState.rawBalances,
-    input.spotAssetCtxs,
-    input.spotMeta,
-  );
+  const portfolio = computePerpsPortfolioValue({
+    balances: input.spotState.rawBalances,
+    includePerpsAccountValue: mode === 'standard',
+    perpsAccountValue: clearinghouse?.marginSummary?.accountValue,
+    spotAssetCtxs: input.spotAssetCtxs,
+    spotMeta: input.spotMeta,
+  });
   const assets = buildAccountAssets({ ...input, mode });
 
   if (mode === 'portfolioMargin') {
@@ -464,7 +468,6 @@ export const buildPerpsAccountViewModel = (
     };
   }
 
-  const totalAccountValue = decimal(clearinghouse?.marginSummary?.accountValue);
   const unresolvedDexes = getUnresolvedStandardDexes(
     clearinghouse,
     input.marketDataMap,
@@ -472,9 +475,11 @@ export const buildPerpsAccountViewModel = (
   return {
     assets,
     diagnostics: {
-      complete: unresolvedDexes.length === 0,
+      complete:
+        unresolvedDexes.length === 0 &&
+        portfolio.unpricedNonZeroAssets.length === 0,
       unresolvedDexes,
-      unpricedNonZeroAssets: [],
+      unpricedNonZeroAssets: portfolio.unpricedNonZeroAssets,
     },
     metrics: [
       {
@@ -492,8 +497,8 @@ export const buildPerpsAccountViewModel = (
       },
     ],
     mode,
-    primaryKey: 'balance',
-    primaryValue: totalAccountValue.minus(unrealizedPnl).toString(),
+    primaryKey: 'portfolioValue',
+    primaryValue: portfolio.value,
     titleKey: 'perpsAccountSummary',
     unrealizedPnl,
   };

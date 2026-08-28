@@ -77,19 +77,21 @@ const isCorrelationPending = (item: AccountHistoryItem) =>
   item.status === 'pending' && isCorrelationOnlyOperation(item);
 
 /**
- * How long an operation may stay unmatched before its local record is dropped.
- * Every funding route settles far inside this window (HyperEVM in seconds, the
- * Arbitrum bridge in about a minute, provider bridges in a few), so anything
- * still unmatched here will not match later — and keeping it spins the pending
- * indicator forever. The ledger row already carries the money, so history stays
- * correct without the local record; only its source-chain metadata is lost.
+ * How long an unmatched operation remains user-visible. Once expired it stops
+ * driving History UI and rapid polling, but remains internal reconciliation
+ * input so a later unique ledger fact or source failure can still settle it.
  */
-const PENDING_FUNDING_TTL_MS = 30 * 60 * 1000;
+export const PERPS_FUNDING_PENDING_VISIBILITY_TTL_MS = 15 * 60 * 1000;
+
+export const isPerpsFundingPendingPresentationExpired = (
+  item: Pick<AccountHistoryItem, 'status' | 'time'>,
+  now: number,
+) =>
+  item.status === 'pending' &&
+  now - item.time >= PERPS_FUNDING_PENDING_VISIBILITY_TTL_MS;
 
 const isExpiredPendingOperation = (item: AccountHistoryItem, now?: number) =>
-  now !== undefined &&
-  item.status === 'pending' &&
-  now - item.time > PENDING_FUNDING_TTL_MS;
+  now !== undefined && isPerpsFundingPendingPresentationExpired(item, now);
 
 /**
  * A provider ledger row describes the settled asset (normally USDC), while
@@ -226,15 +228,12 @@ export const matchPerpsFundingHistory = ({
       );
     });
 
-    // Exactly one operation is outstanding, so the earliest ledger credit at
-    // or after it started is its settlement. Demanding a single eligible row
-    // instead — the previous rule — collapsed as soon as any unrelated
-    // transfer landed in the same window, leaving the operation pending
-    // forever with no way back.
-    const [settlement] = [...eligibleRemote].sort(
-      (left, right) =>
-        left.item.time - right.item.time || left.index - right.index,
-    );
+    // Correlation-only funding has no protocol identity shared by both sides.
+    // Bind it only when the observation is unambiguous: one outstanding local
+    // operation and one compatible, unmatched ledger success. Time ordering
+    // narrows the candidates but must never be used to guess between them.
+    const settlement =
+      eligibleRemote.length === 1 ? eligibleRemote[0] : undefined;
 
     if (settlement) {
       const { index: remoteIndex, item: remote } = settlement;
@@ -282,6 +281,7 @@ export const reconcilePerpsFundingHistory = ({
 }): {
   confirmations: PerpsFundingConfirmation[];
   confirmedOperationIds: string[];
+  hiddenLocal: AccountHistoryItem[];
   history: AccountHistoryItem[];
   local: AccountHistoryItem[];
 } => {
@@ -326,14 +326,24 @@ export const reconcilePerpsFundingHistory = ({
     };
   });
 
+  const local: AccountHistoryItem[] = [];
+  const hiddenLocal: AccountHistoryItem[] = [];
+  localHistory.forEach((item, index) => {
+    if (matches.confirmedLocalIndexes.has(index)) {
+      return;
+    }
+    if (isExpiredPendingOperation(item, now)) {
+      hiddenLocal.push(item);
+    } else {
+      local.push(item);
+    }
+  });
+
   return {
     confirmations: matches.confirmations,
     confirmedOperationIds: matches.confirmedOperationIds,
+    hiddenLocal,
     history,
-    local: localHistory.filter(
-      (item, index) =>
-        !matches.confirmedLocalIndexes.has(index) &&
-        !isExpiredPendingOperation(item, now),
-    ),
+    local,
   };
 };

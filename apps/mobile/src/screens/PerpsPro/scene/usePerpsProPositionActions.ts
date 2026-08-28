@@ -28,6 +28,7 @@ import type {
   PerpsProCloseDraft,
   PerpsProCloseMarketSnapshot,
 } from '../model/positionAction';
+import { getPerpsProOrderErrorText } from '../utils/orderError';
 import type { PerpsProLeverageUpdateRequest } from './usePerpsProLeverageUpdate';
 
 interface LeverageEditorState {
@@ -229,12 +230,22 @@ export const usePerpsProPositionActions = ({
         });
         await ensurePerpsActionApproval(closeEditor.account);
         const result = await executePerpsClosePosition(command);
-        reportPerpsProClosePositionHistory(command, result.confirmed);
         if (result.failureReason === 'userCancelled') return;
         if (result.kind === 'staleContext') {
           showToast(t('page.perps.pro.positions.closeContextChanged'), 'error');
           setCloseEditor(null);
           setCloseReview(null);
+          return;
+        }
+        if (result.kind === 'unknownOutcome') {
+          if (result.refreshError) {
+            Sentry.captureException(
+              new Error(
+                `Perps Pro close reconciliation failed: ${result.refreshError}`,
+              ),
+            );
+          }
+          showToast(t('page.perps.pro.trade.unknownOutcome'), 'error');
           return;
         }
         if (result.kind === 'failed') {
@@ -248,7 +259,15 @@ export const usePerpsProPositionActions = ({
             showMinimumCloseAmountToast();
             return;
           }
-          showToast(t('page.perps.pro.positions.closeFailed'), 'error');
+          showToast(
+            getPerpsProOrderErrorText({
+              message:
+                result.error || t('page.perps.pro.positions.closeFailed'),
+              side: command.direction === 'long' ? 'sell' : 'buy',
+              t,
+            }),
+            'error',
+          );
           Sentry.captureException(
             new Error(`Perps Pro close failed: ${result.error}`),
           );
@@ -258,6 +277,13 @@ export const usePerpsProPositionActions = ({
           Sentry.captureException(
             new Error(`Perps Pro close refresh failed: ${result.refreshError}`),
           );
+        }
+        try {
+          reportPerpsProClosePositionHistory(command, result.confirmed);
+        } catch (reportError) {
+          Sentry.captureException(reportError, {
+            extra: { scene: 'Perps Pro close position history' },
+          });
         }
         showToast(t('page.perps.pro.positions.closeSubmitted'), 'success');
         setCloseEditor(null);
@@ -275,7 +301,14 @@ export const usePerpsProPositionActions = ({
           showMinimumCloseAmountToast();
           return;
         }
-        showToast(t('page.perps.pro.positions.closeFailed'), 'error');
+        showToast(
+          getPerpsProOrderErrorText({
+            message: message || t('page.perps.pro.positions.closeFailed'),
+            side: closeEditor.position.direction === 'long' ? 'sell' : 'buy',
+            t,
+          }),
+          'error',
+        );
         Sentry.captureException(
           error instanceof Error ? error : new Error(message),
           { extra: { scene: 'Perps Pro close position' } },

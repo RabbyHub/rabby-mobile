@@ -1,4 +1,5 @@
 import type { Account } from '@/core/startupServices/preference';
+import { isSamePerpsActionAccount } from '@/hooks/perps/actions/accountGuard';
 import { isPerpsActionUserCancelled } from '@/hooks/perps/actions/actionError';
 import {
   buildPerpsCloseAllPositionsCommand,
@@ -12,6 +13,7 @@ import {
 } from '@/hooks/perps/perpsActionError';
 import { showToast } from '@/hooks/perps/showToast';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 import * as Sentry from '@sentry/react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -34,7 +36,7 @@ export const usePerpsProCloseAll = (accountIdentity: string) => {
     setConfirmation(null);
   }, [accountIdentity]);
 
-  const requestCloseAll = useCallback(() => {
+  const requestCloseAll = useCallback(async () => {
     if (pendingRef.current) {
       return;
     }
@@ -47,21 +49,50 @@ export const usePerpsProCloseAll = (accountIdentity: string) => {
     ) {
       return;
     }
+    const requestedAccount = { ...state.currentPerpsAccount };
+    pendingRef.current = true;
+    setPending(true);
     try {
+      if (!(await ensureWalletUnlockedForAction())) {
+        return;
+      }
+      await ensurePerpsActionApproval(requestedAccount);
+      const latestState = perpsStore.getState();
+      if (
+        !isSamePerpsActionAccount(
+          latestState.currentPerpsAccount,
+          requestedAccount,
+        ) ||
+        !latestState.currentClearinghouseState?.assetPositions.some(
+          item => Number(item.position.szi) !== 0,
+        )
+      ) {
+        showToast(
+          t('page.perps.pro.positions.closeAllContextChanged'),
+          'error',
+        );
+        return;
+      }
       setConfirmation({
-        account: { ...state.currentPerpsAccount },
+        account: requestedAccount,
         command: buildPerpsCloseAllPositionsCommand(
-          state.currentPerpsAccount,
-          state.currentClearinghouseState,
-          state.openOrders,
+          requestedAccount,
+          latestState.currentClearinghouseState,
+          latestState.openOrders,
         ),
       });
     } catch (error) {
+      if (isPerpsActionUserCancelled(error)) {
+        return;
+      }
       showToast(t('page.perps.pro.positions.closeAllFailed'), 'error');
       Sentry.captureException(
         error instanceof Error ? error : new Error(String(error)),
         { extra: { scene: 'Perps Pro prepare close all positions' } },
       );
+    } finally {
+      pendingRef.current = false;
+      setPending(false);
     }
   }, [t]);
 
@@ -72,14 +103,13 @@ export const usePerpsProCloseAll = (accountIdentity: string) => {
   }, []);
 
   const execute = useCallback(
-    async ({ account, command }: PerpsProCloseAllConfirmation) => {
+    async ({ command }: PerpsProCloseAllConfirmation) => {
       if (pendingRef.current) {
         return;
       }
       pendingRef.current = true;
       setPending(true);
       try {
-        await ensurePerpsActionApproval(account);
         const result = await executePerpsCloseAllPositions(command);
         reportPerpsProCloseAllHistory(command, result.confirmedFills);
         if (result.failureReason === 'userCancelled') {

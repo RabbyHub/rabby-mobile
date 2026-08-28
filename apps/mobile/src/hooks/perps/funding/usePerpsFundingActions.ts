@@ -2,14 +2,27 @@ import { UserAbstractionResp } from '@rabby-wallet/hyperliquid-sdk';
 import { useMemoizedFn } from 'ahooks';
 import { useShallow } from 'zustand/react/shallow';
 
-import { perpsStore, usePerpsStore } from '../usePerpsStore';
+import {
+  getPerpsAccountRuntimeContext,
+  perpsStore,
+  queryUserAbstraction,
+  reconcileUserAbstractionSnapshot,
+  usePerpsStore,
+} from '../usePerpsStore';
 import { isSamePerpsFundingAccount } from './accountGuard';
 import { executePerpsStableCoinOrder } from './perpsStableCoinOrder';
 import { executePerpsWithdraw } from './perpsWithdraw';
+import { createPerpsWithdrawLiveAbstractionQuery } from './perpsWithdrawLiveGuard';
 import type { PerpsStableCoinOrderParams, PerpsWithdrawTarget } from './types';
 import { usePerpsDeposit } from './usePerpsDeposit';
 
-export const usePerpsFundingActions = () => {
+export type PerpsWithdrawModeValidation = 'cached' | 'live';
+
+export const usePerpsFundingActions = ({
+  withdrawModeValidation = 'cached',
+}: {
+  withdrawModeValidation?: PerpsWithdrawModeValidation;
+} = {}) => {
   const { currentPerpsAccount, userAbstraction } = perpsStore(
     useShallow(state => ({
       currentPerpsAccount: state.currentPerpsAccount,
@@ -27,23 +40,49 @@ export const usePerpsFundingActions = () => {
       amount: number | string,
       isHypeWithdraw = false,
       targetAsset: PerpsWithdrawTarget = 'USDC',
-    ) =>
-      executePerpsWithdraw({
+    ) => {
+      const expectedRuntime = getPerpsAccountRuntimeContext();
+      const expectedAccount = currentPerpsAccount
+        ? { ...currentPerpsAccount }
+        : null;
+      const queryLiveUserAbstraction =
+        withdrawModeValidation === 'live' && expectedAccount
+          ? createPerpsWithdrawLiveAbstractionQuery({
+              account: expectedAccount,
+              generation: expectedRuntime.generation,
+              getRuntimeContext: getPerpsAccountRuntimeContext,
+              query: queryUserAbstraction,
+              reconcile: liveUserAbstraction =>
+                reconcileUserAbstractionSnapshot({
+                  account: expectedAccount,
+                  generation: expectedRuntime.generation,
+                  userAbstraction: liveUserAbstraction,
+                }),
+            })
+          : undefined;
+
+      return executePerpsWithdraw({
         account: currentPerpsAccount,
         amount,
-        isAccountCurrent: expectedAccount => {
+        isAccountCurrent: expectedFundingAccount => {
           const currentAccount = perpsStore.getState().currentPerpsAccount;
-          return isSamePerpsFundingAccount(currentAccount, expectedAccount);
+          return isSamePerpsFundingAccount(
+            currentAccount,
+            expectedFundingAccount,
+          );
         },
         isHypeWithdraw,
         isSpotCollateralMode,
+        queryLiveUserAbstraction,
         targetAsset,
         setLocalLoadingHistory,
-      }),
+      });
+    },
   );
 
   const handleStableCoinOrder = useMemoizedFn(
-    (params: PerpsStableCoinOrderParams) => executePerpsStableCoinOrder(params),
+    (params: PerpsStableCoinOrderParams) =>
+      executePerpsStableCoinOrder(currentPerpsAccount, params),
   );
 
   return {

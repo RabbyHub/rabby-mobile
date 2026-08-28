@@ -246,6 +246,35 @@ export const computeSpotPortfolioValue = (
   spotMeta: SpotMeta | null,
 ) => computeSpotValue({ balances, spotAssetCtxs, spotMeta });
 
+export const computePerpsPortfolioValue = ({
+  balances,
+  includePerpsAccountValue,
+  perpsAccountValue,
+  spotAssetCtxs,
+  spotMeta,
+}: {
+  balances: RawSpotBalance[];
+  includePerpsAccountValue: boolean;
+  perpsAccountValue: unknown;
+  spotAssetCtxs: Record<string, FFastAssetCtx>;
+  spotMeta: SpotMeta | null;
+}) => {
+  const spotPortfolio = computeSpotPortfolioValue(
+    balances,
+    spotAssetCtxs,
+    spotMeta,
+  );
+
+  return {
+    unpricedNonZeroAssets: spotPortfolio.unpricedNonZeroAssets,
+    value: includePerpsAccountValue
+      ? accountDecimal(spotPortfolio.value)
+          .plus(accountDecimal(perpsAccountValue))
+          .toString()
+      : spotPortfolio.value,
+  };
+};
+
 export const computeTotalCollateralBalance = (
   balances: RawSpotBalance[],
   spotAssetCtxs: Record<string, FFastAssetCtx>,

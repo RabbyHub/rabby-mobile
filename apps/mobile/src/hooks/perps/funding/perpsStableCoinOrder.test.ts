@@ -1,5 +1,11 @@
 const mockStableCoinOrder = jest.fn();
 const mockShowToast = jest.fn();
+const mockEnsureApproval = jest.fn(async () => undefined);
+
+const mockAccount = {
+  address: '0x0000000000000000000000000000000000000001',
+  type: 'PrivateKeyring',
+} as const;
 
 jest.mock('@/core/apis', () => ({
   apisPerps: {
@@ -10,8 +16,36 @@ jest.mock('@/core/apis', () => ({
 }));
 
 jest.mock('@/hooks/perps/perpsActionError', () => ({
-  runPerpsAction: async (_config: unknown, action: () => Promise<unknown>) =>
-    action(),
+  runPerpsAction: async (
+    config: {
+      fallback: unknown;
+      getToastMessage?: (error: Error) => string;
+    },
+    action: () => Promise<unknown>,
+  ) => {
+    try {
+      return await action();
+    } catch (error) {
+      mockShowToast(
+        config.getToastMessage?.(error as Error) || 'Swap failed',
+        'error',
+      );
+      return config.fallback;
+    }
+  },
+}));
+
+jest.mock('@/hooks/perps/actions/accountGuard', () => ({
+  isSamePerpsActionAccount: () => true,
+}));
+
+jest.mock('@/hooks/perps/actions/perpsActionApproval', () => ({
+  ensurePerpsActionApproval: (...args: unknown[]) =>
+    mockEnsureApproval(...args),
+}));
+
+jest.mock('@/hooks/perps/usePerpsStore', () => ({
+  perpsStore: { getState: () => ({ currentPerpsAccount: mockAccount }) },
 }));
 
 jest.mock('@/hooks/perps/showToast', () => ({
@@ -38,7 +72,12 @@ describe('executePerpsStableCoinOrder', () => {
       size: '10',
     };
 
-    await expect(executePerpsStableCoinOrder(params)).resolves.toEqual(filled);
+    await expect(
+      executePerpsStableCoinOrder(mockAccount, params),
+    ).resolves.toEqual(filled);
+    expect(mockEnsureApproval).toHaveBeenCalledWith(mockAccount, {
+      builderFee: false,
+    });
     expect(mockStableCoinOrder).toHaveBeenCalledWith(params);
     expect(mockShowToast).toHaveBeenCalledWith(
       'Swap completed successfully',
@@ -52,7 +91,7 @@ describe('executePerpsStableCoinOrder', () => {
     });
 
     await expect(
-      executePerpsStableCoinOrder({
+      executePerpsStableCoinOrder(mockAccount, {
         coin: 'USDH',
         isBuy: false,
         limitPx: '0.99',

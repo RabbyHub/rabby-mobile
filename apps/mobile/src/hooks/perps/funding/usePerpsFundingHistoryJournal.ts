@@ -16,6 +16,7 @@ import {
   updatePerpsFundingJournalStatus,
 } from './fundingJournal';
 import { mapPerpsFundingJournalEntryToHistory } from './fundingHistory';
+import { PERPS_FUNDING_PENDING_VISIBILITY_TTL_MS } from './fundingHistoryReconciliation';
 import { startPerpsFundingLedgerPolling } from './fundingHistoryPolling';
 
 export const usePerpsFundingHistoryJournal = ({
@@ -25,6 +26,18 @@ export const usePerpsFundingHistoryJournal = ({
   const pendingFundingCount = perpsStore(state =>
     getPerpsPendingFundingCount(state.localLoadingHistory),
   );
+  const nextPendingVisibilityExpirationAt = perpsStore(state => {
+    let earliest: number | null = null;
+    state.localLoadingHistory.forEach(item => {
+      if (item.status !== 'pending' || !Number.isFinite(item.time)) {
+        return;
+      }
+      const expirationAt = item.time + PERPS_FUNDING_PENDING_VISIBILITY_TTL_MS;
+      earliest =
+        earliest === null ? expirationAt : Math.min(earliest, expirationAt);
+    });
+    return earliest;
+  });
   const transactionHistoryReady = useTransactionHistoryServiceReady();
   const accountAddress = currentAccount?.address;
   const accountType = currentAccount?.type;
@@ -53,7 +66,11 @@ export const usePerpsFundingHistoryJournal = ({
         .flatMap(group => group.txs)
         .flatMap(tx => (tx.hash ? [tx.hash.toLowerCase()] : [])),
     );
-    const current = perpsStore.getState().localLoadingHistory;
+    const fundingState = perpsStore.getState();
+    const current = [
+      ...fundingState.localLoadingHistory,
+      ...fundingState.hiddenLocalFundingHistory,
+    ];
     let changed = false;
     let shouldRefreshLedger = false;
     const next = current.map(item => {
@@ -75,7 +92,11 @@ export const usePerpsFundingHistoryJournal = ({
       return { ...item, status: 'failed' as const };
     });
     if (changed) {
-      perpsStore.setState(state => ({ ...state, localLoadingHistory: next }));
+      reconcilePerpsFundingHistoryObservation({
+        confirmedHistory: fundingState.userAccountHistory,
+        localHistory: next,
+        observation: 'baseline',
+      });
     }
     if (enabledRef.current && shouldRefreshLedger) {
       void fetchUserNonFundingLedgerUpdates();
@@ -97,14 +118,18 @@ export const usePerpsFundingHistoryJournal = ({
         )
         .filter(entry => entry.status !== 'confirmed')
         .map(mapPerpsFundingJournalEntryToHistory);
-      const existing = perpsStore.getState().localLoadingHistory;
+      const fundingState = perpsStore.getState();
+      const existing = [
+        ...fundingState.localLoadingHistory,
+        ...fundingState.hiddenLocalFundingHistory,
+      ];
       const persistedIds = new Set(
         persisted.flatMap(item => (item.operationId ? [item.operationId] : [])),
       );
       const unpersisted = existing.filter(
         item => !item.operationId || !persistedIds.has(item.operationId),
       );
-      const remoteHistory = perpsStore.getState().userAccountHistory;
+      const remoteHistory = fundingState.userAccountHistory;
       reconcilePerpsFundingHistoryObservation({
         confirmedHistory: remoteHistory,
         localHistory: [...persisted, ...unpersisted],
@@ -133,6 +158,47 @@ export const usePerpsFundingHistoryJournal = ({
       eventBus.removeListener(EVENTS.RELOAD_TX, reconcileSourceTransactions);
     };
   }, [accountAddress, reconcileSourceTransactions, transactionHistoryReady]);
+
+  useEffect(() => {
+    if (
+      !enabled ||
+      !accountAddress ||
+      nextPendingVisibilityExpirationAt === null
+    ) {
+      return;
+    }
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const normalizedAddress = accountAddress.toLowerCase();
+    const expireAtDeadline = () => {
+      const remaining = nextPendingVisibilityExpirationAt - Date.now();
+      if (remaining > 0) {
+        timer = setTimeout(expireAtDeadline, remaining);
+        return;
+      }
+      const fundingState = perpsStore.getState();
+      const activeAccount = fundingState.currentPerpsAccount;
+      if (
+        !activeAccount ||
+        activeAccount.address.toLowerCase() !== normalizedAddress ||
+        activeAccount.type !== accountType
+      ) {
+        return;
+      }
+      reconcilePerpsFundingHistoryObservation({
+        confirmedHistory: fundingState.userAccountHistory,
+        observation: 'baseline',
+      });
+    };
+    timer = setTimeout(
+      expireAtDeadline,
+      Math.max(0, nextPendingVisibilityExpirationAt - Date.now()),
+    );
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
+  }, [accountAddress, accountType, enabled, nextPendingVisibilityExpirationAt]);
 
   useEffect(() => {
     if (!enabled || !accountAddress || pendingFundingCount === 0) {

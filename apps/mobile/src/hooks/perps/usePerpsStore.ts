@@ -250,6 +250,12 @@ export interface PerpsState {
   approveSignatures: ApproveSignatures;
   userFills: WsFill[];
   userAccountHistory: AccountHistoryItem[];
+  /**
+   * Pending funding operations that outlived the presentation TTL. They stay
+   * available to strict ledger/source reconciliation but are never published
+   * to History UI or counted by pending indicators.
+   */
+  hiddenLocalFundingHistory: AccountHistoryItem[];
   localLoadingHistory: AccountHistoryItem[];
   wsSubscriptions: (() => void)[];
   pollingTimer: NodeJS.Timeout | null;
@@ -314,6 +320,7 @@ export const initialState: PerpsState = {
   marketData: [],
   maintenanceMarginTiersByCoin: {},
   userAccountHistory: [],
+  hiddenLocalFundingHistory: [],
   localLoadingHistory: [],
   marketDataMap: {},
   marketDataStatus: 'idle',
@@ -767,6 +774,9 @@ const setCurrentPerpsAccount = (payload: Account) => {
         ? prev.userAbstraction
         : UserAbstractionResp.default,
       userAccountHistory: sameAccount ? prev.userAccountHistory : [],
+      hiddenLocalFundingHistory: sameAccount
+        ? prev.hiddenLocalFundingHistory
+        : [],
       localLoadingHistory: sameAccount ? prev.localLoadingHistory : [],
       // Fills are merged (not overwritten) on WS snapshots, so a stale
       // account's list must be cleared explicitly on switch.
@@ -1354,6 +1364,7 @@ const resetAccountState = () => {
     userAbstraction: UserAbstractionResp.default,
     userAbstractionOwnerAddress: null,
     userAccountHistory: [],
+    hiddenLocalFundingHistory: [],
     localLoadingHistory: [],
     userFills: [],
     perpFee: 0.00045,
@@ -1555,9 +1566,13 @@ export const confirmPerpsFundingOperations = (
     const localLoadingHistory = prev.localLoadingHistory.filter(
       item => !item.operationId || !operationIdSet.has(item.operationId),
     );
-    return localLoadingHistory.length === prev.localLoadingHistory.length
+    const hiddenLocalFundingHistory = prev.hiddenLocalFundingHistory.filter(
+      item => !item.operationId || !operationIdSet.has(item.operationId),
+    );
+    return localLoadingHistory.length === prev.localLoadingHistory.length &&
+      hiddenLocalFundingHistory.length === prev.hiddenLocalFundingHistory.length
       ? prev
-      : { ...prev, localLoadingHistory };
+      : { ...prev, hiddenLocalFundingHistory, localLoadingHistory };
   });
   confirmations.forEach(confirmation => {
     void confirmPerpsFundingJournalEntry(confirmation);
@@ -1581,7 +1596,10 @@ export const reconcilePerpsFundingHistoryObservation = ({
   const now = Date.now();
   setPerpsState(prev => {
     const reconciled = reconcilePerpsFundingHistory({
-      localHistory: localHistory ?? prev.localLoadingHistory,
+      localHistory: localHistory ?? [
+        ...prev.localLoadingHistory,
+        ...prev.hiddenLocalFundingHistory,
+      ],
       now,
       observation,
       remoteHistory: confirmedHistory,
@@ -1595,6 +1613,7 @@ export const reconcilePerpsFundingHistoryObservation = ({
         : prev.userAccountHistory;
     return {
       ...prev,
+      hiddenLocalFundingHistory: reconciled.hiddenLocal,
       localLoadingHistory: reconciled.local,
       userAccountHistory,
     };
@@ -2439,13 +2458,21 @@ export const usePerpsStore = () => {
       const now = Date.now();
       setPerpsState(prev => {
         if (isReset) {
-          return { ...prev, localLoadingHistory: payload };
+          return {
+            ...prev,
+            hiddenLocalFundingHistory: [],
+            localLoadingHistory: payload,
+          };
         }
         // A ledger event may arrive before the signing flow persists its local
         // pending item. Re-run the same exact-first/baseline reconciliation so
         // the already-settled operation is never reinserted as pending.
         const reconciled = reconcilePerpsFundingHistory({
-          localHistory: [...payload, ...prev.localLoadingHistory],
+          localHistory: [
+            ...payload,
+            ...prev.localLoadingHistory,
+            ...prev.hiddenLocalFundingHistory,
+          ],
           now,
           observation: 'baseline',
           remoteHistory: prev.userAccountHistory,
@@ -2453,6 +2480,7 @@ export const usePerpsStore = () => {
         confirmations = reconciled.confirmations;
         return {
           ...prev,
+          hiddenLocalFundingHistory: reconciled.hiddenLocal,
           localLoadingHistory: reconciled.local,
           userAccountHistory: reconciled.history,
         };
@@ -2527,6 +2555,7 @@ export const usePerpsStore = () => {
           ? prev.userAbstractionOwnerAddress
           : null,
         localLoadingHistory: [],
+        hiddenLocalFundingHistory: [],
         userFills: sameAccount ? prev.userFills : [],
       };
     });

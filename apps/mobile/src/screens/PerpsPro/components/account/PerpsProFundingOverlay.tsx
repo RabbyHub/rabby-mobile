@@ -56,11 +56,13 @@ export const PerpsProFundingOverlay: React.FC<{
     handleDeposit,
     handleStableCoinOrder,
     handleWithdraw,
-  } = usePerpsFundingActions();
+  } = usePerpsFundingActions({ withdrawModeValidation: 'live' });
   const handleWithdrawAndClose = useMemoizedFn(
     async (...args: Parameters<typeof handleWithdraw>) => {
-      await handleWithdraw(...args);
-      onClose();
+      const succeeded = await handleWithdraw(...args);
+      if (succeeded) {
+        onClose();
+      }
     },
   );
 

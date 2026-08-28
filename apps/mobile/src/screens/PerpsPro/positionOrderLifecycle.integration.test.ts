@@ -204,6 +204,55 @@ describe('Perps Pro position and order lifecycle integration', () => {
     },
   );
 
+  it('submits a far Limit close and keeps a definitive server rejection authoritative', async () => {
+    const sourcePositions = [makePosition({ szi: '0.025' })];
+    const [position] = buildPerpsPositions(sourcePositions, []);
+    const command = buildPerpsClosePositionCommand({
+      account,
+      coin: position!.coin,
+      direction: position!.direction,
+      expectedPositionSize: position!.baseSize,
+      limitPrice: '798',
+      midPrice: '79893',
+      orderType: 'limit',
+      pxDecimals: 2,
+      reportingFacts: {
+        leverage: position!.leverage,
+        marginMode: position!.marginMode,
+      },
+      size: position!.baseSize,
+      szDecimals: 5,
+    });
+    const limitClose = jest.fn(async () => ({
+      status: 'ok',
+      response: {
+        data: { statuses: [{ error: 'Order price too far from oracle' }] },
+      },
+    }));
+    const dependencies: ClosePositionDependencies = {
+      getCurrentAccount: () => account,
+      getLiveMidPrice: () => '79893',
+      getLiveSignedSize: () => sourcePositions[0]?.position.szi ?? null,
+      limitClose,
+      marketClose: jest.fn(),
+      refreshClearinghouse: jest.fn(),
+      refreshOpenOrders: jest.fn(),
+      resolveDex: () => '',
+    };
+
+    await expect(
+      executePerpsClosePosition(command, dependencies),
+    ).resolves.toEqual({
+      error: 'Order price too far from oracle',
+      failureReason: 'requestFailed',
+      kind: 'failed',
+    });
+    expect(limitClose).toHaveBeenCalledWith(
+      expect.objectContaining({ limitPx: '798', reduceOnly: true }),
+    );
+    expect(buildPerpsPositions(sourcePositions, [])).toHaveLength(1);
+  });
+
   it('converges a leverage command back into the position projection', async () => {
     let sourcePosition = makePosition();
     const [before] = buildPerpsPositions([sourcePosition], []);

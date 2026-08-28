@@ -18,6 +18,7 @@ import {
 
 import {
   buildPerpsAccountViewModel,
+  computePerpsPortfolioValue,
   computeSpotPortfolioValue,
   computeUnifiedAccountRatio,
   getPerpsAccountMarginRatio,
@@ -295,6 +296,30 @@ describe('Perps Pro account facts', () => {
     ).toEqual({ unpricedNonZeroAssets: ['REV'], value: '12' });
   });
 
+  it('uses one Portfolio Value formula without subtracting unrealized PNL twice', () => {
+    const balances = formattedSpotState().rawBalances;
+    const prices = { '@10': { markPx: '2' } };
+
+    expect(
+      computePerpsPortfolioValue({
+        balances,
+        includePerpsAccountValue: true,
+        perpsAccountValue: '200',
+        spotAssetCtxs: prices,
+        spotMeta,
+      }),
+    ).toEqual({ unpricedNonZeroAssets: [], value: '320' });
+    expect(
+      computePerpsPortfolioValue({
+        balances,
+        includePerpsAccountValue: false,
+        perpsAccountValue: '200',
+        spotAssetCtxs: prices,
+        spotMeta,
+      }),
+    ).toEqual({ unpricedNonZeroAssets: [], value: '120' });
+  });
+
   it('matches the Rabby unified ratio scope and reports unresolved dex collateral', () => {
     const state = formatAllDexsClearinghouseState([
       [
@@ -376,7 +401,7 @@ describe('Perps Pro account facts', () => {
     ).toEqual({ ratio: null, unresolvedDexes: [] });
   });
 
-  it('builds Standard and Portfolio Margin summaries with distinct formulas', () => {
+  it('builds Standard and spot-collateral summaries with the Hyper portfolio formula', () => {
     const aggregate = formatAllDexsClearinghouseState([
       [
         '',
@@ -434,8 +459,8 @@ describe('Perps Pro account facts', () => {
 
     expect(standard).toMatchObject({
       mode: 'standard',
-      primaryKey: 'balance',
-      primaryValue: '190',
+      primaryKey: 'portfolioValue',
+      primaryValue: '320',
       unrealizedPnl: '10',
     });
     expect(standard.metrics).toEqual([
@@ -540,7 +565,7 @@ describe('Perps Pro account facts', () => {
           quoteAsset: 'USDE',
         },
       },
-      spotAssetCtxs: {},
+      spotAssetCtxs: { '@10': { markPx: '2' } },
       spotMeta,
       spotState: formattedSpotState(),
       userAbstraction: 'default',
@@ -560,7 +585,7 @@ describe('Perps Pro account facts', () => {
         total: '100',
       }),
     ]);
-    expect(result.primaryValue).toBe('150');
+    expect(result.primaryValue).toBe('270');
   });
 
   it('does not relabel a non-default DEX balance as Standard USDC', () => {

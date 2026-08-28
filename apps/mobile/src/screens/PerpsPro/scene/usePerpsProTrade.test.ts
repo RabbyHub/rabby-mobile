@@ -143,6 +143,11 @@ jest.mock('@/hooks/perps/actions/perpsActionApproval', () => ({
     mockEnsureApproval(args[0]),
 }));
 
+jest.mock('@/hooks/perps/perpsActionError', () => ({
+  judgeIsBuilderFeeNeedApprove: () => false,
+  judgeIsUserAgentIsExpired: async () => false,
+}));
+
 jest.mock('@/hooks/perps/actions/updateLeverage', () => ({
   buildPerpsUpdateLeverageCommand: (...args: unknown[]) =>
     mockBuildUpdateLeverage(args[0]),

@@ -173,6 +173,99 @@ describe('executePerpsWithdraw', () => {
     );
   });
 
+  it('uses the Pro live abstraction mode instead of the cached route', async () => {
+    const setLocalLoadingHistory = jest.fn();
+    const queryLiveUserAbstraction = jest
+      .fn()
+      .mockResolvedValue('unifiedAccount');
+
+    await expect(
+      executePerpsWithdraw({
+        account,
+        amount: '3',
+        isHypeWithdraw: true,
+        isSpotCollateralMode: false,
+        queryLiveUserAbstraction,
+        setLocalLoadingHistory,
+        targetAsset: 'USDT',
+      }),
+    ).resolves.toBe(true);
+
+    expect(queryLiveUserAbstraction).toHaveBeenCalledTimes(2);
+    expect(mockPrepareSendAsset).toHaveBeenCalledWith(
+      expect.objectContaining({ sourceDex: 'spot' }),
+    );
+    expect(mockSendSendAsset).toHaveBeenCalledTimes(1);
+  });
+
+  it('fails closed before signing when the Pro live mode cannot be read', async () => {
+    const setLocalLoadingHistory = jest.fn();
+
+    await expect(
+      executePerpsWithdraw({
+        account,
+        amount: '3',
+        isHypeWithdraw: true,
+        queryLiveUserAbstraction: async () => {
+          throw new Error('offline');
+        },
+        setLocalLoadingHistory,
+      }),
+    ).resolves.toBe(false);
+
+    expect(mockPrepareSendAsset).not.toHaveBeenCalled();
+    expect(mockSignTypedData).not.toHaveBeenCalled();
+    expect(mockSendSendAsset).not.toHaveBeenCalled();
+    expect(mockShowToast).toHaveBeenCalledWith('offline', 'error');
+  });
+
+  it('fails closed before send when the Pro live mode changes during signing', async () => {
+    const setLocalLoadingHistory = jest.fn();
+    const queryLiveUserAbstraction = jest
+      .fn()
+      .mockResolvedValueOnce('unifiedAccount')
+      .mockResolvedValueOnce('default');
+
+    await expect(
+      executePerpsWithdraw({
+        account,
+        amount: '3',
+        isHypeWithdraw: true,
+        queryLiveUserAbstraction,
+        setLocalLoadingHistory,
+      }),
+    ).resolves.toBe(false);
+
+    expect(mockPrepareSendAsset).toHaveBeenCalledWith(
+      expect.objectContaining({ sourceDex: 'spot' }),
+    );
+    expect(mockSignTypedData).toHaveBeenCalledTimes(1);
+    expect(mockSendSendAsset).not.toHaveBeenCalled();
+    expect(mockUpsertFundingJournal).not.toHaveBeenCalled();
+    expect(setLocalLoadingHistory).not.toHaveBeenCalled();
+  });
+
+  it('fails closed before send when the Pro account context expires after signing', async () => {
+    const setLocalLoadingHistory = jest.fn();
+    const queryLiveUserAbstraction = jest
+      .fn()
+      .mockResolvedValueOnce('default')
+      .mockResolvedValueOnce(null);
+
+    await expect(
+      executePerpsWithdraw({
+        account,
+        amount: '12',
+        queryLiveUserAbstraction,
+        setLocalLoadingHistory,
+      }),
+    ).resolves.toBe(false);
+
+    expect(mockSignTypedData).toHaveBeenCalledTimes(1);
+    expect(mockSendWithdraw).not.toHaveBeenCalled();
+    expect(setLocalLoadingHistory).not.toHaveBeenCalled();
+  });
+
   it('uses the prepared nonce when standard withdraw returns no hash', async () => {
     mockSendWithdraw.mockResolvedValueOnce({});
     const setLocalLoadingHistory = jest.fn();

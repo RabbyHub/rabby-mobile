@@ -1,6 +1,7 @@
 import type { PerpsFundingJournalEntry } from '@/core/services/perpsService';
 import { mapPerpsFundingJournalEntryToHistory } from '@/hooks/perps/funding/fundingHistory';
 import {
+  isPerpsFundingPendingPresentationExpired,
   matchPerpsFundingHistory,
   shouldUsePerpsFundingSourceAssetAmount,
 } from '@/hooks/perps/funding/fundingHistoryReconciliation';
@@ -15,11 +16,13 @@ const getDirection = (
 
 const mapLocalHistoryItem = (
   item: AccountHistoryItem,
+  now?: number,
 ): PerpsProTransactionHistoryRow | null => {
   if (
     item.status === 'success' ||
     item.type === 'transfer' ||
-    (item.status !== 'pending' && item.status !== 'failed')
+    (item.status !== 'pending' && item.status !== 'failed') ||
+    (now !== undefined && isPerpsFundingPendingPresentationExpired(item, now))
   ) {
     return null;
   }
@@ -63,10 +66,12 @@ export const mapPerpsProRemoteTransactionToFundingHistory = (
 export const mergePerpsProLocalTransactionHistory = ({
   journalEntries,
   localHistory,
+  now,
   remoteRows,
 }: {
   journalEntries: readonly PerpsFundingJournalEntry[];
   localHistory: readonly AccountHistoryItem[];
+  now?: number;
   remoteRows: readonly PerpsProTransactionHistoryRow[];
 }): {
   confirmations: ReturnType<typeof matchPerpsFundingHistory>['confirmations'];
@@ -115,7 +120,7 @@ export const mergePerpsProLocalTransactionHistory = ({
     if (matches.confirmedLocalIndexes.has(localIndex)) {
       return;
     }
-    const row = mapLocalHistoryItem(item);
+    const row = mapLocalHistoryItem(item, now);
     if (row) {
       localByKey.set(row.key, row);
     }
