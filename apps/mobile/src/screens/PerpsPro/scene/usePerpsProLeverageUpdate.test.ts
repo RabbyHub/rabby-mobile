@@ -83,7 +83,9 @@ describe('usePerpsProLeverageUpdate', () => {
     expect(mockBuildCommand).toHaveBeenCalledWith(
       expect.objectContaining({ coin: 'BTC', leverage: 20 }),
     );
-    expect(mockEnsureApproval).not.toHaveBeenCalled();
+    expect(mockEnsureApproval).toHaveBeenCalledWith(account, {
+      builderFee: false,
+    });
     expect(mockExecute).toHaveBeenCalledTimes(1);
     expect(mockUpdateActiveAssetLeverageCache).toHaveBeenCalledWith(
       'BTC',
@@ -156,7 +158,7 @@ describe('usePerpsProLeverageUpdate', () => {
     expect(mockShowToast).not.toHaveBeenCalled();
   });
 
-  it('reports the server reason without requesting generic action approval', async () => {
+  it('reports the server reason after action-scoped agent approval', async () => {
     mockExecute.mockResolvedValueOnce({
       error: 'Insufficient margin',
       kind: 'failed',
@@ -181,7 +183,9 @@ describe('usePerpsProLeverageUpdate', () => {
       ).toBe(false);
     });
 
-    expect(mockEnsureApproval).not.toHaveBeenCalled();
+    expect(mockEnsureApproval).toHaveBeenCalledWith(account, {
+      builderFee: false,
+    });
     expect(mockShowToast).toHaveBeenCalledWith(
       'Cannot Change Leverage: Insufficient margin',
       'error',

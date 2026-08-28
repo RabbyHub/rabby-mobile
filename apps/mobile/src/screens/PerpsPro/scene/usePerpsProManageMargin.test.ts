@@ -299,7 +299,9 @@ describe('usePerpsProManageMargin', () => {
 
     await act(async () => hook.result.current.confirm());
 
-    expect(mockEnsureApproval).toHaveBeenCalledWith(mockAccount);
+    expect(mockEnsureApproval).toHaveBeenCalledWith(mockAccount, {
+      builderFee: false,
+    });
     expect(mockFetchClearinghouse).toHaveBeenCalledWith(
       '',
       mockAccount.address,

@@ -3,6 +3,10 @@ import { PERPS_MINI_USD_VALUE } from '@/constant/perps';
 import { isPerpsActionUserCancelled } from '@/hooks/perps/actions/actionError';
 import { ensurePerpsActionApproval } from '@/hooks/perps/actions/perpsActionApproval';
 import {
+  judgeIsBuilderFeeNeedApprove,
+  judgeIsUserAgentIsExpired,
+} from '@/hooks/perps/perpsActionError';
+import {
   buildPerpsUpdateLeverageCommand,
   executePerpsUpdateLeverage,
 } from '@/hooks/perps/actions/updateLeverage';
@@ -1964,6 +1968,12 @@ export const usePerpsProTrade = ({
       } catch (error) {
         if (isPerpsActionUserCancelled(error)) return;
         const message = error instanceof Error ? error.message : String(error);
+        if (
+          (await judgeIsUserAgentIsExpired(message)) ||
+          judgeIsBuilderFeeNeedApprove(message)
+        ) {
+          return;
+        }
         showToast(
           orderErrorText(
             message || t('page.perps.pro.trade.orderFailed'),
@@ -2076,6 +2086,13 @@ export const usePerpsProTrade = ({
             'error',
           );
           setReview(null);
+          return;
+        }
+        if (
+          result.error &&
+          ((await judgeIsUserAgentIsExpired(result.error)) ||
+            judgeIsBuilderFeeNeedApprove(result.error))
+        ) {
           return;
         }
         if (result.kind === 'requestFailed') {

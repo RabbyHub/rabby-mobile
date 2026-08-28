@@ -1,5 +1,6 @@
 import type { Account } from '@/core/startupServices/preference';
 import { isPerpsActionUserCancelled } from '@/hooks/perps/actions/actionError';
+import { ensurePerpsActionApproval } from '@/hooks/perps/actions/perpsActionApproval';
 import {
   buildPerpsUpdateLeverageCommand,
   executePerpsUpdateLeverage,
@@ -43,6 +44,9 @@ export const usePerpsProLeverageUpdate = ({
       pendingRef.current = true;
       setPending(true);
       try {
+        await ensurePerpsActionApproval(request.account, {
+          builderFee: false,
+        });
         const command = buildPerpsUpdateLeverageCommand({
           account: request.account,
           coin: request.coin,

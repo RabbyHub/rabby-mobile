@@ -404,7 +404,9 @@ export const usePerpsProPositionTpSl = (
         const command = buildPerpsCancelOrdersCommand(editor.account, [
           { coin: editor.position.coin, oid: order.oid },
         ]);
-        await ensurePerpsActionApproval(editor.account);
+        await ensurePerpsActionApproval(editor.account, {
+          builderFee: false,
+        });
         const result = await executePerpsCancelOrders(command);
         if (result.failureReason === 'userCancelled') {
           return;

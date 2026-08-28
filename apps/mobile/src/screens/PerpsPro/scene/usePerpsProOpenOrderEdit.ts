@@ -292,7 +292,9 @@ export const usePerpsProOpenOrderEdit = (
       pendingRef.current = true;
       setPending(true);
       try {
-        await ensurePerpsActionApproval(editorSnapshot.account);
+        await ensurePerpsActionApproval(editorSnapshot.account, {
+          builderFee: false,
+        });
         const result = await executePerpsModifyOpenOrder(
           reviewSnapshot.command,
         );

@@ -115,7 +115,9 @@ describe('usePerpsProCancelOrders', () => {
 
     act(() => hook.result.current.confirmCancellation());
     await waitFor(() => expect(mockExecuteCancel).toHaveBeenCalledTimes(1));
-    expect(mockEnsureApproval).toHaveBeenCalledTimes(1);
+    expect(mockEnsureApproval).toHaveBeenCalledWith(mockCurrentAccount, {
+      builderFee: false,
+    });
     expect(mockShowToast).toHaveBeenCalledWith(
       'page.perps.pro.openOrders.cancelSuccess',
       'success',

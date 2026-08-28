@@ -85,7 +85,9 @@ export const usePerpsProCancelOrders = () => {
           expectedAccount,
           orders.map(order => ({ coin: order.coin, oid: order.oid })),
         );
-        await ensurePerpsActionApproval(expectedAccount);
+        await ensurePerpsActionApproval(expectedAccount, {
+          builderFee: false,
+        });
         const result = await executePerpsCancelOrders(command);
         if (result.failureReason === 'userCancelled') {
           return;
