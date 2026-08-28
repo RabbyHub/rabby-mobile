@@ -139,10 +139,12 @@ export const PerpsClosePositionPopup: React.FC<{
 
   const closedPnl = useMemo(() => {
     if (orderType === 'limit') {
-      // Estimate against the expected exit price instead of the live mark.
+      // Always price against the limit the user typed, even when it is
+      // marketable: silently switching to markPrice makes the shown PnL
+      // disagree with the price on screen and reads as a bug to users.
       const sign = direction === 'Long' ? 1 : -1;
       return (
-        (estimatePx - entryPrice) *
+        (effectivePx - entryPrice) *
         sign *
         Number(positionSize) *
         (closePercent / 100)
@@ -151,7 +153,7 @@ export const PerpsClosePositionPopup: React.FC<{
     return (pnl * closePercent) / 100;
   }, [
     orderType,
-    estimatePx,
+    effectivePx,
     entryPrice,
     direction,
     positionSize,

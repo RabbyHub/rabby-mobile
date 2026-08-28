@@ -444,6 +444,10 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
   },
   scrollContent: {
+    // The account card sits flush at the top of the scroll content, so its
+    // top border/shadow halo gets clipped by the ScrollView bounds. Keep a
+    // small inset so the card's top edge renders in full.
+    paddingTop: 2,
     // paddingBottom: 10,
   },
   footer: {
