@@ -79,6 +79,10 @@ import {
   decidePerpsMarketRefresh,
   fetchPerpsRemoteList,
 } from './marketDataRefresh';
+import {
+  createPerpsOpenOrdersInvalidationCoordinator,
+  type PerpsOpenOrdersInvalidationCoordinator,
+} from './openOrdersInvalidation';
 
 export type { AccountHistoryItem } from './funding/types';
 
@@ -131,9 +135,50 @@ const toCachedMarketData = (item: MarketData): MarketData => ({
 // Key '' === hyper native dex.
 const dexClearinghouseStatesCache = new Map<string, ClearinghouseState>();
 
-// Per-dex openOrders. openOrders has no server-side time, so HTTP simply
-// overwrites the matching bucket; WS pushes overwrite all buckets.
+// Per-dex frontendOpenOrders snapshots. This richer HTTP response is the only
+// topology authority because it includes parent/child TP/SL metadata that the
+// ordinary openOrders WebSocket payload omits.
 const dexOpenOrdersCache = new Map<string, OpenOrder[]>();
+const dexOpenOrdersRequestRevision = new Map<string, number>();
+const wsOpenOrdersFingerprintByDex = new Map<string, string>();
+let openOrdersInvalidationCoordinator: PerpsOpenOrdersInvalidationCoordinator;
+
+const resetOpenOrdersInvalidation = () => {
+  wsOpenOrdersFingerprintByDex.clear();
+  openOrdersInvalidationCoordinator.reset();
+};
+
+const getWsOpenOrdersFingerprint = (orders: readonly OpenOrder[]) =>
+  JSON.stringify(
+    orders
+      .map(order => [
+        order.oid,
+        order.coin,
+        order.cloid,
+        order.isPositionTpsl,
+        order.isTrigger,
+        order.limitPx,
+        order.orderType,
+        order.origSz,
+        order.reduceOnly,
+        order.side,
+        order.sz,
+        order.timestamp,
+        order.tif,
+        order.triggerCondition,
+        order.triggerPx,
+      ])
+      .sort((left, right) => Number(left[0]) - Number(right[0])),
+  );
+
+const getWsOpenOrdersDex = (order: OpenOrder, marketDataMap: MarketDataMap) => {
+  const knownDex = marketDataMap[order.coin]?.dexId;
+  if (knownDex !== undefined) {
+    return knownDex;
+  }
+  const separatorIndex = order.coin.indexOf(':');
+  return separatorIndex > 0 ? order.coin.slice(0, separatorIndex) : '';
+};
 
 // HIP-3 dex roster, populated lazily by fetchMarketData.
 let perpDexsCache: PerpDexsResponse | null = null;
@@ -526,6 +571,7 @@ function stopHomeSpotSubscription() {
 
 function stopAccountSubscriptions() {
   activeUserDataSubscription = null;
+  resetOpenOrdersInvalidation();
   stopHomeSpotSubscription();
   setPerpsState(prev => {
     prev.wsSubscriptions.forEach(unsubscribe => {
@@ -1849,30 +1895,38 @@ export const subscribeToUserData = (account: Account) => {
       ) {
         return;
       }
-      // Bucket by dex so a single-dex HTTP refresh can overwrite just its
-      // bucket without losing other dexes' orders.
+      // The ordinary WS payload is an invalidation signal only. It omits the
+      // frontend parent/child metadata required to distinguish position TP/SL
+      // from attached TP/SL belonging to an unfilled parent order.
       const marketDataMap = perpsStore.getState().marketDataMap;
-      const buckets = new Map<string, OpenOrder[]>();
+      const wsBuckets = new Map<string, OpenOrder[]>();
       for (const order of orders) {
-        const dexName = marketDataMap[order.coin]?.dexId ?? '';
-        const list = buckets.get(dexName);
-        if (list) {
-          list.push(order);
+        const dex = getWsOpenOrdersDex(order, marketDataMap);
+        const bucket = wsBuckets.get(dex);
+        if (bucket) {
+          bucket.push(order);
         } else {
-          buckets.set(dexName, [order]);
+          wsBuckets.set(dex, [order]);
         }
       }
-      dexOpenOrdersCache.clear();
-      for (const [dexName, list] of buckets) {
-        dexOpenOrdersCache.set(dexName, list);
+      const knownDexes = new Set([
+        ...dexOpenOrdersCache.keys(),
+        ...wsOpenOrdersFingerprintByDex.keys(),
+        ...wsBuckets.keys(),
+      ]);
+      const affectedDexes = new Set<string>();
+      for (const dex of knownDexes) {
+        const fingerprint = getWsOpenOrdersFingerprint(
+          wsBuckets.get(dex) ?? [],
+        );
+        if (wsOpenOrdersFingerprintByDex.get(dex) !== fingerprint) {
+          affectedDexes.add(dex);
+        }
+        wsOpenOrdersFingerprintByDex.set(dex, fingerprint);
       }
-
-      setPerpsState(prev =>
-        prev.currentPerpsAccount &&
-        isSameAddress(prev.currentPerpsAccount.address, address)
-          ? { ...prev, isOpenOrdersReady: true, openOrders: orders }
-          : prev,
-      );
+      if (affectedDexes.size > 0) {
+        openOrdersInvalidationCoordinator.invalidate(address, affectedDexes);
+      }
     },
   );
 
@@ -2053,7 +2107,10 @@ export const fetchSpotStateHttp = async (expectedAddress?: string) => {
 const fetchAndCacheOpenOrdersForDex = async (
   dex: string,
   expectedAddress: string,
+  expectedGeneration = openOrdersInvalidationCoordinator.getGeneration(),
 ): Promise<boolean> => {
+  const revision = (dexOpenOrdersRequestRevision.get(dex) ?? 0) + 1;
+  dexOpenOrdersRequestRevision.set(dex, revision);
   const sdk = apisPerps.getPerpsSDK();
   let orders: OpenOrder[];
   try {
@@ -2065,7 +2122,11 @@ const fetchAndCacheOpenOrdersForDex = async (
     console.error('[fetchPositionOpenOrdersHttp] failed', dex, e);
     return false;
   }
-  if (!isCurrentPerpsAccountAddress(expectedAddress)) {
+  if (
+    expectedGeneration !== openOrdersInvalidationCoordinator.getGeneration() ||
+    dexOpenOrdersRequestRevision.get(dex) !== revision ||
+    !isCurrentPerpsAccountAddress(expectedAddress)
+  ) {
     return false;
   }
   dexOpenOrdersCache.set(dex, orders);
@@ -2092,8 +2153,15 @@ const flushAggregatedOpenOrders = (
   );
 };
 
-// No server-side time guard for openOrders: callers fire this after the
-// SDK has confirmed the mutating action, and WS reconciles any drift quickly.
+openOrdersInvalidationCoordinator =
+  createPerpsOpenOrdersInvalidationCoordinator({
+    fetchDex: fetchAndCacheOpenOrdersForDex,
+    flush: address => flushAggregatedOpenOrders(address, true),
+    isCurrentAddress: isCurrentPerpsAccountAddress,
+  });
+
+// No server-side time guard for frontendOpenOrders. Per-dex request revisions
+// prevent an older HTTP response from overwriting a newer authoritative one.
 export const fetchPositionOpenOrdersHttp = async (dex: string) => {
   const account = perpsStore.getState().currentPerpsAccount;
   if (!account?.address) {
@@ -2411,6 +2479,7 @@ export const usePerpsStore = () => {
     // the previous account's sub-dex data still in the cache.
     if (!canReuseSubscription) {
       dexClearinghouseStatesCache.clear();
+      resetOpenOrdersInvalidation();
       dexOpenOrdersCache.clear();
     }
     apisPerps.setPerpsCurrentAccount(account);
