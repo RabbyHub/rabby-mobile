@@ -853,6 +853,10 @@ describe('PerpsProScene market loading states', () => {
   });
 
   it('mounts the info pager for the resolved tab without exposing a fallback page', () => {
+    Object.defineProperty(Platform, 'OS', {
+      configurable: true,
+      value: 'ios',
+    });
     mockUsePerpsProScene.mockReturnValue(createSceneState());
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({ activeInfoTab: null }),
@@ -877,6 +881,9 @@ describe('PerpsProScene market loading states', () => {
     expect(screen.getByTestId('perps-pro-info-pager').props.initialPage).toBe(
       0,
     );
+    expect(
+      screen.getByTestId('perps-pro-info-pager').props.offscreenPageLimit,
+    ).toBeUndefined();
     expect(screen.getByTestId('perps-pro-info-tabs-overlay')).toBeOnTheScreen();
     expect(
       screen.getByTestId('perps-pro-trade-scroll-bridge').props.scrollEnabled,
@@ -1245,10 +1252,13 @@ describe('PerpsProScene market loading states', () => {
     const scroll = screen.getByTestId('perps-pro-scroll');
     expect(scroll.props.scrollEnabled).toBe(false);
     expect(
-      screen.queryByTestId('perps-pro-scroll-positions', {
+      screen.getByTestId('perps-pro-scroll-positions', {
         includeHiddenElements: true,
       }),
-    ).toBeNull();
+    ).toBeOnTheScreen();
+    expect(
+      screen.getByTestId('perps-pro-info-pager').props.offscreenPageLimit,
+    ).toBe(2);
     expect(
       screen.getByTestId('perps-pro-trade-scroll-bridge').props.scrollEnabled,
     ).toBe(false);

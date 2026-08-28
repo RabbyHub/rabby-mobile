@@ -107,6 +107,7 @@ type PerpsProInfoPagerProps<Row> = {
   getActiveScrollOffset: () => number;
   keepAllTabsMounted?: boolean;
   nativeVerticalScrollEnabled?: boolean;
+  offscreenPageLimit?: number;
   onActivateOffset: (offset: number) => void;
   onActiveScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onLayout: (event: LayoutChangeEvent) => void;
@@ -149,6 +150,7 @@ const PerpsProInfoPagerInner = <Row,>(
     getActiveScrollOffset,
     keepAllTabsMounted = false,
     nativeVerticalScrollEnabled = true,
+    offscreenPageLimit,
     onActivateOffset,
     onActiveScroll,
     onLayout,
@@ -570,6 +572,7 @@ const PerpsProInfoPagerInner = <Row,>(
   return (
     <ReanimatedPagerView
       initialPage={selectedIndexRef.current}
+      offscreenPageLimit={offscreenPageLimit}
       onPageScroll={handlePageScroll}
       onPageScrollStateChanged={handlePageScrollStateChanged}
       onPageSelected={handlePageSelected}
