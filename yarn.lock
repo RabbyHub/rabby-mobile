@@ -38678,7 +38678,7 @@ __metadata:
     react-native-gesture-handler: "npm:2.30.0"
     react-native-get-random-values: "npm:^2.0.0"
     react-native-haptic-feedback: "npm:2.3.3"
-    react-native-iap: "patch:react-native-iap@npm%3A12.16.4#../../.yarn/patches/react-native-iap-npm-12.16.4-49632744b4.patch"
+    react-native-iap: "npm:16.3.3"
     react-native-image-picker: "npm:8.2.1"
     react-native-inappbrowser-reborn: "npm:^3.7.0"
     react-native-indicators: "npm:^0.17.0"
@@ -38688,7 +38688,7 @@ __metadata:
     react-native-linear-gradient: "npm:^2.8.3"
     react-native-localize: "npm:3.3.0"
     react-native-mmkv: "npm:^2.12.2"
-    react-native-nitro-modules: "npm:0.35.9"
+    react-native-nitro-modules: "npm:0.36.5"
     react-native-pager-view: "npm:6.7.0"
     react-native-permissions: "npm:5.3.0"
     react-native-qrcode-svg: "npm:^6.2.0"
@@ -39490,31 +39490,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-iap@npm:12.16.4":
-  version: 12.16.4
-  resolution: "react-native-iap@npm:12.16.4"
+"react-native-iap@npm:16.3.3":
+  version: 16.3.3
+  resolution: "react-native-iap@npm:16.3.3"
   peerDependencies:
-    expo: ">=47.0.0"
-    react: ">=16.13.1"
-    react-native: ">=0.65.1"
+    "@amazon-devices/keplerscript-appstore-iap-lib": ~2.13.0
+    "@amazon-devices/package-manager-lib": ~1.0.1767254401
+    react: "*"
+    react-native: "*"
+    react-native-nitro-modules: ^0.36.5
   peerDependenciesMeta:
-    expo:
+    "@amazon-devices/keplerscript-appstore-iap-lib":
       optional: true
-  checksum: 10/4c14d88a71b683fd1483280816102e59a2e74b6543c67ab63f28a9edec04df00dfbfaced6d33d8f7db44ee71a73473b9452ce69dfd0749da365adc85a1d71660
-  languageName: node
-  linkType: hard
-
-"react-native-iap@patch:react-native-iap@npm%3A12.16.4#../../.yarn/patches/react-native-iap-npm-12.16.4-49632744b4.patch::locator=rabby-mobile%40workspace%3Aapps%2Fmobile":
-  version: 12.16.4
-  resolution: "react-native-iap@patch:react-native-iap@npm%3A12.16.4#../../.yarn/patches/react-native-iap-npm-12.16.4-49632744b4.patch::version=12.16.4&hash=67e825&locator=rabby-mobile%40workspace%3Aapps%2Fmobile"
-  peerDependencies:
-    expo: ">=47.0.0"
-    react: ">=16.13.1"
-    react-native: ">=0.65.1"
-  peerDependenciesMeta:
-    expo:
+    "@amazon-devices/package-manager-lib":
       optional: true
-  checksum: 10/5c14eac159c04692873fb67e120f8f182ff8e120c1d59a702a6f8beaa0f79a2e72c86a5b11569f97c8590621c3115c93d1b286a14519e9aa00ddda819bd7ffde
+  checksum: 10/595a91f905674c2801545c704d4cc458f7a2b5d49e5196c23f590e52a2027697a25b1ecedbb9650887bdd95959e80db4e4ed4d3ab27fcc3974de55911879d556
   languageName: node
   linkType: hard
 
@@ -39674,13 +39664,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-nitro-modules@npm:0.35.9":
-  version: 0.35.9
-  resolution: "react-native-nitro-modules@npm:0.35.9"
+"react-native-nitro-modules@npm:0.36.5":
+  version: 0.36.5
+  resolution: "react-native-nitro-modules@npm:0.36.5"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10/f1554947b20d4bb2688cca88bd0f30091ce2652a5e3bf63b196f587ee4ae2ed09820e9e05e43acda4d4051b3dc952deb554ae495467aec6d9a4778443ad6c4e3
+  checksum: 10/d92e2a6ad62d6bb338a1ac689f9b9ae757103d8b8812101f7e6e4ed2d64178d90a9e65a6dbae0b78253c972d5881fc69a0e20c0fb64aa3a42e5d16eb31d1d653
   languageName: node
   linkType: hard
 

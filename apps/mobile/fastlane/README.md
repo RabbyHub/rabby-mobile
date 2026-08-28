@@ -1,5 +1,4 @@
-fastlane documentation
-----
+## fastlane documentation
 
 # Installation
 
@@ -14,6 +13,14 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 # Available Actions
 
 ## iOS
+
+### ios appstore_signing_preflight
+
+```sh
+[bundle exec] fastlane ios appstore_signing_preflight
+```
+
+Preflight iOS appstore signing assets
 
 ### ios adhoc
 
@@ -39,8 +46,7 @@ Valid ios adhoc
 
 Release for the iOS production
 
-----
-
+---
 
 ## Android
 
@@ -68,7 +74,7 @@ Release for the Android selfhost
 
 Release for the Android playstore
 
-----
+---
 
 This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.
 

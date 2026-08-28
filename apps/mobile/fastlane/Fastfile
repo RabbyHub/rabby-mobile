@@ -143,6 +143,11 @@ platform :ios do
     #   clone_branch_directly: true)
   end
 
+  desc "Preflight iOS appstore signing assets"
+  lane :appstore_signing_preflight do
+    prepare_apple_sign(type: 'appstore')
+  end
+
   desc "Release for the iOS adhoc"
   lane :adhoc do
     prepare_apple_sign(type: 'adhoc')
