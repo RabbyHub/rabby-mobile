@@ -1,6 +1,10 @@
 import { getContactAliasSnapshot } from '@/core/serviceApi/contact';
 import type { Account, KeyringAccountWithAlias } from '@/types/account';
-import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import {
+  HARDWARE_KEYRING_TYPES,
+  KEYRING_CLASS,
+  KEYRING_TYPE,
+} from '@rabby-wallet/keyring-utils';
 import { ellipsisAddress } from './address';
 
 const priority = {
@@ -34,6 +38,25 @@ export function isWatchOrSafeAccount(account: Account | Account['type']) {
     accType && [KEYRING_CLASS.WATCH, KEYRING_CLASS.GNOSIS].includes(accType)
   );
 }
+
+export const isSupportDBAccount = (account?: Account | null) => {
+  if (!account) {
+    return false;
+  }
+
+  return (
+    (
+      [
+        KEYRING_CLASS.MNEMONIC,
+        KEYRING_CLASS.PRIVATE_KEY,
+        KEYRING_CLASS.GNOSIS,
+      ] as string[]
+    ).includes(account.type) ||
+    Object.values(HARDWARE_KEYRING_TYPES).some(
+      item => item.type === account.type,
+    )
+  );
+};
 
 export const isAccountSupportMiniApproval = (type?: string) => {
   if (!type) {
