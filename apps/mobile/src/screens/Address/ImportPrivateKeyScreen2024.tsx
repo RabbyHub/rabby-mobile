@@ -133,6 +133,7 @@ export const ImportPrivateKeyScreen2024 = () => {
 
   React.useEffect(() => {
     if (scanner.text) {
+      setError(undefined);
       setPrivateKey(scanner.text);
       scanner.clear();
     }
