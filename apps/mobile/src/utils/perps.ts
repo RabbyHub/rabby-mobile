@@ -715,12 +715,7 @@ export const formatSpotState = (spotState: SpotClearinghouseState) => {
   };
 };
 
-export const getStatsReportSide = (isBuy: boolean, isReduceOnly: boolean) => {
-  if (isReduceOnly) {
-    return isBuy ? 'close short' : 'close long';
-  }
-  return isBuy ? 'open long' : 'open short';
-};
+export { getStatsReportSide } from './perpsStats';
 
 export const handleDisplayFundingPayments = (fundingPayments: string) => {
   const bn = new BigNumber(fundingPayments || 0);

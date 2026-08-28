@@ -110,6 +110,35 @@ jest.mock('react-native-reanimated', () => {
   };
 });
 
+jest.mock('./usePerpsProAndroidScenePresentation', () => ({
+  usePerpsProAndroidScenePresentation: ({
+    infoTabsAnchorY,
+    marketNaturalAnchorY,
+    sceneLeadInHeight,
+  }: {
+    infoTabsAnchorY: number;
+    marketNaturalAnchorY: number;
+    sceneLeadInHeight: number;
+  }) => ({
+    headerAnimatedStyle: {
+      opacity: 1,
+      transform: [{ translateY: 0 }],
+    },
+    infoTabsAnimatedStyle: {
+      transform: [{ translateY: infoTabsAnchorY }],
+    },
+    marketAnimatedStyle: {
+      transform: [{ translateY: marketNaturalAnchorY }],
+    },
+    regionAlertAnimatedStyle: {
+      transform: [{ translateY: marketNaturalAnchorY }],
+    },
+    tradeAnimatedStyle: {
+      transform: [{ translateY: sceneLeadInHeight }],
+    },
+  }),
+}));
+
 jest.mock('@/screens/Perps/components/PerpsRegionAlert', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -821,6 +850,11 @@ describe('PerpsProScene market loading states', () => {
     expect(
       screen.getByTestId('perps-pro-trade-scroll-bridge').props.scrollEnabled,
     ).toBe(true);
+    expect(
+      screen.getByTestId('perps-pro-scroll-account', {
+        includeHiddenElements: true,
+      }),
+    ).toBeOnTheScreen();
   });
 
   it('observes a new touch without taking ownership from child gestures', () => {
@@ -1134,6 +1168,11 @@ describe('PerpsProScene market loading states', () => {
     const scroll = screen.getByTestId('perps-pro-scroll');
     expect(scroll.props.scrollEnabled).toBe(false);
     expect(
+      screen.queryByTestId('perps-pro-scroll-positions', {
+        includeHiddenElements: true,
+      }),
+    ).toBeNull();
+    expect(
       screen.getByTestId('perps-pro-trade-scroll-bridge').props.scrollEnabled,
     ).toBe(false);
     expect(
@@ -1204,7 +1243,7 @@ describe('PerpsProScene market loading states', () => {
       nativeEvent: { pageScrollState: 'dragging' },
     });
     fireEvent(pager, 'pageScroll', {
-      nativeEvent: { offset: 0.49, position: 1 },
+      nativeEvent: { offset: 0.45, position: 1 },
     });
     expect(
       screen.getByTestId('perps-pro-info-tab-openOrders').props
@@ -1213,7 +1252,7 @@ describe('PerpsProScene market loading states', () => {
     expect(setActiveInfoTab).not.toHaveBeenCalled();
 
     fireEvent(pager, 'pageScroll', {
-      nativeEvent: { offset: 0.51, position: 1 },
+      nativeEvent: { offset: 0.55, position: 1 },
     });
     expect(
       screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
@@ -1223,7 +1262,7 @@ describe('PerpsProScene market loading states', () => {
       nativeEvent: { pageScrollState: 'settling' },
     });
     fireEvent(pager, 'pageScroll', {
-      nativeEvent: { offset: 0.49, position: 1 },
+      nativeEvent: { offset: 0.45, position: 1 },
     });
     expect(
       screen.getByTestId('perps-pro-info-tab-openOrders').props

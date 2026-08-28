@@ -8,6 +8,7 @@ import { ThemeColors2024 } from '@/constant/theme';
 
 const mockModalProps = jest.fn();
 const mockGetFundingHistory = jest.fn().mockResolvedValue([]);
+let mockBottomInset = 0;
 
 jest.mock('@/components', () => {
   const ReactModule = require('react');
@@ -82,6 +83,15 @@ jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
 }));
 
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({
+    bottom: mockBottomInset,
+    left: 0,
+    right: 0,
+    top: 0,
+  }),
+}));
+
 jest.mock('@gorhom/bottom-sheet', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -103,15 +113,20 @@ jest.mock('../common/perpsProSheetNavigationRegistry', () => ({
   usePerpsProSheetNavigationRegistration: jest.fn(),
 }));
 
-import { PerpsProFundingDetailSheet } from './PerpsProFundingDetailSheet';
+import {
+  PERPS_PRO_FUNDING_ERROR_SHEET_HEIGHT,
+  PERPS_PRO_FUNDING_SHEET_HEIGHT,
+  PerpsProFundingDetailSheet,
+} from './PerpsProFundingDetailSheet';
 
 describe('PerpsProFundingDetailSheet', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetFundingHistory.mockReturnValue(new Promise(() => undefined));
+    mockBottomInset = 0;
   });
 
-  it('matches the approved 330px Funding Rate sheet geometry', () => {
+  it('matches the approved Funding Rate sheet geometry and bottom spacing', () => {
     render(
       <PerpsProFundingDetailSheet
         market={
@@ -128,9 +143,14 @@ describe('PerpsProFundingDetailSheet', () => {
     const modal = mockModalProps.mock.calls.at(-1)?.[0];
     expect(modal).toMatchObject({
       enableDynamicSizing: false,
-      snapPoints: [330],
+      snapPoints: [PERPS_PRO_FUNDING_SHEET_HEIGHT],
       testLinearGradientType: 'bg1',
     });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('funding-detail-content').props.style,
+      ),
+    ).toMatchObject({ paddingBottom: 24 });
     expect(StyleSheet.flatten(modal.backgroundStyle)).toMatchObject({
       backgroundColor: 'neutral-bg-1',
     });
@@ -177,7 +197,7 @@ describe('PerpsProFundingDetailSheet', () => {
     });
   });
 
-  it('expands to the approved 358px geometry when history fails', async () => {
+  it('expands to the approved error geometry when history fails', async () => {
     mockGetFundingHistory.mockRejectedValueOnce(
       new Error('Funding history unavailable'),
     );
@@ -196,11 +216,39 @@ describe('PerpsProFundingDetailSheet', () => {
     );
 
     await waitFor(() => {
-      expect(mockModalProps.mock.calls.at(-1)?.[0].snapPoints).toEqual([358]);
+      expect(mockModalProps.mock.calls.at(-1)?.[0].snapPoints).toEqual([
+        PERPS_PRO_FUNDING_ERROR_SHEET_HEIGHT,
+      ]);
     });
     expect(
       screen.getByText('page.perps.pro.funding.historyUnavailable'),
     ).toBeTruthy();
+  });
+
+  it('adds only the safe-area excess above the minimum bottom spacing', () => {
+    mockBottomInset = 34;
+
+    render(
+      <PerpsProFundingDetailSheet
+        market={
+          {
+            canonicalCoin: 'BTC',
+            marketData: { funding: '0.0001', oraclePx: '60000' },
+          } as never
+        }
+        onClose={jest.fn()}
+        serverClock={null}
+      />,
+    );
+
+    expect(mockModalProps.mock.calls.at(-1)?.[0].snapPoints).toEqual([
+      PERPS_PRO_FUNDING_SHEET_HEIGHT + 10,
+    ]);
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('funding-detail-content').props.style,
+      ),
+    ).toMatchObject({ paddingBottom: 34 });
   });
 
   it('keeps the approved English funding rate label line breaks', () => {

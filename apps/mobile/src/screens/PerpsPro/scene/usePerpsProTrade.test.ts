@@ -43,13 +43,26 @@ const mockLimitOrderOpen = jest.fn(async () => ({
   status: 'ok',
 }));
 const mockMarketOrderOpen = jest.fn(async () => ({
-  response: { data: { statuses: [{ filled: { oid: 1 } }] } },
+  response: {
+    data: {
+      statuses: [{ filled: { avgPx: '101', oid: 1, totalSz: '1' } }],
+    },
+  },
   status: 'ok',
 }));
+const mockReportAttachedParentHistory = jest.fn();
+const mockReportOpenOrderHistory = jest.fn();
 const mockShowToast = jest.fn();
 const mockSetTpSlMode = jest.fn(async () => undefined);
 const mockCalLiquidationPrice = jest.fn((..._args: unknown[]) => 50);
+const mockResolvePerpsProMarketLiquidationRisk = jest.fn();
 const mockExecuteAttached = jest.fn(async (..._args: unknown[]) => ({
+  confirmedParent: {
+    acceptance: 'filled' as const,
+    oid: 1,
+    price: '101',
+    size: '1.01',
+  },
   kind: 'fullAccepted' as const,
   reconciliationErrors: [],
   refreshErrors: [],
@@ -191,6 +204,28 @@ jest.mock('@/utils/perps', () => ({
   ) => marginMode || (onlyIsolated ? 'strictIsolated' : 'normal'),
 }));
 
+jest.mock('../analytics/manualTradeHistory', () => ({
+  reportPerpsProAttachedParentHistory: (...args: unknown[]) =>
+    mockReportAttachedParentHistory(...args),
+  reportPerpsProOpenOrderHistory: (...args: unknown[]) =>
+    mockReportOpenOrderHistory(...args),
+}));
+
+jest.mock('../model/marketLiquidationProjection', () => {
+  const actual = jest.requireActual<
+    typeof import('../model/marketLiquidationProjection')
+  >('../model/marketLiquidationProjection');
+  return {
+    ...actual,
+    resolvePerpsProMarketLiquidationRisk: (
+      facts: Parameters<typeof actual.resolvePerpsProMarketLiquidationRisk>[0],
+    ) => {
+      mockResolvePerpsProMarketLiquidationRisk(facts);
+      return actual.resolvePerpsProMarketLiquidationRisk(facts);
+    },
+  };
+});
+
 jest.mock('@sentry/react-native', () => ({ captureException: jest.fn() }));
 
 jest.mock('react-i18next', () => ({
@@ -249,6 +284,21 @@ const market = {
   quoteAsset: 'USDC',
 } as PerpsProMarket;
 
+const marketWithTiers = {
+  ...market,
+  marketData: {
+    ...market.marketData,
+    maintenanceMarginTiers: [
+      {
+        lowerBound: '0',
+        maintenanceDeduction: '0',
+        maintenanceMarginRate: '0.025',
+        maxLeverage: 20,
+      },
+    ],
+  },
+} as PerpsProMarket;
+
 const book: L2Book = {
   coin: 'BTC',
   levels: [[{ n: 1, px: '99', sz: '10' }], [{ n: 1, px: '101', sz: '10' }]],
@@ -286,7 +336,11 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       status: 'ok',
     });
     mockMarketOrderOpen.mockResolvedValue({
-      response: { data: { statuses: [{ filled: { oid: 1 } }] } },
+      response: {
+        data: {
+          statuses: [{ filled: { avgPx: '101', oid: 1, totalSz: '1' } }],
+        },
+      },
       status: 'ok',
     });
     mockPerpsState.isUserDataReady = true;
@@ -794,6 +848,21 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
 
     expect(mockLimitOrderOpen).toHaveBeenCalledWith(
       expect.objectContaining({ limitPx: '102', tif: 'Gtc' }),
+    );
+    expect(mockReportOpenOrderHistory).toHaveBeenCalledWith(
+      expect.objectContaining({
+        execution: expect.objectContaining({
+          kind: 'limit',
+          limitPrice: '102',
+        }),
+        orderType: 'limit',
+      }),
+      {
+        acceptance: 'resting',
+        oid: 2,
+        price: '102',
+        size: '1.01',
+      },
     );
   });
 
@@ -1539,6 +1608,17 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       expect.objectContaining({ type: 'openOrderWithAttachedTpSl' }),
       expect.any(Function),
     );
+    expect(mockReportAttachedParentHistory).toHaveBeenCalledWith(
+      expect.objectContaining({
+        parent: expect.objectContaining({ side: 'buy' }),
+      }),
+      {
+        acceptance: 'filled',
+        oid: 1,
+        price: '101',
+        size: '1.01',
+      },
+    );
     expect(mockEnsureApproval).not.toHaveBeenCalled();
     expect(mockGetPerpsSdk).not.toHaveBeenCalled();
     expect(refreshActiveAssetData).not.toHaveBeenCalled();
@@ -1663,7 +1743,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
         bboStatus: 'ready',
         executionActive: true,
         leveragePending: false,
-        market,
+        market: marketWithTiers,
         refreshActiveAssetData: jest.fn(async () => undefined),
         updateLeverageRequest: jest.fn(async () => true),
       }),
@@ -1672,18 +1752,20 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     act(() => hook.result.current.setAmount('101'));
     act(() => hook.result.current.tpSl.setRawMagnitude('sl', '40'));
     act(() => hook.result.current.tpSl.setEnabled(true));
+    mockResolvePerpsProMarketLiquidationRisk.mockClear();
     await act(async () => hook.result.current.requestReview('buy'));
 
     expect(hook.result.current.tpSl).not.toHaveProperty('submitErrors');
     expect(mockShowToast).not.toHaveBeenCalled();
     expect(hook.result.current.review).toMatchObject({
       attached: {
-        liquidationPrice: '50.00',
+        liquidationPrice: '92.23',
         sl: { triggerPrice: '40' },
       },
-      reviewFacts: { liquidationPrice: '50.00' },
+      reviewFacts: { liquidationPrice: '92.23' },
       type: 'openOrderWithAttachedTpSl',
     });
+    expect(mockResolvePerpsProMarketLiquidationRisk).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -1710,7 +1792,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
           bboStatus: 'ready',
           executionActive: true,
           leveragePending: false,
-          market,
+          market: marketWithTiers,
           refreshActiveAssetData: jest.fn(async () => undefined),
           updateLeverageRequest: jest.fn(async () => true),
         }),
@@ -1723,8 +1805,9 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
 
       expect(mockShowToast).not.toHaveBeenCalled();
       expect(hook.result.current.review).toMatchObject({
-        attached: { normalizedBaseSize: '1' },
+        attached: { liquidationPrice: null, normalizedBaseSize: '1' },
         parent: { baseSize: '1', side: 'buy' },
+        reviewFacts: { liquidationPrice: null },
         type: 'openOrderWithAttachedTpSl',
       });
     },
@@ -2022,7 +2105,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(hook.result.current.review).toBeNull();
   });
 
-  it('uses directional full-L2 VWAP for ordinary Market risk and cost', () => {
+  it('keeps Market Cost on VWAP and shares marginal liquidation with Review', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
         activeAssetData,
@@ -2032,7 +2115,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
         bboStatus: 'ready',
         executionActive: true,
         leveragePending: false,
-        market,
+        market: marketWithTiers,
         refreshActiveAssetData: jest.fn(async () => undefined),
         updateLeverageRequest: jest.fn(async () => true),
       }),
@@ -2040,33 +2123,110 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
 
     act(() => hook.result.current.setAmount('100'));
     expect(hook.result.current.getEstimatedLiquidationPrice('buy')).toBe(
-      '50.00',
-    );
-    expect(mockCalLiquidationPrice).toHaveBeenLastCalledWith(
-      101,
-      10.1,
-      'Long',
-      1,
-      101,
-      20,
+      '92.23',
     );
     expect(hook.result.current.getCostDisplayAmount('buy')).toBe('10.10');
 
     expect(hook.result.current.getEstimatedLiquidationPrice('sell')).toBe(
-      '50.00',
-    );
-    expect(mockCalLiquidationPrice).toHaveBeenLastCalledWith(
-      99,
-      9.9,
-      'Short',
-      1,
-      99,
-      20,
+      '107.34',
     );
     expect(hook.result.current.getCostDisplayAmount('sell')).toBe('9.90');
+    expect(mockResolvePerpsProMarketLiquidationRisk).toHaveBeenCalledTimes(2);
+
+    await act(async () => hook.result.current.requestReview('buy'));
+
+    expect(hook.result.current.estimatedLiquidation).toMatchObject({
+      price: '92.23',
+    });
+    expect(mockResolvePerpsProMarketLiquidationRisk).toHaveBeenCalledTimes(2);
+    expect(mockCalLiquidationPrice).not.toHaveBeenCalled();
   });
 
-  it('uses Mid for ordinary Market submission and risk when L2 is unavailable', async () => {
+  it('reproduces the official 300 BTC Isolated Buy liquidation in the live Trade surface', () => {
+    mockPerpsState.currentClearinghouseState.assetPositions.push({
+      position: {
+        coin: 'BTC',
+        entryPx: '78827',
+        leverage: {
+          rawUsd: '-10.517885',
+          type: 'isolated',
+          value: 9,
+        },
+        marginUsed: '1.279765',
+        positionValue: '11.791275',
+        szi: '0.00015',
+      },
+    } as never);
+    const screenshotMarket = {
+      ...market,
+      marketData: {
+        ...market.marketData,
+        maintenanceMarginTiers: [
+          {
+            lowerBound: '0',
+            maintenanceDeduction: '0',
+            maintenanceMarginRate: '0.0125',
+            maxLeverage: 40,
+          },
+          {
+            lowerBound: '150000000',
+            maintenanceDeduction: '1875000',
+            maintenanceMarginRate: '0.025',
+            maxLeverage: 20,
+          },
+        ],
+        markPx: '78606.5',
+        maxLeverage: 40,
+        midPx: '78606.5',
+        pxDecimals: 0,
+        szDecimals: 5,
+      },
+    } as PerpsProMarket;
+    const screenshotBook = {
+      coin: 'BTC',
+      levels: [
+        [{ n: 1, px: '78603', sz: '10' }],
+        [{ n: 1, px: '78610', sz: '10' }],
+      ],
+      time: 123,
+    } as L2Book;
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData: {
+          ...activeAssetData,
+          availableToTrade: ['13.18', '13.18'],
+          leverage: { type: 'isolated', value: 9 },
+          markPx: '78606.5',
+          maxTradeSzs: ['400', '400'],
+        },
+        bboBook: screenshotBook,
+        bboPrices: {
+          asks1: '78610',
+          asks5: null,
+          bids1: '78603',
+          bids5: null,
+        },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market: screenshotMarket,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.toggleAmountUnit());
+    act(() => hook.result.current.setAmount('300'));
+
+    expect(hook.result.current.getEstimatedLiquidationPrice('buy')).toBe(
+      '70129',
+    );
+    expect(hook.result.current.getCostDisplayAmount('buy')).toBe('2620216.67');
+    expect(mockCalLiquidationPrice).not.toHaveBeenCalled();
+  });
+
+  it('keeps Mid submission/Cost but fail-closes Market risk when L2 is unavailable', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
         activeAssetData,
@@ -2076,16 +2236,14 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
         bboStatus: 'loading',
         executionActive: true,
         leveragePending: false,
-        market,
+        market: marketWithTiers,
         refreshActiveAssetData: jest.fn(async () => undefined),
         updateLeverageRequest: jest.fn(async () => true),
       }),
     );
 
     act(() => hook.result.current.setAmount('100'));
-    expect(hook.result.current.getEstimatedLiquidationPrice('buy')).toBe(
-      '50.00',
-    );
+    expect(hook.result.current.getEstimatedLiquidationPrice('buy')).toBe('--');
     expect(hook.result.current.getCostDisplayAmount('buy')).toBe('10.00');
 
     await act(async () => hook.result.current.requestReview('buy'));
@@ -2098,9 +2256,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       quoteAmount: '100',
       reviewFacts: { marketFillRiskEntryPrice: '100' },
     });
-    expect(hook.result.current.estimatedLiquidation).toMatchObject({
-      price: '50.00',
-    });
+    expect(hook.result.current.estimatedLiquidation).toBeNull();
   });
 
   it('falls back to Mid for an attached Market review when L2 is unavailable', async () => {
@@ -2616,6 +2772,14 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
         ...market.marketData,
         dexId: 'hyna',
         markPx: '64769',
+        maintenanceMarginTiers: [
+          {
+            lowerBound: '0',
+            maintenanceDeduction: '0',
+            maintenanceMarginRate: '0.0125',
+            maxLeverage: 40,
+          },
+        ],
         maxLeverage: 40,
         midPx: '64769',
         pxDecimals: 0,
@@ -2660,25 +2824,14 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     );
 
     act(() => hook.result.current.setPercentage(43));
-    expect(hook.result.current.getEstimatedLiquidationPrice('buy')).toBe('50');
-    expect(mockCalLiquidationPrice).toHaveBeenLastCalledWith(
-      64770,
-      85.097395625,
-      'Long',
-      0.00515,
-      333.5655,
-      40,
+    expect(hook.result.current.getEstimatedLiquidationPrice('buy')).toBe(
+      '48856',
     );
 
-    expect(hook.result.current.getEstimatedLiquidationPrice('sell')).toBe('50');
-    expect(mockCalLiquidationPrice).toHaveBeenLastCalledWith(
-      64565.42857142857,
-      85.097395625,
-      'Short',
-      0.0084,
-      542.3496,
-      40,
+    expect(hook.result.current.getEstimatedLiquidationPrice('sell')).toBe(
+      '73975',
     );
+    expect(mockCalLiquidationPrice).not.toHaveBeenCalled();
   });
 
   it('uses live Mark for Conditional Market liquidation before Trigger Price input', () => {

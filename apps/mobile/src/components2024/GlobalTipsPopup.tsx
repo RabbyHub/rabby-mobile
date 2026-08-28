@@ -24,6 +24,7 @@ export const GlobalTipsPopup: React.FC<{}> = ({}) => {
     buttonTitleStyle,
     buttonType,
     bgType,
+    enablePanDownToClose,
   } = state || {};
 
   const { styles, colors2024, isLight } = useTheme2024({
@@ -55,6 +56,7 @@ export const GlobalTipsPopup: React.FC<{}> = ({}) => {
           linearGradientType: bgType || 'bg1',
         })}
         onDismiss={hideTipsPopup}
+        enablePanDownToClose={enablePanDownToClose}
         enableDynamicSizing
         maxDynamicContentSize={maxHeight}>
         <BottomSheetView

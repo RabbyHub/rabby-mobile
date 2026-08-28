@@ -16,7 +16,6 @@ import React, {
   useMemo,
   useRef,
   useState,
-  type PropsWithChildren,
 } from 'react';
 import {
   Animated,
@@ -29,15 +28,11 @@ import {
   type AppStateStatus,
   type LayoutChangeEvent,
   type ListRenderItem,
-  type StyleProp,
   type ViewStyle,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Reanimated, {
-  useAnimatedStyle,
-  type SharedValue,
-} from 'react-native-reanimated';
+import Reanimated from 'react-native-reanimated';
 
 import { PerpsProAccountAssetRow } from '../components/account/PerpsProAccountAssetRow';
 import { PerpsProAccountState } from '../components/account/PerpsProAccountState';
@@ -139,6 +134,7 @@ import { usePerpsProManageMargin } from './usePerpsProManageMargin';
 import { usePerpsProTrade } from './usePerpsProTrade';
 import { usePerpsProTransfer } from './usePerpsProTransfer';
 import { usePerpsProAndroidSceneScrollCoordinator } from './usePerpsProAndroidSceneScrollCoordinator';
+import { usePerpsProAndroidScenePresentation } from './usePerpsProAndroidScenePresentation';
 import { usePerpsFundingHistoryJournal } from '@/hooks/perps/funding/usePerpsFundingHistoryJournal';
 
 type PerpsProSceneRow =
@@ -171,29 +167,6 @@ type FundingOverlayState =
 const PERPS_PRO_SCENE_BASE_LEAD_IN_HEIGHT =
   PERPS_PRO_HEADER_HEIGHT + PERPS_PRO_MARKET_BAR_HEIGHT;
 const PERPS_PRO_REGION_ALERT_BOTTOM_SPACING = 4;
-
-const PerpsProAndroidTradeOverlay: React.FC<
-  PropsWithChildren<{
-    leadInHeight: number;
-    scrollOffset: SharedValue<number>;
-    style: StyleProp<ViewStyle>;
-  }>
-> = ({ children, leadInHeight, scrollOffset, style }) => {
-  const animatedStyle = useAnimatedStyle(
-    () => ({
-      transform: [{ translateY: leadInHeight - scrollOffset.value }],
-    }),
-    [leadInHeight],
-  );
-
-  return (
-    <Reanimated.View
-      style={[style, animatedStyle]}
-      testID="perps-pro-trade-overlay">
-      {children}
-    </Reanimated.View>
-  );
-};
 
 const isReusableRegionAlertLayout = ({
   containerWidth,
@@ -519,9 +492,23 @@ export const PerpsProScene: React.FC<{
   const positionedOverlaysReady = !showRegionAlert || !!regionAlertLayout;
   const sceneLeadInHeight =
     PERPS_PRO_SCENE_BASE_LEAD_IN_HEIGHT + regionAlertExtent;
+  const marketNaturalAnchorY = getPerpsProMarketNaturalAnchor({
+    headerHeight: PERPS_PRO_HEADER_HEIGHT,
+    regionAlertExtent: 0,
+  });
   const infoTabsNaturalAnchor = getPerpsProInfoTabsNaturalAnchor({
     leadInHeight: sceneLeadInHeight,
     tradeRowHeight,
+  });
+  const androidScenePresentation = usePerpsProAndroidScenePresentation({
+    enabled: Platform.OS === 'android' && info.activeInfoTab != null,
+    infoTabsAnchorY: infoTabsNaturalAnchor,
+    marketBarHeight: PERPS_PRO_MARKET_BAR_HEIGHT,
+    marketNaturalAnchorY,
+    regionAlertExtent,
+    restricted: showRegionAlert,
+    sceneLeadInHeight,
+    scrollOffset: androidScrollCoordinator.visualOffset,
   });
   const scrollContentMinimumHeightStyle = useMemo<ViewStyle | null>(
     () =>
@@ -592,15 +579,13 @@ export const PerpsProScene: React.FC<{
           })
         : createPerpsProMarketTranslateY({
             headerMarketTranslateY: headerCollapse.marketTranslateY,
-            naturalAnchorY: getPerpsProMarketNaturalAnchor({
-              headerHeight: PERPS_PRO_HEADER_HEIGHT,
-              regionAlertExtent: 0,
-            }),
+            naturalAnchorY: marketNaturalAnchorY,
             scrollY: headerCollapse.scrollY,
           }),
     [
       headerCollapse.marketTranslateY,
       headerCollapse.scrollY,
+      marketNaturalAnchorY,
       regionAlertExtent,
       showRegionAlert,
     ],
@@ -1027,6 +1012,10 @@ export const PerpsProScene: React.FC<{
   );
   const displayedInfoTab =
     requestedInfoTab ?? previewInfoTab ?? info.activeInfoTab;
+  // iOS can select the next native page before React has mounted a
+  // conditionally prepared FlatList. Keep all three native list refs stable so
+  // preparePages can apply the shared offset before the page becomes active.
+  const keepAllInfoTabListsMounted = Platform.OS === 'ios';
   const cancelInfoTabRequest = useCallback(() => {
     if (infoTabRequestFrameRef.current == null) {
       return;
@@ -1090,6 +1079,31 @@ export const PerpsProScene: React.FC<{
       {renderTrade()}
     </PerpsProTradeScrollBridge>
   );
+  const SceneOverlayView =
+    Platform.OS === 'android' ? Reanimated.View : Animated.View;
+  const tradeOverlayMotionStyle =
+    Platform.OS === 'android'
+      ? androidScenePresentation.tradeAnimatedStyle
+      : { transform: [{ translateY: tradeTranslateY }] };
+  const headerOverlayMotionStyle =
+    Platform.OS === 'android'
+      ? androidScenePresentation.headerAnimatedStyle
+      : {
+          opacity: headerCollapse.headerOpacity,
+          transform: [{ translateY: headerCollapse.headerTranslateY }],
+        };
+  const regionAlertMotionStyle =
+    Platform.OS === 'android'
+      ? androidScenePresentation.regionAlertAnimatedStyle
+      : { transform: [{ translateY: headerCollapse.marketTranslateY }] };
+  const marketOverlayMotionStyle =
+    Platform.OS === 'android'
+      ? androidScenePresentation.marketAnimatedStyle
+      : { transform: [{ translateY: marketTranslateY }] };
+  const infoTabsOverlayMotionStyle =
+    Platform.OS === 'android'
+      ? androidScenePresentation.infoTabsAnimatedStyle
+      : { transform: [{ translateY: infoTabsTranslateY }] };
 
   return (
     <PerpsProFieldExplanationProvider>
@@ -1098,12 +1112,16 @@ export const PerpsProScene: React.FC<{
           {info.activeInfoTab ? (
             <PerpsProInfoPager
               activeTab={info.activeInfoTab}
+              authorizeNativePageGestures={Platform.OS === 'android'}
               contentContainerStyle={scrollContentStyles}
               data={rowsByTab}
               getActiveScrollOffset={headerCollapse.getScrollOffset}
+              keepAllTabsMounted={keepAllInfoTabListsMounted}
               nativeVerticalScrollEnabled={Platform.OS !== 'android'}
               onActivateOffset={headerCollapse.syncScrollOffset}
-              onActiveScroll={headerCollapse.onScroll}
+              onActiveScroll={
+                Platform.OS === 'android' ? undefined : headerCollapse.onScroll
+              }
               onLayout={updateScrollViewportHeight}
               onPageDragStart={beginInfoPageDrag}
               onPagePreview={setPreviewInfoTab}
@@ -1117,46 +1135,26 @@ export const PerpsProScene: React.FC<{
               style={styles.scroll}
             />
           ) : null}
-          {Platform.OS === 'android' ? (
-            <PerpsProAndroidTradeOverlay
-              leadInHeight={sceneLeadInHeight}
-              scrollOffset={androidScrollCoordinator.visualOffset}
-              style={styles.tradeOverlay}>
-              {tradeOverlayContent}
-            </PerpsProAndroidTradeOverlay>
-          ) : (
-            <Animated.View
-              style={[
-                styles.tradeOverlay,
-                { transform: [{ translateY: tradeTranslateY }] },
-              ]}
-              testID="perps-pro-trade-overlay">
-              {tradeOverlayContent}
-            </Animated.View>
-          )}
-          <Animated.View
-            style={[
-              styles.headerClip,
-              {
-                opacity: headerCollapse.headerOpacity,
-                transform: [{ translateY: headerCollapse.headerTranslateY }],
-              },
-            ]}
+          <SceneOverlayView
+            style={[styles.tradeOverlay, tradeOverlayMotionStyle]}
+            testID="perps-pro-trade-overlay">
+            {tradeOverlayContent}
+          </SceneOverlayView>
+          <SceneOverlayView
+            style={[styles.headerClip, headerOverlayMotionStyle]}
             testID="perps-pro-header-overlay">
             <PerpsProHeader
               isModeSwitching={isModeSwitching}
               onSwitchToSimple={onSwitchToSimple}
               showBottomDivider
             />
-          </Animated.View>
+          </SceneOverlayView>
           {showRegionAlert ? (
-            <Animated.View
+            <SceneOverlayView
               style={[
                 styles.regionAlertOverlay,
                 restrictedSurfaceCoverageStyle,
-                {
-                  transform: [{ translateY: headerCollapse.marketTranslateY }],
-                },
+                regionAlertMotionStyle,
               ]}
               testID="perps-pro-region-alert-overlay">
               <PerpsRegionAlert
@@ -1171,28 +1169,20 @@ export const PerpsProScene: React.FC<{
                   {marketBarContent}
                 </View>
               ) : null}
-            </Animated.View>
+            </SceneOverlayView>
           ) : null}
           {positionedOverlaysReady ? (
             <>
               {!showRegionAlert ? (
-                <Animated.View
-                  style={[
-                    styles.marketOverlay,
-                    {
-                      transform: [{ translateY: marketTranslateY }],
-                    },
-                  ]}
+                <SceneOverlayView
+                  style={[styles.marketOverlay, marketOverlayMotionStyle]}
                   testID="perps-pro-market-overlay">
                   {marketBarContent}
-                </Animated.View>
+                </SceneOverlayView>
               ) : null}
               {info.activeInfoTab && displayedInfoTab ? (
-                <Animated.View
-                  style={[
-                    styles.infoTabsOverlay,
-                    { transform: [{ translateY: infoTabsTranslateY }] },
-                  ]}
+                <SceneOverlayView
+                  style={[styles.infoTabsOverlay, infoTabsOverlayMotionStyle]}
                   testID="perps-pro-info-tabs-overlay">
                   <PerpsProInfoTabs
                     activeTab={displayedInfoTab}
@@ -1205,7 +1195,7 @@ export const PerpsProScene: React.FC<{
                     pendingFundingCount={info.pendingFundingCount}
                     positionsCount={info.allPositionsCount}
                   />
-                </Animated.View>
+                </SceneOverlayView>
               ) : null}
             </>
           ) : null}

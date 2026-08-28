@@ -43,6 +43,10 @@ import {
   type PerpsProAttachedTpSlCommand,
   type PerpsProAttachedTpSlGuardFailureReason,
 } from '../actions/openOrderWithAttachedTpSl';
+import {
+  reportPerpsProAttachedParentHistory,
+  reportPerpsProOpenOrderHistory,
+} from '../analytics/manualTradeHistory';
 import type { PerpsProBboPrices, PerpsProBboStrategy } from '../model/bbo';
 import { resolvePerpsProBboPrice } from '../model/bbo';
 import {
@@ -50,9 +54,10 @@ import {
   resolvePerpsProMarginModeDisabledReason,
   type PerpsProLeverageConfiguration,
 } from '../model/leverage';
+import { resolvePerpsProMarketLiquidationRisk } from '../model/marketLiquidationProjection';
 import {
+  resolvePerpsProMarketExpectedEntryPrice,
   resolvePerpsProMarketOrderProjection,
-  resolvePerpsProMarketRiskEntryPrice,
 } from '../model/marketOrderProjection';
 import type { PerpsProMarket } from '../model/market';
 import type { PerpsProOrderReviewFacts } from '../model/orderReview';
@@ -1251,6 +1256,88 @@ export const usePerpsProTrade = ({
       market,
     ],
   );
+  const marketLiquidationBuyBaseSize =
+    form.orderType === 'market'
+      ? getSideProjection('buy')?.baseSize ?? null
+      : null;
+  const marketLiquidationSellBaseSize =
+    form.orderType === 'market'
+      ? getSideProjection('sell')?.baseSize ?? null
+      : null;
+  const marketLiquidationRiskBySide = useMemo(() => {
+    const resolveSide = (side: PerpsProTradeSide) => {
+      const baseSize =
+        side === 'buy'
+          ? marketLiquidationBuyBaseSize
+          : marketLiquidationSellBaseSize;
+      if (!market || !baseSize) {
+        return null;
+      }
+      return Object.freeze({
+        baseSize,
+        leverage,
+        marginMode,
+        risk: resolvePerpsProMarketLiquidationRisk({
+          baseSize,
+          book: bboBook,
+          coin: market.canonicalCoin,
+          crossMarginAvailableAfterMaintenance,
+          currentPosition,
+          leverage,
+          maintenanceMarginTiers: market.marketData.maintenanceMarginTiers,
+          marginMode,
+          markPrice: market.marketData.markPx,
+          midPrice: market.marketData.midPx,
+          pxDecimals: market.marketData.pxDecimals,
+          sessionKey: bboSessionKey,
+          side,
+          status: bboStatus,
+          szDecimals: market.marketData.szDecimals,
+        }),
+      });
+    };
+    return Object.freeze({
+      buy: resolveSide('buy'),
+      sell: resolveSide('sell'),
+    });
+  }, [
+    bboBook,
+    bboSessionKey,
+    bboStatus,
+    crossMarginAvailableAfterMaintenance,
+    currentPosition,
+    leverage,
+    marketLiquidationBuyBaseSize,
+    marketLiquidationSellBaseSize,
+    marginMode,
+    market,
+  ]);
+  const getMarketLiquidationRisk = useCallback(
+    ({
+      baseSize,
+      leverageValue = leverage,
+      marginModeValue = marginMode,
+      side,
+    }: {
+      baseSize: string;
+      leverageValue?: number;
+      marginModeValue?: 'cross' | 'isolated';
+      side: PerpsProTradeSide;
+    }) => {
+      const snapshot = marketLiquidationRiskBySide[side];
+      const normalizedBaseSize = positive(baseSize);
+      if (
+        !snapshot ||
+        !normalizedBaseSize?.eq(snapshot.baseSize) ||
+        snapshot.leverage !== leverageValue ||
+        snapshot.marginMode !== marginModeValue
+      ) {
+        return null;
+      }
+      return snapshot.risk;
+    },
+    [leverage, marginMode, marketLiquidationRiskBySide],
+  );
   const getCostDisplayAmount = useCallback(
     (side: PerpsProTradeSide) => {
       const projection = getSideProjection(side);
@@ -1313,7 +1400,7 @@ export const usePerpsProTrade = ({
         const projection = getSideMarketOrderProjection(side);
         if (!projection) return null;
         const expectedEntryPrice =
-          resolvePerpsProMarketRiskEntryPrice(projection);
+          resolvePerpsProMarketExpectedEntryPrice(projection);
         const validExpectedEntryPrice = positive(expectedEntryPrice);
         return validExpectedEntryPrice
           ? {
@@ -1435,7 +1522,7 @@ export const usePerpsProTrade = ({
         marginMode,
         markPrice: market.marketData.markPx,
         marketFillRiskEntryPrice:
-          resolvePerpsProMarketRiskEntryPrice(marketProjection),
+          resolvePerpsProMarketExpectedEntryPrice(marketProjection),
         maxLeverage: market.marketData.maxLeverage,
         midPrice: liveMidPrice,
         pxDecimals: market.marketData.pxDecimals,
@@ -1454,7 +1541,7 @@ export const usePerpsProTrade = ({
           throw new Error(t('page.perps.pro.trade.contextChanged'));
         }
         const projectedEntryPrice =
-          resolvePerpsProMarketRiskEntryPrice(marketProjection);
+          resolvePerpsProMarketExpectedEntryPrice(marketProjection);
         const validProjectedEntryPrice = positive(projectedEntryPrice);
         if (!validProjectedEntryPrice) {
           throw new Error(t('page.perps.pro.trade.contextChanged'));
@@ -1517,20 +1604,23 @@ export const usePerpsProTrade = ({
       if (command.execution.kind === 'limit') {
         expectedEntryPrice = command.execution.limitPrice;
       }
-      const risk = resolvePerpsProProjectedTradeRisk({
-        baseSize: command.baseSize,
-        calculateLiquidationPrice: calLiquidationPrice,
-        crossMarginAvailableAfterMaintenance,
-        currentPosition,
-        entryPrice: expectedEntryPrice,
-        leverage,
-        maintenanceMarginTiers: market.marketData.maintenanceMarginTiers,
-        marginMode,
-        markPrice: market.marketData.markPx,
-        maxLeverage: market.marketData.maxLeverage,
-        pxDecimals: market.marketData.pxDecimals,
-        side,
-      });
+      const risk =
+        commandForm.orderType === 'market'
+          ? getMarketLiquidationRisk({ baseSize: command.baseSize, side })
+          : resolvePerpsProProjectedTradeRisk({
+              baseSize: command.baseSize,
+              calculateLiquidationPrice: calLiquidationPrice,
+              crossMarginAvailableAfterMaintenance,
+              currentPosition,
+              entryPrice: expectedEntryPrice,
+              leverage,
+              maintenanceMarginTiers: market.marketData.maintenanceMarginTiers,
+              marginMode,
+              markPrice: market.marketData.markPx,
+              maxLeverage: market.marketData.maxLeverage,
+              pxDecimals: market.marketData.pxDecimals,
+              side,
+            });
       const evaluation = evaluatePerpsProAttachedTpSl({
         baseSize: command.baseSize,
         draft: commandForm.attachedTpSl,
@@ -1583,6 +1673,7 @@ export const usePerpsProTrade = ({
       getBboPrice,
       getCommandForm,
       getMaxBase,
+      getMarketLiquidationRisk,
       getSideMarketOrderProjection,
       leverage,
       marginMode,
@@ -1832,6 +1923,7 @@ export const usePerpsProTrade = ({
           undefined,
           isSceneCurrent,
         );
+        reportPerpsProOpenOrderHistory(executableCommand, result.confirmed);
         if (result.failureReason === 'userCancelled') return;
         if (result.failureReason === 'regionRestricted') {
           showToast(t('page.perps.regionNotSupport'), 'error');
@@ -1969,6 +2061,7 @@ export const usePerpsProTrade = ({
           command,
           ensureAttachedLeverage,
         );
+        reportPerpsProAttachedParentHistory(command, result.confirmedParent);
         if (result.kind === 'userCancelled') return;
         if (result.kind === 'staleContext') {
           showToast(
@@ -2192,16 +2285,21 @@ export const usePerpsProTrade = ({
     (side: PerpsProTradeSide) => {
       if (!resolvedAmount || form.reduceOnly || !market) return null;
       const projection = getSideProjection(side);
+      if (!projection) return '--';
+      if (form.orderType === 'market') {
+        return (
+          getMarketLiquidationRisk({
+            baseSize: projection.baseSize,
+            side,
+          })?.liquidationPrice ?? '--'
+        );
+      }
       const entryPrice =
         form.orderType === 'conditional' &&
         form.conditionalExecution === 'market'
           ? market.marketData.markPx
-          : form.orderType === 'market'
-          ? resolvePerpsProMarketRiskEntryPrice(
-              getSideMarketOrderProjection(side),
-            )
           : getSideExecutionPrice(side);
-      if (!projection || !entryPrice) return '--';
+      if (!entryPrice) return '--';
       const risk = resolvePerpsProProjectedTradeRisk({
         baseSize: projection.baseSize,
         calculateLiquidationPrice: calLiquidationPrice,
@@ -2224,8 +2322,8 @@ export const usePerpsProTrade = ({
       form.conditionalExecution,
       form.orderType,
       form.reduceOnly,
+      getMarketLiquidationRisk,
       getSideExecutionPrice,
-      getSideMarketOrderProjection,
       getSideProjection,
       leverage,
       marginMode,
@@ -2250,6 +2348,15 @@ export const usePerpsProTrade = ({
             strategy: parent.execution.strategy,
           })
         : null;
+    if (parent.execution.kind === 'market') {
+      const risk = getMarketLiquidationRisk({
+        baseSize: parent.baseSize,
+        leverageValue: reviewFacts.leverage,
+        marginModeValue: reviewFacts.marginMode,
+        side: parent.side,
+      });
+      return risk ? { gap: risk.gap, price: risk.liquidationPrice } : null;
+    }
     const entryPrice =
       review.type === 'openOrderWithAttachedTpSl'
         ? review.attached.expectedEntryPrice
@@ -2283,6 +2390,7 @@ export const usePerpsProTrade = ({
     bboStatus,
     currentPosition,
     crossMarginAvailableAfterMaintenance,
+    getMarketLiquidationRisk,
     market,
     review,
   ]);

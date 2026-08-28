@@ -10,7 +10,7 @@ import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
-const TIPS_OWNER = 'perpsPortfolioBreakdown';
+import { PERPS_PORTFOLIO_BREAKDOWN_TIPS_OWNER } from '../constants';
 
 export const PerpsPortfolioBreakdownExplanationContent: React.FC<{
   desc: string;
@@ -40,7 +40,7 @@ export const PerpsPortfolioBreakdownExplanationContent: React.FC<{
 export const useShowPerpsPortfolioBreakdown = () => {
   const { t } = useTranslation();
   const showTipsPopup = useShowTipsPopup();
-  const hideTipsPopup = useHideTipsPopup(TIPS_OWNER);
+  const hideTipsPopup = useHideTipsPopup(PERPS_PORTFOLIO_BREAKDOWN_TIPS_OWNER);
   const { hasNonPerpsAssets, breakdownMode, getBreakdownValues } =
     usePerpsPortfolioBreakdown();
 
@@ -75,7 +75,6 @@ export const useShowPerpsPortfolioBreakdown = () => {
 
     showTipsPopup({
       title: t(titleKey),
-      owner: TIPS_OWNER,
       bgType: 'bg0',
       desc: (
         <PerpsPortfolioBreakdownExplanationContent
@@ -90,6 +89,8 @@ export const useShowPerpsPortfolioBreakdown = () => {
         />
       ),
       buttonType: 'hyperliquid',
+      enablePanDownToClose: true,
+      owner: PERPS_PORTFOLIO_BREAKDOWN_TIPS_OWNER,
     });
   });
 

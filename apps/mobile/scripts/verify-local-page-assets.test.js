@@ -12,6 +12,7 @@ const CHART_BUNDLE = [
   'CHART_READY',
   'CANDLE_DATA_APPLIED',
   'REQUEST_OLDER_CANDLES',
+  'PERPS_PRO_PRICE_SCALE_AUTO_SCALE_CHANGED',
   'candleDataAppliedAck',
   'perpsProKlineProtocolVersion',
 ].join(' ');

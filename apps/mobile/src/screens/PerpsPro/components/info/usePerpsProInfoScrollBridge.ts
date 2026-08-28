@@ -18,10 +18,23 @@ type PerpsProInfoScrollTarget = {
   ref: AnimatedRef<FlatList<unknown>>;
 };
 
+export const PERPS_PRO_INFO_TOUCH_INTENT = {
+  horizontal: 3,
+  idle: 0,
+  pending: 1,
+  vertical: 2,
+} as const;
+
+export type PerpsProInfoTouchIntent =
+  (typeof PERPS_PRO_INFO_TOUCH_INTENT)[keyof typeof PERPS_PRO_INFO_TOUCH_INTENT];
+
 export type PerpsProInfoScrollBridgeController = {
   activeIndex: SharedValue<number>;
   epoch: SharedValue<number>;
+  horizontalTouchSessionId: SharedValue<number>;
   pageGestureActive: SharedValue<boolean>;
+  touchIntent: SharedValue<PerpsProInfoTouchIntent>;
+  touchSessionId: SharedValue<number>;
   targets: readonly [
     PerpsProInfoScrollTarget,
     PerpsProInfoScrollTarget,
@@ -94,13 +107,21 @@ export const usePerpsProInfoScrollBridge = (
     Math.max(PERPS_PRO_INFO_TABS.indexOf(initialTab), 0),
   );
   const epoch = useSharedValue(0);
+  const horizontalTouchSessionId = useSharedValue(0);
   const pageGestureActive = useSharedValue(false);
+  const touchIntent = useSharedValue<PerpsProInfoTouchIntent>(
+    PERPS_PRO_INFO_TOUCH_INTENT.idle,
+  );
+  const touchSessionId = useSharedValue(0);
 
   return useMemo<PerpsProInfoScrollBridgeController>(
     () => ({
       activeIndex,
       epoch,
+      horizontalTouchSessionId,
       pageGestureActive,
+      touchIntent,
+      touchSessionId,
       targets: [
         {
           maxOffset: positionsMaxOffset,
@@ -125,6 +146,7 @@ export const usePerpsProInfoScrollBridge = (
       accountRef,
       activeIndex,
       epoch,
+      horizontalTouchSessionId,
       openOrdersMaxOffset,
       openOrdersOffset,
       openOrdersRef,
@@ -132,6 +154,8 @@ export const usePerpsProInfoScrollBridge = (
       positionsMaxOffset,
       positionsOffset,
       positionsRef,
+      touchIntent,
+      touchSessionId,
     ],
   );
 };

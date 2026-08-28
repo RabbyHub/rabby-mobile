@@ -350,6 +350,92 @@ describe('usePerpsProAttachedTpSlExecution', () => {
     );
   });
 
+  it('returns only the accepted parent fill as reporting evidence', async () => {
+    mockExecute.mockResolvedValueOnce({
+      batch: {
+        legs: [
+          {
+            acceptance: 'filled',
+            kind: 'accepted',
+            oid: 7,
+            rawStatus: {
+              filled: { avgPx: '101', oid: 7, totalSz: '1' },
+            },
+            role: 'parent',
+          },
+          {
+            error: 'Invalid TP trigger price',
+            kind: 'rejected',
+            rawStatus: { error: 'Invalid TP trigger price' },
+            role: 'takeProfit',
+          },
+        ],
+      },
+      kind: 'childRejected',
+    });
+    mockReconcile.mockResolvedValueOnce({
+      errors: [],
+      kind: 'childRejected',
+      legs: [],
+    });
+    const { hook } = renderExecution();
+
+    let result: Awaited<ReturnType<typeof hook.result.current.execute>>;
+    await act(async () => {
+      result = await hook.result.current.execute(
+        command,
+        jest.fn(async () => 'success'),
+      );
+    });
+
+    expect(result!).toMatchObject({
+      confirmedParent: {
+        acceptance: 'filled',
+        oid: 7,
+        price: '101',
+        size: '1',
+      },
+      kind: 'childRejected',
+    });
+  });
+
+  it('uses a reconciled parent fill after an unknown transport outcome', async () => {
+    mockExecute.mockResolvedValueOnce({ kind: 'unknownOutcome' });
+    mockReconcile.mockResolvedValueOnce({
+      errors: [],
+      fills: [{ coin: 'BTC', oid: 7, px: '101', sz: '1' }],
+      kind: 'fullAccepted',
+      legs: [
+        {
+          acceptance: 'filled',
+          cloid: journal.cloids.parent,
+          kind: 'accepted',
+          oid: 7,
+          role: 'parent',
+        },
+      ],
+    });
+    const { hook } = renderExecution();
+
+    let result: Awaited<ReturnType<typeof hook.result.current.execute>>;
+    await act(async () => {
+      result = await hook.result.current.execute(
+        command,
+        jest.fn(async () => 'success'),
+      );
+    });
+
+    expect(result!).toMatchObject({
+      confirmedParent: {
+        acceptance: 'filled',
+        oid: 7,
+        price: '101',
+        size: '1',
+      },
+      kind: 'fullAccepted',
+    });
+  });
+
   it('preserves a parent rejection returned by Hyperliquid', async () => {
     const serverError =
       'Post only order would have immediately matched, bbo was 101.';

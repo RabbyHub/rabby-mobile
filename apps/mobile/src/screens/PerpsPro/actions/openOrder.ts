@@ -3,6 +3,7 @@ import { apisPerps } from '@/core/apis/perps';
 import type { Account } from '@/core/startupServices/preference';
 import { isSamePerpsActionAccount } from '@/hooks/perps/actions/accountGuard';
 import { isPerpsActionUserCancelled } from '@/hooks/perps/actions/actionError';
+import type { PerpsConfirmedOrder } from '@/hooks/perps/actions/confirmedOrder';
 import {
   fetchClearinghouseStateHttp,
   fetchPositionOpenOrdersHttp,
@@ -59,12 +60,23 @@ export interface PerpsProOpenOrderCommand {
 }
 
 export interface PerpsProOpenOrderResult {
+  confirmed?: PerpsConfirmedOrder;
   error?: string;
   failureReason?: 'regionRestricted' | 'requestFailed' | 'userCancelled';
   kind: 'failed' | 'filled' | 'resting' | 'staleContext' | 'unknownOutcome';
   oid?: number;
   refreshError?: string;
 }
+
+type PerpsProOrderStatus = {
+  error?: string;
+  filled?: {
+    avgPx?: string;
+    oid?: number;
+    totalSz?: string;
+  };
+  resting?: { oid?: number };
+};
 
 const decimal = (value: unknown) => {
   const number = new BigNumber(
@@ -359,6 +371,40 @@ const isUnknownOutcomeError = (error: unknown) => {
   );
 };
 
+const getRestingPrice = (command: PerpsProOpenOrderCommand) =>
+  command.execution.kind === 'limit'
+    ? command.execution.limitPrice
+    : command.execution.kind === 'market'
+    ? command.execution.slippageReferenceMidPrice
+    : command.execution.kind === 'conditionalLimit'
+    ? command.execution.limitPrice
+    : command.execution.kind === 'conditionalMarket'
+    ? command.execution.triggerPrice
+    : '';
+
+const getConfirmedOrder = (
+  command: PerpsProOpenOrderCommand,
+  status: PerpsProOrderStatus | undefined,
+): PerpsConfirmedOrder | undefined => {
+  if (status?.filled) {
+    return Object.freeze({
+      acceptance: 'filled' as const,
+      oid: status.filled.oid,
+      price: status.filled.avgPx ?? '',
+      size: status.filled.totalSz ?? '',
+    });
+  }
+  if (status?.resting) {
+    return Object.freeze({
+      acceptance: 'resting' as const,
+      oid: status.resting.oid,
+      price: getRestingPrice(command),
+      size: command.baseSize,
+    });
+  }
+  return undefined;
+};
+
 export const executePerpsProOpenOrder = async (
   command: PerpsProOpenOrderCommand,
   dependencies: PerpsProOpenOrderDependencies = defaultDependencies,
@@ -457,21 +503,16 @@ export const executePerpsProOpenOrder = async (
         response?: { data?: { statuses?: unknown[] } };
         status?: unknown;
       }
-    )?.response?.data?.statuses?.[0] as
-      | {
-          error?: string;
-          filled?: { oid?: number };
-          resting?: { oid?: number };
-        }
-      | undefined;
+    )?.response?.data?.statuses?.[0] as PerpsProOrderStatus | undefined;
     if ((response as { status?: unknown })?.status !== 'ok' || status?.error) {
       throw new Error(status?.error || 'Hyperliquid rejected order');
     }
+    const confirmed = getConfirmedOrder(executableCommand, status);
     if (!isContextCurrent(command, dependencies, sceneGuard)) {
-      return { kind: 'staleContext' };
+      return { confirmed, kind: 'staleContext' };
     }
-    const kind = status?.filled ? 'filled' : status?.resting ? 'resting' : null;
-    if (!kind) throw new Error('Missing Hyperliquid order status');
+    if (!confirmed) throw new Error('Missing Hyperliquid order status');
+    const kind = confirmed.acceptance;
     let refreshError: string | undefined;
     try {
       await (kind === 'filled'
@@ -481,11 +522,12 @@ export const executePerpsProOpenOrder = async (
       refreshError = error instanceof Error ? error.message : String(error);
     }
     if (!isContextCurrent(command, dependencies, sceneGuard)) {
-      return { kind: 'staleContext', refreshError };
+      return { confirmed, kind: 'staleContext', refreshError };
     }
     return {
+      confirmed,
       kind,
-      oid: kind === 'filled' ? status?.filled?.oid : status?.resting?.oid,
+      oid: confirmed.oid,
       refreshError,
     };
   } catch (error) {

@@ -271,11 +271,11 @@ export const PerpsProPositionTpSlSheet: React.FC<{
         if (index !== 0 || keyboardSessionActiveRef.current) {
           return;
         }
-        const nextRestingPosition = sheetPosition + insets.top;
+        const nextRestingPosition = sheetPosition;
         restingSheetPositionRef.current = nextRestingPosition;
         restingSheetPosition.value = nextRestingPosition;
       },
-      [insets.top, restingSheetPosition],
+      [restingSheetPosition],
     );
 
     useEffect(() => {

@@ -1,16 +1,22 @@
 import {
+  act,
   fireEvent,
   render,
   screen,
   waitFor,
 } from '@testing-library/react-native';
 import React from 'react';
+import { createStore } from 'zustand/vanilla';
+
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 const mockHandleDeposit = jest.fn();
 const mockHandleStableCoinOrder = jest.fn();
 const mockHandleWithdraw = jest.fn(async () => true);
 let mockDepositPopupProps: Record<string, unknown> | null = null;
 let mockSwapPopupProps: Record<string, unknown> | null = null;
+const mockWithdrawBalanceStore = createStore(() => ({ availableBalance: 0 }));
+const mockWithdrawBalanceRenders: number[] = [];
 
 jest.mock('@/hooks/perps/funding/usePerpsFundingActions', () => ({
   usePerpsFundingActions: () => ({
@@ -35,6 +41,9 @@ jest.mock('@/screens/Perps/components/PerpsDepositPopup', () => {
 jest.mock('@/screens/Perps/components/PerpsWithdrawPopup', () => {
   const ReactModule = require('react');
   const { Pressable } = require('react-native');
+  const {
+    useActivityStore: useMockActivityStore,
+  } = require('@/hooks/storeActivity/useActivityStore');
   return {
     PerpsWithdrawPopup: ({
       onWithdraw,
@@ -44,11 +53,17 @@ jest.mock('@/screens/Perps/components/PerpsWithdrawPopup', () => {
         isHypeWithdraw: boolean,
         targetAsset: string,
       ) => Promise<unknown>;
-    }) =>
-      ReactModule.createElement(Pressable, {
+    }) => {
+      const availableBalance = useMockActivityStore(
+        mockWithdrawBalanceStore,
+        (state: { availableBalance: number }) => state.availableBalance,
+      );
+      mockWithdrawBalanceRenders.push(availableBalance);
+      return ReactModule.createElement(Pressable, {
         onPress: () => onWithdraw('12', true, 'USDT'),
         testID: 'withdraw-popup',
-      }),
+      });
+    },
   };
 });
 
@@ -64,6 +79,11 @@ jest.mock('@/screens/Perps/components/PerpsSpotSwapPopup', () => {
 });
 
 import { PerpsProFundingOverlay } from './PerpsProFundingOverlay';
+
+const GlobalBalanceProbe = () => {
+  useActivityStore(mockWithdrawBalanceStore, state => state.availableBalance);
+  return null;
+};
 
 const renderOverlay = (
   mode: React.ComponentProps<typeof PerpsProFundingOverlay>['mode'],
@@ -89,6 +109,7 @@ describe('PerpsProFundingOverlay', () => {
     jest.clearAllMocks();
     mockDepositPopupProps = null;
     mockSwapPopupProps = null;
+    mockWithdrawBalanceRenders.length = 0;
   });
 
   it.each([
@@ -112,6 +133,23 @@ describe('PerpsProFundingOverlay', () => {
       expect(mockHandleWithdraw).toHaveBeenCalledWith('12', true, 'USDT');
     });
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('reads the latest balance on the first Pro withdraw render', () => {
+    act(() => {
+      mockWithdrawBalanceStore.setState({ availableBalance: 0 });
+    });
+    const globalProbe = render(<GlobalBalanceProbe />);
+    globalProbe.unmount();
+
+    act(() => {
+      mockWithdrawBalanceStore.setState({ availableBalance: 42 });
+    });
+    mockWithdrawBalanceRenders.length = 0;
+
+    renderOverlay('withdraw');
+
+    expect(mockWithdrawBalanceRenders[0]).toBe(42);
   });
 
   it('also closes after a handled withdraw failure, matching Simple', async () => {
