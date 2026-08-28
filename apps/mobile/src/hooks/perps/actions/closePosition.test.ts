@@ -159,6 +159,43 @@ describe('Perps close position action', () => {
     expect(() => buildLimit('101.239')).toThrow('Invalid Perps limit price');
   });
 
+  it('submits a far but protocol-valid Limit price and preserves the server rejection', async () => {
+    const limitClose = jest.fn(async () => ({
+      status: 'ok',
+      response: {
+        data: {
+          statuses: [{ error: 'Order price too far from oracle' }],
+        },
+      },
+    }));
+    const deps = dependencies({
+      getLiveSignedSize: () => '0.11',
+      limitClose,
+    });
+    const farLimit = buildPerpsClosePositionCommand({
+      account,
+      coin: 'BTC',
+      direction: 'long',
+      expectedPositionSize: '0.11',
+      limitPrice: '798',
+      midPrice: '79893',
+      orderType: 'limit',
+      pxDecimals: 2,
+      reportingFacts: { leverage: 5, marginMode: 'cross' },
+      size: '0.11',
+      szDecimals: 5,
+    });
+
+    await expect(executePerpsClosePosition(farLimit, deps)).resolves.toEqual({
+      error: 'Order price too far from oracle',
+      failureReason: 'requestFailed',
+      kind: 'failed',
+    });
+    expect(limitClose).toHaveBeenCalledWith(
+      expect.objectContaining({ limitPx: '798', reduceOnly: true }),
+    );
+  });
+
   it('rejects a partial close below $10 after size normalization', () => {
     expect(
       validatePerpsCloseAmount({
@@ -214,6 +251,22 @@ describe('Perps close position action', () => {
       failureReason: 'minimumNotional',
       kind: 'failed',
     });
+  });
+
+  it('reconciles both order sources after a transport error with unknown outcome', async () => {
+    const deps = dependencies({
+      marketClose: jest.fn(async () => {
+        throw new Error('Network request failed');
+      }),
+    });
+
+    await expect(executePerpsClosePosition(command(), deps)).resolves.toEqual({
+      error: 'Network request failed',
+      kind: 'unknownOutcome',
+      refreshError: undefined,
+    });
+    expect(deps.refreshClearinghouse).toHaveBeenCalledWith('');
+    expect(deps.refreshOpenOrders).toHaveBeenCalledWith('');
   });
 
   it('rejects a changed position snapshot before submitting', async () => {

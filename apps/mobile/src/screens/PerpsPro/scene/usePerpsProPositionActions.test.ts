@@ -254,6 +254,102 @@ describe('usePerpsProPositionActions close validation', () => {
     );
   });
 
+  it('shows the authoritative server close rejection instead of a generic failure', async () => {
+    mockGetSkipMarketConfirmation.mockResolvedValue(true);
+    mockExecuteClose.mockResolvedValueOnce({
+      error: 'Order price too far from oracle',
+      failureReason: 'requestFailed',
+      kind: 'failed',
+    });
+    const hook = renderHook(() =>
+      usePerpsProPositionActions({
+        accountIdentity: 'account-a',
+        leveragePending: false,
+        updateLeverageRequest: jest.fn(),
+      }),
+    );
+
+    await act(async () => {
+      hook.result.current.openCloseEditor(position);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    await act(async () => {
+      hook.result.current.reviewClose(draft('0.1'));
+      await Promise.resolve();
+    });
+
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'Order price too far from oracle',
+      'error',
+    );
+    expect(mockReportClosePositionHistory).not.toHaveBeenCalled();
+  });
+
+  it('shows the unknown-outcome guidance after a transport failure', async () => {
+    mockGetSkipMarketConfirmation.mockResolvedValue(true);
+    mockExecuteClose.mockResolvedValueOnce({
+      error: 'Network request failed',
+      kind: 'unknownOutcome',
+    });
+    const hook = renderHook(() =>
+      usePerpsProPositionActions({
+        accountIdentity: 'account-a',
+        leveragePending: false,
+        updateLeverageRequest: jest.fn(),
+      }),
+    );
+
+    await act(async () => {
+      hook.result.current.openCloseEditor(position);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    await act(async () => {
+      hook.result.current.reviewClose(draft('0.1'));
+      await Promise.resolve();
+    });
+
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.trade.unknownOutcome',
+      'error',
+    );
+    expect(mockReportClosePositionHistory).not.toHaveBeenCalled();
+  });
+
+  it('keeps an accepted close successful if history reporting throws', async () => {
+    mockGetSkipMarketConfirmation.mockResolvedValue(true);
+    mockReportClosePositionHistory.mockImplementationOnce(() => {
+      throw new Error('history unavailable');
+    });
+    const hook = renderHook(() =>
+      usePerpsProPositionActions({
+        accountIdentity: 'account-a',
+        leveragePending: false,
+        updateLeverageRequest: jest.fn(),
+      }),
+    );
+
+    await act(async () => {
+      hook.result.current.openCloseEditor(position);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    await act(async () => {
+      hook.result.current.reviewClose(draft('0.1'));
+      await Promise.resolve();
+    });
+
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.positions.closeSubmitted',
+      'success',
+    );
+    expect(mockShowToast).not.toHaveBeenCalledWith(
+      'page.perps.pro.positions.closeFailed',
+      'error',
+    );
+  });
+
   it('does not persist a checked Market preference when review is cancelled', async () => {
     const hook = renderHook(() =>
       usePerpsProPositionActions({
