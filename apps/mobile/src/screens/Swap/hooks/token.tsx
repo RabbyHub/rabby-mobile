@@ -452,6 +452,10 @@ export const useTokenPair = ({
 
   const expiredTimer = useRef<NodeJS.Timeout>(undefined);
   const autoQuoteRefreshDeadlineRef = useRef<number | null>(null);
+  const [quoteRefreshCountdown, setQuoteRefreshCountdown] = useState<{
+    startedAt: number;
+    deadline: number;
+  } | null>(null);
   const autoQuoteRefreshPausedRef = useRef(false);
   const reloadTxRefreshPausedRef = useRef(false);
   const enableRefreshRef = useRef(false);
@@ -466,6 +470,7 @@ export const useTokenPair = ({
   const clearExpiredTimer = useCallback(() => {
     stopExpiredTimer();
     autoQuoteRefreshDeadlineRef.current = null;
+    setQuoteRefreshCountdown(null);
   }, [stopExpiredTimer]);
 
   const runScheduledQuoteRefresh = useCallback(() => {
@@ -476,6 +481,7 @@ export const useTokenPair = ({
     }
 
     autoQuoteRefreshDeadlineRef.current = null;
+    setQuoteRefreshCountdown(null);
     if (
       shouldScheduleQuotePolling({
         enabled: enableRefreshRef.current,
@@ -489,7 +495,10 @@ export const useTokenPair = ({
   const scheduleQuoteRefresh = useCallback(
     (delay: number) => {
       stopExpiredTimer();
-      autoQuoteRefreshDeadlineRef.current = Date.now() + delay;
+      const startedAt = Date.now();
+      const deadline = startedAt + delay;
+      autoQuoteRefreshDeadlineRef.current = deadline;
+      setQuoteRefreshCountdown({ startedAt, deadline });
 
       if (autoQuoteRefreshPausedRef.current) {
         return;
@@ -541,10 +550,10 @@ export const useTokenPair = ({
 
   useEffect(() => {
     return () => {
-      clearExpiredTimer();
+      stopExpiredTimer();
+      autoQuoteRefreshDeadlineRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [stopExpiredTimer]);
 
   const setActiveProvider: React.Dispatch<
     React.SetStateAction<QuoteProvider | undefined>
@@ -1554,6 +1563,7 @@ export const useTokenPair = ({
     clearExpiredTimer,
     setAutoQuoteRefreshPaused,
     setReloadTxRefreshPaused,
+    quoteRefreshCountdown,
 
     autoSuggestSlippage,
   };

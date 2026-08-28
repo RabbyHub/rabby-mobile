@@ -315,6 +315,7 @@ const Swap = ({
     clearExpiredTimer,
     setAutoQuoteRefreshPaused,
     setReloadTxRefreshPaused,
+    quoteRefreshCountdown,
     inSufficientCanGetQuote,
     quoteBlockedByClosedMarket,
 
@@ -2057,6 +2058,9 @@ const Swap = ({
                 onPress={exchangeToken}
                 style={styles.arrowWrapper}
                 loading={quoteLoading}
+                refreshCountdown={
+                  sceneActive && activeProvider ? quoteRefreshCountdown : null
+                }
               />
             </View>
 
