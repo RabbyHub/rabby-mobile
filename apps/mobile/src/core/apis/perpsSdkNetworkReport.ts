@@ -16,6 +16,28 @@ const WS_RECONNECT_ATTEMPT_THRESHOLD = 5;
 let consecutiveTimeouts = 0;
 let installed = false;
 
+/**
+ * The SDK keys active subscriptions by `JSON.stringify(subscription)`, so
+ * user-scoped channels embed the wallet address (and other params). Reduce to
+ * `{ type: count }` so the outage report carries no account identity.
+ */
+function summarizeSubscriptionTypes(keys: string[]): Record<string, number> {
+  const counts: Record<string, number> = {};
+  keys.forEach(key => {
+    let type = 'unknown';
+    try {
+      const parsed = JSON.parse(key);
+      if (typeof parsed?.type === 'string') {
+        type = parsed.type;
+      }
+    } catch {
+      // Not JSON — keep 'unknown' rather than leaking the raw key.
+    }
+    counts[type] = (counts[type] ?? 0) + 1;
+  });
+  return counts;
+}
+
 function trackRequestError(
   endpoint: 'info' | 'exchange',
   requestType: unknown,
@@ -96,7 +118,9 @@ export function attachPerpsWsReconnectReport(ws: WebSocketClient) {
         extra: {
           attempt,
           delayMs,
-          activeSubscriptions: ws.getActiveSubscriptions(),
+          subscriptionTypes: summarizeSubscriptionTypes(
+            ws.getActiveSubscriptions(),
+          ),
         },
       },
     );

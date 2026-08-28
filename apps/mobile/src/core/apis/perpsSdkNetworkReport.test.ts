@@ -117,6 +117,7 @@ describe('installPerpsSdkTimeoutReport', () => {
 
 describe('attachPerpsWsReconnectReport', () => {
   type Listener = (payload: any) => void;
+  const WALLET_ADDRESS = '0x1234567890abcdef1234567890abcdef12345678';
 
   const makeFakeWs = () => {
     const listeners: Record<string, Listener[]> = {};
@@ -124,7 +125,14 @@ describe('attachPerpsWsReconnectReport', () => {
       on: (event: string, listener: Listener) => {
         (listeners[event] ??= []).push(listener);
       },
-      getActiveSubscriptions: () => ['allMids', 'webData2'],
+      // Mirrors the SDK: keys are JSON.stringify(subscription), so user-scoped
+      // channels carry the wallet address.
+      getActiveSubscriptions: () => [
+        JSON.stringify({ type: 'allMids' }),
+        JSON.stringify({ type: 'clearinghouseState', user: WALLET_ADDRESS }),
+        JSON.stringify({ type: 'clearinghouseState', user: WALLET_ADDRESS }),
+        'not-json',
+      ],
     };
     const emit = (event: string, payload: any) =>
       listeners[event]?.forEach(listener => listener(payload));
@@ -152,8 +160,10 @@ describe('attachPerpsWsReconnectReport', () => {
     expect(hint.extra).toEqual({
       attempt: 5,
       delayMs: 8000,
-      activeSubscriptions: ['allMids', 'webData2'],
+      subscriptionTypes: { allMids: 1, clearinghouseState: 2, unknown: 1 },
     });
+    // Privacy: raw subscription keys embed the wallet address — never upload.
+    expect(JSON.stringify(hint)).not.toContain(WALLET_ADDRESS);
   });
 
   it('a successful open starts a new outage that can report again', () => {
