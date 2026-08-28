@@ -25,14 +25,6 @@ export const mergeAddressListSnapshots = <TItem>(
   ...completeAddressListSnapshots(addresses, snapshots),
 });
 
-export const getAddressesWithoutListSnapshot = <TItem>(
-  addresses: string[],
-  snapshots: AddressListSnapshotMap<TItem>,
-) =>
-  normalizeSnapshotAddresses(addresses).filter(
-    address => !Object.prototype.hasOwnProperty.call(snapshots, address),
-  );
-
 type AddressListSnapshotHydratorOptions<TItem> = {
   load: (
     addresses: string[],

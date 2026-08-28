@@ -22,7 +22,6 @@ import {
 import {
   activateRegressionScenarioCommand,
   clearRegressionScenarioRuntime,
-  findPassingRegressionScenarioAssertion,
   getRegressionScenarioRuntimeControlSnapshot,
   getRegressionScenarioRuntimeSnapshot,
   reportRegressionScenarioEvent as reportRegressionScenarioEventToStore,
@@ -345,7 +344,6 @@ export function finishRegressionScenario(
 }
 
 export {
-  findPassingRegressionScenarioAssertion,
   getRegressionScenarioRuntimeControlSnapshot,
   getRegressionScenarioRuntimeSnapshot,
   sanitizeLinkForLogging,

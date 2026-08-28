@@ -1,5 +1,5 @@
-import NativeModules from 'react-native/Libraries/BatchedBridge/NativeModules';
-import DeviceEventEmitter from 'react-native/Libraries/EventEmitter/RCTDeviceEventEmitter';
+import { NativeModules, DeviceEventEmitter } from 'react-native';
+import { makeRnEEClass } from './event';
 import { jsonResponse } from './workmsg';
 
 const { ThreadSelfModule } = NativeModules;
@@ -16,14 +16,8 @@ export const ThreadSelf = {
 type Listeners = {
   msgToThread: (payload?: any) => any;
 };
-// The worker owns a minimal React context without UI packages. Native
-// ThreadSelf messages are emitted through its global device event emitter.
-export const threadSelfEE = DeviceEventEmitter as {
-  addListener<T extends keyof Listeners & string>(
-    eventType: T,
-    listener: Listeners[T],
-  ): { remove: () => void };
-};
+const { NativeEventEmitter } = makeRnEEClass<Listeners>();
+export const threadSelfEE = new NativeEventEmitter(ThreadSelfModule);
 
 threadSelfEE.addListener('msgToThread', message => {
   if (__DEV__) {

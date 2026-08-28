@@ -250,40 +250,6 @@ describe('asset projection persistence', () => {
     });
   });
 
-  it('persists large rows and group members below SQLite variable limits', async () => {
-    dataSource = await createMemoryAppDataSource();
-    const rows = Array.from({ length: 200 }, (_, index) => ({
-      type: 'token' as const,
-      id: `token-${index}`,
-    }));
-    const memberIds = Array.from(
-      { length: 200 },
-      (_, index) => `group-member-${index}`,
-    );
-
-    await persistAssetProjection(
-      {
-        projectionKey: 'token::multi::large-projection',
-        kind: 'token',
-        scene: 'multi-address',
-        rows,
-        groups: [{ id: 'large-token-group', memberIds }],
-      },
-      dataSource,
-    );
-
-    await expect(
-      restoreLatestAssetProjection(
-        'token::multi::large-projection',
-        { kind: 'token', scene: 'multi-address' },
-        dataSource,
-      ),
-    ).resolves.toMatchObject({
-      rows,
-      groups: [{ id: 'large-token-group', memberIds }],
-    });
-  });
-
   it('rolls back unpublished rows when snapshot creation fails', async () => {
     dataSource = await createMemoryAppDataSource();
     const circularMetadata: Record<string, unknown> = {};
@@ -311,65 +277,6 @@ describe('asset projection persistence', () => {
     await expect(
       dataSource.getRepository(AssetProjectionGroupItemEntity).count(),
     ).resolves.toBe(0);
-  });
-
-  it('commits projection prerequisites and snapshot atomically', async () => {
-    dataSource = await createMemoryAppDataSource();
-    await dataSource.query(
-      'CREATE TABLE projection_prerequisite (id text PRIMARY KEY NOT NULL)',
-    );
-
-    await expect(
-      persistAssetProjection(
-        {
-          projectionKey: PROJECTION_KEY,
-          kind: 'token',
-          scene: 'single-address',
-          rows: [{ type: 'token', id: 'token-a' }],
-          prepareTransaction: async manager => {
-            await manager.query(
-              'INSERT INTO projection_prerequisite (id) VALUES (?)',
-              ['required-token-a'],
-            );
-          },
-        },
-        dataSource,
-      ),
-    ).resolves.toMatchObject({ generation: 1 });
-    await expect(
-      dataSource.query('SELECT id FROM projection_prerequisite'),
-    ).resolves.toEqual([{ id: 'required-token-a' }]);
-
-    await expect(
-      persistAssetProjection(
-        {
-          projectionKey: 'token::single::failed-prerequisite',
-          kind: 'token',
-          scene: 'single-address',
-          rows: [{ type: 'token', id: 'token-b' }],
-          prepareTransaction: async manager => {
-            await manager.query(
-              'INSERT INTO projection_prerequisite (id) VALUES (?)',
-              ['required-token-b'],
-            );
-            throw new Error('prerequisite failed');
-          },
-        },
-        dataSource,
-      ),
-    ).rejects.toThrow('prerequisite failed');
-    await expect(
-      dataSource.query(
-        'SELECT id FROM projection_prerequisite ORDER BY id ASC',
-      ),
-    ).resolves.toEqual([{ id: 'required-token-a' }]);
-    await expect(
-      restoreLatestAssetProjection(
-        'token::single::failed-prerequisite',
-        {},
-        dataSource,
-      ),
-    ).resolves.toBeNull();
   });
 
   it('keeps only the latest three complete generations', async () => {

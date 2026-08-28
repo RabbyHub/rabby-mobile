@@ -1,8 +1,6 @@
 import { openapi } from '@/core/request';
 import { bindKeyringEvent, keyringServiceApi } from '@/core/serviceApi/keyring';
 import { makeJsEEClass } from '@/core/utils/makeJsEEClass';
-import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
-import { isNonProductionDiagnosticsEnabled } from '@/core/utils/diagnosticEnv';
 import { ORM_TABLE_NAMES } from '@/databases/constant';
 import type { EvmTotalBalanceResponse } from '@/databases/hooks/balance';
 import { HOME_REFRESH_INTERVAL } from '@/constant/home';
@@ -624,20 +622,8 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     const lowerAddresses = Array.from(
       new Set(top10Addresses.map(item => item.toLowerCase())),
     );
-    const diagnostic =
-      isNonProductionDiagnosticsEnabled &&
-      trace?.scene === 'Home' &&
-      trace.requester === 'fetchTotalBalance'
-        ? beginAssetDataLoadDiagnostic('home-balance-refresh', 'balance', {
-            addressCount: lowerAddresses.length,
-            force,
-          })
-        : null;
     const addresses = await keyringServiceApi.getAllAddresses();
     const coreAddressSet = buildCoreAddressSet(addresses as Account[]);
-    diagnostic?.mark('account-scope-resolved', {
-      coreAddressCount: coreAddressSet.size,
-    });
 
     const fetchList: Array<{ address: string; isCore: boolean }> = [];
     if (!force) {
@@ -712,42 +698,12 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
       fetchList.push({ address, isCore });
     }
 
-    diagnostic?.mark('fetch-targets-resolved', {
-      fetchAddressCount: fetchList.length,
-    });
-
     if (!fetchList.length) {
-      diagnostic?.finish({
-        path: 'local-cache-only',
-      });
       return;
     }
 
     const fetchAddresses = fetchList.map(item => item.address);
-    diagnostic?.mark('app-chain-refresh-started', {
-      fetchAddressCount: fetchAddresses.length,
-    });
-    try {
-      await useAppChainStore
-        .getState()
-        .batchGetAppChains(fetchAddresses, force, diagnostic || undefined);
-    } catch (error) {
-      diagnostic?.fail({
-        phase: 'app-chain-refresh',
-      });
-      throw error;
-    }
-    diagnostic?.mark('app-chain-refresh-settled');
-
-    const queuedAt = Date.now();
-    const queueSizeAtStart = getTotalBalanceQueue.size;
-    const queuePendingAtStart = getTotalBalanceQueue.pending;
-    const queueWaits: number[] = [];
-    const requestDurations: number[] = [];
-    diagnostic?.mark('remote-balance-requests-started', {
-      queueSizeAtStart,
-      queuePendingAtStart,
-    });
+    await useAppChainStore.getState().batchGetAppChains(fetchAddresses, force);
 
     const results = await Promise.all(
       fetchList.map(async ({ address, isCore }) => {
@@ -766,20 +722,14 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
 
         try {
           const queuedBalance = await getTotalBalanceQueue.add(async () => {
-            queueWaits.push(Date.now() - queuedAt);
-            const requestStartedAt = Date.now();
-            try {
-              return await openapi.getTotalBalanceV2({
-                address,
-                isCore,
-                included_token_uuids: [],
-                excluded_token_uuids: [],
-                excluded_protocol_ids: [],
-                excluded_chain_ids: [],
-              });
-            } finally {
-              requestDurations.push(Date.now() - requestStartedAt);
-            }
+            return openapi.getTotalBalanceV2({
+              address,
+              isCore,
+              included_token_uuids: [],
+              excluded_token_uuids: [],
+              excluded_protocol_ids: [],
+              excluded_chain_ids: [],
+            });
           });
           if (!queuedBalance) {
             throw new Error(
@@ -808,24 +758,6 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
       }),
     );
 
-    const getAverage = (values: number[]) =>
-      values.length
-        ? Math.round(
-            values.reduce((total, value) => total + value, 0) / values.length,
-          )
-        : 0;
-    const succeededCount = results.filter(result => result.ok).length;
-    diagnostic?.mark('remote-balance-requests-settled', {
-      fetchAddressCount: fetchList.length,
-      succeededCount,
-      failedCount: fetchList.length - succeededCount,
-      queueWaitAverageMs: getAverage(queueWaits),
-      queueWaitMaxMs: Math.max(0, ...queueWaits),
-      requestAverageMs: getAverage(requestDurations),
-      requestMaxMs: Math.max(0, ...requestDurations),
-    });
-
-    const applyStartedAt = Date.now();
     results.forEach(result => {
       if (!result.ok) {
         this.markError(result.address, 'remote', result.error, {
@@ -889,12 +821,6 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
           ),
         },
       );
-    });
-    diagnostic?.mark('remote-values-applied', {
-      elapsedMs: Date.now() - applyStartedAt,
-    });
-    diagnostic?.finish({
-      path: 'remote-refresh',
     });
   };
 
@@ -1466,17 +1392,16 @@ function setAccountsBalanceState(
   },
 ) {
   const prevState = balanceAccountsStore.getState();
-  const { newVal, changed } = resolveValFromUpdater(prevState, valOrFunc, {
-    strict: true,
-  });
-  if (!changed) {
-    return;
-  }
+  balanceAccountsStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: true,
+    });
+    if (!changed) {
+      return prev;
+    }
 
-  // This path produces an already-resolved Zustand partial/state object.
-  // Passing it through a Mutative producer wraps every large cache hydration
-  // in an unnecessary draft and treats the plain return as a raw return.
-  balanceAccountsStore.setState(newVal);
+    return newVal;
+  });
 
   const nextState = balanceAccountsStore.getState();
   if (nextState === prevState || !meta) {

@@ -1,20 +1,12 @@
 import RNFS from '@rabby-wallet/react-native-fs';
-import { normalizeRegressionWatchAddresses } from './watchAddressFixturePayload.nonprod';
-
-export { MAX_REGRESSION_WATCH_ADDRESS_FIXTURE_ADDRESSES } from './watchAddressFixturePayload.nonprod';
 
 const FIXTURE_DIRECTORY = 'rabby-regression-fixtures';
 const MAX_FIXTURE_BYTES = 128 * 1024;
 const PRIVATE_KEY_PATTERN = /(?:0x)?[a-fA-F0-9]{64}/g;
-const EVM_ADDRESS_PATTERN = /0x[a-fA-F0-9]{40}/g;
 
 export type RegressionWalletFixture = {
   privateKeys: string[];
   seedPhrases: string[];
-};
-
-export type RegressionWatchAddressFixture = {
-  addresses: string[];
 };
 
 function unique(values: string[]) {
@@ -77,64 +69,6 @@ function parseFixtureText(contents: string): RegressionWalletFixture {
   };
 }
 
-function parseWatchAddressFixtureJson(
-  value: unknown,
-): RegressionWatchAddressFixture {
-  if (!value || typeof value !== 'object') {
-    throw new Error('Watch-address fixture JSON must be an object');
-  }
-
-  const fixture = value as Record<string, unknown>;
-  const rankedFixtures = Array.isArray(fixture.fixtures)
-    ? fixture.fixtures
-    : undefined;
-  const rawAddresses =
-    fixture.addresses ??
-    fixture.watchAddresses ??
-    rankedFixtures?.map(item => {
-      if (!item || typeof item !== 'object') {
-        return item;
-      }
-      return (item as Record<string, unknown>).address;
-    });
-  if (!Array.isArray(rawAddresses)) {
-    throw new Error(
-      'Watch-address fixture must define an addresses array or ranked fixtures',
-    );
-  }
-  if (rawAddresses.some(address => typeof address !== 'string')) {
-    throw new Error('Watch-address fixture addresses must be strings');
-  }
-
-  return {
-    addresses: normalizeRegressionWatchAddresses(rawAddresses),
-  };
-}
-
-export function parseRegressionWatchAddressFixture(
-  contents: string,
-): RegressionWatchAddressFixture {
-  const trimmed = contents.trim();
-  // A Watch-address probe must never accept a wallet fixture by accident.
-  // Otherwise a 0x-prefixed private key would also match the first 40 hex
-  // characters of the address pattern below.
-  if (PRIVATE_KEY_PATTERN.test(trimmed)) {
-    PRIVATE_KEY_PATTERN.lastIndex = 0;
-    throw new Error('Watch-address fixture must not contain private keys');
-  }
-  PRIVATE_KEY_PATTERN.lastIndex = 0;
-
-  if (trimmed.startsWith('{')) {
-    return parseWatchAddressFixtureJson(JSON.parse(trimmed));
-  }
-
-  return {
-    addresses: normalizeRegressionWatchAddresses(
-      trimmed.match(EVM_ADDRESS_PATTERN) || [],
-    ),
-  };
-}
-
 function getFixtureCandidates(fixtureId: string) {
   const roots = [RNFS.ExternalDirectoryPath, RNFS.DocumentDirectoryPath].filter(
     (path): path is string => !!path,
@@ -148,7 +82,7 @@ function getFixtureCandidates(fixtureId: string) {
   );
 }
 
-async function consumeRegressionFixtureContents(fixtureId: string) {
+export async function consumeRegressionWalletFixture(fixtureId: string) {
   const candidates = getFixtureCandidates(fixtureId);
   const path = (
     await Promise.all(
@@ -169,27 +103,17 @@ async function consumeRegressionFixtureContents(fixtureId: string) {
     throw new Error('Fixture exceeds the allowed size');
   }
 
+  let contents = '';
   try {
-    return await RNFS.readFile(path, 'utf8');
+    contents = await RNFS.readFile(path, 'utf8');
   } finally {
     await RNFS.unlink(path).catch(() => undefined);
   }
-}
-
-export async function consumeRegressionWalletFixture(fixtureId: string) {
-  let contents = await consumeRegressionFixtureContents(fixtureId);
 
   const fixture = parseFixtureText(contents);
   contents = '';
   if (!fixture.privateKeys.length && !fixture.seedPhrases.length) {
     throw new Error('Fixture contains no supported wallet secrets');
   }
-  return fixture;
-}
-
-export async function consumeRegressionWatchAddressFixture(fixtureId: string) {
-  let contents = await consumeRegressionFixtureContents(fixtureId);
-  const fixture = parseRegressionWatchAddressFixture(contents);
-  contents = '';
   return fixture;
 }

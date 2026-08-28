@@ -47,6 +47,7 @@ import useTokenList, {
   tokenEntityResourceStore,
   tokenGroupResourceStore,
   useTokenAssetsIndexStore,
+  useTokenIndexStore,
 } from '@/store/tokens';
 import { useFindAccountByAddress, useIsFocusedCurrentTab } from './hooks/share';
 import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
@@ -77,7 +78,6 @@ import { toast } from '@/components2024/Toast';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { IS_ANDROID } from '@/core/native/utils';
-import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
 import { formatNetworth } from '@/utils/math';
 import { useScrollToTopOnChainChange } from '@/hooks/useScrollToTopOnChainChange';
 import {
@@ -222,7 +222,7 @@ export const TokenList = () => {
   const regressionScenarioReport = regressionScenario.active
     ? regressionScenario.report
     : null;
-  const { myTop10Accounts, myTop10Addresses } = useHomeAssetAccountInfo();
+  const { myTop10Addresses } = useHomeAssetAccountInfo();
   const selectedChainItem = useSelectedChainItem();
   const chain = useMemo(() => {
     return selectedChainItem?.chain;
@@ -243,7 +243,7 @@ export const TokenList = () => {
     { storeLabel: 'home-multi-assets-token-preferences' },
   );
 
-  const getAccountByAddress = useFindAccountByAddress(myTop10Accounts);
+  const getAccountByAddress = useFindAccountByAddress();
   const {
     sections: customTestnetSections,
     hydrationState: customTestnetHydrationState,
@@ -297,26 +297,21 @@ export const TokenList = () => {
     [myTop10Addresses, chain, tokenDisplayMode],
   );
 
-  useLayoutEffect(() => {
-    const trace = beginAssetDataLoadDiagnostic(
-      'multi-address-token-projection',
-      myTop10Addresses.join('|'),
-      {
-        addressCount: myTop10Addresses.length,
-        chainServerId: chain || 'all',
-        tokenDisplayMode,
-      },
-    );
-    const projectionKey = useTokenAssetsIndexStore
+  useEffect(() => {
+    useTokenIndexStore
       .getState()
-      .ensureMultiAssetsResult({
-        addresses: myTop10Addresses,
-        chainServerId: chain,
-        isLpTokenEnabled: false,
-        tokenDisplayMode,
-      });
-    trace.finish({
-      projectionKeyMatches: projectionKey === multiAssetsKey,
+      .syncFromTokenListMap(
+        useTokenList.getState().tokenListMap,
+        myTop10Addresses,
+      );
+  }, [myTop10Addresses]);
+
+  useLayoutEffect(() => {
+    useTokenAssetsIndexStore.getState().ensureMultiAssetsResult({
+      addresses: myTop10Addresses,
+      chainServerId: chain,
+      isLpTokenEnabled: false,
+      tokenDisplayMode,
     });
   }, [chain, multiAssetsKey, myTop10Addresses, tokenDisplayMode]);
 
@@ -404,20 +399,16 @@ export const TokenList = () => {
     (isCustomTestnetSnapshotPending && projectedTokenCount === 0);
 
   useEffect(() => {
-    batchGetTokenList(myTop10Addresses, false, {
-      preferredMultiAssetsProjectionKey: multiAssetsKey,
-    });
-  }, [multiAssetsKey, myTop10Addresses]);
+    batchGetTokenList(myTop10Addresses);
+  }, [myTop10Addresses]);
 
   const handleForeground = useCallback(() => {
     if (isLoading || !isFocusing || !myTop10Addresses) {
       return;
     }
     triggerUpdate(false);
-    batchGetTokenList(myTop10Addresses, false, {
-      preferredMultiAssetsProjectionKey: multiAssetsKey,
-    });
-  }, [isFocusing, isLoading, multiAssetsKey, myTop10Addresses, triggerUpdate]);
+    batchGetTokenList(myTop10Addresses);
+  }, [isFocusing, isLoading, myTop10Addresses, triggerUpdate]);
 
   useAppForeground({
     enabled: isFocusing,
