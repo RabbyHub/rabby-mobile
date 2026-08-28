@@ -1,11 +1,6 @@
 import { Text } from '@/components/Typography';
 import type { PerpsQuoteAsset } from '@/constant/perps';
 import type { PerpsProInfoTab } from '@/core/services/perpsService';
-import { PerpsProPagerProbeControls } from '@/devtools/perpsProPagerProbe/react';
-import {
-  isPerpsProPagerProbeCapturing,
-  recordPerpsProPagerProbeEvent,
-} from '@/devtools/perpsProPagerProbe/runtime';
 import { useTheme2024 } from '@/hooks/theme';
 import { useActiveAssetSubscription } from '@/hooks/perps/subscriptions/useActiveAssetSubscription';
 import { isPerpsActionUserCancelled } from '@/hooks/perps/actions/actionError';
@@ -1084,22 +1079,9 @@ export const PerpsProScene: React.FC<{
         setRequestedInfoTab(null);
         return;
       }
-      if (isPerpsProPagerProbeCapturing()) {
-        recordPerpsProPagerProbeEvent('tab_request', {
-          activeTab: info.activeInfoTab ?? '',
-          displayedTab: displayedInfoTab ?? '',
-          requestedTab: tab,
-        });
-      }
       setRequestedInfoTab(tab);
       infoTabRequestFrameRef.current = requestAnimationFrame(() => {
         infoTabRequestFrameRef.current = null;
-        if (isPerpsProPagerProbeCapturing()) {
-          recordPerpsProPagerProbeEvent('tab_request_frame', {
-            activeTab: info.activeInfoTab ?? '',
-            requestedTab: tab,
-          });
-        }
         infoPagerRef.current?.setPage(tab);
       });
     },
@@ -1107,12 +1089,6 @@ export const PerpsProScene: React.FC<{
   );
   const commitInfoTab = useCallback(
     (tab: PerpsProInfoTab) => {
-      if (isPerpsProPagerProbeCapturing()) {
-        recordPerpsProPagerProbeEvent('tab_commit', {
-          previousActiveTab: info.activeInfoTab ?? '',
-          tab,
-        });
-      }
       cancelInfoTabRequest();
       setRequestedInfoTab(null);
       setPreviewInfoTab(tab);
@@ -1270,7 +1246,6 @@ export const PerpsProScene: React.FC<{
           ) : null}
         </View>
       </GestureDetector>
-      <PerpsProPagerProbeControls />
       <PerpsProMarketSelector
         currentMarketKey={scene.currentMarket?.marketKey ?? null}
         onClose={scene.cancelPendingMarketSelection}

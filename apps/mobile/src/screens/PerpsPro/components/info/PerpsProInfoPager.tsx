@@ -29,15 +29,6 @@ import Reanimated, {
   useSharedValue,
 } from 'react-native-reanimated';
 
-import {
-  PERPS_PRO_PAGER_PROBE_AVAILABLE,
-  capturePerpsProPagerProbeNativeSnapshot,
-  isPerpsProPagerProbeCapturing,
-  recordPerpsProPagerProbeEvent,
-  registerPerpsProPagerProbeListRef,
-  schedulePerpsProPagerProbeNativeSnapshots,
-} from '@/devtools/perpsProPagerProbe/runtime';
-
 import { usePerpsProPagerPreviewSession } from '../common/usePerpsProPagerPreviewSession';
 
 import { PERPS_PRO_INFO_TABS } from './perpsProInfoTabOrder';
@@ -131,7 +122,6 @@ type PerpsProInfoPagerProps<Row> = {
 };
 
 type PerpsProInfoListHandle = {
-  getScrollableNode?: () => number | object | null;
   scrollToOffset: (params: { animated?: boolean; offset: number }) => void;
 };
 
@@ -193,14 +183,6 @@ const PerpsProInfoPagerInner = <Row,>(
     positions: 0,
     openOrders: 0,
   });
-  const probeListGenerationRef = useRef<Record<PerpsProInfoTab, number>>({
-    account: 0,
-    positions: 0,
-    openOrders: 0,
-  });
-  const probeListIdentityRef = useRef<
-    Partial<Record<PerpsProInfoTab, PerpsProInfoListHandle>>
-  >({});
   const selectedIndexRef = useRef(PERPS_PRO_INFO_TABS.indexOf(activeTab));
   const programmaticTargetIndexRef = useRef<number | null>(null);
   const pendingActiveCorrectionRef = useRef<{
@@ -217,30 +199,6 @@ const PerpsProInfoPagerInner = <Row,>(
     () =>
       getPreparedPerpsProInfoTabs(activeTab, requestedTab, keepAllTabsMounted),
     [activeTab, keepAllTabsMounted, requestedTab],
-  );
-
-  const getProbePayload = useCallback(
-    (tab: PerpsProInfoTab) => {
-      const index = PERPS_PRO_INFO_TABS.indexOf(tab);
-      const target = scrollBridge?.targets[index];
-      return {
-        activeTab: activeTabRef.current,
-        bridgeMaxOffset: target?.maxOffset.value ?? -1,
-        bridgeOffset: target?.offset.value ?? -1,
-        contentHeight: contentHeightsRef.current[tab],
-        desiredOffset: desiredOffsetsRef.current[tab],
-        listGeneration: probeListGenerationRef.current[tab],
-        listRefPresent: !!listRefs.current[tab],
-        pageGestureActive: scrollBridge?.pageGestureActive.value ?? false,
-        requestedTab: requestedTab ?? '',
-        selectedIndex: selectedIndexRef.current,
-        stickyOffset,
-        tab,
-        tabIndex: index,
-        viewportHeight: viewportHeightsRef.current[tab],
-      };
-    },
-    [requestedTab, scrollBridge, stickyOffset],
   );
 
   const recordDesiredOffset = useCallback(
@@ -291,22 +249,9 @@ const PerpsProInfoPagerInner = <Row,>(
       const offset = Math.min(Math.max(pending.offset, 0), maxOffset);
       pendingActiveCorrectionRef.current = null;
       recordDesiredOffset(tab, offset);
-      if (isPerpsProPagerProbeCapturing()) {
-        recordPerpsProPagerProbeEvent('pending_correction_applied', {
-          ...getProbePayload(tab),
-          correctionOffset: offset,
-        });
-      }
       listRefs.current[tab]?.scrollToOffset({ animated: false, offset });
-      if (isPerpsProPagerProbeCapturing()) {
-        schedulePerpsProPagerProbeNativeSnapshots(
-          tab,
-          'pending_correction_applied',
-          { correctionOffset: offset },
-        );
-      }
     },
-    [getProbePayload, recordDesiredOffset],
+    [recordDesiredOffset],
   );
 
   const preparePages = useCallback(() => {
@@ -329,47 +274,9 @@ const PerpsProInfoPagerInner = <Row,>(
         storedOffset: desiredOffsetsRef.current[tab],
       });
       recordDesiredOffset(tab, offset);
-      const listRef = listRefs.current[tab];
-      const probeCapturing = isPerpsProPagerProbeCapturing();
-      const probePayload = probeCapturing
-        ? {
-            ...getProbePayload(tab),
-            activeOffset,
-            preparedOffset: offset,
-          }
-        : null;
-      if (probePayload) {
-        recordPerpsProPagerProbeEvent('page_prepare', probePayload);
-        capturePerpsProPagerProbeNativeSnapshot(
-          tab,
-          'prepare_before_command',
-          { activeOffset, preparedOffset: offset },
-          listRef,
-        );
-      }
-      if (listRef) {
-        listRef.scrollToOffset({ animated: false, offset });
-        if (probePayload) {
-          recordPerpsProPagerProbeEvent('scroll_command', {
-            ...probePayload,
-            animated: false,
-            command: 'prepare',
-          });
-          schedulePerpsProPagerProbeNativeSnapshots(
-            tab,
-            'prepare_after_command',
-            { activeOffset, preparedOffset: offset },
-          );
-        }
-      }
+      listRefs.current[tab]?.scrollToOffset({ animated: false, offset });
     }
-  }, [
-    getActiveScrollOffset,
-    getProbePayload,
-    recordDesiredOffset,
-    scrollBridge,
-    stickyOffset,
-  ]);
+  }, [getActiveScrollOffset, recordDesiredOffset, scrollBridge, stickyOffset]);
 
   const publishPagePreview = useCallback(
     (position: number | null) => {
@@ -404,14 +311,6 @@ const PerpsProInfoPagerInner = <Row,>(
         programmaticTargetIndexRef.current = null;
         return;
       }
-      if (isPerpsProPagerProbeCapturing()) {
-        recordPerpsProPagerProbeEvent('page_set_requested', {
-          ...getProbePayload(tab),
-          animated,
-          fromIndex: selectedIndexRef.current,
-          targetIndex,
-        });
-      }
       programmaticTargetIndexRef.current = targetIndex;
       if (scrollBridge) {
         scrollBridge.epoch.value += 1;
@@ -424,7 +323,7 @@ const PerpsProInfoPagerInner = <Row,>(
         pagerRef.current?.setPageWithoutAnimation(targetIndex);
       }
     },
-    [clearPagePreview, getProbePayload, preparePages, scrollBridge],
+    [clearPagePreview, preparePages, scrollBridge],
   );
 
   const scrollActiveToOffset = useCallback(
@@ -436,21 +335,9 @@ const PerpsProInfoPagerInner = <Row,>(
       }
       recordDesiredOffset(tab, offset);
       listRefs.current[tab]?.scrollToOffset({ animated, offset });
-      if (isPerpsProPagerProbeCapturing()) {
-        recordPerpsProPagerProbeEvent('scroll_command', {
-          ...getProbePayload(tab),
-          animated,
-          command: 'scroll_active',
-          commandOffset: offset,
-        });
-        schedulePerpsProPagerProbeNativeSnapshots(tab, 'scroll_active', {
-          animated,
-          commandOffset: offset,
-        });
-      }
       onActivateOffset(offset);
     },
-    [getProbePayload, onActivateOffset, recordDesiredOffset, scrollBridge],
+    [onActivateOffset, recordDesiredOffset, scrollBridge],
   );
 
   useImperativeHandle(
@@ -507,15 +394,6 @@ const PerpsProInfoPagerInner = <Row,>(
         isPerpsProInfoHorizontalTouchAuthorized(scrollBridge);
 
       if (changed && !programmaticAuthorized && !gestureAuthorized) {
-        if (isPerpsProPagerProbeCapturing()) {
-          recordPerpsProPagerProbeEvent('page_selection_rejected', {
-            ...getProbePayload(tab),
-            changed,
-            gestureAuthorized,
-            position,
-            programmaticAuthorized,
-          });
-        }
         isPreviewGestureActive.value = false;
         previewPagePosition.value = settledPagePosition.value;
         finishPreviewSession(sessionId, true);
@@ -555,29 +433,6 @@ const PerpsProInfoPagerInner = <Row,>(
         Math.abs(desiredOffset - actualOffset) > 0.5
           ? { offset: desiredOffset, tab }
           : null;
-      if (isPerpsProPagerProbeCapturing()) {
-        const probePayload = {
-          ...getProbePayload(tab),
-          actualOffset,
-          changed,
-          desiredOffset,
-          gestureAuthorized,
-          position,
-          programmaticAuthorized,
-          shouldCommit,
-        };
-        recordPerpsProPagerProbeEvent('page_selected', probePayload);
-        if (pendingActiveCorrectionRef.current) {
-          recordPerpsProPagerProbeEvent(
-            'pending_correction_queued',
-            probePayload,
-          );
-        }
-        schedulePerpsProPagerProbeNativeSnapshots(tab, 'page_selected', {
-          actualOffset,
-          desiredOffset,
-        });
-      }
       onActivateOffset(actualOffset);
       if (shouldCommit) {
         onPageSelected(tab);
@@ -589,7 +444,6 @@ const PerpsProInfoPagerInner = <Row,>(
       onActivateOffset,
       onPageSelected,
       finishPreviewSession,
-      getProbePayload,
       previewGestureSessionId,
       previewPagePosition,
       scrollBridge,
@@ -599,13 +453,6 @@ const PerpsProInfoPagerInner = <Row,>(
 
   const beginPageDrag = useCallback(
     (sessionId: number) => {
-      if (isPerpsProPagerProbeCapturing()) {
-        recordPerpsProPagerProbeEvent('page_drag_started', {
-          activeTab: activeTabRef.current,
-          selectedIndex: selectedIndexRef.current,
-          sessionId,
-        });
-      }
       beginPreviewSession(sessionId);
       preparePages();
       onPageDragStart();
@@ -691,35 +538,18 @@ const PerpsProInfoPagerInner = <Row,>(
   );
 
   const recordScrollEnd = useCallback(
-    (tab: PerpsProInfoTab, event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const offset = event.nativeEvent.contentOffset.y;
-      recordDesiredOffset(tab, offset);
-      if (isPerpsProPagerProbeCapturing()) {
-        recordPerpsProPagerProbeEvent('list_scroll_end', {
-          ...getProbePayload(tab),
-          nativeEventOffset: offset,
-        });
-        capturePerpsProPagerProbeNativeSnapshot(tab, 'list_scroll_end', {
-          nativeEventOffset: offset,
-        });
-      }
-    },
-    [getProbePayload, recordDesiredOffset],
+    (tab: PerpsProInfoTab, event: NativeSyntheticEvent<NativeScrollEvent>) =>
+      recordDesiredOffset(tab, event.nativeEvent.contentOffset.y),
+    [recordDesiredOffset],
   );
 
   const recordContentHeight = useCallback(
     (tab: PerpsProInfoTab, height: number) => {
       contentHeightsRef.current[tab] = Math.max(0, height);
-      if (isPerpsProPagerProbeCapturing()) {
-        recordPerpsProPagerProbeEvent('list_content_size', {
-          ...getProbePayload(tab),
-          measuredContentHeight: height,
-        });
-      }
       updateBridgeMaxOffset(tab);
       applyPendingActiveCorrection(tab);
     },
-    [applyPendingActiveCorrection, getProbePayload, updateBridgeMaxOffset],
+    [applyPendingActiveCorrection, updateBridgeMaxOffset],
   );
 
   const recordViewportHeight = useCallback(
@@ -728,26 +558,13 @@ const PerpsProInfoPagerInner = <Row,>(
         0,
         event.nativeEvent.layout.height,
       );
-      if (isPerpsProPagerProbeCapturing()) {
-        recordPerpsProPagerProbeEvent('list_layout', {
-          ...getProbePayload(tab),
-          active,
-          measuredViewportHeight: event.nativeEvent.layout.height,
-          pageLayoutY: event.nativeEvent.layout.y,
-        });
-      }
       updateBridgeMaxOffset(tab);
       applyPendingActiveCorrection(tab);
       if (active) {
         onLayout(event);
       }
     },
-    [
-      applyPendingActiveCorrection,
-      getProbePayload,
-      onLayout,
-      updateBridgeMaxOffset,
-    ],
+    [applyPendingActiveCorrection, onLayout, updateBridgeMaxOffset],
   );
 
   return (
@@ -793,33 +610,8 @@ const PerpsProInfoPagerInner = <Row,>(
                 }
                 onScrollEndDrag={event => recordScrollEnd(tab, event)}
                 ref={list => {
-                  const typedList =
-                    list as unknown as PerpsProInfoListHandle | null;
-                  listRefs.current[tab] = typedList;
-                  if (PERPS_PRO_PAGER_PROBE_AVAILABLE) {
-                    registerPerpsProPagerProbeListRef(tab, typedList);
-                  }
-                  if (
-                    PERPS_PRO_PAGER_PROBE_AVAILABLE &&
-                    typedList &&
-                    probeListIdentityRef.current[tab] !== typedList
-                  ) {
-                    probeListIdentityRef.current[tab] = typedList;
-                    probeListGenerationRef.current[tab] += 1;
-                    if (isPerpsProPagerProbeCapturing()) {
-                      recordPerpsProPagerProbeEvent('list_attached', {
-                        ...getProbePayload(tab),
-                        listGeneration: probeListGenerationRef.current[tab],
-                      });
-                      schedulePerpsProPagerProbeNativeSnapshots(
-                        tab,
-                        'list_attached',
-                        {
-                          listGeneration: probeListGenerationRef.current[tab],
-                        },
-                      );
-                    }
-                  }
+                  listRefs.current[tab] =
+                    list as unknown as PerpsProInfoListHandle;
                   if (scrollBridge) {
                     getPerpsProInfoScrollTarget(scrollBridge, tab)?.ref(
                       list as never,
