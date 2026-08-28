@@ -38,6 +38,59 @@ normalize_sha256() {
   printf '%s' "$1" | awk '{print tolower($1)}'
 }
 
+resolve_preflight_work_dir() {
+  local requested="$1"
+  local root="$2"
+  local root_real
+  local requested_parent
+  local requested_parent_real
+  local requested_base
+  local resolved
+
+  mkdir -p "$root"
+  root_real="$(cd "$root" && pwd -P)"
+
+  if [ -z "$requested" ]; then
+    requested="$root_real/work"
+  fi
+
+  case "$requested" in
+    /*) ;;
+    *) fail "RABBY_MOBILE_IOS_SIGNING_PREFLIGHT_WORK_DIR must be an absolute path" ;;
+  esac
+
+  case "$requested" in
+    *"/../"*|*/..|*/.|*"/./"*)
+      fail "RABBY_MOBILE_IOS_SIGNING_PREFLIGHT_WORK_DIR must not contain . or .. path segments"
+      ;;
+  esac
+
+  requested_parent="$(dirname "$requested")"
+  requested_base="$(basename "$requested")"
+  if [ "$requested_base" = "." ] || [ "$requested_base" = ".." ] || [ -z "$requested_base" ]; then
+    fail "RABBY_MOBILE_IOS_SIGNING_PREFLIGHT_WORK_DIR must name a child directory"
+  fi
+
+  if [ ! -d "$requested_parent" ]; then
+    fail "RABBY_MOBILE_IOS_SIGNING_PREFLIGHT_WORK_DIR parent must already exist: $requested_parent"
+  fi
+
+  requested_parent_real="$(cd "$requested_parent" && pwd -P)"
+  if [ "$requested_parent_real" != "$root_real" ]; then
+    fail "RABBY_MOBILE_IOS_SIGNING_PREFLIGHT_WORK_DIR must be a direct child of $root_real"
+  fi
+
+  resolved="$root_real/$requested_base"
+  if [ -L "$resolved" ]; then
+    fail "RABBY_MOBILE_IOS_SIGNING_PREFLIGHT_WORK_DIR must not be a symlink: $resolved"
+  fi
+  if [ -e "$resolved" ] && [ ! -d "$resolved" ]; then
+    fail "RABBY_MOBILE_IOS_SIGNING_PREFLIGHT_WORK_DIR must be a directory: $resolved"
+  fi
+
+  printf '%s\n' "$resolved"
+}
+
 script_dir="$(cd "$(dirname "$0")" && pwd -P)"
 project_dir="$(cd "$script_dir/../.." && pwd -P)"
 mobile_scripts_dir="$project_dir/scripts"
@@ -71,7 +124,8 @@ expected_bundle_id="${RABBY_MOBILE_IOS_SIGNING_PREFLIGHT_BUNDLE_ID:-com.debank.r
 expected_team_id="${RABBY_MOBILE_IOS_SIGNING_PREFLIGHT_TEAM_ID:-ZPNP2SF27Q}"
 expected_profile_name="${RABBY_MOBILE_IOS_SIGNING_PREFLIGHT_PROFILE_NAME:-RabbyMobileAppStoreOpcode}"
 export_method="${RABBY_MOBILE_IOS_SIGNING_PREFLIGHT_EXPORT_METHOD:-app-store-connect}"
-work_dir="${RABBY_MOBILE_IOS_SIGNING_PREFLIGHT_WORK_DIR:-$project_dir/ios/Package/signing-preflight}"
+work_root="$project_dir/ios/Package/signing-preflight"
+work_dir="$(resolve_preflight_work_dir "${RABBY_MOBILE_IOS_SIGNING_PREFLIGHT_WORK_DIR:-}" "$work_root")"
 archive_zip="$work_dir/RabbyMobileSigningPreflight.xcarchive.zip"
 unpack_dir="$work_dir/unpacked"
 export_dir="$work_dir/export"
