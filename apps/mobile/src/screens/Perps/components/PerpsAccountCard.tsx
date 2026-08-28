@@ -74,8 +74,12 @@ export const PerpsAccountCard: React.FC = () => {
   const [popupState, setPopupState] = usePerpsPopupState();
   const navigation = useRabbyAppNavigation();
 
-  const { availableBalance, accountValue, isUnifiedAccount } =
-    usePerpsAccount();
+  const {
+    availableBalance,
+    isAvailableBalanceReady,
+    accountValue,
+    isUnifiedAccount,
+  } = usePerpsAccount();
   const { hasNonPerpsAssets, showPortfolioBreakdown } =
     useShowPerpsPortfolioBreakdown();
 
@@ -411,12 +415,21 @@ export const PerpsAccountCard: React.FC = () => {
                   <Text style={styles.availableLabel}>
                     {t('page.perps.PerpsCard.available')}
                   </Text>
-                  <Text style={styles.availableValue}>
-                    {'$'}
-                    {splitNumberByStep(
-                      new BigNumber(availableBalance || 0).toFixed(2),
-                    )}
-                  </Text>
+                  {isAvailableBalanceReady ? (
+                    <Text style={styles.availableValue}>
+                      {'$'}
+                      {splitNumberByStep(
+                        new BigNumber(availableBalance || 0).toFixed(2),
+                      )}
+                    </Text>
+                  ) : (
+                    <Skeleton
+                      width={84}
+                      height={20}
+                      style={styles.availableSkeleton}
+                      LinearGradientComponent={LoadingLinear}
+                    />
+                  )}
                 </View>
                 {/* History is reachable from here only while funding is in
                     flight — no idle entry point, per the design. */}
@@ -427,7 +440,7 @@ export const PerpsAccountCard: React.FC = () => {
                   />
                 )}
               </View>
-              {Number(availableBalance) === 0 ? (
+              {isAvailableBalanceReady && Number(availableBalance) === 0 ? (
                 <TouchableOpacity
                   style={styles.addFundsBtn}
                   onPress={openDeposit}>
@@ -452,6 +465,7 @@ export const PerpsAccountCard: React.FC = () => {
                     />
                   </TouchableOpacity>
                   <TouchableOpacity
+                    disabled={!isAvailableBalanceReady}
                     style={styles.roundBtn}
                     onPress={openWithdraw}>
                     <RcIconPortfolioMinusCC
@@ -682,6 +696,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
+  },
+  availableSkeleton: {
+    marginTop: 4,
+    borderRadius: 4,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-3'],
   },
   availableValue: {
     fontFamily: 'SF Pro Rounded',
