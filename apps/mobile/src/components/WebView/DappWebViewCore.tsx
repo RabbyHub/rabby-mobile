@@ -385,12 +385,8 @@ function DappWebViewCore({
         NonNullable<WebViewProps['onShouldStartLoadWithRequest']>
       >[0],
     ) => {
-      const shouldStart = checkShouldStartLoadingWithRequestForDappWebView(
-        event,
-        {
-          isFromMobileInnerDapp: true,
-        },
-      );
+      const shouldStart =
+        checkShouldStartLoadingWithRequestForDappWebView(event);
       const extraResult = onShouldStartLoadWithRequest?.(event);
       const propsResult = webviewOnShouldStartLoadWithRequest?.(event);
       const shouldStartWithExtra =
