@@ -9,6 +9,7 @@ import type {
   MarginSummary,
   OpenOrder,
   PerpDexsResponse,
+  SpotMeta,
   UserNonFundingLedgerUpdates,
   WsFastAssetCtxs,
   WsFill,
@@ -26,6 +27,7 @@ import {
   HYPE_EVM_BRIDGE_ADDRESS_MAP,
   HYPE_CORE_DEPOSIT_WALLET,
 } from '@/constant/perps';
+import type { PerpsMarketMarginMode } from '@/constant/perps';
 import { apisPerps } from '@/core/apis/perps';
 import {
   formatAllDexsClearinghouseState,
@@ -33,6 +35,9 @@ import {
   formatPositionPnl,
   formatSpotState,
   getPxDecimals,
+  mergeFastAssetCtxs,
+  type AggregatedClearinghouseState,
+  type RawSpotBalance,
 } from '@/utils/perps';
 import { eventBus, EVENTS } from '@/utils/events';
 import { openapi } from '@/core/request';
@@ -55,14 +60,34 @@ import type {
 import { stats } from '@/utils/stats';
 import BigNumber from 'bignumber.js';
 import { mergeUserFills, reconcileHttpFills } from './userFills';
+import { publishPerpsProHistoryEvent } from './history/perpsHistoryEvents';
 import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
+import type { PerpsMaintenanceMarginTier } from '@/utils/perpsMargin';
+import { confirmPerpsFundingJournalEntry } from './funding/fundingJournal';
+import { getPerpsFundingLedgerSettlementNonce } from './funding/fundingHistoryIdentity';
+import { createPerpsFundingLedgerQuery } from './funding/fundingHistoryLedgerQuery';
+import {
+  reconcilePerpsFundingHistory,
+  type PerpsFundingHistoryObservation,
+} from './funding/fundingHistoryReconciliation';
+import type {
+  AccountHistoryItem,
+  PerpsFundingConfirmation,
+} from './funding/types';
+import { createPerpsUserAbstractionLifecycle } from './userAbstractionLifecycle';
+import {
+  decidePerpsMarketRefresh,
+  fetchPerpsRemoteList,
+} from './marketDataRefresh';
+
+export type { AccountHistoryItem } from './funding/types';
 
 let perpsTopTokenCache: PerpTopTokenV3[] = [];
 let perpsCategoryCache: PerpTopTokenCategory[] = [];
 
 // Meta-only marketData snapshot: ticker fields are blanked (stale prices must
 // never render as current). Bump the version on MarketData shape changes.
-const MARKET_DATA_CACHE_VERSION = 1;
+const MARKET_DATA_CACHE_VERSION = 3;
 const MARKET_DATA_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
 const EMPTY_MARKET_TICKER = {
   dayBaseVlm: '0',
@@ -88,8 +113,10 @@ const toCachedMarketData = (item: MarketData): MarketData => ({
   maxLeverage: item.maxLeverage,
   minLeverage: item.minLeverage,
   maxUsdValueSize: item.maxUsdValueSize,
+  maintenanceMarginTiers: item.maintenanceMarginTiers,
   szDecimals: item.szDecimals,
   pxDecimals: item.pxDecimals,
+  marginMode: item.marginMode,
   onlyIsolated: item.onlyIsolated,
   dexId: item.dexId,
   category: item.category,
@@ -133,8 +160,10 @@ export interface MarketData {
   maxLeverage: number;
   minLeverage: number;
   maxUsdValueSize: string;
+  maintenanceMarginTiers: PerpsMaintenanceMarginTier[];
   szDecimals: number;
   pxDecimals: number;
+  marginMode?: PerpsMarketMarginMode;
   onlyIsolated?: boolean;
   dayBaseVlm: string;
   dayNtlVlm: string;
@@ -153,15 +182,10 @@ export interface MarketData {
 }
 
 export type MarketDataMap = Record<string, MarketData>;
-
-export interface AccountHistoryItem {
-  time: number;
-  hash: string;
-  destinationDex?: string;
-  type: 'deposit' | 'withdraw' | 'receive' | 'transfer';
-  status: 'pending' | 'success' | 'failed';
-  usdValue: string;
-}
+export type MaintenanceMarginTiersByCoin = Record<
+  string,
+  PerpsMaintenanceMarginTier[]
+>;
 
 export type AllDexsClearinghouseState = [string, ClearinghouseState][];
 
@@ -177,24 +201,40 @@ export type MarketDataStatus = 'idle' | 'loading' | 'success' | 'error';
 
 export interface PerpsState {
   // positionAndOpenOrders: PositionAndOpenOrder[];
-  currentClearinghouseState: ClearinghouseState | null;
+  currentClearinghouseState: AggregatedClearinghouseState | null;
   spotState: {
     accountValue: string;
     availableToTrade: string;
     balances: SpotBalance[];
     balancesMap: Record<string, SpotBalance>;
+    rawBalances: RawSpotBalance[];
+    rawBalancesMap: Record<string, RawSpotBalance>;
+    rawBalancesByToken: Record<number, RawSpotBalance>;
     tokenToAvailableAfterMaintenance: [number, string][] | null;
+    portfolioMarginEnabled?: boolean;
+    portfolioMarginRatio?: string;
+    tokenToPortfolioBorrowRatio?: [number, string][];
   };
+  spotMeta: SpotMeta | null;
+  spotMetaStatus: MarketDataStatus;
+  spotAssetCtxs: WsFastAssetCtxs;
   userAbstraction: UserAbstractionResp;
   userAbstractionReady: boolean;
+  userAbstractionOwnerAddress: string | null;
+  // Address whose abstraction value came from the MMKV cache (or a resolved
+  // fetch). Compared against the current account, so it self-invalidates.
+  userAbstractionCachedAddress: string | null;
   openOrders: OpenOrder[];
+  // A complete open-orders snapshot has been received for the current account.
+  isOpenOrdersReady: boolean;
   currentPerpsAccount: Account | null;
-  clearinghouseStateMap: Record<string, ClearinghouseState | null>;
+  clearinghouseStateMap: Record<string, AggregatedClearinghouseState | null>;
   isFetchAllDone: boolean; // init ClearinghouseStateMap has done
   accountNeedApproveAgent: boolean; // 账户是否需要重新approve agent
   accountNeedApproveBuilderFee: boolean; // 账户是否需要重新approve builder fee
   marketData: MarketData[];
   marketDataMap: MarketDataMap;
+  maintenanceMarginTiersByCoin: MaintenanceMarginTiersByCoin;
   marketDataStatus: MarketDataStatus;
   categories: PerpTopTokenCategory[];
   hasPermission: boolean;
@@ -210,6 +250,12 @@ export interface PerpsState {
   approveSignatures: ApproveSignatures;
   userFills: WsFill[];
   userAccountHistory: AccountHistoryItem[];
+  /**
+   * Pending funding operations that outlived the presentation TTL. They stay
+   * available to strict ledger/source reconciliation but are never published
+   * to History UI or counted by pending indicators.
+   */
+  hiddenLocalFundingHistory: AccountHistoryItem[];
   localLoadingHistory: AccountHistoryItem[];
   wsSubscriptions: (() => void)[];
   pollingTimer: NodeJS.Timeout | null;
@@ -231,6 +277,14 @@ const buildMarketDataMap = (list: MarketData[]): MarketDataMap => {
   }, {} as MarketDataMap);
 };
 
+const buildMaintenanceMarginTiersByCoin = (
+  list: MarketData[],
+): MaintenanceMarginTiersByCoin =>
+  list.reduce((result, market) => {
+    result[market.name] = market.maintenanceMarginTiers;
+    return result;
+  }, {} as MaintenanceMarginTiersByCoin);
+
 export const initialState: PerpsState = {
   // positionAndOpenOrders: [],
   openOrders: [],
@@ -241,10 +295,22 @@ export const initialState: PerpsState = {
     availableToTrade: '0',
     balances: [],
     balancesMap: {},
+    rawBalances: [],
+    rawBalancesMap: {},
+    rawBalancesByToken: {},
     tokenToAvailableAfterMaintenance: null,
+    portfolioMarginEnabled: undefined,
+    portfolioMarginRatio: undefined,
+    tokenToPortfolioBorrowRatio: undefined,
   },
+  spotMeta: null,
+  spotMetaStatus: 'idle',
+  spotAssetCtxs: {},
   userAbstraction: UserAbstractionResp.default,
   userAbstractionReady: false,
+  userAbstractionOwnerAddress: null,
+  userAbstractionCachedAddress: null,
+  isOpenOrdersReady: false,
   hasPermission: true,
   perpFee: 0.00045,
   currentPerpsAccount: null,
@@ -252,7 +318,9 @@ export const initialState: PerpsState = {
   accountNeedApproveAgent: false,
   accountNeedApproveBuilderFee: false,
   marketData: [],
+  maintenanceMarginTiersByCoin: {},
   userAccountHistory: [],
+  hiddenLocalFundingHistory: [],
   localLoadingHistory: [],
   marketDataMap: {},
   marketDataStatus: 'idle',
@@ -277,7 +345,48 @@ export const initialState: PerpsState = {
   categories: DEFAULT_TOKEN_CATEGORY,
 };
 
+const isSamePerpsAccountIdentity = (
+  prev: Account | null,
+  next: Account | null,
+): boolean => {
+  if (!prev || !next) {
+    return prev === next;
+  }
+  return isSameAddress(prev.address, next.address) && prev.type === next.type;
+};
+
 export const perpsStore = zCreate<PerpsState>(() => ({ ...initialState }));
+
+export type PerpsAccountRuntimeContext = Readonly<{
+  account: Account | null;
+  generation: number;
+  isInitialized: boolean;
+}>;
+
+let perpsAccountRuntimeGeneration = 0;
+
+// Zustand listeners run synchronously with setState. This epoch therefore
+// changes before a stale Runtime promise can resume in the microtask queue,
+// including during the Store -> React effect gap on account switch/logout.
+perpsStore.subscribe((state, previousState) => {
+  if (
+    !isSamePerpsAccountIdentity(
+      previousState.currentPerpsAccount,
+      state.currentPerpsAccount,
+    )
+  ) {
+    perpsAccountRuntimeGeneration += 1;
+  }
+});
+
+export const getPerpsAccountRuntimeContext = (): PerpsAccountRuntimeContext => {
+  const state = perpsStore.getState();
+  return {
+    account: state.currentPerpsAccount,
+    generation: perpsAccountRuntimeGeneration,
+    isInitialized: state.isInitialized,
+  };
+};
 
 type ActiveUserDataSubscription = {
   address: string;
@@ -290,6 +399,7 @@ let homeSpotSubscription: {
 } | null = null;
 let marketSnapshotUnsubscribe: (() => void) | null = null;
 let fastMarketUnsubscribe: (() => void) | null = null;
+let fastMarketSubscriptionGeneration = 0;
 
 const canReuseUserDataSubscription = (address: string) =>
   !!activeUserDataSubscription &&
@@ -307,6 +417,185 @@ function setPerpsState(valOrFunc: UpdaterOrPartials<PerpsState>) {
     return newVal;
   });
 }
+
+const isKnownUserAbstraction = (value: unknown): value is UserAbstractionResp =>
+  value === UserAbstractionResp.default ||
+  value === UserAbstractionResp.disabled ||
+  value === UserAbstractionResp.unifiedAccount ||
+  value === UserAbstractionResp.portfolioMargin ||
+  value === UserAbstractionResp.dexAbstraction;
+
+export const isPerpsUserAbstractionReadyForAccount = (
+  state: Pick<
+    PerpsState,
+    | 'currentPerpsAccount'
+    | 'userAbstractionOwnerAddress'
+    | 'userAbstractionReady'
+  >,
+  account: Account | null = state.currentPerpsAccount,
+) =>
+  !!account?.address &&
+  state.userAbstractionReady &&
+  !!state.userAbstractionOwnerAddress &&
+  isSameAddress(state.userAbstractionOwnerAddress, account.address);
+
+export const queryUserAbstraction = async (
+  address: string,
+): Promise<UserAbstractionResp> => {
+  if (!address.trim()) {
+    throw new Error('Perps abstraction address is required');
+  }
+  return apisPerps.getPerpsSDK().info.getUserAbstraction(address);
+};
+
+export const reconcileUserAbstractionSnapshot = ({
+  account,
+  generation,
+  userAbstraction,
+}: {
+  account: Account;
+  generation: number;
+  userAbstraction: unknown;
+}): boolean => {
+  const runtime = getPerpsAccountRuntimeContext();
+  if (
+    runtime.generation !== generation ||
+    !isSamePerpsAccountIdentity(runtime.account, account)
+  ) {
+    return false;
+  }
+
+  setPerpsState(prev => {
+    if (!isSamePerpsAccountIdentity(prev.currentPerpsAccount, account)) {
+      return prev;
+    }
+    if (!isKnownUserAbstraction(userAbstraction)) {
+      return {
+        ...prev,
+        userAbstractionReady: false,
+        userAbstractionOwnerAddress: null,
+      };
+    }
+    return {
+      ...prev,
+      userAbstraction,
+      userAbstractionReady: true,
+      userAbstractionOwnerAddress: account.address,
+      userAbstractionCachedAddress: account.address,
+    };
+  });
+  // Persist for the next cold start: the mode only changes when the user opts
+  // into Unified Account / Portfolio Margin, and that path refetches.
+  void perpsServiceApi
+    .setUserAbstractionForAddress(account.address, String(userAbstraction))
+    .catch(error => {
+      console.error('[perps] persist user abstraction failed', error);
+    });
+  return true;
+};
+
+const userAbstractionLifecycle = createPerpsUserAbstractionLifecycle<
+  Account,
+  UserAbstractionResp
+>({
+  getRuntimeContext: getPerpsAccountRuntimeContext,
+  isSameAccount: isSamePerpsAccountIdentity,
+  onLoading: request => {
+    const runtime = getPerpsAccountRuntimeContext();
+    if (
+      runtime.generation !== request.generation ||
+      !isSamePerpsAccountIdentity(runtime.account, request.account)
+    ) {
+      return;
+    }
+    setPerpsState(prev =>
+      isSamePerpsAccountIdentity(prev.currentPerpsAccount, request.account)
+        ? {
+            ...prev,
+            userAbstractionReady: false,
+            userAbstractionOwnerAddress: null,
+          }
+        : prev,
+    );
+  },
+  onResolved: (request, userAbstraction) => {
+    reconcileUserAbstractionSnapshot({
+      account: request.account,
+      generation: request.generation,
+      userAbstraction,
+    });
+  },
+  query: queryUserAbstraction,
+});
+
+const hydrateUserAbstractionFromCache = async (
+  account: Account,
+): Promise<UserAbstractionResp | null> => {
+  try {
+    const cached = await perpsServiceApi.getUserAbstractionForAddress(
+      account.address,
+    );
+    if (!isKnownUserAbstraction(cached)) {
+      return null;
+    }
+    setPerpsState(prev => {
+      // Never downgrade a value the network already resolved for this account.
+      if (
+        !isSamePerpsAccountIdentity(prev.currentPerpsAccount, account) ||
+        (prev.userAbstractionReady &&
+          !!prev.userAbstractionOwnerAddress &&
+          isSameAddress(prev.userAbstractionOwnerAddress, account.address))
+      ) {
+        return prev;
+      }
+      return {
+        ...prev,
+        userAbstraction: cached,
+        userAbstractionCachedAddress: account.address,
+      };
+    });
+    return cached;
+  } catch (error) {
+    console.error('[perps] read cached user abstraction failed', error);
+    return null;
+  }
+};
+
+/**
+ * Drop the cached mode for an address. MUST be called before refetching after
+ * the user changes the mode (enabling Unified Account / Portfolio Margin):
+ * otherwise a failed refetch would restore the pre-change value and route
+ * balances and withdrawals through the wrong accounting.
+ */
+export const invalidateUserAbstractionCache = async (address: string) => {
+  setPerpsState(prev =>
+    prev.userAbstractionCachedAddress &&
+    isSameAddress(prev.userAbstractionCachedAddress, address)
+      ? { ...prev, userAbstractionCachedAddress: null }
+      : prev,
+  );
+  try {
+    await perpsServiceApi.clearUserAbstractionForAddress(address);
+  } catch (error) {
+    console.error('[perps] clear cached user abstraction failed', error);
+  }
+};
+
+// One network read per account entry. The MMKV cache covers the gap before it
+// lands AND the failure case (no retry loop): callers still get a usable mode
+// so they can start the right subscriptions.
+export const fetchUserAbstraction = async (account: Account) => {
+  const cachedPromise = hydrateUserAbstractionFromCache(account);
+  try {
+    return await userAbstractionLifecycle.refresh({ ...account });
+  } catch (error) {
+    const cached = await cachedPromise;
+    if (cached) {
+      return cached;
+    }
+    throw error;
+  }
+};
 
 function stopHomeSpotSubscription() {
   if (!homeSpotSubscription) {
@@ -394,21 +683,6 @@ const fetchPerpPermission = async (address: string) => {
   // setHasPermission(true);
 };
 
-export const fetchUserAbstraction = async (address: string) => {
-  const sdk = apisPerps.getPerpsSDK();
-  const userAbstraction = await sdk.info.getUserAbstraction(address);
-  const currentAddress = perpsStore.getState().currentPerpsAccount?.address;
-  if (!currentAddress || !isSameAddress(currentAddress, address)) {
-    return null;
-  }
-  setPerpsState(prev => ({
-    ...prev,
-    userAbstraction: userAbstraction,
-    userAbstractionReady: true,
-  }));
-  return userAbstraction;
-};
-
 const setIsFetchAllDone = (payload: boolean) => {
   setPerpsState(prev => ({ ...prev, isFetchAllDone: payload }));
 };
@@ -424,7 +698,7 @@ const setHomePositionPnl = (payload: {
 
 const setClearinghouseStateMap = (payload: {
   address: string;
-  data: ClearinghouseState | null;
+  data: AggregatedClearinghouseState | null;
 }) => {
   const address = payload.address.toLowerCase();
   const { data } = payload;
@@ -464,20 +738,46 @@ export const getClearinghouseStateByMap = (address: string) => {
 };
 
 const isSamePerpsAccount = (prev: Account | null, next: Account): boolean =>
-  !!prev &&
-  isSameAddress(prev.address, next.address) &&
-  prev.type === next.type;
+  isSamePerpsAccountIdentity(prev, next);
+
+const isCurrentPerpsAccountAddress = (address: string) => {
+  const currentAddress = perpsStore.getState().currentPerpsAccount?.address;
+  return !!currentAddress && isSameAddress(currentAddress, address);
+};
 
 const setCurrentPerpsAccount = (payload: Account) => {
   setPerpsState(prev => {
     const sameAccount = isSamePerpsAccount(prev.currentPerpsAccount, payload);
+    const cachedClearinghouseState = sameAccount
+      ? prev.currentClearinghouseState
+      : prev.clearinghouseStateMap[payload.address.toLowerCase()] ?? null;
     return {
       ...prev,
       currentPerpsAccount: payload,
       isLogin: !!payload,
-      isUserDataReady: sameAccount ? prev.isUserDataReady : false,
+      currentClearinghouseState: cachedClearinghouseState,
+      homePositionPnl: cachedClearinghouseState
+        ? formatPositionPnl(cachedClearinghouseState)
+        : initialState.homePositionPnl,
+      isUserDataReady: sameAccount
+        ? prev.isUserDataReady
+        : !!cachedClearinghouseState,
       isSpotStateReady: sameAccount ? prev.isSpotStateReady : false,
       userAbstractionReady: sameAccount ? prev.userAbstractionReady : false,
+      userAbstractionOwnerAddress: sameAccount
+        ? prev.userAbstractionOwnerAddress
+        : null,
+      spotState: sameAccount ? prev.spotState : initialState.spotState,
+      openOrders: sameAccount ? prev.openOrders : [],
+      isOpenOrdersReady: sameAccount ? prev.isOpenOrdersReady : false,
+      userAbstraction: sameAccount
+        ? prev.userAbstraction
+        : UserAbstractionResp.default,
+      userAccountHistory: sameAccount ? prev.userAccountHistory : [],
+      hiddenLocalFundingHistory: sameAccount
+        ? prev.hiddenLocalFundingHistory
+        : [],
+      localLoadingHistory: sameAccount ? prev.localLoadingHistory : [],
       // Fills are merged (not overwritten) on WS snapshots, so a stale
       // account's list must be cleared explicitly on switch.
       userFills: sameAccount ? prev.userFills : [],
@@ -501,22 +801,30 @@ export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
   // Tear down only the old account's streams. Global market feeds have their
   // own lifecycle and remain warm while the Perps screen initializes.
   stopAccountSubscriptions();
-  setPerpsState(prev => ({
-    ...prev,
-    currentPerpsAccount: payload,
-    isLogin: !!payload,
-    isInitialized: false,
-    isUserDataReady: false,
-    isSpotStateReady: false,
-    userAbstractionReady: false,
-    currentClearinghouseState: null,
-    homePositionPnl: pnl,
-    accountNeedApproveAgent: false,
-    accountNeedApproveBuilderFee: false,
-    userFills: isSamePerpsAccount(prev.currentPerpsAccount, payload)
-      ? prev.userFills
-      : [],
-  }));
+  setPerpsState(prev => {
+    const sameAccount = isSamePerpsAccount(prev.currentPerpsAccount, payload);
+    return {
+      ...prev,
+      currentPerpsAccount: payload,
+      isLogin: !!payload,
+      isInitialized: false,
+      isUserDataReady: false,
+      isSpotStateReady: false,
+      userAbstraction: sameAccount
+        ? prev.userAbstraction
+        : UserAbstractionResp.default,
+      userAbstractionReady: false,
+      userAbstractionOwnerAddress: null,
+      currentClearinghouseState: null,
+      spotState: initialState.spotState,
+      openOrders: [],
+      isOpenOrdersReady: false,
+      homePositionPnl: pnl,
+      accountNeedApproveAgent: false,
+      accountNeedApproveBuilderFee: false,
+      userFills: sameAccount ? prev.userFills : [],
+    };
+  });
   void perpsServiceApi.setCurrentAccount(payload).catch(error => {
     console.error('[perpsService] persist current account failed', error);
   });
@@ -558,6 +866,7 @@ const setMarketData = (
   setPerpsState(prev => ({
     ...prev,
     categories,
+    maintenanceMarginTiersByCoin: buildMaintenanceMarginTiersByCoin(list),
     marketData: list,
     marketDataMap: buildMarketDataMap(list),
   }));
@@ -596,6 +905,53 @@ async function withRetry<T>(
 // Single-flight: concurrent callers await the same in-flight fetch, so an
 // awaited fetchMarketData() resolves only when data is loaded.
 let marketDataPromise: Promise<void> | null = null;
+let spotMetaPromise: Promise<SpotMeta | null> | null = null;
+
+export const fetchSpotMeta = (force = false): Promise<SpotMeta | null> => {
+  const current = perpsStore.getState();
+  if (!force && current.spotMetaStatus === 'success' && current.spotMeta) {
+    return Promise.resolve(current.spotMeta);
+  }
+  if (spotMetaPromise) {
+    return spotMetaPromise;
+  }
+
+  setPerpsState(prev => ({
+    ...prev,
+    spotMetaStatus: 'loading',
+  }));
+  const sdk = apisPerps.getPerpsSDK();
+  spotMetaPromise = sdk.info
+    .getSpotMeta()
+    .then(spotMeta => {
+      if (
+        !spotMeta ||
+        !Array.isArray(spotMeta.tokens) ||
+        !Array.isArray(spotMeta.universe)
+      ) {
+        throw new Error('Invalid spot meta response');
+      }
+      setPerpsState(prev => ({
+        ...prev,
+        spotMeta,
+        spotMetaStatus: 'success',
+      }));
+      return spotMeta;
+    })
+    .catch(error => {
+      console.error('[perpsSpotMeta] fetch failed', error);
+      setPerpsState(prev => ({
+        ...prev,
+        spotMetaStatus: 'error',
+      }));
+      return null;
+    })
+    .finally(() => {
+      spotMetaPromise = null;
+    });
+
+  return spotMetaPromise;
+};
 
 // The boot-time fetch races network/VPN readiness and can fail before any
 // screen is around to retry it. Reschedule from the store itself: first retry
@@ -633,7 +989,8 @@ const scheduleMarketDataRetry = () => {
 };
 
 // These openapi endpoints have no axios timeout — a stalled connection would
-// hang fetchMarketData forever. Cap them and fall back to defaults on timeout.
+// hang fetchMarketData forever. Cap them and fall back to last-good memory,
+// then bundled defaults, on timeout.
 const MARKET_DATA_FETCH_TIMEOUT = 10000;
 
 function withTimeout<T>(
@@ -671,56 +1028,52 @@ const runFetchMarketData = async () => {
 
   const sdk = apisPerps.getPerpsSDK();
 
-  const fetchTopTokenList = async () => {
-    if (perpsTopTokenCache.length > 0) {
-      return perpsTopTokenCache;
-    }
-    try {
-      const topAssets = await withTimeout(
-        openapi.getPerpTopTokenListV3({ dex_id: 'all' }),
-        MARKET_DATA_FETCH_TIMEOUT,
-        'getPerpTopTokenListV3',
-      );
-      if (topAssets.length > 0) {
-        perpsTopTokenCache = topAssets;
-        return topAssets;
-      }
-    } catch (error) {
-      console.error('Failed to fetch top assets:', error);
-    }
-    return DEFAULT_TOP_ASSET;
-  };
-
-  const fetchTokenCategories = async () => {
-    if (perpsCategoryCache.length > 0) {
-      return perpsCategoryCache;
-    }
-    try {
-      const categories = await withTimeout(
-        openapi.getPerpTokenCategories({ lang: 'en-US' }),
-        MARKET_DATA_FETCH_TIMEOUT,
-        'getPerpTokenCategories',
-      );
-      if (categories.length > 0) {
-        perpsCategoryCache = categories;
-        return categories;
-      }
-    } catch (error) {
-      console.error('Failed to fetch token categories:', error);
-    }
-    return DEFAULT_TOKEN_CATEGORY;
-  };
-
   try {
-    // Core data — must succeed (retried). perpDexs is degradable.
-    const [topAssets, categories, allMetas, perpDexs] = await Promise.all([
-      fetchTopTokenList(),
-      fetchTokenCategories(),
-      withRetry(() => sdk.info.getPerpsAllMetas(), {
-        label: 'getPerpsAllMetas',
-      }),
-      withRetry(() => sdk.info.getPerpDexs(), { label: 'getPerpDexs' }),
-    ]);
+    // SDK metadata is the trade-safe identity source and must be available.
+    // Rabby catalogue data degrades to last-good/static display metadata.
+    const [topAssetsResult, categoriesResult, allMetas, perpDexs] =
+      await Promise.all([
+        fetchPerpsRemoteList<PerpTopTokenV3>({
+          fallback: DEFAULT_TOP_ASSET,
+          label: 'getPerpTopTokenListV3',
+          memory: perpsTopTokenCache,
+          request: () =>
+            withTimeout(
+              openapi.getPerpTopTokenListV3({ dex_id: 'all' }),
+              MARKET_DATA_FETCH_TIMEOUT,
+              'getPerpTopTokenListV3',
+            ),
+        }),
+        fetchPerpsRemoteList<PerpTopTokenCategory>({
+          fallback: DEFAULT_TOKEN_CATEGORY,
+          label: 'getPerpTokenCategories',
+          memory: perpsCategoryCache,
+          request: () =>
+            withTimeout(
+              openapi.getPerpTokenCategories({ lang: 'en-US' }),
+              MARKET_DATA_FETCH_TIMEOUT,
+              'getPerpTokenCategories',
+            ),
+        }),
+        withRetry(() => sdk.info.getPerpsAllMetas(), {
+          label: 'getPerpsAllMetas',
+        }),
+        withRetry(() => sdk.info.getPerpDexs(), { label: 'getPerpDexs' }),
+      ]);
+
+    if (topAssetsResult.source === 'remote') {
+      perpsTopTokenCache = topAssetsResult.items;
+    } else {
+      console.error('Failed to fetch top assets:', topAssetsResult.error);
+    }
+    if (categoriesResult.source === 'remote') {
+      perpsCategoryCache = categoriesResult.items;
+    } else {
+      console.error(
+        'Failed to fetch token categories:',
+        categoriesResult.error,
+      );
+    }
 
     if (!allMetas || allMetas.length === 0) {
       // Core data unavailable — mark error for retry
@@ -739,24 +1092,37 @@ const runFetchMarketData = async () => {
       dexIdMap[idx] = dex?.name ?? '';
     });
 
-    const marketData = formatMarkData(allMetas, topAssets, dexIdMap);
-    if (marketData.length === 0) {
-      setMarketDataStatus('error');
-      return;
+    const marketData = formatMarkData(
+      allMetas,
+      topAssetsResult.items,
+      dexIdMap,
+    );
+    const decision = decidePerpsMarketRefresh({
+      categoriesSource: categoriesResult.source,
+      hasCurrentMarketData: perpsStore.getState().marketData.length > 0,
+      hasFormattedMarketData: marketData.length > 0,
+      topAssetsSource: topAssetsResult.source,
+    });
+    if (decision.publish) {
+      setMarketData(marketData, categoriesResult.items);
     }
-    setMarketData(marketData, categories);
-    setMarketDataStatus('success');
-    void perpsServiceApi
-      .setMarketDataCache({
-        v: MARKET_DATA_CACHE_VERSION,
-        updatedAt: Date.now(),
-        // Blank the ticker; read from the store (WS-merged) so the cached
-        // pxDecimals is the price-informed one.
-        list: perpsStore.getState().marketData.map(toCachedMarketData),
-      })
-      .catch(error => {
-        console.error('[perpsService] persist market data cache failed', error);
-      });
+    setMarketDataStatus(decision.status);
+    if (decision.persist) {
+      void perpsServiceApi
+        .setMarketDataCache({
+          v: MARKET_DATA_CACHE_VERSION,
+          updatedAt: Date.now(),
+          // Blank the ticker; read from the store (WS-merged) so the cached
+          // pxDecimals is the price-informed one.
+          list: perpsStore.getState().marketData.map(toCachedMarketData),
+        })
+        .catch(error => {
+          console.error(
+            '[perpsService] persist market data cache failed',
+            error,
+          );
+        });
+    }
   } catch (error) {
     console.error('Failed to fetch market data:', error);
     setMarketDataStatus('error');
@@ -901,7 +1267,7 @@ const prepareHomePerpsAccount = async (account: Account) => {
   if (!reusesFullSubscription) {
     sdk.initAccount(account.address);
   }
-  const userAbstraction = await fetchUserAbstraction(account.address);
+  const userAbstraction = await fetchUserAbstraction(account);
   if (
     !userAbstraction ||
     !isSameAddress(
@@ -996,7 +1362,9 @@ const resetAccountState = () => {
     currentPerpsAccount: null,
     isLogin: false,
     userAbstraction: UserAbstractionResp.default,
+    userAbstractionOwnerAddress: null,
     userAccountHistory: [],
+    hiddenLocalFundingHistory: [],
     localLoadingHistory: [],
     userFills: [],
     perpFee: 0.00045,
@@ -1015,18 +1383,22 @@ const resetAccountState = () => {
     isSpotStateReady: false,
     userAbstractionReady: false,
     currentClearinghouseState: null,
+    spotState: initialState.spotState,
+    openOrders: [],
+    isOpenOrdersReady: false,
   }));
 };
 
 const fetchUserFillHistory = async () => {
   const sdk = apisPerps.getPerpsSDK();
   const expectedAddress = perpsStore.getState().currentPerpsAccount?.address;
+  if (!expectedAddress) {
+    return;
+  }
   try {
     const res = await sdk.info.getUserFills();
     // Account switched during the await — drop the response.
-    if (
-      perpsStore.getState().currentPerpsAccount?.address !== expectedAddress
-    ) {
+    if (!isCurrentPerpsAccountAddress(expectedAddress)) {
       return;
     }
     setPerpsState(prev => ({
@@ -1082,6 +1454,9 @@ const mapLedgerUpdatesToHistory = (
         return {
           time: item.time,
           hash: item.hash,
+          amount: Math.abs(realUsdValue).toString(),
+          asset: 'USDC',
+          assetAmountSource: 'legacyUsdc' as const,
           type: 'receive' as const,
           status: 'success' as const,
           usdValue: realUsdValue.toString(),
@@ -1098,9 +1473,20 @@ const mapLedgerUpdatesToHistory = (
         HYPE_EVM_BRIDGE_ADDRESS_MAP,
       ).includes(destination);
       if (item.delta.type === 'send' && isWithdrawSend) {
+        const rawAmount = item.delta.amount ?? usdcValue;
         return {
           time: item.time,
           hash: item.hash,
+          amount: new BigNumber(rawAmount || 0).abs().toString(),
+          asset:
+            item.delta.amount != null && item.delta.token
+              ? item.delta.token
+              : 'USDC',
+          assetAmountSource:
+            item.delta.amount != null && item.delta.token
+              ? ('explicit' as const)
+              : ('legacyUsdc' as const),
+          settlementNonce: getPerpsFundingLedgerSettlementNonce(item.delta),
           type: 'withdraw' as const,
           status: 'success' as const,
           usdValue: usdcValue?.toString() || '0',
@@ -1115,6 +1501,9 @@ const mapLedgerUpdatesToHistory = (
           return {
             time: item.time,
             hash: item.hash,
+            amount: new BigNumber(usdcValue || 0).abs().toString(),
+            asset: 'USDC',
+            assetAmountSource: 'legacyUsdc' as const,
             destinationDex,
             type: 'transfer' as const,
             status: 'success' as const,
@@ -1124,6 +1513,9 @@ const mapLedgerUpdatesToHistory = (
           return {
             time: item.time,
             hash: item.hash,
+            amount: new BigNumber(usdcValue || 0).abs().toString(),
+            asset: 'USDC',
+            assetAmountSource: 'legacyUsdc' as const,
             type: 'receive' as const,
             status: 'success' as const,
             usdValue: usdcValue.toString(),
@@ -1138,9 +1530,21 @@ const mapLedgerUpdatesToHistory = (
             : 'withdraw'
           : item.delta.type;
 
+      const rawAmount =
+        item.delta.amount || item.delta.usdc || (item.delta as any).usdcValue;
       return {
         time: item.time,
         hash: item.hash,
+        amount: new BigNumber(rawAmount || 0).abs().toString(),
+        asset:
+          item.delta.amount != null && item.delta.token
+            ? item.delta.token
+            : 'USDC',
+        assetAmountSource:
+          item.delta.amount != null && item.delta.token
+            ? ('explicit' as const)
+            : ('legacyUsdc' as const),
+        settlementNonce: getPerpsFundingLedgerSettlementNonce(item.delta),
         type: type as 'deposit' | 'withdraw',
         status: 'success' as const,
         usdValue: item.delta.usdc || (item.delta as any).usdcValue || '0',
@@ -1148,74 +1552,144 @@ const mapLedgerUpdatesToHistory = (
     });
 };
 
-const fetchUserNonFundingLedgerUpdates = async () => {
-  const sdk = apisPerps.getPerpsSDK();
-  try {
-    const res = await sdk.info.getUserNonFundingLedgerUpdates();
-    const state = perpsStore.getState();
-    const list = mapLedgerUpdatesToHistory(
-      res,
-      state.currentPerpsAccount?.address,
-    );
+type PerpsFundingRemoteWrite = 'prepend' | 'preserve' | 'replace';
 
-    setPerpsState(prev => ({
-      ...prev,
-      userAccountHistory: list,
-    }));
-  } catch (error) {
-    console.error('Failed to fetch user non-funding ledger updates:', error);
+export const confirmPerpsFundingOperations = (
+  confirmations: readonly PerpsFundingConfirmation[],
+) => {
+  if (confirmations.length === 0) {
+    return;
   }
+  const operationIds = confirmations.map(item => item.operationId);
+  const operationIdSet = new Set(operationIds);
+  setPerpsState(prev => {
+    const localLoadingHistory = prev.localLoadingHistory.filter(
+      item => !item.operationId || !operationIdSet.has(item.operationId),
+    );
+    const hiddenLocalFundingHistory = prev.hiddenLocalFundingHistory.filter(
+      item => !item.operationId || !operationIdSet.has(item.operationId),
+    );
+    return localLoadingHistory.length === prev.localLoadingHistory.length &&
+      hiddenLocalFundingHistory.length === prev.hiddenLocalFundingHistory.length
+      ? prev
+      : { ...prev, hiddenLocalFundingHistory, localLoadingHistory };
+  });
+  confirmations.forEach(confirmation => {
+    void confirmPerpsFundingJournalEntry(confirmation);
+  });
 };
+
+export const reconcilePerpsFundingHistoryObservation = ({
+  confirmedHistory,
+  localHistory,
+  observation,
+  remoteWrite = 'preserve',
+}: {
+  confirmedHistory: readonly AccountHistoryItem[];
+  localHistory?: readonly AccountHistoryItem[];
+  observation: PerpsFundingHistoryObservation;
+  remoteWrite?: PerpsFundingRemoteWrite;
+}) => {
+  let confirmations: PerpsFundingConfirmation[] = [];
+  // Read the clock once: the updater can run more than once per commit, and a
+  // drifting `now` would make the TTL cut non-deterministic within one write.
+  const now = Date.now();
+  setPerpsState(prev => {
+    const reconciled = reconcilePerpsFundingHistory({
+      localHistory: localHistory ?? [
+        ...prev.localLoadingHistory,
+        ...prev.hiddenLocalFundingHistory,
+      ],
+      now,
+      observation,
+      remoteHistory: confirmedHistory,
+    });
+    confirmations = reconciled.confirmations;
+    const userAccountHistory =
+      remoteWrite === 'replace'
+        ? reconciled.history
+        : remoteWrite === 'prepend'
+        ? [...reconciled.history, ...prev.userAccountHistory]
+        : prev.userAccountHistory;
+    return {
+      ...prev,
+      hiddenLocalFundingHistory: reconciled.hiddenLocal,
+      localLoadingHistory: reconciled.local,
+      userAccountHistory,
+    };
+  });
+  confirmPerpsFundingOperations(confirmations);
+  return confirmations;
+};
+
+type PerpsFundingLedgerQueryScope = Readonly<{
+  account: Account;
+  generation: number;
+}>;
+
+const getPerpsFundingLedgerQueryScope =
+  (): PerpsFundingLedgerQueryScope | null => {
+    const runtime = getPerpsAccountRuntimeContext();
+    return runtime.account
+      ? { account: runtime.account, generation: runtime.generation }
+      : null;
+  };
+
+const getPerpsFundingLedgerQueryScopeKey = (
+  scope: PerpsFundingLedgerQueryScope,
+) =>
+  `${scope.account.address.toLowerCase()}::${scope.account.type}::${
+    scope.generation
+  }`;
+
+export const fetchUserNonFundingLedgerUpdates = createPerpsFundingLedgerQuery<
+  PerpsFundingLedgerQueryScope,
+  UserNonFundingLedgerUpdates
+>({
+  applyLedger: (items, scope) => {
+    const list = mapLedgerUpdatesToHistory([...items], scope.account.address);
+    reconcilePerpsFundingHistoryObservation({
+      confirmedHistory: list,
+      observation: 'baseline',
+      remoteWrite: 'replace',
+    });
+  },
+  fetchLedger: scope =>
+    apisPerps
+      .getPerpsSDK()
+      .info.getUserNonFundingLedgerUpdates(scope.account.address),
+  getScope: getPerpsFundingLedgerQueryScope,
+  getScopeKey: getPerpsFundingLedgerQueryScopeKey,
+  onError: error => {
+    console.error('Failed to fetch user non-funding ledger updates:', error);
+  },
+});
 
 const setUserNonFundingLedgerUpdates = (payload: {
   list: UserNonFundingLedgerUpdates[];
   isSnapshot?: boolean;
 }) => {
   const { list, isSnapshot } = payload;
-  const state = perpsStore.getState();
   const newList = mapLedgerUpdatesToHistory(
     list,
-    state.currentPerpsAccount?.address,
+    perpsStore.getState().currentPerpsAccount?.address,
   );
 
   if (isSnapshot) {
-    // Snapshot may be large (historical replay after WS reconnect on app
-    // foreground). Avoid O(pending * snapshot) type scan — take the latest
-    // ledger time per type and drop any pending of the same type whose time
-    // is older, since HL has already recorded an event for it.
-    const maxTimeByType: Record<string, number> = {};
-    for (const item of newList) {
-      const prev = maxTimeByType[item.type];
-      if (prev === undefined || item.time > prev) {
-        maxTimeByType[item.type] = item.time;
-      }
-    }
-    const filteredLocalHistory = state.localLoadingHistory.filter(p => {
-      const cutoff = maxTimeByType[p.type];
-      return cutoff === undefined || p.time > cutoff;
+    void fetchUserNonFundingLedgerUpdates();
+    reconcilePerpsFundingHistoryObservation({
+      confirmedHistory: newList,
+      observation: 'baseline',
+      remoteWrite: 'replace',
     });
-
-    fetchUserNonFundingLedgerUpdates();
-    setPerpsState(prev => ({
-      ...prev,
-      localLoadingHistory: filteredLocalHistory,
-      userAccountHistory: newList,
-    }));
     return;
   }
 
-  let filteredLocalHistory = [...state.localLoadingHistory];
-  newList.forEach(item => {
-    filteredLocalHistory = filteredLocalHistory.filter(i => {
-      return i.type !== item.type;
-    });
+  reconcilePerpsFundingHistoryObservation({
+    confirmedHistory: newList,
+    observation: 'incremental',
+    remoteWrite: 'prepend',
   });
-
-  setPerpsState(prev => ({
-    ...prev,
-    localLoadingHistory: filteredLocalHistory,
-    userAccountHistory: [...newList, ...prev.userAccountHistory],
-  }));
 };
 
 const updateMarketData = (payload: [string, AssetCtx[]][]) => {
@@ -1257,8 +1731,8 @@ const updateMarketData = (payload: [string, AssetCtx[]][]) => {
 // Overlay fresh markPx/midPx from fastAssetCtxs onto perp marketData (by coin
 // name). This feed supersedes the throttled allDexsAssetCtxs for PRICES only;
 // other ctx fields still come from allDexsAssetCtxs. Spot coins in the combined
-// feed match no perp name and are ignored (mobile has no spot). Same ref when
-// unchanged so the map rebuild + re-render is skipped.
+// feed match no perp name here and are retained separately in spotAssetCtxs.
+// Same ref when unchanged so the map rebuild + re-render is skipped.
 const overlayFastCtxsToMarketData = (
   list: MarketData[],
   fastCtxs: WsFastAssetCtxs,
@@ -1286,25 +1760,36 @@ const overlayFastCtxsToMarketData = (
   return changed ? next : list;
 };
 
-const updateMarketDataByFastCtxs = (payload: WsFastAssetCtxs) => {
+const updateMarketDataByFastCtxs = (
+  payload: WsFastAssetCtxs,
+  replaceSpotSnapshot = false,
+) => {
   if (!payload) {
     return;
   }
   setPerpsState(prev => {
-    if (prev.marketData.length === 0) {
-      return prev;
-    }
+    const nextSpotAssetCtxs = mergeFastAssetCtxs(
+      replaceSpotSnapshot ? {} : prev.spotAssetCtxs,
+      payload,
+    );
     const nextMarketData = overlayFastCtxsToMarketData(
       prev.marketData,
       payload,
     );
-    if (nextMarketData === prev.marketData) {
+    if (
+      nextMarketData === prev.marketData &&
+      nextSpotAssetCtxs === prev.spotAssetCtxs
+    ) {
       return prev;
     }
     return {
       ...prev,
+      spotAssetCtxs: nextSpotAssetCtxs,
       marketData: nextMarketData,
-      marketDataMap: buildMarketDataMap(nextMarketData),
+      marketDataMap:
+        nextMarketData === prev.marketData
+          ? prev.marketDataMap
+          : buildMarketDataMap(nextMarketData),
     };
   });
 };
@@ -1330,13 +1815,21 @@ const startMarketSnapshotSubscription = () => {
   return true;
 };
 
+let hasFastMarketSnapshot = false;
+
 const startFastMarketSubscription = () => {
   if (fastMarketUnsubscribe) {
     return false;
   }
+  const generation = ++fastMarketSubscriptionGeneration;
   const sdk = apisPerps.getPerpsSDK();
   const { unsubscribe } = sdk.ws.subscribeToFastAssetCtxs(data => {
-    updateMarketDataByFastCtxs(data);
+    if (generation !== fastMarketSubscriptionGeneration) {
+      return;
+    }
+    const replaceSpotSnapshot = !hasFastMarketSnapshot;
+    hasFastMarketSnapshot = true;
+    updateMarketDataByFastCtxs(data, replaceSpotSnapshot);
   });
   fastMarketUnsubscribe = unsubscribe;
   traceStartupDiagnostic('perps', 'market_fast_registered');
@@ -1357,6 +1850,8 @@ const stopMarketSubscriptions = () => {
   ].filter((unsubscribe): unsubscribe is () => void => !!unsubscribe);
   marketSnapshotUnsubscribe = null;
   fastMarketUnsubscribe = null;
+  fastMarketSubscriptionGeneration += 1;
+  hasFastMarketSnapshot = false;
   subscriptions.forEach(unsubscribe => {
     try {
       unsubscribe();
@@ -1398,7 +1893,11 @@ export const subscribeToUserData = (account: Account) => {
       // Cache is the single source of truth — both WS and HTTP funnel
       // through here, time-guarded per dex. Rebuild + commit aggregate via
       // the shared flush so the React state write also gets the guard.
+      let touched = false;
       for (const [dexName, state] of clearinghouseStates) {
+        if (!isCurrentPerpsAccountAddress(address)) {
+          return;
+        }
         if (!state) {
           continue;
         }
@@ -1407,28 +1906,44 @@ export const subscribeToUserData = (account: Account) => {
           continue;
         }
         dexClearinghouseStatesCache.set(dexName, state);
+        touched = true;
       }
-      flushAggregatedClearinghouseState();
+      if (touched) {
+        flushAggregatedClearinghouseState(address);
+      }
     });
 
   const { unsubscribe: unsubscribeSpotState } = sdk.ws.subscribeToSpotState(
     data => {
       const { spotState, user } = data;
-      if (!isSameAddress(user, address) || !spotState) {
+      if (
+        !isSameAddress(user, address) ||
+        !isCurrentPerpsAccountAddress(address) ||
+        !spotState
+      ) {
         return;
       }
-      setPerpsState(prev => ({
-        ...prev,
-        spotState: formatSpotState(spotState),
-        isSpotStateReady: true,
-      }));
+      setPerpsState(prev =>
+        prev.currentPerpsAccount &&
+        isSameAddress(prev.currentPerpsAccount.address, address)
+          ? {
+              ...prev,
+              spotState: formatSpotState(spotState),
+              isSpotStateReady: true,
+            }
+          : prev,
+      );
     },
   );
 
   const { unsubscribe: unsubscribeOpenOrders } = sdk.ws.subscribeToOpenOrders(
     data => {
       const { orders, user } = data;
-      if (!isSameAddress(user, address) || !orders) {
+      if (
+        !isSameAddress(user, address) ||
+        !isCurrentPerpsAccountAddress(address) ||
+        !orders
+      ) {
         return;
       }
       // Bucket by dex so a single-dex HTTP refresh can overwrite just its
@@ -1449,7 +1964,12 @@ export const subscribeToUserData = (account: Account) => {
         dexOpenOrdersCache.set(dexName, list);
       }
 
-      setPerpsState(prev => ({ ...prev, openOrders: orders }));
+      setPerpsState(prev =>
+        prev.currentPerpsAccount &&
+        isSameAddress(prev.currentPerpsAccount.address, address)
+          ? { ...prev, isOpenOrdersReady: true, openOrders: orders }
+          : prev,
+      );
     },
   );
 
@@ -1458,7 +1978,10 @@ export const subscribeToUserData = (account: Account) => {
       // Only process data when app is active
       console.log('User fills update:', data.fills.length);
       const { fills, isSnapshot, user } = data;
-      if (!isSameAddress(user, address)) {
+      if (
+        !isSameAddress(user, address) ||
+        !isCurrentPerpsAccountAddress(address)
+      ) {
         return;
       }
 
@@ -1467,19 +1990,34 @@ export const subscribeToUserData = (account: Account) => {
         isSnapshot: isSnapshot || false,
         user,
       });
+      publishPerpsProHistoryEvent({
+        accountAddress: user,
+        isSnapshot: isSnapshot || false,
+        items: fills,
+        kind: 'fills',
+      });
     },
   );
 
   const { unsubscribe: unsubscribeUserNonFundingLedgerUpdates } =
     sdk.ws.subscribeToUserNonFundingLedgerUpdates(data => {
       const { nonFundingLedgerUpdates, user, isSnapshot } = data;
-      if (!isSameAddress(user, address)) {
+      if (
+        !isSameAddress(user, address) ||
+        !isCurrentPerpsAccountAddress(address)
+      ) {
         return;
       }
 
       setUserNonFundingLedgerUpdates({
         list: nonFundingLedgerUpdates,
         isSnapshot: isSnapshot || false,
+      });
+      publishPerpsProHistoryEvent({
+        accountAddress: user,
+        isSnapshot: isSnapshot || false,
+        items: nonFundingLedgerUpdates,
+        kind: 'ledger',
       });
     });
 
@@ -1503,11 +2041,14 @@ export const subscribeToUserData = (account: Account) => {
   return true;
 };
 
-// Returns true when the cache changed; callers batch the setState flush.
+type ClearinghouseRefreshResult = 'failed' | 'unchanged' | 'updated';
+
+// Distinguish a successful unchanged response from a transport failure so
+// transaction preflights can fail closed without forcing redundant renders.
 const fetchAndCacheClearinghouseForDex = async (
   dex: string,
   expectedAddress: string,
-): Promise<boolean> => {
+): Promise<ClearinghouseRefreshResult> => {
   const sdk = apisPerps.getPerpsSDK();
   let state: ClearinghouseState;
   try {
@@ -1517,21 +2058,24 @@ const fetchAndCacheClearinghouseForDex = async (
     );
   } catch (e) {
     console.error('[fetchClearinghouseStateHttp] failed', dex, e);
-    return false;
+    return 'failed';
   }
   // Account switched during the await — drop the response.
-  if (perpsStore.getState().currentPerpsAccount?.address !== expectedAddress) {
-    return false;
+  if (!isCurrentPerpsAccountAddress(expectedAddress)) {
+    return 'failed';
   }
   const prevDex = dexClearinghouseStatesCache.get(dex);
   if (prevDex && (state.time ?? 0) <= (prevDex.time ?? 0)) {
-    return false;
+    return 'unchanged';
   }
   dexClearinghouseStatesCache.set(dex, state);
-  return true;
+  return 'updated';
 };
 
-const flushAggregatedClearinghouseState = () => {
+const flushAggregatedClearinghouseState = (expectedAddress: string) => {
+  if (!isCurrentPerpsAccountAddress(expectedAddress)) {
+    return;
+  }
   const entries = Array.from(dexClearinghouseStatesCache.entries());
   const aggregated = formatAllDexsClearinghouseState(entries);
   if (!aggregated) {
@@ -1539,11 +2083,14 @@ const flushAggregatedClearinghouseState = () => {
   }
   setPerpsState(prev => {
     if (
-      prev.currentClearinghouseState &&
-      (aggregated.time ?? 0) <= (prev.currentClearinghouseState.time ?? 0)
+      !prev.currentPerpsAccount ||
+      !isSameAddress(prev.currentPerpsAccount.address, expectedAddress)
     ) {
       return prev;
     }
+    // Freshness is guarded per dex before each cache write. Aggregate time is
+    // only the maximum diagnostic timestamp: one dex can legitimately advance
+    // while another dex keeps that maximum unchanged.
     return {
       ...prev,
       currentClearinghouseState: aggregated,
@@ -1553,15 +2100,51 @@ const flushAggregatedClearinghouseState = () => {
   });
 };
 
-export const fetchClearinghouseStateHttp = async (dex: string) => {
+export const fetchClearinghouseStateHttp = async (
+  dex: string,
+  expectedAddress?: string,
+) => {
   const account = perpsStore.getState().currentPerpsAccount;
-  if (!account?.address) {
-    return;
+  if (
+    !account?.address ||
+    (expectedAddress && !isSameAddress(account.address, expectedAddress))
+  ) {
+    return false;
   }
-  const touched = await fetchAndCacheClearinghouseForDex(dex, account.address);
-  if (touched) {
-    flushAggregatedClearinghouseState();
+  const address = expectedAddress || account.address;
+  const result = await fetchAndCacheClearinghouseForDex(dex, address);
+  if (result === 'updated') {
+    flushAggregatedClearinghouseState(address);
   }
+  return result !== 'failed';
+};
+
+export const fetchSpotStateHttp = async (expectedAddress?: string) => {
+  const account = perpsStore.getState().currentPerpsAccount;
+  if (
+    !account?.address ||
+    (expectedAddress && !isSameAddress(account.address, expectedAddress))
+  ) {
+    return false;
+  }
+  const address = expectedAddress || account.address;
+  const spotState = await apisPerps
+    .getPerpsSDK()
+    .info.getSpotClearingHouseState(address);
+  if (!isCurrentPerpsAccountAddress(address)) {
+    return false;
+  }
+  setPerpsState(prev =>
+    prev.currentPerpsAccount &&
+    isSameAddress(prev.currentPerpsAccount.address, address)
+      ? {
+          ...prev,
+          isSpotStateReady: true,
+          spotState: formatSpotState(spotState),
+        }
+      : prev,
+  );
+  return true;
 };
 
 const fetchAndCacheOpenOrdersForDex = async (
@@ -1579,16 +2162,31 @@ const fetchAndCacheOpenOrdersForDex = async (
     console.error('[fetchPositionOpenOrdersHttp] failed', dex, e);
     return false;
   }
-  if (perpsStore.getState().currentPerpsAccount?.address !== expectedAddress) {
+  if (!isCurrentPerpsAccountAddress(expectedAddress)) {
     return false;
   }
   dexOpenOrdersCache.set(dex, orders);
   return true;
 };
 
-const flushAggregatedOpenOrders = () => {
+const flushAggregatedOpenOrders = (
+  expectedAddress: string,
+  markReady = false,
+) => {
+  if (!isCurrentPerpsAccountAddress(expectedAddress)) {
+    return;
+  }
   const flattened = Array.from(dexOpenOrdersCache.values()).flat();
-  setPerpsState(prev => ({ ...prev, openOrders: flattened }));
+  setPerpsState(prev =>
+    prev.currentPerpsAccount &&
+    isSameAddress(prev.currentPerpsAccount.address, expectedAddress)
+      ? {
+          ...prev,
+          isOpenOrdersReady: prev.isOpenOrdersReady || markReady,
+          openOrders: flattened,
+        }
+      : prev,
+  );
 };
 
 // No server-side time guard for openOrders: callers fire this after the
@@ -1600,7 +2198,7 @@ export const fetchPositionOpenOrdersHttp = async (dex: string) => {
   }
   const touched = await fetchAndCacheOpenOrdersForDex(dex, account.address);
   if (touched) {
-    flushAggregatedOpenOrders();
+    flushAggregatedOpenOrders(account.address);
   }
 };
 
@@ -1619,7 +2217,7 @@ export const fetchPositionOpenOrdersHttpForDexes = async (dexes: string[]) => {
     unique.map(dex => fetchAndCacheOpenOrdersForDex(dex, address)),
   );
   if (results.some(Boolean)) {
-    flushAggregatedOpenOrders();
+    flushAggregatedOpenOrders(address);
   }
 };
 
@@ -1643,8 +2241,8 @@ export const fetchAllDexsClearinghouseStateHttp = async () => {
       fetchAndCacheClearinghouseForDex(dex, address),
     ),
   );
-  if (results.some(Boolean)) {
-    flushAggregatedClearinghouseState();
+  if (results.some(result => result === 'updated')) {
+    flushAggregatedClearinghouseState(address);
   }
 };
 
@@ -1658,7 +2256,7 @@ export const fetchAllDexsPositionOpenOrdersHttp = async () => {
     collectAllDexes().map(dex => fetchAndCacheOpenOrdersForDex(dex, address)),
   );
   if (results.some(Boolean)) {
-    flushAggregatedOpenOrders();
+    flushAggregatedOpenOrders(address, results.every(Boolean));
   }
 };
 
@@ -1856,25 +2454,38 @@ export const usePerpsStore = () => {
   // Reducers 转换为 setState 操作
   const setLocalLoadingHistory = useMemoizedFn(
     (payload: AccountHistoryItem[], isReset: boolean = false) => {
+      let confirmations: PerpsFundingConfirmation[] = [];
+      const now = Date.now();
       setPerpsState(prev => {
         if (isReset) {
-          return { ...prev, localLoadingHistory: payload };
+          return {
+            ...prev,
+            hiddenLocalFundingHistory: [],
+            localLoadingHistory: payload,
+          };
         }
-        // If WS already delivered a confirmed entry for this type,
-        // skip adding the pending item (WS arrived before HTTP response)
-        const filtered = payload.filter(item => {
-          return !prev.userAccountHistory.some(
-            h => h.type === item.type && h.time >= item.time,
-          );
+        // A ledger event may arrive before the signing flow persists its local
+        // pending item. Re-run the same exact-first/baseline reconciliation so
+        // the already-settled operation is never reinserted as pending.
+        const reconciled = reconcilePerpsFundingHistory({
+          localHistory: [
+            ...payload,
+            ...prev.localLoadingHistory,
+            ...prev.hiddenLocalFundingHistory,
+          ],
+          now,
+          observation: 'baseline',
+          remoteHistory: prev.userAccountHistory,
         });
-        if (filtered.length === 0) {
-          return prev;
-        }
+        confirmations = reconciled.confirmations;
         return {
           ...prev,
-          localLoadingHistory: [...filtered, ...prev.localLoadingHistory],
+          hiddenLocalFundingHistory: reconciled.hiddenLocal,
+          localLoadingHistory: reconciled.local,
+          userAccountHistory: reconciled.history,
         };
       });
+      confirmPerpsFundingOperations(confirmations);
     },
   );
 
@@ -1933,11 +2544,18 @@ export const usePerpsStore = () => {
           ? prev.isUserDataReady
           : !!seededClearinghouseState,
         isSpotStateReady: sameAccount ? prev.isSpotStateReady : false,
+        spotState: sameAccount ? prev.spotState : initialState.spotState,
+        openOrders: sameAccount ? prev.openOrders : [],
+        isOpenOrdersReady: sameAccount ? prev.isOpenOrdersReady : false,
         userAbstraction: sameAccount
           ? prev.userAbstraction
           : UserAbstractionResp.default,
         userAbstractionReady: sameAccount ? prev.userAbstractionReady : false,
+        userAbstractionOwnerAddress: sameAccount
+          ? prev.userAbstractionOwnerAddress
+          : null,
         localLoadingHistory: [],
+        hiddenLocalFundingHistory: [],
         userFills: sameAccount ? prev.userFills : [],
       };
     });
@@ -1947,7 +2565,9 @@ export const usePerpsStore = () => {
     }
     fetchUserNonFundingLedgerUpdates();
     fetchPerpPermission(account.address);
-    fetchUserAbstraction(account.address);
+    void fetchUserAbstraction(account).catch(error => {
+      console.error('[perps] fetch user abstraction failed', error);
+    });
 
     setTimeout(() => {
       fetchPerpFee();
@@ -2045,6 +2665,7 @@ export const usePerpsStore = () => {
     fetchUserHistoricalOrders,
     refreshData,
     fetchMarketData,
+    fetchSpotMeta,
     fetchPerpFee,
   };
 };
@@ -2074,6 +2695,7 @@ const hydrateMarketDataCache = async () => {
         : cache.list;
       return {
         ...prev,
+        maintenanceMarginTiersByCoin: buildMaintenanceMarginTiersByCoin(list),
         marketData: list,
         marketDataMap: buildMarketDataMap(list),
       };

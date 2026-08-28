@@ -59,6 +59,10 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { tokenAmountBn } from '@/screens/Swap/utils';
 import { useTwoStepSwap } from '@/screens/Swap/hooks/twoStepSwap';
 import { AccountSummary } from '@/hooks/perps/usePerpsStore';
+import type {
+  PerpBridgeHistory,
+  PerpsDepositOptions,
+} from '@/hooks/perps/funding/types';
 
 import type { PerpsDepositTokenRow } from './PerpsSelectTokenPopup';
 import {
@@ -84,13 +88,7 @@ import {
 } from '@/constant/layout';
 import { useShallow } from 'zustand/shallow';
 
-export interface PerpBridgeHistory {
-  from_chain_id: string;
-  from_token_id: string;
-  from_token_amount: number;
-  to_token_amount: number;
-  tx: Tx;
-}
+export type { PerpBridgeHistory } from '@/hooks/perps/funding/types';
 
 const EMPTY_PERPS_DEPOSIT_TOKEN_ROWS: PerpsDepositTokenRow[] = [];
 
@@ -226,7 +224,7 @@ export const PerpsDepositPopup: React.FC<{
     txs: Tx[],
     amount: string,
     cacheBridgeHistory?: PerpBridgeHistory,
-    options?: { skipHistory?: boolean; isHypeDeposit?: boolean },
+    options?: PerpsDepositOptions,
   ): Promise<string | undefined>;
 }> = ({ visible, onClose, account, onDeposit }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
@@ -856,6 +854,15 @@ export const PerpsDepositPopup: React.FC<{
       const txsToSign = shouldTwoStep ? twoStepCurrentTxs || [] : txs;
 
       const hash = await onDeposit?.(txsToSign, value, bridgeHistory, {
+        history: {
+          amount: isDirectDeposit
+            ? usdValue
+            : String(bridgeHistory?.from_token_amount ?? ''),
+          asset: getTokenSymbol(tokenInfo),
+          settlementAmount: value,
+          sourceChainId: tokenInfo.chain,
+          sourceTokenId: tokenInfo.id,
+        },
         skipHistory: isApproveStep,
         isHypeDeposit: isHypeDeposit,
       });

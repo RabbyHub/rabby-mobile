@@ -58,6 +58,7 @@ import { currencyServiceApi } from '@/core/serviceApi/currency';
 import { storeApiAccounts, useMyAccounts } from '@/hooks/account';
 import { storeApiAccountsSwitcher } from '@/hooks/accountsSwitcher';
 import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
+import { navigateToPerpsHome } from '@/hooks/perps/navigation/navigateToPreferredPerps';
 import addressBalanceStore, {
   balanceAccountsStore,
   getSelectedBalanceAddressesSnapshot,
@@ -1280,9 +1281,9 @@ export const HomeOverview = React.memo(() => {
           break;
         case MultiHomeFeatTitle.Perps:
           apisPerps.setHasShownPerpsGuidePopup(true);
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.Perps,
-            params: {},
+          void navigateToPerpsHome({
+            navigation,
+            source: 'home-main',
           });
           break;
         case MultiHomeFeatTitle.Lending:

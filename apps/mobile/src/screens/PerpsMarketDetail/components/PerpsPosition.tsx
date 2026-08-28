@@ -235,7 +235,7 @@ export const PerpsPosition: React.FC<{
               </View>
             </TouchableOpacity>
             <Text style={styles.positionValue}>
-              {`${Number(positionData?.positionValue || 0).toFixed(2)}`}
+              {`${Number(positionData?.positionValue || 0).toFixed(2)} `}
               {quoteAsset} = {positionData?.size} {formatPerpsCoin(displayName)}
             </Text>
           </View>
