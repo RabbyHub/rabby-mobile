@@ -221,6 +221,9 @@ export interface PerpsState {
   userAbstraction: UserAbstractionResp;
   userAbstractionReady: boolean;
   userAbstractionOwnerAddress: string | null;
+  // Address whose abstraction value came from the MMKV cache (or a resolved
+  // fetch). Compared against the current account, so it self-invalidates.
+  userAbstractionCachedAddress: string | null;
   openOrders: OpenOrder[];
   // A complete open-orders snapshot has been received for the current account.
   isOpenOrdersReady: boolean;
@@ -306,6 +309,7 @@ export const initialState: PerpsState = {
   userAbstraction: UserAbstractionResp.default,
   userAbstractionReady: false,
   userAbstractionOwnerAddress: null,
+  userAbstractionCachedAddress: null,
   isOpenOrdersReady: false,
   hasPermission: true,
   perpFee: 0.00045,
@@ -477,8 +481,16 @@ export const reconcileUserAbstractionSnapshot = ({
       userAbstraction,
       userAbstractionReady: true,
       userAbstractionOwnerAddress: account.address,
+      userAbstractionCachedAddress: account.address,
     };
   });
+  // Persist for the next cold start: the mode only changes when the user opts
+  // into Unified Account / Portfolio Margin, and that path refetches.
+  void perpsServiceApi
+    .setUserAbstractionForAddress(account.address, String(userAbstraction))
+    .catch(error => {
+      console.error('[perps] persist user abstraction failed', error);
+    });
   return true;
 };
 
@@ -516,8 +528,74 @@ const userAbstractionLifecycle = createPerpsUserAbstractionLifecycle<
   query: queryUserAbstraction,
 });
 
-export const fetchUserAbstraction = (account: Account) =>
-  userAbstractionLifecycle.refresh({ ...account });
+const hydrateUserAbstractionFromCache = async (
+  account: Account,
+): Promise<UserAbstractionResp | null> => {
+  try {
+    const cached = await perpsServiceApi.getUserAbstractionForAddress(
+      account.address,
+    );
+    if (!isKnownUserAbstraction(cached)) {
+      return null;
+    }
+    setPerpsState(prev => {
+      // Never downgrade a value the network already resolved for this account.
+      if (
+        !isSamePerpsAccountIdentity(prev.currentPerpsAccount, account) ||
+        (prev.userAbstractionReady &&
+          !!prev.userAbstractionOwnerAddress &&
+          isSameAddress(prev.userAbstractionOwnerAddress, account.address))
+      ) {
+        return prev;
+      }
+      return {
+        ...prev,
+        userAbstraction: cached,
+        userAbstractionCachedAddress: account.address,
+      };
+    });
+    return cached;
+  } catch (error) {
+    console.error('[perps] read cached user abstraction failed', error);
+    return null;
+  }
+};
+
+/**
+ * Drop the cached mode for an address. MUST be called before refetching after
+ * the user changes the mode (enabling Unified Account / Portfolio Margin):
+ * otherwise a failed refetch would restore the pre-change value and route
+ * balances and withdrawals through the wrong accounting.
+ */
+export const invalidateUserAbstractionCache = async (address: string) => {
+  setPerpsState(prev =>
+    prev.userAbstractionCachedAddress &&
+    isSameAddress(prev.userAbstractionCachedAddress, address)
+      ? { ...prev, userAbstractionCachedAddress: null }
+      : prev,
+  );
+  try {
+    await perpsServiceApi.clearUserAbstractionForAddress(address);
+  } catch (error) {
+    console.error('[perps] clear cached user abstraction failed', error);
+  }
+};
+
+// One network read per account entry. The MMKV cache covers the gap before it
+// lands AND the failure case (no retry loop): callers still get a usable mode
+// so they can start the right subscriptions.
+export const fetchUserAbstraction = async (account: Account) => {
+  const cachedPromise = hydrateUserAbstractionFromCache(account);
+  try {
+    return await userAbstractionLifecycle.refresh({ ...account });
+  } catch (error) {
+    const cached = await cachedPromise;
+    if (cached) {
+      return cached;
+    }
+    throw error;
+  }
+};
 
 function stopHomeSpotSubscription() {
   if (!homeSpotSubscription) {

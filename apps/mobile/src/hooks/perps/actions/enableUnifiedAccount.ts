@@ -3,6 +3,7 @@ import type { Account } from '@/core/startupServices/preference';
 import {
   fetchUserAbstraction,
   getPerpsAccountRuntimeContext,
+  invalidateUserAbstractionCache,
   isPerpsUserAbstractionReadyForAccount,
   perpsStore,
 } from '@/hooks/perps/usePerpsStore';
@@ -74,6 +75,8 @@ export const executeEnablePerpsUnifiedAccount = async (
   if (response?.status !== 'ok') {
     throw new Error('Hyperliquid rejected Unified Account configuration');
   }
+
+  await invalidateUserAbstractionCache(expectedAccount.address);
 
   let lastRefreshError: unknown;
   for (const delay of [100, 200, 400]) {

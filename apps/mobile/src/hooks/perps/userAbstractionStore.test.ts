@@ -6,6 +6,15 @@ jest.mock('react-native-haptic-feedback', () => ({
 }));
 
 jest.mock('@/core/apis/perps', () => ({ apisPerps: {} }));
+// Resolving the snapshot now persists the mode; stub the deferred service so
+// the store test does not depend on (or log about) the service registry.
+jest.mock('@/core/serviceApi/perps', () => ({
+  perpsServiceApi: {
+    getUserAbstractionForAddress: jest.fn(async () => null),
+    setUserAbstractionForAddress: jest.fn(async () => undefined),
+    clearUserAbstractionForAddress: jest.fn(async () => undefined),
+  },
+}));
 jest.mock('@/core/request', () => ({ openapi: {} }));
 jest.mock('@/core/utils/startupScheduler', () => ({
   runStartupTask: jest.fn(),

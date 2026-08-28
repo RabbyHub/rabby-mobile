@@ -1,5 +1,6 @@
 const mockPrepare = jest.fn();
 const mockSend = jest.fn();
+const mockInvalidateUserAbstractionCache = jest.fn(async () => undefined);
 const mockFetchUserAbstraction = jest.fn(async () => {
   mockState.userAbstraction = 'unifiedAccount';
 });
@@ -34,6 +35,8 @@ jest.mock('@/core/apis/perps', () => ({
 jest.mock('@/hooks/perps/usePerpsStore', () => ({
   fetchUserAbstraction: (...args: unknown[]) =>
     mockFetchUserAbstraction(...args),
+  invalidateUserAbstractionCache: (...args: unknown[]) =>
+    mockInvalidateUserAbstractionCache(...args),
   getPerpsAccountRuntimeContext: () => ({
     account: mockState.currentPerpsAccount,
     generation: 7,
@@ -95,6 +98,9 @@ describe('executeEnablePerpsUnifiedAccount', () => {
       nonce: 9,
       signature: '0xmaster-signature',
     });
+    expect(mockInvalidateUserAbstractionCache).toHaveBeenCalledWith(
+      mockAccount.address,
+    );
     expect(
       isPerpsUnifiedCollateralMode(mockState.userAbstraction as never),
     ).toBe(true);

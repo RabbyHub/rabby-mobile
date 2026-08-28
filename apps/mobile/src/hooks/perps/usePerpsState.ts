@@ -27,6 +27,7 @@ import {
   perpsStore,
   usePerpsStore,
   fetchUserAbstraction,
+  invalidateUserAbstractionCache,
   subscribeToUserData,
 } from './usePerpsStore';
 import * as Sentry from '@sentry/react-native';
@@ -335,9 +336,13 @@ export const usePerpsState = (
         void handleSafeSetDexAbstraction();
       } finally {
         // need fetch setAbstraction
-        setTimeout(() => {
-          void fetchUserAbstraction(account).catch(() => undefined);
-        }, 100);
+        // The mode just changed: drop the cached value first so a failed
+        // refetch cannot restore the pre-change one.
+        void invalidateUserAbstractionCache(account.address).finally(() => {
+          setTimeout(() => {
+            void fetchUserAbstraction(account).catch(() => undefined);
+          }, 100);
+        });
       }
     },
     [handleSafeSetDexAbstraction],
