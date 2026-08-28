@@ -181,7 +181,6 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevUIScreenContainerShowCase]?: {};
   [RootNames.DevUIDapps]?: {};
   [RootNames.DevDataSQLite]?: {};
-  [RootNames.DevWatchAddressFixtureImport]?: {};
   [RootNames.DevDataKeychain]?: {};
   [RootNames.DevDataKeyringVault]?: {};
   [RootNames.DevDataContactService]?: {};

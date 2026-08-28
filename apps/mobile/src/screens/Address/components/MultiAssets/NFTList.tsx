@@ -184,13 +184,13 @@ const NFTListInner = () => {
   const regressionScenarioReport = regressionScenario.active
     ? regressionScenario.report
     : null;
-  const { myTop10Accounts, myTop10Addresses } = useHomeAssetAccountInfo();
+  const { myTop10Addresses } = useHomeAssetAccountInfo();
   const [showAllNfts, setShowAllNfts] = useState(false);
 
   const selectedChainItem = useSelectedChainItem();
   const chain = selectedChainItem?.chain;
 
-  const getAccountByAddress = useFindAccountByAddress(myTop10Accounts);
+  const getAccountByAddress = useFindAccountByAddress();
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.nft);
 
   useScrollToTopOnChainChange({

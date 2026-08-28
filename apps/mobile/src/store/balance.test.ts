@@ -48,19 +48,11 @@ describe('store/balance', () => {
         },
       },
     }));
-    jest.doMock('@/hooks/appSettings', () => ({
-      getHomeAssetSelectionSettings: () => ({
-        topN: 10,
-        includeWatchAddresses: false,
-      }),
-      isHomeAssetSelectionExperimentEnabled: () => false,
-    }));
     jest.doMock('@/core/utils/reexports', () => {
       const { create } = require('zustand');
-      const { mutative } = require('zustand-mutative');
       return {
         zCreate: create,
-        zMutative: mutative,
+        zMutative: <T>(input: T) => input,
       };
     });
     jest.doMock('@/databases/entities/balance', () => ({
@@ -121,34 +113,6 @@ describe('store/balance', () => {
     }));
 
     balanceModule = require('./balance');
-  });
-
-  it('commits account selection snapshots without a Mutative raw-return warning', () => {
-    const warn = jest.spyOn(console, 'warn').mockImplementation();
-
-    balanceModule.commitAccountBalanceSelectionSnapshot(
-      {
-        selectedAccounts: [
-          {
-            address: '0xABCD',
-            type: 'SimpleKeyring',
-          },
-        ],
-        selectedAddresses: ['0xabcd'],
-        matteredAccountLength: 1,
-      },
-      {
-        source: 'accounts_changed',
-      },
-    );
-
-    expect(warn).not.toHaveBeenCalledWith(
-      expect.stringContaining(
-        'return value does not contain any draft of the base state',
-      ),
-    );
-
-    warn.mockRestore();
   });
 
   it('hydrates missing address memory from persisted sqlite cache first', async () => {

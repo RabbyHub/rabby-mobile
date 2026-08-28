@@ -36,19 +36,6 @@ export async function addWatchAddress(address: string) {
   return result;
 }
 
-export async function addWatchAddresses(addresses: string[]) {
-  const keyring = await getKeyring<WatchKeyring>(
-    KEYRING_TYPE.WatchAddressKeyring,
-  );
-  const result = await keyringServiceApi.addNewWatchAccounts(
-    keyring,
-    addresses,
-  );
-  await preferenceServiceApi.initCurrentAccount();
-
-  return result;
-}
-
 /**
  * @deprecated just for migration, use `addWatchAddress` instead
  */

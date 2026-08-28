@@ -62,12 +62,11 @@ const pendingBalanceSyncs: PendingBalanceSync[] = [];
 let pendingBalanceFlushTimer: ReturnType<typeof setTimeout> | null = null;
 
 type PendingTokenSyncRequest = {
-  resolve: (success: boolean) => void;
+  resolve: () => void;
 };
 
 type PendingTokenAddressSync = {
   tokens: TokenItem[] | ITokenItem[];
-  cleanupStale: boolean;
   requests: PendingTokenSyncRequest[];
 };
 
@@ -104,7 +103,7 @@ function abortPendingAssetSyncs(reason: string) {
   pendingTokenSyncs.clear();
 
   rejectBalanceSyncRequests(pendingBalance, error);
-  resolveTokenSyncRequests(pendingToken, false);
+  resolveTokenSyncRequests(pendingToken);
 
   if (pendingBalanceCount || pendingTokenAddressCount) {
     traceStartupDiagnostic('db', 'pending_asset_sync_abort', {
@@ -275,13 +274,10 @@ function cloneTokenInput(tokens: TokenItem[] | ITokenItem[]) {
   return tokens.slice() as TokenItem[] | ITokenItem[];
 }
 
-function resolveTokenSyncRequests(
-  pending: PendingTokenAddressSync[],
-  success: boolean,
-) {
+function resolveTokenSyncRequests(pending: PendingTokenAddressSync[]) {
   pending.forEach(item => {
     item.requests.forEach(request => {
-      request.resolve(success);
+      request.resolve();
     });
   });
 }
@@ -304,7 +300,7 @@ async function persistPendingTokenSyncs(
   const addresses = pendingEntries.map(([address]) => address);
   const pending = pendingEntries.map(([, item]) => item);
   if (!addresses.length) {
-    resolveTokenSyncRequests(pending, true);
+    resolveTokenSyncRequests(pending);
     return;
   }
 
@@ -318,7 +314,6 @@ async function persistPendingTokenSyncs(
   });
 
   let syncTimestamp = Date.now();
-  let success = false;
   const tokenItemsByAddress = new Map<string, TokenItemEntity[]>();
   const allTokenItems: TokenItemEntity[] = [];
 
@@ -372,10 +367,8 @@ async function persistPendingTokenSyncs(
         skipEmit: true,
         afterBatches: async () => {
           await Promise.all(
-            pendingEntries.flatMap(([address, item]) =>
-              item.cleanupStale
-                ? [TokenItemEntity.cleanupStaleTokens(address, syncTimestamp)]
-                : [],
+            addresses.map(address =>
+              TokenItemEntity.cleanupStaleTokens(address, syncTimestamp),
             ),
           );
         },
@@ -401,7 +394,6 @@ async function persistPendingTokenSyncs(
         true,
       );
     });
-    success = true;
     console.debug(`[${taskKey}] multi-address batch upsert tasks completed`);
   } catch (error) {
     addresses.forEach(address => {
@@ -413,7 +405,7 @@ async function persistPendingTokenSyncs(
     });
     console.error('Batch upsert failed:', error);
   } finally {
-    resolveTokenSyncRequests(pending, success);
+    resolveTokenSyncRequests(pending);
   }
 }
 
@@ -438,22 +430,15 @@ async function flushPendingTokenSyncs() {
   await tokenFlushInFlight;
 }
 
-function enqueueTokenSync(
-  address: string,
-  tokens: TokenItem[] | ITokenItem[],
-  options: { cleanupStale?: boolean } = {},
-) {
-  return new Promise<boolean>(resolve => {
-    const cleanupStale = options.cleanupStale !== false;
+function enqueueTokenSync(address: string, tokens: TokenItem[] | ITokenItem[]) {
+  return new Promise<void>(resolve => {
     const pending = pendingTokenSyncs.get(address);
     if (pending) {
       pending.tokens = cloneTokenInput(tokens);
-      pending.cleanupStale = cleanupStale;
       pending.requests.push({ resolve });
     } else {
       pendingTokenSyncs.set(address, {
         tokens: cloneTokenInput(tokens),
-        cleanupStale,
         requests: [{ resolve }],
       });
     }
@@ -512,9 +497,8 @@ function emitProtocolSyncResult(
 export async function syncRemoteTokens(
   address: string,
   _tokens: TokenItem[] | ITokenItem[],
-  options: { cleanupStale?: boolean } = {},
 ) {
-  return enqueueTokenSync(address.toLowerCase(), _tokens, options);
+  await enqueueTokenSync(address.toLowerCase(), _tokens);
 }
 
 export async function syncRemoteTokensForAddresses(
@@ -522,15 +506,14 @@ export async function syncRemoteTokensForAddresses(
 ) {
   const entries = Object.entries(tokenMap);
   if (!entries.length) {
-    return true;
+    return;
   }
 
-  const results = await Promise.all(
+  await Promise.all(
     entries.map(([rawAddress, tokens]) =>
       enqueueTokenSync(rawAddress.toLowerCase(), tokens || []),
     ),
   );
-  return results.every(Boolean);
 }
 
 export async function syncRemoteTokensAmount(

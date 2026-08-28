@@ -1,5 +1,4 @@
 import Reactotron from 'reactotron-react-native';
-import 'react-native/Libraries/Core/setUpTimers';
 import { ThreadSelf } from './utils/ThreadSelf';
 
 declare global {

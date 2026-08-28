@@ -54,7 +54,6 @@ describe('keyringService support eth-keyring-watch', () => {
   let keyringService: KeyringService;
 
   const TEST_ADDR = '0x39b97205b9826f21fd39b535cf972c809e160e5f';
-  const TEST_ADDR_2 = '0x2222222222222222222222222222222222222222';
   const TEST_HD_ADDR = '0x1111111111111111111111111111111111111111';
 
   class TestHdKeyring {
@@ -173,45 +172,6 @@ describe('keyringService support eth-keyring-watch', () => {
       expect(spyCallback.calledOnce).toBe(true);
     });
 
-    it('adds multiple Watch addresses with one persistence and alias update', async () => {
-      const onSetAddressAliases = sinon.spy(
-        async (_keyring: unknown, _accounts: unknown[]) => undefined,
-      );
-      keyringService = new KeyringService({
-        encryptor: mockEncryptor as any,
-        onSetAddressAliases,
-      });
-      keyringService.loadStore({});
-      await keyringService.boot(password);
-      await keyringService.clearKeyrings();
-      const keyring = await keyringService.addNewKeyring(
-        KEYRING_TYPE.WatchAddressKeyring as KeyringTypeName,
-      );
-      const persistSpy = sinon.spy(keyringService, 'persistAllKeyrings');
-      const newAccountSpy = sinon.spy();
-      keyringService.on('newAccount', newAccountSpy);
-
-      await expect(
-        keyringService.addNewWatchAccounts(keyring, [
-          TEST_ADDR,
-          TEST_ADDR_2,
-          TEST_ADDR,
-        ]),
-      ).resolves.toEqual([TEST_ADDR, TEST_ADDR_2]);
-
-      await expect(keyring.getAccounts()).resolves.toEqual([
-        TEST_ADDR,
-        TEST_ADDR_2,
-      ]);
-      expect(persistSpy.calledOnce).toBe(true);
-      expect(onSetAddressAliases.calledOnce).toBe(true);
-      expect(onSetAddressAliases.firstCall.args[1]).toEqual([
-        expect.objectContaining({ address: TEST_ADDR }),
-        expect.objectContaining({ address: TEST_ADDR_2 }),
-      ]);
-      expect(newAccountSpy.callCount).toBe(2);
-    });
-
     it('restores unencrypted watch keyrings while locked', async () => {
       await addWatchAddress();
       await keyringService.setLocked();
@@ -277,9 +237,9 @@ describe('keyringService support eth-keyring-watch', () => {
       expect(persistedState.publicAccountSnapshot?.accounts).toEqual([]);
       expect(restoredService.hasPersistedPublicAccountSnapshot()).toBe(true);
       expect(restoredService.hasPublicAccountSnapshot()).toBe(false);
-      await expect(restoredService.getCountOfAccountsInKeyring()).resolves.toBe(
-        0,
-      );
+      await expect(
+        restoredService.getCountOfAccountsInKeyring(),
+      ).resolves.toBe(0);
     });
 
     it('preserves locked sensitive vault data when updating password', async () => {
