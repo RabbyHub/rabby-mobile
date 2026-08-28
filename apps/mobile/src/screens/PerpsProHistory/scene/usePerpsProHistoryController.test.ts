@@ -208,6 +208,7 @@ describe('usePerpsProHistoryController', () => {
   });
 
   it('projects a local pending funding operation into an empty Transaction tab', async () => {
+    const createdAt = Date.now();
     mockPerpsState.localLoadingHistory = [
       {
         amount: '12',
@@ -215,7 +216,7 @@ describe('usePerpsProHistoryController', () => {
         hash: '0xpending',
         operationId: 'operation-1',
         status: 'pending',
-        time: 100,
+        time: createdAt,
         type: 'receive',
         usdValue: '11.9',
       },

@@ -1,4 +1,5 @@
 import type { PerpsFundingJournalEntry } from '@/core/services/perpsService';
+import { PERPS_FUNDING_PENDING_VISIBILITY_TTL_MS } from '@/hooks/perps/funding/fundingHistoryReconciliation';
 import type { AccountHistoryItem } from '@/hooks/perps/usePerpsStore';
 
 import type { PerpsProTransactionHistoryRow } from '../types';
@@ -83,6 +84,61 @@ describe('Perps Pro local transaction history', () => {
         asset: 'USDC',
         direction: 'withdraw',
         status: 'failed',
+      }),
+    ]);
+  });
+
+  it('hides pending presentation after 15 minutes without losing late exact reconciliation', () => {
+    const nonce = 1787895600005;
+    const createdAt = 1787895600005;
+    const withdrawEntry = journalEntry({
+      asset: 'USDC',
+      createdAt,
+      direction: 'withdraw',
+      localType: 'withdraw',
+      operationId: 'withdraw-operation',
+      settlementIdentity: { kind: 'hyperliquidNonce', nonce },
+      sourceIdentity: undefined,
+    });
+    const withdrawLocal = localItem({
+      asset: 'USDC',
+      hash: `hl-nonce:${nonce}`,
+      operationId: 'withdraw-operation',
+      settlementNonce: nonce,
+      time: createdAt,
+      type: 'withdraw',
+    });
+    const deadline = createdAt + PERPS_FUNDING_PENDING_VISIBILITY_TTL_MS;
+
+    const expired = mergePerpsProLocalTransactionHistory({
+      journalEntries: [withdrawEntry],
+      localHistory: [withdrawLocal],
+      now: deadline,
+      remoteRows: [],
+    });
+
+    expect(expired.rows).toEqual([]);
+    expect(expired.confirmations).toEqual([]);
+
+    const settled = mergePerpsProLocalTransactionHistory({
+      journalEntries: [withdrawEntry],
+      localHistory: [withdrawLocal],
+      now: deadline + 1,
+      remoteRows: [
+        remoteRow({
+          direction: 'withdraw',
+          hash: '0xledger',
+          settlementNonce: nonce,
+        }),
+      ],
+    });
+
+    expect(settled.confirmedOperationIds).toEqual(['withdraw-operation']);
+    expect(settled.rows).toEqual([
+      expect.objectContaining({
+        direction: 'withdraw',
+        hash: '0xledger',
+        status: 'success',
       }),
     ]);
   });

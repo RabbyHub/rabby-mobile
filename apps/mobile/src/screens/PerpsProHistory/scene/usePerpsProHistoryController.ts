@@ -11,6 +11,7 @@ import {
   isPerpsFundingJournalEntryForAccount,
   readPerpsFundingJournal,
 } from '@/hooks/perps/funding/fundingJournal';
+import { PERPS_FUNDING_PENDING_VISIBILITY_TTL_MS } from '@/hooks/perps/funding/fundingHistoryReconciliation';
 import { mergeUserFills, reconcileHttpFills } from '@/hooks/perps/userFills';
 import {
   confirmPerpsFundingOperations,
@@ -61,6 +62,32 @@ type RequestToken = Readonly<{
 type RefreshPresentation = 'background' | 'manual';
 const EMPTY_LOCAL_FUNDING_HISTORY = [] as const;
 
+const getNextPendingPresentationExpirationAt = ({
+  journalEntries,
+  localHistory,
+  now,
+}: {
+  journalEntries: readonly PerpsFundingJournalEntry[];
+  localHistory: readonly { status: string; time: number }[];
+  now: number;
+}) => {
+  let earliest: number | null = null;
+  const include = (status: string, time: number) => {
+    if (status !== 'pending' || !Number.isFinite(time)) {
+      return;
+    }
+    const expirationAt = time + PERPS_FUNDING_PENDING_VISIBILITY_TTL_MS;
+    if (expirationAt <= now) {
+      return;
+    }
+    earliest =
+      earliest === null ? expirationAt : Math.min(earliest, expirationAt);
+  };
+  journalEntries.forEach(entry => include(entry.status, entry.createdAt));
+  localHistory.forEach(item => include(item.status, item.time));
+  return earliest;
+};
+
 export const usePerpsProHistoryController = (
   initialTab: PerpsProHistoryTab = 'orders',
 ) => {
@@ -81,6 +108,9 @@ export const usePerpsProHistoryController = (
   const [fundingJournalEntries, setFundingJournalEntries] = useState<
     PerpsFundingJournalEntry[]
   >([]);
+  const [pendingPresentationClock, setPendingPresentationClock] = useState(
+    Date.now,
+  );
   const stateRef = useRef(historyState);
   const requestSequencesRef = useRef<Record<PerpsProHistoryTab, number>>({
     funding: 0,
@@ -102,6 +132,12 @@ export const usePerpsProHistoryController = (
   const accountIdentity = currentAccount
     ? `${currentAccount.address.toLowerCase()}::${currentAccount.type}`
     : null;
+  const nextPendingPresentationExpirationAt =
+    getNextPendingPresentationExpirationAt({
+      journalEntries: fundingJournalEntries,
+      localHistory: localFundingHistory,
+      now: pendingPresentationClock,
+    });
   const accountGeneration = getPerpsAccountRuntimeContext().generation;
   const refreshFailedMessage = t('page.perps.pro.history.refreshFailed');
   const enabled =
@@ -151,6 +187,30 @@ export const usePerpsProHistoryController = (
     const subscription = AppState.addEventListener('change', setAppState);
     return () => subscription.remove();
   }, []);
+
+  useEffect(() => {
+    if (!enabled || nextPendingPresentationExpirationAt === null) {
+      return;
+    }
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const expireAtDeadline = () => {
+      const remaining = nextPendingPresentationExpirationAt - Date.now();
+      if (remaining > 0) {
+        timer = setTimeout(expireAtDeadline, remaining);
+        return;
+      }
+      setPendingPresentationClock(Date.now());
+    };
+    timer = setTimeout(
+      expireAtDeadline,
+      Math.max(0, nextPendingPresentationExpirationAt - Date.now()),
+    );
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
+  }, [enabled, nextPendingPresentationExpirationAt]);
 
   const invalidateAll = useCallback(() => {
     PERPS_PRO_HISTORY_TABS.forEach(tab => {
@@ -689,11 +749,17 @@ export const usePerpsProHistoryController = (
       mergePerpsProLocalTransactionHistory({
         journalEntries: fundingJournalEntries,
         localHistory: localFundingHistory,
+        now: Math.max(pendingPresentationClock, Date.now()),
         remoteRows: historyState.transaction.rows.filter(
           row => row.kind === 'transaction',
         ),
       }),
-    [fundingJournalEntries, historyState.transaction.rows, localFundingHistory],
+    [
+      fundingJournalEntries,
+      historyState.transaction.rows,
+      localFundingHistory,
+      pendingPresentationClock,
+    ],
   );
   const unsettledConfirmations = useMemo(() => {
     const unsettled = new Set(

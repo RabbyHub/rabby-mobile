@@ -1,4 +1,6 @@
-import { renderHook, waitFor } from '@testing-library/react-native';
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+
+import { PERPS_FUNDING_PENDING_VISIBILITY_TTL_MS } from './fundingHistoryReconciliation';
 
 const mockReadJournal = jest.fn();
 const mockUpdateStatus = jest.fn(async () => undefined);
@@ -20,7 +22,9 @@ const mockState: any = {
     address: '0xabc',
     type: 'PrivateKey',
   },
+  hiddenLocalFundingHistory: [],
   localLoadingHistory: [],
+  userAccountHistory: [],
 };
 
 jest.mock('@/hooks/perps/usePerpsStore', () => ({
@@ -95,9 +99,15 @@ const entry = {
 describe('usePerpsFundingHistoryJournal', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockState.hiddenLocalFundingHistory = [];
     mockState.localLoadingHistory = [];
+    mockState.userAccountHistory = [];
     mockReadJournal.mockResolvedValue([entry]);
     mockFetchLedger.mockResolvedValue(true);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('hydrates the current account and marks only receipt failures as failed', async () => {
@@ -190,5 +200,54 @@ describe('usePerpsFundingHistoryJournal', () => {
 
     await waitFor(() => expect(mockReadJournal).toHaveBeenCalled());
     expect(mockFetchLedger).not.toHaveBeenCalled();
+  });
+
+  it('defers inactive expiry work and hides immediately when the scene becomes active', async () => {
+    jest.useFakeTimers();
+    const now = 1787895600005;
+    jest.setSystemTime(now);
+    mockState.localLoadingHistory = [
+      {
+        hash: `hl-nonce:${now}`,
+        operationId: 'withdraw-operation',
+        settlementNonce: now,
+        status: 'pending',
+        time: now,
+        type: 'withdraw',
+        usdValue: '4',
+      },
+    ];
+    mockReadJournal.mockResolvedValue([]);
+    mockGetTransactionHistory.mockReturnValue({
+      completeds: [],
+      pendings: [],
+    });
+
+    const hook = renderHook(
+      ({ enabled }: { enabled: boolean }) =>
+        usePerpsFundingHistoryJournal({ enabled }),
+      { initialProps: { enabled: false } },
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    mockReconcileObservation.mockClear();
+
+    act(() => {
+      jest.advanceTimersByTime(PERPS_FUNDING_PENDING_VISIBILITY_TTL_MS);
+    });
+    expect(mockReconcileObservation).not.toHaveBeenCalled();
+    expect(mockFetchLedger).not.toHaveBeenCalled();
+
+    hook.rerender({ enabled: true });
+    act(() => {
+      jest.advanceTimersByTime(0);
+    });
+    expect(mockReconcileObservation).toHaveBeenCalledWith({
+      confirmedHistory: [],
+      observation: 'baseline',
+    });
   });
 });
