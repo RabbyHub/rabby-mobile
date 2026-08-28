@@ -13,18 +13,10 @@ This is a **React Native cryptocurrency wallet mobile app** (Rabby Mobile) organ
 
 ## Local Playbooks
 
-- For outbound Rabby Mobile pull-request code review, read `skills/rabby-mobile-code-review/SKILL.md`; use `skills/mobile-pr-ready-watch/SKILL.md` instead for making a PR ready or handling incoming review feedback.
-- Consider runtime performance for every Rabby Mobile change. For review, read `skills/rabby-mobile-performance-review/SKILL.md` and classify the impact even when no benchmark or public performance comment is needed.
-- For startup stages, module loading, lock/unlock routing, keyring readiness, visible/current account state, or first-Home readiness, read `skills/rabby-mobile-startup-governance/SKILL.md`. If safety or performance remains uncertain, request `@richardo2016x` review using the performance Review Skill's escalation rule.
-- For `apps/mobile` Google Play upload or Android store-release preflight work, read `apps/mobile/skills/google-play-release.md` and keep the public workflow centered on `./scripts/google-play.sh upload-internal-track`; keep private inspection/report helpers under `.codex`.
-- For `apps/mobile` debug export or local file sharing flows, read `apps/mobile/skills/file-share.md` and prefer `src/utils/shareLocalFile.ts` over screen-local platform branching.
-- For `apps/mobile` debug, probe, or migration-diagnostics screens, read `apps/mobile/skills/debug-pages.md` and keep the page focused on live state while moving instructions into help sheets and bulk actions into an actions sheet.
-- For `apps/mobile` keychain patching or upgrade work, read `apps/mobile/skills/keychain-upgrade.md` before changing Android fallback behavior, authentication policy, or package wiring.
-- For `apps/mobile` i18n locale files or translation backfills, read `apps/mobile/skills/i18n-translation.md` and respect `__skip_translation` markers before adding missing keys.
-- For `apps/mobile` fixed bottom buttons, bottom-sheet footer buttons, modal action rows, or footer spacing, read `apps/mobile/skills/bottom-buttons.md` and reuse the shared constants from `src/constant/layout.ts`.
-- For Rabby Mobile test selection, implementation, review, or reclassification, read `skills/rabby-mobile-testing/SKILL.md` before choosing unit, JS integration, Hermes device integration, or E2E coverage.
-- For `apps/mobile` code changes, read `apps/mobile/skills/import-cycles.md` and keep import-cycle detection, TypeScript typecheck, unit/component Jest, and JS integration Jest as the required self-validation set before handoff.
-- For `apps/mobile` stores, hooks, lists, Home-path logic, or mounted-but-inactive Screens, read `apps/mobile/skills/perf-hooks.md` before changing selector or subscription boundaries. Every Home change must be checked for render fan-out and inactive subscription work, including transitive shared-state changes outside `src/screens/Home/**`.
+The playbook triggers below are shared with all agents and maintained in `AGENTS.md`.
+Do not copy them here — edit `AGENTS.md` so both entry points stay in sync.
+
+@AGENTS.md
 
 ## Common Commands
 
@@ -101,7 +93,6 @@ yarn link-assets
 │   ├── mobile/              # Main React Native app
 │   ├── mobile-local-pages/  # Local pages for WebView
 │   ├── dev-console-cra/     # Dev console (CRA)
-│   └── go.rabby.io/         # Go service
 ├── packages/                # Shared packages
 │   ├── base-utils/          # Base utilities
 │   ├── biz-utils/           # Business utilities

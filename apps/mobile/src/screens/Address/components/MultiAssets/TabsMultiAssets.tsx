@@ -22,6 +22,7 @@ import { TokenList } from './TokenList';
 import { IS_IOS } from '@/core/native/utils';
 import { HomeOverview } from '@/screens/Home/components/HomeOverview';
 import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoundary';
+import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 
 export const TAB_HEADER_FULL_HEIGHT =
   HOME_TOP_HEADER_SIZES.headerHeight +
@@ -103,11 +104,41 @@ const HomeTabActivityBoundary = ({
 }) => {
   const focusedTab = useFocusedTab();
   const isScreenFocused = useIsFocused();
+  const regressionScenario = useRegressionScenario<'Home'>();
+  const active = isScreenFocused && focusedTab === name;
+  const lastRegressionStateKeyRef = React.useRef<string | null>(null);
+
+  React.useEffect(() => {
+    if (
+      !regressionScenario.active ||
+      regressionScenario.scenario !== 'high-cardinality-assets'
+    ) {
+      return;
+    }
+
+    const stateKey = [
+      regressionScenario.runId,
+      name,
+      focusedTab || 'none',
+      isScreenFocused,
+      active,
+    ].join(':');
+    if (lastRegressionStateKeyRef.current === stateKey) {
+      return;
+    }
+    lastRegressionStateKeyRef.current = stateKey;
+
+    regressionScenario.report('perf-mark', {
+      mark: 'home-tab-activity-boundary',
+      tabName: name,
+      focusedTab: focusedTab || null,
+      isScreenFocused,
+      active,
+    });
+  }, [active, focusedTab, isScreenFocused, name, regressionScenario]);
 
   return (
-    <RenderActivityBoundary
-      active={isScreenFocused && focusedTab === name}
-      label={`home-multi-assets-${name}`}>
+    <RenderActivityBoundary active={active} label={`home-multi-assets-${name}`}>
       {children}
     </RenderActivityBoundary>
   );

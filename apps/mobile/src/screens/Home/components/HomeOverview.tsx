@@ -13,6 +13,7 @@ import RcIconMarketCC from '@/assets2024/icons/home/IconMarketCC.svg';
 import RcIconConvertDustCC from '@/assets2024/icons/home/IconDustCC.svg';
 
 import { RootNames } from '@/constant/layout';
+import { useRegressionScenarioComponentAction } from '@/devtools/regressionScenarios/react';
 import { useTheme2024 } from '@/hooks/theme';
 import { useAppLanguage } from '@/hooks/lang';
 import {
@@ -82,6 +83,7 @@ import {
   ITEM_LAYOUT_PADDING_HORIZONTAL,
 } from '@/constant/home';
 import { perfEvents } from '@/core/utils/perf';
+import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
 import {
   beginFeatureActivation,
   markFeatureActivation,
@@ -1056,15 +1058,39 @@ export const HomeOverview = React.memo(() => {
     }
 
     perfEvents.emit('HOME_WILL_BE_REFRESHED_MANUALLY');
+    const refreshTrace = beginAssetDataLoadDiagnostic(
+      'home-manual-refresh',
+      'home',
+    );
     const balanceRefresh = refreshManualBalance();
     const gasAccountRefresh = checkGasAccountAddressesEligibility(true);
+    refreshTrace.mark('foreground-requests-dispatched');
+    void balanceRefresh.then(
+      () => refreshTrace.mark('balance-refresh-settled'),
+      () => refreshTrace.mark('balance-refresh-failed'),
+    );
+    void gasAccountRefresh.then(
+      () => refreshTrace.mark('gas-account-refresh-settled'),
+      () => refreshTrace.mark('gas-account-refresh-failed'),
+    );
     const fullRefresh = Promise.all([
       balanceRefresh,
       gasAccountRefresh,
-    ]).finally(refreshManualHomeBackgroundData);
-    const safeFullRefresh = fullRefresh.catch(error => {
-      console.error('Refresh failed:', error);
+    ]).finally(() => {
+      refreshTrace.mark('foreground-requests-settled');
+      refreshTrace.mark('asset-refresh-dispatch-started');
+      return refreshManualHomeBackgroundData();
     });
+    const safeFullRefresh = fullRefresh.then(
+      () => {
+        refreshTrace.mark('asset-refresh-dispatched');
+        refreshTrace.finish({ path: 'manual-refresh-dispatched' });
+      },
+      error => {
+        refreshTrace.fail({ phase: 'manual-refresh' });
+        console.error('Refresh failed:', error);
+      },
+    );
 
     withAnimatedTickerRefreshNudge(() =>
       Promise.race([balanceRefresh, sleep(3000)]),
@@ -1073,6 +1099,13 @@ export const HomeOverview = React.memo(() => {
     });
     await Promise.race([safeFullRefresh, sleep(3000)]);
   }, [refreshManualBalance, refreshManualHomeBackgroundData]);
+
+  // Regression scenarios call the same refresh path as the native pull-down
+  // control. The production alias is a no-op, so this has no release behavior.
+  useRegressionScenarioComponentAction(
+    'home.manual-pulldown-refresh',
+    handleManualPulldownRefresh,
+  );
 
   // const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
   const handlePressMarket = useCallback(() => {
