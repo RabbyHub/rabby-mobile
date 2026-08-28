@@ -45,7 +45,12 @@ export { PERPS_PRO_INFO_TABS } from './perpsProInfoTabOrder';
 export const getPreparedPerpsProInfoTabs = (
   activeTab: PerpsProInfoTab,
   requestedTab: PerpsProInfoTab | null,
+  keepAllTabsMounted = false,
 ) => {
+  if (keepAllTabsMounted) {
+    return new Set(PERPS_PRO_INFO_TABS);
+  }
+
   const activeIndex = PERPS_PRO_INFO_TABS.indexOf(activeTab);
   const result = new Set<PerpsProInfoTab>([activeTab]);
 
@@ -100,6 +105,7 @@ type PerpsProInfoPagerProps<Row> = {
   contentContainerStyle: Record<PerpsProInfoTab, StyleProp<ViewStyle>>;
   data: Record<PerpsProInfoTab, readonly Row[]>;
   getActiveScrollOffset: () => number;
+  keepAllTabsMounted?: boolean;
   nativeVerticalScrollEnabled?: boolean;
   onActivateOffset: (offset: number) => void;
   onActiveScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
@@ -141,6 +147,7 @@ const PerpsProInfoPagerInner = <Row,>(
     contentContainerStyle,
     data,
     getActiveScrollOffset,
+    keepAllTabsMounted = false,
     nativeVerticalScrollEnabled = true,
     onActivateOffset,
     onActiveScroll,
@@ -189,8 +196,9 @@ const PerpsProInfoPagerInner = <Row,>(
   const activeTabRef = useRef(activeTab);
   activeTabRef.current = activeTab;
   const preparedTabs = useMemo(
-    () => getPreparedPerpsProInfoTabs(activeTab, requestedTab),
-    [activeTab, requestedTab],
+    () =>
+      getPreparedPerpsProInfoTabs(activeTab, requestedTab, keepAllTabsMounted),
+    [activeTab, keepAllTabsMounted, requestedTab],
   );
 
   const recordDesiredOffset = useCallback(

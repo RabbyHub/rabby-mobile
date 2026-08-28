@@ -1012,6 +1012,10 @@ export const PerpsProScene: React.FC<{
   );
   const displayedInfoTab =
     requestedInfoTab ?? previewInfoTab ?? info.activeInfoTab;
+  // iOS can select the next native page before React has mounted a
+  // conditionally prepared FlatList. Keep all three native list refs stable so
+  // preparePages can apply the shared offset before the page becomes active.
+  const keepAllInfoTabListsMounted = Platform.OS === 'ios';
   const cancelInfoTabRequest = useCallback(() => {
     if (infoTabRequestFrameRef.current == null) {
       return;
@@ -1112,6 +1116,7 @@ export const PerpsProScene: React.FC<{
               contentContainerStyle={scrollContentStyles}
               data={rowsByTab}
               getActiveScrollOffset={headerCollapse.getScrollOffset}
+              keepAllTabsMounted={keepAllInfoTabListsMounted}
               nativeVerticalScrollEnabled={Platform.OS !== 'android'}
               onActivateOffset={headerCollapse.syncScrollOffset}
               onActiveScroll={
