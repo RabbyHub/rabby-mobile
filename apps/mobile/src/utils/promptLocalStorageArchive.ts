@@ -1,6 +1,6 @@
 import { Alert } from 'react-native';
 
-import { isNonPublicProductionEnv } from '@/constant';
+import { IS_LOCAL_STORAGE_EXPORT_ENABLED } from '@/constant/env';
 import { shareCurrentLocalStorageArchive } from '@/core/storage/localStorageArchive';
 import { toast } from '@/components2024/Toast';
 
@@ -23,7 +23,7 @@ async function exportAndShareLocalStorageArchive() {
     const result = await shareCurrentLocalStorageArchive();
     if (!result.dismissed) {
       toast.success(
-        `Archive with ${result.mmkvDumpCount} MMKV dumps and ${result.keyringStartupDiagnosticFileCount} startup diagnostic files ready to share`,
+        `Archive with ${result.mmkvDumpCount} MMKV dumps, ${result.keyringStartupDiagnosticFileCount} startup diagnostic files, and ${result.appLogArchiveCount} app log ZIP ready to share`,
       );
     }
   } catch (error) {
@@ -34,7 +34,11 @@ async function exportAndShareLocalStorageArchive() {
 }
 
 export function promptLocalStorageArchiveShare() {
-  if (!isNonPublicProductionEnv || isPromptVisible || isExportInProgress) {
+  if (
+    !IS_LOCAL_STORAGE_EXPORT_ENABLED ||
+    isPromptVisible ||
+    isExportInProgress
+  ) {
     return;
   }
 
@@ -42,7 +46,7 @@ export function promptLocalStorageArchiveShare() {
 
   Alert.alert(
     'Export local storage?',
-    'This creates one ZIP with the current raw MMKV and SQLite files, JSON dumps for every known MMKV storage, and preserved pre-React-Native keyring snapshots. It can include wallet and keyring data. Share it only with a trusted recipient.',
+    'This creates one ZIP with the current raw MMKV and SQLite files, JSON dumps for every known MMKV storage, preserved pre-React-Native keyring snapshots, and the latest app log ZIP when available. It can include wallet and keyring data. Share it only with a trusted recipient.',
     [
       {
         text: 'Cancel',

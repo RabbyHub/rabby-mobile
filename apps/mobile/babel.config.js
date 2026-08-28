@@ -38,6 +38,19 @@ module.exports = api => {
     isDevTransform || resolvedBuildChannel === 'selfhost-reg'
       ? 'nonprod'
       : 'prod';
+  const localStorageExportInput =
+    process.env.RABBY_MOBILE_ENABLE_LOCAL_STORAGE_EXPORT;
+  if (
+    localStorageExportInput &&
+    !['true', 'false'].includes(localStorageExportInput)
+  ) {
+    throw new Error(
+      `Unsupported RABBY_MOBILE_ENABLE_LOCAL_STORAGE_EXPORT: ${localStorageExportInput}`,
+    );
+  }
+  const shouldEnableLocalStorageExport = localStorageExportInput
+    ? localStorageExportInput === 'true'
+    : isDevTransform || resolvedBuildEnv !== 'production';
 
   api.cache.using(() =>
     JSON.stringify({
@@ -49,6 +62,7 @@ module.exports = api => {
       moduleLoadingMode,
       regressionScenarioImplExt,
       shouldEnableRozenite,
+      shouldEnableLocalStorageExport,
       shouldInlineDevDynamicImports,
     }),
   );
@@ -73,6 +87,8 @@ module.exports = api => {
             ? 'true'
             : 'false',
           'process.env.RABBY_MOBILE_MODULE_LOADING_MODE': moduleLoadingMode,
+          'process.env.RABBY_MOBILE_ENABLE_LOCAL_STORAGE_EXPORT':
+            shouldEnableLocalStorageExport ? 'true' : 'false',
           'process.env.WITH_ROZENITE': shouldEnableRozenite ? 'true' : 'false',
           'process.env.buildchannel': resolvedBuildChannel,
           'process.env.RABBY_MOBILE_FE_SERVICE_URL':
