@@ -1,6 +1,6 @@
 import { RootNames } from '@/constant/layout';
 import { registerAppScreen } from '@/perfs/apis';
-import { PRELOAD_SCREENS } from '@/perfs/preloads';
+import { PRELOAD_SCREENS } from '@/perfs/preloadNames';
 
 export const SettingsScreen = registerAppScreen<
   typeof import('@/screens/Settings/Settings').default

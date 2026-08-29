@@ -21,7 +21,7 @@ const getBlurModalStyles = createGetStyles(() => {
   };
 });
 
-export function BackgroundSecureBlurView() {
+export function BackgroundSecureBlurViewLegacy() {
   const { styles } = useThemeStyles(getBlurModalStyles);
   const appThemeMode = useGetBinaryMode();
   const { currentRouteName } = useCurrentRouteName();

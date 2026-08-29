@@ -619,6 +619,7 @@ turbo_compute_cocoapods_cache_key() {
 
   printf '%s\n' \
     "platform=$(turbo_platform_fingerprint)" \
+    "react_native_arch=${RCT_NEW_ARCH_ENABLED:-0}" \
     "xcode=$(xcodebuild -version 2>/dev/null | tr '\n' '|')" \
     "ruby=$(ruby -v 2>/dev/null)" \
     "cocoapods=$(turbo_bundle_pod --version 2>/dev/null || pod --version 2>/dev/null)" \
@@ -641,6 +642,7 @@ turbo_compute_gradle_cache_key() {
 
   printf '%s\n' \
     "platform=$(turbo_platform_fingerprint)" \
+    "react_native_arch=${RCT_NEW_ARCH_ENABLED:-0}" \
     "java=$(java -version 2>&1 | head -n 1)" \
     "files=$files_hash" \
     | turbo_sha256 | awk '{print $1}'
@@ -955,12 +957,20 @@ turbo_cocoapods_ready() {
   podfile_lock="$project_dir/ios/Podfile.lock"
   pods_manifest_lock="$project_dir/ios/Pods/Manifest.lock"
   xcworkspace_data="$project_dir/ios/RabbyMobile.xcworkspace/contents.xcworkspacedata"
+  architecture_stamp="$project_dir/ios/Pods/.rabby-react-native-architecture"
+  expected_architecture="${RCT_NEW_ARCH_ENABLED:-0}"
 
   [ -d "$project_dir/ios/Pods" ] || return 1
   [ -f "$podfile_lock" ] || return 1
   [ -f "$pods_manifest_lock" ] || return 1
   [ -f "$xcworkspace_data" ] || return 1
+  [ -f "$architecture_stamp" ] || return 1
+  [ "$(cat "$architecture_stamp" 2>/dev/null)" = "$expected_architecture" ] || return 1
   cmp -s "$podfile_lock" "$pods_manifest_lock"
+}
+
+turbo_mark_cocoapods_architecture() {
+  printf '%s' "${RCT_NEW_ARCH_ENABLED:-0}" >"$project_dir/ios/Pods/.rabby-react-native-architecture"
 }
 
 turbo_gradle_wrapper_version() {
@@ -1019,6 +1029,7 @@ turbo_compute_ios_derived_data_key() {
   printf '%s\n' \
     "platform=$(turbo_platform_fingerprint)" \
     "xcode=$(xcodebuild -version 2>/dev/null | tr '\n' '|')" \
+    "react_native_arch=${RCT_NEW_ARCH_ENABLED:-0}" \
     "files=$files_hash" \
     | turbo_sha256 | awk '{print $1}'
 }
@@ -1227,9 +1238,11 @@ turbo_prepare_cocoapods() {
     fi
 
     (cd "$project_dir/ios" && turbo_bundle_pod install) || return $?
+    turbo_mark_cocoapods_architecture
     turbo_save_layer cocoapods "$cache_key" apps/mobile/ios/Pods
   else
     (cd "$project_dir/ios" && turbo_bundle_pod install --repo-update) || return $?
+    turbo_mark_cocoapods_architecture
   fi
 }
 

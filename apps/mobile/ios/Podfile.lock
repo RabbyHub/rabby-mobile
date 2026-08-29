@@ -198,7 +198,7 @@ PODS:
     - Yoga
   - MMKV (1.3.5):
     - MMKVCore (~> 1.3.5)
-  - MMKVCore (1.3.16)
+  - MMKVCore (1.3.17)
   - MultiplatformBleAdapter (0.2.0)
   - nanopb (2.30909.1):
     - nanopb/decode (= 2.30909.1)
@@ -294,8 +294,39 @@ PODS:
     - SocketRocket
     - Yoga
   - openiap (3.2.1)
-  - OpenSSL-Universal (3.6.0000)
+  - OpenSSL-Universal (3.6.2000)
   - PromisesObjC (2.4.0)
+  - QuickCrypto (1.1.6):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - NitroModules
+    - OpenSSL-Universal (~> 3.6.2000)
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-callinvoker
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - RabbyRNKeychain (8.2.0-rabby.0):
     - React-Core
   - RabbyRNKeychainV9 (9.2.3-rabby.0):
@@ -2388,19 +2419,17 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-quick-crypto (0.7.13):
+  - react-native-quick-base64 (3.0.1):
     - boost
     - DoubleConversion
     - fast_float
     - fmt
     - glog
     - hermes-engine
-    - OpenSSL-Universal
     - RCT-Folly
     - RCT-Folly/Fabric
     - RCTRequired
     - RCTTypeSafety
-    - React
     - React-Core
     - React-debug
     - React-Fabric
@@ -3032,16 +3061,16 @@ PODS:
     - React-Core
     - SDWebImage (~> 5.18.6)
     - SDWebImageWebPCoder (~> 0.8.4)
-  - RNFBAnalytics (18.8.0):
-    - Firebase/Analytics (= 10.20.0)
+  - RNFBAnalytics (21.3.0):
+    - Firebase/Analytics (<= 11.4.0)
     - React-Core
     - RNFBApp
-  - RNFBApp (18.8.0):
-    - Firebase/CoreOnly (= 10.20.0)
+  - RNFBApp (21.3.0):
+    - Firebase/CoreOnly (<= 11.4.0)
     - React-Core
-  - RNFBMessaging (18.8.0):
-    - Firebase/Messaging (= 10.20.0)
-    - FirebaseCoreExtension (= 10.20.0)
+  - RNFBMessaging (21.3.0):
+    - Firebase/Messaging (<= 11.4.0)
+    - FirebaseCoreExtension (<= 11.4.0)
     - React-Core
     - RNFBApp
   - RNFS (2.20.0-rabby.0):
@@ -3439,7 +3468,8 @@ DEPENDENCIES:
   - NitroIap (from `../node_modules/react-native-iap`)
   - NitroModules (from `../node_modules/react-native-nitro-modules`)
   - "op-sqlite (from `../node_modules/@op-engineering/op-sqlite`)"
-  - OpenSSL-Universal (= 3.6.0000)
+  - OpenSSL-Universal (= 3.6.2000)
+  - QuickCrypto (from `../node_modules/react-native-quick-crypto`)
   - "RabbyRNKeychain (from `../node_modules/@rabby-wallet/react-native-keychain`)"
   - "RabbyRNKeychainV9 (from `../node_modules/@rabby-wallet/react-native-keychain-9`)"
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
@@ -3489,10 +3519,10 @@ DEPENDENCIES:
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
   - "react-native-ios-context-menu (from `../node_modules/@rabby-wallet/react-native-ios-context-menu`)"
   - react-native-keyboard-controller (from `../node_modules/react-native-keyboard-controller`)
-  - react-native-mmkv (from `../node_modules/react-native-mmkv`)
+  - react-native-mmkv (from `../node_modules/react-native-mmkv-legacy`)
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-pager-view (from `../node_modules/react-native-pager-view`)
-  - react-native-quick-crypto (from `../node_modules/react-native-quick-crypto`)
+  - react-native-quick-base64 (from `../node_modules/react-native-quick-base64`)
   - react-native-randombytes (from `../node_modules/react-native-randombytes`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-version-check (from `../node_modules/react-native-version-check`)
@@ -3616,6 +3646,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-nitro-modules"
   op-sqlite:
     :path: "../node_modules/@op-engineering/op-sqlite"
+  QuickCrypto:
+    :path: "../node_modules/react-native-quick-crypto"
   RabbyRNKeychain:
     :path: "../node_modules/@rabby-wallet/react-native-keychain"
   RabbyRNKeychainV9:
@@ -3713,13 +3745,13 @@ EXTERNAL SOURCES:
   react-native-keyboard-controller:
     :path: "../node_modules/react-native-keyboard-controller"
   react-native-mmkv:
-    :path: "../node_modules/react-native-mmkv"
+    :path: "../node_modules/react-native-mmkv-legacy"
   react-native-netinfo:
     :path: "../node_modules/@react-native-community/netinfo"
   react-native-pager-view:
     :path: "../node_modules/react-native-pager-view"
-  react-native-quick-crypto:
-    :path: "../node_modules/react-native-quick-crypto"
+  react-native-quick-base64:
+    :path: "../node_modules/react-native-quick-base64"
   react-native-randombytes:
     :path: "../node_modules/react-native-randombytes"
   react-native-safe-area-context:
@@ -3873,15 +3905,16 @@ SPEC CHECKSUMS:
   lottie-ios: 8f959969761e9c45d70353667d00af0e5b9cadb3
   lottie-react-native: ab71a5ac2c8392dbe6f612c8c564d0820ee8716b
   MMKV: 506311d0494023c2f7e0b62cc1f31b7370fa3cfb
-  MMKVCore: 13be45a0394861b74836875ac9ec7ee939e86b78
+  MMKVCore: 56663e48f339bc59825df178e5cac760ceaab943
   MultiplatformBleAdapter: b1fddd0d499b96b607e00f0faa8e60648343dc1d
   nanopb: d4d75c12cd1316f4a64e3c6963f879ecd4b5e0d5
-  NitroIap: 3b1d5677ddecad62d94fa7ab37620d79f56a0d97
-  NitroModules: b2923741acd8e4945ad7aa42cc9e16f8372da610
+  NitroIap: 74aa279f1610cc3bf3f0a3e4e38f80e1467ad58b
+  NitroModules: f9f5f08ddbc92bf10fa7b4c3606969ab3acc1f4d
   op-sqlite: be92c782007c31fa5c92fe49624efc749698d228
   openiap: 5fd63f4544bd4cc34da1e514f27eba6d3f30eed5
-  OpenSSL-Universal: 9110d21982bb7e8b22a962b6db56a8aa805afde7
+  OpenSSL-Universal: ecee7b138fa75a74ecf00d7ffd248fb584739b9e
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
+  QuickCrypto: 5d9895c12af84f6872bc576255afb93844fb7c05
   RabbyRNKeychain: cc2d4ef9630a23dd2a9d72ba3532d54a2fb58c66
   RabbyRNKeychainV9: 149a60d8e00ab5ce9e5a2d27361994d60c332264
   RCT-Folly: 59ec0ac1f2f39672a0c6e6cecdd39383b764646f
@@ -3933,7 +3966,7 @@ SPEC CHECKSUMS:
   react-native-mmkv: ad3e50fbf39b994dfedbec010cd9e295946245bb
   react-native-netinfo: b54effb58887516971e6c273ee0ff0dd853021d3
   react-native-pager-view: 10be7c7df9b34e57d56860892069261f11b2d946
-  react-native-quick-crypto: 324688800acf6a351c53597d627684b0d3ac14fa
+  react-native-quick-base64: 905b12905b5680622503bafa7ef353d91dbfa585
   react-native-randombytes: 421f1c7d48c0af8dbcd471b0324393ebf8fe7846
   react-native-safe-area-context: e48706fb09fde89f82e12bfb49b140cfdcb761f7
   react-native-version-check: 6cd36aad4e30b8e3216747e3b4ddeb09e0647af8
@@ -3968,7 +4001,7 @@ SPEC CHECKSUMS:
   React-timing: 9b3e17f186a9aaa49639d9d684a35597887013ac
   React-utils: c0142ad2d2a74ba5d0806e4c0ad2f66b4450a952
   ReactAppDependencyProvider: 13abb80c2fe164aecc43564432bc5e927e3b3185
-  ReactCodegen: d683c37a16b7e7a50d3b769dac5a8be80d81b5b0
+  ReactCodegen: 318704310d41f570f7d3d3bb085d10ffea889ac2
   ReactCommon: 3321d89a161a9129f5694948779e1de51400ceb3
   ReactNativeExceptionHandler: b11ff67c78802b2f62eed0e10e75cb1ef7947c60
   RNBootSplash: 8bda8e567c5b24b935215dcff4081c5a03014d93
@@ -3977,9 +4010,9 @@ SPEC CHECKSUMS:
   RNCPushNotificationIOS: b9dcb4f28c85f77483c3f86d2fcb1e0f0ab396fa
   RNDeviceInfo: feea80a690d2bde1fe51461cf548039258bd03f2
   RNFastImage: ac82f320c9d1441e46b68721141c4d6aee495406
-  RNFBAnalytics: 991772a4cd8c90de9a5eec33ef24dbba6e028c5b
-  RNFBApp: a4f5b074984cf612e4c97d68b42be690c59e2638
-  RNFBMessaging: 1e7415390ae579c5949505a0709686a2de8a47e5
+  RNFBAnalytics: f2d2de1d546f626bbe9ca1be75fdf156930a8efe
+  RNFBApp: def68a9cfa45d685d540a2934bab81bc32e8cc87
+  RNFBMessaging: e356d5e27b9bd54db1e26c5112cfe3e9d0083aef
   RNFS: 9e5d1c3a660ef08fe2f4868c34d7396247cc9bf9
   RNGestureHandler: 1fe7766166d8be5a28c5f2529fbfd03e22b550f8
   RNGoogleSignin: ee2938633d996756819e3212c8e0f7f696b380d0
@@ -4002,6 +4035,6 @@ SPEC CHECKSUMS:
   Yoga: c7d9adcf9fca72e6219bdc5f1f11b76b38c4a030
   YttriumWrapper: d7f63336830536f1da41b745ed8bacedb04228c4
 
-PODFILE CHECKSUM: 851bcc0d211b5717a5f3a23a27f1b0b7f4aa38ff
+PODFILE CHECKSUM: 6a434b86e923c9c263ddf685eee7c5ba3a4a6918
 
 COCOAPODS: 1.14.3
