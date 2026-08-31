@@ -67,6 +67,8 @@ type SignMainnetGasSelectorHeaderProps = GasSelectorHeaderProps & {
   swapGasInteractionDisabled?: boolean;
   swapGasQuoteVisible?: boolean;
   onSwapGasQuoteVisibleChange?: (visible: boolean) => void;
+  hideGasLevelInSummary?: boolean;
+  rightPrefix?: React.ReactNode;
 };
 
 export const SignMainnetHeaderContent = ({
@@ -119,6 +121,8 @@ export const SignMainnetHeaderContent = ({
   swapGasInteractionDisabled,
   swapGasQuoteVisible,
   onSwapGasQuoteVisibleChange,
+  hideGasLevelInSummary,
+  rightPrefix,
 }: {
   gasList: GasSelectorHeaderProps['gasList'];
   selectedGas: GasSelectorHeaderProps['selectedGas'];
@@ -169,6 +173,8 @@ export const SignMainnetHeaderContent = ({
   swapGasInteractionDisabled?: boolean;
   swapGasQuoteVisible?: boolean;
   onSwapGasQuoteVisibleChange?: (visible: boolean) => void;
+  hideGasLevelInSummary?: boolean;
+  rightPrefix?: React.ReactNode;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -309,9 +315,10 @@ export const SignMainnetHeaderContent = ({
       >
     >
   >({});
+  const gasLevelModalOpen = showMoreOpen || combinedPopupVisible;
   const fetchMode = resolveSignMainnetGasLevelFetchMode({
     isReady,
-    isModalOpen: showMoreOpen,
+    isModalOpen: gasLevelModalOpen,
     nativeTokenInsufficient: !!nativeTokenInsufficient,
     gasAccountUsable,
   });
@@ -515,7 +522,7 @@ export const SignMainnetHeaderContent = ({
     nativeTokenInsufficient,
     requestFingerprint,
     selectedSupportedLevel,
-    showMoreOpen,
+    gasLevelModalOpen,
     supportedLevels,
     levelFetchContextKey,
   ]);
@@ -620,6 +627,7 @@ export const SignMainnetHeaderContent = ({
   useEffect(() => {
     if (swapGasQuoteVisible !== undefined) {
       setCombinedPopupVisible(swapGasQuoteVisible);
+      setShowMoreOpen(swapGasQuoteVisible);
     }
   }, [swapGasQuoteVisible]);
 
@@ -627,6 +635,7 @@ export const SignMainnetHeaderContent = ({
     (open: boolean) => {
       if (renderSwapQuotes) {
         setCombinedPopupVisible(open);
+        setShowMoreOpen(open);
         onSwapGasQuoteVisibleChange?.(open);
       } else {
         setShowMoreOpen(open);
@@ -647,6 +656,8 @@ export const SignMainnetHeaderContent = ({
         label={gasMethodShortcut ? null : t('page.transactions.detail.GasFee')}
         labelPrefix={gasMethodShortcut}
         levelText={t(getGasLevelI18nKey(selectedGas?.level || 'normal'))}
+        hideGasLevelInSummary={hideGasLevelInSummary}
+        rightPrefix={rightPrefix}
         valueText={summary.primaryText}
         textColor={textColor}
         valueColor={summaryValueColor}
@@ -739,6 +750,7 @@ export const SignMainnetHeaderContent = ({
           visible={combinedPopupVisible}
           onClose={() => {
             setCombinedPopupVisible(false);
+            setShowMoreOpen(false);
             onSwapGasQuoteVisibleChange?.(false);
             onGasSettingsOpenChange?.(false);
           }}
@@ -766,6 +778,7 @@ export const SignMainnetHeaderContent = ({
           autoOpenSignal={autoOpenSignal}
           onEditCustomGas={() => {
             setCombinedPopupVisible(false);
+            setShowMoreOpen(false);
             onSwapGasQuoteVisibleChange?.(false);
             setCustomVisible(true);
           }}
@@ -864,6 +877,8 @@ export const SignMainnetGasSelectorHeader = (
       swapGasInteractionDisabled={props.swapGasInteractionDisabled}
       swapGasQuoteVisible={props.swapGasQuoteVisible}
       onSwapGasQuoteVisibleChange={props.onSwapGasQuoteVisibleChange}
+      hideGasLevelInSummary={props.hideGasLevelInSummary}
+      rightPrefix={props.rightPrefix}
     />
   );
 };

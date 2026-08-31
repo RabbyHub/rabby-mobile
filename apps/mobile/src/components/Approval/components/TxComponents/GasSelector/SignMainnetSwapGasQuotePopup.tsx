@@ -339,7 +339,22 @@ export const SignMainnetSwapGasQuotePopup = ({
           )}
         </View>
         {isCustom ? (
-          <IconGasCustomRightArrowCC color={colors2024['neutral-foot']} />
+          <View style={styles.gasCardCustomFooter}>
+            {isActive && costUsd && costUsd !== '-' ? (
+              <Text
+                style={[
+                  styles.gasCardCustomUsd,
+                  isNotEnough && styles.gasCardUsdNotEnough,
+                ]}>
+                {costUsd}
+              </Text>
+            ) : null}
+            <IconGasCustomRightArrowCC
+              width={14}
+              height={14}
+              color={colors2024['neutral-foot']}
+            />
+          </View>
         ) : (
           <View style={styles.gasCardDetails}>
             <Text style={styles.gasCardLevel}>{levelTitle}</Text>
@@ -420,6 +435,8 @@ export const SignMainnetSwapGasQuotePopup = ({
                     </Text>
                   ) : null}
                   <IconGasCustomRightArrowCC
+                    width={14}
+                    height={14}
                     color={colors2024['neutral-foot']}
                   />
                 </View>
@@ -644,6 +661,21 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   gasCardDetails: {
     alignItems: 'center',
     gap: 3,
+  },
+  gasCardCustomFooter: {
+    height: 30,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  gasCardCustomUsd: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
+    textAlign: 'center',
   },
   quotesSection: {
     gap: 16,

@@ -187,6 +187,8 @@ const BridgeShowMore = ({
     value: slippage,
   });
 
+  const showSourceFallback = !!insufficient || !fromToken || !supportDirectSign;
+
   const durationColor = useMemo(() => {
     const mins = Math.ceil((duration || 0) / 60);
     if (mins > 10) {
@@ -247,6 +249,53 @@ const BridgeShowMore = ({
     [QuoteContent, styles, t],
   );
 
+  const sourceSelectorRender = useMemoizedFn((clickable = true) => {
+    if (quoteLoading) {
+      return (
+        <CustomSkeleton
+          style={{
+            width: 60,
+            height: 24,
+            borderRadius: 12,
+          }}
+        />
+      );
+    }
+
+    const content = (
+      <>
+        {isBestQuote ? BestQuoteContent : QuoteContent}
+        {type === 'bridge' && duration ? (
+          <Text style={[styles.sourceName, { color: durationColor }]}>
+            {' · '}
+            {t('page.bridge.duration', {
+              duration: Math.ceil(duration / 60),
+            })}
+          </Text>
+        ) : null}
+        {clickable && (sourceName || sourceLogo) ? (
+          <RcIconBluePolygon
+            style={styles.arrowIcon}
+            color={colors2024['brand-default']}
+          />
+        ) : null}
+        {!sourceLogo && !sourceName ? (
+          <Text style={styles.noQuotePlaceholder}>-</Text>
+        ) : null}
+      </>
+    );
+
+    if (!clickable) {
+      return <View style={styles.quoteContainer}>{content}</View>;
+    }
+
+    return (
+      <TouchableOpacity onPress={openQuotesList} style={styles.quoteContainer}>
+        {content}
+      </TouchableOpacity>
+    );
+  });
+
   const sourceContentRender = useMemoizedFn(() => (
     <ListItem
       name={
@@ -255,38 +304,7 @@ const BridgeShowMore = ({
           : t('page.swap.source')
       }
       style={styles.listItem}>
-      {quoteLoading ? (
-        <CustomSkeleton
-          style={{
-            width: 131,
-            height: 24,
-            borderRadius: 100,
-          }}
-        />
-      ) : (
-        <TouchableOpacity
-          onPress={openQuotesList}
-          style={styles.quoteContainer}>
-          {isBestQuote ? BestQuoteContent : QuoteContent}
-          {duration ? (
-            <Text style={[styles.sourceName, { color: durationColor }]}>
-              {' · '}
-              {t('page.bridge.duration', {
-                duration: Math.ceil(duration / 60),
-              })}
-            </Text>
-          ) : null}
-          {sourceName || sourceLogo ? (
-            <RcIconBluePolygon
-              style={styles.arrowIcon}
-              color={colors2024['brand-default']}
-            />
-          ) : null}
-          {!sourceLogo && !sourceName ? (
-            <Text style={styles.noQuotePlaceholder}>-</Text>
-          ) : null}
-        </TouchableOpacity>
-      )}
+      {sourceSelectorRender()}
     </ListItem>
   ));
 
@@ -345,13 +363,24 @@ const BridgeShowMore = ({
           </View>
         )}
 
-        {!insufficient && fromToken ? (
+        {!showSourceFallback && fromToken ? (
           <DirectSignGasInfo
             supportDirectSign={supportDirectSign}
             loading={!!quoteLoading}
             openShowMore={noop}
             noQuote={!sourceLogo && !sourceName}
             chainServeId={fromToken?.chain}
+            hideGasLevelInSummary
+            sourceSelector={
+              type === 'swap' && (quoteLoading || sourceLogo || sourceName)
+                ? sourceSelectorRender(false)
+                : undefined
+            }
+            fallbackSourceSelector={
+              type === 'swap' && (quoteLoading || sourceLogo || sourceName)
+                ? sourceSelectorRender(false)
+                : undefined
+            }
             onDepositPopupVisibleChange={onDepositPopupVisibleChange}
             onGasSettingsOpenChange={onGasSettingsOpenChange}
             renderSwapQuotes={renderSwapQuotes}
@@ -360,6 +389,8 @@ const BridgeShowMore = ({
             swapGasQuoteVisible={swapGasQuoteVisible}
             onSwapGasQuoteVisibleChange={setSwapGasQuoteVisible}
           />
+        ) : type === 'swap' ? (
+          sourceContentRender()
         ) : null}
 
         {showSlippageWarning ? (
@@ -379,8 +410,6 @@ const BridgeShowMore = ({
             onOptionsOpenChange={onSlippageOptionsOpenChange}
           />
         ) : null}
-
-        {type === 'swap' && sourceContentRender()}
 
         {!showSlippageWarning && (
           <BridgeSlippage
@@ -485,6 +514,9 @@ export const DirectSignGasInfo = ({
   swapQuotesLoading,
   swapGasQuoteVisible,
   onSwapGasQuoteVisibleChange,
+  hideGasLevelInSummary,
+  sourceSelector,
+  fallbackSourceSelector,
 }: {
   supportDirectSign: boolean;
   loading: boolean;
@@ -494,6 +526,9 @@ export const DirectSignGasInfo = ({
   gasFeeListItemStyle?: RNViewProps['style'];
   gasFeeListItemInnerStyle?: RNViewProps['style'];
   textColor?: string;
+  hideGasLevelInSummary?: boolean;
+  sourceSelector?: React.ReactNode;
+  fallbackSourceSelector?: React.ReactNode;
   onDepositPopupVisibleChange?: (visible: boolean) => void;
   onGasSettingsOpenChange?: (open: boolean) => void;
   renderSwapQuotes?: (onSelect: () => void) => React.ReactNode;
@@ -1092,6 +1127,8 @@ export const DirectSignGasInfo = ({
           onAutoChangeGasMethod: handleAutoChangeGasMethod,
           disableAutoGasLevelSwitch: !!manualGasMethod,
           showGasMethodShortcut: false,
+          hideGasLevelInSummary,
+          rightPrefix: sourceSelector,
           disabled: false,
           isReady,
           gasLimit: ctx?.txs?.[0]?.gas,
@@ -1147,6 +1184,7 @@ export const DirectSignGasInfo = ({
             swapGasInteractionDisabled: !showGasContent,
             swapGasQuoteVisible,
             onSwapGasQuoteVisibleChange,
+            rightPrefix: sourceSelector,
           }}
         />
       ) : (
@@ -1154,17 +1192,20 @@ export const DirectSignGasInfo = ({
           name={<>{'Gas Fee'}</>}
           style={gasFeeListItemStyle}
           innerStyle={gasFeeListItemInnerStyle}>
-          {!loading && noQuote ? (
-            <Text style={styles.noQuotePlaceholder}>-</Text>
-          ) : (
-            <CustomSkeleton
-              style={{
-                width: 131,
-                height: 24,
-                borderRadius: 100,
-              }}
-            />
-          )}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {fallbackSourceSelector ?? sourceSelector}
+            {!loading && noQuote ? (
+              <Text style={styles.noQuotePlaceholder}>-</Text>
+            ) : (
+              <CustomSkeleton
+                style={
+                  hideGasLevelInSummary
+                    ? styles.infoCardGasSkeleton
+                    : styles.gasSkeleton
+                }
+              />
+            )}
+          </View>
         </ListItem>
       )}
       {showGasFeeTooHighTips ? (
@@ -1435,6 +1476,16 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   noQuotePlaceholder: {
     color: colors2024['neutral-foot'],
     fontSize: 12,
+  },
+  gasSkeleton: {
+    width: 131,
+    height: 24,
+    borderRadius: 100,
+  },
+  infoCardGasSkeleton: {
+    width: 60,
+    height: 24,
+    borderRadius: 12,
   },
   arrowIcon: {
     transform: [{ rotate: '-90deg' }],
