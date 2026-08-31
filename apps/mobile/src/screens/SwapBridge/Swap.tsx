@@ -100,7 +100,6 @@ import {
   selectSignatureGuardFlags,
 } from '@/components2024/MiniSignV2/state/signatureGuardFlags';
 import { buildFingerprint } from '@/components2024/MiniSignV2/domain/ctx';
-import { BridgeSlippage } from '../Bridge/components/BridgeSlippage';
 import { MarketClosedTip } from '@/components/Token/MarketClosedTip';
 import { APP_VERSIONS } from '@/constant';
 import { stats } from '@/utils/stats';
@@ -2068,26 +2067,9 @@ const Swap = ({
             {showClosedMarketTip ? (
               <MarketClosedTip />
             ) : noQuote ? (
-              <>
-                <Text style={styles.errorTip}>
-                  {t('page.swap.no-quote-found')}
-                </Text>
-                <View>
-                  <BridgeSlippage
-                    value={slippage}
-                    displaySlippage={slippage}
-                    onChange={setSlippage}
-                    autoSlippage={autoSlippage}
-                    isCustomSlippage={isCustomSlippage}
-                    setAutoSlippage={setAutoSlippage}
-                    setIsCustomSlippage={setIsCustomSlippage}
-                    type="swap"
-                    loading={quoteLoading}
-                    autoSuggestSlippage={autoSuggestSlippage}
-                    onOptionsOpenChange={setSlippageOptionsQuoteRefreshPaused}
-                  />
-                </View>
-              </>
+              <Text style={styles.errorTip}>
+                {t('page.swap.no-quote-found')}
+              </Text>
             ) : null}
 
             {isPreviewVisible &&

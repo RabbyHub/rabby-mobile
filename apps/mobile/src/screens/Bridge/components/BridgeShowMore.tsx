@@ -19,7 +19,7 @@ import {
   GasAccountCheckResult,
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { BridgeSlippage, useSlippageTooLowOrTooHigh } from './BridgeSlippage';
+import { BridgeSlippage } from './BridgeSlippage';
 import { tokenPriceImpact } from '../hooks/token';
 import { AppSwitch, AssetAvatar } from '@/components';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -181,11 +181,6 @@ const BridgeShowMore = ({
     () => !quoteLoading && data?.showLoss,
     [data?.showLoss, quoteLoading],
   );
-
-  const showSlippageWarning = useSlippageTooLowOrTooHigh({
-    type: type,
-    value: slippage,
-  });
 
   const showSourceFallback = !!insufficient || !fromToken || !supportDirectSign;
 
@@ -393,41 +388,21 @@ const BridgeShowMore = ({
           sourceContentRender()
         ) : null}
 
-        {showSlippageWarning ? (
-          <BridgeSlippage
-            autoSuggestSlippage={autoSuggestSlippage}
-            value={slippage}
-            displaySlippage={displaySlippage}
-            onChange={onSlippageChange}
-            autoSlippage={autoSlippage}
-            isCustomSlippage={isCustomSlippage}
-            setAutoSlippage={setAutoSlippage}
-            setIsCustomSlippage={setIsCustomSlippage}
-            type={type}
-            isWrapToken={isWrapToken}
-            recommendValue={recommendValue}
-            loading={quoteLoading}
-            onOptionsOpenChange={onSlippageOptionsOpenChange}
-          />
-        ) : null}
-
-        {!showSlippageWarning && (
-          <BridgeSlippage
-            autoSuggestSlippage={autoSuggestSlippage}
-            value={slippage}
-            displaySlippage={displaySlippage}
-            onChange={onSlippageChange}
-            autoSlippage={autoSlippage}
-            isCustomSlippage={isCustomSlippage}
-            setAutoSlippage={setAutoSlippage}
-            setIsCustomSlippage={setIsCustomSlippage}
-            type={type}
-            isWrapToken={isWrapToken}
-            recommendValue={recommendValue}
-            loading={quoteLoading}
-            onOptionsOpenChange={onSlippageOptionsOpenChange}
-          />
-        )}
+        <BridgeSlippage
+          autoSuggestSlippage={autoSuggestSlippage}
+          value={slippage}
+          displaySlippage={displaySlippage}
+          onChange={onSlippageChange}
+          autoSlippage={autoSlippage}
+          isCustomSlippage={isCustomSlippage}
+          setAutoSlippage={setAutoSlippage}
+          setIsCustomSlippage={setIsCustomSlippage}
+          type={type}
+          isWrapToken={isWrapToken}
+          recommendValue={recommendValue}
+          loading={quoteLoading}
+          onOptionsOpenChange={onSlippageOptionsOpenChange}
+        />
 
         <ListItem name={t('page.swap.rabbyFee.title')}>
           {isRabbyFeeFree ? (
