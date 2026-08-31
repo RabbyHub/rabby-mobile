@@ -66,9 +66,3 @@
   @org.greenrobot.eventbus.Subscribe <methods>;
 }
 -keep enum org.greenrobot.eventbus.ThreadMode { *; }
-
-# kotlin
-
--keep class kotlin.** { *; }
-
--keep class kotlin.Metadata { *; }
