@@ -198,6 +198,9 @@ function isSameTokenId(left?: string, right?: string) {
   return !!left && !!right && left.toLowerCase() === right.toLowerCase();
 }
 
+const isMEVProtectionSupported = (chain: CHAINS_ENUM) =>
+  [CHAINS_ENUM.ETH, CHAINS_ENUM.BSC].includes(chain);
+
 function formatSafeHash(hash?: string) {
   if (!hash) {
     return '';
@@ -412,7 +415,7 @@ const Swap = ({
   ] = useRabbyFeeVisible();
 
   const showMEVGuardedSwitch = useMemo(
-    () => chain === CHAINS_ENUM.ETH,
+    () => isMEVProtectionSupported(chain),
     [chain],
   );
 
@@ -420,13 +423,13 @@ const Swap = ({
     swapServiceApi.setSwapPreferMEVGuarded(bool).catch(error => {
       console.error('[Swap] persist MEV preference failed', error);
     });
-    mutatePreferMEVGuarded(bool);
+    mutateMEVProtection(bool);
   });
 
   const {
-    data: originPreferMEVGuarded,
-    mutate: mutatePreferMEVGuarded,
-    run: loadPreferMEVGuarded,
+    data: storedMEVProtection,
+    mutate: mutateMEVProtection,
+    run: loadMEVProtection,
   } = useRequest(
     async () => {
       return swapServiceApi.getSwapPreferMEVGuarded();
@@ -436,13 +439,15 @@ const Swap = ({
 
   useEffect(() => {
     if (sceneActive) {
-      loadPreferMEVGuarded();
+      loadMEVProtection();
     }
-  }, [loadPreferMEVGuarded, sceneActive]);
+  }, [loadMEVProtection, sceneActive]);
+
+  const mevProtection = storedMEVProtection ?? true;
 
   const preferMEVGuarded = useMemo(
-    () => (chain === CHAINS_ENUM.ETH ? originPreferMEVGuarded : false),
-    [chain, originPreferMEVGuarded],
+    () => (isMEVProtectionSupported(chain) ? mevProtection : false),
+    [chain, mevProtection],
   );
   const route =
     useRoute<
@@ -2124,7 +2129,7 @@ const Swap = ({
                       bestQuoteDex === activeProvider?.name
                     }
                     showMEVGuardedSwitch={showMEVGuardedSwitch}
-                    originPreferMEVGuarded={originPreferMEVGuarded}
+                    originPreferMEVGuarded={mevProtection}
                     switchPreferMEV={switchPreferMEV}
                     recommendValue={
                       slippageValidInfo?.is_valid

@@ -683,7 +683,6 @@
       "hidden-no-quote-rates_other": "{{count}}개의 요율을 사용할 수 없습니다.",
       "slippage_tolerance": "슬리피지 허용 범위:",
       "best": "최고의",
-      "preferMEV": "MEV Guarded 우선",
       "actual-slippage": "실제 슬리피지:",
       "approve-swap": "승인 및 스왑",
       "fail-to-simulate-transaction": "트랜잭션 시뮬레이션 실패",

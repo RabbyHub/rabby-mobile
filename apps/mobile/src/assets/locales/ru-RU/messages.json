@@ -1167,7 +1167,6 @@
       "slippage-tolerance": "Допустимое проскальзывание",
       "Completed": "Завершено",
       "insufficient-balance": "Недостаточно средств",
-      "preferMEV": "Предпочитайте MEV Guarded",
       "Gas-fee-too-high": "Комиссия за газ слишком высокая",
       "hidden-no-quote-rates_one": "{{count}} курс недоступен",
       "transaction-might-be-frontrun-because-of-high-slippage-tolerance": "Транзакция может быть фронтран, из-за высокой допустимой погрешности.",

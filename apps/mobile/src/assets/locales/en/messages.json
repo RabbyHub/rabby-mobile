@@ -940,7 +940,7 @@
       "hidden-no-quote-rates_one": "{{count}} rate unavailable",
       "hidden-no-quote-rates_other": "{{count}} rates unavailable",
       "Gas-fee-too-high": "Gas fee too high",
-      "preferMEV": "Prefer MEV Guarded",
+      "preferMEV": "MEV Protection",
       "no-slippage-for-wrap": "No slippage for Wrap",
       "best": "Best",
       "unable-to-fetch-the-price": "Unable to fetch the price",

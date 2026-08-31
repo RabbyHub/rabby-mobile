@@ -1227,7 +1227,6 @@
       "need-to-approve-token-before-swap": "需先授權代幣才能兌換",
       "usd-after-fees": "≈ {{usd}}",
       "slippage-tolerance": "價格滑點容忍度",
-      "preferMEV": "優選 MEV 防護",
       "no-slippage-for-wrap": "封裝代幣無滑點",
       "sort-with-gas": "按 Gas 排序",
       "token": "代幣",

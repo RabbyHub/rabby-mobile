@@ -1306,7 +1306,6 @@
       "no-transaction-records": "Sem registos de transações",
       "hidden-no-quote-rates_other": "{{count}} taxas indisponíveis",
       "pendingTip": "Tx submetida. Se permanecer pendente durante várias horas, pode limpar as transações pendentes nas definições.",
-      "preferMEV": "Preferir MEV Guarded",
       "from": "De",
       "insufficient-balance": "Saldo insuficiente",
       "no-slippage-for-wrap": "Sem slippage para Wrap",

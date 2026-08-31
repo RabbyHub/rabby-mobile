@@ -962,7 +962,6 @@
       "hidden-no-quote-rates_other": "{{count}} tỷ giá không khả dụng",
       "to": "Tới",
       "Completed": "Hoàn thành",
-      "preferMEV": "Ưu tiên MEV Guarded",
       "actual-slippage": "Độ trượt thực tế:",
       "Gas-fee-too-high": "Phí Gas quá cao",
       "no-transaction-records": "Không có bản ghi giao dịch",

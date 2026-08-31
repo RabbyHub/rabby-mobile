@@ -867,7 +867,6 @@
       "actual-slippage": "Glissement réel :",
       "usd-after-fees": "≈ {{usd}} ",
       "to": "À",
-      "preferMEV": "Préférer MEV Guarded",
       "insufficient": "Solde insuffisant :",
       "wrap-contract": "Contrat de wrap",
       "token": "Token",

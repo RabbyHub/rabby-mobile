@@ -927,7 +927,6 @@
       "slippage_tolerance": "Toleransi slippage:",
       "hidden-no-quote-rates_other": "{{count}} tarif tidak tersedia",
       "completedTip": "Transaksi di rantai, mendekode data untuk menghasilkan catatan",
-      "preferMEV": "Sukai MEV Guarded",
       "actual-slippage": "Slippage aktual:",
       "pendingTip": "Tx diajukan. Jika tx menunggu selama berjam-jam, Anda dapat mencoba untuk menghapus pending di pengaturan.",
       "gas-fee-too-high": "Biaya gas terlalu tinggi",

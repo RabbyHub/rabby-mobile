@@ -1287,7 +1287,6 @@
     "swap": {
       "no-transaction-records": "Keine Transaktionsaufzeichnungen",
       "fail-to-simulate-transaction": "Fehler bei der Transaktionssimulation",
-      "preferMEV": "MEV Guarded bevorzugen",
       "hidden-no-quote-rates_other": "{{count}} Raten nicht verfügbar",
       "from": "Von",
       "Completed": "Abgeschlossen",

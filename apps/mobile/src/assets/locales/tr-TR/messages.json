@@ -917,7 +917,6 @@
       "hidden-no-quote-rates_other": "{{count}} oran mevcut değil",
       "from": "Kimden",
       "Pending": "Beklemede",
-      "preferMEV": "MEV Guarded'ı Tercih Et",
       "completedTip": "Zincir üzerindeki işlem, veri çözümleme ile kayıt oluşturma",
       "Completed": "Tamamlandı",
       "hidden-no-quote-rates_one": "{{count}} oran mevcut değil",

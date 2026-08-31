@@ -9579,7 +9579,7 @@ __metadata:
     "@metamask/json-rpc-engine": "npm:^7.3.0"
     "@metamask/utils": "npm:^8.2.0"
     "@rabby-wallet/gnosis-sdk": "npm:1.4.9"
-    "@rabby-wallet/rabby-api": "npm:0.9.63"
+    "@rabby-wallet/rabby-api": "npm:0.9.64"
     "@types/node": "npm:^20.14.8"
     "@typescript-eslint/eslint-plugin": "npm:^5.62.0"
     "@typescript-eslint/parser": "npm:^5.62.0"
@@ -9724,9 +9724,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.9.63":
-  version: 0.9.63
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.63"
+"@rabby-wallet/rabby-api@npm:0.9.64":
+  version: 0.9.64
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.64"
   dependencies:
     "@rabby-wallet/rabby-sign": "npm:0.4.0"
     axios: "npm:^0.27.2"
@@ -9737,7 +9737,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 10/f909e5cb07b24b656b94af9f339abae3732845fabeb480e66d5b7ffafd6263d2617923ac33ad2224c268e5dcd08fa5c9cd989539dccf246ba6835f6107c7263a
+  checksum: 10/46834ea175516ee82a71f5337fe4660e7d9bb6e61e5eeb707a98b24a616adfbb007ee3e5ee2cf92025c7a40997596ea77eedb0d86245096def5dfed96bfe5a61
   languageName: node
   linkType: hard
 
@@ -9789,9 +9789,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-swap@npm:0.0.82":
-  version: 0.0.82
-  resolution: "@rabby-wallet/rabby-swap@npm:0.0.82"
+"@rabby-wallet/rabby-swap@npm:0.0.83":
+  version: 0.0.83
+  resolution: "@rabby-wallet/rabby-swap@npm:0.0.83"
   dependencies:
     "@ethersproject/abi": "npm:^5.7.0"
     axios: "npm:^0.27.2"
@@ -9800,7 +9800,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ">=0.3.60"
     "@rabby-wallet/rabby-api": ">=0.6.28"
-  checksum: 10/fea0212e1d82b79a3e243df1a32d4fb526405c88ce193f52ea9f8d545bbb37fa4c6cc45662c777e4519092a626f7b89fe0be941320c811561ad3441fb742a521
+  checksum: 10/c3e2d0026d64434fc7356f3b129675f78660f8a34eee3f25529589578b221de8e330a621824c4b45a4b07426cb016b6a41c91d8d3182fce45d179bb96c6f3dbf
   languageName: node
   linkType: hard
 
@@ -38537,12 +38537,12 @@ __metadata:
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": "npm:0.1.16"
-    "@rabby-wallet/rabby-api": "npm:0.9.63"
+    "@rabby-wallet/rabby-api": "npm:0.9.64"
     "@rabby-wallet/rabby-bridge": "npm:0.0.8"
     "@rabby-wallet/rabby-logger": "npm:0.3.1"
     "@rabby-wallet/rabby-security-engine": "npm:2.0.12"
     "@rabby-wallet/rabby-sign-bvm": "npm:0.1.1"
-    "@rabby-wallet/rabby-swap": "npm:0.0.82"
+    "@rabby-wallet/rabby-swap": "npm:0.0.83"
     "@rabby-wallet/react-native-bootsplash": "workspace:^"
     "@rabby-wallet/react-native-fs": "workspace:^"
     "@rabby-wallet/react-native-ios-context-menu": "workspace:^"

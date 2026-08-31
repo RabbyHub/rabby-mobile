@@ -1236,7 +1236,6 @@
       "Gas-fee-too-high": "Tarifa de gas demasiado alta",
       "slippage_tolerance": "Tolerancia de deslizamiento:",
       "pendingTip": "Tx enviada. Si permanece pendiente durante varias horas, puedes borrar las transacciones pendientes en los ajustes.",
-      "preferMEV": "Preferir MEV Guarded",
       "best": "Mejor",
       "gas-fee-too-high": "Tarifa de gas demasiado alta",
       "title": "Intercambio",
