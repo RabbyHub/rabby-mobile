@@ -164,7 +164,7 @@
     "transactions": {
       "explain": {
         "unknown": "合约交互",
-        "cancel": "取消了一笔待处理的交易"
+        "cancel": "取消了一笔待确认交易"
       },
       "itemTitle": {
         "Approve": "已授权",
@@ -174,7 +174,7 @@
         "Bridge": "已跨链",
         "Contract": "部署合约",
         "Recieve": "已收到",
-        "Cancel": "取消等待中的交易",
+        "Cancel": "取消待确认交易",
         "Buy": "已购买",
         "Revoke": "撤销{{token}}授权",
         "WithdrawnGas": "已提取 Gas",
@@ -193,7 +193,7 @@
       },
       "detail": {
         "Cancel": "取消",
-        "Pending": "待处理",
+        "Pending": "确认中",
         "Unlimited": "无限制",
         "GasFee": "Gas 费",
         "NoApproveNeed": "无需撤销：没有剩余授权。",
@@ -255,9 +255,9 @@
       "NotShowAllTransactionsToast": "隐藏交易已隐藏",
       "ShowAllTransactionsToast": "隐藏交易已显示",
       "TransactionAlert": {
-        "clearPendingSuccess": "本地待处理交易已移除",
-        "clearPendingText": "{{chainName}} 交易 ({{nonces}}) 已挂起超过 3 分钟。您可以 <5></5> <6>本地清除挂起</6> <7></7> 并重新提交该交易。",
-        "skipNonceText": "Nonce #{{nonce}} 在 {{chainName}} 链上被跳过。这可能导致后续交易待处理。<5></5> <6>在链上提交一笔交易</6> <7></7> 以解决此问题。"
+        "clearPendingSuccess": "本地待处理记录已清除",
+        "clearPendingText": "{{chainName}} 上的交易（{{nonces}}）已超过 3 分钟未确认。你可以<5></5><6>清除本地待处理记录</6><7></7>，然后重新提交交易。",
+        "skipNonceText": "Nonce #{{nonce}} 在 {{chainName}} 链上被跳过。这可能导致后续交易一直无法确认。<5></5><6>在链上提交一笔交易</6><7></7>即可解决。"
       },
       "HideScamTransactions": "隐藏诈骗交易",
       "ShowScamTransactions": "显示诈骗交易",
@@ -288,7 +288,7 @@
     },
     "signTx": {
       "safeAdminSigned": "已签名",
-      "gasPriceTitle": "Gas 价格 (Gwei)",
+      "gasPriceTitle": "Gas 单价（Gwei）",
       "nftCollection": "NFT 合集",
       "nftCollectionApprove": {
         "title": "NFT 合集授权",
@@ -328,8 +328,8 @@
       "contractPopularity": "在 {{1}} 排名第 {{0}}",
       "viewRaw": "查看原始内容",
       "cancelTx": {
-        "title": "取消待处理交易",
-        "gasPriceAlert": "设置当前 Gas 价格高于 {{value}} Gwei 以取消等待中的交易",
+        "title": "取消待确认交易",
+        "gasPriceAlert": "请将当前 Gas 单价调至 {{value}} Gwei 以上，才能取消这笔待确认交易",
         "txToBeCanceled": "待取消的交易"
       },
       "revokeTokenApprove": {
@@ -340,7 +340,7 @@
       "blocked": "已阻止",
       "gasLimitMinValueAlert": "Gas limit 应大于 21000",
       "myMark": "我的标记",
-      "maxPriorityFee": "最大优先费用 (Gwei)",
+      "maxPriorityFee": "最大优先费用（Gwei）",
       "assetOrder": {
         "listAsset": "挂单资产",
         "title": "资产订单",
@@ -411,8 +411,8 @@
       "gasPriceMedian": "最近100笔链上交易的中位数：",
       "gasAccount": {
         "sendGas": "本次交易向您转入的 Gas：",
-        "maxGas": "最大 Gas: ",
-        "estimatedGas": "预估 Gas:",
+        "maxGas": "最大 Gas：",
+        "estimatedGas": "预估 Gas：",
         "gasCost": "将 Gas 转入您的地址所需的 Gas 费用：",
         "description": "使用 GasAccount 支付 Gas 费用。查看支付详情如下："
       },
@@ -496,7 +496,7 @@
         "descriptionTitle": "描述",
         "safeWalletTitle": "Safe{Wallet}"
       },
-      "maxPriorityFeeDisabledAlert": "请先设置 Gas Price",
+      "maxPriorityFeeDisabledAlert": "请先设置 Gas 单价",
       "SafeNonceSelector": {
         "option": {
           "new": "新交易"
@@ -536,7 +536,7 @@
         },
         "mev": {
           "desc": "交易将被广播到指定的 MEV 节点",
-          "title": "MEV Guarded"
+          "title": "MEV 防护"
         }
       },
       "coboSafeModificationDelegatedAddress": {
@@ -576,7 +576,7 @@
         "gasLimitTooLow": "Gas limit 过低",
         "InvalidTx": "无效交易。",
         "insufficient": "您的 Gas 余额不足以支付网络 Gas 费用。请补充 Gas 后重试。",
-        "gasPriceTooLow": "Gas 价格太低。我们会将其上调 30%，以帮助交易确认。点击「重试」确认并再试一次。",
+        "gasPriceTooLow": "Gas 单价过低。我们会自动上调 30%，以提高交易确认成功率。点击「重试」确认并重新提交。",
         "nonceTooLow": "Nonce 太低。我们会将其更新为 {{nonce}}。点击「重试」确认并再试一次。"
       },
       "addLiquidity": {
@@ -594,7 +594,7 @@
       "signedTx": {
         "common": {
           "unlimited": "无限",
-          "pendingDetail": "待处理详情",
+          "pendingDetail": "待确认交易详情",
           "unknownProtocol": "未知协议"
         },
         "empty": {
@@ -604,12 +604,12 @@
           "testnetNoHistory": "自定义代币交易记录不可用。"
         },
         "tips": {
-          "canNotCancel": "无法加速或取消：不是第一个待处理的交易。",
-          "pendingDetail": "只会完成一笔交易，几乎总是具有最高 Gas 价格的那一笔。"
+          "canNotCancel": "无法加速或取消：这不是第一笔待确认交易。",
+          "pendingDetail": "这些待确认交易中最终只会有一笔被确认，通常是 Gas 单价最高的那笔。"
         },
         "message": {
           "cancelSuccess": "已取消",
-          "deleteSuccess": "本地待处理交易已移除"
+          "deleteSuccess": "本地待处理记录已清除"
         },
         "status": {
           "failed": "失败",
@@ -634,8 +634,8 @@
               "desc": "在广播之前取消，无需 Gas 费"
             },
             "removeLocalPendingTx": {
-              "desc": "从界面中移除待处理交易",
-              "title": "清除本地待处理项"
+              "desc": "从 Rabby 界面中移除本地待处理记录",
+              "title": "清除本地待处理记录"
             }
           }
         },
@@ -650,9 +650,9 @@
           "singleNFTApproval": "为 {{protocol}} 单个 NFT 授权"
         },
         "CancelTxConfirmPopup": {
-          "title": "清除本地待处理项",
-          "warning": "被移除的交易可能仍会在链上确认，除非它被替换。",
-          "desc": "这将从您的界面中移除待处理交易。您可以随后发起新的交易。"
+          "title": "清除本地待处理记录",
+          "warning": "清除本地记录后，原交易仍可能在链上确认，除非被另一笔交易替换。",
+          "desc": "这只会从 Rabby 界面中移除本地待处理记录，之后你可以重新发起交易。"
         }
       }
     },
@@ -856,7 +856,7 @@
     },
     "gasTopUp": {
       "Token": "代币",
-      "Loading_Tokens": "正在加载代币...",
+      "Loading_Tokens": "正在加载代币…",
       "Select-from-supported-tokens": "从支持的代币中选择",
       "Deposit-tip": "使用 USDC/USDT 存款",
       "Value": "价值",
@@ -973,7 +973,7 @@
       "bridged": "已发起跨链",
       "gasFeeTooHight": "Gas 费用高于正常情况。仅在您希望继续时确认。",
       "pendingItem": {
-        "pending": "待处理",
+        "pending": "进行中",
         "swap": "兑换",
         "estimatedTime": "预计时间",
         "bridgeStatus": "跨链状态",
@@ -1010,8 +1010,8 @@
         "RevokeButton": {
           "btnText": "撤销",
           "btnText_zero": "撤销",
-          "btnText_other": "解除授权 ({{count}})",
-          "btnText_one": "撤销 ({{count}})",
+          "btnText_other": "撤销（{{count}}）",
+          "btnText_one": "撤销（{{count}}）",
           "permit2Batch": {
             "modalTitle_one": "共需 <2>{{count}}</2> 个签名",
             "modalTitle_other": "总共需要<2>{{count}}</2>个签名",
@@ -1030,7 +1030,7 @@
           },
           "columnTip": {
             "contractTrustValueDanger": "合约信任值 < $10,000",
-            "button": "我知道了。",
+            "button": "我知道了",
             "revokeRecenet": "最近撤销（24小时）：{{ count }}",
             "revokeTrendsValueDanger": "最近的撤销数量是新授权用户数量的 4 倍以上。",
             "revokeNewApproved": "新授权用户（24小时）：{{ count }}",
@@ -1118,7 +1118,7 @@
       "security-verification-failed": "安全验证失败",
       "wrap-contract": "封装合约",
       "Auto": "自动",
-      "slippage_tolerance": "滑点容忍度:",
+      "slippage_tolerance": "滑点容忍度：",
       "Gas-fee-too-high": "Gas 费用过高",
       "completedTip": "交易已提交到链上，正在解码数据并生成记录",
       "by-transaction-simulation-the-quote-is-valid": "通过交易模拟，报价有效",
@@ -1170,7 +1170,7 @@
         "AddMainnetToken": {
           "isBuiltInToken": "已支持该代币"
         },
-        "comingSoon": "即将推出...",
+        "comingSoon": "即将推出…",
         "table": {
           "blockedTokens_zero": "{{count}} 个被阻止的代币",
           "customizeTokens_other": "{{count}} 个自定义代币",
@@ -1241,7 +1241,7 @@
         "savedPhrase": "我已保存助记词",
         "Verify": "验证",
         "passwordTopTips": "此密码将用于解锁您的钱包并加密您的本地数据。",
-        "UnderstandsecurityPrecautions": "我了解这些安全预防措施。",
+        "UnderstandsecurityPrecautions": "我了解这些安全预防措施",
         "backupSeedPhrase": "备份你的助记词，以便在应用被删除或设备丢失时恢复你的钱包。",
         "passwordMin": "至少需要 8 个字符",
         "createOnCurrentDesc": "使用现有导入的助记词创建钱包",
@@ -1254,7 +1254,7 @@
         "seedPhrase": "导入助记词",
         "hardWare": "连接硬件钱包",
         "tips": {
-          "gotIt": "我知道了。",
+          "gotIt": "我知道了",
           "title": "导入到 Rabby 安全吗？",
           "entry": "导入到 Rabby 是否安全",
           "description": "您的数据已被安全加密并存储在您的设备本地。Rabby 无法访问您的私人信息，这些信息也不会与第三方共享。"
@@ -1441,7 +1441,7 @@
         }
       },
       "whatIsSeedPhrase": {
-        "GotIt": "知道了。",
+        "GotIt": "知道了",
         "title1": "备份",
         "title3": "安全性",
         "description4": "您的助记词存储在您的设备上，并通过您的密码加密。只有您可以访问它。Rabby 无法检索或访问您的助记词。",
@@ -1499,20 +1499,20 @@
         "backupFailedTitle": "备份失败",
         "googleDriveBackup": "Google Drive 备份",
         "backupUnlockPlaceholder": "输入密码进行确认",
-        "backupUploadToICloud": "正在备份到 iCloud...",
+        "backupUploadToICloud": "正在备份到 iCloud…",
         "backupRestoreImported": "已导入",
         "backupRestoreTitle": "发现{{count}}个助记词",
         "backupRestoreEmpty": "未找到备份助记词",
         "backupErrorCloudNotAvailable": "iCloud 暂不可用",
-        "backupRestoreCreatedAt": "备份时间: ",
+        "backupRestoreCreatedAt": "备份时间：",
         "backupUnlockTitle": "使用应用密码加密",
         "backupSuccessICloud": "已备份到 iCloud",
-        "backupRestoreLoadingText": "正在搜索备份助记词...",
+        "backupRestoreLoadingText": "正在搜索备份助记词…",
         "backupFailedButton": "重试",
-        "backupRestoreDownloadTitle": "导入助记词...",
+        "backupRestoreDownloadTitle": "导入助记词…",
         "chooseBackupMethodTitle": "选择备份方式",
         "backupTips": "确保在备份助记词时没有其他人看到您的屏幕。",
-        "backupUploadToGDrive": "正在备份到 Google Drive...",
+        "backupUploadToGDrive": "正在备份到 Google Drive…",
         "backupRestoreUnlockDesc": "请输入加密备份时设置的同一密码。",
         "pastedAndClear": "已粘贴并清除剪贴板",
         "backupRestoreUnlockTitle": "输入备份密码",
@@ -1586,16 +1586,16 @@
         "title": "什么是私钥",
         "title4": "安全",
         "title2": "备份",
-        "ButtonGotIt": "我知道了。",
+        "ButtonGotIt": "我知道了",
         "description1": "私钥是一串字母和数字，用于访问和控制您的钱包。您可以使用它在任何设备上恢复您的钱包。",
         "description2": "如果您丢失私钥，将无法恢复钱包。",
         "description4": "您的私钥存储在设备本地，并使用密码加密。只有您可以访问，Rabby 无法找回或访问您的私钥。",
         "description3": "切勿分享您的私钥——任何拥有私钥的人都可以控制您的资金。",
         "title3": "永远不要分享它"
       },
-      "importing": "导入中...",
+      "importing": "导入中…",
       "Done": "完成",
-      "generatingWallets": "正在生成钱包，请稍候...",
+      "generatingWallets": "正在生成钱包，请稍候…",
       "selectAddressesToAdd": "选择要添加的地址"
     },
     "backupPrivateKey": {
@@ -1910,7 +1910,7 @@
         "tokenAddress": "代币地址",
         "enterAddress": "输入地址",
         "foundToken": "已找到代币",
-        "checking": "正在检查代币...",
+        "checking": "正在检查代币…",
         "invalidAddress": "无效的代币地址",
         "notErc20": "该地址未找到 ERC20 代币",
         "alreadyAdded": "该代币已添加",
@@ -2104,7 +2104,7 @@
     "tokenDetail": {
       "relateDefi": "相关 DeFi",
       "noBalance": "无余额",
-      "excludeBalanceTipsButton": "知道了。",
+      "excludeBalanceTipsButton": "知道了",
       "action": {
         "send": "发送",
         "pin": "置顶",
@@ -2277,16 +2277,16 @@
       "autoLockTime": "自动锁定时间",
       "appLaunchLock": "启动时锁定",
       "lockWallet": "锁定钱包",
-      "clearPending": "清除本地待处理事项",
+      "clearPending": "清除本地待处理记录",
       "clearPendingDesc2": "这不会改变您账户中的余额，也不需要您重新输入您的助记词。您所有的资产和账户信息都将保持安全。",
       "currentVersion": "当前版本",
-      "clearPendingDesc1": "这将清除您所有的待处理交易。这样可以帮助您解决在某些情况下 Rabby 中的交易状态与链上状态不匹配的问题。",
+      "clearPendingDesc1": "这会清除 Rabby 中的本地待处理记录，可用于解决 Rabby 显示的交易状态与链上状态不一致的问题。",
       "touchId": "Touch ID",
       "appCache": "清空应用缓存",
       "currentLanguage": "当前语言",
-      "clearPendingWarning": "被移除的交易可能仍会在链上确认，除非它被替换。",
+      "clearPendingWarning": "清除本地记录后，原交易仍可能在链上确认，除非被另一笔交易替换。",
       "clearPendingResetDesc": "同时重置本地 Nonce 数据和签名记录",
-      "clearPendingToast": "本地待处理交易已被移除",
+      "clearPendingToast": "本地待处理记录已清除",
       "clearBrowserData": "清除浏览器数据",
       "currency": "货币",
       "searchCurrency": "搜索货币",
@@ -2311,7 +2311,7 @@
         },
         "title": "清除应用缓存",
         "clearAppCacheDesc": "这将删除临时缓存文件，而不会影响您的个人数据或设置。应用程序需要重新启动以完成此过程。您希望继续吗？",
-        "clearingToast": "正在清理...",
+        "clearingToast": "正在清理…",
         "clearDoneQuitToast": "已清理，即将关闭应用。",
         "iOSToastTitle": "清除缓存成功",
         "iOSToastDesc": "您需要重新启动应用程序才能生效。"
@@ -2347,12 +2347,12 @@
       "noQuote2": "未找到报价。",
       "quotesForYou": "为您提供的报价",
       "paymentsOnly": "支付只能以 {{currency}} 进行",
-      "searchingQuote": "正在为您搜索报价...",
+      "searchingQuote": "正在为您搜索报价…",
       "youWillReceive": "接收",
       "paymentProviderTips": "此提供商支持以下支付方式：",
       "title": "购买",
       "history": "购买记录",
-      "noQuote": "未找到报价：请尝试输入更高的数值。"
+      "noQuote": "未找到报价：请尝试输入更高的金额。"
     },
     "eip7702": {
       "alert": "暂不支持 EIP-7702"
@@ -2577,7 +2577,7 @@
       "noMoreData": "没有更多数据",
       "historyProfit": "历史收益",
       "recentBuy": "最近购买",
-      "comingSoon": "即将推出...",
+      "comingSoon": "即将推出…",
       "smartMoneyWallets": "聪明钱钱包",
       "refreshTitle": "正在加载更多聪明钱跟单交易",
       "smartMoneyWallet": "聪明钱钱包",
@@ -2613,7 +2613,7 @@
       "currentToken": "当前代币",
       "myBalanceFromCopyTrading": "我的跟单交易余额",
       "updateTokenText": "{{count}} 个代币已更新",
-      "gettingLatest": "正在获取聪明钱的最新动态..."
+      "gettingLatest": "正在获取聪明钱的最新动态…"
     },
     "watchlist": {
       "empty": {
@@ -2674,16 +2674,16 @@
         },
         "funding": {
           "title": "资金费率",
-          "summary": "资金费率 (1h) / 倒计时",
+          "summary": "资金费率（1 小时）/倒计时",
           "openDetails": "查看资金费率详情",
           "interval": "周期",
           "previousRate": "上一期资金费率\n/ 年化",
           "nextRate": "下一期资金费率\n/ 年化",
-          "estimatedFee": "预计资金费用",
+          "estimatedFee": "预计资金费",
           "direction": "方向",
           "long": "多仓",
           "short": "空仓",
-          "pays": "支付方",
+          "pays": "支付给",
           "longPaysShort": "多仓向空仓支付",
           "shortPaysLong": "空仓向多仓支付",
           "noPayment": "无需支付",
@@ -2719,7 +2719,7 @@
           "markPrice": "标记价格",
           "estimatedLiquidationPrice": "预计强平价格（距离）",
           "liquidationPrice": "强平价格",
-          "stopPrice": "止损价格",
+          "stopPrice": "触发价格",
           "triggerPrice": "触发价格",
           "amount": "数量",
           "available": "可用",
@@ -2739,7 +2739,7 @@
           "limitDescription": "以指定价格或更优价格买入或卖出",
           "marketDescription": "以当前市场最优价格买入或卖出",
           "conditionalDescription": "达到目标价格时提交限价单或市价单",
-          "gtcDescription": "撤销前有效",
+          "gtcDescription": "撤单前有效",
           "iocDescription": "立即成交或取消",
           "aloDescription": "仅添加流动性",
           "confirmOrder": "确认订单",
@@ -2757,7 +2757,7 @@
           "buyTrigger": "买入触发：",
           "sellTrigger": "卖出触发：",
           "trigger": "触发",
-          "estimatedEntryPrice": "预计入场价格",
+          "estimatedEntryPrice": "预计开仓价格",
           "estimatedTpPnlRoi": "预计止盈 PnL / ROI",
           "estimatedSlPnlRoi": "预计止损 PnL / ROI",
           "tpSlError": {
@@ -2765,7 +2765,7 @@
             "bboUnsupported": "BBO 限价单不支持附加 TP/SL。",
             "conditionalUnsupported": "条件单不支持附加 TP/SL。",
             "insufficientDepth": "当前订单簿深度不足，无法完整估算该市价单。",
-            "invalidDirection": "触发价格必须位于预计入场价格的有效一侧。",
+            "invalidDirection": "触发价格必须位于预计开仓价格的有效一侧。",
             "invalidInput": "请输入有效的正数。",
             "invalidOrderAmount": "请输入符合该市场数量精度的有效订单数量。",
             "invalidTrigger": "预计触发价格无效。",
@@ -2783,7 +2783,7 @@
             "sideLongBuy": "做多（买入）",
             "sideShortSell": "做空（卖出）"
           },
-          "skipConfirmation": "不再显示此订单类型的确认弹窗。",
+          "skipConfirmation": "不再显示此类订单的确认弹窗",
           "accountRequired": "下单前请选择一个 Perps 账户。",
           "insufficientBalance": "余额不足",
           "reduceOnlyUnavailable": "只减仓只能减少当前仓位。",
@@ -2803,8 +2803,8 @@
           "orderFailed": "订单失败。"
         },
         "orderError": {
-          "aloBuyWouldMatch": "Post-only 买入价格必须低于最佳卖价，以避免立即成交。",
-          "aloSellWouldMatch": "Post-only 卖出价格必须高于最佳买价，以避免立即成交。"
+          "aloBuyWouldMatch": "仅挂单模式下，买入价必须低于当前最低卖价，以避免立即成交。",
+          "aloSellWouldMatch": "仅挂单模式下，卖出价必须高于当前最高买价，以避免立即成交。"
         },
         "fieldExplanations": {
           "markPrice": {
@@ -2897,7 +2897,7 @@
           "selectAccount": "选择账户",
           "selectAccountDescription": "选择一个 Perps 账户以查看其余额和资产。",
           "noAssets": "暂无账户资产",
-          "noAssetsDescription": "充值资金后即可开始使用 Perps。",
+          "noAssetsDescription": "充值后即可开始使用 Perps。",
           "loadFailed": "账户数据不可用",
           "loadFailedDescription": "请检查网络连接，然后重新加载账户数据。"
         },
@@ -2912,13 +2912,13 @@
             "orders": "委托历史",
             "trade": "成交历史",
             "transaction": "资金流水",
-            "funding": "资金费用"
+            "funding": "资金费"
           },
           "empty": {
             "orders": "暂无委托历史",
             "trade": "暂无成交历史",
             "transaction": "暂无资金流水",
-            "funding": "暂无资金费用记录"
+            "funding": "暂无资金费记录"
           },
           "noHistory": "暂无历史记录",
           "fields": {
@@ -2978,7 +2978,7 @@
           "marginContextChanged": "仓位或账户已发生变化，请重新检查。",
           "marginRatio": "保证金率",
           "liquidationDistance": "强平距离",
-          "entry": "入场价格",
+          "entry": "开仓价格",
           "mark": "标记价格",
           "liquidation": "强平价格",
           "switchSizeUnit": "切换仓位规模单位",
@@ -3005,7 +3005,7 @@
           "limitPrice": "限价",
           "positionAmount": "仓位数量",
           "estimatedPnl": "预计 PnL",
-          "skipLimitConfirmation": "不再显示限价单的二次确认。",
+          "skipLimitConfirmation": "不再显示限价单的二次确认",
           "closeSubmitted": "平仓订单已提交",
           "closeFailed": "平仓失败",
           "minimumCloseAmount": "最低平仓金额为 $10",
@@ -3024,7 +3024,7 @@
           "estimatedPnl": "预计 PnL",
           "estimatedPnlShort": "预计 PnL",
           "invalidOrder": "请检查 TP/SL 价格和数量",
-          "invalidTrigger": "对于最新标记价格，该触发价格无效",
+          "invalidTrigger": "按最新标记价格判断，该触发价格无效",
           "slTriggerInvalid": "止损触发价格无效，将不会设置",
           "tpTriggerInvalid": "止盈触发价格无效，将不会设置",
           "triggerHigherThanLiquidation": "触发价格应高于强平价格 {{price}}",
@@ -3068,14 +3068,14 @@
           "no": "否",
           "tif": "有效期",
           "edit": "编辑",
-          "entryPrice": "入场价格",
+          "entryPrice": "开仓价格",
           "triggerPrice": "触发价格",
           "limitPrice": "限价",
           "marketPrice": "市价",
           "positionAmount": "仓位数量",
           "estimatedPnl": "预计 PnL",
           "amountAdjusted": "数量（已调整）",
-          "dontShowAgain": "不再显示。",
+          "dontShowAgain": "不再显示",
           "editUnavailable": "无法在此编辑该订单类型。",
           "invalidEdit": "请检查新的价格和数量。",
           "editContextChanged": "账户或订单已发生变化，请重新检查。",
@@ -3131,11 +3131,11 @@
         "learnMore": "了解更多",
         "addFunds": "充值资金",
         "portfolioValue": "账户总价值",
-        "manualAccount": "手动账户",
+        "manualAccount": "标准账户",
         "unifiedAccount": "统一账户",
         "portfolioMarginAccount": "组合保证金账户",
-        "manualAccountDesc": "您在现货与各个永续 DEX 之间分别管理余额，每个 DEX 的全仓保证金相互独立。",
-        "unifiedAccountDesc": "您的账户为每种抵押资产使用单一余额，由现货和使用相同抵押品的全仓永续合约共享。",
+        "manualAccountDesc": "您需要分别管理现货和各永续 DEX 的余额；每个 DEX 也有独立的全仓保证金。",
+        "unifiedAccountDesc": "同一种抵押资产在账户中只有一份余额，由现货和使用该资产作为抵押品的全仓永续合约共享。",
         "portfolioMarginAccountDesc": "您的账户将符合条件的现货资产与永续仓位合并为一个投资组合，以提升资金效率。",
         "breakdownPerps": "永续合约",
         "breakdownSpot": "现货",
@@ -3230,9 +3230,9 @@
         "takeProfitTipsLong": "止盈价格必须高于当前价格",
         "stopLossTipsShort": "止损价格必须高于当前价格",
         "stopLossTipsLong": "止损价格必须低于当前价格",
-        "stopLossTipsShortLiquidation": "价格高于强平价格 ({{price}})",
+        "stopLossTipsShortLiquidation": "价格高于强平价格（{{price}}）",
         "profit": "收益",
-        "stopLossTipsLongLiquidation": "价格低于强平价格 ({{price}})",
+        "stopLossTipsLongLiquidation": "价格低于强平价格（{{price}}）",
         "noPosition": "您必须先输入保证金。"
       },
       "PerpsDepositTokenModal": {
@@ -3245,7 +3245,7 @@
       },
       "history": {
         "status": {
-          "pending": "待处理",
+          "pending": "处理中",
           "completed": "已完成"
         },
         "title": "历史记录",
@@ -3294,6 +3294,7 @@
         "hyperliquidBalance": "永续余额",
         "activatedAddress": "已激活",
         "noPosition": "无仓位",
+        "positionCount_one": "{{count}} 个仓位",
         "positionCount_other": "{{count}} 个仓位"
       },
       "title": "永续合约",
@@ -3327,8 +3328,8 @@
         "liquidationPrice": "强平价格",
         "currentPrice": "当前价格",
         "distanceLabel": "强平距离",
-        "subtitle": "实时强平距离 (%)",
-        "liqIntro": "强平距离 (%) 表示当前价格与强平价格之间的距离。距离越大，说明仓位越安全；距离越小，则强平风险越高。",
+        "subtitle": "实时强平距离（%）",
+        "liqIntro": "强平距离（%）表示当前价格与强平价格之间的距离。距离越大，说明仓位越安全；距离越小，则强平风险越高。",
         "liqDistanceTipsLong": "价格下跌 <1>{{distance}}</1> 将触发强平。",
         "liqDistanceTipsShort": "价格上涨 <1>{{distance}}</1> 将触发强平。"
       },
@@ -3709,7 +3710,7 @@
         "collateral": "抵押品"
       },
       "risk": {
-        "checkbox": "我了解该风险提示，并希望继续。",
+        "checkbox": "我了解该风险提示，并希望继续",
         "warning": "借入该金额会使您的健康因子降至有清算风险的水平。",
         "withdrawWarning": "提取该金额会使您的健康因子降至有清算风险的水平。",
         "toggleCollateralWarning": "关闭该资产的抵押用途会使您的健康因子降至有清算风险的水平。",
@@ -3782,7 +3783,7 @@
           "disable": "禁用 E-Mode"
         },
         "guide": {
-          "title": "效率模式 (E-Mode)",
+          "title": "效率模式（E-Mode）",
           "description": "E-Mode 会提高所选资产类别的 LTV。",
           "buttonTitle": "管理 E-Mode"
         },
@@ -4350,7 +4351,7 @@
   "notifications": {
     "noTransactionDetail": "未找到交易详情。请稍后检查交易历史。",
     "noTransactionOwnerAddress": "该交易不属于您钱包中的任何地址。请稍后检查交易历史记录。",
-    "loadingTransaction": "正在打开交易...",
+    "loadingTransaction": "正在打开交易…",
     "unknownAddressFromTransaction": "交易涉及一个不在您钱包中的地址。请稍后检查交易记录。"
   },
   "backupReminder": {

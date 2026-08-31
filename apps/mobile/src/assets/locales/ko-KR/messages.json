@@ -587,7 +587,7 @@
       },
       "BroadcastMode": {
         "mev": {
-          "title": "MEV Guarded",
+          "title": "MEV 보호",
           "desc": "트랜잭션은 지정된 MEV 노드로 브로드캐스트됩니다."
         },
         "instant": {
@@ -683,7 +683,7 @@
       "hidden-no-quote-rates_other": "{{count}}개의 요율을 사용할 수 없습니다.",
       "slippage_tolerance": "슬리피지 허용 범위:",
       "best": "최고의",
-      "preferMEV": "MEV Guarded 우선",
+      "preferMEV": "MEV 보호 우선 적용",
       "actual-slippage": "실제 슬리피지:",
       "approve-swap": "승인 및 스왑",
       "fail-to-simulate-transaction": "트랜잭션 시뮬레이션 실패",
@@ -1022,7 +1022,7 @@
             "contractTrustValue": "컨트랙트 신뢰도"
           },
           "columnTip": {
-            "button": "알겠습니다.",
+            "button": "알겠습니다",
             "revokeTrendsValueWarning": "최근 철회 건수가 신규 승인 사용자 수의 두 배를 넘습니다.",
             "revokeDangerTitle": "24시간 승인 취소가 승인 수의 4배 초과",
             "revokeRecenet": "최근 철회(24시간): {{ count }}",
@@ -1134,7 +1134,7 @@
         "hardWare": "하드웨어 월렛 연결",
         "privateKey": "개인 키 가져오기",
         "tips": {
-          "gotIt": "알겠습니다.",
+          "gotIt": "알겠습니다",
           "entry": "Rabby로 가져오는 것이 안전한가요?",
           "title": "Rabby에 가져오기가 안전한가요?",
           "description": "귀하의 데이터는 안전하게 암호화되어 기기 내에 로컬로 저장됩니다. Rabby는 귀하의 개인 정보에 접근할 수 없으며, 제삼자와 공유되지 않습니다."
@@ -1525,7 +1525,7 @@
         "logoutSuccess": "로그아웃 성공"
       },
       "GasAccountDepositTipPopup": {
-        "gotIt": "알겠습니다.",
+        "gotIt": "알겠습니다",
         "title": "GasAccount를 열고 입금하기"
       },
       "history": {
@@ -1571,7 +1571,7 @@
         "selectDestinationChain": "대상 체인 선택",
         "destinationChain": "대상 체인",
         "noEnoughGas": "금액이 가스 요금을 충당하기에 너무 낮습니다.",
-        "tipsBtn": "알겠습니다.",
+        "tipsBtn": "알겠습니다",
         "riskMessageFromChain": "위험 관리를 위해 출금 한도는 이 체인에서 입금된 총액에 따라 달라집니다.",
         "noEnoughValuetBalance": "볼트 잔액이 불충분합니다. 체인을 전환하거나 나중에 다시 시도하십시오.",
         "riskMessageFromAddress": "위험 관리로 인해 출금 한도는 이 주소에 입금된 총액에 따라 달라집니다.",
@@ -1740,7 +1740,7 @@
       },
       "whatIsSeedPhrase": {
         "description4": "귀하의 시드 구문은 기기에 로컬로 저장되고 비밀번호로 암호화됩니다. 귀하만 접근할 수 있습니다. Rabby는 귀하의 시드 구문을 검색하거나 접근할 수 없습니다.",
-        "GotIt": "알겠습니다.",
+        "GotIt": "알겠습니다",
         "title3": "안전성",
         "title": "'시드 구문'이란 무엇인가요?",
         "title1": "백업",
@@ -1915,7 +1915,7 @@
       "createNewAddress": "새 지갑 만들기",
       "whatIsPrivateKey": {
         "title3": "절대 공유하지 마세요",
-        "ButtonGotIt": "알겠어요.",
+        "ButtonGotIt": "알겠어요",
         "title4": "안전성",
         "title2": "백업",
         "description2": "개인 키를 잃어버리면 지갑을 복구할 수 없습니다.",
@@ -1981,7 +1981,7 @@
       "noBalance": "잔액 없음",
       "relateDefi": "관련 DeFi",
       "notSupportedOnChain": "이 체인에서는 지원되지 않음",
-      "excludeBalanceTipsButton": "이해했어요.",
+      "excludeBalanceTipsButton": "이해했어요",
       "actionsTips": {
         "excludeBalance_success": "잔액에서 제외됨",
         "unfold_success": "성공적으로 펼쳐졌습니다.",
@@ -2527,9 +2527,9 @@
           "direction": "방향",
           "long": "롱",
           "short": "숏",
-          "pays": "지급",
-          "longPaysShort": "롱이 숏에 지급",
-          "shortPaysLong": "숏이 롱에 지급",
+          "pays": "→",
+          "longPaysShort": "롱에서 숏으로 지급",
+          "shortPaysLong": "숏에서 롱으로 지급",
           "noPayment": "지급 없음",
           "historyUnavailable": "이전 펀딩 비율을 일시적으로 확인할 수 없습니다.",
           "explanation": "펀딩 비율은 롱 포지션 보유자와 숏 포지션 보유자 간의 정기 지급액을 계산하는 데 사용됩니다. 펀딩 비율이 양수이면 롱이 숏에 지급하고, 음수이면 숏이 롱에 지급합니다. 연환산 비율은 단리 방식으로 계산됩니다."
@@ -2538,7 +2538,7 @@
           "price": "가격",
           "pnl": "PnL",
           "roi": "ROI%",
-          "amount": "금액",
+          "amount": "수량",
           "priceAggregation": "가격 단위",
           "viewBoth": "양방향 호가창",
           "viewAsks": "매도 호가창",
@@ -2565,7 +2565,7 @@
           "liquidationPrice": "청산 가격",
           "stopPrice": "스톱 가격",
           "triggerPrice": "트리거 가격",
-          "amount": "금액",
+          "amount": "수량",
           "available": "사용 가능",
           "reduceOnly": "감소 전용",
           "confirmationReduceOnly": "감소 전용",
@@ -2627,7 +2627,7 @@
             "sideLongBuy": "롱(매수)",
             "sideShortSell": "숏(매도)"
           },
-          "skipConfirmation": "이 주문 유형에 대한 확인을 다시 표시하지 않습니다.",
+          "skipConfirmation": "이 주문 유형에 대한 확인을 다시 표시하지 않기",
           "accountRequired": "주문하기 전에 Perps 계정을 선택하세요.",
           "insufficientBalance": "잔액 부족",
           "reduceOnlyUnavailable": "감소 전용 주문은 현재 포지션을 줄이는 데만 사용할 수 있습니다.",
@@ -2689,7 +2689,7 @@
           },
           "liquidationPrice": {
             "title": "청산 가격",
-            "description": "마크 가격이 청산 가격보다 낮아지거나(롱) 높아지면(숏) 포지션이 청산됩니다."
+            "description": "롱 포지션에서는 마크 가격이 청산 가격 아래로 떨어지거나, 숏 포지션에서는 청산 가격 위로 오르면 포지션이 청산됩니다."
           },
           "estimatedPnl": {
             "title": "예상 PnL",
@@ -2755,19 +2755,19 @@
           "tabs": {
             "orders": "주문 내역",
             "trade": "체결 내역",
-            "transaction": "거래 내역",
+            "transaction": "입출금 내역",
             "funding": "펀딩비"
           },
           "empty": {
             "orders": "주문 내역 없음",
             "trade": "체결 내역 없음",
-            "transaction": "거래 내역 없음",
+            "transaction": "입출금 내역 없음",
             "funding": "펀딩 내역 없음"
           },
           "noHistory": "내역 없음",
           "fields": {
             "type": "유형",
-            "amount": "금액",
+            "amount": "수량",
             "filled": "체결됨",
             "price": "가격",
             "fee": "수수료",
@@ -2787,7 +2787,7 @@
           },
           "long": "롱",
           "short": "숏",
-          "true": "참",
+          "true": "예",
           "loadFailed": "내역을 일시적으로 사용할 수 없습니다",
           "refreshFailed": "내역을 새로고침하지 못했습니다",
           "loadingMore": "내역을 더 불러오는 중"
@@ -2844,12 +2844,12 @@
           "market": "시장가",
           "marketPrice": "시장 가격",
           "limit": "지정가",
-          "amount": "금액",
+          "amount": "수량",
           "price": "가격",
           "limitPrice": "지정가 가격",
           "positionAmount": "포지션 수량",
           "estimatedPnl": "예상 PnL",
-          "skipLimitConfirmation": "지정가 주문에 대한 이중 확인을 다시 표시하지 않습니다.",
+          "skipLimitConfirmation": "지정가 주문에 대한 이중 확인을 다시 표시하지 않기",
           "closeSubmitted": "종료 주문을 제출했습니다",
           "closeFailed": "포지션 종료에 실패했습니다",
           "minimumCloseAmount": "최소 종료 금액은 $10입니다",
@@ -2901,7 +2901,7 @@
           "buy": "매수",
           "sell": "매도",
           "filled": "체결됨",
-          "amount": "금액",
+          "amount": "수량",
           "price": "가격",
           "market": "시장가",
           "conditions": "조건",
@@ -2919,7 +2919,7 @@
           "positionAmount": "포지션 수량",
           "estimatedPnl": "예상 PnL",
           "amountAdjusted": "수량(조정됨)",
-          "dontShowAgain": "다시 표시하지 않기.",
+          "dontShowAgain": "다시 표시하지 않기",
           "editUnavailable": "이 주문 유형은 여기에서 수정할 수 없습니다.",
           "invalidEdit": "새 가격과 수량을 확인하세요.",
           "editContextChanged": "계정 또는 주문이 변경되었습니다. 다시 검토하세요.",
@@ -2975,7 +2975,7 @@
         "learnMore": "더 알아보기",
         "addFunds": "자금 추가",
         "portfolioValue": "포트폴리오 가치",
-        "manualAccount": "수동 계정",
+        "manualAccount": "일반 계정",
         "unifiedAccount": "통합 계정",
         "portfolioMarginAccount": "포트폴리오 마진",
         "manualAccountDesc": "현물과 각 무기한 선물 DEX의 잔액을 별도로 관리하며, 교차 마진은 DEX별로 독립적으로 운영됩니다.",
@@ -3133,6 +3133,7 @@
         "swap": "스왑"
       },
       "PerpsAccountSelectorPopup": {
+        "positionCount_one": "{{count}}개 포지션",
         "positionCount_other": "{{count}}개 포지션",
         "lastUsed": "마지막 사용",
         "noPosition": "포지션 없음",

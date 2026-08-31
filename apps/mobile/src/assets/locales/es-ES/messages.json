@@ -725,7 +725,7 @@
       "BroadcastMode": {
         "title": "Modo de Emisión",
         "mev": {
-          "title": "Protegido por MEV",
+          "title": "Protección contra MEV",
           "desc": "Las transacciones se transmitirán al nodo MEV designado"
         },
         "instant": {
@@ -973,7 +973,7 @@
             "revokeTrends": "Tendencias de Revocación de 24h"
           },
           "columnTip": {
-            "button": "Entendido.",
+            "button": "Entendido",
             "revokeRecenet": "Revocaciones recientes (24h): {{ count }}",
             "contractTrustValueWarning": "El valor de confianza del contrato < $100,000",
             "revokeNewApproved": "Usuarios recién aprobados (24h): {{ count }}",
@@ -1236,7 +1236,7 @@
       "Gas-fee-too-high": "Tarifa de gas demasiado alta",
       "slippage_tolerance": "Tolerancia de deslizamiento:",
       "pendingTip": "Tx enviada. Si permanece pendiente durante varias horas, puedes borrar las transacciones pendientes en los ajustes.",
-      "preferMEV": "Preferir MEV Guarded",
+      "preferMEV": "Preferir protección contra MEV",
       "best": "Mejor",
       "gas-fee-too-high": "Tarifa de gas demasiado alta",
       "title": "Intercambio",
@@ -1336,7 +1336,7 @@
         "privateKey": "Importar clave privada",
         "hardWare": "Conectar carteras de hardware",
         "tips": {
-          "gotIt": "Entendido.",
+          "gotIt": "Entendido",
           "title": "¿Es seguro importar a Rabby?",
           "entry": "¿Es seguro importar en Rabby?",
           "description": "Tus datos están cifrados de manera segura y almacenados localmente en tu dispositivo. Rabby no tiene acceso a tu información privada y nunca se comparte con terceros."
@@ -1477,7 +1477,7 @@
       },
       "whatIsSeedPhrase": {
         "title2": "Nunca lo compartas",
-        "GotIt": "Entendido.",
+        "GotIt": "Entendido",
         "title": "¿Qué es una «frase semilla»?",
         "title1": "Copia de seguridad",
         "title3": "Seguridad",
@@ -1674,7 +1674,7 @@
       "createNewAddress": "Crear una cartera nueva",
       "whatIsPrivateKey": {
         "title4": "Seguridad",
-        "ButtonGotIt": "Entendido.",
+        "ButtonGotIt": "Entendido",
         "title": "¿Qué es una clave privada?",
         "description2": "Si pierdes tu clave privada, no podrás recuperar tu cartera.",
         "title2": "Copia de seguridad",
@@ -2124,7 +2124,7 @@
     "tokenDetail": {
       "noBalance": "Sin saldo",
       "relateDefi": "Relacionado con DeFi",
-      "excludeBalanceTipsButton": "Entendido.",
+      "excludeBalanceTipsButton": "Entendido",
       "action": {
         "all": "Todo",
         "excludeBalance": "Excluir del saldo",
@@ -2797,28 +2797,28 @@
           "removeFavorite": "Eliminar {{pair}} de favoritos"
         },
         "funding": {
-          "title": "Tasa de financiamiento",
-          "summary": "Financiamiento (1 h) / Cuenta atrás",
-          "openDetails": "Ver detalles del financiamiento",
+          "title": "Tasa de financiación",
+          "summary": "Financiación (1 h) / Cuenta atrás",
+          "openDetails": "Ver detalles de la financiación",
           "interval": "Intervalo",
-          "previousRate": "Tasa de financiamiento anterior\n/ Anualizada",
-          "nextRate": "Próxima tasa de financiamiento\n/ Anualizada",
-          "estimatedFee": "Comisión de financiamiento estimada",
+          "previousRate": "Tasa de financiación anterior\n/ Anualizada",
+          "nextRate": "Próxima tasa de financiación\n/ Anualizada",
+          "estimatedFee": "Comisión de financiación estimada",
           "direction": "Dirección",
           "long": "Largo",
           "short": "Corto",
-          "pays": "Paga",
+          "pays": "paga a",
           "longPaysShort": "Los largos pagan a los cortos",
           "shortPaysLong": "Los cortos pagan a los largos",
           "noPayment": "Sin pago",
-          "historyUnavailable": "La tasa de financiamiento anterior no está disponible temporalmente.",
-          "explanation": "La tasa de financiamiento se utiliza para calcular los pagos periódicos entre titulares de posiciones largas y cortas. Cuando la tasa es positiva, los largos pagan a los cortos; cuando es negativa, los cortos pagan a los largos. La tasa anualizada se calcula mediante anualización simple."
+          "historyUnavailable": "La tasa de financiación anterior no está disponible temporalmente.",
+          "explanation": "La tasa de financiación se utiliza para calcular los pagos periódicos entre titulares de posiciones largas y cortas. Cuando la tasa es positiva, los largos pagan a los cortos; cuando es negativa, los cortos pagan a los largos. La tasa anualizada se calcula mediante anualización simple."
         },
         "orderBook": {
           "price": "Precio",
           "pnl": "PnL",
           "roi": "ROI %",
-          "amount": "Importe",
+          "amount": "Cantidad",
           "priceAggregation": "Agrupación de precios",
           "viewBoth": "Libro de órdenes de ambos lados",
           "viewAsks": "Libro de órdenes de venta",
@@ -2845,7 +2845,7 @@
           "liquidationPrice": "Precio de liquidación",
           "stopPrice": "Precio de stop",
           "triggerPrice": "Precio de activación",
-          "amount": "Importe",
+          "amount": "Cantidad",
           "available": "Disponible",
           "reduceOnly": "Solo reducir",
           "confirmationReduceOnly": "Solo reducir",
@@ -2891,7 +2891,7 @@
             "insufficientDepth": "El libro de órdenes actual no permite estimar por completo esta orden de mercado.",
             "invalidDirection": "El activador debe estar en el lado válido del precio de entrada estimado.",
             "invalidInput": "Introduce un valor positivo válido.",
-            "invalidOrderAmount": "Introduce un importe de orden que respete la precisión de cantidad de este mercado.",
+            "invalidOrderAmount": "Introduce una cantidad de orden que respete la precisión de este mercado.",
             "invalidTrigger": "El precio de activación estimado no es válido.",
             "iocUnsupported": "Las órdenes límite IOC no admiten TP/SL asociado.",
             "marketBookUnavailable": "El libro de órdenes actual no está disponible o está desactualizado. Inténtalo de nuevo cuando se actualice.",
@@ -2923,7 +2923,7 @@
           "attachedTpSlUnknown": "Se desconoce el resultado del envío. No vuelvas a crear la misma orden hasta que se confirme su estado.",
           "attachedTpSlUnresolved": "Hay un envío de TP/SL anterior sin resolver para este mercado. Comprueba Órdenes abiertas y Posiciones antes de volver a intentarlo.",
           "orderFilled": "Orden ejecutada.",
-          "orderPlaced": "Orden colocada.",
+          "orderPlaced": "Orden enviada.",
           "orderFailed": "La orden ha fallado."
         },
         "orderError": {
@@ -3035,19 +3035,19 @@
           "tabs": {
             "orders": "Historial de órdenes",
             "trade": "Historial de operaciones",
-            "transaction": "Historial de transacciones",
-            "funding": "Comisión de financiamiento"
+            "transaction": "Depósitos y retiradas",
+            "funding": "Comisión de financiación"
           },
           "empty": {
             "orders": "No hay historial de órdenes",
             "trade": "No hay historial de operaciones",
-            "transaction": "No hay historial de transacciones",
-            "funding": "No hay historial de financiamiento"
+            "transaction": "No hay depósitos ni retiradas",
+            "funding": "No hay historial de financiación"
           },
           "noHistory": "Sin historial",
           "fields": {
             "type": "Tipo",
-            "amount": "Importe",
+            "amount": "Cantidad",
             "filled": "Ejecutada",
             "price": "Precio",
             "fee": "Comisión",
@@ -3067,7 +3067,7 @@
           },
           "long": "Largo",
           "short": "Corto",
-          "true": "Verdadero",
+          "true": "Sí",
           "loadFailed": "El historial no está disponible temporalmente",
           "refreshFailed": "No se ha podido actualizar el historial",
           "loadingMore": "Cargando más historial"
@@ -3124,10 +3124,10 @@
           "market": "Mercado",
           "marketPrice": "Precio de mercado",
           "limit": "Límite",
-          "amount": "Importe",
+          "amount": "Cantidad",
           "price": "Precio",
           "limitPrice": "Precio límite",
-          "positionAmount": "Importe de la posición",
+          "positionAmount": "Cantidad de la posición",
           "estimatedPnl": "PnL estimado",
           "skipLimitConfirmation": "No volver a mostrar la doble confirmación para órdenes límite.",
           "closeSubmitted": "Orden de cierre enviada",
@@ -3147,7 +3147,7 @@
           "estimatedLiquidation": "Precio de liquidación est.",
           "estimatedPnl": "PnL estimado",
           "estimatedPnlShort": "PnL est.",
-          "invalidOrder": "Revisa el precio y el importe de TP/SL",
+          "invalidOrder": "Revisa el precio y la cantidad de TP/SL",
           "invalidTrigger": "El precio de activación no es válido para el precio de marca más reciente",
           "slTriggerInvalid": "El precio de activación de SL no es válido y no se establecerá",
           "tpTriggerInvalid": "El precio de activación de TP no es válido y no se establecerá",
@@ -3156,7 +3156,7 @@
           "modify": "Modificar",
           "modifyTitle": "Modificar orden",
           "partialSubmitted": "Se han enviado algunas órdenes TP/SL. Las órdenes más recientes aparecerán tras actualizar.",
-          "positionAmount": "Importe de la posición",
+          "positionAmount": "Cantidad de la posición",
           "positionSizeCoverage": "{{percent}} del tamaño de la posición",
           "replaceFailedAfterCancel": "La orden anterior se canceló, pero no se creó la orden de sustitución.",
           "stopLoss": "Stop Loss",
@@ -3170,7 +3170,7 @@
           "triggerDescription": "Cuando el <1>precio de marca</1> alcance <1>{{trigger}} {{quoteAsset}}</1>, se activará una orden de <1>mercado</1>. El PnL estimado será de <2>{{pnl}} {{quoteAsset}} (ROI: {{roi}} %)</2>",
           "triggerPrice": "Precio de activación",
           "unavailable": "El TP/SL de la posición no está disponible temporalmente",
-          "unfilledAmount": "Importe sin ejecutar",
+          "unfilledAmount": "Cantidad sin ejecutar",
           "volume": "Volumen"
         },
         "openOrders": {
@@ -3181,12 +3181,12 @@
           "buy": "Comprar",
           "sell": "Vender",
           "filled": "Ejecutada",
-          "amount": "Importe",
+          "amount": "Cantidad",
           "price": "Precio",
           "market": "Mercado",
           "conditions": "Condiciones",
           "trigger": "Activador",
-          "mark": "Marca",
+          "mark": "Precio de marca",
           "reduceOnly": "Solo reducir",
           "yes": "Sí",
           "no": "No",
@@ -3196,12 +3196,12 @@
           "triggerPrice": "Precio de activación",
           "limitPrice": "Precio límite",
           "marketPrice": "Precio de mercado",
-          "positionAmount": "Importe de la posición",
+          "positionAmount": "Cantidad de la posición",
           "estimatedPnl": "PnL estimado",
-          "amountAdjusted": "Importe (ajustado)",
+          "amountAdjusted": "Cantidad (ajustada)",
           "dontShowAgain": "No volver a mostrar.",
           "editUnavailable": "Este tipo de orden no puede editarse aquí.",
-          "invalidEdit": "Revisa el nuevo precio y el importe.",
+          "invalidEdit": "Revisa el nuevo precio y la cantidad.",
           "editContextChanged": "La cuenta o la orden han cambiado. Vuelve a revisarlo.",
           "editOrderChanged": "La orden ha cambiado. Revisa la orden actualizada.",
           "editOrderClosed": "Esta orden ya no está abierta.",
@@ -3255,7 +3255,7 @@
         "learnMore": "Aprender más",
         "addFunds": "Añadir fondos",
         "portfolioValue": "Valor de la cartera",
-        "manualAccount": "Cuenta manual",
+        "manualAccount": "Cuenta con saldos separados",
         "unifiedAccount": "Cuenta unificada",
         "portfolioMarginAccount": "Margen de cartera",
         "manualAccountDesc": "Gestionas saldos separados entre Spot y cada DEX de Perps, con margen cruzado independiente por DEX.",
@@ -3570,7 +3570,7 @@
         "24Vol": "Volumen en 24h",
         "openInterest": "Interés Abierto",
         "funding": "Financiación",
-        "fundingRate": "Tasa de financiamiento"
+        "fundingRate": "Tasa de financiación"
       },
       "PerpsIntro": {
         "title": "¿Qué son los Perps?",
@@ -3591,9 +3591,9 @@
         "amount": "Cantidad",
         "minimumWarning": "La cantidad mínima es del {{percent}}%",
         "rabbyFeeTipsV2": "Rabby tarifa: 0.02%",
-        "estReceive": "Recepción est.",
-        "estClosedPnl": "PNL cerrado est.",
-        "limitClosePlacedToast": "Cierre límite {{direction}} {{coin}}: tamaño {{size}} colocado a ${{price}}"
+        "estReceive": "Recepción estimada",
+        "estClosedPnl": "PnL de cierre estimado",
+        "limitClosePlacedToast": "Orden límite de cierre {{direction}} {{coin}}: {{size}} a ${{price}}"
       },
       "PerpsOpenPositionPopup": {
         "title": "Abrir posición de {{coin}}",

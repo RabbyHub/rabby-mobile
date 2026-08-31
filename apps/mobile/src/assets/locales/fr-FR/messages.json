@@ -426,7 +426,7 @@
           "label": "Délai d'attente"
         },
         "mev": {
-          "title": "MEV Guarded",
+          "title": "Protégé contre le MEV",
           "desc": "Les transactions seront diffusées au nœud MEV désigné."
         }
       },
@@ -694,7 +694,7 @@
             "contractTrustValue": "Valeur de confiance du contrat"
           },
           "columnTip": {
-            "button": "J'ai compris.",
+            "button": "J'ai compris",
             "revokeWarningTitle": "Les révocations sur 24 h dépassent 2x les approbations",
             "revokeTrendsValueDanger": "Les révocations récentes sont supérieures à 4 fois le nombre de nouveaux utilisateurs approuvés.",
             "revokeRecenet": "Révocations récentes (24h) : {{ count }}",
@@ -867,7 +867,7 @@
       "actual-slippage": "Glissement réel :",
       "usd-after-fees": "≈ {{usd}} ",
       "to": "À",
-      "preferMEV": "Préférer MEV Guarded",
+      "preferMEV": "Préférer la protection contre le MEV",
       "insufficient": "Solde insuffisant :",
       "wrap-contract": "Contrat de wrap",
       "token": "Token",
@@ -1143,7 +1143,7 @@
         "seedPhrase": "Importer la phrase secrète",
         "hardWare": "Connecter des portefeuilles matériels",
         "tips": {
-          "gotIt": "J'ai compris.",
+          "gotIt": "J'ai compris",
           "entry": "L’importation dans Rabby est-elle sûre ?",
           "title": "Est-il sûr d'importer dans Rabby ?",
           "description": "Vos données sont sécurisées par un chiffrement et stockées localement sur votre appareil. Rabby n'a pas accès à vos informations privées et celles-ci ne sont jamais partagées avec des tiers."
@@ -1400,7 +1400,7 @@
       "Quick": "Rapide",
       "createNewSeedPhrase": "Créer une nouvelle phrase de récupération",
       "whatIsSeedPhrase": {
-        "GotIt": "J'ai compris.",
+        "GotIt": "J'ai compris",
         "title2": "Ne le partagez jamais",
         "title3": "Sécurité",
         "title1": "Sauvegarde",
@@ -1602,7 +1602,7 @@
         "title4": "Sécurité",
         "title3": "Ne jamais le partager",
         "title2": "Sauvegarde",
-        "ButtonGotIt": "J’ai compris.",
+        "ButtonGotIt": "J’ai compris",
         "description3": "Ne partagez jamais votre clé privée : quiconque y a accès peut contrôler vos fonds.",
         "description2": "Si vous perdez votre clé privée, vous ne pourrez pas restaurer votre portefeuille.",
         "description1": "Une clé privée est une chaîne de lettres et de chiffres qui permet d’accéder à votre portefeuille et de le contrôler. Elle permet de restaurer votre portefeuille sur n’importe quel appareil.",
@@ -1920,7 +1920,7 @@
         "excludeBalance_success": "Exclu du solde",
         "pin_success": "Épinglé avec succès"
       },
-      "excludeBalanceTipsButton": "J'ai compris.",
+      "excludeBalanceTipsButton": "J'ai compris",
       "ListedBy": "Listé par",
       "BridgeIssue": "Jeton ponté par un tiers",
       "SupportedExchanges": "Plateformes d’échange compatibles",
@@ -2536,18 +2536,18 @@
           "direction": "Direction",
           "long": "Long",
           "short": "Short",
-          "pays": "Paye",
-          "longPaysShort": "Les longs payent les shorts",
-          "shortPaysLong": "Les shorts payent les longs",
+          "pays": "paie",
+          "longPaysShort": "Les longs paient les shorts",
+          "shortPaysLong": "Les shorts paient les longs",
           "noPayment": "Aucun paiement",
           "historyUnavailable": "Le taux de financement précédent est temporairement indisponible.",
-          "explanation": "Le taux de financement sert à calculer les paiements périodiques entre les détenteurs de positions longues et courtes. Lorsqu’il est positif, les longs payent les shorts ; lorsqu’il est négatif, les shorts payent les longs. Le taux annualisé est calculé par annualisation simple."
+          "explanation": "Le taux de financement sert à calculer les paiements périodiques entre les détenteurs de positions longues et courtes. Lorsqu’il est positif, les longs paient les shorts ; lorsqu’il est négatif, les shorts paient les longs. Le taux annualisé est calculé par annualisation simple."
         },
         "orderBook": {
           "price": "Prix",
           "pnl": "PnL",
           "roi": "ROI %",
-          "amount": "Montant",
+          "amount": "Quantité",
           "priceAggregation": "Regroupement des prix",
           "viewBoth": "Carnet d’ordres des deux côtés",
           "viewAsks": "Carnet d’ordres vendeurs",
@@ -2574,7 +2574,7 @@
           "liquidationPrice": "Prix de liquidation",
           "stopPrice": "Prix stop",
           "triggerPrice": "Prix de déclenchement",
-          "amount": "Montant",
+          "amount": "Quantité",
           "available": "Disponible",
           "reduceOnly": "Réduction uniquement",
           "confirmationReduceOnly": "Réduction uniquement",
@@ -2620,7 +2620,7 @@
             "insufficientDepth": "Le carnet d’ordres actuel ne permet pas d’estimer entièrement cet ordre au marché.",
             "invalidDirection": "Le déclencheur doit se situer du côté valide du prix d’entrée estimé.",
             "invalidInput": "Saisissez une valeur positive valide.",
-            "invalidOrderAmount": "Saisissez un montant d’ordre conforme à la précision de quantité de ce marché.",
+            "invalidOrderAmount": "Saisissez une quantité d’ordre conforme à la précision de ce marché.",
             "invalidTrigger": "Le prix de déclenchement estimé n’est pas valide.",
             "iocUnsupported": "Les ordres limites IOC ne prennent pas en charge le TP/SL associé.",
             "marketBookUnavailable": "Le carnet d’ordres actuel est indisponible ou obsolète. Réessayez après son actualisation.",
@@ -2652,7 +2652,7 @@
           "attachedTpSlUnknown": "Le résultat de l’envoi est inconnu. Ne placez pas à nouveau le même ordre tant que son statut n’est pas confirmé.",
           "attachedTpSlUnresolved": "Un précédent envoi TP/SL pour ce marché n’est pas résolu. Vérifiez les ordres ouverts et les positions avant de réessayer.",
           "orderFilled": "Ordre exécuté.",
-          "orderPlaced": "Ordre placé.",
+          "orderPlaced": "Ordre passé.",
           "orderFailed": "Échec de l’ordre."
         },
         "orderError": {
@@ -2670,7 +2670,7 @@
           },
           "reduceOnly": {
             "title": "Réduction uniquement",
-            "description": "Cet ordre n’ouvrira aucune nouvelle position, quel que soit son montant. Lors de l’exécution, le montant de l’ordre sera comparé à celui de la position existante."
+            "description": "Cet ordre n’ouvrira aucune nouvelle position, quelle que soit sa taille. Lors de l’exécution, la taille de l’ordre sera comparée à celle de la position existante."
           },
           "cost": {
             "title": "Coût",
@@ -2760,23 +2760,23 @@
           "coin": "Crypto"
         },
         "history": {
-          "title": "Mes transactions",
+          "title": "Mes trades",
           "tabs": {
             "orders": "Historique des ordres",
             "trade": "Historique des trades",
-            "transaction": "Historique des transactions",
+            "transaction": "Dépôts et retraits",
             "funding": "Frais de financement"
           },
           "empty": {
             "orders": "Aucun historique d’ordres",
             "trade": "Aucun historique de trades",
-            "transaction": "Aucun historique de transactions",
+            "transaction": "Aucun dépôt ni retrait",
             "funding": "Aucun historique de financement"
           },
           "noHistory": "Aucun historique",
           "fields": {
             "type": "Type",
-            "amount": "Montant",
+            "amount": "Quantité",
             "filled": "Exécuté",
             "price": "Prix",
             "fee": "Frais",
@@ -2796,7 +2796,7 @@
           },
           "long": "Long",
           "short": "Short",
-          "true": "Vrai",
+          "true": "Oui",
           "loadFailed": "L’historique est temporairement indisponible",
           "refreshFailed": "Échec de l’actualisation de l’historique",
           "loadingMore": "Chargement de l’historique supplémentaire"
@@ -2853,10 +2853,10 @@
           "market": "Marché",
           "marketPrice": "Prix du marché",
           "limit": "Limite",
-          "amount": "Montant",
+          "amount": "Quantité",
           "price": "Prix",
           "limitPrice": "Prix limite",
-          "positionAmount": "Montant de la position",
+          "positionAmount": "Quantité de la position",
           "estimatedPnl": "PnL estimé",
           "skipLimitConfirmation": "Ne plus afficher la double confirmation pour les ordres limites.",
           "closeSubmitted": "Ordre de clôture envoyé",
@@ -2876,7 +2876,7 @@
           "estimatedLiquidation": "Prix de liquidation est.",
           "estimatedPnl": "PnL estimé",
           "estimatedPnlShort": "PnL est.",
-          "invalidOrder": "Vérifiez le prix et le montant du TP/SL",
+          "invalidOrder": "Vérifiez le prix et la quantité du TP/SL",
           "invalidTrigger": "Le prix de déclenchement n’est pas valide pour le dernier prix de référence",
           "slTriggerInvalid": "Le prix de déclenchement SL n’est pas valide et ne sera pas défini",
           "tpTriggerInvalid": "Le prix de déclenchement TP n’est pas valide et ne sera pas défini",
@@ -2885,7 +2885,7 @@
           "modify": "Modifier",
           "modifyTitle": "Modifier l’ordre",
           "partialSubmitted": "Certains ordres TP/SL ont été envoyés. Les derniers ordres s’afficheront après actualisation.",
-          "positionAmount": "Montant de la position",
+          "positionAmount": "Quantité de la position",
           "positionSizeCoverage": "{{percent}} de la taille de la position",
           "replaceFailedAfterCancel": "L’ordre précédent a été annulé, mais l’ordre de remplacement n’a pas été créé.",
           "stopLoss": "Stop Loss",
@@ -2899,7 +2899,7 @@
           "triggerDescription": "Lorsque le <1>prix de référence</1> atteint <1>{{trigger}} {{quoteAsset}}</1>, un ordre au <1>marché</1> est déclenché. Le PnL estimé sera de <2>{{pnl}} {{quoteAsset}} (ROI : {{roi}} %)</2>",
           "triggerPrice": "Prix de déclenchement",
           "unavailable": "Le TP/SL de position est temporairement indisponible",
-          "unfilledAmount": "Montant non exécuté",
+          "unfilledAmount": "Quantité non exécutée",
           "volume": "Volume"
         },
         "openOrders": {
@@ -2910,12 +2910,12 @@
           "buy": "Acheter",
           "sell": "Vendre",
           "filled": "Exécuté",
-          "amount": "Montant",
+          "amount": "Quantité",
           "price": "Prix",
           "market": "Marché",
           "conditions": "Conditions",
           "trigger": "Déclencheur",
-          "mark": "Référence",
+          "mark": "Prix de référence",
           "reduceOnly": "Réduction uniquement",
           "yes": "Oui",
           "no": "Non",
@@ -2925,12 +2925,12 @@
           "triggerPrice": "Prix de déclenchement",
           "limitPrice": "Prix limite",
           "marketPrice": "Prix du marché",
-          "positionAmount": "Montant de la position",
+          "positionAmount": "Quantité de la position",
           "estimatedPnl": "PnL estimé",
-          "amountAdjusted": "Montant (ajusté)",
+          "amountAdjusted": "Quantité (ajustée)",
           "dontShowAgain": "Ne plus afficher.",
           "editUnavailable": "Ce type d’ordre ne peut pas être modifié ici.",
-          "invalidEdit": "Vérifiez le nouveau prix et le montant.",
+          "invalidEdit": "Vérifiez le nouveau prix et la quantité.",
           "editContextChanged": "Le compte ou l’ordre a changé. Vérifiez à nouveau.",
           "editOrderChanged": "L’ordre a changé. Vérifiez l’ordre mis à jour.",
           "editOrderClosed": "Cet ordre n’est plus ouvert.",
@@ -2984,7 +2984,7 @@
         "addFunds": "Ajouter des fonds",
         "learnMore": "En savoir plus",
         "portfolioValue": "Valeur du portefeuille",
-        "manualAccount": "Compte manuel",
+        "manualAccount": "Compte à soldes séparés",
         "unifiedAccount": "Compte unifié",
         "portfolioMarginAccount": "Marge de portefeuille",
         "manualAccountDesc": "Vous gérez des soldes séparés entre le Spot et chaque DEX de Perps, avec une marge croisée indépendante par DEX.",
@@ -3320,9 +3320,9 @@
         "minimumWarning": "Le montant minimum est de {{percent}}%",
         "total": "Total",
         "rabbyFeeTipsV2": "Frais Rabby : 0,02 %",
-        "estReceive": "Réception est.",
-        "estClosedPnl": "PNL clôturé est.",
-        "limitClosePlacedToast": "Clôture limite {{direction}} {{coin}} : taille {{size}} placée à ${{price}}"
+        "estReceive": "Réception estimée",
+        "estClosedPnl": "PnL de clôture estimé",
+        "limitClosePlacedToast": "Ordre limite de clôture {{direction}} {{coin}} : {{size}} à ${{price}}"
       },
       "PerpsOpenPositionPopup": {
         "title": "Ouvrir une position {{coin}}",

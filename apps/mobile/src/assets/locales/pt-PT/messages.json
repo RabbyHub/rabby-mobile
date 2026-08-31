@@ -863,7 +863,7 @@
       "BroadcastMode": {
         "mev": {
           "desc": "As transações serão transmitidas para o nó MEV designado",
-          "title": "Protegido por MEV"
+          "title": "Proteção contra MEV"
         },
         "tips": {
           "notSupportChain": "Não suportado nesta rede",
@@ -1306,7 +1306,7 @@
       "no-transaction-records": "Sem registos de transações",
       "hidden-no-quote-rates_other": "{{count}} taxas indisponíveis",
       "pendingTip": "Tx submetida. Se permanecer pendente durante várias horas, pode limpar as transações pendentes nas definições.",
-      "preferMEV": "Preferir MEV Guarded",
+      "preferMEV": "Preferir proteção contra MEV",
       "from": "De",
       "insufficient-balance": "Saldo insuficiente",
       "no-slippage-for-wrap": "Sem slippage para Wrap",
@@ -1412,7 +1412,7 @@
             "revokeRecenet": "Revogações recentes (24h): {{ count }}",
             "revokeNewApproved": "Novos utilizadores aprovados (24h): {{ count }}",
             "contractTrustValue": "O valor de confiança refere-se ao valor total do ativo gasto por este contrato. Um valor de confiança baixo indica risco ou inatividade durante 180 dias.",
-            "button": "Compreendi.",
+            "button": "Compreendi",
             "normalTrustValueDanger": "O valor de confiança do contrato: {{ contractUsdText }}",
             "revokeTrendsValueWarning": "As revogações recentes são mais do que o dobro do número de novos utilizadores aprovados.",
             "revokeTrendsValueDanger": "As revogações recentes são mais de 4 vezes o número de novos utilizadores aprovados.",
@@ -1519,7 +1519,7 @@
         "seedPhrase": "Importar frase-semente",
         "hardWare": "Ligar carteiras de hardware",
         "tips": {
-          "gotIt": "Compreendi.",
+          "gotIt": "Compreendi",
           "title": "É seguro importar para a Rabby?",
           "entry": "É seguro importar para a Rabby?",
           "description": "Os seus dados são encriptados de forma segura e armazenados localmente no seu dispositivo. A Rabby não tem acesso à sua informação privada e esta nunca é partilhada com terceiros."
@@ -1583,7 +1583,7 @@
       "createNewSeedPhrase": "Criar nova frase-semente",
       "whatIsSeedPhrase": {
         "title1": "Cópia de segurança",
-        "GotIt": "Compreendi.",
+        "GotIt": "Compreendi",
         "title3": "Segurança",
         "description3": "Nunca partilhe a sua frase-semente — qualquer pessoa com acesso à mesma pode controlar os seus fundos.",
         "title2": "Nunca partilhe",
@@ -1780,7 +1780,7 @@
       "whatIsPrivateKey": {
         "title2": "Cópia de segurança",
         "title": "O que é uma chave privada?",
-        "ButtonGotIt": "Compreendi.",
+        "ButtonGotIt": "Compreendi",
         "title4": "Segurança",
         "description2": "Se perder a sua chave privada, não poderá restaurar a sua carteira.",
         "title3": "Nunca o partilhe",
@@ -2181,7 +2181,7 @@
     "tokenDetail": {
       "notSupportedOnChain": "Não suportado nesta rede",
       "relateDefi": "Relacionado com DeFi",
-      "excludeBalanceTipsButton": "Compreendi.",
+      "excludeBalanceTipsButton": "Compreendi",
       "action": {
         "unpin": "Desafixar",
         "send": "Enviar",
@@ -2912,9 +2912,9 @@
           "direction": "Direção",
           "long": "Long",
           "short": "Short",
-          "pays": "Paga",
-          "longPaysShort": "Long paga a Short",
-          "shortPaysLong": "Short paga a Long",
+          "pays": "paga a",
+          "longPaysShort": "Longs pagam aos shorts",
+          "shortPaysLong": "Shorts pagam aos longs",
           "noPayment": "Sem pagamento",
           "historyUnavailable": "A taxa de financiamento anterior está temporariamente indisponível.",
           "explanation": "A taxa de financiamento é utilizada para calcular pagamentos periódicos entre titulares de posições long e short. Quando a taxa é positiva, os longs pagam aos shorts; quando é negativa, os shorts pagam aos longs. A taxa anualizada é calculada através de anualização simples."
@@ -2923,7 +2923,7 @@
           "price": "Preço",
           "pnl": "PnL",
           "roi": "ROI%",
-          "amount": "Montante",
+          "amount": "Quantidade",
           "priceAggregation": "Agregação de preços",
           "viewBoth": "Livro de ordens dos dois lados",
           "viewAsks": "Livro de ordens de venda",
@@ -2950,7 +2950,7 @@
           "liquidationPrice": "Preço de liquidação",
           "stopPrice": "Preço stop",
           "triggerPrice": "Preço de ativação",
-          "amount": "Montante",
+          "amount": "Quantidade",
           "available": "Disponível",
           "reduceOnly": "Apenas redução",
           "confirmationReduceOnly": "Apenas redução",
@@ -2996,7 +2996,7 @@
             "insufficientDepth": "O livro de ordens atual não permite estimar totalmente esta ordem de mercado.",
             "invalidDirection": "A ativação deve estar no lado válido do preço de entrada estimado.",
             "invalidInput": "Introduza um valor positivo válido.",
-            "invalidOrderAmount": "Introduza um montante de ordem compatível com a precisão de quantidade deste mercado.",
+            "invalidOrderAmount": "Introduza uma quantidade de ordem compatível com a precisão deste mercado.",
             "invalidTrigger": "O preço de ativação estimado é inválido.",
             "iocUnsupported": "As ordens limite IOC não suportam TP/SL associado.",
             "marketBookUnavailable": "O livro de ordens atual está indisponível ou desatualizado. Tente novamente depois de ser atualizado.",
@@ -3054,7 +3054,7 @@
           },
           "estimatedLiquidationPrice": {
             "title": "Preço de liquidação",
-            "description": "O Preço de liquidação apresentado é uma estimativa e pode diferir do preço real. Monitorize o preço de liquidação e o rácio de margem depois de abrir uma posição."
+            "description": "O preço de liquidação apresentado é uma estimativa e pode diferir do preço real. Monitorize o preço de liquidação e o rácio de margem depois de abrir uma posição."
           },
           "pnl": {
             "title": "PNL",
@@ -3070,7 +3070,7 @@
           },
           "marginRatio": {
             "title": "Rácio de margem",
-            "description": "Quanto menor for o Rácio de margem, menor será o nível de liquidação relativamente ao tamanho da posição. As posições serão liquidadas quando o Rácio de margem atingir 100%."
+            "description": "Quanto menor for o rácio de margem, menor será o nível de liquidação relativamente ao tamanho da posição. As posições serão liquidadas quando o rácio de margem atingir 100%."
           },
           "liquidationPrice": {
             "title": "Preço de liquidação",
@@ -3082,7 +3082,7 @@
           },
           "totalValue": {
             "title": "Valor total",
-            "description": "O Valor da carteira inclui o valor dos ativos spot na sua Conta unificada."
+            "description": "O valor do portefólio inclui o valor dos ativos spot na sua conta unificada."
           }
         },
         "chart": {
@@ -3099,17 +3099,17 @@
           "deposit": "Depositar",
           "withdraw": "Levantar",
           "balance": "Saldo",
-          "portfolioValue": "Valor da carteira",
+          "portfolioValue": "Valor do portefólio",
           "perpsAccountSummary": "Resumo da conta Perps",
           "unifiedAccountSummary": "Resumo da conta unificada",
-          "portfolioMarginSummary": "Resumo da margem da carteira",
+          "portfolioMarginSummary": "Resumo da margem de portefólio",
           "crossMarginRatio": "Rácio de margem cruzada",
           "unifiedAccountRatio": "Rácio da conta unificada",
-          "portfolioMarginRatio": "Rácio de margem da carteira",
+          "portfolioMarginRatio": "Rácio de margem de portefólio",
           "maintenanceMargin": "Margem de manutenção",
           "marginBalance": "Saldo de margem",
           "totalCollateralBalance": "Saldo total de garantias",
-          "ltvAdjustedPortfolioValue": "Valor da carteira ajustado ao LTV",
+          "ltvAdjustedPortfolioValue": "Valor do portefólio ajustado ao LTV",
           "borrowCapUsed": "Limite de empréstimo utilizado",
           "history": "Histórico da conta",
           "assets": "Ativos",
@@ -3140,19 +3140,19 @@
           "tabs": {
             "orders": "Histórico de ordens",
             "trade": "Histórico de negociações",
-            "transaction": "Histórico de transações",
+            "transaction": "Depósitos e levantamentos",
             "funding": "Comissão de financiamento"
           },
           "empty": {
             "orders": "Sem histórico de ordens",
             "trade": "Sem histórico de negociações",
-            "transaction": "Sem histórico de transações",
+            "transaction": "Sem depósitos nem levantamentos",
             "funding": "Sem histórico de financiamento"
           },
           "noHistory": "Sem histórico",
           "fields": {
             "type": "Tipo",
-            "amount": "Montante",
+            "amount": "Quantidade",
             "filled": "Executada",
             "price": "Preço",
             "fee": "Comissão",
@@ -3172,7 +3172,7 @@
           },
           "long": "Long",
           "short": "Short",
-          "true": "Verdadeiro",
+          "true": "Sim",
           "loadFailed": "O histórico está temporariamente indisponível",
           "refreshFailed": "Falha ao atualizar o histórico",
           "loadingMore": "A carregar mais histórico"
@@ -3229,10 +3229,10 @@
           "market": "Mercado",
           "marketPrice": "Preço de mercado",
           "limit": "Limite",
-          "amount": "Montante",
+          "amount": "Quantidade",
           "price": "Preço",
           "limitPrice": "Preço limite",
-          "positionAmount": "Montante da posição",
+          "positionAmount": "Quantidade da posição",
           "estimatedPnl": "PnL estimado",
           "skipLimitConfirmation": "Não voltar a apresentar a dupla confirmação para ordens limite.",
           "closeSubmitted": "Ordem de fecho enviada",
@@ -3252,7 +3252,7 @@
           "estimatedLiquidation": "Preço de liquidação est.",
           "estimatedPnl": "PnL estimado",
           "estimatedPnlShort": "PnL est.",
-          "invalidOrder": "Reveja o preço e o montante de TP/SL",
+          "invalidOrder": "Reveja o preço e a quantidade de TP/SL",
           "invalidTrigger": "O preço de ativação é inválido para o preço de referência mais recente",
           "slTriggerInvalid": "O preço de ativação de SL é inválido e não será definido",
           "tpTriggerInvalid": "O preço de ativação de TP é inválido e não será definido",
@@ -3261,7 +3261,7 @@
           "modify": "Modificar",
           "modifyTitle": "Modificar ordem",
           "partialSubmitted": "Algumas ordens TP/SL foram enviadas. As ordens mais recentes serão apresentadas após a atualização.",
-          "positionAmount": "Montante da posição",
+          "positionAmount": "Quantidade da posição",
           "positionSizeCoverage": "{{percent}} do tamanho da posição",
           "replaceFailedAfterCancel": "A ordem anterior foi cancelada, mas a ordem de substituição não foi criada.",
           "stopLoss": "Stop Loss",
@@ -3275,7 +3275,7 @@
           "triggerDescription": "Quando o <1>preço de referência</1> atingir <1>{{trigger}} {{quoteAsset}}</1>, será ativada uma ordem de <1>mercado</1>. O PnL estimado será de <2>{{pnl}} {{quoteAsset}} (ROI: {{roi}}%)</2>",
           "triggerPrice": "Preço de ativação",
           "unavailable": "O TP/SL da posição está temporariamente indisponível",
-          "unfilledAmount": "Montante não executado",
+          "unfilledAmount": "Quantidade não executada",
           "volume": "Volume"
         },
         "openOrders": {
@@ -3286,12 +3286,12 @@
           "buy": "Comprar",
           "sell": "Vender",
           "filled": "Executada",
-          "amount": "Montante",
+          "amount": "Quantidade",
           "price": "Preço",
           "market": "Mercado",
           "conditions": "Condições",
           "trigger": "Ativação",
-          "mark": "Referência",
+          "mark": "Preço de referência",
           "reduceOnly": "Apenas redução",
           "yes": "Sim",
           "no": "Não",
@@ -3301,12 +3301,12 @@
           "triggerPrice": "Preço de ativação",
           "limitPrice": "Preço limite",
           "marketPrice": "Preço de mercado",
-          "positionAmount": "Montante da posição",
+          "positionAmount": "Quantidade da posição",
           "estimatedPnl": "PnL estimado",
-          "amountAdjusted": "Montante (ajustado)",
+          "amountAdjusted": "Quantidade (ajustada)",
           "dontShowAgain": "Não voltar a mostrar.",
           "editUnavailable": "Este tipo de ordem não pode ser editado aqui.",
-          "invalidEdit": "Reveja o novo preço e o montante.",
+          "invalidEdit": "Reveja o novo preço e a quantidade.",
           "editContextChanged": "A conta ou a ordem foi alterada. Reveja novamente.",
           "editOrderChanged": "A ordem foi alterada. Reveja a ordem atualizada.",
           "editOrderClosed": "Esta ordem já não está aberta.",
@@ -3338,7 +3338,7 @@
         "addFunds": "Adicionar fundos",
         "learnMore": "Saber mais",
         "portfolioValue": "Valor do portefólio",
-        "manualAccount": "Conta manual",
+        "manualAccount": "Conta com saldos separados",
         "unifiedAccount": "Conta unificada",
         "portfolioMarginAccount": "Margem de portefólio",
         "manualAccountDesc": "Gere saldos separados entre o Spot e cada DEX de Perps, com margem cruzada independente por DEX.",
@@ -3696,9 +3696,9 @@
         "amount": "Montante",
         "minimumWarning": "O montante mínimo é {{percent}}%",
         "rabbyFeeTipsV2": "Taxa Rabby: 0,02%",
-        "estReceive": "Receção est.",
-        "estClosedPnl": "PNL fechado est.",
-        "limitClosePlacedToast": "Fecho limite {{direction}} {{coin}}: tamanho {{size}} colocado a ${{price}}"
+        "estReceive": "Receção estimada",
+        "estClosedPnl": "PnL de fecho estimado",
+        "limitClosePlacedToast": "Ordem limite de fecho {{direction}} {{coin}}: {{size}} a ${{price}}"
       },
       "PerpsOpenPositionPopup": {
         "title": "Abrir posição de {{coin}}",

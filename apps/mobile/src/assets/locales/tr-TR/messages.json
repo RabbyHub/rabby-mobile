@@ -834,7 +834,7 @@
             "revokeDangerTitle": "24 saatlik iptaller onayların 4 katından fazla",
             "contractTrustValue": "Güven değeri, bu sözleşme tarafından harcanan toplam varlık değerini ifade eder. Düşük bir güven değeri, ya risk ya da 180 gün boyunca hareketsizlik anlamına gelir.",
             "revokeTrendsValueWarning": "Son zamanlardaki iptaller, yeni onaylanan kullanıcı sayısının iki katından fazla.",
-            "button": "Tamam, aldım.",
+            "button": "Anladım",
             "revokeRecenet": "Son zamanlardaki iptaller (24s): {{ count }}",
             "revokeTrendsValueDanger": "Son Revokeler, yeni onaylanan kullanıcı sayısının 4 katından daha fazladır."
           }
@@ -917,7 +917,7 @@
       "hidden-no-quote-rates_other": "{{count}} oran mevcut değil",
       "from": "Kimden",
       "Pending": "Beklemede",
-      "preferMEV": "MEV Guarded'ı Tercih Et",
+      "preferMEV": "MEV korumasını tercih et",
       "completedTip": "Zincir üzerindeki işlem, veri çözümleme ile kayıt oluşturma",
       "Completed": "Tamamlandı",
       "hidden-no-quote-rates_one": "{{count}} oran mevcut değil",
@@ -1197,7 +1197,7 @@
       },
       "importAddress": {
         "tips": {
-          "gotIt": "Tamamdır.",
+          "gotIt": "Anladım",
           "title": "Rabby'ye aktarmak güvenli mi?",
           "entry": "Rabby'e aktarmak güvenli mi?",
           "description": "Verileriniz güvenli bir şekilde şifrelendi ve cihazınızda yerel olarak depolandı. Rabby, özel bilgilerinize erişemez ve bu bilgiler asla üçüncü şahıslarla paylaşılmaz."
@@ -1265,7 +1265,7 @@
         "description3": "Kurtarma ifadenizi asla paylaşmayın; ona erişen herkes varlıklarınızı kontrol edebilir.",
         "description2": "Eğer kurtarma ifadenizi kaybederseniz, cüzdanınızı geri yükleyemezsiniz.",
         "description4": "Kurtarma ifadeniz cihazınızda yerel olarak saklanır ve şifrenizle şifrelenir. Yalnızca siz erişebilirsiniz. Rabby kurtarma ifadenize erişemez veya onu geri getiremez.",
-        "GotIt": "Tamamdır.",
+        "GotIt": "Anladım",
         "description1": "Kurtarma ifadesi, cüzdanınıza erişmek ve onu kontrol etmek için kullanılan bir dizi kelimedir. Cüzdanınızı herhangi bir cihazda geri yüklemek için kullanabilirsiniz."
       },
       "addContacts": {
@@ -1460,7 +1460,7 @@
       "createNewAddress": "Yeni Cüzdan Oluştur",
       "whatIsPrivateKey": {
         "title4": "Güvenlik",
-        "ButtonGotIt": "Anladım.",
+        "ButtonGotIt": "Anladım",
         "description2": "Özel anahtarınızı kaybederseniz cüzdanınızı geri yükleyemezsiniz.",
         "title2": "Yedekleme",
         "title": "Özel anahtar nedir",
@@ -2020,7 +2020,7 @@
       "NoIssuer": "Hayır, ihraççı bilgisi mevcut değil.",
       "ListedBy": "Tarafından listelenmiştir",
       "fdvTitle": "FDV nedir?",
-      "excludeBalanceTipsButton": "Tamam.",
+      "excludeBalanceTipsButton": "Anladım",
       "fdvContent": "Maksimum arz dolaşımda olsaydı oluşacak piyasa değeri. Tam Seyreltilmiş Değerleme (FDV) = Fiyat × Maksimum Arz. Maksimum Arz boşsa FDV = Fiyat × Toplam Arz. Maksimum Arz ve Toplam Arz tanımlı değilse veya sonsuzsa FDV gösterilmez.",
       "excludeBalanceTips": "Bu varlık, doğruluk için toplam bakiyenizden hariç tutulmuştur. Detayları görmek ve tercih ederseniz dahil etmek için üzerine dokunabilirsiniz.",
       "ShowMore": "Daha fazla göster",
@@ -2526,7 +2526,7 @@
           "direction": "Yön",
           "long": "Long",
           "short": "Short",
-          "pays": "Öder",
+          "pays": "→",
           "longPaysShort": "Long, Short’a Öder",
           "shortPaysLong": "Short, Long’a Öder",
           "noPayment": "Ödeme Yok",
@@ -2537,7 +2537,7 @@
           "price": "Fiyat",
           "pnl": "PnL",
           "roi": "ROI%",
-          "amount": "Tutar",
+          "amount": "Miktar",
           "priceAggregation": "Fiyat gruplama",
           "viewBoth": "Çift taraflı emir defteri",
           "viewAsks": "Satış emir defteri",
@@ -2564,7 +2564,7 @@
           "liquidationPrice": "Likidasyon Fiyatı",
           "stopPrice": "Stop Fiyatı",
           "triggerPrice": "Tetikleme Fiyatı",
-          "amount": "Tutar",
+          "amount": "Miktar",
           "available": "Kullanılabilir",
           "reduceOnly": "Yalnızca Azalt",
           "confirmationReduceOnly": "Yalnızca Azalt",
@@ -2610,7 +2610,7 @@
             "insufficientDepth": "Mevcut emir defteri bu Piyasa emrini tam olarak tahmin edemiyor.",
             "invalidDirection": "Tetikleyici, tahmini giriş fiyatının geçerli tarafında olmalıdır.",
             "invalidInput": "Geçerli bir pozitif değer girin.",
-            "invalidOrderAmount": "Bu piyasanın miktar hassasiyetine uygun bir emir tutarı girin.",
+            "invalidOrderAmount": "Bu piyasanın miktar hassasiyetine uygun bir emir miktarı girin.",
             "invalidTrigger": "Tahmini tetikleme fiyatı geçersiz.",
             "iocUnsupported": "Limit IOC emirleri bağlı TP/SL’yi desteklemez.",
             "marketBookUnavailable": "Mevcut emir defteri kullanılamıyor veya güncel değil. Yenilendikten sonra tekrar deneyin.",
@@ -2668,7 +2668,7 @@
           },
           "estimatedLiquidationPrice": {
             "title": "Likidasyon Fiyatı",
-            "description": "Gösterilen Likidasyon Fiyatı tahminidir ve gerçek fiyattan farklı olabilir. Pozisyon açtıktan sonra likidasyon fiyatını ve marjin oranını takip edin."
+            "description": "Gösterilen likidasyon fiyatı tahminidir ve gerçek fiyattan farklı olabilir. Pozisyon açtıktan sonra likidasyon fiyatını ve marjin oranını takip edin."
           },
           "pnl": {
             "title": "PNL",
@@ -2684,7 +2684,7 @@
           },
           "marginRatio": {
             "title": "Marjin Oranı",
-            "description": "Marjin Oranı ne kadar düşükse pozisyon büyüklüğünüze göre likidasyon seviyeniz de o kadar düşük olur. Marjin Oranı %100’e ulaştığında pozisyonlarınız likide edilir."
+            "description": "Marjin oranı ne kadar düşükse pozisyon büyüklüğünüze göre likidasyon seviyeniz de o kadar düşük olur. Marjin oranı %100’e ulaştığında pozisyonlarınız likide edilir."
           },
           "liquidationPrice": {
             "title": "Likidasyon Fiyatı",
@@ -2696,7 +2696,7 @@
           },
           "totalValue": {
             "title": "Toplam Değer",
-            "description": "Portföy Değeri, Birleşik Hesabınızdaki spot varlıkların değerini içerir."
+            "description": "Portföy değeri, birleşik hesabınızdaki spot varlıkların değerini içerir."
           }
         },
         "chart": {
@@ -2754,19 +2754,19 @@
           "tabs": {
             "orders": "Emir Geçmişi",
             "trade": "İşlem Geçmişi",
-            "transaction": "Transfer Geçmişi",
+            "transaction": "Yatırma ve çekme",
             "funding": "Fonlama Ücreti"
           },
           "empty": {
             "orders": "Emir geçmişi yok",
             "trade": "İşlem geçmişi yok",
-            "transaction": "Transfer geçmişi yok",
+            "transaction": "Yatırma veya çekme işlemi yok",
             "funding": "Fonlama geçmişi yok"
           },
           "noHistory": "Geçmiş Yok",
           "fields": {
             "type": "Tür",
-            "amount": "Tutar",
+            "amount": "Miktar",
             "filled": "Gerçekleşti",
             "price": "Fiyat",
             "fee": "Ücret",
@@ -2786,7 +2786,7 @@
           },
           "long": "Long",
           "short": "Short",
-          "true": "Doğru",
+          "true": "Evet",
           "loadFailed": "Geçmiş geçici olarak kullanılamıyor",
           "refreshFailed": "Geçmiş yenilenemedi",
           "loadingMore": "Daha fazla geçmiş yükleniyor"
@@ -2843,10 +2843,10 @@
           "market": "Piyasa",
           "marketPrice": "Piyasa Fiyatı",
           "limit": "Limit",
-          "amount": "Tutar",
+          "amount": "Miktar",
           "price": "Fiyat",
           "limitPrice": "Limit Fiyatı",
-          "positionAmount": "Pozisyon Tutarı",
+          "positionAmount": "Pozisyon Miktarı",
           "estimatedPnl": "Tahmini PnL",
           "skipLimitConfirmation": "Limit Emirleri için çift onayı bir daha gösterme.",
           "closeSubmitted": "Kapatma emri gönderildi",
@@ -2861,13 +2861,13 @@
           "cancelSuccess": "TP/SL emri iptal edildi",
           "confirmPositionTitle": "Pozisyon TP/SL’yi Onayla",
           "confirmTitle": "TP/SL’yi Onayla",
-          "contextChanged": "Pozisyon, hesap veya İşaret Fiyatı değişti. Tekrar inceleyin.",
+          "contextChanged": "Pozisyon, hesap veya işaret fiyatı değişti. Tekrar inceleyin.",
           "duplicatePositionOrders": "Bu tarafta birden fazla Pozisyon TP/SL emri var. Değiştirmeden önce bunları tek tek iptal edin veya yenileyin.",
           "estimatedLiquidation": "Tahm. Likidasyon Fiyatı",
           "estimatedPnl": "Tahmini PnL",
           "estimatedPnlShort": "Tahm. PnL",
-          "invalidOrder": "TP/SL fiyatını ve tutarını inceleyin",
-          "invalidTrigger": "Tetikleme fiyatı son İşaret Fiyatı için geçersiz",
+          "invalidOrder": "TP/SL fiyatını ve miktarını inceleyin",
+          "invalidTrigger": "Tetikleme fiyatı son işaret fiyatı için geçersiz",
           "slTriggerInvalid": "SL tetikleme fiyatı geçersiz ve ayarlanmayacak",
           "tpTriggerInvalid": "TP tetikleme fiyatı geçersiz ve ayarlanmayacak",
           "triggerHigherThanLiquidation": "Tetikleme fiyatı {{price}} likidasyon fiyatından yüksek olmalıdır",
@@ -2875,7 +2875,7 @@
           "modify": "Değiştir",
           "modifyTitle": "Emri Değiştir",
           "partialSubmitted": "Bazı TP/SL emirleri gönderildi. En yeni emirler yenilemeden sonra gösterilir.",
-          "positionAmount": "Pozisyon Tutarı",
+          "positionAmount": "Pozisyon Miktarı",
           "positionSizeCoverage": "Pozisyon Büyüklüğünün {{percent}}’i",
           "replaceFailedAfterCancel": "Önceki emir iptal edildi ancak yerine yeni bir emir oluşturulmadı.",
           "stopLoss": "Zarar Durdur",
@@ -2886,10 +2886,10 @@
           "takeProfit": "Kâr Al",
           "takeProfitTrigger": "TP Tetikleyicisi",
           "triggeredByMark": "İşaret Fiyatıyla Tetiklenir",
-          "triggerDescription": "<1>İşaret Fiyatı</1> <1>{{trigger}} {{quoteAsset}}</1> seviyesine ulaştığında bir <1>Piyasa</1> emri tetiklenir. Tahmini PnL <2>{{pnl}} {{quoteAsset}} (ROI: {{roi}}%)</2> olacaktır",
+          "triggerDescription": "<1>İşaret fiyatı</1> <1>{{trigger}} {{quoteAsset}}</1> seviyesine ulaştığında bir <1>piyasa</1> emri tetiklenir. Tahmini PnL <2>{{pnl}} {{quoteAsset}} (ROI: {{roi}}%)</2> olacaktır",
           "triggerPrice": "Tetikleme Fiyatı",
           "unavailable": "Pozisyon TP/SL geçici olarak kullanılamıyor",
-          "unfilledAmount": "Gerçekleşmemiş Tutar",
+          "unfilledAmount": "Gerçekleşmemiş miktar",
           "volume": "Hacim"
         },
         "openOrders": {
@@ -2900,12 +2900,12 @@
           "buy": "Al",
           "sell": "Sat",
           "filled": "Gerçekleşti",
-          "amount": "Tutar",
+          "amount": "Miktar",
           "price": "Fiyat",
           "market": "Piyasa",
           "conditions": "Koşullar",
           "trigger": "Tetikleyici",
-          "mark": "İşaret",
+          "mark": "İşaret Fiyatı",
           "reduceOnly": "Yalnızca Azalt",
           "yes": "Evet",
           "no": "Hayır",
@@ -2915,12 +2915,12 @@
           "triggerPrice": "Tetikleme Fiyatı",
           "limitPrice": "Limit Fiyatı",
           "marketPrice": "Piyasa Fiyatı",
-          "positionAmount": "Pozisyon Tutarı",
+          "positionAmount": "Pozisyon Miktarı",
           "estimatedPnl": "Tahmini PnL",
-          "amountAdjusted": "Tutar (Ayarlanmış)",
+          "amountAdjusted": "Miktar (ayarlanmış)",
           "dontShowAgain": "Bir daha gösterme.",
           "editUnavailable": "Bu emir türü burada düzenlenemez.",
-          "invalidEdit": "Yeni fiyatı ve tutarı inceleyin.",
+          "invalidEdit": "Yeni fiyatı ve miktarı inceleyin.",
           "editContextChanged": "Hesap veya emir değişti. Tekrar inceleyin.",
           "editOrderChanged": "Emir değişti. Güncellenen emri inceleyin.",
           "editOrderClosed": "Bu emir artık açık değil.",
@@ -2974,7 +2974,7 @@
         "learnMore": "Daha Fazla Bilgi Edinin",
         "addFunds": "Fon ekle",
         "portfolioValue": "Portföy Değeri",
-        "manualAccount": "Manuel Hesap",
+        "manualAccount": "Ayrı Bakiyeli Hesap",
         "unifiedAccount": "Birleşik Hesap",
         "portfolioMarginAccount": "Portföy Marjini",
         "manualAccountDesc": "Spot ve her Perps DEX'i için ayrı bakiyeler yönetirsiniz; çapraz marjin her DEX için bağımsızdır.",
@@ -3031,7 +3031,7 @@
       "PerpsWithdrawFeePopup": {
         "title": "Ücret",
         "desc": "Hyperliquid tarafından alınan Çekim Ücreti: 1 $",
-        "btn": "Tamam, anladım."
+        "btn": "Anladım"
       },
       "historyDetail": {
         "title": {
@@ -3309,9 +3309,9 @@
         "total": "Toplam",
         "receive": "Alım",
         "rabbyFeeTipsV2": "Rabby ücreti: 0.02%",
-        "estReceive": "Tah. Alım",
-        "estClosedPnl": "Tah. Kapalı PNL",
-        "limitClosePlacedToast": "Limit Kapatma {{direction}} {{coin}}: {{size}} büyüklük ${{price}} fiyattan yerleştirildi"
+        "estReceive": "Tahmini alınacak",
+        "estClosedPnl": "Tahmini kapanış PnL'si",
+        "limitClosePlacedToast": "{{direction}} {{coin}} için {{size}} büyüklüğündeki limit kapatma emri ${{price}} fiyatından verildi"
       },
       "PerpsOpenPositionPopup": {
         "title": "{{coin}} Pozisyonu Aç",

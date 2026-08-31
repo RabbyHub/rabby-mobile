@@ -907,7 +907,7 @@
       "BroadcastMode": {
         "title": "โหมด Broadcast",
         "mev": {
-          "title": "MEV Guarded",
+          "title": "ป้องกัน MEV",
           "desc": "ธุรกรรมจะถูกแพร่ภาพไปยัง MEV โหนดที่กำหนด"
         },
         "tips": {
@@ -1295,7 +1295,7 @@
       "chain": "เชน",
       "estimate": "ประมาณการ:",
       "no-quote-found": "ไม่สามารถหาราคาตลาดที่เหมาะสม",
-      "preferMEV": "แนะนำ MEV Guarded",
+      "preferMEV": "ให้ความสำคัญกับการป้องกัน MEV",
       "wrap-contract": "สัญญา Wrap",
       "low-slippage-may-cause-failed-transactions-due-to-high-volatility": "Slippage ต่ำอาจทำให้การทำธุรกรรมล้มเหลวเนื่องจากความผันผวนสูง",
       "Pending": "รอดำเนินการ",
@@ -1828,7 +1828,7 @@
         "description1": "คีย์ส่วนตัวคือชุดของตัวอักษรและตัวเลขที่ใช้ในการเข้าถึงและควบคุมกระเป๋าเงินของคุณ คุณสามารถใช้มันในการกู้คืนกระเป๋าเงินของคุณบนอุปกรณ์ใดก็ได้",
         "description4": "คีย์ส่วนตัวของคุณจะถูกจัดเก็บไว้ในอุปกรณ์และเข้ารหัสด้วยรหัสผ่าน มีเพียงคุณเท่านั้นที่เข้าถึงได้ Rabby ไม่สามารถเรียกคืนหรือเข้าถึงคีย์ส่วนตัวของคุณได้",
         "description2": "หากคุณทำคีย์ส่วนตัวสูญหาย คุณจะไม่สามารถกู้คืนกระเป๋าเงินได้",
-        "ButtonGotIt": "ฉันเข้าใจแล้ว."
+        "ButtonGotIt": "เข้าใจแล้ว"
       },
       "importing": "นำเข้า...",
       "Done": "เสร็จเรียบร้อย",
@@ -2792,7 +2792,7 @@
           "direction": "ทิศทาง",
           "long": "Long",
           "short": "Short",
-          "pays": "จ่าย",
+          "pays": "จ่ายให้",
           "longPaysShort": "Long จ่ายให้ Short",
           "shortPaysLong": "Short จ่ายให้ Long",
           "noPayment": "ไม่มีการชำระ",
@@ -2832,8 +2832,8 @@
           "triggerPrice": "ราคาทริกเกอร์",
           "amount": "จำนวน",
           "available": "พร้อมใช้งาน",
-          "reduceOnly": "Reduce Only",
-          "confirmationReduceOnly": "Reduce Only",
+          "reduceOnly": "ลดโพซิชันเท่านั้น",
+          "confirmationReduceOnly": "ลดโพซิชันเท่านั้น",
           "yes": "ใช่",
           "no": "ไม่",
           "max": "สูงสุด",
@@ -2882,7 +2882,7 @@
             "marketBookUnavailable": "สมุดคำสั่งปัจจุบันไม่พร้อมใช้งานหรือข้อมูลเก่า โปรดลองอีกครั้งหลังจากรีเฟรช",
             "nonPositiveTrigger": "ราคาทริกเกอร์โดยประมาณต้องมากกว่า 0",
             "oppositePosition": "TP/SL ที่แนบมาไม่พร้อมใช้งานเมื่อคำสั่งนี้อยู่คนละทิศทางกับโพซิชันปัจจุบัน",
-            "reduceOnlyUnsupported": "คำสั่ง Reduce Only ไม่รองรับ TP/SL ที่แนบมาสำหรับเปิดโพซิชัน",
+            "reduceOnlyUnsupported": "คำสั่งแบบลดโพซิชันเท่านั้นไม่รองรับ TP/SL ที่แนบมาสำหรับเปิดโพซิชัน",
             "tpTriggerMoreThanOrderPrice": "ราคาทริกเกอร์ TP ต้องสูงกว่าราคาคำสั่ง",
             "slTriggerLessThanOrderPrice": "ราคาทริกเกอร์ SL ต้องต่ำกว่าราคาคำสั่ง",
             "tpTriggerLessThanOrderPrice": "ราคาทริกเกอร์ TP ต้องต่ำกว่าราคาคำสั่ง",
@@ -2895,7 +2895,7 @@
           "skipConfirmation": "ไม่ต้องแสดงการยืนยันสำหรับคำสั่งประเภทนี้อีก",
           "accountRequired": "เลือกบัญชี Perps ก่อนวางคำสั่ง",
           "insufficientBalance": "ยอดคงเหลือไม่เพียงพอ",
-          "reduceOnlyUnavailable": "Reduce Only สามารถลดโพซิชันปัจจุบันได้เท่านั้น",
+          "reduceOnlyUnavailable": "คำสั่งแบบลดโพซิชันเท่านั้นใช้เพื่อลดโพซิชันปัจจุบันได้เท่านั้น",
           "onlyIsolatedMargin": "โทเค็นนี้รองรับเฉพาะ Isolated Margin",
           "marginModeUnavailable": "ไม่สามารถเปลี่ยนโหมดมาร์จิ้นได้ขณะที่ตลาดนี้มีโพซิชันหรือคำสั่งที่เปิดอยู่",
           "contextChanged": "บัญชีหรือตลาดเปลี่ยนไปแล้ว โปรดตรวจสอบคำสั่งอีกครั้ง",
@@ -2925,7 +2925,7 @@
             "description": "วางคำสั่ง TP/SL แบบ Market ขั้นพื้นฐาน สำหรับฟีเจอร์ขั้นสูง เช่น TP/SL บางส่วน ให้ตั้ง TP/SL บนโพซิชันที่เปิดอยู่"
           },
           "reduceOnly": {
-            "title": "Reduce Only",
+            "title": "ลดโพซิชันเท่านั้น",
             "description": "คำสั่งนี้จะไม่เปิดโพซิชันใหม่ไม่ว่าขนาดเท่าใด เมื่อดำเนินการ ระบบจะเปรียบเทียบขนาดคำสั่งกับขนาดโพซิชันที่มีอยู่"
           },
           "cost": {
@@ -3020,13 +3020,13 @@
           "tabs": {
             "orders": "ประวัติคำสั่ง",
             "trade": "ประวัติการเทรด",
-            "transaction": "ประวัติธุรกรรม",
+            "transaction": "ประวัติฝาก/ถอน",
             "funding": "ค่าฟันดิง"
           },
           "empty": {
             "orders": "ไม่มีประวัติคำสั่ง",
             "trade": "ไม่มีประวัติการเทรด",
-            "transaction": "ไม่มีประวัติธุรกรรม",
+            "transaction": "ไม่มีประวัติฝาก/ถอน",
             "funding": "ไม่มีประวัติฟันดิง"
           },
           "noHistory": "ไม่มีประวัติ",
@@ -3037,7 +3037,7 @@
             "price": "ราคา",
             "fee": "ค่าธรรมเนียม",
             "realizedPnl": "PNL ที่รับรู้แล้ว",
-            "reduceOnly": "Reduce Only",
+            "reduceOnly": "ลดโพซิชันเท่านั้น",
             "status": "สถานะ",
             "symbol": "สัญลักษณ์"
           },
@@ -3052,7 +3052,7 @@
           },
           "long": "Long",
           "short": "Short",
-          "true": "จริง",
+          "true": "ใช่",
           "loadFailed": "ประวัติไม่พร้อมใช้งานชั่วคราว",
           "refreshFailed": "รีเฟรชประวัติไม่สำเร็จ",
           "loadingMore": "กำลังโหลดประวัติเพิ่มเติม"
@@ -3112,7 +3112,7 @@
           "amount": "จำนวน",
           "price": "ราคา",
           "limitPrice": "ราคา Limit",
-          "positionAmount": "จำนวนโพซิชัน",
+          "positionAmount": "ขนาดโพซิชัน",
           "estimatedPnl": "PnL โดยประมาณ",
           "skipLimitConfirmation": "ไม่ต้องแสดงการยืนยันสองครั้งสำหรับคำสั่ง Limit อีก",
           "closeSubmitted": "ส่งคำสั่งปิดแล้ว",
@@ -3141,7 +3141,7 @@
           "modify": "แก้ไข",
           "modifyTitle": "แก้ไขคำสั่ง",
           "partialSubmitted": "ส่งคำสั่ง TP/SL บางรายการแล้ว คำสั่งล่าสุดจะแสดงหลังจากรีเฟรช",
-          "positionAmount": "จำนวนโพซิชัน",
+          "positionAmount": "ขนาดโพซิชัน",
           "positionSizeCoverage": "{{percent}} ของขนาดโพซิชัน",
           "replaceFailedAfterCancel": "ยกเลิกคำสั่งก่อนหน้าแล้ว แต่ไม่ได้สร้างคำสั่งทดแทน",
           "stopLoss": "ตัดขาดทุน",
@@ -3172,7 +3172,7 @@
           "conditions": "เงื่อนไข",
           "trigger": "ทริกเกอร์",
           "mark": "Mark",
-          "reduceOnly": "Reduce Only",
+          "reduceOnly": "ลดโพซิชันเท่านั้น",
           "yes": "ใช่",
           "no": "ไม่",
           "tif": "ระยะเวลามีผล",
@@ -3181,7 +3181,7 @@
           "triggerPrice": "ราคาทริกเกอร์",
           "limitPrice": "ราคา Limit",
           "marketPrice": "ราคาตลาด",
-          "positionAmount": "จำนวนโพซิชัน",
+          "positionAmount": "ขนาดโพซิชัน",
           "estimatedPnl": "PnL โดยประมาณ",
           "amountAdjusted": "จำนวน (ปรับแล้ว)",
           "dontShowAgain": "ไม่ต้องแสดงอีก",
@@ -3240,7 +3240,7 @@
         "learnMore": "เรียนรู้เพิ่มเติม",
         "addFunds": "เติมเงิน",
         "portfolioValue": "มูลค่าพอร์ตโฟลิโอ",
-        "manualAccount": "บัญชีแบบแมนนวล",
+        "manualAccount": "บัญชีมาตรฐาน",
         "unifiedAccount": "บัญชีแบบรวม",
         "portfolioMarginAccount": "มาร์จิ้นพอร์ตโฟลิโอ",
         "manualAccountDesc": "คุณจัดการยอดคงเหลือแยกกันระหว่าง Spot และ DEX ของ Perps แต่ละแห่ง โดยมี Cross Margin อิสระในแต่ละ DEX",
@@ -3398,6 +3398,7 @@
         "swap": "สวอป"
       },
       "PerpsAccountSelectorPopup": {
+        "positionCount_one": "{{count}} โพซิชัน",
         "positionCount_other": "{{count}} โพซิชัน",
         "activatedAddress": "เปิดใช้งาน",
         "hyperliquidBalance": "ยอดคงเหลือ Perps",
@@ -3574,7 +3575,7 @@
         "receive": "รับ",
         "closedPnl": "PNL จากการปิดโพซิชัน",
         "rabbyFeeTipsV2": "ค่าธรรมเนียม Rabby: 0.02%",
-        "estReceive": "รับโดยประมาณ",
+        "estReceive": "ยอดรับโดยประมาณ",
         "estClosedPnl": "PNL จากการปิดโพซิชันโดยประมาณ",
         "limitClosePlacedToast": "ปิดโพซิชันแบบ Limit {{direction}} {{coin}}: ขนาด {{size}} ตั้งไว้ที่ ${{price}}"
       },

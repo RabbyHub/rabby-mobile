@@ -702,7 +702,7 @@
           "notSupportChain": "Không được hỗ trợ trên chuỗi này"
         },
         "mev": {
-          "title": "MEV Guarded",
+          "title": "Bảo vệ khỏi MEV",
           "desc": "Các giao dịch sẽ được phát sóng tới MEV node được chỉ định"
         },
         "instant": {
@@ -862,7 +862,7 @@
           },
           "columnTip": {
             "contractTrustValueWarning": "Giá trị tin cậy của hợp đồng < $100,000",
-            "button": "Tôi đã hiểu.",
+            "button": "Tôi đã hiểu",
             "normalTrustValueDanger": "Giá trị tin cậy của hợp đồng: {{ contractUsdText }}",
             "revokeWarningTitle": "Số lượt thu hồi trong 24 giờ cao hơn 2 lần số lượt phê duyệt",
             "revokeTrendsValueWarning": "Số lần thu hồi gần đây lớn gấp đôi số lượng người dùng được phê duyệt mới.",
@@ -962,7 +962,7 @@
       "hidden-no-quote-rates_other": "{{count}} tỷ giá không khả dụng",
       "to": "Tới",
       "Completed": "Hoàn thành",
-      "preferMEV": "Ưu tiên MEV Guarded",
+      "preferMEV": "Ưu tiên bảo vệ khỏi MEV",
       "actual-slippage": "Độ trượt thực tế:",
       "Gas-fee-too-high": "Phí Gas quá cao",
       "no-transaction-records": "Không có bản ghi giao dịch",
@@ -1182,7 +1182,7 @@
         "seedPhrase": "Nhập cụm từ khôi phục",
         "tips": {
           "entry": "Có an toàn khi nhập vào Rabby không?",
-          "gotIt": "Tôi đã hiểu.",
+          "gotIt": "Tôi đã hiểu",
           "title": "Có an toàn để nhập vào Rabby không?",
           "description": "Dữ liệu của bạn được mã hóa an toàn và lưu trữ cục bộ trên thiết bị của bạn. Rabby không có quyền truy cập vào thông tin cá nhân của bạn và thông tin đó không bao giờ được chia sẻ với bên thứ ba."
         },
@@ -1460,7 +1460,7 @@
       "whatIsSeedPhrase": {
         "title": "'Cụm từ khôi phục' là gì?",
         "title2": "Tuyệt đối không chia sẻ",
-        "GotIt": "Hiểu rồi.",
+        "GotIt": "Hiểu rồi",
         "title1": "Sao lưu",
         "description2": "Nếu bạn mất cụm từ khôi phục, bạn sẽ không thể khôi phục lại ví của mình.",
         "title3": "An toàn",
@@ -1605,7 +1605,7 @@
         "title3": "Không bao giờ chia sẻ nó",
         "title": "Khóa riêng là gì",
         "description2": "Nếu mất khóa riêng, bạn sẽ không thể khôi phục ví của mình.",
-        "ButtonGotIt": "Tôi đã hiểu.",
+        "ButtonGotIt": "Tôi đã hiểu",
         "description3": "Không bao giờ chia sẻ khóa riêng của bạn - bất kỳ ai có quyền truy cập vào nó đều có thể kiểm soát tài sản của bạn.",
         "description1": "Một khóa riêng là một chuỗi các chữ cái và số được sử dụng để truy cập và kiểm soát ví của bạn. Bạn có thể sử dụng nó để phục hồi ví của mình trên bất kỳ thiết bị nào.",
         "description4": "Khoá riêng của bạn được lưu trữ cục bộ trên thiết bị của bạn và được mã hoá bằng mật khẩu của bạn. Chỉ có bạn mới có thể truy cập nó. Rabby không thể lấy lại hoặc truy cập khoá riêng của bạn."
@@ -1959,7 +1959,7 @@
       "chooseWallet": "Chọn một ví để quản lý"
     },
     "tokenDetail": {
-      "excludeBalanceTipsButton": "Tôi hiểu rồi.",
+      "excludeBalanceTipsButton": "Tôi hiểu rồi",
       "relateDefi": "Liên quan đến DeFi",
       "notSupportedOnChain": "Không được hỗ trợ trên chuỗi này",
       "action": {
@@ -2647,7 +2647,7 @@
           "direction": "Hướng",
           "long": "Long",
           "short": "Short",
-          "pays": "Thanh toán",
+          "pays": "trả cho",
           "longPaysShort": "Long trả cho Short",
           "shortPaysLong": "Short trả cho Long",
           "noPayment": "Không thanh toán",
@@ -2747,10 +2747,10 @@
             "sideLongBuy": "long (mua)",
             "sideShortSell": "short (bán)"
           },
-          "skipConfirmation": "Không hiển thị lại xác nhận cho loại lệnh này.",
+          "skipConfirmation": "Không hiển thị lại xác nhận cho loại lệnh này",
           "accountRequired": "Chọn tài khoản Perps trước khi đặt lệnh.",
           "insufficientBalance": "Số dư không đủ",
-          "reduceOnlyUnavailable": "Chỉ giảm chỉ có thể làm giảm vị thế hiện tại.",
+          "reduceOnlyUnavailable": "Lệnh Chỉ giảm chỉ có thể giảm vị thế hiện tại.",
           "onlyIsolatedMargin": "Token này chỉ hỗ trợ ký quỹ cô lập.",
           "marginModeUnavailable": "Không thể thay đổi chế độ ký quỹ khi thị trường này có vị thế hoặc lệnh đang mở.",
           "contextChanged": "Tài khoản hoặc thị trường đã thay đổi. Hãy kiểm tra lại lệnh.",
@@ -2875,13 +2875,13 @@
           "tabs": {
             "orders": "Lịch sử lệnh",
             "trade": "Lịch sử giao dịch",
-            "transaction": "Lịch sử giao dịch chuyển",
+            "transaction": "Lịch sử nạp/rút",
             "funding": "Phí funding"
           },
           "empty": {
             "orders": "Không có lịch sử lệnh",
             "trade": "Không có lịch sử giao dịch",
-            "transaction": "Không có lịch sử giao dịch chuyển",
+            "transaction": "Không có lịch sử nạp/rút",
             "funding": "Không có lịch sử funding"
           },
           "noHistory": "Không có lịch sử",
@@ -2907,7 +2907,7 @@
           },
           "long": "Long",
           "short": "Short",
-          "true": "Đúng",
+          "true": "Có",
           "loadFailed": "Lịch sử tạm thời không khả dụng",
           "refreshFailed": "Không thể làm mới lịch sử",
           "loadingMore": "Đang tải thêm lịch sử"
@@ -2967,9 +2967,9 @@
           "amount": "Số lượng",
           "price": "Giá",
           "limitPrice": "Giá giới hạn",
-          "positionAmount": "Số lượng vị thế",
+          "positionAmount": "Khối lượng vị thế",
           "estimatedPnl": "PnL ước tính",
-          "skipLimitConfirmation": "Không hiển thị lại xác nhận hai bước cho Lệnh giới hạn.",
+          "skipLimitConfirmation": "Không hiển thị lại xác nhận hai bước cho Lệnh giới hạn",
           "closeSubmitted": "Đã gửi lệnh đóng",
           "closeFailed": "Không thể đóng vị thế",
           "minimumCloseAmount": "Số tiền đóng tối thiểu là 10 USD",
@@ -2996,8 +2996,8 @@
           "modify": "Sửa",
           "modifyTitle": "Sửa lệnh",
           "partialSubmitted": "Một số lệnh TP/SL đã được gửi. Các lệnh mới nhất sẽ hiển thị sau khi làm mới.",
-          "positionAmount": "Số lượng vị thế",
-          "positionSizeCoverage": "{{percent}} Quy mô vị thế",
+          "positionAmount": "Khối lượng vị thế",
+          "positionSizeCoverage": "{{percent}} quy mô vị thế",
           "replaceFailedAfterCancel": "Lệnh trước đã bị hủy nhưng lệnh thay thế chưa được tạo.",
           "stopLoss": "Cắt lỗ",
           "stopLossTrigger": "Kích hoạt SL",
@@ -3026,7 +3026,7 @@
           "market": "Thị trường",
           "conditions": "Điều kiện",
           "trigger": "Kích hoạt",
-          "mark": "Đánh dấu",
+          "mark": "Giá đánh dấu",
           "reduceOnly": "Chỉ giảm",
           "yes": "Có",
           "no": "Không",
@@ -3036,10 +3036,10 @@
           "triggerPrice": "Giá kích hoạt",
           "limitPrice": "Giá giới hạn",
           "marketPrice": "Giá thị trường",
-          "positionAmount": "Số lượng vị thế",
+          "positionAmount": "Khối lượng vị thế",
           "estimatedPnl": "PnL ước tính",
           "amountAdjusted": "Số lượng (Đã điều chỉnh)",
-          "dontShowAgain": "Không hiển thị lại.",
+          "dontShowAgain": "Không hiển thị lại",
           "editUnavailable": "Không thể sửa loại lệnh này tại đây.",
           "invalidEdit": "Kiểm tra giá và số lượng mới.",
           "editContextChanged": "Tài khoản hoặc lệnh đã thay đổi. Hãy kiểm tra lại.",
@@ -3095,7 +3095,7 @@
         "addFunds": "Nạp tiền",
         "learnMore": "Tìm hiểu thêm",
         "portfolioValue": "Giá trị danh mục",
-        "manualAccount": "Tài khoản thủ công",
+        "manualAccount": "Tài khoản tiêu chuẩn",
         "unifiedAccount": "Tài khoản hợp nhất",
         "portfolioMarginAccount": "Ký quỹ danh mục",
         "manualAccountDesc": "Bạn quản lý số dư riêng biệt giữa Spot và từng DEX Perps, với ký quỹ chéo độc lập cho mỗi DEX.",
@@ -3150,7 +3150,7 @@
         "selectChain": "Chọn Chuỗi"
       },
       "PerpsWithdrawFeePopup": {
-        "btn": "Tôi đã hiểu.",
+        "btn": "Tôi đã hiểu",
         "title": "Phí",
         "desc": "Phí rút tiền do Hyperliquid tính: 1 đô la"
       },
@@ -3253,6 +3253,7 @@
         "swap": "Đổi"
       },
       "PerpsAccountSelectorPopup": {
+        "positionCount_one": "{{count}} vị thế",
         "positionCount_other": "{{count}} vị thế",
         "activatedAddress": "Đã kích hoạt",
         "lastUsed": "Dùng gần đây",
@@ -3429,8 +3430,8 @@
         "confirm": "Xác nhận",
         "minimumWarning": "Số tiền tối thiểu là {{percent}}%",
         "rabbyFeeTipsV2": "Phí Rabby: 0.02%",
-        "estReceive": "Nhận ước tính",
-        "estClosedPnl": "PNL đã chốt ước tính",
+        "estReceive": "Ước tính nhận được",
+        "estClosedPnl": "PNL đóng lệnh ước tính",
         "limitClosePlacedToast": "Đóng lệnh Limit {{direction}} {{coin}}: khối lượng {{size}} đã đặt tại ${{price}}"
       },
       "PerpsOpenPositionPopup": {
