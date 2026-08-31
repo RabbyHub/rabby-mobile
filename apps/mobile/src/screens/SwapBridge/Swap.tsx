@@ -252,6 +252,7 @@ const Swap = ({
   const { colors2024, styles } = useTheme2024({ getStyle });
   const pendingTransactionsRef =
     useRef<SwapPendingTransactionsControllerRef>(null);
+  const [hasSwapProgress, setHasSwapProgress] = useState(false);
 
   const [twoStepApproveModalVisible, setTwoStepApproveModalVisible] =
     useState(false);
@@ -303,8 +304,6 @@ const Swap = ({
     passGasPrice,
     slider,
     onChangeSlider,
-
-    showMoreVisible,
 
     lowCreditToken: _lowCreditToken,
     lowCreditVisible,
@@ -1378,25 +1377,20 @@ const Swap = ({
     !activeProvider ||
     isSubmitting;
 
-  const isShowMoreVisible = useMemo(() => {
-    return (
-      showMoreVisible &&
-      Number(payAmount) > 0 &&
-      inSufficientCanGetQuote &&
-      !!payToken &&
-      activeProvider?.quote &&
-      !!receiveToken
-    );
-  }, [
-    payAmount,
-    inSufficientCanGetQuote,
-    showMoreVisible,
-    payToken,
-    receiveToken,
-    activeProvider?.quote,
-  ]);
+  const isPreviewVisible = useMemo(() => {
+    const hasTokenPair = !!payToken && !!receiveToken;
+    const isSameTokenPair = isSameTokenId(payToken?.id, receiveToken?.id);
+    const userInputAmountAvailable = Number(payAmount) > 0;
+    const shouldPrioritizeSwapProgress =
+      !userInputAmountAvailable && hasSwapProgress;
 
-  const [showMoreOpen, setShowMoreOpen] = useState(false);
+    return (
+      hasTokenPair &&
+      !isSameTokenPair &&
+      isSupportedChain &&
+      !shouldPrioritizeSwapProgress
+    );
+  }, [isSupportedChain, payAmount, payToken, receiveToken, hasSwapProgress]);
 
   const [sourceName, sourceLogo] = useMemo(() => {
     if (activeProvider?.name) {
@@ -2089,7 +2083,7 @@ const Swap = ({
               </>
             ) : null}
 
-            {isShowMoreVisible &&
+            {isPreviewVisible &&
               (!shouldTwoStepSwap ||
                 (shouldTwoStepSwap && !approveHash) ||
                 showRiskTips) && (
@@ -2102,8 +2096,6 @@ const Swap = ({
                     autoSuggestSlippage={autoSuggestSlippage}
                     supportDirectSign={canShowDirectSubmit}
                     openFeePopup={openFeePopup}
-                    open={showMoreOpen}
-                    setOpen={setShowMoreOpen}
                     sourceName={sourceName}
                     sourceLogo={sourceLogo}
                     slippage={slippageState}
@@ -2153,7 +2145,8 @@ const Swap = ({
               disableHeaderRight={disableHeaderRight}
               enabled={sceneActive}
               isForMultipleAddress={isForMultipleAddress}
-              showPendingTransaction={!approveHash && !isShowMoreVisible}
+              showPendingTransaction={!approveHash && !isPreviewVisible}
+              onProgressChange={setHasSwapProgress}
             />
 
             {!showRiskTips &&

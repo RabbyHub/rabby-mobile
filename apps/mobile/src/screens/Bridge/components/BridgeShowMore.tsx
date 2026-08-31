@@ -1,6 +1,4 @@
 import React, {
-  Dispatch,
-  SetStateAction,
   useCallback,
   useEffect,
   useMemo,
@@ -15,7 +13,6 @@ import {
   Pressable,
   StyleSheet,
 } from 'react-native';
-import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { useTranslation } from 'react-i18next';
 import { getTokenSymbol } from '@/utils/token';
 import {
@@ -92,8 +89,6 @@ const BridgeShowMore = ({
   isCustomSlippage,
   setAutoSlippage,
   setIsCustomSlippage,
-  open,
-  setOpen,
   type,
   isWrapToken,
   isBestQuote,
@@ -105,14 +100,11 @@ const BridgeShowMore = ({
   supportDirectSign,
   autoSuggestSlippage,
   duration,
-  sourceAlwaysShow,
   insufficient,
   onDepositPopupVisibleChange,
   onSlippageOptionsOpenChange,
   onGasSettingsOpenChange,
 }: {
-  open: boolean;
-  setOpen: Dispatch<SetStateAction<boolean>>;
   openQuotesList: () => void;
   sourceName: string;
   sourceLogo: string;
@@ -144,7 +136,6 @@ const BridgeShowMore = ({
   recommendValue?: number;
   supportDirectSign: boolean;
   autoSuggestSlippage?: string;
-  sourceAlwaysShow?: boolean;
   textColor?: string;
   onDepositPopupVisibleChange?: (visible: boolean) => void;
   onSlippageOptionsOpenChange?: (open: boolean) => void;
@@ -293,7 +284,7 @@ const BridgeShowMore = ({
   return (
     <View style={StyleSheet.flatten([styles.container])}>
       <View style={{ gap: 12 }}>
-        {sourceAlwaysShow && sourceContentRender()}
+        {type === 'bridge' && sourceContentRender()}
 
         {showLossInfo && (
           <View style={[styles.lossInfo, { marginBottom: 0 }]}>
@@ -383,28 +374,8 @@ const BridgeShowMore = ({
             onOptionsOpenChange={onSlippageOptionsOpenChange}
           />
         ) : null}
-      </View>
 
-      <View style={styles.header}>
-        <View style={styles.dottedLine} />
-        <TouchableOpacity
-          onPress={() => setOpen(e => !e)}
-          style={styles.headerTextWrapper}>
-          <Text style={styles.headerText}>
-            {t('page.bridge.showMore.title')}
-          </Text>
-          <ArrowRightSVG
-            width={14}
-            height={14}
-            style={[styles.icon, open && { transform: [{ rotate: '-90deg' }] }]}
-            color={colors2024['neutral-secondary']}
-          />
-        </TouchableOpacity>
-        <View style={styles.dottedLine} />
-      </View>
-
-      <View style={[styles.body, !open && { height: 0 }]}>
-        {!sourceAlwaysShow && sourceContentRender()}
+        {type === 'swap' && sourceContentRender()}
 
         {!showSlippageWarning && (
           <BridgeSlippage
@@ -1204,38 +1175,12 @@ export const RecommendFromToken = ({
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   container: { marginHorizontal: 24, marginTop: 12 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    marginTop: 12,
-    paddingHorizontal: 12,
-    justifyContent: 'center',
-  },
-  dottedLine: {
-    flex: 1,
-    borderBottomWidth: 1,
-    borderColor: colors2024['neutral-line'],
-    opacity: 0.5,
-    marginHorizontal: -12,
-  },
-
   impactTooltipText: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
-  },
-  icon: {
-    marginLeft: 4,
-    transform: [{ rotate: '90deg' }],
-  },
-  headerTextWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    // opacity: 0.3,
   },
   listItemText: {
     fontSize: 14,
@@ -1244,14 +1189,6 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     lineHeight: 18,
     color: colors2024['neutral-secondary'],
   },
-  headerText: {
-    fontSize: 16,
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-    lineHeight: 20,
-    color: colors2024['neutral-secondary'],
-  },
-  body: { overflow: 'hidden', gap: 12 },
   lossInfo: { marginBottom: 12, fontSize: 12, color: '#5B5B5B' },
   flexRow: { flexDirection: 'row', justifyContent: 'space-between' },
   lossAmount: {

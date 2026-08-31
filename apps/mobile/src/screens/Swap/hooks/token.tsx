@@ -379,7 +379,6 @@ export const useTokenPair = ({
   const setTokenRefreshId = useSetTokenRefreshId();
   const setRefreshId = useSetAtom(refreshIdAtom);
 
-  const [showMoreVisible, setShowMoreVisible] = useState(false);
   const [quotesListVisible, setQuotesListVisible] = useState(false);
 
   const {
@@ -1085,7 +1084,6 @@ export const useTokenPair = ({
             flushPendingQuoteUpdates(params[0]);
             setQuoteRequestFinished(true);
             setQuoteLoading(false);
-            setShowMoreVisible(true);
           }
         }, 300);
       },
@@ -1182,7 +1180,6 @@ export const useTokenPair = ({
     }
 
     setQuoteLoading(false);
-    setShowMoreVisible(true);
     setBestQuoteDex(best.quote.name);
 
     const currentProviderScore = currentProvider
@@ -1552,8 +1549,6 @@ export const useTokenPair = ({
     slider,
     swapUseSlider,
     onChangeSlider,
-
-    showMoreVisible,
 
     lowCreditToken,
     lowCreditVisible,
