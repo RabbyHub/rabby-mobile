@@ -65,4 +65,28 @@ describe('preloads', () => {
 
     expect(mockPreloadComponent).toHaveBeenCalledTimes(2);
   });
+
+  it('resolves the registered navigator before an explicit Perps push', async () => {
+    const {
+      PRELOAD_NAVIGATORS,
+      prepareTransactionNavigatorForPerpsNavigation,
+    } = require('./preloads');
+
+    await prepareTransactionNavigatorForPerpsNavigation();
+
+    expect(mockPreloadComponent).toHaveBeenCalledWith(
+      PRELOAD_NAVIGATORS.StackTransaction,
+    );
+  });
+
+  it('does not reload a navigator that bundle-splitter already cached', async () => {
+    mockIsCached.mockReturnValue(true);
+    const {
+      prepareTransactionNavigatorForPerpsNavigation,
+    } = require('./preloads');
+
+    await prepareTransactionNavigatorForPerpsNavigation();
+
+    expect(mockPreloadComponent).not.toHaveBeenCalled();
+  });
 });

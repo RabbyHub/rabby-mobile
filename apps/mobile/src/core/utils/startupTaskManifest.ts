@@ -325,6 +325,18 @@ export const STARTUP_TASKS = {
     fallbackMs: 8000,
     budgetMs: 200,
   }),
+  perpsProAffinityWarmup: defineStartupTask({
+    label: 'perps.proAffinityWarmup',
+    owner: 'perps',
+    reason:
+      'warm one exact Pro target active-asset cache for persisted Pro users after Home is idle',
+    stage: 'homePostStartupIdle',
+    priority: 'low',
+    delayMs: 3000,
+    fallbackMs: 8000,
+    idleTimeoutMs: 5000,
+    budgetMs: 120,
+  }),
   perpsPersistedPositionSubscription: defineStartupTask({
     label: 'perps.persistedPositionSubscription',
     owner: 'perps',

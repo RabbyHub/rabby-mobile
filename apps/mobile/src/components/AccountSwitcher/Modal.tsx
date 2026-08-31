@@ -25,6 +25,7 @@ import {
   type DappAccountSwitcherServiceInjectedProps,
 } from './dappAccountSwitcherServices';
 import type { Account } from '@/types/account';
+import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoundary';
 
 export function AccountSwitcherModal({
   forScene,
@@ -92,13 +93,17 @@ export function AccountSwitcherModal({
       <BottomSheetScrollView ref={scrollViewRef}>
         <AutoLockView style={[styles.container]}>
           <View style={[styles.panelContainer]}>
-            <AccountsPanelInModal
-              linearContainerProps={panelLinearGradientProps}
-              forScene={forScene}
-              scrollToBottom={scrollToBottom}
-              token={token}
-              getAccountDisabledTips={getAccountDisabledTips}
-            />
+            <RenderActivityBoundary
+              active={!!isVisible}
+              label={`account-switcher-modal-${forScene}`}>
+              <AccountsPanelInModal
+                linearContainerProps={panelLinearGradientProps}
+                forScene={forScene}
+                scrollToBottom={scrollToBottom}
+                token={token}
+                getAccountDisabledTips={getAccountDisabledTips}
+              />
+            </RenderActivityBoundary>
           </View>
         </AutoLockView>
       </BottomSheetScrollView>
@@ -209,18 +214,22 @@ function AccountSwitcherModalInDappWebViewImpl({
       <BottomSheetScrollView ref={scrollViewRef}>
         <AutoLockView style={[styles.container]}>
           <View style={[styles.panelContainer]}>
-            <AccountsPanelInModal
-              allowNullCurrentAccount={false}
-              forScene={'@ActiveDappWebViewModal'}
-              onSwitchSceneAccount={async ctx => {
-                if (!activeDappId) {
-                  return;
-                }
-                setDappCurrentAccount(activeDappId, ctx.sceneAccount);
-                await ctx.switchAction();
-              }}
-              scrollToBottom={scrollToBottom}
-            />
+            <RenderActivityBoundary
+              active={!!isVisible}
+              label="account-switcher-modal-active-dapp">
+              <AccountsPanelInModal
+                allowNullCurrentAccount={false}
+                forScene={'@ActiveDappWebViewModal'}
+                onSwitchSceneAccount={async ctx => {
+                  if (!activeDappId) {
+                    return;
+                  }
+                  setDappCurrentAccount(activeDappId, ctx.sceneAccount);
+                  await ctx.switchAction();
+                }}
+                scrollToBottom={scrollToBottom}
+              />
+            </RenderActivityBoundary>
           </View>
         </AutoLockView>
       </BottomSheetScrollView>

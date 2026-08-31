@@ -16,8 +16,16 @@ export const GlobalTipsPopup: React.FC<{}> = ({}) => {
 
   const { state, hideTipsPopup } = useTipsPopup();
 
-  const { title, desc, visible, buttonStyle, buttonTitleStyle, buttonType } =
-    state || {};
+  const {
+    title,
+    desc,
+    visible,
+    buttonStyle,
+    buttonTitleStyle,
+    buttonType,
+    bgType,
+    enablePanDownToClose,
+  } = state || {};
 
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyle,
@@ -45,12 +53,14 @@ export const GlobalTipsPopup: React.FC<{}> = ({}) => {
         // snapPoints={snapPoints}
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: 'bg1',
+          linearGradientType: bgType || 'bg1',
         })}
         onDismiss={hideTipsPopup}
+        enablePanDownToClose={enablePanDownToClose}
         enableDynamicSizing
         maxDynamicContentSize={maxHeight}>
-        <BottomSheetView style={[styles.container]}>
+        <BottomSheetView
+          style={[styles.container, bgType === 'bg0' && styles.containerBg0]}>
           <View>
             <Text style={styles.title}>{title}</Text>
           </View>
@@ -82,6 +92,10 @@ const getStyle = createGetStyles2024(ctx => {
       paddingHorizontal: 20,
       display: 'flex',
       flexDirection: 'column',
+    },
+
+    containerBg0: {
+      backgroundColor: ctx.colors2024['neutral-bg-0'],
     },
 
     title: {

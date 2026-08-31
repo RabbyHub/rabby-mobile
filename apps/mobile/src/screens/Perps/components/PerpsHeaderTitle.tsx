@@ -1,175 +1,95 @@
-import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
-import React, { useEffect, useMemo } from 'react';
-import { TouchableOpacity, View } from 'react-native';
-
-import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { apiContact } from '@/core/apis';
 import type { Account } from '@/core/startupServices/preference';
-import { ellipsisAddress } from '@/utils/address';
+import type { PerpsViewMode } from '@/core/services/perpsService';
+import React, { useCallback, useMemo } from 'react';
+
+import { PerpsHeader } from '../../PerpsShared/components/PerpsHeader';
+import { resolvePerpsHeaderAccountLabel } from '../../PerpsShared/utils/resolvePerpsHeaderAccountLabel';
 import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
-import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';
-import { Text } from '@/components/Typography';
-import { HeaderBackPressable, useRabbyAppNavigation } from '@/hooks/navigation';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import RcIconHyper from '@/assets2024/icons/perps/IconHyper.svg';
-import { PerpHistoryHeader } from './PerpHistoryHeader';
-import type { AccountHistoryItem } from '@/hooks/perps/usePerpsStore';
 
-const HEADER_HEIGHT = 58;
-
-/**
- * Extracted as a standalone component so React Navigation
- * re-renders it on prop changes instead of stale closures.
- */
-const PerpsHeaderContent: React.FC<{
+export const PerpsSimpleHeader: React.FC<{
   account?: Account | null;
-  localLoadingHistory: AccountHistoryItem[];
-}> = ({ account, localLoadingHistory }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { top } = useSafeAreaInsets();
-  const [popupState, setPopupState] = usePerpsPopupState();
+  isModeSwitching: boolean;
+  onPressInPro?: () => void;
+  onPressOutPro?: () => void;
+  onSwitchToPro: () => void;
+  showProNewBadge?: boolean;
+}> = React.memo(
+  ({
+    account,
+    isModeSwitching,
+    onPressInPro,
+    onPressOutPro,
+    onSwitchToPro,
+    showProNewBadge = false,
+  }) => {
+    const [popupState, setPopupState] = usePerpsPopupState();
 
-  const alias = useMemo(() => {
-    if (!account?.address) {
-      return;
-    }
-    return apiContact.getAliasName(account?.address);
-  }, [account?.address]);
+    const contactAlias = useMemo(() => {
+      if (!account?.address) {
+        return null;
+      }
+      return apiContact.getAliasName(account.address);
+    }, [account?.address]);
 
-  return (
-    <View style={[styles.headerOuter, { marginTop: top }]}>
-      <View style={styles.headerInner}>
-        {/* Left: back + icon + title */}
-        <View style={styles.headerLeft}>
-          <HeaderBackPressable />
-          <RcIconHyper />
-          <Text style={styles.title}>Perps</Text>
-        </View>
+    const accountLabel = useMemo(
+      () => resolvePerpsHeaderAccountLabel(account, contactAlias),
+      [account, contactAlias],
+    );
 
-        {/* Right: account selector + history */}
-        <View style={styles.headerRight}>
-          {account ? (
-            <View style={styles.accountSelectorContainer}>
-              <TouchableOpacity
-                style={styles.accountSelector}
-                onPress={() => {
-                  setPopupState(prev => ({
-                    ...prev,
-                    isShowLoginPopup: !prev.isShowLoginPopup,
-                  }));
-                }}>
-                <WalletIcon
-                  width={18}
-                  height={18}
-                  type={account.brandName}
-                  address={account.address}
-                />
-                <Text style={styles.accountName} numberOfLines={1}>
-                  {alias || ellipsisAddress(account?.address)}
-                </Text>
-                <CaretArrowIconCC
-                  dir="down"
-                  style={[
-                    popupState.isShowLoginPopup ? styles.reverseCaret : null,
-                  ]}
-                  width={14}
-                  height={14}
-                  bgColor={colors2024['neutral-bg-5']}
-                  lineColor={colors2024['neutral-title-1']}
-                />
-              </TouchableOpacity>
-            </View>
-          ) : null}
-          <PerpHistoryHeader localLoadingHistory={localLoadingHistory} />
-        </View>
-      </View>
-    </View>
-  );
-};
-
-export const PerpsNativeHeader: React.FC<{
-  account?: Account | null;
-  localLoadingHistory: AccountHistoryItem[];
-}> = ({ account, localLoadingHistory }) => {
-  const { colors2024 } = useTheme2024({ getStyle });
-  const navigation = useRabbyAppNavigation();
-
-  useEffect(() => {
-    navigation.setOptions({
-      // eslint-disable-next-line react/no-unstable-nested-components
-      header: () => (
-        <PerpsHeaderContent
-          account={account}
-          localLoadingHistory={localLoadingHistory}
-        />
-      ),
-      headerStyle: {
-        backgroundColor: colors2024['neutral-bg-1'],
+    const handleSelectMode = useCallback(
+      (viewMode: PerpsViewMode) => {
+        if (viewMode === 'pro') {
+          onSwitchToPro();
+        }
       },
-    });
-  }, [navigation, colors2024, account, localLoadingHistory]);
+      [onSwitchToPro],
+    );
 
-  return null;
-};
+    const handlePressInMode = useCallback(
+      (viewMode: PerpsViewMode) => {
+        if (viewMode === 'pro') {
+          onPressInPro?.();
+        }
+      },
+      [onPressInPro],
+    );
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  headerOuter: {
-    height: HEADER_HEIGHT,
-    paddingHorizontal: 12,
-    paddingRight: 16,
-    paddingVertical: 10,
+    const handlePressOutMode = useCallback(
+      (viewMode: PerpsViewMode) => {
+        if (viewMode === 'pro') {
+          onPressOutPro?.();
+        }
+      },
+      [onPressOutPro],
+    );
+
+    const handlePressAccount = useCallback(() => {
+      setPopupState(current => ({
+        ...current,
+        isShowLoginPopup: !current.isShowLoginPopup,
+      }));
+    }, [setPopupState]);
+
+    return (
+      <PerpsHeader
+        accountAddress={account?.address}
+        accountBrandName={account?.brandName}
+        accountExpanded={popupState.isShowLoginPopup}
+        accountLabel={accountLabel}
+        accountTriggerVariant="wallet"
+        activeMode="simple"
+        extendProHitAreaRight
+        isModeSwitching={isModeSwitching}
+        onPressAccount={account ? handlePressAccount : undefined}
+        onPressInMode={handlePressInMode}
+        onPressOutMode={handlePressOutMode}
+        onSelectMode={handleSelectMode}
+        showBottomDivider={false}
+        showProNewBadge={showProNewBadge}
+      />
+    );
   },
-  headerInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 6,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  title: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '900',
-    color: colors2024['neutral-title-1'],
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'flex-end',
-    gap: 12,
-  },
-  accountSelectorContainer: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  accountSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: colors2024['neutral-bg-5'],
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    marginLeft: 'auto',
-  },
-  accountName: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-    color: colors2024['neutral-foot'],
-    flexShrink: 1,
-  },
-  reverseCaret: {
-    transform: [{ rotate: '180deg' }],
-  },
-}));
+);
+
+PerpsSimpleHeader.displayName = 'PerpsSimpleHeader';

@@ -1,0 +1,84 @@
+import { useFocusEffect, useRoute } from '@react-navigation/native';
+import React, { useCallback } from 'react';
+import { BackHandler, Platform, View } from 'react-native';
+
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { useEnsurePerpsRuntime } from '@/hooks/perps/runtime/useEnsurePerpsRuntime';
+import type { GetNestedScreenRouteProp } from '@/navigation-type';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
+import { useHideTipsPopup, useIsTipsPopupVisible } from '@/hooks/useTipsPopup';
+
+import { usePerpsProTradeAmountUnit } from '../PerpsPro/scene/usePerpsProTradePreferences';
+import { PerpsProHistoryPager } from './components/PerpsProHistoryPager';
+import { usePerpsProHistoryController } from './scene/usePerpsProHistoryController';
+import type { PerpsProHistoryTab } from './types';
+import { PERPS_PRO_HISTORY_FEE_TIPS_OWNER } from './constants';
+
+const isHistoryTab = (value: unknown): value is PerpsProHistoryTab =>
+  value === 'orders' ||
+  value === 'trade' ||
+  value === 'transaction' ||
+  value === 'funding';
+
+export const PerpsProHistoryScreen = () => {
+  useEnsurePerpsRuntime();
+  const amountUnit = usePerpsProTradeAmountUnit();
+  const hideFeeTipsPopup = useHideTipsPopup(PERPS_PRO_HISTORY_FEE_TIPS_OWNER);
+  const isFeeTipsPopupVisible = useIsTipsPopupVisible(
+    PERPS_PRO_HISTORY_FEE_TIPS_OWNER,
+  );
+  const { styles } = useTheme2024({ getStyle });
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<
+        'TransactionNavigatorParamList',
+        'PerpsProHistory'
+      >
+    >();
+  const initialTab = isHistoryTab(route.params?.initialTab)
+    ? route.params.initialTab
+    : 'orders';
+  const history = usePerpsProHistoryController(initialTab);
+  useFocusEffect(
+    useCallback(() => () => hideFeeTipsPopup(), [hideFeeTipsPopup]),
+  );
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS !== 'android' || !isFeeTipsPopupVisible) {
+        return undefined;
+      }
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        () => {
+          hideFeeTipsPopup();
+          return true;
+        },
+      );
+      return () => subscription.remove();
+    }, [hideFeeTipsPopup, isFeeTipsPopupVisible]),
+  );
+
+  return (
+    <NormalScreenContainer2024 type="bg1">
+      <View style={styles.container}>
+        <PerpsProHistoryPager
+          activeTab={history.activeTab}
+          amountUnit={amountUnit}
+          onChange={history.setActiveTab}
+          onLoadEarlier={history.loadEarlier}
+          onRefresh={history.refresh}
+          state={history.state}
+        />
+      </View>
+    </NormalScreenContainer2024>
+  );
+};
+
+const getStyle = createGetStyles2024(() => ({
+  container: {
+    flex: 1,
+  },
+}));
+
+export type { PerpsProHistoryTab } from './types';

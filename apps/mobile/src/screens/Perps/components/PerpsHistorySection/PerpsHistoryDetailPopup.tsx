@@ -1,6 +1,4 @@
 import RcIconInfoCC from '@/assets2024/icons/perps/IconInfoCC.svg';
-import RcIconHyper from '@/assets2024/icons/perps/IconHyper.svg';
-import RcIconRabby from '@/assets2024/icons/common/rabby-wallet.svg';
 import { AssetAvatar } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
@@ -9,13 +7,14 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { useTheme2024 } from '@/hooks/theme';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { formatPercent } from '@/screens/Home/utils/price';
+import { useShowPerpsTradeFeeExplanation } from '@/screens/PerpsShared/components/PerpsTradeFeeExplanation';
 import { formatPerpsNumber, splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { sinceTime } from '@/utils/time';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { WsFill } from '@rabby-wallet/hyperliquid-sdk';
 import React, { useEffect, useMemo, useRef } from 'react';
-import { Trans, useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Text } from '@/components/Typography';
 import { SPOT_STABLE_COIN_NAME } from '../PerpsSpotSwapPopup';
@@ -45,6 +44,7 @@ export const PerpsHistoryDetailPopup: React.FC<{
 
   const { t } = useTranslation();
   const { showTipsPopup } = useTipsPopup();
+  const showTradeFeeExplanation = useShowPerpsTradeFeeExplanation();
 
   const {
     coin,
@@ -305,68 +305,7 @@ export const PerpsHistoryDetailPopup: React.FC<{
                   {fee ? (
                     <View style={styles.listItem}>
                       <TouchableOpacity
-                        onPress={() => {
-                          showTipsPopup({
-                            title: t('page.perps.historyDetail.feeTitle'),
-                            desc: (
-                              <View>
-                                <Text style={styles.feeDesc}>
-                                  <Trans
-                                    i18nKey="page.perps.historyDetail.feeDesc"
-                                    components={{
-                                      1: <Text style={styles.feeBold} />,
-                                      2: <Text style={styles.feeBold} />,
-                                    }}
-                                  />
-                                </Text>
-                                <View style={styles.feeTable}>
-                                  <View style={styles.feeRow}>
-                                    <View style={styles.feeRowLeft}>
-                                      <RcIconHyper width={20} height={20} />
-                                      <Text style={styles.feeRowLabel}>
-                                        {t(
-                                          'page.perps.historyDetail.feeHyperliquid',
-                                        )}
-                                      </Text>
-                                    </View>
-                                    <Text style={styles.feeRowValue}>
-                                      0.045%
-                                    </Text>
-                                  </View>
-                                  {!isLiquidation && (
-                                    <View style={styles.feeRow}>
-                                      <View style={styles.feeRowLeft}>
-                                        <RcIconRabby width={20} height={20} />
-                                        <Text style={styles.feeRowLabel}>
-                                          {t(
-                                            'page.perps.historyDetail.feeRabby',
-                                          )}
-                                        </Text>
-                                      </View>
-                                      <View style={styles.feeRowRight}>
-                                        <View style={styles.feeRowValueRow}>
-                                          <Text style={styles.feeRowValue}>
-                                            0.02%
-                                          </Text>
-                                          <Text
-                                            style={styles.feeRowValueOrigin}>
-                                            0.04%
-                                          </Text>
-                                        </View>
-                                        <Text style={styles.feeRowDiscount}>
-                                          {t(
-                                            'page.perps.historyDetail.feeRabbyDiscount',
-                                          )}
-                                        </Text>
-                                      </View>
-                                    </View>
-                                  )}
-                                </View>
-                              </View>
-                            ),
-                            buttonType: 'hyperliquid',
-                          });
-                        }}>
+                        onPress={() => showTradeFeeExplanation(isLiquidation)}>
                         <View style={styles.listItemMain}>
                           <Text style={styles.label}>
                             {t('page.perps.historyDetail.fee')}
@@ -513,78 +452,6 @@ const getStyle = createGetStyles2024(ctx => {
     },
     red: {
       color: colors2024['red-default'],
-    },
-    feeDesc: {
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      lineHeight: 18,
-      fontWeight: '400',
-      color: colors2024['neutral-secondary'],
-      textAlign: 'center',
-      marginBottom: 20,
-    },
-    feeBold: {
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '700',
-      color: colors2024['neutral-title-1'],
-    },
-    feeTable: {
-      borderRadius: 12,
-      backgroundColor: colors2024['neutral-bg-2'],
-      overflow: 'hidden',
-    },
-    feeRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: 16,
-      paddingVertical: 14,
-      borderBottomWidth: 0.5,
-      borderBottomColor: colors2024['neutral-line'],
-    },
-    feeRowLeft: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-    },
-    feeRowLabel: {
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      lineHeight: 18,
-      fontWeight: '500',
-      color: colors2024['neutral-title-1'],
-    },
-    feeRowValue: {
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      lineHeight: 18,
-      fontWeight: '700',
-      color: colors2024['neutral-title-1'],
-    },
-    feeRowRight: {
-      alignItems: 'flex-end',
-      gap: 2,
-    },
-    feeRowValueRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-    },
-    feeRowValueOrigin: {
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      lineHeight: 18,
-      fontWeight: '500',
-      color: colors2024['neutral-foot'],
-      textDecorationLine: 'line-through',
-    },
-    feeRowDiscount: {
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      lineHeight: 14,
-      fontWeight: '400',
-      color: colors2024['neutral-foot'],
     },
   };
 });

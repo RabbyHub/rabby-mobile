@@ -5,11 +5,17 @@ import {
   setAccountNeedApproveBuilderFee,
 } from '@/hooks/perps/usePerpsStore';
 import { showToast } from '@/hooks/perps/showToast';
-import { isWalletUnlockCancelled } from '@/utils/walletUnlockError';
 import * as Sentry from '@sentry/react-native';
 
-// Returns true when the error came from an expired agent. Side-effect: toast +
-// flips `accountNeedApproveAgent`. Callers should treat true as "stop retrying".
+import { isPerpsActionUserCancelled } from './actions/actionError';
+import {
+  ensurePerpsActionApproval,
+  invalidatePerpsActionApprovalCache,
+} from './actions/perpsActionApproval';
+
+// Returns true when the error came from an expired agent. It invalidates the
+// preflight cache and immediately opens the action-scoped reauthorization; the
+// failed financial action is never replayed automatically.
 export const judgeIsUserAgentIsExpired = async (
   errorMessage: string,
 ): Promise<boolean> => {
@@ -28,9 +34,27 @@ export const judgeIsUserAgentIsExpired = async (
   );
   const agentAddress = agentWalletPreference?.agentAddress;
   if (agentAddress && errorMessage.includes(agentAddress)) {
-    console.warn('handle action agent is expired, logout');
-    showToast('Agent is expired, please try again', 'error');
+    console.warn('handle action agent is expired, reauthorize');
     setAccountNeedApproveAgent(true);
+    invalidatePerpsActionApprovalCache();
+    showToast('Agent expired. Authorize again to continue.', 'error');
+    try {
+      await ensurePerpsActionApproval(currentAccount, {
+        forceRemoteCheck: true,
+      });
+    } catch (error) {
+      if (!isUserCancelledSignature(error)) {
+        Sentry.captureException(
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            extra: {
+              scene: 'PERPS expired agent reauthorization error',
+              masterAddress,
+            },
+          },
+        );
+      }
+    }
     return true;
   }
   return false;
@@ -58,7 +82,24 @@ export const judgeIsBuilderFeeNeedApprove = (errorMessage: string): boolean => {
 //   - hardware mini-sign rethrows the string 'Canceled' (executeSignatures)
 //   - local-wallet unlock / biometrics throw WalletUnlockCancelledError
 export function isUserCancelledSignature(error: unknown): boolean {
-  return error === 'Canceled' || isWalletUnlockCancelled(error);
+  return isPerpsActionUserCancelled(error);
+}
+
+// Normalize a thrown value into an Error without losing information.
+// `String(obj)` yields "[object Object]" and `JSON.stringify(err)` yields "{}"
+// (Error props are non-enumerable) — both produced message-less Sentry issues.
+function toError(value: unknown): Error {
+  if (value instanceof Error) {
+    return value;
+  }
+  if (typeof value === 'string') {
+    return new Error(value);
+  }
+  try {
+    return new Error(JSON.stringify(value) ?? String(value));
+  } catch {
+    return new Error(String(value));
+  }
 }
 
 type RunPerpsActionConfig<T> = {
@@ -82,7 +123,7 @@ type RunPerpsActionConfig<T> = {
 /**
  * Wraps a perps action so every handler shares one error path:
  *   1. swallow known, self-handled errors (expired agent / unapproved builder
- *      fee) — those already toast + flip their own approve flag;
+ *      fee) — expired agents immediately enter reauthorization;
  *   2. otherwise console + toast + Sentry, then return `fallback`.
  * Lets each handler declare only what differs (fallback / label / toast /
  * context) instead of repeating the catch block on every new action.
@@ -111,16 +152,20 @@ export async function runPerpsAction<T>(
         (error?.message || `${config.label} error`),
       'error',
     );
-    Sentry.captureException(
-      error instanceof Error ? error : new Error(String(error)),
-      {
-        extra: {
-          title,
-          context: config.context,
-          rawError: error?.message ?? error,
-        },
+    Sentry.captureException(toError(error), {
+      // Searchable in the issue stream (`perps_action:*`) — the captured
+      // error's own message rarely contains "PERPS".
+      tags: { perps_action: config.label },
+      // Appended to the default grouping so that un-symbolicated builds
+      // (minified single-line stacks) can't lump perps errors into the same
+      // catch-all issue as unrelated errors sharing that stack shape.
+      fingerprint: ['{{ default }}', 'perps-action', config.label],
+      extra: {
+        title,
+        context: config.context,
+        rawError: error?.message ?? error,
       },
-    );
+    });
     return config.fallback;
   }
 }

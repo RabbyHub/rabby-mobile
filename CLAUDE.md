@@ -93,7 +93,6 @@ yarn link-assets
 │   ├── mobile/              # Main React Native app
 │   ├── mobile-local-pages/  # Local pages for WebView
 │   ├── dev-console-cra/     # Dev console (CRA)
-│   └── go.rabby.io/         # Go service
 ├── packages/                # Shared packages
 │   ├── base-utils/          # Base utilities
 │   ├── biz-utils/           # Business utilities

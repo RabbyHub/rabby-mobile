@@ -74,12 +74,12 @@ module.exports = {
           {
             name: 'zeego/context-menu',
             message:
-              "Use the Rabby ContextMenuView boundary instead of importing an unscoped context-menu runtime",
+              'Use the Rabby ContextMenuView boundary instead of importing an unscoped context-menu runtime',
           },
           {
             name: '@react-native-menu/menu',
             message:
-              "Use the Rabby ContextMenuView boundary instead of importing an unscoped native menu runtime",
+              'Use the Rabby ContextMenuView boundary instead of importing an unscoped native menu runtime',
           },
         ],
       },

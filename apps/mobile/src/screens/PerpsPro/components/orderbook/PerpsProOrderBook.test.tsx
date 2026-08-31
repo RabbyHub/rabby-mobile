@@ -1,0 +1,513 @@
+import { fireEvent, render, screen } from '@testing-library/react-native';
+import React from 'react';
+import { StyleSheet } from 'react-native';
+
+const mockOpenFieldExplanation = jest.fn();
+
+import type { MarketData } from '@/hooks/perps/usePerpsStore';
+
+import { buildPerpsProMarket } from '../../model/market';
+import { processPerpsOrderBook } from '../../model/orderBook';
+import { PerpsProOrderBook } from './PerpsProOrderBook';
+
+jest.mock('@/assets2024/icons/perps/PerpsProPrecisionCaret.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) => ReactModule.createElement(View, props);
+});
+
+jest.mock('@/components/Typography', () => ({
+  Text: require('react-native').Text,
+}));
+
+jest.mock('@/hooks/theme', () => ({
+  useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
+    const colors2024 = new Proxy(
+      {},
+      {
+        get: (_target, key) => String(key),
+      },
+    );
+    return {
+      colors2024,
+      styles: getStyle({ colors2024 }),
+    };
+  },
+}));
+
+jest.mock('@/utils/styles', () => ({
+  createGetStyles2024: (getStyle: unknown) => getStyle,
+}));
+
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+  }),
+}));
+
+jest.mock('../funding/PerpsProFundingSummary', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    PerpsProFundingSummary: () =>
+      ReactModule.createElement(View, { testID: 'funding-summary' }),
+  };
+});
+
+jest.mock('../common/PerpsProDottedUnderlineText', () => {
+  const ReactModule = require('react');
+  const { Pressable, Text } = require('react-native');
+  return {
+    PerpsProDottedUnderlineText: ({
+      accessibilityLabel,
+      children,
+      onPress,
+      style,
+    }: any) =>
+      onPress
+        ? ReactModule.createElement(
+            Pressable,
+            { accessibilityLabel, accessibilityRole: 'button', onPress },
+            ReactModule.createElement(Text, { style }, children),
+          )
+        : ReactModule.createElement(Text, { style }, children),
+  };
+});
+
+jest.mock('../common/PerpsProFieldExplanationContext', () => ({
+  usePerpsProFieldExplanation: () => mockOpenFieldExplanation,
+}));
+
+jest.mock('../loading/PerpsProSkeletonBlock', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    PerpsProSkeletonBlock: (props: object) =>
+      ReactModule.createElement(View, {
+        ...props,
+        testID: 'perps-pro-skeleton-block',
+      }),
+  };
+});
+
+jest.mock('./PerpsProPrecisionSheet', () => ({
+  PerpsProPrecisionSheet: () => null,
+}));
+
+const defaultProps: React.ComponentProps<typeof PerpsProOrderBook> = {
+  book: processPerpsOrderBook(null),
+  bookStatus: 'loading',
+  hasBookSnapshot: false,
+  latestTrade: null,
+  market: null,
+  onOpenFunding: jest.fn(),
+  onSelectTickOption: jest.fn(),
+  selectedTickOption: null,
+  serverClock: null,
+  tickOptions: [],
+};
+
+const marketData: MarketData = {
+  dayBaseVlm: '100',
+  dayNtlVlm: '1000000',
+  dexId: '',
+  displayName: 'BTC',
+  funding: '0.0001',
+  index: 0,
+  logoUrl: '',
+  markPx: '31.3426',
+  maxLeverage: 40,
+  maxUsdValueSize: '1000000',
+  midPx: '31.3426',
+  minLeverage: 1,
+  name: 'BTC',
+  openInterest: '1',
+  oraclePx: '31.3426',
+  premium: '0',
+  prevDayPx: '30',
+  pxDecimals: 2,
+  quoteAsset: 'USDC',
+  szDecimals: 4,
+};
+
+describe('PerpsProOrderBook display shell', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+  it('keeps the fixed body mounted while display state changes', () => {
+    const view = render(<PerpsProOrderBook {...defaultProps} />);
+
+    expect(screen.getByTestId('perps-pro-order-book')).toBeTruthy();
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-book-column').props.style,
+      ),
+    ).toMatchObject({ gap: 8, height: 416 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-book-column-header').props.style,
+      ),
+    ).toMatchObject({ height: 26 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-book').props.style,
+      ),
+    ).toMatchObject({ height: 308 });
+    expect(screen.getByTestId('perps-pro-order-book-skeleton')).toBeTruthy();
+    expect(
+      screen.getAllByTestId('perps-pro-skeleton-block').length,
+    ).toBeGreaterThan(0);
+
+    view.rerender(
+      <PerpsProOrderBook
+        {...defaultProps}
+        bookStatus="error"
+        hasBookSnapshot={false}
+      />,
+    );
+
+    expect(screen.getByTestId('perps-pro-order-book')).toBeTruthy();
+    expect(screen.queryByTestId('perps-pro-order-book-skeleton')).toBeNull();
+    expect(screen.getByText('page.perps.pro.common.unavailable')).toBeTruthy();
+
+    view.rerender(
+      <PerpsProOrderBook
+        {...defaultProps}
+        bookStatus="stale"
+        hasBookSnapshot={false}
+      />,
+    );
+
+    expect(screen.getByTestId('perps-pro-order-book')).toBeTruthy();
+    expect(screen.getByTestId('perps-pro-order-book-skeleton')).toBeTruthy();
+  });
+
+  it('keeps market prices at pxDecimals when order-book aggregation is coarser', () => {
+    const view = render(
+      <PerpsProOrderBook
+        {...defaultProps}
+        book={processPerpsOrderBook({
+          coin: 'BTC',
+          levels: [
+            [{ n: 1, px: '31.044', sz: '2' }],
+            [{ n: 1, px: '31.556', sz: '3' }],
+          ],
+          time: 100,
+        })}
+        bookStatus="ready"
+        hasBookSnapshot
+        latestTrade={{
+          coin: 'BTC',
+          price: '31.3314',
+          side: 'buy',
+          size: '1',
+          tid: 1,
+          time: 100,
+        }}
+        market={buildPerpsProMarket(marketData)}
+        selectedTickOption={{
+          displayPrice: 1,
+          mantissa: null,
+          nSigFigs: 2,
+          priceDecimals: 0,
+        }}
+      />,
+    );
+
+    expect(screen.getByText('31')).toBeTruthy();
+    expect(screen.getByText('32')).toBeTruthy();
+    expect(screen.getByText('31.33')).toBeTruthy();
+    expect(screen.getByText('31.34')).toBeTruthy();
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-book-mid-price').props.style,
+      ),
+    ).toMatchObject({ gap: 2, height: 60 });
+    fireEvent.press(
+      screen.getByLabelText('page.perps.pro.fieldExplanations.markPrice.title'),
+    );
+    expect(mockOpenFieldExplanation).toHaveBeenCalledWith('markPrice');
+
+    view.rerender(
+      <PerpsProOrderBook
+        {...defaultProps}
+        book={processPerpsOrderBook({
+          coin: 'BTC',
+          levels: [
+            [{ n: 1, px: '31.044', sz: '2' }],
+            [{ n: 1, px: '31.556', sz: '3' }],
+          ],
+          time: 100,
+        })}
+        bookStatus="ready"
+        hasBookSnapshot
+        latestTrade={{
+          coin: 'BTC',
+          price: '31.3314',
+          side: 'buy',
+          size: '1',
+          tid: 1,
+          time: 100,
+        }}
+        market={buildPerpsProMarket(marketData)}
+        selectedTickOption={{
+          displayPrice: 0.01,
+          mantissa: null,
+          nSigFigs: 4,
+          priceDecimals: 2,
+        }}
+      />,
+    );
+
+    expect(screen.getByText('31.04')).toBeTruthy();
+    expect(screen.getByText('31.56')).toBeTruthy();
+    expect(screen.getByText('31.33')).toBeTruthy();
+    expect(screen.getByText('31.34')).toBeTruthy();
+  });
+
+  it('forwards the raw latest trade price only when explicit selection is enabled', () => {
+    const onSelectPrice = jest.fn();
+    const latestTrade = {
+      coin: 'BTC',
+      price: '31.3314',
+      side: 'buy' as const,
+      size: '1',
+      tid: 1,
+      time: 100,
+    };
+    const view = render(
+      <PerpsProOrderBook
+        {...defaultProps}
+        book={processPerpsOrderBook({
+          coin: 'BTC',
+          levels: [
+            [{ n: 1, px: '31.044', sz: '2' }],
+            [{ n: 1, px: '31.556', sz: '3' }],
+          ],
+          time: 100,
+        })}
+        bookStatus="ready"
+        hasBookSnapshot
+        latestTrade={latestTrade}
+        market={buildPerpsProMarket(marketData)}
+        onSelectPrice={onSelectPrice}
+      />,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-order-book-latest-price'));
+    expect(onSelectPrice).toHaveBeenCalledWith('31.3314', {
+      type: 'tradePrice',
+    });
+
+    view.rerender(
+      <PerpsProOrderBook
+        {...defaultProps}
+        bookStatus="ready"
+        hasBookSnapshot
+        latestTrade={latestTrade}
+        market={buildPerpsProMarket(marketData)}
+      />,
+    );
+    fireEvent.press(screen.getByTestId('perps-pro-order-book-latest-price'));
+    expect(onSelectPrice).toHaveBeenCalledTimes(1);
+  });
+
+  it('freezes the typed price intent before the focused input blurs', () => {
+    const onSelectPrice = jest.fn();
+    const onSelectPriceIntentStart = jest
+      .fn()
+      .mockReturnValueOnce({ type: 'attachedTpSlPrice', leg: 'tp' })
+      .mockReturnValue({ type: 'tradePrice' });
+    render(
+      <PerpsProOrderBook
+        {...defaultProps}
+        book={processPerpsOrderBook({
+          coin: 'BTC',
+          levels: [
+            [{ n: 1, px: '31.044', sz: '2' }],
+            [{ n: 1, px: '31.556', sz: '3' }],
+          ],
+          time: 100,
+        })}
+        bookStatus="ready"
+        hasBookSnapshot
+        latestTrade={{
+          coin: 'BTC',
+          price: '31.3314',
+          side: 'buy',
+          size: '1',
+          tid: 1,
+          time: 100,
+        }}
+        market={buildPerpsProMarket(marketData)}
+        onSelectPrice={onSelectPrice}
+        onSelectPriceIntentStart={onSelectPriceIntentStart}
+      />,
+    );
+
+    const latestPrice = screen.getByTestId('perps-pro-order-book-latest-price');
+    fireEvent(latestPrice, 'pressIn');
+    fireEvent.press(latestPrice);
+
+    expect(onSelectPriceIntentStart).toHaveBeenCalledTimes(1);
+    expect(onSelectPrice).toHaveBeenCalledWith('31.3314', {
+      type: 'attachedTpSlPrice',
+      leg: 'tp',
+    });
+  });
+
+  it('forwards an empty display row as an invalid price selection attempt', () => {
+    const onSelectPrice = jest.fn();
+    render(
+      <PerpsProOrderBook
+        {...defaultProps}
+        book={processPerpsOrderBook({
+          coin: 'BTC',
+          levels: [
+            [{ n: 1, px: '31.044', sz: '2' }],
+            [{ n: 1, px: '31.556', sz: '3' }],
+          ],
+          time: 100,
+        })}
+        bookStatus="ready"
+        hasBookSnapshot
+        market={buildPerpsProMarket(marketData)}
+        onSelectPrice={onSelectPrice}
+      />,
+    );
+
+    const rows = screen.getAllByTestId('perps-pro-order-book-row');
+    fireEvent.press(rows[1]);
+    expect(onSelectPrice).toHaveBeenCalledWith(null, { type: 'tradePrice' });
+  });
+
+  it('grows to the measured trade height and retains the center block in single mode', () => {
+    render(
+      <PerpsProOrderBook
+        {...defaultProps}
+        book={processPerpsOrderBook({
+          coin: 'BTC',
+          levels: [
+            [{ n: 1, px: '31', sz: '2' }],
+            [{ n: 1, px: '32', sz: '3' }],
+          ],
+          time: 100,
+        })}
+        bookStatus="ready"
+        hasBookSnapshot
+        height={476}
+        market={buildPerpsProMarket(marketData)}
+      />,
+    );
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-book-column').props.style,
+      ),
+    ).toMatchObject({ height: 476 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-book').props.style,
+      ),
+    ).toMatchObject({ height: 368 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-book-mid-price').props.style,
+      ),
+    ).toMatchObject({ height: 40 });
+
+    fireEvent.press(screen.getByLabelText('page.perps.pro.orderBook.viewBoth'));
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-book-mid-price').props.style,
+      ),
+    ).toMatchObject({ height: 44 });
+  });
+
+  it('keeps both ask and bid amounts at two decimals independently of the tick', () => {
+    const book = processPerpsOrderBook({
+      coin: 'BTC',
+      levels: [
+        [{ n: 1, px: '1000', sz: '14080' }],
+        [{ n: 1, px: '2000', sz: '74950' }],
+      ],
+      time: 100,
+    });
+    const view = render(
+      <PerpsProOrderBook
+        {...defaultProps}
+        book={book}
+        bookStatus="ready"
+        hasBookSnapshot
+        market={buildPerpsProMarket(marketData)}
+        selectedTickOption={{
+          displayPrice: 1000,
+          mantissa: null,
+          nSigFigs: 2,
+          priceDecimals: 0,
+        }}
+      />,
+    );
+
+    expect(screen.getByText('14.08M')).toBeTruthy();
+    expect(screen.getByText('149.90M')).toBeTruthy();
+
+    const amountStyle = StyleSheet.flatten(
+      screen.getByText('149.90M').props.style,
+    );
+    expect(amountStyle.flexShrink).toBe(0);
+    expect(amountStyle.maxWidth).toBeUndefined();
+
+    const priceStyle = StyleSheet.flatten(
+      screen.getByText('2,000').props.style,
+    );
+    expect(priceStyle.flex).toBe(1);
+    expect(priceStyle.minWidth).toBe(0);
+
+    view.rerender(
+      <PerpsProOrderBook
+        {...defaultProps}
+        book={book}
+        bookStatus="ready"
+        hasBookSnapshot
+        market={buildPerpsProMarket(marketData)}
+        selectedTickOption={{
+          displayPrice: 1,
+          mantissa: null,
+          nSigFigs: 5,
+          priceDecimals: 2,
+        }}
+      />,
+    );
+
+    expect(screen.getByText('14.08M')).toBeTruthy();
+    expect(screen.getByText('149.90M')).toBeTruthy();
+    expect(screen.getByText('2,000.00')).toBeTruthy();
+
+    view.rerender(
+      <PerpsProOrderBook
+        {...defaultProps}
+        amountUnit="base"
+        book={book}
+        bookStatus="ready"
+        hasBookSnapshot
+        market={buildPerpsProMarket(marketData)}
+        selectedTickOption={{
+          displayPrice: 1,
+          mantissa: null,
+          nSigFigs: 5,
+          priceDecimals: 2,
+        }}
+      />,
+    );
+
+    expect(screen.getByText('14.08K')).toBeTruthy();
+    expect(screen.getByText('74.95K')).toBeTruthy();
+    expect(
+      screen.getByText('page.perps.pro.orderBook.price\n(USDC)'),
+    ).toBeTruthy();
+    expect(
+      screen.getByText('page.perps.pro.orderBook.amount\n(BTC)'),
+    ).toBeTruthy();
+  });
+});

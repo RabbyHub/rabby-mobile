@@ -29,6 +29,8 @@ export const UL_PROTOCOL = UL_CONFIG.protocol;
 export const UL_HOSTNAME = UL_CONFIG.hostname;
 export const UL_PATH_PREFIX = UL_CONFIG.pathPrefix;
 export const WALLETCONNECT_REDIRECT_PATH = 'walletconnect';
+export const MOBILE_HOME_COMPAT_URL =
+  'https://go.rabby.io/fallback/mobile-home/index.html';
 
 const UL_HTTP_DOMAIN = `https://${UL_HOSTNAME}`;
 const UL_HTTP_DOMAIN_PROD = `https://${RABBY_GO_ENVS.release.hostname}`;

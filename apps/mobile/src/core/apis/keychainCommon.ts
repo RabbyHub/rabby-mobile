@@ -254,7 +254,17 @@ type NativeKeychainDebugState =
   | NativeAndroidKeychainDebugState
   | NativeIOSKeychainDebugState;
 
+type NativeKeychainEntryState = {
+  service: string;
+  hasEntry: boolean;
+  hasUsername: boolean;
+  hasPassword: boolean;
+};
+
 type RNKeychainDebugModule = {
+  getGenericPasswordEntryStateForOptions?: (
+    options: KeychainCompatibleOptions,
+  ) => Promise<NativeKeychainEntryState>;
   debugGetGenericPasswordStateForOptions?: (
     options: KeychainCompatibleOptions,
   ) => Promise<NativeKeychainDebugState>;
@@ -305,6 +315,10 @@ export type DebugGenericPasswordDecryptResult = {
   credentials: KeychainCompatibleUserCredentials;
   decryptedPayload: DebugDecryptedKeychainPayload;
   usedFallbackRabbitCode: boolean;
+};
+
+export type KeychainEntryState = NativeKeychainEntryState & {
+  sourceLabel: string;
 };
 
 type KeychainDebugStateBase = {
@@ -772,6 +786,23 @@ export function createBusinessKeychainApi({
     }
   }
 
+  async function getKeychainEntryState(
+    service: string = KEYCHAIN_DEFAULT_SERVICE,
+  ): Promise<KeychainEntryState> {
+    const nativeState = await callKeychainDebugMethod<NativeKeychainEntryState>(
+      'getGenericPasswordEntryStateForOptions',
+      {
+        ...DEFAULT_BASE_OPTIONS,
+        service,
+      },
+    );
+
+    return {
+      ...nativeState,
+      sourceLabel,
+    };
+  }
+
   async function normalizeRequestGenericPasswordError(error: unknown) {
     const normalizedError =
       error instanceof Error ? error : new Error(getErrorMessage(error));
@@ -856,6 +887,7 @@ export function createBusinessKeychainApi({
     options: KeychainCompatibleOptions,
     walletUnlockDiagnosticsAttemptId?: string,
   ) {
+    const startedAt = Date.now();
     markWalletUnlockDiagnosticStage(
       walletUnlockDiagnosticsAttemptId,
       'keychain_native_get',
@@ -863,6 +895,15 @@ export function createBusinessKeychainApi({
     );
     const result = await keychainModule.getGenericPassword(options);
     const credentials = result as DefaultRet;
+
+    traceAndroidKeychainPerf('biometric_entry_read_end', {
+      elapsedMs: Date.now() - startedAt,
+      hasPassword: !!credentials && !!credentials.password,
+      storage:
+        credentials && typeof credentials.storage === 'string'
+          ? credentials.storage
+          : undefined,
+    });
 
     if (
       isAndroid &&
@@ -879,6 +920,10 @@ export function createBusinessKeychainApi({
           storage: credentials.storage,
         },
       );
+      const availabilityStartedAt = Date.now();
+      traceAndroidKeychainPerf('system_auth_availability_start', {
+        storage: credentials.storage,
+      });
       const [supportedBiometry, keychainPasscodeAvailable, keyguardSecure] =
         await Promise.all([
           keychainModule.getSupportedBiometryType(),
@@ -888,6 +933,13 @@ export function createBusinessKeychainApi({
           DeviceInfo.isPinOrFingerprintSet().catch(() => false),
         ]);
       const passcodeAvailable = keychainPasscodeAvailable || keyguardSecure;
+
+      traceAndroidKeychainPerf('system_auth_availability_end', {
+        elapsedMs: Date.now() - availabilityStartedAt,
+        storage: credentials.storage,
+        supportedBiometry: supportedBiometry || null,
+        passcodeAvailable,
+      });
 
       traceAndroidKeychainPerf('system_auth_prompt_start', {
         storage: credentials.storage,
@@ -914,6 +966,7 @@ export function createBusinessKeychainApi({
       let promptResult: Awaited<
         ReturnType<ReactNativeBiometrics['simplePrompt']>
       >;
+      const promptStartedAt = Date.now();
       try {
         markWalletUnlockDiagnosticStage(
           walletUnlockDiagnosticsAttemptId,
@@ -940,6 +993,8 @@ export function createBusinessKeychainApi({
       }
 
       traceAndroidKeychainPerf('system_auth_prompt_end', {
+        elapsedMs: Date.now() - promptStartedAt,
+        requestElapsedMs: Date.now() - startedAt,
         storage: credentials.storage,
         success: promptResult.success,
         error: promptResult.error || null,
@@ -1795,6 +1850,7 @@ export function createBusinessKeychainApi({
     getSupportedBiometryType,
     isPasscodeAuthAvailable,
     getKeychainDebugState,
+    getKeychainEntryState,
     debugRemoveCurrentCipherStorageMarker,
     getSupportedStorageTypes,
     debugWriteMockLegacyBiometricsEntry,

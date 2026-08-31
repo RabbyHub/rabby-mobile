@@ -273,6 +273,10 @@ export const useBridge = (
 
   const expiredTimer = useRef<NodeJS.Timeout>(undefined);
   const autoQuoteRefreshDeadlineRef = useRef<number | null>(null);
+  const [quoteRefreshCountdown, setQuoteRefreshCountdown] = useState<{
+    startedAt: number;
+    deadline: number;
+  } | null>(null);
   const autoQuoteRefreshPausedRef = useRef(false);
   const reloadTxRefreshPausedRef = useRef(false);
 
@@ -396,6 +400,7 @@ export const useBridge = (
   const clearExpiredTimer = useCallback(() => {
     stopExpiredTimer();
     autoQuoteRefreshDeadlineRef.current = null;
+    setQuoteRefreshCountdown(null);
   }, [stopExpiredTimer]);
 
   const runScheduledQuoteRefresh = useCallback(() => {
@@ -406,13 +411,17 @@ export const useBridge = (
     }
 
     autoQuoteRefreshDeadlineRef.current = null;
+    setQuoteRefreshCountdown(null);
     setRefreshId(e => e + 1);
   }, [setRefreshId]);
 
   const scheduleQuoteRefresh = useCallback(
     (delay: number) => {
       stopExpiredTimer();
-      autoQuoteRefreshDeadlineRef.current = Date.now() + delay;
+      const startedAt = Date.now();
+      const deadline = startedAt + delay;
+      autoQuoteRefreshDeadlineRef.current = deadline;
+      setQuoteRefreshCountdown({ startedAt, deadline });
 
       if (autoQuoteRefreshPausedRef.current) {
         return;
@@ -474,6 +483,13 @@ export const useBridge = (
   const setReloadTxRefreshPaused = useCallback((paused: boolean) => {
     reloadTxRefreshPausedRef.current = paused;
   }, []);
+
+  useEffect(() => {
+    return () => {
+      stopExpiredTimer();
+      autoQuoteRefreshDeadlineRef.current = null;
+    };
+  }, [stopExpiredTimer]);
 
   // const aggregatorsList = useBridgeSupportedChains(s => s.bridge.aggregatorsList || []);
   const aggregatorsList = useAggregatorsList();
@@ -1496,6 +1512,7 @@ export const useBridge = (
     setSelectedBridgeQuote,
     setAutoQuoteRefreshPaused,
     setReloadTxRefreshPaused,
+    quoteRefreshCountdown,
     ...slippageObj,
 
     onChangeSlider,

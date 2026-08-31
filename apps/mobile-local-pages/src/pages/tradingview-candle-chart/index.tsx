@@ -3,7 +3,10 @@ import '../../imports';
 import {
   createChart as LcCreateChart,
   CandlestickSeries,
+  CrosshairMode,
   HistogramSeries,
+  LineSeries,
+  TrackingModeExitMode,
   // type CandlestickData,
 } from 'lightweight-charts/standalone';
 // import BigNumber from 'bignumber.js';
@@ -14,15 +17,39 @@ import { getRuntimeInfo, postMessageToRN } from '../../utils/webview-runtime';
 import {
   type ChartColors,
   type ChartDescription,
+  type CandleStick,
+  type PerpsProChartConfig,
   type TPSLPriceLines,
 } from './types';
 import {
   createChartState,
   updateTPSLPriceLines as updateTPSLPriceLinesLogic,
   updatePriceLines,
+  calculateSimpleMovingAverage,
+  clampPerpsProCrosshairCoordinate,
+  constrainPerpsProFutureLogicalRange,
   formatPrice,
   formatNumber,
+  formatProCompactNumber,
+  formatPerpsProCrosshairChange,
+  formatPerpsProCrosshairPrice,
+  formatProPrice,
+  formatProTooltipTime,
   formatTime,
+  getInitialVisibleLogicalRange,
+  getPrependedCandleCount,
+  getPerpsProCrosshairTimeLabelLeft,
+  getPerpsProLatestCandleClose,
+  getPerpsProPriceScaleAutoScale,
+  getPerpsProTooltipMaxWidth,
+  getPerpsProTooltipPlacement,
+  getPerpsProTooltipMetrics,
+  isPerpsProFutureLogicalRangeAtBoundary,
+  PERPS_PRO_CROSSHAIR_LABEL_LAYOUT,
+  PERPS_PRO_PRICE_SCALE_MARGINS,
+  resetPerpsProPriceScale,
+  shouldBlockPerpsProFutureTouchMove,
+  shiftLogicalRangeForPrependedCandles,
 } from './chart-logic';
 import { ThemeColors2024 } from '@rabby-wallet/base-utils/src/isomorphic/theme-colors';
 
@@ -45,10 +72,22 @@ function getChartColors(
     emptyPrimary: colors2024['brand-light-1'],
     emptySecondary: colors2024['brand-light-2'],
     emptyStroke: colors2024['brand-disable'],
+    ma: {
+      7: colors2024['orange-default'],
+      25: colors2024['red-default'],
+      99: colors2024['brand-default'],
+    },
     tooltip: {
       bg: isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2'],
+      border: colors2024['neutral-line'],
       title: colors2024['neutral-body'],
       value: colors2024['neutral-title-1'],
+    },
+    crosshairLabel: {
+      background: isLight
+        ? colors2024['neutral-black']
+        : colors2024['neutral-body'],
+      text: colors2024['neutral-contrast'],
     },
   };
 }
@@ -67,6 +106,9 @@ const defaultDescription: ChartDescription = {
   chg: 'Chg',
   chgPercent: 'Chg%',
   volume: 'Volume',
+  vol: 'Vol',
+  range: 'Range',
+  txn: 'Txn',
   empty: 'No Data',
 };
 
@@ -202,9 +244,48 @@ const chartState = createChartState();
 chartState.colors = { ...getChartColors() };
 chartState.description = { ...defaultDescription };
 
+const PERPS_PRO_KLINE_PROTOCOL_VERSION = 3;
+const PERPS_PRO_FONT_FAMILY =
+  '"SF Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+const candleByTime = new Map<number, TradingViewCandlestickData>();
+const movingAverageByTime: Record<7 | 25 | 99, Map<number, number>> = {
+  7: new Map(),
+  25: new Map(),
+  99: new Map(),
+};
+
+function rebuildCandleLookup() {
+  candleByTime.clear();
+  chartState.currentData.forEach(candle => {
+    candleByTime.set(Number(candle.time), candle);
+  });
+}
+
+function clearMovingAverageLookup() {
+  ([7, 25, 99] as const).forEach(period => {
+    movingAverageByTime[period].clear();
+  });
+}
+
 // DOM Elements
 const containerEl = document.getElementById('container') as HTMLDivElement;
 containerEl.style.position = 'relative';
+
+const maLegend = document.createElement('div');
+maLegend.style.position = 'absolute';
+maLegend.style.left = '8px';
+maLegend.style.right = '52px';
+maLegend.style.top = '2px';
+maLegend.style.display = 'none';
+maLegend.style.alignItems = 'center';
+maLegend.style.gap = '8px';
+maLegend.style.pointerEvents = 'none';
+maLegend.style.fontFamily = PERPS_PRO_FONT_FAMILY;
+maLegend.style.fontSize = '9px';
+maLegend.style.lineHeight = '12px';
+maLegend.style.whiteSpace = 'nowrap';
+maLegend.style.zIndex = '14';
+containerEl.appendChild(maLegend);
 
 let hasRenderableData = false;
 type OverlayState = 'loading' | 'empty' | 'hidden';
@@ -326,9 +407,12 @@ function resetPriceLines() {
 
 function clearChartData() {
   chartState.currentData = [];
+  candleByTime.clear();
+  clearMovingAverageLookup();
   chartState.isInitialDataLoad = true;
   chartState.lastDataKey = null;
   chartState.currentExtremes = null;
+  clearPerpsProCrosshair();
 
   if (chartState.clearMarkers) {
     chartState.clearMarkers.setMarkers([]);
@@ -347,6 +431,10 @@ function clearChartData() {
   if (chartState.volumeSeries) {
     chartState.volumeSeries.setData([]);
   }
+
+  Object.values(chartState.maSeries).forEach(series => {
+    series?.setData([]);
+  });
 }
 
 // Create tooltip element
@@ -364,10 +452,589 @@ tooltip.style.zIndex = '1000';
 containerEl.appendChild(tooltip);
 chartState.tooltip = tooltip;
 
+function applyPerpsProCrosshairLabelBaseStyles(element: HTMLDivElement) {
+  const layout = PERPS_PRO_CROSSHAIR_LABEL_LAYOUT;
+  element.style.boxSizing = 'border-box';
+  element.style.padding = `${layout.paddingVertical}px ${layout.paddingHorizontal}px`;
+  element.style.border = '0';
+  element.style.borderRadius = `${layout.borderRadius}px`;
+  element.style.overflow = 'hidden';
+  element.style.pointerEvents = 'none';
+  element.style.fontFamily = PERPS_PRO_FONT_FAMILY;
+  element.style.fontSize = `${layout.fontSize}px`;
+  element.style.fontWeight = `${layout.fontWeight}`;
+  element.style.fontVariationSettings = '"wdth" 100';
+  element.style.letterSpacing = '0';
+  element.style.lineHeight = `${layout.lineHeight}px`;
+  element.style.whiteSpace = 'nowrap';
+  element.style.zIndex = '15';
+}
+
+const proCrosshairLabel = document.createElement('div');
+applyPerpsProCrosshairLabelBaseStyles(proCrosshairLabel);
+proCrosshairLabel.style.position = 'absolute';
+proCrosshairLabel.style.right = '0';
+proCrosshairLabel.style.display = 'none';
+proCrosshairLabel.style.width = `${PERPS_PRO_CROSSHAIR_LABEL_LAYOUT.priceWidth}px`;
+proCrosshairLabel.style.flexDirection = 'column';
+proCrosshairLabel.style.alignItems = 'flex-end';
+proCrosshairLabel.style.justifyContent = 'center';
+proCrosshairLabel.style.textAlign = 'right';
+containerEl.appendChild(proCrosshairLabel);
+
+const proCrosshairTimeLabel = document.createElement('div');
+applyPerpsProCrosshairLabelBaseStyles(proCrosshairTimeLabel);
+proCrosshairTimeLabel.style.position = 'absolute';
+proCrosshairTimeLabel.style.bottom = '0';
+proCrosshairTimeLabel.style.display = 'none';
+proCrosshairTimeLabel.style.visibility = 'hidden';
+proCrosshairTimeLabel.style.width = 'max-content';
+proCrosshairTimeLabel.style.height = `${PERPS_PRO_CROSSHAIR_LABEL_LAYOUT.timeHeight}px`;
+proCrosshairTimeLabel.style.alignItems = 'center';
+proCrosshairTimeLabel.style.justifyContent = 'center';
+proCrosshairTimeLabel.style.textAlign = 'center';
+containerEl.appendChild(proCrosshairTimeLabel);
+
+let proCrosshairLabelRows: {
+  change: HTMLDivElement;
+  price: HTMLDivElement;
+} | null = null;
+
+function ensurePerpsProCrosshairLabelRows() {
+  if (!chartState.proConfig) {
+    return null;
+  }
+  if (proCrosshairLabelRows) {
+    return proCrosshairLabelRows;
+  }
+  const price = document.createElement('div');
+  const change = document.createElement('div');
+  change.style.marginTop = `${PERPS_PRO_CROSSHAIR_LABEL_LAYOUT.rowGap}px`;
+  proCrosshairLabel.appendChild(price);
+  proCrosshairLabel.appendChild(change);
+  proCrosshairLabelRows = { change, price };
+  return proCrosshairLabelRows;
+}
+
+function hidePerpsProCrosshairLabel() {
+  proCrosshairLabel.style.display = 'none';
+}
+
+function hidePerpsProCrosshairTimeLabel() {
+  proCrosshairTimeLabel.style.display = 'none';
+  proCrosshairTimeLabel.style.visibility = 'hidden';
+}
+
+function renderPerpsProCrosshairTimeLabel(time: number) {
+  const config = chartState.proConfig;
+  const colors = chartState.colors;
+  const pointX = chartState.chart?.timeScale().timeToCoordinate(time);
+  if (!config || !colors || pointX == null || !Number.isFinite(pointX)) {
+    hidePerpsProCrosshairTimeLabel();
+    return;
+  }
+  proCrosshairTimeLabel.textContent = formatProTooltipTime(
+    time,
+    config.interval,
+  );
+  proCrosshairTimeLabel.style.background = colors.crosshairLabel.background;
+  proCrosshairTimeLabel.style.color = colors.crosshairLabel.text;
+  proCrosshairTimeLabel.style.visibility = 'hidden';
+  proCrosshairTimeLabel.style.display = 'flex';
+  const left = getPerpsProCrosshairTimeLabelLeft(
+    pointX,
+    proCrosshairTimeLabel.offsetWidth,
+    containerEl.clientWidth,
+  );
+  if (left == null) {
+    hidePerpsProCrosshairTimeLabel();
+    return;
+  }
+  proCrosshairTimeLabel.style.left = `${left}px`;
+  proCrosshairTimeLabel.style.visibility = 'visible';
+}
+
+function renderPerpsProCrosshairLabel(price: number) {
+  const config = chartState.proConfig;
+  const colors = chartState.colors;
+  const pointY = chartState.candlestickSeries?.priceToCoordinate(price);
+  if (
+    !config ||
+    !colors ||
+    !Number.isFinite(price) ||
+    pointY == null ||
+    !Number.isFinite(pointY)
+  ) {
+    hidePerpsProCrosshairLabel();
+    return;
+  }
+  const rows = ensurePerpsProCrosshairLabelRows();
+  if (!rows) {
+    hidePerpsProCrosshairLabel();
+    return;
+  }
+  rows.price.textContent = formatPerpsProCrosshairPrice(
+    price,
+    config.priceDecimals,
+  );
+  const change = formatPerpsProCrosshairChange(
+    price,
+    getPerpsProLatestCandleClose(chartState.currentData),
+  );
+  if (change) {
+    rows.change.textContent = change;
+    rows.change.style.display = 'block';
+  } else {
+    rows.change.textContent = '';
+    rows.change.style.display = 'none';
+  }
+  proCrosshairLabel.style.background = colors.crosshairLabel.background;
+  proCrosshairLabel.style.color = colors.crosshairLabel.text;
+  const labelHeight = change
+    ? PERPS_PRO_CROSSHAIR_LABEL_LAYOUT.priceTwoRowHeight
+    : PERPS_PRO_CROSSHAIR_LABEL_LAYOUT.priceSingleRowHeight;
+  const maxTop = Math.max(0, containerEl.clientHeight - labelHeight);
+  proCrosshairLabel.style.top = `${Math.max(
+    0,
+    Math.min(maxTop, pointY - labelHeight / 2),
+  )}px`;
+  proCrosshairLabel.style.height = `${labelHeight}px`;
+  proCrosshairLabel.style.display = 'flex';
+}
+
+let proCrosshairLabelFrameId: number | null = null;
+
+function cancelPendingPerpsProCrosshairLabelRender() {
+  if (proCrosshairLabelFrameId == null) {
+    return;
+  }
+  window.cancelAnimationFrame(proCrosshairLabelFrameId);
+  proCrosshairLabelFrameId = null;
+}
+
+function schedulePerpsProCrosshairLabelRender() {
+  if (
+    !chartState.proConfig ||
+    !chartState.crosshairActive ||
+    chartState.selectedPrice == null ||
+    chartState.selectedTime == null ||
+    proCrosshairLabelFrameId != null
+  ) {
+    return;
+  }
+  proCrosshairLabelFrameId = window.requestAnimationFrame(() => {
+    proCrosshairLabelFrameId = null;
+    if (
+      !chartState.crosshairActive ||
+      chartState.selectedPrice == null ||
+      chartState.selectedTime == null
+    ) {
+      return;
+    }
+    renderPerpsProCrosshairLabel(chartState.selectedPrice);
+    renderPerpsProCrosshairTimeLabel(chartState.selectedTime);
+  });
+}
+
+function getCandleAtTime(time: number): CandleStick | null {
+  const candle = candleByTime.get(time) ?? null;
+  if (!candle || typeof candle.time !== 'number') {
+    return null;
+  }
+
+  return {
+    close: candle.close,
+    high: candle.high,
+    low: candle.low,
+    open: candle.open,
+    quoteTurnover: candle.quoteTurnover,
+    time: candle.time,
+    trades: candle.trades,
+    volume: candle.volume,
+  };
+}
+
+function getMovingAverageValueAtTime(period: 7 | 25 | 99, time: number) {
+  return movingAverageByTime[period].get(time) ?? null;
+}
+
+function updateMaLegend(time?: number) {
+  const config = chartState.proConfig;
+  const colors = chartState.colors;
+  if (!config || !colors || chartState.currentData.length === 0) {
+    maLegend.style.display = 'none';
+    return;
+  }
+  const targetTime =
+    time ??
+    Number(chartState.currentData[chartState.currentData.length - 1].time);
+  maLegend.innerHTML = config.maPeriods
+    .map(period => {
+      const value = getMovingAverageValueAtTime(period, targetTime);
+      return `<span style="color: ${colors.ma[period]};">MA(${period}): ${
+        value == null ? '--' : formatProPrice(value, config.priceDecimals)
+      }</span>`;
+    })
+    .join('');
+  maLegend.style.display = 'flex';
+}
+
+function clearPerpsProCrosshair() {
+  const shouldClearNativeCrosshair =
+    chartState.proConfig != null ||
+    chartState.crosshairActive ||
+    chartState.crosshairMarkerSeries != null;
+
+  chartState.crosshairActive = false;
+  chartState.selectedPointX = null;
+  chartState.selectedPrice = null;
+  chartState.selectedTime = null;
+  cancelPendingPerpsProCrosshairLabelRender();
+
+  if (shouldClearNativeCrosshair) {
+    chartState.chart?.clearCrosshairPosition();
+  }
+  clearPerpsProCrosshairMarker();
+  if (chartState.tooltip) {
+    chartState.tooltip.style.display = 'none';
+  }
+  hidePerpsProCrosshairLabel();
+  hidePerpsProCrosshairTimeLabel();
+  updateMaLegend();
+}
+
+type PerpsProCrosshairEvent = {
+  point?: { x: number; y: number } | null;
+  time?: unknown;
+};
+
+function getPerpsProCrosshairSelection(param: PerpsProCrosshairEvent) {
+  const point = param.point;
+  const time = Number(param.time);
+  if (
+    !point ||
+    !Number.isFinite(point.x) ||
+    !Number.isFinite(point.y) ||
+    !Number.isFinite(time) ||
+    !chartState.candlestickSeries
+  ) {
+    return null;
+  }
+  const paneHeight = chartState.chart?.paneSize(0).height;
+  const coordinateY = clampPerpsProCrosshairCoordinate(
+    point.y,
+    Number.isFinite(paneHeight) ? paneHeight : containerEl.clientHeight,
+  );
+  const price = chartState.candlestickSeries.coordinateToPrice(coordinateY);
+  if (price == null || !Number.isFinite(price)) {
+    return null;
+  }
+  return {
+    pointX: point.x,
+    price,
+    time,
+    wasClamped: coordinateY !== point.y,
+  };
+}
+
+type PerpsProCrosshairSelection = NonNullable<
+  ReturnType<typeof getPerpsProCrosshairSelection>
+>;
+
+let crosshairMarkerFrameId: number | null = null;
+let pendingCrosshairMarker: { time: number; price: number } | null = null;
+let renderedCrosshairMarkerKey: string | null = null;
+let isWritingCrosshairMarker = false;
+let isCorrectingPerpsProCrosshair = false;
+
+function getCrosshairMarkerKey(time: number, price: number) {
+  return `${time}:${price}`;
+}
+
+function cancelPendingPerpsProCrosshairMarker() {
+  if (crosshairMarkerFrameId != null) {
+    window.cancelAnimationFrame(crosshairMarkerFrameId);
+    crosshairMarkerFrameId = null;
+  }
+  pendingCrosshairMarker = null;
+}
+
+function clearPerpsProCrosshairMarker() {
+  const hasRenderedMarker = renderedCrosshairMarkerKey != null;
+  cancelPendingPerpsProCrosshairMarker();
+  renderedCrosshairMarkerKey = null;
+  if (
+    !hasRenderedMarker ||
+    !chartState.crosshairMarkerSeries ||
+    isWritingCrosshairMarker
+  ) {
+    return;
+  }
+
+  isWritingCrosshairMarker = true;
+  try {
+    chartState.crosshairMarkerSeries.setData([]);
+  } finally {
+    isWritingCrosshairMarker = false;
+  }
+}
+
+function schedulePerpsProCrosshairMarker(time: number, price: number) {
+  const markerKey = getCrosshairMarkerKey(time, price);
+  if (
+    markerKey === renderedCrosshairMarkerKey &&
+    crosshairMarkerFrameId == null
+  ) {
+    return;
+  }
+
+  pendingCrosshairMarker = { time, price };
+  if (crosshairMarkerFrameId != null) {
+    return;
+  }
+
+  crosshairMarkerFrameId = window.requestAnimationFrame(() => {
+    crosshairMarkerFrameId = null;
+    const marker = pendingCrosshairMarker;
+    pendingCrosshairMarker = null;
+    if (
+      !marker ||
+      !chartState.crosshairActive ||
+      chartState.selectedTime !== marker.time ||
+      chartState.selectedPrice !== marker.price
+    ) {
+      return;
+    }
+
+    const nextMarkerKey = getCrosshairMarkerKey(marker.time, marker.price);
+    if (nextMarkerKey === renderedCrosshairMarkerKey) {
+      return;
+    }
+
+    isWritingCrosshairMarker = true;
+    try {
+      const markerSeries = ensurePerpsProCrosshairMarkerSeries();
+      if (!markerSeries) {
+        return;
+      }
+      renderedCrosshairMarkerKey = nextMarkerKey;
+      markerSeries.setData([{ time: marker.time, value: marker.price }]);
+    } finally {
+      isWritingCrosshairMarker = false;
+    }
+  });
+}
+
+function hidePerpsProCrosshairSelection() {
+  // In OnNextTap mode, Lightweight Charts clears its native crosshair before
+  // publishing the exit tap. Keep the interaction active so that click clears
+  // it instead of pinning it again.
+  chartState.selectedPointX = null;
+  chartState.selectedPrice = null;
+  chartState.selectedTime = null;
+  cancelPendingPerpsProCrosshairLabelRender();
+  clearPerpsProCrosshairMarker();
+  if (chartState.tooltip) {
+    chartState.tooltip.style.display = 'none';
+  }
+  hidePerpsProCrosshairLabel();
+  hidePerpsProCrosshairTimeLabel();
+  updateMaLegend();
+}
+
+function applyPerpsProCrosshairSelection(
+  selection: PerpsProCrosshairSelection,
+  candle: CandleStick,
+) {
+  chartState.crosshairActive = true;
+  chartState.selectedPointX = selection.pointX;
+  chartState.selectedPrice = selection.price;
+  chartState.selectedTime = selection.time;
+  updateMaLegend(selection.time);
+  renderPerpsProTooltip(candle, selection.pointX);
+  renderPerpsProCrosshairLabel(selection.price);
+  renderPerpsProCrosshairTimeLabel(selection.time);
+  schedulePerpsProCrosshairMarker(selection.time, selection.price);
+}
+
+function handlePerpsProChartClick(param: PerpsProCrosshairEvent) {
+  if (!chartState.proConfig) {
+    return;
+  }
+  if (chartState.crosshairActive) {
+    clearPerpsProCrosshair();
+    return;
+  }
+
+  const selection = getPerpsProCrosshairSelection(param);
+  const candle = selection ? getCandleAtTime(selection.time) : null;
+  if (
+    !selection ||
+    !candle ||
+    !chartState.chart ||
+    !chartState.candlestickSeries
+  ) {
+    return;
+  }
+
+  applyPerpsProCrosshairSelection(selection, candle);
+  chartState.chart.setCrosshairPosition(
+    selection.price,
+    selection.time,
+    chartState.candlestickSeries,
+  );
+}
+
+function createProTooltipRow(
+  label: string,
+  value: string,
+  valueColor: string,
+  isLast = false,
+) {
+  return `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;${
+    isLast ? '' : 'margin-bottom:2px;'
+  }"><span style="color:${
+    chartState.colors?.tooltip.title
+  };min-width:0;overflow-wrap:anywhere;">${label}:</span><span style="color:${valueColor};flex-shrink:0;font-weight:600;text-align:right;white-space:nowrap;">${value}</span></div>`;
+}
+
+function renderPerpsProTooltip(candle: CandleStick, pointX: number) {
+  const tooltipEl = chartState.tooltip;
+  const colors = chartState.colors;
+  const description = chartState.description;
+  const config = chartState.proConfig;
+  if (!tooltipEl || !colors || !description || !config) {
+    return;
+  }
+  const metrics = getPerpsProTooltipMetrics(candle);
+  const directionalColor = metrics.isPositive
+    ? colors.greenLineColor
+    : colors.redLineColor;
+  const change =
+    metrics.change == null
+      ? '--'
+      : `${metrics.change > 0 ? '+' : ''}${formatProPrice(
+          metrics.change,
+          config.priceDecimals,
+        )}`;
+  const changePercent =
+    metrics.changePercent == null
+      ? '--'
+      : `${metrics.changePercent > 0 ? '+' : ''}${metrics.changePercent.toFixed(
+          2,
+        )}%`;
+  const range =
+    metrics.rangePercent == null ? '--' : `${metrics.rangePercent.toFixed(2)}%`;
+
+  tooltipEl.style.padding = '6px';
+  tooltipEl.style.borderRadius = '6px';
+  tooltipEl.style.border = `1px solid ${colors.tooltip.border}`;
+  tooltipEl.style.fontSize = '10px';
+  tooltipEl.style.lineHeight = '12px';
+  tooltipEl.style.minWidth = '112px';
+  tooltipEl.style.boxSizing = 'border-box';
+  tooltipEl.style.width = 'max-content';
+  tooltipEl.style.whiteSpace = 'normal';
+  tooltipEl.innerHTML = [
+    createProTooltipRow(
+      description.time,
+      formatProTooltipTime(candle.time, config.interval),
+      colors.tooltip.value,
+    ),
+    createProTooltipRow(
+      description.open,
+      formatProPrice(candle.open, config.priceDecimals),
+      colors.tooltip.value,
+    ),
+    createProTooltipRow(
+      description.high,
+      formatProPrice(candle.high, config.priceDecimals),
+      colors.tooltip.value,
+    ),
+    createProTooltipRow(
+      description.low,
+      formatProPrice(candle.low, config.priceDecimals),
+      colors.tooltip.value,
+    ),
+    createProTooltipRow(
+      description.close,
+      formatProPrice(candle.close, config.priceDecimals),
+      colors.tooltip.value,
+    ),
+    createProTooltipRow(description.chg, change, directionalColor),
+    createProTooltipRow(
+      description.chgPercent,
+      changePercent,
+      directionalColor,
+    ),
+    createProTooltipRow(description.range, range, colors.tooltip.value),
+    createProTooltipRow(
+      description.vol,
+      formatProCompactNumber(candle.volume),
+      colors.tooltip.value,
+      true,
+    ),
+  ].join('');
+
+  const containerRect = containerEl.getBoundingClientRect();
+  tooltipEl.style.maxWidth = `${getPerpsProTooltipMaxWidth(
+    containerRect.width,
+  )}px`;
+  const placement = getPerpsProTooltipPlacement(pointX, containerRect.width);
+  tooltipEl.style.top = '16px';
+  tooltipEl.style.left =
+    placement.left == null ? 'auto' : `${placement.left}px`;
+  tooltipEl.style.right =
+    placement.right == null ? 'auto' : `${placement.right}px`;
+  tooltipEl.style.display = 'block';
+}
+
+function updatePerpsProTooltip(param: PerpsProCrosshairEvent) {
+  const tooltipEl = chartState.tooltip;
+  if (!tooltipEl || isWritingCrosshairMarker) {
+    return;
+  }
+
+  const selection = getPerpsProCrosshairSelection(param);
+  if (!selection) {
+    hidePerpsProCrosshairSelection();
+    return;
+  }
+  const candle = getCandleAtTime(selection.time);
+  if (!candle) {
+    hidePerpsProCrosshairSelection();
+    return;
+  }
+
+  applyPerpsProCrosshairSelection(selection, candle);
+  if (
+    selection.wasClamped &&
+    !isCorrectingPerpsProCrosshair &&
+    chartState.chart &&
+    chartState.candlestickSeries
+  ) {
+    isCorrectingPerpsProCrosshair = true;
+    try {
+      chartState.chart.setCrosshairPosition(
+        selection.price,
+        selection.time,
+        chartState.candlestickSeries,
+      );
+    } finally {
+      isCorrectingPerpsProCrosshair = false;
+    }
+  }
+}
+
 // Update tooltip content
 function updateTooltipContent(param: any) {
   if (!chartState.tooltip || !chartState.colors || !chartState.description)
     return;
+
+  if (chartState.proConfig) {
+    updatePerpsProTooltip(param);
+    return;
+  }
 
   const tooltipEl = chartState.tooltip;
   const point = param.point;
@@ -548,6 +1215,191 @@ function updateTooltipContent(param: any) {
   tooltipEl.style.display = 'block';
 }
 
+let pendingVisibleLogicalRange: { from: number; to: number } | null = null;
+let visibleLogicalRangeFrameId: number | null = null;
+let isApplyingVisibleLogicalRange = false;
+let perpsProTouchPoint: { x: number; y: number } | null = null;
+let perpsProTouchStartRange: { from: number; to: number } | null = null;
+let isPerpsProHorizontalTouchScroll = false;
+let isPerpsProFutureTouchBoundary = false;
+let lastOlderCandlesRequestKey: string | null = null;
+let exhaustedHistoryIdentity: string | null = null;
+let perpsProPriceScaleStateFrameId: number | null = null;
+let lastPublishedPerpsProPriceScaleAutoScale: boolean | null = null;
+
+function publishPerpsProPriceScaleAutoScale() {
+  if (!chartState.proConfig) {
+    return;
+  }
+  const autoScale = getPerpsProPriceScaleAutoScale(
+    chartState.candlestickSeries,
+  );
+  if (autoScale === lastPublishedPerpsProPriceScaleAutoScale) {
+    return;
+  }
+  lastPublishedPerpsProPriceScaleAutoScale = autoScale;
+  postMessageToRN({
+    type: 'PERPS_PRO_PRICE_SCALE_AUTO_SCALE_CHANGED',
+    autoScale,
+  });
+}
+
+function schedulePerpsProPriceScaleAutoScalePublish() {
+  if (!chartState.proConfig || perpsProPriceScaleStateFrameId != null) {
+    return;
+  }
+  perpsProPriceScaleStateFrameId = window.requestAnimationFrame(() => {
+    perpsProPriceScaleStateFrameId = null;
+    publishPerpsProPriceScaleAutoScale();
+  });
+}
+
+function resetPerpsProTouchBoundaryGesture() {
+  perpsProTouchPoint = null;
+  perpsProTouchStartRange = null;
+  isPerpsProHorizontalTouchScroll = false;
+  isPerpsProFutureTouchBoundary = false;
+}
+
+function handlePerpsProTouchGestureEnd() {
+  resetPerpsProTouchBoundaryGesture();
+  schedulePerpsProPriceScaleAutoScalePublish();
+}
+
+function handlePerpsProBoundaryTouchStart(event: TouchEvent) {
+  if (!chartState.proConfig || event.touches.length !== 1) {
+    resetPerpsProTouchBoundaryGesture();
+    return;
+  }
+  const touch = event.touches[0];
+  perpsProTouchPoint = { x: touch.clientX, y: touch.clientY };
+  perpsProTouchStartRange =
+    chartState.chart?.timeScale().getVisibleLogicalRange() ?? null;
+  isPerpsProHorizontalTouchScroll = false;
+  isPerpsProFutureTouchBoundary = isPerpsProFutureLogicalRangeAtBoundary(
+    perpsProTouchStartRange,
+    chartState.currentData.length,
+  );
+}
+
+function handlePerpsProBoundaryTouchMove(event: TouchEvent) {
+  if (!chartState.proConfig || event.touches.length !== 1) {
+    resetPerpsProTouchBoundaryGesture();
+    return;
+  }
+  if (!perpsProTouchPoint) {
+    return;
+  }
+  const touch = event.touches[0];
+  const deltaX = touch.clientX - perpsProTouchPoint.x;
+  const deltaY = touch.clientY - perpsProTouchPoint.y;
+  perpsProTouchPoint = { x: touch.clientX, y: touch.clientY };
+  if (deltaX > 0) {
+    isPerpsProFutureTouchBoundary = false;
+  }
+  if (
+    shouldBlockPerpsProFutureTouchMove({
+      atFutureBoundary: isPerpsProFutureTouchBoundary,
+      deltaX,
+      deltaY,
+      isHorizontalScroll: isPerpsProHorizontalTouchScroll,
+    })
+  ) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }
+}
+
+function scheduleConstrainedPerpsProLogicalRange(range: {
+  from: number;
+  to: number;
+}) {
+  const constrained = constrainPerpsProFutureLogicalRange(
+    range,
+    chartState.currentData.length,
+  );
+  if (constrained === range) {
+    return;
+  }
+  pendingVisibleLogicalRange = constrained;
+  if (visibleLogicalRangeFrameId != null) {
+    return;
+  }
+  visibleLogicalRangeFrameId = window.requestAnimationFrame(() => {
+    visibleLogicalRangeFrameId = null;
+    const nextRange = pendingVisibleLogicalRange;
+    pendingVisibleLogicalRange = null;
+    if (!nextRange || !chartState.chart || !chartState.proConfig) {
+      return;
+    }
+    isApplyingVisibleLogicalRange = true;
+    try {
+      chartState.chart.timeScale().setVisibleLogicalRange(nextRange);
+    } finally {
+      isApplyingVisibleLogicalRange = false;
+    }
+  });
+}
+
+function requestOlderPerpsProCandlesIfNeeded(range: {
+  from: number;
+  to: number;
+}) {
+  if (
+    !chartState.proConfig ||
+    !chartState.candlestickSeries ||
+    !chartState.currentDataIdentity ||
+    chartState.currentData.length === 0 ||
+    exhaustedHistoryIdentity === chartState.currentDataIdentity
+  ) {
+    return;
+  }
+  const barsInfo = chartState.candlestickSeries.barsInLogicalRange(range);
+  const threshold = chartState.proConfig.initialVisibleBars * 2;
+  if (!barsInfo || barsInfo.barsBefore >= threshold) {
+    return;
+  }
+  const earliestTime = Number(chartState.currentData[0]?.time);
+  if (!Number.isFinite(earliestTime)) {
+    return;
+  }
+  const requestKey = `${chartState.currentDataIdentity}:${earliestTime}`;
+  if (lastOlderCandlesRequestKey === requestKey) {
+    return;
+  }
+  lastOlderCandlesRequestKey = requestKey;
+  postMessageToRN({
+    type: 'REQUEST_OLDER_CANDLES',
+    earliestTime,
+    identity: chartState.currentDataIdentity,
+  });
+}
+
+function handleVisibleLogicalRangeChange(
+  range: { from: number; to: number } | null,
+) {
+  schedulePerpsProCrosshairLabelRender();
+  if (!range || !chartState.proConfig) {
+    return;
+  }
+  if (perpsProTouchPoint && perpsProTouchStartRange) {
+    if (
+      Math.abs(range.from - perpsProTouchStartRange.from) > 0.0001 ||
+      Math.abs(range.to - perpsProTouchStartRange.to) > 0.0001
+    ) {
+      isPerpsProHorizontalTouchScroll = true;
+    }
+    isPerpsProFutureTouchBoundary = isPerpsProFutureLogicalRangeAtBoundary(
+      range,
+      chartState.currentData.length,
+    );
+  }
+  if (!isApplyingVisibleLogicalRange) {
+    scheduleConstrainedPerpsProLogicalRange(range);
+  }
+  requestOlderPerpsProCandlesIfNeeded(range);
+}
+
 // Create chart
 function createChart() {
   if (!containerEl) {
@@ -657,23 +1509,88 @@ function createChart() {
   chartState.chart.subscribeCrosshairMove((param: any) => {
     updateTooltipContent(param);
   });
+  chartState.chart.subscribeClick((param: PerpsProCrosshairEvent) => {
+    handlePerpsProChartClick(param);
+  });
+  chartState.chart.subscribeDblClick(() => {
+    if (chartState.proConfig && chartState.crosshairActive) {
+      clearPerpsProCrosshair();
+    }
+  });
 
   // Subscribe to visible range change
   let updateTimeout: number | null = null;
-  chartState.chart.timeScale().subscribeVisibleLogicalRangeChange(() => {
-    if (updateTimeout) {
-      clearTimeout(updateTimeout);
-    }
-    updateTimeout = window.setTimeout(() => {
-      updatePriceLines(chartState);
-    }, 100);
-  });
+  chartState.chart
+    .timeScale()
+    .subscribeVisibleLogicalRangeChange(
+      (range: { from: number; to: number } | null) => {
+        handleVisibleLogicalRangeChange(range);
+        if (updateTimeout) {
+          clearTimeout(updateTimeout);
+        }
+        updateTimeout = window.setTimeout(() => {
+          updatePriceLines(chartState);
+        }, 100);
+      },
+    );
 
   // Notify RN that chart is ready
   postMessageToRN({
     type: 'CHART_READY',
     timestamp: new Date().toISOString(),
+    capabilities: {
+      candleDataAppliedAck: true,
+      olderCandleRequest: true,
+      perpsProKlineProtocolVersion: PERPS_PRO_KLINE_PROTOCOL_VERSION,
+    },
   });
+}
+
+function applyPerpsProChartOptions(config: PerpsProChartConfig) {
+  if (!chartState.chart) {
+    return;
+  }
+  chartState.chart.applyOptions({
+    crosshair: {
+      mode: CrosshairMode.Normal,
+      vertLine: {
+        labelVisible: false,
+      },
+      horzLine: {
+        labelVisible: false,
+      },
+    },
+    localization: {
+      priceFormatter: (value: number) =>
+        formatProPrice(value, config.priceDecimals),
+      timeFormatter: (time: number) =>
+        formatProTooltipTime(time, config.interval),
+    },
+    trackingMode: {
+      exitMode: TrackingModeExitMode.OnNextTap,
+    },
+    kineticScroll: {
+      mouse: false,
+      touch: false,
+    },
+    rightPriceScale: {
+      scaleMargins: {
+        ...PERPS_PRO_PRICE_SCALE_MARGINS,
+      },
+    },
+    timeScale: {
+      fixRightEdge: false,
+    },
+  });
+}
+
+function handleResetPerpsProPriceScale() {
+  if (!chartState.proConfig) {
+    return;
+  }
+  if (resetPerpsProPriceScale(chartState.candlestickSeries)) {
+    publishPerpsProPriceScaleAutoScale();
+  }
 }
 
 // Create candlestick series
@@ -685,6 +1602,7 @@ function createCandlestickSeries() {
   }
 
   const colors = chartState.colors || getChartColors();
+  const priceDecimals = chartState.proConfig?.priceDecimals;
 
   chartState.candlestickSeries = chartState.chart.addSeries(CandlestickSeries, {
     upColor: colors.greenLineColor,
@@ -700,7 +1618,12 @@ function createCandlestickSeries() {
     priceLineStyle: 2,
     priceFormat: {
       type: 'price',
-      minMove: 0.0000001,
+      ...(priceDecimals == null
+        ? { minMove: 0.0000001 }
+        : {
+            minMove: 10 ** -priceDecimals,
+            precision: priceDecimals,
+          }),
     },
   });
 
@@ -725,6 +1648,98 @@ function createVolumeSeries() {
   return chartState.volumeSeries;
 }
 
+function ensurePerpsProCrosshairMarkerSeries() {
+  if (!chartState.chart || !chartState.proConfig) {
+    return null;
+  }
+  if (!chartState.crosshairMarkerSeries) {
+    const markerColor = chartState.colors?.text ?? getChartColors().text;
+    chartState.crosshairMarkerSeries = chartState.chart.addSeries(LineSeries, {
+      color: markerColor,
+      crosshairMarkerBackgroundColor: markerColor,
+      crosshairMarkerBorderColor: markerColor,
+      crosshairMarkerBorderWidth: 0,
+      crosshairMarkerRadius: 2.5,
+      crosshairMarkerVisible: true,
+      lastValueVisible: false,
+      lineVisible: false,
+      pointMarkersVisible: false,
+      priceLineVisible: false,
+      autoscaleInfoProvider: () => null,
+    });
+  }
+  return chartState.crosshairMarkerSeries;
+}
+
+function ensureMovingAverageSeries() {
+  if (!chartState.chart || !chartState.colors || !chartState.proConfig) {
+    return;
+  }
+  chartState.proConfig.maPeriods.forEach(period => {
+    if (!chartState.maSeries[period]) {
+      chartState.maSeries[period] = chartState.chart.addSeries(LineSeries, {
+        color: chartState.colors!.ma[period],
+        crosshairMarkerVisible: false,
+        lastValueVisible: false,
+        lineWidth: 1,
+        priceLineVisible: false,
+      });
+    }
+  });
+}
+
+function rebuildMovingAverageSeries() {
+  if (!chartState.proConfig) {
+    clearMovingAverageLookup();
+    return;
+  }
+  ensureMovingAverageSeries();
+  const candles = chartState.currentData.map(item => ({
+    close: item.close,
+    high: item.high,
+    low: item.low,
+    open: item.open,
+    quoteTurnover: item.quoteTurnover,
+    time: Number(item.time),
+    trades: item.trades,
+    volume: item.volume,
+  }));
+  chartState.proConfig.maPeriods.forEach(period => {
+    const movingAverage = calculateSimpleMovingAverage(candles, period);
+    movingAverageByTime[period] = new Map(
+      movingAverage.map(point => [point.time, point.value]),
+    );
+    chartState.maSeries[period]?.setData(movingAverage);
+  });
+  updateMaLegend(chartState.selectedTime ?? undefined);
+}
+
+function updateMovingAverageTail() {
+  const config = chartState.proConfig;
+  const latest = chartState.currentData[chartState.currentData.length - 1];
+  if (!config || !latest) {
+    return;
+  }
+  const latestTime = Number(latest.time);
+  config.maPeriods.forEach(period => {
+    if (chartState.currentData.length < period) {
+      return;
+    }
+    let sum = 0;
+    for (
+      let index = chartState.currentData.length - period;
+      index < chartState.currentData.length;
+      index += 1
+    ) {
+      sum += chartState.currentData[index].close;
+    }
+    const value = sum / period;
+    movingAverageByTime[period].set(latestTime, value);
+    chartState.maSeries[period]?.update({ time: latest.time, value });
+  });
+  updateMaLegend(chartState.selectedTime ?? undefined);
+}
+
 // Handle SET_CANDLESTICK_DATA message
 function handleSetCandlestickData(
   message: Omit<
@@ -734,14 +1749,75 @@ function handleSetCandlestickData(
     'type'
   >,
 ) {
+  if (visibleLogicalRangeFrameId != null) {
+    window.cancelAnimationFrame(visibleLogicalRangeFrameId);
+    visibleLogicalRangeFrameId = null;
+    pendingVisibleLogicalRange = null;
+  }
+  const previousData = chartState.currentData;
+  const previousIdentity = chartState.currentDataIdentity;
+  const previousVisibleRange =
+    message.preserveVisibleRange && previousIdentity === message.identity
+      ? chartState.chart?.timeScale().getVisibleLogicalRange() ?? null
+      : null;
+  const acknowledgeAppliedData = () => {
+    if (
+      typeof message.identity !== 'string' ||
+      !Number.isInteger(message.revision)
+    ) {
+      return;
+    }
+    window.requestAnimationFrame(() => {
+      postMessageToRN({
+        type: 'CANDLE_DATA_APPLIED',
+        identity: message.identity!,
+        revision: message.revision!,
+      });
+    });
+  };
   chartState.noTime = !!message.noTime;
+  clearPerpsProCrosshair();
+  chartState.proConfig = message.proConfig ?? null;
+  if (!chartState.proConfig) {
+    if (perpsProPriceScaleStateFrameId != null) {
+      window.cancelAnimationFrame(perpsProPriceScaleStateFrameId);
+      perpsProPriceScaleStateFrameId = null;
+    }
+    lastPublishedPerpsProPriceScaleAutoScale = null;
+  }
+  if (chartState.tooltip) {
+    if (chartState.proConfig) {
+      chartState.tooltip.style.fontFamily = PERPS_PRO_FONT_FAMILY;
+    } else {
+      chartState.tooltip.style.removeProperty('font-family');
+    }
+  }
+  chartState.currentDataIdentity = message.identity ?? null;
+  if (previousIdentity !== chartState.currentDataIdentity) {
+    lastOlderCandlesRequestKey = null;
+    exhaustedHistoryIdentity = null;
+  }
 
   if (!chartState.chart) return;
+
+  if (chartState.proConfig) {
+    applyPerpsProChartOptions(chartState.proConfig);
+  } else {
+    chartState.chart.applyOptions({
+      crosshair: {
+        vertLine: { labelVisible: true },
+        horzLine: { labelVisible: true },
+      },
+      kineticScroll: { mouse: false, touch: true },
+      timeScale: { fixRightEdge: true },
+    });
+  }
 
   if (!message.data?.length) {
     hasRenderableData = false;
     clearChartData();
     setOverlayState('empty');
+    acknowledgeAppliedData();
     return;
   }
 
@@ -753,7 +1829,9 @@ function handleSetCandlestickData(
     hasRenderableData = true;
     setOverlayState('hidden');
     chartState.currentData = message.data;
+    rebuildCandleLookup();
     chartState.candlestickSeries.setData(message.data);
+    rebuildMovingAverageSeries();
 
     const currentDataKey = message.source + '_' + (message.data?.length || 0);
     const shouldAutoscale =
@@ -779,7 +1857,9 @@ function handleSetCandlestickData(
         })),
       );
       chartState.candlestickSeries.priceScale().applyOptions({
-        scaleMargins: { top: 0, bottom: 0.1 },
+        scaleMargins: chartState.proConfig
+          ? PERPS_PRO_PRICE_SCALE_MARGINS
+          : { top: 0, bottom: 0.1 },
       });
       chartState.volumeSeries
         .priceScale()
@@ -787,10 +1867,37 @@ function handleSetCandlestickData(
       updatePriceLines(chartState);
     }
 
-    if (message.fitContent) {
+    if (chartState.proConfig) {
+      const prependedCount = previousVisibleRange
+        ? getPrependedCandleCount(previousData, message.data)
+        : 0;
+      if (previousVisibleRange && prependedCount === 0) {
+        // The final weekly/monthly source page can extend the oldest aggregate
+        // without introducing another visible bucket. Keep the viewport and
+        // allow one more request so RN can confirm the official boundary.
+        lastOlderCandlesRequestKey = null;
+      }
+      chartState.chart
+        .timeScale()
+        .setVisibleLogicalRange(
+          previousVisibleRange
+            ? shiftLogicalRangeForPrependedCandles(
+                previousVisibleRange,
+                prependedCount,
+              )
+            : getInitialVisibleLogicalRange(
+                message.data.length,
+                chartState.proConfig.initialVisibleBars,
+              ),
+        );
+      publishPerpsProPriceScaleAutoScale();
+    } else if (message.fitContent) {
       chartState.chart.timeScale().fitContent();
     }
-    chartState.chart.timeScale().scrollToRealTime();
+    if (!chartState.proConfig) {
+      chartState.chart.timeScale().scrollToRealTime();
+    }
+    acknowledgeAppliedData();
   }
 }
 
@@ -800,6 +1907,56 @@ function handleUpdateCandlestickData(data: TradingViewCandlestickData) {
   hasRenderableData = true;
   setOverlayState('hidden');
   chartState.candlestickSeries.update(data);
+  const dataTime = Number(data.time);
+  const latestIndex = chartState.currentData.length - 1;
+  const latestTime = Number(chartState.currentData[latestIndex]?.time);
+  let updatesLatestCandle = false;
+  if (dataTime === latestTime) {
+    chartState.currentData[latestIndex] = data;
+    updatesLatestCandle = true;
+  } else if (!Number.isFinite(latestTime) || dataTime > latestTime) {
+    chartState.currentData.push(data);
+    updatesLatestCandle = true;
+  } else {
+    const existingIndex = chartState.currentData.findIndex(
+      candle => Number(candle.time) === dataTime,
+    );
+    if (existingIndex >= 0) {
+      chartState.currentData[existingIndex] = data;
+    } else {
+      chartState.currentData = [...chartState.currentData, data].sort(
+        (left, right) => Number(left.time) - Number(right.time),
+      );
+    }
+  }
+  candleByTime.set(dataTime, data);
+
+  if (chartState.proConfig) {
+    if (chartState.volumeSeries) {
+      const colors = chartState.colors || getChartColors();
+      chartState.volumeSeries.update({
+        color:
+          data.close >= data.open ? colors.greenLineColor : colors.redLineColor,
+        time: data.time,
+        value: data.volume ?? 0,
+      });
+    }
+    if (updatesLatestCandle) {
+      updateMovingAverageTail();
+    } else {
+      rebuildMovingAverageSeries();
+    }
+    schedulePerpsProCrosshairLabelRender();
+    if (chartState.selectedTime === Number(data.time)) {
+      const selectedCandle = getCandleAtTime(Number(data.time));
+      if (selectedCandle) {
+        renderPerpsProTooltip(
+          selectedCandle,
+          chartState.selectedPointX ?? window.innerWidth / 2,
+        );
+      }
+    }
+  }
 }
 
 // Handle UPDATE_TPSL_PRICE_LINES message
@@ -830,7 +1987,23 @@ function handleUpdateTheme(colors: ChartColors, description: ChartDescription) {
 
   if (chartState.tooltip) {
     chartState.tooltip.style.background = colors.tooltip.bg;
+    chartState.tooltip.style.borderColor = colors.tooltip.border;
   }
+  proCrosshairLabel.style.background = colors.crosshairLabel.background;
+  proCrosshairLabel.style.color = colors.crosshairLabel.text;
+  proCrosshairTimeLabel.style.background = colors.crosshairLabel.background;
+  proCrosshairTimeLabel.style.color = colors.crosshairLabel.text;
+  ([7, 25, 99] as const).forEach(period => {
+    chartState.maSeries[period]?.applyOptions({
+      color: colors.ma[period],
+    });
+  });
+  chartState.crosshairMarkerSeries?.applyOptions({
+    color: colors.text,
+    crosshairMarkerBackgroundColor: colors.text,
+    crosshairMarkerBorderColor: colors.text,
+  });
+  updateMaLegend(chartState.selectedTime ?? undefined);
 
   containerEl.style.background = colors.background;
   document.body.style.background = colors.background;
@@ -864,6 +2037,9 @@ function handleMessage(event: CustomEvent) {
           defaultDescription.chgPercent,
         volume:
           i18nTexts?.['component.kline.volume'] || defaultDescription.volume,
+        vol: i18nTexts?.['component.kline.vol'] || defaultDescription.vol,
+        range: i18nTexts?.['component.kline.range'] || defaultDescription.range,
+        txn: i18nTexts?.['component.kline.txn'] || defaultDescription.txn,
         empty: i18nTexts?.['component.kline.empty'] || defaultDescription.empty,
       };
       handleUpdateTheme(colors, description);
@@ -880,13 +2056,39 @@ function handleMessage(event: CustomEvent) {
             showVolume: tvMessage.showVolume,
             fitContent: tvMessage.fitContent,
             noTime: tvMessage.noTime,
+            identity: tvMessage.identity,
+            revision: tvMessage.revision,
+            proConfig: tvMessage.proConfig,
+            preserveVisibleRange: tvMessage.preserveVisibleRange,
           });
+          break;
+        case 'COMPLETE_OLDER_CANDLES_REQUEST':
+          if (
+            tvMessage.identity !== chartState.currentDataIdentity ||
+            `${tvMessage.identity}:${tvMessage.earliestTime}` !==
+              lastOlderCandlesRequestKey
+          ) {
+            break;
+          }
+          if (tvMessage.outcome === 'exhausted') {
+            exhaustedHistoryIdentity = tvMessage.identity;
+          } else {
+            lastOlderCandlesRequestKey = null;
+          }
           break;
         case 'UPDATE_CANDLESTICK_DATA':
           handleUpdateCandlestickData(tvMessage.data);
           break;
         case 'UPDATE_TPSL_PRICE_LINES':
           handleUpdateTPSLPriceLines(tvMessage.data);
+          break;
+        case 'CLEAR_CROSSHAIR':
+          if (chartState.proConfig) {
+            clearPerpsProCrosshair();
+          }
+          break;
+        case 'RESET_PERPS_PRO_PRICE_SCALE':
+          handleResetPerpsProPriceScale();
           break;
         case 'UPDATE_THEME':
           handleUpdateTheme(tvMessage.colors, tvMessage.description);
@@ -909,6 +2111,7 @@ function handleResize() {
         width: window.innerWidth,
         height: window.innerHeight,
       });
+      schedulePerpsProCrosshairLabelRender();
     }
   }, 100);
 }
@@ -927,6 +2130,22 @@ function init() {
   // Add event listeners
   window.addEventListener('messageFromRN', handleMessage as EventListener);
   window.addEventListener('resize', handleResize);
+  containerEl.addEventListener('touchstart', handlePerpsProBoundaryTouchStart, {
+    capture: true,
+    passive: true,
+  });
+  containerEl.addEventListener('touchmove', handlePerpsProBoundaryTouchMove, {
+    capture: true,
+    passive: false,
+  });
+  containerEl.addEventListener('touchend', handlePerpsProTouchGestureEnd, {
+    capture: true,
+    passive: true,
+  });
+  containerEl.addEventListener('touchcancel', handlePerpsProTouchGestureEnd, {
+    capture: true,
+    passive: true,
+  });
 
   // Request runtime info (theme, i18n) from RN
   postMessageToRN({ type: 'GET_RUNTIME_INFO' });
@@ -937,8 +2156,36 @@ function init() {
 
 // Cleanup on page unload
 window.addEventListener('beforeunload', () => {
+  cancelPendingPerpsProCrosshairMarker();
+  if (visibleLogicalRangeFrameId != null) {
+    window.cancelAnimationFrame(visibleLogicalRangeFrameId);
+  }
+  if (perpsProPriceScaleStateFrameId != null) {
+    window.cancelAnimationFrame(perpsProPriceScaleStateFrameId);
+    perpsProPriceScaleStateFrameId = null;
+  }
   window.removeEventListener('messageFromRN', handleMessage as EventListener);
   window.removeEventListener('resize', handleResize);
+  containerEl.removeEventListener(
+    'touchstart',
+    handlePerpsProBoundaryTouchStart,
+    true,
+  );
+  containerEl.removeEventListener(
+    'touchmove',
+    handlePerpsProBoundaryTouchMove,
+    true,
+  );
+  containerEl.removeEventListener(
+    'touchend',
+    handlePerpsProTouchGestureEnd,
+    true,
+  );
+  containerEl.removeEventListener(
+    'touchcancel',
+    handlePerpsProTouchGestureEnd,
+    true,
+  );
   if (chartState.chart) {
     chartState.chart.remove();
   }
