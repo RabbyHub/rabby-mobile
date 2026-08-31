@@ -2164,7 +2164,6 @@ const Swap = ({
                           setActiveProvider={setActiveProvider}
                           currentProvider={activeProvider}
                           sortIncludeGasFee
-                          combined
                           onSelect={onSelect}
                           noPadding
                         />

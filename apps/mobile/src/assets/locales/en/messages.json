@@ -178,6 +178,11 @@
       "safeAddressNotSupportChain": "Current safe address is not supported on {{0}} chain",
       "noGasRequired": "No gas required",
       "gasSelectorTitle": "Gas",
+      "swapGasLevel": {
+        "normal": "Normal",
+        "fast": "Fast",
+        "instant": "Instant"
+      },
       "gasSetting": "Gas Setting",
       "failToFetchGasCost": "Fail to estimate gas",
       "manuallySetGasLimitAlert": "You have manually set the Gas limit to",

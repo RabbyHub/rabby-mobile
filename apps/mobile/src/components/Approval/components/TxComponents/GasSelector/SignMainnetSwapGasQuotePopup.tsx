@@ -1,11 +1,6 @@
 import BigNumber from 'bignumber.js';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import {
-  ScrollView,
-  TouchableOpacity,
-  View,
-  type ViewStyle,
-} from 'react-native';
+import { TouchableOpacity, View, type ViewStyle } from 'react-native';
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
@@ -18,10 +13,8 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { getGasLevelI18nKey } from '@/utils/trans';
 import { calcMaxPriorityFee } from '@/utils/transaction';
 import RcIconRefreshCC from '@/assets2024/icons/bridge/IconRefreshCC.svg';
-import IconGasTokenCC from '@/assets2024/icons/gas-account/gas-token-cc.svg';
-import IconGasAccountCC from '@/assets2024/icons/gas-account/gas-account-cc.svg';
-import IconGasTokenActive from '@/assets2024/icons/gas-account/gas-token-active.svg';
-import IconGasAccountActive from '@/assets2024/icons/gas-account/gas-account-active.svg';
+import IconGasTokenCC from '@/assets2024/icons/gas-account/swap-gas-token-cc.svg';
+import IconGasAccountCC from '@/assets2024/icons/gas-account/swap-gas-account-cc.svg';
 import IconGasCustomRightArrowCC from '@/assets2024/icons/gas-account/right-arrow-cc.svg';
 import { AssetAvatar } from '@/components';
 import { GasLevelIcon } from './GasMenuButton';
@@ -87,15 +80,13 @@ const GasMethodTab = ({
   active,
   disabled,
   onPress,
-  ActiveComponent,
-  BlurComponent,
+  IconComponent,
   title,
 }: {
   active: boolean;
   disabled?: boolean;
   onPress: () => void;
-  ActiveComponent: React.FC<SvgProps>;
-  BlurComponent: React.FC<SvgProps>;
+  IconComponent: React.FC<SvgProps>;
   title: React.ReactNode;
 }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
@@ -109,11 +100,13 @@ const GasMethodTab = ({
         disabled && styles.gasHeaderItemDisabled,
       ]}
       onPress={onPress}>
-      {active ? (
-        <ActiveComponent />
-      ) : (
-        <BlurComponent color={colors2024['neutral-foot']} />
-      )}
+      <IconComponent
+        width={16}
+        height={16}
+        color={
+          active ? colors2024['brand-default'] : colors2024['neutral-foot']
+        }
+      />
       <Text style={active ? styles.activeText : styles.inactiveText}>
         {title}
       </Text>
@@ -249,7 +242,15 @@ export const SignMainnetSwapGasQuotePopup = ({
 
   const renderGasLevelCard = (gas: GasLevel) => {
     const gwei = new BigNumber(gas.price / 1e9).toFixed().slice(0, 8);
-    const levelTitle = t(getGasLevelI18nKey(gas.level));
+    const levelTitle = t(
+      gas.level === 'slow'
+        ? 'page.signTx.swapGasLevel.normal'
+        : gas.level === 'normal'
+        ? 'page.signTx.swapGasLevel.fast'
+        : gas.level === 'fast'
+        ? 'page.signTx.swapGasLevel.instant'
+        : getGasLevelI18nKey(gas.level),
+    );
     const isActive = selectedGas?.level === gas.level;
     const isCustom = gas.level === 'custom';
     const levelNativeInsufficient = isCustom
@@ -313,39 +314,37 @@ export const SignMainnetSwapGasQuotePopup = ({
         disabled={gasInteractionDisabled}
         style={cardStyle}
         onPress={() => handleSelectGas(gas)}>
-        <GasLevelIcon level={gas.level} />
-        {isCustom ? (
-          <>
+        <View style={styles.gasCardMain}>
+          <GasLevelIcon
+            level={gas.level}
+            size={24}
+            color={
+              gas.level === 'slow'
+                ? colors2024['neutral-body']
+                : colors2024['neutral-title-1']
+            }
+          />
+          {isCustom ? (
             <Text style={styles.gasCardTitle}>{levelTitle}</Text>
-            <View style={styles.customGasFooter}>
-              {isActive && costUsd ? (
-                <Text
-                  style={[
-                    styles.gasCardUsd,
-                    isNotEnough && styles.gasCardUsdNotEnough,
-                  ]}>
-                  {costUsd}
-                </Text>
-              ) : null}
-              <IconGasCustomRightArrowCC color={colors2024['neutral-foot']} />
-            </View>
-          </>
+          ) : isRowLoading ? (
+            <CustomSkeleton style={styles.gasCardSkeleton} />
+          ) : (
+            <Text
+              style={[
+                styles.gasCardUsd,
+                isNotEnough && styles.gasCardUsdNotEnough,
+              ]}>
+              {costUsd}
+            </Text>
+          )}
+        </View>
+        {isCustom ? (
+          <IconGasCustomRightArrowCC color={colors2024['neutral-foot']} />
         ) : (
-          <>
-            {isRowLoading ? (
-              <CustomSkeleton style={styles.gasCardSkeleton} />
-            ) : (
-              <Text
-                style={[
-                  styles.gasCardUsd,
-                  isNotEnough && styles.gasCardUsdNotEnough,
-                ]}>
-                {costUsd}
-              </Text>
-            )}
+          <View style={styles.gasCardDetails}>
             <Text style={styles.gasCardLevel}>{levelTitle}</Text>
             <Text style={styles.gasCardGwei}>{gwei} Gwei</Text>
-          </>
+          </View>
         )}
       </TouchableOpacity>
     );
@@ -379,16 +378,14 @@ export const SignMainnetSwapGasQuotePopup = ({
                       (currentGasMethod !== 'native' && !noCustomRPCEnabled)
                     }
                     onPress={() => onChangeGasMethod?.('native')}
-                    ActiveComponent={IconGasTokenActive}
-                    BlurComponent={IconGasTokenCC}
+                    IconComponent={IconGasTokenCC}
                     title={t('page.gasAccount.gasToken')}
                   />
                   <GasMethodTab
                     active={currentGasMethod === 'gasAccount'}
                     disabled={gasInteractionDisabled || !noCustomRPCEnabled}
                     onPress={() => onChangeGasMethod?.('gasAccount')}
-                    ActiveComponent={IconGasAccountActive}
-                    BlurComponent={IconGasAccountCC}
+                    IconComponent={IconGasAccountCC}
                     title={t('page.gasAccount.title')}
                   />
                 </View>
@@ -429,31 +426,31 @@ export const SignMainnetSwapGasQuotePopup = ({
               </TouchableOpacity>
             ) : null}
 
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.gasCardsRow}>
+            <View style={styles.gasCardsRow}>
               {gasList.map(renderGasLevelCard)}
-            </ScrollView>
+            </View>
           </View>
 
-          <View style={styles.divider} />
-
           <View style={styles.quotesSection}>
-            <View style={styles.quotesHeader}>
-              <Text style={styles.sectionTitle}>
-                {t('page.swap.quotes', { defaultValue: 'Quotes' })}
+            <View style={styles.quotesIntro}>
+              <View style={styles.quotesHeader}>
+                <Text style={styles.sectionTitle}>
+                  {t('page.swap.quotes', { defaultValue: 'Quotes' })}
+                </Text>
+                <TouchableOpacity
+                  style={styles.refreshButton}
+                  onPress={onRefreshQuotes}>
+                  <RcIconRefreshCC
+                    width={20}
+                    height={20}
+                    color={colors2024['neutral-body']}
+                  />
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.quotesSubtitle}>
+                {t('page.bridge.best-subtitle')}
               </Text>
-              <TouchableOpacity
-                style={styles.refreshButton}
-                onPress={onRefreshQuotes}>
-                <RcIconRefreshCC color={colors2024['brand-default']} />
-                <Text style={styles.refreshText}>{t('global.refresh')}</Text>
-              </TouchableOpacity>
             </View>
-            <Text style={styles.quotesSubtitle}>
-              {t('page.bridge.best-subtitle')}
-            </Text>
             <View style={styles.quotesList}>{renderQuotes(onClose)}</View>
           </View>
         </BottomSheetScrollView>
@@ -478,10 +475,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   sheetContentContainer: {
     paddingHorizontal: 16,
     paddingBottom: 24,
-    gap: 24,
+    gap: 32,
   },
   section: {
     gap: 12,
+    marginHorizontal: 4,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -500,18 +498,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 2,
-    borderRadius: 6,
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderWidth: 0.5,
-    borderColor: colors2024['neutral-line'],
+    borderRadius: 8,
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   gasHeaderItem: {
     flexDirection: 'row',
-    height: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 4,
-    paddingVertical: 2,
+    borderRadius: 8,
+    paddingVertical: 5,
     paddingHorizontal: 8,
     gap: 4,
   },
@@ -526,15 +521,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   activeText: {
     color: colors2024['brand-default'],
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '400',
-    lineHeight: 16,
+    fontFamily: 'SF Pro',
   },
   inactiveText: {
     color: colors2024['neutral-foot'],
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '400',
-    lineHeight: 16,
+    fontFamily: 'SF Pro',
   },
   tempoTokenRow: {
     minHeight: 42,
@@ -576,19 +571,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     maxWidth: 88,
   },
   gasCardsRow: {
+    flexDirection: 'row',
     gap: 6,
-    paddingVertical: 2,
   },
   gasCard: {
-    width: 88,
-    minHeight: 106,
-    borderRadius: 8,
+    flex: 1,
+    minWidth: 0,
+    height: 119,
+    borderRadius: 16,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: 2,
     paddingVertical: 12,
-    gap: 4,
+    gap: 12,
   },
   gasCardActive: {
     borderColor: colors2024['brand-default'],
@@ -602,16 +598,18 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     opacity: 0.5,
   },
   gasCardTitle: {
-    fontSize: 13,
-    lineHeight: 16,
-    fontWeight: '500',
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
     textAlign: 'center',
   },
   gasCardUsd: {
-    fontSize: 13,
-    lineHeight: 16,
-    fontWeight: '500',
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
     textAlign: 'center',
   },
@@ -622,6 +620,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-foot'],
     textAlign: 'center',
   },
@@ -629,6 +628,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 12,
     lineHeight: 16,
     color: colors2024['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
   },
   gasCardSkeleton: {
@@ -636,19 +636,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 12,
     borderRadius: 4,
   },
-  customGasFooter: {
-    flexDirection: 'row',
+  gasCardMain: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-    minHeight: 30,
+    gap: 6,
   },
-  divider: {
-    height: 1,
-    backgroundColor: colors2024['neutral-line'],
+  gasCardDetails: {
+    alignItems: 'center',
+    gap: 3,
   },
   quotesSection: {
-    gap: 12,
+    gap: 16,
+  },
+  quotesIntro: {
+    gap: 8,
   },
   quotesHeader: {
     flexDirection: 'row',
@@ -656,20 +657,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
   },
   refreshButton: {
-    flexDirection: 'row',
+    width: 32,
+    height: 32,
     alignItems: 'center',
-    gap: 4,
-  },
-  refreshText: {
-    fontSize: 13,
-    lineHeight: 16,
-    fontWeight: '500',
-    color: colors2024['brand-default'],
+    justifyContent: 'flex-end',
   },
   quotesSubtitle: {
     fontSize: 14,
     lineHeight: 18,
     color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    marginHorizontal: 4,
   },
   quotesList: {
     gap: 12,
