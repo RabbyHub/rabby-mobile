@@ -238,7 +238,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
         owner_addr,
         id: Not(EMPTY_TOKEN_ITEM_ID),
       })
-      .andWhere(`tokenitem.amount > :amount`, { amount: 0 });
+      .andWhere('tokenitem.amount > :amount', { amount: 0 });
 
     return (await queryBuilder.getMany()).map(i => ({
       ...i,
@@ -256,21 +256,21 @@ export class TokenItemEntity extends EntityAddressAssetBase {
           owner_addr,
           id: Not(EMPTY_TOKEN_ITEM_ID),
         })
-        .andWhere(`tokenitem.amount > :amount`, { amount: 0 })
+        .andWhere('tokenitem.amount > :amount', { amount: 0 })
         .andWhere(
-          `(tokenitem.is_core IS NULL OR tokenitem.is_core != :is_core)`,
+          '(tokenitem.is_core IS NULL OR tokenitem.is_core != :is_core)',
           {
             is_core: true,
           },
         )
         .andWhere(
-          `(tokenitem.is_verified IS NULL OR tokenitem.is_verified != :is_verified)`,
+          '(tokenitem.is_verified IS NULL OR tokenitem.is_verified != :is_verified)',
           {
             is_verified: false,
           },
         )
         .andWhere(
-          `(tokenitem.is_suspicious IS NULL OR tokenitem.is_suspicious != :is_suspicious)`,
+          '(tokenitem.is_suspicious IS NULL OR tokenitem.is_suspicious != :is_suspicious)',
           {
             is_suspicious: true,
           },
@@ -340,7 +340,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
         id: Not(EMPTY_TOKEN_ITEM_ID),
         // amount: Raw(alias => `${alias} > 0`),
       })
-      .andWhere(`tokenitem.amount > :amount`, { amount: 0 })
+      .andWhere('tokenitem.amount > :amount', { amount: 0 })
       .getMany();
 
     return (
@@ -352,6 +352,80 @@ export class TokenItemEntity extends EntityAddressAssetBase {
           cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
         }))
     );
+  }
+
+  static async batchMultiAddressNoCoreTokens(addresses: string[]) {
+    await prepareAppDataSource();
+
+    const ownerAddrList = [
+      ...new Set(addresses.map(addr => addr.toLowerCase())),
+    ].filter(Boolean);
+    if (!ownerAddrList.length) {
+      return [];
+    }
+
+    const queryBuilder = this.getRepository().createQueryBuilder('tokenitem');
+    queryBuilder
+      .andWhere('lower(tokenitem.owner_addr) IN (:...addresses)', {
+        addresses: ownerAddrList,
+      })
+      .andWhere({ id: Not(EMPTY_TOKEN_ITEM_ID) })
+      .andWhere('tokenitem.amount > :amount', { amount: 0 })
+      .andWhere(
+        '(tokenitem.is_core IS NULL OR tokenitem.is_core != :is_core)',
+        { is_core: true },
+      )
+      .andWhere(
+        '(tokenitem.is_verified IS NULL OR tokenitem.is_verified != :is_verified)',
+        { is_verified: false },
+      )
+      .andWhere(
+        '(tokenitem.is_suspicious IS NULL OR tokenitem.is_suspicious != :is_suspicious)',
+        { is_suspicious: true },
+      );
+
+    return (await queryBuilder.getMany()).map(i => ({
+      ...i,
+      cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
+    }));
+  }
+
+  static async batchQueryMultiAddressNoCoreTokenChains(addresses: string[]) {
+    await prepareAppDataSource();
+
+    const ownerAddrList = [
+      ...new Set(addresses.map(addr => addr.toLowerCase())),
+    ].filter(Boolean);
+    if (!ownerAddrList.length) {
+      return [];
+    }
+
+    return this.getRepository()
+      .createQueryBuilder('tokenitem')
+      .select('lower(tokenitem.owner_addr)', 'owner_addr')
+      .addSelect('tokenitem.chain', 'chain')
+      .distinct(true)
+      .andWhere('lower(tokenitem.owner_addr) IN (:...addresses)', {
+        addresses: ownerAddrList,
+      })
+      .andWhere({ id: Not(EMPTY_TOKEN_ITEM_ID) })
+      .andWhere('tokenitem.amount > :amount', { amount: 0 })
+      .andWhere(
+        '(tokenitem.is_core IS NULL OR tokenitem.is_core != :is_core)',
+        { is_core: true },
+      )
+      .andWhere(
+        '(tokenitem.is_verified IS NULL OR tokenitem.is_verified != :is_verified)',
+        { is_verified: false },
+      )
+      .andWhere(
+        '(tokenitem.is_suspicious IS NULL OR tokenitem.is_suspicious != :is_suspicious)',
+        { is_suspicious: true },
+      )
+      .andWhere(
+        "(tokenitem.is_core IS NULL OR COALESCE(tokenitem.protocol_id, '') != '')",
+      )
+      .getRawMany<{ owner_addr: string; chain: string }>();
   }
 
   static async getDefaultTokensByAddresses(
@@ -449,7 +523,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
         id: Not(EMPTY_TOKEN_ITEM_ID),
         // amount: Raw(alias => `${alias} > 0`),
       })
-      .andWhere(`tokenitem.amount > :amount`, { amount: 0 });
+      .andWhere('tokenitem.amount > :amount', { amount: 0 });
 
     if (addresses) {
       queryBuilder.andWhere({ owner_addr: In(addresses) });
@@ -543,7 +617,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
         id: Not(EMPTY_TOKEN_ITEM_ID),
         // amount: Raw(alias => `${alias} > 0`),
       })
-      .andWhere(`tokenitem.amount > :amount`, { amount: 0 })
+      .andWhere('tokenitem.amount > :amount', { amount: 0 })
       .select([
         // TODO: which need customized sqlite drivers
         // `"tokenitem"."raw_amount" / pow(10, tokenitem.decimals) AS tokenitme_token_amount`,
@@ -783,7 +857,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
           'tokenitem.id',
           `SUM(${correctBadRealOnSql('tokenitem.amount')}) as total_amount`,
         ])
-        .where(`tokenitem.owner_addr IN (:...owner_addr)`, { owner_addr })
+        .where('tokenitem.owner_addr IN (:...owner_addr)', { owner_addr })
         .andWhere(`(${whereConditions.join(' OR ')})`, params)
         .groupBy('tokenitem.chain, tokenitem.id')
         .getRawMany();

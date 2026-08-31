@@ -1,15 +1,22 @@
 import { openapi, testOpenapi } from '@/core/request';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { pQueue } from '@/utils/requestQueue';
+import PQueue from 'p-queue';
+
+const complexProtocolListQueue = new PQueue({
+  interval: 1000,
+  intervalCap: 5,
+  concurrency: 5,
+});
 
 export const loadPortfolioSnapshot = (userAddr: string) => {
-  return pQueue.add(() => {
+  return complexProtocolListQueue.add(() => {
     return openapi.getComplexProtocolList(userAddr);
   });
 };
 
 export const loadTestnetPortfolioSnapshot = (userAddr: string) => {
-  return pQueue.add(() => {
+  return complexProtocolListQueue.add(() => {
     return testOpenapi.getComplexProtocolList(userAddr);
   });
 };

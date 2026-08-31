@@ -195,7 +195,8 @@ type TokenListExtraItem =
 
 type TokenListItem = TokenProjectionSectionItem<TokenListExtraItem>;
 
-const { batchGetTokenList } = useTokenList.getState();
+const { batchGetTokenList, loadMultiAddressNonCoreTokens } =
+  useTokenList.getState();
 const EMPTY_CUSTOM_TESTNET_SECTIONS: CustomTestnetAssetSectionData[] = [];
 const ADDITIONAL_TOGGLE_ITEMS: TokenListExtraItem[] = [
   { type: 'additional_token_toggle' },
@@ -241,6 +242,19 @@ export const TokenList = () => {
     state => state.tokenDisplayMode,
     Object.is,
     { storeLabel: 'home-multi-assets-token-preferences' },
+  );
+  const hasDeferredDbTokens = useActivityStore(
+    useTokenList,
+    state =>
+      myTop10Addresses.some(address => {
+        const deferredChains =
+          state.deferredTokenChainsByAddress[address.toLowerCase()] || [];
+        return chain
+          ? deferredChains.includes(chain.toLowerCase())
+          : deferredChains.length > 0;
+      }),
+    Object.is,
+    { storeLabel: 'home-multi-assets-deferred-token-availability' },
   );
 
   const getAccountByAddress = useFindAccountByAddress();
@@ -378,10 +392,9 @@ export const TokenList = () => {
     Object.is,
     { storeLabel: 'home-multi-assets-token-loading' },
   );
-  // LP availability only controls the additional-token selector. Until the
-  // currently selected segments contain rows, the list still has no visible
-  // data and must remain in its loading/empty state.
-  const hasDefaultTokenData = projectedTokenCount > 0;
+  // Deferred DB metadata keeps the fold entry available without publishing
+  // non-core token payloads during the initial multi-address hydration.
+  const hasDefaultTokenData = projectedTokenCount > 0 || hasDeferredDbTokens;
   const tokenProjectionViewState = resolveAssetProjectionViewState({
     availability: tokenProjectionAvailability,
     hasData: hasDefaultTokenData,
@@ -396,7 +409,7 @@ export const TokenList = () => {
       : EMPTY_CUSTOM_TESTNET_SECTIONS;
   const isTokenListDisplayLoading =
     tokenProjectionViewState === 'loading' ||
-    (isCustomTestnetSnapshotPending && projectedTokenCount === 0);
+    (isCustomTestnetSnapshotPending && !hasDefaultTokenData);
 
   useEffect(() => {
     batchGetTokenList(myTop10Addresses);
@@ -750,9 +763,13 @@ export const TokenList = () => {
     if (showAllTokens) {
       setShowLowValueTokens(false);
       handleLpTokenEnabledChange(false);
+    } else {
+      loadMultiAddressNonCoreTokens(myTop10Addresses).catch(error => {
+        console.error('Load multi-address non-core tokens failed:', error);
+      });
     }
     setShowAllTokens(visible => !visible);
-  }, [handleLpTokenEnabledChange, showAllTokens]);
+  }, [handleLpTokenEnabledChange, myTop10Addresses, showAllTokens]);
 
   const emptyAssetsText = useMemo(
     () =>
@@ -795,7 +812,8 @@ export const TokenList = () => {
   const lowValueSegmentKey = isLpTokenEnabled
     ? ('lowValueLp' as const)
     : ('lowValueDefault' as const);
-  const hasAdditionalSection = hasAdditionalTokens || isLpTokenEnabled;
+  const hasAdditionalSection =
+    hasAdditionalTokens || hasDeferredDbTokens || isLpTokenEnabled;
   const sectionSpecs = useMemo<
     TokenProjectionSectionSpec<TokenListExtraItem>[]
   >(() => {
