@@ -268,6 +268,14 @@ export const REGRESSION_SCENARIO_METADATA = Object.freeze<
     requiresFixture: false,
     description: 'Open the Convert Dust screen.',
   },
+  'worker-thread': {
+    id: 'worker-thread',
+    kind: 'focused',
+    screens: [],
+    requiresFixture: false,
+    description:
+      'Verify the packaged computation worker starts and responds through the native thread bridge.',
+  },
 });
 
 export function scenarioIncludesScreen(

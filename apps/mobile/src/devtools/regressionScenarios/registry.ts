@@ -41,6 +41,7 @@ const SCENARIO_MODULE_LOADERS: Record<
   'approvals-entry': () => import('./scenarios/focused'),
   'rabby-points-entry': () => import('./scenarios/focused'),
   'convert-dust-entry': () => import('./scenarios/focused'),
+  'worker-thread': () => import('./scenarios/worker'),
 };
 
 export function loadRegressionScenarioModule(scenario: RegressionScenarioId) {
