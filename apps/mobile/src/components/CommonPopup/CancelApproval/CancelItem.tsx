@@ -1,4 +1,3 @@
-import clsx from 'clsx';
 import React from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
@@ -36,7 +35,7 @@ export const CancelItem: React.FC<Props> = ({ children, onClick }) => {
   return (
     <TouchableOpacity onPress={onClick} style={styles.wrapper}>
       <Text style={styles.text}>{children}</Text>
-      <RcIconArrowRight className="w-20" />
+      <RcIconArrowRight width={20} />
     </TouchableOpacity>
   );
 };

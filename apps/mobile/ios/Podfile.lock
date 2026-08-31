@@ -2098,8 +2098,6 @@ PODS:
     - Yoga
   - react-native-biometrics (3.0.1):
     - React-Core
-  - react-native-ble-manager (11.6.0):
-    - React-Core
   - react-native-ble-plx (3.5.1):
     - boost
     - DoubleConversion
@@ -3479,7 +3477,6 @@ DEPENDENCIES:
   - react-native-aes (from `../node_modules/react-native-aes-crypto`)
   - react-native-animateable-text (from `../node_modules/react-native-animateable-text`)
   - react-native-biometrics (from `../node_modules/react-native-biometrics`)
-  - react-native-ble-manager (from `../node_modules/react-native-ble-manager`)
   - react-native-ble-plx (from `../node_modules/react-native-ble-plx`)
   - "react-native-blur (from `../node_modules/@react-native-community/blur`)"
   - react-native-cloud-storage (from `../node_modules/react-native-cloud-storage`)
@@ -3692,8 +3689,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-animateable-text"
   react-native-biometrics:
     :path: "../node_modules/react-native-biometrics"
-  react-native-ble-manager:
-    :path: "../node_modules/react-native-ble-manager"
   react-native-ble-plx:
     :path: "../node_modules/react-native-ble-plx"
   react-native-blur:
@@ -3876,8 +3871,8 @@ SPEC CHECKSUMS:
   MMKVCore: 13be45a0394861b74836875ac9ec7ee939e86b78
   MultiplatformBleAdapter: b1fddd0d499b96b607e00f0faa8e60648343dc1d
   nanopb: d4d75c12cd1316f4a64e3c6963f879ecd4b5e0d5
-  NitroIap: 3b1d5677ddecad62d94fa7ab37620d79f56a0d97
-  NitroModules: b2923741acd8e4945ad7aa42cc9e16f8372da610
+  NitroIap: 74aa279f1610cc3bf3f0a3e4e38f80e1467ad58b
+  NitroModules: f9f5f08ddbc92bf10fa7b4c3606969ab3acc1f4d
   op-sqlite: 559e7d37fe743edcc74f45bb49cab6259e30a144
   openiap: 5fd63f4544bd4cc34da1e514f27eba6d3f30eed5
   OpenSSL-Universal: 9110d21982bb7e8b22a962b6db56a8aa805afde7
@@ -3920,7 +3915,6 @@ SPEC CHECKSUMS:
   react-native-aes: 2f9ce51c4bd1e9fb5c50f5c867df05bcac10884b
   react-native-animateable-text: 0c9fdbbf97c8fdacd93b1b441b692ec7fca332cf
   react-native-biometrics: 352e5a794bfffc46a0c86725ea7dc62deb085bdc
-  react-native-ble-manager: 7e6373a746c5a815d0a65a11cc5f633c72c36c5b
   react-native-ble-plx: 7dd1776b5d6df9cbffbeaea0b3dba01e48ecd89b
   react-native-blur: aa2c298b36e5aa0ac7feff837315a4668afbf25a
   react-native-cloud-storage: 70ce6dd005f51b58a45d7530208d9c045192c138

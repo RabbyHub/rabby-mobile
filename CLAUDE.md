@@ -119,7 +119,7 @@ yarn link-assets
 - Navigation types in `src/navigation-type.ts`
 
 **Styling**:
-- **NativeWind** (Tailwind CSS for React Native)
+- **React Native StyleSheet** for component styles
 - **RNEUI** (React Native Elements UI) with custom theme
 - Theme hooks: Prefer `useTheme2024()`
 
@@ -210,5 +210,5 @@ yarn link-assets
 ## Environment & Configuration
 
 - Environment variables via `react-native-dotenv`
-- Config files: `tailwind.config.js`, `metro.config.js`, `babel.config.js`
+- Config files: `metro.config.js`, `babel.config.js`
 - Platform-specific code: Use `IS_ANDROID`, `IS_IOS` from `src/core/native/utils`

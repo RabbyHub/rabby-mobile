@@ -33,6 +33,9 @@ const getStyles = (colors: AppColorsVariants) =>
       flexDirection: 'row',
       justifyContent: 'center',
     },
+    buttonLabel: {
+      color: colors['blue-default'],
+    },
   });
 
 export const NoActionBody: React.FC<Props> = ({
@@ -62,8 +65,8 @@ export const NoActionBody: React.FC<Props> = ({
             // eslint-disable-next-line react-native/no-inline-styles
             style={[styles.buttonText, { opacity: isRequesting ? 0.7 : 1 }]}
             onPress={isRequesting ? noop : handleRequest}>
-            {<IconEmail className="w-16" />}
-            <Text className="text-r-blue-default">
+            {<IconEmail width={16} />}
+            <Text style={styles.buttonLabel}>
               {t('page.switchChain.requestRabbyToSupport')}
             </Text>
           </TouchableOpacity>

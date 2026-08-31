@@ -102,15 +102,12 @@ module.exports = api => {
             '^@/startup/moduleLoading/setupRuntimeLoaders$': `./src/startup/moduleLoading/setupRuntimeLoaders.${moduleLoadingMode}`,
             ...(loadableAliases[moduleLoadingMode] || {}),
             '@': './src',
-            'styled-components/native': 'styled-components/native',
-            'styled-components': 'styled-components/native',
           },
         },
       ],
       ['@babel/plugin-transform-export-namespace-from'],
 
       ['module:react-native-dotenv', { moduleName: '@env' }],
-      ['nativewind/babel', {}],
       ['@babel/plugin-proposal-decorators', { legacy: true }],
       ['@babel/plugin-transform-class-static-block'],
       ...(isJestTransform || shouldInlineDevDynamicImports

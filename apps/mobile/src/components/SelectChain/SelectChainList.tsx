@@ -1,5 +1,8 @@
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
-import { FlatList, View } from 'react-native';
+import type { AppColorsVariants } from '@/constant/theme';
+import { useThemeColors } from '@/hooks/theme';
+import React from 'react';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { SelectChainItem } from './SelectChainItem';
 
 export const SelectChainList = ({
@@ -11,17 +14,48 @@ export const SelectChainList = ({
   onChange?(value: CHAINS_ENUM): void;
   data: Chain[];
 }) => {
+  const colors = useThemeColors();
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const renderDivider = React.useCallback(
+    () => <View style={styles.divider} />,
+    [styles.divider],
+  );
+
   return (
     <FlatList
       data={data}
-      className="px-[16] rounded-r-[6] rounded-l-[6] bg-r-neutral-card2"
-      ItemSeparatorComponent={Divider}
+      style={styles.list}
+      ItemSeparatorComponent={renderDivider}
       keyExtractor={item => item.enum}
       renderItem={({ item }) => {
-        return <SelectChainItem data={item} value={value} onPress={onChange} />;
+        return (
+          <SelectChainItem
+            data={item}
+            value={value}
+            textStyle={styles.itemText}
+            onPress={onChange}
+          />
+        );
       }}
     />
   );
 };
 
-const Divider = () => <View className="h-[0.5] bg-r-neutral-line" />;
+const getStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    list: {
+      paddingHorizontal: 16,
+      borderRadius: 6,
+      backgroundColor: colors['neutral-card2'],
+    },
+    divider: {
+      height: 0.5,
+      backgroundColor: colors['neutral-line'],
+    },
+    itemText: {
+      color: colors['neutral-title1'],
+      fontSize: 16,
+      lineHeight: 19,
+      fontWeight: '500',
+    },
+  });

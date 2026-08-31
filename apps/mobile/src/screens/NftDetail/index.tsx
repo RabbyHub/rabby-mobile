@@ -266,7 +266,7 @@ export const NFTDetailScreen = () => {
     (type: KEYRING_TYPE, aliasName: string, address?: string) => {
       return (
         <View style={styles.accountBox}>
-          <View className="relative">
+          <View style={styles.walletIconWrapper}>
             <WalletIcon
               type={type as KEYRING_TYPE}
               address={address}
@@ -281,7 +281,12 @@ export const NFTDetailScreen = () => {
         </View>
       );
     },
-    [styles.accountBox, styles.titleText, styles.walletIcon],
+    [
+      styles.accountBox,
+      styles.titleText,
+      styles.walletIcon,
+      styles.walletIconWrapper,
+    ],
   );
 
   const renderSingeleNft = useCallback(
@@ -429,6 +434,9 @@ const getStyle = createGetStyles2024(
       gap: 4,
       marginTop: 10,
       marginBottom: 8,
+    },
+    walletIconWrapper: {
+      position: 'relative',
     },
     titleText: {
       flexShrink: 1,

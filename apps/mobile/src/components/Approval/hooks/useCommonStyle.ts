@@ -75,6 +75,9 @@ const useCommonStyle = () => {
           row: {
             flexDirection: 'row',
           },
+          relative: {
+            position: 'relative',
+          },
         };
       }),
     [],

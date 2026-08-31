@@ -68,8 +68,11 @@ function BottomSheetMoreLayout({ children }: React.PropsWithChildren) {
   // if (Platform.OS !== 'ios') {
   //   return (
   //     <View
-  //       className={clsx('absolute left-[0] h-[100%] w-[100%]')}
   //       style={{
+  //         position: 'absolute',
+  //         left: 0,
+  //         height: '100%',
+  //         width: '100%',
   //         // BottomSheetModalProvider is provided isolated from the main app below, the start point on vertical axis is
   //         // the parent of this component
   //         top: -ScreenLayouts.headerAreaHeight,
