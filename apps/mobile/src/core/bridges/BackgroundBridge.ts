@@ -17,15 +17,14 @@ import { stringUtils, urlUtils } from '@rabby-wallet/base-utils';
 
 import { createOriginMiddleware } from './middlewares';
 import { createSanitizationMiddleware } from './middlewares/SanitizationMiddleware';
-import { getDappSnapshot } from '@/core/serviceApi/dapp';
 import { isKeyringUnlockedSnapshot } from '@/core/serviceApi/keyring';
 import getRpcMethodMiddleware, {
   RefLikeObject,
 } from './middlewares/RPCMethodMiddleware';
 import WebView from 'react-native-webview';
 import { BroadcastEvent } from '@/constant/event';
-import { findChain } from '@/utils/chain';
-import { CHAINS_ENUM } from '@debank/common';
+import type { ProviderNetworkState } from '@/core/utils/providerNetworkState';
+import { getProviderNetworkState } from '@/core/utils/providerNetworkState';
 
 type BackgroundBridgeOptions = {
   webview: RefLikeObject<WebView | null>;
@@ -55,6 +54,10 @@ export class BackgroundBridge extends EventEmitter {
   #engine: JsonRpcEngine | null = null;
 
   #isFromMobileInnerDapp = false;
+
+  /** Last `chainChanged` payload actually delivered to this bridge's page. */
+  #lastChainIdSent: string | null = null;
+  #lastNetworkVersionSent: string | null = null;
 
   get origin() {
     return this.#webviewOrigin;
@@ -106,31 +109,68 @@ export class BackgroundBridge extends EventEmitter {
     // connect features
     this._setupProviderConnection(portMux.createStream('rabby-provider'));
 
-    setTimeout(() => {
-      const chain =
-        findChain({
-          enum: getDappSnapshot(this.#webviewOrigin)?.chainId,
-        }) ||
-        findChain({
-          enum: CHAINS_ENUM.ETH,
-        });
-      if (chain) {
-        this.port.postMessage(
-          {
-            name: 'rabby-provider',
-            data: {
-              method: BroadcastEvent.chainChanged,
-              params: {
-                chainId: chain.hex,
-                networkVersion: chain.network,
-              },
-            },
-          },
-          this.#webviewOrigin,
-        );
-      }
-    }, 50);
+    // Liveliness ping: tells the inpage provider the background pipeline is up
+    // so messages sent before it was ready can be retried.
+    //
+    // It must be sent synchronously and from `getProviderNetworkState` — the
+    // same function backing `rabby_getProviderState`. A delayed ping, or one
+    // computed from a second independent chain lookup, can carry a chainId that
+    // differs from the state the page bootstrapped with; the inpage provider
+    // then emits a `chainChanged` that never happened, and dapps wired as
+    // `chainChanged -> location.reload()` reload on every page load.
+    const networkState = getProviderNetworkState(this.#webviewOrigin);
+    this.#lastChainIdSent = networkState.chainId;
+    this.#lastNetworkVersionSent = networkState.networkVersion;
+    this.#postChainChanged(networkState);
   }
+
+  #postChainChanged(params: ProviderNetworkState) {
+    this.port.postMessage(
+      {
+        name: 'rabby-provider',
+        data: {
+          method: BroadcastEvent.chainChanged,
+          params,
+        },
+      },
+      this.#webviewOrigin,
+    );
+  }
+
+  /**
+   * Consulted by {@link Session.pushMessage} before a broadcast reaches this
+   * bridge's page. Returning `false` drops the push.
+   *
+   * Tracks what was last delivered so a `chainChanged` carrying the values the
+   * page already holds is never re-sent. Relying only on the inpage provider's
+   * own de-dupe is not enough: it cannot de-dupe against a value it has not
+   * received yet.
+   */
+  shouldPushMessage = (event: BroadcastEvent, data: any) => {
+    if (event !== BroadcastEvent.chainChanged) {
+      return true;
+    }
+
+    const chainId = data?.chainId;
+    if (typeof chainId !== 'string') {
+      // Malformed payload, leave delivery behaviour unchanged.
+      return true;
+    }
+    const networkVersion =
+      typeof data?.networkVersion === 'string' ? data.networkVersion : null;
+
+    if (
+      this.#lastChainIdSent === chainId &&
+      this.#lastNetworkVersionSent === networkVersion
+    ) {
+      return false;
+    }
+
+    this.#lastChainIdSent = chainId;
+    this.#lastNetworkVersionSent = networkVersion;
+
+    return true;
+  };
 
   isUnlocked() {
     return isKeyringUnlockedSnapshot();
