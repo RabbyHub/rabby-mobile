@@ -847,6 +847,7 @@ const Swap = ({
                 slippage: new BigNumber(slippage).div(100).toNumber(),
               },
               dex_id: activeProvider?.name || 'WrapToken',
+              fee_rate: Number(feeRate),
             },
             account: currentAccount!,
             from: navState?.from,
@@ -977,6 +978,7 @@ const Swap = ({
                 slippage: new BigNumber(slippage).div(100).toNumber(),
               },
               dex_id: activeProvider?.name || 'WrapToken',
+              fee_rate: Number(feeRate),
             },
             account: currentAccount!,
           },
@@ -2123,6 +2125,8 @@ const Swap = ({
                     setIsCustomSlippage={setIsCustomSlippage}
                     type="swap"
                     isWrapToken={isWrapToken}
+                    isRabbyFeeFree={!isWrapToken && feeRate === '0'}
+                    isRabbyFeeHalf={feeRate === '0.12'}
                     isBestQuote={
                       !!activeProvider &&
                       !!bestQuoteDex &&

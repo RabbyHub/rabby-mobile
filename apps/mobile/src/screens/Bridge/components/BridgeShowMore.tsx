@@ -19,7 +19,6 @@ import {
   GasAccountCheckResult,
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { isSameTypeTokenPair } from '@rabby-wallet/rabby-swap';
 import { BridgeSlippage, useSlippageTooLowOrTooHigh } from './BridgeSlippage';
 import { tokenPriceImpact } from '../hooks/token';
 import { AppSwitch, AssetAvatar } from '@/components';
@@ -71,6 +70,7 @@ import tokenListStore from '@/store/tokens';
 import RcIconSwapFree from '@/assets2024/icons/swap/free.svg';
 
 const RABBY_FEE = '0.25%';
+const RABBY_HALF_FEE = '0.12%';
 
 const BridgeShowMore = ({
   openQuotesList,
@@ -100,6 +100,8 @@ const BridgeShowMore = ({
   supportDirectSign,
   autoSuggestSlippage,
   duration,
+  isRabbyFeeFree = false,
+  isRabbyFeeHalf = false,
   insufficient,
   onDepositPopupVisibleChange,
   onSlippageOptionsOpenChange,
@@ -136,6 +138,8 @@ const BridgeShowMore = ({
   recommendValue?: number;
   supportDirectSign: boolean;
   autoSuggestSlippage?: string;
+  isRabbyFeeFree?: boolean;
+  isRabbyFeeHalf?: boolean;
   textColor?: string;
   onDepositPopupVisibleChange?: (visible: boolean) => void;
   onSlippageOptionsOpenChange?: (open: boolean) => void;
@@ -144,8 +148,6 @@ const BridgeShowMore = ({
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [lossImpactOpen, setLossImpactOpen] = useState(false);
-  const isFreeTokenPair =
-    type === 'swap' && isSameTypeTokenPair(fromToken, toToken);
 
   const data = useMemo(() => {
     if (quoteLoading || (!sourceLogo && !sourceName)) {
@@ -348,15 +350,6 @@ const BridgeShowMore = ({
           />
         ) : null}
 
-        {isFreeTokenPair && (
-          <ListItem name={t('page.swap.rabbyFee.title')}>
-            <View style={styles.freeFeeContainer}>
-              <Text style={styles.waivedFee}>{RABBY_FEE}</Text>
-              <RcIconSwapFree width={52} height={16} />
-            </View>
-          </ListItem>
-        )}
-
         {showSlippageWarning ? (
           <BridgeSlippage
             autoSuggestSlippage={autoSuggestSlippage}
@@ -395,8 +388,20 @@ const BridgeShowMore = ({
           />
         )}
 
-        {!isFreeTokenPair && (
-          <ListItem name={t('page.swap.rabbyFee.title')}>
+        <ListItem name={t('page.swap.rabbyFee.title')}>
+          {isRabbyFeeFree ? (
+            <View style={styles.freeFeeContainer}>
+              <RcIconSwapFree width={52} height={16} />
+              <Text style={styles.waivedFee}>{RABBY_FEE}</Text>
+            </View>
+          ) : isRabbyFeeHalf ? (
+            <Pressable onPress={openFeePopup}>
+              <View style={styles.halfFeeContainer}>
+                <Text style={styles.waivedFee}>{RABBY_FEE}</Text>
+                <Text style={styles.halfFee}>{RABBY_HALF_FEE}</Text>
+              </View>
+            </Pressable>
+          ) : (
             <Pressable onPress={openFeePopup}>
               <Text style={isWrapToken ? styles.wrapTokenFee : styles.fee}>
                 {isWrapToken && type === 'swap'
@@ -404,8 +409,8 @@ const BridgeShowMore = ({
                   : RABBY_FEE}
               </Text>
             </Pressable>
-          </ListItem>
-        )}
+          )}
+        </ListItem>
 
         {showMEVGuardedSwitch && (
           <ListItem name={t('page.swap.preferMEV')}>
@@ -1262,6 +1267,18 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  halfFeeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  halfFee: {
+    color: colors2024['green-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 20,
   },
   waivedFee: {
     color: colors2024['neutral-foot'],

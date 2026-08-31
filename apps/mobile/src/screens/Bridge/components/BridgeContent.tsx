@@ -379,6 +379,7 @@ export const BridgeContent = ({
     switchToken,
     amount,
     handleAmountChange,
+    feeRate,
 
     recommendFromToken,
     fillRecommendFromToken,
@@ -731,6 +732,7 @@ export const BridgeContent = ({
               to_token_amount: selectedBridgeQuote.to_token_amount,
               tx: tx,
               rabby_fee: selectedBridgeQuote.rabby_fee.usd_value,
+              fee_rate: Number(feeRate),
               slippage: new BigNumber(slippage).div(100).toNumber(),
             },
             account: currentAccount,
@@ -795,6 +797,7 @@ export const BridgeContent = ({
       toToken.chain,
       toToken.id,
       amount,
+      feeRate,
       slippageState,
       selectedBridgeQuote.aggregator.id,
       selectedBridgeQuote.bridge_id,
@@ -810,6 +813,7 @@ export const BridgeContent = ({
     ].join('|');
   }, [
     amount,
+    feeRate,
     fromToken,
     gasList,
     passGasPrice,
@@ -919,6 +923,7 @@ export const BridgeContent = ({
               to_token_amount: selectedBridgeQuote.to_token_amount,
               tx: tx,
               rabby_fee: selectedBridgeQuote.rabby_fee.usd_value,
+              fee_rate: Number(feeRate),
               slippage: new BigNumber(slippageState).div(100).toNumber(),
             },
             account: currentAccount,
@@ -1778,6 +1783,8 @@ export const BridgeContent = ({
                 setAutoSlippage={setAutoSlippage}
                 setIsCustomSlippage={setIsCustomSlippage}
                 type="bridge"
+                isRabbyFeeFree={feeRate === '0'}
+                isRabbyFeeHalf={feeRate === '0.12'}
                 isBestQuote={
                   !!bestQuoteId &&
                   !!selectedBridgeQuote &&
