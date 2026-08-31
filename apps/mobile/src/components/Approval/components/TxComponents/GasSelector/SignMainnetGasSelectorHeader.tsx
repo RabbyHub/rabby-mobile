@@ -356,22 +356,33 @@ export const SignMainnetHeaderContent = ({
     onGasSettingsOpenChangeRef.current = onGasSettingsOpenChange;
   }, [onGasSettingsOpenChange]);
 
+  const notifyGasSettingsOpenChange = useCallback(
+    (open: boolean) => {
+      // Combined gas+quotes popup should keep quote polling alive, like plugin.
+      if (renderSwapQuotes) {
+        return;
+      }
+      onGasSettingsOpenChangeRef.current?.(open);
+    },
+    [renderSwapQuotes],
+  );
+
   useEffect(() => {
     if (gasSettingsOpenRef.current === gasSettingsOpen) {
       return;
     }
 
     gasSettingsOpenRef.current = gasSettingsOpen;
-    onGasSettingsOpenChangeRef.current?.(gasSettingsOpen);
-  }, [gasSettingsOpen]);
+    notifyGasSettingsOpenChange(gasSettingsOpen);
+  }, [gasSettingsOpen, notifyGasSettingsOpenChange]);
 
   useEffect(() => {
     return () => {
       if (gasSettingsOpenRef.current) {
-        onGasSettingsOpenChangeRef.current?.(false);
+        notifyGasSettingsOpenChange(false);
       }
     };
-  }, []);
+  }, [notifyGasSettingsOpenChange]);
 
   useEffect(() => {
     activeLevelRequestsRef.current = {};
@@ -640,9 +651,13 @@ export const SignMainnetHeaderContent = ({
       } else {
         setShowMoreOpen(open);
       }
-      onGasSettingsOpenChange?.(open);
+      notifyGasSettingsOpenChange(open);
     },
-    [onGasSettingsOpenChange, onSwapGasQuoteVisibleChange, renderSwapQuotes],
+    [
+      notifyGasSettingsOpenChange,
+      onSwapGasQuoteVisibleChange,
+      renderSwapQuotes,
+    ],
   );
 
   return (
