@@ -60,7 +60,6 @@ import { useSceneActiveAsync } from '@/screens/SwapBridge/hooks/useSceneActiveAs
 import { getRabbyFeeRate, type SwapFeeRate } from './fee';
 
 export const enableInsufficientQuote = true;
-const FREE_TOKEN_PAIR_AUTO_SLIPPAGE = '0.1';
 
 const sliderHapticTriggerNumbers = [0, 50, 100];
 const SWAP_QUOTE_REFRESH_INTERVAL = 1000 * 20;
@@ -898,9 +897,7 @@ export const useTokenPair = ({
     [payToken, receiveToken],
   );
 
-  const autoSlippageValue = isFreeTokenPair
-    ? FREE_TOKEN_PAIR_AUTO_SLIPPAGE
-    : getSwapAutoSlippageValue(isStableCoin);
+  const autoSlippageValue = getSwapAutoSlippageValue(isStableCoin);
 
   const [isWrapToken, wrapTokenSymbol] = useMemo(() => {
     if (payToken?.id && receiveToken?.id) {
@@ -1037,12 +1034,7 @@ export const useTokenPair = ({
         );
 
         let realSlippage = slippage;
-        if (autoSlippage && isFreeTokenPair) {
-          realSlippage = autoSlippageValue;
-          if (currentFetchId === fetchIdRef.current) {
-            setAutoSuggestSlippage(realSlippage);
-          }
-        } else if (autoSlippage) {
+        if (autoSlippage) {
           try {
             const suggestSlippage = await openapi.suggestSlippage({
               chain_id: findChainByEnum(chain)!.serverId,
