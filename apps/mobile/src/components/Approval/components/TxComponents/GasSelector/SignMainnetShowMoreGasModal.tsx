@@ -272,14 +272,14 @@ export const SignMainnetShowMoreGasModal = ({
                     onChange={() => onChangeGasMethod?.('native')}
                     ActiveComponent={IconGasTokenActive}
                     BlurComponent={IconGasTokenCC}
-                    title={'Use Gas token'}
+                    title={t('page.gasAccount.gasToken')}
                   />
                   <GasMethod
                     active={currentGasMethod === 'gasAccount'}
                     onChange={() => onChangeGasMethod?.('gasAccount')}
                     ActiveComponent={IconGasAccountActive}
                     BlurComponent={IconGasAccountCC}
-                    title={'Use Gasaccount'}
+                    title={t('page.gasAccount.title')}
                   />
                 </View>
               )}
@@ -288,7 +288,9 @@ export const SignMainnetShowMoreGasModal = ({
                 <TouchableOpacity
                   style={styles.tempoTokenCurrentRow}
                   onPress={openTempoTokenSheet}>
-                  <Text style={styles.tempoTokenSectionTitle}>Gas token</Text>
+                  <Text style={styles.tempoTokenSectionTitle}>
+                    {t('page.gasAccount.gasToken')}
+                  </Text>
                   <View style={styles.tempoTokenCurrentValue}>
                     {tempoGasTokenLoading && !currentTempoToken ? (
                       <CustomSkeleton style={styles.tempoLoadingSkeleton} />

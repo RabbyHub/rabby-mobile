@@ -38,7 +38,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { ChainInfo2024 } from '../Send/components/ChainInfo2024';
 import { SwapHeader } from '../Swap/components/Header';
 import { LowCreditModal } from '../Swap/components/LowCreditModal';
-import { QuoteList } from '../Swap/components/Quotes';
+import { QuoteList, Quotes } from '../Swap/components/Quotes';
 import { TwpStepApproveModal } from '../Swap/components/TwoStepApproveModal';
 import {
   useDetectLoss,
@@ -2145,6 +2145,33 @@ const Swap = ({
                       setSlippageOptionsQuoteRefreshPaused
                     }
                     onGasSettingsOpenChange={setGasSettingsQuoteRefreshPaused}
+                    renderSwapQuotes={onSelect =>
+                      userAddress && payToken && receiveToken && chain ? (
+                        <Quotes
+                          list={quoteList}
+                          activeName={activeProvider?.name}
+                          loading={quoteLoading}
+                          visible
+                          onClose={() => undefined}
+                          userAddress={userAddress}
+                          chain={chain}
+                          slippage={slippage}
+                          payToken={payToken}
+                          payAmount={payAmount}
+                          receiveToken={receiveToken}
+                          fee={feeRate}
+                          inSufficient={inSufficient}
+                          setActiveProvider={setActiveProvider}
+                          currentProvider={activeProvider}
+                          sortIncludeGasFee
+                          combined
+                          onSelect={onSelect}
+                          noPadding
+                        />
+                      ) : null
+                    }
+                    onRefreshSwapQuotes={() => refresh(e => e + 1)}
+                    swapQuotesLoading={quoteLoading}
                   />
                 </View>
               )}

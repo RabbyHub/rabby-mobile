@@ -41,6 +41,9 @@ interface QuotesProps
   activeName?: string;
   visible: boolean;
   onClose: () => void;
+  combined?: boolean;
+  onSelect?: () => void;
+  noPadding?: boolean;
 }
 
 export const Quotes = ({
@@ -48,6 +51,9 @@ export const Quotes = ({
   inSufficient,
   visible: _visible,
   onClose,
+  combined,
+  onSelect,
+  noPadding,
   ...other
 }: QuotesProps) => {
   const colors = useThemeColors();
@@ -148,6 +154,8 @@ export const Quotes = ({
               logo: other?.receiveToken?.logo_url,
             }}
             onCloseQuoteList={onClose}
+            combined={combined}
+            onSelect={onSelect}
             {...other}
           />
         ) : (
@@ -157,22 +165,24 @@ export const Quotes = ({
           />
         )}
 
-        <Text
-          style={{
-            fontSize: 13,
-            fontWeight: '400',
-            color: colors['neutral-body'],
-            paddingTop: 20,
-          }}>
-          {t('page.swap.directlySwap', {
-            symbol: getTokenSymbol(other.payToken),
-          })}
-        </Text>
+        {!combined ? (
+          <Text
+            style={{
+              fontSize: 13,
+              fontWeight: '400',
+              color: colors['neutral-body'],
+              paddingTop: 20,
+            }}>
+            {t('page.swap.directlySwap', {
+              symbol: getTokenSymbol(other.payToken),
+            })}
+          </Text>
+        ) : null}
       </View>
     );
   }
   return (
-    <View style={{ paddingHorizontal: 12 }}>
+    <View style={{ paddingHorizontal: noPadding || combined ? 0 : 12 }}>
       <View style={{ gap: 12 }}>
         {sortedList.map((params, idx) => {
           const { name, data, isDex } = params;
@@ -195,98 +205,104 @@ export const Quotes = ({
                 DEX_WITH_WRAP[name as keyof typeof DEX_WITH_WRAP]
               }
               onCloseQuoteList={onClose}
+              combined={combined}
+              onSelect={onSelect}
               {...other}
             />
           );
         })}
-        <QuoteListLoading fetchedList={fetchedList} />
+        {!combined ? <QuoteListLoading fetchedList={fetchedList} /> : null}
       </View>
-      <View>
-        <TouchableOpacity
-          style={[
-            {
-              width: 'auto',
-              flexDirection: 'row',
-              justifyContent: 'center',
-              alignItems: 'center',
-              marginTop: 24,
-              gap: 4,
-            },
-            errorQuoteDEXs.length === 0 ||
-            errorQuoteDEXs?.length === ViewDexIdList?.length
-              ? { display: 'none' }
-              : { marginBottom: 12 },
-          ]}
-          onPress={() => {
-            setHiddenError(e => !e);
-          }}>
-          <View
-            style={{
-              width: 'auto',
-              flexDirection: 'row',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}>
-            <Text
-              style={{
-                fontSize: 13,
-                color: colors['neutral-foot'],
+      {!combined ? (
+        <>
+          <View>
+            <TouchableOpacity
+              style={[
+                {
+                  width: 'auto',
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  marginTop: 24,
+                  gap: 4,
+                },
+                errorQuoteDEXs.length === 0 ||
+                errorQuoteDEXs?.length === ViewDexIdList?.length
+                  ? { display: 'none' }
+                  : { marginBottom: 12 },
+              ]}
+              onPress={() => {
+                setHiddenError(e => !e);
               }}>
-              {t('page.swap.hidden-no-quote-rates', {
-                count: errorQuoteDEXs.length,
-              })}
-            </Text>
-            <RcIconSwapHiddenArrow
-              width={14}
-              height={14}
-              viewBox="0 0 14 14"
-              style={{
-                position: 'relative',
-                top: 2,
-                transform: [{ rotate: hiddenError ? '0deg' : '180deg' }],
-              }}
-            />
+              <View
+                style={{
+                  width: 'auto',
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                <Text
+                  style={{
+                    fontSize: 13,
+                    color: colors['neutral-foot'],
+                  }}>
+                  {t('page.swap.hidden-no-quote-rates', {
+                    count: errorQuoteDEXs.length,
+                  })}
+                </Text>
+                <RcIconSwapHiddenArrow
+                  width={14}
+                  height={14}
+                  viewBox="0 0 14 14"
+                  style={{
+                    position: 'relative',
+                    top: 2,
+                    transform: [{ rotate: hiddenError ? '0deg' : '180deg' }],
+                  }}
+                />
+              </View>
+            </TouchableOpacity>
           </View>
-        </TouchableOpacity>
-      </View>
-      <View
-        style={[
-          { gap: 12, overflow: 'hidden' },
-          hiddenError && errorQuoteDEXs?.length !== ViewDexIdList?.length
-            ? {
-                maxHeight: 0,
-                height: 0,
+          <View
+            style={[
+              { gap: 12, overflow: 'hidden' },
+              hiddenError && errorQuoteDEXs?.length !== ViewDexIdList?.length
+                ? {
+                    maxHeight: 0,
+                    height: 0,
+                  }
+                : {},
+              errorQuoteDEXs.length === 0 ? { display: 'none' } : {},
+            ]}>
+            {sortedList.map((params, idx) => {
+              const { name, data, isDex } = params;
+              if (!isDex) {
+                return null;
               }
-            : {},
-          errorQuoteDEXs.length === 0 ? { display: 'none' } : {},
-        ]}>
-        {sortedList.map((params, idx) => {
-          const { name, data, isDex } = params;
-          if (!isDex) {
-            return null;
-          }
-          return (
-            <DexQuoteItemOld
-              key={name}
-              onErrQuote={setErrorQuoteDEXs}
-              onlyShowErrorQuote
-              inSufficient={inSufficient}
-              preExecResult={params.preExecResult}
-              quote={data as unknown as any}
-              name={name}
-              isBestQuote={idx === 0}
-              bestQuoteAmount={`${bestQuoteAmount}`}
-              bestQuoteGasUsd={bestQuoteGasUsd}
-              isLoading={params.loading}
-              quoteProviderInfo={
-                DEX_WITH_WRAP[name as keyof typeof DEX_WITH_WRAP]
-              }
-              onCloseQuoteList={onClose}
-              {...other}
-            />
-          );
-        })}
-      </View>
+              return (
+                <DexQuoteItemOld
+                  key={name}
+                  onErrQuote={setErrorQuoteDEXs}
+                  onlyShowErrorQuote
+                  inSufficient={inSufficient}
+                  preExecResult={params.preExecResult}
+                  quote={data as unknown as any}
+                  name={name}
+                  isBestQuote={idx === 0}
+                  bestQuoteAmount={`${bestQuoteAmount}`}
+                  bestQuoteGasUsd={bestQuoteGasUsd}
+                  isLoading={params.loading}
+                  quoteProviderInfo={
+                    DEX_WITH_WRAP[name as keyof typeof DEX_WITH_WRAP]
+                  }
+                  onCloseQuoteList={onClose}
+                  {...other}
+                />
+              );
+            })}
+          </View>
+        </>
+      ) : null}
     </View>
   );
 };

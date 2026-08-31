@@ -49,6 +49,8 @@ export interface QuoteItemProps {
   sortIncludeGasFee: boolean;
   onPress?: () => void;
   onCloseQuoteList?: () => void;
+  combined?: boolean;
+  onSelect?: () => void;
 }
 
 export const DexQuoteItem = (
@@ -82,6 +84,8 @@ export const DexQuoteItem = (
     onlyShow,
     onPress,
     onCloseQuoteList,
+    combined,
+    onSelect,
   } = props;
 
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -242,6 +246,7 @@ export const DexQuoteItem = (
     });
 
     onCloseQuoteList?.();
+    onSelect?.();
   }, [
     gasFeeTooHigh,
     inSufficient,
@@ -252,6 +257,7 @@ export const DexQuoteItem = (
     preExecResult,
     receiveToken.decimals,
     onCloseQuoteList,
+    onSelect,
     handleTips,
   ]);
 
@@ -299,8 +305,9 @@ export const DexQuoteItem = (
       activeOpacity={inSufficient || gasFeeTooHigh ? 1 : 0.2}
       style={[
         styles.dexContainer,
-        onlyShow ? styles.onlyShow : styles.normal,
+        combined ? styles.combined : onlyShow ? styles.onlyShow : styles.normal,
         isActive && styles.active,
+        combined && isActive && styles.combinedActive,
         inSufficient && styles.insufficient,
         isErrorQuote && styles.errorQuote,
       ]}
@@ -417,6 +424,20 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       : colors2024['neutral-bg-2'],
   },
   active: {
+    backgroundColor: colors2024['brand-light-1'],
+    borderColor: colors2024['brand-light-2'],
+  },
+  combined: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    shadowColor: 'rgba(0, 0, 0, 0.03)',
+    shadowOpacity: 1,
+    shadowRadius: 14.4,
+    shadowOffset: { width: 0, height: 20 },
+    elevation: 2,
+  },
+  combinedActive: {
     backgroundColor: colors2024['brand-light-1'],
     borderColor: colors2024['brand-light-2'],
   },

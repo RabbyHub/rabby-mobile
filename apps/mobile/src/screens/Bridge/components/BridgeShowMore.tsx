@@ -106,6 +106,9 @@ const BridgeShowMore = ({
   onDepositPopupVisibleChange,
   onSlippageOptionsOpenChange,
   onGasSettingsOpenChange,
+  renderSwapQuotes,
+  onRefreshSwapQuotes,
+  swapQuotesLoading,
 }: {
   openQuotesList: () => void;
   sourceName: string;
@@ -144,10 +147,14 @@ const BridgeShowMore = ({
   onDepositPopupVisibleChange?: (visible: boolean) => void;
   onSlippageOptionsOpenChange?: (open: boolean) => void;
   onGasSettingsOpenChange?: (open: boolean) => void;
+  renderSwapQuotes?: (onSelect: () => void) => React.ReactNode;
+  onRefreshSwapQuotes?: () => void;
+  swapQuotesLoading?: boolean;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [lossImpactOpen, setLossImpactOpen] = useState(false);
+  const [swapGasQuoteVisible, setSwapGasQuoteVisible] = useState(false);
 
   const data = useMemo(() => {
     if (quoteLoading || (!sourceLogo && !sourceName)) {
@@ -347,6 +354,11 @@ const BridgeShowMore = ({
             chainServeId={fromToken?.chain}
             onDepositPopupVisibleChange={onDepositPopupVisibleChange}
             onGasSettingsOpenChange={onGasSettingsOpenChange}
+            renderSwapQuotes={renderSwapQuotes}
+            onRefreshSwapQuotes={onRefreshSwapQuotes}
+            swapQuotesLoading={swapQuotesLoading}
+            swapGasQuoteVisible={swapGasQuoteVisible}
+            onSwapGasQuoteVisibleChange={setSwapGasQuoteVisible}
           />
         ) : null}
 
@@ -437,6 +449,26 @@ const rawAmountToBn = (
   return new BigNumber(value || 0);
 };
 
+const StableSignMainnetHeaderContent = ({
+  headerProps,
+  dynamicProps,
+}: {
+  headerProps?: React.ComponentProps<typeof SignMainnetHeaderContent>;
+  dynamicProps?: Partial<React.ComponentProps<typeof SignMainnetHeaderContent>>;
+}) => {
+  const lastHeaderPropsRef = useRef(headerProps);
+  if (headerProps) {
+    lastHeaderPropsRef.current = headerProps;
+  }
+
+  const cachedHeaderProps = lastHeaderPropsRef.current;
+  if (!cachedHeaderProps) {
+    return null;
+  }
+
+  return <SignMainnetHeaderContent {...cachedHeaderProps} {...dynamicProps} />;
+};
+
 export const DirectSignGasInfo = ({
   supportDirectSign,
   loading,
@@ -448,6 +480,11 @@ export const DirectSignGasInfo = ({
   textColor,
   onDepositPopupVisibleChange,
   onGasSettingsOpenChange,
+  renderSwapQuotes,
+  onRefreshSwapQuotes,
+  swapQuotesLoading,
+  swapGasQuoteVisible,
+  onSwapGasQuoteVisibleChange,
 }: {
   supportDirectSign: boolean;
   loading: boolean;
@@ -459,6 +496,11 @@ export const DirectSignGasInfo = ({
   textColor?: string;
   onDepositPopupVisibleChange?: (visible: boolean) => void;
   onGasSettingsOpenChange?: (open: boolean) => void;
+  renderSwapQuotes?: (onSelect: () => void) => React.ReactNode;
+  onRefreshSwapQuotes?: () => void;
+  swapQuotesLoading?: boolean;
+  swapGasQuoteVisible?: boolean;
+  onSwapGasQuoteVisibleChange?: (visible: boolean) => void;
 } & RNViewProps) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
@@ -1033,53 +1075,79 @@ export const DirectSignGasInfo = ({
     </>
   );
 
+  const gasSelectorHeaderProps: React.ComponentProps<
+    typeof SignMainnetHeaderContent
+  > | null =
+    showGasContent && currentTx && currentAccount
+      ? {
+          textColor,
+          gasFeeListItemStyle,
+          gasFeeListItemInnerStyle,
+          fixedMode: true,
+          defaultFixedModeOnCurrentChain: fixedModeOnCurrentChain,
+          tx: currentTx,
+          gasAccountCost,
+          gasMethod: effectiveGasMethod,
+          onChangeGasMethod: handleChangeGasMethod,
+          onAutoChangeGasMethod: handleAutoChangeGasMethod,
+          disableAutoGasLevelSwitch: !!manualGasMethod,
+          showGasMethodShortcut: false,
+          disabled: false,
+          isReady,
+          gasLimit: ctx?.txs?.[0]?.gas,
+          gasList: ctx?.gasList || [],
+          selectedGas: ctx?.selectedGas || null,
+          version: txsResult?.[0]?.preExecResult?.pre_exec_version || 'v0',
+          chainId: ctx?.chainId || chainId,
+          onChange: handleGasChange,
+          nonce: ctx?.txsCalc?.[0]?.tx?.nonce || '0x1',
+          isSpeedUp: !!isSpeedUp,
+          isCancel: !!isCancel,
+          is1559: !!ctx?.is1559,
+          isHardware: false,
+          nativeTokenBalance: ctx?.nativeTokenBalance || '0x0',
+          gasToken,
+          showTempoGasTokenSelector,
+          tempoGasTokenList,
+          tempoPreferredFeeTokenId: ctx?.tempoPreferredFeeTokenId,
+          onSelectTempoGasToken: handleSelectTempoGasToken,
+          tempoGasTokenLoading,
+          gasPriceMedian: ctx?.gasPriceMedian || null,
+          gas: totalGasCost,
+          gasCalcMethod,
+          checkGasLevelIsNotEnough,
+          account: currentAccount,
+          gasCostUsdStr: formatGasHeaderUsdValue(
+            totalGasCost.gasCostUsd.toString(10),
+          ),
+          nativeTokenInsufficient: isGasNotEnough,
+          freeGasAvailable: canUseGasLess,
+          onGasSettingsOpenChange,
+          renderSwapQuotes,
+          onRefreshSwapQuotes,
+          swapQuotesLoading,
+          swapGasInteractionDisabled: false,
+          swapGasQuoteVisible,
+          onSwapGasQuoteVisibleChange,
+        }
+      : null;
+  const keepCombinedGasHeaderMounted =
+    !!renderSwapQuotes && !!swapGasQuoteVisible;
+
   return (
     <View style={style}>
-      {showGasContent && currentTx && currentAccount ? (
-        <SignMainnetHeaderContent
-          textColor={textColor}
-          gasFeeListItemStyle={gasFeeListItemStyle}
-          gasFeeListItemInnerStyle={gasFeeListItemInnerStyle}
-          fixedMode
-          defaultFixedModeOnCurrentChain={fixedModeOnCurrentChain}
-          tx={currentTx}
-          gasAccountCost={gasAccountCost}
-          gasMethod={effectiveGasMethod}
-          onChangeGasMethod={handleChangeGasMethod}
-          onAutoChangeGasMethod={handleAutoChangeGasMethod}
-          disableAutoGasLevelSwitch={!!manualGasMethod}
-          showGasMethodShortcut={false}
-          disabled={false}
-          isReady={isReady}
-          gasLimit={ctx?.txs?.[0]?.gas}
-          gasList={ctx?.gasList || []}
-          selectedGas={ctx?.selectedGas || null}
-          version={txsResult?.[0]?.preExecResult?.pre_exec_version || 'v0'}
-          chainId={ctx?.chainId || chainId}
-          onChange={handleGasChange}
-          nonce={ctx?.txsCalc?.[0]?.tx?.nonce || '0x1'}
-          isSpeedUp={!!isSpeedUp}
-          isCancel={!!isCancel}
-          is1559={!!ctx?.is1559}
-          isHardware={false}
-          nativeTokenBalance={ctx?.nativeTokenBalance || '0x0'}
-          gasToken={gasToken}
-          showTempoGasTokenSelector={showTempoGasTokenSelector}
-          tempoGasTokenList={tempoGasTokenList}
-          tempoPreferredFeeTokenId={ctx?.tempoPreferredFeeTokenId}
-          onSelectTempoGasToken={handleSelectTempoGasToken}
-          tempoGasTokenLoading={tempoGasTokenLoading}
-          gasPriceMedian={ctx?.gasPriceMedian || null}
-          gas={totalGasCost}
-          gasCalcMethod={gasCalcMethod}
-          checkGasLevelIsNotEnough={checkGasLevelIsNotEnough}
-          account={currentAccount}
-          gasCostUsdStr={formatGasHeaderUsdValue(
-            totalGasCost.gasCostUsd.toString(10),
-          )}
-          nativeTokenInsufficient={isGasNotEnough}
-          freeGasAvailable={canUseGasLess}
-          onGasSettingsOpenChange={onGasSettingsOpenChange}
+      {showGasContent || keepCombinedGasHeaderMounted ? (
+        <StableSignMainnetHeaderContent
+          headerProps={gasSelectorHeaderProps || undefined}
+          dynamicProps={{
+            onGasSettingsOpenChange,
+            renderSwapQuotes,
+            onRefreshSwapQuotes,
+            swapQuotesLoading,
+            swapGasInteractionDisabled: !showGasContent,
+            swapGasQuoteVisible,
+            onSwapGasQuoteVisibleChange,
+          }}
         />
       ) : (
         <ListItem

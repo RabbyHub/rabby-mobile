@@ -1104,7 +1104,13 @@
         "search": "Search",
         "websites": "Websites",
         "tabs": {
-          "__skip_translation": ["favorite", "defi", "dex", "rwa", "nft"],
+          "__skip_translation": [
+            "favorite",
+            "defi",
+            "dex",
+            "rwa",
+            "nft"
+          ],
           "favorite": "Favorite",
           "all": "All",
           "defi": "DeFi",
@@ -1288,7 +1294,9 @@
         "buyWithFiatDesc": "Simple crypto purchase"
       },
       "importAddress": {
-        "__skip_translation": ["safe"],
+        "__skip_translation": [
+          "safe"
+        ],
         "importTitle": "Import Wallet",
         "seedPhrase": "Import Seed Phrase",
         "privateKey": "Import Private Key",
@@ -1828,7 +1836,10 @@
       "gnosisChainScrollDesc": "- This wallet was found deployed on {{count}} chains -"
     },
     "rabbyPoints": {
-      "__skip_translation": ["titleWithStar", "ClaimComing"],
+      "__skip_translation": [
+        "titleWithStar",
+        "ClaimComing"
+      ],
       "title": "Rabby Points",
       "titleWithStar": "Rabby Points ✨",
       "out-of-x-current-total-points": "Out of {{total}} Total Distributed Points",
@@ -2075,7 +2086,9 @@
       "lowBalance": "You don't have enough gas (<$1.00). Deposit gas to ensure future transactions go smoothly.",
       "switchAccount": "Switch Wallet",
       "depositFailed": "Deposit failed",
-      "depositWith": "Deposit via"
+      "depositWith": "Deposit via",
+      "gasToken": "Gas Token",
+      "title": "GasAccount"
     },
     "tokenDetail": {
       "headerBalanceText": "Balance",
@@ -2295,7 +2308,9 @@
       }
     },
     "setting": {
-      "__skip_translation": ["transactionNotification"],
+      "__skip_translation": [
+        "transactionNotification"
+      ],
       "screenTitle": "Settings",
       "enableWhitelist": "Enable whitelist for sending assets",
       "faceId": "Face ID",
@@ -2879,7 +2894,9 @@
           "loadingMore": "Loading more history"
         },
         "positions": {
-          "__skip_translation": ["skipMarketCloseConfirmation"],
+          "__skip_translation": [
+            "skipMarketCloseConfirmation"
+          ],
           "empty": "You have no positions",
           "closeAll": "Close All",
           "closeAllConfirmTitle": "Confirm Close All Positions",
@@ -3597,7 +3614,9 @@
           "mySupplies": "My supplies"
         },
         "item": {
-          "__skip_translation": ["tvl"],
+          "__skip_translation": [
+            "tvl"
+          ],
           "tvl": "TVL",
           "wrapperToken": "Wrapped token for {{name}}"
         }
@@ -3742,7 +3761,9 @@
         "zeroLtvCollateralTips": "You have following LTV = 0 collaterals and thus can only repay with these collaterals first according to collateral repay rules. "
       },
       "manageEmode": {
-        "__skip_translation": ["emode"],
+        "__skip_translation": [
+          "emode"
+        ],
         "emode": "E-Mode",
         "title": "Manage E-Mode",
         "disableTitle": "Disable",
