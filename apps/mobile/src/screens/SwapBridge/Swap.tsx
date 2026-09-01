@@ -1558,6 +1558,86 @@ const Swap = ({
     setRiskChecked(false);
   }, [riskConfirmKey]);
 
+  const showTwoStepApproveProgress =
+    !showRiskTips &&
+    shouldTwoStepSwap &&
+    !!currentAccount?.address &&
+    !!approveHash &&
+    !!currentTxs?.[0]?.chainId;
+
+  const swapPreviewInfo = isPreviewVisible ? (
+    <BridgeShowMore
+      insufficient={inSufficient}
+      autoSuggestSlippage={autoSuggestSlippage}
+      supportDirectSign={canShowDirectSubmit}
+      openFeePopup={openFeePopup}
+      sourceName={sourceName}
+      sourceLogo={sourceLogo}
+      slippage={slippageState}
+      displaySlippage={slippage}
+      onSlippageChange={setSlippage}
+      fromToken={payToken}
+      toToken={receiveToken}
+      amount={payAmount}
+      toAmount={
+        isWrapToken ? payAmount : activeProvider?.actualReceiveAmount || 0
+      }
+      openQuotesList={openQuotesList}
+      quoteLoading={quoteLoading}
+      slippageError={isSlippageHigh || isSlippageLow}
+      autoSlippage={!!autoSlippage}
+      isCustomSlippage={isCustomSlippage}
+      setAutoSlippage={setAutoSlippage}
+      setIsCustomSlippage={setIsCustomSlippage}
+      type="swap"
+      isWrapToken={isWrapToken}
+      isRabbyFeeFree={!isWrapToken && feeRate === '0'}
+      isRabbyFeeHalf={feeRate === '0.12'}
+      isBestQuote={
+        !!activeProvider &&
+        !!bestQuoteDex &&
+        bestQuoteDex === activeProvider?.name
+      }
+      showMEVGuardedSwitch={showMEVGuardedSwitch}
+      originPreferMEVGuarded={mevProtection}
+      switchPreferMEV={switchPreferMEV}
+      recommendValue={
+        slippageValidInfo?.is_valid
+          ? undefined
+          : slippageValidInfo?.suggest_slippage
+      }
+      onDepositPopupVisibleChange={setDepositQuoteRefreshPaused}
+      onSlippageOptionsOpenChange={setSlippageOptionsQuoteRefreshPaused}
+      onGasSettingsOpenChange={setGasSettingsQuoteRefreshPaused}
+      renderSwapQuotes={onSelect =>
+        userAddress && payToken && receiveToken && chain ? (
+          <Quotes
+            list={quoteList}
+            activeName={activeProvider?.name}
+            loading={quoteLoading}
+            visible
+            onClose={() => undefined}
+            userAddress={userAddress}
+            chain={chain}
+            slippage={slippage}
+            payToken={payToken}
+            payAmount={payAmount}
+            receiveToken={receiveToken}
+            fee={feeRate}
+            inSufficient={inSufficient}
+            setActiveProvider={setActiveProvider}
+            currentProvider={activeProvider}
+            sortIncludeGasFee
+            onSelect={onSelect}
+            noPadding
+          />
+        ) : null
+      }
+      onRefreshSwapQuotes={() => refresh(e => e + 1)}
+      swapQuotesLoading={quoteLoading}
+    />
+  ) : null;
+
   useEffect(() => {
     if (
       !sceneActive ||
@@ -2072,90 +2152,22 @@ const Swap = ({
               </Text>
             ) : null}
 
-            {isPreviewVisible &&
-              (!shouldTwoStepSwap ||
-                (shouldTwoStepSwap && !approveHash) ||
-                showRiskTips) && (
-                <View
-                  style={{
-                    marginHorizontal: -24,
-                  }}>
-                  <BridgeShowMore
-                    insufficient={inSufficient}
-                    autoSuggestSlippage={autoSuggestSlippage}
-                    supportDirectSign={canShowDirectSubmit}
-                    openFeePopup={openFeePopup}
-                    sourceName={sourceName}
-                    sourceLogo={sourceLogo}
-                    slippage={slippageState}
-                    displaySlippage={slippage}
-                    onSlippageChange={setSlippage}
-                    fromToken={payToken}
-                    toToken={receiveToken}
-                    amount={payAmount}
-                    toAmount={
-                      isWrapToken
-                        ? payAmount
-                        : activeProvider?.actualReceiveAmount || 0
-                    }
-                    openQuotesList={openQuotesList}
-                    quoteLoading={quoteLoading}
-                    slippageError={isSlippageHigh || isSlippageLow}
-                    autoSlippage={!!autoSlippage}
-                    isCustomSlippage={isCustomSlippage}
-                    setAutoSlippage={setAutoSlippage}
-                    setIsCustomSlippage={setIsCustomSlippage}
-                    type="swap"
-                    isWrapToken={isWrapToken}
-                    isRabbyFeeFree={!isWrapToken && feeRate === '0'}
-                    isRabbyFeeHalf={feeRate === '0.12'}
-                    isBestQuote={
-                      !!activeProvider &&
-                      !!bestQuoteDex &&
-                      bestQuoteDex === activeProvider?.name
-                    }
-                    showMEVGuardedSwitch={showMEVGuardedSwitch}
-                    originPreferMEVGuarded={mevProtection}
-                    switchPreferMEV={switchPreferMEV}
-                    recommendValue={
-                      slippageValidInfo?.is_valid
-                        ? undefined
-                        : slippageValidInfo?.suggest_slippage
-                    }
-                    onDepositPopupVisibleChange={setDepositQuoteRefreshPaused}
-                    onSlippageOptionsOpenChange={
-                      setSlippageOptionsQuoteRefreshPaused
-                    }
-                    onGasSettingsOpenChange={setGasSettingsQuoteRefreshPaused}
-                    renderSwapQuotes={onSelect =>
-                      userAddress && payToken && receiveToken && chain ? (
-                        <Quotes
-                          list={quoteList}
-                          activeName={activeProvider?.name}
-                          loading={quoteLoading}
-                          visible
-                          onClose={() => undefined}
-                          userAddress={userAddress}
-                          chain={chain}
-                          slippage={slippage}
-                          payToken={payToken}
-                          payAmount={payAmount}
-                          receiveToken={receiveToken}
-                          fee={feeRate}
-                          inSufficient={inSufficient}
-                          setActiveProvider={setActiveProvider}
-                          currentProvider={activeProvider}
-                          sortIncludeGasFee
-                          onSelect={onSelect}
-                          noPadding
-                        />
-                      ) : null
-                    }
-                    onRefreshSwapQuotes={() => refresh(e => e + 1)}
-                    swapQuotesLoading={quoteLoading}
-                  />
-                </View>
-              )}
+            {!showTwoStepApproveProgress ? (
+              <View style={{ marginHorizontal: -24 }}>{swapPreviewInfo}</View>
+            ) : (
+              <View style={{ marginTop: 16 }}>
+                <ApprovePendingTxItem
+                  type="approveSwap"
+                  isForMultipleAddress={isForMultipleAddress}
+                  address={currentAccount!.address}
+                  hash={approveHash}
+                  chainId={currentTxs![0]!.chainId}
+                  showHeaderDivider={false}
+                  showFooterDivider
+                />
+                <View style={{ marginHorizontal: -24 }}>{swapPreviewInfo}</View>
+              </View>
+            )}
 
             <SwapPendingTransactionsController
               ref={pendingTransactionsRef}
@@ -2165,20 +2177,6 @@ const Swap = ({
               showPendingTransaction={!approveHash && !isPreviewVisible}
               onProgressChange={setHasSwapProgress}
             />
-
-            {!showRiskTips &&
-            shouldTwoStepSwap &&
-            !!currentAccount?.address &&
-            approveHash &&
-            currentTxs?.[0]?.chainId ? (
-              <ApprovePendingTxItem
-                type="approveSwap"
-                isForMultipleAddress={isForMultipleAddress}
-                address={currentAccount?.address}
-                hash={approveHash}
-                chainId={currentTxs[0]?.chainId}
-              />
-            ) : null}
 
             {!isSupportedChain ? (
               <>
