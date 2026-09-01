@@ -283,7 +283,6 @@ jobs:
           SKIP_NOTIFY_LARK: ${{ inputs.SKIP_NOTIFY_LARK }}
           RABBY_MOBILE_LARK_DRIVE_UPLOAD: ${{ inputs.LARK_DRIVE_UPLOAD }}
           RABBY_MOBILE_LARK_DRIVE_UPLOAD_REQUIRED: 'false'
-          RABBY_MOBILE_LARK_DRIVE_FILE_URL_BASE: ${{ vars.RABBY_MOBILE_LARK_DRIVE_FILE_URL_BASE || 'https://debankglobal.sg.larksuite.com/file' }}
           RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.LARK_CHAT_URL }}
           RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}
           RABBY_MOBILE_LARK_CHAT_URL_FROM_GITHUB: ${{ secrets.LARK_CHAT_URL }}

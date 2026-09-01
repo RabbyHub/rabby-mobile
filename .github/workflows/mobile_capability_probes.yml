@@ -103,7 +103,6 @@ jobs:
       RABBY_ROBOT_LARK_APP_ID_FROM_GITHUB: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
       RABBY_ROBOT_LARK_APP_SECRET_FROM_GITHUB: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
       RABBY_MOBILE_LARK_DRIVE_PROBE_PACKAGE_URL: ${{ secrets.RABBY_MOBILE_LARK_DRIVE_PROBE_PACKAGE_URL }}
-      RABBY_MOBILE_LARK_DRIVE_FILE_URL_BASE: ${{ vars.RABBY_MOBILE_LARK_DRIVE_FILE_URL_BASE || 'https://debankglobal.sg.larksuite.com/file' }}
     steps:
       - name: Checkout git repo
         uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3

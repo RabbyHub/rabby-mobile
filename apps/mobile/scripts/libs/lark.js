@@ -8,10 +8,7 @@ const FormData = require('form-data'); // npm install --save form-data
 const Axios = require('axios');
 
 const LARK_OPEN_API_BASE_URL = 'https://open.larksuite.com/open-apis';
-const LARK_DRIVE_FILE_URL_BASE = (
-  process.env.RABBY_MOBILE_LARK_DRIVE_FILE_URL_BASE ||
-  'https://debankglobal.sg.larksuite.com/file'
-).replace(/\/+$/, '');
+const LARK_DRIVE_FILE_URL_BASE = 'https://debankglobal.sg.larksuite.com/file';
 
 const { RABBY_ROBOT_LARK_APP_ID, RABBY_ROBOT_LARK_APP_SECRET } = process.env;
 if (!RABBY_ROBOT_LARK_APP_ID) {
