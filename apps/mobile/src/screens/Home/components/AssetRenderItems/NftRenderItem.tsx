@@ -52,6 +52,7 @@ export const NftRow = memo(
                 },
               ])}>
               <Media
+                retryOnFailure
                 failedPlaceholder={
                   <IconDefaultNFT width="100%" height="100%" />
                 }

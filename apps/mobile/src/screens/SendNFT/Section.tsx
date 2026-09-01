@@ -56,6 +56,7 @@ export const NFTSection = React.memo(function NFTSection({
           <View style={styles.infoSection}>
             <View style={styles.nftMedia}>
               <Media
+                retryOnFailure
                 failedPlaceholder={
                   <IconDefaultNFT width={'100%'} height={BASIC_INFO_H} />
                 }

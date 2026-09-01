@@ -42,6 +42,7 @@ export const Item = ({ item, onPress }: ItemProps) => {
       ])}
       onPress={onPress}>
       <Media
+        retryOnFailure
         failedPlaceholder={<IconDefaultNFT width="100%" height="100%" />}
         type={item?.content_type || MEDIA_TYPE.IMAGE_URL}
         src={item?.content}

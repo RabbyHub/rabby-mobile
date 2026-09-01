@@ -11,6 +11,7 @@ import React, {
   useState,
 } from 'react';
 import {
+  type GestureResponderEvent,
   StyleSheet,
   TouchableOpacityProps,
   View,
@@ -25,6 +26,7 @@ import RNFS, {
   type SafeSvgResult,
   type SafeSvgVariant,
 } from '@rabby-wallet/react-native-fs';
+import RcIconRefreshCC from '@/assets2024/icons/bridge/IconRefreshCC.svg';
 
 export enum MEDIA_TYPE {
   IMAGE = 'image',
@@ -46,6 +48,8 @@ interface MediaProps {
   playable?: boolean;
   playIconSize?: number;
   safeSvgVariant?: SafeSvgVariant;
+  retryOnFailure?: boolean;
+  onRetry?(): void;
 }
 
 const isDebankUrl = (url: string) => {
@@ -94,6 +98,8 @@ export const Media = ({
   thumbnail,
   playIconSize,
   safeSvgVariant = 'thumbnail',
+  retryOnFailure = false,
+  onRetry,
   onPress,
   resizeMode,
 }: MediaProps &
@@ -109,7 +115,7 @@ export const Media = ({
   );
 
   const ref = useRef<VideoRef>(null);
-  const { on: loading, turnOff } = useSwitch(true);
+  const { on: loading, turnOff, turnOn: loadingStart } = useSwitch(true);
   const {
     on: failed,
     turnOff: loadingSucceed,
@@ -120,6 +126,7 @@ export const Media = ({
     status: 'idle',
   });
   const [showSafeSvgSkeleton, setShowSafeSvgSkeleton] = useState(false);
+  const [retryAttempt, setRetryAttempt] = useState(0);
 
   const _src = useMemo(() => getValidLink(src), [src]);
   const rawThumbnail = useMemo(() => getValidLink(thumbnail), [thumbnail]);
@@ -183,7 +190,7 @@ export const Media = ({
       active = false;
       clearTimeout(skeletonTimer);
     };
-  }, [loadingSucceed, safeSvgUrl, safeSvgVariant]);
+  }, [loadingSucceed, retryAttempt, safeSvgUrl, safeSvgVariant]);
 
   const imageUrl = useMemo(
     () =>
@@ -226,6 +233,21 @@ export const Media = ({
     handleError && handleError();
   }, [handleError, loadingFail, turnOff]);
 
+  const retryMedia = useCallback(
+    (event?: GestureResponderEvent) => {
+      event?.stopPropagation();
+      loadingStart();
+      loadingSucceed();
+      if (safeSvgUrl) {
+        setSafeSvgState({ status: 'resolving' });
+        setShowSafeSvgSkeleton(true);
+      }
+      setRetryAttempt(current => current + 1);
+      onRetry?.();
+    },
+    [loadingStart, loadingSucceed, onRetry, safeSvgUrl],
+  );
+
   const changePlay = useCallback(() => {
     ref?.current?.seek(0);
     toggle();
@@ -246,7 +268,26 @@ export const Media = ({
 
   const safeSvgFailed = safeSvgState.status === 'failed';
   if (failed || safeSvgFailed || (!safeSvgUrl && !_src)) {
-    return <View style={containerStyles}>{failedPlaceholder}</View>;
+    if (!retryOnFailure) {
+      return <View style={containerStyles}>{failedPlaceholder}</View>;
+    }
+
+    return (
+      <CustomTouchableOpacity
+        style={containerStyles}
+        onPress={retryMedia}
+        accessibilityRole="button"
+        accessibilityLabel="Retry media loading">
+        {failedPlaceholder}
+        <View pointerEvents="none" style={styles.retryBadge}>
+          <RcIconRefreshCC
+            width={11}
+            height={11}
+            color={colors['neutral-title-1']}
+          />
+        </View>
+      </CustomTouchableOpacity>
+    );
   }
 
   return (
@@ -255,6 +296,7 @@ export const Media = ({
         <>
           {imageUrl ? (
             <FastImage
+              key={`image-${retryAttempt}`}
               source={source}
               style={mediaContainerStyles}
               onLoad={onSuccess}
@@ -275,12 +317,21 @@ export const Media = ({
               style={styles.loading}
             />
           ) : null}
+          {!safeSvgUrl && retryAttempt > 0 && loading ? (
+            <Skeleton
+              animation="pulse"
+              width="100%"
+              height="100%"
+              style={styles.loading}
+            />
+          ) : null}
         </>
       ) : null}
       {type === MEDIA_TYPE.VIDEO_URL ? (
         playable ? (
           <CustomTouchableOpacity style={mediaContainerStyles} onPress={toggle}>
             <Video
+              key={`playable-video-${retryAttempt}`}
               style={mediaContainerStyles}
               source={srcSource}
               controls={!pause}
@@ -304,6 +355,7 @@ export const Media = ({
           <>
             {_thumbnail ? (
               <FastImage
+                key={`video-thumbnail-${retryAttempt}`}
                 source={thumbnailSource}
                 style={mediaContainerStyles}
                 resizeMode="cover"
@@ -314,6 +366,7 @@ export const Media = ({
               />
             ) : (
               <Video
+                key={`video-${retryAttempt}`}
                 style={mediaContainerStyles}
                 source={srcSource}
                 onLoad={onSuccess}
@@ -358,6 +411,18 @@ const getStyle = (colors: AppColorsVariants) =>
       width: '100%',
       height: '100%',
       zIndex: 2,
+    },
+    retryBadge: {
+      position: 'absolute',
+      right: 2,
+      bottom: 2,
+      width: 18,
+      height: 18,
+      borderRadius: 9,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors['neutral-bg-1'],
+      zIndex: 3,
     },
     playIcon: {
       position: 'absolute',

@@ -195,6 +195,10 @@ export default function DevUISafeSvgMedia(): JSX.Element {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Production Media component</Text>
+          <Text style={styles.description}>
+            Failed previews expose a refresh badge. Tap the image to retry
+            without clearing the cache.
+          </Text>
           <View style={styles.previewRow}>
             <View style={styles.previewColumn}>
               <Text style={styles.previewLabel}>thumbnail policy</Text>
@@ -202,6 +206,7 @@ export default function DevUISafeSvgMedia(): JSX.Element {
                 style={styles.thumbnailPreview}
                 {...makeTestIDProps(E2E_ID.playground.safeSvgThumbnail)}>
                 <Media
+                  retryOnFailure
                   key={`thumbnail-${renderKey}`}
                   type={MEDIA_TYPE.IMAGE_URL}
                   src={activeUrl}
@@ -218,6 +223,7 @@ export default function DevUISafeSvgMedia(): JSX.Element {
                 style={styles.detailPreview}
                 {...makeTestIDProps(E2E_ID.playground.safeSvgDetail)}>
                 <Media
+                  retryOnFailure
                   key={`detail-${renderKey}`}
                   type={MEDIA_TYPE.IMAGE_URL}
                   src={activeUrl}

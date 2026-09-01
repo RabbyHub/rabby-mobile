@@ -83,6 +83,7 @@ const TokenItemInlist = ({
           <View>
             {isNft ? (
               <Media
+                retryOnFailure
                 failedPlaceholder={<IconDefaultNFT width={33} height={33} />}
                 type={token?.content_type || 'image_url'}
                 src={token?.content}
@@ -305,6 +306,7 @@ export const HistoryTokenList = ({
                       <View>
                         {tokenIsNft ? (
                           <Media
+                            retryOnFailure
                             failedPlaceholder={
                               <IconDefaultNFT width={45} height={45} />
                             }
@@ -389,6 +391,7 @@ export const HistoryTokenList = ({
                       <View>
                         {tokenIsNft ? (
                           <Media
+                            retryOnFailure
                             failedPlaceholder={
                               <IconDefaultNFT width={45} height={45} />
                             }

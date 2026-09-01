@@ -91,6 +91,7 @@ const NFTBalanceChange = ({
             <View style={styles.logoWithText}>
               <View>
                 <Media
+                  retryOnFailure
                   failedPlaceholder={
                     <IconDefaultNFT width="100%" height="100%" />
                   }
@@ -135,6 +136,7 @@ const NFTBalanceChange = ({
             <View style={styles.logoWithText}>
               <View>
                 <Media
+                  retryOnFailure
                   failedPlaceholder={
                     <IconDefaultNFT width="100%" height="100%" />
                   }
