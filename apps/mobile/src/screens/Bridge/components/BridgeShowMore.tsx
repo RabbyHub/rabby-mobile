@@ -399,6 +399,9 @@ const BridgeShowMore = ({
             swapQuotesLoading={swapQuotesLoading}
             swapGasQuoteVisible={swapGasQuoteVisible}
             onSwapGasQuoteVisibleChange={setSwapGasQuoteVisible}
+            gasFeeLabel={
+              type === 'swap' ? t('page.signTx.gasSelectorTitle') : undefined
+            }
           />
         ) : type === 'swap' ? (
           sourceContentRender()
@@ -508,6 +511,7 @@ export const DirectSignGasInfo = ({
   hideGasLevelInSummary,
   sourceSelector,
   fallbackSourceSelector,
+  gasFeeLabel,
 }: {
   supportDirectSign: boolean;
   loading: boolean;
@@ -527,8 +531,11 @@ export const DirectSignGasInfo = ({
   swapQuotesLoading?: boolean;
   swapGasQuoteVisible?: boolean;
   onSwapGasQuoteVisibleChange?: (visible: boolean) => void;
+  gasFeeLabel?: React.ReactNode;
 } & RNViewProps) => {
   const { t } = useTranslation();
+  const resolvedGasFeeLabel =
+    gasFeeLabel ?? t('page.transactions.detail.GasFee');
   const { styles } = useTheme2024({ getStyle });
   const chainId = useMemo(
     () => findChainByServerID(chainServeId)?.id || 0,
@@ -1161,6 +1168,7 @@ export const DirectSignGasInfo = ({
           swapGasInteractionDisabled: false,
           swapGasQuoteVisible,
           onSwapGasQuoteVisibleChange,
+          gasFeeLabel: resolvedGasFeeLabel,
         }
       : null;
   const keepCombinedGasHeaderMounted =
@@ -1184,7 +1192,7 @@ export const DirectSignGasInfo = ({
         />
       ) : (
         <ListItem
-          name={<>{'Gas Fee'}</>}
+          name={<>{resolvedGasFeeLabel}</>}
           style={gasFeeListItemStyle}
           innerStyle={gasFeeListItemInnerStyle}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

@@ -123,6 +123,7 @@ export const SignMainnetHeaderContent = ({
   onSwapGasQuoteVisibleChange,
   hideGasLevelInSummary,
   rightPrefix,
+  gasFeeLabel,
 }: {
   gasList: GasSelectorHeaderProps['gasList'];
   selectedGas: GasSelectorHeaderProps['selectedGas'];
@@ -175,6 +176,7 @@ export const SignMainnetHeaderContent = ({
   onSwapGasQuoteVisibleChange?: (visible: boolean) => void;
   hideGasLevelInSummary?: boolean;
   rightPrefix?: React.ReactNode;
+  gasFeeLabel?: React.ReactNode;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -668,7 +670,11 @@ export const SignMainnetHeaderContent = ({
         empty={isHeaderError}
         emptyText={t('page.signTx.failToFetchGasCost')}
         chainId={chainId}
-        label={gasMethodShortcut ? null : t('page.transactions.detail.GasFee')}
+        label={
+          gasMethodShortcut
+            ? null
+            : gasFeeLabel ?? t('page.transactions.detail.GasFee')
+        }
         labelPrefix={gasMethodShortcut}
         levelText={t(getGasLevelI18nKey(selectedGas?.level || 'normal'))}
         hideGasLevelInSummary={hideGasLevelInSummary}
