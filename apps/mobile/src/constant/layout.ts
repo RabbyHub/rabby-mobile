@@ -268,10 +268,9 @@ export type AppRootName = keyof typeof RootNames;
 
 type NonStackAppRootName = Exclude<AppRootName, `Stack${string}`>;
 
-export type ScreenStatusBarConf = {
-  barStyle?: 'light-content' | 'dark-content';
-  iosStatusBarStyle?: NativeStackNavigationOptions['statusBarStyle'];
-  androidStatusBarBg?: string;
+export type ScreenSystemBarConfig = {
+  statusBarStyle: 'light-content' | 'dark-content';
+  statusBarBackgroundColor: string;
 };
 
 // function rgbaToAlphaHex(rgba: string) {
@@ -290,92 +289,63 @@ export function makeTxPageBackgroundColors({
 
 function makeScreenSpecConfig() {
   type ThemeType = {
-    '@default': ScreenStatusBarConf;
-    '@bg1default': ScreenStatusBarConf;
-    '@openeddapp': ScreenStatusBarConf;
-  } & Record<NonStackAppRootName, ScreenStatusBarConf>;
+    '@default': ScreenSystemBarConfig;
+    '@bg1default': ScreenSystemBarConfig;
+    '@openeddapp': ScreenSystemBarConfig;
+  } & Record<NonStackAppRootName, ScreenSystemBarConfig>;
 
   const [dark, light] = [true, false].map(isDarkTheme => {
-    const adaptiveStatusBarStyle = isDarkTheme
+    const statusBarStyle = isDarkTheme
       ? ('light-content' as const)
       : ('dark-content' as const);
-
-    // const adaptiveIosStatusBarStyle = isDarkTheme
-    //   ? 'dark' as const
-    //   : 'light' as const;
-    const adaptiveIosStatusBarStyle = isDarkTheme
-      ? ('light' as const)
-      : ('dark' as const);
 
     const colors = ThemeColors[isDarkTheme ? 'dark' : 'light'];
     const colors2024 = ThemeColors2024[
       isDarkTheme ? 'dark' : 'light'
     ] as AppColors2024Variants;
 
-    const bg1DefaultConf = <ScreenStatusBarConf>{
-      barStyle: adaptiveStatusBarStyle,
-      iosStatusBarStyle: adaptiveIosStatusBarStyle,
-      androidStatusBarBg: colors['neutral-bg-1'],
+    const bg1DefaultConf = <ScreenSystemBarConfig>{
+      statusBarStyle,
+      statusBarBackgroundColor: colors['neutral-bg-1'],
     };
 
-    const bg1Default2024Conf = <ScreenStatusBarConf>{
-      barStyle: adaptiveStatusBarStyle,
-      iosStatusBarStyle: adaptiveIosStatusBarStyle,
-      androidStatusBarBg: colors2024['neutral-bg-1'],
+    const bg1Default2024Conf = <ScreenSystemBarConfig>{
+      statusBarStyle,
+      statusBarBackgroundColor: colors2024['neutral-bg-1'],
     };
 
-    const bg2Default2024Conf = <ScreenStatusBarConf>{
-      barStyle: adaptiveStatusBarStyle,
-      iosStatusBarStyle: adaptiveIosStatusBarStyle,
-      androidStatusBarBg: colors2024['neutral-bg-2'],
+    const bg2Default2024Conf = <ScreenSystemBarConfig>{
+      statusBarStyle,
+      statusBarBackgroundColor: colors2024['neutral-bg-2'],
     };
 
-    const historyPageConf = <ScreenStatusBarConf>{
+    const historyPageConf = <ScreenSystemBarConfig>{
       ...bg2Default2024Conf,
-      androidStatusBarBg: makeTxPageBackgroundColors({
+      statusBarBackgroundColor: makeTxPageBackgroundColors({
         isLight: !isDarkTheme,
         colors2024,
       }),
     };
 
-    const transparentDefault2024Conf = <ScreenStatusBarConf>{
-      barStyle: adaptiveStatusBarStyle,
-      iosStatusBarStyle: adaptiveIosStatusBarStyle,
-      androidStatusBarBg: 'transparent',
+    const transparentDefault2024Conf = <ScreenSystemBarConfig>{
+      statusBarStyle,
+      statusBarBackgroundColor: 'transparent',
     };
 
-    // const bg2DefaultConf = <ScreenStatusBarConf>{
-    //   barStyle: adaptiveStatusBarStyle,
-    //   iosStatusBarStyle: adaptiveIosStatusBarStyle,
-    //   androidStatusBarBg: colors['neutral-bg2'],
-    // };
-
-    const card2DefaultConf = <ScreenStatusBarConf>{
-      barStyle: adaptiveStatusBarStyle,
-      iosStatusBarStyle: adaptiveIosStatusBarStyle,
-      androidStatusBarBg: colors['neutral-card2'],
+    const card2DefaultConf = <ScreenSystemBarConfig>{
+      statusBarStyle,
+      statusBarBackgroundColor: colors['neutral-card2'],
     };
 
-    // const blueDefaultConf = <ScreenStatusBarConf>{
-    //   barStyle: adaptiveStatusBarStyle,
-    //   iosStatusBarStyle: adaptiveIosStatusBarStyle,
-    //   androidStatusBarBg: colors['blue-default'],
-    // };
-
-    const blueLightConf = <ScreenStatusBarConf>{
-      barStyle: 'light-content',
-      iosStatusBarStyle: adaptiveIosStatusBarStyle,
-      androidStatusBarBg: colors['blue-default'],
+    const blueLightConf = <ScreenSystemBarConfig>{
+      statusBarStyle: 'light-content',
+      statusBarBackgroundColor: colors['blue-default'],
     };
 
     const themeSpecs: ThemeType = {
       '@default': bg1Default2024Conf,
       '@bg1default': { ...bg1DefaultConf },
-      '@openeddapp': {
-        barStyle: adaptiveStatusBarStyle,
-        iosStatusBarStyle: adaptiveIosStatusBarStyle,
-        androidStatusBarBg: colors['neutral-bg-1'],
-      },
+      '@openeddapp': bg1DefaultConf,
 
       // StackGetStarted
       [RootNames.GetStarted]: bg1DefaultConf,
@@ -387,8 +357,8 @@ function makeScreenSpecConfig() {
       [RootNames.Unlock]: bg1DefaultConf,
 
       // StackBottom
-      [RootNames.Home]: bg1Default2024Conf,
-      [RootNames.Points]: bg1Default2024Conf,
+      [RootNames.Home]: transparentDefault2024Conf,
+      [RootNames.Points]: transparentDefault2024Conf,
       [RootNames.Prediction]: bg1Default2024Conf,
 
       // StackDapps
@@ -401,10 +371,10 @@ function makeScreenSpecConfig() {
       [RootNames.Lending]: bg1Default2024Conf,
 
       // StackSettings
-      [RootNames.Settings]: historyPageConf,
+      [RootNames.Settings]: transparentDefault2024Conf,
       [RootNames.SetPassword]: blueLightConf,
       [RootNames.WalletConnect]: transparentDefault2024Conf,
-      [RootNames.CustomTestnet]: bg1Default2024Conf,
+      [RootNames.CustomTestnet]: card2DefaultConf,
       [RootNames.CustomRPC]: bg1Default2024Conf,
       [RootNames.SetBiometricsAuthentication]: bg1DefaultConf,
       [RootNames.ProviderControllerTester]: bg1Default2024Conf,
@@ -453,8 +423,8 @@ function makeScreenSpecConfig() {
       [RootNames.MultiAddressHistory]: historyPageConf,
       [RootNames.LendingHistory]: bg1Default2024Conf,
       [RootNames.ConvertDust]: bg1Default2024Conf,
-      [RootNames.GasAccount]: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      [RootNames.Perps]: bg1Default2024Conf,
+      [RootNames.GasAccount]: transparentDefault2024Conf,
+      [RootNames.Perps]: transparentDefault2024Conf,
       [RootNames.PerpsMarketList]: bg1Default2024Conf,
       [RootNames.PerpsMarketDetail]: bg1Default2024Conf,
       [RootNames.PerpsHistory]: bg1Default2024Conf,
@@ -508,12 +478,11 @@ function makeScreenSpecConfig() {
       [RootNames.SingleAddressHome]: transparentDefault2024Conf,
 
       [RootNames.DappWebViewStubOnHome]: {
-        barStyle: adaptiveStatusBarStyle,
-        iosStatusBarStyle: adaptiveIosStatusBarStyle,
-        androidStatusBarBg: colors['neutral-bg-1'],
+        statusBarStyle,
+        statusBarBackgroundColor: colors['neutral-bg-1'],
       },
       [RootNames.TokenDetail]: transparentDefault2024Conf,
-      [RootNames.TokenMarketInfo]: bg1Default2024Conf,
+      [RootNames.TokenMarketInfo]: transparentDefault2024Conf,
       [RootNames.ReceiveAddressList]: bg1Default2024Conf,
 
       [RootNames.SyncExtensionPassword]: bg1Default2024Conf,
@@ -540,7 +509,7 @@ function makeScreenSpecConfig() {
 }
 const ScreenSpecs = makeScreenSpecConfig();
 
-export function getScreenStatusBarConf(options: {
+export function getScreenSystemBarConfig(options: {
   screenName: string | AppRootName;
   isDarkTheme?: boolean;
   isShowingDappCard?: boolean;
@@ -552,12 +521,7 @@ export function getScreenStatusBarConf(options: {
     ? rootSpecs['@openeddapp']
     : rootSpecs[screenName as AppRootName] || rootSpecs['@default'];
 
-  return {
-    rootSpecs,
-    screenSpec,
-    navStatusBarBackground: screenSpec.androidStatusBarBg,
-    navStatusBarStyle: screenSpec.iosStatusBarStyle,
-  };
+  return screenSpec;
 }
 
 export const DEFAULT_NAVBAR_FONT_SIZE = 18;
