@@ -67,12 +67,8 @@ export const HistoryItemIcon = ({
                 <IconDefaultNFT width={singleSize} height={singleSize} />
               }
               type={singeToken?.content_type || 'image_url'}
-              src={
-                singeToken?.content?.endsWith('.svg') ? '' : singeToken?.content
-              }
-              thumbnail={
-                singeToken?.content?.endsWith('.svg') ? '' : singeToken?.content
-              }
+              src={singeToken?.content}
+              thumbnail={singeToken?.content}
               mediaStyle={isInDetail ? styles.mediaInDetail : styles.media}
               style={isInDetail ? styles.mediaInDetail : styles.media}
               playIconSize={14}

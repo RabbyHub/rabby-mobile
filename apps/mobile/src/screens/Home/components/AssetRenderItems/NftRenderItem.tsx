@@ -36,9 +36,9 @@ export const NftRow = memo(
 
     const chain = getCHAIN_ID_LIST().get(item.chain);
     const iconUri = chain?.logo;
-    const isSvgURL = isCollection
-      ? item.logo_url?.endsWith('.svg')
-      : (item as NFTItem)?.content?.endsWith('.svg');
+    const nftImageUrl = isCollection
+      ? item.logo_url
+      : (item as NFTItem)?.thumbnail_url;
     return (
       <TouchableOpacity onPress={onPress} style={[styles.wrpper, style]}>
         <View style={styles.main}>
@@ -56,20 +56,8 @@ export const NftRow = memo(
                   <IconDefaultNFT width="100%" height="100%" />
                 }
                 type="image_url"
-                src={
-                  isSvgURL
-                    ? ''
-                    : isCollection
-                    ? item.logo_url
-                    : (item as NFTItem)?.thumbnail_url
-                }
-                thumbnail={
-                  isSvgURL
-                    ? ''
-                    : isCollection
-                    ? item.logo_url
-                    : (item as NFTItem)?.thumbnail_url
-                }
+                src={nftImageUrl}
+                thumbnail={nftImageUrl}
                 mediaStyle={styles.images}
                 style={styles.images}
                 playIconSize={36}

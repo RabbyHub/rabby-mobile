@@ -95,10 +95,8 @@ const NFTBalanceChange = ({
                     <IconDefaultNFT width="100%" height="100%" />
                   }
                   type={item?.content_type}
-                  src={item?.content?.endsWith('.svg') ? '' : item?.content}
-                  thumbnail={
-                    item?.content?.endsWith('.svg') ? '' : item?.content
-                  }
+                  src={item?.content}
+                  thumbnail={item?.content}
                   playIconSize={18}
                   mediaStyle={styles.nftIcon}
                   style={styles.nftIcon}
@@ -141,10 +139,8 @@ const NFTBalanceChange = ({
                     <IconDefaultNFT width="100%" height="100%" />
                   }
                   type={item?.content_type}
-                  src={item?.content?.endsWith('.svg') ? '' : item?.content}
-                  thumbnail={
-                    item?.content?.endsWith('.svg') ? '' : item?.content
-                  }
+                  src={item?.content}
+                  thumbnail={item?.content}
                   playIconSize={18}
                   mediaStyle={styles.nftIcon}
                   style={styles.nftIcon}
