@@ -28,6 +28,7 @@ async function getLarkToken() {
       app_id: RABBY_ROBOT_LARK_APP_ID,
       app_secret: RABBY_ROBOT_LARK_APP_SECRET,
     },
+    { validateStatus: () => true },
   );
 
   const body = assertLarkSuccess(resp, 'tenant access token');
@@ -44,10 +45,16 @@ exports.getLarkToken = getLarkToken;
 function assertLarkSuccess(response, operation) {
   const body = response && response.data;
   const code = body && body.code;
-  if (Number(code) !== 0) {
+  const status = response && response.status;
+  if (
+    (typeof status === 'number' && (status < 200 || status >= 300)) ||
+    Number(code) !== 0
+  ) {
     const message = String((body && body.msg) || 'unknown error').slice(0, 200);
     throw new Error(
-      `[lark] ${operation} failed: code=${String(
+      `[lark] ${operation} failed: http=${String(
+        status === undefined ? 'unknown' : status,
+      )} code=${String(
         code === undefined ? 'unknown' : code,
       )} message=${message}`,
     );
@@ -60,6 +67,7 @@ function getLarkApiOptions(accessToken) {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
+    validateStatus: () => true,
     timeout: 120000,
     maxContentLength: Infinity,
     maxBodyLength: Infinity,
