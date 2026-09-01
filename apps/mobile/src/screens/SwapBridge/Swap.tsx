@@ -88,6 +88,7 @@ import { last } from 'lodash';
 import type { SwapTxHistoryItem } from '@/core/services/transactionHistory';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useTwoStepSwap } from '../Swap/hooks/twoStepSwap';
 import type { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
@@ -192,10 +193,6 @@ function readRegressionSwapChain(value: string | undefined) {
     return CHAINS_ENUM.POLYGON;
   }
   return findChainByServerID(normalized)?.enum || CHAINS_ENUM.POLYGON;
-}
-
-function isSameTokenId(left?: string, right?: string) {
-  return !!left && !!right && left.toLowerCase() === right.toLowerCase();
 }
 
 function formatSafeHash(hash?: string) {
@@ -601,7 +598,8 @@ const Swap = ({
     if (
       chain !== targetChain ||
       payToken?.chain !== targetChainInfo?.serverId ||
-      !isSameTokenId(payToken?.id, targetPayToken.id)
+      !payToken?.id ||
+      !isSameAddress(payToken.id, targetPayToken.id)
     ) {
       switchChain(targetChain, {
         payTokenId: targetPayToken.id,
@@ -615,7 +613,7 @@ const Swap = ({
       targetReceiveToken &&
       (!receiveToken ||
         receiveToken.chain !== targetReceiveToken.chain ||
-        !isSameTokenId(receiveToken.id, targetReceiveToken.id))
+        !isSameAddress(receiveToken.id, targetReceiveToken.id))
     ) {
       setReceiveToken(targetReceiveToken);
       return;

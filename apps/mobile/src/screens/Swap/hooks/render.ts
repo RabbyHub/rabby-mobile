@@ -1,16 +1,13 @@
-import { useMemo } from 'react';
 import BigNumber from 'bignumber.js';
 import { CHAINS_ENUM } from '@debank/common';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import type { QuoteProvider } from './quote';
 
 export const isMEVProtectionSupported = (chain: CHAINS_ENUM) =>
   [CHAINS_ENUM.ETH, CHAINS_ENUM.BSC].includes(chain);
-
-const isSameTokenId = (left?: string, right?: string) =>
-  !!left && !!right && left.toLowerCase() === right.toLowerCase();
 
 export type SwapScreenRenderStateInput = {
   form: {
@@ -66,10 +63,8 @@ export const computeSwapScreenRenderState = ({
   ).gt(0);
   const hasUserInputAmount = Number(form.payAmount) > 0;
   const hasTokenPair = !!form.payToken && !!form.receiveToken;
-  const isSameTokenPair = isSameTokenId(
-    form.payToken?.id,
-    form.receiveToken?.id,
-  );
+  const isSameTokenPair =
+    hasTokenPair && isSameAddress(form.payToken!.id, form.receiveToken!.id);
   const shouldPrioritizeSwapProgress =
     !hasUserInputAmount && pending.hasSwapProgress;
 
@@ -142,10 +137,7 @@ export const computeSwapScreenRenderState = ({
 export const useSwapScreenRenderState = (
   params: SwapScreenRenderStateInput,
 ) => {
-  const renderState = useMemo(
-    () => computeSwapScreenRenderState(params),
-    [params],
-  );
+  const renderState = computeSwapScreenRenderState(params);
   const noQuote = useDebouncedValue(renderState.noQuoteOrigin, 10);
 
   return {
