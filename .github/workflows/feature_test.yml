@@ -187,7 +187,7 @@ jobs:
 
       - name: Install JavaScript dependencies without lifecycle scripts
         shell: bash --noprofile --norc -eo pipefail {0}
-        run: YARN_ENABLE_SCRIPTS=false yarn install --immutable
+        run: YARN_ENABLE_SCRIPTS=false corepack yarn install --immutable
 
       - name: Upload existing APK through bot credentials
         shell: bash --noprofile --norc -eo pipefail {0}
