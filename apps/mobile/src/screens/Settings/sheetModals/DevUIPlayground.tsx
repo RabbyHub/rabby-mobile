@@ -100,6 +100,18 @@ export default function DevUIPlaygroundModal({
         },
       },
       {
+        label: 'Safe SVG Media',
+        testID: E2E_ID.playground.safeSvgEntry,
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevUISafeSvgMedia,
+            }),
+          );
+        },
+      },
+      {
         label: '2024 Components',
         testID: E2E_ID.playground.components2024Entry,
         icon: <RcCode style={styles.labelIcon} />,
