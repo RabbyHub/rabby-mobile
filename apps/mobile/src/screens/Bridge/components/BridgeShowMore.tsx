@@ -244,52 +244,76 @@ const BridgeShowMore = ({
     [QuoteContent, styles, t],
   );
 
-  const sourceSelectorRender = useMemoizedFn((clickable = true) => {
-    if (quoteLoading) {
-      return (
-        <CustomSkeleton
-          style={{
-            width: 60,
-            height: 24,
-            borderRadius: 12,
-          }}
-        />
-      );
-    }
+  const sourceSelectorRender = useMemoizedFn(
+    (
+      options:
+        | boolean
+        | {
+            clickable?: boolean;
+            showArrow?: boolean;
+          } = true,
+    ) => {
+      const { clickable, showArrow } =
+        typeof options === 'boolean'
+          ? { clickable: options, showArrow: options }
+          : {
+              clickable: options.clickable ?? true,
+              showArrow: options.showArrow ?? true,
+            };
 
-    const content = (
-      <>
-        {isBestQuote ? BestQuoteContent : QuoteContent}
-        {type === 'bridge' && duration ? (
-          <Text style={[styles.sourceName, { color: durationColor }]}>
-            {' · '}
-            {t('page.bridge.duration', {
-              duration: Math.ceil(duration / 60),
-            })}
-          </Text>
-        ) : null}
-        {clickable && (sourceName || sourceLogo) ? (
-          <RcIconBluePolygon
-            style={styles.arrowIcon}
-            color={colors2024['brand-default']}
+      if (quoteLoading) {
+        return (
+          <CustomSkeleton
+            style={{
+              width: 60,
+              height: 24,
+              borderRadius: 12,
+            }}
           />
-        ) : null}
-        {!sourceLogo && !sourceName ? (
-          <Text style={styles.noQuotePlaceholder}>-</Text>
-        ) : null}
-      </>
-    );
+        );
+      }
 
-    if (!clickable) {
-      return <View style={styles.quoteContainer}>{content}</View>;
-    }
+      const content = (
+        <>
+          {isBestQuote ? BestQuoteContent : QuoteContent}
+          {type === 'bridge' && duration ? (
+            <Text style={[styles.sourceName, { color: durationColor }]}>
+              {' · '}
+              {t('page.bridge.duration', {
+                duration: Math.ceil(duration / 60),
+              })}
+            </Text>
+          ) : null}
+          {showArrow && (sourceName || sourceLogo) ? (
+            <RcIconBluePolygon
+              style={styles.arrowIcon}
+              color={colors2024['brand-default']}
+            />
+          ) : null}
+          {!sourceLogo && !sourceName ? (
+            <Text style={styles.noQuotePlaceholder}>-</Text>
+          ) : null}
+        </>
+      );
 
-    return (
-      <TouchableOpacity onPress={openQuotesList} style={styles.quoteContainer}>
-        {content}
-      </TouchableOpacity>
-    );
-  });
+      if (!clickable) {
+        return <View style={styles.quoteContainer}>{content}</View>;
+      }
+
+      return (
+        <TouchableOpacity
+          onPress={openQuotesList}
+          style={styles.quoteContainer}>
+          {content}
+        </TouchableOpacity>
+      );
+    },
+  );
+
+  const swapGasRowSourceSelector =
+    type === 'swap' && (quoteLoading || sourceLogo || sourceName)
+      ? sourceSelectorRender({ clickable: true, showArrow: false })
+      : undefined;
 
   const sourceContentRender = useMemoizedFn(() => (
     <ListItem
@@ -366,16 +390,8 @@ const BridgeShowMore = ({
             noQuote={!sourceLogo && !sourceName}
             chainServeId={fromToken?.chain}
             hideGasLevelInSummary
-            sourceSelector={
-              type === 'swap' && (quoteLoading || sourceLogo || sourceName)
-                ? sourceSelectorRender(false)
-                : undefined
-            }
-            fallbackSourceSelector={
-              type === 'swap' && (quoteLoading || sourceLogo || sourceName)
-                ? sourceSelectorRender(false)
-                : undefined
-            }
+            sourceSelector={swapGasRowSourceSelector}
+            fallbackSourceSelector={swapGasRowSourceSelector}
             onDepositPopupVisibleChange={onDepositPopupVisibleChange}
             onGasSettingsOpenChange={onGasSettingsOpenChange}
             renderSwapQuotes={renderSwapQuotes}
