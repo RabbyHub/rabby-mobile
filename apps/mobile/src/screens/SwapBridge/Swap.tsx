@@ -122,6 +122,13 @@ import {
 } from '@/core/utils/featureActivationDiagnostics';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { shouldClearConsumedSwapNavigationParams } from './navigationParams';
+import {
+  formatSafeHash,
+  isRegressionBroadcastRequested,
+  isSameAmountValue,
+  readRegressionSwapChain,
+  readRegressionUsdParam,
+} from './util';
 
 const isAndroid = Platform.OS === 'android';
 const BOTTOM_BUTTON_HEIGHT = 52;
@@ -180,38 +187,6 @@ function SwapActivationDataProbe({
   ]);
 
   return null;
-}
-
-function readRegressionUsdParam(value: string | undefined, fallback: string) {
-  const parsed = new BigNumber(value || fallback);
-  return parsed.isFinite() && parsed.gt(0) ? parsed : new BigNumber(fallback);
-}
-
-function readRegressionSwapChain(value: string | undefined) {
-  const normalized = (value || 'polygon').toLowerCase();
-  if (normalized === 'polygon' || normalized === 'matic') {
-    return CHAINS_ENUM.POLYGON;
-  }
-  return findChainByServerID(normalized)?.enum || CHAINS_ENUM.POLYGON;
-}
-
-function formatSafeHash(hash?: string) {
-  if (!hash) {
-    return '';
-  }
-  return `${hash.slice(0, 10)}...${hash.slice(-6)}`;
-}
-
-function isRegressionBroadcastRequested(
-  params: Readonly<Record<string, string>>,
-) {
-  const value = params.broadcast;
-  return !!value && ['1', 'true', 'yes', 'on'].includes(value.toLowerCase());
-}
-
-function isSameAmountValue(current: string | undefined, target: BigNumber) {
-  const parsed = new BigNumber(current || 0);
-  return parsed.isFinite() && parsed.eq(target);
 }
 
 const Swap = ({
