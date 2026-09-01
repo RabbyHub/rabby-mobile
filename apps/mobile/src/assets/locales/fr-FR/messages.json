@@ -3898,7 +3898,10 @@
         "method_other": "{{count}} méthodes"
       },
       "unsupportedCapabilityList": "{{first}} et {{second}}",
-      "unsupportedRequiredRequest": "Requête WalletConnect obligatoire non prise en charge : {{capabilities}} non pris en charge."
+      "unsupportedRequiredRequest": "Requête WalletConnect obligatoire non prise en charge : {{capabilities}} non pris en charge.",
+      "verifyWarningScam": "Cette dapp est signalée comme arnaque par WalletConnect Verify. La connexion peut mettre vos actifs en danger.",
+      "verifyWarningInvalid": "Cette dapp a échoué aux vérifications de WalletConnect Verify. Elle usurpe peut-être un autre site.",
+      "verifyWarningUnknown": "Rabby n'a pas pu vérifier l'identité de cette dapp avec WalletConnect Verify. Ne vous connectez que si vous faites confiance à ce site."
     }
   },
   "native": {

@@ -20,6 +20,7 @@ import { pairWalletConnectUri } from '@/core/walletconnect';
  */
 export function checkShouldStartLoadingWithRequestForDappWebView(
   evt: Pick<ShouldStartLoadRequestEvent, 'url'>,
+  options?: { currentOrigin?: string },
 ): boolean /* should allow */ {
   const url = evt.url;
   const { protocol = '' } = urlUtils.safeParseURL(url) || {};
@@ -42,6 +43,7 @@ export function checkShouldStartLoadingWithRequestForDappWebView(
     pairWalletConnectUri({
       uri: uri,
       source: 'inner-webview',
+      browserOrigin: options?.currentOrigin,
     }).catch(() => {});
     return false;
   }

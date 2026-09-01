@@ -3939,7 +3939,10 @@
         "method_other": "{{count}}メソッド"
       },
       "unsupportedCapabilityList": "{{first}}と{{second}}",
-      "unsupportedRequiredRequest": "サポートされていない必須WalletConnectリクエスト: {{capabilities}}はサポートされていません。"
+      "unsupportedRequiredRequest": "サポートされていない必須WalletConnectリクエスト: {{capabilities}}はサポートされていません。",
+      "verifyWarningScam": "この dapp は WalletConnect Verify により詐欺として報告されています。接続すると資産が危険にさらされる可能性があります。",
+      "verifyWarningInvalid": "この dapp は WalletConnect Verify のチェックに合格しませんでした。別のサイトになりすましている可能性があります。",
+      "verifyWarningUnknown": "Rabby は WalletConnect Verify でこの dapp の身元を確認できませんでした。このサイトを信頼できる場合のみ接続してください。"
     }
   },
   "global": {

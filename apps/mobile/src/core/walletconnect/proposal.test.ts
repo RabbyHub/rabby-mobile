@@ -1,8 +1,10 @@
 import type { Account } from '@/types/account';
+import type { WalletConnectDebugState } from './types';
 import {
   buildApprovedNamespacesForAccount,
   storeWalletConnectProposal,
 } from './proposal';
+import { setWalletConnectDebugState } from './state';
 
 const mockCaptureException = jest.fn();
 
@@ -237,5 +239,100 @@ describe('walletconnect proposal approval', () => {
         },
       }),
     ).toThrow('No supported WalletConnect namespace to approve.');
+  });
+});
+
+describe('walletconnect proposal verify info', () => {
+  const baseProposal = {
+    proposer: {
+      metadata: {
+        name: 'Example dapp',
+        description: '',
+        url: 'https://app.uniswap.org',
+        icons: [],
+      },
+    },
+    requiredNamespaces: {},
+    optionalNamespaces: {},
+  };
+
+  function captureStoredProposal() {
+    const calls = jest.mocked(setWalletConnectDebugState).mock.calls;
+    const updater = calls[calls.length - 1]?.[0];
+    const prev = {} as WalletConnectDebugState;
+    const next =
+      typeof updater === 'function'
+        ? updater(prev)
+        : ({ ...prev, ...updater } as WalletConnectDebugState);
+    return next.proposal;
+  }
+
+  beforeEach(() => {
+    jest.mocked(setWalletConnectDebugState).mockClear();
+  });
+
+  it('derives verify info from a VALID verifyContext', () => {
+    storeWalletConnectProposal({
+      id: 101,
+      proposal: baseProposal,
+      source: 'qr',
+      verifyContext: {
+        verified: {
+          origin: 'https://app.uniswap.org',
+          validation: 'VALID',
+          verifyUrl: 'https://verify.walletconnect.org',
+        },
+      },
+    });
+
+    expect(captureStoredProposal()?.verify).toEqual({
+      validation: 'VALID',
+      verifiedOrigin: 'https://app.uniswap.org',
+      isScam: false,
+    });
+  });
+
+  it('derives verify info from an INVALID scam verifyContext', () => {
+    storeWalletConnectProposal({
+      id: 102,
+      proposal: baseProposal,
+      source: 'deeplink',
+      verifyContext: {
+        verified: {
+          origin: 'https://uniswap.org.evil.example',
+          validation: 'INVALID',
+          verifyUrl: 'https://verify.walletconnect.org',
+          isScam: true,
+        },
+      },
+    });
+
+    expect(captureStoredProposal()?.verify).toEqual({
+      validation: 'INVALID',
+      verifiedOrigin: 'https://uniswap.org.evil.example',
+      isScam: true,
+    });
+  });
+
+  it('derives null verify info when verifyContext is missing or malformed', () => {
+    storeWalletConnectProposal({
+      id: 103,
+      proposal: baseProposal,
+      source: 'manual',
+    });
+    expect(captureStoredProposal()?.verify).toBeNull();
+
+    storeWalletConnectProposal({
+      id: 104,
+      proposal: baseProposal,
+      source: 'manual',
+      verifyContext: {
+        verified: {
+          origin: 42,
+          validation: 'GARBAGE',
+        },
+      } as never,
+    });
+    expect(captureStoredProposal()?.verify).toBeNull();
   });
 });

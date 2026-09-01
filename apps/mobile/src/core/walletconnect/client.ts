@@ -1,4 +1,5 @@
-import type { IWalletKit } from '@reown/walletkit';
+import type { IWalletKit, WalletKitTypes } from '@reown/walletkit';
+import { getSdkError } from '@walletconnect/utils';
 import i18n from '@/utils/i18n';
 import { RABBY_MOBILE_WALLETCONNECT_PROJECT_ID } from '@/constant/env';
 import {
@@ -8,6 +9,10 @@ import {
 import { addWalletConnectLog } from './debugLog';
 import { getWalletConnectErrorMessage } from './error';
 import { WALLETCONNECT_CLIENT_METADATA } from './metadata';
+import {
+  getWalletConnectPairingBrowserOrigin,
+  isWalletConnectOriginMismatch,
+} from './pairingBrowserOrigin';
 import {
   clearWalletConnectProposal,
   storeWalletConnectProposal,
@@ -47,19 +52,73 @@ type WalletConnectCore = InstanceType<
 let walletKitClient: IWalletKit | null = null;
 let initPromise: Promise<IWalletKit> | null = null;
 
+export function handleWalletConnectSessionProposal(
+  walletKit: IWalletKit,
+  event: WalletKitTypes.SessionProposal,
+) {
+  const browserOrigin = getWalletConnectPairingBrowserOrigin(
+    event.params?.pairingTopic,
+  );
+  const source = browserOrigin
+    ? 'inner-webview'
+    : getWalletConnectDebugState().pairing.source || ('manual' as const);
+
+  if (browserOrigin) {
+    const dappUrl = event.params?.proposer?.metadata?.url;
+    if (isWalletConnectOriginMismatch({ browserOrigin, dappUrl })) {
+      console.warn(
+        `[WalletConnect] session proposal auto-rejected: dapp declares "${dappUrl}" but pairing started from "${browserOrigin}"`,
+      );
+      addWalletConnectLog(
+        'proposal',
+        'session proposal auto-rejected: origin mismatch',
+        { dappUrl, browserOrigin },
+        'warn',
+      );
+      walletKit
+        .rejectSession({
+          id: event.id,
+          reason: getSdkError('USER_REJECTED'),
+        })
+        .catch((error: unknown) => {
+          addWalletConnectLog(
+            'proposal',
+            'failed to reject mismatched proposal',
+            error,
+            'error',
+          );
+        });
+      const message = i18n.t('page.walletConnect.pairingFailed');
+      setWalletConnectDebugState(prev => ({
+        ...prev,
+        pairing: {
+          ...prev.pairing,
+          status: 'error',
+          error: message,
+        },
+      }));
+      emitWalletConnectUiEvent({
+        type: 'pairingError',
+        message,
+      });
+      return;
+    }
+  }
+
+  storeWalletConnectProposal({
+    id: event.id,
+    proposal: event.params,
+    source,
+    verifyContext: event.verifyContext,
+  });
+}
+
 function bindWalletConnectEvents(
   walletKit: IWalletKit,
   core: WalletConnectCore,
 ) {
   walletKit.on('session_proposal', event => {
-    const source =
-      getWalletConnectDebugState().pairing.source || ('manual' as const);
-    storeWalletConnectProposal({
-      id: event.id,
-      proposal: event.params,
-      source,
-      verifyContext: event.verifyContext,
-    });
+    handleWalletConnectSessionProposal(walletKit, event);
   });
 
   walletKit.on('session_request', event => {
