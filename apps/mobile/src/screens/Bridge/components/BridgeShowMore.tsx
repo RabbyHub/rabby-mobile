@@ -429,7 +429,7 @@ const BridgeShowMore = ({
           ) : isRabbyFeeHalf ? (
             <Pressable onPress={openFeePopup}>
               <View style={styles.halfFeeContainer}>
-                <Text style={styles.waivedFee}>{RABBY_FEE}</Text>
+                <Text style={styles.halfOriginalFee}>{RABBY_FEE}</Text>
                 <Text style={styles.halfFee}>{RABBY_HALF_FEE}</Text>
               </View>
             </Pressable>
@@ -1380,9 +1380,17 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   halfFee: {
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '400',
+    fontSize: 14,
+    fontWeight: '700',
     lineHeight: 20,
+  },
+  halfOriginalFee: {
+    color: colors2024['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 20,
+    textDecorationLine: 'line-through',
   },
   waivedFee: {
     color: colors2024['neutral-foot'],
