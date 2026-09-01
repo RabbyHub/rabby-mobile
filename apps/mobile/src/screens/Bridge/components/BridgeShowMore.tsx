@@ -1013,6 +1013,15 @@ export const DirectSignGasInfo = ({
   );
 
   const showGasFeeTooHighTips = ctx?.gasFeeTooHigh && !loading && !noQuote;
+  const showGasLessNotEnoughTip = shouldShowGasLessNotEnough({
+    showGasLess,
+    isGasNotEnough,
+    payGasByGasAccount: !!payGasByGasAccount,
+    canUseGasLess,
+  });
+  const showGasAccountTip = payGasByGasAccount && !gasAccountCanPay;
+  const showGasTips =
+    showGasLessToSign || showGasLessNotEnoughTip || showGasAccountTip;
 
   useEffect(() => {
     if (manualGasMethod) {
@@ -1056,12 +1065,7 @@ export const DirectSignGasInfo = ({
         />
       ) : null}
 
-      {shouldShowGasLessNotEnough({
-        showGasLess,
-        isGasNotEnough,
-        payGasByGasAccount: !!payGasByGasAccount,
-        canUseGasLess,
-      }) ? (
+      {showGasLessNotEnoughTip ? (
         <GasLessNotEnough
           inShowMore
           nativeTokenInsufficient={isGasNotEnough}
@@ -1080,7 +1084,7 @@ export const DirectSignGasInfo = ({
         />
       ) : null}
 
-      {payGasByGasAccount && !gasAccountCanPay ? (
+      {showGasAccountTip ? (
         <GasAccountTips
           inShowMore
           gasAccountAddress={accountId || config?.account.address || ''}
@@ -1204,7 +1208,7 @@ export const DirectSignGasInfo = ({
           {t('page.bridge.gasFeeTooHight')}
         </WarningText>
       ) : null}
-      {showGasContent ? (
+      {showGasContent && showGasTips ? (
         <View style={{ marginTop: 6 }}>{gasTipsComponent()}</View>
       ) : null}
     </View>
