@@ -1,5 +1,4 @@
 import { keyBy } from 'lodash';
-import { CHAINS_ENUM } from '@/constant/chains';
 import { autoConnectServiceApi } from '@/core/serviceApi/autoConnect';
 import {
   addDappSync,
@@ -9,14 +8,10 @@ import {
 import { getKeyringMemStoreStateSnapshot } from '@/core/serviceApi/keyring';
 import { metamaskModeServiceApi } from '@/core/serviceApi/metamaskMode';
 import providerController from './provider';
-import { findChain, findChainByEnum } from '@/utils/chain';
+import { getProviderNetworkState } from '@/core/utils/providerNetworkState';
 import type { ProviderRequest } from './type';
 import { createDappBySession } from '@/core/utils/createDappBySession';
 import { openapi } from '../request';
-
-const networkIdMap: {
-  [key: string]: string;
-} = {};
 
 const tabCheckin = ({
   data: {
@@ -57,31 +52,15 @@ const getProviderState = async (req: ProviderRequest) => {
   const {
     session: { origin },
   } = req;
-  const chainEnum = getDappSnapshot(origin)?.chainId || CHAINS_ENUM.ETH;
   const isUnlocked = getKeyringMemStoreStateSnapshot()?.isUnlocked || false;
-  let networkVersion = '1';
-  if (networkIdMap[chainEnum]) {
-    networkVersion = networkIdMap[chainEnum];
-  } else {
-    // TODO: it maybe throw error
-    networkVersion = await providerController.netVersion(req);
-    networkIdMap[chainEnum] = networkVersion;
-  }
 
-  // TODO: should we throw error here?
-  let chainItem = findChainByEnum(chainEnum);
-
-  if (!chainItem) {
-    console.warn(
-      `[internalMethod::getProviderState] chain ${chainEnum} not found`,
-    );
-    chainItem = findChain({
-      enum: CHAINS_ENUM.ETH,
-    })!;
-  }
+  // Must stay on `getProviderNetworkState`: the `chainChanged` notification the
+  // BackgroundBridge pushes is derived from the same function, and the two
+  // disagreeing makes the inpage provider emit a spurious `chainChanged`.
+  const { chainId, networkVersion } = getProviderNetworkState(origin);
 
   return {
-    chainId: chainItem.hex,
+    chainId,
     isUnlocked,
     accounts: isUnlocked ? await providerController.ethAccounts(req) : [],
     networkVersion,
