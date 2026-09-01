@@ -5,3 +5,4 @@ export * from './settings';
 export * from './quote';
 export * from './slippage';
 export * from './fee';
+export * from './render';

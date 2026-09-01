@@ -43,8 +43,10 @@ import { TwpStepApproveModal } from '../Swap/components/TwoStepApproveModal';
 import {
   useDetectLoss,
   useSlippageStore,
+  useSwapScreenRenderState,
   useSwapUnlimitedAllowance,
   useTokenPair,
+  isMEVProtectionSupported,
 } from '../Swap/hooks';
 import { refreshIdAtom, useRabbyFeeVisible } from '../Swap/hooks/atom';
 import { buildDexSwap, dexSwap } from '../Swap/hooks/swap';
@@ -63,7 +65,6 @@ import {
 import { SwapTokenItem } from '../Swap/components/Token';
 import BridgeSwitchBtn from '../Bridge/components/BridgeSwitchBtn';
 import BridgeShowMore from '../Bridge/components/BridgeShowMore';
-import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { useSwapRecentToTokens } from '../Swap/hooks/recent';
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
 import type {
@@ -196,9 +197,6 @@ function readRegressionSwapChain(value: string | undefined) {
 function isSameTokenId(left?: string, right?: string) {
   return !!left && !!right && left.toLowerCase() === right.toLowerCase();
 }
-
-const isMEVProtectionSupported = (chain: CHAINS_ENUM) =>
-  [CHAINS_ENUM.ETH, CHAINS_ENUM.BSC].includes(chain);
 
 function formatSafeHash(hash?: string) {
   if (!hash) {
@@ -412,11 +410,6 @@ const Swap = ({
     { visible: isShowRabbyFeePopup, dexName, dexFeeDesc },
     setIsShowRabbyFeePopup,
   ] = useRabbyFeeVisible();
-
-  const showMEVGuardedSwitch = useMemo(
-    () => isMEVProtectionSupported(chain),
-    [chain],
-  );
 
   const switchPreferMEV = useMemoizedFn((bool: boolean) => {
     swapServiceApi.setSwapPreferMEVGuarded(bool).catch(error => {
@@ -1069,14 +1062,6 @@ const Swap = ({
 
   const [_, setRecentSwapToToken] = useSwapRecentToTokens();
 
-  const canShowDirectSubmit = useMemo(
-    () =>
-      isAccountSupportMiniApproval(currentAccount?.type || '') &&
-      isSupportedChain &&
-      !inSufficient,
-    [currentAccount?.type, inSufficient, isSupportedChain],
-  );
-
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -1367,75 +1352,7 @@ const Swap = ({
     }).catch(console.error);
   });
 
-  const amountAvailable = useMemo(
-    () => new BigNumber(payToken?.raw_amount_hex_str || 0, 16).gt(0),
-    [payToken],
-  );
-
   const lowCreditInit = useRef(false);
-
-  const swapBtnDisabled =
-    quoteLoading ||
-    !payToken ||
-    !receiveToken ||
-    !amountAvailable ||
-    inSufficient ||
-    !activeProvider ||
-    isSubmitting;
-
-  const isPreviewVisible = useMemo(() => {
-    const hasTokenPair = !!payToken && !!receiveToken;
-    const isSameTokenPair = isSameTokenId(payToken?.id, receiveToken?.id);
-    const userInputAmountAvailable = Number(payAmount) > 0;
-    const shouldPrioritizeSwapProgress =
-      !userInputAmountAvailable && hasSwapProgress;
-
-    return (
-      hasTokenPair &&
-      !isSameTokenPair &&
-      isSupportedChain &&
-      !shouldPrioritizeSwapProgress
-    );
-  }, [isSupportedChain, payAmount, payToken, receiveToken, hasSwapProgress]);
-
-  const [sourceName, sourceLogo] = useMemo(() => {
-    if (activeProvider?.name) {
-      if (isWrapToken) {
-        return [t('page.swap.wrap-contract'), receiveToken?.logo_url];
-      }
-      const currentDex = DEX_WITH_WRAP[activeProvider.name];
-      return [currentDex.name, currentDex.logo];
-    }
-    return ['', ''];
-  }, [activeProvider?.name, isWrapToken, t, receiveToken?.logo_url]);
-
-  const noQuoteOrigin = useMemo(
-    () =>
-      Number(payAmount) > 0 &&
-      inSufficientCanGetQuote &&
-      !quoteBlockedByClosedMarket &&
-      amountAvailable &&
-      !quoteLoading &&
-      !!payToken &&
-      !!receiveToken &&
-      !activeProvider,
-    [
-      payAmount,
-      inSufficientCanGetQuote,
-      quoteBlockedByClosedMarket,
-      amountAvailable,
-      quoteLoading,
-      payToken,
-      receiveToken,
-      activeProvider,
-    ],
-  );
-
-  const noQuote = useDebouncedValue(noQuoteOrigin, 10);
-  const showClosedMarketTip = useMemo(
-    () => (!!payToken || !!receiveToken) && quoteBlockedByClosedMarket,
-    [payToken, receiveToken, quoteBlockedByClosedMarket],
-  );
 
   const lowCreditToken = useMemo(() => {
     if (!navState) {
@@ -1511,9 +1428,67 @@ const Swap = ({
     payAmount,
   });
 
-  const showRiskTips =
-    isSlippageLow || isSlippageHigh || showLoss || miniSignGasFeeTooHigh;
-  const showRiskConfirm = showRiskTips && !swapBtnDisabled;
+  const {
+    canShowDirectSubmit,
+    swapBtnDisabled,
+    isPreviewVisible,
+    noQuote,
+    showClosedMarketTip,
+    showRiskTips,
+    showRiskConfirm,
+    showTwoStepApproveProgress,
+    showMEVGuardedSwitch,
+    showPendingSwapProgress,
+  } = useSwapScreenRenderState({
+    form: {
+      payAmount,
+      payToken,
+      receiveToken,
+      inSufficient,
+      inSufficientCanGetQuote,
+      quoteBlockedByClosedMarket,
+    },
+    quote: {
+      loading: quoteLoading,
+      activeProvider,
+      isSubmitting,
+    },
+    page: {
+      chain,
+      isSupportedChain,
+    },
+    risk: {
+      isSlippageLow,
+      isSlippageHigh,
+      showLoss,
+      gasFeeTooHigh: miniSignGasFeeTooHigh,
+    },
+    directSign: {
+      accountType: currentAccount?.type,
+    },
+    twoStep: {
+      shouldTwoStep: shouldTwoStepSwap,
+      approveHash,
+      currentTxChainId: currentTxs?.[0]?.chainId,
+      hasCurrentAccount: !!currentAccount?.address,
+    },
+    pending: {
+      hasSwapProgress,
+      approveHash,
+    },
+  });
+
+  const [sourceName, sourceLogo] = useMemo(() => {
+    if (activeProvider?.name) {
+      if (isWrapToken) {
+        return [t('page.swap.wrap-contract'), receiveToken?.logo_url];
+      }
+      const currentDex = DEX_WITH_WRAP[activeProvider.name];
+      return [currentDex.name, currentDex.logo];
+    }
+    return ['', ''];
+  }, [activeProvider?.name, isWrapToken, t, receiveToken?.logo_url]);
+
   const [riskChecked, setRiskChecked] = useState(false);
   const riskConfirmKey = useMemo(
     () =>
@@ -1557,13 +1532,6 @@ const Swap = ({
   useEffect(() => {
     setRiskChecked(false);
   }, [riskConfirmKey]);
-
-  const showTwoStepApproveProgress =
-    !showRiskTips &&
-    shouldTwoStepSwap &&
-    !!currentAccount?.address &&
-    !!approveHash &&
-    !!currentTxs?.[0]?.chainId;
 
   const swapPreviewInfo = isPreviewVisible ? (
     <BridgeShowMore
@@ -2174,7 +2142,7 @@ const Swap = ({
               disableHeaderRight={disableHeaderRight}
               enabled={sceneActive}
               isForMultipleAddress={isForMultipleAddress}
-              showPendingTransaction={!approveHash && !isPreviewVisible}
+              showPendingTransaction={showPendingSwapProgress}
               onProgressChange={setHasSwapProgress}
             />
 
