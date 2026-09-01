@@ -2070,7 +2070,7 @@ const Swap = ({
           extraHeight={200}
           keyboardOpeningTime={0}>
           <View style={styles.content}>
-            <Text style={[styles.label, { marginBottom: 12 }]}>
+            <Text style={[styles.label, styles.labelWithBottomSpacing]}>
               {t('page.swap.chain')}
             </Text>
             <ChainInfo2024
@@ -2153,9 +2153,9 @@ const Swap = ({
             ) : null}
 
             {!showTwoStepApproveProgress ? (
-              <View style={{ marginHorizontal: -24 }}>{swapPreviewInfo}</View>
+              <View style={styles.previewInfoBleed}>{swapPreviewInfo}</View>
             ) : (
-              <View style={{ marginTop: 16 }}>
+              <View style={styles.twoStepApproveSection}>
                 <ApprovePendingTxItem
                   type="approveSwap"
                   isForMultipleAddress={isForMultipleAddress}
@@ -2165,7 +2165,7 @@ const Swap = ({
                   showHeaderDivider={false}
                   showFooterDivider
                 />
-                <View style={{ marginHorizontal: -24 }}>{swapPreviewInfo}</View>
+                <View style={styles.previewInfoBleed}>{swapPreviewInfo}</View>
               </View>
             )}
 
@@ -2376,6 +2376,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
+  },
+  labelWithBottomSpacing: {
+    marginBottom: 12,
+  },
+  previewInfoBleed: {
+    marginHorizontal: -24,
+  },
+  twoStepApproveSection: {
+    marginTop: 16,
   },
   chainArrowIconContainer: {
     width: 26,
