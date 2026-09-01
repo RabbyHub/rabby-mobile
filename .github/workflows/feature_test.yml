@@ -164,7 +164,7 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.LARK_DRIVE_UPLOAD_ONLY == true }}
     runs-on:
       - self-hosted
-      - Linux
+      - macOS
       - mobile
     env:
       RABBY_ROBOT_LARK_APP_ID_FROM_GITHUB: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
@@ -177,7 +177,7 @@ jobs:
         with:
           clean: false
 
-      - name: '[Linux] Setup Nodejs and Yarn'
+      - name: Setup Nodejs and Yarn
         uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
         with:
           node-version: 22
@@ -197,7 +197,7 @@ jobs:
             exit 1
           fi
 
-          package_file="$(mktemp --suffix=.apk)"
+          package_file="$(mktemp -t rabby-mobile-lark-probe)"
           trap 'rm -f "$package_file"' EXIT
 
           curl --fail --location --silent --show-error --retry 2 \
