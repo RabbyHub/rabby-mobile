@@ -421,7 +421,7 @@ function makeScreenSpecConfig() {
       [RootNames.MultiAddressHistory]: historyPageConf,
       [RootNames.LendingHistory]: bg1Default2024Conf,
       [RootNames.ConvertDust]: bg1Default2024Conf,
-      [RootNames.GasAccount]: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      [RootNames.GasAccount]: transparentDefault2024Conf,
       [RootNames.Perps]: bg1Default2024Conf,
       [RootNames.PerpsMarketList]: bg1Default2024Conf,
       [RootNames.PerpsMarketDetail]: bg1Default2024Conf,

@@ -26,6 +26,18 @@ describe('screen system bar configuration', () => {
     });
   });
 
+  it('keeps the gas account screen transparent for edge-to-edge content', () => {
+    expect(
+      getScreenSystemBarConfig({
+        screenName: RootNames.GasAccount,
+        isDarkTheme: false,
+      }),
+    ).toEqual({
+      statusBarStyle: 'dark-content',
+      statusBarBackgroundColor: 'transparent',
+    });
+  });
+
   it('preserves route-specific backgrounds', () => {
     expect(
       getScreenSystemBarConfig({
