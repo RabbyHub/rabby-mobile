@@ -121,7 +121,7 @@ function toggleThemeMode(nextTheme?: AppThemeScheme) {
   });
 }
 
-export function getBinaryMode(appTheme = themeModeStore.getState().appTheme) {
+function getBinaryMode(appTheme = themeModeStore.getState().appTheme) {
   const colorScheme = Appearance.getColorScheme();
 
   return coerceBinaryTheme(appTheme, colorScheme);
@@ -180,8 +180,8 @@ export const useAppTheme = (options?: { isAppTop?: boolean }) => {
   React.useEffect(() => {
     if (!options?.isAppTop) return;
 
-    setRneuiMode(binaryTheme === 'dark' ? 'dark' : 'light');
-  }, [options?.isAppTop, setRneuiMode, binaryTheme]);
+    setRneuiMode(colorScheme === 'dark' ? 'dark' : 'light');
+  }, [options?.isAppTop, setRneuiMode, colorScheme]);
 
   React.useEffect(() => {
     if (!options?.isAppTop) return;
