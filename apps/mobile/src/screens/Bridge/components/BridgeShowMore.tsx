@@ -323,60 +323,57 @@ const BridgeShowMore = ({
     </ListItem>
   ));
 
+  const priceImpactContent = showLossInfo ? (
+    <View style={[styles.lossInfo, { marginBottom: 0 }]}>
+      <View style={styles.flexRow}>
+        <Text style={styles.impactText}>{t('page.bridge.price-impact')}</Text>
+        <TouchableOpacity
+          style={styles.diffBox}
+          onPress={() => setLossImpactOpen(i => !i)}>
+          <Text style={styles.lossAmount}>-{data?.diff}%</Text>
+          <Animated.View
+            style={{
+              transform: [{ rotate: !lossImpactOpen ? '180deg' : '0deg' }],
+            }}>
+            <RcIconBluePolygon color={colors2024['orange-default']} />
+          </Animated.View>
+        </TouchableOpacity>
+      </View>
+
+      <WarningText>
+        <Text>{t('page.bridge.loss-tips', { usd: data?.lossUsd })}</Text>
+        {lossImpactOpen && (
+          <>
+            {'\n'}
+            {'\n'}
+            <Text style={styles.impactTooltipText}>
+              {t('page.bridge.est-payment')} {formatTokenAmount(amount || '0')}
+              {getTokenSymbol(fromToken)} ≈ {data?.fromUsd}
+            </Text>
+            {'\n'}
+
+            <Text style={styles.impactTooltipText}>
+              {t('page.bridge.est-receiving')}{' '}
+              {formatTokenAmount(toAmount || '0')}
+              {getTokenSymbol(toToken)} ≈ {data?.toUsd}
+            </Text>
+            {'\n'}
+
+            <Text style={styles.impactTooltipText}>
+              {t('page.bridge.est-difference')} {data?.lossUsd}
+            </Text>
+          </>
+        )}
+      </WarningText>
+    </View>
+  ) : null;
+
   return (
     <View style={StyleSheet.flatten([styles.container])}>
       <View style={{ gap: 12 }}>
+        {priceImpactContent}
+
         {type === 'bridge' && sourceContentRender()}
-
-        {showLossInfo && (
-          <View style={[styles.lossInfo, { marginBottom: 0 }]}>
-            <View style={styles.flexRow}>
-              <Text style={styles.impactText}>
-                {t('page.bridge.price-impact')}
-              </Text>
-              <TouchableOpacity
-                style={styles.diffBox}
-                onPress={() => setLossImpactOpen(i => !i)}>
-                <Text style={styles.lossAmount}>-{data?.diff}%</Text>
-                <Animated.View
-                  style={{
-                    transform: [
-                      { rotate: !lossImpactOpen ? '180deg' : '0deg' },
-                    ],
-                  }}>
-                  <RcIconBluePolygon color={colors2024['orange-default']} />
-                </Animated.View>
-              </TouchableOpacity>
-            </View>
-
-            <WarningText>
-              <Text>{t('page.bridge.loss-tips', { usd: data?.lossUsd })}</Text>
-              {lossImpactOpen && (
-                <>
-                  {'\n'}
-                  {'\n'}
-                  <Text style={styles.impactTooltipText}>
-                    {t('page.bridge.est-payment')}{' '}
-                    {formatTokenAmount(amount || '0')}
-                    {getTokenSymbol(fromToken)} ≈ {data?.fromUsd}
-                  </Text>
-                  {'\n'}
-
-                  <Text style={styles.impactTooltipText}>
-                    {t('page.bridge.est-receiving')}{' '}
-                    {formatTokenAmount(toAmount || '0')}
-                    {getTokenSymbol(toToken)} ≈ {data?.toUsd}
-                  </Text>
-                  {'\n'}
-
-                  <Text style={styles.impactTooltipText}>
-                    {t('page.bridge.est-difference')} {data?.lossUsd}
-                  </Text>
-                </>
-              )}
-            </WarningText>
-          </View>
-        )}
 
         {!showSourceFallback && fromToken ? (
           <DirectSignGasInfo
