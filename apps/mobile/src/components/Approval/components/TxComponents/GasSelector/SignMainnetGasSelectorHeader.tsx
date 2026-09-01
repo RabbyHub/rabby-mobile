@@ -26,6 +26,7 @@ import { getGasLevelI18nKey } from '@/utils/trans';
 import { calcMaxPriorityFee } from '@/utils/transaction';
 import { buildDirectSignSummary, calcGasAccountUsd } from './directSignSummary';
 import { SignMainnetShowMoreGasModal } from './SignMainnetShowMoreGasModal';
+import { SignMainnetSwapGasQuotePopup } from './SignMainnetSwapGasQuotePopup';
 import { SignMainnetCustomGasSheet } from './SignMainnetCustomGasSheet';
 import {
   isApprovalGasMethodNotEnough,
@@ -60,6 +61,14 @@ type SignMainnetGasSelectorHeaderProps = GasSelectorHeaderProps & {
   tempoPreferredFeeTokenId?: string;
   onAutoChangeGasMethod?: (value: 'native' | 'gasAccount') => void;
   disableAutoGasLevelSwitch?: boolean;
+  renderSwapQuotes?: (onSelect: () => void) => React.ReactNode;
+  onRefreshSwapQuotes?: () => void;
+  swapQuotesLoading?: boolean;
+  swapGasInteractionDisabled?: boolean;
+  swapGasQuoteVisible?: boolean;
+  onSwapGasQuoteVisibleChange?: (visible: boolean) => void;
+  hideGasLevelInSummary?: boolean;
+  rightPrefix?: React.ReactNode;
 };
 
 export const SignMainnetHeaderContent = ({
@@ -106,6 +115,15 @@ export const SignMainnetHeaderContent = ({
   tempoPreferredFeeTokenId,
   onAutoChangeGasMethod,
   disableAutoGasLevelSwitch = false,
+  renderSwapQuotes,
+  onRefreshSwapQuotes,
+  swapQuotesLoading,
+  swapGasInteractionDisabled,
+  swapGasQuoteVisible,
+  onSwapGasQuoteVisibleChange,
+  hideGasLevelInSummary,
+  rightPrefix,
+  gasFeeLabel,
 }: {
   gasList: GasSelectorHeaderProps['gasList'];
   selectedGas: GasSelectorHeaderProps['selectedGas'];
@@ -150,15 +168,25 @@ export const SignMainnetHeaderContent = ({
   tempoPreferredFeeTokenId?: string;
   onAutoChangeGasMethod?: (value: 'native' | 'gasAccount') => void;
   disableAutoGasLevelSwitch?: boolean;
+  renderSwapQuotes?: (onSelect: () => void) => React.ReactNode;
+  onRefreshSwapQuotes?: () => void;
+  swapQuotesLoading?: boolean;
+  swapGasInteractionDisabled?: boolean;
+  swapGasQuoteVisible?: boolean;
+  onSwapGasQuoteVisibleChange?: (visible: boolean) => void;
+  hideGasLevelInSummary?: boolean;
+  rightPrefix?: React.ReactNode;
+  gasFeeLabel?: React.ReactNode;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [gasAccountTipVisible, setGasAccountTipVisible] = useState(false);
   const [customVisible, setCustomVisible] = useState(false);
   const [showMoreOpen, setShowMoreOpen] = useState(false);
+  const [combinedPopupVisible, setCombinedPopupVisible] = useState(false);
   const [autoOpenSignal, setAutoOpenSignal] = useState(0);
   const hasOpenedOnceRef = useRef(false);
-  const gasSettingsOpen = showMoreOpen || customVisible;
+  const gasSettingsOpen = showMoreOpen || customVisible || combinedPopupVisible;
   const gasSettingsOpenRef = useRef(gasSettingsOpen);
   const onGasSettingsOpenChangeRef = useRef(onGasSettingsOpenChange);
   const noCustomRPCEnabled = noCustomRPC ?? true;
@@ -289,9 +317,10 @@ export const SignMainnetHeaderContent = ({
       >
     >
   >({});
+  const gasLevelModalOpen = showMoreOpen || combinedPopupVisible;
   const fetchMode = resolveSignMainnetGasLevelFetchMode({
     isReady,
-    isModalOpen: showMoreOpen,
+    isModalOpen: gasLevelModalOpen,
     nativeTokenInsufficient: !!nativeTokenInsufficient,
     gasAccountUsable,
   });
@@ -329,22 +358,33 @@ export const SignMainnetHeaderContent = ({
     onGasSettingsOpenChangeRef.current = onGasSettingsOpenChange;
   }, [onGasSettingsOpenChange]);
 
+  const notifyGasSettingsOpenChange = useCallback(
+    (open: boolean) => {
+      // Combined gas+quotes popup should keep quote polling alive, like plugin.
+      if (renderSwapQuotes) {
+        return;
+      }
+      onGasSettingsOpenChangeRef.current?.(open);
+    },
+    [renderSwapQuotes],
+  );
+
   useEffect(() => {
     if (gasSettingsOpenRef.current === gasSettingsOpen) {
       return;
     }
 
     gasSettingsOpenRef.current = gasSettingsOpen;
-    onGasSettingsOpenChangeRef.current?.(gasSettingsOpen);
-  }, [gasSettingsOpen]);
+    notifyGasSettingsOpenChange(gasSettingsOpen);
+  }, [gasSettingsOpen, notifyGasSettingsOpenChange]);
 
   useEffect(() => {
     return () => {
       if (gasSettingsOpenRef.current) {
-        onGasSettingsOpenChangeRef.current?.(false);
+        notifyGasSettingsOpenChange(false);
       }
     };
-  }, []);
+  }, [notifyGasSettingsOpenChange]);
 
   useEffect(() => {
     activeLevelRequestsRef.current = {};
@@ -495,7 +535,7 @@ export const SignMainnetHeaderContent = ({
     nativeTokenInsufficient,
     requestFingerprint,
     selectedSupportedLevel,
-    showMoreOpen,
+    gasLevelModalOpen,
     supportedLevels,
     levelFetchContextKey,
   ]);
@@ -597,6 +637,31 @@ export const SignMainnetHeaderContent = ({
     supportedLevels,
   ]);
 
+  useEffect(() => {
+    if (swapGasQuoteVisible !== undefined) {
+      setCombinedPopupVisible(swapGasQuoteVisible);
+      setShowMoreOpen(swapGasQuoteVisible);
+    }
+  }, [swapGasQuoteVisible]);
+
+  const handleGasSettingsOpenChange = useCallback(
+    (open: boolean) => {
+      if (renderSwapQuotes) {
+        setCombinedPopupVisible(open);
+        setShowMoreOpen(open);
+        onSwapGasQuoteVisibleChange?.(open);
+      } else {
+        setShowMoreOpen(open);
+      }
+      notifyGasSettingsOpenChange(open);
+    },
+    [
+      notifyGasSettingsOpenChange,
+      onSwapGasQuoteVisibleChange,
+      renderSwapQuotes,
+    ],
+  );
+
   return (
     <>
       <DirectSignGasInfoUI
@@ -605,47 +670,57 @@ export const SignMainnetHeaderContent = ({
         empty={isHeaderError}
         emptyText={t('page.signTx.failToFetchGasCost')}
         chainId={chainId}
-        label={gasMethodShortcut ? null : t('page.transactions.detail.GasFee')}
+        label={
+          gasMethodShortcut
+            ? null
+            : gasFeeLabel ?? t('page.transactions.detail.GasFee')
+        }
         labelPrefix={gasMethodShortcut}
         levelText={t(getGasLevelI18nKey(selectedGas?.level || 'normal'))}
+        hideGasLevelInSummary={hideGasLevelInSummary}
+        rightPrefix={rightPrefix}
         valueText={summary.primaryText}
         textColor={textColor}
         valueColor={summaryValueColor}
         listItemStyle={gasFeeListItemStyle}
         listItemInnerStyle={gasFeeListItemInnerStyle}
-        onOpenChange={setShowMoreOpen}
-        renderModal={({ visible, layout, close, chainId: modalChainId }) => (
-          <SignMainnetShowMoreGasModal
-            visible={visible}
-            layout={layout}
-            onClose={close}
-            chainId={modalChainId}
-            gasList={gasList}
-            selectedGas={selectedGas}
-            gasMethod={gasMethod}
-            onChangeGasMethod={onChangeGasMethod}
-            gasLimit={gasLimit || '0'}
-            nonce={nonce}
-            onChange={onChange}
-            isCancel={isCancel}
-            isSpeedUp={isSpeedUp}
-            selectedGasCostUsdStr={gasCostUsdStr}
-            gasAccountCost={gasAccountCost}
-            nativeTokenInsufficient={nativeTokenInsufficient}
-            noCustomRPC={noCustomRPCEnabled}
-            freeGasAvailable={freeGasAvailable}
-            levelState={levelState}
-            showCustomFixedModeTag={showCustomFixedModeTag}
-            gasToken={gasToken}
-            showTempoGasTokenSelector={showTempoGasTokenSelector}
-            tempoGasTokenList={tempoGasTokenList}
-            onSelectTempoGasToken={onSelectTempoGasToken}
-            tempoGasTokenLoading={tempoGasTokenLoading}
-            onEditCustomGas={() => {
-              setCustomVisible(true);
-            }}
-          />
-        )}
+        onOpenChange={handleGasSettingsOpenChange}
+        renderModal={
+          renderSwapQuotes
+            ? undefined
+            : ({ visible, layout, close, chainId: modalChainId }) => (
+                <SignMainnetShowMoreGasModal
+                  visible={visible}
+                  layout={layout}
+                  onClose={close}
+                  chainId={modalChainId}
+                  gasList={gasList}
+                  selectedGas={selectedGas}
+                  gasMethod={gasMethod}
+                  onChangeGasMethod={onChangeGasMethod}
+                  gasLimit={gasLimit || '0'}
+                  nonce={nonce}
+                  onChange={onChange}
+                  isCancel={isCancel}
+                  isSpeedUp={isSpeedUp}
+                  selectedGasCostUsdStr={gasCostUsdStr}
+                  gasAccountCost={gasAccountCost}
+                  nativeTokenInsufficient={nativeTokenInsufficient}
+                  noCustomRPC={noCustomRPCEnabled}
+                  freeGasAvailable={freeGasAvailable}
+                  levelState={levelState}
+                  showCustomFixedModeTag={showCustomFixedModeTag}
+                  gasToken={gasToken}
+                  showTempoGasTokenSelector={showTempoGasTokenSelector}
+                  tempoGasTokenList={tempoGasTokenList}
+                  onSelectTempoGasToken={onSelectTempoGasToken}
+                  tempoGasTokenLoading={tempoGasTokenLoading}
+                  onEditCustomGas={() => {
+                    setCustomVisible(true);
+                  }}
+                />
+              )
+        }
         leftIcon={
           displayGasMethod === 'gasAccount' ? (
             <Tip
@@ -691,6 +766,49 @@ export const SignMainnetHeaderContent = ({
           ) : null
         }
       />
+      {renderSwapQuotes ? (
+        <SignMainnetSwapGasQuotePopup
+          visible={combinedPopupVisible}
+          onClose={() => {
+            setCombinedPopupVisible(false);
+            setShowMoreOpen(false);
+            onSwapGasQuoteVisibleChange?.(false);
+            onGasSettingsOpenChange?.(false);
+          }}
+          gasList={gasList}
+          selectedGas={selectedGas}
+          gasMethod={gasMethod}
+          onChangeGasMethod={onChangeGasMethod}
+          chainId={chainId}
+          gasLimit={gasLimit || '0'}
+          nonce={nonce}
+          onChange={onChange}
+          isCancel={isCancel}
+          isSpeedUp={isSpeedUp}
+          selectedGasCostUsdStr={gasCostUsdStr}
+          gasAccountCost={gasAccountCost}
+          nativeTokenInsufficient={nativeTokenInsufficient}
+          noCustomRPC={noCustomRPCEnabled}
+          freeGasAvailable={freeGasAvailable}
+          levelState={levelState}
+          showTempoGasTokenSelector={showTempoGasTokenSelector}
+          gasToken={gasToken}
+          tempoGasTokenList={tempoGasTokenList}
+          onSelectTempoGasToken={onSelectTempoGasToken}
+          tempoGasTokenLoading={tempoGasTokenLoading}
+          autoOpenSignal={autoOpenSignal}
+          onEditCustomGas={() => {
+            setCombinedPopupVisible(false);
+            setShowMoreOpen(false);
+            onSwapGasQuoteVisibleChange?.(false);
+            setCustomVisible(true);
+          }}
+          renderQuotes={renderSwapQuotes}
+          onRefreshQuotes={onRefreshSwapQuotes || (() => undefined)}
+          quotesLoading={swapQuotesLoading}
+          gasInteractionDisabled={swapGasInteractionDisabled}
+        />
+      ) : null}
       <SignMainnetCustomGasSheet
         visible={customVisible}
         onClose={() => setCustomVisible(false)}
@@ -774,6 +892,14 @@ export const SignMainnetGasSelectorHeader = (
       onAutoChangeGasMethod={props.onAutoChangeGasMethod}
       disableAutoGasLevelSwitch={props.disableAutoGasLevelSwitch}
       onGasSettingsOpenChange={props.onGasSettingsOpenChange}
+      renderSwapQuotes={props.renderSwapQuotes}
+      onRefreshSwapQuotes={props.onRefreshSwapQuotes}
+      swapQuotesLoading={props.swapQuotesLoading}
+      swapGasInteractionDisabled={props.swapGasInteractionDisabled}
+      swapGasQuoteVisible={props.swapGasQuoteVisible}
+      onSwapGasQuoteVisibleChange={props.onSwapGasQuoteVisibleChange}
+      hideGasLevelInSummary={props.hideGasLevelInSummary}
+      rightPrefix={props.rightPrefix}
     />
   );
 };

@@ -379,6 +379,7 @@ export const BridgeContent = ({
     switchToken,
     amount,
     handleAmountChange,
+    feeRate,
 
     recommendFromToken,
     fillRecommendFromToken,
@@ -639,7 +640,6 @@ export const BridgeContent = ({
     [isSupportedChain, fromChain, toChain],
   );
 
-  const [showMoreOpen, setShowMoreOpen] = useState(false);
   const refresh = useSetRefreshId();
   const refreshId = useRefreshId();
 
@@ -732,6 +732,7 @@ export const BridgeContent = ({
               to_token_amount: selectedBridgeQuote.to_token_amount,
               tx: tx,
               rabby_fee: selectedBridgeQuote.rabby_fee.usd_value,
+              fee_rate: Number(feeRate),
               slippage: new BigNumber(slippage).div(100).toNumber(),
             },
             account: currentAccount,
@@ -796,6 +797,7 @@ export const BridgeContent = ({
       toToken.chain,
       toToken.id,
       amount,
+      feeRate,
       slippageState,
       selectedBridgeQuote.aggregator.id,
       selectedBridgeQuote.bridge_id,
@@ -811,6 +813,7 @@ export const BridgeContent = ({
     ].join('|');
   }, [
     amount,
+    feeRate,
     fromToken,
     gasList,
     passGasPrice,
@@ -920,6 +923,7 @@ export const BridgeContent = ({
               to_token_amount: selectedBridgeQuote.to_token_amount,
               tx: tx,
               rabby_fee: selectedBridgeQuote.rabby_fee.usd_value,
+              fee_rate: Number(feeRate),
               slippage: new BigNumber(slippageState).div(100).toNumber(),
             },
             account: currentAccount,
@@ -1320,6 +1324,12 @@ export const BridgeContent = ({
     Number(amount) > 0 &&
     !quoteLoading &&
     !quoteList?.length;
+  const [bridgeProgressVisible, setBridgeProgressVisible] = useState(false);
+  const showStickyInfo =
+    !!fromToken &&
+    !!toToken &&
+    !noQuote &&
+    !(bridgeProgressVisible && !amountAvailable);
   const showClosedMarketTip =
     (!!fromToken || !!toToken) && quoteBlockedByClosedMarket;
 
@@ -1750,48 +1760,45 @@ export const BridgeContent = ({
           ) : null}
 
           <View>
-            {selectedBridgeQuote &&
-              !quoteLoading &&
-              inSufficientCanGetQuote && (
-                <BridgeShowMore
-                  insufficient={inSufficient}
-                  sourceAlwaysShow
-                  duration={selectedBridgeQuote?.duration}
-                  supportDirectSign={canShowDirectSubmit}
-                  openFeePopup={openFeePopup}
-                  open={showMoreOpen}
-                  setOpen={setShowMoreOpen}
-                  sourceName={selectedBridgeQuote?.aggregator.name || ''}
-                  sourceLogo={selectedBridgeQuote?.aggregator.logo_url || ''}
-                  slippage={slippageState}
-                  displaySlippage={slippage}
-                  onSlippageChange={handleSlippageChange}
-                  fromToken={fromToken}
-                  toToken={toToken}
-                  amount={amount || 0}
-                  toAmount={selectedBridgeQuote?.to_token_amount}
-                  openQuotesList={openQuotesList}
-                  quoteLoading={quoteLoading}
-                  slippageError={isSlippageHigh || isSlippageLow}
-                  autoSlippage={autoSlippage}
-                  isCustomSlippage={isCustomSlippage}
-                  setAutoSlippage={setAutoSlippage}
-                  setIsCustomSlippage={setIsCustomSlippage}
-                  type="bridge"
-                  isBestQuote={
-                    !!bestQuoteId &&
-                    !!selectedBridgeQuote &&
-                    bestQuoteId?.aggregatorId ===
-                      selectedBridgeQuote.aggregator.id &&
-                    bestQuoteId?.bridgeId === selectedBridgeQuote.bridge_id
-                  }
-                  onDepositPopupVisibleChange={setDepositQuoteRefreshPaused}
-                  onSlippageOptionsOpenChange={
-                    setSlippageOptionsQuoteRefreshPaused
-                  }
-                  onGasSettingsOpenChange={setGasSettingsQuoteRefreshPaused}
-                />
-              )}
+            {showStickyInfo && (
+              <BridgeShowMore
+                insufficient={inSufficient}
+                duration={selectedBridgeQuote?.duration}
+                supportDirectSign={canShowDirectSubmit}
+                openFeePopup={openFeePopup}
+                sourceName={selectedBridgeQuote?.aggregator.name || ''}
+                sourceLogo={selectedBridgeQuote?.aggregator.logo_url || ''}
+                slippage={slippageState}
+                displaySlippage={slippage}
+                onSlippageChange={handleSlippageChange}
+                fromToken={fromToken}
+                toToken={toToken}
+                amount={amount || 0}
+                toAmount={selectedBridgeQuote?.to_token_amount}
+                openQuotesList={openQuotesList}
+                quoteLoading={quoteLoading}
+                slippageError={isSlippageHigh || isSlippageLow}
+                autoSlippage={autoSlippage}
+                isCustomSlippage={isCustomSlippage}
+                setAutoSlippage={setAutoSlippage}
+                setIsCustomSlippage={setIsCustomSlippage}
+                type="bridge"
+                isRabbyFeeFree={feeRate === '0'}
+                isRabbyFeeHalf={feeRate === '0.12'}
+                isBestQuote={
+                  !!bestQuoteId &&
+                  !!selectedBridgeQuote &&
+                  bestQuoteId?.aggregatorId ===
+                    selectedBridgeQuote.aggregator.id &&
+                  bestQuoteId?.bridgeId === selectedBridgeQuote.bridge_id
+                }
+                onDepositPopupVisibleChange={setDepositQuoteRefreshPaused}
+                onSlippageOptionsOpenChange={
+                  setSlippageOptionsQuoteRefreshPaused
+                }
+                onGasSettingsOpenChange={setGasSettingsQuoteRefreshPaused}
+              />
+            )}
             {showClosedMarketTip && (
               <MarketClosedTip style={styles.marketClosedTip} />
             )}
@@ -1828,12 +1835,14 @@ export const BridgeContent = ({
               </>
             )}
           </View>
-          {Boolean(
-            !(selectedBridgeQuote && inSufficientCanGetQuote) &&
-              !recommendFromToken,
-          ) &&
+          {!amountAvailable &&
+            !selectedBridgeQuote &&
+            !recommendFromToken &&
             currentAccount?.address && (
-              <BridgePendingTxItem userAddress={currentAccount?.address} />
+              <BridgePendingTxItem
+                userAddress={currentAccount.address}
+                onDisplayChange={setBridgeProgressVisible}
+              />
             )}
         </KeyboardAwareScrollView>
 

@@ -972,7 +972,7 @@
       "gas-fee": "Gas 费：{{gasUsed}}",
       "token": "代币",
       "transaction-might-be-frontrun-because-of-high-slippage-tolerance": "由于高滑点容忍度，交易可能会被抢跑。",
-      "preferMEV": "优选 MEV 防护",
+      "sort-with-gas": "按 Gas 排序",
       "lowCreditModal": {
         "title": "该代币的信用值较低",
         "desc": "较低的信用值通常表示高风险，例如蜜罐代币或流动性非常低。"

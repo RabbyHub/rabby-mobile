@@ -145,6 +145,12 @@
       "multiSigChainNotMatch": "Multi-signature addresses are not on this chain and cannot initiate transactions",
       "safeAddressNotSupportChain": "Current safe address is not supported on {{0}} chain",
       "noGasRequired": "No gas required",
+      "gasSelectorTitle": "Gas",
+      "swapGasLevel": {
+        "normal": "Normal",
+        "fast": "Fast",
+        "instant": "Instant"
+      },
       "gasSetting": "Gas Setting",
       "failToFetchGasCost": "Fail to estimate gas",
       "manuallySetGasLimitAlert": "You have manually set the Gas limit to",
@@ -793,7 +799,8 @@
       "insufficient-balance": "Insufficient balance",
       "hidden-no-quote-rates_one": "{{count}} rate unavailable",
       "hidden-no-quote-rates_other": "{{count}} rates unavailable",
-      "preferMEV": "Prefer MEV Guarded",
+      "Gas-fee-too-high": "Gas fee too high",
+      "preferMEV": "MEV Protection",
       "no-slippage-for-wrap": "No slippage for Wrap",
       "best": "Best",
       "unable-to-fetch-the-price": "Unable to fetch the price",
@@ -862,6 +869,7 @@
       "need-to-approve-token-before-bridge": "Need to approve token before bridge",
       "via-bridge": "via {{bridge}}",
       "duration": "{{duration}} min",
+      "durationSeconds": "{{duration}}s",
       "best": "Best",
       "best-subtitle": "The best quote is determined by a combination of estimated total cost (including gas fees) and delivery speed.",
       "swap-best-subtitle": "The best quote is determined by the lowest estimated total cost, including the exchange rate and gas fees.",
@@ -1706,7 +1714,9 @@
       "lowBalance": "You don't have enough gas (<$1.00). Deposit gas to ensure future transactions go smoothly.",
       "switchAccount": "Switch Wallet",
       "depositFailed": "Deposit failed",
-      "depositWith": "Deposit via"
+      "depositWith": "Deposit via",
+      "gasToken": "Gas Token",
+      "title": "GasAccount"
     },
     "tokenDetail": {
       "headerBalanceText": "Balance",

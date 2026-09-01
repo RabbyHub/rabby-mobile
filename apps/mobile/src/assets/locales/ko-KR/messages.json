@@ -604,7 +604,7 @@
       "hidden-no-quote-rates_one": "{{count}}개 환율을 사용할 수 없습니다",
       "hidden-no-quote-rates_other": "{{count}}개의 요율을 사용할 수 없습니다.",
       "best": "최고의",
-      "preferMEV": "MEV 보호 우선 적용",
+      "actual-slippage": "실제 슬리피지:",
       "approve-swap": "승인 및 스왑",
       "token": "토큰",
       "gas-fee": "가스 수수료: {{gasUsed}}",

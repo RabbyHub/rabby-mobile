@@ -37,6 +37,7 @@ type DirectSignGasInfoUIProps = {
   empty?: boolean;
   emptyText?: string;
   levelText?: string;
+  hideGasLevelInSummary?: boolean;
   valueText?: string;
   chainId?: number;
   textColor?: string;
@@ -44,6 +45,7 @@ type DirectSignGasInfoUIProps = {
   style?: RNViewProps['style'];
   listItemStyle?: RNViewProps['style'];
   listItemInnerStyle?: RNViewProps['style'];
+  rightPrefix?: React.ReactNode;
   onOpenChange?: (open: boolean) => void;
   renderModal?: (args: {
     visible: boolean;
@@ -61,6 +63,7 @@ export const DirectSignGasInfoUI = ({
   empty,
   emptyText = '-',
   levelText,
+  hideGasLevelInSummary,
   valueText,
   chainId,
   textColor,
@@ -68,6 +71,7 @@ export const DirectSignGasInfoUI = ({
   style,
   listItemStyle,
   listItemInnerStyle,
+  rightPrefix,
   onOpenChange,
   renderModal,
 }: DirectSignGasInfoUIProps) => {
@@ -174,54 +178,73 @@ export const DirectSignGasInfoUI = ({
         style={listItemStyle}
         innerStyle={listItemInnerStyle}
         LeftIcon={leftIcon}>
-        {!loading && !empty ? (
-          <TouchableOpacity
-            ref={triggerRef}
-            activeOpacity={0.7}
-            hitSlop={8}
-            style={styles.triggerButton}
-            onPress={handleTriggerPress}
-            onLayout={handleTriggerLayout}>
-            <View style={styles.quoteContainer}>
-              <Text
-                style={[
-                  styles.levelTag,
-                  textColor && {
-                    color: textColor,
-                  },
-                  textColor && {
-                    backgroundColor: colors2024['brand-light-1'],
-                  },
-                ]}>
-                {levelText}
-              </Text>
+        <View style={styles.rightContent}>
+          {!loading && !empty ? (
+            <TouchableOpacity
+              ref={triggerRef}
+              activeOpacity={0.7}
+              hitSlop={8}
+              style={[styles.triggerButton, styles.rightContentTouchable]}
+              onPress={handleTriggerPress}
+              onLayout={handleTriggerLayout}>
+              {rightPrefix}
+              <View style={styles.quoteContainer}>
+                {!hideGasLevelInSummary ? (
+                  <Text
+                    style={[
+                      styles.levelTag,
+                      textColor && {
+                        color: textColor,
+                      },
+                      textColor && {
+                        backgroundColor: colors2024['brand-light-1'],
+                      },
+                    ]}>
+                    {levelText}
+                  </Text>
+                ) : null}
 
-              <Text
-                style={[
-                  styles.valueText,
-                  {
-                    color:
-                      valueColor || textColor || colors2024['brand-default'],
-                  },
-                ]}>
-                {valueText}
-              </Text>
-              <Animated.View
-                style={{
-                  transform: [{ rotate: visible ? '-90deg' : '90deg' }],
-                }}>
-                <RcIconBluePolygon
-                  style={styles.arrowIcon}
-                  color={valueColor || textColor || colors2024['brand-default']}
-                />
-              </Animated.View>
-            </View>
-          </TouchableOpacity>
-        ) : !loading && empty ? (
-          <Text style={styles.noQuotePlaceholder}>{emptyText}</Text>
-        ) : (
-          <CustomSkeleton style={styles.skeletonPill} />
-        )}
+                <Text
+                  style={[
+                    styles.valueText,
+                    {
+                      color:
+                        valueColor || textColor || colors2024['brand-default'],
+                    },
+                  ]}>
+                  {valueText}
+                </Text>
+                <Animated.View
+                  style={{
+                    transform: [{ rotate: visible ? '-90deg' : '90deg' }],
+                  }}>
+                  <RcIconBluePolygon
+                    style={styles.arrowIcon}
+                    color={
+                      valueColor || textColor || colors2024['brand-default']
+                    }
+                  />
+                </Animated.View>
+              </View>
+            </TouchableOpacity>
+          ) : !loading && empty ? (
+            <>
+              {rightPrefix}
+              <Text style={styles.noQuotePlaceholder}>{emptyText}</Text>
+            </>
+          ) : (
+            <>
+              {rightPrefix}
+              <CustomSkeleton
+                style={
+                  hideGasLevelInSummary
+                    ? styles.infoCardSkeletonPill
+                    : styles.skeletonPill
+                }
+              />
+            </>
+          )}
+        </View>
       </ListItem>
       {renderModal?.({
         visible,
@@ -270,6 +293,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-secondary'],
   },
   flexRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  rightContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  rightContentTouchable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   listItemContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -301,6 +334,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 24,
     borderRadius: 100,
   },
+  infoCardSkeletonPill: {
+    width: 60,
+    height: 24,
+    borderRadius: 12,
+  },
   arrowIcon: {
     transform: [{ rotate: '-90deg' }],
   },
@@ -324,5 +362,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontStyle: 'normal',
     fontWeight: '700',
     lineHeight: 18,
+  },
+  infoCardValueText: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 16,
   },
 }));
