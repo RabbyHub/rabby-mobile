@@ -517,7 +517,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderColor: colors2024['neutral-line'],
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
     marginBottom: 16,
   },
   tempoTokenCurrentRow: {
