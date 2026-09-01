@@ -23,6 +23,10 @@ on:
         required: false
         type: boolean
         default: true
+      LARK_DRIVE_UPLOAD_ONLY:
+        required: false
+        type: boolean
+        default: false
       ANDROID_16KB_CHECK:
         required: false
         type: choice
@@ -155,9 +159,63 @@ jobs:
           INPUT_MOBILE_LOC: ${{ inputs.macos_machine_location }}
           DISABLE_AWS_CLI_HTTPS_VALIDATION: ${{ inputs.__DANGEROUS_NO_VERIFY_SSL }}
 
+  lark-drive-upload-probe:
+    name: Lark Drive bot upload probe
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.LARK_DRIVE_UPLOAD_ONLY == true }}
+    runs-on:
+      - self-hosted
+      - Linux
+      - mobile
+    env:
+      RABBY_ROBOT_LARK_APP_ID_FROM_GITHUB: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
+      RABBY_ROBOT_LARK_APP_SECRET_FROM_GITHUB: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
+      RABBY_MOBILE_LARK_DRIVE_PROBE_PACKAGE_URL: ${{ secrets.RABBY_MOBILE_LARK_DRIVE_PROBE_PACKAGE_URL }}
+      RABBY_MOBILE_LARK_DRIVE_FILE_URL_BASE: ${{ vars.RABBY_MOBILE_LARK_DRIVE_FILE_URL_BASE || 'https://debankglobal.sg.larksuite.com/file' }}
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+        with:
+          clean: false
+
+      - name: '[Linux] Setup Nodejs and Yarn'
+        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
+        with:
+          node-version: 22
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install JavaScript dependencies without lifecycle scripts
+        shell: bash --noprofile --norc -eo pipefail {0}
+        run: YARN_ENABLE_SCRIPTS=false yarn install --immutable
+
+      - name: Upload existing APK through bot credentials
+        shell: bash --noprofile --norc -eo pipefail {0}
+        run: |
+          if [ -z "$RABBY_MOBILE_LARK_DRIVE_PROBE_PACKAGE_URL" ]; then
+            echo "RABBY_MOBILE_LARK_DRIVE_PROBE_PACKAGE_URL is not configured"
+            exit 1
+          fi
+
+          package_file="$(mktemp --suffix=.apk)"
+          trap 'rm -f "$package_file"' EXIT
+
+          curl --fail --location --silent --show-error --retry 2 \
+            --proto '=https' --tlsv1.2 \
+            "$RABBY_MOBILE_LARK_DRIVE_PROBE_PACKAGE_URL" \
+            --output "$package_file"
+          test -s "$package_file"
+          unzip -tq "$package_file" >/dev/null
+
+          export RABBY_ROBOT_LARK_APP_ID="$RABBY_ROBOT_LARK_APP_ID_FROM_GITHUB"
+          export RABBY_ROBOT_LARK_APP_SECRET="$RABBY_ROBOT_LARK_APP_SECRET_FROM_GITHUB"
+          node apps/mobile/scripts/ci/upload-package-to-lark-drive.js \
+            "$package_file" \
+            "rabby-mobile-ci-probe-${GITHUB_RUN_ID}.apk"
+
   setup:
     name: Build
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.IOS_SIGNING_EXPORT_PREFLIGHT_ONLY != true }}
+    if: ${{ github.event_name != 'workflow_dispatch' || (inputs.IOS_SIGNING_EXPORT_PREFLIGHT_ONLY != true && inputs.LARK_DRIVE_UPLOAD_ONLY != true) }}
     strategy:
       matrix:
         include:
