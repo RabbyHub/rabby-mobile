@@ -357,7 +357,7 @@ function makeScreenSpecConfig() {
 
       // StackBottom
       [RootNames.Home]: transparentDefault2024Conf,
-      [RootNames.Points]: bg1Default2024Conf,
+      [RootNames.Points]: transparentDefault2024Conf,
       [RootNames.Prediction]: bg1Default2024Conf,
 
       // StackDapps
@@ -370,10 +370,10 @@ function makeScreenSpecConfig() {
       [RootNames.Lending]: bg1Default2024Conf,
 
       // StackSettings
-      [RootNames.Settings]: historyPageConf,
+      [RootNames.Settings]: transparentDefault2024Conf,
       [RootNames.SetPassword]: blueLightConf,
       [RootNames.WalletConnect]: transparentDefault2024Conf,
-      [RootNames.CustomTestnet]: bg1Default2024Conf,
+      [RootNames.CustomTestnet]: card2DefaultConf,
       [RootNames.CustomRPC]: bg1Default2024Conf,
       [RootNames.SetBiometricsAuthentication]: bg1DefaultConf,
       [RootNames.ProviderControllerTester]: bg1Default2024Conf,
@@ -422,7 +422,7 @@ function makeScreenSpecConfig() {
       [RootNames.LendingHistory]: bg1Default2024Conf,
       [RootNames.ConvertDust]: bg1Default2024Conf,
       [RootNames.GasAccount]: transparentDefault2024Conf,
-      [RootNames.Perps]: bg1Default2024Conf,
+      [RootNames.Perps]: transparentDefault2024Conf,
       [RootNames.PerpsMarketList]: bg1Default2024Conf,
       [RootNames.PerpsMarketDetail]: bg1Default2024Conf,
       [RootNames.PerpsHistory]: bg1Default2024Conf,
@@ -480,7 +480,7 @@ function makeScreenSpecConfig() {
         statusBarBackgroundColor: colors['neutral-bg-1'],
       },
       [RootNames.TokenDetail]: transparentDefault2024Conf,
-      [RootNames.TokenMarketInfo]: bg1Default2024Conf,
+      [RootNames.TokenMarketInfo]: transparentDefault2024Conf,
       [RootNames.ReceiveAddressList]: bg1Default2024Conf,
 
       [RootNames.SyncExtensionPassword]: bg1Default2024Conf,
