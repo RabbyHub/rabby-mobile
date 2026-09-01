@@ -69,9 +69,6 @@ const styles = StyleSheet.create({
     flex: 0,
     flexShrink: 0,
   },
-  textValue: {
-    overflow: 'hidden',
-  },
 });
 
 const TokenAmount = ({
@@ -412,7 +409,11 @@ const AddressWithCopy = ({
 };
 
 const TextValue = ({ children }: { children: ReactNode }) => {
-  return <View style={styles.textValue}>{children}</View>;
+  return (
+    <View className="overflow-hidden overflow-ellipsis whitespace-nowrap">
+      {children}
+    </View>
+  );
 };
 
 const DisplayChain = ({

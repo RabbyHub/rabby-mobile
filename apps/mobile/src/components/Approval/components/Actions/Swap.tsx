@@ -106,7 +106,7 @@ const Swap = ({
             <LogoWithText
               logo={payToken.logo_url}
               text={
-                <View style={commonStyle.row}>
+                <View className="flex flex-row">
                   <Text style={commonStyle.primaryText}>
                     {formatAmount(payToken.amount)}{' '}
                   </Text>
@@ -131,7 +131,7 @@ const Swap = ({
                 logo={receiveToken.logo_url}
                 text={
                   balanceChange.success && balanceChange.support ? (
-                    <View style={commonStyle.row}>
+                    <View className="flex flex-row">
                       <Text
                         ref={swapReceiveRef}
                         style={commonStyle.primaryText}>

@@ -31,6 +31,7 @@ import { HistoryItemCateType } from './type';
 import { ChainIconFastImage } from '@/components/Chain/ChainIconImage';
 
 interface ItemIconProps {
+  className?: string;
   type?: HistoryItemCateType | undefined;
   token?: TokenItem | TokenItem[];
   isNft?: boolean;

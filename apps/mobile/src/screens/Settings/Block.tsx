@@ -17,6 +17,7 @@ export function Block({
   children,
 }: React.PropsWithChildren<{
   label: string;
+  className?: string;
   style?: React.ComponentProps<typeof View>['style'];
 }>) {
   const { colors2024, isLight } = useTheme2024();

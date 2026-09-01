@@ -1,3 +1,4 @@
+/// <reference types="nativewind/types" />
 /// <reference path="./assets/assets.d.ts" />
 /// <reference path="./types/token.d.ts" />
 
@@ -32,6 +33,7 @@ type RNViewProps = {
   style?: import('react').ComponentProps<
     typeof import('react-native').View
   >['style'];
+  className?: string;
   testID?: import('react').ComponentProps<
     typeof import('react-native').View
   >['testID'];

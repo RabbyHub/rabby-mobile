@@ -121,7 +121,7 @@ const BatchSellNFT = ({
             </Text>
           </Row>
           <Row>
-            <View style={commonStyle.relative}>
+            <View className="relative">
               <LogoWithText
                 logo={actionData.receive_token.logo_url}
                 text={

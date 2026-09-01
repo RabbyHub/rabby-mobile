@@ -20,7 +20,7 @@ export const AccountOverview = ({
   const { styles } = useTheme2024({ getStyle: getStyles });
   return (
     <View style={styles.accountBox}>
-      <View style={styles.walletIconWrapper}>
+      <View className="relative">
         <WalletIcon
           type={account.type as KEYRING_TYPE}
           address={account.address}
@@ -50,9 +50,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-  },
-  walletIconWrapper: {
-    position: 'relative',
   },
   walletIcon: {
     width: 14,

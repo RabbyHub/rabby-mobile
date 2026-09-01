@@ -26,13 +26,6 @@ const getStyles = (colors: AppColorsVariants) =>
       paddingHorizontal: 20,
       paddingTop: 4,
     },
-    aliasText: {
-      marginRight: 2,
-    },
-    errorMessage: {
-      marginTop: 10,
-      color: colors['red-default'],
-    },
   });
 
 const AddressMemo = ({
@@ -98,10 +91,10 @@ const AddressMemo = ({
     <View>
       <TouchableOpacity onPress={handleEditMemo}>
         <View style={commonStyle.rowFlexCenterItem}>
-          <Text style={[styles.aliasText, textStyle]}>
+          <Text className="mr-[2]" style={textStyle}>
             {addressAlias || '-'}
           </Text>
-          <IconEdit width={13} />
+          <IconEdit className="w-[13px]" />
         </View>
       </TouchableOpacity>
       <AppBottomSheetModal
@@ -121,7 +114,7 @@ const AddressMemo = ({
               value={inputText}
               placeholder="Please input address note"
             />
-            <Text style={styles.errorMessage}>{errorMessage}</Text>
+            <Text className="mt-[10] text-r-red-default">{errorMessage}</Text>
           </View>
           <FooterButtonGroup
             onCancel={() => setVisible(false)}

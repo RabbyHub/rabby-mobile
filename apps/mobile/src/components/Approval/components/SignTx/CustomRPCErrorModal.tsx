@@ -52,6 +52,7 @@ export const CustomRPCErrorModal = ({
         <View style={styles.dialogFooter}>
           <Button
             type="primary"
+            className="w-[172px]"
             onPress={onConfirm}
             title={t('page.signTx.customRPCErrorModal.button')}
             containerStyle={styles.button}

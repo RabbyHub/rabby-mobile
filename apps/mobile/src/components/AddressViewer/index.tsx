@@ -19,6 +19,7 @@ interface AddressViewProps {
   onClick?(): void;
   ellipsis?: boolean;
   showArrow?: boolean;
+  className?: string;
   showImportIcon?: boolean;
   index?: number;
   showIndex?: boolean;
@@ -32,6 +33,7 @@ export const AddressViewer = ({
   onClick,
   ellipsis = true,
   showArrow = true,
+  className = 'normal',
   index = -1,
   showIndex = false,
   style,
@@ -43,7 +45,7 @@ export const AddressViewer = ({
 
   return (
     <TouchableOpacity disabled={disabledPress} onPress={onClick}>
-      <View style={StyleSheet.flatten([styles.normal, style])}>
+      <View style={StyleSheet.flatten([styles[className], style])}>
         {showIndex && index >= 0 && (
           <Text style={styles.numberIndex}>{index}</Text>
         )}
@@ -61,7 +63,7 @@ export const AddressViewer = ({
         </Text>
       </View>
       {showArrow && (
-        <SvgIconArrowDown fill="#fff" color="#fff" style={styles.arrow} />
+        <SvgIconArrowDown className="ml-1 fill-current text-white opacity-80" />
       )}
     </TouchableOpacity>
   );

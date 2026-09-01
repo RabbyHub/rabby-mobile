@@ -9,6 +9,7 @@ import AppNavigation from '@/AppNavigation';
 import AppErrorBoundary from '@/components/ErrorBoundary';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { ThemeProvider, createTheme } from '@rneui/themed';
+import { withExpoSnack } from 'nativewind';
 import React, { Suspense, useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootSiblingParent } from 'react-native-root-siblings';
@@ -186,4 +187,4 @@ function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
   );
 }
 
-export default App;
+export default withExpoSnack(App);

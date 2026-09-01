@@ -109,7 +109,7 @@ const BuyNFT = ({
             <Text>{t('page.signTypedData.buyNFT.receiveNFT')}</Text>
           </Row>
           <Row>
-            <View style={commonStyle.relative}>
+            <View className="relative">
               <ViewMore
                 type="nft"
                 data={{

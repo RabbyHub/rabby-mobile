@@ -38,6 +38,7 @@ export const BlockedAddressDialog = ({
         <View style={styles.dialogFooter}>
           <Button
             type="primary"
+            className="w-[172px]"
             onPress={onConfirm}
             title={t('common.dialogs.blockedTransaction.button')}
             containerStyle={styles.button}

@@ -12,6 +12,7 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import type { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import type { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
+import clsx from 'clsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
@@ -363,7 +364,11 @@ export const MiniFooterBar: React.FC<Props> = ({
 
   return (
     <View style={styles.container}>
-      <View style={styles.wrapper}>
+      <View
+        style={styles.wrapper}
+        className={clsx({
+          // 'has-shadow': !isDarkTheme && hasShadow,
+        })}>
         {Header}
         <View>
           {!isInited ? null : (

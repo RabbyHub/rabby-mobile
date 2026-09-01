@@ -86,9 +86,6 @@ const getRuleDrawerWrapperStyles = (colors: AppColorsVariants) =>
       lineHeight: 14,
       color: colors['neutral-foot'],
     },
-    descriptionWrapper: {
-      position: 'relative',
-    },
     ruleThreshold: {
       display: 'flex',
       marginTop: 8,
@@ -459,7 +456,7 @@ const RuleDrawer = ({
             </View>
           )}
 
-          <View style={ruleDrawerWrapperStyles.descriptionWrapper}>
+          <View className="relative">
             <Text style={styles.description}>{currentDescription}</Text>
             {valueTooltip ? (
               <Tip content={valueTooltip}>

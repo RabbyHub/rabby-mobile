@@ -24,6 +24,7 @@ interface TokenAmountInputProps {
   onChange?(amount: string): void;
   handleClickMaxButton?: () => Promise<void> | void;
   inlinePrize?: boolean;
+  className?: string;
   placeholder?: string;
   isEstimatingGas?: boolean;
   onClickToken?: () => void;

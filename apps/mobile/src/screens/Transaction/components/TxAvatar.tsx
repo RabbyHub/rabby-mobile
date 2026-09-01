@@ -10,6 +10,7 @@ import {
   ViewStyle,
 } from 'react-native';
 interface TxAvatarProps {
+  className?: string;
   src?: string | null;
   cateId?: string | null;
   style?: StyleProp<ImageStyle>;

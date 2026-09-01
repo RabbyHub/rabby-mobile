@@ -151,6 +151,7 @@ const AssetOrder = ({
               })}>
               {actionData.receiveTokenList.map(token => (
                 <LogoWithText
+                  className="overflow-hidden w-full"
                   key={token.id}
                   logo={token.logo_url}
                   text={

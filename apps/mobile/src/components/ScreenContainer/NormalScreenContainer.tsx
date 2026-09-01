@@ -7,7 +7,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import React, { useMemo } from 'react';
 
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, ViewProps } from 'react-native';
 
 export default function NormalScreenContainer<
   T extends ReactNativeViewAs = 'View',
@@ -22,6 +22,7 @@ export default function NormalScreenContainer<
   {
     as?: T;
     noHeader?: boolean;
+    className?: ViewProps['className'];
     fitStatuBar?: boolean;
     style?: React.ComponentProps<typeof View>['style'];
     hideBottomBar?: boolean;

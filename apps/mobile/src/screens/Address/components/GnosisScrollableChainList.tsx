@@ -9,6 +9,7 @@ import FastImage from 'react-native-fast-image';
 
 type RNViewProps = {
   style?: import('react').ComponentProps<typeof View>['style'];
+  className?: string;
 };
 
 export const GnosisScrollableChainList = ({

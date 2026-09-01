@@ -19,9 +19,6 @@ const getStyle = (colors: AppColorsVariants) =>
       width: 16,
       marginRight: 4,
     },
-    alias: {
-      flex: 1,
-    },
   });
 
 const AccountAlias = ({ address }: { address: string }) => {
@@ -41,7 +38,9 @@ const AccountAlias = ({ address }: { address: string }) => {
           KEYRING_ICONS[account.type]
         }
       /> */}
-      <Text style={[commonStyle.secondaryText, styles.alias]}>{alias}</Text>
+      <Text className="flex-1" style={commonStyle.secondaryText}>
+        {alias}
+      </Text>
     </View>
   );
 };

@@ -24,8 +24,4 @@ export const getStyles = (colors: AppColorsVariants) => ({
     color: '#b4bdcc',
     marginRight: 22,
   },
-  arrow: {
-    marginLeft: 1,
-    opacity: 0.8,
-  },
 });
