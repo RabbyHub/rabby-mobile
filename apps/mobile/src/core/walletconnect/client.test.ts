@@ -177,7 +177,7 @@ describe('handleWalletConnectSessionProposal', () => {
   it('stores inner-webview proposals whose declared origin matches the browser origin', () => {
     rememberWalletConnectPairingBrowserOrigin(
       'topic-match',
-      'https://uniswap.org',
+      'https://app.uniswap.org',
     );
     const walletKit = makeWalletKit();
 
@@ -263,8 +263,10 @@ describe('handleWalletConnectSessionProposal', () => {
     );
     expect(walletKit.rejectSession).not.toHaveBeenCalled();
 
+    mockState.pairing = { status: 'idle' };
+
     // a second proposal on the same pairing that spoofs a well-known dapp
-    // is still rejected because the browser origin mapping is read-only
+    // is still rejected after the first proposal clears the global source
     handleWalletConnectSessionProposal(
       walletKit,
       makeProposalEvent({
