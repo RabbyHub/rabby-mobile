@@ -356,7 +356,7 @@ function makeScreenSpecConfig() {
       [RootNames.Unlock]: bg1DefaultConf,
 
       // StackBottom
-      [RootNames.Home]: bg1Default2024Conf,
+      [RootNames.Home]: transparentDefault2024Conf,
       [RootNames.Points]: bg1Default2024Conf,
       [RootNames.Prediction]: bg1Default2024Conf,
 

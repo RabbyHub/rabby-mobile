@@ -1,8 +1,8 @@
 import { RootNames, getScreenSystemBarConfig } from './layout';
-import { ThemeColors, ThemeColors2024 } from './theme';
+import { ThemeColors } from './theme';
 
 describe('screen system bar configuration', () => {
-  it('uses the 2024 background for the home screen', () => {
+  it('keeps the home screen transparent for edge-to-edge content', () => {
     expect(
       getScreenSystemBarConfig({
         screenName: RootNames.Home,
@@ -10,7 +10,7 @@ describe('screen system bar configuration', () => {
       }),
     ).toEqual({
       statusBarStyle: 'dark-content',
-      statusBarBackgroundColor: ThemeColors2024.light['neutral-bg-1'],
+      statusBarBackgroundColor: 'transparent',
     });
   });
 
