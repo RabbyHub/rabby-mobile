@@ -65,6 +65,7 @@ describe('screen system bar configuration', () => {
       for (const screenName of [
         RootNames.Points,
         RootNames.Settings,
+        RootNames.Lending,
         RootNames.TokenDetail,
         RootNames.TokenMarketInfo,
       ]) {

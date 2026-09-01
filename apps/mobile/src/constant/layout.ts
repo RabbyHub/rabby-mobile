@@ -368,7 +368,7 @@ function makeScreenSpecConfig() {
       [RootNames.Market]: bg1Default2024Conf,
       [RootNames.Watchlist]: bg1Default2024Conf,
       [RootNames.Meme]: bg1Default2024Conf,
-      [RootNames.Lending]: bg1Default2024Conf,
+      [RootNames.Lending]: transparentDefault2024Conf,
 
       // StackSettings
       [RootNames.Settings]: transparentDefault2024Conf,
