@@ -68,6 +68,10 @@ import {
 } from '@/utils/tempo';
 import tokenListStore from '@/store/tokens';
 import RcIconSwapFree from '@/assets2024/icons/swap/free.svg';
+import {
+  formatBridgeDurationLabel,
+  getBridgeDurationColor,
+} from '../utils/bridgeDuration';
 
 const RABBY_FEE = '0.25%';
 const RABBY_HALF_FEE = '0.12%';
@@ -184,16 +188,10 @@ const BridgeShowMore = ({
 
   const showSourceFallback = !!insufficient || !fromToken || !supportDirectSign;
 
-  const durationColor = useMemo(() => {
-    const mins = Math.ceil((duration || 0) / 60);
-    if (mins > 10) {
-      return colors2024['red-default'];
-    }
-    if (mins > 3) {
-      return colors2024['orange-default'];
-    }
-    return colors2024['brand-default'];
-  }, [duration, colors2024]);
+  const durationColor = useMemo(
+    () => getBridgeDurationColor(duration || 0, colors2024),
+    [duration, colors2024],
+  );
 
   const QuoteContent = useMemo(
     () => (
@@ -279,9 +277,7 @@ const BridgeShowMore = ({
           {type === 'bridge' && duration ? (
             <Text style={[styles.sourceName, { color: durationColor }]}>
               {' · '}
-              {t('page.bridge.duration', {
-                duration: Math.ceil(duration / 60),
-              })}
+              {formatBridgeDurationLabel(duration, t)}
             </Text>
           ) : null}
           {showArrow && (sourceName || sourceLogo) ? (

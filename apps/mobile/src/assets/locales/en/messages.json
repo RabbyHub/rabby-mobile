@@ -1027,6 +1027,7 @@
       "need-to-approve-token-before-bridge": "Need to approve token before bridge",
       "via-bridge": "via {{bridge}}",
       "duration": "{{duration}} min",
+      "durationSeconds": "{{duration}}s",
       "best": "Best",
       "best-subtitle": "The best quote is determined by a combination of estimated total cost (including gas fees) and delivery speed.",
       "swap-best-subtitle": "The best quote is determined by the lowest estimated total cost, including the exchange rate and gas fees.",
@@ -1109,13 +1110,7 @@
         "search": "Search",
         "websites": "Websites",
         "tabs": {
-          "__skip_translation": [
-            "favorite",
-            "defi",
-            "dex",
-            "rwa",
-            "nft"
-          ],
+          "__skip_translation": ["favorite", "defi", "dex", "rwa", "nft"],
           "favorite": "Favorite",
           "all": "All",
           "defi": "DeFi",
@@ -1299,9 +1294,7 @@
         "buyWithFiatDesc": "Simple crypto purchase"
       },
       "importAddress": {
-        "__skip_translation": [
-          "safe"
-        ],
+        "__skip_translation": ["safe"],
         "importTitle": "Import Wallet",
         "seedPhrase": "Import Seed Phrase",
         "privateKey": "Import Private Key",
@@ -1841,10 +1834,7 @@
       "gnosisChainScrollDesc": "- This wallet was found deployed on {{count}} chains -"
     },
     "rabbyPoints": {
-      "__skip_translation": [
-        "titleWithStar",
-        "ClaimComing"
-      ],
+      "__skip_translation": ["titleWithStar", "ClaimComing"],
       "title": "Rabby Points",
       "titleWithStar": "Rabby Points ✨",
       "out-of-x-current-total-points": "Out of {{total}} Total Distributed Points",
@@ -2313,9 +2303,7 @@
       }
     },
     "setting": {
-      "__skip_translation": [
-        "transactionNotification"
-      ],
+      "__skip_translation": ["transactionNotification"],
       "screenTitle": "Settings",
       "enableWhitelist": "Enable whitelist for sending assets",
       "faceId": "Face ID",
@@ -2899,9 +2887,7 @@
           "loadingMore": "Loading more history"
         },
         "positions": {
-          "__skip_translation": [
-            "skipMarketCloseConfirmation"
-          ],
+          "__skip_translation": ["skipMarketCloseConfirmation"],
           "empty": "You have no positions",
           "closeAll": "Close All",
           "closeAllConfirmTitle": "Confirm Close All Positions",
@@ -3619,9 +3605,7 @@
           "mySupplies": "My supplies"
         },
         "item": {
-          "__skip_translation": [
-            "tvl"
-          ],
+          "__skip_translation": ["tvl"],
           "tvl": "TVL",
           "wrapperToken": "Wrapped token for {{name}}"
         }
@@ -3766,9 +3750,7 @@
         "zeroLtvCollateralTips": "You have following LTV = 0 collaterals and thus can only repay with these collaterals first according to collateral repay rules. "
       },
       "manageEmode": {
-        "__skip_translation": [
-          "emode"
-        ],
+        "__skip_translation": ["emode"],
         "emode": "E-Mode",
         "title": "Manage E-Mode",
         "disableTitle": "Disable",
