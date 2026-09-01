@@ -3543,7 +3543,10 @@
         "method_other": "{{count}} методов"
       },
       "unsupportedCapabilityList": "{{first}} и {{second}}",
-      "unsupportedRequiredRequest": "Неподдерживаемый обязательный запрос WalletConnect: {{capabilities}} не поддерживается."
+      "unsupportedRequiredRequest": "Неподдерживаемый обязательный запрос WalletConnect: {{capabilities}} не поддерживается.",
+      "verifyWarningScam": "WalletConnect Verify пометил это dapp как мошенническое. Подключение может поставить ваши активы под угрозу.",
+      "verifyWarningInvalid": "Это dapp не прошло проверку WalletConnect Verify. Оно может выдавать себя за другой сайт.",
+      "verifyWarningUnknown": "Rabby не удалось подтвердить подлинность этого dapp через WalletConnect Verify. Подключайтесь, только если доверяете этому сайту."
     }
   },
   "component": {

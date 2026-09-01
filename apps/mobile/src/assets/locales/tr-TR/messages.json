@@ -3422,7 +3422,10 @@
         "method_other": "{{count}} yöntem"
       },
       "unsupportedCapabilityList": "{{first}} ve {{second}}",
-      "unsupportedRequiredRequest": "Desteklenmeyen zorunlu WalletConnect isteği: {{capabilities}} desteklenmiyor."
+      "unsupportedRequiredRequest": "Desteklenmeyen zorunlu WalletConnect isteği: {{capabilities}} desteklenmiyor.",
+      "verifyWarningScam": "Bu dapp, WalletConnect Verify tarafından dolandırıcılık olarak işaretlendi. Bağlanmak varlıklarınızı riske atabilir.",
+      "verifyWarningInvalid": "Bu dapp, WalletConnect Verify kontrollerini geçemedi. Başka bir siteyi taklit ediyor olabilir.",
+      "verifyWarningUnknown": "Rabby, bu dapp'in kimliğini WalletConnect Verify ile doğrulayamadı. Yalnızca bu siteye güveniyorsanız bağlanın."
     }
   },
   "component": {

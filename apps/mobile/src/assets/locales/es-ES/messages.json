@@ -3703,7 +3703,10 @@
         "method_other": "{{count}} métodos"
       },
       "unsupportedCapabilityList": "{{first}} y {{second}}",
-      "unsupportedRequiredRequest": "Solicitud obligatoria de WalletConnect no compatible: {{capabilities}} no es compatible."
+      "unsupportedRequiredRequest": "Solicitud obligatoria de WalletConnect no compatible: {{capabilities}} no es compatible.",
+      "verifyWarningScam": "WalletConnect Verify ha marcado esta dapp como una estafa. Conectar puede poner en riesgo tus activos.",
+      "verifyWarningInvalid": "Esta dapp no superó las comprobaciones de WalletConnect Verify. Podría estar suplantando otro sitio.",
+      "verifyWarningUnknown": "Rabby no pudo verificar la identidad de esta dapp con WalletConnect Verify. Conéctate solo si confías en este sitio."
     }
   },
   "global": {

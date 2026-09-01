@@ -1,5 +1,6 @@
 import { initWalletConnect } from './client';
 import { pairWalletConnectUri } from './pairing';
+import { getWalletConnectPairingBrowserOrigin } from './pairingBrowserOrigin';
 import type { WalletConnectDebugState } from './types';
 
 const WC_URI =
@@ -145,5 +146,36 @@ describe('walletconnect pairing', () => {
       status: 'error',
       error: 'Missing WalletConnect project id.',
     });
+  });
+
+  it('remembers the browser origin for inner-webview pairings', async () => {
+    const walletKit = {
+      pair: jest.fn().mockResolvedValue(undefined),
+    } as unknown as Awaited<ReturnType<typeof initWalletConnect>>;
+    jest.mocked(initWalletConnect).mockResolvedValue(walletKit);
+
+    await pairWalletConnectUri({
+      uri: WC_URI,
+      source: 'inner-webview',
+      browserOrigin: 'https://app.uniswap.org',
+    });
+
+    expect(getWalletConnectPairingBrowserOrigin('abc123')).toBe(
+      'https://app.uniswap.org',
+    );
+  });
+
+  it('does not remember a browser origin when none is provided', async () => {
+    const walletKit = {
+      pair: jest.fn().mockResolvedValue(undefined),
+    } as unknown as Awaited<ReturnType<typeof initWalletConnect>>;
+    jest.mocked(initWalletConnect).mockResolvedValue(walletKit);
+
+    await pairWalletConnectUri({
+      uri: NEXT_WC_URI,
+      source: 'qr',
+    });
+
+    expect(getWalletConnectPairingBrowserOrigin('def456')).toBeNull();
   });
 });

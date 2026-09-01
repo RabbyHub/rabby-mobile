@@ -3423,7 +3423,10 @@
         "method_other": "{{count}}개 메서드"
       },
       "unsupportedCapabilityList": "{{first}} 및 {{second}}",
-      "unsupportedRequiredRequest": "지원되지 않는 필수 WalletConnect 요청: {{capabilities}}은(는) 지원되지 않습니다."
+      "unsupportedRequiredRequest": "지원되지 않는 필수 WalletConnect 요청: {{capabilities}}은(는) 지원되지 않습니다.",
+      "verifyWarningScam": "이 dapp은 WalletConnect Verify에 의해 스캠으로 표시되었습니다. 연결하면 자산이 위험에 처할 수 있습니다.",
+      "verifyWarningInvalid": "이 dapp은 WalletConnect Verify 검증을 통과하지 못했습니다. 다른 사이트를 사칭하고 있을 수 있습니다.",
+      "verifyWarningUnknown": "Rabby가 WalletConnect Verify로 이 dapp의 신원을 확인하지 못했습니다. 이 사이트를 신뢰하는 경우에만 연결하세요."
     }
   },
   "global": {

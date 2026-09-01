@@ -3543,7 +3543,10 @@
         "method_other": "{{count}} phương thức"
       },
       "unsupportedCapabilityList": "{{first}} và {{second}}",
-      "unsupportedRequiredRequest": "Yêu cầu WalletConnect bắt buộc không được hỗ trợ: {{capabilities}} không được hỗ trợ."
+      "unsupportedRequiredRequest": "Yêu cầu WalletConnect bắt buộc không được hỗ trợ: {{capabilities}} không được hỗ trợ.",
+      "verifyWarningScam": "Dapp này bị WalletConnect Verify gắn cờ là lừa đảo. Kết nối có thể khiến tài sản của bạn gặp rủi ro.",
+      "verifyWarningInvalid": "Dapp này không vượt qua được kiểm tra của WalletConnect Verify. Nó có thể đang mạo danh một trang web khác.",
+      "verifyWarningUnknown": "Rabby không thể xác minh danh tính của dapp này bằng WalletConnect Verify. Chỉ kết nối nếu bạn tin tưởng trang web này."
     }
   },
   "component": {

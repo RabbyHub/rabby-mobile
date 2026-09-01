@@ -625,6 +625,23 @@ export function WalletConnectConnectSheet({
     }
   };
 
+  const verifyWarningText = useMemo(() => {
+    const verify = proposal.verify;
+    if (!verify) {
+      return '';
+    }
+    if (verify.isScam) {
+      return t('page.walletConnect.verifyWarningScam');
+    }
+    if (verify.validation === 'INVALID') {
+      return t('page.walletConnect.verifyWarningInvalid');
+    }
+    if (verify.validation !== 'VALID') {
+      return t('page.walletConnect.verifyWarningUnknown');
+    }
+    return '';
+  }, [proposal, t]);
+
   const displayTipText = walletConnectBlockText || connectBtnStatus.text;
   const LevelTipColor = walletConnectBlockText
     ? SecurityLevelTipColor[Level.FORBIDDEN]
@@ -669,6 +686,30 @@ export function WalletConnectConnectSheet({
           </View>
         </View>
       </BottomSheetScrollView>
+
+      {verifyWarningText ? (
+        <View
+          style={[
+            styles.securityTip,
+            {
+              backgroundColor: SecurityLevelTipColor[Level.WARNING].bg,
+            },
+          ]}>
+          <RcIconWarningCircleCC
+            color={SecurityLevelTipColor[Level.WARNING].text}
+            style={styles.securityTipIcon}
+          />
+          <Text
+            style={[
+              styles.securityTipText,
+              {
+                color: SecurityLevelTipColor[Level.WARNING].text,
+              },
+            ]}>
+            {verifyWarningText}
+          </Text>
+        </View>
+      ) : null}
 
       {displayTipText && LevelTipColor ? (
         <View

@@ -3422,7 +3422,10 @@
         "method_other": "{{count}} metode"
       },
       "unsupportedCapabilityList": "{{first}} dan {{second}}",
-      "unsupportedRequiredRequest": "Permintaan wajib WalletConnect tidak didukung: {{capabilities}} tidak didukung."
+      "unsupportedRequiredRequest": "Permintaan wajib WalletConnect tidak didukung: {{capabilities}} tidak didukung.",
+      "verifyWarningScam": "Dapp ini ditandai sebagai penipuan oleh WalletConnect Verify. Menghubungkan dapat membahayakan aset Anda.",
+      "verifyWarningInvalid": "Dapp ini tidak lolos pemeriksaan WalletConnect Verify. Dapp ini mungkin menyamar sebagai situs lain.",
+      "verifyWarningUnknown": "Rabby tidak dapat memverifikasi identitas dapp ini dengan WalletConnect Verify. Hubungkan hanya jika Anda mempercayai situs ini."
     }
   },
   "component": {

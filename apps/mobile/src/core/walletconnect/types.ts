@@ -1,4 +1,4 @@
-import type { ProposalTypes } from '@walletconnect/types';
+import type { ProposalTypes, Verify } from '@walletconnect/types';
 
 export type WalletConnectNamespace = {
   chains?: string[];
@@ -46,6 +46,12 @@ export type WalletConnectDappMetadata = {
   redirectNative?: string;
 };
 
+export type WalletConnectVerifyInfo = {
+  validation: Verify.Context['verified']['validation'];
+  verifiedOrigin: string;
+  isScam: boolean;
+};
+
 export type WalletConnectProposalViewModel = {
   id: number;
   source: WalletConnectPairingSource;
@@ -57,7 +63,8 @@ export type WalletConnectProposalViewModel = {
   requestedMethods: string[];
   unsupportedRequiredChains: string[];
   unsupportedRequiredMethods: string[];
-  verifyContext?: unknown;
+  verifyContext?: Verify.Context;
+  verify: WalletConnectVerifyInfo | null;
   error?: string;
 };
 

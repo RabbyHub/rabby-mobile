@@ -3603,7 +3603,10 @@
         "method_other": "{{count}} 個方法"
       },
       "unsupportedCapabilityList": "{{first}} 和 {{second}}",
-      "unsupportedRequiredRequest": "不支援必需的 WalletConnect 請求：{{capabilities}}。"
+      "unsupportedRequiredRequest": "不支援必需的 WalletConnect 請求：{{capabilities}}。",
+      "verifyWarningScam": "此 DApp 被 WalletConnect Verify 標記為詐騙網站，連接可能危及您的資產安全。",
+      "verifyWarningInvalid": "此 DApp 未通過 WalletConnect Verify 驗證，可能正在冒充其他網站。",
+      "verifyWarningUnknown": "Rabby 無法透過 WalletConnect Verify 驗證此 DApp 的身分，請確認信任該網站後再連接。"
     }
   },
   "component": {

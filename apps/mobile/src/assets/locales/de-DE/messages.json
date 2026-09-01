@@ -3808,7 +3808,10 @@
         "method_other": "{{count}} Methoden"
       },
       "unsupportedCapabilityList": "{{first}} und {{second}}",
-      "unsupportedRequiredRequest": "Erforderliche WalletConnect-Anfrage wird nicht unterstützt: {{capabilities}}."
+      "unsupportedRequiredRequest": "Erforderliche WalletConnect-Anfrage wird nicht unterstützt: {{capabilities}}.",
+      "verifyWarningScam": "Diese Dapp wurde von WalletConnect Verify als Betrug markiert. Eine Verbindung kann deine Assets gefährden.",
+      "verifyWarningInvalid": "Diese Dapp hat die WalletConnect-Verify-Prüfung nicht bestanden. Sie gibt sich möglicherweise als eine andere Website aus.",
+      "verifyWarningUnknown": "Rabby konnte die Identität dieser Dapp nicht mit WalletConnect Verify bestätigen. Verbinde dich nur, wenn du dieser Seite vertraust."
     }
   },
   "constant": {
