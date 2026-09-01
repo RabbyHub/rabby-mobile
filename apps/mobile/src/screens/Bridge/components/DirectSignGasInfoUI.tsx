@@ -110,6 +110,8 @@ export const DirectSignGasInfoUI = ({
     onOpenChange?.(false);
   }, [onOpenChange]);
 
+  const useInternalGasModal = !!renderModal;
+
   const measureTriggerOnce = useCallback(() => {
     return new Promise<TriggerLayout | null>(resolve => {
       const trigger = triggerRef.current;
@@ -214,17 +216,26 @@ export const DirectSignGasInfoUI = ({
                   ]}>
                   {valueText}
                 </Text>
-                <Animated.View
-                  style={{
-                    transform: [{ rotate: visible ? '-90deg' : '90deg' }],
-                  }}>
+                {useInternalGasModal ? (
+                  <Animated.View
+                    style={{
+                      transform: [{ rotate: visible ? '-90deg' : '90deg' }],
+                    }}>
+                    <RcIconBluePolygon
+                      style={styles.arrowIcon}
+                      color={
+                        valueColor || textColor || colors2024['brand-default']
+                      }
+                    />
+                  </Animated.View>
+                ) : (
                   <RcIconBluePolygon
                     style={styles.arrowIcon}
                     color={
                       valueColor || textColor || colors2024['brand-default']
                     }
                   />
-                </Animated.View>
+                )}
               </View>
             </TouchableOpacity>
           ) : !loading && empty ? (
