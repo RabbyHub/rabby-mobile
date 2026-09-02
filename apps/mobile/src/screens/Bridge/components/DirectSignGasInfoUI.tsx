@@ -239,12 +239,12 @@ export const DirectSignGasInfoUI = ({
               </View>
             </TouchableOpacity>
           ) : !loading && empty ? (
-            <>
+            <View style={styles.valueSlot}>
               {rightPrefix}
               <Text style={styles.noQuotePlaceholder}>{emptyText}</Text>
-            </>
+            </View>
           ) : (
-            <>
+            <View style={styles.valueSlot}>
               {rightPrefix}
               <CustomSkeleton
                 style={
@@ -253,7 +253,7 @@ export const DirectSignGasInfoUI = ({
                     : styles.skeletonPill
                 }
               />
-            </>
+            </View>
           )}
         </View>
       </ListItem>
@@ -308,6 +308,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    minHeight: 24,
   },
   rightContentTouchable: {
     flexDirection: 'row',
@@ -327,7 +328,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    height: 24,
+    minHeight: 24,
   },
   triggerButton: {
     paddingHorizontal: 4,
@@ -339,6 +340,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   noQuotePlaceholder: {
     color: colors2024['neutral-foot'],
     fontSize: 12,
+    lineHeight: 18,
+  },
+  valueSlot: {
+    minHeight: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   skeletonPill: {
     width: 131,

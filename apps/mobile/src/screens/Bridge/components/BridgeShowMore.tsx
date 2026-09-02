@@ -228,7 +228,7 @@ const BridgeShowMore = ({
 
   const BestQuoteContent = useMemo(
     () => (
-      <View style={[styles.bestQuoteWrapper, { height: 24 }]}>
+      <View style={[styles.bestQuoteWrapper, styles.bestQuoteWrapperMinHeight]}>
         <View>
           <IconBestQuoteTag height={24} style={styles.bestQuoteTag} />
           <View style={styles.bestTagWrapper}>
@@ -260,15 +260,7 @@ const BridgeShowMore = ({
             };
 
       if (quoteLoading) {
-        return (
-          <CustomSkeleton
-            style={{
-              width: 60,
-              height: 24,
-              borderRadius: 12,
-            }}
-          />
-        );
+        return <CustomSkeleton style={styles.sourceSkeleton} />;
       }
 
       const content = (
@@ -370,7 +362,7 @@ const BridgeShowMore = ({
 
   return (
     <View style={StyleSheet.flatten([styles.container])}>
-      <View style={{ gap: 12 }}>
+      <View style={styles.containerContent}>
         {priceImpactContent}
 
         {type === 'bridge' && sourceContentRender()}
@@ -418,24 +410,30 @@ const BridgeShowMore = ({
 
         <ListItem name={t('page.swap.rabbyFee.title')}>
           {isRabbyFeeFree ? (
-            <View style={styles.freeFeeContainer}>
-              <RcIconSwapFree width={52} height={16} />
-              <Text style={styles.waivedFee}>{RABBY_FEE}</Text>
+            <View style={styles.feeValueSlot}>
+              <View style={styles.freeFeeContainer}>
+                <RcIconSwapFree width={52} height={16} />
+                <Text style={styles.waivedFee}>{RABBY_FEE}</Text>
+              </View>
             </View>
           ) : isRabbyFeeHalf ? (
             <Pressable onPress={openFeePopup}>
-              <View style={styles.halfFeeContainer}>
-                <Text style={styles.halfOriginalFee}>{RABBY_FEE}</Text>
-                <Text style={styles.halfFee}>{RABBY_HALF_FEE}</Text>
+              <View style={styles.feeValueSlot}>
+                <View style={styles.halfFeeContainer}>
+                  <Text style={styles.halfOriginalFee}>{RABBY_FEE}</Text>
+                  <Text style={styles.halfFee}>{RABBY_HALF_FEE}</Text>
+                </View>
               </View>
             </Pressable>
           ) : (
             <Pressable onPress={openFeePopup}>
-              <Text style={isWrapToken ? styles.wrapTokenFee : styles.fee}>
-                {isWrapToken && type === 'swap'
-                  ? t('page.swap.no-fees-for-wrap')
-                  : RABBY_FEE}
-              </Text>
+              <View style={styles.feeValueSlot}>
+                <Text style={isWrapToken ? styles.wrapTokenFee : styles.fee}>
+                  {isWrapToken && type === 'swap'
+                    ? t('page.swap.no-fees-for-wrap')
+                    : RABBY_FEE}
+                </Text>
+              </View>
             </Pressable>
           )}
         </ListItem>
@@ -1188,7 +1186,7 @@ export const DirectSignGasInfo = ({
           name={<>{resolvedGasFeeLabel}</>}
           style={gasFeeListItemStyle}
           innerStyle={gasFeeListItemInnerStyle}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <View style={styles.previewValueSlot}>
             {fallbackSourceSelector ?? sourceSelector}
             {!loading && noQuote ? (
               <Text style={styles.noQuotePlaceholder}>-</Text>
@@ -1284,7 +1282,11 @@ export const RecommendFromToken = ({
 };
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
-  container: { marginHorizontal: 24, marginTop: 12 },
+  container: { marginHorizontal: 24, marginTop: 10 },
+  containerContent: {
+    gap: 10,
+    paddingHorizontal: 6,
+  },
   impactTooltipText: {
     fontSize: 12,
     lineHeight: 16,
@@ -1357,7 +1359,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     fontSize: 16,
     fontStyle: 'normal',
     fontWeight: '700',
-    lineHeight: 20,
+    lineHeight: 18,
   },
   wrapTokenFee: {
     color: colors2024['neutral-foot'],
@@ -1366,7 +1368,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     fontSize: 16,
     fontStyle: 'normal',
     fontWeight: '500',
-    lineHeight: 20,
+    lineHeight: 18,
   },
   freeFeeContainer: {
     flexDirection: 'row',
@@ -1383,14 +1385,14 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '700',
-    lineHeight: 20,
+    lineHeight: 18,
   },
   halfOriginalFee: {
     color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '700',
-    lineHeight: 20,
+    lineHeight: 18,
     textDecorationLine: 'line-through',
   },
   waivedFee: {
@@ -1398,7 +1400,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '400',
-    lineHeight: 20,
+    lineHeight: 18,
     textDecorationLine: 'line-through',
   },
   recommendFromToken: {
@@ -1470,6 +1472,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    minHeight: 24,
   },
 
   afterLabel: {
@@ -1480,6 +1483,24 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   noQuotePlaceholder: {
     color: colors2024['neutral-foot'],
     fontSize: 12,
+    lineHeight: 18,
+  },
+  previewValueSlot: {
+    minHeight: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  feeValueSlot: {
+    minHeight: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sourceSkeleton: {
+    width: 60,
+    height: 24,
+    borderRadius: 12,
   },
   gasSkeleton: {
     width: 131,
@@ -1512,6 +1533,9 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     overflow: 'hidden',
+  },
+  bestQuoteWrapperMinHeight: {
+    minHeight: 24,
   },
   bestQuoteTag: {
     left: -StyleSheet.hairlineWidth * 2,
