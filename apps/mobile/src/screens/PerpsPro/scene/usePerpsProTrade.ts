@@ -89,7 +89,6 @@ import {
   getPerpsProReduceOnlyAvailability,
   getPerpsProTradeExecutionPrice,
   inferPerpsProConditionalClassification,
-  isPerpsProAmountAboveSharedMax,
   resolvePerpsProMinimumOrderAmount,
   resolvePerpsProTradeAmount,
   sanitizePerpsProDecimalInput,
@@ -305,7 +304,6 @@ export const usePerpsProTrade = ({
   const percentageRef = useRef(0);
   const priceFillRevisionRef = useRef(0);
   const amountDraftRef = useRef(createPerpsProTradeAmountDraft());
-  const amountOverflowToastActiveRef = useRef(false);
   const latestTradeRef = useRef<PerpsLatestTrade | null>(null);
   const shouldAutoFillLimitPriceRef = useRef(form.orderType === 'limit');
   amountSourceRef.current = amountSource;
@@ -438,7 +436,6 @@ export const usePerpsProTrade = ({
       initialLeverageConfiguration,
       leverageConfigurationScopeKey,
     );
-    amountOverflowToastActiveRef.current = false;
     setReview(null);
   }, [
     accountIdentity,
@@ -458,7 +455,6 @@ export const usePerpsProTrade = ({
       leverageConfigurationScopeKey,
     );
     amountDraftRef.current = createPerpsProTradeAmountDraft();
-    amountOverflowToastActiveRef.current = false;
     amountSourceRef.current = 'manual';
     latestTradeRef.current = null;
     percentageRef.current = 0;
@@ -668,7 +664,6 @@ export const usePerpsProTrade = ({
       };
 
       amountDraftRef.current = createPerpsProTradeAmountDraft();
-      amountOverflowToastActiveRef.current = false;
       amountSourceRef.current = 'manual';
       percentageRef.current = 0;
       shouldAutoFillLimitPriceRef.current =
@@ -685,7 +680,6 @@ export const usePerpsProTrade = ({
     const currentForm = formRef.current;
     if (currentForm.amountUnit === amountUnit) return;
 
-    amountOverflowToastActiveRef.current = false;
     amountDraftRef.current = createPerpsProTradeAmountDraft();
     amountSourceRef.current = 'manual';
     percentageRef.current = 0;
@@ -1101,33 +1095,6 @@ export const usePerpsProTrade = ({
       }),
     [form, getMaxBase, maxDisplayMarketPrice],
   );
-  const isAmountAboveSharedMax = useCallback(
-    (amount: string) =>
-      tradeConfigurationReady &&
-      isPerpsProAmountAboveSharedMax({
-        amount,
-        amountUnit: form.amountUnit,
-        buyMaxBase: getMaxBase('buy').toFixed(),
-        minimumQuoteAmount: PERPS_MINI_USD_VALUE,
-        price: displayReferencePrice,
-        sellMaxBase: getMaxBase('sell').toFixed(),
-        szDecimals: market?.marketData.szDecimals ?? 0,
-      }),
-    [
-      displayReferencePrice,
-      form.amountUnit,
-      getMaxBase,
-      market?.marketData.szDecimals,
-      tradeConfigurationReady,
-    ],
-  );
-  const currentManualAmountAboveSharedMax =
-    amountSource === 'manual' && isAmountAboveSharedMax(form.amount);
-  useEffect(() => {
-    if (!currentManualAmountAboveSharedMax) {
-      amountOverflowToastActiveRef.current = false;
-    }
-  }, [currentManualAmountAboveSharedMax]);
   const setAmount = useCallback(
     (value: string) => {
       const amount = sanitizePerpsProDecimalInput(value, amountDecimals);
@@ -1142,28 +1109,19 @@ export const usePerpsProTrade = ({
       setAmountSource('manual');
       setPercentageState(0);
       patchForm({ amount });
-
-      const amountAboveSharedMax = isAmountAboveSharedMax(amount);
-      if (amountAboveSharedMax && !amountOverflowToastActiveRef.current) {
-        showToast(t('page.perps.pro.trade.insufficientBalance'), 'error');
-      }
-      amountOverflowToastActiveRef.current = amountAboveSharedMax;
     },
     [
       amountDecimals,
       displayReferencePrice,
       form.amountUnit,
-      isAmountAboveSharedMax,
       market?.marketData.szDecimals,
       patchForm,
-      t,
     ],
   );
   const beginAmountEntry = useCallback(() => {
     tradeInputFocusOwnerRef.current = 'amount';
     if (amountSource !== 'slider') return;
     amountDraftRef.current = createPerpsProTradeAmountDraft();
-    amountOverflowToastActiveRef.current = false;
     amountSourceRef.current = 'manual';
     percentageRef.current = 0;
     setAmountSource('manual');
@@ -1360,7 +1318,6 @@ export const usePerpsProTrade = ({
   );
   const setPercentage = useCallback(
     (percent: number) => {
-      amountOverflowToastActiveRef.current = false;
       const next = Math.max(0, Math.min(100, percent));
       const nextSource = next === 0 ? 'manual' : 'slider';
       if (next === 0) {
@@ -1584,17 +1541,24 @@ export const usePerpsProTrade = ({
         side,
         szDecimals: market.marketData.szDecimals,
       });
-      const sharedMaxBase = BigNumber.max(
-        getMaxBase('buy'),
-        getMaxBase('sell'),
+      const rawSelectedMaxBase =
+        scopedActiveAssetData?.maxTradeSzs[side === 'buy' ? 0 : 1];
+      const rawSelectedMaximum = new BigNumber(
+        rawSelectedMaxBase ?? Number.NaN,
       );
+      const hasKnownSelectedMaximum =
+        rawSelectedMaximum.isFinite() && rawSelectedMaximum.gte(0);
+      const selectedMaxBase = getMaxBase(side);
       if (
-        sharedMaxBase.gt(0) &&
-        new BigNumber(command.baseSize).gt(sharedMaxBase)
+        !commandForm.reduceOnly &&
+        hasKnownSelectedMaximum &&
+        selectedMaxBase.isFinite() &&
+        selectedMaxBase.gte(0) &&
+        new BigNumber(command.baseSize).gt(selectedMaxBase)
       ) {
         throw new Error(t('page.perps.pro.trade.insufficientBalance'));
       }
-      if (form.reduceOnly) {
+      if (commandForm.reduceOnly) {
         const signedSize = positive(
           new BigNumber(currentPosition?.szi ?? 0).abs(),
         );
@@ -1684,6 +1648,7 @@ export const usePerpsProTrade = ({
       market,
       reduceOnlyAvailability.buyUnavailable,
       reduceOnlyAvailability.sellUnavailable,
+      scopedActiveAssetData,
       t,
       tpSlErrorText,
     ],
@@ -1954,7 +1919,6 @@ export const usePerpsProTrade = ({
           'success',
         );
         amountDraftRef.current = createPerpsProTradeAmountDraft();
-        amountOverflowToastActiveRef.current = false;
         amountSourceRef.current = 'manual';
         percentageRef.current = 0;
         patchForm({ amount: '' });
@@ -2164,7 +2128,6 @@ export const usePerpsProTrade = ({
           'success',
         );
         amountDraftRef.current = createPerpsProTradeAmountDraft();
-        amountOverflowToastActiveRef.current = false;
         amountSourceRef.current = 'manual';
         percentageRef.current = 0;
         patchForm({

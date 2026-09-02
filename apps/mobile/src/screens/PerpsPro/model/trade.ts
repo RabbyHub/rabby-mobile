@@ -125,43 +125,6 @@ export const resolvePerpsProTradeAmount = ({
   };
 };
 
-export const isPerpsProAmountAboveSharedMax = ({
-  amount,
-  amountUnit,
-  buyMaxBase,
-  minimumQuoteAmount,
-  price,
-  sellMaxBase,
-  szDecimals,
-}: {
-  amount: string;
-  amountUnit: PerpsProTradeAmountUnit;
-  buyMaxBase: string;
-  minimumQuoteAmount: string | number;
-  price: string;
-  sellMaxBase: string;
-  szDecimals: number;
-}) => {
-  const resolved = resolvePerpsProTradeAmount({
-    amount,
-    amountUnit,
-    price,
-    szDecimals,
-  });
-  const buyMaximum = decimal(buyMaxBase);
-  const sellMaximum = decimal(sellMaxBase);
-  const minimumQuote = decimal(minimumQuoteAmount);
-  if (!resolved || !buyMaximum || !sellMaximum || !minimumQuote) {
-    return false;
-  }
-  const sharedMaximum = BigNumber.max(buyMaximum, sellMaximum, 0);
-  return (
-    sharedMaximum.gt(0) &&
-    new BigNumber(resolved.quoteAmount).gte(minimumQuote) &&
-    new BigNumber(resolved.baseSize).gt(sharedMaximum)
-  );
-};
-
 /**
  * Resolves the first protocol-valid base-size lot whose quote notional meets
  * the exchange floor. The display value is rounded up so the two-decimal hint
