@@ -38731,7 +38731,7 @@ __metadata:
     typescript: "npm:5.7.3"
     use-count-up: "npm:^3.0.1"
     viem: "npm:2.47.6"
-    warden.rn: "npm:2.2.1"
+    warden.rn: "patch:warden.rn@npm%3A2.2.1#~/.yarn/patches/warden.rn-npm-2.2.1-c1350e5489.patch"
     web3: "npm:^4.3.0"
     web3-eth-abi: "npm:1.7.0"
     web3-utils: "npm:1.7.0"
@@ -46692,6 +46692,19 @@ __metadata:
     "@babel/types": "npm:7.28.5"
     metro-source-map: "npm:0.83.3"
   checksum: 10/8c3f67065497d8e24e7bccde7f642bf3f35e0c37d8a6aede3a606640de36cdb310645e31f6cc811b38d2c550d484e1efdc5b3ffbdef2d9547f2247dfeea26db5
+  languageName: node
+  linkType: hard
+
+"warden.rn@patch:warden.rn@npm%3A2.2.1#~/.yarn/patches/warden.rn-npm-2.2.1-c1350e5489.patch":
+  version: 2.2.1
+  resolution: "warden.rn@patch:warden.rn@npm%3A2.2.1#~/.yarn/patches/warden.rn-npm-2.2.1-c1350e5489.patch::version=2.2.1&hash=c7649d"
+  dependencies:
+    "@babel/generator": "npm:7.28.5"
+    "@babel/parser": "npm:7.28.5"
+    "@babel/traverse": "npm:7.28.5"
+    "@babel/types": "npm:7.28.5"
+    metro-source-map: "npm:0.83.3"
+  checksum: 10/4cbe5907ced34a1bfebd0fd428204e522af63f43d145dc1efefb5ae3edbf1675bbe8975d204ac1f0bfd889240812b10ce37ea3d7d3a488a684def9668dc8c56b
   languageName: node
   linkType: hard
 
