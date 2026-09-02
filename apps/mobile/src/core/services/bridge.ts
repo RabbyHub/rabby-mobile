@@ -21,6 +21,7 @@ export type BridgeRecord = {
   tx: Partial<Tx>;
   rabby_fee: number;
   slippage: number;
+  duration: number;
 };
 
 export type BridgeServiceStore = {
