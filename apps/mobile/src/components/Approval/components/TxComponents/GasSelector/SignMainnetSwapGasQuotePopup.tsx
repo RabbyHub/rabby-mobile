@@ -485,11 +485,12 @@ export const SignMainnetSwapGasQuotePopup = ({
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   sheetContent: {
     flex: 1,
   },
   sheetContentContainer: {
+    paddingTop: 12,
     paddingHorizontal: 16,
     paddingBottom: 24,
     gap: 32,
@@ -516,7 +517,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     padding: 2,
     borderRadius: 8,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
   },
   gasHeaderItem: {
     flexDirection: 'row',
@@ -687,12 +690,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 12,
   },
   refreshButton: {
     width: 32,
     height: 32,
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
   },
   quotesSubtitle: {
     fontSize: 14,
