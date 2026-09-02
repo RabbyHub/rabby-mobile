@@ -409,7 +409,7 @@ function makeScreenSpecConfig() {
       [RootNames.MultiSend]: bg1Default2024Conf,
       [RootNames.SendNFT]: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       [RootNames.MultiSendNFT]: bg1Default2024Conf,
-      [RootNames.Receive]: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      [RootNames.Receive]: transparentDefault2024Conf,
       [RootNames.SwapBridge]: bg1Default2024Conf,
       [RootNames.MultiSwapBridge]: bg1Default2024Conf,
       [RootNames.GnosisTransactionQueue]: card2DefaultConf,

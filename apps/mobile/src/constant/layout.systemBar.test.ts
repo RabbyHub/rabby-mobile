@@ -9,6 +9,7 @@ const transparentScreenNames = [
   RootNames.WalletConnect,
   RootNames.BatchRevoke,
   RootNames.GasAccount,
+  RootNames.Receive,
   RootNames.Perps,
   RootNames.Scanner,
   RootNames.SingleAddressHome,
