@@ -199,7 +199,7 @@
     "react-native-crypto-js": "^1.0.0",
     "react-native-device-info": "14.0.4",
     "react-native-dotenv": "^3.4.9",
-    "react-native-edge-to-edge": "^1.6.0",
+    "react-native-edge-to-edge": "patch:react-native-edge-to-edge@npm%3A1.8.1#~/.yarn/patches/react-native-edge-to-edge-npm-1.8.1-d24497f3ec.patch",
     "react-native-exception-handler": "^2.10.10",
     "react-native-fast-image": "patch:react-native-fast-image@npm%3A8.6.3#../../.yarn/patches/react-native-fast-image-npm-8.6.3-2e46af8e7b.patch",
     "react-native-gesture-handler": "2.30.0",

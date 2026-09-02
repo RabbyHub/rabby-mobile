@@ -30,7 +30,7 @@ public class MainActivity extends ReactActivity {
       RabbyStartupTrace.beginSection("MainActivity.bootSplash.init");
       try {
         RNBootSplash.init(this, R.style.BootTheme, R.layout.launch_screen);
-        applyInitialEdgeToEdgeWindowPolicy();
+        applyInitialEdgeToEdgeWindowPolicy(true);
       } finally {
         RabbyStartupTrace.endSection();
       }
@@ -61,7 +61,7 @@ public class MainActivity extends ReactActivity {
     super.onWindowFocusChanged(hasFocus);
     if (hasFocus) {
       if (!initialWindowInsetsReapplied) {
-        applyInitialEdgeToEdgeWindowPolicy();
+        applyInitialEdgeToEdgeWindowPolicy(false);
         initialWindowInsetsReapplied = true;
       }
       requestHighRefreshRate("onWindowFocusChanged");
@@ -101,7 +101,7 @@ public class MainActivity extends ReactActivity {
   }
 
   @SuppressWarnings("deprecation")
-  private void applyInitialEdgeToEdgeWindowPolicy() {
+  private void applyInitialEdgeToEdgeWindowPolicy(boolean applySystemBarAppearance) {
     Window window = getWindow();
     View decorView = window.getDecorView();
 
@@ -109,14 +109,21 @@ public class MainActivity extends ReactActivity {
     WindowCompat.setDecorFitsSystemWindows(window, false);
     window.setStatusBarColor(Color.TRANSPARENT);
 
-    boolean lightSystemBars = getResources().getBoolean(R.bool.windowLightStatusBar);
-    WindowInsetsControllerCompat insetsController =
-      WindowCompat.getInsetsController(window, decorView);
-    insetsController.setAppearanceLightStatusBars(lightSystemBars);
+    if (applySystemBarAppearance) {
+      // Use the resource theme only for the initial launch state. Runtime
+      // appearance is owned by the JavaScript system-bar controller.
+      boolean lightSystemBars = getResources().getBoolean(R.bool.windowLightStatusBar);
+      WindowInsetsControllerCompat insetsController =
+        WindowCompat.getInsetsController(window, decorView);
+      insetsController.setAppearanceLightStatusBars(lightSystemBars);
+
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+        insetsController.setAppearanceLightNavigationBars(lightSystemBars);
+      }
+    }
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
       window.setNavigationBarColor(Color.TRANSPARENT);
-      insetsController.setAppearanceLightNavigationBars(lightSystemBars);
     } else {
       window.setNavigationBarColor(Color.argb(0x80, 0x1b, 0x1b, 0x1b));
     }

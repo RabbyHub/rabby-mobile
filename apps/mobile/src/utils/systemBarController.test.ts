@@ -1,10 +1,25 @@
+type AppStateListener = (state: string) => void;
+
 const mockPushStackEntry = jest.fn();
 const mockReplaceStackEntry = jest.fn();
+const mockReapply = jest.fn();
+const mockAppStateListeners = new Map<string, AppStateListener>();
+const mockAppState = {
+  addEventListener: jest.fn((event: string, listener: AppStateListener) => {
+    mockAppStateListeners.set(event, listener);
+    return {
+      remove: () => mockAppStateListeners.delete(event),
+    };
+  }),
+};
+
+jest.doMock('react-native', () => ({ AppState: mockAppState }));
 
 jest.doMock('react-native-edge-to-edge', () => ({
   SystemBars: {
     pushStackEntry: mockPushStackEntry,
     replaceStackEntry: mockReplaceStackEntry,
+    reapply: mockReapply,
   },
 }));
 
@@ -25,10 +40,20 @@ jest.doMock('@/constant/layout', () => ({
   })),
 }));
 
-const { syncAppSystemBars } =
+const { reapplyAppSystemBars, syncAppSystemBars } =
   require('./systemBarController') as typeof import('./systemBarController');
 
 describe('app system bar controller', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockPushStackEntry.mockReturnValue({ id: 'base' });
+    mockReplaceStackEntry.mockImplementation(entry => entry);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('keeps one base entry and replaces it on subsequent updates', () => {
     const firstEntry = { id: 'first' };
     const secondEntry = { id: 'second' };
@@ -48,5 +73,26 @@ describe('app system bar controller', () => {
     expect(mockReplaceStackEntry).toHaveBeenCalledWith(firstEntry, {
       style: 'light',
     });
+  });
+
+  it('coalesces active and focus events before reapplying native values', () => {
+    jest.useFakeTimers();
+    syncAppSystemBars({
+      statusBarStyle: 'dark-content',
+      statusBarBackgroundColor: 'transparent',
+    });
+
+    mockAppStateListeners.get('change')?.('active');
+    mockAppStateListeners.get('focus')?.('active');
+    jest.runOnlyPendingTimers();
+
+    expect(mockReapply).toHaveBeenCalledTimes(1);
+
+    mockAppStateListeners.get('focus')?.('active');
+    jest.runOnlyPendingTimers();
+    expect(mockReapply).toHaveBeenCalledTimes(2);
+
+    reapplyAppSystemBars();
+    expect(mockReapply).toHaveBeenCalledTimes(3);
   });
 });

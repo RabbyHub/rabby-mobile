@@ -1,3 +1,4 @@
+import { AppState } from 'react-native';
 import { SystemBars } from 'react-native-edge-to-edge';
 import type {
   SystemBarsEntry,
@@ -10,6 +11,7 @@ import { getBinaryMode } from '@/hooks/theme';
 import { perfEvents } from '@/core/utils/perf';
 
 let appSystemBarsEntry: SystemBarsEntry | null = null;
+let reapplyTimer: ReturnType<typeof setTimeout> | null = null;
 
 function toEdgeToEdgeStyle(
   statusBarStyle: ScreenSystemBarConfig['statusBarStyle'],
@@ -25,6 +27,26 @@ export function syncAppSystemBars(config: ScreenSystemBarConfig) {
   appSystemBarsEntry = appSystemBarsEntry
     ? SystemBars.replaceStackEntry(appSystemBarsEntry, props)
     : SystemBars.pushStackEntry(props);
+}
+
+export function reapplyAppSystemBars() {
+  if (!appSystemBarsEntry) {
+    return;
+  }
+
+  SystemBars.reapply();
+}
+
+function scheduleAppSystemBarsReapply() {
+  if (reapplyTimer != null) {
+    clearTimeout(reapplyTimer);
+  }
+
+  // Wait until the native focus/active event has finished before reapplying.
+  reapplyTimer = setTimeout(() => {
+    reapplyTimer = null;
+    reapplyAppSystemBars();
+  }, 0);
 }
 
 export function syncAppSystemBarsForRoute({
@@ -55,3 +77,13 @@ perfEvents.addListener('EVENT_ROUTE_CHANGE', ({ currentRouteName }) => {
     isDarkTheme: getBinaryMode() === 'dark',
   });
 });
+
+AppState.addEventListener('change', nextAppState => {
+  if (nextAppState === 'active') {
+    scheduleAppSystemBarsReapply();
+  }
+});
+
+// Android emits focus after onWindowFocusChanged. This runs after native code
+// has restored the window and avoids relying on a React render to reapply it.
+AppState.addEventListener('focus', scheduleAppSystemBarsReapply);

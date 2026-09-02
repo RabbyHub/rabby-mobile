@@ -1,0 +1,372 @@
+diff --git a/dist/commonjs/SystemBars.js b/dist/commonjs/SystemBars.js
+index 1ed329b12ca320b8ae7e2d4d2d0a7c264f7ec575..4b1f889898c8ffc1658c62ef7ef8ef5044ef04ec 100644
+--- a/dist/commonjs/SystemBars.js
++++ b/dist/commonjs/SystemBars.js
+@@ -69,6 +69,7 @@ const entriesStack = [];
+ 
+ // Timer for updating the native module values at the end of the frame.
+ let updateImmediate = null;
++let androidReapplyTimer = null;
+ 
+ // The current merged values from the entries stack.
+ const currentValues = {
+@@ -77,8 +78,8 @@ const currentValues = {
+   statusBarHidden: undefined,
+   navigationBarHidden: undefined
+ };
+-function setStatusBarStyle(style) {
+-  if (style !== currentValues.statusBarStyle) {
++function setStatusBarStyle(style, force = false) {
++  if (force || style !== currentValues.statusBarStyle) {
+     currentValues.statusBarStyle = style;
+     const nativeStyle = toNativeBarStyle(style);
+     if (_reactNative.Platform.OS === "android") {
+@@ -88,8 +89,8 @@ function setStatusBarStyle(style) {
+     }
+   }
+ }
+-function setNavigationBarStyle(style) {
+-  if (style !== currentValues.navigationBarStyle) {
++function setNavigationBarStyle(style, force = false) {
++  if (force || style !== currentValues.navigationBarStyle) {
+     currentValues.navigationBarStyle = style;
+     if (_reactNative.Platform.OS === "android") {
+       const nativeStyle = toNativeBarStyle(style);
+@@ -97,8 +98,8 @@ function setNavigationBarStyle(style) {
+     }
+   }
+ }
+-function setStatusBarHidden(hidden) {
+-  if (hidden !== currentValues.statusBarHidden) {
++function setStatusBarHidden(hidden, force = false) {
++  if (force || hidden !== currentValues.statusBarHidden) {
+     currentValues.statusBarHidden = hidden;
+     if (_reactNative.Platform.OS === "android") {
+       _NativeEdgeToEdgeModule.default?.setStatusBarHidden(hidden);
+@@ -107,8 +108,8 @@ function setStatusBarHidden(hidden) {
+     }
+   }
+ }
+-function setNavigationBarHidden(hidden) {
+-  if (hidden !== currentValues.navigationBarHidden) {
++function setNavigationBarHidden(hidden, force = false) {
++  if (force || hidden !== currentValues.navigationBarHidden) {
+     currentValues.navigationBarHidden = hidden;
+     if (_reactNative.Platform.OS === "android") {
+       _NativeEdgeToEdgeModule.default?.setNavigationBarHidden(hidden);
+@@ -224,6 +225,50 @@ function setHidden(hidden) {
+     setNavigationBarHidden(navigationBarHidden);
+   }
+ }
++
++/**
++ * Re-apply the current stack values to the native system bars.
++ *
++ * Android can reset a window's system bar appearance while the JavaScript
++ * values remain unchanged. This intentionally bypasses the value cache.
++ */
++function reapply() {
++  if (updateImmediate != null) {
++    clearImmediate(updateImmediate);
++    updateImmediate = null;
++  }
++  const mergedEntries = mergeEntriesStack(entriesStack);
++  const {
++    statusBarHidden,
++    navigationBarHidden
++  } = mergedEntries;
++  const statusBarStyle = resolveSystemBarStyle(mergedEntries.statusBarStyle);
++  const navigationBarStyle = resolveSystemBarStyle(mergedEntries.navigationBarStyle);
++  if (statusBarHidden != null) {
++    setStatusBarHidden(statusBarHidden, true);
++  }
++  if (navigationBarHidden != null) {
++    setNavigationBarHidden(navigationBarHidden, true);
++  }
++  setNavigationBarStyle(navigationBarStyle, true);
++  if (_reactNative.Platform.OS === "android" && (statusBarStyle === "light" || statusBarStyle === "dark")) {
++    if (androidReapplyTimer != null) {
++      clearTimeout(androidReapplyTimer);
++    }
++
++    // Some Android SystemUI implementations can retain stale icon colors even
++    // after the window records the expected appearance. Force a real state
++    // transition so SystemUI receives a fresh appearance callback.
++    setStatusBarStyle(statusBarStyle === "light" ? "dark" : "light", true);
++    androidReapplyTimer = setTimeout(() => {
++      androidReapplyTimer = null;
++      const latestEntries = mergeEntriesStack(entriesStack);
++      setStatusBarStyle(resolveSystemBarStyle(latestEntries.statusBarStyle), true);
++    }, 32);
++    return;
++  }
++  setStatusBarStyle(statusBarStyle, true);
++}
+ function SystemBars(props) {
+   const {
+     statusBarStyle,
+@@ -269,4 +314,5 @@ SystemBars.popStackEntry = popStackEntry;
+ SystemBars.replaceStackEntry = replaceStackEntry;
+ SystemBars.setStyle = setStyle;
+ SystemBars.setHidden = setHidden;
++SystemBars.reapply = reapply;
+ //# sourceMappingURL=SystemBars.js.map
+diff --git a/dist/module/SystemBars.js b/dist/module/SystemBars.js
+index b7c3a8c269404712d9fb344e2a2f7beea819acff..f157a3cad4a17151a7c2f2ede472ba221c08ed4c 100644
+--- a/dist/module/SystemBars.js
++++ b/dist/module/SystemBars.js
+@@ -64,6 +64,7 @@ const entriesStack = [];
+ 
+ // Timer for updating the native module values at the end of the frame.
+ let updateImmediate = null;
++let androidReapplyTimer = null;
+ 
+ // The current merged values from the entries stack.
+ const currentValues = {
+@@ -72,8 +73,8 @@ const currentValues = {
+   statusBarHidden: undefined,
+   navigationBarHidden: undefined
+ };
+-function setStatusBarStyle(style) {
+-  if (style !== currentValues.statusBarStyle) {
++function setStatusBarStyle(style, force = false) {
++  if (force || style !== currentValues.statusBarStyle) {
+     currentValues.statusBarStyle = style;
+     const nativeStyle = toNativeBarStyle(style);
+     if (Platform.OS === "android") {
+@@ -83,8 +84,8 @@ function setStatusBarStyle(style) {
+     }
+   }
+ }
+-function setNavigationBarStyle(style) {
+-  if (style !== currentValues.navigationBarStyle) {
++function setNavigationBarStyle(style, force = false) {
++  if (force || style !== currentValues.navigationBarStyle) {
+     currentValues.navigationBarStyle = style;
+     if (Platform.OS === "android") {
+       const nativeStyle = toNativeBarStyle(style);
+@@ -92,8 +93,8 @@ function setNavigationBarStyle(style) {
+     }
+   }
+ }
+-function setStatusBarHidden(hidden) {
+-  if (hidden !== currentValues.statusBarHidden) {
++function setStatusBarHidden(hidden, force = false) {
++  if (force || hidden !== currentValues.statusBarHidden) {
+     currentValues.statusBarHidden = hidden;
+     if (Platform.OS === "android") {
+       NativeModule?.setStatusBarHidden(hidden);
+@@ -102,8 +103,8 @@ function setStatusBarHidden(hidden) {
+     }
+   }
+ }
+-function setNavigationBarHidden(hidden) {
+-  if (hidden !== currentValues.navigationBarHidden) {
++function setNavigationBarHidden(hidden, force = false) {
++  if (force || hidden !== currentValues.navigationBarHidden) {
+     currentValues.navigationBarHidden = hidden;
+     if (Platform.OS === "android") {
+       NativeModule?.setNavigationBarHidden(hidden);
+@@ -219,6 +220,50 @@ function setHidden(hidden) {
+     setNavigationBarHidden(navigationBarHidden);
+   }
+ }
++
++/**
++ * Re-apply the current stack values to the native system bars.
++ *
++ * Android can reset a window's system bar appearance while the JavaScript
++ * values remain unchanged. This intentionally bypasses the value cache.
++ */
++function reapply() {
++  if (updateImmediate != null) {
++    clearImmediate(updateImmediate);
++    updateImmediate = null;
++  }
++  const mergedEntries = mergeEntriesStack(entriesStack);
++  const {
++    statusBarHidden,
++    navigationBarHidden
++  } = mergedEntries;
++  const statusBarStyle = resolveSystemBarStyle(mergedEntries.statusBarStyle);
++  const navigationBarStyle = resolveSystemBarStyle(mergedEntries.navigationBarStyle);
++  if (statusBarHidden != null) {
++    setStatusBarHidden(statusBarHidden, true);
++  }
++  if (navigationBarHidden != null) {
++    setNavigationBarHidden(navigationBarHidden, true);
++  }
++  setNavigationBarStyle(navigationBarStyle, true);
++  if (Platform.OS === "android" && (statusBarStyle === "light" || statusBarStyle === "dark")) {
++    if (androidReapplyTimer != null) {
++      clearTimeout(androidReapplyTimer);
++    }
++
++    // Some Android SystemUI implementations can retain stale icon colors even
++    // after the window records the expected appearance. Force a real state
++    // transition so SystemUI receives a fresh appearance callback.
++    setStatusBarStyle(statusBarStyle === "light" ? "dark" : "light", true);
++    androidReapplyTimer = setTimeout(() => {
++      androidReapplyTimer = null;
++      const latestEntries = mergeEntriesStack(entriesStack);
++      setStatusBarStyle(resolveSystemBarStyle(latestEntries.statusBarStyle), true);
++    }, 32);
++    return;
++  }
++  setStatusBarStyle(statusBarStyle, true);
++}
+ export function SystemBars(props) {
+   const {
+     statusBarStyle,
+@@ -264,4 +309,5 @@ SystemBars.popStackEntry = popStackEntry;
+ SystemBars.replaceStackEntry = replaceStackEntry;
+ SystemBars.setStyle = setStyle;
+ SystemBars.setHidden = setHidden;
++SystemBars.reapply = reapply;
+ //# sourceMappingURL=SystemBars.js.map
+diff --git a/dist/typescript/commonjs/SystemBars.d.ts b/dist/typescript/commonjs/SystemBars.d.ts
+index 935aa1e90f465d980337ed3ab8be150ed3d029e1..c3d630afdb1d76aa59d8d012f3fcbdd9c46d120e 100644
+--- a/dist/typescript/commonjs/SystemBars.d.ts
++++ b/dist/typescript/commonjs/SystemBars.d.ts
+@@ -6,5 +6,6 @@ export declare namespace SystemBars {
+     var replaceStackEntry: (entry: SystemBarsEntry, props: SystemBarsProps) => SystemBarsEntry;
+     var setStyle: (style: SystemBarsProps["style"]) => void;
+     var setHidden: (hidden: SystemBarsProps["hidden"]) => void;
++    var reapply: () => void;
+ }
+ //# sourceMappingURL=SystemBars.d.ts.map
+\ No newline at end of file
+diff --git a/dist/typescript/module/SystemBars.d.ts b/dist/typescript/module/SystemBars.d.ts
+index 935aa1e90f465d980337ed3ab8be150ed3d029e1..c3d630afdb1d76aa59d8d012f3fcbdd9c46d120e 100644
+--- a/dist/typescript/module/SystemBars.d.ts
++++ b/dist/typescript/module/SystemBars.d.ts
+@@ -6,5 +6,6 @@ export declare namespace SystemBars {
+     var replaceStackEntry: (entry: SystemBarsEntry, props: SystemBarsProps) => SystemBarsEntry;
+     var setStyle: (style: SystemBarsProps["style"]) => void;
+     var setHidden: (hidden: SystemBarsProps["hidden"]) => void;
++    var reapply: () => void;
+ }
+ //# sourceMappingURL=SystemBars.d.ts.map
+\ No newline at end of file
+diff --git a/src/SystemBars.ts b/src/SystemBars.ts
+index 7662f253c54a6b268767ee0a47476679ef02623a..ab42fde4b5bf3c05e7e9e5c4681cc334ca6a3330 100644
+--- a/src/SystemBars.ts
++++ b/src/SystemBars.ts
+@@ -80,6 +80,7 @@ const entriesStack: SystemBarsEntry[] = [];
+ 
+ // Timer for updating the native module values at the end of the frame.
+ let updateImmediate: NodeJS.Immediate | null = null;
++let androidReapplyTimer: ReturnType<typeof setTimeout> | null = null;
+ 
+ // The current merged values from the entries stack.
+ const currentValues: {
+@@ -94,8 +95,8 @@ const currentValues: {
+   navigationBarHidden: undefined,
+ };
+ 
+-function setStatusBarStyle(style: ResolvedBarStyle) {
+-  if (style !== currentValues.statusBarStyle) {
++function setStatusBarStyle(style: ResolvedBarStyle, force = false) {
++  if (force || style !== currentValues.statusBarStyle) {
+     currentValues.statusBarStyle = style;
+ 
+     const nativeStyle = toNativeBarStyle(style);
+@@ -108,8 +109,8 @@ function setStatusBarStyle(style: ResolvedBarStyle) {
+   }
+ }
+ 
+-function setNavigationBarStyle(style: ResolvedBarStyle) {
+-  if (style !== currentValues.navigationBarStyle) {
++function setNavigationBarStyle(style: ResolvedBarStyle, force = false) {
++  if (force || style !== currentValues.navigationBarStyle) {
+     currentValues.navigationBarStyle = style;
+ 
+     if (Platform.OS === "android") {
+@@ -119,8 +120,8 @@ function setNavigationBarStyle(style: ResolvedBarStyle) {
+   }
+ }
+ 
+-function setStatusBarHidden(hidden: boolean) {
+-  if (hidden !== currentValues.statusBarHidden) {
++function setStatusBarHidden(hidden: boolean, force = false) {
++  if (force || hidden !== currentValues.statusBarHidden) {
+     currentValues.statusBarHidden = hidden;
+ 
+     if (Platform.OS === "android") {
+@@ -131,8 +132,8 @@ function setStatusBarHidden(hidden: boolean) {
+   }
+ }
+ 
+-function setNavigationBarHidden(hidden: boolean) {
+-  if (hidden !== currentValues.navigationBarHidden) {
++function setNavigationBarHidden(hidden: boolean, force = false) {
++  if (force || hidden !== currentValues.navigationBarHidden) {
+     currentValues.navigationBarHidden = hidden;
+ 
+     if (Platform.OS === "android") {
+@@ -254,6 +255,60 @@ function setHidden(hidden: SystemBarsProps["hidden"]) {
+   }
+ }
+ 
++/**
++ * Re-apply the current stack values to the native system bars.
++ *
++ * Android can reset a window's system bar appearance while the JavaScript
++ * values remain unchanged. This intentionally bypasses the value cache.
++ */
++function reapply() {
++  if (updateImmediate != null) {
++    clearImmediate(updateImmediate);
++    updateImmediate = null;
++  }
++
++  const mergedEntries = mergeEntriesStack(entriesStack);
++  const { statusBarHidden, navigationBarHidden } = mergedEntries;
++  const statusBarStyle = resolveSystemBarStyle(mergedEntries.statusBarStyle);
++  const navigationBarStyle = resolveSystemBarStyle(
++    mergedEntries.navigationBarStyle,
++  );
++
++  if (statusBarHidden != null) {
++    setStatusBarHidden(statusBarHidden, true);
++  }
++  if (navigationBarHidden != null) {
++    setNavigationBarHidden(navigationBarHidden, true);
++  }
++
++  setNavigationBarStyle(navigationBarStyle, true);
++
++  if (
++    Platform.OS === "android" &&
++    (statusBarStyle === "light" || statusBarStyle === "dark")
++  ) {
++    if (androidReapplyTimer != null) {
++      clearTimeout(androidReapplyTimer);
++    }
++
++    // Some Android SystemUI implementations can retain stale icon colors even
++    // after the window records the expected appearance. Force a real state
++    // transition so SystemUI receives a fresh appearance callback.
++    setStatusBarStyle(statusBarStyle === "light" ? "dark" : "light", true);
++    androidReapplyTimer = setTimeout(() => {
++      androidReapplyTimer = null;
++      const latestEntries = mergeEntriesStack(entriesStack);
++      setStatusBarStyle(
++        resolveSystemBarStyle(latestEntries.statusBarStyle),
++        true,
++      );
++    }, 32);
++    return;
++  }
++
++  setStatusBarStyle(statusBarStyle, true);
++}
++
+ export function SystemBars(props: SystemBarsProps) {
+   const {
+     statusBarStyle,
+@@ -312,3 +367,4 @@ SystemBars.popStackEntry = popStackEntry;
+ SystemBars.replaceStackEntry = replaceStackEntry;
+ SystemBars.setStyle = setStyle;
+ SystemBars.setHidden = setHidden;
++SystemBars.reapply = reapply;
