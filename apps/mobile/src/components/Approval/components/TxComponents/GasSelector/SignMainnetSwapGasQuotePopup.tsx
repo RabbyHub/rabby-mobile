@@ -490,6 +490,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     flex: 1,
   },
   sheetContentContainer: {
+    paddingTop: 12,
     paddingHorizontal: 16,
     paddingBottom: 24,
     gap: 32,
