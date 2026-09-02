@@ -1408,10 +1408,7 @@
         "chain_one": "{{count}} chain",
         "chain_other": "{{count}} chains"
       },
-      "unsupportedRequiredRequest": "Unsupported required WalletConnect request: {{capabilities}} not supported.",
-      "verifyWarningScam": "This dapp is flagged as a scam by WalletConnect Verify. Connecting may put your assets at risk.",
-      "verifyWarningInvalid": "This dapp failed WalletConnect Verify checks. It may be impersonating another site.",
-      "verifyWarningUnknown": "Rabby could not verify this dapp's identity with WalletConnect Verify. Only connect if you trust this site."
+      "unsupportedRequiredRequest": "Unsupported required WalletConnect request: {{capabilities}} not supported."
     },
     "addressDetail": {
       "add-to-whitelist": "Add to Whitelist",

@@ -25,19 +25,11 @@ import { useTheme2024 } from '@/hooks/theme';
 
 import { RcIconCloseDapp } from './icons';
 import TouchableView from '@/components/Touchable/TouchableView';
-import {
-  WebViewActions,
-  WebViewState,
-  useWebViewControl,
-  BLANK_PAGE,
-} from '../hooks';
+import { WebViewActions, WebViewState, useWebViewControl } from '../hooks';
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
 import { BUILTIN_SPECIAL_URLS } from '@/core/bridges/useBackgroundBridge';
 import { BackgroundBridgeBoundary } from '@/core/bridges/BackgroundBridgeBoundary';
-import {
-  canoicalizeDappUrl,
-  safeGetOrigin,
-} from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { BottomNavControl2, BottomNavControlCbCtx } from './Widgets';
 import { APP_UA_PARIALS } from '@/constant';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -381,13 +373,6 @@ const DappWebViewControl2 = ({
               onShouldStartLoadWithRequest={nativeEvent => {
                 return checkShouldStartLoadingWithRequestForDappWebView(
                   nativeEvent,
-                  {
-                    currentOrigin: safeGetOrigin(
-                      urlRef.current && urlRef.current !== BLANK_PAGE
-                        ? urlRef.current
-                        : initialUrl,
-                    ),
-                  },
                 );
               }}
               onError={errorLog}

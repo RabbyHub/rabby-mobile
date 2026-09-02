@@ -3,10 +3,6 @@ import { initWalletConnect } from './client';
 import { addWalletConnectLog } from './debugLog';
 import { getWalletConnectErrorMessage } from './error';
 import {
-  getWalletConnectPairingTopicFromUri,
-  rememberWalletConnectPairingBrowserOrigin,
-} from './pairingBrowserOrigin';
-import {
   clearWalletConnectDappRedirectPending,
   markWalletConnectDappRedirectPending,
 } from './redirectState';
@@ -44,7 +40,6 @@ function formatPairingError(error: unknown) {
 export async function pairWalletConnectUri(input: {
   uri: string;
   source: WalletConnectPairingSource;
-  browserOrigin?: string;
 }) {
   let parsed: ReturnType<typeof parseWalletConnectUri>;
   try {
@@ -87,16 +82,6 @@ export async function pairWalletConnectUri(input: {
   addWalletConnectLog('pairing', 'pairing started', {
     source: input.source,
   });
-
-  if (input.browserOrigin) {
-    const pairingTopic = getWalletConnectPairingTopicFromUri(parsed.uri);
-    if (pairingTopic) {
-      rememberWalletConnectPairingBrowserOrigin(
-        pairingTopic,
-        input.browserOrigin,
-      );
-    }
-  }
 
   try {
     const walletKit = await initWalletConnect();

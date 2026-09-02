@@ -3405,10 +3405,7 @@
         "chain_one": "{{count}} เชน",
         "chain_other": "{{count}} เชน"
       },
-      "unsupportedRequiredRequest": "คำขอ WalletConnect ที่จำเป็นไม่รองรับ: ไม่รองรับ {{capabilities}}",
-      "verifyWarningScam": "dapp นี้ถูก WalletConnect Verify ระบุว่าเป็นการหลอกลวง การเชื่อมต่ออาจทำให้สินทรัพย์ของคุณตกอยู่ในความเสี่ยง",
-      "verifyWarningInvalid": "dapp นี้ไม่ผ่านการตรวจสอบของ WalletConnect Verify อาจกำลังแอบอ้างเป็นเว็บไซต์อื่น",
-      "verifyWarningUnknown": "Rabby ไม่สามารถยืนยันตัวตนของ dapp นี้ด้วย WalletConnect Verify ได้ เชื่อมต่อต่อก็ต่อเมื่อคุณไว้วางใจเว็บไซต์นี้"
+      "unsupportedRequiredRequest": "คำขอ WalletConnect ที่จำเป็นไม่รองรับ: ไม่รองรับ {{capabilities}}"
     }
   },
   "native": {

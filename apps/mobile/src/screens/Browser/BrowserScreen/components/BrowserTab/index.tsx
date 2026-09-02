@@ -785,11 +785,6 @@ export const BrowserTab = ({
                           }
                           return checkShouldStartLoadingWithRequestForDappWebView(
                             nativeEvent,
-                            {
-                              currentOrigin: safeGetOrigin(
-                                webviewState.resolvedUrl,
-                              ),
-                            },
                           );
                         }}
                         onContentProcessDidTerminate={syntheticEvent => {

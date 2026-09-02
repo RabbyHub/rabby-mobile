@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/react-native';
 import { buildApprovedNamespaces } from '@walletconnect/utils';
-import type { ProposalTypes, SessionTypes, Verify } from '@walletconnect/types';
+import type { ProposalTypes, SessionTypes } from '@walletconnect/types';
 import type { CHAINS_ENUM } from '@/constant/chains';
 import type { Account } from '@/types/account';
 import {
@@ -26,7 +26,6 @@ import { getWalletConnectTelemetrySource } from './telemetry';
 import type {
   WalletConnectPairingSource,
   WalletConnectProposalViewModel,
-  WalletConnectVerifyInfo,
 } from './types';
 import { emitWalletConnectUiEvent } from './uiEvents';
 
@@ -34,7 +33,7 @@ type PendingProposal = {
   id: number;
   proposal: ProposalTypes.Struct;
   source: WalletConnectPairingSource;
-  verifyContext?: Verify.Context;
+  verifyContext?: unknown;
 };
 
 const pendingProposals = new Map<number, PendingProposal>();
@@ -48,28 +47,6 @@ function normalizeMetadata(
     url: metadata?.url || '',
     icons: Array.isArray(metadata?.icons) ? metadata.icons : [],
     redirectNative: metadata?.redirect?.native || '',
-  };
-}
-
-function buildVerifyInfo(
-  verifyContext: Verify.Context | undefined,
-): WalletConnectVerifyInfo | null {
-  const verified = verifyContext?.verified;
-  if (!verified) {
-    return null;
-  }
-  const validation = verified.validation;
-  if (
-    validation !== 'VALID' &&
-    validation !== 'INVALID' &&
-    validation !== 'UNKNOWN'
-  ) {
-    return null;
-  }
-  return {
-    validation,
-    verifiedOrigin: typeof verified.origin === 'string' ? verified.origin : '',
-    isScam: verified.isScam === true,
   };
 }
 
@@ -91,7 +68,6 @@ function buildProposalViewModel(
     unsupportedRequiredMethods:
       getUnsupportedRequiredMethodsFromProposal(proposal),
     verifyContext: pending.verifyContext,
-    verify: buildVerifyInfo(pending.verifyContext),
   };
 }
 
@@ -99,7 +75,7 @@ export function storeWalletConnectProposal(input: {
   id: number;
   proposal: ProposalTypes.Struct;
   source: WalletConnectPairingSource;
-  verifyContext?: Verify.Context;
+  verifyContext?: unknown;
 }) {
   const pending: PendingProposal = {
     id: input.id,

@@ -1454,9 +1454,6 @@
         "chain_other": "{{count}} 条链"
       },
       "unsupportedRequiredRequest": "不支持必需的 WalletConnect 请求：{{capabilities}}。",
-      "verifyWarningScam": "该 DApp 被 WalletConnect Verify 标记为诈骗站点，连接可能危及你的资产安全。",
-      "verifyWarningInvalid": "该 DApp 未通过 WalletConnect Verify 校验，可能正在冒充其他网站。",
-      "verifyWarningUnknown": "Rabby 无法通过 WalletConnect Verify 验证该 DApp 的身份，请确认信任该站点后再连接。",
       "transactionSentReturnToBrowser": "交易已发送！请返回 DApp。",
       "transactionCanceledReturnToBrowser": "交易已取消！请返回 DApp。"
     },
