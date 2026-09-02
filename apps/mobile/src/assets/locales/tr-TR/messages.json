@@ -1657,7 +1657,10 @@
       "action": {
         "all": "Hepsi",
         "less": "Daha az",
-        "Sell": "Satılır",
+        "includeBalance": "Balansta Dahil Et",
+        "unpin": "Sabitlenmeyi Kaldır",
+        "Sell": "Sat",
+        "pin": "Șifre",
         "Buy": "Satın Al",
         "favorite": "Favori",
         "unfavorite": "Favori Değil"
