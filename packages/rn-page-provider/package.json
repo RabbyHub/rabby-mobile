@@ -26,7 +26,6 @@
     "@rollup/plugin-image": "^2.1.1",
     "@rollup/plugin-typescript": "^8.3.2",
     "@types/webextension-polyfill": "^0.10.4",
-    "jest": "^28.1.0",
     "rollup": "^2.73.0",
     "typescript": "^4.6.4"
   },
