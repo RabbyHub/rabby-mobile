@@ -48,7 +48,7 @@ import {
   type PerpsProAttachedTpSlGuardFailureReason,
 } from '../actions/openOrderWithAttachedTpSl';
 import {
-  reportPerpsProAttachedParentHistory,
+  reportPerpsProAttachedOrderHistory,
   reportPerpsProOpenOrderHistory,
 } from '../analytics/manualTradeHistory';
 import type { PerpsProBboPrices, PerpsProBboStrategy } from '../model/bbo';
@@ -2071,7 +2071,11 @@ export const usePerpsProTrade = ({
           command,
           ensureAttachedLeverage,
         );
-        reportPerpsProAttachedParentHistory(command, result.confirmedParent);
+        reportPerpsProAttachedOrderHistory(
+          command,
+          result.confirmedParent,
+          result.confirmedChildren,
+        );
         if (result.kind === 'userCancelled') return;
         if (result.kind === 'staleContext') {
           showToast(
