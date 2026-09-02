@@ -563,6 +563,15 @@ function SettingsBlocks() {
     });
   }, []);
 
+  const allowAppLaunchLockToggle = useCallback(
+    (nextEnabled: boolean) =>
+      !nextEnabled ||
+      !shouldRedirectToSetPasswordBefore({
+        onSettingsAction: 'setAppLaunchLock',
+      }),
+    [shouldRedirectToSetPasswordBefore],
+  );
+
   const toggleDataAnalysisRef = useRef<SwitchToggleType>(null);
   const switchAppLaunchLockRef = useRef<SwitchToggleType>(null);
 
@@ -669,7 +678,12 @@ function SettingsBlocks() {
           {
             label: t('page.setting.appLaunchLock'),
             icon: RcAutolock,
-            rightNode: <SwitchAppLaunchLock ref={switchAppLaunchLockRef} />,
+            rightNode: (
+              <SwitchAppLaunchLock
+                ref={switchAppLaunchLockRef}
+                onBeforeToggle={allowAppLaunchLockToggle}
+              />
+            ),
             onPress: () => {
               switchAppLaunchLockRef.current?.toggle();
             },
