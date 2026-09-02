@@ -56,14 +56,13 @@ export function handleWalletConnectSessionProposal(
   walletKit: IWalletKit,
   event: WalletKitTypes.SessionProposal,
 ) {
-  const browserOrigin = getWalletConnectPairingBrowserOrigin(
-    event.params?.pairingTopic,
-  );
-  const source = browserOrigin
-    ? 'inner-webview'
-    : getWalletConnectDebugState().pairing.source || ('manual' as const);
+  const source =
+    getWalletConnectDebugState().pairing.source || ('manual' as const);
 
-  if (browserOrigin) {
+  if (source === 'inner-webview') {
+    const browserOrigin = getWalletConnectPairingBrowserOrigin(
+      event.params?.pairingTopic,
+    );
     const dappUrl = event.params?.proposer?.metadata?.url;
     if (isWalletConnectOriginMismatch({ browserOrigin, dappUrl })) {
       console.warn(

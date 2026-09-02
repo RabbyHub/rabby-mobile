@@ -1,3 +1,4 @@
+import { parse as parseDomain } from 'tldts';
 import { safeParseURL } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 const PAIRING_BROWSER_ORIGIN_TTL_MS = 10 * 60 * 1000;
@@ -57,24 +58,27 @@ export function getWalletConnectPairingBrowserOrigin(
   return entry.browserOrigin;
 }
 
-export function getWalletConnectHostname(urlOrOrigin: string) {
+export function getWalletConnectRegisteredDomain(urlOrOrigin: string) {
   const urlInfo = safeParseURL(urlOrOrigin);
   const hostname = urlInfo?.hostname?.toLowerCase() || '';
-  return hostname || null;
+  if (!hostname) {
+    return null;
+  }
+  return parseDomain(hostname).domain || hostname;
 }
 
 export function isWalletConnectOriginMismatch(input: {
   browserOrigin?: string | null;
   dappUrl?: string | null;
 }) {
-  const browserHostname = input.browserOrigin
-    ? getWalletConnectHostname(input.browserOrigin)
+  const browserDomain = input.browserOrigin
+    ? getWalletConnectRegisteredDomain(input.browserOrigin)
     : null;
-  const dappHostname = input.dappUrl
-    ? getWalletConnectHostname(input.dappUrl)
+  const dappDomain = input.dappUrl
+    ? getWalletConnectRegisteredDomain(input.dappUrl)
     : null;
-  if (!browserHostname || !dappHostname) {
+  if (!browserDomain || !dappDomain) {
     return false;
   }
-  return browserHostname !== dappHostname;
+  return browserDomain !== dappDomain;
 }

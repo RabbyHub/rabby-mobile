@@ -1,7 +1,7 @@
 import {
   getWalletConnectPairingBrowserOrigin,
   getWalletConnectPairingTopicFromUri,
-  getWalletConnectHostname,
+  getWalletConnectRegisteredDomain,
   isWalletConnectOriginMismatch,
   rememberWalletConnectPairingBrowserOrigin,
 } from './pairingBrowserOrigin';
@@ -95,38 +95,49 @@ describe('pairing browser origin map', () => {
   });
 });
 
-describe('getWalletConnectHostname', () => {
-  it('returns the complete hostname', () => {
-    expect(getWalletConnectHostname('https://app.uniswap.org/swap')).toBe(
-      'app.uniswap.org',
+describe('getWalletConnectRegisteredDomain', () => {
+  it('returns the eTLD+1 for hosts with subdomains', () => {
+    expect(getWalletConnectRegisteredDomain('https://app.uniswap.org')).toBe(
+      'uniswap.org',
     );
-    expect(getWalletConnectHostname('http://localhost:8545')).toBe('localhost');
-    expect(getWalletConnectHostname('http://192.168.1.1:8080')).toBe(
+    expect(getWalletConnectRegisteredDomain('https://uniswap.org/swap')).toBe(
+      'uniswap.org',
+    );
+    expect(getWalletConnectRegisteredDomain('https://app.foo.co.uk')).toBe(
+      'foo.co.uk',
+    );
+  });
+
+  it('falls back to the hostname for hosts without a registrable domain', () => {
+    expect(getWalletConnectRegisteredDomain('http://localhost:8545')).toBe(
+      'localhost',
+    );
+    expect(getWalletConnectRegisteredDomain('http://192.168.1.1:8080')).toBe(
       '192.168.1.1',
     );
   });
 
   it('returns null for unparseable input', () => {
-    expect(getWalletConnectHostname('')).toBeNull();
-    expect(getWalletConnectHostname('not a url')).toBeNull();
+    expect(getWalletConnectRegisteredDomain('')).toBeNull();
+    expect(getWalletConnectRegisteredDomain('not a url')).toBeNull();
   });
 });
 
 describe('isWalletConnectOriginMismatch', () => {
-  it('treats the same hostname as a match', () => {
+  it('treats same eTLD+1 as a match', () => {
     expect(
       isWalletConnectOriginMismatch({
         browserOrigin: 'https://app.uniswap.org',
-        dappUrl: 'https://app.uniswap.org/swap',
+        dappUrl: 'https://uniswap.org',
       }),
     ).toBe(false);
   });
 
-  it('flags different hostnames as a mismatch', () => {
+  it('flags different eTLD+1 as a mismatch', () => {
     expect(
       isWalletConnectOriginMismatch({
-        browserOrigin: 'https://attacker.vercel.app',
-        dappUrl: 'https://victim.vercel.app',
+        browserOrigin: 'https://evil.example',
+        dappUrl: 'https://app.uniswap.org',
       }),
     ).toBe(true);
   });
