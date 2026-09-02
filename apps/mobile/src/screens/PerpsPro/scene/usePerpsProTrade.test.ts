@@ -50,13 +50,20 @@ const mockMarketOrderOpen = jest.fn(async () => ({
   },
   status: 'ok',
 }));
-const mockReportAttachedParentHistory = jest.fn();
+const mockReportAttachedOrderHistory = jest.fn();
 const mockReportOpenOrderHistory = jest.fn();
 const mockShowToast = jest.fn();
 const mockSetTpSlMode = jest.fn(async () => undefined);
 const mockCalLiquidationPrice = jest.fn((..._args: unknown[]) => 50);
 const mockResolvePerpsProMarketLiquidationRisk = jest.fn();
 const mockExecuteAttached = jest.fn(async (..._args: unknown[]) => ({
+  confirmedChildren: [
+    {
+      acceptance: 'resting' as const,
+      oid: 2,
+      role: 'takeProfit' as const,
+    },
+  ],
   confirmedParent: {
     acceptance: 'filled' as const,
     oid: 1,
@@ -210,8 +217,8 @@ jest.mock('@/utils/perps', () => ({
 }));
 
 jest.mock('../analytics/manualTradeHistory', () => ({
-  reportPerpsProAttachedParentHistory: (...args: unknown[]) =>
-    mockReportAttachedParentHistory(...args),
+  reportPerpsProAttachedOrderHistory: (...args: unknown[]) =>
+    mockReportAttachedOrderHistory(...args),
   reportPerpsProOpenOrderHistory: (...args: unknown[]) =>
     mockReportOpenOrderHistory(...args),
 }));
@@ -1613,7 +1620,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       expect.objectContaining({ type: 'openOrderWithAttachedTpSl' }),
       expect.any(Function),
     );
-    expect(mockReportAttachedParentHistory).toHaveBeenCalledWith(
+    expect(mockReportAttachedOrderHistory).toHaveBeenCalledWith(
       expect.objectContaining({
         parent: expect.objectContaining({ side: 'buy' }),
       }),
@@ -1623,6 +1630,13 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
         price: '101',
         size: '1.01',
       },
+      [
+        {
+          acceptance: 'resting',
+          oid: 2,
+          role: 'takeProfit',
+        },
+      ],
     );
     expect(mockEnsureApproval).not.toHaveBeenCalled();
     expect(mockGetPerpsSdk).not.toHaveBeenCalled();
