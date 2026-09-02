@@ -1,4 +1,9 @@
-import { RootNames, getScreenSystemBarConfig } from './layout';
+import {
+  RootNames,
+  getOwnScreenSystemBarConfig,
+  getScreenContentBackgroundColor,
+  getScreenSystemBarConfig,
+} from './layout';
 import { ThemeColors } from './theme';
 
 const transparentScreenNames = [
@@ -18,6 +23,21 @@ const transparentScreenNames = [
 ] as const;
 
 describe('screen system bar configuration', () => {
+  it('leaves navigator-only routes transparent for child screen ownership', () => {
+    expect(
+      getOwnScreenSystemBarConfig({
+        screenName: RootNames.StackRoot,
+        isDarkTheme: false,
+      }),
+    ).toBeUndefined();
+    expect(
+      getScreenContentBackgroundColor({
+        screenName: RootNames.StackRoot,
+        isDarkTheme: false,
+      }),
+    ).toBe('transparent');
+  });
+
   it('keeps the home screen transparent for edge-to-edge content', () => {
     expect(
       getScreenSystemBarConfig({

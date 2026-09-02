@@ -507,17 +507,40 @@ function makeScreenSpecConfig() {
 }
 const ScreenSpecs = makeScreenSpecConfig();
 
-export function getScreenSystemBarConfig(options: {
+type GetScreenSystemBarConfigOptions = {
   screenName: string | AppRootName;
   isDarkTheme?: boolean;
   isShowingDappCard?: boolean;
-}) {
+};
+
+export function getOwnScreenSystemBarConfig(
+  options: Omit<GetScreenSystemBarConfigOptions, 'isShowingDappCard'>,
+) {
+  const { screenName, isDarkTheme } = options;
+  const rootSpecs = ScreenSpecs[isDarkTheme ? 'dark' : 'light'];
+
+  return rootSpecs[screenName as AppRootName];
+}
+
+export function getScreenContentBackgroundColor(
+  options: Omit<GetScreenSystemBarConfigOptions, 'isShowingDappCard'>,
+) {
+  return (
+    getOwnScreenSystemBarConfig(options)?.statusBarBackgroundColor ||
+    'transparent'
+  );
+}
+
+export function getScreenSystemBarConfig(
+  options: GetScreenSystemBarConfigOptions,
+) {
   const { screenName, isDarkTheme, isShowingDappCard } = options || {};
   const rootSpecs = ScreenSpecs[isDarkTheme ? 'dark' : 'light'];
 
   const screenSpec = isShowingDappCard
     ? rootSpecs['@openeddapp']
-    : rootSpecs[screenName as AppRootName] || rootSpecs['@default'];
+    : getOwnScreenSystemBarConfig({ screenName, isDarkTheme }) ||
+      rootSpecs['@default'];
 
   return screenSpec;
 }

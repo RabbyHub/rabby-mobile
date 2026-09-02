@@ -38672,7 +38672,7 @@ __metadata:
     react-native-crypto-js: "npm:^1.0.0"
     react-native-device-info: "npm:14.0.4"
     react-native-dotenv: "npm:^3.4.9"
-    react-native-edge-to-edge: "patch:react-native-edge-to-edge@npm%3A1.8.1#~/.yarn/patches/react-native-edge-to-edge-npm-1.8.1-d24497f3ec.patch"
+    react-native-edge-to-edge: "npm:^1.6.0"
     react-native-exception-handler: "npm:^2.10.10"
     react-native-fast-image: "patch:react-native-fast-image@npm%3A8.6.3#../../.yarn/patches/react-native-fast-image-npm-8.6.3-2e46af8e7b.patch"
     react-native-gesture-handler: "npm:2.30.0"
@@ -39416,23 +39416,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-edge-to-edge@npm:1.8.1":
-  version: 1.8.1
-  resolution: "react-native-edge-to-edge@npm:1.8.1"
+"react-native-edge-to-edge@npm:^1.6.0":
+  version: 1.6.0
+  resolution: "react-native-edge-to-edge@npm:1.6.0"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10/d35740f24daaf2154b6485639eccb1e47ec9ffa717918ae1a1c0d8dcfd9df47d63d7743bf1baf0a70dbd1e4cc62417a530a9dc8dfe19dcbc4a9f7edfbba751fc
-  languageName: node
-  linkType: hard
-
-"react-native-edge-to-edge@patch:react-native-edge-to-edge@npm%3A1.8.1#~/.yarn/patches/react-native-edge-to-edge-npm-1.8.1-d24497f3ec.patch":
-  version: 1.8.1
-  resolution: "react-native-edge-to-edge@patch:react-native-edge-to-edge@npm%3A1.8.1#~/.yarn/patches/react-native-edge-to-edge-npm-1.8.1-d24497f3ec.patch::version=1.8.1&hash=ee47c6"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: 10/a6abf9524fcbe82ee082424e03d22f699c0fcfadf4a8dd3635aa127536676eb6e7b88f747a1570403ae5c648c91d2b9abf50251689d8e8e1f26c4d94504dfda5
+  checksum: 10/9476f00c4cb60861799a4b306aa8e26275a503468f2b37e53af9c66a4eb2660b56b58f7bc4a77ee4c7ad7105cd489e186a08cda63a568c41217517b8f940be8a
   languageName: node
   linkType: hard
 
