@@ -18,7 +18,10 @@ import React, {
 } from 'react';
 
 import { PerpsProFundingDetailSheet } from '../components/funding/PerpsProFundingDetailSheet';
-import { PerpsProOrderBook } from '../components/orderbook/PerpsProOrderBook';
+import {
+  PerpsProOrderBook,
+  type PerpsProOrderBookPriceSelectionSource,
+} from '../components/orderbook/PerpsProOrderBook';
 import type { PerpsProMarket } from '../model/market';
 import type { PerpsProOrderBookPriceIntent } from '../model/orderBookPriceIntent';
 import type { PerpsProTradeAmountUnit } from '../model/trade';
@@ -76,7 +79,20 @@ export const PerpsProRealtimeOrderBook: React.FC<{
     enabled,
     publicationEnabled,
   });
-  const usesCachedSnapshot = !!fastL2.book && fastL2.status !== 'ready';
+  const priceSelectionStateRef = useRef({
+    bookIdentity: fastL2.identity,
+    bookStatus: fastL2.status,
+    latestTradeIdentity: latestTrade.identity,
+    latestTradeStatus: latestTrade.status,
+    marketKey: market.marketKey,
+  });
+  priceSelectionStateRef.current = {
+    bookIdentity: fastL2.identity,
+    bookStatus: fastL2.status,
+    latestTradeIdentity: latestTrade.identity,
+    latestTradeStatus: latestTrade.status,
+    marketKey: market.marketKey,
+  };
   const displayBook = fastL2.book;
   const displayLatestTrade = latestTrade.trade;
   const processedBook = useMemo(
@@ -175,6 +191,42 @@ export const PerpsProRealtimeOrderBook: React.FC<{
 
   const currentServerClock =
     serverClock?.marketKey === market.marketKey ? serverClock : null;
+  const selectCurrentBookPrice = useCallback(
+    (
+      price: string | null,
+      intent: PerpsProOrderBookPriceIntent,
+      source: PerpsProOrderBookPriceSelectionSource,
+    ) => {
+      const current = priceSelectionStateRef.current;
+      if (
+        source.type === 'book' &&
+        source.marketKey === current.marketKey &&
+        current.bookStatus === 'ready' &&
+        source.feedIdentity === current.bookIdentity
+      ) {
+        onSelectPrice?.(price, intent);
+      }
+    },
+    [onSelectPrice],
+  );
+  const selectCurrentLatestTradePrice = useCallback(
+    (
+      price: string | null,
+      intent: PerpsProOrderBookPriceIntent,
+      source: PerpsProOrderBookPriceSelectionSource,
+    ) => {
+      const current = priceSelectionStateRef.current;
+      if (
+        source.type === 'latestTrade' &&
+        source.marketKey === current.marketKey &&
+        current.latestTradeStatus === 'ready' &&
+        source.feedIdentity === current.latestTradeIdentity
+      ) {
+        onSelectPrice?.(price, intent);
+      }
+    },
+    [onSelectPrice],
+  );
 
   return (
     <>
@@ -186,11 +238,21 @@ export const PerpsProRealtimeOrderBook: React.FC<{
         hasBookSnapshot={displayBook != null}
         height={height}
         latestTrade={displayLatestTrade}
+        latestTradeIdentity={latestTrade.identity}
         market={market}
         onOpenFunding={() => setFundingDetailOpen(true)}
         onPrecisionIntentStart={startPrecisionIntent}
+        onSelectBookPrice={
+          onSelectPrice && fastL2.status === 'ready'
+            ? selectCurrentBookPrice
+            : undefined
+        }
+        onSelectLatestTradePrice={
+          onSelectPrice && latestTrade.status === 'ready'
+            ? selectCurrentLatestTradePrice
+            : undefined
+        }
         onSelectTickOption={selectTickOptionWithSnapshot}
-        onSelectPrice={usesCachedSnapshot ? undefined : onSelectPrice}
         onSelectPriceIntentStart={onSelectPriceIntentStart}
         selectedTickOption={selectedTickOption}
         serverClock={currentServerClock}

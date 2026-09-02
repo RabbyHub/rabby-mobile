@@ -56,57 +56,32 @@ export const PerpsProOrderBookModeIcon: React.FC<{
 };
 
 export const PerpsProOrderBookRow: React.FC<{
-  animationIdentity: string;
   amountUnit?: PerpsProTradeAmountUnit;
   amountDecimals?: number;
   level?: PerpsOrderBookLevel;
-  maxTotal: number;
-  onSelectPrice?: (price: string | null) => void;
+  onSelectPrice?: () => void;
   onSelectPriceIntentStart?: () => void;
   priceDecimals: number;
   side: 'ask' | 'bid';
 }> = ({
-  animationIdentity,
   amountUnit = 'quote',
   amountDecimals = 2,
   level,
-  maxTotal,
   onSelectPrice,
   onSelectPriceIntentStart,
   priceDecimals,
   side,
 }) => {
   const { styles } = useTheme2024({ getStyle });
-  const depth = level ? getPerpsOrderBookDepthPercent(level, maxTotal) : 0;
-  const animatedDepth = usePerpsProOrderBookPercentAnimation({
-    animationIdentity,
-    hasValue: level != null,
-    targetPercent: depth,
-    valueIdentity: level?.price ?? 'empty',
-  });
-  const depthStyle = useAnimatedStyle(() => ({
-    width: `${animatedDepth.value}%` as `${number}%`,
-  }));
 
   return (
     <Pressable
       accessibilityRole={onSelectPrice ? 'button' : undefined}
       disabled={!onSelectPrice}
       onPressIn={onSelectPriceIntentStart}
-      onPress={() => onSelectPrice?.(level?.price ?? null)}
+      onPress={onSelectPrice}
       style={styles.bookRow}
       testID="perps-pro-order-book-row">
-      {level ? (
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.depth,
-            side === 'bid' ? styles.bidDepth : styles.askDepth,
-            depthStyle,
-          ]}
-          testID="perps-pro-order-book-depth"
-        />
-      ) : null}
       <Text
         numberOfLines={1}
         style={[
@@ -130,6 +105,38 @@ export const PerpsProOrderBookRow: React.FC<{
           : '--'}
       </Text>
     </Pressable>
+  );
+};
+
+export const PerpsProOrderBookDepth: React.FC<{
+  animationIdentity: string;
+  level: PerpsOrderBookLevel;
+  maxTotal: number;
+  rowIndex: number;
+  side: 'ask' | 'bid';
+}> = ({ animationIdentity, level, maxTotal, rowIndex, side }) => {
+  const { styles } = useTheme2024({ getStyle });
+  const animatedDepth = usePerpsProOrderBookPercentAnimation({
+    animationIdentity,
+    hasValue: true,
+    targetPercent: getPerpsOrderBookDepthPercent(level, maxTotal),
+    valueIdentity: level.price,
+  });
+  const depthStyle = useAnimatedStyle(() => ({
+    width: `${animatedDepth.value}%` as `${number}%`,
+  }));
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        styles.depth,
+        side === 'bid' ? styles.bidDepth : styles.askDepth,
+        { top: rowIndex * PERPS_PRO_ORDER_BOOK_ROW_HEIGHT },
+        depthStyle,
+      ]}
+      testID="perps-pro-order-book-depth"
+    />
   );
 };
 
@@ -184,10 +191,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'relative',
   },
   depth: {
-    bottom: 0,
+    height: PERPS_PRO_ORDER_BOOK_ROW_HEIGHT,
     position: 'absolute',
     right: 0,
-    top: 0,
   },
   askDepth: {
     backgroundColor: colors2024['red-light-1'],

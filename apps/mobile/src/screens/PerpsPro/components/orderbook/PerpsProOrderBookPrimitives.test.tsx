@@ -38,6 +38,7 @@ jest.mock('@/utils/styles', () => ({
 }));
 
 import {
+  PerpsProOrderBookDepth,
   PerpsProOrderBookModeIcon,
   PerpsProOrderBookRow,
 } from './PerpsProOrderBookPrimitives';
@@ -95,8 +96,6 @@ describe('PerpsProOrderBookRow', () => {
     const onSelectPrice = jest.fn();
     render(
       <PerpsProOrderBookRow
-        animationIdentity="BTC:5:null|both|6|content"
-        maxTotal={0}
         onSelectPrice={onSelectPrice}
         priceDecimals={2}
         side="ask"
@@ -111,13 +110,12 @@ describe('PerpsProOrderBookRow', () => {
       });
     });
     fireEvent.press(screen.getByTestId('perps-pro-order-book-row'));
-    expect(onSelectPrice).toHaveBeenCalledWith(null);
+    expect(onSelectPrice).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the Figma row inset and shared platform font', () => {
     render(
       <PerpsProOrderBookRow
-        animationIdentity="BTC:5:null|both|6|content"
         level={{
           price: '100',
           priceNumber: 100,
@@ -126,7 +124,6 @@ describe('PerpsProOrderBookRow', () => {
           totalUsd: 200,
           usdSize: 200,
         }}
-        maxTotal={2}
         priceDecimals={2}
         side="bid"
       />,
@@ -151,7 +148,6 @@ describe('PerpsProOrderBookRow', () => {
   it('uses market size precision below 1K and fixed K/M/B precision', () => {
     const view = render(
       <PerpsProOrderBookRow
-        animationIdentity="BTC:5:null|both|6|content"
         amountDecimals={1}
         amountUnit="base"
         level={{
@@ -162,7 +158,6 @@ describe('PerpsProOrderBookRow', () => {
           totalUsd: 2000,
           usdSize: 2000,
         }}
-        maxTotal={20}
         priceDecimals={2}
         side="bid"
       />,
@@ -171,7 +166,6 @@ describe('PerpsProOrderBookRow', () => {
     expect(screen.getByText('20')).toBeTruthy();
     view.rerender(
       <PerpsProOrderBookRow
-        animationIdentity="BTC:5:null|both|6|content"
         amountDecimals={1}
         amountUnit="base"
         level={{
@@ -182,7 +176,6 @@ describe('PerpsProOrderBookRow', () => {
           totalUsd: 2050,
           usdSize: 2050,
         }}
-        maxTotal={20.5}
         priceDecimals={2}
         side="bid"
       />,
@@ -191,7 +184,6 @@ describe('PerpsProOrderBookRow', () => {
 
     view.rerender(
       <PerpsProOrderBookRow
-        animationIdentity="BTC:5:null|both|6|content"
         amountDecimals={1}
         amountUnit="base"
         level={{
@@ -202,7 +194,6 @@ describe('PerpsProOrderBookRow', () => {
           totalUsd: 100000,
           usdSize: 100000,
         }}
-        maxTotal={1000}
         priceDecimals={2}
         side="bid"
       />,
@@ -220,11 +211,11 @@ describe('PerpsProOrderBookRow', () => {
       usdSize: 200,
     };
     const view = render(
-      <PerpsProOrderBookRow
+      <PerpsProOrderBookDepth
         animationIdentity="BTC:5:null|both|6|content"
         level={level}
         maxTotal={4}
-        priceDecimals={2}
+        rowIndex={3}
         side="bid"
       />,
     );
@@ -233,11 +224,11 @@ describe('PerpsProOrderBookRow', () => {
     mockCancelAnimation.mockClear();
 
     view.rerender(
-      <PerpsProOrderBookRow
+      <PerpsProOrderBookDepth
         animationIdentity="BTC:5:null|both|6|content"
         level={{ ...level, size: 3, total: 3, totalUsd: 300, usdSize: 300 }}
         maxTotal={4}
-        priceDecimals={2}
+        rowIndex={2}
         side="bid"
       />,
     );
@@ -250,7 +241,7 @@ describe('PerpsProOrderBookRow', () => {
     expect(mockCancelAnimation).not.toHaveBeenCalled();
 
     view.rerender(
-      <PerpsProOrderBookRow
+      <PerpsProOrderBookDepth
         animationIdentity="BTC:5:null|both|6|content"
         level={{
           ...level,
@@ -261,7 +252,7 @@ describe('PerpsProOrderBookRow', () => {
           usdSize: 101,
         }}
         maxTotal={4}
-        priceDecimals={2}
+        rowIndex={2}
         side="bid"
       />,
     );
@@ -270,7 +261,7 @@ describe('PerpsProOrderBookRow', () => {
     expect(mockCancelAnimation).toHaveBeenCalledTimes(1);
 
     view.rerender(
-      <PerpsProOrderBookRow
+      <PerpsProOrderBookDepth
         animationIdentity="ETH:5:null|both|6|content"
         level={{
           ...level,
@@ -281,7 +272,7 @@ describe('PerpsProOrderBookRow', () => {
           usdSize: 202,
         }}
         maxTotal={4}
-        priceDecimals={2}
+        rowIndex={1}
         side="bid"
       />,
     );
@@ -289,14 +280,12 @@ describe('PerpsProOrderBookRow', () => {
     expect(mockWithTiming).toHaveBeenCalledTimes(1);
     expect(mockCancelAnimation).toHaveBeenCalledTimes(2);
 
-    view.rerender(
-      <PerpsProOrderBookRow
-        animationIdentity="ETH:5:null|both|6|content"
-        maxTotal={0}
-        priceDecimals={2}
-        side="bid"
-      />,
-    );
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-book-depth').props.style,
+      ),
+    ).toMatchObject({ height: 20, top: 20 });
+    view.unmount();
 
     expect(mockWithTiming).toHaveBeenCalledTimes(1);
     expect(mockCancelAnimation).toHaveBeenCalledTimes(3);
