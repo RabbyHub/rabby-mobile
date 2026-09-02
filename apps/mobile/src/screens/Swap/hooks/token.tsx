@@ -71,14 +71,16 @@ const tokenRefreshIdAtom = atom(0);
 const useTokenRefreshId = () => useAtomValue(tokenRefreshIdAtom);
 const useSetTokenRefreshId = () => useSetAtom(tokenRefreshIdAtom);
 
-const getSwapQuoteScore = ({
+export const getSwapQuoteScore = ({
   quote,
   receiveToken,
   inSufficient,
+  sortIncludeGasFee = true,
 }: {
   quote: TDexQuoteData;
   receiveToken: TokenItem;
   inSufficient: boolean;
+  sortIncludeGasFee?: boolean;
 }) => {
   if (
     quote.loading ||
@@ -88,17 +90,17 @@ const getSwapQuoteScore = ({
     return null;
   }
 
-  const price = receiveToken.price ? receiveToken.price : 1;
   const receiveTokenAmount = new BigNumber(quote.data.toTokenAmount).div(
     10 ** (quote.data.toTokenDecimals || receiveToken.decimals),
   );
-  const amountUsd = receiveTokenAmount.times(price);
 
-  if (inSufficient) {
-    return amountUsd;
+  if (inSufficient || !receiveToken.price || !sortIncludeGasFee) {
+    return receiveTokenAmount;
   }
 
-  return amountUsd.minus(quote.preExecResult.gasUsdValue || 0);
+  return receiveTokenAmount
+    .times(receiveToken.price)
+    .minus(quote.preExecResult.gasUsdValue || 0);
 };
 
 const getSwapProviderScore = ({
@@ -114,17 +116,17 @@ const getSwapProviderScore = ({
     return null;
   }
 
-  const price = receiveToken.price ? receiveToken.price : 1;
   const receiveTokenAmount = new BigNumber(provider.quote.toTokenAmount).div(
     10 ** (provider.quote.toTokenDecimals || receiveToken.decimals),
   );
-  const amountUsd = receiveTokenAmount.times(price);
 
-  if (inSufficient) {
-    return amountUsd;
+  if (inSufficient || !receiveToken.price) {
+    return receiveTokenAmount;
   }
 
-  return amountUsd.minus(provider.preExecResult.gasUsdValue || 0);
+  return receiveTokenAmount
+    .times(receiveToken.price)
+    .minus(provider.preExecResult.gasUsdValue || 0);
 };
 
 const getTokenUsdValue = ({
