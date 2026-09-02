@@ -5,15 +5,27 @@ import type { PerpsProInfoTab } from '@/core/services/perpsService';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { Animated, Easing, Pressable, View } from 'react-native';
+import {
+  Animated,
+  Easing,
+  Pressable,
+  View,
+  type LayoutChangeEvent,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
+import type { SharedValue } from 'react-native-reanimated';
 
+import {
+  PerpsProTabIndicator,
+  type PerpsProTabIndicatorLayout,
+} from '../common/PerpsProTabIndicator';
 import { PERPS_PRO_INFO_TABS_HEIGHT } from './perpsProInfoTabsSticky';
 import { PERPS_PRO_INFO_TABS } from './perpsProInfoTabOrder';
 
 interface PerpsProInfoTabsProps {
   activeTab: PerpsProInfoTab;
   historyEnabled: boolean;
+  indicatorPosition: SharedValue<number>;
   openOrdersCount: number;
   onHistoryPress: (hasPendingFunding: boolean) => void;
   pendingFundingCount: number;
@@ -60,6 +72,7 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
   ({
     activeTab,
     historyEnabled,
+    indicatorPosition,
     onChange,
     onHistoryPress,
     openOrdersCount,
@@ -68,6 +81,34 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
   }) => {
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
+    const [tabFrames, setTabFrames] = React.useState<
+      Partial<Record<PerpsProInfoTab, PerpsProTabIndicatorLayout>>
+    >({});
+
+    const recordTabFrame = React.useCallback(
+      (tab: PerpsProInfoTab, event: LayoutChangeEvent) => {
+        const { width, x } = event.nativeEvent.layout;
+        setTabFrames(current => {
+          const previous = current[tab];
+          if (previous?.width === width && previous.x === x) {
+            return current;
+          }
+          return { ...current, [tab]: { width, x } };
+        });
+      },
+      [],
+    );
+    const indicatorLayouts = React.useMemo(() => {
+      const layouts: PerpsProTabIndicatorLayout[] = [];
+      for (const tab of PERPS_PRO_INFO_TABS) {
+        const frame = tabFrames[tab];
+        if (!frame || frame.width <= 0) {
+          return [];
+        }
+        layouts.push(frame);
+      }
+      return layouts;
+    }, [tabFrames]);
 
     const labels: Record<PerpsProInfoTab, string> = {
       account: t('page.perps.pro.account.account'),
@@ -86,6 +127,7 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
               accessibilityRole="tab"
               accessibilityState={{ selected }}
               key={tab}
+              onLayout={event => recordTabFrame(tab, event)}
               onPress={() => onChange(tab)}
               style={styles.tab}
               testID={`perps-pro-info-tab-${tab}`}>
@@ -94,10 +136,15 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
                 style={selected ? styles.activeText : styles.text}>
                 {labels[tab]}
               </Text>
-              {selected ? <View style={styles.indicator} /> : null}
             </Pressable>
           );
         })}
+        <PerpsProTabIndicator
+          layouts={indicatorLayouts}
+          position={indicatorPosition}
+          style={styles.indicator}
+          testID="perps-pro-info-tab-indicator"
+        />
         <Pressable
           accessibilityLabel={t('page.perps.pro.account.history')}
           accessibilityRole="button"
@@ -137,6 +184,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 12,
     height: PERPS_PRO_INFO_TABS_HEIGHT,
     paddingHorizontal: 15,
+    position: 'relative',
   },
   tab: {
     alignItems: 'center',
@@ -163,9 +211,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-title-1'],
     bottom: 0,
     height: 2,
-    left: 0,
-    position: 'absolute',
-    right: 0,
   },
   history: {
     alignItems: 'center',

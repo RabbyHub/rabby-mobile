@@ -1,16 +1,26 @@
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   Pressable,
-  View,
   type LayoutChangeEvent,
   type LayoutRectangle,
 } from 'react-native';
 import { ScrollView as GestureHandlerScrollView } from 'react-native-gesture-handler';
+import type { SharedValue } from 'react-native-reanimated';
 
 import type { PerpsProMarketTab } from '../../model/market';
+import {
+  PerpsProTabIndicator,
+  type PerpsProTabIndicatorLayout,
+} from '../common/PerpsProTabIndicator';
 
 type MarketTabItem = Readonly<{
   id: PerpsProMarketTab;
@@ -68,9 +78,10 @@ export const updatePerpsProMarketTabFrame = (
 
 export const PerpsProMarketTabs: React.FC<{
   activeTab: PerpsProMarketTab;
+  indicatorPosition: SharedValue<number>;
   onChange: (tab: PerpsProMarketTab) => void;
   tabs: readonly MarketTabItem[];
-}> = React.memo(({ activeTab, onChange, tabs }) => {
+}> = React.memo(({ activeTab, indicatorPosition, onChange, tabs }) => {
   const { styles } = useTheme2024({ getStyle });
   const scrollRef = useRef<GestureHandlerScrollView>(null);
   const lastScrollPositionRef = useRef<MarketTabScrollPosition | null>(null);
@@ -78,6 +89,22 @@ export const PerpsProMarketTabs: React.FC<{
   const [viewportWidth, setViewportWidth] = useState(0);
   const [contentWidth, setContentWidth] = useState(0);
   const activeFrame = tabFrames[activeTab];
+  const indicatorLayouts = useMemo<
+    readonly PerpsProTabIndicatorLayout[]
+  >(() => {
+    const layouts: PerpsProTabIndicatorLayout[] = [];
+    for (const tab of tabs) {
+      const frame = tabFrames[tab.id];
+      if (!frame) {
+        return [];
+      }
+      layouts.push({
+        width: 20,
+        x: frame.x + (frame.width - 20) / 2,
+      });
+    }
+    return layouts;
+  }, [tabFrames, tabs]);
 
   const scrollActiveTabIntoView = useCallback(() => {
     if (!activeFrame) {
@@ -141,15 +168,15 @@ export const PerpsProMarketTabs: React.FC<{
             <Text style={active ? styles.activeText : styles.text}>
               {tab.label}
             </Text>
-            {active ? (
-              <View
-                style={styles.indicator}
-                testID="perps-pro-market-tab-indicator"
-              />
-            ) : null}
           </Pressable>
         );
       })}
+      <PerpsProTabIndicator
+        layouts={indicatorLayouts}
+        position={indicatorPosition}
+        style={styles.indicator}
+        testID="perps-pro-market-tab-indicator"
+      />
     </GestureHandlerScrollView>
   );
 });
@@ -166,6 +193,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   content: {
     gap: 12,
     paddingHorizontal: 15,
+    position: 'relative',
   },
   tab: {
     alignItems: 'center',
@@ -192,9 +220,5 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 1,
     bottom: 1,
     height: 2,
-    left: '50%',
-    marginLeft: -10,
-    position: 'absolute',
-    width: 20,
   },
 }));

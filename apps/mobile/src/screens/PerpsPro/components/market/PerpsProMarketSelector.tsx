@@ -26,6 +26,7 @@ import React, {
 } from 'react';
 import { Keyboard, useWindowDimensions, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -47,6 +48,7 @@ import {
   getPerpsProMarketSession,
   setPerpsProSessionSort,
 } from '../../session/perpsProMarketSession';
+import { snapPerpsProTabIndicator } from '../common/PerpsProTabIndicator';
 import { getPerpsProBottomSheetChromeStyles } from '../common/perpsProVisual';
 import {
   PerpsProMarketList,
@@ -157,6 +159,8 @@ const PerpsProMarketSelectorComponent = forwardRef<
     const searchRef = useRef<PerpsProMarketSearchBarHandle>(null);
     const projectionRef = useRef(EMPTY_PERPS_PRO_MARKET_SELECTOR_PROJECTION);
     const selectionRequestRef = useRef(0);
+    const tabIndicatorContextRef = useRef<string | null>(null);
+    const tabIndicatorPosition = useSharedValue(0);
     const [query, setQuery] = useState('');
     const [inputFocused, setInputFocused] = useState(false);
     const [tabPresentation, setTabPresentation] = useState<{
@@ -227,10 +231,25 @@ const PerpsProMarketSelectorComponent = forwardRef<
     const displayedTab = resolvedPreviewTab ?? resolvedActiveTab;
     const isSearchMode = inputFocused || !!query.trim();
     const tabIdsKey = tabs.map(tab => tab.id).join('\u0000');
+    const tabLayoutKey = `${tabIdsKey}\u0002${tabs
+      .map(tab => tab.label)
+      .join('\u0000')}\u0002${width}`;
     const activeTabIndex = Math.max(
       0,
       tabs.findIndex(tab => tab.id === resolvedActiveTab),
     );
+    const tabIndicatorContext = `${tabLayoutKey}\u0001${
+      isSearchMode ? 'search' : 'tabs'
+    }`;
+
+    useLayoutEffect(() => {
+      if (tabIndicatorContextRef.current === tabIndicatorContext) {
+        return;
+      }
+      tabIndicatorContextRef.current = tabIndicatorContext;
+      snapPerpsProTabIndicator(tabIndicatorPosition, activeTabIndex);
+    }, [activeTabIndex, tabIndicatorContext, tabIndicatorPosition]);
+
     const preparedTabIndex =
       IS_IOS && resolvedPreviewTab
         ? Math.max(
@@ -351,15 +370,26 @@ const PerpsProMarketSelectorComponent = forwardRef<
       Keyboard.dismiss();
       searchRef.current?.clear();
       searchRef.current?.blur();
+      const allTabIndex = Math.max(
+        0,
+        tabs.findIndex(tab => tab.id === 'all'),
+      );
+      snapPerpsProTabIndicator(tabIndicatorPosition, allTabIndex);
       if (resolvedActiveTab !== 'all' || previewTab) {
-        const allTabIndex = tabs.findIndex(tab => tab.id === 'all');
-        pagerRef.current?.setPageWithoutAnimation(Math.max(0, allTabIndex));
+        pagerRef.current?.setPageWithoutAnimation(allTabIndex);
       }
       setQuery('');
       setInputFocused(false);
       setTabPresentation({ activeTab: 'all', previewTab: null });
       onClose?.();
-    }, [markDismissed, onClose, previewTab, resolvedActiveTab, tabs]);
+    }, [
+      markDismissed,
+      onClose,
+      previewTab,
+      resolvedActiveTab,
+      tabIndicatorPosition,
+      tabs,
+    ]);
     const selectSort = useCallback((field: 'name' | 'volume') => {
       setSort(current =>
         getNextPerpsProSort(current.field, current.direction, field),
@@ -461,7 +491,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
           if (distance === 1) {
             pagerRef.current?.setPage(targetIndex);
           } else {
-            pagerRef.current?.setPageWithoutAnimation(targetIndex);
+            pagerRef.current?.setPageWithoutAnimation(targetIndex, true);
           }
         });
       },
@@ -534,6 +564,8 @@ const PerpsProMarketSelectorComponent = forwardRef<
             {!isSearchMode ? (
               <PerpsProMarketTabs
                 activeTab={displayedTab}
+                indicatorPosition={tabIndicatorPosition}
+                key={tabLayoutKey}
                 onChange={selectTab}
                 tabs={tabs}
               />
@@ -606,6 +638,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
               </View>
             ) : (
               <PerpsProMarketPager
+                indicatorPosition={tabIndicatorPosition}
                 initialPage={activeTabIndex}
                 key={tabIdsKey}
                 onPagePreview={handlePagePreview}

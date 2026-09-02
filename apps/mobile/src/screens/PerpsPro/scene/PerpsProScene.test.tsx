@@ -85,6 +85,8 @@ jest.mock('react-native-reanimated', () => {
       View: ReactNative.View,
     },
     cancelAnimation: jest.fn(),
+    Easing: { bezier: jest.fn(() => 'ease-out') },
+    ReduceMotion: { System: 'system' },
     runOnJS: (callback: (...args: unknown[]) => unknown) => callback,
     scrollTo: jest.fn(),
     useAnimatedRef: () => {
@@ -109,6 +111,7 @@ jest.mock('react-native-reanimated', () => {
     useScrollViewOffset: (_ref: unknown, offset: unknown) => offset,
     useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
     withDecay: jest.fn(({ velocity }: { velocity: number }) => velocity),
+    withTiming: (target: number) => target,
   };
 });
 

@@ -4,6 +4,7 @@ import React, {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useLayoutEffect,
   useMemo,
   useRef,
   type ReactElement,
@@ -27,8 +28,13 @@ import Reanimated, {
   runOnJS,
   useEvent,
   useSharedValue,
+  type SharedValue,
 } from 'react-native-reanimated';
 
+import {
+  animatePerpsProTabIndicator,
+  snapPerpsProTabIndicator,
+} from '../common/PerpsProTabIndicator';
 import { usePerpsProPagerPreviewSession } from '../common/usePerpsProPagerPreviewSession';
 
 import { PERPS_PRO_INFO_TABS } from './perpsProInfoTabOrder';
@@ -106,6 +112,7 @@ type PerpsProInfoPagerProps<Row> = {
   data: Record<PerpsProInfoTab, readonly Row[]>;
   getActiveScrollOffset: () => number;
   keepAllTabsMounted?: boolean;
+  indicatorPosition: SharedValue<number>;
   nativeVerticalScrollEnabled?: boolean;
   offscreenPageLimit?: number;
   onActivateOffset: (offset: number) => void;
@@ -149,6 +156,7 @@ const PerpsProInfoPagerInner = <Row,>(
     data,
     getActiveScrollOffset,
     keepAllTabsMounted = false,
+    indicatorPosition,
     nativeVerticalScrollEnabled = true,
     offscreenPageLimit,
     onActivateOffset,
@@ -193,9 +201,19 @@ const PerpsProInfoPagerInner = <Row,>(
   } | null>(null);
   const settledPagePosition = useSharedValue(selectedIndexRef.current);
   const isPreviewGestureActive = useSharedValue(false);
+  const isIndicatorScrollActive = useSharedValue(false);
+  const isProgrammaticIndicatorProgressActive = useSharedValue(false);
+  const programmaticIndicatorTargetPosition = useSharedValue(
+    selectedIndexRef.current,
+  );
+  const preserveIndicatorOnSelection = useSharedValue(false);
   const previewGestureSessionId = useSharedValue(0);
   const previewPagePosition = useSharedValue(selectedIndexRef.current);
   const activeTabRef = useRef(activeTab);
+
+  useLayoutEffect(() => {
+    snapPerpsProTabIndicator(indicatorPosition, selectedIndexRef.current);
+  }, [indicatorPosition]);
   activeTabRef.current = activeTab;
   const preparedTabs = useMemo(
     () =>
@@ -311,6 +329,12 @@ const PerpsProInfoPagerInner = <Row,>(
       const targetIndex = PERPS_PRO_INFO_TABS.indexOf(tab);
       if (targetIndex < 0 || targetIndex === selectedIndexRef.current) {
         programmaticTargetIndexRef.current = null;
+        isIndicatorScrollActive.value = false;
+        isProgrammaticIndicatorProgressActive.value = false;
+        preserveIndicatorOnSelection.value = false;
+        if (targetIndex >= 0) {
+          snapPerpsProTabIndicator(indicatorPosition, targetIndex);
+        }
         return;
       }
       programmaticTargetIndexRef.current = targetIndex;
@@ -319,13 +343,34 @@ const PerpsProInfoPagerInner = <Row,>(
         scrollBridge.pageGestureActive.value = true;
       }
       preparePages();
-      if (animated && Math.abs(targetIndex - selectedIndexRef.current) === 1) {
+      const shouldTrackNativeProgress =
+        animated && Math.abs(targetIndex - selectedIndexRef.current) === 1;
+      isIndicatorScrollActive.value = shouldTrackNativeProgress;
+      isProgrammaticIndicatorProgressActive.value = shouldTrackNativeProgress;
+      programmaticIndicatorTargetPosition.value = targetIndex;
+      preserveIndicatorOnSelection.value =
+        animated && !shouldTrackNativeProgress;
+      if (shouldTrackNativeProgress) {
         pagerRef.current?.setPage(targetIndex);
       } else {
+        if (animated) {
+          animatePerpsProTabIndicator(indicatorPosition, targetIndex);
+        } else {
+          snapPerpsProTabIndicator(indicatorPosition, targetIndex);
+        }
         pagerRef.current?.setPageWithoutAnimation(targetIndex);
       }
     },
-    [clearPagePreview, preparePages, scrollBridge],
+    [
+      clearPagePreview,
+      indicatorPosition,
+      isIndicatorScrollActive,
+      isProgrammaticIndicatorProgressActive,
+      preparePages,
+      preserveIndicatorOnSelection,
+      programmaticIndicatorTargetPosition,
+      scrollBridge,
+    ],
   );
 
   const scrollActiveToOffset = useCallback(
@@ -363,6 +408,10 @@ const PerpsProInfoPagerInner = <Row,>(
       return;
     }
     clearPagePreview();
+    isIndicatorScrollActive.value = false;
+    isProgrammaticIndicatorProgressActive.value = false;
+    preserveIndicatorOnSelection.value = false;
+    snapPerpsProTabIndicator(indicatorPosition, activeIndex);
     selectedIndexRef.current = activeIndex;
     settledPagePosition.value = activeIndex;
     previewPagePosition.value = activeIndex;
@@ -371,6 +420,10 @@ const PerpsProInfoPagerInner = <Row,>(
   }, [
     activeTab,
     clearPagePreview,
+    indicatorPosition,
+    isIndicatorScrollActive,
+    isProgrammaticIndicatorProgressActive,
+    preserveIndicatorOnSelection,
     previewPagePosition,
     scrollBridge,
     settledPagePosition,
@@ -394,9 +447,14 @@ const PerpsProInfoPagerInner = <Row,>(
       const gestureAuthorized =
         !authorizeNativePageGestures ||
         isPerpsProInfoHorizontalTouchAuthorized(scrollBridge);
+      const indicatorScrollWasActive = isIndicatorScrollActive.value;
 
       if (changed && !programmaticAuthorized && !gestureAuthorized) {
         isPreviewGestureActive.value = false;
+        isIndicatorScrollActive.value = false;
+        isProgrammaticIndicatorProgressActive.value = false;
+        preserveIndicatorOnSelection.value = false;
+        snapPerpsProTabIndicator(indicatorPosition, settledPagePosition.value);
         previewPagePosition.value = settledPagePosition.value;
         finishPreviewSession(sessionId, true);
         if (scrollBridge) {
@@ -417,6 +475,16 @@ const PerpsProInfoPagerInner = <Row,>(
         scrollBridge.horizontalTouchSessionId.value = 0;
       }
       isPreviewGestureActive.value = false;
+      const shouldPreserveIndicator =
+        preserveIndicatorOnSelection.value &&
+        programmaticTargetIndexRef.current === position;
+      preserveIndicatorOnSelection.value = false;
+      if (!indicatorScrollWasActive) {
+        isProgrammaticIndicatorProgressActive.value = false;
+      }
+      if (!shouldPreserveIndicator && !indicatorScrollWasActive) {
+        snapPerpsProTabIndicator(indicatorPosition, position);
+      }
       settledPagePosition.value = position;
       previewPagePosition.value = position;
       finishPreviewSession(sessionId, !shouldCommit);
@@ -442,12 +510,16 @@ const PerpsProInfoPagerInner = <Row,>(
     },
     [
       authorizeNativePageGestures,
+      indicatorPosition,
+      isIndicatorScrollActive,
       isPreviewGestureActive,
+      isProgrammaticIndicatorProgressActive,
       onActivateOffset,
       onPageSelected,
       finishPreviewSession,
       previewGestureSessionId,
       previewPagePosition,
+      preserveIndicatorOnSelection,
       scrollBridge,
       settledPagePosition,
     ],
@@ -467,6 +539,9 @@ const PerpsProInfoPagerInner = <Row,>(
       event => {
         'worklet';
         if (event.pageScrollState === 'dragging') {
+          if (isProgrammaticIndicatorProgressActive.value) {
+            return;
+          }
           if (isPreviewGestureActive.value) {
             return;
           }
@@ -479,6 +554,7 @@ const PerpsProInfoPagerInner = <Row,>(
           const sessionId = previewGestureSessionId.value + 1;
           previewGestureSessionId.value = sessionId;
           isPreviewGestureActive.value = true;
+          isIndicatorScrollActive.value = true;
           if (scrollBridge) {
             scrollBridge.epoch.value += 1;
             scrollBridge.pageGestureActive.value = true;
@@ -488,6 +564,20 @@ const PerpsProInfoPagerInner = <Row,>(
           return;
         }
         if (event.pageScrollState === 'idle') {
+          const wasIndicatorScrollActive = isIndicatorScrollActive.value;
+          const wasProgrammaticIndicatorProgressActive =
+            isProgrammaticIndicatorProgressActive.value;
+          isIndicatorScrollActive.value = false;
+          isProgrammaticIndicatorProgressActive.value = false;
+          if (
+            wasIndicatorScrollActive &&
+            (wasProgrammaticIndicatorProgressActive ||
+              previewPagePosition.value === settledPagePosition.value)
+          ) {
+            indicatorPosition.value = wasProgrammaticIndicatorProgressActive
+              ? programmaticIndicatorTargetPosition.value
+              : settledPagePosition.value;
+          }
           const sessionId = previewGestureSessionId.value;
           const shouldFinishPreviewSession = isPreviewGestureActive.value;
           isPreviewGestureActive.value = false;
@@ -506,7 +596,15 @@ const PerpsProInfoPagerInner = <Row,>(
   const handlePageScroll = useEvent<PagerViewOnPageScrollEvent>(
     event => {
       'worklet';
+      const pagePosition = Math.max(
+        0,
+        Math.min(PERPS_PRO_INFO_TABS.length - 1, event.position + event.offset),
+      );
       if (!isPreviewGestureActive.value) {
+        if (isIndicatorScrollActive.value) {
+          indicatorPosition.value = pagePosition;
+          return;
+        }
         if (
           !authorizeNativePageGestures ||
           !isPerpsProInfoHorizontalTouchAuthorized(scrollBridge)
@@ -516,6 +614,7 @@ const PerpsProInfoPagerInner = <Row,>(
         const sessionId = previewGestureSessionId.value + 1;
         previewGestureSessionId.value = sessionId;
         isPreviewGestureActive.value = true;
+        isIndicatorScrollActive.value = true;
         if (scrollBridge) {
           scrollBridge.epoch.value += 1;
           scrollBridge.pageGestureActive.value = true;
@@ -523,9 +622,10 @@ const PerpsProInfoPagerInner = <Row,>(
         previewPagePosition.value = settledPagePosition.value;
         runOnJS(beginPageDrag)(sessionId);
       }
+      indicatorPosition.value = pagePosition;
       const nextPosition = getPerpsProInfoPagerPreviewPosition({
         maximumPosition: PERPS_PRO_INFO_TABS.length - 1,
-        pagePosition: event.position + event.offset,
+        pagePosition,
         previewPosition: previewPagePosition.value,
         settledPosition: settledPagePosition.value,
       });

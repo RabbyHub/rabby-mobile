@@ -38,8 +38,12 @@ jest.mock('react-native-reanimated', () => {
     __esModule: true,
     default: {
       ScrollView: ReactNative.ScrollView,
+      View: ReactNative.View,
       createAnimatedComponent: (Component: React.ComponentType) => Component,
     },
+    Easing: { bezier: jest.fn(() => jest.fn()) },
+    ReduceMotion: { System: 'system' },
+    cancelAnimation: jest.fn(),
     runOnJS: (callback: (...args: unknown[]) => unknown) => callback,
     useAnimatedScrollHandler:
       (handlers: { onScroll: (event: unknown) => void }) =>
@@ -52,6 +56,8 @@ jest.mock('react-native-reanimated', () => {
           eventName: 'onPageScroll',
         }),
     useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
+    useAnimatedStyle: (factory: () => object) => factory(),
+    withTiming: (target: number) => target,
   };
 });
 

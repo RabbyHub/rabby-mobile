@@ -39,7 +39,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Reanimated from 'react-native-reanimated';
+import Reanimated, { useSharedValue } from 'react-native-reanimated';
 
 import { PerpsProAccountAssetRow } from '../components/account/PerpsProAccountAssetRow';
 import { PerpsProAccountState } from '../components/account/PerpsProAccountState';
@@ -244,6 +244,9 @@ export const PerpsProScene: React.FC<{
   const info = usePerpsProInfoPanel(
     scene.currentMarket?.canonicalCoin ?? '',
     requestedInfoTab,
+  );
+  const infoTabIndicatorPosition = useSharedValue(
+    Math.max(0, PERPS_PRO_INFO_TABS.indexOf(info.activeInfoTab ?? 'positions')),
   );
   usePerpsFundingHistoryJournal({ enabled: scene.fundingHistoryEnabled });
   const positionActions = usePerpsProPositionActions({
@@ -1168,6 +1171,7 @@ export const PerpsProScene: React.FC<{
               data={rowsByTab}
               getActiveScrollOffset={headerCollapse.getScrollOffset}
               keepAllTabsMounted={keepAllInfoTabListsMounted}
+              indicatorPosition={infoTabIndicatorPosition}
               nativeVerticalScrollEnabled={Platform.OS !== 'android'}
               offscreenPageLimit={infoPagerOffscreenPageLimit}
               onActivateOffset={headerCollapse.syncScrollOffset}
@@ -1241,6 +1245,7 @@ export const PerpsProScene: React.FC<{
                     historyEnabled={
                       historyEnabled && info.accountState !== 'noAccount'
                     }
+                    indicatorPosition={infoTabIndicatorPosition}
                     onChange={requestInfoTab}
                     onHistoryPress={openHistory}
                     openOrdersCount={info.allOpenOrdersCount}

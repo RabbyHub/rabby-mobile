@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React, { createRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import type { SharedValue } from 'react-native-reanimated';
 
 import {
   PerpsProMarketPager,
@@ -13,6 +14,8 @@ const mockNativeSetPageWithoutAnimation = jest.fn();
 const mockNativePagerRender = jest.fn();
 let mockQueueRunOnJS = false;
 const mockRunOnJSQueue: Array<() => unknown> = [];
+const mockCancelAnimation = jest.fn();
+const mockWithTiming = jest.fn((target: number) => target);
 
 const flushMockRunOnJSQueue = () => {
   const queuedCallbacks = mockRunOnJSQueue.splice(0);
@@ -53,8 +56,12 @@ jest.mock('react-native-reanimated', () => {
     __esModule: true,
     default: {
       ScrollView: ReactNative.ScrollView,
+      View: ReactNative.View,
       createAnimatedComponent: (Component: React.ComponentType) => Component,
     },
+    Easing: { bezier: jest.fn(() => jest.fn()) },
+    ReduceMotion: { System: 'system' },
+    cancelAnimation: (...args: unknown[]) => mockCancelAnimation(...args),
     runOnJS:
       (callback: (...args: unknown[]) => unknown) =>
       (...args: unknown[]) => {
@@ -91,17 +98,24 @@ jest.mock('react-native-reanimated', () => {
           eventName: eventNames?.[0] ?? 'onPageScroll',
         }),
     useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
+    useAnimatedStyle: (factory: () => object) => factory(),
+    withTiming: (...args: [number, object]) => mockWithTiming(...args),
   };
 });
+
+const createIndicatorPosition = (value: number) =>
+  ({ value } as SharedValue<number>);
 
 const renderPager = (
   onPageSelected = jest.fn(),
   ref = createRef<PerpsProMarketPagerHandle>(),
   initialPage = 1,
   onPagePreview = jest.fn(),
+  indicatorPosition = createIndicatorPosition(initialPage),
 ) => {
   render(
     <PerpsProMarketPager
+      indicatorPosition={indicatorPosition}
       initialPage={initialPage}
       onPagePreview={onPagePreview}
       onPageSelected={onPageSelected}
@@ -123,8 +137,10 @@ const ControlledPager = ({
   onPageSelected: (position: number) => void;
 }) => {
   const [activePage, setActivePage] = React.useState(0);
+  const indicatorPosition = React.useRef(createIndicatorPosition(0)).current;
   return (
     <PerpsProMarketPager
+      indicatorPosition={indicatorPosition}
       initialPage={activePage}
       onPagePreview={jest.fn()}
       onPageSelected={position => {
@@ -252,6 +268,42 @@ describe('PerpsProMarketPager', () => {
     expect(onPagePreview).toHaveBeenLastCalledWith(1);
     expect(onPageSelected).toHaveBeenCalledTimes(1);
     expect(onPageSelected).toHaveBeenCalledWith(1);
+  });
+
+  it('drives the iOS indicator with fractional UI progress without per-frame previews', () => {
+    const onPagePreview = jest.fn();
+    const indicatorPosition = createIndicatorPosition(0);
+    renderPager(
+      jest.fn(),
+      createRef<PerpsProMarketPagerHandle>(),
+      0,
+      onPagePreview,
+      indicatorPosition,
+    );
+    const pager = screen.getByTestId('market-pager');
+
+    fireEvent.scroll(pager, {
+      nativeEvent: { contentOffset: { x: 80, y: 0 } },
+    });
+    expect(indicatorPosition.value).toBe(0);
+
+    act(() => {
+      pager.props.onScroll({
+        contentOffset: { x: 0, y: 0 },
+        eventName: 'onScrollBeginDrag',
+      });
+    });
+    fireEvent.scroll(pager, {
+      nativeEvent: { contentOffset: { x: 80, y: 0 } },
+    });
+    expect(indicatorPosition.value).toBe(0.25);
+    expect(onPagePreview).not.toHaveBeenCalled();
+
+    fireEvent.scroll(pager, {
+      nativeEvent: { contentOffset: { x: 160, y: 0 } },
+    });
+    expect(indicatorPosition.value).toBe(0.5);
+    expect(onPagePreview.mock.calls).toEqual([[1]]);
   });
 
   it('ignores iOS mount-time offsets until a user drag begins', () => {
@@ -386,11 +438,45 @@ describe('PerpsProMarketPager', () => {
     scrollTo.mockRestore();
   });
 
+  it('follows adjacent iOS programmatic progress and animates only a direct jump', () => {
+    const scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo');
+    const ref = createRef<PerpsProMarketPagerHandle>();
+    const indicatorPosition = createIndicatorPosition(1);
+    renderPager(jest.fn(), ref, 1, jest.fn(), indicatorPosition);
+    const pager = screen.getByTestId('market-pager');
+
+    act(() => {
+      ref.current?.setPage(2);
+    });
+    fireEvent.scroll(pager, {
+      nativeEvent: { contentOffset: { x: 480, y: 0 } },
+    });
+    expect(indicatorPosition.value).toBe(1.5);
+
+    fireEvent(pager, 'momentumScrollEnd', {
+      nativeEvent: { contentOffset: { x: 640, y: 0 } },
+    });
+    expect(indicatorPosition.value).toBe(2);
+
+    act(() => {
+      ref.current?.setPageWithoutAnimation(0, true);
+    });
+    expect(mockWithTiming).toHaveBeenLastCalledWith(
+      0,
+      expect.objectContaining({ duration: 300, reduceMotion: 'system' }),
+    );
+    expect(indicatorPosition.value).toBe(0);
+
+    scrollTo.mockRestore();
+  });
+
   it('realigns the settled page without animation when page width changes', () => {
     const scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo');
     const onPageSelected = jest.fn();
+    const indicatorPosition = createIndicatorPosition(1);
     const { rerender } = render(
       <PerpsProMarketPager
+        indicatorPosition={indicatorPosition}
         initialPage={1}
         onPagePreview={jest.fn()}
         onPageSelected={onPageSelected}
@@ -404,6 +490,7 @@ describe('PerpsProMarketPager', () => {
 
     rerender(
       <PerpsProMarketPager
+        indicatorPosition={indicatorPosition}
         initialPage={1}
         onPagePreview={jest.fn()}
         onPageSelected={onPageSelected}
@@ -487,6 +574,9 @@ describe('PerpsProMarketPager', () => {
     fireEvent(pager, 'pageSelected', { nativeEvent: { position: 2 } });
     expect(onPagePreview).toHaveBeenLastCalledWith(2);
     expect(onPageSelected).toHaveBeenCalledWith(2);
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'idle' },
+    });
     fireEvent(pager, 'pageScroll', {
       nativeEvent: { offset: 0, position: 0 },
     });
@@ -498,6 +588,77 @@ describe('PerpsProMarketPager', () => {
     });
     expect(mockNativeSetPage).toHaveBeenCalledWith(1);
     expect(mockNativeSetPageWithoutAnimation).toHaveBeenCalledWith(0);
+  });
+
+  it('keeps tracking an Android drag when selection arrives before idle', () => {
+    mockIsIOS = false;
+    const ref = createRef<PerpsProMarketPagerHandle>();
+    const indicatorPosition = createIndicatorPosition(1);
+    renderPager(jest.fn(), ref, 1, jest.fn(), indicatorPosition);
+    const pager = screen.getByTestId('market-pager');
+
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.25, position: 1 },
+    });
+    expect(indicatorPosition.value).toBe(1);
+
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'dragging' },
+    });
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.25, position: 1 },
+    });
+    expect(indicatorPosition.value).toBe(1.25);
+
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 2 } });
+    expect(indicatorPosition.value).toBe(1.25);
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.75, position: 1 },
+    });
+    expect(indicatorPosition.value).toBe(1.75);
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'idle' },
+    });
+    expect(indicatorPosition.value).toBe(2);
+
+    mockCancelAnimation.mockClear();
+    act(() => {
+      ref.current?.setPageWithoutAnimation(0, true);
+    });
+    expect(mockWithTiming).toHaveBeenLastCalledWith(
+      0,
+      expect.objectContaining({ duration: 300, reduceMotion: 'system' }),
+    );
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 0 } });
+    expect(mockCancelAnimation).not.toHaveBeenCalled();
+  });
+
+  it('keeps tracking an Android animated command when selection arrives before idle', () => {
+    mockIsIOS = false;
+    const ref = createRef<PerpsProMarketPagerHandle>();
+    const indicatorPosition = createIndicatorPosition(1);
+    renderPager(jest.fn(), ref, 1, jest.fn(), indicatorPosition);
+    const pager = screen.getByTestId('market-pager');
+
+    act(() => {
+      ref.current?.setPage(2);
+    });
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.25, position: 1 },
+    });
+    expect(indicatorPosition.value).toBe(1.25);
+
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 2 } });
+    expect(indicatorPosition.value).toBe(1.25);
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.75, position: 1 },
+    });
+    expect(indicatorPosition.value).toBe(1.75);
+
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'idle' },
+    });
+    expect(indicatorPosition.value).toBe(2);
   });
 
   it('rejects an iOS preview callback that arrives after settlement', () => {
