@@ -870,6 +870,21 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(trade.requestReview).toHaveBeenLastCalledWith('sell');
   });
 
+  it('delegates add-funds immediately so the Scene can freeze the tap intent', () => {
+    const onAddFunds = jest.fn();
+    mockDismissKeyboardThen.mockImplementation(action => {
+      throw new Error(`Form must not delay add-funds: ${String(action)}`);
+    });
+    render(
+      <PerpsProTradeForm controller={controller()} onAddFunds={onAddFunds} />,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-trade-available-deposit'));
+
+    expect(onAddFunds).toHaveBeenCalledTimes(1);
+    expect(mockDismissKeyboardThen).not.toHaveBeenCalled();
+  });
+
   it('focuses Amount instead of requesting review when manual Amount is empty', () => {
     const trade = controller();
     render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);

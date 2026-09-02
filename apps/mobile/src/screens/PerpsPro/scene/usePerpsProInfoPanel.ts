@@ -6,7 +6,10 @@ import {
   useState,
 } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import type { WsFastAssetCtxs } from '@rabby-wallet/hyperliquid-sdk';
+import {
+  USDC_TOKEN_ID,
+  type WsFastAssetCtxs,
+} from '@rabby-wallet/hyperliquid-sdk';
 
 import type { PerpsProInfoTab } from '@/core/services/perpsService';
 import { usePerpsRuntimeStatus } from '@/hooks/perps/runtime/usePerpsRuntimeStatus';
@@ -214,6 +217,22 @@ export const usePerpsProInfoPanel = (
   const runtimeAccountIdentity = facts.currentAccount
     ? getPerpsRuntimeIdentity(facts.currentAccount)
     : null;
+  const fundingAccountValue =
+    account.mode === 'portfolioMargin'
+      ? facts.spotState.tokenToAvailableAfterMaintenance?.find(
+          ([tokenId]) => tokenId === USDC_TOKEN_ID,
+        )?.[1] ?? null
+      : account.mode === 'unified'
+      ? facts.spotState.accountValue ?? null
+      : facts.clearinghouseState?.marginSummary?.accountValue ?? null;
+  const fundingAccountValueReady =
+    !!runtimeAccountIdentity &&
+    runtime.status === 'ready' &&
+    runtime.identity === runtimeAccountIdentity &&
+    facts.userAbstractionReady &&
+    (account.mode === 'standard'
+      ? facts.isUserDataReady
+      : facts.isSpotStateReady);
   const accountFactsReady =
     !!runtimeAccountIdentity &&
     runtime.status === 'ready' &&
@@ -353,6 +372,8 @@ export const usePerpsProInfoPanel = (
     }),
     hideOtherOpenOrderSymbols,
     hideOtherPositionSymbols,
+    fundingAccountValue,
+    fundingAccountValueReady,
     hydrated: preferences.hydrated,
     openOrderCategory,
     openOrderCommandCandidates,

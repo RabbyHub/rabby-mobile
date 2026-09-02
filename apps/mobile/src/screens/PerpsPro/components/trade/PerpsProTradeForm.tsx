@@ -290,14 +290,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
       <View style={styles.optionsGroup}>
         <PerpsProTradeSummaryRow
           label={t('page.perps.pro.trade.available')}
-          onPressValue={
-            configurationReady
-              ? () =>
-                  dismissKeyboardThen(() => {
-                    onAddFunds();
-                  })
-              : undefined
-          }
+          onPressValue={configurationReady ? onAddFunds : undefined}
           trailing={
             addFundsMode === 'swap' ? (
               <RcIconAvailableSwap

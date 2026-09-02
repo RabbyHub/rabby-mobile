@@ -1,9 +1,11 @@
 import { Text } from '@/components/Typography';
 import type { PerpsQuoteAsset } from '@/constant/perps';
 import type { PerpsProInfoTab } from '@/core/services/perpsService';
+import type { Account } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { useActiveAssetSubscription } from '@/hooks/perps/subscriptions/useActiveAssetSubscription';
 import { isPerpsActionUserCancelled } from '@/hooks/perps/actions/actionError';
+import { ensurePerpsActionApproval } from '@/hooks/perps/actions/perpsActionApproval';
 import {
   executeEnablePerpsUnifiedAccount,
   isPerpsUnifiedCollateralMode,
@@ -172,6 +174,20 @@ type FundingOverlayState =
       targetAsset: PerpsQuoteAsset;
     };
 
+type UnifiedEnableIntent = Readonly<{
+  account: Account;
+  accountIdentity: string;
+  targetAsset: PerpsQuoteAsset;
+}>;
+
+type TradeAddFundsIntent = Readonly<{
+  account: Account;
+  accountIdentity: string;
+  mode: 'deposit' | 'swap';
+  quoteAsset: PerpsQuoteAsset;
+  targetAsset: PerpsQuoteAsset;
+}>;
+
 const PERPS_PRO_SCENE_BASE_LEAD_IN_HEIGHT =
   PERPS_PRO_HEADER_HEIGHT + PERPS_PRO_MARKET_BAR_HEIGHT;
 const PERPS_PRO_REGION_ALERT_BOTTOM_SPACING = 4;
@@ -328,8 +344,8 @@ export const PerpsProScene: React.FC<{
   );
   const [fundingOverlay, setFundingOverlay] =
     useState<FundingOverlayState | null>(null);
-  const [unifiedEnableTarget, setUnifiedEnableTarget] =
-    useState<PerpsQuoteAsset | null>(null);
+  const [unifiedEnableIntent, setUnifiedEnableIntent] =
+    useState<UnifiedEnableIntent | null>(null);
   const [mainColumnHeight, setMainColumnHeight] = useState(
     PERPS_PRO_MAIN_COLUMN_HEIGHT,
   );
@@ -339,15 +355,27 @@ export const PerpsProScene: React.FC<{
   const [measuredRegionAlertLayout, setMeasuredRegionAlertLayout] =
     useState<PerpsRegionAlertLayout | null>(null);
   const [scrollViewportHeight, setScrollViewportHeight] = useState(0);
-  const fundingAccountIdentityRef = useRef(info.accountIdentity);
+  const fundingOverlayAccountIdentityRef = useRef(info.accountIdentity);
+  const fundingActionContextRef = useRef({
+    accountIdentity: info.accountIdentity,
+    fundingAccountValue: info.fundingAccountValue,
+    fundingAccountValueReady: info.fundingAccountValueReady,
+    userAbstraction: info.userAbstraction,
+  });
+  fundingActionContextRef.current = {
+    accountIdentity: info.accountIdentity,
+    fundingAccountValue: info.fundingAccountValue,
+    fundingAccountValueReady: info.fundingAccountValueReady,
+    userAbstraction: info.userAbstraction,
+  };
 
   useEffect(() => {
-    if (fundingAccountIdentityRef.current === info.accountIdentity) {
+    if (fundingOverlayAccountIdentityRef.current === info.accountIdentity) {
       return;
     }
-    fundingAccountIdentityRef.current = info.accountIdentity;
+    fundingOverlayAccountIdentityRef.current = info.accountIdentity;
     setFundingOverlay(null);
-    setUnifiedEnableTarget(null);
+    setUnifiedEnableIntent(null);
   }, [info.accountIdentity]);
   const dismissKeyboardThen = usePerpsProDismissKeyboard();
   const getOrderBookPriceIntent = trade.getOrderBookPriceIntent;
@@ -409,48 +437,151 @@ export const PerpsProScene: React.FC<{
   const tradeAddFundsAction = useMemo(
     () =>
       resolvePerpsProTradeAddFundsAction({
+        fundingAccountValue: info.fundingAccountValue,
+        fundingAccountValueReady: info.fundingAccountValueReady,
         quoteAsset: scene.currentMarket?.quoteAsset ?? 'USDC',
       }),
-    [scene.currentMarket?.quoteAsset],
+    [
+      info.fundingAccountValue,
+      info.fundingAccountValueReady,
+      scene.currentMarket?.quoteAsset,
+    ],
+  );
+  const executeTradeAddFundsIntent = useCallback(
+    async (intent: TradeAddFundsIntent) => {
+      const initialContext = fundingActionContextRef.current;
+      const initialAction = resolvePerpsProTradeAddFundsAction({
+        fundingAccountValue: initialContext.fundingAccountValue,
+        fundingAccountValueReady: initialContext.fundingAccountValueReady,
+        quoteAsset: intent.quoteAsset,
+      });
+      if (
+        initialContext.accountIdentity !== intent.accountIdentity ||
+        !initialAction.isReady ||
+        initialAction.mode !== intent.mode ||
+        initialAction.targetAsset !== intent.targetAsset
+      ) {
+        return;
+      }
+
+      if (intent.mode === 'deposit') {
+        setFundingOverlay({
+          mode: 'deposit',
+          targetAsset: intent.targetAsset,
+        });
+        return;
+      }
+
+      try {
+        await ensurePerpsActionApproval(intent.account, { builderFee: false });
+      } catch (error) {
+        if (isPerpsActionUserCancelled(error)) {
+          return;
+        }
+        showToast(
+          error instanceof Error
+            ? error.message
+            : 'Failed to approve Perps Agent',
+          'error',
+        );
+        return;
+      }
+
+      const currentContext = fundingActionContextRef.current;
+      const currentAction = resolvePerpsProTradeAddFundsAction({
+        fundingAccountValue: currentContext.fundingAccountValue,
+        fundingAccountValueReady: currentContext.fundingAccountValueReady,
+        quoteAsset: intent.quoteAsset,
+      });
+      if (
+        currentContext.accountIdentity !== intent.accountIdentity ||
+        !currentAction.isReady ||
+        currentAction.mode !== 'swap' ||
+        currentAction.targetAsset !== intent.targetAsset
+      ) {
+        return;
+      }
+      if (isPerpsUnifiedCollateralMode(currentContext.userAbstraction)) {
+        openSwap(intent.targetAsset);
+        return;
+      }
+      setUnifiedEnableIntent({
+        account: intent.account,
+        accountIdentity: intent.accountIdentity,
+        targetAsset: intent.targetAsset,
+      });
+    },
+    [openSwap],
   );
   const openTradeAddFunds = useCallback(() => {
-    if (tradeAddFundsAction.mode === 'swap') {
-      if (!info.currentAccount || !info.userAbstractionReady) {
-        return;
-      }
-      if (!isPerpsUnifiedCollateralMode(info.userAbstraction)) {
-        setUnifiedEnableTarget(tradeAddFundsAction.targetAsset);
-        return;
-      }
-      openSwap(tradeAddFundsAction.targetAsset);
+    if (!tradeAddFundsAction.isReady || !info.currentAccount) {
       return;
     }
-    setFundingOverlay({
-      mode: 'deposit',
+
+    const intent: TradeAddFundsIntent = {
+      account: info.currentAccount,
+      accountIdentity: info.accountIdentity,
+      mode: tradeAddFundsAction.mode,
+      quoteAsset: scene.currentMarket?.quoteAsset ?? 'USDC',
       targetAsset: tradeAddFundsAction.targetAsset,
+    };
+    dismissKeyboardThen(() => {
+      executeTradeAddFundsIntent(intent);
     });
   }, [
+    dismissKeyboardThen,
+    executeTradeAddFundsIntent,
+    info.accountIdentity,
     info.currentAccount,
-    info.userAbstraction,
-    info.userAbstractionReady,
-    openSwap,
+    scene.currentMarket?.quoteAsset,
     tradeAddFundsAction,
   ]);
   const closeUnifiedEnable = useCallback(() => {
-    setUnifiedEnableTarget(null);
+    setUnifiedEnableIntent(null);
   }, []);
   const confirmUnifiedEnable = useCallback(async () => {
-    const account = info.currentAccount;
-    const targetAsset = unifiedEnableTarget;
-    if (!account || !targetAsset) {
-      setUnifiedEnableTarget(null);
+    const intent = unifiedEnableIntent;
+    if (!intent) {
+      return;
+    }
+    const currentContext = fundingActionContextRef.current;
+    const currentAction = resolvePerpsProTradeAddFundsAction({
+      fundingAccountValue: currentContext.fundingAccountValue,
+      fundingAccountValueReady: currentContext.fundingAccountValueReady,
+      quoteAsset: intent.targetAsset,
+    });
+    if (
+      currentContext.accountIdentity !== intent.accountIdentity ||
+      !currentAction.isReady ||
+      currentAction.mode !== 'swap'
+    ) {
+      setUnifiedEnableIntent(null);
+      return;
+    }
+    if (isPerpsUnifiedCollateralMode(currentContext.userAbstraction)) {
+      setUnifiedEnableIntent(null);
+      openSwap(intent.targetAsset);
       return;
     }
     try {
-      await executeEnablePerpsUnifiedAccount(account);
-      setUnifiedEnableTarget(null);
+      await executeEnablePerpsUnifiedAccount(intent.account);
+      const latestContext = fundingActionContextRef.current;
+      const latestAction = resolvePerpsProTradeAddFundsAction({
+        fundingAccountValue: latestContext.fundingAccountValue,
+        fundingAccountValueReady: latestContext.fundingAccountValueReady,
+        quoteAsset: intent.targetAsset,
+      });
+      if (
+        latestContext.accountIdentity !== intent.accountIdentity ||
+        !latestAction.isReady ||
+        latestAction.mode !== 'swap'
+      ) {
+        setUnifiedEnableIntent(null);
+        return;
+      }
+      setUnifiedEnableIntent(null);
       showToast('Unified Account enabled', 'success');
-      openSwap(targetAsset);
+      openSwap(intent.targetAsset);
     } catch (error) {
       if (isPerpsActionUserCancelled(error)) {
         return;
@@ -462,7 +593,7 @@ export const PerpsProScene: React.FC<{
         'error',
       );
     }
-  }, [info.currentAccount, openSwap, unifiedEnableTarget]);
+  }, [openSwap, unifiedEnableIntent]);
   const openMarketSelector = useCallback(
     () => dismissKeyboardThen(() => marketSelectorRef.current?.present()),
     [dismissKeyboardThen],
@@ -1364,7 +1495,7 @@ export const PerpsProScene: React.FC<{
       />
       <PerpsProAccountSelectorLayer />
       <EnableUnifiedAccountPopup
-        visible={!!unifiedEnableTarget}
+        visible={!!unifiedEnableIntent}
         onClose={closeUnifiedEnable}
         onConfirm={confirmUnifiedEnable}
       />
