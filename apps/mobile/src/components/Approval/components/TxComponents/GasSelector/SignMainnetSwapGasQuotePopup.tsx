@@ -690,12 +690,13 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 12,
   },
   refreshButton: {
     width: 32,
     height: 32,
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
   },
   quotesSubtitle: {
     fontSize: 14,
