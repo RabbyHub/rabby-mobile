@@ -179,8 +179,8 @@ export const PerpsProMarketTabs: React.FC<{
         return [];
       }
       layouts.push({
-        width: 20,
-        x: frame.x + (frame.width - 20) / 2,
+        width: frame.width,
+        x: frame.x,
       });
     }
     return layouts;

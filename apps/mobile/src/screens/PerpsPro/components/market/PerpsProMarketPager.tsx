@@ -32,18 +32,12 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 
-import {
-  animatePerpsProTabIndicator,
-  snapPerpsProTabIndicator,
-} from '../common/PerpsProTabIndicator';
+import { snapPerpsProTabIndicator } from '../common/PerpsProTabIndicator';
 import { usePerpsProPagerPreviewSession } from '../common/usePerpsProPagerPreviewSession';
 
 export type PerpsProMarketPagerHandle = {
   setPage: (position: number) => void;
-  setPageWithoutAnimation: (
-    position: number,
-    animateIndicator?: boolean,
-  ) => void;
+  setPageWithoutAnimation: (position: number) => void;
 };
 
 type PerpsProMarketPagerProps = {
@@ -256,7 +250,7 @@ const IosPerpsProMarketPager = forwardRef<
     );
 
     const scrollToPage = useCallback(
-      (position: number, animated: boolean, animateIndicator: boolean) => {
+      (position: number, animated: boolean) => {
         const nextPosition = clampPagePosition(position, pageCount);
         resetPreviewSession();
         previewGestureSessionId.value += 1;
@@ -273,11 +267,7 @@ const IosPerpsProMarketPager = forwardRef<
           ? MARKET_PAGER_TRANSITION_PROGRAMMATIC
           : MARKET_PAGER_TRANSITION_DIRECT;
         if (!animated) {
-          if (animateIndicator) {
-            animatePerpsProTabIndicator(indicatorPosition, nextPosition);
-          } else {
-            snapPerpsProTabIndicator(indicatorPosition, nextPosition);
-          }
+          snapPerpsProTabIndicator(indicatorPosition, nextPosition);
         }
         scrollViewRef.current?.scrollTo({
           animated,
@@ -354,9 +344,8 @@ const IosPerpsProMarketPager = forwardRef<
     useImperativeHandle(
       ref,
       () => ({
-        setPage: position => scrollToPage(position, true, false),
-        setPageWithoutAnimation: (position, animateIndicator = false) =>
-          scrollToPage(position, false, animateIndicator),
+        setPage: position => scrollToPage(position, true),
+        setPageWithoutAnimation: position => scrollToPage(position, false),
       }),
       [scrollToPage],
     );
@@ -497,7 +486,6 @@ const AndroidPerpsProMarketPager = forwardRef<
     const programmaticTargetPosition = useSharedValue(
       clampPagePosition(initialPage, pageCount),
     );
-    const preserveIndicatorOnSelection = useSharedValue(false);
     const previewGestureSessionId = useSharedValue(0);
     const transitionIdleSeen = useSharedValue(false);
     const transitionKind = useSharedValue(MARKET_PAGER_TRANSITION_IDLE);
@@ -576,7 +564,6 @@ const AndroidPerpsProMarketPager = forwardRef<
         resetPreviewSession();
         previewGestureSessionId.value += 1;
         isPreviewGestureActive.value = false;
-        preserveIndicatorOnSelection.value = false;
         programmaticTargetPosition.value = nextPosition;
         transitionIdleSeen.value = false;
         transitionKind.value = MARKET_PAGER_TRANSITION_PROGRAMMATIC;
@@ -596,7 +583,6 @@ const AndroidPerpsProMarketPager = forwardRef<
         isIndicatorScrollActive,
         isPreviewGestureActive,
         pageCount,
-        preserveIndicatorOnSelection,
         previewGestureSessionId,
         previewPagePosition,
         programmaticTargetPosition,
@@ -612,14 +598,13 @@ const AndroidPerpsProMarketPager = forwardRef<
     );
 
     const startDirectTransition = useCallback(
-      (position: number, animateIndicator = false) => {
+      (position: number) => {
         const nextPosition = clampPagePosition(position, pageCount);
         resetPreviewSession();
         previewGestureSessionId.value += 1;
         isPreviewGestureActive.value = false;
         isIndicatorScrollActive.value = false;
         programmaticTargetPosition.value = nextPosition;
-        preserveIndicatorOnSelection.value = animateIndicator;
         transitionIdleSeen.value = false;
         transitionKind.value = MARKET_PAGER_TRANSITION_DIRECT;
         transitionCandidatePosition.value = nextPosition;
@@ -627,11 +612,7 @@ const AndroidPerpsProMarketPager = forwardRef<
         transitionProgressSeen.value = false;
         transitionStartPosition.value = nextPosition;
         previewPagePosition.value = nextPosition;
-        if (animateIndicator) {
-          animatePerpsProTabIndicator(indicatorPosition, nextPosition);
-        } else {
-          snapPerpsProTabIndicator(indicatorPosition, nextPosition);
-        }
+        snapPerpsProTabIndicator(indicatorPosition, nextPosition);
         pagerRef.current?.setPageWithoutAnimation(nextPosition);
       },
       [
@@ -639,7 +620,6 @@ const AndroidPerpsProMarketPager = forwardRef<
         isIndicatorScrollActive,
         isPreviewGestureActive,
         pageCount,
-        preserveIndicatorOnSelection,
         previewGestureSessionId,
         previewPagePosition,
         programmaticTargetPosition,
@@ -658,7 +638,6 @@ const AndroidPerpsProMarketPager = forwardRef<
         sessionId: number,
         targetPosition: number,
         expectedTransitionKind: number,
-        animateIndicator: boolean,
       ) => {
         if (
           previewGestureSessionId.value !== sessionId ||
@@ -668,7 +647,7 @@ const AndroidPerpsProMarketPager = forwardRef<
           return;
         }
         if (expectedTransitionKind === MARKET_PAGER_TRANSITION_DIRECT) {
-          startDirectTransition(targetPosition, animateIndicator);
+          startDirectTransition(targetPosition);
           return;
         }
         startProgrammaticTransition(targetPosition);
@@ -700,7 +679,6 @@ const AndroidPerpsProMarketPager = forwardRef<
             previewGestureSessionId.value = sessionId;
             isPreviewGestureActive.value = true;
             isIndicatorScrollActive.value = true;
-            preserveIndicatorOnSelection.value = false;
             transitionIdleSeen.value = false;
             transitionKind.value = MARKET_PAGER_TRANSITION_GESTURE;
             transitionCandidatePosition.value = settledPagePosition.value;
@@ -781,7 +759,6 @@ const AndroidPerpsProMarketPager = forwardRef<
           }
           const sessionId = previewGestureSessionId.value;
           const targetPosition = programmaticTargetPosition.value;
-          const shouldAnimateIndicator = preserveIndicatorOnSelection.value;
           settledPagePosition.value = position;
           previewPagePosition.value = position;
           isPreviewGestureActive.value = false;
@@ -792,16 +769,10 @@ const AndroidPerpsProMarketPager = forwardRef<
             sessionId,
             targetPosition,
             currentTransitionKind,
-            shouldAnimateIndicator,
           );
           return;
         }
         const sessionId = previewGestureSessionId.value;
-        const shouldPreserveIndicator =
-          currentTransitionKind === MARKET_PAGER_TRANSITION_DIRECT &&
-          preserveIndicatorOnSelection.value &&
-          programmaticTargetPosition.value === position;
-        preserveIndicatorOnSelection.value = false;
         transitionSelectedPosition.value = position;
         if (currentTransitionKind === MARKET_PAGER_TRANSITION_DIRECT) {
           settledPagePosition.value = position;
@@ -809,9 +780,7 @@ const AndroidPerpsProMarketPager = forwardRef<
           isPreviewGestureActive.value = false;
           isIndicatorScrollActive.value = false;
           transitionKind.value = MARKET_PAGER_TRANSITION_IDLE;
-          if (!shouldPreserveIndicator) {
-            indicatorPosition.value = position;
-          }
+          indicatorPosition.value = position;
           runOnJS(commitSelectedTransition)(sessionId, position);
           return;
         }

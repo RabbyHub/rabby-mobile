@@ -280,17 +280,19 @@ describe('PerpsProMarketTabs', () => {
       backgroundColor: 'neutral-body',
       bottom: 1,
       height: 2,
-      width: 20,
+      left: 15,
+      width: 40,
     });
   });
 
-  it('keeps one indicator and interpolates its fixed-width center continuously', () => {
-    indicatorPosition.value = 1.5;
-    render(
+  it('keeps one indicator and interpolates real tab frames in both directions', () => {
+    indicatorPosition.value = 1;
+    const onChange = jest.fn();
+    const view = render(
       <PerpsProMarketTabs
-        activeTab="all"
+        activeTab="layer-one"
         indicatorPosition={indicatorPosition}
-        onChange={jest.fn()}
+        onChange={onChange}
         tabs={tabs}
       />,
     );
@@ -327,12 +329,52 @@ describe('PerpsProMarketTabs', () => {
       ),
     ).toMatchObject({
       opacity: 1,
-      transform: [{ translateX: 128 }],
-      width: 20,
+      left: 67,
+      width: 70,
+    });
+
+    indicatorPosition.value = 1.75;
+    view.rerender(
+      <PerpsProMarketTabs
+        activeTab="meme"
+        indicatorPosition={indicatorPosition}
+        onChange={onChange}
+        tabs={tabs}
+      />,
+    );
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-market-tab-indicator', {
+          includeHiddenElements: true,
+        }).props.style,
+      ),
+    ).toMatchObject({
+      left: 128.5,
+      width: 55,
+    });
+
+    indicatorPosition.value = 1.25;
+    view.rerender(
+      <PerpsProMarketTabs
+        activeTab="layer-one"
+        indicatorPosition={indicatorPosition}
+        onChange={onChange}
+        tabs={tabs}
+      />,
+    );
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-market-tab-indicator', {
+          includeHiddenElements: true,
+        }).props.style,
+      ),
+    ).toMatchObject({
+      left: 87.5,
+      width: 65,
     });
     expect(
       screen.getByTestId('perps-pro-market-tab-all').props.accessibilityState,
-    ).toEqual({ selected: true });
+    ).toEqual({ selected: false });
   });
 
   it('derives the visible label highlight from the indicator presentation', () => {
@@ -462,8 +504,8 @@ describe('PerpsProMarketTabs', () => {
       ),
     ).toMatchObject({
       opacity: 1,
-      transform: [{ translateX: 40 }],
-      width: 20,
+      left: 15,
+      width: 70,
     });
   });
 });

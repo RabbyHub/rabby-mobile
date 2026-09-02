@@ -646,7 +646,7 @@ describe('PerpsProMarketSelector', () => {
     expect(getLatestMarketListProps('all').renderProfile).toBe('prepared');
   });
 
-  it('keeps a distant page jump direct while requesting indicator motion', () => {
+  it('keeps a distant page jump direct without traversing intermediate tabs', () => {
     __setCategories([
       {
         id: 'category-a',
@@ -683,7 +683,7 @@ describe('PerpsProMarketSelector', () => {
     fireEvent.press(screen.getByTestId('perps-pro-market-tab-category-c'));
 
     expect(mockPagerSetPage).not.toHaveBeenCalled();
-    expect(mockPagerSetPageWithoutAnimation).toHaveBeenCalledWith(3, true);
+    expect(mockPagerSetPageWithoutAnimation).toHaveBeenCalledWith(3);
     expect(
       screen.getByTestId('perps-pro-market-tab-category-c').props
         .accessibilityState,

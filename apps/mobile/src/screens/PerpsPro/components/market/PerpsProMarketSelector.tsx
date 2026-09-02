@@ -542,7 +542,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
           if (distance === 1) {
             pagerRef.current?.setPage(targetIndex);
           } else {
-            pagerRef.current?.setPageWithoutAnimation(targetIndex, true);
+            pagerRef.current?.setPageWithoutAnimation(targetIndex);
           }
           if (pendingTabPageRequestRef.current === pendingRequest) {
             pendingTabPageRequestRef.current = null;
