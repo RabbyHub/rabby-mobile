@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import type { SharedValue } from 'react-native-reanimated';
 
 const mockScrollTo = jest.fn();
 
@@ -11,7 +12,7 @@ jest.mock('@/components/Typography', () => ({
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
     const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
-    return { styles: getStyle({ colors2024 }) };
+    return { colors2024, styles: getStyle({ colors2024 }) };
   },
 }));
 
@@ -19,9 +20,22 @@ jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
 }));
 
+jest.mock('react-native-reanimated', () => {
+  const ReactNative = require('react-native');
+  return {
+    __esModule: true,
+    default: { Text: ReactNative.Text, View: ReactNative.View },
+    Easing: { bezier: jest.fn(() => jest.fn()) },
+    ReduceMotion: { System: 'system' },
+    cancelAnimation: jest.fn(),
+    useAnimatedStyle: (factory: () => object) => factory(),
+    withTiming: (target: number) => target,
+  };
+});
+
 jest.mock('react-native-gesture-handler', () => {
   const ReactModule = require('react');
-  const { View } = require('react-native');
+  const ReactNative = require('react-native');
   return {
     ScrollView: ReactModule.forwardRef(
       (
@@ -31,7 +45,7 @@ jest.mock('react-native-gesture-handler', () => {
         ReactModule.useImperativeHandle(ref, () => ({
           scrollTo: mockScrollTo,
         }));
-        return ReactModule.createElement(View, props, children);
+        return ReactModule.createElement(ReactNative.View, props, children);
       },
     ),
   };
@@ -45,10 +59,12 @@ const tabs = [
   { id: 'meme', label: 'Meme' },
   { id: 'last-category', label: 'Last category' },
 ] as const;
+const indicatorPosition = { value: 0 } as SharedValue<number>;
 
 describe('PerpsProMarketTabs', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    indicatorPosition.value = 0;
   });
 
   it('positions a restored trailing tab without animating its first mount', () => {
@@ -56,6 +72,7 @@ describe('PerpsProMarketTabs', () => {
     render(
       <PerpsProMarketTabs
         activeTab="last-category"
+        indicatorPosition={indicatorPosition}
         onChange={onChange}
         tabs={tabs}
       />,
@@ -84,7 +101,12 @@ describe('PerpsProMarketTabs', () => {
   it('animates a later active-tab change after the initial position is ready', () => {
     const onChange = jest.fn();
     const view = render(
-      <PerpsProMarketTabs activeTab="all" onChange={onChange} tabs={tabs} />,
+      <PerpsProMarketTabs
+        activeTab="all"
+        indicatorPosition={indicatorPosition}
+        onChange={onChange}
+        tabs={tabs}
+      />,
     );
     const strip = screen.getByTestId('perps-pro-market-tabs');
     const allTab = screen.getByTestId('perps-pro-market-tab-all');
@@ -111,6 +133,7 @@ describe('PerpsProMarketTabs', () => {
     view.rerender(
       <PerpsProMarketTabs
         activeTab="last-category"
+        indicatorPosition={indicatorPosition}
         onChange={onChange}
         tabs={tabs}
       />,
@@ -128,6 +151,7 @@ describe('PerpsProMarketTabs', () => {
     render(
       <PerpsProMarketTabs
         activeTab="last-category"
+        indicatorPosition={indicatorPosition}
         onChange={jest.fn()}
         tabs={tabs}
       />,
@@ -166,6 +190,7 @@ describe('PerpsProMarketTabs', () => {
     const view = render(
       <PerpsProMarketTabs
         activeTab="last-category"
+        indicatorPosition={indicatorPosition}
         onChange={onChange}
         tabs={tabs}
       />,
@@ -180,6 +205,7 @@ describe('PerpsProMarketTabs', () => {
     view.rerender(
       <PerpsProMarketTabs
         activeTab="all"
+        indicatorPosition={indicatorPosition}
         onChange={onChange}
         tabs={tabs.slice(0, 2)}
       />,
@@ -194,8 +220,33 @@ describe('PerpsProMarketTabs', () => {
 
   it('matches the approved compact typography, spacing and divider contract', () => {
     render(
-      <PerpsProMarketTabs activeTab="all" onChange={jest.fn()} tabs={tabs} />,
+      <PerpsProMarketTabs
+        activeTab="all"
+        indicatorPosition={indicatorPosition}
+        onChange={jest.fn()}
+        tabs={tabs}
+      />,
     );
+
+    const frames = [
+      { id: 'all', width: 40, x: 15 },
+      { id: 'layer-one', width: 70, x: 67 },
+      { id: 'meme', width: 50, x: 149 },
+      { id: 'last-category', width: 100, x: 211 },
+    ] as const;
+    act(() => {
+      frames.forEach(frame => {
+        fireEvent(
+          screen.getByTestId(`perps-pro-market-tab-${frame.id}`),
+          'layout',
+          {
+            nativeEvent: {
+              layout: { height: 34, width: frame.width, x: frame.x, y: 0 },
+            },
+          },
+        );
+      });
+    });
 
     expect(
       StyleSheet.flatten(
@@ -221,12 +272,197 @@ describe('PerpsProMarketTabs', () => {
     });
     expect(
       StyleSheet.flatten(
-        screen.getByTestId('perps-pro-market-tab-indicator').props.style,
+        screen.getByTestId('perps-pro-market-tab-indicator', {
+          includeHiddenElements: true,
+        }).props.style,
       ),
     ).toMatchObject({
       backgroundColor: 'neutral-body',
       bottom: 1,
       height: 2,
+      width: 20,
+    });
+  });
+
+  it('keeps one indicator and interpolates its fixed-width center continuously', () => {
+    indicatorPosition.value = 1.5;
+    render(
+      <PerpsProMarketTabs
+        activeTab="all"
+        indicatorPosition={indicatorPosition}
+        onChange={jest.fn()}
+        tabs={tabs}
+      />,
+    );
+
+    act(() => {
+      [
+        { id: 'all', width: 40, x: 15 },
+        { id: 'layer-one', width: 70, x: 67 },
+        { id: 'meme', width: 50, x: 149 },
+        { id: 'last-category', width: 100, x: 211 },
+      ].forEach(frame => {
+        fireEvent(
+          screen.getByTestId(`perps-pro-market-tab-${frame.id}`),
+          'layout',
+          {
+            nativeEvent: {
+              layout: { height: 34, width: frame.width, x: frame.x, y: 0 },
+            },
+          },
+        );
+      });
+    });
+
+    expect(
+      screen.getAllByTestId('perps-pro-market-tab-indicator', {
+        includeHiddenElements: true,
+      }),
+    ).toHaveLength(1);
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-market-tab-indicator', {
+          includeHiddenElements: true,
+        }).props.style,
+      ),
+    ).toMatchObject({
+      opacity: 1,
+      transform: [{ translateX: 128 }],
+      width: 20,
+    });
+    expect(
+      screen.getByTestId('perps-pro-market-tab-all').props.accessibilityState,
+    ).toEqual({ selected: true });
+  });
+
+  it('derives the visible label highlight from the indicator presentation', () => {
+    indicatorPosition.value = 1;
+    render(
+      <PerpsProMarketTabs
+        activeTab="all"
+        indicatorPosition={indicatorPosition}
+        onChange={jest.fn()}
+        tabs={tabs}
+      />,
+    );
+
+    expect(
+      StyleSheet.flatten(screen.getByText('All').props.style),
+    ).toMatchObject({
+      color: 'neutral-secondary',
+      fontWeight: '400',
+    });
+    expect(
+      StyleSheet.flatten(screen.getByText('Layer 1').props.style),
+    ).toMatchObject({
+      color: 'neutral-title-1',
+      fontWeight: '500',
+    });
+    expect(
+      screen.getByTestId('perps-pro-market-tab-all').props.accessibilityState,
+    ).toEqual({ selected: true });
+    expect(
+      screen.getByTestId('perps-pro-market-tab-layer-one').props
+        .accessibilityState,
+    ).toEqual({ selected: false });
+    expect(
+      screen
+        .getAllByText('Layer 1', { includeHiddenElements: true })
+        .map(label => StyleSheet.flatten(label.props.style)),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ fontWeight: '500', opacity: 0 }),
+        expect.objectContaining({ position: 'absolute' }),
+      ]),
+    );
+  });
+
+  it('hides stale frames until a changed tab layout is measured again', () => {
+    indicatorPosition.value = 1;
+    const view = render(
+      <View>
+        <PerpsProMarketTabs
+          activeTab="layer-one"
+          indicatorPosition={indicatorPosition}
+          key="with-leading-tab"
+          onChange={jest.fn()}
+          tabs={tabs}
+        />
+      </View>,
+    );
+
+    act(() => {
+      [
+        { id: 'all', width: 40, x: 15 },
+        { id: 'layer-one', width: 70, x: 67 },
+        { id: 'meme', width: 50, x: 149 },
+        { id: 'last-category', width: 100, x: 211 },
+      ].forEach(frame => {
+        fireEvent(
+          view.getByTestId(`perps-pro-market-tab-${frame.id}`),
+          'layout',
+          {
+            nativeEvent: {
+              layout: { height: 34, width: frame.width, x: frame.x, y: 0 },
+            },
+          },
+        );
+      });
+    });
+    expect(
+      StyleSheet.flatten(
+        view.getByTestId('perps-pro-market-tab-indicator', {
+          includeHiddenElements: true,
+        }).props.style,
+      ),
+    ).toMatchObject({ opacity: 1 });
+
+    indicatorPosition.value = 0;
+    view.rerender(
+      <View>
+        <PerpsProMarketTabs
+          activeTab="layer-one"
+          indicatorPosition={indicatorPosition}
+          key="without-leading-tab"
+          onChange={jest.fn()}
+          tabs={tabs.slice(1)}
+        />
+      </View>,
+    );
+    expect(
+      StyleSheet.flatten(
+        view.getByTestId('perps-pro-market-tab-indicator', {
+          includeHiddenElements: true,
+        }).props.style,
+      ),
+    ).toMatchObject({ opacity: 0, width: 0 });
+
+    act(() => {
+      [
+        { id: 'layer-one', width: 70, x: 15 },
+        { id: 'meme', width: 50, x: 97 },
+        { id: 'last-category', width: 100, x: 159 },
+      ].forEach(frame => {
+        fireEvent(
+          view.getByTestId(`perps-pro-market-tab-${frame.id}`),
+          'layout',
+          {
+            nativeEvent: {
+              layout: { height: 34, width: frame.width, x: frame.x, y: 0 },
+            },
+          },
+        );
+      });
+    });
+    expect(
+      StyleSheet.flatten(
+        view.getByTestId('perps-pro-market-tab-indicator', {
+          includeHiddenElements: true,
+        }).props.style,
+      ),
+    ).toMatchObject({
+      opacity: 1,
+      transform: [{ translateX: 40 }],
       width: 20,
     });
   });

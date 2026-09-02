@@ -12,8 +12,8 @@ import { usePerpsProMarketIdentity } from '../../scene/usePerpsProMarketIdentity
 import {
   formatPerpsProDecimal,
   formatPerpsProPercent,
-  formatPerpsProPrice,
   formatPerpsProTime,
+  formatPerpsProVariableDecimal,
 } from '../../utils/format';
 import {
   getPerpsProSemanticTagContainerStyle,
@@ -123,7 +123,7 @@ export const PerpsProOpenOrderCard: React.FC<{
     const executionPrice =
       order.executionPriceKind === 'market'
         ? t('page.perps.pro.openOrders.market')
-        : formatPerpsProPrice(order.executionPrice, market.pxDecimals);
+        : formatPerpsProVariableDecimal(order.executionPrice);
     const numericFilledRatio = Number(order.filledRatio);
     const filledRatio = Number.isFinite(numericFilledRatio)
       ? Math.max(0, Math.min(numericFilledRatio, 1))

@@ -464,7 +464,7 @@ describe('PerpsProOpenOrderCard', () => {
     const priceEdit = screen.getByTestId(
       'perps-pro-order-price-edit-basic:BTC:1',
     );
-    expect(priceEdit).toHaveTextContent('100.00');
+    expect(priceEdit).toHaveTextContent('100');
     expect(StyleSheet.flatten(priceEdit.props.style)).toMatchObject({
       alignSelf: 'stretch',
       flex: 1,
@@ -479,9 +479,9 @@ describe('PerpsProOpenOrderCard', () => {
       top: 4,
     });
     expect(
-      StyleSheet.flatten(screen.getByText('100.00').props.style),
+      StyleSheet.flatten(screen.getByText('100').props.style),
     ).toMatchObject({ marginLeft: 0 });
-    fireEvent.press(screen.getByText('100.00'));
+    fireEvent.press(screen.getByText('100'));
     expect(onEdit).toHaveBeenCalledWith(expect.objectContaining({ oid: 1 }));
 
     rerender(
@@ -497,6 +497,66 @@ describe('PerpsProOpenOrderCard', () => {
     expect(
       screen.queryByTestId('perps-pro-order-price-edit-basic:BTC:1'),
     ).toBeNull();
+  });
+
+  it('keeps the canonical effective price precision without padding market decimals', () => {
+    mockMarketIdentity = {
+      ...mockReadyMarket,
+      displayBase: 'CXMT',
+      displayPair: 'CXMTUSDC',
+      pxDecimals: 4,
+    };
+    const onEdit = jest.fn();
+    const value = order({
+      coin: 'CXMT',
+      executionPrice: '12.982',
+      key: 'basic:CXMT:12',
+      limitPrice: '12.982',
+      oid: 12,
+    });
+    render(
+      <PerpsProOpenOrderCard
+        cancelPending={false}
+        editEnabled
+        onCancel={jest.fn()}
+        onEdit={onEdit}
+        order={value}
+      />,
+    );
+
+    expect(screen.getByText('12.982')).toBeTruthy();
+    expect(screen.queryByText('12.9820')).toBeNull();
+    fireEvent.press(screen.getByText('12.982'));
+    expect(onEdit).toHaveBeenCalledWith(value);
+    expect(onEdit.mock.calls[0][0].executionPrice).toBe('12.982');
+  });
+
+  it('uses the same effective price precision for Conditional Limit orders', () => {
+    mockMarketIdentity = {
+      ...mockReadyMarket,
+      displayBase: 'CXMT',
+      displayPair: 'CXMTUSDC',
+      pxDecimals: 4,
+    };
+    render(
+      <PerpsProOpenOrderCard
+        cancelPending={false}
+        onCancel={jest.fn()}
+        order={order({
+          category: 'conditional',
+          coin: 'CXMT',
+          executionPrice: '12.9820',
+          key: 'conditional:CXMT:13',
+          limitPrice: '12.982',
+          oid: 13,
+          orderType: 'Stop Limit',
+          triggerCondition: 'Below',
+        })}
+      />,
+    );
+
+    expect(screen.getByText('12.982')).toBeTruthy();
+    expect(screen.queryByText('12.9820')).toBeNull();
   });
 
   it('makes the Conditional condition text part of the edit control', () => {

@@ -181,6 +181,7 @@ export const PerpsProRealtimeOrderBook: React.FC<{
       <PerpsProOrderBook
         amountUnit={amountUnit}
         book={processedBook}
+        bookIdentity={fastL2.identity}
         bookStatus={fastL2.status}
         hasBookSnapshot={displayBook != null}
         height={height}

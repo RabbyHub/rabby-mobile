@@ -196,7 +196,13 @@ const runApproval = async (
       account: expectedAccount,
       agentAddress: signer.agentAddress,
       builderFee: requiresBuilderFee,
-      forceRemoteCheck: requirements.forceRemoteCheck === true,
+      // Local flags are invalidation hints, not proof that a remote approval is
+      // missing. Recheck the server, then let that authoritative result decide
+      // whether a signature is required.
+      forceRemoteCheck:
+        requirements.forceRemoteCheck === true ||
+        state.accountNeedApproveAgent ||
+        (requiresBuilderFee && state.accountNeedApproveBuilderFee),
     });
     assertCurrentAccount(expectedAccount);
 
@@ -239,22 +245,14 @@ const runApproval = async (
   }
 
   const actions: ApprovalAction[] = [];
-  if (
-    !signer.isSelfSign &&
-    (state.accountNeedApproveAgent ||
-      signer.isCreate ||
-      remoteStatus.agentExpired)
-  ) {
+  if (!signer.isSelfSign && remoteStatus.agentExpired) {
     actions.push({
       action: exchange.prepareApproveAgent(),
       signature: '',
       type: 'approveAgent',
     });
   }
-  if (
-    requiresBuilderFee &&
-    (state.accountNeedApproveBuilderFee || !remoteStatus.builderFeeApproved)
-  ) {
+  if (requiresBuilderFee && !remoteStatus.builderFeeApproved) {
     await sleep(10);
     actions.push({
       action: exchange.prepareApproveBuilderFee({
@@ -266,8 +264,11 @@ const runApproval = async (
   }
 
   if (actions.length === 0) {
-    if (signer.isSelfSign && state.accountNeedApproveAgent) {
+    if (state.accountNeedApproveAgent) {
       setAccountNeedApproveAgent(false);
+    }
+    if (requiresBuilderFee && state.accountNeedApproveBuilderFee) {
+      setAccountNeedApproveBuilderFee(false);
     }
     return;
   }

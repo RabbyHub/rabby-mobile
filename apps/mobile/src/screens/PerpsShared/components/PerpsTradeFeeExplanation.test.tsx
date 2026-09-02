@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react-native';
 import React from 'react';
 
+let mockTranslations: Record<string, string> = {};
+
 jest.mock('@/assets2024/icons/common/rabby-wallet.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -30,12 +32,18 @@ jest.mock('@/utils/styles', () => ({
 
 jest.mock('react-i18next', () => ({
   Trans: ({ i18nKey }: { i18nKey: string }) => i18nKey,
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({
+    t: (key: string) => mockTranslations[key] ?? key,
+  }),
 }));
 
 import { PerpsTradeFeeExplanationContent } from './PerpsTradeFeeExplanation';
 
 describe('PerpsTradeFeeExplanationContent', () => {
+  beforeEach(() => {
+    mockTranslations = {};
+  });
+
   it('keeps the Simple trading and builder fee explanation for normal fills', () => {
     render(<PerpsTradeFeeExplanationContent isLiquidation={false} />);
 
@@ -59,5 +67,35 @@ describe('PerpsTradeFeeExplanationContent', () => {
     expect(screen.queryByTestId('rabby-fee-icon')).toBeNull();
     expect(screen.queryByText('0.02%')).toBeNull();
     expect(screen.queryByText('0.04%')).toBeNull();
+  });
+
+  it('bounds and right-aligns long discount copy without truncating it', () => {
+    const longDiscountCopy =
+      'Diskon biaya trading untuk waktu terbatas yang tetap ditampilkan sepenuhnya';
+    mockTranslations = {
+      'page.perps.historyDetail.feeRabbyDiscount': longDiscountCopy,
+    };
+
+    render(<PerpsTradeFeeExplanationContent isLiquidation={false} />);
+
+    expect(screen.getByTestId('perps-trade-fee-rabby-left')).toHaveStyle({
+      flexShrink: 0,
+    });
+    expect(screen.getByTestId('perps-trade-fee-rabby-right')).toHaveStyle({
+      alignItems: 'flex-end',
+      flex: 1,
+      marginLeft: 12,
+      minWidth: 0,
+    });
+
+    const discount = screen.getByTestId('perps-trade-fee-rabby-discount');
+    expect(discount).toHaveTextContent(longDiscountCopy);
+    expect(discount).toHaveStyle({
+      alignSelf: 'stretch',
+      flexShrink: 1,
+      textAlign: 'right',
+    });
+    expect(discount.props.numberOfLines).toBeUndefined();
+    expect(discount.props.ellipsizeMode).toBeUndefined();
   });
 });

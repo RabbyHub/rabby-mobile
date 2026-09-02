@@ -37,18 +37,22 @@ export const PerpsTradeFeeExplanationContent: React.FC<{
         </View>
         {!isLiquidation ? (
           <View style={styles.feeRow}>
-            <View style={styles.feeRowLeft}>
+            <View style={styles.feeRowLeft} testID="perps-trade-fee-rabby-left">
               <RcIconRabby width={20} height={20} />
               <Text style={styles.feeRowLabel}>
                 {t('page.perps.historyDetail.feeRabby')}
               </Text>
             </View>
-            <View style={styles.feeRowRight}>
+            <View
+              style={styles.feeRowRight}
+              testID="perps-trade-fee-rabby-right">
               <View style={styles.feeRowValueRow}>
                 <Text style={styles.feeRowValue}>0.02%</Text>
                 <Text style={styles.feeRowValueOrigin}>0.04%</Text>
               </View>
-              <Text style={styles.feeRowDiscount}>
+              <Text
+                style={styles.feeRowDiscount}
+                testID="perps-trade-fee-rabby-discount">
                 {t('page.perps.historyDetail.feeRabbyDiscount')}
               </Text>
             </View>
@@ -109,6 +113,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   feeRowLeft: {
     alignItems: 'center',
     flexDirection: 'row',
+    flexShrink: 0,
     gap: 8,
   },
   feeRowLabel: {
@@ -127,10 +132,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   feeRowRight: {
     alignItems: 'flex-end',
+    flex: 1,
     gap: 2,
+    marginLeft: 12,
+    minWidth: 0,
   },
   feeRowValueRow: {
     alignItems: 'center',
+    alignSelf: 'flex-end',
     flexDirection: 'row',
     gap: 6,
   },
@@ -143,10 +152,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textDecorationLine: 'line-through',
   },
   feeRowDiscount: {
+    alignSelf: 'stretch',
     color: colors2024['neutral-foot'],
+    flexShrink: 1,
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '400',
     lineHeight: 14,
+    textAlign: 'right',
   },
 }));

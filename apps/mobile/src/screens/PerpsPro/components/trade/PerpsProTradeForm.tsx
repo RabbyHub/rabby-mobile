@@ -71,6 +71,8 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
   const [sheet, setSheet] = useState<Sheet>(null);
   const amountInputRef = useRef<TextInput>(null);
   const triggerPriceInputRef = useRef<TextInput>(null);
+  const requestReviewRef = useRef(controller.requestReview);
+  requestReviewRef.current = controller.requestReview;
   const dismissKeyboardThen = usePerpsProDismissKeyboard();
   const openSheet = useCallback(
     (nextSheet: Exclude<Sheet, null>) =>
@@ -123,7 +125,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
         amountInputRef.current?.focus();
         return;
       }
-      dismissKeyboardThen(() => controller.requestReview(side));
+      dismissKeyboardThen(() => requestReviewRef.current(side));
     },
     [controller, dismissKeyboardThen],
   );
@@ -290,14 +292,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
       <View style={styles.optionsGroup}>
         <PerpsProTradeSummaryRow
           label={t('page.perps.pro.trade.available')}
-          onPressValue={
-            configurationReady
-              ? () =>
-                  dismissKeyboardThen(() => {
-                    onAddFunds();
-                  })
-              : undefined
-          }
+          onPressValue={configurationReady ? onAddFunds : undefined}
           trailing={
             addFundsMode === 'swap' ? (
               <RcIconAvailableSwap

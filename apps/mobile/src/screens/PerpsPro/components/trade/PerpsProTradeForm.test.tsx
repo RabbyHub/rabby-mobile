@@ -870,6 +870,47 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(trade.requestReview).toHaveBeenLastCalledWith('sell');
   });
 
+  it('uses the latest requestReview callback after keyboard dismissal', () => {
+    const initialTrade = controller({ amount: '10' });
+    const latestTrade = controller({ amount: '10' });
+    let pendingAction: (() => void) | null = null;
+    mockDismissKeyboardThen.mockImplementation(action => {
+      pendingAction = action;
+    });
+    const view = render(
+      <PerpsProTradeForm controller={initialTrade} onAddFunds={jest.fn()} />,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-trade-button-buy'));
+    expect(initialTrade.requestReview).not.toHaveBeenCalled();
+
+    view.rerender(
+      <PerpsProTradeForm controller={latestTrade} onAddFunds={jest.fn()} />,
+    );
+    act(() => {
+      pendingAction?.();
+    });
+
+    expect(initialTrade.requestReview).not.toHaveBeenCalled();
+    expect(latestTrade.requestReview).toHaveBeenCalledTimes(1);
+    expect(latestTrade.requestReview).toHaveBeenCalledWith('buy');
+  });
+
+  it('delegates add-funds immediately so the Scene can freeze the tap intent', () => {
+    const onAddFunds = jest.fn();
+    mockDismissKeyboardThen.mockImplementation(action => {
+      throw new Error(`Form must not delay add-funds: ${String(action)}`);
+    });
+    render(
+      <PerpsProTradeForm controller={controller()} onAddFunds={onAddFunds} />,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-trade-available-deposit'));
+
+    expect(onAddFunds).toHaveBeenCalledTimes(1);
+    expect(mockDismissKeyboardThen).not.toHaveBeenCalled();
+  });
+
   it('focuses Amount instead of requesting review when manual Amount is empty', () => {
     const trade = controller();
     render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
