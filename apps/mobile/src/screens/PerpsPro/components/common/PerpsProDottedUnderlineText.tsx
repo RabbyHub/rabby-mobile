@@ -27,7 +27,11 @@ interface PerpsProDottedUnderlineTextProps {
   children: React.ReactNode;
   accessibilityLabel?: string;
   containerStyle?: StyleProp<ViewStyle>;
+  multiline?: boolean;
   numberOfLines?: number;
+  onFirstLineLayout?: (
+    line: Readonly<{ lineCount: number; width: number; x: number }>,
+  ) => void;
   onPress?: () => void;
   style?: StyleProp<TextStyle>;
   testID?: string;
@@ -45,7 +49,9 @@ export const PerpsProDottedUnderlineText: React.FC<
   allowNaturalWidth = false,
   children,
   containerStyle,
+  multiline = false,
   numberOfLines = 1,
+  onFirstLineLayout,
   onPress,
   style,
   testID,
@@ -65,6 +71,13 @@ export const PerpsProDottedUnderlineText: React.FC<
       const line = event.nativeEvent.lines[0] as
         | PerpsProDottedUnderlineLineMetrics
         | undefined;
+      if (line && Number.isFinite(line.width)) {
+        onFirstLineLayout?.({
+          lineCount: event.nativeEvent.lines.length,
+          width: Math.max(line.width, 0),
+          x: Number.isFinite(line.x) ? Math.max(line.x ?? 0, 0) : 0,
+        });
+      }
       const nextGeometry = line
         ? resolvePerpsProDottedUnderlineGeometry({
             fontSize,
@@ -83,13 +96,13 @@ export const PerpsProDottedUnderlineText: React.FC<
           : nextGeometry,
       );
     },
-    [fontSize],
+    [fontSize, onFirstLineLayout],
   );
 
   const content = (
     <>
       <Text
-        numberOfLines={numberOfLines}
+        numberOfLines={multiline ? undefined : numberOfLines}
         onTextLayout={handleTextLayout}
         style={style}>
         {children}
@@ -101,6 +114,7 @@ export const PerpsProDottedUnderlineText: React.FC<
             styles.underline,
             {
               height: underlineGeometry.canvasHeight,
+              left: underlineGeometry.canvasLeft,
               top: underlineGeometry.canvasTop,
               width: underlineGeometry.width,
             },

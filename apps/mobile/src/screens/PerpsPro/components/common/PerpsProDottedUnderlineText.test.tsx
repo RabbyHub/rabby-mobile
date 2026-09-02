@@ -112,4 +112,36 @@ describe('PerpsProDottedUnderlineText', () => {
       screen.getByText('Funding (1h) / Countdown').props.numberOfLines,
     ).toBe(1);
   });
+
+  it('allows Position labels to wrap while preserving first-line underline geometry', () => {
+    const onFirstLineLayout = jest.fn();
+    const view = render(
+      <PerpsProDottedUnderlineText
+        multiline
+        onFirstLineLayout={onFirstLineLayout}
+        style={{ color: '#9a9ca9', fontSize: 12 }}>
+        Precio de liquidación (USDC)
+      </PerpsProDottedUnderlineText>,
+    );
+
+    const lines = [
+      { ascender: 11, width: 74, x: 9, y: 0 },
+      { ascender: 11, width: 42, x: 41, y: 16 },
+    ];
+    const label = screen.getByText('Precio de liquidación (USDC)');
+    expect(label.props.numberOfLines).toBeUndefined();
+    fireEvent(label, 'textLayout', { nativeEvent: { lines } });
+
+    expect(onFirstLineLayout).toHaveBeenCalledWith({
+      lineCount: 2,
+      width: 74,
+      x: 9,
+    });
+    expect(view.UNSAFE_getAllByType(Line)).toHaveLength(1);
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-dotted-underline').props.style,
+      ),
+    ).toMatchObject({ left: 9, width: 74 });
+  });
 });
