@@ -7,11 +7,7 @@ import type { WebViewNavigation } from 'react-native-webview';
 import { type BackgroundBridgeServices } from './backgroundBridgeServices';
 import { createDappBySession } from '@/core/utils/createDappBySession';
 import { useRefState } from '@/hooks/common/useRefState';
-import {
-  BRIDGE_FRAME_CAPABILITY_KEY,
-  JSBridgeHarden,
-  RABBY_DECLARED_PREFIX,
-} from '@rabby-wallet/rn-webview-bridge';
+import { RABBY_DECLARED_PREFIX } from '@rabby-wallet/rn-webview-bridge';
 
 export const BLANK_PAGE = 'about:blank';
 export const BLANK_RABBY_PAGE = 'about:rabby';
@@ -33,7 +29,6 @@ type WebViewDataPayload<P = any> = {
   type: string;
   name?: string;
   payload?: P;
-  [BRIDGE_FRAME_CAPABILITY_KEY]?: string;
 };
 
 export type SetupWebviewParams = {
@@ -60,25 +55,6 @@ export function useSetupWebviewWithServices({
 }) {
   const { setRefState: putBackgroundBridge, stateRef: currentBridgeRef } =
     useRefState<BackgroundBridge | null>(null);
-  const bridgeFrameCapabilityRef = useRef<{
-    value: string;
-    injectedJavaScript: string;
-  } | null>(null);
-
-  if (!bridgeFrameCapabilityRef.current) {
-    const randomBytes = new Uint8Array(32);
-    crypto.getRandomValues(randomBytes);
-    const value = Array.from(randomBytes, byte =>
-      byte.toString(16).padStart(2, '0'),
-    ).join('');
-
-    bridgeFrameCapabilityRef.current = {
-      value,
-      injectedJavaScript: JSBridgeHarden(value),
-    };
-  }
-
-  const bridgeFrameCapability = bridgeFrameCapabilityRef.current;
 
   const destroyCurrentBridge = useCallback(() => {
     if (currentBridgeRef.current) {
@@ -158,13 +134,6 @@ export function useSetupWebviewWithServices({
 
         const data = fromData as WebViewDataPayload;
         if (data.name) {
-          if (
-            data[BRIDGE_FRAME_CAPABILITY_KEY] !== bridgeFrameCapability.value
-          ) {
-            return;
-          }
-          delete data[BRIDGE_FRAME_CAPABILITY_KEY];
-
           const msgOrigin =
             typeof (data as any).origin === 'string'
               ? (data as any).origin
@@ -199,12 +168,7 @@ export function useSetupWebviewWithServices({
         console.error(e, `Browser::onMessage on ${urlRef.current}`);
       }
     },
-    [
-      bridgeFrameCapability.value,
-      currentBridgeRef,
-      onRabbyDeclaredMessage,
-      urlRef,
-    ],
+    [currentBridgeRef, onRabbyDeclaredMessage, urlRef],
   );
 
   const changeUrl = useCallback(
@@ -283,7 +247,6 @@ export function useSetupWebviewWithServices({
   }, [destroyCurrentBridge]);
 
   return {
-    bridgeHardenScript: bridgeFrameCapability.injectedJavaScript,
     onLoadStart,
     onMessage,
   };

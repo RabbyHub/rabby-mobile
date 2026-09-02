@@ -51,6 +51,7 @@ const syncCustomTestChainList = () => {
 };
 
 const WEBVIEW_BEFORE_CONTENT_LOADED_BUILTIN_SCRIPT_IDS = [
+  'rabby-jsbridge-harden',
   'rabby-inpage-web3',
   'rabby-browser-script-base',
   ...(__DEV__ ? ['rabby-dev-window-info-after-load'] : []),

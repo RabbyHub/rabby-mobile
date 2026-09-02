@@ -348,7 +348,7 @@ const DappWebViewControl = ({
         webviewRef={webviewRef}
         webviewIdRef={webviewIdRef}
         siteInfoRefs={{ urlRef, titleRef, iconRef }}>
-        {({ bridgeHardenScript, onLoadStart, onMessage: onBridgeMessage }) => {
+        {({ onLoadStart, onMessage: onBridgeMessage }) => {
           if (!entryScriptWeb3Loaded) {
             return null;
           }
@@ -382,9 +382,6 @@ const DappWebViewControl = ({
               injectedJavaScriptBeforeContentLoadedBuiltinScriptIds={
                 beforeContentLoadedBuiltinScriptIds
               }
-              injectedJavaScriptBeforeContentLoaded={`${bridgeHardenScript}\n${
-                webviewProps?.injectedJavaScriptBeforeContentLoaded ?? ''
-              }`}
               injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
               injectedJavaScriptBuiltinScriptIds={documentEndBuiltinScriptIds}
               onNavigationStateChange={webviewActions.onNavigationStateChange}

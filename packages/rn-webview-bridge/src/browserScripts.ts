@@ -206,72 +206,50 @@ export const JS_IFRAME_POST_MESSAGE_TO_PROVIDER = (
 })()`;
  */
 
-export const BRIDGE_FRAME_CAPABILITY_KEY = '__rabbyFrameCapability';
+export const JSBridgeHarden = /* js */`(function () {
+    function safeStartsWith(str, search) {
+        if (typeof str !== 'string' || typeof search !== 'string') {
+            return false;
+        }
 
-export const JSBridgeHarden = (capability: string) => /* js */`
-;(function () {
-  function safeStartsWith(str, search) {
-    if (typeof str !== 'string' || typeof search !== 'string') {
-      return false;
+        for (let i = 0; i < search.length; i++) {
+          if (str[i] !== search[i]) {
+            return false;
+          }
+        }
+
+        return true;
     }
 
-    for (var i = 0; i < search.length; i++) {
-      if (str[i] !== search[i]) return false;
-    }
-
-    return true;
-  }
-
-  var bridge = window.ReactNativeWebView;
-  if (bridge == null) return;
-
-  var parse = JSON.parse;
-  var stringify = JSON.stringify;
-  var apply = Reflect.apply;
-  var originalPostMessage = bridge.postMessage;
-  var capability = ${JSON.stringify(capability)};
-  var capabilityKey = ${JSON.stringify(BRIDGE_FRAME_CAPABILITY_KEY)};
-
-  function send(message) {
-    return apply(originalPostMessage, bridge, [message]);
-  }
-
-  function postMessageWithHarden(message) {
-    try {
-      var data = parse(message);
-      if (
-        data &&
-        data.name != null &&
-        !(
-          location.origin === data.origin ||
-          location.origin === data.origin + '/' ||
-          safeStartsWith(data.origin, location.origin + '/')
-        )
-      ) {
-        console.warn(
-          'Origin mismatch in postMessage: expected ' +
-            location.origin +
-            ', got ' +
-            data.origin
-        );
+    if (window.ReactNativeWebView == null) {
         return;
-      }
-
-      if (data && data.name) {
-        data[capabilityKey] = capability;
-        return send(stringify(data));
-      }
-    } catch (_error) {}
-    return send(message);
-  }
-
-  var facade = Object.create(null);
-  Object.defineProperty(facade, 'postMessage', {
-    value: postMessageWithHarden,
-    enumerable: true,
-    writable: false,
-    configurable: false,
-  });
-  Object.freeze(facade);
-  window.ReactNativeWebView = facade;
-})();true;`;
+    }
+    const parse = JSON.parse;
+    const realPost = window.ReactNativeWebView.postMessage.bind(window.ReactNativeWebView);
+    function myPostMessage(msg) {
+        try {
+            const json = parse(msg);
+            if (json &&
+                json.name != null &&
+                !(location.origin === json.origin ||
+                    location.origin === json.origin + '/' || safeStartsWith(json.origin, location.origin + '/'))) {
+                console.warn('Origin mismatch in postMessage: expected ' +
+                    location.origin +
+                    ', got ' +
+                    json.origin);
+                return;
+            }
+        }
+        catch (_a) { }
+        return realPost(msg);
+    }
+    window.ReactNativeWebView = new Proxy(window.ReactNativeWebView || {}, {
+        get: function (target, prop) {
+            if (prop === 'postMessage') {
+                return myPostMessage;
+            }
+            const f = Reflect.get(target, prop);
+            return typeof f === 'function' ? f.bind(target) : f;
+        },
+    });
+})();`;
