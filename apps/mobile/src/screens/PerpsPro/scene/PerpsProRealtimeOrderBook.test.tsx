@@ -94,6 +94,7 @@ describe('PerpsProRealtimeOrderBook reconnect display cache', () => {
     );
 
     expect(mockRenderedOrderBookProps?.hasBookSnapshot).toBe(true);
+    expect(mockRenderedOrderBookProps?.bookIdentity).toBe('BTC:5:null');
     expect(mockRenderedOrderBookProps?.onSelectPrice).toBe(onSelectPrice);
     expect(mockRenderedOrderBookProps?.onSelectPriceIntentStart).toBe(
       onSelectPriceIntentStart,

@@ -3,12 +3,32 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 
 const mockOpenFieldExplanation = jest.fn();
+const mockCancelAnimation = jest.fn();
+const mockWithTiming = jest.fn((value: number) => value);
 
 import type { MarketData } from '@/hooks/perps/usePerpsStore';
 
 import { buildPerpsProMarket } from '../../model/market';
 import { processPerpsOrderBook } from '../../model/orderBook';
-import { PerpsProOrderBook } from './PerpsProOrderBook';
+import {
+  getPerpsProOrderBookRowKey,
+  PerpsProOrderBook,
+} from './PerpsProOrderBook';
+
+jest.mock('react-native-reanimated', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    __esModule: true,
+    default: { View },
+    Easing: { bezier: () => 'desktop-ease-out' },
+    ReduceMotion: { System: 'system' },
+    cancelAnimation: (...args: unknown[]) => mockCancelAnimation(...args),
+    useAnimatedStyle: (updater: () => object) => updater(),
+    useSharedValue: (value: number) => ReactModule.useRef({ value }).current,
+    withTiming: (...args: [number, object]) => mockWithTiming(...args),
+  };
+});
 
 jest.mock('@/assets2024/icons/perps/PerpsProPrecisionCaret.svg', () => {
   const ReactModule = require('react');
@@ -96,6 +116,7 @@ jest.mock('./PerpsProPrecisionSheet', () => ({
 
 const defaultProps: React.ComponentProps<typeof PerpsProOrderBook> = {
   book: processPerpsOrderBook(null),
+  bookIdentity: 'disabled',
   bookStatus: 'loading',
   hasBookSnapshot: false,
   latestTrade: null,
@@ -509,5 +530,121 @@ describe('PerpsProOrderBook display shell', () => {
     expect(
       screen.getByText('page.perps.pro.orderBook.amount\n(BTC)'),
     ).toBeTruthy();
+  });
+
+  it('animates only the ratio tracks while keeping ratio text on the latest snapshot', () => {
+    const createBook = (bidSize: string) =>
+      processPerpsOrderBook({
+        coin: 'BTC',
+        levels: [
+          [{ n: 1, px: '100', sz: '1' }],
+          [{ n: 1, px: '100', sz: bidSize }],
+        ],
+        time: 100,
+      });
+    const view = render(
+      <PerpsProOrderBook
+        {...defaultProps}
+        book={createBook('1')}
+        bookIdentity="BTC:5:null"
+        bookStatus="ready"
+        hasBookSnapshot
+        market={buildPerpsProMarket(marketData)}
+      />,
+    );
+
+    expect(screen.getAllByText('50.00%')).toHaveLength(2);
+    expect(mockWithTiming).not.toHaveBeenCalled();
+    mockCancelAnimation.mockClear();
+
+    view.rerender(
+      <PerpsProOrderBook
+        {...defaultProps}
+        book={createBook('3')}
+        bookIdentity="BTC:5:null"
+        bookStatus="ready"
+        hasBookSnapshot
+        market={buildPerpsProMarket(marketData)}
+      />,
+    );
+
+    expect(screen.getByText('75.00%')).toBeTruthy();
+    expect(screen.getByText('25.00%')).toBeTruthy();
+    expect(mockWithTiming).toHaveBeenCalledWith(25, {
+      duration: 200,
+      easing: 'desktop-ease-out',
+      reduceMotion: 'system',
+    });
+
+    mockWithTiming.mockClear();
+    mockCancelAnimation.mockClear();
+    view.rerender(
+      <PerpsProOrderBook
+        {...defaultProps}
+        book={createBook('4')}
+        bookIdentity="BTC:4:null"
+        bookStatus="ready"
+        hasBookSnapshot
+        market={buildPerpsProMarket(marketData)}
+      />,
+    );
+
+    expect(screen.getByText('80.00%')).toBeTruthy();
+    expect(screen.getByText('20.00%')).toBeTruthy();
+    expect(mockWithTiming).not.toHaveBeenCalled();
+    expect(mockCancelAnimation).toHaveBeenCalled();
+  });
+
+  it('retains a price animation when a new best level moves it to another row', () => {
+    const createBook = (askLevels: [string, string][]) =>
+      processPerpsOrderBook({
+        coin: 'BTC',
+        levels: [
+          [
+            { n: 1, px: '100', sz: '1' },
+            { n: 1, px: '99', sz: '1' },
+          ],
+          askLevels.map(([px, sz]) => ({ n: 1, px, sz })),
+        ],
+        time: 100,
+      });
+    const view = render(
+      <PerpsProOrderBook
+        {...defaultProps}
+        book={createBook([
+          ['101', '1'],
+          ['102', '1'],
+        ])}
+        bookIdentity="BTC:5:null"
+        bookStatus="ready"
+        hasBookSnapshot
+        market={buildPerpsProMarket(marketData)}
+      />,
+    );
+    mockWithTiming.mockClear();
+
+    view.rerender(
+      <PerpsProOrderBook
+        {...defaultProps}
+        book={createBook([
+          ['100.5', '1'],
+          ['101', '1'],
+        ])}
+        bookIdentity="BTC:5:null"
+        bookStatus="ready"
+        hasBookSnapshot
+        market={buildPerpsProMarket(marketData)}
+      />,
+    );
+
+    expect(getPerpsProOrderBookRowKey('ask', 4, { price: '101' })).toBe(
+      'ask:101',
+    );
+    expect(getPerpsProOrderBookRowKey('ask', 4, null)).toBe('ask:empty:4');
+    expect(mockWithTiming).toHaveBeenCalledWith(100, {
+      duration: 200,
+      easing: 'desktop-ease-out',
+      reduceMotion: 'system',
+    });
   });
 });

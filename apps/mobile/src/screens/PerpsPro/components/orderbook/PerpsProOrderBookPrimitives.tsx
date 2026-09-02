@@ -2,8 +2,9 @@ import { Text } from '@/components/Typography';
 import { FontNames } from '@/core/utils/fonts';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useMemo } from 'react';
-import { Pressable, View, type ViewStyle } from 'react-native';
+import React from 'react';
+import { Pressable, View } from 'react-native';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 
 import {
   getPerpsOrderBookDepthPercent,
@@ -16,6 +17,7 @@ import {
   formatPerpsProPrice,
 } from '../../utils/format';
 import type { PerpsProTradeAmountUnit } from '../../model/trade';
+import { usePerpsProOrderBookPercentAnimation } from './usePerpsProOrderBookPercentAnimation';
 
 export const PERPS_PRO_ORDER_BOOK_ROW_HEIGHT = 20;
 
@@ -54,6 +56,7 @@ export const PerpsProOrderBookModeIcon: React.FC<{
 };
 
 export const PerpsProOrderBookRow: React.FC<{
+  animationIdentity: string;
   amountUnit?: PerpsProTradeAmountUnit;
   amountDecimals?: number;
   level?: PerpsOrderBookLevel;
@@ -63,6 +66,7 @@ export const PerpsProOrderBookRow: React.FC<{
   priceDecimals: number;
   side: 'ask' | 'bid';
 }> = ({
+  animationIdentity,
   amountUnit = 'quote',
   amountDecimals = 2,
   level,
@@ -74,10 +78,15 @@ export const PerpsProOrderBookRow: React.FC<{
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const depth = level ? getPerpsOrderBookDepthPercent(level, maxTotal) : 0;
-  const depthStyle = useMemo<ViewStyle>(
-    () => ({ width: `${depth}%` }),
-    [depth],
-  );
+  const animatedDepth = usePerpsProOrderBookPercentAnimation({
+    animationIdentity,
+    hasValue: level != null,
+    targetPercent: depth,
+    valueIdentity: level?.price ?? 'empty',
+  });
+  const depthStyle = useAnimatedStyle(() => ({
+    width: `${animatedDepth.value}%` as `${number}%`,
+  }));
 
   return (
     <Pressable
@@ -88,13 +97,14 @@ export const PerpsProOrderBookRow: React.FC<{
       style={styles.bookRow}
       testID="perps-pro-order-book-row">
       {level ? (
-        <View
+        <Animated.View
           pointerEvents="none"
           style={[
             styles.depth,
             side === 'bid' ? styles.bidDepth : styles.askDepth,
             depthStyle,
           ]}
+          testID="perps-pro-order-book-depth"
         />
       ) : null}
       <Text
