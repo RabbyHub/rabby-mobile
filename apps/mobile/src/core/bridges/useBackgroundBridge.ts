@@ -203,17 +203,17 @@ export function useSetupWebviewWithServices({
             return;
           }
 
-          let msgHost = '';
-          let bridgeHost = '';
+          let normalizedMsgOrigin = '';
+          let normalizedBridgeOrigin = '';
           try {
-            msgHost = new URL(msgOrigin).host;
-            bridgeHost = new URL(bridgeOrigin).host;
+            normalizedMsgOrigin = new URL(msgOrigin).origin;
+            normalizedBridgeOrigin = new URL(bridgeOrigin).origin;
           } catch {
             return;
           }
-          if (msgHost !== bridgeHost) {
+          if (normalizedMsgOrigin !== normalizedBridgeOrigin) {
             console.warn(
-              `[onMessage] host mismatch: msgHost=${msgHost},bridgeHost=${bridgeHost}`,
+              `[onMessage] origin mismatch: msgOrigin=${normalizedMsgOrigin},bridgeOrigin=${normalizedBridgeOrigin}`,
             );
             return;
           }
