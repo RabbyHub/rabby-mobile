@@ -411,7 +411,7 @@ function makeScreenSpecConfig() {
       [RootNames.MultiSend]: bg1Default2024Conf,
       [RootNames.SendNFT]: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       [RootNames.MultiSendNFT]: bg1Default2024Conf,
-      [RootNames.Receive]: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      [RootNames.Receive]: transparentDefault2024Conf,
       [RootNames.SwapBridge]: bg1Default2024Conf,
       [RootNames.MultiSwapBridge]: bg1Default2024Conf,
       [RootNames.GnosisTransactionQueue]: card2DefaultConf,
@@ -509,17 +509,40 @@ function makeScreenSpecConfig() {
 }
 const ScreenSpecs = makeScreenSpecConfig();
 
-export function getScreenSystemBarConfig(options: {
+type GetScreenSystemBarConfigOptions = {
   screenName: string | AppRootName;
   isDarkTheme?: boolean;
   isShowingDappCard?: boolean;
-}) {
+};
+
+export function getOwnScreenSystemBarConfig(
+  options: Omit<GetScreenSystemBarConfigOptions, 'isShowingDappCard'>,
+) {
+  const { screenName, isDarkTheme } = options;
+  const rootSpecs = ScreenSpecs[isDarkTheme ? 'dark' : 'light'];
+
+  return rootSpecs[screenName as AppRootName];
+}
+
+export function getScreenContentBackgroundColor(
+  options: Omit<GetScreenSystemBarConfigOptions, 'isShowingDappCard'>,
+) {
+  return (
+    getOwnScreenSystemBarConfig(options)?.statusBarBackgroundColor ||
+    'transparent'
+  );
+}
+
+export function getScreenSystemBarConfig(
+  options: GetScreenSystemBarConfigOptions,
+) {
   const { screenName, isDarkTheme, isShowingDappCard } = options || {};
   const rootSpecs = ScreenSpecs[isDarkTheme ? 'dark' : 'light'];
 
   const screenSpec = isShowingDappCard
     ? rootSpecs['@openeddapp']
-    : rootSpecs[screenName as AppRootName] || rootSpecs['@default'];
+    : getOwnScreenSystemBarConfig({ screenName, isDarkTheme }) ||
+      rootSpecs['@default'];
 
   return screenSpec;
 }

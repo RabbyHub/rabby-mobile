@@ -1,7 +1,43 @@
-import { RootNames, getScreenSystemBarConfig } from './layout';
+import {
+  RootNames,
+  getOwnScreenSystemBarConfig,
+  getScreenContentBackgroundColor,
+  getScreenSystemBarConfig,
+} from './layout';
 import { ThemeColors } from './theme';
 
+const transparentScreenNames = [
+  RootNames.Home,
+  RootNames.Points,
+  RootNames.Lending,
+  RootNames.Settings,
+  RootNames.WalletConnect,
+  RootNames.BatchRevoke,
+  RootNames.GasAccount,
+  RootNames.Receive,
+  RootNames.Perps,
+  RootNames.Scanner,
+  RootNames.SingleAddressHome,
+  RootNames.TokenDetail,
+  RootNames.TokenMarketInfo,
+] as const;
+
 describe('screen system bar configuration', () => {
+  it('leaves navigator-only routes transparent for child screen ownership', () => {
+    expect(
+      getOwnScreenSystemBarConfig({
+        screenName: RootNames.StackRoot,
+        isDarkTheme: false,
+      }),
+    ).toBeUndefined();
+    expect(
+      getScreenContentBackgroundColor({
+        screenName: RootNames.StackRoot,
+        isDarkTheme: false,
+      }),
+    ).toBe('transparent');
+  });
+
   it('keeps the home screen transparent for edge-to-edge content', () => {
     expect(
       getScreenSystemBarConfig({
@@ -60,21 +96,21 @@ describe('screen system bar configuration', () => {
     });
   });
 
-  it('keeps points, settings, and token detail screens transparent', () => {
-    for (const isDarkTheme of [false, true]) {
-      for (const screenName of [
-        RootNames.Points,
-        RootNames.Settings,
-        RootNames.Lending,
-        RootNames.TokenDetail,
-        RootNames.TokenMarketInfo,
-      ]) {
+  it('matches the effective theme on every transparent screen', () => {
+    for (const [isDarkTheme, statusBarStyle] of [
+      [false, 'dark-content'],
+      [true, 'light-content'],
+    ] as const) {
+      for (const screenName of transparentScreenNames) {
         expect(
           getScreenSystemBarConfig({
             screenName,
             isDarkTheme,
-          }).statusBarBackgroundColor,
-        ).toBe('transparent');
+          }),
+        ).toEqual({
+          statusBarStyle,
+          statusBarBackgroundColor: 'transparent',
+        });
       }
     }
   });

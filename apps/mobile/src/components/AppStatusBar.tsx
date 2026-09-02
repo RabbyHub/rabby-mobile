@@ -1,16 +1,10 @@
-import React, { useMemo } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
-import { SystemBars } from 'react-native-edge-to-edge';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React, { useEffect, useMemo } from 'react';
 
 import { useCurrentRouteName, useRabbyAppNavigation } from '@/hooks/navigation';
 import { useGetBinaryMode } from '@/hooks/theme';
-import { useOpenedActiveDappState } from '@/screens/Dapps/hooks/useDappView';
-import {
-  ScreenSystemBarConfig,
-  getScreenSystemBarConfig,
-} from '@/constant/layout';
+import { getScreenSystemBarConfig } from '@/constant/layout';
 import { getLatestNavigationName } from '@/utils/navigation';
+import { syncAppSystemBars } from '@/utils/systemBarController';
 import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 
 export function useSafeSetNavigationOptions() {
@@ -26,66 +20,28 @@ export function useSafeSetNavigationOptions() {
   return { navigation, setNavigationOptions };
 }
 
-function useScreenSystemBarConfig() {
+function useScreenSystemBarStyle() {
   const { currentRouteName: currentRouteNameOrig } = useCurrentRouteName();
   const currentRouteName = useMemo(() => {
     return getLatestNavigationName() || currentRouteNameOrig;
   }, [currentRouteNameOrig]);
 
   const isLight = useGetBinaryMode() === 'light';
-  const { hasActiveDapp: isShowingDappCard } = useOpenedActiveDappState();
 
-  return useMemo<ScreenSystemBarConfig>(() => {
+  return useMemo(() => {
     return getScreenSystemBarConfig({
       screenName: currentRouteName || '@default',
       isDarkTheme: !isLight,
-      isShowingDappCard,
-    });
-  }, [currentRouteName, isLight, isShowingDappCard]);
-}
-
-export function StatusBarBackground({
-  color,
-  height,
-}: {
-  color: string;
-  height: number;
-}) {
-  if (Platform.OS !== 'android' || height <= 0 || color === 'transparent') {
-    return null;
-  }
-
-  return (
-    <View
-      pointerEvents="none"
-      style={[styles.statusBarBackground, { backgroundColor: color, height }]}
-    />
-  );
+    }).statusBarStyle;
+  }, [currentRouteName, isLight]);
 }
 
 export function AppStatusBar() {
-  const { top } = useSafeAreaInsets();
-  const config = useScreenSystemBarConfig();
-  const systemBarStyle =
-    config.statusBarStyle === 'dark-content' ? 'dark' : 'light';
+  const statusBarStyle = useScreenSystemBarStyle();
 
-  return (
-    <>
-      <StatusBarBackground
-        color={config.statusBarBackgroundColor}
-        height={top}
-      />
-      <SystemBars style={systemBarStyle} />
-    </>
-  );
+  useEffect(() => {
+    syncAppSystemBars(statusBarStyle);
+  }, [statusBarStyle]);
+
+  return null;
 }
-
-const styles = StyleSheet.create({
-  statusBarBackground: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-  },
-});
