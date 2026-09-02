@@ -9,7 +9,6 @@ import { createDappBySession } from '@/core/utils/createDappBySession';
 import { useRefState } from '@/hooks/common/useRefState';
 import {
   BRIDGE_FRAME_CAPABILITY_KEY,
-  BRIDGE_FRAME_PAYLOAD_KEY,
   JSBridgeHarden,
   RABBY_DECLARED_PREFIX,
 } from '@rabby-wallet/rn-webview-bridge';
@@ -34,11 +33,7 @@ type WebViewDataPayload<P = any> = {
   type: string;
   name?: string;
   payload?: P;
-};
-
-type WebViewCapabilityEnvelope = {
-  [BRIDGE_FRAME_CAPABILITY_KEY]?: unknown;
-  [BRIDGE_FRAME_PAYLOAD_KEY]?: unknown;
+  [BRIDGE_FRAME_CAPABILITY_KEY]?: string;
 };
 
 export type SetupWebviewParams = {
@@ -157,41 +152,18 @@ export function useSetupWebviewWithServices({
       try {
         fromData =
           typeof fromData === 'string' ? JSON.parse(fromData) : fromData;
-        const hasCapabilityEnvelope =
-          fromData != null &&
-          typeof fromData === 'object' &&
-          Object.prototype.hasOwnProperty.call(
-            fromData,
-            BRIDGE_FRAME_CAPABILITY_KEY,
-          ) &&
-          Object.prototype.hasOwnProperty.call(
-            fromData,
-            BRIDGE_FRAME_PAYLOAD_KEY,
-          );
-        const capabilityEnvelope = hasCapabilityEnvelope
-          ? (fromData as WebViewCapabilityEnvelope)
-          : null;
-        const messageData = capabilityEnvelope
-          ? capabilityEnvelope[BRIDGE_FRAME_PAYLOAD_KEY]
-          : fromData;
-
-        if (
-          !messageData ||
-          typeof messageData !== 'object' ||
-          (!(messageData as WebViewDataPayload).type &&
-            !(messageData as WebViewDataPayload).name)
-        ) {
+        if (!fromData || (!fromData.type && !fromData.name)) {
           return;
         }
 
-        const data = messageData as WebViewDataPayload;
+        const data = fromData as WebViewDataPayload;
         if (data.name) {
           if (
-            capabilityEnvelope?.[BRIDGE_FRAME_CAPABILITY_KEY] !==
-            bridgeFrameCapability.value
+            data[BRIDGE_FRAME_CAPABILITY_KEY] !== bridgeFrameCapability.value
           ) {
             return;
           }
+          delete data[BRIDGE_FRAME_CAPABILITY_KEY];
 
           const msgOrigin =
             typeof (data as any).origin === 'string'

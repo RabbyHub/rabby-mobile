@@ -207,14 +207,8 @@ export const JS_IFRAME_POST_MESSAGE_TO_PROVIDER = (
  */
 
 export const BRIDGE_FRAME_CAPABILITY_KEY = '__rabbyFrameCapability';
-export const BRIDGE_FRAME_PAYLOAD_KEY = '__rabbyFramePayload';
 
-export const JSBridgeHarden = (capability: string) => {
-  const envelopePrefix = `${JSON.stringify({
-    [BRIDGE_FRAME_CAPABILITY_KEY]: capability,
-  }).slice(0, -1)},${JSON.stringify(BRIDGE_FRAME_PAYLOAD_KEY)}:`;
-
-  return /* js */`
+export const JSBridgeHarden = (capability: string) => /* js */`
 ;(function () {
   function safeStartsWith(str, search) {
     if (typeof str !== 'string' || typeof search !== 'string') {
@@ -234,54 +228,38 @@ export const JSBridgeHarden = (capability: string) => {
   var parse = JSON.parse;
   var stringify = JSON.stringify;
   var apply = Reflect.apply;
-  var nativeReceiver;
-  var nativePostMessage;
-  var iosHandler =
-    window.webkit &&
-    window.webkit.messageHandlers &&
-    window.webkit.messageHandlers.ReactNativeWebView;
-
-  if (iosHandler && typeof iosHandler.postMessage === 'function') {
-    nativeReceiver = iosHandler;
-    nativePostMessage = iosHandler.postMessage;
-  } else if (typeof bridge.postMessage === 'function') {
-    nativeReceiver = bridge;
-    nativePostMessage = bridge.postMessage;
-  } else {
-    return;
-  }
-
-  var envelopePrefix = ${JSON.stringify(envelopePrefix)};
+  var originalPostMessage = bridge.postMessage;
+  var capability = ${JSON.stringify(capability)};
+  var capabilityKey = ${JSON.stringify(BRIDGE_FRAME_CAPABILITY_KEY)};
 
   function send(message) {
-    return apply(nativePostMessage, nativeReceiver, [message]);
+    return apply(originalPostMessage, bridge, [message]);
   }
 
   function postMessageWithHarden(message) {
     try {
       var data = parse(message);
+      if (
+        data &&
+        data.name != null &&
+        !(
+          location.origin === data.origin ||
+          location.origin === data.origin + '/' ||
+          safeStartsWith(data.origin, location.origin + '/')
+        )
+      ) {
+        console.warn(
+          'Origin mismatch in postMessage: expected ' +
+            location.origin +
+            ', got ' +
+            data.origin
+        );
+        return;
+      }
+
       if (data && data.name) {
-        var payload = stringify(data);
-        data = parse(payload);
-
-        if (!data || !data.name) return;
-        if (
-          !(
-            location.origin === data.origin ||
-            location.origin === data.origin + '/' ||
-            safeStartsWith(data.origin, location.origin + '/')
-          )
-        ) {
-          console.warn(
-            'Origin mismatch in postMessage: expected ' +
-              location.origin +
-              ', got ' +
-              data.origin
-          );
-          return;
-        }
-
-        return send(envelopePrefix + payload + '}');
+        data[capabilityKey] = capability;
+        return send(stringify(data));
       }
     } catch (_error) {}
     return send(message);
@@ -297,4 +275,3 @@ export const JSBridgeHarden = (capability: string) => {
   Object.freeze(facade);
   window.ReactNativeWebView = facade;
 })();true;`;
-};
