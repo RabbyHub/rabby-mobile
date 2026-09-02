@@ -335,7 +335,7 @@ index 6664b6f6eacb37743d049556dc55f613c0244517..315d954165153852fc65c1ad1378a66e
      }
 
 diff --git a/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java b/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
-index d59e19ce82a5a03a60c558b35171af713719af4a..1179dc4d407a6faac186ee60cc7b7c55bb61f261 100644
+index d59e19ce82a5a03a60c558b35171af713719af4a..ceb0d2c6e3ef5376523aa0cb4f5ea0e81b3dc804 100644
 --- a/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
 +++ b/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
 @@ -1,7 +1,9 @@
@@ -405,7 +405,15 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..1179dc4d407a6faac186ee60cc7b7c55
      }
 
      @Override
-@@ -121,7 +143,18 @@ public class RNCWebViewClient extends WebViewClient {
+@@ -95,6 +117,7 @@ public class RNCWebViewClient extends WebViewClient {
+             final AtomicReference<RNCWebViewModuleImpl.ShouldOverrideUrlLoadingLock.ShouldOverrideCallbackState> lockObject = lock.second;
+
+             final WritableMap event = createWebViewEvent(view, url);
++            event.putString("sourceDocumentURL", view.getUrl() != null ? view.getUrl() : "");
+             event.putDouble("lockIdentifier", lockIdentifier);
+             rncWebView.dispatchDirectShouldStartLoadWithRequest(event);
+
+@@ -121,14 +145,27 @@ public class RNCWebViewClient extends WebViewClient {
              RNCWebViewModuleImpl.shouldOverrideUrlLoadingLock.removeLock(lockIdentifier);
 
              return shouldOverride;
@@ -425,7 +433,17 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..1179dc4d407a6faac186ee60cc7b7c55
              FLog.w(TAG, "Couldn't use blocking synchronous call for onShouldStartLoadWithRequest due to debugging or missing Catalyst instance, falling back to old event-and-load.");
              progressChangedFilter.setWaitingForCommandLoadUrl(true);
 
-@@ -136,6 +169,21 @@ public class RNCWebViewClient extends WebViewClient {
+             int reactTag = RNCWebViewWrapper.getReactTagFromWebView(view);
++            WritableMap event = createWebViewEvent(view, url);
++            event.putString("sourceDocumentURL", view.getUrl() != null ? view.getUrl() : "");
+             UIManagerHelper.getEventDispatcherForReactTag((ReactContext) view.getContext(), reactTag).dispatchEvent(new TopShouldStartLoadWithRequestEvent(
+                     reactTag,
+-                    createWebViewEvent(view, url)));
++                    event));
+             return true;
+         }
+     }
+@@ -136,8 +172,23 @@ public class RNCWebViewClient extends WebViewClient {
      @TargetApi(Build.VERSION_CODES.N)
      @Override
      public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
@@ -447,7 +465,9 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..1179dc4d407a6faac186ee60cc7b7c55
          final String url = request.getUrl().toString();
          return this.shouldOverrideUrlLoading(view, url);
      }
-@@ -205,7 +253,7 @@ public class RNCWebViewClient extends WebViewClient {
+
+     @Override
+@@ -205,7 +256,7 @@ public class RNCWebViewClient extends WebViewClient {
                  code,
                  description,
                  failingUrl
@@ -456,7 +476,7 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..1179dc4d407a6faac186ee60cc7b7c55
      }
 
      @Override
-@@ -300,12 +348,26 @@ public class RNCWebViewClient extends WebViewClient {
+@@ -300,12 +351,26 @@ public class RNCWebViewClient extends WebViewClient {
      }
 
      protected WritableMap createWebViewEvent(WebView webView, String url) {
@@ -896,10 +916,20 @@ index 709117a91e44c2e32a263c638b0c092185d76e94..92e698594e0fdc650b8c59c8d3a41c24
      public void setUserAgent(RNCWebViewWrapper view, @Nullable String value) {
          mRNCWebViewManagerImpl.setUserAgent(view, value);
 diff --git a/apple/RNCWebView.mm b/apple/RNCWebView.mm
-index 1ae84c89237f2133378b35a75f6b48a538a1502f..f1067770db645778fec82f8942e3eaafd7d96ac1 100644
+index 1ae84c89237f2133378b35a75f6b48a538a1502f..c02421e0e3b8da34776544f54698b91699ebce1c 100644
 --- a/apple/RNCWebView.mm
 +++ b/apple/RNCWebView.mm
-@@ -90,6 +90,7 @@ - (instancetype)initWithFrame:(CGRect)frame
+@@ -80,7 +80,8 @@ - (instancetype)initWithFrame:(CGRect)frame
+                     .canGoForward = static_cast<bool>([[dictionary valueForKey:@"canGoBack"] boolValue]),
+                     .isTopFrame = static_cast<bool>([[dictionary valueForKey:@"isTopFrame"] boolValue]),
+                     .loading = static_cast<bool>([[dictionary valueForKey:@"loading"] boolValue]),
+-                    .mainDocumentURL = std::string([[dictionary valueForKey:@"mainDocumentURL"] UTF8String])
++                    .mainDocumentURL = std::string([[dictionary valueForKey:@"mainDocumentURL"] UTF8String]),
++                    .sourceDocumentURL = std::string([[dictionary valueForKey:@"sourceDocumentURL"] UTF8String])
+                 };
+                 webViewEventEmitter->onShouldStartLoadWithRequest(data);
+             };
+@@ -90,6 +91,7 @@ - (instancetype)initWithFrame:(CGRect)frame
                  auto webViewEventEmitter = std::static_pointer_cast<RNCWebViewEventEmitter const>(_eventEmitter);
                  facebook::react::RNCWebViewEventEmitter::OnLoadingStart data = {
                      .url = std::string([[dictionary valueForKey:@"url"] UTF8String]),
@@ -907,7 +937,7 @@ index 1ae84c89237f2133378b35a75f6b48a538a1502f..f1067770db645778fec82f8942e3eaaf
                      .lockIdentifier = [[dictionary valueForKey:@"lockIdentifier"] doubleValue],
                      .title = std::string([[dictionary valueForKey:@"title"] UTF8String]),
                      .navigationType = stringToOnLoadingStartNavigationTypeEnum(std::string([[dictionary valueForKey:@"navigationType"] UTF8String])),
-@@ -263,9 +264,20 @@ - (void)updateProps:(Props::Shared const &)props oldProps:(Props::Shared const &
+@@ -263,9 +265,20 @@ - (void)updateProps:(Props::Shared const &)props oldProps:(Props::Shared const &
          _view.name = RCTNSStringFromString(newViewProps.name);      \
      }
 
@@ -928,7 +958,7 @@ index 1ae84c89237f2133378b35a75f6b48a538a1502f..f1067770db645778fec82f8942e3eaaf
      REMAP_WEBVIEW_PROP(injectedJavaScriptForMainFrameOnly)
      REMAP_WEBVIEW_PROP(injectedJavaScriptBeforeContentLoadedForMainFrameOnly)
      REMAP_WEBVIEW_STRING_PROP(injectedJavaScriptObject)
-@@ -275,6 +287,7 @@ - (void)updateProps:(Props::Shared const &)props oldProps:(Props::Shared const &
+@@ -275,6 +288,7 @@ - (void)updateProps:(Props::Shared const &)props oldProps:(Props::Shared const &
      REMAP_WEBVIEW_PROP(allowUniversalAccessFromFileURLs)
      REMAP_WEBVIEW_PROP(allowsInlineMediaPlayback)
      REMAP_WEBVIEW_PROP(webviewDebuggingEnabled)
@@ -959,7 +989,7 @@ index ba9adf749d3874b74952a8f7d7044d939672a6b3..3bc7975e654fba288e1307f4556be53c
  @property (nonatomic, assign) BOOL bounces;
  @property (nonatomic, assign) BOOL mediaPlaybackRequiresUserAction;
 diff --git a/apple/RNCWebViewImpl.m b/apple/RNCWebViewImpl.m
-index 77abeafb502f717550434a286d2611380949157b..33dfa70f5c710a6452af9ca0808e460a91b3c04b 100644
+index 77abeafb502f717550434a286d2611380949157b..6e61e5d57e0569b2e6e865d2069b6c6d4308e014 100644
 --- a/apple/RNCWebViewImpl.m
 +++ b/apple/RNCWebViewImpl.m
 @@ -25,6 +25,301 @@
@@ -1454,7 +1484,15 @@ index 77abeafb502f717550434a286d2611380949157b..33dfa70f5c710a6452af9ca0808e460a
                              @"navigationType": navigationTypes[@(navigationType)]
                          }];
                          self->_onLoadingStart(event);
-@@ -1370,6 +1716,7 @@ - (void)                  webView:(WKWebView *)webView
+@@ -1354,6 +1700,7 @@ - (void)                  webView:(WKWebView *)webView
+         }
+         [event addEntriesFromDictionary: @{
+             @"url": (request.URL).absoluteString,
++            @"sourceDocumentURL": webView.URL.absoluteString ?: @"",
+             @"navigationType": navigationTypes[@(navigationType)],
+             @"isTopFrame": @(isTopFrame),
+             @"hasTargetFrame": @(hasTargetFrame),
+@@ -1370,6 +1717,7 @@ - (void)                  webView:(WKWebView *)webView
              NSMutableDictionary<NSString *, id> *event = [self baseEvent];
              [event addEntriesFromDictionary: @{
                  @"url": (request.URL).absoluteString,
@@ -1462,7 +1500,7 @@ index 77abeafb502f717550434a286d2611380949157b..33dfa70f5c710a6452af9ca0808e460a
                  @"navigationType": navigationTypes[@(navigationType)]
              }];
              _onLoadingStart(event);
-@@ -1535,6 +1882,7 @@ - (void)webView:(WKWebView *)webView
+@@ -1535,6 +1883,7 @@ - (void)webView:(WKWebView *)webView
    }
 
    if (_onLoadingFinish) {
@@ -1470,7 +1508,7 @@ index 77abeafb502f717550434a286d2611380949157b..33dfa70f5c710a6452af9ca0808e460a
      _onLoadingFinish([self baseEvent]);
    }
  }
-@@ -1667,8 +2015,9 @@ - (void)setBounces:(BOOL)bounces
+@@ -1667,8 +2016,9 @@ - (void)setBounces:(BOOL)bounces
 
  - (void)setInjectedJavaScript:(NSString *)source {
    _injectedJavaScript = source;
@@ -1481,7 +1519,7 @@ index 77abeafb502f717550434a286d2611380949157b..33dfa70f5c710a6452af9ca0808e460a
                                                                    injectionTime:WKUserScriptInjectionTimeAtDocumentEnd
                                                                 forMainFrameOnly:_injectedJavaScriptForMainFrameOnly];
 
-@@ -1677,6 +2026,11 @@ - (void)setInjectedJavaScript:(NSString *)source {
+@@ -1677,6 +2027,11 @@ - (void)setInjectedJavaScript:(NSString *)source {
    }
  }
 
@@ -1493,7 +1531,7 @@ index 77abeafb502f717550434a286d2611380949157b..33dfa70f5c710a6452af9ca0808e460a
  - (void)setInjectedJavaScriptObject:(NSString *)source
  {
    self.injectedObjectJsonScript = [
-@@ -1706,8 +2060,9 @@ - (void)setEnableApplePay:(BOOL)enableApplePay {
+@@ -1706,8 +2061,9 @@ - (void)setEnableApplePay:(BOOL)enableApplePay {
 
  - (void)setInjectedJavaScriptBeforeContentLoaded:(NSString *)source {
    _injectedJavaScriptBeforeContentLoaded = source;
@@ -1504,7 +1542,7 @@ index 77abeafb502f717550434a286d2611380949157b..33dfa70f5c710a6452af9ca0808e460a
                                                                      injectionTime:WKUserScriptInjectionTimeAtDocumentStart
                                                                   forMainFrameOnly:_injectedJavaScriptBeforeContentLoadedForMainFrameOnly];
 
-@@ -1716,6 +2071,11 @@ - (void)setInjectedJavaScriptBeforeContentLoaded:(NSString *)source {
+@@ -1716,6 +2072,11 @@ - (void)setInjectedJavaScriptBeforeContentLoaded:(NSString *)source {
    }
  }
 
@@ -1539,10 +1577,18 @@ index 1d22028a1c44d18f8bf333265dd6781ff3df4250..98a8ecaa47c470d0b6725da9bd96d140
  RCT_EXPORT_VIEW_PROPERTY(mediaPlaybackRequiresUserAction, BOOL)
  RCT_EXPORT_VIEW_PROPERTY(dataDetectorTypes, WKDataDetectorTypes)
 diff --git a/lib/RNCWebViewNativeComponent.d.ts b/lib/RNCWebViewNativeComponent.d.ts
-index d898feb33b08830382a565b1503f0c3ffebd8bb5..1550510cac52c869d749174cf84987c7284e7d4e 100644
+index d898feb33b08830382a565b1503f0c3ffebd8bb5..fa36235daba17195cb9bfc025f9d7e1d2f67b3e4 100644
 --- a/lib/RNCWebViewNativeComponent.d.ts
 +++ b/lib/RNCWebViewNativeComponent.d.ts
-@@ -188,7 +188,9 @@ export interface NativeProps extends ViewProps {
+@@ -75,6 +75,7 @@ export type ShouldStartLoadRequestEvent = Readonly<{
+     navigationType: 'click' | 'formsubmit' | 'backforward' | 'reload' | 'formresubmit' | 'other';
+     mainDocumentURL?: string;
+     isTopFrame: boolean;
++    sourceDocumentURL: string;
+ }>;
+ type ScrollEvent = Readonly<{
+     contentInset: {
+@@ -188,7 +189,9 @@ export interface NativeProps extends ViewProps {
      cacheEnabled?: boolean;
      incognito?: boolean;
      injectedJavaScript?: string;
@@ -1582,7 +1628,7 @@ index 37344a794b0cffd2e748e04f6827e732a7b4117b..3975335120549d725a1d1e24522f280a
      onLoadProgress?: ((event: WebViewProgressEvent) => void) | undefined;
      onLoadEnd?: ((event: WebViewNavigationEvent | WebViewErrorEvent) => void) | undefined;
 diff --git a/lib/WebViewTypes.d.ts b/lib/WebViewTypes.d.ts
-index 7cbd83521257c1a730cca632a712737253dcddab..f4dec97dfaf0240d9e1b665610480e9dd12ad93b 100644
+index 7cbd83521257c1a730cca632a712737253dcddab..80c87559df58df078f990efed31d8c7c5a421fb3 100644
 --- a/lib/WebViewTypes.d.ts
 +++ b/lib/WebViewTypes.d.ts
 @@ -45,6 +45,7 @@ export interface ContentInsetProp {
@@ -1593,7 +1639,7 @@ index 7cbd83521257c1a730cca632a712737253dcddab..f4dec97dfaf0240d9e1b665610480e9d
      url: string;
      loading: boolean;
      title: string;
-@@ -56,9 +57,15 @@ export interface WebViewNativeProgressEvent extends WebViewNativeEvent {
+@@ -56,11 +57,18 @@ export interface WebViewNativeProgressEvent extends WebViewNativeEvent {
      progress: number;
  }
  export interface WebViewNavigation extends WebViewNativeEvent {
@@ -1608,8 +1654,11 @@ index 7cbd83521257c1a730cca632a712737253dcddab..f4dec97dfaf0240d9e1b665610480e9d
 +}
  export interface ShouldStartLoadRequest extends WebViewNavigation {
      isTopFrame: boolean;
++    sourceDocumentURL: string;
  }
-@@ -90,6 +97,7 @@ export interface WebViewOpenWindow {
+ export interface FileDownload {
+     downloadUrl: string;
+@@ -90,6 +98,7 @@ export interface WebViewOpenWindow {
  export type WebViewEvent = NativeSyntheticEvent<WebViewNativeEvent>;
  export type WebViewProgressEvent = NativeSyntheticEvent<WebViewNativeProgressEvent>;
  export type WebViewNavigationEvent = NativeSyntheticEvent<WebViewNavigation>;
@@ -1617,7 +1666,7 @@ index 7cbd83521257c1a730cca632a712737253dcddab..f4dec97dfaf0240d9e1b665610480e9d
  export type ShouldStartLoadRequestEvent = NativeSyntheticEvent<ShouldStartLoadRequest>;
  export type FileDownloadEvent = NativeSyntheticEvent<FileDownload>;
  export type WebViewMessageEvent = NativeSyntheticEvent<WebViewMessage>;
-@@ -183,7 +191,9 @@ export interface CommonNativeWebViewProps extends ViewProps {
+@@ -183,7 +192,9 @@ export interface CommonNativeWebViewProps extends ViewProps {
      cacheEnabled?: boolean;
      incognito?: boolean;
      injectedJavaScript?: string;
@@ -1627,7 +1676,7 @@ index 7cbd83521257c1a730cca632a712737253dcddab..f4dec97dfaf0240d9e1b665610480e9d
      injectedJavaScriptForMainFrameOnly?: boolean;
      injectedJavaScriptBeforeContentLoadedForMainFrameOnly?: boolean;
      javaScriptCanOpenWindowsAutomatically?: boolean;
-@@ -961,7 +971,7 @@ export interface WebViewSharedProps extends ViewProps {
+@@ -961,7 +972,7 @@ export interface WebViewSharedProps extends ViewProps {
      /**
       * Function that is invoked when the `WebView` starts loading.
       */
@@ -1636,7 +1685,7 @@ index 7cbd83521257c1a730cca632a712737253dcddab..f4dec97dfaf0240d9e1b665610480e9d
      /**
       * Function that is invoked when the `WebView` load fails.
       */
-@@ -997,11 +1007,19 @@ export interface WebViewSharedProps extends ViewProps {
+@@ -997,11 +1008,19 @@ export interface WebViewSharedProps extends ViewProps {
       * when the view loads.
       */
      injectedJavaScript?: string;
@@ -1656,7 +1705,7 @@ index 7cbd83521257c1a730cca632a712737253dcddab..f4dec97dfaf0240d9e1b665610480e9d
      /**
       * If `true` (default; mandatory for Android), loads the `injectedJavaScript` only into the main frame.
       * If `false` (only supported on iOS and macOS), loads it into all frames (e.g. iframes).
-@@ -1066,5 +1084,9 @@ export interface WebViewSharedProps extends ViewProps {
+@@ -1066,5 +1085,9 @@ export interface WebViewSharedProps extends ViewProps {
       * Enables WebView remote debugging using Chrome (Android) or Safari (iOS).
       */
      webviewDebuggingEnabled?: boolean;
@@ -1667,10 +1716,18 @@ index 7cbd83521257c1a730cca632a712737253dcddab..f4dec97dfaf0240d9e1b665610480e9d
  }
  export {};
 diff --git a/src/RNCWebViewNativeComponent.ts b/src/RNCWebViewNativeComponent.ts
-index 682ab39b9136598f62666e4f89a069702e654499..db75f6aada6d755f85b2a5e87191db064b62d646 100644
+index 682ab39b9136598f62666e4f89a069702e654499..d89c40daf944c2a67295f58179b5663078d499f0 100644
 --- a/src/RNCWebViewNativeComponent.ts
 +++ b/src/RNCWebViewNativeComponent.ts
-@@ -256,7 +256,9 @@ export interface NativeProps extends ViewProps {
+@@ -99,6 +99,7 @@ export type ShouldStartLoadRequestEvent = Readonly<{
+     | 'other';
+   mainDocumentURL?: string;
+   isTopFrame: boolean;
++  sourceDocumentURL: string;
+ }>;
+
+ type ScrollEvent = Readonly<{
+@@ -256,7 +257,9 @@ export interface NativeProps extends ViewProps {
    cacheEnabled?: boolean;
    incognito?: boolean;
    injectedJavaScript?: string;
@@ -1681,10 +1738,18 @@ index 682ab39b9136598f62666e4f89a069702e654499..db75f6aada6d755f85b2a5e87191db06
    injectedJavaScriptBeforeContentLoadedForMainFrameOnly?: boolean;
    javaScriptCanOpenWindowsAutomatically?: boolean;
 diff --git a/src/WebViewTypes.ts b/src/WebViewTypes.ts
-index 1bc55cbe5aaa69ee82db0efac18dd97dade63a7b..cc3e507bf91c9da76a37f748ae6b6a76181b1b83 100644
+index 1bc55cbe5aaa69ee82db0efac18dd97dade63a7b..495b6d277b8dbef460144c0b17364cb4e8354fe2 100644
 --- a/src/WebViewTypes.ts
 +++ b/src/WebViewTypes.ts
-@@ -289,7 +289,9 @@ export interface CommonNativeWebViewProps extends ViewProps {
+@@ -100,6 +100,7 @@ export interface WebViewNavigation extends WebViewNativeEvent {
+
+ export interface ShouldStartLoadRequest extends WebViewNavigation {
+   isTopFrame: boolean;
++  sourceDocumentURL: string;
+ }
+
+ export interface FileDownload {
+@@ -289,7 +290,9 @@ export interface CommonNativeWebViewProps extends ViewProps {
    cacheEnabled?: boolean;
    incognito?: boolean;
    injectedJavaScript?: string;
@@ -1694,7 +1759,7 @@ index 1bc55cbe5aaa69ee82db0efac18dd97dade63a7b..cc3e507bf91c9da76a37f748ae6b6a76
    injectedJavaScriptForMainFrameOnly?: boolean;
    injectedJavaScriptBeforeContentLoadedForMainFrameOnly?: boolean;
    javaScriptCanOpenWindowsAutomatically?: boolean;
-@@ -1223,12 +1225,22 @@ export interface WebViewSharedProps extends ViewProps {
+@@ -1223,12 +1226,22 @@ export interface WebViewSharedProps extends ViewProps {
     */
    injectedJavaScript?: string;
 

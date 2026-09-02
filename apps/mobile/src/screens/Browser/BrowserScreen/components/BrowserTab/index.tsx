@@ -785,6 +785,9 @@ export const BrowserTab = ({
                           }
                           return checkShouldStartLoadingWithRequestForDappWebView(
                             nativeEvent,
+                            {
+                              enforceWalletConnectOrigin: true,
+                            },
                           );
                         }}
                         onContentProcessDidTerminate={syntheticEvent => {

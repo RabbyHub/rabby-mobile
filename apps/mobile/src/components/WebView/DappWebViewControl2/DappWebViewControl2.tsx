@@ -373,6 +373,9 @@ const DappWebViewControl2 = ({
               onShouldStartLoadWithRequest={nativeEvent => {
                 return checkShouldStartLoadingWithRequestForDappWebView(
                   nativeEvent,
+                  {
+                    enforceWalletConnectOrigin: true,
+                  },
                 );
               }}
               onError={errorLog}
