@@ -50,14 +50,19 @@ export const getPerpsProTabIndicatorFrame = (
 export const animatePerpsProTabIndicator = (
   position: SharedValue<number>,
   target: number,
+  callback?: (finished?: boolean) => void,
 ) => {
-  position.value = withTiming(target, PERPS_PRO_TAB_INDICATOR_TIMING_CONFIG);
+  'worklet';
+  position.value = callback
+    ? withTiming(target, PERPS_PRO_TAB_INDICATOR_TIMING_CONFIG, callback)
+    : withTiming(target, PERPS_PRO_TAB_INDICATOR_TIMING_CONFIG);
 };
 
 export const snapPerpsProTabIndicator = (
   position: SharedValue<number>,
   target: number,
 ) => {
+  'worklet';
   cancelAnimation(position);
   position.value = target;
 };

@@ -240,6 +240,8 @@ export const PerpsProScene: React.FC<{
   const [previewInfoTab, setPreviewInfoTab] = useState<PerpsProInfoTab | null>(
     null,
   );
+  const [committedInfoTab, setCommittedInfoTab] =
+    useState<PerpsProInfoTab | null>(null);
   const infoTabRequestFrameRef = useRef<number | null>(null);
   const info = usePerpsProInfoPanel(
     scene.currentMarket?.canonicalCoin ?? '',
@@ -248,6 +250,29 @@ export const PerpsProScene: React.FC<{
   const infoTabIndicatorPosition = useSharedValue(
     Math.max(0, PERPS_PRO_INFO_TABS.indexOf(info.activeInfoTab ?? 'positions')),
   );
+  const infoTabHighlightedPosition = useSharedValue(
+    Math.max(0, PERPS_PRO_INFO_TABS.indexOf(info.activeInfoTab ?? 'positions')),
+  );
+  const infoTabIndicatorTransitionActive = useSharedValue(false);
+  const lastNativeInfoTabRef = useRef<PerpsProInfoTab | null>(
+    info.activeInfoTab,
+  );
+  const infoTabWriteGenerationRef = useRef(0);
+  const latestInfoTabWriteRef = useRef<{
+    generation: number;
+    settled: boolean;
+    tab: PerpsProInfoTab;
+  } | null>(null);
+  const infoTabWriteMountedRef = useRef(true);
+  const [infoTabWriteResolutionRevision, setInfoTabWriteResolutionRevision] =
+    useState(0);
+  useEffect(() => {
+    infoTabWriteMountedRef.current = true;
+    return () => {
+      infoTabWriteMountedRef.current = false;
+      latestInfoTabWriteRef.current = null;
+    };
+  }, []);
   usePerpsFundingHistoryJournal({ enabled: scene.fundingHistoryEnabled });
   const positionActions = usePerpsProPositionActions({
     accountIdentity: info.accountIdentity,
@@ -1059,8 +1084,9 @@ export const PerpsProScene: React.FC<{
     infoTabsNaturalAnchor - PERPS_PRO_MARKET_BAR_HEIGHT,
     0,
   );
-  const displayedInfoTab =
-    requestedInfoTab ?? previewInfoTab ?? info.activeInfoTab;
+  const settledInfoTab =
+    info.activeInfoTab == null ? null : committedInfoTab ?? info.activeInfoTab;
+  const displayedInfoTab = requestedInfoTab ?? previewInfoTab ?? settledInfoTab;
   // Both native pagers can select or reattach a page before a conditionally
   // prepared FlatList is ready. Keep all three list refs stable so preparePages
   // can apply the shared offset before the page becomes active.
@@ -1084,8 +1110,9 @@ export const PerpsProScene: React.FC<{
         return;
       }
       cancelInfoTabRequest();
-      if (tab === info.activeInfoTab) {
+      if (tab === settledInfoTab) {
         setRequestedInfoTab(null);
+        infoPagerRef.current?.returnToPage(tab);
         return;
       }
       setRequestedInfoTab(tab);
@@ -1094,24 +1121,88 @@ export const PerpsProScene: React.FC<{
         infoPagerRef.current?.setPage(tab);
       });
     },
-    [cancelInfoTabRequest, displayedInfoTab, info.activeInfoTab],
+    [cancelInfoTabRequest, displayedInfoTab, settledInfoTab],
   );
   const commitInfoTab = useCallback(
     (tab: PerpsProInfoTab) => {
       cancelInfoTabRequest();
       setRequestedInfoTab(null);
-      setPreviewInfoTab(tab);
-      if (tab !== info.activeInfoTab) {
-        setActiveInfoTab(tab);
+      setPreviewInfoTab(null);
+      setCommittedInfoTab(tab);
+      lastNativeInfoTabRef.current = tab;
+      const generation = infoTabWriteGenerationRef.current + 1;
+      infoTabWriteGenerationRef.current = generation;
+      const write = { generation, settled: false, tab };
+      latestInfoTabWriteRef.current = write;
+      const settleWrite = () => {
+        if (
+          !infoTabWriteMountedRef.current ||
+          latestInfoTabWriteRef.current?.generation !== generation
+        ) {
+          return;
+        }
+        write.settled = true;
+        setInfoTabWriteResolutionRevision(revision => revision + 1);
+      };
+      let persistence: unknown;
+      try {
+        persistence = setActiveInfoTab(tab);
+      } catch {
+        settleWrite();
+        return;
       }
+      if (
+        persistence &&
+        (typeof persistence === 'object' ||
+          typeof persistence === 'function') &&
+        typeof (persistence as PromiseLike<unknown>).then === 'function'
+      ) {
+        Promise.resolve(persistence).then(settleWrite, settleWrite);
+        return;
+      }
+      settleWrite();
     },
-    [cancelInfoTabRequest, info.activeInfoTab, setActiveInfoTab],
+    [cancelInfoTabRequest, setActiveInfoTab],
   );
   useEffect(() => {
-    if (previewInfoTab === info.activeInfoTab) {
+    const rawActiveInfoTab = info.activeInfoTab;
+    if (rawActiveInfoTab == null) {
+      latestInfoTabWriteRef.current = null;
+      lastNativeInfoTabRef.current = null;
+      cancelInfoTabRequest();
+      setRequestedInfoTab(null);
       setPreviewInfoTab(null);
+      setCommittedInfoTab(null);
+      return;
     }
-  }, [info.activeInfoTab, previewInfoTab]);
+    const latestWrite = latestInfoTabWriteRef.current;
+    if (latestWrite && !latestWrite.settled) {
+      return;
+    }
+    if (latestWrite) {
+      latestInfoTabWriteRef.current = null;
+      if (rawActiveInfoTab === lastNativeInfoTabRef.current) {
+        setCommittedInfoTab(null);
+        return;
+      }
+    } else if (rawActiveInfoTab === lastNativeInfoTabRef.current) {
+      if (committedInfoTab === rawActiveInfoTab) {
+        setCommittedInfoTab(null);
+      }
+      return;
+    }
+    lastNativeInfoTabRef.current = rawActiveInfoTab;
+    cancelInfoTabRequest();
+    setRequestedInfoTab(null);
+    setPreviewInfoTab(null);
+    setCommittedInfoTab(null);
+    infoPagerRef.current?.syncPageWithoutAnimation?.(rawActiveInfoTab);
+  }, [
+    cancelInfoTabRequest,
+    committedInfoTab,
+    info.activeInfoTab,
+    infoTabWriteResolutionRevision,
+  ]);
   const beginInfoPageDrag = useCallback(() => {
     cancelInfoTabRequest();
     setRequestedInfoTab(null);
@@ -1163,15 +1254,17 @@ export const PerpsProScene: React.FC<{
     <PerpsProFieldExplanationProvider>
       <GestureDetector gesture={sceneScrollGesture}>
         <View collapsable={false} style={styles.container}>
-          {info.activeInfoTab ? (
+          {settledInfoTab ? (
             <PerpsProInfoPager
-              activeTab={info.activeInfoTab}
+              activeTab={settledInfoTab}
               authorizeNativePageGestures={Platform.OS === 'android'}
               contentContainerStyle={scrollContentStyles}
               data={rowsByTab}
               getActiveScrollOffset={headerCollapse.getScrollOffset}
+              highlightedTabPosition={infoTabHighlightedPosition}
               keepAllTabsMounted={keepAllInfoTabListsMounted}
               indicatorPosition={infoTabIndicatorPosition}
+              indicatorTransitionActive={infoTabIndicatorTransitionActive}
               nativeVerticalScrollEnabled={Platform.OS !== 'android'}
               offscreenPageLimit={infoPagerOffscreenPageLimit}
               onActivateOffset={headerCollapse.syncScrollOffset}
@@ -1236,16 +1329,18 @@ export const PerpsProScene: React.FC<{
                   {marketBarContent}
                 </SceneOverlayView>
               ) : null}
-              {info.activeInfoTab && displayedInfoTab ? (
+              {settledInfoTab && displayedInfoTab ? (
                 <SceneOverlayView
                   style={[styles.infoTabsOverlay, infoTabsOverlayMotionStyle]}
                   testID="perps-pro-info-tabs-overlay">
                   <PerpsProInfoTabs
                     activeTab={displayedInfoTab}
+                    highlightedTabPosition={infoTabHighlightedPosition}
                     historyEnabled={
                       historyEnabled && info.accountState !== 'noAccount'
                     }
                     indicatorPosition={infoTabIndicatorPosition}
+                    indicatorTransitionActive={infoTabIndicatorTransitionActive}
                     onChange={requestInfoTab}
                     onHistoryPress={openHistory}
                     openOrdersCount={info.allOpenOrdersCount}

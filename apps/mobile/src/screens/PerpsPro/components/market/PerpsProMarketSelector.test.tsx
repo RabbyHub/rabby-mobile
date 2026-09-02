@@ -27,7 +27,7 @@ jest.mock('react-native-reanimated', () => {
   const ReactNative = require('react-native');
   return {
     __esModule: true,
-    default: { View: ReactNative.View },
+    default: { Text: ReactNative.Text, View: ReactNative.View },
     Easing: { bezier: jest.fn(() => jest.fn()) },
     ReduceMotion: { System: 'system' },
     cancelAnimation: jest.fn(),
@@ -687,6 +687,55 @@ describe('PerpsProMarketSelector', () => {
     expect(
       screen.getByTestId('perps-pro-market-tab-category-c').props
         .accessibilityState,
+    ).toEqual({ selected: true });
+  });
+
+  it('keeps the latest reverse command when old pager callbacks arrive first', () => {
+    const queuedFrames = new Map<number, FrameRequestCallback>();
+    let nextFrameId = 0;
+    (
+      global.requestAnimationFrame as jest.MockedFunction<
+        typeof requestAnimationFrame
+      >
+    ).mockImplementation(callback => {
+      nextFrameId += 1;
+      queuedFrames.set(nextFrameId, callback);
+      return nextFrameId;
+    });
+    jest.spyOn(global, 'cancelAnimationFrame').mockImplementation(frameId => {
+      queuedFrames.delete(frameId);
+    });
+    __setFavoriteMarkets(['BTC']);
+    render(
+      <PerpsProMarketSelector currentMarketKey={null} onSelect={jest.fn()} />,
+    );
+    const flushQueuedFrames = () => {
+      act(() => {
+        const callbacks = [...queuedFrames.values()];
+        queuedFrames.clear();
+        callbacks.forEach(callback => callback(0));
+      });
+    };
+    flushQueuedFrames();
+
+    fireEvent.press(screen.getByTestId('perps-pro-market-tab-favorites'));
+    flushQueuedFrames();
+    expect(mockPagerSetPage.mock.calls).toEqual([[0]]);
+
+    fireEvent.press(screen.getByTestId('perps-pro-market-tab-all'));
+    const pager = screen.getByTestId('perps-pro-market-pager');
+    fireEvent(pager, 'pagePreview', 0);
+    fireEvent(pager, 'pageSelected', 0);
+
+    expect(
+      screen.getByTestId('perps-pro-market-tab-all').props.accessibilityState,
+    ).toEqual({ selected: true });
+    flushQueuedFrames();
+
+    expect(mockPagerSetPage.mock.calls).toEqual([[0], [1]]);
+    expect(mockPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
+    expect(
+      screen.getByTestId('perps-pro-market-tab-all').props.accessibilityState,
     ).toEqual({ selected: true });
   });
 

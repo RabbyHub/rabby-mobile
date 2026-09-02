@@ -1,4 +1,3 @@
-import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, {
@@ -10,11 +9,18 @@ import React, {
 } from 'react';
 import {
   Pressable,
+  Text as NativeText,
+  View,
   type LayoutChangeEvent,
   type LayoutRectangle,
+  type StyleProp,
+  type TextStyle,
 } from 'react-native';
 import { ScrollView as GestureHandlerScrollView } from 'react-native-gesture-handler';
-import type { SharedValue } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  type SharedValue,
+} from 'react-native-reanimated';
 
 import type { PerpsProMarketTab } from '../../model/market';
 import {
@@ -33,6 +39,80 @@ type MarketTabScrollPosition = Readonly<{
   tab: PerpsProMarketTab;
   x: number;
 }>;
+
+const PerpsProMarketTabLabel: React.FC<{
+  activeColor: string;
+  index: number;
+  inactiveColor: string;
+  indicatorPosition: SharedValue<number>;
+  label: string;
+  style: StyleProp<TextStyle>;
+  tabCount: number;
+}> = React.memo(
+  ({
+    activeColor,
+    index,
+    inactiveColor,
+    indicatorPosition,
+    label,
+    style,
+    tabCount,
+  }) => {
+    const animatedStyle = useAnimatedStyle(() => {
+      // The label and underline intentionally share one UI-thread visual
+      // position; activeTab remains the business/accessibility selection.
+      const maximumIndex = Math.max(0, tabCount - 1);
+      const rawPosition = Number.isFinite(indicatorPosition.value)
+        ? indicatorPosition.value
+        : 0;
+      const visualIndex = Math.round(
+        Math.max(0, Math.min(maximumIndex, rawPosition)),
+      );
+      const active = visualIndex === index;
+
+      return {
+        color: active ? activeColor : inactiveColor,
+        fontWeight: active ? '500' : '400',
+      };
+    }, [activeColor, inactiveColor, index, indicatorPosition, tabCount]);
+
+    return (
+      <View style={labelStyles.container}>
+        <NativeText
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          numberOfLines={1}
+          style={[style, labelStyles.measureText]}>
+          {label}
+        </NativeText>
+        <Animated.Text
+          numberOfLines={1}
+          style={[style, labelStyles.visibleText, animatedStyle]}>
+          {label}
+        </Animated.Text>
+      </View>
+    );
+  },
+);
+
+PerpsProMarketTabLabel.displayName = 'PerpsProMarketTabLabel';
+
+const labelStyles = {
+  container: {
+    position: 'relative' as const,
+  },
+  measureText: {
+    fontWeight: '500' as const,
+    opacity: 0,
+  },
+  visibleText: {
+    left: 0,
+    position: 'absolute' as const,
+    right: 0,
+    textAlign: 'center' as const,
+    top: 0,
+  },
+};
 
 export const getPerpsProMarketTabScrollOffset = ({
   contentWidth,
@@ -82,7 +162,7 @@ export const PerpsProMarketTabs: React.FC<{
   onChange: (tab: PerpsProMarketTab) => void;
   tabs: readonly MarketTabItem[];
 }> = React.memo(({ activeTab, indicatorPosition, onChange, tabs }) => {
-  const { styles } = useTheme2024({ getStyle });
+  const { colors2024, styles } = useTheme2024({ getStyle });
   const scrollRef = useRef<GestureHandlerScrollView>(null);
   const lastScrollPositionRef = useRef<MarketTabScrollPosition | null>(null);
   const [tabFrames, setTabFrames] = useState<MarketTabFrames>({});
@@ -152,7 +232,7 @@ export const PerpsProMarketTabs: React.FC<{
       showsHorizontalScrollIndicator={false}
       style={styles.scroll}
       testID="perps-pro-market-tabs">
-      {tabs.map(tab => {
+      {tabs.map((tab, index) => {
         const active = tab.id === activeTab;
         return (
           <Pressable
@@ -165,9 +245,15 @@ export const PerpsProMarketTabs: React.FC<{
             onPress={() => onChange(tab.id)}
             style={styles.tab}
             testID={`perps-pro-market-tab-${tab.id}`}>
-            <Text style={active ? styles.activeText : styles.text}>
-              {tab.label}
-            </Text>
+            <PerpsProMarketTabLabel
+              activeColor={colors2024['neutral-title-1']}
+              index={index}
+              inactiveColor={colors2024['neutral-secondary']}
+              indicatorPosition={indicatorPosition}
+              label={tab.label}
+              style={styles.text}
+              tabCount={tabs.length}
+            />
           </Pressable>
         );
       })}
@@ -206,13 +292,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro',
     fontSize: 14,
     fontWeight: '400',
-    lineHeight: 18,
-  },
-  activeText: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
-    fontSize: 14,
-    fontWeight: '500',
     lineHeight: 18,
   },
   indicator: {

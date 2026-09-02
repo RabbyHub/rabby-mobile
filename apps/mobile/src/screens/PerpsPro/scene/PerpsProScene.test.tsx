@@ -77,11 +77,15 @@ jest.mock('react-native-pager-view', () => {
 jest.mock('react-native-reanimated', () => {
   const ReactModule = require('react');
   const ReactNative = require('react-native');
+  const useSharedValue = (value: unknown) =>
+    ReactModule.useRef({ value }).current;
   return {
     __esModule: true,
     default: {
       createAnimatedComponent: (Component: React.ComponentType) => Component,
       ScrollView: ReactNative.ScrollView,
+      Text: ReactNative.Text,
+      useSharedValue,
       View: ReactNative.View,
     },
     cancelAnimation: jest.fn(),
@@ -109,7 +113,7 @@ jest.mock('react-native-reanimated', () => {
           eventName: eventNames?.[0] ?? 'onPageScroll',
         }),
     useScrollViewOffset: (_ref: unknown, offset: unknown) => offset,
-    useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
+    useSharedValue,
     withDecay: jest.fn(({ velocity }: { velocity: number }) => velocity),
     withTiming: (target: number) => target,
   };
@@ -753,6 +757,16 @@ const createInfoState = (overrides: Record<string, unknown> = {}) => {
   };
 };
 
+const createDeferred = () => {
+  let resolve!: () => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<void>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, reject, resolve };
+};
+
 const createPositionActionsState = (
   overrides: Record<string, unknown> = {},
 ) => ({
@@ -1304,6 +1318,152 @@ describe('PerpsProScene market loading states', () => {
     });
     expect(setActiveInfoTab).toHaveBeenCalledWith('openOrders');
     animationFrame.mockRestore();
+  });
+
+  it('keeps the settled info tab when a rapid reverse press supersedes an in-flight page', () => {
+    const setActiveInfoTab = jest.fn(() => new Promise<void>(() => undefined));
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ setActiveInfoTab }),
+    );
+    const animationFrame = jest
+      .spyOn(global, 'requestAnimationFrame')
+      .mockImplementation(callback => {
+        callback(0);
+        return 1;
+      });
+
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    fireEvent.press(screen.getByTestId('perps-pro-info-tab-openOrders'));
+    expect(mockInfoPagerSetPage).toHaveBeenLastCalledWith(1);
+
+    fireEvent.press(screen.getByTestId('perps-pro-info-tab-account'));
+    expect(mockInfoPagerSetPageWithoutAnimation).toHaveBeenLastCalledWith(2);
+
+    const pager = screen.getByTestId('perps-pro-info-pager');
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    expect(mockInfoPagerSetPage).toHaveBeenLastCalledWith(2);
+    expect(setActiveInfoTab).not.toHaveBeenCalled();
+
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 2 } });
+    expect(setActiveInfoTab).not.toHaveBeenCalled();
+    expect(
+      screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
+    ).toEqual({ selected: true });
+
+    animationFrame.mockRestore();
+  });
+
+  it('persists both selections when native pages reverse before React rerenders', () => {
+    const setActiveInfoTab = jest.fn(() => new Promise<void>(() => undefined));
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ setActiveInfoTab }),
+    );
+
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 2 } });
+
+    expect(setActiveInfoTab.mock.calls).toEqual([['openOrders'], ['account']]);
+    expect(
+      screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
+    ).toEqual({ selected: true });
+  });
+
+  it('ignores stale preference echoes until the latest native tab write settles', async () => {
+    const openOrdersWrite = createDeferred();
+    const accountWrite = createDeferred();
+    const setActiveInfoTab = jest
+      .fn()
+      .mockReturnValueOnce(openOrdersWrite.promise)
+      .mockReturnValueOnce(accountWrite.promise);
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ activeInfoTab: 'account', setActiveInfoTab }),
+    );
+    const view = render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 2 } });
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ activeInfoTab: 'openOrders', setActiveInfoTab }),
+    );
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    expect(
+      screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
+    ).toEqual({ selected: true });
+    expect(mockInfoPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
+
+    await act(async () => {
+      openOrdersWrite.resolve();
+      await openOrdersWrite.promise;
+    });
+    expect(
+      screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
+    ).toEqual({ selected: true });
+
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ activeInfoTab: 'account', setActiveInfoTab }),
+    );
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    await act(async () => {
+      accountWrite.resolve();
+      await accountWrite.promise;
+    });
+
+    expect(mockInfoPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
+    expect(setActiveInfoTab.mock.calls).toEqual([['openOrders'], ['account']]);
+  });
+
+  it('realigns the native pager only after the latest preference write rolls back', async () => {
+    const write = createDeferred();
+    const setActiveInfoTab = jest.fn(() => write.promise);
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ activeInfoTab: 'account', setActiveInfoTab }),
+    );
+    const view = render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ activeInfoTab: 'account', setActiveInfoTab }),
+    );
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    expect(
+      screen.getByTestId('perps-pro-info-tab-openOrders').props
+        .accessibilityState,
+    ).toEqual({ selected: true });
+    expect(mockInfoPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
+
+    await act(async () => {
+      write.resolve();
+      await write.promise;
+    });
+
+    expect(mockInfoPagerSetPageWithoutAnimation).toHaveBeenCalledWith(2);
+    expect(
+      screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
+    ).toEqual({ selected: true });
   });
 
   it('previews the top info tab during a drag without persisting it', () => {

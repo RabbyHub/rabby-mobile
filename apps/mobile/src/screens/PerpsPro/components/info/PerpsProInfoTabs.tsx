@@ -9,11 +9,20 @@ import {
   Animated,
   Easing,
   Pressable,
+  Text as NativeText,
   View,
   type LayoutChangeEvent,
+  type StyleProp,
+  type TextStyle,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import type { SharedValue } from 'react-native-reanimated';
+import Reanimated, {
+  runOnJS,
+  useAnimatedReaction,
+  useAnimatedStyle,
+  useSharedValue,
+  type SharedValue,
+} from 'react-native-reanimated';
 
 import {
   PerpsProTabIndicator,
@@ -24,14 +33,74 @@ import { PERPS_PRO_INFO_TABS } from './perpsProInfoTabOrder';
 
 interface PerpsProInfoTabsProps {
   activeTab: PerpsProInfoTab;
+  highlightedTabPosition?: SharedValue<number>;
   historyEnabled: boolean;
   indicatorPosition: SharedValue<number>;
+  indicatorTransitionActive?: SharedValue<boolean>;
   openOrdersCount: number;
   onHistoryPress: (hasPendingFunding: boolean) => void;
   pendingFundingCount: number;
   positionsCount: number;
   onChange: (tab: PerpsProInfoTab) => void;
 }
+
+const PerpsProInfoTabLabel: React.FC<{
+  activeColor: string;
+  highlightedTabPosition: SharedValue<number>;
+  index: number;
+  inactiveColor: string;
+  label: string;
+  style: StyleProp<TextStyle>;
+}> = ({
+  activeColor,
+  highlightedTabPosition,
+  index,
+  inactiveColor,
+  label,
+  style,
+}) => {
+  const animatedStyle = useAnimatedStyle(() => {
+    const active = Math.abs(highlightedTabPosition.value - index) < 0.5;
+    return {
+      color: active ? activeColor : inactiveColor,
+      fontWeight: active ? '500' : '400',
+    };
+  }, [activeColor, highlightedTabPosition, inactiveColor, index]);
+
+  return (
+    <View style={labelStyles.container}>
+      <NativeText
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        numberOfLines={1}
+        style={[style, labelStyles.measureText]}>
+        {label}
+      </NativeText>
+      <Reanimated.Text
+        numberOfLines={1}
+        style={[style, labelStyles.visibleText, animatedStyle]}>
+        {label}
+      </Reanimated.Text>
+    </View>
+  );
+};
+
+const labelStyles = {
+  container: {
+    position: 'relative' as const,
+  },
+  measureText: {
+    fontWeight: '500' as const,
+    opacity: 0,
+  },
+  visibleText: {
+    left: 0,
+    position: 'absolute' as const,
+    right: 0,
+    textAlign: 'center' as const,
+    top: 0,
+  },
+};
 
 const PerpsProPendingHistoryIcon: React.FC<{ count: number }> = ({ count }) => {
   const { styles } = useTheme2024({ getStyle });
@@ -71,8 +140,10 @@ const PerpsProPendingHistoryIcon: React.FC<{ count: number }> = ({ count }) => {
 export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
   ({
     activeTab,
+    highlightedTabPosition: providedHighlightedTabPosition,
     historyEnabled,
     indicatorPosition,
+    indicatorTransitionActive: providedIndicatorTransitionActive,
     onChange,
     onHistoryPress,
     openOrdersCount,
@@ -81,22 +152,65 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
   }) => {
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
+    const highlightedTabPosition =
+      providedHighlightedTabPosition ?? indicatorPosition;
+    const fallbackIndicatorTransitionActive = useSharedValue(false);
+    const indicatorTransitionActive =
+      providedIndicatorTransitionActive ?? fallbackIndicatorTransitionActive;
     const [tabFrames, setTabFrames] = React.useState<
       Partial<Record<PerpsProInfoTab, PerpsProTabIndicatorLayout>>
     >({});
+    const tabFramesRef = React.useRef(tabFrames);
+    const pendingTabFramesRef = React.useRef<
+      Partial<Record<PerpsProInfoTab, PerpsProTabIndicatorLayout>>
+    >({});
+
+    const commitTabFrame = React.useCallback(
+      (tab: PerpsProInfoTab, frame: PerpsProTabIndicatorLayout) => {
+        const previous = tabFramesRef.current[tab];
+        if (previous?.width === frame.width && previous.x === frame.x) {
+          return;
+        }
+        const next = { ...tabFramesRef.current, [tab]: frame };
+        tabFramesRef.current = next;
+        setTabFrames(next);
+      },
+      [],
+    );
 
     const recordTabFrame = React.useCallback(
       (tab: PerpsProInfoTab, event: LayoutChangeEvent) => {
         const { width, x } = event.nativeEvent.layout;
-        setTabFrames(current => {
-          const previous = current[tab];
-          if (previous?.width === width && previous.x === x) {
-            return current;
-          }
-          return { ...current, [tab]: { width, x } };
-        });
+        const frame = { width, x };
+        if (indicatorTransitionActive.value && tabFramesRef.current[tab]) {
+          pendingTabFramesRef.current[tab] = frame;
+          return;
+        }
+        commitTabFrame(tab, frame);
       },
-      [],
+      [commitTabFrame, indicatorTransitionActive],
+    );
+    const flushPendingTabFrames = React.useCallback(() => {
+      if (indicatorTransitionActive.value) {
+        return;
+      }
+      const pendingFrames = pendingTabFramesRef.current;
+      if (Object.keys(pendingFrames).length === 0) {
+        return;
+      }
+      pendingTabFramesRef.current = {};
+      const next = { ...tabFramesRef.current, ...pendingFrames };
+      tabFramesRef.current = next;
+      setTabFrames(next);
+    }, [indicatorTransitionActive]);
+    useAnimatedReaction(
+      () => indicatorTransitionActive.value,
+      (active, previousActive) => {
+        if (previousActive && !active) {
+          runOnJS(flushPendingTabFrames)();
+        }
+      },
+      [flushPendingTabFrames, indicatorTransitionActive],
     );
     const indicatorLayouts = React.useMemo(() => {
       const layouts: PerpsProTabIndicatorLayout[] = [];
@@ -120,7 +234,7 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
 
     return (
       <View accessibilityRole="tablist" style={styles.container}>
-        {PERPS_PRO_INFO_TABS.map(tab => {
+        {PERPS_PRO_INFO_TABS.map((tab, index) => {
           const selected = tab === activeTab;
           return (
             <Pressable
@@ -131,11 +245,14 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
               onPress={() => onChange(tab)}
               style={styles.tab}
               testID={`perps-pro-info-tab-${tab}`}>
-              <Text
-                numberOfLines={1}
-                style={selected ? styles.activeText : styles.text}>
-                {labels[tab]}
-              </Text>
+              <PerpsProInfoTabLabel
+                activeColor={colors2024['neutral-title-1']}
+                highlightedTabPosition={highlightedTabPosition}
+                inactiveColor={colors2024['neutral-secondary']}
+                index={index}
+                label={labels[tab]}
+                style={styles.text}
+              />
             </Pressable>
           );
         })}
@@ -198,13 +315,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro',
     fontSize: 14,
     fontWeight: '400',
-    lineHeight: 18,
-  },
-  activeText: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
-    fontSize: 14,
-    fontWeight: '500',
     lineHeight: 18,
   },
   indicator: {

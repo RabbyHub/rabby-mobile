@@ -3,6 +3,10 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
 
+let mockAnimatedReaction:
+  | ((active: boolean, previousActive: boolean | null) => void)
+  | null = null;
+
 jest.mock('@/assets2024/icons/perps/IconHistoryCC.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -48,10 +52,17 @@ jest.mock('react-native-reanimated', () => {
   const ReactNative = require('react-native');
   return {
     __esModule: true,
-    default: { View: ReactNative.View },
+    default: { Text: ReactNative.Text, View: ReactNative.View },
     cancelAnimation: jest.fn(),
     Easing: { bezier: jest.fn(() => 'ease-out') },
     ReduceMotion: { System: 'system' },
+    runOnJS: (callback: (...args: unknown[]) => unknown) => callback,
+    useAnimatedReaction: (
+      _prepare: () => boolean,
+      reaction: (active: boolean, previousActive: boolean | null) => void,
+    ) => {
+      mockAnimatedReaction = reaction;
+    },
     useAnimatedStyle: (factory: () => object) => factory(),
     useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
     withTiming: (target: number) => target,
@@ -61,10 +72,17 @@ jest.mock('react-native-reanimated', () => {
 import { PerpsProInfoTabs } from './PerpsProInfoTabs';
 
 const indicatorPosition = { value: 0 } as SharedValue<number>;
+const highlightedTabPosition = { value: 0 } as SharedValue<number>;
+const indicatorTransitionActive = {
+  value: false,
+} as SharedValue<boolean>;
 
 describe('PerpsProInfoTabs', () => {
   beforeEach(() => {
     indicatorPosition.value = 0;
+    highlightedTabPosition.value = 0;
+    indicatorTransitionActive.value = false;
+    mockAnimatedReaction = null;
   });
 
   it('keeps counted tab labels on one line', () => {
@@ -72,7 +90,9 @@ describe('PerpsProInfoTabs', () => {
       <PerpsProInfoTabs
         activeTab="openOrders"
         historyEnabled
+        highlightedTabPosition={highlightedTabPosition}
         indicatorPosition={indicatorPosition}
+        indicatorTransitionActive={indicatorTransitionActive}
         onChange={jest.fn()}
         onHistoryPress={jest.fn()}
         openOrdersCount={123}
@@ -90,13 +110,43 @@ describe('PerpsProInfoTabs', () => {
     ]);
   });
 
+  it('derives visible label emphasis from the same UI position as the indicator', () => {
+    highlightedTabPosition.value = 1;
+    render(
+      <PerpsProInfoTabs
+        activeTab="account"
+        historyEnabled
+        highlightedTabPosition={highlightedTabPosition}
+        indicatorPosition={indicatorPosition}
+        indicatorTransitionActive={indicatorTransitionActive}
+        onChange={jest.fn()}
+        onHistoryPress={jest.fn()}
+        openOrdersCount={0}
+        pendingFundingCount={0}
+        positionsCount={0}
+      />,
+    );
+
+    expect(
+      StyleSheet.flatten(screen.getByText('Open Orders (0)').props.style),
+    ).toMatchObject({ color: 'neutral-title-1', fontWeight: '500' });
+    expect(
+      StyleSheet.flatten(screen.getByText('Account').props.style),
+    ).toMatchObject({ color: 'neutral-secondary', fontWeight: '400' });
+    expect(
+      screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
+    ).toEqual({ selected: true });
+  });
+
   it('only dispatches the History action when the SDK capability is enabled', () => {
     const onHistoryPress = jest.fn();
     const view = render(
       <PerpsProInfoTabs
         activeTab="account"
         historyEnabled={false}
+        highlightedTabPosition={highlightedTabPosition}
         indicatorPosition={indicatorPosition}
+        indicatorTransitionActive={indicatorTransitionActive}
         onChange={jest.fn()}
         onHistoryPress={onHistoryPress}
         openOrdersCount={0}
@@ -111,7 +161,9 @@ describe('PerpsProInfoTabs', () => {
       <PerpsProInfoTabs
         activeTab="account"
         historyEnabled
+        highlightedTabPosition={highlightedTabPosition}
         indicatorPosition={indicatorPosition}
+        indicatorTransitionActive={indicatorTransitionActive}
         onChange={jest.fn()}
         onHistoryPress={onHistoryPress}
         openOrdersCount={0}
@@ -129,7 +181,9 @@ describe('PerpsProInfoTabs', () => {
       <PerpsProInfoTabs
         activeTab="account"
         historyEnabled
+        highlightedTabPosition={highlightedTabPosition}
         indicatorPosition={indicatorPosition}
+        indicatorTransitionActive={indicatorTransitionActive}
         onChange={jest.fn()}
         onHistoryPress={jest.fn()}
         openOrdersCount={0}
@@ -144,7 +198,9 @@ describe('PerpsProInfoTabs', () => {
       <PerpsProInfoTabs
         activeTab="account"
         historyEnabled
+        highlightedTabPosition={highlightedTabPosition}
         indicatorPosition={indicatorPosition}
+        indicatorTransitionActive={indicatorTransitionActive}
         onChange={jest.fn()}
         onHistoryPress={jest.fn()}
         openOrdersCount={0}
@@ -164,7 +220,9 @@ describe('PerpsProInfoTabs', () => {
       <PerpsProInfoTabs
         activeTab="account"
         historyEnabled
+        highlightedTabPosition={highlightedTabPosition}
         indicatorPosition={indicatorPosition}
+        indicatorTransitionActive={indicatorTransitionActive}
         onChange={jest.fn()}
         onHistoryPress={onHistoryPress}
         openOrdersCount={0}
@@ -183,7 +241,9 @@ describe('PerpsProInfoTabs', () => {
       <PerpsProInfoTabs
         activeTab="positions"
         historyEnabled
+        highlightedTabPosition={highlightedTabPosition}
         indicatorPosition={indicatorPosition}
+        indicatorTransitionActive={indicatorTransitionActive}
         onChange={jest.fn()}
         onHistoryPress={jest.fn()}
         openOrdersCount={0}
@@ -216,6 +276,92 @@ describe('PerpsProInfoTabs', () => {
       opacity: 1,
       transform: [{ translateX: 61 }],
       width: 90,
+    });
+  });
+
+  it('uses stable active typography for localized label measurement', () => {
+    render(
+      <PerpsProInfoTabs
+        activeTab="account"
+        historyEnabled
+        highlightedTabPosition={highlightedTabPosition}
+        indicatorPosition={indicatorPosition}
+        indicatorTransitionActive={indicatorTransitionActive}
+        onChange={jest.fn()}
+        onHistoryPress={jest.fn()}
+        openOrdersCount={0}
+        pendingFundingCount={0}
+        positionsCount={0}
+      />,
+    );
+
+    const accountLabels = screen.getAllByText('Account', {
+      includeHiddenElements: true,
+    });
+    expect(accountLabels).toHaveLength(2);
+    expect(
+      accountLabels.map(label => StyleSheet.flatten(label.props.style)),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ fontWeight: '500', opacity: 0 }),
+        expect.objectContaining({ position: 'absolute' }),
+      ]),
+    );
+  });
+
+  it('defers localized frame changes until the indicator transition finishes', () => {
+    indicatorPosition.value = 2;
+    render(
+      <PerpsProInfoTabs
+        activeTab="account"
+        historyEnabled
+        highlightedTabPosition={highlightedTabPosition}
+        indicatorPosition={indicatorPosition}
+        indicatorTransitionActive={indicatorTransitionActive}
+        onChange={jest.fn()}
+        onHistoryPress={jest.fn()}
+        openOrdersCount={0}
+        pendingFundingCount={0}
+        positionsCount={0}
+      />,
+    );
+    const accountTab = screen.getByTestId('perps-pro-info-tab-account');
+
+    act(() => {
+      fireEvent(screen.getByTestId('perps-pro-info-tab-positions'), 'layout', {
+        nativeEvent: { layout: { height: 44, width: 80, x: 15, y: 0 } },
+      });
+      fireEvent(screen.getByTestId('perps-pro-info-tab-openOrders'), 'layout', {
+        nativeEvent: { layout: { height: 44, width: 100, x: 107, y: 0 } },
+      });
+      fireEvent(accountTab, 'layout', {
+        nativeEvent: { layout: { height: 44, width: 70, x: 219, y: 0 } },
+      });
+    });
+    const indicator = screen.getByTestId('perps-pro-info-tab-indicator', {
+      includeHiddenElements: true,
+    });
+    expect(StyleSheet.flatten(indicator.props.style)).toMatchObject({
+      transform: [{ translateX: 219 }],
+      width: 70,
+    });
+
+    indicatorTransitionActive.value = true;
+    act(() => {
+      fireEvent(accountTab, 'layout', {
+        nativeEvent: { layout: { height: 44, width: 180, x: 219, y: 0 } },
+      });
+    });
+    expect(StyleSheet.flatten(indicator.props.style)).toMatchObject({
+      transform: [{ translateX: 219 }],
+      width: 70,
+    });
+
+    indicatorTransitionActive.value = false;
+    act(() => mockAnimatedReaction?.(false, true));
+    expect(StyleSheet.flatten(indicator.props.style)).toMatchObject({
+      transform: [{ translateX: 219 }],
+      width: 180,
     });
   });
 });

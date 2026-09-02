@@ -38,6 +38,7 @@ jest.mock('react-native-reanimated', () => {
     __esModule: true,
     default: {
       ScrollView: ReactNative.ScrollView,
+      Text: ReactNative.Text,
       View: ReactNative.View,
       createAnimatedComponent: (Component: React.ComponentType) => Component,
     },

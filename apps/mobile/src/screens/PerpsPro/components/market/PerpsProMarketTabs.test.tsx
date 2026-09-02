@@ -12,7 +12,7 @@ jest.mock('@/components/Typography', () => ({
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
     const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
-    return { styles: getStyle({ colors2024 }) };
+    return { colors2024, styles: getStyle({ colors2024 }) };
   },
 }));
 
@@ -24,7 +24,7 @@ jest.mock('react-native-reanimated', () => {
   const ReactNative = require('react-native');
   return {
     __esModule: true,
-    default: { View: ReactNative.View },
+    default: { Text: ReactNative.Text, View: ReactNative.View },
     Easing: { bezier: jest.fn(() => jest.fn()) },
     ReduceMotion: { System: 'system' },
     cancelAnimation: jest.fn(),
@@ -333,6 +333,48 @@ describe('PerpsProMarketTabs', () => {
     expect(
       screen.getByTestId('perps-pro-market-tab-all').props.accessibilityState,
     ).toEqual({ selected: true });
+  });
+
+  it('derives the visible label highlight from the indicator presentation', () => {
+    indicatorPosition.value = 1;
+    render(
+      <PerpsProMarketTabs
+        activeTab="all"
+        indicatorPosition={indicatorPosition}
+        onChange={jest.fn()}
+        tabs={tabs}
+      />,
+    );
+
+    expect(
+      StyleSheet.flatten(screen.getByText('All').props.style),
+    ).toMatchObject({
+      color: 'neutral-secondary',
+      fontWeight: '400',
+    });
+    expect(
+      StyleSheet.flatten(screen.getByText('Layer 1').props.style),
+    ).toMatchObject({
+      color: 'neutral-title-1',
+      fontWeight: '500',
+    });
+    expect(
+      screen.getByTestId('perps-pro-market-tab-all').props.accessibilityState,
+    ).toEqual({ selected: true });
+    expect(
+      screen.getByTestId('perps-pro-market-tab-layer-one').props
+        .accessibilityState,
+    ).toEqual({ selected: false });
+    expect(
+      screen
+        .getAllByText('Layer 1', { includeHiddenElements: true })
+        .map(label => StyleSheet.flatten(label.props.style)),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ fontWeight: '500', opacity: 0 }),
+        expect.objectContaining({ position: 'absolute' }),
+      ]),
+    );
   });
 
   it('hides stale frames until a changed tab layout is measured again', () => {
