@@ -570,7 +570,20 @@ describe('PerpsProPositionCard', () => {
     ).toBeUndefined();
     expect(
       StyleSheet.flatten(screen.getByLabelText('Ratio de margen').props.style),
-    ).toMatchObject({ alignItems: 'flex-end', alignSelf: 'stretch' });
+    ).toMatchObject({ alignItems: 'stretch', alignSelf: 'stretch' });
+    expect(
+      StyleSheet.flatten(screen.getByText('Ratio de margen').props.style),
+    ).toMatchObject({ textAlign: 'right' });
+    expect(
+      StyleSheet.flatten(
+        screen.getByLabelText('Precio de liquidación').props.style,
+      ),
+    ).toMatchObject({ alignItems: 'stretch', alignSelf: 'stretch' });
+    expect(
+      StyleSheet.flatten(
+        screen.getByText('Precio de liquidación (USDC)').props.style,
+      ),
+    ).toMatchObject({ textAlign: 'right' });
     expect(
       StyleSheet.flatten(screen.getByText('Tamaño (USDC)').props.style),
     ).toMatchObject({ flexShrink: 1, minWidth: 0 });
@@ -627,6 +640,57 @@ describe('PerpsProPositionCard', () => {
     expect(
       screen.getByTestId('perps-pro-position-liquidation-label-BTC'),
     ).toBeTruthy();
+    expect(
+      StyleSheet.flatten(screen.getByLabelText('Margin Ratio').props.style),
+    ).toMatchObject({ alignSelf: 'flex-end' });
+    expect(
+      StyleSheet.flatten(screen.getByLabelText('Margin Ratio').props.style)
+        .alignItems,
+    ).toBeUndefined();
+  });
+
+  it('keeps a short English right label aligned when another row expands the card', () => {
+    render(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        position={createPosition({ marginMode: 'cross' })}
+      />,
+    );
+
+    expect(
+      StyleSheet.flatten(screen.getByLabelText('Margin Ratio').props.style),
+    ).toMatchObject({ alignSelf: 'flex-end' });
+
+    fireEvent(
+      screen.getByTestId('perps-pro-position-price-metrics-BTC'),
+      'layout',
+      {
+        nativeEvent: { layout: { height: 34, width: 345, x: 0, y: 0 } },
+      },
+    );
+    fireEvent(
+      screen.getByTestId('perps-pro-position-middle-price-BTC'),
+      'layout',
+      {
+        nativeEvent: { layout: { height: 34, width: 116, x: 136, y: 0 } },
+      },
+    );
+    fireEvent(screen.getByText('Mark Price (USDC)'), 'textLayout', {
+      nativeEvent: { lines: [{ width: 72, x: 0 }] },
+    });
+    fireEvent(screen.getByText('Liq. Price (USDC)'), 'textLayout', {
+      nativeEvent: { lines: [{ width: 180, x: 0 }] },
+    });
+
+    expect(
+      StyleSheet.flatten(screen.getByLabelText('Margin Ratio').props.style),
+    ).toMatchObject({ alignItems: 'stretch', alignSelf: 'stretch' });
+    expect(
+      StyleSheet.flatten(screen.getByText('Margin Ratio').props.style),
+    ).toMatchObject({ textAlign: 'right' });
+    expect(
+      StyleSheet.flatten(screen.getByLabelText('Liq. Price').props.style),
+    ).toMatchObject({ alignItems: 'stretch', alignSelf: 'stretch' });
   });
 
   it('preserves the full-row single-line Liq. Distance value after expanding labels', () => {
@@ -664,6 +728,17 @@ describe('PerpsProPositionCard', () => {
     expect(
       screen.queryByTestId('perps-pro-position-liquidation-distance-label-BTC'),
     ).toBeNull();
+    expect(
+      StyleSheet.flatten(
+        screen.getByLabelText('Distancia del precio de liquidación').props
+          .style,
+      ),
+    ).toMatchObject({ alignItems: 'stretch', alignSelf: 'stretch' });
+    expect(
+      StyleSheet.flatten(
+        screen.getByText('Distancia del precio de liquidación').props.style,
+      ),
+    ).toMatchObject({ textAlign: 'right' });
     expect(
       screen.getByText('Distancia del precio de liquidación').props
         .numberOfLines,

@@ -890,7 +890,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 16,
   },
   expandedRightDottedLabel: {
-    alignItems: 'flex-end',
+    alignItems: 'stretch',
     alignSelf: 'stretch',
   },
   expandedRightLabel: {

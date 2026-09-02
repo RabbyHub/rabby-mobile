@@ -28,7 +28,7 @@ describe('perpsProDottedUnderlineGeometry', () => {
     });
   });
 
-  it('positions the canvas at the measured first-line x without changing its width', () => {
+  it('positions the canvas at the measured line x without changing its width', () => {
     expect(
       resolvePerpsProDottedUnderlineGeometry({
         fontSize: 12,

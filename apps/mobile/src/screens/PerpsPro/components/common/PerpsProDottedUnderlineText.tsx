@@ -68,20 +68,24 @@ export const PerpsProDottedUnderlineText: React.FC<
     flattenedTextStyle?.color ?? colors2024['neutral-secondary'];
   const handleTextLayout = useCallback(
     (event: TextLayoutEvent) => {
-      const line = event.nativeEvent.lines[0] as
+      const { lines } = event.nativeEvent;
+      const firstLine = lines[0] as
         | PerpsProDottedUnderlineLineMetrics
         | undefined;
-      if (line && Number.isFinite(line.width)) {
+      if (firstLine && Number.isFinite(firstLine.width)) {
         onFirstLineLayout?.({
-          lineCount: event.nativeEvent.lines.length,
-          width: Math.max(line.width, 0),
-          x: Number.isFinite(line.x) ? Math.max(line.x ?? 0, 0) : 0,
+          lineCount: lines.length,
+          width: Math.max(firstLine.width, 0),
+          x: Number.isFinite(firstLine.x) ? Math.max(firstLine.x ?? 0, 0) : 0,
         });
       }
-      const nextGeometry = line
+      const underlineLine = (
+        multiline ? lines[lines.length - 1] : firstLine
+      ) as PerpsProDottedUnderlineLineMetrics | undefined;
+      const nextGeometry = underlineLine
         ? resolvePerpsProDottedUnderlineGeometry({
             fontSize,
-            line,
+            line: underlineLine,
             minimumStrokeWidth: StyleSheet.hairlineWidth,
             roundToNearestPixel: PixelRatio.roundToNearestPixel,
           })
@@ -96,7 +100,7 @@ export const PerpsProDottedUnderlineText: React.FC<
           : nextGeometry,
       );
     },
-    [fontSize, onFirstLineLayout],
+    [fontSize, multiline, onFirstLineLayout],
   );
 
   const content = (
