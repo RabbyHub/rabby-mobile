@@ -612,7 +612,9 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   gasCardInactive: {
     borderColor: 'transparent',
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
   },
   gasCardDisabled: {
     opacity: 0.5,
