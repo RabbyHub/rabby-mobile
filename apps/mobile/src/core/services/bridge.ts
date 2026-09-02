@@ -22,6 +22,7 @@ export type BridgeRecord = {
   rabby_fee: number;
   fee_rate: number;
   slippage: number;
+  duration: number;
 };
 
 export type BridgeServiceStore = {
