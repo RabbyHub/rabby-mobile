@@ -68,7 +68,6 @@ export const NFTDetailScreen = () => {
   type NonListType = Exclude<typeof token, TokenItem[]>;
 
   const chain = getCHAIN_ID_LIST().get((token as NonListType).chain);
-  const isSvgURL = (token as NonListType)?.content?.endsWith('.svg');
   const iconUri = chain?.logo;
 
   const TokenDetailHeaderArea = useMemoizedFn(() => {
@@ -84,10 +83,11 @@ export const NFTDetailScreen = () => {
               },
             ])}>
             <Media
+              retryOnFailure
               failedPlaceholder={<IconDefaultNFT width="100%" height="100%" />}
               type="image_url"
-              src={isSvgURL ? '' : (token as NFTItem)?.thumbnail_url}
-              thumbnail={isSvgURL ? '' : (token as NFTItem)?.thumbnail_url}
+              src={(token as NFTItem)?.thumbnail_url}
+              thumbnail={(token as NFTItem)?.thumbnail_url}
               mediaStyle={styles.imagesAvatar}
               style={styles.imagesAvatar}
               playIconSize={36}
@@ -304,9 +304,11 @@ export const NFTDetailScreen = () => {
             ? renderAccountHeader(type, aliasName, address)
             : null}
           <Media
+            retryOnFailure
             failedPlaceholder={<IconDefaultNFT width={'100%'} height={360} />}
             type={iToken?.content_type}
             src={iToken?.content}
+            safeSvgVariant="detail"
             style={styles.images}
             mediaStyle={styles.innerImages}
             playable={true}

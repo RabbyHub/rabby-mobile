@@ -214,6 +214,11 @@ jobs:
           # use specific version rather than 'latest-stable' if multiple Xcodes installed
           xcode-version: ${{ env.XCODE_VER }}
 
+      - name: Setup Rust toolchain for safe SVG rasterization
+        uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
+        with:
+          targets: ${{ runner.os == 'Linux' && 'aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android' || 'aarch64-apple-ios,aarch64-apple-ios-sim,x86_64-apple-ios' }}
+
       - name: Install and build
         run: |
           unset MATCH_GIT_BASIC_AUTHORIZATION

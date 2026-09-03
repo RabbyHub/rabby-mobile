@@ -185,20 +185,13 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
                       <View>
                         {tokenIsNft ? (
                           <Media
+                            retryOnFailure
                             failedPlaceholder={
                               <IconDefaultNFT width={45} height={45} />
                             }
                             type="image_url"
-                            src={
-                              token?.content?.endsWith('.svg')
-                                ? ''
-                                : token?.content
-                            }
-                            thumbnail={
-                              token?.content?.endsWith('.svg')
-                                ? ''
-                                : token?.content
-                            }
+                            src={token?.content}
+                            thumbnail={token?.content}
                             mediaStyle={styles.media}
                             style={styles.media}
                             playIconSize={12}
@@ -275,20 +268,13 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
                       <View>
                         {tokenIsNft ? (
                           <Media
+                            retryOnFailure
                             failedPlaceholder={
                               <IconDefaultNFT width={45} height={45} />
                             }
                             type="image_url"
-                            src={
-                              token?.content?.endsWith('.svg')
-                                ? ''
-                                : token?.content
-                            }
-                            thumbnail={
-                              token?.content?.endsWith('.svg')
-                                ? ''
-                                : token?.content
-                            }
+                            src={token?.content}
+                            thumbnail={token?.content}
                             mediaStyle={styles.media}
                             style={styles.media}
                             playIconSize={12}

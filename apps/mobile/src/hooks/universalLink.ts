@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect } from 'react';
+import RNFS from '@rabby-wallet/react-native-fs';
 import { Linking } from 'react-native';
 import { StackActions } from '@react-navigation/native';
 import { t } from 'i18next';
@@ -483,6 +484,7 @@ async function clearAppCacheFromLink() {
   try {
     abortAllSyncTasks('clear-app-cache-link');
     resetUpdateHistoryTime();
+    await RNFS.clearSafeSvgCache();
     await dropAppDataSourceAndQuitApp({
       exitDelayMs: 300,
     });
