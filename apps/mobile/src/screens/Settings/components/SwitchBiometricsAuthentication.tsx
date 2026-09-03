@@ -15,7 +15,8 @@ import {
 import SetPasswordBottomSheet from '@/screens/ManagePassword/components/SetPasswordBottomSheet';
 
 function useToggleBiometricsEnabled() {
-  const { computed, toggleBiometrics } = useBiometrics({ autoFetch: true });
+  const { computed, toggleBiometrics, confirmBiometricsSetupAvailability } =
+    useBiometrics({ autoFetch: true });
   const { t } = useTranslation();
   const [sheetVisible, setSheetVisible] = useState(false);
   const [sheetLoading, setSheetLoading] = useState(false);
@@ -25,6 +26,7 @@ function useToggleBiometricsEnabled() {
     async (
       nextEnabled: boolean,
       onToggleSuccess?: (enabled: boolean) => void | Promise<void>,
+      onUnavailablePress?: () => void,
     ) => {
       // When turning OFF and password is auto-generated:
       // verify biometrics → show password setup → update password → turn off
@@ -69,6 +71,15 @@ function useToggleBiometricsEnabled() {
       }
 
       // Enabling biometrics: needs password verification
+      const confirmation = await confirmBiometricsSetupAvailability();
+      if (!confirmation.couldSetupBiometrics) {
+        onUnavailablePress?.();
+        return;
+      }
+      if (confirmation.isBiometricsEnabled) {
+        return;
+      }
+
       AuthenticationModal.show({
         confirmText: t('global.confirm'),
         cancelText: t('global.cancel'),
@@ -86,7 +97,12 @@ function useToggleBiometricsEnabled() {
         },
       });
     },
-    [toggleBiometrics, computed.systemAuthTypeLabel, t],
+    [
+      confirmBiometricsSetupAvailability,
+      toggleBiometrics,
+      computed.systemAuthTypeLabel,
+      t,
+    ],
   );
 
   const handleSheetConfirm = React.useCallback(
@@ -162,6 +178,7 @@ export const SwitchBiometricsAuthentication = ({
       await requestToggleBiometricsEnabled(
         enabled ?? (!isBiometricsEnabled && !isUsingDevicePasscodeForSettings),
         onToggleSuccess,
+        onUnavailablePress,
       );
     },
   }));
@@ -171,9 +188,7 @@ export const SwitchBiometricsAuthentication = ({
   const switchValue = couldSetupBiometrics
     ? !!isBiometricsEnabled
     : isUsingDevicePasscodeForSettings;
-  const isBiometricsUnavailableForSetup = !couldSetupBiometrics && !switchValue;
-  const switchDisabled =
-    !hasSetupCustomPassword || isBiometricsUnavailableForSetup;
+  const switchDisabled = !hasSetupCustomPassword;
 
   return (
     <>
@@ -183,14 +198,12 @@ export const SwitchBiometricsAuthentication = ({
         disabled={switchDisabled}
         value={switchValue}
         changeValueImmediately={false}
-        onPress={evt => {
-          if (switchDisabled && isBiometricsUnavailableForSetup) {
-            evt.stopPropagation?.();
-            onUnavailablePress?.();
-          }
-        }}
         onValueChange={enabled => {
-          requestToggleBiometricsEnabled(enabled, onToggleSuccess);
+          requestToggleBiometricsEnabled(
+            enabled,
+            onToggleSuccess,
+            onUnavailablePress,
+          );
         }}
       />
       <SetPasswordBottomSheet

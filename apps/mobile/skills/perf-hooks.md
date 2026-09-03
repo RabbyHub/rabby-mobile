@@ -254,6 +254,23 @@ Good APIs naturally steer callers toward:
 - less repeated computation
 - less repeated rendering
 
+### 10. Treat Cached Negative External State As Provisional
+
+When a low-cost external capability or availability check is cached for
+performance and negative results are expected to be rare:
+
+- Keep a positive cached result as the fast path.
+- Do not let a cached negative permanently block an explicit user retry.
+- When the check is safe and inexpensive, bypass the negative cache and run one
+  single-flight authoritative recheck.
+- Publish the refreshed result to the shared cache or store before continuing
+  the user action. A successful retry should repair subsequent attempts too.
+- Keep the actual protected operation as the final authority; a refreshed
+  availability result must not bypass its normal validation or authorization.
+
+Do not apply this pattern to destructive, security-authorizing, rate-limited,
+or materially expensive checks without a separately reviewed policy.
+
 ## Recommended Decision Order
 
 When adding a hook or changing store exposure, reason in this order:
@@ -286,6 +303,8 @@ Before merging changes in this area, check:
 - Are there residual broad subscribers still sitting in the same path?
 - Am I scanning the same inputs multiple times when one pass would do?
 - Does the API limit misuse, or does it encourage misuse?
+- Can a rare cached negative incorrectly block an explicit retry, and if so can
+  a safe single-flight recheck update shared state before the action resumes?
 
 ## Preference Order
 
