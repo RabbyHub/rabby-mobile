@@ -19,6 +19,7 @@ type SwapPendingTransactionsControllerProps = {
   enabled: boolean;
   isForMultipleAddress: boolean;
   showPendingTransaction: boolean;
+  onProgressChange?: (hasProgress: boolean) => void;
 };
 
 export const SwapPendingTransactionsController = forwardRef<
@@ -31,6 +32,7 @@ export const SwapPendingTransactionsController = forwardRef<
       enabled,
       isForMultipleAddress,
       showPendingTransaction,
+      onProgressChange,
     },
     ref,
   ) => {
@@ -72,6 +74,13 @@ export const SwapPendingTransactionsController = forwardRef<
         headerRight,
       });
     }, [disableHeaderRight, headerRight, setNavigationOptions]);
+
+    const hasSwapProgress = !!localPendingTxData;
+
+    useEffect(() => {
+      onProgressChange?.(hasSwapProgress);
+      return () => onProgressChange?.(false);
+    }, [hasSwapProgress, onProgressChange]);
 
     if (!showPendingTransaction || !localPendingTxData) {
       return null;

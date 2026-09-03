@@ -9,23 +9,25 @@ export const QuoteLogo = ({
   logo,
   isCex = false,
   loaded = false,
+  size = 24,
 }: {
   isLoading?: boolean;
   logo: any;
   isCex?: boolean;
   loaded?: boolean;
+  size?: number;
 }) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
 
   const imageStyle = useMemo(() => {
-    const size = !loaded && (isLoading || isCex) ? 18 : 24;
+    const imageSize = !loaded && (isLoading || isCex) ? 18 : size;
     return {
-      width: size,
-      height: size,
+      width: imageSize,
+      height: imageSize,
       borderRadius: 999999,
     };
-  }, [loaded, isLoading, isCex]);
+  }, [loaded, isLoading, isCex, size]);
 
   const spinValue = useRef(new Animated.Value(0)).current;
   const spin = spinValue.interpolate({
@@ -56,7 +58,7 @@ export const QuoteLogo = ({
   }, [logo]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { width: size, height: size }]}>
       <Image source={source} style={imageStyle} />
       {isLoading && (
         <Animated.View
@@ -67,8 +69,8 @@ export const QuoteLogo = ({
             },
           ]}>
           <IconQuoteLoading
-            width={loaded ? 32 : 24}
-            height={loaded ? 32 : 24}
+            width={loaded ? size + 8 : 24}
+            height={loaded ? size + 8 : 24}
           />
         </Animated.View>
       )}
@@ -81,8 +83,6 @@ const getStyles = createGetStyles(_ => ({
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
-    width: 24,
-    height: 24,
   },
   loadingWrapper: {
     position: 'absolute',

@@ -1056,7 +1056,6 @@
     },
     "swap": {
       "no-transaction-records": "Keine Transaktionsaufzeichnungen",
-      "preferMEV": "MEV-Schutz bevorzugen",
       "hidden-no-quote-rates_other": "{{count}} Raten nicht verfügbar",
       "from": "Von",
       "Completed": "Abgeschlossen",

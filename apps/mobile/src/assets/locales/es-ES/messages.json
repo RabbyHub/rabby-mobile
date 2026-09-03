@@ -988,7 +988,6 @@
     "swap": {
       "chain": "Red",
       "to": "A",
-      "preferMEV": "Preferir protección contra MEV",
       "best": "Mejor",
       "gas-fee-too-high": "Tarifa de gas demasiado alta",
       "title": "Intercambio",

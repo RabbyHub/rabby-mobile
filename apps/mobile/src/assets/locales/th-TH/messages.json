@@ -1037,7 +1037,6 @@
       "best": "ดีที่สุด",
       "chain": "เชน",
       "no-quote-found": "ไม่สามารถหาราคาตลาดที่เหมาะสม",
-      "preferMEV": "ให้ความสำคัญกับการป้องกัน MEV",
       "wrap-contract": "สัญญา Wrap",
       "low-slippage-may-cause-failed-transactions-due-to-high-volatility": "Slippage ต่ำอาจทำให้การทำธุรกรรมล้มเหลวเนื่องจากความผันผวนสูง",
       "usd-after-fees": "≈ {{usd}}",

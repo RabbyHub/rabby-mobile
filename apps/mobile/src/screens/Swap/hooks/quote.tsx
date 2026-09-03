@@ -16,7 +16,6 @@ import {
   DEX_ENUM,
   DEX_ROUTER_WHITELIST,
   DEX_SPENDER_WHITELIST,
-  isSameTypeTokenPair,
   UNI_NATIVE_TO_ADDRESSES,
   WrapTokenAddressMap,
 } from '@rabby-wallet/rabby-swap';
@@ -90,6 +89,7 @@ export const useQuoteMethods = () => {
       // receiveRawAmount,
       slippage,
       dexId,
+      feeRate,
       txId,
       quote,
       tx,
@@ -105,6 +105,7 @@ export const useQuoteMethods = () => {
           slippage: new BigNumber(slippage).div(100).toNumber(),
         },
         dex_id: dexId,
+        fee_rate: Number(feeRate),
         tx_id: txId,
         tx,
       }),
@@ -413,7 +414,6 @@ export const useQuoteMethods = () => {
         recommendNonceTask?: Promise<string>;
       };
     }): Promise<TDexQuoteData> => {
-      const isOpenOcean = dexId === DEX_ENUM.OPENOCEAN;
       const chainInfo = findChainByEnum(chain) || CHAINS[chain];
       const recommendNonceTask = !inSufficient
         ? sharedTasks?.recommendNonceTask ??
@@ -446,12 +446,9 @@ export const useQuoteMethods = () => {
                 .toFixed(0, 1),
               userAddress,
               slippage: Number(slippage),
-              feeRate:
-                feeAfterDiscount === '0' && isOpenOcean
-                  ? undefined
-                  : Number(feeAfterDiscount) || 0,
+              feeRate: Number(feeAfterDiscount),
               chain,
-              fee: !isSameTypeTokenPair(payToken, receiveToken),
+              fee: Number(feeAfterDiscount) > 0,
               chainServerId: chainInfo.serverId,
               nativeTokenAddress: chainInfo.nativeTokenAddress,
               insufficient: inSufficient,
@@ -762,6 +759,7 @@ export interface postSwapParams {
   // receiveRawAmount: string;
   slippage: string;
   dexId: string;
+  feeRate: string;
   txId: string;
   quote: QuoteResult;
   tx: Tx;

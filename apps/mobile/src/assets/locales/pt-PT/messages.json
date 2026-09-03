@@ -1070,7 +1070,6 @@
       "title": "Swap",
       "no-transaction-records": "Sem registos de transações",
       "hidden-no-quote-rates_other": "{{count}} taxas indisponíveis",
-      "preferMEV": "Preferir proteção contra MEV",
       "from": "De",
       "insufficient-balance": "Saldo insuficiente",
       "no-slippage-for-wrap": "Sem slippage para Wrap",

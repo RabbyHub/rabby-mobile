@@ -29,7 +29,7 @@ export type SwapServiceStore = {
   selectedChain: CHAINS_ENUM | null;
   selectedFromToken?: TokenItem;
   selectedToToken?: TokenItem;
-  preferMEVGuarded: boolean;
+  mevProtection: boolean;
   recentToTokens?: TokenItem[];
   openSwapHistoryTs: Record<string, number>;
 
@@ -117,7 +117,7 @@ export class SwapService extends StoreServiceBase<
         unlimitedAllowance: false,
         viewList: {} as SwapServiceStore['viewList'],
         tradeList: {} as SwapServiceStore['tradeList'],
-        preferMEVGuarded: false,
+        mevProtection: true,
         sortIncludeGasFee: true,
         recentToTokens: [],
         openSwapHistoryTs: {},
@@ -339,12 +339,12 @@ export class SwapService extends StoreServiceBase<
   };
 
   getSwapPreferMEVGuarded = () => {
-    return this.store.preferMEVGuarded ?? false;
+    return this.store.mevProtection ?? true;
   };
 
   setSwapPreferMEVGuarded = (bool: boolean) => {
     this.mutateStore(draft => {
-      draft.preferMEVGuarded = bool;
+      draft.mevProtection = bool;
     });
   };
 

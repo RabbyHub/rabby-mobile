@@ -991,7 +991,6 @@
       "slippage-tolerance": "Допустимое проскальзывание",
       "Completed": "Завершено",
       "insufficient-balance": "Недостаточно средств",
-      "preferMEV": "Предпочитать защиту от MEV",
       "hidden-no-quote-rates_one": "{{count}} курс недоступен",
       "transaction-might-be-frontrun-because-of-high-slippage-tolerance": "Транзакция может быть фронтран, из-за высокой допустимой погрешности.",
       "no-transaction-records": "Нет записей транзакций",

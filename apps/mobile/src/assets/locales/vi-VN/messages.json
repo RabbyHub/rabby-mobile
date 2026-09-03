@@ -832,7 +832,6 @@
       "hidden-no-quote-rates_other": "{{count}} tỷ giá không khả dụng",
       "to": "Tới",
       "Completed": "Hoàn thành",
-      "preferMEV": "Ưu tiên bảo vệ khỏi MEV",
       "no-transaction-records": "Không có bản ghi giao dịch",
       "Auto": "Tự động",
       "unable-to-fetch-the-price": "Không thể lấy giá",

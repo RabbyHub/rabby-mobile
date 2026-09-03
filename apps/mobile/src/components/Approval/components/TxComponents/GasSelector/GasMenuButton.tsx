@@ -30,10 +30,12 @@ interface Props {
   disabled?: boolean;
 }
 
-const GasLevelIcon: React.FC<{ level: string; isActive }> = ({
-  level,
-  isActive,
-}) => {
+export const GasLevelIcon: React.FC<{
+  level: string;
+  isActive?: boolean;
+  size?: number;
+  color?: string;
+}> = ({ level, isActive, size = 20, color }) => {
   const colors = useThemeColors();
   const GasLevelSVG =
     level === 'slow'
@@ -44,12 +46,13 @@ const GasLevelIcon: React.FC<{ level: string; isActive }> = ({
       ? GasLevelInstantSVG
       : GasLevelCustomSVG;
   return (
-    <div>
-      <GasLevelSVG
-        color={isActive ? colors['blue-default'] : colors['neutral-body']}
-        width={20}
-      />
-    </div>
+    <GasLevelSVG
+      color={
+        color || (isActive ? colors['blue-default'] : colors['neutral-body'])
+      }
+      width={size}
+      height={size}
+    />
   );
 };
 

@@ -782,7 +782,6 @@
       "from": "Dari",
       "approve-swap": "Setujui dan Tukar",
       "hidden-no-quote-rates_other": "{{count}} tarif tidak tersedia",
-      "preferMEV": "Utamakan perlindungan dari MEV",
       "gas-fee-too-high": "Biaya gas terlalu tinggi",
       "token": "Token",
       "slippage-tolerance": "Toleransi slippage",
