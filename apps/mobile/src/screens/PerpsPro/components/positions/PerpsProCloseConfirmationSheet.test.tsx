@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 
 jest.mock('@/assets2024/icons/common/checkbox-empty-cc.svg', () => {
   const ReactModule = require('react');
@@ -137,6 +138,34 @@ describe('PerpsProCloseConfirmationSheet', () => {
     expect(screen.getByText('BTCUSDC')).toBeTruthy();
     expect(screen.getByText('Sell')).toBeTruthy();
     expect(screen.getByText('Short')).toBeTruthy();
+    for (const testID of [
+      'perps-pro-close-confirmation-side-tag',
+      'perps-pro-close-confirmation-position-tag',
+    ]) {
+      const tagStyle = StyleSheet.flatten(
+        screen.getByTestId(testID).props.style,
+      );
+      expect(tagStyle).toMatchObject({
+        backgroundColor: 'red-light-1',
+        borderRadius: 4,
+        paddingHorizontal: 4,
+        paddingVertical: 1,
+      });
+      expect(tagStyle.borderColor).toBeUndefined();
+      expect(tagStyle.borderWidth).toBeUndefined();
+    }
+    expect(screen.getByText('Sell').props.style).toMatchObject({
+      color: 'red-default',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    });
+    expect(screen.getByText('Short').props.style).toMatchObject({
+      color: 'red-default',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    });
     expect(screen.getByText('61,000 USDC')).toBeTruthy();
     expect(screen.getByText('0.5000 BTC')).toBeTruthy();
     expect(screen.queryByText('Perp')).toBeNull();
@@ -150,6 +179,53 @@ describe('PerpsProCloseConfirmationSheet', () => {
       ),
     ).toBeTruthy();
     expect(screen.queryByText('Confirm Close')).toBeNull();
+  });
+
+  it('keeps Buy and Long on the positive direction tag contract', () => {
+    render(
+      <PerpsProCloseConfirmationSheet
+        amountUnit="base"
+        draft={draft}
+        market={market}
+        onClose={jest.fn()}
+        onConfirm={jest.fn()}
+        onToggleSkipConfirmation={jest.fn()}
+        pending={false}
+        position={{
+          ...position,
+          direction: 'short',
+        }}
+        skipConfirmation={false}
+        visible
+      />,
+    );
+
+    expect(screen.getByText('Buy').props.style).toMatchObject({
+      color: 'green-default',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    });
+    expect(screen.getByText('Long').props.style).toMatchObject({
+      color: 'green-default',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    });
+    for (const testID of [
+      'perps-pro-close-confirmation-side-tag',
+      'perps-pro-close-confirmation-position-tag',
+    ]) {
+      const tagStyle = StyleSheet.flatten(
+        screen.getByTestId(testID).props.style,
+      );
+      expect(tagStyle).toMatchObject({
+        backgroundColor: 'green-light-1',
+        borderRadius: 4,
+      });
+      expect(tagStyle.borderColor).toBeUndefined();
+      expect(tagStyle.borderWidth).toBeUndefined();
+    }
   });
 
   it('uses Market Price with its own opt-in confirmation preference', () => {
@@ -198,6 +274,25 @@ describe('PerpsProCloseConfirmationSheet', () => {
 
     expect(screen.getByText('xyz')).toBeTruthy();
     expect(screen.queryByText('Perp')).toBeNull();
+    const sourceTagStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-close-market-tag').props.style,
+    );
+    expect(sourceTagStyle).toMatchObject({
+      backgroundColor: 'neutral-bg-5',
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    });
+    expect(sourceTagStyle.borderColor).toBeUndefined();
+    expect(sourceTagStyle.borderWidth).toBeUndefined();
+    expect(
+      StyleSheet.flatten(screen.getByText('xyz').props.style),
+    ).toMatchObject({
+      color: 'neutral-foot',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    });
     expect(screen.getByTestId('close-confirmation-sheet').props).toMatchObject({
       backdropProps: { pressBehavior: 'none' },
       enablePanDownToClose: false,

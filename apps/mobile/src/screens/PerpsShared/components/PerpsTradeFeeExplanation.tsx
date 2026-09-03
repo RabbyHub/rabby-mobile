@@ -8,11 +8,24 @@ import React, { useCallback } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
-export const PerpsTradeFeeExplanationContent: React.FC<{
+export type PerpsTradeFeeExplanationVariant = 'default' | 'pro';
+
+type PerpsTradeFeeExplanationContentProps = {
   isLiquidation: boolean;
-}> = ({ isLiquidation }) => {
+  variant?: PerpsTradeFeeExplanationVariant;
+};
+
+type UseShowPerpsTradeFeeExplanationOptions = {
+  owner?: string;
+  variant?: PerpsTradeFeeExplanationVariant;
+};
+
+export const PerpsTradeFeeExplanationContent: React.FC<
+  PerpsTradeFeeExplanationContentProps
+> = ({ isLiquidation, variant = 'default' }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const feeBoldStyle = variant === 'pro' ? styles.feeBoldPro : styles.feeBold;
 
   return (
     <View testID="perps-trade-fee-explanation-content">
@@ -20,8 +33,8 @@ export const PerpsTradeFeeExplanationContent: React.FC<{
         <Trans
           i18nKey="page.perps.historyDetail.feeDesc"
           components={{
-            1: <Text style={styles.feeBold} />,
-            2: <Text style={styles.feeBold} />,
+            1: <Text style={feeBoldStyle} />,
+            2: <Text style={feeBoldStyle} />,
           }}
         />
       </Text>
@@ -37,18 +50,22 @@ export const PerpsTradeFeeExplanationContent: React.FC<{
         </View>
         {!isLiquidation ? (
           <View style={styles.feeRow}>
-            <View style={styles.feeRowLeft}>
+            <View style={styles.feeRowLeft} testID="perps-trade-fee-rabby-left">
               <RcIconRabby width={20} height={20} />
               <Text style={styles.feeRowLabel}>
                 {t('page.perps.historyDetail.feeRabby')}
               </Text>
             </View>
-            <View style={styles.feeRowRight}>
+            <View
+              style={styles.feeRowRight}
+              testID="perps-trade-fee-rabby-right">
               <View style={styles.feeRowValueRow}>
                 <Text style={styles.feeRowValue}>0.02%</Text>
                 <Text style={styles.feeRowValueOrigin}>0.04%</Text>
               </View>
-              <Text style={styles.feeRowDiscount}>
+              <Text
+                style={styles.feeRowDiscount}
+                testID="perps-trade-fee-rabby-discount">
                 {t('page.perps.historyDetail.feeRabbyDiscount')}
               </Text>
             </View>
@@ -59,7 +76,10 @@ export const PerpsTradeFeeExplanationContent: React.FC<{
   );
 };
 
-export const useShowPerpsTradeFeeExplanation = (owner?: string) => {
+export const useShowPerpsTradeFeeExplanation = ({
+  owner,
+  variant = 'default',
+}: UseShowPerpsTradeFeeExplanationOptions = {}) => {
   const { t } = useTranslation();
   const showTipsPopup = useShowTipsPopup();
 
@@ -67,12 +87,17 @@ export const useShowPerpsTradeFeeExplanation = (owner?: string) => {
     (isLiquidation: boolean) => {
       showTipsPopup({
         title: t('page.perps.historyDetail.feeTitle'),
-        desc: <PerpsTradeFeeExplanationContent isLiquidation={isLiquidation} />,
+        desc: (
+          <PerpsTradeFeeExplanationContent
+            isLiquidation={isLiquidation}
+            variant={variant}
+          />
+        ),
         buttonType: 'hyperliquid',
         owner,
       });
     },
-    [owner, showTipsPopup, t],
+    [owner, showTipsPopup, t, variant],
   );
 };
 
@@ -88,6 +113,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   feeBold: {
     color: colors2024['neutral-title-1'],
+    fontSize: 16,
+    fontWeight: '700',
+    lineHeight: 20,
+  },
+  feeBoldPro: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,
@@ -109,6 +141,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   feeRowLeft: {
     alignItems: 'center',
     flexDirection: 'row',
+    flexShrink: 0,
     gap: 8,
   },
   feeRowLabel: {
@@ -127,10 +160,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   feeRowRight: {
     alignItems: 'flex-end',
+    flex: 1,
     gap: 2,
+    marginLeft: 12,
+    minWidth: 0,
   },
   feeRowValueRow: {
     alignItems: 'center',
+    alignSelf: 'flex-end',
     flexDirection: 'row',
     gap: 6,
   },
@@ -143,10 +180,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textDecorationLine: 'line-through',
   },
   feeRowDiscount: {
+    alignSelf: 'stretch',
     color: colors2024['neutral-foot'],
+    flexShrink: 1,
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '400',
     lineHeight: 14,
+    textAlign: 'right',
   },
 }));

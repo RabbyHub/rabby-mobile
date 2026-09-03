@@ -3,7 +3,6 @@ import {
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
-import { FontNames } from '@/core/utils/fonts';
 import { createGetStyles2024 } from '@/utils/styles';
 
 import {
@@ -23,7 +22,7 @@ export const getPerpsProTransferSheetStyles = createGetStyles2024(
       container: { height: '100%', paddingHorizontal: 15, paddingTop: 8 },
       title: {
         color: colors2024['neutral-title-1'],
-        fontFamily: FontNames.sf_pro,
+        fontFamily: 'SF Pro Rounded',
         fontSize: 16,
         fontWeight: '700',
         lineHeight: 20,
@@ -32,7 +31,7 @@ export const getPerpsProTransferSheetStyles = createGetStyles2024(
       section: { gap: 8 },
       sectionLabel: {
         color: colors2024['neutral-body'],
-        fontFamily: FontNames.sf_pro,
+        fontFamily: 'SF Pro Rounded',
         fontSize: 12,
         fontWeight: '500',
         lineHeight: 16,
@@ -51,14 +50,14 @@ export const getPerpsProTransferSheetStyles = createGetStyles2024(
       directionRow: { alignItems: 'center', flexDirection: 'row', height: 34 },
       directionLabel: {
         color: colors2024['neutral-foot'],
-        fontFamily: FontNames.sf_pro,
+        fontFamily: 'SF Pro Rounded',
         fontSize: 12,
         lineHeight: 16,
         width: 41,
       },
       directionValue: {
         color: colors2024['neutral-title-1'],
-        fontFamily: FontNames.sf_pro,
+        fontFamily: 'SF Pro Rounded',
         fontSize: 14,
         fontWeight: '500',
         lineHeight: 18,
@@ -81,7 +80,7 @@ export const getPerpsProTransferSheetStyles = createGetStyles2024(
       },
       balance: {
         color: colors2024['neutral-body'],
-        fontFamily: FontNames.sf_pro,
+        fontFamily: 'SF Pro Rounded',
         fontSize: 12,
         lineHeight: 16,
       },
@@ -99,7 +98,7 @@ export const getPerpsProTransferSheetStyles = createGetStyles2024(
       amountInput: {
         color: colors2024['neutral-title-1'],
         flex: 1,
-        fontFamily: FontNames.sf_pro,
+        fontFamily: 'SF Pro Rounded',
         fontSize: 28,
         fontWeight: '700',
         height: 72,
@@ -123,7 +122,7 @@ export const getPerpsProTransferSheetStyles = createGetStyles2024(
       tokenIcon: { height: 24, width: 24 },
       tokenText: {
         color: colors2024['neutral-title-1'],
-        fontFamily: FontNames.sf_pro,
+        fontFamily: 'SF Pro Rounded',
         fontSize: 16,
         fontWeight: '500',
         lineHeight: 20,
@@ -143,7 +142,7 @@ export const getPerpsProTransferSheetStyles = createGetStyles2024(
       shortcutDisabled: { opacity: 0.55 },
       shortcutText: {
         color: colors2024['neutral-title-1'],
-        fontFamily: FontNames.sf_pro,
+        fontFamily: 'SF Pro Rounded',
         fontSize: 12,
         fontWeight: '500',
         lineHeight: 16,

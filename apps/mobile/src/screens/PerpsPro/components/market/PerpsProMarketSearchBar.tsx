@@ -264,7 +264,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   input: {
     bottom: 0,
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '700',
     height: 18,
@@ -280,7 +280,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   activePlaceholder: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '400',
     left: 2,
@@ -297,7 +297,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   placeholder: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '400',
     lineHeight: 18,
@@ -310,7 +310,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   cancelText: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '400',
     lineHeight: 18,

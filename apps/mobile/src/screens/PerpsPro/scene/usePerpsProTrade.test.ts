@@ -50,13 +50,20 @@ const mockMarketOrderOpen = jest.fn(async () => ({
   },
   status: 'ok',
 }));
-const mockReportAttachedParentHistory = jest.fn();
+const mockReportAttachedOrderHistory = jest.fn();
 const mockReportOpenOrderHistory = jest.fn();
 const mockShowToast = jest.fn();
 const mockSetTpSlMode = jest.fn(async () => undefined);
 const mockCalLiquidationPrice = jest.fn((..._args: unknown[]) => 50);
 const mockResolvePerpsProMarketLiquidationRisk = jest.fn();
 const mockExecuteAttached = jest.fn(async (..._args: unknown[]) => ({
+  confirmedChildren: [
+    {
+      acceptance: 'resting' as const,
+      oid: 2,
+      role: 'takeProfit' as const,
+    },
+  ],
   confirmedParent: {
     acceptance: 'filled' as const,
     oid: 1,
@@ -210,8 +217,8 @@ jest.mock('@/utils/perps', () => ({
 }));
 
 jest.mock('../analytics/manualTradeHistory', () => ({
-  reportPerpsProAttachedParentHistory: (...args: unknown[]) =>
-    mockReportAttachedParentHistory(...args),
+  reportPerpsProAttachedOrderHistory: (...args: unknown[]) =>
+    mockReportAttachedOrderHistory(...args),
   reportPerpsProOpenOrderHistory: (...args: unknown[]) =>
     mockReportOpenOrderHistory(...args),
 }));
@@ -871,12 +878,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     );
   });
 
-  it('submits a BBO order above only the selected-side Max and surfaces the server error', async () => {
-    const serverError = 'Insufficient margin on server';
-    mockLimitOrderOpen.mockResolvedValueOnce({
-      response: { data: { statuses: [{ error: serverError }] } },
-      status: 'ok',
-    });
+  it('blocks a BBO order above the selected-side Max when Buy is pressed', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
         activeAssetData: {
@@ -901,7 +903,56 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(mockShowToast).not.toHaveBeenCalled();
 
     await act(async () => hook.result.current.requestReview('buy'));
-    expect(hook.result.current.review).toMatchObject({ side: 'buy' });
+    expect(hook.result.current.review).toBeNull();
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.trade.insufficientBalance',
+      'error',
+    );
+    expect(mockGetSkipConfirmation).not.toHaveBeenCalled();
+    expect(mockLimitOrderOpen).not.toHaveBeenCalled();
+  });
+
+  it('keeps the frozen BBO review server-authoritative if Max falls after review', async () => {
+    const serverError = 'Insufficient margin on server';
+    mockLimitOrderOpen.mockResolvedValueOnce({
+      response: { data: { statuses: [{ error: serverError }] } },
+      status: 'ok',
+    });
+    const hook = renderHook(
+      ({ buyMax }: { buyMax: string }) =>
+        usePerpsProTrade({
+          activeAssetData: {
+            ...activeAssetData,
+            maxTradeSzs: [buyMax, '10'],
+          },
+          bboBook: book,
+          bboPrices: {
+            asks1: '101',
+            asks5: null,
+            bids1: '99',
+            bids5: null,
+          },
+          bboSessionKey: 'BTC:1',
+          bboStatus: 'ready',
+          executionActive: true,
+          leveragePending: false,
+          market,
+          refreshActiveAssetData: jest.fn(async () => undefined),
+          updateLeverageRequest: jest.fn(async () => true),
+        }),
+      { initialProps: { buyMax: '2' } },
+    );
+
+    act(() => hook.result.current.setOrderType('limit'));
+    act(() => hook.result.current.enableBbo('cp1'));
+    act(() => hook.result.current.setAmount('101'));
+    await act(async () => hook.result.current.requestReview('buy'));
+    expect(hook.result.current.review).toMatchObject({
+      baseSize: '1.01',
+      side: 'buy',
+    });
+
+    hook.rerender({ buyMax: '0.5' });
     await act(async () => hook.result.current.confirmReview());
 
     expect(mockLimitOrderOpen).toHaveBeenCalledWith(
@@ -1149,7 +1200,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(hook.result.current.tpSl.disabled).toBe(false);
   });
 
-  it('toasts once per input episode only after canonical size exceeds the shared Max', () => {
+  it('never toasts while manual Amount input moves above or below Max', () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
         activeAssetData: {
@@ -1170,32 +1221,25 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
 
     act(() => hook.result.current.setAmount('600'));
     act(() => hook.result.current.setAmount('1000.01'));
-    expect(mockShowToast).not.toHaveBeenCalled();
-
     act(() => hook.result.current.setAmount('1001'));
-    expect(mockShowToast).toHaveBeenCalledWith(
-      'page.perps.pro.trade.insufficientBalance',
-      'error',
-    );
     act(() => hook.result.current.setAmount('1002'));
-    expect(mockShowToast).toHaveBeenCalledTimes(1);
-
     act(() => hook.result.current.setAmount('900'));
     act(() => hook.result.current.setAmount('1001'));
-    expect(mockShowToast).toHaveBeenCalledTimes(2);
+
+    expect(hook.result.current.form.amount).toBe('1001');
+    expect(hook.result.current.resolvedAmount).toEqual({
+      baseSize: '10.01',
+      quoteAmount: '1001',
+    });
+    expect(mockShowToast).not.toHaveBeenCalled();
   });
 
   it.each([
-    ['buy', ['5', '10']],
-    ['sell', ['10', '5']],
+    ['buy', 'sell', ['5', '10']],
+    ['sell', 'buy', ['10', '5']],
   ] as const)(
-    'lets a %s order above only that direction Max reach the server',
-    async (side, maxTradeSzs) => {
-      const serverError = `${side} insufficient margin on server`;
-      mockMarketOrderOpen.mockResolvedValueOnce({
-        response: { data: { statuses: [{ error: serverError }] } },
-        status: 'ok',
-      });
+    'blocks %s against its own Max while the same Amount remains valid for %s',
+    async (blockedSide, allowedSide, maxTradeSzs) => {
       const hook = renderHook(() =>
         usePerpsProTrade({
           activeAssetData: { ...activeAssetData, maxTradeSzs },
@@ -1214,26 +1258,27 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       act(() => hook.result.current.setAmount('600'));
       expect(mockShowToast).not.toHaveBeenCalled();
 
-      await act(async () => hook.result.current.requestReview(side));
-      expect(hook.result.current.review).toMatchObject({ side });
-      expect(mockShowToast).not.toHaveBeenCalled();
-
-      await act(async () => hook.result.current.confirmReview());
-      expect(mockMarketOrderOpen).toHaveBeenCalledWith(
-        expect.objectContaining({ isBuy: side === 'buy', size: '6' }),
+      await act(async () => hook.result.current.requestReview(blockedSide));
+      expect(hook.result.current.review).toBeNull();
+      expect(mockShowToast).toHaveBeenCalledWith(
+        'page.perps.pro.trade.insufficientBalance',
+        'error',
       );
-      expect(mockShowToast).toHaveBeenCalledWith(serverError, 'error');
+      expect(mockGetSkipConfirmation).not.toHaveBeenCalled();
+
+      mockShowToast.mockClear();
+      await act(async () => hook.result.current.requestReview(allowedSide));
+      expect(hook.result.current.review).toMatchObject({
+        baseSize: '6',
+        side: allowedSide,
+      });
+      expect(mockShowToast).not.toHaveBeenCalled();
+      expect(mockGetSkipConfirmation).toHaveBeenCalledWith('market');
+      expect(mockMarketOrderOpen).not.toHaveBeenCalled();
     },
   );
 
-  it('lets an attached order above only the selected-side Max surface the parent server error', async () => {
-    const serverError = 'attached buy insufficient margin on server';
-    mockExecuteAttached.mockResolvedValueOnce({
-      error: serverError,
-      kind: 'parentRejected',
-      reconciliationErrors: [],
-      refreshErrors: [],
-    });
+  it('blocks an attached order above the selected-side Max before review', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
         activeAssetData: {
@@ -1258,10 +1303,58 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(mockShowToast).not.toHaveBeenCalled();
 
     await act(async () => hook.result.current.requestReview('buy'));
+    expect(hook.result.current.review).toBeNull();
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.trade.insufficientBalance',
+      'error',
+    );
+    expect(mockGetSkipConfirmation).not.toHaveBeenCalled();
+    expect(mockExecuteAttached).not.toHaveBeenCalled();
+  });
+
+  it('keeps the frozen attached review server-authoritative if Max falls after review', async () => {
+    const serverError = 'attached buy insufficient margin on server';
+    mockExecuteAttached.mockResolvedValueOnce({
+      error: serverError,
+      kind: 'parentRejected',
+      reconciliationErrors: [],
+      refreshErrors: [],
+    });
+    const hook = renderHook(
+      ({ buyMax }: { buyMax: string }) =>
+        usePerpsProTrade({
+          activeAssetData: {
+            ...activeAssetData,
+            maxTradeSzs: [buyMax, '10'],
+          },
+          bboBook: book,
+          bboPrices: {
+            asks1: '101',
+            asks5: null,
+            bids1: '99',
+            bids5: null,
+          },
+          bboSessionKey: 'BTC:1',
+          bboStatus: 'ready',
+          executionActive: true,
+          leveragePending: false,
+          market,
+          refreshActiveAssetData: jest.fn(async () => undefined),
+          updateLeverageRequest: jest.fn(async () => true),
+        }),
+      { initialProps: { buyMax: '10' } },
+    );
+
+    act(() => hook.result.current.setAmount('600'));
+    act(() => hook.result.current.tpSl.setRawMagnitude('tp', '110'));
+    act(() => hook.result.current.tpSl.setEnabled(true));
+    await act(async () => hook.result.current.requestReview('buy'));
     expect(hook.result.current.review).toMatchObject({
-      parent: { side: 'buy' },
+      parent: { baseSize: '6', side: 'buy' },
       type: 'openOrderWithAttachedTpSl',
     });
+
+    hook.rerender({ buyMax: '5' });
     await act(async () => hook.result.current.confirmReview());
 
     expect(mockExecuteAttached).toHaveBeenCalledWith(
@@ -1311,13 +1404,75 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     );
   });
 
-  it('keeps shared overflow as a direction-neutral local click guard', async () => {
+  it.each([
+    ['base equality', 'base', '5', '5', false, '5'],
+    ['base overflow', 'base', '5.01', '5', true, null],
+    [
+      'quote equality after lot quantization',
+      'quote',
+      '1000.01',
+      '10',
+      false,
+      '10',
+    ],
+    [
+      'quote overflow after lot quantization',
+      'quote',
+      '1001',
+      '10',
+      true,
+      null,
+    ],
+  ] as const)(
+    'uses frozen canonical baseSize for %s',
+    async (_label, amountUnit, amount, buyMax, blocked, expectedBaseSize) => {
+      const hook = renderHook(() =>
+        usePerpsProTrade({
+          activeAssetData: {
+            ...activeAssetData,
+            maxTradeSzs: [buyMax, '20'],
+          },
+          bboBook: book,
+          bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+          bboSessionKey: 'BTC:1',
+          bboStatus: 'ready',
+          executionActive: true,
+          leveragePending: false,
+          market,
+          refreshActiveAssetData: jest.fn(async () => undefined),
+          updateLeverageRequest: jest.fn(async () => true),
+        }),
+      );
+
+      if (amountUnit === 'base') {
+        act(() => hook.result.current.toggleAmountUnit());
+      }
+      act(() => hook.result.current.setAmount(amount));
+      expect(mockShowToast).not.toHaveBeenCalled();
+
+      await act(async () => hook.result.current.requestReview('buy'));
+
+      if (blocked) {
+        expect(hook.result.current.review).toBeNull();
+        expect(mockShowToast).toHaveBeenCalledWith(
+          'page.perps.pro.trade.insufficientBalance',
+          'error',
+        );
+        expect(mockGetSkipConfirmation).not.toHaveBeenCalled();
+      } else {
+        expect(hook.result.current.review).toMatchObject({
+          baseSize: expectedBaseSize,
+          side: 'buy',
+        });
+        expect(mockShowToast).not.toHaveBeenCalled();
+      }
+    },
+  );
+
+  it('treats an identity-scoped finite zero Max as known capacity', async () => {
     const hook = renderHook(() =>
       usePerpsProTrade({
-        activeAssetData: {
-          ...activeAssetData,
-          maxTradeSzs: ['5', '10'],
-        },
+        activeAssetData: { ...activeAssetData, maxTradeSzs: ['0', '10'] },
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
         bboSessionKey: 'BTC:1',
@@ -1330,12 +1485,81 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       }),
     );
 
-    act(() => hook.result.current.setAmount('1001'));
-    mockShowToast.mockClear();
+    act(() => hook.result.current.setAmount('100'));
+    expect(mockShowToast).not.toHaveBeenCalled();
     await act(async () => hook.result.current.requestReview('buy'));
 
     expect(hook.result.current.review).toBeNull();
     expect(mockShowToast).toHaveBeenCalledWith(
+      'page.perps.pro.trade.insufficientBalance',
+      'error',
+    );
+    expect(mockGetSkipConfirmation).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['missing', null],
+    ['invalid', { ...activeAssetData, maxTradeSzs: ['invalid', '10'] }],
+    [
+      'wrong identity',
+      {
+        ...activeAssetData,
+        maxTradeSzs: ['0', '10'],
+        user: '0x0000000000000000000000000000000000000002',
+      },
+    ],
+  ] as const)(
+    'does not synthesize a zero-capacity guard for %s selected Max data',
+    async (_label, nextActiveAssetData) => {
+      const hook = renderHook(() =>
+        usePerpsProTrade({
+          activeAssetData: nextActiveAssetData,
+          bboBook: book,
+          bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+          bboSessionKey: 'BTC:1',
+          bboStatus: 'ready',
+          executionActive: true,
+          leveragePending: false,
+          market,
+          refreshActiveAssetData: jest.fn(async () => undefined),
+          updateLeverageRequest: jest.fn(async () => true),
+        }),
+      );
+
+      act(() => hook.result.current.setAmount('100'));
+      await act(async () => hook.result.current.requestReview('buy'));
+
+      expect(hook.result.current.review).toMatchObject({
+        baseSize: '1',
+        side: 'buy',
+      });
+      expect(mockShowToast).not.toHaveBeenCalled();
+      expect(mockGetSkipConfirmation).toHaveBeenCalledWith('market');
+    },
+  );
+
+  it('keeps the canonical minimum-amount error ahead of a known zero Max', async () => {
+    const hook = renderHook(() =>
+      usePerpsProTrade({
+        activeAssetData: { ...activeAssetData, maxTradeSzs: ['0', '10'] },
+        bboBook: book,
+        bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
+        bboSessionKey: 'BTC:1',
+        bboStatus: 'ready',
+        executionActive: true,
+        leveragePending: false,
+        market,
+        refreshActiveAssetData: jest.fn(async () => undefined),
+        updateLeverageRequest: jest.fn(async () => true),
+      }),
+    );
+
+    act(() => hook.result.current.setAmount('5'));
+    await act(async () => hook.result.current.requestReview('buy'));
+
+    expect(hook.result.current.review).toBeNull();
+    expect(mockShowToast).toHaveBeenCalledWith('Minimum amount is 10', 'error');
+    expect(mockShowToast).not.toHaveBeenCalledWith(
       'page.perps.pro.trade.insufficientBalance',
       'error',
     );
@@ -1381,7 +1605,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     expect(hook.result.current.getSliderButtonDisplayAmount('sell')).toBe('50');
   });
 
-  it('shows the Reduce Only direction error before generic Amount or Max errors', async () => {
+  it('shows the Reduce Only direction error before a known zero Max error', async () => {
     mockPerpsState.currentClearinghouseState.assetPositions.push({
       position: {
         coin: 'BTC',
@@ -1391,7 +1615,10 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
     } as never);
     const hook = renderHook(() =>
       usePerpsProTrade({
-        activeAssetData,
+        activeAssetData: {
+          ...activeAssetData,
+          maxTradeSzs: ['0', '10'],
+        },
         bboBook: book,
         bboPrices: { asks1: '101', asks5: null, bids1: '99', bids5: null },
         bboSessionKey: 'BTC:1',
@@ -1404,6 +1631,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       }),
     );
 
+    act(() => hook.result.current.setAmount('100'));
     act(() => hook.result.current.patchForm({ reduceOnly: true }));
     await act(async () => hook.result.current.requestReview('buy'));
 
@@ -1613,7 +1841,7 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
       expect.objectContaining({ type: 'openOrderWithAttachedTpSl' }),
       expect.any(Function),
     );
-    expect(mockReportAttachedParentHistory).toHaveBeenCalledWith(
+    expect(mockReportAttachedOrderHistory).toHaveBeenCalledWith(
       expect.objectContaining({
         parent: expect.objectContaining({ side: 'buy' }),
       }),
@@ -1623,6 +1851,13 @@ describe('usePerpsProTrade attached TP/SL execution integration', () => {
         price: '101',
         size: '1.01',
       },
+      [
+        {
+          acceptance: 'resting',
+          oid: 2,
+          role: 'takeProfit',
+        },
+      ],
     );
     expect(mockEnsureApproval).not.toHaveBeenCalled();
     expect(mockGetPerpsSdk).not.toHaveBeenCalled();

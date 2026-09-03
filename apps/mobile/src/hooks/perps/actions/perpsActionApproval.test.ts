@@ -24,7 +24,7 @@ const mockSetApproveBuilderFee = jest.fn();
 
 const mockAccount = {
   address: '0x0000000000000000000000000000000000000001',
-  type: 'WatchAddressKeyring',
+  type: 'Ledger Hardware',
 } as const;
 
 const mockState = {
@@ -112,6 +112,87 @@ describe('ensurePerpsActionApproval', () => {
     expect(mockExtraAgents).toHaveBeenCalledWith(mockAccount.address);
     expect(mockGetMaxBuilderFee).toHaveBeenCalled();
     expect(mockSignActions).not.toHaveBeenCalled();
+  });
+
+  it('clears stale local flags without reapproving remotely valid capabilities', async () => {
+    mockState.accountNeedApproveAgent = true;
+    mockState.accountNeedApproveBuilderFee = true;
+
+    await ensurePerpsActionApproval(mockAccount as never);
+
+    expect(mockExtraAgents).toHaveBeenCalledWith(mockAccount.address);
+    expect(mockGetMaxBuilderFee).toHaveBeenCalled();
+    expect(mockPrepareApproveAgent).not.toHaveBeenCalled();
+    expect(mockPrepareApproveBuilderFee).not.toHaveBeenCalled();
+    expect(mockSignActions).not.toHaveBeenCalled();
+    expect(mockSendApproveAgent).not.toHaveBeenCalled();
+    expect(mockSendApproveBuilderFee).not.toHaveBeenCalled();
+    expect(mockSetApproveAgent).toHaveBeenCalledWith(false);
+    expect(mockSetApproveBuilderFee).toHaveBeenCalledWith(false);
+  });
+
+  it('uses a stale local flag to bypass a cached remote result', async () => {
+    await ensurePerpsActionApproval(mockAccount as never);
+
+    mockState.accountNeedApproveAgent = true;
+    mockExtraAgents.mockResolvedValue([]);
+    mockCreatePerpsAgentWallet.mockResolvedValue({
+      agentAddress: '0x0000000000000000000000000000000000000003',
+      vault: 'encrypted-vault',
+    });
+
+    await ensurePerpsActionApproval(mockAccount as never);
+
+    // First call populates the cache. The stale flag forces the second call to
+    // query again; rotation performs one additional limit/name query.
+    expect(mockExtraAgents).toHaveBeenCalledTimes(3);
+    expect(mockCreatePerpsAgentWallet).toHaveBeenCalledTimes(1);
+    expect(mockSendApproveAgent).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses a stale builder flag to bypass cache without reapproving the agent', async () => {
+    await ensurePerpsActionApproval(mockAccount as never);
+
+    mockState.accountNeedApproveBuilderFee = true;
+    mockGetMaxBuilderFee.mockResolvedValue(0);
+
+    await ensurePerpsActionApproval(mockAccount as never);
+
+    expect(mockExtraAgents).toHaveBeenCalledTimes(2);
+    expect(mockGetMaxBuilderFee).toHaveBeenCalledTimes(2);
+    expect(mockPrepareApproveAgent).not.toHaveBeenCalled();
+    expect(mockSendApproveAgent).not.toHaveBeenCalled();
+    expect(mockPrepareApproveBuilderFee).toHaveBeenCalledTimes(1);
+    expect(mockSendApproveBuilderFee).toHaveBeenCalledTimes(1);
+  });
+
+  it('approves a freshly created local agent without creating another one', async () => {
+    mockApplyPerpsSigner.mockResolvedValue({
+      agentAddress: '0x0000000000000000000000000000000000000003',
+      isCreate: true,
+      isSelfSign: false,
+    });
+    mockExtraAgents.mockResolvedValue([]);
+
+    await ensurePerpsActionApproval(mockAccount as never);
+
+    expect(mockCreatePerpsAgentWallet).not.toHaveBeenCalled();
+    expect(mockInitPerpsAgentAccount).not.toHaveBeenCalled();
+    expect(mockPrepareApproveAgent).toHaveBeenCalledTimes(1);
+    expect(mockSendApproveAgent).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not reapprove a newly reported signer when remote already has it', async () => {
+    mockApplyPerpsSigner.mockResolvedValue({
+      agentAddress: '0x0000000000000000000000000000000000000002',
+      isCreate: true,
+      isSelfSign: false,
+    });
+
+    await ensurePerpsActionApproval(mockAccount as never);
+
+    expect(mockPrepareApproveAgent).not.toHaveBeenCalled();
+    expect(mockSendApproveAgent).not.toHaveBeenCalled();
   });
 
   it('rotates and signs a remotely expired agent before the action continues', async () => {

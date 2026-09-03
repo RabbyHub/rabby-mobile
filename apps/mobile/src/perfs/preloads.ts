@@ -95,6 +95,7 @@ export const TESTKITS_PRELOAD_SCREENS: { [P in AppRootName]?: P } = {
   [RootNames.DevCapabilityFile]: 'DevCapabilityFile',
   [RootNames.DevUIBuiltInPages]: 'DevUIBuiltInPages',
   [RootNames.DevDataSQLite]: 'DevDataSQLite',
+  [RootNames.DevWatchAddressFixtureImport]: 'DevWatchAddressFixtureImport',
   [RootNames.DevDataKeychain]: 'DevDataKeychain',
   [RootNames.DevDataKeyringVault]: 'DevDataKeyringVault',
   [RootNames.DevDataContactService]: 'DevDataContactService',

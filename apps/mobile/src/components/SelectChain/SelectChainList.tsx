@@ -1,5 +1,8 @@
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
-import { FlatList, View } from 'react-native';
+import type { AppColorsVariants } from '@/constant/theme';
+import { useThemeColors } from '@/hooks/theme';
+import { useMemo } from 'react';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { SelectChainItem } from './SelectChainItem';
 
 export const SelectChainList = ({
@@ -11,10 +14,13 @@ export const SelectChainList = ({
   onChange?(value: CHAINS_ENUM): void;
   data: Chain[];
 }) => {
+  const colors = useThemeColors();
+  const styles = useMemo(() => getStyles(colors), [colors]);
+
   return (
     <FlatList
       data={data}
-      className="px-[16] rounded-r-[6] rounded-l-[6] bg-r-neutral-card2"
+      style={styles.list}
       ItemSeparatorComponent={Divider}
       keyExtractor={item => item.enum}
       renderItem={({ item }) => {
@@ -24,4 +30,22 @@ export const SelectChainList = ({
   );
 };
 
-const Divider = () => <View className="h-[0.5] bg-r-neutral-line" />;
+const Divider = () => {
+  const colors = useThemeColors();
+  const styles = useMemo(() => getStyles(colors), [colors]);
+
+  return <View style={styles.divider} />;
+};
+
+const getStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    list: {
+      paddingHorizontal: 16,
+      borderRadius: 6,
+      backgroundColor: colors['neutral-card2'],
+    },
+    divider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors['neutral-line'],
+    },
+  });

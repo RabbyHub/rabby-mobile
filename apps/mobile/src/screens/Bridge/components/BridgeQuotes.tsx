@@ -2,7 +2,6 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useSetRefreshId } from '../hooks/context';
 import type { SelectedBridgeQuote } from '../types';
-import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { TouchableOpacity, View } from 'react-native';
@@ -14,7 +13,10 @@ import { RcIconEmptyCC } from '@/assets/icons/gnosis';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import RcIconRefreshCC from '@/assets2024/icons/bridge/IconRefreshCC.svg';
 import { BridgeQuoteItem } from './BridgeQuoteItem';
-import { bridgeQuoteScore } from '../utils/bridgeQuote';
+import {
+  bridgeQuoteEstimatedValueBn,
+  bridgeQuoteScore,
+} from '../utils/bridgeQuote';
 import { QuoteLoading } from './loading';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { Text } from '@/components/Typography';
@@ -70,6 +72,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     position: 'absolute',
     top: -2,
     right: 24,
+    zIndex: 1,
   },
   container: {
     flexGrow: 1,
@@ -122,15 +125,9 @@ export const Quotes = ({
   const { t } = useTranslation();
 
   const sortedList = useMemo(() => {
-    return [...(list || [])].sort((b, a) => {
-      return new BigNumber(a.to_token_amount)
-        .times(other.receiveToken.price || 1)
-        .minus(a.gas_fee.usd_value)
-        .minus(
-          new BigNumber(b.to_token_amount)
-            .times(other.receiveToken.price || 1)
-            .minus(b.gas_fee.usd_value),
-        )
+    return [...(list || [])].sort((a, b) => {
+      return bridgeQuoteEstimatedValueBn(b, other.receiveToken)
+        .minus(bridgeQuoteEstimatedValueBn(a, other.receiveToken))
         .toNumber();
     });
   }, [list, other.receiveToken]);
@@ -156,10 +153,7 @@ export const Quotes = ({
     if (!first) {
       return '0';
     }
-    return new BigNumber(first.to_token_amount)
-      .times(other.receiveToken.price || 1)
-      .minus(first.gas_fee.usd_value)
-      .toString();
+    return bridgeQuoteEstimatedValueBn(first, other.receiveToken).toString();
   }, [sortedList, other.receiveToken]);
 
   return (
@@ -234,7 +228,10 @@ export const QuoteList = (props: QuotesProps) => {
         linearGradientType: isLight ? 'bg0' : 'bg1',
       })}>
       <View style={{ flex: 1, position: 'relative' }}>
-        <TouchableOpacity onPress={refreshQuote} style={styles.refreshIconBtn}>
+        <TouchableOpacity
+          hitSlop={10}
+          onPress={refreshQuote}
+          style={styles.refreshIconBtn}>
           <RcIconRefreshCC color={colors2024['neutral-body']} />
         </TouchableOpacity>
         <View

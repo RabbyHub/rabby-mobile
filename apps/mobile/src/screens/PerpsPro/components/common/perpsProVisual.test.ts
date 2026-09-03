@@ -1,15 +1,18 @@
 import { ThemeColors2024 } from '@/constant/theme';
-import { FontNames } from '@/core/utils/fonts';
 import { Platform } from 'react-native';
 
 import {
   getPerpsProBottomSheetChromeStyles,
+  getPerpsProFontStyle,
   getPerpsProIsolatedTextStyle,
+  getPerpsProTradeControlMediumTextStyle,
   PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
   PERPS_PRO_CONFIRM_BUTTON_STYLE,
+  PERPS_PRO_FONT_FAMILY,
   PERPS_PRO_ISOLATED_TEXT_STYLE,
   PERPS_PRO_LIGHT_FIELD_BACKGROUND,
   PERPS_PRO_ORDER_CONFIRMATION_FOOTER_TOP_OFFSET,
+  PERPS_PRO_REGULAR_TEXT_STYLE,
   resolvePerpsProFieldBackground,
 } from './perpsProVisual';
 
@@ -56,20 +59,50 @@ describe('Perps Pro visual contract', () => {
     });
   });
 
-  it('overrides the shared rounded button default with semantic SF Pro', () => {
-    expect(PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE.fontFamily).toBe(
-      FontNames.sf_pro,
+  it('maps raw text styles to the platform-specific rounded font face', () => {
+    expect(getPerpsProFontStyle('ios', '500')).toEqual({
+      fontFamily: PERPS_PRO_FONT_FAMILY,
+      fontWeight: '500',
+    });
+    expect(getPerpsProFontStyle('android', '400')).toEqual({
+      fontFamily: 'SF-Pro-Rounded-Regular',
+      fontWeight: undefined,
+    });
+    expect(getPerpsProFontStyle('android', '500')).toEqual({
+      fontFamily: 'SF-Pro-Rounded-Medium',
+      fontWeight: undefined,
+    });
+    expect(getPerpsProFontStyle('android', '600')).toEqual({
+      fontFamily: 'SF-Pro-Rounded-Bold',
+      fontWeight: undefined,
+    });
+    expect(getPerpsProFontStyle('android', '900')).toEqual({
+      fontFamily: 'SF-Pro-Rounded-Heavy',
+      fontWeight: undefined,
+    });
+  });
+
+  it('keeps shared button and trade-control font overrides Pro-private', () => {
+    expect(PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE).toMatchObject(
+      getPerpsProFontStyle(Platform.OS, '500'),
     );
+    expect(PERPS_PRO_REGULAR_TEXT_STYLE).toEqual(
+      getPerpsProFontStyle(Platform.OS),
+    );
+    expect(getPerpsProTradeControlMediumTextStyle('android')).toEqual({
+      fontFamily: 'SF-Pro-Rounded-Medium',
+      fontWeight: undefined,
+    });
+    expect(getPerpsProTradeControlMediumTextStyle('ios')).toEqual({
+      fontFamily: PERPS_PRO_FONT_FAMILY,
+      fontWeight: '500',
+    });
+    expect(
+      getPerpsProTradeControlMediumTextStyle(Platform.OS).fontVariant,
+    ).toBeUndefined();
     expect(PERPS_PRO_ISOLATED_TEXT_STYLE).toEqual(
       getPerpsProIsolatedTextStyle(Platform.OS),
     );
-    expect(getPerpsProIsolatedTextStyle('android')).toEqual({
-      fontFamily: 'SF-Pro-Rounded-Medium',
-      fontVariant: ['stylistic-six'],
-    });
-    expect(getPerpsProIsolatedTextStyle('ios')).toEqual({
-      fontVariant: ['stylistic-six'],
-    });
     expect(PERPS_PRO_ORDER_CONFIRMATION_FOOTER_TOP_OFFSET).toBe(24);
     expect(PERPS_PRO_CONFIRM_BUTTON_STYLE).toEqual({ borderRadius: 8 });
   });

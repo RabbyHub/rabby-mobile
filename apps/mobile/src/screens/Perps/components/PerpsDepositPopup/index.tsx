@@ -37,7 +37,14 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, Platform, TouchableOpacity, View } from 'react-native';
+import {
+  Keyboard,
+  Platform,
+  TouchableOpacity,
+  View,
+  type StyleProp,
+  type TextStyle,
+} from 'react-native';
 import { useUsdInput } from '@/hooks/useUsdInput';
 import AuthButton from '@/components2024/AuthButton';
 import { zCreate, zMutative } from '@/core/utils/reexports';
@@ -219,6 +226,8 @@ const usePerpsDepositTokenIndexStore = zCreate(
 export const PerpsDepositPopup: React.FC<{
   account?: Account | null;
   visible?: boolean;
+  inputTextStyle?: StyleProp<TextStyle>;
+  tooltipTextStyle?: StyleProp<TextStyle>;
   onClose(): void;
   onDeposit?(
     txs: Tx[],
@@ -226,7 +235,14 @@ export const PerpsDepositPopup: React.FC<{
     cacheBridgeHistory?: PerpBridgeHistory,
     options?: PerpsDepositOptions,
   ): Promise<string | undefined>;
-}> = ({ visible, onClose, account, onDeposit }) => {
+}> = ({
+  visible,
+  onClose,
+  account,
+  onDeposit,
+  inputTextStyle,
+  tooltipTextStyle,
+}) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   const { styles, colors2024, isLight } = useTheme2024({
@@ -951,7 +967,11 @@ export const PerpsDepositPopup: React.FC<{
                 onClose={hideTip}
                 content={
                   <View style={{ width: 280, padding: 8 }}>
-                    <Text style={{ fontSize: 12, color: '#fff' }}>
+                    <Text
+                      style={[
+                        { fontSize: 12, color: '#fff' },
+                        tooltipTextStyle,
+                      ]}>
                       {t('page.perps.PerpsDepositPopup.estReceiveTooltip', {
                         number: bridgeQuote?.duration || 0,
                       })}
@@ -985,6 +1005,7 @@ export const PerpsDepositPopup: React.FC<{
     estReceiveUsdValue,
     tipVisible,
     hideTip,
+    tooltipTextStyle,
   ]);
 
   if (!account) {
@@ -1031,6 +1052,7 @@ export const PerpsDepositPopup: React.FC<{
                   keyboardType="numeric"
                   style={[
                     styles.input,
+                    inputTextStyle,
                     !amountValidation.isValid && usdValue !== ''
                       ? styles.inputError
                       : null,

@@ -22,6 +22,21 @@ jest.mock('@/core/native/utils', () => ({
   },
 }));
 
+jest.mock('react-native-reanimated', () => {
+  const ReactModule = require('react');
+  const ReactNative = require('react-native');
+  return {
+    __esModule: true,
+    default: { Text: ReactNative.Text, View: ReactNative.View },
+    Easing: { bezier: jest.fn(() => jest.fn()) },
+    ReduceMotion: { System: 'system' },
+    cancelAnimation: jest.fn(),
+    useAnimatedStyle: (factory: () => object) => factory(),
+    useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
+    withTiming: (target: number) => target,
+  };
+});
+
 jest.mock('./PerpsProMarketPager', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -631,6 +646,99 @@ describe('PerpsProMarketSelector', () => {
     expect(getLatestMarketListProps('all').renderProfile).toBe('prepared');
   });
 
+  it('keeps a distant page jump direct without traversing intermediate tabs', () => {
+    __setCategories([
+      {
+        id: 'category-a',
+        is_disable: false,
+        name: 'Category A',
+        priority: 0,
+        translations: {},
+      },
+      {
+        id: 'category-b',
+        is_disable: false,
+        name: 'Category B',
+        priority: 1,
+        translations: {},
+      },
+      {
+        id: 'category-c',
+        is_disable: false,
+        name: 'Category C',
+        priority: 2,
+        translations: {},
+      },
+    ]);
+    __setMarketData(
+      mockPerpsStore.getState().marketData.map((market, index) => ({
+        ...market,
+        categoryId: `category-${String.fromCharCode(97 + index)}`,
+      })),
+    );
+    render(
+      <PerpsProMarketSelector currentMarketKey={null} onSelect={jest.fn()} />,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-market-tab-category-c'));
+
+    expect(mockPagerSetPage).not.toHaveBeenCalled();
+    expect(mockPagerSetPageWithoutAnimation).toHaveBeenCalledWith(3);
+    expect(
+      screen.getByTestId('perps-pro-market-tab-category-c').props
+        .accessibilityState,
+    ).toEqual({ selected: true });
+  });
+
+  it('keeps the latest reverse command when old pager callbacks arrive first', () => {
+    const queuedFrames = new Map<number, FrameRequestCallback>();
+    let nextFrameId = 0;
+    (
+      global.requestAnimationFrame as jest.MockedFunction<
+        typeof requestAnimationFrame
+      >
+    ).mockImplementation(callback => {
+      nextFrameId += 1;
+      queuedFrames.set(nextFrameId, callback);
+      return nextFrameId;
+    });
+    jest.spyOn(global, 'cancelAnimationFrame').mockImplementation(frameId => {
+      queuedFrames.delete(frameId);
+    });
+    __setFavoriteMarkets(['BTC']);
+    render(
+      <PerpsProMarketSelector currentMarketKey={null} onSelect={jest.fn()} />,
+    );
+    const flushQueuedFrames = () => {
+      act(() => {
+        const callbacks = [...queuedFrames.values()];
+        queuedFrames.clear();
+        callbacks.forEach(callback => callback(0));
+      });
+    };
+    flushQueuedFrames();
+
+    fireEvent.press(screen.getByTestId('perps-pro-market-tab-favorites'));
+    flushQueuedFrames();
+    expect(mockPagerSetPage.mock.calls).toEqual([[0]]);
+
+    fireEvent.press(screen.getByTestId('perps-pro-market-tab-all'));
+    const pager = screen.getByTestId('perps-pro-market-pager');
+    fireEvent(pager, 'pagePreview', 0);
+    fireEvent(pager, 'pageSelected', 0);
+
+    expect(
+      screen.getByTestId('perps-pro-market-tab-all').props.accessibilityState,
+    ).toEqual({ selected: true });
+    flushQueuedFrames();
+
+    expect(mockPagerSetPage.mock.calls).toEqual([[0], [1]]);
+    expect(mockPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
+    expect(
+      screen.getByTestId('perps-pro-market-tab-all').props.accessibilityState,
+    ).toEqual({ selected: true });
+  });
+
   it('previews the swipe target without feeding it back into pager state', () => {
     __setFavoriteMarkets(['BTC']);
     render(
@@ -681,10 +789,14 @@ describe('PerpsProMarketSelector', () => {
       mockBottomSheetModalProps.mock.calls[
         mockBottomSheetModalProps.mock.calls.length - 1
       ][0];
+    const indicatorPosition = screen.getByTestId('perps-pro-market-pager').props
+      .indicatorPosition as { value: number };
+    indicatorPosition.value = 0.25;
     act(() => {
       modalProps.onDismiss();
     });
     expect(mockPagerSetPageWithoutAnimation).toHaveBeenCalledWith(1);
+    expect(indicatorPosition.value).toBe(1);
     expect(
       screen.getByTestId('perps-pro-market-tab-all').props.accessibilityState,
     ).toEqual({ selected: true });

@@ -13,6 +13,7 @@ const SCENARIO_MODULE_LOADERS: Record<
   'lock-unlock': () => import('./scenarios/wallet'),
   'address-switch': () => import('./scenarios/coreNavigation'),
   'home-assets': () => import('./scenarios/coreNavigation'),
+  'high-cardinality-assets': () => import('./scenarios/coreNavigation'),
   'single-address': () => import('./scenarios/coreNavigation'),
   'token-detail': () => import('./scenarios/coreNavigation'),
   'send-receive': () => import('./scenarios/coreNavigation'),
@@ -40,6 +41,7 @@ const SCENARIO_MODULE_LOADERS: Record<
   'approvals-entry': () => import('./scenarios/focused'),
   'rabby-points-entry': () => import('./scenarios/focused'),
   'convert-dust-entry': () => import('./scenarios/focused'),
+  'worker-thread': () => import('./scenarios/worker'),
 };
 
 export function loadRegressionScenarioModule(scenario: RegressionScenarioId) {

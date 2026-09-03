@@ -28,6 +28,7 @@ import {
 import { reconcilePerpsProAttachedTpSl } from '../actions/reconcileAttachedTpSl';
 
 export type PerpsProAttachedTpSlFinalOutcome = {
+  confirmedChildren: readonly PerpsProConfirmedAttachedTpSlChild[];
   confirmedParent?: PerpsConfirmedOrder;
   error?: string;
   kind: PerpsProAttachedTpSlResult['kind'];
@@ -36,6 +37,12 @@ export type PerpsProAttachedTpSlFinalOutcome = {
   refreshErrors: string[];
   reason?: PerpsProAttachedTpSlGuardFailureReason | 'unresolvedSubmission';
 };
+
+export type PerpsProConfirmedAttachedTpSlChild = Readonly<{
+  acceptance: 'filled' | 'resting';
+  oid: number;
+  role: 'stopLoss' | 'takeProfit';
+}>;
 
 export type EnsurePerpsProAttachedTpSlLeverage = (
   command: PerpsProAttachedTpSlCommand,
@@ -145,6 +152,51 @@ const getReconciledConfirmedParent = (
         : command.parent.execution.limitPrice,
     size: command.parent.baseSize,
   });
+};
+
+const getConfirmedChildren = (
+  legs:
+    | readonly {
+        acceptance?: 'filled' | 'resting';
+        kind: 'accepted' | 'rejected' | 'unresolved';
+        oid?: number;
+        role: 'parent' | 'stopLoss' | 'takeProfit';
+      }[]
+    | undefined,
+): readonly PerpsProConfirmedAttachedTpSlChild[] =>
+  Object.freeze(
+    (legs ?? []).flatMap(leg =>
+      leg.role !== 'parent' &&
+      leg.kind === 'accepted' &&
+      leg.acceptance &&
+      typeof leg.oid === 'number' &&
+      Number.isSafeInteger(leg.oid) &&
+      leg.oid >= 0
+        ? [
+            Object.freeze({
+              acceptance: leg.acceptance,
+              oid: leg.oid,
+              role: leg.role,
+            }),
+          ]
+        : [],
+    ),
+  );
+
+const mergeConfirmedChildren = (
+  direct: readonly PerpsProConfirmedAttachedTpSlChild[],
+  reconciled: readonly PerpsProConfirmedAttachedTpSlChild[],
+) => {
+  const byRole = new Map<
+    PerpsProConfirmedAttachedTpSlChild['role'],
+    PerpsProConfirmedAttachedTpSlChild
+  >();
+  [...direct, ...reconciled].forEach(child => {
+    if (!byRole.has(child.role)) {
+      byRole.set(child.role, child);
+    }
+  });
+  return Object.freeze([...byRole.values()]);
 };
 
 export const usePerpsProAttachedTpSlExecution = ({
@@ -273,8 +325,13 @@ export const usePerpsProAttachedTpSlExecution = ({
       command: PerpsProAttachedTpSlCommand,
       ensureLeverage: EnsurePerpsProAttachedTpSlLeverage,
     ): Promise<PerpsProAttachedTpSlFinalOutcome> => {
-      const empty = { reconciliationErrors: [], refreshErrors: [] };
+      const empty = {
+        confirmedChildren: [] as readonly PerpsProConfirmedAttachedTpSlChild[],
+        reconciliationErrors: [],
+        refreshErrors: [],
+      };
       let confirmedParent: PerpsConfirmedOrder | undefined;
+      let confirmedChildren: readonly PerpsProConfirmedAttachedTpSlChild[] = [];
       const guardFailure = (candidate: PerpsProAttachedTpSlCommand) => {
         const result = validatePerpsProAttachedTpSlCommand(
           candidate,
@@ -347,6 +404,11 @@ export const usePerpsProAttachedTpSlExecution = ({
           getGuardContext,
         );
         confirmedParent = getConfirmedParent(executableCommand, result);
+        confirmedChildren = getConfirmedChildren(
+          'batch' in result && result.batch && 'legs' in result.batch
+            ? result.batch.legs
+            : undefined,
+        );
         const serverError = getResultServerError(result);
         if (
           result.kind !== 'fullAccepted' &&
@@ -356,6 +418,7 @@ export const usePerpsProAttachedTpSlExecution = ({
         ) {
           return {
             ...empty,
+            confirmedChildren,
             confirmedParent,
             error:
               ('error' in result ? result.error : undefined) ?? serverError,
@@ -373,6 +436,7 @@ export const usePerpsProAttachedTpSlExecution = ({
         if (!entry) {
           return {
             ...empty,
+            confirmedChildren,
             confirmedParent,
             error: serverError,
             kind: result.kind,
@@ -383,7 +447,12 @@ export const usePerpsProAttachedTpSlExecution = ({
           executableCommand,
           reconciled.reconciliation,
         );
+        confirmedChildren = mergeConfirmedChildren(
+          confirmedChildren,
+          getConfirmedChildren(reconciled.reconciliation.legs),
+        );
         return {
+          confirmedChildren,
           confirmedParent,
           error: ('error' in result ? result.error : undefined) ?? serverError,
           kind: reconciled.finalKind,
@@ -396,6 +465,7 @@ export const usePerpsProAttachedTpSlExecution = ({
         }
         return {
           ...empty,
+          confirmedChildren,
           confirmedParent,
           error: error instanceof Error ? error.message : String(error),
           kind: 'requestFailed',

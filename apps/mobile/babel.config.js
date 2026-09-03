@@ -110,7 +110,6 @@ module.exports = api => {
       ['@babel/plugin-transform-export-namespace-from'],
 
       ['module:react-native-dotenv', { moduleName: '@env' }],
-      ['nativewind/babel', {}],
       ['@babel/plugin-proposal-decorators', { legacy: true }],
       ['@babel/plugin-transform-class-static-block'],
       ...(isJestTransform || shouldInlineDevDynamicImports

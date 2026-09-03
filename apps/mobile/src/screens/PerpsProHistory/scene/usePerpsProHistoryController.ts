@@ -1,9 +1,12 @@
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import type { WsFill } from '@rabby-wallet/hyperliquid-sdk';
 import type { PerpsFundingJournalEntry } from '@/core/services/perpsService';
-import { useIsFocused } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState, type AppStateStatus } from 'react-native';
+import {
+  AppState,
+  InteractionManager,
+  type AppStateStatus,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { showToast } from '@/hooks/perps/showToast';
@@ -90,9 +93,11 @@ const getNextPendingPresentationExpirationAt = ({
 
 export const usePerpsProHistoryController = (
   initialTab: PerpsProHistoryTab = 'orders',
+  active = true,
+  preloadEnabled = active,
+  deferPreload = false,
 ) => {
   const { t } = useTranslation();
-  const isFocused = useIsFocused();
   const currentAccount = perpsStore(state => state.currentPerpsAccount);
   const localFundingHistory = perpsStore(
     state => state.localLoadingHistory ?? EMPTY_LOCAL_FUNDING_HISTORY,
@@ -124,9 +129,10 @@ export const usePerpsProHistoryController = (
     trade: false,
     transaction: false,
   });
-  const accountIdentityRef = useRef<string | null>(null);
+  const accountIdentityRef = useRef<string | null | undefined>(undefined);
   const orderFillsRef = useRef<WsFill[]>([]);
   const orderExecutionIndexRef = useRef(buildPerpsProOrderExecutionIndex([]));
+  const externalPreloadRef = useRef(active || preloadEnabled);
   const sdkSupported = useMemo(isPerpsProHistorySdkSupported, []);
   const accountAddress = currentAccount?.address ?? null;
   const accountIdentity = currentAccount
@@ -139,24 +145,31 @@ export const usePerpsProHistoryController = (
       now: pendingPresentationClock,
     });
   const accountGeneration = getPerpsAccountRuntimeContext().generation;
+  const accountRuntimeIdentity = accountIdentity
+    ? `${accountIdentity}::${accountGeneration}`
+    : null;
   const refreshFailedMessage = t('page.perps.pro.history.refreshFailed');
-  const enabled =
-    isFocused &&
+  const preloadScopeEnabled = active || preloadEnabled;
+  const requestEnabled =
+    preloadScopeEnabled &&
     appState === 'active' &&
     !!accountAddress &&
     isRuntimeInitialized &&
     sdkSupported;
+  const liveEnabled = active && requestEnabled;
   const guardRef = useRef({
     accountAddress,
     accountGeneration,
     activeTab,
-    enabled,
+    enabled: requestEnabled,
+    liveEnabled,
   });
   guardRef.current = {
     accountAddress,
     accountGeneration,
     activeTab,
-    enabled,
+    enabled: requestEnabled,
+    liveEnabled,
   };
 
   useEffect(() => {
@@ -164,13 +177,48 @@ export const usePerpsProHistoryController = (
   }, [historyState]);
 
   useEffect(() => {
+    const wasEnabled = externalPreloadRef.current;
+    externalPreloadRef.current = preloadScopeEnabled;
+    if (wasEnabled || !preloadScopeEnabled) {
+      return;
+    }
+    const previous = stateRef.current;
+    const next = { ...previous };
+    let changed = false;
+    PERPS_PRO_HISTORY_TABS.forEach(tab => {
+      const tabState = previous[tab];
+      const status = tabState.status === 'loading' ? 'idle' : tabState.status;
+      if (
+        status !== tabState.status ||
+        tabState.refreshing ||
+        tabState.loadingEarlier
+      ) {
+        changed = true;
+        next[tab] = {
+          ...tabState,
+          loadingEarlier: false,
+          refreshing: false,
+          status,
+        };
+      }
+    });
+    if (changed) {
+      stateRef.current = next;
+      setHistoryState(next);
+    }
+  }, [preloadScopeEnabled]);
+
+  useEffect(() => {
+    if (!preloadScopeEnabled || appState !== 'active') {
+      return;
+    }
     if (!currentAccount) {
       setFundingJournalEntries([]);
       return;
     }
-    let active = true;
+    let requestActive = true;
     void readPerpsFundingJournal().then(entries => {
-      if (active) {
+      if (requestActive) {
         setFundingJournalEntries(
           entries.filter(entry =>
             isPerpsFundingJournalEntryForAccount(entry, currentAccount),
@@ -179,9 +227,15 @@ export const usePerpsProHistoryController = (
       }
     });
     return () => {
-      active = false;
+      requestActive = false;
     };
-  }, [accountIdentity, currentAccount, localFundingHistory]);
+  }, [
+    accountIdentity,
+    appState,
+    currentAccount,
+    localFundingHistory,
+    preloadScopeEnabled,
+  ]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', setAppState);
@@ -189,7 +243,7 @@ export const usePerpsProHistoryController = (
   }, []);
 
   useEffect(() => {
-    if (!enabled || nextPendingPresentationExpirationAt === null) {
+    if (!liveEnabled || nextPendingPresentationExpirationAt === null) {
       return;
     }
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -210,7 +264,7 @@ export const usePerpsProHistoryController = (
         clearTimeout(timer);
       }
     };
-  }, [enabled, nextPendingPresentationExpirationAt]);
+  }, [liveEnabled, nextPendingPresentationExpirationAt]);
 
   const invalidateAll = useCallback(() => {
     PERPS_PRO_HISTORY_TABS.forEach(tab => {
@@ -219,28 +273,43 @@ export const usePerpsProHistoryController = (
     });
   }, []);
 
+  useEffect(
+    () => () => {
+      guardRef.current = {
+        ...guardRef.current,
+        enabled: false,
+        liveEnabled: false,
+      };
+      invalidateAll();
+    },
+    [invalidateAll],
+  );
+
   useEffect(() => {
-    if (accountIdentityRef.current === null) {
-      accountIdentityRef.current = accountIdentity;
+    if (accountIdentityRef.current === undefined) {
+      accountIdentityRef.current = accountRuntimeIdentity;
       return;
     }
-    if (accountIdentityRef.current === accountIdentity) {
+    if (accountIdentityRef.current === accountRuntimeIdentity) {
       return;
     }
-    accountIdentityRef.current = accountIdentity;
+    accountIdentityRef.current = accountRuntimeIdentity;
     orderFillsRef.current = [];
     orderExecutionIndexRef.current = buildPerpsProOrderExecutionIndex([]);
     invalidateAll();
     const nextState = createPerpsProHistoryState();
     stateRef.current = nextState;
     setHistoryState(nextState);
-  }, [accountIdentity, invalidateAll]);
+  }, [accountRuntimeIdentity, invalidateAll]);
 
   useEffect(() => {
-    if (enabled) {
+    if (requestEnabled) {
       return;
     }
     invalidateAll();
+    if (!preloadScopeEnabled) {
+      return;
+    }
     setHistoryState(previous => {
       const next = { ...previous };
       let changed = false;
@@ -267,7 +336,7 @@ export const usePerpsProHistoryController = (
       stateRef.current = next;
       return next;
     });
-  }, [enabled, invalidateAll]);
+  }, [invalidateAll, preloadScopeEnabled, requestEnabled]);
 
   const updateTabState = useCallback<UpdatePerpsProHistoryTabState>(
     (tab, updater) => {
@@ -331,7 +400,7 @@ export const usePerpsProHistoryController = (
     ) => {
       const guard = guardRef.current;
       return (
-        guard.enabled &&
+        guard.liveEnabled &&
         guard.activeTab === tab &&
         guard.accountGeneration === subscribedGeneration &&
         !!guard.accountAddress &&
@@ -672,41 +741,63 @@ export const usePerpsProHistoryController = (
   }, []);
 
   useEffect(() => {
-    if (!enabled || !accountAddress) {
+    if (!requestEnabled || !accountAddress) {
       return;
     }
-    const idleTabs = PERPS_PRO_HISTORY_TABS.filter(
-      tab => stateRef.current[tab].status === 'idle',
-    );
-    if (idleTabs.length === 0) {
-      refreshLatest(activeTab, undefined, 'background');
-      return;
-    }
-    const shouldLoadLatestFills = idleTabs.some(
-      tab => tab === 'orders' || tab === 'trade',
-    );
-    const latestFills = shouldLoadLatestFills
-      ? perpsProHistoryRepository.fetchLatestTrades(accountAddress)
-      : undefined;
-    idleTabs.forEach(tab => {
-      loadInitial(
-        tab,
-        tab === 'orders' || tab === 'trade' ? latestFills : undefined,
+    const startBaseline = () => {
+      const guard = guardRef.current;
+      if (
+        !guard.enabled ||
+        !guard.accountAddress ||
+        !isSameAddress(guard.accountAddress, accountAddress)
+      ) {
+        return;
+      }
+      const idleTabs = PERPS_PRO_HISTORY_TABS.filter(
+        tab => stateRef.current[tab].status === 'idle',
       );
-    });
+      if (idleTabs.length === 0) {
+        return;
+      }
+      const shouldLoadLatestFills = idleTabs.some(
+        tab => tab === 'orders' || tab === 'trade',
+      );
+      const latestFills = shouldLoadLatestFills
+        ? perpsProHistoryRepository.fetchLatestTrades(accountAddress)
+        : undefined;
+      idleTabs.forEach(tab => {
+        loadInitial(
+          tab,
+          tab === 'orders' || tab === 'trade' ? latestFills : undefined,
+        );
+      });
+    };
+
+    if (!deferPreload || active) {
+      startBaseline();
+      return;
+    }
+    const task = InteractionManager.runAfterInteractions(startBaseline);
+    return () => task.cancel();
   }, [
-    accountGeneration,
-    accountIdentity,
     accountAddress,
-    activeTab,
-    enabled,
+    accountRuntimeIdentity,
+    active,
+    deferPreload,
     loadInitial,
-    refreshLatest,
+    requestEnabled,
   ]);
 
   useEffect(() => {
+    if (!liveEnabled) {
+      return;
+    }
+    refreshLatest(activeTab, undefined, 'background');
+  }, [activeTab, liveEnabled, refreshLatest]);
+
+  useEffect(() => {
     if (
-      !isFocused ||
+      !preloadScopeEnabled ||
       appState !== 'active' ||
       !accountAddress ||
       !isRuntimeInitialized ||
@@ -727,8 +818,8 @@ export const usePerpsProHistoryController = (
     accountAddress,
     activeTab,
     appState,
-    isFocused,
     isRuntimeInitialized,
+    preloadScopeEnabled,
     sdkSupported,
     updateTabState,
   ]);
@@ -737,7 +828,7 @@ export const usePerpsProHistoryController = (
     accountAddress,
     accountGeneration,
     activeTab,
-    enabled,
+    enabled: liveEnabled,
     isSubscriptionCurrent,
     mapRawRows,
     onOrderFills: handleOrderFills,
@@ -783,7 +874,11 @@ export const usePerpsProHistoryController = (
   const confirmedOperationSignature = JSON.stringify(unsettledConfirmations);
 
   useEffect(() => {
-    if (unsettledConfirmations.length === 0 || !currentAccount) {
+    if (
+      !liveEnabled ||
+      unsettledConfirmations.length === 0 ||
+      !currentAccount
+    ) {
       return;
     }
     const confirmationByOperationId = new Map(
@@ -807,7 +902,12 @@ export const usePerpsProHistoryController = (
           : entry;
       }),
     );
-  }, [confirmedOperationSignature, currentAccount, unsettledConfirmations]);
+  }, [
+    confirmedOperationSignature,
+    currentAccount,
+    liveEnabled,
+    unsettledConfirmations,
+  ]);
 
   const presentedHistoryState = useMemo<PerpsProHistoryControllerState>(
     () => ({

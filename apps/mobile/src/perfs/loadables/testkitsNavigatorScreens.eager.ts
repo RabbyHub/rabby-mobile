@@ -16,6 +16,7 @@ export { default as DevUIPermissions } from '@/screens/Testkits/DevUIPermissions
 export { default as DevUIWalletConnect } from '@/screens/Testkits/DevUIWalletConnect';
 export { default as DevCapabilityFile } from '@/screens/Testkits/DevCapabilityFile';
 export { default as DevDataSQLite } from '@/screens/Testkits/DevDataSQLite';
+export { default as DevWatchAddressFixtureImport } from '@/screens/Testkits/DevWatchAddressFixtureImport';
 export { default as DevDataKeychain } from '@/screens/Testkits/DevDataKeychain';
 export { default as DevDataKeyringVault } from '@/screens/Testkits/DevDataKeyringVault';
 export { default as DevDataContactService } from '@/screens/Testkits/DevDataContactService';

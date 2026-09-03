@@ -125,7 +125,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   coin: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '500',
     lineHeight: 20,
@@ -138,14 +138,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   ledgerTagText: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 14,
   },
   fullName: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },
@@ -154,14 +154,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   total: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '400',
     lineHeight: 18,
   },
   usdValue: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
     marginTop: 4,
@@ -179,7 +179,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   assetActionText: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,

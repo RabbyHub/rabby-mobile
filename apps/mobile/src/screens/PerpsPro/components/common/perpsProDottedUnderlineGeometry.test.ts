@@ -16,6 +16,7 @@ describe('perpsProDottedUnderlineGeometry', () => {
       }),
     ).toEqual({
       canvasHeight: 1,
+      canvasLeft: 0,
       canvasTop: 11.5,
       dotGap: 2,
       dotLength: 1,
@@ -25,6 +26,17 @@ describe('perpsProDottedUnderlineGeometry', () => {
       strokeWidth: 1,
       width: 61.5,
     });
+  });
+
+  it('positions the canvas at the measured line x without changing its width', () => {
+    expect(
+      resolvePerpsProDottedUnderlineGeometry({
+        fontSize: 12,
+        line: { ascender: 8, width: 40, x: 9.2, y: 0 },
+        minimumStrokeWidth: 0.5,
+        roundToNearestPixel: roundToHalfPixel,
+      }),
+    ).toEqual(expect.objectContaining({ canvasLeft: 9, width: 40 }));
   });
 
   it('rounds 12px geometry to physical pixels and prefers a native baseline', () => {

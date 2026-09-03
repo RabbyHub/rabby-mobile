@@ -75,7 +75,7 @@ describe('PerpsProPositionTpSlInput', () => {
     expect(
       StyleSheet.flatten(screen.getByTestId('field-label').props.style),
     ).toMatchObject({
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 10,
       fontWeight: '500',
       lineHeight: 12,
@@ -87,7 +87,7 @@ describe('PerpsProPositionTpSlInput', () => {
         screen.getByTestId('field-formatted-value').props.style,
       ),
     ).toMatchObject({
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
       lineHeight: 18,

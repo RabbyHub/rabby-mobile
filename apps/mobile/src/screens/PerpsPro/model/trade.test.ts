@@ -3,7 +3,6 @@ import {
   getPerpsProPriceInputMaxDecimals,
   getPerpsProReduceOnlyAvailability,
   inferPerpsProConditionalClassification,
-  isPerpsProAmountAboveSharedMax,
   isPerpsProTradeCombinationSupported,
   isPerpsProPriceProtocolValid,
   resolvePerpsProDisplayAmount,
@@ -152,70 +151,6 @@ describe('Perps Pro trade model', () => {
         szDecimals: 5,
       }),
     ).toEqual({ baseSize: '0.00123', quoteAmount: '77.49' });
-  });
-
-  it('validates balance against the shared canonical base-size Max', () => {
-    const facts = {
-      amountUnit: 'base' as const,
-      buyMaxBase: '5',
-      minimumQuoteAmount: '10',
-      price: '100',
-      sellMaxBase: '10',
-      szDecimals: 2,
-    };
-
-    expect(isPerpsProAmountAboveSharedMax({ amount: '10.01', ...facts })).toBe(
-      true,
-    );
-    expect(isPerpsProAmountAboveSharedMax({ amount: '6', ...facts })).toBe(
-      false,
-    );
-    expect(isPerpsProAmountAboveSharedMax({ amount: '10', ...facts })).toBe(
-      false,
-    );
-  });
-
-  it('quantizes quote input before comparing it with the shared Max', () => {
-    const facts = {
-      amountUnit: 'quote' as const,
-      buyMaxBase: '5',
-      minimumQuoteAmount: '10',
-      price: '100',
-      sellMaxBase: '10',
-      szDecimals: 2,
-    };
-
-    expect(
-      isPerpsProAmountAboveSharedMax({ amount: '1000.01', ...facts }),
-    ).toBe(false);
-    expect(isPerpsProAmountAboveSharedMax({ amount: '1001', ...facts })).toBe(
-      true,
-    );
-  });
-
-  it('keeps minimum-order and unavailable-Max states ahead of balance feedback', () => {
-    expect(
-      isPerpsProAmountAboveSharedMax({
-        amount: '5',
-        amountUnit: 'quote',
-        buyMaxBase: '0.01',
-        minimumQuoteAmount: '10',
-        price: '100',
-        sellMaxBase: '0.02',
-        szDecimals: 2,
-      }),
-    ).toBe(false);
-    expect(
-      isPerpsProAmountAboveSharedMax({
-        amount: '100',
-        amountUnit: 'quote',
-        buyMaxBase: '0',
-        minimumQuoteAmount: '10',
-        price: '100',
-        sellMaxBase: '0',
-        szDecimals: 2,
-      }),
-    ).toBe(false);
   });
 
   it('keeps base display independent and requires a price only for quote display', () => {

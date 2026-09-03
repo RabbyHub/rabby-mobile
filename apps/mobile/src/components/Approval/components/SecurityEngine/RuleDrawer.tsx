@@ -301,6 +301,9 @@ const getStyles = (colors: AppColorsVariants) =>
       marginTop: 6,
       textAlign: 'center',
     },
+    relative: {
+      position: 'relative',
+    },
     footer: {
       marginBottom: 20,
     },
@@ -456,7 +459,7 @@ const RuleDrawer = ({
             </View>
           )}
 
-          <View className="relative">
+          <View style={styles.relative}>
             <Text style={styles.description}>{currentDescription}</Text>
             {valueTooltip ? (
               <Tip content={valueTooltip}>

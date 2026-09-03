@@ -107,7 +107,7 @@ describe('PerpsProFieldExplanationSheet', () => {
     expect(
       StyleSheet.flatten(screen.getByText('Distance explanation').props.style),
     ).toMatchObject({
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       lineHeight: 18,
       marginTop: 16,

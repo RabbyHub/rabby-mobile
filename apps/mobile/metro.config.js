@@ -7,6 +7,7 @@ const { withRozenite } = require('@rozenite/metro');
 const {
   wrapWithReanimatedMetroConfig,
 } = require('react-native-reanimated/metro-config');
+const { createWardenSerializer } = require('warden.rn');
 
 const {
   createI18nLivePreviewSerializer,
@@ -31,6 +32,29 @@ const withI18nLivePreview = config => {
     },
   };
 };
+
+const withWarden = config => ({
+  ...config,
+  serializer: {
+    ...config.serializer,
+    customSerializer: createWardenSerializer(
+      config.serializer?.customSerializer,
+      {
+        dev: false,
+        harden: false,
+        hardenDynamicCode: false,
+        protectModuleImports: false,
+        trustedRuntimePackages: [
+          'react-native-gesture-handler',
+          'react-native-reanimated',
+        ],
+        rootDir: './',
+        sourceRoot: './src',
+        policyDir: './Warden-RN',
+      },
+    ),
+  },
+});
 
 const defaultConfig = getDefaultConfig(__dirname);
 const { assetExts, sourceExts } = defaultConfig.resolver;
@@ -464,7 +488,7 @@ const mergedConfig = compose(
 
 const rozeniteEnabled = process.env.WITH_ROZENITE === 'true';
 
-module.exports = rozeniteEnabled
+const configWithRozenite = rozeniteEnabled
   ? withRozenite(mergedConfig, {
       enabled: true,
       include: [
@@ -475,3 +499,5 @@ module.exports = rozeniteEnabled
       ],
     })
   : mergedConfig;
+
+module.exports = withWarden(configWithRozenite);
