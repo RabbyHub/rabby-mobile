@@ -1,4 +1,3 @@
-import { RootNames } from '@/constant/layout';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
 import { trackGasAccountActiveStatusOncePerDay } from '@/utils/gasAccountAnalytics';
 import { autoLoginGasAccountIfNeeded } from '@/utils/autoLoginGasAccount';
@@ -27,7 +26,6 @@ import {
 import { apisHomeTabIndex, resetNavigationTo } from '@/hooks/navigation';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { getReadyNavigationInstance } from '@/utils/navigation';
-import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
 import { useTrack0331HomeActiveSnapshots } from '@/utils/analytics0331';
@@ -445,8 +443,6 @@ function MultiAddressHome(): JSX.Element {
         end: { x: 0.5, y: 0.26 },
       }}
       overwriteStyle={styles.screenContainer}>
-      <ScreenSpecificStatusBar screenName={RootNames.Home} />
-
       <View
         style={[styles.paddingContainer]}
         onTouchStart={() => {

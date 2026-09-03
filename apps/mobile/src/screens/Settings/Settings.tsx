@@ -100,7 +100,6 @@ import ThemeSelectorModal, {
 } from './sheetModals/ThemeSelector';
 import { RABBY_GENESIS_NFT_DATA } from '../SendNFT/testData';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
-import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DevForceLocalVersionSelector, {
   useLocalVersionSelectorModalVisible,
@@ -563,6 +562,15 @@ function SettingsBlocks() {
     });
   }, []);
 
+  const allowAppLaunchLockToggle = useCallback(
+    (nextEnabled: boolean) =>
+      !nextEnabled ||
+      !shouldRedirectToSetPasswordBefore({
+        onSettingsAction: 'setAppLaunchLock',
+      }),
+    [shouldRedirectToSetPasswordBefore],
+  );
+
   const toggleDataAnalysisRef = useRef<SwitchToggleType>(null);
   const switchAppLaunchLockRef = useRef<SwitchToggleType>(null);
 
@@ -669,7 +677,12 @@ function SettingsBlocks() {
           {
             label: t('page.setting.appLaunchLock'),
             icon: RcAutolock,
-            rightNode: <SwitchAppLaunchLock ref={switchAppLaunchLockRef} />,
+            rightNode: (
+              <SwitchAppLaunchLock
+                ref={switchAppLaunchLockRef}
+                onBeforeToggle={allowAppLaunchLockToggle}
+              />
+            ),
             onPress: () => {
               switchAppLaunchLockRef.current?.toggle();
             },
@@ -1374,7 +1387,6 @@ export default function SettingsScreen(): JSX.Element {
           paddingBottom: safeSizes.containerPaddingBottom,
         },
       ]}>
-      <ScreenSpecificStatusBar screenName={RootNames.Settings} />
       <ScrollView
         style={[styles.scrollableView]}
         contentContainerStyle={[
