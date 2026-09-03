@@ -1,5 +1,11 @@
 import { TokenItemEntity } from './tokenitem';
 
+jest.mock('typeorm/browser', () => require('typeorm'));
+
+jest.mock('@/utils/token', () => ({
+  tokenItemEntityToTokenItem: jest.fn(),
+}));
+
 jest.mock('../imports', () => ({
   prepareAppDataSource: jest.fn(async () => undefined),
 }));
@@ -57,7 +63,7 @@ function createQueryBuilderFactory(results: RawAmountRow[][]) {
   return { createQueryBuilder, queryCalls };
 }
 
-describe('TokenItemEntity.getTokenListAmount', () => {
+describe('TokenItemEntity.getTokenListAmount query batching', () => {
   afterEach(() => {
     jest.restoreAllMocks();
   });
