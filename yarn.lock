@@ -9048,27 +9048,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@op-engineering/op-sqlite@npm:15.1.1":
-  version: 15.1.1
-  resolution: "@op-engineering/op-sqlite@npm:15.1.1"
-  dependencies:
-    react-native-safe-area-context: "npm:^5.6.2"
+"@op-engineering/op-sqlite@npm:15.1.3":
+  version: 15.1.3
+  resolution: "@op-engineering/op-sqlite@npm:15.1.3"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10/8e283660e371ce521d79411c8325e4ca0b529af0432c4cd05d6f25799dcee8a4411ade9e3a1adf047d39af3d044484edb61d6bad481248197732e0f6e06ee5a4
+  checksum: 10/4766bcb1c7a94c42e161d37b1d4e5eaa2cc9a52e7db083b8201a393af56176e63682cc88a377b6ed95ff46810ab7ea50dcd92505c09503050f96ef956741ee36
   languageName: node
   linkType: hard
 
-"@op-engineering/op-sqlite@patch:@op-engineering/op-sqlite@npm%3A15.1.1#./.yarn/patches/@op-engineering-op-sqlite-npm-15.1.1-64eb5c2a0a.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
-  version: 15.1.1
-  resolution: "@op-engineering/op-sqlite@patch:@op-engineering/op-sqlite@npm%3A15.1.1#./.yarn/patches/@op-engineering-op-sqlite-npm-15.1.1-64eb5c2a0a.patch::version=15.1.1&hash=b47906&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
-  dependencies:
-    react-native-safe-area-context: "npm:^5.6.2"
+"@op-engineering/op-sqlite@patch:@op-engineering/op-sqlite@npm%3A15.1.3#./.yarn/patches/@op-engineering-op-sqlite-npm-15.1.3-4595b64c2f.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 15.1.3
+  resolution: "@op-engineering/op-sqlite@patch:@op-engineering/op-sqlite@npm%3A15.1.3#./.yarn/patches/@op-engineering-op-sqlite-npm-15.1.3-4595b64c2f.patch::version=15.1.3&hash=e0c4de&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10/b862c54c45b515264915871dbbb24dafaa929a61ad078fc6c8c0495cbd5a0e81bfc42533797249eb4a96a8f4603fa619cdb90ce34966b50707d27977a480e493
+  checksum: 10/45282dfffba992b5dce78089e126cd7221474cb39c7719ffd29e916838c4be7feba9abcafdfe555959091b0bc0aab34665aa7331cd4fc2c51432755623e7c839
   languageName: node
   linkType: hard
 
@@ -38426,7 +38422,7 @@ __metadata:
     "@notifee/react-native": "npm:9.1.8"
     "@onekeyfe/hd-ble-sdk": "npm:1.1.26"
     "@onekeyfe/react-native-ble-utils": "npm:0.1.4"
-    "@op-engineering/op-sqlite": "npm:^15.1.1"
+    "@op-engineering/op-sqlite": "npm:^15.1.3"
     "@paraswap/sdk": "npm:6.10.0"
     "@rabby-wallet/biz-utils": "workspace:^"
     "@rabby-wallet/eth-hd-keyring": "npm:4.3.7"
@@ -39731,7 +39727,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-safe-area-context@npm:5.6.2, react-native-safe-area-context@npm:^5.6.2":
+"react-native-safe-area-context@npm:5.6.2":
   version: 5.6.2
   resolution: "react-native-safe-area-context@npm:5.6.2"
   peerDependencies:
