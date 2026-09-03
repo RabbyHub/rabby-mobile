@@ -485,10 +485,8 @@ function SettingsBlocks() {
   const disabledBiometrics = !APP_FEATURE_SWITCH.biometricsAuth;
 
   const showBiometricsUnavailableToast = useCallback(() => {
-    toast.show(
-      'Biometric authentication is unavailable. Check your system biometric settings and try again.',
-    );
-  }, []);
+    toast.show(t('page.setting.biometricsUnavailable'));
+  }, [t]);
 
   const startSwitchBiometrics = useCallback(() => {
     if (
