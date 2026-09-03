@@ -14,10 +14,6 @@ import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import RcIconLock from '@/assets2024/icons/bridge/IconLock.svg';
 // import RcIconDurationCC from '@/assets/icons/bridge/duration.svg';
 import { Text } from '@/components/Typography';
-import {
-  formatBridgeDurationLabel,
-  getBridgeDurationColor,
-} from '../utils/bridgeDuration';
 import { bridgeQuoteEstimatedValueBn } from '../utils/bridgeQuote';
 
 interface QuoteItemProps extends SelectedBridgeQuote {
@@ -91,10 +87,16 @@ export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
       : styles.normal,
   ]);
 
-  const durationColor = useMemo(
-    () => getBridgeDurationColor(props.duration, colors2024),
-    [colors2024, props.duration],
-  );
+  const durationColor = useMemo(() => {
+    const mins = Math.ceil(props.duration / 60);
+    if (mins > 10) {
+      return colors2024['red-default'];
+    }
+    if (mins > 3) {
+      return colors2024['orange-default'];
+    }
+    return colors2024['brand-default'];
+  }, [colors2024, props.duration]);
 
   const disabled = props.inSufficient || props.onlyShow;
 
@@ -159,7 +161,9 @@ export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
             style={[styles.icon, styles.durationIcon]}
           /> */}
             <Text style={[styles.feeText, { color: durationColor }]}>
-              {formatBridgeDurationLabel(props.duration, t)}
+              {t('page.bridge.duration', {
+                duration: Math.ceil(props.duration / 60),
+              })}
             </Text>
           </View>
           <View

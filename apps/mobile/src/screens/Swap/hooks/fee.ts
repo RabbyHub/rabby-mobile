@@ -1,7 +1,5 @@
 import BigNumber from 'bignumber.js';
 
-import { APP_RUNTIME_ENV } from '@/constant/env';
-
 export const SWAP_FEE_RATE = {
   DEFAULT: '0.25',
   HALF: '0.12',
@@ -10,8 +8,8 @@ export const SWAP_FEE_RATE = {
 
 export type SwapFeeRate = (typeof SWAP_FEE_RATE)[keyof typeof SWAP_FEE_RATE];
 
-const SWAP_HALF_FEE_MIN_USD = APP_RUNTIME_ENV === 'production' ? 100_000 : 5;
-const SWAP_FREE_FEE_MIN_USD = APP_RUNTIME_ENV === 'production' ? 1_000_000 : 10;
+const SWAP_HALF_FEE_MIN_USD = 100_000;
+const SWAP_FREE_FEE_MIN_USD = 1_000_000;
 
 export const getRabbyFeeRate = ({
   payAmount,
