@@ -567,33 +567,21 @@ function SettingsBlocks() {
   const navigation = useRabbyAppNavigation();
 
   const biometricsComputed = useBiometricsComputed();
-  const { couldSetupBiometrics, isUsingDevicePasscodeForSettings } =
-    biometricsComputed;
-  const biometricsUnavailableForSettings =
-    !couldSetupBiometrics && !isUsingDevicePasscodeForSettings;
+  const { isUsingDevicePasscodeForSettings } = biometricsComputed;
   const disabledBiometrics = !APP_FEATURE_SWITCH.biometricsAuth;
 
   const showBiometricsUnavailableToast = useCallback(() => {
-    toast.show('Please enable biometric permissions in the system settings.');
-  }, []);
+    toast.show(t('page.setting.biometricsUnavailable'));
+  }, [t]);
 
   const startSwitchBiometrics = useCallback(() => {
-    if (biometricsUnavailableForSettings) {
-      showBiometricsUnavailableToast();
-      return;
-    }
-
     if (
       shouldRedirectToSetPasswordBefore({ onSettingsAction: 'setBiometrics' })
     ) {
       return;
     }
     switchBiometricsRef.current?.toggle();
-  }, [
-    biometricsUnavailableForSettings,
-    shouldRedirectToSetPasswordBefore,
-    showBiometricsUnavailableToast,
-  ]);
+  }, [shouldRedirectToSetPasswordBefore]);
 
   const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
 
@@ -738,10 +726,7 @@ function SettingsBlocks() {
             onPress: () => {
               startSwitchBiometrics();
             },
-            onDisabledPress: biometricsUnavailableForSettings
-              ? showBiometricsUnavailableToast
-              : undefined,
-            disabled: disabledBiometrics || biometricsUnavailableForSettings,
+            disabled: disabledBiometrics,
             visible: APP_FEATURE_SWITCH.biometricsAuth,
           },
           {
