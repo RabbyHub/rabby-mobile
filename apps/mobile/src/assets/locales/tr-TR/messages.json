@@ -1656,7 +1656,7 @@
       "action": {
         "all": "Hepsi",
         "less": "Daha az",
-        "Sell": "Satılır",
+        "Sell": "Sat",
         "Buy": "Satın Al",
         "favorite": "Favori",
         "unfavorite": "Favori Değil"
