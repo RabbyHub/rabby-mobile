@@ -1,4 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import fs from 'fs';
+import path from 'path';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -8,6 +10,16 @@ const mockUseShowPerpsTradeFeeExplanation = jest.fn(
   () => mockShowTradeFeeExplanation,
 );
 let mockIsLight = true;
+
+jest.mock('@/assets2024/icons/perps/PerpsProHistoryEmpty.svg', () => {
+  const ReactModule = require('react');
+  const { View: SvgView } = require('react-native');
+  return (props: object) =>
+    ReactModule.createElement(SvgView, {
+      ...props,
+      testUri: 'assets2024/icons/perps/PerpsProHistoryEmpty.svg',
+    });
+});
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
@@ -139,20 +151,22 @@ describe('PerpsProHistoryList', () => {
     const lightIllustration = screen.getByTestId(
       'perps-pro-history-empty-illustration',
     );
-    expect(lightIllustration.props.source).toEqual(
+    expect(lightIllustration.props).toEqual(
       expect.objectContaining({
+        accessible: false,
+        height: 126,
         testUri: expect.stringContaining(
-          'assets2024/icons/perps/PerpsProHistoryEmpty.png',
+          'assets2024/icons/perps/PerpsProHistoryEmpty.svg',
         ),
+        width: 163,
       }),
     );
-    expect(lightIllustration.props.source.testUri).not.toContain(
+    expect(lightIllustration.props.testUri).not.toContain(
+      'PerpsProHistoryEmpty.png',
+    );
+    expect(lightIllustration.props.testUri).not.toContain(
       'singleHome/empty-token',
     );
-    expect(StyleSheet.flatten(lightIllustration.props.style)).toEqual({
-      height: 126,
-      width: 163,
-    });
     expect(
       StyleSheet.flatten(
         screen.getByText('page.perps.pro.history.noHistory').props.style,
@@ -179,8 +193,26 @@ describe('PerpsProHistoryList', () => {
       />,
     );
     expect(
-      screen.getByTestId('perps-pro-history-empty-illustration').props.source,
-    ).toEqual(lightIllustration.props.source);
+      screen.getByTestId('perps-pro-history-empty-illustration').props.testUri,
+    ).toEqual(lightIllustration.props.testUri);
+  });
+
+  it('keeps the empty-state SVG transparent and React Native compatible', () => {
+    const source = fs.readFileSync(
+      path.resolve(
+        __dirname,
+        '../../../assets2024/icons/perps/PerpsProHistoryEmpty.svg',
+      ),
+      'utf8',
+    );
+
+    expect(source).toContain('viewBox="0 0 163 126"');
+    expect(source).toContain('id="frosted-strip"');
+    expect(source).toContain('id="frosted-paper"');
+    expect(source).not.toContain('<foreignObject');
+    expect(source).not.toContain('backdrop-filter');
+    expect(source).not.toContain('<image');
+    expect(source).not.toContain('<rect width="163" height="126"');
   });
 
   it('renders initial error Retry', () => {
@@ -362,13 +394,16 @@ describe('PerpsProHistoryList', () => {
     expect(refreshControl.props.tintColor).toBeUndefined();
   });
 
-  it('uses the Bottom Sheet scroll host without changing list behavior', () => {
-    render(
+  it('uses the Bottom Sheet refresh contract without remounting inactive lists', () => {
+    const onLoadEarlier = jest.fn();
+    const onRefresh = jest.fn();
+    const onRetry = jest.fn();
+    const view = render(
       <PerpsProHistoryList
         amountUnit="base"
-        onLoadEarlier={jest.fn()}
-        onRefresh={jest.fn()}
-        onRetry={jest.fn()}
+        onLoadEarlier={onLoadEarlier}
+        onRefresh={onRefresh}
+        onRetry={onRetry}
         scrollHost="bottomSheet"
         state={makeState()}
         tab="trade"
@@ -376,11 +411,43 @@ describe('PerpsProHistoryList', () => {
     );
 
     expect(mockBottomSheetFlatListProps).toHaveBeenCalledTimes(1);
-    expect(mockBottomSheetFlatListProps.mock.calls[0][0]).toMatchObject({
+    const activeProps = mockBottomSheetFlatListProps.mock.calls[0][0];
+    expect(activeProps).toMatchObject({
       initialNumToRender: 10,
       nestedScrollEnabled: true,
+      onRefresh: expect.any(Function),
+      refreshing: false,
       scrollEnabled: true,
       testID: 'perps-pro-history-list-trade',
     });
+    expect(activeProps.refreshControl).toBeUndefined();
+    activeProps.onRefresh();
+    expect(onRefresh).toHaveBeenCalledTimes(1);
+
+    view.rerender(
+      <PerpsProHistoryList
+        active={false}
+        amountUnit="base"
+        onLoadEarlier={onLoadEarlier}
+        onRefresh={onRefresh}
+        onRetry={onRetry}
+        scrollHost="bottomSheet"
+        state={makeState({ refreshing: true })}
+        tab="trade"
+      />,
+    );
+
+    const inactiveProps =
+      mockBottomSheetFlatListProps.mock.calls[
+        mockBottomSheetFlatListProps.mock.calls.length - 1
+      ][0];
+    expect(inactiveProps).toMatchObject({
+      onRefresh: expect.any(Function),
+      refreshing: false,
+      scrollEnabled: false,
+    });
+    expect(inactiveProps.onRefresh).toBe(activeProps.onRefresh);
+    inactiveProps.onRefresh();
+    expect(onRefresh).toHaveBeenCalledTimes(1);
   });
 });

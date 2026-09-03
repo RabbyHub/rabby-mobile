@@ -324,8 +324,8 @@ describe('PerpsProOrderConfirmationSheet', () => {
     expect(screen.getByText('No')).toBeTruthy();
     expect(screen.getByText('105.00 USDC')).toBeTruthy();
     expect(screen.getByText('55.00 USDC (-40.00%)')).toBeTruthy();
-    expect(screen.getByText('Mark Price ≥ 110.00 USDC')).toBeTruthy();
-    expect(screen.getByText('Mark Price ≤ 90.00 USDC')).toBeTruthy();
+    expect(screen.getByText('Mark Price ≥ 110 USDC')).toBeTruthy();
+    expect(screen.getByText('Mark Price ≤ 90 USDC')).toBeTruthy();
     expect(screen.getByText('skipConfirmation')).toBeTruthy();
     expect(screen.queryByText('confirmAttachedTpSl')).toBeNull();
     expect(screen.queryByText('tpSlFullFillWarning')).toBeNull();
@@ -445,7 +445,7 @@ describe('PerpsProOrderConfirmationSheet', () => {
       },
     });
 
-    expect(screen.getByText('Mark Price ≥ 111,111.00 USDC')).toBeTruthy();
+    expect(screen.getByText('Mark Price ≥ 111,111 USDC')).toBeTruthy();
   });
 
   it('shows the reviewed Reduce Only value', () => {
@@ -460,7 +460,7 @@ describe('PerpsProOrderConfirmationSheet', () => {
       .map(node => node.props.children);
     expect(detailTexts).toEqual([
       'price',
-      '100.00 USDC',
+      '100 USDC',
       'amount',
       '100.00 USDC',
       'Mark Price',
@@ -486,9 +486,27 @@ describe('PerpsProOrderConfirmationSheet', () => {
     });
 
     expect(screen.getByText('triggerPrice')).toBeTruthy();
-    expect(screen.getByText('110.00 USDC')).toBeTruthy();
-    expect(screen.getByText('102.00 USDC')).toBeTruthy();
+    expect(screen.getByText('110 USDC')).toBeTruthy();
+    expect(screen.getByText('102 USDC')).toBeTruthy();
     expect(screen.queryByText('orderType')).toBeNull();
+  });
+
+  it('keeps meaningful frozen command decimals without market padding', () => {
+    renderSheet({
+      ...parent,
+      execution: {
+        kind: 'conditionalLimit',
+        limitPrice: '123.4',
+        referencePrice: '100',
+        tpsl: 'tp',
+        triggerPrice: '0.12345',
+      },
+      orderType: 'conditional',
+    });
+
+    expect(screen.getByText('0.12345 USDC')).toBeTruthy();
+    expect(screen.getByText('123.4 USDC')).toBeTruthy();
+    expect(screen.queryByText('123.40 USDC')).toBeNull();
   });
 
   it('shows the BBO level instead of freezing a reviewed numeric price', () => {

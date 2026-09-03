@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react-native';
+import { act, render, screen, within } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
@@ -46,6 +46,10 @@ jest.mock('@/components/customized/BottomSheet', () => {
     ),
   };
 });
+
+jest.mock('@/components/customized/BottomSheetHandle', () => ({
+  BottomSheetHandlableView: require('react-native').View,
+}));
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
@@ -112,6 +116,8 @@ import {
 
 const getLatestSheetProps = () =>
   mockSheetProps.mock.calls.at(-1)?.[0] as {
+    enableContentPanningGesture: boolean;
+    enablePanDownToClose: boolean;
     onAnimate: (fromIndex: number, toIndex: number) => void;
     onDismiss: () => void;
     snapPoints: number[];
@@ -170,6 +176,21 @@ describe('PerpsProHistorySheetHost', () => {
         textAlign: 'center',
       }),
     );
+    const titleDragRegion = screen.getByTestId(
+      'perps-pro-history-sheet-title-drag-region',
+    );
+    expect(
+      within(titleDragRegion).getByText('page.perps.pro.history.title'),
+    ).toBeTruthy();
+    expect(titleDragRegion.props.accessible).toBe(false);
+    expect(StyleSheet.flatten(titleDragRegion.props.style)).toMatchObject({
+      height: 56,
+      paddingBottom: 20,
+      paddingHorizontal: 16,
+      paddingTop: 12,
+    });
+    expect(getLatestSheetProps().enableContentPanningGesture).toBe(false);
+    expect(getLatestSheetProps().enablePanDownToClose).toBe(true);
 
     act(() => getLatestSheetProps().onAnimate(0, -1));
     expect(screen.getByTestId('mock-history-content').props.active).toBe(false);

@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { Text } from '@/components/Typography';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
@@ -201,9 +202,14 @@ export const PerpsProHistorySheetHost = forwardRef<
           key={session.id}
           style={styles.content}
           testID="perps-pro-history-sheet">
-          <Text style={[styles.title, HISTORY_TITLE_FONT_STYLE]}>
-            {t('page.perps.pro.history.title')}
-          </Text>
+          <BottomSheetHandlableView
+            accessible={false}
+            style={styles.titleDragRegion}
+            testID="perps-pro-history-sheet-title-drag-region">
+            <Text style={[styles.title, HISTORY_TITLE_FONT_STYLE]}>
+              {t('page.perps.pro.history.title')}
+            </Text>
+          </BottomSheetHandlableView>
           <View style={styles.pager}>
             <PerpsProHistoryContentView
               active={presentationActive}
@@ -245,6 +251,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   content: {
     backgroundColor: colors2024['neutral-bg-0'],
     flex: 1,
+  },
+  titleDragRegion: {
+    height: 56,
+    paddingBottom: 20,
+    paddingHorizontal: 16,
     paddingTop: 12,
   },
   title: {
@@ -252,8 +263,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: PERPS_PRO_FONT_FAMILY,
     fontSize: 20,
     lineHeight: 24,
-    marginBottom: 20,
-    marginHorizontal: 16,
     textAlign: 'center',
   },
   pager: {

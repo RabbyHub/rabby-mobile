@@ -232,7 +232,7 @@ describe('PerpsProOrderBookRow', () => {
     );
 
     expect(mockWithTiming).toHaveBeenCalledWith(75, {
-      duration: 200,
+      duration: 250,
       easing: 'desktop-ease-out',
       reduceMotion: 'system',
     });

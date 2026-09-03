@@ -8,7 +8,7 @@ import {
 } from 'react-native-reanimated';
 
 export const PERPS_PRO_ORDER_BOOK_PERCENT_ANIMATION = {
-  durationMs: 200,
+  durationMs: 250,
   easing: Easing.bezier(0, 0, 0.2, 1),
 } as const;
 
