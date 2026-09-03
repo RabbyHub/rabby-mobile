@@ -70,6 +70,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     position: 'absolute',
     top: -2,
     right: 24,
+    zIndex: 1,
   },
   container: {
     flexGrow: 1,

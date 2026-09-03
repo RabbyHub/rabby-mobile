@@ -308,6 +308,9 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   btnTitle: {
     color: colors['neutral-title-2'],
   },
+  riskWarning: {
+    marginBottom: BOTTOM_BUTTON_TOP_OFFSET,
+  },
   bottomButtonTitle: {
     ...BOTTOM_BUTTON_TITLE_STYLE,
   },
@@ -1874,6 +1877,7 @@ export const BridgeContent = ({
               {showRiskConfirm ? (
                 <SignRiskWarning
                   checked={riskChecked}
+                  style={styles.riskWarning}
                   onToggle={() => setRiskChecked(checked => !checked)}
                 />
               ) : null}

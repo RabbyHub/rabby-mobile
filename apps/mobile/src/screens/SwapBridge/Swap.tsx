@@ -1832,6 +1832,7 @@ const Swap = ({
             <View>
               {showRiskConfirm ? (
                 <SignRiskWarning
+                  style={styles.riskWarning}
                   checked={riskChecked}
                   onToggle={() => setRiskChecked(checked => !checked)}
                 />
@@ -2154,6 +2155,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: BOTTOM_BUTTON_HORIZONTAL_PADDING,
     backgroundColor: colors2024['neutral-bg-1'],
     width: '100%',
+  },
+  riskWarning: {
+    marginTop: 12,
+    marginBottom: 12,
   },
   bottomButtonTitle: {
     ...BOTTOM_BUTTON_TITLE_STYLE,
