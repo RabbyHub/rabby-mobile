@@ -8,7 +8,9 @@ import {
   Not,
   MoreThan,
   Raw,
+  Index,
 } from 'typeorm/browser';
+import type { DataSource } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import {
   columnConverter,
@@ -25,8 +27,13 @@ import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
 import { ParseEntity } from '@/core/utils/typeorm';
 import { chunkBySqliteVariableBudget } from '@/core/databases/sqliteVariableLimit';
+import {
+  buildTokenProjectionResourceId,
+  TOKEN_PROJECTION_RESOURCE_ID_INDEX_NAME,
+} from '../tokenProjectionResourceId';
 
 const TOKEN_AMOUNT_OWNER_BATCH_SIZE = 100;
+const PROJECTION_RESOURCE_QUERY_BATCH_SIZE = 200;
 
 function makeTokenAmountKey(chain: string, tokenId: string) {
   return JSON.stringify([chain, tokenId]);
@@ -39,7 +46,11 @@ const RawAmountTransformer = {
 
 @ParseEntity()
 @Entity(ORM_TABLE_NAMES.cache_tokenitem)
+@Index(TOKEN_PROJECTION_RESOURCE_ID_INDEX_NAME, ['projection_resource_id'])
 export class TokenItemEntity extends EntityAddressAssetBase {
+  @Column('text', { default: '', select: false })
+  projection_resource_id!: string;
+
   // content_type
   @Column('text', { default: '' })
   content_type: TokenItem['content_type'];
@@ -213,6 +224,11 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     e.launchpad = input.launchpad ?? null;
     e.asset = input.asset ?? null;
     e.market_status = input.market_status ?? '';
+    e.projection_resource_id = buildTokenProjectionResourceId(
+      e.owner_addr,
+      e.chain,
+      e.id,
+    );
 
     e.makeDbId();
   }
@@ -359,6 +375,57 @@ export class TokenItemEntity extends EntityAddressAssetBase {
           cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
         }))
     );
+  }
+
+  /**
+   * Restores only the token resources referenced by a persisted projection.
+   *
+   * The projection identifier intentionally excludes `inner_id`, so this
+   * returns every matching cache row just like the former address-wide read.
+   */
+  static async batchMultiAddressTokensByResourceIds(
+    resourceIds: string[],
+    dataSource?: DataSource,
+  ) {
+    const repo = dataSource
+      ? dataSource.getRepository(TokenItemEntity)
+      : (await prepareAppDataSource(), this.getRepository());
+
+    const normalizedResourceIds = Array.from(
+      new Set(resourceIds.map(resourceId => resourceId.toLowerCase())),
+    ).filter(Boolean);
+    if (!normalizedResourceIds.length) {
+      return [];
+    }
+
+    const tokens: TokenItemEntity[] = [];
+
+    for (
+      let start = 0;
+      start < normalizedResourceIds.length;
+      start += PROJECTION_RESOURCE_QUERY_BATCH_SIZE
+    ) {
+      const resourceIdChunk = normalizedResourceIds.slice(
+        start,
+        start + PROJECTION_RESOURCE_QUERY_BATCH_SIZE,
+      );
+      const rows = await repo
+        .createQueryBuilder('tokenitem')
+        .where('tokenitem.projection_resource_id IN (:...resourceIds)', {
+          resourceIds: resourceIdChunk,
+        })
+        .andWhere('tokenitem.id != :emptyTokenId', {
+          emptyTokenId: EMPTY_TOKEN_ITEM_ID,
+        })
+        .andWhere('tokenitem.amount > :amount', { amount: 0 })
+        .getMany();
+      tokens.push(...rows);
+    }
+
+    return tokens.map(token => ({
+      ...token,
+      cex_ids: columnConverter.jsonStringToObj(token.cex_ids),
+    }));
   }
 
   static async getDefaultTokensByAddresses(

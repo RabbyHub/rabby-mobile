@@ -6,7 +6,7 @@ import React, {
   useState,
 } from 'react';
 
-import { makeTxPageBackgroundColors, RootNames } from '@/constant/layout';
+import { makeTxPageBackgroundColors } from '@/constant/layout';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { openapi } from '@/core/request';
 import {
@@ -29,7 +29,6 @@ import { View } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import type { TxHistoryResult } from '@rabby-wallet/rabby-api/dist/types';
 import { HistoryList } from './components/HistoryGroupList';
-import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
@@ -748,7 +747,6 @@ const HistoryScreen = ({ isForMultipleAddress = true }) => {
           // panelLinearGradientProps={{ type: 'tx-page' }}
         />
       )}
-      <ScreenSpecificStatusBar screenName={RootNames.History} />
       <History isTestnet={false} isForMultipleAddress={isForMultipleAddress} />
       {/* TODO: it seems to be useless, drop it after confirming */}
       <BottomSheetModalTokenDetail

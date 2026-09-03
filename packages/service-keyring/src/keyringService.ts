@@ -75,6 +75,12 @@ type OnSetAddressAlias = (
   contactService?: ContactBookService,
 ) => Promise<void>;
 
+type OnSetAddressAliases = (
+  keyring: KeyringInstance | KeyringIntf | undefined,
+  accounts: AccountItemWithBrandQueryResult[],
+  contactService?: ContactBookService,
+) => Promise<void>;
+
 type OnCreateKeyring = (
   Keyring: typeof KeyringIntf,
 ) => KeyringInstance | KeyringIntf;
@@ -154,6 +160,7 @@ export type KeyringServiceOptions = {
   encryptor?: EncryptorAdapter;
   keyringClasses?: (typeof KeyringIntf)[];
   onSetAddressAlias?: OnSetAddressAlias;
+  onSetAddressAliases?: OnSetAddressAliases;
   onCreateKeyring?: OnCreateKeyring;
   perfLogger?: KeyringPerfLogger;
 };
@@ -262,6 +269,7 @@ export class KeyringService extends RNEventEmitter {
   private readonly encryptor: EncryptorAdapter;
   private readonly contactService?: ContactBookService;
   private readonly onSetAddressAlias?: OnSetAddressAlias;
+  private readonly onSetAddressAliases?: OnSetAddressAliases;
   private readonly onCreateKeyring?: OnCreateKeyring;
   private readonly perfLogger?: KeyringPerfLogger;
   private pendingKeyringRuntimeRestore: DeferredKeyringRuntimeRestore | null =
@@ -279,6 +287,7 @@ export class KeyringService extends RNEventEmitter {
       encryptor: inputEncryptor = nodeEncryptor,
       keyringClasses = keyringSdks,
       onSetAddressAlias,
+      onSetAddressAliases,
       onCreateKeyring,
       perfLogger,
       contactService,
@@ -298,6 +307,7 @@ export class KeyringService extends RNEventEmitter {
       preMnemonics: '',
     });
     this.onSetAddressAlias = onSetAddressAlias;
+    this.onSetAddressAliases = onSetAddressAliases;
     this.onCreateKeyring = onCreateKeyring;
     this.perfLogger = perfLogger;
 
@@ -936,6 +946,88 @@ export class KeyringService extends RNEventEmitter {
       .then(this._updateMemStoreKeyrings.bind(this))
       .then(this.fullUpdate.bind(this))
       .then(() => _accounts);
+  }
+
+  async addNewWatchAccounts(
+    selectedKeyring: KeyringInstance | KeyringIntf,
+    addresses: string[],
+  ): Promise<string[]> {
+    await this.ensureKeyringRuntimeReadyForType(
+      'add_new_watch_accounts',
+      selectedKeyring.type,
+    );
+    this.assertCanPersistKeyringMutation(selectedKeyring);
+
+    if (
+      selectedKeyring.type !== KEYRING_TYPE.WatchAddressKeyring ||
+      typeof selectedKeyring.setAccountToAdd !== 'function'
+    ) {
+      throw new Error('addNewWatchAccounts requires a Watch Address keyring');
+    }
+
+    const existingAccounts = await selectedKeyring.getAccounts();
+    const existingAddresses = new Set(
+      existingAccounts.map(address => normalizeAddress(address).toLowerCase()),
+    );
+    const addedAddresses: string[] = [];
+
+    try {
+      for (const address of addresses) {
+        const normalizedAddress = normalizeAddress(address);
+        const normalizedKey = normalizedAddress.toLowerCase();
+        if (existingAddresses.has(normalizedKey)) {
+          continue;
+        }
+
+        selectedKeyring.setAccountToAdd(normalizedAddress);
+        const added = await selectedKeyring.addAccounts(1);
+        if (!added[0]) {
+          throw new Error('Watch Address keyring did not add an account');
+        }
+        const addedAddress = normalizeAddress(added[0]);
+        existingAddresses.add(addedAddress.toLowerCase());
+        addedAddresses.push(addedAddress);
+      }
+    } catch (error) {
+      await selectedKeyring.deserialize({ accounts: existingAccounts });
+      throw error;
+    }
+
+    if (!addedAddresses.length) {
+      return [];
+    }
+
+    const addedAccounts = addedAddresses.map(address => ({
+      address,
+      brandName: selectedKeyring.type,
+      type: selectedKeyring.type as KeyringTypeName,
+    }));
+
+    if (this.onSetAddressAliases) {
+      await this.onSetAddressAliases(
+        selectedKeyring,
+        addedAccounts,
+        this.contactService,
+      );
+    } else {
+      await Promise.all(
+        addedAccounts.map(account =>
+          this.onSetAddressAlias?.(
+            selectedKeyring,
+            account,
+            this.contactService,
+          ),
+        ),
+      );
+    }
+    await this.persistKeyringsForKeyring(selectedKeyring);
+    await this._updateMemStoreKeyrings();
+    this.fullUpdate();
+    addedAccounts.forEach(account => {
+      this.emit('newAccount', account as KeyringEventAccount);
+    });
+
+    return addedAddresses;
   }
   /**
    * Export Account
