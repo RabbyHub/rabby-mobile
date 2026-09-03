@@ -10,7 +10,6 @@ import {
   Easing,
   Platform,
   Pressable,
-  Text as NativeText,
   View,
   type LayoutChangeEvent,
   type StyleProp,
@@ -51,37 +50,65 @@ const PerpsProInfoTabLabel: React.FC<{
   label: string;
   position: SharedValue<number>;
   style: StyleProp<TextStyle>;
-}> = ({ activeColor, index, inactiveColor, label, position, style }) => {
-  const animatedStyle = useAnimatedStyle(() => {
+  testID: string;
+}> = ({
+  activeColor,
+  index,
+  inactiveColor,
+  label,
+  position,
+  style,
+  testID,
+}) => {
+  const mediumAnimatedStyle = useAnimatedStyle(() => {
     const maximumIndex = PERPS_PRO_INFO_TABS.length - 1;
     const rawPosition = Number.isFinite(position.value) ? position.value : 0;
     const visualIndex = Math.round(
       Math.max(0, Math.min(maximumIndex, rawPosition)),
     );
-    const active = visualIndex === index;
     return {
-      color: active ? activeColor : inactiveColor,
-      fontFamily: active
-        ? INFO_TAB_MEDIUM_FONT_STYLE.fontFamily
-        : INFO_TAB_REGULAR_FONT_STYLE.fontFamily,
-      fontWeight: active
-        ? INFO_TAB_MEDIUM_FONT_STYLE.fontWeight
-        : INFO_TAB_REGULAR_FONT_STYLE.fontWeight,
+      opacity: visualIndex === index ? 1 : 0,
     };
-  }, [activeColor, inactiveColor, position, index]);
+  }, [position, index]);
+  const regularAnimatedStyle = useAnimatedStyle(() => {
+    const maximumIndex = PERPS_PRO_INFO_TABS.length - 1;
+    const rawPosition = Number.isFinite(position.value) ? position.value : 0;
+    const visualIndex = Math.round(
+      Math.max(0, Math.min(maximumIndex, rawPosition)),
+    );
+    return {
+      opacity: visualIndex === index ? 0 : 1,
+    };
+  }, [position, index]);
 
   return (
     <View style={labelStyles.container}>
-      <NativeText
+      {/* Fixed font layers avoid a text layout update at the swipe midpoint. */}
+      <Reanimated.Text
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
         numberOfLines={1}
-        style={[style, labelStyles.measureText]}>
+        style={[
+          style,
+          INFO_TAB_MEDIUM_FONT_STYLE,
+          { color: activeColor },
+          mediumAnimatedStyle,
+        ]}
+        testID={`${testID}-medium`}>
         {label}
-      </NativeText>
+      </Reanimated.Text>
       <Reanimated.Text
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
         numberOfLines={1}
-        style={[style, labelStyles.visibleText, animatedStyle]}>
+        style={[
+          style,
+          INFO_TAB_REGULAR_FONT_STYLE,
+          { color: inactiveColor },
+          labelStyles.visibleText,
+          regularAnimatedStyle,
+        ]}
+        testID={`${testID}-regular`}>
         {label}
       </Reanimated.Text>
     </View>
@@ -91,10 +118,6 @@ const PerpsProInfoTabLabel: React.FC<{
 const labelStyles = {
   container: {
     position: 'relative' as const,
-  },
-  measureText: {
-    ...INFO_TAB_MEDIUM_FONT_STYLE,
-    opacity: 0,
   },
   visibleText: {
     left: 0,
@@ -204,6 +227,7 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
           const selected = tab === activeTab;
           return (
             <Pressable
+              accessibilityLabel={labels[tab]}
               accessibilityRole="tab"
               accessibilityState={{ selected }}
               key={tab}
@@ -218,11 +242,13 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
                 label={labels[tab]}
                 position={indicatorPosition}
                 style={styles.text}
+                testID={`perps-pro-info-tab-label-${tab}`}
               />
             </Pressable>
           );
         })}
         <PerpsProTabIndicator
+          geometryMode="transform"
           layouts={indicatorLayouts}
           position={indicatorPosition}
           style={styles.indicator}
