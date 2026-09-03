@@ -367,7 +367,10 @@ export const QuoteList = (props: QuotesProps) => {
         linearGradientType: isLight ? 'bg0' : 'bg1',
       })}>
       <View style={{ flex: 1, position: 'relative' }}>
-        <TouchableOpacity onPress={refreshQuote} style={styles.refreshIconBtn}>
+        <TouchableOpacity
+          hitSlop={10}
+          onPress={refreshQuote}
+          style={styles.refreshIconBtn}>
           <RcIconRefreshCC color={colors2024['neutral-body']} />
         </TouchableOpacity>
         <Text style={styles.headerText}>
