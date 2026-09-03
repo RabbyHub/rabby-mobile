@@ -1,20 +1,13 @@
 import { isNonPublicProductionEnv } from '@/constant';
 import { AppRootName, RootNames } from '@/constant/layout';
 import { isCached, preload } from 'react-native-bundle-splitter';
+import { PRELOAD_NAVIGATORS, PRELOAD_SCREENS } from './preloadNames';
+
+export { PRELOAD_NAVIGATORS, PRELOAD_SCREENS } from './preloadNames';
 
 const loadablesAreEager =
   process.env.RABBY_MOBILE_MODULE_LOADING_MODE === 'eager';
 const pendingNamedComponentPreloads = new Map<string, Promise<void>>();
-
-export const PRELOAD_SCREENS = {
-  [RootNames.Settings]: 'SettingsScreen',
-  [RootNames.SingleAddressHome]: 'SingleAddressHomeScreen',
-};
-
-export const PRELOAD_NAVIGATORS = {
-  [RootNames.StackTransaction]: RootNames.StackTransaction,
-  [RootNames.SingleAddressStack]: RootNames.SingleAddressStack,
-};
 
 async function preloadNamedComponent(
   name?: string,
@@ -50,6 +43,9 @@ async function preloadNamedComponent(
 }
 
 export async function preloadSettingsScreen() {
+  // SettingsScreen is registered by the lazy Settings navigator module. Load
+  // that module first so the named screen is available to bundle-splitter.
+  await preloadNamedComponent(PRELOAD_NAVIGATORS[RootNames.StackSettings]);
   await preloadNamedComponent(PRELOAD_SCREENS[RootNames.Settings]);
 }
 
@@ -76,6 +72,7 @@ export async function prepareTransactionNavigatorForPerpsNavigation() {
 }
 
 export async function preloadSingleAddressNavigator() {
+  await preloadNamedComponent(PRELOAD_NAVIGATORS[RootNames.SingleAddressStack]);
   await preloadNamedComponent(PRELOAD_SCREENS[RootNames.SingleAddressHome]);
 }
 

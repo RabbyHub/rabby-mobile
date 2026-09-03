@@ -24,9 +24,18 @@ import java.util.List;
 
 public class ThreadBaseReactPackage implements ReactPackage {
     private final ReactInstanceManager reactInstanceManager;
+    private ThreadSelfModule threadSelfModule;
 
     public ThreadBaseReactPackage(ReactInstanceManager reactInstanceManager) {
         this.reactInstanceManager = reactInstanceManager;
+    }
+
+    private synchronized ThreadSelfModule getThreadSelfModule(
+            ReactApplicationContext reactContext) {
+        if (threadSelfModule == null) {
+            threadSelfModule = new ThreadSelfModule(reactContext);
+        }
+        return threadSelfModule;
     }
 
     @Override
@@ -46,7 +55,7 @@ public class ThreadBaseReactPackage implements ReactPackage {
                 new NetworkingModule(catalystApplicationContext),
                 new VibrationModule(catalystApplicationContext),
                 new WebSocketModule(catalystApplicationContext),
-                new ThreadSelfModule(catalystApplicationContext),
+                getThreadSelfModule(catalystApplicationContext),
                 new DevSettingsModule(catalystApplicationContext, reactInstanceManager.getDevSupportManager())
         );
     }

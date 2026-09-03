@@ -63,10 +63,10 @@ import { hasBootSplashExited } from './core/utils/bootSplashExit';
 import { RefLikeObject } from './utils/type';
 import { useRendererDetect } from './components/Perf/PerfDetector';
 import { useTranslation } from 'react-i18next';
+import { BackgroundSecureBlurView } from '@/components/customized/BackgroundSecureBlurView';
 import {
   AliasNameEditModal,
   ApprovalTokenDetailSheetModalStub,
-  BackgroundSecureBlurView,
   BottomSheetBrowser,
   BottomSheetDappInfoPopup,
   BrowserFavoritePopup,
@@ -94,10 +94,10 @@ import {
   DappsNavigator,
   HomeNonTabNavigator,
   SettingNavigator,
+  SingleAddressNavigator,
   TestkitsNavigator,
   TransactionNavigator,
 } from '@/perfs/loadables/navigators';
-import { SingleAddressNavigator } from '@/screens/Navigators/SingleAddressNavigator';
 import { HomeScreenNavigator } from '@/perfs/loadables/homeRootNavigator';
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
 import { APP_TEST_PASSWORD, NEED_DEVSETTINGBLOCKS } from './constant';

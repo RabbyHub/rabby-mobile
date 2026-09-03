@@ -54,3 +54,13 @@ export const HomeNonTabNavigator = registerAppScreen<
   loader: () => import('@/screens/Navigators/HomeNonTabNavigator'),
   name: RootNames.StackHomeNonTab,
 });
+
+export const SingleAddressNavigator = registerAppScreen<
+  typeof import('@/screens/Navigators/SingleAddressNavigator').SingleAddressNavigator
+>({
+  loader: () =>
+    import('@/screens/Navigators/SingleAddressNavigator').then(m => ({
+      default: m.SingleAddressNavigator,
+    })),
+  name: RootNames.SingleAddressStack,
+});
