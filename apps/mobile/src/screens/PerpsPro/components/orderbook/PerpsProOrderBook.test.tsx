@@ -600,7 +600,7 @@ describe('PerpsProOrderBook display shell', () => {
     expect(screen.getByText('75.00%')).toBeTruthy();
     expect(screen.getByText('25.00%')).toBeTruthy();
     expect(mockWithTiming).toHaveBeenCalledWith(25, {
-      duration: 200,
+      duration: 250,
       easing: 'desktop-ease-out',
       reduceMotion: 'system',
     });
@@ -622,6 +622,39 @@ describe('PerpsProOrderBook display shell', () => {
     expect(screen.getByText('20.00%')).toBeTruthy();
     expect(mockWithTiming).not.toHaveBeenCalled();
     expect(mockCancelAnimation).toHaveBeenCalled();
+  });
+
+  it('keeps the ratio track bounds stable with symmetric label lanes', () => {
+    const book = processPerpsOrderBook({
+      coin: 'BTC',
+      levels: [[{ n: 1, px: '101', sz: '1' }], [{ n: 1, px: '100', sz: '1' }]],
+      time: 100,
+    });
+    render(
+      <PerpsProOrderBook
+        {...defaultProps}
+        book={book}
+        bookIdentity="BTC:5:null"
+        bookStatus="ready"
+        hasBookSnapshot
+        market={buildPerpsProMarket(marketData)}
+      />,
+    );
+
+    const buyRatio = screen.getByText('50.25%');
+    const sellRatio = screen.getByText('49.75%');
+    expect(buyRatio.props.numberOfLines).toBe(1);
+    expect(sellRatio.props.numberOfLines).toBe(1);
+    expect(StyleSheet.flatten(buyRatio.props.style)).toMatchObject({
+      flexShrink: 0,
+      textAlign: 'left',
+      width: 42,
+    });
+    expect(StyleSheet.flatten(sellRatio.props.style)).toMatchObject({
+      flexShrink: 0,
+      textAlign: 'right',
+      width: 42,
+    });
   });
 
   it('retains a price animation when a new best level moves it to another row', () => {
@@ -671,7 +704,7 @@ describe('PerpsProOrderBook display shell', () => {
       'ask:101',
     );
     expect(mockWithTiming).toHaveBeenCalledWith(100, {
-      duration: 200,
+      duration: 250,
       easing: 'desktop-ease-out',
       reduceMotion: 'system',
     });

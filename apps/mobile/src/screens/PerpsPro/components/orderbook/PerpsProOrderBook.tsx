@@ -376,7 +376,11 @@ export const PerpsProOrderBook: React.FC<{
             <PerpsProOrderBookRatioSkeleton />
           ) : (
             <>
-              <Text style={styles.buyRatio}>{buyRatio.buy.toFixed(2)}%</Text>
+              <Text
+                numberOfLines={1}
+                style={[styles.ratioLabel, styles.buyRatio]}>
+                {buyRatio.buy.toFixed(2)}%
+              </Text>
               <View style={styles.ratioTrack}>
                 {hasRatio ? (
                   <>
@@ -393,7 +397,11 @@ export const PerpsProOrderBook: React.FC<{
                   <View style={styles.emptyRatioTrack} />
                 )}
               </View>
-              <Text style={styles.sellRatio}>{buyRatio.sell.toFixed(2)}%</Text>
+              <Text
+                numberOfLines={1}
+                style={[styles.ratioLabel, styles.sellRatio]}>
+                {buyRatio.sell.toFixed(2)}%
+              </Text>
             </>
           )}
         </View>
@@ -555,19 +563,21 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 4,
     height: 12,
   },
-  buyRatio: {
-    color: colors2024['green-default'],
+  ratioLabel: {
+    flexShrink: 0,
     fontFamily: 'SF Pro Rounded',
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 12,
+    width: 42,
+  },
+  buyRatio: {
+    color: colors2024['green-default'],
+    textAlign: 'left',
   },
   sellRatio: {
     color: colors2024['red-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 10,
-    fontWeight: '500',
-    lineHeight: 12,
+    textAlign: 'right',
   },
   ratioTrack: {
     flexDirection: 'row',
