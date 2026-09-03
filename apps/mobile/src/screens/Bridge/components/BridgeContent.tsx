@@ -88,13 +88,18 @@ import {
   type QuotePollingPauseReasonState,
   updateQuotePollingPauseReason,
 } from '@/utils/quotePolling';
-import { IS_ANDROID } from '@/core/native/utils';
 import {
   ensureFeatureActivation,
   markFeatureActivation,
 } from '@/core/utils/featureActivationDiagnostics';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+  RootNames,
+} from '@/constant/layout';
 import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import {
   BridgePendingTransactionsController,
@@ -154,10 +159,8 @@ function BridgeActivationDataProbe({
   return null;
 }
 
-const BOTTOM_BUTTON_HEIGHT = 52;
-const BOTTOM_BUTTON_TITLE_FONT_SIZE = 18;
 const BOTTOM_BUTTON_HORIZONTAL_PADDING = 20;
-const BOTTOM_BUTTON_BOTTOM_OFFSET = 36;
+const SIGN_RISK_WARNING_RESERVE_HEIGHT = 26;
 const BUILD_BRIDGE_TXS_DEBOUNCE_MS = 500;
 const DEFAULT_REGRESSION_TARGET_USD = '0.1';
 const DEFAULT_REGRESSION_MAX_TOTAL_USD = '1';
@@ -300,12 +303,13 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
     width: '100%',
     paddingHorizontal: BOTTOM_BUTTON_HORIZONTAL_PADDING,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
   },
   btnTitle: {
     color: colors['neutral-title-2'],
   },
   bottomButtonTitle: {
-    fontSize: BOTTOM_BUTTON_TITLE_FONT_SIZE,
+    ...BOTTOM_BUTTON_TITLE_STYLE,
   },
   marketClosedTip: {
     marginHorizontal: 24,
@@ -1658,6 +1662,13 @@ export const BridgeContent = ({
     [setSlippage, setSlippageChanged],
   );
 
+  const footerBottomOffset = getBottomButtonBottomOffset(bottom);
+  const footerReserveHeight =
+    BOTTOM_BUTTON_TOP_OFFSET +
+    BOTTOM_BUTTON_SINGLE_HEIGHT +
+    footerBottomOffset +
+    (showRiskConfirm ? SIGN_RISK_WARNING_RESERVE_HEIGHT : 0);
+
   return (
     <SignatureInstanceProvider instance={instance}>
       <NormalScreenContainer overwriteStyle={styles.screen}>
@@ -1683,7 +1694,7 @@ export const BridgeContent = ({
         <KeyboardAwareScrollView
           style={styles.container}
           contentContainerStyle={{
-            paddingBottom: 150 + bottom + (showRiskTips ? 26 : 0),
+            paddingBottom: footerReserveHeight,
           }}
           enableOnAndroid
           scrollEnabled={scrollEnabled}
@@ -1850,8 +1861,7 @@ export const BridgeContent = ({
           style={[
             styles.buttonContainer,
             {
-              paddingBottom:
-                BOTTOM_BUTTON_BOTTOM_OFFSET + (IS_ANDROID ? bottom : 0),
+              paddingBottom: footerBottomOffset,
             },
           ]}>
           <Tip
@@ -1871,7 +1881,7 @@ export const BridgeContent = ({
                 <DirectSignBtn
                   ref={directSignBtnRef}
                   key={`${selectedBridgeQuote?.aggregator.id}-${selectedBridgeQuote?.bridge?.id}-${refreshId}`}
-                  height={BOTTOM_BUTTON_HEIGHT}
+                  height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                   titleStyle={styles.bottomButtonTitle}
                   authTitle={t('page.whitelist.confirmPassword')}
                   title={t('global.confirm')}
@@ -1903,7 +1913,7 @@ export const BridgeContent = ({
                 />
               ) : (
                 <Button
-                  height={BOTTOM_BUTTON_HEIGHT}
+                  height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                   onPress={handleConfirm}
                   title={btnText}
                   titleStyle={[styles.btnTitle, styles.bottomButtonTitle]}

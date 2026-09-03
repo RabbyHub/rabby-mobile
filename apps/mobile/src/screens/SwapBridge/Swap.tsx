@@ -1,7 +1,13 @@
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { RabbyFeePopup } from '@/components/RabbyFeePopup';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import type { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+  type RootNames,
+} from '@/constant/layout';
 import { DEX_WITH_WRAP, getChainDefaultToken } from '@/constant/swap';
 import { swapServiceApi } from '@/core/serviceApi/swap';
 import { setReportActionTs } from '@/core/serviceApi/preference';
@@ -29,7 +35,7 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Platform, View } from 'react-native';
+import { Alert, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { ChainInfo2024 } from '../Send/components/ChainInfo2024';
 import { SwapHeader } from '../Swap/components/Header';
@@ -121,11 +127,8 @@ import {
   type SwapFundedBroadcastSuccessPayload,
 } from './hooks/useSwapFundedRegression';
 
-const isAndroid = Platform.OS === 'android';
-const BOTTOM_BUTTON_HEIGHT = 52;
-const BOTTOM_BUTTON_TITLE_FONT_SIZE = 18;
 const BOTTOM_BUTTON_HORIZONTAL_PADDING = 20;
-const BOTTOM_BUTTON_BOTTOM_OFFSET = 36;
+const SIGN_RISK_WARNING_RESERVE_HEIGHT = 26;
 const BUILD_SWAP_TXS_DEBOUNCE_MS = 500;
 
 type SwapRouteProps = CompositeScreenProps<
@@ -967,7 +970,6 @@ const Swap = ({
     isPreviewVisible,
     noQuote,
     showClosedMarketTip,
-    showRiskTips,
     showRiskConfirm,
     showTwoStepApproveProgress,
     showMEVGuardedSwitch,
@@ -1654,6 +1656,13 @@ const Swap = ({
     [chain, payToken?.id, receiveToken?.id],
   );
 
+  const footerBottomOffset = getBottomButtonBottomOffset(safeOffBottom);
+  const footerReserveHeight =
+    BOTTOM_BUTTON_TOP_OFFSET +
+    BOTTOM_BUTTON_SINGLE_HEIGHT +
+    footerBottomOffset +
+    (showRiskConfirm ? SIGN_RISK_WARNING_RESERVE_HEIGHT : 0);
+
   return (
     <SignatureInstanceProvider instance={instance}>
       <NormalScreenContainer2024 type="bg1">
@@ -1672,12 +1681,8 @@ const Swap = ({
         <KeyboardAwareScrollView
           style={[
             styles.container,
-
             {
-              marginBottom:
-                112 +
-                (isAndroid ? 20 + safeOffBottom : 0) +
-                (showRiskTips ? 26 : 0),
+              marginBottom: footerReserveHeight,
             },
           ]}
           ref={keyboardAwareRef}
@@ -1815,8 +1820,7 @@ const Swap = ({
           style={[
             styles.buttonContainer,
             {
-              paddingBottom:
-                BOTTOM_BUTTON_BOTTOM_OFFSET + (isAndroid ? safeOffBottom : 0),
+              paddingBottom: footerBottomOffset,
             },
           ]}>
           <Tip
@@ -1837,7 +1841,7 @@ const Swap = ({
                   ref={directSignBtnRef}
                   // refresh  risk check
                   key={`${refreshId}-${chain}-${payToken?.id}-${receiveToken?.id}-${payAmount}-${activeProvider?.quote?.tx?.data}-${isApprove}`}
-                  height={BOTTOM_BUTTON_HEIGHT}
+                  height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                   titleStyle={styles.bottomButtonTitle}
                   loading={miniSignLoading}
                   loadingType="circle"
@@ -1870,7 +1874,7 @@ const Swap = ({
                 />
               ) : (
                 <Button
-                  height={BOTTOM_BUTTON_HEIGHT}
+                  height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                   titleStyle={styles.bottomButtonTitle}
                   onPress={() => {
                     if (!isSupportedChain && !externalDapps.length) {
@@ -2152,7 +2156,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: '100%',
   },
   bottomButtonTitle: {
-    fontSize: BOTTOM_BUTTON_TITLE_FONT_SIZE,
+    ...BOTTOM_BUTTON_TITLE_STYLE,
   },
   approveContainer: {
     flexDirection: 'row',
