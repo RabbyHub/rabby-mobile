@@ -492,6 +492,7 @@ class KeychainModule(reactContext: ReactApplicationContext) :
       val result = Arguments.createMap()
 
       result.putString(Maps.SERVICE, debugEntry.service)
+      result.putMap("androidBiometricHardware", buildAndroidBiometricHardware())
       result.putMap("androidAuthenticatorCapabilities", buildAndroidAuthenticatorCapabilities())
       result.putBoolean("hasEntry", debugEntry.hasEntry)
       result.putBoolean("hasUsername", debugEntry.hasUsername)
@@ -572,6 +573,23 @@ class KeychainModule(reactContext: ReactApplicationContext) :
       Log.e(KEYCHAIN_MODULE, fail.message, fail)
       promise.reject(Errors.E_UNKNOWN_ERROR, fail)
     }
+  }
+
+  private fun buildAndroidBiometricHardware(): WritableMap {
+    val result = Arguments.createMap()
+    result.putBoolean(
+      "fingerprint",
+      DeviceAvailability.isFingerprintAuthAvailable(reactApplicationContext)
+    )
+    result.putBoolean(
+      "face",
+      DeviceAvailability.isFaceAuthAvailable(reactApplicationContext)
+    )
+    result.putBoolean(
+      "iris",
+      DeviceAvailability.isIrisAuthAvailable(reactApplicationContext)
+    )
+    return result
   }
 
   private fun buildAndroidAuthenticatorCapabilities(): WritableMap {
