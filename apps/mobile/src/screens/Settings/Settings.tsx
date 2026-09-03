@@ -100,7 +100,6 @@ import ThemeSelectorModal, {
 } from './sheetModals/ThemeSelector';
 import { RABBY_GENESIS_NFT_DATA } from '../SendNFT/testData';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
-import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DevForceLocalVersionSelector, {
   useLocalVersionSelectorModalVisible,
@@ -1388,7 +1387,6 @@ export default function SettingsScreen(): JSX.Element {
           paddingBottom: safeSizes.containerPaddingBottom,
         },
       ]}>
-      <ScreenSpecificStatusBar screenName={RootNames.Settings} />
       <ScrollView
         style={[styles.scrollableView]}
         contentContainerStyle={[
