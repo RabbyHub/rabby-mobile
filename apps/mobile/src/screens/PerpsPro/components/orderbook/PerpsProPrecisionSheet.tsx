@@ -118,7 +118,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   optionText: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,

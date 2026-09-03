@@ -21,6 +21,7 @@ const mockUsePerpsFundingActions = jest.fn((_options?: unknown) => ({
 }));
 let mockDepositPopupProps: Record<string, unknown> | null = null;
 let mockSwapPopupProps: Record<string, unknown> | null = null;
+let mockWithdrawPopupProps: Record<string, unknown> | null = null;
 const mockWithdrawBalanceStore = createStore(() => ({ availableBalance: 0 }));
 const mockWithdrawBalanceRenders: number[] = [];
 
@@ -47,15 +48,15 @@ jest.mock('@/screens/Perps/components/PerpsWithdrawPopup', () => {
     useActivityStore: useMockActivityStore,
   } = require('@/hooks/storeActivity/useActivityStore');
   return {
-    PerpsWithdrawPopup: ({
-      onWithdraw,
-    }: {
+    PerpsWithdrawPopup: (props: {
       onWithdraw: (
         amount: string,
         isHypeWithdraw: boolean,
         targetAsset: string,
       ) => Promise<unknown>;
     }) => {
+      mockWithdrawPopupProps = props;
+      const { onWithdraw } = props;
       const availableBalance = useMockActivityStore(
         mockWithdrawBalanceStore,
         (state: { availableBalance: number }) => state.availableBalance,
@@ -111,6 +112,7 @@ describe('PerpsProFundingOverlay', () => {
     jest.clearAllMocks();
     mockDepositPopupProps = null;
     mockSwapPopupProps = null;
+    mockWithdrawPopupProps = null;
     mockWithdrawBalanceRenders.length = 0;
   });
 
@@ -161,6 +163,26 @@ describe('PerpsProFundingOverlay', () => {
       withdrawModeValidation: 'live',
     });
   });
+
+  it.each(['deposit', 'withdraw', 'swap'] as const)(
+    'opts the shared %s popup into Pro rounded typography',
+    mode => {
+      renderOverlay(mode);
+
+      const popupProps =
+        mode === 'deposit'
+          ? mockDepositPopupProps
+          : mode === 'withdraw'
+          ? mockWithdrawPopupProps
+          : mockSwapPopupProps;
+      expect(popupProps?.inputTextStyle).toMatchObject({
+        fontFamily: expect.stringContaining('Rounded'),
+      });
+      expect(popupProps?.tooltipTextStyle).toMatchObject({
+        fontFamily: expect.stringContaining('Rounded'),
+      });
+    },
+  );
 
   it('keeps the Pro withdraw popup open after a handled failure', async () => {
     mockHandleWithdraw.mockResolvedValueOnce(false);

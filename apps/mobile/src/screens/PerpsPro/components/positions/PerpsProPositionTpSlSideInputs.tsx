@@ -180,7 +180,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   fieldHintRow: { gap: 4, minHeight: 32 },
   fieldHint: {
     color: colors2024['neutral-foot'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },
@@ -189,7 +189,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   fieldHintNegative: { color: colors2024['red-default'] },
   errorText: {
     color: colors2024['red-default'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },

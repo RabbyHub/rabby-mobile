@@ -2,7 +2,6 @@ import { AppBottomSheetModal } from '@/components';
 import { Text } from '@/components/Typography';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { apisPerps } from '@/core/apis/perps';
-import { FontNames } from '@/core/utils/fonts';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -289,7 +288,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   title: {
     color: colors2024['neutral-title-1'],
-    fontFamily: FontNames.sf_pro,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,
@@ -309,14 +308,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   valueLabel: {
     color: colors2024['neutral-secondary'],
     flex: 1,
-    fontFamily: FontNames.sf_pro,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '400',
     lineHeight: 16,
   },
   value: {
     color: colors2024['neutral-title-1'],
-    fontFamily: FontNames.sf_pro,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
@@ -324,7 +323,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'right',
   },
   intervalValue: {
-    fontFamily: FontNames.sf_pro_rounded_medium,
+    fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
   },
   valueMuted: {
@@ -341,14 +340,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   error: {
     color: colors2024['red-default'],
-    fontFamily: FontNames.sf_pro,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
     marginTop: 12,
   },
   explanation: {
     color: colors2024['neutral-foot'],
-    fontFamily: FontNames.sf_pro,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
     marginTop: 19,

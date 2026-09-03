@@ -84,7 +84,9 @@ describe('PerpsProKlineToolbar', () => {
     expect(
       StyleSheet.flatten(screen.getByText('15m').props.style),
     ).toMatchObject({
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
+      fontWeight: '700',
       lineHeight: 16,
     });
     expect(

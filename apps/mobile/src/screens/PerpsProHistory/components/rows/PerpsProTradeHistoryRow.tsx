@@ -24,15 +24,13 @@ export const PerpsProTradeHistoryRowView: React.FC<{
   const filledValue = isBase
     ? formatPerpsProHistoryAssetAmount(filled, unit, decimals)
     : formatPerpsProDecimal(filled, 2);
-  const sideLabel =
+  const sideAccessibilityLabel =
     row.side === 'buy'
       ? t('page.perps.pro.history.buy')
       : t('page.perps.pro.history.sell');
-  const sideTone = row.side === 'buy' ? 'positive' : 'negative';
 
   return (
     <PerpsProHistoryRowLayout
-      badges={[{ label: sideLabel, tone: sideTone }]}
       details={[
         {
           label: t('page.perps.pro.history.fields.price'),
@@ -64,6 +62,8 @@ export const PerpsProTradeHistoryRowView: React.FC<{
           ),
         },
       ]}
+      side={row.side}
+      sideAccessibilityLabel={sideAccessibilityLabel}
       sourceTag={row.market.sourceTag}
       testID={`perps-pro-history-trade-${row.key}`}
       time={row.time}

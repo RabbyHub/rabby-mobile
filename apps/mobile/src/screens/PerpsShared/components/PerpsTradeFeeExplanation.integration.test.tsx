@@ -28,9 +28,10 @@ const FeeExplanationTrigger = () => {
 
 const ScopedTipsControls = () => {
   const hideHistoryTips = useHideTipsPopup('perps-pro-history-fee');
-  const showHistoryFeeExplanation = useShowPerpsTradeFeeExplanation(
-    'perps-pro-history-fee',
-  );
+  const showHistoryFeeExplanation = useShowPerpsTradeFeeExplanation({
+    owner: 'perps-pro-history-fee',
+    variant: 'pro',
+  });
   const showTipsPopup = useShowTipsPopup();
 
   return (
@@ -69,6 +70,9 @@ const OwnedVisibilityProbe = () => {
 
 const TipsPopupStateProbe = () => {
   const { hideTipsPopup, state } = useTipsPopup();
+  const descVariant = React.isValidElement<{ variant?: string }>(state.desc)
+    ? state.desc.props.variant
+    : undefined;
 
   return (
     <View>
@@ -79,7 +83,7 @@ const TipsPopupStateProbe = () => {
         {state.visible
           ? `${state.title}:${state.buttonType}:${React.isValidElement(
               state.desc,
-            )}`
+            )}:${descVariant ?? 'none'}`
           : 'closed'}
       </Text>
     </View>
@@ -107,7 +111,7 @@ describe('Perps Trade Fee explanation integration', () => {
 
     fireEvent.press(screen.getByTestId('open-fee-explanation'));
     expect(screen.getByTestId('fee-explanation-state')).toHaveTextContent(
-      'page.perps.historyDetail.feeTitle:hyperliquid:true',
+      'page.perps.historyDetail.feeTitle:hyperliquid:true:default',
     );
     expect(triggerRenderCount).toBe(1);
 
@@ -125,7 +129,7 @@ describe('Perps Trade Fee explanation integration', () => {
       'true:false',
     );
     expect(screen.getByTestId('fee-explanation-state')).toHaveTextContent(
-      'page.perps.historyDetail.feeTitle:hyperliquid:true',
+      'page.perps.historyDetail.feeTitle:hyperliquid:true:pro',
     );
     fireEvent.press(screen.getByTestId('close-owned-fee-explanation'));
     expect(screen.getByTestId('fee-explanation-state')).toHaveTextContent(
@@ -137,11 +141,11 @@ describe('Perps Trade Fee explanation integration', () => {
       'false:true',
     );
     expect(screen.getByTestId('fee-explanation-state')).toHaveTextContent(
-      'Other title:undefined:false',
+      'Other title:undefined:false:none',
     );
     fireEvent.press(screen.getByTestId('close-owned-fee-explanation'));
     expect(screen.getByTestId('fee-explanation-state')).toHaveTextContent(
-      'Other title:undefined:false',
+      'Other title:undefined:false:none',
     );
     fireEvent.press(screen.getByTestId('close-fee-explanation'));
   });

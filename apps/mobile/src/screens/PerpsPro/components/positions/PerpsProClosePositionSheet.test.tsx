@@ -236,6 +236,36 @@ describe('PerpsProClosePositionSheet', () => {
       'primary',
     );
     expect(screen.getByText('xyz')).toBeTruthy();
+    const sourceTagStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-close-market-tag').props.style,
+    );
+    expect(sourceTagStyle).toMatchObject({
+      backgroundColor: 'neutral-bg-5',
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    });
+    expect(sourceTagStyle.borderColor).toBeUndefined();
+    expect(sourceTagStyle.borderWidth).toBeUndefined();
+    const directionTagStyle = StyleSheet.flatten(
+      screen.getByText('Long 5x').parent?.parent?.props.style,
+    );
+    expect(directionTagStyle).toMatchObject({
+      backgroundColor: 'green-light-1',
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    });
+    expect(directionTagStyle.borderColor).toBeUndefined();
+    expect(directionTagStyle.borderWidth).toBeUndefined();
+    expect(
+      StyleSheet.flatten(screen.getByText('Long 5x').props.style),
+    ).toMatchObject({
+      color: 'green-default',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    });
     expect(screen.getByText('Entry Price (USDC)')).toBeTruthy();
     expect(screen.getByText('Mark Price (USDC)')).toBeTruthy();
     expect(screen.getByDisplayValue('100% (≈1.0000)')).toBeTruthy();

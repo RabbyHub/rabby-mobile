@@ -89,7 +89,7 @@ describe('PerpsProOpenOrdersControls', () => {
     });
     expect(screen.getByText('Basic (2)').props.style).toMatchObject({
       color: 'neutral-body',
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       fontWeight: '500',
       lineHeight: 16,
@@ -105,7 +105,7 @@ describe('PerpsProOpenOrdersControls', () => {
     });
     expect(screen.getByText('Conditional (1)').props.style).toMatchObject({
       color: 'neutral-foot',
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       fontWeight: '400',
       lineHeight: 16,

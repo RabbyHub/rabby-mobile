@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -22,23 +22,49 @@ const mockReadyMarket: MockPositionMarket = {
   sourceTag: 'xyz',
 };
 let mockPositionMarket: MockPositionMarket = mockReadyMarket;
+const mockUsePerpsProPositionMark = jest.fn(() => mockPositionMarket);
+const mockEnglishTranslations: Record<string, string> = {
+  'page.perps.pro.positions.close': 'Close',
+  'page.perps.pro.positions.cross': 'Cross',
+  'page.perps.pro.positions.entry': 'Entry Price',
+  'page.perps.pro.positions.isolated': 'Isolated',
+  'page.perps.pro.positions.leverage': 'Leverage',
+  'page.perps.pro.positions.liquidation': 'Liq. Price',
+  'page.perps.pro.positions.liquidationDistance': 'Liq. Distance',
+  'page.perps.pro.positions.long': 'Long',
+  'page.perps.pro.positions.margin': 'Margin',
+  'page.perps.pro.positions.manageMargin': 'Manage Margin',
+  'page.perps.pro.positions.marginRatio': 'Margin Ratio',
+  'page.perps.pro.positions.mark': 'Mark Price',
+  'page.perps.pro.positions.pnl': 'PNL',
+  'page.perps.pro.positions.positionTpsl': 'Position TP/SL',
+  'page.perps.pro.positions.roi': 'ROI',
+  'page.perps.pro.positions.size': 'Size',
+  'page.perps.pro.positions.short': 'Short',
+  'page.perps.pro.positions.stopLossShort': 'SL',
+  'page.perps.pro.positions.switchSizeUnit': 'Switch size unit',
+  'page.perps.pro.positions.takeProfitShort': 'TP',
+  'page.perps.pro.positions.tpsl': 'TP/SL',
+  'page.perps.pro.positions.triggerShort': 'Trigger',
+};
+let mockTranslations = mockEnglishTranslations;
 
 jest.mock('@/assets2024/icons/perps/IconPerpEdit.svg', () => {
   const ReactModule = require('react');
-  const { View } = require('react-native');
-  return (props: object) => ReactModule.createElement(View, props);
+  const { View: NativeView } = require('react-native');
+  return (props: object) => ReactModule.createElement(NativeView, props);
 });
 
 jest.mock('@/assets2024/icons/perps/PerpsProAvailableAdd.svg', () => {
   const ReactModule = require('react');
-  const { View } = require('react-native');
-  return (props: object) => ReactModule.createElement(View, props);
+  const { View: NativeView } = require('react-native');
+  return (props: object) => ReactModule.createElement(NativeView, props);
 });
 
 jest.mock('@/assets2024/icons/perps/PerpsProPositionUnitSwitch.svg', () => {
   const ReactModule = require('react');
-  const { View } = require('react-native');
-  return (props: object) => ReactModule.createElement(View, props);
+  const { View: NativeView } = require('react-native');
+  return (props: object) => ReactModule.createElement(NativeView, props);
 });
 
 jest.mock('../common/PerpsProDottedUnderlineText', () => {
@@ -48,16 +74,47 @@ jest.mock('../common/PerpsProDottedUnderlineText', () => {
     PerpsProDottedUnderlineText: ({
       accessibilityLabel,
       children,
+      containerStyle,
+      multiline,
+      onFirstLineLayout,
       onPress,
       style,
+      testID,
     }: any) =>
       onPress
         ? ReactModule.createElement(
             Pressable,
-            { accessibilityLabel, accessibilityRole: 'button', onPress },
-            ReactModule.createElement(Text, { style }, children),
+            {
+              accessibilityLabel,
+              accessibilityRole: 'button',
+              onPress,
+              style: containerStyle,
+              testID,
+            },
+            ReactModule.createElement(
+              Text,
+              {
+                numberOfLines: multiline ? undefined : 1,
+                onTextLayout: (event: any) => {
+                  const firstLine = event.nativeEvent.lines[0];
+                  if (firstLine) {
+                    onFirstLineLayout?.({
+                      lineCount: event.nativeEvent.lines.length,
+                      width: firstLine.width,
+                      x: firstLine.x ?? 0,
+                    });
+                  }
+                },
+                style,
+              },
+              children,
+            ),
           )
-        : ReactModule.createElement(Text, { style }, children),
+        : ReactModule.createElement(
+            Text,
+            { numberOfLines: multiline ? undefined : 1, style, testID },
+            children,
+          ),
   };
 });
 
@@ -86,35 +143,12 @@ jest.mock('@/utils/styles', () => ({
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) =>
-      ({
-        'page.perps.pro.positions.close': 'Close',
-        'page.perps.pro.positions.cross': 'Cross',
-        'page.perps.pro.positions.entry': 'Entry Price',
-        'page.perps.pro.positions.isolated': 'Isolated',
-        'page.perps.pro.positions.leverage': 'Leverage',
-        'page.perps.pro.positions.liquidation': 'Liq. Price',
-        'page.perps.pro.positions.liquidationDistance': 'Liq. Distance',
-        'page.perps.pro.positions.long': 'Long',
-        'page.perps.pro.positions.margin': 'Margin',
-        'page.perps.pro.positions.manageMargin': 'Manage Margin',
-        'page.perps.pro.positions.marginRatio': 'Margin Ratio',
-        'page.perps.pro.positions.mark': 'Mark Price',
-        'page.perps.pro.positions.pnl': 'PNL',
-        'page.perps.pro.positions.positionTpsl': 'Position TP/SL',
-        'page.perps.pro.positions.roi': 'ROI',
-        'page.perps.pro.positions.size': 'Size',
-        'page.perps.pro.positions.stopLossShort': 'SL',
-        'page.perps.pro.positions.switchSizeUnit': 'Switch size unit',
-        'page.perps.pro.positions.takeProfitShort': 'TP',
-        'page.perps.pro.positions.tpsl': 'TP/SL',
-        'page.perps.pro.positions.triggerShort': 'Trigger',
-      }[key] || key),
+    t: (key: string) => mockTranslations[key] || key,
   }),
 }));
 
 jest.mock('../../scene/usePerpsProPositionMark', () => ({
-  usePerpsProPositionMark: () => mockPositionMarket,
+  usePerpsProPositionMark: () => mockUsePerpsProPositionMark(),
 }));
 
 import { PerpsProPositionCard } from './PerpsProPositionCard';
@@ -165,6 +199,7 @@ describe('PerpsProPositionCard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockPositionMarket = mockReadyMarket;
+    mockTranslations = mockEnglishTranslations;
     __resetPerpsProPositionSizeUnitSessionForTests();
   });
 
@@ -275,36 +310,110 @@ describe('PerpsProPositionCard', () => {
       'perps-pro-position-direction-BTC',
     ]);
     expect(
-      screen.getByTestId('perps-pro-position-side-BTC').props.style,
-    ).toMatchObject({ borderRadius: 2, height: 18, width: 16 });
-    expect(screen.getByText('B').props.style).toMatchObject({
-      fontFamily: 'SF Pro',
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-side-BTC').props.style,
+      ),
+    ).toMatchObject({
+      backgroundColor: 'green-default',
+      borderRadius: 4,
+      height: 16,
+      paddingHorizontal: 4,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-side-BTC').props.style,
+      ).borderWidth,
+    ).toBeUndefined();
+    expect(StyleSheet.flatten(screen.getByText('B').props.style)).toMatchObject(
+      {
+        color: 'neutral-InvertHighlight',
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 12,
+        fontWeight: '700',
+        lineHeight: 16,
+      },
+    );
+    for (const testID of [
+      'perps-pro-position-source-BTC',
+      'perps-pro-position-mode-BTC',
+    ]) {
+      const style = StyleSheet.flatten(screen.getByTestId(testID).props.style);
+      expect(style).toMatchObject({
+        backgroundColor: 'neutral-bg-5',
+        borderRadius: 4,
+        paddingHorizontal: 4,
+        paddingVertical: 1,
+      });
+      expect(style.borderColor).toBeUndefined();
+      expect(style.borderWidth).toBeUndefined();
+    }
+    const directionStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-position-direction-BTC').props.style,
+    );
+    expect(directionStyle).toMatchObject({
+      backgroundColor: 'green-light-1',
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    });
+    expect(directionStyle.borderColor).toBeUndefined();
+    expect(directionStyle.borderWidth).toBeUndefined();
+    for (const label of ['xyz', 'Isolated']) {
+      expect(
+        StyleSheet.flatten(screen.getByText(label).props.style),
+      ).toMatchObject({
+        color: 'neutral-foot',
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 12,
+        fontWeight: '500',
+        lineHeight: 16,
+      });
+    }
+    expect(
+      StyleSheet.flatten(screen.getByText('Long 20x').props.style),
+    ).toMatchObject({
+      color: 'green-default',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       fontWeight: '500',
       lineHeight: 16,
     });
-    for (const testID of [
-      'perps-pro-position-source-BTC',
-      'perps-pro-position-mode-BTC',
-      'perps-pro-position-direction-BTC',
-    ]) {
-      expect(screen.getByTestId(testID).props.style).toMatchObject({
-        borderRadius: 2,
-        borderWidth: 0.5,
-        height: 14,
-        paddingHorizontal: 4,
-      });
-    }
-    for (const label of ['xyz', 'Isolated', 'Long 20x']) {
-      expect(
-        StyleSheet.flatten(screen.getByText(label).props.style),
-      ).toMatchObject({
-        fontFamily: 'SF Pro',
-        fontSize: 10,
-        fontWeight: '500',
-        lineHeight: 12,
-      });
-    }
+    expect(
+      StyleSheet.flatten(screen.getByText('Isolated').props.style).fontVariant,
+    ).toBeUndefined();
+  });
+
+  it('uses the negative tag contract and omits source metadata for a native Short', () => {
+    mockPositionMarket = { ...mockReadyMarket, sourceTag: null };
+    render(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        position={createPosition({ direction: 'short' })}
+      />,
+    );
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-side-BTC').props.style,
+      ),
+    ).toMatchObject({
+      backgroundColor: 'red-default',
+      borderRadius: 4,
+      height: 16,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-direction-BTC').props.style,
+      ),
+    ).toMatchObject({
+      backgroundColor: 'red-light-1',
+      borderRadius: 4,
+      paddingVertical: 1,
+    });
+    expect(
+      StyleSheet.flatten(screen.getByText('Short 20x').props.style),
+    ).toMatchObject({ color: 'red-default', fontSize: 12, lineHeight: 16 });
+    expect(screen.queryByTestId('perps-pro-position-source-BTC')).toBeNull();
   });
 
   it('maps every position dotted label to its approved explanation', () => {
@@ -425,7 +534,7 @@ describe('PerpsProPositionCard', () => {
     ).toMatchObject({ left: 0, position: 'absolute', right: 0, top: 0 });
     expect(
       StyleSheet.flatten(screen.getByText('Isolated').props.style),
-    ).toEqual(expect.objectContaining({ fontVariant: ['stylistic-six'] }));
+    ).not.toHaveProperty('fontVariant');
     expect(screen.getByText('TP/SL(3)')).toBeTruthy();
     expect(screen.getByText('120.00')).toBeTruthy();
     expect(screen.queryByText('130.00')).toBeNull();
@@ -444,8 +553,15 @@ describe('PerpsProPositionCard', () => {
     expect(StyleSheet.flatten(leverageAction.props.style)).toMatchObject({
       borderRadius: 6,
       flex: 1,
-      height: 26,
+      minHeight: 26,
+      paddingVertical: 4,
     });
+    expect(
+      StyleSheet.flatten(leverageAction.props.style).height,
+    ).toBeUndefined();
+    expect(
+      StyleSheet.flatten(screen.getByText('Leverage').props.style),
+    ).toMatchObject({ flexShrink: 1, textAlign: 'center' });
     const actions = screen.UNSAFE_getAllByType(View).find(view => {
       const style = StyleSheet.flatten(view.props.style);
       return style?.flexDirection === 'row' && style.gap === 12;
@@ -472,6 +588,350 @@ describe('PerpsProPositionCard', () => {
       screen.getByTestId('perps-pro-position-liquidation-distance-BTC').props
         .style,
     ).toMatchObject({ left: 0, right: 0 });
+  });
+
+  it('keeps compact geometry for fitting copy and expands only after native measurements collide', () => {
+    mockTranslations = {
+      ...mockEnglishTranslations,
+      'page.perps.pro.positions.entry': 'Precio de entrada',
+      'page.perps.pro.positions.leverage': 'Apalancamiento',
+      'page.perps.pro.positions.liquidation': 'Precio de liquidación',
+      'page.perps.pro.positions.margin': 'Margen',
+      'page.perps.pro.positions.marginRatio': 'Ratio de margen',
+      'page.perps.pro.positions.mark': 'Precio de marca',
+      'page.perps.pro.positions.size': 'Tamaño',
+    };
+    render(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        position={createPosition({ marginMode: 'cross' })}
+      />,
+    );
+
+    expect(
+      screen.getByTestId('perps-pro-position-liquidation-label-BTC'),
+    ).toBeTruthy();
+    expect(
+      screen.getByText('Ratio de margen').props.numberOfLines,
+    ).toBeUndefined();
+
+    fireEvent(screen.getByTestId('perps-pro-position-metrics-BTC'), 'layout', {
+      nativeEvent: { layout: { height: 34, width: 345, x: 0, y: 0 } },
+    });
+    fireEvent(
+      screen.getByTestId('perps-pro-position-middle-metric-BTC'),
+      'layout',
+      {
+        nativeEvent: { layout: { height: 34, width: 116, x: 136, y: 0 } },
+      },
+    );
+    fireEvent(screen.getByText('Margen (USDC)'), 'textLayout', {
+      nativeEvent: { lines: [{ width: 72, x: 0 }] },
+    });
+    fireEvent(screen.getByText('Ratio de margen'), 'textLayout', {
+      nativeEvent: {
+        lines: [
+          { width: 90, x: 0 },
+          { width: 50, x: 40 },
+        ],
+      },
+    });
+
+    expect(
+      screen.queryByTestId('perps-pro-position-liquidation-label-BTC'),
+    ).toBeNull();
+    expect(
+      screen.getByText('Ratio de margen').props.numberOfLines,
+    ).toBeUndefined();
+    expect(
+      StyleSheet.flatten(screen.getByLabelText('Ratio de margen').props.style),
+    ).toMatchObject({ alignItems: 'stretch', alignSelf: 'stretch' });
+    expect(
+      StyleSheet.flatten(screen.getByText('Ratio de margen').props.style),
+    ).toMatchObject({ textAlign: 'right' });
+    expect(
+      StyleSheet.flatten(
+        screen.getByLabelText('Precio de liquidación').props.style,
+      ),
+    ).toMatchObject({ alignItems: 'stretch', alignSelf: 'stretch' });
+    expect(
+      StyleSheet.flatten(
+        screen.getByText('Precio de liquidación (USDC)').props.style,
+      ),
+    ).toMatchObject({ textAlign: 'right' });
+    expect(
+      StyleSheet.flatten(screen.getByText('Tamaño (USDC)').props.style),
+    ).toMatchObject({ flexShrink: 1, minWidth: 0 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByRole('button', { name: 'Apalancamiento' }).props.style,
+      ),
+    ).toMatchObject({ minHeight: 26, paddingVertical: 4 });
+  });
+
+  it('does not re-render the card when fitting measurements confirm compact mode', () => {
+    render(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        position={createPosition({ marginMode: 'cross' })}
+      />,
+    );
+    expect(mockUsePerpsProPositionMark).toHaveBeenCalledTimes(1);
+
+    const measureFittingRow = (
+      rowTestID: string,
+      middleTestID: string,
+      middleLabel: string,
+      rightLabel: string,
+    ) => {
+      fireEvent(screen.getByTestId(rowTestID), 'layout', {
+        nativeEvent: { layout: { height: 34, width: 345, x: 0, y: 0 } },
+      });
+      fireEvent(screen.getByTestId(middleTestID), 'layout', {
+        nativeEvent: { layout: { height: 34, width: 116, x: 136, y: 0 } },
+      });
+      fireEvent(screen.getByText(middleLabel), 'textLayout', {
+        nativeEvent: { lines: [{ width: 72, x: 0 }] },
+      });
+      fireEvent(screen.getByText(rightLabel), 'textLayout', {
+        nativeEvent: { lines: [{ width: 88, x: 0 }] },
+      });
+    };
+
+    measureFittingRow(
+      'perps-pro-position-metrics-BTC',
+      'perps-pro-position-middle-metric-BTC',
+      'Margin (USDC)',
+      'Margin Ratio',
+    );
+    measureFittingRow(
+      'perps-pro-position-price-metrics-BTC',
+      'perps-pro-position-middle-price-BTC',
+      'Mark Price (USDC)',
+      'Liq. Price (USDC)',
+    );
+
+    expect(mockUsePerpsProPositionMark).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByTestId('perps-pro-position-liquidation-label-BTC'),
+    ).toBeTruthy();
+    expect(
+      StyleSheet.flatten(screen.getByLabelText('Margin Ratio').props.style),
+    ).toMatchObject({ alignSelf: 'flex-end' });
+    expect(
+      StyleSheet.flatten(screen.getByLabelText('Margin Ratio').props.style)
+        .alignItems,
+    ).toBeUndefined();
+  });
+
+  it('keeps a short English right label aligned when another row expands the card', () => {
+    render(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        position={createPosition({ marginMode: 'cross' })}
+      />,
+    );
+
+    expect(
+      StyleSheet.flatten(screen.getByLabelText('Margin Ratio').props.style),
+    ).toMatchObject({ alignSelf: 'flex-end' });
+
+    fireEvent(
+      screen.getByTestId('perps-pro-position-price-metrics-BTC'),
+      'layout',
+      {
+        nativeEvent: { layout: { height: 34, width: 345, x: 0, y: 0 } },
+      },
+    );
+    fireEvent(
+      screen.getByTestId('perps-pro-position-middle-price-BTC'),
+      'layout',
+      {
+        nativeEvent: { layout: { height: 34, width: 116, x: 136, y: 0 } },
+      },
+    );
+    fireEvent(screen.getByText('Mark Price (USDC)'), 'textLayout', {
+      nativeEvent: { lines: [{ width: 72, x: 0 }] },
+    });
+    fireEvent(screen.getByText('Liq. Price (USDC)'), 'textLayout', {
+      nativeEvent: { lines: [{ width: 180, x: 0 }] },
+    });
+
+    expect(
+      StyleSheet.flatten(screen.getByLabelText('Margin Ratio').props.style),
+    ).toMatchObject({ alignItems: 'stretch', alignSelf: 'stretch' });
+    expect(
+      StyleSheet.flatten(screen.getByText('Margin Ratio').props.style),
+    ).toMatchObject({ textAlign: 'right' });
+    expect(
+      StyleSheet.flatten(screen.getByLabelText('Liq. Price').props.style),
+    ).toMatchObject({ alignItems: 'stretch', alignSelf: 'stretch' });
+  });
+
+  it('preserves the full-row single-line Liq. Distance value after expanding labels', () => {
+    mockTranslations = {
+      ...mockEnglishTranslations,
+      'page.perps.pro.positions.liquidationDistance':
+        'Distancia del precio de liquidación',
+    };
+    render(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        position={createPosition({ marginMode: 'isolated' })}
+      />,
+    );
+
+    fireEvent(screen.getByTestId('perps-pro-position-metrics-BTC'), 'layout', {
+      nativeEvent: { layout: { height: 34, width: 345, x: 0, y: 0 } },
+    });
+    fireEvent(
+      screen.getByTestId('perps-pro-position-middle-metric-BTC'),
+      'layout',
+      {
+        nativeEvent: { layout: { height: 34, width: 116, x: 136, y: 0 } },
+      },
+    );
+    fireEvent(screen.getByText('Margin (USDC)'), 'textLayout', {
+      nativeEvent: { lines: [{ width: 72, x: 0 }] },
+    });
+    fireEvent(
+      screen.getByText('Distancia del precio de liquidación'),
+      'textLayout',
+      { nativeEvent: { lines: [{ width: 180, x: 0 }] } },
+    );
+
+    expect(
+      screen.queryByTestId('perps-pro-position-liquidation-distance-label-BTC'),
+    ).toBeNull();
+    expect(
+      StyleSheet.flatten(
+        screen.getByLabelText('Distancia del precio de liquidación').props
+          .style,
+      ),
+    ).toMatchObject({ alignItems: 'stretch', alignSelf: 'stretch' });
+    expect(
+      StyleSheet.flatten(
+        screen.getByText('Distancia del precio de liquidación').props.style,
+      ),
+    ).toMatchObject({ textAlign: 'right' });
+    expect(
+      screen.getByText('Distancia del precio de liquidación').props
+        .numberOfLines,
+    ).toBeUndefined();
+    expect(screen.getByText('-23.81%(-25.00)').props.numberOfLines).toBe(1);
+    expect(
+      screen.getByTestId('perps-pro-position-liquidation-distance-BTC').props
+        .style,
+    ).toMatchObject({ bottom: 0, left: 0, position: 'absolute', right: 0 });
+  });
+
+  it('re-evaluates stored natural widths when the card width changes', () => {
+    render(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        position={createPosition({ marginMode: 'cross' })}
+      />,
+    );
+
+    const measureRow = (
+      rowTestID: string,
+      middleTestID: string,
+      middleLabel: string,
+      rightLabel: string,
+      rightWidth: number,
+    ) => {
+      fireEvent(screen.getByTestId(rowTestID), 'layout', {
+        nativeEvent: { layout: { height: 34, width: 345, x: 0, y: 0 } },
+      });
+      fireEvent(screen.getByTestId(middleTestID), 'layout', {
+        nativeEvent: { layout: { height: 34, width: 116, x: 136, y: 0 } },
+      });
+      fireEvent(screen.getByText(middleLabel), 'textLayout', {
+        nativeEvent: { lines: [{ width: 72, x: 0 }] },
+      });
+      fireEvent(screen.getByText(rightLabel), 'textLayout', {
+        nativeEvent: { lines: [{ width: rightWidth, x: 0 }] },
+      });
+    };
+
+    measureRow(
+      'perps-pro-position-metrics-BTC',
+      'perps-pro-position-middle-metric-BTC',
+      'Margin (USDC)',
+      'Margin Ratio',
+      88,
+    );
+    measureRow(
+      'perps-pro-position-price-metrics-BTC',
+      'perps-pro-position-middle-price-BTC',
+      'Mark Price (USDC)',
+      'Liq. Price (USDC)',
+      130,
+    );
+    expect(
+      screen.queryByTestId('perps-pro-position-liquidation-label-BTC'),
+    ).toBeNull();
+
+    fireEvent(
+      screen.getByTestId('perps-pro-position-price-metrics-BTC'),
+      'layout',
+      {
+        nativeEvent: { layout: { height: 50, width: 500, x: 0, y: 0 } },
+      },
+    );
+
+    expect(
+      screen.getByTestId('perps-pro-position-liquidation-label-BTC'),
+    ).toBeTruthy();
+  });
+
+  it('ignores native layout callbacks from an obsolete measurement key', () => {
+    const position = createPosition({ marginMode: 'cross' });
+    const view = render(
+      <PerpsProPositionCard accountIdentity="account-a" position={position} />,
+    );
+    const oldRowLayout = screen.getByTestId('perps-pro-position-metrics-BTC')
+      .props.onLayout;
+    const oldMiddleLayout = screen.getByTestId(
+      'perps-pro-position-middle-metric-BTC',
+    ).props.onLayout;
+    const oldMiddleTextLayout =
+      screen.getByText('Margin (USDC)').props.onTextLayout;
+    const oldRightTextLayout =
+      screen.getByText('Margin Ratio').props.onTextLayout;
+
+    mockTranslations = {
+      ...mockEnglishTranslations,
+      'page.perps.pro.positions.marginRatio': 'Ratio de margen',
+    };
+    view.rerender(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        position={{ ...position }}
+      />,
+    );
+
+    act(() => {
+      oldRowLayout({
+        nativeEvent: { layout: { height: 34, width: 345, x: 0, y: 0 } },
+      });
+      oldMiddleLayout({
+        nativeEvent: { layout: { height: 34, width: 116, x: 136, y: 0 } },
+      });
+      oldMiddleTextLayout({
+        nativeEvent: { lines: [{ width: 72, x: 0 }] },
+      });
+      oldRightTextLayout({
+        nativeEvent: { lines: [{ width: 180, x: 0 }] },
+      });
+    });
+
+    expect(
+      screen.getByTestId('perps-pro-position-liquidation-label-BTC'),
+    ).toBeTruthy();
+    expect(
+      screen.getByText('Ratio de margen').props.numberOfLines,
+    ).toBeUndefined();
   });
 
   it('shows the account margin ratio for Cross', () => {
