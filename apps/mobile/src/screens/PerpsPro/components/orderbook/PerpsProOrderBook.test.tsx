@@ -624,7 +624,7 @@ describe('PerpsProOrderBook display shell', () => {
     expect(mockCancelAnimation).toHaveBeenCalled();
   });
 
-  it('keeps the ratio track bounds stable with symmetric label lanes', () => {
+  it('expands the centered ratio track without destabilizing label lanes', () => {
     const book = processPerpsOrderBook({
       coin: 'BTC',
       levels: [[{ n: 1, px: '101', sz: '1' }], [{ n: 1, px: '100', sz: '1' }]],
@@ -645,16 +645,30 @@ describe('PerpsProOrderBook display shell', () => {
     const sellRatio = screen.getByText('49.75%');
     expect(buyRatio.props.numberOfLines).toBe(1);
     expect(sellRatio.props.numberOfLines).toBe(1);
-    expect(StyleSheet.flatten(buyRatio.props.style)).toMatchObject({
-      flexShrink: 0,
-      textAlign: 'left',
-      width: 42,
+    const ratioRowStyle = StyleSheet.flatten(
+      buyRatio.parent?.parent?.props.style,
+    );
+    expect(ratioRowStyle).toMatchObject({
+      gap: 2,
+      marginHorizontal: -12,
     });
-    expect(StyleSheet.flatten(sellRatio.props.style)).toMatchObject({
+    expect(StyleSheet.flatten(buyRatio.props.style)).toMatchObject({
       flexShrink: 0,
       textAlign: 'right',
       width: 42,
     });
+    expect(StyleSheet.flatten(sellRatio.props.style)).toMatchObject({
+      flexShrink: 0,
+      textAlign: 'left',
+      width: 42,
+    });
+    const getTrackWidth = (orderBookWidth: number) =>
+      orderBookWidth -
+      2 * 42 -
+      2 * ratioRowStyle.gap -
+      2 * ratioRowStyle.marginHorizontal;
+    expect(getTrackWidth(112)).toBe(48);
+    expect(getTrackWidth(136)).toBe(72);
   });
 
   it('retains a price animation when a new best level moves it to another row', () => {
