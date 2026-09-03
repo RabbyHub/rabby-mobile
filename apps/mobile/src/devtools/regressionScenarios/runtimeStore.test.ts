@@ -6,6 +6,7 @@ import {
   activateRegressionScenarioCommand,
   claimRegressionScenarioAction,
   clearRegressionScenarioRuntime,
+  findPassingRegressionScenarioAssertion,
   getRegressionScenarioRuntimeControlSnapshot,
   getRegressionScenarioRuntimeSnapshot,
   reportRegressionScenarioEvent,
@@ -85,6 +86,26 @@ describe('regression scenario one-shot actions', () => {
     ]);
     expect(listener).not.toHaveBeenCalled();
     unsubscribe();
+  });
+
+  it('keeps a passing assertion discoverable for the active run', () => {
+    const command = makeCommand('ready-before-wait');
+    activateRegressionScenarioCommand(command, makeSession(command));
+    const event = reportRegressionScenarioEvent('assertion', {
+      assertion: 'rows-renderable',
+      passed: true,
+    });
+
+    expect(
+      findPassingRegressionScenarioAssertion(command.runId, 'rows-renderable'),
+    ).toBe(event);
+    expect(
+      findPassingRegressionScenarioAssertion(
+        command.runId,
+        'rows-renderable',
+        (event?.timestamp || 0) + 1,
+      ),
+    ).toBeUndefined();
   });
 
   it('updates scenario status without invalidating React runtime subscribers', () => {

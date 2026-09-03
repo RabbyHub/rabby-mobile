@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Entity, Column, In } from 'typeorm/browser';
+import type { DataSource } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import { columnConverter, badRealTransformer } from './_helpers';
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
@@ -9,6 +10,8 @@ import { prepareAppDataSource } from '../imports';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
 import { ParseEntity } from '@/core/utils/typeorm';
+
+const PROJECTION_RESOURCE_QUERY_BATCH_SIZE = 200;
 
 @ParseEntity()
 @Entity(ORM_TABLE_NAMES.cache_nftitem)
@@ -188,6 +191,58 @@ export class NFTItemEntity extends EntityAddressAssetBase {
         collection: columnConverter.jsonStringToObj(i.collection),
         pay_token: columnConverter.jsonStringToObj(i.pay_token),
       }));
+  }
+
+  static async batchMultiAddressNFTsByResourceIds(
+    resourceIds: string[],
+    dataSource?: DataSource,
+  ) {
+    const repo = dataSource
+      ? dataSource.getRepository(NFTItemEntity)
+      : (await prepareAppDataSource(), this.getRepository());
+
+    const normalizedResourceIds = Array.from(
+      new Set(resourceIds.map(resourceId => resourceId.toLowerCase())),
+    ).filter(Boolean);
+    if (!normalizedResourceIds.length) {
+      return [];
+    }
+
+    const resourceIdExpression = [
+      "LOWER(COALESCE(nftitem.owner_addr, ''))",
+      "LOWER(COALESCE(nftitem.chain, ''))",
+      "LOWER(COALESCE(nftitem.collection_id, ''))",
+      "LOWER(COALESCE(nftitem.id, ''))",
+      "LOWER(COALESCE(nftitem.inner_id, ''))",
+    ].join(" || ':' || ");
+    const nfts: NFTItemEntity[] = [];
+
+    for (
+      let start = 0;
+      start < normalizedResourceIds.length;
+      start += PROJECTION_RESOURCE_QUERY_BATCH_SIZE
+    ) {
+      const resourceIdChunk = normalizedResourceIds.slice(
+        start,
+        start + PROJECTION_RESOURCE_QUERY_BATCH_SIZE,
+      );
+      const rows = await repo
+        .createQueryBuilder('nftitem')
+        .where(`${resourceIdExpression} IN (:...resourceIds)`, {
+          resourceIds: resourceIdChunk,
+        })
+        .andWhere('nftitem.id != :emptyNftId', {
+          emptyNftId: EMPTY_NFT_ITEM_ID,
+        })
+        .getMany();
+      nfts.push(...rows);
+    }
+
+    return nfts.map(nft => ({
+      ...nft,
+      collection: columnConverter.jsonStringToObj(nft.collection),
+      pay_token: columnConverter.jsonStringToObj(nft.pay_token),
+    }));
   }
   static async willExpired(owner_addr: string, offest?: number) {
     if (await this.isExpired(owner_addr)) {

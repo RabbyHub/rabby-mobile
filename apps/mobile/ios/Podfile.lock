@@ -265,7 +265,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - op-sqlite (15.1.1):
+  - op-sqlite (15.1.3):
     - boost
     - DoubleConversion
     - fast_float
@@ -3878,7 +3878,7 @@ SPEC CHECKSUMS:
   nanopb: d4d75c12cd1316f4a64e3c6963f879ecd4b5e0d5
   NitroIap: 74aa279f1610cc3bf3f0a3e4e38f80e1467ad58b
   NitroModules: f9f5f08ddbc92bf10fa7b4c3606969ab3acc1f4d
-  op-sqlite: 559e7d37fe743edcc74f45bb49cab6259e30a144
+  op-sqlite: be92c782007c31fa5c92fe49624efc749698d228
   openiap: 5fd63f4544bd4cc34da1e514f27eba6d3f30eed5
   OpenSSL-Universal: 9110d21982bb7e8b22a962b6db56a8aa805afde7
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47

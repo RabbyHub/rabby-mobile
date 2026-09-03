@@ -7,6 +7,19 @@ module.exports = {
     'react/react-in-jsx-scope': 'off',
     'react-hooks/exhaustive-deps': 'error',
     '@typescript-eslint/no-unused-vars': 'warn',
+    'no-restricted-syntax': [
+      'error',
+      {
+        selector: "JSXAttribute[name.name='className']",
+        message:
+          'Do not use className in the React Native app. Use style, containerStyle, or a typed variant prop instead.',
+      },
+      {
+        selector: "TSPropertySignature[key.name='className']",
+        message:
+          'Do not expose className props in the React Native app. Use style, containerStyle, or a typed variant prop instead.',
+      },
+    ],
     'no-runtime-service-imports': 'error',
     'no-floating-deferred-service-api-calls': 'error',
     'no-persist-store-direct-mutation': 'error',

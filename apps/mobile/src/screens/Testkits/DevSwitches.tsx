@@ -24,7 +24,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { NextInput } from '@/components2024/Form/Input';
 import { RcIconCorrectCC } from '@/assets/icons/common';
-import { RcIconScannerCC } from '@/assets/icons/address';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import {
@@ -1660,7 +1659,6 @@ function DevSwitchHomeAssetSelection() {
     setTopN,
     setIncludeWatchAddresses,
   } = useHomeAssetSelectionSettings();
-
   return (
     <View style={styles.showCaseRowsContainer}>
       <View style={styles.secondarySectionHeader}>
@@ -1694,7 +1692,6 @@ function DevSwitchHomeAssetSelection() {
             : 'Use owned addresses only (default)'}
         </Text>
       </TouchableOpacity>
-
       <View
         style={[
           styles.secondarySectionContent,
