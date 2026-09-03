@@ -1,6 +1,6 @@
-import PerpsProHistoryEmptyImage from '@/assets2024/icons/perps/PerpsProHistoryEmpty.png';
+import PerpsProHistoryEmptyIllustration from '@/assets2024/icons/perps/PerpsProHistoryEmpty.svg';
 import React from 'react';
-import { Image, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { Text } from '@/components/Typography';
@@ -31,10 +31,11 @@ export const PerpsProHistoryEmpty = () => {
   const { t } = useTranslation();
   return (
     <View style={styles.empty} testID="perps-pro-history-empty">
-      <Image
-        source={PerpsProHistoryEmptyImage}
-        style={styles.emptyImage}
+      <PerpsProHistoryEmptyIllustration
+        accessible={false}
+        height={126}
         testID="perps-pro-history-empty-illustration"
+        width={163}
       />
       <Text style={styles.emptyMessage}>
         {t('page.perps.pro.history.noHistory')}
@@ -145,10 +146,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     flex: 1,
     paddingTop: 188,
-  },
-  emptyImage: {
-    height: 126,
-    width: 163,
   },
   emptyMessage: {
     color: colors2024['neutral-info'],
