@@ -26,12 +26,18 @@ import type { ITokenItem } from '@/types/assets';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
 import { ParseEntity } from '@/core/utils/typeorm';
+import { chunkBySqliteVariableBudget } from '@/core/databases/sqliteVariableLimit';
 import {
   buildTokenProjectionResourceId,
   TOKEN_PROJECTION_RESOURCE_ID_INDEX_NAME,
 } from '../tokenProjectionResourceId';
 
 const PROJECTION_RESOURCE_QUERY_BATCH_SIZE = 200;
+const TOKEN_AMOUNT_OWNER_BATCH_SIZE = 100;
+
+function makeTokenAmountKey(chain: string, tokenId: string) {
+  return JSON.stringify([chain, tokenId]);
+}
 
 const RawAmountTransformer = {
   to: (val: any) => columnConverter.numberToString(val),
@@ -832,38 +838,67 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       }
 
       const repo = this.getRepository();
-      const whereConditions = tokenList.map((token, index) => {
-        const chainParam = `chain${index}`;
-        const tokenIdParam = `tokenId${index}`;
-        return `(tokenitem.chain = :${chainParam} AND tokenitem.id = :${tokenIdParam})`;
-      });
-
-      const params: Record<string, any> = {};
-      tokenList.forEach((token, index) => {
-        params[`chain${index}`] = token.chain;
-        params[`tokenId${index}`] = token.tokenId;
-      });
-
-      const result = await repo
-        .createQueryBuilder('tokenitem')
-        .select([
-          'tokenitem.chain',
-          'tokenitem.id',
-          `SUM(${correctBadRealOnSql('tokenitem.amount')}) as total_amount`,
-        ])
-        .where(`tokenitem.owner_addr IN (:...owner_addr)`, { owner_addr })
-        .andWhere(`(${whereConditions.join(' OR ')})`, params)
-        .groupBy('tokenitem.chain, tokenitem.id')
-        .getRawMany();
-
       const amountMap = new Map<string, number>();
-      result.forEach(item => {
-        const key = `${item.tokenitem_chain}-${item.tokenitem_id}`;
-        amountMap.set(key, parseFloat(item.total_amount) || 0);
+      const uniqueOwnerAddresses = Array.from(new Set(owner_addr));
+      const uniqueTokens = Array.from(
+        new Map(
+          tokenList.map(token => [
+            makeTokenAmountKey(token.chain, token.tokenId),
+            token,
+          ]),
+        ).values(),
+      );
+      const ownerBatches = chunkBySqliteVariableBudget(uniqueOwnerAddresses, {
+        variablesPerItem: 1,
+        requestedBatchSize: TOKEN_AMOUNT_OWNER_BATCH_SIZE,
       });
+
+      for (const ownerBatch of ownerBatches) {
+        const tokenBatches = chunkBySqliteVariableBudget(uniqueTokens, {
+          variablesPerItem: 2,
+          fixedVariableCount: ownerBatch.length,
+        });
+
+        for (const tokenBatch of tokenBatches) {
+          const whereConditions = tokenBatch.map((token, index) => {
+            const chainParam = `chain${index}`;
+            const tokenIdParam = `tokenId${index}`;
+            return `(tokenitem.chain = :${chainParam} AND tokenitem.id = :${tokenIdParam})`;
+          });
+
+          const params: Record<string, string> = {};
+          tokenBatch.forEach((token, index) => {
+            params[`chain${index}`] = token.chain;
+            params[`tokenId${index}`] = token.tokenId;
+          });
+
+          const result = await repo
+            .createQueryBuilder('tokenitem')
+            .select([
+              'tokenitem.chain',
+              'tokenitem.id',
+              `SUM(${correctBadRealOnSql('tokenitem.amount')}) as total_amount`,
+            ])
+            .where(`tokenitem.owner_addr IN (:...owner_addr)`, {
+              owner_addr: ownerBatch,
+            })
+            .andWhere(`(${whereConditions.join(' OR ')})`, params)
+            .groupBy('tokenitem.chain, tokenitem.id')
+            .getRawMany();
+
+          result.forEach(item => {
+            const key = makeTokenAmountKey(
+              item.tokenitem_chain,
+              item.tokenitem_id,
+            );
+            const amount = parseFloat(item.total_amount) || 0;
+            amountMap.set(key, (amountMap.get(key) || 0) + amount);
+          });
+        }
+      }
 
       return tokenList.map(token => {
-        const key = `${token.chain}-${token.tokenId}`;
+        const key = makeTokenAmountKey(token.chain, token.tokenId);
         return {
           chain: token.chain,
           tokenId: token.tokenId,
