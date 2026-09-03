@@ -67,7 +67,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   pair: {
     color: colors2024['neutral-title-1'],
     flexShrink: 1,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,

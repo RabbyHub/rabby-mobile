@@ -98,7 +98,6 @@ export const PerpsProPositionTpSlHeader: React.FC<{
           label={`${t('page.perps.pro.positions.entry')} (${
             market.quoteAsset
           })`}
-          rounded
           value={formatPerpsProPrice(position.entryPrice, market.pxDecimals)}
         />
         <Metric
@@ -121,9 +120,8 @@ export const PerpsProPositionTpSlHeader: React.FC<{
 
 PerpsProPositionTpSlHeader.displayName = 'PerpsProPositionTpSlHeader';
 
-const Metric: React.FC<{ label: string; rounded?: boolean; value: string }> = ({
+const Metric: React.FC<{ label: string; value: string }> = ({
   label,
-  rounded = false,
   value,
 }) => {
   const { styles } = useTheme2024({ getStyle });
@@ -132,9 +130,7 @@ const Metric: React.FC<{ label: string; rounded?: boolean; value: string }> = ({
       <Text numberOfLines={1} style={styles.metricLabel}>
         {label}
       </Text>
-      <Text
-        numberOfLines={1}
-        style={[styles.metricValue, rounded && styles.roundedMetricValue]}>
+      <Text numberOfLines={1} style={styles.metricValue}>
         {value}
       </Text>
     </View>
@@ -159,7 +155,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   pageTitle: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,
@@ -183,7 +179,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   mainTitle: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,
@@ -201,7 +197,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   pair: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
@@ -223,17 +219,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   metricLabel: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },
   metricValue: {
     color: colors2024['neutral-title-1'],
     flexShrink: 1,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
   },
-  roundedMetricValue: { fontFamily: 'SF Pro' },
 }));

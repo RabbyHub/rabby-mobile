@@ -227,7 +227,7 @@ describe('PerpsProOpenOrderCard', () => {
     expect(screen.getByText('50%')).toBeTruthy();
     expect(screen.getByText('50%').props.style).toMatchObject({
       color: 'neutral-secondary',
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 10,
       fontWeight: '500',
       lineHeight: 12,
@@ -269,7 +269,7 @@ describe('PerpsProOpenOrderCard', () => {
     const cancelButton = screen.getByRole('button', { name: 'Cancel' });
     expect(screen.getByText('Cancel').props.style).toMatchObject({
       color: 'neutral-title-1',
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
       lineHeight: 18,

@@ -507,7 +507,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   optionsGroup: { gap: 8 },
   convertedAmount: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
     marginTop: -4,
@@ -519,7 +519,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
   },
   tif: { alignItems: 'center', flexDirection: 'row', gap: 4, height: 18 },
-  tifText: { color: colors2024['neutral-body'], fontSize: 12, lineHeight: 16 },
+  tifText: {
+    color: colors2024['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+  },
   orderGroups: { gap: 16 },
   orderGroup: { gap: 8 },
   orderSummary: { gap: 4 },

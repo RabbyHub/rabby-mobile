@@ -8,6 +8,7 @@ import React from 'react';
 import {
   Animated,
   Easing,
+  Platform,
   Pressable,
   Text as NativeText,
   View,
@@ -25,6 +26,7 @@ import {
   PerpsProTabIndicator,
   type PerpsProTabIndicatorLayout,
 } from '../common/PerpsProTabIndicator';
+import { getPerpsProFontStyle } from '../common/perpsProVisual';
 import { PERPS_PRO_INFO_TABS_HEIGHT } from './perpsProInfoTabsSticky';
 import { PERPS_PRO_INFO_TABS } from './perpsProInfoTabOrder';
 
@@ -38,6 +40,9 @@ interface PerpsProInfoTabsProps {
   positionsCount: number;
   onChange: (tab: PerpsProInfoTab) => void;
 }
+
+const INFO_TAB_REGULAR_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '400');
+const INFO_TAB_MEDIUM_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '500');
 
 const PerpsProInfoTabLabel: React.FC<{
   activeColor: string;
@@ -56,7 +61,12 @@ const PerpsProInfoTabLabel: React.FC<{
     const active = visualIndex === index;
     return {
       color: active ? activeColor : inactiveColor,
-      fontWeight: active ? '500' : '400',
+      fontFamily: active
+        ? INFO_TAB_MEDIUM_FONT_STYLE.fontFamily
+        : INFO_TAB_REGULAR_FONT_STYLE.fontFamily,
+      fontWeight: active
+        ? INFO_TAB_MEDIUM_FONT_STYLE.fontWeight
+        : INFO_TAB_REGULAR_FONT_STYLE.fontWeight,
     };
   }, [activeColor, inactiveColor, position, index]);
 
@@ -83,7 +93,7 @@ const labelStyles = {
     position: 'relative' as const,
   },
   measureText: {
-    fontWeight: '500' as const,
+    ...INFO_TAB_MEDIUM_FONT_STYLE,
     opacity: 0,
   },
   visibleText: {
@@ -268,7 +278,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   text: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '400',
     lineHeight: 18,
@@ -294,7 +304,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   pendingCount: {
     color: colors2024['orange-default'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 10,
     fontWeight: '700',
     lineHeight: 12,

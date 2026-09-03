@@ -57,9 +57,10 @@ export const PerpsProHistoryList: React.FC<{
 }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const showTradeFeeExplanation = useShowPerpsTradeFeeExplanation(
-    PERPS_PRO_HISTORY_FEE_TIPS_OWNER,
-  );
+  const showTradeFeeExplanation = useShowPerpsTradeFeeExplanation({
+    owner: PERPS_PRO_HISTORY_FEE_TIPS_OWNER,
+    variant: 'pro',
+  });
   const handleShowTradeFeeExplanation = useCallback(
     (isLiquidation: boolean) => {
       if (active) {

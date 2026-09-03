@@ -355,7 +355,7 @@ const getStyle = createGetStyles2024(
     },
     title: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 16,
       fontWeight: '700',
       lineHeight: 20,
@@ -369,7 +369,7 @@ const getStyle = createGetStyles2024(
     },
     pair: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
       lineHeight: 18,
@@ -401,27 +401,27 @@ const getStyle = createGetStyles2024(
     },
     factLabel: {
       color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       lineHeight: 16,
     },
     factValue: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       fontWeight: '500',
       lineHeight: 16,
     },
     factValueRounded: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       fontWeight: '500',
       lineHeight: 16,
     },
     configureLabel: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
       lineHeight: 18,
@@ -444,7 +444,7 @@ const getStyle = createGetStyles2024(
     amountCardError: { height: 184 },
     minimumValue: {
       color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       fontWeight: '500',
       left: 12,
@@ -454,7 +454,7 @@ const getStyle = createGetStyles2024(
     },
     maximumValue: {
       color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       fontWeight: '500',
       lineHeight: 16,
@@ -478,7 +478,7 @@ const getStyle = createGetStyles2024(
     warningText: {
       color: colors2024['orange-default'],
       flex: 1,
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       fontWeight: '500',
       lineHeight: 16,

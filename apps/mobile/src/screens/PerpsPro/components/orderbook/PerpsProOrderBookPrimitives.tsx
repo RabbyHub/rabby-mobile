@@ -1,5 +1,4 @@
 import { Text } from '@/components/Typography';
-import { FontNames } from '@/core/utils/fonts';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
@@ -203,7 +202,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   bookPrice: {
     flex: 1,
-    fontFamily: FontNames.sf_pro,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '400',
     lineHeight: 16,
@@ -222,7 +221,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   bookAmount: {
     color: colors2024['neutral-title-1'],
     flexShrink: 0,
-    fontFamily: FontNames.sf_pro,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '400',
     lineHeight: 16,

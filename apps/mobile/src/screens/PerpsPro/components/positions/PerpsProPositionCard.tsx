@@ -727,7 +727,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   shortSideText: getPerpsProSolidSideTagTextStyle(colors2024),
   coin: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,
@@ -770,13 +770,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   label: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },
   emphasizedValue: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '500',
     lineHeight: 20,
@@ -784,7 +784,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   positiveValue: {
     color: colors2024['green-default'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '500',
     lineHeight: 20,
@@ -792,7 +792,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   negativeValue: {
     color: colors2024['red-default'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '500',
     lineHeight: 20,
@@ -861,7 +861,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   value: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
@@ -875,7 +875,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   marginValue: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
@@ -904,7 +904,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   tpslTitle: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },
@@ -916,21 +916,21 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   takeProfit: {
     color: colors2024['green-default'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
   },
   stopLoss: {
     color: colors2024['red-default'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
   },
   partialTpSlCount: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
@@ -938,7 +938,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   separator: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },
@@ -967,7 +967,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   actionText: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     flexShrink: 1,
@@ -977,7 +977,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   disabledActionText: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     flexShrink: 1,

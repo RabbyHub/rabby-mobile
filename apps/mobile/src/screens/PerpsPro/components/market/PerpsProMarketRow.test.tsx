@@ -159,7 +159,7 @@ describe('PerpsProMarketRow', () => {
     );
     expect(screen.getByText('ALPHAUSDC').props.style).toEqual(
       expect.objectContaining({
-        fontFamily: 'SF Pro',
+        fontFamily: 'SF Pro Rounded',
         fontSize: 16,
         fontWeight: '500',
         lineHeight: 20,
@@ -167,7 +167,7 @@ describe('PerpsProMarketRow', () => {
     );
     expect(screen.getByText('120').props.style).toEqual(
       expect.objectContaining({
-        fontFamily: 'SF Pro',
+        fontFamily: 'SF Pro Rounded',
         fontSize: 16,
         fontWeight: '500',
         lineHeight: 20,

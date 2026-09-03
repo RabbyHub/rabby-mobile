@@ -310,7 +310,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   coin: {
     color: colors2024['neutral-title-1'],
     flexShrink: 1,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,
@@ -331,7 +331,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   sellText: getPerpsProTintedTagTextStyle(colors2024, 'negative'),
   time: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },
@@ -350,7 +350,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   progressText: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 12,
@@ -383,7 +383,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   cancelText: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
@@ -399,14 +399,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   label: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },
   detailValue: {
     color: colors2024['neutral-title-1'],
     flexShrink: 1,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,

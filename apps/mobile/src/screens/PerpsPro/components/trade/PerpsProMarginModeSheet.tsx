@@ -134,7 +134,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   title: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,
@@ -160,14 +160,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   copy: { alignSelf: 'stretch', gap: 4 },
   label: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
   },
   description: {
     color: colors2024['neutral-foot'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },

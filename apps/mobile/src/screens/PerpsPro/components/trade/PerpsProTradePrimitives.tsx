@@ -1,7 +1,6 @@
 import RcIconCheckboxEmpty from '@/assets2024/icons/common/checkbox-empty-cc.svg';
 import RcIconCheckboxFilled from '@/assets2024/icons/common/checkbox-filled-brand.svg';
 import { Text } from '@/components/Typography';
-import { FontNames } from '@/core/utils/fonts';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
@@ -229,7 +228,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   selectText: {
     color: colors2024['neutral-title-1'],
     flex: 1,
-    fontFamily: FontNames.sf_pro,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
@@ -251,14 +250,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   summaryLabel: {
     color: colors2024['neutral-secondary'],
     flexShrink: 1,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },
   summaryValue: {
     color: colors2024['neutral-title-1'],
     flexShrink: 1,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '400',
     lineHeight: 16,
@@ -283,7 +282,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   checkboxLabel: {
     color: colors2024['neutral-body'],
     flexShrink: 1,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },
@@ -303,14 +302,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   tradeButtonText: {
     color: colors2024['neutral-title-2'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
   },
   tradeButtonSubtitle: {
     color: colors2024['neutral-InvertHighlight'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 10,
     fontWeight: '400',
   },

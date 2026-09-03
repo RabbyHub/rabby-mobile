@@ -3,6 +3,10 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
 const mockBottomSheetFlatListProps = jest.fn();
+const mockShowTradeFeeExplanation = jest.fn();
+const mockUseShowPerpsTradeFeeExplanation = jest.fn(
+  () => mockShowTradeFeeExplanation,
+);
 let mockIsLight = true;
 
 jest.mock('@/components/Typography', () => ({
@@ -35,6 +39,11 @@ jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
 }));
 
+jest.mock('@/screens/PerpsShared/components/PerpsTradeFeeExplanation', () => ({
+  useShowPerpsTradeFeeExplanation: (options?: object) =>
+    mockUseShowPerpsTradeFeeExplanation(options),
+}));
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
@@ -49,6 +58,7 @@ jest.mock('./PerpsProHistoryRow', () => {
 });
 
 import { PerpsProHistoryList } from './PerpsProHistoryList';
+import { PERPS_PRO_HISTORY_FEE_TIPS_OWNER } from '../constants';
 import type { PerpsProHistoryTabState } from '../types';
 
 const makeState = (
@@ -65,7 +75,27 @@ const makeState = (
 describe('PerpsProHistoryList', () => {
   beforeEach(() => {
     mockBottomSheetFlatListProps.mockClear();
+    mockShowTradeFeeExplanation.mockClear();
+    mockUseShowPerpsTradeFeeExplanation.mockClear();
     mockIsLight = true;
+  });
+
+  it('explicitly opts the Pro History fee explanation into Pro typography', () => {
+    render(
+      <PerpsProHistoryList
+        amountUnit="base"
+        onLoadEarlier={jest.fn()}
+        onRefresh={jest.fn()}
+        onRetry={jest.fn()}
+        state={makeState()}
+        tab="trade"
+      />,
+    );
+
+    expect(mockUseShowPerpsTradeFeeExplanation).toHaveBeenCalledWith({
+      owner: PERPS_PRO_HISTORY_FEE_TIPS_OWNER,
+      variant: 'pro',
+    });
   });
 
   it('renders the approved local skeleton and per-tab empty state', () => {

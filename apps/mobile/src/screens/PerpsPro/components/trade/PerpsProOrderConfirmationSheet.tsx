@@ -335,7 +335,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   },
   symbol: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,
@@ -372,14 +372,14 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   },
   detailLabel: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },
   detailValue: {
     color: colors2024['neutral-title-1'],
     flexShrink: 1,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
@@ -395,7 +395,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   checkboxText: {
     color: colors2024['neutral-body'],
     flex: 1,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },

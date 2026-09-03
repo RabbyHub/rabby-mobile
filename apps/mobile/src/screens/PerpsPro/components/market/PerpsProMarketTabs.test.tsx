@@ -265,7 +265,7 @@ describe('PerpsProMarketTabs', () => {
     expect(
       StyleSheet.flatten(screen.getByText('All').props.style),
     ).toMatchObject({
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
       lineHeight: 18,

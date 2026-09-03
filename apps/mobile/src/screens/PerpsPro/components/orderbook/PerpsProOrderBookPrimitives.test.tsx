@@ -2,8 +2,6 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
-import { FontNames } from '@/core/utils/fonts';
-
 const mockCancelAnimation = jest.fn();
 const mockWithTiming = jest.fn((value: number) => value);
 
@@ -136,12 +134,12 @@ describe('PerpsProOrderBookRow', () => {
       ),
     ).toMatchObject({ gap: 4, padding: 2 });
     expect(StyleSheet.flatten(price.props.style)).toMatchObject({
-      fontFamily: FontNames.sf_pro,
+      fontFamily: 'SF Pro Rounded',
     });
     expect(
       StyleSheet.flatten(screen.getByText('200').props.style),
     ).toMatchObject({
-      fontFamily: FontNames.sf_pro,
+      fontFamily: 'SF Pro Rounded',
     });
   });
 
