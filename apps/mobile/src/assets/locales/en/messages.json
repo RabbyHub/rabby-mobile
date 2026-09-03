@@ -2354,7 +2354,7 @@
         "history": {
           "title": "My trades",
           "tabs": {
-            "orders": "Orders History",
+            "orders": "Order History",
             "trade": "Trade History",
             "transaction": "Transaction History",
             "funding": "Funding Fee"

@@ -14,7 +14,6 @@ const mockNativeSetPageWithoutAnimation = jest.fn();
 const mockNativePagerRender = jest.fn();
 let mockQueueRunOnJS = false;
 const mockRunOnJSQueue: Array<() => unknown> = [];
-const mockCancelAnimation = jest.fn();
 const mockWithTiming = jest.fn((target: number) => target);
 
 const flushMockRunOnJSQueue = () => {
@@ -61,7 +60,7 @@ jest.mock('react-native-reanimated', () => {
     },
     Easing: { bezier: jest.fn(() => jest.fn()) },
     ReduceMotion: { System: 'system' },
-    cancelAnimation: (...args: unknown[]) => mockCancelAnimation(...args),
+    cancelAnimation: jest.fn(),
     runOnJS:
       (callback: (...args: unknown[]) => unknown) =>
       (...args: unknown[]) => {
@@ -463,7 +462,7 @@ describe('PerpsProMarketPager', () => {
     scrollTo.mockRestore();
   });
 
-  it('follows adjacent iOS programmatic progress and animates only a direct jump', () => {
+  it('follows adjacent iOS progress and snaps a direct jump without timing', () => {
     const scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo');
     const ref = createRef<PerpsProMarketPagerHandle>();
     const indicatorPosition = createIndicatorPosition(1);
@@ -484,13 +483,10 @@ describe('PerpsProMarketPager', () => {
     expect(indicatorPosition.value).toBe(2);
 
     act(() => {
-      ref.current?.setPageWithoutAnimation(0, true);
+      ref.current?.setPageWithoutAnimation(0);
     });
-    expect(mockWithTiming).toHaveBeenLastCalledWith(
-      0,
-      expect.objectContaining({ duration: 300, reduceMotion: 'system' }),
-    );
     expect(indicatorPosition.value).toBe(0);
+    expect(mockWithTiming).not.toHaveBeenCalled();
 
     scrollTo.mockRestore();
   });
@@ -694,16 +690,13 @@ describe('PerpsProMarketPager', () => {
     });
     expect(indicatorPosition.value).toBe(2);
 
-    mockCancelAnimation.mockClear();
     act(() => {
-      ref.current?.setPageWithoutAnimation(0, true);
+      ref.current?.setPageWithoutAnimation(0);
     });
-    expect(mockWithTiming).toHaveBeenLastCalledWith(
-      0,
-      expect.objectContaining({ duration: 300, reduceMotion: 'system' }),
-    );
+    expect(indicatorPosition.value).toBe(0);
+    expect(mockWithTiming).not.toHaveBeenCalled();
     fireEvent(pager, 'pageSelected', { nativeEvent: { position: 0 } });
-    expect(mockCancelAnimation).not.toHaveBeenCalled();
+    expect(indicatorPosition.value).toBe(0);
   });
 
   it('keeps tracking an Android animated command when selection arrives before idle', () => {
@@ -1025,8 +1018,8 @@ describe('PerpsProMarketPager', () => {
     const pager = screen.getByTestId('market-pager');
 
     act(() => {
-      ref.current?.setPageWithoutAnimation(2, true);
-      ref.current?.setPageWithoutAnimation(0, true);
+      ref.current?.setPageWithoutAnimation(2);
+      ref.current?.setPageWithoutAnimation(0);
     });
     fireEvent(pager, 'pageSelected', { nativeEvent: { position: 2 } });
 

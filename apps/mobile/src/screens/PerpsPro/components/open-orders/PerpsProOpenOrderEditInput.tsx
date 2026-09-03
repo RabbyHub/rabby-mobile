@@ -123,7 +123,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   disabled: { opacity: 0.5 },
   label: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 10,
     lineHeight: 12,
     position: 'absolute',
@@ -131,10 +131,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     left: 8,
     right: 8,
   },
-  labelTitle: { fontWeight: '500' },
+  labelTitle: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+  },
   input: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     height: 40,
@@ -145,7 +148,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   inputWithUnit: { paddingRight: 72 },
   unit: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
@@ -154,7 +157,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   disabledText: {
     color: colors2024['neutral-info'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,

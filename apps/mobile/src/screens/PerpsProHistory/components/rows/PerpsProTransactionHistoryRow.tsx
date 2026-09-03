@@ -2,6 +2,7 @@ import RcIconFailed from '@/assets2024/icons/bridge/IconFailedCC.svg';
 import RcIconPending from '@/assets2024/icons/bridge/IconPendingCC.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
+import { PERPS_PRO_FONT_FAMILY } from '@/screens/PerpsPro/components/common/perpsProVisual';
 import {
   formatPerpsProSignedDecimal,
   isPerpsProStableAsset,
@@ -15,13 +16,14 @@ import type { PerpsProTransactionHistoryRow } from '../../types';
 import { PerpsProHistoryRowLayout } from '../PerpsProHistoryRowPrimitives';
 
 const PerpsProTransactionStatus: React.FC<{
+  active: boolean;
   status: 'failed' | 'pending';
-}> = ({ status }) => {
+}> = ({ active, status }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const rotation = React.useRef(new Animated.Value(0)).current;
   React.useEffect(() => {
-    if (status !== 'pending') {
+    if (!active || status !== 'pending') {
       rotation.setValue(0);
       return;
     }
@@ -35,7 +37,7 @@ const PerpsProTransactionStatus: React.FC<{
     );
     animation.start();
     return () => animation.stop();
-  }, [rotation, status]);
+  }, [active, rotation, status]);
   const color =
     status === 'pending'
       ? colors2024['orange-default']
@@ -69,8 +71,9 @@ const PerpsProTransactionStatus: React.FC<{
 };
 
 export const PerpsProTransactionHistoryRowView: React.FC<{
+  active?: boolean;
   row: PerpsProTransactionHistoryRow;
-}> = ({ row }) => {
+}> = ({ active = true, row }) => {
   const { t } = useTranslation();
   const isDeposit = row.direction === 'deposit';
   const type = isDeposit
@@ -99,7 +102,7 @@ export const PerpsProTransactionHistoryRowView: React.FC<{
       title={row.asset}
       trailing={
         row.status === 'success' ? undefined : (
-          <PerpsProTransactionStatus status={row.status} />
+          <PerpsProTransactionStatus active={active} status={row.status} />
         )
       }
     />
@@ -115,14 +118,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   pending: {
     color: colors2024['orange-default'],
-    fontFamily: 'SF Pro',
+    fontFamily: PERPS_PRO_FONT_FAMILY,
     fontSize: 12,
+    fontWeight: '500',
     lineHeight: 16,
   },
   failed: {
     color: colors2024['red-default'],
-    fontFamily: 'SF Pro',
+    fontFamily: PERPS_PRO_FONT_FAMILY,
     fontSize: 12,
+    fontWeight: '500',
     lineHeight: 16,
   },
 }));

@@ -1,11 +1,8 @@
 import React from 'react';
 import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
-  Easing,
-  ReduceMotion,
   cancelAnimation,
   useAnimatedStyle,
-  withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
 
@@ -13,14 +10,6 @@ export type PerpsProTabIndicatorLayout = Readonly<{
   width: number;
   x: number;
 }>;
-
-export const PERPS_PRO_TAB_INDICATOR_DURATION_MS = 300;
-
-const PERPS_PRO_TAB_INDICATOR_TIMING_CONFIG = {
-  duration: PERPS_PRO_TAB_INDICATOR_DURATION_MS,
-  easing: Easing.bezier(0, 0, 0.2, 1),
-  reduceMotion: ReduceMotion.System,
-} as const;
 
 export const getPerpsProTabIndicatorFrame = (
   rawPosition: number,
@@ -47,17 +36,6 @@ export const getPerpsProTabIndicatorFrame = (
   };
 };
 
-export const animatePerpsProTabIndicator = (
-  position: SharedValue<number>,
-  target: number,
-  callback?: (finished?: boolean) => void,
-) => {
-  'worklet';
-  position.value = callback
-    ? withTiming(target, PERPS_PRO_TAB_INDICATOR_TIMING_CONFIG, callback)
-    : withTiming(target, PERPS_PRO_TAB_INDICATOR_TIMING_CONFIG);
-};
-
 export const snapPerpsProTabIndicator = (
   position: SharedValue<number>,
   target: number,
@@ -76,8 +54,8 @@ export const PerpsProTabIndicator: React.FC<{
   const animatedStyle = useAnimatedStyle(() => {
     const frame = getPerpsProTabIndicatorFrame(position.value, layouts);
     return {
+      left: frame.x,
       opacity: layouts.length > 0 ? 1 : 0,
-      transform: [{ translateX: frame.x }],
       width: frame.width,
     };
   }, [layouts, position]);
@@ -95,7 +73,6 @@ export const PerpsProTabIndicator: React.FC<{
 
 const styles = StyleSheet.create({
   indicator: {
-    left: 0,
     position: 'absolute',
   },
 });

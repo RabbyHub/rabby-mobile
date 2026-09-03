@@ -103,7 +103,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   filterText: {
     color: colors2024['neutral-secondary'],
     flexShrink: 1,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
@@ -130,14 +130,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   actionText: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
   },
   disabledActionText: {
     color: colors2024['neutral-foot'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,

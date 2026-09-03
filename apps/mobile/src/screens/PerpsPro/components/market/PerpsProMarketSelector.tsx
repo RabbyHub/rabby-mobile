@@ -542,7 +542,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
           if (distance === 1) {
             pagerRef.current?.setPage(targetIndex);
           } else {
-            pagerRef.current?.setPageWithoutAnimation(targetIndex, true);
+            pagerRef.current?.setPageWithoutAnimation(targetIndex);
           }
           if (pendingTabPageRequestRef.current === pendingRequest) {
             pendingTabPageRequestRef.current = null;
@@ -815,7 +815,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   columnText: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,

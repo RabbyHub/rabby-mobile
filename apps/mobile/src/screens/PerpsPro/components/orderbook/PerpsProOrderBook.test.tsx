@@ -11,6 +11,7 @@ import type { MarketData } from '@/hooks/perps/usePerpsStore';
 import { buildPerpsProMarket } from '../../model/market';
 import { processPerpsOrderBook } from '../../model/orderBook';
 import {
+  getPerpsProOrderBookDepthKey,
   getPerpsProOrderBookRowKey,
   PerpsProOrderBook,
 } from './PerpsProOrderBook';
@@ -120,6 +121,7 @@ const defaultProps: React.ComponentProps<typeof PerpsProOrderBook> = {
   bookStatus: 'loading',
   hasBookSnapshot: false,
   latestTrade: null,
+  latestTradeIdentity: 'disabled',
   market: null,
   onOpenFunding: jest.fn(),
   onSelectTickOption: jest.fn(),
@@ -150,6 +152,7 @@ const marketData: MarketData = {
   quoteAsset: 'USDC',
   szDecimals: 4,
 };
+const btcMarket = buildPerpsProMarket(marketData);
 
 describe('PerpsProOrderBook display shell', () => {
   beforeEach(() => {
@@ -310,15 +313,22 @@ describe('PerpsProOrderBook display shell', () => {
         bookStatus="ready"
         hasBookSnapshot
         latestTrade={latestTrade}
-        market={buildPerpsProMarket(marketData)}
-        onSelectPrice={onSelectPrice}
+        latestTradeIdentity="BTC"
+        market={btcMarket}
+        onSelectLatestTradePrice={onSelectPrice}
       />,
     );
 
     fireEvent.press(screen.getByTestId('perps-pro-order-book-latest-price'));
-    expect(onSelectPrice).toHaveBeenCalledWith('31.3314', {
-      type: 'tradePrice',
-    });
+    expect(onSelectPrice).toHaveBeenCalledWith(
+      '31.3314',
+      { type: 'tradePrice' },
+      {
+        feedIdentity: 'BTC',
+        marketKey: btcMarket.marketKey,
+        type: 'latestTrade',
+      },
+    );
 
     view.rerender(
       <PerpsProOrderBook
@@ -326,7 +336,8 @@ describe('PerpsProOrderBook display shell', () => {
         bookStatus="ready"
         hasBookSnapshot
         latestTrade={latestTrade}
-        market={buildPerpsProMarket(marketData)}
+        latestTradeIdentity="BTC"
+        market={btcMarket}
       />,
     );
     fireEvent.press(screen.getByTestId('perps-pro-order-book-latest-price'));
@@ -360,8 +371,9 @@ describe('PerpsProOrderBook display shell', () => {
           tid: 1,
           time: 100,
         }}
-        market={buildPerpsProMarket(marketData)}
-        onSelectPrice={onSelectPrice}
+        latestTradeIdentity="BTC"
+        market={btcMarket}
+        onSelectLatestTradePrice={onSelectPrice}
         onSelectPriceIntentStart={onSelectPriceIntentStart}
       />,
     );
@@ -371,10 +383,18 @@ describe('PerpsProOrderBook display shell', () => {
     fireEvent.press(latestPrice);
 
     expect(onSelectPriceIntentStart).toHaveBeenCalledTimes(1);
-    expect(onSelectPrice).toHaveBeenCalledWith('31.3314', {
-      type: 'attachedTpSlPrice',
-      leg: 'tp',
-    });
+    expect(onSelectPrice).toHaveBeenCalledWith(
+      '31.3314',
+      {
+        type: 'attachedTpSlPrice',
+        leg: 'tp',
+      },
+      {
+        feedIdentity: 'BTC',
+        marketKey: btcMarket.marketKey,
+        type: 'latestTrade',
+      },
+    );
   });
 
   it('forwards an empty display row as an invalid price selection attempt', () => {
@@ -392,14 +412,23 @@ describe('PerpsProOrderBook display shell', () => {
         })}
         bookStatus="ready"
         hasBookSnapshot
-        market={buildPerpsProMarket(marketData)}
-        onSelectPrice={onSelectPrice}
+        bookIdentity="BTC:5:null"
+        market={btcMarket}
+        onSelectBookPrice={onSelectPrice}
       />,
     );
 
     const rows = screen.getAllByTestId('perps-pro-order-book-row');
     fireEvent.press(rows[1]);
-    expect(onSelectPrice).toHaveBeenCalledWith(null, { type: 'tradePrice' });
+    expect(onSelectPrice).toHaveBeenCalledWith(
+      null,
+      { type: 'tradePrice' },
+      {
+        feedIdentity: 'BTC:5:null',
+        marketKey: btcMarket.marketKey,
+        type: 'book',
+      },
+    );
   });
 
   it('grows to the measured trade height and retains the center block in single mode', () => {
@@ -637,14 +666,125 @@ describe('PerpsProOrderBook display shell', () => {
       />,
     );
 
-    expect(getPerpsProOrderBookRowKey('ask', 4, { price: '101' })).toBe(
+    expect(getPerpsProOrderBookRowKey('ask', 4)).toBe('ask:4');
+    expect(getPerpsProOrderBookDepthKey('ask', { price: '101' })).toBe(
       'ask:101',
     );
-    expect(getPerpsProOrderBookRowKey('ask', 4, null)).toBe('ask:empty:4');
     expect(mockWithTiming).toHaveBeenCalledWith(100, {
       duration: 200,
       easing: 'desktop-ease-out',
       reduceMotion: 'system',
     });
+  });
+
+  it('keeps the pressed row mounted and commits its frozen raw price when L2 removes that price', () => {
+    const onSelectBookPrice = jest.fn();
+    const createBook = (askLevels: [string, string][]) =>
+      processPerpsOrderBook({
+        coin: 'BTC',
+        levels: [
+          [
+            { n: 1, px: '100', sz: '1' },
+            { n: 1, px: '99', sz: '1' },
+          ],
+          askLevels.map(([px, sz]) => ({ n: 1, px, sz })),
+        ],
+        time: 100,
+      });
+    const view = render(
+      <PerpsProOrderBook
+        {...defaultProps}
+        book={createBook([
+          ['101', '1'],
+          ['102', '1'],
+        ])}
+        bookIdentity="BTC:5:null"
+        bookStatus="ready"
+        hasBookSnapshot
+        market={btcMarket}
+        onSelectBookPrice={onSelectBookPrice}
+      />,
+    );
+    const pressedRow = screen.getByText('101.00').parent;
+    expect(pressedRow).not.toBeNull();
+    fireEvent(pressedRow!, 'pressIn');
+
+    view.rerender(
+      <PerpsProOrderBook
+        {...defaultProps}
+        book={createBook([
+          ['100.5', '1'],
+          ['102', '1'],
+        ])}
+        bookIdentity="BTC:5:null"
+        bookStatus="ready"
+        hasBookSnapshot
+        market={btcMarket}
+        onSelectBookPrice={onSelectBookPrice}
+      />,
+    );
+
+    expect(screen.getByText('100.50').parent).toBe(pressedRow);
+    fireEvent.press(pressedRow!);
+    expect(onSelectBookPrice).toHaveBeenCalledTimes(1);
+    expect(onSelectBookPrice).toHaveBeenCalledWith(
+      '101',
+      { type: 'tradePrice' },
+      {
+        feedIdentity: 'BTC:5:null',
+        marketKey: btcMarket.marketKey,
+        type: 'book',
+      },
+    );
+  });
+
+  it('commits the latest trade raw price that was touched before the feed updates', () => {
+    const onSelectLatestTradePrice = jest.fn();
+    const createTrade = (price: string, tid: number) => ({
+      coin: 'BTC',
+      price,
+      side: 'buy' as const,
+      size: '1',
+      tid,
+      time: 100 + tid,
+    });
+    const view = render(
+      <PerpsProOrderBook
+        {...defaultProps}
+        bookStatus="ready"
+        hasBookSnapshot
+        latestTrade={createTrade('31.3314', 1)}
+        latestTradeIdentity="BTC"
+        market={btcMarket}
+        onSelectLatestTradePrice={onSelectLatestTradePrice}
+      />,
+    );
+    const pressedLatest = screen.getByTestId(
+      'perps-pro-order-book-latest-price',
+    );
+    fireEvent(pressedLatest, 'pressIn');
+
+    view.rerender(
+      <PerpsProOrderBook
+        {...defaultProps}
+        bookStatus="ready"
+        hasBookSnapshot
+        latestTrade={createTrade('31.4414', 2)}
+        latestTradeIdentity="BTC"
+        market={btcMarket}
+        onSelectLatestTradePrice={onSelectLatestTradePrice}
+      />,
+    );
+
+    fireEvent.press(pressedLatest);
+    expect(onSelectLatestTradePrice).toHaveBeenCalledWith(
+      '31.3314',
+      { type: 'tradePrice' },
+      {
+        feedIdentity: 'BTC',
+        marketKey: btcMarket.marketKey,
+        type: 'latestTrade',
+      },
+    );
   });
 });

@@ -1,4 +1,8 @@
-import { useFocusEffect, useRoute } from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useIsFocused,
+  useRoute,
+} from '@react-navigation/native';
 import React, { useCallback } from 'react';
 import { BackHandler, Platform, View } from 'react-native';
 
@@ -9,9 +13,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useHideTipsPopup, useIsTipsPopupVisible } from '@/hooks/useTipsPopup';
 
-import { usePerpsProTradeAmountUnit } from '../PerpsPro/scene/usePerpsProTradePreferences';
-import { PerpsProHistoryPager } from './components/PerpsProHistoryPager';
-import { usePerpsProHistoryController } from './scene/usePerpsProHistoryController';
+import { PerpsProHistoryContent } from './components/PerpsProHistoryContent';
 import type { PerpsProHistoryTab } from './types';
 import { PERPS_PRO_HISTORY_FEE_TIPS_OWNER } from './constants';
 
@@ -23,7 +25,7 @@ const isHistoryTab = (value: unknown): value is PerpsProHistoryTab =>
 
 export const PerpsProHistoryScreen = () => {
   useEnsurePerpsRuntime();
-  const amountUnit = usePerpsProTradeAmountUnit();
+  const isFocused = useIsFocused();
   const hideFeeTipsPopup = useHideTipsPopup(PERPS_PRO_HISTORY_FEE_TIPS_OWNER);
   const isFeeTipsPopupVisible = useIsTipsPopupVisible(
     PERPS_PRO_HISTORY_FEE_TIPS_OWNER,
@@ -39,7 +41,6 @@ export const PerpsProHistoryScreen = () => {
   const initialTab = isHistoryTab(route.params?.initialTab)
     ? route.params.initialTab
     : 'orders';
-  const history = usePerpsProHistoryController(initialTab);
   useFocusEffect(
     useCallback(() => () => hideFeeTipsPopup(), [hideFeeTipsPopup]),
   );
@@ -62,14 +63,7 @@ export const PerpsProHistoryScreen = () => {
   return (
     <NormalScreenContainer2024 type="bg1">
       <View style={styles.container}>
-        <PerpsProHistoryPager
-          activeTab={history.activeTab}
-          amountUnit={amountUnit}
-          onChange={history.setActiveTab}
-          onLoadEarlier={history.loadEarlier}
-          onRefresh={history.refresh}
-          state={history.state}
-        />
+        <PerpsProHistoryContent active={isFocused} initialTab={initialTab} />
       </View>
     </NormalScreenContainer2024>
   );

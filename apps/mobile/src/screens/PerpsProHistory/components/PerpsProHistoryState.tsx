@@ -1,10 +1,11 @@
+import PerpsProHistoryEmptyImage from '@/assets2024/icons/perps/PerpsProHistoryEmpty.png';
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
-import { PerpsProEmptyState } from '@/screens/PerpsPro/components/common/PerpsProEmptyState';
+import { PERPS_PRO_FONT_FAMILY } from '@/screens/PerpsPro/components/common/perpsProVisual';
 import { createGetStyles2024 } from '@/utils/styles';
 
 export const PerpsProHistorySkeleton = () => {
@@ -26,12 +27,19 @@ export const PerpsProHistorySkeleton = () => {
 };
 
 export const PerpsProHistoryEmpty = () => {
+  const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   return (
-    <PerpsProEmptyState
-      message={t('page.perps.pro.history.noHistory')}
-      testID="perps-pro-history-empty"
-    />
+    <View style={styles.empty} testID="perps-pro-history-empty">
+      <Image
+        source={PerpsProHistoryEmptyImage}
+        style={styles.emptyImage}
+        testID="perps-pro-history-empty-illustration"
+      />
+      <Text style={styles.emptyMessage}>
+        {t('page.perps.pro.history.noHistory')}
+      </Text>
+    </View>
   );
 };
 
@@ -61,12 +69,14 @@ export const PerpsProHistoryError: React.FC<{ onRetry: () => void }> = ({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   skeletonList: {
     flex: 1,
-    paddingHorizontal: 16,
+    gap: 8,
   },
   skeletonRow: {
-    borderBottomColor: colors2024['neutral-bg-5'],
-    borderBottomWidth: 1,
-    gap: 12,
+    backgroundColor: colors2024['neutral-card-1'],
+    borderRadius: 12,
+    gap: 8,
+    marginHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 16,
   },
   skeletonHeader: {
@@ -107,7 +117,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   message: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: PERPS_PRO_FONT_FAMILY,
     fontSize: 14,
     lineHeight: 20,
     textAlign: 'center',
@@ -126,9 +136,27 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   retryText: {
     color: colors2024['blue-default'],
-    fontFamily: 'SF Pro',
+    fontFamily: PERPS_PRO_FONT_FAMILY,
     fontSize: 13,
     fontWeight: '600',
     lineHeight: 18,
+  },
+  empty: {
+    alignItems: 'center',
+    flex: 1,
+    paddingTop: 188,
+  },
+  emptyImage: {
+    height: 126,
+    width: 163,
+  },
+  emptyMessage: {
+    color: colors2024['neutral-info'],
+    fontFamily: PERPS_PRO_FONT_FAMILY,
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 20,
+    marginTop: 12,
+    textAlign: 'center',
   },
 }));

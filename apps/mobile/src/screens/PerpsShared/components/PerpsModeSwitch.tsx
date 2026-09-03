@@ -36,6 +36,7 @@ export const PerpsModeSwitch: React.FC<PerpsModeSwitchProps> = ({
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const useRoundedTypography = activeMode === 'pro';
 
   return (
     <View
@@ -67,7 +68,16 @@ export const PerpsModeSwitch: React.FC<PerpsModeSwitchProps> = ({
             }
             testID={`perps-mode-${option.value}`}>
             <View style={styles.optionContent}>
-              <Text style={selected ? styles.activeText : styles.inactiveText}>
+              <Text
+                style={
+                  useRoundedTypography
+                    ? selected
+                      ? styles.roundedActiveText
+                      : styles.roundedInactiveText
+                    : selected
+                    ? styles.activeText
+                    : styles.inactiveText
+                }>
                 {option.label}
               </Text>
               {option.value === 'pro' && showProNewBadge ? (
@@ -133,6 +143,22 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   inactiveText: {
     fontFamily: FontNames.sf_pro,
+    fontSize: 14,
+    fontWeight: '500',
+    includeFontPadding: false,
+    lineHeight: 18,
+    color: colors2024['neutral-secondary'],
+  },
+  roundedActiveText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 18,
+    fontWeight: '700',
+    includeFontPadding: false,
+    lineHeight: 22,
+    color: colors2024['neutral-title-1'],
+  },
+  roundedInactiveText: {
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     includeFontPadding: false,

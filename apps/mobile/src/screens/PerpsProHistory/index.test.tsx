@@ -12,6 +12,7 @@ jest.mock('@react-navigation/native', () => {
   return {
     useFocusEffect: (effect: () => void | (() => void)) =>
       ReactModule.useEffect(effect, [effect]),
+    useIsFocused: () => true,
     useRoute: () => ({ params: { initialTab: 'trade' } }),
   };
 });

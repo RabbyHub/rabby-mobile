@@ -8,10 +8,7 @@ import React, { useEffect, useRef } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import {
-  getPerpsProBottomSheetChromeStyles,
-  PERPS_PRO_ISOLATED_TEXT_STYLE,
-} from '../common/perpsProVisual';
+import { getPerpsProBottomSheetChromeStyles } from '../common/perpsProVisual';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
 type MarginMode = 'cross' | 'isolated';
@@ -109,10 +106,7 @@ export const PerpsProMarginModeSheet: React.FC<{
                     <View
                       style={styles.copy}
                       testID={`perps-pro-margin-mode-${option.value}-copy`}>
-                      <Text
-                        style={[styles.label, PERPS_PRO_ISOLATED_TEXT_STYLE]}>
-                        {option.label}
-                      </Text>
+                      <Text style={styles.label}>{option.label}</Text>
                       <Text style={styles.description}>
                         {option.description}
                       </Text>
@@ -140,7 +134,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   title: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,
@@ -166,14 +160,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   copy: { alignSelf: 'stretch', gap: 4 },
   label: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
   },
   description: {
     color: colors2024['neutral-foot'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },

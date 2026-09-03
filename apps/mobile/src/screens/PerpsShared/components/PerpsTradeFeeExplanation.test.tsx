@@ -1,7 +1,12 @@
 import { render, screen } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet, type StyleProp, type TextStyle } from 'react-native';
 
 let mockTranslations: Record<string, string> = {};
+let mockTransComponents: Record<
+  string,
+  React.ReactElement<{ style?: StyleProp<TextStyle> }>
+> = {};
 
 jest.mock('@/assets2024/icons/common/rabby-wallet.svg', () => {
   const ReactModule = require('react');
@@ -31,7 +36,16 @@ jest.mock('@/utils/styles', () => ({
 }));
 
 jest.mock('react-i18next', () => ({
-  Trans: ({ i18nKey }: { i18nKey: string }) => i18nKey,
+  Trans: ({
+    components,
+    i18nKey,
+  }: {
+    components: typeof mockTransComponents;
+    i18nKey: string;
+  }) => {
+    mockTransComponents = components;
+    return i18nKey;
+  },
   useTranslation: () => ({
     t: (key: string) => mockTranslations[key] ?? key,
   }),
@@ -41,7 +55,46 @@ import { PerpsTradeFeeExplanationContent } from './PerpsTradeFeeExplanation';
 
 describe('PerpsTradeFeeExplanationContent', () => {
   beforeEach(() => {
+    mockTransComponents = {};
     mockTranslations = {};
+  });
+
+  it('keeps the default emphasis on its inherited font family', () => {
+    render(<PerpsTradeFeeExplanationContent isLiquidation={false} />);
+
+    expect(StyleSheet.flatten(mockTransComponents['1'].props.style)).toEqual(
+      expect.objectContaining({
+        fontSize: 16,
+        fontWeight: '700',
+        lineHeight: 20,
+      }),
+    );
+    expect(
+      StyleSheet.flatten(mockTransComponents['1'].props.style)?.fontFamily,
+    ).toBeUndefined();
+    expect(
+      StyleSheet.flatten(mockTransComponents['2'].props.style)?.fontFamily,
+    ).toBeUndefined();
+  });
+
+  it('opts Pro emphasis into the explicit SF Pro Rounded family', () => {
+    render(
+      <PerpsTradeFeeExplanationContent isLiquidation={false} variant="pro" />,
+    );
+
+    expect(StyleSheet.flatten(mockTransComponents['1'].props.style)).toEqual(
+      expect.objectContaining({
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 16,
+        fontWeight: '700',
+        lineHeight: 20,
+      }),
+    );
+    expect(StyleSheet.flatten(mockTransComponents['2'].props.style)).toEqual(
+      expect.objectContaining({
+        fontFamily: 'SF Pro Rounded',
+      }),
+    );
   });
 
   it('keeps the Simple trading and builder fee explanation for normal fills', () => {

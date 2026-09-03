@@ -1,7 +1,9 @@
 import type { AppColors2024Variants } from '@/constant/theme';
 import { BOTTOM_BUTTON_COMPACT_TITLE_STYLE } from '@/constant/layout';
-import { FontNames } from '@/core/utils/fonts';
+import { FontWeightEnum, getFontWeightType } from '@/core/utils/fonts';
 import { Platform, type TextStyle, type ViewStyle } from 'react-native';
+
+export const PERPS_PRO_FONT_FAMILY = 'SF Pro Rounded';
 
 export const PERPS_PRO_LIGHT_FIELD_BACKGROUND = '#F4F5F5';
 
@@ -13,9 +15,45 @@ export const resolvePerpsProFieldBackground = ({
   isLight?: boolean;
 }) => (isLight !== false ? PERPS_PRO_LIGHT_FIELD_BACKGROUND : darkBackground);
 
+const getPerpsProAndroidFontFamily = (fontWeight?: TextStyle['fontWeight']) => {
+  switch (getFontWeightType(fontWeight).supertype) {
+    case FontWeightEnum.heavy:
+      return 'SF-Pro-Rounded-Heavy';
+    case FontWeightEnum.bold:
+      return 'SF-Pro-Rounded-Bold';
+    case FontWeightEnum.medium:
+      return 'SF-Pro-Rounded-Medium';
+    default:
+      return 'SF-Pro-Rounded-Regular';
+  }
+};
+
+/**
+ * Use for styles that bypass createGetStyles2024/mutateStyles, such as
+ * third-party TextInput and Button titleStyle props.
+ */
+export const getPerpsProFontStyle = (
+  platform: typeof Platform.OS,
+  fontWeight: TextStyle['fontWeight'] = '400',
+): TextStyle =>
+  platform === 'android'
+    ? {
+        fontFamily: getPerpsProAndroidFontFamily(fontWeight),
+        fontWeight: undefined,
+      }
+    : {
+        fontFamily: PERPS_PRO_FONT_FAMILY,
+        fontWeight,
+      };
+
+export const PERPS_PRO_REGULAR_TEXT_STYLE = getPerpsProFontStyle(Platform.OS);
+
 export const PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE: TextStyle = {
   ...BOTTOM_BUTTON_COMPACT_TITLE_STYLE,
-  fontFamily: FontNames.sf_pro,
+  ...getPerpsProFontStyle(
+    Platform.OS,
+    BOTTOM_BUTTON_COMPACT_TITLE_STYLE.fontWeight,
+  ),
 };
 
 export const PERPS_PRO_CONFIRM_BUTTON_STYLE: ViewStyle = {
@@ -24,17 +62,14 @@ export const PERPS_PRO_CONFIRM_BUTTON_STYLE: ViewStyle = {
 
 export const getPerpsProTradeControlMediumTextStyle = (
   platform: typeof Platform.OS,
-): TextStyle =>
-  platform === 'android'
-    ? { fontFamily: 'SF-Pro-Rounded-Medium' }
-    : { fontFamily: 'SF Pro', fontWeight: '500' };
+): TextStyle => getPerpsProFontStyle(platform, '500');
 
+/**
+ * Compatibility export retained for the isolated-label API name.
+ */
 export const getPerpsProIsolatedTextStyle = (
   platform: typeof Platform.OS,
-): TextStyle => ({
-  ...(platform === 'android' ? { fontFamily: 'SF-Pro-Rounded-Medium' } : null),
-  fontVariant: ['stylistic-six'],
-});
+): TextStyle => getPerpsProFontStyle(platform, '500');
 
 export const PERPS_PRO_ISOLATED_TEXT_STYLE = getPerpsProIsolatedTextStyle(
   Platform.OS,

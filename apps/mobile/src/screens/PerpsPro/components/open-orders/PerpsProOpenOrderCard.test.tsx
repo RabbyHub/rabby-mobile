@@ -206,10 +206,28 @@ describe('PerpsProOpenOrderCard', () => {
     );
 
     expect(screen.getByText('BTCUSDC')).toBeTruthy();
+    const buySideTagStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-order-side-basic:BTC:1').props.style,
+    );
+    expect(buySideTagStyle).toMatchObject({
+      backgroundColor: 'green-light-1',
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    });
+    expect(buySideTagStyle.borderColor).toBeUndefined();
+    expect(buySideTagStyle.borderWidth).toBeUndefined();
+    expect(screen.getByText('Buy').props.style).toMatchObject({
+      color: 'green-default',
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    });
     expect(screen.getByText('50%')).toBeTruthy();
     expect(screen.getByText('50%').props.style).toMatchObject({
       color: 'neutral-secondary',
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 10,
       fontWeight: '500',
       lineHeight: 12,
@@ -251,7 +269,7 @@ describe('PerpsProOpenOrderCard', () => {
     const cancelButton = screen.getByRole('button', { name: 'Cancel' });
     expect(screen.getByText('Cancel').props.style).toMatchObject({
       color: 'neutral-title-1',
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
       lineHeight: 18,
@@ -305,53 +323,62 @@ describe('PerpsProOpenOrderCard', () => {
     expect(screen.queryByText('0.00')).toBeNull();
     expect(screen.getByText('Reduce Only')).toBeTruthy();
     expect(screen.getByText('Yes')).toBeTruthy();
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-order-type-conditional:BTC:2').props
-          .style,
-      ),
-    ).toMatchObject({
+    const orderTypeTagStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-order-type-conditional:BTC:2').props.style,
+    );
+    expect(orderTypeTagStyle).toMatchObject({
       backgroundColor: 'red-light-1',
-      borderColor: 'red-light-2',
-      borderRadius: 2,
-      borderWidth: 0.5,
+      borderRadius: 4,
       paddingHorizontal: 4,
       paddingVertical: 1,
     });
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-order-side-conditional:BTC:2').props
-          .style,
-      ),
-    ).toMatchObject({
+    expect(orderTypeTagStyle.borderColor).toBeUndefined();
+    expect(orderTypeTagStyle.borderWidth).toBeUndefined();
+    const sellSideTagStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-order-side-conditional:BTC:2').props.style,
+    );
+    expect(sellSideTagStyle).toMatchObject({
       backgroundColor: 'red-light-1',
-      borderColor: 'red-light-2',
-      borderRadius: 2,
-      borderWidth: 0.5,
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
     });
+    expect(sellSideTagStyle.borderColor).toBeUndefined();
+    expect(sellSideTagStyle.borderWidth).toBeUndefined();
     expect(screen.getByText('Stop Market').props.style).toMatchObject({
       color: 'red-default',
-      fontFamily: 'SF Pro',
-      fontSize: 10,
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
       fontWeight: '500',
-      lineHeight: 12,
+      lineHeight: 16,
+    });
+    expect(screen.getByText('Sell').props.style).toMatchObject({
+      color: 'red-default',
+      fontSize: 12,
+      lineHeight: 16,
     });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-order-source-conditional:BTC:2').props
           .style,
       ),
-    ).toMatchObject({
-      backgroundColor: '#F4F5F5',
-      borderColor: 'neutral-line',
-      borderRadius: 2,
-      borderWidth: 0.5,
+    ).toEqual({
+      backgroundColor: 'neutral-bg-5',
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
     });
-    expect(screen.getByText('xyz').props.style).toMatchObject({
-      color: 'neutral-body',
-      fontSize: 10,
-      lineHeight: 12,
+    const sourceTextStyle = StyleSheet.flatten(
+      screen.getByText('xyz').props.style,
+    );
+    expect(sourceTextStyle).toEqual({
+      color: 'neutral-foot',
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
     });
+    expect(sourceTextStyle.fontVariant).toBeUndefined();
     expect(screen.queryByText('0%')).toBeNull();
     expect(
       screen.queryByTestId('perps-pro-order-progress-conditional:BTC:2'),

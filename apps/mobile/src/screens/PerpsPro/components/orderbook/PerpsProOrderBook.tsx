@@ -1,5 +1,4 @@
 import { Text } from '@/components/Typography';
-import { FontNames } from '@/core/utils/fonts';
 import type { PerpsRealtimeStatus } from '@/hooks/perps/subscriptions/usePerpsFastL2';
 import type { PerpsLatestTrade } from '@/hooks/perps/subscriptions/usePerpsLatestTrade';
 import { useTheme2024 } from '@/hooks/theme';
@@ -32,6 +31,7 @@ import { PerpsProFundingSummary } from '../funding/PerpsProFundingSummary';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
 import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 import {
+  PerpsProOrderBookDepth,
   PerpsProOrderBookModeIcon,
   PerpsProOrderBookRow,
 } from './PerpsProOrderBookPrimitives';
@@ -45,8 +45,24 @@ import { usePerpsProOrderBookPercentAnimation } from './usePerpsProOrderBookPerc
 export const getPerpsProOrderBookRowKey = (
   side: 'ask' | 'bid',
   index: number,
-  level: Readonly<{ price: string }> | null,
-) => (level ? `${side}:${level.price}` : `${side}:empty:${index}`);
+) => `${side}:${index}`;
+
+export const getPerpsProOrderBookDepthKey = (
+  side: 'ask' | 'bid',
+  level: Readonly<{ price: string }>,
+) => `${side}:${level.price}`;
+
+export type PerpsProOrderBookPriceSelectionSource = Readonly<{
+  feedIdentity: string;
+  marketKey: string;
+  type: 'book' | 'latestTrade';
+}>;
+
+type PendingPriceSelection = Readonly<{
+  intent: PerpsProOrderBookPriceIntent;
+  price: string | null;
+  source: PerpsProOrderBookPriceSelectionSource;
+}>;
 
 export const PerpsProOrderBook: React.FC<{
   amountUnit?: PerpsProTradeAmountUnit;
@@ -56,12 +72,19 @@ export const PerpsProOrderBook: React.FC<{
   hasBookSnapshot: boolean;
   height?: number;
   latestTrade: PerpsLatestTrade | null;
+  latestTradeIdentity: string;
   market: PerpsProMarket | null;
   onOpenFunding: () => void;
   onPrecisionIntentStart?: (option: PerpsTickOption) => void;
-  onSelectPrice?: (
+  onSelectBookPrice?: (
     price: string | null,
     intent: PerpsProOrderBookPriceIntent,
+    source: PerpsProOrderBookPriceSelectionSource,
+  ) => void;
+  onSelectLatestTradePrice?: (
+    price: string | null,
+    intent: PerpsProOrderBookPriceIntent,
+    source: PerpsProOrderBookPriceSelectionSource,
   ) => void;
   onSelectPriceIntentStart?: () => PerpsProOrderBookPriceIntent;
   onSelectTickOption: (option: PerpsTickOption) => void;
@@ -76,10 +99,12 @@ export const PerpsProOrderBook: React.FC<{
   hasBookSnapshot,
   height = PERPS_PRO_MAIN_COLUMN_HEIGHT,
   latestTrade,
+  latestTradeIdentity,
   market,
   onOpenFunding,
   onPrecisionIntentStart,
-  onSelectPrice,
+  onSelectBookPrice,
+  onSelectLatestTradePrice,
   onSelectPriceIntentStart,
   onSelectTickOption,
   selectedTickOption,
@@ -136,43 +161,133 @@ export const PerpsProOrderBook: React.FC<{
   const sellRatioTrackStyle = useAnimatedStyle(() => ({
     flexGrow: 100 - animatedBuyRatio.value,
   }));
-  const priceIntentRef = useRef<PerpsProOrderBookPriceIntent | null>(null);
-  const startPriceSelectionIntent = useCallback(() => {
-    priceIntentRef.current = onSelectPriceIntentStart?.() ?? {
-      type: 'tradePrice',
-    };
-  }, [onSelectPriceIntentStart]);
-  const selectPrice = useCallback(
-    (price: string | null) => {
-      const intent =
-        priceIntentRef.current ??
-        onSelectPriceIntentStart?.() ??
-        ({ type: 'tradePrice' } as const);
-      priceIntentRef.current = null;
-      onSelectPrice?.(price, intent);
-    },
-    [onSelectPrice, onSelectPriceIntentStart],
+  const pendingPriceSelectionRef = useRef<PendingPriceSelection | null>(null);
+  const getPriceSelectionSource = useCallback(
+    (
+      type: PerpsProOrderBookPriceSelectionSource['type'],
+    ): PerpsProOrderBookPriceSelectionSource => ({
+      feedIdentity: type === 'book' ? bookIdentity : latestTradeIdentity,
+      marketKey: market?.marketKey ?? '',
+      type,
+    }),
+    [bookIdentity, latestTradeIdentity, market?.marketKey],
   );
-  const selectablePrice = onSelectPrice ? selectPrice : undefined;
+  const startPriceSelection = useCallback(
+    (
+      type: PerpsProOrderBookPriceSelectionSource['type'],
+      price: string | null,
+    ) => {
+      pendingPriceSelectionRef.current = {
+        intent: onSelectPriceIntentStart?.() ?? { type: 'tradePrice' },
+        price,
+        source: getPriceSelectionSource(type),
+      };
+    },
+    [getPriceSelectionSource, onSelectPriceIntentStart],
+  );
+  const finishPriceSelection = useCallback(
+    (
+      type: PerpsProOrderBookPriceSelectionSource['type'],
+      currentPrice: string | null,
+    ) => {
+      const pending = pendingPriceSelectionRef.current;
+      pendingPriceSelectionRef.current = null;
+      const selection =
+        pending?.source.type === type
+          ? pending
+          : {
+              intent: onSelectPriceIntentStart?.() ?? {
+                type: 'tradePrice' as const,
+              },
+              price: currentPrice,
+              source: getPriceSelectionSource(type),
+            };
+      const selectPrice =
+        type === 'book' ? onSelectBookPrice : onSelectLatestTradePrice;
+      selectPrice?.(selection.price, selection.intent, selection.source);
+    },
+    [
+      getPriceSelectionSource,
+      onSelectBookPrice,
+      onSelectLatestTradePrice,
+      onSelectPriceIntentStart,
+    ],
+  );
 
-  const renderRows = (side: 'ask' | 'bid', rows: PerpsOrderBookDisplayRow[]) =>
-    Array.from({ length: rowCount }, (_, index) => {
-      const level = rows[index] ?? null;
-      return (
-        <PerpsProOrderBookRow
-          animationIdentity={animationIdentity}
-          amountDecimals={amountDecimals}
-          amountUnit={amountUnit}
-          key={getPerpsProOrderBookRowKey(side, index, level)}
-          level={level ?? undefined}
-          maxTotal={maxVisibleTotal}
-          onSelectPrice={selectablePrice}
-          onSelectPriceIntentStart={startPriceSelectionIntent}
-          priceDecimals={orderBookPriceDecimals}
-          side={side}
-        />
-      );
-    });
+  const renderRows = (
+    side: 'ask' | 'bid',
+    rows: PerpsOrderBookDisplayRow[],
+  ) => {
+    const displayRows = Array.from(
+      { length: rowCount },
+      (_, index) => rows[index] ?? null,
+    );
+    return (
+      <View style={styles.bookSide}>
+        <View pointerEvents="none" style={styles.bookDepthLayer}>
+          {displayRows.map((level, index) =>
+            level ? (
+              <PerpsProOrderBookDepth
+                animationIdentity={animationIdentity}
+                key={getPerpsProOrderBookDepthKey(side, level)}
+                level={level}
+                maxTotal={maxVisibleTotal}
+                rowIndex={index}
+                side={side}
+              />
+            ) : null,
+          )}
+        </View>
+        {displayRows.map((level, index) => (
+          <PerpsProOrderBookRow
+            amountDecimals={amountDecimals}
+            amountUnit={amountUnit}
+            key={getPerpsProOrderBookRowKey(side, index)}
+            level={level ?? undefined}
+            onSelectPrice={
+              onSelectBookPrice
+                ? () => finishPriceSelection('book', level?.price ?? null)
+                : undefined
+            }
+            onSelectPriceIntentStart={
+              onSelectBookPrice
+                ? () => startPriceSelection('book', level?.price ?? null)
+                : undefined
+            }
+            priceDecimals={orderBookPriceDecimals}
+            side={side}
+          />
+        ))}
+      </View>
+    );
+  };
+
+  const latestTradePressable = (
+    <Pressable
+      accessibilityRole={
+        latestTrade && onSelectLatestTradePrice ? 'button' : undefined
+      }
+      disabled={!latestTrade || !onSelectLatestTradePrice}
+      onPressIn={
+        latestTrade && onSelectLatestTradePrice
+          ? () => startPriceSelection('latestTrade', latestTrade.price)
+          : undefined
+      }
+      onPress={
+        latestTrade && onSelectLatestTradePrice
+          ? () => finishPriceSelection('latestTrade', latestTrade.price)
+          : undefined
+      }
+      testID="perps-pro-order-book-latest-price">
+      <Text
+        numberOfLines={1}
+        style={
+          latestTrade?.side === 'sell' ? styles.latestSell : styles.latestBuy
+        }>
+        {formatPerpsProPrice(latestTrade?.price, marketPriceDecimals)}
+      </Text>
+    </Pressable>
+  );
 
   return (
     <View
@@ -207,36 +322,12 @@ export const PerpsProOrderBook: React.FC<{
             <PerpsProOrderBookBodySkeleton mode={mode} rowCount={rowCount} />
           ) : displayState === 'content' ? (
             <View style={styles.bookSections}>
-              {mode !== 'bids' ? (
-                <View>{renderRows('ask', visible.asks)}</View>
-              ) : null}
+              {mode !== 'bids' ? renderRows('ask', visible.asks) : null}
               {mode !== 'asks' ? (
                 <View
                   style={[styles.midPrice, { height: layout.middleHeight }]}
                   testID="perps-pro-order-book-mid-price">
-                  <Pressable
-                    accessibilityRole={
-                      latestTrade && selectablePrice ? 'button' : undefined
-                    }
-                    disabled={!latestTrade || !selectablePrice}
-                    onPressIn={startPriceSelectionIntent}
-                    onPress={() =>
-                      latestTrade && selectablePrice?.(latestTrade.price)
-                    }
-                    testID="perps-pro-order-book-latest-price">
-                    <Text
-                      numberOfLines={1}
-                      style={
-                        latestTrade?.side === 'sell'
-                          ? styles.latestSell
-                          : styles.latestBuy
-                      }>
-                      {formatPerpsProPrice(
-                        latestTrade?.price,
-                        marketPriceDecimals,
-                      )}
-                    </Text>
-                  </Pressable>
+                  {latestTradePressable}
                   <PerpsProDottedUnderlineText
                     accessibilityLabel={t(
                       'page.perps.pro.fieldExplanations.markPrice.title',
@@ -251,36 +342,12 @@ export const PerpsProOrderBook: React.FC<{
                   </PerpsProDottedUnderlineText>
                 </View>
               ) : null}
-              {mode !== 'asks' ? (
-                <View>{renderRows('bid', visible.bids)}</View>
-              ) : null}
+              {mode !== 'asks' ? renderRows('bid', visible.bids) : null}
               {mode === 'asks' ? (
                 <View
                   style={[styles.midPrice, { height: layout.middleHeight }]}
                   testID="perps-pro-order-book-mid-price">
-                  <Pressable
-                    accessibilityRole={
-                      latestTrade && selectablePrice ? 'button' : undefined
-                    }
-                    disabled={!latestTrade || !selectablePrice}
-                    onPressIn={startPriceSelectionIntent}
-                    onPress={() =>
-                      latestTrade && selectablePrice?.(latestTrade.price)
-                    }
-                    testID="perps-pro-order-book-latest-price">
-                    <Text
-                      numberOfLines={1}
-                      style={
-                        latestTrade?.side === 'sell'
-                          ? styles.latestSell
-                          : styles.latestBuy
-                      }>
-                      {formatPerpsProPrice(
-                        latestTrade?.price,
-                        marketPriceDecimals,
-                      )}
-                    </Text>
-                  </Pressable>
+                  {latestTradePressable}
                   <PerpsProDottedUnderlineText
                     accessibilityLabel={t(
                       'page.perps.pro.fieldExplanations.markPrice.title',
@@ -386,7 +453,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   columnLabel: {
     color: colors2024['neutral-secondary'],
-    fontFamily: FontNames.sf_pro,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 10,
     fontWeight: '400',
     lineHeight: 12,
@@ -400,13 +467,24 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   bookSections: {
     gap: 4,
   },
+  bookSide: {
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  bookDepthLayer: {
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
   midPrice: {
     gap: 2,
     justifyContent: 'center',
   },
   latestBuy: {
     color: colors2024['green-default'],
-    fontFamily: FontNames.sf_pro,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     fontWeight: '700',
     lineHeight: 22,
@@ -414,7 +492,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   latestSell: {
     color: colors2024['red-default'],
-    fontFamily: FontNames.sf_pro,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     fontWeight: '700',
     lineHeight: 22,
@@ -422,7 +500,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   markPrice: {
     color: colors2024['neutral-foot'],
-    fontFamily: FontNames.sf_pro,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
@@ -442,7 +520,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   statusText: {
     color: colors2024['neutral-secondary'],
-    fontFamily: FontNames.sf_pro,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 10,
     lineHeight: 14,
     textAlign: 'center',
@@ -466,7 +544,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   precisionTriggerText: {
     color: colors2024['neutral-title-1'],
     flex: 1,
-    fontFamily: FontNames.sf_pro,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
@@ -479,14 +557,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   buyRatio: {
     color: colors2024['green-default'],
-    fontFamily: FontNames.sf_pro,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 12,
   },
   sellRatio: {
     color: colors2024['red-default'],
-    fontFamily: FontNames.sf_pro,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 12,

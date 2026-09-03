@@ -1,5 +1,4 @@
 import { Text } from '@/components/Typography';
-import { FontNames } from '@/core/utils/fonts';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useEffect, useState } from 'react';
@@ -86,7 +85,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   label: {
     color: colors2024['neutral-secondary'],
-    fontFamily: FontNames.sf_pro,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 12,
@@ -101,20 +100,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   rate: {
     color: colors2024['neutral-body'],
-    fontFamily: FontNames.sf_pro,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 12,
   },
   separator: {
     color: colors2024['neutral-secondary'],
-    fontFamily: FontNames.sf_pro,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 10,
     lineHeight: 12,
   },
   countdown: {
     color: colors2024['neutral-body'],
-    fontFamily: FontNames.sf_pro,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 12,

@@ -8,11 +8,24 @@ import React, { useCallback } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
-export const PerpsTradeFeeExplanationContent: React.FC<{
+export type PerpsTradeFeeExplanationVariant = 'default' | 'pro';
+
+type PerpsTradeFeeExplanationContentProps = {
   isLiquidation: boolean;
-}> = ({ isLiquidation }) => {
+  variant?: PerpsTradeFeeExplanationVariant;
+};
+
+type UseShowPerpsTradeFeeExplanationOptions = {
+  owner?: string;
+  variant?: PerpsTradeFeeExplanationVariant;
+};
+
+export const PerpsTradeFeeExplanationContent: React.FC<
+  PerpsTradeFeeExplanationContentProps
+> = ({ isLiquidation, variant = 'default' }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const feeBoldStyle = variant === 'pro' ? styles.feeBoldPro : styles.feeBold;
 
   return (
     <View testID="perps-trade-fee-explanation-content">
@@ -20,8 +33,8 @@ export const PerpsTradeFeeExplanationContent: React.FC<{
         <Trans
           i18nKey="page.perps.historyDetail.feeDesc"
           components={{
-            1: <Text style={styles.feeBold} />,
-            2: <Text style={styles.feeBold} />,
+            1: <Text style={feeBoldStyle} />,
+            2: <Text style={feeBoldStyle} />,
           }}
         />
       </Text>
@@ -63,7 +76,10 @@ export const PerpsTradeFeeExplanationContent: React.FC<{
   );
 };
 
-export const useShowPerpsTradeFeeExplanation = (owner?: string) => {
+export const useShowPerpsTradeFeeExplanation = ({
+  owner,
+  variant = 'default',
+}: UseShowPerpsTradeFeeExplanationOptions = {}) => {
   const { t } = useTranslation();
   const showTipsPopup = useShowTipsPopup();
 
@@ -71,12 +87,17 @@ export const useShowPerpsTradeFeeExplanation = (owner?: string) => {
     (isLiquidation: boolean) => {
       showTipsPopup({
         title: t('page.perps.historyDetail.feeTitle'),
-        desc: <PerpsTradeFeeExplanationContent isLiquidation={isLiquidation} />,
+        desc: (
+          <PerpsTradeFeeExplanationContent
+            isLiquidation={isLiquidation}
+            variant={variant}
+          />
+        ),
         buttonType: 'hyperliquid',
         owner,
       });
     },
-    [owner, showTipsPopup, t],
+    [owner, showTipsPopup, t, variant],
   );
 };
 
@@ -92,6 +113,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   feeBold: {
     color: colors2024['neutral-title-1'],
+    fontSize: 16,
+    fontWeight: '700',
+    lineHeight: 20,
+  },
+  feeBoldPro: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,

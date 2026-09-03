@@ -40,6 +40,7 @@ const mockEnglishTranslations: Record<string, string> = {
   'page.perps.pro.positions.positionTpsl': 'Position TP/SL',
   'page.perps.pro.positions.roi': 'ROI',
   'page.perps.pro.positions.size': 'Size',
+  'page.perps.pro.positions.short': 'Short',
   'page.perps.pro.positions.stopLossShort': 'SL',
   'page.perps.pro.positions.switchSizeUnit': 'Switch size unit',
   'page.perps.pro.positions.takeProfitShort': 'TP',
@@ -309,36 +310,110 @@ describe('PerpsProPositionCard', () => {
       'perps-pro-position-direction-BTC',
     ]);
     expect(
-      screen.getByTestId('perps-pro-position-side-BTC').props.style,
-    ).toMatchObject({ borderRadius: 2, height: 18, width: 16 });
-    expect(screen.getByText('B').props.style).toMatchObject({
-      fontFamily: 'SF Pro',
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-side-BTC').props.style,
+      ),
+    ).toMatchObject({
+      backgroundColor: 'green-default',
+      borderRadius: 4,
+      height: 16,
+      paddingHorizontal: 4,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-side-BTC').props.style,
+      ).borderWidth,
+    ).toBeUndefined();
+    expect(StyleSheet.flatten(screen.getByText('B').props.style)).toMatchObject(
+      {
+        color: 'neutral-InvertHighlight',
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 12,
+        fontWeight: '700',
+        lineHeight: 16,
+      },
+    );
+    for (const testID of [
+      'perps-pro-position-source-BTC',
+      'perps-pro-position-mode-BTC',
+    ]) {
+      const style = StyleSheet.flatten(screen.getByTestId(testID).props.style);
+      expect(style).toMatchObject({
+        backgroundColor: 'neutral-bg-5',
+        borderRadius: 4,
+        paddingHorizontal: 4,
+        paddingVertical: 1,
+      });
+      expect(style.borderColor).toBeUndefined();
+      expect(style.borderWidth).toBeUndefined();
+    }
+    const directionStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-position-direction-BTC').props.style,
+    );
+    expect(directionStyle).toMatchObject({
+      backgroundColor: 'green-light-1',
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    });
+    expect(directionStyle.borderColor).toBeUndefined();
+    expect(directionStyle.borderWidth).toBeUndefined();
+    for (const label of ['xyz', 'Isolated']) {
+      expect(
+        StyleSheet.flatten(screen.getByText(label).props.style),
+      ).toMatchObject({
+        color: 'neutral-foot',
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 12,
+        fontWeight: '500',
+        lineHeight: 16,
+      });
+    }
+    expect(
+      StyleSheet.flatten(screen.getByText('Long 20x').props.style),
+    ).toMatchObject({
+      color: 'green-default',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       fontWeight: '500',
       lineHeight: 16,
     });
-    for (const testID of [
-      'perps-pro-position-source-BTC',
-      'perps-pro-position-mode-BTC',
-      'perps-pro-position-direction-BTC',
-    ]) {
-      expect(screen.getByTestId(testID).props.style).toMatchObject({
-        borderRadius: 2,
-        borderWidth: 0.5,
-        height: 14,
-        paddingHorizontal: 4,
-      });
-    }
-    for (const label of ['xyz', 'Isolated', 'Long 20x']) {
-      expect(
-        StyleSheet.flatten(screen.getByText(label).props.style),
-      ).toMatchObject({
-        fontFamily: 'SF Pro',
-        fontSize: 10,
-        fontWeight: '500',
-        lineHeight: 12,
-      });
-    }
+    expect(
+      StyleSheet.flatten(screen.getByText('Isolated').props.style).fontVariant,
+    ).toBeUndefined();
+  });
+
+  it('uses the negative tag contract and omits source metadata for a native Short', () => {
+    mockPositionMarket = { ...mockReadyMarket, sourceTag: null };
+    render(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        position={createPosition({ direction: 'short' })}
+      />,
+    );
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-side-BTC').props.style,
+      ),
+    ).toMatchObject({
+      backgroundColor: 'red-default',
+      borderRadius: 4,
+      height: 16,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-direction-BTC').props.style,
+      ),
+    ).toMatchObject({
+      backgroundColor: 'red-light-1',
+      borderRadius: 4,
+      paddingVertical: 1,
+    });
+    expect(
+      StyleSheet.flatten(screen.getByText('Short 20x').props.style),
+    ).toMatchObject({ color: 'red-default', fontSize: 12, lineHeight: 16 });
+    expect(screen.queryByTestId('perps-pro-position-source-BTC')).toBeNull();
   });
 
   it('maps every position dotted label to its approved explanation', () => {
@@ -459,7 +534,7 @@ describe('PerpsProPositionCard', () => {
     ).toMatchObject({ left: 0, position: 'absolute', right: 0, top: 0 });
     expect(
       StyleSheet.flatten(screen.getByText('Isolated').props.style),
-    ).toEqual(expect.objectContaining({ fontVariant: ['stylistic-six'] }));
+    ).not.toHaveProperty('fontVariant');
     expect(screen.getByText('TP/SL(3)')).toBeTruthy();
     expect(screen.getByText('120.00')).toBeTruthy();
     expect(screen.queryByText('130.00')).toBeNull();

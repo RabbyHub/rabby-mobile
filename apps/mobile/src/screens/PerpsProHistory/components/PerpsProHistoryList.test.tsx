@@ -1,32 +1,47 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+
+const mockBottomSheetFlatListProps = jest.fn();
+const mockShowTradeFeeExplanation = jest.fn();
+const mockUseShowPerpsTradeFeeExplanation = jest.fn(
+  () => mockShowTradeFeeExplanation,
+);
+let mockIsLight = true;
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
 
-jest.mock('@/assets2024/singleHome/empty-token.svg', () => {
+jest.mock('@gorhom/bottom-sheet', () => {
   const ReactModule = require('react');
-  const { View } = require('react-native');
-  return (props: object) => ReactModule.createElement(View, props);
-});
-
-jest.mock('@/assets2024/singleHome/empty-token-dark.svg', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
-  return (props: object) => ReactModule.createElement(View, props);
+  const { FlatList } = require('react-native');
+  return {
+    BottomSheetFlatList: (props: object) => {
+      mockBottomSheetFlatListProps(props);
+      return ReactModule.createElement(FlatList, props);
+    },
+  };
 });
 
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
     const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
-    return { colors2024, isLight: true, styles: getStyle({ colors2024 }) };
+    return {
+      colors2024,
+      isLight: mockIsLight,
+      styles: getStyle({ colors2024 }),
+    };
   },
 }));
 
 jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
+}));
+
+jest.mock('@/screens/PerpsShared/components/PerpsTradeFeeExplanation', () => ({
+  useShowPerpsTradeFeeExplanation: (options?: object) =>
+    mockUseShowPerpsTradeFeeExplanation(options),
 }));
 
 jest.mock('react-i18next', () => ({
@@ -43,6 +58,7 @@ jest.mock('./PerpsProHistoryRow', () => {
 });
 
 import { PerpsProHistoryList } from './PerpsProHistoryList';
+import { PERPS_PRO_HISTORY_FEE_TIPS_OWNER } from '../constants';
 import type { PerpsProHistoryTabState } from '../types';
 
 const makeState = (
@@ -57,6 +73,31 @@ const makeState = (
 });
 
 describe('PerpsProHistoryList', () => {
+  beforeEach(() => {
+    mockBottomSheetFlatListProps.mockClear();
+    mockShowTradeFeeExplanation.mockClear();
+    mockUseShowPerpsTradeFeeExplanation.mockClear();
+    mockIsLight = true;
+  });
+
+  it('explicitly opts the Pro History fee explanation into Pro typography', () => {
+    render(
+      <PerpsProHistoryList
+        amountUnit="base"
+        onLoadEarlier={jest.fn()}
+        onRefresh={jest.fn()}
+        onRetry={jest.fn()}
+        state={makeState()}
+        tab="trade"
+      />,
+    );
+
+    expect(mockUseShowPerpsTradeFeeExplanation).toHaveBeenCalledWith({
+      owner: PERPS_PRO_HISTORY_FEE_TIPS_OWNER,
+      variant: 'pro',
+    });
+  });
+
   it('renders the approved local skeleton and per-tab empty state', () => {
     const view = render(
       <PerpsProHistoryList
@@ -69,6 +110,20 @@ describe('PerpsProHistoryList', () => {
       />,
     );
     expect(screen.getByLabelText('Loading history')).toBeTruthy();
+    const skeletonCard = screen
+      .UNSAFE_getAllByType(View)
+      .find(
+        node =>
+          StyleSheet.flatten(node.props.style)?.backgroundColor ===
+          'neutral-card-1',
+      );
+    expect(StyleSheet.flatten(skeletonCard?.props.style)).toMatchObject({
+      backgroundColor: 'neutral-card-1',
+      borderRadius: 12,
+      marginHorizontal: 16,
+      paddingHorizontal: 12,
+      paddingVertical: 16,
+    });
 
     view.rerender(
       <PerpsProHistoryList
@@ -81,7 +136,23 @@ describe('PerpsProHistoryList', () => {
       />,
     );
     expect(screen.getByText('page.perps.pro.history.noHistory')).toBeTruthy();
-    expect(screen.getByTestId('perps-pro-history-empty-light')).toBeTruthy();
+    const lightIllustration = screen.getByTestId(
+      'perps-pro-history-empty-illustration',
+    );
+    expect(lightIllustration.props.source).toEqual(
+      expect.objectContaining({
+        testUri: expect.stringContaining(
+          'assets2024/icons/perps/PerpsProHistoryEmpty.png',
+        ),
+      }),
+    );
+    expect(lightIllustration.props.source.testUri).not.toContain(
+      'singleHome/empty-token',
+    );
+    expect(StyleSheet.flatten(lightIllustration.props.style)).toEqual({
+      height: 126,
+      width: 163,
+    });
     expect(
       StyleSheet.flatten(
         screen.getByText('page.perps.pro.history.noHistory').props.style,
@@ -89,12 +160,27 @@ describe('PerpsProHistoryList', () => {
     ).toEqual(
       expect.objectContaining({
         color: 'neutral-info',
-        fontFamily: 'SF Pro',
-        fontSize: 14,
-        lineHeight: 18,
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 16,
+        lineHeight: 20,
         marginTop: 12,
       }),
     );
+
+    mockIsLight = false;
+    view.rerender(
+      <PerpsProHistoryList
+        amountUnit="base"
+        onLoadEarlier={jest.fn()}
+        onRefresh={jest.fn()}
+        onRetry={jest.fn()}
+        state={makeState()}
+        tab="transaction"
+      />,
+    );
+    expect(
+      screen.getByTestId('perps-pro-history-empty-illustration').props.source,
+    ).toEqual(lightIllustration.props.source);
   });
 
   it('renders initial error Retry', () => {
@@ -113,7 +199,7 @@ describe('PerpsProHistoryList', () => {
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps the first populated row 16px below the divider', () => {
+  it('starts the first card at the Pager-owned 12px content gap', () => {
     render(
       <PerpsProHistoryList
         amountUnit="base"
@@ -133,7 +219,13 @@ describe('PerpsProHistoryList', () => {
         screen.getByTestId('perps-pro-history-list-trade').props
           .contentContainerStyle,
       ),
-    ).toMatchObject({ paddingBottom: 24, paddingTop: 16 });
+    ).toMatchObject({ paddingBottom: 24 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-history-list-trade').props
+          .contentContainerStyle,
+      ).paddingTop,
+    ).toBeUndefined();
   });
 
   it('loads earlier automatically at the end and keeps Retry explicit', () => {
@@ -268,5 +360,27 @@ describe('PerpsProHistoryList', () => {
       .props.refreshControl;
     expect(refreshControl.props.colors).toBeUndefined();
     expect(refreshControl.props.tintColor).toBeUndefined();
+  });
+
+  it('uses the Bottom Sheet scroll host without changing list behavior', () => {
+    render(
+      <PerpsProHistoryList
+        amountUnit="base"
+        onLoadEarlier={jest.fn()}
+        onRefresh={jest.fn()}
+        onRetry={jest.fn()}
+        scrollHost="bottomSheet"
+        state={makeState()}
+        tab="trade"
+      />,
+    );
+
+    expect(mockBottomSheetFlatListProps).toHaveBeenCalledTimes(1);
+    expect(mockBottomSheetFlatListProps.mock.calls[0][0]).toMatchObject({
+      initialNumToRender: 10,
+      nestedScrollEnabled: true,
+      scrollEnabled: true,
+      testID: 'perps-pro-history-list-trade',
+    });
   });
 });

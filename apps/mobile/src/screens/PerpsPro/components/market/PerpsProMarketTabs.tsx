@@ -8,6 +8,7 @@ import React, {
   useState,
 } from 'react';
 import {
+  Platform,
   Pressable,
   Text as NativeText,
   View,
@@ -27,6 +28,7 @@ import {
   PerpsProTabIndicator,
   type PerpsProTabIndicatorLayout,
 } from '../common/PerpsProTabIndicator';
+import { getPerpsProFontStyle } from '../common/perpsProVisual';
 
 type MarketTabItem = Readonly<{
   id: PerpsProMarketTab;
@@ -39,6 +41,9 @@ type MarketTabScrollPosition = Readonly<{
   tab: PerpsProMarketTab;
   x: number;
 }>;
+
+const MARKET_TAB_REGULAR_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '400');
+const MARKET_TAB_MEDIUM_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '500');
 
 const PerpsProMarketTabLabel: React.FC<{
   activeColor: string;
@@ -72,7 +77,12 @@ const PerpsProMarketTabLabel: React.FC<{
 
       return {
         color: active ? activeColor : inactiveColor,
-        fontWeight: active ? '500' : '400',
+        fontFamily: active
+          ? MARKET_TAB_MEDIUM_FONT_STYLE.fontFamily
+          : MARKET_TAB_REGULAR_FONT_STYLE.fontFamily,
+        fontWeight: active
+          ? MARKET_TAB_MEDIUM_FONT_STYLE.fontWeight
+          : MARKET_TAB_REGULAR_FONT_STYLE.fontWeight,
       };
     }, [activeColor, inactiveColor, index, indicatorPosition, tabCount]);
 
@@ -102,7 +112,7 @@ const labelStyles = {
     position: 'relative' as const,
   },
   measureText: {
-    fontWeight: '500' as const,
+    ...MARKET_TAB_MEDIUM_FONT_STYLE,
     opacity: 0,
   },
   visibleText: {
@@ -179,8 +189,8 @@ export const PerpsProMarketTabs: React.FC<{
         return [];
       }
       layouts.push({
-        width: 20,
-        x: frame.x + (frame.width - 20) / 2,
+        width: frame.width,
+        x: frame.x,
       });
     }
     return layouts;
@@ -289,7 +299,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   text: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '400',
     lineHeight: 18,

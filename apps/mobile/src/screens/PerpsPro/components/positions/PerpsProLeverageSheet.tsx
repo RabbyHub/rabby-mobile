@@ -267,14 +267,14 @@ const getStyle = createGetStyles2024(
     },
     title: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 16,
       fontWeight: '700',
       lineHeight: 20,
     },
     maximum: {
       color: colors2024['neutral-body'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       fontWeight: '500',
       lineHeight: 16,
@@ -327,7 +327,7 @@ const getStyle = createGetStyles2024(
     },
     valueInput: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
       height: 24,
@@ -338,7 +338,7 @@ const getStyle = createGetStyles2024(
     },
     valueSuffix: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
       lineHeight: 18,

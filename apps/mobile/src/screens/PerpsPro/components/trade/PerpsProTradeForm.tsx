@@ -17,7 +17,6 @@ import {
 import type { PerpsProTradeController } from '../../scene/usePerpsProTrade';
 import { formatPerpsProDecimal } from '../../utils/format';
 import { PerpsProSelectCaret } from '../common/PerpsProSelectCaret';
-import { PERPS_PRO_ISOLATED_TEXT_STYLE } from '../common/perpsProVisual';
 import { usePerpsProDismissKeyboard } from '../common/usePerpsProDismissKeyboard';
 import { PerpsProLeverageSheet } from '../positions/PerpsProLeverageSheet';
 import { PerpsProBboSheet } from './PerpsProBboSheet';
@@ -155,11 +154,6 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
             }}
             showCaret={false}
             style={styles.flexItem}
-            textStyle={
-              configurationReady && controller.marginMode === 'isolated'
-                ? PERPS_PRO_ISOLATED_TEXT_STYLE
-                : undefined
-            }
           />
           <PerpsProTradeSelect
             disabled={!configurationReady}
@@ -167,7 +161,6 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
             onPress={() => openSheet('leverage')}
             showCaret={false}
             style={styles.flexItem}
-            useReadableTextVariant={false}
           />
         </View>
         <PerpsProTradeSelect
@@ -514,7 +507,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   optionsGroup: { gap: 8 },
   convertedAmount: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
     marginTop: -4,
@@ -526,7 +519,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
   },
   tif: { alignItems: 'center', flexDirection: 'row', gap: 4, height: 18 },
-  tifText: { color: colors2024['neutral-body'], fontSize: 12, lineHeight: 16 },
+  tifText: {
+    color: colors2024['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+  },
   orderGroups: { gap: 16 },
   orderGroup: { gap: 8 },
   orderSummary: { gap: 4 },

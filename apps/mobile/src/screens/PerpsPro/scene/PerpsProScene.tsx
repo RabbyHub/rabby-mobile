@@ -58,7 +58,6 @@ import { triggerPerpsProLightHaptic } from '../components/common/triggerPerpsPro
 import {
   PerpsProSheetGlobalEdgeTarget,
   PerpsProSheetNavigationBoundary,
-  usePerpsProSheetNavigationHost,
 } from '../components/common/PerpsProSheetNavigationGuard';
 import { usePerpsProDismissKeyboard } from '../components/common/usePerpsProDismissKeyboard';
 import { PerpsProHeader } from '../components/header/PerpsProHeader';
@@ -222,7 +221,6 @@ export const PerpsProScene: React.FC<{
 }) => {
   const { width } = useWindowDimensions();
   const { styles } = useTheme2024({ getStyle });
-  usePerpsProSheetNavigationHost();
   const { t } = useTranslation();
   const scene = usePerpsProScene();
   const activeAsset = useActiveAssetSubscription(
@@ -266,10 +264,6 @@ export const PerpsProScene: React.FC<{
   const infoTabIndicatorPosition = useSharedValue(
     Math.max(0, PERPS_PRO_INFO_TABS.indexOf(info.activeInfoTab ?? 'positions')),
   );
-  const infoTabHighlightedPosition = useSharedValue(
-    Math.max(0, PERPS_PRO_INFO_TABS.indexOf(info.activeInfoTab ?? 'positions')),
-  );
-  const infoTabIndicatorTransitionActive = useSharedValue(false);
   const lastNativeInfoTabRef = useRef<PerpsProInfoTab | null>(
     info.activeInfoTab,
   );
@@ -1392,10 +1386,8 @@ export const PerpsProScene: React.FC<{
               contentContainerStyle={scrollContentStyles}
               data={rowsByTab}
               getActiveScrollOffset={headerCollapse.getScrollOffset}
-              highlightedTabPosition={infoTabHighlightedPosition}
               keepAllTabsMounted={keepAllInfoTabListsMounted}
               indicatorPosition={infoTabIndicatorPosition}
-              indicatorTransitionActive={infoTabIndicatorTransitionActive}
               nativeVerticalScrollEnabled={Platform.OS !== 'android'}
               offscreenPageLimit={infoPagerOffscreenPageLimit}
               onActivateOffset={headerCollapse.syncScrollOffset}
@@ -1466,12 +1458,10 @@ export const PerpsProScene: React.FC<{
                   testID="perps-pro-info-tabs-overlay">
                   <PerpsProInfoTabs
                     activeTab={displayedInfoTab}
-                    highlightedTabPosition={infoTabHighlightedPosition}
                     historyEnabled={
                       historyEnabled && info.accountState !== 'noAccount'
                     }
                     indicatorPosition={infoTabIndicatorPosition}
-                    indicatorTransitionActive={infoTabIndicatorTransitionActive}
                     onChange={requestInfoTab}
                     onHistoryPress={openHistory}
                     openOrdersCount={info.allOpenOrdersCount}
@@ -1775,7 +1765,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   emptyText: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 13,
     lineHeight: 18,
     textAlign: 'center',
@@ -1791,7 +1781,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   retryText: {
     color: colors2024['blue-default'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 13,
     fontWeight: '600',
     lineHeight: 18,
