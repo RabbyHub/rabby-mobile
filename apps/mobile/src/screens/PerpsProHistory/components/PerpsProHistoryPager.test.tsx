@@ -8,8 +8,6 @@ const mockSetPageWithoutAnimation = jest.fn();
 const mockHideFeeTipsPopup = jest.fn();
 const mockListRender = jest.fn();
 let mockTabsPosition: SharedValue<number> | null = null;
-let mockTabsTransitionActive: SharedValue<boolean> | null = null;
-let mockTabsTransitionAnimated: SharedValue<boolean> | null = null;
 let mockDeferRunOnJS = false;
 let mockRunOnJSQueue: Array<() => void> = [];
 
@@ -72,18 +70,12 @@ jest.mock('./PerpsProHistoryTabs', () => {
       activeTab,
       onChange,
       position,
-      transitionActive,
-      transitionAnimated,
     }: {
       activeTab: string;
       onChange: (tab: string) => void;
       position: SharedValue<number>;
-      transitionActive: SharedValue<boolean>;
-      transitionAnimated: SharedValue<boolean>;
     }) => {
       mockTabsPosition = position;
-      mockTabsTransitionActive = transitionActive;
-      mockTabsTransitionAnimated = transitionAnimated;
       return ReactModule.createElement(
         View,
         null,
@@ -174,8 +166,6 @@ describe('PerpsProHistoryPager', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockTabsPosition = null;
-    mockTabsTransitionActive = null;
-    mockTabsTransitionAnimated = null;
     mockDeferRunOnJS = false;
     mockRunOnJSQueue = [];
   });
@@ -221,9 +211,39 @@ describe('PerpsProHistoryPager', () => {
     fireState('idle');
 
     expect(mockTabsPosition?.value).toBe(1);
-    expect(mockTabsTransitionActive?.value).toBe(false);
     expect(onChange).toHaveBeenCalledWith('trade');
     expect(terminalPositions).toEqual([1]);
+  });
+
+  it('keeps strip presentation independent from the business-state commit', () => {
+    const ControlledPager = () => {
+      const [activeTab, setActiveTab] =
+        React.useState<PerpsProHistoryTab>('orders');
+      return (
+        <PerpsProHistoryPager
+          active
+          activeTab={activeTab}
+          amountUnit="base"
+          onChange={setActiveTab}
+          onLoadEarlier={defaultOnLoadEarlier}
+          onRefresh={defaultOnRefresh}
+          state={createPerpsProHistoryState()}
+        />
+      );
+    };
+    render(<ControlledPager />);
+
+    fireState('dragging');
+    fireScroll(0, 0.7);
+    expect(mockTabsPosition?.value).toBe(0.7);
+    fireSelected(1);
+    fireState('idle');
+
+    expect(mockTabsPosition?.value).toBe(1);
+    expect(
+      screen.getByTestId('perps-pro-history-tab-trade').props
+        .accessibilityState,
+    ).toEqual({ selected: true });
   });
 
   it('converges when native idle arrives before selected', () => {
@@ -443,8 +463,6 @@ describe('PerpsProHistoryPager', () => {
     fireState('idle');
 
     expect(mockTabsPosition?.value).toBe(0);
-    expect(mockTabsTransitionActive?.value).toBe(false);
-    expect(mockTabsTransitionAnimated?.value).toBe(true);
     expect(onChange).not.toHaveBeenCalled();
   });
 

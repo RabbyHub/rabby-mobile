@@ -120,8 +120,6 @@ export const PerpsProHistoryPager: React.FC<{
   const transitionCandidatePosition = useSharedValue(initialIndex);
   const transitionStartPosition = useSharedValue(initialIndex);
   const transitionTargetPosition = useSharedValue(initialIndex);
-  const transitionActive = useSharedValue(false);
-  const transitionAnimated = useSharedValue(false);
 
   activeRef.current = active;
   activeTabRef.current = activeTab;
@@ -137,14 +135,10 @@ export const PerpsProHistoryPager: React.FC<{
       transitionCandidatePosition.value = position;
       transitionStartPosition.value = position;
       transitionTargetPosition.value = position;
-      transitionActive.value = false;
-      transitionAnimated.value = false;
       snapPerpsProTabIndicator(visualPosition, position);
     },
     [
       settledPagePosition,
-      transitionActive,
-      transitionAnimated,
       transitionCandidatePosition,
       transitionIdleSeen,
       transitionKind,
@@ -199,8 +193,6 @@ export const PerpsProHistoryPager: React.FC<{
       transitionCandidatePosition.value = target;
       transitionStartPosition.value = origin;
       transitionTargetPosition.value = target;
-      transitionActive.value = animated;
-      transitionAnimated.value = animated;
 
       if (animated) {
         pagerRef.current?.setPage(target);
@@ -212,8 +204,6 @@ export const PerpsProHistoryPager: React.FC<{
     [
       pageTransitionEpoch,
       settledPagePosition,
-      transitionActive,
-      transitionAnimated,
       transitionCandidatePosition,
       transitionIdleSeen,
       transitionKind,
@@ -276,7 +266,7 @@ export const PerpsProHistoryPager: React.FC<{
   );
 
   const finishTransitionOnUI = useCallback(
-    (position: number, canceled: boolean) => {
+    (position: number) => {
       'worklet';
       const epoch = pageTransitionEpoch.value;
       snapPerpsProTabIndicator(visualPosition, position);
@@ -288,8 +278,6 @@ export const PerpsProHistoryPager: React.FC<{
       transitionProgrammaticMotionSeen.value = false;
       transitionProgressSeen.value = false;
       transitionSelectedPosition.value = -1;
-      transitionActive.value = false;
-      transitionAnimated.value = canceled;
       transitionKind.value = HISTORY_PAGER_TRANSITION_IDLE;
       runOnJS(handleNativeTerminal)(epoch, position);
     },
@@ -297,8 +285,6 @@ export const PerpsProHistoryPager: React.FC<{
       handleNativeTerminal,
       pageTransitionEpoch,
       settledPagePosition,
-      transitionActive,
-      transitionAnimated,
       transitionCandidatePosition,
       transitionIdleSeen,
       transitionKind,
@@ -334,15 +320,11 @@ export const PerpsProHistoryPager: React.FC<{
     transitionCandidatePosition.value = origin;
     transitionStartPosition.value = origin;
     transitionTargetPosition.value = origin;
-    transitionActive.value = true;
-    transitionAnimated.value = true;
     runOnJS(handleGestureBegan)(epoch, origin);
   }, [
     handleGestureBegan,
     pageTransitionEpoch,
     settledPagePosition,
-    transitionActive,
-    transitionAnimated,
     transitionCandidatePosition,
     transitionIdleSeen,
     transitionKind,
@@ -436,17 +418,14 @@ export const PerpsProHistoryPager: React.FC<{
         transitionIdleSeen.value = true;
         if (transitionSelectedPosition.value >= 0) {
           const selected = transitionSelectedPosition.value;
-          const canceled =
-            transitionKind.value === HISTORY_PAGER_TRANSITION_GESTURE &&
-            selected === settledPagePosition.value;
-          finishTransitionOnUI(selected, canceled);
+          finishTransitionOnUI(selected);
           return;
         }
         if (
           transitionKind.value === HISTORY_PAGER_TRANSITION_GESTURE &&
           transitionCandidatePosition.value === settledPagePosition.value
         ) {
-          finishTransitionOnUI(settledPagePosition.value, true);
+          finishTransitionOnUI(settledPagePosition.value);
         }
       },
       ['onPageScrollStateChanged'],
@@ -469,7 +448,7 @@ export const PerpsProHistoryPager: React.FC<{
           return;
         }
         pageTransitionEpoch.value += 1;
-        finishTransitionOnUI(position, false);
+        finishTransitionOnUI(position);
         return;
       }
       if (
@@ -481,7 +460,7 @@ export const PerpsProHistoryPager: React.FC<{
       }
       transitionSelectedPosition.value = position;
       if (kind === HISTORY_PAGER_TRANSITION_DIRECT) {
-        finishTransitionOnUI(position, false);
+        finishTransitionOnUI(position);
         return;
       }
       // iOS dispatches a programmatic selection from
@@ -492,14 +471,11 @@ export const PerpsProHistoryPager: React.FC<{
         kind === HISTORY_PAGER_TRANSITION_PROGRAMMATIC &&
         !waitForProgrammaticIdle
       ) {
-        finishTransitionOnUI(position, false);
+        finishTransitionOnUI(position);
         return;
       }
       if (transitionIdleSeen.value) {
-        const canceled =
-          kind === HISTORY_PAGER_TRANSITION_GESTURE &&
-          position === settledPagePosition.value;
-        finishTransitionOnUI(position, canceled);
+        finishTransitionOnUI(position);
       }
     },
     ['onPageSelected'],
@@ -652,11 +628,6 @@ export const PerpsProHistoryPager: React.FC<{
         activeTab={activeTab}
         onChange={selectTab}
         position={visualPosition}
-        transitionActive={transitionActive}
-        transitionAnimated={transitionAnimated}
-        transitionEpoch={pageTransitionEpoch}
-        transitionStartPosition={transitionStartPosition}
-        transitionTargetPosition={transitionTargetPosition}
       />
       <AnimatedPagerView
         initialPage={initialIndex}

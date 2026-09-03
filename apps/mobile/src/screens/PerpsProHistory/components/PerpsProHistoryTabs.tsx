@@ -5,7 +5,6 @@ import {
 } from '@/screens/PerpsPro/components/common/perpsProVisual';
 import {
   getPerpsProTabIndicatorFrame,
-  PerpsProTabIndicator,
   type PerpsProTabIndicatorLayout,
 } from '@/screens/PerpsPro/components/common/PerpsProTabIndicator';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -13,23 +12,25 @@ import React, { useMemo, useState } from 'react';
 import {
   Platform,
   Pressable,
+  StyleSheet,
   Text as NativeText,
   View,
   type LayoutChangeEvent,
   type LayoutRectangle,
+  type ScrollViewProps,
   type StyleProp,
   type TextStyle,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Animated, {
-  scrollTo,
-  useAnimatedReaction,
-  useAnimatedRef,
+  useAnimatedProps,
   useAnimatedScrollHandler,
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
   type SharedValue,
 } from 'react-native-reanimated';
+import Svg, { Path, type PathProps } from 'react-native-svg';
 
 import type { PerpsProHistoryTab } from '../types';
 
@@ -40,11 +41,20 @@ const TABS: PerpsProHistoryTab[] = [
   'funding',
 ];
 const TAB_HORIZONTAL_PADDING = 16;
-const STRIP_POSITION_EPSILON = 0.001;
-const STRIP_OFFSET_EPSILON = 0.5;
+const TAB_INDICATOR_HEIGHT = 30;
+const TAB_INDICATOR_RADIUS = 8;
+const TAB_INDICATOR_TOP = 1;
+const STRIP_MOMENTUM_VELOCITY_EPSILON = 0.01;
+const STRIP_MOMENTUM_OFFSET_EPSILON = 0.5;
 type PerpsProHistoryTabFrames = Partial<
   Record<PerpsProHistoryTab, LayoutRectangle>
 >;
+type PerpsProHistoryAnimatedScrollProps = Pick<
+  ScrollViewProps,
+  'contentOffset'
+>;
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const HISTORY_TAB_MEDIUM_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '500');
 const HISTORY_TAB_BOLD_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '700');
@@ -74,75 +84,182 @@ export const updatePerpsProHistoryTabFrame = (
   });
 };
 
-const getCenteredStripOffset = ({
+const clampPerpsProHistoryStripOffset = (
+  offset: number,
+  maximumOffset: number,
+) => {
+  'worklet';
+  return Math.max(0, Math.min(maximumOffset, offset));
+};
+
+const getCenteredPerpsProHistoryTabOffset = ({
   contentWidth,
-  layouts,
-  position,
+  frame,
   viewportWidth,
 }: {
   contentWidth: number;
-  layouts: readonly PerpsProTabIndicatorLayout[];
-  position: number;
+  frame: PerpsProTabIndicatorLayout;
   viewportWidth: number;
 }) => {
-  'worklet';
-  if (layouts.length === 0 || viewportWidth <= 0) {
-    return 0;
+  if (contentWidth <= 0 || frame.width <= 0 || viewportWidth <= 0) {
+    return null;
   }
-  const frame = getPerpsProTabIndicatorFrame(position, layouts);
   const maximumOffset = Math.max(0, contentWidth - viewportWidth);
   const centeredOffset =
     TAB_HORIZONTAL_PADDING + frame.x + frame.width / 2 - viewportWidth / 2;
-  return Math.max(0, Math.min(maximumOffset, centeredOffset));
+  return clampPerpsProHistoryStripOffset(centeredOffset, maximumOffset);
 };
 
-export const getPerpsProHistoryStripOffset = ({
+export const getPerpsProHistoryTabStripAnchors = ({
   contentWidth,
   layouts,
-  position,
-  startOffset,
-  startPosition,
-  targetPosition,
   viewportWidth,
 }: {
   contentWidth: number;
   layouts: readonly PerpsProTabIndicatorLayout[];
-  position: number;
-  startOffset: number;
-  startPosition: number;
-  targetPosition: number;
   viewportWidth: number;
 }) => {
-  'worklet';
-  const naturalStart = getCenteredStripOffset({
-    contentWidth,
-    layouts,
-    position: startPosition,
-    viewportWidth,
-  });
-  const naturalCurrent = getCenteredStripOffset({
-    contentWidth,
-    layouts,
-    position,
-    viewportWidth,
-  });
-  const transitionDistance = Math.abs(targetPosition - startPosition);
-  const progress =
-    transitionDistance <= STRIP_POSITION_EPSILON
-      ? 0
-      : Math.max(
-          0,
-          Math.min(1, Math.abs(position - startPosition) / transitionDistance),
-        );
+  if (
+    layouts.length === 0 ||
+    layouts.some(layout => layout.width <= 0) ||
+    contentWidth <= 0 ||
+    viewportWidth <= 0
+  ) {
+    return [];
+  }
 
-  // Preserve the user's real strip offset at the start of a generation, then
-  // continuously converge to the naturally centered destination. A cancelled
-  // pager gesture returns to the exact captured offset without a second jump.
-  const offset = naturalCurrent + (startOffset - naturalStart) * (1 - progress);
-  return Math.max(
-    0,
-    Math.min(Math.max(0, contentWidth - viewportWidth), offset),
+  const maximumOffset = Math.max(0, contentWidth - viewportWidth);
+  const anchors: number[] = [];
+
+  for (let index = 0; index < layouts.length; index += 1) {
+    const frame = layouts[index]!;
+    const centeredOffset = getCenteredPerpsProHistoryTabOffset({
+      contentWidth,
+      frame,
+      viewportWidth,
+    });
+    if (centeredOffset === null) {
+      return [];
+    }
+    if (index === 0) {
+      anchors.push(centeredOffset);
+      continue;
+    }
+
+    const previousFrame = layouts[index - 1]!;
+    const previousOffset = anchors[index - 1]!;
+    const leftEdgeTravel = frame.x - previousFrame.x;
+    const rightEdgeTravel =
+      frame.x + frame.width - (previousFrame.x + previousFrame.width);
+    const directionalBudget = Math.max(
+      0,
+      Math.min(leftEdgeTravel, rightEdgeTravel),
+    );
+    const visibilityMinimum = clampPerpsProHistoryStripOffset(
+      TAB_HORIZONTAL_PADDING + frame.x + frame.width - viewportWidth,
+      maximumOffset,
+    );
+    const visibilityMaximum = clampPerpsProHistoryStripOffset(
+      TAB_HORIZONTAL_PADDING + frame.x,
+      maximumOffset,
+    );
+    const directionSafeMinimum = previousOffset;
+    const directionSafeMaximum = clampPerpsProHistoryStripOffset(
+      previousOffset + directionalBudget,
+      maximumOffset,
+    );
+    const visibleDirectionSafeMinimum = Math.max(
+      directionSafeMinimum,
+      visibilityMinimum,
+    );
+    const visibleDirectionSafeMaximum = Math.min(
+      directionSafeMaximum,
+      visibilityMaximum,
+    );
+    const directionSafeOffset = Math.max(
+      directionSafeMinimum,
+      Math.min(centeredOffset, directionSafeMaximum),
+    );
+
+    // Visibility is preferred only inside the hard directional interval. If a
+    // future translation produces incompatible geometry, preserving monotonic
+    // pill edges takes precedence over introducing the original edge flash.
+    anchors.push(
+      visibleDirectionSafeMinimum <= visibleDirectionSafeMaximum
+        ? Math.max(
+            visibleDirectionSafeMinimum,
+            Math.min(visibleDirectionSafeMaximum, centeredOffset),
+          )
+        : directionSafeOffset,
+    );
+  }
+
+  return anchors;
+};
+
+export const getPerpsProHistoryStripOffset = ({
+  anchors,
+  bias,
+  maximumOffset,
+  position,
+}: {
+  anchors: readonly number[];
+  bias: number;
+  maximumOffset: number;
+  position: number;
+}) => {
+  'worklet';
+  if (anchors.length === 0 || maximumOffset <= 0) {
+    return 0;
+  }
+  const maximumIndex = anchors.length - 1;
+  const safePosition = Number.isFinite(position)
+    ? Math.max(0, Math.min(maximumIndex, position))
+    : 0;
+  const fromIndex = Math.floor(safePosition);
+  const toIndex = Math.min(maximumIndex, fromIndex + 1);
+  const progress = safePosition - fromIndex;
+  const from = anchors[fromIndex] ?? anchors[0]!;
+  const to = anchors[toIndex] ?? from;
+  return clampPerpsProHistoryStripOffset(
+    from + (to - from) * progress + bias,
+    maximumOffset,
   );
+};
+
+export const getPerpsProHistoryIndicatorPath = ({
+  frame,
+  stripOffset,
+}: {
+  frame: PerpsProTabIndicatorLayout;
+  stripOffset: number;
+}) => {
+  'worklet';
+  if (frame.width <= 0) {
+    return '';
+  }
+  const left = TAB_HORIZONTAL_PADDING + frame.x - stripOffset;
+  const right = left + frame.width;
+  const top = TAB_INDICATOR_TOP;
+  const bottom = top + TAB_INDICATOR_HEIGHT;
+  const radius = Math.min(
+    TAB_INDICATOR_RADIUS,
+    frame.width / 2,
+    TAB_INDICATOR_HEIGHT / 2,
+  );
+
+  return [
+    `M ${left + radius} ${top}`,
+    `H ${right - radius}`,
+    `Q ${right} ${top} ${right} ${top + radius}`,
+    `V ${bottom - radius}`,
+    `Q ${right} ${bottom} ${right - radius} ${bottom}`,
+    `H ${left + radius}`,
+    `Q ${left} ${bottom} ${left} ${bottom - radius}`,
+    `V ${top + radius}`,
+    `Q ${left} ${top} ${left + radius} ${top}`,
+    'Z',
+  ].join(' ');
 };
 
 const PerpsProHistoryTabLabel: React.FC<{
@@ -211,182 +328,162 @@ export const PerpsProHistoryTabs: React.FC<{
   activeTab: PerpsProHistoryTab;
   onChange: (tab: PerpsProHistoryTab) => void;
   position: SharedValue<number>;
-  transitionActive: SharedValue<boolean>;
-  transitionAnimated: SharedValue<boolean>;
-  transitionEpoch: SharedValue<number>;
-  transitionStartPosition: SharedValue<number>;
-  transitionTargetPosition: SharedValue<number>;
-}> = React.memo(
-  ({
-    activeTab,
-    onChange,
-    position,
-    transitionActive,
-    transitionAnimated,
-    transitionEpoch,
-    transitionStartPosition,
-    transitionTargetPosition,
-  }) => {
-    const { colors2024, styles } = useTheme2024({ getStyle });
-    const { t } = useTranslation();
-    const scrollRef =
-      useAnimatedRef<React.ElementRef<typeof Animated.ScrollView>>();
-    const [tabFrames, setTabFrames] = useState<PerpsProHistoryTabFrames>({});
-    const [viewportWidth, setViewportWidth] = useState(0);
-    const [contentWidth, setContentWidth] = useState(0);
-    const actualStripOffset = useSharedValue(0);
-    const manualOverrideEpoch = useSharedValue(-1);
-    const anchorEpoch = useSharedValue(-1);
-    const anchorGeometryVersion = useSharedValue('');
-    const anchorOffset = useSharedValue(0);
-    const anchorPosition = useSharedValue(0);
+}> = React.memo(({ activeTab, onChange, position }) => {
+  const { colors2024, styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
+  const [tabFrames, setTabFrames] = useState<PerpsProHistoryTabFrames>({});
+  const [viewportWidth, setViewportWidth] = useState(0);
+  const [contentWidth, setContentWidth] = useState(0);
+  const actualStripOffset = useSharedValue(0);
+  const manualStripActive = useSharedValue(false);
+  const stripBias = useSharedValue(0);
+  const stripBiasGeometryVersion = useSharedValue('');
 
-    const indicatorLayouts = useMemo(() => {
-      const layouts: PerpsProTabIndicatorLayout[] = [];
-      for (const tab of TABS) {
-        const frame = tabFrames[tab];
-        if (!frame || frame.width <= 0) {
-          return [];
-        }
-        layouts.push({ width: frame.width, x: frame.x });
+  const indicatorLayouts = useMemo(() => {
+    const layouts: PerpsProTabIndicatorLayout[] = [];
+    for (const tab of TABS) {
+      const frame = tabFrames[tab];
+      if (!frame || frame.width <= 0) {
+        return [];
       }
-      return layouts;
-    }, [tabFrames]);
-    const geometryVersion = useMemo(
-      () =>
-        [
-          viewportWidth,
-          contentWidth,
-          ...indicatorLayouts.flatMap(frame => [frame.x, frame.width]),
-        ].join(':'),
-      [contentWidth, indicatorLayouts, viewportWidth],
-    );
+      layouts.push({ width: frame.width, x: frame.x });
+    }
+    return layouts;
+  }, [tabFrames]);
+  const stripAnchors = useMemo(
+    () =>
+      getPerpsProHistoryTabStripAnchors({
+        contentWidth,
+        layouts: indicatorLayouts,
+        viewportWidth,
+      }),
+    [contentWidth, indicatorLayouts, viewportWidth],
+  );
+  const maximumStripOffset = Math.max(0, contentWidth - viewportWidth);
+  const stripGeometryReady =
+    indicatorLayouts.length === TABS.length &&
+    stripAnchors.length === TABS.length &&
+    contentWidth > 0 &&
+    viewportWidth > 0;
+  const geometryVersion = useMemo(
+    () =>
+      [
+        viewportWidth,
+        contentWidth,
+        ...indicatorLayouts.flatMap(layout => [layout.x, layout.width]),
+        ...stripAnchors,
+      ].join(':'),
+    [contentWidth, indicatorLayouts, stripAnchors, viewportWidth],
+  );
 
-    const handleScroll = useAnimatedScrollHandler({
-      onBeginDrag: event => {
-        actualStripOffset.value = event.contentOffset.x;
-        manualOverrideEpoch.value = transitionEpoch.value;
-      },
-      onScroll: event => {
-        actualStripOffset.value = event.contentOffset.x;
-      },
+  const effectiveStripOffset = useDerivedValue(() => {
+    if (manualStripActive.value) {
+      return actualStripOffset.value;
+    }
+    return getPerpsProHistoryStripOffset({
+      anchors: stripAnchors,
+      bias:
+        stripBiasGeometryVersion.value === geometryVersion
+          ? stripBias.value
+          : 0,
+      maximumOffset: maximumStripOffset,
+      position: position.value,
+    });
+  }, [geometryVersion, maximumStripOffset, position, stripAnchors]);
+
+  const animatedScrollProps =
+    useAnimatedProps<PerpsProHistoryAnimatedScrollProps>(() => {
+      if (manualStripActive.value) {
+        return {};
+      }
+      return {
+        contentOffset: { x: effectiveStripOffset.value, y: 0 },
+      };
     });
 
-    useAnimatedReaction(
-      () => ({
-        active: transitionActive.value,
-        animated: transitionAnimated.value,
-        epoch: transitionEpoch.value,
-        geometryVersion,
-        position: position.value,
-        startPosition: transitionStartPosition.value,
-        targetPosition: transitionTargetPosition.value,
-      }),
-      current => {
-        if (
-          indicatorLayouts.length !== TABS.length ||
-          viewportWidth <= 0 ||
-          contentWidth <= 0
-        ) {
-          return;
-        }
-
-        const isFirstLayout = anchorEpoch.value < 0;
-        const generationChanged = anchorEpoch.value !== current.epoch;
-        const geometryChanged =
-          anchorGeometryVersion.value !== current.geometryVersion;
-        if (isFirstLayout || generationChanged || geometryChanged) {
-          anchorEpoch.value = current.epoch;
-          anchorGeometryVersion.value = current.geometryVersion;
-          anchorOffset.value = actualStripOffset.value;
-          const logicalStartDiffersFromCurrent =
-            Math.abs(current.position - current.startPosition) >
-            STRIP_POSITION_EPSILON;
-          anchorPosition.value =
-            (geometryChanged && !generationChanged) ||
-            (generationChanged && logicalStartDiffersFromCurrent)
-              ? current.position
-              : current.startPosition;
-
-          if (manualOverrideEpoch.value === current.epoch) {
-            return;
-          }
-          if (isFirstLayout || !current.active || !current.animated) {
-            const target = getCenteredStripOffset({
-              contentWidth,
-              layouts: indicatorLayouts,
-              position: current.active
-                ? current.animated
-                  ? current.position
-                  : current.targetPosition
-                : current.position,
-              viewportWidth,
-            });
-            if (
-              Math.abs(target - actualStripOffset.value) > STRIP_OFFSET_EPSILON
-            ) {
-              scrollTo(scrollRef, target, 0, false);
-              actualStripOffset.value = target;
-            }
-          }
-          return;
-        }
-
-        if (manualOverrideEpoch.value === current.epoch) {
-          return;
-        }
-        const target = current.animated
-          ? getPerpsProHistoryStripOffset({
-              contentWidth,
-              layouts: indicatorLayouts,
-              position: current.position,
-              startOffset: anchorOffset.value,
-              startPosition: anchorPosition.value,
-              targetPosition: current.targetPosition,
-              viewportWidth,
-            })
-          : getCenteredStripOffset({
-              contentWidth,
-              layouts: indicatorLayouts,
-              position: current.active
-                ? current.targetPosition
-                : current.position,
-              viewportWidth,
-            });
-        if (Math.abs(target - actualStripOffset.value) > STRIP_OFFSET_EPSILON) {
-          scrollTo(scrollRef, target, 0, false);
-          actualStripOffset.value = target;
-        }
-      },
-      [
-        contentWidth,
-        geometryVersion,
-        indicatorLayouts,
-        scrollRef,
-        transitionActive,
-        viewportWidth,
-      ],
+  const indicatorAnimatedProps = useAnimatedProps<PathProps>(() => {
+    const frame = getPerpsProTabIndicatorFrame(
+      position.value,
+      indicatorLayouts,
     );
+    return {
+      d: getPerpsProHistoryIndicatorPath({
+        frame,
+        stripOffset: effectiveStripOffset.value,
+      }),
+      opacity: stripGeometryReady ? 1 : 0,
+    };
+  }, [indicatorLayouts, position, stripGeometryReady]);
 
-    return (
+  const updateManualStripBias = (offset: number) => {
+    'worklet';
+    actualStripOffset.value = offset;
+    const naturalOffset = getPerpsProHistoryStripOffset({
+      anchors: stripAnchors,
+      bias: 0,
+      maximumOffset: maximumStripOffset,
+      position: position.value,
+    });
+    stripBias.value = offset - naturalOffset;
+    stripBiasGeometryVersion.value = geometryVersion;
+  };
+
+  const handleScroll = useAnimatedScrollHandler({
+    onBeginDrag: event => {
+      manualStripActive.value = true;
+      updateManualStripBias(event.contentOffset.x);
+    },
+    onEndDrag: event => {
+      updateManualStripBias(event.contentOffset.x);
+      const targetOffset = event.targetContentOffset?.x;
+      const velocity = event.velocity?.x ?? 0;
+      const momentumExpected =
+        Math.abs(velocity) > STRIP_MOMENTUM_VELOCITY_EPSILON ||
+        (targetOffset !== undefined &&
+          Math.abs(targetOffset - event.contentOffset.x) >
+            STRIP_MOMENTUM_OFFSET_EPSILON);
+      manualStripActive.value = momentumExpected;
+    },
+    onMomentumBegin: () => {
+      manualStripActive.value = true;
+    },
+    onMomentumEnd: event => {
+      updateManualStripBias(event.contentOffset.x);
+      manualStripActive.value = false;
+    },
+    onScroll: event => {
+      actualStripOffset.value = event.contentOffset.x;
+      if (manualStripActive.value) {
+        updateManualStripBias(event.contentOffset.x);
+      }
+    },
+  });
+
+  return (
+    <View style={styles.tabViewport}>
+      <Svg
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        pointerEvents="none"
+        style={styles.indicatorCanvas}>
+        <AnimatedPath
+          animatedProps={indicatorAnimatedProps}
+          fill={styles.indicator.backgroundColor}
+          testID="perps-pro-history-tab-indicator"
+        />
+      </Svg>
       <Animated.ScrollView
+        animatedProps={animatedScrollProps}
         contentContainerStyle={styles.content}
         horizontal
         onContentSizeChange={width => setContentWidth(width)}
         onLayout={event => setViewportWidth(event.nativeEvent.layout.width)}
         onScroll={handleScroll}
-        ref={scrollRef}
         scrollEventThrottle={16}
         showsHorizontalScrollIndicator={false}
         style={styles.scroll}
         testID="perps-pro-history-tabs-scroll">
         <View accessibilityRole="tablist" style={styles.tabs}>
-          <PerpsProTabIndicator
-            layouts={indicatorLayouts}
-            position={position}
-            style={styles.indicator}
-            testID="perps-pro-history-tab-indicator"
-          />
           {TABS.map((tab, index) => {
             const selected = activeTab === tab;
             return (
@@ -400,7 +497,7 @@ export const PerpsProHistoryTabs: React.FC<{
                 onPress={() => onChange(tab)}
                 style={styles.tab}
                 testID={`perps-pro-history-tab-${tab}`}>
-                {indicatorLayouts.length !== TABS.length && selected ? (
+                {!stripGeometryReady && selected ? (
                   <View
                     pointerEvents="none"
                     style={styles.fallbackIndicator}
@@ -420,15 +517,23 @@ export const PerpsProHistoryTabs: React.FC<{
           })}
         </View>
       </Animated.ScrollView>
-    );
-  },
-);
+    </View>
+  );
+});
 
 PerpsProHistoryTabs.displayName = 'PerpsProHistoryTabs';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  tabViewport: {
+    height: 32,
+    position: 'relative' as const,
+  },
   scroll: {
     flexGrow: 0,
+  },
+  indicatorCanvas: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
   },
   content: {
     minWidth: '100%',
@@ -458,10 +563,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: isLight
       ? '#131416'
       : colors2024['neutral-InvertHighlight'],
-    borderRadius: 8,
-    height: 30,
-    top: 1,
-    zIndex: 0,
   },
   fallbackIndicator: {
     backgroundColor: isLight

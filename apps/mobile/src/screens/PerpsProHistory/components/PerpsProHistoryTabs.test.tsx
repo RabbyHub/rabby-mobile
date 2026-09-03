@@ -1,18 +1,23 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
 import type { PerpsProHistoryTab } from '../types';
 
-const mockScrollTo = jest.fn();
-let mockScrollHandlers: {
-  onBeginDrag?: (event: { contentOffset: { x: number } }) => void;
-  onScroll?: (event: { contentOffset: { x: number } }) => void;
-} = {};
-let mockAnimatedReactions: Array<{
-  prepare: () => unknown;
-  react: (current: unknown, previous?: unknown) => void;
-}> = [];
+type MockScrollEvent = Readonly<{
+  contentOffset: Readonly<{ x: number; y: number }>;
+  targetContentOffset?: Readonly<{ x: number; y: number }>;
+  velocity?: Readonly<{ x: number; y: number }>;
+}>;
+type MockAnimatedScrollHandlers = Readonly<{
+  onBeginDrag?: (event: MockScrollEvent) => void;
+  onEndDrag?: (event: MockScrollEvent) => void;
+  onMomentumBegin?: (event: MockScrollEvent) => void;
+  onMomentumEnd?: (event: MockScrollEvent) => void;
+  onScroll?: (event: MockScrollEvent) => void;
+}>;
+
+let mockAnimatedScrollHandlers: MockAnimatedScrollHandlers | null = null;
 
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
@@ -32,6 +37,15 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
+jest.mock('react-native-svg', () => {
+  const ReactNative = require('react-native');
+  return {
+    __esModule: true,
+    default: ReactNative.View,
+    Path: ReactNative.View,
+  };
+});
+
 jest.mock('react-native-reanimated', () => {
   const ReactModule = require('react');
   const ReactNative = require('react-native');
@@ -44,55 +58,50 @@ jest.mock('react-native-reanimated', () => {
       createAnimatedComponent: (Component: React.ComponentType) => Component,
     },
     cancelAnimation: jest.fn(),
-    scrollTo: (...args: unknown[]) => mockScrollTo(...args),
-    useAnimatedReaction: (
-      prepare: () => unknown,
-      react: (current: unknown, previous?: unknown) => void,
-    ) => {
-      mockAnimatedReactions.push({ prepare, react });
-    },
-    useAnimatedRef: () => ReactModule.useRef(null),
-    useAnimatedScrollHandler: (handlers: typeof mockScrollHandlers) => {
-      mockScrollHandlers = handlers;
-      return (event: { nativeEvent?: { contentOffset: { x: number } } }) =>
-        handlers.onScroll?.(event.nativeEvent ?? event);
+    useAnimatedProps: (updater: () => object) => updater(),
+    useAnimatedScrollHandler: (handlers: MockAnimatedScrollHandlers) => {
+      mockAnimatedScrollHandlers = handlers;
+      return (event: { nativeEvent?: MockScrollEvent } | MockScrollEvent) =>
+        handlers.onScroll?.(
+          'nativeEvent' in event && event.nativeEvent
+            ? event.nativeEvent
+            : (event as MockScrollEvent),
+        );
     },
     useAnimatedStyle: (updater: () => object) => updater(),
+    useDerivedValue: (updater: () => unknown) => ({
+      get value() {
+        return updater();
+      },
+    }),
     useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
   };
 });
 
 import {
+  getPerpsProHistoryIndicatorPath,
   getPerpsProHistoryStripOffset,
+  getPerpsProHistoryTabStripAnchors,
   PerpsProHistoryTabs,
   updatePerpsProHistoryTabFrame,
 } from './PerpsProHistoryTabs';
 
 const shared = <T,>(value: T) => ({ value } as SharedValue<T>);
 
-const createMotion = (position = 0) => ({
-  position: shared(position),
-  transitionActive: shared(false),
-  transitionAnimated: shared(true),
-  transitionEpoch: shared(0),
-  transitionStartPosition: shared(position),
-  transitionTargetPosition: shared(position),
-});
-
 const renderTabs = ({
   activeTab = 'orders',
-  motion = createMotion(),
   onChange = jest.fn(),
+  position = shared(0),
 }: {
   activeTab?: PerpsProHistoryTab;
-  motion?: ReturnType<typeof createMotion>;
   onChange?: jest.Mock;
+  position?: SharedValue<number>;
 } = {}) =>
   render(
     <PerpsProHistoryTabs
       activeTab={activeTab}
       onChange={onChange}
-      {...motion}
+      position={position}
     />,
   );
 
@@ -102,6 +111,7 @@ const tabLayouts = [
   { height: 32, width: 110, x: 148, y: 0 },
   { height: 32, width: 82, x: 258, y: 0 },
 ];
+const indicatorLayouts = tabLayouts.map(({ width, x }) => ({ width, x }));
 
 const publishAllTabLayouts = () => {
   ['orders', 'trade', 'transaction', 'funding'].forEach((tab, index) => {
@@ -111,27 +121,24 @@ const publishAllTabLayouts = () => {
   });
 };
 
-const getLatestStripReaction = () => {
-  const reaction = [...mockAnimatedReactions].reverse().find(candidate => {
-    const value = candidate.prepare();
-    return (
-      typeof value === 'object' &&
-      value !== null &&
-      'geometryVersion' in value &&
-      'position' in value
-    );
+const publishScrollableGeometry = () => {
+  const scroll = screen.getByTestId('perps-pro-history-tabs-scroll');
+  act(() => {
+    publishAllTabLayouts();
+    fireEvent(scroll, 'layout', {
+      nativeEvent: { layout: { height: 32, width: 200, x: 0, y: 0 } },
+    });
+    fireEvent(scroll, 'contentSizeChange', 372, 32);
   });
-  if (!reaction) {
-    throw new Error('Expected a strip animated reaction');
-  }
-  return reaction;
+  return scroll;
 };
 
 describe('PerpsProHistoryTabs', () => {
+  const scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo');
+
   beforeEach(() => {
     jest.clearAllMocks();
-    mockScrollHandlers = {};
-    mockAnimatedReactions = [];
+    mockAnimatedScrollHandlers = null;
   });
 
   it('renders one background pill behind stable-width labels', () => {
@@ -148,26 +155,35 @@ describe('PerpsProHistoryTabs', () => {
     fireEvent.press(screen.getByTestId('perps-pro-history-tab-funding'));
     expect(onChange).toHaveBeenCalledWith('funding');
 
-    publishAllTabLayouts();
+    act(publishAllTabLayouts);
+    expect(
+      screen.getByTestId('perps-pro-history-tab-indicator-fallback'),
+    ).toBeTruthy();
+    expect(
+      screen.getByTestId('perps-pro-history-tab-indicator', {
+        includeHiddenElements: true,
+      }).props.animatedProps.opacity,
+    ).toBe(0);
+
+    publishScrollableGeometry();
     expect(
       screen.queryByTestId('perps-pro-history-tab-indicator-fallback'),
     ).toBeNull();
     const indicator = screen.getByTestId('perps-pro-history-tab-indicator', {
       includeHiddenElements: true,
     });
-    expect(indicator.parent?.children[0]).toBe(indicator);
     expect(
       screen.getAllByTestId('perps-pro-history-tab-indicator', {
         includeHiddenElements: true,
       }),
     ).toHaveLength(1);
-    expect(StyleSheet.flatten(indicator.props.style)).toMatchObject({
-      backgroundColor: '#131416',
-      borderRadius: 8,
-      height: 30,
-      top: 1,
-      zIndex: 0,
+    expect(indicator.props).toMatchObject({
+      animatedProps: {
+        opacity: 1,
+      },
+      fill: '#131416',
     });
+    expect(indicator.props.animatedProps.d).not.toBe('');
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-history-tab-orders').props.style,
@@ -176,8 +192,7 @@ describe('PerpsProHistoryTabs', () => {
   });
 
   it('uses a hidden bold label to prevent width changes during emphasis', () => {
-    const motion = createMotion(0.8);
-    renderTabs({ motion });
+    renderTabs({ position: shared(0.8) });
 
     const selectedTab = screen.getByTestId('perps-pro-history-tab-orders');
     const visuallyActiveLabel = screen.getByTestId(
@@ -221,324 +236,308 @@ describe('PerpsProHistoryTabs', () => {
     ).toMatchObject({ height: 32, paddingHorizontal: 12 });
   });
 
-  it('interpolates the strip from a real captured offset to the centered target', () => {
-    const layouts = [
-      { width: 80, x: 0 },
-      { width: 80, x: 80 },
-      { width: 100, x: 160 },
-      { width: 80, x: 260 },
-    ];
-    const common = {
+  it('builds direction-safe strip anchors for unequal-width tabs', () => {
+    expect(
+      getPerpsProHistoryTabStripAnchors({
+        contentWidth: 372,
+        layouts: indicatorLayouts,
+        viewportWidth: 200,
+      }),
+    ).toEqual([0, 28, 100, 172]);
+    expect(
+      getPerpsProHistoryTabStripAnchors({
+        contentWidth: 180,
+        layouts: indicatorLayouts,
+        viewportWidth: 200,
+      }),
+    ).toEqual([0, 0, 0, 0]);
+    expect(
+      getPerpsProHistoryTabStripAnchors({
+        contentWidth: 0,
+        layouts: indicatorLayouts,
+        viewportWidth: 200,
+      }),
+    ).toEqual([]);
+
+    // Full target visibility and monotonic edges are geometrically
+    // incompatible for this intentionally extreme alternating-width case.
+    // The original edge flash must remain impossible even in that fallback.
+    expect(
+      getPerpsProHistoryTabStripAnchors({
+        contentWidth: 252,
+        layouts: [
+          { width: 100, x: 0 },
+          { width: 10, x: 100 },
+          { width: 100, x: 110 },
+          { width: 10, x: 210 },
+        ],
+        viewportWidth: 100,
+      }),
+    ).toEqual([16, 26, 36, 46]);
+  });
+
+  it('keeps both pill edges monotonic throughout adjacent transitions', () => {
+    const anchors = getPerpsProHistoryTabStripAnchors({
       contentWidth: 372,
-      layouts,
-      startOffset: 10,
-      startPosition: 1,
-      targetPosition: 3,
+      layouts: indicatorLayouts,
       viewportWidth: 200,
+    });
+    const sampleFrame = (position: number) => {
+      const fromIndex = Math.floor(position);
+      const toIndex = Math.min(indicatorLayouts.length - 1, fromIndex + 1);
+      const progress = position - fromIndex;
+      const from = indicatorLayouts[fromIndex]!;
+      const to = indicatorLayouts[toIndex]!;
+      const width = from.width + (to.width - from.width) * progress;
+      const x = from.x + (to.x - from.x) * progress;
+      const stripOffset = getPerpsProHistoryStripOffset({
+        anchors,
+        bias: 0,
+        maximumOffset: 172,
+        position,
+      });
+      return {
+        left: 16 + x - stripOffset,
+        right: 16 + x + width - stripOffset,
+      };
     };
 
-    expect(getPerpsProHistoryStripOffset({ ...common, position: 1 })).toBe(10);
-    expect(getPerpsProHistoryStripOffset({ ...common, position: 2 })).toBe(113);
-    expect(getPerpsProHistoryStripOffset({ ...common, position: 3 })).toBe(172);
+    for (let index = 0; index < indicatorLayouts.length - 1; index += 1) {
+      const forward = [0, 0.25, 0.5, 0.75, 1].map(progress =>
+        sampleFrame(index + progress),
+      );
+      for (let sample = 1; sample < forward.length; sample += 1) {
+        expect(forward[sample]!.left).toBeGreaterThanOrEqual(
+          forward[sample - 1]!.left,
+        );
+        expect(forward[sample]!.right).toBeGreaterThanOrEqual(
+          forward[sample - 1]!.right,
+        );
+      }
+      const reverse = [...forward].reverse();
+      for (let sample = 1; sample < reverse.length; sample += 1) {
+        expect(reverse[sample]!.left).toBeLessThanOrEqual(
+          reverse[sample - 1]!.left,
+        );
+        expect(reverse[sample]!.right).toBeLessThanOrEqual(
+          reverse[sample - 1]!.right,
+        );
+      }
+    }
+  });
+
+  it('drives strip offset and pill geometry from the same fractional position', () => {
+    let position = shared(1);
+    const onChange = jest.fn();
+    const view = renderTabs({ activeTab: 'trade', onChange, position });
+    publishScrollableGeometry();
+
     expect(
-      getPerpsProHistoryStripOffset({
-        ...common,
-        contentWidth: 180,
-        position: 2,
-      }),
-    ).toBe(0);
-  });
-
-  it('lets a manual strip drag own the current generation and retakes next generation', () => {
-    const motion = createMotion();
-    renderTabs({ motion });
-    publishAllTabLayouts();
-    fireEvent(screen.getByTestId('perps-pro-history-tabs-scroll'), 'layout', {
-      nativeEvent: { layout: { height: 32, width: 200, x: 0, y: 0 } },
-    });
-    fireEvent(
-      screen.getByTestId('perps-pro-history-tabs-scroll'),
-      'contentSizeChange',
-      372,
-      32,
+      screen.getByTestId('perps-pro-history-tabs-scroll').props.animatedProps,
+    ).toEqual({ contentOffset: { x: 28, y: 0 } });
+    position = shared(1.5);
+    view.rerender(
+      <PerpsProHistoryTabs
+        activeTab="trade"
+        onChange={onChange}
+        position={position}
+      />,
     );
 
-    let stripReaction = getLatestStripReaction();
-    act(() => stripReaction.react(stripReaction.prepare()));
-    mockScrollTo.mockClear();
-    act(() => mockScrollHandlers.onBeginDrag?.({ contentOffset: { x: 50 } }));
-
-    motion.transitionStartPosition.value = 0;
-    motion.transitionTargetPosition.value = 1;
-    motion.position.value = 0.5;
-    stripReaction = getLatestStripReaction();
-    act(() => stripReaction.react(stripReaction.prepare()));
-    expect(mockScrollTo).not.toHaveBeenCalled();
-
-    motion.transitionEpoch.value = 1;
-    motion.transitionActive.value = true;
-    motion.transitionStartPosition.value = 0.5;
-    motion.transitionTargetPosition.value = 1;
-    act(() => stripReaction.react(stripReaction.prepare()));
-    motion.position.value = 2;
-    act(() => stripReaction.react(stripReaction.prepare()));
-    expect(mockScrollTo).toHaveBeenCalledTimes(1);
-  });
-
-  it('anchors a takeover generation at its current fractional frame', () => {
-    const motion = createMotion(0.4);
-    motion.transitionActive.value = true;
-    motion.transitionStartPosition.value = 0;
-    motion.transitionTargetPosition.value = 1;
-    renderTabs({ motion });
-    publishAllTabLayouts();
-    const scroll = screen.getByTestId('perps-pro-history-tabs-scroll');
-    fireEvent(scroll, 'layout', {
-      nativeEvent: { layout: { height: 32, width: 200, x: 0, y: 0 } },
-    });
-    fireEvent(scroll, 'contentSizeChange', 372, 32);
-
-    const stripReaction = getLatestStripReaction();
-    act(() => stripReaction.react(stripReaction.prepare()));
-    act(() => mockScrollHandlers.onScroll?.({ contentOffset: { x: 60 } }));
-    mockScrollTo.mockClear();
-
-    motion.transitionEpoch.value = 1;
-    motion.transitionStartPosition.value = 1;
-    motion.transitionTargetPosition.value = 0;
-    act(() => stripReaction.react(stripReaction.prepare()));
-    expect(mockScrollTo).not.toHaveBeenCalled();
-
-    motion.position.value = 0.3;
-    act(() => stripReaction.react(stripReaction.prepare()));
-
-    expect(mockScrollTo).toHaveBeenCalledTimes(1);
-    expect(mockScrollTo.mock.calls[0]?.[1]).toBeCloseTo(
-      getPerpsProHistoryStripOffset({
-        contentWidth: 372,
-        layouts: tabLayouts.map(({ width, x }) => ({ width, x })),
-        position: 0.3,
-        startOffset: 60,
-        startPosition: 0.4,
-        targetPosition: 0,
-        viewportWidth: 200,
+    expect(
+      screen.getByTestId('perps-pro-history-tabs-scroll').props.animatedProps,
+    ).toEqual({ contentOffset: { x: 64, y: 0 } });
+    expect(scrollTo).not.toHaveBeenCalled();
+    expect(
+      screen.getByTestId('perps-pro-history-tab-indicator', {
+        includeHiddenElements: true,
+      }).props.animatedProps.d,
+    ).toBe(
+      getPerpsProHistoryIndicatorPath({
+        frame: { width: 91, x: 112 },
+        stripOffset: 64,
       }),
     );
+
+    position = shared(2);
+    view.rerender(
+      <PerpsProHistoryTabs
+        activeTab="trade"
+        onChange={onChange}
+        position={position}
+      />,
+    );
+    expect(
+      screen.getByTestId('perps-pro-history-tabs-scroll').props.animatedProps,
+    ).toEqual({ contentOffset: { x: 100, y: 0 } });
+    expect(scrollTo).not.toHaveBeenCalled();
   });
 
-  it('returns a cancelled pager motion to the captured manual offset without a terminal jump', () => {
-    const motion = createMotion();
-    renderTabs({ motion });
-    publishAllTabLayouts();
-    const scroll = screen.getByTestId('perps-pro-history-tabs-scroll');
-    fireEvent(scroll, 'layout', {
-      nativeEvent: { layout: { height: 32, width: 200, x: 0, y: 0 } },
-    });
-    fireEvent(scroll, 'contentSizeChange', 372, 32);
+  it('does not start a second strip movement when business state commits', () => {
+    const position = shared(2);
+    const onChange = jest.fn();
+    const view = renderTabs({ activeTab: 'trade', onChange, position });
+    publishScrollableGeometry();
+    const beforeCommit = screen.getByTestId('perps-pro-history-tabs-scroll')
+      .props.animatedProps;
 
-    let stripReaction = getLatestStripReaction();
-    act(() => stripReaction.react(stripReaction.prepare()));
-    act(() => mockScrollHandlers.onBeginDrag?.({ contentOffset: { x: 50 } }));
-    mockScrollTo.mockClear();
-
-    motion.transitionEpoch.value = 1;
-    motion.transitionActive.value = true;
-    motion.transitionStartPosition.value = 0;
-    motion.transitionTargetPosition.value = 1;
-    stripReaction = getLatestStripReaction();
-    act(() => stripReaction.react(stripReaction.prepare()));
-    motion.position.value = 0.4;
-    act(() => stripReaction.react(stripReaction.prepare()));
-    motion.position.value = 0;
-    act(() => stripReaction.react(stripReaction.prepare()));
-    const callsBeforeTerminal = mockScrollTo.mock.calls.length;
-    expect(mockScrollTo).toHaveBeenLastCalledWith(
-      expect.anything(),
-      50,
-      0,
-      false,
+    view.rerender(
+      <PerpsProHistoryTabs
+        activeTab="transaction"
+        onChange={onChange}
+        position={position}
+      />,
     );
 
-    motion.transitionActive.value = false;
-    act(() => stripReaction.react(stripReaction.prepare()));
-
-    expect(mockScrollTo).toHaveBeenCalledTimes(callsBeforeTerminal);
+    expect(
+      screen.getByTestId('perps-pro-history-tabs-scroll').props.animatedProps,
+    ).toEqual(beforeCommit);
+    expect(scrollTo).not.toHaveBeenCalled();
   });
 
-  it('keeps a successful 0 to 3 terminal centered without restoring the origin offset', () => {
-    const motion = createMotion();
-    renderTabs({ motion });
-    publishAllTabLayouts();
-    const scroll = screen.getByTestId('perps-pro-history-tabs-scroll');
-    fireEvent(scroll, 'layout', {
-      nativeEvent: { layout: { height: 32, width: 200, x: 0, y: 0 } },
+  it('reprojects the settled position directly after geometry changes', () => {
+    renderTabs({ activeTab: 'transaction', position: shared(2) });
+    const scroll = publishScrollableGeometry();
+    expect(scroll.props.animatedProps).toEqual({
+      contentOffset: { x: 100, y: 0 },
     });
-    fireEvent(scroll, 'contentSizeChange', 372, 32);
 
-    const stripReaction = getLatestStripReaction();
-    act(() => stripReaction.react(stripReaction.prepare()));
-    mockScrollTo.mockClear();
+    act(() => {
+      fireEvent(scroll, 'layout', {
+        nativeEvent: { layout: { height: 32, width: 220, x: 0, y: 0 } },
+      });
+    });
 
-    motion.transitionEpoch.value = 1;
-    motion.transitionActive.value = true;
-    motion.transitionAnimated.value = true;
-    motion.transitionStartPosition.value = 0;
-    motion.transitionTargetPosition.value = 3;
-    act(() => stripReaction.react(stripReaction.prepare()));
-    motion.position.value = 3;
-    act(() => stripReaction.react(stripReaction.prepare()));
-
-    expect(mockScrollTo).toHaveBeenLastCalledWith(
-      expect.anything(),
-      172,
-      0,
-      false,
-    );
-    const callsBeforeTerminal = mockScrollTo.mock.calls.length;
-
-    motion.transitionActive.value = false;
-    motion.transitionAnimated.value = false;
-    motion.transitionStartPosition.value = 3;
-    motion.transitionTargetPosition.value = 3;
-    act(() => stripReaction.react(stripReaction.prepare()));
-
-    expect(mockScrollTo).toHaveBeenCalledTimes(callsBeforeTerminal);
+    expect(
+      screen.getByTestId('perps-pro-history-tabs-scroll').props.animatedProps,
+    ).toEqual({
+      contentOffset: { x: 90, y: 0 },
+    });
+    expect(scrollTo).not.toHaveBeenCalled();
   });
 
-  it('recenters inactive terminal presentation after real geometry changes', () => {
-    const motion = createMotion(2);
-    motion.transitionAnimated.value = true;
-    renderTabs({ activeTab: 'transaction', motion });
-    publishAllTabLayouts();
-    const scroll = screen.getByTestId('perps-pro-history-tabs-scroll');
-    fireEvent(scroll, 'layout', {
-      nativeEvent: { layout: { height: 32, width: 200, x: 0, y: 0 } },
-    });
-    fireEvent(scroll, 'contentSizeChange', 372, 32);
+  it('preserves a manual strip offset as a UI-thread bias', () => {
+    let position = shared(1);
+    const view = renderTabs({ activeTab: 'trade', position });
+    publishScrollableGeometry();
+    expect(mockAnimatedScrollHandlers).not.toBeNull();
 
-    let stripReaction = getLatestStripReaction();
-    act(() => stripReaction.react(stripReaction.prepare()));
-    mockScrollTo.mockClear();
-    fireEvent(
-      screen.getByTestId('perps-pro-history-tab-transaction'),
-      'layout',
-      {
-        nativeEvent: {
-          layout: { ...tabLayouts[2], width: 120 },
-        },
-      },
+    act(() => {
+      mockAnimatedScrollHandlers?.onBeginDrag?.({
+        contentOffset: { x: 60, y: 0 },
+      });
+    });
+    view.rerender(
+      <PerpsProHistoryTabs
+        activeTab="trade"
+        onChange={jest.fn()}
+        position={position}
+      />,
     );
-    fireEvent(screen.getByTestId('perps-pro-history-tab-funding'), 'layout', {
-      nativeEvent: {
-        layout: { ...tabLayouts[3], x: 268 },
-      },
-    });
-    fireEvent(scroll, 'contentSizeChange', 382, 32);
-    stripReaction = getLatestStripReaction();
-    act(() => stripReaction.react(stripReaction.prepare()));
+    expect(
+      screen.getByTestId('perps-pro-history-tabs-scroll').props.animatedProps,
+    ).toEqual({});
 
-    expect(mockScrollTo).toHaveBeenCalledTimes(1);
-    expect(mockScrollTo.mock.calls[0]?.[3]).toBe(false);
+    act(() => {
+      mockAnimatedScrollHandlers?.onEndDrag?.({
+        contentOffset: { x: 60, y: 0 },
+      });
+    });
+    position = shared(1.5);
+    view.rerender(
+      <PerpsProHistoryTabs
+        activeTab="trade"
+        onChange={jest.fn()}
+        position={position}
+      />,
+    );
+    expect(
+      screen.getByTestId('perps-pro-history-tabs-scroll').props.animatedProps,
+    ).toEqual({ contentOffset: { x: 96, y: 0 } });
   });
 
-  it('reanchors an active transition at its current position after geometry changes', () => {
-    const motion = createMotion(0.5);
-    motion.transitionActive.value = true;
-    motion.transitionStartPosition.value = 0;
-    motion.transitionTargetPosition.value = 2;
-    renderTabs({ motion });
-    publishAllTabLayouts();
-    const scroll = screen.getByTestId('perps-pro-history-tabs-scroll');
-    fireEvent(scroll, 'layout', {
-      nativeEvent: { layout: { height: 32, width: 200, x: 0, y: 0 } },
+  it('keeps native momentum in control until the strip actually settles', () => {
+    let position = shared(1);
+    const view = renderTabs({ activeTab: 'trade', position });
+    publishScrollableGeometry();
+
+    act(() => {
+      mockAnimatedScrollHandlers?.onBeginDrag?.({
+        contentOffset: { x: 60, y: 0 },
+      });
+      mockAnimatedScrollHandlers?.onEndDrag?.({
+        contentOffset: { x: 60, y: 0 },
+        targetContentOffset: { x: 90, y: 0 },
+        velocity: { x: 1, y: 0 },
+      });
     });
-    fireEvent(scroll, 'contentSizeChange', 372, 32);
-
-    let stripReaction = getLatestStripReaction();
-    act(() => stripReaction.react(stripReaction.prepare()));
-    act(() => mockScrollHandlers.onScroll?.({ contentOffset: { x: 60 } }));
-    mockScrollTo.mockClear();
-    fireEvent(
-      screen.getByTestId('perps-pro-history-tab-transaction'),
-      'layout',
-      {
-        nativeEvent: {
-          layout: { ...tabLayouts[2], width: 120 },
-        },
-      },
+    view.rerender(
+      <PerpsProHistoryTabs
+        activeTab="trade"
+        onChange={jest.fn()}
+        position={position}
+      />,
     );
-    fireEvent(screen.getByTestId('perps-pro-history-tab-funding'), 'layout', {
-      nativeEvent: {
-        layout: { ...tabLayouts[3], x: 268 },
-      },
+    expect(
+      screen.getByTestId('perps-pro-history-tabs-scroll').props.animatedProps,
+    ).toEqual({});
+
+    act(() => {
+      mockAnimatedScrollHandlers?.onMomentumBegin?.({
+        contentOffset: { x: 60, y: 0 },
+      });
+      mockAnimatedScrollHandlers?.onScroll?.({
+        contentOffset: { x: 90, y: 0 },
+      });
+      mockAnimatedScrollHandlers?.onMomentumEnd?.({
+        contentOffset: { x: 90, y: 0 },
+      });
     });
-    fireEvent(scroll, 'contentSizeChange', 382, 32);
-    stripReaction = getLatestStripReaction();
-    act(() => stripReaction.react(stripReaction.prepare()));
-    expect(mockScrollTo).not.toHaveBeenCalled();
-
-    motion.position.value = 1;
-    act(() => stripReaction.react(stripReaction.prepare()));
-
-    expect(mockScrollTo).toHaveBeenCalledTimes(1);
-    expect(mockScrollTo.mock.calls[0]?.[1]).toBeCloseTo(
-      getPerpsProHistoryStripOffset({
-        contentWidth: 382,
-        layouts: [
-          { width: 76, x: 0 },
-          { width: 72, x: 76 },
-          { width: 120, x: 148 },
-          { width: 82, x: 268 },
-        ],
-        position: 1,
-        startOffset: 60,
-        startPosition: 0.5,
-        targetPosition: 2,
-        viewportWidth: 200,
-      }),
+    position = shared(1.5);
+    view.rerender(
+      <PerpsProHistoryTabs
+        activeTab="trade"
+        onChange={jest.fn()}
+        position={position}
+      />,
     );
+    expect(
+      screen.getByTestId('perps-pro-history-tabs-scroll').props.animatedProps,
+    ).toEqual({ contentOffset: { x: 126, y: 0 } });
   });
 
-  it('reanchors active motion when viewport and content widths change', () => {
-    const motion = createMotion(0.5);
-    motion.transitionActive.value = true;
-    motion.transitionStartPosition.value = 0;
-    motion.transitionTargetPosition.value = 2;
-    renderTabs({ motion });
-    publishAllTabLayouts();
-    const scroll = screen.getByTestId('perps-pro-history-tabs-scroll');
-    fireEvent(scroll, 'layout', {
-      nativeEvent: { layout: { height: 32, width: 200, x: 0, y: 0 } },
+  it('invalidates a manual bias when measured geometry changes', () => {
+    const position = shared(1);
+    const view = renderTabs({ activeTab: 'trade', position });
+    const scroll = publishScrollableGeometry();
+
+    act(() => {
+      mockAnimatedScrollHandlers?.onBeginDrag?.({
+        contentOffset: { x: 60, y: 0 },
+      });
+      mockAnimatedScrollHandlers?.onEndDrag?.({
+        contentOffset: { x: 60, y: 0 },
+      });
     });
-    fireEvent(scroll, 'contentSizeChange', 372, 32);
-
-    let stripReaction = getLatestStripReaction();
-    act(() => stripReaction.react(stripReaction.prepare()));
-    act(() => mockScrollHandlers.onScroll?.({ contentOffset: { x: 60 } }));
-    mockScrollTo.mockClear();
-    fireEvent(scroll, 'layout', {
-      nativeEvent: { layout: { height: 32, width: 220, x: 0, y: 0 } },
-    });
-    fireEvent(scroll, 'contentSizeChange', 400, 32);
-    stripReaction = getLatestStripReaction();
-    act(() => stripReaction.react(stripReaction.prepare()));
-    expect(mockScrollTo).not.toHaveBeenCalled();
-
-    motion.position.value = 1;
-    act(() => stripReaction.react(stripReaction.prepare()));
-
-    expect(mockScrollTo).toHaveBeenCalledTimes(1);
-    expect(mockScrollTo.mock.calls[0]?.[1]).toBeCloseTo(
-      getPerpsProHistoryStripOffset({
-        contentWidth: 400,
-        layouts: tabLayouts.map(({ width, x }) => ({ width, x })),
-        position: 1,
-        startOffset: 60,
-        startPosition: 0.5,
-        targetPosition: 2,
-        viewportWidth: 220,
-      }),
+    view.rerender(
+      <PerpsProHistoryTabs
+        activeTab="trade"
+        onChange={jest.fn()}
+        position={position}
+      />,
     );
+    expect(
+      screen.getByTestId('perps-pro-history-tabs-scroll').props.animatedProps,
+    ).toEqual({ contentOffset: { x: 60, y: 0 } });
+
+    act(() => {
+      fireEvent(scroll, 'layout', {
+        nativeEvent: { layout: { height: 32, width: 220, x: 0, y: 0 } },
+      });
+    });
+    expect(
+      screen.getByTestId('perps-pro-history-tabs-scroll').props.animatedProps,
+    ).toEqual({ contentOffset: { x: 18, y: 0 } });
   });
 
   it('snapshots native layout before a deferred state updater runs', () => {
