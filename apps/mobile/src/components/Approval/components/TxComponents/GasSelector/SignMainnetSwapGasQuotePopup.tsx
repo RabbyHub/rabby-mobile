@@ -151,6 +151,7 @@ export const SignMainnetSwapGasQuotePopup = ({
   const lastHandledAutoOpenSignalRef = useRef(0);
   const [tempoTokenSheetVisible, setTempoTokenSheetVisible] =
     React.useState(false);
+  const [quotesContentMounted, setQuotesContentMounted] = React.useState(false);
 
   const currentGasMethod = gasMethod ?? 'native';
   const noCustomRPCEnabled = noCustomRPC ?? true;
@@ -159,6 +160,7 @@ export const SignMainnetSwapGasQuotePopup = ({
 
   useEffect(() => {
     if (visible) {
+      setQuotesContentMounted(true);
       requestAnimationFrame(() => {
         sheetRef.current?.present();
       });
@@ -178,10 +180,16 @@ export const SignMainnetSwapGasQuotePopup = ({
     }
 
     lastHandledAutoOpenSignalRef.current = autoOpenSignal;
+    setQuotesContentMounted(true);
     requestAnimationFrame(() => {
       sheetRef.current?.present();
     });
   }, [autoOpenSignal, visible]);
+
+  const handleDismiss = useCallback(() => {
+    setQuotesContentMounted(false);
+    onClose();
+  }, [onClose]);
 
   const currentTempoToken = useMemo(() => {
     if (!gasToken?.tokenId) {
@@ -370,7 +378,7 @@ export const SignMainnetSwapGasQuotePopup = ({
       <AppBottomSheetModal
         ref={sheetRef}
         snapPoints={['85%']}
-        onDismiss={onClose}
+        onDismiss={handleDismiss}
         enableDismissOnClose
         {...makeBottomSheetProps({
           colors: colors2024,
@@ -455,7 +463,11 @@ export const SignMainnetSwapGasQuotePopup = ({
                   {t('page.swap.quotes', { defaultValue: 'Quotes' })}
                 </Text>
                 <TouchableOpacity
-                  style={styles.refreshButton}
+                  disabled={quotesLoading}
+                  style={[
+                    styles.refreshButton,
+                    quotesLoading && styles.refreshButtonDisabled,
+                  ]}
                   onPress={onRefreshQuotes}>
                   <RcIconRefreshCC
                     width={20}
@@ -468,7 +480,9 @@ export const SignMainnetSwapGasQuotePopup = ({
                 {t('page.bridge.best-subtitle')}
               </Text>
             </View>
-            <View style={styles.quotesList}>{renderQuotes(onClose)}</View>
+            {quotesContentMounted ? (
+              <View style={styles.quotesList}>{renderQuotes(onClose)}</View>
+            ) : null}
           </View>
         </BottomSheetScrollView>
       </AppBottomSheetModal>
@@ -699,6 +713,9 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     height: 32,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  refreshButtonDisabled: {
+    opacity: 0.5,
   },
   quotesSubtitle: {
     fontSize: 14,

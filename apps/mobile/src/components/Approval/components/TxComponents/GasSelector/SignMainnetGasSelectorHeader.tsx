@@ -187,7 +187,9 @@ export const SignMainnetHeaderContent = ({
   const [autoOpenSignal, setAutoOpenSignal] = useState(0);
   const hasOpenedOnceRef = useRef(false);
   const gasSettingsOpen = showMoreOpen || customVisible || combinedPopupVisible;
-  const gasSettingsOpenRef = useRef(gasSettingsOpen);
+  const shouldPauseQuoteRefresh =
+    customVisible || (!renderSwapQuotes && gasSettingsOpen);
+  const shouldPauseQuoteRefreshRef = useRef(shouldPauseQuoteRefresh);
   const onGasSettingsOpenChangeRef = useRef(onGasSettingsOpenChange);
   const noCustomRPCEnabled = noCustomRPC ?? true;
   const displayGasMethod = resolveApprovalGasMethod({
@@ -358,29 +360,22 @@ export const SignMainnetHeaderContent = ({
     onGasSettingsOpenChangeRef.current = onGasSettingsOpenChange;
   }, [onGasSettingsOpenChange]);
 
-  const notifyGasSettingsOpenChange = useCallback(
-    (open: boolean) => {
-      // Combined gas+quotes popup should keep quote polling alive, like plugin.
-      if (renderSwapQuotes) {
-        return;
-      }
-      onGasSettingsOpenChangeRef.current?.(open);
-    },
-    [renderSwapQuotes],
-  );
+  const notifyGasSettingsOpenChange = useCallback((open: boolean) => {
+    onGasSettingsOpenChangeRef.current?.(open);
+  }, []);
 
   useEffect(() => {
-    if (gasSettingsOpenRef.current === gasSettingsOpen) {
+    if (shouldPauseQuoteRefreshRef.current === shouldPauseQuoteRefresh) {
       return;
     }
 
-    gasSettingsOpenRef.current = gasSettingsOpen;
-    notifyGasSettingsOpenChange(gasSettingsOpen);
-  }, [gasSettingsOpen, notifyGasSettingsOpenChange]);
+    shouldPauseQuoteRefreshRef.current = shouldPauseQuoteRefresh;
+    notifyGasSettingsOpenChange(shouldPauseQuoteRefresh);
+  }, [notifyGasSettingsOpenChange, shouldPauseQuoteRefresh]);
 
   useEffect(() => {
     return () => {
-      if (gasSettingsOpenRef.current) {
+      if (shouldPauseQuoteRefreshRef.current) {
         notifyGasSettingsOpenChange(false);
       }
     };
@@ -653,13 +648,8 @@ export const SignMainnetHeaderContent = ({
       } else {
         setShowMoreOpen(open);
       }
-      notifyGasSettingsOpenChange(open);
     },
-    [
-      notifyGasSettingsOpenChange,
-      onSwapGasQuoteVisibleChange,
-      renderSwapQuotes,
-    ],
+    [onSwapGasQuoteVisibleChange, renderSwapQuotes],
   );
 
   return (
@@ -773,7 +763,6 @@ export const SignMainnetHeaderContent = ({
             setCombinedPopupVisible(false);
             setShowMoreOpen(false);
             onSwapGasQuoteVisibleChange?.(false);
-            onGasSettingsOpenChange?.(false);
           }}
           gasList={gasList}
           selectedGas={selectedGas}
