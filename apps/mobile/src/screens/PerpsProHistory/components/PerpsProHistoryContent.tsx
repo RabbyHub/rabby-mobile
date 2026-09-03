@@ -6,13 +6,16 @@ import { usePerpsProHistoryController } from '../scene/usePerpsProHistoryControl
 import type { PerpsProHistoryTab } from '../types';
 import { PerpsProHistoryPager } from './PerpsProHistoryPager';
 
-export const PerpsProHistoryContent: React.FC<{
+export type PerpsProHistoryController = ReturnType<
+  typeof usePerpsProHistoryController
+>;
+
+export const PerpsProHistoryContentView: React.FC<{
   active: boolean;
-  initialTab?: PerpsProHistoryTab;
+  history: PerpsProHistoryController;
   scrollHost?: 'bottomSheet' | 'screen';
-}> = ({ active, initialTab = 'orders', scrollHost = 'screen' }) => {
+}> = ({ active, history, scrollHost = 'screen' }) => {
   const amountUnit = usePerpsProTradeAmountUnit();
-  const history = usePerpsProHistoryController(initialTab, active);
 
   return (
     <PerpsProHistoryPager
@@ -24,6 +27,22 @@ export const PerpsProHistoryContent: React.FC<{
       onRefresh={history.refresh}
       scrollHost={scrollHost}
       state={history.state}
+    />
+  );
+};
+
+export const PerpsProHistoryContent: React.FC<{
+  active: boolean;
+  initialTab?: PerpsProHistoryTab;
+  scrollHost?: 'bottomSheet' | 'screen';
+}> = ({ active, initialTab = 'orders', scrollHost = 'screen' }) => {
+  const history = usePerpsProHistoryController(initialTab, active);
+
+  return (
+    <PerpsProHistoryContentView
+      active={active}
+      history={history}
+      scrollHost={scrollHost}
     />
   );
 };

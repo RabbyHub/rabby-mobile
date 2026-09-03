@@ -2,7 +2,11 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import type { WsFill } from '@rabby-wallet/hyperliquid-sdk';
 import type { PerpsFundingJournalEntry } from '@/core/services/perpsService';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState, type AppStateStatus } from 'react-native';
+import {
+  AppState,
+  InteractionManager,
+  type AppStateStatus,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { showToast } from '@/hooks/perps/showToast';
@@ -90,6 +94,8 @@ const getNextPendingPresentationExpirationAt = ({
 export const usePerpsProHistoryController = (
   initialTab: PerpsProHistoryTab = 'orders',
   active = true,
+  preloadEnabled = active,
+  deferPreload = false,
 ) => {
   const { t } = useTranslation();
   const currentAccount = perpsStore(state => state.currentPerpsAccount);
@@ -123,10 +129,10 @@ export const usePerpsProHistoryController = (
     trade: false,
     transaction: false,
   });
-  const accountIdentityRef = useRef<string | null>(null);
+  const accountIdentityRef = useRef<string | null | undefined>(undefined);
   const orderFillsRef = useRef<WsFill[]>([]);
   const orderExecutionIndexRef = useRef(buildPerpsProOrderExecutionIndex([]));
-  const externalActiveRef = useRef(active);
+  const externalPreloadRef = useRef(active || preloadEnabled);
   const sdkSupported = useMemo(isPerpsProHistorySdkSupported, []);
   const accountAddress = currentAccount?.address ?? null;
   const accountIdentity = currentAccount
@@ -139,24 +145,31 @@ export const usePerpsProHistoryController = (
       now: pendingPresentationClock,
     });
   const accountGeneration = getPerpsAccountRuntimeContext().generation;
+  const accountRuntimeIdentity = accountIdentity
+    ? `${accountIdentity}::${accountGeneration}`
+    : null;
   const refreshFailedMessage = t('page.perps.pro.history.refreshFailed');
-  const enabled =
-    active &&
+  const preloadScopeEnabled = active || preloadEnabled;
+  const requestEnabled =
+    preloadScopeEnabled &&
     appState === 'active' &&
     !!accountAddress &&
     isRuntimeInitialized &&
     sdkSupported;
+  const liveEnabled = active && requestEnabled;
   const guardRef = useRef({
     accountAddress,
     accountGeneration,
     activeTab,
-    enabled,
+    enabled: requestEnabled,
+    liveEnabled,
   });
   guardRef.current = {
     accountAddress,
     accountGeneration,
     activeTab,
-    enabled,
+    enabled: requestEnabled,
+    liveEnabled,
   };
 
   useEffect(() => {
@@ -164,9 +177,9 @@ export const usePerpsProHistoryController = (
   }, [historyState]);
 
   useEffect(() => {
-    const wasActive = externalActiveRef.current;
-    externalActiveRef.current = active;
-    if (wasActive || !active) {
+    const wasEnabled = externalPreloadRef.current;
+    externalPreloadRef.current = preloadScopeEnabled;
+    if (wasEnabled || !preloadScopeEnabled) {
       return;
     }
     const previous = stateRef.current;
@@ -193,10 +206,10 @@ export const usePerpsProHistoryController = (
       stateRef.current = next;
       setHistoryState(next);
     }
-  }, [active]);
+  }, [preloadScopeEnabled]);
 
   useEffect(() => {
-    if (!active) {
+    if (!preloadScopeEnabled || appState !== 'active') {
       return;
     }
     if (!currentAccount) {
@@ -216,7 +229,13 @@ export const usePerpsProHistoryController = (
     return () => {
       requestActive = false;
     };
-  }, [accountIdentity, active, currentAccount, localFundingHistory]);
+  }, [
+    accountIdentity,
+    appState,
+    currentAccount,
+    localFundingHistory,
+    preloadScopeEnabled,
+  ]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', setAppState);
@@ -224,7 +243,7 @@ export const usePerpsProHistoryController = (
   }, []);
 
   useEffect(() => {
-    if (!enabled || nextPendingPresentationExpirationAt === null) {
+    if (!liveEnabled || nextPendingPresentationExpirationAt === null) {
       return;
     }
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -245,7 +264,7 @@ export const usePerpsProHistoryController = (
         clearTimeout(timer);
       }
     };
-  }, [enabled, nextPendingPresentationExpirationAt]);
+  }, [liveEnabled, nextPendingPresentationExpirationAt]);
 
   const invalidateAll = useCallback(() => {
     PERPS_PRO_HISTORY_TABS.forEach(tab => {
@@ -259,6 +278,7 @@ export const usePerpsProHistoryController = (
       guardRef.current = {
         ...guardRef.current,
         enabled: false,
+        liveEnabled: false,
       };
       invalidateAll();
     },
@@ -266,28 +286,28 @@ export const usePerpsProHistoryController = (
   );
 
   useEffect(() => {
-    if (accountIdentityRef.current === null) {
-      accountIdentityRef.current = accountIdentity;
+    if (accountIdentityRef.current === undefined) {
+      accountIdentityRef.current = accountRuntimeIdentity;
       return;
     }
-    if (accountIdentityRef.current === accountIdentity) {
+    if (accountIdentityRef.current === accountRuntimeIdentity) {
       return;
     }
-    accountIdentityRef.current = accountIdentity;
+    accountIdentityRef.current = accountRuntimeIdentity;
     orderFillsRef.current = [];
     orderExecutionIndexRef.current = buildPerpsProOrderExecutionIndex([]);
     invalidateAll();
     const nextState = createPerpsProHistoryState();
     stateRef.current = nextState;
     setHistoryState(nextState);
-  }, [accountIdentity, invalidateAll]);
+  }, [accountRuntimeIdentity, invalidateAll]);
 
   useEffect(() => {
-    if (enabled) {
+    if (requestEnabled) {
       return;
     }
     invalidateAll();
-    if (!active) {
+    if (!preloadScopeEnabled) {
       return;
     }
     setHistoryState(previous => {
@@ -316,7 +336,7 @@ export const usePerpsProHistoryController = (
       stateRef.current = next;
       return next;
     });
-  }, [active, enabled, invalidateAll]);
+  }, [invalidateAll, preloadScopeEnabled, requestEnabled]);
 
   const updateTabState = useCallback<UpdatePerpsProHistoryTabState>(
     (tab, updater) => {
@@ -380,7 +400,7 @@ export const usePerpsProHistoryController = (
     ) => {
       const guard = guardRef.current;
       return (
-        guard.enabled &&
+        guard.liveEnabled &&
         guard.activeTab === tab &&
         guard.accountGeneration === subscribedGeneration &&
         !!guard.accountAddress &&
@@ -721,41 +741,63 @@ export const usePerpsProHistoryController = (
   }, []);
 
   useEffect(() => {
-    if (!enabled || !accountAddress) {
+    if (!requestEnabled || !accountAddress) {
       return;
     }
-    const idleTabs = PERPS_PRO_HISTORY_TABS.filter(
-      tab => stateRef.current[tab].status === 'idle',
-    );
-    if (idleTabs.length === 0) {
-      refreshLatest(activeTab, undefined, 'background');
-      return;
-    }
-    const shouldLoadLatestFills = idleTabs.some(
-      tab => tab === 'orders' || tab === 'trade',
-    );
-    const latestFills = shouldLoadLatestFills
-      ? perpsProHistoryRepository.fetchLatestTrades(accountAddress)
-      : undefined;
-    idleTabs.forEach(tab => {
-      loadInitial(
-        tab,
-        tab === 'orders' || tab === 'trade' ? latestFills : undefined,
+    const startBaseline = () => {
+      const guard = guardRef.current;
+      if (
+        !guard.enabled ||
+        !guard.accountAddress ||
+        !isSameAddress(guard.accountAddress, accountAddress)
+      ) {
+        return;
+      }
+      const idleTabs = PERPS_PRO_HISTORY_TABS.filter(
+        tab => stateRef.current[tab].status === 'idle',
       );
-    });
+      if (idleTabs.length === 0) {
+        return;
+      }
+      const shouldLoadLatestFills = idleTabs.some(
+        tab => tab === 'orders' || tab === 'trade',
+      );
+      const latestFills = shouldLoadLatestFills
+        ? perpsProHistoryRepository.fetchLatestTrades(accountAddress)
+        : undefined;
+      idleTabs.forEach(tab => {
+        loadInitial(
+          tab,
+          tab === 'orders' || tab === 'trade' ? latestFills : undefined,
+        );
+      });
+    };
+
+    if (!deferPreload || active) {
+      startBaseline();
+      return;
+    }
+    const task = InteractionManager.runAfterInteractions(startBaseline);
+    return () => task.cancel();
   }, [
-    accountGeneration,
-    accountIdentity,
     accountAddress,
-    activeTab,
-    enabled,
+    accountRuntimeIdentity,
+    active,
+    deferPreload,
     loadInitial,
-    refreshLatest,
+    requestEnabled,
   ]);
 
   useEffect(() => {
+    if (!liveEnabled) {
+      return;
+    }
+    refreshLatest(activeTab, undefined, 'background');
+  }, [activeTab, liveEnabled, refreshLatest]);
+
+  useEffect(() => {
     if (
-      !active ||
+      !preloadScopeEnabled ||
       appState !== 'active' ||
       !accountAddress ||
       !isRuntimeInitialized ||
@@ -776,8 +818,8 @@ export const usePerpsProHistoryController = (
     accountAddress,
     activeTab,
     appState,
-    active,
     isRuntimeInitialized,
+    preloadScopeEnabled,
     sdkSupported,
     updateTabState,
   ]);
@@ -786,7 +828,7 @@ export const usePerpsProHistoryController = (
     accountAddress,
     accountGeneration,
     activeTab,
-    enabled,
+    enabled: liveEnabled,
     isSubscriptionCurrent,
     mapRawRows,
     onOrderFills: handleOrderFills,
@@ -832,7 +874,11 @@ export const usePerpsProHistoryController = (
   const confirmedOperationSignature = JSON.stringify(unsettledConfirmations);
 
   useEffect(() => {
-    if (!enabled || unsettledConfirmations.length === 0 || !currentAccount) {
+    if (
+      !liveEnabled ||
+      unsettledConfirmations.length === 0 ||
+      !currentAccount
+    ) {
       return;
     }
     const confirmationByOperationId = new Map(
@@ -859,7 +905,7 @@ export const usePerpsProHistoryController = (
   }, [
     confirmedOperationSignature,
     currentAccount,
-    enabled,
+    liveEnabled,
     unsettledConfirmations,
   ]);
 

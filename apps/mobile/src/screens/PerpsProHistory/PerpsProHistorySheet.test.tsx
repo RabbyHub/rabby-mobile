@@ -6,6 +6,14 @@ const mockPresent = jest.fn();
 const mockDismiss = jest.fn();
 const mockHideFeeTips = jest.fn();
 const mockSheetProps = jest.fn();
+const mockSetActiveTab = jest.fn();
+const mockUseHistoryController = jest.fn(() => ({
+  activeTab: 'orders',
+  loadEarlier: jest.fn(),
+  refresh: jest.fn(),
+  setActiveTab: mockSetActiveTab,
+  state: {},
+}));
 
 jest.mock('@react-navigation/native', () => ({
   useIsFocused: () => true,
@@ -79,11 +87,16 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
+jest.mock('./scene/usePerpsProHistoryController', () => ({
+  usePerpsProHistoryController: (...args: unknown[]) =>
+    mockUseHistoryController(...args),
+}));
+
 jest.mock('./components/PerpsProHistoryContent', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return {
-    PerpsProHistoryContent: (props: object) =>
+    PerpsProHistoryContentView: (props: object) =>
       ReactModule.createElement(View, {
         ...props,
         testID: 'mock-history-content',
@@ -109,6 +122,18 @@ describe('PerpsProHistorySheetHost', () => {
     jest.clearAllMocks();
   });
 
+  it('keeps one deferred preload controller mounted outside sheet sessions', () => {
+    render(<PerpsProHistorySheetHost ref={React.createRef()} />);
+
+    expect(mockUseHistoryController).toHaveBeenCalledWith(
+      'orders',
+      false,
+      true,
+      true,
+    );
+    expect(screen.queryByTestId('mock-history-content')).toBeNull();
+  });
+
   it('caps the Figma sheet and clamps it below the safe-area top', () => {
     expect(
       getPerpsProHistorySheetHeight({ topInset: 47, windowHeight: 852 }),
@@ -130,9 +155,9 @@ describe('PerpsProHistorySheetHost', () => {
     expect(mockPresent).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId('mock-history-content').props).toMatchObject({
       active: true,
-      initialTab: 'orders',
       scrollHost: 'bottomSheet',
     });
+    expect(mockSetActiveTab).toHaveBeenCalledWith('orders');
     expect(getLatestSheetProps().snapPoints).toEqual([748]);
     expect(
       StyleSheet.flatten(
@@ -161,9 +186,7 @@ describe('PerpsProHistorySheetHost', () => {
 
     act(() => ref.current?.present('funding'));
     expect(mockPresent).toHaveBeenCalledTimes(2);
-    expect(screen.getByTestId('mock-history-content').props.initialTab).toBe(
-      'funding',
-    );
+    expect(mockSetActiveTab).toHaveBeenLastCalledWith('funding');
   });
 
   it('cancels an opening session synchronously before native presentation', () => {

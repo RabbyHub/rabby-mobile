@@ -1,17 +1,15 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import PagerView, {
   type PageScrollStateChangedNativeEvent,
   type PagerViewOnPageScrollEvent,
   type PagerViewOnPageSelectedEvent,
 } from 'react-native-pager-view';
-import Animated, { useEvent, useSharedValue } from 'react-native-reanimated';
+import Animated, {
+  runOnJS,
+  useEvent,
+  useSharedValue,
+} from 'react-native-reanimated';
 
 import type { PerpsProTradeAmountUnit } from '@/core/services/perpsService';
 import { useHideTipsPopup } from '@/hooks/useTipsPopup';
@@ -26,51 +24,57 @@ import { PerpsProHistoryList } from './PerpsProHistoryList';
 import { PerpsProHistoryTabs } from './PerpsProHistoryTabs';
 
 const PAGE_POSITION_EPSILON = 0.001;
+const HISTORY_PAGER_TRANSITION_IDLE = 0;
+const HISTORY_PAGER_TRANSITION_GESTURE = 1;
+const HISTORY_PAGER_TRANSITION_PROGRAMMATIC = 2;
+const HISTORY_PAGER_TRANSITION_DIRECT = 3;
 const AnimatedPagerView = Animated.createAnimatedComponent(PagerView);
 
-type NativePageSession =
-  | {
-      animated: boolean;
-      issued: boolean;
-      kind: 'programmatic';
-      selected: number | null;
-      target: number;
-    }
-  | {
-      idleSeen: boolean;
-      kind: 'gesture';
-      origin: number;
-      preserveOriginOffset: boolean;
-      selected: number | null;
-    };
+type DesiredPage = Readonly<{
+  epoch: number;
+  position: number;
+}>;
 
-export const getPreparedPerpsProHistoryTabs = (
-  activeTab: PerpsProHistoryTab,
-  requestedTab: PerpsProHistoryTab | null,
-  nativeInFlightTab: PerpsProHistoryTab | null = null,
-) => {
-  if (requestedTab || nativeInFlightTab) {
-    return new Set<PerpsProHistoryTab>(
-      [activeTab, nativeInFlightTab, requestedTab].filter(
-        (tab): tab is PerpsProHistoryTab => tab != null,
-      ),
+const PerpsProHistoryPagerPage: React.FC<{
+  active: boolean;
+  amountUnit: PerpsProTradeAmountUnit;
+  onLoadEarlier: (tab: PerpsProHistoryTab) => void;
+  onRefresh: (tab: PerpsProHistoryTab) => void;
+  scrollHost: 'bottomSheet' | 'screen';
+  state: PerpsProHistoryControllerState[PerpsProHistoryTab];
+  tab: PerpsProHistoryTab;
+}> = React.memo(
+  ({
+    active,
+    amountUnit,
+    onLoadEarlier,
+    onRefresh,
+    scrollHost,
+    state,
+    tab,
+  }) => {
+    const handleLoadEarlier = useCallback(
+      () => onLoadEarlier(tab),
+      [onLoadEarlier, tab],
     );
-  }
+    const handleRefresh = useCallback(() => onRefresh(tab), [onRefresh, tab]);
 
-  const activeIndex = PERPS_PRO_HISTORY_TABS.indexOf(activeTab);
-  const result = new Set<PerpsProHistoryTab>();
-  for (
-    let index = Math.max(0, activeIndex - 1);
-    index <= Math.min(PERPS_PRO_HISTORY_TABS.length - 1, activeIndex + 1);
-    index += 1
-  ) {
-    const tab = PERPS_PRO_HISTORY_TABS[index];
-    if (tab) {
-      result.add(tab);
-    }
-  }
-  return result;
-};
+    return (
+      <PerpsProHistoryList
+        active={active}
+        amountUnit={amountUnit}
+        onLoadEarlier={handleLoadEarlier}
+        onRefresh={handleRefresh}
+        onRetry={handleRefresh}
+        scrollHost={scrollHost}
+        state={state}
+        tab={tab}
+      />
+    );
+  },
+);
+
+PerpsProHistoryPagerPage.displayName = 'PerpsProHistoryPagerPage';
 
 export const PerpsProHistoryPager: React.FC<{
   active?: boolean;
@@ -92,29 +96,28 @@ export const PerpsProHistoryPager: React.FC<{
   state,
 }) => {
   const initialIndex = PERPS_PRO_HISTORY_TABS.indexOf(activeTab);
+  const waitForProgrammaticIdle = Platform.OS === 'android';
   const pagerRef = useRef<PagerView>(null);
   const activeRef = useRef(active);
   const activeTabRef = useRef(activeTab);
   const previousActiveRef = useRef(active);
   const observedIndexRef = useRef(initialIndex);
-  const latestDesiredIndexRef = useRef<number | null>(null);
-  const nativeSessionRef = useRef<NativePageSession | null>(null);
-  const scheduledPageFrameRef = useRef<number | null>(null);
+  const latestDesiredRef = useRef<DesiredPage | null>(null);
   const awaitingCommittedTabRef = useRef<PerpsProHistoryTab | null>(null);
+  const lastHandledEpochRef = useRef(-1);
+  const mountedRef = useRef(true);
   const hideFeeTipsPopup = useHideTipsPopup(PERPS_PRO_HISTORY_FEE_TIPS_OWNER);
-  const [requestedTab, setRequestedTab] = useState<PerpsProHistoryTab | null>(
-    null,
-  );
-  const [nativeInFlightTab, setNativeInFlightTab] =
-    useState<PerpsProHistoryTab | null>(null);
 
   const activeState = useSharedValue(active);
   const settledPagePosition = useSharedValue(initialIndex);
   const visualPosition = useSharedValue(initialIndex);
   const pageTransitionEpoch = useSharedValue(0);
-  const progressEnabled = useSharedValue(false);
-  const gestureProgress = useSharedValue(false);
-  const lastAcceptedPagePosition = useSharedValue(initialIndex);
+  const transitionKind = useSharedValue(HISTORY_PAGER_TRANSITION_IDLE);
+  const transitionIdleSeen = useSharedValue(false);
+  const transitionProgrammaticMotionSeen = useSharedValue(false);
+  const transitionProgressSeen = useSharedValue(false);
+  const transitionSelectedPosition = useSharedValue(-1);
+  const transitionCandidatePosition = useSharedValue(initialIndex);
   const transitionStartPosition = useSharedValue(initialIndex);
   const transitionTargetPosition = useSharedValue(initialIndex);
   const transitionActive = useSharedValue(false);
@@ -123,60 +126,31 @@ export const PerpsProHistoryPager: React.FC<{
   activeRef.current = active;
   activeTabRef.current = activeTab;
 
-  const preparedTabs = useMemo(
-    () =>
-      getPreparedPerpsProHistoryTabs(
-        activeTab,
-        requestedTab,
-        nativeInFlightTab,
-      ),
-    [activeTab, nativeInFlightTab, requestedTab],
-  );
-
-  const cancelScheduledPage = useCallback(() => {
-    if (scheduledPageFrameRef.current === null) {
-      return false;
-    }
-    cancelAnimationFrame(scheduledPageFrameRef.current);
-    scheduledPageFrameRef.current = null;
-    return true;
-  }, []);
-
-  const setLatestDesiredIndex = useCallback((position: number | null) => {
-    latestDesiredIndexRef.current = position;
-  }, []);
-
-  const setPreparedRequestedIndex = useCallback((position: number | null) => {
-    setRequestedTab(
-      position === null ? null : PERPS_PRO_HISTORY_TABS[position] ?? null,
-    );
-  }, []);
-
-  const setNativePreparedIndex = useCallback((position: number | null) => {
-    setNativeInFlightTab(
-      position === null ? null : PERPS_PRO_HISTORY_TABS[position] ?? null,
-    );
-  }, []);
-
   const configureSettledPresentation = useCallback(
-    (position: number, animated = false) => {
-      progressEnabled.value = false;
-      gestureProgress.value = false;
+    (position: number) => {
       settledPagePosition.value = position;
-      lastAcceptedPagePosition.value = position;
+      transitionKind.value = HISTORY_PAGER_TRANSITION_IDLE;
+      transitionIdleSeen.value = false;
+      transitionProgrammaticMotionSeen.value = false;
+      transitionProgressSeen.value = false;
+      transitionSelectedPosition.value = -1;
+      transitionCandidatePosition.value = position;
       transitionStartPosition.value = position;
       transitionTargetPosition.value = position;
       transitionActive.value = false;
-      transitionAnimated.value = animated;
+      transitionAnimated.value = false;
       snapPerpsProTabIndicator(visualPosition, position);
     },
     [
-      gestureProgress,
-      lastAcceptedPagePosition,
-      progressEnabled,
       settledPagePosition,
       transitionActive,
       transitionAnimated,
+      transitionCandidatePosition,
+      transitionIdleSeen,
+      transitionKind,
+      transitionProgrammaticMotionSeen,
+      transitionProgressSeen,
+      transitionSelectedPosition,
       transitionStartPosition,
       transitionTargetPosition,
       visualPosition,
@@ -193,224 +167,191 @@ export const PerpsProHistoryPager: React.FC<{
         if (awaitingCommittedTabRef.current === tab) {
           awaitingCommittedTabRef.current = null;
         }
-        if (!nativeSessionRef.current) {
-          setNativePreparedIndex(null);
-        }
         return;
       }
       if (awaitingCommittedTabRef.current === tab) {
         return;
       }
       awaitingCommittedTabRef.current = tab;
-      if (!nativeSessionRef.current) {
-        setNativePreparedIndex(position);
-      }
       hideFeeTipsPopup();
       onChange(tab);
     },
-    [hideFeeTipsPopup, onChange, setNativePreparedIndex],
+    [hideFeeTipsPopup, onChange],
   );
 
   const startProgrammaticTransition = useCallback(
     (target: number, origin: number) => {
-      cancelScheduledPage();
+      if (!activeRef.current) {
+        return;
+      }
       const epoch = pageTransitionEpoch.value + 1;
       const animated = Math.abs(target - origin) === 1;
-      const session: NativePageSession = {
-        animated,
-        issued: false,
-        kind: 'programmatic',
-        selected: null,
-        target,
-      };
-      nativeSessionRef.current = session;
-      const activeIndex = PERPS_PRO_HISTORY_TABS.indexOf(activeTabRef.current);
-      setNativePreparedIndex(origin !== activeIndex ? origin : target);
-      setPreparedRequestedIndex(target);
-
+      latestDesiredRef.current = { epoch, position: target };
       pageTransitionEpoch.value = epoch;
-      progressEnabled.value = animated;
-      gestureProgress.value = false;
       settledPagePosition.value = origin;
-      lastAcceptedPagePosition.value = visualPosition.value;
+      transitionKind.value = animated
+        ? HISTORY_PAGER_TRANSITION_PROGRAMMATIC
+        : HISTORY_PAGER_TRANSITION_DIRECT;
+      transitionIdleSeen.value = false;
+      transitionProgrammaticMotionSeen.value = false;
+      transitionProgressSeen.value = false;
+      transitionSelectedPosition.value = -1;
+      transitionCandidatePosition.value = target;
       transitionStartPosition.value = origin;
       transitionTargetPosition.value = target;
       transitionActive.value = animated;
       transitionAnimated.value = animated;
 
-      let completedSynchronously = false;
-      const frame = requestAnimationFrame(() => {
-        completedSynchronously = true;
-        scheduledPageFrameRef.current = null;
-        if (
-          !activeRef.current ||
-          nativeSessionRef.current !== session ||
-          latestDesiredIndexRef.current !== target
-        ) {
-          return;
-        }
-        session.issued = true;
-        if (animated) {
-          pagerRef.current?.setPage(target);
-          return;
-        }
-        configureSettledPresentation(target);
-        pagerRef.current?.setPageWithoutAnimation(target);
-      });
-      if (!completedSynchronously) {
-        scheduledPageFrameRef.current = frame;
+      if (animated) {
+        pagerRef.current?.setPage(target);
+        return;
       }
+      snapPerpsProTabIndicator(visualPosition, target);
+      pagerRef.current?.setPageWithoutAnimation(target);
     },
     [
-      cancelScheduledPage,
-      configureSettledPresentation,
-      gestureProgress,
-      lastAcceptedPagePosition,
       pageTransitionEpoch,
-      progressEnabled,
-      setNativePreparedIndex,
-      setPreparedRequestedIndex,
       settledPagePosition,
       transitionActive,
       transitionAnimated,
+      transitionCandidatePosition,
+      transitionIdleSeen,
+      transitionKind,
+      transitionProgrammaticMotionSeen,
+      transitionProgressSeen,
+      transitionSelectedPosition,
       transitionStartPosition,
       transitionTargetPosition,
       visualPosition,
     ],
   );
 
-  const finishNativeSession = useCallback(
-    (position: number) => {
-      const session = nativeSessionRef.current;
-      if (!session) {
+  const handleGestureBegan = useCallback(
+    (epoch: number, origin: number) => {
+      if (
+        !mountedRef.current ||
+        pageTransitionEpoch.value !== epoch ||
+        transitionKind.value !== HISTORY_PAGER_TRANSITION_GESTURE
+      ) {
         return;
       }
-      cancelScheduledPage();
-      nativeSessionRef.current = null;
-      observedIndexRef.current = position;
-      const preserveGestureOriginOffset =
-        session.kind === 'gesture' &&
-        session.preserveOriginOffset &&
-        position === session.origin;
-      configureSettledPresentation(position, preserveGestureOriginOffset);
+      const desired = latestDesiredRef.current;
+      if (desired && desired.epoch < epoch) {
+        latestDesiredRef.current = null;
+      }
+      observedIndexRef.current = origin;
+      hideFeeTipsPopup();
+    },
+    [hideFeeTipsPopup, pageTransitionEpoch, transitionKind],
+  );
 
-      const desired = latestDesiredIndexRef.current;
-      if (desired !== null && desired !== position) {
-        startProgrammaticTransition(desired, position);
+  const handleNativeTerminal = useCallback(
+    (epoch: number, position: number) => {
+      if (
+        !mountedRef.current ||
+        !activeRef.current ||
+        pageTransitionEpoch.value !== epoch ||
+        transitionKind.value !== HISTORY_PAGER_TRANSITION_IDLE ||
+        epoch <= lastHandledEpochRef.current
+      ) {
         return;
       }
-      setNativePreparedIndex(position);
-      setLatestDesiredIndex(null);
-      setPreparedRequestedIndex(null);
+      lastHandledEpochRef.current = epoch;
+      observedIndexRef.current = position;
+
+      const desired = latestDesiredRef.current;
+      if (desired?.epoch === epoch && desired.position !== position) {
+        startProgrammaticTransition(desired.position, position);
+        return;
+      }
+      latestDesiredRef.current = null;
       commitBusinessPosition(position);
     },
     [
-      cancelScheduledPage,
       commitBusinessPosition,
-      configureSettledPresentation,
-      setLatestDesiredIndex,
-      setNativePreparedIndex,
-      setPreparedRequestedIndex,
+      pageTransitionEpoch,
       startProgrammaticTransition,
+      transitionKind,
     ],
   );
 
-  const beginGestureSession = useCallback(() => {
-    const previousSession = nativeSessionRef.current;
-    if (previousSession?.kind === 'gesture') {
+  const finishTransitionOnUI = useCallback(
+    (position: number, canceled: boolean) => {
+      'worklet';
+      const epoch = pageTransitionEpoch.value;
+      snapPerpsProTabIndicator(visualPosition, position);
+      settledPagePosition.value = position;
+      transitionCandidatePosition.value = position;
+      transitionStartPosition.value = position;
+      transitionTargetPosition.value = position;
+      transitionIdleSeen.value = false;
+      transitionProgrammaticMotionSeen.value = false;
+      transitionProgressSeen.value = false;
+      transitionSelectedPosition.value = -1;
+      transitionActive.value = false;
+      transitionAnimated.value = canceled;
+      transitionKind.value = HISTORY_PAGER_TRANSITION_IDLE;
+      runOnJS(handleNativeTerminal)(epoch, position);
+    },
+    [
+      handleNativeTerminal,
+      pageTransitionEpoch,
+      settledPagePosition,
+      transitionActive,
+      transitionAnimated,
+      transitionCandidatePosition,
+      transitionIdleSeen,
+      transitionKind,
+      transitionProgrammaticMotionSeen,
+      transitionProgressSeen,
+      transitionSelectedPosition,
+      transitionStartPosition,
+      transitionTargetPosition,
+      visualPosition,
+    ],
+  );
+
+  const beginGestureOnUI = useCallback(() => {
+    'worklet';
+    if (
+      transitionKind.value === HISTORY_PAGER_TRANSITION_GESTURE &&
+      transitionProgressSeen.value
+    ) {
       return;
     }
-    cancelScheduledPage();
-    nativeSessionRef.current = null;
-    setLatestDesiredIndex(null);
-    setPreparedRequestedIndex(null);
-
     const origin =
-      previousSession?.kind === 'programmatic' &&
-      previousSession.selected !== null
-        ? previousSession.selected
-        : observedIndexRef.current;
-    const alreadyTrackingGesture =
-      progressEnabled.value && gestureProgress.value;
-    const epoch = alreadyTrackingGesture
-      ? pageTransitionEpoch.value
-      : pageTransitionEpoch.value + 1;
-    nativeSessionRef.current = {
-      idleSeen: false,
-      kind: 'gesture',
-      origin,
-      preserveOriginOffset: previousSession?.kind !== 'programmatic',
-      selected: null,
-    };
+      transitionSelectedPosition.value >= 0
+        ? transitionSelectedPosition.value
+        : settledPagePosition.value;
+    const epoch = pageTransitionEpoch.value + 1;
     pageTransitionEpoch.value = epoch;
+    settledPagePosition.value = origin;
+    transitionKind.value = HISTORY_PAGER_TRANSITION_GESTURE;
+    transitionIdleSeen.value = false;
+    transitionProgrammaticMotionSeen.value = false;
+    transitionProgressSeen.value = false;
+    transitionSelectedPosition.value = -1;
+    transitionCandidatePosition.value = origin;
+    transitionStartPosition.value = origin;
+    transitionTargetPosition.value = origin;
     transitionActive.value = true;
     transitionAnimated.value = true;
-    progressEnabled.value = true;
-    gestureProgress.value = true;
-    settledPagePosition.value = origin;
-
-    if (!alreadyTrackingGesture) {
-      const currentPosition = visualPosition.value;
-      const hasCurrentProgress =
-        Math.abs(currentPosition - origin) > PAGE_POSITION_EPSILON;
-      lastAcceptedPagePosition.value = currentPosition;
-      transitionStartPosition.value = origin;
-      transitionTargetPosition.value = hasCurrentProgress
-        ? currentPosition > origin
-          ? Math.min(
-              PERPS_PRO_HISTORY_TABS.length - 1,
-              Math.ceil(currentPosition),
-            )
-          : Math.max(0, Math.floor(currentPosition))
-        : origin;
-    }
-
-    const activeIndex = PERPS_PRO_HISTORY_TABS.indexOf(activeTabRef.current);
-    const candidate = Math.round(transitionTargetPosition.value);
-    setNativePreparedIndex(
-      candidate !== activeIndex
-        ? candidate
-        : origin !== activeIndex
-        ? origin
-        : null,
-    );
-    hideFeeTipsPopup();
+    runOnJS(handleGestureBegan)(epoch, origin);
   }, [
-    cancelScheduledPage,
-    gestureProgress,
-    hideFeeTipsPopup,
-    lastAcceptedPagePosition,
+    handleGestureBegan,
     pageTransitionEpoch,
-    progressEnabled,
-    setLatestDesiredIndex,
-    setNativePreparedIndex,
-    setPreparedRequestedIndex,
     settledPagePosition,
     transitionActive,
     transitionAnimated,
+    transitionCandidatePosition,
+    transitionIdleSeen,
+    transitionKind,
+    transitionProgrammaticMotionSeen,
+    transitionProgressSeen,
+    transitionSelectedPosition,
     transitionStartPosition,
     transitionTargetPosition,
-    visualPosition,
   ]);
-
-  const adoptTrackedGesture = useCallback(() => {
-    const current = nativeSessionRef.current;
-    if (current) {
-      return current;
-    }
-    if (!progressEnabled.value || !gestureProgress.value) {
-      return null;
-    }
-    const session: NativePageSession = {
-      idleSeen: false,
-      kind: 'gesture',
-      origin: observedIndexRef.current,
-      preserveOriginOffset: true,
-      selected: null,
-    };
-    nativeSessionRef.current = session;
-    return session;
-  }, [gestureProgress, progressEnabled]);
 
   const selectTab = useCallback(
     (tab: PerpsProHistoryTab) => {
@@ -418,180 +359,151 @@ export const PerpsProHistoryPager: React.FC<{
         return;
       }
       const target = PERPS_PRO_HISTORY_TABS.indexOf(tab);
-      if (target < 0 || latestDesiredIndexRef.current === target) {
+      if (target < 0 || latestDesiredRef.current?.position === target) {
         return;
       }
       hideFeeTipsPopup();
 
-      const session = nativeSessionRef.current ?? adoptTrackedGesture();
-      if (session?.kind === 'programmatic' && !session.issued) {
-        cancelScheduledPage();
-        nativeSessionRef.current = null;
-      } else if (session) {
-        setLatestDesiredIndex(target);
-        if (session.kind === 'gesture') {
-          const candidate =
-            session.selected ?? Math.round(transitionTargetPosition.value);
-          const activeIndex = PERPS_PRO_HISTORY_TABS.indexOf(
-            activeTabRef.current,
-          );
-          setNativePreparedIndex(
-            candidate !== activeIndex
-              ? candidate
-              : session.origin !== activeIndex
-              ? session.origin
-              : null,
-          );
-        }
+      if (transitionKind.value !== HISTORY_PAGER_TRANSITION_IDLE) {
+        latestDesiredRef.current = {
+          epoch: pageTransitionEpoch.value,
+          position: target,
+        };
         return;
       }
-
-      if (target === observedIndexRef.current) {
-        setLatestDesiredIndex(null);
-        setPreparedRequestedIndex(null);
+      // The UI runtime settles before handleNativeTerminal gets a JS turn.
+      // A press in that gap must start from the native page, not the lagging
+      // JS observer, otherwise a request back to the old tab can be dropped.
+      const settledPosition = Math.max(
+        0,
+        Math.min(
+          PERPS_PRO_HISTORY_TABS.length - 1,
+          Math.round(settledPagePosition.value),
+        ),
+      );
+      if (target === settledPosition) {
+        latestDesiredRef.current = null;
         configureSettledPresentation(target);
         commitBusinessPosition(target);
         return;
       }
-      setLatestDesiredIndex(target);
-      startProgrammaticTransition(target, observedIndexRef.current);
+      startProgrammaticTransition(target, settledPosition);
     },
     [
-      adoptTrackedGesture,
-      cancelScheduledPage,
       commitBusinessPosition,
       configureSettledPresentation,
       hideFeeTipsPopup,
-      setLatestDesiredIndex,
-      setNativePreparedIndex,
-      setPreparedRequestedIndex,
-      startProgrammaticTransition,
-      transitionTargetPosition,
-    ],
-  );
-
-  const handlePageSelected = useCallback(
-    (event: PagerViewOnPageSelectedEvent) => {
-      if (!activeRef.current) {
-        return;
-      }
-      const position = event.nativeEvent.position;
-      if (position < 0 || position >= PERPS_PRO_HISTORY_TABS.length) {
-        return;
-      }
-
-      const session = nativeSessionRef.current ?? adoptTrackedGesture();
-      if (!session) {
-        if (position === observedIndexRef.current) {
-          return;
-        }
-        observedIndexRef.current = position;
-        configureSettledPresentation(position);
-        commitBusinessPosition(position);
-        return;
-      }
-
-      if (session.kind === 'programmatic') {
-        if (position !== session.target) {
-          return;
-        }
-        if (session.animated && Platform.OS === 'android') {
-          // ViewPager2 reports the selected target before its smooth scroll
-          // frames and IDLE state. Keep the fractional presentation alive and
-          // serialize any follow-up until the physical motion is terminal.
-          session.selected = position;
-          return;
-        }
-        finishNativeSession(position);
-        return;
-      }
-
-      if (session.selected === position) {
-        return;
-      }
-      const transitionCandidate = Math.round(transitionTargetPosition.value);
-      session.selected = position;
-      observedIndexRef.current = position;
-      settledPagePosition.value = position;
-      transitionTargetPosition.value = position;
-      gestureProgress.value = false;
-      const companionPosition =
-        position !== session.origin
-          ? session.origin
-          : transitionCandidate !== position
-          ? transitionCandidate
-          : null;
-      setPreparedRequestedIndex(position);
-      setNativePreparedIndex(
-        companionPosition !== null &&
-          companionPosition >= 0 &&
-          companionPosition < PERPS_PRO_HISTORY_TABS.length
-          ? companionPosition
-          : null,
-      );
-
-      const desired = latestDesiredIndexRef.current;
-      if (desired === null || desired === position) {
-        commitBusinessPosition(position);
-      }
-      if (session.idleSeen) {
-        finishNativeSession(position);
-      }
-    },
-    [
-      adoptTrackedGesture,
-      commitBusinessPosition,
-      configureSettledPresentation,
-      finishNativeSession,
-      gestureProgress,
-      setNativePreparedIndex,
-      setPreparedRequestedIndex,
+      pageTransitionEpoch,
       settledPagePosition,
-      transitionTargetPosition,
+      startProgrammaticTransition,
+      transitionKind,
     ],
   );
 
-  const handlePageScrollStateChanged = useCallback(
-    (event: PageScrollStateChangedNativeEvent) => {
-      if (!activeRef.current) {
-        return;
-      }
-      if (event.nativeEvent.pageScrollState === 'dragging') {
-        beginGestureSession();
-        return;
-      }
-      if (event.nativeEvent.pageScrollState !== 'idle') {
-        return;
-      }
-
-      const session = nativeSessionRef.current ?? adoptTrackedGesture();
-      if (!session) {
-        return;
-      }
-      if (session.kind === 'programmatic') {
-        if (session.selected !== null) {
-          finishNativeSession(session.selected);
+  const handlePageScrollStateChanged =
+    useEvent<PageScrollStateChangedNativeEvent>(
+      event => {
+        'worklet';
+        if (!activeState.value) {
+          return;
         }
+        if (event.pageScrollState === 'dragging') {
+          beginGestureOnUI();
+          return;
+        }
+        if (
+          event.pageScrollState === 'settling' &&
+          transitionKind.value === HISTORY_PAGER_TRANSITION_PROGRAMMATIC
+        ) {
+          transitionProgrammaticMotionSeen.value = true;
+          return;
+        }
+        if (
+          event.pageScrollState !== 'idle' ||
+          transitionKind.value === HISTORY_PAGER_TRANSITION_IDLE
+        ) {
+          return;
+        }
+        // A delayed idle from the previous native command can arrive after JS
+        // has already issued the next command. Do not let that stale event
+        // complete the new transition before the new command has moved.
+        if (
+          transitionKind.value === HISTORY_PAGER_TRANSITION_PROGRAMMATIC &&
+          !transitionProgrammaticMotionSeen.value
+        ) {
+          return;
+        }
+        transitionIdleSeen.value = true;
+        if (transitionSelectedPosition.value >= 0) {
+          const selected = transitionSelectedPosition.value;
+          const canceled =
+            transitionKind.value === HISTORY_PAGER_TRANSITION_GESTURE &&
+            selected === settledPagePosition.value;
+          finishTransitionOnUI(selected, canceled);
+          return;
+        }
+        if (
+          transitionKind.value === HISTORY_PAGER_TRANSITION_GESTURE &&
+          transitionCandidatePosition.value === settledPagePosition.value
+        ) {
+          finishTransitionOnUI(settledPagePosition.value, true);
+        }
+      },
+      ['onPageScrollStateChanged'],
+      true,
+    );
+
+  const handlePageSelected = useEvent<PagerViewOnPageSelectedEvent>(
+    event => {
+      'worklet';
+      if (!activeState.value) {
         return;
       }
-      session.idleSeen = true;
-      if (session.selected !== null) {
-        finishNativeSession(session.selected);
+      const position = Math.max(
+        0,
+        Math.min(PERPS_PRO_HISTORY_TABS.length - 1, Math.round(event.position)),
+      );
+      const kind = transitionKind.value;
+      if (kind === HISTORY_PAGER_TRANSITION_IDLE) {
+        if (position === settledPagePosition.value) {
+          return;
+        }
+        pageTransitionEpoch.value += 1;
+        finishTransitionOnUI(position, false);
         return;
       }
       if (
-        Math.abs(lastAcceptedPagePosition.value - session.origin) <=
-        PAGE_POSITION_EPSILON
+        (kind === HISTORY_PAGER_TRANSITION_PROGRAMMATIC ||
+          kind === HISTORY_PAGER_TRANSITION_DIRECT) &&
+        position !== transitionTargetPosition.value
       ) {
-        finishNativeSession(session.origin);
+        return;
+      }
+      transitionSelectedPosition.value = position;
+      if (kind === HISTORY_PAGER_TRANSITION_DIRECT) {
+        finishTransitionOnUI(position, false);
+        return;
+      }
+      // iOS dispatches a programmatic selection from
+      // UIPageViewController's animation completion and may not dispatch a
+      // matching scroll-state idle. Android's ViewPager2 can select before
+      // settling finishes, so it must still converge on idle.
+      if (
+        kind === HISTORY_PAGER_TRANSITION_PROGRAMMATIC &&
+        !waitForProgrammaticIdle
+      ) {
+        finishTransitionOnUI(position, false);
+        return;
+      }
+      if (transitionIdleSeen.value) {
+        const canceled =
+          kind === HISTORY_PAGER_TRANSITION_GESTURE &&
+          position === settledPagePosition.value;
+        finishTransitionOnUI(position, canceled);
       }
     },
-    [
-      adoptTrackedGesture,
-      beginGestureSession,
-      finishNativeSession,
-      lastAcceptedPagePosition,
-    ],
+    ['onPageSelected'],
+    true,
   );
 
   const handlePageScroll = useEvent<PagerViewOnPageScrollEvent>(
@@ -607,50 +519,52 @@ export const PerpsProHistoryPager: React.FC<{
           event.position + event.offset,
         ),
       );
-      if (!progressEnabled.value) {
+      if (transitionKind.value === HISTORY_PAGER_TRANSITION_IDLE) {
         if (
           Math.abs(pagePosition - settledPagePosition.value) <=
           PAGE_POSITION_EPSILON
         ) {
           return;
         }
-        const epoch = pageTransitionEpoch.value + 1;
-        pageTransitionEpoch.value = epoch;
-        progressEnabled.value = true;
-        gestureProgress.value = true;
-        transitionActive.value = true;
-        transitionAnimated.value = true;
-        transitionStartPosition.value = settledPagePosition.value;
-        transitionTargetPosition.value = settledPagePosition.value;
-        lastAcceptedPagePosition.value = settledPagePosition.value;
+        beginGestureOnUI();
       }
-      if (gestureProgress.value) {
-        const settledPosition = settledPagePosition.value;
-        transitionTargetPosition.value =
-          pagePosition > settledPosition + PAGE_POSITION_EPSILON
+      if (transitionKind.value === HISTORY_PAGER_TRANSITION_PROGRAMMATIC) {
+        const minimumPosition = Math.min(
+          transitionStartPosition.value,
+          transitionTargetPosition.value,
+        );
+        const maximumPosition = Math.max(
+          transitionStartPosition.value,
+          transitionTargetPosition.value,
+        );
+        if (
+          pagePosition < minimumPosition - PAGE_POSITION_EPSILON ||
+          pagePosition > maximumPosition + PAGE_POSITION_EPSILON
+        ) {
+          return;
+        }
+        if (
+          Math.abs(pagePosition - transitionStartPosition.value) >
+          PAGE_POSITION_EPSILON
+        ) {
+          transitionProgrammaticMotionSeen.value = true;
+        }
+      }
+      transitionProgressSeen.value = true;
+      if (transitionKind.value === HISTORY_PAGER_TRANSITION_GESTURE) {
+        const settled = settledPagePosition.value;
+        const target =
+          pagePosition > settled + PAGE_POSITION_EPSILON
             ? Math.min(
                 PERPS_PRO_HISTORY_TABS.length - 1,
                 Math.ceil(pagePosition),
               )
-            : pagePosition < settledPosition - PAGE_POSITION_EPSILON
+            : pagePosition < settled - PAGE_POSITION_EPSILON
             ? Math.max(0, Math.floor(pagePosition))
-            : settledPosition;
+            : settled;
+        transitionCandidatePosition.value = Math.round(pagePosition);
+        transitionTargetPosition.value = target;
       }
-      const minimumPosition = Math.min(
-        transitionStartPosition.value,
-        transitionTargetPosition.value,
-      );
-      const maximumPosition = Math.max(
-        transitionStartPosition.value,
-        transitionTargetPosition.value,
-      );
-      if (
-        pagePosition < minimumPosition - PAGE_POSITION_EPSILON ||
-        pagePosition > maximumPosition + PAGE_POSITION_EPSILON
-      ) {
-        return;
-      }
-      lastAcceptedPagePosition.value = pagePosition;
       visualPosition.value = pagePosition;
     },
     ['onPageScroll'],
@@ -661,12 +575,9 @@ export const PerpsProHistoryPager: React.FC<{
     activeState.value = active;
     if (!active) {
       previousActiveRef.current = false;
-      cancelScheduledPage();
-      nativeSessionRef.current = null;
+      latestDesiredRef.current = null;
       awaitingCommittedTabRef.current = null;
-      setLatestDesiredIndex(null);
-      setPreparedRequestedIndex(null);
-      setNativePreparedIndex(null);
+      pageTransitionEpoch.value += 1;
       const activeIndex = PERPS_PRO_HISTORY_TABS.indexOf(activeTab);
       observedIndexRef.current = activeIndex;
       configureSettledPresentation(activeIndex);
@@ -683,11 +594,8 @@ export const PerpsProHistoryPager: React.FC<{
     active,
     activeState,
     activeTab,
-    cancelScheduledPage,
     configureSettledPresentation,
-    setLatestDesiredIndex,
-    setNativePreparedIndex,
-    setPreparedRequestedIndex,
+    pageTransitionEpoch,
   ]);
 
   useEffect(() => {
@@ -699,39 +607,40 @@ export const PerpsProHistoryPager: React.FC<{
     if (awaitingTab) {
       if (awaitingTab === activeTab) {
         awaitingCommittedTabRef.current = null;
-        if (!nativeSessionRef.current) {
-          setNativePreparedIndex(null);
-        }
       }
       return;
     }
-    if (nativeSessionRef.current || latestDesiredIndexRef.current !== null) {
+    if (
+      transitionKind.value !== HISTORY_PAGER_TRANSITION_IDLE ||
+      latestDesiredRef.current
+    ) {
       return;
     }
     if (observedIndexRef.current === activeIndex) {
-      setNativePreparedIndex(null);
       return;
     }
-    cancelScheduledPage();
+    pageTransitionEpoch.value += 1;
     observedIndexRef.current = activeIndex;
     configureSettledPresentation(activeIndex);
     pagerRef.current?.setPageWithoutAnimation(activeIndex);
   }, [
     active,
     activeTab,
-    cancelScheduledPage,
     configureSettledPresentation,
-    setNativePreparedIndex,
+    pageTransitionEpoch,
+    transitionKind,
   ]);
 
   useEffect(
     () => () => {
-      cancelScheduledPage();
-      nativeSessionRef.current = null;
+      mountedRef.current = false;
       pageTransitionEpoch.value += 1;
     },
-    [cancelScheduledPage, pageTransitionEpoch],
+    [pageTransitionEpoch],
   );
+
+  const offscreenPageLimit =
+    Platform.OS === 'android' ? PERPS_PRO_HISTORY_TABS.length - 1 : undefined;
 
   return (
     <View
@@ -751,6 +660,7 @@ export const PerpsProHistoryPager: React.FC<{
       />
       <AnimatedPagerView
         initialPage={initialIndex}
+        offscreenPageLimit={offscreenPageLimit}
         onPageScroll={handlePageScroll}
         onPageScrollStateChanged={handlePageScrollStateChanged}
         onPageSelected={handlePageSelected}
@@ -758,31 +668,31 @@ export const PerpsProHistoryPager: React.FC<{
         scrollEnabled={active}
         style={styles.pager}
         testID="perps-pro-history-pager">
-        {PERPS_PRO_HISTORY_TABS.map(tab => (
-          <View
-            accessibilityElementsHidden={tab !== activeTab || !active}
-            collapsable={false}
-            importantForAccessibility={
-              tab === activeTab && active ? 'auto' : 'no-hide-descendants'
-            }
-            key={tab}
-            pointerEvents={tab === activeTab && active ? 'auto' : 'none'}
-            style={styles.page}
-            testID={`perps-pro-history-page-${tab}`}>
-            {preparedTabs.has(tab) ? (
-              <PerpsProHistoryList
-                active={tab === activeTab && active}
+        {PERPS_PRO_HISTORY_TABS.map(tab => {
+          const pageActive = tab === activeTab && active;
+          return (
+            <View
+              accessibilityElementsHidden={!pageActive}
+              collapsable={false}
+              importantForAccessibility={
+                pageActive ? 'auto' : 'no-hide-descendants'
+              }
+              key={tab}
+              pointerEvents={pageActive ? 'auto' : 'none'}
+              style={styles.page}
+              testID={`perps-pro-history-page-${tab}`}>
+              <PerpsProHistoryPagerPage
+                active={pageActive}
                 amountUnit={amountUnit}
-                onLoadEarlier={() => onLoadEarlier(tab)}
-                onRefresh={() => onRefresh(tab)}
-                onRetry={() => onRefresh(tab)}
+                onLoadEarlier={onLoadEarlier}
+                onRefresh={onRefresh}
                 scrollHost={scrollHost}
                 state={state[tab]}
                 tab={tab}
               />
-            ) : null}
-          </View>
-        ))}
+            </View>
+          );
+        })}
       </AnimatedPagerView>
     </View>
   );

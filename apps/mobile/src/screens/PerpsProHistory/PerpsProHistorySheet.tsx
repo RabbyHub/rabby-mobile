@@ -24,8 +24,9 @@ import {
 } from '@/screens/PerpsPro/components/common/perpsProVisual';
 import { createGetStyles2024 } from '@/utils/styles';
 
-import { PerpsProHistoryContent } from './components/PerpsProHistoryContent';
+import { PerpsProHistoryContentView } from './components/PerpsProHistoryContent';
 import { PERPS_PRO_HISTORY_FEE_TIPS_OWNER } from './constants';
+import { usePerpsProHistoryController } from './scene/usePerpsProHistoryController';
 import type { PerpsProHistoryTab } from './types';
 
 const HISTORY_SHEET_MAX_HEIGHT = 748;
@@ -51,7 +52,6 @@ export type PerpsProHistorySheetHostRef = {
 
 type HistorySheetSession = Readonly<{
   id: number;
-  initialTab: PerpsProHistoryTab;
 }>;
 
 export const PerpsProHistorySheetHost = forwardRef<
@@ -74,6 +74,14 @@ export const PerpsProHistorySheetHost = forwardRef<
   );
   const [session, setSession] = useState<HistorySheetSession | null>(null);
   const [dataActive, setDataActive] = useState(false);
+  const presentationActive = dataActive && isFocused;
+  const history = usePerpsProHistoryController(
+    'orders',
+    presentationActive,
+    isFocused,
+    true,
+  );
+  const setHistoryActiveTab = history.setActiveTab;
   focusedRef.current = isFocused;
 
   const deactivateSession = useCallback(() => {
@@ -104,14 +112,14 @@ export const PerpsProHistorySheetHost = forwardRef<
       nextSessionIdRef.current += 1;
       const nextSession = {
         id: nextSessionIdRef.current,
-        initialTab,
       };
+      setHistoryActiveTab(initialTab);
       openingRef.current = true;
       sessionRef.current = nextSession;
       setDataActive(true);
       setSession(nextSession);
     },
-    [hideFeeTipsPopup],
+    [hideFeeTipsPopup, setHistoryActiveTab],
   );
 
   useImperativeHandle(ref, () => ({ dismiss, present }), [dismiss, present]);
@@ -197,9 +205,9 @@ export const PerpsProHistorySheetHost = forwardRef<
             {t('page.perps.pro.history.title')}
           </Text>
           <View style={styles.pager}>
-            <PerpsProHistoryContent
-              active={dataActive && isFocused}
-              initialTab={session.initialTab}
+            <PerpsProHistoryContentView
+              active={presentationActive}
+              history={history}
               scrollHost="bottomSheet"
             />
           </View>

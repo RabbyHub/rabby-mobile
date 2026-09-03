@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import {
   ActivityIndicator,
@@ -45,128 +45,135 @@ export const PerpsProHistoryList: React.FC<{
   state: PerpsProHistoryTabState;
   scrollHost?: 'bottomSheet' | 'screen';
   tab: PerpsProHistoryTab;
-}> = ({
-  active = true,
-  amountUnit,
-  onLoadEarlier,
-  onRefresh,
-  onRetry,
-  scrollHost = 'screen',
-  state,
-  tab,
-}) => {
-  const { colors2024, styles } = useTheme2024({ getStyle });
-  const { t } = useTranslation();
-  const showTradeFeeExplanation = useShowPerpsTradeFeeExplanation({
-    owner: PERPS_PRO_HISTORY_FEE_TIPS_OWNER,
-    variant: 'pro',
-  });
-  const handleShowTradeFeeExplanation = useCallback(
-    (isLiquidation: boolean) => {
-      if (active) {
-        showTradeFeeExplanation(isLiquidation);
-      }
-    },
-    [active, showTradeFeeExplanation],
-  );
-  const renderItem = useCallback<ListRenderItem<PerpsProHistoryRow>>(
-    ({ item }) => (
-      <PerpsProHistoryRowView
-        active={active}
-        amountUnit={amountUnit}
-        onShowFeeExplanation={handleShowTradeFeeExplanation}
-        row={item}
-      />
-    ),
-    [active, amountUnit, handleShowTradeFeeExplanation],
-  );
-  const handleEndReached = useCallback(() => {
-    if (
-      !active ||
-      tab === 'orders' ||
-      !state.hasEarlier ||
-      state.loadingEarlier ||
-      state.refreshing ||
-      state.loadEarlierError
-    ) {
-      return;
-    }
-    onLoadEarlier();
-  }, [
-    active,
+}> = React.memo(
+  ({
+    active = true,
+    amountUnit,
     onLoadEarlier,
-    state.hasEarlier,
-    state.loadEarlierError,
-    state.loadingEarlier,
-    state.refreshing,
+    onRefresh,
+    onRetry,
+    scrollHost = 'screen',
+    state,
     tab,
-  ]);
-
-  if (state.status === 'idle' || state.status === 'loading') {
-    return <PerpsProHistorySkeleton />;
-  }
-  if (state.status === 'error') {
-    return <PerpsProHistoryError onRetry={onRetry} />;
-  }
-
-  const listProps: FlatListProps<PerpsProHistoryRow> = {
-    contentContainerStyle:
-      state.rows.length === 0 ? styles.emptyContent : styles.content,
-    data: state.rows,
-    extraData: `${amountUnit}:${active}`,
-    initialNumToRender: 10,
-    ItemSeparatorComponent: PerpsProHistoryRowSeparator,
-    keyExtractor: item => item.key,
-    ListEmptyComponent: <PerpsProHistoryEmpty />,
-    ListFooterComponent: state.loadingEarlier ? (
-      <View
-        style={styles.loadingFooter}
-        testID="perps-pro-history-loading-footer">
-        <ActivityIndicator
-          accessibilityLabel={t('page.perps.pro.history.loadingMore')}
-          accessibilityState={{ busy: true }}
-          color={colors2024['neutral-body']}
-          size="small"
-          style={styles.loadingIndicator}
+  }) => {
+    const { colors2024, styles } = useTheme2024({ getStyle });
+    const { t } = useTranslation();
+    const showTradeFeeExplanation = useShowPerpsTradeFeeExplanation({
+      owner: PERPS_PRO_HISTORY_FEE_TIPS_OWNER,
+      variant: 'pro',
+    });
+    const activeRef = useRef(active);
+    activeRef.current = active;
+    const handleShowTradeFeeExplanation = useCallback(
+      (isLiquidation: boolean) => {
+        if (activeRef.current) {
+          showTradeFeeExplanation(isLiquidation);
+        }
+      },
+      [showTradeFeeExplanation],
+    );
+    const rowActive = tab === 'transaction' ? active : true;
+    const renderItem = useCallback<ListRenderItem<PerpsProHistoryRow>>(
+      ({ item }) => (
+        <PerpsProHistoryRowView
+          active={rowActive}
+          amountUnit={amountUnit}
+          onShowFeeExplanation={handleShowTradeFeeExplanation}
+          row={item}
         />
-      </View>
-    ) : state.loadEarlierError ? (
-      <View style={styles.footer}>
-        <Pressable
-          accessibilityRole="button"
-          onPress={onLoadEarlier}
-          style={({ pressed }) => [
-            styles.footerButton,
-            pressed && styles.buttonPressed,
-          ]}>
-          <Text style={styles.footerText}>
-            {t('page.perps.pro.common.retry')}
-          </Text>
-        </Pressable>
-      </View>
-    ) : null,
-    nestedScrollEnabled: scrollHost === 'bottomSheet',
-    onEndReached: handleEndReached,
-    onEndReachedThreshold: 0.3,
-    refreshControl: (
-      <RefreshControl
-        enabled={active}
-        onRefresh={onRefresh}
-        refreshing={active && state.refreshing}
-      />
-    ),
-    renderItem,
-    scrollEnabled: active,
-    showsVerticalScrollIndicator: false,
-    testID: `perps-pro-history-list-${tab}`,
-  };
+      ),
+      [amountUnit, handleShowTradeFeeExplanation, rowActive],
+    );
+    const handleEndReached = useCallback(() => {
+      if (
+        !active ||
+        tab === 'orders' ||
+        !state.hasEarlier ||
+        state.loadingEarlier ||
+        state.refreshing ||
+        state.loadEarlierError
+      ) {
+        return;
+      }
+      onLoadEarlier();
+    }, [
+      active,
+      onLoadEarlier,
+      state.hasEarlier,
+      state.loadEarlierError,
+      state.loadingEarlier,
+      state.refreshing,
+      tab,
+    ]);
 
-  return scrollHost === 'bottomSheet' ? (
-    <BottomSheetFlatList {...listProps} />
-  ) : (
-    <FlatList {...listProps} />
-  );
-};
+    if (state.status === 'idle' || state.status === 'loading') {
+      return <PerpsProHistorySkeleton />;
+    }
+    if (state.status === 'error') {
+      return <PerpsProHistoryError onRetry={onRetry} />;
+    }
+
+    const listProps: FlatListProps<PerpsProHistoryRow> = {
+      contentContainerStyle:
+        state.rows.length === 0 ? styles.emptyContent : styles.content,
+      data: state.rows,
+      extraData: `${amountUnit}:${rowActive}`,
+      initialNumToRender: 10,
+      ItemSeparatorComponent: PerpsProHistoryRowSeparator,
+      keyExtractor: item => item.key,
+      ListEmptyComponent: <PerpsProHistoryEmpty />,
+      ListFooterComponent: state.loadingEarlier ? (
+        <View
+          style={styles.loadingFooter}
+          testID="perps-pro-history-loading-footer">
+          <ActivityIndicator
+            accessibilityLabel={t('page.perps.pro.history.loadingMore')}
+            accessibilityState={{ busy: true }}
+            color={colors2024['neutral-body']}
+            size="small"
+            style={styles.loadingIndicator}
+          />
+        </View>
+      ) : state.loadEarlierError ? (
+        <View style={styles.footer}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={onLoadEarlier}
+            style={({ pressed }) => [
+              styles.footerButton,
+              pressed && styles.buttonPressed,
+            ]}>
+            <Text style={styles.footerText}>
+              {t('page.perps.pro.common.retry')}
+            </Text>
+          </Pressable>
+        </View>
+      ) : null,
+      nestedScrollEnabled: scrollHost === 'bottomSheet',
+      onEndReached: handleEndReached,
+      onEndReachedThreshold: 0.3,
+      refreshControl: (
+        <RefreshControl
+          enabled={active}
+          onRefresh={onRefresh}
+          refreshing={active && state.refreshing}
+        />
+      ),
+      renderItem,
+      scrollEnabled: active,
+      showsVerticalScrollIndicator: false,
+      testID: `perps-pro-history-list-${tab}`,
+    };
+
+    return scrollHost === 'bottomSheet' ? (
+      <BottomSheetFlatList {...listProps} />
+    ) : (
+      <FlatList {...listProps} />
+    );
+  },
+);
+
+PerpsProHistoryList.displayName = 'PerpsProHistoryList';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   content: {
