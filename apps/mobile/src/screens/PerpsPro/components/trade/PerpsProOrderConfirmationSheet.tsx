@@ -16,7 +16,11 @@ import type { PerpsProOpenOrderCommand } from '../../actions/openOrder';
 import type { PerpsProAttachedTpSlCommand } from '../../actions/openOrderWithAttachedTpSl';
 import type { PerpsProMarket } from '../../model/market';
 import { getPerpsProBboStrategyLabel } from '../../model/bbo';
-import { formatPerpsProDecimal, formatPerpsProPrice } from '../../utils/format';
+import {
+  formatPerpsProDecimal,
+  formatPerpsProPrice,
+  formatPerpsProVariableDecimal,
+} from '../../utils/format';
 import {
   getPerpsProBottomSheetChromeStyles,
   PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
@@ -93,10 +97,9 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
       execution.kind === 'bboLimit'
         ? getPerpsProBboStrategyLabel(execution.strategy)
         : execution.kind === 'limit' || execution.kind === 'conditionalLimit'
-        ? `${formatPerpsProPrice(
-            execution.limitPrice,
-            reviewFacts.pxDecimals,
-          )} ${reviewFacts.quoteAsset}`
+        ? `${formatPerpsProVariableDecimal(execution.limitPrice)} ${
+            reviewFacts.quoteAsset
+          }`
         : t('page.perps.pro.trade.marketPrice');
     const isBuy = parent.side === 'buy';
     const triggerOperator = (kind: 'sl' | 'tp') =>
@@ -172,9 +175,8 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
               {isConditional ? (
                 <DetailRow
                   label={t('page.perps.pro.trade.triggerPrice')}
-                  value={`${formatPerpsProPrice(
+                  value={`${formatPerpsProVariableDecimal(
                     execution.triggerPrice,
-                    reviewFacts.pxDecimals,
                   )} ${reviewFacts.quoteAsset}`}
                 />
               ) : null}
@@ -235,9 +237,10 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
                       label={t('page.perps.pro.trade.trigger')}
                       value={`${t(
                         'page.perps.pro.trade.markPrice',
-                      )} ${triggerOperator('tp')} ${formatPerpsProPrice(
+                      )} ${triggerOperator(
+                        'tp',
+                      )} ${formatPerpsProVariableDecimal(
                         attachedCommand.attached.tp.triggerPrice,
-                        reviewFacts.pxDecimals,
                       )} ${reviewFacts.quoteAsset}`}
                     />
                   </>
@@ -254,9 +257,10 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
                       label={t('page.perps.pro.trade.trigger')}
                       value={`${t(
                         'page.perps.pro.trade.markPrice',
-                      )} ${triggerOperator('sl')} ${formatPerpsProPrice(
+                      )} ${triggerOperator(
+                        'sl',
+                      )} ${formatPerpsProVariableDecimal(
                         attachedCommand.attached.sl.triggerPrice,
-                        reviewFacts.pxDecimals,
                       )} ${reviewFacts.quoteAsset}`}
                     />
                   </>
