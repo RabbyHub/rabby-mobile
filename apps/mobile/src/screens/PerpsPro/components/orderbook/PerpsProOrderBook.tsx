@@ -560,8 +560,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   ratioRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 4,
+    gap: 2,
     height: 12,
+    marginHorizontal: -12,
   },
   ratioLabel: {
     flexShrink: 0,
@@ -573,11 +574,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   buyRatio: {
     color: colors2024['green-default'],
-    textAlign: 'left',
+    textAlign: 'right',
   },
   sellRatio: {
     color: colors2024['red-default'],
-    textAlign: 'right',
+    textAlign: 'left',
   },
   ratioTrack: {
     flexDirection: 'row',
