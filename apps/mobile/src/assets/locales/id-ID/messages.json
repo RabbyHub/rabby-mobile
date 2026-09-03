@@ -326,6 +326,12 @@
       "gasNotRequireForSafeTransaction": "Biaya gas tidak diperlukan untuk transaksi Safe",
       "safeAddressNotSupportChain": "Alamat Safe saat ini tidak didukung di jaringan {{0}}",
       "noGasRequired": "Tidak ada gas yang diperlukan",
+      "gasSelectorTitle": "Gas",
+      "swapGasLevel": {
+        "normal": "Normal",
+        "fast": "Cepat",
+        "instant": "Instan"
+      },
       "eip1559Desc1": "Pada rantai yang mendukung EIP-1559, Priority Fee adalah tip untuk penambang agar memproses transaksi Anda. Anda dapat menghemat biaya gas akhir Anda dengan menurunkan Priority Fee, yang mungkin memerlukan lebih banyak waktu untuk transaksi diproses.",
       "gasLimitModifyOnlyNecessaryAlert": "Modifikasi hanya jika diperlukan",
       "moreSafeSigNeeded": "{{0}} lebih banyak konfirmasi dibutuhkan",
@@ -782,6 +788,7 @@
       "from": "Dari",
       "approve-swap": "Setujui dan Tukar",
       "hidden-no-quote-rates_other": "{{count}} tarif tidak tersedia",
+      "preferMEV": "Perlindungan MEV",
       "gas-fee-too-high": "Biaya gas terlalu tinggi",
       "token": "Token",
       "slippage-tolerance": "Toleransi slippage",
@@ -809,7 +816,8 @@
       "selectChainModalTitle": "Pilih Rantai",
       "results": "Hasil",
       "approve": "Setujui",
-      "market-closed": "Pasar tidak buka: Penempatan pesanan tidak didukung."
+      "market-closed": "Pasar tidak buka: Penempatan pesanan tidak didukung.",
+      "quotes": "Penawaran"
     },
     "bridge": {
       "showMore": {
@@ -1044,6 +1052,9 @@
         "subTitle": "Menyimpan frasa benih Anda sebagai gambar dapat mengeksposnya, jadi menuliskannya adalah pilihan yang lebih aman.",
         "tip1": "Tangkapan layar dapat disinkronkan ke cloud atau perangkat lain, dan dapat diakses jika perangkat hilang, dicuri, atau terganggu.",
         "tip3": "Siapa pun yang mendapatkan frasa benih Anda dapat mengambil kendali penuh atas dompet, dan hal ini tidak dapat dibatalkan."
+      },
+      "rateModalTriggerOnHome": {
+        "title": "Beri Rating untuk Rabby Wallet"
       }
     },
     "newAddress": {
@@ -1588,7 +1599,8 @@
         "estReceiveLabel": "Perkiraan diterima: {{usd}}",
         "estReceiveTip": "Layanan diproses melalui {{name}} dan mungkin mengalami slippage",
         "unavailablePaymentWallet": "Dompet pembayaran yang dipilih tidak tersedia",
-        "noAvailableToken": "Token tidak tersedia"
+        "noAvailableToken": "Token tidak tersedia",
+        "priceImpactLoss": "Dampak Harga: Anda kehilangan {{usd}}."
       },
       "withdrawPopup": {
         "selectChain": "Pilih Rantai",
@@ -1649,7 +1661,9 @@
       "switchAccount": "Ganti Dompet",
       "depositNow": "Setor Sekarang",
       "depositSubmitted": "Setoran Diajukan",
-      "depositWith": "Setor melalui"
+      "depositWith": "Setor melalui",
+      "gasToken": "Token Gas",
+      "title": "GasAccount"
     },
     "tokenDetail": {
       "action": {
@@ -3370,7 +3384,8 @@
         "skipText": "Lewati popup ini selama 1 hari"
       },
       "alertText": "DApp pihak ketiga: untuk masalah penggunaan, silakan hubungi dukungan DApp. Rabby hanya menyediakan akses melihat.",
-      "title": "Tangkapan Layar untuk Melaporkan Bug"
+      "title": "Tangkapan Layar untuk Melaporkan Bug",
+      "submitFailed": "Gagal mengirim."
     },
     "submitFeedbackSuccessModal": {
       "desc": "Dikirim Berhasil!"

@@ -165,7 +165,8 @@
         "skipText": "ข้ามป๊อปอัปนี้ไป 1 วัน"
       },
       "alertText": "DApp บุคคลที่สาม: หากมีปัญหาการใช้งาน โปรดติดต่อฝ่ายสนับสนุนของ DApp Rabby ให้สิทธิ์เข้าดูเท่านั้น.",
-      "title": "จับภาพหน้าจอเพื่อนำเสนอข้อบกพร่อง"
+      "title": "จับภาพหน้าจอเพื่อนำเสนอข้อบกพร่อง",
+      "submitFailed": "ส่งไม่สำเร็จ"
     },
     "submitFeedbackSuccessModal": {
       "desc": "ส่งเสร็จเรียบร้อย!"
@@ -511,6 +512,12 @@
       "markAsTrust": "ทำเครื่องหมายว่าเชื่อถือได้",
       "myMark": "มาร์คของฉัน",
       "noGasRequired": "ไม่จำเป็นต้องใช้ gas",
+      "gasSelectorTitle": "Gas",
+      "swapGasLevel": {
+        "normal": "ปกติ",
+        "fast": "รวดเร็ว",
+        "instant": "ทันที"
+      },
       "contractAddress": "ที่อยู่สัญญา",
       "sendNFT": {
         "title": "ส่ง NFT",
@@ -1049,6 +1056,7 @@
       "from": "จาก",
       "directlySwap": "ห่อโทเค็น {{symbol}} โดยตรงผ่านสัญญาอัจฉริยะ",
       "hidden-no-quote-rates_other": "{{count}} อัตราไม่พร้อมใช้งาน",
+      "preferMEV": "การป้องกัน MEV",
       "insufficient": "ยอดคงเหลือไม่เพียงพอ:",
       "select-token": "เลือก Token",
       "transaction-might-be-frontrun-because-of-high-slippage-tolerance": "ธุรกรรมอาจถูก frontrun เนื่องจากการยอมรับ slippage ที่สูง",
@@ -1075,7 +1083,8 @@
       "selectChainModalTitle": "เลือกเชน",
       "results": "ผลลัพธ์",
       "approve": "อนุมัติ",
-      "market-closed": "ตลาดยังไม่เปิด: ไม่สามารถวางคำสั่งซื้อขายได้"
+      "market-closed": "ตลาดยังไม่เปิด: ไม่สามารถวางคำสั่งซื้อขายได้",
+      "quotes": "ราคาเสนอ"
     },
     "nextComponent": {
       "addAddress": {
@@ -1169,6 +1178,9 @@
         "tip3": "ใครก็ตามที่ได้ seed phrase ของคุณสามารถควบคุมกระเป๋าเงินของคุณได้อย่างเต็มที่ และสิ่งนี้ไม่สามารถย้อนกลับได้",
         "subTitle": "การบันทึก seed phrase ของคุณเป็นภาพอาจทำให้มันถูกเปิดเผย ดังนั้นการจดลงเป็นตัวอักษรเป็นตัวเลือกที่ปลอดภัยกว่า",
         "tip1": "ภาพหน้าจออาจซิงค์ไปยังคลาวด์หรืออุปกรณ์อื่น และอาจถูกเข้าถึงได้หากอุปกรณ์สูญหาย ถูกขโมย หรือถูกแฮ็ก"
+      },
+      "rateModalTriggerOnHome": {
+        "title": "ให้คะแนน Rabby Wallet"
       }
     },
     "switchChain": {
@@ -1708,7 +1720,8 @@
         "fetchQuoteFailed": "ไม่สามารถดึงข้อมูลการเสนอราคาได้",
         "minAmountRequired": "จำนวนเงินฝากขั้นต่ำคือ $1",
         "estReceiveTip": "บริการดำเนินการผ่าน {{name}} และราคาอาจคลาดเคลื่อน",
-        "noAvailableToken": "ไม่มีโทเค็นที่พร้อมใช้งาน"
+        "noAvailableToken": "ไม่มีโทเค็นที่พร้อมใช้งาน",
+        "priceImpactLoss": "ผลกระทบต่อราคา: คุณกำลังสูญเสีย {{usd}}"
       },
       "withdrawPopup": {
         "noEnoughGas": "จำนวนเงินต่ำเกินไปจนไม่พอชำระค่า Gas",
@@ -1768,7 +1781,9 @@
       "depositFailed": "การฝากเงินล้มเหลว",
       "lowBalance": "คุณไม่มีแก๊สเพียงพอ (<$1.00) ฝากแก๊สเพื่อให้การทำธุรกรรมในอนาคตดำเนินไปอย่างราบรื่น",
       "depositSubmitted": "ฝากเงินเรียบร้อยแล้ว",
-      "depositWith": "ฝากผ่าน"
+      "depositWith": "ฝากผ่าน",
+      "gasToken": "โทเค็น Gas",
+      "title": "GasAccount"
     },
     "addChain": {
       "title": "เพิ่มเครือข่ายที่กำหนดเองไปยัง Rabby",

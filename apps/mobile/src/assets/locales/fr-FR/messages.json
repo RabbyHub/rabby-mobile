@@ -140,6 +140,12 @@
       "gasLimitEmptyAlert": "Veuillez saisir la limite de gas",
       "nftCollection": "Collection NFT",
       "noGasRequired": "Pas de gas nécessaire",
+      "gasSelectorTitle": "Gas",
+      "swapGasLevel": {
+        "normal": "Normal",
+        "fast": "Rapide",
+        "instant": "Instantané"
+      },
       "myNativeTokenBalance": "Mon solde Gas :",
       "gasPriceTitle": "Prix du gas (Gwei)",
       "gasNotRequireForSafeTransaction": "Aucun frais de gas n'est requis pour les transactions Safe.",
@@ -733,6 +739,7 @@
       "source": "Source",
       "no-slippage-for-wrap": "Aucun glissement pour Wrap",
       "hidden-no-quote-rates_other": "{{count}} tarifs non disponibles",
+      "preferMEV": "Protection contre le MEV",
       "usd-after-fees": "≈ {{usd}} ",
       "to": "À",
       "insufficient": "Solde insuffisant :",
@@ -769,7 +776,8 @@
       "selectChainModalTitle": "Sélectionner le réseau",
       "results": "Résultats",
       "approve": "Approuver",
-      "market-closed": "Marché fermé : le placement d’ordres n’est pas pris en charge."
+      "market-closed": "Marché fermé : le placement d’ordres n’est pas pris en charge.",
+      "quotes": "Devis"
     },
     "manageAddress": {
       "seed-phrase": "Phrase de récupération",
@@ -1004,6 +1012,9 @@
         "subTitle": "Enregistrer votre phrase de récupération sous forme d'image peut l'exposer, donc l'écrire est une option plus sûre.",
         "tip2": "Les applications ou les logiciels malveillants peuvent lire les images stockées dans votre bibliothèque de photos.",
         "tip3": "Toute personne qui obtient votre phrase de récupération peut prendre le contrôle total de votre portefeuille, sans possibilité d’annuler cette action."
+      },
+      "rateModalTriggerOnHome": {
+        "title": "Évaluer Rabby Wallet"
       }
     },
     "signText": {
@@ -1540,7 +1551,8 @@
         "unavailablePaymentWallet": "Le portefeuille de paiement sélectionné n'est pas disponible",
         "estReceiveTip": "Service traité via {{name}}, peut avoir du slippage",
         "minAmountRequired": "Le montant de dépôt minimum est de 1 $.",
-        "noAvailableToken": "Aucun jeton disponible"
+        "noAvailableToken": "Aucun jeton disponible",
+        "priceImpactLoss": "Impact sur le prix : Vous perdez {{usd}}."
       },
       "withdrawPopup": {
         "withdrawalLimit": "Limite de retrait",
@@ -1600,7 +1612,9 @@
       "gasBalance": "Solde de Gaz",
       "lowBalance": "Vous n'avez pas assez de gas (<$1.00). Déposez du gas pour garantir que vos futures transactions se déroulent sans problème.",
       "depositSubmitted": "Dépôt soumis",
-      "depositWith": "Déposer via"
+      "depositWith": "Déposer via",
+      "gasToken": "Jeton de gas",
+      "title": "GasAccount"
     },
     "tokenDetail": {
       "excludeBalanceTips": "Cet actif est exclu de votre solde total pour plus de précision. Vous pouvez le toucher pour voir les détails et l'inclure si vous le souhaitez.",
@@ -3415,7 +3429,8 @@
         "skipText": "Ignorer cette fenêtre contextuelle pendant 1 jour"
       },
       "alertText": "DApp tierce : pour les problèmes d’utilisation, contactez le support de la DApp. Rabby fournit uniquement un accès en lecture.",
-      "title": "Capture d'écran pour signaler un bug"
+      "title": "Capture d'écran pour signaler un bug",
+      "submitFailed": "Échec de l'envoi."
     },
     "submitFeedbackSuccessModal": {
       "desc": "Soumis avec succès !"
