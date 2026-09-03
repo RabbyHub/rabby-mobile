@@ -13,7 +13,12 @@ import { useSetAtom } from 'jotai';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, Easing, TouchableOpacity, View } from 'react-native';
-import { TDexQuoteData, useSwapSettings, useSwapViewDexIdList } from '../hooks';
+import {
+  getSwapQuoteScore,
+  TDexQuoteData,
+  useSwapSettings,
+  useSwapViewDexIdList,
+} from '../hooks';
 import { refreshIdAtom } from '../hooks/atom';
 import { isSwapWrapToken } from '../utils';
 import { QuoteListLoading, QuoteLoading } from './loading';
@@ -58,35 +63,15 @@ export const Quotes = ({
   const sortedList = useMemo(
     () =>
       [...(list || [])].sort((a, b) => {
-        const getNumber = (quote: typeof a) => {
-          const price = other.receiveToken.price ? other.receiveToken.price : 0;
-          if (inSufficient) {
-            return new BigNumber(quote.data?.toTokenAmount || 0)
-              .div(
-                10 **
-                  (quote.data?.toTokenDecimals || other.receiveToken.decimals),
-              )
-              .times(price);
-          }
-          if (!quote.preExecResult) {
-            return new BigNumber(Number.MIN_SAFE_INTEGER);
-          }
-          const receiveTokenAmount =
-            new BigNumber(quote?.data?.toTokenAmount || 0)
-              .div(
-                10 **
-                  (quote?.data?.toTokenDecimals || other.receiveToken.decimals),
-              )
-              .toString() || 0;
-          if (sortIncludeGasFee) {
-            return new BigNumber(receiveTokenAmount)
-              .times(price)
-              .minus(quote?.preExecResult?.gasUsdValue || 0);
-          }
+        const getScore = (quote: typeof a) =>
+          getSwapQuoteScore({
+            quote,
+            receiveToken: other.receiveToken,
+            inSufficient,
+            sortIncludeGasFee,
+          }) || new BigNumber(Number.MIN_SAFE_INTEGER);
 
-          return new BigNumber(receiveTokenAmount).times(price);
-        };
-        return getNumber(b).minus(getNumber(a)).toNumber();
+        return getScore(b).minus(getScore(a)).toNumber();
       }),
     [inSufficient, list, other.receiveToken, sortIncludeGasFee],
   );
