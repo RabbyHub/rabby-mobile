@@ -304,6 +304,10 @@ const BridgeShowMore = ({
 
   const swapGasRowSourceSelector =
     type === 'swap' && (quoteLoading || sourceLogo || sourceName)
+      ? sourceSelectorRender({ clickable: false, showArrow: false })
+      : undefined;
+  const swapGasRowFallbackSourceSelector =
+    type === 'swap' && (quoteLoading || sourceLogo || sourceName)
       ? sourceSelectorRender({ clickable: true, showArrow: false })
       : undefined;
 
@@ -380,7 +384,7 @@ const BridgeShowMore = ({
             chainServeId={fromToken?.chain}
             hideGasLevelInSummary
             sourceSelector={swapGasRowSourceSelector}
-            fallbackSourceSelector={swapGasRowSourceSelector}
+            fallbackSourceSelector={swapGasRowFallbackSourceSelector}
             onDepositPopupVisibleChange={onDepositPopupVisibleChange}
             onGasSettingsOpenChange={onGasSettingsOpenChange}
             renderSwapQuotes={renderSwapQuotes}
