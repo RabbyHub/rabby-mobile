@@ -1,7 +1,6 @@
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import type { WsFill } from '@rabby-wallet/hyperliquid-sdk';
 import type { PerpsFundingJournalEntry } from '@/core/services/perpsService';
-import { useIsFocused } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -90,9 +89,9 @@ const getNextPendingPresentationExpirationAt = ({
 
 export const usePerpsProHistoryController = (
   initialTab: PerpsProHistoryTab = 'orders',
+  active = true,
 ) => {
   const { t } = useTranslation();
-  const isFocused = useIsFocused();
   const currentAccount = perpsStore(state => state.currentPerpsAccount);
   const localFundingHistory = perpsStore(
     state => state.localLoadingHistory ?? EMPTY_LOCAL_FUNDING_HISTORY,
@@ -127,6 +126,7 @@ export const usePerpsProHistoryController = (
   const accountIdentityRef = useRef<string | null>(null);
   const orderFillsRef = useRef<WsFill[]>([]);
   const orderExecutionIndexRef = useRef(buildPerpsProOrderExecutionIndex([]));
+  const externalActiveRef = useRef(active);
   const sdkSupported = useMemo(isPerpsProHistorySdkSupported, []);
   const accountAddress = currentAccount?.address ?? null;
   const accountIdentity = currentAccount
@@ -141,7 +141,7 @@ export const usePerpsProHistoryController = (
   const accountGeneration = getPerpsAccountRuntimeContext().generation;
   const refreshFailedMessage = t('page.perps.pro.history.refreshFailed');
   const enabled =
-    isFocused &&
+    active &&
     appState === 'active' &&
     !!accountAddress &&
     isRuntimeInitialized &&
@@ -164,13 +164,48 @@ export const usePerpsProHistoryController = (
   }, [historyState]);
 
   useEffect(() => {
+    const wasActive = externalActiveRef.current;
+    externalActiveRef.current = active;
+    if (wasActive || !active) {
+      return;
+    }
+    const previous = stateRef.current;
+    const next = { ...previous };
+    let changed = false;
+    PERPS_PRO_HISTORY_TABS.forEach(tab => {
+      const tabState = previous[tab];
+      const status = tabState.status === 'loading' ? 'idle' : tabState.status;
+      if (
+        status !== tabState.status ||
+        tabState.refreshing ||
+        tabState.loadingEarlier
+      ) {
+        changed = true;
+        next[tab] = {
+          ...tabState,
+          loadingEarlier: false,
+          refreshing: false,
+          status,
+        };
+      }
+    });
+    if (changed) {
+      stateRef.current = next;
+      setHistoryState(next);
+    }
+  }, [active]);
+
+  useEffect(() => {
+    if (!active) {
+      return;
+    }
     if (!currentAccount) {
       setFundingJournalEntries([]);
       return;
     }
-    let active = true;
+    let requestActive = true;
     void readPerpsFundingJournal().then(entries => {
-      if (active) {
+      if (requestActive) {
         setFundingJournalEntries(
           entries.filter(entry =>
             isPerpsFundingJournalEntryForAccount(entry, currentAccount),
@@ -179,9 +214,9 @@ export const usePerpsProHistoryController = (
       }
     });
     return () => {
-      active = false;
+      requestActive = false;
     };
-  }, [accountIdentity, currentAccount, localFundingHistory]);
+  }, [accountIdentity, active, currentAccount, localFundingHistory]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', setAppState);
@@ -219,6 +254,17 @@ export const usePerpsProHistoryController = (
     });
   }, []);
 
+  useEffect(
+    () => () => {
+      guardRef.current = {
+        ...guardRef.current,
+        enabled: false,
+      };
+      invalidateAll();
+    },
+    [invalidateAll],
+  );
+
   useEffect(() => {
     if (accountIdentityRef.current === null) {
       accountIdentityRef.current = accountIdentity;
@@ -241,6 +287,9 @@ export const usePerpsProHistoryController = (
       return;
     }
     invalidateAll();
+    if (!active) {
+      return;
+    }
     setHistoryState(previous => {
       const next = { ...previous };
       let changed = false;
@@ -267,7 +316,7 @@ export const usePerpsProHistoryController = (
       stateRef.current = next;
       return next;
     });
-  }, [enabled, invalidateAll]);
+  }, [active, enabled, invalidateAll]);
 
   const updateTabState = useCallback<UpdatePerpsProHistoryTabState>(
     (tab, updater) => {
@@ -706,7 +755,7 @@ export const usePerpsProHistoryController = (
 
   useEffect(() => {
     if (
-      !isFocused ||
+      !active ||
       appState !== 'active' ||
       !accountAddress ||
       !isRuntimeInitialized ||
@@ -727,7 +776,7 @@ export const usePerpsProHistoryController = (
     accountAddress,
     activeTab,
     appState,
-    isFocused,
+    active,
     isRuntimeInitialized,
     sdkSupported,
     updateTabState,
@@ -783,7 +832,7 @@ export const usePerpsProHistoryController = (
   const confirmedOperationSignature = JSON.stringify(unsettledConfirmations);
 
   useEffect(() => {
-    if (unsettledConfirmations.length === 0 || !currentAccount) {
+    if (!enabled || unsettledConfirmations.length === 0 || !currentAccount) {
       return;
     }
     const confirmationByOperationId = new Map(
@@ -807,7 +856,12 @@ export const usePerpsProHistoryController = (
           : entry;
       }),
     );
-  }, [confirmedOperationSignature, currentAccount, unsettledConfirmations]);
+  }, [
+    confirmedOperationSignature,
+    currentAccount,
+    enabled,
+    unsettledConfirmations,
+  ]);
 
   const presentedHistoryState = useMemo<PerpsProHistoryControllerState>(
     () => ({

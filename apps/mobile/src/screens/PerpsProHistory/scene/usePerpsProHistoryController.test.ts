@@ -17,7 +17,6 @@ const mockShowToast = jest.fn();
 const mockReadFundingJournal = jest.fn(async () => []);
 const mockConfirmFundingOperations = jest.fn();
 let mockHistoryListener: ((event: any) => void) | null = null;
-let mockIsFocused = true;
 
 const mockPerpsState = {
   currentPerpsAccount: {
@@ -29,10 +28,6 @@ const mockPerpsState = {
   marketDataMap: {},
   spotMeta: null,
 };
-
-jest.mock('@react-navigation/native', () => ({
-  useIsFocused: () => mockIsFocused,
-}));
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -143,7 +138,6 @@ describe('usePerpsProHistoryController', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockHistoryListener = null;
-    mockIsFocused = true;
     mockPerpsState.currentPerpsAccount = {
       address: '0x1111111111111111111111111111111111111111',
       type: 'SimpleKeyring',
@@ -474,20 +468,22 @@ describe('usePerpsProHistoryController', () => {
     );
   });
 
-  it('revalidates the active tab after route focus returns', async () => {
+  it('stops subscriptions while externally inactive and revalidates on resume', async () => {
     mockFetchLatestTrades
       .mockResolvedValueOnce([makeFill({ time: 100 })])
       .mockResolvedValueOnce([makeFill({ tid: 2, time: 200 })]);
-    const hook = renderHook(() => usePerpsProHistoryController('trade'));
+    const hook = renderHook(
+      ({ active }: { active: boolean }) =>
+        usePerpsProHistoryController('trade', active),
+      { initialProps: { active: true } },
+    );
     await waitFor(() =>
       expect(hook.result.current.tabState.status).toBe('ready'),
     );
 
-    mockIsFocused = false;
-    hook.rerender({});
+    hook.rerender({ active: false });
     await waitFor(() => expect(mockHistoryListener).toBeNull());
-    mockIsFocused = true;
-    hook.rerender({});
+    hook.rerender({ active: true });
 
     await waitFor(() => expect(mockFetchLatestTrades).toHaveBeenCalledTimes(2));
     await waitFor(() =>
@@ -495,6 +491,59 @@ describe('usePerpsProHistoryController', () => {
         200, 100,
       ]),
     );
+  });
+
+  it('keeps the loading presentation but ignores completion after external activity stops', async () => {
+    let resolveOrders: (orders: UserHistoricalOrders[]) => void = () =>
+      undefined;
+    mockFetchOrders.mockReturnValueOnce(
+      new Promise<UserHistoricalOrders[]>(resolve => {
+        resolveOrders = resolve;
+      }),
+    );
+    const hook = renderHook(
+      ({ active }: { active: boolean }) =>
+        usePerpsProHistoryController('orders', active),
+      { initialProps: { active: true } },
+    );
+    await waitFor(() => expect(mockFetchOrders).toHaveBeenCalledTimes(1));
+
+    hook.rerender({ active: false });
+    await act(async () => resolveOrders([makeOrder()]));
+
+    expect(hook.result.current.state.orders).toMatchObject({
+      rows: [],
+      status: 'loading',
+    });
+
+    mockFetchOrders.mockResolvedValueOnce([makeOrder(2, 200)]);
+    hook.rerender({ active: true });
+
+    await waitFor(() => expect(mockFetchOrders).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(hook.result.current.state.orders).toMatchObject({
+        rows: [expect.objectContaining({ oid: 2 })],
+        status: 'ready',
+      }),
+    );
+  });
+
+  it('invalidates in-flight completions before unmount cleanup returns', async () => {
+    let resolveOrders: (orders: UserHistoricalOrders[]) => void = () =>
+      undefined;
+    mockFetchOrders.mockReturnValueOnce(
+      new Promise<UserHistoricalOrders[]>(resolve => {
+        resolveOrders = resolve;
+      }),
+    );
+    const hook = renderHook(() => usePerpsProHistoryController('orders'));
+    await waitFor(() => expect(mockFetchOrders).toHaveBeenCalledTimes(1));
+
+    hook.unmount();
+    await act(async () => resolveOrders([makeOrder()]));
+
+    expect(mockHistoryListener).toBeNull();
+    expect(mockShowToast).not.toHaveBeenCalled();
   });
 
   it('does not issue duplicate requests for a repeated refresh gesture', async () => {

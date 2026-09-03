@@ -58,7 +58,6 @@ import { triggerPerpsProLightHaptic } from '../components/common/triggerPerpsPro
 import {
   PerpsProSheetGlobalEdgeTarget,
   PerpsProSheetNavigationBoundary,
-  usePerpsProSheetNavigationHost,
 } from '../components/common/PerpsProSheetNavigationGuard';
 import { usePerpsProDismissKeyboard } from '../components/common/usePerpsProDismissKeyboard';
 import { PerpsProHeader } from '../components/header/PerpsProHeader';
@@ -222,7 +221,6 @@ export const PerpsProScene: React.FC<{
 }) => {
   const { width } = useWindowDimensions();
   const { styles } = useTheme2024({ getStyle });
-  usePerpsProSheetNavigationHost();
   const { t } = useTranslation();
   const scene = usePerpsProScene();
   const activeAsset = useActiveAssetSubscription(

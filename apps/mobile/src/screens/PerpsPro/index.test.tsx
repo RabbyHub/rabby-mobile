@@ -8,10 +8,10 @@ import {
 } from './components/common/perpsProSheetNavigationRegistry';
 import { PerpsProScreen } from './index';
 
-const mockSetOptions = jest.fn();
-const mockPush = jest.fn();
+const mockPresentHistory = jest.fn();
 const mockHidePortfolioBreakdown = jest.fn();
 let mockPortfolioBreakdownVisible = false;
+let mockSceneRenderCount = 0;
 
 jest.mock(
   '@/screens/PerpsProHistory/repository/perpsProHistoryRepository',
@@ -19,6 +19,33 @@ jest.mock(
     isPerpsProHistorySdkSupported: () => true,
   }),
 );
+
+jest.mock('./components/common/PerpsProSheetNavigationGuard', () => ({
+  PerpsProSheetNavigationHost: () => null,
+}));
+
+jest.mock('@/screens/PerpsProHistory/PerpsProHistorySheet', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    PerpsProHistorySheetHost: ReactModule.forwardRef(
+      (_props: Record<string, never>, ref: React.Ref<unknown>) => {
+        const [open, setOpen] = ReactModule.useState(false);
+        ReactModule.useImperativeHandle(ref, () => ({
+          dismiss: jest.fn(),
+          present: (initialTab: string) => {
+            mockPresentHistory(initialTab);
+            setOpen(true);
+          },
+        }));
+        return ReactModule.createElement(View, {
+          accessibilityLabel: String(open),
+          testID: 'perps-pro-history-sheet-host',
+        });
+      },
+    ),
+  };
+});
 
 jest.mock('@/components2024/ScreenContainer/NormalScreenContainer', () => {
   const ReactModule = require('react');
@@ -42,15 +69,6 @@ jest.mock('@/components2024/ScreenContainer/NormalScreenContainer', () => {
     );
 });
 
-jest.mock('@/hooks/navigation', () => {
-  return {
-    useRabbyAppNavigation: () => ({
-      push: mockPush,
-      setOptions: mockSetOptions,
-    }),
-  };
-});
-
 jest.mock('@/hooks/useTipsPopup', () => ({
   useHideTipsPopup: () => mockHidePortfolioBreakdown,
   useIsTipsPopupVisible: () => mockPortfolioBreakdownVisible,
@@ -72,8 +90,9 @@ jest.mock('./scene/PerpsProScene', () => {
       isModeSwitching: boolean;
       onOpenHistory: (hasPendingFunding: boolean) => void;
       onSwitchToSimple: () => void;
-    }) =>
-      ReactModule.createElement(
+    }) => {
+      mockSceneRenderCount += 1;
+      return ReactModule.createElement(
         View,
         {
           accessibilityLabel: initialRegionAlertLayout
@@ -100,7 +119,8 @@ jest.mock('./scene/PerpsProScene', () => {
           onPress: () => onOpenHistory(true),
           testID: 'perps-pro-history-pending',
         }),
-      ),
+      );
+    },
   };
 });
 
@@ -108,6 +128,7 @@ describe('PerpsProScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockPortfolioBreakdownVisible = false;
+    mockSceneRenderCount = 0;
     resetPerpsProSheetNavigationGuardForTests();
   });
 
@@ -121,7 +142,6 @@ describe('PerpsProScreen', () => {
       />,
     );
 
-    expect(mockSetOptions).not.toHaveBeenCalled();
     expect(
       screen.getByTestId('screen-container').props.accessibilityLabel,
     ).toBe('true:bg1');
@@ -136,9 +156,12 @@ describe('PerpsProScreen', () => {
     expect(onSwitchToSimple).toHaveBeenCalledTimes(1);
 
     fireEvent.press(screen.getByTestId('perps-pro-history'));
-    expect(mockPush).toHaveBeenCalledWith('StackTransaction', {
-      screen: 'PerpsProHistory',
-    });
+    expect(mockPresentHistory).toHaveBeenCalledWith('orders');
+    expect(
+      screen.getByTestId('perps-pro-history-sheet-host').props
+        .accessibilityLabel,
+    ).toBe('true');
+    expect(mockSceneRenderCount).toBe(1);
   });
 
   it('disables the shared switch while the mode preference is saving', () => {
@@ -157,10 +180,7 @@ describe('PerpsProScreen', () => {
     );
 
     fireEvent.press(screen.getByTestId('perps-pro-history-pending'));
-    expect(mockPush).toHaveBeenCalledWith('StackTransaction', {
-      params: { initialTab: 'transaction' },
-      screen: 'PerpsProHistory',
-    });
+    expect(mockPresentHistory).toHaveBeenCalledWith('transaction');
   });
 
   it('registers the owned Portfolio breakdown as the top Pro sheet', () => {
