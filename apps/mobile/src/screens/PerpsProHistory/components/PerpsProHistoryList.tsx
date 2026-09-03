@@ -72,6 +72,11 @@ export const PerpsProHistoryList: React.FC<{
       },
       [showTradeFeeExplanation],
     );
+    const handleRefresh = useCallback(() => {
+      if (activeRef.current) {
+        onRefresh();
+      }
+    }, [onRefresh]);
     const rowActive = tab === 'transaction' ? active : true;
     const renderItem = useCallback<ListRenderItem<PerpsProHistoryRow>>(
       ({ item }) => (
@@ -152,13 +157,6 @@ export const PerpsProHistoryList: React.FC<{
       nestedScrollEnabled: scrollHost === 'bottomSheet',
       onEndReached: handleEndReached,
       onEndReachedThreshold: 0.3,
-      refreshControl: (
-        <RefreshControl
-          enabled={active}
-          onRefresh={onRefresh}
-          refreshing={active && state.refreshing}
-        />
-      ),
       renderItem,
       scrollEnabled: active,
       showsVerticalScrollIndicator: false,
@@ -166,9 +164,22 @@ export const PerpsProHistoryList: React.FC<{
     };
 
     return scrollHost === 'bottomSheet' ? (
-      <BottomSheetFlatList {...listProps} />
+      <BottomSheetFlatList
+        {...listProps}
+        onRefresh={handleRefresh}
+        refreshing={active && state.refreshing}
+      />
     ) : (
-      <FlatList {...listProps} />
+      <FlatList
+        {...listProps}
+        refreshControl={
+          <RefreshControl
+            enabled={active}
+            onRefresh={handleRefresh}
+            refreshing={active && state.refreshing}
+          />
+        }
+      />
     );
   },
 );

@@ -362,13 +362,16 @@ describe('PerpsProHistoryList', () => {
     expect(refreshControl.props.tintColor).toBeUndefined();
   });
 
-  it('uses the Bottom Sheet scroll host without changing list behavior', () => {
-    render(
+  it('uses the Bottom Sheet refresh contract without remounting inactive lists', () => {
+    const onLoadEarlier = jest.fn();
+    const onRefresh = jest.fn();
+    const onRetry = jest.fn();
+    const view = render(
       <PerpsProHistoryList
         amountUnit="base"
-        onLoadEarlier={jest.fn()}
-        onRefresh={jest.fn()}
-        onRetry={jest.fn()}
+        onLoadEarlier={onLoadEarlier}
+        onRefresh={onRefresh}
+        onRetry={onRetry}
         scrollHost="bottomSheet"
         state={makeState()}
         tab="trade"
@@ -376,11 +379,43 @@ describe('PerpsProHistoryList', () => {
     );
 
     expect(mockBottomSheetFlatListProps).toHaveBeenCalledTimes(1);
-    expect(mockBottomSheetFlatListProps.mock.calls[0][0]).toMatchObject({
+    const activeProps = mockBottomSheetFlatListProps.mock.calls[0][0];
+    expect(activeProps).toMatchObject({
       initialNumToRender: 10,
       nestedScrollEnabled: true,
+      onRefresh: expect.any(Function),
+      refreshing: false,
       scrollEnabled: true,
       testID: 'perps-pro-history-list-trade',
     });
+    expect(activeProps.refreshControl).toBeUndefined();
+    activeProps.onRefresh();
+    expect(onRefresh).toHaveBeenCalledTimes(1);
+
+    view.rerender(
+      <PerpsProHistoryList
+        active={false}
+        amountUnit="base"
+        onLoadEarlier={onLoadEarlier}
+        onRefresh={onRefresh}
+        onRetry={onRetry}
+        scrollHost="bottomSheet"
+        state={makeState({ refreshing: true })}
+        tab="trade"
+      />,
+    );
+
+    const inactiveProps =
+      mockBottomSheetFlatListProps.mock.calls[
+        mockBottomSheetFlatListProps.mock.calls.length - 1
+      ][0];
+    expect(inactiveProps).toMatchObject({
+      onRefresh: expect.any(Function),
+      refreshing: false,
+      scrollEnabled: false,
+    });
+    expect(inactiveProps.onRefresh).toBe(activeProps.onRefresh);
+    inactiveProps.onRefresh();
+    expect(onRefresh).toHaveBeenCalledTimes(1);
   });
 });
