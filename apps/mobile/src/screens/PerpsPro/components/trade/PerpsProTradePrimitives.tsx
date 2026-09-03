@@ -19,22 +19,15 @@ import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineTe
 import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 import { PerpsProSelectCaret } from '../common/PerpsProSelectCaret';
 import {
-  getPerpsProIsolatedTextStyle,
   getPerpsProTradeControlMediumTextStyle,
   resolvePerpsProFieldBackground,
 } from '../common/perpsProVisual';
 
 export const getPerpsProTradeSelectFontStyle = (
   platform: typeof Platform.OS,
-): TextStyle => ({
-  ...getPerpsProTradeControlMediumTextStyle(platform),
-  ...getPerpsProIsolatedTextStyle(platform),
-});
+): TextStyle => getPerpsProTradeControlMediumTextStyle(platform);
 
 const tradeSelectFontStyle = getPerpsProTradeSelectFontStyle(Platform.OS);
-const tradeSelectPlainFontStyle = getPerpsProTradeControlMediumTextStyle(
-  Platform.OS,
-);
 
 export const PerpsProTradeSelect: React.FC<{
   label: string;
@@ -43,17 +36,8 @@ export const PerpsProTradeSelect: React.FC<{
   showCaret?: boolean;
   style?: ViewStyle;
   textStyle?: StyleProp<TextStyle>;
-  useReadableTextVariant?: boolean;
 }> = React.memo(
-  ({
-    disabled,
-    label,
-    onPress,
-    showCaret = true,
-    style,
-    textStyle,
-    useReadableTextVariant = true,
-  }) => {
+  ({ disabled, label, onPress, showCaret = true, style, textStyle }) => {
     const { colors2024, styles } = useTheme2024({ getStyle });
     return (
       <Pressable
@@ -63,13 +47,7 @@ export const PerpsProTradeSelect: React.FC<{
         style={[styles.select, disabled ? styles.disabled : null, style]}>
         <Text
           numberOfLines={1}
-          style={[
-            styles.selectText,
-            useReadableTextVariant
-              ? tradeSelectFontStyle
-              : tradeSelectPlainFontStyle,
-            textStyle,
-          ]}>
+          style={[styles.selectText, tradeSelectFontStyle, textStyle]}>
           {label}
         </Text>
         {showCaret ? (

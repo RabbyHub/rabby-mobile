@@ -21,12 +21,13 @@ import {
   getPerpsProBottomSheetChromeStyles,
   PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
   PERPS_PRO_CONFIRM_BUTTON_STYLE,
-  PERPS_PRO_ISOLATED_TEXT_STYLE,
   PERPS_PRO_ORDER_CONFIRMATION_FOOTER_TOP_OFFSET,
 } from '../common/perpsProVisual';
 import {
-  getPerpsProSemanticTagContainerStyle,
-  getPerpsProSemanticTagTextStyle,
+  getPerpsProMetadataTagContainerStyle,
+  getPerpsProMetadataTagTextStyle,
+  getPerpsProTintedTagContainerStyle,
+  getPerpsProTintedTagTextStyle,
 } from '../common/perpsProSemanticTagStyles';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
@@ -133,12 +134,8 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
                 ) : null}
                 <Text
                   numberOfLines={1}
-                  style={[
-                    styles.marketTag,
-                    reviewFacts.marginMode === 'isolated'
-                      ? PERPS_PRO_ISOLATED_TEXT_STYLE
-                      : null,
-                  ]}>
+                  style={styles.marketTag}
+                  testID="perps-pro-order-confirmation-margin-mode-tag">
                   {reviewFacts.marginMode === 'cross' ? 'Cross' : 'Isolated'}{' '}
                   {reviewFacts.leverage}x
                 </Text>
@@ -345,17 +342,15 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     maxWidth: 160,
   },
   marketTag: {
-    ...getPerpsProSemanticTagContainerStyle(colors2024, 'neutral'),
-    ...getPerpsProSemanticTagTextStyle(colors2024, 'neutral', {
-      color: colors2024['neutral-secondary'],
-    }),
+    ...getPerpsProMetadataTagContainerStyle(colors2024),
+    ...getPerpsProMetadataTagTextStyle(colors2024),
     maxWidth: 100,
   },
   directionRow: { flexDirection: 'row', gap: 4 },
-  buyTag: getPerpsProSemanticTagContainerStyle(colors2024, 'positive'),
-  sellTag: getPerpsProSemanticTagContainerStyle(colors2024, 'negative'),
-  buyTagText: getPerpsProSemanticTagTextStyle(colors2024, 'positive'),
-  sellTagText: getPerpsProSemanticTagTextStyle(colors2024, 'negative'),
+  buyTag: getPerpsProTintedTagContainerStyle(colors2024, 'positive'),
+  sellTag: getPerpsProTintedTagContainerStyle(colors2024, 'negative'),
+  buyTagText: getPerpsProTintedTagTextStyle(colors2024, 'positive'),
+  sellTagText: getPerpsProTintedTagTextStyle(colors2024, 'negative'),
   details: {
     borderBottomColor: colors2024['neutral-bg-5'],
     borderBottomWidth: 1,

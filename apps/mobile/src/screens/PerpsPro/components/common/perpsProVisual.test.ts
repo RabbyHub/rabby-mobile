@@ -65,11 +65,9 @@ describe('Perps Pro visual contract', () => {
     );
     expect(getPerpsProIsolatedTextStyle('android')).toEqual({
       fontFamily: 'SF-Pro-Rounded-Medium',
-      fontVariant: ['stylistic-six'],
     });
-    expect(getPerpsProIsolatedTextStyle('ios')).toEqual({
-      fontVariant: ['stylistic-six'],
-    });
+    expect(getPerpsProIsolatedTextStyle('ios')).toEqual({});
+    expect(PERPS_PRO_ISOLATED_TEXT_STYLE.fontVariant).toBeUndefined();
     expect(PERPS_PRO_ORDER_CONFIRMATION_FOOTER_TOP_OFFSET).toBe(24);
     expect(PERPS_PRO_CONFIRM_BUTTON_STYLE).toEqual({ borderRadius: 8 });
   });

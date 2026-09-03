@@ -25,8 +25,8 @@ import {
   PERPS_PRO_CONFIRM_BUTTON_STYLE,
 } from '../common/perpsProVisual';
 import {
-  getPerpsProSemanticTagContainerStyle,
-  getPerpsProSemanticTagTextStyle,
+  getPerpsProTintedTagContainerStyle,
+  getPerpsProTintedTagTextStyle,
 } from '../common/perpsProSemanticTagStyles';
 import type {
   PerpsProCloseDraft,
@@ -114,7 +114,9 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
                 <PerpsProCloseMarketTag sourceTag={market.sourceTag} />
               </View>
               <View style={styles.sideRow}>
-                <View style={isSell ? styles.sellTag : styles.buyTag}>
+                <View
+                  style={isSell ? styles.sellTag : styles.buyTag}
+                  testID="perps-pro-close-confirmation-side-tag">
                   <Text style={isSell ? styles.sellTagText : styles.buyTagText}>
                     {t(
                       isSell
@@ -123,7 +125,9 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
                     )}
                   </Text>
                 </View>
-                <View style={isSell ? styles.shortTag : styles.longTag}>
+                <View
+                  style={isSell ? styles.shortTag : styles.longTag}
+                  testID="perps-pro-close-confirmation-position-tag">
                   <Text
                     style={isSell ? styles.shortTagText : styles.longTagText}>
                     {t(
@@ -222,14 +226,14 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     lineHeight: 20,
   },
   sideRow: { flexDirection: 'row', gap: 4 },
-  buyTag: getPerpsProSemanticTagContainerStyle(colors2024, 'positive'),
-  sellTag: getPerpsProSemanticTagContainerStyle(colors2024, 'negative'),
-  longTag: getPerpsProSemanticTagContainerStyle(colors2024, 'positive'),
-  shortTag: getPerpsProSemanticTagContainerStyle(colors2024, 'negative'),
-  buyTagText: getPerpsProSemanticTagTextStyle(colors2024, 'positive'),
-  sellTagText: getPerpsProSemanticTagTextStyle(colors2024, 'negative'),
-  longTagText: getPerpsProSemanticTagTextStyle(colors2024, 'positive'),
-  shortTagText: getPerpsProSemanticTagTextStyle(colors2024, 'negative'),
+  buyTag: getPerpsProTintedTagContainerStyle(colors2024, 'positive'),
+  sellTag: getPerpsProTintedTagContainerStyle(colors2024, 'negative'),
+  longTag: getPerpsProTintedTagContainerStyle(colors2024, 'positive'),
+  shortTag: getPerpsProTintedTagContainerStyle(colors2024, 'negative'),
+  buyTagText: getPerpsProTintedTagTextStyle(colors2024, 'positive'),
+  sellTagText: getPerpsProTintedTagTextStyle(colors2024, 'negative'),
+  longTagText: getPerpsProTintedTagTextStyle(colors2024, 'positive'),
+  shortTagText: getPerpsProTintedTagTextStyle(colors2024, 'negative'),
   details: { marginTop: 16 },
   detailRow: {
     alignItems: 'center',

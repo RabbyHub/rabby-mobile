@@ -8,8 +8,10 @@ import { useTranslation } from 'react-i18next';
 import type { PerpsOpenOrderViewModel } from '../../model/openOrder';
 import type { PerpsProOpenOrderEditMarketSnapshot } from '../../model/openOrderEdit';
 import {
-  getPerpsProSemanticTagContainerStyle,
-  getPerpsProSemanticTagTextStyle,
+  getPerpsProMetadataTagContainerStyle,
+  getPerpsProMetadataTagTextStyle,
+  getPerpsProTintedTagContainerStyle,
+  getPerpsProTintedTagTextStyle,
 } from '../common/perpsProSemanticTagStyles';
 
 export const PerpsProOpenOrderEditHeader: React.FC<{
@@ -26,18 +28,24 @@ export const PerpsProOpenOrderEditHeader: React.FC<{
           {market.displayPair}
         </Text>
         {market.sourceTag ? (
-          <View style={styles.sourceTag}>
+          <View
+            style={styles.sourceTag}
+            testID="perps-pro-open-order-edit-source">
             <Text style={styles.sourceText}>{market.sourceTag}</Text>
           </View>
         ) : null}
       </View>
       <View style={styles.tags}>
-        <View style={buy ? styles.buyTag : styles.sellTag}>
+        <View
+          style={buy ? styles.buyTag : styles.sellTag}
+          testID="perps-pro-open-order-edit-order-type-tag">
           <Text style={buy ? styles.buyText : styles.sellText}>
             {order.orderType}
           </Text>
         </View>
-        <View style={buy ? styles.buyTag : styles.sellTag}>
+        <View
+          style={buy ? styles.buyTag : styles.sellTag}
+          testID="perps-pro-open-order-edit-side-tag">
           <Text style={buy ? styles.buyText : styles.sellText}>
             {t(
               buy
@@ -66,15 +74,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   sourceTag: {
     alignItems: 'center',
-    ...getPerpsProSemanticTagContainerStyle(colors2024, 'neutral', {
-      backgroundColor: colors2024['neutral-bg-2'],
-    }),
+    ...getPerpsProMetadataTagContainerStyle(colors2024),
     justifyContent: 'center',
   },
-  sourceText: getPerpsProSemanticTagTextStyle(colors2024, 'neutral'),
+  sourceText: getPerpsProMetadataTagTextStyle(colors2024),
   tags: { flexDirection: 'row', gap: 4 },
-  buyTag: getPerpsProSemanticTagContainerStyle(colors2024, 'positive'),
-  sellTag: getPerpsProSemanticTagContainerStyle(colors2024, 'negative'),
-  buyText: getPerpsProSemanticTagTextStyle(colors2024, 'positive'),
-  sellText: getPerpsProSemanticTagTextStyle(colors2024, 'negative'),
+  buyTag: getPerpsProTintedTagContainerStyle(colors2024, 'positive'),
+  sellTag: getPerpsProTintedTagContainerStyle(colors2024, 'negative'),
+  buyText: getPerpsProTintedTagTextStyle(colors2024, 'positive'),
+  sellText: getPerpsProTintedTagTextStyle(colors2024, 'negative'),
 }));

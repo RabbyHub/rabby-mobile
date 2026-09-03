@@ -34,10 +34,13 @@ import {
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
 import { PerpsProMarketPair } from '../common/PerpsProMarketPair';
 import {
-  getPerpsProSemanticTagContainerStyle,
-  getPerpsProSemanticTagTextStyle,
+  getPerpsProMetadataTagContainerStyle,
+  getPerpsProMetadataTagTextStyle,
+  getPerpsProSolidSideTagContainerStyle,
+  getPerpsProSolidSideTagTextStyle,
+  getPerpsProTintedTagContainerStyle,
+  getPerpsProTintedTagTextStyle,
 } from '../common/perpsProSemanticTagStyles';
-import { PERPS_PRO_ISOLATED_TEXT_STYLE } from '../common/perpsProVisual';
 import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 import {
   resolvePerpsProPositionMetricCollision,
@@ -364,13 +367,7 @@ export const PerpsProPositionCard: React.FC<{
           <View
             style={styles.modeTag}
             testID={`perps-pro-position-mode-${position.key}`}>
-            <Text
-              style={[
-                styles.modeText,
-                position.marginMode === 'isolated'
-                  ? PERPS_PRO_ISOLATED_TEXT_STYLE
-                  : null,
-              ]}>
+            <Text style={styles.modeText}>
               {position.marginMode === 'cross'
                 ? t('page.perps.pro.positions.cross')
                 : t('page.perps.pro.positions.isolated')}
@@ -721,35 +718,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 4,
   },
   longSide: {
-    alignItems: 'center',
-    backgroundColor: colors2024['green-default'],
-    borderRadius: 2,
-    height: 18,
-    justifyContent: 'center',
-    width: 16,
+    ...getPerpsProSolidSideTagContainerStyle(colors2024, 'positive'),
   },
   shortSide: {
-    alignItems: 'center',
-    backgroundColor: colors2024['red-default'],
-    borderRadius: 2,
-    height: 18,
-    justifyContent: 'center',
-    width: 16,
+    ...getPerpsProSolidSideTagContainerStyle(colors2024, 'negative'),
   },
-  longSideText: {
-    color: colors2024['neutral-bg-1'],
-    fontFamily: 'SF Pro',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
-  },
-  shortSideText: {
-    color: colors2024['neutral-bg-1'],
-    fontFamily: 'SF Pro',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
-  },
+  longSideText: getPerpsProSolidSideTagTextStyle(colors2024),
+  shortSideText: getPerpsProSolidSideTagTextStyle(colors2024),
   coin: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro',
@@ -760,37 +735,25 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   marketButton: { flexShrink: 1, maxWidth: 140 },
   longTag: {
-    ...getPerpsProSemanticTagContainerStyle(colors2024, 'positive', {
-      variant: 'compact',
-    }),
+    ...getPerpsProTintedTagContainerStyle(colors2024, 'positive'),
     justifyContent: 'center',
   },
   shortTag: {
-    ...getPerpsProSemanticTagContainerStyle(colors2024, 'negative', {
-      variant: 'compact',
-    }),
+    ...getPerpsProTintedTagContainerStyle(colors2024, 'negative'),
     justifyContent: 'center',
   },
-  longText: getPerpsProSemanticTagTextStyle(colors2024, 'positive'),
-  shortText: getPerpsProSemanticTagTextStyle(colors2024, 'negative'),
+  longText: getPerpsProTintedTagTextStyle(colors2024, 'positive'),
+  shortText: getPerpsProTintedTagTextStyle(colors2024, 'negative'),
   modeTag: {
-    ...getPerpsProSemanticTagContainerStyle(colors2024, 'neutral', {
-      variant: 'compact',
-    }),
+    ...getPerpsProMetadataTagContainerStyle(colors2024),
     justifyContent: 'center',
   },
-  modeText: getPerpsProSemanticTagTextStyle(colors2024, 'neutral', {
-    color: colors2024['neutral-secondary'],
-  }),
+  modeText: getPerpsProMetadataTagTextStyle(colors2024),
   sourceTag: {
-    ...getPerpsProSemanticTagContainerStyle(colors2024, 'neutral', {
-      variant: 'compact',
-    }),
+    ...getPerpsProMetadataTagContainerStyle(colors2024),
     justifyContent: 'center',
   },
-  sourceText: getPerpsProSemanticTagTextStyle(colors2024, 'neutral', {
-    color: colors2024['neutral-secondary'],
-  }),
+  sourceText: getPerpsProMetadataTagTextStyle(colors2024),
   pnlRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

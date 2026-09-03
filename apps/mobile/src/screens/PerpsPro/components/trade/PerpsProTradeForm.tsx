@@ -17,7 +17,6 @@ import {
 import type { PerpsProTradeController } from '../../scene/usePerpsProTrade';
 import { formatPerpsProDecimal } from '../../utils/format';
 import { PerpsProSelectCaret } from '../common/PerpsProSelectCaret';
-import { PERPS_PRO_ISOLATED_TEXT_STYLE } from '../common/perpsProVisual';
 import { usePerpsProDismissKeyboard } from '../common/usePerpsProDismissKeyboard';
 import { PerpsProLeverageSheet } from '../positions/PerpsProLeverageSheet';
 import { PerpsProBboSheet } from './PerpsProBboSheet';
@@ -155,11 +154,6 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
             }}
             showCaret={false}
             style={styles.flexItem}
-            textStyle={
-              configurationReady && controller.marginMode === 'isolated'
-                ? PERPS_PRO_ISOLATED_TEXT_STYLE
-                : undefined
-            }
           />
           <PerpsProTradeSelect
             disabled={!configurationReady}
@@ -167,7 +161,6 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
             onPress={() => openSheet('leverage')}
             showCaret={false}
             style={styles.flexItem}
-            useReadableTextVariant={false}
           />
         </View>
         <PerpsProTradeSelect

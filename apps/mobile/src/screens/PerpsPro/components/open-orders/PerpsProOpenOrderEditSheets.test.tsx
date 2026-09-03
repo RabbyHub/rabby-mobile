@@ -251,6 +251,58 @@ describe('Perps Pro open order edit sheets', () => {
     expect(
       screen.getByLabelText('page.perps.pro.openOrders.amount').props.value,
     ).toBe('50.00');
+    const source = screen.getByText('xyz');
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-open-order-edit-source').props.style,
+      ),
+    ).toEqual({
+      alignItems: 'center',
+      backgroundColor: 'neutral-bg-5',
+      borderRadius: 4,
+      justifyContent: 'center',
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    });
+    const sourceTextStyle = StyleSheet.flatten(source.props.style);
+    expect(sourceTextStyle).toEqual({
+      color: 'neutral-foot',
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    });
+    expect(sourceTextStyle.fontVariant).toBeUndefined();
+    for (const testID of [
+      'perps-pro-open-order-edit-order-type-tag',
+      'perps-pro-open-order-edit-side-tag',
+    ]) {
+      const tagStyle = StyleSheet.flatten(
+        screen.getByTestId(testID).props.style,
+      );
+      expect(tagStyle).toMatchObject({
+        backgroundColor: 'green-light-1',
+        borderRadius: 4,
+        paddingHorizontal: 4,
+        paddingVertical: 1,
+      });
+      expect(tagStyle.borderColor).toBeUndefined();
+      expect(tagStyle.borderWidth).toBeUndefined();
+    }
+    expect(screen.getByText('Limit').props.style).toMatchObject({
+      color: 'green-default',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    });
+    expect(
+      screen.getByText('page.perps.pro.openOrders.buy').props.style,
+    ).toMatchObject({
+      color: 'green-default',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    });
   });
 
   it('keeps the Basic Bottom Sheet inputs under native cursor ownership', () => {
@@ -370,6 +422,36 @@ describe('Perps Pro open order edit sheets', () => {
     expect(
       screen.getByLabelText('page.perps.pro.openOrders.amount').props.value,
     ).toBe('100% (≈50.00)');
+    for (const testID of [
+      'perps-pro-open-order-edit-order-type-tag',
+      'perps-pro-open-order-edit-side-tag',
+    ]) {
+      const tagStyle = StyleSheet.flatten(
+        screen.getByTestId(testID).props.style,
+      );
+      expect(tagStyle).toMatchObject({
+        backgroundColor: 'red-light-1',
+        borderRadius: 4,
+        paddingHorizontal: 4,
+        paddingVertical: 1,
+      });
+      expect(tagStyle.borderColor).toBeUndefined();
+      expect(tagStyle.borderWidth).toBeUndefined();
+    }
+    expect(screen.getByText('Take Profit Market').props.style).toMatchObject({
+      color: 'red-default',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    });
+    expect(
+      screen.getByText('page.perps.pro.openOrders.sell').props.style,
+    ).toMatchObject({
+      color: 'red-default',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    });
     fireEvent.press(
       screen.getByLabelText('page.perps.pro.openOrders.estimatedPnl'),
     );
@@ -541,6 +623,11 @@ describe('Perps Pro open order edit sheets', () => {
           .props.style,
       ),
     ).toMatchObject({ top: 186 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-open-order-edit-side-tag').props.style,
+      ),
+    ).toMatchObject({ backgroundColor: 'green-light-1', borderRadius: 4 });
     const checkbox = screen.getByRole('checkbox');
     expect(checkbox.props.accessibilityState).toMatchObject({ checked: false });
     fireEvent.press(checkbox);
@@ -616,5 +703,10 @@ describe('Perps Pro open order edit sheets', () => {
           .props.style,
       ),
     ).toMatchObject({ top: 210 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-open-order-edit-side-tag').props.style,
+      ),
+    ).toMatchObject({ backgroundColor: 'red-light-1', borderRadius: 4 });
   });
 });

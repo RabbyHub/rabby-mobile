@@ -72,7 +72,6 @@ export const getPerpsProIsolatedTextStyle = (
   platform: typeof Platform.OS,
 ): TextStyle => ({
   ...(platform === 'android' ? { fontFamily: 'SF-Pro-Rounded-Medium' } : null),
-  fontVariant: ['stylistic-six'],
 });
 
 export const PERPS_PRO_ISOLATED_TEXT_STYLE = getPerpsProIsolatedTextStyle(

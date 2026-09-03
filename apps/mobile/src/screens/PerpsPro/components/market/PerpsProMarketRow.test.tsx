@@ -173,17 +173,22 @@ describe('PerpsProMarketRow', () => {
         lineHeight: 20,
       }),
     );
-    expect(screen.getByText('xyz').props.style).toEqual(
-      expect.objectContaining({
-        borderRadius: 2,
-        borderWidth: 0.5,
-        fontSize: 10,
-        fontWeight: '500',
-        height: 14,
-        lineHeight: 12,
-        paddingHorizontal: 4,
-      }),
-    );
+    const sourceStyle = StyleSheet.flatten(screen.getByText('xyz').props.style);
+    expect(sourceStyle).toEqual({
+      backgroundColor: 'neutral-bg-5',
+      borderRadius: 4,
+      color: 'neutral-foot',
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+      maxWidth: 52,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    });
+    expect(sourceStyle.borderColor).toBeUndefined();
+    expect(sourceStyle.borderWidth).toBeUndefined();
+    expect(sourceStyle.fontVariant).toBeUndefined();
     expect(screen.getByText('Alpha').props.style).toEqual(
       expect.objectContaining({
         flexShrink: 1,

@@ -16,9 +16,10 @@ import {
   formatPerpsProVariableDecimal,
 } from '../../utils/format';
 import {
-  getPerpsProSemanticTagContainerStyle,
-  getPerpsProSemanticTagTextStyle,
-  PERPS_PRO_LIGHT_NEUTRAL_TAG_BACKGROUND,
+  getPerpsProMetadataTagContainerStyle,
+  getPerpsProMetadataTagTextStyle,
+  getPerpsProTintedTagContainerStyle,
+  getPerpsProTintedTagTextStyle,
 } from '../common/perpsProSemanticTagStyles';
 import { PerpsProMarketPair } from '../common/PerpsProMarketPair';
 
@@ -284,7 +285,7 @@ export const PerpsProOpenOrderCard: React.FC<{
 
 PerpsProOpenOrderCard.displayName = 'PerpsProOpenOrderCard';
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   row: {
     borderBottomColor: colors2024['neutral-bg-5'],
     borderBottomWidth: 1,
@@ -315,14 +316,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 20,
   },
   marketButton: { flexShrink: 1 },
-  sourceTag: {
-    ...getPerpsProSemanticTagContainerStyle(colors2024, 'neutral', {
-      backgroundColor: isLight
-        ? PERPS_PRO_LIGHT_NEUTRAL_TAG_BACKGROUND
-        : colors2024['neutral-bg-5'],
-    }),
-  },
-  sourceText: getPerpsProSemanticTagTextStyle(colors2024, 'neutral'),
+  sourceTag: getPerpsProMetadataTagContainerStyle(colors2024),
+  sourceText: getPerpsProMetadataTagTextStyle(colors2024),
   metaRow: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -330,10 +325,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 4,
     marginTop: 2,
   },
-  buyTag: getPerpsProSemanticTagContainerStyle(colors2024, 'positive'),
-  sellTag: getPerpsProSemanticTagContainerStyle(colors2024, 'negative'),
-  buyText: getPerpsProSemanticTagTextStyle(colors2024, 'positive'),
-  sellText: getPerpsProSemanticTagTextStyle(colors2024, 'negative'),
+  buyTag: getPerpsProTintedTagContainerStyle(colors2024, 'positive'),
+  sellTag: getPerpsProTintedTagContainerStyle(colors2024, 'negative'),
+  buyText: getPerpsProTintedTagTextStyle(colors2024, 'positive'),
+  sellText: getPerpsProTintedTagTextStyle(colors2024, 'negative'),
   time: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro',

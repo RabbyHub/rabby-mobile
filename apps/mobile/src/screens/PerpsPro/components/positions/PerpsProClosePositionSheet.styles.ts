@@ -6,8 +6,8 @@ import {
   resolvePerpsProFieldBackground,
 } from '../common/perpsProVisual';
 import {
-  getPerpsProSemanticTagContainerStyle,
-  getPerpsProSemanticTagTextStyle,
+  getPerpsProTintedTagContainerStyle,
+  getPerpsProTintedTagTextStyle,
 } from '../common/perpsProSemanticTagStyles';
 
 export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
@@ -37,10 +37,10 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
       fontWeight: '500',
       lineHeight: 18,
     },
-    longTag: getPerpsProSemanticTagContainerStyle(colors2024, 'positive'),
-    shortTag: getPerpsProSemanticTagContainerStyle(colors2024, 'negative'),
-    longTagText: getPerpsProSemanticTagTextStyle(colors2024, 'positive'),
-    shortTagText: getPerpsProSemanticTagTextStyle(colors2024, 'negative'),
+    longTag: getPerpsProTintedTagContainerStyle(colors2024, 'positive'),
+    shortTag: getPerpsProTintedTagContainerStyle(colors2024, 'negative'),
+    longTagText: getPerpsProTintedTagTextStyle(colors2024, 'positive'),
+    shortTagText: getPerpsProTintedTagTextStyle(colors2024, 'negative'),
     priceSummaryRow: {
       alignItems: 'center',
       flexDirection: 'row',
