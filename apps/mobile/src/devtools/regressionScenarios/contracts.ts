@@ -17,6 +17,12 @@ export const CORE_REGRESSION_SCENARIO_IDS = [
   'app-background-restore',
 ] as const;
 
+// Deliberate capacity probes are started explicitly with their own fixture and
+// must never become part of the ordinary core/focused/smoke suites.
+export const EXPERIMENTAL_REGRESSION_SCENARIO_IDS = [
+  'high-cardinality-assets',
+] as const;
+
 export const FOCUSED_REGRESSION_SCENARIO_IDS = [
   'dapp-browser',
   'dapp-connect',
@@ -37,17 +43,21 @@ export const FOCUSED_REGRESSION_SCENARIO_IDS = [
   'approvals-entry',
   'rabby-points-entry',
   'convert-dust-entry',
+  'worker-thread',
 ] as const;
 
 export const REGRESSION_SCENARIO_IDS = [
   ...CORE_REGRESSION_SCENARIO_IDS,
   ...FOCUSED_REGRESSION_SCENARIO_IDS,
+  ...EXPERIMENTAL_REGRESSION_SCENARIO_IDS,
 ] as const;
 
 export type CoreRegressionScenarioId =
   (typeof CORE_REGRESSION_SCENARIO_IDS)[number];
 export type FocusedRegressionScenarioId =
   (typeof FOCUSED_REGRESSION_SCENARIO_IDS)[number];
+export type ExperimentalRegressionScenarioId =
+  (typeof EXPERIMENTAL_REGRESSION_SCENARIO_IDS)[number];
 export type RegressionScenarioId = (typeof REGRESSION_SCENARIO_IDS)[number];
 
 export const REGRESSION_SCREEN_IDS = [
