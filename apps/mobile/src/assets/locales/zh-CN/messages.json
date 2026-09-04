@@ -343,6 +343,12 @@
       },
       "addressNote": "地址备注",
       "noGasRequired": "无需 Gas",
+      "gasSelectorTitle": "Gas",
+      "swapGasLevel": {
+        "normal": "正常",
+        "fast": "快速",
+        "instant": "即时"
+      },
       "unwrap": "解除封装代币",
       "enoughSafeSigCollected": "已收集到足够的签名",
       "gasNotRequireForSafeTransaction": "Safe 交易不需要 Gas 费",
@@ -958,6 +964,7 @@
       "best": "最佳",
       "search-by-name-address": "通过名称 / 地址搜索",
       "hidden-no-quote-rates_other": "{{count}} 汇率不可用",
+      "preferMEV": "MEV 防护",
       "slippage-tolerance": "滑点容忍度",
       "insufficient": "余额不足：",
       "no-slippage-for-wrap": "封装代币无滑点",
@@ -994,7 +1001,8 @@
       "selectChainModalTitle": "选择链",
       "results": "结果",
       "approve": "授权",
-      "market-closed": "市场未开放：不支持下单。"
+      "market-closed": "市场未开放：不支持下单。",
+      "quotes": "报价"
     },
     "dashboard": {
       "hd": {
@@ -1119,6 +1127,9 @@
         "tip1": "截图可能同步到云端或其他设备；如果设备丢失、被盗或遭到入侵，截图可能被他人访问。",
         "title": "截图并不安全",
         "tip2": "应用程序或恶意软件可以读取您照片库中存储的图像。"
+      },
+      "rateModalTriggerOnHome": {
+        "title": "为 Rabby 钱包评分"
       }
     },
     "signText": {
@@ -1688,7 +1699,8 @@
         "minAmountRequired": "最低充值金额为 $1",
         "estReceiveTip": "服务通过 {{name}} 处理，可能会有滑点。",
         "suggestedToken": "建议的代币",
-        "noAvailableToken": "没有可用的代币"
+        "noAvailableToken": "没有可用的代币",
+        "priceImpactLoss": "价格影响：您正在损失 {{usd}}。"
       },
       "withdrawPopup": {
         "noEnoughGas": "金额过低，无法支付 Gas 费用",
@@ -1747,7 +1759,9 @@
       "lowBalance": "您的 Gas 不足（<$1.00）。请充值 Gas，以确保后续交易顺利进行。",
       "gasBalance": "Gas 余额",
       "depositSubmitted": "充值已提交",
-      "depositWith": "充值方式"
+      "depositWith": "充值方式",
+      "gasToken": "Gas 代币",
+      "title": "GasAccount"
     },
     "search": {
       "header": {
@@ -3494,7 +3508,8 @@
         "skipText": "1 天内不再显示此弹窗"
       },
       "alertText": "第三方 DApp：如遇使用问题，请联系 DApp 支持。Rabby 仅提供浏览功能。",
-      "title": "截图报告问题"
+      "title": "截图报告问题",
+      "submitFailed": "提交失败。"
     },
     "submitFeedbackSuccessModal": {
       "desc": "提交成功！"

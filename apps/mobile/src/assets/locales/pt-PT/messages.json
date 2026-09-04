@@ -180,7 +180,8 @@
         "skipText": "Não mostrar esta janela durante 1 dia"
       },
       "alertText": "DApp de terceiros: para problemas de utilização, contacte o suporte da DApp. A Rabby fornece apenas acesso de visualização.",
-      "title": "Captura de ecrã para comunicar um erro"
+      "title": "Captura de ecrã para comunicar um erro",
+      "submitFailed": "Falha ao submeter."
     },
     "submitFeedbackSuccessModal": {
       "desc": "Enviado com sucesso!"
@@ -482,6 +483,12 @@
       "gasLimitTitle": "Limite de gas",
       "myNativeTokenBalance": "O meu saldo de Gas:",
       "noGasRequired": "Nenhum gas necessário",
+      "gasSelectorTitle": "Gas",
+      "swapGasLevel": {
+        "normal": "Normal",
+        "fast": "Rápido",
+        "instant": "Instantâneo"
+      },
       "myMark": "Minha marca",
       "contractAddress": "Endereço do contrato",
       "blocked": "Bloqueado",
@@ -1070,6 +1077,7 @@
       "title": "Swap",
       "no-transaction-records": "Sem registos de transações",
       "hidden-no-quote-rates_other": "{{count}} taxas indisponíveis",
+      "preferMEV": "Proteção contra MEV",
       "from": "De",
       "insufficient-balance": "Saldo insuficiente",
       "no-slippage-for-wrap": "Sem slippage para Wrap",
@@ -1117,7 +1125,8 @@
       "selectChainModalTitle": "Selecionar rede",
       "results": "Resultados",
       "approve": "Aprovar",
-      "market-closed": "Mercado fechado: a colocação de ordens não é suportada."
+      "market-closed": "Mercado fechado: a colocação de ordens não é suportada.",
+      "quotes": "Cotações"
     },
     "approvals": {
       "title": "Aprovações",
@@ -1284,6 +1293,9 @@
         "tip3": "Qualquer pessoa que obtenha a sua frase-semente pode assumir o controlo total da sua carteira, sem possibilidade de reversão.",
         "tip1": "As capturas de ecrã podem sincronizar para a nuvem ou outros dispositivos, e podem ser acedidas se um dispositivo for perdido, roubado ou comprometido.",
         "subTitle": "Guardar a sua frase-semente como imagem pode expô-la; anotá-la é uma opção mais segura."
+      },
+      "rateModalTriggerOnHome": {
+        "title": "Avaliar Rabby Wallet"
       }
     },
     "newAddress": {
@@ -2019,7 +2031,8 @@
         "selectToken": "Selecionar token para depositar",
         "suggestedToken": "Tokens sugeridos",
         "balanceLabel": "Saldo",
-        "noAvailableToken": "Nenhum token disponível"
+        "noAvailableToken": "Nenhum token disponível",
+        "priceImpactLoss": "Impacto no preço: Está a perder {{usd}}."
       },
       "withdrawPopup": {
         "noEnoughGas": "Montante demasiado baixo para cobrir as taxas de gas.",
@@ -2079,7 +2092,9 @@
       "depositFailed": "Depósito falhou",
       "lowBalance": "Não tem gas suficiente (<$1.00). Deposite gas para garantir que as transações futuras decorrem sem problemas.",
       "depositSubmitted": "Depósito submetido",
-      "depositWith": "Depositar via"
+      "depositWith": "Depositar via",
+      "gasToken": "Token de gas",
+      "title": "GasAccount"
     },
     "settingModal": {
       "themeMode": {
