@@ -1023,6 +1023,7 @@ export const useTokenPair = ({
   const rateLimitRef = useRef(new RequestRateLimiter(1000 * 30, 10));
 
   const [rateLimit, setRateLimit] = useState(false);
+  const [isDraggingSlider, setIsDraggingSlider] = useState<boolean>(false);
 
   const { error: quotesError, runAsync: _runGetAllQuotes } = useRequest(
     async (currentFetchId: number) => {
@@ -1078,17 +1079,22 @@ export const useTokenPair = ({
           account,
         });
       }
+      return { skipped: true as const };
     },
     {
       manual: true,
-      onFinally(params) {
+      onFinally(params, data) {
         // wait for progress animation finish
         setTimeout(() => {
-          if (params[0] === fetchIdRef.current) {
-            flushPendingQuoteUpdates(params[0]);
-            setQuoteRequestFinished(true);
-            setQuoteLoading(false);
+          if (
+            params[0] !== fetchIdRef.current ||
+            (data != null && 'skipped' in data && data.skipped)
+          ) {
+            return;
           }
+          flushPendingQuoteUpdates(params[0]);
+          setQuoteRequestFinished(true);
+          setQuoteLoading(false);
         }, 300);
       },
     },
@@ -1147,6 +1153,7 @@ export const useTokenPair = ({
     chain,
     feeRate,
     payAmount,
+    isDraggingSlider,
     runGetAllQuotes,
     setActiveProvider,
     // auto slippage
@@ -1345,8 +1352,6 @@ export const useTokenPair = ({
   const [slider, setSlider] = useState<number>(0);
 
   const [swapUseSlider, setSwapUseSlider] = useState<boolean>(false);
-
-  const [isDraggingSlider, setIsDraggingSlider] = useState<boolean>(false);
 
   const handleSlider100 = useCallback(() => {
     if (!payToken) {
