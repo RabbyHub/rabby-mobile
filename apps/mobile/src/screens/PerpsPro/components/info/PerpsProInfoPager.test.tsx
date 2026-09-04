@@ -540,6 +540,9 @@ describe('PerpsProInfoPager', () => {
     });
     const pager = screen.getByTestId('perps-pro-info-pager');
 
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'dragging' },
+    });
     fireEvent(pager, 'pageScroll', {
       nativeEvent: { offset: 0.3, position: 0 },
     });
@@ -573,6 +576,9 @@ describe('PerpsProInfoPager', () => {
     });
     const pager = screen.getByTestId('perps-pro-info-pager');
 
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'dragging' },
+    });
     fireEvent(pager, 'pageScroll', {
       nativeEvent: { offset: 0.25, position: 0 },
     });
@@ -590,6 +596,100 @@ describe('PerpsProInfoPager', () => {
     expect(scrollBridge.touchIntent.value).toBe(
       PERPS_PRO_INFO_TOUCH_INTENT.idle,
     );
+  });
+
+  it('ignores Android progress that has no native dragging owner', () => {
+    const indicatorPosition = { value: 2 } as SharedValue<number>;
+    const onPageDragStart = jest.fn();
+    const onPagePreview = jest.fn();
+    const onPageSelected = jest.fn();
+    const scrollBridge = createScrollBridge();
+    scrollBridge.activeIndex.value = 2;
+    scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.pending;
+    scrollBridge.touchSessionId.value = 17;
+    renderPager({
+      activeTab: 'account',
+      authorizeNativePageGestures: true,
+      indicatorPosition,
+      onPageDragStart,
+      onPagePreview,
+      onPageSelected,
+      scrollBridge,
+    });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.2, position: 1 },
+    });
+
+    expect(indicatorPosition.value).toBe(2);
+    expect(onPageDragStart).not.toHaveBeenCalled();
+    expect(onPagePreview).not.toHaveBeenCalled();
+    expect(onPageSelected).not.toHaveBeenCalled();
+    expect(scrollBridge.pageGestureActive.value).toBe(false);
+  });
+
+  it('keeps Account selected after an unauthorized Android selection emits trailing progress', () => {
+    const indicatorPosition = { value: 2 } as SharedValue<number>;
+    const onPageDragStart = jest.fn();
+    const onPagePreview = jest.fn();
+    const onPageSelected = jest.fn();
+    const scrollBridge = createScrollBridge();
+    scrollBridge.activeIndex.value = 2;
+    scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.pending;
+    scrollBridge.touchSessionId.value = 19;
+    renderPager({
+      activeTab: 'account',
+      authorizeNativePageGestures: true,
+      indicatorPosition,
+      onPageDragStart,
+      onPagePreview,
+      onPageSelected,
+      scrollBridge,
+    });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'dragging' },
+    });
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.2, position: 1 },
+    });
+
+    expect(mockSetPageWithoutAnimation).toHaveBeenCalledWith(2);
+    expect(indicatorPosition.value).toBe(2);
+    expect(onPageDragStart).not.toHaveBeenCalled();
+    expect(onPagePreview).not.toHaveBeenCalledWith('openOrders');
+    expect(onPageSelected).not.toHaveBeenCalled();
+    expect(scrollBridge.activeIndex.value).toBe(2);
+  });
+
+  it('does not authorize an older Android visual transition with a newer touch session', () => {
+    const indicatorPosition = { value: 0 } as SharedValue<number>;
+    const onPageSelected = jest.fn();
+    const scrollBridge = createScrollBridge();
+    scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.pending;
+    scrollBridge.touchSessionId.value = 23;
+    renderPager({
+      authorizeNativePageGestures: true,
+      indicatorPosition,
+      onPageSelected,
+      scrollBridge,
+    });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'dragging' },
+    });
+    scrollBridge.touchSessionId.value = 24;
+    scrollBridge.horizontalTouchSessionId.value = 24;
+    scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.horizontal;
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+
+    expect(mockSetPageWithoutAnimation).toHaveBeenCalledWith(0);
+    expect(indicatorPosition.value).toBe(0);
+    expect(onPageSelected).not.toHaveBeenCalled();
   });
 
   it('commits an Android selection authorized by the current horizontal touch', () => {

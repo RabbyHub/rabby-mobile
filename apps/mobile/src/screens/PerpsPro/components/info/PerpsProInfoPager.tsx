@@ -133,17 +133,17 @@ type PerpsProInfoListHandle = {
 };
 
 const isPerpsProInfoHorizontalTouchAuthorized = (
-  controller?: PerpsProInfoScrollBridgeController,
+  controller: PerpsProInfoScrollBridgeController | undefined,
+  expectedTouchSessionId: number,
 ) => {
   'worklet';
-  if (!controller) {
+  if (!controller || expectedTouchSessionId <= 0) {
     return false;
   }
-  const touchSessionId = controller.touchSessionId.value;
   return (
     controller.touchIntent.value === PERPS_PRO_INFO_TOUCH_INTENT.horizontal &&
-    touchSessionId > 0 &&
-    controller.horizontalTouchSessionId.value === touchSessionId
+    controller.touchSessionId.value === expectedTouchSessionId &&
+    controller.horizontalTouchSessionId.value === expectedTouchSessionId
   );
 };
 
@@ -206,6 +206,7 @@ const PerpsProInfoPagerInner = <Row,>(
   const isPreviewGestureActive = useSharedValue(false);
   const isIndicatorScrollActive = useSharedValue(false);
   const isNativeGestureVisualActive = useSharedValue(false);
+  const nativeGestureVisualTouchSessionId = useSharedValue(0);
   const programmaticSelectionTargetPosition = useSharedValue(-1);
   const transitionShouldNotifySelection = useSharedValue(true);
   const previewGestureSessionId = useSharedValue(0);
@@ -342,6 +343,7 @@ const PerpsProInfoPagerInner = <Row,>(
           (programmaticSelectionTargetPosition.value >= 0 &&
             programmaticSelectionTargetPosition.value !== targetIndex));
       isNativeGestureVisualActive.value = false;
+      nativeGestureVisualTouchSessionId.value = 0;
       if (
         targetIndex < 0 ||
         (targetIndex === currentPosition && !isReturningFromActiveTransition)
@@ -390,6 +392,7 @@ const PerpsProInfoPagerInner = <Row,>(
       isIndicatorScrollActive,
       isNativeGestureVisualActive,
       isPreviewGestureActive,
+      nativeGestureVisualTouchSessionId,
       pageTransitionEpoch,
       preparePages,
       programmaticSelectionTargetPosition,
@@ -534,6 +537,7 @@ const PerpsProInfoPagerInner = <Row,>(
         isPreviewGestureActive.value = false;
         isIndicatorScrollActive.value = false;
         isNativeGestureVisualActive.value = false;
+        nativeGestureVisualTouchSessionId.value = 0;
         settledPagePosition.value = position;
         previewPagePosition.value = position;
         visualSettledPagePosition.value = position;
@@ -559,7 +563,10 @@ const PerpsProInfoPagerInner = <Row,>(
       }
       const gestureAuthorized =
         !authorizeNativePageGestures ||
-        isPerpsProInfoHorizontalTouchAuthorized(scrollBridge);
+        isPerpsProInfoHorizontalTouchAuthorized(
+          scrollBridge,
+          nativeGestureVisualTouchSessionId.value,
+        );
       const authorized =
         !changed || programmaticAuthorized || gestureAuthorized;
 
@@ -567,6 +574,7 @@ const PerpsProInfoPagerInner = <Row,>(
         isPreviewGestureActive.value = false;
         isIndicatorScrollActive.value = false;
         isNativeGestureVisualActive.value = false;
+        nativeGestureVisualTouchSessionId.value = 0;
         programmaticSelectionTargetPosition.value = -1;
         previewPagePosition.value = settledPagePosition.value;
         visualSettledPagePosition.value = settledPagePosition.value;
@@ -616,6 +624,7 @@ const PerpsProInfoPagerInner = <Row,>(
       if (shouldFinalizeAtSelection) {
         isIndicatorScrollActive.value = false;
         isNativeGestureVisualActive.value = false;
+        nativeGestureVisualTouchSessionId.value = 0;
         visualSettledPagePosition.value = position;
         snapPerpsProTabIndicator(indicatorPosition, position);
       } else if (shouldAwaitIosGestureFinalScroll) {
@@ -644,7 +653,7 @@ const PerpsProInfoPagerInner = <Row,>(
     [beginPreviewSession, onPageDragStart, preparePages],
   );
 
-  const beginNativeGestureVisualTracking = () => {
+  const beginNativeGestureVisualTracking = (touchSessionId: number) => {
     'worklet';
     // Android ViewPager2 can move before the scene direction resolver has
     // authorized the touch. Track its physical position immediately while
@@ -656,6 +665,7 @@ const PerpsProInfoPagerInner = <Row,>(
     programmaticSelectionTargetPosition.value = -1;
     isIndicatorScrollActive.value = true;
     isNativeGestureVisualActive.value = true;
+    nativeGestureVisualTouchSessionId.value = touchSessionId;
     previewPagePosition.value = settledPagePosition.value;
     visualSettledPagePosition.value = settledPagePosition.value;
   };
@@ -686,15 +696,22 @@ const PerpsProInfoPagerInner = <Row,>(
           ) {
             return;
           }
-          if (
-            !isNativeGestureVisualActive.value ||
-            selectedTransitionEpoch.value === pageTransitionEpoch.value
-          ) {
-            beginNativeGestureVisualTracking();
+          const touchSessionId = authorizeNativePageGestures
+            ? scrollBridge?.touchSessionId.value ?? 0
+            : 0;
+          if (authorizeNativePageGestures && touchSessionId <= 0) {
+            return;
           }
+          // ViewPager2 dispatches `dragging` before manual `onPageScrolled`.
+          // Make that state transition the only owner-creation boundary so a
+          // late, ownerless progress callback cannot reopen a settled page.
+          beginNativeGestureVisualTracking(touchSessionId);
           if (
             authorizeNativePageGestures &&
-            !isPerpsProInfoHorizontalTouchAuthorized(scrollBridge)
+            !isPerpsProInfoHorizontalTouchAuthorized(
+              scrollBridge,
+              nativeGestureVisualTouchSessionId.value,
+            )
           ) {
             return;
           }
@@ -720,6 +737,7 @@ const PerpsProInfoPagerInner = <Row,>(
           }
           isIndicatorScrollActive.value = false;
           isNativeGestureVisualActive.value = false;
+          nativeGestureVisualTouchSessionId.value = 0;
           snapPerpsProTabIndicator(
             indicatorPosition,
             settledPagePosition.value,
@@ -771,6 +789,7 @@ const PerpsProInfoPagerInner = <Row,>(
           ) {
             isIndicatorScrollActive.value = false;
             isNativeGestureVisualActive.value = false;
+            nativeGestureVisualTouchSessionId.value = 0;
             visualSettledPagePosition.value = settledPagePosition.value;
             snapPerpsProTabIndicator(
               indicatorPosition,
@@ -780,17 +799,15 @@ const PerpsProInfoPagerInner = <Row,>(
           return;
         }
         if (!isNativeGestureVisualActive.value) {
-          const nativePositionChanged =
-            Math.abs(pagePosition - settledPagePosition.value) >= 0.001;
-          if (!authorizeNativePageGestures || !nativePositionChanged) {
-            return;
-          }
-          beginNativeGestureVisualTracking();
+          return;
         }
         indicatorPosition.value = pagePosition;
         if (
           authorizeNativePageGestures &&
-          !isPerpsProInfoHorizontalTouchAuthorized(scrollBridge)
+          !isPerpsProInfoHorizontalTouchAuthorized(
+            scrollBridge,
+            nativeGestureVisualTouchSessionId.value,
+          )
         ) {
           return;
         }
