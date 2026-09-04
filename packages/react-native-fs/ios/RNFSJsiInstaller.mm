@@ -1,4 +1,5 @@
 #import "RNFSJsiInstaller.h"
+#import "RNFSSafeMediaDownloader.h"
 
 #import <React/RCTBridge+Private.h>
 #import <React/RCTUtils.h>
@@ -22,7 +23,14 @@
     return NO;
   }
 
-  rabbyfs::install(*runtime, [(RCTBridge *)cxxBridge jsCallInvoker]);
+  NSArray<NSString *> *cacheDirectories = NSSearchPathForDirectoriesInDomains(
+      NSCachesDirectory, NSUserDomainMask, YES);
+  NSString *cacheDirectory = cacheDirectories.firstObject;
+  rabbyfs::install(
+      *runtime,
+      [(RCTBridge *)cxxBridge jsCallInvoker],
+      cacheDirectory != nil ? cacheDirectory.UTF8String : "",
+      RNFSCreateSafeMediaDownloadStarter());
   return YES;
 }
 

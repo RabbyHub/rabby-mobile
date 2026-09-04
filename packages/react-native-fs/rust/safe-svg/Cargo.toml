@@ -1,0 +1,23 @@
+[package]
+name = "rabby-safe-svg"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95.0"
+publish = false
+license = "MIT"
+
+[lib]
+name = "rabby_safe_svg"
+crate-type = ["staticlib"]
+
+[dependencies]
+resvg = { version = "=0.47.0", default-features = false }
+roxmltree = "=0.21.1"
+sha2 = "=0.10.9"
+
+[profile.release]
+codegen-units = 1
+lto = "thin"
+opt-level = "s"
+panic = "unwind"
+strip = "debuginfo"

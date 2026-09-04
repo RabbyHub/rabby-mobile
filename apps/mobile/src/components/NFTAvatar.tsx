@@ -20,8 +20,6 @@ export default function NFTAvatar<T extends React.ComponentType<any>>({
 } & React.ComponentProps<T>) {
   const { styles } = useThemeStyles(getStyle);
 
-  const isSvgURL = nftImageUrl?.endsWith('.svg');
-
   nftImageUrl = nftImageUrl || '';
 
   return (
@@ -33,10 +31,11 @@ export default function NFTAvatar<T extends React.ComponentType<any>>({
         style,
       ])}>
       <Media
+        retryOnFailure
         failedPlaceholder={<IconDefaultNFT width="100%" height="100%" />}
         type={MEDIA_TYPE.IMAGE_URL}
-        src={isSvgURL ? '' : nftImageUrl}
-        thumbnail={isSvgURL ? '' : nftImageUrl}
+        src={nftImageUrl}
+        thumbnail={nftImageUrl}
         mediaStyle={styles.images}
         style={styles.images}
       />
