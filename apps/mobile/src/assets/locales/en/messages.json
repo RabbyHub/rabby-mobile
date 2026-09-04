@@ -1891,6 +1891,7 @@
       "faceId": "Face ID",
       "touchId": "Touch ID",
       "fingerPrint": "Fingerprint",
+      "biometricsUnavailable": "Biometric authentication is unavailable. Check your system biometric settings and try again.",
       "devicePassword": "Device password",
       "useDevicePassword": "Use device password",
       "autoLockTime": "Auto lock time",
