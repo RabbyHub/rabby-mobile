@@ -52,6 +52,18 @@ export function createLaunchTaskDefinitions(
       },
     },
     {
+      taskKey: 'setupRuntimeSecuritySubscriptions',
+      run: async () => {
+        const { startSetupRuntimeSecuritySubscriptions } =
+          await loadLaunchModule(
+            'setupRuntimeSecuritySubscriptions',
+            'startup/setupRuntimeSecuritySubscriptions',
+            loaders.setupRuntimeSecuritySubscriptions,
+          );
+        startSetupRuntimeSecuritySubscriptions();
+      },
+    },
+    {
       taskKey: 'bootstrapI18nReady',
       run: async () => {
         const { startSubscribeLangChange } = await loadLaunchModule(

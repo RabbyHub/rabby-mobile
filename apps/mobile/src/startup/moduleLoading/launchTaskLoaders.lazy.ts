@@ -11,6 +11,8 @@ export const launchTaskLoaders = {
   globalNetworkPolling: () => import('@/hooks/useGlobalStatus'),
   homePreSplashLocalStateWarmup: () => import('@/setup-home-pre-splash-state'),
   lockUnlockEventBridge: () => import('@/core/apis/lock'),
+  setupRuntimeSecuritySubscriptions: () =>
+    import('@/startup/setupRuntimeSecuritySubscriptions'),
   syncChainMetadataWarmup: () => import('@/core/serviceApi/syncChain'),
   transactionWatchersStart: () =>
     import('@/core/serviceApi/createDeferredServiceApi'),

@@ -114,6 +114,15 @@ export const UpgradePromptModal = registerAppScreen<
     })),
 });
 
+export const BackgroundSecureBlurView = registerAppScreen<
+  typeof import('@/components/customized/BlurViews').BackgroundSecureBlurView
+>({
+  loader: () =>
+    import('@/components/customized/BlurViews').then(m => ({
+      default: m.BackgroundSecureBlurView,
+    })),
+});
+
 export const FloatingDiagnosticsPanel = registerAppScreen<
   typeof import('@/screens/Settings/components/FloatingDiagnosticsPanel').FloatingDiagnosticsPanel
 >({

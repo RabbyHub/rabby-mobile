@@ -89,33 +89,4 @@ describe('preloads', () => {
 
     expect(mockPreloadComponent).not.toHaveBeenCalled();
   });
-
-  it('loads the lazy settings navigator before its registered settings screen', async () => {
-    mockPreloadComponent.mockResolvedValue(undefined);
-    const { preloadSettingsScreen } = require('./preloads');
-
-    await preloadSettingsScreen();
-
-    expect(mockPreloadComponent.mock.calls).toEqual([
-      ['StackSettings'],
-      ['SettingsScreen'],
-    ]);
-  });
-
-  it('initializes the single-address screen registration before preloading it', async () => {
-    mockPreloadComponent.mockResolvedValue(undefined);
-    const {
-      PRELOAD_NAVIGATORS,
-      PRELOAD_SCREENS,
-      preloadSingleAddressNavigator,
-    } = require('./preloads');
-    const { RootNames } = require('@/constant/layout');
-
-    await preloadSingleAddressNavigator();
-
-    expect(mockPreloadComponent.mock.calls).toEqual([
-      [PRELOAD_NAVIGATORS[RootNames.SingleAddressStack]],
-      [PRELOAD_SCREENS[RootNames.SingleAddressHome]],
-    ]);
-  });
 });

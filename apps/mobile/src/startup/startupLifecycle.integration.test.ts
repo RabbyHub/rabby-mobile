@@ -54,6 +54,7 @@ type LifecycleState = {
 
 const EXPECTED_LAUNCH_TASK_LABELS = [
   'lock.unlockEventBridge',
+  'setup.runtimeSecuritySubscriptions',
   'bootstrap.i18nReady',
   'appTimeout.autoLockHydrate',
   'appSettings.autoLockHydrate',
@@ -108,6 +109,11 @@ function createBoundaryLoaders(events: string[]): LaunchTaskLoaderCatalog {
     lockUnlockEventBridge: async () => ({
       startLockUnlockEventBridge: () => {
         events.push('lock:started');
+      },
+    }),
+    setupRuntimeSecuritySubscriptions: async () => ({
+      startSetupRuntimeSecuritySubscriptions: () => {
+        events.push('security:started');
       },
     }),
     bootstrapI18nReady: async () => ({
@@ -301,6 +307,7 @@ describe.each([
         expect.arrayContaining([
           `performance:integration_${name}`,
           'lock:started',
+          'security:started',
           'i18n:started',
           'app-timeout:hydrated',
           'app-settings:hydrated',

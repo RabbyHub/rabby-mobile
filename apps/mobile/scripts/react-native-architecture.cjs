@@ -62,8 +62,15 @@ const resolveReactNativeArchitecture = (environment = process.env) => {
   return architectureEnabled ? 'new' : 'legacy';
 };
 
+const resolveStartupProfilerWorkerDeferral = (environment = process.env) =>
+  parseArchitectureFlag(
+    'RABBY_STARTUP_PROFILER_DEFER_WORKER',
+    environment.RABBY_STARTUP_PROFILER_DEFER_WORKER,
+  ) ?? false;
+
 module.exports = {
   resolveReactNativeArchitecture,
+  resolveStartupProfilerWorkerDeferral,
   isLegacyReactNativeArchitecture: environment =>
     resolveReactNativeArchitecture(environment) === 'legacy',
 };

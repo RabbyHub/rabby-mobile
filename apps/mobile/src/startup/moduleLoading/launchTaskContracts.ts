@@ -30,6 +30,9 @@ export type LaunchTaskLoaderCatalog = {
   lockUnlockEventBridge: LaunchTaskModuleLoader<{
     startLockUnlockEventBridge: () => unknown;
   }>;
+  setupRuntimeSecuritySubscriptions: LaunchTaskModuleLoader<{
+    startSetupRuntimeSecuritySubscriptions: () => unknown;
+  }>;
   syncChainMetadataWarmup: LaunchTaskModuleLoader<{
     ensureSyncChainServiceReady: () => unknown | Promise<unknown>;
   }>;
