@@ -3197,7 +3197,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - RNReanimated (3.19.2):
+  - RNReanimated (3.19.5):
     - boost
     - DoubleConversion
     - fast_float
@@ -3224,11 +3224,11 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNReanimated/reanimated (= 3.19.2)
-    - RNReanimated/worklets (= 3.19.2)
+    - RNReanimated/reanimated (= 3.19.5)
+    - RNReanimated/worklets (= 3.19.5)
     - SocketRocket
     - Yoga
-  - RNReanimated/reanimated (3.19.2):
+  - RNReanimated/reanimated (3.19.5):
     - boost
     - DoubleConversion
     - fast_float
@@ -3255,10 +3255,10 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNReanimated/reanimated/apple (= 3.19.2)
+    - RNReanimated/reanimated/apple (= 3.19.5)
     - SocketRocket
     - Yoga
-  - RNReanimated/reanimated/apple (3.19.2):
+  - RNReanimated/reanimated/apple (3.19.5):
     - boost
     - DoubleConversion
     - fast_float
@@ -3287,7 +3287,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - RNReanimated/worklets (3.19.2):
+  - RNReanimated/worklets (3.19.5):
     - boost
     - DoubleConversion
     - fast_float
@@ -3314,10 +3314,10 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNReanimated/worklets/apple (= 3.19.2)
+    - RNReanimated/worklets/apple (= 3.19.5)
     - SocketRocket
     - Yoga
-  - RNReanimated/worklets/apple (3.19.2):
+  - RNReanimated/worklets/apple (3.19.5):
     - boost
     - DoubleConversion
     - fast_float
@@ -4020,7 +4020,7 @@ SPEC CHECKSUMS:
   RNNotifee: 4a6ee5c7deaf00e005050052d73ee6315dff7ec9
   RNPermissions: a5d0a96eddf4b155c1af78a66ca7f63b1e0146eb
   RNReactNativeHapticFeedback: 108e0779dcc17acfba116cb07d20ff919c188096
-  RNReanimated: 5535e8529e8272abab396641a9135c2718055b14
+  RNReanimated: f0c5851f30b214ad26c2e6a70e7d4b74022d30c7
   RNScreens: df68a9d884c93da2f6f342183b630bac30b770c5
   RNSentry: 0c4143e43acee4334a965a00c1583a316310efee
   RNSVG: 3e87821b2215b30e19f90232247007e5c313a06c

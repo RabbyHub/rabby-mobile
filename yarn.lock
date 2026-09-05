@@ -39272,7 +39272,7 @@ __metadata:
     react-native-quick-base64: "npm:3.0.1"
     react-native-quick-crypto: "npm:1.1.6"
     react-native-randombytes: "npm:^3.6.1"
-    react-native-reanimated: "npm:3.19.2"
+    react-native-reanimated: "npm:3.19.5"
     react-native-root-toast: "npm:4.0.1"
     react-native-safe-area-context: "npm:5.6.2"
     react-native-screens: "npm:4.14.1"
@@ -40379,9 +40379,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-reanimated@npm:3.19.2":
-  version: 3.19.2
-  resolution: "react-native-reanimated@npm:3.19.2"
+"react-native-reanimated@npm:3.19.5":
+  version: 3.19.5
+  resolution: "react-native-reanimated@npm:3.19.5"
   dependencies:
     "@babel/plugin-transform-arrow-functions": "npm:^7.0.0-0"
     "@babel/plugin-transform-class-properties": "npm:^7.0.0-0"
@@ -40399,7 +40399,7 @@ __metadata:
     "@babel/core": ^7.0.0-0
     react: "*"
     react-native: "*"
-  checksum: 10/71c147b7c092cca37125b622805e5acdc82e021994c920fc71469e4dae3a1828c81f2747cf5c4f2dd3b741c8a3cbccfb2197205a75579c9641eff24e500f3337
+  checksum: 10/9d14ee038b161f22e08ea1bef1a3eb87e287f491fb9f9f8dadde26689a41a2e5271c30a9749e6ba4cdc1d82723edb8729d0526faf7d1da9bd2f2fa51e9382ffd
   languageName: node
   linkType: hard
 
