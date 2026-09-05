@@ -19,11 +19,11 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
 +import android.webkit.JsPromptResult;
  import android.widget.FrameLayout;
 +import android.widget.Button;
-
+ 
 +import androidx.annotation.Nullable;
  import androidx.annotation.RequiresApi;
  import androidx.core.content.ContextCompat;
-
+ 
 @@ -28,6 +34,7 @@ import com.facebook.react.bridge.WritableMap;
  import com.facebook.react.common.build.ReactBuildConfig;
  import com.facebook.react.modules.core.PermissionAwareActivity;
@@ -35,7 +35,7 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
 @@ -36,6 +43,24 @@ import java.util.ArrayList;
  import java.util.Collections;
  import java.util.List;
-
+ 
 +import okhttp3.MediaType;
 +import okhttp3.OkHttpClient;
 +import okhttp3.Request;
@@ -58,25 +58,25 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
      protected static final FrameLayout.LayoutParams FULLSCREEN_LAYOUT_PARAMS = new FrameLayout.LayoutParams(
              ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, Gravity.CENTER);
 @@ -54,6 +79,7 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
-
+ 
      protected View mVideoView;
      protected WebChromeClient.CustomViewCallback mCustomViewCallback;
 +    protected boolean blockJsDuringLoading = true;
-
+ 
      /*
       * - Permissions -
 @@ -144,30 +170,33 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
-
+ 
      @Override
      public void onPermissionRequest(final PermissionRequest request) {
 -
          grantedPermissions = new ArrayList<>();
-
+ 
 +        ArrayList<String> requestPermissionIdentifiers = new ArrayList<>();
          ArrayList<String> requestedAndroidPermissions = new ArrayList<>();
          for (String requestedResource : request.getResources()) {
              String androidPermission = null;
-
+ 
              if (requestedResource.equals(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {
                  androidPermission = Manifest.permission.RECORD_AUDIO;
 +                requestPermissionIdentifiers.add("microphone");
@@ -114,7 +114,7 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
 @@ -178,40 +207,128 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
              }
          }
-
+ 
 -        // If all the permissions are already granted, send the response to the WebView synchronously
 -        if (requestedAndroidPermissions.isEmpty()) {
 -            request.grant(grantedPermissions.toArray(new String[0]));
@@ -153,7 +153,7 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
 +            );
          }
 +    }
-
+ 
 -        // Otherwise, ask to Android System for native permissions asynchronously
 -
 -        this.permissionRequest = request;
@@ -161,7 +161,7 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
 +        Handler handler = new Handler();
 +        handler.postDelayed(function, delayMillis);
 +    }
-
+ 
 -        requestPermissions(requestedAndroidPermissions);
 +    private void showPermissionPrompt(
 +        @Nullable CharSequence message,
@@ -188,8 +188,8 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
 +        posButton.setEnabled(false);
 +        this.runDelayed(() -> posButton.setEnabled(true), 500);
      }
-
-
+ 
+ 
      @Override
      public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
 -
@@ -204,7 +204,7 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
 +            */
              geolocationPermissionCallback = callback;
              geolocationPermissionOrigin = origin;
-
+ 
              requestPermissions(Collections.singletonList(Manifest.permission.ACCESS_FINE_LOCATION));
 -
          } else {
@@ -222,7 +222,7 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b
 +            );
          }
      }
-
+ 
 +    @Override
 +    public boolean onJsAlert(WebView view, String url, String message, JsResult result) {
 +        android.graphics.Rect r = new android.graphics.Rect();
@@ -278,12 +278,12 @@ index 6664b6f6eacb37743d049556dc55f613c0244517..315d954165153852fc65c1ad1378a66e
      protected boolean nestedScrollEnabled = false;
 +    protected boolean disableJsPromptLike = false;
      protected ProgressChangedFilter progressChangedFilter;
-
+ 
      /**
 @@ -102,6 +107,10 @@ public class RNCWebView extends WebView implements LifecycleEventListener {
          this.nestedScrollEnabled = nestedScrollEnabled;
      }
-
+ 
 +    public void setDisableJsPromptLike(boolean val) {
 +        this.disableJsPromptLike = val;
 +    }
@@ -294,7 +294,7 @@ index 6664b6f6eacb37743d049556dc55f613c0244517..315d954165153852fc65c1ad1378a66e
 @@ -267,19 +276,36 @@ public class RNCWebView extends WebView implements LifecycleEventListener {
          evaluateJavascript(script, null);
      }
-
+ 
 +    private @Nullable String buildInjectedScript(@Nullable String builtinScript, @Nullable String propScript) {
 +        StringBuilder script = new StringBuilder();
 +        if (!TextUtils.isEmpty(builtinScript)) {
@@ -321,7 +321,7 @@ index 6664b6f6eacb37743d049556dc55f613c0244517..315d954165153852fc65c1ad1378a66e
 +            evaluateJavascriptWithFallback("(function() {\n" + script + ";\n})();");
          }
      }
-
+ 
      public void callInjectedJavaScriptBeforeContentLoaded() {
 +        String script = buildInjectedScript(injectedJSBeforeContentLoadedBuiltin, injectedJSBeforeContentLoaded);
          if (getSettings().getJavaScriptEnabled() &&
@@ -333,14 +333,14 @@ index 6664b6f6eacb37743d049556dc55f613c0244517..315d954165153852fc65c1ad1378a66e
 +            evaluateJavascriptWithFallback("(function() {\n" + script + ";\n})();");
          }
      }
-
+ 
 diff --git a/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java b/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
-index d59e19ce82a5a03a60c558b35171af713719af4a..ceb0d2c6e3ef5376523aa0cb4f5ea0e81b3dc804 100644
+index d59e19ce82a5a03a60c558b35171af713719af4a..5fe78ebba0c80ff2bc6b24c4104faa377a799b6e 100644
 --- a/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
 +++ b/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
 @@ -1,7 +1,9 @@
  package com.reactnativecommunity.webview;
-
+ 
  import android.annotation.TargetApi;
 +import android.content.Intent;
  import android.graphics.Bitmap;
@@ -351,11 +351,11 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..ceb0d2c6e3ef5376523aa0cb4f5ea0e8
 @@ -32,6 +34,8 @@ import com.reactnativecommunity.webview.events.TopLoadingStartEvent;
  import com.reactnativecommunity.webview.events.TopRenderProcessGoneEvent;
  import com.reactnativecommunity.webview.events.TopShouldStartLoadWithRequestEvent;
-
+ 
 +import java.util.Arrays;
 +import java.util.Objects;
  import java.util.concurrent.atomic.AtomicReference;
-
+ 
  public class RNCWebViewClient extends WebViewClient {
 @@ -41,6 +45,8 @@ public class RNCWebViewClient extends WebViewClient {
      protected boolean mLastLoadFailed = false;
@@ -364,12 +364,12 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..ceb0d2c6e3ef5376523aa0cb4f5ea0e8
 +    // Allow list is used to support specific deeplinks in the webview.
 +    private final String[] DEEPLINK_ALLOW_LIST = new String[] {"https://twitter.com/i/wallet/verify"};
      protected @Nullable RNCBasicAuthCredential basicAuthCredential = null;
-
+ 
      public void setIgnoreErrFailedForThisURL(@Nullable String url) {
 @@ -51,12 +57,28 @@ public class RNCWebViewClient extends WebViewClient {
          basicAuthCredential = credential;
      }
-
+ 
 +    private Boolean SetBlockJsDuringLoading(Boolean val, RNCWebView reactWebView) {
 +        RNCWebChromeClient chromeClient = (RNCWebChromeClient) reactWebView.mWebChromeClient;
 +
@@ -388,14 +388,14 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..ceb0d2c6e3ef5376523aa0cb4f5ea0e8
 +        // Only return the URL that the web view is currently showing.
 +        String visibleUrl = webView.getUrl();
 +        Boolean isFinishedLoading = url.equals(visibleUrl);
-
+ 
 -        if (!mLastLoadFailed) {
 +        if (!mLastLoadFailed && isFinishedLoading) {
              RNCWebView reactWebView = (RNCWebView) webView;
 +            this.SetBlockJsDuringLoading(false, reactWebView);
-
+ 
              reactWebView.callInjectedJavaScript();
-
+ 
 @@ -72,7 +94,7 @@ public class RNCWebViewClient extends WebViewClient {
          webView,
          new TopLoadingStartEvent(
@@ -403,7 +403,7 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..ceb0d2c6e3ef5376523aa0cb4f5ea0e8
 -          createWebViewEvent(webView, url)));
 +          createWebViewEvent(webView, url, "updateVisitedHistory", isReload)));
      }
-
+ 
      @Override
 @@ -95,6 +117,7 @@ public class RNCWebViewClient extends WebViewClient {
              final AtomicReference<RNCWebViewModuleImpl.ShouldOverrideUrlLoadingLock.ShouldOverrideCallbackState> lockObject = lock.second;
@@ -413,9 +413,9 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..ceb0d2c6e3ef5376523aa0cb4f5ea0e8
              event.putDouble("lockIdentifier", lockIdentifier);
              rncWebView.dispatchDirectShouldStartLoadWithRequest(event);
 
-@@ -121,14 +145,27 @@ public class RNCWebViewClient extends WebViewClient {
+@@ -121,14 +144,27 @@ public class RNCWebViewClient extends WebViewClient {
              RNCWebViewModuleImpl.shouldOverrideUrlLoadingLock.removeLock(lockIdentifier);
-
+ 
              return shouldOverride;
 -        } else {
 +        } else if (url != null && Arrays.asList(DEEPLINK_ALLOW_LIST).contains(url)) {
@@ -432,7 +432,7 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..ceb0d2c6e3ef5376523aa0cb4f5ea0e8
 +       } else {
              FLog.w(TAG, "Couldn't use blocking synchronous call for onShouldStartLoadWithRequest due to debugging or missing Catalyst instance, falling back to old event-and-load.");
              progressChangedFilter.setWaitingForCommandLoadUrl(true);
-
+ 
              int reactTag = RNCWebViewWrapper.getReactTagFromWebView(view);
 +            WritableMap event = createWebViewEvent(view, url);
 +            event.putString("sourceDocumentURL", view.getUrl() != null ? view.getUrl() : "");
@@ -443,7 +443,7 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..ceb0d2c6e3ef5376523aa0cb4f5ea0e8
              return true;
          }
      }
-@@ -136,8 +172,23 @@ public class RNCWebViewClient extends WebViewClient {
+@@ -136,6 +172,21 @@ public class RNCWebViewClient extends WebViewClient {
      @TargetApi(Build.VERSION_CODES.N)
      @Override
      public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
@@ -465,8 +465,6 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..ceb0d2c6e3ef5376523aa0cb4f5ea0e8
          final String url = request.getUrl().toString();
          return this.shouldOverrideUrlLoading(view, url);
      }
-
-     @Override
 @@ -205,7 +256,7 @@ public class RNCWebViewClient extends WebViewClient {
                  code,
                  description,
@@ -474,11 +472,11 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..ceb0d2c6e3ef5376523aa0cb4f5ea0e8
 -        );
 +            );
      }
-
+ 
      @Override
 @@ -300,12 +351,26 @@ public class RNCWebViewClient extends WebViewClient {
      }
-
+ 
      protected WritableMap createWebViewEvent(WebView webView, String url) {
 +        return createWebViewEvent(webView, url, "unknown", false);
 +    }
@@ -512,9 +510,9 @@ index 4600a8dc5c448a2236d25e40172453f93ae92c45..213520b0fb13b4d4eaa6ca2320c6d118
  import java.net.URL
  import java.util.Locale
 +import java.util.concurrent.ConcurrentHashMap
-
+ 
  val invalidCharRegex = "[\\\\/%\"]".toRegex()
-
+ 
 +private object RNCWebViewBuiltinScripts {
 +    private const val TAG = "RNCWebViewBuiltinScripts"
 +    private val cache = ConcurrentHashMap<String, String>()
@@ -804,7 +802,7 @@ index 4600a8dc5c448a2236d25e40172453f93ae92c45..213520b0fb13b4d4eaa6ca2320c6d118
 @@ -483,11 +758,21 @@ class RNCWebViewManagerImpl {
          view.injectedJS = injectedJavaScript
      }
-
+ 
 +    fun setInjectedJavaScriptBuiltinScriptIds(viewWrapper: RNCWebViewWrapper, value: ReadableArray?) {
 +        val view = viewWrapper.webView
 +        view.injectedJSBuiltin = RNCWebViewBuiltinScripts.resolve(view.themedReactContext, value)
@@ -814,7 +812,7 @@ index 4600a8dc5c448a2236d25e40172453f93ae92c45..213520b0fb13b4d4eaa6ca2320c6d118
          val view = viewWrapper.webView
          view.injectedJSBeforeContentLoaded = value
      }
-
+ 
 +    fun setInjectedJavaScriptBeforeContentLoadedBuiltinScriptIds(viewWrapper: RNCWebViewWrapper, value: ReadableArray?) {
 +        val view = viewWrapper.webView
 +        view.injectedJSBeforeContentLoadedBuiltin = RNCWebViewBuiltinScripts.resolve(view.themedReactContext, value)
@@ -836,13 +834,13 @@ index 4600a8dc5c448a2236d25e40172453f93ae92c45..213520b0fb13b4d4eaa6ca2320c6d118
  }
 \ No newline at end of file
 diff --git a/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewManager.java b/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewManager.java
-index 5bae4aa9e66897473a9083a2c9320c99d72e80d7..5cf879e9f6eb253f4651d46d98f7fb1a6e27eb91 100644
+index 5bae4aa9e66897473a9083a2c9320c99d72e80d7..eff05b085b1baa86112a64ec9b24e8f1646205f6 100644
 --- a/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewManager.java
 +++ b/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewManager.java
 @@ -165,12 +165,24 @@ public class RNCWebViewManager extends ViewGroupManager<RNCWebViewWrapper>
          mRNCWebViewManagerImpl.setInjectedJavaScript(view, value);
      }
-
+ 
 +    @Override
 +    @ReactProp(name = "injectedJavaScriptBuiltinScriptIds")
 +    public void setInjectedJavaScriptBuiltinScriptIds(RNCWebViewWrapper view, @Nullable ReadableArray value) {
@@ -854,7 +852,7 @@ index 5bae4aa9e66897473a9083a2c9320c99d72e80d7..5cf879e9f6eb253f4651d46d98f7fb1a
      public void setInjectedJavaScriptBeforeContentLoaded(RNCWebViewWrapper view, @Nullable String value) {
          mRNCWebViewManagerImpl.setInjectedJavaScriptBeforeContentLoaded(view, value);
      }
-
+ 
 +    @Override
 +    @ReactProp(name = "injectedJavaScriptBeforeContentLoadedBuiltinScriptIds")
 +    public void setInjectedJavaScriptBeforeContentLoadedBuiltinScriptIds(RNCWebViewWrapper view, @Nullable ReadableArray value) {
@@ -864,11 +862,10 @@ index 5bae4aa9e66897473a9083a2c9320c99d72e80d7..5cf879e9f6eb253f4651d46d98f7fb1a
      @Override
      @ReactProp(name = "injectedJavaScriptForMainFrameOnly")
      public void setInjectedJavaScriptForMainFrameOnly(RNCWebViewWrapper view, boolean value) {
-@@ -331,6 +343,12 @@ public class RNCWebViewManager extends ViewGroupManager<RNCWebViewWrapper>
+@@ -331,6 +343,11 @@ public class RNCWebViewManager extends ViewGroupManager<RNCWebViewWrapper>
          mRNCWebViewManagerImpl.setWebviewDebuggingEnabled(view, value);
      }
-
-+    @Override
+ 
 +    @ReactProp(name = "disableJsPromptLike")
 +    public void setDisableJsPromptLike(RNCWebViewWrapper view, boolean value) {
 +        mRNCWebViewManagerImpl.setDisableJsPromptLike(view, value);
@@ -884,7 +881,7 @@ index 709117a91e44c2e32a263c638b0c092185d76e94..92e698594e0fdc650b8c59c8d3a41c24
 @@ -131,11 +131,21 @@ public class RNCWebViewManager extends ViewGroupManager<RNCWebViewWrapper> {
          mRNCWebViewManagerImpl.setInjectedJavaScript(view, value);
      }
-
+ 
 +    @ReactProp(name = "injectedJavaScriptBuiltinScriptIds")
 +    public void setInjectedJavaScriptBuiltinScriptIds(RNCWebViewWrapper view, @Nullable ReadableArray value) {
 +        mRNCWebViewManagerImpl.setInjectedJavaScriptBuiltinScriptIds(view, value);
@@ -894,7 +891,7 @@ index 709117a91e44c2e32a263c638b0c092185d76e94..92e698594e0fdc650b8c59c8d3a41c24
      public void setInjectedJavaScriptBeforeContentLoaded(RNCWebViewWrapper view, @Nullable String value) {
          mRNCWebViewManagerImpl.setInjectedJavaScriptBeforeContentLoaded(view, value);
      }
-
+ 
 +    @ReactProp(name = "injectedJavaScriptBeforeContentLoadedBuiltinScriptIds")
 +    public void setInjectedJavaScriptBeforeContentLoadedBuiltinScriptIds(RNCWebViewWrapper view, @Nullable ReadableArray value) {
 +        mRNCWebViewManagerImpl.setInjectedJavaScriptBeforeContentLoadedBuiltinScriptIds(view, value);
@@ -906,7 +903,7 @@ index 709117a91e44c2e32a263c638b0c092185d76e94..92e698594e0fdc650b8c59c8d3a41c24
 @@ -268,6 +278,11 @@ public class RNCWebViewManager extends ViewGroupManager<RNCWebViewWrapper> {
          mRNCWebViewManagerImpl.setWebviewDebuggingEnabled(view, value);
      }
-
+ 
 +    @ReactProp(name = "disableJsPromptLike")
 +    public void setDisableJsPromptLike(RNCWebViewWrapper view, boolean value) {
 +        mRNCWebViewManagerImpl.setDisableJsPromptLike(view, value);
@@ -940,7 +937,7 @@ index 1ae84c89237f2133378b35a75f6b48a538a1502f..c02421e0e3b8da34776544f54698b916
 @@ -263,9 +265,20 @@ - (void)updateProps:(Props::Shared const &)props oldProps:(Props::Shared const &
          _view.name = RCTNSStringFromString(newViewProps.name);      \
      }
-
+ 
 +#define REMAP_WEBVIEW_STRING_ARRAY_PROP(name)                       \
 +    if (oldViewProps.name != newViewProps.name) {                   \
 +        NSMutableArray *values = [NSMutableArray array];            \
@@ -993,9 +990,9 @@ index 77abeafb502f717550434a286d2611380949157b..6e61e5d57e0569b2e6e865d2069b6c6d
 --- a/apple/RNCWebViewImpl.m
 +++ b/apple/RNCWebViewImpl.m
 @@ -25,6 +25,301 @@
-
+ 
  NSString *const CUSTOM_SELECTOR = @"_CUSTOM_SELECTOR_";
-
+ 
 +#define RNC_WEBVIEW_BUILTIN_SCRIPT(...) @#__VA_ARGS__
 +
 +static NSMutableDictionary<NSString *, NSString *> *RNCWebViewBuiltinScriptCache(void)
@@ -1300,7 +1297,7 @@ index 77abeafb502f717550434a286d2611380949157b..6e61e5d57e0569b2e6e865d2069b6c6d
    BOOL _savedStatusBarHidden;
 +  BOOL _disablePromptDuringLoading;
 +  BOOL _disableJsPromptLike;
-
+ 
  #if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000 /* __IPHONE_11_0 */
    UIScrollViewContentInsetAdjustmentBehavior _savedContentInsetAdjustmentBehavior;
 @@ -179,6 +476,8 @@ - (instancetype)initWithFrame:(CGRect)frame
@@ -1309,7 +1306,7 @@ index 77abeafb502f717550434a286d2611380949157b..6e61e5d57e0569b2e6e865d2069b6c6d
      _injectedJavaScriptBeforeContentLoadedForMainFrameOnly = YES;
 +    _disablePromptDuringLoading = YES;
 +    _disableJsPromptLike = NO;
-
+ 
  #if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000 /* __IPHONE_11_0 */
      _savedContentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
 @@ -588,6 +887,9 @@ - (void)setWebviewDebuggingEnabled:(BOOL)webviewDebuggingEnabled {
@@ -1319,7 +1316,7 @@ index 77abeafb502f717550434a286d2611380949157b..6e61e5d57e0569b2e6e865d2069b6c6d
 +- (void)setDisableJsPromptLike:(BOOL)disableJsPromptLike {
 +  _disableJsPromptLike = disableJsPromptLike;
 +}
-
+ 
  #ifdef RCT_NEW_ARCH_ENABLED
  - (void)destroyWebView
 @@ -685,6 +987,7 @@ -(void)keyboardDisplacementFix
@@ -1339,9 +1336,9 @@ index 77abeafb502f717550434a286d2611380949157b..6e61e5d57e0569b2e6e865d2069b6c6d
    } else if ([message.name isEqualToString:MessageHandlerName]) {
      if (_onMessage) {
 @@ -1156,17 +1460,45 @@ - (void)                    webView:(WKWebView *)webView
-
+ 
  #pragma mark - WKNavigationDelegate methods
-
+ 
 +/**
 + * one method to construct dialog title information based on the frame,
 + * if get host, show it as title, otherwise show a default title
@@ -1475,7 +1472,7 @@ index 77abeafb502f717550434a286d2611380949157b..6e61e5d57e0569b2e6e865d2069b6c6d
 +   }
  }
  #endif
-
+ 
 @@ -1336,6 +1681,7 @@ - (void)                  webView:(WKWebView *)webView
                          NSMutableDictionary<NSString *, id> *event = [self baseEvent];
                          [event addEntriesFromDictionary: @{
@@ -1502,27 +1499,27 @@ index 77abeafb502f717550434a286d2611380949157b..6e61e5d57e0569b2e6e865d2069b6c6d
              _onLoadingStart(event);
 @@ -1535,6 +1883,7 @@ - (void)webView:(WKWebView *)webView
    }
-
+ 
    if (_onLoadingFinish) {
 +    _disablePromptDuringLoading = NO;
      _onLoadingFinish([self baseEvent]);
    }
  }
 @@ -1667,8 +2016,9 @@ - (void)setBounces:(BOOL)bounces
-
+ 
  - (void)setInjectedJavaScript:(NSString *)source {
    _injectedJavaScript = source;
 +  NSString *scriptSource = RNCWebViewCombineScripts(_injectedJavaScriptBuiltinScriptIds, source);
-
+ 
 -  self.atEndScript = source == nil ? nil : [[WKUserScript alloc] initWithSource:source
 +  self.atEndScript = scriptSource == nil ? nil : [[WKUserScript alloc] initWithSource:scriptSource
                                                                    injectionTime:WKUserScriptInjectionTimeAtDocumentEnd
                                                                 forMainFrameOnly:_injectedJavaScriptForMainFrameOnly];
-
+ 
 @@ -1677,6 +2027,11 @@ - (void)setInjectedJavaScript:(NSString *)source {
    }
  }
-
+ 
 +- (void)setInjectedJavaScriptBuiltinScriptIds:(NSArray<NSString *> *)scriptIds {
 +  _injectedJavaScriptBuiltinScriptIds = [scriptIds copy];
 +  [self setInjectedJavaScript:_injectedJavaScript];
@@ -1532,20 +1529,20 @@ index 77abeafb502f717550434a286d2611380949157b..6e61e5d57e0569b2e6e865d2069b6c6d
  {
    self.injectedObjectJsonScript = [
 @@ -1706,8 +2061,9 @@ - (void)setEnableApplePay:(BOOL)enableApplePay {
-
+ 
  - (void)setInjectedJavaScriptBeforeContentLoaded:(NSString *)source {
    _injectedJavaScriptBeforeContentLoaded = source;
 +  NSString *scriptSource = RNCWebViewCombineScripts(_injectedJavaScriptBeforeContentLoadedBuiltinScriptIds, source);
-
+ 
 -  self.atStartScript = source == nil ? nil : [[WKUserScript alloc] initWithSource:source
 +  self.atStartScript = scriptSource == nil ? nil : [[WKUserScript alloc] initWithSource:scriptSource
                                                                      injectionTime:WKUserScriptInjectionTimeAtDocumentStart
                                                                   forMainFrameOnly:_injectedJavaScriptBeforeContentLoadedForMainFrameOnly];
-
+ 
 @@ -1716,6 +2072,11 @@ - (void)setInjectedJavaScriptBeforeContentLoaded:(NSString *)source {
    }
  }
-
+ 
 +- (void)setInjectedJavaScriptBeforeContentLoadedBuiltinScriptIds:(NSArray<NSString *> *)scriptIds {
 +  _injectedJavaScriptBeforeContentLoadedBuiltinScriptIds = [scriptIds copy];
 +  [self setInjectedJavaScriptBeforeContentLoaded:_injectedJavaScriptBeforeContentLoaded];
@@ -1577,10 +1574,18 @@ index 1d22028a1c44d18f8bf333265dd6781ff3df4250..98a8ecaa47c470d0b6725da9bd96d140
  RCT_EXPORT_VIEW_PROPERTY(mediaPlaybackRequiresUserAction, BOOL)
  RCT_EXPORT_VIEW_PROPERTY(dataDetectorTypes, WKDataDetectorTypes)
 diff --git a/lib/RNCWebViewNativeComponent.d.ts b/lib/RNCWebViewNativeComponent.d.ts
-index d898feb33b08830382a565b1503f0c3ffebd8bb5..fa36235daba17195cb9bfc025f9d7e1d2f67b3e4 100644
+index d898feb33b08830382a565b1503f0c3ffebd8bb5..37f6bdb489be92fcaec275600da1a63a297d55aa 100644
 --- a/lib/RNCWebViewNativeComponent.d.ts
 +++ b/lib/RNCWebViewNativeComponent.d.ts
-@@ -75,6 +75,7 @@ export type ShouldStartLoadRequestEvent = Readonly<{
+@@ -64,6 +64,7 @@ export type WebViewNavigationEvent = Readonly<{
+     lockIdentifier: Double;
+     navigationType: 'click' | 'formsubmit' | 'backforward' | 'reload' | 'formresubmit' | 'other';
+     mainDocumentURL?: string;
++    isReload?: boolean;
+ }>;
+ export type ShouldStartLoadRequestEvent = Readonly<{
+     url: string;
+@@ -75,6 +76,7 @@ export type ShouldStartLoadRequestEvent = Readonly<{
      navigationType: 'click' | 'formsubmit' | 'backforward' | 'reload' | 'formresubmit' | 'other';
      mainDocumentURL?: string;
      isTopFrame: boolean;
@@ -1588,7 +1593,7 @@ index d898feb33b08830382a565b1503f0c3ffebd8bb5..fa36235daba17195cb9bfc025f9d7e1d
  }>;
  type ScrollEvent = Readonly<{
      contentInset: {
-@@ -188,7 +189,9 @@ export interface NativeProps extends ViewProps {
+@@ -188,12 +190,15 @@ export interface NativeProps extends ViewProps {
      cacheEnabled?: boolean;
      incognito?: boolean;
      injectedJavaScript?: string;
@@ -1598,14 +1603,20 @@ index d898feb33b08830382a565b1503f0c3ffebd8bb5..fa36235daba17195cb9bfc025f9d7e1d
      injectedJavaScriptForMainFrameOnly?: boolean;
      injectedJavaScriptBeforeContentLoadedForMainFrameOnly?: boolean;
      javaScriptCanOpenWindowsAutomatically?: boolean;
+     javaScriptEnabled?: boolean;
+     webviewDebuggingEnabled?: boolean;
++    disableJsPromptLike?: boolean;
+     mediaPlaybackRequiresUserAction?: boolean;
+     messagingEnabled: boolean;
+     onLoadingError: DirectEventHandler<WebViewErrorEvent>;
 diff --git a/lib/RNCWebViewNativeComponent.js b/lib/RNCWebViewNativeComponent.js
-index f90905ba00650c3a2013e12b11db2806764e1eba..ce95ceb595ac53b555f70b856f1c6193e3b1e8bd 100644
+index f90905ba00650c3a2013e12b11db2806764e1eba..f2365d260073ac2a599c3d3fb096a6251ddf5a81 100644
 --- a/lib/RNCWebViewNativeComponent.js
 +++ b/lib/RNCWebViewNativeComponent.js
 @@ -1 +1 @@
 -var _interopRequireDefault=require("@babel/runtime/helpers/interopRequireDefault");Object.defineProperty(exports,"__esModule",{value:true});exports.default=exports.__INTERNAL_VIEW_CONFIG=exports.Commands=void 0;var _codegenNativeComponent=_interopRequireDefault(require("react-native/Libraries/Utilities/codegenNativeComponent"));var _codegenNativeCommands=_interopRequireDefault(require("react-native/Libraries/Utilities/codegenNativeCommands"));var NativeComponentRegistry=require('react-native/Libraries/NativeComponent/NativeComponentRegistry');var _require=require('react-native/Libraries/NativeComponent/ViewConfigIgnore'),ConditionallyIgnoredEventHandlers=_require.ConditionallyIgnoredEventHandlers;var _require2=require("react-native/Libraries/ReactNative/RendererProxy"),dispatchCommand=_require2.dispatchCommand;var nativeComponentName='RNCWebView';var __INTERNAL_VIEW_CONFIG=exports.__INTERNAL_VIEW_CONFIG={uiViewClassName:'RNCWebView',directEventTypes:{topContentSizeChange:{registrationName:'onContentSizeChange'},topRenderProcessGone:{registrationName:'onRenderProcessGone'},topContentProcessDidTerminate:{registrationName:'onContentProcessDidTerminate'},topCustomMenuSelection:{registrationName:'onCustomMenuSelection'},topFileDownload:{registrationName:'onFileDownload'},topLoadingError:{registrationName:'onLoadingError'},topLoadingFinish:{registrationName:'onLoadingFinish'},topLoadingProgress:{registrationName:'onLoadingProgress'},topLoadingStart:{registrationName:'onLoadingStart'},topHttpError:{registrationName:'onHttpError'},topMessage:{registrationName:'onMessage'},topOpenWindow:{registrationName:'onOpenWindow'},topScroll:{registrationName:'onScroll'},topShouldStartLoadWithRequest:{registrationName:'onShouldStartLoadWithRequest'}},validAttributes:Object.assign({allowFileAccess:true,allowsProtectedMedia:true,allowsFullscreenVideo:true,androidLayerType:true,cacheMode:true,domStorageEnabled:true,downloadingMessage:true,forceDarkOn:true,geolocationEnabled:true,lackPermissionToDownloadMessage:true,messagingModuleName:true,minimumFontSize:true,mixedContentMode:true,nestedScrollEnabled:true,overScrollMode:true,saveFormDataDisabled:true,scalesPageToFit:true,setBuiltInZoomControls:true,setDisplayZoomControls:true,setSupportMultipleWindows:true,textZoom:true,thirdPartyCookiesEnabled:true,hasOnScroll:true,allowingReadAccessToURL:true,allowsBackForwardNavigationGestures:true,allowsInlineMediaPlayback:true,allowsAirPlayForMediaPlayback:true,allowsLinkPreview:true,automaticallyAdjustContentInsets:true,autoManageStatusBarEnabled:true,bounces:true,contentInset:true,contentInsetAdjustmentBehavior:true,contentMode:true,dataDetectorTypes:true,decelerationRate:true,directionalLockEnabled:true,enableApplePay:true,hideKeyboardAccessoryView:true,keyboardDisplayRequiresUserAction:true,limitsNavigationsToAppBoundDomains:true,mediaCapturePermissionGrantType:true,pagingEnabled:true,pullToRefreshEnabled:true,scrollEnabled:true,sharedCookiesEnabled:true,textInteractionEnabled:true,useSharedProcessPool:true,menuItems:true,suppressMenuItems:true,hasOnFileDownload:true,fraudulentWebsiteWarningEnabled:true,allowFileAccessFromFileURLs:true,allowUniversalAccessFromFileURLs:true,applicationNameForUserAgent:true,basicAuthCredential:true,cacheEnabled:true,incognito:true,injectedJavaScript:true,injectedJavaScriptBeforeContentLoaded:true,injectedJavaScriptForMainFrameOnly:true,injectedJavaScriptBeforeContentLoadedForMainFrameOnly:true,javaScriptCanOpenWindowsAutomatically:true,javaScriptEnabled:true,webviewDebuggingEnabled:true,mediaPlaybackRequiresUserAction:true,messagingEnabled:true,hasOnOpenWindowEvent:true,showsHorizontalScrollIndicator:true,showsVerticalScrollIndicator:true,newSource:true,userAgent:true,injectedJavaScriptObject:true},ConditionallyIgnoredEventHandlers({onContentSizeChange:true,onRenderProcessGone:true,onContentProcessDidTerminate:true,onCustomMenuSelection:true,onFileDownload:true,onLoadingError:true,onLoadingFinish:true,onLoadingProgress:true,onLoadingStart:true,onHttpError:true,onMessage:true,onOpenWindow:true,onScroll:true,onShouldStartLoadWithRequest:true}))};var _default=exports.default=NativeComponentRegistry.get(nativeComponentName,function(){return __INTERNAL_VIEW_CONFIG;});var Commands=exports.Commands={goBack:function goBack(ref){dispatchCommand(ref,"goBack",[]);},goForward:function goForward(ref){dispatchCommand(ref,"goForward",[]);},reload:function reload(ref){dispatchCommand(ref,"reload",[]);},stopLoading:function stopLoading(ref){dispatchCommand(ref,"stopLoading",[]);},injectJavaScript:function injectJavaScript(ref,javascript){dispatchCommand(ref,"injectJavaScript",[javascript]);},requestFocus:function requestFocus(ref){dispatchCommand(ref,"requestFocus",[]);},postMessage:function postMessage(ref,data){dispatchCommand(ref,"postMessage",[data]);},loadUrl:function loadUrl(ref,url){dispatchCommand(ref,"loadUrl",[url]);},clearFormData:function clearFormData(ref){dispatchCommand(ref,"clearFormData",[]);},clearCache:function clearCache(ref,includeDiskFiles){dispatchCommand(ref,"clearCache",[includeDiskFiles]);},clearHistory:function clearHistory(ref){dispatchCommand(ref,"clearHistory",[]);}};
 \ No newline at end of file
-+var _interopRequireDefault=require("@babel/runtime/helpers/interopRequireDefault");Object.defineProperty(exports,"__esModule",{value:true});exports.default=exports.__INTERNAL_VIEW_CONFIG=exports.Commands=void 0;var _codegenNativeComponent=_interopRequireDefault(require("react-native/Libraries/Utilities/codegenNativeComponent"));var _codegenNativeCommands=_interopRequireDefault(require("react-native/Libraries/Utilities/codegenNativeCommands"));var NativeComponentRegistry=require('react-native/Libraries/NativeComponent/NativeComponentRegistry');var _require=require('react-native/Libraries/NativeComponent/ViewConfigIgnore'),ConditionallyIgnoredEventHandlers=_require.ConditionallyIgnoredEventHandlers;var _require2=require("react-native/Libraries/ReactNative/RendererProxy"),dispatchCommand=_require2.dispatchCommand;var nativeComponentName='RNCWebView';var __INTERNAL_VIEW_CONFIG=exports.__INTERNAL_VIEW_CONFIG={uiViewClassName:'RNCWebView',directEventTypes:{topContentSizeChange:{registrationName:'onContentSizeChange'},topRenderProcessGone:{registrationName:'onRenderProcessGone'},topContentProcessDidTerminate:{registrationName:'onContentProcessDidTerminate'},topCustomMenuSelection:{registrationName:'onCustomMenuSelection'},topFileDownload:{registrationName:'onFileDownload'},topLoadingError:{registrationName:'onLoadingError'},topLoadingFinish:{registrationName:'onLoadingFinish'},topLoadingProgress:{registrationName:'onLoadingProgress'},topLoadingStart:{registrationName:'onLoadingStart'},topHttpError:{registrationName:'onHttpError'},topMessage:{registrationName:'onMessage'},topOpenWindow:{registrationName:'onOpenWindow'},topScroll:{registrationName:'onScroll'},topShouldStartLoadWithRequest:{registrationName:'onShouldStartLoadWithRequest'}},validAttributes:Object.assign({allowFileAccess:true,allowsProtectedMedia:true,allowsFullscreenVideo:true,androidLayerType:true,cacheMode:true,domStorageEnabled:true,downloadingMessage:true,forceDarkOn:true,geolocationEnabled:true,lackPermissionToDownloadMessage:true,messagingModuleName:true,minimumFontSize:true,mixedContentMode:true,nestedScrollEnabled:true,overScrollMode:true,saveFormDataDisabled:true,scalesPageToFit:true,setBuiltInZoomControls:true,setDisplayZoomControls:true,setSupportMultipleWindows:true,textZoom:true,thirdPartyCookiesEnabled:true,hasOnScroll:true,allowingReadAccessToURL:true,allowsBackForwardNavigationGestures:true,allowsInlineMediaPlayback:true,allowsAirPlayForMediaPlayback:true,allowsLinkPreview:true,automaticallyAdjustContentInsets:true,autoManageStatusBarEnabled:true,bounces:true,contentInset:true,contentInsetAdjustmentBehavior:true,contentMode:true,dataDetectorTypes:true,decelerationRate:true,directionalLockEnabled:true,enableApplePay:true,hideKeyboardAccessoryView:true,keyboardDisplayRequiresUserAction:true,limitsNavigationsToAppBoundDomains:true,mediaCapturePermissionGrantType:true,pagingEnabled:true,pullToRefreshEnabled:true,scrollEnabled:true,sharedCookiesEnabled:true,textInteractionEnabled:true,useSharedProcessPool:true,menuItems:true,suppressMenuItems:true,hasOnFileDownload:true,fraudulentWebsiteWarningEnabled:true,allowFileAccessFromFileURLs:true,allowUniversalAccessFromFileURLs:true,applicationNameForUserAgent:true,basicAuthCredential:true,cacheEnabled:true,incognito:true,injectedJavaScript:true,injectedJavaScriptBuiltinScriptIds:true,injectedJavaScriptBeforeContentLoaded:true,injectedJavaScriptBeforeContentLoadedBuiltinScriptIds:true,injectedJavaScriptForMainFrameOnly:true,injectedJavaScriptBeforeContentLoadedForMainFrameOnly:true,javaScriptCanOpenWindowsAutomatically:true,javaScriptEnabled:true,webviewDebuggingEnabled:true,mediaPlaybackRequiresUserAction:true,messagingEnabled:true,hasOnOpenWindowEvent:true,showsHorizontalScrollIndicator:true,showsVerticalScrollIndicator:true,newSource:true,userAgent:true,injectedJavaScriptObject:true},ConditionallyIgnoredEventHandlers({onContentSizeChange:true,onRenderProcessGone:true,onContentProcessDidTerminate:true,onCustomMenuSelection:true,onFileDownload:true,onLoadingError:true,onLoadingFinish:true,onLoadingProgress:true,onLoadingStart:true,onHttpError:true,onMessage:true,onOpenWindow:true,onScroll:true,onShouldStartLoadWithRequest:true}))};var _default=exports.default=NativeComponentRegistry.get(nativeComponentName,function(){return __INTERNAL_VIEW_CONFIG;});var Commands=exports.Commands={goBack:function goBack(ref){dispatchCommand(ref,"goBack",[]);},goForward:function goForward(ref){dispatchCommand(ref,"goForward",[]);},reload:function reload(ref){dispatchCommand(ref,"reload",[]);},stopLoading:function stopLoading(ref){dispatchCommand(ref,"stopLoading",[]);},injectJavaScript:function injectJavaScript(ref,javascript){dispatchCommand(ref,"injectJavaScript",[javascript]);},requestFocus:function requestFocus(ref){dispatchCommand(ref,"requestFocus",[]);},postMessage:function postMessage(ref,data){dispatchCommand(ref,"postMessage",[data]);},loadUrl:function loadUrl(ref,url){dispatchCommand(ref,"loadUrl",[url]);},clearFormData:function clearFormData(ref){dispatchCommand(ref,"clearFormData",[]);},clearCache:function clearCache(ref,includeDiskFiles){dispatchCommand(ref,"clearCache",[includeDiskFiles]);},clearHistory:function clearHistory(ref){dispatchCommand(ref,"clearHistory",[]);}};
++var _interopRequireDefault=require("@babel/runtime/helpers/interopRequireDefault");Object.defineProperty(exports,"__esModule",{value:true});exports.default=exports.__INTERNAL_VIEW_CONFIG=exports.Commands=void 0;var _codegenNativeComponent=_interopRequireDefault(require("react-native/Libraries/Utilities/codegenNativeComponent"));var _codegenNativeCommands=_interopRequireDefault(require("react-native/Libraries/Utilities/codegenNativeCommands"));var NativeComponentRegistry=require('react-native/Libraries/NativeComponent/NativeComponentRegistry');var _require=require('react-native/Libraries/NativeComponent/ViewConfigIgnore'),ConditionallyIgnoredEventHandlers=_require.ConditionallyIgnoredEventHandlers;var _require2=require("react-native/Libraries/ReactNative/RendererProxy"),dispatchCommand=_require2.dispatchCommand;var nativeComponentName='RNCWebView';var __INTERNAL_VIEW_CONFIG=exports.__INTERNAL_VIEW_CONFIG={uiViewClassName:'RNCWebView',directEventTypes:{topContentSizeChange:{registrationName:'onContentSizeChange'},topRenderProcessGone:{registrationName:'onRenderProcessGone'},topContentProcessDidTerminate:{registrationName:'onContentProcessDidTerminate'},topCustomMenuSelection:{registrationName:'onCustomMenuSelection'},topFileDownload:{registrationName:'onFileDownload'},topLoadingError:{registrationName:'onLoadingError'},topLoadingFinish:{registrationName:'onLoadingFinish'},topLoadingProgress:{registrationName:'onLoadingProgress'},topLoadingStart:{registrationName:'onLoadingStart'},topHttpError:{registrationName:'onHttpError'},topMessage:{registrationName:'onMessage'},topOpenWindow:{registrationName:'onOpenWindow'},topScroll:{registrationName:'onScroll'},topShouldStartLoadWithRequest:{registrationName:'onShouldStartLoadWithRequest'}},validAttributes:Object.assign({allowFileAccess:true,allowsProtectedMedia:true,allowsFullscreenVideo:true,androidLayerType:true,cacheMode:true,domStorageEnabled:true,downloadingMessage:true,forceDarkOn:true,geolocationEnabled:true,lackPermissionToDownloadMessage:true,messagingModuleName:true,minimumFontSize:true,mixedContentMode:true,nestedScrollEnabled:true,overScrollMode:true,saveFormDataDisabled:true,scalesPageToFit:true,setBuiltInZoomControls:true,setDisplayZoomControls:true,setSupportMultipleWindows:true,textZoom:true,thirdPartyCookiesEnabled:true,hasOnScroll:true,allowingReadAccessToURL:true,allowsBackForwardNavigationGestures:true,allowsInlineMediaPlayback:true,allowsAirPlayForMediaPlayback:true,allowsLinkPreview:true,automaticallyAdjustContentInsets:true,autoManageStatusBarEnabled:true,bounces:true,contentInset:true,contentInsetAdjustmentBehavior:true,contentMode:true,dataDetectorTypes:true,decelerationRate:true,directionalLockEnabled:true,enableApplePay:true,hideKeyboardAccessoryView:true,keyboardDisplayRequiresUserAction:true,limitsNavigationsToAppBoundDomains:true,mediaCapturePermissionGrantType:true,pagingEnabled:true,pullToRefreshEnabled:true,scrollEnabled:true,sharedCookiesEnabled:true,textInteractionEnabled:true,useSharedProcessPool:true,menuItems:true,suppressMenuItems:true,hasOnFileDownload:true,fraudulentWebsiteWarningEnabled:true,allowFileAccessFromFileURLs:true,allowUniversalAccessFromFileURLs:true,applicationNameForUserAgent:true,basicAuthCredential:true,cacheEnabled:true,incognito:true,injectedJavaScript:true,injectedJavaScriptBuiltinScriptIds:true,injectedJavaScriptBeforeContentLoaded:true,injectedJavaScriptBeforeContentLoadedBuiltinScriptIds:true,injectedJavaScriptForMainFrameOnly:true,injectedJavaScriptBeforeContentLoadedForMainFrameOnly:true,javaScriptCanOpenWindowsAutomatically:true,javaScriptEnabled:true,webviewDebuggingEnabled:true,disableJsPromptLike:true,mediaPlaybackRequiresUserAction:true,messagingEnabled:true,hasOnOpenWindowEvent:true,showsHorizontalScrollIndicator:true,showsVerticalScrollIndicator:true,newSource:true,userAgent:true,injectedJavaScriptObject:true},ConditionallyIgnoredEventHandlers({onContentSizeChange:true,onRenderProcessGone:true,onContentProcessDidTerminate:true,onCustomMenuSelection:true,onFileDownload:true,onLoadingError:true,onLoadingFinish:true,onLoadingProgress:true,onLoadingStart:true,onHttpError:true,onMessage:true,onOpenWindow:true,onScroll:true,onShouldStartLoadWithRequest:true}))};var _default=exports.default=NativeComponentRegistry.get(nativeComponentName,function(){return __INTERNAL_VIEW_CONFIG;});var Commands=exports.Commands={goBack:function goBack(ref){dispatchCommand(ref,"goBack",[]);},goForward:function goForward(ref){dispatchCommand(ref,"goForward",[]);},reload:function reload(ref){dispatchCommand(ref,"reload",[]);},stopLoading:function stopLoading(ref){dispatchCommand(ref,"stopLoading",[]);},injectJavaScript:function injectJavaScript(ref,javascript){dispatchCommand(ref,"injectJavaScript",[javascript]);},requestFocus:function requestFocus(ref){dispatchCommand(ref,"requestFocus",[]);},postMessage:function postMessage(ref,data){dispatchCommand(ref,"postMessage",[data]);},loadUrl:function loadUrl(ref,url){dispatchCommand(ref,"loadUrl",[url]);},clearFormData:function clearFormData(ref){dispatchCommand(ref,"clearFormData",[]);},clearCache:function clearCache(ref,includeDiskFiles){dispatchCommand(ref,"clearCache",[includeDiskFiles]);},clearHistory:function clearHistory(ref){dispatchCommand(ref,"clearHistory",[]);}};
 \ No newline at end of file
 diff --git a/lib/WebViewShared.d.ts b/lib/WebViewShared.d.ts
 index 37344a794b0cffd2e748e04f6827e732a7b4117b..3975335120549d725a1d1e24522f280abe0ed161 100644
@@ -1716,10 +1727,18 @@ index 7cbd83521257c1a730cca632a712737253dcddab..80c87559df58df078f990efed31d8c7c
  }
  export {};
 diff --git a/src/RNCWebViewNativeComponent.ts b/src/RNCWebViewNativeComponent.ts
-index 682ab39b9136598f62666e4f89a069702e654499..d89c40daf944c2a67295f58179b5663078d499f0 100644
+index 682ab39b9136598f62666e4f89a069702e654499..4ca70cf8f1f226d2bdd9ef539e9c66bbfd0b0a5a 100644
 --- a/src/RNCWebViewNativeComponent.ts
 +++ b/src/RNCWebViewNativeComponent.ts
-@@ -99,6 +99,7 @@ export type ShouldStartLoadRequestEvent = Readonly<{
+@@ -81,6 +81,7 @@ export type WebViewNavigationEvent = Readonly<{
+     | 'formresubmit'
+     | 'other';
+   mainDocumentURL?: string;
++  isReload?: boolean;
+ }>;
+ 
+ export type ShouldStartLoadRequestEvent = Readonly<{
+@@ -99,6 +100,7 @@ export type ShouldStartLoadRequestEvent = Readonly<{
      | 'other';
    mainDocumentURL?: string;
    isTopFrame: boolean;
@@ -1727,7 +1746,7 @@ index 682ab39b9136598f62666e4f89a069702e654499..d89c40daf944c2a67295f58179b56630
  }>;
 
  type ScrollEvent = Readonly<{
-@@ -256,7 +257,9 @@ export interface NativeProps extends ViewProps {
+@@ -256,12 +258,15 @@ export interface NativeProps extends ViewProps {
    cacheEnabled?: boolean;
    incognito?: boolean;
    injectedJavaScript?: string;
@@ -1737,19 +1756,70 @@ index 682ab39b9136598f62666e4f89a069702e654499..d89c40daf944c2a67295f58179b56630
    injectedJavaScriptForMainFrameOnly?: boolean;
    injectedJavaScriptBeforeContentLoadedForMainFrameOnly?: boolean;
    javaScriptCanOpenWindowsAutomatically?: boolean;
+   javaScriptEnabled?: boolean;
+   webviewDebuggingEnabled?: boolean;
++  disableJsPromptLike?: boolean;
+   mediaPlaybackRequiresUserAction?: boolean;
+   messagingEnabled: boolean;
+   onLoadingError: DirectEventHandler<WebViewErrorEvent>;
+diff --git a/src/WebViewShared.tsx b/src/WebViewShared.tsx
+index 08905ea61669ae1b4f073817303642a33ef5133e..58688314cfe2f45b30c302ae9be888c41c38afb6 100644
+--- a/src/WebViewShared.tsx
++++ b/src/WebViewShared.tsx
+@@ -10,6 +10,7 @@ import {
+   WebViewMessageEvent,
+   WebViewNavigation,
+   WebViewNavigationEvent,
++  WebViewOnLoadStartEvent,
+   WebViewOpenWindowEvent,
+   WebViewProgressEvent,
+   WebViewRenderProcessGoneEvent,
+@@ -115,7 +116,7 @@ export const useWebViewLogic = ({
+ }: {
+   startInLoadingState?: boolean;
+   onNavigationStateChange?: (event: WebViewNavigation) => void;
+-  onLoadStart?: (event: WebViewNavigationEvent) => void;
++  onLoadStart?: (event: WebViewOnLoadStartEvent) => void;
+   onLoad?: (event: WebViewNavigationEvent) => void;
+   onLoadProgress?: (event: WebViewProgressEvent) => void;
+   onLoadEnd?: (event: WebViewNavigationEvent | WebViewErrorEvent) => void;
 diff --git a/src/WebViewTypes.ts b/src/WebViewTypes.ts
-index 1bc55cbe5aaa69ee82db0efac18dd97dade63a7b..495b6d277b8dbef460144c0b17364cb4e8354fe2 100644
+index 1bc55cbe5aaa69ee82db0efac18dd97dade63a7b..1c1c42f0e0b4923064cf9aace2e9f0ac65823686 100644
 --- a/src/WebViewTypes.ts
 +++ b/src/WebViewTypes.ts
-@@ -100,6 +100,7 @@ export interface WebViewNavigation extends WebViewNativeEvent {
-
+@@ -75,6 +75,7 @@ export interface ContentInsetProp {
+ }
+ 
+ export interface WebViewNativeEvent {
++  scene?: 'unknown' | 'updateVisitedHistory' | 'message';
+   url: string;
+   loading: boolean;
+   title: string;
+@@ -98,8 +99,13 @@ export interface WebViewNavigation extends WebViewNativeEvent {
+   mainDocumentURL?: string;
+ }
+ 
++export interface WebViewNativeOnLoadStartEvent extends WebViewNavigation {
++  isReload: boolean;
++}
++
  export interface ShouldStartLoadRequest extends WebViewNavigation {
    isTopFrame: boolean;
 +  sourceDocumentURL: string;
  }
 
  export interface FileDownload {
-@@ -289,7 +290,9 @@ export interface CommonNativeWebViewProps extends ViewProps {
+@@ -141,6 +147,9 @@ export type WebViewProgressEvent =
+ 
+ export type WebViewNavigationEvent = NativeSyntheticEvent<WebViewNavigation>;
+ 
++export type WebViewOnLoadStartEvent =
++  NativeSyntheticEvent<WebViewNativeOnLoadStartEvent>;
++
+ export type ShouldStartLoadRequestEvent =
+   NativeSyntheticEvent<ShouldStartLoadRequest>;
+ 
+@@ -289,7 +298,9 @@ export interface CommonNativeWebViewProps extends ViewProps {
    cacheEnabled?: boolean;
    incognito?: boolean;
    injectedJavaScript?: string;
@@ -1759,10 +1829,19 @@ index 1bc55cbe5aaa69ee82db0efac18dd97dade63a7b..495b6d277b8dbef460144c0b17364cb4
    injectedJavaScriptForMainFrameOnly?: boolean;
    injectedJavaScriptBeforeContentLoadedForMainFrameOnly?: boolean;
    javaScriptCanOpenWindowsAutomatically?: boolean;
-@@ -1223,12 +1226,22 @@ export interface WebViewSharedProps extends ViewProps {
+@@ -1179,7 +1190,7 @@ export interface WebViewSharedProps extends ViewProps {
+   /**
+    * Function that is invoked when the `WebView` starts loading.
+    */
+-  onLoadStart?: (event: WebViewNavigationEvent) => void;
++  onLoadStart?: (event: WebViewOnLoadStartEvent) => void;
+ 
+   /**
+    * Function that is invoked when the `WebView` load fails.
+@@ -1223,12 +1234,22 @@ export interface WebViewSharedProps extends ViewProps {
     */
    injectedJavaScript?: string;
-
+ 
 +  /**
 +   * Rabby extension: inject built-in native scripts by id at document end.
 +   */
@@ -1773,7 +1852,7 @@ index 1bc55cbe5aaa69ee82db0efac18dd97dade63a7b..495b6d277b8dbef460144c0b17364cb4
     * once the webview is initialized but before the view loads any content.
     */
    injectedJavaScriptBeforeContentLoaded?: string;
-
+ 
 +  /**
 +   * Rabby extension: inject built-in native scripts by id before content loads.
 +   */
@@ -1782,3 +1861,13 @@ index 1bc55cbe5aaa69ee82db0efac18dd97dade63a7b..495b6d277b8dbef460144c0b17364cb4
    /**
     * If `true` (default; mandatory for Android), loads the `injectedJavaScript` only into the main frame.
     * If `false` (only supported on iOS and macOS), loads it into all frames (e.g. iframes).
+@@ -1305,4 +1326,9 @@ export interface WebViewSharedProps extends ViewProps {
+    * Enables WebView remote debugging using Chrome (Android) or Safari (iOS).
+    */
+   webviewDebuggingEnabled?: boolean;
++
++  /**
++   * Disallow calling `window.alert`, `window.confirm`, and `window.prompt` from the WebView.
++   */
++  disableJsPromptLike?: boolean;
+ }

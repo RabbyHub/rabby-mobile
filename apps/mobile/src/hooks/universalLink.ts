@@ -59,6 +59,8 @@ import {
 import { apisHomeTabIndex, UnlockUIManager } from './navigation';
 import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 import { switchSceneCurrentAccount } from './accountsSwitcher';
+import { setSensitiveSceneProtectionEnabled } from './appSettings';
+import { IS_IOS } from '@/core/native/utils';
 
 const nextAppLinkRef = {
   current: '' as string,
@@ -101,6 +103,7 @@ type OnParseUrlAndProcessAction = (payload: {
   testkitParams?: {
     tab?: 'overview' | 'debug';
     appLaunchLock?: boolean;
+    sensitiveSceneProtection?: boolean;
   };
   debugDbSyncPolicy?: {
     resetWritePolicyOverride?: boolean;
@@ -174,17 +177,32 @@ function parseNonProductionTestkitLink(appLink: string) {
       : appLaunchLockRaw === 'disabled'
       ? false
       : undefined;
+  const sensitiveSceneProtectionRaw = urlInfo.searchParams.get(
+    'sensitiveSceneProtection',
+  );
+  const sensitiveSceneProtection =
+    sensitiveSceneProtectionRaw === 'enabled'
+      ? true
+      : sensitiveSceneProtectionRaw === 'disabled'
+      ? false
+      : undefined;
 
   return {
     type: 'open-testkit-screen',
     testkitScreen: screen,
     testkitParams:
-      tabRaw === 'debug' || tabRaw === 'overview' || appLaunchLock !== undefined
+      tabRaw === 'debug' ||
+      tabRaw === 'overview' ||
+      appLaunchLock !== undefined ||
+      sensitiveSceneProtection !== undefined
         ? {
             ...(tabRaw === 'debug' || tabRaw === 'overview'
               ? { tab: tabRaw }
               : {}),
             ...(appLaunchLock !== undefined ? { appLaunchLock } : {}),
+            ...(sensitiveSceneProtection !== undefined
+              ? { sensitiveSceneProtection }
+              : {}),
           }
         : undefined,
   } satisfies Parameters<OnParseUrlAndProcessAction>[0];
@@ -663,6 +681,21 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
         console.info('[useUniversalLinkOnTop] App Launch Lock set by testkit', {
           enabled: payload.testkitParams.appLaunchLock,
         });
+      }
+      if (
+        isNonPublicProductionEnv &&
+        typeof payload.testkitParams?.sensitiveSceneProtection === 'boolean'
+      ) {
+        setSensitiveSceneProtectionEnabled(
+          payload.testkitParams.sensitiveSceneProtection,
+        );
+        console.info(
+          '[useUniversalLinkOnTop] Sensitive Scene Protection set by testkit',
+          {
+            enabled: payload.testkitParams.sensitiveSceneProtection,
+            restartRequired: IS_IOS,
+          },
+        );
       }
       dispatchWhenNavigationReady(
         StackActions.push(RootNames.StackTestkits, {

@@ -9,6 +9,7 @@ import * as customTestnet from '@/core/serviceApi/customTestnet';
 import * as deferredServiceApi from '@/core/serviceApi/createDeferredServiceApi';
 import * as syncChain from '@/core/serviceApi/syncChain';
 import * as homePreSplashLocalState from '@/setup-home-pre-splash-state';
+import * as runtimeSecuritySubscriptions from '@/startup/setupRuntimeSecuritySubscriptions';
 
 export const launchTaskLoaders = {
   appSettingsAutoLockHydrate: () => Promise.resolve(appSettings),
@@ -20,6 +21,8 @@ export const launchTaskLoaders = {
   globalNetworkPolling: () => Promise.resolve(globalStatus),
   homePreSplashLocalStateWarmup: () => Promise.resolve(homePreSplashLocalState),
   lockUnlockEventBridge: () => Promise.resolve(lock),
+  setupRuntimeSecuritySubscriptions: () =>
+    Promise.resolve(runtimeSecuritySubscriptions),
   syncChainMetadataWarmup: () => Promise.resolve(syncChain),
   transactionWatchersStart: () => Promise.resolve(deferredServiceApi),
 } as const satisfies typeof import('./launchTaskLoaders.lazy').launchTaskLoaders;

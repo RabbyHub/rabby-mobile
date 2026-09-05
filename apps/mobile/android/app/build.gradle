@@ -9,6 +9,10 @@ def metroBundleCli = file("../../scripts/metro-bundle-cli.js")
 def metroNodeExecutableAndArgs = ["node"]
 def metroExtraPackagerArgs = []
 
+def isNewArchitectureEnabled() {
+    return rootProject.hasProperty("newArchEnabled") && rootProject.getProperty("newArchEnabled") == "true"
+}
+
 if (metroNodeMaxOldSpaceSize) {
     metroNodeExecutableAndArgs += ["--max-old-space-size=${metroNodeMaxOldSpaceSize}"]
 }
@@ -238,7 +242,14 @@ android {
     sourceSets {
         main {
             assets.srcDir generatedBuildInfoAssetsDir
-            java.srcDirs += ["src/oldarch"]
+            if (isNewArchitectureEnabled()) {
+                java.srcDirs += [
+                    "src/newarch",
+                    "${project.buildDir}/generated/source/codegen/java",
+                ]
+            } else {
+                java.srcDirs += ["src/oldarch"]
+            }
         }
     }
 }

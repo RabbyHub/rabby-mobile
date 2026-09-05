@@ -246,7 +246,16 @@ export const STARTUP_TASKS = {
     label: 'setup.runtimeSecuritySubscriptions',
     owner: 'security',
     reason:
-      'register screenshot and sensitive-scene guards after Home is usable',
+      'register screenshot, screen-recording, and app-switcher guards before protected routes are usable',
+    stage: 'registration',
+    priority: 'critical',
+    budgetMs: 40,
+  }),
+  setupRuntimeScreenshotFeedbackSubscription: defineStartupTask({
+    label: 'setup.runtimeScreenshotFeedbackSubscription',
+    owner: 'screenshot-feedback',
+    reason:
+      'load screenshot feedback capture after Home without delaying security guards',
     stage: 'homePostStartupReady',
     priority: 'normal',
     fallbackMs: 5000,
