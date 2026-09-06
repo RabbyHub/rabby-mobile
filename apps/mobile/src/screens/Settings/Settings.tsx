@@ -296,6 +296,21 @@ async function getAndroidBiometricsBuildInfoLines() {
       `  Fingerprint Hardware: ${formatBuildInfoBoolean(
         hardware?.fingerprint,
       )}`,
+      `  Legacy Fingerprint Hardware: ${formatBuildInfoBoolean(
+        hardware?.legacyFingerprintHardwareDetected,
+      )}`,
+      `  Legacy Fingerprint Enrolled: ${formatBuildInfoBoolean(
+        hardware?.legacyFingerprintEnrolled,
+      )}`,
+      `  Biometric Permission Gate: ${formatBuildInfoBoolean(
+        hardware?.permissionsGranted,
+      )}`,
+      `  AndroidX Strong/Weak Status: ${
+        hardware?.androidXStrongStatusCode ?? 'unknown'
+      }/${hardware?.androidXWeakStatusCode ?? 'unknown'}`,
+      `  Effective Strong: ${formatBuildInfoBoolean(
+        hardware?.effectiveStrongAvailable,
+      )} (${hardware?.effectiveStrongSource || 'unknown'})`,
       `  Iris Hardware: ${formatBuildInfoBoolean(hardware?.iris)}`,
       `  BIOMETRIC_STRONG: ${formatAndroidAuthenticatorCapability(
         capabilities?.biometricStrong,

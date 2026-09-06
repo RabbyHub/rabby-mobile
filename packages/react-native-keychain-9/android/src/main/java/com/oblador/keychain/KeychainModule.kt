@@ -1,5 +1,6 @@
 package com.rabbywallet.keychain9
 
+import android.content.Context
 import android.os.Build
 import android.text.TextUtils
 import android.util.Log
@@ -228,7 +229,7 @@ class KeychainModule(reactContext: ReactApplicationContext) :
           val level = getSecurityLevelOrDefault(options)
           val storage = getSelectedStorage(options)
           throwIfInsufficientLevel(storage, level)
-          val promptInfo = getPromptInfo(options)
+          val promptInfo = getPromptInfo(options, reactApplicationContext)
           val result = encryptToResult(alias, storage, username, password, level, promptInfo)
           prefsStorage.storeEncryptedEntry(alias, result)
           val results = Arguments.createMap()
@@ -290,7 +291,7 @@ class KeychainModule(reactContext: ReactApplicationContext) :
           }
           val storageName = resultSet.cipherStorageName
           val rules = getSecurityRulesOrDefault(options)
-          val promptInfo = getPromptInfo(options)
+          val promptInfo = getPromptInfo(options, reactApplicationContext)
           var cipher: CipherStorage? = null
 
           // Only check for upgradable ciphers for FacebookConseal as that
@@ -441,7 +442,9 @@ class KeychainModule(reactContext: ReactApplicationContext) :
   fun getSupportedBiometryType(promise: Promise) {
     try {
       var reply: String? = null
-      if (!DeviceAvailability.isStrongBiometricAuthAvailable(reactApplicationContext)) {
+      val strongAvailability =
+        DeviceAvailability.getStrongBiometricAuthAvailability(reactApplicationContext)
+      if (!strongAvailability.available) {
         reply = null
       } else {
         if (isFingerprintAuthAvailable) {
@@ -451,6 +454,22 @@ class KeychainModule(reactContext: ReactApplicationContext) :
         } else if (isIrisAuthAvailable) {
           reply = IRIS_SUPPORTED_NAME
         }
+      }
+      if (
+        strongAvailability.androidXStatusCode != BiometricManager.BIOMETRIC_SUCCESS ||
+          strongAvailability.api29FingerprintFallbackEligible
+      ) {
+        Log.i(
+          KEYCHAIN_MODULE,
+          "Strong biometric availability: api=${Build.VERSION.SDK_INT}, " +
+            "androidXStatus=${strongAvailability.androidXStatusCode}, " +
+            "androidXWeakStatus=${strongAvailability.androidXWeakStatusCode}, " +
+            "permissionsGranted=${strongAvailability.permissionsGranted}, " +
+            "legacyFingerprintHardwareDetected=" +
+            "${strongAvailability.legacyFingerprintHardwareDetected}, " +
+            "legacyFingerprintEnrolled=${strongAvailability.legacyFingerprintEnrolled}, " +
+            "source=${strongAvailability.source}"
+        )
       }
       promise.resolve(reply)
     } catch (e: Exception) {
@@ -577,6 +596,8 @@ class KeychainModule(reactContext: ReactApplicationContext) :
 
   private fun buildAndroidBiometricHardware(): WritableMap {
     val result = Arguments.createMap()
+    val strongAvailability =
+      DeviceAvailability.getStrongBiometricAuthAvailability(reactApplicationContext)
     result.putBoolean(
       "fingerprint",
       DeviceAvailability.isFingerprintAuthAvailable(reactApplicationContext)
@@ -589,6 +610,23 @@ class KeychainModule(reactContext: ReactApplicationContext) :
       "iris",
       DeviceAvailability.isIrisAuthAvailable(reactApplicationContext)
     )
+    result.putBoolean("permissionsGranted", strongAvailability.permissionsGranted)
+    result.putInt("androidXStrongStatusCode", strongAvailability.androidXStatusCode)
+    result.putInt("androidXWeakStatusCode", strongAvailability.androidXWeakStatusCode)
+    result.putBoolean(
+      "legacyFingerprintHardwareDetected",
+      strongAvailability.legacyFingerprintHardwareDetected
+    )
+    result.putBoolean(
+      "legacyFingerprintEnrolled",
+      strongAvailability.legacyFingerprintEnrolled
+    )
+    result.putBoolean(
+      "api29FingerprintFallbackEligible",
+      strongAvailability.api29FingerprintFallbackEligible
+    )
+    result.putBoolean("effectiveStrongAvailable", strongAvailability.available)
+    result.putString("effectiveStrongSource", strongAvailability.source)
     return result
   }
 
@@ -683,7 +721,13 @@ class KeychainModule(reactContext: ReactApplicationContext) :
                 "Wrong cipher storage name '$storageName' or cipher not available"
               )
           val decryptionResult =
-            decryptToResult(service, storage, resultSet, getPromptInfo(options), options)
+            decryptToResult(
+              service,
+              storage,
+              resultSet,
+              getPromptInfo(options, reactApplicationContext),
+              options
+            )
           val credentials = Arguments.createMap()
 
           credentials.putString(Maps.SERVICE, service)
@@ -1099,10 +1143,24 @@ class KeychainModule(reactContext: ReactApplicationContext) :
     }
 
     /** Extract user specified prompt info from options. */
-    private fun getPromptInfo(options: ReadableMap?): PromptInfo {
+    private fun getPromptInfo(options: ReadableMap?, context: Context): PromptInfo {
       val accessControl = getAccessControlOrDefault(options)
       val useBiometry = getUseBiometry(accessControl)
       val usePasscode = getUsePasscode(accessControl)
+      val api29FingerprintFallbackEligible =
+        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q && useBiometry) {
+          DeviceAvailability.getStrongBiometricAuthAvailability(context)
+            .api29FingerprintFallbackEligible
+        } else {
+          false
+        }
+      val promptAuthenticatorPolicy =
+        PromptAuthenticatorPolicyResolver.resolve(
+          apiLevel = Build.VERSION.SDK_INT,
+          useBiometry = useBiometry,
+          usePasscode = usePasscode,
+          api29FingerprintFallbackEligible = api29FingerprintFallbackEligible
+        )
       val promptInfoOptionsMap =
         if (options != null && options.hasKey(Maps.AUTH_PROMPT)) options.getMap(Maps.AUTH_PROMPT)
         else null
@@ -1121,14 +1179,14 @@ class KeychainModule(reactContext: ReactApplicationContext) :
         val promptInfoDescription = promptInfoOptionsMap.getString(AuthPromptOptions.DESCRIPTION)
         promptInfoBuilder.setDescription(promptInfoDescription)
       }
-      val allowedAuthenticators =
-        when {
-          useBiometry && usePasscode ->
-            BiometricManager.Authenticators.BIOMETRIC_STRONG or
-              BiometricManager.Authenticators.DEVICE_CREDENTIAL
-          usePasscode -> BiometricManager.Authenticators.DEVICE_CREDENTIAL
-          else -> BiometricManager.Authenticators.BIOMETRIC_STRONG
-        }
+      val allowedAuthenticators = promptAuthenticatorPolicy.allowedAuthenticators
+
+      if (promptAuthenticatorPolicy.usesApi29FingerprintFallback) {
+        Log.i(
+          KEYCHAIN_MODULE,
+          "Using API 29 fingerprint prompt fallback with BIOMETRIC_STRONG"
+        )
+      }
 
       if (null != promptInfoOptionsMap &&
         promptInfoOptionsMap.hasKey(AuthPromptOptions.CANCEL) &&
