@@ -37,11 +37,48 @@ class DeviceAvailabilityTest {
   }
 
   @Test
-  fun allowsApi29WhenAndroidXFindsBiometricButCannotClassifyItsStrength() {
-    assertTrue(
+  fun weakBiometricSignalDoesNotBecomeConfirmedFingerprintFallback() {
+    assertFalse(
       DeviceAvailability.shouldUseApi29FingerprintFallback(
         apiLevel = 29,
         androidXStrongStatusCode = BiometricManager.BIOMETRIC_STATUS_UNKNOWN,
+        androidXWeakStatusCode = BiometricManager.BIOMETRIC_SUCCESS,
+        permissionsGranted = true,
+        hasFingerprintFeature = true,
+        legacyFingerprintHardwareDetected = false,
+        legacyFingerprintEnrolled = false
+      )
+    )
+    assertTrue(
+      DeviceAvailability.shouldAllowApi29FingerprintPromptProbe(
+        apiLevel = 29,
+        androidXStrongStatusCode = BiometricManager.BIOMETRIC_STATUS_UNKNOWN,
+        androidXWeakStatusCode = BiometricManager.BIOMETRIC_SUCCESS,
+        permissionsGranted = true,
+        hasFingerprintFeature = true,
+        legacyFingerprintHardwareDetected = false,
+        legacyFingerprintEnrolled = false
+      )
+    )
+  }
+
+  @Test
+  fun hardwareUnavailableNeverActivatesFingerprintFallbackOrProbe() {
+    assertFalse(
+      DeviceAvailability.shouldUseApi29FingerprintFallback(
+        apiLevel = 29,
+        androidXStrongStatusCode = BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE,
+        androidXWeakStatusCode = BiometricManager.BIOMETRIC_SUCCESS,
+        permissionsGranted = true,
+        hasFingerprintFeature = true,
+        legacyFingerprintHardwareDetected = true,
+        legacyFingerprintEnrolled = true
+      )
+    )
+    assertFalse(
+      DeviceAvailability.shouldAllowApi29FingerprintPromptProbe(
+        apiLevel = 29,
+        androidXStrongStatusCode = BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE,
         androidXWeakStatusCode = BiometricManager.BIOMETRIC_SUCCESS,
         permissionsGranted = true,
         hasFingerprintFeature = true,
@@ -99,7 +136,7 @@ class DeviceAvailabilityTest {
   @Test
   fun weakBiometricHeuristicStillRequiresFingerprintHardwareFeature() {
     assertFalse(
-      DeviceAvailability.shouldUseApi29FingerprintFallback(
+      DeviceAvailability.shouldAllowApi29FingerprintPromptProbe(
         apiLevel = 29,
         androidXStrongStatusCode = BiometricManager.BIOMETRIC_STATUS_UNKNOWN,
         androidXWeakStatusCode = BiometricManager.BIOMETRIC_SUCCESS,

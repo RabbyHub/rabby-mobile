@@ -41,6 +41,7 @@ import {
   apisKeychainV10_0_0,
 } from '@/core/apis';
 import { IS_ANDROID } from '@/core/native/utils';
+import RNHelpers from '@/core/native/RNHelpers';
 import {
   useCurrentKeychainVersion,
   useDebugKeychainStorage,
@@ -2580,16 +2581,18 @@ export default function DevDataKeychain(): JSX.Element {
   );
 
   const handleChangeCurrentVersion = useCallback(
-    async (nextVersion: CurrentKeychainVersion) => {
+    (nextVersion: CurrentKeychainVersion) => {
       if (nextVersion === currentKeychainVersion) {
         return;
       }
 
       setCurrentKeychainVersion(nextVersion);
-      toast.success(`Current keychain switched to ${nextVersion}`);
-      await refreshState();
+      toast.success(`Keychain ${nextVersion} applies after restart`);
+      setTimeout(() => {
+        RNHelpers.forceExitApp();
+      }, 100);
     },
-    [currentKeychainVersion, refreshState, setCurrentKeychainVersion],
+    [currentKeychainVersion, setCurrentKeychainVersion],
   );
 
   const handleChangeVersionStorage = useCallback(
