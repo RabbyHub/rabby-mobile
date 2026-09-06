@@ -194,6 +194,14 @@ export type AndroidBiometricHardwareState = {
   fingerprint: boolean;
   face: boolean;
   iris: boolean;
+  permissionsGranted?: boolean;
+  androidXStrongStatusCode?: number;
+  androidXWeakStatusCode?: number;
+  legacyFingerprintHardwareDetected?: boolean;
+  legacyFingerprintEnrolled?: boolean;
+  api29FingerprintFallbackEligible?: boolean;
+  effectiveStrongAvailable?: boolean;
+  effectiveStrongSource?: string;
 };
 
 export type KeychainCompatibleModule = {
