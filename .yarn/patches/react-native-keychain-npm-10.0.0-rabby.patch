@@ -370,10 +370,28 @@ index 722a5ed990c2a1baa15546351d36928ec2b6d268..0dd72c221196a5f8a1262359f31d7916
        promise.resolve(reply)
      } catch (e: Exception) {
        Log.e(KEYCHAIN_MODULE, e.message, e)
-@@ -426,6 +451,219 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+@@ -426,6 +451,237 @@ class KeychainModule(reactContext: ReactApplicationContext) :
      }
    }
 
++  @ReactMethod
++  fun getAndroidBiometricPromptOptimization(promise: Promise) {
++    try {
++      val strongAvailability =
++        DeviceAvailability.getStrongBiometricAuthAvailability(reactApplicationContext)
++      val result = Arguments.createMap()
++      result.putBoolean(
++        "api29FingerprintFallbackEligible",
++        strongAvailability.api29FingerprintFallbackEligible
++      )
++      result.putString("effectiveStrongSource", strongAvailability.source)
++      promise.resolve(result)
++    } catch (fail: Throwable) {
++      Log.e(KEYCHAIN_MODULE, fail.message, fail)
++      promise.reject(Errors.E_UNKNOWN_ERROR, fail)
++    }
++  }
++
 +  @ReactMethod
 +  fun debugGetGenericPasswordStateForOptions(options: ReadableMap?, promise: Promise) {
 +    try {

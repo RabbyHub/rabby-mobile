@@ -500,6 +500,24 @@ class KeychainModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
+  fun getAndroidBiometricPromptOptimization(promise: Promise) {
+    try {
+      val strongAvailability =
+        DeviceAvailability.getStrongBiometricAuthAvailability(reactApplicationContext)
+      val result = Arguments.createMap()
+      result.putBoolean(
+        "api29FingerprintFallbackEligible",
+        strongAvailability.api29FingerprintFallbackEligible
+      )
+      result.putString("effectiveStrongSource", strongAvailability.source)
+      promise.resolve(result)
+    } catch (fail: Throwable) {
+      Log.e(KEYCHAIN_MODULE, fail.message, fail)
+      promise.reject(Errors.E_UNKNOWN_ERROR, fail)
+    }
+  }
+
+  @ReactMethod
   fun debugGetGenericPasswordStateForOptions(options: ReadableMap?, promise: Promise) {
     try {
       val service = getServiceOrDefault(options)

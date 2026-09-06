@@ -6,6 +6,8 @@ describe('core/apis/keychainV9_0_0', () => {
     trustedVaultKeyString?: string | null;
     embeddedVaultKeyString?: string | null;
     platform?: 'android' | 'ios';
+    platformVersion?: number;
+    api29FingerprintFallbackEligible?: boolean;
   }) => {
     jest.resetModules();
     const {
@@ -15,6 +17,8 @@ describe('core/apis/keychainV9_0_0', () => {
       trustedVaultKeyString = null,
       embeddedVaultKeyString = null,
       platform = 'android',
+      platformVersion = 33,
+      api29FingerprintFallbackEligible = false,
     } = options || {};
 
     const mockEncrypt = jest.fn(
@@ -120,15 +124,29 @@ describe('core/apis/keychainV9_0_0', () => {
     }));
     const mockUpdateUnlockTime = jest.fn();
     const mockSimplePrompt = jest.fn(async () => ({ success: true }));
+    const mockPrepareSimplePrompt = jest.fn(async () => true);
+    const mockGetSupportedBiometryType = jest.fn(async () => 'Fingerprint');
+    const mockIsPasscodeAuthAvailable = jest.fn(async () => true);
+    const mockGetAndroidBiometricPromptOptimization = jest.fn(async () => ({
+      api29FingerprintFallbackEligible,
+      effectiveStrongSource: api29FingerprintFallbackEligible
+        ? 'fingerprint-api29-fallback'
+        : 'androidx-strong',
+    }));
 
     jest.doMock('react-native', () => ({
       Platform: {
         OS: platform,
-        Version: 33,
+        Version: platformVersion,
         select: (obj: any) => obj[platform],
       },
       NativeModules: {
+        ReactNativeBiometrics: {
+          prepareSimplePrompt: mockPrepareSimplePrompt,
+        },
         RNRabbyKeychainV9Manager: {
+          getAndroidBiometricPromptOptimization:
+            mockGetAndroidBiometricPromptOptimization,
           getGenericPasswordEntryStateForOptions:
             mockGetGenericPasswordEntryStateForOptions,
           debugGetGenericPasswordStateForOptions:
@@ -145,8 +163,8 @@ describe('core/apis/keychainV9_0_0', () => {
         getGenericPassword: mockGetGenericPassword,
         setGenericPassword: mockSetGenericPassword,
         resetGenericPassword: mockResetGenericPassword,
-        getSupportedBiometryType: jest.fn(async () => 'Fingerprint'),
-        isPasscodeAuthAvailable: jest.fn(async () => true),
+        getSupportedBiometryType: mockGetSupportedBiometryType,
+        isPasscodeAuthAvailable: mockIsPasscodeAuthAvailable,
         canImplyAuthentication: mockCanImplyAuthentication,
         ACCESSIBLE: {
           WHEN_UNLOCKED_THIS_DEVICE_ONLY:
@@ -254,6 +272,10 @@ describe('core/apis/keychainV9_0_0', () => {
       mockSafeVerifyPasswordAndUpdateUnlockTime,
       mockUpdateUnlockTime,
       mockSimplePrompt,
+      mockPrepareSimplePrompt,
+      mockGetSupportedBiometryType,
+      mockIsPasscodeAuthAvailable,
+      mockGetAndroidBiometricPromptOptimization,
     };
   };
 
@@ -699,7 +721,45 @@ describe('core/apis/keychainV9_0_0', () => {
         allowDeviceCredentials: true,
       }),
     );
+    expect(mockSimplePrompt.mock.calls[0]?.[0]).not.toHaveProperty(
+      'androidUsePreparedPrompt',
+    );
     expect(mockSetGenericPassword).not.toHaveBeenCalled();
+  });
+
+  it('prepares and reuses the API 29 fingerprint fallback prompt', async () => {
+    const {
+      module,
+      mockGetSupportedBiometryType,
+      mockIsPasscodeAuthAvailable,
+      mockGetAndroidBiometricPromptOptimization,
+      mockPrepareSimplePrompt,
+      mockSimplePrompt,
+    } = await setup({
+      storage: 'KeystoreAESGCM_NoAuth',
+      authType: 4,
+      platformVersion: 29,
+      api29FingerprintFallbackEligible: true,
+    });
+
+    await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.VERIFY,
+    });
+    await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.VERIFY,
+    });
+
+    expect(mockGetAndroidBiometricPromptOptimization).toHaveBeenCalledTimes(1);
+    expect(mockPrepareSimplePrompt).toHaveBeenCalledTimes(1);
+    expect(mockGetSupportedBiometryType).toHaveBeenCalledTimes(1);
+    expect(mockIsPasscodeAuthAvailable).not.toHaveBeenCalled();
+    expect(mockSimplePrompt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        allowDeviceCredentials: true,
+        androidUsePreparedPrompt: true,
+      }),
+    );
+    expect(mockSimplePrompt).toHaveBeenCalledTimes(2);
   });
 
   it('passes the Android authenticated-session reuse option through business reads when requested', async () => {
