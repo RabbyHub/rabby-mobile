@@ -10415,15 +10415,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/react-native-keychain@workspace:^, @rabby-wallet/react-native-keychain@workspace:packages/react-native-keychain":
-  version: 0.0.0-use.local
-  resolution: "@rabby-wallet/react-native-keychain@workspace:packages/react-native-keychain"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  languageName: unknown
-  linkType: soft
-
 "@rabby-wallet/react-native-menu@workspace:^, @rabby-wallet/react-native-menu@workspace:packages/react-native-menu":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/react-native-menu@workspace:packages/react-native-menu"
@@ -39123,7 +39114,6 @@ __metadata:
     "@rabby-wallet/react-native-bootsplash": "workspace:^"
     "@rabby-wallet/react-native-fs": "workspace:^"
     "@rabby-wallet/react-native-ios-context-menu": "workspace:^"
-    "@rabby-wallet/react-native-keychain": "workspace:^"
     "@rabby-wallet/react-native-keychain-9": "workspace:^"
     "@rabby-wallet/react-native-menu": "workspace:^"
     "@rabby-wallet/rozenite-resource-flow-plugin": "workspace:^"
@@ -39237,7 +39227,7 @@ __metadata:
     react-native-aes-crypto: "npm:^3.0.1"
     react-native-animateable-text: "npm:0.17.1"
     react-native-asset: "npm:^2.1.1"
-    react-native-biometrics: "npm:^3.0.1"
+    react-native-biometrics: "patch:react-native-biometrics@npm%3A3.0.1#~/.yarn/patches/react-native-biometrics-npm-3.0.1-34e1156211.patch"
     react-native-ble-manager: "npm:11.6.0"
     react-native-ble-plx: "npm:3.5.1"
     react-native-bundle-splitter: "npm:^3.0.1"
@@ -39815,12 +39805,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-biometrics@npm:^3.0.1":
+"react-native-biometrics@npm:3.0.1":
   version: 3.0.1
   resolution: "react-native-biometrics@npm:3.0.1"
   peerDependencies:
     react-native: ">=0.60.0"
   checksum: 10/abbbe0b4ba0470ae6b8acdc9f1914b8356349096c58abd3b195d832ae7f007b9876191d08dd88b27c1cc9b69a43f4cd3b320307cd7f066e4475da4dfd696e198
+  languageName: node
+  linkType: hard
+
+"react-native-biometrics@patch:react-native-biometrics@npm%3A3.0.1#~/.yarn/patches/react-native-biometrics-npm-3.0.1-34e1156211.patch":
+  version: 3.0.1
+  resolution: "react-native-biometrics@patch:react-native-biometrics@npm%3A3.0.1#~/.yarn/patches/react-native-biometrics-npm-3.0.1-34e1156211.patch::version=3.0.1&hash=452839"
+  peerDependencies:
+    react-native: ">=0.60.0"
+  checksum: 10/ccc08cbb25ff80bdb79faaa028a639bbef4c6f0ed533d83bb46203a573e35b86a09a8234c6f7cdd280990212de71452318efcfc2c83e86bede8d9216a2ea0562
   languageName: node
   linkType: hard
 
@@ -40192,8 +40191,8 @@ __metadata:
 
 "react-native-keychain@patch:react-native-keychain@npm%3A10.0.0#../../.yarn/patches/react-native-keychain-npm-10.0.0-rabby.patch::locator=rabby-mobile%40workspace%3Aapps%2Fmobile":
   version: 10.0.0
-  resolution: "react-native-keychain@patch:react-native-keychain@npm%3A10.0.0#../../.yarn/patches/react-native-keychain-npm-10.0.0-rabby.patch::version=10.0.0&hash=f9dbbf&locator=rabby-mobile%40workspace%3Aapps%2Fmobile"
-  checksum: 10/7babdc26139e32534735f4de7fad049d9aa7a5119cd7a49267b1c249d3c9acf9a03f6ff1c33b2feff74b5cc69dc4b2ac58bfb5f093087d93d8f05f14348af2d6
+  resolution: "react-native-keychain@patch:react-native-keychain@npm%3A10.0.0#../../.yarn/patches/react-native-keychain-npm-10.0.0-rabby.patch::version=10.0.0&hash=896314&locator=rabby-mobile%40workspace%3Aapps%2Fmobile"
+  checksum: 10/a2853c176d3617e108767c15dcd757cb1cc6dcf056888fcd0cd1d36ce244877193c961214272ae35401ba9f368e7e4332c0eba2a1c55e6d4009333e28430c909
   languageName: node
   linkType: hard
 

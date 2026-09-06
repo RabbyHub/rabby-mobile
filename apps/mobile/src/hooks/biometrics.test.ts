@@ -82,11 +82,6 @@ describe('hooks/biometrics', () => {
       sourceLabel: 'test-keychain',
     }));
 
-    jest.doMock('@rabby-wallet/react-native-keychain', () => ({
-      BIOMETRY_TYPE: {
-        FACE_ID: 'FaceID',
-      },
-    }));
     jest.doMock('react-i18next', () => ({
       useTranslation: () => ({
         t: (key: string) => key,
@@ -120,6 +115,9 @@ describe('hooks/biometrics', () => {
     }));
     jest.doMock('@/core/apis/keychain', () => ({
       KEYCHAIN_AUTH_TYPES,
+      KEYCHAIN_BIOMETRY_TYPES: {
+        FACE_ID: 'FaceID',
+      },
       RequestGenericPurpose,
       getAuthenticationType: jest.fn(() => currentAuthType),
       getSupportedBiometryType: mockGetSupportedBiometryType,

@@ -32,15 +32,6 @@ module.exports = {
         ios: null,
       },
     },
-    '@rabby-wallet/react-native-keychain': {
-      platforms: {
-        android: {
-          packageImportPath:
-            'import com.rabbywallet.keychain.RabbyKeychainPackage;',
-          packageInstance: 'new RabbyKeychainPackage()',
-        },
-      },
-    },
     '@rabby-wallet/react-native-keychain-9': {
       platforms: {
         android: {

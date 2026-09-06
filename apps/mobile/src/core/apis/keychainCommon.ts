@@ -39,6 +39,16 @@ type RNBiometricsSimplePromptOptions = Parameters<
   ReactNativeBiometrics['simplePrompt']
 >[0] & {
   allowDeviceCredentials?: boolean;
+  androidUsePreparedPrompt?: boolean;
+};
+
+type AndroidBiometricPromptOptimization = {
+  api29FingerprintFallbackEligible: boolean;
+  effectiveStrongSource?: string;
+};
+
+type ReactNativeBiometricsNativeModule = {
+  prepareSimplePrompt?: () => Promise<boolean>;
 };
 
 function getRNBiometrics(): ReactNativeBiometrics {
@@ -173,6 +183,10 @@ function sortKeychainStorageTypes(
 
 export type KeychainSupportedBiometryType = string | null;
 
+export const KEYCHAIN_BIOMETRY_TYPES = {
+  FACE_ID: 'FaceID',
+} as const;
+
 export type AndroidAuthenticatorCapability = {
   name: string;
   authenticators: number;
@@ -295,6 +309,7 @@ type NativeKeychainEntryState = {
 };
 
 type RNKeychainDebugModule = {
+  getAndroidBiometricPromptOptimization?: () => Promise<AndroidBiometricPromptOptimization>;
   getGenericPasswordEntryStateForOptions?: (
     options: KeychainCompatibleOptions,
   ) => Promise<NativeKeychainEntryState>;
@@ -717,6 +732,77 @@ export function createBusinessKeychainApi({
   const debugModule = (NativeModules as Record<string, unknown>)[
     debugNativeModuleName
   ] as RNKeychainDebugModule | undefined;
+  const biometricsNativeModule = (NativeModules as Record<string, unknown>)[
+    'ReactNativeBiometrics'
+  ] as ReactNativeBiometricsNativeModule | undefined;
+  let api29FingerprintPromptOptimizationChecked = false;
+  let api29FingerprintPromptOptimizationEligible = false;
+  let api29FingerprintPromptPrepared = false;
+  let api29FingerprintPromptPreparationPromise: Promise<void> | null = null;
+
+  async function prepareApi29FingerprintPromptOptimization(
+    supportedBiometryType: KeychainSupportedBiometryType,
+  ) {
+    if (
+      !isAndroid ||
+      Number(Platform.Version) !== 29 ||
+      supportedBiometryType !== 'Fingerprint'
+    ) {
+      return;
+    }
+
+    if (api29FingerprintPromptOptimizationChecked) {
+      return;
+    }
+
+    if (api29FingerprintPromptPreparationPromise) {
+      return api29FingerprintPromptPreparationPromise;
+    }
+
+    const nextPromise = (async () => {
+      const optimizationMethod =
+        debugModule?.getAndroidBiometricPromptOptimization;
+      if (typeof optimizationMethod !== 'function') {
+        api29FingerprintPromptOptimizationChecked = true;
+        return;
+      }
+
+      try {
+        const optimization = await optimizationMethod();
+        api29FingerprintPromptOptimizationEligible =
+          optimization.api29FingerprintFallbackEligible === true;
+
+        if (
+          api29FingerprintPromptOptimizationEligible &&
+          typeof biometricsNativeModule?.prepareSimplePrompt === 'function'
+        ) {
+          const startedAt = Date.now();
+          api29FingerprintPromptPrepared =
+            (await biometricsNativeModule.prepareSimplePrompt()) === true;
+          traceAndroidKeychainPerf('api29_fingerprint_prompt_prepare_end', {
+            elapsedMs: Date.now() - startedAt,
+            prepared: api29FingerprintPromptPrepared,
+            source: optimization.effectiveStrongSource || null,
+          });
+        }
+      } catch (error) {
+        api29FingerprintPromptOptimizationEligible = false;
+        api29FingerprintPromptPrepared = false;
+        traceAndroidKeychainPerf('api29_fingerprint_prompt_prepare_error', {
+          error: getErrorMessage(error),
+        });
+      } finally {
+        api29FingerprintPromptOptimizationChecked = true;
+      }
+    })().finally(() => {
+      if (api29FingerprintPromptPreparationPromise === nextPromise) {
+        api29FingerprintPromptPreparationPromise = null;
+      }
+    });
+
+    api29FingerprintPromptPreparationPromise = nextPromise;
+    return nextPromise;
+  }
 
   async function callKeychainDebugMethod<R>(
     method: keyof RNKeychainDebugModule,
@@ -920,6 +1006,17 @@ export function createBusinessKeychainApi({
     options: KeychainCompatibleOptions,
     walletUnlockDiagnosticsAttemptId?: string,
   ) {
+    const api29FingerprintPromptPreparation =
+      isAndroid &&
+      Number(Platform.Version) === 29 &&
+      isAuthenticatedByBiometrics() &&
+      !api29FingerprintPromptOptimizationChecked
+        ? getSupportedBiometryType().catch(error => {
+            traceAndroidKeychainPerf('api29_fingerprint_prompt_prepare_error', {
+              error: getErrorMessage(error),
+            });
+          })
+        : null;
     const startedAt = Date.now();
     markWalletUnlockDiagnosticStage(
       walletUnlockDiagnosticsAttemptId,
@@ -957,18 +1054,33 @@ export function createBusinessKeychainApi({
       traceAndroidKeychainPerf('system_auth_availability_start', {
         storage: credentials.storage,
       });
-      const [supportedBiometry, keychainPasscodeAvailable, keyguardSecure] =
-        await Promise.all([
-          keychainModule.getSupportedBiometryType(),
-          typeof keychainModule.isPasscodeAuthAvailable === 'function'
-            ? keychainModule.isPasscodeAuthAvailable().catch(() => false)
-            : Promise.resolve(false),
-          DeviceInfo.isPinOrFingerprintSet().catch(() => false),
-        ]);
+      await api29FingerprintPromptPreparation;
+      const useApi29FingerprintFastPath =
+        api29FingerprintPromptOptimizationChecked &&
+        api29FingerprintPromptOptimizationEligible;
+      let supportedBiometry: KeychainSupportedBiometryType = null;
+      let keychainPasscodeAvailable = false;
+      let keyguardSecure = false;
+
+      if (useApi29FingerprintFastPath) {
+        supportedBiometry = 'Fingerprint';
+      } else {
+        [supportedBiometry, keychainPasscodeAvailable, keyguardSecure] =
+          await Promise.all([
+            keychainModule.getSupportedBiometryType(),
+            typeof keychainModule.isPasscodeAuthAvailable === 'function'
+              ? keychainModule.isPasscodeAuthAvailable().catch(() => false)
+              : Promise.resolve(false),
+            DeviceInfo.isPinOrFingerprintSet().catch(() => false),
+          ]);
+      }
       const passcodeAvailable = keychainPasscodeAvailable || keyguardSecure;
 
       traceAndroidKeychainPerf('system_auth_availability_end', {
         elapsedMs: Date.now() - availabilityStartedAt,
+        strategy: useApi29FingerprintFastPath
+          ? 'cached-api29-fingerprint-fallback'
+          : 'live-check',
         storage: credentials.storage,
         supportedBiometry: supportedBiometry || null,
         passcodeAvailable,
@@ -981,6 +1093,8 @@ export function createBusinessKeychainApi({
         keychainPasscodeAvailable,
         keyguardSecure,
         allowDeviceCredentials: true,
+        useApi29FingerprintFastPath,
+        promptPrepared: api29FingerprintPromptPrepared,
       });
 
       if (!supportedBiometry && !passcodeAvailable) {
@@ -1012,8 +1126,16 @@ export function createBusinessKeychainApi({
         promptResult = await getRNBiometrics().simplePrompt({
           promptMessage: i18n.t('native.authentication.auth_prompt_desc'),
           allowDeviceCredentials: true,
+          ...(useApi29FingerprintFastPath
+            ? { androidUsePreparedPrompt: true }
+            : null),
         } as RNBiometricsSimplePromptOptions);
       } catch (error) {
+        if (useApi29FingerprintFastPath) {
+          api29FingerprintPromptOptimizationChecked = false;
+          api29FingerprintPromptOptimizationEligible = false;
+          api29FingerprintPromptPrepared = false;
+        }
         traceAndroidKeychainPerf('system_auth_prompt_error', {
           storage: credentials.storage,
           supportedBiometry: supportedBiometry || null,
@@ -1813,10 +1935,12 @@ export function createBusinessKeychainApi({
     }
   }
 
-  function getSupportedBiometryType() {
-    return keychainModule.getSupportedBiometryType(
+  async function getSupportedBiometryType() {
+    const supportedBiometryType = await keychainModule.getSupportedBiometryType(
       getAndroidBiometricSecurityLevelOptions(),
     );
+    await prepareApi29FingerprintPromptOptimization(supportedBiometryType);
+    return supportedBiometryType;
   }
 
   async function isPasscodeAuthAvailable() {
