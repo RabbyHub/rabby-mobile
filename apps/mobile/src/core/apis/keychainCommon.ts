@@ -173,6 +173,10 @@ function sortKeychainStorageTypes(
 
 export type KeychainSupportedBiometryType = string | null;
 
+export const KEYCHAIN_BIOMETRY_TYPES = {
+  FACE_ID: 'FaceID',
+} as const;
+
 export type AndroidAuthenticatorCapability = {
   name: string;
   authenticators: number;

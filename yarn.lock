@@ -9823,15 +9823,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/react-native-keychain@workspace:^, @rabby-wallet/react-native-keychain@workspace:packages/react-native-keychain":
-  version: 0.0.0-use.local
-  resolution: "@rabby-wallet/react-native-keychain@workspace:packages/react-native-keychain"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  languageName: unknown
-  linkType: soft
-
 "@rabby-wallet/react-native-menu@workspace:^, @rabby-wallet/react-native-menu@workspace:packages/react-native-menu":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/react-native-menu@workspace:packages/react-native-menu"
@@ -38445,7 +38436,6 @@ __metadata:
     "@rabby-wallet/react-native-bootsplash": "workspace:^"
     "@rabby-wallet/react-native-fs": "workspace:^"
     "@rabby-wallet/react-native-ios-context-menu": "workspace:^"
-    "@rabby-wallet/react-native-keychain": "workspace:^"
     "@rabby-wallet/react-native-keychain-9": "workspace:^"
     "@rabby-wallet/react-native-menu": "workspace:^"
     "@rabby-wallet/rozenite-resource-flow-plugin": "workspace:^"
@@ -39512,8 +39502,8 @@ __metadata:
 
 "react-native-keychain@patch:react-native-keychain@npm%3A10.0.0#../../.yarn/patches/react-native-keychain-npm-10.0.0-rabby.patch::locator=rabby-mobile%40workspace%3Aapps%2Fmobile":
   version: 10.0.0
-  resolution: "react-native-keychain@patch:react-native-keychain@npm%3A10.0.0#../../.yarn/patches/react-native-keychain-npm-10.0.0-rabby.patch::version=10.0.0&hash=f9dbbf&locator=rabby-mobile%40workspace%3Aapps%2Fmobile"
-  checksum: 10/7babdc26139e32534735f4de7fad049d9aa7a5119cd7a49267b1c249d3c9acf9a03f6ff1c33b2feff74b5cc69dc4b2ac58bfb5f093087d93d8f05f14348af2d6
+  resolution: "react-native-keychain@patch:react-native-keychain@npm%3A10.0.0#../../.yarn/patches/react-native-keychain-npm-10.0.0-rabby.patch::version=10.0.0&hash=4d644a&locator=rabby-mobile%40workspace%3Aapps%2Fmobile"
+  checksum: 10/4b4314e32a5fa3a0144dce1197ceda965c5cefb35edd61abcf80a60dc828c49d2e71dc88fca0f1b3b37002ac157d5da2fa1d692f30e2236e7461770bf9968c76
   languageName: node
   linkType: hard
 

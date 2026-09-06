@@ -113,7 +113,6 @@
     "@rabby-wallet/react-native-bootsplash": "workspace:^",
     "@rabby-wallet/react-native-fs": "workspace:^",
     "@rabby-wallet/react-native-ios-context-menu": "workspace:^",
-    "@rabby-wallet/react-native-keychain": "workspace:^",
     "@rabby-wallet/react-native-keychain-9": "workspace:^",
     "@rabby-wallet/react-native-menu": "workspace:^",
     "@rabby-wallet/rozenite-resource-flow-plugin": "workspace:^",

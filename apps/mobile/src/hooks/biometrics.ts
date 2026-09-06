@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { BIOMETRY_TYPE } from '@rabby-wallet/react-native-keychain';
 import { toast, toastLoading } from '@/components2024/Toast';
 import * as apisKeychain from '@/core/apis/keychain';
 import {
   KEYCHAIN_AUTH_TYPES,
+  KEYCHAIN_BIOMETRY_TYPES,
   RequestGenericPurpose,
   getAuthenticationType,
   isAuthenticatedByBiometrics,
@@ -403,7 +403,7 @@ export function computeBiometricsState({
   t: (key: string) => string;
   isIOS?: boolean;
 }) {
-  const isFaceID = supportedBiometryType === BIOMETRY_TYPE.FACE_ID;
+  const isFaceID = supportedBiometryType === KEYCHAIN_BIOMETRY_TYPES.FACE_ID;
   const isBiometricsOrPasscode =
     authType === KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE;
   const canAuthTypeFallbackToDevicePasscode =
