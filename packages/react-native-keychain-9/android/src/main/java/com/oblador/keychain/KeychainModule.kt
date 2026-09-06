@@ -444,20 +444,21 @@ class KeychainModule(reactContext: ReactApplicationContext) :
       var reply: String? = null
       val strongAvailability =
         DeviceAvailability.getStrongBiometricAuthAvailability(reactApplicationContext)
-      if (!strongAvailability.available) {
+      if (!strongAvailability.promptProbeAvailable) {
         reply = null
       } else {
-        if (isFingerprintAuthAvailable) {
+        if (DeviceAvailability.isFingerprintAuthAvailable(reactApplicationContext)) {
           reply = FINGERPRINT_SUPPORTED_NAME
-        } else if (isFaceAuthAvailable) {
+        } else if (DeviceAvailability.isFaceAuthAvailable(reactApplicationContext)) {
           reply = FACE_SUPPORTED_NAME
-        } else if (isIrisAuthAvailable) {
+        } else if (DeviceAvailability.isIrisAuthAvailable(reactApplicationContext)) {
           reply = IRIS_SUPPORTED_NAME
         }
       }
       if (
         strongAvailability.androidXStatusCode != BiometricManager.BIOMETRIC_SUCCESS ||
-          strongAvailability.api29FingerprintFallbackEligible
+          strongAvailability.api29FingerprintFallbackEligible ||
+          strongAvailability.api29FingerprintPromptProbeEligible
       ) {
         Log.i(
           KEYCHAIN_MODULE,
@@ -468,6 +469,8 @@ class KeychainModule(reactContext: ReactApplicationContext) :
             "legacyFingerprintHardwareDetected=" +
             "${strongAvailability.legacyFingerprintHardwareDetected}, " +
             "legacyFingerprintEnrolled=${strongAvailability.legacyFingerprintEnrolled}, " +
+            "promptProbeEligible=" +
+            "${strongAvailability.api29FingerprintPromptProbeEligible}, " +
             "source=${strongAvailability.source}"
         )
       }
@@ -508,6 +511,10 @@ class KeychainModule(reactContext: ReactApplicationContext) :
       result.putBoolean(
         "api29FingerprintFallbackEligible",
         strongAvailability.api29FingerprintFallbackEligible
+      )
+      result.putBoolean(
+        "api29FingerprintPromptProbeEligible",
+        strongAvailability.api29FingerprintPromptProbeEligible
       )
       result.putString("effectiveStrongSource", strongAvailability.source)
       promise.resolve(result)
@@ -642,6 +649,10 @@ class KeychainModule(reactContext: ReactApplicationContext) :
     result.putBoolean(
       "api29FingerprintFallbackEligible",
       strongAvailability.api29FingerprintFallbackEligible
+    )
+    result.putBoolean(
+      "api29FingerprintPromptProbeEligible",
+      strongAvailability.api29FingerprintPromptProbeEligible
     )
     result.putBoolean("effectiveStrongAvailable", strongAvailability.available)
     result.putString("effectiveStrongSource", strongAvailability.source)
@@ -1206,8 +1217,19 @@ class KeychainModule(reactContext: ReactApplicationContext) :
         )
       }
 
+      if (promptAuthenticatorPolicy.usesApi29LegacyDeviceCredentialApi) {
+        Log.i(
+          KEYCHAIN_MODULE,
+          "Using API 29 legacy device-credential-compatible prompt"
+        )
+        @Suppress("DEPRECATION")
+        promptInfoBuilder.setDeviceCredentialAllowed(true)
+      }
+
       if (null != promptInfoOptionsMap &&
         promptInfoOptionsMap.hasKey(AuthPromptOptions.CANCEL) &&
+        !promptAuthenticatorPolicy.usesApi29LegacyDeviceCredentialApi &&
+        allowedAuthenticators != null &&
         (allowedAuthenticators and BiometricManager.Authenticators.DEVICE_CREDENTIAL) == 0
       ) {
         val promptInfoNegativeButton = promptInfoOptionsMap.getString(AuthPromptOptions.CANCEL)
@@ -1215,7 +1237,9 @@ class KeychainModule(reactContext: ReactApplicationContext) :
       }
 
       /* PromptInfo is used as Rabby's v9 business auth gate. RSA keys are kept unauthenticated. */
-      promptInfoBuilder.setAllowedAuthenticators(allowedAuthenticators)
+      if (allowedAuthenticators != null) {
+        promptInfoBuilder.setAllowedAuthenticators(allowedAuthenticators)
+      }
 
       /* Bypass confirmation to avoid KeyStore unlock timeout being exceeded when using passive biometrics */ promptInfoBuilder
         .setConfirmationRequired(false)

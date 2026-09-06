@@ -22,7 +22,9 @@ object DeviceAvailability {
     val legacyFingerprintHardwareDetected: Boolean,
     val legacyFingerprintEnrolled: Boolean,
     val api29FingerprintFallbackEligible: Boolean,
+    val api29FingerprintPromptProbeEligible: Boolean,
     val available: Boolean,
+    val promptProbeAvailable: Boolean,
     val source: String
   )
 
@@ -71,7 +73,18 @@ object DeviceAvailability {
         legacyFingerprintHardwareDetected = legacyFingerprintHardwareDetected,
         legacyFingerprintEnrolled = legacyFingerprintEnrolled
       )
+    val api29FingerprintPromptProbeEligible =
+      shouldAllowApi29FingerprintPromptProbe(
+        apiLevel = Build.VERSION.SDK_INT,
+        androidXStrongStatusCode = androidXStatusCode,
+        androidXWeakStatusCode = androidXWeakStatusCode,
+        permissionsGranted = permissionsGranted,
+        hasFingerprintFeature = hasFingerprintFeature,
+        legacyFingerprintHardwareDetected = legacyFingerprintHardwareDetected,
+        legacyFingerprintEnrolled = legacyFingerprintEnrolled
+      )
     val androidXStrongAvailable = androidXStatusCode == BiometricManager.BIOMETRIC_SUCCESS
+    val available = androidXStrongAvailable || api29FingerprintFallbackEligible
 
     return StrongBiometricAvailability(
       androidXStatusCode = androidXStatusCode,
@@ -80,7 +93,9 @@ object DeviceAvailability {
       legacyFingerprintHardwareDetected = legacyFingerprintHardwareDetected,
       legacyFingerprintEnrolled = legacyFingerprintEnrolled,
       api29FingerprintFallbackEligible = api29FingerprintFallbackEligible,
-      available = androidXStrongAvailable || api29FingerprintFallbackEligible,
+      api29FingerprintPromptProbeEligible = api29FingerprintPromptProbeEligible,
+      available = available,
+      promptProbeAvailable = available || api29FingerprintPromptProbeEligible,
       source =
         when {
           androidXStrongAvailable -> STRONG_BIOMETRIC_SOURCE_ANDROIDX
@@ -110,19 +125,41 @@ object DeviceAvailability {
 
     val legacyFingerprintConfirmed =
       legacyFingerprintHardwareDetected && legacyFingerprintEnrolled
-    val androidXFoundBiometricButCouldNotClassifyStrength =
-      androidXStrongStatusCode == BiometricManager.BIOMETRIC_STATUS_UNKNOWN &&
-        androidXWeakStatusCode == BiometricManager.BIOMETRIC_SUCCESS
-
     return when (androidXStrongStatusCode) {
       BiometricManager.BIOMETRIC_STATUS_UNKNOWN,
       BiometricManager.BIOMETRIC_ERROR_UNSUPPORTED,
-      BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE,
       BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED,
-      BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE ->
-        legacyFingerprintConfirmed || androidXFoundBiometricButCouldNotClassifyStrength
+      BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> legacyFingerprintConfirmed
       else -> false
     }
+  }
+
+  /**
+   * Android 10 devices can report a usable strong fingerprint prompt as UNKNOWN/WEAK even when
+   * FingerprintManagerCompat cannot observe enrollment. This signal is only permission to try a
+   * BIOMETRIC_STRONG prompt; it must never be treated as confirmed enrollment or remove a device
+   * credential fallback.
+   */
+  internal fun shouldAllowApi29FingerprintPromptProbe(
+    apiLevel: Int,
+    androidXStrongStatusCode: Int,
+    androidXWeakStatusCode: Int,
+    permissionsGranted: Boolean,
+    hasFingerprintFeature: Boolean,
+    legacyFingerprintHardwareDetected: Boolean,
+    legacyFingerprintEnrolled: Boolean
+  ): Boolean {
+    if (
+      apiLevel != Build.VERSION_CODES.Q ||
+        androidXStrongStatusCode != BiometricManager.BIOMETRIC_STATUS_UNKNOWN ||
+        androidXWeakStatusCode != BiometricManager.BIOMETRIC_SUCCESS ||
+        !permissionsGranted ||
+        !hasFingerprintFeature
+    ) {
+      return false
+    }
+
+    return !(legacyFingerprintHardwareDetected && legacyFingerprintEnrolled)
   }
 
   fun isBiometricAuthAvailable(context: Context, allowWeakBiometrics: Boolean): Boolean {

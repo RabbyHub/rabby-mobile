@@ -8,7 +8,7 @@ import org.junit.Test
 
 class PromptAuthenticatorPolicyTest {
   @Test
-  fun api29FingerprintFallbackUsesStrongBiometricWithoutUnsupportedCredentialCombination() {
+  fun api29PasscodeCapableAccessPreservesDeviceCredentialFallback() {
     val policy =
       PromptAuthenticatorPolicyResolver.resolve(
         apiLevel = 29,
@@ -17,11 +17,9 @@ class PromptAuthenticatorPolicyTest {
         api29FingerprintFallbackEligible = true
       )
 
-    assertEquals(
-      BiometricManager.Authenticators.BIOMETRIC_STRONG,
-      policy.allowedAuthenticators
-    )
-    assertTrue(policy.usesApi29FingerprintFallback)
+    assertEquals(null, policy.allowedAuthenticators)
+    assertFalse(policy.usesApi29FingerprintFallback)
+    assertTrue(policy.usesApi29LegacyDeviceCredentialApi)
   }
 
   @Test
@@ -40,10 +38,11 @@ class PromptAuthenticatorPolicyTest {
       policy.allowedAuthenticators
     )
     assertFalse(policy.usesApi29FingerprintFallback)
+    assertFalse(policy.usesApi29LegacyDeviceCredentialApi)
   }
 
   @Test
-  fun api29WithoutFingerprintFallbackKeepsExistingAuthenticatorPolicy() {
+  fun api29WithoutConfirmedFingerprintStillPreservesDeviceCredentialFallback() {
     val policy =
       PromptAuthenticatorPolicyResolver.resolve(
         apiLevel = 29,
@@ -52,12 +51,9 @@ class PromptAuthenticatorPolicyTest {
         api29FingerprintFallbackEligible = false
       )
 
-    assertEquals(
-      BiometricManager.Authenticators.BIOMETRIC_STRONG or
-        BiometricManager.Authenticators.DEVICE_CREDENTIAL,
-      policy.allowedAuthenticators
-    )
+    assertEquals(null, policy.allowedAuthenticators)
     assertFalse(policy.usesApi29FingerprintFallback)
+    assertTrue(policy.usesApi29LegacyDeviceCredentialApi)
   }
 
   @Test
@@ -70,10 +66,26 @@ class PromptAuthenticatorPolicyTest {
         api29FingerprintFallbackEligible = true
       )
 
+    assertEquals(null, policy.allowedAuthenticators)
+    assertFalse(policy.usesApi29FingerprintFallback)
+    assertTrue(policy.usesApi29LegacyDeviceCredentialApi)
+  }
+
+  @Test
+  fun api29BiometricOnlyAccessKeepsStrongPrompt() {
+    val policy =
+      PromptAuthenticatorPolicyResolver.resolve(
+        apiLevel = 29,
+        useBiometry = true,
+        usePasscode = false,
+        api29FingerprintFallbackEligible = true
+      )
+
     assertEquals(
-      BiometricManager.Authenticators.DEVICE_CREDENTIAL,
+      BiometricManager.Authenticators.BIOMETRIC_STRONG,
       policy.allowedAuthenticators
     )
-    assertFalse(policy.usesApi29FingerprintFallback)
+    assertTrue(policy.usesApi29FingerprintFallback)
+    assertFalse(policy.usesApi29LegacyDeviceCredentialApi)
   }
 }

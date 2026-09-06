@@ -252,6 +252,7 @@ describe('hooks/biometrics', () => {
     );
     expect(mockRequestGenericPassword).toHaveBeenCalledWith({
       purpose: RequestGenericPurpose.VERIFY,
+      androidRequireBiometricProof: false,
     });
     expect(mockGetSupportedBiometryType).toHaveBeenCalled();
     expect(mockIsPasscodeAuthAvailable).toHaveBeenCalled();
@@ -324,6 +325,21 @@ describe('hooks/biometrics', () => {
     expect(computed.systemAuthSettingsLabel).toBe(
       'page.setting.useDevicePassword',
     );
+  });
+
+  it('requires a successful biometric prompt before enabling detected biometrics', async () => {
+    const { module, mockRequestGenericPassword } = await setup({
+      supportedBiometryType: 'Fingerprint',
+    });
+
+    await module.storeApisBiometrics.toggleBiometrics(true, {
+      validatedPassword: 'plain-password',
+    });
+
+    expect(mockRequestGenericPassword).toHaveBeenCalledWith({
+      purpose: RequestGenericPurpose.VERIFY,
+      androidRequireBiometricProof: true,
+    });
   });
 
   it('finishes a persisted biometric-disable transition before unlock', async () => {

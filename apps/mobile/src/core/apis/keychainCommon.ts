@@ -40,10 +40,18 @@ type RNBiometricsSimplePromptOptions = Parameters<
 >[0] & {
   allowDeviceCredentials?: boolean;
   androidUsePreparedPrompt?: boolean;
+  androidUseDeviceCredentialOnly?: boolean;
+};
+
+type RNBiometricsSimplePromptResult = Awaited<
+  ReturnType<ReactNativeBiometrics['simplePrompt']>
+> & {
+  errorCode?: number;
 };
 
 type AndroidBiometricPromptOptimization = {
   api29FingerprintFallbackEligible: boolean;
+  api29FingerprintPromptProbeEligible?: boolean;
   effectiveStrongSource?: string;
 };
 
@@ -214,6 +222,7 @@ export type AndroidBiometricHardwareState = {
   legacyFingerprintHardwareDetected?: boolean;
   legacyFingerprintEnrolled?: boolean;
   api29FingerprintFallbackEligible?: boolean;
+  api29FingerprintPromptProbeEligible?: boolean;
   effectiveStrongAvailable?: boolean;
   effectiveStrongSource?: string;
 };
@@ -244,6 +253,7 @@ export type KeychainCompatibleModule = {
     BIOMETRY_CURRENT_SET: unknown;
     DEVICE_PASSCODE: unknown;
     BIOMETRY_ANY_OR_DEVICE_PASSCODE: unknown;
+    BIOMETRY_CURRENT_SET_OR_DEVICE_PASSCODE: unknown;
   };
   AUTHENTICATION_TYPE: {
     BIOMETRICS: unknown;
@@ -641,6 +651,84 @@ function getErrorMessage(error: unknown) {
   return String(error);
 }
 
+type AndroidBiometricPromptError = {
+  code?: unknown;
+  userInfo?: {
+    errorCode?: unknown;
+  };
+};
+
+type AndroidBiometricPromptErrorReportContext = {
+  phase: 'biometric' | 'device-credential' | 'biometric-or-device-credential';
+  sourceLabel: string;
+  storage: string;
+  supportedBiometry: KeychainSupportedBiometryType;
+  passcodeAvailable: boolean;
+  allowDeviceCredentials: boolean;
+  usePreparedPrompt: boolean;
+  fallbackAttempted: boolean;
+  fallbackSucceeded?: boolean;
+};
+
+function getAndroidBiometricPromptErrorDetails(error: unknown) {
+  const promptError = error as AndroidBiometricPromptError | null;
+  const jsErrorCode =
+    typeof promptError?.code === 'string' ? promptError.code : null;
+  const userInfoErrorCode = promptError?.userInfo?.errorCode;
+  const parsedErrorCode = jsErrorCode?.match(
+    /^BIOMETRIC_PROMPT_ERROR_(\d+)$/,
+  )?.[1];
+  const nativeErrorCode =
+    typeof userInfoErrorCode === 'number'
+      ? userInfoErrorCode
+      : parsedErrorCode
+      ? Number(parsedErrorCode)
+      : null;
+
+  return { jsErrorCode, nativeErrorCode };
+}
+
+function reportAndroidBiometricPromptError(
+  error: unknown,
+  context: AndroidBiometricPromptErrorReportContext,
+) {
+  const normalizedError =
+    error instanceof Error ? error : new Error(getErrorMessage(error));
+  const { jsErrorCode, nativeErrorCode } =
+    getAndroidBiometricPromptErrorDetails(error);
+
+  void import('@sentry/react-native')
+    .then(Sentry =>
+      Sentry.captureException(normalizedError, {
+        fingerprint: [
+          'android-biometric-prompt',
+          context.phase,
+          jsErrorCode || String(nativeErrorCode ?? 'unknown'),
+        ],
+        tags: {
+          scene: 'android-biometric-prompt',
+          prompt_phase: context.phase,
+          prompt_error_code:
+            jsErrorCode || String(nativeErrorCode ?? 'unknown'),
+          keychain_source: context.sourceLabel,
+          fallback_attempted: String(context.fallbackAttempted),
+        },
+        extra: {
+          nativeErrorCode,
+          jsErrorCode,
+          platformVersion: Platform.Version,
+          storage: context.storage,
+          supportedBiometry: context.supportedBiometry,
+          passcodeAvailable: context.passcodeAvailable,
+          allowDeviceCredentials: context.allowDeviceCredentials,
+          usePreparedPrompt: context.usePreparedPrompt,
+          fallbackSucceeded: context.fallbackSucceeded ?? null,
+        },
+      }),
+    )
+    .catch(() => undefined);
+}
+
 const canceledByUserMessages = ['code: 10', 'code: 13', `msg: ${CANCELSTR}`];
 
 export function parseKeychainError(error: any | Error) {
@@ -770,7 +858,8 @@ export function createBusinessKeychainApi({
       try {
         const optimization = await optimizationMethod();
         api29FingerprintPromptOptimizationEligible =
-          optimization.api29FingerprintFallbackEligible === true;
+          optimization.api29FingerprintFallbackEligible === true ||
+          optimization.api29FingerprintPromptProbeEligible === true;
 
         if (
           api29FingerprintPromptOptimizationEligible &&
@@ -1005,6 +1094,7 @@ export function createBusinessKeychainApi({
   async function getGenericPasswordWithBiometricPrompt(
     options: KeychainCompatibleOptions,
     walletUnlockDiagnosticsAttemptId?: string,
+    androidRequireBiometricProof = false,
   ) {
     const api29FingerprintPromptPreparation =
       isAndroid &&
@@ -1061,6 +1151,27 @@ export function createBusinessKeychainApi({
       let supportedBiometry: KeychainSupportedBiometryType = null;
       let keychainPasscodeAvailable = false;
       let keyguardSecure = false;
+      const apiLevel = Number(Platform.Version);
+      const isApi29 = apiLevel === 29;
+      const accessControlAllowsDeviceCredential =
+        !androidRequireBiometricProof &&
+        (options.accessControl ===
+          keychainModule.ACCESS_CONTROL.DEVICE_PASSCODE ||
+          options.accessControl ===
+            keychainModule.ACCESS_CONTROL.BIOMETRY_ANY_OR_DEVICE_PASSCODE ||
+          options.accessControl ===
+            keychainModule.ACCESS_CONTROL
+              .BIOMETRY_CURRENT_SET_OR_DEVICE_PASSCODE);
+
+      const refreshPasscodeAvailability = async () => {
+        [keychainPasscodeAvailable, keyguardSecure] = await Promise.all([
+          typeof keychainModule.isPasscodeAuthAvailable === 'function'
+            ? keychainModule.isPasscodeAuthAvailable().catch(() => false)
+            : Promise.resolve(false),
+          DeviceInfo.isPinOrFingerprintSet().catch(() => false),
+        ]);
+        return keychainPasscodeAvailable || keyguardSecure;
+      };
 
       if (useApi29FingerprintFastPath) {
         supportedBiometry = 'Fingerprint';
@@ -1074,7 +1185,7 @@ export function createBusinessKeychainApi({
             DeviceInfo.isPinOrFingerprintSet().catch(() => false),
           ]);
       }
-      const passcodeAvailable = keychainPasscodeAvailable || keyguardSecure;
+      let passcodeAvailable = keychainPasscodeAvailable || keyguardSecure;
 
       traceAndroidKeychainPerf('system_auth_availability_end', {
         elapsedMs: Date.now() - availabilityStartedAt,
@@ -1092,12 +1203,15 @@ export function createBusinessKeychainApi({
         passcodeAvailable,
         keychainPasscodeAvailable,
         keyguardSecure,
-        allowDeviceCredentials: true,
+        allowDeviceCredentials: accessControlAllowsDeviceCredential,
         useApi29FingerprintFastPath,
         promptPrepared: api29FingerprintPromptPrepared,
       });
 
-      if (!supportedBiometry && !passcodeAvailable) {
+      if (
+        !supportedBiometry &&
+        (!passcodeAvailable || !accessControlAllowsDeviceCredential)
+      ) {
         traceAndroidKeychainPerf('system_auth_prompt_unavailable', {
           storage: credentials.storage,
           supportedBiometry: supportedBiometry || null,
@@ -1110,9 +1224,7 @@ export function createBusinessKeychainApi({
         );
       }
 
-      let promptResult: Awaited<
-        ReturnType<ReactNativeBiometrics['simplePrompt']>
-      >;
+      let promptResult: RNBiometricsSimplePromptResult;
       const promptStartedAt = Date.now();
       try {
         markWalletUnlockDiagnosticStage(
@@ -1123,13 +1235,117 @@ export function createBusinessKeychainApi({
             storage: credentials.storage,
           },
         );
-        promptResult = await getRNBiometrics().simplePrompt({
-          promptMessage: i18n.t('native.authentication.auth_prompt_desc'),
-          allowDeviceCredentials: true,
-          ...(useApi29FingerprintFastPath
-            ? { androidUsePreparedPrompt: true }
-            : null),
-        } as RNBiometricsSimplePromptOptions);
+        const promptMessage = i18n.t('native.authentication.auth_prompt_desc');
+        const useApi29DeviceCredentialOnly =
+          isApi29 &&
+          !supportedBiometry &&
+          accessControlAllowsDeviceCredential &&
+          passcodeAvailable;
+        const primaryPromptPhase = useApi29DeviceCredentialOnly
+          ? 'device-credential'
+          : accessControlAllowsDeviceCredential && !isApi29
+          ? 'biometric-or-device-credential'
+          : 'biometric';
+
+        try {
+          promptResult = await getRNBiometrics().simplePrompt({
+            promptMessage,
+            allowDeviceCredentials:
+              accessControlAllowsDeviceCredential && !isApi29,
+            ...(useApi29FingerprintFastPath
+              ? { androidUsePreparedPrompt: true }
+              : null),
+            ...(useApi29DeviceCredentialOnly
+              ? { androidUseDeviceCredentialOnly: true }
+              : null),
+          } as RNBiometricsSimplePromptOptions);
+        } catch (biometricError) {
+          const canTryDeviceCredentialFallback =
+            isApi29 &&
+            !!supportedBiometry &&
+            accessControlAllowsDeviceCredential;
+          if (!canTryDeviceCredentialFallback) {
+            reportAndroidBiometricPromptError(biometricError, {
+              phase: primaryPromptPhase,
+              sourceLabel,
+              storage: credentials.storage,
+              supportedBiometry,
+              passcodeAvailable,
+              allowDeviceCredentials: accessControlAllowsDeviceCredential,
+              usePreparedPrompt: useApi29FingerprintFastPath,
+              fallbackAttempted: false,
+            });
+            throw biometricError;
+          }
+
+          if (!passcodeAvailable) {
+            passcodeAvailable = await refreshPasscodeAvailability();
+          }
+          if (!passcodeAvailable) {
+            reportAndroidBiometricPromptError(biometricError, {
+              phase: primaryPromptPhase,
+              sourceLabel,
+              storage: credentials.storage,
+              supportedBiometry,
+              passcodeAvailable,
+              allowDeviceCredentials: accessControlAllowsDeviceCredential,
+              usePreparedPrompt: useApi29FingerprintFastPath,
+              fallbackAttempted: false,
+            });
+            throw biometricError;
+          }
+
+          traceAndroidKeychainPerf(
+            'system_auth_prompt_device_credential_fallback',
+            {
+              storage: credentials.storage,
+              biometricError: getErrorMessage(biometricError),
+            },
+          );
+          try {
+            promptResult = await getRNBiometrics().simplePrompt({
+              promptMessage,
+              allowDeviceCredentials: true,
+              androidUseDeviceCredentialOnly: true,
+            } as RNBiometricsSimplePromptOptions);
+          } catch (deviceCredentialError) {
+            reportAndroidBiometricPromptError(deviceCredentialError, {
+              phase: 'device-credential',
+              sourceLabel,
+              storage: credentials.storage,
+              supportedBiometry,
+              passcodeAvailable,
+              allowDeviceCredentials: true,
+              usePreparedPrompt: false,
+              fallbackAttempted: true,
+              fallbackSucceeded: false,
+            });
+            reportAndroidBiometricPromptError(biometricError, {
+              phase: primaryPromptPhase,
+              sourceLabel,
+              storage: credentials.storage,
+              supportedBiometry,
+              passcodeAvailable,
+              allowDeviceCredentials: accessControlAllowsDeviceCredential,
+              usePreparedPrompt: useApi29FingerprintFastPath,
+              fallbackAttempted: true,
+              fallbackSucceeded: false,
+            });
+            throw deviceCredentialError;
+          }
+
+          reportAndroidBiometricPromptError(biometricError, {
+            phase: primaryPromptPhase,
+            sourceLabel,
+            storage: credentials.storage,
+            supportedBiometry,
+            passcodeAvailable,
+            allowDeviceCredentials: accessControlAllowsDeviceCredential,
+            usePreparedPrompt: useApi29FingerprintFastPath,
+            fallbackAttempted: true,
+            fallbackSucceeded: promptResult.success,
+          });
+        }
       } catch (error) {
         if (useApi29FingerprintFastPath) {
           api29FingerprintPromptOptimizationChecked = false;
@@ -1153,13 +1369,18 @@ export function createBusinessKeychainApi({
         storage: credentials.storage,
         success: promptResult.success,
         error: promptResult.error || null,
+        errorCode: promptResult.errorCode ?? null,
       });
 
       if (!promptResult.success) {
+        const errorCodePrefix =
+          typeof promptResult.errorCode === 'number'
+            ? `code: ${promptResult.errorCode}; `
+            : '';
         throw new Error(
           promptResult.error
-            ? `msg: ${promptResult.error}`
-            : `msg: ${CANCELSTR}`,
+            ? `${errorCodePrefix}msg: ${promptResult.error}`
+            : `${errorCodePrefix}msg: ${CANCELSTR}`,
         );
       }
     }
@@ -1441,6 +1662,7 @@ export function createBusinessKeychainApi({
     skipPostDecryptKeychainRewrite = false,
     deferPostDecryptKeychainRewrite = false,
     walletUnlockDiagnosticsAttemptId,
+    androidRequireBiometricProof = false,
   }: {
     purpose?: T;
     onPlainPassword?: (
@@ -1455,6 +1677,7 @@ export function createBusinessKeychainApi({
     skipPostDecryptKeychainRewrite?: boolean;
     deferPostDecryptKeychainRewrite?: boolean;
     walletUnlockDiagnosticsAttemptId?: string;
+    androidRequireBiometricProof?: boolean;
   }): Promise<null | DefaultRet> {
     markWalletUnlockDiagnosticStage(
       walletUnlockDiagnosticsAttemptId,
@@ -1470,6 +1693,7 @@ export function createBusinessKeychainApi({
         purpose,
         androidAuthPromptPolicy,
         androidAllowKeyStoreRecovery,
+        androidRequireBiometricProof,
         shouldAttachTrustedVaultKeyString,
         skipPostDecryptKeychainRewrite,
         deferPostDecryptKeychainRewrite,
@@ -1488,6 +1712,7 @@ export function createBusinessKeychainApi({
           ...(isAndroid ? { androidAllowKeyStoreRecovery } : {}),
         },
         walletUnlockDiagnosticsAttemptId,
+        androidRequireBiometricProof,
       )) as DefaultRet;
       traceAndroidKeychainPerf('request_generic_password_native_end', {
         elapsedMs: Date.now() - startedAt,

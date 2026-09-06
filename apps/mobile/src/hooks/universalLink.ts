@@ -65,6 +65,7 @@ import {
   type CurrentKeychainVersion,
 } from './appSettings';
 import { parseKeychainVersionDeepLinkValue } from '@/core/apis/keychainVersionShared';
+import RNHelpers from '@/core/native/RNHelpers';
 
 const nextAppLinkRef = {
   current: '' as string,
@@ -690,9 +691,13 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
           payload.testkitParams.keychainVersion,
         );
         console.info(
-          '[useUniversalLinkOnTop] Keychain version set by testkit',
+          '[useUniversalLinkOnTop] Keychain version set for next cold start',
           { appliedVersion },
         );
+        setTimeout(() => {
+          RNHelpers.forceExitApp();
+        }, 100);
+        return;
       }
       dispatchWhenNavigationReady(
         StackActions.push(RootNames.StackTestkits, {
