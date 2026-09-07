@@ -308,6 +308,12 @@
         "interactContract": "Sözleşmeyle etkileşim"
       },
       "noGasRequired": "Gas gerekmez",
+      "gasSelectorTitle": "Gaz",
+      "swapGasLevel": {
+        "normal": "Normal",
+        "fast": "Hızlı",
+        "instant": "Anında"
+      },
       "failToFetchGasCost": "Gas tahmini yapılamadı",
       "gasPriceTitle": "Gaz Fiyatı (Gwei)",
       "nonceTitle": "Nonce",
@@ -774,6 +780,7 @@
       "title": "Değiştir",
       "insufficient-balance": "Yetersiz bakiye",
       "hidden-no-quote-rates_other": "{{count}} oran mevcut değil",
+      "preferMEV": "MEV Koruması",
       "from": "Kimden",
       "Completed": "Tamamlandı",
       "hidden-no-quote-rates_one": "{{count}} oran mevcut değil",
@@ -809,7 +816,8 @@
       "historyTitle": "Takas geçmişi",
       "results": "Sonuçlar",
       "approve": "Onayla",
-      "market-closed": "Pazar açılmadı: Sipariş verme desteklenmiyor."
+      "market-closed": "Pazar açılmadı: Sipariş verme desteklenmiyor.",
+      "quotes": "Teklifler"
     },
     "bridge": {
       "showMore": {
@@ -1044,6 +1052,9 @@
         "tip3": "Kurtarma ifadenizi ele geçiren biri cüzdanınızın tüm kontrolünü alabilir ve bu işlem geri alınamaz.",
         "tip2": "Uygulamalar veya kötü amaçlı yazılımlar, fotoğraf kütüphanenizde depolanan resimleri okuyabilir.",
         "subTitle": "Kurtarma ifadenizi görsel olarak kaydetmek ifşa olmasına yol açabilir; bu nedenle yazılı olarak saklamak daha güvenlidir."
+      },
+      "rateModalTriggerOnHome": {
+        "title": "Rabby Wallet'ı değerlendirin"
       }
     },
     "newAddress": {
@@ -1588,7 +1599,8 @@
         "minAmountRequired": "En az depozit tutarı 1 $'dır.",
         "estReceiveTip": "{{name}} üzerinden işlenen hizmetin kayma yaşama ihtimali vardır.",
         "selectToken": "Para Yatırmak İçin Token Seçin",
-        "noAvailableToken": "Kullanılabilir token yok"
+        "noAvailableToken": "Kullanılabilir token yok",
+        "priceImpactLoss": "Fiyat Etkisi: {{usd}} kaybediyorsunuz."
       },
       "withdrawPopup": {
         "destinationChain": "Hedef zincir",
@@ -1649,7 +1661,9 @@
       "gasBalance": "Gaz Bakiyesi",
       "depositFailed": "Yatırım başarısız oldu",
       "depositSubmitted": "Yatırma Gönderildi",
-      "depositWith": "Şu yolla yatır"
+      "depositWith": "Şu yolla yatır",
+      "gasToken": "Gaz Tokeni",
+      "title": "GasAccount"
     },
     "tokenDetail": {
       "action": {
@@ -3370,7 +3384,8 @@
         "skipText": "Bu açılır pencereyi 1 gün için atla"
       },
       "alertText": "Üçüncü taraf DApp: kullanım sorunları için lütfen DApp desteğiyle iletişime geçin. Rabby yalnızca görüntüleme erişimi sağlar.",
-      "title": "Hata Bildirmek için Ekran Görüntüsü"
+      "title": "Hata Bildirmek için Ekran Görüntüsü",
+      "submitFailed": "Gönderim başarısız."
     },
     "submitFeedbackSuccessModal": {
       "desc": "Başarıyla Gönderildi!"

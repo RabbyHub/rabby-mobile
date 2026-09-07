@@ -800,6 +800,7 @@
       "hidden-no-quote-rates_one": "{{count}} rate unavailable",
       "hidden-no-quote-rates_other": "{{count}} rates unavailable",
       "preferMEV": "MEV Protection",
+      "quotes": "Quotes",
       "no-slippage-for-wrap": "No slippage for Wrap",
       "best": "Best",
       "unable-to-fetch-the-price": "Unable to fetch the price",
@@ -1060,6 +1061,9 @@
           "gotIt": "I Got It.",
           "entry": "Is it safe to import into Rabby"
         }
+      },
+      "rateModalTriggerOnHome": {
+        "title": "Rating Rabby Wallet"
       },
       "rateModal": {
         "descriptionIOS": "If you like Rabby, a quick rating on the App Store would mean a lot.",
@@ -1651,7 +1655,8 @@
         "unavailablePaymentWallet": "Selected payment wallet is unavailable",
         "estReceiveLabel": "Est.Receive: {{usd}}",
         "estReceiveTip": "Service processed via {{name}}, may have slippage",
-        "noAvailableToken": "No available token"
+        "noAvailableToken": "No available token",
+        "priceImpactLoss": "Price Impact: You're losing {{usd}}."
       },
       "withdrawPopup": {
         "availableBalance": "Available withdrawal balance: {{balance}}",
@@ -3420,6 +3425,7 @@
     "screenshotModal": {
       "title": "Screenshot to Report Bug",
       "submitButtonText": "Submit",
+      "submitFailed": "Submit failed.",
       "feedbackInput": {
         "placeholder": "Describe the issue (required)"
       },

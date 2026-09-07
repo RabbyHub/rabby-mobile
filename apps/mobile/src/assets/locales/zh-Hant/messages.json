@@ -546,6 +546,12 @@
         "title": "合約呼叫"
       },
       "noGasRequired": "無需 Gas",
+      "gasSelectorTitle": "Gas",
+      "swapGasLevel": {
+        "normal": "正常",
+        "fast": "快速",
+        "instant": "即時"
+      },
       "advancedSettings": "高級設定",
       "label": "標籤",
       "yes": "是",
@@ -1033,6 +1039,7 @@
       "no-quote-found": "未找到報價",
       "chain": "鏈",
       "hidden-no-quote-rates_other": "{{count}} 匯率不可用",
+      "preferMEV": "MEV 防護",
       "approve-swap": "授權並兌換",
       "hidden-no-quote-rates_one": "{{count}} 匯率不可用",
       "from": "來自",
@@ -1076,7 +1083,8 @@
       "selectChainModalTitle": "選擇鏈",
       "results": "結果",
       "approve": "授權",
-      "market-closed": "市場尚未開放：不支援下單。"
+      "market-closed": "市場尚未開放：不支援下單。",
+      "quotes": "報價"
     },
     "signText": {
       "title": "簽署文字",
@@ -1212,6 +1220,9 @@
         "tip1": "截圖可能同步到雲端或其他裝置；如果裝置遺失、被盜或遭入侵，就可能被他人存取。",
         "title": "螢幕截圖並不安全",
         "subTitle": "把助記詞儲存為圖片可能導致外洩，寫在紙上會更安全。"
+      },
+      "rateModalTriggerOnHome": {
+        "title": "為 Rabby 錢包評分"
       }
     },
     "ethSign": {
@@ -1626,7 +1637,8 @@
         "fetchQuoteFailed": "無法取得報價",
         "estReceiveTip": "透過 {{name}} 處理的服務，可能會有滑點",
         "unavailablePaymentWallet": "所選付款錢包不可用",
-        "noAvailableToken": "暫無可用代幣"
+        "noAvailableToken": "暫無可用代幣",
+        "priceImpactLoss": "價格影響：您正在損失 {{usd}}。"
       },
       "withdrawPopup": {
         "noEnoughGas": "金額過低，無法支付 Gas 費用",
@@ -1685,7 +1697,9 @@
       "depositFailed": "入金失敗",
       "lowBalance": "你的 Gas 不足（<$1.00）。請存入 Gas，以確保後續交易順利進行。",
       "depositSubmitted": "入金已提交",
-      "depositWith": "入金方式"
+      "depositWith": "入金方式",
+      "gasToken": "Gas 代幣",
+      "title": "GasAccount"
     },
     "receiveAddressList": {
       "selectChainTitle": "選擇鏈",
@@ -3540,7 +3554,8 @@
         "skipText": "1 天內不再顯示此彈窗"
       },
       "alertText": "第三方 DApp：如遇使用問題，請聯絡 DApp 支援。Rabby 僅提供瀏覽功能。",
-      "title": "截圖回報問題"
+      "title": "截圖回報問題",
+      "submitFailed": "提交失敗。"
     },
     "submitFeedbackSuccessModal": {
       "desc": "提交成功！"

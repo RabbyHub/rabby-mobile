@@ -180,7 +180,8 @@
         "skipText": "No mostrar esta ventana durante 1 día"
       },
       "alertText": "DApp de terceros: para problemas de uso, contacta con el soporte de la DApp. Rabby solo proporciona acceso de visualización.",
-      "title": "Captura de pantalla para reportar un error"
+      "title": "Captura de pantalla para reportar un error",
+      "submitFailed": "Error al enviar."
     },
     "submitFeedbackSuccessModal": {
       "desc": "¡Enviado con éxito!"
@@ -473,6 +474,12 @@
       },
       "nonceLowerThanExpect": "Nonce es demasiado bajo, el mínimo debería ser {{0}}",
       "noGasRequired": "No se requiere gas",
+      "gasSelectorTitle": "Gas",
+      "swapGasLevel": {
+        "normal": "Normal",
+        "fast": "Rápido",
+        "instant": "Instantáneo"
+      },
       "balanceChange": {
         "failedTitle": "Error de simulación",
         "noBalanceChange": "Sin cambios de saldo",
@@ -993,6 +1000,7 @@
       "title": "Intercambio",
       "security-verification-failed": "La verificación de seguridad falló",
       "hidden-no-quote-rates_other": "{{count}} tarifas no disponibles",
+      "preferMEV": "Protección contra MEV",
       "insufficient": "Saldo insuficiente:",
       "usd-after-fees": "≈ {{usd}} ",
       "Completed": "Completado",
@@ -1036,7 +1044,8 @@
       "selectChainModalTitle": "Seleccionar red",
       "results": "Resultados",
       "approve": "Aprobar",
-      "market-closed": "Mercado cerrado: no se admite la colocación de órdenes."
+      "market-closed": "Mercado cerrado: no se admite la colocación de órdenes.",
+      "quotes": "Cotizaciones"
     },
     "nextComponent": {
       "addAddress": {
@@ -1130,6 +1139,9 @@
         "tip1": "Las capturas de pantalla se pueden sincronizar con la nube u otros dispositivos, y se pueden acceder si un dispositivo se pierde, es robado o se ve comprometido.",
         "subTitle": "Guardar tu frase semilla como una imagen puede exponerla, así que escribirla es una opción más segura.",
         "tip3": "Quien obtenga tu frase semilla podrá controlar por completo tus fondos, y esto no se puede revertir."
+      },
+      "rateModalTriggerOnHome": {
+        "title": "Valora Rabby Wallet"
       }
     },
     "bridge": {
@@ -1919,7 +1931,8 @@
         "selectToken": "Seleccionar Token para Depositar",
         "unavailablePaymentWallet": "La cartera de pago seleccionada no está disponible",
         "estReceiveTip": "El servicio procesado a través de {{name}} puede tener deslizamiento.",
-        "noAvailableToken": "No hay tokens disponibles"
+        "noAvailableToken": "No hay tokens disponibles",
+        "priceImpactLoss": "Impacto en el precio: Está perdiendo {{usd}}."
       },
       "withdrawPopup": {
         "title": "Retirar",
@@ -1979,7 +1992,9 @@
       "lowBalance": "No tienes suficiente gas (<$1.00). Deposita gas para asegurar que las futuras transacciones transcurran sin problemas.",
       "switchAccount": "Cambiar cartera",
       "depositSubmitted": "Depósito Enviado",
-      "depositWith": "Depositar mediante"
+      "depositWith": "Depositar mediante",
+      "gasToken": "Token de gas",
+      "title": "GasAccount"
     },
     "settingModal": {
       "themeMode": {
