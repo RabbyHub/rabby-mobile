@@ -1,5 +1,4 @@
-import RcIconEmptyTokenDark from '@/assets2024/singleHome/empty-token-dark.svg';
-import RcIconEmptyToken from '@/assets2024/singleHome/empty-token.svg';
+import PerpsProHistoryEmptyIllustration from '@/assets2024/icons/perps/PerpsProHistoryEmpty.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -10,19 +9,16 @@ export const PerpsProEmptyState: React.FC<{
   message: string;
   testID: string;
 }> = React.memo(({ message, testID }) => {
-  const { isLight, styles } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
 
   return (
     <View style={styles.container} testID={testID}>
-      {isLight ? (
-        <RcIconEmptyToken height={126} testID={`${testID}-light`} width={163} />
-      ) : (
-        <RcIconEmptyTokenDark
-          height={126}
-          testID={`${testID}-dark`}
-          width={163}
-        />
-      )}
+      <PerpsProHistoryEmptyIllustration
+        accessible={false}
+        height={126}
+        testID={`${testID}-illustration`}
+        width={163}
+      />
       <Text style={styles.message}>{message}</Text>
     </View>
   );

@@ -294,13 +294,7 @@ jest.mock('@/assets2024/icons/common/checkbox-filled-brand.svg', () => {
   return (props: object) => ReactModule.createElement(View, props);
 });
 
-jest.mock('@/assets2024/singleHome/empty-token.svg', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
-  return (props: object) => ReactModule.createElement(View, props);
-});
-
-jest.mock('@/assets2024/singleHome/empty-token-dark.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProHistoryEmpty.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
@@ -2772,7 +2766,9 @@ describe('PerpsProScene market loading states', () => {
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
 
-    expect(screen.getByTestId('perps-pro-positions-empty-light')).toBeTruthy();
+    expect(
+      screen.getByTestId('perps-pro-positions-empty-illustration'),
+    ).toBeTruthy();
     expect(screen.getByText('page.perps.pro.positions.empty')).toBeTruthy();
     expect(screen.queryByTestId('perps-pro-positions-controls')).toBeNull();
 
@@ -2787,7 +2783,7 @@ describe('PerpsProScene market loading states', () => {
     );
 
     expect(
-      screen.getByTestId('perps-pro-open-orders-empty-light'),
+      screen.getByTestId('perps-pro-open-orders-empty-illustration'),
     ).toBeTruthy();
     expect(screen.getByText('page.perps.pro.openOrders.empty')).toBeTruthy();
     expect(screen.queryByTestId('perps-pro-open-orders-controls')).toBeNull();

@@ -4,16 +4,14 @@ import { StyleSheet } from 'react-native';
 
 let mockIsLight = true;
 
-jest.mock('@/assets2024/singleHome/empty-token.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProHistoryEmpty.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
-  return (props: object) => ReactModule.createElement(View, props);
-});
-
-jest.mock('@/assets2024/singleHome/empty-token-dark.svg', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
-  return (props: object) => ReactModule.createElement(View, props);
+  return (props: object) =>
+    ReactModule.createElement(View, {
+      ...props,
+      testUri: 'assets2024/icons/perps/PerpsProHistoryEmpty.svg',
+    });
 });
 
 jest.mock('@/components/Typography', () => ({
@@ -43,13 +41,16 @@ describe('PerpsProEmptyState', () => {
   });
 
   it('matches the approved light empty-state geometry and typography', () => {
-    render(<PerpsProEmptyState message="No History" testID="empty" />);
+    render(
+      <PerpsProEmptyState message="You have no positions" testID="empty" />,
+    );
 
-    expect(screen.getByTestId('empty-light').props).toMatchObject({
+    expect(screen.getByTestId('empty-illustration').props).toMatchObject({
+      accessible: false,
       height: 126,
+      testUri: 'assets2024/icons/perps/PerpsProHistoryEmpty.svg',
       width: 163,
     });
-    expect(screen.queryByTestId('empty-dark')).toBeNull();
     expect(StyleSheet.flatten(screen.getByTestId('empty').props.style)).toEqual(
       expect.objectContaining({
         alignItems: 'center',
@@ -58,7 +59,7 @@ describe('PerpsProEmptyState', () => {
       }),
     );
     expect(
-      StyleSheet.flatten(screen.getByText('No History').props.style),
+      StyleSheet.flatten(screen.getByText('You have no positions').props.style),
     ).toEqual(
       expect.objectContaining({
         color: 'neutral-info',
@@ -72,14 +73,16 @@ describe('PerpsProEmptyState', () => {
     );
   });
 
-  it('uses the approved dark asset in dark mode', () => {
+  it('uses the same history illustration in dark mode', () => {
     mockIsLight = false;
     render(<PerpsProEmptyState message="No open orders" testID="empty" />);
 
-    expect(screen.getByTestId('empty-dark').props).toMatchObject({
+    expect(screen.getByTestId('empty-illustration').props).toMatchObject({
+      accessible: false,
       height: 126,
+      testUri: 'assets2024/icons/perps/PerpsProHistoryEmpty.svg',
       width: 163,
     });
-    expect(screen.queryByTestId('empty-light')).toBeNull();
+    expect(screen.getByText('No open orders')).toBeTruthy();
   });
 });
