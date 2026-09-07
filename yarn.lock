@@ -9555,7 +9555,7 @@ __metadata:
     "@metamask/json-rpc-engine": "npm:^7.3.0"
     "@metamask/utils": "npm:^8.2.0"
     "@rabby-wallet/gnosis-sdk": "npm:1.4.9"
-    "@rabby-wallet/rabby-api": "npm:0.9.65"
+    "@rabby-wallet/rabby-api": "npm:0.9.66-alpha.0"
     "@types/node": "npm:^20.14.8"
     "@typescript-eslint/eslint-plugin": "npm:^5.62.0"
     "@typescript-eslint/parser": "npm:^5.62.0"
@@ -9700,9 +9700,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.9.65":
-  version: 0.9.65
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.65"
+"@rabby-wallet/rabby-api@npm:0.9.66-alpha.0":
+  version: 0.9.66-alpha.0
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.66-alpha.0"
   dependencies:
     "@rabby-wallet/rabby-sign": "npm:0.4.0"
     axios: "npm:^0.27.2"
@@ -9713,17 +9713,17 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 10/77e244c3e6e216c3fa1da7902e11c5119235db38bfce4962d376d9c1a4e070e51a059da1a3c5d3ea0cedf1f6156be5654e542cd0e77b4614dc040d4110cfb6a5
+  checksum: 10/d3c50c65cadefce253900420210e290a207cb5dfff9fe10c40a2d5af60d08ebaf4b4f253c96c00c3e8aa471618fa6bd7fb84d72c81256b84c90ea8f9256570b0
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-bridge@npm:0.0.8":
-  version: 0.0.8
-  resolution: "@rabby-wallet/rabby-bridge@npm:0.0.8"
+"@rabby-wallet/rabby-bridge@npm:0.0.9-alpha.0":
+  version: 0.0.9-alpha.0
+  resolution: "@rabby-wallet/rabby-bridge@npm:0.0.9-alpha.0"
   peerDependencies:
     "@debank/common": ">=0.3.60"
     "@rabby-wallet/rabby-api": ">=0.9.58"
-  checksum: 10/185ad9774735a554a2bd2a7bb5aa75a2e0c8c1a11a21a8c6baa90babb147131e4873ea6593ed55c34c74b8d5a64fc1f05d36907b64fc9898155420c382de4341
+  checksum: 10/b10686e91a9c753234d869e04ed3de043f92fb95a662a35e5f88d16ed6e9bd000cdb4a5c736c538d0f58ea94e154f03fc37efedef1a77813c3bf96bee667083e
   languageName: node
   linkType: hard
 
@@ -38436,8 +38436,8 @@ __metadata:
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": "npm:0.1.16"
-    "@rabby-wallet/rabby-api": "npm:0.9.65"
-    "@rabby-wallet/rabby-bridge": "npm:0.0.8"
+    "@rabby-wallet/rabby-api": "npm:0.9.66-alpha.0"
+    "@rabby-wallet/rabby-bridge": "npm:0.0.9-alpha.0"
     "@rabby-wallet/rabby-logger": "npm:0.3.1"
     "@rabby-wallet/rabby-security-engine": "npm:2.0.12"
     "@rabby-wallet/rabby-sign-bvm": "npm:0.1.1"
