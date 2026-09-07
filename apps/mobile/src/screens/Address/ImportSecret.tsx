@@ -8,7 +8,13 @@ import { useScanner } from '../Scanner/ScannerScreen';
 import PasteButton from '@/components2024/PasteButton';
 import { NextInput } from '@/components2024/Form/Input';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Keyboard, Pressable, TouchableOpacity, View } from 'react-native';
+import {
+  Keyboard,
+  Platform,
+  Pressable,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { validateAndCleanPrivateKey } from '@/core/apis/privateKey';
 import { apiPrivateKey, apiMnemonic } from '@/core/apis';
 import { validateAndCleanMnemonic } from '@/core/apis/mnemonic';
@@ -427,7 +433,9 @@ export const ImportSecret = ({ route }: ScreenProps) => {
       }}
       style={styles.screen}
       footerBottomOffset={48}>
-      <View style={styles.container} onTouchStart={() => Keyboard.dismiss()}>
+      <View
+        style={styles.container}
+        onTouchStart={Platform.OS === 'android' ? Keyboard.dismiss : undefined}>
         <View style={styles.content}>
           <PagerView
             ref={pagerRef}
