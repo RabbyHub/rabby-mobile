@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import {
   ActivityIndicator,
@@ -40,7 +40,7 @@ export const PerpsProHistoryList: React.FC<{
   active?: boolean;
   amountUnit: PerpsProTradeAmountUnit;
   onLoadEarlier: () => void;
-  onRefresh: () => void;
+  onRefresh: () => void | Promise<void>;
   onRetry: () => void;
   state: PerpsProHistoryTabState;
   scrollHost?: 'bottomSheet' | 'screen';
@@ -64,6 +64,23 @@ export const PerpsProHistoryList: React.FC<{
     });
     const activeRef = useRef(active);
     activeRef.current = active;
+    const bottomSheetRefreshEpochRef = useRef(0);
+    const bottomSheetRefreshingRef = useRef(false);
+    const [bottomSheetRefreshing, setBottomSheetRefreshing] = useState(false);
+    const finishBottomSheetRefresh = useCallback((epoch: number) => {
+      if (bottomSheetRefreshEpochRef.current !== epoch) {
+        return;
+      }
+      bottomSheetRefreshingRef.current = false;
+      setBottomSheetRefreshing(false);
+    }, []);
+    useEffect(
+      () => () => {
+        bottomSheetRefreshEpochRef.current += 1;
+        bottomSheetRefreshingRef.current = false;
+      },
+      [],
+    );
     const handleShowTradeFeeExplanation = useCallback(
       (isLiquidation: boolean) => {
         if (activeRef.current) {
@@ -73,10 +90,33 @@ export const PerpsProHistoryList: React.FC<{
       [showTradeFeeExplanation],
     );
     const handleRefresh = useCallback(() => {
-      if (activeRef.current) {
-        onRefresh();
+      if (!activeRef.current) {
+        return;
       }
-    }, [onRefresh]);
+      if (scrollHost !== 'bottomSheet') {
+        return onRefresh();
+      }
+      if (bottomSheetRefreshingRef.current) {
+        return;
+      }
+
+      bottomSheetRefreshingRef.current = true;
+      const epoch = bottomSheetRefreshEpochRef.current + 1;
+      bottomSheetRefreshEpochRef.current = epoch;
+      setBottomSheetRefreshing(true);
+
+      let refreshResult: void | Promise<void>;
+      try {
+        refreshResult = onRefresh();
+      } catch {
+        finishBottomSheetRefresh(epoch);
+        return;
+      }
+      return Promise.resolve(refreshResult).then(
+        () => finishBottomSheetRefresh(epoch),
+        () => finishBottomSheetRefresh(epoch),
+      );
+    }, [finishBottomSheetRefresh, onRefresh, scrollHost]);
     const rowActive = tab === 'transaction' ? active : true;
     const renderItem = useCallback<ListRenderItem<PerpsProHistoryRow>>(
       ({ item }) => (
@@ -167,7 +207,7 @@ export const PerpsProHistoryList: React.FC<{
       <BottomSheetFlatList
         {...listProps}
         onRefresh={handleRefresh}
-        refreshing={active && state.refreshing}
+        refreshing={active && bottomSheetRefreshing}
       />
     ) : (
       <FlatList

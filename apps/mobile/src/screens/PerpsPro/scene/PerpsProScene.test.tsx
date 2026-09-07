@@ -44,6 +44,8 @@ const mockGetOrderBookPriceIntent = jest.fn();
 const mockTriggerImpact = jest.fn();
 const mockInfoPagerSetPage = jest.fn();
 const mockInfoPagerSetPageWithoutAnimation = jest.fn();
+let mockQueueInfoCallbacks = false;
+const mockInfoCallbacks: Array<() => unknown> = [];
 let mockManualTouchesDown:
   | ((event: unknown, stateManager: { fail: () => void }) => void)
   | null = null;
@@ -93,9 +95,23 @@ jest.mock('react-native-reanimated', () => {
       View: ReactNative.View,
     },
     cancelAnimation: jest.fn(),
+    dispatchCommand: (
+      ref: { current: Record<string, (...args: unknown[]) => void> },
+      name: string,
+      args: unknown[],
+    ) => ref.current[name](...args),
+    runOnUI: (callback: (...args: unknown[]) => unknown) => callback,
     Easing: { bezier: jest.fn(() => 'ease-out') },
     ReduceMotion: { System: 'system' },
-    runOnJS: (callback: (...args: unknown[]) => unknown) => callback,
+    runOnJS:
+      (callback: (...args: unknown[]) => unknown) =>
+      (...args: unknown[]) => {
+        if (mockQueueInfoCallbacks) {
+          mockInfoCallbacks.push(() => callback(...args));
+        } else {
+          return callback(...args);
+        }
+      },
     scrollTo: jest.fn(),
     useAnimatedRef: () => {
       const ref = (component?: unknown) => {
@@ -805,6 +821,8 @@ const createPositionActionsState = (
 describe('PerpsProScene market loading states', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockQueueInfoCallbacks = false;
+    mockInfoCallbacks.splice(0);
     mockDismissKeyboardThen.mockReset();
     mockDismissKeyboardThen.mockImplementation(action => action());
     mockIsPerpsActionUserCancelled.mockReturnValue(false);
@@ -2035,7 +2053,8 @@ describe('PerpsProScene market loading states', () => {
     expect(mockInfoPagerSetPage).toHaveBeenLastCalledWith(1);
 
     fireEvent.press(screen.getByTestId('perps-pro-info-tab-account'));
-    expect(mockInfoPagerSetPageWithoutAnimation).toHaveBeenLastCalledWith(2);
+    expect(mockInfoPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
+    expect(mockInfoPagerSetPage).toHaveBeenCalledTimes(1);
 
     const pager = screen.getByTestId('perps-pro-info-pager');
     fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
@@ -2049,6 +2068,36 @@ describe('PerpsProScene market loading states', () => {
     ).toEqual({ selected: true });
 
     animationFrame.mockRestore();
+  });
+
+  it('preserves a newer click while an older native commit waits on JS', () => {
+    const setActiveInfoTab = jest.fn(() => new Promise<void>(() => undefined));
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ setActiveInfoTab }),
+    );
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    const pager = screen.getByTestId('perps-pro-info-pager');
+    fireEvent.press(screen.getByTestId('perps-pro-info-tab-openOrders'));
+    mockQueueInfoCallbacks = true;
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    fireEvent.press(screen.getByTestId('perps-pro-info-tab-positions'));
+    expect(mockInfoPagerSetPage).toHaveBeenLastCalledWith(0);
+    act(() => mockInfoCallbacks.splice(0).forEach(callback => callback()));
+    expect(setActiveInfoTab).not.toHaveBeenCalled();
+    expect(mockUsePerpsProInfoPanel).toHaveBeenLastCalledWith(
+      expect.any(String),
+      'positions',
+    );
+    expect(
+      screen.getByTestId('perps-pro-info-tab-positions').props
+        .accessibilityState,
+    ).toEqual({ selected: true });
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 0 } });
+    act(() => mockInfoCallbacks.splice(0).forEach(callback => callback()));
+    expect(setActiveInfoTab.mock.calls).toEqual([['positions']]);
   });
 
   it('persists both selections when native pages reverse before React rerenders', () => {
