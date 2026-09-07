@@ -859,6 +859,7 @@ export const useTokenPair = ({
       if (!/^\d*(\.\d*)?$/.test(v)) {
         return;
       }
+      setSwapUseSlider(false);
       if (v !== payAmount) {
         setQuotesList([]);
       }
@@ -878,7 +879,6 @@ export const useTokenPair = ({
         }
       }
       setUseGasPrice(false);
-      setSwapUseSlider(false);
     },
     [payAmount, payToken, setUseGasPrice],
   );
