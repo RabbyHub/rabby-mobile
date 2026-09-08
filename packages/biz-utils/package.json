@@ -39,10 +39,10 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@debank/common": "0.3.60",
     "@rabby-wallet/base-utils": "workspace:^",
     "@rabby-wallet/rabby-api": "*",
-    "bignumber.js": "^9.1.2",
-    "ethereumjs-util": "^7.1.5"
+    "bignumber.js": "^9.1.2"
   },
   "devDependencies": {
     "@metamask/auto-changelog": "^3.4.3",

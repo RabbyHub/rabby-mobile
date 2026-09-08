@@ -32,8 +32,7 @@
   },
   "dependencies": {
     "@rabby-wallet/base-utils": "workspace:^",
-    "@rabby-wallet/persist-store": "workspace:^",
-    "ethereumjs-util": "^7.1.5"
+    "@rabby-wallet/persist-store": "workspace:^"
   },
   "devDependencies": {
     "@metamask/auto-changelog": "^3.4.3",
