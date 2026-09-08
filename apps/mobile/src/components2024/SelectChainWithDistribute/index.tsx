@@ -13,6 +13,7 @@ import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import MixedFlatChainList from './MixedFlatChainList';
 import { NextSearchBar } from '../SearchBar';
 import { useForceUpdate } from '@/hooks/useForceUpdate';
+import { useMainnetChainList } from '@/hooks/useChainList';
 import { findChainByServerID, searchChains } from '@/utils/chain';
 import { Chain } from '@/constant/chains';
 import { Text, TextInput } from '@/components/Typography';
@@ -47,6 +48,7 @@ export default function SelectChainWithDistribute({
   const { t } = useTranslation();
   const inputRef = useRef<TextInput | null>(null);
   const forceUpdate = useForceUpdate();
+  const mainnetList = useMainnetChainList();
 
   const handleToggleSearch = () => {
     if (!canSearch) {
@@ -63,22 +65,32 @@ export default function SelectChainWithDistribute({
     setCanSearch(!canSearch);
   };
 
-  const chainListWithInfo = useMemo(
-    () =>
-      (chainList || [])
-        .map(item => {
-          const chainInfo = findChainByServerID(item.chain);
-          if (!chainInfo) {
-            return null;
-          }
-          return {
-            ...item,
-            chainInfo,
-          };
-        })
-        .filter((item): item is ChainListItem & { chainInfo: Chain } => !!item),
-    [chainList],
-  );
+  const chainListWithInfo = useMemo(() => {
+    const existingChains = (chainList || [])
+      .map(item => {
+        const chainInfo = findChainByServerID(item.chain);
+        if (!chainInfo) {
+          return null;
+        }
+        return {
+          ...item,
+          chainInfo,
+        };
+      })
+      .filter((item): item is ChainListItem & { chainInfo: Chain } => !!item);
+    const existingChainIds = new Set(existingChains.map(item => item.chain));
+    const remainingChains = mainnetList
+      .filter(chain => !existingChainIds.has(chain.serverId))
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map(chainInfo => ({
+        chain: chainInfo.serverId,
+        total: 0,
+        percentage: 0,
+        chainInfo,
+      }));
+
+    return [...existingChains, ...remainingChains];
+  }, [chainList, mainnetList]);
 
   const filterChainList = useMemo(() => {
     if (!debouncedSearch) {
