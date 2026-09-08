@@ -18,10 +18,7 @@ import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHisto
 import { getKeyring } from './keyring';
 import { BroadcastEvent } from '@/constant/event';
 import { removeTestnetAddressBalanceCache } from '@/utils/testnetAddressBalanceCache';
-import {
-  isSensitiveKeyringType,
-  withWalletUnlockIf,
-} from '@/utils/walletUnlockGuard';
+import { withWalletUnlock } from '@/utils/walletUnlockGuard';
 import { disconnectWalletConnectSessionsForRemovedAccount } from '../walletconnect/accountRemoval';
 
 export async function addWatchAddress(address: string) {
@@ -67,8 +64,7 @@ async function resetCurrentAccount() {
   }
 }
 
-export const removeAddress = withWalletUnlockIf(
-  account => isSensitiveKeyringType(account.type),
+export const removeAddress = withWalletUnlock(
   async (account: KeyringAccountWithAlias) => {
     const isRemoveEmptyKeyring =
       account.type !== KEYRING_TYPE.WalletConnectKeyring;
