@@ -1,21 +1,14 @@
-import { useMemo } from 'react';
-import { Platform, StyleProp, ViewStyle } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { ScrollView, StyleProp, ViewStyle } from 'react-native';
 import WebView from 'react-native-webview';
 
-import MarkdownIt from 'markdown-it';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import { WEBVIEW_BUILTIN_FONT_CSS } from '@/constant/webviewCss';
-import { ColorOrVariant } from '@/core/theme';
 import { AppColorsVariants } from '@/constant/theme';
-
-const dMarkdownit = MarkdownIt({ typographer: true });
-
-const TestRunFirst = `
-  document.body.style.backgroundColor = 'red';
-  setTimeout(function() { window.alert('hi') }, 2000);
-  true; // note: this is required, or you'll sometimes get silent failures
-`;
+import { Text } from '@/components/Typography';
+import { MARKDOWN_FALLBACK_TEXT, parseMarkdown } from './parseMarkdown';
+import type { MarkdownParseResult } from './parseMarkdown';
 
 const getMarkdownPageStyle = (colors: AppColorsVariants) => {
   return `${WEBVIEW_BUILTIN_FONT_CSS}
@@ -36,70 +29,78 @@ const getMarkdownPageStyle = (colors: AppColorsVariants) => {
   }
 
   .md-wrapper {
-    color: ${colors['neutral-title-1']};
-    font-family: var(--default-font);
-    font-size: 16px;
-    font-style: normal;
-    font-weight: 600;
-    line-height: normal;
-    text-align: left;
-    padding-top: 0;
-    use-select: none;
-    overflow: hidden;
-    padding-left: 20px;
-  }
-
-  ul li, ol li
-  , p, a, blockquote, pre, code, img {
     color: ${colors['neutral-body']};
     font-family: var(--default-font);
     font-size: 14px;
     font-style: normal;
     font-weight: 400;
     line-height: 24px;
+    text-align: left;
+    padding-top: 0;
+    use-select: none;
+    overflow: hidden;
+    padding-left: 5px;
+    overflow-wrap: anywhere;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-style: normal;
+  .md-wrapper h1, .md-wrapper h2, .md-wrapper h3,
+  .md-wrapper h4, .md-wrapper h5, .md-wrapper h6 {
+    color: ${colors['neutral-title-1']};
     font-weight: 600;
-    margin-top: 0;
-    margin-bottom: 0;
+    line-height: 1.4;
+    margin: 16px 0 8px;
   }
 
-  h1:first-child, h2:first-child, h3:first-child, h4:first-child, h5:first-child, h6:first-child {
-    margin-top: 0;
+  .md-wrapper h1 { font-size: 28px; }
+  .md-wrapper h2 { font-size: 22px; }
+  .md-wrapper h3 { font-size: 18px; }
+  .md-wrapper h4 { font-size: 16px; }
+  .md-wrapper h5 { font-size: 15px; }
+  .md-wrapper h6 { font-size: 14px; }
+  .md-wrapper > :first-child { margin-top: 0; }
+
+  .md-wrapper p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 18px;
+    white-space: pre-wrap;
   }
 
-  h1 { font-size: 36px; }
-  h2 { font-size: 32px; }
-  h3 { font-size: 20px; }
-  h4 { font-size: 16px; }
-  h5 { font-size: 14px; }
-  h6 { font-size: 12px; }
+  .md-wrapper ul, .md-wrapper ol {
+    margin: 0;
+    padding-left: 22px;
+  }
 
-  ul { padding-left: 0; }
-  ul li, ol li { padding-left: 0; }
-  ul li { list-style-type: disc; }
-  ol li { list-style-type: decimal; }
+  .md-wrapper li {
+    padding-left: 2px;
+    font-size: 14px;
+    line-height: 18px;
+    margin: 4px 0;
+  }
 `;
 };
 
 export function MarkdownInWebView({
   markdown,
-  markdownit = dMarkdownit,
+  parsedMarkdown,
   htmlInnerStyle,
   webviewStyle,
+  onWebViewError,
 }: React.PropsWithoutRef<{
   markdown: string;
-  markdownit?: MarkdownIt;
+  parsedMarkdown?: MarkdownParseResult;
   htmlInnerStyle?: string;
   webviewStyle?: StyleProp<ViewStyle>;
+  onWebViewError?: () => void;
 }>) {
   const { styles, colors } = useThemeStyles(getStyles);
+  const parsed = useMemo(
+    () => parsedMarkdown ?? parseMarkdown(markdown),
+    [markdown, parsedMarkdown],
+  );
+  const [failedHtml, setFailedHtml] = useState<string | null>(null);
 
   const webviewHtml = useMemo(() => {
-    const renderedHtml = markdownit.render(markdown);
-
     const webviewCss = getMarkdownPageStyle(colors);
 
     return `
@@ -110,12 +111,25 @@ export function MarkdownInWebView({
       ${htmlInnerStyle ? `<style>${htmlInnerStyle}</style>` : ''}
     </head>
     <body>
-      <div class="md-wrapper">
-        ${renderedHtml}
-      </div>
+      <div class="md-wrapper">${parsed.html}</div>
     </body>
   </html>`;
-  }, [markdown, htmlInnerStyle, markdownit, colors]);
+  }, [parsed.html, htmlInnerStyle, colors]);
+
+  const handleWebViewError = useCallback(() => {
+    setFailedHtml(webviewHtml);
+    onWebViewError?.();
+  }, [webviewHtml, onWebViewError]);
+
+  if (!parsed.success || failedHtml === webviewHtml) {
+    return (
+      <ScrollView
+        style={[styles.webview, webviewStyle]}
+        contentContainerStyle={styles.fallbackContent}>
+        <Text style={styles.fallbackText}>{MARKDOWN_FALLBACK_TEXT}</Text>
+      </ScrollView>
+    );
+  }
 
   return (
     <WebView
@@ -130,13 +144,25 @@ export function MarkdownInWebView({
       cacheEnabled={false}
       pullToRefreshEnabled={false}
       textInteractionEnabled={false}
-      // injectedJavaScript={TestRunFirst}
+      javaScriptEnabled={false}
+      dataDetectorTypes="none"
+      onError={handleWebViewError}
+      onRenderProcessGone={handleWebViewError}
+      onContentProcessDidTerminate={handleWebViewError}
     />
   );
 }
 
 const getStyles = createGetStyles(colors => {
   return {
+    fallbackContent: {
+      paddingHorizontal: 10,
+    },
+    fallbackText: {
+      color: colors['neutral-body'],
+      fontSize: 14,
+      lineHeight: 18,
+    },
     container: {
       flex: 1,
       height: '100%',
