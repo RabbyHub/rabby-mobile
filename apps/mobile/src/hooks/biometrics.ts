@@ -623,7 +623,8 @@ const toggleBiometrics = async <T extends boolean>(
       });
       const shouldRequireBiometricProof =
         authenticationType !== KEYCHAIN_AUTH_TYPES.PASSCODE &&
-        !!(await fetchSystemAuthAvailability()).supportedBiometryType;
+        !!(await fetchSystemAuthAvailability()).supportedBiometryType &&
+        apisKeychain.shouldRequireBiometricProofForSetup();
       const requestResult = await apisKeychain.requestGenericPassword({
         purpose: RequestGenericPurpose.VERIFY,
         androidRequireBiometricProof: shouldRequireBiometricProof,

@@ -22,6 +22,7 @@ describe('hooks/biometrics', () => {
       | import('@rabby-wallet/service-keyring').KeyringPasswordState
       | undefined,
     isIOS = false,
+    shouldRequireBiometricProofForSetup = false,
   } = {}) => {
     jest.resetModules();
 
@@ -125,6 +126,9 @@ describe('hooks/biometrics', () => {
       getKeychainEntryState: mockGetKeychainEntryState,
       getDefaultBiometricsAuthenticationType: jest.fn(
         () => KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE,
+      ),
+      shouldRequireBiometricProofForSetup: jest.fn(
+        () => shouldRequireBiometricProofForSetup,
       ),
       setGenericPassword: mockSetGenericPassword,
       requestGenericPassword: mockRequestGenericPassword,
@@ -323,9 +327,25 @@ describe('hooks/biometrics', () => {
     );
   });
 
-  it('requires a successful biometric prompt before enabling detected biometrics', async () => {
+  it('allows device credentials when enabling normally detected biometrics', async () => {
     const { module, mockRequestGenericPassword } = await setup({
       supportedBiometryType: 'Fingerprint',
+    });
+
+    await module.storeApisBiometrics.toggleBiometrics(true, {
+      validatedPassword: 'plain-password',
+    });
+
+    expect(mockRequestGenericPassword).toHaveBeenCalledWith({
+      purpose: RequestGenericPurpose.VERIFY,
+      androidRequireBiometricProof: false,
+    });
+  });
+
+  it('requires a successful biometric prompt for the API 29 compatibility path', async () => {
+    const { module, mockRequestGenericPassword } = await setup({
+      supportedBiometryType: 'Fingerprint',
+      shouldRequireBiometricProofForSetup: true,
     });
 
     await module.storeApisBiometrics.toggleBiometrics(true, {
