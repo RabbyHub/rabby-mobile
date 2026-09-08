@@ -62,6 +62,22 @@ describe('core/apis/keychainV9_0_0', () => {
       hasEntry: true,
       hasUsername: true,
       hasPassword: true,
+      androidBiometricHardware: {
+        fingerprint: true,
+        face: true,
+        iris: false,
+      },
+      androidAuthenticatorCapabilities: {
+        apiLevel: 33,
+        biometricStrong: {
+          name: 'BIOMETRIC_STRONG',
+          authenticators: 15,
+          statusCode: 0,
+          statusLabel: 'BIOMETRIC_SUCCESS',
+          available: true,
+          errorMessage: null,
+        },
+      },
       hasCipherStorageMarker: false,
       isCipherStorageMarkerMissing: true,
       storedCipherStorageName: null,
@@ -753,6 +769,17 @@ describe('core/apis/keychainV9_0_0', () => {
         service: 'com.debank',
         resolvedCipherStorageName: 'KeystoreRSAECB',
         isCipherStorageMarkerMissing: true,
+        androidBiometricHardware: {
+          fingerprint: true,
+          face: true,
+          iris: false,
+        },
+        androidAuthenticatorCapabilities: expect.objectContaining({
+          biometricStrong: expect.objectContaining({
+            statusLabel: 'BIOMETRIC_SUCCESS',
+            available: true,
+          }),
+        }),
         authenticationTypeLabel: 'APPLICATION_PASSWORD',
       }),
     );

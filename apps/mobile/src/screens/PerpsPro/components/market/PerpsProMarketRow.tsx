@@ -14,8 +14,8 @@ import {
   formatPerpsProPercent,
 } from '../../utils/format';
 import {
-  getPerpsProSemanticTagContainerStyle,
-  getPerpsProSemanticTagTextStyle,
+  getPerpsProMetadataTagContainerStyle,
+  getPerpsProMetadataTagTextStyle,
 } from '../common/perpsProSemanticTagStyles';
 import { PerpsProMarketLogo } from './PerpsProMarketLogo';
 import { PERPS_PRO_MARKET_ROW_HEIGHT } from './marketLayout';
@@ -289,17 +289,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   marketName: {
     color: colors2024['neutral-title-1'],
     flexShrink: 1,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '500',
     lineHeight: 20,
   },
   sourceTag: {
-    ...getPerpsProSemanticTagContainerStyle(colors2024, 'neutral', {
-      backgroundColor: colors2024['neutral-bg-0'],
-      variant: 'compact',
-    }),
-    ...getPerpsProSemanticTagTextStyle(colors2024, 'neutral'),
+    ...getPerpsProMetadataTagContainerStyle(colors2024),
+    ...getPerpsProMetadataTagTextStyle(colors2024),
     maxWidth: 52,
   },
   marketMeta: {
@@ -312,7 +309,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   fullNameText: {
     color: colors2024['neutral-secondary'],
     flexShrink: 1,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '400',
     lineHeight: 16,
@@ -320,7 +317,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   volumeText: {
     color: colors2024['neutral-secondary'],
     flexShrink: 0,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '400',
     lineHeight: 16,
@@ -334,7 +331,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   marketPrice: {
     color: colors2024['neutral-title-1'],
     marginLeft: 8,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '500',
     lineHeight: 20,
@@ -343,7 +340,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['green-default'],
     flexShrink: 0,
     marginLeft: 20,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
@@ -352,7 +349,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['red-default'],
     flexShrink: 0,
     marginLeft: 20,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
@@ -361,7 +358,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-secondary'],
     flexShrink: 0,
     marginLeft: 20,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,

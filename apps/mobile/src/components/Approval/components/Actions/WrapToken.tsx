@@ -99,7 +99,7 @@ const WrapToken = ({
             <LogoWithText
               logo={payToken.logo_url}
               text={
-                <View className="flex flex-row">
+                <View style={commonStyle.row}>
                   <Text style={commonStyle.primaryText}>
                     {formatAmount(payToken.amount)}{' '}
                   </Text>
@@ -122,7 +122,7 @@ const WrapToken = ({
             <LogoWithText
               logo={receiveToken.logo_url}
               text={
-                <View className="flex flex-row">
+                <View style={commonStyle.row}>
                   <Text style={commonStyle.primaryText}>
                     {formatAmount(receiveToken.min_amount)}{' '}
                   </Text>

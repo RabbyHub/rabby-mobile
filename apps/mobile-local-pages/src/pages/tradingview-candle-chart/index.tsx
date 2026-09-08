@@ -51,6 +51,14 @@ import {
   shouldBlockPerpsProFutureTouchMove,
   shiftLogicalRangeForPrependedCandles,
 } from './chart-logic';
+import {
+  createPerpsProFontFaceCss,
+  LIGHTWEIGHT_CHARTS_DEFAULT_FONT_FAMILY,
+  PERPS_PRO_FONT_FACE_FAMILY,
+  PERPS_PRO_FONT_FAMILY,
+  PERPS_PRO_FONT_STYLE_ELEMENT_ID,
+  resolvePerpsProFontAssetUrls,
+} from './perps-pro-font';
 import { ThemeColors2024 } from '@rabby-wallet/base-utils/src/isomorphic/theme-colors';
 
 function getChartColors(
@@ -245,8 +253,6 @@ chartState.colors = { ...getChartColors() };
 chartState.description = { ...defaultDescription };
 
 const PERPS_PRO_KLINE_PROTOCOL_VERSION = 3;
-const PERPS_PRO_FONT_FAMILY =
-  '"SF Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 const candleByTime = new Map<number, TradingViewCandlestickData>();
 const movingAverageByTime: Record<7 | 25 | 99, Map<number, number>> = {
   7: new Map(),
@@ -280,7 +286,6 @@ maLegend.style.display = 'none';
 maLegend.style.alignItems = 'center';
 maLegend.style.gap = '8px';
 maLegend.style.pointerEvents = 'none';
-maLegend.style.fontFamily = PERPS_PRO_FONT_FAMILY;
 maLegend.style.fontSize = '9px';
 maLegend.style.lineHeight = '12px';
 maLegend.style.whiteSpace = 'nowrap';
@@ -349,8 +354,9 @@ emptyIllustration.style.justifyContent = 'center';
 emptyIllustration.innerHTML = getCurrentEmptySvg();
 
 const emptyText = document.createElement('div');
-emptyText.style.fontFamily =
+const legacyEmptyTextFontFamily =
   '"SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+emptyText.style.fontFamily = legacyEmptyTextFontFamily;
 emptyText.style.fontSize = '16px';
 emptyText.style.lineHeight = '20px';
 emptyText.style.fontWeight = '400';
@@ -460,7 +466,6 @@ function applyPerpsProCrosshairLabelBaseStyles(element: HTMLDivElement) {
   element.style.borderRadius = `${layout.borderRadius}px`;
   element.style.overflow = 'hidden';
   element.style.pointerEvents = 'none';
-  element.style.fontFamily = PERPS_PRO_FONT_FAMILY;
   element.style.fontSize = `${layout.fontSize}px`;
   element.style.fontWeight = `${layout.fontWeight}`;
   element.style.fontVariationSettings = '"wdth" 100';
@@ -494,6 +499,71 @@ proCrosshairTimeLabel.style.alignItems = 'center';
 proCrosshairTimeLabel.style.justifyContent = 'center';
 proCrosshairTimeLabel.style.textAlign = 'center';
 containerEl.appendChild(proCrosshairTimeLabel);
+
+let legacyChartFontFamily = LIGHTWEIGHT_CHARTS_DEFAULT_FONT_FAMILY;
+let perpsProFontLoadPromise: Promise<void> | null = null;
+let isPageUnloading = false;
+
+function ensurePerpsProFontsLoaded() {
+  if (perpsProFontLoadPromise) {
+    return;
+  }
+
+  const fontUrls = resolvePerpsProFontAssetUrls(getRuntimeInfo());
+  if (!fontUrls) {
+    return;
+  }
+
+  let fontStyle = document.getElementById(
+    PERPS_PRO_FONT_STYLE_ELEMENT_ID,
+  ) as HTMLStyleElement | null;
+  if (!fontStyle) {
+    fontStyle = document.createElement('style');
+    fontStyle.id = PERPS_PRO_FONT_STYLE_ELEMENT_ID;
+    fontStyle.textContent = createPerpsProFontFaceCss(fontUrls);
+    document.head.appendChild(fontStyle);
+  }
+
+  perpsProFontLoadPromise = Promise.allSettled([
+    document.fonts.load(`400 12px "${PERPS_PRO_FONT_FACE_FAMILY}"`),
+    document.fonts.load(`500 12px "${PERPS_PRO_FONT_FACE_FAMILY}"`),
+    document.fonts.load(`700 12px "${PERPS_PRO_FONT_FACE_FAMILY}"`),
+  ]).then(() => undefined);
+
+  void perpsProFontLoadPromise.then(() => {
+    if (isPageUnloading || !chartState.proConfig || !chartState.chart) {
+      return;
+    }
+    // Canvas labels can be measured before the async font load finishes.
+    // Re-applying the same layout family invalidates them exactly once.
+    chartState.chart.applyOptions({
+      layout: { fontFamily: PERPS_PRO_FONT_FAMILY },
+    });
+  });
+}
+
+function applyPerpsProFontMode(enabled: boolean) {
+  const proDomElements = [
+    maLegend,
+    proCrosshairLabel,
+    proCrosshairTimeLabel,
+    tooltip,
+  ];
+
+  if (enabled) {
+    ensurePerpsProFontsLoaded();
+    proDomElements.forEach(element => {
+      element.style.fontFamily = PERPS_PRO_FONT_FAMILY;
+    });
+    emptyText.style.fontFamily = PERPS_PRO_FONT_FAMILY;
+    return;
+  }
+
+  proDomElements.forEach(element => {
+    element.style.removeProperty('font-family');
+  });
+  emptyText.style.fontFamily = legacyEmptyTextFontFamily;
+}
 
 let proCrosshairLabelRows: {
   change: HTMLDivElement;
@@ -1480,6 +1550,8 @@ function createChart() {
       borderColor: 'transparent',
     },
   });
+  legacyChartFontFamily =
+    chartState.chart.options().layout.fontFamily ?? legacyChartFontFamily;
 
   // Setup logo hijack
   setTimeout(() => {
@@ -1551,6 +1623,9 @@ function applyPerpsProChartOptions(config: PerpsProChartConfig) {
     return;
   }
   chartState.chart.applyOptions({
+    layout: {
+      fontFamily: PERPS_PRO_FONT_FAMILY,
+    },
     crosshair: {
       mode: CrosshairMode.Normal,
       vertLine: {
@@ -1785,13 +1860,7 @@ function handleSetCandlestickData(
     }
     lastPublishedPerpsProPriceScaleAutoScale = null;
   }
-  if (chartState.tooltip) {
-    if (chartState.proConfig) {
-      chartState.tooltip.style.fontFamily = PERPS_PRO_FONT_FAMILY;
-    } else {
-      chartState.tooltip.style.removeProperty('font-family');
-    }
-  }
+  applyPerpsProFontMode(chartState.proConfig != null);
   chartState.currentDataIdentity = message.identity ?? null;
   if (previousIdentity !== chartState.currentDataIdentity) {
     lastOlderCandlesRequestKey = null;
@@ -1804,6 +1873,9 @@ function handleSetCandlestickData(
     applyPerpsProChartOptions(chartState.proConfig);
   } else {
     chartState.chart.applyOptions({
+      layout: {
+        fontFamily: legacyChartFontFamily,
+      },
       crosshair: {
         vertLine: { labelVisible: true },
         horzLine: { labelVisible: true },
@@ -2043,6 +2115,9 @@ function handleMessage(event: CustomEvent) {
         empty: i18nTexts?.['component.kline.empty'] || defaultDescription.empty,
       };
       handleUpdateTheme(colors, description);
+      if (chartState.proConfig) {
+        ensurePerpsProFontsLoaded();
+      }
       break;
     }
     case 'TRADINGVIEW_MESSAGE': {
@@ -2156,6 +2231,7 @@ function init() {
 
 // Cleanup on page unload
 window.addEventListener('beforeunload', () => {
+  isPageUnloading = true;
   cancelPendingPerpsProCrosshairMarker();
   if (visibleLogicalRangeFrameId != null) {
     window.cancelAnimationFrame(visibleLogicalRangeFrameId);

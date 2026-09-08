@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { View } from 'react-native';
 import type { PerpsProInfoTab } from '@/core/services/perpsService';
+import type { SharedValue } from 'react-native-reanimated';
 import {
   PERPS_PRO_INFO_TOUCH_INTENT,
   type PerpsProInfoScrollBridgeController,
@@ -9,11 +10,18 @@ import {
 
 const mockSetPage = jest.fn();
 const mockSetPageWithoutAnimation = jest.fn();
+const mockCancelAnimation = jest.fn();
+const mockWithTiming = jest.fn((target: number, _config?: object) => target);
 let mockQueueRunOnJS = false;
 const mockRunOnJSQueue: Array<() => unknown> = [];
 
 const flushMockRunOnJSQueue = () => {
   const queuedCallbacks = mockRunOnJSQueue.splice(0);
+  queuedCallbacks.forEach(callback => callback());
+};
+
+const flushMockRunOnJSQueueInReverse = () => {
+  const queuedCallbacks = mockRunOnJSQueue.splice(0).reverse();
   queuedCallbacks.forEach(callback => callback());
 };
 
@@ -41,6 +49,9 @@ jest.mock('react-native-reanimated', () => {
     default: {
       createAnimatedComponent: (Component: React.ComponentType) => Component,
     },
+    cancelAnimation: (value: unknown) => mockCancelAnimation(value),
+    Easing: { bezier: jest.fn(() => 'ease-out') },
+    ReduceMotion: { System: 'system' },
     runOnJS:
       (callback: (...args: unknown[]) => unknown) =>
       (...args: unknown[]) => {
@@ -58,6 +69,8 @@ jest.mock('react-native-reanimated', () => {
           eventName: eventNames?.[0] ?? 'onPageScroll',
         }),
     useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
+    withTiming: (target: number, config: object) =>
+      mockWithTiming(target, config),
   };
 });
 
@@ -96,6 +109,7 @@ const createScrollBridge = (
 const renderPager = ({
   activeTab = 'positions',
   authorizeNativePageGestures = false,
+  indicatorPosition = { value: 0 } as SharedValue<number>,
   keepAllTabsMounted = false,
   nativeVerticalScrollEnabled = true,
   offscreenPageLimit,
@@ -109,6 +123,7 @@ const renderPager = ({
 }: {
   activeTab?: PerpsProInfoTab;
   authorizeNativePageGestures?: boolean;
+  indicatorPosition?: SharedValue<number>;
   keepAllTabsMounted?: boolean;
   nativeVerticalScrollEnabled?: boolean;
   offscreenPageLimit?: number;
@@ -132,6 +147,7 @@ const renderPager = ({
       data={data}
       getActiveScrollOffset={() => 500}
       keepAllTabsMounted={keepAllTabsMounted}
+      indicatorPosition={indicatorPosition}
       nativeVerticalScrollEnabled={nativeVerticalScrollEnabled}
       offscreenPageLimit={offscreenPageLimit}
       onActivateOffset={onActivateOffset}
@@ -274,9 +290,10 @@ describe('PerpsProInfoPager', () => {
   });
 
   it('previews the nearest tab at the midpoint only during a real drag', () => {
+    const indicatorPosition = { value: 0 } as SharedValue<number>;
     const onPagePreview = jest.fn();
     const onPageSelected = jest.fn();
-    renderPager({ onPagePreview, onPageSelected });
+    renderPager({ indicatorPosition, onPagePreview, onPageSelected });
     const pager = screen.getByTestId('perps-pro-info-pager');
 
     fireEvent(pager, 'pageScroll', {
@@ -290,11 +307,13 @@ describe('PerpsProInfoPager', () => {
     fireEvent(pager, 'pageScroll', {
       nativeEvent: { offset: 0.49, position: 0 },
     });
+    expect(indicatorPosition.value).toBe(0.49);
     expect(onPagePreview).not.toHaveBeenCalled();
 
     fireEvent(pager, 'pageScroll', {
       nativeEvent: { offset: 0.55, position: 0 },
     });
+    expect(indicatorPosition.value).toBe(0.55);
     expect(onPagePreview).toHaveBeenLastCalledWith('openOrders');
     expect(onPageSelected).not.toHaveBeenCalled();
     const midpointCallCount = onPagePreview.mock.calls.length;
@@ -314,13 +333,13 @@ describe('PerpsProInfoPager', () => {
     fireEvent(pager, 'pageScrollStateChanged', {
       nativeEvent: { pageScrollState: 'idle' },
     });
-    expect(onPagePreview).toHaveBeenLastCalledWith('positions');
+    expect(onPagePreview).toHaveBeenLastCalledWith(null);
     expect(onPageSelected).not.toHaveBeenCalled();
 
     fireEvent(pager, 'pageScroll', {
       nativeEvent: { offset: 0.55, position: 0 },
     });
-    expect(onPagePreview).toHaveBeenLastCalledWith('positions');
+    expect(onPagePreview).toHaveBeenLastCalledWith(null);
 
     fireEvent(pager, 'pageScrollStateChanged', {
       nativeEvent: { pageScrollState: 'dragging' },
@@ -374,16 +393,18 @@ describe('PerpsProInfoPager', () => {
       nativeEvent: { offset: 0.45, position: 0 },
     });
     fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
-    expect(onPageSelected).toHaveBeenCalledWith('openOrders');
+    expect(onPageSelected).not.toHaveBeenCalled();
 
     act(flushMockRunOnJSQueue);
+    expect(onPageSelected).toHaveBeenCalledWith('openOrders');
     expect(onPagePreview.mock.calls).toEqual([['openOrders']]);
   });
 
   it('keeps the destination preview when native idle arrives before selection', () => {
+    const indicatorPosition = { value: 0 } as SharedValue<number>;
     const onPagePreview = jest.fn();
     const onPageSelected = jest.fn();
-    renderPager({ onPagePreview, onPageSelected });
+    renderPager({ indicatorPosition, onPagePreview, onPageSelected });
     const pager = screen.getByTestId('perps-pro-info-pager');
 
     fireEvent(pager, 'pageScrollStateChanged', {
@@ -402,8 +423,12 @@ describe('PerpsProInfoPager', () => {
     expect(onPagePreview.mock.calls).toEqual([['openOrders']]);
 
     fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    expect(onPageSelected).not.toHaveBeenCalled();
+    act(flushMockRunOnJSQueue);
     expect(onPageSelected).toHaveBeenCalledWith('openOrders');
     expect(onPagePreview.mock.calls).toEqual([['openOrders']]);
+    expect(indicatorPosition.value).toBe(1);
+    expect(mockWithTiming).not.toHaveBeenCalled();
   });
 
   it('ignores a delayed idle completion after the destination was selected', () => {
@@ -423,9 +448,10 @@ describe('PerpsProInfoPager', () => {
       nativeEvent: { pageScrollState: 'idle' },
     });
     fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
-    expect(onPageSelected).toHaveBeenCalledWith('openOrders');
+    expect(onPageSelected).not.toHaveBeenCalled();
 
     act(flushMockRunOnJSQueue);
+    expect(onPageSelected).toHaveBeenCalledWith('openOrders');
     expect(onPagePreview.mock.calls).toEqual([['openOrders']]);
   });
 
@@ -449,6 +475,7 @@ describe('PerpsProInfoPager', () => {
   });
 
   it('rejects an Android native selection without horizontal touch intent', () => {
+    const indicatorPosition = { value: 0.25 } as SharedValue<number>;
     const onActivateOffset = jest.fn();
     const onPageSelected = jest.fn();
     const scrollBridge = createScrollBridge();
@@ -456,6 +483,7 @@ describe('PerpsProInfoPager', () => {
     scrollBridge.touchSessionId.value = 1;
     renderPager({
       authorizeNativePageGestures: true,
+      indicatorPosition,
       onActivateOffset,
       onPageSelected,
       scrollBridge,
@@ -468,6 +496,7 @@ describe('PerpsProInfoPager', () => {
     expect(mockSetPageWithoutAnimation).toHaveBeenCalledWith(0);
     expect(onActivateOffset).not.toHaveBeenCalled();
     expect(onPageSelected).not.toHaveBeenCalled();
+    expect(indicatorPosition.value).toBe(0);
     expect(scrollBridge.activeIndex.value).toBe(0);
     expect(scrollBridge.touchIntent.value).toBe(
       PERPS_PRO_INFO_TOUCH_INTENT.idle,
@@ -475,6 +504,7 @@ describe('PerpsProInfoPager', () => {
   });
 
   it('commits an Android selection authorized by the current horizontal touch', () => {
+    const indicatorPosition = { value: 0 } as SharedValue<number>;
     const onPageSelected = jest.fn();
     const scrollBridge = createScrollBridge();
     scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.horizontal;
@@ -482,6 +512,7 @@ describe('PerpsProInfoPager', () => {
     scrollBridge.horizontalTouchSessionId.value = 3;
     renderPager({
       authorizeNativePageGestures: true,
+      indicatorPosition,
       onPageSelected,
       scrollBridge,
     });
@@ -494,10 +525,210 @@ describe('PerpsProInfoPager', () => {
       nativeEvent: { offset: 0.55, position: 0 },
     });
     fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.85, position: 0 },
+    });
 
     expect(onPageSelected).toHaveBeenCalledWith('openOrders');
     expect(mockSetPageWithoutAnimation).not.toHaveBeenCalled();
     expect(scrollBridge.activeIndex.value).toBe(1);
+    expect(indicatorPosition.value).toBe(0.85);
+
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'idle' },
+    });
+    expect(indicatorPosition.value).toBe(1);
+    expect(mockWithTiming).not.toHaveBeenCalled();
+  });
+
+  it('waits for Android idle after a programmatic selection while keeping native progress live', () => {
+    const indicatorPosition = { value: 0 } as SharedValue<number>;
+    const onPageSelected = jest.fn();
+    const ref = React.createRef<PerpsProInfoPagerHandle>();
+    const scrollBridge = createScrollBridge();
+    renderPager({
+      authorizeNativePageGestures: true,
+      indicatorPosition,
+      onPageSelected,
+      ref,
+      requestedTab: 'openOrders',
+      scrollBridge,
+    });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    act(() => ref.current?.setPage('openOrders'));
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.82, position: 0 },
+    });
+
+    expect(onPageSelected).toHaveBeenCalledWith('openOrders');
+    expect(indicatorPosition.value).toBe(0.82);
+
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'idle' },
+    });
+    expect(indicatorPosition.value).toBe(1);
+    expect(mockWithTiming).not.toHaveBeenCalled();
+  });
+
+  it('keeps a sub-midpoint Android programmatic target through idle-before-selected', () => {
+    const indicatorPosition = { value: 0 } as SharedValue<number>;
+    const onPageSelected = jest.fn();
+    const ref = React.createRef<PerpsProInfoPagerHandle>();
+    const scrollBridge = createScrollBridge();
+    renderPager({
+      authorizeNativePageGestures: true,
+      indicatorPosition,
+      onPageSelected,
+      ref,
+      requestedTab: 'openOrders',
+      scrollBridge,
+    });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    act(() => ref.current?.setPage('openOrders'));
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.4, position: 0 },
+    });
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'idle' },
+    });
+    expect(indicatorPosition.value).toBe(0.4);
+
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.75, position: 0 },
+    });
+    expect(indicatorPosition.value).toBe(0.75);
+
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+
+    expect(indicatorPosition.value).toBe(1);
+    expect(onPageSelected).toHaveBeenCalledWith('openOrders');
+    expect(mockWithTiming).not.toHaveBeenCalled();
+  });
+
+  it('uses selected-before-idle as the Android no-progress fallback', () => {
+    const indicatorPosition = { value: 0 } as SharedValue<number>;
+    const ref = React.createRef<PerpsProInfoPagerHandle>();
+    const scrollBridge = createScrollBridge();
+    renderPager({
+      authorizeNativePageGestures: true,
+      indicatorPosition,
+      ref,
+      requestedTab: 'openOrders',
+      scrollBridge,
+    });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    act(() => ref.current?.setPage('openOrders'));
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    expect(indicatorPosition.value).toBe(0);
+
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'idle' },
+    });
+
+    expect(indicatorPosition.value).toBe(1);
+    expect(mockWithTiming).not.toHaveBeenCalled();
+  });
+
+  it('does not snap an Android programmatic transition backward when idle precedes selection', () => {
+    const indicatorPosition = { value: 0 } as SharedValue<number>;
+    const onPageSelected = jest.fn();
+    const ref = React.createRef<PerpsProInfoPagerHandle>();
+    const scrollBridge = createScrollBridge();
+    renderPager({
+      authorizeNativePageGestures: true,
+      indicatorPosition,
+      onPageSelected,
+      ref,
+      requestedTab: 'openOrders',
+      scrollBridge,
+    });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    act(() => ref.current?.setPage('openOrders'));
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.63, position: 0 },
+    });
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 0 } });
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'idle' },
+    });
+
+    expect(indicatorPosition.value).toBe(0.63);
+    expect(onPageSelected).not.toHaveBeenCalled();
+
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    expect(indicatorPosition.value).toBe(1);
+    expect(onPageSelected).toHaveBeenCalledWith('openOrders');
+    expect(mockWithTiming).not.toHaveBeenCalled();
+  });
+
+  it('converges an Android transition when idle arrives before selection', () => {
+    const indicatorPosition = { value: 0 } as SharedValue<number>;
+    const onPageSelected = jest.fn();
+    const scrollBridge = createScrollBridge();
+    scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.horizontal;
+    scrollBridge.touchSessionId.value = 11;
+    scrollBridge.horizontalTouchSessionId.value = 11;
+    renderPager({
+      authorizeNativePageGestures: true,
+      indicatorPosition,
+      onPageSelected,
+      scrollBridge,
+    });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'dragging' },
+    });
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.72, position: 0 },
+    });
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'idle' },
+    });
+
+    expect(indicatorPosition.value).toBe(0.72);
+    expect(onPageSelected).not.toHaveBeenCalled();
+
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    expect(indicatorPosition.value).toBe(1);
+    expect(onPageSelected).toHaveBeenCalledWith('openOrders');
+  });
+
+  it('safely snaps an Android drag that rebounds without selection', () => {
+    const indicatorPosition = { value: 0 } as SharedValue<number>;
+    const onPageSelected = jest.fn();
+    const scrollBridge = createScrollBridge();
+    scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.horizontal;
+    scrollBridge.touchSessionId.value = 13;
+    scrollBridge.horizontalTouchSessionId.value = 13;
+    renderPager({
+      authorizeNativePageGestures: true,
+      indicatorPosition,
+      onPageSelected,
+      scrollBridge,
+    });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'dragging' },
+    });
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.4, position: 0 },
+    });
+    expect(indicatorPosition.value).toBe(0.4);
+
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'idle' },
+    });
+
+    expect(indicatorPosition.value).toBe(0);
+    expect(onPageSelected).not.toHaveBeenCalled();
+    expect(mockWithTiming).not.toHaveBeenCalled();
   });
 
   it('invalidates prior Android authorization when a new touch begins', () => {
@@ -544,9 +775,252 @@ describe('PerpsProInfoPager', () => {
     expect(onPageSelected).toHaveBeenCalledWith('account');
   });
 
-  it('mounts and jumps directly to a requested non-adjacent tab', () => {
+  it('tracks an adjacent programmatic transition from native pager progress', () => {
+    const indicatorPosition = { value: 0 } as SharedValue<number>;
+    const onPageDragStart = jest.fn();
+    const onPagePreview = jest.fn();
     const ref = React.createRef<PerpsProInfoPagerHandle>();
-    renderPager({ ref, requestedTab: 'account' });
+    renderPager({
+      indicatorPosition,
+      onPageDragStart,
+      onPagePreview,
+      ref,
+      requestedTab: 'openOrders',
+    });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    act(() => ref.current?.setPage('openOrders'));
+    expect(mockSetPage).toHaveBeenCalledWith(1);
+    expect(mockWithTiming).not.toHaveBeenCalled();
+
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.4, position: 0 },
+    });
+    expect(indicatorPosition.value).toBe(0.4);
+    expect(onPageDragStart).not.toHaveBeenCalled();
+    expect(onPagePreview.mock.calls).toEqual([[null]]);
+
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.8, position: 0 },
+    });
+    expect(indicatorPosition.value).toBe(1);
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'idle' },
+    });
+    expect(indicatorPosition.value).toBe(1);
+    expect(mockWithTiming).not.toHaveBeenCalled();
+  });
+
+  it('starts an immediate reverse iOS drag after selection without waiting for idle', () => {
+    const indicatorPosition = { value: 0 } as SharedValue<number>;
+    const onPageDragStart = jest.fn();
+    const onPageSelected = jest.fn();
+    const ref = React.createRef<PerpsProInfoPagerHandle>();
+    renderPager({
+      indicatorPosition,
+      onPageDragStart,
+      onPageSelected,
+      ref,
+      requestedTab: 'openOrders',
+    });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    act(() => ref.current?.setPage('openOrders'));
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.4, position: 0 },
+    });
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    expect(indicatorPosition.value).toBe(1);
+
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'dragging' },
+    });
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.4, position: 0 },
+    });
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 0 } });
+
+    expect(onPageDragStart).toHaveBeenCalledTimes(1);
+    expect(onPageSelected.mock.calls).toEqual([['openOrders'], ['positions']]);
+    expect(indicatorPosition.value).toBe(0.4);
+    expect(mockWithTiming).not.toHaveBeenCalled();
+
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0, position: 0 },
+    });
+    expect(indicatorPosition.value).toBe(0);
+    expect(mockWithTiming).not.toHaveBeenCalled();
+  });
+
+  it('keeps iOS gesture progress native-owned until the exact final scroll', () => {
+    const indicatorPosition = { value: 0 } as SharedValue<number>;
+    renderPager({ indicatorPosition });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'dragging' },
+    });
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.75, position: 0 },
+    });
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+
+    expect(indicatorPosition.value).toBe(0.75);
+    expect(mockWithTiming).not.toHaveBeenCalled();
+
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0, position: 1 },
+    });
+    expect(indicatorPosition.value).toBe(1);
+    expect(mockWithTiming).not.toHaveBeenCalled();
+  });
+
+  it('ignores an iOS selection from a superseded programmatic target', () => {
+    const indicatorPosition = { value: 0 } as SharedValue<number>;
+    const onPageSelected = jest.fn();
+    const ref = React.createRef<PerpsProInfoPagerHandle>();
+    renderPager({
+      indicatorPosition,
+      onPageSelected,
+      ref,
+      requestedTab: 'account',
+    });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    act(() => {
+      ref.current?.setPage('openOrders');
+      ref.current?.setPage('account');
+    });
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    expect(onPageSelected).not.toHaveBeenCalled();
+
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 2 } });
+    expect(onPageSelected.mock.calls).toEqual([['account']]);
+    expect(indicatorPosition.value).toBe(2);
+  });
+
+  it('returns to the settled iOS page after an in-flight target completes late', () => {
+    const indicatorPosition = { value: 0 } as SharedValue<number>;
+    const onPageSelected = jest.fn();
+    const ref = React.createRef<PerpsProInfoPagerHandle>();
+    renderPager({
+      indicatorPosition,
+      onPageSelected,
+      ref,
+      requestedTab: 'openOrders',
+    });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    act(() => {
+      ref.current?.setPage('openOrders');
+      ref.current?.returnToPage('positions');
+    });
+    expect(mockSetPage).toHaveBeenCalledWith(1);
+    expect(mockSetPageWithoutAnimation).toHaveBeenCalledWith(0);
+
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    expect(onPageSelected).not.toHaveBeenCalled();
+    expect(mockSetPage).toHaveBeenLastCalledWith(0);
+
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 0 } });
+    expect(onPageSelected).not.toHaveBeenCalled();
+    expect(indicatorPosition.value).toBe(0);
+  });
+
+  it('drops a queued selected callback from an older reverse-swipe epoch', () => {
+    const indicatorPosition = { value: 0 } as SharedValue<number>;
+    const onPageSelected = jest.fn();
+    renderPager({
+      indicatorPosition,
+      onPageSelected,
+    });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'dragging' },
+    });
+    mockQueueRunOnJS = true;
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    mockQueueRunOnJS = false;
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'dragging' },
+    });
+    mockQueueRunOnJS = true;
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 0 } });
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0, position: 0 },
+    });
+
+    act(flushMockRunOnJSQueueInReverse);
+
+    expect(onPageSelected.mock.calls).toEqual([['positions']]);
+    expect(indicatorPosition.value).toBe(0);
+  });
+
+  it('keeps an older selected commit when the newer reverse gesture cancels', () => {
+    const indicatorPosition = { value: 0 } as SharedValue<number>;
+    const onPageSelected = jest.fn();
+    renderPager({ indicatorPosition, onPageSelected });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'dragging' },
+    });
+    mockQueueRunOnJS = true;
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    mockQueueRunOnJS = false;
+
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'dragging' },
+    });
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 1, position: 0 },
+    });
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'idle' },
+    });
+
+    act(flushMockRunOnJSQueue);
+
+    expect(onPageSelected).toHaveBeenCalledWith('openOrders');
+    expect(indicatorPosition.value).toBe(1);
+  });
+
+  it('drops an unauthorized Android correction after a newer gesture starts', () => {
+    const onPageSelected = jest.fn();
+    const scrollBridge = createScrollBridge();
+    scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.pending;
+    scrollBridge.touchSessionId.value = 21;
+    renderPager({
+      authorizeNativePageGestures: true,
+      onPageSelected,
+      scrollBridge,
+    });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    mockQueueRunOnJS = true;
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    mockQueueRunOnJS = false;
+    scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.horizontal;
+    scrollBridge.touchSessionId.value = 22;
+    scrollBridge.horizontalTouchSessionId.value = 22;
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'dragging' },
+    });
+    mockQueueRunOnJS = true;
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+
+    act(flushMockRunOnJSQueue);
+
+    expect(mockSetPageWithoutAnimation).not.toHaveBeenCalled();
+    expect(onPageSelected).toHaveBeenCalledWith('openOrders');
+  });
+
+  it('mounts and snaps directly to a requested non-adjacent tab', () => {
+    const indicatorPosition = { value: 0 } as SharedValue<number>;
+    const ref = React.createRef<PerpsProInfoPagerHandle>();
+    renderPager({ indicatorPosition, ref, requestedTab: 'account' });
     expect(
       screen.getByTestId('account-row', { includeHiddenElements: true }),
     ).toBeTruthy();
@@ -554,6 +1028,42 @@ describe('PerpsProInfoPager', () => {
     act(() => ref.current?.setPage('account'));
     expect(mockSetPage).not.toHaveBeenCalled();
     expect(mockSetPageWithoutAnimation).toHaveBeenCalledWith(2);
+    expect(mockWithTiming).not.toHaveBeenCalled();
+    expect(indicatorPosition.value).toBe(2);
+    mockCancelAnimation.mockClear();
+    fireEvent(screen.getByTestId('perps-pro-info-pager'), 'pageSelected', {
+      nativeEvent: { position: 2 },
+    });
+    fireEvent(
+      screen.getByTestId('perps-pro-info-pager'),
+      'pageScrollStateChanged',
+      {
+        nativeEvent: { pageScrollState: 'idle' },
+      },
+    );
+    expect(mockCancelAnimation).toHaveBeenCalledWith(indicatorPosition);
+    expect(indicatorPosition.value).toBe(2);
+  });
+
+  it('starts adjacent native progress from a settled non-adjacent snap', () => {
+    const indicatorPosition = { value: 0 } as SharedValue<number>;
+    const ref = React.createRef<PerpsProInfoPagerHandle>();
+    renderPager({ indicatorPosition, ref, requestedTab: 'account' });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    act(() => ref.current?.setPage('account'));
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 2 } });
+    expect(indicatorPosition.value).toBe(2);
+
+    act(() => ref.current?.setPage('openOrders'));
+    expect(mockSetPage).toHaveBeenLastCalledWith(1);
+    expect(indicatorPosition.value).toBe(2);
+
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { offset: 0.7, position: 1 },
+    });
+    expect(indicatorPosition.value).toBe(1.7);
+    expect(mockWithTiming).not.toHaveBeenCalled();
   });
 
   it('normalizes preview offsets without losing an already-deep tab', () => {

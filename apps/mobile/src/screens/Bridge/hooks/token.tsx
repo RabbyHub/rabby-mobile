@@ -53,6 +53,7 @@ import {
   mergeBridgeQuoteBatch,
 } from '../utils/quoteResultBatch';
 import { useSceneActiveAsync } from '@/screens/SwapBridge/hooks/useSceneActiveAsync';
+import { getRabbyFeeRate } from '@/screens/Swap/hooks/fee';
 
 export const enableInsufficientQuote = true;
 const BRIDGE_QUOTE_REFRESH_INTERVAL = 1000 * 30;
@@ -493,6 +494,16 @@ export const useBridge = (
 
   // const aggregatorsList = useBridgeSupportedChains(s => s.bridge.aggregatorsList || []);
   const aggregatorsList = useAggregatorsList();
+  const feeRate = useMemo(
+    () =>
+      getRabbyFeeRate({
+        payAmount: amount,
+        payTokenPrice: fromToken?.price || 0,
+        isFreeTokenPair: false,
+        isWrapToken: false,
+      }),
+    [amount, fromToken?.price],
+  );
 
   const [bestQuoteId, setBestQuoteId] = useState<
     | {
@@ -918,6 +929,7 @@ export const useBridge = (
                   slippage: new BigNumber(slippageObj.slippageState)
                     .div(100)
                     .toString(10),
+                  feeRate: Number(feeRate),
                 },
                 openapi,
               ).catch(e => {
@@ -1053,6 +1065,7 @@ export const useBridge = (
       fromChain,
       toChain,
       amount,
+      feeRate,
       slippageObj.slippage,
       isDraggingSlider,
       flushPendingQuoteUpdates,
@@ -1080,6 +1093,7 @@ export const useBridge = (
     fromChain,
     toChain,
     amount,
+    feeRate,
     slippageObj.slippage,
     cancelPendingQuoteFlush,
     setSelectedBridgeQuote,
@@ -1108,6 +1122,7 @@ export const useBridge = (
     fromChain,
     toChain,
     amount,
+    feeRate,
     aggregatorsList.length,
     refreshId,
   ]);
@@ -1489,6 +1504,7 @@ export const useBridge = (
     quoteBlockedByClosedMarket,
     amount,
     handleAmountChange,
+    feeRate,
     showLoss,
 
     openQuotesList,

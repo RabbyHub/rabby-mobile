@@ -238,8 +238,12 @@ describe('Perps Pro trade selection sheets', () => {
     );
     expect(crossTitleStyle).toEqual(isolatedTitleStyle);
     expect(crossTitleStyle).toMatchObject({
-      fontVariant: ['stylistic-six'],
+      fontSize: 14,
+      fontWeight: '500',
+      lineHeight: 18,
     });
+    expect(crossTitleStyle.fontVariant).toBeUndefined();
+    expect(isolatedTitleStyle.fontVariant).toBeUndefined();
   });
 
   it('locks Margin Mode dismissal and options while the server update is pending', () => {

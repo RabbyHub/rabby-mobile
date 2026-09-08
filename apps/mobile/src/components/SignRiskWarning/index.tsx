@@ -33,6 +33,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
+    gap: 4,
   },
   warningText: {
     fontSize: 12,

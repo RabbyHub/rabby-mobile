@@ -368,7 +368,7 @@ describe('PerpsProMarketList', () => {
     ).toEqual(
       expect.objectContaining({
         color: 'neutral-info',
-        fontFamily: 'SF Pro',
+        fontFamily: 'SF Pro Rounded',
         fontSize: 14,
         fontWeight: '400',
         lineHeight: 18,

@@ -1,5 +1,9 @@
 import { initWalletConnect } from './client';
 import { pairWalletConnectUri } from './pairing';
+import {
+  forgetWalletConnectPairingBrowserOrigin,
+  getWalletConnectPairingBrowserOrigin,
+} from './pairingBrowserOrigin';
 import type { WalletConnectDebugState } from './types';
 
 const WC_URI =
@@ -50,6 +54,10 @@ describe('walletconnect pairing', () => {
     jest.mocked(initWalletConnect).mockReset();
   });
 
+  afterEach(() => {
+    forgetWalletConnectPairingBrowserOrigin('abc123');
+  });
+
   it('keeps pairing pending after WalletKit accepts the URI', async () => {
     const walletKit = {
       pair: jest.fn().mockResolvedValue(undefined),
@@ -69,6 +77,37 @@ describe('walletconnect pairing', () => {
       uri: WC_URI,
       source: 'qr',
     });
+    expect(getWalletConnectPairingBrowserOrigin('abc123')).toBeNull();
+  });
+
+  it('binds a strict WebView pairing to its source origin', async () => {
+    const walletKit = {
+      pair: jest.fn().mockResolvedValue(undefined),
+    } as unknown as Awaited<ReturnType<typeof initWalletConnect>>;
+    jest.mocked(initWalletConnect).mockResolvedValue(walletKit);
+
+    await pairWalletConnectUri({
+      uri: WC_URI,
+      source: 'inner-webview',
+      browserOrigin: 'https://app.example/path',
+    });
+
+    expect(getWalletConnectPairingBrowserOrigin('abc123')).toBe(
+      'https://app.example',
+    );
+  });
+
+  it('fails before pairing when a WebView origin is invalid', async () => {
+    await expect(
+      pairWalletConnectUri({
+        uri: WC_URI,
+        source: 'inner-webview',
+        browserOrigin: '',
+      }),
+    ).rejects.toThrow();
+
+    expect(initWalletConnect).not.toHaveBeenCalled();
+    expect(getWalletConnectPairingBrowserOrigin('abc123')).toBeNull();
   });
 
   it('does not overwrite proposal state when proposal arrives before pair resolves', async () => {

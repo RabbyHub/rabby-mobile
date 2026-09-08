@@ -247,7 +247,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   amountGroup: { gap: 4 },
   conversion: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },

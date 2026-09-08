@@ -16,17 +16,22 @@ import type { PerpsProOpenOrderCommand } from '../../actions/openOrder';
 import type { PerpsProAttachedTpSlCommand } from '../../actions/openOrderWithAttachedTpSl';
 import type { PerpsProMarket } from '../../model/market';
 import { getPerpsProBboStrategyLabel } from '../../model/bbo';
-import { formatPerpsProDecimal, formatPerpsProPrice } from '../../utils/format';
+import {
+  formatPerpsProDecimal,
+  formatPerpsProPrice,
+  formatPerpsProVariableDecimal,
+} from '../../utils/format';
 import {
   getPerpsProBottomSheetChromeStyles,
   PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
   PERPS_PRO_CONFIRM_BUTTON_STYLE,
-  PERPS_PRO_ISOLATED_TEXT_STYLE,
   PERPS_PRO_ORDER_CONFIRMATION_FOOTER_TOP_OFFSET,
 } from '../common/perpsProVisual';
 import {
-  getPerpsProSemanticTagContainerStyle,
-  getPerpsProSemanticTagTextStyle,
+  getPerpsProMetadataTagContainerStyle,
+  getPerpsProMetadataTagTextStyle,
+  getPerpsProTintedTagContainerStyle,
+  getPerpsProTintedTagTextStyle,
 } from '../common/perpsProSemanticTagStyles';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
@@ -92,10 +97,9 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
       execution.kind === 'bboLimit'
         ? getPerpsProBboStrategyLabel(execution.strategy)
         : execution.kind === 'limit' || execution.kind === 'conditionalLimit'
-        ? `${formatPerpsProPrice(
-            execution.limitPrice,
-            reviewFacts.pxDecimals,
-          )} ${reviewFacts.quoteAsset}`
+        ? `${formatPerpsProVariableDecimal(execution.limitPrice)} ${
+            reviewFacts.quoteAsset
+          }`
         : t('page.perps.pro.trade.marketPrice');
     const isBuy = parent.side === 'buy';
     const triggerOperator = (kind: 'sl' | 'tp') =>
@@ -133,12 +137,8 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
                 ) : null}
                 <Text
                   numberOfLines={1}
-                  style={[
-                    styles.marketTag,
-                    reviewFacts.marginMode === 'isolated'
-                      ? PERPS_PRO_ISOLATED_TEXT_STYLE
-                      : null,
-                  ]}>
+                  style={styles.marketTag}
+                  testID="perps-pro-order-confirmation-margin-mode-tag">
                   {reviewFacts.marginMode === 'cross' ? 'Cross' : 'Isolated'}{' '}
                   {reviewFacts.leverage}x
                 </Text>
@@ -175,9 +175,8 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
               {isConditional ? (
                 <DetailRow
                   label={t('page.perps.pro.trade.triggerPrice')}
-                  value={`${formatPerpsProPrice(
+                  value={`${formatPerpsProVariableDecimal(
                     execution.triggerPrice,
-                    reviewFacts.pxDecimals,
                   )} ${reviewFacts.quoteAsset}`}
                 />
               ) : null}
@@ -238,9 +237,10 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
                       label={t('page.perps.pro.trade.trigger')}
                       value={`${t(
                         'page.perps.pro.trade.markPrice',
-                      )} ${triggerOperator('tp')} ${formatPerpsProPrice(
+                      )} ${triggerOperator(
+                        'tp',
+                      )} ${formatPerpsProVariableDecimal(
                         attachedCommand.attached.tp.triggerPrice,
-                        reviewFacts.pxDecimals,
                       )} ${reviewFacts.quoteAsset}`}
                     />
                   </>
@@ -257,9 +257,10 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
                       label={t('page.perps.pro.trade.trigger')}
                       value={`${t(
                         'page.perps.pro.trade.markPrice',
-                      )} ${triggerOperator('sl')} ${formatPerpsProPrice(
+                      )} ${triggerOperator(
+                        'sl',
+                      )} ${formatPerpsProVariableDecimal(
                         attachedCommand.attached.sl.triggerPrice,
-                        reviewFacts.pxDecimals,
                       )} ${reviewFacts.quoteAsset}`}
                     />
                   </>
@@ -338,24 +339,22 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   },
   symbol: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,
     maxWidth: 160,
   },
   marketTag: {
-    ...getPerpsProSemanticTagContainerStyle(colors2024, 'neutral'),
-    ...getPerpsProSemanticTagTextStyle(colors2024, 'neutral', {
-      color: colors2024['neutral-secondary'],
-    }),
+    ...getPerpsProMetadataTagContainerStyle(colors2024),
+    ...getPerpsProMetadataTagTextStyle(colors2024),
     maxWidth: 100,
   },
   directionRow: { flexDirection: 'row', gap: 4 },
-  buyTag: getPerpsProSemanticTagContainerStyle(colors2024, 'positive'),
-  sellTag: getPerpsProSemanticTagContainerStyle(colors2024, 'negative'),
-  buyTagText: getPerpsProSemanticTagTextStyle(colors2024, 'positive'),
-  sellTagText: getPerpsProSemanticTagTextStyle(colors2024, 'negative'),
+  buyTag: getPerpsProTintedTagContainerStyle(colors2024, 'positive'),
+  sellTag: getPerpsProTintedTagContainerStyle(colors2024, 'negative'),
+  buyTagText: getPerpsProTintedTagTextStyle(colors2024, 'positive'),
+  sellTagText: getPerpsProTintedTagTextStyle(colors2024, 'negative'),
   details: {
     borderBottomColor: colors2024['neutral-bg-5'],
     borderBottomWidth: 1,
@@ -377,14 +376,14 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   },
   detailLabel: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },
   detailValue: {
     color: colors2024['neutral-title-1'],
     flexShrink: 1,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
@@ -400,7 +399,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   checkboxText: {
     color: colors2024['neutral-body'],
     flex: 1,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },

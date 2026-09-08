@@ -552,13 +552,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   activeTab: { borderBottomColor: colors2024['neutral-title-1'] },
   tabText: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
   },
   activeTabText: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,

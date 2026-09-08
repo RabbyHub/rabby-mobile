@@ -177,7 +177,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   tooltipText: {
     color: colors2024['neutral-bg-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 10,
     lineHeight: 12,
   },

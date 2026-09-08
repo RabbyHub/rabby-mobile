@@ -37,21 +37,25 @@ export interface PerpsProCancelConfirmation {
 const reportCancelledOrders = (orders: PerpsOpenOrderViewModel[]) => {
   const account = perpsStore.getState().currentPerpsAccount;
   orders.forEach(order => {
-    stats.report('perpsTradeHistory', {
-      address_type: account?.type || '',
-      app_version: APP_VERSIONS.fromNative || '0',
-      coin: order.coin,
-      created_at: Date.now(),
-      leverage: '',
-      margin_mode: '',
-      price: order.executionPrice || '',
-      service_provider: 'hyperliquid',
-      size: order.amountBase,
-      trade_side: getStatsReportSide(order.side === 'buy', false),
-      trade_type: 'cancel limit order',
-      trade_usd_value: order.amountQuote,
-      user_addr: account?.address || '',
-    });
+    try {
+      stats.report('perpsTradeHistory', {
+        address_type: account?.type || '',
+        app_version: APP_VERSIONS.fromNative || '0',
+        coin: order.coin,
+        created_at: Date.now(),
+        leverage: '',
+        margin_mode: '',
+        price: order.executionPrice || '',
+        service_provider: 'hyperliquid',
+        size: order.amountBase,
+        trade_side: getStatsReportSide(order.side === 'buy', false),
+        trade_type: 'pro cancel limit order',
+        trade_usd_value: order.amountQuote,
+        user_addr: account?.address || '',
+      });
+    } catch {
+      // Analytics must not change an already accepted cancellation result.
+    }
   });
 };
 

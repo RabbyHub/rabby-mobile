@@ -89,6 +89,12 @@ describe('PerpsModeSwitch', () => {
       disabled: true,
       selected: true,
     });
+    expect(
+      StyleSheet.flatten(screen.getByText('Perps').props.style),
+    ).toMatchObject({ fontFamily: 'SF Pro Rounded' });
+    expect(
+      StyleSheet.flatten(screen.getByText('Pro').props.style),
+    ).toMatchObject({ fontFamily: 'SF Pro Rounded' });
 
     fireEvent.press(screen.getByTestId('perps-mode-simple'));
     expect(onSelectMode).not.toHaveBeenCalled();

@@ -276,7 +276,7 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(trade.requestReview).not.toHaveBeenCalled();
   });
 
-  it('keeps the readable variant off the leverage configuration button only', () => {
+  it('keeps every trade selector on the same font without readability variants', () => {
     render(
       <PerpsProTradeForm controller={controller()} onAddFunds={jest.fn()} />,
     );
@@ -300,26 +300,22 @@ describe('PerpsProTradeForm order matrix', () => {
 
     expect(isolatedStyle).toMatchObject(sharedVisibleStyle);
     expect(orderTypeStyle).toMatchObject(sharedVisibleStyle);
-    expect(leverageStyle).toMatchObject({
-      fontFamily: sharedVisibleStyle.fontFamily,
-      fontSize: 14,
-      lineHeight: 18,
-    });
+    expect(leverageStyle).toMatchObject(sharedVisibleStyle);
+    expect(isolatedStyle.fontVariant).toBeUndefined();
     expect(leverageStyle.fontVariant).toBeUndefined();
-    expect(isolatedStyle.fontVariant).toEqual(['stylistic-six']);
-    expect(orderTypeStyle.fontVariant).toEqual(['stylistic-six']);
+    expect(orderTypeStyle.fontVariant).toBeUndefined();
   });
 
-  it('keeps every selector on the same platform font and stylistic variant', () => {
-    expect(getPerpsProTradeSelectFontStyle('android')).toEqual({
+  it('maps every selector to the platform medium font without font variants', () => {
+    const androidStyle = getPerpsProTradeSelectFontStyle('android');
+    const iosStyle = getPerpsProTradeSelectFontStyle('ios');
+
+    expect(androidStyle).toMatchObject({
       fontFamily: 'SF-Pro-Rounded-Medium',
-      fontVariant: ['stylistic-six'],
     });
-    expect(getPerpsProTradeSelectFontStyle('ios')).toEqual({
-      fontFamily: 'SF Pro',
-      fontWeight: '500',
-      fontVariant: ['stylistic-six'],
-    });
+    expect(iosStyle).toMatchObject({ fontWeight: '500' });
+    expect(androidStyle.fontVariant).toBeUndefined();
+    expect(iosStyle.fontVariant).toBeUndefined();
   });
 
   it('keeps Market free of Price, BBO and TIF controls', () => {
@@ -349,6 +345,9 @@ describe('PerpsProTradeForm order matrix', () => {
       fontSize: 12,
       lineHeight: 16,
     });
+    expect(
+      StyleSheet.flatten(screen.getByText('BBO').props.style).fontVariant,
+    ).toBeUndefined();
 
     view.rerender(
       <PerpsProTradeForm
@@ -368,6 +367,10 @@ describe('PerpsProTradeForm order matrix', () => {
       fontSize: 14,
       lineHeight: 18,
     });
+    expect(
+      StyleSheet.flatten(screen.getByText('Counterparty 1').props.style)
+        .fontVariant,
+    ).toBeUndefined();
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-trade-bbo-caret').props.style,
@@ -447,6 +450,9 @@ describe('PerpsProTradeForm order matrix', () => {
       textAlign: 'center',
       width: 40,
     });
+    expect(
+      StyleSheet.flatten(screen.getByText('BBO').props.style).fontVariant,
+    ).toBeUndefined();
     expect(screen.getByText('BBO').props.numberOfLines).toBe(1);
     expect(screen.queryByText('price')).toBeNull();
   });
@@ -709,6 +715,9 @@ describe('PerpsProTradeForm order matrix', () => {
       lineHeight: 12,
     });
     expect(
+      StyleSheet.flatten(screen.getByText('market').props.style).fontVariant,
+    ).toBeUndefined();
+    expect(
       screen.getByTestId('perps-pro-trade-conditional-execution-switch'),
     ).toHaveProp('height', 10);
     expect(
@@ -868,6 +877,47 @@ describe('PerpsProTradeForm order matrix', () => {
     });
     expect(trade.requestReview).toHaveBeenCalledTimes(1);
     expect(trade.requestReview).toHaveBeenLastCalledWith('sell');
+  });
+
+  it('uses the latest requestReview callback after keyboard dismissal', () => {
+    const initialTrade = controller({ amount: '10' });
+    const latestTrade = controller({ amount: '10' });
+    let pendingAction: (() => void) | null = null;
+    mockDismissKeyboardThen.mockImplementation(action => {
+      pendingAction = action;
+    });
+    const view = render(
+      <PerpsProTradeForm controller={initialTrade} onAddFunds={jest.fn()} />,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-trade-button-buy'));
+    expect(initialTrade.requestReview).not.toHaveBeenCalled();
+
+    view.rerender(
+      <PerpsProTradeForm controller={latestTrade} onAddFunds={jest.fn()} />,
+    );
+    act(() => {
+      pendingAction?.();
+    });
+
+    expect(initialTrade.requestReview).not.toHaveBeenCalled();
+    expect(latestTrade.requestReview).toHaveBeenCalledTimes(1);
+    expect(latestTrade.requestReview).toHaveBeenCalledWith('buy');
+  });
+
+  it('delegates add-funds immediately so the Scene can freeze the tap intent', () => {
+    const onAddFunds = jest.fn();
+    mockDismissKeyboardThen.mockImplementation(action => {
+      throw new Error(`Form must not delay add-funds: ${String(action)}`);
+    });
+    render(
+      <PerpsProTradeForm controller={controller()} onAddFunds={onAddFunds} />,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-trade-available-deposit'));
+
+    expect(onAddFunds).toHaveBeenCalledTimes(1);
+    expect(mockDismissKeyboardThen).not.toHaveBeenCalled();
   });
 
   it('focuses Amount instead of requesting review when manual Amount is empty', () => {

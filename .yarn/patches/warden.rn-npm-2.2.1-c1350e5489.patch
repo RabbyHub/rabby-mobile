@@ -1,0 +1,386 @@
+diff --git a/dist/index.js b/dist/index.js
+index 6e0be540a56b1874e60de7a5e392102070c569f7..aa138d921c5e5035210bd7961090cae92770f233 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -143,6 +143,42 @@ function hasExecutableJavaScriptOutput(module) {
+ function isJavaScriptSourcePath(modulePath) {
+     return /\.(?:[cm]?[jt]sx?|json)$/i.test(modulePath);
+ }
++function referencesSandboxGlobalAlias(fn) {
++    const factoryGlobal = fn.node.params[0];
++    if (!t.isIdentifier(factoryGlobal)) {
++        throw new Error("The first parameter of the function must be an identifier");
++    }
++    const implicitAliases = new Set([
++        "globalThis",
++        "self",
++        "window",
++        "global",
++        "g",
++        "__mkGb",
++    ]);
++    let referenced = false;
++    fn.traverse({
++        Identifier(path) {
++            if (referenced || !path.isReferencedIdentifier()) {
++                return;
++            }
++            const name = path.node.name;
++            if (name === factoryGlobal.name) {
++                if (path.scope.getBinding(name)?.identifier === factoryGlobal) {
++                    referenced = true;
++                    path.stop();
++                }
++                return;
++            }
++            if (implicitAliases.has(name) &&
++                !path.scope.hasBinding(name, { noGlobals: true })) {
++                referenced = true;
++                path.stop();
++            }
++        },
++    });
++    return referenced;
++}
+ function assertNoThirdPartyImportsFirstParty(graph, rootDir, override) {
+     const violations = new Map();
+     const boundaryTargets = new Map();
+@@ -234,6 +270,7 @@ async function serializeModulesIndividually({ serializer, entryPoint, preModules
+     let staticGlobalFastPathCount = 0;
+     let normalizedGlobalCount = 0;
+     let runtimeGlobalSandboxCount = 0;
++    let emptyGlobalRuntimePassthroughCount = 0;
+     let trustedRuntimePassthroughCount = 0;
+     const globalPrefix = options.globalPrefix ??
+         "";
+@@ -294,6 +331,7 @@ async function serializeModulesIndividually({ serializer, entryPoint, preModules
+                 globals: {},
+             };
+         const moduleAst = (0, parser_1.parse)(output.data.code, { sourceType: "module" });
++        let preserveOriginalModuleOutput = isTrustedRuntimeModule;
+         const statement = moduleAst.program.body.find((node) => t.isExpressionStatement(node) &&
+             t.isCallExpression(node.expression) &&
+             t.isIdentifier(node.expression.callee, { name: "__d" }));
+@@ -315,6 +353,7 @@ async function serializeModulesIndividually({ serializer, entryPoint, preModules
+                     }
+                     const moduleFnPath = moduleCallPath.get("arguments")[0];
+                     if (item != null) {
++                        const usesSandboxGlobalAlias = referencesSandboxGlobalAlias(moduleFnPath);
+                         const detectedGlobals = (0, globals_1.analyzeGlobals)(moduleCallPath, false, forceProtectedGlobals);
+                         for (const name of protectedModuleGlobals) {
+                             delete detectedGlobals[name];
+@@ -330,9 +369,21 @@ async function serializeModulesIndividually({ serializer, entryPoint, preModules
+                                 effectiveGlobals[name] === "rw"));
+                         const shouldNormalizeGlobals = !isTrustedRuntimeModule &&
+                             !policyAllowsDirectAccess;
++                        const canPassthroughEmptyGlobalModule = !isTrustedRuntimeModule &&
++                            !dev &&
++                            !protectModuleImports &&
++                            !hardenDynamicCode &&
++                            !isHardenAfterModule &&
++                            Object.keys(detectedAccessModes).length === 0 &&
++                            !usesSandboxGlobalAlias &&
++                            Object.keys(effectiveGlobals).length === 0;
+                         if (isTrustedRuntimeModule) {
+                             trustedRuntimePassthroughCount++;
+                         }
++                        else if (canPassthroughEmptyGlobalModule) {
++                            emptyGlobalRuntimePassthroughCount++;
++                            preserveOriginalModuleOutput = true;
++                        }
+                         else if (shouldNormalizeGlobals) {
+                             normalizedGlobalCount++;
+                             (0, globals_1.analyzeGlobals)(moduleCallPath, true);
+@@ -340,7 +391,8 @@ async function serializeModulesIndividually({ serializer, entryPoint, preModules
+                         else {
+                             staticGlobalFastPathCount++;
+                         }
+-                        if (!isTrustedRuntimeModule) {
++                        if (!isTrustedRuntimeModule &&
++                            !canPassthroughEmptyGlobalModule) {
+                             runtimeGlobalSandboxCount++;
+                         }
+                         if (protectModuleImports &&
+@@ -355,7 +407,8 @@ async function serializeModulesIndividually({ serializer, entryPoint, preModules
+                                 dev,
+                             });
+                         }
+-                        if (!isTrustedRuntimeModule) {
++                        if (!isTrustedRuntimeModule &&
++                            !canPassthroughEmptyGlobalModule) {
+                             (0, globals_1.rewriteGlobalFunctionBind)(moduleFnPath, shouldNormalizeGlobals);
+                             (0, globals_1.hardenGlobals)(moduleCallPath, effectiveGlobals, path.relative(rootDir, module.path), dev, hardenDynamicCode, protectedModuleGlobals);
+                         }
+@@ -371,11 +424,12 @@ async function serializeModulesIndividually({ serializer, entryPoint, preModules
+         finally {
+             traverse_1.default.cache.clear();
+         }
+-        if (isTrustedRuntimeModule) {
+-            // Reanimated-style JSI/worklet packages can depend on the exact
+-            // transformed source bytes and factory scope produced by Metro.
+-            // Analysis is read-only for trusted runtimes: preserve their
+-            // module output, mappings, and function metadata verbatim.
++        if (preserveOriginalModuleOutput) {
++            // Trusted runtimes and release modules that neither need a global
++            // capability nor reference Warden's implicit global aliases keep
++            // Metro's output, mappings, and function metadata byte-for-byte.
++            // Empty-policy passthrough is valid only when the optional runtime
++            // guards are disabled and collection mode is off.
+             continue;
+         }
+         const inputMap = output.data.map.length === 0
+@@ -415,7 +469,7 @@ async function serializeModulesIndividually({ serializer, entryPoint, preModules
+     if (hardenAfterModulePath != null && !hardenAfterModuleFound) {
+         throw new Error(`hardenAfterModule was not found in the Metro graph: ${hardenAfterModulePath}`);
+     }
+-    console.log(`[Warden] compatible global fast path: ${staticGlobalFastPathCount} modules; normalized globals: ${normalizedGlobalCount} modules; runtime sandbox: ${runtimeGlobalSandboxCount} modules; trusted runtime passthrough: ${trustedRuntimePassthroughCount} modules`);
++    console.log(`[Warden] compatible global fast path: ${staticGlobalFastPathCount} modules; normalized globals: ${normalizedGlobalCount} modules; runtime sandbox: ${runtimeGlobalSandboxCount} modules; empty global runtime passthrough: ${emptyGlobalRuntimePassthroughCount} modules; trusted runtime passthrough: ${trustedRuntimePassthroughCount} modules`);
+     const runtimeAst = t.file(t.program([]));
+     (0, globals_1.refactorRuntime)(runtimeAst, dev);
+     const runtimeCode = (0, generator_1.default)(runtimeAst).code;
+diff --git a/src/index.ts b/src/index.ts
+index 19fa4e45c60842e8102f71fc485bc0474485f53b..0cd80ee7a547d048ad0329f7408d758fd37f2138 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -199,6 +199,54 @@ function isJavaScriptSourcePath(modulePath: string) {
+     return /\.(?:[cm]?[jt]sx?|json)$/i.test(modulePath);
+ }
+ 
++function referencesSandboxGlobalAlias(fn: NodePath<t.FunctionExpression>) {
++    const factoryGlobal = fn.node.params[0];
++    if (!t.isIdentifier(factoryGlobal)) {
++        throw new Error(
++            "The first parameter of the function must be an identifier"
++        );
++    }
++
++    const implicitAliases = new Set([
++        "globalThis",
++        "self",
++        "window",
++        "global",
++        "g",
++        "__mkGb",
++    ]);
++    let referenced = false;
++
++    fn.traverse({
++        Identifier(path) {
++            if (referenced || !path.isReferencedIdentifier()) {
++                return;
++            }
++
++            const name = path.node.name;
++            if (name === factoryGlobal.name) {
++                if (
++                    path.scope.getBinding(name)?.identifier === factoryGlobal
++                ) {
++                    referenced = true;
++                    path.stop();
++                }
++                return;
++            }
++
++            if (
++                implicitAliases.has(name) &&
++                !path.scope.hasBinding(name, { noGlobals: true })
++            ) {
++                referenced = true;
++                path.stop();
++            }
++        },
++    });
++
++    return referenced;
++}
++
+ function assertNoThirdPartyImportsFirstParty(
+     graph: SerializerArguments[2],
+     rootDir: string,
+@@ -357,6 +405,7 @@ async function serializeModulesIndividually({
+     let staticGlobalFastPathCount = 0;
+     let normalizedGlobalCount = 0;
+     let runtimeGlobalSandboxCount = 0;
++    let emptyGlobalRuntimePassthroughCount = 0;
+     let trustedRuntimePassthroughCount = 0;
+     const globalPrefix =
+         (options as typeof options & { globalPrefix?: string }).globalPrefix ??
+@@ -436,6 +485,7 @@ async function serializeModulesIndividually({
+                   globals: {},
+               };
+         const moduleAst = parse(output.data.code, { sourceType: "module" });
++        let preserveOriginalModuleOutput = isTrustedRuntimeModule;
+         const statement = moduleAst.program.body.find(
+             (node): node is t.ExpressionStatement =>
+                 t.isExpressionStatement(node) &&
+@@ -473,6 +523,8 @@ async function serializeModulesIndividually({
+                         "arguments"
+                     )[0] as NodePath<t.FunctionExpression>;
+                     if (item != null) {
++                        const usesSandboxGlobalAlias =
++                            referencesSandboxGlobalAlias(moduleFnPath);
+                         const detectedGlobals = analyzeGlobals(
+                             moduleCallPath,
+                             false,
+@@ -501,16 +553,31 @@ async function serializeModulesIndividually({
+                         const shouldNormalizeGlobals =
+                             !isTrustedRuntimeModule &&
+                             !policyAllowsDirectAccess;
++                        const canPassthroughEmptyGlobalModule =
++                            !isTrustedRuntimeModule &&
++                            !dev &&
++                            !protectModuleImports &&
++                            !hardenDynamicCode &&
++                            !isHardenAfterModule &&
++                            Object.keys(detectedAccessModes).length === 0 &&
++                            !usesSandboxGlobalAlias &&
++                            Object.keys(effectiveGlobals).length === 0;
+ 
+                         if (isTrustedRuntimeModule) {
+                             trustedRuntimePassthroughCount++;
++                        } else if (canPassthroughEmptyGlobalModule) {
++                            emptyGlobalRuntimePassthroughCount++;
++                            preserveOriginalModuleOutput = true;
+                         } else if (shouldNormalizeGlobals) {
+                             normalizedGlobalCount++;
+                             analyzeGlobals(moduleCallPath, true);
+                         } else {
+                             staticGlobalFastPathCount++;
+                         }
+-                        if (!isTrustedRuntimeModule) {
++                        if (
++                            !isTrustedRuntimeModule &&
++                            !canPassthroughEmptyGlobalModule
++                        ) {
+                             runtimeGlobalSandboxCount++;
+                         }
+                         if (
+@@ -531,7 +598,10 @@ async function serializeModulesIndividually({
+                                 dev,
+                             });
+                         }
+-                        if (!isTrustedRuntimeModule) {
++                        if (
++                            !isTrustedRuntimeModule &&
++                            !canPassthroughEmptyGlobalModule
++                        ) {
+                             rewriteGlobalFunctionBind(
+                                 moduleFnPath,
+                                 shouldNormalizeGlobals
+@@ -561,11 +631,12 @@ async function serializeModulesIndividually({
+             traverse.cache.clear();
+         }
+ 
+-        if (isTrustedRuntimeModule) {
+-            // Reanimated-style JSI/worklet packages can depend on the exact
+-            // transformed source bytes and factory scope produced by Metro.
+-            // Analysis is read-only for trusted runtimes: preserve their
+-            // module output, mappings, and function metadata verbatim.
++        if (preserveOriginalModuleOutput) {
++            // Trusted runtimes and release modules that neither need a global
++            // capability nor reference Warden's implicit global aliases keep
++            // Metro's output, mappings, and function metadata byte-for-byte.
++            // Empty-policy passthrough is valid only when the optional runtime
++            // guards are disabled and collection mode is off.
+             continue;
+         }
+ 
+@@ -613,7 +684,7 @@ async function serializeModulesIndividually({
+     }
+ 
+     console.log(
+-        `[Warden] compatible global fast path: ${staticGlobalFastPathCount} modules; normalized globals: ${normalizedGlobalCount} modules; runtime sandbox: ${runtimeGlobalSandboxCount} modules; trusted runtime passthrough: ${trustedRuntimePassthroughCount} modules`
++        `[Warden] compatible global fast path: ${staticGlobalFastPathCount} modules; normalized globals: ${normalizedGlobalCount} modules; runtime sandbox: ${runtimeGlobalSandboxCount} modules; empty global runtime passthrough: ${emptyGlobalRuntimePassthroughCount} modules; trusted runtime passthrough: ${trustedRuntimePassthroughCount} modules`
+     );
+ 
+     const runtimeAst = t.file(t.program([]));
+diff --git a/test/serializer.test.js b/test/serializer.test.js
+index 9ec0f5802f0a7d4a7f52ab10b37cbfb1046933c3..9cd812009499eea6f7f8f4330c6ce365da78fa3c 100644
+--- a/test/serializer.test.js
++++ b/test/serializer.test.js
+@@ -210,6 +210,85 @@ test('trusted runtime passthrough preserves Metro module output byte-for-byte',
+   assert.match(dependencyCode, /__mkGb\(/);
+ });
+ 
++test('release empty-global passthrough preserves Metro output when aliases and optional guards are absent', async t => {
++  const harness = makeHarness({
++    wardenOptions: {
++      hardenDynamicCode: false,
++      protectModuleImports: false,
++    },
++  });
++  t.after(() => fs.rmSync(harness.root, { force: true, recursive: true }));
++
++  const originalPackageOutput = harness.graph.dependencies
++    .get(harness.packagePath)
++    .output[0];
++
++  await harness.serializer(
++    harness.entryPath,
++    [],
++    harness.graph,
++    harness.options,
++  );
++
++  const packageOutput = harness.getSerializedGraph().dependencies
++    .get(harness.packagePath)
++    .output[0];
++  assert.strictEqual(packageOutput, originalPackageOutput);
++  assert.doesNotMatch(packageOutput.data.code, /__mkGb\(/);
++});
++
++test('release global access still receives a runtime sandbox', async t => {
++  const harness = makeHarness({
++    wardenOptions: {
++      hardenDynamicCode: false,
++      protectModuleImports: false,
++    },
++  });
++  t.after(() => fs.rmSync(harness.root, { force: true, recursive: true }));
++
++  const packageModule = harness.graph.dependencies.get(harness.packagePath);
++  packageModule.output[0].data.code =
++    '__d(function(global, require, importDefault, importAll, module) { module.exports = global.console; });';
++
++  await harness.serializer(
++    harness.entryPath,
++    [],
++    harness.graph,
++    harness.options,
++  );
++
++  const packageCode = harness.getSerializedGraph().dependencies
++    .get(harness.packagePath)
++    .output[0].data.code;
++  assert.match(packageCode, /__mkGb\(/);
++});
++
++test('release implicit global alias still receives a runtime sandbox', async t => {
++  const harness = makeHarness({
++    wardenOptions: {
++      hardenDynamicCode: false,
++      protectModuleImports: false,
++    },
++  });
++  t.after(() => fs.rmSync(harness.root, { force: true, recursive: true }));
++
++  const packageModule = harness.graph.dependencies.get(harness.packagePath);
++  packageModule.output[0].data.code =
++    '__d(function(global, require, importDefault, importAll, module) { module.exports = typeof window; });';
++
++  await harness.serializer(
++    harness.entryPath,
++    [],
++    harness.graph,
++    harness.options,
++  );
++
++  const packageCode = harness.getSerializedGraph().dependencies
++    .get(harness.packagePath)
++    .output[0].data.code;
++  assert.match(packageCode, /__mkGb\(/);
++});
++
+ test('trusted runtime passthrough rejects paths instead of package names', () => {
+   assert.throws(
+     () =>

@@ -1,4 +1,4 @@
-import { FocusAwareStatusBar, Text } from '@/components';
+import { Text } from '@/components';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 import { RootNames } from '@/constant/layout';
 import {
@@ -261,7 +261,6 @@ export const ImportSuccessScreen = () => {
       </TouchableWithoutFeedback>
 
       <FooterButton title="Done" onPress={handleDone} />
-      <FocusAwareStatusBar backgroundColor={colors['blue-default']} />
     </RootScreenContainer>
   );
 };

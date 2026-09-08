@@ -11,7 +11,6 @@ import {
   type StackActionHelpers,
   StackActions,
   type StackNavigationState,
-  StackRouter,
   type StackRouterOptions,
   type StaticConfig,
   type TypedNavigator,
@@ -20,6 +19,7 @@ import {
 import * as React from 'react';
 
 import { CustomStackRouter } from './CustomStackRouter';
+import { getScreenContentBackgroundColor } from '@/constant/layout';
 
 import {
   NativeStackView,
@@ -28,6 +28,14 @@ import {
   type NativeStackNavigationProp,
   type NativeStackNavigatorProps,
 } from '@react-navigation/native-stack';
+
+type NativeStackScreenOptionsResolver = Extract<
+  NonNullable<NativeStackNavigatorProps['screenOptions']>,
+  (...args: never[]) => unknown
+>;
+
+type NativeStackScreenOptionsArgs =
+  Parameters<NativeStackScreenOptionsResolver>[0];
 // import { NativeStackView } from '../views/NativeStackView';
 
 function NativeStackNavigator({
@@ -41,6 +49,28 @@ function NativeStackNavigator({
   UNSTABLE_router,
   ...rest
 }: NativeStackNavigatorProps) {
+  const screenOptionsWithSystemBarBackground = React.useCallback(
+    (args: NativeStackScreenOptionsArgs): NativeStackNavigationOptions => {
+      const resolvedOptions =
+        typeof screenOptions === 'function'
+          ? screenOptions(args)
+          : screenOptions || {};
+      return {
+        ...resolvedOptions,
+        contentStyle: [
+          {
+            backgroundColor: getScreenContentBackgroundColor({
+              screenName: args.route.name,
+              isDarkTheme: args.theme.dark,
+            }),
+          },
+          resolvedOptions.contentStyle,
+        ],
+      };
+    },
+    [screenOptions],
+  );
+
   const { state, describe, descriptors, navigation, NavigationContent } =
     useNavigationBuilder<
       StackNavigationState<ParamListBase>,
@@ -54,7 +84,7 @@ function NativeStackNavigator({
       children,
       layout,
       screenListeners,
-      screenOptions,
+      screenOptions: screenOptionsWithSystemBarBackground,
       screenLayout,
       UNSTABLE_router,
     });

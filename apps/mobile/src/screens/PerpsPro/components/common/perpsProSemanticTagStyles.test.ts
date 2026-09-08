@@ -1,95 +1,103 @@
 import type { AppColors2024Variants } from '@/constant/theme';
 
 import {
-  getPerpsProSemanticTagContainerStyle,
-  getPerpsProSemanticTagTextStyle,
-  PERPS_PRO_LIGHT_NEUTRAL_TAG_BACKGROUND,
+  getPerpsProMetadataTagContainerStyle,
+  getPerpsProMetadataTagTextStyle,
+  getPerpsProSolidSideTagContainerStyle,
+  getPerpsProSolidSideTagTextStyle,
+  getPerpsProTintedTagContainerStyle,
+  getPerpsProTintedTagTextStyle,
 } from './perpsProSemanticTagStyles';
 
 const colors2024 = {
   'green-default': 'green-default',
   'green-light-1': 'green-light-1',
-  'green-light-2': 'green-light-2',
   'neutral-bg-5': 'neutral-bg-5',
-  'neutral-body': 'neutral-body',
-  'neutral-line': 'neutral-line',
+  'neutral-foot': 'neutral-foot',
+  'neutral-InvertHighlight': 'neutral-InvertHighlight',
   'red-default': 'red-default',
   'red-light-1': 'red-light-1',
-  'red-light-2': 'red-light-2',
 } as AppColors2024Variants;
 
 describe('perpsProSemanticTagStyles', () => {
+  it('matches the metadata tag contract without a border or readability variant', () => {
+    const container = getPerpsProMetadataTagContainerStyle(colors2024);
+    const text = getPerpsProMetadataTagTextStyle(colors2024);
+
+    expect(container).toEqual({
+      backgroundColor: 'neutral-bg-5',
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    });
+    expect(text).toEqual({
+      color: 'neutral-foot',
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    });
+    expect(container).not.toHaveProperty('borderColor');
+    expect(container).not.toHaveProperty('borderWidth');
+    expect(text).not.toHaveProperty('fontVariant');
+  });
+
   it.each([
-    [
-      'positive',
-      {
-        backgroundColor: 'green-light-1',
-        borderColor: 'green-light-2',
-        textColor: 'green-default',
-      },
-    ],
-    [
-      'negative',
-      {
-        backgroundColor: 'red-light-1',
-        borderColor: 'red-light-2',
-        textColor: 'red-default',
-      },
-    ],
-    [
-      'neutral',
-      {
-        backgroundColor: 'neutral-bg-5',
-        borderColor: 'neutral-line',
-        textColor: 'neutral-body',
-      },
-    ],
+    ['positive', 'green-light-1', 'green-default'],
+    ['negative', 'red-light-1', 'red-default'],
   ] as const)(
-    'maps the %s tone to the approved token family',
-    (tone, expected) => {
-      expect(getPerpsProSemanticTagContainerStyle(colors2024, tone)).toEqual({
-        backgroundColor: expected.backgroundColor,
-        borderColor: expected.borderColor,
-        borderRadius: 2,
-        borderWidth: 0.5,
+    'matches the %s tinted tag contract',
+    (tone, backgroundColor, color) => {
+      const container = getPerpsProTintedTagContainerStyle(colors2024, tone);
+      const text = getPerpsProTintedTagTextStyle(colors2024, tone);
+
+      expect(container).toEqual({
+        backgroundColor,
+        borderRadius: 4,
         paddingHorizontal: 4,
         paddingVertical: 1,
       });
-      expect(getPerpsProSemanticTagTextStyle(colors2024, tone)).toEqual({
-        color: expected.textColor,
-        fontFamily: 'SF Pro',
-        fontSize: 10,
+      expect(text).toEqual({
+        color,
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 12,
         fontWeight: '500',
-        lineHeight: 12,
+        lineHeight: 16,
       });
+      expect(container).not.toHaveProperty('borderColor');
+      expect(container).not.toHaveProperty('borderWidth');
+      expect(text).not.toHaveProperty('fontVariant');
     },
   );
 
-  it('preserves the compact 14px variant without vertical padding', () => {
-    expect(
-      getPerpsProSemanticTagContainerStyle(colors2024, 'positive', {
-        variant: 'compact',
-      }),
-    ).toEqual({
-      backgroundColor: 'green-light-1',
-      borderColor: 'green-light-2',
-      borderRadius: 2,
-      borderWidth: 0.5,
-      height: 14,
-      paddingHorizontal: 4,
-    });
-  });
+  it.each([
+    ['positive', 'green-default'],
+    ['negative', 'red-default'],
+  ] as const)(
+    'matches the solid %s side tag contract',
+    (tone, backgroundColor) => {
+      const container = getPerpsProSolidSideTagContainerStyle(colors2024, tone);
+      const text = getPerpsProSolidSideTagTextStyle(colors2024);
 
-  it('allows a surface-specific neutral background and text color', () => {
-    expect(
-      getPerpsProSemanticTagContainerStyle(colors2024, 'neutral', {
-        backgroundColor: PERPS_PRO_LIGHT_NEUTRAL_TAG_BACKGROUND,
-      }),
-    ).toEqual(expect.objectContaining({ backgroundColor: '#F4F5F5' }));
-    expect(
-      getPerpsProSemanticTagTextStyle(colors2024, 'neutral', {
-        color: 'neutral-secondary',
-      }),
-    ).toEqual(expect.objectContaining({ color: 'neutral-secondary' }));
-  });
+      expect(container).toEqual({
+        alignItems: 'center',
+        backgroundColor,
+        borderRadius: 4,
+        height: 16,
+        justifyContent: 'center',
+        paddingHorizontal: 4,
+      });
+      expect(text).toEqual({
+        color: 'neutral-InvertHighlight',
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 12,
+        fontWeight: '700',
+        lineHeight: 16,
+      });
+      expect(container).not.toHaveProperty('borderColor');
+      expect(container).not.toHaveProperty('borderWidth');
+      expect(container).not.toHaveProperty('width');
+      expect(text).not.toHaveProperty('fontVariant');
+    },
+  );
 });

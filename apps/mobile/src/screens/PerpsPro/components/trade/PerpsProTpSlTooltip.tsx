@@ -261,7 +261,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   line: {
     color: colors2024['neutral-title-2'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },

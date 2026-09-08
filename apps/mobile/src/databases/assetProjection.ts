@@ -1,4 +1,4 @@
-import { In, type DataSource } from 'typeorm/browser';
+import { In, type DataSource, type EntityManager } from 'typeorm/browser';
 
 import {
   AssetProjectionGroupItemEntity,
@@ -12,6 +12,10 @@ import { prepareAppDataSource } from './imports';
 
 export const ASSET_PROJECTION_RULE_VERSION = 3;
 export const ASSET_PROJECTION_GENERATIONS_TO_KEEP = 3;
+
+// Projection rows have six persisted columns. Keep one insert below SQLite's
+// conservative 999-variable limit while preserving one transaction per generation.
+const ASSET_PROJECTION_INSERT_BATCH_SIZE = 100;
 
 export type AssetProjectionRow = {
   type: AssetProjectionRowType;
@@ -31,6 +35,7 @@ export type PersistAssetProjectionInput = {
   groups?: AssetProjectionGroup[];
   metadata?: Record<string, unknown>;
   ruleVersion?: number;
+  prepareTransaction?: (manager: EntityManager) => Promise<void> | void;
 };
 
 export type RestoredAssetProjection = {
@@ -88,6 +93,21 @@ const parseMetadata = (metadataJson: string) => {
   }
 };
 
+const insertInBatches = async <T>(
+  values: readonly T[],
+  insert: (batch: T[]) => Promise<unknown>,
+) => {
+  for (
+    let start = 0;
+    start < values.length;
+    start += ASSET_PROJECTION_INSERT_BATCH_SIZE
+  ) {
+    await insert(
+      values.slice(start, start + ASSET_PROJECTION_INSERT_BATCH_SIZE),
+    );
+  }
+};
+
 export async function persistAssetProjection(
   input: PersistAssetProjectionInput,
   dataSource?: DataSource,
@@ -97,6 +117,8 @@ export async function persistAssetProjection(
   const ruleVersion = input.ruleVersion ?? ASSET_PROJECTION_RULE_VERSION;
 
   return source.transaction(async manager => {
+    await input.prepareTransaction?.(manager);
+
     const snapshotRepository = manager.getRepository(
       AssetProjectionSnapshotEntity,
     );
@@ -128,7 +150,7 @@ export async function persistAssetProjection(
       }),
     );
     if (items.length) {
-      await itemRepository.insert(items);
+      await insertInBatches(items, batch => itemRepository.insert(batch));
     }
 
     const groupItems = (input.groups || []).flatMap(group =>
@@ -149,7 +171,9 @@ export async function persistAssetProjection(
       ),
     );
     if (groupItems.length) {
-      await groupItemRepository.insert(groupItems);
+      await insertInBatches(groupItems, batch =>
+        groupItemRepository.insert(batch),
+      );
     }
 
     // Keep serialization inside the transaction: a malformed metadata value

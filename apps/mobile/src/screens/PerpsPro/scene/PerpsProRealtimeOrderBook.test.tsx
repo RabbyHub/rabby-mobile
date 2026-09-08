@@ -14,8 +14,14 @@ type FastL2State = {
   status: PerpsRealtimeStatus;
 };
 
+type LatestTradeState = {
+  identity: string;
+  status: PerpsRealtimeStatus;
+  trade: PerpsLatestTrade | null;
+};
+
 let mockFastL2State: FastL2State;
-let mockLatestTradeState: { trade: PerpsLatestTrade | null };
+let mockLatestTradeState: LatestTradeState;
 let mockRenderedOrderBookProps: Record<string, any> | null;
 const mockPrewarmHttpSnapshot = jest.fn(() => Promise.resolve(true));
 const mockWaitForHttpSnapshot = jest.fn(() => Promise.resolve(true));
@@ -71,15 +77,21 @@ describe('PerpsProRealtimeOrderBook reconnect display cache', () => {
       identity: 'BTC:5:null',
       status: 'ready',
     };
-    mockLatestTradeState = { trade: liveTrade };
+    mockLatestTradeState = {
+      identity: 'BTC',
+      status: 'ready',
+      trade: liveTrade,
+    };
     mockRenderedOrderBookProps = null;
     mockPrewarmHttpSnapshot.mockReset().mockResolvedValue(true);
     mockWaitForHttpSnapshot.mockReset().mockResolvedValue(true);
   });
 
-  it('renders a registry-retained snapshot but disables cached price selection', () => {
+  it('keeps display caches visible but gates each price source by its own readiness', () => {
     const onSelectPrice = jest.fn();
-    const onSelectPriceIntentStart = jest.fn(() => false);
+    const onSelectPriceIntentStart = jest.fn(() => ({
+      type: 'tradePrice' as const,
+    }));
     const view = render(
       <PerpsProRealtimeOrderBook
         enabled
@@ -94,10 +106,30 @@ describe('PerpsProRealtimeOrderBook reconnect display cache', () => {
     );
 
     expect(mockRenderedOrderBookProps?.hasBookSnapshot).toBe(true);
-    expect(mockRenderedOrderBookProps?.onSelectPrice).toBe(onSelectPrice);
+    expect(mockRenderedOrderBookProps?.bookIdentity).toBe('BTC:5:null');
+    expect(mockRenderedOrderBookProps?.latestTradeIdentity).toBe('BTC');
+    expect(mockRenderedOrderBookProps?.onSelectBookPrice).toEqual(
+      expect.any(Function),
+    );
+    expect(mockRenderedOrderBookProps?.onSelectLatestTradePrice).toEqual(
+      expect.any(Function),
+    );
     expect(mockRenderedOrderBookProps?.onSelectPriceIntentStart).toBe(
       onSelectPriceIntentStart,
     );
+
+    mockRenderedOrderBookProps?.onSelectBookPrice(
+      '100',
+      { type: 'tradePrice' },
+      {
+        feedIdentity: 'BTC:5:null',
+        marketKey: market.marketKey,
+        type: 'book',
+      },
+    );
+    expect(onSelectPrice).toHaveBeenCalledWith('100', {
+      type: 'tradePrice',
+    });
 
     mockFastL2State = { ...mockFastL2State, status: 'stale' };
     view.rerender(
@@ -115,10 +147,37 @@ describe('PerpsProRealtimeOrderBook reconnect display cache', () => {
 
     expect(mockRenderedOrderBookProps?.hasBookSnapshot).toBe(true);
     expect(mockRenderedOrderBookProps?.latestTrade).toEqual(liveTrade);
-    expect(mockRenderedOrderBookProps?.onSelectPrice).toBeUndefined();
+    expect(mockRenderedOrderBookProps?.onSelectBookPrice).toBeUndefined();
+    expect(mockRenderedOrderBookProps?.onSelectLatestTradePrice).toEqual(
+      expect.any(Function),
+    );
 
-    mockFastL2State = { ...mockFastL2State, book: null };
-    mockLatestTradeState = { trade: null };
+    mockFastL2State = { ...mockFastL2State, status: 'ready' };
+    mockLatestTradeState = { ...mockLatestTradeState, status: 'stale' };
+    view.rerender(
+      <PerpsProRealtimeOrderBook
+        enabled
+        market={market}
+        onSelectPrice={onSelectPrice}
+        onSelectTickOption={jest.fn()}
+        precision={{ mantissa: null, nSigFigs: 5 }}
+        selectedTickOption={null}
+        tickOptions={[]}
+      />,
+    );
+    expect(mockRenderedOrderBookProps?.onSelectBookPrice).toEqual(
+      expect.any(Function),
+    );
+    expect(
+      mockRenderedOrderBookProps?.onSelectLatestTradePrice,
+    ).toBeUndefined();
+
+    mockFastL2State = { ...mockFastL2State, book: null, status: 'stale' };
+    mockLatestTradeState = {
+      ...mockLatestTradeState,
+      status: 'stale',
+      trade: null,
+    };
     view.rerender(
       <PerpsProRealtimeOrderBook
         enabled
@@ -131,6 +190,85 @@ describe('PerpsProRealtimeOrderBook reconnect display cache', () => {
       />,
     );
     expect(mockRenderedOrderBookProps?.hasBookSnapshot).toBe(false);
+    expect(mockRenderedOrderBookProps?.onSelectBookPrice).toBeUndefined();
+    expect(
+      mockRenderedOrderBookProps?.onSelectLatestTradePrice,
+    ).toBeUndefined();
+  });
+
+  it('rejects a frozen press when its market or feed identity changes before release', () => {
+    const onSelectPrice = jest.fn();
+    const view = render(
+      <PerpsProRealtimeOrderBook
+        enabled
+        market={market}
+        onSelectPrice={onSelectPrice}
+        onSelectTickOption={jest.fn()}
+        precision={{ mantissa: null, nSigFigs: 5 }}
+        selectedTickOption={null}
+        tickOptions={[]}
+      />,
+    );
+    const pressedBookSelection = mockRenderedOrderBookProps?.onSelectBookPrice;
+    const pressedLatestSelection =
+      mockRenderedOrderBookProps?.onSelectLatestTradePrice;
+
+    mockFastL2State = {
+      ...mockFastL2State,
+      identity: 'BTC:4:null',
+    };
+    view.rerender(
+      <PerpsProRealtimeOrderBook
+        enabled
+        market={market}
+        onSelectPrice={onSelectPrice}
+        onSelectTickOption={jest.fn()}
+        precision={{ mantissa: null, nSigFigs: 4 }}
+        selectedTickOption={null}
+        tickOptions={[]}
+      />,
+    );
+    pressedBookSelection(
+      '100',
+      { type: 'tradePrice' },
+      {
+        feedIdentity: 'BTC:5:null',
+        marketKey: market.marketKey,
+        type: 'book',
+      },
+    );
+    expect(onSelectPrice).not.toHaveBeenCalled();
+
+    const nextMarket = {
+      ...market,
+      canonicalCoin: 'ETH',
+      marketKey: 'perp:ETH',
+    } as PerpsProMarket;
+    mockLatestTradeState = {
+      ...mockLatestTradeState,
+      identity: 'ETH',
+    };
+    view.rerender(
+      <PerpsProRealtimeOrderBook
+        enabled
+        market={nextMarket}
+        onSelectPrice={onSelectPrice}
+        onSelectTickOption={jest.fn()}
+        precision={{ mantissa: null, nSigFigs: 4 }}
+        selectedTickOption={null}
+        tickOptions={[]}
+      />,
+    );
+    pressedLatestSelection(
+      '100.5',
+      { type: 'tradePrice' },
+      {
+        feedIdentity: 'BTC',
+        marketKey: market.marketKey,
+        type: 'latestTrade',
+      },
+    );
+    expect(onSelectPrice).not.toHaveBeenCalled();
   });
 
   it('does not reuse a snapshot after the subscription identity changes', () => {

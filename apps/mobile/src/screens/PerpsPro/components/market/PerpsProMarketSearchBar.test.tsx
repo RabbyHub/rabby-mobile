@@ -148,7 +148,7 @@ describe('PerpsProMarketSearchBar', () => {
     expect(screen.getByText('Search').props.style).toEqual(
       expect.objectContaining({
         color: 'neutral-secondary',
-        fontFamily: 'SF Pro',
+        fontFamily: 'SF Pro Rounded',
         fontSize: 14,
         fontWeight: '400',
         lineHeight: 18,
@@ -162,7 +162,7 @@ describe('PerpsProMarketSearchBar', () => {
     expect(mockBottomSheetInputProps).not.toHaveBeenCalled();
     expect(restingInputStyle).toEqual(
       expect.objectContaining({
-        fontFamily: 'SF Pro',
+        fontFamily: 'SF Pro Rounded',
         fontSize: 14,
         fontWeight: '700',
         height: 18,

@@ -38,7 +38,6 @@ export const FooterButton: React.FC<Props> = ({
   return (
     <View>
       <Button
-        // className={clsx('w-[180px] h-[40px]', 'active:before:bg-[#00000033]')}
         buttonStyle={styles.buttonStyle}
         titleStyle={styles.buttonTitleStyle}
         type="primary"

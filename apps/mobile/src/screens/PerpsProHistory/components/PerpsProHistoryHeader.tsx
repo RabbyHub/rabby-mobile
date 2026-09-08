@@ -1,7 +1,7 @@
 import { Text } from '@/components/Typography';
-import { FontNames } from '@/core/utils/fonts';
 import { HeaderBackPressable } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
+import { PERPS_PRO_FONT_FAMILY } from '@/screens/PerpsPro/components/common/perpsProVisual';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { View } from 'react-native';
@@ -64,7 +64,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   title: {
     color: colors2024['neutral-title-1'],
-    fontFamily: FontNames.sf_pro,
+    fontFamily: PERPS_PRO_FONT_FAMILY,
     fontSize: 18,
     fontWeight: '700',
     lineHeight: 22,

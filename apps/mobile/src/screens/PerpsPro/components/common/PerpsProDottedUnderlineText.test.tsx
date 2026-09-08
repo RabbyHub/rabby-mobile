@@ -112,4 +112,175 @@ describe('PerpsProDottedUnderlineText', () => {
       screen.getByText('Funding (1h) / Countdown').props.numberOfLines,
     ).toBe(1);
   });
+
+  it('measures the first line while underlining every wrapped line', () => {
+    const onFirstLineLayout = jest.fn();
+    const view = render(
+      <PerpsProDottedUnderlineText
+        multiline
+        onFirstLineLayout={onFirstLineLayout}
+        style={{ color: '#9a9ca9', fontSize: 12 }}>
+        Precio de liquidación (USDC)
+      </PerpsProDottedUnderlineText>,
+    );
+
+    const lines = [
+      { ascender: 11, width: 74, x: 9, y: 0 },
+      { ascender: 10, baseline: 27, width: 58, x: 25, y: 16 },
+      { ascender: 12, baseline: 45, width: 42, x: 41, y: 32 },
+    ];
+    const expectedGeometries = lines.map(line =>
+      resolvePerpsProDottedUnderlineGeometry({
+        fontSize: 12,
+        line,
+        minimumStrokeWidth: StyleSheet.hairlineWidth,
+        roundToNearestPixel: PixelRatio.roundToNearestPixel,
+      }),
+    );
+    const canvasLeft = Math.min(
+      ...expectedGeometries.map(geometry => geometry.canvasLeft),
+    );
+    const canvasTop = Math.min(
+      ...expectedGeometries.map(geometry => geometry.canvasTop),
+    );
+    const canvasRight = Math.max(
+      ...expectedGeometries.map(
+        geometry => geometry.canvasLeft + geometry.width,
+      ),
+    );
+    const canvasBottom = Math.max(
+      ...expectedGeometries.map(
+        geometry => geometry.canvasTop + geometry.canvasHeight,
+      ),
+    );
+    const label = screen.getByText('Precio de liquidación (USDC)');
+    expect(label.props.numberOfLines).toBeUndefined();
+    fireEvent(label, 'textLayout', { nativeEvent: { lines } });
+
+    expect(onFirstLineLayout).toHaveBeenCalledWith({
+      lineCount: 3,
+      width: 74,
+      x: 9,
+    });
+    expect(onFirstLineLayout).toHaveBeenCalledTimes(1);
+    expect(view.UNSAFE_getAllByType(Svg)).toHaveLength(1);
+    const renderedLines = view.UNSAFE_getAllByType(Line);
+    expect(renderedLines).toHaveLength(3);
+    expectedGeometries.forEach((geometry, index) => {
+      expect(renderedLines[index].props).toMatchObject({
+        stroke: '#9a9ca9',
+        strokeDasharray: [geometry.dotLength, geometry.dotGap],
+        strokeWidth: geometry.strokeWidth,
+        x1: geometry.canvasLeft - canvasLeft + geometry.lineX1,
+        x2: geometry.canvasLeft - canvasLeft + geometry.lineX2,
+        y1: geometry.canvasTop - canvasTop + geometry.lineY,
+        y2: geometry.canvasTop - canvasTop + geometry.lineY,
+      });
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-dotted-underline').props.style,
+      ),
+    ).toMatchObject({
+      height: canvasBottom - canvasTop,
+      left: canvasLeft,
+      top: canvasTop,
+      width: canvasRight - canvasLeft,
+    });
+  });
+
+  it('keeps multiline opt-in geometry unchanged when the label fits one line', () => {
+    render(
+      <PerpsProDottedUnderlineText
+        multiline
+        style={{ color: '#9a9ca9', fontSize: 12 }}>
+        Margin Ratio
+      </PerpsProDottedUnderlineText>,
+    );
+
+    const line = { ascender: 11, width: 74, x: 17, y: 0 };
+    const expectedGeometry = resolvePerpsProDottedUnderlineGeometry({
+      fontSize: 12,
+      line,
+      minimumStrokeWidth: StyleSheet.hairlineWidth,
+      roundToNearestPixel: PixelRatio.roundToNearestPixel,
+    });
+    fireEvent(screen.getByText('Margin Ratio'), 'textLayout', {
+      nativeEvent: { lines: [line] },
+    });
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-dotted-underline').props.style,
+      ),
+    ).toMatchObject({
+      height: expectedGeometry.canvasHeight,
+      left: expectedGeometry.canvasLeft,
+      top: expectedGeometry.canvasTop,
+      width: expectedGeometry.width,
+    });
+    expect(screen.UNSAFE_getAllByType(Svg)).toHaveLength(1);
+    expect(screen.UNSAFE_getAllByType(Line)).toHaveLength(1);
+  });
+
+  it('removes stale wrapped underlines after text reflows', () => {
+    const view = render(
+      <PerpsProDottedUnderlineText multiline style={{ color: '#9a9ca9' }}>
+        Precio de liquidación (USDC)
+      </PerpsProDottedUnderlineText>,
+    );
+    const label = screen.getByText('Precio de liquidación (USDC)');
+    const threeLines = [
+      { ascender: 11, width: 74, x: 9, y: 0 },
+      { ascender: 11, width: 58, x: 25, y: 16 },
+      { ascender: 11, width: 42, x: 41, y: 32 },
+    ];
+
+    fireEvent(label, 'textLayout', { nativeEvent: { lines: threeLines } });
+    expect(view.UNSAFE_getAllByType(Line)).toHaveLength(3);
+
+    fireEvent(label, 'textLayout', {
+      nativeEvent: { lines: [threeLines[0]] },
+    });
+    expect(view.UNSAFE_getAllByType(Line)).toHaveLength(1);
+
+    fireEvent(label, 'textLayout', {
+      nativeEvent: { lines: threeLines.slice(0, 2) },
+    });
+    expect(view.UNSAFE_getAllByType(Line)).toHaveLength(2);
+  });
+
+  it('keeps default consumers bound to first-line geometry', () => {
+    render(
+      <PerpsProDottedUnderlineText style={{ color: '#9a9ca9', fontSize: 12 }}>
+        Funding (1h) / Countdown
+      </PerpsProDottedUnderlineText>,
+    );
+
+    const lines = [
+      { ascender: 11, width: 91, x: 5, y: 0 },
+      { ascender: 11, width: 37, x: 59, y: 16 },
+    ];
+    const expectedGeometry = resolvePerpsProDottedUnderlineGeometry({
+      fontSize: 12,
+      line: lines[0],
+      minimumStrokeWidth: StyleSheet.hairlineWidth,
+      roundToNearestPixel: PixelRatio.roundToNearestPixel,
+    });
+    fireEvent(screen.getByText('Funding (1h) / Countdown'), 'textLayout', {
+      nativeEvent: { lines },
+    });
+
+    expect(screen.UNSAFE_getAllByType(Line)).toHaveLength(1);
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-dotted-underline').props.style,
+      ),
+    ).toMatchObject({
+      height: expectedGeometry.canvasHeight,
+      left: expectedGeometry.canvasLeft,
+      top: expectedGeometry.canvasTop,
+      width: expectedGeometry.width,
+    });
+  });
 });

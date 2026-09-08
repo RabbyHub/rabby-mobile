@@ -1,29 +1,21 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Alert } from 'react-native';
+import React, { useCallback, useEffect, useRef } from 'react';
+import { View } from 'react-native';
 import { RcArrowRightCC } from '@/assets/icons/common';
 
 import { AppBottomSheetModal } from '@/components';
 import { useSheetModals } from '@/hooks/useSheetModal';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
-import TouchableView from '@/components/Touchable/TouchableView';
 import { atom, useAtom } from 'jotai';
 import AutoLockView from '@/components/AutoLockView';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 
 import { RcCode } from '@/assets/icons/settings';
 import type { DevTestItem } from './testDevUtils';
-import { makeNoop, GeneralTestItem } from './testDevUtils';
+import { GeneralTestItem } from './testDevUtils';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
-import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import {
-  dropAppDataSourceAndQuitApp,
-  prepareAppDataSource,
-} from '@/databases/imports';
-import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
-import { BuyItemEntity } from '@/databases/entities/buyItem';
 import { downloadDbFile } from '@/databases/dbfs';
 import { IS_IOS } from '@/core/native/utils';
 import { perpsServiceApi } from '@/core/serviceApi/perps';
@@ -134,6 +126,17 @@ export default function DevDataPlaygroundModal({
       //   },
       // },
       {
+        label: 'Benchmark Watch addresses',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevWatchAddressFixtureImport,
+            }),
+          );
+        },
+      },
+      {
         label: 'Reset Perps Store',
         icon: <RcCode style={styles.labelIcon} />,
         onPress: async () => {
@@ -212,7 +215,11 @@ export default function DevDataPlaygroundModal({
                   <View style={styles.iconWrapper}>{item.icon}</View>
                   <Text style={styles.settingItemLabel}>{item.label}</Text>
                 </View>
-                <RcArrowRightCC color={colors['neutral-foot']} />
+                {typeof item.rightNode === 'function'
+                  ? item.rightNode()
+                  : item.rightNode || (
+                      <RcArrowRightCC color={colors['neutral-foot']} />
+                    )}
               </GeneralTestItem>
             );
           })}

@@ -54,60 +54,76 @@ export const PerpsProTradePriceField = React.memo(
     const [focused, setFocused] = useState(false);
     const animatedInputStyle = usePerpsProPriceFillAnimation(fillRevision);
     const showFloatingLabel = focused || !!value;
+    const fieldContent = (
+      <View style={styles.inputArea}>
+        {showFloatingLabel ? (
+          <Text
+            pointerEvents="none"
+            style={styles.label}
+            testID="perps-pro-trade-price-label">
+            {label}
+          </Text>
+        ) : (
+          <Text
+            numberOfLines={1}
+            pointerEvents="none"
+            style={styles.centeredPlaceholder}
+            testID="perps-pro-trade-price-placeholder">
+            {label}
+          </Text>
+        )}
+        <PerpsProDecimalTextInput
+          accessibilityLabel={label}
+          canonicalizeValueOnBlur={canonicalizeValueOnBlur}
+          cursorColor={colors2024['brand-default']}
+          editable={editable}
+          inputComponent={PerpsProAnimatedPriceTextInput}
+          maxFontSizeMultiplier={1.2}
+          maxDecimals={maxDecimals}
+          normalizeValue={normalizeValue}
+          preserveIntegerZeroRun
+          ref={ref}
+          onBlur={() => setFocused(false)}
+          onChangeText={onChangeText}
+          onFocus={() => setFocused(true)}
+          pointerEvents={onPressValue ? 'none' : 'auto'}
+          selectionColor={colors2024['brand-default']}
+          style={[styles.input, animatedInputStyle]}
+          value={value}
+        />
+      </View>
+    );
+    const fieldStyle = [
+      styles.fieldArea,
+      variant === 'conditionalExecution' && !editable
+        ? styles.conditionalDisabledField
+        : null,
+    ];
     return (
       <View style={styles.container} testID="perps-pro-trade-price-field">
-        <Pressable
-          accessibilityRole={onPressValue ? 'button' : undefined}
-          onPress={onPressValue}
-          style={[
-            styles.fieldArea,
-            variant === 'conditionalExecution' && !editable
-              ? styles.conditionalDisabledField
-              : null,
-          ]}
-          testID={
-            variant === 'conditionalExecution'
-              ? 'perps-pro-trade-conditional-execution-value'
-              : undefined
-          }>
-          <View style={styles.inputArea}>
-            {showFloatingLabel ? (
-              <Text
-                pointerEvents="none"
-                style={styles.label}
-                testID="perps-pro-trade-price-label">
-                {label}
-              </Text>
-            ) : (
-              <Text
-                numberOfLines={1}
-                pointerEvents="none"
-                style={styles.centeredPlaceholder}
-                testID="perps-pro-trade-price-placeholder">
-                {label}
-              </Text>
-            )}
-            <PerpsProDecimalTextInput
-              accessibilityLabel={label}
-              canonicalizeValueOnBlur={canonicalizeValueOnBlur}
-              cursorColor={colors2024['brand-default']}
-              editable={editable}
-              inputComponent={PerpsProAnimatedPriceTextInput}
-              maxFontSizeMultiplier={1.2}
-              maxDecimals={maxDecimals}
-              normalizeValue={normalizeValue}
-              preserveIntegerZeroRun
-              ref={ref}
-              onBlur={() => setFocused(false)}
-              onChangeText={onChangeText}
-              onFocus={() => setFocused(true)}
-              pointerEvents={onPressValue ? 'none' : 'auto'}
-              selectionColor={colors2024['brand-default']}
-              style={[styles.input, animatedInputStyle]}
-              value={value}
-            />
+        {onPressValue ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={onPressValue}
+            style={fieldStyle}
+            testID={
+              variant === 'conditionalExecution'
+                ? 'perps-pro-trade-conditional-execution-value'
+                : undefined
+            }>
+            {fieldContent}
+          </Pressable>
+        ) : (
+          <View
+            style={fieldStyle}
+            testID={
+              variant === 'conditionalExecution'
+                ? 'perps-pro-trade-conditional-execution-value'
+                : undefined
+            }>
+            {fieldContent}
           </View>
-        </Pressable>
+        )}
         {suffix ? (
           <Pressable
             accessibilityRole={onPressSuffix ? 'button' : undefined}
@@ -180,7 +196,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   label: {
     color: colors2024['neutral-info'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 10,
     left: 8,
     lineHeight: 12,
@@ -191,7 +207,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   input: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     height: 40,
@@ -205,7 +221,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   centeredPlaceholder: {
     color: colors2024['neutral-info'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     left: 8,
@@ -235,7 +251,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   suffix: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,

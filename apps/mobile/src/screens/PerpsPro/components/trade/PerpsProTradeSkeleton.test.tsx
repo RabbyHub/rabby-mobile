@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 jest.mock('react-native-haptic-feedback', () => ({
   trigger: jest.fn(),
@@ -96,6 +96,7 @@ jest.mock('../common/PerpsProDottedUnderlineText', () => {
 });
 
 import { PerpsProTradeSkeleton } from './PerpsProTradeSkeleton';
+import { getPerpsProTradeSelectFontStyle } from './PerpsProTradePrimitives';
 
 describe('PerpsProTradeSkeleton', () => {
   it('uses the three approved sections and centered field typography', () => {
@@ -127,24 +128,22 @@ describe('PerpsProTradeSkeleton', () => {
         screen.getByTestId('perps-pro-trade-order-groups').props.style,
       ),
     ).toMatchObject({ gap: 16 });
-    expect(
-      StyleSheet.flatten(screen.getByText('Isolated').props.style),
-    ).toMatchObject({
-      fontSize: 14,
-      fontVariant: ['stylistic-six'],
-      lineHeight: 18,
-      textAlign: 'center',
-    });
-    expect(
-      StyleSheet.flatten(screen.getByText('25x').props.style),
-    ).toMatchObject({
+    const sharedSelectorStyle = {
+      ...getPerpsProTradeSelectFontStyle(Platform.OS),
       fontSize: 14,
       lineHeight: 18,
       textAlign: 'center',
-    });
-    expect(
-      StyleSheet.flatten(screen.getByText('25x').props.style).fontVariant,
-    ).toBeUndefined();
+    };
+    const isolatedStyle = StyleSheet.flatten(
+      screen.getByText('Isolated').props.style,
+    );
+    const leverageStyle = StyleSheet.flatten(
+      screen.getByText('25x').props.style,
+    );
+    expect(isolatedStyle).toMatchObject(sharedSelectorStyle);
+    expect(leverageStyle).toMatchObject(sharedSelectorStyle);
+    expect(isolatedStyle.fontVariant).toBeUndefined();
+    expect(leverageStyle.fontVariant).toBeUndefined();
     expect(screen.getAllByTestId('perps-pro-trade-select-caret')).toHaveLength(
       1,
     );

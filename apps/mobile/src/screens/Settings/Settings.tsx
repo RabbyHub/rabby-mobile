@@ -100,7 +100,6 @@ import ThemeSelectorModal, {
 } from './sheetModals/ThemeSelector';
 import { RABBY_GENESIS_NFT_DATA } from '../SendNFT/testData';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
-import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DevForceLocalVersionSelector, {
   useLocalVersionSelectorModalVisible,
@@ -132,6 +131,7 @@ import {
   dropAppDataSourceAndQuitApp,
 } from '@/databases/imports';
 import { AppCacheSizeText } from './components/SpecialText';
+import * as apisKeychain from '@/core/apis/keychain';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { abortAllSyncTasks } from '@/databases/sync/_task';
 import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
@@ -237,11 +237,92 @@ function getInnerDappPreloadStrategyLabel(strategy: string) {
   }
 }
 
-function AlertBuildInfo({
+function getBuildInfoErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (
+    error &&
+    typeof error === 'object' &&
+    'message' in error &&
+    typeof error.message === 'string'
+  ) {
+    return error.message;
+  }
+
+  return String(error);
+}
+
+function formatBuildInfoBoolean(value: boolean | null | undefined) {
+  if (typeof value !== 'boolean') {
+    return 'unknown';
+  }
+
+  return value ? 'Yes' : 'No';
+}
+
+function formatAndroidAuthenticatorCapability(
+  capability: apisKeychain.AndroidAuthenticatorCapability | null | undefined,
+) {
+  if (!capability) {
+    return 'unknown';
+  }
+
+  const statusLabel = capability.statusLabel || 'unknown';
+  return `${capability.available ? 'Yes' : 'No'} (${statusLabel})`;
+}
+
+async function getAndroidBiometricsBuildInfoLines() {
+  if (!IS_ANDROID) {
+    return [];
+  }
+
+  try {
+    const keychainState = await apisKeychain.getKeychainDebugState();
+
+    if (keychainState.platform !== 'android') {
+      return [];
+    }
+
+    const hardware = keychainState.androidBiometricHardware;
+    const capabilities = keychainState.androidAuthenticatorCapabilities;
+
+    return [
+      'Android Biometrics:',
+      `  Supported Type: ${keychainState.supportedBiometryType || '-'}`,
+      `  Face Hardware: ${formatBuildInfoBoolean(hardware?.face)}`,
+      `  Fingerprint Hardware: ${formatBuildInfoBoolean(
+        hardware?.fingerprint,
+      )}`,
+      `  Iris Hardware: ${formatBuildInfoBoolean(hardware?.iris)}`,
+      `  BIOMETRIC_STRONG: ${formatAndroidAuthenticatorCapability(
+        capabilities?.biometricStrong,
+      )}`,
+      `  BIOMETRIC_WEAK: ${formatAndroidAuthenticatorCapability(
+        capabilities?.biometricWeak,
+      )}`,
+      `  STRONG_OR_CREDENTIAL: ${formatAndroidAuthenticatorCapability(
+        capabilities?.biometricStrongOrDeviceCredential,
+      )}`,
+      `  DEVICE_CREDENTIAL: ${formatAndroidAuthenticatorCapability(
+        capabilities?.deviceCredential,
+      )}`,
+      '  Prompt Gate: BIOMETRIC_STRONG + DEVICE_CREDENTIAL',
+    ];
+  } catch (error) {
+    return [
+      `Android Biometrics: unavailable (${getBuildInfoErrorMessage(error)})`,
+    ];
+  }
+}
+
+async function AlertBuildInfo({
   rabbitCodeLen,
 }: {
   rabbitCodeLen?: number | null;
 } = {}) {
+  const androidBiometricsInfos = await getAndroidBiometricsBuildInfoLines();
   const commonInfos = [
     `Build Channel: ${BUILD_CHANNEL}`,
     `Runtime Env: ${APP_RUNTIME_ENV}`,
@@ -258,6 +339,8 @@ function AlertBuildInfo({
       isOnlineWorkerThreadEnabled() ? 'Enabled' : 'Disabled'
     }`,
     `Worker Thread Running: ${isWorkerThreadRunning() ? 'Yes' : 'No'}`,
+    androidBiometricsInfos.length > 0 && '   ',
+    ...androidBiometricsInfos,
   ];
 
   if (isNonPublicProductionEnv) {
@@ -563,6 +646,15 @@ function SettingsBlocks() {
     });
   }, []);
 
+  const allowAppLaunchLockToggle = useCallback(
+    (nextEnabled: boolean) =>
+      !nextEnabled ||
+      !shouldRedirectToSetPasswordBefore({
+        onSettingsAction: 'setAppLaunchLock',
+      }),
+    [shouldRedirectToSetPasswordBefore],
+  );
+
   const toggleDataAnalysisRef = useRef<SwitchToggleType>(null);
   const switchAppLaunchLockRef = useRef<SwitchToggleType>(null);
 
@@ -669,7 +761,12 @@ function SettingsBlocks() {
           {
             label: t('page.setting.appLaunchLock'),
             icon: RcAutolock,
-            rightNode: <SwitchAppLaunchLock ref={switchAppLaunchLockRef} />,
+            rightNode: (
+              <SwitchAppLaunchLock
+                ref={switchAppLaunchLockRef}
+                onBeforeToggle={allowAppLaunchLockToggle}
+              />
+            ),
             onPress: () => {
               switchAppLaunchLockRef.current?.toggle();
             },
@@ -1347,7 +1444,7 @@ export default function SettingsScreen(): JSX.Element {
   const { rabbitCode } = useAppSecurityChain();
   const rabbitCodeLen = rabbitCode?.length ?? null;
   const handleShowBuildInfo = useCallback(() => {
-    AlertBuildInfo({ rabbitCodeLen });
+    void AlertBuildInfo({ rabbitCodeLen });
   }, [rabbitCodeLen]);
 
   useFocusEffect(
@@ -1374,7 +1471,6 @@ export default function SettingsScreen(): JSX.Element {
           paddingBottom: safeSizes.containerPaddingBottom,
         },
       ]}>
-      <ScreenSpecificStatusBar screenName={RootNames.Settings} />
       <ScrollView
         style={[styles.scrollableView]}
         contentContainerStyle={[

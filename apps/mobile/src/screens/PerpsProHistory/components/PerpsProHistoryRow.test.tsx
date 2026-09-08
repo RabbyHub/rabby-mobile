@@ -5,7 +5,9 @@ import type {
 } from '@rabby-wallet/hyperliquid-sdk';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Animated, Pressable, StyleSheet } from 'react-native';
+
+import { ThemeColors2024 } from '@/constant/theme';
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
@@ -101,6 +103,15 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
     onShowFeeExplanation.mockClear();
   });
 
+  it('keeps history cards distinct from the page surface in both themes', () => {
+    expect(ThemeColors2024.light['neutral-card-1']).not.toBe(
+      ThemeColors2024.light['neutral-bg-0'],
+    );
+    expect(ThemeColors2024.dark['neutral-card-1']).not.toBe(
+      ThemeColors2024.dark['neutral-bg-0'],
+    );
+  });
+
   it('switches Trade Filled between base and quote without changing net PNL', () => {
     const row = mapPerpsProTradeHistoryFact(fill, {});
     const view = render(
@@ -116,17 +127,45 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
     expect(screen.getByText('2,000.0')).toBeTruthy();
     expect(
       StyleSheet.flatten(
-        screen.getByTestId('perps-pro-history-trade-200-BTC-A-9-details').props
-          .style,
+        screen.getByTestId('perps-pro-history-trade-200-BTC-A-9').props.style,
       ),
     ).toMatchObject({
-      borderBottomColor: 'neutral-bg-5',
-      borderBottomWidth: 1,
+      backgroundColor: 'neutral-card-1',
+      borderRadius: 12,
+      marginHorizontal: 16,
+      paddingHorizontal: 12,
+      paddingVertical: 16,
     });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-history-trade-200-BTC-A-9-details').props
+          .style,
+      ).borderBottomWidth,
+    ).toBeUndefined();
 
     fireEvent.press(screen.getByLabelText('page.perps.historyDetail.feeTitle'));
     expect(onShowFeeExplanation).toHaveBeenCalledWith(false);
     expect(screen.queryByText('Perp')).toBeNull();
+    expect(screen.getByText('S')).toBeTruthy();
+    expect(screen.queryByText('page.perps.pro.history.sell')).toBeNull();
+    const sideText = screen.getByLabelText('page.perps.pro.history.sell');
+    expect(StyleSheet.flatten(sideText.props.style)).toMatchObject({
+      color: 'neutral-InvertHighlight',
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      fontWeight: '700',
+      lineHeight: 16,
+    });
+    const sideTag = screen.getByTestId(
+      'perps-pro-history-trade-200-BTC-A-9-side-tag',
+    );
+    expect(StyleSheet.flatten(sideTag?.props.style)).toMatchObject({
+      backgroundColor: 'red-default',
+      borderRadius: 4,
+      height: 16,
+      paddingHorizontal: 4,
+    });
+    expect(StyleSheet.flatten(sideTag.props.style).borderWidth).toBeUndefined();
 
     view.rerender(
       <PerpsProHistoryRowView
@@ -214,6 +253,17 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
       expect(
         screen.getByText(`page.perps.pro.history.status.${status}`),
       ).toBeTruthy();
+      expect(
+        StyleSheet.flatten(
+          screen.getByText(`page.perps.pro.history.status.${status}`).props
+            .style,
+        ),
+      ).toMatchObject({
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 12,
+        fontWeight: '500',
+        lineHeight: 16,
+      });
       expect(screen.getByTestId(icon).props).toMatchObject({
         height: 18,
         width: 18,
@@ -222,6 +272,56 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
       view.unmount();
     },
   );
+
+  it('does not run the Pending animation while its Pager page is inactive', () => {
+    const start = jest.fn();
+    const stop = jest.fn();
+    const loop = jest.spyOn(Animated, 'loop').mockReturnValue({
+      start,
+      stop,
+    } as ReturnType<typeof Animated.loop>);
+    const pendingRow = {
+      amount: '12',
+      asset: 'USDT',
+      direction: 'deposit' as const,
+      hash: '0xpending',
+      key: 'pending',
+      kind: 'transaction' as const,
+      rawType: 'receive',
+      status: 'pending' as const,
+      time: 300,
+    };
+    const view = render(
+      <PerpsProHistoryRowView
+        active={false}
+        amountUnit="base"
+        onShowFeeExplanation={onShowFeeExplanation}
+        row={pendingRow}
+      />,
+    );
+
+    expect(loop).not.toHaveBeenCalled();
+    view.rerender(
+      <PerpsProHistoryRowView
+        active
+        amountUnit="base"
+        onShowFeeExplanation={onShowFeeExplanation}
+        row={pendingRow}
+      />,
+    );
+    expect(start).toHaveBeenCalledTimes(1);
+
+    view.rerender(
+      <PerpsProHistoryRowView
+        active={false}
+        amountUnit="base"
+        onShowFeeExplanation={onShowFeeExplanation}
+        row={pendingRow}
+      />,
+    );
+    expect(stop).toHaveBeenCalledTimes(1);
+    loop.mockRestore();
+  });
 
   it('renders Funding asset, pair symbol and four-decimal signed amount without side', () => {
     const row = mapPerpsProFundingHistoryFact(
@@ -266,11 +366,12 @@ describe('PerpsProHistoryRowView Orders', () => {
   );
 
   it('renders Limit Amount and Filled in quote', () => {
+    const row = mapPerpsProOrderHistoryFact(makeOrder('Limit'), {});
     render(
       <PerpsProHistoryRowView
         amountUnit="quote"
         onShowFeeExplanation={jest.fn()}
-        row={mapPerpsProOrderHistoryFact(makeOrder('Limit'), {})}
+        row={row}
       />,
     );
 
@@ -279,6 +380,50 @@ describe('PerpsProHistoryRowView Orders', () => {
     expect(screen.queryByTestId('history-arrow')).toBeNull();
     expect(screen.UNSAFE_queryAllByType(Pressable)).toHaveLength(0);
     expect(screen.queryByText('Perp')).toBeNull();
+    expect(
+      screen.queryByTestId(`perps-pro-history-order-${row.key}-source-tag`),
+    ).toBeNull();
+    expect(
+      screen.getByTestId(`perps-pro-history-order-${row.key}-side-tag`),
+    ).toBeTruthy();
+  });
+
+  it('uses the positive solid-side contract for a Buy order row', () => {
+    const fact = makeOrder('Limit');
+    const row = mapPerpsProOrderHistoryFact(
+      { ...fact, order: { ...fact.order, side: 'B' } },
+      {},
+    );
+    render(
+      <PerpsProHistoryRowView
+        amountUnit="base"
+        onShowFeeExplanation={jest.fn()}
+        row={row}
+      />,
+    );
+
+    const sideTagStyle = StyleSheet.flatten(
+      screen.getByTestId(`perps-pro-history-order-${row.key}-side-tag`).props
+        .style,
+    );
+    expect(sideTagStyle).toMatchObject({
+      backgroundColor: 'green-default',
+      borderRadius: 4,
+      height: 16,
+      paddingHorizontal: 4,
+    });
+    expect(sideTagStyle.borderWidth).toBeUndefined();
+    expect(
+      StyleSheet.flatten(
+        screen.getByLabelText('page.perps.pro.history.buy').props.style,
+      ),
+    ).toMatchObject({
+      color: 'neutral-InvertHighlight',
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      fontWeight: '700',
+      lineHeight: 16,
+    });
   });
 
   it('renders TP/SL Market Amount and Filled in base while Price remains Market', () => {
@@ -402,21 +547,46 @@ describe('PerpsProHistoryRowView Orders', () => {
   });
 
   it('preserves a real HIP-3 source when market metadata is unavailable', () => {
+    const row = mapPerpsProOrderHistoryFact(
+      {
+        ...makeOrder('Limit'),
+        order: { ...makeOrder('Limit').order, coin: 'xyz:AAPL' },
+      },
+      {},
+    );
     render(
       <PerpsProHistoryRowView
         amountUnit="base"
         onShowFeeExplanation={jest.fn()}
-        row={mapPerpsProOrderHistoryFact(
-          {
-            ...makeOrder('Limit'),
-            order: { ...makeOrder('Limit').order, coin: 'xyz:AAPL' },
-          },
-          {},
-        )}
+        row={row}
       />,
     );
 
     expect(screen.getByText('xyz')).toBeTruthy();
+    const sourceTag = screen.getByTestId(
+      `perps-pro-history-order-${row.key}-source-tag`,
+    );
+    expect(StyleSheet.flatten(sourceTag?.props.style)).toMatchObject({
+      backgroundColor: 'neutral-bg-5',
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    });
+    expect(
+      StyleSheet.flatten(sourceTag.props.style).borderColor,
+    ).toBeUndefined();
+    expect(
+      StyleSheet.flatten(sourceTag.props.style).borderWidth,
+    ).toBeUndefined();
+    expect(
+      StyleSheet.flatten(screen.getByText('xyz').props.style),
+    ).toMatchObject({
+      color: 'neutral-foot',
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    });
     expect(screen.queryByText('Perp')).toBeNull();
   });
 });

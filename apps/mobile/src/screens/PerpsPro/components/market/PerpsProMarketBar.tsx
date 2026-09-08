@@ -9,6 +9,10 @@ import { useTranslation } from 'react-i18next';
 
 import type { PerpsProMarket } from '../../model/market';
 import { formatPerpsProPercent } from '../../utils/format';
+import {
+  getPerpsProMetadataTagContainerStyle,
+  getPerpsProMetadataTagTextStyle,
+} from '../common/perpsProSemanticTagStyles';
 
 export const PERPS_PRO_MARKET_BAR_HEIGHT = 40;
 
@@ -93,40 +97,33 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   pair: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     fontWeight: '700',
     lineHeight: 22,
   },
   source: {
-    backgroundColor: colors2024['neutral-bg-5'],
-    borderRadius: 4,
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
+    ...getPerpsProMetadataTagContainerStyle(colors2024),
+    ...getPerpsProMetadataTagTextStyle(colors2024),
     maxWidth: 52,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
   },
   up: {
     color: colors2024['green-default'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
   },
   down: {
     color: colors2024['red-default'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
   },
   muted: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,

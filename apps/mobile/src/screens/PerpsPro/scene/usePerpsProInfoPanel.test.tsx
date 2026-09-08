@@ -3,6 +3,9 @@ import { act, renderHook } from '@testing-library/react-native';
 const mockFetchMarketData = jest.fn();
 const mockFetchSpotMeta = jest.fn();
 const mockSetActiveInfoTab = jest.fn();
+let mockRuntimeIdentity = 'runtime-account';
+let mockRuntimeStatus: 'error' | 'ready' | 'waitingForAccount' = 'ready';
+let mockUserAbstractionReady = true;
 
 const mockPositions = [
   { coin: 'BTC', key: 'BTC' },
@@ -19,8 +22,16 @@ const mockAccount = {
   mode: 'standard',
 };
 const mockPerpsState = {
-  currentClearinghouseState: { assetPositions: [] },
-  currentPerpsAccount: { address: '0xABC', type: 'watch' },
+  currentClearinghouseState: {
+    assetPositions: [],
+    marginSummary: {
+      accountValue: '101' as string | null | undefined,
+    } as { accountValue: string | null | undefined } | undefined,
+  },
+  currentPerpsAccount: { address: '0xABC', type: 'watch' } as {
+    address: string;
+    type: string;
+  } | null,
   isFetchAllDone: true,
   isOpenOrdersReady: true,
   isSpotStateReady: true,
@@ -32,15 +43,19 @@ const mockPerpsState = {
   spotAssetCtxs: {},
   spotMeta: null,
   spotMetaStatus: 'ready',
-  spotState: { rawBalances: [] },
+  spotState: {
+    accountValue: '202' as string | null | undefined,
+    rawBalances: [],
+    tokenToAvailableAfterMaintenance: [[0, '303']] as [number, string][] | null,
+  },
   userAbstraction: null,
 };
 
 jest.mock('@/hooks/perps/runtime/usePerpsRuntimeStatus', () => ({
   usePerpsRuntimeStatus: () => ({
-    identity: 'runtime-account',
+    identity: mockRuntimeIdentity,
     retry: jest.fn(),
-    status: 'ready',
+    status: mockRuntimeStatus,
   }),
 }));
 
@@ -49,7 +64,7 @@ jest.mock('@/hooks/perps/runtime/perpsRuntimeState', () => ({
 }));
 
 jest.mock('@/hooks/perps/usePerpsStore', () => ({
-  isPerpsUserAbstractionReadyForAccount: () => true,
+  isPerpsUserAbstractionReadyForAccount: () => mockUserAbstractionReady,
   perpsStore: (selector: (state: typeof mockPerpsState) => unknown) =>
     selector(mockPerpsState),
   usePerpsStore: () => ({
@@ -145,11 +160,137 @@ jest.mock('./usePerpsProInfoPreferences', () => ({
 const { usePerpsProInfoPanel } =
   require('./usePerpsProInfoPanel') as typeof import('./usePerpsProInfoPanel');
 
-describe('usePerpsProInfoPanel symbol filters', () => {
+describe('usePerpsProInfoPanel', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockAccount.mode = 'standard';
+    mockPerpsState.currentClearinghouseState.marginSummary = {
+      accountValue: '101',
+    };
+    mockPerpsState.currentPerpsAccount = {
+      address: '0xABC',
+      type: 'watch',
+    };
+    mockPerpsState.isSpotStateReady = true;
+    mockPerpsState.isUserDataReady = true;
+    mockPerpsState.spotState.accountValue = '202';
+    mockPerpsState.spotState.tokenToAvailableAfterMaintenance = [[0, '303']];
     mockPerpsState.spotMeta = null;
     mockPerpsState.spotMetaStatus = 'ready';
+    mockRuntimeIdentity = 'runtime-account';
+    mockRuntimeStatus = 'ready';
+    mockUserAbstractionReady = true;
+  });
+
+  it('uses aggregate clearinghouse account value for a ready Standard account', () => {
+    const hook = renderHook(() => usePerpsProInfoPanel('BTC'));
+
+    expect(hook.result.current.fundingAccountValue).toBe('101');
+    expect(hook.result.current.fundingAccountValueReady).toBe(true);
+  });
+
+  it('uses Spot account value for a ready Unified account', () => {
+    mockAccount.mode = 'unified';
+    mockPerpsState.currentClearinghouseState.marginSummary = {
+      accountValue: '0',
+    };
+
+    const hook = renderHook(() => usePerpsProInfoPanel('BTC'));
+
+    expect(hook.result.current.fundingAccountValue).toBe('202');
+    expect(hook.result.current.fundingAccountValueReady).toBe(true);
+  });
+
+  it('uses token id 0 available-after-maintenance for a ready Portfolio Margin account', () => {
+    mockAccount.mode = 'portfolioMargin';
+    mockPerpsState.spotState.accountValue = '999';
+
+    const hook = renderHook(() => usePerpsProInfoPanel('BTC'));
+
+    expect(hook.result.current.fundingAccountValue).toBe('303');
+    expect(hook.result.current.fundingAccountValueReady).toBe(true);
+  });
+
+  it('keeps a missing Portfolio Margin maintenance value explicit after its source is ready', () => {
+    mockAccount.mode = 'portfolioMargin';
+    mockPerpsState.spotState.tokenToAvailableAfterMaintenance = [[1, '303']];
+
+    const hook = renderHook(() => usePerpsProInfoPanel('BTC'));
+
+    expect(hook.result.current.fundingAccountValue).toBeNull();
+    expect(hook.result.current.fundingAccountValueReady).toBe(true);
+  });
+
+  it('keeps a missing Standard account value explicit after its source is ready', () => {
+    mockPerpsState.currentClearinghouseState.marginSummary = undefined;
+
+    const hook = renderHook(() => usePerpsProInfoPanel('BTC'));
+
+    expect(hook.result.current.fundingAccountValue).toBeNull();
+    expect(hook.result.current.fundingAccountValueReady).toBe(true);
+  });
+
+  it('keeps a missing Unified account value explicit after its source is ready', () => {
+    mockAccount.mode = 'unified';
+    mockPerpsState.spotState.accountValue = undefined;
+
+    const hook = renderHook(() => usePerpsProInfoPanel('BTC'));
+
+    expect(hook.result.current.fundingAccountValue).toBeNull();
+    expect(hook.result.current.fundingAccountValueReady).toBe(true);
+  });
+
+  it.each([
+    [
+      'runtime identity mismatch',
+      () => (mockRuntimeIdentity = 'other-account'),
+    ],
+    ['runtime not ready', () => (mockRuntimeStatus = 'waitingForAccount')],
+    ['abstraction unresolved', () => (mockUserAbstractionReady = false)],
+    [
+      'Standard user data unresolved',
+      () => (mockPerpsState.isUserDataReady = false),
+    ],
+  ] as const)('keeps Standard funding unready when %s', (_label, arrange) => {
+    arrange();
+
+    const hook = renderHook(() => usePerpsProInfoPanel('BTC'));
+
+    expect(hook.result.current.fundingAccountValueReady).toBe(false);
+  });
+
+  it('requires Spot state readiness for Unified and Portfolio Margin funding', () => {
+    mockAccount.mode = 'unified';
+    mockPerpsState.isSpotStateReady = false;
+
+    const hook = renderHook(() => usePerpsProInfoPanel('BTC'));
+
+    expect(hook.result.current.fundingAccountValueReady).toBe(false);
+  });
+
+  it('does not require Spot state readiness for Standard funding', () => {
+    mockPerpsState.isSpotStateReady = false;
+
+    const hook = renderHook(() => usePerpsProInfoPanel('BTC'));
+
+    expect(hook.result.current.fundingAccountValueReady).toBe(true);
+  });
+
+  it('does not require Perps user data readiness for Unified funding', () => {
+    mockAccount.mode = 'unified';
+    mockPerpsState.isUserDataReady = false;
+
+    const hook = renderHook(() => usePerpsProInfoPanel('BTC'));
+
+    expect(hook.result.current.fundingAccountValueReady).toBe(true);
+  });
+
+  it('keeps funding unready without a current account', () => {
+    mockPerpsState.currentPerpsAccount = null;
+
+    const hook = renderHook(() => usePerpsProInfoPanel('BTC'));
+
+    expect(hook.result.current.fundingAccountValueReady).toBe(false);
   });
 
   it('requires and fetches Spot Meta for a Standard account', () => {

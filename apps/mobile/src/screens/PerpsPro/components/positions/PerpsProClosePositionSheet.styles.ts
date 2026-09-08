@@ -6,8 +6,8 @@ import {
   resolvePerpsProFieldBackground,
 } from '../common/perpsProVisual';
 import {
-  getPerpsProSemanticTagContainerStyle,
-  getPerpsProSemanticTagTextStyle,
+  getPerpsProTintedTagContainerStyle,
+  getPerpsProTintedTagTextStyle,
 } from '../common/perpsProSemanticTagStyles';
 
 export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
@@ -17,7 +17,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     container: { height: '100%', paddingHorizontal: 15, paddingTop: 8 },
     title: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 16,
       fontWeight: '700',
       lineHeight: 20,
@@ -32,15 +32,15 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     pairRow: { alignItems: 'center', flexDirection: 'row', gap: 4 },
     pair: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
       lineHeight: 18,
     },
-    longTag: getPerpsProSemanticTagContainerStyle(colors2024, 'positive'),
-    shortTag: getPerpsProSemanticTagContainerStyle(colors2024, 'negative'),
-    longTagText: getPerpsProSemanticTagTextStyle(colors2024, 'positive'),
-    shortTagText: getPerpsProSemanticTagTextStyle(colors2024, 'negative'),
+    longTag: getPerpsProTintedTagContainerStyle(colors2024, 'positive'),
+    shortTag: getPerpsProTintedTagContainerStyle(colors2024, 'negative'),
+    longTagText: getPerpsProTintedTagTextStyle(colors2024, 'positive'),
+    shortTagText: getPerpsProTintedTagTextStyle(colors2024, 'negative'),
     priceSummaryRow: {
       alignItems: 'center',
       flexDirection: 'row',
@@ -48,13 +48,13 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     },
     priceSummaryLabel: {
       color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       lineHeight: 16,
     },
     priceSummaryValue: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       lineHeight: 16,
     },
@@ -76,7 +76,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     disabledPriceField: {},
     centeredFieldText: {
       color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
       lineHeight: 18,
@@ -84,7 +84,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     },
     floatingLabel: {
       color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 10,
       left: 8,
       lineHeight: 12,
@@ -94,7 +94,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     },
     priceInput: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
       height: 40,
@@ -106,7 +106,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     },
     priceUnit: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       lineHeight: 18,
       position: 'absolute',
@@ -126,7 +126,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     },
     orderTypeText: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
       lineHeight: 18,
@@ -146,7 +146,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     },
     amountInput: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
       height: 40,
@@ -160,7 +160,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     },
     amountUnit: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
       lineHeight: 18,
@@ -180,25 +180,25 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
     },
     summaryLabel: {
       color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       lineHeight: 16,
     },
     summaryValue: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       lineHeight: 16,
     },
     positiveValue: {
       color: colors2024['green-default'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       lineHeight: 16,
     },
     negativeValue: {
       color: colors2024['red-default'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       lineHeight: 16,
     },

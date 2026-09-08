@@ -241,28 +241,40 @@ describe('PerpsProOrderConfirmationSheet', () => {
     expect(screen.getByText('Isolated 10x')).toBeTruthy();
     expect(screen.getByText('Buy')).toBeTruthy();
     expect(screen.getByText('Long')).toBeTruthy();
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-order-confirmation-side-tag').props.style,
-      ),
-    ).toMatchObject({
+    const buyTagStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-order-confirmation-side-tag').props.style,
+    );
+    expect(buyTagStyle).toMatchObject({
       backgroundColor: 'green-light-1',
-      borderColor: 'green-light-2',
-      borderRadius: 2,
-      borderWidth: 0.5,
+      borderRadius: 4,
       paddingHorizontal: 4,
       paddingVertical: 1,
     });
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-order-confirmation-position-tag').props
-          .style,
-      ),
-    ).toMatchObject({ borderColor: 'green-light-2', borderWidth: 0.5 });
+    expect(buyTagStyle.borderColor).toBeUndefined();
+    expect(buyTagStyle.borderWidth).toBeUndefined();
+    const longTagStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-order-confirmation-position-tag').props
+        .style,
+    );
+    expect(longTagStyle).toMatchObject({
+      backgroundColor: 'green-light-1',
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    });
+    expect(longTagStyle.borderColor).toBeUndefined();
+    expect(longTagStyle.borderWidth).toBeUndefined();
     expect(screen.getByText('Buy').props.style).toMatchObject({
       color: 'green-default',
-      fontSize: 10,
-      lineHeight: 12,
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    });
+    expect(screen.getByText('Long').props.style).toMatchObject({
+      color: 'green-default',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
     });
     expect(
       StyleSheet.flatten(
@@ -270,17 +282,50 @@ describe('PerpsProOrderConfirmationSheet', () => {
           .style,
       ),
     ).toMatchObject({
-      borderColor: 'neutral-line',
-      borderRadius: 2,
-      borderWidth: 0.5,
-      fontSize: 10,
-      lineHeight: 12,
+      backgroundColor: 'neutral-bg-5',
+      borderRadius: 4,
+      color: 'neutral-foot',
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
     });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-confirmation-source-tag').props
+          .style,
+      ).borderColor,
+    ).toBeUndefined();
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-confirmation-source-tag').props
+          .style,
+      ).borderWidth,
+    ).toBeUndefined();
+    const marginModeTagStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-order-confirmation-margin-mode-tag').props
+        .style,
+    );
+    expect(marginModeTagStyle).toMatchObject({
+      backgroundColor: 'neutral-bg-5',
+      borderRadius: 4,
+      color: 'neutral-foot',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    });
+    expect(marginModeTagStyle.borderColor).toBeUndefined();
+    expect(marginModeTagStyle.borderWidth).toBeUndefined();
+    expect(marginModeTagStyle.fontVariant).toBeUndefined();
     expect(screen.getByText('No')).toBeTruthy();
     expect(screen.getByText('105.00 USDC')).toBeTruthy();
     expect(screen.getByText('55.00 USDC (-40.00%)')).toBeTruthy();
-    expect(screen.getByText('Mark Price ≥ 110.00 USDC')).toBeTruthy();
-    expect(screen.getByText('Mark Price ≤ 90.00 USDC')).toBeTruthy();
+    expect(screen.getByText('Mark Price ≥ 110 USDC')).toBeTruthy();
+    expect(screen.getByText('Mark Price ≤ 90 USDC')).toBeTruthy();
     expect(screen.getByText('skipConfirmation')).toBeTruthy();
     expect(screen.queryByText('confirmAttachedTpSl')).toBeNull();
     expect(screen.queryByText('tpSlFullFillWarning')).toBeNull();
@@ -298,7 +343,7 @@ describe('PerpsProOrderConfirmationSheet', () => {
     ).toMatchObject({ paddingBottom: 40, paddingTop: 24 });
     expect(
       StyleSheet.flatten(screen.getByText('Isolated 10x').props.style),
-    ).toMatchObject({ fontVariant: ['stylistic-six'] });
+    ).not.toHaveProperty('fontVariant');
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-order-confirmation-footer').props.style,
@@ -317,30 +362,55 @@ describe('PerpsProOrderConfirmationSheet', () => {
     ).toMatchObject({ borderRadius: 8 });
   });
 
-  it('uses the bordered negative badge contract for Sell and Short', () => {
+  it('uses the negative direction tag contract for Sell and Short', () => {
     renderSheet({ ...parent, side: 'sell' });
 
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-order-confirmation-side-tag').props.style,
-      ),
-    ).toMatchObject({
+    const sellTagStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-order-confirmation-side-tag').props.style,
+    );
+    expect(sellTagStyle).toMatchObject({
       backgroundColor: 'red-light-1',
-      borderColor: 'red-light-2',
-      borderRadius: 2,
-      borderWidth: 0.5,
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
     });
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-order-confirmation-position-tag').props
-          .style,
-      ),
-    ).toMatchObject({ borderColor: 'red-light-2', borderWidth: 0.5 });
+    expect(sellTagStyle.borderColor).toBeUndefined();
+    expect(sellTagStyle.borderWidth).toBeUndefined();
+    const shortTagStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-order-confirmation-position-tag').props
+        .style,
+    );
+    expect(shortTagStyle).toMatchObject({
+      backgroundColor: 'red-light-1',
+      borderRadius: 4,
+    });
+    expect(shortTagStyle.borderColor).toBeUndefined();
+    expect(shortTagStyle.borderWidth).toBeUndefined();
     expect(screen.getByText('Sell').props.style).toMatchObject({
       color: 'red-default',
-      fontSize: 10,
-      lineHeight: 12,
+      fontSize: 12,
+      lineHeight: 16,
     });
+    expect(screen.getByText('Short').props.style).toMatchObject({
+      color: 'red-default',
+      fontSize: 12,
+      lineHeight: 16,
+    });
+  });
+
+  it('omits only the source metadata tag when the reviewed market is native', () => {
+    renderSheet({
+      ...parent,
+      reviewFacts: { ...reviewFacts, sourceTag: null },
+    });
+
+    expect(
+      screen.queryByTestId('perps-pro-order-confirmation-source-tag'),
+    ).toBeNull();
+    expect(
+      screen.getByTestId('perps-pro-order-confirmation-margin-mode-tag'),
+    ).toBeTruthy();
+    expect(screen.getByText('Isolated 10x')).toBeTruthy();
   });
 
   it('renders unavailable liquidation as a double dash', () => {
@@ -375,7 +445,7 @@ describe('PerpsProOrderConfirmationSheet', () => {
       },
     });
 
-    expect(screen.getByText('Mark Price ≥ 111,111.00 USDC')).toBeTruthy();
+    expect(screen.getByText('Mark Price ≥ 111,111 USDC')).toBeTruthy();
   });
 
   it('shows the reviewed Reduce Only value', () => {
@@ -390,7 +460,7 @@ describe('PerpsProOrderConfirmationSheet', () => {
       .map(node => node.props.children);
     expect(detailTexts).toEqual([
       'price',
-      '100.00 USDC',
+      '100 USDC',
       'amount',
       '100.00 USDC',
       'Mark Price',
@@ -416,9 +486,27 @@ describe('PerpsProOrderConfirmationSheet', () => {
     });
 
     expect(screen.getByText('triggerPrice')).toBeTruthy();
-    expect(screen.getByText('110.00 USDC')).toBeTruthy();
-    expect(screen.getByText('102.00 USDC')).toBeTruthy();
+    expect(screen.getByText('110 USDC')).toBeTruthy();
+    expect(screen.getByText('102 USDC')).toBeTruthy();
     expect(screen.queryByText('orderType')).toBeNull();
+  });
+
+  it('keeps meaningful frozen command decimals without market padding', () => {
+    renderSheet({
+      ...parent,
+      execution: {
+        kind: 'conditionalLimit',
+        limitPrice: '123.4',
+        referencePrice: '100',
+        tpsl: 'tp',
+        triggerPrice: '0.12345',
+      },
+      orderType: 'conditional',
+    });
+
+    expect(screen.getByText('0.12345 USDC')).toBeTruthy();
+    expect(screen.getByText('123.4 USDC')).toBeTruthy();
+    expect(screen.queryByText('123.40 USDC')).toBeNull();
   });
 
   it('shows the BBO level instead of freezing a reviewed numeric price', () => {

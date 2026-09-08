@@ -39,7 +39,11 @@ import { setTxRpcClient } from '../utils/tx';
 import { perfEvents } from '../utils/perf';
 import { traceAndroidInstant } from '../utils/androidTrace';
 import { recordKeyringRuntimePerfDiagnostic } from '../utils/startupDiagnostics';
-import { onCreateKeyring, onSetAddressAlias } from './keyringParams';
+import {
+  onCreateKeyring,
+  onSetAddressAlias,
+  onSetAddressAliases,
+} from './keyringParams';
 import { callCoreService, registerCoreServices } from './serviceRegistry';
 import RNEncryptor from './encryptor';
 
@@ -188,6 +192,7 @@ export function loadStartupCoreServices() {
     encryptor: new RNEncryptor(),
     keyringClasses,
     onSetAddressAlias,
+    onSetAddressAliases,
     onCreateKeyring,
     contactService,
     perfLogger: {

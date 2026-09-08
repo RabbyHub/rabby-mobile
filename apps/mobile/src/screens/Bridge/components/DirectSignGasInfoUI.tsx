@@ -37,6 +37,7 @@ type DirectSignGasInfoUIProps = {
   empty?: boolean;
   emptyText?: string;
   levelText?: string;
+  hideGasLevelInSummary?: boolean;
   valueText?: string;
   chainId?: number;
   textColor?: string;
@@ -44,6 +45,7 @@ type DirectSignGasInfoUIProps = {
   style?: RNViewProps['style'];
   listItemStyle?: RNViewProps['style'];
   listItemInnerStyle?: RNViewProps['style'];
+  rightPrefix?: React.ReactNode;
   onOpenChange?: (open: boolean) => void;
   renderModal?: (args: {
     visible: boolean;
@@ -61,6 +63,7 @@ export const DirectSignGasInfoUI = ({
   empty,
   emptyText = '-',
   levelText,
+  hideGasLevelInSummary,
   valueText,
   chainId,
   textColor,
@@ -68,6 +71,7 @@ export const DirectSignGasInfoUI = ({
   style,
   listItemStyle,
   listItemInnerStyle,
+  rightPrefix,
   onOpenChange,
   renderModal,
 }: DirectSignGasInfoUIProps) => {
@@ -105,6 +109,8 @@ export const DirectSignGasInfoUI = ({
     setVisible(false);
     onOpenChange?.(false);
   }, [onOpenChange]);
+
+  const useInternalGasModal = !!renderModal;
 
   const measureTriggerOnce = useCallback(() => {
     return new Promise<TriggerLayout | null>(resolve => {
@@ -174,54 +180,82 @@ export const DirectSignGasInfoUI = ({
         style={listItemStyle}
         innerStyle={listItemInnerStyle}
         LeftIcon={leftIcon}>
-        {!loading && !empty ? (
-          <TouchableOpacity
-            ref={triggerRef}
-            activeOpacity={0.7}
-            hitSlop={8}
-            style={styles.triggerButton}
-            onPress={handleTriggerPress}
-            onLayout={handleTriggerLayout}>
-            <View style={styles.quoteContainer}>
-              <Text
-                style={[
-                  styles.levelTag,
-                  textColor && {
-                    color: textColor,
-                  },
-                  textColor && {
-                    backgroundColor: colors2024['brand-light-1'],
-                  },
-                ]}>
-                {levelText}
-              </Text>
+        <View style={styles.rightContent}>
+          {!loading && !empty ? (
+            <TouchableOpacity
+              ref={triggerRef}
+              activeOpacity={0.7}
+              hitSlop={8}
+              style={[styles.triggerButton, styles.rightContentTouchable]}
+              onPress={handleTriggerPress}
+              onLayout={handleTriggerLayout}>
+              {rightPrefix}
+              <View style={styles.quoteContainer}>
+                {!hideGasLevelInSummary ? (
+                  <Text
+                    style={[
+                      styles.levelTag,
+                      textColor && {
+                        color: textColor,
+                      },
+                      textColor && {
+                        backgroundColor: colors2024['brand-light-1'],
+                      },
+                    ]}>
+                    {levelText}
+                  </Text>
+                ) : null}
 
-              <Text
-                style={[
-                  styles.valueText,
-                  {
-                    color:
-                      valueColor || textColor || colors2024['brand-default'],
-                  },
-                ]}>
-                {valueText}
-              </Text>
-              <Animated.View
-                style={{
-                  transform: [{ rotate: visible ? '-90deg' : '90deg' }],
-                }}>
-                <RcIconBluePolygon
-                  style={styles.arrowIcon}
-                  color={valueColor || textColor || colors2024['brand-default']}
-                />
-              </Animated.View>
+                <Text
+                  style={[
+                    styles.valueText,
+                    {
+                      color:
+                        valueColor || textColor || colors2024['brand-default'],
+                    },
+                  ]}>
+                  {valueText}
+                </Text>
+                {useInternalGasModal ? (
+                  <Animated.View
+                    style={{
+                      transform: [{ rotate: visible ? '-90deg' : '90deg' }],
+                    }}>
+                    <RcIconBluePolygon
+                      style={styles.arrowIcon}
+                      color={
+                        valueColor || textColor || colors2024['brand-default']
+                      }
+                    />
+                  </Animated.View>
+                ) : (
+                  <RcIconBluePolygon
+                    style={styles.arrowIcon}
+                    color={
+                      valueColor || textColor || colors2024['brand-default']
+                    }
+                  />
+                )}
+              </View>
+            </TouchableOpacity>
+          ) : !loading && empty ? (
+            <View style={styles.valueSlot}>
+              {rightPrefix}
+              <Text style={styles.noQuotePlaceholder}>{emptyText}</Text>
             </View>
-          </TouchableOpacity>
-        ) : !loading && empty ? (
-          <Text style={styles.noQuotePlaceholder}>{emptyText}</Text>
-        ) : (
-          <CustomSkeleton style={styles.skeletonPill} />
-        )}
+          ) : (
+            <View style={styles.valueSlot}>
+              {rightPrefix}
+              <CustomSkeleton
+                style={
+                  hideGasLevelInSummary
+                    ? styles.infoCardSkeletonPill
+                    : styles.skeletonPill
+                }
+              />
+            </View>
+          )}
+        </View>
       </ListItem>
       {renderModal?.({
         visible,
@@ -270,6 +304,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-secondary'],
   },
   flexRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  rightContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    minHeight: 24,
+  },
+  rightContentTouchable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   listItemContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -283,7 +328,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    height: 24,
+    minHeight: 24,
   },
   triggerButton: {
     paddingHorizontal: 4,
@@ -295,11 +340,23 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   noQuotePlaceholder: {
     color: colors2024['neutral-foot'],
     fontSize: 12,
+    lineHeight: 18,
+  },
+  valueSlot: {
+    minHeight: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   skeletonPill: {
     width: 131,
     height: 24,
     borderRadius: 100,
+  },
+  infoCardSkeletonPill: {
+    width: 60,
+    height: 24,
+    borderRadius: 12,
   },
   arrowIcon: {
     transform: [{ rotate: '-90deg' }],
@@ -324,5 +381,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontStyle: 'normal',
     fontWeight: '700',
     lineHeight: 18,
+  },
+  infoCardValueText: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 16,
   },
 }));

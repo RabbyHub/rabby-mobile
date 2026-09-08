@@ -53,6 +53,7 @@ jest.mock('react-native-screens', () => ({
 
 const {
   PerpsProSheetGlobalEdgeTarget,
+  PerpsProSheetNavigationHost,
   PerpsProSheetNavigationBoundary,
   resetPerpsProSheetNavigationGuardForTests,
   shouldDismissPerpsProSheetFromEdge,
@@ -89,6 +90,40 @@ describe('PerpsProSheetNavigationGuard', () => {
 
     expect(mockSetOptions).toHaveBeenLastCalledWith({ gestureEnabled: true });
     expect(mockRequestBack?.()).toBe(true);
+  });
+
+  it('isolates registry publications from a realtime scene sibling', () => {
+    let setRegistrationActive: React.Dispatch<
+      React.SetStateAction<boolean>
+    > = () => undefined;
+    let realtimeSceneRenderCount = 0;
+
+    const RegistrationController = () => {
+      const [active, setActive] = React.useState(false);
+      setRegistrationActive = setActive;
+      usePerpsProSheetNavigationRegistration({
+        active,
+        dismiss: jest.fn(),
+      });
+      return null;
+    };
+    const RealtimeScene = () => {
+      realtimeSceneRenderCount += 1;
+      return null;
+    };
+
+    render(
+      <>
+        <PerpsProSheetNavigationHost />
+        <RealtimeScene />
+        <RegistrationController />
+      </>,
+    );
+
+    act(() => setRegistrationActive(true));
+    act(() => setRegistrationActive(false));
+
+    expect(realtimeSceneRenderCount).toBe(1);
   });
 
   it('routes Back and edge swipe only to the topmost dismissible sheet', () => {

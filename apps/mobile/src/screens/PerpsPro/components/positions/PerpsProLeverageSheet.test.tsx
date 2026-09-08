@@ -179,7 +179,7 @@ describe('PerpsProLeverageSheet', () => {
     expect(
       StyleSheet.flatten(screen.getByText('Adjust Leverage').props.style),
     ).toMatchObject({
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 16,
       fontWeight: '700',
       lineHeight: 20,
@@ -187,7 +187,7 @@ describe('PerpsProLeverageSheet', () => {
     expect(
       StyleSheet.flatten(screen.getByText('Up To 40x').props.style),
     ).toMatchObject({
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       fontWeight: '500',
       lineHeight: 16,
