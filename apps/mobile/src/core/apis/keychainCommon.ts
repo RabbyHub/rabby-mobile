@@ -2168,6 +2168,10 @@ export function createBusinessKeychainApi({
     return supportedBiometryType;
   }
 
+  function shouldRequireBiometricProofForSetup() {
+    return isAndroid && api29FingerprintPromptOptimizationEligible;
+  }
+
   async function isPasscodeAuthAvailable() {
     if (
       isAndroid &&
@@ -2230,6 +2234,7 @@ export function createBusinessKeychainApi({
     isBrokenBiometricsEntryError,
     requestGenericPassword,
     getSupportedBiometryType,
+    shouldRequireBiometricProofForSetup,
     isPasscodeAuthAvailable,
     getKeychainDebugState,
     getKeychainEntryState,

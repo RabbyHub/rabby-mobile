@@ -735,6 +735,7 @@ describe('core/apis/keychainV9_0_0', () => {
       'androidUsePreparedPrompt',
     );
     expect(mockSetGenericPassword).not.toHaveBeenCalled();
+    expect(module.shouldRequireBiometricProofForSetup()).toBe(false);
   });
 
   it('prepares and reuses the API 29 fingerprint fallback prompt', async () => {
@@ -770,6 +771,7 @@ describe('core/apis/keychainV9_0_0', () => {
       }),
     );
     expect(mockSimplePrompt).toHaveBeenCalledTimes(2);
+    expect(module.shouldRequireBiometricProofForSetup()).toBe(true);
   });
 
   it('falls back to device credentials when an API 29 fingerprint probe is unavailable', async () => {

@@ -298,6 +298,9 @@ export const getSupportedBiometryType =
   (): Promise<KeychainSupportedBiometryType> =>
     getCurrentKeychainApi().getSupportedBiometryType();
 
+export const shouldRequireBiometricProofForSetup = () =>
+  getCurrentKeychainApi().shouldRequireBiometricProofForSetup();
+
 export const isPasscodeAuthAvailable = () =>
   getCurrentKeychainApi().isPasscodeAuthAvailable();
 
