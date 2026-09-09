@@ -154,6 +154,61 @@ describe('PerpsProKeyboardAccessory', () => {
     expect(screen.queryByTestId('perps-pro-keyboard-minimum')).toBeNull();
   });
 
+  it.each(['ios', 'android'] as const)(
+    'keeps the rounded shadow outside the content clip on %s',
+    platformOS => {
+      Platform.OS = platformOS;
+      render(<PerpsProKeyboardAccessory />, {
+        wrapper: BottomSheetModalProvider,
+      });
+      focus();
+      if (platformOS === 'android') {
+        act(() =>
+          keyboardListeners.get('keyboardDidShow')?.({
+            endCoordinates: { screenY: 560, height: 300 },
+          }),
+        );
+        measureOverlay(-24);
+      }
+      expect(screen.getByTestId('perps-pro-keyboard-shadow')).toHaveStyle({
+        backgroundColor: 'neutral-bg-1',
+        borderTopLeftRadius: 14,
+        borderTopRightRadius: 14,
+        borderBottomLeftRadius: 0,
+        borderBottomRightRadius: 0,
+        overflow: 'visible',
+      });
+      expect(screen.getByTestId('perps-pro-keyboard-accessory')).toHaveStyle({
+        height: 48,
+        backgroundColor: 'neutral-bg-1',
+        borderTopLeftRadius: 14,
+        borderTopRightRadius: 14,
+        overflow: 'hidden',
+      });
+      if (platformOS === 'android') {
+        const shadow = screen.getByTestId('perps-pro-keyboard-android-shadow');
+        // The canvas must include the 20pt upper shadow AND the 14pt corners.
+        expect(shadow.props.height).toBe(34);
+        expect(shadow.props.pointerEvents).toBe('none');
+        expect(shadow).toHaveStyle({ top: -20 });
+      } else {
+        expect(screen.getByTestId('perps-pro-keyboard-shadow')).toHaveStyle({
+          shadowColor: '#494B5B',
+          shadowOffset: { width: 0, height: -8 },
+          shadowRadius: 6,
+          shadowOpacity: 0.06,
+        });
+        expect(
+          screen.queryByTestId('perps-pro-keyboard-android-shadow'),
+        ).toBeNull();
+      }
+      expect(screen.getByTestId('perps-pro-keyboard-minimum')).toHaveStyle({
+        color: 'neutral-title-1',
+      });
+      expect(screen.getByText('global.Done')).toHaveStyle({ color: '#23C0B0' });
+    },
+  );
+
   it('removes ownership and listeners on leaving Pro, backgrounding and unmounting', () => {
     const view = render(<PerpsProKeyboardAccessory />, {
       wrapper: BottomSheetModalProvider,
