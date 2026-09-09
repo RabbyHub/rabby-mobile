@@ -12,7 +12,7 @@ jest.mock('@/assets2024/icons/perps/PerpsProFavoriteStar.svg', () => {
     });
 });
 
-jest.mock('@/assets/icons/dapp/icon-star.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProFavoriteStarInactive.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) =>
@@ -143,7 +143,7 @@ describe('PerpsProMarketRow', () => {
     },
   );
 
-  it('matches the approved 56px row geometry and typography', () => {
+  it('matches the approved 60px row geometry and typography', () => {
     const model = buildPerpsProMarketRowModel(
       createMarketData('xyz:ALPHA', {
         brief: 'Alpha',
@@ -168,10 +168,10 @@ describe('PerpsProMarketRow', () => {
       ),
     ).toEqual(
       expect.objectContaining({
-        alignItems: 'flex-start',
-        height: 56,
-        paddingHorizontal: 15,
-        paddingVertical: 8,
+        alignItems: 'center',
+        height: 60,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
       }),
     );
     expect(
@@ -181,18 +181,22 @@ describe('PerpsProMarketRow', () => {
         ).props.style,
       ),
     ).toEqual(
-      expect.objectContaining({ height: 24, marginRight: 6, width: 16 }),
+      expect.objectContaining({ height: 32, marginRight: 6, width: 16 }),
     );
     expect(screen.getByTestId('favorite-star-empty').props).toEqual(
-      expect.objectContaining({ height: 16, width: 16 }),
+      expect.objectContaining({
+        color: 'neutral-line',
+        height: 12.9307,
+        width: 13.0288,
+      }),
     );
     expect(screen.getByTestId('market-logo').props).toEqual(
-      expect.objectContaining({ size: 24 }),
+      expect.objectContaining({ size: 32 }),
     );
     expect(
       StyleSheet.flatten(screen.getByTestId('market-logo').props.style),
     ).toEqual(
-      expect.objectContaining({ borderRadius: 12, height: 24, width: 24 }),
+      expect.objectContaining({ borderRadius: 16, height: 32, width: 32 }),
     );
     expect(screen.getByText('ALPHAUSDC').props.style).toEqual(
       expect.objectContaining({

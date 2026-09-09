@@ -255,19 +255,20 @@ describe('PerpsProMarketTabs', () => {
     ).toMatchObject({
       borderBottomColor: 'neutral-bg-5',
       borderBottomWidth: 1,
-      height: 34,
+      height: 38,
+      marginTop: 16,
     });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-market-tab-all').props.style,
       ),
-    ).toMatchObject({ height: 34, paddingHorizontal: 2, paddingTop: 8 });
+    ).toMatchObject({ height: 34, paddingHorizontal: 0, paddingTop: 8 });
     expect(
       StyleSheet.flatten(screen.getByText('All').props.style),
     ).toMatchObject({
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
-      fontWeight: '500',
+      fontWeight: '700',
       lineHeight: 18,
     });
     expect(
@@ -278,10 +279,10 @@ describe('PerpsProMarketTabs', () => {
       ),
     ).toMatchObject({
       backgroundColor: 'neutral-body',
-      bottom: 1,
-      height: 2,
-      left: 15,
-      width: 40,
+      bottom: -0.5,
+      height: 3,
+      left: 13.5,
+      width: 43,
     });
   });
 
@@ -329,8 +330,8 @@ describe('PerpsProMarketTabs', () => {
       ),
     ).toMatchObject({
       opacity: 1,
-      left: 67,
-      width: 70,
+      left: 65.5,
+      width: 73,
     });
 
     indicatorPosition.value = 1.75;
@@ -349,8 +350,8 @@ describe('PerpsProMarketTabs', () => {
         }).props.style,
       ),
     ).toMatchObject({
-      left: 128.5,
-      width: 55,
+      left: 127,
+      width: 58,
     });
 
     indicatorPosition.value = 1.25;
@@ -369,8 +370,8 @@ describe('PerpsProMarketTabs', () => {
         }).props.style,
       ),
     ).toMatchObject({
-      left: 87.5,
-      width: 65,
+      left: 86,
+      width: 68,
     });
     expect(
       screen.getByTestId('perps-pro-market-tab-all').props.accessibilityState,
@@ -392,13 +393,13 @@ describe('PerpsProMarketTabs', () => {
       StyleSheet.flatten(screen.getByText('All').props.style),
     ).toMatchObject({
       color: 'neutral-secondary',
-      fontWeight: '400',
+      fontWeight: '500',
     });
     expect(
       StyleSheet.flatten(screen.getByText('Layer 1').props.style),
     ).toMatchObject({
       color: 'neutral-title-1',
-      fontWeight: '500',
+      fontWeight: '700',
     });
     expect(
       screen.getByTestId('perps-pro-market-tab-all').props.accessibilityState,
@@ -413,7 +414,7 @@ describe('PerpsProMarketTabs', () => {
         .map(label => StyleSheet.flatten(label.props.style)),
     ).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ fontWeight: '500', opacity: 0 }),
+        expect.objectContaining({ fontWeight: '700', opacity: 0 }),
         expect.objectContaining({ position: 'absolute' }),
       ]),
     );
@@ -504,8 +505,8 @@ describe('PerpsProMarketTabs', () => {
       ),
     ).toMatchObject({
       opacity: 1,
-      left: 15,
-      width: 70,
+      left: 13.5,
+      width: 73,
     });
   });
 });

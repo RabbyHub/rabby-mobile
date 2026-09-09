@@ -14,6 +14,12 @@ const mockScrollToOffset = jest.fn();
 const mockPagerSetPage = jest.fn();
 const mockPagerSetPageWithoutAnimation = jest.fn();
 
+const mockUiRefreshTimeout = jest.fn();
+
+jest.mock('@/core/apis/autoLock', () => ({
+  uiRefreshTimeout: mockUiRefreshTimeout,
+}));
+
 jest.mock('react-native-pager-view', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -68,7 +74,7 @@ jest.mock('@/assets2024/icons/perps/PerpsProFavoriteStar.svg', () => {
   return (props: object) => ReactModule.createElement(View, props);
 });
 
-jest.mock('@/assets/icons/dapp/icon-star.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProFavoriteStarInactive.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);

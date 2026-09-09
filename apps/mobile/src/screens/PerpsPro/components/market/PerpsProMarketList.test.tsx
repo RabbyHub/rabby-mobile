@@ -204,6 +204,7 @@ describe('PerpsProMarketList', () => {
       offset: 1020,
     });
     expect(props.keyExtractor(slots[17], 17)).toBe('slot:17');
+    expect(props.ItemSeparatorComponent).toBeUndefined();
     expect(props).not.toHaveProperty('focusHook');
     expect(props).not.toHaveProperty('drawDistance');
     expect(props).not.toHaveProperty('maintainVisibleContentPosition');
@@ -213,9 +214,7 @@ describe('PerpsProMarketList', () => {
     const mountedRows = screen.getAllByTestId(/perps-pro-market-row-MARKET/);
     expect(mountedRows.length).toBeGreaterThan(0);
     expect(mountedRows.length).toBeLessThanOrEqual(12);
-    expect(
-      screen.getAllByTestId('perps-pro-market-row-separator')[0].props.style,
-    ).toEqual({ height: 4 });
+    expect(screen.queryByTestId('perps-pro-market-row-separator')).toBeNull();
   });
 
   it('keeps adjacent prepared pages on the bounded preview profile', () => {

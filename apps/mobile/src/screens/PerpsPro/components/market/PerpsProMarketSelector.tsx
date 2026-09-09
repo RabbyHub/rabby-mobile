@@ -3,6 +3,7 @@ import RcSortArrowUp from '@/assets2024/icons/perps/PerpsProSortArrowUp.svg';
 import { AppBottomSheetModal } from '@/components';
 import { Text } from '@/components/Typography';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { uiRefreshTimeout } from '@/core/apis/autoLock';
 import { IS_IOS } from '@/core/native/utils';
 import {
   addFavoriteMarket,
@@ -13,7 +14,11 @@ import {
 import { useTheme2024 } from '@/hooks/theme';
 import { useAppLanguage } from '@/hooks/lang';
 import { createGetStyles2024 } from '@/utils/styles';
-import { TouchableOpacity as BottomSheetTouchableOpacity } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetBackdrop,
+  type BottomSheetBackdropProps,
+  TouchableOpacity as BottomSheetTouchableOpacity,
+} from '@gorhom/bottom-sheet';
 import React, {
   forwardRef,
   useCallback,
@@ -349,9 +354,23 @@ const PerpsProMarketSelectorComponent = forwardRef<
       topInset: insets.top,
       windowHeight: stableWindowHeight,
     });
-    const backdropProps = useMemo(
-      () => ({ onPress: Keyboard.dismiss, pressBehavior: 'close' as const }),
-      [],
+    const handleBackdropPress = useCallback(() => {
+      uiRefreshTimeout();
+      Keyboard.dismiss();
+    }, []);
+    const renderBackdrop = useCallback(
+      (props: BottomSheetBackdropProps) => (
+        <BottomSheetBackdrop
+          {...props}
+          appearsOnIndex={0}
+          disappearsOnIndex={-1}
+          onPress={handleBackdropPress}
+          opacity={0.3}
+          pressBehavior="close"
+          style={styles.backdrop}
+        />
+      ),
+      [handleBackdropPress, styles.backdrop],
     );
 
     useEffect(() => {
@@ -603,7 +622,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
       <PerpsProMarketSelectorDismissProvider onDismiss={dismissSelector}>
         <AppBottomSheetModal
           android_keyboardInputMode="adjustPan"
-          backdropProps={backdropProps}
+          backdropComponent={renderBackdrop}
           containerComponent={PerpsProMarketSelectorGestureContainer}
           enableContentPanningGesture={false}
           enableDynamicSizing={false}
@@ -649,10 +668,16 @@ const PerpsProMarketSelectorComponent = forwardRef<
                     accessibilityLabel={t('page.perps.pro.marketSelector.name')}
                     accessibilityRole="button"
                     onPress={() => selectSort('name')}
-                    style={styles.sortControl}
+                    style={[styles.sortControl, styles.nameSortControl]}
                     testID="perps-pro-market-sort-name">
                     <View style={styles.sortControlContent}>
-                      <Text style={styles.columnText}>
+                      <Text
+                        style={[
+                          styles.columnText,
+                          sort.field === 'name'
+                            ? styles.activeColumnText
+                            : null,
+                        ]}>
                         {t('page.perps.pro.marketSelector.name')}
                       </Text>
                       <PerpsProSortIcon
@@ -671,8 +696,18 @@ const PerpsProMarketSelectorComponent = forwardRef<
                     onPress={() => selectSort('volume')}
                     style={styles.sortControl}
                     testID="perps-pro-market-sort-volume">
-                    <View style={styles.sortControlContent}>
-                      <Text style={styles.columnText}>
+                    <View
+                      style={[
+                        styles.sortControlContent,
+                        styles.volumeSortContent,
+                      ]}>
+                      <Text
+                        style={[
+                          styles.columnText,
+                          sort.field === 'volume'
+                            ? styles.activeColumnText
+                            : null,
+                        ]}>
                         {t('page.perps.pro.marketSelector.volume')}
                       </Text>
                       <PerpsProSortIcon
@@ -763,66 +798,102 @@ export const PerpsProMarketSelector = React.memo(
   PerpsProMarketSelectorComponent,
 );
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  ...getPerpsProBottomSheetChromeStyles(colors2024),
-  sheet: {
-    flex: 1,
-    paddingTop: 0,
-  },
-  pager: {
-    flex: 1,
-  },
-  page: {
-    flex: 1,
-  },
-  search: {
-    marginLeft: 15,
-    marginRight: 15,
-    marginTop: 0,
-  },
-  searchResults: {
-    flex: 1,
-    paddingTop: 16,
-  },
-  columnHeader: {
-    alignItems: 'flex-start',
-    flexDirection: 'row',
-    height: 46,
-    paddingHorizontal: 12,
-    paddingTop: 2,
-  },
-  sortGroup: {
-    alignItems: 'flex-start',
-    flexDirection: 'row',
-    gap: 12,
-    height: 44,
-  },
-  sortControl: {
-    height: 44,
-    minWidth: 44,
-    paddingTop: 16,
-  },
-  sortControlContent: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 4,
-  },
-  sortSeparator: {
-    backgroundColor: colors2024['neutral-line'],
-    height: 14,
-    marginTop: 18,
-    width: 1,
-  },
-  columnText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-  sortIcon: {
-    height: 8.52016,
-    justifyContent: 'space-between',
-    width: 4.24675,
-  },
-}));
+const getStyle = createGetStyles2024(({ colors2024 }) => {
+  const chrome = getPerpsProBottomSheetChromeStyles(colors2024);
+  return {
+    ...chrome,
+    handle: {
+      ...chrome.handle,
+      paddingTop: 10,
+      paddingBottom: 40 - 10 - 6.272816181182861,
+    },
+    handleIndicator: {
+      ...chrome.handleIndicator,
+      width: 50.18252944946289,
+      height: 6.272816181182861,
+      borderRadius: 6.272816181182861 / 2,
+    },
+    backdrop: {
+      flex: 1,
+    },
+    sheet: {
+      flex: 1,
+      paddingTop: 0,
+    },
+    pager: {
+      flex: 1,
+    },
+    page: {
+      flex: 1,
+    },
+    search: {
+      marginLeft: 20,
+      marginRight: 16,
+      marginTop: 0,
+    },
+    searchResults: {
+      flex: 1,
+      paddingTop: 16,
+    },
+    columnHeader: {
+      alignItems: 'flex-start',
+      flexDirection: 'row',
+      // The last 4pt of the tab strip only paint its divider/indicator.
+      // Borrow that space for 44pt sort targets; the first row stays at y=180.
+      height: 44,
+      marginTop: -4,
+      paddingHorizontal: 9,
+    },
+    sortGroup: {
+      alignItems: 'flex-start',
+      flexDirection: 'row',
+      gap: 8,
+      flex: 1,
+      height: 44,
+      paddingLeft: 7,
+    },
+    sortControl: {
+      height: 44,
+      minWidth: 44,
+      paddingTop: 18,
+      // Expand touch bounds without widening the visible label/arrow gaps.
+      paddingHorizontal: 9,
+      marginHorizontal: -9,
+    },
+    nameSortControl: {
+      paddingHorizontal: 7,
+      marginHorizontal: -7,
+    },
+    volumeSortContent: {
+      gap: 5,
+    },
+    sortControlContent: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: 4,
+    },
+    sortSeparator: {
+      backgroundColor: colors2024['neutral-line'],
+      height: 12,
+      marginTop: 20,
+      width: 1,
+    },
+    columnText: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    },
+    activeColumnText: {
+      color: colors2024['brand-default'],
+      fontFamily: 'SF Pro Rounded',
+      fontWeight: '700',
+    },
+    sortIcon: {
+      height: 8.52016,
+      justifyContent: 'space-between',
+      width: 4.24675,
+    },
+  };
+});

@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import fs from 'fs';
 import path from 'path';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { Keyboard, StyleSheet } from 'react-native';
 
 const mockPresent = jest.fn();
 const mockDismiss = jest.fn();
@@ -15,6 +15,12 @@ const mockMakeBottomSheetProps = jest.fn(() => ({}));
 const mockPagerSetPage = jest.fn();
 const mockPagerSetPageWithoutAnimation = jest.fn();
 let mockSelectorIsIOS = true;
+
+const mockUiRefreshTimeout = jest.fn();
+
+jest.mock('@/core/apis/autoLock', () => ({
+  uiRefreshTimeout: mockUiRefreshTimeout,
+}));
 
 jest.mock('@/core/native/utils', () => ({
   get IS_IOS() {
@@ -383,8 +389,9 @@ jest.mock('@/utils/styles', () => ({
 }));
 
 jest.mock('@gorhom/bottom-sheet', () => {
-  const { TouchableOpacity } = require('react-native');
+  const { TouchableOpacity, View } = require('react-native');
   return {
+    BottomSheetBackdrop: View,
     TouchableOpacity,
   };
 });
@@ -1076,7 +1083,31 @@ describe('PerpsProMarketSelector', () => {
     expect(modalProps.keyboardBehavior).toBe('extend');
     expect(modalProps.keyboardBlurBehavior).toBe('restore');
     expect(modalProps.android_keyboardInputMode).toBe('adjustPan');
-    expect(modalProps.backdropProps.pressBehavior).toBe('close');
+    const backdrop = modalProps.backdropComponent({
+      animatedIndex: { value: 0 },
+      animatedPosition: { value: 104 },
+    });
+    expect(backdrop.props).toMatchObject({
+      opacity: 0.3,
+      pressBehavior: 'close',
+      appearsOnIndex: 0,
+      disappearsOnIndex: -1,
+    });
+    const dismissKeyboard = jest
+      .spyOn(Keyboard, 'dismiss')
+      .mockImplementation(() => {});
+    backdrop.props.onPress();
+    expect(mockUiRefreshTimeout).toHaveBeenCalledTimes(1);
+    expect(dismissKeyboard).toHaveBeenCalledTimes(1);
+    dismissKeyboard.mockRestore();
+    expect(modalProps.handleStyle).toMatchObject({
+      height: 40,
+      paddingTop: 10,
+    });
+    expect(modalProps.handleIndicatorStyle).toMatchObject({
+      width: 50.18252944946289,
+      height: 6.272816181182861,
+    });
     expect(mockMakeBottomSheetProps).toHaveBeenLastCalledWith(
       expect.objectContaining({ linearGradientType: 'bg1' }),
     );
@@ -1095,8 +1126,8 @@ describe('PerpsProMarketSelector', () => {
     );
     expect(searchStyle).toEqual(
       expect.objectContaining({
-        marginLeft: 15,
-        marginRight: 15,
+        marginLeft: 20,
+        marginRight: 16,
         marginTop: 0,
       }),
     );
@@ -1106,8 +1137,8 @@ describe('PerpsProMarketSelector', () => {
     );
     expect(headerStyle).toEqual(
       expect.objectContaining({
-        height: 46,
-        paddingTop: 2,
+        height: 44,
+        marginTop: -4,
       }),
     );
 
@@ -1119,7 +1150,7 @@ describe('PerpsProMarketSelector', () => {
         expect.objectContaining({
           height: 44,
           minWidth: 44,
-          paddingTop: 16,
+          paddingTop: 18,
         }),
       );
     });
@@ -1276,6 +1307,6 @@ describe('PerpsProMarketSelector', () => {
     );
     const messages = JSON.parse(fs.readFileSync(localePath, 'utf8'));
 
-    expect(messages.page.perps.pro.marketSelector.search).toBe('Search');
+    expect(messages.page.perps.pro.marketSelector.search).toBe('Search Token');
   });
 });

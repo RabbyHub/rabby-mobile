@@ -42,8 +42,8 @@ type MarketTabScrollPosition = Readonly<{
   x: number;
 }>;
 
-const MARKET_TAB_REGULAR_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '400');
 const MARKET_TAB_MEDIUM_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '500');
+const MARKET_TAB_BOLD_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '700');
 
 const PerpsProMarketTabLabel: React.FC<{
   activeColor: string;
@@ -78,11 +78,11 @@ const PerpsProMarketTabLabel: React.FC<{
       return {
         color: active ? activeColor : inactiveColor,
         fontFamily: active
-          ? MARKET_TAB_MEDIUM_FONT_STYLE.fontFamily
-          : MARKET_TAB_REGULAR_FONT_STYLE.fontFamily,
+          ? MARKET_TAB_BOLD_FONT_STYLE.fontFamily
+          : MARKET_TAB_MEDIUM_FONT_STYLE.fontFamily,
         fontWeight: active
-          ? MARKET_TAB_MEDIUM_FONT_STYLE.fontWeight
-          : MARKET_TAB_REGULAR_FONT_STYLE.fontWeight,
+          ? MARKET_TAB_BOLD_FONT_STYLE.fontWeight
+          : MARKET_TAB_MEDIUM_FONT_STYLE.fontWeight,
       };
     }, [activeColor, inactiveColor, index, indicatorPosition, tabCount]);
 
@@ -112,7 +112,7 @@ const labelStyles = {
     position: 'relative' as const,
   },
   measureText: {
-    ...MARKET_TAB_MEDIUM_FONT_STYLE,
+    ...MARKET_TAB_BOLD_FONT_STYLE,
     opacity: 0,
   },
   visibleText: {
@@ -189,8 +189,9 @@ export const PerpsProMarketTabs: React.FC<{
         return [];
       }
       layouts.push({
-        width: frame.width,
-        x: frame.x,
+        // Include the 1.5pt round cap beyond each end of the text.
+        width: frame.width + 3,
+        x: frame.x - 1.5,
       });
     }
     return layouts;
@@ -284,30 +285,32 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderBottomColor: colors2024['neutral-bg-5'],
     borderBottomWidth: 1,
     flexGrow: 0,
-    height: 34,
+    height: 38,
+    marginTop: 16,
   },
   content: {
-    gap: 12,
-    paddingHorizontal: 15,
+    gap: 16,
+    paddingHorizontal: 16,
     position: 'relative',
+    height: 38,
   },
   tab: {
     alignItems: 'center',
     height: 34,
-    paddingHorizontal: 2,
+    paddingHorizontal: 0,
     paddingTop: 8,
   },
   text: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    fontWeight: '400',
+    fontWeight: '500',
     lineHeight: 18,
   },
   indicator: {
     backgroundColor: colors2024['neutral-body'],
-    borderRadius: 1,
-    bottom: 1,
-    height: 2,
+    borderRadius: 1.5,
+    bottom: -0.5,
+    height: 3,
   },
 }));

@@ -69,19 +69,19 @@ describe('Perps Pro layout model', () => {
     });
   });
 
-  it('keeps the selector at the Figma y=120 baseline and respects larger top insets', () => {
+  it('keeps the selector at the Figma y=104 baseline and respects larger top insets', () => {
     expect(
       getPerpsProMarketSelectorSnapPoint({
         topInset: 47,
         windowHeight: 852,
       }),
-    ).toBe(732);
+    ).toBe(748);
     expect(
       getPerpsProMarketSelectorSnapPoint({
         topInset: 80,
         windowHeight: 852,
       }),
-    ).toBe(732);
+    ).toBe(748);
     expect(
       getPerpsProMarketSelectorSnapPoint({
         topInset: 120,

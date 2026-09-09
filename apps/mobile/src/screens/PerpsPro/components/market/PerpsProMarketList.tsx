@@ -26,10 +26,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { PerpsProMarketSlot } from '../../model/marketSelectorProjection';
 import type { PerpsProMarketTab } from '../../model/market';
-import {
-  PERPS_PRO_MARKET_ITEM_HEIGHT,
-  PERPS_PRO_MARKET_ROW_GAP,
-} from './marketLayout';
+import { PERPS_PRO_MARKET_ITEM_HEIGHT } from './marketLayout';
 import { PerpsProMarketSlotRow } from './PerpsProMarketSlotRow';
 
 const PERPS_PRO_MARKET_TOP_THRESHOLD = 1;
@@ -55,12 +52,6 @@ const PERPS_PRO_MARKET_RENDER_PROFILES: Record<
     windowSize: 3,
   },
 };
-const rowSeparatorStyle: ViewStyle = { height: PERPS_PRO_MARKET_ROW_GAP };
-
-const PerpsProMarketRowSeparator = () => (
-  <View style={rowSeparatorStyle} testID="perps-pro-market-row-separator" />
-);
-
 export type PerpsProMarketListHandle = {
   scrollToTopIfNeeded: () => boolean;
 };
@@ -191,7 +182,6 @@ const PerpsProMarketListComponent = forwardRef<
         extraData={extraData}
         getItemLayout={getItemLayout}
         initialNumToRender={renderConfig.initialNumToRender}
-        ItemSeparatorComponent={PerpsProMarketRowSeparator}
         keyboardShouldPersistTaps="handled"
         keyExtractor={item => item.slotKey}
         ListEmptyComponent={
