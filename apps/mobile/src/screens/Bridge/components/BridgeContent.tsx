@@ -35,6 +35,7 @@ import BridgeSwitchBtn from './BridgeSwitchBtn';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import BridgeShowMore, { RecommendFromToken } from './BridgeShowMore';
 import { tokenPriceImpact, useBridge } from '../hooks/token';
+import { SWAP_FEE_RATE } from '@/screens/Swap/hooks/fee';
 import { Button } from '@/components2024/Button';
 import { SignRiskWarning } from '@/components/SignRiskWarning';
 
@@ -1800,8 +1801,8 @@ export const BridgeContent = ({
                 setAutoSlippage={setAutoSlippage}
                 setIsCustomSlippage={setIsCustomSlippage}
                 type="bridge"
-                isRabbyFeeFree={feeRate === '0'}
-                isRabbyFeeHalf={feeRate === '0.12'}
+                isRabbyFeeFree={feeRate === SWAP_FEE_RATE.FREE}
+                isRabbyFeeHalf={feeRate === SWAP_FEE_RATE.HALF}
                 isBestQuote={
                   !!bestQuoteId &&
                   !!selectedBridgeQuote &&

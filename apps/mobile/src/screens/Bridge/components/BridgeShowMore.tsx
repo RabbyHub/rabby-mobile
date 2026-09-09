@@ -69,9 +69,10 @@ import {
 import tokenListStore from '@/store/tokens';
 import RcIconFeeFreeLogo from '@/assets2024/icons/swap/fee-free-logo.svg';
 import RcIconFeeQuestion from '@/assets2024/icons/swap/fee-question.svg';
+import { SWAP_FEE_RATE } from '@/screens/Swap/hooks/fee';
 
-const RABBY_FEE = '0.25%';
-const RABBY_HALF_FEE = '0.12%';
+const RABBY_FEE = `${SWAP_FEE_RATE.DEFAULT}%`;
+const RABBY_HALF_FEE = `${SWAP_FEE_RATE.HALF}%`;
 
 const BridgeShowMore = ({
   openQuotesList,

@@ -49,6 +49,7 @@ import {
   useSwapUnlimitedAllowance,
   useTokenPair,
   isMEVProtectionSupported,
+  SWAP_FEE_RATE,
 } from '../Swap/hooks';
 import { refreshIdAtom, useRabbyFeeVisible } from '../Swap/hooks/atom';
 import { buildDexSwap, dexSwap } from '../Swap/hooks/swap';
@@ -1333,8 +1334,8 @@ const Swap = ({
       setIsCustomSlippage={setIsCustomSlippage}
       type="swap"
       isWrapToken={isWrapToken}
-      isRabbyFeeFree={feeRate === '0'}
-      isRabbyFeeHalf={feeRate === '0.12'}
+      isRabbyFeeFree={feeRate === SWAP_FEE_RATE.FREE}
+      isRabbyFeeHalf={feeRate === SWAP_FEE_RATE.HALF}
       isBestQuote={
         !!activeProvider &&
         !!bestQuoteDex &&
