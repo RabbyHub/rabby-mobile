@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
-import { ScrollView, StyleProp, Text, View, ViewStyle } from 'react-native';
+import { ScrollView, StyleProp, View, ViewStyle } from 'react-native';
 
+import { Text } from '@/components/Typography';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import { parseMarkdown } from './parseMarkdown';
@@ -72,7 +73,8 @@ function MarkdownBlockView({
   switch (block.type) {
     case 'heading': {
       const fontSize =
-        HEADING_FONT_SIZES[Math.min(Math.max(block.level, 1), 6) - 1];
+        HEADING_FONT_SIZES[Math.min(Math.max(block.level, 1), 6) - 1] ??
+        BODY_FONT_SIZE;
       return (
         <Text
           style={[
