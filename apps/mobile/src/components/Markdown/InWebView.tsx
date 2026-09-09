@@ -1,13 +1,12 @@
-import { useCallback, useMemo, useState } from 'react';
-import { ScrollView, StyleProp, ViewStyle } from 'react-native';
+import { useMemo } from 'react';
+import { StyleProp, ViewStyle } from 'react-native';
 import WebView from 'react-native-webview';
 
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import { WEBVIEW_BUILTIN_FONT_CSS } from '@/constant/webviewCss';
 import { AppColorsVariants } from '@/constant/theme';
-import { Text } from '@/components/Typography';
-import { MARKDOWN_FALLBACK_TEXT, parseMarkdown } from './parseMarkdown';
+import { parseMarkdown } from './parseMarkdown';
 import type { MarkdownParseResult } from './parseMarkdown';
 
 const getMarkdownPageStyle = (colors: AppColorsVariants) => {
@@ -98,7 +97,6 @@ export function MarkdownInWebView({
     () => parsedMarkdown ?? parseMarkdown(markdown),
     [markdown, parsedMarkdown],
   );
-  const [failedHtml, setFailedHtml] = useState<string | null>(null);
 
   const webviewHtml = useMemo(() => {
     const webviewCss = getMarkdownPageStyle(colors);
@@ -116,21 +114,6 @@ export function MarkdownInWebView({
   </html>`;
   }, [parsed.html, htmlInnerStyle, colors]);
 
-  const handleWebViewError = useCallback(() => {
-    setFailedHtml(webviewHtml);
-    onWebViewError?.();
-  }, [webviewHtml, onWebViewError]);
-
-  if (!parsed.success || failedHtml === webviewHtml) {
-    return (
-      <ScrollView
-        style={[styles.webview, webviewStyle]}
-        contentContainerStyle={styles.fallbackContent}>
-        <Text style={styles.fallbackText}>{MARKDOWN_FALLBACK_TEXT}</Text>
-      </ScrollView>
-    );
-  }
-
   return (
     <WebView
       style={[styles.webview, webviewStyle]}
@@ -146,23 +129,15 @@ export function MarkdownInWebView({
       textInteractionEnabled={false}
       javaScriptEnabled={false}
       dataDetectorTypes="none"
-      onError={handleWebViewError}
-      onRenderProcessGone={handleWebViewError}
-      onContentProcessDidTerminate={handleWebViewError}
+      onError={onWebViewError}
+      onRenderProcessGone={onWebViewError}
+      onContentProcessDidTerminate={onWebViewError}
     />
   );
 }
 
 const getStyles = createGetStyles(colors => {
   return {
-    fallbackContent: {
-      paddingHorizontal: 10,
-    },
-    fallbackText: {
-      color: colors['neutral-body'],
-      fontSize: 14,
-      lineHeight: 18,
-    },
     container: {
       flex: 1,
       height: '100%',
