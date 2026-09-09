@@ -231,7 +231,6 @@ export function UpgradePromptDialog({
             <MarkdownInWebView
               markdown={remoteVersion.changelog}
               parsedMarkdown={parsedMarkdown}
-              onWebViewError={onClose}
               htmlInnerStyle={`
                 html, body { background-color: transparent; }
                 .md-wrapper, .md-wrapper * {
