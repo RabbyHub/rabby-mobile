@@ -31,7 +31,7 @@ import React, {
 } from 'react';
 import { Keyboard, useWindowDimensions, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useSharedValue } from 'react-native-reanimated';
+import { useSharedValue, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -125,6 +125,32 @@ type PendingMarketTabPageRequest = {
   targetIndex: number;
 };
 
+type PerpsProMarketTabSessionHandle = {
+  snapToPage: (position: number) => void;
+};
+
+// Numeric progress is meaningful only within one tab sequence. Initialize it
+// alongside the keyed Tabs/Pager, before their first render reads the value.
+const PerpsProMarketTabSession = forwardRef<
+  PerpsProMarketTabSessionHandle,
+  {
+    initialPage: number;
+    children: (position: SharedValue<number>) => React.ReactNode;
+  }
+>(({ children, initialPage }, ref) => {
+  const position = useSharedValue(initialPage);
+  useImperativeHandle(
+    ref,
+    () => ({
+      snapToPage: index => snapPerpsProTabIndicator(position, index),
+    }),
+    [position],
+  );
+  return <>{children(position)}</>;
+});
+
+PerpsProMarketTabSession.displayName = 'PerpsProMarketTabSession';
+
 const createProjectionSelector = () => {
   let previousMarketData: PerpsState['marketData'] | null = null;
   let projection = EMPTY_PERPS_PRO_MARKET_SELECTOR_PROJECTION;
@@ -174,8 +200,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
       null,
     );
     const tabPageRequestGenerationRef = useRef(0);
-    const tabIndicatorContextRef = useRef<string | null>(null);
-    const tabIndicatorPosition = useSharedValue(0);
+    const tabSessionRef = useRef<PerpsProMarketTabSessionHandle>(null);
     const [query, setQuery] = useState('');
     const [inputFocused, setInputFocused] = useState(false);
     const [tabPresentation, setTabPresentation] = useState<{
@@ -269,18 +294,6 @@ const PerpsProMarketSelectorComponent = forwardRef<
       0,
       tabs.findIndex(tab => tab.id === resolvedActiveTab),
     );
-    const tabIndicatorContext = `${tabIdsKey}\u0001${
-      isSearchMode ? 'search' : 'tabs'
-    }`;
-
-    useLayoutEffect(() => {
-      if (tabIndicatorContextRef.current === tabIndicatorContext) {
-        return;
-      }
-      tabIndicatorContextRef.current = tabIndicatorContext;
-      snapPerpsProTabIndicator(tabIndicatorPosition, activeTabIndex);
-    }, [activeTabIndex, tabIndicatorContext, tabIndicatorPosition]);
-
     const preparedTabIndex =
       IS_IOS && resolvedPreviewTab
         ? Math.max(
@@ -421,7 +434,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
         0,
         tabs.findIndex(tab => tab.id === 'all'),
       );
-      snapPerpsProTabIndicator(tabIndicatorPosition, allTabIndex);
+      tabSessionRef.current?.snapToPage(allTabIndex);
       if (resolvedActiveTab !== 'all' || previewTab) {
         pagerRef.current?.setPageWithoutAnimation(allTabIndex);
       }
@@ -435,7 +448,6 @@ const PerpsProMarketSelectorComponent = forwardRef<
       onClose,
       previewTab,
       resolvedActiveTab,
-      tabIndicatorPosition,
       tabs,
     ]);
     const selectSort = useCallback((field: 'name' | 'volume') => {
@@ -649,76 +661,6 @@ const PerpsProMarketSelectorComponent = forwardRef<
               style={styles.search}
               value={query}
             />
-            {!isSearchMode ? (
-              <PerpsProMarketTabs
-                activeTab={displayedTab}
-                indicatorPosition={tabIndicatorPosition}
-                key={tabLayoutKey}
-                onChange={selectTab}
-                tabs={tabs}
-              />
-            ) : null}
-            {!isSearchMode ? (
-              <View
-                style={styles.columnHeader}
-                testID="perps-pro-market-column-header">
-                <View style={styles.sortGroup}>
-                  <BottomSheetTouchableOpacity
-                    activeOpacity={1}
-                    accessibilityLabel={t('page.perps.pro.marketSelector.name')}
-                    accessibilityRole="button"
-                    onPress={() => selectSort('name')}
-                    style={[styles.sortControl, styles.nameSortControl]}
-                    testID="perps-pro-market-sort-name">
-                    <View style={styles.sortControlContent}>
-                      <Text
-                        style={[
-                          styles.columnText,
-                          sort.field === 'name'
-                            ? styles.activeColumnText
-                            : null,
-                        ]}>
-                        {t('page.perps.pro.marketSelector.name')}
-                      </Text>
-                      <PerpsProSortIcon
-                        active={sort.field === 'name'}
-                        direction={sort.direction}
-                      />
-                    </View>
-                  </BottomSheetTouchableOpacity>
-                  <View style={styles.sortSeparator} />
-                  <BottomSheetTouchableOpacity
-                    activeOpacity={1}
-                    accessibilityLabel={t(
-                      'page.perps.pro.marketSelector.volume',
-                    )}
-                    accessibilityRole="button"
-                    onPress={() => selectSort('volume')}
-                    style={styles.sortControl}
-                    testID="perps-pro-market-sort-volume">
-                    <View
-                      style={[
-                        styles.sortControlContent,
-                        styles.volumeSortContent,
-                      ]}>
-                      <Text
-                        style={[
-                          styles.columnText,
-                          sort.field === 'volume'
-                            ? styles.activeColumnText
-                            : null,
-                        ]}>
-                        {t('page.perps.pro.marketSelector.volume')}
-                      </Text>
-                      <PerpsProSortIcon
-                        active={sort.field === 'volume'}
-                        direction={sort.direction}
-                      />
-                    </View>
-                  </BottomSheetTouchableOpacity>
-                </View>
-              </View>
-            ) : null}
             {isSearchMode ? (
               <View
                 style={styles.searchResults}
@@ -741,49 +683,128 @@ const PerpsProMarketSelectorComponent = forwardRef<
                 />
               </View>
             ) : (
-              <PerpsProMarketPager
-                indicatorPosition={tabIndicatorPosition}
+              <PerpsProMarketTabSession
                 initialPage={activeTabIndex}
                 key={tabIdsKey}
-                onPagePreview={handlePagePreview}
-                onPageSelected={handlePageSelected}
-                pageWidth={width}
-                ref={pagerRef}
-                style={styles.pager}
-                testID="perps-pro-market-pager">
-                {tabs.map(tab => {
-                  const slotOrders = slotOrdersByPreparedTab.get(tab.id);
-                  const slots = slotOrders?.[sort.field][sort.direction];
-                  return (
+                ref={tabSessionRef}>
+                {tabIndicatorPosition => (
+                  <>
+                    <PerpsProMarketTabs
+                      activeTab={displayedTab}
+                      indicatorPosition={tabIndicatorPosition}
+                      key={tabLayoutKey}
+                      onChange={selectTab}
+                      tabs={tabs}
+                    />
                     <View
-                      collapsable={false}
-                      key={tab.id}
-                      style={styles.page}
-                      testID={`perps-pro-market-page-${tab.id}`}>
-                      {slots ? (
-                        <PerpsProMarketList
-                          bottomInset={insets.bottom}
-                          currentMarketKey={currentMarketKey}
-                          data={slots}
-                          favoriteSet={favoriteSet}
-                          marketDataStatus={marketDataStatus}
-                          onPrefetch={onPrefetch}
-                          onRealtimeIntentCancel={onRealtimeIntentCancel}
-                          onRealtimeIntentStart={startRealtimeIntent}
-                          onSelect={selectMarket}
-                          onToggleFavorite={toggleFavorite}
-                          pageTab={tab.id}
-                          ref={handle => setListRef(tab.id, handle)}
-                          renderProfile={
-                            tab.id === resolvedActiveTab ? 'active' : 'prepared'
-                          }
-                          searchMode={false}
-                        />
-                      ) : null}
+                      style={styles.columnHeader}
+                      testID="perps-pro-market-column-header">
+                      <View style={styles.sortGroup}>
+                        <BottomSheetTouchableOpacity
+                          activeOpacity={1}
+                          accessibilityLabel={t(
+                            'page.perps.pro.marketSelector.name',
+                          )}
+                          accessibilityRole="button"
+                          onPress={() => selectSort('name')}
+                          style={[styles.sortControl, styles.nameSortControl]}
+                          testID="perps-pro-market-sort-name">
+                          <View style={styles.sortControlContent}>
+                            <Text
+                              style={[
+                                styles.columnText,
+                                sort.field === 'name'
+                                  ? styles.activeColumnText
+                                  : null,
+                              ]}>
+                              {t('page.perps.pro.marketSelector.name')}
+                            </Text>
+                            <PerpsProSortIcon
+                              active={sort.field === 'name'}
+                              direction={sort.direction}
+                            />
+                          </View>
+                        </BottomSheetTouchableOpacity>
+                        <View style={styles.sortSeparator} />
+                        <BottomSheetTouchableOpacity
+                          activeOpacity={1}
+                          accessibilityLabel={t(
+                            'page.perps.pro.marketSelector.volume',
+                          )}
+                          accessibilityRole="button"
+                          onPress={() => selectSort('volume')}
+                          style={styles.sortControl}
+                          testID="perps-pro-market-sort-volume">
+                          <View
+                            style={[
+                              styles.sortControlContent,
+                              styles.volumeSortContent,
+                            ]}>
+                            <Text
+                              style={[
+                                styles.columnText,
+                                sort.field === 'volume'
+                                  ? styles.activeColumnText
+                                  : null,
+                              ]}>
+                              {t('page.perps.pro.marketSelector.volume')}
+                            </Text>
+                            <PerpsProSortIcon
+                              active={sort.field === 'volume'}
+                              direction={sort.direction}
+                            />
+                          </View>
+                        </BottomSheetTouchableOpacity>
+                      </View>
                     </View>
-                  );
-                })}
-              </PerpsProMarketPager>
+                    <PerpsProMarketPager
+                      indicatorPosition={tabIndicatorPosition}
+                      initialPage={activeTabIndex}
+                      key={tabIdsKey}
+                      onPagePreview={handlePagePreview}
+                      onPageSelected={handlePageSelected}
+                      pageWidth={width}
+                      ref={pagerRef}
+                      style={styles.pager}
+                      testID="perps-pro-market-pager">
+                      {tabs.map(tab => {
+                        const slotOrders = slotOrdersByPreparedTab.get(tab.id);
+                        const slots = slotOrders?.[sort.field][sort.direction];
+                        return (
+                          <View
+                            collapsable={false}
+                            key={tab.id}
+                            style={styles.page}
+                            testID={`perps-pro-market-page-${tab.id}`}>
+                            {slots ? (
+                              <PerpsProMarketList
+                                bottomInset={insets.bottom}
+                                currentMarketKey={currentMarketKey}
+                                data={slots}
+                                favoriteSet={favoriteSet}
+                                marketDataStatus={marketDataStatus}
+                                onPrefetch={onPrefetch}
+                                onRealtimeIntentCancel={onRealtimeIntentCancel}
+                                onRealtimeIntentStart={startRealtimeIntent}
+                                onSelect={selectMarket}
+                                onToggleFavorite={toggleFavorite}
+                                pageTab={tab.id}
+                                ref={handle => setListRef(tab.id, handle)}
+                                renderProfile={
+                                  tab.id === resolvedActiveTab
+                                    ? 'active'
+                                    : 'prepared'
+                                }
+                                searchMode={false}
+                              />
+                            ) : null}
+                          </View>
+                        );
+                      })}
+                    </PerpsProMarketPager>
+                  </>
+                )}
+              </PerpsProMarketTabSession>
             )}
           </View>
         </AppBottomSheetModal>

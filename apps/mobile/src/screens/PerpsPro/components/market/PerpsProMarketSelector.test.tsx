@@ -14,7 +14,9 @@ const mockMarkPresent = jest.fn();
 const mockMakeBottomSheetProps = jest.fn(() => ({}));
 const mockPagerSetPage = jest.fn();
 const mockPagerSetPageWithoutAnimation = jest.fn();
+const mockAnimatedStyles = jest.fn();
 let mockSelectorIsIOS = true;
+let mockLanguage = 'en-US';
 
 const mockUiRefreshTimeout = jest.fn();
 
@@ -37,7 +39,11 @@ jest.mock('react-native-reanimated', () => {
     Easing: { bezier: jest.fn(() => jest.fn()) },
     ReduceMotion: { System: 'system' },
     cancelAnimation: jest.fn(),
-    useAnimatedStyle: (factory: () => object) => factory(),
+    useAnimatedStyle: (factory: () => object) => {
+      const style = factory();
+      mockAnimatedStyles(style);
+      return style;
+    },
     useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
     withTiming: (target: number) => target,
   };
@@ -129,7 +135,7 @@ jest.mock('@/components/Typography', () => ({
 }));
 
 jest.mock('@/hooks/lang', () => ({
-  useAppLanguage: () => ({ currentLanguage: 'en-US' }),
+  useAppLanguage: () => ({ currentLanguage: mockLanguage }),
 }));
 
 jest.mock('@/components2024/GlobalBottomSheetModal/utils-help', () => ({
@@ -569,6 +575,7 @@ describe('PerpsProMarketSelector', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockSelectorIsIOS = true;
+    mockLanguage = 'en-US';
     jest.spyOn(global, 'requestAnimationFrame').mockImplementation(callback => {
       callback(0);
       return 1;
@@ -1063,6 +1070,170 @@ describe('PerpsProMarketSelector', () => {
     ).toBeTruthy();
     expect(marketListProps.searchMode).toBe(false);
     expect(screen.getByTestId('perps-pro-market-column-header')).toBeTruthy();
+  });
+
+  describe.each([true, false])('tab presentation (iOS=%s)', isIOS => {
+    let windowWidth: number | null = null;
+    const getPosition = () =>
+      screen.getByTestId('perps-pro-market-pager').props.indicatorPosition as {
+        value: number;
+      };
+    const renderSelector = () => (
+      <PerpsProMarketSelector currentMarketKey={null} onSelect={jest.fn()} />
+    );
+    const selectPage = (position: number) => {
+      getPosition().value = position;
+      fireEvent(
+        screen.getByTestId('perps-pro-market-pager'),
+        'pageSelected',
+        position,
+      );
+    };
+    // Reanimated computes the initial style during render, before layout effects.
+    // Capture that output so an eventual correction cannot hide a wrong first frame.
+    const expectFirstHighlight = (count: number, selected: number) => {
+      const styles = mockAnimatedStyles.mock.calls
+        .map(([style]) => style)
+        .filter(style => 'fontWeight' in style)
+        .slice(0, count);
+      expect(styles).toHaveLength(count);
+      expect(styles.map(style => style.fontWeight)).toEqual(
+        Array.from({ length: count }, (_, index) =>
+          index === selected ? '700' : '500',
+        ),
+      );
+      expect(styles.map(style => style.color)).toEqual(
+        Array.from({ length: count }, (_, index) =>
+          index === selected ? 'neutral-title-1' : 'neutral-secondary',
+        ),
+      );
+    };
+
+    beforeEach(() => {
+      mockSelectorIsIOS = isIOS;
+      windowWidth = null;
+      const native = require('react-native');
+      const useDimensions = native.useWindowDimensions;
+      jest.spyOn(native, 'useWindowDimensions').mockImplementation(() => {
+        const dimensions = useDimensions();
+        return { ...dimensions, width: windowWidth ?? dimensions.width };
+      });
+      __setCategories(
+        ['category-a', 'category-b'].map((id, index) => ({
+          id,
+          is_disable: false,
+          name: id,
+          priority: index,
+          translations: { 'de-DE': `${id} translated` },
+        })),
+      );
+      __setMarketData(
+        mockPerpsStore.getState().marketData.map((market, index) => ({
+          ...market,
+          categoryId: index === 0 ? 'category-a' : 'category-b',
+        })),
+      );
+    });
+
+    it.each(['all', 'category-a', 'category-b'])(
+      'keeps %s highlighted from the first render when Favorites appears or disappears',
+      tab => {
+        const view = render(renderSelector());
+        const index = ['all', 'category-a', 'category-b'].indexOf(tab);
+        selectPage(index);
+        let previousPosition = getPosition();
+        for (const favorites of [['BTC'], []]) {
+          __setFavoriteMarkets(favorites);
+          mockAnimatedStyles.mockClear();
+          // This unit Store fake does not publish; rerender supplies its new snapshot.
+          view.rerender(renderSelector());
+          const expectedIndex = index + (favorites.length ? 1 : 0);
+          expectFirstHighlight(favorites.length ? 4 : 3, expectedIndex);
+          expect(getPosition()).not.toBe(previousPosition);
+          expect(getPosition().value).toBe(expectedIndex);
+          expect(
+            screen.getByTestId('perps-pro-market-pager').props.initialPage,
+          ).toBe(expectedIndex);
+          expect(
+            screen.getByTestId(`perps-pro-market-tab-${tab}`).props
+              .accessibilityState,
+          ).toEqual({ selected: true });
+          expect(getLatestMarketListProps(tab).renderProfile).toBe('active');
+          // A detached pager's late UI-thread write must not change the new presentation.
+          previousPosition.value = 99;
+          expect(getPosition().value).toBe(expectedIndex);
+          previousPosition = getPosition();
+        }
+        expect(mockPagerSetPage).not.toHaveBeenCalled();
+        expect(mockPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
+      },
+    );
+
+    it('falls back to All immediately when the last favorite is removed on Favorites', () => {
+      __setFavoriteMarkets(['BTC']);
+      const view = render(renderSelector());
+      selectPage(0);
+      __setFavoriteMarkets([]);
+      mockAnimatedStyles.mockClear();
+      view.rerender(renderSelector());
+      expectFirstHighlight(3, 0);
+      expect(getPosition().value).toBe(0);
+      expect(screen.queryByTestId('perps-pro-market-tab-favorites')).toBeNull();
+      expect(getLatestMarketListProps('all').renderProfile).toBe('active');
+    });
+
+    it.each([false, true])(
+      'restores the saved category after search changes Favorites (initially present=%s)',
+      hadFavorites => {
+        __setFavoriteMarkets(hadFavorites ? ['BTC'] : []);
+        const view = render(renderSelector());
+        selectPage(hadFavorites ? 2 : 1);
+        const previousPosition = getPosition();
+        fireEvent(screen.getByTestId('market-search'), 'focus');
+        expect(screen.queryByTestId('perps-pro-market-pager')).toBeNull();
+        __setFavoriteMarkets(hadFavorites ? [] : ['BTC']);
+        view.rerender(renderSelector());
+        mockAnimatedStyles.mockClear();
+        fireEvent.press(screen.getByTestId('market-search-cancel'));
+        const expectedIndex = hadFavorites ? 1 : 2;
+        expectFirstHighlight(hadFavorites ? 3 : 4, expectedIndex);
+        expect(getPosition()).not.toBe(previousPosition);
+        expect(getPosition().value).toBe(expectedIndex);
+        expect(getLatestMarketListProps('category-a').renderProfile).toBe(
+          'active',
+        );
+      },
+    );
+
+    it('preserves fractional progress for ordinary changes within the same tab sequence', () => {
+      __setFavoriteMarkets(['BTC']);
+      const view = render(renderSelector());
+      const position = getPosition();
+      position.value = 1.4;
+      fireEvent(screen.getByTestId('perps-pro-market-pager'), 'pagePreview', 2);
+      expect(getPosition()).toBe(position);
+      expect(position.value).toBe(1.4);
+      __setFavoriteMarkets(['BTC', 'ETH']);
+      view.rerender(renderSelector());
+      expect(getPosition()).toBe(position);
+      expect(position.value).toBe(1.4);
+      mockLanguage = 'de-DE';
+      mockAnimatedStyles.mockClear();
+      view.rerender(renderSelector());
+      expectFirstHighlight(4, 1);
+      expect(getPosition()).toBe(position);
+      expect(position.value).toBe(1.4);
+      windowWidth = 430;
+      view.rerender(renderSelector());
+      expect(getPosition()).toBe(position);
+      expect(position.value).toBe(1.4);
+      fireEvent.press(screen.getByTestId('perps-pro-market-tab-category-b'));
+      expect(getPosition()).toBe(position);
+      expect(mockPagerSetPageWithoutAnimation).toHaveBeenCalledWith(3);
+      selectPage(3);
+      expect(getPosition()).toBe(position);
+      expect(position.value).toBe(3);
+    });
   });
 
   it('matches the Figma header spacing and keeps 44pt gesture-aware sort targets', () => {
