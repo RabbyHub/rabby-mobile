@@ -848,6 +848,45 @@ describe('PerpsProTradeForm order matrix', () => {
     ).toMatchObject({ height: 40 });
   });
 
+  it.each(['buy', 'sell'] as const)(
+    'keeps the %s button copy in the Figma 18 + 2 + 12 line boxes',
+    side => {
+      const trade = controller({ amountUnit: 'base' }) as any;
+      trade.amountUnitLabel = 'BTC';
+      trade.getSliderButtonDisplayAmount = jest.fn(() => '1.23456');
+      render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
+      const amount = screen.getByTestId(
+        `perps-pro-trade-button-${side}-amount`,
+      );
+      const amountStyle = StyleSheet.flatten(amount.props.style);
+      const copy = amount.parent?.parent!;
+      const copyStyle = StyleSheet.flatten(copy.props.style);
+      const labelStyle = StyleSheet.flatten(copy.children[0].props.style);
+      const buttonStyle = StyleSheet.flatten(
+        screen.getByTestId(`perps-pro-trade-button-${side}`).props.style,
+      );
+      expect(amount.props.adjustsFontSizeToFit).toBeUndefined();
+      expect(amountStyle).toMatchObject({
+        fontSize: 10,
+        lineHeight: 12,
+        fontVariant: ['tabular-nums'],
+      });
+      expect(labelStyle).toMatchObject({ fontSize: 14, lineHeight: 18 });
+      expect(copyStyle.gap).toBe(2);
+      expect(buttonStyle).toMatchObject({
+        height: 40,
+        justifyContent: 'center',
+      });
+      expect(
+        (buttonStyle.height -
+          labelStyle.lineHeight -
+          copyStyle.gap -
+          amountStyle.lineHeight) /
+          2,
+      ).toBe(4);
+    },
+  );
+
   it('waits for keyboard dismissal before requesting Buy or Sell review', () => {
     const trade = controller({ amount: '10' });
     let pendingAction: (() => void) | null = null;

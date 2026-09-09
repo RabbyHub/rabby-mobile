@@ -1,7 +1,4 @@
-import {
-  PERPS_PRO_NUMBER_STYLE,
-  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
-} from '../common/perpsProNumberText';
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcIconEdit from '@/assets2024/icons/perps/IconPerpEdit.svg';
 import RcManageMargin from '@/assets2024/icons/perps/PerpsProAvailableAdd.svg';
 import RcIconSwitchUnit from '@/assets2024/icons/perps/PerpsProPositionUnitSwitch.svg';
@@ -523,21 +520,11 @@ export const PerpsProPositionCard: React.FC<{
                   style={[styles.label, styles.expandedRightLabel]}>
                   {liquidationDistanceLabel}
                 </PerpsProDottedUnderlineText>
+                <View style={styles.metricValueSpacer} />
               </>
             ) : (
               <View style={styles.metricLabelSpacer} />
             )}
-            {position.marginMode === 'isolated' ? (
-              <View
-                style={styles.liquidationDistanceValueContainer}
-                testID={`perps-pro-position-liquidation-distance-${position.key}`}>
-                <Text
-                  {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
-                  style={[styles.value, styles.liquidationDistanceValue]}>
-                  {displayLiquidationDistance}
-                </Text>
-              </View>
-            ) : null}
           </View>
           {position.marginMode === 'isolated' ? (
             <>
@@ -557,6 +544,16 @@ export const PerpsProPositionCard: React.FC<{
                   </PerpsProDottedUnderlineText>
                 </View>
               )}
+              <View
+                pointerEvents="none"
+                style={styles.liquidationDistanceValueOverlay}
+                testID={`perps-pro-position-liquidation-distance-${position.key}`}>
+                <Text
+                  numberOfLines={1}
+                  style={[styles.value, styles.liquidationDistanceValue]}>
+                  {displayLiquidationDistance}
+                </Text>
+              </View>
             </>
           ) : null}
         </View>
@@ -832,6 +829,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   metricLabelSpacer: {
     height: 16,
   },
+  metricValueSpacer: {
+    height: 18,
+  },
   rightMetricLabelOverlay: {
     alignItems: 'flex-end',
     left: 0,
@@ -895,14 +895,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'center',
     width: 16,
   },
-  liquidationDistanceValueContainer: {
-    alignSelf: 'stretch',
-    marginTop: 'auto',
-    paddingTop: 2,
+  liquidationDistanceValueOverlay: {
+    alignItems: 'flex-end',
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
   },
   liquidationDistanceValue: {
     marginTop: 0,
-    textAlign: 'right',
   },
   tpslRow: {
     alignItems: 'center',

@@ -609,16 +609,16 @@ describe('PerpsProTpSlFields', () => {
       expect(
         screen.getByTestId('perps-pro-tpsl-tooltip-buy-line').props
           .ellipsizeMode,
-      ).toBeUndefined();
+      ).toBe('tail');
       expect(
         screen.getByTestId('perps-pro-tpsl-tooltip-sell-line').props
           .ellipsizeMode,
-      ).toBeUndefined();
+      ).toBe('tail');
 
       const staleMeasureHandler = tooltipMeasure().props.onTextLayout;
-      // Measure the natural tabular text, then fit only the visible bounded row.
+      // Measure at the visible font size; retain the existing bounded ellipsis policy.
       const visibleLine = screen.getByTestId('perps-pro-tpsl-tooltip-buy-line');
-      expect(visibleLine.props.adjustsFontSizeToFit).toBe(true);
+      expect(visibleLine.props.adjustsFontSizeToFit).toBeUndefined();
       expect(tooltipMeasure().props.adjustsFontSizeToFit).toBeUndefined();
       expect(StyleSheet.flatten(visibleLine.props.style).fontVariant).toEqual([
         'tabular-nums',
@@ -732,11 +732,11 @@ describe('PerpsProTpSlFields', () => {
     });
     expect(
       screen.getByTestId('perps-pro-tpsl-tooltip-buy-line').props.ellipsizeMode,
-    ).toBeUndefined();
+    ).toBe('tail');
     expect(
       screen.getByTestId('perps-pro-tpsl-tooltip-sell-line').props
         .ellipsizeMode,
-    ).toBeUndefined();
+    ).toBe('tail');
   });
 
   it('does not reserve inline error UI beside either TP/SL leg', () => {

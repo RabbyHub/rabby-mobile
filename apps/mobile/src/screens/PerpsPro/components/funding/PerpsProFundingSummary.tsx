@@ -1,7 +1,4 @@
-import {
-  PERPS_PRO_NUMBER_STYLE,
-  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
-} from '../common/perpsProNumberText';
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -39,7 +36,7 @@ const FundingCountdown = React.memo(
     }, [serverClock]);
 
     return (
-      <Text {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS} style={styles.countdown}>
+      <Text style={styles.countdown}>
         {formatPerpsFundingCountdown(
           getPerpsFundingCountdownMs(serverClock, now),
         )}
@@ -72,7 +69,7 @@ export const PerpsProFundingSummary: React.FC<{
         {t('page.perps.pro.funding.summary')}
       </PerpsProDottedUnderlineText>
       <View style={styles.valueLine}>
-        <Text {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS} style={styles.rate}>
+        <Text style={styles.rate}>
           {formatPerpsProFundingRate(market?.marketData.funding)}
         </Text>
         <Text style={styles.separator}>/</Text>
@@ -104,8 +101,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   rate: {
     ...PERPS_PRO_NUMBER_STYLE,
-    flexShrink: 1,
-    minWidth: 0,
     color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 10,
@@ -120,7 +115,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   countdown: {
     ...PERPS_PRO_NUMBER_STYLE,
-    flexShrink: 0,
     color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 10,

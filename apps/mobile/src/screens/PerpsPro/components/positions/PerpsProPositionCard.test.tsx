@@ -518,9 +518,11 @@ describe('PerpsProPositionCard', () => {
       screen.getByTestId('perps-pro-position-liquidation-distance-BTC').props
         .style,
     ).toMatchObject({
-      alignSelf: 'stretch',
-      marginTop: 'auto',
-      paddingTop: 2,
+      alignItems: 'flex-end',
+      bottom: 0,
+      left: 0,
+      position: 'absolute',
+      right: 0,
     });
     expect(
       screen.getByTestId('perps-pro-position-liquidation-distance-label-BTC')
@@ -570,7 +572,7 @@ describe('PerpsProPositionCard', () => {
     });
   });
 
-  it('fits a long Isolated Liq. Distance inside its own metric column', () => {
+  it('keeps a long Isolated Liq. Distance at its original size across the full row', () => {
     render(
       <PerpsProPositionCard
         accountIdentity="account-a"
@@ -581,11 +583,18 @@ describe('PerpsProPositionCard', () => {
       />,
     );
 
-    expect(screen.getByText('+117477.89%(+123,351.78)')).toBeTruthy();
+    const value = screen.getByText('+117477.89%(+123,351.78)');
+    expect(value.props.adjustsFontSizeToFit).toBeUndefined();
+    expect(value.props.numberOfLines).toBe(1);
+    expect(StyleSheet.flatten(value.props.style)).toMatchObject({
+      fontSize: 12,
+      lineHeight: 16,
+      fontVariant: ['tabular-nums'],
+    });
     expect(
       screen.getByTestId('perps-pro-position-liquidation-distance-BTC').props
         .style,
-    ).toMatchObject({ alignSelf: 'stretch', marginTop: 'auto' });
+    ).toMatchObject({ bottom: 0, left: 0, position: 'absolute', right: 0 });
   });
 
   it('keeps compact geometry for fitting copy and expands only after native measurements collide', () => {
@@ -820,10 +829,10 @@ describe('PerpsProPositionCard', () => {
     expect(
       screen.getByTestId('perps-pro-position-liquidation-distance-BTC').props
         .style,
-    ).toMatchObject({ alignSelf: 'stretch', marginTop: 'auto', paddingTop: 2 });
-    expect(screen.getByText('-23.81%(-25.00)').props.adjustsFontSizeToFit).toBe(
-      true,
-    );
+    ).toMatchObject({ bottom: 0, left: 0, position: 'absolute', right: 0 });
+    expect(
+      screen.getByText('-23.81%(-25.00)').props.adjustsFontSizeToFit,
+    ).toBeUndefined();
     expect(
       StyleSheet.flatten(screen.getByText('-23.81%(-25.00)').props.style)
         .fontVariant,

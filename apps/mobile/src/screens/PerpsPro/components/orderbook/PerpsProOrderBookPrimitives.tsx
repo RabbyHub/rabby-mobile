@@ -1,7 +1,4 @@
-import {
-  PERPS_PRO_NUMBER_STYLE,
-  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
-} from '../common/perpsProNumberText';
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -86,7 +83,7 @@ export const PerpsProOrderBookRow: React.FC<{
       style={styles.bookRow}
       testID="perps-pro-order-book-row">
       <Text
-        {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
+        numberOfLines={1}
         style={[
           styles.bookPrice,
           level
@@ -98,7 +95,7 @@ export const PerpsProOrderBookRow: React.FC<{
         {level ? formatPerpsProPrice(level.priceNumber, priceDecimals) : '--'}
       </Text>
       <Text
-        {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
+        numberOfLines={1}
         style={[styles.bookAmount, level ? null : styles.placeholder]}>
         {level
           ? formatPerpsProOrderBookAmount(
@@ -225,10 +222,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   bookAmount: {
     ...PERPS_PRO_NUMBER_STYLE,
-    maxWidth: '50%',
-    minWidth: 0,
     color: colors2024['neutral-title-1'],
-    flexShrink: 1,
+    flexShrink: 0,
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '400',

@@ -1,7 +1,4 @@
-import {
-  PERPS_PRO_NUMBER_STYLE,
-  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
-} from '../common/perpsProNumberText';
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcAlarm from '@/assets2024/icons/perps/PerpsProMarginAlarm.svg';
 import RcWarning from '@/assets2024/icons/perps/PerpsProMarginWarning.svg';
 import AutoLockView from '@/components/AutoLockView';
@@ -213,9 +210,7 @@ export const PerpsProManageMarginSheet: React.FC<{
                   {t('page.perps.pro.positions.entry')} (
                   {displayView.quoteAsset})
                 </Text>
-                <Text
-                  {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
-                  style={styles.factValueRounded}>
+                <Text style={styles.factValueRounded}>
                   {formatPerpsProPrice(
                     displayView.entryPrice,
                     displayView.pxDecimals,
@@ -227,9 +222,7 @@ export const PerpsProManageMarginSheet: React.FC<{
                   {t('page.perps.pro.positions.mark')} ({displayView.quoteAsset}
                   )
                 </Text>
-                <Text
-                  {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
-                  style={styles.factValue}>
+                <Text style={styles.factValue}>
                   {formatPerpsProPrice(
                     displayView.markPrice,
                     displayView.pxDecimals,
@@ -257,14 +250,10 @@ export const PerpsProManageMarginSheet: React.FC<{
                 range={range}
                 ref={inputRef}
               />
-              <Text
-                {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
-                style={styles.minimumValue}>
+              <Text style={styles.minimumValue}>
                 {range ? formatPerpsProDecimal(range.displayMin, 2) : '--'}
               </Text>
-              <Text
-                {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
-                style={styles.maximumValue}>
+              <Text style={styles.maximumValue}>
                 {range ? formatPerpsProDecimal(range.max, 2) : '--'}
               </Text>
               <View style={styles.slider}>
@@ -311,9 +300,7 @@ export const PerpsProManageMarginSheet: React.FC<{
                 <Text style={styles.factLabel}>
                   {t('page.perps.pro.positions.liquidation')}
                 </Text>
-                <Text
-                  {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
-                  style={styles.factValue}>
+                <Text style={styles.factValue}>
                   {currentLiq} → {projectedLiq}
                 </Text>
               </View>
@@ -327,9 +314,7 @@ export const PerpsProManageMarginSheet: React.FC<{
                     height={16}
                     width={16}
                   />
-                  <Text
-                    {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
-                    style={styles.factValue}>
+                  <Text style={styles.factValue}>
                     {currentDistance} → {projectedDistance}
                   </Text>
                 </View>
@@ -470,7 +455,6 @@ const getStyle = createGetStyles2024(
     amountCardError: { height: 184 },
     minimumValue: {
       ...PERPS_PRO_NUMBER_STYLE,
-      maxWidth: '45%',
       color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 12,
@@ -482,8 +466,6 @@ const getStyle = createGetStyles2024(
     },
     maximumValue: {
       ...PERPS_PRO_NUMBER_STYLE,
-      maxWidth: '45%',
-      textAlign: 'right',
       color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 12,

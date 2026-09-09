@@ -1,7 +1,4 @@
-import {
-  PERPS_PRO_NUMBER_STYLE,
-  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
-} from '../common/perpsProNumberText';
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcIconHistory from '@/assets2024/icons/perps/IconHistoryCC.svg';
 import RcIconPending from '@/assets2024/icons/home/pending.svg';
 import { Text } from '@/components/Typography';
@@ -158,7 +155,6 @@ const PerpsProPendingHistoryIcon: React.FC<{ count: number }> = ({ count }) => {
       </Animated.View>
       {count > 1 ? (
         <Text
-          {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
           style={styles.pendingCount}
           testID="perps-pro-history-pending-count">
           {count}

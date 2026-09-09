@@ -1,7 +1,4 @@
-import {
-  PERPS_PRO_NUMBER_STYLE,
-  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
-} from '../common/perpsProNumberText';
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -103,9 +100,7 @@ export const PerpsProPositionTpSlOrderList: React.FC<{
                       )}
                     </Text>
                   </View>
-                  <Text
-                    {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
-                    style={styles.coverage}>
+                  <Text style={styles.coverage}>
                     {t('page.perps.pro.positionTpsl.positionSizeCoverage', {
                       percent: formatPerpsProPercent(
                         coverage == null ? null : Number(coverage),
@@ -203,7 +198,6 @@ const PartialOrderRow: React.FC<{
           {t('page.perps.pro.positionTpsl.triggerPrice')}
         </Text>
         <Text
-          {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
           style={
             kind === 'takeProfit'
               ? styles.takeProfitValue
@@ -297,7 +291,7 @@ const OrderMetric: React.FC<{
         label
       )}
       <Text
-        {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
+        numberOfLines={1}
         style={[
           tone === 'positive'
             ? styles.positiveMetricValue
@@ -392,7 +386,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   orderMetric: { height: 36, minWidth: 0 },
   orderMetricRight: {
     alignItems: 'flex-end',
-    // Preserve the label's natural width; bound the numeric value to its cell.
+    // Keep right-anchored text in Yoga's natural-width measurement mode.
     flexDirection: 'row',
     overflow: 'visible',
     position: 'relative',
@@ -406,7 +400,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   orderMetricRightValue: {
     flexShrink: 0,
-    left: 0,
     marginTop: 0,
     position: 'absolute',
     right: 0,

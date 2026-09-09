@@ -219,7 +219,7 @@ describe('Perps Pro account visual contract', () => {
     },
   );
 
-  it('keeps large signed balances complete inside bounded numeric columns', () => {
+  it('lets large signed balances wrap at the approved size inside their columns', () => {
     render(
       <PerpsProAccountSummary
         account={{
@@ -234,10 +234,8 @@ describe('Perps Pro account visual contract', () => {
 
     for (const value of ['$1,111,111,111.11', '-$888,888,888.88']) {
       const text = screen.getByText(value);
-      expect(text.props).toMatchObject({
-        adjustsFontSizeToFit: true,
-        numberOfLines: 1,
-      });
+      expect(text.props.adjustsFontSizeToFit).toBeUndefined();
+      expect(text.props.numberOfLines).toBeUndefined();
       expect(StyleSheet.flatten(text.props.style)).toMatchObject({
         fontVariant: ['tabular-nums'],
         fontSize: 18,
@@ -394,7 +392,7 @@ describe('Perps Pro account visual contract', () => {
     });
   });
 
-  it('keeps Swap identity and complete large amounts in the available numeric column', () => {
+  it('keeps Swap identity and lets large amounts wrap without shrinking', () => {
     const onSwap = jest.fn();
     const onTransfer = jest.fn();
     render(
@@ -412,10 +410,8 @@ describe('Perps Pro account visual contract', () => {
 
     for (const amount of ['1,111,111,111.11', '$1,111,111,111.11']) {
       const value = screen.getByText(amount);
-      expect(value.props).toMatchObject({
-        adjustsFontSizeToFit: true,
-        numberOfLines: 1,
-      });
+      expect(value.props.adjustsFontSizeToFit).toBeUndefined();
+      expect(value.props.numberOfLines).toBeUndefined();
       expect(StyleSheet.flatten(value.props.style).fontVariant).toEqual([
         'tabular-nums',
       ]);

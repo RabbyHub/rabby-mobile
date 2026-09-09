@@ -1,7 +1,4 @@
-import {
-  PERPS_PRO_NUMBER_STYLE,
-  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
-} from '../common/perpsProNumberText';
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text, TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -70,18 +67,14 @@ export const PerpsProOpenOrderEditInput: React.FC<{
     if (disabled) {
       return (
         <View style={[styles.field, styles.disabled]} testID={testID}>
-          <Text
-            {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
-            style={styles.disabledText}>
-            {value}
-          </Text>
+          <Text style={styles.disabledText}>{value}</Text>
         </View>
       );
     }
     return (
       <View style={styles.field} testID={testID}>
         {label ? (
-          <Text {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS} style={styles.label}>
+          <Text numberOfLines={1} style={styles.label}>
             <Text style={styles.labelTitle}>{label} </Text>
             {currentValue ? (
               <Text style={PERPS_PRO_NUMBER_STYLE}>{`(${currentValue})`}</Text>

@@ -1,7 +1,4 @@
-import {
-  PERPS_PRO_NUMBER_STYLE,
-  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
-} from '../common/perpsProNumberText';
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcCandlestick from '@/assets2024/icons/perps/PerpsProCandlestick.svg';
 import RcMarketCaret from '@/assets2024/icons/perps/PerpsProMarketCaret.svg';
 import { Text } from '@/components/Typography';
@@ -51,7 +48,7 @@ export const PerpsProMarketBar: React.FC<{
             {market.sourceTag}
           </Text>
         ) : null}
-        <Text {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS} style={changeStyle}>
+        <Text style={changeStyle}>
           {formatPerpsProPercent(market?.change24h)}
         </Text>
         <RcMarketCaret

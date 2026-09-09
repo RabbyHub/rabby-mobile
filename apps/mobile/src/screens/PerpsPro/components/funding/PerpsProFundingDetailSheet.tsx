@@ -1,7 +1,4 @@
-import {
-  PERPS_PRO_NUMBER_STYLE,
-  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
-} from '../common/perpsProNumberText';
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { AppBottomSheetModal } from '@/components';
 import { Text } from '@/components/Typography';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
@@ -78,11 +75,7 @@ const FundingValueRow: React.FC<{
   return (
     <View style={styles.valueRow}>
       <Text style={styles.valueLabel}>{label}</Text>
-      <Text
-        {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
-        style={[styles.value, valueStyle]}>
-        {value}
-      </Text>
+      <Text style={[styles.value, valueStyle]}>{value}</Text>
     </View>
   );
 };
@@ -323,9 +316,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   value: {
     ...PERPS_PRO_NUMBER_STYLE,
-    flexShrink: 1,
-    maxWidth: '64%',
-    minWidth: 0,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,

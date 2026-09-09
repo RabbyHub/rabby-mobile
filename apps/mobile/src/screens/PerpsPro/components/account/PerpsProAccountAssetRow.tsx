@@ -1,7 +1,4 @@
-import {
-  PERPS_PRO_NUMBER_STYLE,
-  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
-} from '../common/perpsProNumberText';
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcIconUSDC from '@/assets2024/icons/perps/IconUSDC.svg';
 import RcIconUSDE from '@/assets2024/icons/perps/IconUSDE.svg';
 import RcIconUSDH from '@/assets2024/icons/perps/IconUSDH.svg';
@@ -56,10 +53,10 @@ export const PerpsProAccountAssetRow: React.FC<{
           </View>
         </View>
         <View style={styles.assetValue}>
-          <Text {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS} style={styles.total}>
+          <Text style={styles.total}>
             {formatPerpsProDecimal(asset.total, 2)}
           </Text>
-          <Text {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS} style={styles.usdValue}>
+          <Text style={styles.usdValue}>
             {formatPerpsProUsdValue(asset.usdValue)}
           </Text>
         </View>

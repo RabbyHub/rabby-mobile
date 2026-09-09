@@ -1,7 +1,4 @@
-import {
-  PERPS_PRO_NUMBER_STYLE,
-  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
-} from '../common/perpsProNumberText';
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcCheckboxEmptyCC from '@/assets2024/icons/common/checkbox-empty-cc.svg';
 import RcCheckboxFilledBrand from '@/assets2024/icons/common/checkbox-filled-brand.svg';
 import AutoLockView from '@/components/AutoLockView';
@@ -149,9 +146,7 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
                 <Text style={styles.detailLabel}>
                   {t('page.perps.pro.positions.price')}
                 </Text>
-                <Text
-                  {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
-                  style={styles.detailValue}>
+                <Text style={styles.detailValue}>
                   {draft.orderType === 'market'
                     ? t('page.perps.pro.positions.marketPrice')
                     : `${formatPerpsProPrice(
@@ -164,9 +159,7 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
                 <Text style={styles.detailLabel}>
                   {t('page.perps.pro.positions.amount')}
                 </Text>
-                <Text
-                  {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
-                  style={styles.detailValue}>
+                <Text style={styles.detailValue}>
                   {formatPerpsProDecimal(
                     displayAmount,
                     amountUnit === 'base' ? market.szDecimals : 2,

@@ -1,7 +1,4 @@
-import {
-  PERPS_PRO_NUMBER_STYLE,
-  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
-} from '../common/perpsProNumberText';
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcIconCheckboxEmpty from '@/assets2024/icons/common/checkbox-empty-cc.svg';
 import RcIconCheckboxFilled from '@/assets2024/icons/common/checkbox-filled-brand.svg';
 import { Text } from '@/components/Typography';
@@ -113,9 +110,7 @@ export const PerpsProTradeSummaryRow: React.FC<{
           onPress={onPressValue}
           style={styles.summaryValueGroup}
           testID={valueTestID}>
-          <Text
-            {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
-            style={styles.summaryValue}>
+          <Text numberOfLines={1} style={styles.summaryValue}>
             {value}
           </Text>
           {trailing}
@@ -205,7 +200,7 @@ export const PerpsProTradeButton: React.FC<{
         <Text style={styles.tradeButtonText}>{label}</Text>
         {subtitle ? (
           <Text
-            {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
+            numberOfLines={1}
             style={styles.tradeButtonSubtitle}
             testID={`perps-pro-trade-button-${side}-amount`}>
             {subtitle}
@@ -325,5 +320,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 10,
     fontWeight: '400',
+    lineHeight: 12,
   },
 }));

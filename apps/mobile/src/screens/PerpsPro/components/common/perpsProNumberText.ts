@@ -1,12 +1,10 @@
-import type { TextProps, TextStyle } from 'react-native';
+import type { TextStyle } from 'react-native';
 
-/** Keep the existing Rounded face/weight; opt numeric runs into its tnum glyphs. */
+/**
+ * Keep the existing Rounded face, size and weight; opt numeric runs into tnum.
+ * Line count and available width belong to each field. Native font fitting can
+ * shrink even fitting text when a fixed line height meets a rounded layout box.
+ */
 export const PERPS_PRO_NUMBER_STYLE: Pick<TextStyle, 'fontVariant'> = {
   fontVariant: ['tabular-nums'],
 };
-
-/** Prefer native fitting in bounded numeric rows; keep the full source value. */
-export const PERPS_PRO_SINGLE_LINE_NUMBER_PROPS = {
-  adjustsFontSizeToFit: true,
-  numberOfLines: 1,
-} satisfies Pick<TextProps, 'adjustsFontSizeToFit' | 'numberOfLines'>;

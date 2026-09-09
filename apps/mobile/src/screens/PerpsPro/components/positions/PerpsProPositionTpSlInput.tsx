@@ -1,7 +1,4 @@
-import {
-  PERPS_PRO_NUMBER_STYLE,
-  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
-} from '../common/perpsProNumberText';
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text, TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -103,7 +100,7 @@ export const PerpsProPositionTpSlInput: React.FC<{
           )}
           {!focused && value ? (
             <Text
-              {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
+              numberOfLines={1}
               pointerEvents="none"
               style={styles.formattedValue}
               testID={`${testID}-formatted-value`}>

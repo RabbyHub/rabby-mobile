@@ -1,7 +1,4 @@
-import {
-  PERPS_PRO_NUMBER_STYLE,
-  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
-} from '../common/perpsProNumberText';
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text, TextInput } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import {
@@ -532,7 +529,6 @@ export const PerpsProPositionTpSlForm: React.FC<{
               </Text>
               {inputSource === 'slider' && hasAmountValue ? (
                 <Text
-                  {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
                   pointerEvents="none"
                   style={styles.sliderAmountValue}
                   testID="perps-pro-position-tpsl-slider-amount">

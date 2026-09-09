@@ -505,11 +505,15 @@ describe('PerpsProOrderBook display shell', () => {
     const amountStyle = StyleSheet.flatten(
       screen.getByText('149.90M').props.style,
     );
-    expect(amountStyle.flexShrink).toBe(1);
-    expect(amountStyle.maxWidth).toBe('50%');
+    expect(amountStyle.flexShrink).toBe(0);
+    expect(amountStyle.maxWidth).toBeUndefined();
     expect(amountStyle.fontVariant).toEqual(['tabular-nums']);
-    expect(screen.getByText('149.90M').props.adjustsFontSizeToFit).toBe(true);
-    expect(screen.getByText('2,000').props.adjustsFontSizeToFit).toBe(true);
+    expect(
+      screen.getByText('149.90M').props.adjustsFontSizeToFit,
+    ).toBeUndefined();
+    expect(
+      screen.getByText('2,000').props.adjustsFontSizeToFit,
+    ).toBeUndefined();
 
     const priceStyle = StyleSheet.flatten(
       screen.getByText('2,000').props.style,
@@ -648,6 +652,14 @@ describe('PerpsProOrderBook display shell', () => {
     const sellRatio = screen.getByText('49.75%');
     expect(buyRatio.props.numberOfLines).toBe(1);
     expect(sellRatio.props.numberOfLines).toBe(1);
+    for (const label of [buyRatio, sellRatio]) {
+      expect(label.props.adjustsFontSizeToFit).toBeUndefined();
+      expect(StyleSheet.flatten(label.props.style)).toMatchObject({
+        fontSize: 10,
+        lineHeight: 12,
+        fontVariant: ['tabular-nums'],
+      });
+    }
     const ratioRowStyle = StyleSheet.flatten(
       buyRatio.parent?.parent?.props.style,
     );

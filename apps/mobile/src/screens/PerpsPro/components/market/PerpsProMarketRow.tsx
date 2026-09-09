@@ -1,7 +1,4 @@
-import {
-  PERPS_PRO_NUMBER_STYLE,
-  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
-} from '../common/perpsProNumberText';
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcFavoriteStar from '@/assets2024/icons/perps/PerpsProFavoriteStar.svg';
 import RcFavoriteStarEmpty from '@/assets/icons/dapp/icon-star.svg';
 import { Text } from '@/components/Typography';
@@ -203,9 +200,7 @@ const PerpsProMarketRowComponent: React.FC<PerpsProMarketRowProps> = ({
               </Text>
             ) : null}
           </View>
-          <Text
-            {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
-            style={styles.marketPrice}>
+          <Text numberOfLines={1} style={styles.marketPrice}>
             {formatPerpsProMarketSelectorPrice(model.price, model.pxDecimals)}
           </Text>
         </View>
@@ -217,13 +212,11 @@ const PerpsProMarketRowComponent: React.FC<PerpsProMarketRowProps> = ({
               </Text>
             ) : null}
             {model.fullName ? <View style={styles.marketMetaDivider} /> : null}
-            <Text
-              {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
-              style={styles.volumeText}>
+            <Text numberOfLines={1} style={styles.volumeText}>
               {formatPerpsProCompactNumber(model.volume24h)}
             </Text>
           </View>
-          <Text {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS} style={changeStyle}>
+          <Text numberOfLines={1} style={changeStyle}>
             {formatPerpsProPercent(model.change24h)}
           </Text>
         </View>
@@ -324,7 +317,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   volumeText: {
     ...PERPS_PRO_NUMBER_STYLE,
-    maxWidth: '60%',
     color: colors2024['neutral-secondary'],
     flexShrink: 0,
     fontFamily: 'SF Pro Rounded',
@@ -340,9 +332,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   marketPrice: {
     ...PERPS_PRO_NUMBER_STYLE,
-    flexShrink: 1,
-    minWidth: 0,
-    maxWidth: '60%',
     color: colors2024['neutral-title-1'],
     marginLeft: 8,
     fontFamily: 'SF Pro Rounded',
@@ -352,7 +341,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   changeUp: {
     ...PERPS_PRO_NUMBER_STYLE,
-    maxWidth: '60%',
     color: colors2024['green-default'],
     flexShrink: 0,
     marginLeft: 20,
@@ -363,7 +351,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   changeDown: {
     ...PERPS_PRO_NUMBER_STYLE,
-    maxWidth: '60%',
     color: colors2024['red-default'],
     flexShrink: 0,
     marginLeft: 20,
@@ -374,7 +361,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   changeMuted: {
     ...PERPS_PRO_NUMBER_STYLE,
-    maxWidth: '60%',
     color: colors2024['neutral-secondary'],
     flexShrink: 0,
     marginLeft: 20,

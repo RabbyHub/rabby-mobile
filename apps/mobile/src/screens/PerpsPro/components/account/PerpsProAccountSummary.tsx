@@ -1,7 +1,4 @@
-import {
-  PERPS_PRO_NUMBER_STYLE,
-  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
-} from '../common/perpsProNumberText';
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { useShowPerpsPortfolioBreakdown } from '@/screens/PerpsShared/components/PerpsPortfolioBreakdownExplanation';
@@ -50,9 +47,7 @@ export const PerpsProAccountSummary: React.FC<PerpsProAccountSummaryProps> =
             ) : (
               <Text style={styles.label}>{portfolioValueLabel}</Text>
             )}
-            <Text
-              {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
-              style={styles.primaryValue}>
+            <Text style={styles.primaryValue}>
               {formatPerpsProUsdValue(account.primaryValue)}
             </Text>
           </View>
@@ -61,7 +56,6 @@ export const PerpsProAccountSummary: React.FC<PerpsProAccountSummaryProps> =
               {t('page.perps.pro.account.unrealizedPnl')}
             </Text>
             <Text
-              {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
               style={
                 pnl > 0
                   ? styles.positiveValue

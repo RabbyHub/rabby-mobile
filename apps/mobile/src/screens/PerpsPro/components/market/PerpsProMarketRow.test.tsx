@@ -106,6 +106,43 @@ const createMarketData = (
 });
 
 describe('PerpsProMarketRow', () => {
+  it.each([
+    ['111111.11', 2, '111,111.11'],
+    ['0.00000123', 8, '0.00000123'],
+  ])(
+    'keeps %s at 16pt beside a long market name',
+    (markPx, pxDecimals, price) => {
+      const model = buildPerpsProMarketRowModel(
+        createMarketData('xyz:LONGMARKETNAME', {
+          dexId: 'xyz',
+          displayName: 'LONGMARKETNAME',
+          markPx,
+          pxDecimals,
+        }),
+      );
+      render(
+        <PerpsProMarketRow
+          favorite={false}
+          model={model}
+          onSelect={jest.fn()}
+          onToggleFavorite={jest.fn()}
+          selected={false}
+        />,
+      );
+      const text = screen.getByText(price);
+      const style = StyleSheet.flatten(text.props.style);
+      expect(text.props.adjustsFontSizeToFit).toBeUndefined();
+      expect(text.props.numberOfLines).toBe(1);
+      expect(style).toMatchObject({
+        fontSize: 16,
+        lineHeight: 20,
+        fontVariant: ['tabular-nums'],
+      });
+      expect(style.maxWidth).toBeUndefined();
+      expect(style.flexShrink).toBeUndefined();
+    },
+  );
+
   it('matches the approved 56px row geometry and typography', () => {
     const model = buildPerpsProMarketRowModel(
       createMarketData('xyz:ALPHA', {

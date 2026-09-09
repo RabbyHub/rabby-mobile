@@ -1,7 +1,4 @@
-import {
-  PERPS_PRO_NUMBER_STYLE,
-  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
-} from '../common/perpsProNumberText';
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcIconBack from '@/assets/icons/header/back-cc.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
@@ -134,7 +131,7 @@ const Metric: React.FC<{ label: string; value: string }> = ({
       <Text numberOfLines={1} style={styles.metricLabel}>
         {label}
       </Text>
-      <Text {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS} style={styles.metricValue}>
+      <Text numberOfLines={1} style={styles.metricValue}>
         {value}
       </Text>
     </View>

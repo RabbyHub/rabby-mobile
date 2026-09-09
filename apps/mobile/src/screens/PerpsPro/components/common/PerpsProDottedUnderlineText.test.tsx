@@ -22,16 +22,19 @@ import { PerpsProDottedUnderlineText } from './PerpsProDottedUnderlineText';
 import { resolvePerpsProDottedUnderlineGeometry } from './perpsProDottedUnderlineGeometry';
 
 describe('PerpsProDottedUnderlineText', () => {
-  it('keeps numeric fitting opt-in and derives the underline from the final text layout', () => {
+  it('keeps tabular text at its declared size and measures its underline', () => {
     const view = render(
       <PerpsProDottedUnderlineText
-        adjustsFontSizeToFit
         style={{ fontSize: 12, fontVariant: ['tabular-nums'] }}>
         111,111.11
       </PerpsProDottedUnderlineText>,
     );
     const value = screen.getByText('111,111.11');
-    expect(value.props.adjustsFontSizeToFit).toBe(true);
+    expect(value.props.adjustsFontSizeToFit).toBeUndefined();
+    expect(StyleSheet.flatten(value.props.style)).toMatchObject({
+      fontSize: 12,
+      fontVariant: ['tabular-nums'],
+    });
     fireEvent(value, 'textLayout', {
       nativeEvent: { lines: [{ ascender: 9, width: 54, y: 0 }] },
     });
