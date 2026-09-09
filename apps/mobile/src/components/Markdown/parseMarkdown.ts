@@ -4,13 +4,24 @@ const MAX_MARKDOWN_LINES = 500;
 export const MARKDOWN_FALLBACK_TEXT =
   'Fixed some bugs and optimized user experience';
 
+export type MarkdownListItem = {
+  text: string;
+  /** 1-based number shown before the item in ordered lists. */
+  order: number;
+};
+
+export type MarkdownBlock =
+  | { type: 'heading'; level: number; text: string }
+  | { type: 'paragraph'; text: string }
+  | { type: 'list'; ordered: boolean; items: MarkdownListItem[] };
+
 export type MarkdownParseResult = {
-  html: string;
+  blocks: MarkdownBlock[];
   success: boolean;
 };
 
 const FALLBACK_RESULT: MarkdownParseResult = {
-  html: `<p>${MARKDOWN_FALLBACK_TEXT}</p>`,
+  blocks: [{ type: 'paragraph', text: MARKDOWN_FALLBACK_TEXT }],
   success: false,
 };
 
@@ -23,13 +34,6 @@ export function getMarkdownText(text: unknown): string {
     : text;
 }
 
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
 /** Only render headings and flat lists; all other content stays literal text. */
 export function parseMarkdown(text: unknown): MarkdownParseResult {
   try {
@@ -37,20 +41,20 @@ export function parseMarkdown(text: unknown): MarkdownParseResult {
     if (!safeText.trim()) {
       return FALLBACK_RESULT;
     }
-    return { html: renderMarkdown(safeText), success: true };
+    return { blocks: renderMarkdown(safeText), success: true };
   } catch {
     return FALLBACK_RESULT;
   }
 }
 
-function renderMarkdown(text: string): string {
-  const html: string[] = [];
-  let listType: 'ul' | 'ol' | null = null;
+function renderMarkdown(text: string): MarkdownBlock[] {
+  const blocks: MarkdownBlock[] = [];
+  let list: Extract<MarkdownBlock, { type: 'list' }> | null = null;
 
   const closeList = () => {
-    if (listType) {
-      html.push(`</${listType}>`);
-      listType = null;
+    if (list) {
+      blocks.push(list);
+      list = null;
     }
   };
 
@@ -58,7 +62,7 @@ function renderMarkdown(text: string): string {
   for (const [index, line] of lines.entries()) {
     if (index >= MAX_MARKDOWN_LINES) {
       closeList();
-      html.push('<p>…</p>');
+      blocks.push({ type: 'paragraph', text: '…' });
       break;
     }
     const heading = line.match(/^ {0,3}(#{1,6})[\t ]+(.*)$/);
@@ -66,24 +70,28 @@ function renderMarkdown(text: string): string {
 
     if (heading?.[1] && heading[2] !== undefined) {
       closeList();
-      const level = heading[1].length;
-      html.push(`<h${level}>${escapeHtml(heading[2])}</h${level}>`);
+      blocks.push({
+        type: 'heading',
+        level: heading[1].length,
+        text: heading[2],
+      });
     } else if (listItem && listItem[3] !== undefined) {
-      const nextListType = listItem[1] ? 'ul' : 'ol';
-      if (listType !== nextListType) {
+      const ordered = !listItem[1];
+      if (!list || list.ordered !== ordered) {
         closeList();
-        listType = nextListType;
-        html.push(`<${listType}>`);
+        list = { type: 'list', ordered, items: [] };
       }
       // The numeric marker comes only from the digits matched above.
-      const value = listItem[2] ? ` value="${Number(listItem[2])}"` : '';
-      html.push(`<li${value}>${escapeHtml(listItem[3])}</li>`);
+      list.items.push({
+        text: listItem[3],
+        order: listItem[2] ? Number(listItem[2]) : 0,
+      });
     } else {
       closeList();
-      html.push(`<p>${escapeHtml(line) || '<br>'}</p>`);
+      blocks.push({ type: 'paragraph', text: line });
     }
   }
 
   closeList();
-  return html.join('');
+  return blocks;
 }
