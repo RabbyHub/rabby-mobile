@@ -24,7 +24,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Text } from '@/components/Typography';
 import { TrackedModal } from '@/components/Modal/TrackedModal';
-import { MarkdownInWebView } from '@/components/Markdown/InWebView';
+import { MarkdownNative } from '@/components/Markdown/MarkdownNative';
 import { parseMarkdown } from '@/components/Markdown/parseMarkdown';
 import RcUpgradeClose from '@/assets/icons/upgrade/close.svg';
 import RcUpgradeSliderThumbLight from '@/assets/icons/upgrade/slider-thumb-light.svg';
@@ -228,18 +228,13 @@ export function UpgradePromptDialog({
           </Text>
 
           <View style={styles.changelogContainer}>
-            <MarkdownInWebView
+            <MarkdownNative
               markdown={remoteVersion.changelog}
               parsedMarkdown={parsedMarkdown}
-              onWebViewError={onClose}
-              htmlInnerStyle={`
-                html, body { background-color: transparent; }
-                .md-wrapper, .md-wrapper * {
-                  font-family: 'SF Pro Rounded', ui-rounded, sans-serif !important;
-                  ${isDark ? 'color: #FFF !important;' : ''}
-                }
-              `}
-              webviewStyle={styles.markdownWebView}
+              style={styles.markdownView}
+              textColor={isDark ? '#FFF' : undefined}
+              headingColor={isDark ? '#FFF' : undefined}
+              fontFamily="SF Pro Rounded"
             />
           </View>
 
@@ -318,7 +313,7 @@ const styles = StyleSheet.create({
     marginHorizontal: CONTENT_HORIZONTAL_PADDING,
     overflow: 'hidden',
   },
-  markdownWebView: {
+  markdownView: {
     backgroundColor: 'transparent',
   },
   sliderContainer: {
