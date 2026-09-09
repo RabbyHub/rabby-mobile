@@ -44,9 +44,11 @@ export const PerpsProMarketBar: React.FC<{
           {market?.displayPair ?? '-'}
         </Text>
         {market?.sourceTag ? (
-          <Text numberOfLines={1} style={styles.source}>
-            {market.sourceTag}
-          </Text>
+          <View style={styles.source} testID="perps-pro-market-source-tag">
+            <Text numberOfLines={1} style={styles.sourceText}>
+              {market.sourceTag}
+            </Text>
+          </View>
         ) : null}
         <Text style={changeStyle}>
           {formatPerpsProPercent(market?.change24h)}
@@ -108,8 +110,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   source: {
     ...getPerpsProMetadataTagContainerStyle(colors2024),
-    ...getPerpsProMetadataTagTextStyle(colors2024),
     maxWidth: 52,
+    overflow: 'hidden',
+  },
+  sourceText: {
+    ...getPerpsProMetadataTagTextStyle(colors2024),
   },
   up: {
     ...PERPS_PRO_NUMBER_STYLE,
