@@ -1,11 +1,16 @@
-import { apiSecurityEngine } from '@/core/apis';
+import * as apiSecurityEngine from '@/core/apis/securityEngine';
 import {
   Level,
   RuleConfig,
   UserData,
 } from '@rabby-wallet/rabby-security-engine/dist/rules';
-import { atom, useAtom } from 'jotai';
+import { atom, useAtom, useStore } from 'jotai';
 import React from 'react';
+import { isEqual } from 'lodash';
+import {
+  getProcessedRulesForScope,
+  getSecurityRuleKey,
+} from './securityEngineScope';
 
 interface State {
   userData: UserData;
@@ -18,6 +23,7 @@ interface State {
         value?: number | string | boolean;
         level?: Level;
         ignored: boolean;
+        scope?: string;
       } | null;
       visible: boolean;
     };
@@ -41,9 +47,32 @@ const currentTxAtom = atom<State['currentTx']>({
   },
 });
 export const useApprovalSecurityEngine = () => {
+  const scope = React.useContext(SecurityEngineScopeContext);
+  const store = useStore();
   const [userData, setUserData] = useAtom(userDataAtom);
   const [rules, setRules] = useAtom(rulesAtom);
   const [currentTx, setCurrentTx] = useAtom(currentTxAtom);
+  const getSnapshot = React.useCallback(
+    () => ({
+      rules: store.get(rulesAtom),
+      userData: store.get(userDataAtom),
+      currentTx: store.get(currentTxAtom),
+    }),
+    [store],
+  );
+  const scopedCurrentTx = React.useMemo(
+    () =>
+      scope === undefined
+        ? currentTx
+        : {
+            ...currentTx,
+            processedRules: getProcessedRulesForScope(
+              currentTx.processedRules,
+              scope,
+            ),
+          },
+    [currentTx, scope],
+  );
 
   const updateCurrentTx = React.useCallback(
     (payload: Partial<State['currentTx']>) => {
@@ -72,15 +101,16 @@ export const useApprovalSecurityEngine = () => {
       value?: number | string | boolean;
       level?: Level;
       ignored: boolean;
+      scope?: string;
     }) => {
       updateCurrentTx({
         ruleDrawer: {
-          selectRule: rule,
+          selectRule: { ...rule, scope: rule.scope ?? scope },
           visible: true,
         },
       });
     },
-    [updateCurrentTx],
+    [updateCurrentTx, scope],
   );
   const closeRuleDrawer = React.useCallback(() => {
     updateCurrentTx({
@@ -99,41 +129,46 @@ export const useApprovalSecurityEngine = () => {
     [updateCurrentTx],
   );
   const unProcessRule = React.useCallback(
-    (id: string) => {
+    (id: string, ruleScope?: string) => {
+      const key = getSecurityRuleKey(id, ruleScope ?? scope);
       setCurrentTx(prev => {
         return {
           ...prev,
-          processedRules: prev.processedRules.filter(i => i !== id),
+          processedRules: prev.processedRules.filter(i => i !== key),
         };
       });
     },
-    [setCurrentTx],
+    [setCurrentTx, scope],
   );
   const processRule = React.useCallback(
-    (id: string) => {
+    (id: string, ruleScope?: string) => {
+      const key = getSecurityRuleKey(id, ruleScope ?? scope);
       setCurrentTx(prev => {
         return {
           ...prev,
-          processedRules: [...prev.processedRules, id],
+          processedRules: Array.from(new Set([...prev.processedRules, key])),
         };
       });
     },
-    [setCurrentTx],
+    [setCurrentTx, scope],
   );
   const init = React.useCallback(async () => {
     const [nextUserData, nextRules] = await Promise.all([
       apiSecurityEngine.getSecurityEngineUserData(),
       apiSecurityEngine.getSecurityEngineRules(),
     ]);
-    setUserData(nextUserData);
-    setRules(nextRules);
+    // Rows refresh settings on mount. Unchanged settings must not restart the
+    // approval evaluation and remount those rows again.
+    setUserData(prev => (isEqual(prev, nextUserData) ? prev : nextUserData));
+    setRules(prev => (isEqual(prev, nextRules) ? prev : nextRules));
   }, [setRules, setUserData]);
 
   return {
     userData,
     setUserData,
     rules,
-    currentTx,
+    currentTx: scopedCurrentTx,
+    getSnapshot,
     resetCurrentTx,
     openRuleDrawer,
     closeRuleDrawer,
@@ -143,3 +178,20 @@ export const useApprovalSecurityEngine = () => {
     init,
   };
 };
+
+const SecurityEngineScopeContext = React.createContext<string | undefined>(
+  undefined,
+);
+
+export const SecurityEngineScopeProvider = ({
+  scope,
+  children,
+}: {
+  scope?: string;
+  children?: React.ReactNode;
+}) =>
+  React.createElement(
+    SecurityEngineScopeContext.Provider,
+    { value: scope },
+    children,
+  );
