@@ -1,13 +1,15 @@
-import React, { useEffect, useMemo } from 'react';
-import { View, Image, useWindowDimensions, Dimensions } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
+import { View, Image, useWindowDimensions } from 'react-native';
 import { useTranslation, Trans } from 'react-i18next';
 import RCIconRabbyWhite from '@/assets2024/icons/bridge/FeeRabbyWallet.svg';
 // import RCIconRabbyWhite from '@/assets/icons/swap/rabby.svg'; // Ensure this is a compatible React Native SVG component
 import ImgMetaMask from '@/assets/icons/swap/metamask.png';
 import ImgPhantom from '@/assets/icons/swap/phantom.png';
 import ImgRabbyWallet from '@/assets/icons/swap/rabby-wallet.png';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
-import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 // import { Button } from '@components2024/swap';
 import { Button } from '@/components2024/Button';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
@@ -69,6 +71,17 @@ export const CompareFee = ({
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
   const { sheetModalRef } = useSheetModal();
+  const sheetVisibleRef = useRef(false);
+  const { onHardwareBackHandler } = useHandleBackPressClosable(
+    useCallback(() => {
+      if (visible || sheetVisibleRef.current) {
+        onClose();
+        return false;
+      }
+      return true;
+    }, [visible, onClose]),
+  );
+  useFocusEffect(onHardwareBackHandler);
 
   const hasSwapDexFee = useMemo(() => {
     return type === 'swap' && dexName && dexFeeDesc && DEX?.[dexName]?.logo;
@@ -97,7 +110,13 @@ export const CompareFee = ({
       ref={sheetModalRef}
       snapPoints={snapPoints}
       enableDismissOnClose
-      onDismiss={onClose}
+      onChange={index => {
+        sheetVisibleRef.current = index >= 0;
+      }}
+      onDismiss={() => {
+        sheetVisibleRef.current = false;
+        onClose();
+      }}
       handleStyle={styles.sheetBg}
       backgroundStyle={styles.sheetBg}>
       <BottomSheetScrollView>
