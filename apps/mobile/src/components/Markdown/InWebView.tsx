@@ -84,11 +84,13 @@ export function MarkdownInWebView({
   parsedMarkdown,
   htmlInnerStyle,
   webviewStyle,
+  onWebViewError,
 }: React.PropsWithoutRef<{
   markdown: string;
   parsedMarkdown?: MarkdownParseResult;
   htmlInnerStyle?: string;
   webviewStyle?: StyleProp<ViewStyle>;
+  onWebViewError?: () => void;
 }>) {
   const { styles, colors } = useThemeStyles(getStyles);
   const parsed = useMemo(
@@ -127,6 +129,9 @@ export function MarkdownInWebView({
       textInteractionEnabled={false}
       javaScriptEnabled={false}
       dataDetectorTypes="none"
+      onError={onWebViewError}
+      onRenderProcessGone={onWebViewError}
+      onContentProcessDidTerminate={onWebViewError}
     />
   );
 }
