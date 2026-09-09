@@ -9,6 +9,8 @@ import { Keyboard, View } from 'react-native';
 import { usePerpsProSliderHaptics } from '../common/usePerpsProSliderHaptics';
 
 const TRADE_SLIDER_POINTS = [0, 25, 50, 75, 100] as const;
+const TRADE_SLIDER_THUMB_SIZE = 13;
+const TRADE_SLIDER_TRACK_INSET = 9;
 
 export const PerpsProTradeAmountSlider: React.FC<{
   onChange?: (value: number) => void;
@@ -87,17 +89,19 @@ export const PerpsProTradeAmountSlider: React.FC<{
         ))}
       </View>
       {dragging ? (
-        <View
-          pointerEvents="none"
-          style={[
-            styles.tooltip,
-            {
-              left: `${value}%`,
-              transform: [{ translateX: (-36 * value) / 100 }],
-            },
-          ]}
-          testID="perps-pro-trade-amount-slider-tooltip">
-          <Text style={styles.tooltipText}>{Math.round(value)}%</Text>
+        <View pointerEvents="none" style={styles.tooltipTrack}>
+          <View
+            pointerEvents="none"
+            style={[
+              styles.tooltip,
+              {
+                left: `${value}%`,
+                transform: [{ translateX: (-36 * value) / 100 }],
+              },
+            ]}
+            testID="perps-pro-trade-amount-slider-tooltip">
+            <Text style={styles.tooltipText}>{Math.round(value)}%</Text>
+          </View>
         </View>
       ) : null}
     </View>
@@ -114,6 +118,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   slider: {
     height: 24,
+    // RNEUI's thumb travels containerWidth - thumbWidth. Match its center
+    // to the same inset used by the track, quarter points and tooltip.
+    marginHorizontal: TRADE_SLIDER_TRACK_INSET - TRADE_SLIDER_THUMB_SIZE / 2,
+    transform: [{ translateY: -0.5 }],
     zIndex: 3,
   },
   track: {
@@ -123,11 +131,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   trackBase: {
     backgroundColor: colors2024['neutral-line'],
     height: 1,
-    left: 6.5,
+    left: TRADE_SLIDER_TRACK_INSET,
     overflow: 'hidden',
     position: 'absolute',
-    right: 6.5,
-    top: 11.5,
+    right: TRADE_SLIDER_TRACK_INSET,
+    top: 11,
     zIndex: 1,
   },
   activeTrack: {
@@ -135,10 +143,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 1,
   },
   points: {
-    left: 6.5,
+    left: TRADE_SLIDER_TRACK_INSET,
     position: 'absolute',
-    right: 6.5,
-    top: 8.5,
+    right: TRADE_SLIDER_TRACK_INSET,
+    top: 8,
     zIndex: 2,
   },
   pointPosition: {
@@ -159,10 +167,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   thumb: {
     backgroundColor: colors2024['neutral-bg-1'],
     borderColor: colors2024['neutral-title-1'],
-    borderRadius: 6.5,
+    borderRadius: TRADE_SLIDER_THUMB_SIZE / 2,
     borderWidth: 1,
-    height: 13,
-    width: 13,
+    height: TRADE_SLIDER_THUMB_SIZE,
+    width: TRADE_SLIDER_THUMB_SIZE,
+  },
+  tooltipTrack: {
+    left: TRADE_SLIDER_TRACK_INSET,
+    position: 'absolute',
+    right: TRADE_SLIDER_TRACK_INSET,
+    top: 0,
+    zIndex: 4,
   },
   tooltip: {
     alignItems: 'center',

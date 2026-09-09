@@ -117,7 +117,7 @@ PerpsProTradeSkeleton.displayName = 'PerpsProTradeSkeleton';
 const getStyle = createGetStyles2024(() => ({
   container: {
     gap: 16,
-    height: PERPS_PRO_MAIN_COLUMN_HEIGHT,
+    minHeight: PERPS_PRO_MAIN_COLUMN_HEIGHT,
   },
   inputGroup: {
     gap: 8,

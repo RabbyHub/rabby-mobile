@@ -6,15 +6,13 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React, { useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 
-import {
-  getPerpsProTradeControlMediumTextStyle,
-  resolvePerpsProFieldBackground,
-} from '../common/perpsProVisual';
+import { getPerpsProTradeControlMediumTextStyle } from '../common/perpsProVisual';
+import { PERPS_PRO_TRADE_AMOUNT_FIELD_HEIGHT } from '../../model/layout';
 import { PerpsProDecimalTextInput } from './PerpsProDecimalTextInput';
 
 const noop = () => undefined;
 const unitFontStyle = getPerpsProTradeControlMediumTextStyle(Platform.OS);
-const UNIT_AREA_MIN_WIDTH = 52;
+const UNIT_AREA_MIN_WIDTH = 63;
 const UNIT_AREA_MAX_WIDTH = 72;
 const UNIT_TEXT_MIN_WIDTH = 34;
 
@@ -117,17 +115,14 @@ export const PerpsProTradeAmountField = React.memo(
 
 PerpsProTradeAmountField.displayName = 'PerpsProTradeAmountField';
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     alignItems: 'center',
-    backgroundColor: resolvePerpsProFieldBackground({
-      darkBackground: colors2024['neutral-bg-5'],
-      isLight,
-    }),
+    backgroundColor: colors2024['neutral-bg-0'],
     borderRadius: 6,
     flexDirection: 'row',
-    gap: 6,
-    height: 40,
+    gap: 4,
+    height: PERPS_PRO_TRADE_AMOUNT_FIELD_HEIGHT,
     overflow: 'hidden',
     paddingHorizontal: 8,
   },
@@ -159,7 +154,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     position: 'absolute',
     right: 0,
     textAlign: 'center',
-    top: 11,
+    top: 12,
   },
   input: {
     ...PERPS_PRO_NUMBER_STYLE,
@@ -167,7 +162,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
-    height: 40,
+    height: PERPS_PRO_TRADE_AMOUNT_FIELD_HEIGHT,
     includeFontPadding: false,
     lineHeight: 18,
     paddingBottom: 0,
@@ -182,19 +177,20 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderLeftWidth: 1,
     flexDirection: 'row',
     flexShrink: 0,
-    gap: 2,
-    height: 24,
+    gap: 4,
+    height: 26,
     maxWidth: UNIT_AREA_MAX_WIDTH,
     minWidth: UNIT_AREA_MIN_WIDTH,
-    paddingLeft: 5,
+    paddingLeft: 10,
+    paddingRight: 4,
   },
   unit: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '500',
     flexShrink: 1,
-    lineHeight: 16,
+    lineHeight: 18,
     minWidth: UNIT_TEXT_MIN_WIDTH,
     textAlign: 'center',
   },

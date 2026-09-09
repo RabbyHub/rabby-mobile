@@ -112,7 +112,7 @@ describe('PerpsProTradeSkeleton', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-trade-skeleton').props.style,
       ),
-    ).toMatchObject({ gap: 16, height: 416 });
+    ).toMatchObject({ gap: 16, minHeight: 416 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-trade-input-group').props.style,
@@ -185,17 +185,17 @@ describe('PerpsProTradeSkeleton', () => {
     expect(unitAreaStyle).toMatchObject({
       borderLeftWidth: 1,
       flexShrink: 0,
-      height: 24,
+      height: 26,
       maxWidth: 72,
-      minWidth: 52,
-      paddingLeft: 5,
+      minWidth: 63,
+      paddingLeft: 10,
     });
     expect(unitAreaStyle.width).toBeUndefined();
     const unitStyle = StyleSheet.flatten(screen.getByText('USDC').props.style);
     expect(unitStyle).toMatchObject({
       flexShrink: 1,
-      fontSize: 12,
-      lineHeight: 16,
+      fontSize: 14,
+      lineHeight: 18,
       minWidth: 34,
     });
     expect(unitStyle.width).toBeUndefined();
