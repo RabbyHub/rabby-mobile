@@ -500,10 +500,11 @@ export const useBridge = (
         payToken: fromToken,
         payAmount: amount,
         payTokenPrice: fromToken?.price || 0,
-        isFreeTokenPair: false,
+        type: 'bridge',
+        receiveToken: toToken,
         isWrapToken: false,
       }),
-    [amount, fromToken],
+    [amount, fromToken, toToken],
   );
 
   const [bestQuoteId, setBestQuoteId] = useState<

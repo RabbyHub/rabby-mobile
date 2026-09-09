@@ -1,9 +1,6 @@
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import {
-  isSameTypeTokenPair,
-  WrapTokenAddressMap,
-} from '@rabby-wallet/rabby-swap';
+import { WrapTokenAddressMap } from '@rabby-wallet/rabby-swap';
 import BigNumber from 'bignumber.js';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 import {
@@ -894,11 +891,6 @@ export const useTokenPair = ({
     return false;
   }, [payToken, receiveToken]);
 
-  const isFreeTokenPair = useMemo(
-    () => isSameTypeTokenPair(payToken, receiveToken),
-    [payToken, receiveToken],
-  );
-
   const autoSlippageValue = getSwapAutoSlippageValue(isStableCoin);
 
   const [isWrapToken, wrapTokenSymbol] = useMemo(() => {
@@ -920,10 +912,10 @@ export const useTokenPair = ({
         payAmount,
         payTokenPrice: payToken?.price || 0,
         payToken,
-        isFreeTokenPair,
+        receiveToken,
         isWrapToken,
       }),
-    [isFreeTokenPair, isWrapToken, payAmount, payToken],
+    [isWrapToken, payAmount, payToken, receiveToken],
   );
 
   const inSufficient = useMemo(

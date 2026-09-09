@@ -450,11 +450,7 @@ const BridgeShowMore = ({
           ) : (
             <Pressable onPress={openFeePopup}>
               <View style={styles.feeValueSlot}>
-                <Text style={isWrapToken ? styles.wrapTokenFee : styles.fee}>
-                  {isWrapToken && type === 'swap'
-                    ? t('page.swap.no-fees-for-wrap')
-                    : RABBY_FEE}
-                </Text>
+                <Text style={styles.fee}>{RABBY_FEE}</Text>
               </View>
             </Pressable>
           )}
@@ -1381,15 +1377,6 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     fontSize: 16,
     fontStyle: 'normal',
     fontWeight: '700',
-    lineHeight: 18,
-  },
-  wrapTokenFee: {
-    color: colors2024['neutral-foot'],
-    textAlign: 'right',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontStyle: 'normal',
-    fontWeight: '500',
     lineHeight: 18,
   },
   freeFeeContainer: {

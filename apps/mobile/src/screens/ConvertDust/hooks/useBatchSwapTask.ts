@@ -9,11 +9,7 @@ import type {
   ExplainTxResponse,
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
-import {
-  DEX_ENUM,
-  DEX_SPENDER_WHITELIST,
-  isSameTypeTokenPair,
-} from '@rabby-wallet/rabby-swap';
+import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
 import { useMemoizedFn } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import { last, random } from 'lodash';
@@ -199,7 +195,7 @@ export const getActiveProvider = async ({
     payToken,
     payAmount,
     payTokenPrice: payToken.price || 0,
-    isFreeTokenPair: isSameTypeTokenPair(payToken, receiveToken),
+    receiveToken,
     isWrapToken,
   });
 
@@ -276,7 +272,7 @@ export const buildSwapTxs = async ({
       payToken,
       payAmount: inputAmount,
       payTokenPrice: payToken.price || 0,
-      isFreeTokenPair: isSameTypeTokenPair(payToken, receiveToken),
+      receiveToken,
       isWrapToken: isSwapWrapToken(payToken.id, receiveToken.id, chain),
     });
     const toAmount = new BigNumber(quoteResult.toTokenAmount)

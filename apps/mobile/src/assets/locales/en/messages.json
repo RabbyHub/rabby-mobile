@@ -830,6 +830,7 @@
         "case": "Case",
         "free": "Free",
         "cases": {
+          "wrap": "Wrap/Unwrap Native Token",
           "stablecoins": "Stablecoins",
           "lstLrt": "LST/LRT Token",
           "million": "Vol $1M+",

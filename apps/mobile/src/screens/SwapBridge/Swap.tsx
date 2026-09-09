@@ -942,9 +942,6 @@ const Swap = ({
   }, [_lowCreditToken, navState]);
 
   const openFeePopup = useCallback(() => {
-    if (isWrapToken) {
-      return;
-    }
     setIsShowRabbyFeePopup({
       visible: true,
       dexName: activeProvider?.name || undefined,
@@ -953,7 +950,6 @@ const Swap = ({
   }, [
     activeProvider?.name,
     activeProvider?.quote?.dexFeeDesc,
-    isWrapToken,
     setIsShowRabbyFeePopup,
   ]);
 
@@ -1337,7 +1333,7 @@ const Swap = ({
       setIsCustomSlippage={setIsCustomSlippage}
       type="swap"
       isWrapToken={isWrapToken}
-      isRabbyFeeFree={!isWrapToken && feeRate === '0'}
+      isRabbyFeeFree={feeRate === '0'}
       isRabbyFeeHalf={feeRate === '0.12'}
       isBestQuote={
         !!activeProvider &&

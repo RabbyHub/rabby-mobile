@@ -47,7 +47,8 @@ export const RabbyFeePopup = ({
   const snapPoints = useMemo(
     () => [
       Math.min(
-        (type === 'swap' ? 524 : 428) +
+        332 +
+          RABBY_FEE_DISCOUNT_CASES[type].length * 48 +
           getBottomButtonBottomOffset(bottom) +
           (hasSwapDexFee ? 60 : 0),
         height,

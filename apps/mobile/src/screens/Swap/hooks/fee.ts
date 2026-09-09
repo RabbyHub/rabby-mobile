@@ -1,5 +1,8 @@
 import BigNumber from 'bignumber.js';
-import { STABLE_TOKEN_POOL } from '@rabby-wallet/rabby-swap';
+import {
+  isStableTokenPair,
+  isNativeAndDerivativeTokenPair,
+} from '@rabby-wallet/rabby-swap';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 
 export const SWAP_FEE_RATE = {
@@ -22,44 +25,40 @@ export const RABBY_FEE_TIERS = {
 export type RabbyFeeTier = keyof typeof RABBY_FEE_TIERS;
 
 export const RABBY_FEE_DISCOUNT_CASES = {
-  swap: ['stablecoins', 'lstLrt', 'million', 'hundredThousand'],
+  swap: ['stablecoins', 'lstLrt', 'wrap', 'million', 'hundredThousand'],
   bridge: ['million', 'hundredThousand'],
 } as const satisfies Record<string, readonly RabbyFeeTier[]>;
 
 const SWAP_HALF_FEE_MIN_USD = 100_000;
 const SWAP_FREE_FEE_MIN_USD = 1_000_000;
-const stableTokenKeys = new Set(
-  STABLE_TOKEN_POOL.map(
-    token => `${token.chain.toLowerCase()}:${token.id.toLowerCase()}`,
-  ),
-);
 
 type RabbyFeeParams = {
   payAmount: string;
   payTokenPrice: number;
-  isFreeTokenPair: boolean;
+  type?: 'swap' | 'bridge';
   isWrapToken: boolean;
   payToken?: Pick<TokenItem, 'id' | 'chain'>;
+  receiveToken?: Pick<TokenItem, 'id' | 'chain'>;
 };
 
 export const getRabbyFeeInfo = ({
   payAmount,
   payTokenPrice,
-  isFreeTokenPair,
+  type = 'swap',
   isWrapToken,
   payToken,
+  receiveToken,
 }: RabbyFeeParams): { feeRate: SwapFeeRate; feeTier: RabbyFeeTier } => {
   let feeTier: RabbyFeeTier;
   if (isWrapToken) {
     feeTier = 'wrap';
-  } else if (isFreeTokenPair) {
-    feeTier =
-      payToken &&
-      stableTokenKeys.has(
-        `${payToken.chain.toLowerCase()}:${payToken.id.toLowerCase()}`,
-      )
-        ? 'stablecoins'
-        : 'lstLrt';
+  } else if (type === 'swap' && isStableTokenPair(payToken, receiveToken)) {
+    feeTier = 'stablecoins';
+  } else if (
+    type === 'swap' &&
+    isNativeAndDerivativeTokenPair(payToken, receiveToken)
+  ) {
+    feeTier = 'lstLrt';
   } else {
     const fromTokenUsdValue = new BigNumber(payAmount || 0).times(
       payTokenPrice || 0,
