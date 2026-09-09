@@ -1,5 +1,4 @@
-import RcIconEmptyTokenDark from '@/assets2024/singleHome/empty-token-dark.svg';
-import RcIconEmptyToken from '@/assets2024/singleHome/empty-token.svg';
+import { PerpsProEmptyIllustration } from '../common/PerpsProEmptyIllustration';
 import { Text } from '@/components/Typography';
 import type { MarketDataStatus } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
@@ -189,19 +188,12 @@ const PerpsProMarketListComponent = forwardRef<
             <View
               style={styles.searchEmpty}
               testID="perps-pro-market-search-empty">
-              {isLight ? (
-                <RcIconEmptyToken
-                  height={126}
-                  testID="perps-pro-market-search-empty-light"
-                  width={163}
-                />
-              ) : (
-                <RcIconEmptyTokenDark
-                  height={126}
-                  testID="perps-pro-market-search-empty-dark"
-                  width={163}
-                />
-              )}
+              <PerpsProEmptyIllustration
+                isLight={isLight}
+                testID={`perps-pro-market-search-empty-${
+                  isLight ? 'light' : 'dark'
+                }`}
+              />
               <Text style={styles.searchEmptyText}>
                 {t('page.perps.pro.marketSelector.empty')}
               </Text>

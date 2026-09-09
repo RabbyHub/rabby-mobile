@@ -1,16 +1,28 @@
 import { render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
+import fs from 'fs';
+import path from 'path';
 
 let mockIsLight = true;
 
-jest.mock('@/assets2024/icons/perps/PerpsProHistoryEmpty.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProEmptyLight.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) =>
     ReactModule.createElement(View, {
       ...props,
-      testUri: 'assets2024/icons/perps/PerpsProHistoryEmpty.svg',
+      testUri: 'assets2024/icons/perps/PerpsProEmptyLight.svg',
+    });
+});
+
+jest.mock('@/assets2024/icons/perps/PerpsProEmptyDark.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) =>
+    ReactModule.createElement(View, {
+      ...props,
+      testUri: 'assets2024/icons/perps/PerpsProEmptyDark.svg',
     });
 });
 
@@ -48,7 +60,7 @@ describe('PerpsProEmptyState', () => {
     expect(screen.getByTestId('empty-illustration').props).toMatchObject({
       accessible: false,
       height: 126,
-      testUri: 'assets2024/icons/perps/PerpsProHistoryEmpty.svg',
+      testUri: 'assets2024/icons/perps/PerpsProEmptyLight.svg',
       width: 163,
     });
     expect(StyleSheet.flatten(screen.getByTestId('empty').props.style)).toEqual(
@@ -73,16 +85,41 @@ describe('PerpsProEmptyState', () => {
     );
   });
 
-  it('uses the same history illustration in dark mode', () => {
+  it('uses the approved independent dark illustration', () => {
     mockIsLight = false;
     render(<PerpsProEmptyState message="No open orders" testID="empty" />);
 
     expect(screen.getByTestId('empty-illustration').props).toMatchObject({
       accessible: false,
       height: 126,
-      testUri: 'assets2024/icons/perps/PerpsProHistoryEmpty.svg',
+      testUri: 'assets2024/icons/perps/PerpsProEmptyDark.svg',
       width: 163,
     });
     expect(screen.getByText('No open orders')).toBeTruthy();
+  });
+
+  it.each([
+    'PerpsProEmptyLight',
+    'PerpsProEmptyDark',
+    'PerpsProHistoryEmptyDark',
+  ])('keeps %s entirely vector with portable opaque clipping masks', asset => {
+    const source = fs.readFileSync(
+      path.resolve(
+        __dirname,
+        '../../../../assets2024/icons/perps',
+        `${asset}.svg`,
+      ),
+      'utf8',
+    );
+    expect(source).toContain('viewBox="0 0 163 126"');
+    expect(source).not.toMatch(
+      /foreignObject|backdrop-filter|<image|data:image|<filter/,
+    );
+    const masks = source.match(/<mask\b[^>]*>[\s\S]*?<\/mask>/g) ?? [];
+    expect(masks.length).toBeGreaterThan(0);
+    masks.forEach(mask => {
+      expect(mask).toContain('fill="white"');
+      expect(mask).not.toContain('url(#frosted-');
+    });
   });
 });

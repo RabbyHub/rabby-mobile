@@ -21,6 +21,16 @@ jest.mock('@/assets2024/icons/perps/PerpsProHistoryEmpty.svg', () => {
     });
 });
 
+jest.mock('@/assets2024/icons/perps/PerpsProHistoryEmptyDark.svg', () => {
+  const ReactModule = require('react');
+  const { View: SvgView } = require('react-native');
+  return (props: object) =>
+    ReactModule.createElement(SvgView, {
+      ...props,
+      testUri: 'assets2024/icons/perps/PerpsProHistoryEmptyDark.svg',
+    });
+});
+
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
@@ -194,7 +204,7 @@ describe('PerpsProHistoryList', () => {
     );
     expect(
       screen.getByTestId('perps-pro-history-empty-illustration').props.testUri,
-    ).toEqual(lightIllustration.props.testUri);
+    ).toEqual('assets2024/icons/perps/PerpsProHistoryEmptyDark.svg');
   });
 
   it('keeps the empty-state SVG transparent and React Native compatible', () => {

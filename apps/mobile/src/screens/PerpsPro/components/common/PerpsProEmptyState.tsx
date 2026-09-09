@@ -1,23 +1,21 @@
-import PerpsProHistoryEmptyIllustration from '@/assets2024/icons/perps/PerpsProHistoryEmpty.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { View } from 'react-native';
+import { PerpsProEmptyIllustration } from './PerpsProEmptyIllustration';
 
 export const PerpsProEmptyState: React.FC<{
   message: string;
   testID: string;
 }> = React.memo(({ message, testID }) => {
-  const { styles } = useTheme2024({ getStyle });
+  const { isLight, styles } = useTheme2024({ getStyle });
 
   return (
     <View style={styles.container} testID={testID}>
-      <PerpsProHistoryEmptyIllustration
-        accessible={false}
-        height={126}
+      <PerpsProEmptyIllustration
+        isLight={isLight}
         testID={`${testID}-illustration`}
-        width={163}
       />
       <Text style={styles.message}>{message}</Text>
     </View>

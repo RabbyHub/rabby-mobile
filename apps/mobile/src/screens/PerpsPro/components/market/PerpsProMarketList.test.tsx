@@ -7,13 +7,13 @@ const mockRowUnmount = jest.fn();
 const mockScrollToOffset = jest.fn();
 let mockIsLight = true;
 
-jest.mock('@/assets2024/singleHome/empty-token.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProEmptyLight.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
 });
 
-jest.mock('@/assets2024/singleHome/empty-token-dark.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProEmptyDark.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);

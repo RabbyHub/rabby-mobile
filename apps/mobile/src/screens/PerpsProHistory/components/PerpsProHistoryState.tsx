@@ -1,4 +1,5 @@
 import PerpsProHistoryEmptyIllustration from '@/assets2024/icons/perps/PerpsProHistoryEmpty.svg';
+import PerpsProHistoryEmptyDarkIllustration from '@/assets2024/icons/perps/PerpsProHistoryEmptyDark.svg';
 import React from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -27,11 +28,14 @@ export const PerpsProHistorySkeleton = () => {
 };
 
 export const PerpsProHistoryEmpty = () => {
-  const { styles } = useTheme2024({ getStyle });
+  const { isLight, styles } = useTheme2024({ getStyle });
+  const Illustration = isLight
+    ? PerpsProHistoryEmptyIllustration
+    : PerpsProHistoryEmptyDarkIllustration;
   const { t } = useTranslation();
   return (
     <View style={styles.empty} testID="perps-pro-history-empty">
-      <PerpsProHistoryEmptyIllustration
+      <Illustration
         accessible={false}
         height={126}
         testID="perps-pro-history-empty-illustration"
