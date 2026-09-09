@@ -32,6 +32,8 @@ const IOS_KEYCHAIN_STORAGE_TYPE = 'keychain';
 const BROKEN_BIOMETRICS_ENTRY_MESSAGE =
   'Biometrics data could not be decrypted with the current keychain state. Inspect the keychain debug screen before resetting biometrics.';
 const CANCELSTR = i18n.t('native.authentication.auth_prompt_cancel');
+const ANDROID_BIOMETRIC_NEGATIVE_BUTTON_ERROR_CODE = 13;
+const API29_PROMPT_HANDOFF_DELAY_MS = 100;
 const isAndroid = Platform.OS === 'android';
 
 let _rnBiometricsInstance: ReactNativeBiometrics | null = null;
@@ -1241,6 +1243,8 @@ export function createBusinessKeychainApi({
           !supportedBiometry &&
           accessControlAllowsDeviceCredential &&
           passcodeAvailable;
+        const offerApi29DeviceCredentialFallback =
+          isApi29 && !!supportedBiometry && accessControlAllowsDeviceCredential;
         const primaryPromptPhase = useApi29DeviceCredentialOnly
           ? 'device-credential'
           : accessControlAllowsDeviceCredential && !isApi29
@@ -1250,6 +1254,9 @@ export function createBusinessKeychainApi({
         try {
           promptResult = await getRNBiometrics().simplePrompt({
             promptMessage,
+            cancelButtonText: offerApi29DeviceCredentialFallback
+              ? i18n.t('page.setting.useDevicePassword')
+              : CANCELSTR,
             allowDeviceCredentials:
               accessControlAllowsDeviceCredential && !isApi29,
             ...(useApi29FingerprintFastPath
@@ -1303,6 +1310,7 @@ export function createBusinessKeychainApi({
             },
           );
           try {
+            await sleep(API29_PROMPT_HANDOFF_DELAY_MS);
             promptResult = await getRNBiometrics().simplePrompt({
               promptMessage,
               allowDeviceCredentials: true,
@@ -1345,6 +1353,45 @@ export function createBusinessKeychainApi({
             fallbackAttempted: true,
             fallbackSucceeded: promptResult.success,
           });
+        }
+
+        if (
+          !promptResult.success &&
+          promptResult.errorCode ===
+            ANDROID_BIOMETRIC_NEGATIVE_BUTTON_ERROR_CODE &&
+          offerApi29DeviceCredentialFallback
+        ) {
+          if (!passcodeAvailable) {
+            passcodeAvailable = await refreshPasscodeAvailability();
+          }
+
+          if (passcodeAvailable) {
+            traceAndroidKeychainPerf(
+              'system_auth_prompt_device_credential_selected',
+              { storage: credentials.storage },
+            );
+            try {
+              await sleep(API29_PROMPT_HANDOFF_DELAY_MS);
+              promptResult = await getRNBiometrics().simplePrompt({
+                promptMessage,
+                allowDeviceCredentials: true,
+                androidUseDeviceCredentialOnly: true,
+              } as RNBiometricsSimplePromptOptions);
+            } catch (deviceCredentialError) {
+              reportAndroidBiometricPromptError(deviceCredentialError, {
+                phase: 'device-credential',
+                sourceLabel,
+                storage: credentials.storage,
+                supportedBiometry,
+                passcodeAvailable,
+                allowDeviceCredentials: true,
+                usePreparedPrompt: false,
+                fallbackAttempted: true,
+                fallbackSucceeded: false,
+              });
+              throw deviceCredentialError;
+            }
+          }
         }
       } catch (error) {
         if (useApi29FingerprintFastPath) {
@@ -2169,7 +2216,7 @@ export function createBusinessKeychainApi({
   }
 
   function shouldRequireBiometricProofForSetup() {
-    return isAndroid && api29FingerprintPromptOptimizationEligible;
+    return false;
   }
 
   async function isPasscodeAuthAvailable() {

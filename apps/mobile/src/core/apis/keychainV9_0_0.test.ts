@@ -738,7 +738,7 @@ describe('core/apis/keychainV9_0_0', () => {
     expect(module.shouldRequireBiometricProofForSetup()).toBe(false);
   });
 
-  it('prepares and reuses the API 29 fingerprint fallback prompt', async () => {
+  it('prepares the API 29 fingerprint fallback prompt without requiring biometric-only setup proof', async () => {
     const {
       module,
       mockGetSupportedBiometryType,
@@ -771,7 +771,45 @@ describe('core/apis/keychainV9_0_0', () => {
       }),
     );
     expect(mockSimplePrompt).toHaveBeenCalledTimes(2);
-    expect(module.shouldRequireBiometricProofForSetup()).toBe(true);
+    expect(module.shouldRequireBiometricProofForSetup()).toBe(false);
+  });
+
+  it('opens the API 29 device credential prompt when the user selects the fallback button', async () => {
+    const { module, mockIsPasscodeAuthAvailable, mockSimplePrompt } =
+      await setup({
+        storage: 'KeystoreAESGCM_NoAuth',
+        authType: 4,
+        platformVersion: 29,
+        api29FingerprintFallbackEligible: true,
+      });
+    mockSimplePrompt
+      .mockResolvedValueOnce({
+        success: false,
+        error: 'User cancellation',
+        errorCode: 13,
+      })
+      .mockResolvedValueOnce({ success: true });
+
+    await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.VERIFY,
+    });
+
+    expect(mockSimplePrompt).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        allowDeviceCredentials: false,
+        androidUsePreparedPrompt: true,
+        cancelButtonText: 'page.setting.useDevicePassword',
+      }),
+    );
+    expect(mockIsPasscodeAuthAvailable).toHaveBeenCalledTimes(1);
+    expect(mockSimplePrompt).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        allowDeviceCredentials: true,
+        androidUseDeviceCredentialOnly: true,
+      }),
+    );
   });
 
   it('falls back to device credentials when an API 29 fingerprint probe is unavailable', async () => {
