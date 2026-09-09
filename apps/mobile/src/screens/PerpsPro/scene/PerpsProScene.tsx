@@ -1419,7 +1419,6 @@ export const PerpsProScene: React.FC<{
             <PerpsProHeader
               isModeSwitching={isModeSwitching}
               onSwitchToSimple={onSwitchToSimple}
-              showBottomDivider
             />
           </SceneOverlayView>
           {showRegionAlert ? (

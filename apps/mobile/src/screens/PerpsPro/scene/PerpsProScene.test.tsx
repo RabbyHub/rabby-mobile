@@ -1911,7 +1911,9 @@ describe('PerpsProScene market loading states', () => {
     expect(screen.getAllByTestId('perps-pro-trade-scroll-bridge')).toHaveLength(
       1,
     );
-    expect(screen.getByTestId('pro-header').props.showBottomDivider).toBe(true);
+    expect(screen.getByTestId('pro-header').props).not.toHaveProperty(
+      'showBottomDivider',
+    );
     fireEvent(scroll, 'layout', {
       nativeEvent: { layout: { height: 700, width: 393, x: 0, y: 0 } },
     });
@@ -2331,7 +2333,9 @@ describe('PerpsProScene market loading states', () => {
     });
     expect(screen.getByTestId('realtime-order-book')).toBeTruthy();
     expect(screen.getByTestId('trade-form')).toBeTruthy();
-    expect(screen.getByTestId('pro-header').props.showBottomDivider).toBe(true);
+    expect(screen.getByTestId('pro-header').props).not.toHaveProperty(
+      'showBottomDivider',
+    );
 
     expect(screen.getByTestId('perps-region-alert').props.bottomSpacing).toBe(
       4,
@@ -2421,7 +2425,9 @@ describe('PerpsProScene market loading states', () => {
     );
 
     expect(screen.getByTestId('perps-region-alert')).toBeOnTheScreen();
-    expect(screen.getByTestId('pro-header').props.showBottomDivider).toBe(true);
+    expect(screen.getByTestId('pro-header').props).not.toHaveProperty(
+      'showBottomDivider',
+    );
     expect(screen.getByTestId('market-bar-skeleton')).toBeOnTheScreen();
     const restrictedSurfaceStyle = StyleSheet.flatten(
       screen.getByTestId('perps-pro-region-alert-overlay').props.style,

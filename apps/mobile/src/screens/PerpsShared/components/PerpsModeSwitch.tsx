@@ -36,7 +36,6 @@ export const PerpsModeSwitch: React.FC<PerpsModeSwitchProps> = ({
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const useRoundedTypography = activeMode === 'pro';
 
   return (
     <View
@@ -61,23 +60,15 @@ export const PerpsModeSwitch: React.FC<PerpsModeSwitchProps> = ({
             onPress={() => onSelectMode(option.value)}
             onPressIn={() => onPressInMode?.(option.value)}
             onPressOut={() => onPressOutMode?.(option.value)}
-            style={
+            style={[
+              styles.optionTarget,
               option.value === 'pro' && extendProHitAreaRight
                 ? styles.extendedProTarget
-                : undefined
-            }
+                : null,
+            ]}
             testID={`perps-mode-${option.value}`}>
             <View style={styles.optionContent}>
-              <Text
-                style={
-                  useRoundedTypography
-                    ? selected
-                      ? styles.roundedActiveText
-                      : styles.roundedInactiveText
-                    : selected
-                    ? styles.activeText
-                    : styles.inactiveText
-                }>
+              <Text style={selected ? styles.activeText : styles.inactiveText}>
                 {option.label}
               </Text>
               {option.value === 'pro' && showProNewBadge ? (
@@ -102,12 +93,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
+    height: 44,
   },
   extendedContainer: {
     flex: 1,
-    height: 26,
     minWidth: 0,
+  },
+  optionTarget: {
+    height: '100%',
+    justifyContent: 'center',
   },
   extendedProTarget: {
     alignItems: 'flex-start',
@@ -134,35 +129,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
   },
   activeText: {
-    fontFamily: FontNames.sf_pro,
-    fontSize: 18,
-    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    fontWeight: '800',
     includeFontPadding: false,
-    lineHeight: 22,
+    lineHeight: 24,
     color: colors2024['neutral-title-1'],
   },
   inactiveText: {
-    fontFamily: FontNames.sf_pro,
-    fontSize: 14,
-    fontWeight: '500',
-    includeFontPadding: false,
-    lineHeight: 18,
-    color: colors2024['neutral-secondary'],
-  },
-  roundedActiveText: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     includeFontPadding: false,
-    lineHeight: 22,
-    color: colors2024['neutral-title-1'],
-  },
-  roundedInactiveText: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    includeFontPadding: false,
-    lineHeight: 18,
+    lineHeight: 24,
     color: colors2024['neutral-secondary'],
   },
 }));

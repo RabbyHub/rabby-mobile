@@ -2,7 +2,6 @@ import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
-import { FontNames } from '@/core/utils/fonts';
 import { PerpsModeSwitch } from './PerpsModeSwitch';
 
 jest.mock('@/components/Typography', () => {
@@ -47,20 +46,20 @@ describe('PerpsModeSwitch', () => {
     expect(
       StyleSheet.flatten(screen.getByText('Perps').props.style),
     ).toMatchObject({
-      fontFamily: FontNames.sf_pro,
-      fontSize: 18,
-      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 20,
+      fontWeight: '800',
       includeFontPadding: false,
-      lineHeight: 22,
+      lineHeight: 24,
     });
     expect(
       StyleSheet.flatten(screen.getByText('Pro').props.style),
     ).toMatchObject({
-      fontFamily: FontNames.sf_pro,
-      fontSize: 14,
-      fontWeight: '500',
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 20,
+      fontWeight: '700',
       includeFontPadding: false,
-      lineHeight: 18,
+      lineHeight: 24,
     });
 
     fireEvent.press(screen.getByTestId('perps-mode-simple'));
@@ -109,12 +108,14 @@ describe('PerpsModeSwitch', () => {
       />,
     );
 
-    expect(screen.getByTestId('perps-mode-simple').props.style).toBeUndefined();
+    expect(
+      StyleSheet.flatten(screen.getByTestId('perps-mode-simple').props.style),
+    ).not.toHaveProperty('flex');
     expect(
       StyleSheet.flatten(screen.getByTestId('perps-mode-switch').props.style),
     ).toMatchObject({
       flex: 1,
-      height: 26,
+      height: 44,
       minWidth: 0,
     });
     expect(
