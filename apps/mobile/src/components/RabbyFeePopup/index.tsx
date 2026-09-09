@@ -1,4 +1,6 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { View, Image, useWindowDimensions } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import RCIconRabbyWhite from '@/assets2024/icons/bridge/FeeRabbyWallet.svg';
@@ -36,6 +38,17 @@ export const RabbyFeePopup = ({
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
   const { sheetModalRef } = useSheetModal();
+  const sheetVisibleRef = useRef(false);
+  const { onHardwareBackHandler } = useHandleBackPressClosable(
+    useCallback(() => {
+      if (visible || sheetVisibleRef.current) {
+        onClose();
+        return false;
+      }
+      return true;
+    }, [visible, onClose]),
+  );
+  useFocusEffect(onHardwareBackHandler);
 
   const hasSwapDexFee = useMemo(() => {
     return type === 'swap' && dexName && dexFeeDesc && DEX?.[dexName]?.logo;
@@ -70,7 +83,13 @@ export const RabbyFeePopup = ({
       ref={sheetModalRef}
       snapPoints={snapPoints}
       enableDismissOnClose
-      onDismiss={onClose}
+      onChange={index => {
+        sheetVisibleRef.current = index >= 0;
+      }}
+      onDismiss={() => {
+        sheetVisibleRef.current = false;
+        onClose();
+      }}
       handleStyle={styles.handle}
       handleIndicatorStyle={styles.handleIndicator}
       backgroundStyle={styles.sheetBg}>
