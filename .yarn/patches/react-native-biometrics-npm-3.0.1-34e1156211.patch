@@ -1,5 +1,5 @@
 diff --git a/android/src/main/java/com/rnbiometrics/ReactNativeBiometrics.java b/android/src/main/java/com/rnbiometrics/ReactNativeBiometrics.java
-index 624ecd947cc970139c9e6a74070cd41c13825dc5..d72352d6d8f4d2f04e8099032d9499331344b899 100644
+index 624ecd947cc970139c9e6a74070cd41c13825dc5..8af3ea389805572d056acbd0077075369c81523d 100644
 --- a/android/src/main/java/com/rnbiometrics/ReactNativeBiometrics.java
 +++ b/android/src/main/java/com/rnbiometrics/ReactNativeBiometrics.java
 @@ -9,6 +9,7 @@ import androidx.biometric.BiometricManager;
@@ -10,17 +10,18 @@ index 624ecd947cc970139c9e6a74070cd41c13825dc5..d72352d6d8f4d2f04e8099032d949933
  import androidx.fragment.app.FragmentActivity;
 
  import com.facebook.react.bridge.Promise;
-@@ -37,6 +38,9 @@ import java.util.concurrent.Executors;
+@@ -37,6 +38,10 @@ import java.util.concurrent.Executors;
  public class ReactNativeBiometrics extends ReactContextBaseJavaModule {
 
      protected String biometricKeyAlias = "biometric_key";
 +    private FragmentActivity preparedSimplePromptActivity;
 +    private SimplePromptCallback preparedSimplePromptCallback;
 +    private BiometricPrompt preparedSimplePrompt;
++    private SimplePromptCallback activePreparedSimplePromptCallback;
 
      public ReactNativeBiometrics(ReactApplicationContext reactContext) {
          super(reactContext);
-@@ -171,7 +175,7 @@ public class ReactNativeBiometrics extends ReactContextBaseJavaModule {
+@@ -171,7 +176,7 @@ public class ReactNativeBiometrics extends ReactContextBaseJavaModule {
                                  Executor executor = Executors.newSingleThreadExecutor();
                                  BiometricPrompt biometricPrompt = new BiometricPrompt(fragmentActivity, executor, authCallback);
 
@@ -29,7 +30,7 @@ index 624ecd947cc970139c9e6a74070cd41c13825dc5..d72352d6d8f4d2f04e8099032d949933
                              } catch (Exception e) {
                                  promise.reject("Error signing payload: " + e.getMessage(), "Error generating signature: " + e.getMessage());
                              }
-@@ -182,12 +186,29 @@ public class ReactNativeBiometrics extends ReactContextBaseJavaModule {
+@@ -182,12 +187,29 @@ public class ReactNativeBiometrics extends ReactContextBaseJavaModule {
          }
      }
 
@@ -62,7 +63,7 @@ index 624ecd947cc970139c9e6a74070cd41c13825dc5..d72352d6d8f4d2f04e8099032d949933
              builder.setNegativeButtonText(cancelButtonText);
          }
 
-@@ -205,6 +226,46 @@ public class ReactNativeBiometrics extends ReactContextBaseJavaModule {
+@@ -205,6 +227,55 @@ public class ReactNativeBiometrics extends ReactContextBaseJavaModule {
          return Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q;
      }
 
@@ -72,7 +73,16 @@ index 624ecd947cc970139c9e6a74070cd41c13825dc5..d72352d6d8f4d2f04e8099032d949933
 +        }
 +
 +        preparedSimplePromptActivity = fragmentActivity;
-+        preparedSimplePromptCallback = new SimplePromptCallback();
++        preparedSimplePromptCallback = new SimplePromptCallback(
++                new SimplePromptCallback.TerminalListener() {
++                    @Override
++                    public void onTerminal(SimplePromptCallback callback) {
++                        if (activePreparedSimplePromptCallback == callback) {
++                            activePreparedSimplePromptCallback = null;
++                        }
++                    }
++                }
++        );
 +        preparedSimplePrompt = new BiometricPrompt(
 +                fragmentActivity,
 +                ContextCompat.getMainExecutor(fragmentActivity),
@@ -109,7 +119,7 @@ index 624ecd947cc970139c9e6a74070cd41c13825dc5..d72352d6d8f4d2f04e8099032d949933
      @ReactMethod
      public void simplePrompt(final ReadableMap params, final Promise promise) {
          if (isCurrentSDKMarshmallowOrLater()) {
-@@ -216,15 +277,44 @@ public class ReactNativeBiometrics extends ReactContextBaseJavaModule {
+@@ -216,15 +287,58 @@ public class ReactNativeBiometrics extends ReactContextBaseJavaModule {
                                  String promptMessage = params.getString("promptMessage");
                                  String cancelButtonText = params.getString("cancelButtonText");
                                  boolean allowDeviceCredentials = params.getBoolean("allowDeviceCredentials");
@@ -121,20 +131,34 @@ index 624ecd947cc970139c9e6a74070cd41c13825dc5..d72352d6d8f4d2f04e8099032d949933
 -                                AuthenticationCallback authCallback = new SimplePromptCallback(promise);
                                  FragmentActivity fragmentActivity = (FragmentActivity) getCurrentActivity();
 +                                if (usePreparedPrompt) {
-+                                    ensurePreparedSimplePrompt(fragmentActivity);
-+                                    if (!preparedSimplePromptCallback.setPromise(promise)) {
++                                    if (activePreparedSimplePromptCallback != null) {
 +                                        promise.reject(
 +                                                "Biometric prompt already active",
 +                                                "Biometric prompt already active"
 +                                        );
 +                                        return;
 +                                    }
++                                    ensurePreparedSimplePrompt(fragmentActivity);
++                                    SimplePromptCallback promptCallback = preparedSimplePromptCallback;
++                                    BiometricPrompt biometricPrompt = preparedSimplePrompt;
++                                    preparedSimplePromptActivity = null;
++                                    preparedSimplePromptCallback = null;
++                                    preparedSimplePrompt = null;
++
++                                    if (!promptCallback.setPromise(promise)) {
++                                        promise.reject(
++                                                "Biometric prompt already active",
++                                                "Biometric prompt already active"
++                                        );
++                                        return;
++                                    }
++                                    activePreparedSimplePromptCallback = promptCallback;
 +                                    try {
-+                                            preparedSimplePrompt.authenticate(
++                                            biometricPrompt.authenticate(
 +                                                getPromptInfo(promptMessage, cancelButtonText, allowDeviceCredentials, false)
 +                                        );
 +                                    } catch (Exception error) {
-+                                        preparedSimplePromptCallback.clearPromise(promise);
++                                        promptCallback.clearPromise(promise);
 +                                        throw error;
 +                                    }
 +                                    return;
@@ -158,37 +182,79 @@ index 624ecd947cc970139c9e6a74070cd41c13825dc5..d72352d6d8f4d2f04e8099032d949933
                          }
                      });
 diff --git a/android/src/main/java/com/rnbiometrics/SimplePromptCallback.java b/android/src/main/java/com/rnbiometrics/SimplePromptCallback.java
-index 587f1ddce328738266e7ababe18f51ef3e57b527..0eddbef1317dee8a58bbaca29f14662f927017a0 100644
+index 587f1ddce328738266e7ababe18f51ef3e57b527..8f539df8cf85dc0865ee6b683773dbeaf3aa4ce1 100644
 --- a/android/src/main/java/com/rnbiometrics/SimplePromptCallback.java
 +++ b/android/src/main/java/com/rnbiometrics/SimplePromptCallback.java
-@@ -15,16 +15,48 @@ public class SimplePromptCallback extends BiometricPrompt.AuthenticationCallback
-         this.promise = promise;
-     }
+@@ -8,23 +8,90 @@ import com.facebook.react.bridge.WritableMap;
+ import com.facebook.react.bridge.WritableNativeMap;
 
+ public class SimplePromptCallback extends BiometricPrompt.AuthenticationCallback {
++    public interface TerminalListener {
++        void onTerminal(SimplePromptCallback callback);
++    }
++
+     private Promise promise;
++    private final TerminalListener terminalListener;
++    private boolean terminal;
+
+     public SimplePromptCallback(Promise promise) {
+         super();
+         this.promise = promise;
++        this.terminalListener = null;
++    }
++
 +    public SimplePromptCallback() {
-+        this(null);
++        super();
++        this.promise = null;
++        this.terminalListener = null;
++    }
++
++    public SimplePromptCallback(TerminalListener terminalListener) {
++        super();
++        this.promise = null;
++        this.terminalListener = terminalListener;
 +    }
 +
 +    public synchronized boolean setPromise(Promise promise) {
-+        if (this.promise != null) {
++        if (terminal || this.promise != null) {
 +            return false;
 +        }
 +        this.promise = promise;
 +        return true;
 +    }
 +
-+    public synchronized void clearPromise(Promise promise) {
-+        if (this.promise == promise) {
-+            this.promise = null;
++    public void clearPromise(Promise promise) {
++        TerminalListener listener = null;
++        synchronized (this) {
++            if (!terminal && this.promise == promise) {
++                this.promise = null;
++                terminal = true;
++                listener = terminalListener;
++            }
++        }
++        if (listener != null) {
++            listener.onTerminal(this);
 +        }
 +    }
 +
-+    private synchronized Promise takePromise() {
-+        Promise result = this.promise;
-+        this.promise = null;
++    private Promise takePromise() {
++        Promise result;
++        TerminalListener listener;
++        synchronized (this) {
++            if (terminal) {
++                return null;
++            }
++            terminal = true;
++            result = promise;
++            promise = null;
++            listener = terminalListener;
++        }
++        if (listener != null) {
++            listener.onTerminal(this);
++        }
 +        return result;
-+    }
-+
+     }
+
      @Override
      public void onAuthenticationError(int errorCode, @NonNull CharSequence errString) {
          super.onAuthenticationError(errorCode, errString);
@@ -202,8 +268,8 @@ index 587f1ddce328738266e7ababe18f51ef3e57b527..0eddbef1317dee8a58bbaca29f14662f
              WritableMap resultMap = new WritableNativeMap();
              resultMap.putBoolean("success", false);
              resultMap.putString("error", "User cancellation");
-+            resultMap.putInt("errorCode", errorCode);
 -            this.promise.resolve(resultMap);
++            resultMap.putInt("errorCode", errorCode);
 +            promise.resolve(resultMap);
          } else {
 -            this.promise.reject(errString.toString(), errString.toString());
@@ -213,7 +279,7 @@ index 587f1ddce328738266e7ababe18f51ef3e57b527..0eddbef1317dee8a58bbaca29f14662f
          }
      }
 
-@@ -32,8 +62,13 @@ public class SimplePromptCallback extends BiometricPrompt.AuthenticationCallback
+@@ -32,8 +99,13 @@ public class SimplePromptCallback extends BiometricPrompt.AuthenticationCallback
      public void onAuthenticationSucceeded(@NonNull BiometricPrompt.AuthenticationResult result) {
          super.onAuthenticationSucceeded(result);
 
