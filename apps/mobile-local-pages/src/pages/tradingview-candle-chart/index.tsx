@@ -284,6 +284,7 @@ maLegend.style.right = '52px';
 maLegend.style.top = '2px';
 maLegend.style.display = 'none';
 maLegend.style.alignItems = 'center';
+maLegend.style.flexWrap = 'wrap';
 maLegend.style.gap = '8px';
 maLegend.style.pointerEvents = 'none';
 maLegend.style.fontSize = '9px';
@@ -480,7 +481,9 @@ applyPerpsProCrosshairLabelBaseStyles(proCrosshairLabel);
 proCrosshairLabel.style.position = 'absolute';
 proCrosshairLabel.style.right = '0';
 proCrosshairLabel.style.display = 'none';
-proCrosshairLabel.style.width = `${PERPS_PRO_CROSSHAIR_LABEL_LAYOUT.priceWidth}px`;
+proCrosshairLabel.style.minWidth = `${PERPS_PRO_CROSSHAIR_LABEL_LAYOUT.priceWidth}px`;
+proCrosshairLabel.style.width = 'max-content';
+proCrosshairLabel.style.maxWidth = '100%';
 proCrosshairLabel.style.flexDirection = 'column';
 proCrosshairLabel.style.alignItems = 'flex-end';
 proCrosshairLabel.style.justifyContent = 'center';
@@ -554,6 +557,7 @@ function applyPerpsProFontMode(enabled: boolean) {
     ensurePerpsProFontsLoaded();
     proDomElements.forEach(element => {
       element.style.fontFamily = PERPS_PRO_FONT_FAMILY;
+      element.style.fontVariantNumeric = 'tabular-nums';
     });
     emptyText.style.fontFamily = PERPS_PRO_FONT_FAMILY;
     return;
@@ -561,6 +565,7 @@ function applyPerpsProFontMode(enabled: boolean) {
 
   proDomElements.forEach(element => {
     element.style.removeProperty('font-family');
+    element.style.removeProperty('font-variant-numeric');
   });
   emptyText.style.fontFamily = legacyEmptyTextFontFamily;
 }
@@ -741,7 +746,9 @@ function updateMaLegend(time?: number) {
   maLegend.innerHTML = config.maPeriods
     .map(period => {
       const value = getMovingAverageValueAtTime(period, targetTime);
-      return `<span style="color: ${colors.ma[period]};">MA(${period}): ${
+      return `<span style="color: ${
+        colors.ma[period]
+      };min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;">MA(${period}): ${
         value == null ? '--' : formatProPrice(value, config.priceDecimals)
       }</span>`;
     })
@@ -965,7 +972,7 @@ function createProTooltipRow(
     isLast ? '' : 'margin-bottom:2px;'
   }"><span style="color:${
     chartState.colors?.tooltip.title
-  };min-width:0;overflow-wrap:anywhere;">${label}:</span><span style="color:${valueColor};flex-shrink:0;font-weight:600;text-align:right;white-space:nowrap;">${value}</span></div>`;
+  };min-width:0;overflow-wrap:anywhere;">${label}:</span><span style="color:${valueColor};min-width:0;flex-shrink:1;font-weight:600;text-align:right;overflow-wrap:anywhere;">${value}</span></div>`;
 }
 
 function renderPerpsProTooltip(candle: CandleStick, pointX: number) {
