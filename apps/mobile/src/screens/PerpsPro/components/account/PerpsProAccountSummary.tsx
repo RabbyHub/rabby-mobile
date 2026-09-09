@@ -3,16 +3,20 @@ import {
   PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
 } from '../common/perpsProNumberText';
 import { Text } from '@/components/Typography';
-import RcIconPortfolioInfoCC from '@/assets2024/icons/perps/IconPortfolioInfoCC.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { useShowPerpsPortfolioBreakdown } from '@/screens/PerpsShared/components/PerpsPortfolioBreakdownExplanation';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { Pressable, TouchableOpacity, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsAccountViewModel } from '../../model/account';
 import { formatPerpsProUsdValue } from '../../utils/format';
+import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
+
+// Approved Account-only colors, matching Simple Account in both themes.
+const ACCOUNT_ACTION_COLOR = '#23C0B0';
+const ACCOUNT_ACTION_BACKGROUND = 'rgba(80, 210, 193, 0.1)';
 
 interface PerpsProAccountSummaryProps {
   account: PerpsAccountViewModel;
@@ -22,7 +26,7 @@ interface PerpsProAccountSummaryProps {
 
 export const PerpsProAccountSummary: React.FC<PerpsProAccountSummaryProps> =
   React.memo(({ account, onDeposit, onWithdraw }) => {
-    const { colors2024, styles } = useTheme2024({ getStyle });
+    const { styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
     const { hasNonPerpsAssets, showPortfolioBreakdown } =
       useShowPerpsPortfolioBreakdown();
@@ -33,25 +37,19 @@ export const PerpsProAccountSummary: React.FC<PerpsProAccountSummaryProps> =
       <View style={styles.container} testID="perps-pro-account-summary">
         <View style={styles.summary}>
           <View style={styles.summaryColumn}>
-            <View style={styles.labelRow}>
+            {hasNonPerpsAssets ? (
+              <PerpsProDottedUnderlineText
+                accessibilityLabel={portfolioValueLabel}
+                onPress={() =>
+                  showPortfolioBreakdown(Number(account.primaryValue))
+                }
+                style={styles.label}
+                testID="perps-pro-portfolio-value-breakdown">
+                {portfolioValueLabel}
+              </PerpsProDottedUnderlineText>
+            ) : (
               <Text style={styles.label}>{portfolioValueLabel}</Text>
-              {hasNonPerpsAssets ? (
-                <TouchableOpacity
-                  accessibilityLabel={portfolioValueLabel}
-                  accessibilityRole="button"
-                  hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
-                  onPress={() =>
-                    showPortfolioBreakdown(Number(account.primaryValue))
-                  }
-                  testID="perps-pro-portfolio-value-breakdown">
-                  <RcIconPortfolioInfoCC
-                    color={colors2024['neutral-foot']}
-                    height={16}
-                    width={16}
-                  />
-                </TouchableOpacity>
-              ) : null}
-            </View>
+            )}
             <Text
               {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
               style={styles.primaryValue}>
@@ -81,16 +79,16 @@ export const PerpsProAccountSummary: React.FC<PerpsProAccountSummaryProps> =
           <Pressable
             accessibilityRole="button"
             onPress={onDeposit}
-            style={styles.primaryAction}>
-            <Text style={styles.primaryActionText}>
+            style={styles.action}>
+            <Text style={styles.actionText}>
               {t('page.perps.pro.account.deposit')}
             </Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
             onPress={onWithdraw}
-            style={styles.secondaryAction}>
-            <Text style={styles.secondaryActionText}>
+            style={styles.action}>
+            <Text style={styles.actionText}>
               {t('page.perps.pro.account.withdraw')}
             </Text>
           </Pressable>
@@ -103,19 +101,16 @@ PerpsProAccountSummary.displayName = 'PerpsProAccountSummary';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderColor: colors2024['neutral-bg-5'],
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 16,
-    marginHorizontal: 15,
+    gap: 12,
+    marginHorizontal: 16,
     marginTop: 16,
-    padding: 12,
+    paddingBottom: 16,
   },
   summary: {
     gap: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingHorizontal: 4,
   },
   summaryColumn: {
     flex: 1,
@@ -126,81 +121,61 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'flex-end',
   },
   label: {
-    color: colors2024['neutral-secondary'],
+    color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
-  },
-  labelRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 4,
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 18,
   },
   primaryValue: {
     ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
-    lineHeight: 20,
+    lineHeight: 22,
   },
   value: {
     ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
-    lineHeight: 20,
+    lineHeight: 22,
   },
   positiveValue: {
     ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
-    lineHeight: 20,
+    lineHeight: 22,
   },
   negativeValue: {
     ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
-    lineHeight: 20,
+    lineHeight: 22,
   },
   actions: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 12,
   },
-  primaryAction: {
+  action: {
     alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderRadius: 6,
+    backgroundColor: ACCOUNT_ACTION_BACKGROUND,
+    borderRadius: 8,
     flex: 1,
-    height: 34,
+    height: 36,
     justifyContent: 'center',
   },
-  primaryActionText: {
-    color: colors2024['neutral-title-1'],
+  actionText: {
+    color: ACCOUNT_ACTION_COLOR,
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-  secondaryAction: {
-    alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderRadius: 6,
-    flex: 1,
-    height: 34,
-    justifyContent: 'center',
-  },
-  secondaryActionText: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
+    fontSize: 16,
+    fontWeight: '700',
+    lineHeight: 20,
   },
 }));

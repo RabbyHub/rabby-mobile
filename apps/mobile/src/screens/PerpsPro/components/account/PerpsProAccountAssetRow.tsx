@@ -45,17 +45,14 @@ export const PerpsProAccountAssetRow: React.FC<{
     <View style={styles.assetRow} testID={`perps-pro-asset-${asset.key}`}>
       <View style={styles.assetMain}>
         <View style={styles.assetIdentity}>
-          <AssetIcon height={24} width={24} />
-          <View style={styles.assetCopy}>
-            <View style={styles.coinRow}>
-              <Text style={styles.coin}>{asset.coin}</Text>
-              {ledgerLabel ? (
-                <View style={styles.ledgerTag}>
-                  <Text style={styles.ledgerTagText}>{ledgerLabel}</Text>
-                </View>
-              ) : null}
-            </View>
-            <Text style={styles.fullName}>{asset.fullName}</Text>
+          <AssetIcon height={36} width={36} />
+          <View style={styles.coinRow}>
+            <Text style={styles.coin}>{asset.coin}</Text>
+            {ledgerLabel ? (
+              <View style={styles.ledgerTag}>
+                <Text style={styles.ledgerTagText}>{ledgerLabel}</Text>
+              </View>
+            ) : null}
           </View>
         </View>
         <View style={styles.assetValue}>
@@ -99,31 +96,30 @@ PerpsProAccountAssetRow.displayName = 'PerpsProAccountAssetRow';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   assetRow: {
-    borderBottomColor: colors2024['neutral-bg-5'],
-    borderBottomWidth: 1,
-    gap: 12,
-    justifyContent: 'center',
-    marginHorizontal: 15,
-    marginTop: 8,
-    minHeight: 92,
-    paddingVertical: 8,
+    alignItems: 'center',
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    flexDirection: 'row',
+    gap: 16,
+    marginHorizontal: 16,
+    minHeight: 62,
+    paddingLeft: 4,
+    paddingVertical: 12,
   },
   assetMain: {
     gap: 8,
-    alignItems: 'flex-start',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  assetIdentity: {
-    alignItems: 'flex-start',
+    alignItems: 'center',
     flex: 1,
     flexDirection: 'row',
-    gap: 4,
-  },
-  assetCopy: {
-    flexShrink: 1,
+    justifyContent: 'space-between',
     minWidth: 0,
-    gap: 2,
+  },
+  assetIdentity: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexShrink: 0,
+    gap: 8,
   },
   coinRow: {
     alignItems: 'center',
@@ -134,7 +130,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '700',
     lineHeight: 20,
   },
   ledgerTag: {
@@ -150,17 +146,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     lineHeight: 14,
   },
-  fullName: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-  },
   assetValue: {
-    maxWidth: '60%',
+    flex: 1,
     minWidth: 0,
-    flexShrink: 1,
     alignItems: 'flex-end',
+    gap: 2,
   },
   total: {
     ...PERPS_PRO_NUMBER_STYLE,
@@ -174,30 +164,31 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-    marginTop: 4,
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 18,
   },
   actionRow: {
     alignItems: 'flex-end',
+    flexShrink: 0,
   },
   assetAction: {
     alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-5'],
     borderRadius: 6,
-    height: 26,
+    height: 30,
     justifyContent: 'center',
-    width: 64,
+    width: 68,
   },
   assetActionText: {
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '700',
     lineHeight: 18,
   },
   actionPlaceholder: {
-    height: 26,
-    width: 64,
+    height: 30,
+    width: 68,
   },
 }));
