@@ -273,6 +273,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
                   ? form.conditionalLimitPrice
                   : ''
               }
+              displayMarketPrice={form.conditionalExecution === 'market'}
               variant="conditionalExecution"
             />
           </>

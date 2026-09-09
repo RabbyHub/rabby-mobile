@@ -93,7 +93,7 @@ jest.mock('@/components/Typography', () => {
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
     const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
-    return { colors2024, styles: getStyle({ colors2024 }) };
+    return { colors2024, styles: getStyle({ colors2024, isLight: true }) };
   },
 }));
 
@@ -704,18 +704,36 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(screen.queryByTestId('perps-pro-trade-price-suffix-BBO')).toBeNull();
     expect(screen.queryByTestId('perps-pro-trade-tif-trigger')).toBeNull();
     expect(screen.getByLabelText('triggerPrice(USDC)')).toBeTruthy();
+    expect(screen.queryByLabelText('marketPrice')).toBeNull();
+    expect(
+      StyleSheet.flatten(screen.getByText('marketPrice').props.style),
+    ).toMatchObject({
+      color: 'neutral-title-1',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-trade-price-suffix-market').props.style,
+      ),
+    ).toMatchObject({
+      width: 72,
+      height: 40,
+      borderRadius: 8,
+    });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-trade-conditional-execution-value').props
           .style,
       ),
-    ).toMatchObject({ opacity: 0.5 });
+    ).toMatchObject({ backgroundColor: 'neutral-bg-0' });
     expect(
       StyleSheet.flatten(screen.getByText('market').props.style),
     ).toMatchObject({
       ...getPerpsProTradeSelectFontStyle(Platform.OS),
-      fontSize: 10,
-      lineHeight: 12,
+      fontSize: 12,
+      lineHeight: 16,
     });
     expect(
       StyleSheet.flatten(screen.getByText('market').props.style).fontVariant,
