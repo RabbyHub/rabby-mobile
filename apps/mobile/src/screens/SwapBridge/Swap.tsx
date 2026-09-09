@@ -49,6 +49,7 @@ import {
   useSwapUnlimitedAllowance,
   useTokenPair,
   isMEVProtectionSupported,
+  SWAP_FEE_RATE,
 } from '../Swap/hooks';
 import { refreshIdAtom, useRabbyFeeVisible } from '../Swap/hooks/atom';
 import { buildDexSwap, dexSwap } from '../Swap/hooks/swap';
@@ -252,6 +253,7 @@ const Swap = ({
     isSlippageLow,
 
     feeRate,
+    feeTier,
 
     openQuotesList,
     closeQuotesList,
@@ -941,9 +943,6 @@ const Swap = ({
   }, [_lowCreditToken, navState]);
 
   const openFeePopup = useCallback(() => {
-    if (isWrapToken) {
-      return;
-    }
     setIsShowRabbyFeePopup({
       visible: true,
       dexName: activeProvider?.name || undefined,
@@ -952,7 +951,6 @@ const Swap = ({
   }, [
     activeProvider?.name,
     activeProvider?.quote?.dexFeeDesc,
-    isWrapToken,
     setIsShowRabbyFeePopup,
   ]);
 
@@ -1336,8 +1334,8 @@ const Swap = ({
       setIsCustomSlippage={setIsCustomSlippage}
       type="swap"
       isWrapToken={isWrapToken}
-      isRabbyFeeFree={!isWrapToken && feeRate === '0'}
-      isRabbyFeeHalf={feeRate === '0.12'}
+      isRabbyFeeFree={feeRate === SWAP_FEE_RATE.FREE}
+      isRabbyFeeHalf={feeRate === SWAP_FEE_RATE.HALF}
       isBestQuote={
         !!activeProvider &&
         !!bestQuoteDex &&
@@ -1939,6 +1937,7 @@ const Swap = ({
         ) : null}
         <RabbyFeePopup
           type="swap"
+          feeTier={feeTier}
           visible={isShowRabbyFeePopup}
           dexName={dexName}
           dexFeeDesc={dexFeeDesc}
