@@ -17,6 +17,7 @@ const UNIT_AREA_MAX_WIDTH = 72;
 const UNIT_TEXT_MIN_WIDTH = 34;
 
 type PerpsProTradeAmountFieldProps = {
+  getKeyboardMinimum?: () => string | null;
   label: string;
   maxDecimals: number;
   onChangeText?: (value: string) => void;
@@ -32,6 +33,7 @@ export const PerpsProTradeAmountField = React.memo(
   React.forwardRef<TextInput, PerpsProTradeAmountFieldProps>(
     (props, forwardedRef) => {
       const {
+        getKeyboardMinimum,
         label,
         maxDecimals,
         onBlur,
@@ -68,6 +70,8 @@ export const PerpsProTradeAmountField = React.memo(
               </Text>
             )}
             <PerpsProDecimalTextInput
+              keyboardMinimum={focused ? getKeyboardMinimum?.() : null}
+              keyboardScrollTrade
               accessibilityLabel={label}
               cursorColor={colors2024['brand-default']}
               maxFontSizeMultiplier={1.2}

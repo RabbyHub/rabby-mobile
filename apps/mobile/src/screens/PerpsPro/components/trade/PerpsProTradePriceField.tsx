@@ -74,6 +74,7 @@ export const PerpsProTradePriceField = React.memo(
           </Text>
         )}
         <PerpsProDecimalTextInput
+          keyboardScrollTrade
           accessibilityLabel={label}
           canonicalizeValueOnBlur={canonicalizeValueOnBlur}
           cursorColor={colors2024['brand-default']}

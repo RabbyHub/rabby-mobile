@@ -2178,6 +2178,7 @@
           "liquidationPrice": "Liq. Price",
           "triggerPrice": "Trigger Price",
           "amount": "Amount",
+          "keyboardMinimum": "Min {{amount}}",
           "available": "Available",
           "reduceOnly": "Reduce Only",
           "confirmationReduceOnly": "Reduce Only",

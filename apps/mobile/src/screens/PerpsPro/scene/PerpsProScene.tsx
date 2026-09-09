@@ -41,7 +41,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Reanimated, { useSharedValue } from 'react-native-reanimated';
+import Reanimated, { runOnUI, useSharedValue } from 'react-native-reanimated';
 
 import { PerpsProAccountAssetRow } from '../components/account/PerpsProAccountAssetRow';
 import { PerpsProAccountState } from '../components/account/PerpsProAccountState';
@@ -52,6 +52,7 @@ import {
   type PerpsProFundingMode,
 } from '../components/account/PerpsProFundingOverlay';
 import { PerpsProKlineSheet } from '../components/chart/PerpsProKlineSheet';
+import { registerPerpsProKeyboardTradeScroll } from '../components/common/perpsProKeyboardSession';
 import { PerpsProEmptyState } from '../components/common/PerpsProEmptyState';
 import { PerpsProFieldExplanationProvider } from '../components/common/PerpsProFieldExplanationProvider';
 import { triggerPerpsProLightHaptic } from '../components/common/triggerPerpsProLightHaptic';
@@ -71,7 +72,9 @@ import {
   type PerpsProInfoPagerHandle,
 } from '../components/info/PerpsProInfoPager';
 import {
+  getPerpsProInfoBridgeOffset,
   interruptPerpsProInfoScrollBridge,
+  scrollPerpsProInfoBridgeTarget,
   usePerpsProInfoScrollBridge,
 } from '../components/info/usePerpsProInfoScrollBridge';
 import {
@@ -312,6 +315,27 @@ export const PerpsProScene: React.FC<{
   const headerCollapse = usePerpsProHeaderCollapse();
   const infoScrollBridge = usePerpsProInfoScrollBridge(
     info.activeInfoTab ?? 'account',
+  );
+  useEffect(
+    () =>
+      registerPerpsProKeyboardTradeScroll(distance => {
+        runOnUI((delta: number) => {
+          'worklet';
+          const index = infoScrollBridge.activeIndex.value;
+          const target = infoScrollBridge.targets[index];
+          if (!target || infoScrollBridge.pageGestureActive.value) {
+            return;
+          }
+          const offset = getPerpsProInfoBridgeOffset({
+            maxOffset: target.maxOffset.value,
+            offset: target.offset.value,
+            delta,
+          });
+          interruptPerpsProInfoScrollBridge(infoScrollBridge);
+          scrollPerpsProInfoBridgeTarget(infoScrollBridge, index, offset);
+        })(distance);
+      }),
+    [infoScrollBridge],
   );
   const androidScrollCoordinator = usePerpsProAndroidSceneScrollCoordinator({
     controller: infoScrollBridge,

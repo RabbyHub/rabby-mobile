@@ -144,6 +144,7 @@ export const PerpsProTpSlInput: React.FC<{
               </>
             ) : null}
             <PerpsProDecimalTextInput
+              keyboardScrollTrade
               accessibilityLabel={label}
               canonicalizeValueOnBlur={
                 usesPriceEditingPolicy ? canonicalizePriceInput : undefined

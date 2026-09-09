@@ -82,6 +82,7 @@ jest.mock('@/components/Typography', () => {
               (props as { accessibilityLabel?: string }).accessibilityLabel,
             ),
           setNativeProps: jest.fn(),
+          blur: jest.fn(),
         }));
         return ReactModule.createElement(TextInput, props);
       },
@@ -162,6 +163,7 @@ import type { PerpsProTradeController } from '../../scene/usePerpsProTrade';
 import { PerpsProTradeForm } from './PerpsProTradeForm';
 import { PERPS_PRO_PRICE_FILL_ANIMATION } from './PerpsProTradePriceField';
 import { getPerpsProTradeSelectFontStyle } from './PerpsProTradePrimitives';
+import { perpsProKeyboardSession } from '../common/perpsProKeyboardSession';
 
 const market = {
   canonicalCoin: 'BTC',
@@ -241,6 +243,7 @@ const controller = (
   } as unknown as PerpsProTradeController);
 
 describe('PerpsProTradeForm order matrix', () => {
+  afterEach(() => act(() => perpsProKeyboardSession.setEnabled(false)));
   beforeEach(() => {
     mockFocusTextInput.mockClear();
     mockDismissKeyboardThen.mockReset();
@@ -761,6 +764,76 @@ describe('PerpsProTradeForm order matrix', () => {
 
     fireEvent.press(screen.getByTestId('perps-pro-trade-amount-unit'));
     expect(trade.toggleAmountUnit).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the effective minimum only for the opening Amount and follows its unit and reference price', () => {
+    perpsProKeyboardSession.setEnabled(true);
+    const trade = controller();
+    const spMarket = {
+      ...trade.market!,
+      displayBase: 'SP500',
+      marketData: {
+        ...trade.market!.marketData,
+        markPx: '7673',
+        szDecimals: 3,
+      },
+    };
+    const view = render(
+      <PerpsProTradeForm
+        controller={{ ...trade, market: spMarket }}
+        onAddFunds={jest.fn()}
+      />,
+    );
+    expect(perpsProKeyboardSession.getSnapshot()).toBeNull();
+    fireEvent(screen.getByLabelText('amount(USDC)'), 'focus');
+    expect(perpsProKeyboardSession.getSnapshot()?.minimum).toBe('15.35 USDC');
+    view.rerender(
+      <PerpsProTradeForm
+        controller={{
+          ...trade,
+          market: spMarket,
+          form: { ...trade.form, amountUnit: 'base' },
+        }}
+        onAddFunds={jest.fn()}
+      />,
+    );
+    expect(perpsProKeyboardSession.getSnapshot()?.minimum).toBe('0.002 SP500');
+    view.rerender(
+      <PerpsProTradeForm
+        controller={{
+          ...trade,
+          market: spMarket,
+          form: { ...trade.form, reduceOnly: true },
+        }}
+        onAddFunds={jest.fn()}
+      />,
+    );
+    expect(perpsProKeyboardSession.getSnapshot()?.minimum).toBeNull();
+    view.rerender(
+      <PerpsProTradeForm
+        controller={{
+          ...trade,
+          market: spMarket,
+          form: { ...trade.form, orderType: 'limit', limitPrice: '' },
+        }}
+        onAddFunds={jest.fn()}
+      />,
+    );
+    expect(perpsProKeyboardSession.getSnapshot()?.minimum).toBeNull();
+    view.rerender(
+      <PerpsProTradeForm
+        controller={{
+          ...trade,
+          market: spMarket,
+          form: { ...trade.form, orderType: 'limit', limitPrice: '5000' },
+        }}
+        onAddFunds={jest.fn()}
+      />,
+    );
+    expect(perpsProKeyboardSession.getSnapshot()?.minimum).toBe('10 USDC');
+    fireEvent(screen.getByLabelText('price(USDC)'), 'focus');
+    expect(perpsProKeyboardSession.getSnapshot()?.minimum).toBeNull();
+    expect(trade.requestReview).not.toHaveBeenCalled();
   });
 
   it('keeps the Amount native input geometry stable while moving its visual label', () => {

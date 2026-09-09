@@ -25,6 +25,7 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { resolvePerpsProEmptyInputSelection } from '../common/perpsProInputSelection';
+import { usePerpsProKeyboardInput } from '../common/usePerpsProKeyboardInput';
 import { PerpsProNativeSearchInput } from './PerpsProNativeSearchInput';
 
 export type PerpsProMarketSearchBarHandle = {
@@ -51,6 +52,13 @@ const PerpsProMarketSearchBarComponent = forwardRef<
     useRef<React.ElementRef<typeof PerpsProNativeSearchInput>>(null);
   const bottomSheetInputRef =
     useRef<React.ElementRef<typeof BottomSheetTextInput>>(null);
+  const {
+    onFocus: onKeyboardFocus,
+    onBlur: onKeyboardBlur,
+    inputAccessoryViewID,
+  } = usePerpsProKeyboardInput(
+    Platform.OS === 'ios' ? nativeInputRef : bottomSheetInputRef,
+  );
   const initialNativeValueRef = useRef(value);
   const [focused, setFocused] = useState(false);
   const isResting = !focused && !value;
@@ -88,13 +96,15 @@ const PerpsProMarketSearchBarComponent = forwardRef<
   );
 
   const handleFocus = useCallback(() => {
+    onKeyboardFocus();
     setFocused(true);
     onFocusChange(true);
-  }, [onFocusChange]);
+  }, [onFocusChange, onKeyboardFocus]);
   const handleBlur = useCallback(() => {
+    onKeyboardBlur();
     setFocused(false);
     onFocusChange(false);
-  }, [onFocusChange]);
+  }, [onFocusChange, onKeyboardBlur]);
   const handleCancel = useCallback(() => {
     clearInput();
     onChangeText('');
@@ -108,6 +118,7 @@ const PerpsProMarketSearchBarComponent = forwardRef<
   const commonInputProps: React.ComponentProps<
     typeof PerpsProNativeSearchInput
   > = {
+    inputAccessoryViewID,
     accessibilityLabel: placeholder,
     accessible: !isResting,
     allowFontScaling: false,
