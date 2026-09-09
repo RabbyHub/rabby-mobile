@@ -28,25 +28,8 @@ type AppBuildGitInfo = {
   METRO_CACHE_ENABLED?: boolean;
 };
 
-function getNativeBuildInfo(): Partial<AppBuildGitInfo> {
-  const legacyBuildInfo = NativeModules?.RNHelpers?.buildInfo;
-  if (legacyBuildInfo) {
-    return legacyBuildInfo as Partial<AppBuildGitInfo>;
-  }
-
-  try {
-    const nativeRNHelpers = require('@/core/native/specs/NativeRNHelpers')
-      .default as
-      | { getConstants?: () => { buildInfo?: Partial<AppBuildGitInfo> } }
-      | undefined;
-
-    return nativeRNHelpers?.getConstants?.().buildInfo || {};
-  } catch {
-    return {};
-  }
-}
-
-const nativeBuildInfo = getNativeBuildInfo();
+const nativeBuildInfo = (NativeModules?.RNHelpers?.buildInfo ||
+  {}) as Partial<AppBuildGitInfo>;
 
 export const BUILD_GIT_INFO: AppBuildGitInfo = {
   BUILD_GIT_HASH: 'unknown',

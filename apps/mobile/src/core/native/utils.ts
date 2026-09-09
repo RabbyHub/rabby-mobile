@@ -33,15 +33,6 @@ interface NativeModulesStatic {
     exitAppForSecurity(): void;
   };
   RNHelpers: NativeModule & {
-    getConstants?(): {
-      buildInfo?: {
-        BUILD_GIT_HASH?: string;
-        BUILD_GIT_HASH_TIME?: string;
-        BUILD_TIME?: string;
-        BUILD_GIT_COMMITOR?: string;
-        METRO_CACHE_ENABLED?: boolean;
-      };
-    };
     buildInfo?: {
       BUILD_GIT_HASH?: string;
       BUILD_GIT_HASH_TIME?: string;
@@ -114,14 +105,13 @@ if (IS_ANDROID) {
 
 export function resolveNativeModule<T extends keyof NativeModulesStatic>(
   name: T,
-  codegenModule?: unknown,
 ) {
   const NATIVE_ERROR =
     `The native module '${name}' doesn't seem to be added. Make sure: \n\n` +
     '- You rebuilt the app after native code changed\n' +
     '- You are not using Expo managed workflow\n';
 
-  const nModule = codegenModule || NativeModules[name];
+  const nModule = NativeModules[name];
 
   const module: NativeModulesStatic[T] = nModule
     ? nModule

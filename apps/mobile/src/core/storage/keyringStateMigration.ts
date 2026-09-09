@@ -34,8 +34,8 @@ export type KeyringStateStorage = {
   delete(key: string): void;
   getString(key: string): string | null | undefined;
   set(key: string, value: string): void;
-  sync?(): void;
-  reload?(): void;
+  sync(): void;
+  reload(): void;
 };
 
 type KeyringStateDiagnosticStorage = Pick<
@@ -313,11 +313,6 @@ function serializePersistedKeyringState(value: PersistedKeyringState) {
   return JSON.stringify(value);
 }
 
-function flushAndReloadStorage(storage: KeyringStateStorage) {
-  storage.sync?.();
-  storage.reload?.();
-}
-
 function ensureKeyringMMKVGuard(storage: KeyringStateStorage) {
   const currentValue = storage.getString(KEYRING_MMKV_GUARD_KEY);
   if (currentValue === KEYRING_MMKV_GUARD_VALUE) {
@@ -335,7 +330,8 @@ function ensureKeyringMMKVGuard(storage: KeyringStateStorage) {
   }
 
   storage.set(KEYRING_MMKV_GUARD_KEY, KEYRING_MMKV_GUARD_VALUE);
-  flushAndReloadStorage(storage);
+  storage.sync();
+  storage.reload();
 
   if (storage.getString(KEYRING_MMKV_GUARD_KEY) !== KEYRING_MMKV_GUARD_VALUE) {
     throw new Error('Keyring MMKV guard persistence verification failed.');
@@ -364,7 +360,8 @@ function writePersistedKeyringStateAndVerify({
 
   const serializedValue = serializePersistedKeyringState(value);
   storage.set(key, serializedValue);
-  flushAndReloadStorage(storage);
+  storage.sync();
+  storage.reload();
 
   const verified = readPersistedKeyringState(storage, key);
   if (
