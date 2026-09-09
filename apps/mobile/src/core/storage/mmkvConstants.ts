@@ -40,4 +40,5 @@ export const APP_MMKV_WEAK_KEYS = {
   WALLETCONNECT_LAST_APPROVED_ACCOUNTS: '@walletConnectLastApprovedAccounts',
   WALLETCONNECT_APPROVED_ACCOUNTS_BY_TOPIC:
     '@walletConnectApprovedAccountsByTopic',
+  PERPS_NET_REPORT: '@perpsNetReport',
 } as const;
