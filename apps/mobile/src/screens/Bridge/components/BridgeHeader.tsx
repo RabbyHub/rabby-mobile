@@ -45,7 +45,7 @@ export const BridgeHeader = ({
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const clearBridgeHistoryRedDotFromScene = useClearBridgeHistoryRedDot();
 
-  const feePopupVisible = useSettingVisible();
+  const { visible: feePopupVisible, feeTier } = useSettingVisible();
   const setFeePopupVisible = useSetSettingVisible();
   const [recentShowTime, setRecentShowTime] = React.useState<number>(0);
   const [historyVisible, setHistoryVisible] = useState(false);
@@ -67,7 +67,7 @@ export const BridgeHeader = ({
   }, [clearBridgeHistoryRedDot, clearBridgeHistoryRedDotFromScene]);
 
   const closeFeePopup = useCallback(() => {
-    setFeePopupVisible(false);
+    setFeePopupVisible({ visible: false });
   }, [setFeePopupVisible]);
 
   useImperativeHandle(
@@ -94,6 +94,7 @@ export const BridgeHeader = ({
       <RabbyFeePopup
         type="bridge"
         visible={feePopupVisible}
+        feeTier={feeTier}
         onClose={closeFeePopup}
       />
     </>

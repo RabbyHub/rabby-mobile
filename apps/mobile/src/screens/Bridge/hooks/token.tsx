@@ -53,7 +53,7 @@ import {
   mergeBridgeQuoteBatch,
 } from '../utils/quoteResultBatch';
 import { useSceneActiveAsync } from '@/screens/SwapBridge/hooks/useSceneActiveAsync';
-import { getRabbyFeeRate } from '@/screens/Swap/hooks/fee';
+import { getRabbyFeeInfo } from '@/screens/Swap/hooks/fee';
 
 export const enableInsufficientQuote = true;
 const BRIDGE_QUOTE_REFRESH_INTERVAL = 1000 * 30;
@@ -494,15 +494,16 @@ export const useBridge = (
 
   // const aggregatorsList = useBridgeSupportedChains(s => s.bridge.aggregatorsList || []);
   const aggregatorsList = useAggregatorsList();
-  const feeRate = useMemo(
+  const { feeRate, feeTier } = useMemo(
     () =>
-      getRabbyFeeRate({
+      getRabbyFeeInfo({
+        payToken: fromToken,
         payAmount: amount,
         payTokenPrice: fromToken?.price || 0,
         isFreeTokenPair: false,
         isWrapToken: false,
       }),
-    [amount, fromToken?.price],
+    [amount, fromToken],
   );
 
   const [bestQuoteId, setBestQuoteId] = useState<
@@ -1505,6 +1506,7 @@ export const useBridge = (
     amount,
     handleAmountChange,
     feeRate,
+    feeTier,
     showLoss,
 
     openQuotesList,

@@ -387,6 +387,7 @@ export const BridgeContent = ({
     amount,
     handleAmountChange,
     feeRate,
+    feeTier,
 
     recommendFromToken,
     fillRecommendFromToken,
@@ -1532,8 +1533,8 @@ export const BridgeContent = ({
   const switchFeePopup = useSetSettingVisible();
 
   const openFeePopup = useCallback(() => {
-    switchFeePopup(true);
-  }, [switchFeePopup]);
+    switchFeePopup({ visible: true, feeTier });
+  }, [switchFeePopup, feeTier]);
 
   const { switchAccountOnSelectedToken } =
     useSwitchSceneAccountOnSelectedTokenWithOwner('MakeTransactionAbout');

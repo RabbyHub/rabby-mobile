@@ -826,6 +826,15 @@
       "results": "Results",
       "insufficient": "Insufficient Balance:",
       "rabbyFee": {
+        "discountTitle": "Rabby fee discount",
+        "case": "Case",
+        "free": "Free",
+        "cases": {
+          "stablecoins": "Stablecoins",
+          "lstLrt": "LST/LRT Token",
+          "million": "Vol $1M+",
+          "hundredThousand": "Vol $100k - $1M"
+        },
         "title": "Rabby fee",
         "swapDesc": "Rabby Wallet will always find the best possible rate from top aggregators and verify the reliability of their offers. Rabby charges a <1>0.25%</1> fee (0% for wrapping), which is automatically included in the quote.",
         "bridgeDesc": "Rabby Wallet will always find the best possible rate from top aggregators and verify the reliability of their offers. Rabby charges a <1>0.25%</1> fee, which is automatically included in the quote.",

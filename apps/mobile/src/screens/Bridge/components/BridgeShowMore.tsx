@@ -41,7 +41,7 @@ import {
 } from '@/components/Approval/components/FooterBar/gasLessDecision';
 import { GasAccountTips } from '@/components/Approval/components/FooterBar/GasLessComponents/GasAccountTips';
 import { useMemoizedFn } from 'ahooks';
-import IconBestQuoteTag from '@/assets2024/icons/bridge/IconBestQuoteTag.svg';
+import IconBestQuoteBackground from '@/assets2024/icons/bridge/BestQuoteBackground.svg';
 import { Text } from '@/components/Typography';
 import { SignMainnetHeaderContent } from '@/components/Approval/components/TxComponents/GasSelector/SignMainnetGasSelectorHeader';
 import type { ApprovalGasMethod } from '@/components/Approval/components/TxComponents/GasSelector/approvalGasDisplay';
@@ -67,7 +67,8 @@ import {
   TxWithTempoExtras,
 } from '@/utils/tempo';
 import tokenListStore from '@/store/tokens';
-import RcIconSwapFree from '@/assets2024/icons/swap/free.svg';
+import RcIconFeeFreeLogo from '@/assets2024/icons/swap/fee-free-logo.svg';
+import RcIconFeeQuestion from '@/assets2024/icons/swap/fee-question.svg';
 
 const RABBY_FEE = '0.25%';
 const RABBY_HALF_FEE = '0.12%';
@@ -152,7 +153,7 @@ const BridgeShowMore = ({
   swapQuotesLoading?: boolean;
 }) => {
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, colors } = useTheme2024({ getStyle });
   const [lossImpactOpen, setLossImpactOpen] = useState(false);
   const [swapGasQuoteVisible, setSwapGasQuoteVisible] = useState(false);
 
@@ -203,39 +204,37 @@ const BridgeShowMore = ({
             source={
               typeof sourceLogo === 'string' ? { uri: sourceLogo } : sourceLogo
             }
-            style={styles.sourceLogo}
+            style={isBestQuote ? styles.bestSourceLogo : styles.sourceLogo}
           />
         )}
         {sourceName && (
-          <Text
-            style={
-              isBestQuote
-                ? [
-                    styles.sourceName,
-                    {
-                      fontSize: 12,
-                      fontWeight: 900,
-                      lineHeight: 16,
-                    },
-                  ]
-                : styles.sourceName
-            }>
+          <Text style={isBestQuote ? styles.bestSourceName : styles.sourceName}>
             {sourceName}
           </Text>
         )}
       </>
     ),
-    [isBestQuote, sourceLogo, sourceName, styles.sourceLogo, styles.sourceName],
+    [
+      isBestQuote,
+      sourceLogo,
+      sourceName,
+      styles.bestSourceLogo,
+      styles.bestSourceName,
+      styles.sourceLogo,
+      styles.sourceName,
+    ],
   );
 
   const BestQuoteContent = useMemo(
     () => (
-      <View style={[styles.bestQuoteWrapper, styles.bestQuoteWrapperMinHeight]}>
-        <View>
-          <IconBestQuoteTag height={24} style={styles.bestQuoteTag} />
-          <View style={styles.bestTagWrapper}>
-            <Text style={styles.bestText}>{t('page.swap.best')}</Text>
-          </View>
+      <View style={styles.bestQuoteWrapper}>
+        <View style={styles.bestTagWrapper}>
+          <IconBestQuoteBackground
+            width={83}
+            height={20}
+            style={styles.bestQuoteTag}
+          />
+          <Text style={styles.bestText}>{t('page.swap.best')}</Text>
         </View>
 
         <View style={styles.bestRightWrapper}>{QuoteContent}</View>
@@ -317,8 +316,7 @@ const BridgeShowMore = ({
         type === 'bridge'
           ? t('page.bridge.showMore.source')
           : t('page.swap.source')
-      }
-      style={styles.listItem}>
+      }>
       {sourceSelectorRender()}
     </ListItem>
   ));
@@ -418,18 +416,34 @@ const BridgeShowMore = ({
 
         <ListItem name={t('page.swap.rabbyFee.title')}>
           {isRabbyFeeFree ? (
-            <View style={styles.feeValueSlot}>
+            <Pressable onPress={openFeePopup} style={styles.feeValueSlot}>
               <View style={styles.freeFeeContainer}>
-                <RcIconSwapFree width={52} height={16} />
-                <Text style={styles.waivedFee}>{RABBY_FEE}</Text>
+                <View style={styles.freeFeeLabel}>
+                  <RcIconFeeFreeLogo width={14} height={14} />
+                  <Text style={styles.freeFeeText}>
+                    {t('page.swap.rabbyFee.free')}
+                  </Text>
+                </View>
+                <RcIconFeeQuestion
+                  width={14}
+                  height={14}
+                  color={colors2024['neutral-InvertHighlight']}
+                />
               </View>
-            </View>
+            </Pressable>
           ) : isRabbyFeeHalf ? (
             <Pressable onPress={openFeePopup}>
               <View style={styles.feeValueSlot}>
                 <View style={styles.halfFeeContainer}>
                   <Text style={styles.halfOriginalFee}>{RABBY_FEE}</Text>
-                  <Text style={styles.halfFee}>{RABBY_HALF_FEE}</Text>
+                  <View style={styles.halfFeeBadge}>
+                    <Text style={styles.halfFee}>{RABBY_HALF_FEE}</Text>
+                    <RcIconFeeQuestion
+                      width={14}
+                      height={14}
+                      color={colors['green-default']}
+                    />
+                  </View>
                 </View>
               </View>
             </Pressable>
@@ -451,7 +465,7 @@ const BridgeShowMore = ({
             <AppSwitch
               value={originPreferMEVGuarded}
               onValueChange={switchPreferMEV}
-              barHeight={22}
+              barHeight={20}
               circleBorderInactiveColor={colors2024['neutral-bg-2']}
               backgroundInactive={colors2024['neutral-bg-2']}
             />
@@ -1346,8 +1360,8 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     // borderRadius: 8,
     // overflow: 'hidden',
   },
-  listItem: {},
   listItemContainer: {
+    height: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -1381,15 +1395,45 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   freeFeeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 1,
+    borderRadius: 5,
+    backgroundColor: colors['green-default'],
+    overflow: 'hidden',
+  },
+  freeFeeLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  freeFeeText: {
+    color: colors2024['neutral-InvertHighlight'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
   },
   halfFeeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 8,
+  },
+  halfFeeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+    paddingHorizontal: 6,
+    paddingVertical: 0,
+    borderWidth: 1,
+    borderColor: colors['green-default'],
+    borderRadius: 4,
+    overflow: 'hidden',
   },
   halfFee: {
-    color: colors2024['green-default'],
+    color: colors['green-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '700',
@@ -1400,14 +1444,6 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '700',
-    lineHeight: 18,
-    textDecorationLine: 'line-through',
-  },
-  waivedFee: {
-    color: colors2024['neutral-foot'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '400',
     lineHeight: 18,
     textDecorationLine: 'line-through',
   },
@@ -1480,7 +1516,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    minHeight: 24,
+    height: 20,
   },
 
   afterLabel: {
@@ -1494,30 +1530,30 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     lineHeight: 18,
   },
   previewValueSlot: {
-    minHeight: 24,
+    height: 20,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
   feeValueSlot: {
-    minHeight: 18,
+    height: 20,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
   sourceSkeleton: {
     width: 60,
-    height: 24,
+    height: 20,
     borderRadius: 12,
   },
   gasSkeleton: {
     width: 131,
-    height: 24,
+    height: 20,
     borderRadius: 100,
   },
   infoCardGasSkeleton: {
     width: 60,
-    height: 24,
+    height: 20,
     borderRadius: 12,
   },
   arrowIcon: {
@@ -1535,42 +1571,59 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   },
 
   bestQuoteWrapper: {
-    borderColor: colors2024['brand-default'],
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    borderRadius: 4,
+    height: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    overflow: 'hidden',
-  },
-  bestQuoteWrapperMinHeight: {
-    minHeight: 24,
-  },
-  bestQuoteTag: {
-    left: -StyleSheet.hairlineWidth * 2,
   },
   bestTagWrapper: {
-    position: 'absolute',
-    top: StyleSheet.hairlineWidth * 2,
-    left: 7,
-    height: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
+    width: 38,
+    height: 20,
+    borderTopLeftRadius: 4,
+    borderBottomLeftRadius: 4,
+    overflow: 'hidden',
     justifyContent: 'center',
+    paddingLeft: 3,
+    zIndex: 1,
+  },
+  bestQuoteTag: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    transform: [{ rotate: '180deg' }],
   },
   bestText: {
     color: colors2024['neutral-InvertHighlight'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    fontStyle: 'normal',
+    fontSize: 14,
+    fontStyle: 'italic',
     fontWeight: '500',
-    lineHeight: 16,
+    lineHeight: 18,
   },
   bestRightWrapper: {
+    height: 20,
+    marginLeft: -7,
     flexDirection: 'row',
-    gap: 4,
-    paddingRight: 6,
-    paddingLeft: 2,
+    gap: 2,
+    paddingRight: 4,
+    paddingLeft: 11,
     alignItems: 'center',
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderRightWidth: 1,
+    borderColor: colors2024['brand-default'],
+    borderTopRightRadius: 4,
+    borderBottomRightRadius: 4,
+  },
+  bestSourceLogo: {
+    width: 12,
+    height: 12,
+    borderRadius: 90,
+  },
+  bestSourceName: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
+    color: colors2024['brand-default'],
   },
 }));
 

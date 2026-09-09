@@ -252,6 +252,7 @@ const Swap = ({
     isSlippageLow,
 
     feeRate,
+    feeTier,
 
     openQuotesList,
     closeQuotesList,
@@ -1939,6 +1940,7 @@ const Swap = ({
         ) : null}
         <RabbyFeePopup
           type="swap"
+          feeTier={feeTier}
           visible={isShowRabbyFeePopup}
           dexName={dexName}
           dexFeeDesc={dexFeeDesc}

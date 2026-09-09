@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo } from 'react';
-import { View, Image, useWindowDimensions, Dimensions } from 'react-native';
-import { useTranslation, Trans } from 'react-i18next';
+import { View, Image, useWindowDimensions } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import RCIconRabbyWhite from '@/assets2024/icons/bridge/FeeRabbyWallet.svg';
-// import RCIconRabbyWhite from '@/assets/icons/swap/rabby.svg'; // Ensure this is a compatible React Native SVG component
-import ImgMetaMask from '@/assets/icons/swap/metamask.png';
-import ImgPhantom from '@/assets/icons/swap/phantom.png';
-import ImgRabbyWallet from '@/assets/icons/swap/rabby-wallet.png';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
-import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
-// import { Button } from '@components2024/swap';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import {
+  RABBY_FEE_DISCOUNT_CASES,
+  type RabbyFeeTier,
+} from '@/screens/Swap/hooks/fee';
+import { getBottomButtonBottomOffset } from '@/constant/layout';
 import { Button } from '@/components2024/Button';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { useSheetModal } from '@/hooks/useSheetModal';
@@ -17,52 +17,19 @@ import { DEX } from '@/constant/swap';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Text } from '@/components/Typography';
 
-const swapFee = [
-  {
-    name: 'MetaMask',
-    logo: ImgMetaMask,
-    rate: '0.875%',
-  },
-  {
-    name: 'Phantom',
-    logo: ImgPhantom,
-    rate: '0.85%',
-  },
-  {
-    name: 'Rabby Wallet',
-    logo: ImgRabbyWallet,
-    rate: '0.25%',
-  },
-];
-
-const bridgeList = [
-  {
-    name: 'MetaMask',
-    logo: ImgMetaMask,
-    rate: '0.875%',
-  },
-  {
-    name: 'Rabby Wallet',
-    logo: ImgRabbyWallet,
-    rate: '0.25%',
-  },
-];
-
-const fee = {
-  swap: swapFee,
-  bridge: bridgeList,
-};
-
+/** Explains the applicable fee discounts and highlights the current tier. */
 export const RabbyFeePopup = ({
   visible,
   onClose,
   type = 'swap',
+  feeTier,
   dexFeeDesc,
   dexName,
 }: {
   visible: boolean;
   onClose: () => void;
-  type?: keyof typeof fee;
+  type?: keyof typeof RABBY_FEE_DISCOUNT_CASES;
+  feeTier?: RabbyFeeTier;
   dexFeeDesc?: string;
   dexName?: string;
 }) => {
@@ -79,9 +46,14 @@ export const RabbyFeePopup = ({
 
   const snapPoints = useMemo(
     () => [
-      Math.min(type === 'swap' ? (hasSwapDexFee ? 740 : 700) : 620, height),
+      Math.min(
+        (type === 'swap' ? 524 : 428) +
+          getBottomButtonBottomOffset(bottom) +
+          (hasSwapDexFee ? 60 : 0),
+        height,
+      ),
     ],
-    [type, hasSwapDexFee, height],
+    [type, hasSwapDexFee, bottom, height],
   );
 
   useEffect(() => {
@@ -98,63 +70,55 @@ export const RabbyFeePopup = ({
       snapPoints={snapPoints}
       enableDismissOnClose
       onDismiss={onClose}
-      handleStyle={styles.sheetBg}
+      handleStyle={styles.handle}
+      handleIndicatorStyle={styles.handleIndicator}
       backgroundStyle={styles.sheetBg}>
       <BottomSheetScrollView>
-        <View style={[styles.contentContainer, { paddingBottom: 20 + bottom }]}>
+        <View
+          style={[
+            styles.contentContainer,
+            { paddingBottom: getBottomButtonBottomOffset(bottom) },
+          ]}>
           <View style={styles.iconContainer}>
             <RCIconRabbyWhite width={70} height={70} />
           </View>
 
-          <Text style={styles.title}>{t('page.swap.rabbyFee.title')}</Text>
-
-          <Text style={styles.description}>
-            <Trans
-              t={t}
-              i18nKey={
-                type === 'swap'
-                  ? t('page.swap.rabbyFee.swapDesc')
-                  : t('page.swap.rabbyFee.bridgeDesc')
-              }
-              components={{
-                1: <Text style={styles.highlightText} />,
-              }}
-            />
+          <Text style={styles.title}>
+            {t('page.swap.rabbyFee.discountTitle')}
           </Text>
 
-          <View style={styles.header}>
-            <Text style={styles.headerText}>
-              {t('page.swap.rabbyFee.wallet')}
-            </Text>
-            <Text style={styles.headerText}>
-              {t('page.swap.rabbyFee.rate')}
-            </Text>
-          </View>
-
           <View style={styles.listContainer}>
-            {fee[type].map((item, idx, list) => (
+            <View style={styles.header}>
+              <Text style={styles.headerText}>
+                {t('page.swap.rabbyFee.case')}
+              </Text>
+              <Text style={styles.headerText}>
+                {t('page.swap.rabbyFee.rate')}
+              </Text>
+            </View>
+            {RABBY_FEE_DISCOUNT_CASES[type].map((item, idx, list) => (
               <View
-                key={item.name}
+                key={item}
                 style={[
                   styles.listItem,
-                  idx === list.length - 1 ? styles.noBorder : {},
+                  idx === list.length - 1 && styles.noBorder,
                 ]}>
-                <View style={styles.itemLeft}>
-                  <Image source={item.logo} style={styles.logo} />
-                  <Text
-                    style={[
-                      styles.itemText,
-                      item.name === 'Rabby Wallet' ? styles.highItem : {},
-                    ]}>
-                    {item.name}
-                  </Text>
-                </View>
                 <Text
                   style={[
                     styles.itemText,
-                    item.name === 'Rabby Wallet' ? styles.highItem : {},
+                    item === feeTier && styles.highItem,
                   ]}>
-                  {item.rate}
+                  {t(`page.swap.rabbyFee.cases.${item}`)}
+                </Text>
+                <Text
+                  style={[
+                    styles.itemText,
+                    styles.rateText,
+                    item === feeTier && styles.highItem,
+                  ]}>
+                  {item === 'hundredThousand'
+                    ? '50%'
+                    : t('page.swap.rabbyFee.free')}
                 </Text>
               </View>
             ))}
@@ -202,19 +166,29 @@ function SwapAggregatorFee({
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   sheetBg: {
     backgroundColor: colors2024['neutral-bg-1'],
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+  },
+  handle: {
+    height: 23,
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+  },
+  handleIndicator: {
+    width: 50,
+    height: 6,
+    backgroundColor: colors2024['neutral-sheet-handle'],
   },
   contentContainer: {
-    flex: 1,
     alignItems: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingHorizontal: 16,
+    paddingTop: 20,
     backgroundColor: colors2024['neutral-bg-1'],
   },
   iconContainer: {
     width: 70,
     height: 70,
-    marginVertical: 8,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 45,
@@ -226,88 +200,57 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     fontWeight: '700',
     lineHeight: 24,
     color: colors2024['neutral-title-1'],
-    marginVertical: 12,
-  },
-  description: {
-    fontSize: 17,
-    textAlign: 'center',
-    fontFamily: 'SF Pro Rounded',
-    fontWeight: '400',
-    lineHeight: 22,
-    color: colors2024['neutral-secondary'],
-  },
-  highlightText: {
-    color: colors['neutral-body'],
-    fontWeight: '700',
+    marginTop: 16,
+    marginBottom: 24,
   },
   header: {
     backgroundColor: colors2024['neutral-bg-2'],
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: '100%',
     paddingHorizontal: 16,
-    paddingVertical: 15,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    borderWidth: 0.5,
-    // borderBottomColor: colors2024['neutral-line'],
-    borderColor: colors2024['neutral-line'],
-    marginTop: 20,
     height: 52,
     alignItems: 'center',
-    // marginBottom: 8,
+    borderBottomWidth: 0.5,
+    borderBottomColor: colors2024['neutral-line'],
   },
   headerText: {
     color: colors2024['neutral-secondary'],
     fontSize: 17,
-    textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '400',
+    fontWeight: '700',
     lineHeight: 22,
   },
   listContainer: {
     width: '100%',
     borderWidth: 0.5,
     borderColor: colors2024['neutral-line'],
-    borderTopWidth: 0,
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    // borderRadius: 6,
+    borderRadius: 24,
+    overflow: 'hidden',
   },
   listItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    height: 63,
+    height: 48,
     borderBottomWidth: 0.5,
-    borderBottomColor: colors['neutral-line'],
+    borderBottomColor: colors2024['neutral-line'],
   },
   noBorder: {
     borderBottomWidth: 0,
   },
-  itemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  logo: {
-    width: 20,
-    height: 20,
-    marginRight: 8,
-  },
   itemText: {
     color: colors2024['neutral-body'],
     fontSize: 16,
-    textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
     lineHeight: 20,
   },
+  rateText: {
+    color: colors2024['neutral-foot'],
+  },
   highItem: {
-    color: colors['neutral-title-1'],
+    color: colors2024['brand-default'],
     fontWeight: '700',
   },
   dexFeeContainer: {
@@ -327,12 +270,10 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   dexFeeText: {
     flexShrink: 0,
     fontSize: 13,
-    color: colors['neutral-foot'],
+    color: colors2024['neutral-foot'],
   },
   buttonContainer: {
-    flex: 1,
-    justifyContent: 'flex-end',
     width: '100%',
-    marginVertical: 20,
+    marginTop: 24,
   },
 }));

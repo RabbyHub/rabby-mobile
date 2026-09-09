@@ -57,7 +57,7 @@ import {
 import { useSwapService } from '../swapServiceDependencies';
 import { mergeSwapQuoteBatch } from './quoteResultBatch';
 import { useSceneActiveAsync } from '@/screens/SwapBridge/hooks/useSceneActiveAsync';
-import { getRabbyFeeRate, type SwapFeeRate } from './fee';
+import { getRabbyFeeInfo, type SwapFeeRate } from './fee';
 
 export const enableInsufficientQuote = true;
 
@@ -914,15 +914,16 @@ export const useTokenPair = ({
     return [false, ''];
   }, [payToken, receiveToken, chain]);
 
-  const feeRate = useMemo<FeeProps['fee']>(
+  const { feeRate, feeTier } = useMemo(
     () =>
-      getRabbyFeeRate({
+      getRabbyFeeInfo({
         payAmount,
         payTokenPrice: payToken?.price || 0,
+        payToken,
         isFreeTokenPair,
         isWrapToken,
       }),
-    [isFreeTokenPair, isWrapToken, payAmount, payToken?.price],
+    [isFreeTokenPair, isWrapToken, payAmount, payToken],
   );
 
   const inSufficient = useMemo(
@@ -1528,6 +1529,7 @@ export const useTokenPair = ({
     slippage,
     setSlippage,
     feeRate,
+    feeTier,
     isSlippageHigh,
     isSlippageLow,
 

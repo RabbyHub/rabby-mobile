@@ -196,6 +196,7 @@ export const getActiveProvider = async ({
 
   const isWrapToken = isSwapWrapToken(payToken.id, receiveToken.id, chain.enum);
   const feeRate = getRabbyFeeRate({
+    payToken,
     payAmount,
     payTokenPrice: payToken.price || 0,
     isFreeTokenPair: isSameTypeTokenPair(payToken, receiveToken),
@@ -272,6 +273,7 @@ export const buildSwapTxs = async ({
 
   try {
     const feeRate = getRabbyFeeRate({
+      payToken,
       payAmount: inputAmount,
       payTokenPrice: payToken.price || 0,
       isFreeTokenPair: isSameTypeTokenPair(payToken, receiveToken),
