@@ -11,6 +11,7 @@ import { usePerpsProSliderHaptics } from '../common/usePerpsProSliderHaptics';
 const TRADE_SLIDER_POINTS = [0, 25, 50, 75, 100] as const;
 const TRADE_SLIDER_THUMB_SIZE = 13;
 const TRADE_SLIDER_TRACK_INSET = 9;
+const TRADE_SLIDER_TOOLTIP_WIDTH = 36;
 
 export const PerpsProTradeAmountSlider: React.FC<{
   onChange?: (value: number) => void;
@@ -96,7 +97,6 @@ export const PerpsProTradeAmountSlider: React.FC<{
               styles.tooltip,
               {
                 left: `${value}%`,
-                transform: [{ translateX: (-36 * value) / 100 }],
               },
             ]}
             testID="perps-pro-trade-amount-slider-tooltip">
@@ -185,10 +185,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 4,
     height: 20,
     justifyContent: 'center',
-    minWidth: 36,
+    width: TRADE_SLIDER_TOOLTIP_WIDTH,
     paddingHorizontal: 4,
     position: 'absolute',
     top: -18,
+    transform: [{ translateX: -TRADE_SLIDER_TOOLTIP_WIDTH / 2 }],
     zIndex: 4,
   },
   tooltipText: {
