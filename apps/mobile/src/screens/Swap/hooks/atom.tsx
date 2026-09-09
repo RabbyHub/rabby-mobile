@@ -3,9 +3,12 @@ import {
   TokenItemWithEntity,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtom } from 'jotai';
+import type { RabbyFeeTier } from './fee';
 
-const rabbyFeeVisibleAtom = atom({ visible: false } as {
+const rabbyFeeVisibleAtom = atom({ visible: false, compareVisible: false } as {
   visible: boolean;
+  compareVisible: boolean;
+  feeTier?: RabbyFeeTier;
   dexFeeDesc?: string;
   dexName?: string;
 });
