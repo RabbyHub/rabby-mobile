@@ -1,3 +1,7 @@
+import {
+  PERPS_PRO_NUMBER_STYLE,
+  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
+} from '../common/perpsProNumberText';
 import RcIconUSDC from '@/assets2024/icons/perps/IconUSDC.svg';
 import RcIconUSDE from '@/assets2024/icons/perps/IconUSDE.svg';
 import RcIconUSDH from '@/assets2024/icons/perps/IconUSDH.svg';
@@ -55,10 +59,10 @@ export const PerpsProAccountAssetRow: React.FC<{
           </View>
         </View>
         <View style={styles.assetValue}>
-          <Text style={styles.total}>
+          <Text {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS} style={styles.total}>
             {formatPerpsProDecimal(asset.total, 2)}
           </Text>
-          <Text style={styles.usdValue}>
+          <Text {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS} style={styles.usdValue}>
             {formatPerpsProUsdValue(asset.usdValue)}
           </Text>
         </View>
@@ -105,6 +109,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingVertical: 8,
   },
   assetMain: {
+    gap: 8,
     alignItems: 'flex-start',
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -116,6 +121,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 4,
   },
   assetCopy: {
+    flexShrink: 1,
+    minWidth: 0,
     gap: 2,
   },
   coinRow: {
@@ -150,9 +157,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
   },
   assetValue: {
+    maxWidth: '60%',
+    minWidth: 0,
+    flexShrink: 1,
     alignItems: 'flex-end',
   },
   total: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
@@ -160,6 +171,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 18,
   },
   usdValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,

@@ -1,3 +1,7 @@
+import {
+  PERPS_PRO_NUMBER_STYLE,
+  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
+} from '../common/perpsProNumberText';
 import { Text } from '@/components/Typography';
 import RcIconPortfolioInfoCC from '@/assets2024/icons/perps/IconPortfolioInfoCC.svg';
 import { useTheme2024 } from '@/hooks/theme';
@@ -48,7 +52,9 @@ export const PerpsProAccountSummary: React.FC<PerpsProAccountSummaryProps> =
                 </TouchableOpacity>
               ) : null}
             </View>
-            <Text style={styles.primaryValue}>
+            <Text
+              {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
+              style={styles.primaryValue}>
               {formatPerpsProUsdValue(account.primaryValue)}
             </Text>
           </View>
@@ -57,6 +63,7 @@ export const PerpsProAccountSummary: React.FC<PerpsProAccountSummaryProps> =
               {t('page.perps.pro.account.unrealizedPnl')}
             </Text>
             <Text
+              {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
               style={
                 pnl > 0
                   ? styles.positiveValue
@@ -106,10 +113,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     padding: 12,
   },
   summary: {
+    gap: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   summaryColumn: {
+    flex: 1,
+    minWidth: 0,
     gap: 4,
   },
   pnlColumn: {
@@ -128,6 +138,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 4,
   },
   primaryValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
@@ -135,6 +146,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
   },
   value: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
@@ -142,6 +154,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
   },
   positiveValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
@@ -149,6 +162,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
   },
   negativeValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,

@@ -505,8 +505,11 @@ describe('PerpsProOrderBook display shell', () => {
     const amountStyle = StyleSheet.flatten(
       screen.getByText('149.90M').props.style,
     );
-    expect(amountStyle.flexShrink).toBe(0);
-    expect(amountStyle.maxWidth).toBeUndefined();
+    expect(amountStyle.flexShrink).toBe(1);
+    expect(amountStyle.maxWidth).toBe('50%');
+    expect(amountStyle.fontVariant).toEqual(['tabular-nums']);
+    expect(screen.getByText('149.90M').props.adjustsFontSizeToFit).toBe(true);
+    expect(screen.getByText('2,000').props.adjustsFontSizeToFit).toBe(true);
 
     const priceStyle = StyleSheet.flatten(
       screen.getByText('2,000').props.style,

@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text, TextInput } from '@/components/Typography';
@@ -273,6 +274,7 @@ const getStyle = createGetStyles2024(
       lineHeight: 20,
     },
     maximum: {
+      ...PERPS_PRO_NUMBER_STYLE,
       color: colors2024['neutral-body'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 12,
@@ -326,6 +328,7 @@ const getStyle = createGetStyles2024(
       justifyContent: 'center',
     },
     valueInput: {
+      ...PERPS_PRO_NUMBER_STYLE,
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,

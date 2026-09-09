@@ -1,3 +1,7 @@
+import {
+  PERPS_PRO_NUMBER_STYLE,
+  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
+} from '../common/perpsProNumberText';
 import RcCheckboxEmptyCC from '@/assets2024/icons/common/checkbox-empty-cc.svg';
 import RcCheckboxFilledBrand from '@/assets2024/icons/common/checkbox-filled-brand.svg';
 import AutoLockView from '@/components/AutoLockView';
@@ -145,7 +149,9 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
                 <Text style={styles.detailLabel}>
                   {t('page.perps.pro.positions.price')}
                 </Text>
-                <Text style={styles.detailValue}>
+                <Text
+                  {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
+                  style={styles.detailValue}>
                   {draft.orderType === 'market'
                     ? t('page.perps.pro.positions.marketPrice')
                     : `${formatPerpsProPrice(
@@ -158,7 +164,9 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
                 <Text style={styles.detailLabel}>
                   {t('page.perps.pro.positions.amount')}
                 </Text>
-                <Text style={styles.detailValue}>
+                <Text
+                  {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
+                  style={styles.detailValue}>
                   {formatPerpsProDecimal(
                     displayAmount,
                     amountUnit === 'base' ? market.szDecimals : 2,
@@ -250,6 +258,11 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     lineHeight: 16,
   },
   detailValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
+    flexShrink: 1,
+    minWidth: 0,
+    marginLeft: 12,
+    textAlign: 'right',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,

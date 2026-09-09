@@ -1,3 +1,7 @@
+import {
+  PERPS_PRO_NUMBER_STYLE,
+  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
+} from '../common/perpsProNumberText';
 import RcTooltipTail from '@/assets2024/icons/perps/PerpsProTpSlTooltipTail.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
@@ -179,7 +183,7 @@ export const PerpsProTpSlTooltip: React.FC<{
     },
     [measurementKey, triggerMode],
   );
-  // The visible single-line Text reports its truncated usedRect on iOS, so it
+  // The visible single-line Text reports its fitted usedRect on iOS, so it
   // cannot be the source of truth for the tooltip width.
   const shouldMeasureTrigger =
     triggerMode != null && triggerWidth < TOOLTIP_MAX_WIDTH;
@@ -194,16 +198,14 @@ export const PerpsProTpSlTooltip: React.FC<{
       testID="perps-pro-tpsl-tooltip">
       <View style={styles.body} testID="perps-pro-tpsl-tooltip-body">
         <Text
-          ellipsizeMode="tail"
-          numberOfLines={1}
+          {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
           style={styles.line}
           testID="perps-pro-tpsl-tooltip-buy-line">
           {t(`page.perps.pro.trade.${labelKeys[0]}`)}{' '}
           <Text style={buyValueStyle}>{buyValue}</Text>
         </Text>
         <Text
-          ellipsizeMode="tail"
-          numberOfLines={1}
+          {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
           style={styles.line}
           testID="perps-pro-tpsl-tooltip-sell-line">
           {t(`page.perps.pro.trade.${labelKeys[1]}`)}{' '}
@@ -260,6 +262,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingVertical: 4,
   },
   line: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-2'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,

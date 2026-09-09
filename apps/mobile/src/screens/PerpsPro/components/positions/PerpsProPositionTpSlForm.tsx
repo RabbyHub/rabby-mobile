@@ -1,3 +1,7 @@
+import {
+  PERPS_PRO_NUMBER_STYLE,
+  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
+} from '../common/perpsProNumberText';
 import { Text, TextInput } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import {
@@ -528,6 +532,7 @@ export const PerpsProPositionTpSlForm: React.FC<{
               </Text>
               {inputSource === 'slider' && hasAmountValue ? (
                 <Text
+                  {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
                   pointerEvents="none"
                   style={styles.sliderAmountValue}
                   testID="perps-pro-position-tpsl-slider-amount">
@@ -728,6 +733,7 @@ const getStyle = createGetStyles2024(
       top: 14,
     },
     input: {
+      ...PERPS_PRO_NUMBER_STYLE,
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
@@ -769,6 +775,10 @@ const getStyle = createGetStyles2024(
       justifyContent: 'space-between',
     },
     duplicateOrderPrice: {
+      ...PERPS_PRO_NUMBER_STYLE,
+      flexShrink: 1,
+      minWidth: 0,
+      marginRight: 8,
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 12,
@@ -776,6 +786,8 @@ const getStyle = createGetStyles2024(
     },
     amountSection: { gap: 8, marginTop: 24 },
     sliderAmountValue: {
+      ...PERPS_PRO_NUMBER_STYLE,
+      right: 72,
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
@@ -786,6 +798,7 @@ const getStyle = createGetStyles2024(
       top: 18,
     },
     amountAvailable: {
+      ...PERPS_PRO_NUMBER_STYLE,
       color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 12,

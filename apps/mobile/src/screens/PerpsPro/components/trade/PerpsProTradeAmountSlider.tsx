@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -176,6 +177,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     zIndex: 4,
   },
   tooltipText: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-bg-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 10,

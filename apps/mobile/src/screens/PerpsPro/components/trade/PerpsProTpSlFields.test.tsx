@@ -609,13 +609,23 @@ describe('PerpsProTpSlFields', () => {
       expect(
         screen.getByTestId('perps-pro-tpsl-tooltip-buy-line').props
           .ellipsizeMode,
-      ).toBe('tail');
+      ).toBeUndefined();
       expect(
         screen.getByTestId('perps-pro-tpsl-tooltip-sell-line').props
           .ellipsizeMode,
-      ).toBe('tail');
+      ).toBeUndefined();
 
       const staleMeasureHandler = tooltipMeasure().props.onTextLayout;
+      // Measure the natural tabular text, then fit only the visible bounded row.
+      const visibleLine = screen.getByTestId('perps-pro-tpsl-tooltip-buy-line');
+      expect(visibleLine.props.adjustsFontSizeToFit).toBe(true);
+      expect(tooltipMeasure().props.adjustsFontSizeToFit).toBeUndefined();
+      expect(StyleSheet.flatten(visibleLine.props.style).fontVariant).toEqual([
+        'tabular-nums',
+      ]);
+      expect(
+        StyleSheet.flatten(tooltipMeasure().props.style).fontVariant,
+      ).toEqual(['tabular-nums']);
       fireEvent(tooltipMeasure(), 'textLayout', textLayoutEvent(145, 160));
       expect(tooltipWidth()).toBe(176);
 
@@ -722,11 +732,11 @@ describe('PerpsProTpSlFields', () => {
     });
     expect(
       screen.getByTestId('perps-pro-tpsl-tooltip-buy-line').props.ellipsizeMode,
-    ).toBe('tail');
+    ).toBeUndefined();
     expect(
       screen.getByTestId('perps-pro-tpsl-tooltip-sell-line').props
         .ellipsizeMode,
-    ).toBe('tail');
+    ).toBeUndefined();
   });
 
   it('does not reserve inline error UI beside either TP/SL leg', () => {

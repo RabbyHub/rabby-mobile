@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcIconAvailableAdd from '@/assets2024/icons/perps/PerpsProAvailableAdd.svg';
 import RcIconAvailableSwap from '@/assets2024/icons/perps/PerpsProAvailableSwap.svg';
 import { Text, type TextInput } from '@/components/Typography';
@@ -159,6 +160,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
             disabled={!configurationReady}
             label={configurationReady ? `${controller.leverage}x` : '--'}
             onPress={() => openSheet('leverage')}
+            textStyle={PERPS_PRO_NUMBER_STYLE}
             showCaret={false}
             style={styles.flexItem}
           />
@@ -506,6 +508,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   flexItem: { flex: 1, minWidth: 0 },
   optionsGroup: { gap: 8 },
   convertedAmount: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,

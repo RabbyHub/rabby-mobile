@@ -276,7 +276,7 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(trade.requestReview).not.toHaveBeenCalled();
   });
 
-  it('keeps every trade selector on the same font without readability variants', () => {
+  it('keeps selector fonts consistent and opts only numeric leverage into tabular figures', () => {
     render(
       <PerpsProTradeForm controller={controller()} onAddFunds={jest.fn()} />,
     );
@@ -302,7 +302,7 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(orderTypeStyle).toMatchObject(sharedVisibleStyle);
     expect(leverageStyle).toMatchObject(sharedVisibleStyle);
     expect(isolatedStyle.fontVariant).toBeUndefined();
-    expect(leverageStyle.fontVariant).toBeUndefined();
+    expect(leverageStyle.fontVariant).toEqual(['tabular-nums']);
     expect(orderTypeStyle.fontVariant).toBeUndefined();
   });
 

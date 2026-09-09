@@ -23,6 +23,7 @@ import {
 } from './perpsProDottedUnderlineGeometry';
 
 interface PerpsProDottedUnderlineTextProps {
+  adjustsFontSizeToFit?: boolean;
   allowNaturalWidth?: boolean;
   children: React.ReactNode;
   accessibilityLabel?: string;
@@ -108,6 +109,7 @@ export const PerpsProDottedUnderlineText: React.FC<
   PerpsProDottedUnderlineTextProps
 > = ({
   accessibilityLabel,
+  adjustsFontSizeToFit,
   allowNaturalWidth = false,
   children,
   containerStyle,
@@ -172,6 +174,7 @@ export const PerpsProDottedUnderlineText: React.FC<
   const content = (
     <>
       <Text
+        adjustsFontSizeToFit={adjustsFontSizeToFit}
         numberOfLines={multiline ? undefined : numberOfLines}
         onTextLayout={handleTextLayout}
         style={style}>

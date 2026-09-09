@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcIconAvailableAdd from '@/assets2024/icons/perps/PerpsProAvailableAdd.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -42,6 +43,7 @@ export const PerpsProTradeSkeleton: React.FC<{
           />
           <PerpsProTradeSelect
             label={`${Math.max(1, leverage)}x`}
+            textStyle={PERPS_PRO_NUMBER_STYLE}
             showCaret={false}
             style={styles.flexItem}
           />

@@ -1,3 +1,7 @@
+import {
+  PERPS_PRO_NUMBER_STYLE,
+  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
+} from '../common/perpsProNumberText';
 import RcIconEdit from '@/assets2024/icons/perps/IconPerpEdit.svg';
 import RcManageMargin from '@/assets2024/icons/perps/PerpsProAvailableAdd.svg';
 import RcIconSwitchUnit from '@/assets2024/icons/perps/PerpsProPositionUnitSwitch.svg';
@@ -519,11 +523,21 @@ export const PerpsProPositionCard: React.FC<{
                   style={[styles.label, styles.expandedRightLabel]}>
                   {liquidationDistanceLabel}
                 </PerpsProDottedUnderlineText>
-                <View style={styles.metricValueSpacer} />
               </>
             ) : (
               <View style={styles.metricLabelSpacer} />
             )}
+            {position.marginMode === 'isolated' ? (
+              <View
+                style={styles.liquidationDistanceValueContainer}
+                testID={`perps-pro-position-liquidation-distance-${position.key}`}>
+                <Text
+                  {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
+                  style={[styles.value, styles.liquidationDistanceValue]}>
+                  {displayLiquidationDistance}
+                </Text>
+              </View>
+            ) : null}
           </View>
           {position.marginMode === 'isolated' ? (
             <>
@@ -543,16 +557,6 @@ export const PerpsProPositionCard: React.FC<{
                   </PerpsProDottedUnderlineText>
                 </View>
               )}
-              <View
-                pointerEvents="none"
-                style={styles.liquidationDistanceValueOverlay}
-                testID={`perps-pro-position-liquidation-distance-${position.key}`}>
-                <Text
-                  numberOfLines={1}
-                  style={[styles.value, styles.liquidationDistanceValue]}>
-                  {displayLiquidationDistance}
-                </Text>
-              </View>
             </>
           ) : null}
         </View>
@@ -775,6 +779,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
   },
   emphasizedValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
@@ -783,6 +788,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 2,
   },
   positiveValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
@@ -791,6 +797,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 2,
   },
   negativeValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
@@ -825,9 +832,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   metricLabelSpacer: {
     height: 16,
   },
-  metricValueSpacer: {
-    height: 18,
-  },
   rightMetricLabelOverlay: {
     alignItems: 'flex-end',
     left: 0,
@@ -860,6 +864,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'right',
   },
   value: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -874,6 +879,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 4,
   },
   marginValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
+    flexShrink: 1,
+    minWidth: 0,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -881,20 +889,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
   },
   marginButton: {
+    flexShrink: 0,
     alignItems: 'center',
     height: 16,
     justifyContent: 'center',
     width: 16,
   },
-  liquidationDistanceValueOverlay: {
-    alignItems: 'flex-end',
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-    right: 0,
+  liquidationDistanceValueContainer: {
+    alignSelf: 'stretch',
+    marginTop: 'auto',
+    paddingTop: 2,
   },
   liquidationDistanceValue: {
     marginTop: 0,
+    textAlign: 'right',
   },
   tpslRow: {
     alignItems: 'center',
@@ -915,6 +923,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     minWidth: 0,
   },
   takeProfit: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -922,6 +931,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
   },
   stopLoss: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -929,6 +939,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
   },
   partialTpSlCount: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,

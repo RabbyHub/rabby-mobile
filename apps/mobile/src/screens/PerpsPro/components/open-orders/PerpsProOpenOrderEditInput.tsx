@@ -1,3 +1,7 @@
+import {
+  PERPS_PRO_NUMBER_STYLE,
+  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
+} from '../common/perpsProNumberText';
 import { Text, TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -66,16 +70,22 @@ export const PerpsProOpenOrderEditInput: React.FC<{
     if (disabled) {
       return (
         <View style={[styles.field, styles.disabled]} testID={testID}>
-          <Text style={styles.disabledText}>{value}</Text>
+          <Text
+            {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
+            style={styles.disabledText}>
+            {value}
+          </Text>
         </View>
       );
     }
     return (
       <View style={styles.field} testID={testID}>
         {label ? (
-          <Text numberOfLines={1} style={styles.label}>
+          <Text {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS} style={styles.label}>
             <Text style={styles.labelTitle}>{label} </Text>
-            {currentValue ? `(${currentValue})` : ''}
+            {currentValue ? (
+              <Text style={PERPS_PRO_NUMBER_STYLE}>{`(${currentValue})`}</Text>
+            ) : null}
           </Text>
         ) : null}
         <PerpsProDecimalTextInput
@@ -136,6 +146,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '500',
   },
   input: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
@@ -156,6 +167,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     right: 8,
   },
   disabledText: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-info'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,

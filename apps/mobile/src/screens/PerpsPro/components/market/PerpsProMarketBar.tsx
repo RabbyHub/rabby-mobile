@@ -1,3 +1,7 @@
+import {
+  PERPS_PRO_NUMBER_STYLE,
+  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
+} from '../common/perpsProNumberText';
 import RcCandlestick from '@/assets2024/icons/perps/PerpsProCandlestick.svg';
 import RcMarketCaret from '@/assets2024/icons/perps/PerpsProMarketCaret.svg';
 import { Text } from '@/components/Typography';
@@ -47,7 +51,7 @@ export const PerpsProMarketBar: React.FC<{
             {market.sourceTag}
           </Text>
         ) : null}
-        <Text style={changeStyle}>
+        <Text {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS} style={changeStyle}>
           {formatPerpsProPercent(market?.change24h)}
         </Text>
         <RcMarketCaret
@@ -94,8 +98,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     gap: 4,
     height: '100%',
+    minWidth: 0,
   },
   pair: {
+    flexShrink: 1,
+    minWidth: 0,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
@@ -108,6 +115,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     maxWidth: 52,
   },
   up: {
+    ...PERPS_PRO_NUMBER_STYLE,
+    flexShrink: 1,
+    minWidth: 0,
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -115,6 +125,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
   },
   down: {
+    ...PERPS_PRO_NUMBER_STYLE,
+    flexShrink: 1,
+    minWidth: 0,
     color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -122,6 +135,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
   },
   muted: {
+    ...PERPS_PRO_NUMBER_STYLE,
+    flexShrink: 1,
+    minWidth: 0,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,

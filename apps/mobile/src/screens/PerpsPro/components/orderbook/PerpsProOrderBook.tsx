@@ -1,3 +1,7 @@
+import {
+  PERPS_PRO_NUMBER_STYLE,
+  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
+} from '../common/perpsProNumberText';
 import { Text } from '@/components/Typography';
 import type { PerpsRealtimeStatus } from '@/hooks/perps/subscriptions/usePerpsFastL2';
 import type { PerpsLatestTrade } from '@/hooks/perps/subscriptions/usePerpsLatestTrade';
@@ -280,7 +284,7 @@ export const PerpsProOrderBook: React.FC<{
       }
       testID="perps-pro-order-book-latest-price">
       <Text
-        numberOfLines={1}
+        {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
         style={
           latestTrade?.side === 'sell' ? styles.latestSell : styles.latestBuy
         }>
@@ -329,6 +333,7 @@ export const PerpsProOrderBook: React.FC<{
                   testID="perps-pro-order-book-mid-price">
                   {latestTradePressable}
                   <PerpsProDottedUnderlineText
+                    adjustsFontSizeToFit
                     accessibilityLabel={t(
                       'page.perps.pro.fieldExplanations.markPrice.title',
                     )}
@@ -349,6 +354,7 @@ export const PerpsProOrderBook: React.FC<{
                   testID="perps-pro-order-book-mid-price">
                   {latestTradePressable}
                   <PerpsProDottedUnderlineText
+                    adjustsFontSizeToFit
                     accessibilityLabel={t(
                       'page.perps.pro.fieldExplanations.markPrice.title',
                     )}
@@ -377,7 +383,7 @@ export const PerpsProOrderBook: React.FC<{
           ) : (
             <>
               <Text
-                numberOfLines={1}
+                {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
                 style={[styles.ratioLabel, styles.buyRatio]}>
                 {buyRatio.buy.toFixed(2)}%
               </Text>
@@ -398,7 +404,7 @@ export const PerpsProOrderBook: React.FC<{
                 )}
               </View>
               <Text
-                numberOfLines={1}
+                {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
                 style={[styles.ratioLabel, styles.sellRatio]}>
                 {buyRatio.sell.toFixed(2)}%
               </Text>
@@ -412,7 +418,9 @@ export const PerpsProOrderBook: React.FC<{
             disabled={!selectedTickOption || tickOptions.length === 0}
             onPress={() => setPrecisionOpen(true)}
             style={styles.precisionTrigger}>
-            <Text numberOfLines={1} style={styles.precisionTriggerText}>
+            <Text
+              {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
+              style={styles.precisionTriggerText}>
               {selectedTickOption
                 ? formatPerpsProPrice(
                     selectedTickOption.displayPrice,
@@ -491,6 +499,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'center',
   },
   latestBuy: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
@@ -499,6 +508,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
   },
   latestSell: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
@@ -507,6 +517,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
   },
   markPrice: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -550,6 +561,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 104,
   },
   precisionTriggerText: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     flex: 1,
     fontFamily: 'SF Pro Rounded',
@@ -565,6 +577,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginHorizontal: -12,
   },
   ratioLabel: {
+    ...PERPS_PRO_NUMBER_STYLE,
     flexShrink: 0,
     fontFamily: 'SF Pro Rounded',
     fontSize: 10,

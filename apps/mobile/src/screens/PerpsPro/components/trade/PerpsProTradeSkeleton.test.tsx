@@ -143,7 +143,7 @@ describe('PerpsProTradeSkeleton', () => {
     expect(isolatedStyle).toMatchObject(sharedSelectorStyle);
     expect(leverageStyle).toMatchObject(sharedSelectorStyle);
     expect(isolatedStyle.fontVariant).toBeUndefined();
-    expect(leverageStyle.fontVariant).toBeUndefined();
+    expect(leverageStyle.fontVariant).toEqual(['tabular-nums']);
     expect(screen.getAllByTestId('perps-pro-trade-select-caret')).toHaveLength(
       1,
     );

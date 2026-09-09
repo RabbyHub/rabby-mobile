@@ -518,11 +518,9 @@ describe('PerpsProPositionCard', () => {
       screen.getByTestId('perps-pro-position-liquidation-distance-BTC').props
         .style,
     ).toMatchObject({
-      alignItems: 'flex-end',
-      bottom: 0,
-      left: 0,
-      position: 'absolute',
-      right: 0,
+      alignSelf: 'stretch',
+      marginTop: 'auto',
+      paddingTop: 2,
     });
     expect(
       screen.getByTestId('perps-pro-position-liquidation-distance-label-BTC')
@@ -572,7 +570,7 @@ describe('PerpsProPositionCard', () => {
     });
   });
 
-  it('gives a long Isolated Liq. Distance the full metric row width', () => {
+  it('fits a long Isolated Liq. Distance inside its own metric column', () => {
     render(
       <PerpsProPositionCard
         accountIdentity="account-a"
@@ -587,7 +585,7 @@ describe('PerpsProPositionCard', () => {
     expect(
       screen.getByTestId('perps-pro-position-liquidation-distance-BTC').props
         .style,
-    ).toMatchObject({ left: 0, right: 0 });
+    ).toMatchObject({ alignSelf: 'stretch', marginTop: 'auto' });
   });
 
   it('keeps compact geometry for fitting copy and expands only after native measurements collide', () => {
@@ -822,7 +820,14 @@ describe('PerpsProPositionCard', () => {
     expect(
       screen.getByTestId('perps-pro-position-liquidation-distance-BTC').props
         .style,
-    ).toMatchObject({ bottom: 0, left: 0, position: 'absolute', right: 0 });
+    ).toMatchObject({ alignSelf: 'stretch', marginTop: 'auto', paddingTop: 2 });
+    expect(screen.getByText('-23.81%(-25.00)').props.adjustsFontSizeToFit).toBe(
+      true,
+    );
+    expect(
+      StyleSheet.flatten(screen.getByText('-23.81%(-25.00)').props.style)
+        .fontVariant,
+    ).toEqual(['tabular-nums']);
   });
 
   it('re-evaluates stored natural widths when the card width changes', () => {

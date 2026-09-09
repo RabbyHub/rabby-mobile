@@ -42,6 +42,20 @@ import { getPerpsProTradeControlMediumTextStyle } from '../common/perpsProVisual
 import { PerpsProTradeAmountField } from './PerpsProTradeAmountField';
 
 describe('PerpsProTradeAmountField', () => {
+  it('preserves the complete editing value while enabling tabular input glyphs', () => {
+    render(
+      <PerpsProTradeAmountField
+        label="Amount(USDC)"
+        maxDecimals={2}
+        unit="USDC"
+        value="111111111111.11"
+      />,
+    );
+    const input = screen.getByTestId('amount-input');
+    expect(input.props.value).toBe('111111111111.11');
+    const style = StyleSheet.flatten(input.props.style);
+    expect(style.fontVariant).toEqual(['tabular-nums']);
+  });
   it('keeps long Amount and unit labels on one tail-ellipsized line', () => {
     const view = render(
       <PerpsProTradeAmountField

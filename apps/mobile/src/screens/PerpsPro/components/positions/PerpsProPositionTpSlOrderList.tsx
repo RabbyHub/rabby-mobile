@@ -1,3 +1,7 @@
+import {
+  PERPS_PRO_NUMBER_STYLE,
+  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
+} from '../common/perpsProNumberText';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -99,7 +103,9 @@ export const PerpsProPositionTpSlOrderList: React.FC<{
                       )}
                     </Text>
                   </View>
-                  <Text style={styles.coverage}>
+                  <Text
+                    {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
+                    style={styles.coverage}>
                     {t('page.perps.pro.positionTpsl.positionSizeCoverage', {
                       percent: formatPerpsProPercent(
                         coverage == null ? null : Number(coverage),
@@ -197,6 +203,7 @@ const PartialOrderRow: React.FC<{
           {t('page.perps.pro.positionTpsl.triggerPrice')}
         </Text>
         <Text
+          {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
           style={
             kind === 'takeProfit'
               ? styles.takeProfitValue
@@ -290,7 +297,7 @@ const OrderMetric: React.FC<{
         label
       )}
       <Text
-        numberOfLines={1}
+        {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
         style={[
           tone === 'positive'
             ? styles.positiveMetricValue
@@ -353,6 +360,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 18,
   },
   coverage: {
+    ...PERPS_PRO_NUMBER_STYLE,
+    flexShrink: 1,
+    minWidth: 0,
+    marginLeft: 8,
+    textAlign: 'right',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -380,7 +392,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   orderMetric: { height: 36, minWidth: 0 },
   orderMetricRight: {
     alignItems: 'flex-end',
-    // Keep auto-width absolute Text in Yoga's MaxContent measurement mode.
+    // Preserve the label's natural width; bound the numeric value to its cell.
     flexDirection: 'row',
     overflow: 'visible',
     position: 'relative',
@@ -394,6 +406,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   orderMetricRightValue: {
     flexShrink: 0,
+    left: 0,
     marginTop: 0,
     position: 'absolute',
     right: 0,
@@ -407,6 +420,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
   },
   orderMetricValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -415,6 +429,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 4,
   },
   positiveMetricValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -423,6 +438,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 4,
   },
   negativeMetricValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -431,6 +447,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 4,
   },
   takeProfitValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
+    flexShrink: 1,
+    minWidth: 0,
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
@@ -438,6 +457,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 18,
   },
   stopLossValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
+    flexShrink: 1,
+    minWidth: 0,
     color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,

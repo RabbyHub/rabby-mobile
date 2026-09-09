@@ -1,3 +1,7 @@
+import {
+  PERPS_PRO_NUMBER_STYLE,
+  PERPS_PRO_SINGLE_LINE_NUMBER_PROPS,
+} from '../common/perpsProNumberText';
 import RcAlarm from '@/assets2024/icons/perps/PerpsProMarginAlarm.svg';
 import RcWarning from '@/assets2024/icons/perps/PerpsProMarginWarning.svg';
 import AutoLockView from '@/components/AutoLockView';
@@ -209,7 +213,9 @@ export const PerpsProManageMarginSheet: React.FC<{
                   {t('page.perps.pro.positions.entry')} (
                   {displayView.quoteAsset})
                 </Text>
-                <Text style={styles.factValueRounded}>
+                <Text
+                  {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
+                  style={styles.factValueRounded}>
                   {formatPerpsProPrice(
                     displayView.entryPrice,
                     displayView.pxDecimals,
@@ -221,7 +227,9 @@ export const PerpsProManageMarginSheet: React.FC<{
                   {t('page.perps.pro.positions.mark')} ({displayView.quoteAsset}
                   )
                 </Text>
-                <Text style={styles.factValue}>
+                <Text
+                  {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
+                  style={styles.factValue}>
                   {formatPerpsProPrice(
                     displayView.markPrice,
                     displayView.pxDecimals,
@@ -249,10 +257,14 @@ export const PerpsProManageMarginSheet: React.FC<{
                 range={range}
                 ref={inputRef}
               />
-              <Text style={styles.minimumValue}>
+              <Text
+                {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
+                style={styles.minimumValue}>
                 {range ? formatPerpsProDecimal(range.displayMin, 2) : '--'}
               </Text>
-              <Text style={styles.maximumValue}>
+              <Text
+                {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
+                style={styles.maximumValue}>
                 {range ? formatPerpsProDecimal(range.max, 2) : '--'}
               </Text>
               <View style={styles.slider}>
@@ -299,7 +311,9 @@ export const PerpsProManageMarginSheet: React.FC<{
                 <Text style={styles.factLabel}>
                   {t('page.perps.pro.positions.liquidation')}
                 </Text>
-                <Text style={styles.factValue}>
+                <Text
+                  {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
+                  style={styles.factValue}>
                   {currentLiq} → {projectedLiq}
                 </Text>
               </View>
@@ -313,7 +327,9 @@ export const PerpsProManageMarginSheet: React.FC<{
                     height={16}
                     width={16}
                   />
-                  <Text style={styles.factValue}>
+                  <Text
+                    {...PERPS_PRO_SINGLE_LINE_NUMBER_PROPS}
+                    style={styles.factValue}>
                     {currentDistance} → {projectedDistance}
                   </Text>
                 </View>
@@ -406,6 +422,11 @@ const getStyle = createGetStyles2024(
       lineHeight: 16,
     },
     factValue: {
+      ...PERPS_PRO_NUMBER_STYLE,
+      flexShrink: 1,
+      minWidth: 0,
+      marginLeft: 8,
+      textAlign: 'right',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 12,
@@ -413,6 +434,11 @@ const getStyle = createGetStyles2024(
       lineHeight: 16,
     },
     factValueRounded: {
+      ...PERPS_PRO_NUMBER_STYLE,
+      flexShrink: 1,
+      minWidth: 0,
+      marginLeft: 8,
+      textAlign: 'right',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 12,
@@ -443,6 +469,8 @@ const getStyle = createGetStyles2024(
     },
     amountCardError: { height: 184 },
     minimumValue: {
+      ...PERPS_PRO_NUMBER_STYLE,
+      maxWidth: '45%',
       color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 12,
@@ -453,6 +481,9 @@ const getStyle = createGetStyles2024(
       top: 62,
     },
     maximumValue: {
+      ...PERPS_PRO_NUMBER_STYLE,
+      maxWidth: '45%',
+      textAlign: 'right',
       color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 12,
@@ -491,7 +522,13 @@ const getStyle = createGetStyles2024(
       top: 318,
     },
     riskGroupError: { top: 364 },
-    riskValue: { alignItems: 'center', flexDirection: 'row', gap: 4 },
+    riskValue: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: 4,
+      flexShrink: 1,
+      minWidth: 0,
+    },
     footer: {
       bottom: Math.max(40, safeAreaInsets.bottom),
       left: 15,
