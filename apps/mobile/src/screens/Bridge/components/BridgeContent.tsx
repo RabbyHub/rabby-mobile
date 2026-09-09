@@ -1533,8 +1533,26 @@ export const BridgeContent = ({
 
   const switchFeePopup = useSetSettingVisible();
 
+  useEffect(() => {
+    const clearFeePopups = () => {
+      switchFeePopup(prev =>
+        prev.visible || prev.compareVisible || prev.feeTier
+          ? { visible: false, compareVisible: false }
+          : prev,
+      );
+    };
+    if (!sceneActive) {
+      clearFeePopups();
+    }
+    return clearFeePopups;
+  }, [sceneActive, switchFeePopup]);
+
   const openFeePopup = useCallback(() => {
-    switchFeePopup({ visible: true, feeTier });
+    switchFeePopup({
+      visible: feeTier !== 'default',
+      compareVisible: feeTier === 'default',
+      feeTier,
+    });
   }, [switchFeePopup, feeTier]);
 
   const { switchAccountOnSelectedToken } =

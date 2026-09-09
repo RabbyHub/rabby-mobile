@@ -11,6 +11,7 @@ import {
 } from '../hooks';
 import { BridgeTxHistory } from './BridgeHistory';
 import { RabbyFeePopup } from '@/components/RabbyFeePopup';
+import { CompareFee } from '@/components/RabbyFeePopup/CompareFee';
 import { Keyboard, TouchableOpacity, View } from 'react-native';
 import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
 import { useTheme2024 } from '@/hooks/theme';
@@ -45,7 +46,11 @@ export const BridgeHeader = ({
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const clearBridgeHistoryRedDotFromScene = useClearBridgeHistoryRedDot();
 
-  const { visible: feePopupVisible, feeTier } = useSettingVisible();
+  const {
+    visible: feePopupVisible,
+    compareVisible,
+    feeTier,
+  } = useSettingVisible();
   const setFeePopupVisible = useSetSettingVisible();
   const [recentShowTime, setRecentShowTime] = React.useState<number>(0);
   const [historyVisible, setHistoryVisible] = useState(false);
@@ -67,7 +72,15 @@ export const BridgeHeader = ({
   }, [clearBridgeHistoryRedDot, clearBridgeHistoryRedDotFromScene]);
 
   const closeFeePopup = useCallback(() => {
-    setFeePopupVisible({ visible: false });
+    setFeePopupVisible(prev =>
+      prev.visible ? { visible: false, compareVisible: false } : prev,
+    );
+  }, [setFeePopupVisible]);
+
+  const closeCompareFee = useCallback(() => {
+    setFeePopupVisible(prev =>
+      prev.compareVisible ? { visible: false, compareVisible: false } : prev,
+    );
   }, [setFeePopupVisible]);
 
   useImperativeHandle(
@@ -96,6 +109,11 @@ export const BridgeHeader = ({
         visible={feePopupVisible}
         feeTier={feeTier}
         onClose={closeFeePopup}
+      />
+      <CompareFee
+        type="bridge"
+        visible={compareVisible}
+        onClose={closeCompareFee}
       />
     </>
   );
