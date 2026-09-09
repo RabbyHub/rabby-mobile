@@ -93,12 +93,12 @@ describe('PerpsProInfoTabs', () => {
 
     expect(
       screen
-        .getAllByText('Positions (45)', { includeHiddenElements: true })
+        .getAllByText('Positions 45', { includeHiddenElements: true })
         .every(label => Boolean(label.props.numberOfLines === 1)),
     ).toBe(true);
     expect(
       screen
-        .getAllByText('Open Orders (123)', { includeHiddenElements: true })
+        .getAllByText('Open Orders 123', { includeHiddenElements: true })
         .every(label => Boolean(label.props.numberOfLines === 1)),
     ).toBe(true);
     expect(screen.getAllByRole('tab').map(tab => tab.props.testID)).toEqual([
@@ -124,23 +124,23 @@ describe('PerpsProInfoTabs', () => {
     );
 
     expect(
-      getLabelLayerStyle('perps-pro-info-tab-label-positions-medium'),
+      getLabelLayerStyle('perps-pro-info-tab-label-positions-active'),
     ).toMatchObject({
       color: 'neutral-title-1',
-      fontWeight: '500',
+      fontWeight: '700',
       opacity: 1,
     });
     expect(
-      getLabelLayerStyle('perps-pro-info-tab-label-positions-regular'),
+      getLabelLayerStyle('perps-pro-info-tab-label-positions-inactive'),
     ).toMatchObject({ opacity: 0 });
     expect(
-      getLabelLayerStyle('perps-pro-info-tab-label-openOrders-medium'),
+      getLabelLayerStyle('perps-pro-info-tab-label-openOrders-active'),
     ).toMatchObject({ opacity: 0 });
     expect(
-      getLabelLayerStyle('perps-pro-info-tab-label-openOrders-regular'),
+      getLabelLayerStyle('perps-pro-info-tab-label-openOrders-inactive'),
     ).toMatchObject({
       color: 'neutral-secondary',
-      fontWeight: '400',
+      fontWeight: '500',
       opacity: 1,
     });
 
@@ -159,16 +159,16 @@ describe('PerpsProInfoTabs', () => {
     );
 
     expect(
-      getLabelLayerStyle('perps-pro-info-tab-label-positions-regular'),
+      getLabelLayerStyle('perps-pro-info-tab-label-positions-inactive'),
     ).toMatchObject({ opacity: 1 });
     expect(
-      getLabelLayerStyle('perps-pro-info-tab-label-openOrders-medium'),
+      getLabelLayerStyle('perps-pro-info-tab-label-openOrders-active'),
     ).toMatchObject({ opacity: 1 });
     expect(
-      getLabelLayerStyle('perps-pro-info-tab-label-openOrders-regular'),
+      getLabelLayerStyle('perps-pro-info-tab-label-openOrders-inactive'),
     ).toMatchObject({ opacity: 0 });
     expect(
-      getLabelLayerStyle('perps-pro-info-tab-label-account-regular'),
+      getLabelLayerStyle('perps-pro-info-tab-label-account-inactive'),
     ).toMatchObject({ opacity: 1 });
     expect(
       screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
@@ -189,22 +189,22 @@ describe('PerpsProInfoTabs', () => {
     );
 
     expect(
-      getLabelLayerStyle('perps-pro-info-tab-label-openOrders-regular'),
+      getLabelLayerStyle('perps-pro-info-tab-label-openOrders-inactive'),
     ).toMatchObject({ opacity: 1 });
     expect(
-      getLabelLayerStyle('perps-pro-info-tab-label-account-medium'),
+      getLabelLayerStyle('perps-pro-info-tab-label-account-active'),
     ).toMatchObject({ opacity: 1 });
     expect(
-      getLabelLayerStyle('perps-pro-info-tab-label-account-regular'),
+      getLabelLayerStyle('perps-pro-info-tab-label-account-inactive'),
     ).toMatchObject({ opacity: 0 });
     expect(
-      getLabelAnimatedStyle('perps-pro-info-tab-label-account-medium'),
+      getLabelAnimatedStyle('perps-pro-info-tab-label-account-active'),
     ).toEqual({ opacity: 1 });
     expect(
-      getLabelAnimatedStyle('perps-pro-info-tab-label-account-medium'),
+      getLabelAnimatedStyle('perps-pro-info-tab-label-account-active'),
     ).not.toHaveProperty('fontFamily');
     expect(
-      getLabelAnimatedStyle('perps-pro-info-tab-label-account-medium'),
+      getLabelAnimatedStyle('perps-pro-info-tab-label-account-active'),
     ).not.toHaveProperty('fontWeight');
   });
 
@@ -327,13 +327,13 @@ describe('PerpsProInfoTabs', () => {
     });
     expect(indicators).toHaveLength(1);
     expect(StyleSheet.flatten(indicators[0].props.style)).toMatchObject({
-      backgroundColor: 'neutral-title-1',
-      bottom: 0,
-      height: 2,
+      backgroundColor: 'neutral-body',
+      bottom: -0.5,
+      height: 3,
       left: 0,
       opacity: 1,
-      transform: [{ translateX: 66 }, { scaleX: 1.125 }],
-      width: 80,
+      transform: [{ translateX: 64.5 }, { scaleX: 93 / 83 }],
+      width: 83,
     });
   });
 
@@ -359,9 +359,9 @@ describe('PerpsProInfoTabs', () => {
       accountLabels.map(label => StyleSheet.flatten(label.props.style)),
     ).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ fontWeight: '500', opacity: 0 }),
+        expect.objectContaining({ fontWeight: '700', opacity: 0 }),
         expect.objectContaining({
-          fontWeight: '400',
+          fontWeight: '500',
           opacity: 1,
           position: 'absolute',
         }),
@@ -401,8 +401,8 @@ describe('PerpsProInfoTabs', () => {
     });
     expect(StyleSheet.flatten(indicator.props.style)).toMatchObject({
       left: 0,
-      transform: [{ translateX: 165.5 }, { scaleX: 1.0625 }],
-      width: 80,
+      transform: [{ translateX: 164 }, { scaleX: 88 / 83 }],
+      width: 83,
     });
 
     act(() => {
@@ -412,8 +412,8 @@ describe('PerpsProInfoTabs', () => {
     });
     expect(StyleSheet.flatten(indicator.props.style)).toMatchObject({
       left: 0,
-      transform: [{ translateX: 208 }, { scaleX: 1.75 }],
-      width: 80,
+      transform: [{ translateX: 206.5 }, { scaleX: 143 / 83 }],
+      width: 83,
     });
   });
 });

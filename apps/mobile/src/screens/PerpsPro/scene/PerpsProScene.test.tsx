@@ -1921,7 +1921,7 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
       ),
-    ).toMatchObject({ minHeight: 1196 });
+    ).toMatchObject({ minHeight: 1202 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-header-lead-in-spacer').props.style,
@@ -1947,12 +1947,12 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-info-tabs-spacer').props.style,
       ),
-    ).toMatchObject({ height: 50 });
+    ).toMatchObject({ height: 60 });
     const infoTabsOverlayStyle = StyleSheet.flatten(
       screen.getByTestId('perps-pro-info-tabs-overlay').props.style,
     );
     expect(infoTabsOverlayStyle).toEqual(
-      expect.objectContaining({ height: 34 }),
+      expect.objectContaining({ height: 38 }),
     );
     const infoTabsTranslateY = infoTabsOverlayStyle?.transform?.[0]
       ?.translateY as unknown as number | { __getValue: () => number };
@@ -1960,7 +1960,7 @@ describe('PerpsProScene market loading states', () => {
       typeof infoTabsTranslateY === 'number'
         ? infoTabsTranslateY
         : infoTabsTranslateY.__getValue(),
-    ).toBe(536);
+    ).toBe(542);
     expect(screen.getAllByTestId('perps-pro-info-tab-account')).toHaveLength(1);
   });
 
@@ -2995,7 +2995,7 @@ describe('PerpsProScene market loading states', () => {
 
     expect(
       StyleSheet.flatten(scroll.props.contentContainerStyle),
-    ).toMatchObject({ minHeight: 1196, paddingBottom: 390 });
+    ).toMatchObject({ minHeight: 1202, paddingBottom: 386 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -3011,7 +3011,7 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
       ),
-    ).toMatchObject({ minHeight: 1196, paddingBottom: 390 });
+    ).toMatchObject({ minHeight: 1202, paddingBottom: 386 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -3027,7 +3027,7 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
       ),
-    ).toMatchObject({ minHeight: 1196, paddingBottom: 390 });
+    ).toMatchObject({ minHeight: 1202, paddingBottom: 386 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -3043,7 +3043,7 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
       ),
-    ).toMatchObject({ minHeight: 1196, paddingBottom: 32 });
+    ).toMatchObject({ minHeight: 1202, paddingBottom: 32 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -3058,7 +3058,7 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
       ),
-    ).toMatchObject({ minHeight: 1196, paddingBottom: 32 });
+    ).toMatchObject({ minHeight: 1202, paddingBottom: 32 });
   });
 
   it('closes the local funding overlay when the active account changes', () => {

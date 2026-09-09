@@ -8,12 +8,12 @@ import {
 
 describe('Perps Pro layout model', () => {
   it.each([
-    [320, 112, 13, 165],
-    [360, 124, 15, 191],
-    [375, 129, 15, 201],
-    [390, 135, 16, 209],
-    [393, 136, 16, 211],
-    [430, 136, 16, 248],
+    [320, 112, 11, 165],
+    [360, 124, 13, 191],
+    [375, 129, 13, 201],
+    [390, 135, 14, 209],
+    [393, 136, 14, 211],
+    [430, 136, 14, 248],
   ])(
     'keeps the order-book/trade columns continuous at %ipx',
     (windowWidth, orderBookWidth, gap, tradeWidth) => {
