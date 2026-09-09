@@ -231,62 +231,80 @@ export const PerpsProMarketTabs: React.FC<{
   }, [scrollActiveTabIntoView]);
 
   return (
-    <GestureHandlerScrollView
-      accessibilityRole="tablist"
-      contentContainerStyle={styles.content}
-      horizontal
-      keyboardShouldPersistTaps="handled"
-      nestedScrollEnabled
-      onContentSizeChange={width => setContentWidth(width)}
-      onLayout={event => setViewportWidth(event.nativeEvent.layout.width)}
-      ref={scrollRef}
-      showsHorizontalScrollIndicator={false}
-      style={styles.scroll}
-      testID="perps-pro-market-tabs">
-      {tabs.map((tab, index) => {
-        const active = tab.id === activeTab;
-        return (
-          <Pressable
-            key={tab.id}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: active }}
-            onLayout={event =>
-              updatePerpsProMarketTabFrame(tab.id, event, setTabFrames)
-            }
-            onPress={() => onChange(tab.id)}
-            style={styles.tab}
-            testID={`perps-pro-market-tab-${tab.id}`}>
-            <PerpsProMarketTabLabel
-              activeColor={colors2024['neutral-title-1']}
-              index={index}
-              inactiveColor={colors2024['neutral-secondary']}
-              indicatorPosition={indicatorPosition}
-              label={tab.label}
-              style={styles.text}
-              tabCount={tabs.length}
-            />
-          </Pressable>
-        );
-      })}
-      <PerpsProTabIndicator
-        layouts={indicatorLayouts}
-        position={indicatorPosition}
-        style={styles.indicator}
-        testID="perps-pro-market-tab-indicator"
+    <View style={styles.container} testID="perps-pro-market-tabs-container">
+      <View
+        pointerEvents="none"
+        style={styles.divider}
+        testID="perps-pro-market-tabs-divider"
       />
-    </GestureHandlerScrollView>
+      <GestureHandlerScrollView
+        accessibilityRole="tablist"
+        contentContainerStyle={styles.content}
+        horizontal
+        keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled
+        onContentSizeChange={width => setContentWidth(width)}
+        onLayout={event => setViewportWidth(event.nativeEvent.layout.width)}
+        ref={scrollRef}
+        showsHorizontalScrollIndicator={false}
+        style={styles.scroll}
+        testID="perps-pro-market-tabs">
+        {tabs.map((tab, index) => {
+          const active = tab.id === activeTab;
+          return (
+            <Pressable
+              key={tab.id}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: active }}
+              onLayout={event =>
+                updatePerpsProMarketTabFrame(tab.id, event, setTabFrames)
+              }
+              onPress={() => onChange(tab.id)}
+              style={styles.tab}
+              testID={`perps-pro-market-tab-${tab.id}`}>
+              <PerpsProMarketTabLabel
+                activeColor={colors2024['neutral-title-1']}
+                index={index}
+                inactiveColor={colors2024['neutral-secondary']}
+                indicatorPosition={indicatorPosition}
+                label={tab.label}
+                style={styles.text}
+                tabCount={tabs.length}
+              />
+            </Pressable>
+          );
+        })}
+        <PerpsProTabIndicator
+          layouts={indicatorLayouts}
+          position={indicatorPosition}
+          style={styles.indicator}
+          testID="perps-pro-market-tab-indicator"
+        />
+      </GestureHandlerScrollView>
+    </View>
   );
 });
 
 PerpsProMarketTabs.displayName = 'PerpsProMarketTabs';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  scroll: {
-    borderBottomColor: colors2024['neutral-bg-5'],
-    borderBottomWidth: 1,
-    flexGrow: 0,
+  container: {
     height: 38,
     marginTop: 16,
+  },
+  // A ScrollView border clips the underline to its padding box on Android.
+  // Paint the divider behind it without reducing the 38pt scroll viewport.
+  divider: {
+    backgroundColor: colors2024['neutral-bg-5'],
+    bottom: 0,
+    height: 1,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+  },
+  scroll: {
+    flexGrow: 0,
+    height: 38,
   },
   content: {
     gap: 16,

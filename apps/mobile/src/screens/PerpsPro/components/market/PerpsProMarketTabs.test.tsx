@@ -250,14 +250,32 @@ describe('PerpsProMarketTabs', () => {
 
     expect(
       StyleSheet.flatten(
-        screen.getByTestId('perps-pro-market-tabs').props.style,
+        screen.getByTestId('perps-pro-market-tabs-container').props.style,
       ),
     ).toMatchObject({
-      borderBottomColor: 'neutral-bg-5',
-      borderBottomWidth: 1,
       height: 38,
       marginTop: 16,
     });
+    const scroll = screen.getByTestId('perps-pro-market-tabs');
+    const scrollStyle = StyleSheet.flatten(scroll.props.style);
+    expect(scrollStyle.height).toBe(38);
+    expect(scrollStyle.borderBottomWidth ?? 0).toBe(0);
+    const divider = screen.getByTestId('perps-pro-market-tabs-divider');
+    expect(divider.props.pointerEvents).toBe('none');
+    expect(StyleSheet.flatten(divider.props.style)).toMatchObject({
+      backgroundColor: 'neutral-bg-5',
+      bottom: 0,
+      height: 1,
+      left: 0,
+      position: 'absolute',
+      right: 0,
+    });
+    const container = screen.getByTestId('perps-pro-market-tabs-container');
+    expect(
+      container.children.map(child =>
+        typeof child === 'string' ? child : child.props.testID,
+      ),
+    ).toEqual(['perps-pro-market-tabs-divider', 'perps-pro-market-tabs']);
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-market-tab-all').props.style,
