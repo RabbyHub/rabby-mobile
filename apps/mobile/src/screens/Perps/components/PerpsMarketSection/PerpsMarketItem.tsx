@@ -44,6 +44,13 @@ const PerpsMarketItemComponent: React.FC<{
           <View style={styles.row}>
             <View style={styles.nameContainer}>
               <PerpsDisplayCoinName item={item} />
+              {/* HIP-3 markets carry their builder dex as the source tag;
+                  the native dex has an empty dexId and shows nothing. */}
+              {item.dexId ? (
+                <View style={styles.tag}>
+                  <Text style={styles.tagText}>{item.dexId}</Text>
+                </View>
+              ) : null}
             </View>
             <Text style={styles.price}>
               {hasPrice ? `$${splitNumberByStep(item.markPx)}` : '-'}
@@ -51,8 +58,8 @@ const PerpsMarketItemComponent: React.FC<{
           </View>
           <View style={styles.row}>
             <View style={styles.infoContainer}>
-              <View style={styles.leverageContainer}>
-                <Text style={styles.leverage}>{item.maxLeverage}x</Text>
+              <View style={styles.tag}>
+                <Text style={styles.tagText}>{item.maxLeverage}x</Text>
               </View>
               <Text style={styles.volText}>
                 VOL: {formatUsdValueKMB(item.dayNtlVlm || 0)}
@@ -96,6 +103,7 @@ export const PerpsMarketItem = React.memo(
       prev.item.maxLeverage === next.item.maxLeverage &&
       prev.item.logoUrl === next.item.logoUrl &&
       prev.item.quoteAsset === next.item.quoteAsset &&
+      prev.item.dexId === next.item.dexId &&
       prev.rank === next.rank
     );
   },
@@ -144,7 +152,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
   },
   positionText: {
     fontFamily: 'SF Pro Rounded',
@@ -179,13 +187,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '500',
     color: colors2024['neutral-title-1'],
   },
-  leverageContainer: {
+  // Shared by the leverage pill and the HIP-3 source tag (same design token).
+  tag: {
     backgroundColor: colors2024['neutral-bg-5'],
     borderRadius: 4,
     paddingHorizontal: 4,
     paddingVertical: 1,
   },
-  leverage: {
+  tagText: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
