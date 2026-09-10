@@ -4,9 +4,13 @@ import type { SQLBatchTuple, Scalar } from '@op-engineering/op-sqlite';
 import { type EntityAddressAssetBase } from '../entities/base';
 import { appOrmEvents, SyncTaskOptions } from './_event';
 import { resolveDriverAndConnectionFromRepo } from '@/core/databases/typeormConnection';
-import { getOnlineConfig } from '@/core/config/online';
+import {
+  getOnlineConfig,
+  ONLINE_SWITCH_DISABLE_DB_PREPARED_UPSERT_V2,
+} from '@/core/config/online';
 import { logger } from '@/utils/logger';
 import { isNonPublicProductionEnv } from '@/constant';
+import { getSqliteVariableBatchSize } from '@/core/databases/sqliteVariableLimit';
 import {
   beginDbSyncTask,
   endDbSyncTask,
@@ -24,6 +28,7 @@ import {
 } from './scheduler';
 import { notifySyncAbortHandlers } from './abort';
 import { isNonProductionDiagnosticsEnabled } from '@/core/utils/diagnosticEnv';
+import { shouldDisablePreparedUpsert } from './preparedUpsertPolicy';
 
 /**
  * @description In most cases, you don't need call it manually,
@@ -209,10 +214,13 @@ type AfterBatchesFn = (ctx: {
 function resolveUpsertMethod<T extends typeof EntityAddressAssetBase>(
   entityCls: T & typeof BaseEntity,
 ) {
-  const enablePreparedUpsert =
-    isNonPublicProductionEnv ||
-    !!getOnlineConfig().switches?.['20260122.enable_db_prepared_upsert'];
-  const disablePreparedUpsert = !__DEV__ && !enablePreparedUpsert;
+  const disablePreparedUpsert = shouldDisablePreparedUpsert({
+    isDev: __DEV__,
+    isNonPublicProductionEnv,
+    onlineDisablePreparedUpsert:
+      getOnlineConfig().switches?.[ONLINE_SWITCH_DISABLE_DB_PREPARED_UPSERT_V2],
+  });
+  const enablePreparedUpsert = !disablePreparedUpsert;
   const hasStatementSql =
     'getStatementSql' in entityCls &&
     typeof entityCls.getStatementSql === 'function';
@@ -631,10 +639,20 @@ export async function batchSaveWithPQueueAndTransaction<
               executeMs = Date.now() - executeStartedAt;
             } else {
               const executeStartedAt = Date.now();
+              const variablesPerRow = Math.max(1, repo.metadata.columns.length);
+              const typeormBatchSize = getSqliteVariableBatchSize({
+                variablesPerItem: variablesPerRow,
+                requestedBatchSize: curBatch.length,
+              });
+              const typeormBatchCount = Math.ceil(
+                curBatch.length / typeormBatchSize,
+              );
               ctx.setStage('typeorm_upsert', {
                 round,
                 count: curBatch.length,
                 totalRound,
+                typeormBatchSize,
+                typeormBatchCount,
               });
               markDbSyncTaskStage(
                 diagTaskId,
@@ -645,12 +663,29 @@ export async function batchSaveWithPQueueAndTransaction<
                   count: curBatch.length,
                   totalRound,
                   method: upsertMethod.method,
+                  variablesPerRow,
+                  typeormBatchSize,
+                  typeormBatchCount,
                 },
                 true,
               );
-              await repo.manager.upsert(entityCls, curBatch, {
-                conflictPaths: ['_db_id'],
-              });
+              for (
+                let typeormBatchIndex = 0;
+                typeormBatchIndex < curBatch.length;
+                typeormBatchIndex += typeormBatchSize
+              ) {
+                ensureNotAborted(currentSignal);
+                await repo.manager.upsert(
+                  entityCls,
+                  curBatch.slice(
+                    typeormBatchIndex,
+                    typeormBatchIndex + typeormBatchSize,
+                  ),
+                  {
+                    conflictPaths: ['_db_id'],
+                  },
+                );
+              }
               executeMs = Date.now() - executeStartedAt;
             }
 
