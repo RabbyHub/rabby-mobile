@@ -5,6 +5,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { TextProps, View, ViewProps } from 'react-native';
 import { DefaultStyle } from 'react-native-reanimated/lib/typescript/hook/commonTypes';
+import { AnimatedText } from '@/components/Typography';
 
 interface CustomLabelProps {
   index: number;
@@ -58,9 +59,9 @@ const CustomLabel = ({
   return (
     <View style={[styles.container, containerStyle]}>
       {!!text && (
-        <Animated.Text style={[styles.label, stylez, style]}>
+        <AnimatedText numberOfLines={1} style={[styles.label, stylez, style]}>
           {text}
-        </Animated.Text>
+        </AnimatedText>
       )}
       {icon}
     </View>
@@ -74,11 +75,14 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     position: 'relative',
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'nowrap',
+    flexShrink: 0,
     gap: 2,
     height: 30,
   },
   label: {
     margin: 4,
+    flexShrink: 0,
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '500',

@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -143,6 +144,7 @@ export const PerpsProTpSlInput: React.FC<{
               </>
             ) : null}
             <PerpsProDecimalTextInput
+              keyboardScrollTrade
               accessibilityLabel={label}
               canonicalizeValueOnBlur={
                 usesPriceEditingPolicy ? canonicalizePriceInput : undefined
@@ -207,7 +209,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: { gap: 4, minWidth: 0 },
   legLabel: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },
@@ -227,7 +229,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   inputArea: { flex: 1, height: '100%', minWidth: 0, position: 'relative' },
   floatingLabel: {
     color: colors2024['neutral-info'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 10,
     fontWeight: '500',
     left: 0,
@@ -239,7 +241,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   centeredPlaceholder: {
     color: colors2024['neutral-info'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     left: 0,
@@ -250,8 +252,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     top: 11,
   },
   input: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     height: 40,
@@ -265,7 +268,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   inputWithNegativePrefix: { paddingLeft: NEGATIVE_PREFIX_SLOT_WIDTH },
   valueMeasure: {
-    fontFamily: 'SF Pro',
+    ...PERPS_PRO_NUMBER_STYLE,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     left: 0,
@@ -276,7 +280,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   negativePrefix: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     includeFontPadding: false,
@@ -304,7 +308,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   modeText: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,

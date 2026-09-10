@@ -3,7 +3,6 @@ import {
   BOTTOM_BUTTON_BOTTOM_OFFSET,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
-import { FontNames } from '@/core/utils/fonts';
 import { StyleSheet } from 'react-native';
 
 import { getPerpsProTransferSheetStyles } from './PerpsProTransferSheet.styles';
@@ -33,7 +32,7 @@ describe('PerpsProTransferSheet Figma styles', () => {
       width: 40,
     });
     expect(StyleSheet.flatten(styles.title)).toMatchObject({
-      fontFamily: FontNames.sf_pro,
+      fontFamily: 'SF Pro Rounded',
       fontSize: 16,
       fontWeight: '700',
       lineHeight: 20,
@@ -68,7 +67,7 @@ describe('PerpsProTransferSheet Figma styles', () => {
       height: 40,
     });
     expect(StyleSheet.flatten(styles.shortcutText)).toMatchObject({
-      fontFamily: FontNames.sf_pro,
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       fontWeight: '500',
       lineHeight: 16,

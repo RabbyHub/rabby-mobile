@@ -4,9 +4,13 @@ import {
   useLayoutEffect,
   useMemo,
   useState,
+  useSyncExternalStore,
 } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import type { WsFastAssetCtxs } from '@rabby-wallet/hyperliquid-sdk';
+import {
+  USDC_TOKEN_ID,
+  type WsFastAssetCtxs,
+} from '@rabby-wallet/hyperliquid-sdk';
 
 import type { PerpsProInfoTab } from '@/core/services/perpsService';
 import { usePerpsRuntimeStatus } from '@/hooks/perps/runtime/usePerpsRuntimeStatus';
@@ -14,6 +18,7 @@ import { getPerpsRuntimeIdentity } from '@/hooks/perps/runtime/perpsRuntimeState
 import {
   isPerpsUserAbstractionReadyForAccount,
   perpsStore,
+  type PerpsState,
   usePerpsStore,
 } from '@/hooks/perps/usePerpsStore';
 import { getPerpsPendingFundingCount } from '@/hooks/perps/funding/fundingJournal';
@@ -121,22 +126,36 @@ export const usePerpsProInfoPanel = (
     requestedInfoTab === 'account';
   const priceDependencyKeys = useMemo(
     () =>
-      accountPagePrepared
-        ? getSpotPriceDependencyKeys(
-            facts.spotState.rawBalances
-              .filter(balance => Number(balance.total) !== 0)
-              .map(balance => balance.coin),
-            facts.spotMeta,
-          )
-        : [],
-    [accountPagePrepared, facts.spotMeta, facts.spotState.rawBalances],
-  );
-  const spotPriceValues = perpsStore(
-    useShallow(state =>
-      priceDependencyKeys.map(
-        key => `${key}\u0000${state.spotAssetCtxs[key]?.markPx ?? ''}`,
+      getSpotPriceDependencyKeys(
+        facts.spotState.rawBalances
+          .filter(balance => Number(balance.total) !== 0)
+          .map(balance => balance.coin),
+        facts.spotMeta,
       ),
+    [facts.spotMeta, facts.spotState.rawBalances],
+  );
+  const selectSpotPriceValues = useShallow((state: PerpsState) =>
+    priceDependencyKeys.map(
+      key => `${key}\u0000${state.spotAssetCtxs[key]?.markPx ?? ''}`,
     ),
+  );
+  // The retained Account page can be revealed before a swipe commits its tab.
+  // Pause price notifications, never erase the inputs to its portfolio value.
+  const subscribeSpotPrices = useCallback(
+    (listener: () => void) =>
+      accountPagePrepared ? perpsStore.subscribe(listener) : () => {},
+    [accountPagePrepared],
+  );
+  const getSpotPriceSnapshot = useCallback(
+    () => selectSpotPriceValues(perpsStore.getState()),
+    [selectSpotPriceValues],
+  );
+  // Read the current source on every render, including unrelated updates while
+  // paused and the first reactivation render, without an effect-time catch-up.
+  const spotPriceValues = useSyncExternalStore(
+    subscribeSpotPrices,
+    getSpotPriceSnapshot,
+    getSpotPriceSnapshot,
   );
   const spotAssetCtxs = useMemo(
     () =>
@@ -214,6 +233,22 @@ export const usePerpsProInfoPanel = (
   const runtimeAccountIdentity = facts.currentAccount
     ? getPerpsRuntimeIdentity(facts.currentAccount)
     : null;
+  const fundingAccountValue =
+    account.mode === 'portfolioMargin'
+      ? facts.spotState.tokenToAvailableAfterMaintenance?.find(
+          ([tokenId]) => tokenId === USDC_TOKEN_ID,
+        )?.[1] ?? null
+      : account.mode === 'unified'
+      ? facts.spotState.accountValue ?? null
+      : facts.clearinghouseState?.marginSummary?.accountValue ?? null;
+  const fundingAccountValueReady =
+    !!runtimeAccountIdentity &&
+    runtime.status === 'ready' &&
+    runtime.identity === runtimeAccountIdentity &&
+    facts.userAbstractionReady &&
+    (account.mode === 'standard'
+      ? facts.isUserDataReady
+      : facts.isSpotStateReady);
   const accountFactsReady =
     !!runtimeAccountIdentity &&
     runtime.status === 'ready' &&
@@ -353,6 +388,8 @@ export const usePerpsProInfoPanel = (
     }),
     hideOtherOpenOrderSymbols,
     hideOtherPositionSymbols,
+    fundingAccountValue,
+    fundingAccountValueReady,
     hydrated: preferences.hydrated,
     openOrderCategory,
     openOrderCommandCandidates,

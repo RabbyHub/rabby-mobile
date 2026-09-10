@@ -145,6 +145,12 @@
       "multiSigChainNotMatch": "Multi-signature addresses are not on this chain and cannot initiate transactions",
       "safeAddressNotSupportChain": "Current safe address is not supported on {{0}} chain",
       "noGasRequired": "No gas required",
+      "gasSelectorTitle": "Gas",
+      "swapGasLevel": {
+        "normal": "Normal",
+        "fast": "Fast",
+        "instant": "Instant"
+      },
       "gasSetting": "Gas Setting",
       "failToFetchGasCost": "Fail to estimate gas",
       "manuallySetGasLimitAlert": "You have manually set the Gas limit to",
@@ -793,7 +799,8 @@
       "insufficient-balance": "Insufficient balance",
       "hidden-no-quote-rates_one": "{{count}} rate unavailable",
       "hidden-no-quote-rates_other": "{{count}} rates unavailable",
-      "preferMEV": "Prefer MEV Guarded",
+      "preferMEV": "MEV Protection",
+      "quotes": "Quotes",
       "no-slippage-for-wrap": "No slippage for Wrap",
       "best": "Best",
       "unable-to-fetch-the-price": "Unable to fetch the price",
@@ -819,6 +826,16 @@
       "results": "Results",
       "insufficient": "Insufficient Balance:",
       "rabbyFee": {
+        "discountTitle": "Rabby Fee Discount",
+        "case": "Case",
+        "free": "Free",
+        "cases": {
+          "wrap": "Wrap/Unwrap Native Token",
+          "stablecoins": "Stablecoins",
+          "lstLrt": "LST/LRT Token",
+          "million": "Vol $1M+",
+          "hundredThousand": "Vol $100k - $1M"
+        },
         "title": "Rabby fee",
         "swapDesc": "Rabby Wallet will always find the best possible rate from top aggregators and verify the reliability of their offers. Rabby charges a <1>0.25%</1> fee (0% for wrapping), which is automatically included in the quote.",
         "bridgeDesc": "Rabby Wallet will always find the best possible rate from top aggregators and verify the reliability of their offers. Rabby charges a <1>0.25%</1> fee, which is automatically included in the quote.",
@@ -1054,6 +1071,9 @@
           "gotIt": "I Got It.",
           "entry": "Is it safe to import into Rabby"
         }
+      },
+      "rateModalTriggerOnHome": {
+        "title": "Rating Rabby Wallet"
       },
       "rateModal": {
         "descriptionIOS": "If you like Rabby, a quick rating on the App Store would mean a lot.",
@@ -1645,7 +1665,8 @@
         "unavailablePaymentWallet": "Selected payment wallet is unavailable",
         "estReceiveLabel": "Est.Receive: {{usd}}",
         "estReceiveTip": "Service processed via {{name}}, may have slippage",
-        "noAvailableToken": "No available token"
+        "noAvailableToken": "No available token",
+        "priceImpactLoss": "Price Impact: You're losing {{usd}}."
       },
       "withdrawPopup": {
         "availableBalance": "Available withdrawal balance: {{balance}}",
@@ -1703,7 +1724,9 @@
       "lowBalance": "You don't have enough gas (<$1.00). Deposit gas to ensure future transactions go smoothly.",
       "switchAccount": "Switch Wallet",
       "depositFailed": "Deposit failed",
-      "depositWith": "Deposit via"
+      "depositWith": "Deposit via",
+      "gasToken": "Gas Token",
+      "title": "GasAccount"
     },
     "tokenDetail": {
       "headerBalanceText": "Balance",
@@ -2106,7 +2129,7 @@
         },
         "marketSelector": {
           "title": "Select Market",
-          "search": "Search",
+          "search": "Search Token",
           "favorites": "Favorites",
           "all": "All",
           "name": "Name",
@@ -2165,6 +2188,7 @@
           "liquidationPrice": "Liq. Price",
           "triggerPrice": "Trigger Price",
           "amount": "Amount",
+          "keyboardMinimum": "Min {{amount}}",
           "available": "Available",
           "reduceOnly": "Reduce Only",
           "confirmationReduceOnly": "Reduce Only",
@@ -2176,8 +2200,8 @@
           "sell": "Sell",
           "long": "Long",
           "short": "Short",
-          "buyLong": "Buy/Long",
-          "sellShort": "Sell/Short",
+          "buyLong": "Buy / Long",
+          "sellShort": "Sell / Short",
           "timeInForce": "Time in Force",
           "limitDescription": "Buy or Sell at a specific price or better",
           "marketDescription": "Buy or Sell at the best available market price",
@@ -2344,7 +2368,7 @@
         "history": {
           "title": "My trades",
           "tabs": {
-            "orders": "Orders History",
+            "orders": "Order History",
             "trade": "Trade History",
             "transaction": "Transaction History",
             "funding": "Funding Fee"
@@ -3412,6 +3436,7 @@
     "screenshotModal": {
       "title": "Screenshot to Report Bug",
       "submitButtonText": "Submit",
+      "submitFailed": "Submit failed.",
       "feedbackInput": {
         "placeholder": "Describe the issue (required)"
       },

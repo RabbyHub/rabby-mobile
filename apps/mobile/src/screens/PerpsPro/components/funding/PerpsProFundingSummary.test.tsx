@@ -2,8 +2,6 @@ import { render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
-import { FontNames } from '@/core/utils/fonts';
-
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
@@ -43,7 +41,7 @@ describe('PerpsProFundingSummary', () => {
     const label = screen.getByText('Funding (1h) / Countdown');
     expect(label.props.numberOfLines).toBe(1);
     expect(StyleSheet.flatten(label.props.style)).toMatchObject({
-      fontFamily: FontNames.sf_pro,
+      fontFamily: 'SF Pro Rounded',
       fontSize: 10,
       fontWeight: '500',
       lineHeight: 12,
@@ -54,5 +52,15 @@ describe('PerpsProFundingSummary', () => {
         minWidth: 136,
       },
     );
+    for (const value of ['-', '--:--']) {
+      const text = screen.getByText(value);
+      expect(text.props.adjustsFontSizeToFit).toBeUndefined();
+      expect(StyleSheet.flatten(text.props.style)).toMatchObject({
+        fontSize: 10,
+        lineHeight: 12,
+        fontWeight: '500',
+        fontVariant: ['tabular-nums'],
+      });
+    }
   });
 });

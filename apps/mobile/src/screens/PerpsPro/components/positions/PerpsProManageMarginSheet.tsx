@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcAlarm from '@/assets2024/icons/perps/PerpsProMarginAlarm.svg';
 import RcWarning from '@/assets2024/icons/perps/PerpsProMarginWarning.svg';
 import AutoLockView from '@/components/AutoLockView';
@@ -21,8 +22,10 @@ import {
   resolvePerpsProFieldBackground,
 } from '../common/perpsProVisual';
 import {
-  getPerpsProSemanticTagContainerStyle,
-  getPerpsProSemanticTagTextStyle,
+  getPerpsProMetadataTagContainerStyle,
+  getPerpsProMetadataTagTextStyle,
+  getPerpsProTintedTagContainerStyle,
+  getPerpsProTintedTagTextStyle,
 } from '../common/perpsProSemanticTagStyles';
 import {
   formatPerpsProDecimal,
@@ -175,7 +178,9 @@ export const PerpsProManageMarginSheet: React.FC<{
             <View style={styles.identityRow}>
               <Text style={styles.pair}>{displayView.displayPair}</Text>
               {displayView.sourceTag ? (
-                <View style={styles.sourceTag}>
+                <View
+                  style={styles.sourceTag}
+                  testID="perps-pro-manage-margin-source-tag">
                   <Text style={styles.sourceText}>{displayView.sourceTag}</Text>
                 </View>
               ) : null}
@@ -184,7 +189,8 @@ export const PerpsProManageMarginSheet: React.FC<{
                   displayView.direction === 'long'
                     ? styles.longTag
                     : styles.shortTag
-                }>
+                }
+                testID="perps-pro-manage-margin-direction-tag">
                 <Text
                   style={
                     displayView.direction === 'long'
@@ -350,7 +356,7 @@ const getStyle = createGetStyles2024(
     },
     title: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 16,
       fontWeight: '700',
       lineHeight: 20,
@@ -364,29 +370,29 @@ const getStyle = createGetStyles2024(
     },
     pair: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
       lineHeight: 18,
     },
     sourceTag: {
       alignItems: 'center',
-      ...getPerpsProSemanticTagContainerStyle(colors2024, 'neutral'),
+      ...getPerpsProMetadataTagContainerStyle(colors2024),
       justifyContent: 'center',
     },
-    sourceText: getPerpsProSemanticTagTextStyle(colors2024, 'neutral'),
+    sourceText: getPerpsProMetadataTagTextStyle(colors2024),
     longTag: {
       alignItems: 'center',
-      ...getPerpsProSemanticTagContainerStyle(colors2024, 'positive'),
+      ...getPerpsProTintedTagContainerStyle(colors2024, 'positive'),
       justifyContent: 'center',
     },
     shortTag: {
       alignItems: 'center',
-      ...getPerpsProSemanticTagContainerStyle(colors2024, 'negative'),
+      ...getPerpsProTintedTagContainerStyle(colors2024, 'negative'),
       justifyContent: 'center',
     },
-    longText: getPerpsProSemanticTagTextStyle(colors2024, 'positive'),
-    shortText: getPerpsProSemanticTagTextStyle(colors2024, 'negative'),
+    longText: getPerpsProTintedTagTextStyle(colors2024, 'positive'),
+    shortText: getPerpsProTintedTagTextStyle(colors2024, 'negative'),
     priceGroup: { gap: 8, marginTop: 16 },
     factRow: {
       alignItems: 'center',
@@ -396,27 +402,37 @@ const getStyle = createGetStyles2024(
     },
     factLabel: {
       color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       lineHeight: 16,
     },
     factValue: {
+      ...PERPS_PRO_NUMBER_STYLE,
+      flexShrink: 1,
+      minWidth: 0,
+      marginLeft: 8,
+      textAlign: 'right',
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       fontWeight: '500',
       lineHeight: 16,
     },
     factValueRounded: {
+      ...PERPS_PRO_NUMBER_STYLE,
+      flexShrink: 1,
+      minWidth: 0,
+      marginLeft: 8,
+      textAlign: 'right',
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       fontWeight: '500',
       lineHeight: 16,
     },
     configureLabel: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
       lineHeight: 18,
@@ -438,8 +454,9 @@ const getStyle = createGetStyles2024(
     },
     amountCardError: { height: 184 },
     minimumValue: {
+      ...PERPS_PRO_NUMBER_STYLE,
       color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       fontWeight: '500',
       left: 12,
@@ -448,8 +465,9 @@ const getStyle = createGetStyles2024(
       top: 62,
     },
     maximumValue: {
+      ...PERPS_PRO_NUMBER_STYLE,
       color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       fontWeight: '500',
       lineHeight: 16,
@@ -473,7 +491,7 @@ const getStyle = createGetStyles2024(
     warningText: {
       color: colors2024['orange-default'],
       flex: 1,
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       fontWeight: '500',
       lineHeight: 16,
@@ -486,7 +504,13 @@ const getStyle = createGetStyles2024(
       top: 318,
     },
     riskGroupError: { top: 364 },
-    riskValue: { alignItems: 'center', flexDirection: 'row', gap: 4 },
+    riskValue: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: 4,
+      flexShrink: 1,
+      minWidth: 0,
+    },
     footer: {
       bottom: Math.max(40, safeAreaInsets.bottom),
       left: 15,

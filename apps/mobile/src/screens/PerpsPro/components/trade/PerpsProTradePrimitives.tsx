@@ -1,7 +1,7 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcIconCheckboxEmpty from '@/assets2024/icons/common/checkbox-empty-cc.svg';
 import RcIconCheckboxFilled from '@/assets2024/icons/common/checkbox-filled-brand.svg';
 import { Text } from '@/components/Typography';
-import { FontNames } from '@/core/utils/fonts';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
@@ -19,22 +19,15 @@ import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineTe
 import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 import { PerpsProSelectCaret } from '../common/PerpsProSelectCaret';
 import {
-  getPerpsProIsolatedTextStyle,
   getPerpsProTradeControlMediumTextStyle,
   resolvePerpsProFieldBackground,
 } from '../common/perpsProVisual';
 
 export const getPerpsProTradeSelectFontStyle = (
   platform: typeof Platform.OS,
-): TextStyle => ({
-  ...getPerpsProTradeControlMediumTextStyle(platform),
-  ...getPerpsProIsolatedTextStyle(platform),
-});
+): TextStyle => getPerpsProTradeControlMediumTextStyle(platform);
 
 const tradeSelectFontStyle = getPerpsProTradeSelectFontStyle(Platform.OS);
-const tradeSelectPlainFontStyle = getPerpsProTradeControlMediumTextStyle(
-  Platform.OS,
-);
 
 export const PerpsProTradeSelect: React.FC<{
   label: string;
@@ -43,17 +36,8 @@ export const PerpsProTradeSelect: React.FC<{
   showCaret?: boolean;
   style?: ViewStyle;
   textStyle?: StyleProp<TextStyle>;
-  useReadableTextVariant?: boolean;
 }> = React.memo(
-  ({
-    disabled,
-    label,
-    onPress,
-    showCaret = true,
-    style,
-    textStyle,
-    useReadableTextVariant = true,
-  }) => {
+  ({ disabled, label, onPress, showCaret = true, style, textStyle }) => {
     const { colors2024, styles } = useTheme2024({ getStyle });
     return (
       <Pressable
@@ -63,13 +47,7 @@ export const PerpsProTradeSelect: React.FC<{
         style={[styles.select, disabled ? styles.disabled : null, style]}>
         <Text
           numberOfLines={1}
-          style={[
-            styles.selectText,
-            useReadableTextVariant
-              ? tradeSelectFontStyle
-              : tradeSelectPlainFontStyle,
-            textStyle,
-          ]}>
+          style={[styles.selectText, tradeSelectFontStyle, textStyle]}>
           {label}
         </Text>
         {showCaret ? (
@@ -251,7 +229,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   selectText: {
     color: colors2024['neutral-title-1'],
     flex: 1,
-    fontFamily: FontNames.sf_pro,
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
@@ -273,14 +251,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   summaryLabel: {
     color: colors2024['neutral-secondary'],
     flexShrink: 1,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },
   summaryValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     flexShrink: 1,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '400',
     lineHeight: 16,
@@ -305,7 +284,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   checkboxLabel: {
     color: colors2024['neutral-body'],
     flexShrink: 1,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },
@@ -316,7 +295,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'center',
   },
   tradeButtonWithSubtitle: { height: 40 },
-  tradeButtonCopy: { alignItems: 'center', gap: 2 },
+  tradeButtonCopy: {
+    alignItems: 'center',
+    gap: 2,
+    maxWidth: '100%',
+    paddingHorizontal: 4,
+  },
   buyButton: {
     backgroundColor: colors2024['green-default'],
   },
@@ -325,15 +309,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   tradeButtonText: {
     color: colors2024['neutral-title-2'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
   },
   tradeButtonSubtitle: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-InvertHighlight'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 10,
     fontWeight: '400',
+    lineHeight: 12,
   },
 }));

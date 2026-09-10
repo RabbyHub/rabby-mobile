@@ -35,6 +35,7 @@ import BridgeSwitchBtn from './BridgeSwitchBtn';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import BridgeShowMore, { RecommendFromToken } from './BridgeShowMore';
 import { tokenPriceImpact, useBridge } from '../hooks/token';
+import { SWAP_FEE_RATE } from '@/screens/Swap/hooks/fee';
 import { Button } from '@/components2024/Button';
 import { SignRiskWarning } from '@/components/SignRiskWarning';
 
@@ -88,13 +89,18 @@ import {
   type QuotePollingPauseReasonState,
   updateQuotePollingPauseReason,
 } from '@/utils/quotePolling';
-import { IS_ANDROID } from '@/core/native/utils';
 import {
   ensureFeatureActivation,
   markFeatureActivation,
 } from '@/core/utils/featureActivationDiagnostics';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+  RootNames,
+} from '@/constant/layout';
 import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import {
   BridgePendingTransactionsController,
@@ -154,10 +160,8 @@ function BridgeActivationDataProbe({
   return null;
 }
 
-const BOTTOM_BUTTON_HEIGHT = 52;
-const BOTTOM_BUTTON_TITLE_FONT_SIZE = 18;
 const BOTTOM_BUTTON_HORIZONTAL_PADDING = 20;
-const BOTTOM_BUTTON_BOTTOM_OFFSET = 36;
+const SIGN_RISK_WARNING_RESERVE_HEIGHT = 26;
 const BUILD_BRIDGE_TXS_DEBOUNCE_MS = 500;
 const DEFAULT_REGRESSION_TARGET_USD = '0.1';
 const DEFAULT_REGRESSION_MAX_TOTAL_USD = '1';
@@ -300,12 +304,16 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
     width: '100%',
     paddingHorizontal: BOTTOM_BUTTON_HORIZONTAL_PADDING,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
   },
   btnTitle: {
     color: colors['neutral-title-2'],
   },
+  riskWarning: {
+    marginBottom: BOTTOM_BUTTON_TOP_OFFSET,
+  },
   bottomButtonTitle: {
-    fontSize: BOTTOM_BUTTON_TITLE_FONT_SIZE,
+    ...BOTTOM_BUTTON_TITLE_STYLE,
   },
   marketClosedTip: {
     marginHorizontal: 24,
@@ -379,6 +387,8 @@ export const BridgeContent = ({
     switchToken,
     amount,
     handleAmountChange,
+    feeRate,
+    feeTier,
 
     recommendFromToken,
     fillRecommendFromToken,
@@ -639,7 +649,6 @@ export const BridgeContent = ({
     [isSupportedChain, fromChain, toChain],
   );
 
-  const [showMoreOpen, setShowMoreOpen] = useState(false);
   const refresh = useSetRefreshId();
   const refreshId = useRefreshId();
 
@@ -732,6 +741,7 @@ export const BridgeContent = ({
               to_token_amount: selectedBridgeQuote.to_token_amount,
               tx: tx,
               rabby_fee: selectedBridgeQuote.rabby_fee.usd_value,
+              fee_rate: Number(feeRate),
               slippage: new BigNumber(slippage).div(100).toNumber(),
               duration: selectedBridgeQuote.duration,
             },
@@ -797,6 +807,7 @@ export const BridgeContent = ({
       toToken.chain,
       toToken.id,
       amount,
+      feeRate,
       slippageState,
       selectedBridgeQuote.aggregator.id,
       selectedBridgeQuote.bridge_id,
@@ -812,6 +823,7 @@ export const BridgeContent = ({
     ].join('|');
   }, [
     amount,
+    feeRate,
     fromToken,
     gasList,
     passGasPrice,
@@ -921,6 +933,7 @@ export const BridgeContent = ({
               to_token_amount: selectedBridgeQuote.to_token_amount,
               tx: tx,
               rabby_fee: selectedBridgeQuote.rabby_fee.usd_value,
+              fee_rate: Number(feeRate),
               slippage: new BigNumber(slippageState).div(100).toNumber(),
               duration: selectedBridgeQuote.duration,
             },
@@ -1322,6 +1335,12 @@ export const BridgeContent = ({
     Number(amount) > 0 &&
     !quoteLoading &&
     !quoteList?.length;
+  const [bridgeProgressVisible, setBridgeProgressVisible] = useState(false);
+  const showStickyInfo =
+    !!fromToken &&
+    !!toToken &&
+    !noQuote &&
+    !(bridgeProgressVisible && !amountAvailable);
   const showClosedMarketTip =
     (!!fromToken || !!toToken) && quoteBlockedByClosedMarket;
 
@@ -1514,9 +1533,27 @@ export const BridgeContent = ({
 
   const switchFeePopup = useSetSettingVisible();
 
+  useEffect(() => {
+    const clearFeePopups = () => {
+      switchFeePopup(prev =>
+        prev.visible || prev.compareVisible || prev.feeTier
+          ? { visible: false, compareVisible: false }
+          : prev,
+      );
+    };
+    if (!sceneActive) {
+      clearFeePopups();
+    }
+    return clearFeePopups;
+  }, [sceneActive, switchFeePopup]);
+
   const openFeePopup = useCallback(() => {
-    switchFeePopup(true);
-  }, [switchFeePopup]);
+    switchFeePopup({
+      visible: feeTier !== 'default',
+      compareVisible: feeTier === 'default',
+      feeTier,
+    });
+  }, [switchFeePopup, feeTier]);
 
   const { switchAccountOnSelectedToken } =
     useSwitchSceneAccountOnSelectedTokenWithOwner('MakeTransactionAbout');
@@ -1650,6 +1687,13 @@ export const BridgeContent = ({
     [setSlippage, setSlippageChanged],
   );
 
+  const footerBottomOffset = getBottomButtonBottomOffset(bottom);
+  const footerReserveHeight =
+    BOTTOM_BUTTON_TOP_OFFSET +
+    BOTTOM_BUTTON_SINGLE_HEIGHT +
+    footerBottomOffset +
+    (showRiskConfirm ? SIGN_RISK_WARNING_RESERVE_HEIGHT : 0);
+
   return (
     <SignatureInstanceProvider instance={instance}>
       <NormalScreenContainer overwriteStyle={styles.screen}>
@@ -1675,7 +1719,7 @@ export const BridgeContent = ({
         <KeyboardAwareScrollView
           style={styles.container}
           contentContainerStyle={{
-            paddingBottom: 150 + bottom + (showRiskTips ? 26 : 0),
+            paddingBottom: footerReserveHeight,
           }}
           enableOnAndroid
           scrollEnabled={scrollEnabled}
@@ -1752,48 +1796,45 @@ export const BridgeContent = ({
           ) : null}
 
           <View>
-            {selectedBridgeQuote &&
-              !quoteLoading &&
-              inSufficientCanGetQuote && (
-                <BridgeShowMore
-                  insufficient={inSufficient}
-                  sourceAlwaysShow
-                  duration={selectedBridgeQuote?.duration}
-                  supportDirectSign={canShowDirectSubmit}
-                  openFeePopup={openFeePopup}
-                  open={showMoreOpen}
-                  setOpen={setShowMoreOpen}
-                  sourceName={selectedBridgeQuote?.aggregator.name || ''}
-                  sourceLogo={selectedBridgeQuote?.aggregator.logo_url || ''}
-                  slippage={slippageState}
-                  displaySlippage={slippage}
-                  onSlippageChange={handleSlippageChange}
-                  fromToken={fromToken}
-                  toToken={toToken}
-                  amount={amount || 0}
-                  toAmount={selectedBridgeQuote?.to_token_amount}
-                  openQuotesList={openQuotesList}
-                  quoteLoading={quoteLoading}
-                  slippageError={isSlippageHigh || isSlippageLow}
-                  autoSlippage={autoSlippage}
-                  isCustomSlippage={isCustomSlippage}
-                  setAutoSlippage={setAutoSlippage}
-                  setIsCustomSlippage={setIsCustomSlippage}
-                  type="bridge"
-                  isBestQuote={
-                    !!bestQuoteId &&
-                    !!selectedBridgeQuote &&
-                    bestQuoteId?.aggregatorId ===
-                      selectedBridgeQuote.aggregator.id &&
-                    bestQuoteId?.bridgeId === selectedBridgeQuote.bridge_id
-                  }
-                  onDepositPopupVisibleChange={setDepositQuoteRefreshPaused}
-                  onSlippageOptionsOpenChange={
-                    setSlippageOptionsQuoteRefreshPaused
-                  }
-                  onGasSettingsOpenChange={setGasSettingsQuoteRefreshPaused}
-                />
-              )}
+            {showStickyInfo && (
+              <BridgeShowMore
+                insufficient={inSufficient}
+                duration={selectedBridgeQuote?.duration}
+                supportDirectSign={canShowDirectSubmit}
+                openFeePopup={openFeePopup}
+                sourceName={selectedBridgeQuote?.aggregator.name || ''}
+                sourceLogo={selectedBridgeQuote?.aggregator.logo_url || ''}
+                slippage={slippageState}
+                displaySlippage={slippage}
+                onSlippageChange={handleSlippageChange}
+                fromToken={fromToken}
+                toToken={toToken}
+                amount={amount || 0}
+                toAmount={selectedBridgeQuote?.to_token_amount}
+                openQuotesList={openQuotesList}
+                quoteLoading={quoteLoading}
+                slippageError={isSlippageHigh || isSlippageLow}
+                autoSlippage={autoSlippage}
+                isCustomSlippage={isCustomSlippage}
+                setAutoSlippage={setAutoSlippage}
+                setIsCustomSlippage={setIsCustomSlippage}
+                type="bridge"
+                isRabbyFeeFree={feeRate === SWAP_FEE_RATE.FREE}
+                isRabbyFeeHalf={feeRate === SWAP_FEE_RATE.HALF}
+                isBestQuote={
+                  !!bestQuoteId &&
+                  !!selectedBridgeQuote &&
+                  bestQuoteId?.aggregatorId ===
+                    selectedBridgeQuote.aggregator.id &&
+                  bestQuoteId?.bridgeId === selectedBridgeQuote.bridge_id
+                }
+                onDepositPopupVisibleChange={setDepositQuoteRefreshPaused}
+                onSlippageOptionsOpenChange={
+                  setSlippageOptionsQuoteRefreshPaused
+                }
+                onGasSettingsOpenChange={setGasSettingsQuoteRefreshPaused}
+              />
+            )}
             {showClosedMarketTip && (
               <MarketClosedTip style={styles.marketClosedTip} />
             )}
@@ -1830,12 +1871,14 @@ export const BridgeContent = ({
               </>
             )}
           </View>
-          {Boolean(
-            !(selectedBridgeQuote && inSufficientCanGetQuote) &&
-              !recommendFromToken,
-          ) &&
+          {!amountAvailable &&
+            !selectedBridgeQuote &&
+            !recommendFromToken &&
             currentAccount?.address && (
-              <BridgePendingTxItem userAddress={currentAccount?.address} />
+              <BridgePendingTxItem
+                userAddress={currentAccount.address}
+                onDisplayChange={setBridgeProgressVisible}
+              />
             )}
         </KeyboardAwareScrollView>
 
@@ -1843,8 +1886,7 @@ export const BridgeContent = ({
           style={[
             styles.buttonContainer,
             {
-              paddingBottom:
-                BOTTOM_BUTTON_BOTTOM_OFFSET + (IS_ANDROID ? bottom : 0),
+              paddingBottom: footerBottomOffset,
             },
           ]}>
           <Tip
@@ -1857,6 +1899,7 @@ export const BridgeContent = ({
               {showRiskConfirm ? (
                 <SignRiskWarning
                   checked={riskChecked}
+                  style={styles.riskWarning}
                   onToggle={() => setRiskChecked(checked => !checked)}
                 />
               ) : null}
@@ -1864,7 +1907,7 @@ export const BridgeContent = ({
                 <DirectSignBtn
                   ref={directSignBtnRef}
                   key={`${selectedBridgeQuote?.aggregator.id}-${selectedBridgeQuote?.bridge?.id}-${refreshId}`}
-                  height={BOTTOM_BUTTON_HEIGHT}
+                  height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                   titleStyle={styles.bottomButtonTitle}
                   authTitle={t('page.whitelist.confirmPassword')}
                   title={t('global.confirm')}
@@ -1896,7 +1939,7 @@ export const BridgeContent = ({
                 />
               ) : (
                 <Button
-                  height={BOTTOM_BUTTON_HEIGHT}
+                  height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                   onPress={handleConfirm}
                   title={btnText}
                   titleStyle={[styles.btnTitle, styles.bottomButtonTitle]}

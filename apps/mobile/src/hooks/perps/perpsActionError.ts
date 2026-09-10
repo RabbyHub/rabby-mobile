@@ -8,14 +8,11 @@ import { showToast } from '@/hooks/perps/showToast';
 import * as Sentry from '@sentry/react-native';
 
 import { isPerpsActionUserCancelled } from './actions/actionError';
-import {
-  ensurePerpsActionApproval,
-  invalidatePerpsActionApprovalCache,
-} from './actions/perpsActionApproval';
+import { invalidatePerpsActionApprovalCache } from './actions/perpsActionApproval';
 
 // Returns true when the error came from an expired agent. It invalidates the
-// preflight cache and immediately opens the action-scoped reauthorization; the
-// failed financial action is never replayed automatically.
+// preflight cache so the user's next attempt must recheck remote authorization;
+// the failed financial action is never replayed automatically.
 export const judgeIsUserAgentIsExpired = async (
   errorMessage: string,
 ): Promise<boolean> => {
@@ -34,27 +31,10 @@ export const judgeIsUserAgentIsExpired = async (
   );
   const agentAddress = agentWalletPreference?.agentAddress;
   if (agentAddress && errorMessage.includes(agentAddress)) {
-    console.warn('handle action agent is expired, reauthorize');
+    console.warn('handle action agent is expired, reauthorize on next attempt');
     setAccountNeedApproveAgent(true);
     invalidatePerpsActionApprovalCache();
     showToast('Agent expired. Authorize again to continue.', 'error');
-    try {
-      await ensurePerpsActionApproval(currentAccount, {
-        forceRemoteCheck: true,
-      });
-    } catch (error) {
-      if (!isUserCancelledSignature(error)) {
-        Sentry.captureException(
-          error instanceof Error ? error : new Error(String(error)),
-          {
-            extra: {
-              scene: 'PERPS expired agent reauthorization error',
-              masterAddress,
-            },
-          },
-        );
-      }
-    }
     return true;
   }
   return false;
@@ -123,7 +103,7 @@ type RunPerpsActionConfig<T> = {
 /**
  * Wraps a perps action so every handler shares one error path:
  *   1. swallow known, self-handled errors (expired agent / unapproved builder
- *      fee) — expired agents immediately enter reauthorization;
+ *      fee) — expired agents invalidate preflight and require a user retry;
  *   2. otherwise console + toast + Sentry, then return `fallback`.
  * Lets each handler declare only what differs (fallback / label / toast /
  * context) instead of repeating the catch block on every new action.

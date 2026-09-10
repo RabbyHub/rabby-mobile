@@ -23,6 +23,10 @@ type BuiltinSpec = {
   showRankOnSearch: boolean;
 };
 
+// Home modules preview this many pairs (favorites are the exception and show
+// everything); the full list lives on the search page's matching tab.
+const HOME_CATEGORY_LIMIT = 5;
+
 const BUILTIN_SPECS: BuiltinSpec[] = [
   {
     id: 'favorite',
@@ -34,7 +38,7 @@ const BUILTIN_SPECS: BuiltinSpec[] = [
   {
     id: 'topVolume',
     i18nKey: 'page.perps.categories.topVolume',
-    homeLimit: 5,
+    homeLimit: HOME_CATEGORY_LIMIT,
     showRankOnHome: true,
     showRankOnSearch: true,
   },
@@ -65,7 +69,7 @@ export function usePerpsGroupedMarketData(params: {
       ...(backendCategories ?? []).map<PerpsCategoryConfig>(c => ({
         id: c.id,
         label: c.translations?.[currentLanguage] ?? c.name ?? c.id,
-        homeLimit: 3,
+        homeLimit: HOME_CATEGORY_LIMIT,
         showRankOnHome: false,
         showRankOnSearch: false,
       })),

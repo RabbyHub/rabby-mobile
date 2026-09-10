@@ -4,7 +4,7 @@ const mockSetApproveAgent = jest.fn();
 
 const mockAccount = {
   address: '0x0000000000000000000000000000000000000001',
-  type: 'WatchAddressKeyring',
+  type: 'Ledger Hardware',
 } as const;
 
 jest.mock('@/core/apis/perps', () => ({
@@ -43,7 +43,7 @@ describe('Perps action expired-agent recovery', () => {
     jest.clearAllMocks();
   });
 
-  it('opens action approval immediately when a server error identifies the expired agent', async () => {
+  it('invalidates approval for the next attempt without reentering it immediately', async () => {
     await expect(
       judgeIsUserAgentIsExpired(
         'API wallet 0x0000000000000000000000000000000000000002 does not exist',
@@ -52,9 +52,7 @@ describe('Perps action expired-agent recovery', () => {
 
     expect(mockSetApproveAgent).toHaveBeenCalledWith(true);
     expect(mockInvalidateApproval).toHaveBeenCalledTimes(1);
-    expect(mockEnsureApproval).toHaveBeenCalledWith(mockAccount, {
-      forceRemoteCheck: true,
-    });
+    expect(mockEnsureApproval).not.toHaveBeenCalled();
   });
 
   it('does not authorize for an unrelated action error', async () => {

@@ -3,7 +3,7 @@ import type {
   WsFill,
 } from '@rabby-wallet/hyperliquid-sdk';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { AppState } from 'react-native';
+import { AppState, InteractionManager } from 'react-native';
 
 const mockFetchOrders = jest.fn();
 const mockFetchLatestTrades = jest.fn();
@@ -17,7 +17,7 @@ const mockShowToast = jest.fn();
 const mockReadFundingJournal = jest.fn(async () => []);
 const mockConfirmFundingOperations = jest.fn();
 let mockHistoryListener: ((event: any) => void) | null = null;
-let mockIsFocused = true;
+let mockAccountGeneration = 1;
 
 const mockPerpsState = {
   currentPerpsAccount: {
@@ -29,10 +29,6 @@ const mockPerpsState = {
   marketDataMap: {},
   spotMeta: null,
 };
-
-jest.mock('@react-navigation/native', () => ({
-  useIsFocused: () => mockIsFocused,
-}));
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -67,7 +63,7 @@ jest.mock('@/hooks/perps/usePerpsStore', () => {
       mockConfirmFundingOperations(...args),
     getPerpsAccountRuntimeContext: () => ({
       account: mockPerpsState.currentPerpsAccount,
-      generation: 1,
+      generation: mockAccountGeneration,
       isInitialized: true,
     }),
     fetchSpotMeta: jest.fn(async () => undefined),
@@ -143,7 +139,7 @@ describe('usePerpsProHistoryController', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockHistoryListener = null;
-    mockIsFocused = true;
+    mockAccountGeneration = 1;
     mockPerpsState.currentPerpsAccount = {
       address: '0x1111111111111111111111111111111111111111',
       type: 'SimpleKeyring',
@@ -205,6 +201,89 @@ describe('usePerpsProHistoryController', () => {
     expect(mockFetchTransactionsWindow).toHaveBeenCalledTimes(1);
     expect(mockFetchFundingWindow).toHaveBeenCalledTimes(1);
     expect(mockFetchOrderFills).not.toHaveBeenCalled();
+  });
+
+  it('retains route-scoped preload data while live presentation is inactive', async () => {
+    mockFetchLatestTrades
+      .mockResolvedValueOnce([makeFill({ time: 100 })])
+      .mockResolvedValueOnce([makeFill({ tid: 2, time: 200 })]);
+    const hook = renderHook(
+      ({ active }: { active: boolean }) =>
+        usePerpsProHistoryController('trade', active, true),
+      { initialProps: { active: false } },
+    );
+
+    await waitFor(() =>
+      expect(hook.result.current.tabState.rows.map(row => row.time)).toEqual([
+        100,
+      ]),
+    );
+    expect(mockHistoryListener).toBeNull();
+
+    hook.rerender({ active: true });
+    await waitFor(() => expect(mockFetchLatestTrades).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(hook.result.current.tabState.rows.map(row => row.time)).toEqual([
+        200, 100,
+      ]),
+    );
+    expect(mockHistoryListener).not.toBeNull();
+
+    hook.rerender({ active: false });
+    await waitFor(() => expect(mockHistoryListener).toBeNull());
+    expect(hook.result.current.tabState.rows.map(row => row.time)).toEqual([
+      200, 100,
+    ]);
+  });
+
+  it('defers a hidden route preload until entrance interactions settle', async () => {
+    let startDeferredPreload: (() => void) | null = null;
+    const cancelDeferredPreload = jest.fn();
+    jest
+      .spyOn(InteractionManager, 'runAfterInteractions')
+      .mockImplementation(callback => {
+        startDeferredPreload = () => {
+          callback();
+        };
+        return { cancel: cancelDeferredPreload } as never;
+      });
+    const hook = renderHook(() =>
+      usePerpsProHistoryController('orders', false, true, true),
+    );
+
+    expect(mockFetchOrders).not.toHaveBeenCalled();
+    act(() => startDeferredPreload?.());
+    await waitFor(() => expect(mockFetchOrders).toHaveBeenCalledTimes(1));
+
+    hook.unmount();
+    expect(cancelDeferredPreload).toHaveBeenCalledTimes(1);
+  });
+
+  it('starts immediately when the sheet opens before deferred preload runs', async () => {
+    let startDeferredPreload: (() => void) | null = null;
+    const cancelDeferredPreload = jest.fn();
+    jest
+      .spyOn(InteractionManager, 'runAfterInteractions')
+      .mockImplementation(callback => {
+        startDeferredPreload = () => {
+          callback();
+        };
+        return { cancel: cancelDeferredPreload } as never;
+      });
+    const hook = renderHook(
+      ({ active }: { active: boolean }) =>
+        usePerpsProHistoryController('orders', active, true, true),
+      { initialProps: { active: false } },
+    );
+
+    expect(mockFetchOrders).not.toHaveBeenCalled();
+    hook.rerender({ active: true });
+
+    await waitFor(() => expect(mockFetchOrders).toHaveBeenCalledTimes(1));
+    expect(cancelDeferredPreload).toHaveBeenCalledTimes(1);
+
+    act(() => startDeferredPreload?.());
+    expect(mockFetchOrders).toHaveBeenCalledTimes(1);
   });
 
   it('projects a local pending funding operation into an empty Transaction tab', async () => {
@@ -474,20 +553,42 @@ describe('usePerpsProHistoryController', () => {
     );
   });
 
-  it('revalidates the active tab after route focus returns', async () => {
+  it('invalidates cached rows when the runtime generation changes', async () => {
+    mockFetchOrders
+      .mockResolvedValueOnce([makeOrder(1, 100)])
+      .mockResolvedValueOnce([makeOrder(2, 200)]);
+    const hook = renderHook(() => usePerpsProHistoryController());
+    await waitFor(() =>
+      expect(hook.result.current.tabState.rows[0]).toMatchObject({ oid: 1 }),
+    );
+
+    mockAccountGeneration = 2;
+    hook.rerender({});
+
+    await waitFor(() => expect(mockFetchOrders).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(hook.result.current.tabState.rows).toEqual([
+        expect.objectContaining({ oid: 2 }),
+      ]),
+    );
+  });
+
+  it('stops subscriptions while externally inactive and revalidates on resume', async () => {
     mockFetchLatestTrades
       .mockResolvedValueOnce([makeFill({ time: 100 })])
       .mockResolvedValueOnce([makeFill({ tid: 2, time: 200 })]);
-    const hook = renderHook(() => usePerpsProHistoryController('trade'));
+    const hook = renderHook(
+      ({ active }: { active: boolean }) =>
+        usePerpsProHistoryController('trade', active),
+      { initialProps: { active: true } },
+    );
     await waitFor(() =>
       expect(hook.result.current.tabState.status).toBe('ready'),
     );
 
-    mockIsFocused = false;
-    hook.rerender({});
+    hook.rerender({ active: false });
     await waitFor(() => expect(mockHistoryListener).toBeNull());
-    mockIsFocused = true;
-    hook.rerender({});
+    hook.rerender({ active: true });
 
     await waitFor(() => expect(mockFetchLatestTrades).toHaveBeenCalledTimes(2));
     await waitFor(() =>
@@ -495,6 +596,59 @@ describe('usePerpsProHistoryController', () => {
         200, 100,
       ]),
     );
+  });
+
+  it('keeps the loading presentation but ignores completion after external activity stops', async () => {
+    let resolveOrders: (orders: UserHistoricalOrders[]) => void = () =>
+      undefined;
+    mockFetchOrders.mockReturnValueOnce(
+      new Promise<UserHistoricalOrders[]>(resolve => {
+        resolveOrders = resolve;
+      }),
+    );
+    const hook = renderHook(
+      ({ active }: { active: boolean }) =>
+        usePerpsProHistoryController('orders', active),
+      { initialProps: { active: true } },
+    );
+    await waitFor(() => expect(mockFetchOrders).toHaveBeenCalledTimes(1));
+
+    hook.rerender({ active: false });
+    await act(async () => resolveOrders([makeOrder()]));
+
+    expect(hook.result.current.state.orders).toMatchObject({
+      rows: [],
+      status: 'loading',
+    });
+
+    mockFetchOrders.mockResolvedValueOnce([makeOrder(2, 200)]);
+    hook.rerender({ active: true });
+
+    await waitFor(() => expect(mockFetchOrders).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(hook.result.current.state.orders).toMatchObject({
+        rows: [expect.objectContaining({ oid: 2 })],
+        status: 'ready',
+      }),
+    );
+  });
+
+  it('invalidates in-flight completions before unmount cleanup returns', async () => {
+    let resolveOrders: (orders: UserHistoricalOrders[]) => void = () =>
+      undefined;
+    mockFetchOrders.mockReturnValueOnce(
+      new Promise<UserHistoricalOrders[]>(resolve => {
+        resolveOrders = resolve;
+      }),
+    );
+    const hook = renderHook(() => usePerpsProHistoryController('orders'));
+    await waitFor(() => expect(mockFetchOrders).toHaveBeenCalledTimes(1));
+
+    hook.unmount();
+    await act(async () => resolveOrders([makeOrder()]));
+
+    expect(mockHistoryListener).toBeNull();
+    expect(mockShowToast).not.toHaveBeenCalled();
   });
 
   it('does not issue duplicate requests for a repeated refresh gesture', async () => {
@@ -544,6 +698,192 @@ describe('usePerpsProHistoryController', () => {
       'page.perps.pro.history.refreshFailed',
       'error',
     );
+  });
+
+  it('keeps successful empty results silent across tab changes', async () => {
+    const hook = renderHook(() => usePerpsProHistoryController());
+    await waitFor(() =>
+      expect(
+        Object.values(hook.result.current.state).every(
+          state => state.status === 'empty',
+        ),
+      ).toBe(true),
+    );
+    for (const tab of ['trade', 'transaction', 'funding', 'orders'] as const) {
+      await act(async () => hook.result.current.setActiveTab(tab));
+      expect(hook.result.current.tabState).toMatchObject({
+        rows: [],
+        status: 'empty',
+      });
+    }
+    expect(mockShowToast).not.toHaveBeenCalled();
+  });
+
+  it.each(['orders', 'trade', 'transaction', 'funding'] as const)(
+    'retains the successful empty %s baseline silently when background refresh fails',
+    async tab => {
+      const hook = renderHook(
+        ({ active }: { active: boolean }) =>
+          usePerpsProHistoryController(tab, active, true),
+        { initialProps: { active: false } },
+      );
+      await waitFor(() =>
+        expect(hook.result.current.tabState.status).toBe('empty'),
+      );
+      const fetchLatest = {
+        orders: mockFetchOrders,
+        trade: mockFetchLatestTrades,
+        transaction: mockFetchTransactionsWindow,
+        funding: mockFetchFundingWindow,
+      }[tab];
+      fetchLatest.mockRejectedValueOnce(new Error('offline'));
+      hook.rerender({ active: true });
+      await waitFor(() =>
+        expect(hook.result.current.tabState.refreshError).toBe('offline'),
+      );
+      expect(hook.result.current.tabState).toMatchObject({
+        rows: [],
+        status: 'empty',
+        refreshing: false,
+      });
+      expect(mockShowToast).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['orders', 'trade', 'transaction', 'funding'] as const)(
+    'reports a failed manual refresh of the current empty %s tab',
+    async tab => {
+      const hook = renderHook(() => usePerpsProHistoryController(tab));
+      await waitFor(() =>
+        expect(hook.result.current.tabState.status).toBe('empty'),
+      );
+      const fetchLatest = {
+        orders: mockFetchOrders,
+        trade: mockFetchLatestTrades,
+        transaction: mockFetchTransactionsWindow,
+        funding: mockFetchFundingWindow,
+      }[tab];
+      fetchLatest.mockRejectedValueOnce(new Error('offline'));
+      await act(async () => hook.result.current.refresh());
+      expect(hook.result.current.tabState).toMatchObject({
+        rows: [],
+        status: 'empty',
+        refreshing: false,
+        refreshError: 'offline',
+      });
+      expect(mockShowToast).toHaveBeenCalledTimes(1);
+      expect(mockShowToast).toHaveBeenCalledWith(
+        'page.perps.pro.history.refreshFailed',
+        'error',
+      );
+    },
+  );
+
+  it.each([
+    'switch tab',
+    'return to tab',
+    'hide sheet',
+    'reopen sheet',
+  ] as const)(
+    'retains the refresh error without a stale Toast after %s',
+    async transition => {
+      const hook = renderHook(
+        ({ active }: { active: boolean }) =>
+          usePerpsProHistoryController('trade', active, true),
+        { initialProps: { active: true } },
+      );
+      await waitFor(() =>
+        expect(hook.result.current.tabState.status).toBe('empty'),
+      );
+      let rejectRefresh: (error: Error) => void = () => undefined;
+      mockFetchLatestTrades.mockReturnValueOnce(
+        new Promise<WsFill[]>((_, reject) => {
+          rejectRefresh = reject;
+        }),
+      );
+      let pending = Promise.resolve();
+      act(() => {
+        pending = hook.result.current.refresh();
+      });
+      if (transition === 'switch tab' || transition === 'return to tab') {
+        await act(async () => hook.result.current.setActiveTab('orders'));
+        if (transition === 'return to tab') {
+          await act(async () => hook.result.current.setActiveTab('trade'));
+        }
+      } else {
+        hook.rerender({ active: false });
+        if (transition === 'reopen sheet') {
+          hook.rerender({ active: true });
+        }
+      }
+      await act(async () => {
+        rejectRefresh(new Error('late offline'));
+        await pending;
+      });
+      expect(hook.result.current.state.trade).toMatchObject({
+        rows: [],
+        status: 'empty',
+        refreshing: false,
+        refreshError: 'late offline',
+      });
+      expect(mockFetchLatestTrades).toHaveBeenCalledTimes(2);
+      expect(mockShowToast).not.toHaveBeenCalled();
+    },
+  );
+
+  it('retains cached rows when a previous tab background refresh fails', async () => {
+    mockFetchLatestTrades.mockResolvedValueOnce([makeFill({ time: 100 })]);
+    const hook = renderHook(() => usePerpsProHistoryController('trade'));
+    await waitFor(() =>
+      expect(hook.result.current.tabState.status).toBe('ready'),
+    );
+    await act(async () => hook.result.current.setActiveTab('orders'));
+    let rejectRefresh: (error: Error) => void = () => undefined;
+    mockFetchLatestTrades.mockReturnValueOnce(
+      new Promise<WsFill[]>((_, reject) => {
+        rejectRefresh = reject;
+      }),
+    );
+    await act(async () => hook.result.current.setActiveTab('trade'));
+    await act(async () => hook.result.current.setActiveTab('transaction'));
+    await act(async () => rejectRefresh(new Error('late offline')));
+    expect(hook.result.current.state.trade).toMatchObject({
+      status: 'ready',
+      refreshing: false,
+      refreshError: 'late offline',
+    });
+    expect(hook.result.current.state.trade.rows.map(row => row.time)).toEqual([
+      100,
+    ]);
+    expect(mockShowToast).not.toHaveBeenCalled();
+  });
+
+  it('still merges a successful manual response after its presentation ends', async () => {
+    mockFetchLatestTrades.mockResolvedValueOnce([makeFill({ time: 100 })]);
+    const hook = renderHook(() => usePerpsProHistoryController('trade'));
+    await waitFor(() =>
+      expect(hook.result.current.tabState.status).toBe('ready'),
+    );
+    let resolveRefresh: (fills: WsFill[]) => void = () => undefined;
+    mockFetchLatestTrades.mockReturnValueOnce(
+      new Promise<WsFill[]>(resolve => {
+        resolveRefresh = resolve;
+      }),
+    );
+    let pending = Promise.resolve();
+    act(() => {
+      pending = hook.result.current.refresh();
+    });
+    await act(async () => hook.result.current.setActiveTab('orders'));
+    await act(async () => {
+      resolveRefresh([makeFill({ tid: 2, time: 200 })]);
+      await pending;
+    });
+    expect(hook.result.current.state.trade.rows.map(row => row.time)).toEqual([
+      200, 100,
+    ]);
+    expect(hook.result.current.state.trade.refreshing).toBe(false);
+    expect(mockShowToast).not.toHaveBeenCalled();
   });
 
   it('advances an explicit Transaction window and stops on an empty window', async () => {

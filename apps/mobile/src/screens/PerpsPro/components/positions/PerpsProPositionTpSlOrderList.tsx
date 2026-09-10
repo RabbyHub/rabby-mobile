@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -319,7 +320,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   addButtonText: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
@@ -347,14 +348,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   groupTitleText: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
   },
   coverage: {
+    ...PERPS_PRO_NUMBER_STYLE,
+    flexShrink: 1,
+    minWidth: 0,
+    marginLeft: 8,
+    textAlign: 'right',
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },
@@ -372,7 +378,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   triggerLabel: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },
@@ -380,7 +386,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   orderMetric: { height: 36, minWidth: 0 },
   orderMetricRight: {
     alignItems: 'flex-end',
-    // Keep auto-width absolute Text in Yoga's MaxContent measurement mode.
+    // Keep right-anchored text in Yoga's natural-width measurement mode.
     flexDirection: 'row',
     overflow: 'visible',
     position: 'relative',
@@ -402,44 +408,53 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   orderMetricLabel: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },
   orderMetricValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
     marginTop: 4,
   },
   positiveMetricValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['green-default'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
     marginTop: 4,
   },
   negativeMetricValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['red-default'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
     marginTop: 4,
   },
   takeProfitValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
+    flexShrink: 1,
+    minWidth: 0,
     color: colors2024['green-default'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
   },
   stopLossValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
+    flexShrink: 1,
+    minWidth: 0,
     color: colors2024['red-default'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
@@ -455,7 +470,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   orderActionText: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,

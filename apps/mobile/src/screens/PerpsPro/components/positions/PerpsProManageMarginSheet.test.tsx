@@ -183,6 +183,9 @@ describe('PerpsProManageMarginSheet', () => {
     expect(screen.getByText('10.10')).toBeTruthy();
     expect(screen.getByText('25.00')).toBeTruthy();
     expect(
+      screen.queryByTestId('perps-pro-manage-margin-source-tag'),
+    ).toBeNull();
+    expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-amount-card').props.style,
       ),
@@ -231,6 +234,75 @@ describe('PerpsProManageMarginSheet', () => {
         screen.getByTestId('perps-pro-manage-margin-footer').props.style,
       ).bottom,
     ).toBe(40);
+  });
+
+  it('uses the shared metadata and direction-leverage tag contracts', () => {
+    renderSheet({
+      view: { ...baseView, sourceTag: 'xyz' },
+    });
+
+    const sourceTagStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-manage-margin-source-tag').props.style,
+    );
+    expect(sourceTagStyle).toMatchObject({
+      backgroundColor: 'neutral-bg-5',
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    });
+    expect(sourceTagStyle.borderColor).toBeUndefined();
+    expect(sourceTagStyle.borderWidth).toBeUndefined();
+    expect(
+      StyleSheet.flatten(screen.getByText('xyz').props.style),
+    ).toMatchObject({
+      color: 'neutral-foot',
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    });
+
+    const directionTagStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-manage-margin-direction-tag').props.style,
+    );
+    expect(directionTagStyle).toMatchObject({
+      backgroundColor: 'green-light-1',
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    });
+    expect(directionTagStyle.borderColor).toBeUndefined();
+    expect(directionTagStyle.borderWidth).toBeUndefined();
+    expect(
+      StyleSheet.flatten(
+        screen.getByText('page.perps.pro.positions.long 10x').props.style,
+      ),
+    ).toMatchObject({
+      color: 'green-default',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    });
+  });
+
+  it('uses the negative direction-leverage tag contract for Short', () => {
+    renderSheet({
+      view: { ...baseView, direction: 'short' },
+    });
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-manage-margin-direction-tag').props.style,
+      ),
+    ).toMatchObject({
+      backgroundColor: 'red-light-1',
+      borderRadius: 4,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByText('page.perps.pro.positions.short 10x').props.style,
+      ),
+    ).toMatchObject({ color: 'red-default', fontSize: 12, lineHeight: 16 });
   });
 
   it('expands the amount area and moves risk facts for boundary warnings', () => {

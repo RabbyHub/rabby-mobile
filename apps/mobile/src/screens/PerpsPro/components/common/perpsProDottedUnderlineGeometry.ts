@@ -7,11 +7,13 @@ export type PerpsProDottedUnderlineLineMetrics = Readonly<{
   ascender: number;
   baseline?: number;
   width: number;
+  x?: number;
   y: number;
 }>;
 
 export type PerpsProDottedUnderlineGeometry = Readonly<{
   canvasHeight: number;
+  canvasLeft: number;
   canvasTop: number;
   dotGap: number;
   dotLength: number;
@@ -63,6 +65,11 @@ export const resolvePerpsProDottedUnderlineGeometry = ({
 
   return {
     canvasHeight: strokeWidth,
+    canvasLeft: roundToNearestPixel(
+      typeof line.x === 'number' && Number.isFinite(line.x)
+        ? Math.max(line.x, 0)
+        : 0,
+    ),
     canvasTop: roundToNearestPixel(baseline + offset - strokeWidth / 2),
     dotGap: strokeWidth * 2,
     dotLength: strokeWidth,
@@ -87,6 +94,7 @@ export const arePerpsProDottedUnderlineGeometriesEqual = (
   }
   return (
     Math.abs(current.canvasHeight - next.canvasHeight) < tolerance &&
+    Math.abs(current.canvasLeft - next.canvasLeft) < tolerance &&
     Math.abs(current.canvasTop - next.canvasTop) < tolerance &&
     Math.abs(current.dotGap - next.dotGap) < tolerance &&
     Math.abs(current.dotLength - next.dotLength) < tolerance &&

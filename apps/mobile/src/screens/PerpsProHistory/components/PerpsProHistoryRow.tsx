@@ -8,10 +8,11 @@ import { PerpsProTradeHistoryRowView } from './rows/PerpsProTradeHistoryRow';
 import { PerpsProTransactionHistoryRowView } from './rows/PerpsProTransactionHistoryRow';
 
 export const PerpsProHistoryRowView: React.FC<{
+  active?: boolean;
   amountUnit: PerpsProTradeAmountUnit;
   onShowFeeExplanation: (isLiquidation: boolean) => void;
   row: PerpsProHistoryRow;
-}> = React.memo(({ amountUnit, onShowFeeExplanation, row }) => {
+}> = React.memo(({ active = true, amountUnit, onShowFeeExplanation, row }) => {
   switch (row.kind) {
     case 'orders':
       return <PerpsProOrderHistoryRowView amountUnit={amountUnit} row={row} />;
@@ -24,7 +25,7 @@ export const PerpsProHistoryRowView: React.FC<{
         />
       );
     case 'transaction':
-      return <PerpsProTransactionHistoryRowView row={row} />;
+      return <PerpsProTransactionHistoryRowView active={active} row={row} />;
     case 'funding':
       return <PerpsProFundingHistoryRowView row={row} />;
   }

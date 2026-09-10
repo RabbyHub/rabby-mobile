@@ -53,6 +53,7 @@ import {
   mergeBridgeQuoteBatch,
 } from '../utils/quoteResultBatch';
 import { useSceneActiveAsync } from '@/screens/SwapBridge/hooks/useSceneActiveAsync';
+import { getRabbyFeeInfo } from '@/screens/Swap/hooks/fee';
 
 export const enableInsufficientQuote = true;
 const BRIDGE_QUOTE_REFRESH_INTERVAL = 1000 * 30;
@@ -493,6 +494,18 @@ export const useBridge = (
 
   // const aggregatorsList = useBridgeSupportedChains(s => s.bridge.aggregatorsList || []);
   const aggregatorsList = useAggregatorsList();
+  const { feeRate, feeTier } = useMemo(
+    () =>
+      getRabbyFeeInfo({
+        payToken: fromToken,
+        payAmount: amount,
+        payTokenPrice: fromToken?.price || 0,
+        type: 'bridge',
+        receiveToken: toToken,
+        isWrapToken: false,
+      }),
+    [amount, fromToken, toToken],
+  );
 
   const [bestQuoteId, setBestQuoteId] = useState<
     | {
@@ -915,9 +928,10 @@ export const useBridge = (
                         .toString(),
                   toChainId: toToken.chain,
                   toTokenId: toToken.id,
-                  slippage: new BigNumber(slippageObj.slippageState)
+                  slippage: new BigNumber(slippageObj.slippageState || '1')
                     .div(100)
                     .toString(10),
+                  feeRate: Number(feeRate),
                 },
                 openapi,
               ).catch(e => {
@@ -1053,6 +1067,7 @@ export const useBridge = (
       fromChain,
       toChain,
       amount,
+      feeRate,
       slippageObj.slippage,
       isDraggingSlider,
       flushPendingQuoteUpdates,
@@ -1080,6 +1095,7 @@ export const useBridge = (
     fromChain,
     toChain,
     amount,
+    feeRate,
     slippageObj.slippage,
     cancelPendingQuoteFlush,
     setSelectedBridgeQuote,
@@ -1108,6 +1124,7 @@ export const useBridge = (
     fromChain,
     toChain,
     amount,
+    feeRate,
     aggregatorsList.length,
     refreshId,
   ]);
@@ -1489,6 +1506,8 @@ export const useBridge = (
     quoteBlockedByClosedMarket,
     amount,
     handleAmountChange,
+    feeRate,
+    feeTier,
     showLoss,
 
     openQuotesList,

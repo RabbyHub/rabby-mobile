@@ -1,6 +1,6 @@
 {
   "name": "rabby-mobile",
-  "version": "0.6.87",
+  "version": "0.6.88",
   "private": true,
   "repository": {
     "type": "git",
@@ -104,16 +104,15 @@
     "@rabby-wallet/object-multiplex": "workspace:^",
     "@rabby-wallet/persist-store": "workspace:^",
     "@rabby-wallet/rabby-action": "0.1.16",
-    "@rabby-wallet/rabby-api": "0.9.65",
-    "@rabby-wallet/rabby-bridge": "0.0.8",
+    "@rabby-wallet/rabby-api": "0.9.66",
+    "@rabby-wallet/rabby-bridge": "0.0.9",
     "@rabby-wallet/rabby-logger": "0.3.1",
     "@rabby-wallet/rabby-security-engine": "2.0.12",
     "@rabby-wallet/rabby-sign-bvm": "0.1.1",
-    "@rabby-wallet/rabby-swap": "0.0.82",
+    "@rabby-wallet/rabby-swap": "0.0.85",
     "@rabby-wallet/react-native-bootsplash": "workspace:^",
     "@rabby-wallet/react-native-fs": "workspace:^",
     "@rabby-wallet/react-native-ios-context-menu": "workspace:^",
-    "@rabby-wallet/react-native-keychain": "workspace:^",
     "@rabby-wallet/react-native-keychain-9": "workspace:^",
     "@rabby-wallet/react-native-menu": "workspace:^",
     "@rabby-wallet/rozenite-resource-flow-plugin": "workspace:^",
@@ -173,7 +172,6 @@
     "lodash": "^4.17.21",
     "lottie-react-native": "7.3.6",
     "lru-cache": "11.2.4",
-    "markdown-it": "^14.0.0",
     "mutative": "^1.3.0",
     "node-libs-react-native": "^1.2.1",
     "p-queue": "7.3",
@@ -188,7 +186,7 @@
     "react-native": "0.81.6",
     "react-native-aes-crypto": "^3.0.1",
     "react-native-animateable-text": "0.17.1",
-    "react-native-biometrics": "^3.0.1",
+    "react-native-biometrics": "patch:react-native-biometrics@npm%3A3.0.1#~/.yarn/patches/react-native-biometrics-npm-3.0.1-34e1156211.patch",
     "react-native-ble-manager": "11.6.0",
     "react-native-ble-plx": "3.5.1",
     "react-native-bundle-splitter": "^3.0.1",
@@ -309,7 +307,8 @@
     "rimraf": "^3.0.2",
     "svg2vectordrawable": "^2.9.1",
     "ts-toolbelt": "^9.6.0",
-    "typescript": "5.7.3"
+    "typescript": "5.7.3",
+    "warden.rn": "patch:warden.rn@npm%3A2.2.1#~/.yarn/patches/warden.rn-npm-2.2.1-c1350e5489.patch"
   },
   "engines": {
     "node": ">=22"

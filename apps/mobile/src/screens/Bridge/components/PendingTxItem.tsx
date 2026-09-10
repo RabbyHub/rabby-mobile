@@ -984,12 +984,15 @@ const PendingStatusDetail = ({
 };
 export const BridgePendingTxItem = ({
   userAddress,
+  onDisplayChange,
 }: {
   userAddress: string;
+  onDisplayChange?: (visible: boolean) => void;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getItemStyles });
   const sheetRef = useRef<AppBottomSheetModal>(null);
   const [data, setData] = useState<BridgeTxHistoryItem | null>(null);
+  const isDisplayed = !!data;
 
   const fetchHistory = useCallback(async () => {
     const historyData =
@@ -1074,6 +1077,11 @@ export const BridgePendingTxItem = ({
       console.error('[BridgePendingTxItem] load local history failed', error);
     });
   }, [fetchHistory]);
+
+  useEffect(() => {
+    onDisplayChange?.(isDisplayed);
+    return () => onDisplayChange?.(false);
+  }, [isDisplayed, onDisplayChange]);
 
   const fetchRefreshLocalData = useMemoizedFn(
     async (data: BridgeTxHistoryItem) => {

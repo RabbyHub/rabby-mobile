@@ -46,6 +46,8 @@ interface QuotesProps
   activeName?: string;
   visible: boolean;
   onClose: () => void;
+  onSelect?: () => void;
+  noPadding?: boolean;
 }
 
 export const Quotes = ({
@@ -53,6 +55,8 @@ export const Quotes = ({
   inSufficient,
   visible: _visible,
   onClose,
+  onSelect,
+  noPadding,
   ...other
 }: QuotesProps) => {
   const colors = useThemeColors();
@@ -110,7 +114,7 @@ export const Quotes = ({
     const dex = sortedList.find(e => e.isDex) as TDexQuoteData | undefined;
 
     return (
-      <View style={{ paddingHorizontal: 12 }}>
+      <View style={{ paddingHorizontal: noPadding ? 0 : 12 }}>
         {dex ? (
           <DexQuoteItemOld
             inSufficient={inSufficient}
@@ -133,6 +137,7 @@ export const Quotes = ({
               logo: other?.receiveToken?.logo_url,
             }}
             onCloseQuoteList={onClose}
+            onSelect={onSelect}
             {...other}
           />
         ) : (
@@ -157,7 +162,7 @@ export const Quotes = ({
     );
   }
   return (
-    <View style={{ paddingHorizontal: 12 }}>
+    <View style={{ paddingHorizontal: noPadding ? 0 : 12 }}>
       <View style={{ gap: 12 }}>
         {sortedList.map((params, idx) => {
           const { name, data, isDex } = params;
@@ -180,6 +185,7 @@ export const Quotes = ({
                 DEX_WITH_WRAP[name as keyof typeof DEX_WITH_WRAP]
               }
               onCloseQuoteList={onClose}
+              onSelect={onSelect}
               {...other}
             />
           );
@@ -346,7 +352,10 @@ export const QuoteList = (props: QuotesProps) => {
         linearGradientType: isLight ? 'bg0' : 'bg1',
       })}>
       <View style={{ flex: 1, position: 'relative' }}>
-        <TouchableOpacity onPress={refreshQuote} style={styles.refreshIconBtn}>
+        <TouchableOpacity
+          hitSlop={10}
+          onPress={refreshQuote}
+          style={styles.refreshIconBtn}>
           <RcIconRefreshCC color={colors2024['neutral-body']} />
         </TouchableOpacity>
         <Text style={styles.headerText}>
