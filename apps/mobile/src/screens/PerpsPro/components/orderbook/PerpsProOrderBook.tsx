@@ -565,18 +565,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   ratioRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 2,
+    gap: 1,
     height: 12,
-    marginHorizontal: -12,
   },
   ratioLabel: {
     ...PERPS_PRO_NUMBER_STYLE,
     flexShrink: 0,
     fontFamily: 'SF Pro Rounded',
     fontSize: 10,
-    fontWeight: '500',
+    fontWeight: '400',
     lineHeight: 12,
-    width: 42,
+    width: 41,
   },
   buyRatio: {
     color: colors2024['green-default'],

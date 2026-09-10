@@ -631,7 +631,7 @@ describe('PerpsProOrderBook display shell', () => {
     expect(mockCancelAnimation).toHaveBeenCalled();
   });
 
-  it('expands the centered ratio track without destabilizing label lanes', () => {
+  it('keeps the centered ratio track and fixed label lanes inside the book column', () => {
     const book = processPerpsOrderBook({
       coin: 'BTC',
       levels: [[{ n: 1, px: '101', sz: '1' }], [{ n: 1, px: '100', sz: '1' }]],
@@ -655,6 +655,8 @@ describe('PerpsProOrderBook display shell', () => {
     for (const label of [buyRatio, sellRatio]) {
       expect(label.props.adjustsFontSizeToFit).toBeUndefined();
       expect(StyleSheet.flatten(label.props.style)).toMatchObject({
+        fontFamily: 'SF Pro Rounded',
+        fontWeight: '400',
         fontSize: 10,
         lineHeight: 12,
         fontVariant: ['tabular-nums'],
@@ -664,26 +666,108 @@ describe('PerpsProOrderBook display shell', () => {
       buyRatio.parent?.parent?.props.style,
     );
     expect(ratioRowStyle).toMatchObject({
-      gap: 2,
-      marginHorizontal: -12,
+      gap: 1,
+      height: 12,
     });
     expect(StyleSheet.flatten(buyRatio.props.style)).toMatchObject({
       flexShrink: 0,
       textAlign: 'right',
-      width: 42,
+      width: 41,
     });
     expect(StyleSheet.flatten(sellRatio.props.style)).toMatchObject({
       flexShrink: 0,
       textAlign: 'left',
-      width: 42,
+      width: 41,
     });
     const getTrackWidth = (orderBookWidth: number) =>
       orderBookWidth -
-      2 * 42 -
+      2 * 41 -
       2 * ratioRowStyle.gap -
-      2 * ratioRowStyle.marginHorizontal;
-    expect(getTrackWidth(112)).toBe(48);
-    expect(getTrackWidth(136)).toBe(72);
+      2 * (ratioRowStyle.marginHorizontal ?? 0);
+    expect(ratioRowStyle.marginHorizontal ?? 0).toBe(0);
+    expect(getTrackWidth(112)).toBe(28);
+    expect(getTrackWidth(124)).toBe(40);
+    expect(getTrackWidth(136)).toBe(52);
+  });
+
+  it.each([3.89, 34.89, 50, 0, 100])(
+    'preserves full percentage text and stable lanes at %s percent',
+    buy => {
+      const book = processPerpsOrderBook({
+        coin: 'BTC',
+        time: 100,
+        levels: [
+          buy < 100 ? [{ n: 1, px: '1', sz: String(100 - buy) }] : [],
+          buy > 0 ? [{ n: 1, px: '1', sz: String(buy) }] : [],
+        ],
+      });
+      render(
+        <PerpsProOrderBook
+          {...defaultProps}
+          book={book}
+          bookStatus="ready"
+          hasBookSnapshot
+          market={buildPerpsProMarket(marketData)}
+        />,
+      );
+      for (const value of [buy, 100 - buy]) {
+        const labels = screen.getAllByText(`${value.toFixed(2)}%`);
+        for (const label of labels) {
+          expect(label.props.adjustsFontSizeToFit).toBeUndefined();
+          expect(StyleSheet.flatten(label.props.style)).toMatchObject({
+            width: 41,
+            flexShrink: 0,
+            fontFamily: 'SF Pro Rounded',
+            fontWeight: '400',
+            fontSize: 10,
+            lineHeight: 12,
+            fontVariant: ['tabular-nums'],
+          });
+        }
+      }
+    },
+  );
+
+  it('keeps the same ratio lanes and gap when the skeleton resolves', () => {
+    const view = render(<PerpsProOrderBook {...defaultProps} />);
+    const [left, bar, right] = screen
+      .getAllByTestId('perps-pro-skeleton-block')
+      .slice(-3);
+    const ancestorStyle = (
+      node: typeof left,
+      property: 'flexShrink' | 'flexDirection',
+      value: 0 | 'row',
+    ) => {
+      let ancestor = node.parent;
+      while (ancestor) {
+        const style = StyleSheet.flatten(ancestor.props.style);
+        if (style?.[property] === value) {
+          return style;
+        }
+        ancestor = ancestor.parent;
+      }
+      throw new Error(`Missing ratio ancestor with ${property}=${value}`);
+    };
+    const leftLane = ancestorStyle(left, 'flexShrink', 0);
+    const rightLane = ancestorStyle(right, 'flexShrink', 0);
+    const skeletonRow = ancestorStyle(bar, 'flexDirection', 'row');
+    expect(leftLane).toMatchObject({
+      width: 41,
+      flexShrink: 0,
+      alignItems: 'flex-end',
+    });
+    expect(rightLane).toMatchObject({
+      width: 41,
+      flexShrink: 0,
+      alignItems: 'flex-start',
+    });
+    expect(skeletonRow).toMatchObject({ gap: 1, width: '100%', height: 12 });
+    view.rerender(<PerpsProOrderBook {...defaultProps} bookStatus="error" />);
+    const label = screen.getAllByText('0.00%')[0];
+    expect(StyleSheet.flatten(label.props.style).width).toBe(leftLane.width);
+    expect(StyleSheet.flatten(label.parent?.parent?.props.style).gap).toBe(
+      skeletonRow.gap,
+    );
   });
 
   it('retains a price animation when a new best level moves it to another row', () => {

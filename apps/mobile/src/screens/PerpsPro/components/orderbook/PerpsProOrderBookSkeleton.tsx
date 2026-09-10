@@ -106,13 +106,13 @@ const styles = {
   ratio: {
     alignItems: 'center' as const,
     flexDirection: 'row' as const,
-    gap: 2,
+    gap: 1,
     height: 12,
     width: '100%' as const,
   },
   ratioLabelLane: {
     flexShrink: 0,
-    width: 42,
+    width: 41,
   },
   buyRatioLabelLane: {
     alignItems: 'flex-end' as const,
