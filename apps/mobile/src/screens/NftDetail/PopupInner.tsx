@@ -144,6 +144,7 @@ export const NFTDetailPopupInner = ({
         contentContainerStyle={styles.scrollViewContentContainer}>
         <View style={styles.imageView}>
           <Media
+            retryOnFailure
             failedPlaceholder={
               <IconDefaultNFT width={CONTENT_W} height={CONTENT_W} />
             }

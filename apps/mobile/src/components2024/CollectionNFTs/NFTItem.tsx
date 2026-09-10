@@ -31,8 +31,6 @@ export const Item = ({ item, onPress }: ItemProps) => {
     return v;
   }, [item.amount]);
 
-  const isSvgURL = item?.content?.endsWith('.svg');
-
   return (
     <CustomTouchableOpacity
       style={StyleSheet.flatten([
@@ -44,10 +42,11 @@ export const Item = ({ item, onPress }: ItemProps) => {
       ])}
       onPress={onPress}>
       <Media
+        retryOnFailure
         failedPlaceholder={<IconDefaultNFT width="100%" height="100%" />}
         type={item?.content_type || MEDIA_TYPE.IMAGE_URL}
-        src={isSvgURL ? '' : item?.content}
-        thumbnail={isSvgURL ? '' : item?.content}
+        src={item?.content}
+        thumbnail={item?.content}
         mediaStyle={styles.images}
         style={styles.images}
         playIconSize={36}

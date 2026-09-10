@@ -82,12 +82,11 @@ const TokenItemInlist = ({
           <View>
             {isNft ? (
               <Media
+                retryOnFailure
                 failedPlaceholder={<IconDefaultNFT width={33} height={33} />}
                 type={token?.content_type || 'image_url'}
-                src={token?.content?.endsWith('.svg') ? '' : token?.content}
-                thumbnail={
-                  token?.content?.endsWith('.svg') ? '' : token?.content
-                }
+                src={token?.content}
+                thumbnail={token?.content}
                 mediaStyle={styles.media}
                 style={styles.media}
                 playIconSize={12}
@@ -306,20 +305,13 @@ export const HistoryTokenList = ({
                       <View>
                         {tokenIsNft ? (
                           <Media
+                            retryOnFailure
                             failedPlaceholder={
                               <IconDefaultNFT width={45} height={45} />
                             }
                             type={token?.content_type || 'image_url'}
-                            src={
-                              token?.content?.endsWith('.svg')
-                                ? ''
-                                : token?.content
-                            }
-                            thumbnail={
-                              token?.content?.endsWith('.svg')
-                                ? ''
-                                : token?.content
-                            }
+                            src={token?.content}
+                            thumbnail={token?.content}
                             mediaStyle={styles.media}
                             style={styles.media}
                             playIconSize={12}
@@ -398,20 +390,13 @@ export const HistoryTokenList = ({
                       <View>
                         {tokenIsNft ? (
                           <Media
+                            retryOnFailure
                             failedPlaceholder={
                               <IconDefaultNFT width={45} height={45} />
                             }
                             type={token?.content_type || 'image_url'}
-                            src={
-                              token?.content?.endsWith('.svg')
-                                ? ''
-                                : token?.content
-                            }
-                            thumbnail={
-                              token?.content?.endsWith('.svg')
-                                ? ''
-                                : token?.content
-                            }
+                            src={token?.content}
+                            thumbnail={token?.content}
                             mediaStyle={styles.media}
                             style={styles.media}
                             playIconSize={12}

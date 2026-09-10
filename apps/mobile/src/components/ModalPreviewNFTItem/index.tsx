@@ -135,10 +135,12 @@ export default function ModalPreviewNFTItem({
       <BottomSheetView style={styles.wrapper}>
         <View style={styles.nft}>
           <Media
+            retryOnFailure
             failedPlaceholder={<IconDefaultNFT width="100%" height="100%" />}
             type={nft?.content_type}
-            src={nft?.content?.endsWith('.svg') ? '' : nft?.content}
-            thumbnail={nft?.content?.endsWith('.svg') ? '' : nft?.content}
+            src={nft?.content}
+            thumbnail={nft?.content}
+            safeSvgVariant="detail"
             style={styles.media}
             mediaStyle={styles.media}
           />
