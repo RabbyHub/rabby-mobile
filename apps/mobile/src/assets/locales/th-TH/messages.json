@@ -1069,6 +1069,16 @@
       },
       "slippage-tolerance": "ค่าความคลาดเคลื่อนของราคา",
       "rabbyFee": {
+        "discountTitle": "ส่วนลดค่าธรรมเนียม Rabby",
+        "case": "เงื่อนไข",
+        "free": "ฟรี",
+        "cases": {
+          "wrap": "Wrap/Unwrap โทเคนดั้งเดิม",
+          "stablecoins": "สเตเบิลคอยน์",
+          "lstLrt": "โทเคน LST/LRT",
+          "million": "ปริมาณ $1M+",
+          "hundredThousand": "ปริมาณ $100k - $1M"
+        },
         "title": "ค่าธรรมเนียม Rabby",
         "button": "เข้าใจแล้ว",
         "rate": "อัตราค่าธรรมเนียม",
@@ -2267,6 +2277,7 @@
           "liquidationPrice": "ราคาชำระบัญชี",
           "triggerPrice": "ราคาทริกเกอร์",
           "amount": "จำนวน",
+          "keyboardMinimum": "ขั้นต่ำ {{amount}}",
           "available": "พร้อมใช้งาน",
           "reduceOnly": "ลดโพซิชันเท่านั้น",
           "confirmationReduceOnly": "ลดโพซิชันเท่านั้น",

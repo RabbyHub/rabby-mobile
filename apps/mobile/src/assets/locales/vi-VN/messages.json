@@ -864,6 +864,16 @@
       "title": "Hoán đổi",
       "no-slippage-for-wrap": "Không trượt giá khi bọc token",
       "rabbyFee": {
+        "discountTitle": "Giảm phí Rabby",
+        "case": "Điều kiện",
+        "free": "Miễn phí",
+        "cases": {
+          "wrap": "Bọc/Gỡ bọc token gốc",
+          "stablecoins": "Stablecoin",
+          "lstLrt": "Token LST/LRT",
+          "million": "KL $1M+",
+          "hundredThousand": "KL $100k - $1M"
+        },
         "rate": "Tỷ lệ phí",
         "title": "Phí Rabby",
         "wallet": "Ví",
@@ -2207,6 +2217,7 @@
           "liquidationPrice": "Giá thanh lý",
           "triggerPrice": "Giá kích hoạt",
           "amount": "Số lượng",
+          "keyboardMinimum": "Tối thiểu {{amount}}",
           "available": "Khả dụng",
           "reduceOnly": "Chỉ giảm",
           "confirmationReduceOnly": "Chỉ giảm",
