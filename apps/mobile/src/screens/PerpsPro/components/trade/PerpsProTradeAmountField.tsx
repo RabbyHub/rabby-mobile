@@ -119,10 +119,12 @@ export const PerpsProTradeAmountField = React.memo(
 
 PerpsProTradeAmountField.displayName = 'PerpsProTradeAmountField';
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-0'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-5'],
     borderRadius: 6,
     flexDirection: 'row',
     gap: 4,
