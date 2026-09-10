@@ -151,7 +151,7 @@ describe('Perps Pro account visual contract', () => {
     });
     expect(
       StyleSheet.flatten(
-        screen.getByText('$190.00').parent?.parent?.props.style,
+        screen.getByTestId('perps-pro-account-portfolio-column').props.style,
       ),
     ).toMatchObject({ gap: 4 });
     expect(
@@ -219,7 +219,7 @@ describe('Perps Pro account visual contract', () => {
     },
   );
 
-  it('lets large signed balances wrap at the approved size inside their columns', () => {
+  it('keeps complete large signed balances on one line inside their columns', () => {
     render(
       <PerpsProAccountSummary
         account={{
@@ -232,10 +232,13 @@ describe('Perps Pro account visual contract', () => {
       />,
     );
 
-    for (const value of ['$1,111,111,111.11', '-$888,888,888.88']) {
+    for (const [value, id] of [
+      ['$1,111,111,111.11', 'perps-pro-account-portfolio-value'],
+      ['-$888,888,888.88', 'perps-pro-account-pnl-value'],
+    ]) {
       const text = screen.getByText(value);
       expect(text.props.adjustsFontSizeToFit).toBeUndefined();
-      expect(text.props.numberOfLines).toBeUndefined();
+      expect(text.props.numberOfLines).toBe(1);
       expect(StyleSheet.flatten(text.props.style)).toMatchObject({
         fontVariant: ['tabular-nums'],
         fontSize: 18,
@@ -243,7 +246,9 @@ describe('Perps Pro account visual contract', () => {
         lineHeight: 22,
       });
       expect(
-        StyleSheet.flatten(text.parent?.parent?.props.style),
+        StyleSheet.flatten(
+          screen.getByTestId(id.replace('-value', '-column')).props.style,
+        ),
       ).toMatchObject({ flex: 1, minWidth: 0 });
     }
     expect(

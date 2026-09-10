@@ -1,6 +1,14 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { Keyboard, Platform, StyleSheet } from 'react-native';
+import { perpsProKeyboardSession } from '../common/perpsProKeyboardSession';
+
+let mockAndroid = false;
+jest.mock('@/core/native/utils', () => ({
+  get IS_ANDROID() {
+    return mockAndroid;
+  },
+}));
 
 const mockBottomSheetProps = jest.fn();
 const mockDismiss = jest.fn();
@@ -69,12 +77,22 @@ jest.mock('@gorhom/bottom-sheet', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return {
+    ANIMATION_STATUS: { STOPPED: 2 },
+    SCROLLABLE_STATUS: { UNLOCKED: 1 },
+    useBottomSheetInternal: () => ({
+      animatedAnimationState: { value: { status: 2 } },
+      animatedScrollableStatus: { value: 1 },
+    }),
     BottomSheetScrollView: ReactModule.forwardRef(
       ({ children, ...props }: any, ref: React.Ref<unknown>) => {
         ReactModule.useImperativeHandle(ref, () => ({
           scrollToEnd: mockScrollToEnd,
         }));
-        return ReactModule.createElement(View, props, children);
+        return ReactModule.createElement(
+          View,
+          { ...props, testID: 'tpsl-scroll' },
+          children,
+        );
       },
     ),
   };
@@ -164,7 +182,11 @@ jest.mock('./PerpsProPositionTpSlForm', () => {
   return {
     PerpsProPositionTpSlForm: (props: any) => {
       const [instanceId] = ReactModule.useState(() => ++mockNextFormInstanceId);
-      mockFormProps({ ...props, instanceId });
+      const sheetId = ReactModule.useContext(
+        require('../common/PerpsProKeyboardSheetContext')
+          .PerpsProKeyboardSheetContext,
+      );
+      mockFormProps({ ...props, instanceId, sheetId });
       return ReactModule.createElement(View, {
         testID: `tpsl-form-${props.mode}`,
       });
@@ -225,6 +247,7 @@ const market = {
 describe('PerpsProPositionTpSlSheet', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockAndroid = false;
     mockAnimatedReactions = [];
     mockNextFormInstanceId = 0;
     mockKeyboardListeners.clear();
@@ -250,6 +273,65 @@ describe('PerpsProPositionTpSlSheet', () => {
       return 1;
     });
     jest.spyOn(global, 'cancelAnimationFrame').mockImplementation(jest.fn());
+  });
+
+  it('excludes Done from the Android TP/SL viewport without changing the form height or instance', () => {
+    mockAndroid = true;
+    perpsProKeyboardSession.setEnabled(true);
+    const view = render(
+      <PerpsProPositionTpSlSheet
+        amountUnit="base"
+        cancelingOids={[]}
+        confirmedCancelledOids={[]}
+        coveredByReview={false}
+        defaultTab="partial"
+        market={market}
+        onCancelOrder={jest.fn()}
+        onClose={jest.fn()}
+        onReview={jest.fn()}
+        pending={false}
+        position={{ ...position, tpslOrders: [] }}
+        visible
+      />,
+    );
+    const { sheetId, instanceId, minimumHeight } =
+      mockFormProps.mock.lastCall?.[0];
+    const snapPoints = mockBottomSheetProps.mock.lastCall?.[0].snapPoints;
+    act(() => {
+      perpsProKeyboardSession.focus({
+        id: 'tpsl-amount',
+        sheetId,
+        minimum: null,
+        scrollTrade: false,
+        input: {
+          blur: jest.fn(),
+          isFocused: () => true,
+          measureInWindow: jest.fn(),
+        },
+      });
+      jest
+        .mocked(Keyboard.addListener)
+        .mock.calls.forEach(([event, callback]) => {
+          if (event === 'keyboardDidShow') {
+            callback({
+              endCoordinates: { height: 300, screenY: 500 },
+            } as never);
+          }
+        });
+    });
+    expect(
+      StyleSheet.flatten(screen.getByTestId('tpsl-scroll').props.style),
+    ).toEqual({ marginBottom: 48 });
+    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual(
+      snapPoints,
+    );
+    expect(mockFormProps.mock.lastCall?.[0]).toMatchObject({
+      sheetId,
+      instanceId,
+      minimumHeight,
+    });
+    view.unmount();
+    perpsProKeyboardSession.setEnabled(false);
   });
 
   afterEach(() => {

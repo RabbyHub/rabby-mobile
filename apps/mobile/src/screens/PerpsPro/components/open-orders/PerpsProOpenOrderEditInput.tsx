@@ -12,6 +12,7 @@ import {
 } from '../../model/trade';
 import { resolvePerpsProFieldBackground } from '../common/perpsProVisual';
 import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
+import { PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE } from '../common/perpsProSingleLineInput';
 
 const OpenOrderBottomSheetTextInput = React.forwardRef<
   TextInput,
@@ -148,6 +149,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
     padding: 0,
     paddingTop: 13,
+    ...PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE,
   },
   inputWithUnit: { paddingRight: 72 },
   unit: {

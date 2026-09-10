@@ -110,17 +110,18 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'center',
   },
   optionContent: {
-    position: 'relative',
+    alignItems: 'flex-start',
+    flexDirection: 'row',
   },
   newBadge: {
     backgroundColor: colors2024['red-light-1'],
     borderRadius: 4,
-    // Keep the badge attached to the label's right edge as its font changes.
-    left: '100%',
+    // Keep the overlap in the content row; legacy Yoga percentage insets use
+    // the expanded press target's available width instead of the label width.
+    flexShrink: 0,
+    marginLeft: -4,
     paddingHorizontal: 4,
-    position: 'absolute',
-    top: -8,
-    transform: [{ translateX: -4 }],
+    transform: [{ translateY: -8 }],
   },
   newBadgeText: {
     color: colors2024['red-default'],
