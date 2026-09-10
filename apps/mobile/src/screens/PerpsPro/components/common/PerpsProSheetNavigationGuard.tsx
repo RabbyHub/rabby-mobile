@@ -114,6 +114,16 @@ export const usePerpsProSheetNavigationHost = () => {
   useHandleBackPressClosable(requestBack, { autoEffectEnabled: true });
 };
 
+/**
+ * Keep registry publications out of the realtime Perps Pro scene. This host
+ * intentionally renders as a route-level sibling so opening or closing a
+ * sheet only updates the lightweight navigation control plane.
+ */
+export const PerpsProSheetNavigationHost = () => {
+  usePerpsProSheetNavigationHost();
+  return null;
+};
+
 const styles = StyleSheet.create({
   edgeGestureTarget: {
     bottom: 0,

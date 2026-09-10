@@ -39,18 +39,43 @@ import useAsync from 'react-use/lib/useAsync';
 import useMount from 'react-use/lib/useMount';
 import { Text } from '@/components/Typography';
 import type { Account } from '@/types/account';
+
+export const PendingTxDivider = ({
+  placement = 'top',
+}: {
+  placement?: 'top' | 'bottom';
+}) => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+
+  return (
+    <View
+      style={[
+        styles.divider,
+        placement === 'top' ? styles.dividerTop : styles.dividerBottom,
+      ]}>
+      <View style={styles.dottedLine} />
+      <View style={styles.dot} />
+      <View style={styles.dottedLine} />
+    </View>
+  );
+};
+
 export const PendingTxItem = ({
   data,
   clearLocalPendingTxData,
   isForMultipleAddress,
   type,
   account,
+  showHeaderDivider = true,
+  showFooterDivider = false,
 }: {
   data: SwapTxHistoryItem | SendTxHistoryItem | ApproveTokenTxHistoryItem;
   clearLocalPendingTxData: () => void;
   isForMultipleAddress: boolean;
   type: 'send' | 'swap' | 'approveSwap';
   account?: Account | null;
+  showHeaderDivider?: boolean;
+  showFooterDivider?: boolean;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -144,11 +169,7 @@ export const PendingTxItem = ({
 
   return (
     <>
-      <View style={styles.header}>
-        <View style={styles.dottedLine} />
-        <View style={styles.dot} />
-        <View style={styles.dottedLine} />
-      </View>
+      {showHeaderDivider ? <PendingTxDivider placement="top" /> : null}
       <TouchableOpacity style={styles.container} onPress={handlePress}>
         <View style={styles.leftContainer}>
           <View style={styles.mainContainer}>
@@ -241,6 +262,7 @@ export const PendingTxItem = ({
           )}
         </View>
       </TouchableOpacity>
+      {showFooterDivider ? <PendingTxDivider placement="bottom" /> : null}
     </>
   );
 };
@@ -251,13 +273,16 @@ export const ApprovePendingTxItem = ({
   isForMultipleAddress,
   hash,
   chainId,
-}: // hash,
-{
+  showHeaderDivider = true,
+  showFooterDivider = false,
+}: {
   type: 'approveSwap';
   isForMultipleAddress: boolean;
   address: string;
   chainId: number;
   hash: string;
+  showHeaderDivider?: boolean;
+  showFooterDivider?: boolean;
 }) => {
   const [{ value: data }, getApproveItem] = useAsyncFn(async () => {
     const v = await transactionHistoryServiceApi.getRecentTxHistory(
@@ -295,6 +320,8 @@ export const ApprovePendingTxItem = ({
       data={data}
       clearLocalPendingTxData={noop}
       isForMultipleAddress={isForMultipleAddress}
+      showHeaderDivider={showHeaderDivider}
+      showFooterDivider={showFooterDivider}
     />
   );
 };
@@ -344,6 +371,19 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     marginBottom: 12,
     marginTop: 18,
     justifyContent: 'center',
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dividerTop: {
+    marginTop: 18,
+    marginBottom: 12,
+  },
+  dividerBottom: {
+    marginTop: 12,
+    marginBottom: 12,
   },
   dottedLine: {
     flex: 1,

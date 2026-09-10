@@ -335,7 +335,16 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
   if [ ! -z $apk_url ]; then
     echo "[deploy-android] publish as $apk_name, with version.json"
 
-    [ ! -z "$CI" ] && [ "$SKIP_NOTIFY_LARK" != "true" ] && RABBY_MOBILE_ANDROID_16KB_REPORT_TEXT="$android_16kb_report_text" node $script_dir/notify-lark.js "$apk_url" android "$FAST_BUILD_ENABLED"
+    lark_drive_url=""
+    if [ "$RABBY_MOBILE_LARK_DRIVE_UPLOAD" = "true" ] && [ "$SKIP_NOTIFY_LARK" != "true" ]; then
+      echo "[deploy-android] upload APK to Lark Drive..."
+      if ! lark_drive_url=$(node "$script_dir/ci/upload-package-to-lark-drive.js" "$deployment_local_dir/$apk_name" "$version_bundle_filename"); then
+        echo "[deploy-android] ⚠️ Lark Drive upload failed; keeping AWS notification only."
+        [ "$RABBY_MOBILE_LARK_DRIVE_UPLOAD_REQUIRED" = "true" ] && exit 1
+      fi
+    fi
+
+    [ ! -z "$CI" ] && [ "$SKIP_NOTIFY_LARK" != "true" ] && RABBY_MOBILE_ANDROID_16KB_REPORT_TEXT="$android_16kb_report_text" RABBY_MOBILE_LARK_DRIVE_URL="$lark_drive_url" node $script_dir/notify-lark.js "$apk_url" android "$FAST_BUILD_ENABLED"
   fi
 fi
 

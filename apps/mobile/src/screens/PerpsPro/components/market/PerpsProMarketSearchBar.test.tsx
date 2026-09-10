@@ -121,13 +121,13 @@ describe('PerpsProMarketSearchBar', () => {
     mockIsLight = true;
   });
 
-  it('matches the 34px resting design without a native placeholder', () => {
+  it('matches the 46px resting design without a native placeholder', () => {
     const onFocusChange = jest.fn();
     render(
       <PerpsProMarketSearchBar
         onChangeText={jest.fn()}
         onFocusChange={onFocusChange}
-        placeholder="Search"
+        placeholder="Search Token"
         value=""
       />,
     );
@@ -137,21 +137,21 @@ describe('PerpsProMarketSearchBar', () => {
     );
     expect(containerStyle).toEqual(
       expect.objectContaining({
-        backgroundColor: 'neutral-bg-0',
-        borderRadius: 6,
-        gap: 8,
-        height: 34,
-        marginRight: 1,
-        paddingHorizontal: 12,
+        backgroundColor: 'neutral-bg-5',
+        borderRadius: 12,
+        gap: 16,
+        height: 46,
+        marginRight: 4,
+        paddingHorizontal: 16,
       }),
     );
-    expect(screen.getByText('Search').props.style).toEqual(
+    expect(screen.getByText('Search Token').props.style).toEqual(
       expect.objectContaining({
         color: 'neutral-secondary',
-        fontFamily: 'SF Pro',
-        fontSize: 14,
-        fontWeight: '400',
-        lineHeight: 18,
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 16,
+        fontWeight: '500',
+        lineHeight: 20,
       }),
     );
 
@@ -162,12 +162,12 @@ describe('PerpsProMarketSearchBar', () => {
     expect(mockBottomSheetInputProps).not.toHaveBeenCalled();
     expect(restingInputStyle).toEqual(
       expect.objectContaining({
-        fontFamily: 'SF Pro',
-        fontSize: 14,
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 16,
         fontWeight: '700',
-        height: 18,
+        height: 20,
         includeFontPadding: false,
-        lineHeight: 18,
+        lineHeight: 20,
         paddingVertical: 0,
       }),
     );
@@ -195,7 +195,7 @@ describe('PerpsProMarketSearchBar', () => {
       <PerpsProMarketSearchBar
         onChangeText={onChangeText}
         onFocusChange={onFocusChange}
-        placeholder="Search"
+        placeholder="Search Token"
         value=""
       />,
     );
@@ -207,7 +207,7 @@ describe('PerpsProMarketSearchBar', () => {
       <PerpsProMarketSearchBar
         onChangeText={onChangeText}
         onFocusChange={onFocusChange}
-        placeholder="Search"
+        placeholder="Search Token"
         value="中文"
       />,
     );
@@ -240,7 +240,7 @@ describe('PerpsProMarketSearchBar', () => {
       <PerpsProMarketSearchBar
         onChangeText={jest.fn()}
         onFocusChange={jest.fn()}
-        placeholder="Search"
+        placeholder="Search Token"
         value="ETH"
       />,
     );
@@ -256,9 +256,9 @@ describe('PerpsProMarketSearchBar', () => {
     ).toEqual(
       expect.objectContaining({
         backgroundColor: 'neutral-bg-2',
-        borderRadius: 6,
-        height: 34,
-        paddingHorizontal: 12,
+        borderRadius: 12,
+        height: 46,
+        paddingHorizontal: 16,
       }),
     );
     expect(StyleSheet.flatten(getLatestInputProps().style)).toEqual(
@@ -278,7 +278,7 @@ describe('PerpsProMarketSearchBar', () => {
         <PerpsProMarketSearchBar
           onChangeText={jest.fn()}
           onFocusChange={jest.fn()}
-          placeholder="Search"
+          placeholder="Search Token"
           value="ETH"
         />,
       );

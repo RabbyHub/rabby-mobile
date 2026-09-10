@@ -15,6 +15,7 @@ import {
   type AppStateStatus,
 } from 'react-native';
 
+let mockIsLight = true;
 const mockUsePerpsProScene = jest.fn();
 const mockUsePerpsProInfoPanel = jest.fn();
 const mockMarketSelectorPresent = jest.fn();
@@ -24,6 +25,10 @@ const mockTradeFormProps = jest.fn();
 const mockFundingOverlayProps = jest.fn();
 const mockEnableUnifiedProps = jest.fn();
 const mockExecuteEnableUnified = jest.fn(async () => undefined);
+const mockEnsurePerpsActionApproval = jest.fn(async () => undefined);
+const mockIsPerpsActionUserCancelled = jest.fn(() => false);
+const mockShowToast = jest.fn();
+const mockDismissKeyboardThen = jest.fn((action: () => void) => action());
 const mockConfirmCancelAll = jest.fn();
 const mockConfirmCancelOrder = jest.fn();
 const mockRequestCloseAll = jest.fn();
@@ -40,6 +45,8 @@ const mockGetOrderBookPriceIntent = jest.fn();
 const mockTriggerImpact = jest.fn();
 const mockInfoPagerSetPage = jest.fn();
 const mockInfoPagerSetPageWithoutAnimation = jest.fn();
+let mockQueueInfoCallbacks = false;
+const mockInfoCallbacks: Array<() => unknown> = [];
 let mockManualTouchesDown:
   | ((event: unknown, stateManager: { fail: () => void }) => void)
   | null = null;
@@ -77,15 +84,35 @@ jest.mock('react-native-pager-view', () => {
 jest.mock('react-native-reanimated', () => {
   const ReactModule = require('react');
   const ReactNative = require('react-native');
+  const useSharedValue = (value: unknown) =>
+    ReactModule.useRef({ value }).current;
   return {
     __esModule: true,
     default: {
       createAnimatedComponent: (Component: React.ComponentType) => Component,
       ScrollView: ReactNative.ScrollView,
+      Text: ReactNative.Text,
+      useSharedValue,
       View: ReactNative.View,
     },
     cancelAnimation: jest.fn(),
-    runOnJS: (callback: (...args: unknown[]) => unknown) => callback,
+    dispatchCommand: (
+      ref: { current: Record<string, (...args: unknown[]) => void> },
+      name: string,
+      args: unknown[],
+    ) => ref.current[name](...args),
+    runOnUI: (callback: (...args: unknown[]) => unknown) => callback,
+    Easing: { bezier: jest.fn(() => 'ease-out') },
+    ReduceMotion: { System: 'system' },
+    runOnJS:
+      (callback: (...args: unknown[]) => unknown) =>
+      (...args: unknown[]) => {
+        if (mockQueueInfoCallbacks) {
+          mockInfoCallbacks.push(() => callback(...args));
+        } else {
+          return callback(...args);
+        }
+      },
     scrollTo: jest.fn(),
     useAnimatedRef: () => {
       const ref = (component?: unknown) => {
@@ -107,8 +134,9 @@ jest.mock('react-native-reanimated', () => {
           eventName: eventNames?.[0] ?? 'onPageScroll',
         }),
     useScrollViewOffset: (_ref: unknown, offset: unknown) => offset,
-    useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
+    useSharedValue,
     withDecay: jest.fn(({ velocity }: { velocity: number }) => velocity),
+    withTiming: (target: number) => target,
   };
 });
 
@@ -167,7 +195,13 @@ jest.mock('@/hooks/perps/funding/usePerpsFundingHistoryJournal', () => ({
 }));
 
 jest.mock('@/hooks/perps/actions/actionError', () => ({
-  isPerpsActionUserCancelled: () => false,
+  isPerpsActionUserCancelled: (...args: unknown[]) =>
+    mockIsPerpsActionUserCancelled(...args),
+}));
+
+jest.mock('@/hooks/perps/actions/perpsActionApproval', () => ({
+  ensurePerpsActionApproval: (...args: unknown[]) =>
+    mockEnsurePerpsActionApproval(...args),
 }));
 
 jest.mock('@/hooks/perps/actions/enableUnifiedAccount', () => ({
@@ -177,7 +211,9 @@ jest.mock('@/hooks/perps/actions/enableUnifiedAccount', () => ({
     value === 'unifiedAccount' || value === 'portfolioMargin',
 }));
 
-jest.mock('@/hooks/perps/showToast', () => ({ showToast: jest.fn() }));
+jest.mock('@/hooks/perps/showToast', () => ({
+  showToast: (...args: unknown[]) => mockShowToast(...args),
+}));
 
 jest.mock('@/screens/Perps/components/EnableUnifiedAccountPopup', () => {
   const ReactModule = require('react');
@@ -259,13 +295,13 @@ jest.mock('@/assets2024/icons/common/checkbox-filled-brand.svg', () => {
   return (props: object) => ReactModule.createElement(View, props);
 });
 
-jest.mock('@/assets2024/singleHome/empty-token.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProEmptyLight.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
 });
 
-jest.mock('@/assets2024/singleHome/empty-token-dark.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProEmptyDark.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
@@ -295,8 +331,8 @@ jest.mock('@/hooks/theme', () => ({
     );
     return {
       colors2024,
-      isLight: true,
-      styles: getStyle({ colors2024 }),
+      isLight: mockIsLight,
+      styles: getStyle({ colors2024, isLight: mockIsLight }),
     };
   },
 }));
@@ -463,7 +499,7 @@ jest.mock('../components/chart/PerpsProKlineSheet', () => {
 });
 
 jest.mock('../components/common/usePerpsProDismissKeyboard', () => ({
-  usePerpsProDismissKeyboard: () => (action: () => void) => action(),
+  usePerpsProDismissKeyboard: () => mockDismissKeyboardThen,
 }));
 
 jest.mock('../components/common/PerpsProFieldExplanationProvider', () => ({
@@ -725,6 +761,8 @@ const createInfoState = (overrides: Record<string, unknown> = {}) => {
     allPositionsCount: 0,
     allPositionsByCoin: new Map(),
     currentAccount: null,
+    fundingAccountValue: null,
+    fundingAccountValueReady: false,
     hideOtherOpenOrderSymbols: false,
     hideOtherPositionSymbols: false,
     openOrderCategory: 'basic',
@@ -748,6 +786,16 @@ const createInfoState = (overrides: Record<string, unknown> = {}) => {
     userAbstractionReady: false,
     ...overrides,
   };
+};
+
+const createDeferred = () => {
+  let resolve!: () => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<void>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, reject, resolve };
 };
 
 const createPositionActionsState = (
@@ -774,6 +822,12 @@ const createPositionActionsState = (
 describe('PerpsProScene market loading states', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockIsLight = true;
+    mockQueueInfoCallbacks = false;
+    mockInfoCallbacks.splice(0);
+    mockDismissKeyboardThen.mockReset();
+    mockDismissKeyboardThen.mockImplementation(action => action());
+    mockIsPerpsActionUserCancelled.mockReturnValue(false);
     mockGetOrderBookPriceIntent.mockImplementation(
       () => mockOrderBookPriceIntent,
     );
@@ -1036,12 +1090,83 @@ describe('PerpsProScene market loading states', () => {
     expect(mockTriggerImpact).not.toHaveBeenCalled();
   });
 
-  it('routes unified non-USDC Trade add-funds to the current quote Swap', () => {
+  it.each([
+    ['Unified', 'unified', 'unifiedAccount'],
+    ['Portfolio Margin', 'portfolioMargin', 'portfolioMargin'],
+  ] as const)(
+    'approves Agent before routing %s non-USDC Trade add-funds to the current quote Swap',
+    async (_label, accountMode, userAbstraction) => {
+      let resolveApproval: (() => void) | undefined;
+      mockEnsurePerpsActionApproval.mockImplementationOnce(
+        () =>
+          new Promise<void>(resolve => {
+            resolveApproval = resolve;
+          }),
+      );
+      const account = { address: '0x1', type: 'PrivateKeyring' };
+      mockUsePerpsProInfoPanel.mockReturnValue(
+        createInfoState({
+          account: { assets: [], mode: accountMode },
+          currentAccount: account,
+          fundingAccountValue: '12',
+          fundingAccountValueReady: true,
+          userAbstraction,
+          userAbstractionReady: true,
+        }),
+      );
+      mockUsePerpsProScene.mockReturnValue(
+        createSceneState({
+          currentMarket: {
+            canonicalCoin: 'DOGE-USDE',
+            marketKey: 'hyperliquid::DOGE-USDE',
+            marketData: { maxLeverage: 10, onlyIsolated: false },
+            quoteAsset: 'USDE',
+          },
+          tradeConfigurationReady: true,
+        }),
+      );
+
+      render(
+        <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+      );
+
+      expect(mockTradeFormProps.mock.lastCall?.[0]).toMatchObject({
+        addFundsMode: 'swap',
+      });
+      act(() => {
+        mockTradeFormProps.mock.lastCall?.[0].onAddFunds();
+      });
+      expect(mockEnsurePerpsActionApproval).toHaveBeenCalledWith(account, {
+        builderFee: false,
+      });
+      expect(mockFundingOverlayProps).not.toHaveBeenCalled();
+
+      await act(async () => {
+        resolveApproval?.();
+        await Promise.resolve();
+      });
+      expect(mockFundingOverlayProps.mock.lastCall?.[0]).toMatchObject({
+        mode: 'swap',
+        targetAsset: 'USDE',
+      });
+      expect(mockEnableUnifiedProps.mock.lastCall?.[0]).toMatchObject({
+        visible: false,
+      });
+    },
+  );
+
+  it('drops a frozen Deposit tap when the account changes before keyboard dismissal', () => {
+    let pendingAction: (() => void) | null = null;
+    mockDismissKeyboardThen.mockImplementation(action => {
+      pendingAction = action;
+    });
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
-        account: { assets: [], mode: 'unified' },
+        accountIdentity: 'account-a',
         currentAccount: { address: '0x1', type: 'PrivateKeyring' },
-        userAbstraction: 'unifiedAccount',
+        fundingAccountValue: '0',
+        fundingAccountValueReady: true,
+        userAbstraction: 'default',
         userAbstractionReady: true,
       }),
     );
@@ -1056,15 +1181,95 @@ describe('PerpsProScene market loading states', () => {
         tradeConfigurationReady: true,
       }),
     );
-
-    render(
+    const view = render(
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
 
-    expect(mockTradeFormProps.mock.lastCall?.[0]).toMatchObject({
-      addFundsMode: 'swap',
-    });
     act(() => mockTradeFormProps.mock.lastCall?.[0].onAddFunds());
+    expect(mockFundingOverlayProps).not.toHaveBeenCalled();
+
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        accountIdentity: 'account-b',
+        currentAccount: { address: '0x2', type: 'PrivateKeyring' },
+        fundingAccountValue: '0',
+        fundingAccountValueReady: true,
+        userAbstraction: 'default',
+        userAbstractionReady: true,
+      }),
+    );
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    act(() => pendingAction?.());
+
+    expect(mockEnsurePerpsActionApproval).not.toHaveBeenCalled();
+    expect(mockFundingOverlayProps).not.toHaveBeenCalled();
+    expect(mockEnableUnifiedProps.mock.lastCall?.[0]).toMatchObject({
+      visible: false,
+    });
+  });
+
+  it('keeps the tap-time quote while keyboard dismissal is pending', async () => {
+    let pendingAction: (() => void) | null = null;
+    mockDismissKeyboardThen.mockImplementation(action => {
+      pendingAction = action;
+    });
+    const account = { address: '0x1', type: 'PrivateKeyring' };
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        accountIdentity: 'account-a',
+        currentAccount: account,
+        fundingAccountValue: '12',
+        fundingAccountValueReady: true,
+        userAbstraction: 'default',
+        userAbstractionReady: true,
+      }),
+    );
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'DOGE-USDE',
+          marketKey: 'hyperliquid::DOGE-USDE',
+          marketData: { maxLeverage: 10, onlyIsolated: false },
+          quoteAsset: 'USDE',
+        },
+        tradeConfigurationReady: true,
+      }),
+    );
+    const view = render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    act(() => mockTradeFormProps.mock.lastCall?.[0].onAddFunds());
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'DOGE-USDH',
+          marketKey: 'hyperliquid::DOGE-USDH',
+          marketData: { maxLeverage: 10, onlyIsolated: false },
+          quoteAsset: 'USDH',
+        },
+        tradeConfigurationReady: true,
+      }),
+    );
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    await act(async () => {
+      pendingAction?.();
+      await Promise.resolve();
+    });
+
+    expect(mockEnsurePerpsActionApproval).toHaveBeenCalledWith(account, {
+      builderFee: false,
+    });
+    expect(mockEnableUnifiedProps.mock.lastCall?.[0]).toMatchObject({
+      visible: true,
+    });
+    await act(async () => {
+      await mockEnableUnifiedProps.mock.lastCall?.[0].onConfirm();
+    });
     expect(mockFundingOverlayProps.mock.lastCall?.[0]).toMatchObject({
       mode: 'swap',
       targetAsset: 'USDE',
@@ -1076,6 +1281,8 @@ describe('PerpsProScene market loading states', () => {
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
         currentAccount: account,
+        fundingAccountValue: '12',
+        fundingAccountValueReady: true,
         userAbstraction: 'default',
         userAbstractionReady: true,
       }),
@@ -1099,7 +1306,12 @@ describe('PerpsProScene market loading states', () => {
     expect(mockTradeFormProps.mock.lastCall?.[0]).toMatchObject({
       addFundsMode: 'swap',
     });
-    act(() => mockTradeFormProps.mock.lastCall?.[0].onAddFunds());
+    await act(async () => {
+      await mockTradeFormProps.mock.lastCall?.[0].onAddFunds();
+    });
+    expect(mockEnsurePerpsActionApproval).toHaveBeenCalledWith(account, {
+      builderFee: false,
+    });
     expect(mockEnableUnifiedProps.mock.lastCall?.[0]).toMatchObject({
       visible: true,
     });
@@ -1111,6 +1323,526 @@ describe('PerpsProScene market loading states', () => {
     expect(mockFundingOverlayProps.mock.lastCall?.[0]).toMatchObject({
       mode: 'swap',
       targetAsset: 'USDE',
+    });
+  });
+
+  it.each([
+    ['user cancellation', true, 'User cancelled'],
+    ['non-cancellation failure', false, 'Enable failed'],
+  ] as const)(
+    'keeps the Unified prompt open without opening Swap after %s',
+    async (_label, isCancellation, message) => {
+      const account = { address: '0x1', type: 'PrivateKeyring' };
+      const error = new Error(message);
+      mockExecuteEnableUnified.mockRejectedValueOnce(error);
+      mockIsPerpsActionUserCancelled.mockReturnValueOnce(isCancellation);
+      mockUsePerpsProInfoPanel.mockReturnValue(
+        createInfoState({
+          currentAccount: account,
+          fundingAccountValue: '12',
+          fundingAccountValueReady: true,
+          userAbstraction: 'default',
+          userAbstractionReady: true,
+        }),
+      );
+      mockUsePerpsProScene.mockReturnValue(
+        createSceneState({
+          currentMarket: {
+            canonicalCoin: 'DOGE-USDE',
+            marketKey: 'hyperliquid::DOGE-USDE',
+            marketData: { maxLeverage: 10, onlyIsolated: false },
+            quoteAsset: 'USDE',
+          },
+          tradeConfigurationReady: true,
+        }),
+      );
+
+      render(
+        <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+      );
+      await act(async () => {
+        mockTradeFormProps.mock.lastCall?.[0].onAddFunds();
+        await Promise.resolve();
+      });
+      expect(mockEnableUnifiedProps.mock.lastCall?.[0]).toMatchObject({
+        visible: true,
+      });
+
+      await act(async () => {
+        await mockEnableUnifiedProps.mock.lastCall?.[0].onConfirm();
+      });
+
+      expect(mockExecuteEnableUnified).toHaveBeenCalledWith(account);
+      expect(mockFundingOverlayProps).not.toHaveBeenCalled();
+      expect(mockEnableUnifiedProps.mock.lastCall?.[0]).toMatchObject({
+        visible: true,
+      });
+      if (isCancellation) {
+        expect(mockShowToast).not.toHaveBeenCalled();
+      } else {
+        expect(mockShowToast).toHaveBeenCalledWith(message, 'error');
+      }
+    },
+  );
+
+  it.each([
+    ['zero value', '0', true],
+    ['unready value', '12', false],
+  ] as const)(
+    'drops a pending Unified confirmation after the funding fact becomes %s',
+    async (_label, fundingAccountValue, fundingAccountValueReady) => {
+      const account = { address: '0x1', type: 'PrivateKeyring' };
+      const readyInfo = createInfoState({
+        currentAccount: account,
+        fundingAccountValue: '12',
+        fundingAccountValueReady: true,
+        userAbstraction: 'default',
+        userAbstractionReady: true,
+      });
+      mockUsePerpsProInfoPanel.mockReturnValue(readyInfo);
+      mockUsePerpsProScene.mockReturnValue(
+        createSceneState({
+          currentMarket: {
+            canonicalCoin: 'DOGE-USDE',
+            marketKey: 'hyperliquid::DOGE-USDE',
+            marketData: { maxLeverage: 10, onlyIsolated: false },
+            quoteAsset: 'USDE',
+          },
+          tradeConfigurationReady: true,
+        }),
+      );
+      const view = render(
+        <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+      );
+      await act(async () => {
+        await mockTradeFormProps.mock.lastCall?.[0].onAddFunds();
+      });
+      expect(mockEnableUnifiedProps.mock.lastCall?.[0]).toMatchObject({
+        visible: true,
+      });
+
+      mockUsePerpsProInfoPanel.mockReturnValue(
+        createInfoState({
+          currentAccount: account,
+          fundingAccountValue,
+          fundingAccountValueReady,
+          userAbstraction: 'default',
+          userAbstractionReady: true,
+        }),
+      );
+      view.rerender(
+        <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+      );
+      await act(async () => {
+        await mockEnableUnifiedProps.mock.lastCall?.[0].onConfirm();
+      });
+
+      expect(mockExecuteEnableUnified).not.toHaveBeenCalled();
+      expect(mockFundingOverlayProps).not.toHaveBeenCalled();
+      expect(mockEnableUnifiedProps.mock.lastCall?.[0]).toMatchObject({
+        visible: false,
+      });
+    },
+  );
+
+  it('skips a redundant Unified mutation when the account mode changes before confirmation', async () => {
+    const account = { address: '0x1', type: 'PrivateKeyring' };
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        currentAccount: account,
+        fundingAccountValue: '12',
+        fundingAccountValueReady: true,
+        userAbstraction: 'default',
+        userAbstractionReady: true,
+      }),
+    );
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'DOGE-USDE',
+          marketKey: 'hyperliquid::DOGE-USDE',
+          marketData: { maxLeverage: 10, onlyIsolated: false },
+          quoteAsset: 'USDE',
+        },
+        tradeConfigurationReady: true,
+      }),
+    );
+    const view = render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    await act(async () => {
+      await mockTradeFormProps.mock.lastCall?.[0].onAddFunds();
+    });
+    expect(mockEnableUnifiedProps.mock.lastCall?.[0]).toMatchObject({
+      visible: true,
+    });
+
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        account: { assets: [], mode: 'unified' },
+        currentAccount: account,
+        fundingAccountValue: '12',
+        fundingAccountValueReady: true,
+        userAbstraction: 'unifiedAccount',
+        userAbstractionReady: true,
+      }),
+    );
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    await act(async () => {
+      await mockEnableUnifiedProps.mock.lastCall?.[0].onConfirm();
+    });
+
+    expect(mockExecuteEnableUnified).not.toHaveBeenCalled();
+    expect(mockFundingOverlayProps.mock.lastCall?.[0]).toMatchObject({
+      mode: 'swap',
+      targetAsset: 'USDE',
+    });
+    expect(mockEnableUnifiedProps.mock.lastCall?.[0]).toMatchObject({
+      visible: false,
+    });
+  });
+
+  it('routes a ready zero-value non-USDC account to Deposit without continuing into Unified', async () => {
+    const account = { address: '0x1', type: 'PrivateKeyring' };
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        currentAccount: account,
+        fundingAccountValue: '0',
+        fundingAccountValueReady: true,
+        userAbstraction: 'default',
+        userAbstractionReady: true,
+      }),
+    );
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'DOGE-USDE',
+          marketKey: 'hyperliquid::DOGE-USDE',
+          marketData: { maxLeverage: 10, onlyIsolated: false },
+          quoteAsset: 'USDE',
+        },
+        tradeConfigurationReady: true,
+      }),
+    );
+
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    expect(mockTradeFormProps.mock.lastCall?.[0]).toMatchObject({
+      addFundsMode: 'deposit',
+    });
+    await act(async () => {
+      await mockTradeFormProps.mock.lastCall?.[0].onAddFunds();
+    });
+    expect(mockFundingOverlayProps.mock.lastCall?.[0]).toMatchObject({
+      mode: 'deposit',
+      targetAsset: 'USDC',
+    });
+    expect(mockEnsurePerpsActionApproval).not.toHaveBeenCalled();
+    expect(mockEnableUnifiedProps.mock.lastCall?.[0]).toMatchObject({
+      visible: false,
+    });
+
+    act(() => mockFundingOverlayProps.mock.lastCall?.[0].onClose());
+
+    expect(mockEnsurePerpsActionApproval).not.toHaveBeenCalled();
+    expect(mockEnableUnifiedProps.mock.lastCall?.[0]).toMatchObject({
+      visible: false,
+    });
+  });
+
+  it('does not execute an add-funds route before the funding fact is ready', async () => {
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        currentAccount: { address: '0x1', type: 'PrivateKeyring' },
+        fundingAccountValue: '12',
+        fundingAccountValueReady: false,
+        userAbstraction: 'default',
+        userAbstractionReady: true,
+      }),
+    );
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'DOGE-USDE',
+          marketKey: 'hyperliquid::DOGE-USDE',
+          marketData: { maxLeverage: 10, onlyIsolated: false },
+          quoteAsset: 'USDE',
+        },
+        tradeConfigurationReady: true,
+      }),
+    );
+
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    await act(async () => {
+      await mockTradeFormProps.mock.lastCall?.[0].onAddFunds();
+    });
+
+    expect(mockEnsurePerpsActionApproval).not.toHaveBeenCalled();
+    expect(mockFundingOverlayProps).not.toHaveBeenCalled();
+    expect(mockEnableUnifiedProps.mock.lastCall?.[0]).toMatchObject({
+      visible: false,
+    });
+  });
+
+  it('drops a pending Standard funding continuation when the account identity changes', async () => {
+    let resolveApproval: (() => void) | undefined;
+    mockEnsurePerpsActionApproval.mockImplementationOnce(
+      () =>
+        new Promise<void>(resolve => {
+          resolveApproval = resolve;
+        }),
+    );
+    const account = { address: '0x1', type: 'PrivateKeyring' };
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        accountIdentity: 'account-a',
+        currentAccount: account,
+        fundingAccountValue: '12',
+        fundingAccountValueReady: true,
+        userAbstraction: 'default',
+        userAbstractionReady: true,
+      }),
+    );
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'DOGE-USDE',
+          marketKey: 'hyperliquid::DOGE-USDE',
+          marketData: { maxLeverage: 10, onlyIsolated: false },
+          quoteAsset: 'USDE',
+        },
+        tradeConfigurationReady: true,
+      }),
+    );
+    const view = render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    act(() => {
+      mockTradeFormProps.mock.lastCall?.[0].onAddFunds();
+    });
+
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        accountIdentity: 'account-b',
+        currentAccount: { address: '0x2', type: 'PrivateKeyring' },
+        fundingAccountValue: '20',
+        fundingAccountValueReady: true,
+        userAbstraction: 'default',
+        userAbstractionReady: true,
+      }),
+    );
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    await act(async () => {
+      resolveApproval?.();
+      await Promise.resolve();
+    });
+
+    expect(mockEnableUnifiedProps.mock.lastCall?.[0]).toMatchObject({
+      visible: false,
+    });
+    expect(mockFundingOverlayProps).not.toHaveBeenCalled();
+  });
+
+  it('drops a pending funding continuation when the live funding value is no longer positive', async () => {
+    let resolveApproval: (() => void) | undefined;
+    mockEnsurePerpsActionApproval.mockImplementationOnce(
+      () =>
+        new Promise<void>(resolve => {
+          resolveApproval = resolve;
+        }),
+    );
+    const account = { address: '0x1', type: 'PrivateKeyring' };
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        accountIdentity: 'account-a',
+        currentAccount: account,
+        fundingAccountValue: '12',
+        fundingAccountValueReady: true,
+        userAbstraction: 'default',
+        userAbstractionReady: true,
+      }),
+    );
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'DOGE-USDE',
+          marketKey: 'hyperliquid::DOGE-USDE',
+          marketData: { maxLeverage: 10, onlyIsolated: false },
+          quoteAsset: 'USDE',
+        },
+        tradeConfigurationReady: true,
+      }),
+    );
+    const view = render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    act(() => {
+      mockTradeFormProps.mock.lastCall?.[0].onAddFunds();
+    });
+
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        accountIdentity: 'account-a',
+        currentAccount: account,
+        fundingAccountValue: '0',
+        fundingAccountValueReady: true,
+        userAbstraction: 'default',
+        userAbstractionReady: true,
+      }),
+    );
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    await act(async () => {
+      resolveApproval?.();
+      await Promise.resolve();
+    });
+
+    expect(mockEnableUnifiedProps.mock.lastCall?.[0]).toMatchObject({
+      visible: false,
+    });
+    expect(mockFundingOverlayProps).not.toHaveBeenCalled();
+  });
+
+  it('freezes the account and quote while Standard Agent approval is pending', async () => {
+    let resolveApproval: (() => void) | undefined;
+    mockEnsurePerpsActionApproval.mockImplementationOnce(
+      () =>
+        new Promise<void>(resolve => {
+          resolveApproval = resolve;
+        }),
+    );
+    const account = { address: '0x1', type: 'PrivateKeyring' };
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        accountIdentity: 'account-a',
+        currentAccount: account,
+        fundingAccountValue: '12',
+        fundingAccountValueReady: true,
+        userAbstraction: 'default',
+        userAbstractionReady: true,
+      }),
+    );
+    const usdeScene = createSceneState({
+      currentMarket: {
+        canonicalCoin: 'DOGE-USDE',
+        marketKey: 'hyperliquid::DOGE-USDE',
+        marketData: { maxLeverage: 10, onlyIsolated: false },
+        quoteAsset: 'USDE',
+      },
+      tradeConfigurationReady: true,
+    });
+    mockUsePerpsProScene.mockReturnValue(usdeScene);
+    const view = render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    act(() => {
+      mockTradeFormProps.mock.lastCall?.[0].onAddFunds();
+    });
+
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'DOGE-USDH',
+          marketKey: 'hyperliquid::DOGE-USDH',
+          marketData: { maxLeverage: 10, onlyIsolated: false },
+          quoteAsset: 'USDH',
+        },
+        tradeConfigurationReady: true,
+      }),
+    );
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    await act(async () => {
+      resolveApproval?.();
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      await mockEnableUnifiedProps.mock.lastCall?.[0].onConfirm();
+    });
+    expect(mockEnsurePerpsActionApproval).toHaveBeenCalledWith(account, {
+      builderFee: false,
+    });
+    expect(mockExecuteEnableUnified).toHaveBeenCalledWith(account);
+    expect(mockFundingOverlayProps.mock.lastCall?.[0]).toMatchObject({
+      mode: 'swap',
+      targetAsset: 'USDE',
+    });
+  });
+
+  it('does not open a frozen Swap after the account changes during Unified confirmation', async () => {
+    let resolveUnifiedEnable: (() => void) | undefined;
+    mockExecuteEnableUnified.mockImplementationOnce(
+      () =>
+        new Promise<void>(resolve => {
+          resolveUnifiedEnable = resolve;
+        }),
+    );
+    const account = { address: '0x1', type: 'PrivateKeyring' };
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        accountIdentity: 'account-a',
+        currentAccount: account,
+        fundingAccountValue: '12',
+        fundingAccountValueReady: true,
+        userAbstraction: 'default',
+        userAbstractionReady: true,
+      }),
+    );
+    mockUsePerpsProScene.mockReturnValue(
+      createSceneState({
+        currentMarket: {
+          canonicalCoin: 'DOGE-USDE',
+          marketKey: 'hyperliquid::DOGE-USDE',
+          marketData: { maxLeverage: 10, onlyIsolated: false },
+          quoteAsset: 'USDE',
+        },
+        tradeConfigurationReady: true,
+      }),
+    );
+    const view = render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    await act(async () => {
+      await mockTradeFormProps.mock.lastCall?.[0].onAddFunds();
+    });
+    let enablePromise: Promise<void> | undefined;
+    act(() => {
+      enablePromise = mockEnableUnifiedProps.mock.lastCall?.[0].onConfirm();
+    });
+
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({
+        accountIdentity: 'account-b',
+        currentAccount: { address: '0x2', type: 'PrivateKeyring' },
+        fundingAccountValue: '20',
+        fundingAccountValueReady: true,
+        userAbstraction: 'default',
+        userAbstractionReady: true,
+      }),
+    );
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    await act(async () => {
+      resolveUnifiedEnable?.();
+      await enablePromise;
+    });
+
+    expect(mockFundingOverlayProps).not.toHaveBeenCalled();
+    expect(mockEnableUnifiedProps.mock.lastCall?.[0]).toMatchObject({
+      visible: false,
     });
   });
 
@@ -1187,7 +1919,9 @@ describe('PerpsProScene market loading states', () => {
     expect(screen.getAllByTestId('perps-pro-trade-scroll-bridge')).toHaveLength(
       1,
     );
-    expect(screen.getByTestId('pro-header').props.showBottomDivider).toBe(true);
+    expect(screen.getByTestId('pro-header').props).not.toHaveProperty(
+      'showBottomDivider',
+    );
     fireEvent(scroll, 'layout', {
       nativeEvent: { layout: { height: 700, width: 393, x: 0, y: 0 } },
     });
@@ -1195,7 +1929,7 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
       ),
-    ).toMatchObject({ minHeight: 1196 });
+    ).toMatchObject({ minHeight: 1202 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-header-lead-in-spacer').props.style,
@@ -1221,12 +1955,12 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-info-tabs-spacer').props.style,
       ),
-    ).toMatchObject({ height: 50 });
+    ).toMatchObject({ height: 60 });
     const infoTabsOverlayStyle = StyleSheet.flatten(
       screen.getByTestId('perps-pro-info-tabs-overlay').props.style,
     );
     expect(infoTabsOverlayStyle).toEqual(
-      expect.objectContaining({ height: 34 }),
+      expect.objectContaining({ height: 38 }),
     );
     const infoTabsTranslateY = infoTabsOverlayStyle?.transform?.[0]
       ?.translateY as unknown as number | { __getValue: () => number };
@@ -1234,9 +1968,36 @@ describe('PerpsProScene market loading states', () => {
       typeof infoTabsTranslateY === 'number'
         ? infoTabsTranslateY
         : infoTabsTranslateY.__getValue(),
-    ).toBe(536);
+    ).toBe(542);
     expect(screen.getAllByTestId('perps-pro-info-tab-account')).toHaveLength(1);
   });
+
+  it.each([true, false])(
+    'keeps the six-point section divider distinct with isLight=%s',
+    isLight => {
+      mockIsLight = isLight;
+      mockUsePerpsProScene.mockReturnValue(createSceneState());
+      render(
+        <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+      );
+      const spacer = screen.getByTestId('perps-pro-info-tabs-spacer');
+      const divider = spacer.children[0];
+      if (typeof divider === 'string') {
+        throw new Error('Missing section divider');
+      }
+      expect(divider.props.pointerEvents).toBe('none');
+      expect(StyleSheet.flatten(divider.props.style)).toMatchObject({
+        backgroundColor: isLight ? 'neutral-bg-0' : 'neutral-bg-2',
+        height: 6,
+        bottom: 38,
+        left: 0,
+        right: 0,
+      });
+      expect(StyleSheet.flatten(spacer.props.style)).toMatchObject({
+        height: 60,
+      });
+    },
+  );
 
   it('uses one Android scene gesture owner and a shared Trade offset', () => {
     Object.defineProperty(Platform, 'OS', {
@@ -1301,6 +2062,183 @@ describe('PerpsProScene market loading states', () => {
     });
     expect(setActiveInfoTab).toHaveBeenCalledWith('openOrders');
     animationFrame.mockRestore();
+  });
+
+  it('keeps the settled info tab when a rapid reverse press supersedes an in-flight page', () => {
+    const setActiveInfoTab = jest.fn(() => new Promise<void>(() => undefined));
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ setActiveInfoTab }),
+    );
+    const animationFrame = jest
+      .spyOn(global, 'requestAnimationFrame')
+      .mockImplementation(callback => {
+        callback(0);
+        return 1;
+      });
+
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    fireEvent.press(screen.getByTestId('perps-pro-info-tab-openOrders'));
+    expect(mockInfoPagerSetPage).toHaveBeenLastCalledWith(1);
+
+    fireEvent.press(screen.getByTestId('perps-pro-info-tab-account'));
+    expect(mockInfoPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
+    expect(mockInfoPagerSetPage).toHaveBeenCalledTimes(1);
+
+    const pager = screen.getByTestId('perps-pro-info-pager');
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    expect(mockInfoPagerSetPage).toHaveBeenLastCalledWith(2);
+    expect(setActiveInfoTab).not.toHaveBeenCalled();
+
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 2 } });
+    expect(setActiveInfoTab).not.toHaveBeenCalled();
+    expect(
+      screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
+    ).toEqual({ selected: true });
+
+    animationFrame.mockRestore();
+  });
+
+  it('preserves a newer click while an older native commit waits on JS', () => {
+    const setActiveInfoTab = jest.fn(() => new Promise<void>(() => undefined));
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ setActiveInfoTab }),
+    );
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    const pager = screen.getByTestId('perps-pro-info-pager');
+    fireEvent.press(screen.getByTestId('perps-pro-info-tab-openOrders'));
+    mockQueueInfoCallbacks = true;
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    fireEvent.press(screen.getByTestId('perps-pro-info-tab-positions'));
+    expect(mockInfoPagerSetPage).toHaveBeenLastCalledWith(0);
+    act(() => mockInfoCallbacks.splice(0).forEach(callback => callback()));
+    expect(setActiveInfoTab).not.toHaveBeenCalled();
+    expect(mockUsePerpsProInfoPanel).toHaveBeenLastCalledWith(
+      expect.any(String),
+      'positions',
+    );
+    expect(
+      screen.getByTestId('perps-pro-info-tab-positions').props
+        .accessibilityState,
+    ).toEqual({ selected: true });
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 0 } });
+    act(() => mockInfoCallbacks.splice(0).forEach(callback => callback()));
+    expect(setActiveInfoTab.mock.calls).toEqual([['positions']]);
+  });
+
+  it('persists both selections when native pages reverse before React rerenders', () => {
+    const setActiveInfoTab = jest.fn(() => new Promise<void>(() => undefined));
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ setActiveInfoTab }),
+    );
+
+    render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 2 } });
+
+    expect(setActiveInfoTab.mock.calls).toEqual([['openOrders'], ['account']]);
+    expect(
+      screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
+    ).toEqual({ selected: true });
+  });
+
+  it('ignores stale preference echoes until the latest native tab write settles', async () => {
+    const openOrdersWrite = createDeferred();
+    const accountWrite = createDeferred();
+    const setActiveInfoTab = jest
+      .fn()
+      .mockReturnValueOnce(openOrdersWrite.promise)
+      .mockReturnValueOnce(accountWrite.promise);
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ activeInfoTab: 'account', setActiveInfoTab }),
+    );
+    const view = render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 2 } });
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ activeInfoTab: 'openOrders', setActiveInfoTab }),
+    );
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+
+    expect(
+      screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
+    ).toEqual({ selected: true });
+    expect(mockInfoPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
+
+    await act(async () => {
+      openOrdersWrite.resolve();
+      await openOrdersWrite.promise;
+    });
+    expect(
+      screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
+    ).toEqual({ selected: true });
+
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ activeInfoTab: 'account', setActiveInfoTab }),
+    );
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    await act(async () => {
+      accountWrite.resolve();
+      await accountWrite.promise;
+    });
+
+    expect(mockInfoPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
+    expect(setActiveInfoTab.mock.calls).toEqual([['openOrders'], ['account']]);
+  });
+
+  it('realigns the native pager only after the latest preference write rolls back', async () => {
+    const write = createDeferred();
+    const setActiveInfoTab = jest.fn(() => write.promise);
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ activeInfoTab: 'account', setActiveInfoTab }),
+    );
+    const view = render(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    const pager = screen.getByTestId('perps-pro-info-pager');
+
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    mockUsePerpsProInfoPanel.mockReturnValue(
+      createInfoState({ activeInfoTab: 'account', setActiveInfoTab }),
+    );
+    view.rerender(
+      <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+    );
+    expect(
+      screen.getByTestId('perps-pro-info-tab-openOrders').props
+        .accessibilityState,
+    ).toEqual({ selected: true });
+    expect(mockInfoPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
+
+    await act(async () => {
+      write.resolve();
+      await write.promise;
+    });
+
+    expect(mockInfoPagerSetPageWithoutAnimation).toHaveBeenCalledWith(2);
+    expect(
+      screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
+    ).toEqual({ selected: true });
   });
 
   it('previews the top info tab during a drag without persisting it', () => {
@@ -1430,7 +2368,9 @@ describe('PerpsProScene market loading states', () => {
     });
     expect(screen.getByTestId('realtime-order-book')).toBeTruthy();
     expect(screen.getByTestId('trade-form')).toBeTruthy();
-    expect(screen.getByTestId('pro-header').props.showBottomDivider).toBe(true);
+    expect(screen.getByTestId('pro-header').props).not.toHaveProperty(
+      'showBottomDivider',
+    );
 
     expect(screen.getByTestId('perps-region-alert').props.bottomSpacing).toBe(
       4,
@@ -1520,7 +2460,9 @@ describe('PerpsProScene market loading states', () => {
     );
 
     expect(screen.getByTestId('perps-region-alert')).toBeOnTheScreen();
-    expect(screen.getByTestId('pro-header').props.showBottomDivider).toBe(true);
+    expect(screen.getByTestId('pro-header').props).not.toHaveProperty(
+      'showBottomDivider',
+    );
     expect(screen.getByTestId('market-bar-skeleton')).toBeOnTheScreen();
     const restrictedSurfaceStyle = StyleSheet.flatten(
       screen.getByTestId('perps-pro-region-alert-overlay').props.style,
@@ -1865,7 +2807,9 @@ describe('PerpsProScene market loading states', () => {
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
 
-    expect(screen.getByTestId('perps-pro-positions-empty-light')).toBeTruthy();
+    expect(
+      screen.getByTestId('perps-pro-positions-empty-illustration'),
+    ).toBeTruthy();
     expect(screen.getByText('page.perps.pro.positions.empty')).toBeTruthy();
     expect(screen.queryByTestId('perps-pro-positions-controls')).toBeNull();
 
@@ -1880,7 +2824,7 @@ describe('PerpsProScene market loading states', () => {
     );
 
     expect(
-      screen.getByTestId('perps-pro-open-orders-empty-light'),
+      screen.getByTestId('perps-pro-open-orders-empty-illustration'),
     ).toBeTruthy();
     expect(screen.getByText('page.perps.pro.openOrders.empty')).toBeTruthy();
     expect(screen.queryByTestId('perps-pro-open-orders-controls')).toBeNull();
@@ -2086,7 +3030,7 @@ describe('PerpsProScene market loading states', () => {
 
     expect(
       StyleSheet.flatten(scroll.props.contentContainerStyle),
-    ).toMatchObject({ minHeight: 1196, paddingBottom: 390 });
+    ).toMatchObject({ minHeight: 1202, paddingBottom: 386 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -2102,7 +3046,7 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
       ),
-    ).toMatchObject({ minHeight: 1196, paddingBottom: 390 });
+    ).toMatchObject({ minHeight: 1202, paddingBottom: 386 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -2118,7 +3062,7 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
       ),
-    ).toMatchObject({ minHeight: 1196, paddingBottom: 390 });
+    ).toMatchObject({ minHeight: 1202, paddingBottom: 386 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -2134,7 +3078,7 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
       ),
-    ).toMatchObject({ minHeight: 1196, paddingBottom: 32 });
+    ).toMatchObject({ minHeight: 1202, paddingBottom: 32 });
 
     mockUsePerpsProInfoPanel.mockReturnValue(
       createInfoState({
@@ -2149,7 +3093,7 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
       ),
-    ).toMatchObject({ minHeight: 1196, paddingBottom: 32 });
+    ).toMatchObject({ minHeight: 1202, paddingBottom: 32 });
   });
 
   it('closes the local funding overlay when the active account changes', () => {

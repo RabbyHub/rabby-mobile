@@ -81,18 +81,17 @@ describe('PerpsProHeader', () => {
       <PerpsProHeader
         isModeSwitching={false}
         onSwitchToSimple={onSwitchToSimple}
-        showBottomDivider
       />,
     );
 
     expect(screen.getByTestId('shared-header').props.accessibilityLabel).toBe(
-      'pro:undefined:Contact alias:true',
+      'pro:undefined:Contact alias:false',
     );
     expect(mockGetAliasName).toHaveBeenCalledWith(mockAccount.address);
     expect(mockSharedHeaderProps.mock.lastCall?.[0]).toMatchObject({
       accountAddress: mockAccount.address,
       accountBrandName: 'metamask',
-      accountTriggerVariant: 'wallet',
+      accountTriggerVariant: 'wallet-icon',
     });
 
     fireEvent.press(screen.getByTestId('switch-to-simple'));
@@ -110,11 +109,7 @@ describe('PerpsProHeader', () => {
   it('prefers the account alias so mode changes cannot alter its width source', () => {
     mockAccount = { ...mockAccount, aliasName: 'Wallet alias' };
     const screen = render(
-      <PerpsProHeader
-        isModeSwitching={false}
-        onSwitchToSimple={jest.fn()}
-        showBottomDivider={false}
-      />,
+      <PerpsProHeader isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
 
     expect(screen.getByTestId('shared-header').props.accessibilityLabel).toBe(

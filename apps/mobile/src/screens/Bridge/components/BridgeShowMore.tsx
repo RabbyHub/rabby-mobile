@@ -1,6 +1,4 @@
 import React, {
-  Dispatch,
-  SetStateAction,
   useCallback,
   useEffect,
   useMemo,
@@ -15,15 +13,13 @@ import {
   Pressable,
   StyleSheet,
 } from 'react-native';
-import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { useTranslation } from 'react-i18next';
 import { getTokenSymbol } from '@/utils/token';
 import {
   GasAccountCheckResult,
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { isSameTypeTokenPair } from '@rabby-wallet/rabby-swap';
-import { BridgeSlippage, useSlippageTooLowOrTooHigh } from './BridgeSlippage';
+import { BridgeSlippage } from './BridgeSlippage';
 import { tokenPriceImpact } from '../hooks/token';
 import { AppSwitch, AssetAvatar } from '@/components';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -45,7 +41,7 @@ import {
 } from '@/components/Approval/components/FooterBar/gasLessDecision';
 import { GasAccountTips } from '@/components/Approval/components/FooterBar/GasLessComponents/GasAccountTips';
 import { useMemoizedFn } from 'ahooks';
-import IconBestQuoteTag from '@/assets2024/icons/bridge/IconBestQuoteTag.svg';
+import IconBestQuoteBackground from '@/assets2024/icons/bridge/BestQuoteBackground.svg';
 import { Text } from '@/components/Typography';
 import { SignMainnetHeaderContent } from '@/components/Approval/components/TxComponents/GasSelector/SignMainnetGasSelectorHeader';
 import type { ApprovalGasMethod } from '@/components/Approval/components/TxComponents/GasSelector/approvalGasDisplay';
@@ -71,9 +67,12 @@ import {
   TxWithTempoExtras,
 } from '@/utils/tempo';
 import tokenListStore from '@/store/tokens';
-import RcIconSwapFree from '@/assets2024/icons/swap/free.svg';
+import RcIconFeeFreeLogo from '@/assets2024/icons/swap/fee-free-logo.svg';
+import RcIconFeeQuestion from '@/assets2024/icons/swap/fee-question.svg';
+import { SWAP_FEE_RATE } from '@/screens/Swap/hooks/fee';
 
-const RABBY_FEE = '0.25%';
+const RABBY_FEE = `${SWAP_FEE_RATE.DEFAULT}%`;
+const RABBY_HALF_FEE = `${SWAP_FEE_RATE.HALF}%`;
 
 const BridgeShowMore = ({
   openQuotesList,
@@ -92,8 +91,6 @@ const BridgeShowMore = ({
   isCustomSlippage,
   setAutoSlippage,
   setIsCustomSlippage,
-  open,
-  setOpen,
   type,
   isWrapToken,
   isBestQuote,
@@ -105,14 +102,16 @@ const BridgeShowMore = ({
   supportDirectSign,
   autoSuggestSlippage,
   duration,
-  sourceAlwaysShow,
+  isRabbyFeeFree = false,
+  isRabbyFeeHalf = false,
   insufficient,
   onDepositPopupVisibleChange,
   onSlippageOptionsOpenChange,
   onGasSettingsOpenChange,
+  renderSwapQuotes,
+  onRefreshSwapQuotes,
+  swapQuotesLoading,
 }: {
-  open: boolean;
-  setOpen: Dispatch<SetStateAction<boolean>>;
   openQuotesList: () => void;
   sourceName: string;
   sourceLogo: string;
@@ -144,17 +143,20 @@ const BridgeShowMore = ({
   recommendValue?: number;
   supportDirectSign: boolean;
   autoSuggestSlippage?: string;
-  sourceAlwaysShow?: boolean;
+  isRabbyFeeFree?: boolean;
+  isRabbyFeeHalf?: boolean;
   textColor?: string;
   onDepositPopupVisibleChange?: (visible: boolean) => void;
   onSlippageOptionsOpenChange?: (open: boolean) => void;
   onGasSettingsOpenChange?: (open: boolean) => void;
+  renderSwapQuotes?: (onSelect: () => void) => React.ReactNode;
+  onRefreshSwapQuotes?: () => void;
+  swapQuotesLoading?: boolean;
 }) => {
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, colors } = useTheme2024({ getStyle });
   const [lossImpactOpen, setLossImpactOpen] = useState(false);
-  const isFreeTokenPair =
-    type === 'swap' && isSameTypeTokenPair(fromToken, toToken);
+  const [swapGasQuoteVisible, setSwapGasQuoteVisible] = useState(false);
 
   const data = useMemo(() => {
     if (quoteLoading || (!sourceLogo && !sourceName)) {
@@ -182,10 +184,7 @@ const BridgeShowMore = ({
     [data?.showLoss, quoteLoading],
   );
 
-  const showSlippageWarning = useSlippageTooLowOrTooHigh({
-    type: type,
-    value: slippage,
-  });
+  const showSourceFallback = !!insufficient || !fromToken || !supportDirectSign;
 
   const durationColor = useMemo(() => {
     const mins = Math.ceil((duration || 0) / 60);
@@ -206,39 +205,37 @@ const BridgeShowMore = ({
             source={
               typeof sourceLogo === 'string' ? { uri: sourceLogo } : sourceLogo
             }
-            style={styles.sourceLogo}
+            style={isBestQuote ? styles.bestSourceLogo : styles.sourceLogo}
           />
         )}
         {sourceName && (
-          <Text
-            style={
-              isBestQuote
-                ? [
-                    styles.sourceName,
-                    {
-                      fontSize: 12,
-                      fontWeight: 900,
-                      lineHeight: 16,
-                    },
-                  ]
-                : styles.sourceName
-            }>
+          <Text style={isBestQuote ? styles.bestSourceName : styles.sourceName}>
             {sourceName}
           </Text>
         )}
       </>
     ),
-    [isBestQuote, sourceLogo, sourceName, styles.sourceLogo, styles.sourceName],
+    [
+      isBestQuote,
+      sourceLogo,
+      sourceName,
+      styles.bestSourceLogo,
+      styles.bestSourceName,
+      styles.sourceLogo,
+      styles.sourceName,
+    ],
   );
 
   const BestQuoteContent = useMemo(
     () => (
-      <View style={[styles.bestQuoteWrapper, { height: 24 }]}>
-        <View>
-          <IconBestQuoteTag height={24} style={styles.bestQuoteTag} />
-          <View style={styles.bestTagWrapper}>
-            <Text style={styles.bestText}>{t('page.swap.best')}</Text>
-          </View>
+      <View style={styles.bestQuoteWrapper}>
+        <View style={styles.bestTagWrapper}>
+          <IconBestQuoteBackground
+            width={83}
+            height={20}
+            style={styles.bestQuoteTag}
+          />
+          <Text style={styles.bestText}>{t('page.swap.best')}</Text>
         </View>
 
         <View style={styles.bestRightWrapper}>{QuoteContent}</View>
@@ -247,28 +244,31 @@ const BridgeShowMore = ({
     [QuoteContent, styles, t],
   );
 
-  const sourceContentRender = useMemoizedFn(() => (
-    <ListItem
-      name={
-        type === 'bridge'
-          ? t('page.bridge.showMore.source')
-          : t('page.swap.source')
+  const sourceSelectorRender = useMemoizedFn(
+    (
+      options:
+        | boolean
+        | {
+            clickable?: boolean;
+            showArrow?: boolean;
+          } = true,
+    ) => {
+      const { clickable, showArrow } =
+        typeof options === 'boolean'
+          ? { clickable: options, showArrow: options }
+          : {
+              clickable: options.clickable ?? true,
+              showArrow: options.showArrow ?? true,
+            };
+
+      if (quoteLoading) {
+        return <CustomSkeleton style={styles.sourceSkeleton} />;
       }
-      style={styles.listItem}>
-      {quoteLoading ? (
-        <CustomSkeleton
-          style={{
-            width: 131,
-            height: 24,
-            borderRadius: 100,
-          }}
-        />
-      ) : (
-        <TouchableOpacity
-          onPress={openQuotesList}
-          style={styles.quoteContainer}>
+
+      const content = (
+        <>
           {isBestQuote ? BestQuoteContent : QuoteContent}
-          {duration ? (
+          {type === 'bridge' && duration ? (
             <Text style={[styles.sourceName, { color: durationColor }]}>
               {' · '}
               {t('page.bridge.duration', {
@@ -276,7 +276,7 @@ const BridgeShowMore = ({
               })}
             </Text>
           ) : null}
-          {sourceName || sourceLogo ? (
+          {showArrow && (sourceName || sourceLogo) ? (
             <RcIconBluePolygon
               style={styles.arrowIcon}
               color={colors2024['brand-default']}
@@ -285,163 +285,184 @@ const BridgeShowMore = ({
           {!sourceLogo && !sourceName ? (
             <Text style={styles.noQuotePlaceholder}>-</Text>
           ) : null}
+        </>
+      );
+
+      if (!clickable) {
+        return <View style={styles.quoteContainer}>{content}</View>;
+      }
+
+      return (
+        <TouchableOpacity
+          onPress={openQuotesList}
+          style={styles.quoteContainer}>
+          {content}
         </TouchableOpacity>
-      )}
+      );
+    },
+  );
+
+  const swapGasRowSourceSelector =
+    type === 'swap' && (quoteLoading || sourceLogo || sourceName)
+      ? sourceSelectorRender({ clickable: false, showArrow: false })
+      : undefined;
+  const swapGasRowFallbackSourceSelector =
+    type === 'swap' && (quoteLoading || sourceLogo || sourceName)
+      ? sourceSelectorRender({ clickable: true, showArrow: false })
+      : undefined;
+
+  const sourceContentRender = useMemoizedFn(() => (
+    <ListItem
+      name={
+        type === 'bridge'
+          ? t('page.bridge.showMore.source')
+          : t('page.swap.source')
+      }>
+      {sourceSelectorRender()}
     </ListItem>
   ));
 
+  const priceImpactContent = showLossInfo ? (
+    <View style={[styles.lossInfo, { marginBottom: 0 }]}>
+      <View style={styles.flexRow}>
+        <Text style={styles.impactText}>{t('page.bridge.price-impact')}</Text>
+        <TouchableOpacity
+          style={styles.diffBox}
+          onPress={() => setLossImpactOpen(i => !i)}>
+          <Text style={styles.lossAmount}>-{data?.diff}%</Text>
+          <Animated.View
+            style={{
+              transform: [{ rotate: !lossImpactOpen ? '180deg' : '0deg' }],
+            }}>
+            <RcIconBluePolygon color={colors2024['orange-default']} />
+          </Animated.View>
+        </TouchableOpacity>
+      </View>
+
+      <WarningText>
+        <Text>{t('page.bridge.loss-tips', { usd: data?.lossUsd })}</Text>
+        {lossImpactOpen && (
+          <>
+            {'\n'}
+            {'\n'}
+            <Text style={styles.impactTooltipText}>
+              {t('page.bridge.est-payment')} {formatTokenAmount(amount || '0')}
+              {getTokenSymbol(fromToken)} ≈ {data?.fromUsd}
+            </Text>
+            {'\n'}
+
+            <Text style={styles.impactTooltipText}>
+              {t('page.bridge.est-receiving')}{' '}
+              {formatTokenAmount(toAmount || '0')}
+              {getTokenSymbol(toToken)} ≈ {data?.toUsd}
+            </Text>
+            {'\n'}
+
+            <Text style={styles.impactTooltipText}>
+              {t('page.bridge.est-difference')} {data?.lossUsd}
+            </Text>
+          </>
+        )}
+      </WarningText>
+    </View>
+  ) : null;
+
   return (
     <View style={StyleSheet.flatten([styles.container])}>
-      <View style={{ gap: 12 }}>
-        {sourceAlwaysShow && sourceContentRender()}
+      <View style={styles.containerContent}>
+        {priceImpactContent}
 
-        {showLossInfo && (
-          <View style={[styles.lossInfo, { marginBottom: 0 }]}>
-            <View style={styles.flexRow}>
-              <Text style={styles.impactText}>
-                {t('page.bridge.price-impact')}
-              </Text>
-              <TouchableOpacity
-                style={styles.diffBox}
-                onPress={() => setLossImpactOpen(i => !i)}>
-                <Text style={styles.lossAmount}>-{data?.diff}%</Text>
-                <Animated.View
-                  style={{
-                    transform: [
-                      { rotate: !lossImpactOpen ? '180deg' : '0deg' },
-                    ],
-                  }}>
-                  <RcIconBluePolygon color={colors2024['orange-default']} />
-                </Animated.View>
-              </TouchableOpacity>
-            </View>
+        {type === 'bridge' && sourceContentRender()}
 
-            <WarningText>
-              <Text>{t('page.bridge.loss-tips', { usd: data?.lossUsd })}</Text>
-              {lossImpactOpen && (
-                <>
-                  {'\n'}
-                  {'\n'}
-                  <Text style={styles.impactTooltipText}>
-                    {t('page.bridge.est-payment')}{' '}
-                    {formatTokenAmount(amount || '0')}
-                    {getTokenSymbol(fromToken)} ≈ {data?.fromUsd}
-                  </Text>
-                  {'\n'}
-
-                  <Text style={styles.impactTooltipText}>
-                    {t('page.bridge.est-receiving')}{' '}
-                    {formatTokenAmount(toAmount || '0')}
-                    {getTokenSymbol(toToken)} ≈ {data?.toUsd}
-                  </Text>
-                  {'\n'}
-
-                  <Text style={styles.impactTooltipText}>
-                    {t('page.bridge.est-difference')} {data?.lossUsd}
-                  </Text>
-                </>
-              )}
-            </WarningText>
-          </View>
-        )}
-
-        {!insufficient && fromToken ? (
+        {!showSourceFallback && fromToken ? (
           <DirectSignGasInfo
             supportDirectSign={supportDirectSign}
             loading={!!quoteLoading}
             openShowMore={noop}
             noQuote={!sourceLogo && !sourceName}
             chainServeId={fromToken?.chain}
+            hideGasLevelInSummary
+            sourceSelector={swapGasRowSourceSelector}
+            fallbackSourceSelector={swapGasRowFallbackSourceSelector}
             onDepositPopupVisibleChange={onDepositPopupVisibleChange}
             onGasSettingsOpenChange={onGasSettingsOpenChange}
+            renderSwapQuotes={renderSwapQuotes}
+            onRefreshSwapQuotes={onRefreshSwapQuotes}
+            swapQuotesLoading={swapQuotesLoading}
+            swapGasQuoteVisible={swapGasQuoteVisible}
+            onSwapGasQuoteVisibleChange={setSwapGasQuoteVisible}
+            gasFeeLabel={
+              type === 'swap' ? t('page.signTx.gasSelectorTitle') : undefined
+            }
           />
+        ) : type === 'swap' ? (
+          sourceContentRender()
         ) : null}
 
-        {isFreeTokenPair && (
-          <ListItem name={t('page.swap.rabbyFee.title')}>
-            <View style={styles.freeFeeContainer}>
-              <Text style={styles.waivedFee}>{RABBY_FEE}</Text>
-              <RcIconSwapFree width={52} height={16} />
-            </View>
-          </ListItem>
-        )}
+        <BridgeSlippage
+          autoSuggestSlippage={autoSuggestSlippage}
+          value={slippage}
+          displaySlippage={displaySlippage}
+          onChange={onSlippageChange}
+          autoSlippage={autoSlippage}
+          isCustomSlippage={isCustomSlippage}
+          setAutoSlippage={setAutoSlippage}
+          setIsCustomSlippage={setIsCustomSlippage}
+          type={type}
+          isWrapToken={isWrapToken}
+          recommendValue={recommendValue}
+          loading={quoteLoading}
+          onOptionsOpenChange={onSlippageOptionsOpenChange}
+        />
 
-        {showSlippageWarning ? (
-          <BridgeSlippage
-            autoSuggestSlippage={autoSuggestSlippage}
-            value={slippage}
-            displaySlippage={displaySlippage}
-            onChange={onSlippageChange}
-            autoSlippage={autoSlippage}
-            isCustomSlippage={isCustomSlippage}
-            setAutoSlippage={setAutoSlippage}
-            setIsCustomSlippage={setIsCustomSlippage}
-            type={type}
-            isWrapToken={isWrapToken}
-            recommendValue={recommendValue}
-            loading={quoteLoading}
-            onOptionsOpenChange={onSlippageOptionsOpenChange}
-          />
-        ) : null}
-      </View>
-
-      <View style={styles.header}>
-        <View style={styles.dottedLine} />
-        <TouchableOpacity
-          onPress={() => setOpen(e => !e)}
-          style={styles.headerTextWrapper}>
-          <Text style={styles.headerText}>
-            {t('page.bridge.showMore.title')}
-          </Text>
-          <ArrowRightSVG
-            width={14}
-            height={14}
-            style={[styles.icon, open && { transform: [{ rotate: '-90deg' }] }]}
-            color={colors2024['neutral-secondary']}
-          />
-        </TouchableOpacity>
-        <View style={styles.dottedLine} />
-      </View>
-
-      <View style={[styles.body, !open && { height: 0 }]}>
-        {!sourceAlwaysShow && sourceContentRender()}
-
-        {!showSlippageWarning && (
-          <BridgeSlippage
-            autoSuggestSlippage={autoSuggestSlippage}
-            value={slippage}
-            displaySlippage={displaySlippage}
-            onChange={onSlippageChange}
-            autoSlippage={autoSlippage}
-            isCustomSlippage={isCustomSlippage}
-            setAutoSlippage={setAutoSlippage}
-            setIsCustomSlippage={setIsCustomSlippage}
-            type={type}
-            isWrapToken={isWrapToken}
-            recommendValue={recommendValue}
-            loading={quoteLoading}
-            onOptionsOpenChange={onSlippageOptionsOpenChange}
-          />
-        )}
-
-        {!isFreeTokenPair && (
-          <ListItem name={t('page.swap.rabbyFee.title')}>
-            <Pressable onPress={openFeePopup}>
-              <Text style={isWrapToken ? styles.wrapTokenFee : styles.fee}>
-                {isWrapToken && type === 'swap'
-                  ? t('page.swap.no-fees-for-wrap')
-                  : RABBY_FEE}
-              </Text>
+        <ListItem name={t('page.swap.rabbyFee.title')}>
+          {isRabbyFeeFree ? (
+            <Pressable onPress={openFeePopup} style={styles.feeValueSlot}>
+              <View style={styles.freeFeeContainer}>
+                <View style={styles.freeFeeLabel}>
+                  <RcIconFeeFreeLogo width={14} height={14} />
+                  <Text style={styles.freeFeeText}>
+                    {t('page.swap.rabbyFee.free')}
+                  </Text>
+                </View>
+                <RcIconFeeQuestion
+                  width={14}
+                  height={14}
+                  color={colors2024['neutral-InvertHighlight']}
+                />
+              </View>
             </Pressable>
-          </ListItem>
-        )}
+          ) : isRabbyFeeHalf ? (
+            <Pressable onPress={openFeePopup}>
+              <View style={styles.feeValueSlot}>
+                <View style={styles.halfFeeContainer}>
+                  <Text style={styles.halfOriginalFee}>{RABBY_FEE}</Text>
+                  <View style={styles.halfFeeBadge}>
+                    <Text style={styles.halfFee}>{RABBY_HALF_FEE}</Text>
+                    <RcIconFeeQuestion
+                      width={14}
+                      height={14}
+                      color={colors['green-default']}
+                    />
+                  </View>
+                </View>
+              </View>
+            </Pressable>
+          ) : (
+            <Pressable onPress={openFeePopup}>
+              <View style={styles.feeValueSlot}>
+                <Text style={styles.fee}>{RABBY_FEE}</Text>
+              </View>
+            </Pressable>
+          )}
+        </ListItem>
 
         {showMEVGuardedSwitch && (
           <ListItem name={t('page.swap.preferMEV')}>
             <AppSwitch
               value={originPreferMEVGuarded}
               onValueChange={switchPreferMEV}
-              barHeight={22}
+              barHeight={20}
               circleBorderInactiveColor={colors2024['neutral-bg-2']}
               backgroundInactive={colors2024['neutral-bg-2']}
             />
@@ -461,6 +482,26 @@ const rawAmountToBn = (
   return new BigNumber(value || 0);
 };
 
+const StableSignMainnetHeaderContent = ({
+  headerProps,
+  dynamicProps,
+}: {
+  headerProps?: React.ComponentProps<typeof SignMainnetHeaderContent>;
+  dynamicProps?: Partial<React.ComponentProps<typeof SignMainnetHeaderContent>>;
+}) => {
+  const lastHeaderPropsRef = useRef(headerProps);
+  if (headerProps) {
+    lastHeaderPropsRef.current = headerProps;
+  }
+
+  const cachedHeaderProps = lastHeaderPropsRef.current;
+  if (!cachedHeaderProps) {
+    return null;
+  }
+
+  return <SignMainnetHeaderContent {...cachedHeaderProps} {...dynamicProps} />;
+};
+
 export const DirectSignGasInfo = ({
   supportDirectSign,
   loading,
@@ -472,6 +513,15 @@ export const DirectSignGasInfo = ({
   textColor,
   onDepositPopupVisibleChange,
   onGasSettingsOpenChange,
+  renderSwapQuotes,
+  onRefreshSwapQuotes,
+  swapQuotesLoading,
+  swapGasQuoteVisible,
+  onSwapGasQuoteVisibleChange,
+  hideGasLevelInSummary,
+  sourceSelector,
+  fallbackSourceSelector,
+  gasFeeLabel,
 }: {
   supportDirectSign: boolean;
   loading: boolean;
@@ -481,10 +531,21 @@ export const DirectSignGasInfo = ({
   gasFeeListItemStyle?: RNViewProps['style'];
   gasFeeListItemInnerStyle?: RNViewProps['style'];
   textColor?: string;
+  hideGasLevelInSummary?: boolean;
+  sourceSelector?: React.ReactNode;
+  fallbackSourceSelector?: React.ReactNode;
   onDepositPopupVisibleChange?: (visible: boolean) => void;
   onGasSettingsOpenChange?: (open: boolean) => void;
+  renderSwapQuotes?: (onSelect: () => void) => React.ReactNode;
+  onRefreshSwapQuotes?: () => void;
+  swapQuotesLoading?: boolean;
+  swapGasQuoteVisible?: boolean;
+  onSwapGasQuoteVisibleChange?: (visible: boolean) => void;
+  gasFeeLabel?: React.ReactNode;
 } & RNViewProps) => {
   const { t } = useTranslation();
+  const resolvedGasFeeLabel =
+    gasFeeLabel ?? t('page.transactions.detail.GasFee');
   const { styles } = useTheme2024({ getStyle });
   const chainId = useMemo(
     () => findChainByServerID(chainServeId)?.id || 0,
@@ -969,6 +1030,15 @@ export const DirectSignGasInfo = ({
   );
 
   const showGasFeeTooHighTips = ctx?.gasFeeTooHigh && !loading && !noQuote;
+  const showGasLessNotEnoughTip = shouldShowGasLessNotEnough({
+    showGasLess,
+    isGasNotEnough,
+    payGasByGasAccount: !!payGasByGasAccount,
+    canUseGasLess,
+  });
+  const showGasAccountTip = payGasByGasAccount && !gasAccountCanPay;
+  const showGasTips =
+    showGasLessToSign || showGasLessNotEnoughTip || showGasAccountTip;
 
   useEffect(() => {
     if (manualGasMethod) {
@@ -1012,12 +1082,7 @@ export const DirectSignGasInfo = ({
         />
       ) : null}
 
-      {shouldShowGasLessNotEnough({
-        showGasLess,
-        isGasNotEnough,
-        payGasByGasAccount: !!payGasByGasAccount,
-        canUseGasLess,
-      }) ? (
+      {showGasLessNotEnoughTip ? (
         <GasLessNotEnough
           inShowMore
           nativeTokenInsufficient={isGasNotEnough}
@@ -1036,7 +1101,7 @@ export const DirectSignGasInfo = ({
         />
       ) : null}
 
-      {payGasByGasAccount && !gasAccountCanPay ? (
+      {showGasAccountTip ? (
         <GasAccountTips
           inShowMore
           gasAccountAddress={accountId || config?.account.address || ''}
@@ -1057,70 +1122,103 @@ export const DirectSignGasInfo = ({
     </>
   );
 
+  const gasSelectorHeaderProps: React.ComponentProps<
+    typeof SignMainnetHeaderContent
+  > | null =
+    showGasContent && currentTx && currentAccount
+      ? {
+          textColor,
+          gasFeeListItemStyle,
+          gasFeeListItemInnerStyle,
+          fixedMode: true,
+          defaultFixedModeOnCurrentChain: fixedModeOnCurrentChain,
+          tx: currentTx,
+          gasAccountCost,
+          gasMethod: effectiveGasMethod,
+          onChangeGasMethod: handleChangeGasMethod,
+          onAutoChangeGasMethod: handleAutoChangeGasMethod,
+          disableAutoGasLevelSwitch: !!manualGasMethod,
+          showGasMethodShortcut: false,
+          hideGasLevelInSummary,
+          rightPrefix: sourceSelector,
+          disabled: false,
+          isReady,
+          gasLimit: ctx?.txs?.[0]?.gas,
+          gasList: ctx?.gasList || [],
+          selectedGas: ctx?.selectedGas || null,
+          version: txsResult?.[0]?.preExecResult?.pre_exec_version || 'v0',
+          chainId: ctx?.chainId || chainId,
+          onChange: handleGasChange,
+          nonce: ctx?.txsCalc?.[0]?.tx?.nonce || '0x1',
+          isSpeedUp: !!isSpeedUp,
+          isCancel: !!isCancel,
+          is1559: !!ctx?.is1559,
+          isHardware: false,
+          nativeTokenBalance: ctx?.nativeTokenBalance || '0x0',
+          gasToken,
+          showTempoGasTokenSelector,
+          tempoGasTokenList,
+          tempoPreferredFeeTokenId: ctx?.tempoPreferredFeeTokenId,
+          onSelectTempoGasToken: handleSelectTempoGasToken,
+          tempoGasTokenLoading,
+          gasPriceMedian: ctx?.gasPriceMedian || null,
+          gas: totalGasCost,
+          gasCalcMethod,
+          checkGasLevelIsNotEnough,
+          account: currentAccount,
+          gasCostUsdStr: formatGasHeaderUsdValue(
+            totalGasCost.gasCostUsd.toString(10),
+          ),
+          nativeTokenInsufficient: isGasNotEnough,
+          freeGasAvailable: canUseGasLess,
+          onGasSettingsOpenChange,
+          renderSwapQuotes,
+          onRefreshSwapQuotes,
+          swapQuotesLoading,
+          swapGasInteractionDisabled: false,
+          swapGasQuoteVisible,
+          onSwapGasQuoteVisibleChange,
+          gasFeeLabel: resolvedGasFeeLabel,
+        }
+      : null;
+  const keepCombinedGasHeaderMounted =
+    !!renderSwapQuotes && !!swapGasQuoteVisible;
+
   return (
     <View style={style}>
-      {showGasContent && currentTx && currentAccount ? (
-        <SignMainnetHeaderContent
-          textColor={textColor}
-          gasFeeListItemStyle={gasFeeListItemStyle}
-          gasFeeListItemInnerStyle={gasFeeListItemInnerStyle}
-          fixedMode
-          defaultFixedModeOnCurrentChain={fixedModeOnCurrentChain}
-          tx={currentTx}
-          gasAccountCost={gasAccountCost}
-          gasMethod={effectiveGasMethod}
-          onChangeGasMethod={handleChangeGasMethod}
-          onAutoChangeGasMethod={handleAutoChangeGasMethod}
-          disableAutoGasLevelSwitch={!!manualGasMethod}
-          showGasMethodShortcut={false}
-          disabled={false}
-          isReady={isReady}
-          gasLimit={ctx?.txs?.[0]?.gas}
-          gasList={ctx?.gasList || []}
-          selectedGas={ctx?.selectedGas || null}
-          version={txsResult?.[0]?.preExecResult?.pre_exec_version || 'v0'}
-          chainId={ctx?.chainId || chainId}
-          onChange={handleGasChange}
-          nonce={ctx?.txsCalc?.[0]?.tx?.nonce || '0x1'}
-          isSpeedUp={!!isSpeedUp}
-          isCancel={!!isCancel}
-          is1559={!!ctx?.is1559}
-          isHardware={false}
-          nativeTokenBalance={ctx?.nativeTokenBalance || '0x0'}
-          gasToken={gasToken}
-          showTempoGasTokenSelector={showTempoGasTokenSelector}
-          tempoGasTokenList={tempoGasTokenList}
-          tempoPreferredFeeTokenId={ctx?.tempoPreferredFeeTokenId}
-          onSelectTempoGasToken={handleSelectTempoGasToken}
-          tempoGasTokenLoading={tempoGasTokenLoading}
-          gasPriceMedian={ctx?.gasPriceMedian || null}
-          gas={totalGasCost}
-          gasCalcMethod={gasCalcMethod}
-          checkGasLevelIsNotEnough={checkGasLevelIsNotEnough}
-          account={currentAccount}
-          gasCostUsdStr={formatGasHeaderUsdValue(
-            totalGasCost.gasCostUsd.toString(10),
-          )}
-          nativeTokenInsufficient={isGasNotEnough}
-          freeGasAvailable={canUseGasLess}
-          onGasSettingsOpenChange={onGasSettingsOpenChange}
+      {showGasContent || keepCombinedGasHeaderMounted ? (
+        <StableSignMainnetHeaderContent
+          headerProps={gasSelectorHeaderProps || undefined}
+          dynamicProps={{
+            onGasSettingsOpenChange,
+            renderSwapQuotes,
+            onRefreshSwapQuotes,
+            swapQuotesLoading,
+            swapGasInteractionDisabled: !showGasContent,
+            swapGasQuoteVisible,
+            onSwapGasQuoteVisibleChange,
+            rightPrefix: sourceSelector,
+          }}
         />
       ) : (
         <ListItem
-          name={<>{'Gas Fee'}</>}
+          name={<>{resolvedGasFeeLabel}</>}
           style={gasFeeListItemStyle}
           innerStyle={gasFeeListItemInnerStyle}>
-          {!loading && noQuote ? (
-            <Text style={styles.noQuotePlaceholder}>-</Text>
-          ) : (
-            <CustomSkeleton
-              style={{
-                width: 131,
-                height: 24,
-                borderRadius: 100,
-              }}
-            />
-          )}
+          <View style={styles.previewValueSlot}>
+            {fallbackSourceSelector ?? sourceSelector}
+            {!loading && noQuote ? (
+              <Text style={styles.noQuotePlaceholder}>-</Text>
+            ) : (
+              <CustomSkeleton
+                style={
+                  hideGasLevelInSummary
+                    ? styles.infoCardGasSkeleton
+                    : styles.gasSkeleton
+                }
+              />
+            )}
+          </View>
         </ListItem>
       )}
       {showGasFeeTooHighTips ? (
@@ -1128,7 +1226,7 @@ export const DirectSignGasInfo = ({
           {t('page.bridge.gasFeeTooHight')}
         </WarningText>
       ) : null}
-      {showGasContent ? (
+      {showGasContent && showGasTips ? (
         <View style={{ marginTop: 6 }}>{gasTipsComponent()}</View>
       ) : null}
     </View>
@@ -1203,39 +1301,17 @@ export const RecommendFromToken = ({
 };
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
-  container: { marginHorizontal: 24, marginTop: 12 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    marginTop: 12,
-    paddingHorizontal: 12,
-    justifyContent: 'center',
+  container: { marginHorizontal: 24, marginTop: 10 },
+  containerContent: {
+    gap: 10,
+    paddingHorizontal: 6,
   },
-  dottedLine: {
-    flex: 1,
-    borderBottomWidth: 1,
-    borderColor: colors2024['neutral-line'],
-    opacity: 0.5,
-    marginHorizontal: -12,
-  },
-
   impactTooltipText: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
-  },
-  icon: {
-    marginLeft: 4,
-    transform: [{ rotate: '90deg' }],
-  },
-  headerTextWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    // opacity: 0.3,
   },
   listItemText: {
     fontSize: 14,
@@ -1244,14 +1320,6 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     lineHeight: 18,
     color: colors2024['neutral-secondary'],
   },
-  headerText: {
-    fontSize: 16,
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-    lineHeight: 20,
-    color: colors2024['neutral-secondary'],
-  },
-  body: { overflow: 'hidden', gap: 12 },
   lossInfo: { marginBottom: 12, fontSize: 12, color: '#5B5B5B' },
   flexRow: { flexDirection: 'row', justifyContent: 'space-between' },
   lossAmount: {
@@ -1289,8 +1357,8 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     // borderRadius: 8,
     // overflow: 'hidden',
   },
-  listItem: {},
   listItemContainer: {
+    height: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -1310,28 +1378,61 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     fontSize: 16,
     fontStyle: 'normal',
     fontWeight: '700',
-    lineHeight: 20,
-  },
-  wrapTokenFee: {
-    color: colors2024['neutral-foot'],
-    textAlign: 'right',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontStyle: 'normal',
-    fontWeight: '500',
-    lineHeight: 20,
+    lineHeight: 18,
   },
   freeFeeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 1,
+    borderRadius: 5,
+    backgroundColor: colors['green-default'],
+    overflow: 'hidden',
+  },
+  freeFeeLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  freeFeeText: {
+    color: colors2024['neutral-InvertHighlight'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
+  },
+  halfFeeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
   },
-  waivedFee: {
+  halfFeeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+    paddingHorizontal: 6,
+    paddingVertical: 0,
+    borderWidth: 1,
+    borderColor: colors['green-default'],
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  halfFee: {
+    color: colors['green-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
+  },
+  halfOriginalFee: {
     color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '400',
-    lineHeight: 20,
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
     textDecorationLine: 'line-through',
   },
   recommendFromToken: {
@@ -1403,6 +1504,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    height: 20,
   },
 
   afterLabel: {
@@ -1413,6 +1515,34 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   noQuotePlaceholder: {
     color: colors2024['neutral-foot'],
     fontSize: 12,
+    lineHeight: 18,
+  },
+  previewValueSlot: {
+    height: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  feeValueSlot: {
+    height: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sourceSkeleton: {
+    width: 60,
+    height: 20,
+    borderRadius: 12,
+  },
+  gasSkeleton: {
+    width: 131,
+    height: 20,
+    borderRadius: 100,
+  },
+  infoCardGasSkeleton: {
+    width: 60,
+    height: 20,
+    borderRadius: 12,
   },
   arrowIcon: {
     transform: [{ rotate: '-90deg' }],
@@ -1429,39 +1559,59 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   },
 
   bestQuoteWrapper: {
-    borderColor: colors2024['brand-default'],
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    borderRadius: 4,
+    height: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    overflow: 'hidden',
-  },
-  bestQuoteTag: {
-    left: -StyleSheet.hairlineWidth * 2,
   },
   bestTagWrapper: {
-    position: 'absolute',
-    top: StyleSheet.hairlineWidth * 2,
-    left: 7,
-    height: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
+    width: 38,
+    height: 20,
+    borderTopLeftRadius: 4,
+    borderBottomLeftRadius: 4,
+    overflow: 'hidden',
     justifyContent: 'center',
+    paddingLeft: 3,
+    zIndex: 1,
+  },
+  bestQuoteTag: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    transform: [{ rotate: '180deg' }],
   },
   bestText: {
     color: colors2024['neutral-InvertHighlight'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    fontStyle: 'normal',
+    fontSize: 14,
+    fontStyle: 'italic',
     fontWeight: '500',
-    lineHeight: 16,
+    lineHeight: 18,
   },
   bestRightWrapper: {
+    height: 20,
+    marginLeft: -7,
     flexDirection: 'row',
-    gap: 4,
-    paddingRight: 6,
-    paddingLeft: 2,
+    gap: 2,
+    paddingRight: 4,
+    paddingLeft: 11,
     alignItems: 'center',
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderRightWidth: 1,
+    borderColor: colors2024['brand-default'],
+    borderTopRightRadius: 4,
+    borderBottomRightRadius: 4,
+  },
+  bestSourceLogo: {
+    width: 12,
+    height: 12,
+    borderRadius: 90,
+  },
+  bestSourceName: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
+    color: colors2024['brand-default'],
   },
 }));
 

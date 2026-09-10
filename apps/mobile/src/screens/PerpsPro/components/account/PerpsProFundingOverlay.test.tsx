@@ -6,9 +6,12 @@ import {
   waitFor,
 } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import { createStore } from 'zustand/vanilla';
 
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+
+jest.mock('@/core/native/utils', () => ({ IS_ANDROID: true }));
 
 const mockHandleDeposit = jest.fn();
 const mockHandleStableCoinOrder = jest.fn();
@@ -21,6 +24,7 @@ const mockUsePerpsFundingActions = jest.fn((_options?: unknown) => ({
 }));
 let mockDepositPopupProps: Record<string, unknown> | null = null;
 let mockSwapPopupProps: Record<string, unknown> | null = null;
+let mockWithdrawPopupProps: Record<string, unknown> | null = null;
 const mockWithdrawBalanceStore = createStore(() => ({ availableBalance: 0 }));
 const mockWithdrawBalanceRenders: number[] = [];
 
@@ -47,15 +51,15 @@ jest.mock('@/screens/Perps/components/PerpsWithdrawPopup', () => {
     useActivityStore: useMockActivityStore,
   } = require('@/hooks/storeActivity/useActivityStore');
   return {
-    PerpsWithdrawPopup: ({
-      onWithdraw,
-    }: {
+    PerpsWithdrawPopup: (props: {
       onWithdraw: (
         amount: string,
         isHypeWithdraw: boolean,
         targetAsset: string,
       ) => Promise<unknown>;
     }) => {
+      mockWithdrawPopupProps = props;
+      const { onWithdraw } = props;
       const availableBalance = useMockActivityStore(
         mockWithdrawBalanceStore,
         (state: { availableBalance: number }) => state.availableBalance,
@@ -107,10 +111,30 @@ const renderOverlay = (
   );
 
 describe('PerpsProFundingOverlay', () => {
+  it.each(['deposit', 'withdraw'] as const)(
+    'uses stable Android font metrics only for the %s amount',
+    mode => {
+      renderOverlay(mode);
+      const props =
+        mode === 'deposit' ? mockDepositPopupProps : mockWithdrawPopupProps;
+      const style = StyleSheet.flatten([
+        { fontSize: 28, lineHeight: 36, minHeight: 52 },
+        props?.inputTextStyle as object,
+      ]);
+      expect(style).toMatchObject({
+        fontSize: 28,
+        minHeight: 52,
+        includeFontPadding: false,
+        textAlignVertical: 'center',
+      });
+      expect(style.lineHeight).toBeUndefined();
+    },
+  );
   beforeEach(() => {
     jest.clearAllMocks();
     mockDepositPopupProps = null;
     mockSwapPopupProps = null;
+    mockWithdrawPopupProps = null;
     mockWithdrawBalanceRenders.length = 0;
   });
 
@@ -161,6 +185,26 @@ describe('PerpsProFundingOverlay', () => {
       withdrawModeValidation: 'live',
     });
   });
+
+  it.each(['deposit', 'withdraw', 'swap'] as const)(
+    'opts the shared %s popup into Pro rounded typography',
+    mode => {
+      renderOverlay(mode);
+
+      const popupProps =
+        mode === 'deposit'
+          ? mockDepositPopupProps
+          : mode === 'withdraw'
+          ? mockWithdrawPopupProps
+          : mockSwapPopupProps;
+      expect(popupProps?.inputTextStyle).toMatchObject({
+        fontFamily: expect.stringContaining('Rounded'),
+      });
+      expect(popupProps?.tooltipTextStyle).toMatchObject({
+        fontFamily: expect.stringContaining('Rounded'),
+      });
+    },
+  );
 
   it('keeps the Pro withdraw popup open after a handled failure', async () => {
     mockHandleWithdraw.mockResolvedValueOnce(false);

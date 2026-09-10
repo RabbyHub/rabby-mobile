@@ -70,6 +70,43 @@ describe('PerpsProPositionTpSlHeader', () => {
     ).toMatchObject({ gap: 8, marginTop: 16 });
     expect(screen.getByText('BTCUSDC')).toBeTruthy();
     expect(screen.getByText('xyz')).toBeTruthy();
+    const sourceTagStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-close-market-tag').props.style,
+    );
+    expect(sourceTagStyle).toMatchObject({
+      backgroundColor: 'neutral-bg-5',
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    });
+    expect(sourceTagStyle.borderColor).toBeUndefined();
+    expect(sourceTagStyle.borderWidth).toBeUndefined();
+    expect(
+      StyleSheet.flatten(screen.getByText('xyz').props.style),
+    ).toMatchObject({
+      color: 'neutral-foot',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    });
+    const directionTagStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-position-tpsl-direction-main').props.style,
+    );
+    expect(directionTagStyle).toMatchObject({
+      backgroundColor: 'green-light-1',
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    });
+    expect(directionTagStyle.borderWidth).toBeUndefined();
+    expect(
+      StyleSheet.flatten(screen.getByText('long 10x').props.style),
+    ).toMatchObject({
+      color: 'green-default',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    });
     expect(screen.getByText('100.00')).toBeTruthy();
     expect(screen.getByText('101.25')).toBeTruthy();
     expect(screen.queryByText('99.00')).toBeNull();
@@ -134,5 +171,30 @@ describe('PerpsProPositionTpSlHeader', () => {
     expect(screen.getByText('BTCUSDC')).toBeTruthy();
     expect(screen.queryByText('Perp')).toBeNull();
     expect(screen.queryByTestId('perps-pro-close-market-tag')).toBeNull();
+  });
+
+  it('uses the negative direction-leverage contract for a Short summary', () => {
+    render(
+      <PerpsProPositionTpSlHeader
+        markPrice="101.25"
+        market={{ ...market, sourceTag: null }}
+        position={{ ...position, direction: 'short' }}
+        variant="summary"
+      />,
+    );
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-direction-summary').props
+          .style,
+      ),
+    ).toMatchObject({
+      backgroundColor: 'red-light-1',
+      borderRadius: 4,
+      paddingVertical: 1,
+    });
+    expect(
+      StyleSheet.flatten(screen.getByText('short 10x').props.style),
+    ).toMatchObject({ color: 'red-default', fontSize: 12, lineHeight: 16 });
   });
 });

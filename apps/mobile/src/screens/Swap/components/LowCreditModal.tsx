@@ -31,7 +31,6 @@ interface LowCreditModalProps {
   visible: boolean;
   onConfirm?: () => void;
   onCancel?: () => void;
-  className?: string;
   token?: TokenItem;
 }
 

@@ -99,14 +99,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   text: {
     color: colors2024['neutral-foot'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '400',
     lineHeight: 16,
   },
   activeText: {
     color: colors2024['neutral-body'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,

@@ -1,11 +1,18 @@
 import {
+  act,
   fireEvent,
   render,
   screen,
   waitFor,
 } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { Keyboard, StyleSheet } from 'react-native';
+import { perpsProKeyboardSession } from '../common/perpsProKeyboardSession';
+
+jest.mock('@/core/native/utils', () => ({ IS_ANDROID: true }));
+jest.mock('react-native-reanimated', () => ({
+  useAnimatedReaction: jest.fn(),
+}));
 
 const mockOpenFieldExplanation = jest.fn();
 const mockUsePerpsLatestTrade = jest.fn();
@@ -97,6 +104,13 @@ jest.mock('@/utils/styles', () => ({
 }));
 
 jest.mock('@gorhom/bottom-sheet', () => ({
+  ANIMATION_STATUS: { STOPPED: 2 },
+  SCROLLABLE_STATUS: { UNLOCKED: 1 },
+  useBottomSheetInternal: () => ({
+    animatedAnimationState: { value: { status: 2 } },
+    animatedScrollableStatus: { value: 1 },
+  }),
+  BottomSheetScrollView: require('react-native').ScrollView,
   BottomSheetTextInput: require('react-native').TextInput,
   BottomSheetView: require('react-native').View,
 }));
@@ -206,6 +220,49 @@ const market = {
 };
 
 describe('PerpsProClosePositionSheet', () => {
+  it('keeps Android Amount editing mounted while reserving the Done bar', () => {
+    const show = jest.fn();
+    const listener = jest
+      .spyOn(Keyboard, 'addListener')
+      .mockImplementation((event, callback) => {
+        if (event === 'keyboardDidShow') {
+          show.mockImplementation(callback);
+        }
+        return { remove: jest.fn() };
+      });
+    perpsProKeyboardSession.setEnabled(true);
+    const view = render(
+      <PerpsProClosePositionSheet
+        amountUnit="base"
+        market={market}
+        position={position}
+        onClose={jest.fn()}
+        onReview={jest.fn()}
+        visible
+      />,
+    );
+    const input = screen.getByLabelText('Amount');
+    fireEvent(input, 'focus');
+    const owner = perpsProKeyboardSession.getSnapshot();
+    fireEvent.changeText(input, '0.5');
+    act(() => show({ endCoordinates: { height: 300, screenY: 500 } }));
+    expect(screen.getByTestId('close-position-sheet').props.snapPoints).toEqual(
+      [558],
+    );
+    expect(perpsProKeyboardSession.getSnapshot()?.id).toBe(owner?.id);
+    expect(owner?.sheetId).toBeDefined();
+    expect(screen.getByLabelText('Amount').props.value).toBe('0.5');
+    expect(StyleSheet.flatten(input.props.style)).toMatchObject({
+      height: 40,
+      fontSize: 14,
+      includeFontPadding: false,
+      textAlignVertical: 'center',
+    });
+    expect(StyleSheet.flatten(input.props.style).lineHeight).toBeUndefined();
+    view.unmount();
+    perpsProKeyboardSession.setEnabled(false);
+    listener.mockRestore();
+  });
   beforeEach(() => {
     jest.clearAllMocks();
     mockLatestTradePrice = '60001';
@@ -236,6 +293,36 @@ describe('PerpsProClosePositionSheet', () => {
       'primary',
     );
     expect(screen.getByText('xyz')).toBeTruthy();
+    const sourceTagStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-close-market-tag').props.style,
+    );
+    expect(sourceTagStyle).toMatchObject({
+      backgroundColor: 'neutral-bg-5',
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    });
+    expect(sourceTagStyle.borderColor).toBeUndefined();
+    expect(sourceTagStyle.borderWidth).toBeUndefined();
+    const directionTagStyle = StyleSheet.flatten(
+      screen.getByText('Long 5x').parent?.parent?.props.style,
+    );
+    expect(directionTagStyle).toMatchObject({
+      backgroundColor: 'green-light-1',
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    });
+    expect(directionTagStyle.borderColor).toBeUndefined();
+    expect(directionTagStyle.borderWidth).toBeUndefined();
+    expect(
+      StyleSheet.flatten(screen.getByText('Long 5x').props.style),
+    ).toMatchObject({
+      color: 'green-default',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    });
     expect(screen.getByText('Entry Price (USDC)')).toBeTruthy();
     expect(screen.getByText('Mark Price (USDC)')).toBeTruthy();
     expect(screen.getByDisplayValue('100% (≈1.0000)')).toBeTruthy();

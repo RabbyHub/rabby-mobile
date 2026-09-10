@@ -519,7 +519,7 @@ export default function AppNavigation() {
     return (
       <AutoLockView.ForAppNav
         style={{ flex: 1, backgroundColor: colors['neutral-bg-2'] }}>
-        <AppStatusBar __isTop__ />
+        <AppStatusBar />
       </AutoLockView.ForAppNav>
     );
   }
@@ -527,7 +527,7 @@ export default function AppNavigation() {
   return (
     <AutoLockView.ForAppNav
       style={{ flex: 1, backgroundColor: colors['neutral-bg-2'] }}>
-      <AppStatusBar __isTop__ />
+      <AppStatusBar />
       <GlobalBottomSheetModal />
       <GlobalBottomSheetModal2024 />
       {/* <GlobalAccountSwitcherStub /> */}

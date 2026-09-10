@@ -27,6 +27,23 @@ describe('regression scenario command', () => {
     });
   });
 
+  it('parses the non-production high-cardinality fixture scenario', () => {
+    const result = parseRegressionScenarioCommand(
+      `${BASE_URL}&scenario=high-cardinality-assets&action=start&runId=high-cardinality-run&fixture=watch-addresses-a&addressCount=50`,
+    );
+
+    expect(result).toEqual({
+      matched: true,
+      command: expect.objectContaining({
+        scenario: 'high-cardinality-assets',
+        fixture: 'watch-addresses-a',
+        params: {
+          addressCount: '50',
+        },
+      }),
+    });
+  });
+
   it.each(['password', 'privateKey', 'mnemonic', 'seed_phrase'])(
     'rejects the sensitive query key %s',
     key => {

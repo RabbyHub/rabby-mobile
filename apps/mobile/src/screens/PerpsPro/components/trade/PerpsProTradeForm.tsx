@@ -1,5 +1,7 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcIconAvailableAdd from '@/assets2024/icons/perps/PerpsProAvailableAdd.svg';
 import RcIconAvailableSwap from '@/assets2024/icons/perps/PerpsProAvailableSwap.svg';
+import { PERPS_MINI_USD_VALUE } from '@/constant/perps';
 import { Text, type TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -10,14 +12,15 @@ import { useTranslation } from 'react-i18next';
 import type { PerpsProBboStrategy } from '../../model/bbo';
 import {
   getPerpsProPriceInputMaxDecimals,
+  resolvePerpsProMinimumOrderAmount,
   sanitizePerpsProPriceEditingInput,
   sanitizePerpsProPriceInput,
   type PerpsProTradeTif,
 } from '../../model/trade';
+import { getPerpsProTradeDisplayReferencePrice } from '../../model/tradeProjection';
 import type { PerpsProTradeController } from '../../scene/usePerpsProTrade';
 import { formatPerpsProDecimal } from '../../utils/format';
 import { PerpsProSelectCaret } from '../common/PerpsProSelectCaret';
-import { PERPS_PRO_ISOLATED_TEXT_STYLE } from '../common/perpsProVisual';
 import { usePerpsProDismissKeyboard } from '../common/usePerpsProDismissKeyboard';
 import { PerpsProLeverageSheet } from '../positions/PerpsProLeverageSheet';
 import { PerpsProBboSheet } from './PerpsProBboSheet';
@@ -71,6 +74,8 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
   const [sheet, setSheet] = useState<Sheet>(null);
   const amountInputRef = useRef<TextInput>(null);
   const triggerPriceInputRef = useRef<TextInput>(null);
+  const requestReviewRef = useRef(controller.requestReview);
+  requestReviewRef.current = controller.requestReview;
   const dismissKeyboardThen = usePerpsProDismissKeyboard();
   const openSheet = useCallback(
     (nextSheet: Exclude<Sheet, null>) =>
@@ -95,6 +100,27 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
     (value: string) => sanitizePerpsProPriceInput(value, priceSzDecimals),
     [priceSzDecimals],
   );
+  const getKeyboardMinimum = useCallback(() => {
+    if (form.reduceOnly || !market) {
+      return null;
+    }
+    const minimum = resolvePerpsProMinimumOrderAmount({
+      minimumQuoteAmount: PERPS_MINI_USD_VALUE,
+      price:
+        getPerpsProTradeDisplayReferencePrice({
+          form,
+          marketPrice:
+            market.marketData.midPx || market.marketData.markPx || '',
+        }) || '',
+      szDecimals: market.marketData.szDecimals,
+    });
+    if (!minimum) {
+      return null;
+    }
+    return form.amountUnit === 'base'
+      ? `${minimum.minimumBaseSize} ${market.displayBase}`
+      : `${minimum.displayQuoteAmount} ${market.quoteAsset}`;
+  }, [form, market]);
   const quoteAsset = market?.quoteAsset ?? '-';
   const amountLabel = `${t('page.perps.pro.trade.amount')}(${
     controller.amountUnitLabel
@@ -123,7 +149,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
         amountInputRef.current?.focus();
         return;
       }
-      dismissKeyboardThen(() => controller.requestReview(side));
+      dismissKeyboardThen(() => requestReviewRef.current(side));
     },
     [controller, dismissKeyboardThen],
   );
@@ -153,19 +179,14 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
             }}
             showCaret={false}
             style={styles.flexItem}
-            textStyle={
-              configurationReady && controller.marginMode === 'isolated'
-                ? PERPS_PRO_ISOLATED_TEXT_STYLE
-                : undefined
-            }
           />
           <PerpsProTradeSelect
             disabled={!configurationReady}
             label={configurationReady ? `${controller.leverage}x` : '--'}
             onPress={() => openSheet('leverage')}
+            textStyle={PERPS_PRO_NUMBER_STYLE}
             showCaret={false}
             style={styles.flexItem}
-            useReadableTextVariant={false}
           />
         </View>
         <PerpsProTradeSelect
@@ -252,11 +273,13 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
                   ? form.conditionalLimitPrice
                   : ''
               }
+              displayMarketPrice={form.conditionalExecution === 'market'}
               variant="conditionalExecution"
             />
           </>
         ) : null}
         <PerpsProTradeAmountField
+          getKeyboardMinimum={getKeyboardMinimum}
           label={amountLabel}
           maxDecimals={controller.amountDecimals}
           onBlur={controller.endAmountEntry}
@@ -290,14 +313,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
       <View style={styles.optionsGroup}>
         <PerpsProTradeSummaryRow
           label={t('page.perps.pro.trade.available')}
-          onPressValue={
-            configurationReady
-              ? () =>
-                  dismissKeyboardThen(() => {
-                    onAddFunds();
-                  })
-              : undefined
-          }
+          onPressValue={configurationReady ? onAddFunds : undefined}
           trailing={
             addFundsMode === 'swap' ? (
               <RcIconAvailableSwap
@@ -518,8 +534,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   flexItem: { flex: 1, minWidth: 0 },
   optionsGroup: { gap: 8 },
   convertedAmount: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
     marginTop: -4,
@@ -531,7 +548,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
   },
   tif: { alignItems: 'center', flexDirection: 'row', gap: 4, height: 18 },
-  tifText: { color: colors2024['neutral-body'], fontSize: 12, lineHeight: 16 },
+  tifText: {
+    color: colors2024['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+  },
   orderGroups: { gap: 16 },
   orderGroup: { gap: 8 },
   orderSummary: { gap: 4 },

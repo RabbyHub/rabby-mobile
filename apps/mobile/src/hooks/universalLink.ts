@@ -60,6 +60,12 @@ import {
 import { apisHomeTabIndex, UnlockUIManager } from './navigation';
 import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 import { switchSceneCurrentAccount } from './accountsSwitcher';
+import {
+  setCurrentKeychainVersion,
+  type CurrentKeychainVersion,
+} from './appSettings';
+import { parseKeychainVersionDeepLinkValue } from '@/core/apis/keychainVersionShared';
+import RNHelpers from '@/core/native/RNHelpers';
 
 const nextAppLinkRef = {
   current: '' as string,
@@ -98,10 +104,12 @@ type OnParseUrlAndProcessAction = (payload: {
     | typeof RootNames.DebugLogViewer
     | typeof RootNames.StartupPerformanceLogViewer
     | typeof RootNames.DevDataSQLite
+    | typeof RootNames.DevDataKeychain
     | typeof RootNames.DevSwitches;
   testkitParams?: {
     tab?: 'overview' | 'debug';
     appLaunchLock?: boolean;
+    keychainVersion?: CurrentKeychainVersion;
   };
   debugDbSyncPolicy?: {
     resetWritePolicyOverride?: boolean;
@@ -121,6 +129,7 @@ const NON_PRODUCTION_TESTKIT_SCREENS = {
   DebugLogViewer: RootNames.DebugLogViewer,
   StartupPerformanceLogViewer: RootNames.StartupPerformanceLogViewer,
   DevDataSQLite: RootNames.DevDataSQLite,
+  DevDataKeychain: RootNames.DevDataKeychain,
   DevSwitches: RootNames.DevSwitches,
 } as const;
 
@@ -175,17 +184,24 @@ function parseNonProductionTestkitLink(appLink: string) {
       : appLaunchLockRaw === 'disabled'
       ? false
       : undefined;
+  const keychainVersion = parseKeychainVersionDeepLinkValue(
+    urlInfo.searchParams.get('keychainVersion'),
+  );
 
   return {
     type: 'open-testkit-screen',
     testkitScreen: screen,
     testkitParams:
-      tabRaw === 'debug' || tabRaw === 'overview' || appLaunchLock !== undefined
+      tabRaw === 'debug' ||
+      tabRaw === 'overview' ||
+      appLaunchLock !== undefined ||
+      keychainVersion !== null
         ? {
             ...(tabRaw === 'debug' || tabRaw === 'overview'
               ? { tab: tabRaw }
               : {}),
             ...(appLaunchLock !== undefined ? { appLaunchLock } : {}),
+            ...(keychainVersion ? { keychainVersion } : {}),
           }
         : undefined,
   } satisfies Parameters<OnParseUrlAndProcessAction>[0];
@@ -665,6 +681,23 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
         console.info('[useUniversalLinkOnTop] App Launch Lock set by testkit', {
           enabled: payload.testkitParams.appLaunchLock,
         });
+      }
+      if (
+        isNonPublicProductionEnv &&
+        payload.testkitScreen === RootNames.DevDataKeychain &&
+        payload.testkitParams?.keychainVersion
+      ) {
+        const appliedVersion = setCurrentKeychainVersion(
+          payload.testkitParams.keychainVersion,
+        );
+        console.info(
+          '[useUniversalLinkOnTop] Keychain version set for next cold start',
+          { appliedVersion },
+        );
+        setTimeout(() => {
+          RNHelpers.forceExitApp();
+        }, 100);
+        return;
       }
       dispatchWhenNavigationReady(
         StackActions.push(RootNames.StackTestkits, {

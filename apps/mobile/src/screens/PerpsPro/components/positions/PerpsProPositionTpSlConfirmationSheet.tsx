@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcCheckboxEmptyCC from '@/assets2024/icons/common/checkbox-empty-cc.svg';
 import RcCheckboxFilledBrand from '@/assets2024/icons/common/checkbox-filled-brand.svg';
 import AutoLockView from '@/components/AutoLockView';
@@ -276,7 +277,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   container: { paddingHorizontal: 15, paddingTop: 8 },
   title: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,
@@ -297,14 +298,14 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   },
   takeProfit: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
   },
   stopLoss: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
@@ -316,27 +317,30 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   },
   detailLabel: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },
   detailValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
     maxWidth: '64%',
     textAlign: 'right',
   },
   positiveValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['green-default'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },
   negativeValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['red-default'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },
@@ -351,7 +355,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   checkboxText: {
     color: colors2024['neutral-body'],
     flex: 1,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },

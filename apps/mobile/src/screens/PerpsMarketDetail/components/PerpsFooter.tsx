@@ -47,7 +47,7 @@ export const PerpsFooter: React.FC<{
             <View style={styles.btnContainer}>
               <Button
                 type="hyperliquid-light"
-                buttonStyle={{ height: BOTTOM_BUTTON_DOUBLE_HEIGHT }}
+                height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
                 title={t('page.perpsDetail.action.add', {
                   direction,
                 })}
@@ -58,7 +58,7 @@ export const PerpsFooter: React.FC<{
             <View style={styles.btnContainer}>
               <Button
                 type="hyperliquid"
-                buttonStyle={{ height: BOTTOM_BUTTON_DOUBLE_HEIGHT }}
+                height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
                 title={t('page.perpsDetail.action.close')}
                 onPress={onClosePress}
                 titleStyle={styles.titleFontsize}
@@ -85,8 +85,8 @@ export const PerpsFooter: React.FC<{
             <Button
               type="primary"
               titleStyle={styles.titleFontsize}
+              height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
               buttonStyle={{
-                height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
                 backgroundColor: colors2024['green-default'],
               }}
               title={t('page.perpsDetail.action.long')}
@@ -97,8 +97,8 @@ export const PerpsFooter: React.FC<{
             <Button
               type="primary"
               titleStyle={styles.titleFontsize}
+              height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
               buttonStyle={{
-                height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
                 backgroundColor: colors2024['red-default'],
               }}
               title={t('page.perpsDetail.action.short')}
@@ -133,7 +133,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   titleFontsize: {
     fontSize: 18,
-    lineHeight: 22,
   },
   btnGroup: {
     display: 'flex',

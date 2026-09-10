@@ -7,7 +7,7 @@ import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 
 import FooterComponentForUpgrade from './FooterComponentForUpgrade';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { MarkdownInWebView } from '../Markdown/InWebView';
+import { MarkdownNative } from '../Markdown/MarkdownNative';
 import AutoLockView from '../AutoLockView';
 import { Text } from '@/components/Typography';
 
@@ -41,7 +41,7 @@ export function TipUpgradeModalInner() {
         <View
           // contentInsetAdjustmentBehavior="automatic"
           style={[styles.bodyTextScrollerContainer]}>
-          <MarkdownInWebView markdown={remoteVersion.changelog} />
+          <MarkdownNative markdown={remoteVersion.changelog} />
         </View>
       </View>
       <FooterComponentForUpgrade style={[styles.footerComponent]} />
