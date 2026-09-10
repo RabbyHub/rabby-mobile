@@ -7,12 +7,22 @@ import { eventBus, EVENT_ACTIVE_WINDOW } from '@/utils/events';
 import React, { useCallback } from 'react';
 import { useApprovalPopup } from './useApprovalPopup';
 import { useDeviceConnect } from './useDeviceConnect';
+import { ApprovalIdentityContext } from './approvalIdentity';
 
-export const useApproval = () => {
+export const useApproval = (security?: { canResolve: () => boolean }) => {
+  const identity = React.useContext(ApprovalIdentityContext);
+  const bound = !!security;
   const getApproval: () => Promise<Approval | null> = useCallback(async () => {
     const approval = await notificationServiceApi.getApproval();
+    if (
+      bound &&
+      (!identity ||
+        approval?.id !== identity.id ||
+        approval.data.approvalComponent !== identity.component)
+    )
+      return null;
     return approval;
-  }, []);
+  }, [bound, identity]);
   const { showPopup, enablePopup, closePopup } = useApprovalPopup();
   const deviceConnect = useDeviceConnect();
 
@@ -22,6 +32,7 @@ export const useApproval = () => {
     forceReject = false,
     approvalId?: string,
   ) => {
+    if (security && (!identity || !security.canResolve())) return;
     // handle connect
     if (!deviceConnect(data)) {
       return;
@@ -29,11 +40,20 @@ export const useApproval = () => {
 
     const approval = await getApproval();
 
+    if (
+      security &&
+      (!approval ||
+        approval.id !== identity?.id ||
+        approval.data.approvalComponent !== identity.component ||
+        !security.canResolve())
+    )
+      return;
+
     if (approval) {
       await notificationServiceApi.resolveApproval(
         data,
         forceReject,
-        approvalId,
+        security ? identity?.id : approvalId,
       );
     }
     if (stay) {
