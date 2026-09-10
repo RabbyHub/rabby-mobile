@@ -295,6 +295,24 @@ async function getAndroidBiometricsBuildInfoLines() {
       `  Fingerprint Hardware: ${formatBuildInfoBoolean(
         hardware?.fingerprint,
       )}`,
+      `  Legacy Fingerprint Hardware: ${formatBuildInfoBoolean(
+        hardware?.legacyFingerprintHardwareDetected,
+      )}`,
+      `  Legacy Fingerprint Enrolled: ${formatBuildInfoBoolean(
+        hardware?.legacyFingerprintEnrolled,
+      )}`,
+      `  Biometric Permission Gate: ${formatBuildInfoBoolean(
+        hardware?.permissionsGranted,
+      )}`,
+      `  AndroidX Strong/Weak Status: ${
+        hardware?.androidXStrongStatusCode ?? 'unknown'
+      }/${hardware?.androidXWeakStatusCode ?? 'unknown'}`,
+      `  Effective Strong: ${formatBuildInfoBoolean(
+        hardware?.effectiveStrongAvailable,
+      )} (${hardware?.effectiveStrongSource || 'unknown'})`,
+      `  API 29 Fingerprint Prompt Probe: ${formatBuildInfoBoolean(
+        hardware?.api29FingerprintPromptProbeEligible,
+      )}`,
       `  Iris Hardware: ${formatBuildInfoBoolean(hardware?.iris)}`,
       `  BIOMETRIC_STRONG: ${formatAndroidAuthenticatorCapability(
         capabilities?.biometricStrong,
@@ -308,7 +326,14 @@ async function getAndroidBiometricsBuildInfoLines() {
       `  DEVICE_CREDENTIAL: ${formatAndroidAuthenticatorCapability(
         capabilities?.deviceCredential,
       )}`,
-      '  Prompt Gate: BIOMETRIC_STRONG + DEVICE_CREDENTIAL',
+      `  Prompt Gate: ${
+        capabilities?.apiLevel === 29
+          ? hardware?.effectiveStrongAvailable ||
+            hardware?.api29FingerprintPromptProbeEligible
+            ? 'BIOMETRIC_STRONG -> DEVICE_CREDENTIAL fallback'
+            : 'DEVICE_CREDENTIAL'
+          : 'BIOMETRIC_STRONG + DEVICE_CREDENTIAL'
+      }`,
     ];
   } catch (error) {
     return [

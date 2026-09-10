@@ -76,6 +76,8 @@ export const makeSecureKeyChainInstance =
   keychainApi.makeSecureKeyChainInstance;
 export const requestGenericPassword = keychainApi.requestGenericPassword;
 export const getSupportedBiometryType = keychainApi.getSupportedBiometryType;
+export const shouldRequireBiometricProofForSetup =
+  keychainApi.shouldRequireBiometricProofForSetup;
 export const isPasscodeAuthAvailable = keychainApi.isPasscodeAuthAvailable;
 export const getKeychainDebugState = keychainApi.getKeychainDebugState;
 export const getKeychainEntryState = keychainApi.getKeychainEntryState;
