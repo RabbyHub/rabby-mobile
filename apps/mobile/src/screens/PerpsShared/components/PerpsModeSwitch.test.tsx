@@ -148,27 +148,38 @@ describe('PerpsModeSwitch', () => {
   });
 
   it('renders the Figma New badge without changing the Pro press target', () => {
+    const onSelectMode = jest.fn();
     const screen = render(
       <PerpsModeSwitch
         activeMode="simple"
         extendProHitAreaRight
-        onSelectMode={jest.fn()}
+        onSelectMode={onSelectMode}
         showProNewBadge
       />,
     );
 
     expect(screen.getByText('New')).toBeTruthy();
     expect(
-      StyleSheet.flatten(screen.getByTestId('perps-pro-new-badge').props.style),
+      StyleSheet.flatten(screen.getByText('Pro').parent?.parent?.props.style),
     ).toMatchObject({
+      alignItems: 'flex-start',
+      flexDirection: 'row',
+    });
+    const badgeStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-new-badge').props.style,
+    );
+    expect(badgeStyle).toMatchObject({
       backgroundColor: 'red-light-1',
       borderRadius: 4,
-      left: '100%',
+      flexShrink: 0,
+      marginLeft: -4,
       paddingHorizontal: 4,
-      position: 'absolute',
-      top: -8,
-      transform: [{ translateX: -4 }],
+      transform: [{ translateY: -8 }],
     });
+    // Legacy Yoga resolves absolute percentages against the available target
+    // width, so the badge must participate in the label's content row.
+    expect(badgeStyle.position).not.toBe('absolute');
+    expect(badgeStyle).not.toHaveProperty('left');
     expect(
       StyleSheet.flatten(screen.getByText('New').props.style),
     ).toMatchObject({
@@ -185,5 +196,9 @@ describe('PerpsModeSwitch', () => {
     expect(
       StyleSheet.flatten(screen.getByTestId('perps-mode-pro').props.style),
     ).toMatchObject({ flex: 1, height: '100%' });
+
+    fireEvent.press(screen.getByText('New'));
+    expect(onSelectMode).toHaveBeenCalledTimes(1);
+    expect(onSelectMode).toHaveBeenCalledWith('pro');
   });
 });
