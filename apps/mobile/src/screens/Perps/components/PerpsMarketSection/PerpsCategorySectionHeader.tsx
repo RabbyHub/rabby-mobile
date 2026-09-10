@@ -11,8 +11,7 @@ import { PerpsCategoryConfig } from '../../constants/perpsCategories';
 
 export const PerpsCategorySectionHeader: React.FC<{
   cfg: PerpsCategoryConfig;
-  showSearch?: boolean;
-}> = ({ cfg, showSearch }) => {
+}> = ({ cfg }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const handlePress = () => {
@@ -26,13 +25,15 @@ export const PerpsCategorySectionHeader: React.FC<{
     });
   };
 
+  // Same destination as the title, but with the search input focused: the
+  // search page opens on this module's own category tab.
   const handleSearchPress = () => {
     naviPush(RootNames.StackTransaction, {
       screen: RootNames.PerpsSearch,
       params: {
+        initialTab: cfg.id,
         openFromSource: 'searchPerps',
         autoFocus: true,
-        initialTab: 'topVolume',
       },
     });
   };
@@ -50,15 +51,13 @@ export const PerpsCategorySectionHeader: React.FC<{
           color={colors2024['neutral-title-1']}
         />
       </TouchableOpacity>
-      {showSearch ? (
-        <TouchableOpacity hitSlop={8} onPress={handleSearchPress}>
-          <RcIconSearchCC
-            width={18}
-            height={18}
-            color={colors2024['neutral-foot']}
-          />
-        </TouchableOpacity>
-      ) : null}
+      <TouchableOpacity hitSlop={8} onPress={handleSearchPress}>
+        <RcIconSearchCC
+          width={18}
+          height={18}
+          color={colors2024['neutral-foot']}
+        />
+      </TouchableOpacity>
     </View>
   );
 };

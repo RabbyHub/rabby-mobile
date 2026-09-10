@@ -48,6 +48,7 @@ import {
   PERPS_PRO_CROSSHAIR_LABEL_LAYOUT,
   PERPS_PRO_PRICE_SCALE_MARGINS,
   resetPerpsProPriceScale,
+  resetSimplePriceScale,
   shouldBlockPerpsProFutureTouchMove,
   shiftLogicalRangeForPrependedCandles,
 } from './chart-logic';
@@ -1967,6 +1968,7 @@ function handleSetCandlestickData(
       chartState.chart.timeScale().fitContent();
     }
     if (!chartState.proConfig) {
+      resetSimplePriceScale(chartState.candlestickSeries);
       chartState.chart.timeScale().scrollToRealTime();
     }
     acknowledgeAppliedData();

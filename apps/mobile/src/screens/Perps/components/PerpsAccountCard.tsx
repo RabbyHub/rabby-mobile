@@ -37,7 +37,7 @@ import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { Text } from '@/components/Typography';
 import ImgLearnMore from '@/assets2024/icons/perps/ImgLearnMore.png';
 import RcIconLearnArrow from '@/assets2024/icons/perps/IconLearnArrow.svg';
-import RcIconPortfolioInfoCC from '@/assets2024/icons/perps/IconPortfolioInfoCC.svg';
+import RcIconHistoryCC from '@/assets2024/icons/perps/IconHistoryCC.svg';
 import RcIconPortfolioCollapseCC from '@/assets2024/icons/perps/IconPortfolioCollapseCC.svg';
 import RcIconPortfolioPlusCC from '@/assets2024/icons/perps/IconPortfolioPlusCC.svg';
 import RcIconPortfolioMinusCC from '@/assets2024/icons/perps/IconPortfolioMinusCC.svg';
@@ -57,6 +57,7 @@ import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/
 import { PerpsPortfolioChart } from './PerpsPortfolioChart';
 import { useMemoizedFn } from 'ahooks';
 import { useShowPerpsPortfolioBreakdown } from '@/screens/PerpsShared/components/PerpsPortfolioBreakdownExplanation';
+import { PerpsProDottedUnderlineText } from '@/screens/PerpsPro/components/common/PerpsProDottedUnderlineText';
 import PendingTx from '@/screens/Bridge/components/PendingTx';
 import { getPerpsPendingFundingCount } from '@/hooks/perps/funding/fundingJournal';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
@@ -71,6 +72,7 @@ const EXPANDED_BLOCK_HEIGHT = 156;
 export const PerpsAccountCard: React.FC = () => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const portfolioValueLabel = t('page.perps.PerpsCard.portfolioValue');
   const [popupState, setPopupState] = usePerpsPopupState();
   const navigation = useRabbyAppNavigation();
 
@@ -287,20 +289,30 @@ export const PerpsAccountCard: React.FC = () => {
             <View style={styles.headerRow}>
               <View style={styles.headerLeft}>
                 <View style={styles.titleRow}>
-                  <Text style={styles.portfolioLabel}>
-                    {t('page.perps.PerpsCard.portfolioValue')}
-                  </Text>
-                  {hasNonPerpsAssets && (
-                    <TouchableOpacity
-                      hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
-                      onPress={() => showPortfolioBreakdown(displayValue || 0)}>
-                      <RcIconPortfolioInfoCC
-                        width={16}
-                        height={16}
-                        color={colors2024['neutral-foot']}
-                      />
-                    </TouchableOpacity>
+                  {/* The breakdown sheet is reached by the dotted label
+                      itself; the label stays plain when there is nothing
+                      to break down. */}
+                  {hasNonPerpsAssets ? (
+                    <PerpsProDottedUnderlineText
+                      accessibilityLabel={portfolioValueLabel}
+                      onPress={() => showPortfolioBreakdown(displayValue || 0)}
+                      style={styles.portfolioLabel}>
+                      {portfolioValueLabel}
+                    </PerpsProDottedUnderlineText>
+                  ) : (
+                    <Text style={styles.portfolioLabel}>
+                      {portfolioValueLabel}
+                    </Text>
                   )}
+                  <TouchableOpacity
+                    hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
+                    onPress={openHistory}>
+                    <RcIconHistoryCC
+                      width={16}
+                      height={16}
+                      color={colors2024['neutral-foot']}
+                    />
+                  </TouchableOpacity>
                 </View>
                 {portfolioViewState === 'loading' ? (
                   <Skeleton
@@ -431,8 +443,8 @@ export const PerpsAccountCard: React.FC = () => {
                     />
                   )}
                 </View>
-                {/* History is reachable from here only while funding is in
-                    flight — no idle entry point, per the design. */}
+                {/* The idle history entry is the clock next to the title;
+                    this pill only surfaces the in-flight funding count. */}
                 {pendingFundingCount > 0 && (
                   <PendingTx
                     number={pendingFundingCount}
@@ -575,7 +587,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 8,
   },
   portfolioLabel: {
     fontFamily: 'SF Pro Rounded',
