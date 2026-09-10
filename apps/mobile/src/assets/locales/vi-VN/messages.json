@@ -386,6 +386,12 @@
       "nonceTitle": "Nonce",
       "gasAccountForGas": "Sử dụng USD từ GasAccount của tôi để trả phí gas",
       "noGasRequired": "Không cần gas",
+      "gasSelectorTitle": "Gas",
+      "swapGasLevel": {
+        "normal": "Bình thường",
+        "fast": "Nhanh",
+        "instant": "Tức thì"
+      },
       "gasLimitMinValueAlert": "Giới hạn gas phải lớn hơn 21000",
       "manuallySetGasLimitAlert": "Bạn đã đặt giới hạn Gas thành",
       "myNativeTokenBalance": "Số dư Gas của tôi:",
@@ -830,6 +836,7 @@
       "chain": "Chuỗi",
       "token": "Token",
       "hidden-no-quote-rates_other": "{{count}} tỷ giá không khả dụng",
+      "preferMEV": "Bảo vệ khỏi MEV",
       "to": "Tới",
       "Completed": "Hoàn thành",
       "no-transaction-records": "Không có bản ghi giao dịch",
@@ -875,7 +882,8 @@
       "selectChainModalTitle": "Chọn chain",
       "results": "Kết quả",
       "approve": "Phê duyệt",
-      "market-closed": "Thị trường chưa mở: Việc đặt lệnh không được hỗ trợ."
+      "market-closed": "Thị trường chưa mở: Việc đặt lệnh không được hỗ trợ.",
+      "quotes": "Báo giá"
     },
     "bridge": {
       "for-available-quote": "để có báo giá khả dụng",
@@ -1073,6 +1081,9 @@
         "tip2": "Các ứng dụng hoặc phần mềm độc hại có thể đọc các hình ảnh được lưu trữ trong thư viện ảnh của bạn.",
         "tip3": "Bất kỳ ai có cụm từ khôi phục của bạn đều có thể kiểm soát hoàn toàn ví và không thể hoàn tác việc này.",
         "tip1": "Hình chụp màn hình có thể đồng bộ với đám mây hoặc các thiết bị khác, và có thể được truy cập nếu thiết bị bị mất, bị đánh cắp hoặc bị xâm phạm."
+      },
+      "rateModalTriggerOnHome": {
+        "title": "Đánh giá Rabby Wallet"
       }
     },
     "signText": {
@@ -1562,7 +1573,8 @@
         "unavailablePaymentWallet": "Ví thanh toán đã chọn không khả dụng",
         "estReceiveTip": "Dịch vụ được xử lý thông qua {{name}}, có thể có độ trượt giá",
         "estReceiveLabel": "Dự kiến nhận: {{usd}}",
-        "noAvailableToken": "Không có token nào"
+        "noAvailableToken": "Không có token nào",
+        "priceImpactLoss": "Tác động giá: Bạn đang mất {{usd}}."
       },
       "withdrawPopup": {
         "noEnoughGas": "Số tiền quá thấp để chi trả phí gas",
@@ -1622,7 +1634,9 @@
       "gasBalance": "Số dư Gas",
       "lowBalance": "Bạn không có đủ gas (<$1.00). Nạp gas để đảm bảo các giao dịch trong tương lai diễn ra suôn sẻ.",
       "depositSubmitted": "Đã gửi tiền gửi",
-      "depositWith": "Nạp tiền qua"
+      "depositWith": "Nạp tiền qua",
+      "gasToken": "Token Gas",
+      "title": "GasAccount"
     },
     "setting": {
       "aboutUs": "Về Chúng Tôi",
@@ -3485,7 +3499,8 @@
         "skipText": "Bỏ qua thông báo này trong 1 ngày"
       },
       "alertText": "DApp bên thứ ba: nếu gặp vấn đề sử dụng, vui lòng liên hệ bộ phận hỗ trợ DApp. Rabby chỉ cung cấp quyền truy cập xem.",
-      "title": "Chụp màn hình để Báo cáo Lỗi"
+      "title": "Chụp màn hình để Báo cáo Lỗi",
+      "submitFailed": "Gửi thất bại."
     },
     "submitFeedbackSuccessModal": {
       "desc": "Gửi thành công!"

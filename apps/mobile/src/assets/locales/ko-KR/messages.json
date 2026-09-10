@@ -306,6 +306,12 @@
       "gasLimitModifyOnlyNecessaryAlert": "필요한 경우에만 수정하세요",
       "nonceTitle": "Nonce",
       "noGasRequired": "Gas 필요 없음",
+      "gasSelectorTitle": "가스",
+      "swapGasLevel": {
+        "normal": "보통",
+        "fast": "빠름",
+        "instant": "즉시"
+      },
       "gasPriceTitle": "Gas 가격(Gwei)",
       "gasLimitMinValueAlert": "Gas 한도는 21000보다 커야 합니다.",
       "maxPriorityFee": "최대 우선 수수료(Gwei)",
@@ -603,6 +609,7 @@
       "search-by-name-address": "이름 / 주소로 검색",
       "hidden-no-quote-rates_one": "{{count}}개 환율을 사용할 수 없습니다",
       "hidden-no-quote-rates_other": "{{count}}개의 요율을 사용할 수 없습니다.",
+      "preferMEV": "MEV 보호",
       "best": "최고의",
       "approve-swap": "승인 및 스왑",
       "token": "토큰",
@@ -644,7 +651,8 @@
       "selectChainModalTitle": "체인을 선택하십시오",
       "results": "결과",
       "approve": "승인",
-      "market-closed": "시장 오픈 안됨: 주문 입력이 지원되지 않습니다."
+      "market-closed": "시장 오픈 안됨: 주문 입력이 지원되지 않습니다.",
+      "quotes": "견적"
     },
     "activities": {
       "signedTx": {
@@ -995,6 +1003,9 @@
         "tip2": "앱이나 악성코드가 사진 라이브러리에 저장된 이미지를 읽을 수 있습니다.",
         "subTitle": "시드 문구를 이미지로 저장하면 노출될 수 있으므로, 이를 적어두는 것이 더 안전한 선택입니다.",
         "tip1": "스크린샷은 클라우드나 다른 장치와 동기화할 수 있으며, 장치가 분실되거나 도난당하거나 손상된 경우에도 접근할 수 있습니다."
+      },
+      "rateModalTriggerOnHome": {
+        "title": "Rabby Wallet 평가하기"
       }
     },
     "switchChain": {
@@ -1274,7 +1285,8 @@
         "insufficientBalanceLabel": "잔액 부족",
         "unavailablePaymentWallet": "선택한 결제 지갑을 사용할 수 없습니다",
         "minAmountRequired": "최소 입금 금액은 $1입니다.",
-        "noAvailableToken": "사용 가능한 토큰 없음"
+        "noAvailableToken": "사용 가능한 토큰 없음",
+        "priceImpactLoss": "가격 영향: {{usd}} 손실이 발생합니다."
       },
       "withdrawPopup": {
         "title": "출금",
@@ -1334,7 +1346,9 @@
       "depositFailed": "입금 실패",
       "lowBalance": "가스가 충분하지 않습니다(<$1.00). 향후 거래가 원활하게 진행될 수 있도록 가스를 입금하세요.",
       "depositSubmitted": "입금 요청 제출됨",
-      "depositWith": "입금 수단"
+      "depositWith": "입금 수단",
+      "gasToken": "가스 토큰",
+      "title": "GasAccount"
     },
     "approvalsAddressList": {
       "title": "승인"
@@ -3485,7 +3499,8 @@
         "skipText": "이 팝업을 1일 동안 건너뛰기"
       },
       "alertText": "타사 DApp: 사용 문제는 DApp 지원팀에 문의하세요. Rabby는 보기 전용 접근만 제공합니다.",
-      "title": "스크린샷으로 버그 신고"
+      "title": "스크린샷으로 버그 신고",
+      "submitFailed": "제출에 실패했습니다."
     },
     "submitFeedbackSuccessModal": {
       "desc": "성공적으로 제출되었습니다!"
