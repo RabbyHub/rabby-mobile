@@ -6,6 +6,7 @@ import { PerpsProDecimalTextInput } from './components/trade/PerpsProDecimalText
 import { perpsProKeyboardSession } from './components/common/perpsProKeyboardSession';
 import { usePerpsProKeyboardInput } from './components/common/usePerpsProKeyboardInput';
 import { PerpsProTradeAmountField } from './components/trade/PerpsProTradeAmountField';
+import { PerpsProKeyboardSheetContext } from './components/common/PerpsProKeyboardSheetContext';
 
 const SheetInput = ({ visible }: { visible: boolean }) => {
   const ref = useRef<TextInput>(null);
@@ -47,6 +48,33 @@ const Inputs = ({
 describe('Pro native-input registration and decimal editing', () => {
   beforeEach(() => perpsProKeyboardSession.setEnabled(true));
   afterEach(() => act(() => perpsProKeyboardSession.setEnabled(false)));
+
+  it('carries the sheet scroll owner through the real decimal input without resetting the draft', () => {
+    const tree = (minimum: string | null) => (
+      <PerpsProKeyboardSheetContext.Provider value="tpsl-sheet">
+        <Inputs minimum={minimum} />
+      </PerpsProKeyboardSheetContext.Provider>
+    );
+    const view = render(tree(null));
+    fireEvent(screen.getByTestId('amount'), 'focus');
+    const owner = perpsProKeyboardSession.getSnapshot();
+    expect(owner?.sheetId).toBe('tpsl-sheet');
+    fireEvent.changeText(screen.getByTestId('amount'), '0.');
+    view.rerender(tree('15.35 USDC'));
+    expect(perpsProKeyboardSession.getSnapshot()).toMatchObject({
+      id: owner?.id,
+      sheetId: 'tpsl-sheet',
+    });
+    expect(screen.getByTestId('amount').props.value).toBe('0.');
+    fireEvent(screen.getByTestId('price'), 'focus');
+    fireEvent(screen.getByTestId('amount'), 'blur');
+    expect(perpsProKeyboardSession.getSnapshot()).toMatchObject({
+      sheetId: 'tpsl-sheet',
+      minimum: null,
+    });
+    view.unmount();
+    expect(perpsProKeyboardSession.getSnapshot()).toBeNull();
+  });
 
   it('publishes the opening Amount minimum with its first focus and updates it without refocusing', () => {
     const getMinimum = jest.fn(() => '15.35 USDC');

@@ -15,6 +15,7 @@ type FocusedInput = {
   input: PerpsProKeyboardInput;
   minimum: string | null;
   scrollTrade: boolean;
+  sheetId?: string;
 };
 
 /** Local UI ownership only. A late blur may never clear another input's hint. */

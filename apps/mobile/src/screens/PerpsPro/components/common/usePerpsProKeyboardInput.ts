@@ -1,4 +1,4 @@
-import { useCallback, useId, useLayoutEffect, useRef } from 'react';
+import { useCallback, useContext, useId, useLayoutEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import type { RefObject } from 'react';
 import {
@@ -6,6 +6,7 @@ import {
   perpsProKeyboardSession,
   type PerpsProKeyboardInput,
 } from './perpsProKeyboardSession';
+import { PerpsProKeyboardSheetContext } from './PerpsProKeyboardSheetContext';
 
 export const usePerpsProKeyboardInput = (
   inputRef: RefObject<PerpsProKeyboardInput | null | undefined>,
@@ -14,14 +15,18 @@ export const usePerpsProKeyboardInput = (
     getMinimum,
     minimum = null,
     scrollTrade = false,
+    sheetId: providedSheetId,
   }: {
     enabled?: boolean;
     getMinimum?: () => string | null;
     minimum?: string | null;
     scrollTrade?: boolean;
+    sheetId?: string;
   } = {},
 ) => {
   const id = useId();
+  const contextSheetId = useContext(PerpsProKeyboardSheetContext);
+  const sheetId = providedSheetId ?? contextSheetId;
   const minimumRef = useRef({ getMinimum, minimum });
   minimumRef.current = { getMinimum, minimum };
   useLayoutEffect(() => {
@@ -42,9 +47,10 @@ export const usePerpsProKeyboardInput = (
           ? minimumRef.current.getMinimum()
           : minimumRef.current.minimum,
         scrollTrade,
+        sheetId,
       });
     }
-  }, [enabled, id, inputRef, scrollTrade]);
+  }, [enabled, id, inputRef, scrollTrade, sheetId]);
   const onBlur = useCallback(() => perpsProKeyboardSession.blur(id), [id]);
   return {
     inputAccessoryViewID:

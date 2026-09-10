@@ -1,4 +1,5 @@
 import { BOTTOM_BUTTON_TOP_OFFSET } from '@/constant/layout';
+import { IS_ANDROID } from '@/core/native/utils';
 import { createGetStyles2024 } from '@/utils/styles';
 
 import {
@@ -14,7 +15,14 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
     ...getPerpsProBottomSheetChromeStyles(colors2024),
     sheetView: { height: '100%' },
-    container: { height: '100%', paddingHorizontal: 15, paddingTop: 8 },
+    scrollContent: { flexGrow: 1 },
+    container: {
+      ...(IS_ANDROID
+        ? { minHeight: 510 - 40, flexGrow: 1 }
+        : { height: '100%' }),
+      paddingHorizontal: 15,
+      paddingTop: 8,
+    },
     title: {
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
