@@ -56,16 +56,18 @@ export default function ChainItem({
       <View style={styles.contentContainer}>
         <View style={styles.leftBasic}>
           <Text style={styles.nameText}>{chainItem?.name}</Text>
-          <View style={styles.chainSummary}>
-            <View style={styles.selectChainItemBalance}>
-              <Text style={styles.usdValueText}>
-                {formatNetworth(data.total || 0)}
-              </Text>
-              <Text style={styles.percentageText}>
-                {`${Math.floor(data.percentage)}%`}
-              </Text>
+          {!data.isAppended ? (
+            <View style={styles.chainSummary}>
+              <View style={styles.selectChainItemBalance}>
+                <Text style={styles.usdValueText}>
+                  {formatNetworth(data.total || 0)}
+                </Text>
+                <Text style={styles.percentageText}>
+                  {`${Math.floor(data.percentage)}%`}
+                </Text>
+              </View>
             </View>
-          </View>
+          ) : null}
         </View>
         <View style={styles.rightArea}>
           {isSelected ? <RcIconChecked /> : null}
