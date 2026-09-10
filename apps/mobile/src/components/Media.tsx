@@ -11,7 +11,6 @@ import React, {
   useState,
 } from 'react';
 import {
-  type GestureResponderEvent,
   StyleSheet,
   TouchableOpacityProps,
   View,
@@ -233,20 +232,16 @@ export const Media = ({
     handleError && handleError();
   }, [handleError, loadingFail, turnOff]);
 
-  const retryMedia = useCallback(
-    (event?: GestureResponderEvent) => {
-      event?.stopPropagation();
-      loadingStart();
-      loadingSucceed();
-      if (safeSvgUrl) {
-        setSafeSvgState({ status: 'resolving' });
-        setShowSafeSvgSkeleton(true);
-      }
-      setRetryAttempt(current => current + 1);
-      onRetry?.();
-    },
-    [loadingStart, loadingSucceed, onRetry, safeSvgUrl],
-  );
+  const retryMedia = useCallback(() => {
+    loadingStart();
+    loadingSucceed();
+    if (safeSvgUrl) {
+      setSafeSvgState({ status: 'resolving' });
+      setShowSafeSvgSkeleton(true);
+    }
+    setRetryAttempt(current => current + 1);
+    onRetry?.();
+  }, [loadingStart, loadingSucceed, onRetry, safeSvgUrl]);
 
   const changePlay = useCallback(() => {
     ref?.current?.seek(0);
