@@ -25,6 +25,7 @@ export type ChainListItem = {
   chain: string;
   total: number;
   percentage: number;
+  isAppended?: boolean;
 };
 
 type SelectSortedChainProps = {
@@ -87,6 +88,7 @@ export default function SelectChainWithDistribute({
         total: 0,
         percentage: 0,
         chainInfo,
+        isAppended: true,
       }));
 
     return [...existingChains, ...remainingChains];
