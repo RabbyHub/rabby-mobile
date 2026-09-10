@@ -185,7 +185,6 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
                       <View>
                         {tokenIsNft ? (
                           <Media
-                            retryOnFailure
                             failedPlaceholder={
                               <IconDefaultNFT width={45} height={45} />
                             }
@@ -268,7 +267,6 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
                       <View>
                         {tokenIsNft ? (
                           <Media
-                            retryOnFailure
                             failedPlaceholder={
                               <IconDefaultNFT width={45} height={45} />
                             }

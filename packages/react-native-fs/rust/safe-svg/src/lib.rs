@@ -1,7 +1,9 @@
 use std::ffi::{CStr, c_char};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, OnceLock};
 
+use base64::Engine;
 use resvg::{tiny_skia, usvg};
 use sha2::{Digest, Sha256};
 
@@ -10,9 +12,18 @@ const MAX_XML_NODES: usize = 10_000;
 const MAX_XML_DEPTH: usize = 64;
 const MAX_ATTRIBUTES: usize = 50_000;
 const MAX_ATTRIBUTE_VALUE_BYTES: usize = 64 * 1024;
+const MAX_STYLESHEET_BYTES: usize = 64 * 1024;
+const MAX_TEXT_CHARACTERS: usize = 16 * 1024;
+const MAX_EMBEDDED_PNG_BYTES: usize = 4 * 1024 * 1024;
+const MAX_EMBEDDED_PNG_PIXELS: u64 = 4 * 1024 * 1024;
+const MAX_TOTAL_EMBEDDED_PNG_PIXELS: u64 = 16 * 1024 * 1024;
 const MIN_MAX_EDGE: u32 = 16;
 const MAX_MAX_EDGE: u32 = 4096;
 const MAX_ALLOWED_PIXELS: u32 = 16 * 1024 * 1024;
+const BUNDLED_FONT_BYTES: &[u8] = include_bytes!("../assets/basic/Basic-Regular.ttf");
+const BUNDLED_FONT_FAMILY: &str = "Basic";
+
+static BUNDLED_FONT_DB: OnceLock<Option<Arc<usvg::fontdb::Database>>> = OnceLock::new();
 
 #[repr(i32)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -103,6 +114,86 @@ fn contains_non_local_url_reference(value: &str) -> bool {
     false
 }
 
+fn validate_css_fragment(value: &str) -> Result<(), RabbySafeSvgError> {
+    // CSS escapes can hide an at-rule, URL function, or scheme from a
+    // byte-level policy check. Rabby's static profile does not need them.
+    if value.contains('\\')
+        || value.contains('@')
+        || contains_ascii_case_insensitive(value, "expression(")
+        || contains_non_local_url_reference(value)
+        || contains_ascii_case_insensitive(value, "javascript:")
+        || contains_ascii_case_insensitive(value, "file:")
+        || contains_ascii_case_insensitive(value, "data:")
+        || contains_ascii_case_insensitive(value, "http:")
+        || contains_ascii_case_insensitive(value, "https:")
+    {
+        return Err(RabbySafeSvgError::UnsafeContent);
+    }
+
+    Ok(())
+}
+
+fn bundled_font_database() -> Result<Arc<usvg::fontdb::Database>, RabbySafeSvgError> {
+    BUNDLED_FONT_DB
+        .get_or_init(|| {
+            let mut database = usvg::fontdb::Database::new();
+            database.load_font_data(BUNDLED_FONT_BYTES.to_vec());
+            if database.is_empty() {
+                return None;
+            }
+
+            database.set_serif_family(BUNDLED_FONT_FAMILY);
+            database.set_sans_serif_family(BUNDLED_FONT_FAMILY);
+            database.set_cursive_family(BUNDLED_FONT_FAMILY);
+            database.set_fantasy_family(BUNDLED_FONT_FAMILY);
+            database.set_monospace_family(BUNDLED_FONT_FAMILY);
+            Some(Arc::new(database))
+        })
+        .clone()
+        .ok_or(RabbySafeSvgError::UnsupportedContent)
+}
+
+fn embedded_png_dimensions(data: &[u8]) -> Result<(u32, u32), RabbySafeSvgError> {
+    const PNG_SIGNATURE: &[u8; 8] = b"\x89PNG\r\n\x1a\n";
+    if data.len() < 24
+        || data.len() > MAX_EMBEDDED_PNG_BYTES
+        || &data[..8] != PNG_SIGNATURE
+        || u32::from_be_bytes(data[8..12].try_into().unwrap_or_default()) != 13
+        || &data[12..16] != b"IHDR"
+    {
+        return Err(RabbySafeSvgError::UnsafeContent);
+    }
+
+    let width = u32::from_be_bytes(data[16..20].try_into().unwrap_or_default());
+    let height = u32::from_be_bytes(data[20..24].try_into().unwrap_or_default());
+    let pixels = u64::from(width)
+        .checked_mul(u64::from(height))
+        .ok_or(RabbySafeSvgError::UnsafeContent)?;
+    if width == 0
+        || height == 0
+        || width > MAX_MAX_EDGE
+        || height > MAX_MAX_EDGE
+        || pixels > MAX_EMBEDDED_PNG_PIXELS
+    {
+        return Err(RabbySafeSvgError::UnsafeContent);
+    }
+
+    Ok((width, height))
+}
+
+fn validate_embedded_png_href(value: &str) -> Result<u64, RabbySafeSvgError> {
+    const PREFIX: &str = "data:image/png;base64,";
+    let encoded = value
+        .strip_prefix(PREFIX)
+        .filter(|encoded| !encoded.is_empty())
+        .ok_or(RabbySafeSvgError::UnsafeContent)?;
+    let decoded = base64::engine::general_purpose::STANDARD
+        .decode(encoded)
+        .map_err(|_| RabbySafeSvgError::UnsafeContent)?;
+    let (width, height) = embedded_png_dimensions(&decoded)?;
+    Ok(u64::from(width) * u64::from(height))
+}
+
 fn validate_svg_profile(svg: &[u8]) -> Result<&str, RabbySafeSvgError> {
     if svg.len() > MAX_INPUT_BYTES {
         return Err(RabbySafeSvgError::InputTooLarge);
@@ -133,9 +224,7 @@ fn validate_svg_profile(svg: &[u8]) -> Result<&str, RabbySafeSvgError> {
 
     let forbidden_elements = [
         "script",
-        "style",
         "foreignObject",
-        "image",
         "animate",
         "animateMotion",
         "animateTransform",
@@ -144,9 +233,14 @@ fn validate_svg_profile(svg: &[u8]) -> Result<&str, RabbySafeSvgError> {
         "video",
         "iframe",
     ];
-    let unsupported_elements = ["text", "textPath", "tspan"];
+    let unsupported_elements = ["textPath"];
     let mut node_count = 0usize;
     let mut attribute_count = 0usize;
+    let mut stylesheet_bytes = 0usize;
+    let mut text_characters = 0usize;
+    let mut total_embedded_png_pixels = 0u64;
+    let bundled_font = ttf_parser::Face::parse(BUNDLED_FONT_BYTES, 0)
+        .map_err(|_| RabbySafeSvgError::UnsupportedContent)?;
 
     for node in document.descendants() {
         node_count = node_count.saturating_add(1);
@@ -158,6 +252,21 @@ fn validate_svg_profile(svg: &[u8]) -> Result<&str, RabbySafeSvgError> {
         }
         if node.is_pi() {
             return Err(RabbySafeSvgError::UnsafeContent);
+        }
+        if node.is_text()
+            && node.ancestors().any(|ancestor| {
+                ancestor.is_element() && matches!(ancestor.tag_name().name(), "text" | "tspan")
+            })
+        {
+            let value = node.text().unwrap_or_default();
+            text_characters = text_characters.saturating_add(value.chars().count());
+            if text_characters > MAX_TEXT_CHARACTERS
+                || value.chars().any(|character| {
+                    !character.is_whitespace() && bundled_font.glyph_index(character).is_none()
+                })
+            {
+                return Err(RabbySafeSvgError::UnsupportedContent);
+            }
         }
         if !node.is_element() {
             continue;
@@ -171,6 +280,32 @@ fn validate_svg_profile(svg: &[u8]) -> Result<&str, RabbySafeSvgError> {
             return Err(RabbySafeSvgError::UnsupportedContent);
         }
 
+        if element_name == "style" {
+            if node.children().any(|child| child.is_element()) {
+                return Err(RabbySafeSvgError::UnsafeContent);
+            }
+
+            let mut stylesheet = String::new();
+            for content in node.children().filter_map(|child| child.text()) {
+                stylesheet_bytes = stylesheet_bytes.saturating_add(content.len());
+                if stylesheet_bytes > MAX_STYLESHEET_BYTES {
+                    return Err(RabbySafeSvgError::UnsafeContent);
+                }
+                stylesheet.push_str(content);
+            }
+            validate_css_fragment(&stylesheet)?;
+        }
+
+        if element_name == "image"
+            && node
+                .attributes()
+                .filter(|attribute| attribute.name() == "href")
+                .count()
+                != 1
+        {
+            return Err(RabbySafeSvgError::UnsafeContent);
+        }
+
         for attribute in node.attributes() {
             attribute_count = attribute_count.saturating_add(1);
             if attribute_count > MAX_ATTRIBUTES
@@ -181,6 +316,7 @@ fn validate_svg_profile(svg: &[u8]) -> Result<&str, RabbySafeSvgError> {
 
             let name = attribute.name();
             let value = attribute.value().trim();
+            let is_embedded_png = element_name == "image" && name == "href";
             if name
                 .as_bytes()
                 .get(..2)
@@ -188,20 +324,27 @@ fn validate_svg_profile(svg: &[u8]) -> Result<&str, RabbySafeSvgError> {
             {
                 return Err(RabbySafeSvgError::UnsafeContent);
             }
-            if name == "href" && !value.starts_with('#') {
+            if is_embedded_png {
+                total_embedded_png_pixels = total_embedded_png_pixels
+                    .checked_add(validate_embedded_png_href(value)?)
+                    .ok_or(RabbySafeSvgError::UnsafeContent)?;
+                if total_embedded_png_pixels > MAX_TOTAL_EMBEDDED_PNG_PIXELS {
+                    return Err(RabbySafeSvgError::UnsafeContent);
+                }
+            } else if name == "href" && !value.starts_with('#') {
                 return Err(RabbySafeSvgError::UnsafeContent);
             }
-            if name == "style"
-                && (contains_ascii_case_insensitive(value, "@import")
-                    || contains_non_local_url_reference(value))
-            {
+            if name == "style" {
+                validate_css_fragment(value)?;
+            } else if contains_non_local_url_reference(value) {
                 return Err(RabbySafeSvgError::UnsafeContent);
             }
-            if contains_ascii_case_insensitive(value, "javascript:")
-                || contains_ascii_case_insensitive(value, "file:")
-                || contains_ascii_case_insensitive(value, "data:")
-                || contains_ascii_case_insensitive(value, "http:")
-                || contains_ascii_case_insensitive(value, "https:")
+            if !is_embedded_png
+                && (contains_ascii_case_insensitive(value, "javascript:")
+                    || contains_ascii_case_insensitive(value, "file:")
+                    || contains_ascii_case_insensitive(value, "data:")
+                    || contains_ascii_case_insensitive(value, "http:")
+                    || contains_ascii_case_insensitive(value, "https:"))
             {
                 return Err(RabbySafeSvgError::UnsafeContent);
             }
@@ -234,12 +377,32 @@ fn render_svg_to_png(
         return Err(RabbySafeSvgError::InvalidArgument);
     }
 
+    let fontdb = bundled_font_database()?;
+    let font_id = fontdb
+        .faces()
+        .next()
+        .map(|face| face.id)
+        .ok_or(RabbySafeSvgError::UnsupportedContent)?;
     let options = usvg::Options {
         resources_dir: None,
+        font_family: BUNDLED_FONT_FAMILY.to_owned(),
         image_href_resolver: usvg::ImageHrefResolver {
-            resolve_data: Box::new(|_, _, _| None),
+            resolve_data: Box::new(|mime, data, _| {
+                if mime == "image/png" && embedded_png_dimensions(&data).is_ok() {
+                    Some(usvg::ImageKind::PNG(Arc::clone(&data)))
+                } else {
+                    None
+                }
+            }),
             resolve_string: Box::new(|_, _| None),
         },
+        font_resolver: usvg::FontResolver {
+            // Ignore untrusted font-family names. Every accepted glyph is
+            // converted to paths with this one app-bundled font.
+            select_font: Box::new(move |_, _| Some(font_id)),
+            select_fallback: Box::new(|_, _, _| None),
+        },
+        fontdb,
         ..usvg::Options::default()
     };
     let tree = usvg::Tree::from_data(svg, &options).map_err(|error| match error {
@@ -407,15 +570,20 @@ mod tests {
     }
 
     #[test]
-    fn permits_local_inline_style_references_but_rejects_style_elements() {
+    fn permits_local_style_references_but_rejects_unsafe_stylesheets() {
         let inline = br##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><defs><linearGradient id="g"><stop stop-color="#fff"/></linearGradient></defs><rect width="10" height="10" style="fill:url(#g);stroke:#000"/></svg>"##;
         assert!(render_svg_to_png(inline, 64, 100_000).is_ok());
 
-        let stylesheet = br#"<svg xmlns="http://www.w3.org/2000/svg"><style>rect { fill: url(https://example.com/a.svg); }</style><rect width="1" height="1"/></svg>"#;
-        assert_eq!(
-            render_svg_to_png(stylesheet, 64, 100_000).unwrap_err(),
-            RabbySafeSvgError::UnsafeContent
-        );
+        for stylesheet in [
+            br#"<svg xmlns="http://www.w3.org/2000/svg"><style>rect { fill: url(https://example.com/a.svg); }</style><rect width="1" height="1"/></svg>"#.as_slice(),
+            br#"<svg xmlns="http://www.w3.org/2000/svg"><style>@import "theme.css"; rect { fill: red; }</style><rect width="1" height="1"/></svg>"#.as_slice(),
+            br#"<svg xmlns="http://www.w3.org/2000/svg"><style>.x { fill: u\72l(https://example.com/a.svg); }</style><rect class="x" width="1" height="1"/></svg>"#.as_slice(),
+        ] {
+            assert_eq!(
+                render_svg_to_png(stylesheet, 64, 100_000).unwrap_err(),
+                RabbySafeSvgError::UnsafeContent
+            );
+        }
     }
 
     #[test]
@@ -434,6 +602,25 @@ mod tests {
     }
 
     #[test]
+    fn renders_a_bounded_embedded_png_but_rejects_other_image_sources() {
+        let embedded_png = br#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240"><image width="240" height="240" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAADwBAMAAADMe/ShAAAAG1BMVEUAAACui2FjhZb/9o5ZWVmGWB5fHQmnfEcAQP8C9EmFAAABQElEQVR42u3by23DMBAFQLWQFtyCWkgLaSEtpIWUHUgHC1isGZJY00Ay7yaR4OzpQfJnu70oGxgMBoPBYDAYDAaD/x68HwmX4R4YDAa/Gs6O3pNkY4HBYPBKeH+UjlUwGAxeDg9J48OAwWBwLTzEdQzTXZlgMBg8A+91GXvYA4PB4Gm4Y4S3JOMjgMFgcC3c5jL9utf7TQEYDAaXwUNFmc2xHZmoTDAYDJ6Gg34ec536cU/Qr4UMnuhqMBgM7ofD7gCfl19HAnwtgMFg8HI4q8ygt1P5sAcGg8HTr6mTcPtn/GAwGFwGh93tD9iyiTpMMBgMfhY8VJnb7wGDweCnwqHxMvjznnP1/VG+j4DBYPAiOG5s9mZlZYLBYHA9nI2QHT37tyMwGAyuh7OOvA0HDAaDl8OTRQkGg8FgMBj8L+Efqp8TFlZDe5MAAAAASUVORK5CYII="/></svg>"#;
+        let rendered = render_svg_to_png(embedded_png, 64, 100_000).unwrap();
+        let pixmap = tiny_skia::Pixmap::decode_png(&rendered.bytes).unwrap();
+        assert!(pixmap.pixels().iter().any(|pixel| pixel.alpha() > 0));
+
+        for svg in [
+            br#"<svg xmlns="http://www.w3.org/2000/svg"><image href="https://example.com/a.png"/></svg>"#.as_slice(),
+            br#"<svg xmlns="http://www.w3.org/2000/svg"><image href="data:image/svg+xml;base64,PHN2Zy8+"/></svg>"#.as_slice(),
+            br#"<svg xmlns="http://www.w3.org/2000/svg"><image href="data:image/png;base64,not-base64"/></svg>"#.as_slice(),
+        ] {
+            assert_eq!(
+                render_svg_to_png(svg, 64, 100_000).unwrap_err(),
+                RabbySafeSvgError::UnsafeContent
+            );
+        }
+    }
+
+    #[test]
     fn rejects_malformed_svg_without_panicking() {
         assert_eq!(
             render_svg_to_png(b"<svg><", 256, 1_000_000).unwrap_err(),
@@ -442,10 +629,40 @@ mod tests {
     }
 
     #[test]
-    fn rejects_text_instead_of_silently_dropping_it() {
-        let svg = br#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><text x="1" y="10">NFT</text></svg>"#;
+    fn renders_bounded_static_text_with_the_bundled_font() {
+        let svg = br##"<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 350 350"><style>.base { fill: black; font-family: Impact; font-size: 50px; }</style><rect width="100%" height="100%" fill="#E8D33E"/><text x="10" y="60" class="base">token 1398</text><text x="10" y="150" class="base">balanceOf 15721239218291655</text><text x="10" y="230" class="base">locked_end 1680739200</text><text x="10" y="310" class="base">value 4000000000000000000</text></svg>"##;
+        let rendered = render_svg_to_png(svg, 350, 350 * 350).unwrap();
+        let pixmap = tiny_skia::Pixmap::decode_png(&rendered.bytes).unwrap();
+
+        assert_eq!((rendered.width, rendered.height), (350, 350));
+        assert!(pixmap.pixels().iter().any(|pixel| {
+            pixel.alpha() > 0 && pixel.red() < 64 && pixel.green() < 64 && pixel.blue() < 64
+        }));
+    }
+
+    #[test]
+    fn rejects_text_that_cannot_be_rendered_without_external_fonts() {
+        let svg = r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><text x="1" y="10">🙂</text></svg>"#;
         assert_eq!(
-            render_svg_to_png(svg, 64, 100_000).unwrap_err(),
+            render_svg_to_png(svg.as_bytes(), 64, 100_000).unwrap_err(),
+            RabbySafeSvgError::UnsupportedContent
+        );
+    }
+
+    #[test]
+    fn rejects_text_paths_and_excessive_text_work() {
+        let text_path = br##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path id="p" d="M0 10h20"/><text><textPath href="#p">NFT</textPath></text></svg>"##;
+        assert_eq!(
+            render_svg_to_png(text_path, 64, 100_000).unwrap_err(),
+            RabbySafeSvgError::UnsupportedContent
+        );
+
+        let oversized_text = format!(
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 20 20\"><text>{}</text></svg>",
+            "a".repeat(MAX_TEXT_CHARACTERS + 1)
+        );
+        assert_eq!(
+            render_svg_to_png(oversized_text.as_bytes(), 64, 100_000).unwrap_err(),
             RabbySafeSvgError::UnsupportedContent
         );
     }

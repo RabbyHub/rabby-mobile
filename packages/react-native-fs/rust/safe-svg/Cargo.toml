@@ -11,9 +11,11 @@ name = "rabby_safe_svg"
 crate-type = ["staticlib"]
 
 [dependencies]
-resvg = { version = "=0.47.0", default-features = false }
+base64 = "=0.22.1"
+resvg = { version = "=0.47.0", default-features = false, features = ["raster-images", "text"] }
 roxmltree = "=0.21.1"
 sha2 = "=0.10.9"
+ttf-parser = "=0.25.1"
 
 [profile.release]
 codegen-units = 1

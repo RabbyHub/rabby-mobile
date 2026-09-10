@@ -31,7 +31,6 @@ export default function NFTAvatar<T extends React.ComponentType<any>>({
         style,
       ])}>
       <Media
-        retryOnFailure
         failedPlaceholder={<IconDefaultNFT width="100%" height="100%" />}
         type={MEDIA_TYPE.IMAGE_URL}
         src={nftImageUrl}

@@ -44,7 +44,6 @@ const Avatar = ({
     <>
       {isNft ? (
         <Media
-          retryOnFailure
           failedPlaceholder={<IconDefaultNFT width={size} height={size} />}
           type={item?.token?.content_type || 'image_url'}
           src={item?.token?.content}
