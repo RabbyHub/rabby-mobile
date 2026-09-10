@@ -124,8 +124,11 @@ export const RabbyFeePopup = ({
                   idx === list.length - 1 && styles.noBorder,
                 ]}>
                 <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
                   style={[
                     styles.itemText,
+                    styles.caseText,
                     item === feeTier && styles.highItem,
                   ]}>
                   {t(`page.swap.rabbyFee.cases.${item}`)}
@@ -265,6 +268,11 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
     lineHeight: 20,
+  },
+  caseText: {
+    flexShrink: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   rateText: {
     color: colors2024['neutral-foot'],
