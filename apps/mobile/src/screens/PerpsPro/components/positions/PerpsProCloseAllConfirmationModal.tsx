@@ -156,7 +156,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '500',
-    lineHeight: 20,
   },
   pressed: { opacity: 0.8 },
 }));
