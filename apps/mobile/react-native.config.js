@@ -1,3 +1,9 @@
+const {
+  isLegacyReactNativeArchitecture,
+} = require('./scripts/react-native-architecture.cjs');
+
+const isLegacyArchitecture = isLegacyReactNativeArchitecture();
+
 /**
  * @type {import('@react-native-community/cli-types').Config}
  */
@@ -10,6 +16,12 @@ module.exports = {
     // './assets/ios/builtin-pages'
   ],
   dependencies: {
+    'react-native-mmkv': isLegacyArchitecture
+      ? { platforms: { android: null, ios: null } }
+      : {},
+    'react-native-mmkv-legacy': isLegacyArchitecture
+      ? {}
+      : { platforms: { android: null, ios: null } },
     '@rabby-wallet/react-native-ios-context-menu': {
       platforms: {
         android: null,

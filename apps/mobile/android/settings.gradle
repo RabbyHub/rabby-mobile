@@ -1,5 +1,50 @@
 pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
 plugins { id("com.facebook.react.settings") }
+
+def architectureCommand = [
+    "node",
+    new File(settingsDir, "../scripts/react-native-architecture.cjs").absolutePath,
+]
+def commandLineGradleArchitecture = gradle.startParameter.projectProperties.get(
+    "newArchEnabled",
+)
+def configuredGradleArchitecture = providers.gradleProperty("newArchEnabled").orNull
+def defaultLegacyArchitectureValues = ["0", "false", "no", "off"]
+def gradleArchitectureToValidate = commandLineGradleArchitecture != null
+    ? commandLineGradleArchitecture
+    : configuredGradleArchitecture != null && !defaultLegacyArchitectureValues.contains(
+        configuredGradleArchitecture.toString().toLowerCase(),
+    )
+        ? configuredGradleArchitecture
+        : null
+if (gradleArchitectureToValidate != null) {
+    architectureCommand.addAll([
+        "--gradle-project-new-arch",
+        gradleArchitectureToValidate,
+    ])
+}
+def architectureResolution = providers.exec {
+    commandLine architectureCommand
+    ignoreExitValue = true
+}
+def architectureExitCode = architectureResolution.result.get().exitValue
+if (architectureExitCode != 0) {
+    def architectureError = architectureResolution.standardError.asText.get().trim()
+    throw new GradleException(
+        architectureError ?: "[react-native-architecture] resolver failed with exit code ${architectureExitCode}",
+    )
+}
+def resolvedReactNativeArchitecture = architectureResolution.standardOutput.asText.get().trim()
+if (!["legacy", "new"].contains(resolvedReactNativeArchitecture)) {
+    throw new GradleException(
+        "[react-native-architecture] unexpected resolver output: ${resolvedReactNativeArchitecture}",
+    )
+}
+gradle.extensions.extraProperties.set(
+    "rabbyReactNativeArchitecture",
+    resolvedReactNativeArchitecture,
+)
+
 extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
 rootProject.name = 'RabbyMobile'
 include ':app'

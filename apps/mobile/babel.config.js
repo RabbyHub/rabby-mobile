@@ -1,5 +1,8 @@
 const pkg = require('./package.json');
 const loadableAliases = require('./scripts/loadables-aliases.generated.cjs');
+const {
+  resolveStartupProfilerWorkerDeferral,
+} = require('./scripts/react-native-architecture.cjs');
 
 /** @type {import('@babel/core').ConfigFunction} */
 module.exports = api => {
@@ -34,6 +37,8 @@ module.exports = api => {
   }
   const shouldInlineDevDynamicImports =
     isDevTransform && moduleLoadingMode === 'lazy';
+  const shouldDeferStartupProfilerWorker =
+    resolveStartupProfilerWorkerDeferral();
   const regressionScenarioImplExt =
     isDevTransform || resolvedBuildChannel === 'selfhost-reg'
       ? 'nonprod'
@@ -49,6 +54,7 @@ module.exports = api => {
       moduleLoadingMode,
       regressionScenarioImplExt,
       shouldEnableRozenite,
+      shouldDeferStartupProfilerWorker,
       shouldInlineDevDynamicImports,
     }),
   );
@@ -73,6 +79,8 @@ module.exports = api => {
             ? 'true'
             : 'false',
           'process.env.RABBY_MOBILE_MODULE_LOADING_MODE': moduleLoadingMode,
+          'process.env.RABBY_STARTUP_PROFILER_DEFER_WORKER':
+            shouldDeferStartupProfilerWorker ? 'true' : 'false',
           'process.env.WITH_ROZENITE': shouldEnableRozenite ? 'true' : 'false',
           'process.env.buildchannel': resolvedBuildChannel,
           'process.env.RABBY_MOBILE_FE_SERVICE_URL':

@@ -1,13 +1,24 @@
 #import "RNThread.h"
 #include <stdlib.h>
 
+#import "AppDelegate.h"
 #include "RNUtils.h"
+#import <React/RCTJavaScriptLoader.h>
+#import <React/RCTLog.h>
+
+@interface RNThreadRuntime : NSObject
+@property(nonatomic, strong) RCTBridge *bridge;
+@property(nonatomic, strong) RCTRootViewFactory *rootViewFactory;
+@end
+
+@implementation RNThreadRuntime
+@end
 
 @implementation RNThread
 
 // @synthesize bridge = _bridge;
 
-NSMutableDictionary *threads;
+NSMutableDictionary<NSNumber *, RNThreadRuntime *> *threads;
 
 RCT_EXPORT_MODULE();
 - (NSArray<NSString *> *)supportedEvents {
@@ -34,13 +45,74 @@ RCT_EXPORT_MODULE();
     return;
   }
 
-  for (NSNumber *threadId in threads) {
-    RCTBridge *threadBridge = threads[threadId];
-    [threadBridge invalidate];
+  for (RNThreadRuntime *runtime in threads.allValues) {
+    [runtime.bridge invalidate];
   }
 
   [threads removeAllObjects];
   threads = nil;
+}
+
+- (RNThreadRuntime *)createRuntimeWithBundleURL:(NSURL *)threadURL error:(NSError **)error
+{
+  RNThreadRuntime *runtime = [RNThreadRuntime new];
+  RCTBridge *currentBridge = RCTBridge.currentBridge;
+
+  if (!RCTTurboModuleEnabled()) {
+    runtime.bridge = [[RCTBridge alloc] initWithBundleURL:threadURL
+                                          moduleProvider:nil
+                                           launchOptions:nil];
+    RCTBridge.currentBridge = currentBridge;
+    return runtime;
+  }
+
+  AppDelegate *appDelegate = (AppDelegate *)UIApplication.sharedApplication.delegate;
+  RCTReactNativeFactory *reactNativeFactory = appDelegate.reactNativeFactory;
+  if (reactNativeFactory == nil) {
+    if (error != nil) {
+      *error = [NSError errorWithDomain:@"RNThread"
+                                   code:1
+                               userInfo:@{NSLocalizedDescriptionKey : @"React Native factory is not ready"}];
+    }
+    return nil;
+  }
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+  RCTRootViewFactoryConfiguration *configuration =
+      [[RCTRootViewFactoryConfiguration alloc] initWithBundleURL:threadURL
+                                                  newArchEnabled:YES
+                                              turboModuleEnabled:YES
+                                               bridgelessEnabled:NO];
+#pragma clang diagnostic pop
+
+  configuration.loadSourceForBridgeWithProgress = ^(
+      RCTBridge *bridge, RCTSourceLoadProgressBlock onProgress, RCTSourceLoadBlock loadCallback) {
+    [RCTJavaScriptLoader loadBundleAtURL:threadURL onProgress:onProgress onComplete:loadCallback];
+  };
+
+  RCTRootViewFactory *rootViewFactory = [[RCTRootViewFactory alloc]
+      initWithConfiguration:configuration
+      andTurboModuleManagerDelegate:(id<RCTTurboModuleManagerDelegate>)reactNativeFactory];
+
+  @try {
+    [rootViewFactory initializeReactHostWithLaunchOptions:nil];
+  } @finally {
+    RCTBridge.currentBridge = currentBridge;
+  }
+
+  if (rootViewFactory.bridge == nil) {
+    if (error != nil) {
+      *error = [NSError errorWithDomain:@"RNThread"
+                                   code:2
+                               userInfo:@{NSLocalizedDescriptionKey : @"Worker bridge could not be created"}];
+    }
+    return nil;
+  }
+
+  runtime.rootViewFactory = rootViewFactory;
+  runtime.bridge = rootViewFactory.bridge;
+  return runtime;
 }
 
 #pragma mark - Public API
@@ -77,18 +149,33 @@ RCT_REMAP_METHOD(startThread,
 
   NSLog(@"starting Thread %@", [threadURL absoluteString]);
 
-  RCTBridge* currentBridge = RCTBridge.currentBridge;
-  RCTBridge *threadBridge = [[RCTBridge alloc] initWithBundleURL:threadURL
-                                            moduleProvider:nil
-                                             launchOptions:nil];
-  RCTBridge.currentBridge = currentBridge;
-//  self.setBridge(currentBridge);
+  if (threadURL == nil) {
+    reject(@"thread_bundle_missing", @"Worker bundle URL could not be resolved", nil);
+    return;
+  }
 
-  ThreadSelfModule *threadSelf = [threadBridge moduleForName:@"ThreadSelfModule"];
+  NSError *runtimeError = nil;
+  RNThreadRuntime *runtime = [self createRuntimeWithBundleURL:threadURL error:&runtimeError];
+  if (runtime == nil) {
+    reject(@"thread_runtime_failed", runtimeError.localizedDescription, runtimeError);
+    return;
+  }
+
+  ThreadSelfModule *threadSelf = [runtime.bridge moduleForName:@"ThreadSelfModule"];
+  if (threadSelf == nil) {
+    [runtime.bridge invalidate];
+    NSError *moduleError = [NSError errorWithDomain:@"RNThread"
+                                                code:3
+                                            userInfo:@{
+                                              NSLocalizedDescriptionKey : @"ThreadSelfModule could not be initialized"
+                                            }];
+    reject(@"thread_module_missing", moduleError.localizedDescription, moduleError);
+    return;
+  }
   [threadSelf setThreadId:threadId];
   [threadSelf setParentModule:self];
 
-  [threads setObject:threadBridge forKey:[NSNumber numberWithInt:threadId]];
+  [threads setObject:runtime forKey:[NSNumber numberWithInt:threadId]];
   resolve([NSNumber numberWithInt:threadId]);
 
   NSDictionary *ret;
@@ -104,13 +191,13 @@ RCT_EXPORT_METHOD(stopThread:(int)threadId)
     return;
   }
 
-  RCTBridge *threadBridge = threads[[NSNumber numberWithInt:threadId]];
-  if (threadBridge == nil) {
+  RNThreadRuntime *runtime = threads[[NSNumber numberWithInt:threadId]];
+  if (runtime == nil) {
     NSLog(@"Thread is NIl. abort stopping thread with id %i", threadId);
     return;
   }
 
-  [threadBridge invalidate];
+  [runtime.bridge invalidate];
   [threads removeObjectForKey:[NSNumber numberWithInt:threadId]];
 
   NSDictionary *ret;
@@ -125,14 +212,13 @@ RCT_EXPORT_METHOD(postThreadMessage: (int)threadId message:(NSString *)message)
     return;
   }
 
-  RCTBridge *threadBridge = threads[[NSNumber numberWithInt:threadId]];
-  if (threadBridge == nil) {
+  RNThreadRuntime *runtime = threads[[NSNumber numberWithInt:threadId]];
+  if (runtime == nil) {
     NSLog(@"Thread is NIl. abort posting to thread with id %i", threadId);
     return;
   }
 
-  [threadBridge.eventDispatcher sendAppEventWithName:@"msgToThread"
-                                               body:message];
+  [runtime.bridge.eventDispatcher sendAppEventWithName:@"msgToThread" body:message];
 }
 
 @end

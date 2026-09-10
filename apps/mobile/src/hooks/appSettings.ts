@@ -474,6 +474,20 @@ export function getExpScreenCapture(
   };
 }
 
+export function setSensitiveSceneProtectionEnabled(enabled: boolean) {
+  if (!isNonPublicProductionEnv) {
+    return true;
+  }
+
+  setExpSettingData(prev => ({
+    ...prev,
+    [KEY]: !enabled,
+    ...(isIOS ? { iosForceDisableAlertForSensitiveScene: !enabled } : {}),
+  }));
+
+  return enabled;
+}
+
 export function useIosForceDisableAlertForSensitiveScene() {
   const iosForceDisableAlertForSensitiveScene = experimentalSettingsStore(
     s => s.iosForceDisableAlertForSensitiveScene,

@@ -424,6 +424,17 @@ index 98de6b8fefec0ffcc46de4544d8c3cfb002d342c..e096c486c94bb4509c2d606a5f5f164e
      toString(): string;
      toJSON(): object;
      addOnValueChangedListener(onValueChanged: (key: string) => void): Listener;
+diff --git a/package.json b/package.json
+index d0a18430d9bb21ea87010b17a355c775ada69ba7..f56755dcf4be115b5315fd0e47c5f7014a26a5a2 100644
+--- a/package.json
++++ b/package.json
+@@ -1,5 +1,5 @@
+ {
+-  "name": "react-native-mmkv",
++  "name": "react-native-mmkv-legacy",
+   "version": "2.12.2",
+   "description": "The fastest key/value storage for React Native. ~30x faster than AsyncStorage! Works on Android, iOS and Web.",
+   "main": "lib/commonjs/index",
 diff --git a/react-native-mmkv.podspec b/react-native-mmkv.podspec
 index 599f39e20baad5a1db037a80560f5105a0ad7d20..34c5f847d787e44f53f7ed7da632a3ed39edf061 100644
 --- a/react-native-mmkv.podspec
