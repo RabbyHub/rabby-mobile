@@ -14,12 +14,14 @@ import { getStyles } from './style';
 import { ellipsisAddress } from '@/utils/address';
 import { Text } from '@/components/Typography';
 
+type AddressViewerVariant = 'normal' | 'subtitle' | 'import-color';
+
 interface AddressViewProps {
   address: string;
   onClick?(): void;
   ellipsis?: boolean;
   showArrow?: boolean;
-  className?: string;
+  variant?: AddressViewerVariant;
   showImportIcon?: boolean;
   index?: number;
   showIndex?: boolean;
@@ -33,7 +35,7 @@ export const AddressViewer = ({
   onClick,
   ellipsis = true,
   showArrow = true,
-  className = 'normal',
+  variant = 'normal',
   index = -1,
   showIndex = false,
   style,
@@ -45,7 +47,7 @@ export const AddressViewer = ({
 
   return (
     <TouchableOpacity disabled={disabledPress} onPress={onClick}>
-      <View style={StyleSheet.flatten([styles[className], style])}>
+      <View style={StyleSheet.flatten([styles[variant] as ViewStyle, style])}>
         {showIndex && index >= 0 && (
           <Text style={styles.numberIndex}>{index}</Text>
         )}
@@ -62,9 +64,7 @@ export const AddressViewer = ({
             : address?.toLowerCase()}
         </Text>
       </View>
-      {showArrow && (
-        <SvgIconArrowDown className="ml-1 fill-current text-white opacity-80" />
-      )}
+      {showArrow && <SvgIconArrowDown style={styles.arrow} color="#fff" />}
     </TouchableOpacity>
   );
 };

@@ -1,3 +1,4 @@
+import { isApprovalProcessDisabled } from './securityGate';
 import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
 import type { Chain } from '@/constant/chains';
 import { SecurityEngineLevel } from '@/constant/security';
@@ -12,7 +13,6 @@ import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
 import type { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import type { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
-import clsx from 'clsx';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -42,6 +42,7 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   origin?: string;
   originLogo?: string;
   hasUnProcessSecurityResult?: boolean;
+  securityBlocked?: boolean;
   hasShadow?: boolean;
   isTestnet?: boolean;
   engineResults?: Result[];
@@ -162,6 +163,14 @@ const getStyles = (
       fontSize: 13,
       lineHeight: 15,
     },
+    securityLevelTipMessage: {
+      flex: 1,
+    },
+    ignoreAllText: {
+      fontSize: 13,
+      fontWeight: '500',
+      textDecorationLine: 'underline',
+    },
     iconLevel: {
       width: 14,
       height: 14,
@@ -201,7 +210,8 @@ export const FooterBar: React.FC<Props> = ({
   securityLevel,
   engineResults = [],
   hasUnProcessSecurityResult,
-  hasShadow = false,
+  securityBlocked = false,
+  hasShadow: _hasShadow = false,
   showGasLess = false,
   useGasLess = false,
   canUseGasLess = false,
@@ -349,11 +359,7 @@ export const FooterBar: React.FC<Props> = ({
   return (
     <View style={styles.container}>
       {/* {!isDarkTheme && hasShadow && <Shadow />} */}
-      <View
-        style={styles.wrapper}
-        className={clsx({
-          // 'has-shadow': !isDarkTheme && hasShadow,
-        })}>
+      <View style={styles.wrapper}>
         {Header}
 
         {isFirstGasCostLoading || isFirstGasLessLoading ? null : (
@@ -423,14 +429,14 @@ export const FooterBar: React.FC<Props> = ({
           account={account}
           gasLess={useGasLess && !payGasByGasAccount}
           {...props}
-          disabledProcess={
-            payGasByGasAccount
-              ? !gasAccountCanPay ||
-                (!!securityLevel && !!hasUnProcessSecurityResult)
-              : useGasLess
-              ? false
-              : props.disabledProcess
-          }
+          disabledProcess={isApprovalProcessDisabled({
+            securityBlocked,
+            hasUnprocessedSecurityResult: !!hasUnProcessSecurityResult,
+            payGasByGasAccount,
+            gasAccountCanPay,
+            useGasLess,
+            disabledProcess: !!props.disabledProcess,
+          })}
           enableTooltip={
             account.type === KEYRING_TYPE.WatchAddressKeyring
               ? true
@@ -446,7 +452,6 @@ export const FooterBar: React.FC<Props> = ({
         />
         {securityLevel && hasUnProcessSecurityResult && (
           <View
-            className="security-level-tip"
             style={StyleSheet.flatten([
               styles.securityLevelTip,
               {
@@ -455,9 +460,9 @@ export const FooterBar: React.FC<Props> = ({
             ])}>
             <Icon style={styles.iconLevel} />
             <Text
-              className="flex-1"
               style={StyleSheet.flatten([
                 styles.securityLevelTipText,
+                styles.securityLevelTipMessage,
                 {
                   color: SecurityLevelTipColor[securityLevel].text,
                 },
@@ -466,9 +471,9 @@ export const FooterBar: React.FC<Props> = ({
             </Text>
             <TouchableOpacity onPress={onIgnoreAllRules}>
               <Text
-                className="underline text-13 font-medium"
                 style={StyleSheet.flatten([
                   styles.securityLevelTipText,
+                  styles.ignoreAllText,
                   {
                     color: SecurityLevelTipColor[securityLevel].text,
                   },

@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcIconAmountUnitSwitch from '@/assets2024/icons/perps/PerpsProAmountUnitSwitch.svg';
 import { Text, TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
@@ -20,6 +21,7 @@ const suffixFontStyle = getPerpsProTradeSelectFontStyle(Platform.OS);
 type PerpsProTradePriceFieldProps = {
   canonicalizeValueOnBlur?: (value: string) => string;
   editable?: boolean;
+  displayMarketPrice?: boolean;
   fillRevision?: number;
   label: string;
   maxDecimals: number;
@@ -38,6 +40,7 @@ export const PerpsProTradePriceField = React.memo(
     const {
       canonicalizeValueOnBlur,
       editable = true,
+      displayMarketPrice = false,
       fillRevision = 0,
       label,
       maxDecimals,
@@ -54,60 +57,79 @@ export const PerpsProTradePriceField = React.memo(
     const [focused, setFocused] = useState(false);
     const animatedInputStyle = usePerpsProPriceFillAnimation(fillRevision);
     const showFloatingLabel = focused || !!value;
+    const isMarketExecution =
+      variant === 'conditionalExecution' && displayMarketPrice;
+    const fieldContent = isMarketExecution ? (
+      <Text style={styles.marketPrice}>{label}</Text>
+    ) : (
+      <View style={styles.inputArea}>
+        {showFloatingLabel ? (
+          <Text
+            pointerEvents="none"
+            style={styles.label}
+            testID="perps-pro-trade-price-label">
+            {label}
+          </Text>
+        ) : (
+          <Text
+            numberOfLines={1}
+            pointerEvents="none"
+            style={styles.centeredPlaceholder}
+            testID="perps-pro-trade-price-placeholder">
+            {label}
+          </Text>
+        )}
+        <PerpsProDecimalTextInput
+          keyboardScrollTrade
+          accessibilityLabel={label}
+          canonicalizeValueOnBlur={canonicalizeValueOnBlur}
+          cursorColor={colors2024['brand-default']}
+          editable={editable}
+          inputComponent={PerpsProAnimatedPriceTextInput}
+          maxFontSizeMultiplier={1.2}
+          maxDecimals={maxDecimals}
+          normalizeValue={normalizeValue}
+          preserveIntegerZeroRun
+          ref={ref}
+          onBlur={() => setFocused(false)}
+          onChangeText={onChangeText}
+          onFocus={() => setFocused(true)}
+          pointerEvents={onPressValue ? 'none' : 'auto'}
+          selectionColor={colors2024['brand-default']}
+          style={[styles.input, animatedInputStyle]}
+          value={value}
+        />
+      </View>
+    );
+    const fieldStyle = [
+      styles.fieldArea,
+      variant === 'conditionalExecution' ? styles.conditionalField : null,
+    ];
     return (
       <View style={styles.container} testID="perps-pro-trade-price-field">
-        <Pressable
-          accessibilityRole={onPressValue ? 'button' : undefined}
-          onPress={onPressValue}
-          style={[
-            styles.fieldArea,
-            variant === 'conditionalExecution' && !editable
-              ? styles.conditionalDisabledField
-              : null,
-          ]}
-          testID={
-            variant === 'conditionalExecution'
-              ? 'perps-pro-trade-conditional-execution-value'
-              : undefined
-          }>
-          <View style={styles.inputArea}>
-            {showFloatingLabel ? (
-              <Text
-                pointerEvents="none"
-                style={styles.label}
-                testID="perps-pro-trade-price-label">
-                {label}
-              </Text>
-            ) : (
-              <Text
-                numberOfLines={1}
-                pointerEvents="none"
-                style={styles.centeredPlaceholder}
-                testID="perps-pro-trade-price-placeholder">
-                {label}
-              </Text>
-            )}
-            <PerpsProDecimalTextInput
-              accessibilityLabel={label}
-              canonicalizeValueOnBlur={canonicalizeValueOnBlur}
-              cursorColor={colors2024['brand-default']}
-              editable={editable}
-              inputComponent={PerpsProAnimatedPriceTextInput}
-              maxFontSizeMultiplier={1.2}
-              maxDecimals={maxDecimals}
-              normalizeValue={normalizeValue}
-              preserveIntegerZeroRun
-              ref={ref}
-              onBlur={() => setFocused(false)}
-              onChangeText={onChangeText}
-              onFocus={() => setFocused(true)}
-              pointerEvents={onPressValue ? 'none' : 'auto'}
-              selectionColor={colors2024['brand-default']}
-              style={[styles.input, animatedInputStyle]}
-              value={value}
-            />
+        {onPressValue ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={onPressValue}
+            style={fieldStyle}
+            testID={
+              variant === 'conditionalExecution'
+                ? 'perps-pro-trade-conditional-execution-value'
+                : undefined
+            }>
+            {fieldContent}
+          </Pressable>
+        ) : (
+          <View
+            style={fieldStyle}
+            testID={
+              variant === 'conditionalExecution'
+                ? 'perps-pro-trade-conditional-execution-value'
+                : undefined
+            }>
+            {fieldContent}
           </View>
-        </Pressable>
+        )}
         {suffix ? (
           <Pressable
             accessibilityRole={onPressSuffix ? 'button' : undefined}
@@ -180,7 +202,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   label: {
     color: colors2024['neutral-info'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 10,
     left: 8,
     lineHeight: 12,
@@ -190,8 +212,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     top: 4,
   },
   input: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     height: 40,
@@ -205,7 +228,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   centeredPlaceholder: {
     color: colors2024['neutral-info'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     left: 8,
@@ -227,7 +250,26 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 10,
     width: 60,
   },
+  conditionalField: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-5'],
+    justifyContent: 'center',
+  },
+  marketPrice: {
+    paddingHorizontal: 8,
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 18,
+    textAlign: 'center',
+  },
   conditionalSuffixArea: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-5'],
+    width: 72,
     borderRadius: 8,
     flexDirection: 'row',
     gap: 4,
@@ -235,7 +277,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   suffix: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
@@ -247,11 +289,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   disabledSuffix: {
     opacity: 0.45,
   },
-  conditionalDisabledField: {
-    opacity: 0.5,
-  },
   conditionalSuffix: {
-    fontSize: 10,
-    lineHeight: 12,
+    fontSize: 12,
+    lineHeight: 16,
   },
 }));

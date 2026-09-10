@@ -58,7 +58,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   title: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 15,
     fontWeight: '700',
     lineHeight: 20,
@@ -66,7 +66,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   description: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 17,
     marginTop: 6,
@@ -84,7 +84,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   actionText: {
     color: colors2024['neutral-bg-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 13,
     fontWeight: '700',
     lineHeight: 18,

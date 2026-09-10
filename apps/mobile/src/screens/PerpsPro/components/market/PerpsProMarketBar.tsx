@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcCandlestick from '@/assets2024/icons/perps/PerpsProCandlestick.svg';
 import RcMarketCaret from '@/assets2024/icons/perps/PerpsProMarketCaret.svg';
 import { Text } from '@/components/Typography';
@@ -9,6 +10,10 @@ import { useTranslation } from 'react-i18next';
 
 import type { PerpsProMarket } from '../../model/market';
 import { formatPerpsProPercent } from '../../utils/format';
+import {
+  getPerpsProMetadataTagContainerStyle,
+  getPerpsProMetadataTagTextStyle,
+} from '../common/perpsProSemanticTagStyles';
 
 export const PERPS_PRO_MARKET_BAR_HEIGHT = 40;
 
@@ -39,9 +44,11 @@ export const PerpsProMarketBar: React.FC<{
           {market?.displayPair ?? '-'}
         </Text>
         {market?.sourceTag ? (
-          <Text numberOfLines={1} style={styles.source}>
-            {market.sourceTag}
-          </Text>
+          <View style={styles.source} testID="perps-pro-market-source-tag">
+            <Text numberOfLines={1} style={styles.sourceText}>
+              {market.sourceTag}
+            </Text>
+          </View>
         ) : null}
         <Text style={changeStyle}>
           {formatPerpsProPercent(market?.change24h)}
@@ -90,43 +97,51 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     gap: 4,
     height: '100%',
+    minWidth: 0,
   },
   pair: {
+    flexShrink: 1,
+    minWidth: 0,
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     fontWeight: '700',
     lineHeight: 22,
   },
   source: {
-    backgroundColor: colors2024['neutral-bg-5'],
-    borderRadius: 4,
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
+    ...getPerpsProMetadataTagContainerStyle(colors2024),
     maxWidth: 52,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
+    overflow: 'hidden',
+  },
+  sourceText: {
+    ...getPerpsProMetadataTagTextStyle(colors2024),
   },
   up: {
+    ...PERPS_PRO_NUMBER_STYLE,
+    flexShrink: 1,
+    minWidth: 0,
     color: colors2024['green-default'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
   },
   down: {
+    ...PERPS_PRO_NUMBER_STYLE,
+    flexShrink: 1,
+    minWidth: 0,
     color: colors2024['red-default'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
   },
   muted: {
+    ...PERPS_PRO_NUMBER_STYLE,
+    flexShrink: 1,
+    minWidth: 0,
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,

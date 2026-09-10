@@ -1,69 +1,158 @@
-import { perpsStore } from './usePerpsStore';
+import { useContext, useEffect, useState } from 'react';
+import { NavigationContext } from '@react-navigation/native';
+import {
+  fetchHomePerpsSnapshotHttp,
+  isPerpsUserAbstractionModeKnown,
+  perpsStore,
+} from './usePerpsStore';
 import { useShallow } from 'zustand/react/shallow';
 import { usePerpsAccount } from './usePerpsAccount';
 import { UserAbstractionResp } from '@rabby-wallet/hyperliquid-sdk';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
+// The badge otherwise waits on WS first frames forever. After this window it
+// pulls one HTTP snapshot and then drops the skeleton whatever the outcome.
+export const HOME_PERPS_PNL_WS_FALLBACK_MS = 8_000;
+
+// Home stays mounted behind other screens, so the fallback must not do
+// network work for a hidden badge. Same focus/blur source as
+// ScreenStoreActivityProvider; outside a navigator it counts as focused.
+const useIsScreenFocused = () => {
+  const navigation = useContext(NavigationContext);
+  const [isFocused, setIsFocused] = useState(
+    () => navigation?.isFocused() ?? true,
+  );
+
+  useEffect(() => {
+    if (!navigation) {
+      setIsFocused(true);
+      return;
+    }
+    setIsFocused(navigation.isFocused());
+    const unsubscribeFocus = navigation.addListener('focus', () =>
+      setIsFocused(true),
+    );
+    const unsubscribeBlur = navigation.addListener('blur', () =>
+      setIsFocused(false),
+    );
+    return () => {
+      unsubscribeFocus();
+      unsubscribeBlur();
+    };
+  }, [navigation]);
+
+  return isFocused;
+};
+
 export const usePerpsHomePnl = () => {
   const {
-    currentPerpsAccount,
+    currentAddress,
     homePositionPnl,
     isFetchAllDone,
+    isModeKnown,
     isSpotStateReady,
     isUserDataReady,
     userAbstraction,
-    userAbstractionReady,
   } = useActivityStore(
     perpsStore,
     useShallow(s => ({
-      currentPerpsAccount: s.currentPerpsAccount,
+      currentAddress: s.currentPerpsAccount?.address ?? null,
       homePositionPnl: s.homePositionPnl,
       isFetchAllDone: s.isFetchAllDone,
+      isModeKnown: isPerpsUserAbstractionModeKnown(s),
       isSpotStateReady: s.isSpotStateReady,
       isUserDataReady: s.isUserDataReady,
       userAbstraction: s.userAbstraction,
-      userAbstractionReady: s.userAbstractionReady,
     })),
     Object.is,
     { storeLabel: 'home-overview-perps-pnl' },
   );
   const { availableBalance } = usePerpsAccount();
+  const hasAccount = !!currentAddress;
   const isSpotCollateralMode =
     userAbstraction === UserAbstractionResp.unifiedAccount ||
     userAbstraction === UserAbstractionResp.portfolioMargin;
-  const hasResolvedPositionInfo = currentPerpsAccount
+  const hasResolvedPositionInfo = hasAccount
     ? isUserDataReady || isFetchAllDone
     : isFetchAllDone;
-  const hasResolvedAvailableBalance = currentPerpsAccount
-    ? userAbstractionReady &&
-      (isSpotCollateralMode ? isSpotStateReady : isUserDataReady)
+  const hasResolvedAvailableBalance = hasAccount
+    ? isModeKnown && (isSpotCollateralMode ? isSpotStateReady : isUserDataReady)
     : isFetchAllDone;
-  const canShowResolvedZero = currentPerpsAccount
-    ? userAbstractionReady &&
+  const canShowResolvedZero = hasAccount
+    ? isModeKnown &&
       (isSpotCollateralMode ? isSpotStateReady : hasResolvedPositionInfo)
     : isFetchAllDone;
   const shouldShowResolvedZero =
-    !!currentPerpsAccount && canShowResolvedZero && !homePositionPnl.show;
+    hasAccount && canShowResolvedZero && !homePositionPnl.show;
   const displayType = shouldShowResolvedZero
     ? 'accountValue'
     : homePositionPnl.type;
   const shouldWaitForAccountValue =
-    !!currentPerpsAccount &&
+    hasAccount &&
     homePositionPnl.show &&
     displayType === 'accountValue' &&
     !hasResolvedAvailableBalance;
   const shouldWaitForResolvedZero =
-    !!currentPerpsAccount && !homePositionPnl.show && !canShowResolvedZero;
-  const isLoading = currentPerpsAccount
+    hasAccount && !homePositionPnl.show && !canShowResolvedZero;
+  const isWaitingForData = hasAccount
     ? shouldWaitForAccountValue || shouldWaitForResolvedZero
     : !homePositionPnl.show && !hasResolvedPositionInfo;
+
+  // The settled marker is scoped to this account entry, not the address:
+  // A → B → A must give A a fresh window even if B never settled.
+  const fallbackKey = currentAddress?.toLowerCase() ?? '';
+  const [fallback, setFallback] = useState({
+    key: fallbackKey,
+    settled: false,
+  });
+  if (fallback.key !== fallbackKey) {
+    // Reset during render so the new entry never renders as given up.
+    setFallback({ key: fallbackKey, settled: false });
+  }
+  const hasGivenUp =
+    isWaitingForData && fallback.key === fallbackKey && fallback.settled;
+  const isFocused = useIsScreenFocused();
+
+  // Blur cancels a pending window; focus starts a fresh one if still waiting.
+  useEffect(() => {
+    if (
+      !isFocused ||
+      !isWaitingForData ||
+      fallback.key !== fallbackKey ||
+      fallback.settled
+    ) {
+      return;
+    }
+    let cancelled = false;
+    const settle = () => {
+      if (!cancelled) {
+        setFallback(prev =>
+          prev.key === fallbackKey ? { key: fallbackKey, settled: true } : prev,
+        );
+      }
+    };
+    const timer = setTimeout(() => {
+      if (!fallbackKey) {
+        settle();
+        return;
+      }
+      fetchHomePerpsSnapshotHttp(fallbackKey).then(settle, settle);
+    }, HOME_PERPS_PNL_WS_FALLBACK_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [fallback, fallbackKey, isFocused, isWaitingForData]);
 
   return {
     perpsPositionInfo: {
       ...homePositionPnl,
-      show: homePositionPnl.show || shouldShowResolvedZero,
+      // While still waiting, the only value that could surface is an
+      // unresolved account value — after giving up it would read as a
+      // misleading $0.
+      show: (homePositionPnl.show || shouldShowResolvedZero) && !hasGivenUp,
       type: displayType,
-      isLoading,
+      isLoading: isWaitingForData && !hasGivenUp,
       availableBalance: Number(availableBalance),
     },
   };

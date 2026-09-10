@@ -1,10 +1,9 @@
-import RcIconEmptyTokenDark from '@/assets2024/singleHome/empty-token-dark.svg';
-import RcIconEmptyToken from '@/assets2024/singleHome/empty-token.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { View } from 'react-native';
+import { PerpsProEmptyIllustration } from './PerpsProEmptyIllustration';
 
 export const PerpsProEmptyState: React.FC<{
   message: string;
@@ -14,15 +13,10 @@ export const PerpsProEmptyState: React.FC<{
 
   return (
     <View style={styles.container} testID={testID}>
-      {isLight ? (
-        <RcIconEmptyToken height={126} testID={`${testID}-light`} width={163} />
-      ) : (
-        <RcIconEmptyTokenDark
-          height={126}
-          testID={`${testID}-dark`}
-          width={163}
-        />
-      )}
+      <PerpsProEmptyIllustration
+        isLight={isLight}
+        testID={`${testID}-illustration`}
+      />
       <Text style={styles.message}>{message}</Text>
     </View>
   );
@@ -38,7 +32,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   message: {
     color: colors2024['neutral-info'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '400',
     lineHeight: 18,

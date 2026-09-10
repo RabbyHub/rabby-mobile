@@ -5,7 +5,6 @@ import {
 import { Platform } from 'react-native';
 import { logger } from '@/utils/logger';
 
-import * as apisKeychainV8_2_0 from './keychainV8_2_0';
 import * as apisKeychainV9_0_0 from './keychainV9_0_0';
 import * as apisKeychainV10_0_0 from './keychainV10_0_0';
 import {
@@ -14,10 +13,14 @@ import {
   DEFAULT_ANDROID_AUTH_PROMPT_POLICY,
   DEFAULT_KEYCHAIN_STORAGE_TYPE,
   KEYCHAIN_AUTH_TYPES,
+  KEYCHAIN_BIOMETRY_TYPES,
   KEYCHAIN_DEFAULT_SERVICE,
   KEYCHAIN_ERROR_CODES,
   RequestGenericPurpose,
+  type AndroidAuthenticatorCapability,
+  type AndroidAuthenticatorCapabilities,
   type AndroidAuthPromptPolicy,
+  type AndroidBiometricHardwareState,
   type KeychainStorageType,
   coerceKeychainStorageType,
   getDefaultBiometricsAuthenticationType,
@@ -45,10 +48,14 @@ export {
   DEFAULT_ANDROID_AUTH_PROMPT_POLICY,
   DEFAULT_KEYCHAIN_STORAGE_TYPE,
   KEYCHAIN_AUTH_TYPES,
+  KEYCHAIN_BIOMETRY_TYPES,
   KEYCHAIN_DEFAULT_SERVICE,
   KEYCHAIN_ERROR_CODES,
   RequestGenericPurpose,
+  type AndroidAuthenticatorCapability,
+  type AndroidAuthenticatorCapabilities,
   type AndroidAuthPromptPolicy,
+  type AndroidBiometricHardwareState,
   type KeychainStorageType,
   coerceKeychainStorageType,
   getDefaultBiometricsAuthenticationType,
@@ -74,10 +81,8 @@ function getKeychainApiByVersion(version: CurrentKeychainVersion) {
     case '10.0.0':
       return apisKeychainV10_0_0;
     case '9.0.0':
-      return apisKeychainV9_0_0;
-    case '8.2.0-fork':
     default:
-      return apisKeychainV8_2_0;
+      return apisKeychainV9_0_0;
   }
 }
 
@@ -112,13 +117,11 @@ type KeychainBiometricsFailureDiagnostic = {
   };
   debugStates: {
     current: SafeKeychainDebugState | null;
-    v8: SafeKeychainDebugState | null;
-    v9: SafeKeychainDebugState | null;
   };
 };
 
 type RequestGenericPasswordOptions = Parameters<
-  typeof apisKeychainV8_2_0.requestGenericPassword
+  KeychainBusinessApi['requestGenericPassword']
 >[0];
 
 function getErrorMessage(error: unknown) {
@@ -210,12 +213,6 @@ async function recordAndroidBiometricsFailureDiagnostic(options: {
       current: await getSafeKeychainDebugState(() =>
         currentApi.getKeychainDebugState(),
       ),
-      v8: await getSafeKeychainDebugState(() =>
-        apisKeychainV8_2_0.getKeychainDebugState(),
-      ),
-      v9: await getSafeKeychainDebugState(() =>
-        apisKeychainV9_0_0.getKeychainDebugState(),
-      ),
     },
   };
 
@@ -239,11 +236,11 @@ export function getCurrentKeychainSourceLabel() {
 }
 
 export const makeSecureKeyChainInstance = (
-  ...args: Parameters<typeof apisKeychainV8_2_0.makeSecureKeyChainInstance>
+  ...args: Parameters<KeychainBusinessApi['makeSecureKeyChainInstance']>
 ) => getCurrentKeychainApi().makeSecureKeyChainInstance(...args);
 
 export async function requestGenericPassword(
-  ...args: Parameters<typeof apisKeychainV8_2_0.requestGenericPassword>
+  ...args: Parameters<KeychainBusinessApi['requestGenericPassword']>
 ) {
   const currentVersion = getCurrentKeychainVersion();
   const currentApi = getKeychainApiByVersion(currentVersion);
@@ -301,55 +298,54 @@ export const getSupportedBiometryType =
   (): Promise<KeychainSupportedBiometryType> =>
     getCurrentKeychainApi().getSupportedBiometryType();
 
+export const shouldRequireBiometricProofForSetup = () =>
+  getCurrentKeychainApi().shouldRequireBiometricProofForSetup();
+
 export const isPasscodeAuthAvailable = () =>
   getCurrentKeychainApi().isPasscodeAuthAvailable();
 
 export const getKeychainDebugState = (
-  ...args: Parameters<typeof apisKeychainV8_2_0.getKeychainDebugState>
+  ...args: Parameters<KeychainBusinessApi['getKeychainDebugState']>
 ) => getCurrentKeychainApi().getKeychainDebugState(...args);
 
 export const getKeychainEntryState = (
-  ...args: Parameters<typeof apisKeychainV8_2_0.getKeychainEntryState>
+  ...args: Parameters<KeychainBusinessApi['getKeychainEntryState']>
 ) => getCurrentKeychainApi().getKeychainEntryState(...args);
 
 export const debugRemoveCurrentCipherStorageMarker = (
   ...args: Parameters<
-    typeof apisKeychainV8_2_0.debugRemoveCurrentCipherStorageMarker
+    KeychainBusinessApi['debugRemoveCurrentCipherStorageMarker']
   >
 ) => getCurrentKeychainApi().debugRemoveCurrentCipherStorageMarker(...args);
 
 export const debugWriteMockLegacyBiometricsEntry = (
   ...args: Parameters<
-    typeof apisKeychainV8_2_0.debugWriteMockLegacyBiometricsEntry
+    KeychainBusinessApi['debugWriteMockLegacyBiometricsEntry']
   >
 ) => getCurrentKeychainApi().debugWriteMockLegacyBiometricsEntry(...args);
 
 export const getSupportedStorageTypes = (
-  ...args: Parameters<typeof apisKeychainV8_2_0.getSupportedStorageTypes>
+  ...args: Parameters<KeychainBusinessApi['getSupportedStorageTypes']>
 ) => getCurrentKeychainApi().getSupportedStorageTypes(...args);
 
 export const debugDecryptStoredPasswordPayload = (
-  ...args: Parameters<
-    typeof apisKeychainV8_2_0.debugDecryptStoredPasswordPayload
-  >
+  ...args: Parameters<KeychainBusinessApi['debugDecryptStoredPasswordPayload']>
 ) => getCurrentKeychainApi().debugDecryptStoredPasswordPayload(...args);
 
 export const debugDecryptGenericPassword = (
-  ...args: Parameters<typeof apisKeychainV8_2_0.debugDecryptGenericPassword>
+  ...args: Parameters<KeychainBusinessApi['debugDecryptGenericPassword']>
 ) => getCurrentKeychainApi().debugDecryptGenericPassword(...args);
 
 export const setGenericPassword = (
-  ...args: Parameters<typeof apisKeychainV8_2_0.setGenericPassword>
+  ...args: Parameters<KeychainBusinessApi['setGenericPassword']>
 ) => getCurrentKeychainApi().setGenericPassword(...args);
 
 export const migrateAndroidBiometricsToPasscode = (
-  ...args: Parameters<
-    typeof apisKeychainV8_2_0.migrateAndroidBiometricsToPasscode
-  >
+  ...args: Parameters<KeychainBusinessApi['migrateAndroidBiometricsToPasscode']>
 ) => getCurrentKeychainApi().migrateAndroidBiometricsToPasscode(...args);
 
 export const cacheTrustedVaultKeyString = (
-  ...args: Parameters<typeof apisKeychainV8_2_0.cacheTrustedVaultKeyString>
+  ...args: Parameters<KeychainBusinessApi['cacheTrustedVaultKeyString']>
 ) => getCurrentKeychainApi().cacheTrustedVaultKeyString(...args);
 
 export async function repairBiometricsAfterPasswordUnlock(
@@ -412,9 +408,9 @@ export async function repairBiometricsAfterPasswordUnlock(
 }
 
 export const resetGenericPassword = (
-  ...args: Parameters<typeof apisKeychainV8_2_0.resetGenericPassword>
+  ...args: Parameters<KeychainBusinessApi['resetGenericPassword']>
 ) => getCurrentKeychainApi().resetGenericPassword(...args);
 
 export const clearApplicationPassword = (
-  ...args: Parameters<typeof apisKeychainV8_2_0.clearApplicationPassword>
+  ...args: Parameters<KeychainBusinessApi['clearApplicationPassword']>
 ) => getCurrentKeychainApi().clearApplicationPassword(...args);

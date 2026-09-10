@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 jest.mock('react-native-haptic-feedback', () => ({
   trigger: jest.fn(),
@@ -96,6 +96,7 @@ jest.mock('../common/PerpsProDottedUnderlineText', () => {
 });
 
 import { PerpsProTradeSkeleton } from './PerpsProTradeSkeleton';
+import { getPerpsProTradeSelectFontStyle } from './PerpsProTradePrimitives';
 
 describe('PerpsProTradeSkeleton', () => {
   it('uses the three approved sections and centered field typography', () => {
@@ -111,7 +112,7 @@ describe('PerpsProTradeSkeleton', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-trade-skeleton').props.style,
       ),
-    ).toMatchObject({ gap: 16, height: 416 });
+    ).toMatchObject({ gap: 16, minHeight: 416 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-trade-input-group').props.style,
@@ -127,24 +128,22 @@ describe('PerpsProTradeSkeleton', () => {
         screen.getByTestId('perps-pro-trade-order-groups').props.style,
       ),
     ).toMatchObject({ gap: 16 });
-    expect(
-      StyleSheet.flatten(screen.getByText('Isolated').props.style),
-    ).toMatchObject({
-      fontSize: 14,
-      fontVariant: ['stylistic-six'],
-      lineHeight: 18,
-      textAlign: 'center',
-    });
-    expect(
-      StyleSheet.flatten(screen.getByText('25x').props.style),
-    ).toMatchObject({
+    const sharedSelectorStyle = {
+      ...getPerpsProTradeSelectFontStyle(Platform.OS),
       fontSize: 14,
       lineHeight: 18,
       textAlign: 'center',
-    });
-    expect(
-      StyleSheet.flatten(screen.getByText('25x').props.style).fontVariant,
-    ).toBeUndefined();
+    };
+    const isolatedStyle = StyleSheet.flatten(
+      screen.getByText('Isolated').props.style,
+    );
+    const leverageStyle = StyleSheet.flatten(
+      screen.getByText('25x').props.style,
+    );
+    expect(isolatedStyle).toMatchObject(sharedSelectorStyle);
+    expect(leverageStyle).toMatchObject(sharedSelectorStyle);
+    expect(isolatedStyle.fontVariant).toBeUndefined();
+    expect(leverageStyle.fontVariant).toEqual(['tabular-nums']);
     expect(screen.getAllByTestId('perps-pro-trade-select-caret')).toHaveLength(
       1,
     );
@@ -186,17 +185,17 @@ describe('PerpsProTradeSkeleton', () => {
     expect(unitAreaStyle).toMatchObject({
       borderLeftWidth: 1,
       flexShrink: 0,
-      height: 24,
+      height: 26,
       maxWidth: 72,
-      minWidth: 52,
-      paddingLeft: 5,
+      minWidth: 63,
+      paddingLeft: 10,
     });
     expect(unitAreaStyle.width).toBeUndefined();
     const unitStyle = StyleSheet.flatten(screen.getByText('USDC').props.style);
     expect(unitStyle).toMatchObject({
       flexShrink: 1,
-      fontSize: 12,
-      lineHeight: 16,
+      fontSize: 14,
+      lineHeight: 18,
       minWidth: 34,
     });
     expect(unitStyle.width).toBeUndefined();

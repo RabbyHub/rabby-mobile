@@ -14,7 +14,6 @@ import { Text } from '@/components/Typography';
 import {
   BOTTOM_BUTTON_DOUBLE_HEIGHT,
   BOTTOM_BUTTON_GAP,
-  BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
   BOTTOM_BUTTON_TEXT_SIZE,
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
@@ -208,6 +207,5 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     fontSize: BOTTOM_BUTTON_TEXT_SIZE,
     fontStyle: 'normal',
     fontWeight: '600',
-    lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
   },
 }));

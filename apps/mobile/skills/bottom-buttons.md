@@ -83,6 +83,8 @@ That PR centralized bottom button sizing and spacing in [`src/constant/layout.ts
 
    Avoid re-declaring button title font size, line height, radius, disabled color, or primary background in each screen. Pass `height` and `titleStyle`, and only add local style for genuinely local width/layout constraints.
 
+   When `height` is a number, `Button` defaults the title `lineHeight` to that height so CJK titles stay vertically centered (a fixed 22px line height renders Chinese text above center). The shared title constants therefore carry no `lineHeight`; do not add one to a `titleStyle` unless the title must wrap onto multiple lines (see the no-permission button in `PerpsFooter`). Size the button via `height`, not `buttonStyle.height`, so the default applies.
+
 ## Current References
 
 - [`src/constant/layout.ts`](../src/constant/layout.ts)

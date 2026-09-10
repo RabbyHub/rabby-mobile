@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcIconEdit from '@/assets2024/icons/perps/IconPerpEdit.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
@@ -12,13 +13,14 @@ import { usePerpsProMarketIdentity } from '../../scene/usePerpsProMarketIdentity
 import {
   formatPerpsProDecimal,
   formatPerpsProPercent,
-  formatPerpsProPrice,
   formatPerpsProTime,
+  formatPerpsProVariableDecimal,
 } from '../../utils/format';
 import {
-  getPerpsProSemanticTagContainerStyle,
-  getPerpsProSemanticTagTextStyle,
-  PERPS_PRO_LIGHT_NEUTRAL_TAG_BACKGROUND,
+  getPerpsProMetadataTagContainerStyle,
+  getPerpsProMetadataTagTextStyle,
+  getPerpsProTintedTagContainerStyle,
+  getPerpsProTintedTagTextStyle,
 } from '../common/perpsProSemanticTagStyles';
 import { PerpsProMarketPair } from '../common/PerpsProMarketPair';
 
@@ -123,7 +125,7 @@ export const PerpsProOpenOrderCard: React.FC<{
     const executionPrice =
       order.executionPriceKind === 'market'
         ? t('page.perps.pro.openOrders.market')
-        : formatPerpsProPrice(order.executionPrice, market.pxDecimals);
+        : formatPerpsProVariableDecimal(order.executionPrice);
     const numericFilledRatio = Number(order.filledRatio);
     const filledRatio = Number.isFinite(numericFilledRatio)
       ? Math.max(0, Math.min(numericFilledRatio, 1))
@@ -284,7 +286,7 @@ export const PerpsProOpenOrderCard: React.FC<{
 
 PerpsProOpenOrderCard.displayName = 'PerpsProOpenOrderCard';
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   row: {
     borderBottomColor: colors2024['neutral-bg-5'],
     borderBottomWidth: 1,
@@ -309,20 +311,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   coin: {
     color: colors2024['neutral-title-1'],
     flexShrink: 1,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,
   },
   marketButton: { flexShrink: 1 },
-  sourceTag: {
-    ...getPerpsProSemanticTagContainerStyle(colors2024, 'neutral', {
-      backgroundColor: isLight
-        ? PERPS_PRO_LIGHT_NEUTRAL_TAG_BACKGROUND
-        : colors2024['neutral-bg-5'],
-    }),
-  },
-  sourceText: getPerpsProSemanticTagTextStyle(colors2024, 'neutral'),
+  sourceTag: getPerpsProMetadataTagContainerStyle(colors2024),
+  sourceText: getPerpsProMetadataTagTextStyle(colors2024),
   metaRow: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -330,13 +326,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 4,
     marginTop: 2,
   },
-  buyTag: getPerpsProSemanticTagContainerStyle(colors2024, 'positive'),
-  sellTag: getPerpsProSemanticTagContainerStyle(colors2024, 'negative'),
-  buyText: getPerpsProSemanticTagTextStyle(colors2024, 'positive'),
-  sellText: getPerpsProSemanticTagTextStyle(colors2024, 'negative'),
+  buyTag: getPerpsProTintedTagContainerStyle(colors2024, 'positive'),
+  sellTag: getPerpsProTintedTagContainerStyle(colors2024, 'negative'),
+  buyText: getPerpsProTintedTagTextStyle(colors2024, 'positive'),
+  sellText: getPerpsProTintedTagTextStyle(colors2024, 'negative'),
   time: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },
@@ -354,8 +351,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 32,
   },
   progressText: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 12,
@@ -388,7 +386,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   cancelText: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
@@ -404,14 +402,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   label: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },
   detailValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     flexShrink: 1,
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,

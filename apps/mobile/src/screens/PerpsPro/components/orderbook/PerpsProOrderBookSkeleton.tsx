@@ -65,9 +65,15 @@ PerpsProOrderBookBodySkeleton.displayName = 'PerpsProOrderBookBodySkeleton';
 
 export const PerpsProOrderBookRatioSkeleton: React.FC = React.memo(() => (
   <View style={styles.ratio}>
-    <PerpsProSkeletonBlock height={8} style={styles.value} width={24} />
-    <PerpsProSkeletonBlock height={4} style={styles.ratioBar} width={48} />
-    <PerpsProSkeletonBlock height={8} style={styles.value} width={24} />
+    <View style={[styles.ratioLabelLane, styles.buyRatioLabelLane]}>
+      <PerpsProSkeletonBlock height={8} style={styles.value} width={24} />
+    </View>
+    <View style={styles.ratioBarSlot}>
+      <PerpsProSkeletonBlock height={4} style={styles.ratioBar} width="100%" />
+    </View>
+    <View style={[styles.ratioLabelLane, styles.sellRatioLabelLane]}>
+      <PerpsProSkeletonBlock height={8} style={styles.value} width={24} />
+    </View>
   </View>
 ));
 
@@ -100,9 +106,22 @@ const styles = {
   ratio: {
     alignItems: 'center' as const,
     flexDirection: 'row' as const,
+    gap: 2,
     height: 12,
-    justifyContent: 'space-between' as const,
     width: '100%' as const,
+  },
+  ratioLabelLane: {
+    flexShrink: 0,
+    width: 42,
+  },
+  buyRatioLabelLane: {
+    alignItems: 'flex-end' as const,
+  },
+  sellRatioLabelLane: {
+    alignItems: 'flex-start' as const,
+  },
+  ratioBarSlot: {
+    flex: 1,
   },
   ratioBar: {
     borderRadius: 2,

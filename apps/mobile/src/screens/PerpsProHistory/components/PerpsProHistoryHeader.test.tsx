@@ -6,15 +6,15 @@ jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
 
-jest.mock('@/core/utils/fonts', () => ({
-  FontNames: { sf_pro: 'SF Pro' },
+jest.mock('@/screens/PerpsPro/components/common/perpsProVisual', () => ({
+  PERPS_PRO_FONT_FAMILY: 'SF Pro Rounded',
 }));
 
 jest.mock('@/hooks/navigation', () => ({
   HeaderBackPressable: (props: object) => {
     const ReactModule = require('react');
-    const { View } = require('react-native');
-    return ReactModule.createElement(View, {
+    const { View: NativeView } = require('react-native');
+    return ReactModule.createElement(NativeView, {
       ...props,
       testID: 'history-header-back',
     });
@@ -70,7 +70,7 @@ describe('PerpsProHistoryHeader', () => {
     });
     expect(StyleSheet.flatten(title.props.style)).toMatchObject({
       color: 'neutral-title-1',
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 18,
       fontWeight: '700',
       lineHeight: 22,

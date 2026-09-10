@@ -34,7 +34,6 @@ import { ChainIconFastImage } from '@/components/Chain/ChainIconImage';
 
 interface ItemProps {
   status: number;
-  className?: string;
   type?: HistoryItemCateType | undefined;
   token?: TokenItem | TokenItem[];
   chain: TxDisplayItem['chain'];

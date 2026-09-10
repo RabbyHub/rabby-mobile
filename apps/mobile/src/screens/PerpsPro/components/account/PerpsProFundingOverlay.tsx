@@ -7,6 +7,22 @@ import { PerpsSpotSwapPopup } from '@/screens/Perps/components/PerpsSpotSwapPopu
 import { PerpsWithdrawPopup } from '@/screens/Perps/components/PerpsWithdrawPopup';
 import { useMemoizedFn } from 'ahooks';
 import React from 'react';
+import { Platform } from 'react-native';
+import { PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE } from '../common/perpsProSingleLineInput';
+
+import {
+  getPerpsProFontStyle,
+  PERPS_PRO_REGULAR_TEXT_STYLE,
+} from '../common/perpsProVisual';
+
+const PERPS_PRO_FUNDING_INPUT_TEXT_STYLE = getPerpsProFontStyle(
+  Platform.OS,
+  '700',
+);
+const PERPS_PRO_FUNDING_AMOUNT_INPUT_STYLE = {
+  ...PERPS_PRO_FUNDING_INPUT_TEXT_STYLE,
+  ...PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE,
+};
 
 export type PerpsProFundingMode = 'deposit' | 'withdraw' | 'swap';
 
@@ -29,7 +45,11 @@ const PerpsProScopedWithdrawPopup: React.FC<
 
   return (
     <StoreActivityProvider scope={activityScope}>
-      <PerpsWithdrawPopup {...props} />
+      <PerpsWithdrawPopup
+        {...props}
+        inputTextStyle={PERPS_PRO_FUNDING_AMOUNT_INPUT_STYLE}
+        tooltipTextStyle={PERPS_PRO_REGULAR_TEXT_STYLE}
+      />
     </StoreActivityProvider>
   );
 };
@@ -72,6 +92,8 @@ export const PerpsProFundingOverlay: React.FC<{
         account={currentPerpsAccount}
         onClose={onClose}
         onDeposit={handleDeposit}
+        inputTextStyle={PERPS_PRO_FUNDING_AMOUNT_INPUT_STYLE}
+        tooltipTextStyle={PERPS_PRO_REGULAR_TEXT_STYLE}
         visible
       />
     );
@@ -96,6 +118,8 @@ export const PerpsProFundingOverlay: React.FC<{
         onSpotOrder={handleStableCoinOrder}
         sourceAsset={sourceAsset}
         targetAsset={sourceAsset ? undefined : targetAsset}
+        inputTextStyle={PERPS_PRO_FUNDING_INPUT_TEXT_STYLE}
+        tooltipTextStyle={PERPS_PRO_REGULAR_TEXT_STYLE}
         visible
       />
       {depositFromSwapVisible ? (
@@ -103,6 +127,8 @@ export const PerpsProFundingOverlay: React.FC<{
           account={currentPerpsAccount}
           onClose={onCloseDeposit}
           onDeposit={handleDeposit}
+          inputTextStyle={PERPS_PRO_FUNDING_AMOUNT_INPUT_STYLE}
+          tooltipTextStyle={PERPS_PRO_REGULAR_TEXT_STYLE}
           visible
         />
       ) : null}

@@ -16,6 +16,8 @@ import {
   Platform,
   Keyboard,
   Pressable,
+  type StyleProp,
+  type TextStyle,
 } from 'react-native';
 import { Text } from '@/components/Typography';
 import { Tip } from '@/components/Tip';
@@ -65,6 +67,8 @@ export const SPOT_STABLE_COIN_NAME: Record<SpotStableCoin, string> = {
 
 export const PerpsSpotSwapPopup: React.FC<{
   visible?: boolean;
+  inputTextStyle?: StyleProp<TextStyle>;
+  tooltipTextStyle?: StyleProp<TextStyle>;
   sourceAsset?: PerpsQuoteAsset;
   targetAsset?: PerpsQuoteAsset;
   disableSwitch?: boolean;
@@ -79,6 +83,8 @@ export const PerpsSpotSwapPopup: React.FC<{
   }): Promise<unknown>;
 }> = ({
   visible,
+  inputTextStyle,
+  tooltipTextStyle,
   sourceAsset,
   targetAsset,
   disableSwitch,
@@ -491,6 +497,7 @@ export const PerpsSpotSwapPopup: React.FC<{
                     keyboardType="numeric"
                     style={[
                       styles.input,
+                      inputTextStyle,
                       {
                         color: validation.error
                           ? colors2024['red-default']
@@ -568,7 +575,11 @@ export const PerpsSpotSwapPopup: React.FC<{
                     onClose={hideTip}
                     content={
                       <View style={{ width: 280, padding: 8 }}>
-                        <Text style={{ fontSize: 12, color: '#fff' }}>
+                        <Text
+                          style={[
+                            { fontSize: 12, color: '#fff' },
+                            tooltipTextStyle,
+                          ]}>
                           {t('page.perps.PerpsSpotSwap.estReceiveTooltip')}
                         </Text>
                       </View>

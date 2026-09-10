@@ -2,7 +2,7 @@ import type { RegressionScenarioId, RegressionScreenId } from './contracts';
 
 export type RegressionScenarioMetadata = {
   id: RegressionScenarioId;
-  kind: 'core' | 'focused';
+  kind: 'core' | 'focused' | 'experimental';
   screens: readonly RegressionScreenId[];
   requiresFixture: boolean;
   description: string;
@@ -55,6 +55,14 @@ export const REGRESSION_SCENARIO_METADATA = Object.freeze<
     screens: ['Home'],
     requiresFixture: false,
     description: 'Open Home and visit the Token, DeFi, and NFT asset tabs.',
+  },
+  'high-cardinality-assets': {
+    id: 'high-cardinality-assets',
+    kind: 'experimental',
+    screens: ['Home'],
+    requiresFixture: true,
+    description:
+      'Import a bounded Watch-address fixture through the normal address API and exercise Home asset loading with the configured non-production Top-N selection policy.',
   },
   'single-address': {
     id: 'single-address',
@@ -259,6 +267,14 @@ export const REGRESSION_SCENARIO_METADATA = Object.freeze<
     screens: ['ConvertDust'],
     requiresFixture: false,
     description: 'Open the Convert Dust screen.',
+  },
+  'worker-thread': {
+    id: 'worker-thread',
+    kind: 'focused',
+    screens: [],
+    requiresFixture: false,
+    description:
+      'Verify the packaged computation worker starts and responds through the native thread bridge.',
   },
 });
 

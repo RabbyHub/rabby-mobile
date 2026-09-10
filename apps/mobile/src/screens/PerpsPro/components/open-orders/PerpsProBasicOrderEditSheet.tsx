@@ -1,13 +1,19 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { BOTTOM_BUTTON_COMPACT_HEIGHT } from '@/constant/layout';
+import { IS_ANDROID } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useRegisterBlockingModal } from '@/utils/modalGate';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetScrollView,
+  BottomSheetView,
+  type BottomSheetScrollViewMethods,
+} from '@gorhom/bottom-sheet';
 import BigNumber from 'bignumber.js';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
@@ -32,12 +38,16 @@ import type { PerpsProOpenOrderEditEditorState } from '../../scene/usePerpsProOp
 import { formatPerpsProDecimal, formatPerpsProPrice } from '../../utils/format';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 import { usePerpsProDismissKeyboard } from '../common/usePerpsProDismissKeyboard';
+import { PerpsProKeyboardSheetContext } from '../common/PerpsProKeyboardSheetContext';
+import { PerpsProSheetKeyboardAnimation } from '../common/PerpsProSheetKeyboardAnimation';
+import { usePerpsProSheetKeyboard } from '../common/usePerpsProSheetKeyboard';
 import { PerpsProOpenOrderEditHeader } from './PerpsProOpenOrderEditHeader';
 import { PerpsProOpenOrderEditInput } from './PerpsProOpenOrderEditInput';
 
 const MODAL_ID = 'perps-pro-basic-order-edit';
 const SHEET_HEIGHT = 326;
 const CONTENT_HEIGHT = SHEET_HEIGHT - 40;
+const SheetContent = IS_ANDROID ? BottomSheetScrollView : BottomSheetView;
 
 export const PerpsProBasicOrderEditSheet: React.FC<{
   coveredByReview: boolean;
@@ -56,6 +66,11 @@ export const PerpsProBasicOrderEditSheet: React.FC<{
     visible,
   } = props;
   const modalRef = useRef<AppBottomSheetModal>(null);
+  const scrollViewRef = useRef<BottomSheetScrollViewMethods>(null);
+  const keyboard = usePerpsProSheetKeyboard({
+    visible: visible && !coveredByReview,
+    scrollViewRef,
+  });
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const dismissKeyboardThen = usePerpsProDismissKeyboard();
@@ -155,80 +170,98 @@ export const PerpsProBasicOrderEditSheet: React.FC<{
       keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
       onDismiss={onClose}
-      snapPoints={[SHEET_HEIGHT]}
+      snapPoints={[SHEET_HEIGHT + keyboard.accessoryInset]}
       style={styles.modal}>
-      <BottomSheetView>
-        <AutoLockView
-          pointerEvents={interactionLocked ? 'none' : 'auto'}
-          style={styles.container}
-          testID="perps-pro-basic-order-edit-content">
-          <PerpsProOpenOrderEditHeader
-            market={editor.market}
-            order={editor.order}
+      <PerpsProKeyboardSheetContext.Provider value={keyboard.sheetId}>
+        {IS_ANDROID && visible && !coveredByReview ? (
+          <PerpsProSheetKeyboardAnimation
+            onReadyChange={keyboard.onSheetReadyChange}
           />
-          <View style={styles.form}>
-            <PerpsProOpenOrderEditInput
-              accessibilityLabel={t('page.perps.pro.openOrders.price')}
-              currentValue={`Current ${formatPerpsProPrice(
-                initialPrice,
-                editor.market.pxDecimals,
-              )}`}
-              label={t('page.perps.pro.openOrders.price')}
-              maxDecimals={getPerpsProPriceInputMaxDecimals(
-                editor.market.szDecimals,
-              )}
-              onChangeText={setPrice}
-              priceSzDecimals={editor.market.szDecimals}
-              testID="perps-pro-basic-order-edit-price"
-              unit={editor.market.quoteAsset}
-              value={price}
-            />
-            <View style={styles.amountGroup}>
-              <PerpsProOpenOrderEditInput
-                accessibilityLabel={t('page.perps.pro.openOrders.amount')}
-                currentValue={`Current ${formatPerpsProDecimal(
-                  currentAmount,
-                  amountDecimals,
-                )}`}
-                label={t('page.perps.pro.openOrders.amount')}
-                maxDecimals={getPerpsProAmountInputDecimals({
-                  amountUnit: editor.amountUnit,
-                  szDecimals: editor.market.szDecimals,
-                })}
-                onChangeText={value => {
-                  setAmountTouched(true);
-                  setManualAmount(value);
-                }}
-                testID="perps-pro-basic-order-edit-amount"
-                unit={displayUnit}
-                value={amount}
-              />
-              <Text style={styles.conversion}>
-                ≈{formatPerpsProDecimal(oppositeAmount, oppositeDecimals)}{' '}
-                {oppositeUnit}
-              </Text>
-            </View>
-          </View>
-          <View
-            style={styles.footer}
-            testID="perps-pro-basic-order-edit-footer">
-            <Button
-              buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
-              disabled={!canReview || interactionLocked}
-              height={BOTTOM_BUTTON_COMPACT_HEIGHT}
-              onPress={() =>
-                dismissKeyboardThen(() =>
-                  onReview({ amount, amountTouched, price }),
-                )
+        ) : null}
+        <SheetContent
+          {...(IS_ANDROID
+            ? {
+                ref: scrollViewRef,
+                style: { marginBottom: keyboard.accessoryInset },
+                keyboardShouldPersistTaps: 'handled' as const,
+                onLayout: keyboard.ensureInputVisible,
+                onContentSizeChange: keyboard.ensureInputVisible,
+                onScrollBeginDrag: keyboard.cancelMeasurement,
+                showsVerticalScrollIndicator: false,
               }
-              testID="perps-pro-basic-order-edit-confirm"
-              title={t('global.confirm')}
-              titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
-              type="primary"
+            : {})}>
+          <AutoLockView
+            pointerEvents={interactionLocked ? 'none' : 'auto'}
+            style={styles.container}
+            testID="perps-pro-basic-order-edit-content">
+            <PerpsProOpenOrderEditHeader
+              market={editor.market}
+              order={editor.order}
             />
-          </View>
-        </AutoLockView>
-      </BottomSheetView>
+            <View style={styles.form}>
+              <PerpsProOpenOrderEditInput
+                accessibilityLabel={t('page.perps.pro.openOrders.price')}
+                currentValue={`Current ${formatPerpsProPrice(
+                  initialPrice,
+                  editor.market.pxDecimals,
+                )}`}
+                label={t('page.perps.pro.openOrders.price')}
+                maxDecimals={getPerpsProPriceInputMaxDecimals(
+                  editor.market.szDecimals,
+                )}
+                onChangeText={setPrice}
+                priceSzDecimals={editor.market.szDecimals}
+                testID="perps-pro-basic-order-edit-price"
+                unit={editor.market.quoteAsset}
+                value={price}
+              />
+              <View style={styles.amountGroup}>
+                <PerpsProOpenOrderEditInput
+                  accessibilityLabel={t('page.perps.pro.openOrders.amount')}
+                  currentValue={`Current ${formatPerpsProDecimal(
+                    currentAmount,
+                    amountDecimals,
+                  )}`}
+                  label={t('page.perps.pro.openOrders.amount')}
+                  maxDecimals={getPerpsProAmountInputDecimals({
+                    amountUnit: editor.amountUnit,
+                    szDecimals: editor.market.szDecimals,
+                  })}
+                  onChangeText={value => {
+                    setAmountTouched(true);
+                    setManualAmount(value);
+                  }}
+                  testID="perps-pro-basic-order-edit-amount"
+                  unit={displayUnit}
+                  value={amount}
+                />
+                <Text style={styles.conversion}>
+                  ≈{formatPerpsProDecimal(oppositeAmount, oppositeDecimals)}{' '}
+                  {oppositeUnit}
+                </Text>
+              </View>
+            </View>
+            <View
+              style={styles.footer}
+              testID="perps-pro-basic-order-edit-footer">
+              <Button
+                buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
+                disabled={!canReview || interactionLocked}
+                height={BOTTOM_BUTTON_COMPACT_HEIGHT}
+                onPress={() =>
+                  dismissKeyboardThen(() =>
+                    onReview({ amount, amountTouched, price }),
+                  )
+                }
+                testID="perps-pro-basic-order-edit-confirm"
+                title={t('global.confirm')}
+                titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
+                type="primary"
+              />
+            </View>
+          </AutoLockView>
+        </SheetContent>
+      </PerpsProKeyboardSheetContext.Provider>
     </AppBottomSheetModal>
   );
 });
@@ -246,8 +279,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   form: { gap: 24, marginTop: 16 },
   amountGroup: { gap: 4 },
   conversion: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },

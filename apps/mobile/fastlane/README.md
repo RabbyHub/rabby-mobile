@@ -1,5 +1,4 @@
-fastlane documentation
-----
+## fastlane documentation
 
 # Installation
 
@@ -47,8 +46,7 @@ Valid ios adhoc
 
 Release for the iOS production
 
-----
-
+---
 
 ## Android
 
@@ -76,7 +74,7 @@ Release for the Android selfhost
 
 Release for the Android playstore
 
-----
+---
 
 This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.
 

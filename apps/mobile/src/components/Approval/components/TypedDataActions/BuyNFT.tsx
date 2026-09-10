@@ -16,7 +16,7 @@ import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { Chain } from '@/constant/chains';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { formatAmount } from '@/utils/number';
 import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
 import useCommonStyle from '../../hooks/useCommonStyle';
@@ -109,7 +109,7 @@ const BuyNFT = ({
             <Text>{t('page.signTypedData.buyNFT.receiveNFT')}</Text>
           </Row>
           <Row>
-            <View className="relative">
+            <View style={styles.relative}>
               <ViewMore
                 type="nft"
                 data={{
@@ -252,3 +252,9 @@ const BuyNFT = ({
 };
 
 export default BuyNFT;
+
+const styles = StyleSheet.create({
+  relative: {
+    position: 'relative',
+  },
+});

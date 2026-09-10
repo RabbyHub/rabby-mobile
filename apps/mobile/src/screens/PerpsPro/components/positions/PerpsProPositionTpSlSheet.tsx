@@ -1,5 +1,6 @@
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+import { IS_ANDROID } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
@@ -52,6 +53,9 @@ import { PerpsProPositionTpSlOrderList } from './PerpsProPositionTpSlOrderList';
 import { getPerpsProBottomSheetChromeStyles } from '../common/perpsProVisual';
 import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
+import { PerpsProKeyboardSheetContext } from '../common/PerpsProKeyboardSheetContext';
+import { usePerpsProSheetKeyboard } from '../common/usePerpsProSheetKeyboard';
+import { PerpsProSheetKeyboardAnimation } from '../common/PerpsProSheetKeyboardAnimation';
 
 type PartialPage = 'add' | 'list' | 'modify';
 
@@ -99,6 +103,10 @@ export const PerpsProPositionTpSlSheet: React.FC<{
     const scrollFrameRef = useRef<number | null>(null);
     const restingSheetPositionRef = useRef<number | null>(null);
     const animatedSheetPosition = useSharedValue(Number.NaN);
+    const keyboard = usePerpsProSheetKeyboard({
+      visible: visible && !coveredByReview,
+      scrollViewRef,
+    });
     const restingSheetPosition = useSharedValue(Number.NaN);
     const androidScrollAfterKeyboardRestore = useSharedValue(false);
     const { height: windowHeight } = useWindowDimensions();
@@ -385,122 +393,139 @@ export const PerpsProPositionTpSlSheet: React.FC<{
         onDismiss={handleDismiss}
         snapPoints={[snapPoint]}
         style={styles.modal}>
-        <BottomSheetScrollView
-          ref={scrollViewRef}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}>
-          <AutoLockView style={styles.page}>
-            {tab === 'partial' && partialPage !== 'list' ? (
-              <>
-                <PerpsProPositionTpSlPageHeader
-                  onBack={requestDismiss}
-                  title={t(
-                    partialPage === 'add'
-                      ? 'page.perps.pro.positionTpsl.addTitle'
-                      : 'page.perps.pro.positionTpsl.modifyTitle',
+        <PerpsProKeyboardSheetContext.Provider value={keyboard.sheetId}>
+          {IS_ANDROID && visible && !coveredByReview ? (
+            <PerpsProSheetKeyboardAnimation
+              onReadyChange={keyboard.onSheetReadyChange}
+            />
+          ) : null}
+          <BottomSheetScrollView
+            ref={scrollViewRef}
+            {...(IS_ANDROID
+              ? {
+                  style: { marginBottom: keyboard.accessoryInset },
+                  onLayout: keyboard.ensureInputVisible,
+                  onContentSizeChange: keyboard.ensureInputVisible,
+                  onScrollBeginDrag: keyboard.cancelMeasurement,
+                }
+              : {})}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
+            <AutoLockView style={styles.page}>
+              {tab === 'partial' && partialPage !== 'list' ? (
+                <>
+                  <PerpsProPositionTpSlPageHeader
+                    onBack={requestDismiss}
+                    title={t(
+                      partialPage === 'add'
+                        ? 'page.perps.pro.positionTpsl.addTitle'
+                        : 'page.perps.pro.positionTpsl.modifyTitle',
+                    )}
+                  />
+                  <PerpsProPositionTpSlHeader
+                    markPrice={liveMarket.markPrice}
+                    market={market}
+                    position={visiblePosition}
+                    variant="summary"
+                  />
+                  <PerpsProPositionTpSlForm
+                    key={`${position.key}:${partialPage}:${
+                      editingOrder?.oid || 'new'
+                    }`}
+                    amountUnit={amountUnit}
+                    cancelingOids={cancelingOids}
+                    initialOrder={editingOrder}
+                    markPrice={liveMarket.markPrice}
+                    market={market}
+                    minimumHeight={getFormMinimumHeight('subpage')}
+                    mode={partialPage === 'add' ? 'add' : 'modify'}
+                    onCancelOrder={onCancelOrder}
+                    onReview={onReview}
+                    pending={interactionLocked}
+                    presentation="subpage"
+                    position={visiblePosition}
+                  />
+                </>
+              ) : (
+                <>
+                  <PerpsProPositionTpSlHeader
+                    markPrice={liveMarket.markPrice}
+                    market={market}
+                    position={visiblePosition}
+                    variant={isInlineEmpty ? 'empty' : 'main'}
+                  />
+                  <View
+                    style={[
+                      styles.tabs,
+                      isInlineEmpty ? styles.inlineEmptyTabs : null,
+                    ]}
+                    testID="perps-pro-position-tpsl-tabs">
+                    <TabButton
+                      active={tab === 'partial'}
+                      label={t('page.perps.pro.positions.tpsl')}
+                      onPress={() => switchTab('partial')}
+                    />
+                    <TabButton
+                      active={tab === 'position'}
+                      label={t('page.perps.pro.positions.positionTpsl')}
+                      onPress={() => switchTab('position')}
+                    />
+                  </View>
+                  {tab === 'position' ? (
+                    <PerpsProPositionTpSlForm
+                      key={`${position.key}:position:${positionFormResetSignature}`}
+                      amountUnit={amountUnit}
+                      cancelingOids={cancelingOids}
+                      markPrice={liveMarket.markPrice}
+                      market={market}
+                      minimumHeight={getFormMinimumHeight('tab')}
+                      mode="position"
+                      onCancelOrder={onCancelOrder}
+                      onReview={onReview}
+                      pending={interactionLocked}
+                      presentation="tab"
+                      position={positionFormPosition}
+                    />
+                  ) : isInlineEmpty ? (
+                    <PerpsProPositionTpSlForm
+                      key={`${position.key}:partial:inline-empty`}
+                      amountUnit={amountUnit}
+                      cancelingOids={cancelingOids}
+                      markPrice={liveMarket.markPrice}
+                      market={market}
+                      minimumHeight={getFormMinimumHeight('inline-empty')}
+                      mode="add"
+                      onCancelOrder={onCancelOrder}
+                      onReview={onReview}
+                      pending={interactionLocked}
+                      presentation="inline-empty"
+                      position={visiblePosition}
+                    />
+                  ) : (
+                    <PerpsProPositionTpSlOrderList
+                      amountUnit={amountUnit}
+                      cancelingOids={cancelingOids}
+                      markPrice={liveMarket.markPrice}
+                      market={market}
+                      onAdd={() => setPartialPage('add')}
+                      onCancelOrder={onCancelOrder}
+                      onModify={order => {
+                        setEditingOrder(order);
+                        setPartialPage('modify');
+                      }}
+                      onOpenEstimatedPnlExplanation={
+                        openEstimatedPnlExplanation
+                      }
+                      pending={interactionLocked}
+                      position={visiblePosition}
+                    />
                   )}
-                />
-                <PerpsProPositionTpSlHeader
-                  markPrice={liveMarket.markPrice}
-                  market={market}
-                  position={visiblePosition}
-                  variant="summary"
-                />
-                <PerpsProPositionTpSlForm
-                  key={`${position.key}:${partialPage}:${
-                    editingOrder?.oid || 'new'
-                  }`}
-                  amountUnit={amountUnit}
-                  cancelingOids={cancelingOids}
-                  initialOrder={editingOrder}
-                  markPrice={liveMarket.markPrice}
-                  market={market}
-                  minimumHeight={getFormMinimumHeight('subpage')}
-                  mode={partialPage === 'add' ? 'add' : 'modify'}
-                  onCancelOrder={onCancelOrder}
-                  onReview={onReview}
-                  pending={interactionLocked}
-                  presentation="subpage"
-                  position={visiblePosition}
-                />
-              </>
-            ) : (
-              <>
-                <PerpsProPositionTpSlHeader
-                  markPrice={liveMarket.markPrice}
-                  market={market}
-                  position={visiblePosition}
-                  variant={isInlineEmpty ? 'empty' : 'main'}
-                />
-                <View
-                  style={[
-                    styles.tabs,
-                    isInlineEmpty ? styles.inlineEmptyTabs : null,
-                  ]}
-                  testID="perps-pro-position-tpsl-tabs">
-                  <TabButton
-                    active={tab === 'partial'}
-                    label={t('page.perps.pro.positions.tpsl')}
-                    onPress={() => switchTab('partial')}
-                  />
-                  <TabButton
-                    active={tab === 'position'}
-                    label={t('page.perps.pro.positions.positionTpsl')}
-                    onPress={() => switchTab('position')}
-                  />
-                </View>
-                {tab === 'position' ? (
-                  <PerpsProPositionTpSlForm
-                    key={`${position.key}:position:${positionFormResetSignature}`}
-                    amountUnit={amountUnit}
-                    cancelingOids={cancelingOids}
-                    markPrice={liveMarket.markPrice}
-                    market={market}
-                    minimumHeight={getFormMinimumHeight('tab')}
-                    mode="position"
-                    onCancelOrder={onCancelOrder}
-                    onReview={onReview}
-                    pending={interactionLocked}
-                    presentation="tab"
-                    position={positionFormPosition}
-                  />
-                ) : isInlineEmpty ? (
-                  <PerpsProPositionTpSlForm
-                    key={`${position.key}:partial:inline-empty`}
-                    amountUnit={amountUnit}
-                    cancelingOids={cancelingOids}
-                    markPrice={liveMarket.markPrice}
-                    market={market}
-                    minimumHeight={getFormMinimumHeight('inline-empty')}
-                    mode="add"
-                    onCancelOrder={onCancelOrder}
-                    onReview={onReview}
-                    pending={interactionLocked}
-                    presentation="inline-empty"
-                    position={visiblePosition}
-                  />
-                ) : (
-                  <PerpsProPositionTpSlOrderList
-                    amountUnit={amountUnit}
-                    cancelingOids={cancelingOids}
-                    markPrice={liveMarket.markPrice}
-                    market={market}
-                    onAdd={() => setPartialPage('add')}
-                    onCancelOrder={onCancelOrder}
-                    onModify={order => {
-                      setEditingOrder(order);
-                      setPartialPage('modify');
-                    }}
-                    onOpenEstimatedPnlExplanation={openEstimatedPnlExplanation}
-                    pending={interactionLocked}
-                    position={visiblePosition}
-                  />
-                )}
-              </>
-            )}
-          </AutoLockView>
-        </BottomSheetScrollView>
+                </>
+              )}
+            </AutoLockView>
+          </BottomSheetScrollView>
+        </PerpsProKeyboardSheetContext.Provider>
       </AppBottomSheetModal>
     );
   },
@@ -552,13 +577,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   activeTab: { borderBottomColor: colors2024['neutral-title-1'] },
   tabText: {
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
   },
   activeTabText: {
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,

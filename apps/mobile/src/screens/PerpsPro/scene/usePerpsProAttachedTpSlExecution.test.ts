@@ -350,7 +350,7 @@ describe('usePerpsProAttachedTpSlExecution', () => {
     );
   });
 
-  it('returns only the accepted parent fill as reporting evidence', async () => {
+  it('returns accepted parent and child legs as reporting evidence', async () => {
     mockExecute.mockResolvedValueOnce({
       batch: {
         legs: [
@@ -364,10 +364,17 @@ describe('usePerpsProAttachedTpSlExecution', () => {
             role: 'parent',
           },
           {
-            error: 'Invalid TP trigger price',
-            kind: 'rejected',
-            rawStatus: { error: 'Invalid TP trigger price' },
+            acceptance: 'resting',
+            kind: 'accepted',
+            oid: 8,
+            rawStatus: { resting: { oid: 8 } },
             role: 'takeProfit',
+          },
+          {
+            error: 'Invalid SL trigger price',
+            kind: 'rejected',
+            rawStatus: { error: 'Invalid SL trigger price' },
+            role: 'stopLoss',
           },
         ],
       },
@@ -389,6 +396,9 @@ describe('usePerpsProAttachedTpSlExecution', () => {
     });
 
     expect(result!).toMatchObject({
+      confirmedChildren: [
+        { acceptance: 'resting', oid: 8, role: 'takeProfit' },
+      ],
       confirmedParent: {
         acceptance: 'filled',
         oid: 7,
@@ -413,6 +423,13 @@ describe('usePerpsProAttachedTpSlExecution', () => {
           oid: 7,
           role: 'parent',
         },
+        {
+          acceptance: 'resting',
+          cloid: journal.cloids.takeProfit,
+          kind: 'accepted',
+          oid: 8,
+          role: 'takeProfit',
+        },
       ],
     });
     const { hook } = renderExecution();
@@ -426,6 +443,9 @@ describe('usePerpsProAttachedTpSlExecution', () => {
     });
 
     expect(result!).toMatchObject({
+      confirmedChildren: [
+        { acceptance: 'resting', oid: 8, role: 'takeProfit' },
+      ],
       confirmedParent: {
         acceptance: 'filled',
         oid: 7,

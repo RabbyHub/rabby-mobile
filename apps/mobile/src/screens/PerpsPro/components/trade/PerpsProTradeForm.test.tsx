@@ -82,6 +82,7 @@ jest.mock('@/components/Typography', () => {
               (props as { accessibilityLabel?: string }).accessibilityLabel,
             ),
           setNativeProps: jest.fn(),
+          blur: jest.fn(),
         }));
         return ReactModule.createElement(TextInput, props);
       },
@@ -92,7 +93,7 @@ jest.mock('@/components/Typography', () => {
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
     const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
-    return { colors2024, styles: getStyle({ colors2024 }) };
+    return { colors2024, styles: getStyle({ colors2024, isLight: true }) };
   },
 }));
 
@@ -162,6 +163,7 @@ import type { PerpsProTradeController } from '../../scene/usePerpsProTrade';
 import { PerpsProTradeForm } from './PerpsProTradeForm';
 import { PERPS_PRO_PRICE_FILL_ANIMATION } from './PerpsProTradePriceField';
 import { getPerpsProTradeSelectFontStyle } from './PerpsProTradePrimitives';
+import { perpsProKeyboardSession } from '../common/perpsProKeyboardSession';
 
 const market = {
   canonicalCoin: 'BTC',
@@ -241,6 +243,7 @@ const controller = (
   } as unknown as PerpsProTradeController);
 
 describe('PerpsProTradeForm order matrix', () => {
+  afterEach(() => act(() => perpsProKeyboardSession.setEnabled(false)));
   beforeEach(() => {
     mockFocusTextInput.mockClear();
     mockDismissKeyboardThen.mockReset();
@@ -276,7 +279,7 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(trade.requestReview).not.toHaveBeenCalled();
   });
 
-  it('keeps the readable variant off the leverage configuration button only', () => {
+  it('keeps selector fonts consistent and opts only numeric leverage into tabular figures', () => {
     render(
       <PerpsProTradeForm controller={controller()} onAddFunds={jest.fn()} />,
     );
@@ -300,26 +303,22 @@ describe('PerpsProTradeForm order matrix', () => {
 
     expect(isolatedStyle).toMatchObject(sharedVisibleStyle);
     expect(orderTypeStyle).toMatchObject(sharedVisibleStyle);
-    expect(leverageStyle).toMatchObject({
-      fontFamily: sharedVisibleStyle.fontFamily,
-      fontSize: 14,
-      lineHeight: 18,
-    });
-    expect(leverageStyle.fontVariant).toBeUndefined();
-    expect(isolatedStyle.fontVariant).toEqual(['stylistic-six']);
-    expect(orderTypeStyle.fontVariant).toEqual(['stylistic-six']);
+    expect(leverageStyle).toMatchObject(sharedVisibleStyle);
+    expect(isolatedStyle.fontVariant).toBeUndefined();
+    expect(leverageStyle.fontVariant).toEqual(['tabular-nums']);
+    expect(orderTypeStyle.fontVariant).toBeUndefined();
   });
 
-  it('keeps every selector on the same platform font and stylistic variant', () => {
-    expect(getPerpsProTradeSelectFontStyle('android')).toEqual({
+  it('maps every selector to the platform medium font without font variants', () => {
+    const androidStyle = getPerpsProTradeSelectFontStyle('android');
+    const iosStyle = getPerpsProTradeSelectFontStyle('ios');
+
+    expect(androidStyle).toMatchObject({
       fontFamily: 'SF-Pro-Rounded-Medium',
-      fontVariant: ['stylistic-six'],
     });
-    expect(getPerpsProTradeSelectFontStyle('ios')).toEqual({
-      fontFamily: 'SF Pro',
-      fontWeight: '500',
-      fontVariant: ['stylistic-six'],
-    });
+    expect(iosStyle).toMatchObject({ fontWeight: '500' });
+    expect(androidStyle.fontVariant).toBeUndefined();
+    expect(iosStyle.fontVariant).toBeUndefined();
   });
 
   it('keeps Market free of Price, BBO and TIF controls', () => {
@@ -349,6 +348,9 @@ describe('PerpsProTradeForm order matrix', () => {
       fontSize: 12,
       lineHeight: 16,
     });
+    expect(
+      StyleSheet.flatten(screen.getByText('BBO').props.style).fontVariant,
+    ).toBeUndefined();
 
     view.rerender(
       <PerpsProTradeForm
@@ -368,6 +370,10 @@ describe('PerpsProTradeForm order matrix', () => {
       fontSize: 14,
       lineHeight: 18,
     });
+    expect(
+      StyleSheet.flatten(screen.getByText('Counterparty 1').props.style)
+        .fontVariant,
+    ).toBeUndefined();
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-trade-bbo-caret').props.style,
@@ -447,6 +453,9 @@ describe('PerpsProTradeForm order matrix', () => {
       textAlign: 'center',
       width: 40,
     });
+    expect(
+      StyleSheet.flatten(screen.getByText('BBO').props.style).fontVariant,
+    ).toBeUndefined();
     expect(screen.getByText('BBO').props.numberOfLines).toBe(1);
     expect(screen.queryByText('price')).toBeNull();
   });
@@ -695,19 +704,40 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(screen.queryByTestId('perps-pro-trade-price-suffix-BBO')).toBeNull();
     expect(screen.queryByTestId('perps-pro-trade-tif-trigger')).toBeNull();
     expect(screen.getByLabelText('triggerPrice(USDC)')).toBeTruthy();
+    expect(screen.queryByLabelText('marketPrice')).toBeNull();
+    expect(
+      StyleSheet.flatten(screen.getByText('marketPrice').props.style),
+    ).toMatchObject({
+      color: 'neutral-title-1',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-trade-price-suffix-market').props.style,
+      ),
+    ).toMatchObject({
+      width: 72,
+      height: 40,
+      borderRadius: 8,
+    });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-trade-conditional-execution-value').props
           .style,
       ),
-    ).toMatchObject({ opacity: 0.5 });
+    ).toMatchObject({ backgroundColor: 'neutral-bg-0' });
     expect(
       StyleSheet.flatten(screen.getByText('market').props.style),
     ).toMatchObject({
       ...getPerpsProTradeSelectFontStyle(Platform.OS),
-      fontSize: 10,
-      lineHeight: 12,
+      fontSize: 12,
+      lineHeight: 16,
     });
+    expect(
+      StyleSheet.flatten(screen.getByText('market').props.style).fontVariant,
+    ).toBeUndefined();
     expect(
       screen.getByTestId('perps-pro-trade-conditional-execution-switch'),
     ).toHaveProp('height', 10);
@@ -752,6 +782,76 @@ describe('PerpsProTradeForm order matrix', () => {
 
     fireEvent.press(screen.getByTestId('perps-pro-trade-amount-unit'));
     expect(trade.toggleAmountUnit).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the effective minimum only for the opening Amount and follows its unit and reference price', () => {
+    perpsProKeyboardSession.setEnabled(true);
+    const trade = controller();
+    const spMarket = {
+      ...trade.market!,
+      displayBase: 'SP500',
+      marketData: {
+        ...trade.market!.marketData,
+        markPx: '7673',
+        szDecimals: 3,
+      },
+    };
+    const view = render(
+      <PerpsProTradeForm
+        controller={{ ...trade, market: spMarket }}
+        onAddFunds={jest.fn()}
+      />,
+    );
+    expect(perpsProKeyboardSession.getSnapshot()).toBeNull();
+    fireEvent(screen.getByLabelText('amount(USDC)'), 'focus');
+    expect(perpsProKeyboardSession.getSnapshot()?.minimum).toBe('15.35 USDC');
+    view.rerender(
+      <PerpsProTradeForm
+        controller={{
+          ...trade,
+          market: spMarket,
+          form: { ...trade.form, amountUnit: 'base' },
+        }}
+        onAddFunds={jest.fn()}
+      />,
+    );
+    expect(perpsProKeyboardSession.getSnapshot()?.minimum).toBe('0.002 SP500');
+    view.rerender(
+      <PerpsProTradeForm
+        controller={{
+          ...trade,
+          market: spMarket,
+          form: { ...trade.form, reduceOnly: true },
+        }}
+        onAddFunds={jest.fn()}
+      />,
+    );
+    expect(perpsProKeyboardSession.getSnapshot()?.minimum).toBeNull();
+    view.rerender(
+      <PerpsProTradeForm
+        controller={{
+          ...trade,
+          market: spMarket,
+          form: { ...trade.form, orderType: 'limit', limitPrice: '' },
+        }}
+        onAddFunds={jest.fn()}
+      />,
+    );
+    expect(perpsProKeyboardSession.getSnapshot()?.minimum).toBeNull();
+    view.rerender(
+      <PerpsProTradeForm
+        controller={{
+          ...trade,
+          market: spMarket,
+          form: { ...trade.form, orderType: 'limit', limitPrice: '5000' },
+        }}
+        onAddFunds={jest.fn()}
+      />,
+    );
+    expect(perpsProKeyboardSession.getSnapshot()?.minimum).toBe('10 USDC');
+    fireEvent(screen.getByLabelText('price(USDC)'), 'focus');
+    expect(perpsProKeyboardSession.getSnapshot()?.minimum).toBeNull();
+    expect(trade.requestReview).not.toHaveBeenCalled();
   });
 
   it('keeps the Amount native input geometry stable while moving its visual label', () => {
@@ -839,6 +939,45 @@ describe('PerpsProTradeForm order matrix', () => {
     ).toMatchObject({ height: 40 });
   });
 
+  it.each(['buy', 'sell'] as const)(
+    'keeps the %s button copy in the Figma 18 + 2 + 12 line boxes',
+    side => {
+      const trade = controller({ amountUnit: 'base' }) as any;
+      trade.amountUnitLabel = 'BTC';
+      trade.getSliderButtonDisplayAmount = jest.fn(() => '1.23456');
+      render(<PerpsProTradeForm controller={trade} onAddFunds={jest.fn()} />);
+      const amount = screen.getByTestId(
+        `perps-pro-trade-button-${side}-amount`,
+      );
+      const amountStyle = StyleSheet.flatten(amount.props.style);
+      const copy = amount.parent?.parent!;
+      const copyStyle = StyleSheet.flatten(copy.props.style);
+      const labelStyle = StyleSheet.flatten(copy.children[0].props.style);
+      const buttonStyle = StyleSheet.flatten(
+        screen.getByTestId(`perps-pro-trade-button-${side}`).props.style,
+      );
+      expect(amount.props.adjustsFontSizeToFit).toBeUndefined();
+      expect(amountStyle).toMatchObject({
+        fontSize: 10,
+        lineHeight: 12,
+        fontVariant: ['tabular-nums'],
+      });
+      expect(labelStyle).toMatchObject({ fontSize: 14, lineHeight: 18 });
+      expect(copyStyle.gap).toBe(2);
+      expect(buttonStyle).toMatchObject({
+        height: 40,
+        justifyContent: 'center',
+      });
+      expect(
+        (buttonStyle.height -
+          labelStyle.lineHeight -
+          copyStyle.gap -
+          amountStyle.lineHeight) /
+          2,
+      ).toBe(4);
+    },
+  );
+
   it('waits for keyboard dismissal before requesting Buy or Sell review', () => {
     const trade = controller({ amount: '10' });
     let pendingAction: (() => void) | null = null;
@@ -868,6 +1007,47 @@ describe('PerpsProTradeForm order matrix', () => {
     });
     expect(trade.requestReview).toHaveBeenCalledTimes(1);
     expect(trade.requestReview).toHaveBeenLastCalledWith('sell');
+  });
+
+  it('uses the latest requestReview callback after keyboard dismissal', () => {
+    const initialTrade = controller({ amount: '10' });
+    const latestTrade = controller({ amount: '10' });
+    let pendingAction: (() => void) | null = null;
+    mockDismissKeyboardThen.mockImplementation(action => {
+      pendingAction = action;
+    });
+    const view = render(
+      <PerpsProTradeForm controller={initialTrade} onAddFunds={jest.fn()} />,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-trade-button-buy'));
+    expect(initialTrade.requestReview).not.toHaveBeenCalled();
+
+    view.rerender(
+      <PerpsProTradeForm controller={latestTrade} onAddFunds={jest.fn()} />,
+    );
+    act(() => {
+      pendingAction?.();
+    });
+
+    expect(initialTrade.requestReview).not.toHaveBeenCalled();
+    expect(latestTrade.requestReview).toHaveBeenCalledTimes(1);
+    expect(latestTrade.requestReview).toHaveBeenCalledWith('buy');
+  });
+
+  it('delegates add-funds immediately so the Scene can freeze the tap intent', () => {
+    const onAddFunds = jest.fn();
+    mockDismissKeyboardThen.mockImplementation(action => {
+      throw new Error(`Form must not delay add-funds: ${String(action)}`);
+    });
+    render(
+      <PerpsProTradeForm controller={controller()} onAddFunds={onAddFunds} />,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-trade-available-deposit'));
+
+    expect(onAddFunds).toHaveBeenCalledTimes(1);
+    expect(mockDismissKeyboardThen).not.toHaveBeenCalled();
   });
 
   it('focuses Amount instead of requesting review when manual Amount is empty', () => {

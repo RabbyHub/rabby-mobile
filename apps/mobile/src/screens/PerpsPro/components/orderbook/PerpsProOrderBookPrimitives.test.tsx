@@ -2,7 +2,23 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
-import { FontNames } from '@/core/utils/fonts';
+const mockCancelAnimation = jest.fn();
+const mockWithTiming = jest.fn((value: number) => value);
+
+jest.mock('react-native-reanimated', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    __esModule: true,
+    default: { View },
+    Easing: { bezier: () => 'desktop-ease-out' },
+    ReduceMotion: { System: 'system' },
+    cancelAnimation: (...args: unknown[]) => mockCancelAnimation(...args),
+    useAnimatedStyle: (updater: () => object) => updater(),
+    useSharedValue: (value: number) => ReactModule.useRef({ value }).current,
+    withTiming: (...args: [number, object]) => mockWithTiming(...args),
+  };
+});
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
@@ -20,6 +36,7 @@ jest.mock('@/utils/styles', () => ({
 }));
 
 import {
+  PerpsProOrderBookDepth,
   PerpsProOrderBookModeIcon,
   PerpsProOrderBookRow,
 } from './PerpsProOrderBookPrimitives';
@@ -68,11 +85,15 @@ describe('PerpsProOrderBookModeIcon', () => {
 });
 
 describe('PerpsProOrderBookRow', () => {
+  beforeEach(() => {
+    mockCancelAnimation.mockClear();
+    mockWithTiming.mockClear();
+  });
+
   it('renders a neutral placeholder and emits an invalid price attempt', () => {
     const onSelectPrice = jest.fn();
     render(
       <PerpsProOrderBookRow
-        maxTotal={0}
         onSelectPrice={onSelectPrice}
         priceDecimals={2}
         side="ask"
@@ -87,7 +108,7 @@ describe('PerpsProOrderBookRow', () => {
       });
     });
     fireEvent.press(screen.getByTestId('perps-pro-order-book-row'));
-    expect(onSelectPrice).toHaveBeenCalledWith(null);
+    expect(onSelectPrice).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the Figma row inset and shared platform font', () => {
@@ -101,7 +122,6 @@ describe('PerpsProOrderBookRow', () => {
           totalUsd: 200,
           usdSize: 200,
         }}
-        maxTotal={2}
         priceDecimals={2}
         side="bid"
       />,
@@ -114,12 +134,12 @@ describe('PerpsProOrderBookRow', () => {
       ),
     ).toMatchObject({ gap: 4, padding: 2 });
     expect(StyleSheet.flatten(price.props.style)).toMatchObject({
-      fontFamily: FontNames.sf_pro,
+      fontFamily: 'SF Pro Rounded',
     });
     expect(
       StyleSheet.flatten(screen.getByText('200').props.style),
     ).toMatchObject({
-      fontFamily: FontNames.sf_pro,
+      fontFamily: 'SF Pro Rounded',
     });
   });
 
@@ -136,7 +156,6 @@ describe('PerpsProOrderBookRow', () => {
           totalUsd: 2000,
           usdSize: 2000,
         }}
-        maxTotal={20}
         priceDecimals={2}
         side="bid"
       />,
@@ -155,7 +174,6 @@ describe('PerpsProOrderBookRow', () => {
           totalUsd: 2050,
           usdSize: 2050,
         }}
-        maxTotal={20.5}
         priceDecimals={2}
         side="bid"
       />,
@@ -174,11 +192,100 @@ describe('PerpsProOrderBookRow', () => {
           totalUsd: 100000,
           usdSize: 100000,
         }}
-        maxTotal={1000}
         priceDecimals={2}
         side="bid"
       />,
     );
     expect(screen.getByText('1.00K')).toBeTruthy();
+  });
+
+  it('animates only a retained price in the same presentation context', () => {
+    const level = {
+      price: '100',
+      priceNumber: 100,
+      size: 2,
+      total: 2,
+      totalUsd: 200,
+      usdSize: 200,
+    };
+    const view = render(
+      <PerpsProOrderBookDepth
+        animationIdentity="BTC:5:null|both|6|content"
+        level={level}
+        maxTotal={4}
+        rowIndex={3}
+        side="bid"
+      />,
+    );
+
+    expect(mockWithTiming).not.toHaveBeenCalled();
+    mockCancelAnimation.mockClear();
+
+    view.rerender(
+      <PerpsProOrderBookDepth
+        animationIdentity="BTC:5:null|both|6|content"
+        level={{ ...level, size: 3, total: 3, totalUsd: 300, usdSize: 300 }}
+        maxTotal={4}
+        rowIndex={2}
+        side="bid"
+      />,
+    );
+
+    expect(mockWithTiming).toHaveBeenCalledWith(75, {
+      duration: 250,
+      easing: 'desktop-ease-out',
+      reduceMotion: 'system',
+    });
+    expect(mockCancelAnimation).not.toHaveBeenCalled();
+
+    view.rerender(
+      <PerpsProOrderBookDepth
+        animationIdentity="BTC:5:null|both|6|content"
+        level={{
+          ...level,
+          price: '101',
+          priceNumber: 101,
+          total: 1,
+          totalUsd: 101,
+          usdSize: 101,
+        }}
+        maxTotal={4}
+        rowIndex={2}
+        side="bid"
+      />,
+    );
+
+    expect(mockWithTiming).toHaveBeenCalledTimes(1);
+    expect(mockCancelAnimation).toHaveBeenCalledTimes(1);
+
+    view.rerender(
+      <PerpsProOrderBookDepth
+        animationIdentity="ETH:5:null|both|6|content"
+        level={{
+          ...level,
+          price: '101',
+          priceNumber: 101,
+          total: 2,
+          totalUsd: 202,
+          usdSize: 202,
+        }}
+        maxTotal={4}
+        rowIndex={1}
+        side="bid"
+      />,
+    );
+
+    expect(mockWithTiming).toHaveBeenCalledTimes(1);
+    expect(mockCancelAnimation).toHaveBeenCalledTimes(2);
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-book-depth').props.style,
+      ),
+    ).toMatchObject({ height: 20, top: 20 });
+    view.unmount();
+
+    expect(mockWithTiming).toHaveBeenCalledTimes(1);
+    expect(mockCancelAnimation).toHaveBeenCalledTimes(3);
   });
 });

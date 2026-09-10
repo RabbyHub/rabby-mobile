@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcIconAvailableAdd from '@/assets2024/icons/perps/PerpsProAvailableAdd.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -6,7 +7,6 @@ import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { PERPS_PRO_MAIN_COLUMN_HEIGHT } from '../../model/layout';
-import { PERPS_PRO_ISOLATED_TEXT_STYLE } from '../common/perpsProVisual';
 import { PerpsProTradeAmountField } from './PerpsProTradeAmountField';
 import { PerpsProTradeAmountSlider } from './PerpsProTradeAmountSlider';
 import {
@@ -40,17 +40,12 @@ export const PerpsProTradeSkeleton: React.FC<{
             }
             showCaret={false}
             style={styles.flexItem}
-            textStyle={
-              marginMode === 'isolated'
-                ? PERPS_PRO_ISOLATED_TEXT_STYLE
-                : undefined
-            }
           />
           <PerpsProTradeSelect
             label={`${Math.max(1, leverage)}x`}
+            textStyle={PERPS_PRO_NUMBER_STYLE}
             showCaret={false}
             style={styles.flexItem}
-            useReadableTextVariant={false}
           />
         </View>
         <PerpsProTradeSelect label={t('page.perps.pro.trade.market')} />
@@ -122,7 +117,7 @@ PerpsProTradeSkeleton.displayName = 'PerpsProTradeSkeleton';
 const getStyle = createGetStyles2024(() => ({
   container: {
     gap: 16,
-    height: PERPS_PRO_MAIN_COLUMN_HEIGHT,
+    minHeight: PERPS_PRO_MAIN_COLUMN_HEIGHT,
   },
   inputGroup: {
     gap: 8,

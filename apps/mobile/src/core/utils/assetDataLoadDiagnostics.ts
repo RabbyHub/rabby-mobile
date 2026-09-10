@@ -1,13 +1,20 @@
 import { isNonProductionDiagnosticsEnabled } from './diagnosticEnv';
 
 export type AssetDataLoadDiagnosticDomain =
+  | 'home-manual-refresh'
+  | 'home-balance-refresh'
   | 'single-address-token'
   | 'single-address-nft'
   | 'single-address-warmup'
   | 'multi-address-token'
+  | 'multi-address-token-projection'
   | 'token-runtime-sync'
   | 'multi-address-protocol'
-  | 'multi-address-nft';
+  | 'multi-address-nft'
+  | 'asset-projection-token-restore'
+  | 'asset-projection-token-entity-background-restore'
+  | 'asset-projection-protocol-restore'
+  | 'asset-projection-nft-restore';
 
 type AssetDataLoadDiagnosticValue = string | number | boolean | null;
 
@@ -23,9 +30,15 @@ export type AssetDataLoadDiagnosticRecord = {
   details?: Readonly<Record<string, AssetDataLoadDiagnosticValue>>;
 };
 
-type AssetDataLoadTraceDetails = Readonly<
+export type AssetDataLoadTraceDetails = Readonly<
   Record<string, AssetDataLoadDiagnosticValue | undefined>
 >;
+
+export type AssetDataLoadDiagnosticTrace = {
+  mark: (phase: string, details?: AssetDataLoadTraceDetails) => void;
+  finish: (details?: AssetDataLoadTraceDetails) => void;
+  fail: (details?: AssetDataLoadTraceDetails) => void;
+};
 
 const MAX_RECORDS = 160;
 const records = isNonProductionDiagnosticsEnabled
@@ -50,7 +63,7 @@ export function beginAssetDataLoadDiagnostic(
   domain: AssetDataLoadDiagnosticDomain,
   address: string,
   details?: AssetDataLoadTraceDetails,
-) {
+): AssetDataLoadDiagnosticTrace {
   if (!records) {
     return {
       mark: (_phase: string, _details?: AssetDataLoadTraceDetails) => {},

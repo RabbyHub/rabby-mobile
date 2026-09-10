@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import fs from 'fs';
 import path from 'path';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { Keyboard, StyleSheet } from 'react-native';
 
 const mockPresent = jest.fn();
 const mockDismiss = jest.fn();
@@ -14,13 +14,40 @@ const mockMarkPresent = jest.fn();
 const mockMakeBottomSheetProps = jest.fn(() => ({}));
 const mockPagerSetPage = jest.fn();
 const mockPagerSetPageWithoutAnimation = jest.fn();
+const mockAnimatedStyles = jest.fn();
 let mockSelectorIsIOS = true;
+let mockLanguage = 'en-US';
+
+const mockUiRefreshTimeout = jest.fn();
+
+jest.mock('@/core/apis/autoLock', () => ({
+  uiRefreshTimeout: mockUiRefreshTimeout,
+}));
 
 jest.mock('@/core/native/utils', () => ({
   get IS_IOS() {
     return mockSelectorIsIOS;
   },
 }));
+
+jest.mock('react-native-reanimated', () => {
+  const ReactModule = require('react');
+  const ReactNative = require('react-native');
+  return {
+    __esModule: true,
+    default: { Text: ReactNative.Text, View: ReactNative.View },
+    Easing: { bezier: jest.fn(() => jest.fn()) },
+    ReduceMotion: { System: 'system' },
+    cancelAnimation: jest.fn(),
+    useAnimatedStyle: (factory: () => object) => {
+      const style = factory();
+      mockAnimatedStyles(style);
+      return style;
+    },
+    useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
+    withTiming: (target: number) => target,
+  };
+});
 
 jest.mock('./PerpsProMarketPager', () => {
   const ReactModule = require('react');
@@ -108,7 +135,7 @@ jest.mock('@/components/Typography', () => ({
 }));
 
 jest.mock('@/hooks/lang', () => ({
-  useAppLanguage: () => ({ currentLanguage: 'en-US' }),
+  useAppLanguage: () => ({ currentLanguage: mockLanguage }),
 }));
 
 jest.mock('@/components2024/GlobalBottomSheetModal/utils-help', () => ({
@@ -368,8 +395,9 @@ jest.mock('@/utils/styles', () => ({
 }));
 
 jest.mock('@gorhom/bottom-sheet', () => {
-  const { TouchableOpacity } = require('react-native');
+  const { TouchableOpacity, View } = require('react-native');
   return {
+    BottomSheetBackdrop: View,
     TouchableOpacity,
   };
 });
@@ -543,10 +571,37 @@ const getLatestMarketListProps = (pageTab: string = 'all') => {
   return call[0];
 };
 
+// Node has no Yoga layout pass. Supply the native measurements explicitly;
+// the production Selector/Tabs still own readiness and geometry publication.
+const measureMarketTabs = (widths: Record<string, number> = {}) => {
+  act(() => {
+    let x = 16;
+    for (const tab of screen.getAllByRole('tab')) {
+      const id = tab.props.testID.replace('perps-pro-market-tab-', '');
+      const width = widths[id] ?? 60;
+      fireEvent(tab, 'layout', {
+        nativeEvent: { layout: { height: 34, width, x, y: 0 } },
+      });
+      x += width + 16;
+    }
+    const extra = screen.queryByTestId('perps-pro-market-tab-extra-measure', {
+      includeHiddenElements: true,
+    });
+    if (extra) {
+      fireEvent(extra, 'layout', {
+        nativeEvent: {
+          layout: { height: 18, width: widths.favorites ?? 70, x: 0, y: 0 },
+        },
+      });
+    }
+  });
+};
+
 describe('PerpsProMarketSelector', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockSelectorIsIOS = true;
+    mockLanguage = 'en-US';
     jest.spyOn(global, 'requestAnimationFrame').mockImplementation(callback => {
       callback(0);
       return 1;
@@ -631,6 +686,99 @@ describe('PerpsProMarketSelector', () => {
     expect(getLatestMarketListProps('all').renderProfile).toBe('prepared');
   });
 
+  it('keeps a distant page jump direct without traversing intermediate tabs', () => {
+    __setCategories([
+      {
+        id: 'category-a',
+        is_disable: false,
+        name: 'Category A',
+        priority: 0,
+        translations: {},
+      },
+      {
+        id: 'category-b',
+        is_disable: false,
+        name: 'Category B',
+        priority: 1,
+        translations: {},
+      },
+      {
+        id: 'category-c',
+        is_disable: false,
+        name: 'Category C',
+        priority: 2,
+        translations: {},
+      },
+    ]);
+    __setMarketData(
+      mockPerpsStore.getState().marketData.map((market, index) => ({
+        ...market,
+        categoryId: `category-${String.fromCharCode(97 + index)}`,
+      })),
+    );
+    render(
+      <PerpsProMarketSelector currentMarketKey={null} onSelect={jest.fn()} />,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-market-tab-category-c'));
+
+    expect(mockPagerSetPage).not.toHaveBeenCalled();
+    expect(mockPagerSetPageWithoutAnimation).toHaveBeenCalledWith(3);
+    expect(
+      screen.getByTestId('perps-pro-market-tab-category-c').props
+        .accessibilityState,
+    ).toEqual({ selected: true });
+  });
+
+  it('keeps the latest reverse command when old pager callbacks arrive first', () => {
+    const queuedFrames = new Map<number, FrameRequestCallback>();
+    let nextFrameId = 0;
+    (
+      global.requestAnimationFrame as jest.MockedFunction<
+        typeof requestAnimationFrame
+      >
+    ).mockImplementation(callback => {
+      nextFrameId += 1;
+      queuedFrames.set(nextFrameId, callback);
+      return nextFrameId;
+    });
+    jest.spyOn(global, 'cancelAnimationFrame').mockImplementation(frameId => {
+      queuedFrames.delete(frameId);
+    });
+    __setFavoriteMarkets(['BTC']);
+    render(
+      <PerpsProMarketSelector currentMarketKey={null} onSelect={jest.fn()} />,
+    );
+    const flushQueuedFrames = () => {
+      act(() => {
+        const callbacks = [...queuedFrames.values()];
+        queuedFrames.clear();
+        callbacks.forEach(callback => callback(0));
+      });
+    };
+    flushQueuedFrames();
+
+    fireEvent.press(screen.getByTestId('perps-pro-market-tab-favorites'));
+    flushQueuedFrames();
+    expect(mockPagerSetPage.mock.calls).toEqual([[0]]);
+
+    fireEvent.press(screen.getByTestId('perps-pro-market-tab-all'));
+    const pager = screen.getByTestId('perps-pro-market-pager');
+    fireEvent(pager, 'pagePreview', 0);
+    fireEvent(pager, 'pageSelected', 0);
+
+    expect(
+      screen.getByTestId('perps-pro-market-tab-all').props.accessibilityState,
+    ).toEqual({ selected: true });
+    flushQueuedFrames();
+
+    expect(mockPagerSetPage.mock.calls).toEqual([[0], [1]]);
+    expect(mockPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
+    expect(
+      screen.getByTestId('perps-pro-market-tab-all').props.accessibilityState,
+    ).toEqual({ selected: true });
+  });
+
   it('previews the swipe target without feeding it back into pager state', () => {
     __setFavoriteMarkets(['BTC']);
     render(
@@ -681,10 +829,14 @@ describe('PerpsProMarketSelector', () => {
       mockBottomSheetModalProps.mock.calls[
         mockBottomSheetModalProps.mock.calls.length - 1
       ][0];
+    const indicatorPosition = screen.getByTestId('perps-pro-market-pager').props
+      .indicatorPosition as { value: number };
+    indicatorPosition.value = 0.25;
     act(() => {
       modalProps.onDismiss();
     });
     expect(mockPagerSetPageWithoutAnimation).toHaveBeenCalledWith(1);
+    expect(indicatorPosition.value).toBe(1);
     expect(
       screen.getByTestId('perps-pro-market-tab-all').props.accessibilityState,
     ).toEqual({ selected: true });
@@ -946,6 +1098,251 @@ describe('PerpsProMarketSelector', () => {
     expect(screen.getByTestId('perps-pro-market-column-header')).toBeTruthy();
   });
 
+  describe.each([true, false])('tab presentation (iOS=%s)', isIOS => {
+    let windowWidth: number | null = null;
+    const getPosition = () =>
+      screen.getByTestId('perps-pro-market-pager').props.indicatorPosition as {
+        value: number;
+      };
+    const renderSelector = () => (
+      <PerpsProMarketSelector currentMarketKey={null} onSelect={jest.fn()} />
+    );
+    const selectPage = (position: number) => {
+      getPosition().value = position;
+      fireEvent(
+        screen.getByTestId('perps-pro-market-pager'),
+        'pageSelected',
+        position,
+      );
+    };
+    // Reanimated computes the initial style during render, before layout effects.
+    // Capture that output so an eventual correction cannot hide a wrong first frame.
+    const expectFirstHighlight = (count: number, selected: number) => {
+      const styles = mockAnimatedStyles.mock.calls
+        .map(([style]) => style)
+        .filter(style => 'fontWeight' in style)
+        .slice(0, count);
+      expect(styles).toHaveLength(count);
+      expect(styles.map(style => style.fontWeight)).toEqual(
+        Array.from({ length: count }, (_, index) =>
+          index === selected ? '700' : '500',
+        ),
+      );
+      expect(styles.map(style => style.color)).toEqual(
+        Array.from({ length: count }, (_, index) =>
+          index === selected ? 'neutral-title-1' : 'neutral-secondary',
+        ),
+      );
+    };
+
+    beforeEach(() => {
+      mockSelectorIsIOS = isIOS;
+      windowWidth = null;
+      const native = require('react-native');
+      const useDimensions = native.useWindowDimensions;
+      jest.spyOn(native, 'useWindowDimensions').mockImplementation(() => {
+        const dimensions = useDimensions();
+        return { ...dimensions, width: windowWidth ?? dimensions.width };
+      });
+      __setCategories(
+        ['category-a', 'category-b'].map((id, index) => ({
+          id,
+          is_disable: false,
+          name: id,
+          priority: index,
+          translations: { 'de-DE': `${id} translated` },
+        })),
+      );
+      __setMarketData(
+        mockPerpsStore.getState().marketData.map((market, index) => ({
+          ...market,
+          categoryId: index === 0 ? 'category-a' : 'category-b',
+        })),
+      );
+    });
+
+    it.each(['all', 'category-a', 'category-b'])(
+      'keeps %s highlighted from the first render when Favorites appears or disappears',
+      tab => {
+        const view = render(renderSelector());
+        measureMarketTabs();
+        const index = ['all', 'category-a', 'category-b'].indexOf(tab);
+        selectPage(index);
+        let previousPosition = getPosition();
+        for (const favorites of [['BTC'], []]) {
+          __setFavoriteMarkets(favorites);
+          mockAnimatedStyles.mockClear();
+          // This unit Store fake does not publish; rerender supplies its new snapshot.
+          view.rerender(renderSelector());
+          const expectedIndex = index + (favorites.length ? 1 : 0);
+          expectFirstHighlight(favorites.length ? 4 : 3, expectedIndex);
+          expect(getPosition()).not.toBe(previousPosition);
+          expect(getPosition().value).toBe(expectedIndex);
+          expect(
+            screen.getByTestId('perps-pro-market-pager').props.initialPage,
+          ).toBe(expectedIndex);
+          expect(
+            screen.getByTestId(`perps-pro-market-tab-${tab}`).props
+              .accessibilityState,
+          ).toEqual({ selected: true });
+          expect(getLatestMarketListProps(tab).renderProfile).toBe('active');
+          // A detached pager's late UI-thread write must not change the new presentation.
+          previousPosition.value = 99;
+          expect(getPosition().value).toBe(expectedIndex);
+          previousPosition = getPosition();
+        }
+        expect(mockPagerSetPage).not.toHaveBeenCalled();
+        expect(mockPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
+      },
+    );
+
+    it('falls back to All immediately when the last favorite is removed on Favorites', () => {
+      __setFavoriteMarkets(['BTC']);
+      const view = render(renderSelector());
+      measureMarketTabs();
+      selectPage(0);
+      __setFavoriteMarkets([]);
+      mockAnimatedStyles.mockClear();
+      view.rerender(renderSelector());
+      expectFirstHighlight(3, 0);
+      expect(getPosition().value).toBe(0);
+      expect(screen.queryByTestId('perps-pro-market-tab-favorites')).toBeNull();
+      expect(getLatestMarketListProps('all').renderProfile).toBe('active');
+    });
+
+    it.each([false, true])(
+      'restores the saved category after search changes Favorites (initially present=%s)',
+      hadFavorites => {
+        __setFavoriteMarkets(hadFavorites ? ['BTC'] : []);
+        const view = render(renderSelector());
+        measureMarketTabs();
+        selectPage(hadFavorites ? 2 : 1);
+        const previousPosition = getPosition();
+        fireEvent(screen.getByTestId('market-search'), 'focus');
+        expect(screen.queryByTestId('perps-pro-market-pager')).toBeNull();
+        __setFavoriteMarkets(hadFavorites ? [] : ['BTC']);
+        view.rerender(renderSelector());
+        mockAnimatedStyles.mockClear();
+        fireEvent.press(screen.getByTestId('market-search-cancel'));
+        const expectedIndex = hadFavorites ? 1 : 2;
+        expectFirstHighlight(hadFavorites ? 3 : 4, expectedIndex);
+        expect(getPosition()).not.toBe(previousPosition);
+        expect(getPosition().value).toBe(expectedIndex);
+        expect(getLatestMarketListProps('category-a').renderProfile).toBe(
+          'active',
+        );
+      },
+    );
+
+    it('preserves fractional progress for ordinary changes within the same tab sequence', () => {
+      __setFavoriteMarkets(['BTC']);
+      const view = render(renderSelector());
+      const position = getPosition();
+      position.value = 1.4;
+      fireEvent(screen.getByTestId('perps-pro-market-pager'), 'pagePreview', 2);
+      expect(getPosition()).toBe(position);
+      expect(position.value).toBe(1.4);
+      __setFavoriteMarkets(['BTC', 'ETH']);
+      view.rerender(renderSelector());
+      expect(getPosition()).toBe(position);
+      expect(position.value).toBe(1.4);
+      mockLanguage = 'de-DE';
+      mockAnimatedStyles.mockClear();
+      view.rerender(renderSelector());
+      expectFirstHighlight(4, 1);
+      expect(getPosition()).toBe(position);
+      expect(position.value).toBe(1.4);
+      windowWidth = 430;
+      view.rerender(renderSelector());
+      expect(getPosition()).toBe(position);
+      expect(position.value).toBe(1.4);
+      fireEvent.press(screen.getByTestId('perps-pro-market-tab-category-b'));
+      expect(getPosition()).toBe(position);
+      expect(mockPagerSetPageWithoutAnimation).toHaveBeenCalledWith(3);
+      selectPage(3);
+      expect(getPosition()).toBe(position);
+      expect(position.value).toBe(3);
+    });
+
+    it.each([
+      [200, 150, 64],
+      [300, 50, 0],
+    ])(
+      'mounts the first-favorite strip at its final offset with a visible underline (viewport=%s)',
+      (viewport, addedOffset, removedOffset) => {
+        windowWidth = viewport;
+        const view = render(renderSelector());
+        measureMarketTabs({
+          favorites: 70,
+          all: 30,
+          'category-a': 80,
+          'category-b': 90,
+        });
+        selectPage(2);
+        const oldPosition = getPosition();
+        __setFavoriteMarkets(['BTC']);
+        mockAnimatedStyles.mockClear();
+        view.rerender(renderSelector());
+
+        // Assert before ANY layout event from the newly mounted strip. The
+        // previous implementation only reached this position after those events.
+        expect(
+          screen.getByTestId('perps-pro-market-tabs').props.contentOffset,
+        ).toEqual({ x: addedOffset, y: 0 });
+        const firstUnderline = mockAnimatedStyles.mock.calls
+          .map(([style]) => style)
+          .find(style => 'left' in style && 'opacity' in style);
+        expect(firstUnderline).toMatchObject({
+          left: 242.5,
+          width: 93,
+          opacity: 1,
+        });
+        expectFirstHighlight(4, 3);
+        expect(getPosition().value).toBe(3);
+        expect(getPosition()).not.toBe(oldPosition);
+        expect(mockPagerSetPage).not.toHaveBeenCalled();
+        expect(mockPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
+
+        __setFavoriteMarkets([]);
+        view.rerender(renderSelector());
+        expect(
+          screen.getByTestId('perps-pro-market-tabs').props.contentOffset,
+        ).toEqual({ x: removedOffset, y: 0 });
+        expect(
+          StyleSheet.flatten(
+            screen.getByTestId('perps-pro-market-tab-indicator', {
+              includeHiddenElements: true,
+            }).props.style,
+          ),
+        ).toMatchObject({ left: 156.5, width: 93, opacity: 1 });
+      },
+    );
+
+    it('keeps the current tab sequence until the missing favorite measurement arrives', () => {
+      windowWidth = 200;
+      const view = render(renderSelector());
+      selectPage(2);
+      const position = getPosition();
+      __setFavoriteMarkets(['BTC']);
+      view.rerender(renderSelector());
+      expect(screen.queryByTestId('perps-pro-market-tab-favorites')).toBeNull();
+      expect(getPosition()).toBe(position);
+      expect(getLatestMarketListProps('category-b').renderProfile).toBe(
+        'active',
+      );
+      measureMarketTabs({
+        favorites: 70,
+        all: 30,
+        'category-a': 80,
+        'category-b': 90,
+      });
+      expect(
+        screen.getByTestId('perps-pro-market-tabs').props.contentOffset,
+      ).toEqual({ x: 150, y: 0 });
+      expect(getPosition().value).toBe(3);
+    });
+  });
+
   it('matches the Figma header spacing and keeps 44pt gesture-aware sort targets', () => {
     render(
       <PerpsProMarketSelector
@@ -964,7 +1361,31 @@ describe('PerpsProMarketSelector', () => {
     expect(modalProps.keyboardBehavior).toBe('extend');
     expect(modalProps.keyboardBlurBehavior).toBe('restore');
     expect(modalProps.android_keyboardInputMode).toBe('adjustPan');
-    expect(modalProps.backdropProps.pressBehavior).toBe('close');
+    const backdrop = modalProps.backdropComponent({
+      animatedIndex: { value: 0 },
+      animatedPosition: { value: 104 },
+    });
+    expect(backdrop.props).toMatchObject({
+      opacity: 0.3,
+      pressBehavior: 'close',
+      appearsOnIndex: 0,
+      disappearsOnIndex: -1,
+    });
+    const dismissKeyboard = jest
+      .spyOn(Keyboard, 'dismiss')
+      .mockImplementation(() => {});
+    backdrop.props.onPress();
+    expect(mockUiRefreshTimeout).toHaveBeenCalledTimes(1);
+    expect(dismissKeyboard).toHaveBeenCalledTimes(1);
+    dismissKeyboard.mockRestore();
+    expect(modalProps.handleStyle).toMatchObject({
+      height: 40,
+      paddingTop: 10,
+    });
+    expect(modalProps.handleIndicatorStyle).toMatchObject({
+      width: 50.18252944946289,
+      height: 6.272816181182861,
+    });
     expect(mockMakeBottomSheetProps).toHaveBeenLastCalledWith(
       expect.objectContaining({ linearGradientType: 'bg1' }),
     );
@@ -983,8 +1404,8 @@ describe('PerpsProMarketSelector', () => {
     );
     expect(searchStyle).toEqual(
       expect.objectContaining({
-        marginLeft: 15,
-        marginRight: 15,
+        marginLeft: 20,
+        marginRight: 16,
         marginTop: 0,
       }),
     );
@@ -994,8 +1415,8 @@ describe('PerpsProMarketSelector', () => {
     );
     expect(headerStyle).toEqual(
       expect.objectContaining({
-        height: 46,
-        paddingTop: 2,
+        height: 44,
+        marginTop: -4,
       }),
     );
 
@@ -1007,7 +1428,7 @@ describe('PerpsProMarketSelector', () => {
         expect.objectContaining({
           height: 44,
           minWidth: 44,
-          paddingTop: 16,
+          paddingTop: 18,
         }),
       );
     });
@@ -1164,6 +1585,6 @@ describe('PerpsProMarketSelector', () => {
     );
     const messages = JSON.parse(fs.readFileSync(localePath, 'utf8'));
 
-    expect(messages.page.perps.pro.marketSelector.search).toBe('Search');
+    expect(messages.page.perps.pro.marketSelector.search).toBe('Search Token');
   });
 });

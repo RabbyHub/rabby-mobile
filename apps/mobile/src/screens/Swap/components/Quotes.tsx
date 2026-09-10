@@ -13,7 +13,12 @@ import { useSetAtom } from 'jotai';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, Easing, TouchableOpacity, View } from 'react-native';
-import { TDexQuoteData, useSwapSettings, useSwapViewDexIdList } from '../hooks';
+import {
+  getSwapQuoteScore,
+  TDexQuoteData,
+  useSwapSettings,
+  useSwapViewDexIdList,
+} from '../hooks';
 import { refreshIdAtom } from '../hooks/atom';
 import { isSwapWrapToken } from '../utils';
 import { QuoteListLoading, QuoteLoading } from './loading';
@@ -41,6 +46,8 @@ interface QuotesProps
   activeName?: string;
   visible: boolean;
   onClose: () => void;
+  onSelect?: () => void;
+  noPadding?: boolean;
 }
 
 export const Quotes = ({
@@ -48,6 +55,8 @@ export const Quotes = ({
   inSufficient,
   visible: _visible,
   onClose,
+  onSelect,
+  noPadding,
   ...other
 }: QuotesProps) => {
   const colors = useThemeColors();
@@ -58,35 +67,15 @@ export const Quotes = ({
   const sortedList = useMemo(
     () =>
       [...(list || [])].sort((a, b) => {
-        const getNumber = (quote: typeof a) => {
-          const price = other.receiveToken.price ? other.receiveToken.price : 0;
-          if (inSufficient) {
-            return new BigNumber(quote.data?.toTokenAmount || 0)
-              .div(
-                10 **
-                  (quote.data?.toTokenDecimals || other.receiveToken.decimals),
-              )
-              .times(price);
-          }
-          if (!quote.preExecResult) {
-            return new BigNumber(Number.MIN_SAFE_INTEGER);
-          }
-          const receiveTokenAmount =
-            new BigNumber(quote?.data?.toTokenAmount || 0)
-              .div(
-                10 **
-                  (quote?.data?.toTokenDecimals || other.receiveToken.decimals),
-              )
-              .toString() || 0;
-          if (sortIncludeGasFee) {
-            return new BigNumber(receiveTokenAmount)
-              .times(price)
-              .minus(quote?.preExecResult?.gasUsdValue || 0);
-          }
+        const getScore = (quote: typeof a) =>
+          getSwapQuoteScore({
+            quote,
+            receiveToken: other.receiveToken,
+            inSufficient,
+            sortIncludeGasFee,
+          }) || new BigNumber(Number.MIN_SAFE_INTEGER);
 
-          return new BigNumber(receiveTokenAmount).times(price);
-        };
-        return getNumber(b).minus(getNumber(a)).toNumber();
+        return getScore(b).minus(getScore(a)).toNumber();
       }),
     [inSufficient, list, other.receiveToken, sortIncludeGasFee],
   );
@@ -125,7 +114,7 @@ export const Quotes = ({
     const dex = sortedList.find(e => e.isDex) as TDexQuoteData | undefined;
 
     return (
-      <View style={{ paddingHorizontal: 12 }}>
+      <View style={{ paddingHorizontal: noPadding ? 0 : 12 }}>
         {dex ? (
           <DexQuoteItemOld
             inSufficient={inSufficient}
@@ -148,6 +137,7 @@ export const Quotes = ({
               logo: other?.receiveToken?.logo_url,
             }}
             onCloseQuoteList={onClose}
+            onSelect={onSelect}
             {...other}
           />
         ) : (
@@ -172,7 +162,7 @@ export const Quotes = ({
     );
   }
   return (
-    <View style={{ paddingHorizontal: 12 }}>
+    <View style={{ paddingHorizontal: noPadding ? 0 : 12 }}>
       <View style={{ gap: 12 }}>
         {sortedList.map((params, idx) => {
           const { name, data, isDex } = params;
@@ -195,6 +185,7 @@ export const Quotes = ({
                 DEX_WITH_WRAP[name as keyof typeof DEX_WITH_WRAP]
               }
               onCloseQuoteList={onClose}
+              onSelect={onSelect}
               {...other}
             />
           );
@@ -361,7 +352,10 @@ export const QuoteList = (props: QuotesProps) => {
         linearGradientType: isLight ? 'bg0' : 'bg1',
       })}>
       <View style={{ flex: 1, position: 'relative' }}>
-        <TouchableOpacity onPress={refreshQuote} style={styles.refreshIconBtn}>
+        <TouchableOpacity
+          hitSlop={10}
+          onPress={refreshQuote}
+          style={styles.refreshIconBtn}>
           <RcIconRefreshCC color={colors2024['neutral-body']} />
         </TouchableOpacity>
         <Text style={styles.headerText}>

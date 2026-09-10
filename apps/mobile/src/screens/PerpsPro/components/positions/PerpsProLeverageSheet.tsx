@@ -1,12 +1,19 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text, TextInput } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { BOTTOM_BUTTON_COMPACT_HEIGHT } from '@/constant/layout';
+import { IS_ANDROID } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetScrollView,
+  BottomSheetTextInput,
+  BottomSheetView,
+  type BottomSheetScrollViewMethods,
+} from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Keyboard, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -21,6 +28,12 @@ import {
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 import { usePerpsProSliderHaptics } from '../common/usePerpsProSliderHaptics';
 import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
+import { PerpsProKeyboardSheetContext } from '../common/PerpsProKeyboardSheetContext';
+import { usePerpsProSheetKeyboard } from '../common/usePerpsProSheetKeyboard';
+import { PerpsProSheetKeyboardAnimation } from '../common/PerpsProSheetKeyboardAnimation';
+
+const SHEET_HEIGHT = 296;
+const SheetContent = IS_ANDROID ? BottomSheetScrollView : BottomSheetView;
 
 const PerpsProLeverageBottomSheetTextInput = React.forwardRef<
   TextInput,
@@ -48,6 +61,8 @@ export const PerpsProLeverageSheet: React.FC<{
   ({ currentLeverage, maxLeverage, onClose, onConfirm, pending, visible }) => {
     const modalRef = useRef<AppBottomSheetModal>(null);
     const inputRef = useRef<TextInput>(null);
+    const scrollViewRef = useRef<BottomSheetScrollViewMethods>(null);
+    const keyboard = usePerpsProSheetKeyboard({ visible, scrollViewRef });
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
     const safeMax = Math.max(1, Math.floor(maxLeverage));
@@ -145,105 +160,124 @@ export const PerpsProLeverageSheet: React.FC<{
         handleIndicatorStyle={styles.handleIndicator}
         handleStyle={styles.handle}
         onDismiss={onClose}
-        snapPoints={[296]}
+        snapPoints={[SHEET_HEIGHT + keyboard.accessoryInset]}
         style={styles.modal}>
-        <BottomSheetView style={styles.sheetView}>
-          <AutoLockView style={styles.container}>
-            <View style={styles.titleGroup}>
-              <Text style={styles.title}>
-                {t('page.perps.pro.positions.adjustLeverage')}
-              </Text>
-              <Text style={styles.maximum}>
-                {t('page.perps.pro.positions.upToLeverage', {
-                  leverage: safeMax,
-                })}
-              </Text>
-            </View>
-            <View style={styles.inputRow}>
-              <Pressable
-                accessibilityRole="button"
-                disabled={pending || numericDraft <= 1}
-                onPress={decrement}
-                style={styles.stepButton}
-                testID="perps-pro-leverage-decrement">
-                <View style={styles.minus} />
-              </Pressable>
-              <Pressable
-                accessible={false}
-                onPress={() => inputRef.current?.focus()}
-                style={styles.valueEditor}>
-                <PerpsProDecimalTextInput
-                  accessibilityLabel={t(
-                    'page.perps.pro.positions.adjustLeverage',
-                  )}
-                  cursorColor={colors2024['brand-default']}
-                  editable={!pending}
-                  focusCursorAtEnd
-                  focusCursorAtEndMode="initialFocus"
-                  inputComponent={PerpsProLeverageBottomSheetTextInput}
-                  inputMode="numeric"
-                  keyboardType="number-pad"
-                  maxDecimals={0}
-                  normalizeValue={normalizeLeverageInput}
-                  onChangeText={setDraft}
-                  ref={inputRef}
-                  selectionColor={colors2024['brand-default']}
-                  style={[styles.valueInput, { width: valueInputWidth }]}
-                  testID="perps-pro-leverage-input"
-                  value={draft}
-                />
-                <Text pointerEvents="none" style={styles.valueSuffix}>
-                  x
+        <PerpsProKeyboardSheetContext.Provider value={keyboard.sheetId}>
+          {IS_ANDROID && visible ? (
+            <PerpsProSheetKeyboardAnimation
+              onReadyChange={keyboard.onSheetReadyChange}
+            />
+          ) : null}
+          <SheetContent
+            {...(IS_ANDROID
+              ? {
+                  ref: scrollViewRef,
+                  style: { marginBottom: keyboard.accessoryInset },
+                  contentContainerStyle: styles.scrollContent,
+                  keyboardShouldPersistTaps: 'handled' as const,
+                  onLayout: keyboard.ensureInputVisible,
+                  onContentSizeChange: keyboard.ensureInputVisible,
+                  onScrollBeginDrag: keyboard.cancelMeasurement,
+                  showsVerticalScrollIndicator: false,
+                }
+              : { style: styles.sheetView })}>
+            <AutoLockView style={styles.container}>
+              <View style={styles.titleGroup}>
+                <Text style={styles.title}>
+                  {t('page.perps.pro.positions.adjustLeverage')}
                 </Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                disabled={pending || numericDraft >= safeMax}
-                onPress={increment}
-                style={styles.stepButton}
-                testID="perps-pro-leverage-increment">
-                <View style={styles.plusHorizontal} />
-                <View style={styles.plusVertical} />
-              </Pressable>
-            </View>
-            <View
-              onStartShouldSetResponderCapture={handleSliderTouchCapture}
-              style={styles.sliderSection}
-              testID="perps-pro-leverage-slider-section">
-              <PerpsProSlider
-                disabled={pending}
-                dimWhenDisabled={false}
-                maximumValue={safeMax}
-                minimumValue={1}
-                onSlidingComplete={sliderHaptics.onSlidingComplete}
-                onSlidingStart={sliderHaptics.onSlidingStart}
-                onValueChange={next => {
-                  const roundedNext = Math.round(next);
-                  sliderHaptics.onValueChange(roundedNext);
-                  setDraft(String(roundedNext));
-                }}
-                pointCount={5}
-                showPoints={false}
-                step={1}
-                tone="neutral"
-                value={sliderValue}
-              />
-            </View>
-            <View style={styles.footer} testID="perps-pro-leverage-footer">
-              <Button
-                buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
-                disabled={pending || !isDraftValid}
-                height={BOTTOM_BUTTON_COMPACT_HEIGHT}
-                loading={pending}
-                onPress={confirm}
-                title={t('global.confirm')}
-                titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
-                testID="perps-pro-leverage-confirm"
-                type="primary"
-              />
-            </View>
-          </AutoLockView>
-        </BottomSheetView>
+                <Text style={styles.maximum}>
+                  {t('page.perps.pro.positions.upToLeverage', {
+                    leverage: safeMax,
+                  })}
+                </Text>
+              </View>
+              <View style={styles.inputRow}>
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={pending || numericDraft <= 1}
+                  onPress={decrement}
+                  style={styles.stepButton}
+                  testID="perps-pro-leverage-decrement">
+                  <View style={styles.minus} />
+                </Pressable>
+                <Pressable
+                  accessible={false}
+                  onPress={() => inputRef.current?.focus()}
+                  style={styles.valueEditor}>
+                  <PerpsProDecimalTextInput
+                    accessibilityLabel={t(
+                      'page.perps.pro.positions.adjustLeverage',
+                    )}
+                    cursorColor={colors2024['brand-default']}
+                    editable={!pending}
+                    focusCursorAtEnd
+                    focusCursorAtEndMode="initialFocus"
+                    inputComponent={PerpsProLeverageBottomSheetTextInput}
+                    inputMode="numeric"
+                    keyboardType="number-pad"
+                    maxDecimals={0}
+                    normalizeValue={normalizeLeverageInput}
+                    onChangeText={setDraft}
+                    ref={inputRef}
+                    selectionColor={colors2024['brand-default']}
+                    style={[styles.valueInput, { width: valueInputWidth }]}
+                    testID="perps-pro-leverage-input"
+                    value={draft}
+                  />
+                  <Text pointerEvents="none" style={styles.valueSuffix}>
+                    x
+                  </Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={pending || numericDraft >= safeMax}
+                  onPress={increment}
+                  style={styles.stepButton}
+                  testID="perps-pro-leverage-increment">
+                  <View style={styles.plusHorizontal} />
+                  <View style={styles.plusVertical} />
+                </Pressable>
+              </View>
+              <View
+                onStartShouldSetResponderCapture={handleSliderTouchCapture}
+                style={styles.sliderSection}
+                testID="perps-pro-leverage-slider-section">
+                <PerpsProSlider
+                  disabled={pending}
+                  dimWhenDisabled={false}
+                  maximumValue={safeMax}
+                  minimumValue={1}
+                  onSlidingComplete={sliderHaptics.onSlidingComplete}
+                  onSlidingStart={sliderHaptics.onSlidingStart}
+                  onValueChange={next => {
+                    const roundedNext = Math.round(next);
+                    sliderHaptics.onValueChange(roundedNext);
+                    setDraft(String(roundedNext));
+                  }}
+                  pointCount={5}
+                  showPoints={false}
+                  step={1}
+                  tone="neutral"
+                  value={sliderValue}
+                />
+              </View>
+              <View style={styles.footer} testID="perps-pro-leverage-footer">
+                <Button
+                  buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
+                  disabled={pending || !isDraftValid}
+                  height={BOTTOM_BUTTON_COMPACT_HEIGHT}
+                  loading={pending}
+                  onPress={confirm}
+                  title={t('global.confirm')}
+                  titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
+                  testID="perps-pro-leverage-confirm"
+                  type="primary"
+                />
+              </View>
+            </AutoLockView>
+          </SheetContent>
+        </PerpsProKeyboardSheetContext.Provider>
       </AppBottomSheetModal>
     );
   },
@@ -257,8 +291,11 @@ const getStyle = createGetStyles2024(
     sheetView: {
       height: '100%',
     },
+    scrollContent: { flexGrow: 1 },
     container: {
-      height: '100%',
+      ...(IS_ANDROID
+        ? { minHeight: SHEET_HEIGHT - 40, flexGrow: 1 }
+        : { height: '100%' }),
       paddingHorizontal: 15,
       paddingTop: 8,
     },
@@ -267,14 +304,15 @@ const getStyle = createGetStyles2024(
     },
     title: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 16,
       fontWeight: '700',
       lineHeight: 20,
     },
     maximum: {
+      ...PERPS_PRO_NUMBER_STYLE,
       color: colors2024['neutral-body'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       fontWeight: '500',
       lineHeight: 16,
@@ -326,8 +364,9 @@ const getStyle = createGetStyles2024(
       justifyContent: 'center',
     },
     valueInput: {
+      ...PERPS_PRO_NUMBER_STYLE,
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
       height: 24,
@@ -338,7 +377,7 @@ const getStyle = createGetStyles2024(
     },
     valueSuffix: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
       lineHeight: 18,

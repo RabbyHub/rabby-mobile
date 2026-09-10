@@ -51,7 +51,7 @@ export const CancelConnect = () => {
       <AppBottomSheetModalTitle
         title={t('page.signFooterBar.cancelConnection')}
       />
-      <Text className="text-r-neutral-body text-13 font-normal text-center leading-[16px]">
+      <Text style={styles.title}>
         {t('page.signFooterBar.detectedMultipleRequestsFromThisDapp')}
       </Text>
       <View style={styles.buttonGroup}>

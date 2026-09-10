@@ -26,9 +26,11 @@ function subscribeAppLaunchLock(onStoreChange: () => void) {
 
 export const SwitchAppLaunchLock = ({
   ref,
+  onBeforeToggle,
   ...props
 }: React.ComponentProps<typeof AppSwitch2024> & {
   ref?: Ref<SwitchToggleType>;
+  onBeforeToggle?: (nextEnabled: boolean) => boolean;
 }) => {
   const enabled = useSyncExternalStore(
     subscribeAppLaunchLock,
@@ -38,6 +40,10 @@ export const SwitchAppLaunchLock = ({
 
   const toggle = useCallback(
     (nextEnabled = !enabled) => {
+      if (onBeforeToggle && !onBeforeToggle(nextEnabled)) {
+        return;
+      }
+
       try {
         setAppLaunchLockEnabled(nextEnabled);
       } catch (error) {
@@ -45,7 +51,7 @@ export const SwitchAppLaunchLock = ({
         console.error('setAppLaunchLockEnabled failed', error);
       }
     },
-    [enabled],
+    [enabled, onBeforeToggle],
   );
 
   useImperativeHandle(ref, () => ({ toggle }), [toggle]);
