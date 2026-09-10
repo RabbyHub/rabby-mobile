@@ -62,6 +62,28 @@ const resolveReactNativeArchitecture = (environment = process.env) => {
   return architectureEnabled ? 'new' : 'legacy';
 };
 
+const resolveGradleReactNativeArchitecture = ({
+  environment = process.env,
+  projectProperty,
+} = {}) => {
+  const architecture = resolveReactNativeArchitecture(environment);
+  const projectPropertyEnabled = parseArchitectureFlag(
+    'newArchEnabled',
+    projectProperty,
+  );
+
+  if (
+    projectPropertyEnabled !== undefined &&
+    projectPropertyEnabled !== (architecture === 'new')
+  ) {
+    throw new Error(
+      `[react-native-architecture] newArchEnabled=${projectPropertyEnabled} does not match the architecture selected for JavaScript tooling (${architecture}). Use RCT_NEW_ARCH_ENABLED or ORG_GRADLE_PROJECT_newArchEnabled consistently; a Gradle project property cannot select the architecture by itself.`,
+    );
+  }
+
+  return architecture;
+};
+
 const resolveStartupProfilerWorkerDeferral = (environment = process.env) =>
   parseArchitectureFlag(
     'RABBY_STARTUP_PROFILER_DEFER_WORKER',
@@ -69,10 +91,27 @@ const resolveStartupProfilerWorkerDeferral = (environment = process.env) =>
   ) ?? false;
 
 if (require.main === module) {
-  process.stdout.write(`${resolveReactNativeArchitecture()}\n`);
+  try {
+    const args = process.argv.slice(2);
+    if (
+      args.length !== 0 &&
+      (args.length !== 2 || args[0] !== '--gradle-project-new-arch')
+    ) {
+      throw new Error(
+        '[react-native-architecture] expected --gradle-project-new-arch <value>',
+      );
+    }
+    process.stdout.write(
+      `${resolveGradleReactNativeArchitecture({ projectProperty: args[1] })}\n`,
+    );
+  } catch (error) {
+    process.stderr.write(`${error instanceof Error ? error.message : error}\n`);
+    process.exitCode = 1;
+  }
 }
 
 module.exports = {
+  resolveGradleReactNativeArchitecture,
   resolveReactNativeArchitecture,
   resolveStartupProfilerWorkerDeferral,
   isLegacyReactNativeArchitecture: environment =>

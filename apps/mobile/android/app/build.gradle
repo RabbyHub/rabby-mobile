@@ -1,54 +1,16 @@
-def parseReactNativeArchitectureFlag(String name, Object value) {
-    if (value == null || value.toString().isEmpty()) {
-        return null
-    }
-
-    def normalizedValue = value.toString().toLowerCase()
-    if (["1", "true", "yes", "on"].contains(normalizedValue)) {
-        return true
-    }
-    if (["0", "false", "no", "off"].contains(normalizedValue)) {
-        return false
-    }
-
-    throw new GradleException("[react-native-architecture] ${name} must be one of true/false or 1/0. Received: ${value}")
-}
-
-def architectureCandidates = [
-    RCT_NEW_ARCH_ENABLED: parseReactNativeArchitectureFlag(
-        "RCT_NEW_ARCH_ENABLED",
-        System.getenv("RCT_NEW_ARCH_ENABLED"),
-    ),
-    ORG_GRADLE_PROJECT_newArchEnabled: parseReactNativeArchitectureFlag(
-        "ORG_GRADLE_PROJECT_newArchEnabled",
-        System.getenv("ORG_GRADLE_PROJECT_newArchEnabled"),
-    ),
-    newArchEnabled: parseReactNativeArchitectureFlag(
-        "newArchEnabled",
-        gradle.startParameter.projectProperties.get("newArchEnabled"),
-    ),
-].findAll { entry -> entry.value != null }
-
-def requestedNewArchitecture = architectureCandidates.isEmpty()
-    ? parseReactNativeArchitectureFlag(
-        "newArchEnabled",
-        rootProject.findProperty("newArchEnabled"),
-    ) ?: false
-    : architectureCandidates.values().iterator().next()
-def architectureMismatch = architectureCandidates.find {
-    entry -> entry.value != requestedNewArchitecture
-}
-
-if (architectureMismatch != null) {
+if (!gradle.extensions.extraProperties.has("rabbyReactNativeArchitecture")) {
     throw new GradleException(
-        "[react-native-architecture] ${architectureCandidates.collect { entry -> "${entry.key}=${entry.value}" }.join(", ")} resolve to different architectures. Use one consistent value for this build.",
+        "[react-native-architecture] settings.gradle did not resolve the architecture before project configuration.",
     )
 }
+def resolvedReactNativeArchitecture = gradle.extensions.extraProperties.get(
+    "rabbyReactNativeArchitecture",
+).toString()
+def requestedNewArchitecture = resolvedReactNativeArchitecture == "new"
 
-// React Native's JavaScript tooling accepts RCT_NEW_ARCH_ENABLED, while the
-// Android Gradle plugin reads the newArchEnabled project property. Normalize
-// the resolved value before applying the plugin so native sources and Metro
-// always select the same architecture.
+// settings.gradle resolves and validates the architecture before autolinking.
+// Mirror that value into the Android Gradle property before applying the React
+// plugin so native source selection uses the same dependency graph as Metro.
 def normalizedNewArchitecture = requestedNewArchitecture.toString()
 rootProject.extensions.extraProperties.set("newArchEnabled", normalizedNewArchitecture)
 project.extensions.extraProperties.set("newArchEnabled", normalizedNewArchitecture)
