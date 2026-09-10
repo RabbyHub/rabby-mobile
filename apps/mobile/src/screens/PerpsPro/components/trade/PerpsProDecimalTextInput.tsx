@@ -24,6 +24,7 @@ type PerpsProDecimalTextInputProps = Omit<
   | 'selection'
   | 'value'
 > & {
+  getKeyboardMinimum?: () => string | null;
   keyboardMinimum?: string | null;
   keyboardScrollTrade?: boolean;
   focusCursorAtEnd?: boolean;
@@ -46,6 +47,7 @@ export const PerpsProDecimalTextInput = React.memo(
     (
       {
         canonicalizeValueOnBlur,
+        getKeyboardMinimum,
         keyboardMinimum = null,
         keyboardScrollTrade = false,
         focusCursorAtEnd = false,
@@ -72,6 +74,7 @@ export const PerpsProDecimalTextInput = React.memo(
         onBlur: onKeyboardBlur,
         inputAccessoryViewID,
       } = usePerpsProKeyboardInput(inputRef, {
+        getMinimum: getKeyboardMinimum,
         minimum: keyboardMinimum,
         scrollTrade: keyboardScrollTrade,
       });

@@ -4,6 +4,52 @@ import {
 } from './perpsProKeyboardSession';
 
 describe('Pro keyboard focus ownership', () => {
+  it('adopts an input focused before activation with its latest minimum', () => {
+    const session = createPerpsProKeyboardSession();
+    const listener = jest.fn();
+    session.subscribe(listener);
+    const input = {
+      blur: jest.fn(),
+      isFocused: () => true,
+      measureInWindow: jest.fn(),
+    };
+    session.focus({ id: 'amount', input, minimum: null, scrollTrade: true });
+    session.updateMinimum('amount', '15.35 USDC');
+    expect(session.getSnapshot()).toBeNull();
+    expect(listener).not.toHaveBeenCalled();
+    session.setEnabled(true);
+    expect(session.getSnapshot()).toMatchObject({
+      id: 'amount',
+      minimum: '15.35 USDC',
+    });
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['blur', 'disable', 'nativeBlur'] as const)(
+    'does not restore a pending input after %s',
+    action => {
+      const session = createPerpsProKeyboardSession();
+      const input = {
+        blur: jest.fn(),
+        isFocused: () => action !== 'nativeBlur',
+        measureInWindow: jest.fn(),
+      };
+      session.focus({
+        id: 'amount',
+        input,
+        minimum: '10 USDC',
+        scrollTrade: true,
+      });
+      if (action === 'blur') session.blur('amount');
+      if (action === 'disable') session.setEnabled(false);
+      session.setEnabled(true);
+      expect(session.getSnapshot()).toBeNull();
+      if (action === 'disable') {
+        expect(input.blur).toHaveBeenCalledTimes(1);
+      }
+    },
+  );
+
   it('ignores a late blur and hint update from the previous input', () => {
     const session = createPerpsProKeyboardSession();
     const input = {

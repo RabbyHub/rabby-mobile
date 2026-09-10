@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import {
   AppState,
+  InputAccessoryView,
   Keyboard,
   Platform,
   StatusBar,
@@ -112,6 +113,7 @@ describe('PerpsProKeyboardAccessory', () => {
     removeKeyboardListener.mockClear();
     removeAppStateListener.mockClear();
     jest.spyOn(Keyboard, 'dismiss').mockImplementation(jest.fn());
+    jest.spyOn(Keyboard, 'metrics').mockReturnValue(undefined);
     jest
       .spyOn(Keyboard, 'addListener')
       .mockImplementation((event, listener) => {
@@ -213,20 +215,68 @@ describe('PerpsProKeyboardAccessory', () => {
     const view = render(<PerpsProKeyboardAccessory />, {
       wrapper: BottomSheetModalProvider,
     });
+    const host = screen.UNSAFE_getByType(InputAccessoryView);
     focus(null);
     expect(screen.queryByTestId('perps-pro-keyboard-minimum')).toBeNull();
     act(() => appStateListener('background'));
     expect(perpsProKeyboardSession.getSnapshot()).toBeNull();
-    expect(screen.queryByTestId('perps-pro-keyboard-accessory')).toBeNull();
+    expect(screen.UNSAFE_getByType(InputAccessoryView)).toBe(host);
     act(() => appStateListener('active'));
     focus();
     mockRouteFocused = false;
     view.rerender(<PerpsProKeyboardAccessory />);
     expect(perpsProKeyboardSession.getSnapshot()).toBeNull();
-    expect(screen.queryByTestId('perps-pro-keyboard-accessory')).toBeNull();
+    expect(screen.UNSAFE_getByType(InputAccessoryView)).toBe(host);
+    expect(screen.queryByTestId('perps-pro-keyboard-minimum')).toBeNull();
     view.unmount();
     expect(removeAppStateListener).toHaveBeenCalledTimes(1);
     expect(removeKeyboardListener).toHaveBeenCalledTimes(6);
+  });
+
+  it('dismisses the keyboard even when the iOS accessory has no local focus owner', () => {
+    render(<PerpsProKeyboardAccessory />, {
+      wrapper: BottomSheetModalProvider,
+    });
+    expect(perpsProKeyboardSession.getSnapshot()).toBeNull();
+    fireEvent.press(screen.getByTestId('perps-pro-keyboard-done'));
+    expect(Keyboard.dismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the same iOS native host when the screen first becomes active', () => {
+    mockRouteFocused = false;
+    const view = render(<PerpsProKeyboardAccessory />, {
+      wrapper: BottomSheetModalProvider,
+    });
+    const host = screen.UNSAFE_getByType(InputAccessoryView);
+    focus();
+    expect(perpsProKeyboardSession.getSnapshot()).toBeNull();
+    mockRouteFocused = true;
+    view.rerender(<PerpsProKeyboardAccessory />);
+    expect(screen.UNSAFE_getByType(InputAccessoryView)).toBe(host);
+    expect(screen.getByText('Min 15.35 USDC')).toBeTruthy();
+  });
+
+  it('uses the current Android keyboard frame when show preceded subscription', () => {
+    Platform.OS = 'android';
+    jest.mocked(Keyboard.metrics).mockReturnValue({
+      screenX: 0,
+      screenY: 560,
+      width: 393,
+      height: 300,
+    });
+    // Native focus and keyboard visibility precede the accessory owner mounting.
+    focus();
+    render(<PerpsProKeyboardAccessory />, {
+      wrapper: BottomSheetModalProvider,
+    });
+    measureOverlay(-24);
+    expect(screen.getByText('Min 15.35 USDC')).toBeTruthy();
+    expect(screen.getByTestId('perps-pro-keyboard-position')).toHaveStyle({
+      top: 512,
+    });
+    fireEvent.press(screen.getByTestId('perps-pro-keyboard-done'));
+    expect(Keyboard.dismiss).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('perps-pro-keyboard-overlay')).toBeNull();
   });
 
   it('shows the Android overlay only for a registered input with an open keyboard', () => {

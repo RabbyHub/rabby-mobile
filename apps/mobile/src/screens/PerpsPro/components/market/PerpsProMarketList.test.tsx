@@ -361,16 +361,16 @@ describe('PerpsProMarketList', () => {
     ).toEqual(expect.objectContaining({ height: 126, width: 163 }));
     expect(
       screen.getByTestId('perps-pro-market-search-empty').props.style,
-    ).toEqual(expect.objectContaining({ paddingTop: 64 }));
+    ).toEqual(expect.objectContaining({ paddingTop: 128 }));
     expect(
       screen.getByText('page.perps.pro.marketSelector.empty').props.style,
     ).toEqual(
       expect.objectContaining({
         color: 'neutral-info',
         fontFamily: 'SF Pro Rounded',
-        fontSize: 14,
+        fontSize: 16,
         fontWeight: '400',
-        lineHeight: 18,
+        lineHeight: 20,
         marginTop: 12,
       }),
     );
