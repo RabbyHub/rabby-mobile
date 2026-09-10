@@ -1,9 +1,6 @@
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import {
-  isSameTypeTokenPair,
-  WrapTokenAddressMap,
-} from '@rabby-wallet/rabby-swap';
+import { WrapTokenAddressMap } from '@rabby-wallet/rabby-swap';
 import BigNumber from 'bignumber.js';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 import {
@@ -57,7 +54,7 @@ import {
 import { useSwapService } from '../swapServiceDependencies';
 import { mergeSwapQuoteBatch } from './quoteResultBatch';
 import { useSceneActiveAsync } from '@/screens/SwapBridge/hooks/useSceneActiveAsync';
-import { getRabbyFeeRate, type SwapFeeRate } from './fee';
+import { getRabbyFeeInfo, type SwapFeeRate } from './fee';
 
 export const enableInsufficientQuote = true;
 
@@ -894,11 +891,6 @@ export const useTokenPair = ({
     return false;
   }, [payToken, receiveToken]);
 
-  const isFreeTokenPair = useMemo(
-    () => isSameTypeTokenPair(payToken, receiveToken),
-    [payToken, receiveToken],
-  );
-
   const autoSlippageValue = getSwapAutoSlippageValue(isStableCoin);
 
   const [isWrapToken, wrapTokenSymbol] = useMemo(() => {
@@ -914,15 +906,16 @@ export const useTokenPair = ({
     return [false, ''];
   }, [payToken, receiveToken, chain]);
 
-  const feeRate = useMemo<FeeProps['fee']>(
+  const { feeRate, feeTier } = useMemo(
     () =>
-      getRabbyFeeRate({
+      getRabbyFeeInfo({
         payAmount,
         payTokenPrice: payToken?.price || 0,
-        isFreeTokenPair,
+        payToken,
+        receiveToken,
         isWrapToken,
       }),
-    [isFreeTokenPair, isWrapToken, payAmount, payToken?.price],
+    [isWrapToken, payAmount, payToken, receiveToken],
   );
 
   const inSufficient = useMemo(
@@ -1533,6 +1526,7 @@ export const useTokenPair = ({
     slippage,
     setSlippage,
     feeRate,
+    feeTier,
     isSlippageHigh,
     isSlippageLow,
 

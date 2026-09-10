@@ -221,7 +221,7 @@ describe('PerpsSimpleScreen', () => {
     expect(screen.getByTestId('simple-popup-group')).toBeOnTheScreen();
   });
 
-  it('lets the dark Header and content share the container background image', () => {
+  it('keeps the dark page on a plain bg1 with no background image', () => {
     mockIsLight = false;
 
     const screen = render(
@@ -233,10 +233,10 @@ describe('PerpsSimpleScreen', () => {
     ).toBe('true:bg1');
     expect(
       screen.getByTestId('screen-container').props.bgImageSource,
-    ).toBeTruthy();
+    ).toBeUndefined();
     expect(
       screen.getByTestId('screen-container').props.bgImageHeight,
-    ).toBeGreaterThan(0);
+    ).toBeUndefined();
   });
 
   it('forwards the restricted alert layout without adding page state', () => {

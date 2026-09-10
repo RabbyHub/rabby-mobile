@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { Keyboard } from 'react-native';
+import { Keyboard, StyleSheet } from 'react-native';
 
 const mockTriggerImpact = jest.fn();
 
@@ -40,6 +40,49 @@ describe('PerpsProTradeAmountSlider haptics', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
+
+  it.each([0, 1, 25, 50, 75, 99, 100])(
+    'centers the percentage over the thumb at %s percent for narrow and wide tracks',
+    value => {
+      render(<PerpsProTradeAmountSlider onChange={jest.fn()} value={value} />);
+      const slider = screen.getByTestId('amount-slider-input');
+      act(() => slider.props.onSlidingStart(value));
+
+      const tooltip = screen.getByTestId(
+        'perps-pro-trade-amount-slider-tooltip',
+      );
+      const tooltipStyle = StyleSheet.flatten(tooltip.props.style);
+      const tooltipTrack = StyleSheet.flatten(
+        tooltip.parent?.parent?.props.style,
+      );
+      const sliderStyle = StyleSheet.flatten(slider.props.style);
+      const thumbStyle = StyleSheet.flatten(slider.props.thumbStyle);
+      expect(tooltip).toHaveTextContent(`${value}%`);
+      expect(tooltipStyle.width).toBe(36);
+
+      for (const width of [165, 193, 211, 248]) {
+        const thumbCenter =
+          sliderStyle.marginHorizontal +
+          thumbStyle.width / 2 +
+          ((width - 2 * sliderStyle.marginHorizontal - thumbStyle.width) *
+            value) /
+            100;
+        const tooltipCenter =
+          tooltipTrack.left +
+          ((width - tooltipTrack.left - tooltipTrack.right) *
+            parseFloat(tooltipStyle.left)) /
+            100 +
+          tooltipStyle.transform[0].translateX +
+          tooltipStyle.width / 2;
+        expect(tooltipCenter).toBeCloseTo(thumbCenter, 8);
+      }
+
+      act(() => slider.props.onSlidingComplete());
+      expect(
+        screen.queryByTestId('perps-pro-trade-amount-slider-tooltip'),
+      ).toBeNull();
+    },
+  );
 
   it('triggers feedback when dragging to the next discrete unit', () => {
     const onChange = jest.fn();

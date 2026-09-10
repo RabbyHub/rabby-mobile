@@ -4,6 +4,7 @@ import {
   useLayoutEffect,
   useMemo,
   useState,
+  useSyncExternalStore,
 } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import {
@@ -17,6 +18,7 @@ import { getPerpsRuntimeIdentity } from '@/hooks/perps/runtime/perpsRuntimeState
 import {
   isPerpsUserAbstractionReadyForAccount,
   perpsStore,
+  type PerpsState,
   usePerpsStore,
 } from '@/hooks/perps/usePerpsStore';
 import { getPerpsPendingFundingCount } from '@/hooks/perps/funding/fundingJournal';
@@ -124,22 +126,36 @@ export const usePerpsProInfoPanel = (
     requestedInfoTab === 'account';
   const priceDependencyKeys = useMemo(
     () =>
-      accountPagePrepared
-        ? getSpotPriceDependencyKeys(
-            facts.spotState.rawBalances
-              .filter(balance => Number(balance.total) !== 0)
-              .map(balance => balance.coin),
-            facts.spotMeta,
-          )
-        : [],
-    [accountPagePrepared, facts.spotMeta, facts.spotState.rawBalances],
-  );
-  const spotPriceValues = perpsStore(
-    useShallow(state =>
-      priceDependencyKeys.map(
-        key => `${key}\u0000${state.spotAssetCtxs[key]?.markPx ?? ''}`,
+      getSpotPriceDependencyKeys(
+        facts.spotState.rawBalances
+          .filter(balance => Number(balance.total) !== 0)
+          .map(balance => balance.coin),
+        facts.spotMeta,
       ),
+    [facts.spotMeta, facts.spotState.rawBalances],
+  );
+  const selectSpotPriceValues = useShallow((state: PerpsState) =>
+    priceDependencyKeys.map(
+      key => `${key}\u0000${state.spotAssetCtxs[key]?.markPx ?? ''}`,
     ),
+  );
+  // The retained Account page can be revealed before a swipe commits its tab.
+  // Pause price notifications, never erase the inputs to its portfolio value.
+  const subscribeSpotPrices = useCallback(
+    (listener: () => void) =>
+      accountPagePrepared ? perpsStore.subscribe(listener) : () => {},
+    [accountPagePrepared],
+  );
+  const getSpotPriceSnapshot = useCallback(
+    () => selectSpotPriceValues(perpsStore.getState()),
+    [selectSpotPriceValues],
+  );
+  // Read the current source on every render, including unrelated updates while
+  // paused and the first reactivation render, without an effect-time catch-up.
+  const spotPriceValues = useSyncExternalStore(
+    subscribeSpotPrices,
+    getSpotPriceSnapshot,
+    getSpotPriceSnapshot,
   );
   const spotAssetCtxs = useMemo(
     () =>

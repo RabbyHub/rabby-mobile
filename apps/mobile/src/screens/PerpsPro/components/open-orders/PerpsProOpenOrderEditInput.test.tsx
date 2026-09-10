@@ -4,6 +4,8 @@ import { StyleSheet } from 'react-native';
 
 import { PerpsProOpenOrderEditInput } from './PerpsProOpenOrderEditInput';
 
+jest.mock('@/core/native/utils', () => ({ IS_ANDROID: true }));
+
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
   TextInput: require('react-native').TextInput,
@@ -25,10 +27,37 @@ jest.mock('@gorhom/bottom-sheet', () => ({
 }));
 
 jest.mock('../trade/PerpsProDecimalTextInput', () => ({
-  PerpsProDecimalTextInput: () => null,
+  PerpsProDecimalTextInput: require('react-native').TextInput,
 }));
 
 describe('PerpsProOpenOrderEditInput', () => {
+  it('keeps the same Android font metrics before and after typing', () => {
+    const tree = (value: string) => (
+      <PerpsProOpenOrderEditInput
+        accessibilityLabel="Limit price"
+        currentValue="$100"
+        label="Limit Price"
+        maxDecimals={2}
+        onChangeText={jest.fn()}
+        value={value}
+      />
+    );
+    const view = render(tree(''));
+    const focusedStyle = StyleSheet.flatten(
+      screen.getByLabelText('Limit price').props.style,
+    );
+    view.rerender(tree('1'));
+    expect(
+      StyleSheet.flatten(screen.getByLabelText('Limit price').props.style),
+    ).toEqual(focusedStyle);
+    expect(focusedStyle).toMatchObject({
+      fontSize: 14,
+      height: 40,
+      includeFontPadding: false,
+      textAlignVertical: 'center',
+    });
+    expect(focusedStyle.lineHeight).toBeUndefined();
+  });
   it('keeps the emphasized nested label on the rounded medium face', () => {
     render(
       <PerpsProOpenOrderEditInput

@@ -392,7 +392,7 @@ export const TokenMarketInfoScreen = () => {
           },
           {
             x: 120,
-            width: 120,
+            width: 160,
           },
         ]}
         initPaddingLeft={styles.tabsBarContainer?.paddingLeft ?? 0}

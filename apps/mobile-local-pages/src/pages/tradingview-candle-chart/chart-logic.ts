@@ -312,6 +312,25 @@ export function resetPerpsProPriceScale(
   return true;
 }
 
+type SimplePriceScaleResetTarget = {
+  priceScale: () => {
+    setAutoScale: (autoScale: boolean) => void;
+  };
+};
+
+// Simple (non-Pro) charts replace the whole candle set on every interval or
+// market switch. A price scale the user zoomed by hand stays in manual mode
+// across setData, so restore autoscale or the old range sticks to new candles.
+export function resetSimplePriceScale(
+  series: SimplePriceScaleResetTarget | null,
+): boolean {
+  if (!series) {
+    return false;
+  }
+  series.priceScale().setAutoScale(true);
+  return true;
+}
+
 export function clampPerpsProCrosshairCoordinate(
   coordinate: number,
   chartHeight: number,

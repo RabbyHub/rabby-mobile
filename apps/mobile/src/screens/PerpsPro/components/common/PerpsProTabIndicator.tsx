@@ -11,6 +11,13 @@ export type PerpsProTabIndicatorLayout = Readonly<{
   x: number;
 }>;
 
+export type PerpsProTabIndicatorGeometryMode = 'layout' | 'transform';
+
+export type PerpsProTabIndicatorTransform = Readonly<{
+  scaleX: number;
+  translateX: number;
+}>;
+
 export const getPerpsProTabIndicatorFrame = (
   rawPosition: number,
   layouts: readonly PerpsProTabIndicatorLayout[],
@@ -45,27 +52,79 @@ export const snapPerpsProTabIndicator = (
   position.value = target;
 };
 
+export const getPerpsProTabIndicatorTransform = (
+  frame: PerpsProTabIndicatorLayout,
+  rawBaseWidth: number,
+): PerpsProTabIndicatorTransform => {
+  'worklet';
+  const baseWidth =
+    Number.isFinite(rawBaseWidth) && rawBaseWidth > 0 ? rawBaseWidth : 1;
+  // React Native scales around the view center. Moving the scaled center to
+  // the measured frame center preserves the exact [x, x + width] bounds.
+  return {
+    scaleX: frame.width / baseWidth,
+    translateX: frame.x + (frame.width - baseWidth) / 2,
+  };
+};
+
 export const PerpsProTabIndicator: React.FC<{
+  geometryMode?: PerpsProTabIndicatorGeometryMode;
   layouts: readonly PerpsProTabIndicatorLayout[];
   position: SharedValue<number>;
   style?: StyleProp<ViewStyle>;
   testID?: string;
-}> = ({ layouts, position, style, testID }) => {
+}> = ({ geometryMode = 'layout', layouts, position, style, testID }) => {
+  const useTransformGeometry = geometryMode === 'transform';
+  const firstLayoutWidth = layouts[0]?.width;
+  // This width participates in layout only when measured frames change. The
+  // high-frequency pager path changes the single transform prop below.
+  const baseWidth =
+    typeof firstLayoutWidth === 'number' &&
+    Number.isFinite(firstLayoutWidth) &&
+    firstLayoutWidth > 0
+      ? firstLayoutWidth
+      : 1;
+  const baseGeometryStyle = React.useMemo<ViewStyle | undefined>(
+    () =>
+      useTransformGeometry
+        ? {
+            left: 0,
+            width: baseWidth,
+          }
+        : undefined,
+    [baseWidth, useTransformGeometry],
+  );
   const animatedStyle = useAnimatedStyle(() => {
     const frame = getPerpsProTabIndicatorFrame(position.value, layouts);
+    if (useTransformGeometry) {
+      if (layouts.length === 0) {
+        return {
+          opacity: 0,
+          transform: [{ translateX: 0 }, { scaleX: 1 }],
+        };
+      }
+      const transform = getPerpsProTabIndicatorTransform(frame, baseWidth);
+      return {
+        opacity: layouts.length > 0 ? 1 : 0,
+        transform: [
+          { translateX: transform.translateX },
+          { scaleX: transform.scaleX },
+        ],
+      };
+    }
     return {
       left: frame.x,
       opacity: layouts.length > 0 ? 1 : 0,
       width: frame.width,
     };
-  }, [layouts, position]);
+  }, [baseWidth, layouts, position, useTransformGeometry]);
 
   return (
     <Animated.View
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       pointerEvents="none"
-      style={[styles.indicator, animatedStyle, style]}
+      style={[styles.indicator, baseGeometryStyle, animatedStyle, style]}
       testID={testID}
     />
   );

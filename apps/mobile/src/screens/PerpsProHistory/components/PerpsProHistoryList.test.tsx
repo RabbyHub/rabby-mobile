@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import fs from 'fs';
 import path from 'path';
 import React from 'react';
@@ -18,6 +18,16 @@ jest.mock('@/assets2024/icons/perps/PerpsProHistoryEmpty.svg', () => {
     ReactModule.createElement(SvgView, {
       ...props,
       testUri: 'assets2024/icons/perps/PerpsProHistoryEmpty.svg',
+    });
+});
+
+jest.mock('@/assets2024/icons/perps/PerpsProHistoryEmptyDark.svg', () => {
+  const ReactModule = require('react');
+  const { View: SvgView } = require('react-native');
+  return (props: object) =>
+    ReactModule.createElement(SvgView, {
+      ...props,
+      testUri: 'assets2024/icons/perps/PerpsProHistoryEmptyDark.svg',
     });
 });
 
@@ -194,7 +204,7 @@ describe('PerpsProHistoryList', () => {
     );
     expect(
       screen.getByTestId('perps-pro-history-empty-illustration').props.testUri,
-    ).toEqual(lightIllustration.props.testUri);
+    ).toEqual('assets2024/icons/perps/PerpsProHistoryEmptyDark.svg');
   });
 
   it('keeps the empty-state SVG transparent and React Native compatible', () => {
@@ -394,9 +404,15 @@ describe('PerpsProHistoryList', () => {
     expect(refreshControl.props.tintColor).toBeUndefined();
   });
 
-  it('uses the Bottom Sheet refresh contract without remounting inactive lists', () => {
+  it('uses the Bottom Sheet refresh contract without remounting inactive lists', async () => {
     const onLoadEarlier = jest.fn();
-    const onRefresh = jest.fn();
+    let resolveRefresh: (() => void) | undefined;
+    const onRefresh = jest.fn(
+      () =>
+        new Promise<void>(resolve => {
+          resolveRefresh = resolve;
+        }),
+    );
     const onRetry = jest.fn();
     const view = render(
       <PerpsProHistoryList
@@ -421,8 +437,16 @@ describe('PerpsProHistoryList', () => {
       testID: 'perps-pro-history-list-trade',
     });
     expect(activeProps.refreshControl).toBeUndefined();
-    activeProps.onRefresh();
+    act(() => {
+      activeProps.onRefresh();
+    });
     expect(onRefresh).toHaveBeenCalledTimes(1);
+    const refreshingProps =
+      mockBottomSheetFlatListProps.mock.calls[
+        mockBottomSheetFlatListProps.mock.calls.length - 1
+      ][0];
+    expect(refreshingProps.refreshing).toBe(true);
+    expect(refreshingProps.onRefresh).toBe(activeProps.onRefresh);
 
     view.rerender(
       <PerpsProHistoryList
@@ -449,5 +473,61 @@ describe('PerpsProHistoryList', () => {
     expect(inactiveProps.onRefresh).toBe(activeProps.onRefresh);
     inactiveProps.onRefresh();
     expect(onRefresh).toHaveBeenCalledTimes(1);
+    await act(async () => resolveRefresh?.());
+  });
+
+  it('does not hand the native spinner back to delayed controller state', async () => {
+    let resolveRefresh: (() => void) | undefined;
+    const onRefresh = jest.fn(
+      () =>
+        new Promise<void>(resolve => {
+          resolveRefresh = resolve;
+        }),
+    );
+    const view = render(
+      <PerpsProHistoryList
+        amountUnit="base"
+        onLoadEarlier={jest.fn()}
+        onRefresh={onRefresh}
+        onRetry={jest.fn()}
+        scrollHost="bottomSheet"
+        state={makeState()}
+        tab="trade"
+      />,
+    );
+
+    const initialProps = mockBottomSheetFlatListProps.mock.calls[0][0];
+    act(() => {
+      initialProps.onRefresh();
+    });
+    expect(
+      mockBottomSheetFlatListProps.mock.calls[
+        mockBottomSheetFlatListProps.mock.calls.length - 1
+      ][0].refreshing,
+    ).toBe(true);
+
+    view.rerender(
+      <PerpsProHistoryList
+        amountUnit="base"
+        onLoadEarlier={jest.fn()}
+        onRefresh={onRefresh}
+        onRetry={jest.fn()}
+        scrollHost="bottomSheet"
+        state={makeState({ refreshing: true })}
+        tab="trade"
+      />,
+    );
+    expect(
+      mockBottomSheetFlatListProps.mock.calls[
+        mockBottomSheetFlatListProps.mock.calls.length - 1
+      ][0].refreshing,
+    ).toBe(true);
+
+    await act(async () => resolveRefresh?.());
+    expect(
+      mockBottomSheetFlatListProps.mock.calls[
+        mockBottomSheetFlatListProps.mock.calls.length - 1
+      ][0].refreshing,
+    ).toBe(false);
   });
 });

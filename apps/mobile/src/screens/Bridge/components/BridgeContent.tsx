@@ -35,6 +35,7 @@ import BridgeSwitchBtn from './BridgeSwitchBtn';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import BridgeShowMore, { RecommendFromToken } from './BridgeShowMore';
 import { tokenPriceImpact, useBridge } from '../hooks/token';
+import { SWAP_FEE_RATE } from '@/screens/Swap/hooks/fee';
 import { Button } from '@/components2024/Button';
 import { SignRiskWarning } from '@/components/SignRiskWarning';
 
@@ -387,6 +388,7 @@ export const BridgeContent = ({
     amount,
     handleAmountChange,
     feeRate,
+    feeTier,
 
     recommendFromToken,
     fillRecommendFromToken,
@@ -1531,9 +1533,27 @@ export const BridgeContent = ({
 
   const switchFeePopup = useSetSettingVisible();
 
+  useEffect(() => {
+    const clearFeePopups = () => {
+      switchFeePopup(prev =>
+        prev.visible || prev.compareVisible || prev.feeTier
+          ? { visible: false, compareVisible: false }
+          : prev,
+      );
+    };
+    if (!sceneActive) {
+      clearFeePopups();
+    }
+    return clearFeePopups;
+  }, [sceneActive, switchFeePopup]);
+
   const openFeePopup = useCallback(() => {
-    switchFeePopup(true);
-  }, [switchFeePopup]);
+    switchFeePopup({
+      visible: feeTier !== 'default',
+      compareVisible: feeTier === 'default',
+      feeTier,
+    });
+  }, [switchFeePopup, feeTier]);
 
   const { switchAccountOnSelectedToken } =
     useSwitchSceneAccountOnSelectedTokenWithOwner('MakeTransactionAbout');
@@ -1799,8 +1819,8 @@ export const BridgeContent = ({
                 setAutoSlippage={setAutoSlippage}
                 setIsCustomSlippage={setIsCustomSlippage}
                 type="bridge"
-                isRabbyFeeFree={feeRate === '0'}
-                isRabbyFeeHalf={feeRate === '0.12'}
+                isRabbyFeeFree={feeRate === SWAP_FEE_RATE.FREE}
+                isRabbyFeeHalf={feeRate === SWAP_FEE_RATE.HALF}
                 isBestQuote={
                   !!bestQuoteId &&
                   !!selectedBridgeQuote &&

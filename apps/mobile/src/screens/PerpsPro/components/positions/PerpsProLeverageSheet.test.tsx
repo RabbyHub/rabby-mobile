@@ -1,6 +1,12 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { Keyboard, StyleSheet } from 'react-native';
+import { perpsProKeyboardSession } from '../common/perpsProKeyboardSession';
+
+jest.mock('@/core/native/utils', () => ({ IS_ANDROID: true }));
+jest.mock('react-native-reanimated', () => ({
+  useAnimatedReaction: jest.fn(),
+}));
 
 const mockSliderHapticComplete = jest.fn();
 const mockSliderHapticStart = jest.fn();
@@ -83,6 +89,13 @@ jest.mock('@/utils/styles', () => ({
 jest.mock('@gorhom/bottom-sheet', () => {
   const ReactModule = require('react');
   return {
+    ANIMATION_STATUS: { STOPPED: 2 },
+    SCROLLABLE_STATUS: { UNLOCKED: 1 },
+    useBottomSheetInternal: () => ({
+      animatedAnimationState: { value: { status: 2 } },
+      animatedScrollableStatus: { value: 1 },
+    }),
+    BottomSheetScrollView: require('react-native').ScrollView,
     BottomSheetTextInput: ReactModule.forwardRef(
       (props: object, ref: React.Ref<unknown>) => {
         ReactModule.useImperativeHandle(ref, () => ({
@@ -140,6 +153,44 @@ import { PerpsProLeverageSheet } from './PerpsProLeverageSheet';
 describe('PerpsProLeverageSheet', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('reserves Done space without remounting the focused leverage draft', () => {
+    const show = jest.fn();
+    const listener = jest
+      .spyOn(Keyboard, 'addListener')
+      .mockImplementation((event, callback) => {
+        if (event === 'keyboardDidShow') {
+          show.mockImplementation(callback);
+        }
+        return { remove: jest.fn() };
+      });
+    perpsProKeyboardSession.setEnabled(true);
+    const view = render(
+      <PerpsProLeverageSheet
+        currentLeverage={20}
+        maxLeverage={40}
+        onClose={jest.fn()}
+        onConfirm={jest.fn()}
+        pending={false}
+        visible
+      />,
+    );
+    fireEvent(screen.getByTestId('perps-pro-leverage-input'), 'focus');
+    const owner = perpsProKeyboardSession.getSnapshot();
+    fireEvent.changeText(screen.getByTestId('perps-pro-leverage-input'), '12');
+    act(() => show({ endCoordinates: { height: 300, screenY: 500 } }));
+    expect(screen.getByTestId('leverage-sheet').props.snapPoints).toEqual([
+      344,
+    ]);
+    expect(perpsProKeyboardSession.getSnapshot()?.id).toBe(owner?.id);
+    expect(owner?.sheetId).toBeDefined();
+    expect(screen.getByTestId('perps-pro-leverage-input').props.value).toBe(
+      '12',
+    );
+    view.unmount();
+    perpsProKeyboardSession.setEnabled(false);
+    listener.mockRestore();
   });
 
   it('matches the compact Figma contract and confirms the draft value', () => {

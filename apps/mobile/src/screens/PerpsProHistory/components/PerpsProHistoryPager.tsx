@@ -39,7 +39,7 @@ const PerpsProHistoryPagerPage: React.FC<{
   active: boolean;
   amountUnit: PerpsProTradeAmountUnit;
   onLoadEarlier: (tab: PerpsProHistoryTab) => void;
-  onRefresh: (tab: PerpsProHistoryTab) => void;
+  onRefresh: (tab: PerpsProHistoryTab) => void | Promise<void>;
   scrollHost: 'bottomSheet' | 'screen';
   state: PerpsProHistoryControllerState[PerpsProHistoryTab];
   tab: PerpsProHistoryTab;
@@ -82,7 +82,7 @@ export const PerpsProHistoryPager: React.FC<{
   amountUnit: PerpsProTradeAmountUnit;
   onChange: (tab: PerpsProHistoryTab) => void;
   onLoadEarlier: (tab: PerpsProHistoryTab) => void;
-  onRefresh: (tab: PerpsProHistoryTab) => void;
+  onRefresh: (tab: PerpsProHistoryTab) => void | Promise<void>;
   scrollHost?: 'bottomSheet' | 'screen';
   state: PerpsProHistoryControllerState;
 }> = ({

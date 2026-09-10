@@ -29,6 +29,7 @@ import { Text } from '@/components/Typography';
 import {
   BOTTOM_BUTTON_BOTTOM_OFFSET,
   BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
@@ -436,7 +437,7 @@ const getBottomSheetModalFooterButtonStyles = createGetStyles(colors => {
     footerText: {
       color: colors['neutral-title2'],
       fontSize: BOTTOM_BUTTON_TITLE_STYLE.fontSize,
-      lineHeight: BOTTOM_BUTTON_TITLE_STYLE.lineHeight,
+      lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
       fontWeight: BOTTOM_BUTTON_TITLE_STYLE.fontWeight,
     },
     disabledFooterText: {
