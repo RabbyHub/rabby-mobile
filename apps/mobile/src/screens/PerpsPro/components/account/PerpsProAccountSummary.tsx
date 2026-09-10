@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import type { PerpsAccountViewModel } from '../../model/account';
 import { formatPerpsProUsdValue } from '../../utils/format';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
+import { PerpsProAccountValue } from './PerpsProAccountValue';
 
 // Approved Account-only colors, matching Simple Account in both themes.
 const ACCOUNT_ACTION_COLOR = '#23C0B0';
@@ -33,7 +34,9 @@ export const PerpsProAccountSummary: React.FC<PerpsProAccountSummaryProps> =
     return (
       <View style={styles.container} testID="perps-pro-account-summary">
         <View style={styles.summary}>
-          <View style={styles.summaryColumn}>
+          <View
+            style={styles.summaryColumn}
+            testID="perps-pro-account-portfolio-column">
             {hasNonPerpsAssets ? (
               <PerpsProDottedUnderlineText
                 accessibilityLabel={portfolioValueLabel}
@@ -47,26 +50,32 @@ export const PerpsProAccountSummary: React.FC<PerpsProAccountSummaryProps> =
             ) : (
               <Text style={styles.label}>{portfolioValueLabel}</Text>
             )}
-            <Text style={styles.primaryValue}>
-              {formatPerpsProUsdValue(account.primaryValue)}
-            </Text>
+            <PerpsProAccountValue
+              testID="perps-pro-account-portfolio-value"
+              style={styles.primaryValue}
+              value={formatPerpsProUsdValue(account.primaryValue)}
+            />
           </View>
-          <View style={[styles.summaryColumn, styles.pnlColumn]}>
+          <View
+            style={[styles.summaryColumn, styles.pnlColumn]}
+            testID="perps-pro-account-pnl-column">
             <Text style={styles.label}>
               {t('page.perps.pro.account.unrealizedPnl')}
             </Text>
-            <Text
+            <PerpsProAccountValue
+              testID="perps-pro-account-pnl-value"
+              align="right"
               style={
                 pnl > 0
                   ? styles.positiveValue
                   : pnl < 0
                   ? styles.negativeValue
                   : styles.value
-              }>
-              {formatPerpsProUsdValue(account.unrealizedPnl, {
+              }
+              value={formatPerpsProUsdValue(account.unrealizedPnl, {
                 signed: true,
               })}
-            </Text>
+            />
           </View>
         </View>
         <View style={styles.actions}>
