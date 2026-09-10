@@ -1,6 +1,7 @@
 import { BOTTOM_BUTTON_TOP_OFFSET } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
 import { createGetStyles2024 } from '@/utils/styles';
+import { PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE } from '../common/perpsProSingleLineInput';
 
 import {
   getPerpsProBottomSheetChromeStyles,
@@ -111,6 +112,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
       paddingLeft: 8,
       paddingRight: 56,
       paddingTop: 12,
+      ...PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE,
     },
     priceUnit: {
       color: colors2024['neutral-title-1'],
@@ -165,6 +167,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
       paddingRight: 72,
       paddingTop: 12,
       textAlignVertical: 'center',
+      ...PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE,
     },
     amountUnit: {
       color: colors2024['neutral-title-1'],

@@ -252,6 +252,13 @@ describe('PerpsProClosePositionSheet', () => {
     expect(perpsProKeyboardSession.getSnapshot()?.id).toBe(owner?.id);
     expect(owner?.sheetId).toBeDefined();
     expect(screen.getByLabelText('Amount').props.value).toBe('0.5');
+    expect(StyleSheet.flatten(input.props.style)).toMatchObject({
+      height: 40,
+      fontSize: 14,
+      includeFontPadding: false,
+      textAlignVertical: 'center',
+    });
+    expect(StyleSheet.flatten(input.props.style).lineHeight).toBeUndefined();
     view.unmount();
     perpsProKeyboardSession.setEnabled(false);
     listener.mockRestore();

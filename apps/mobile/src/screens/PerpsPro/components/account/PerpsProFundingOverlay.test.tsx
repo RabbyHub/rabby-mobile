@@ -6,9 +6,12 @@ import {
   waitFor,
 } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import { createStore } from 'zustand/vanilla';
 
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+
+jest.mock('@/core/native/utils', () => ({ IS_ANDROID: true }));
 
 const mockHandleDeposit = jest.fn();
 const mockHandleStableCoinOrder = jest.fn();
@@ -108,6 +111,25 @@ const renderOverlay = (
   );
 
 describe('PerpsProFundingOverlay', () => {
+  it.each(['deposit', 'withdraw'] as const)(
+    'uses stable Android font metrics only for the %s amount',
+    mode => {
+      renderOverlay(mode);
+      const props =
+        mode === 'deposit' ? mockDepositPopupProps : mockWithdrawPopupProps;
+      const style = StyleSheet.flatten([
+        { fontSize: 28, lineHeight: 36, minHeight: 52 },
+        props?.inputTextStyle as object,
+      ]);
+      expect(style).toMatchObject({
+        fontSize: 28,
+        minHeight: 52,
+        includeFontPadding: false,
+        textAlignVertical: 'center',
+      });
+      expect(style.lineHeight).toBeUndefined();
+    },
+  );
   beforeEach(() => {
     jest.clearAllMocks();
     mockDepositPopupProps = null;
