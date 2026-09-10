@@ -11,7 +11,10 @@ import { redirectToAddAddressEntry } from '@/utils/navigation';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useCallback } from 'react';
 import { trigger } from 'react-native-haptic-feedback';
-import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+import {
+  ensureWalletUnlockedForAction,
+  isWalletUnlockCancelled,
+} from '@/utils/walletUnlock';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import i18n from '@/utils/i18n';
 import { refreshAppLockAccountFlags } from '@/hooks/useLock';
@@ -96,7 +99,14 @@ export const useDeleteAccountModal = () => {
           ) {
             return;
           }
-          await storeApiAccounts.removeAccount(account);
+          try {
+            await storeApiAccounts.removeAccount(account);
+          } catch (error) {
+            if (isWalletUnlockCancelled(error)) {
+              return;
+            }
+            throw error;
+          }
           void refreshHomeBalanceAfterAccountMutation().catch(error => {
             console.error(
               '[useDeleteAccountModal] failed to refresh Home balance after deleting account',
