@@ -571,6 +571,32 @@ const getLatestMarketListProps = (pageTab: string = 'all') => {
   return call[0];
 };
 
+// Node has no Yoga layout pass. Supply the native measurements explicitly;
+// the production Selector/Tabs still own readiness and geometry publication.
+const measureMarketTabs = (widths: Record<string, number> = {}) => {
+  act(() => {
+    let x = 16;
+    for (const tab of screen.getAllByRole('tab')) {
+      const id = tab.props.testID.replace('perps-pro-market-tab-', '');
+      const width = widths[id] ?? 60;
+      fireEvent(tab, 'layout', {
+        nativeEvent: { layout: { height: 34, width, x, y: 0 } },
+      });
+      x += width + 16;
+    }
+    const extra = screen.queryByTestId('perps-pro-market-tab-extra-measure', {
+      includeHiddenElements: true,
+    });
+    if (extra) {
+      fireEvent(extra, 'layout', {
+        nativeEvent: {
+          layout: { height: 18, width: widths.favorites ?? 70, x: 0, y: 0 },
+        },
+      });
+    }
+  });
+};
+
 describe('PerpsProMarketSelector', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -1139,6 +1165,7 @@ describe('PerpsProMarketSelector', () => {
       'keeps %s highlighted from the first render when Favorites appears or disappears',
       tab => {
         const view = render(renderSelector());
+        measureMarketTabs();
         const index = ['all', 'category-a', 'category-b'].indexOf(tab);
         selectPage(index);
         let previousPosition = getPosition();
@@ -1172,6 +1199,7 @@ describe('PerpsProMarketSelector', () => {
     it('falls back to All immediately when the last favorite is removed on Favorites', () => {
       __setFavoriteMarkets(['BTC']);
       const view = render(renderSelector());
+      measureMarketTabs();
       selectPage(0);
       __setFavoriteMarkets([]);
       mockAnimatedStyles.mockClear();
@@ -1187,6 +1215,7 @@ describe('PerpsProMarketSelector', () => {
       hadFavorites => {
         __setFavoriteMarkets(hadFavorites ? ['BTC'] : []);
         const view = render(renderSelector());
+        measureMarketTabs();
         selectPage(hadFavorites ? 2 : 1);
         const previousPosition = getPosition();
         fireEvent(screen.getByTestId('market-search'), 'focus');
@@ -1233,6 +1262,84 @@ describe('PerpsProMarketSelector', () => {
       selectPage(3);
       expect(getPosition()).toBe(position);
       expect(position.value).toBe(3);
+    });
+
+    it.each([
+      [200, 150, 64],
+      [300, 50, 0],
+    ])(
+      'mounts the first-favorite strip at its final offset with a visible underline (viewport=%s)',
+      (viewport, addedOffset, removedOffset) => {
+        windowWidth = viewport;
+        const view = render(renderSelector());
+        measureMarketTabs({
+          favorites: 70,
+          all: 30,
+          'category-a': 80,
+          'category-b': 90,
+        });
+        selectPage(2);
+        const oldPosition = getPosition();
+        __setFavoriteMarkets(['BTC']);
+        mockAnimatedStyles.mockClear();
+        view.rerender(renderSelector());
+
+        // Assert before ANY layout event from the newly mounted strip. The
+        // previous implementation only reached this position after those events.
+        expect(
+          screen.getByTestId('perps-pro-market-tabs').props.contentOffset,
+        ).toEqual({ x: addedOffset, y: 0 });
+        const firstUnderline = mockAnimatedStyles.mock.calls
+          .map(([style]) => style)
+          .find(style => 'left' in style && 'opacity' in style);
+        expect(firstUnderline).toMatchObject({
+          left: 242.5,
+          width: 93,
+          opacity: 1,
+        });
+        expectFirstHighlight(4, 3);
+        expect(getPosition().value).toBe(3);
+        expect(getPosition()).not.toBe(oldPosition);
+        expect(mockPagerSetPage).not.toHaveBeenCalled();
+        expect(mockPagerSetPageWithoutAnimation).not.toHaveBeenCalled();
+
+        __setFavoriteMarkets([]);
+        view.rerender(renderSelector());
+        expect(
+          screen.getByTestId('perps-pro-market-tabs').props.contentOffset,
+        ).toEqual({ x: removedOffset, y: 0 });
+        expect(
+          StyleSheet.flatten(
+            screen.getByTestId('perps-pro-market-tab-indicator', {
+              includeHiddenElements: true,
+            }).props.style,
+          ),
+        ).toMatchObject({ left: 156.5, width: 93, opacity: 1 });
+      },
+    );
+
+    it('keeps the current tab sequence until the missing favorite measurement arrives', () => {
+      windowWidth = 200;
+      const view = render(renderSelector());
+      selectPage(2);
+      const position = getPosition();
+      __setFavoriteMarkets(['BTC']);
+      view.rerender(renderSelector());
+      expect(screen.queryByTestId('perps-pro-market-tab-favorites')).toBeNull();
+      expect(getPosition()).toBe(position);
+      expect(getLatestMarketListProps('category-b').renderProfile).toBe(
+        'active',
+      );
+      measureMarketTabs({
+        favorites: 70,
+        all: 30,
+        'category-a': 80,
+        'category-b': 90,
+      });
+      expect(
+        screen.getByTestId('perps-pro-market-tabs').props.contentOffset,
+      ).toEqual({ x: 150, y: 0 });
+      expect(getPosition().value).toBe(3);
     });
   });
 

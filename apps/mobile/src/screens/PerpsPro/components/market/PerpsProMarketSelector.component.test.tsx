@@ -476,6 +476,16 @@ describe('PerpsProMarketSelector component', () => {
       selectorRef.current?.present();
     });
     expect(mockPresent).toHaveBeenCalledTimes(1);
+    // Supply the native layout pass before exercising dynamic Favorites.
+    act(() => {
+      screen.getAllByRole('tab').forEach((tab, index) => {
+        fireEvent(tab, 'layout', {
+          nativeEvent: {
+            layout: { height: 34, width: 60, x: 16 + index * 76, y: 0 },
+          },
+        });
+      });
+    });
     expect(getLatestListProps().data).toHaveLength(296);
     expect(
       within(screen.getByTestId('perps-pro-market-page-all')).getAllByLabelText(

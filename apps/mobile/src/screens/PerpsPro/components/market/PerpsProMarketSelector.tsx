@@ -63,7 +63,10 @@ import {
   PerpsProMarketPager,
   type PerpsProMarketPagerHandle,
 } from './PerpsProMarketPager';
-import { PerpsProMarketTabs } from './PerpsProMarketTabs';
+import {
+  PerpsProMarketTabs,
+  usePerpsProMarketTabLayout,
+} from './PerpsProMarketTabs';
 import {
   PerpsProMarketSearchBar,
   type PerpsProMarketSearchBarHandle,
@@ -183,7 +186,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
     },
     ref,
   ) => {
-    const { height, width } = useWindowDimensions();
+    const { fontScale, height, width } = useWindowDimensions();
     const insets = useSafeAreaInsets();
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { currentLanguage } = useAppLanguage();
@@ -265,21 +268,29 @@ const PerpsProMarketSelectorComponent = forwardRef<
       }
       return false;
     }, [favoriteSet, projection.recordsByKey]);
-    const tabs = useMemo(
+    const tabCandidates = useMemo(
       () => [
-        ...(hasVisibleFavorites
-          ? [
-              {
-                id: 'favorites',
-                label: t('page.perps.pro.marketSelector.favorites'),
-              },
-            ]
-          : []),
+        {
+          id: 'favorites',
+          label: t('page.perps.pro.marketSelector.favorites'),
+        },
         { id: 'all', label: t('page.perps.pro.marketSelector.all') },
         ...visibleCategories,
       ],
-      [hasVisibleFavorites, t, visibleCategories],
+      [t, visibleCategories],
     );
+    const requestedTabs = useMemo(
+      () => (hasVisibleFavorites ? tabCandidates : tabCandidates.slice(1)),
+      [hasVisibleFavorites, tabCandidates],
+    );
+    const { tabs, initialLayout, measurementKey, onMeasure } =
+      usePerpsProMarketTabLayout({
+        candidates: tabCandidates,
+        fontScale,
+        language: currentLanguage,
+        tabs: requestedTabs,
+        viewportWidth: width,
+      });
     const validTabIds = useMemo(() => new Set(tabs.map(tab => tab.id)), [tabs]);
     const resolvedActiveTab = validTabIds.has(activeTab) ? activeTab : 'all';
     const resolvedPreviewTab =
@@ -287,9 +298,7 @@ const PerpsProMarketSelectorComponent = forwardRef<
     const displayedTab = resolvedPreviewTab ?? resolvedActiveTab;
     const isSearchMode = inputFocused || !!query.trim();
     const tabIdsKey = tabs.map(tab => tab.id).join('\u0000');
-    const tabLayoutKey = `${tabIdsKey}\u0002${tabs
-      .map(tab => tab.label)
-      .join('\u0000')}\u0002${width}`;
+    const tabLayoutKey = `${tabIdsKey}\u0002${measurementKey}`;
     const activeTabIndex = Math.max(
       0,
       tabs.findIndex(tab => tab.id === resolvedActiveTab),
@@ -692,8 +701,15 @@ const PerpsProMarketSelectorComponent = forwardRef<
                     <PerpsProMarketTabs
                       activeTab={displayedTab}
                       indicatorPosition={tabIndicatorPosition}
+                      initialLayout={initialLayout}
                       key={tabLayoutKey}
+                      measureTab={
+                        tabs.some(tab => tab.id === 'favorites')
+                          ? undefined
+                          : tabCandidates[0]
+                      }
                       onChange={selectTab}
+                      onMeasure={onMeasure}
                       tabs={tabs}
                     />
                     <View

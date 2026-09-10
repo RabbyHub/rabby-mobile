@@ -9,6 +9,7 @@ import React, {
 } from 'react';
 import {
   Platform,
+  PixelRatio,
   Pressable,
   Text as NativeText,
   View,
@@ -44,6 +45,127 @@ type MarketTabScrollPosition = Readonly<{
 
 const MARKET_TAB_MEDIUM_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '500');
 const MARKET_TAB_BOLD_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '700');
+const MARKET_TAB_GAP = 16;
+const MARKET_TAB_PADDING = 16;
+
+type MarketTabLayout = Readonly<{
+  frames: MarketTabFrames;
+  contentWidth: number;
+  viewportWidth: number;
+}>;
+
+type MarketTabMeasurements = {
+  key: string;
+  initialTabs: readonly MarketTabItem[];
+  widths: Map<string, number>;
+};
+
+// Keep intrinsic measurements outside the keyed tab session. A prefix change
+// can then mount at its final geometry instead of revealing offset zero first.
+export const usePerpsProMarketTabLayout = ({
+  candidates,
+  fontScale,
+  language,
+  tabs: requestedTabs,
+  viewportWidth,
+}: {
+  candidates: readonly MarketTabItem[];
+  fontScale: number;
+  language: string;
+  tabs: readonly MarketTabItem[];
+  viewportWidth: number;
+}) => {
+  const measurementKey = JSON.stringify([
+    candidates,
+    language,
+    fontScale,
+    viewportWidth,
+    PixelRatio.get(),
+    MARKET_TAB_BOLD_FONT_STYLE,
+  ]);
+  const [state, setState] = useState<{
+    measurements: MarketTabMeasurements;
+    widths: ReadonlyMap<string, number> | null;
+  }>(() => ({
+    measurements: {
+      key: measurementKey,
+      initialTabs: requestedTabs,
+      widths: new Map(),
+    },
+    widths: null,
+  }));
+  let current = state;
+  if (state.measurements.key !== measurementKey) {
+    // Reset before rendering children with changed text/font/viewport inputs.
+    // An effect would allow one render to combine new labels with old widths.
+    current = {
+      measurements: {
+        key: measurementKey,
+        initialTabs: requestedTabs,
+        widths: new Map(),
+      },
+      widths: null,
+    };
+    setState(current);
+  }
+  const { measurements, widths } = current;
+  const onMeasure = useCallback(
+    (tab: PerpsProMarketTab, width: number) => {
+      if (
+        !Number.isFinite(width) ||
+        width <= 0 ||
+        !candidates.some(candidate => candidate.id === tab) ||
+        measurements.widths.get(tab) === width
+      ) {
+        return;
+      }
+      measurements.widths.set(tab, width);
+      if (
+        candidates.some(candidate => !measurements.widths.has(candidate.id))
+      ) {
+        return;
+      }
+      const nextWidths = new Map(measurements.widths);
+      // Old native layout callbacks cannot publish into a newer locale/session.
+      setState(previous =>
+        previous.measurements === measurements
+          ? { measurements, widths: nextWidths }
+          : previous,
+      );
+    },
+    [candidates, measurements],
+  );
+  // Until all measurements arrive, keep one coherent tab sequence for the
+  // labels, pager and handlers. Favorite data itself is updated immediately.
+  const tabs = widths ? requestedTabs : measurements.initialTabs;
+  const initialLayout = useMemo<MarketTabLayout | undefined>(() => {
+    if (!widths) {
+      return undefined;
+    }
+    const frames: MarketTabFrames = {};
+    let x = MARKET_TAB_PADDING;
+    for (const tab of tabs) {
+      const width = widths.get(tab.id)!;
+      frames[tab.id] = {
+        height: 34,
+        width,
+        x: PixelRatio.roundToNearestPixel(x),
+        y: 0,
+      };
+      x += width + MARKET_TAB_GAP;
+    }
+    return {
+      contentWidth: Math.max(
+        viewportWidth,
+        PixelRatio.roundToNearestPixel(x - MARKET_TAB_GAP + MARKET_TAB_PADDING),
+      ),
+      frames,
+      viewportWidth,
+    };
+  }, [tabs, viewportWidth, widths]);
+
+  return { initialLayout, measurementKey, onMeasure, tabs };
+};
 
 const PerpsProMarketTabLabel: React.FC<{
   activeColor: string;
@@ -169,15 +291,50 @@ export const updatePerpsProMarketTabFrame = (
 export const PerpsProMarketTabs: React.FC<{
   activeTab: PerpsProMarketTab;
   indicatorPosition: SharedValue<number>;
+  initialLayout?: MarketTabLayout;
+  measureTab?: MarketTabItem;
   onChange: (tab: PerpsProMarketTab) => void;
+  onMeasure?: (tab: PerpsProMarketTab, width: number) => void;
   tabs: readonly MarketTabItem[];
-}> = React.memo(({ activeTab, indicatorPosition, onChange, tabs }) => {
+}> = React.memo(props => {
+  const {
+    activeTab,
+    indicatorPosition,
+    initialLayout,
+    measureTab,
+    onChange,
+    onMeasure,
+    tabs,
+  } = props;
   const { colors2024, styles } = useTheme2024({ getStyle });
   const scrollRef = useRef<GestureHandlerScrollView>(null);
-  const lastScrollPositionRef = useRef<MarketTabScrollPosition | null>(null);
-  const [tabFrames, setTabFrames] = useState<MarketTabFrames>({});
-  const [viewportWidth, setViewportWidth] = useState(0);
-  const [contentWidth, setContentWidth] = useState(0);
+  const [initialGeometry] = useState(() => {
+    const frame = initialLayout?.frames[activeTab];
+    return {
+      layout: initialLayout,
+      offset: {
+        x:
+          initialLayout && frame
+            ? getPerpsProMarketTabScrollOffset({ ...initialLayout, frame }) ?? 0
+            : 0,
+        y: 0,
+      },
+    };
+  });
+  const lastScrollPositionRef = useRef<MarketTabScrollPosition | null>(
+    initialGeometry.layout
+      ? { tab: activeTab, x: initialGeometry.offset.x }
+      : null,
+  );
+  const [tabFrames, setTabFrames] = useState<MarketTabFrames>(
+    initialGeometry.layout?.frames ?? {},
+  );
+  const [viewportWidth, setViewportWidth] = useState(
+    initialGeometry.layout?.viewportWidth ?? 0,
+  );
+  const [contentWidth, setContentWidth] = useState(
+    initialGeometry.layout?.contentWidth ?? 0,
+  );
   const activeFrame = tabFrames[activeTab];
   const indicatorLayouts = useMemo<
     readonly PerpsProTabIndicatorLayout[]
@@ -239,6 +396,7 @@ export const PerpsProMarketTabs: React.FC<{
       />
       <GestureHandlerScrollView
         accessibilityRole="tablist"
+        contentOffset={initialGeometry.offset}
         contentContainerStyle={styles.content}
         horizontal
         keyboardShouldPersistTaps="handled"
@@ -256,9 +414,10 @@ export const PerpsProMarketTabs: React.FC<{
               key={tab.id}
               accessibilityRole="tab"
               accessibilityState={{ selected: active }}
-              onLayout={event =>
-                updatePerpsProMarketTabFrame(tab.id, event, setTabFrames)
-              }
+              onLayout={event => {
+                updatePerpsProMarketTabFrame(tab.id, event, setTabFrames);
+                onMeasure?.(tab.id, event.nativeEvent.layout.width);
+              }}
               onPress={() => onChange(tab.id)}
               style={styles.tab}
               testID={`perps-pro-market-tab-${tab.id}`}>
@@ -280,6 +439,23 @@ export const PerpsProMarketTabs: React.FC<{
           style={styles.indicator}
           testID="perps-pro-market-tab-indicator"
         />
+        {measureTab ? (
+          <View
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            pointerEvents="none"
+            style={styles.extraMeasure}>
+            <NativeText
+              numberOfLines={1}
+              onLayout={event =>
+                onMeasure?.(measureTab.id, event.nativeEvent.layout.width)
+              }
+              style={[styles.text, labelStyles.measureText]}
+              testID="perps-pro-market-tab-extra-measure">
+              {measureTab.label}
+            </NativeText>
+          </View>
+        ) : null}
       </GestureHandlerScrollView>
     </View>
   );
@@ -307,10 +483,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 38,
   },
   content: {
-    gap: 16,
-    paddingHorizontal: 16,
+    gap: MARKET_TAB_GAP,
+    paddingHorizontal: MARKET_TAB_PADDING,
     position: 'relative',
     height: 38,
+  },
+  extraMeasure: {
+    flexDirection: 'row',
+    position: 'absolute',
+    opacity: 0,
   },
   tab: {
     alignItems: 'center',
