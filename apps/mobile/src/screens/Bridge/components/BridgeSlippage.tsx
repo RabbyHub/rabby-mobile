@@ -429,7 +429,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    minHeight: 24,
+    height: 20,
   },
   text: {
     fontSize: 14,
@@ -442,11 +442,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    minHeight: 24,
+    height: 20,
   },
   autoSlippageSkeleton: {
     width: 131,
-    height: 24,
+    height: 20,
     borderRadius: 100,
   },
   value: {
