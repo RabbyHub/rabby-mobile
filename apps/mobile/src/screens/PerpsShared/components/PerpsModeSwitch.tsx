@@ -1,6 +1,5 @@
 import { Text } from '@/components/Typography';
 import type { PerpsViewMode } from '@/core/services/perpsService';
-import { FontNames } from '@/core/utils/fonts';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
@@ -116,15 +115,18 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   newBadge: {
     backgroundColor: colors2024['red-light-1'],
     borderRadius: 4,
-    left: 16,
-    paddingHorizontal: 2,
+    // Keep the badge attached to the label's right edge as its font changes.
+    left: '100%',
+    paddingHorizontal: 4,
     position: 'absolute',
-    top: -10,
+    top: -8,
+    transform: [{ translateX: -4 }],
   },
   newBadgeText: {
     color: colors2024['red-default'],
-    fontFamily: FontNames.sf_pro_rounded_medium,
-    fontSize: 12,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 10,
+    fontWeight: '600',
     includeFontPadding: false,
     lineHeight: 16,
   },

@@ -163,11 +163,25 @@ describe('PerpsModeSwitch', () => {
     ).toMatchObject({
       backgroundColor: 'red-light-1',
       borderRadius: 4,
-      left: 16,
-      paddingHorizontal: 2,
+      left: '100%',
+      paddingHorizontal: 4,
       position: 'absolute',
-      top: -10,
+      top: -8,
+      transform: [{ translateX: -4 }],
     });
+    expect(
+      StyleSheet.flatten(screen.getByText('New').props.style),
+    ).toMatchObject({
+      color: 'red-default',
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 10,
+      fontWeight: '600',
+      includeFontPadding: false,
+      lineHeight: 16,
+    });
+    expect(screen.getByTestId('perps-pro-new-badge').props.pointerEvents).toBe(
+      'none',
+    );
     expect(
       StyleSheet.flatten(screen.getByTestId('perps-mode-pro').props.style),
     ).toMatchObject({ flex: 1, height: '100%' });
