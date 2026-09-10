@@ -439,6 +439,28 @@ export const isPerpsUserAbstractionReadyForAccount = (
   !!state.userAbstractionOwnerAddress &&
   isSameAddress(state.userAbstractionOwnerAddress, account.address);
 
+// Known = resolved from the network this session, or restored from the MMKV
+// cache for this very address. A failed refresh keeps the cached mode usable
+// instead of parking readers on a permanent skeleton.
+export const isPerpsUserAbstractionModeKnown = (
+  state: Pick<
+    PerpsState,
+    | 'currentPerpsAccount'
+    | 'userAbstractionCachedAddress'
+    | 'userAbstractionReady'
+  >,
+) => {
+  const address = state.currentPerpsAccount?.address;
+  if (!address) {
+    return false;
+  }
+  return (
+    state.userAbstractionReady ||
+    (!!state.userAbstractionCachedAddress &&
+      isSameAddress(state.userAbstractionCachedAddress, address))
+  );
+};
+
 export const queryUserAbstraction = async (
   address: string,
 ): Promise<UserAbstractionResp> => {
@@ -1247,6 +1269,10 @@ const prepareHomePerpsAccount = async (account: Account) => {
   const reusesFullSubscription = canReuseUserDataSubscription(account.address);
   if (!reusesFullSubscription) {
     stopAccountSubscriptions();
+    // Otherwise the Home HTTP fallback would rebuild the aggregate with the
+    // previous account's sub-dex data still in the cache.
+    dexClearinghouseStatesCache.clear();
+    dexOpenOrdersCache.clear();
   }
 
   const cachedClearinghouseState =
@@ -2244,6 +2270,36 @@ export const fetchAllDexsClearinghouseStateHttp = async () => {
   if (results.some(result => result === 'updated')) {
     flushAggregatedClearinghouseState(address);
   }
+};
+
+// Home badge fallback for when the WS first frames never arrive: pull one
+// HTTP snapshot of whatever the badge still waits on. Always resolves — the
+// caller drops its skeleton either way, and a later WS frame still lands
+// through the normal time-guarded path.
+export const fetchHomePerpsSnapshotHttp = async (address: string) => {
+  const state = perpsStore.getState();
+  if (
+    !state.currentPerpsAccount ||
+    !isSameAddress(state.currentPerpsAccount.address, address)
+  ) {
+    return;
+  }
+  const needsSpotState =
+    state.userAbstraction === UserAbstractionResp.unifiedAccount ||
+    state.userAbstraction === UserAbstractionResp.portfolioMargin;
+  const requests: Promise<unknown>[] = [];
+  if (!state.isUserDataReady) {
+    requests.push(fetchAllDexsClearinghouseStateHttp());
+  }
+  if (needsSpotState && !state.isSpotStateReady) {
+    requests.push(fetchSpotStateHttp(state.currentPerpsAccount.address));
+  }
+  const results = await Promise.allSettled(requests);
+  results.forEach(result => {
+    if (result.status === 'rejected') {
+      console.error('[perpsHomePnl] http snapshot failed', result.reason);
+    }
+  });
 };
 
 export const fetchAllDexsPositionOpenOrdersHttp = async () => {
