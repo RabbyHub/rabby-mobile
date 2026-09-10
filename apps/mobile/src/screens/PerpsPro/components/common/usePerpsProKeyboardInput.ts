@@ -11,20 +11,22 @@ export const usePerpsProKeyboardInput = (
   inputRef: RefObject<PerpsProKeyboardInput | null | undefined>,
   {
     enabled = true,
+    getMinimum,
     minimum = null,
     scrollTrade = false,
   }: {
     enabled?: boolean;
+    getMinimum?: () => string | null;
     minimum?: string | null;
     scrollTrade?: boolean;
   } = {},
 ) => {
   const id = useId();
-  const minimumRef = useRef(minimum);
-  minimumRef.current = minimum;
+  const minimumRef = useRef({ getMinimum, minimum });
+  minimumRef.current = { getMinimum, minimum };
   useLayoutEffect(() => {
-    perpsProKeyboardSession.updateMinimum(id, minimum);
-  }, [id, minimum]);
+    perpsProKeyboardSession.updateMinimum(id, getMinimum ?? minimum);
+  }, [getMinimum, id, minimum]);
   useLayoutEffect(() => () => perpsProKeyboardSession.blur(id), [id]);
   useLayoutEffect(() => {
     if (!enabled) {
@@ -36,7 +38,9 @@ export const usePerpsProKeyboardInput = (
       perpsProKeyboardSession.focus({
         id,
         input: inputRef.current,
-        minimum: minimumRef.current,
+        minimum: minimumRef.current.getMinimum
+          ? minimumRef.current.getMinimum()
+          : minimumRef.current.minimum,
         scrollTrade,
       });
     }

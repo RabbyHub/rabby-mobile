@@ -70,7 +70,7 @@ export const PerpsProTradeAmountField = React.memo(
               </Text>
             )}
             <PerpsProDecimalTextInput
-              keyboardMinimum={focused ? getKeyboardMinimum?.() : null}
+              getKeyboardMinimum={getKeyboardMinimum}
               keyboardScrollTrade
               accessibilityLabel={label}
               cursorColor={colors2024['brand-default']}

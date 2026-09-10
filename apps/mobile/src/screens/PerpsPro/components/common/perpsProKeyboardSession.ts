@@ -21,6 +21,7 @@ type FocusedInput = {
 export const createPerpsProKeyboardSession = () => {
   let enabled = false;
   let focused: FocusedInput | null = null;
+  let pendingFocus: FocusedInput | null = null;
   const listeners = new Set<() => void>();
   const publish = () => listeners.forEach(listener => listener());
   return {
@@ -33,33 +34,69 @@ export const createPerpsProKeyboardSession = () => {
     },
     setEnabled: (next: boolean) => {
       enabled = next;
-      if (!next && focused) {
-        const previous = focused;
-        focused = null;
+      if (!next) {
+        const previous = focused ?? pendingFocus;
+        pendingFocus = null;
+        if (focused) {
+          focused = null;
+          publish();
+        }
+        previous?.input.blur();
+        return;
+      }
+      const candidate = pendingFocus;
+      pendingFocus = null;
+      // Native focus can precede the accessory's activation. Adopt only an
+      // input which is still focused; never replay a stale focus event.
+      if (candidate?.input.isFocused()) {
+        focused = candidate;
         publish();
-        previous.input.blur();
       }
     },
     focus: (input: FocusedInput) => {
       if (!enabled) {
+        pendingFocus = input;
         return;
       }
+      pendingFocus = null;
       focused = input;
       publish();
     },
     blur: (id: string) => {
+      if (pendingFocus?.id === id) {
+        pendingFocus = null;
+      }
       if (focused?.id !== id) {
         return;
       }
       focused = null;
       publish();
     },
-    updateMinimum: (id: string, minimum: string | null) => {
-      if (focused?.id !== id || focused.minimum === minimum) {
+    updateMinimum: (
+      id: string,
+      minimum: string | null | (() => string | null),
+    ) => {
+      const current =
+        focused?.id === id
+          ? focused
+          : pendingFocus?.id === id
+          ? pendingFocus
+          : null;
+      if (!current) {
         return;
       }
-      focused = { ...focused, minimum };
-      publish();
+      // Evaluate an Amount hint only for the current input, not every mounted
+      // field or every market update while the keyboard is closed.
+      const nextMinimum = typeof minimum === 'function' ? minimum() : minimum;
+      if (current.minimum === nextMinimum) {
+        return;
+      }
+      if (current === focused) {
+        focused = { ...current, minimum: nextMinimum };
+        publish();
+      } else {
+        pendingFocus = { ...current, minimum: nextMinimum };
+      }
     },
   };
 };

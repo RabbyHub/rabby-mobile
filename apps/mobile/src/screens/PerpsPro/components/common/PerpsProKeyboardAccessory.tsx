@@ -207,17 +207,19 @@ export const PerpsProKeyboardAccessory = () => {
   const enabled = routeFocused && foreground;
   useLayoutEffect(() => {
     perpsProKeyboardSession.setEnabled(enabled);
-    return () => perpsProKeyboardSession.setEnabled(false);
   }, [enabled]);
-  useEffect(() => {
+  useLayoutEffect(() => () => perpsProKeyboardSession.setEnabled(false), []);
+  useLayoutEffect(() => {
     const subscription = AppState.addEventListener('change', state =>
       setForeground(state === 'active'),
     );
+    setForeground(AppState.currentState === 'active');
     return () => subscription.remove();
   }, []);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!enabled) {
       setKeyboardY(null);
+      setHostY(null);
       return;
     }
     const show = (event: KeyboardEvent) =>
@@ -234,6 +236,10 @@ export const PerpsProKeyboardAccessory = () => {
     if (Platform.OS === 'ios') {
       subscriptions.push(Keyboard.addListener('keyboardWillChangeFrame', show));
     }
+    // Subscribe before reading the native-event snapshot so a first show
+    // cannot be lost between the input focusing and this owner becoming active.
+    const metrics = Keyboard.metrics();
+    setKeyboardY(metrics && metrics.height > 0 ? metrics.screenY : null);
     return () => subscriptions.forEach(subscription => subscription.remove());
   }, [enabled]);
   const measureHost = useCallback(() => {
@@ -281,28 +287,26 @@ export const PerpsProKeyboardAccessory = () => {
   ]);
   const done = useCallback(() => {
     const current = perpsProKeyboardSession.getSnapshot();
-    if (!current) {
-      return;
+    if (current) {
+      current.input.blur();
+      perpsProKeyboardSession.blur(current.id);
     }
-    current.input.blur();
-    perpsProKeyboardSession.blur(current.id);
     Keyboard.dismiss();
   }, []);
-  if (!enabled) {
-    return null;
-  }
   if (Platform.OS === 'ios') {
+    // Paper binds an inputAccessoryView when inputAccessoryViewID changes,
+    // not on each focus. Keep this native host for the input's full lifetime.
     return (
       <InputAccessoryView nativeID={PERPS_PRO_KEYBOARD_ACCESSORY_ID}>
         <AccessoryBar
-          minimum={focused?.minimum ?? null}
+          minimum={enabled ? focused?.minimum ?? null : null}
           onDone={done}
           width={dimensions.width}
         />
       </InputAccessoryView>
     );
   }
-  if (!focused || keyboardY == null) {
+  if (!enabled || !focused || keyboardY == null) {
     return null;
   }
   return (
