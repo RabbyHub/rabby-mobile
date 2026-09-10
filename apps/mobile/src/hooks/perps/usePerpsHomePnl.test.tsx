@@ -344,4 +344,67 @@ describe('usePerpsHomePnl', () => {
 
     expect(result.current.perpsPositionInfo.isLoading).toBe(true);
   });
+
+  it('starts a fresh window when returning to an account that already gave up', async () => {
+    seedWaitingManualAccount(ACCOUNT_A);
+    mockGetClearingHouseState.mockRejectedValue(new Error('offline'));
+
+    const { result } = renderHook(() => usePerpsHomePnl());
+    await elapseFallbackWindow();
+    expect(mockGetClearingHouseState).toHaveBeenCalledTimes(1);
+    expect(result.current.perpsPositionInfo.isLoading).toBe(false);
+
+    // B never settles: switch back before its window elapses.
+    act(() => {
+      seedWaitingManualAccount(ACCOUNT_B);
+    });
+    act(() => {
+      jest.advanceTimersByTime(HOME_PERPS_PNL_WS_FALLBACK_MS / 2);
+    });
+    act(() => {
+      seedWaitingManualAccount(ACCOUNT_A);
+    });
+
+    expect(result.current.perpsPositionInfo.isLoading).toBe(true);
+    expect(result.current.perpsPositionInfo.show).toBe(false);
+    await elapseFallbackWindow();
+
+    expect(mockGetClearingHouseState).toHaveBeenCalledTimes(2);
+    expect(result.current.perpsPositionInfo.isLoading).toBe(false);
+  });
+
+  it('re-arms the fallback for an account that gave up after visiting one that never waited', async () => {
+    seedWaitingManualAccount(ACCOUNT_A);
+    mockGetClearingHouseState.mockRejectedValue(new Error('offline'));
+
+    const { result } = renderHook(() => usePerpsHomePnl());
+    await elapseFallbackWindow();
+    expect(result.current.perpsPositionInfo.isLoading).toBe(false);
+
+    // B arrives with resolved data: nothing to wait for, nothing settles.
+    act(() => {
+      perpsStore.setState({
+        ...initialState,
+        currentPerpsAccount: ACCOUNT_B,
+        userAbstractionReady: true,
+        userAbstractionOwnerAddress: ACCOUNT_B.address,
+        isUserDataReady: true,
+        homePositionPnl: {
+          pnl: 1.5,
+          show: true,
+          type: 'pnl',
+          accountValue: 10,
+        },
+      });
+    });
+    expect(result.current.perpsPositionInfo.isLoading).toBe(false);
+    expect(result.current.perpsPositionInfo.show).toBe(true);
+
+    act(() => {
+      seedWaitingManualAccount(ACCOUNT_A);
+    });
+
+    expect(result.current.perpsPositionInfo.isLoading).toBe(true);
+    expect(result.current.perpsPositionInfo.show).toBe(false);
+  });
 });

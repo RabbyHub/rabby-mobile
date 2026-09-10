@@ -441,7 +441,10 @@ export const isPerpsUserAbstractionReadyForAccount = (
 
 // Known = resolved from the network this session, or restored from the MMKV
 // cache for this very address. A failed refresh keeps the cached mode usable
-// instead of parking readers on a permanent skeleton.
+// instead of parking readers on a permanent skeleton. The cached marker
+// travels with the mode value: every account switch that resets the value
+// to `default` clears the marker too, so a stale marker can never vouch for
+// a reset value.
 export const isPerpsUserAbstractionModeKnown = (
   state: Pick<
     PerpsState,
@@ -795,6 +798,9 @@ const setCurrentPerpsAccount = (payload: Account) => {
       userAbstraction: sameAccount
         ? prev.userAbstraction
         : UserAbstractionResp.default,
+      userAbstractionCachedAddress: sameAccount
+        ? prev.userAbstractionCachedAddress
+        : null,
       userAccountHistory: sameAccount ? prev.userAccountHistory : [],
       hiddenLocalFundingHistory: sameAccount
         ? prev.hiddenLocalFundingHistory
@@ -835,6 +841,9 @@ export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
       userAbstraction: sameAccount
         ? prev.userAbstraction
         : UserAbstractionResp.default,
+      userAbstractionCachedAddress: sameAccount
+        ? prev.userAbstractionCachedAddress
+        : null,
       userAbstractionReady: false,
       userAbstractionOwnerAddress: null,
       currentClearinghouseState: null,
@@ -1388,6 +1397,7 @@ const resetAccountState = () => {
     currentPerpsAccount: null,
     isLogin: false,
     userAbstraction: UserAbstractionResp.default,
+    userAbstractionCachedAddress: null,
     userAbstractionOwnerAddress: null,
     userAccountHistory: [],
     hiddenLocalFundingHistory: [],
@@ -2610,6 +2620,9 @@ export const usePerpsStore = () => {
         userAbstraction: sameAccount
           ? prev.userAbstraction
           : UserAbstractionResp.default,
+        userAbstractionCachedAddress: sameAccount
+          ? prev.userAbstractionCachedAddress
+          : null,
         userAbstractionReady: sameAccount ? prev.userAbstractionReady : false,
         userAbstractionOwnerAddress: sameAccount
           ? prev.userAbstractionOwnerAddress

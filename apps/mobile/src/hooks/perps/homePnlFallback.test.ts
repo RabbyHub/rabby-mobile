@@ -27,6 +27,7 @@ jest.mock('@/core/serviceApi/perps', () => ({
     getUserAbstractionForAddress: jest.fn(async () => null),
     setUserAbstractionForAddress: jest.fn(async () => undefined),
     clearUserAbstractionForAddress: jest.fn(async () => undefined),
+    setCurrentAccount: jest.fn(async () => undefined),
   },
 }));
 jest.mock('@/core/request', () => ({ openapi: {} }));
@@ -44,6 +45,7 @@ import {
   initialState,
   isPerpsUserAbstractionModeKnown,
   perpsStore,
+  switchPerpsAccountBeforeNavigate,
 } from './usePerpsStore';
 
 const ACCOUNT_A = {
@@ -118,6 +120,46 @@ describe('isPerpsUserAbstractionModeKnown', () => {
         userAbstractionCachedAddress: null,
       }),
     ).toBe(true);
+  });
+});
+
+describe('cached abstraction marker across account switches', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    perpsStore.setState({ ...initialState });
+  });
+
+  it('does not report a stale cached mode as known after an A → B → A round trip', () => {
+    // A's mode was restored from the MMKV cache.
+    perpsStore.setState({
+      currentPerpsAccount: ACCOUNT_A,
+      userAbstraction: UserAbstractionResp.unifiedAccount,
+      userAbstractionCachedAddress: ACCOUNT_A.address,
+    });
+
+    switchPerpsAccountBeforeNavigate(ACCOUNT_B);
+    // B's hydration has not landed yet when the user switches back.
+    switchPerpsAccountBeforeNavigate(ACCOUNT_A);
+
+    const state = perpsStore.getState();
+    expect(state.userAbstraction).toBe(UserAbstractionResp.default);
+    expect(state.userAbstractionCachedAddress).toBeNull();
+    expect(isPerpsUserAbstractionModeKnown(state)).toBe(false);
+  });
+
+  it('keeps the cached mode and its marker when the same account is re-selected', () => {
+    perpsStore.setState({
+      currentPerpsAccount: ACCOUNT_A,
+      userAbstraction: UserAbstractionResp.unifiedAccount,
+      userAbstractionCachedAddress: ACCOUNT_A.address,
+    });
+
+    switchPerpsAccountBeforeNavigate(ACCOUNT_A);
+
+    const state = perpsStore.getState();
+    expect(state.userAbstraction).toBe(UserAbstractionResp.unifiedAccount);
+    expect(state.userAbstractionCachedAddress).toBe(ACCOUNT_A.address);
+    expect(isPerpsUserAbstractionModeKnown(state)).toBe(true);
   });
 });
 

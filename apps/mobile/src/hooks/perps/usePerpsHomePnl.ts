@@ -98,23 +98,37 @@ export const usePerpsHomePnl = () => {
     ? shouldWaitForAccountValue || shouldWaitForResolvedZero
     : !homePositionPnl.show && !hasResolvedPositionInfo;
 
-  // Keyed by address so an account switch starts a fresh wait.
+  // The settled marker is scoped to this account entry, not the address:
+  // A → B → A must give A a fresh window even if B never settled.
   const fallbackKey = currentAddress?.toLowerCase() ?? '';
-  const [settledFallbackKey, setSettledFallbackKey] = useState<string | null>(
-    null,
-  );
-  const hasGivenUp = isWaitingForData && settledFallbackKey === fallbackKey;
+  const [fallback, setFallback] = useState({
+    key: fallbackKey,
+    settled: false,
+  });
+  if (fallback.key !== fallbackKey) {
+    // Reset during render so the new entry never renders as given up.
+    setFallback({ key: fallbackKey, settled: false });
+  }
+  const hasGivenUp =
+    isWaitingForData && fallback.key === fallbackKey && fallback.settled;
   const isFocused = useIsScreenFocused();
 
   // Blur cancels a pending window; focus starts a fresh one if still waiting.
   useEffect(() => {
-    if (!isFocused || !isWaitingForData || settledFallbackKey === fallbackKey) {
+    if (
+      !isFocused ||
+      !isWaitingForData ||
+      fallback.key !== fallbackKey ||
+      fallback.settled
+    ) {
       return;
     }
     let cancelled = false;
     const settle = () => {
       if (!cancelled) {
-        setSettledFallbackKey(fallbackKey);
+        setFallback(prev =>
+          prev.key === fallbackKey ? { key: fallbackKey, settled: true } : prev,
+        );
       }
     };
     const timer = setTimeout(() => {
@@ -128,7 +142,7 @@ export const usePerpsHomePnl = () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [fallbackKey, isFocused, isWaitingForData, settledFallbackKey]);
+  }, [fallback, fallbackKey, isFocused, isWaitingForData]);
 
   return {
     perpsPositionInfo: {
