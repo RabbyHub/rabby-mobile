@@ -15,7 +15,7 @@ import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { createGetStyles2024 } from '@/utils/styles';
 
 const DEFAULT_SVG_URL =
-  'https://assets.debank.com/static/media/default.99a115ad939329c9a25b45d3cdecf56f.svg';
+  'https://static.debank.com/image/avax_nft/local_url/eef2702954d1321120127cc24e217d30/3943a566ce8fdc5e1b84ff2dd7a6f52a.svg';
 const FAILURE_SVG_URL =
   'https://assets.debank.com/safe-svg-playground/not-found.svg';
 
@@ -148,6 +148,9 @@ export default function DevUISafeSvgMedia(): JSX.Element {
           Exercises the production Media path: HTTPS download, Rust/resvg
           rasterization, local PNG cache, skeleton timeout and failed fallback.
         </Text>
+        <Text style={styles.description}>
+          Default sample: veFLDX lock #1398 from the device NFT cache.
+        </Text>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>SVG URL</Text>
@@ -171,7 +174,7 @@ export default function DevUISafeSvgMedia(): JSX.Element {
               {...makeTestIDProps(E2E_ID.playground.safeSvgApply)}
             />
             <Button
-              title="Use default"
+              title="Use NFT sample"
               type="ghost"
               containerStyle={styles.button}
               onPress={() => applyUrl(DEFAULT_SVG_URL)}
@@ -196,8 +199,8 @@ export default function DevUISafeSvgMedia(): JSX.Element {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Production Media component</Text>
           <Text style={styles.description}>
-            Failed previews expose a refresh badge. Tap the image to retry
-            without clearing the cache.
+            Failed previews keep the standard placeholder. Remount the media
+            above to repeat a diagnostic attempt.
           </Text>
           <View style={styles.previewRow}>
             <View style={styles.previewColumn}>
@@ -206,7 +209,6 @@ export default function DevUISafeSvgMedia(): JSX.Element {
                 style={styles.thumbnailPreview}
                 {...makeTestIDProps(E2E_ID.playground.safeSvgThumbnail)}>
                 <Media
-                  retryOnFailure
                   key={`thumbnail-${renderKey}`}
                   type={MEDIA_TYPE.IMAGE_URL}
                   src={activeUrl}
@@ -223,7 +225,6 @@ export default function DevUISafeSvgMedia(): JSX.Element {
                 style={styles.detailPreview}
                 {...makeTestIDProps(E2E_ID.playground.safeSvgDetail)}>
                 <Media
-                  retryOnFailure
                   key={`detail-${renderKey}`}
                   type={MEDIA_TYPE.IMAGE_URL}
                   src={activeUrl}

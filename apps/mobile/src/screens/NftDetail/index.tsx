@@ -83,7 +83,6 @@ export const NFTDetailScreen = () => {
               },
             ])}>
             <Media
-              retryOnFailure
               failedPlaceholder={<IconDefaultNFT width="100%" height="100%" />}
               type="image_url"
               src={(token as NFTItem)?.thumbnail_url}
@@ -304,7 +303,6 @@ export const NFTDetailScreen = () => {
             ? renderAccountHeader(type, aliasName, address)
             : null}
           <Media
-            retryOnFailure
             failedPlaceholder={<IconDefaultNFT width={'100%'} height={360} />}
             type={iToken?.content_type}
             src={iToken?.content}

@@ -62,7 +62,6 @@ export const HistoryItemIcon = ({
         <View style={[styles.imageBox]}>
           {isNft ? (
             <Media
-              retryOnFailure
               failedPlaceholder={
                 <IconDefaultNFT width={singleSize} height={singleSize} />
               }
