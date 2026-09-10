@@ -132,6 +132,8 @@ describe('fetchHomePerpsSnapshotHttp', () => {
       currentPerpsAccount: ACCOUNT_A,
       isUserDataReady: false,
       userAbstraction: UserAbstractionResp.default,
+      userAbstractionReady: true,
+      userAbstractionOwnerAddress: ACCOUNT_A.address,
     });
     mockGetClearingHouseState.mockResolvedValue(
       buildClearinghouseState('12.5', 10),
@@ -179,6 +181,46 @@ describe('fetchHomePerpsSnapshotHttp', () => {
     expect(state.isUserDataReady).toBe(true);
     expect(state.isSpotStateReady).toBe(true);
     expect(state.spotState.balancesMap.USDC?.available).toBe('5');
+  });
+
+  it('pulls spot state while the abstraction mode is still unknown', async () => {
+    perpsStore.setState({
+      currentPerpsAccount: ACCOUNT_A,
+      isUserDataReady: true,
+      isSpotStateReady: false,
+      userAbstraction: UserAbstractionResp.default,
+      userAbstractionReady: false,
+      userAbstractionCachedAddress: null,
+    });
+    mockGetSpotClearingHouseState.mockResolvedValue({
+      balances: [
+        { coin: 'USDC', token: 0, total: '9', hold: '0', entryNtl: '0' },
+      ],
+    });
+
+    await fetchHomePerpsSnapshotHttp(ACCOUNT_A.address);
+
+    expect(mockGetClearingHouseState).not.toHaveBeenCalled();
+    expect(mockGetSpotClearingHouseState).toHaveBeenCalledWith(
+      ACCOUNT_A.address,
+    );
+    expect(perpsStore.getState().isSpotStateReady).toBe(true);
+  });
+
+  it('skips spot state for a cached manual mode', async () => {
+    perpsStore.setState({
+      currentPerpsAccount: ACCOUNT_A,
+      isUserDataReady: true,
+      isSpotStateReady: false,
+      userAbstraction: UserAbstractionResp.default,
+      userAbstractionReady: false,
+      userAbstractionCachedAddress: ACCOUNT_A.address,
+    });
+
+    await fetchHomePerpsSnapshotHttp(ACCOUNT_A.address);
+
+    expect(mockGetClearingHouseState).not.toHaveBeenCalled();
+    expect(mockGetSpotClearingHouseState).not.toHaveBeenCalled();
   });
 
   it('skips requests whose data already resolved', async () => {

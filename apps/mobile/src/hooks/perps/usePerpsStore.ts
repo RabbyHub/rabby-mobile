@@ -2284,9 +2284,13 @@ export const fetchHomePerpsSnapshotHttp = async (address: string) => {
   ) {
     return;
   }
-  const needsSpotState =
+  // This is the only fallback, and an unresolved mode may still turn out to
+  // be spot-collateral: skip the spot slice only for a known manual mode.
+  const isSpotCollateralMode =
     state.userAbstraction === UserAbstractionResp.unifiedAccount ||
     state.userAbstraction === UserAbstractionResp.portfolioMargin;
+  const needsSpotState =
+    !isPerpsUserAbstractionModeKnown(state) || isSpotCollateralMode;
   const requests: Promise<unknown>[] = [];
   if (!state.isUserDataReady) {
     requests.push(fetchAllDexsClearinghouseStateHttp());
