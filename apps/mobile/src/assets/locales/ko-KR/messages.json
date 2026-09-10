@@ -639,6 +639,16 @@
       "gas-fee-too-high": "가스 요금이 너무 높음",
       "need-to-approve-token-before-swap": "교환하기 전에 토큰을 승인해야 합니다.",
       "rabbyFee": {
+        "discountTitle": "Rabby 수수료 할인",
+        "case": "조건",
+        "free": "무료",
+        "cases": {
+          "wrap": "네이티브 토큰 랩핑/언랩",
+          "stablecoins": "스테이블코인",
+          "lstLrt": "LST/LRT 토큰",
+          "million": "거래량 $1M+",
+          "hundredThousand": "거래량 $100k - $1M"
+        },
         "rate": "수수료율",
         "wallet": "지갑",
         "button": "이해했습니다",
@@ -2092,6 +2102,7 @@
           "liquidationPrice": "청산 가격",
           "triggerPrice": "트리거 가격",
           "amount": "수량",
+          "keyboardMinimum": "최소 {{amount}}",
           "available": "사용 가능",
           "reduceOnly": "감소 전용",
           "confirmationReduceOnly": "감소 전용",

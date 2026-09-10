@@ -765,6 +765,16 @@
       },
       "recommend-slippage": "フロントランニングを防ぐために、<2>{{ slippage }}</2>% のスリッページをお勧めします。",
       "rabbyFee": {
+        "discountTitle": "Rabby 手数料割引",
+        "case": "条件",
+        "free": "無料",
+        "cases": {
+          "wrap": "ネイティブトークンのラップ/アンラップ",
+          "stablecoins": "ステーブルコイン",
+          "lstLrt": "LST/LRT トークン",
+          "million": "取引量 $1M+",
+          "hundredThousand": "取引量 $100k - $1M"
+        },
         "button": "了解しました",
         "wallet": "ウォレット",
         "title": "Rabby 手数料",
@@ -2142,6 +2152,7 @@
           "liquidationPrice": "清算価格",
           "triggerPrice": "トリガー価格",
           "amount": "数量",
+          "keyboardMinimum": "最小 {{amount}}",
           "available": "利用可能",
           "reduceOnly": "決済専用",
           "confirmationReduceOnly": "決済専用",
