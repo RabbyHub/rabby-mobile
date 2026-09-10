@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
+import { NavigationContext } from '@react-navigation/native';
 import {
   fetchHomePerpsSnapshotHttp,
   isPerpsUserAbstractionModeKnown,
@@ -12,6 +13,36 @@ import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 // The badge otherwise waits on WS first frames forever. After this window it
 // pulls one HTTP snapshot and then drops the skeleton whatever the outcome.
 export const HOME_PERPS_PNL_WS_FALLBACK_MS = 8_000;
+
+// Home stays mounted behind other screens, so the fallback must not do
+// network work for a hidden badge. Same focus/blur source as
+// ScreenStoreActivityProvider; outside a navigator it counts as focused.
+const useIsScreenFocused = () => {
+  const navigation = useContext(NavigationContext);
+  const [isFocused, setIsFocused] = useState(
+    () => navigation?.isFocused() ?? true,
+  );
+
+  useEffect(() => {
+    if (!navigation) {
+      setIsFocused(true);
+      return;
+    }
+    setIsFocused(navigation.isFocused());
+    const unsubscribeFocus = navigation.addListener('focus', () =>
+      setIsFocused(true),
+    );
+    const unsubscribeBlur = navigation.addListener('blur', () =>
+      setIsFocused(false),
+    );
+    return () => {
+      unsubscribeFocus();
+      unsubscribeBlur();
+    };
+  }, [navigation]);
+
+  return isFocused;
+};
 
 export const usePerpsHomePnl = () => {
   const {
@@ -67,21 +98,37 @@ export const usePerpsHomePnl = () => {
     ? shouldWaitForAccountValue || shouldWaitForResolvedZero
     : !homePositionPnl.show && !hasResolvedPositionInfo;
 
-  // Keyed by address so an account switch starts a fresh wait.
+  // The settled marker is scoped to this account entry, not the address:
+  // A → B → A must give A a fresh window even if B never settled.
   const fallbackKey = currentAddress?.toLowerCase() ?? '';
-  const [settledFallbackKey, setSettledFallbackKey] = useState<string | null>(
-    null,
-  );
-  const hasGivenUp = isWaitingForData && settledFallbackKey === fallbackKey;
+  const [fallback, setFallback] = useState({
+    key: fallbackKey,
+    settled: false,
+  });
+  if (fallback.key !== fallbackKey) {
+    // Reset during render so the new entry never renders as given up.
+    setFallback({ key: fallbackKey, settled: false });
+  }
+  const hasGivenUp =
+    isWaitingForData && fallback.key === fallbackKey && fallback.settled;
+  const isFocused = useIsScreenFocused();
 
+  // Blur cancels a pending window; focus starts a fresh one if still waiting.
   useEffect(() => {
-    if (!isWaitingForData || settledFallbackKey === fallbackKey) {
+    if (
+      !isFocused ||
+      !isWaitingForData ||
+      fallback.key !== fallbackKey ||
+      fallback.settled
+    ) {
       return;
     }
     let cancelled = false;
     const settle = () => {
       if (!cancelled) {
-        setSettledFallbackKey(fallbackKey);
+        setFallback(prev =>
+          prev.key === fallbackKey ? { key: fallbackKey, settled: true } : prev,
+        );
       }
     };
     const timer = setTimeout(() => {
@@ -95,7 +142,7 @@ export const usePerpsHomePnl = () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [fallbackKey, isWaitingForData, settledFallbackKey]);
+  }, [fallback, fallbackKey, isFocused, isWaitingForData]);
 
   return {
     perpsPositionInfo: {

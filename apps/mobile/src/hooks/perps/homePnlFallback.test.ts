@@ -27,6 +27,7 @@ jest.mock('@/core/serviceApi/perps', () => ({
     getUserAbstractionForAddress: jest.fn(async () => null),
     setUserAbstractionForAddress: jest.fn(async () => undefined),
     clearUserAbstractionForAddress: jest.fn(async () => undefined),
+    setCurrentAccount: jest.fn(async () => undefined),
   },
 }));
 jest.mock('@/core/request', () => ({ openapi: {} }));
@@ -44,6 +45,7 @@ import {
   initialState,
   isPerpsUserAbstractionModeKnown,
   perpsStore,
+  switchPerpsAccountBeforeNavigate,
 } from './usePerpsStore';
 
 const ACCOUNT_A = {
@@ -121,6 +123,46 @@ describe('isPerpsUserAbstractionModeKnown', () => {
   });
 });
 
+describe('cached abstraction marker across account switches', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    perpsStore.setState({ ...initialState });
+  });
+
+  it('does not report a stale cached mode as known after an A → B → A round trip', () => {
+    // A's mode was restored from the MMKV cache.
+    perpsStore.setState({
+      currentPerpsAccount: ACCOUNT_A,
+      userAbstraction: UserAbstractionResp.unifiedAccount,
+      userAbstractionCachedAddress: ACCOUNT_A.address,
+    });
+
+    switchPerpsAccountBeforeNavigate(ACCOUNT_B);
+    // B's hydration has not landed yet when the user switches back.
+    switchPerpsAccountBeforeNavigate(ACCOUNT_A);
+
+    const state = perpsStore.getState();
+    expect(state.userAbstraction).toBe(UserAbstractionResp.default);
+    expect(state.userAbstractionCachedAddress).toBeNull();
+    expect(isPerpsUserAbstractionModeKnown(state)).toBe(false);
+  });
+
+  it('keeps the cached mode and its marker when the same account is re-selected', () => {
+    perpsStore.setState({
+      currentPerpsAccount: ACCOUNT_A,
+      userAbstraction: UserAbstractionResp.unifiedAccount,
+      userAbstractionCachedAddress: ACCOUNT_A.address,
+    });
+
+    switchPerpsAccountBeforeNavigate(ACCOUNT_A);
+
+    const state = perpsStore.getState();
+    expect(state.userAbstraction).toBe(UserAbstractionResp.unifiedAccount);
+    expect(state.userAbstractionCachedAddress).toBe(ACCOUNT_A.address);
+    expect(isPerpsUserAbstractionModeKnown(state)).toBe(true);
+  });
+});
+
 describe('fetchHomePerpsSnapshotHttp', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -132,6 +174,8 @@ describe('fetchHomePerpsSnapshotHttp', () => {
       currentPerpsAccount: ACCOUNT_A,
       isUserDataReady: false,
       userAbstraction: UserAbstractionResp.default,
+      userAbstractionReady: true,
+      userAbstractionOwnerAddress: ACCOUNT_A.address,
     });
     mockGetClearingHouseState.mockResolvedValue(
       buildClearinghouseState('12.5', 10),
@@ -179,6 +223,46 @@ describe('fetchHomePerpsSnapshotHttp', () => {
     expect(state.isUserDataReady).toBe(true);
     expect(state.isSpotStateReady).toBe(true);
     expect(state.spotState.balancesMap.USDC?.available).toBe('5');
+  });
+
+  it('pulls spot state while the abstraction mode is still unknown', async () => {
+    perpsStore.setState({
+      currentPerpsAccount: ACCOUNT_A,
+      isUserDataReady: true,
+      isSpotStateReady: false,
+      userAbstraction: UserAbstractionResp.default,
+      userAbstractionReady: false,
+      userAbstractionCachedAddress: null,
+    });
+    mockGetSpotClearingHouseState.mockResolvedValue({
+      balances: [
+        { coin: 'USDC', token: 0, total: '9', hold: '0', entryNtl: '0' },
+      ],
+    });
+
+    await fetchHomePerpsSnapshotHttp(ACCOUNT_A.address);
+
+    expect(mockGetClearingHouseState).not.toHaveBeenCalled();
+    expect(mockGetSpotClearingHouseState).toHaveBeenCalledWith(
+      ACCOUNT_A.address,
+    );
+    expect(perpsStore.getState().isSpotStateReady).toBe(true);
+  });
+
+  it('skips spot state for a cached manual mode', async () => {
+    perpsStore.setState({
+      currentPerpsAccount: ACCOUNT_A,
+      isUserDataReady: true,
+      isSpotStateReady: false,
+      userAbstraction: UserAbstractionResp.default,
+      userAbstractionReady: false,
+      userAbstractionCachedAddress: ACCOUNT_A.address,
+    });
+
+    await fetchHomePerpsSnapshotHttp(ACCOUNT_A.address);
+
+    expect(mockGetClearingHouseState).not.toHaveBeenCalled();
+    expect(mockGetSpotClearingHouseState).not.toHaveBeenCalled();
   });
 
   it('skips requests whose data already resolved', async () => {
