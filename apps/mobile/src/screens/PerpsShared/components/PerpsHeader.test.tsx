@@ -1,30 +1,38 @@
-import { render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
+import { navBack } from '@/hooks/navigation';
 
 import { PERPS_HEADER_HEIGHT } from '../constants';
 import { PerpsHeader } from './PerpsHeader';
 
-jest.mock('@/assets2024/icons/perps/IconHyper.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsHeaderBackground.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
-  return (props: object) =>
-    ReactModule.createElement(View, { ...props, testID: 'hyper-icon' });
+  return (props: object) => ReactModule.createElement(View, props);
+});
+
+jest.mock('@/assets2024/icons/perps/PerpsHeaderBack.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) => ReactModule.createElement(View, props);
 });
 
 jest.mock('@/hooks/navigation', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
   return {
-    HeaderBackPressable: (props: object) =>
-      ReactModule.createElement(View, props),
+    navBack: jest.fn(),
   };
+});
+
+jest.mock('react-native-gesture-handler', () => {
+  const { Pressable, TouchableOpacity } = require('react-native');
+  return { Pressable, TouchableOpacity };
 });
 
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
     const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
-    return { styles: getStyle({ colors2024 }) };
+    return { colors2024, styles: getStyle({ colors2024 }) };
   },
 }));
 
@@ -83,8 +91,8 @@ describe('PerpsHeader', () => {
       backgroundColor: 'transparent',
       gap: 8,
       height: PERPS_HEADER_HEIGHT,
-      paddingLeft: 8,
-      paddingRight: 15,
+      paddingLeft: 16,
+      paddingRight: 16,
       position: 'relative',
     });
     expect(screen.queryByTestId('perps-header-bottom-divider')).toBeNull();
@@ -95,18 +103,18 @@ describe('PerpsHeader', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-header-identity').props.style,
       ),
-    ).toMatchObject({ flex: 1, gap: 16, minWidth: 0 });
+    ).toMatchObject({ flex: 1, minWidth: 0 });
     expect(
       StyleSheet.flatten(screen.getByTestId('perps-header-back').props.style),
     ).toMatchObject({
-      height: 24,
-      marginLeft: 0,
-      paddingLeft: 0,
+      height: 44,
       width: 24,
     });
-    expect(screen.getByTestId('hyper-icon').props).toMatchObject({
-      height: 15,
-      width: 19,
+    expect(
+      screen.getByTestId('perps-header-background-mark').props,
+    ).toMatchObject({
+      height: 48,
+      width: 61,
     });
     expect(screen.getByTestId('mode-switch').props).toMatchObject({
       activeMode: 'simple',
@@ -121,6 +129,8 @@ describe('PerpsHeader', () => {
       label: 'Hongbo',
       onPress: onPressAccount,
     });
+    fireEvent.press(screen.getByTestId('perps-header-back'));
+    expect(navBack).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the same shell when Pro is active and no account is available', () => {

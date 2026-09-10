@@ -56,6 +56,32 @@ jest.mock('@/utils/styles', () => ({
 import { PerpsAccountTrigger } from './PerpsAccountTrigger';
 
 describe('PerpsAccountTrigger', () => {
+  it('hides icon-only account text while preserving account identity and the popup action', () => {
+    const onPress = jest.fn();
+    render(
+      <PerpsAccountTrigger
+        address="0x1234567890123456789012345678901234567890"
+        brandName="metamask"
+        expanded
+        label="Wallet alias"
+        onPress={onPress}
+        variant="wallet-icon"
+      />,
+    );
+    expect(screen.queryByText('Wallet alias')).toBeNull();
+    const trigger = screen.getByRole('button', { name: 'Wallet alias' });
+    expect(trigger.props.accessibilityState).toEqual({ expanded: true });
+    expect(StyleSheet.flatten(trigger.props.style)).toMatchObject({
+      height: 44,
+      width: 52,
+    });
+    expect(trigger.props.hitSlop).toBeUndefined();
+    expect(screen.getByTestId('wallet-account-icon').props.address).toBe(
+      '0x1234567890123456789012345678901234567890',
+    );
+    fireEvent.press(trigger);
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
   it('uses the shared Pro-sized visual contract and remains interactive', () => {
     const onPress = jest.fn();
     render(

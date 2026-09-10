@@ -254,8 +254,8 @@ describe('PerpsProKlineSheet', () => {
     expect(props.style).toMatchObject({
       borderBottomLeftRadius: 0,
       borderBottomRightRadius: 0,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
+      borderTopLeftRadius: 32,
+      borderTopRightRadius: 32,
     });
     expect(props.handleStyle).toMatchObject({
       height: 40,
