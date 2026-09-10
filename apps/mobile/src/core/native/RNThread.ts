@@ -3,10 +3,11 @@
 import { EmitterSubscription } from 'react-native';
 
 import { IS_IOS, makeRnEEClass, resolveNativeModule } from './utils';
+import NativeRNThread from './specs/NativeRNThread';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { sleep } from '@/utils/async';
 
-const { RNThread } = resolveNativeModule('RNThread');
+const { RNThread } = resolveNativeModule('RNThread', NativeRNThread);
 
 type Listeners = {
   msgFromThread: (payload: { tid: number; message: string }) => any;

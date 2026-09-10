@@ -1,3 +1,20 @@
+if (!gradle.extensions.extraProperties.has("rabbyReactNativeArchitecture")) {
+    throw new GradleException(
+        "[react-native-architecture] settings.gradle did not resolve the architecture before project configuration.",
+    )
+}
+def resolvedReactNativeArchitecture = gradle.extensions.extraProperties.get(
+    "rabbyReactNativeArchitecture",
+).toString()
+def requestedNewArchitecture = resolvedReactNativeArchitecture == "new"
+
+// settings.gradle resolves and validates the architecture before autolinking.
+// Mirror that value into the Android Gradle property before applying the React
+// plugin so native source selection uses the same dependency graph as Metro.
+def normalizedNewArchitecture = requestedNewArchitecture.toString()
+rootProject.extensions.extraProperties.set("newArchEnabled", normalizedNewArchitecture)
+project.extensions.extraProperties.set("newArchEnabled", normalizedNewArchitecture)
+
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
@@ -8,6 +25,10 @@ def metroNodeMaxOldSpaceSize = System.getenv("RABBY_MOBILE_METRO_NODE_MAX_OLD_SP
 def metroBundleCli = file("../../scripts/metro-bundle-cli.js")
 def metroNodeExecutableAndArgs = ["node"]
 def metroExtraPackagerArgs = []
+
+def isNewArchitectureEnabled() {
+    return rootProject.hasProperty("newArchEnabled") && rootProject.getProperty("newArchEnabled").toString().toBoolean()
+}
 
 if (metroNodeMaxOldSpaceSize) {
     metroNodeExecutableAndArgs += ["--max-old-space-size=${metroNodeMaxOldSpaceSize}"]
@@ -238,7 +259,14 @@ android {
     sourceSets {
         main {
             assets.srcDir generatedBuildInfoAssetsDir
-            java.srcDirs += ["src/oldarch"]
+            if (isNewArchitectureEnabled()) {
+                java.srcDirs += [
+                    "src/newarch",
+                    "${project.buildDir}/generated/source/codegen/java",
+                ]
+            } else {
+                java.srcDirs += ["src/oldarch"]
+            }
         }
     }
 }
