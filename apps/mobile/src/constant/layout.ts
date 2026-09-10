@@ -16,14 +16,15 @@ export const BOTTOM_BUTTON_COMPACT_HEIGHT = 36;
 export const BOTTOM_BUTTON_DOUBLE_HEIGHT = 48;
 export const BOTTOM_BUTTON_TEXT_SIZE = 18;
 export const BOTTOM_BUTTON_TEXT_LINE_HEIGHT = 22;
+// 标题样式故意不带 lineHeight：components2024/Button 在传了 height 时默认把
+// 行高设为按钮高度（中文字体垂直居中需要）。非 Button 的 Text 需要固定行高时
+// 用 BOTTOM_BUTTON_TEXT_LINE_HEIGHT
 export const BOTTOM_BUTTON_TITLE_STYLE = {
   fontSize: BOTTOM_BUTTON_TEXT_SIZE,
-  lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
   fontWeight: '700',
 } as const;
 export const BOTTOM_BUTTON_COMPACT_TITLE_STYLE = {
   fontSize: 16,
-  lineHeight: 20,
   fontWeight: '500',
 } as const;
 export const BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE = {
