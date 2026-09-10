@@ -572,7 +572,7 @@ describe('PerpsProPositionCard', () => {
     });
   });
 
-  it('gives a long Isolated Liq. Distance the full metric row width', () => {
+  it('keeps a long Isolated Liq. Distance at its original size across the full row', () => {
     render(
       <PerpsProPositionCard
         accountIdentity="account-a"
@@ -583,11 +583,18 @@ describe('PerpsProPositionCard', () => {
       />,
     );
 
-    expect(screen.getByText('+117477.89%(+123,351.78)')).toBeTruthy();
+    const value = screen.getByText('+117477.89%(+123,351.78)');
+    expect(value.props.adjustsFontSizeToFit).toBeUndefined();
+    expect(value.props.numberOfLines).toBe(1);
+    expect(StyleSheet.flatten(value.props.style)).toMatchObject({
+      fontSize: 12,
+      lineHeight: 16,
+      fontVariant: ['tabular-nums'],
+    });
     expect(
       screen.getByTestId('perps-pro-position-liquidation-distance-BTC').props
         .style,
-    ).toMatchObject({ left: 0, right: 0 });
+    ).toMatchObject({ bottom: 0, left: 0, position: 'absolute', right: 0 });
   });
 
   it('keeps compact geometry for fitting copy and expands only after native measurements collide', () => {
@@ -823,6 +830,13 @@ describe('PerpsProPositionCard', () => {
       screen.getByTestId('perps-pro-position-liquidation-distance-BTC').props
         .style,
     ).toMatchObject({ bottom: 0, left: 0, position: 'absolute', right: 0 });
+    expect(
+      screen.getByText('-23.81%(-25.00)').props.adjustsFontSizeToFit,
+    ).toBeUndefined();
+    expect(
+      StyleSheet.flatten(screen.getByText('-23.81%(-25.00)').props.style)
+        .fontVariant,
+    ).toEqual(['tabular-nums']);
   });
 
   it('re-evaluates stored natural widths when the card width changes', () => {

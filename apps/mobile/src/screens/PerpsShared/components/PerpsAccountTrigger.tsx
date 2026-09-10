@@ -14,22 +14,14 @@ export const PerpsAccountTrigger: React.FC<{
   expanded: boolean;
   label: string;
   onPress: () => void;
-  variant?: 'compact' | 'wallet';
+  variant?: 'compact' | 'wallet' | 'wallet-icon';
 }> = React.memo(
   ({ address, brandName, expanded, label, onPress, variant = 'compact' }) => {
     const { colors2024, styles } = useTheme2024({ getStyle });
-    const walletVariant = variant === 'wallet' && !!address;
-    return (
-      <Pressable
-        accessibilityLabel={label}
-        accessibilityRole="button"
-        accessibilityState={{ expanded }}
-        onPress={onPress}
-        style={[
-          styles.trigger,
-          walletVariant ? styles.walletTrigger : styles.compactTrigger,
-        ]}
-        testID="perps-account-trigger">
+    const walletVariant = variant !== 'compact' && !!address;
+    const iconOnly = variant === 'wallet-icon' && walletVariant;
+    const content = (
+      <>
         {walletVariant ? (
           <WalletIcon
             address={address}
@@ -38,17 +30,19 @@ export const PerpsAccountTrigger: React.FC<{
             width={18}
           />
         ) : null}
-        <Text
-          numberOfLines={1}
-          style={[
-            styles.label,
-            walletVariant ? styles.walletLabel : styles.compactLabel,
-          ]}>
-          {label}
-        </Text>
+        {!iconOnly ? (
+          <Text
+            numberOfLines={1}
+            style={[
+              styles.label,
+              walletVariant ? styles.walletLabel : styles.compactLabel,
+            ]}>
+            {label}
+          </Text>
+        ) : null}
         {walletVariant ? (
           <CaretArrowIconCC
-            bgColor={colors2024['neutral-bg-5']}
+            bgColor={colors2024[iconOnly ? 'neutral-line' : 'neutral-bg-5']}
             dir="down"
             height={14}
             lineColor={colors2024['neutral-title-1']}
@@ -59,6 +53,31 @@ export const PerpsAccountTrigger: React.FC<{
           <View style={[styles.caret, expanded ? styles.expandedCaret : null]}>
             <RcAccountCaret color={colors2024['neutral-foot']} />
           </View>
+        )}
+      </>
+    );
+    return (
+      <Pressable
+        accessibilityLabel={label}
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        onPress={onPress}
+        style={
+          iconOnly
+            ? styles.iconTarget
+            : [
+                styles.trigger,
+                walletVariant ? styles.walletTrigger : styles.compactTrigger,
+              ]
+        }
+        testID="perps-account-trigger">
+        {iconOnly ? (
+          <View
+            style={[styles.trigger, styles.walletTrigger, styles.iconTrigger]}>
+            {content}
+          </View>
+        ) : (
+          content
         )}
       </Pressable>
     );
@@ -98,6 +117,18 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexShrink: 1,
     fontSize: 14,
     lineHeight: 18,
+  },
+  iconTarget: {
+    height: 44,
+    justifyContent: 'center',
+    transform: [{ translateY: -1 }],
+    width: 52,
+  },
+  iconTrigger: {
+    borderWidth: 0,
+    flexShrink: 0,
+    height: 30,
+    width: 52,
   },
   compactLabel: {
     fontFamily: FontNames.sf_pro,

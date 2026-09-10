@@ -7,13 +7,13 @@ const mockRowUnmount = jest.fn();
 const mockScrollToOffset = jest.fn();
 let mockIsLight = true;
 
-jest.mock('@/assets2024/singleHome/empty-token.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProEmptyLight.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
 });
 
-jest.mock('@/assets2024/singleHome/empty-token-dark.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProEmptyDark.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
@@ -204,6 +204,7 @@ describe('PerpsProMarketList', () => {
       offset: 1020,
     });
     expect(props.keyExtractor(slots[17], 17)).toBe('slot:17');
+    expect(props.ItemSeparatorComponent).toBeUndefined();
     expect(props).not.toHaveProperty('focusHook');
     expect(props).not.toHaveProperty('drawDistance');
     expect(props).not.toHaveProperty('maintainVisibleContentPosition');
@@ -213,9 +214,7 @@ describe('PerpsProMarketList', () => {
     const mountedRows = screen.getAllByTestId(/perps-pro-market-row-MARKET/);
     expect(mountedRows.length).toBeGreaterThan(0);
     expect(mountedRows.length).toBeLessThanOrEqual(12);
-    expect(
-      screen.getAllByTestId('perps-pro-market-row-separator')[0].props.style,
-    ).toEqual({ height: 4 });
+    expect(screen.queryByTestId('perps-pro-market-row-separator')).toBeNull();
   });
 
   it('keeps adjacent prepared pages on the bounded preview profile', () => {

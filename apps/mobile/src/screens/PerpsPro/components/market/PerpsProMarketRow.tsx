@@ -1,5 +1,6 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcFavoriteStar from '@/assets2024/icons/perps/PerpsProFavoriteStar.svg';
-import RcFavoriteStarEmpty from '@/assets/icons/dapp/icon-star.svg';
+import RcFavoriteStarInactive from '@/assets2024/icons/perps/PerpsProFavoriteStarInactive.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -170,21 +171,29 @@ const PerpsProMarketRowComponent: React.FC<PerpsProMarketRowProps> = ({
         }}
         onPressIn={captureFavoriteIdentity}
         style={styles.star}>
-        {favorite ? (
-          <RcFavoriteStar
-            color={colors2024['orange-default']}
-            height={13.5445}
-            width={13.6231}
-          />
-        ) : (
-          <RcFavoriteStarEmpty height={16} width={16} />
-        )}
+        <View pointerEvents="none" style={styles.starGlyph}>
+          {favorite ? (
+            <RcFavoriteStar
+              color={colors2024['orange-default']}
+              height={13.5445}
+              style={styles.favoriteStar}
+              width={13.6231}
+            />
+          ) : (
+            <RcFavoriteStarInactive
+              color={colors2024['neutral-line']}
+              height={12.9307}
+              style={styles.inactiveStar}
+              width={13.0288}
+            />
+          )}
+        </View>
       </TouchableOpacity>
       <PerpsProMarketLogo
         isLight={isLight}
         logoUrl={model.logoUrl}
         marketKey={model.marketKey}
-        size={24}
+        size={32}
         style={styles.logo}
       />
       <View style={styles.marketContent}>
@@ -241,24 +250,38 @@ PerpsProMarketRow.displayName = 'PerpsProMarketRow';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   marketRow: {
-    alignItems: 'flex-start',
+    alignItems: 'center',
     flexDirection: 'row',
     height: PERPS_PRO_MARKET_ROW_HEIGHT,
-    paddingHorizontal: 15,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   star: {
     alignItems: 'center',
-    height: 24,
+    height: 32,
     justifyContent: 'center',
     marginRight: 6,
     width: 16,
   },
+  starGlyph: {
+    height: 16,
+    width: 16,
+  },
+  favoriteStar: {
+    left: 1.1886,
+    position: 'absolute',
+    top: 1.496,
+  },
+  inactiveStar: {
+    left: 1.4856,
+    position: 'absolute',
+    top: 1.8688,
+  },
   logo: {
     backgroundColor: colors2024['neutral-bg-0'],
-    borderRadius: 12,
-    height: 24,
-    width: 24,
+    borderRadius: 16,
+    height: 32,
+    width: 32,
   },
   marketContent: {
     flex: 1,
@@ -315,6 +338,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
   },
   volumeText: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-secondary'],
     flexShrink: 0,
     fontFamily: 'SF Pro Rounded',
@@ -329,6 +353,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 1,
   },
   marketPrice: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     marginLeft: 8,
     fontFamily: 'SF Pro Rounded',
@@ -337,6 +362,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
   },
   changeUp: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['green-default'],
     flexShrink: 0,
     marginLeft: 20,
@@ -346,6 +372,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
   },
   changeDown: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['red-default'],
     flexShrink: 0,
     marginLeft: 20,
@@ -355,6 +382,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
   },
   changeMuted: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-secondary'],
     flexShrink: 0,
     marginLeft: 20,

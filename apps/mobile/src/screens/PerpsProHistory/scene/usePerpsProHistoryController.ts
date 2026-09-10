@@ -163,6 +163,7 @@ export const usePerpsProHistoryController = (
     activeTab,
     enabled: requestEnabled,
     liveEnabled,
+    presentationEpoch: 0,
   });
   guardRef.current = {
     accountAddress,
@@ -170,6 +171,13 @@ export const usePerpsProHistoryController = (
     activeTab,
     enabled: requestEnabled,
     liveEnabled,
+    // Keep request/cache validity independent from the visible refresh session.
+    presentationEpoch:
+      guardRef.current.presentationEpoch +
+      Number(
+        guardRef.current.activeTab !== activeTab ||
+          guardRef.current.liveEnabled !== liveEnabled,
+      ),
   };
 
   useEffect(() => {
@@ -564,6 +572,7 @@ export const usePerpsProHistoryController = (
           refreshing: true,
         }));
       }
+      const presentationEpoch = guardRef.current.presentationEpoch;
 
       try {
         const [batch] = await Promise.all([
@@ -621,7 +630,15 @@ export const usePerpsProHistoryController = (
           refreshError: error instanceof Error ? error.message : String(error),
           refreshing: false,
         }));
-        showToast(refreshFailedMessage, 'error');
+        const guard = guardRef.current;
+        if (
+          presentation === 'manual' &&
+          guard.liveEnabled &&
+          guard.activeTab === tab &&
+          guard.presentationEpoch === presentationEpoch
+        ) {
+          showToast(refreshFailedMessage, 'error');
+        }
       } finally {
         finishRequest(token);
       }

@@ -462,6 +462,7 @@ describe('PerpsProPositionTpSlSheet', () => {
     expect(label.props.ellipsizeMode).toBeUndefined();
     expect(value.props.children).toBe('0.800(80.00%)');
     expect(value.props.numberOfLines).toBe(1);
+    expect(value.props.adjustsFontSizeToFit).toBeUndefined();
     expect(value.props.ellipsizeMode).toBeUndefined();
     expect(StyleSheet.flatten(label.props.style)).toMatchObject({
       flexShrink: 0,
@@ -470,7 +471,9 @@ describe('PerpsProPositionTpSlSheet', () => {
       textAlign: 'right',
       top: 0,
     });
+    expect(StyleSheet.flatten(value.props.style).left).toBeUndefined();
     expect(StyleSheet.flatten(value.props.style)).toMatchObject({
+      fontVariant: ['tabular-nums'],
       flexShrink: 0,
       position: 'absolute',
       right: 0,

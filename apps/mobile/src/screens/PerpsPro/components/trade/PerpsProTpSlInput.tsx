@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -143,6 +144,7 @@ export const PerpsProTpSlInput: React.FC<{
               </>
             ) : null}
             <PerpsProDecimalTextInput
+              keyboardScrollTrade
               accessibilityLabel={label}
               canonicalizeValueOnBlur={
                 usesPriceEditingPolicy ? canonicalizePriceInput : undefined
@@ -250,6 +252,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     top: 11,
   },
   input: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
@@ -265,6 +268,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   inputWithNegativePrefix: { paddingLeft: NEGATIVE_PREFIX_SLOT_WIDTH },
   valueMeasure: {
+    ...PERPS_PRO_NUMBER_STYLE,
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',

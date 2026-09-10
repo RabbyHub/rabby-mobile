@@ -21,6 +21,7 @@ import { useHideTipsPopup, useIsTipsPopupVisible } from '@/hooks/useTipsPopup';
 import { usePerpsProSheetNavigationRegistration } from '@/screens/PerpsPro/components/common/perpsProSheetNavigationRegistry';
 import {
   PERPS_PRO_FONT_FAMILY,
+  PERPS_PRO_SHEET_CORNER_RADIUS,
   getPerpsProFontStyle,
 } from '@/screens/PerpsPro/components/common/perpsProVisual';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -227,14 +228,14 @@ PerpsProHistorySheetHost.displayName = 'PerpsProHistorySheetHost';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   modal: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: PERPS_PRO_SHEET_CORNER_RADIUS,
+    borderTopRightRadius: PERPS_PRO_SHEET_CORNER_RADIUS,
     overflow: 'hidden',
   },
   background: {
     backgroundColor: colors2024['neutral-bg-0'],
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: PERPS_PRO_SHEET_CORNER_RADIUS,
+    borderTopRightRadius: PERPS_PRO_SHEET_CORNER_RADIUS,
   },
   handle: {
     backgroundColor: colors2024['neutral-bg-0'],

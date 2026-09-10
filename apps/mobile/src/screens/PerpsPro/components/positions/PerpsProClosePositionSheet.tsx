@@ -52,6 +52,7 @@ import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationC
 import { PerpsProSlider } from '../common/PerpsProSlider';
 import { usePerpsProDismissKeyboard } from '../common/usePerpsProDismissKeyboard';
 import { usePerpsProSliderHaptics } from '../common/usePerpsProSliderHaptics';
+import { usePerpsProKeyboardInput } from '../common/usePerpsProKeyboardInput';
 import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
 import { PerpsProCloseMarketTag } from './PerpsProCloseMarketTag';
 import { getPerpsProClosePositionSheetStyles } from './PerpsProClosePositionSheet.styles';
@@ -113,6 +114,11 @@ export const PerpsProClosePositionSheet: React.FC<{
     visible,
   }) => {
     const modalRef = useRef<AppBottomSheetModal>(null);
+    const amountInputRef =
+      useRef<React.ElementRef<typeof BottomSheetTextInput>>(null);
+    const amountKeyboard = usePerpsProKeyboardInput(amountInputRef, {
+      enabled: visible,
+    });
     const previousAmountUnitRef = useRef(amountUnit);
     const { colors2024, styles } = useTheme2024({
       getStyle: getPerpsProClosePositionSheetStyles,
@@ -463,6 +469,9 @@ export const PerpsProClosePositionSheet: React.FC<{
                     {t('page.perps.pro.positions.amount')}
                   </Text>
                   <BottomSheetTextInput
+                    inputAccessoryViewID={amountKeyboard.inputAccessoryViewID}
+                    onBlur={amountKeyboard.onBlur}
+                    ref={amountInputRef}
                     accessibilityLabel={t('page.perps.pro.positions.amount')}
                     cursorColor={colors2024['brand-default']}
                     keyboardType="decimal-pad"
@@ -470,7 +479,10 @@ export const PerpsProClosePositionSheet: React.FC<{
                     multiline={false}
                     numberOfLines={1}
                     onChangeText={handleAmountChange}
-                    onFocus={() => beginAmountEntry()}
+                    onFocus={() => {
+                      amountKeyboard.onFocus();
+                      beginAmountEntry();
+                    }}
                     onKeyPress={event => {
                       if (
                         event.nativeEvent.key === 'Backspace' &&
