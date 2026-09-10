@@ -2,6 +2,7 @@ import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcFavoriteStar from '@/assets2024/icons/perps/PerpsProFavoriteStar.svg';
 import RcFavoriteStarInactive from '@/assets2024/icons/perps/PerpsProFavoriteStarInactive.svg';
 import { Text } from '@/components/Typography';
+import { IS_IOS } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useEffect, useRef } from 'react';
@@ -321,6 +322,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     ...getPerpsProMetadataTagContainerStyle(colors2024),
     ...getPerpsProMetadataTagTextStyle(colors2024),
     maxWidth: 52,
+    ...(IS_IOS ? { overflow: 'hidden' as const } : {}),
   },
   marketMeta: {
     alignItems: 'center',

@@ -2,6 +2,14 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
+let mockIsIOS = true;
+
+jest.mock('@/core/native/utils', () => ({
+  get IS_IOS() {
+    return mockIsIOS;
+  },
+}));
+
 jest.mock('@/assets2024/icons/perps/PerpsProFavoriteStar.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -105,7 +113,11 @@ const createMarketData = (
   ...overrides,
 });
 
-describe('PerpsProMarketRow', () => {
+describe.each([true, false])('PerpsProMarketRow (iOS=%s)', isIOS => {
+  beforeEach(() => {
+    mockIsIOS = isIOS;
+  });
+
   it.each([
     ['111111.11', 2, '111,111.11'],
     ['0.00000123', 8, '0.00000123'],
@@ -214,7 +226,11 @@ describe('PerpsProMarketRow', () => {
         lineHeight: 20,
       }),
     );
-    const sourceStyle = StyleSheet.flatten(screen.getByText('xyz').props.style);
+    const source = screen.getByText('xyz');
+    const { overflow, ...sourceStyle } = StyleSheet.flatten(source.props.style);
+    expect(overflow).toBe(isIOS ? 'hidden' : undefined);
+    expect(source.props.numberOfLines).toBe(1);
+    expect(source.props.adjustsFontSizeToFit).toBeUndefined();
     expect(sourceStyle).toEqual({
       backgroundColor: 'neutral-bg-5',
       borderRadius: 4,
