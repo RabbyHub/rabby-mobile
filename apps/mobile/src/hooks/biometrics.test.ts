@@ -22,6 +22,7 @@ describe('hooks/biometrics', () => {
       | import('@rabby-wallet/service-keyring').KeyringPasswordState
       | undefined,
     isIOS = false,
+    shouldRequireBiometricProofForSetup = false,
   } = {}) => {
     jest.resetModules();
 
@@ -81,11 +82,6 @@ describe('hooks/biometrics', () => {
       sourceLabel: 'test-keychain',
     }));
 
-    jest.doMock('@rabby-wallet/react-native-keychain', () => ({
-      BIOMETRY_TYPE: {
-        FACE_ID: 'FaceID',
-      },
-    }));
     jest.doMock('react-i18next', () => ({
       useTranslation: () => ({
         t: (key: string) => key,
@@ -119,6 +115,9 @@ describe('hooks/biometrics', () => {
     }));
     jest.doMock('@/core/apis/keychain', () => ({
       KEYCHAIN_AUTH_TYPES,
+      KEYCHAIN_BIOMETRY_TYPES: {
+        FACE_ID: 'FaceID',
+      },
       RequestGenericPurpose,
       getAuthenticationType: jest.fn(() => currentAuthType),
       getSupportedBiometryType: mockGetSupportedBiometryType,
@@ -127,6 +126,9 @@ describe('hooks/biometrics', () => {
       getKeychainEntryState: mockGetKeychainEntryState,
       getDefaultBiometricsAuthenticationType: jest.fn(
         () => KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE,
+      ),
+      shouldRequireBiometricProofForSetup: jest.fn(
+        () => shouldRequireBiometricProofForSetup,
       ),
       setGenericPassword: mockSetGenericPassword,
       requestGenericPassword: mockRequestGenericPassword,
@@ -250,6 +252,7 @@ describe('hooks/biometrics', () => {
     );
     expect(mockRequestGenericPassword).toHaveBeenCalledWith({
       purpose: RequestGenericPurpose.VERIFY,
+      androidRequireBiometricProof: false,
     });
     expect(mockGetSupportedBiometryType).toHaveBeenCalled();
     expect(mockIsPasscodeAuthAvailable).toHaveBeenCalled();
@@ -322,6 +325,37 @@ describe('hooks/biometrics', () => {
     expect(computed.systemAuthSettingsLabel).toBe(
       'page.setting.useDevicePassword',
     );
+  });
+
+  it('allows device credentials when enabling normally detected biometrics', async () => {
+    const { module, mockRequestGenericPassword } = await setup({
+      supportedBiometryType: 'Fingerprint',
+    });
+
+    await module.storeApisBiometrics.toggleBiometrics(true, {
+      validatedPassword: 'plain-password',
+    });
+
+    expect(mockRequestGenericPassword).toHaveBeenCalledWith({
+      purpose: RequestGenericPurpose.VERIFY,
+      androidRequireBiometricProof: false,
+    });
+  });
+
+  it('requires a successful biometric prompt for the API 29 compatibility path', async () => {
+    const { module, mockRequestGenericPassword } = await setup({
+      supportedBiometryType: 'Fingerprint',
+      shouldRequireBiometricProofForSetup: true,
+    });
+
+    await module.storeApisBiometrics.toggleBiometrics(true, {
+      validatedPassword: 'plain-password',
+    });
+
+    expect(mockRequestGenericPassword).toHaveBeenCalledWith({
+      purpose: RequestGenericPurpose.VERIFY,
+      androidRequireBiometricProof: true,
+    });
   });
 
   it('finishes a persisted biometric-disable transition before unlock', async () => {

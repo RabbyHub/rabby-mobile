@@ -68,6 +68,10 @@ const resolveStartupProfilerWorkerDeferral = (environment = process.env) =>
     environment.RABBY_STARTUP_PROFILER_DEFER_WORKER,
   ) ?? false;
 
+if (require.main === module) {
+  process.stdout.write(`${resolveReactNativeArchitecture()}\n`);
+}
+
 module.exports = {
   resolveReactNativeArchitecture,
   resolveStartupProfilerWorkerDeferral,

@@ -59,8 +59,14 @@ import {
 import { apisHomeTabIndex, UnlockUIManager } from './navigation';
 import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 import { switchSceneCurrentAccount } from './accountsSwitcher';
-import { setSensitiveSceneProtectionEnabled } from './appSettings';
+import {
+  setCurrentKeychainVersion,
+  setSensitiveSceneProtectionEnabled,
+  type CurrentKeychainVersion,
+} from './appSettings';
 import { IS_IOS } from '@/core/native/utils';
+import { parseKeychainVersionDeepLinkValue } from '@/core/apis/keychainVersionShared';
+import RNHelpers from '@/core/native/RNHelpers';
 
 const nextAppLinkRef = {
   current: '' as string,
@@ -99,11 +105,13 @@ type OnParseUrlAndProcessAction = (payload: {
     | typeof RootNames.DebugLogViewer
     | typeof RootNames.StartupPerformanceLogViewer
     | typeof RootNames.DevDataSQLite
+    | typeof RootNames.DevDataKeychain
     | typeof RootNames.DevSwitches;
   testkitParams?: {
     tab?: 'overview' | 'debug';
     appLaunchLock?: boolean;
     sensitiveSceneProtection?: boolean;
+    keychainVersion?: CurrentKeychainVersion;
   };
   debugDbSyncPolicy?: {
     resetWritePolicyOverride?: boolean;
@@ -123,6 +131,7 @@ const NON_PRODUCTION_TESTKIT_SCREENS = {
   DebugLogViewer: RootNames.DebugLogViewer,
   StartupPerformanceLogViewer: RootNames.StartupPerformanceLogViewer,
   DevDataSQLite: RootNames.DevDataSQLite,
+  DevDataKeychain: RootNames.DevDataKeychain,
   DevSwitches: RootNames.DevSwitches,
 } as const;
 
@@ -186,6 +195,9 @@ function parseNonProductionTestkitLink(appLink: string) {
       : sensitiveSceneProtectionRaw === 'disabled'
       ? false
       : undefined;
+  const keychainVersion = parseKeychainVersionDeepLinkValue(
+    urlInfo.searchParams.get('keychainVersion'),
+  );
 
   return {
     type: 'open-testkit-screen',
@@ -194,7 +206,8 @@ function parseNonProductionTestkitLink(appLink: string) {
       tabRaw === 'debug' ||
       tabRaw === 'overview' ||
       appLaunchLock !== undefined ||
-      sensitiveSceneProtection !== undefined
+      sensitiveSceneProtection !== undefined ||
+      keychainVersion !== null
         ? {
             ...(tabRaw === 'debug' || tabRaw === 'overview'
               ? { tab: tabRaw }
@@ -203,6 +216,7 @@ function parseNonProductionTestkitLink(appLink: string) {
             ...(sensitiveSceneProtection !== undefined
               ? { sensitiveSceneProtection }
               : {}),
+            ...(keychainVersion ? { keychainVersion } : {}),
           }
         : undefined,
   } satisfies Parameters<OnParseUrlAndProcessAction>[0];
@@ -696,6 +710,23 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
             restartRequired: IS_IOS,
           },
         );
+      }
+      if (
+        isNonPublicProductionEnv &&
+        payload.testkitScreen === RootNames.DevDataKeychain &&
+        payload.testkitParams?.keychainVersion
+      ) {
+        const appliedVersion = setCurrentKeychainVersion(
+          payload.testkitParams.keychainVersion,
+        );
+        console.info(
+          '[useUniversalLinkOnTop] Keychain version set for next cold start',
+          { appliedVersion },
+        );
+        setTimeout(() => {
+          RNHelpers.forceExitApp();
+        }, 100);
+        return;
       }
       dispatchWhenNavigationReady(
         StackActions.push(RootNames.StackTestkits, {

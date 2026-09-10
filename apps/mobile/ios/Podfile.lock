@@ -325,8 +325,6 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - RabbyRNKeychain (8.2.0-rabby.0):
-    - React-Core
   - RabbyRNKeychainV9 (9.2.3-rabby.0):
     - boost
     - DoubleConversion
@@ -3468,7 +3466,6 @@ DEPENDENCIES:
   - "op-sqlite (from `../node_modules/@op-engineering/op-sqlite`)"
   - OpenSSL-Universal (= 3.6.2000)
   - QuickCrypto (from `../node_modules/react-native-quick-crypto`)
-  - "RabbyRNKeychain (from `../node_modules/@rabby-wallet/react-native-keychain`)"
   - "RabbyRNKeychainV9 (from `../node_modules/@rabby-wallet/react-native-keychain-9`)"
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCTDeprecation (from `../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
@@ -3646,8 +3643,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@op-engineering/op-sqlite"
   QuickCrypto:
     :path: "../node_modules/react-native-quick-crypto"
-  RabbyRNKeychain:
-    :path: "../node_modules/@rabby-wallet/react-native-keychain"
   RabbyRNKeychainV9:
     :path: "../node_modules/@rabby-wallet/react-native-keychain-9"
   RCT-Folly:
@@ -3913,7 +3908,6 @@ SPEC CHECKSUMS:
   OpenSSL-Universal: ecee7b138fa75a74ecf00d7ffd248fb584739b9e
   PromisesObjC: 752c3227f599e3467650e47ea36f433eeb10c273
   QuickCrypto: 5d9895c12af84f6872bc576255afb93844fb7c05
-  RabbyRNKeychain: cc2d4ef9630a23dd2a9d72ba3532d54a2fb58c66
   RabbyRNKeychainV9: 149a60d8e00ab5ce9e5a2d27361994d60c332264
   RCT-Folly: 59ec0ac1f2f39672a0c6e6cecdd39383b764646f
   RCTDeprecation: d4ef510f229cea15314176aee5e3ba10064a8496

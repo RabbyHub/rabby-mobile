@@ -82,9 +82,3 @@ NativeModules.RNHelpers = {
 NativeModules.RNVersionCheck = {
   packageName: 'com.debank.rabbymobile.regression',
 };
-
-NativeModules.RNRabbyKeychainManager = {
-  SECURITY_LEVEL_ANY: 'ANY',
-  SECURITY_LEVEL_SECURE_SOFTWARE: 'SECURE_SOFTWARE',
-  SECURITY_LEVEL_SECURE_HARDWARE: 'SECURE_HARDWARE',
-};

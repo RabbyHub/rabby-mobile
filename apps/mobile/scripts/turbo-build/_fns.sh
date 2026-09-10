@@ -629,6 +629,7 @@ turbo_compute_cocoapods_cache_key() {
 
 turbo_compute_gradle_cache_key() {
   repo_root="$RABBY_MOBILE_REPO_ROOT"
+  react_native_arch=$(build_cache_resolve_react_native_architecture) || return $?
   files_hash=$(
     turbo_hash_git_files "$repo_root" \
       apps/mobile/android/build.gradle \
@@ -642,7 +643,7 @@ turbo_compute_gradle_cache_key() {
 
   printf '%s\n' \
     "platform=$(turbo_platform_fingerprint)" \
-    "react_native_arch=${RCT_NEW_ARCH_ENABLED:-0}" \
+    "react_native_arch=$react_native_arch" \
     "java=$(java -version 2>&1 | head -n 1)" \
     "files=$files_hash" \
     | turbo_sha256 | awk '{print $1}'
