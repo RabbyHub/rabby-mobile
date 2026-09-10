@@ -15,6 +15,7 @@ import {
   type AppStateStatus,
 } from 'react-native';
 
+let mockIsLight = true;
 const mockUsePerpsProScene = jest.fn();
 const mockUsePerpsProInfoPanel = jest.fn();
 const mockMarketSelectorPresent = jest.fn();
@@ -330,8 +331,8 @@ jest.mock('@/hooks/theme', () => ({
     );
     return {
       colors2024,
-      isLight: true,
-      styles: getStyle({ colors2024 }),
+      isLight: mockIsLight,
+      styles: getStyle({ colors2024, isLight: mockIsLight }),
     };
   },
 }));
@@ -821,6 +822,7 @@ const createPositionActionsState = (
 describe('PerpsProScene market loading states', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockIsLight = true;
     mockQueueInfoCallbacks = false;
     mockInfoCallbacks.splice(0);
     mockDismissKeyboardThen.mockReset();
@@ -1969,6 +1971,33 @@ describe('PerpsProScene market loading states', () => {
     ).toBe(542);
     expect(screen.getAllByTestId('perps-pro-info-tab-account')).toHaveLength(1);
   });
+
+  it.each([true, false])(
+    'keeps the six-point section divider distinct with isLight=%s',
+    isLight => {
+      mockIsLight = isLight;
+      mockUsePerpsProScene.mockReturnValue(createSceneState());
+      render(
+        <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
+      );
+      const spacer = screen.getByTestId('perps-pro-info-tabs-spacer');
+      const divider = spacer.children[0];
+      if (typeof divider === 'string') {
+        throw new Error('Missing section divider');
+      }
+      expect(divider.props.pointerEvents).toBe('none');
+      expect(StyleSheet.flatten(divider.props.style)).toMatchObject({
+        backgroundColor: isLight ? 'neutral-bg-0' : 'neutral-bg-2',
+        height: 6,
+        bottom: 38,
+        left: 0,
+        right: 0,
+      });
+      expect(StyleSheet.flatten(spacer.props.style)).toMatchObject({
+        height: 60,
+      });
+    },
+  );
 
   it('uses one Android scene gesture owner and a shared Trade offset', () => {
     Object.defineProperty(Platform, 'OS', {

@@ -1716,7 +1716,7 @@ export const PerpsProScene: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     flex: 1,
     overflow: 'hidden',
@@ -1764,7 +1764,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   infoTabsSpacer: { height: PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT },
   infoSectionDivider: {
-    backgroundColor: colors2024['neutral-bg-0'],
+    backgroundColor: colors2024[isLight ? 'neutral-bg-0' : 'neutral-bg-2'],
     bottom: PERPS_PRO_INFO_TABS_HEIGHT,
     height: PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT,
     left: 0,
