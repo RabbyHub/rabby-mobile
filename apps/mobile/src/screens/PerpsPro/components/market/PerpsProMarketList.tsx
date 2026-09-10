@@ -250,14 +250,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   searchEmpty: {
     alignItems: 'center',
-    paddingTop: 64,
+    // Sheet y=246: handle 40 + search 46 + results 16 + list 16 + empty 128.
+    paddingTop: 128,
   },
   searchEmptyText: {
     color: colors2024['neutral-info'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '400',
-    lineHeight: 18,
+    lineHeight: 20,
     marginTop: 12,
     textAlign: 'center',
   },
