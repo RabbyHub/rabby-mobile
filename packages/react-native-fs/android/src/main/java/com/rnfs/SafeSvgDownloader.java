@@ -88,7 +88,7 @@ final class SafeSvgDownloader {
           if (location == null || location.isEmpty()) {
             return new Result(NETWORK, status, bytes);
           }
-          current = validateUrl(new URL(current, location).toString());
+          current = validateTrustedRedirectUrl(current, location);
           continue;
         }
 
@@ -172,6 +172,16 @@ final class SafeSvgDownloader {
       throw new InvalidSafeMediaUrl();
     }
     return uri.toURL();
+  }
+
+  private static URL validateTrustedRedirectUrl(URL current, String location)
+      throws Exception {
+    URL redirect = validateUrl(new URL(current, location).toString());
+    String host = redirect.getHost().toLowerCase(Locale.ROOT);
+    if (!host.equals("debank.com") && !host.endsWith(".debank.com")) {
+      throw new InvalidSafeMediaUrl();
+    }
+    return redirect;
   }
 
   private static boolean isIpLiteral(String host) {

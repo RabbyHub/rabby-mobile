@@ -40,6 +40,13 @@ BOOL RNFSIsAllowedSafeMediaURL(NSURL *url)
   return YES;
 }
 
+BOOL RNFSIsTrustedMediaRedirectURL(NSURL *url)
+{
+  NSURLComponents *components = [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:YES];
+  NSString *host = components.host.lowercaseString;
+  return [host isEqualToString:@"debank.com"] || [host hasSuffix:@".debank.com"];
+}
+
 NSOperationQueue *RNFSSafeMediaDelegateQueue(void)
 {
   static NSOperationQueue *queue;
@@ -229,7 +236,8 @@ willPerformHTTPRedirection:(NSHTTPURLResponse *)response
  completionHandler:(void (^)(NSURLRequest *_Nullable))completionHandler
 {
   _redirectCount += 1;
-  if (_redirectCount > kMaxRedirects || !RNFSIsAllowedSafeMediaURL(request.URL)) {
+  if (_redirectCount > kMaxRedirects || !RNFSIsAllowedSafeMediaURL(request.URL) ||
+      !RNFSIsTrustedMediaRedirectURL(request.URL)) {
     completionHandler(nil);
     [self finishWithCode:rabbyfs::SafeMediaDownloadCode::InvalidUrl];
     return;
