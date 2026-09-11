@@ -25,6 +25,10 @@ import RNFS, {
   type SafeSvgResult,
   type SafeSvgVariant,
 } from '@rabby-wallet/react-native-fs';
+import {
+  getTrustedSafeSvgUrl,
+  isDebankMediaUrl,
+} from '@/utils/trustedMediaUrl';
 
 export enum MEDIA_TYPE {
   IMAGE = 'image',
@@ -48,17 +52,8 @@ interface MediaProps {
   safeSvgVariant?: SafeSvgVariant;
 }
 
-const isDebankUrl = (url: string) => {
-  try {
-    const hostname = new URL(url).hostname.toLowerCase();
-    return hostname === 'debank.com' || hostname.endsWith('.debank.com');
-  } catch (_error) {
-    return false;
-  }
-};
-
 const getValidLink = (link?: string) => {
-  return link && link.startsWith('http') && isDebankUrl(link)
+  return link && link.startsWith('http') && isDebankMediaUrl(link)
     ? link
     : undefined;
 };
@@ -70,20 +65,6 @@ const checkImageLink = (link?: string) => {
     SUPPORT_IMAGE_TYPE.some(x => link?.toLowerCase().endsWith(x))
     ? link
     : undefined;
-};
-
-const isSvgLink = (link?: string) => !!link && /\.svg(?:$|[?#])/i.test(link);
-
-const getSafeSvgLink = (link?: string) => {
-  if (!link || !isSvgLink(link)) {
-    return undefined;
-  }
-
-  try {
-    return new URL(link).protocol === 'https:' ? link : undefined;
-  } catch (_error) {
-    return undefined;
-  }
 };
 
 type SafeSvgState =
@@ -147,10 +128,9 @@ export const Media = ({
     if (type !== MEDIA_TYPE.IMAGE && type !== MEDIA_TYPE.IMAGE_URL) {
       return undefined;
     }
-    // Raster images keep the existing DeBank-host restriction. SVGs are
-    // downloaded by the hardened native pipeline, which validates HTTPS,
-    // redirects, response size, and the SVG contents before exposing a PNG.
-    return [thumbnail, src].map(getSafeSvgLink).find(Boolean);
+    // Keep the existing DeBank-host privacy boundary for every production
+    // media fetch. Trusted SVGs are then validated and rasterized natively.
+    return [thumbnail, src].map(getTrustedSafeSvgUrl).find(Boolean);
   }, [src, thumbnail, type]);
   const invalidImageSource =
     (type === MEDIA_TYPE.IMAGE || type === MEDIA_TYPE.IMAGE_URL) &&
