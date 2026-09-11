@@ -438,7 +438,13 @@ turbo_bundle_exec() {
 }
 
 turbo_bundle_pod() {
-  turbo_bundle_exec exec ruby -e 'load Gem.bin_path("cocoapods", "pod")' -- "$@"
+  if [ "${RABBY_MOBILE_COCOAPODS_FORCE_HTTP1:-false}" = "true" ]; then
+    turbo_bundle_exec exec ruby \
+      -e 'require ARGV.shift; load Gem.bin_path("cocoapods", "pod")' -- \
+      "$script_dir/ci/cocoapods-force-http1.rb" "$@"
+  else
+    turbo_bundle_exec exec ruby -e 'load Gem.bin_path("cocoapods", "pod")' -- "$@"
+  fi
 }
 
 turbo_log() {
@@ -1238,13 +1244,27 @@ turbo_prepare_cocoapods() {
       return 0
     fi
 
-    (cd "$project_dir/ios" && turbo_bundle_pod install) || return $?
+    turbo_install_cocoapods || return $?
     turbo_mark_cocoapods_architecture
     turbo_save_layer cocoapods "$cache_key" apps/mobile/ios/Pods
   else
-    (cd "$project_dir/ios" && turbo_bundle_pod install --repo-update) || return $?
+    turbo_install_cocoapods --repo-update || return $?
     turbo_mark_cocoapods_architecture
   fi
+}
+
+turbo_install_cocoapods() {
+  if (cd "$project_dir/ios" && turbo_bundle_pod install "$@"); then
+    return 0
+  else
+    tb_cocoapods_status=$?
+  fi
+
+  turbo_log "CocoaPods install failed with status $tb_cocoapods_status; retrying once with CDN requests forced to HTTP/1.1"
+  (
+    cd "$project_dir/ios" &&
+      RABBY_MOBILE_COCOAPODS_FORCE_HTTP1=true turbo_bundle_pod install "$@"
+  )
 }
 
 turbo_restore_gradle_state() {
