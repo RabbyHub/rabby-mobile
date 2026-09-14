@@ -1011,6 +1011,16 @@
       },
       "gas-fee": "Комиссия за газ: {{gasUsed}}",
       "rabbyFee": {
+        "discountTitle": "Скидка на комиссию Rabby",
+        "case": "Условие",
+        "free": "Бесплатно",
+        "cases": {
+          "wrap": "Упаковка/распаковка нативного токена",
+          "stablecoins": "Стейблкоины",
+          "lstLrt": "Токен LST/LRT",
+          "million": "Объём $1M+",
+          "hundredThousand": "Объём $100k - $1M"
+        },
         "wallet": "Кошелёк",
         "title": "Комиссия Rabby",
         "button": "Понял",
@@ -2207,6 +2217,7 @@
           "liquidationPrice": "Цена ликвидации",
           "triggerPrice": "Цена срабатывания",
           "amount": "Объём",
+          "keyboardMinimum": "Мин. {{amount}}",
           "available": "Доступно",
           "reduceOnly": "Только сокращение",
           "confirmationReduceOnly": "Только сокращение",
