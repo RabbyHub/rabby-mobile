@@ -16,6 +16,8 @@ import React from 'react';
 import { Keyboard, StyleSheet } from 'react-native';
 import { perpsProKeyboardSession } from '../common/perpsProKeyboardSession';
 
+const ReactNative = jest.requireActual('react-native');
+
 jest.mock('@/core/native/utils', () => ({ IS_ANDROID: true }));
 jest.mock('react-native-reanimated', () => ({
   useAnimatedReaction: jest.fn(),
@@ -511,3 +513,93 @@ describe('PerpsProLeverageSheet', () => {
     expect(onConfirm).toHaveBeenCalledWith(1);
   });
 });
+
+it.each(['android', 'ios'] as const)(
+  'preserves input geometry through editing with the real %s font factory',
+  platform => {
+    let Sheet = PerpsProLeverageSheet;
+    jest.resetModules();
+    jest.isolateModules(() => {
+      jest.doMock('react', () => React);
+      jest.doMock('react-native', () => ReactNative);
+      jest.doMock('@/core/native/utils', () => ({
+        IS_ANDROID: platform === 'android',
+        IS_IOS: platform === 'ios',
+      }));
+      jest.doMock('@/utils/styles', () => {
+        const actual = jest.requireActual('@/utils/styles');
+        return {
+          ...actual,
+          createGetStyles2024: (factory: unknown) =>
+            actual.createGetStyles2024(factory).getStyles,
+        };
+      });
+      Sheet = jest.requireActual(
+        './PerpsProLeverageSheet',
+      ).PerpsProLeverageSheet;
+    });
+
+    render(
+      <Sheet
+        currentLeverage={21}
+        maxLeverage={40}
+        onClose={jest.fn()}
+        onConfirm={jest.fn()}
+        pending={false}
+        visible
+      />,
+    );
+    const input = screen.getByTestId('perps-pro-leverage-input');
+    const inputStyle = StyleSheet.flatten(input.props.style);
+    const measureStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-leverage-input-measure', {
+        includeHiddenElements: true,
+      }).props.style,
+    );
+    expect(inputStyle).toMatchObject({
+      fontFamily:
+        platform === 'android' ? 'SF-Pro-Rounded-Bold' : 'SF Pro Rounded',
+      fontSize: 36,
+      fontVariant: ['tabular-nums'],
+      height: platform === 'android' ? 54 : 42,
+      top: platform === 'android' ? -6 : 0,
+    });
+    expect(measureStyle).toMatchObject({ height: 42, lineHeight: 42 });
+    expect(inputStyle.top + inputStyle.height / 2).toBe(
+      measureStyle.height / 2,
+    );
+    expect(StyleSheet.flatten(screen.getByText('x').props.style)).toMatchObject(
+      {
+        fontSize: 36,
+        lineHeight: 42,
+      },
+    );
+    if (platform === 'android') {
+      expect(inputStyle.lineHeight).toBeUndefined();
+      expect(inputStyle).toMatchObject({
+        includeFontPadding: false,
+        textAlignVertical: 'center',
+      });
+    } else {
+      expect(inputStyle.lineHeight).toBe(42);
+      expect(inputStyle.includeFontPadding).toBeUndefined();
+      expect(inputStyle.textAlignVertical).toBeUndefined();
+    }
+
+    fireEvent(input, 'focus');
+    expect(input.props.selection).toEqual({ start: 2, end: 2 });
+    fireEvent(input, 'keyPress', { nativeEvent: { key: 'Backspace' } });
+    fireEvent.changeText(input, '2');
+    expect(input.props.selection).toBeUndefined();
+    for (const draft of ['', '1', '40']) {
+      fireEvent.changeText(input, draft);
+      expect(screen.getByTestId('perps-pro-leverage-input')).toBe(input);
+      expect(input.props.value).toBe(draft);
+      expect(StyleSheet.flatten(input.props.style)).toEqual(inputStyle);
+    }
+    fireEvent(input, 'blur');
+    fireEvent(input, 'focus');
+    expect(input.props.selection).toEqual({ start: 2, end: 2 });
+    expect(StyleSheet.flatten(input.props.style)).toEqual(inputStyle);
+  },
+);

@@ -35,6 +35,7 @@ import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
 import { PerpsProKeyboardSheetContext } from '../common/PerpsProKeyboardSheetContext';
 import { usePerpsProSheetKeyboard } from '../common/usePerpsProSheetKeyboard';
 import { PerpsProSheetKeyboardAnimation } from '../common/PerpsProSheetKeyboardAnimation';
+import { PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE } from '../common/perpsProSingleLineInput';
 
 const SHEET_HEIGHT = 362;
 const SheetContent = IS_ANDROID ? BottomSheetScrollView : BottomSheetView;
@@ -239,7 +240,12 @@ export const PerpsProLeverageSheet: React.FC<{
                       onChangeText={setDraft}
                       ref={inputRef}
                       selectionColor={colors2024['brand-default']}
-                      style={[styles.valueInput, styles.valueInputOverlay]}
+                      style={[
+                        styles.valueInput,
+                        styles.valueInputOverlay,
+                        // Apply after the style factory so undefined clears lineHeight.
+                        PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE,
+                      ]}
                       testID="perps-pro-leverage-input"
                       value={draft}
                     />
@@ -380,7 +386,15 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   // Use the same font and draft to size the input, including tabular digits.
   // The overlay keeps native input/cursor ownership and adds no measuring state.
   valueInputMeasure: { opacity: 0 },
-  valueInputOverlay: { position: 'absolute', left: 0, right: 0, top: 0 },
+  valueInputOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    // Fit Android's natural font metrics inside the existing 54-high row.
+    // Expand equally around the 42-high measuring slot, keeping its center.
+    ...(IS_ANDROID ? { height: 54, top: -6 } : {}),
+  },
   valueSuffix: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
