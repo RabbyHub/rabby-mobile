@@ -2159,6 +2159,7 @@
           "explanation": "The funding rate is used to calculate periodic payments between long and short position holders. When the funding rate is positive, longs pay shorts; when it is negative, shorts pay longs. The annualized rate is calculated using simple annualization."
         },
         "orderBook": {
+          "grouping": "Order book grouping",
           "price": "Price",
           "pnl": "PnL",
           "roi": "ROI%",

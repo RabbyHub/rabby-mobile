@@ -1,4 +1,3 @@
-import RcOptionCheck from '@/assets2024/icons/perps/PerpsProOptionCheck.svg';
 import { AppBottomSheetModal } from '@/components';
 import { Text } from '@/components/Typography';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
@@ -9,7 +8,8 @@ import React, { useEffect, useRef } from 'react';
 import { Pressable, View } from 'react-native';
 
 import type { PerpsProBboStrategy } from '../../model/bbo';
-import { getPerpsProBottomSheetChromeStyles } from '../common/perpsProVisual';
+import { getPerpsProDialogStyles } from '../common/perpsProDialogVisual';
+import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
 export interface PerpsProBboOption {
@@ -40,11 +40,12 @@ export const PerpsProBboSheet: React.FC<{
     <AppBottomSheetModal
       onDismiss={onClose}
       ref={modalRef}
-      snapPoints={[316]}
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: 'bg1',
+        linearGradientType: 'bg0',
       })}
+      enableDynamicSizing
+      backdropComponent={PerpsProDialogBackdrop}
       backgroundStyle={styles.background}
       handleIndicatorStyle={styles.handleIndicator}
       handleStyle={styles.handle}
@@ -64,17 +65,12 @@ export const PerpsProBboSheet: React.FC<{
                     onSelect(option.value);
                     onClose();
                   }}
-                  style={styles.option}
+                  style={[
+                    styles.option,
+                    active ? styles.optionActive : styles.optionInactive,
+                  ]}
                   testID={`perps-pro-bbo-${option.value}`}>
                   <Text style={styles.label}>{option.label}</Text>
-                  {active ? (
-                    <RcOptionCheck
-                      color={colors2024['green-default']}
-                      height={24}
-                      testID="perps-pro-bbo-selected"
-                      width={24}
-                    />
-                  ) : null}
                 </Pressable>
               );
             })}
@@ -87,36 +83,6 @@ export const PerpsProBboSheet: React.FC<{
 
 PerpsProBboSheet.displayName = 'PerpsProBboSheet';
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  ...getPerpsProBottomSheetChromeStyles(colors2024),
-  sheet: { height: '100%' },
-  content: {
-    height: '100%',
-    paddingHorizontal: 15,
-    paddingTop: 8,
-  },
-  title: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '700',
-    lineHeight: 20,
-  },
-  options: { gap: 8, marginTop: 16 },
-  option: {
-    alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderRadius: 12,
-    flexDirection: 'row',
-    overflow: 'hidden',
-    paddingVertical: 8,
-  },
-  label: {
-    color: colors2024['neutral-title-1'],
-    flex: 1,
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
+const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
+  ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom),
 }));

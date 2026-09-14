@@ -40,16 +40,16 @@ describe('Perps Pro layout model', () => {
     });
 
     expect(oneOption).toEqual({
-      bottomPadding: 48,
-      contentHeight: 136,
+      bottomPadding: 36,
+      contentHeight: 184,
       scrollEnabled: false,
-      snapPoint: 150,
+      snapPoint: 184,
     });
     expect(sixOptions).toEqual({
-      bottomPadding: 48,
-      contentHeight: 376,
+      bottomPadding: 36,
+      contentHeight: 484,
       scrollEnabled: false,
-      snapPoint: 376,
+      snapPoint: 484,
     });
   });
 
@@ -62,10 +62,10 @@ describe('Perps Pro layout model', () => {
         windowHeight: 568,
       }),
     ).toEqual({
-      bottomPadding: 48,
-      contentHeight: 664,
+      bottomPadding: 36,
+      contentHeight: 844,
       scrollEnabled: true,
-      snapPoint: 420,
+      snapPoint: 484,
     });
   });
 

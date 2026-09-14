@@ -1,3 +1,22 @@
+jest.mock('@/assets2024/icons/perps/PerpsProOrderTypeLimit.svg', () => {
+  const ReactModule = require('react');
+  return (props: object) =>
+    ReactModule.createElement(require('react-native').View, props);
+});
+
+jest.mock('@/assets2024/icons/perps/PerpsProOrderTypeMarket.svg', () => {
+  const ReactModule = require('react');
+  return (props: object) =>
+    ReactModule.createElement(require('react-native').View, props);
+});
+
+jest.mock('@/assets2024/icons/perps/PerpsProOrderTypeConditional.svg', () => {
+  const ReactModule = require('react');
+  return (props: object) =>
+    ReactModule.createElement(require('react-native').View, props);
+});
+jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
+
 import {
   fireEvent,
   render,
@@ -64,7 +83,7 @@ jest.mock('@/hooks/theme', () => ({
     return {
       colors2024,
       isLight: true,
-      styles: getStyle({ colors2024 }),
+      styles: getStyle({ colors2024, safeAreaInsets: { bottom: 0 } }),
     };
   },
 }));
@@ -119,7 +138,7 @@ import { PerpsProTifSheet } from './PerpsProTifSheet';
 import { PerpsProTpSlModeSheet } from './PerpsProTpSlModeSheet';
 
 describe('Perps Pro trade selection sheets', () => {
-  it('matches the 372px Margin Mode card contract', async () => {
+  it('matches the new Margin Mode card layout', async () => {
     const onClose = jest.fn();
     const onSelect = jest.fn(() => true);
     render(
@@ -132,14 +151,14 @@ describe('Perps Pro trade selection sheets', () => {
       />,
     );
 
-    expect(screen.getByTestId('selection-sheet').props.snapPoints).toEqual([
-      372,
-    ]);
+    expect(
+      screen.getByTestId('selection-sheet').props.enableDynamicSizing,
+    ).toBe(true);
     expect(
       StyleSheet.flatten(screen.getByTestId('selection-sheet').props.style),
     ).toMatchObject({
-      borderTopLeftRadius: 32,
-      borderTopRightRadius: 32,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
       overflow: 'hidden',
     });
     expect(
@@ -148,8 +167,8 @@ describe('Perps Pro trade selection sheets', () => {
       ),
     ).toMatchObject({
       backgroundColor: '#192945',
-      borderTopLeftRadius: 32,
-      borderTopRightRadius: 32,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
     });
     expect(
       StyleSheet.flatten(
@@ -158,8 +177,8 @@ describe('Perps Pro trade selection sheets', () => {
     ).toMatchObject({
       backgroundColor: '#192945',
       height: 40,
-      paddingBottom: 27,
-      paddingTop: 9,
+      paddingBottom: 23.727184,
+      paddingTop: 10,
     });
     expect(
       StyleSheet.flatten(
@@ -167,17 +186,17 @@ describe('Perps Pro trade selection sheets', () => {
       ),
     ).toMatchObject({
       backgroundColor: ThemeColors2024.light['neutral-sheet-handle'],
-      borderRadius: 2,
-      height: 4,
-      width: 40,
+      borderRadius: 3.136408,
+      height: 6.272816,
+      width: 50.182529,
     });
     expect(screen.getByText('BTC Margin Mode')).toBeTruthy();
     expect(
       StyleSheet.flatten(screen.getByText('Cross').props.style),
-    ).toMatchObject({ fontSize: 14, lineHeight: 18 });
+    ).toMatchObject({ fontSize: 16, lineHeight: 20 });
     expect(
       StyleSheet.flatten(screen.getByText('Cross description').props.style),
-    ).toMatchObject({ fontSize: 12, lineHeight: 16 });
+    ).toMatchObject({ fontSize: 14, lineHeight: 18 });
     expect(
       screen.getByTestId('perps-pro-margin-mode-cross').props
         .accessibilityState,
@@ -187,8 +206,8 @@ describe('Perps Pro trade selection sheets', () => {
         screen.getByTestId('perps-pro-margin-mode-cross').props.style,
       ),
     ).toMatchObject({
-      backgroundColor: '#192945',
-      borderColor: '#192945',
+      backgroundColor: 'rgba(80, 210, 193, 0.1)',
+      borderColor: 'rgba(35, 192, 176, 0.4)',
     });
     expect(screen.queryByTestId('perps-pro-margin-mode-selected')).toBeNull();
 
@@ -211,14 +230,9 @@ describe('Perps Pro trade selection sheets', () => {
     const isolatedCopy = screen.getByTestId(
       'perps-pro-margin-mode-isolated-copy',
     );
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-margin-mode-isolated').props.style,
-      ),
-    ).toMatchObject({ flexDirection: 'column' });
     expect(StyleSheet.flatten(isolatedCopy.props.style)).toMatchObject({
       alignSelf: 'stretch',
-      gap: 4,
+      gap: 8,
     });
     expect(
       screen.getByTestId('perps-pro-margin-mode-isolated').props
@@ -238,9 +252,9 @@ describe('Perps Pro trade selection sheets', () => {
     );
     expect(crossTitleStyle).toEqual(isolatedTitleStyle);
     expect(crossTitleStyle).toMatchObject({
-      fontSize: 14,
-      fontWeight: '500',
-      lineHeight: 18,
+      fontSize: 16,
+      fontWeight: '700',
+      lineHeight: 20,
     });
     expect(crossTitleStyle.fontVariant).toBeUndefined();
     expect(isolatedTitleStyle.fontVariant).toBeUndefined();
@@ -270,7 +284,7 @@ describe('Perps Pro trade selection sheets', () => {
     expect(onSelect).not.toHaveBeenCalled();
   });
 
-  it('matches the 326px Order Type icon-list contract', () => {
+  it('matches the new Order Type card layout', () => {
     const onSelect = jest.fn();
     render(
       <PerpsProOrderTypeSheet
@@ -281,28 +295,31 @@ describe('Perps Pro trade selection sheets', () => {
       />,
     );
 
-    expect(screen.getByTestId('selection-sheet').props.snapPoints).toEqual([
-      326,
-    ]);
+    expect(
+      screen.getByTestId('selection-sheet').props.enableDynamicSizing,
+    ).toBe(true);
     expect(
       StyleSheet.flatten(screen.getByText('Order Type').props.style),
-    ).toMatchObject({ fontSize: 16, lineHeight: 20 });
+    ).toMatchObject({ fontSize: 20, lineHeight: 24 });
     expect(screen.queryByTestId('perps-pro-order-type-help')).toBeNull();
-    expect(screen.getByTestId('perps-pro-order-type-selected')).toBeTruthy();
+    expect(
+      screen.getByTestId('perps-pro-order-type-limit').props.accessibilityState,
+    ).toEqual({ checked: true });
+    expect(screen.queryByTestId('perps-pro-order-type-selected')).toBeNull();
     expect(
       StyleSheet.flatten(
         screen.getByTestId('selection-sheet').props.backgroundStyle,
       ),
     ).toMatchObject({
       backgroundColor: '#192945',
-      borderTopLeftRadius: 32,
-      borderTopRightRadius: 32,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
     });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('selection-sheet').props.handleIndicatorStyle,
       ),
-    ).toMatchObject({ height: 4, width: 40 });
+    ).toMatchObject({ height: 6.272816, width: 50.182529 });
     expect(screen.getByText('Limit description')).toBeTruthy();
     expect(screen.getByText('Market description')).toBeTruthy();
     expect(
@@ -315,7 +332,7 @@ describe('Perps Pro trade selection sheets', () => {
     expect(onSelect).toHaveBeenCalledWith('market');
   });
 
-  it('matches the 316px BBO icon-list contract', () => {
+  it('matches the new BBO card layout', () => {
     const onSelect = jest.fn();
     render(
       <PerpsProBboSheet
@@ -332,32 +349,31 @@ describe('Perps Pro trade selection sheets', () => {
       />,
     );
 
-    expect(screen.getByTestId('selection-sheet').props.snapPoints).toEqual([
-      316,
-    ]);
+    expect(
+      screen.getByTestId('selection-sheet').props.enableDynamicSizing,
+    ).toBe(true);
     expect(
       StyleSheet.flatten(screen.getByText('BBO').props.style),
-    ).toMatchObject({ fontSize: 16, lineHeight: 20 });
+    ).toMatchObject({ fontSize: 20, lineHeight: 24 });
     expect(screen.queryByTestId('perps-pro-bbo-help')).toBeNull();
     expect(
       StyleSheet.flatten(screen.getByText('Counterparty 1').props.style),
-    ).toMatchObject({ fontSize: 14, lineHeight: 18 });
-    expect(screen.getByTestId('perps-pro-bbo-selected').props).toMatchObject({
-      color: '#58C669',
-      height: 24,
-      width: 24,
-    });
+    ).toMatchObject({ fontSize: 16, lineHeight: 20 });
+    expect(
+      screen.getByTestId('perps-pro-bbo-cp1').props.accessibilityState,
+    ).toEqual({ checked: true });
+    expect(screen.queryByTestId('perps-pro-bbo-selected')).toBeNull();
     expect(
       StyleSheet.flatten(
         screen.getByTestId('selection-sheet').props.handleIndicatorStyle,
       ),
-    ).toMatchObject({ height: 4, width: 40 });
+    ).toMatchObject({ height: 6.272816, width: 50.182529 });
 
     fireEvent.press(screen.getByTestId('perps-pro-bbo-q5'));
     expect(onSelect).toHaveBeenCalledWith('q5');
   });
 
-  it('matches the 324px TP/SL Settings card contract', () => {
+  it('matches the new TP/SL Settings card layout', () => {
     const onSelect = jest.fn();
     render(
       <PerpsProTpSlModeSheet
@@ -368,21 +384,21 @@ describe('Perps Pro trade selection sheets', () => {
       />,
     );
 
-    expect(screen.getByTestId('selection-sheet').props.snapPoints).toEqual([
-      324,
-    ]);
+    expect(
+      screen.getByTestId('selection-sheet').props.enableDynamicSizing,
+    ).toBe(true);
     expect(
       StyleSheet.flatten(screen.getByText('TP/SL Settings').props.style),
-    ).toMatchObject({ fontSize: 16, lineHeight: 20 });
+    ).toMatchObject({ fontSize: 20, lineHeight: 24 });
     expect(
       StyleSheet.flatten(screen.getByText('Price').props.style),
-    ).toMatchObject({ fontSize: 14, lineHeight: 18 });
+    ).toMatchObject({ fontSize: 16, lineHeight: 20 });
     expect(
       StyleSheet.flatten(
         screen.getByText('Execute your TP/SL based on the crypto price.').props
           .style,
       ),
-    ).toMatchObject({ fontSize: 12, lineHeight: 16 });
+    ).toMatchObject({ fontSize: 14, lineHeight: 18 });
     expect(
       screen.getByTestId('perps-pro-tpsl-mode-price').props.accessibilityState,
     ).toEqual({ checked: true });
@@ -391,7 +407,7 @@ describe('Perps Pro trade selection sheets', () => {
       StyleSheet.flatten(
         screen.getByTestId('selection-sheet').props.handleIndicatorStyle,
       ),
-    ).toMatchObject({ height: 4, width: 40 });
+    ).toMatchObject({ height: 6.272816, width: 50.182529 });
 
     fireEvent.press(screen.getByTestId('perps-pro-tpsl-mode-roi'));
     expect(onSelect).toHaveBeenCalledWith('roi');
@@ -411,12 +427,12 @@ describe('Perps Pro trade selection sheets', () => {
     expect(screen.queryByTestId('perps-pro-tpsl-mode-price')).toBeNull();
     expect(screen.getByTestId('perps-pro-tpsl-mode-pnl')).toBeTruthy();
     expect(screen.getByTestId('perps-pro-tpsl-mode-roi')).toBeTruthy();
-    expect(screen.getByTestId('selection-sheet').props.snapPoints).toEqual([
-      240,
-    ]);
+    expect(
+      screen.getByTestId('selection-sheet').props.enableDynamicSizing,
+    ).toBe(true);
   });
 
-  it('matches the 304px Time in Force card contract', () => {
+  it('matches the new Time in Force card layout', () => {
     const onClose = jest.fn();
     const onSelect = jest.fn();
     render(
@@ -428,20 +444,20 @@ describe('Perps Pro trade selection sheets', () => {
       />,
     );
 
-    expect(screen.getByTestId('selection-sheet').props.snapPoints).toEqual([
-      304,
-    ]);
+    expect(
+      screen.getByTestId('selection-sheet').props.enableDynamicSizing,
+    ).toBe(true);
     expect(
       StyleSheet.flatten(screen.getByText('Time in Force').props.style),
-    ).toMatchObject({ fontSize: 16, lineHeight: 20 });
+    ).toMatchObject({ fontSize: 20, lineHeight: 24 });
     expect(
       StyleSheet.flatten(screen.getByTestId('perps-pro-tif-gtc').props.style),
     ).toMatchObject({
-      backgroundColor: '#192945',
-      borderColor: '#192945',
+      backgroundColor: 'rgba(80, 210, 193, 0.1)',
+      borderColor: 'rgba(35, 192, 176, 0.4)',
       borderRadius: 12,
-      paddingHorizontal: 12,
-      paddingVertical: 8,
+      padding: 15,
+      borderWidth: 1,
     });
     expect(screen.getByText('Good Till Cancel')).toBeTruthy();
     expect(screen.getByText('Immediate or Cancel')).toBeTruthy();
@@ -454,7 +470,7 @@ describe('Perps Pro trade selection sheets', () => {
       StyleSheet.flatten(
         screen.getByTestId('selection-sheet').props.handleIndicatorStyle,
       ),
-    ).toMatchObject({ height: 4, width: 40 });
+    ).toMatchObject({ height: 6.272816, width: 50.182529 });
 
     fireEvent.press(screen.getByTestId('perps-pro-tif-alo'));
     expect(onSelect).toHaveBeenCalledWith('Alo');
