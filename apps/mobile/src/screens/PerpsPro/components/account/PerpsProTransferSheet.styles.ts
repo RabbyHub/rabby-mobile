@@ -5,12 +5,13 @@ import {
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   getPerpsProDialogStyles,
+  resolvePerpsProDialogCardBackground,
   PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
 } from '../common/perpsProDialogVisual';
 
 export const getPerpsProTransferSheetStyles = createGetStyles2024(
-  ({ colors2024, safeAreaInsets }) => ({
-    ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom),
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
     sheetView: { height: '100%' },
     container: { height: '100%', paddingHorizontal: 16, paddingTop: 8 },
     content: { gap: 8, marginTop: 24 },
@@ -23,7 +24,7 @@ export const getPerpsProTransferSheetStyles = createGetStyles2024(
       lineHeight: 16,
     },
     directionCard: {
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
       borderRadius: 12,
       height: 92,
       paddingHorizontal: 16,
@@ -58,7 +59,7 @@ export const getPerpsProTransferSheetStyles = createGetStyles2024(
     },
     amountField: {
       alignItems: 'center',
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
       borderRadius: 16,
       flexDirection: 'row',
       height: 82,
@@ -103,7 +104,7 @@ export const getPerpsProTransferSheetStyles = createGetStyles2024(
     shortcuts: { flexDirection: 'row', gap: 8, marginTop: 4 },
     shortcut: {
       alignItems: 'center',
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
       borderRadius: 6,
       flex: 1,
       height: 40,

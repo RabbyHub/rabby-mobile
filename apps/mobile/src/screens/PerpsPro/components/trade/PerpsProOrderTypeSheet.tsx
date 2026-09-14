@@ -94,7 +94,7 @@ export const PerpsProOrderTypeSheet: React.FC<{
                   <View style={styles.copy}>
                     <View style={styles.optionHeading}>
                       <PerpsProOrderTypeIcon
-                        backgroundColor={colors2024['neutral-bg-1']}
+                        backgroundColor={styles.option.backgroundColor}
                         footColor={colors2024['neutral-foot']}
                         titleColor={colors2024['neutral-title-1']}
                         type={option.value}
@@ -115,7 +115,9 @@ export const PerpsProOrderTypeSheet: React.FC<{
 
 PerpsProOrderTypeSheet.displayName = 'PerpsProOrderTypeSheet';
 
-const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
-  ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom),
-  optionHeading: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
+    optionHeading: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  }),
+);

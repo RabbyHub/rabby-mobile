@@ -126,7 +126,9 @@ export const PerpsProMarginModeSheet: React.FC<{
 
 PerpsProMarginModeSheet.displayName = 'PerpsProMarginModeSheet';
 
-const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
-  ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom),
-  disabled: { opacity: 0.45 },
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
+    disabled: { opacity: 0.45 },
+  }),
+);

@@ -79,18 +79,30 @@ describe('PerpsProTransferSheet Figma styles', () => {
     });
   });
 
-  it('keeps the approved Dark surfaces and handle token', () => {
+  it('keeps Dark cards distinct from the sheet and the nested token pill', () => {
     const styles = getStyles(false);
 
     expect(StyleSheet.flatten(styles.directionCard)).toMatchObject({
-      backgroundColor: ThemeColors2024.dark['neutral-bg-1'],
+      backgroundColor: ThemeColors2024.dark['neutral-bg-2'],
     });
     expect(StyleSheet.flatten(styles.amountField)).toMatchObject({
-      backgroundColor: ThemeColors2024.dark['neutral-bg-1'],
+      backgroundColor: ThemeColors2024.dark['neutral-bg-2'],
     });
     expect(StyleSheet.flatten(styles.shortcut)).toMatchObject({
-      backgroundColor: ThemeColors2024.dark['neutral-bg-1'],
+      backgroundColor: ThemeColors2024.dark['neutral-bg-2'],
     });
+    for (const card of [
+      styles.directionCard,
+      styles.amountField,
+      styles.shortcut,
+    ]) {
+      expect(StyleSheet.flatten(card).backgroundColor).not.toBe(
+        StyleSheet.flatten(styles.background).backgroundColor,
+      );
+    }
+    expect(StyleSheet.flatten(styles.tokenPill).backgroundColor).toBe(
+      ThemeColors2024.dark['neutral-bg-5'],
+    );
     expect(StyleSheet.flatten(styles.handleIndicator)).toMatchObject({
       backgroundColor: ThemeColors2024.dark['neutral-sheet-handle'],
     });

@@ -24,6 +24,7 @@ import {
 } from '../../utils/format';
 import {
   getPerpsProDialogStyles,
+  resolvePerpsProDialogCardBackground,
   PERPS_PRO_DIALOG_TOKENS,
   PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
 } from '../common/perpsProDialogVisual';
@@ -325,92 +326,94 @@ const DetailRow: React.FC<{ label: string; value: string }> = ({
 
 PerpsProOrderConfirmationSheet.displayName = 'PerpsProOrderConfirmationSheet';
 
-const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
-  ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom),
-  container: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-  },
-  header: { alignItems: 'center' },
-  assetRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 4,
-  },
-  symbol: {
-    ...PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
-    maxWidth: 160,
-  },
-  marketTag: {
-    ...getPerpsProMetadataTagContainerStyle(colors2024),
-    ...getPerpsProMetadataTagTextStyle(colors2024),
-    maxWidth: 100,
-  },
-  buyDirection: {
-    ...getPerpsProTintedTagTextStyle(colors2024, 'positive'),
-    fontWeight: '700',
-  },
-  sellDirection: {
-    ...getPerpsProTintedTagTextStyle(colors2024, 'negative'),
-    fontWeight: '700',
-  },
-  details: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderRadius: 12,
-    padding: 16,
-    gap: 10,
-    marginTop: 24,
-  },
-  tpSlDetails: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderRadius: 12,
-    padding: 16,
-    gap: 10,
-    marginTop: 8,
-  },
-  detailRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  detailLabel: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  detailValue: {
-    ...PERPS_PRO_NUMBER_STYLE,
-    color: colors2024['neutral-title-1'],
-    flexShrink: 1,
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
-    marginLeft: 12,
-    textAlign: 'right',
-  },
-  checkboxRow: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 4,
-    marginTop: 8,
-  },
-  checkboxText: {
-    color: colors2024['neutral-foot'],
-    flexShrink: 1,
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  footer: {
-    paddingHorizontal: 4,
-    paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
-    paddingTop: BOTTOM_BUTTON_TOP_OFFSET * 2,
-  },
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
+    container: {
+      paddingHorizontal: 16,
+      paddingTop: 8,
+    },
+    header: { alignItems: 'center' },
+    assetRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: 4,
+    },
+    symbol: {
+      ...PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 20,
+      lineHeight: 24,
+      maxWidth: 160,
+    },
+    marketTag: {
+      ...getPerpsProMetadataTagContainerStyle(colors2024),
+      ...getPerpsProMetadataTagTextStyle(colors2024),
+      maxWidth: 100,
+    },
+    buyDirection: {
+      ...getPerpsProTintedTagTextStyle(colors2024, 'positive'),
+      fontWeight: '700',
+    },
+    sellDirection: {
+      ...getPerpsProTintedTagTextStyle(colors2024, 'negative'),
+      fontWeight: '700',
+    },
+    details: {
+      backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
+      borderRadius: 12,
+      padding: 16,
+      gap: 10,
+      marginTop: 24,
+    },
+    tpSlDetails: {
+      backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
+      borderRadius: 12,
+      padding: 16,
+      gap: 10,
+      marginTop: 8,
+    },
+    detailRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    detailLabel: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      lineHeight: 16,
+    },
+    detailValue: {
+      ...PERPS_PRO_NUMBER_STYLE,
+      color: colors2024['neutral-title-1'],
+      flexShrink: 1,
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+      marginLeft: 12,
+      textAlign: 'right',
+    },
+    checkboxRow: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: 4,
+      marginTop: 8,
+    },
+    checkboxText: {
+      color: colors2024['neutral-foot'],
+      flexShrink: 1,
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      lineHeight: 16,
+    },
+    footer: {
+      paddingHorizontal: 4,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET * 2,
+    },
+  }),
+);

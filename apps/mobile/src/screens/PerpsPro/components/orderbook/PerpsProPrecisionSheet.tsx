@@ -100,12 +100,18 @@ export const PerpsProPrecisionSheet: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => {
-  const dialog = getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom);
-  return {
-    ...dialog,
-    sheetContent: { gap: 8, paddingHorizontal: 16, paddingTop: 8 },
-    groupingTitle: { ...dialog.title, marginBottom: 16 },
-    optionText: { ...PERPS_PRO_NUMBER_STYLE, ...dialog.label },
-  };
-});
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => {
+    const dialog = getPerpsProDialogStyles(
+      colors2024,
+      safeAreaInsets.bottom,
+      isLight,
+    );
+    return {
+      ...dialog,
+      sheetContent: { gap: 8, paddingHorizontal: 16, paddingTop: 8 },
+      groupingTitle: { ...dialog.title, marginBottom: 16 },
+      optionText: { ...PERPS_PRO_NUMBER_STYLE, ...dialog.label },
+    };
+  },
+);

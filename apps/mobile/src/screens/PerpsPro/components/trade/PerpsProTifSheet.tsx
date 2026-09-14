@@ -106,6 +106,8 @@ export const PerpsProTifSheet: React.FC<{
 
 PerpsProTifSheet.displayName = 'PerpsProTifSheet';
 
-const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
-  ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom),
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
+  }),
+);

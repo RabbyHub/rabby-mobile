@@ -120,6 +120,8 @@ export const PerpsProTpSlModeSheet: React.FC<{
 
 PerpsProTpSlModeSheet.displayName = 'PerpsProTpSlModeSheet';
 
-const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
-  ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom),
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
+  }),
+);

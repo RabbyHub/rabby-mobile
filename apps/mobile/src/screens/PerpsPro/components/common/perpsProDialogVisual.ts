@@ -29,10 +29,18 @@ export const PERPS_PRO_DIALOG_TOKENS = {
   actionShadow: 'rgba(112, 132, 255, 0.1)',
 } as const;
 
+// bg-0 and bg-1 resolve to the same Dark color. Preserve the Light design
+// binding while using Pro's existing raised surface token in Dark mode.
+export const resolvePerpsProDialogCardBackground = (
+  colors: AppColors2024Variants,
+  isLight: boolean | undefined,
+) => colors[isLight === false ? 'neutral-bg-2' : 'neutral-bg-1'];
+
 /** September dialog geometry; legacy Pro sheets keep their existing defaults. */
 export const getPerpsProDialogStyles = (
   colors: AppColors2024Variants,
   bottomInset: number,
+  isLight: boolean | undefined,
 ) =>
   ({
     ...getPerpsProBottomSheetChromeStyles(colors, {
@@ -78,7 +86,7 @@ export const getPerpsProDialogStyles = (
       borderRadius: 12,
       borderWidth: 1,
       padding: 15,
-      backgroundColor: colors['neutral-bg-1'],
+      backgroundColor: resolvePerpsProDialogCardBackground(colors, isLight),
     },
     optionActive: {
       backgroundColor: PERPS_PRO_DIALOG_TOKENS.selectedBackground,

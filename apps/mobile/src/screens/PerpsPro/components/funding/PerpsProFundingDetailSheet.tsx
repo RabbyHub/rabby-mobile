@@ -28,7 +28,10 @@ import {
   formatPerpsProFundingRate,
   formatPerpsProSignedUsd,
 } from '../../utils/format';
-import { getPerpsProDialogStyles } from '../common/perpsProDialogVisual';
+import {
+  getPerpsProDialogStyles,
+  resolvePerpsProDialogCardBackground,
+} from '../common/perpsProDialogVisual';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { Button } from '@/components2024/Button';
 import {
@@ -261,75 +264,77 @@ export const PerpsProFundingDetailSheet: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
-  ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom),
-  sheet: { paddingHorizontal: 16, paddingTop: 8 },
-  values: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderRadius: 12,
-    marginTop: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 4,
-  },
-  footer: {
-    paddingHorizontal: 4,
-    paddingTop: BOTTOM_BUTTON_TOP_OFFSET * 2,
-    paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
-  },
-  valueRow: {
-    paddingVertical: 12,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  valueLabel: {
-    color: colors2024['neutral-secondary'],
-    flex: 1,
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-  value: {
-    ...PERPS_PRO_NUMBER_STYLE,
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '700',
-    lineHeight: 18,
-    marginLeft: 16,
-    textAlign: 'right',
-  },
-  intervalValue: {
-    ...PERPS_PRO_NUMBER_STYLE,
-    fontFamily: 'SF Pro Rounded',
-    fontWeight: '700',
-  },
-  valueMuted: {
-    color: colors2024['neutral-secondary'],
-  },
-  positive: {
-    color: colors2024['green-default'],
-  },
-  negative: {
-    color: colors2024['red-default'],
-  },
-  direction: {
-    color: colors2024['neutral-title-1'],
-  },
-  error: {
-    color: colors2024['red-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-    marginTop: 12,
-  },
-  explanation: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-    marginTop: 12,
-    textAlign: 'center',
-  },
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
+    sheet: { paddingHorizontal: 16, paddingTop: 8 },
+    values: {
+      backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
+      borderRadius: 12,
+      marginTop: 24,
+      paddingHorizontal: 16,
+      paddingVertical: 4,
+    },
+    footer: {
+      paddingHorizontal: 4,
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET * 2,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+    },
+    valueRow: {
+      paddingVertical: 12,
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    valueLabel: {
+      color: colors2024['neutral-secondary'],
+      flex: 1,
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      fontWeight: '500',
+      lineHeight: 18,
+    },
+    value: {
+      ...PERPS_PRO_NUMBER_STYLE,
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      fontWeight: '700',
+      lineHeight: 18,
+      marginLeft: 16,
+      textAlign: 'right',
+    },
+    intervalValue: {
+      ...PERPS_PRO_NUMBER_STYLE,
+      fontFamily: 'SF Pro Rounded',
+      fontWeight: '700',
+    },
+    valueMuted: {
+      color: colors2024['neutral-secondary'],
+    },
+    positive: {
+      color: colors2024['green-default'],
+    },
+    negative: {
+      color: colors2024['red-default'],
+    },
+    direction: {
+      color: colors2024['neutral-title-1'],
+    },
+    error: {
+      color: colors2024['red-default'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      lineHeight: 16,
+      marginTop: 12,
+    },
+    explanation: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      lineHeight: 16,
+      marginTop: 12,
+      textAlign: 'center',
+    },
+  }),
+);

@@ -24,7 +24,10 @@ import { Keyboard, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { PerpsProSlider } from '../common/PerpsProSlider';
-import { getPerpsProDialogStyles } from '../common/perpsProDialogVisual';
+import {
+  getPerpsProDialogStyles,
+  resolvePerpsProDialogCardBackground,
+} from '../common/perpsProDialogVisual';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import RcLeverageMinus from '@/assets2024/icons/perps/PerpsProLeverageMinus.svg';
 import RcLeveragePlus from '@/assets2024/icons/perps/PerpsProLeveragePlus.svg';
@@ -318,94 +321,96 @@ export const PerpsProLeverageSheet: React.FC<{
 
 PerpsProLeverageSheet.displayName = 'PerpsProLeverageSheet';
 
-const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
-  ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom),
-  sheetView: { height: '100%' },
-  scrollContent: { flexGrow: 1 },
-  container: {
-    ...(IS_ANDROID
-      ? {
-          minHeight:
-            SHEET_HEIGHT -
-            40 +
-            getBottomButtonBottomOffset(safeAreaInsets.bottom) -
-            BOTTOM_BUTTON_BOTTOM_OFFSET,
-          flexGrow: 1,
-        }
-      : { height: '100%' }),
-    paddingHorizontal: 15,
-    paddingTop: 8,
-  },
-  titleGroup: { gap: 8, alignItems: 'center' },
-  maximum: {
-    ...PERPS_PRO_NUMBER_STYLE,
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '400',
-    lineHeight: 20,
-  },
-  inputRow: {
-    alignSelf: 'center',
-    alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderRadius: 12,
-    flexDirection: 'row',
-    height: 54,
-    width: 202,
-    justifyContent: 'space-between',
-    marginTop: 24,
-    paddingHorizontal: 8,
-  },
-  stepButton: {
-    alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-5'],
-    borderRadius: 6,
-    height: 32,
-    width: 32,
-    justifyContent: 'center',
-  },
-  valueEditor: {
-    alignItems: 'center',
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  valueInput: {
-    ...PERPS_PRO_NUMBER_STYLE,
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 36,
-    fontWeight: '700',
-    height: 42,
-    lineHeight: 42,
-    margin: 0,
-    padding: 0,
-    textAlign: 'right',
-  },
-  // Use the same font and draft to size the input, including tabular digits.
-  // The overlay keeps native input/cursor ownership and adds no measuring state.
-  valueInputMeasure: { opacity: 0 },
-  valueInputOverlay: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    // Fit Android's natural font metrics inside the existing 54-high row.
-    // Expand equally around the 42-high measuring slot, keeping its center.
-    ...(IS_ANDROID ? { height: 54, top: -6 } : {}),
-  },
-  valueSuffix: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 36,
-    fontWeight: '700',
-    lineHeight: 42,
-  },
-  sliderSection: { marginTop: 24 },
-  footer: {
-    paddingHorizontal: 5,
-    paddingTop: BOTTOM_BUTTON_TOP_OFFSET * 2,
-    paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
-  },
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
+    sheetView: { height: '100%' },
+    scrollContent: { flexGrow: 1 },
+    container: {
+      ...(IS_ANDROID
+        ? {
+            minHeight:
+              SHEET_HEIGHT -
+              40 +
+              getBottomButtonBottomOffset(safeAreaInsets.bottom) -
+              BOTTOM_BUTTON_BOTTOM_OFFSET,
+            flexGrow: 1,
+          }
+        : { height: '100%' }),
+      paddingHorizontal: 15,
+      paddingTop: 8,
+    },
+    titleGroup: { gap: 8, alignItems: 'center' },
+    maximum: {
+      ...PERPS_PRO_NUMBER_STYLE,
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      fontWeight: '400',
+      lineHeight: 20,
+    },
+    inputRow: {
+      alignSelf: 'center',
+      alignItems: 'center',
+      backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
+      borderRadius: 12,
+      flexDirection: 'row',
+      height: 54,
+      width: 202,
+      justifyContent: 'space-between',
+      marginTop: 24,
+      paddingHorizontal: 8,
+    },
+    stepButton: {
+      alignItems: 'center',
+      backgroundColor: colors2024['neutral-bg-5'],
+      borderRadius: 6,
+      height: 32,
+      width: 32,
+      justifyContent: 'center',
+    },
+    valueEditor: {
+      alignItems: 'center',
+      flex: 1,
+      flexDirection: 'row',
+      justifyContent: 'center',
+    },
+    valueInput: {
+      ...PERPS_PRO_NUMBER_STYLE,
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 36,
+      fontWeight: '700',
+      height: 42,
+      lineHeight: 42,
+      margin: 0,
+      padding: 0,
+      textAlign: 'right',
+    },
+    // Use the same font and draft to size the input, including tabular digits.
+    // The overlay keeps native input/cursor ownership and adds no measuring state.
+    valueInputMeasure: { opacity: 0 },
+    valueInputOverlay: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      top: 0,
+      // Fit Android's natural font metrics inside the existing 54-high row.
+      // Expand equally around the 42-high measuring slot, keeping its center.
+      ...(IS_ANDROID ? { height: 54, top: -6 } : {}),
+    },
+    valueSuffix: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 36,
+      fontWeight: '700',
+      lineHeight: 42,
+    },
+    sliderSection: { marginTop: 24 },
+    footer: {
+      paddingHorizontal: 5,
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET * 2,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+    },
+  }),
+);
