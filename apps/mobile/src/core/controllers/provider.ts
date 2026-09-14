@@ -962,11 +962,16 @@ class ProviderController extends BaseController {
       }
     }
     const requestChain = getProviderRequestChain(options as any);
-    const chain = requestChain
-      ? requestChain.enum
-      : isInternalDappSnapshot(origin)
-      ? findChain({ id: approvalRes.chainId })!.enum
-      : getConnectedDappSnapshot(origin)!.chainId;
+    // Pin the broadcast chain to the approved transaction's chain; the
+    // connected dapp's chain is attacker-mutable mid-approval via a silent
+    // wallet_switchEthereumChain.
+    const chain =
+      requestChain?.enum ??
+      findChain({ id: approvalRes.chainId })?.enum ??
+      getConnectedDappSnapshot(origin)?.chainId;
+    if (!chain) {
+      throw new Error('Cannot determine broadcast chain for approved tx');
+    }
 
     const approvingTx = await transactionHistoryServiceApi.getSigningTx(
       signingTxId!,
