@@ -17,15 +17,20 @@ import { stringUtils, urlUtils } from '@rabby-wallet/base-utils';
 
 import { createOriginMiddleware } from './middlewares';
 import { createSanitizationMiddleware } from './middlewares/SanitizationMiddleware';
-import { getDappSnapshot } from '@/core/serviceApi/dapp';
 import { isKeyringUnlockedSnapshot } from '@/core/serviceApi/keyring';
 import getRpcMethodMiddleware, {
   RefLikeObject,
 } from './middlewares/RPCMethodMiddleware';
 import WebView from 'react-native-webview';
 import { BroadcastEvent } from '@/constant/event';
-import { findChain } from '@/utils/chain';
-import { CHAINS_ENUM } from '@debank/common';
+import type { ProviderNetworkState } from '@/core/utils/providerNetworkState';
+import { getProviderNetworkState } from '@/core/utils/providerNetworkState';
+
+/**
+ * Delay before the readiness beacon is sent, giving the document the
+ * navigation is loading time to come up and install its inpage bridge.
+ */
+const READINESS_BEACON_DELAY = 50;
 
 type BackgroundBridgeOptions = {
   webview: RefLikeObject<WebView | null>;
@@ -55,6 +60,12 @@ export class BackgroundBridge extends EventEmitter {
   #engine: JsonRpcEngine | null = null;
 
   #isFromMobileInnerDapp = false;
+
+  /** Last `chainChanged` payload actually delivered to this bridge's page. */
+  #lastChainIdSent: string | null = null;
+  #lastNetworkVersionSent: string | null = null;
+
+  #readinessBeaconTimer: ReturnType<typeof setTimeout> | null = null;
 
   get origin() {
     return this.#webviewOrigin;
@@ -106,31 +117,90 @@ export class BackgroundBridge extends EventEmitter {
     // connect features
     this._setupProviderConnection(portMux.createStream('rabby-provider'));
 
-    setTimeout(() => {
-      const chain =
-        findChain({
-          enum: getDappSnapshot(this.#webviewOrigin)?.chainId,
-        }) ||
-        findChain({
-          enum: CHAINS_ENUM.ETH,
-        });
-      if (chain) {
-        this.port.postMessage(
-          {
-            name: 'rabby-provider',
-            data: {
-              method: BroadcastEvent.chainChanged,
-              params: {
-                chainId: chain.hex,
-                networkVersion: chain.network,
-              },
-            },
-          },
-          this.#webviewOrigin,
-        );
-      }
-    }, 50);
+    // Readiness beacon, NOT a chain state update (see #935).
+    //
+    // The inpage bridge treats the first `rabby_chainChanged` it receives as
+    // "the background pipeline is up" and replies with
+    // `RABBY_EXTENSION_CONNECT_CAN_RETRY`, which makes the stream middleware
+    // replay requests that were dropped before the pipeline was wired — on
+    // Android an early `rabby_getProviderState` would otherwise hang forever.
+    // See `backgroundBridgeStreamMessageListener` in
+    // `@rabby-wallet/rn-webview-bridge` (scripts/inpage-bridge/inpage/index.js).
+    //
+    // Two properties this send has to keep:
+    //
+    // 1. It must land in the *new* document. The bridge is constructed from
+    //    `onLoadStart`, before the navigation commits, so the page that needs
+    //    the beacon does not exist yet — hence the delay. Sending it
+    //    synchronously injects it into the outgoing document and the retry
+    //    never happens. (Deleting this delay needs the bridge to be created
+    //    after navigation commit instead.)
+    // 2. It must carry exactly the state `rabby_getProviderState` reports,
+    //    which is why both read `getProviderNetworkState`. The value is
+    //    resolved here rather than inside the timer so the two cannot drift
+    //    apart. If they disagree, the inpage provider emits a `chainChanged`
+    //    that never happened and dapps wired as
+    //    `chainChanged -> location.reload()` reload on every page load.
+    //
+    // A beacon carrying the value the page already has is harmless: the retry
+    // fires on receipt, before and independently of the provider's own
+    // de-duplication, so nothing is lost by it being de-duped.
+    const networkState = getProviderNetworkState(this.#webviewOrigin);
+    this.#lastChainIdSent = networkState.chainId;
+    this.#lastNetworkVersionSent = networkState.networkVersion;
+    this.#readinessBeaconTimer = setTimeout(() => {
+      this.#readinessBeaconTimer = null;
+      this.#postChainChanged(networkState);
+    }, READINESS_BEACON_DELAY);
   }
+
+  #postChainChanged(params: ProviderNetworkState) {
+    this.port.postMessage(
+      {
+        name: 'rabby-provider',
+        data: {
+          method: BroadcastEvent.chainChanged,
+          params,
+        },
+      },
+      this.#webviewOrigin,
+    );
+  }
+
+  /**
+   * Consulted by {@link Session.pushMessage} before a broadcast reaches this
+   * bridge's page. Returning `false` drops the push.
+   *
+   * Tracks what was last delivered so a `chainChanged` carrying the values the
+   * page already holds is never re-sent. Relying only on the inpage provider's
+   * own de-dupe is not enough: it cannot de-dupe against a value it has not
+   * received yet.
+   */
+  shouldPushMessage = (event: BroadcastEvent, data: any) => {
+    if (event !== BroadcastEvent.chainChanged) {
+      return true;
+    }
+
+    const chainId = data?.chainId;
+    if (typeof chainId !== 'string') {
+      // Malformed payload, leave delivery behaviour unchanged.
+      return true;
+    }
+    const networkVersion =
+      typeof data?.networkVersion === 'string' ? data.networkVersion : null;
+
+    if (
+      this.#lastChainIdSent === chainId &&
+      this.#lastNetworkVersionSent === networkVersion
+    ) {
+      return false;
+    }
+
+    this.#lastChainIdSent = chainId;
+    this.#lastNetworkVersionSent = networkVersion;
+
+    return true;
+  };
 
   isUnlocked() {
     return isKeyringUnlockedSnapshot();
@@ -162,6 +232,14 @@ export class BackgroundBridge extends EventEmitter {
 
   onDisconnect = () => {
     this.#disconnected = true;
+
+    // A bridge is torn down at the start of the next navigation, so a beacon
+    // still in flight would land in the document the *next* bridge serves,
+    // carrying this bridge's (now stale) origin and chain.
+    if (this.#readinessBeaconTimer) {
+      clearTimeout(this.#readinessBeaconTimer);
+      this.#readinessBeaconTimer = null;
+    }
 
     this.port.emit('disconnect', { name: this.port.name, data: null });
   };
