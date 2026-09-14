@@ -1,3 +1,16 @@
+jest.mock('@/assets2024/icons/perps/PerpsProLeveragePlus.svg', () => {
+  const ReactModule = require('react');
+  return (props: object) =>
+    ReactModule.createElement(require('react-native').View, props);
+});
+
+jest.mock('@/assets2024/icons/perps/PerpsProLeverageMinus.svg', () => {
+  const ReactModule = require('react');
+  return (props: object) =>
+    ReactModule.createElement(require('react-native').View, props);
+});
+jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
+
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { Keyboard, StyleSheet } from 'react-native';
@@ -72,12 +85,16 @@ jest.mock('@/components2024/GlobalBottomSheetModal/utils-help', () => ({
   makeBottomSheetProps: () => ({}),
 }));
 
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ bottom: 0, left: 0, right: 0, top: 0 }),
+}));
+
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
     const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
     return {
       colors2024,
-      styles: getStyle({ colors2024, safeAreaInsets: { bottom: 34 } }),
+      styles: getStyle({ colors2024, safeAreaInsets: { bottom: 0 } }),
     };
   },
 }));
@@ -181,7 +198,7 @@ describe('PerpsProLeverageSheet', () => {
     fireEvent.changeText(screen.getByTestId('perps-pro-leverage-input'), '12');
     act(() => show({ endCoordinates: { height: 300, screenY: 500 } }));
     expect(screen.getByTestId('leverage-sheet').props.snapPoints).toEqual([
-      344,
+      410,
     ]);
     expect(perpsProKeyboardSession.getSnapshot()?.id).toBe(owner?.id);
     expect(owner?.sheetId).toBeDefined();
@@ -207,7 +224,7 @@ describe('PerpsProLeverageSheet', () => {
     );
 
     expect(screen.getByTestId('leverage-sheet').props.snapPoints).toEqual([
-      296,
+      362,
     ]);
     expect(screen.getByTestId('leverage-sheet').props).toMatchObject({
       android_keyboardInputMode: 'adjustPan',
@@ -219,29 +236,29 @@ describe('PerpsProLeverageSheet', () => {
       StyleSheet.flatten(
         screen.getByTestId('leverage-sheet').props.handleStyle,
       ),
-    ).toMatchObject({ height: 40, paddingBottom: 27, paddingTop: 9 });
+    ).toMatchObject({ height: 40, paddingBottom: 23.727184, paddingTop: 10 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('leverage-sheet').props.handleIndicatorStyle,
       ),
-    ).toMatchObject({ height: 4, width: 40 });
+    ).toMatchObject({ height: 6.272816, width: 50.182529 });
     expect(screen.getByText('Adjust Leverage')).toBeTruthy();
     expect(screen.getByText('Up To 40x')).toBeTruthy();
     expect(
       StyleSheet.flatten(screen.getByText('Adjust Leverage').props.style),
     ).toMatchObject({
       fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      fontWeight: '700',
-      lineHeight: 20,
+      fontSize: 20,
+      fontWeight: '900',
+      lineHeight: 24,
     });
     expect(
       StyleSheet.flatten(screen.getByText('Up To 40x').props.style),
     ).toMatchObject({
       fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      fontWeight: '500',
-      lineHeight: 16,
+      fontSize: 16,
+      fontWeight: '400',
+      lineHeight: 20,
     });
     expect(screen.getByTestId('perps-pro-leverage-input').props.value).toBe(
       '20',
@@ -262,6 +279,7 @@ describe('PerpsProLeverageSheet', () => {
       pointCount: 5,
       showPoints: false,
       tone: 'neutral',
+      appearance: 'leverage-dialog',
     });
     expect(mockUseSliderHaptics).toHaveBeenCalledWith({
       disabled: false,
@@ -288,7 +306,7 @@ describe('PerpsProLeverageSheet', () => {
     fireEvent.press(screen.getByTestId('perps-pro-leverage-confirm'));
     expect(onConfirm).toHaveBeenCalledWith(31);
     expect(screen.getByTestId('perps-pro-leverage-confirm').props.height).toBe(
-      36,
+      52,
     );
     expect(screen.getByTestId('perps-pro-leverage-confirm').props.type).toBe(
       'primary',
@@ -297,7 +315,7 @@ describe('PerpsProLeverageSheet', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-leverage-footer').props.style,
       ),
-    ).toMatchObject({ marginTop: 32, paddingBottom: 40 });
+    ).toMatchObject({ paddingTop: 24, paddingBottom: 36 });
   });
 
   it('blurs the leverage input before the slider handles a touch', () => {
@@ -341,9 +359,22 @@ describe('PerpsProLeverageSheet', () => {
 
     const input = screen.getByTestId('perps-pro-leverage-input');
     expect(input.props.value).toBe('40');
-    expect(StyleSheet.flatten(input.props.style).width).toBeGreaterThanOrEqual(
-      28,
-    );
+    const measure = screen.getByTestId('perps-pro-leverage-input-measure', {
+      includeHiddenElements: true,
+    });
+    expect(measure.props.children).toBe('40');
+    expect(measure.props.accessibilityElementsHidden).toBe(true);
+    expect(StyleSheet.flatten(measure.props.style)).toMatchObject({
+      fontSize: 36,
+      fontVariant: ['tabular-nums'],
+      opacity: 0,
+    });
+    expect(StyleSheet.flatten(input.props.style)).toMatchObject({
+      left: 0,
+      right: 0,
+      fontSize: 36,
+      fontVariant: ['tabular-nums'],
+    });
 
     fireEvent.press(screen.getByTestId('perps-pro-leverage-confirm'));
     expect(onConfirm).toHaveBeenCalledWith(40);

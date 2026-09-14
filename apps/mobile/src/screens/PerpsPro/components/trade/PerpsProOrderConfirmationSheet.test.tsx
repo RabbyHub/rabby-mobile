@@ -1,3 +1,5 @@
+jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
+
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet, Text as NativeText } from 'react-native';
@@ -239,42 +241,13 @@ describe('PerpsProOrderConfirmationSheet', () => {
     expect(screen.getByText('BTCUSDC')).toBeTruthy();
     expect(screen.getByText('xyz')).toBeTruthy();
     expect(screen.getByText('Isolated 10x')).toBeTruthy();
-    expect(screen.getByText('Buy')).toBeTruthy();
-    expect(screen.getByText('Long')).toBeTruthy();
-    const buyTagStyle = StyleSheet.flatten(
-      screen.getByTestId('perps-pro-order-confirmation-side-tag').props.style,
-    );
-    expect(buyTagStyle).toMatchObject({
-      backgroundColor: 'green-light-1',
-      borderRadius: 4,
-      paddingHorizontal: 4,
-      paddingVertical: 1,
-    });
-    expect(buyTagStyle.borderColor).toBeUndefined();
-    expect(buyTagStyle.borderWidth).toBeUndefined();
-    const longTagStyle = StyleSheet.flatten(
-      screen.getByTestId('perps-pro-order-confirmation-position-tag').props
-        .style,
-    );
-    expect(longTagStyle).toMatchObject({
-      backgroundColor: 'green-light-1',
-      borderRadius: 4,
-      paddingHorizontal: 4,
-      paddingVertical: 1,
-    });
-    expect(longTagStyle.borderColor).toBeUndefined();
-    expect(longTagStyle.borderWidth).toBeUndefined();
-    expect(screen.getByText('Buy').props.style).toMatchObject({
+    expect(
+      StyleSheet.flatten(screen.getByText('Buy / Long').props.style),
+    ).toMatchObject({
       color: 'green-default',
       fontSize: 12,
-      fontWeight: '500',
       lineHeight: 16,
-    });
-    expect(screen.getByText('Long').props.style).toMatchObject({
-      color: 'green-default',
-      fontSize: 12,
-      fontWeight: '500',
-      lineHeight: 16,
+      fontWeight: '700',
     });
     expect(
       StyleSheet.flatten(
@@ -340,7 +313,7 @@ describe('PerpsProOrderConfirmationSheet', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-order-confirmation-footer').props.style,
       ),
-    ).toMatchObject({ paddingBottom: 40, paddingTop: 24 });
+    ).toMatchObject({ paddingBottom: 36, paddingTop: 24 });
     expect(
       StyleSheet.flatten(screen.getByText('Isolated 10x').props.style),
     ).not.toHaveProperty('fontVariant');
@@ -353,50 +326,34 @@ describe('PerpsProOrderConfirmationSheet', () => {
       StyleSheet.flatten(
         screen.getByTestId('confirmation-sheet').props.handleIndicatorStyle,
       ),
-    ).toMatchObject({ height: 4, width: 40 });
+    ).toMatchObject({ height: 6.272816, width: 50.182529 });
     expect(
       screen.getByTestId('confirm-button').props.accessibilityValue,
-    ).toEqual({ text: '36:primary' });
+    ).toEqual({ text: '52:primary' });
     expect(
       StyleSheet.flatten(screen.getByTestId('confirm-button').props.style),
-    ).toMatchObject({ borderRadius: 8 });
+    ).toMatchObject({ borderRadius: 12 });
   });
 
-  it('uses the negative direction tag contract for Sell and Short', () => {
-    renderSheet({ ...parent, side: 'sell' });
-
-    const sellTagStyle = StyleSheet.flatten(
-      screen.getByTestId('perps-pro-order-confirmation-side-tag').props.style,
-    );
-    expect(sellTagStyle).toMatchObject({
-      backgroundColor: 'red-light-1',
-      borderRadius: 4,
-      paddingHorizontal: 4,
-      paddingVertical: 1,
-    });
-    expect(sellTagStyle.borderColor).toBeUndefined();
-    expect(sellTagStyle.borderWidth).toBeUndefined();
-    const shortTagStyle = StyleSheet.flatten(
-      screen.getByTestId('perps-pro-order-confirmation-position-tag').props
-        .style,
-    );
-    expect(shortTagStyle).toMatchObject({
-      backgroundColor: 'red-light-1',
-      borderRadius: 4,
-    });
-    expect(shortTagStyle.borderColor).toBeUndefined();
-    expect(shortTagStyle.borderWidth).toBeUndefined();
-    expect(screen.getByText('Sell').props.style).toMatchObject({
-      color: 'red-default',
-      fontSize: 12,
-      lineHeight: 16,
-    });
-    expect(screen.getByText('Short').props.style).toMatchObject({
-      color: 'red-default',
-      fontSize: 12,
-      lineHeight: 16,
-    });
-  });
+  it.each(['plain', 'attached'] as const)(
+    'preserves the parent sell direction for a %s order',
+    kind => {
+      renderSheet(
+        kind === 'plain'
+          ? { ...parent, side: 'sell' }
+          : { ...attached, parent: { ...parent, side: 'sell' } },
+      );
+      expect(
+        StyleSheet.flatten(screen.getByText('Sell / Short').props.style),
+      ).toMatchObject({
+        color: 'red-default',
+        fontSize: 12,
+        lineHeight: 16,
+        fontWeight: '700',
+      });
+      expect(screen.queryByText('Buy / Long')).toBeNull();
+    },
+  );
 
   it('omits only the source metadata tag when the reviewed market is native', () => {
     renderSheet({
@@ -459,6 +416,8 @@ describe('PerpsProOrderConfirmationSheet', () => {
       .findAllByType(NativeText)
       .map(node => node.props.children);
     expect(detailTexts).toEqual([
+      'direction',
+      ['Buy', ' / ', 'Long'],
       'price',
       '100 USDC',
       'amount',

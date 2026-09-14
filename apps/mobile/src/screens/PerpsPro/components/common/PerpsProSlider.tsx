@@ -1,3 +1,4 @@
+import LeverageThumb from '@/assets2024/icons/perps/PerpsProLeverageThumb.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Slider } from '@rneui/themed';
@@ -17,6 +18,7 @@ export const PerpsProSlider: React.FC<{
   showPoints?: boolean;
   step?: number;
   tone?: 'brand' | 'neutral';
+  appearance?: 'default' | 'leverage-dialog';
   value: number;
 }> = React.memo(
   ({
@@ -32,9 +34,12 @@ export const PerpsProSlider: React.FC<{
     showPoints = true,
     step = 1,
     tone = 'brand',
+    appearance = 'default',
     value,
   }) => {
     const { colors2024, styles } = useTheme2024({ getStyle });
+    const isLeverageDialog =
+      tone === 'neutral' && appearance === 'leverage-dialog';
     const showDisabledAppearance = disabled && dimWhenDisabled;
     const points = useMemo(
       () =>
@@ -52,6 +57,7 @@ export const PerpsProSlider: React.FC<{
         style={[
           styles.container,
           tone === 'neutral' && styles.neutralContainer,
+          isLeverageDialog && styles.leverageContainer,
         ]}>
         <Slider
           allowTouchTrack={!disabled}
@@ -72,10 +78,17 @@ export const PerpsProSlider: React.FC<{
           onSlidingStart={onSlidingStart}
           onValueChange={onValueChange}
           step={step}
-          style={[styles.slider, tone === 'neutral' && styles.neutralSlider]}
+          style={[
+            styles.slider,
+            tone === 'neutral' && styles.neutralSlider,
+            isLeverageDialog && styles.leverageSlider,
+          ]}
           thumbStyle={
             tone === 'neutral'
-              ? styles.invisibleThumb
+              ? [
+                  styles.invisibleThumb,
+                  isLeverageDialog && styles.leverageInvisibleThumb,
+                ]
               : showDisabledAppearance
               ? styles.disabledThumb
               : styles.thumb
@@ -91,6 +104,7 @@ export const PerpsProSlider: React.FC<{
               pointerEvents="none"
               style={[
                 styles.neutralTrack,
+                isLeverageDialog && styles.leverageTrack,
                 showDisabledAppearance && styles.neutralTrackDisabled,
               ]}
               testID="perps-pro-slider-neutral-track"
@@ -99,17 +113,22 @@ export const PerpsProSlider: React.FC<{
               pointerEvents="none"
               style={[
                 styles.neutralTrackProgressStart,
+                isLeverageDialog && styles.leverageProgressStart,
                 showDisabledAppearance && styles.neutralTrackProgressDisabled,
               ]}
               testID="perps-pro-slider-neutral-track-progress-start"
             />
             <View
               pointerEvents="none"
-              style={styles.neutralTrackProgressRail}
+              style={[
+                styles.neutralTrackProgressRail,
+                isLeverageDialog && styles.leverageProgressRail,
+              ]}
               testID="perps-pro-slider-neutral-track-progress-rail">
               <View
                 style={[
                   styles.neutralTrackProgress,
+                  isLeverageDialog && styles.leverageProgress,
                   showDisabledAppearance && styles.neutralTrackProgressDisabled,
                   { width: `${neutralProgress * 100}%` },
                 ]}
@@ -118,16 +137,32 @@ export const PerpsProSlider: React.FC<{
             </View>
             <View
               pointerEvents="none"
-              style={styles.neutralThumbRail}
+              style={[
+                styles.neutralThumbRail,
+                isLeverageDialog && styles.leverageThumbRail,
+              ]}
               testID="perps-pro-slider-neutral-thumb-rail">
               <View
                 style={[
                   styles.neutralThumb,
+                  isLeverageDialog && styles.leverageThumb,
                   showDisabledAppearance && styles.neutralThumbDisabled,
                   { left: `${neutralProgress * 100}%` },
                 ]}
-                testID="perps-pro-slider-neutral-thumb"
-              />
+                testID="perps-pro-slider-neutral-thumb">
+                {isLeverageDialog ? (
+                  <LeverageThumb
+                    width={20}
+                    height={20}
+                    fill={colors2024['neutral-bg-0']}
+                    color={
+                      showDisabledAppearance
+                        ? colors2024['neutral-secondary']
+                        : colors2024['neutral-title-1']
+                    }
+                  />
+                ) : null}
+              </View>
             </View>
           </>
         ) : null}
@@ -176,6 +211,26 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   slider: {
     height: 24,
     zIndex: 2,
+  },
+  leverageContainer: { height: 48 },
+  leverageSlider: { height: 48, marginHorizontal: 3 },
+  leverageInvisibleThumb: { height: 20, width: 20 },
+  leverageTrack: { height: 4, borderRadius: 2, left: 13, right: 13, top: 22 },
+  leverageProgressStart: { width: 0 },
+  leverageProgressRail: {
+    height: 4,
+    left: 13,
+    right: 13,
+    top: 22,
+    borderRadius: 2,
+  },
+  leverageProgress: { height: 4, borderRadius: 2 },
+  leverageThumbRail: { height: 20, left: 3, right: 23, top: 14 },
+  leverageThumb: {
+    height: 20,
+    width: 20,
+    backgroundColor: 'transparent',
+    borderWidth: 0,
   },
   neutralContainer: {
     height: 32,

@@ -23,21 +23,22 @@ import {
   formatPerpsProVariableDecimal,
 } from '../../utils/format';
 import {
-  getPerpsProBottomSheetChromeStyles,
-  PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
-  PERPS_PRO_CONFIRM_BUTTON_STYLE,
-  PERPS_PRO_ORDER_CONFIRMATION_FOOTER_TOP_OFFSET,
-} from '../common/perpsProVisual';
+  getPerpsProDialogStyles,
+  PERPS_PRO_DIALOG_TOKENS,
+  PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
+} from '../common/perpsProDialogVisual';
+import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import {
   getPerpsProMetadataTagContainerStyle,
   getPerpsProMetadataTagTextStyle,
-  getPerpsProTintedTagContainerStyle,
   getPerpsProTintedTagTextStyle,
 } from '../common/perpsProSemanticTagStyles';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
-
-// Figma 80430:12847 defines a compact 36px Pro confirmation action.
-const PERPS_PRO_ORDER_CONFIRM_HEIGHT = 36;
 
 type OrderReview = PerpsProAttachedTpSlCommand | PerpsProOpenOrderCommand;
 
@@ -111,8 +112,9 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
       <AppBottomSheetModal
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: 'bg1',
+          linearGradientType: 'bg0',
         })}
+        backdropComponent={PerpsProDialogBackdrop}
         backgroundStyle={styles.background}
         enableDynamicSizing
         enablePanDownToClose={!pending}
@@ -144,35 +146,31 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
                   {reviewFacts.leverage}x
                 </Text>
               </View>
-              <View style={styles.directionRow}>
-                <View
-                  style={isBuy ? styles.buyTag : styles.sellTag}
-                  testID="perps-pro-order-confirmation-side-tag">
-                  <Text style={isBuy ? styles.buyTagText : styles.sellTagText}>
-                    {t(
-                      isBuy
-                        ? 'page.perps.pro.trade.buy'
-                        : 'page.perps.pro.trade.sell',
-                    )}
-                  </Text>
-                </View>
-                <View
-                  style={isBuy ? styles.buyTag : styles.sellTag}
-                  testID="perps-pro-order-confirmation-position-tag">
-                  <Text style={isBuy ? styles.buyTagText : styles.sellTagText}>
-                    {t(
-                      isBuy
-                        ? 'page.perps.pro.trade.long'
-                        : 'page.perps.pro.trade.short',
-                    )}
-                  </Text>
-                </View>
-              </View>
             </View>
 
             <View
               style={styles.details}
               testID="perps-pro-order-confirmation-details">
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>
+                  {t('page.perps.pro.trade.direction')}
+                </Text>
+                <Text
+                  style={isBuy ? styles.buyDirection : styles.sellDirection}
+                  testID="perps-pro-order-confirmation-direction">
+                  {t(
+                    isBuy
+                      ? 'page.perps.pro.trade.buy'
+                      : 'page.perps.pro.trade.sell',
+                  )}
+                  {' / '}
+                  {t(
+                    isBuy
+                      ? 'page.perps.pro.trade.long'
+                      : 'page.perps.pro.trade.short',
+                  )}
+                </Text>
+              </View>
               {isConditional ? (
                 <DetailRow
                   label={t('page.perps.pro.trade.triggerPrice')}
@@ -278,7 +276,7 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
                 <RcCheckboxFilledBrand height={20} width={20} />
               ) : (
                 <RcCheckboxEmptyCC
-                  color={colors2024['neutral-secondary']}
+                  color={PERPS_PRO_DIALOG_TOKENS.checkboxBorder}
                   height={20}
                   width={20}
                 />
@@ -292,13 +290,14 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
               style={styles.footer}
               testID="perps-pro-order-confirmation-footer">
               <Button
-                buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
+                buttonStyle={[styles.button, pending && styles.buttonDisabled]}
                 disabled={pending}
-                height={PERPS_PRO_ORDER_CONFIRM_HEIGHT}
+                height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                 loading={pending}
                 onPress={onConfirm}
                 title={t('global.confirm')}
-                titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
+                titleStyle={styles.buttonTitle}
+                disabledTitleStyle={styles.buttonDisabledTitle}
                 type="primary"
               />
             </View>
@@ -327,23 +326,23 @@ const DetailRow: React.FC<{ label: string; value: string }> = ({
 PerpsProOrderConfirmationSheet.displayName = 'PerpsProOrderConfirmationSheet';
 
 const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
-  ...getPerpsProBottomSheetChromeStyles(colors2024),
+  ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom),
   container: {
-    paddingHorizontal: 15,
+    paddingHorizontal: 16,
     paddingTop: 8,
   },
-  header: { gap: 8 },
+  header: { alignItems: 'center' },
   assetRow: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 4,
   },
   symbol: {
+    ...PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '700',
-    lineHeight: 20,
+    fontSize: 20,
+    lineHeight: 24,
     maxWidth: 160,
   },
   marketTag: {
@@ -351,24 +350,27 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     ...getPerpsProMetadataTagTextStyle(colors2024),
     maxWidth: 100,
   },
-  directionRow: { flexDirection: 'row', gap: 4 },
-  buyTag: getPerpsProTintedTagContainerStyle(colors2024, 'positive'),
-  sellTag: getPerpsProTintedTagContainerStyle(colors2024, 'negative'),
-  buyTagText: getPerpsProTintedTagTextStyle(colors2024, 'positive'),
-  sellTagText: getPerpsProTintedTagTextStyle(colors2024, 'negative'),
+  buyDirection: {
+    ...getPerpsProTintedTagTextStyle(colors2024, 'positive'),
+    fontWeight: '700',
+  },
+  sellDirection: {
+    ...getPerpsProTintedTagTextStyle(colors2024, 'negative'),
+    fontWeight: '700',
+  },
   details: {
-    borderBottomColor: colors2024['neutral-bg-5'],
-    borderBottomWidth: 1,
-    gap: 8,
-    marginTop: 16,
-    paddingBottom: 12,
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderRadius: 12,
+    padding: 16,
+    gap: 10,
+    marginTop: 24,
   },
   tpSlDetails: {
-    borderBottomColor: colors2024['neutral-bg-5'],
-    borderBottomWidth: 1,
-    gap: 8,
-    paddingBottom: 12,
-    paddingTop: 12,
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderRadius: 12,
+    padding: 16,
+    gap: 10,
+    marginTop: 8,
   },
   detailRow: {
     alignItems: 'center',
@@ -393,20 +395,22 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     textAlign: 'right',
   },
   checkboxRow: {
+    justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
     gap: 4,
-    marginTop: 16,
+    marginTop: 8,
   },
   checkboxText: {
-    color: colors2024['neutral-body'],
-    flex: 1,
+    color: colors2024['neutral-foot'],
+    flexShrink: 1,
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
   },
   footer: {
-    paddingBottom: Math.max(40, safeAreaInsets.bottom),
-    paddingTop: PERPS_PRO_ORDER_CONFIRMATION_FOOTER_TOP_OFFSET,
+    paddingHorizontal: 4,
+    paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET * 2,
   },
 }));
