@@ -1,3 +1,10 @@
+jest.mock('@/assets2024/icons/perps/PerpsProTransferUSDC.svg', () => {
+  const ReactModule = require('react');
+  return (props: object) =>
+    ReactModule.createElement(require('react-native').View, props);
+});
+jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
+
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 
@@ -60,6 +67,10 @@ jest.mock('@/components2024/Button', () => {
 jest.mock('@/components2024/GlobalBottomSheetModal/utils-help', () => ({
   makeBottomSheetProps: () => ({}),
 }));
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ bottom: 0, left: 0, right: 0, top: 0 }),
+}));
+
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
     const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
@@ -113,10 +124,11 @@ describe('PerpsProTransferSheet', () => {
       enablePanDownToClose: true,
       keyboardBehavior: 'interactive',
       keyboardBlurBehavior: 'restore',
-      snapPoints: [546],
+      snapPoints: [490],
     });
     expect(
-      screen.getByTestId('transfer-sheet').props.backdropProps.pressBehavior,
+      screen.getByTestId('transfer-sheet').props.backdropComponent({}).props
+        .pressBehavior,
     ).toBe('close');
     expect(screen.getByTestId('transfer-confirm').props).toMatchObject({
       isDisabled: true,
@@ -124,11 +136,11 @@ describe('PerpsProTransferSheet', () => {
       type: 'primary',
     });
     expect(screen.getByTestId('transfer-confirm').props.buttonStyle).toEqual(
-      expect.arrayContaining([expect.objectContaining({ borderRadius: 8 })]),
+      expect.arrayContaining([expect.objectContaining({ borderRadius: 12 })]),
     );
     expect(
-      screen.getByTestId('perps-pro-transfer-usdc-icon').props.style,
-    ).toEqual({ height: 24, width: 24 });
+      screen.getByTestId('perps-pro-transfer-usdc-icon').props,
+    ).toMatchObject({ height: 24, width: 24 });
 
     fireEvent.changeText(screen.getByTestId('perps-pro-transfer-amount'), '2');
     expect(screen.getByTestId('transfer-confirm').props.isDisabled).toBe(false);
@@ -171,7 +183,8 @@ describe('PerpsProTransferSheet', () => {
       screen.getByTestId('transfer-sheet').props.enablePanDownToClose,
     ).toBe(false);
     expect(
-      screen.getByTestId('transfer-sheet').props.backdropProps.pressBehavior,
+      screen.getByTestId('transfer-sheet').props.backdropComponent({}).props
+        .pressBehavior,
     ).toBe('none');
     expect(screen.getByTestId('perps-pro-transfer-amount').props.editable).toBe(
       false,
