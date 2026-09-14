@@ -31,6 +31,7 @@ import { useSwapSettings, useSwapSupportedDexList } from './settings';
 import { findChain, findChainByEnum } from '@/utils/chain';
 import { apiProvider } from '@/core/apis';
 import type { Account, ChainGas } from '@/core/startupServices/preference';
+import { isSwapCalldataReceiverAllowed } from '../swapCalldataReceiver';
 
 const { isSameAddress } = addressUtils;
 
@@ -482,6 +483,7 @@ export const useQuoteMethods = () => {
             },
             payToken,
             receiveToken,
+            userAddress,
           });
           if (inSufficient) {
             const quote: TDexQuoteData = {
@@ -962,6 +964,7 @@ export const verifyCalldata = <T extends Parameters<typeof decodeCalldata>[1]>(
   dexId: DEX_ENUM | null,
   slippage: string | number,
   tx?: T,
+  userAddress?: string,
 ) => {
   let callDataResult: DecodeCalldataResult | null = null;
   if (dexId && dexId !== DEX_ENUM.WRAPTOKEN && tx) {
@@ -992,7 +995,11 @@ export const verifyCalldata = <T extends Parameters<typeof decodeCalldata>[1]>(
           .minus(estimateMinReceive)
           .div(estimateMinReceive)
           .abs()
-          .lte(0.05);
+          .lte(0.05) &&
+        isSwapCalldataReceiverAllowed(
+          callDataResult.toTokenReceiver,
+          userAddress,
+        );
     }
   }
   return result;
@@ -1005,12 +1012,14 @@ type VerifySdkParams<T extends ValidateTokenParam> = {
   data: QuoteResult | null;
   payToken: T;
   receiveToken: T;
+  userAddress: string;
 };
 
 export const verifySdk = <T extends ValidateTokenParam>(
   p: VerifySdkParams<T>,
 ) => {
-  const { chain, dexId, slippage, data, payToken, receiveToken } = p;
+  const { chain, dexId, slippage, data, payToken, receiveToken, userAddress } =
+    p;
 
   const isWrapTokens = isSwapWrapToken(payToken.id, receiveToken.id, chain);
   const actualDexId = isWrapTokens ? DEX_ENUM.WRAPTOKEN : dexId;
@@ -1031,6 +1040,7 @@ export const verifySdk = <T extends ValidateTokenParam>(
     data?.tx
       ? { ...data?.tx, chainId: findChainByEnum(chain)?.id || CHAINS[chain].id }
       : undefined,
+    userAddress,
   );
 
   return {
