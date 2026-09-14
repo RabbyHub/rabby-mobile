@@ -118,7 +118,7 @@ export const PerpsProFundingOverlay: React.FC<{
         onSpotOrder={handleStableCoinOrder}
         sourceAsset={sourceAsset}
         targetAsset={sourceAsset ? undefined : targetAsset}
-        inputTextStyle={PERPS_PRO_FUNDING_INPUT_TEXT_STYLE}
+        inputTextStyle={PERPS_PRO_FUNDING_AMOUNT_INPUT_STYLE}
         tooltipTextStyle={PERPS_PRO_REGULAR_TEXT_STYLE}
         visible
       />

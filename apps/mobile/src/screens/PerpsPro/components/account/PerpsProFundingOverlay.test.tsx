@@ -11,6 +11,8 @@ import { createStore } from 'zustand/vanilla';
 
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
+const ReactNative = jest.requireActual('react-native');
+
 jest.mock('@/core/native/utils', () => ({ IS_ANDROID: true }));
 
 const mockHandleDeposit = jest.fn();
@@ -111,6 +113,81 @@ const renderOverlay = (
   );
 
 describe('PerpsProFundingOverlay', () => {
+  it.each(['android', 'ios'] as const)(
+    'uses consistent %s Swap metrics while preserving nested Deposit',
+    platform => {
+      let Overlay = PerpsProFundingOverlay;
+      const nativePlatform = { ...ReactNative.Platform, OS: platform };
+      jest.resetModules();
+      jest.isolateModules(() => {
+        jest.doMock('react', () => React);
+        jest.doMock(
+          'react-native',
+          () =>
+            new Proxy(ReactNative, {
+              get: (target, key) =>
+                key === 'Platform' ? nativePlatform : Reflect.get(target, key),
+            }),
+        );
+        jest.doMock('@/core/native/utils', () => ({
+          IS_ANDROID: platform === 'android',
+          IS_IOS: platform === 'ios',
+        }));
+        Overlay = jest.requireActual(
+          './PerpsProFundingOverlay',
+        ).PerpsProFundingOverlay;
+      });
+      render(
+        <Overlay
+          depositFromSwapVisible
+          mode="swap"
+          onClose={jest.fn()}
+          onCloseDeposit={jest.fn()}
+          onOpenDeposit={jest.fn()}
+          sourceAsset="USDC"
+          targetAsset="USDC"
+        />,
+      );
+      const base = {
+        fontSize: 28,
+        lineHeight: 36,
+        paddingTop: 0,
+        paddingBottom: 0,
+      };
+      const style = StyleSheet.flatten([
+        base,
+        mockSwapPopupProps?.inputTextStyle as object,
+      ]);
+      expect(style).toMatchObject({
+        fontSize: 28,
+        fontFamily:
+          platform === 'android' ? 'SF-Pro-Rounded-Bold' : 'SF Pro Rounded',
+        paddingTop: 0,
+        paddingBottom: 0,
+      });
+      expect(style.height).toBeUndefined();
+      expect(style.minHeight).toBeUndefined();
+      if (platform === 'android') {
+        expect(style.lineHeight).toBeUndefined();
+        expect(style).toMatchObject({
+          includeFontPadding: false,
+          textAlignVertical: 'center',
+        });
+      } else {
+        expect(style).toEqual({
+          ...base,
+          fontFamily: 'SF Pro Rounded',
+          fontWeight: '700',
+        });
+      }
+      expect(mockSwapPopupProps?.inputTextStyle).toEqual(
+        mockDepositPopupProps?.inputTextStyle,
+      );
+      expect(mockSwapPopupProps?.onSpotOrder).toBe(mockHandleStableCoinOrder);
+      expect(screen.getByTestId('swap-popup')).toBeTruthy();
+      expect(screen.getByTestId('deposit-popup')).toBeTruthy();
+    },
+  );
   it.each(['deposit', 'withdraw'] as const)(
     'uses stable Android font metrics only for the %s amount',
     mode => {
