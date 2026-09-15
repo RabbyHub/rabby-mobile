@@ -159,6 +159,10 @@ const TokenDetailContent = () => {
       price_24h_change: res?.price_24h_change,
       usd_value: res?.usd_value,
       price: res?.price,
+      is_verified: res?.is_verified ?? token.is_verified,
+      is_suspicious: res?.is_suspicious ?? token.is_suspicious,
+      is_scam: res?.is_scam ?? token.is_scam,
+      is_core: res?.is_core ?? token.is_core,
     } as ITokenItem;
   }, [effectiveAccount?.address, isCustomTestnetToken, token]);
 

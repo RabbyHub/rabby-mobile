@@ -38,7 +38,7 @@ export const EMPTY_TOKEN_ITEM: TokenItem = {
   display_symbol: EMPTY_TOKEN_ITEM_ID,
   id: EMPTY_TOKEN_ITEM_ID,
   is_core: false,
-  is_verified: false,
+  is_verified: null,
   is_wallet: false,
   logo_url: EMPTY_TOKEN_ITEM_ID,
   name: EMPTY_TOKEN_ITEM_ID,
