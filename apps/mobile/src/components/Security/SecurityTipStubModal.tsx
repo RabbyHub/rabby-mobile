@@ -13,11 +13,11 @@ import {
   useIOSScreenIsBeingCaptured,
   useIOSScreenshottedJustNow,
 } from '@/hooks/native/security';
+import type { ProtectedConf } from '@/hooks/native/sensitiveScene';
 import {
-  ProtectedConf,
   ProtectType,
   useAtSensitiveScene,
-} from '@/hooks/navigation';
+} from '@/hooks/native/sensitiveScene';
 import { getReadyNavigationInstance } from '@/utils/navigation';
 import { BlurView } from '@react-native-community/blur';
 import { Text } from '@/components/Typography';
