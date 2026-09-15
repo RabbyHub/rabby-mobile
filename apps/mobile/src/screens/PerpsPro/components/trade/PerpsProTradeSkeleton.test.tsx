@@ -6,6 +6,12 @@ jest.mock('react-native-haptic-feedback', () => ({
   trigger: jest.fn(),
 }));
 
+jest.mock('@/assets2024/icons/perps/PerpsProTradeAmountSliderThumb.svg', () => {
+  const ReactModule = require('react');
+  return (props: object) =>
+    ReactModule.createElement(require('react-native').View, props);
+});
+
 jest.mock('@/assets2024/icons/perps/PerpsProAvailableAdd.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -158,9 +164,17 @@ describe('PerpsProTradeSkeleton', () => {
     expect(
       StyleSheet.flatten(screen.getByTestId('rne-slider').props.thumbStyle),
     ).toMatchObject({
-      backgroundColor: 'neutral-bg-1',
-      borderColor: 'neutral-title-1',
-      borderWidth: 1,
+      backgroundColor: 'transparent',
+      borderRadius: 0,
+      borderWidth: 0,
+      height: 13,
+      width: 13,
+    });
+    expect(
+      screen.getByTestId('rne-slider').props.thumbProps.children.props,
+    ).toMatchObject({
+      fill: 'neutral-bg-1',
+      stroke: 'neutral-title-1',
       height: 13,
       width: 13,
     });
