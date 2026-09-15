@@ -2503,7 +2503,8 @@
         "breakdownPerps": "Perps",
         "breakdownSpot": "Spot",
         "breakdownOtherAssets": "Aset Lainnya",
-        "breakdownNetOtherAssets": "Aset Lainnya Bersih"
+        "breakdownNetOtherAssets": "Aset Lainnya Bersih",
+        "breakdownStaking": "Staking"
       },
       "PerpsGuidePopup": {
         "step3Title": "Short",

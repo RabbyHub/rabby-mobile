@@ -2693,7 +2693,8 @@
         "breakdownPerps": "Perps",
         "breakdownSpot": "Spot",
         "breakdownOtherAssets": "Otros activos",
-        "breakdownNetOtherAssets": "Otros activos netos"
+        "breakdownNetOtherAssets": "Otros activos netos",
+        "breakdownStaking": "Staking"
       },
       "PerpsGuidePopup": {
         "step2Title": "Largo",

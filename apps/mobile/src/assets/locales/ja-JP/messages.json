@@ -2553,7 +2553,8 @@
         "breakdownPerps": "無期限先物",
         "breakdownSpot": "現物",
         "breakdownOtherAssets": "その他の資産",
-        "breakdownNetOtherAssets": "その他の資産（純額）"
+        "breakdownNetOtherAssets": "その他の資産（純額）",
+        "breakdownStaking": "ステーキング"
       },
       "PerpsGuidePopup": {
         "step5Title": "清算",

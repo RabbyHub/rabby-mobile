@@ -2503,7 +2503,8 @@
         "breakdownPerps": "무기한 선물",
         "breakdownSpot": "현물",
         "breakdownOtherAssets": "기타 자산",
-        "breakdownNetOtherAssets": "기타 자산 순액"
+        "breakdownNetOtherAssets": "기타 자산 순액",
+        "breakdownStaking": "스테이킹"
       },
       "PerpsGuidePopup": {
         "step1Title": "무기한 선물 이해하기",

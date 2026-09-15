@@ -2618,7 +2618,8 @@
         "breakdownPerps": "Perps",
         "breakdownSpot": "Spot",
         "breakdownOtherAssets": "Tài sản khác",
-        "breakdownNetOtherAssets": "Tài sản khác ròng"
+        "breakdownNetOtherAssets": "Tài sản khác ròng",
+        "breakdownStaking": "Staking"
       },
       "PerpsGuidePopup": {
         "step5Title": "Thanh lý",

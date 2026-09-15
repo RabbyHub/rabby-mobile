@@ -2503,7 +2503,8 @@
         "breakdownPerps": "Perps",
         "breakdownSpot": "Spot",
         "breakdownOtherAssets": "Diğer Varlıklar",
-        "breakdownNetOtherAssets": "Net Diğer Varlıklar"
+        "breakdownNetOtherAssets": "Net Diğer Varlıklar",
+        "breakdownStaking": "Staking"
       },
       "PerpsGuidePopup": {
         "step4Title": "Kaldıraç Ayarlama",
