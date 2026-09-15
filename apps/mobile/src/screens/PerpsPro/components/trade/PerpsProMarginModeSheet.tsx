@@ -8,7 +8,8 @@ import React, { useEffect, useRef } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { getPerpsProBottomSheetChromeStyles } from '../common/perpsProVisual';
+import { getPerpsProDialogStyles } from '../common/perpsProDialogVisual';
+import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
 type MarginMode = 'cross' | 'isolated';
@@ -67,11 +68,12 @@ export const PerpsProMarginModeSheet: React.FC<{
         enablePanDownToClose={!pending}
         onDismiss={onClose}
         ref={modalRef}
-        snapPoints={[372]}
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: 'bg1',
+          linearGradientType: 'bg0',
         })}
+        enableDynamicSizing
+        backdropComponent={PerpsProDialogBackdrop}
         backgroundStyle={styles.background}
         handleIndicatorStyle={styles.handleIndicator}
         handleStyle={styles.handle}
@@ -124,51 +126,9 @@ export const PerpsProMarginModeSheet: React.FC<{
 
 PerpsProMarginModeSheet.displayName = 'PerpsProMarginModeSheet';
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  ...getPerpsProBottomSheetChromeStyles(colors2024),
-  sheet: { height: '100%' },
-  content: {
-    height: '100%',
-    paddingHorizontal: 15,
-    paddingTop: 8,
-  },
-  title: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '700',
-    lineHeight: 20,
-  },
-  options: { gap: 8, marginTop: 16 },
-  option: {
-    borderRadius: 12,
-    borderWidth: 1,
-    flexDirection: 'column',
-    overflow: 'hidden',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  optionActive: {
-    backgroundColor: colors2024['brand-light-1'],
-    borderColor: colors2024['brand-default'],
-  },
-  optionInactive: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderColor: colors2024['neutral-info'],
-  },
-  disabled: { opacity: 0.45 },
-  copy: { alignSelf: 'stretch', gap: 4 },
-  label: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-  description: {
-    color: colors2024['neutral-foot'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-  },
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
+    disabled: { opacity: 0.45 },
+  }),
+);

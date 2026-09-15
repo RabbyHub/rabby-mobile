@@ -1,5 +1,4 @@
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
-import RcOptionCheck from '@/assets2024/icons/perps/PerpsProOptionCheck.svg';
 import { AppBottomSheetModal } from '@/components';
 import { Text } from '@/components/Typography';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
@@ -13,7 +12,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getPerpsProPrecisionSheetLayout } from '../../model/layout';
 import type { PerpsTickOption } from '../../model/orderBook';
 import { formatPerpsProPrice } from '../../utils/format';
-import { getPerpsProBottomSheetChromeStyles } from '../common/perpsProVisual';
+import { getPerpsProDialogStyles } from '../common/perpsProDialogVisual';
+import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
+import { useTranslation } from 'react-i18next';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 
 export const PerpsProPrecisionSheet: React.FC<{
@@ -23,6 +24,7 @@ export const PerpsProPrecisionSheet: React.FC<{
   options: PerpsTickOption[];
   selected: PerpsTickOption | null;
 }> = ({ onClose, onIntentStart, onSelect, options, selected }) => {
+  const { t } = useTranslation();
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -51,8 +53,9 @@ export const PerpsProPrecisionSheet: React.FC<{
       snapPoints={[sheetLayout.snapPoint]}
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: 'bg1',
+        linearGradientType: 'bg0',
       })}
+      backdropComponent={PerpsProDialogBackdrop}
       backgroundStyle={styles.background}
       handleIndicatorStyle={styles.handleIndicator}
       handleStyle={styles.handle}
@@ -62,6 +65,9 @@ export const PerpsProPrecisionSheet: React.FC<{
         scrollEnabled={sheetLayout.scrollEnabled}
         showsVerticalScrollIndicator={false}
         testID="perps-pro-precision-options">
+        <Text style={styles.groupingTitle}>
+          {t('page.perps.pro.orderBook.grouping')}
+        </Text>
         {options.map(option => {
           const active =
             option.nSigFigs === selected?.nSigFigs &&
@@ -76,21 +82,16 @@ export const PerpsProPrecisionSheet: React.FC<{
                 onClose();
               }}
               onPressIn={() => onIntentStart?.(option)}
-              style={styles.option}
+              style={[
+                styles.option,
+                active ? styles.optionActive : styles.optionInactive,
+              ]}
               testID={`perps-pro-precision-${option.nSigFigs}-${
                 option.mantissa ?? 'null'
               }`}>
               <Text style={styles.optionText}>
                 {formatPerpsProPrice(option.displayPrice, option.priceDecimals)}
               </Text>
-              {active ? (
-                <RcOptionCheck
-                  color={colors2024['green-default']}
-                  height={24}
-                  testID="perps-pro-precision-selected"
-                  width={24}
-                />
-              ) : null}
             </Pressable>
           );
         })}
@@ -99,30 +100,18 @@ export const PerpsProPrecisionSheet: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  ...getPerpsProBottomSheetChromeStyles(colors2024),
-  sheetContent: {
-    gap: 8,
-    paddingHorizontal: 15,
-    paddingTop: 8,
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => {
+    const dialog = getPerpsProDialogStyles(
+      colors2024,
+      safeAreaInsets.bottom,
+      isLight,
+    );
+    return {
+      ...dialog,
+      sheetContent: { gap: 8, paddingHorizontal: 16, paddingTop: 8 },
+      groupingTitle: { ...dialog.title, marginBottom: 16 },
+      optionText: { ...PERPS_PRO_NUMBER_STYLE, ...dialog.label },
+    };
   },
-  option: {
-    alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderRadius: 12,
-    flexDirection: 'row',
-    gap: 12,
-    justifyContent: 'space-between',
-    minHeight: 40,
-    overflow: 'hidden',
-    paddingVertical: 8,
-  },
-  optionText: {
-    ...PERPS_PRO_NUMBER_STYLE,
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-}));
+);

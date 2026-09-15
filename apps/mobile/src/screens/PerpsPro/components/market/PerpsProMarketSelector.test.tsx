@@ -1381,10 +1381,12 @@ describe('PerpsProMarketSelector', () => {
     expect(modalProps.handleStyle).toMatchObject({
       height: 40,
       paddingTop: 10,
+      paddingBottom: 24,
     });
     expect(modalProps.handleIndicatorStyle).toMatchObject({
-      width: 50.18252944946289,
-      height: 6.272816181182861,
+      width: 50,
+      height: 6,
+      borderRadius: 3,
     });
     expect(mockMakeBottomSheetProps).toHaveBeenLastCalledWith(
       expect.objectContaining({ linearGradientType: 'bg1' }),

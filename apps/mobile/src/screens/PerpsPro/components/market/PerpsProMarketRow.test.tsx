@@ -198,8 +198,8 @@ describe.each([true, false])('PerpsProMarketRow (iOS=%s)', isIOS => {
     expect(screen.getByTestId('favorite-star-empty').props).toEqual(
       expect.objectContaining({
         color: 'neutral-line',
-        height: 12.9307,
-        width: 13.0288,
+        height: 12.9,
+        width: 13,
       }),
     );
     expect(screen.getByTestId('market-logo').props).toEqual(
@@ -324,7 +324,12 @@ describe.each([true, false])('PerpsProMarketRow (iOS=%s)', isIOS => {
         'hyperliquid::ALPHA:https://example.test/ALPHA.png',
       ),
     ).toBeTruthy();
-    expect(screen.getByTestId('favorite-star-empty')).toBeTruthy();
+    const inactiveStar = screen.getByTestId('favorite-star-empty');
+    const inactiveStarStyle = StyleSheet.flatten(inactiveStar.props.style);
+    expect(inactiveStarStyle).toMatchObject({ left: 1.5, top: 1.9 });
+    const inactiveStarCenter =
+      inactiveStarStyle.left + inactiveStar.props.width / 2;
+    expect(inactiveStarCenter).toBe(8);
 
     rerender(
       <PerpsProMarketRow
@@ -346,9 +351,15 @@ describe.each([true, false])('PerpsProMarketRow (iOS=%s)', isIOS => {
     ).toBeTruthy();
     expect(screen.getByTestId('favorite-star').props).toMatchObject({
       color: 'orange-default',
-      height: 13.5445,
-      width: 13.6231,
+      height: 13.5,
+      width: 13.6,
     });
+    const activeStar = screen.getByTestId('favorite-star');
+    const activeStarStyle = StyleSheet.flatten(activeStar.props.style);
+    expect(activeStarStyle).toMatchObject({ left: 1.2, top: 1.5 });
+    expect(activeStarStyle.left + activeStar.props.width / 2).toBe(
+      inactiveStarCenter,
+    );
     expect(
       screen.getByLabelText('page.perps.pro.marketSelector.select:BETAUSDC')
         .props.accessibilityState,

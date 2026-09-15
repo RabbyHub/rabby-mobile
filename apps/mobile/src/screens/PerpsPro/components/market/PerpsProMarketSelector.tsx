@@ -842,13 +842,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     handle: {
       ...chrome.handle,
       paddingTop: 10,
-      paddingBottom: 40 - 10 - 6.272816181182861,
+      paddingBottom: 24,
     },
     handleIndicator: {
       ...chrome.handleIndicator,
-      width: 50.18252944946289,
-      height: 6.272816181182861,
-      borderRadius: 6.272816181182861 / 2,
+      width: 50,
+      height: 6,
+      borderRadius: 3,
     },
     backdrop: {
       flex: 1,

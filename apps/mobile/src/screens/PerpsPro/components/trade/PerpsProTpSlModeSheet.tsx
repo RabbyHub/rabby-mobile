@@ -9,11 +9,9 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsProTpSlMode } from '../../model/tpsl';
-import { getPerpsProBottomSheetChromeStyles } from '../common/perpsProVisual';
+import { getPerpsProDialogStyles } from '../common/perpsProDialogVisual';
+import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
-
-const PERPS_PRO_TP_SL_MODE_SHEET_MIN_HEIGHT = 240;
-const PERPS_PRO_TP_SL_MODE_SHEET_THREE_MODE_HEIGHT = 324;
 
 export const PerpsProTpSlModeSheet: React.FC<{
   allowedModes?: readonly PerpsProTpSlMode[];
@@ -66,20 +64,17 @@ export const PerpsProTpSlModeSheet: React.FC<{
     const options = allOptions.filter(option =>
       allowedModes.includes(option.value),
     );
-    const sheetHeight =
-      options.length >= 3
-        ? PERPS_PRO_TP_SL_MODE_SHEET_THREE_MODE_HEIGHT
-        : PERPS_PRO_TP_SL_MODE_SHEET_MIN_HEIGHT;
 
     return (
       <AppBottomSheetModal
         onDismiss={onClose}
         ref={modalRef}
-        snapPoints={[sheetHeight]}
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: 'bg1',
+          linearGradientType: 'bg0',
         })}
+        enableDynamicSizing
+        backdropComponent={PerpsProDialogBackdrop}
         backgroundStyle={styles.background}
         handleIndicatorStyle={styles.handleIndicator}
         handleStyle={styles.handle}
@@ -125,50 +120,8 @@ export const PerpsProTpSlModeSheet: React.FC<{
 
 PerpsProTpSlModeSheet.displayName = 'PerpsProTpSlModeSheet';
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  ...getPerpsProBottomSheetChromeStyles(colors2024),
-  sheet: { height: '100%' },
-  content: {
-    height: '100%',
-    paddingHorizontal: 15,
-    paddingTop: 8,
-  },
-  title: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '700',
-    lineHeight: 20,
-  },
-  options: { gap: 8, marginTop: 16 },
-  option: {
-    alignItems: 'flex-start',
-    borderRadius: 12,
-    borderWidth: 1,
-    flexDirection: 'row',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  optionActive: {
-    backgroundColor: colors2024['brand-light-1'],
-    borderColor: colors2024['brand-default'],
-  },
-  optionInactive: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderColor: colors2024['neutral-info'],
-  },
-  copy: { flex: 1, gap: 4, minWidth: 0 },
-  label: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-  description: {
-    color: colors2024['neutral-foot'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-  },
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
+  }),
+);

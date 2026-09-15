@@ -1,3 +1,8 @@
+jest.mock('@/assets2024/icons/perps/PerpsProLeverageThumb.svg', () => {
+  const ReactModule = require('react');
+  return (props: object) =>
+    ReactModule.createElement(require('react-native').View, props);
+});
 import { render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
@@ -25,6 +30,54 @@ jest.mock('@/utils/styles', () => ({
 import { PerpsProSlider } from './PerpsProSlider';
 
 describe('PerpsProSlider neutral design', () => {
+  it.each([1, 40])(
+    'aligns the opt-in leverage thumb and input at endpoint %i',
+    value => {
+      const onValueChange = jest.fn();
+      render(
+        <PerpsProSlider
+          appearance="leverage-dialog"
+          maximumValue={40}
+          minimumValue={1}
+          onValueChange={onValueChange}
+          showPoints={false}
+          tone="neutral"
+          value={value}
+        />,
+      );
+      const input = screen.getByTestId('slider-input');
+      expect(input.props.onValueChange).toBe(onValueChange);
+      expect(StyleSheet.flatten(input.props.style)).toMatchObject({
+        height: 48,
+        marginHorizontal: 3,
+      });
+      expect(StyleSheet.flatten(input.props.thumbStyle)).toMatchObject({
+        width: 20,
+        height: 20,
+      });
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId('perps-pro-slider-neutral-thumb-rail').props.style,
+        ),
+      ).toMatchObject({ left: 3, right: 23, top: 14 });
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId('perps-pro-slider-neutral-thumb').props.style,
+        ),
+      ).toMatchObject({
+        width: 20,
+        height: 20,
+        left: value === 1 ? '0%' : '100%',
+      });
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId('perps-pro-slider-neutral-track-progress-rail')
+            .props.style,
+        ),
+      ).toMatchObject({ left: 13, right: 13, height: 4 });
+    },
+  );
+
   it('matches the 32/2/16/8 neutral geometry with aligned rails', () => {
     render(
       <PerpsProSlider
