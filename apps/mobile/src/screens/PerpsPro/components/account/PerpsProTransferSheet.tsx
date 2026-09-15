@@ -23,6 +23,7 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { usePerpsProKeyboardInput } from '../common/usePerpsProKeyboardInput';
+import { PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE } from '../common/perpsProSingleLineInput';
 import { formatPerpsProDecimal } from '../../utils/format';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
@@ -168,7 +169,10 @@ export const PerpsProTransferSheet: React.FC<{
                   placeholder="0"
                   placeholderTextColor={colors2024['neutral-foot']}
                   selectionColor={PERPS_PRO_DIALOG_TOKENS.inputCursor}
-                  style={styles.amountInput}
+                  style={[
+                    styles.amountInput,
+                    PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE,
+                  ]}
                   testID="perps-pro-transfer-amount"
                   value={amount}
                 />

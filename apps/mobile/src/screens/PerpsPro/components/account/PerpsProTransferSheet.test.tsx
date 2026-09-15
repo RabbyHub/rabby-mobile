@@ -7,6 +7,9 @@ jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
 
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
+
+const ReactNative = jest.requireActual('react-native');
 
 jest.mock('@/assets2024/icons/perps/PerpsProTransferDirectionArrow.svg', () => {
   const ReactModule = require('react');
@@ -107,6 +110,83 @@ jest.mock('react-i18next', () => ({
 import { PerpsProTransferSheet } from './PerpsProTransferSheet';
 
 describe('PerpsProTransferSheet', () => {
+  it.each(['android', 'ios'] as const)(
+    'preserves %s amount metrics through focus, typing, clearing, and shortcuts',
+    platform => {
+      let Sheet = PerpsProTransferSheet;
+      jest.resetModules();
+      jest.isolateModules(() => {
+        jest.doMock('react', () => React);
+        jest.doMock('react-native', () => ReactNative);
+        jest.doMock('@/core/native/utils', () => ({
+          IS_ANDROID: platform === 'android',
+          IS_IOS: platform === 'ios',
+        }));
+        jest.doMock('@/utils/styles', () => {
+          const actual = jest.requireActual('@/utils/styles');
+          return {
+            ...actual,
+            createGetStyles2024: (factory: unknown) =>
+              actual.createGetStyles2024(factory).getStyles,
+          };
+        });
+        Sheet = jest.requireActual(
+          './PerpsProTransferSheet',
+        ).PerpsProTransferSheet;
+      });
+      const onConfirm = jest.fn();
+      render(
+        <Sheet
+          available="10.119"
+          onClose={jest.fn()}
+          onConfirm={onConfirm}
+          pending={false}
+          visible
+        />,
+      );
+      const input = screen.getByTestId('perps-pro-transfer-amount');
+      const style = StyleSheet.flatten(input.props.style);
+      expect(style).toMatchObject({
+        fontFamily:
+          platform === 'android' ? 'SF-Pro-Rounded-Heavy' : 'SF Pro Rounded',
+        fontSize: 36,
+        height: 82,
+        padding: 0,
+      });
+      if (platform === 'android') {
+        expect(style.lineHeight).toBeUndefined();
+        expect(style).toMatchObject({
+          includeFontPadding: false,
+          textAlignVertical: 'center',
+        });
+      } else {
+        expect(style.lineHeight).toBe(42);
+        expect(style.fontWeight).toBe('800');
+        expect(style.includeFontPadding).toBeUndefined();
+        expect(style.textAlignVertical).toBeUndefined();
+      }
+      expect(input.props).toMatchObject({
+        allowFontScaling: false,
+        keyboardType: 'decimal-pad',
+        placeholder: '0',
+        value: '',
+      });
+      fireEvent(input, 'focus');
+      for (const value of ['2', '', '1.25']) {
+        fireEvent.changeText(input, value);
+        expect(screen.getByTestId('perps-pro-transfer-amount')).toBe(input);
+        expect(input.props.value).toBe(value);
+        expect(StyleSheet.flatten(input.props.style)).toEqual(style);
+      }
+      fireEvent(input, 'blur');
+      fireEvent.press(screen.getByTestId('perps-pro-transfer-shortcut-0.25'));
+      expect(input.props.value).toBe('2.52');
+      expect(StyleSheet.flatten(input.props.style)).toEqual(style);
+      fireEvent.press(screen.getByTestId('transfer-confirm'));
+      expect(onConfirm).toHaveBeenCalledWith('2.52');
+    },
+  );
+
   it('uses the fixed Figma geometry and only enables a valid amount', () => {
     const onConfirm = jest.fn();
     render(
