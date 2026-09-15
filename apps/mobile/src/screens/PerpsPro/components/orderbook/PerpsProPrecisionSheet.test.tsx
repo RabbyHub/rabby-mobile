@@ -140,14 +140,14 @@ describe.each(['light', 'dark'] as const)(
       );
       expect(StyleSheet.flatten(sheet.props.handleStyle)).toMatchObject({
         height: 40,
-        paddingBottom: 23.727184,
+        paddingBottom: 24,
         paddingTop: 10,
       });
       expect(
         StyleSheet.flatten(sheet.props.handleIndicatorStyle),
       ).toMatchObject({
-        height: 6.272816,
-        width: 50.182529,
+        height: 6,
+        width: 50,
       });
       expect(
         StyleSheet.flatten(

@@ -258,12 +258,12 @@ describe.each(['light', 'dark'] as const)(
         StyleSheet.flatten(
           screen.getByTestId('leverage-sheet').props.handleStyle,
         ),
-      ).toMatchObject({ height: 40, paddingBottom: 23.727184, paddingTop: 10 });
+      ).toMatchObject({ height: 40, paddingBottom: 24, paddingTop: 10 });
       expect(
         StyleSheet.flatten(
           screen.getByTestId('leverage-sheet').props.handleIndicatorStyle,
         ),
-      ).toMatchObject({ height: 6.272816, width: 50.182529 });
+      ).toMatchObject({ height: 6, width: 50 });
       expect(screen.getByText('Adjust Leverage')).toBeTruthy();
       expect(screen.getByText('Up To 40x')).toBeTruthy();
       const inputCard = screen

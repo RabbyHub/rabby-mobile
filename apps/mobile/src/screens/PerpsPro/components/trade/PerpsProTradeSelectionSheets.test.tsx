@@ -204,7 +204,7 @@ describe.each(['light', 'dark'] as const)(
       ).toMatchObject({
         backgroundColor: colors['neutral-bg-0'],
         height: 40,
-        paddingBottom: 23.727184,
+        paddingBottom: 24,
         paddingTop: 10,
       });
       expect(
@@ -213,9 +213,9 @@ describe.each(['light', 'dark'] as const)(
         ),
       ).toMatchObject({
         backgroundColor: colors['neutral-sheet-handle'],
-        borderRadius: 3.136408,
-        height: 6.272816,
-        width: 50.182529,
+        borderRadius: 3,
+        height: 6,
+        width: 50,
       });
       expect(screen.getByText('BTC Margin Mode')).toBeTruthy();
       expect(
@@ -349,7 +349,7 @@ describe.each(['light', 'dark'] as const)(
         StyleSheet.flatten(
           screen.getByTestId('selection-sheet').props.handleIndicatorStyle,
         ),
-      ).toMatchObject({ height: 6.272816, width: 50.182529 });
+      ).toMatchObject({ height: 6, width: 50 });
       for (const kind of ['limit', 'market', 'conditional']) {
         expect(screen.getByTestId(`order-type-${kind}-svg`).props.fill2).toBe(
           colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
@@ -404,7 +404,7 @@ describe.each(['light', 'dark'] as const)(
         StyleSheet.flatten(
           screen.getByTestId('selection-sheet').props.handleIndicatorStyle,
         ),
-      ).toMatchObject({ height: 6.272816, width: 50.182529 });
+      ).toMatchObject({ height: 6, width: 50 });
 
       fireEvent.press(screen.getByTestId('perps-pro-bbo-q5'));
       expect(onSelect).toHaveBeenCalledWith('q5');
@@ -447,7 +447,7 @@ describe.each(['light', 'dark'] as const)(
         StyleSheet.flatten(
           screen.getByTestId('selection-sheet').props.handleIndicatorStyle,
         ),
-      ).toMatchObject({ height: 6.272816, width: 50.182529 });
+      ).toMatchObject({ height: 6, width: 50 });
 
       fireEvent.press(screen.getByTestId('perps-pro-tpsl-mode-roi'));
       expect(onSelect).toHaveBeenCalledWith('roi');
@@ -514,7 +514,7 @@ describe.each(['light', 'dark'] as const)(
         StyleSheet.flatten(
           screen.getByTestId('selection-sheet').props.handleIndicatorStyle,
         ),
-      ).toMatchObject({ height: 6.272816, width: 50.182529 });
+      ).toMatchObject({ height: 6, width: 50 });
 
       fireEvent.press(screen.getByTestId('perps-pro-tif-alo'));
       expect(onSelect).toHaveBeenCalledWith('Alo');

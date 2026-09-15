@@ -14,20 +14,25 @@ const getStyles = (isLight: boolean) =>
   });
 
 describe('PerpsProTransferSheet Figma styles', () => {
-  it('matches the exact Light geometry, typography, surfaces, and button treatment', () => {
+  it('matches the approved Light geometry, typography, surfaces, and button treatment', () => {
     const styles = getStyles(true);
+    const handle = StyleSheet.flatten(styles.handle);
+    const indicator = StyleSheet.flatten(styles.handleIndicator);
 
-    expect(StyleSheet.flatten(styles.handle)).toMatchObject({
+    expect(handle).toMatchObject({
       height: 40,
-      paddingBottom: 23.727184,
+      paddingBottom: 24,
       paddingTop: 10,
     });
-    expect(StyleSheet.flatten(styles.handleIndicator)).toMatchObject({
+    expect(indicator).toMatchObject({
       backgroundColor: ThemeColors2024.light['neutral-sheet-handle'],
-      borderRadius: 3.136408,
-      height: 6.272816,
-      width: 50.182529,
+      borderRadius: 3,
+      height: 6,
+      width: 50,
     });
+    expect(handle.paddingTop + indicator.height + handle.paddingBottom).toBe(
+      handle.height,
+    );
     expect(StyleSheet.flatten(styles.title)).toMatchObject({
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,

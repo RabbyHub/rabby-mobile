@@ -176,16 +176,16 @@ const PerpsProMarketRowComponent: React.FC<PerpsProMarketRowProps> = ({
           {favorite ? (
             <RcFavoriteStar
               color={colors2024['orange-default']}
-              height={13.5445}
+              height={13.5}
               style={styles.favoriteStar}
-              width={13.6231}
+              width={13.6}
             />
           ) : (
             <RcFavoriteStarInactive
               color={colors2024['neutral-line']}
-              height={12.9307}
+              height={12.9}
               style={styles.inactiveStar}
-              width={13.0288}
+              width={13}
             />
           )}
         </View>
@@ -269,14 +269,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 16,
   },
   favoriteStar: {
-    left: 1.1886,
+    left: 1.2,
     position: 'absolute',
-    top: 1.496,
+    top: 1.5,
   },
   inactiveStar: {
-    left: 1.4856,
+    left: 1.5,
     position: 'absolute',
-    top: 1.8688,
+    top: 1.9,
   },
   logo: {
     backgroundColor: colors2024['neutral-bg-0'],

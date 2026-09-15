@@ -60,13 +60,13 @@ export const getPerpsProDialogStyles = (
       backgroundColor: colors['neutral-bg-0'],
       height: 40,
       paddingTop: 10,
-      paddingBottom: 23.727184,
+      paddingBottom: 24,
     },
     handleIndicator: {
       backgroundColor: colors['neutral-sheet-handle'],
-      width: 50.182529,
-      height: 6.272816,
-      borderRadius: 3.136408,
+      width: 50,
+      height: 6,
+      borderRadius: 3,
     },
     sheet: {},
     content: {

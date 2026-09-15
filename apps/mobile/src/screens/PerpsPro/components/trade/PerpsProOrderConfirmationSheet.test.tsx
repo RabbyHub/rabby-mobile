@@ -371,7 +371,7 @@ describe.each(['light', 'dark'] as const)(
         StyleSheet.flatten(
           screen.getByTestId('confirmation-sheet').props.handleIndicatorStyle,
         ),
-      ).toMatchObject({ height: 6.272816, width: 50.182529 });
+      ).toMatchObject({ height: 6, width: 50 });
       expect(
         screen.getByTestId('confirm-button').props.accessibilityValue,
       ).toEqual({ text: '52:primary' });
