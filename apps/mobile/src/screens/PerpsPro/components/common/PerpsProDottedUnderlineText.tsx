@@ -101,8 +101,9 @@ const resolveUnderlineCanvas = (
 
 /**
  * React Native renders dotted text decoration as a solid underline on some
- * native versions. This Pro-private primitive draws deterministic dots while
- * keeping each underline exactly as wide as its rendered text line.
+ * native versions. This primitive (shared by the Pro and Simple Perps
+ * screens) draws deterministic dots while keeping each underline exactly as
+ * wide as its rendered text line.
  */
 export const PerpsProDottedUnderlineText: React.FC<
   PerpsProDottedUnderlineTextProps

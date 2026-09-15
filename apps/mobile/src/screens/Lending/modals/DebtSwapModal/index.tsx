@@ -154,7 +154,11 @@ export default function DebtSwapModal({
     maxInputAmountWithSlippage?: string;
   }>({});
 
-  const [currentTxs, setCurrentTxs] = useState<Tx[]>([]);
+  const [builtTxs, setBuiltTxs] = useState<{
+    txs: Tx[];
+    build: () => Promise<Tx[]>;
+    slippage: string;
+  } | null>(null);
 
   const lastQuoteParamsRef = useRef<{
     rawAmount: string;
@@ -573,6 +577,33 @@ export default function DebtSwapModal({
     isInsufficientLiquidity,
   ]);
 
+  // Only expose transactions built for the current inputs and quote.
+  const currentTxs = useMemo(() => {
+    if (
+      builtTxs?.build !== buildDebtSwapTxs ||
+      builtTxs.slippage !== displaySlippage ||
+      fromAmount !== debouncedFromAmount ||
+      !new BigNumber(swapRate.outputAmount || 0).eq(
+        normalizeBN(fromAmount || '0', -1 * fromToken.decimals),
+      ) ||
+      isQuoteLoading ||
+      noQuote
+    ) {
+      return [];
+    }
+    return builtTxs.txs;
+  }, [
+    builtTxs,
+    buildDebtSwapTxs,
+    displaySlippage,
+    fromAmount,
+    debouncedFromAmount,
+    swapRate.outputAmount,
+    fromToken.decimals,
+    isQuoteLoading,
+    noQuote,
+  ]);
+
   useEffect(() => {
     let cancelled = false;
     const buildTxs = async () => {
@@ -590,7 +621,7 @@ export default function DebtSwapModal({
         isInsufficientLiquidity
       ) {
         if (!cancelled) {
-          setCurrentTxs([]);
+          setBuiltTxs(null);
         }
         return;
       }
@@ -598,11 +629,15 @@ export default function DebtSwapModal({
       try {
         const txs = await buildDebtSwapTxs();
         if (!cancelled) {
-          setCurrentTxs(txs);
+          setBuiltTxs({
+            txs,
+            build: buildDebtSwapTxs,
+            slippage: displaySlippage,
+          });
         }
       } catch (error) {
         if (!cancelled) {
-          setCurrentTxs([]);
+          setBuiltTxs(null);
         }
       }
     };
@@ -612,6 +647,7 @@ export default function DebtSwapModal({
     };
   }, [
     buildDebtSwapTxs,
+    displaySlippage,
     currentAccount?.address,
     debouncedFromAmount,
     fromReserve,
@@ -877,6 +913,7 @@ export default function DebtSwapModal({
   const buttonDisabled = useMemo(() => {
     return (
       !canSwap ||
+      !currentTxs.length ||
       (isRisky && !riskChecked) ||
       isLiquidatable ||
       isInsufficientLiquidity ||
@@ -884,6 +921,7 @@ export default function DebtSwapModal({
     );
   }, [
     canSwap,
+    currentTxs.length,
     isExceedMaxLtvAfterSwap,
     isInsufficientLiquidity,
     isLiquidatable,

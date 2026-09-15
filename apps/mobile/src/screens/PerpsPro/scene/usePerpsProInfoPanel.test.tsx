@@ -65,8 +65,14 @@ jest.mock('@/hooks/perps/runtime/perpsRuntimeState', () => ({
 
 jest.mock('@/hooks/perps/usePerpsStore', () => ({
   isPerpsUserAbstractionReadyForAccount: () => mockUserAbstractionReady,
-  perpsStore: (selector: (state: typeof mockPerpsState) => unknown) =>
-    selector(mockPerpsState),
+  perpsStore: Object.assign(
+    (selector: (state: typeof mockPerpsState) => unknown) =>
+      selector(mockPerpsState),
+    {
+      getState: () => mockPerpsState,
+      subscribe: () => () => {},
+    },
+  ),
   usePerpsStore: () => ({
     fetchMarketData: mockFetchMarketData,
     fetchSpotMeta: mockFetchSpotMeta,

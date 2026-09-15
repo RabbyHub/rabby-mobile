@@ -182,7 +182,9 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevUIDapps]?: {};
   [RootNames.DevDataSQLite]?: {};
   [RootNames.DevWatchAddressFixtureImport]?: {};
-  [RootNames.DevDataKeychain]?: {};
+  [RootNames.DevDataKeychain]?: {
+    keychainVersion?: import('@/core/apis/keychainVersionShared').CurrentKeychainVersion;
+  };
   [RootNames.DevDataKeyringVault]?: {};
   [RootNames.DevDataContactService]?: {};
   [RootNames.DevDataWhitelist]?: {};

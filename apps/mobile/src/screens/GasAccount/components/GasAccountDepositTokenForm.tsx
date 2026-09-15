@@ -90,6 +90,7 @@ import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureMana
 import AuthButton from '@/components2024/AuthButton';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
   BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
   getBottomButtonBottomOffset,
@@ -1408,7 +1409,7 @@ const getStyles = createGetStyles2024(ctx => ({
   depositButtonTitle: {
     fontFamily: 'SF Pro Rounded',
     fontSize: BOTTOM_BUTTON_TITLE_STYLE.fontSize,
-    lineHeight: BOTTOM_BUTTON_TITLE_STYLE.lineHeight,
+    lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
     fontWeight: '700',
   },
 }));

@@ -1,3 +1,4 @@
+import { isApprovalProcessDisabled } from './securityGate';
 import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
 import type { Chain } from '@/constant/chains';
 import { SecurityEngineLevel } from '@/constant/security';
@@ -41,6 +42,7 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   origin?: string;
   originLogo?: string;
   hasUnProcessSecurityResult?: boolean;
+  securityBlocked?: boolean;
   hasShadow?: boolean;
   isTestnet?: boolean;
   engineResults?: Result[];
@@ -208,6 +210,7 @@ export const FooterBar: React.FC<Props> = ({
   securityLevel,
   engineResults = [],
   hasUnProcessSecurityResult,
+  securityBlocked = false,
   hasShadow: _hasShadow = false,
   showGasLess = false,
   useGasLess = false,
@@ -426,14 +429,14 @@ export const FooterBar: React.FC<Props> = ({
           account={account}
           gasLess={useGasLess && !payGasByGasAccount}
           {...props}
-          disabledProcess={
-            payGasByGasAccount
-              ? !gasAccountCanPay ||
-                (!!securityLevel && !!hasUnProcessSecurityResult)
-              : useGasLess
-              ? false
-              : props.disabledProcess
-          }
+          disabledProcess={isApprovalProcessDisabled({
+            securityBlocked,
+            hasUnprocessedSecurityResult: !!hasUnProcessSecurityResult,
+            payGasByGasAccount,
+            gasAccountCanPay,
+            useGasLess,
+            disabledProcess: !!props.disabledProcess,
+          })}
           enableTooltip={
             account.type === KEYRING_TYPE.WatchAddressKeyring
               ? true

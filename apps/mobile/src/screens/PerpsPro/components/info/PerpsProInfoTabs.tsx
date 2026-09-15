@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcIconHistory from '@/assets2024/icons/perps/IconHistoryCC.svg';
 import RcIconPending from '@/assets2024/icons/home/pending.svg';
 import { Text } from '@/components/Typography';
@@ -10,7 +11,6 @@ import {
   Easing,
   Platform,
   Pressable,
-  Text as NativeText,
   View,
   type LayoutChangeEvent,
   type StyleProp,
@@ -41,8 +41,8 @@ interface PerpsProInfoTabsProps {
   onChange: (tab: PerpsProInfoTab) => void;
 }
 
-const INFO_TAB_REGULAR_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '400');
-const INFO_TAB_MEDIUM_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '500');
+const INFO_TAB_INACTIVE_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '500');
+const INFO_TAB_ACTIVE_FONT_STYLE = getPerpsProFontStyle(Platform.OS, '700');
 
 const PerpsProInfoTabLabel: React.FC<{
   activeColor: string;
@@ -51,37 +51,65 @@ const PerpsProInfoTabLabel: React.FC<{
   label: string;
   position: SharedValue<number>;
   style: StyleProp<TextStyle>;
-}> = ({ activeColor, index, inactiveColor, label, position, style }) => {
-  const animatedStyle = useAnimatedStyle(() => {
+  testID: string;
+}> = ({
+  activeColor,
+  index,
+  inactiveColor,
+  label,
+  position,
+  style,
+  testID,
+}) => {
+  const activeAnimatedStyle = useAnimatedStyle(() => {
     const maximumIndex = PERPS_PRO_INFO_TABS.length - 1;
     const rawPosition = Number.isFinite(position.value) ? position.value : 0;
     const visualIndex = Math.round(
       Math.max(0, Math.min(maximumIndex, rawPosition)),
     );
-    const active = visualIndex === index;
     return {
-      color: active ? activeColor : inactiveColor,
-      fontFamily: active
-        ? INFO_TAB_MEDIUM_FONT_STYLE.fontFamily
-        : INFO_TAB_REGULAR_FONT_STYLE.fontFamily,
-      fontWeight: active
-        ? INFO_TAB_MEDIUM_FONT_STYLE.fontWeight
-        : INFO_TAB_REGULAR_FONT_STYLE.fontWeight,
+      opacity: visualIndex === index ? 1 : 0,
     };
-  }, [activeColor, inactiveColor, position, index]);
+  }, [position, index]);
+  const inactiveAnimatedStyle = useAnimatedStyle(() => {
+    const maximumIndex = PERPS_PRO_INFO_TABS.length - 1;
+    const rawPosition = Number.isFinite(position.value) ? position.value : 0;
+    const visualIndex = Math.round(
+      Math.max(0, Math.min(maximumIndex, rawPosition)),
+    );
+    return {
+      opacity: visualIndex === index ? 0 : 1,
+    };
+  }, [position, index]);
 
   return (
     <View style={labelStyles.container}>
-      <NativeText
+      {/* Fixed font layers avoid a text layout update at the swipe midpoint. */}
+      <Reanimated.Text
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
         numberOfLines={1}
-        style={[style, labelStyles.measureText]}>
+        style={[
+          style,
+          INFO_TAB_ACTIVE_FONT_STYLE,
+          { color: activeColor },
+          activeAnimatedStyle,
+        ]}
+        testID={`${testID}-active`}>
         {label}
-      </NativeText>
+      </Reanimated.Text>
       <Reanimated.Text
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
         numberOfLines={1}
-        style={[style, labelStyles.visibleText, animatedStyle]}>
+        style={[
+          style,
+          INFO_TAB_INACTIVE_FONT_STYLE,
+          { color: inactiveColor },
+          labelStyles.visibleText,
+          inactiveAnimatedStyle,
+        ]}
+        testID={`${testID}-inactive`}>
         {label}
       </Reanimated.Text>
     </View>
@@ -91,10 +119,6 @@ const PerpsProInfoTabLabel: React.FC<{
 const labelStyles = {
   container: {
     position: 'relative' as const,
-  },
-  measureText: {
-    ...INFO_TAB_MEDIUM_FONT_STYLE,
-    opacity: 0,
   },
   visibleText: {
     left: 0,
@@ -185,17 +209,18 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
         if (!frame || frame.width <= 0) {
           return [];
         }
-        layouts.push(frame);
+        // Figma's round stroke caps extend 1.5px beyond each text edge.
+        layouts.push({ x: frame.x - 1.5, width: frame.width + 3 });
       }
       return layouts;
     }, [tabFrames]);
 
     const labels: Record<PerpsProInfoTab, string> = {
       account: t('page.perps.pro.account.account'),
-      positions: `${t('page.perps.pro.account.positions')} (${positionsCount})`,
+      positions: `${t('page.perps.pro.account.positions')} ${positionsCount}`,
       openOrders: `${t(
         'page.perps.pro.account.openOrders',
-      )} (${openOrdersCount})`,
+      )} ${openOrdersCount}`,
     };
 
     return (
@@ -204,6 +229,7 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
           const selected = tab === activeTab;
           return (
             <Pressable
+              accessibilityLabel={labels[tab]}
               accessibilityRole="tab"
               accessibilityState={{ selected }}
               key={tab}
@@ -218,11 +244,13 @@ export const PerpsProInfoTabs: React.FC<PerpsProInfoTabsProps> = React.memo(
                 label={labels[tab]}
                 position={indicatorPosition}
                 style={styles.text}
+                testID={`perps-pro-info-tab-label-${tab}`}
               />
             </Pressable>
           );
         })}
         <PerpsProTabIndicator
+          geometryMode="transform"
           layouts={indicatorLayouts}
           position={indicatorPosition}
           style={styles.indicator}
@@ -264,29 +292,30 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderBottomColor: colors2024['neutral-bg-5'],
     borderBottomWidth: 1,
     flexDirection: 'row',
-    gap: 12,
+    gap: 16,
     height: PERPS_PRO_INFO_TABS_HEIGHT,
-    paddingHorizontal: 15,
+    paddingHorizontal: 16,
+    overflow: 'hidden',
     position: 'relative',
   },
   tab: {
     alignItems: 'center',
     height: '100%',
-    justifyContent: 'center',
-    paddingHorizontal: 2,
+    paddingTop: 8,
     position: 'relative',
   },
   text: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    fontWeight: '400',
+    fontWeight: '500',
     lineHeight: 18,
   },
   indicator: {
-    backgroundColor: colors2024['neutral-title-1'],
-    bottom: 0,
-    height: 2,
+    backgroundColor: colors2024['neutral-body'],
+    borderRadius: 1.5,
+    bottom: -0.5,
+    height: 3,
   },
   history: {
     alignItems: 'center',
@@ -303,6 +332,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 24,
   },
   pendingCount: {
+    ...PERPS_PRO_NUMBER_STYLE,
+    width: '100%',
     color: colors2024['orange-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 10,

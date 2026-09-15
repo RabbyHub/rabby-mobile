@@ -764,6 +764,16 @@
         "desc": "Une faible valeur de crédit signale souvent un risque élevé, tel qu'un token honeypot ou une très faible liquidité."
       },
       "rabbyFee": {
+        "discountTitle": "Réduction des frais Rabby",
+        "case": "Condition",
+        "free": "Gratuit",
+        "cases": {
+          "wrap": "Wrap/Unwrap du token natif",
+          "stablecoins": "Stablecoins",
+          "lstLrt": "Token LST/LRT",
+          "million": "Vol. $1M+",
+          "hundredThousand": "Vol. $100k - $1M"
+        },
         "wallet": "Portefeuille",
         "title": "Frais Rabby",
         "button": "Compris",
@@ -2101,6 +2111,7 @@
           "liquidationPrice": "Prix de liquidation",
           "triggerPrice": "Prix de déclenchement",
           "amount": "Quantité",
+          "keyboardMinimum": "Min. {{amount}}",
           "available": "Disponible",
           "reduceOnly": "Réduction uniquement",
           "confirmationReduceOnly": "Réduction uniquement",

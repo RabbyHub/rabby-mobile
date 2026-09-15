@@ -1,4 +1,5 @@
 import { Text } from '@/components/Typography';
+import { PERPS_PRO_NUMBER_STYLE } from '@/screens/PerpsPro/components/common/perpsProNumberText';
 import { useTheme2024 } from '@/hooks/theme';
 import { PerpsProDottedUnderlineText } from '@/screens/PerpsPro/components/common/PerpsProDottedUnderlineText';
 import {
@@ -113,9 +114,7 @@ export const PerpsProHistoryRowLayout: React.FC<{
             ) : (
               <Text style={styles.label}>{detail.label}</Text>
             )}
-            <Text
-              numberOfLines={2}
-              style={valueStyles[detail.tone ?? 'neutral']}>
+            <Text style={valueStyles[detail.tone ?? 'neutral']}>
               {detail.value}
             </Text>
           </View>
@@ -126,6 +125,7 @@ export const PerpsProHistoryRowLayout: React.FC<{
 };
 
 const value = (color: string, fontWeight: '400' | '500' = '400') => ({
+  ...PERPS_PRO_NUMBER_STYLE,
   color,
   flexShrink: 1,
   fontFamily: PERPS_PRO_FONT_FAMILY,
@@ -184,6 +184,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginLeft: 12,
   },
   time: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-secondary'],
     fontFamily: PERPS_PRO_FONT_FAMILY,
     fontSize: 12,

@@ -1101,6 +1101,16 @@
       },
       "low-slippage-may-cause-failed-transactions-due-to-high-volatility": "Niedrige Slippage kann aufgrund hoher Volatilität zu fehlgeschlagenen Transaktionen führen",
       "rabbyFee": {
+        "discountTitle": "Rabatt auf Rabby-Gebühren",
+        "case": "Bedingung",
+        "free": "Kostenlos",
+        "cases": {
+          "wrap": "Native Token wrappen/unwrappen",
+          "stablecoins": "Stablecoins",
+          "lstLrt": "LST/LRT-Token",
+          "million": "Vol. $1M+",
+          "hundredThousand": "Vol. $100k - $1M"
+        },
         "wallet": "Wallet",
         "rate": "Gebührensatz",
         "button": "Verstanden",
@@ -2382,6 +2392,7 @@
           "liquidationPrice": "Liquidationspreis",
           "triggerPrice": "Auslösepreis",
           "amount": "Menge",
+          "keyboardMinimum": "Min. {{amount}}",
           "available": "Verfügbar",
           "reduceOnly": "Nur reduzieren",
           "confirmationReduceOnly": "Nur reduzieren",

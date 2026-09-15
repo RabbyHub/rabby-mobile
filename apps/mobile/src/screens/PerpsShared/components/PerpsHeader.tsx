@@ -1,6 +1,8 @@
-import RcIconHyper from '@/assets2024/icons/perps/IconHyper.svg';
+import RcHeaderBackground from '@/assets2024/icons/perps/PerpsHeaderBackground.svg';
+import RcHeaderBack from '@/assets2024/icons/perps/PerpsHeaderBack.svg';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import type { PerpsViewMode } from '@/core/services/perpsService';
-import { HeaderBackPressable } from '@/hooks/navigation';
+import { navBack } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
@@ -15,7 +17,7 @@ export type PerpsHeaderProps = {
   accountBrandName?: string;
   accountExpanded?: boolean;
   accountLabel?: string | null;
-  accountTriggerVariant?: 'compact' | 'wallet';
+  accountTriggerVariant?: 'compact' | 'wallet' | 'wallet-icon';
   activeMode: PerpsViewMode;
   extendProHitAreaRight?: boolean;
   isModeSwitching: boolean;
@@ -48,7 +50,7 @@ export const PerpsHeader: React.FC<PerpsHeaderProps> = React.memo(
     showBottomDivider,
     showProNewBadge = false,
   }) => {
-    const { styles } = useTheme2024({ getStyle });
+    const { colors2024, styles } = useTheme2024({ getStyle });
 
     return (
       <View
@@ -57,13 +59,27 @@ export const PerpsHeader: React.FC<PerpsHeaderProps> = React.memo(
           activeMode === 'simple' ? styles.simpleHeader : null,
         ]}
         testID="perps-header">
+        <RcHeaderBackground
+          height={48}
+          width={61}
+          pointerEvents="none"
+          style={styles.backgroundMark}
+          testID="perps-header-background-mark"
+        />
         <View style={styles.left} testID="perps-header-left">
-          <HeaderBackPressable
+          <CustomTouchableOpacity
+            accessibilityRole="button"
+            onPress={navBack}
             style={styles.backButton}
-            testID="perps-header-back"
-          />
+            testID="perps-header-back">
+            <RcHeaderBack
+              color={colors2024['neutral-title-1']}
+              height={24}
+              width={24}
+              style={styles.backIcon}
+            />
+          </CustomTouchableOpacity>
           <View style={styles.identity} testID="perps-header-identity">
-            <RcIconHyper height={15} width={19} />
             <PerpsModeSwitch
               activeMode={activeMode}
               disabled={isModeSwitching}
@@ -106,12 +122,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     gap: 8,
     height: PERPS_HEADER_HEIGHT,
-    paddingLeft: 8,
-    paddingRight: 15,
+    paddingLeft: 16,
+    paddingRight: 16,
     position: 'relative',
   },
   simpleHeader: {
     backgroundColor: 'transparent',
+  },
+  backgroundMark: {
+    left: 16,
+    position: 'absolute',
+    top: -2,
   },
   bottomDivider: {
     backgroundColor: colors2024['neutral-bg-5'],
@@ -129,16 +150,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     minWidth: 0,
   },
   backButton: {
-    height: 24,
-    marginLeft: 0,
-    paddingLeft: 0,
+    height: 44,
+    justifyContent: 'center',
     width: 24,
   },
+  backIcon: { transform: [{ rotate: '180deg' }] },
   identity: {
     alignItems: 'center',
     flex: 1,
     flexDirection: 'row',
-    gap: 16,
     minWidth: 0,
   },
 }));

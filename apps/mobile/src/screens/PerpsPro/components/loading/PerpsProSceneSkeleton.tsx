@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import { View, type ViewStyle } from 'react-native';
 
 import { PerpsProOrderBookSkeleton } from '../orderbook/PerpsProOrderBookSkeleton';
+import { PERPS_PRO_TRADE_AMOUNT_FIELD_HEIGHT } from '../../model/layout';
 import { PerpsProSkeletonBlock } from './PerpsProSkeletonBlock';
 
 export const PerpsProMarketBarSkeleton: React.FC = React.memo(() => {
@@ -110,7 +111,7 @@ export const PerpsProSceneSkeleton: React.FC<{
           width={tradeWidth}
         />
         <PerpsProSkeletonBlock
-          height={48}
+          height={PERPS_PRO_TRADE_AMOUNT_FIELD_HEIGHT}
           style={styles.tradeInput}
           width={tradeWidth}
         />
@@ -199,7 +200,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 8,
   },
   tradeInput: {
-    borderRadius: 8,
+    borderRadius: 6,
   },
   tradeOrders: {
     gap: 12,

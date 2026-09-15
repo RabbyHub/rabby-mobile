@@ -1,6 +1,18 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { Keyboard, ScrollView, StyleSheet } from 'react-native';
+import { perpsProKeyboardSession } from '../common/perpsProKeyboardSession';
+
+jest.mock('@/core/native/utils', () => ({ IS_ANDROID: true }));
+jest.mock('react-native-reanimated', () => ({
+  useAnimatedReaction: jest.fn(),
+}));
 
 const mockModalProps = jest.fn();
 const mockPresent = jest.fn();
@@ -81,8 +93,19 @@ jest.mock('@/utils/styles', () => ({
 jest.mock('@/utils/modalGate', () => ({ useRegisterBlockingModal: jest.fn() }));
 jest.mock('@gorhom/bottom-sheet', () => {
   const ReactModule = require('react');
-  const { TextInput, View } = require('react-native');
+  const {
+    ScrollView: NativeScrollView,
+    TextInput,
+    View,
+  } = require('react-native');
   return {
+    ANIMATION_STATUS: { STOPPED: 2 },
+    SCROLLABLE_STATUS: { UNLOCKED: 1 },
+    useBottomSheetInternal: () => ({
+      animatedAnimationState: { value: { status: 2 } },
+      animatedScrollableStatus: { value: 1 },
+    }),
+    BottomSheetScrollView: NativeScrollView,
     BottomSheetTextInput: ReactModule.forwardRef(
       (props: object, ref: unknown) =>
         ReactModule.createElement(TextInput, { ...props, ref }),
@@ -215,6 +238,202 @@ const conditionalEditor = {
   }),
   position,
 } as Extract<PerpsProOpenOrderEditEditorState, { category: 'conditional' }>;
+
+// Component coverage: keep the real input/context/session/viewport chain;
+// native IME events and Gorhom layout remain process-boundary substitutes.
+describe('Android open order edit keyboard avoidance', () => {
+  const listeners = new Map<string, (...args: any[]) => void>();
+  const keyboardMetrics = {
+    height: 300,
+    screenX: 0,
+    screenY: 500,
+    width: 393,
+  };
+  const showKeyboard = () =>
+    act(() => {
+      jest.spyOn(Keyboard, 'metrics').mockReturnValue(keyboardMetrics);
+      listeners.get('keyboardDidShow')?.({ endCoordinates: keyboardMetrics });
+    });
+  const hideKeyboard = () =>
+    act(() => {
+      jest.spyOn(Keyboard, 'metrics').mockReturnValue(undefined);
+      listeners.get('keyboardDidHide')?.();
+    });
+  const getInput = (field: string) =>
+    screen.getByLabelText(`page.perps.pro.openOrders.${field}`);
+  const getModalProps = () => mockModalProps.mock.calls.at(-1)![0];
+  const cases = [
+    { kind: 'basic', height: 326, fields: ['price', 'amount'] },
+    {
+      kind: 'conditionalMarket',
+      height: 542,
+      fields: ['triggerPrice', 'amount'],
+    },
+    {
+      kind: 'conditionalLimit',
+      height: 542,
+      fields: ['triggerPrice', 'limitPrice', 'amount'],
+    },
+  ] as const;
+  const makeEditor = (
+    kind: (typeof cases)[number]['kind'],
+    { coveredByReview = false, visible = true, onReview = jest.fn() } = {},
+  ) =>
+    kind === 'basic' ? (
+      <PerpsProBasicOrderEditSheet
+        coveredByReview={coveredByReview}
+        editor={basicEditor}
+        onClose={mockClose}
+        onReview={onReview}
+        visible={visible}
+      />
+    ) : (
+      <PerpsProConditionalOrderEditSheet
+        coveredByReview={coveredByReview}
+        editor={
+          kind === 'conditionalLimit'
+            ? {
+                ...conditionalEditor,
+                order: { ...conditionalEditor.order, editKind: 'triggerLimit' },
+              }
+            : conditionalEditor
+        }
+        onClose={mockClose}
+        onReview={onReview}
+        position={position}
+        visible={visible}
+      />
+    );
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    listeners.clear();
+    jest.spyOn(Keyboard, 'metrics').mockReturnValue(undefined);
+    jest
+      .spyOn(Keyboard, 'addListener')
+      .mockImplementation((event, callback) => {
+        listeners.set(event, callback);
+        return { remove: () => listeners.delete(event) };
+      });
+    perpsProKeyboardSession.setEnabled(true);
+  });
+  afterEach(() => {
+    cleanup();
+    perpsProKeyboardSession.setEnabled(false);
+    jest.restoreAllMocks();
+  });
+
+  it.each(cases)(
+    'reserves Done space for every $kind field without remounting inputs',
+    ({ kind, height, fields }) => {
+      render(makeEditor(kind));
+      expect(getModalProps().snapPoints).toEqual([height]);
+      const firstInput = getInput(fields[0]);
+      fireEvent(firstInput, 'focus');
+      const firstOwner = perpsProKeyboardSession.getSnapshot();
+      expect(firstOwner?.sheetId).toBeDefined();
+      expect(getModalProps().snapPoints).toEqual([height]);
+      showKeyboard();
+
+      for (const field of fields) {
+        const input = getInput(field);
+        fireEvent(input, 'focus');
+        const owner = perpsProKeyboardSession.getSnapshot();
+        expect(owner).toMatchObject({
+          minimum: null,
+          scrollTrade: false,
+          sheetId: firstOwner!.sheetId,
+        });
+        fireEvent.changeText(input, field === 'amount' ? '20' : '120');
+        expect(getModalProps().snapPoints).toEqual([height + 48]);
+        expect(getInput(field)).toBe(input);
+        expect(perpsProKeyboardSession.getSnapshot()?.id).toBe(owner?.id);
+      }
+
+      const scrollView = screen.UNSAFE_getByType(ScrollView);
+      expect(StyleSheet.flatten(scrollView.props.style)).toMatchObject({
+        marginBottom: 48,
+      });
+      expect(scrollView.props.keyboardShouldPersistTaps).toBe('handled');
+      // Keep the footer inside the scroll content, so it remains reachable
+      // when a short Android window caps the sheet's keyboard expansion.
+      const prefix = kind === 'basic' ? 'basic' : 'conditional';
+      const contentId = `perps-pro-${prefix}-order-edit-content`;
+      const footerId = `perps-pro-${prefix}-order-edit-footer`;
+      expect(scrollView.findByProps({ testID: contentId })).toBeTruthy();
+      expect(scrollView.findByProps({ testID: footerId })).toBeTruthy();
+      expect(
+        StyleSheet.flatten(screen.getByTestId(contentId).props.style).height,
+      ).toBe(height - 40);
+      expect(
+        StyleSheet.flatten(screen.getByTestId(footerId).props.style).top,
+      ).toBe(height - 116);
+      hideKeyboard();
+      expect(getModalProps().snapPoints).toEqual([height]);
+      expect(StyleSheet.flatten(scrollView.props.style).marginBottom).toBe(0);
+      expect(getInput('amount').props.value).toBe('20');
+      expect(getInput(fields[0])).toBe(firstInput);
+    },
+  );
+
+  it.each(cases)(
+    'pauses $kind avoidance under Review and resumes the same draft',
+    ({ kind, height, fields }) => {
+      const onReview = jest.fn();
+      const view = render(makeEditor(kind, { onReview }));
+      const input = getInput(fields[0]);
+      fireEvent(input, 'focus');
+      fireEvent.changeText(input, '120');
+      const owner = perpsProKeyboardSession.getSnapshot();
+      showKeyboard();
+      const prefix = kind === 'basic' ? 'basic' : 'conditional';
+      const confirmId = `perps-pro-${prefix}-order-edit-confirm`;
+      fireEvent.press(screen.getByTestId(confirmId));
+      expect(onReview).toHaveBeenCalledTimes(1);
+      view.rerender(makeEditor(kind, { coveredByReview: true, onReview }));
+      expect(getModalProps().snapPoints).toEqual([height]);
+      expect(listeners.size).toBe(0);
+      fireEvent.press(screen.getByTestId(confirmId));
+      expect(onReview).toHaveBeenCalledTimes(1);
+
+      view.rerender(makeEditor(kind, { onReview }));
+      expect(getModalProps().snapPoints).toEqual([height + 48]);
+      expect(getInput(fields[0])).toBe(input);
+      expect(getInput(fields[0]).props.value).toBe('120');
+      expect(perpsProKeyboardSession.getSnapshot()?.id).toBe(owner?.id);
+      view.rerender(makeEditor(kind, { visible: false, onReview }));
+      expect(getModalProps().snapPoints).toEqual([height]);
+      expect(listeners.size).toBe(0);
+      view.unmount();
+      expect(perpsProKeyboardSession.getSnapshot()).toBeNull();
+    },
+  );
+
+  it('does not reserve space for a foreign input or register the readonly market price', () => {
+    render(makeEditor('conditionalMarket'));
+    const marketField = screen.getByTestId(
+      'perps-pro-conditional-order-edit-market',
+    );
+    expect(marketField.props.onFocus).toBeUndefined();
+    showKeyboard();
+    expect(getModalProps().snapPoints).toEqual([542]);
+    fireEvent(getInput('triggerPrice'), 'focus');
+    const ownInput = perpsProKeyboardSession.getSnapshot()!;
+    expect(getModalProps().snapPoints).toEqual([590]);
+    act(() => {
+      perpsProKeyboardSession.focus({
+        ...ownInput,
+        id: 'foreign',
+        sheetId: 'other-sheet',
+      });
+    });
+    expect(getModalProps().snapPoints).toEqual([542]);
+    expect(
+      StyleSheet.flatten(screen.UNSAFE_getByType(ScrollView).props.style)
+        .marginBottom,
+    ).toBe(0);
+  });
+});
 
 describe('Perps Pro open order edit sheets', () => {
   beforeEach(() => jest.clearAllMocks());

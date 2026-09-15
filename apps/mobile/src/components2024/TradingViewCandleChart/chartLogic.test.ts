@@ -28,6 +28,7 @@ const {
   PERPS_PRO_CROSSHAIR_LABEL_LAYOUT,
   PERPS_PRO_PRICE_SCALE_MARGINS,
   resetPerpsProPriceScale,
+  resetSimplePriceScale,
   shouldBlockPerpsProFutureTouchMove,
   shiftLogicalRangeForPrependedCandles,
 } =
@@ -247,6 +248,15 @@ describe('Perps Pro local chart calculations', () => {
     });
     expect(setAutoScale).toHaveBeenCalledWith(true);
     expect(resetPerpsProPriceScale(null)).toBe(false);
+  });
+
+  it('restores Simple autoscale so every full data load fits the new candles', () => {
+    const setAutoScale = jest.fn();
+    const series = { priceScale: () => ({ setAutoScale }) };
+
+    expect(resetSimplePriceScale(series)).toBe(true);
+    expect(setAutoScale).toHaveBeenCalledWith(true);
+    expect(resetSimplePriceScale(null)).toBe(false);
   });
 
   it('reads whether the Pro price scale is still in automatic mode', () => {

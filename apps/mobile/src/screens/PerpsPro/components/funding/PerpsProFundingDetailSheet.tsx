@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { AppBottomSheetModal } from '@/components';
 import { Text } from '@/components/Typography';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
@@ -314,6 +315,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
   },
   value: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -323,6 +325,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'right',
   },
   intervalValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
   },

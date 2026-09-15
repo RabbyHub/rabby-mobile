@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -201,6 +202,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['green-light-1'],
   },
   bookPrice: {
+    ...PERPS_PRO_NUMBER_STYLE,
     flex: 1,
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -219,6 +221,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-secondary'],
   },
   bookAmount: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     flexShrink: 0,
     fontFamily: 'SF Pro Rounded',

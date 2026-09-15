@@ -41,7 +41,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Reanimated, { useSharedValue } from 'react-native-reanimated';
+import Reanimated, { runOnUI, useSharedValue } from 'react-native-reanimated';
 
 import { PerpsProAccountAssetRow } from '../components/account/PerpsProAccountAssetRow';
 import { PerpsProAccountState } from '../components/account/PerpsProAccountState';
@@ -52,6 +52,7 @@ import {
   type PerpsProFundingMode,
 } from '../components/account/PerpsProFundingOverlay';
 import { PerpsProKlineSheet } from '../components/chart/PerpsProKlineSheet';
+import { registerPerpsProKeyboardTradeScroll } from '../components/common/perpsProKeyboardSession';
 import { PerpsProEmptyState } from '../components/common/PerpsProEmptyState';
 import { PerpsProFieldExplanationProvider } from '../components/common/PerpsProFieldExplanationProvider';
 import { triggerPerpsProLightHaptic } from '../components/common/triggerPerpsProLightHaptic';
@@ -71,7 +72,9 @@ import {
   type PerpsProInfoPagerHandle,
 } from '../components/info/PerpsProInfoPager';
 import {
+  getPerpsProInfoBridgeOffset,
   interruptPerpsProInfoScrollBridge,
+  scrollPerpsProInfoBridgeTarget,
   usePerpsProInfoScrollBridge,
 } from '../components/info/usePerpsProInfoScrollBridge';
 import {
@@ -80,6 +83,7 @@ import {
   getPerpsProInfoSectionMinimumContentHeight,
   getPerpsProInfoTabsNaturalAnchor,
   PERPS_PRO_INFO_TABS_HEIGHT,
+  PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT,
   PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT,
 } from '../components/info/perpsProInfoTabsSticky';
 import {
@@ -256,7 +260,7 @@ export const PerpsProScene: React.FC<{
   );
   const [committedInfoTab, setCommittedInfoTab] =
     useState<PerpsProInfoTab | null>(null);
-  const infoTabRequestFrameRef = useRef<number | null>(null);
+  const infoTabRequestIdRef = useRef(0);
   const info = usePerpsProInfoPanel(
     scene.currentMarket?.canonicalCoin ?? '',
     requestedInfoTab,
@@ -311,6 +315,27 @@ export const PerpsProScene: React.FC<{
   const headerCollapse = usePerpsProHeaderCollapse();
   const infoScrollBridge = usePerpsProInfoScrollBridge(
     info.activeInfoTab ?? 'account',
+  );
+  useEffect(
+    () =>
+      registerPerpsProKeyboardTradeScroll(distance => {
+        runOnUI((delta: number) => {
+          'worklet';
+          const index = infoScrollBridge.activeIndex.value;
+          const target = infoScrollBridge.targets[index];
+          if (!target || infoScrollBridge.pageGestureActive.value) {
+            return;
+          }
+          const offset = getPerpsProInfoBridgeOffset({
+            maxOffset: target.maxOffset.value,
+            offset: target.offset.value,
+            delta,
+          });
+          interruptPerpsProInfoScrollBridge(infoScrollBridge);
+          scrollPerpsProInfoBridgeTarget(infoScrollBridge, index, offset);
+        })(distance);
+      }),
+    [infoScrollBridge],
   );
   const androidScrollCoordinator = usePerpsProAndroidSceneScrollCoordinator({
     controller: infoScrollBridge,
@@ -879,8 +904,9 @@ export const PerpsProScene: React.FC<{
             active
               ? 'perps-pro-info-tabs-spacer'
               : `perps-pro-info-tabs-spacer-${tab}`
-          }
-        />
+          }>
+          <View pointerEvents="none" style={styles.infoSectionDivider} />
+        </View>
       </View>
     ),
     [
@@ -888,6 +914,7 @@ export const PerpsProScene: React.FC<{
       showRegionAlert,
       styles.headerLeadInSpacer,
       styles.infoTabsSpacer,
+      styles.infoSectionDivider,
       styles.marketLeadInSpacer,
       tradeLeadInSpacerStyle,
     ],
@@ -1221,36 +1248,36 @@ export const PerpsProScene: React.FC<{
   // native scrollY=0 while the shared scene offset still points at its lead-in.
   const infoPagerOffscreenPageLimit =
     Platform.OS === 'android' ? PERPS_PRO_INFO_TABS.length - 1 : undefined;
-  const cancelInfoTabRequest = useCallback(() => {
-    if (infoTabRequestFrameRef.current == null) {
-      return;
-    }
-    cancelAnimationFrame(infoTabRequestFrameRef.current);
-    infoTabRequestFrameRef.current = null;
-  }, []);
-  useEffect(() => cancelInfoTabRequest, [cancelInfoTabRequest]);
   const requestInfoTab = useCallback(
     (tab: PerpsProInfoTab) => {
       if (tab === displayedInfoTab) {
         return;
       }
-      cancelInfoTabRequest();
+      const requestId = ++infoTabRequestIdRef.current;
       if (tab === settledInfoTab) {
         setRequestedInfoTab(null);
-        infoPagerRef.current?.returnToPage(tab);
+        infoPagerRef.current?.returnToPage(tab, requestId);
         return;
       }
       setRequestedInfoTab(tab);
-      infoTabRequestFrameRef.current = requestAnimationFrame(() => {
-        infoTabRequestFrameRef.current = null;
-        infoPagerRef.current?.setPage(tab);
-      });
+      // All three lists are retained. Send the intent now so a delayed native
+      // callback cannot cancel a newer press while it waits for a JS frame.
+      infoPagerRef.current?.setPage(tab, requestId);
     },
-    [cancelInfoTabRequest, displayedInfoTab, settledInfoTab],
+    [displayedInfoTab, settledInfoTab],
   );
+  const finishInfoTabRequest = useCallback((requestId: number) => {
+    if (requestId !== infoTabRequestIdRef.current) {
+      return;
+    }
+    setRequestedInfoTab(null);
+    setPreviewInfoTab(null);
+  }, []);
   const commitInfoTab = useCallback(
-    (tab: PerpsProInfoTab) => {
-      cancelInfoTabRequest();
+    (tab: PerpsProInfoTab, requestId: number) => {
+      if (requestId !== infoTabRequestIdRef.current) {
+        return;
+      }
       setRequestedInfoTab(null);
       setPreviewInfoTab(null);
       setCommittedInfoTab(tab);
@@ -1287,14 +1314,14 @@ export const PerpsProScene: React.FC<{
       }
       settleWrite();
     },
-    [cancelInfoTabRequest, setActiveInfoTab],
+    [setActiveInfoTab],
   );
   useEffect(() => {
     const rawActiveInfoTab = info.activeInfoTab;
     if (rawActiveInfoTab == null) {
       latestInfoTabWriteRef.current = null;
       lastNativeInfoTabRef.current = null;
-      cancelInfoTabRequest();
+      infoTabRequestIdRef.current += 1;
       setRequestedInfoTab(null);
       setPreviewInfoTab(null);
       setCommittedInfoTab(null);
@@ -1317,21 +1344,20 @@ export const PerpsProScene: React.FC<{
       return;
     }
     lastNativeInfoTabRef.current = rawActiveInfoTab;
-    cancelInfoTabRequest();
+    const requestId = ++infoTabRequestIdRef.current;
     setRequestedInfoTab(null);
     setPreviewInfoTab(null);
     setCommittedInfoTab(null);
-    infoPagerRef.current?.syncPageWithoutAnimation?.(rawActiveInfoTab);
-  }, [
-    cancelInfoTabRequest,
-    committedInfoTab,
-    info.activeInfoTab,
-    infoTabWriteResolutionRevision,
-  ]);
-  const beginInfoPageDrag = useCallback(() => {
-    cancelInfoTabRequest();
-    setRequestedInfoTab(null);
-  }, [cancelInfoTabRequest]);
+    infoPagerRef.current?.syncPageWithoutAnimation?.(
+      rawActiveInfoTab,
+      requestId,
+    );
+  }, [committedInfoTab, info.activeInfoTab, infoTabWriteResolutionRevision]);
+  const beginInfoPageDrag = useCallback((requestId: number) => {
+    if (requestId === infoTabRequestIdRef.current) {
+      setRequestedInfoTab(null);
+    }
+  }, []);
   const marketBarContent = isMarketLoading ? (
     <PerpsProMarketBarSkeleton />
   ) : (
@@ -1386,6 +1412,7 @@ export const PerpsProScene: React.FC<{
               contentContainerStyle={scrollContentStyles}
               data={rowsByTab}
               getActiveScrollOffset={headerCollapse.getScrollOffset}
+              initialRequestId={infoTabRequestIdRef.current}
               keepAllTabsMounted={keepAllInfoTabListsMounted}
               indicatorPosition={infoTabIndicatorPosition}
               nativeVerticalScrollEnabled={Platform.OS !== 'android'}
@@ -1397,6 +1424,7 @@ export const PerpsProScene: React.FC<{
               onLayout={updateScrollViewportHeight}
               onPageDragStart={beginInfoPageDrag}
               onPagePreview={setPreviewInfoTab}
+              onPageRequestFinished={finishInfoTabRequest}
               onPageSelected={commitInfoTab}
               ref={infoPagerRef}
               renderItem={renderItem}
@@ -1418,7 +1446,6 @@ export const PerpsProScene: React.FC<{
             <PerpsProHeader
               isModeSwitching={isModeSwitching}
               onSwitchToSimple={onSwitchToSimple}
-              showBottomDivider
             />
           </SceneOverlayView>
           {showRegionAlert ? (
@@ -1689,7 +1716,7 @@ export const PerpsProScene: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     flex: 1,
     overflow: 'hidden',
@@ -1736,6 +1763,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     zIndex: 1,
   },
   infoTabsSpacer: { height: PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT },
+  infoSectionDivider: {
+    backgroundColor: colors2024[isLight ? 'neutral-bg-0' : 'neutral-bg-2'],
+    bottom: PERPS_PRO_INFO_TABS_HEIGHT,
+    height: PERPS_PRO_INFO_SECTION_DIVIDER_HEIGHT,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+  },
   scroll: {
     bottom: 0,
     left: 0,
@@ -1753,7 +1788,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   columns: {
     alignItems: 'flex-start',
     flexDirection: 'row',
-    paddingHorizontal: 15,
+    paddingHorizontal: 16,
     paddingTop: 8,
   },
   empty: {

@@ -1,5 +1,7 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcIconAvailableAdd from '@/assets2024/icons/perps/PerpsProAvailableAdd.svg';
 import RcIconAvailableSwap from '@/assets2024/icons/perps/PerpsProAvailableSwap.svg';
+import { PERPS_MINI_USD_VALUE } from '@/constant/perps';
 import { Text, type TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -10,10 +12,12 @@ import { useTranslation } from 'react-i18next';
 import type { PerpsProBboStrategy } from '../../model/bbo';
 import {
   getPerpsProPriceInputMaxDecimals,
+  resolvePerpsProMinimumOrderAmount,
   sanitizePerpsProPriceEditingInput,
   sanitizePerpsProPriceInput,
   type PerpsProTradeTif,
 } from '../../model/trade';
+import { getPerpsProTradeDisplayReferencePrice } from '../../model/tradeProjection';
 import type { PerpsProTradeController } from '../../scene/usePerpsProTrade';
 import { formatPerpsProDecimal } from '../../utils/format';
 import { PerpsProSelectCaret } from '../common/PerpsProSelectCaret';
@@ -96,6 +100,27 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
     (value: string) => sanitizePerpsProPriceInput(value, priceSzDecimals),
     [priceSzDecimals],
   );
+  const getKeyboardMinimum = useCallback(() => {
+    if (form.reduceOnly || !market) {
+      return null;
+    }
+    const minimum = resolvePerpsProMinimumOrderAmount({
+      minimumQuoteAmount: PERPS_MINI_USD_VALUE,
+      price:
+        getPerpsProTradeDisplayReferencePrice({
+          form,
+          marketPrice:
+            market.marketData.midPx || market.marketData.markPx || '',
+        }) || '',
+      szDecimals: market.marketData.szDecimals,
+    });
+    if (!minimum) {
+      return null;
+    }
+    return form.amountUnit === 'base'
+      ? `${minimum.minimumBaseSize} ${market.displayBase}`
+      : `${minimum.displayQuoteAmount} ${market.quoteAsset}`;
+  }, [form, market]);
   const quoteAsset = market?.quoteAsset ?? '-';
   const amountLabel = `${t('page.perps.pro.trade.amount')}(${
     controller.amountUnitLabel
@@ -159,6 +184,7 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
             disabled={!configurationReady}
             label={configurationReady ? `${controller.leverage}x` : '--'}
             onPress={() => openSheet('leverage')}
+            textStyle={PERPS_PRO_NUMBER_STYLE}
             showCaret={false}
             style={styles.flexItem}
           />
@@ -247,11 +273,13 @@ const PerpsProTradeFormComponent: React.FC<PerpsProTradeFormProps> = ({
                   ? form.conditionalLimitPrice
                   : ''
               }
+              displayMarketPrice={form.conditionalExecution === 'market'}
               variant="conditionalExecution"
             />
           </>
         ) : null}
         <PerpsProTradeAmountField
+          getKeyboardMinimum={getKeyboardMinimum}
           label={amountLabel}
           maxDecimals={controller.amountDecimals}
           onBlur={controller.endAmountEntry}
@@ -506,6 +534,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   flexItem: { flex: 1, minWidth: 0 },
   optionsGroup: { gap: 8 },
   convertedAmount: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,

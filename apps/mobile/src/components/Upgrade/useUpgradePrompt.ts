@@ -1,5 +1,6 @@
 import { zustandByMMKV } from '@/core/storage/mmkv';
 import { zCreate } from '@/core/utils/reexports';
+import { parseMarkdown } from '@/components/Markdown/parseMarkdown';
 
 type UpgradePromptInfo = {
   version: string;
@@ -35,6 +36,7 @@ export function requestAutoUpgradePrompt(info: UpgradePromptInfo) {
   if (
     !info.couldUpgrade ||
     hasPromptedVersion(info.version) ||
+    typeof info.changelog !== 'string' ||
     !info.changelog.trim()
   ) {
     return;
@@ -57,9 +59,9 @@ export function showPendingAutoUpgradePrompt() {
   showUpgradePrompt(pendingInfo.version, pendingInfo.changelog);
 }
 
-// 设置页主动检查更新时不受忽略记录限制，但 changelog 为空时不展示。
+// 设置页主动检查更新时不受忽略记录限制，但 changelog 为空或解析失败时不展示。
 export function showUpgradePrompt(version: string, changelog: string) {
-  if (!changelog.trim()) {
+  if (!parseMarkdown(changelog).success) {
     return;
   }
 

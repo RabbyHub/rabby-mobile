@@ -52,5 +52,15 @@ describe('PerpsProFundingSummary', () => {
         minWidth: 136,
       },
     );
+    for (const value of ['-', '--:--']) {
+      const text = screen.getByText(value);
+      expect(text.props.adjustsFontSizeToFit).toBeUndefined();
+      expect(StyleSheet.flatten(text.props.style)).toMatchObject({
+        fontSize: 10,
+        lineHeight: 12,
+        fontWeight: '500',
+        fontVariant: ['tabular-nums'],
+      });
+    }
   });
 });

@@ -10,14 +10,14 @@ import {
 } from './perpsProInfoTabsSticky';
 
 describe('Perps Pro info tabs sticky geometry', () => {
-  it('preserves the 16px natural gap after the trade row', () => {
+  it('preserves the 16px natural gap and 6px section divider after the trade row', () => {
     expect(
       getPerpsProInfoTabsNaturalAnchor({
         leadInHeight: 96,
         tradeRowHeight: 424,
       }),
-    ).toBe(536);
-    expect(PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT).toBe(50);
+    ).toBe(542);
+    expect(PERPS_PRO_INFO_TABS_PLACEHOLDER_HEIGHT).toBe(60);
   });
 
   it('follows its list anchor until it reaches the moving Market bottom', () => {
@@ -67,7 +67,7 @@ describe('Perps Pro info tabs sticky geometry', () => {
         marketBarHeight: 40,
         viewportHeight: 700,
       }),
-    ).toBe(390);
+    ).toBe(386);
     expect(
       getPerpsProPopulatedInfoSectionBottomPadding({
         marketBarHeight: 40,

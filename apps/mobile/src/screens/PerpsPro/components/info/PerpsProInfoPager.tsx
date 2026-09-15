@@ -25,7 +25,10 @@ import PagerView, {
   type PagerViewOnPageSelectedEvent,
 } from 'react-native-pager-view';
 import Reanimated, {
+  dispatchCommand,
   runOnJS,
+  runOnUI,
+  useAnimatedRef,
   useEvent,
   useSharedValue,
   type SharedValue,
@@ -97,11 +100,18 @@ export const getPerpsProInfoPagePreparedOffset = ({
 };
 
 export type PerpsProInfoPagerHandle = {
-  returnToPage: (tab: PerpsProInfoTab) => void;
+  returnToPage: (tab: PerpsProInfoTab, requestId?: number) => void;
   scrollActiveToOffset: (offset: number, animated?: boolean) => void;
-  setPage: (tab: PerpsProInfoTab) => void;
-  setPageWithoutAnimation: (tab: PerpsProInfoTab) => void;
-  syncPageWithoutAnimation: (tab: PerpsProInfoTab) => void;
+  setPage: (tab: PerpsProInfoTab, requestId?: number) => void;
+  setPageWithoutAnimation: (tab: PerpsProInfoTab, requestId?: number) => void;
+  syncPageWithoutAnimation: (tab: PerpsProInfoTab, requestId?: number) => void;
+};
+
+type PerpsProInfoPageRequest = {
+  animated: boolean;
+  id: number;
+  notifySelection: boolean;
+  position: number;
 };
 
 type PerpsProInfoPagerProps<Row> = {
@@ -110,6 +120,7 @@ type PerpsProInfoPagerProps<Row> = {
   contentContainerStyle: Record<PerpsProInfoTab, StyleProp<ViewStyle>>;
   data: Record<PerpsProInfoTab, readonly Row[]>;
   getActiveScrollOffset: () => number;
+  initialRequestId?: number;
   keepAllTabsMounted?: boolean;
   indicatorPosition: SharedValue<number>;
   nativeVerticalScrollEnabled?: boolean;
@@ -117,9 +128,10 @@ type PerpsProInfoPagerProps<Row> = {
   onActivateOffset: (offset: number) => void;
   onActiveScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onLayout: (event: LayoutChangeEvent) => void;
-  onPageDragStart: () => void;
+  onPageDragStart: (requestId: number) => void;
   onPagePreview: (tab: PerpsProInfoTab | null) => void;
-  onPageSelected: (tab: PerpsProInfoTab) => void;
+  onPageRequestFinished?: (requestId: number) => void;
+  onPageSelected: (tab: PerpsProInfoTab, requestId: number) => void;
   renderItem: ListRenderItem<Row>;
   renderListHeader: (tab: PerpsProInfoTab, active: boolean) => ReactElement;
   requestedTab: PerpsProInfoTab | null;
@@ -133,17 +145,17 @@ type PerpsProInfoListHandle = {
 };
 
 const isPerpsProInfoHorizontalTouchAuthorized = (
-  controller?: PerpsProInfoScrollBridgeController,
+  controller: PerpsProInfoScrollBridgeController | undefined,
+  expectedTouchSessionId: number,
 ) => {
   'worklet';
-  if (!controller) {
+  if (!controller || expectedTouchSessionId <= 0) {
     return false;
   }
-  const touchSessionId = controller.touchSessionId.value;
   return (
     controller.touchIntent.value === PERPS_PRO_INFO_TOUCH_INTENT.horizontal &&
-    touchSessionId > 0 &&
-    controller.horizontalTouchSessionId.value === touchSessionId
+    controller.touchSessionId.value === expectedTouchSessionId &&
+    controller.horizontalTouchSessionId.value === expectedTouchSessionId
   );
 };
 
@@ -154,6 +166,7 @@ const PerpsProInfoPagerInner = <Row,>(
     contentContainerStyle,
     data,
     getActiveScrollOffset,
+    initialRequestId = 0,
     keepAllTabsMounted = false,
     indicatorPosition,
     nativeVerticalScrollEnabled = true,
@@ -163,6 +176,7 @@ const PerpsProInfoPagerInner = <Row,>(
     onLayout,
     onPageDragStart,
     onPagePreview,
+    onPageRequestFinished,
     onPageSelected,
     renderItem,
     renderListHeader,
@@ -173,7 +187,7 @@ const PerpsProInfoPagerInner = <Row,>(
   }: PerpsProInfoPagerProps<Row>,
   ref: React.ForwardedRef<PerpsProInfoPagerHandle>,
 ) => {
-  const pagerRef = useRef<PagerView>(null);
+  const pagerRef = useAnimatedRef<PagerView>();
   const listRefs = useRef<
     Partial<Record<PerpsProInfoTab, PerpsProInfoListHandle | null>>
   >({});
@@ -194,22 +208,39 @@ const PerpsProInfoPagerInner = <Row,>(
   });
   const selectedIndexRef = useRef(PERPS_PRO_INFO_TABS.indexOf(activeTab));
   const latestHandledTransitionRef = useRef(0);
+  const latestRequestIdRef = useRef(initialRequestId);
+  const mountedRef = useRef(true);
   const pendingActiveCorrectionRef = useRef<{
     offset: number;
     tab: PerpsProInfoTab;
   } | null>(null);
   const settledPagePosition = useSharedValue(selectedIndexRef.current);
+  // Native selected is an acknowledgement, not necessarily a business commit
+  // or the physical end of an animation.
+  const nativeSelectedPosition = useSharedValue(selectedIndexRef.current);
+  const latestRequestId = useSharedValue(initialRequestId);
+  const pendingPageRequest = useSharedValue<PerpsProInfoPageRequest | null>(
+    null,
+  );
   const visualSettledPagePosition = useSharedValue(selectedIndexRef.current);
   const pageTransitionEpoch = useSharedValue(0);
   const selectedTransitionEpoch = useSharedValue(-1);
   const idleTransitionEpoch = useSharedValue(-1);
   const isPreviewGestureActive = useSharedValue(false);
   const isIndicatorScrollActive = useSharedValue(false);
+  const isNativeGestureVisualActive = useSharedValue(false);
+  const nativeGestureVisualTouchSessionId = useSharedValue(0);
   const programmaticSelectionTargetPosition = useSharedValue(-1);
-  const transitionShouldNotifySelection = useSharedValue(true);
   const previewGestureSessionId = useSharedValue(0);
   const previewPagePosition = useSharedValue(selectedIndexRef.current);
   const activeTabRef = useRef(activeTab);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useLayoutEffect(() => {
     snapPerpsProTabIndicator(indicatorPosition, selectedIndexRef.current);
@@ -275,9 +306,11 @@ const PerpsProInfoPagerInner = <Row,>(
   );
 
   const preparePages = useCallback(() => {
-    const currentTab = activeTabRef.current;
+    const currentIndex =
+      scrollBridge?.activeIndex.value ?? selectedIndexRef.current;
+    const currentTab = PERPS_PRO_INFO_TABS[currentIndex];
     const nativeActiveOffset =
-      scrollBridge?.targets[selectedIndexRef.current]?.offset.value;
+      scrollBridge?.targets[currentIndex]?.offset.value;
     const rawActiveOffset = Number.isFinite(nativeActiveOffset)
       ? nativeActiveOffset
       : getActiveScrollOffset();
@@ -307,145 +340,12 @@ const PerpsProInfoPagerInner = <Row,>(
     [onPagePreview],
   );
 
-  const {
-    beginPreviewSession,
-    finishPreviewSession,
-    publishPreview,
-    resetPreviewSession,
-  } = usePerpsProPagerPreviewSession({
-    gestureSessionId: previewGestureSessionId,
-    isGestureActive: isPreviewGestureActive,
-    onPreview: publishPagePreview,
-  });
-
-  const clearPagePreview = useCallback(() => {
-    previewPagePosition.value = settledPagePosition.value;
-    resetPreviewSession();
-  }, [previewPagePosition, resetPreviewSession, settledPagePosition]);
-
-  const setPage = useCallback(
-    (
-      tab: PerpsProInfoTab,
-      animated: boolean,
-      shouldNotifySelection: boolean,
-      shouldPreparePages = true,
-    ) => {
-      clearPagePreview();
-      const targetIndex = PERPS_PRO_INFO_TABS.indexOf(tab);
-      const currentPosition = settledPagePosition.value;
-      const wasIndicatorScrollActive = isIndicatorScrollActive.value;
-      const isReturningFromActiveTransition =
-        targetIndex === currentPosition &&
-        (wasIndicatorScrollActive ||
-          isPreviewGestureActive.value ||
-          (programmaticSelectionTargetPosition.value >= 0 &&
-            programmaticSelectionTargetPosition.value !== targetIndex));
-      if (
-        targetIndex < 0 ||
-        (targetIndex === currentPosition && !isReturningFromActiveTransition)
-      ) {
-        programmaticSelectionTargetPosition.value = -1;
-        isIndicatorScrollActive.value = false;
-        if (targetIndex >= 0) {
-          snapPerpsProTabIndicator(indicatorPosition, targetIndex);
-        }
-        return;
-      }
-      pageTransitionEpoch.value += 1;
-      transitionShouldNotifySelection.value = shouldNotifySelection;
-      selectedTransitionEpoch.value = -1;
-      idleTransitionEpoch.value = -1;
-      programmaticSelectionTargetPosition.value = targetIndex;
-      visualSettledPagePosition.value = currentPosition;
-      if (scrollBridge) {
-        scrollBridge.epoch.value += 1;
-        scrollBridge.pageGestureActive.value = !isReturningFromActiveTransition;
-        if (isReturningFromActiveTransition) {
-          scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.idle;
-          scrollBridge.horizontalTouchSessionId.value = 0;
-        }
-      }
-      if (shouldPreparePages) {
-        preparePages();
-      }
-      const shouldTrackNativeProgress =
-        animated && Math.abs(targetIndex - currentPosition) === 1;
-      isIndicatorScrollActive.value = shouldTrackNativeProgress;
-      if (shouldTrackNativeProgress) {
-        if (!wasIndicatorScrollActive) {
-          snapPerpsProTabIndicator(indicatorPosition, currentPosition);
-        }
-        pagerRef.current?.setPage(targetIndex);
-      } else {
-        snapPerpsProTabIndicator(indicatorPosition, targetIndex);
-        pagerRef.current?.setPageWithoutAnimation(targetIndex);
-      }
-    },
-    [
-      clearPagePreview,
-      idleTransitionEpoch,
-      indicatorPosition,
-      isIndicatorScrollActive,
-      isPreviewGestureActive,
-      pageTransitionEpoch,
-      preparePages,
-      programmaticSelectionTargetPosition,
-      selectedTransitionEpoch,
-      scrollBridge,
-      settledPagePosition,
-      transitionShouldNotifySelection,
-      visualSettledPagePosition,
-    ],
-  );
-
-  const scrollActiveToOffset = useCallback(
-    (rawOffset: number, animated = true) => {
-      const offset = Number.isFinite(rawOffset) ? Math.max(0, rawOffset) : 0;
-      const tab = activeTabRef.current;
-      if (scrollBridge) {
-        scrollBridge.epoch.value += 1;
-      }
-      recordDesiredOffset(tab, offset);
-      listRefs.current[tab]?.scrollToOffset({ animated, offset });
-      onActivateOffset(offset);
-    },
-    [onActivateOffset, recordDesiredOffset, scrollBridge],
-  );
-
-  useImperativeHandle(
-    ref,
-    () => ({
-      returnToPage: tab => setPage(tab, true, false),
-      scrollActiveToOffset,
-      setPage: tab => setPage(tab, true, true),
-      setPageWithoutAnimation: tab => setPage(tab, false, true),
-      syncPageWithoutAnimation: tab => setPage(tab, false, false),
-    }),
-    [scrollActiveToOffset, setPage],
-  );
-
-  const resumeSupersededProgrammaticSelection = useCallback(
-    (
-      observedPosition: number,
-      targetPosition: number,
-      transitionEpoch: number,
-      shouldNotifySelection: boolean,
-    ) => {
-      if (
-        pageTransitionEpoch.value !== transitionEpoch ||
-        programmaticSelectionTargetPosition.value !== targetPosition
-      ) {
-        return;
-      }
-      const targetTab = PERPS_PRO_INFO_TABS[targetPosition];
-      if (!targetTab) {
-        return;
-      }
-      selectedIndexRef.current = observedPosition;
-      setPage(targetTab, true, shouldNotifySelection, false);
-    },
-    [pageTransitionEpoch, programmaticSelectionTargetPosition, setPage],
-  );
+  const { beginPreviewSession, finishPreviewSession, publishPreview } =
+    usePerpsProPagerPreviewSession({
+      gestureSessionId: previewGestureSessionId,
+      isGestureActive: isPreviewGestureActive,
+      onPreview: publishPagePreview,
+    });
 
   useEffect(() => {
     applyPendingActiveCorrection(activeTab);
@@ -457,27 +357,19 @@ const PerpsProInfoPagerInner = <Row,>(
       transitionEpoch: number,
       sessionId: number,
       changed: boolean,
-      authorized: boolean,
       shouldNotifySelection: boolean,
+      requestId: number,
     ) => {
       const tab = PERPS_PRO_INFO_TABS[position];
-      if (!tab) {
-        return;
-      }
-      if (transitionEpoch < latestHandledTransitionRef.current) {
-        return;
-      }
-      if (!authorized && transitionEpoch !== pageTransitionEpoch.value) {
+      if (
+        !tab ||
+        !mountedRef.current ||
+        requestId !== latestRequestIdRef.current ||
+        transitionEpoch < latestHandledTransitionRef.current
+      ) {
         return;
       }
       latestHandledTransitionRef.current = transitionEpoch;
-
-      if (!authorized) {
-        finishPreviewSession(sessionId, true);
-        pagerRef.current?.setPageWithoutAnimation(selectedIndexRef.current);
-        return;
-      }
-
       const shouldCommit =
         shouldNotifySelection && (changed || tab !== activeTabRef.current);
       finishPreviewSession(sessionId, !shouldCommit);
@@ -495,101 +387,36 @@ const PerpsProInfoPagerInner = <Row,>(
           : null;
       onActivateOffset(actualOffset);
       if (shouldCommit) {
-        onPageSelected(tab);
+        onPageSelected(tab, requestId);
       }
+      onPageRequestFinished?.(requestId);
     },
     [
       finishPreviewSession,
       onActivateOffset,
+      onPageRequestFinished,
       onPageSelected,
-      pageTransitionEpoch,
       scrollBridge,
     ],
   );
 
-  const handlePageSelected = useEvent<PagerViewOnPageSelectedEvent>(
-    event => {
+  const closeNativeGestureVisual = useCallback(() => {
+    'worklet';
+    isNativeGestureVisualActive.value = false;
+    nativeGestureVisualTouchSessionId.value = 0;
+  }, [isNativeGestureVisualActive, nativeGestureVisualTouchSessionId]);
+
+  const acceptNativePageSelection = useCallback(
+    (position: number, requestId: number, notifySelection: boolean) => {
       'worklet';
-      const position = event.position;
-      if (position < 0 || position >= PERPS_PRO_INFO_TABS.length) {
-        return;
-      }
       const transitionEpoch = pageTransitionEpoch.value;
       const sessionId = previewGestureSessionId.value;
-      const shouldNotifySelection = transitionShouldNotifySelection.value;
       const changed = position !== settledPagePosition.value;
-      const programmaticAuthorized =
-        programmaticSelectionTargetPosition.value === position;
-      if (
-        programmaticSelectionTargetPosition.value >= 0 &&
-        !programmaticAuthorized
-      ) {
-        if (!changed) {
-          return;
-        }
-        const targetPosition = programmaticSelectionTargetPosition.value;
-        isPreviewGestureActive.value = false;
-        isIndicatorScrollActive.value = false;
-        settledPagePosition.value = position;
-        previewPagePosition.value = position;
-        visualSettledPagePosition.value = position;
-        // Reissued progress starts at the native page that actually won, not
-        // at the partial indicator frame left by the superseded command.
-        snapPerpsProTabIndicator(indicatorPosition, position);
-        selectedTransitionEpoch.value = -1;
-        idleTransitionEpoch.value = -1;
-        if (scrollBridge) {
-          scrollBridge.activeIndex.value = position;
-          scrollBridge.epoch.value += 1;
-          scrollBridge.pageGestureActive.value = false;
-          scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.idle;
-          scrollBridge.horizontalTouchSessionId.value = 0;
-        }
-        runOnJS(resumeSupersededProgrammaticSelection)(
-          position,
-          targetPosition,
-          transitionEpoch,
-          shouldNotifySelection,
-        );
-        return;
-      }
-      const gestureAuthorized =
-        !authorizeNativePageGestures ||
-        isPerpsProInfoHorizontalTouchAuthorized(scrollBridge);
-      const authorized =
-        !changed || programmaticAuthorized || gestureAuthorized;
-
-      if (!authorized) {
-        isPreviewGestureActive.value = false;
-        isIndicatorScrollActive.value = false;
-        programmaticSelectionTargetPosition.value = -1;
-        previewPagePosition.value = settledPagePosition.value;
-        visualSettledPagePosition.value = settledPagePosition.value;
-        snapPerpsProTabIndicator(indicatorPosition, settledPagePosition.value);
-        if (scrollBridge) {
-          scrollBridge.pageGestureActive.value = false;
-          scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.idle;
-          scrollBridge.horizontalTouchSessionId.value = 0;
-        }
-        runOnJS(commitNativePageSelection)(
-          position,
-          transitionEpoch,
-          sessionId,
-          changed,
-          false,
-          false,
-        );
-        return;
-      }
-
       const wasPreviewGestureActive = isPreviewGestureActive.value;
       isPreviewGestureActive.value = false;
       settledPagePosition.value = position;
       previewPagePosition.value = position;
       selectedTransitionEpoch.value = transitionEpoch;
-      if (programmaticAuthorized) {
-        programmaticSelectionTargetPosition.value = -1;
-      }
       if (scrollBridge) {
         scrollBridge.activeIndex.value = position;
         scrollBridge.epoch.value += 1;
@@ -610,98 +437,385 @@ const PerpsProInfoPagerInner = <Row,>(
           idleTransitionEpoch.value === transitionEpoch);
       if (shouldFinalizeAtSelection) {
         isIndicatorScrollActive.value = false;
+        closeNativeGestureVisual();
         visualSettledPagePosition.value = position;
         snapPerpsProTabIndicator(indicatorPosition, position);
       } else if (shouldAwaitIosGestureFinalScroll) {
         visualSettledPagePosition.value = position;
       }
-
       runOnJS(commitNativePageSelection)(
         position,
         transitionEpoch,
         sessionId,
         changed,
-        true,
-        shouldNotifySelection,
+        notifySelection,
+        requestId,
       );
+    },
+    [
+      authorizeNativePageGestures,
+      closeNativeGestureVisual,
+      commitNativePageSelection,
+      idleTransitionEpoch,
+      indicatorPosition,
+      isIndicatorScrollActive,
+      isPreviewGestureActive,
+      pageTransitionEpoch,
+      previewGestureSessionId,
+      previewPagePosition,
+      scrollBridge,
+      selectedTransitionEpoch,
+      settledPagePosition,
+      visualSettledPagePosition,
+    ],
+  );
+
+  const startProgrammaticPage = useCallback(
+    (request: PerpsProInfoPageRequest) => {
+      'worklet';
+      const currentPosition = nativeSelectedPosition.value;
+      const wasIndicatorScrollActive = isIndicatorScrollActive.value;
+      const wasUnselectedGesture =
+        isNativeGestureVisualActive.value &&
+        selectedTransitionEpoch.value !== pageTransitionEpoch.value;
+      isPreviewGestureActive.value = false;
+      closeNativeGestureVisual();
+      runOnJS(finishPreviewSession)(previewGestureSessionId.value, true);
+
+      // Both native pagers can omit selected for the page they already know.
+      // Adopt that acknowledgement instead of installing a command that can
+      // never finish. A partial manual drag still needs an explicit return.
+      if (request.position === currentPosition) {
+        // UIKit can ignore even a non-animated return to its current
+        // controller while a manual transition is completing. Release input
+        // now, retaining the requested return only to correct a late selection.
+        pendingPageRequest.value = wasUnselectedGesture ? request : null;
+        programmaticSelectionTargetPosition.value = -1;
+        if (wasUnselectedGesture) {
+          isIndicatorScrollActive.value = false;
+        }
+        acceptNativePageSelection(
+          request.position,
+          request.id,
+          request.notifySelection,
+        );
+        if (wasUnselectedGesture) {
+          dispatchCommand(pagerRef, 'setPageWithoutAnimation', [
+            request.position,
+          ]);
+        }
+        return;
+      }
+
+      pageTransitionEpoch.value += 1;
+      selectedTransitionEpoch.value = -1;
+      idleTransitionEpoch.value = -1;
+      programmaticSelectionTargetPosition.value = request.position;
+      visualSettledPagePosition.value = settledPagePosition.value;
+      const trackProgress =
+        request.animated && Math.abs(request.position - currentPosition) === 1;
+      isIndicatorScrollActive.value = trackProgress;
+      if (scrollBridge) {
+        scrollBridge.epoch.value += 1;
+        scrollBridge.pageGestureActive.value = true;
+        scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.idle;
+        scrollBridge.horizontalTouchSessionId.value = 0;
+      }
+      if (!trackProgress) {
+        snapPerpsProTabIndicator(indicatorPosition, request.position);
+      } else if (!wasIndicatorScrollActive) {
+        snapPerpsProTabIndicator(indicatorPosition, currentPosition);
+      }
+      // Install the owner on UI before dispatch. On Paper dispatchCommand
+      // still queues a native command, so keep this issued target until its
+      // acknowledgement rather than overwriting it on the next press.
+      dispatchCommand(
+        pagerRef,
+        trackProgress ? 'setPage' : 'setPageWithoutAnimation',
+        [request.position],
+      );
+    },
+    [
+      acceptNativePageSelection,
+      closeNativeGestureVisual,
+      finishPreviewSession,
+      idleTransitionEpoch,
+      indicatorPosition,
+      isIndicatorScrollActive,
+      isNativeGestureVisualActive,
+      isPreviewGestureActive,
+      nativeSelectedPosition,
+      pageTransitionEpoch,
+      pagerRef,
+      pendingPageRequest,
+      previewGestureSessionId,
+      programmaticSelectionTargetPosition,
+      scrollBridge,
+      selectedTransitionEpoch,
+      settledPagePosition,
+      visualSettledPagePosition,
+    ],
+  );
+
+  const requestProgrammaticPage = useCallback(
+    (request: PerpsProInfoPageRequest) => {
+      'worklet';
+      if (request.id < latestRequestId.value) {
+        return;
+      }
+      latestRequestId.value = request.id;
+      pendingPageRequest.value = request;
+      if (programmaticSelectionTargetPosition.value < 0) {
+        startProgrammaticPage(request);
+      }
+    },
+    [
+      latestRequestId,
+      pendingPageRequest,
+      programmaticSelectionTargetPosition,
+      startProgrammaticPage,
+    ],
+  );
+
+  const setPage = useCallback(
+    (
+      tab: PerpsProInfoTab,
+      animated: boolean,
+      notifySelection: boolean,
+      requestId?: number,
+    ) => {
+      const position = PERPS_PRO_INFO_TABS.indexOf(tab);
+      if (position < 0 || !mountedRef.current) {
+        return;
+      }
+      const id = requestId ?? latestRequestIdRef.current + 1;
+      if (id < latestRequestIdRef.current) {
+        return;
+      }
+      latestRequestIdRef.current = id;
+      preparePages();
+      runOnUI(requestProgrammaticPage)({
+        animated,
+        id,
+        notifySelection,
+        position,
+      });
+    },
+    [preparePages, requestProgrammaticPage],
+  );
+
+  const scrollActiveToOffset = useCallback(
+    (rawOffset: number, animated = true) => {
+      const offset = Number.isFinite(rawOffset) ? Math.max(0, rawOffset) : 0;
+      const tab = activeTabRef.current;
+      if (scrollBridge) {
+        scrollBridge.epoch.value += 1;
+      }
+      recordDesiredOffset(tab, offset);
+      listRefs.current[tab]?.scrollToOffset({ animated, offset });
+      onActivateOffset(offset);
+    },
+    [onActivateOffset, recordDesiredOffset, scrollBridge],
+  );
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      returnToPage: (tab, id) => setPage(tab, true, false, id),
+      scrollActiveToOffset,
+      setPage: (tab, id) => setPage(tab, true, true, id),
+      setPageWithoutAnimation: (tab, id) => setPage(tab, false, true, id),
+      syncPageWithoutAnimation: (tab, id) => setPage(tab, false, false, id),
+    }),
+    [scrollActiveToOffset, setPage],
+  );
+
+  const handlePageSelected = useEvent<PagerViewOnPageSelectedEvent>(
+    event => {
+      'worklet';
+      const position = event.position;
+      if (position < 0 || position >= PERPS_PRO_INFO_TABS.length) {
+        return;
+      }
+      nativeSelectedPosition.value = position;
+      const issuedTarget = programmaticSelectionTargetPosition.value;
+      if (issuedTarget >= 0) {
+        if (position !== issuedTarget) {
+          // A stale/native gesture acknowledgement must not move the business
+          // page or the Scene's vertical offset owner.
+          return;
+        }
+        programmaticSelectionTargetPosition.value = -1;
+        const request = pendingPageRequest.value;
+        if (request && request.position !== position) {
+          startProgrammaticPage(request);
+          return;
+        }
+        pendingPageRequest.value = null;
+        acceptNativePageSelection(
+          position,
+          request?.id ?? latestRequestId.value,
+          request?.notifySelection ?? false,
+        );
+        return;
+      }
+
+      const pendingReturn = pendingPageRequest.value;
+      if (pendingReturn) {
+        if (position !== pendingReturn.position) {
+          startProgrammaticPage(pendingReturn);
+        } else {
+          pendingPageRequest.value = null;
+        }
+        return;
+      }
+
+      const authorized =
+        position === settledPagePosition.value ||
+        !authorizeNativePageGestures ||
+        isPerpsProInfoHorizontalTouchAuthorized(
+          scrollBridge,
+          nativeGestureVisualTouchSessionId.value,
+        );
+      if (!authorized) {
+        isPreviewGestureActive.value = false;
+        isIndicatorScrollActive.value = false;
+        closeNativeGestureVisual();
+        previewPagePosition.value = settledPagePosition.value;
+        visualSettledPagePosition.value = settledPagePosition.value;
+        snapPerpsProTabIndicator(indicatorPosition, settledPagePosition.value);
+        const correction: PerpsProInfoPageRequest = {
+          animated: false,
+          id: latestRequestId.value,
+          notifySelection: false,
+          position: settledPagePosition.value,
+        };
+        pendingPageRequest.value = correction;
+        startProgrammaticPage(correction);
+        return;
+      }
+      acceptNativePageSelection(position, latestRequestId.value, true);
     },
     ['onPageSelected'],
     true,
   );
 
   const beginPageDrag = useCallback(
-    (sessionId: number) => {
+    (sessionId: number, requestId: number) => {
+      if (
+        !mountedRef.current ||
+        requestId !== latestRequestIdRef.current ||
+        !isPreviewGestureActive.value ||
+        previewGestureSessionId.value !== sessionId
+      ) {
+        return;
+      }
       beginPreviewSession(sessionId);
       preparePages();
-      onPageDragStart();
+      onPageDragStart(requestId);
     },
-    [beginPreviewSession, onPageDragStart, preparePages],
+    [
+      beginPreviewSession,
+      isPreviewGestureActive,
+      onPageDragStart,
+      preparePages,
+      previewGestureSessionId,
+    ],
   );
+
+  const beginNativeGestureVisualTracking = (touchSessionId: number) => {
+    'worklet';
+    pageTransitionEpoch.value += 1;
+    selectedTransitionEpoch.value = -1;
+    idleTransitionEpoch.value = -1;
+    isPreviewGestureActive.value = false;
+    isIndicatorScrollActive.value = true;
+    isNativeGestureVisualActive.value = true;
+    nativeGestureVisualTouchSessionId.value = touchSessionId;
+    previewPagePosition.value = settledPagePosition.value;
+    visualSettledPagePosition.value = settledPagePosition.value;
+  };
+
+  const beginAuthorizedPageGesture = () => {
+    'worklet';
+    if (isPreviewGestureActive.value) {
+      return;
+    }
+    const sessionId = previewGestureSessionId.value + 1;
+    previewGestureSessionId.value = sessionId;
+    isPreviewGestureActive.value = true;
+    if (scrollBridge) {
+      scrollBridge.epoch.value += 1;
+      scrollBridge.pageGestureActive.value = true;
+    }
+    runOnJS(beginPageDrag)(sessionId, latestRequestId.value);
+  };
 
   const handlePageScrollStateChanged =
     useEvent<PageScrollStateChangedNativeEvent>(
       event => {
         'worklet';
         if (event.pageScrollState === 'dragging') {
-          if (isPreviewGestureActive.value) {
+          if (programmaticSelectionTargetPosition.value >= 0) {
+            return;
+          }
+          const touchSessionId = authorizeNativePageGestures
+            ? scrollBridge?.touchSessionId.value ?? 0
+            : 0;
+          if (authorizeNativePageGestures && touchSessionId <= 0) {
             return;
           }
           if (
-            authorizeNativePageGestures &&
-            !isPerpsProInfoHorizontalTouchAuthorized(scrollBridge)
+            isPreviewGestureActive.value &&
+            nativeGestureVisualTouchSessionId.value === touchSessionId
           ) {
             return;
           }
-          const transitionEpoch = pageTransitionEpoch.value + 1;
-          pageTransitionEpoch.value = transitionEpoch;
-          transitionShouldNotifySelection.value = true;
-          selectedTransitionEpoch.value = -1;
-          idleTransitionEpoch.value = -1;
-          programmaticSelectionTargetPosition.value = -1;
-          const sessionId = previewGestureSessionId.value + 1;
-          previewGestureSessionId.value = sessionId;
-          isPreviewGestureActive.value = true;
-          isIndicatorScrollActive.value = true;
-          if (scrollBridge) {
-            scrollBridge.epoch.value += 1;
-            scrollBridge.pageGestureActive.value = true;
+          pendingPageRequest.value = null;
+          beginNativeGestureVisualTracking(touchSessionId);
+          if (
+            authorizeNativePageGestures &&
+            !isPerpsProInfoHorizontalTouchAuthorized(
+              scrollBridge,
+              touchSessionId,
+            )
+          ) {
+            return;
           }
-          previewPagePosition.value = settledPagePosition.value;
-          visualSettledPagePosition.value = settledPagePosition.value;
-          runOnJS(beginPageDrag)(sessionId);
+          beginAuthorizedPageGesture();
           return;
         }
         if (event.pageScrollState === 'idle') {
           const transitionEpoch = pageTransitionEpoch.value;
           idleTransitionEpoch.value = transitionEpoch;
-          const wasIndicatorScrollActive = isIndicatorScrollActive.value;
           const selectionSeen =
             selectedTransitionEpoch.value === transitionEpoch;
           const returnedToSettledPage =
             previewPagePosition.value === settledPagePosition.value;
-          const awaitingProgrammaticSelection =
-            programmaticSelectionTargetPosition.value >= 0 && !selectionSeen;
-          const shouldFinalize =
-            wasIndicatorScrollActive &&
-            !awaitingProgrammaticSelection &&
-            (selectionSeen || returnedToSettledPage);
-          if (!shouldFinalize) {
+          if (
+            !isIndicatorScrollActive.value ||
+            programmaticSelectionTargetPosition.value >= 0 ||
+            (!selectionSeen && !returnedToSettledPage)
+          ) {
             return;
           }
           isIndicatorScrollActive.value = false;
+          closeNativeGestureVisual();
           snapPerpsProTabIndicator(
             indicatorPosition,
             settledPagePosition.value,
           );
           visualSettledPagePosition.value = settledPagePosition.value;
-          const sessionId = previewGestureSessionId.value;
           const shouldFinishPreviewSession = isPreviewGestureActive.value;
           isPreviewGestureActive.value = false;
           if (scrollBridge) {
             scrollBridge.pageGestureActive.value = false;
           }
           if (shouldFinishPreviewSession) {
-            runOnJS(finishPreviewSession)(sessionId, returnedToSettledPage);
+            runOnJS(finishPreviewSession)(
+              previewGestureSessionId.value,
+              returnedToSettledPage,
+            );
           }
         }
       },
@@ -716,22 +830,63 @@ const PerpsProInfoPagerInner = <Row,>(
         0,
         Math.min(PERPS_PRO_INFO_TABS.length - 1, event.position + event.offset),
       );
+      const currentTransitionSelected =
+        selectedTransitionEpoch.value === pageTransitionEpoch.value;
+
+      // Pending progress is visual-only, but vertical/cancelled/replaced touch
+      // sessions are not owners. Validate before any indicator or preview write.
+      if (
+        authorizeNativePageGestures &&
+        isNativeGestureVisualActive.value &&
+        !currentTransitionSelected &&
+        scrollBridge
+      ) {
+        const intent = scrollBridge.touchIntent.value;
+        const validOwner =
+          nativeGestureVisualTouchSessionId.value > 0 &&
+          nativeGestureVisualTouchSessionId.value ===
+            scrollBridge.touchSessionId.value &&
+          (intent === PERPS_PRO_INFO_TOUCH_INTENT.pending ||
+            isPerpsProInfoHorizontalTouchAuthorized(
+              scrollBridge,
+              nativeGestureVisualTouchSessionId.value,
+            ));
+        if (!validOwner) {
+          isPreviewGestureActive.value = false;
+          isIndicatorScrollActive.value = false;
+          closeNativeGestureVisual();
+          previewPagePosition.value = settledPagePosition.value;
+          visualSettledPagePosition.value = settledPagePosition.value;
+          scrollBridge.pageGestureActive.value = false;
+          snapPerpsProTabIndicator(
+            indicatorPosition,
+            settledPagePosition.value,
+          );
+          runOnJS(finishPreviewSession)(previewGestureSessionId.value, true);
+          return;
+        }
+      }
+
       if (!isPreviewGestureActive.value) {
-        if (isIndicatorScrollActive.value) {
+        if (
+          isIndicatorScrollActive.value &&
+          (programmaticSelectionTargetPosition.value >= 0 ||
+            currentTransitionSelected)
+        ) {
           indicatorPosition.value = pagePosition;
-          const nextPosition = getPerpsProInfoPagerPreviewPosition({
+          previewPagePosition.value = getPerpsProInfoPagerPreviewPosition({
             maximumPosition: PERPS_PRO_INFO_TABS.length - 1,
             pagePosition,
             previewPosition: previewPagePosition.value,
             settledPosition: visualSettledPagePosition.value,
           });
-          previewPagePosition.value = nextPosition;
           if (
             !authorizeNativePageGestures &&
-            selectedTransitionEpoch.value === pageTransitionEpoch.value &&
+            currentTransitionSelected &&
             Math.abs(pagePosition - settledPagePosition.value) < 0.001
           ) {
             isIndicatorScrollActive.value = false;
+            closeNativeGestureVisual();
             visualSettledPagePosition.value = settledPagePosition.value;
             snapPerpsProTabIndicator(
               indicatorPosition,
@@ -740,29 +895,20 @@ const PerpsProInfoPagerInner = <Row,>(
           }
           return;
         }
+        if (!isNativeGestureVisualActive.value) {
+          return;
+        }
+        indicatorPosition.value = pagePosition;
         if (
-          !authorizeNativePageGestures ||
-          !isPerpsProInfoHorizontalTouchAuthorized(scrollBridge)
+          authorizeNativePageGestures &&
+          !isPerpsProInfoHorizontalTouchAuthorized(
+            scrollBridge,
+            nativeGestureVisualTouchSessionId.value,
+          )
         ) {
           return;
         }
-        const transitionEpoch = pageTransitionEpoch.value + 1;
-        pageTransitionEpoch.value = transitionEpoch;
-        transitionShouldNotifySelection.value = true;
-        selectedTransitionEpoch.value = -1;
-        idleTransitionEpoch.value = -1;
-        programmaticSelectionTargetPosition.value = -1;
-        const sessionId = previewGestureSessionId.value + 1;
-        previewGestureSessionId.value = sessionId;
-        isPreviewGestureActive.value = true;
-        isIndicatorScrollActive.value = true;
-        if (scrollBridge) {
-          scrollBridge.epoch.value += 1;
-          scrollBridge.pageGestureActive.value = true;
-        }
-        previewPagePosition.value = settledPagePosition.value;
-        visualSettledPagePosition.value = settledPagePosition.value;
-        runOnJS(beginPageDrag)(sessionId);
+        beginAuthorizedPageGesture();
       }
       indicatorPosition.value = pagePosition;
       const nextPosition = getPerpsProInfoPagerPreviewPosition({
@@ -771,11 +917,10 @@ const PerpsProInfoPagerInner = <Row,>(
         previewPosition: previewPagePosition.value,
         settledPosition: visualSettledPagePosition.value,
       });
-      if (nextPosition === previewPagePosition.value) {
-        return;
+      if (nextPosition !== previewPagePosition.value) {
+        previewPagePosition.value = nextPosition;
+        runOnJS(publishPreview)(previewGestureSessionId.value, nextPosition);
       }
-      previewPagePosition.value = nextPosition;
-      runOnJS(publishPreview)(previewGestureSessionId.value, nextPosition);
     },
     ['onPageScroll'],
     true,

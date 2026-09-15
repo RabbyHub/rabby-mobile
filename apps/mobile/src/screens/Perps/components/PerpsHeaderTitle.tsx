@@ -77,7 +77,7 @@ export const PerpsSimpleHeader: React.FC<{
         accountBrandName={account?.brandName}
         accountExpanded={popupState.isShowLoginPopup}
         accountLabel={accountLabel}
-        accountTriggerVariant="wallet"
+        accountTriggerVariant="wallet-icon"
         activeMode="simple"
         extendProHitAreaRight
         isModeSwitching={isModeSwitching}

@@ -29,9 +29,13 @@ import * as SecretVault from '@/core/utils/secretVault';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+import { IS_ANDROID } from '@/core/native/utils';
 
 /** Toast position at the top of screen */
 const TOAST_POSITION_TOP = 30;
+
+// Android needs touch-start dismissal without Pressable claiming the swipe.
+const Container = IS_ANDROID ? View : Pressable;
 
 type TabType = 'seedPhrase' | 'privateKey';
 
@@ -65,6 +69,7 @@ export const ImportSecret = ({ route }: ScreenProps) => {
 
   // Clear errors when switching tabs
   const handleTabChange = React.useCallback((tab: TabType) => {
+    Keyboard.dismiss();
     setActiveTab(tab);
     setMnemonicError(undefined);
     setPrivateKeyError(undefined);
@@ -134,6 +139,7 @@ export const ImportSecret = ({ route }: ScreenProps) => {
                 textContentType: 'none',
                 blurOnSubmit: true,
                 returnKeyType: 'done',
+                rejectResponderTermination: false,
                 ...makeTestIDProps(
                   !isSeedPhrase ? E2E_ID.onboarding.privateKeyInput : null,
                 ),
@@ -427,10 +433,15 @@ export const ImportSecret = ({ route }: ScreenProps) => {
       }}
       style={styles.screen}
       footerBottomOffset={48}>
-      <View style={styles.container} onTouchStart={() => Keyboard.dismiss()}>
+      <Container
+        accessible={false}
+        style={styles.container}
+        onTouchStart={IS_ANDROID ? Keyboard.dismiss : undefined}
+        onPress={IS_ANDROID ? undefined : Keyboard.dismiss}>
         <View style={styles.content}>
           <PagerView
             ref={pagerRef}
+            keyboardDismissMode="on-drag"
             style={styles.pager}
             initialPage={initialTab === 'privateKey' ? 1 : 0}
             onPageSelected={({ nativeEvent }) => {
@@ -466,7 +477,7 @@ export const ImportSecret = ({ route }: ScreenProps) => {
             </Text>
           </View>
         )}
-      </View>
+      </Container>
     </FooterButtonScreenContainer>
   );
 };

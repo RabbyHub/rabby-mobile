@@ -8,6 +8,7 @@ import { PerpsWithdrawPopup } from '@/screens/Perps/components/PerpsWithdrawPopu
 import { useMemoizedFn } from 'ahooks';
 import React from 'react';
 import { Platform } from 'react-native';
+import { PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE } from '../common/perpsProSingleLineInput';
 
 import {
   getPerpsProFontStyle,
@@ -18,6 +19,10 @@ const PERPS_PRO_FUNDING_INPUT_TEXT_STYLE = getPerpsProFontStyle(
   Platform.OS,
   '700',
 );
+const PERPS_PRO_FUNDING_AMOUNT_INPUT_STYLE = {
+  ...PERPS_PRO_FUNDING_INPUT_TEXT_STYLE,
+  ...PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE,
+};
 
 export type PerpsProFundingMode = 'deposit' | 'withdraw' | 'swap';
 
@@ -42,7 +47,7 @@ const PerpsProScopedWithdrawPopup: React.FC<
     <StoreActivityProvider scope={activityScope}>
       <PerpsWithdrawPopup
         {...props}
-        inputTextStyle={PERPS_PRO_FUNDING_INPUT_TEXT_STYLE}
+        inputTextStyle={PERPS_PRO_FUNDING_AMOUNT_INPUT_STYLE}
         tooltipTextStyle={PERPS_PRO_REGULAR_TEXT_STYLE}
       />
     </StoreActivityProvider>
@@ -87,7 +92,7 @@ export const PerpsProFundingOverlay: React.FC<{
         account={currentPerpsAccount}
         onClose={onClose}
         onDeposit={handleDeposit}
-        inputTextStyle={PERPS_PRO_FUNDING_INPUT_TEXT_STYLE}
+        inputTextStyle={PERPS_PRO_FUNDING_AMOUNT_INPUT_STYLE}
         tooltipTextStyle={PERPS_PRO_REGULAR_TEXT_STYLE}
         visible
       />
@@ -122,7 +127,7 @@ export const PerpsProFundingOverlay: React.FC<{
           account={currentPerpsAccount}
           onClose={onCloseDeposit}
           onDeposit={handleDeposit}
-          inputTextStyle={PERPS_PRO_FUNDING_INPUT_TEXT_STYLE}
+          inputTextStyle={PERPS_PRO_FUNDING_AMOUNT_INPUT_STYLE}
           tooltipTextStyle={PERPS_PRO_REGULAR_TEXT_STYLE}
           visible
         />

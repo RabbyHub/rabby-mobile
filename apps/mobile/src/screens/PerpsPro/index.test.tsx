@@ -24,6 +24,10 @@ jest.mock('./components/common/PerpsProSheetNavigationGuard', () => ({
   PerpsProSheetNavigationHost: () => null,
 }));
 
+jest.mock('./components/common/PerpsProKeyboardAccessory', () => ({
+  PerpsProKeyboardAccessory: () => null,
+}));
+
 jest.mock('@/screens/PerpsProHistory/PerpsProHistorySheet', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');

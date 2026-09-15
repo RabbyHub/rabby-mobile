@@ -1,4 +1,10 @@
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import {
+  act,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+} from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
@@ -51,7 +57,10 @@ jest.mock('react-native-gesture-handler', () => {
   };
 });
 
-import { PerpsProMarketTabs } from './PerpsProMarketTabs';
+import {
+  PerpsProMarketTabs,
+  usePerpsProMarketTabLayout,
+} from './PerpsProMarketTabs';
 
 const tabs = [
   { id: 'all', label: 'All' },
@@ -65,6 +74,70 @@ describe('PerpsProMarketTabs', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     indicatorPosition.value = 0;
+  });
+
+  it('uses initial geometry without issuing a post-mount scroll, then animates normal tab changes', () => {
+    const layout = {
+      viewportWidth: 200,
+      contentWidth: 540,
+      frames: {
+        all: { height: 34, width: 50, x: 16, y: 0 },
+        'last-category': { height: 34, width: 70, x: 450, y: 0 },
+      },
+    };
+    const onChange = jest.fn();
+    const view = render(
+      <PerpsProMarketTabs
+        activeTab="last-category"
+        initialLayout={layout}
+        indicatorPosition={indicatorPosition}
+        onChange={onChange}
+        tabs={[tabs[0], tabs[3]]}
+      />,
+    );
+    expect(
+      screen.getByTestId('perps-pro-market-tabs').props.contentOffset,
+    ).toEqual({ x: 340, y: 0 });
+    expect(mockScrollTo).not.toHaveBeenCalled();
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-market-tab-last-category').props.style,
+      ).width,
+    ).toBeUndefined();
+    act(() => {
+      fireEvent(screen.getByTestId('perps-pro-market-tabs'), 'layout', {
+        nativeEvent: { layout: { height: 38, width: 200, x: 0, y: 0 } },
+      });
+      screen
+        .getByTestId('perps-pro-market-tabs')
+        .props.onContentSizeChange(540, 38);
+      fireEvent(
+        screen.getByTestId('perps-pro-market-tab-last-category'),
+        'layout',
+        {
+          nativeEvent: { layout: layout.frames['last-category'] },
+        },
+      );
+    });
+    expect(mockScrollTo).not.toHaveBeenCalled();
+    view.rerender(
+      <PerpsProMarketTabs
+        activeTab="all"
+        initialLayout={layout}
+        indicatorPosition={indicatorPosition}
+        onChange={onChange}
+        tabs={[tabs[0], tabs[3]]}
+      />,
+    );
+    expect(mockScrollTo).toHaveBeenCalledTimes(1);
+    expect(mockScrollTo).toHaveBeenCalledWith({
+      animated: true,
+      x: 0,
+    });
+    // contentOffset is an initial native prop, never a second scroll owner.
+    expect(
+      screen.getByTestId('perps-pro-market-tabs').props.contentOffset,
+    ).toEqual({ x: 340, y: 0 });
   });
 
   it('positions a restored trailing tab without animating its first mount', () => {
@@ -250,24 +323,43 @@ describe('PerpsProMarketTabs', () => {
 
     expect(
       StyleSheet.flatten(
-        screen.getByTestId('perps-pro-market-tabs').props.style,
+        screen.getByTestId('perps-pro-market-tabs-container').props.style,
       ),
     ).toMatchObject({
-      borderBottomColor: 'neutral-bg-5',
-      borderBottomWidth: 1,
-      height: 34,
+      height: 38,
+      marginTop: 16,
     });
+    const scroll = screen.getByTestId('perps-pro-market-tabs');
+    const scrollStyle = StyleSheet.flatten(scroll.props.style);
+    expect(scrollStyle.height).toBe(38);
+    expect(scrollStyle.borderBottomWidth ?? 0).toBe(0);
+    const divider = screen.getByTestId('perps-pro-market-tabs-divider');
+    expect(divider.props.pointerEvents).toBe('none');
+    expect(StyleSheet.flatten(divider.props.style)).toMatchObject({
+      backgroundColor: 'neutral-bg-5',
+      bottom: 0,
+      height: 1,
+      left: 0,
+      position: 'absolute',
+      right: 0,
+    });
+    const container = screen.getByTestId('perps-pro-market-tabs-container');
+    expect(
+      container.children.map(child =>
+        typeof child === 'string' ? child : child.props.testID,
+      ),
+    ).toEqual(['perps-pro-market-tabs-divider', 'perps-pro-market-tabs']);
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-market-tab-all').props.style,
       ),
-    ).toMatchObject({ height: 34, paddingHorizontal: 2, paddingTop: 8 });
+    ).toMatchObject({ height: 34, paddingHorizontal: 0, paddingTop: 8 });
     expect(
       StyleSheet.flatten(screen.getByText('All').props.style),
     ).toMatchObject({
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
-      fontWeight: '500',
+      fontWeight: '700',
       lineHeight: 18,
     });
     expect(
@@ -278,10 +370,10 @@ describe('PerpsProMarketTabs', () => {
       ),
     ).toMatchObject({
       backgroundColor: 'neutral-body',
-      bottom: 1,
-      height: 2,
-      left: 15,
-      width: 40,
+      bottom: -0.5,
+      height: 3,
+      left: 13.5,
+      width: 43,
     });
   });
 
@@ -329,8 +421,8 @@ describe('PerpsProMarketTabs', () => {
       ),
     ).toMatchObject({
       opacity: 1,
-      left: 67,
-      width: 70,
+      left: 65.5,
+      width: 73,
     });
 
     indicatorPosition.value = 1.75;
@@ -349,8 +441,8 @@ describe('PerpsProMarketTabs', () => {
         }).props.style,
       ),
     ).toMatchObject({
-      left: 128.5,
-      width: 55,
+      left: 127,
+      width: 58,
     });
 
     indicatorPosition.value = 1.25;
@@ -369,8 +461,8 @@ describe('PerpsProMarketTabs', () => {
         }).props.style,
       ),
     ).toMatchObject({
-      left: 87.5,
-      width: 65,
+      left: 86,
+      width: 68,
     });
     expect(
       screen.getByTestId('perps-pro-market-tab-all').props.accessibilityState,
@@ -392,13 +484,13 @@ describe('PerpsProMarketTabs', () => {
       StyleSheet.flatten(screen.getByText('All').props.style),
     ).toMatchObject({
       color: 'neutral-secondary',
-      fontWeight: '400',
+      fontWeight: '500',
     });
     expect(
       StyleSheet.flatten(screen.getByText('Layer 1').props.style),
     ).toMatchObject({
       color: 'neutral-title-1',
-      fontWeight: '500',
+      fontWeight: '700',
     });
     expect(
       screen.getByTestId('perps-pro-market-tab-all').props.accessibilityState,
@@ -413,7 +505,7 @@ describe('PerpsProMarketTabs', () => {
         .map(label => StyleSheet.flatten(label.props.style)),
     ).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ fontWeight: '500', opacity: 0 }),
+        expect.objectContaining({ fontWeight: '700', opacity: 0 }),
         expect.objectContaining({ position: 'absolute' }),
       ]),
     );
@@ -504,8 +596,92 @@ describe('PerpsProMarketTabs', () => {
       ),
     ).toMatchObject({
       opacity: 1,
-      left: 15,
-      width: 70,
+      left: 13.5,
+      width: 73,
     });
   });
+});
+
+describe('usePerpsProMarketTabLayout', () => {
+  const candidates = [
+    { id: 'favorites', label: 'Favorites' },
+    { id: 'all', label: 'All' },
+    { id: 'indices', label: 'Indices' },
+  ];
+  const initialProps = {
+    candidates,
+    fontScale: 1,
+    language: 'en-US',
+    tabs: candidates.slice(1),
+    viewportWidth: 200,
+  };
+
+  it('publishes a complete dynamic layout once and cancels an unmeasured prefix insertion', () => {
+    const { result, rerender } = renderHook(usePerpsProMarketTabLayout, {
+      initialProps,
+    });
+    const onMeasure = result.current.onMeasure;
+    act(() => {
+      onMeasure('all', 30);
+      onMeasure('indices', 90);
+      onMeasure('favorites', NaN);
+      onMeasure('favorites', 0);
+      onMeasure('unknown', 100);
+    });
+    rerender({ ...initialProps, tabs: candidates });
+    expect(result.current.tabs).toEqual(candidates.slice(1));
+    expect(result.current.initialLayout).toBeUndefined();
+    rerender(initialProps);
+    act(() => onMeasure('favorites', 70));
+    expect(result.current.tabs).toEqual(candidates.slice(1));
+    const ready = result.current.initialLayout;
+    act(() => onMeasure('favorites', 70));
+    expect(result.current.initialLayout).toBe(ready);
+    rerender({ ...initialProps, tabs: candidates });
+    expect(result.current.initialLayout).toMatchObject({
+      contentWidth: 254,
+      frames: { indices: { x: 148, width: 90 } },
+    });
+  });
+
+  it.each(['language', 'label', 'fontScale', 'viewportWidth'] as const)(
+    'invalidates %s measurements and ignores old callbacks, including after returning to the old inputs',
+    changed => {
+      const { result, rerender } = renderHook(usePerpsProMarketTabLayout, {
+        initialProps,
+      });
+      const oldMeasure = result.current.onMeasure;
+      act(() => candidates.forEach(tab => oldMeasure(tab.id, 50)));
+      expect(result.current.initialLayout).toBeDefined();
+      const translated = candidates.map(tab => ({
+        ...tab,
+        label: `${tab.label} translated`,
+      }));
+      const nextProps = {
+        ...initialProps,
+        ...(changed === 'language' ? { language: 'de-DE' } : {}),
+        ...(changed === 'label'
+          ? { candidates: translated, tabs: translated.slice(1) }
+          : {}),
+        ...(changed === 'fontScale' ? { fontScale: 1.5 } : {}),
+        ...(changed === 'viewportWidth' ? { viewportWidth: 300 } : {}),
+      };
+      rerender(nextProps);
+      expect(result.current.tabs).toEqual(nextProps.tabs);
+      expect(result.current.initialLayout).toBeUndefined();
+      act(() => candidates.forEach(tab => oldMeasure(tab.id, 999)));
+      expect(result.current.initialLayout).toBeUndefined();
+      act(() =>
+        candidates.forEach(tab => result.current.onMeasure(tab.id, 100)),
+      );
+      expect(result.current.initialLayout?.frames.indices?.width).toBe(100);
+      rerender(initialProps);
+      act(() => candidates.forEach(tab => oldMeasure(tab.id, 888)));
+      expect(result.current.initialLayout).toBeUndefined();
+      act(() =>
+        candidates.forEach(tab => result.current.onMeasure(tab.id, 60)),
+      );
+      expect(result.current.initialLayout?.frames.indices?.width).toBe(60);
+    },
+  );
 });

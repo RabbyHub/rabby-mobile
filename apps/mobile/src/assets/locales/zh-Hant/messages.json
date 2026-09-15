@@ -1070,6 +1070,16 @@
       "low-slippage-may-cause-failed-transactions-due-to-high-volatility": "低滑點可能由於高波動性導致交易失敗",
       "recommend-slippage": "為了防止搶先交易，我們建議滑點為<2>{{ slippage }}</2>%",
       "rabbyFee": {
+        "discountTitle": "Rabby 費用優惠",
+        "case": "適用情形",
+        "free": "免費",
+        "cases": {
+          "wrap": "封裝/解除封裝原生代幣",
+          "stablecoins": "穩定幣",
+          "lstLrt": "LST/LRT 代幣",
+          "million": "交易量 $1M+",
+          "hundredThousand": "交易量 $100k - $1M"
+        },
         "rate": "費率",
         "button": "明白了",
         "wallet": "錢包",
@@ -2262,6 +2272,7 @@
           "liquidationPrice": "強平價格",
           "triggerPrice": "觸發價格",
           "amount": "數量",
+          "keyboardMinimum": "最低 {{amount}}",
           "available": "可用",
           "reduceOnly": "只減倉",
           "confirmationReduceOnly": "只減倉",

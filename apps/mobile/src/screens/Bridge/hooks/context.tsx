@@ -1,7 +1,12 @@
 import { createContextState } from '@/hooks/contextState';
+import type { RabbyFeeTier } from '@/screens/Swap/hooks/fee';
 
 const [SettingVisibleProvider, useSettingVisible, useSetSettingVisible] =
-  createContextState(false, true);
+  createContextState<{
+    visible: boolean;
+    compareVisible: boolean;
+    feeTier?: RabbyFeeTier;
+  }>({ visible: false, compareVisible: false }, true);
 
 const [QuoteVisibleProvider, useQuoteVisible, useSetQuoteVisible] =
   createContextState(false, true);

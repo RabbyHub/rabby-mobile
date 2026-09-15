@@ -104,6 +104,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   const { refresh } = useRefreshHistoryId();
   const [approveTxs, setApproveTxs] = useState<any>(null);
   const [isAtTokenRepay, setIsAtTokenRepay] = useState(false);
+  const buildRequestIdRef = useRef(0);
 
   const { isMainnet, chainInfo, chainEnum, selectedMarketData } =
     useSelectedMarket();
@@ -291,12 +292,17 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   ]);
 
   const buildTransactions = useCallback(async () => {
-    if (!amount || isZeroAmount(amount) || !currentAccount?.address) {
-      setRepayTx(null);
-      setApproveTxs(null);
-      return;
-    }
-    if (!selectedMarketData || !pools) {
+    const requestId = ++buildRequestIdRef.current;
+    setRepayTx(null);
+    setApproveTxs(null);
+    if (
+      !amount ||
+      isZeroAmount(amount) ||
+      !currentAccount?.address ||
+      !selectedMarketData ||
+      !pools
+    ) {
+      setIsLoading(false);
       return;
     }
     try {
@@ -325,6 +331,9 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
           currentAccount.address,
           currentAccount,
         );
+        if (requestId !== buildRequestIdRef.current) {
+          return;
+        }
 
         requiredAmount = new BigNumber(amount)
           .multipliedBy(_amount === '-1' ? REPAY_AMOUNT_MULTIPLIER : 1)
@@ -389,7 +398,6 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
         };
 
         txs.push(approveTxBuilt);
-        setApproveTxs(txs);
       }
 
       if (!targetPool?.aTokenAddress) {
@@ -406,19 +414,28 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
         useOptimizedPath: optimizedPath(selectedMarketData?.chainId),
         repayWithATokens: isAtTokenRepay,
       });
+      if (requestId !== buildRequestIdRef.current) {
+        return;
+      }
       delete repayResult.gasLimit;
 
+      setApproveTxs(txs);
       setRepayTx({
         ...repayResult,
         chainId: chainInfo.id,
       });
     } catch (error) {
+      if (requestId !== buildRequestIdRef.current) {
+        return;
+      }
       console.error('Build transactions error:', error);
       toast.error('something error');
       setRepayTx(null);
       setApproveTxs(null);
     } finally {
-      setIsLoading(false);
+      if (requestId === buildRequestIdRef.current) {
+        setIsLoading(false);
+      }
     }
     //currentAccount is not stable
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -706,6 +723,9 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
 
   useEffect(() => {
     buildTransactions();
+    return () => {
+      buildRequestIdRef.current += 1;
+    };
   }, [buildTransactions]);
 
   useEffect(() => {

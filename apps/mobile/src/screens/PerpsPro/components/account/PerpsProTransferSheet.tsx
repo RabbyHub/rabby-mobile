@@ -13,6 +13,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { usePerpsProKeyboardInput } from '../common/usePerpsProKeyboardInput';
 import { formatPerpsProDecimal } from '../../utils/format';
 import {
   PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
@@ -33,6 +34,8 @@ export const PerpsProTransferSheet: React.FC<{
   visible: boolean;
 }> = React.memo(({ available, onClose, onConfirm, pending, visible }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
+  const inputRef = useRef<React.ElementRef<typeof BottomSheetTextInput>>(null);
+  const keyboard = usePerpsProKeyboardInput(inputRef, { enabled: visible });
   const [amount, setAmount] = useState('');
   const { colors2024, styles } = useTheme2024({
     getStyle: getPerpsProTransferSheetStyles,
@@ -135,6 +138,8 @@ export const PerpsProTransferSheet: React.FC<{
                 style={styles.amountField}
                 testID="perps-pro-transfer-amount-field">
                 <BottomSheetTextInput
+                  {...keyboard}
+                  ref={inputRef}
                   accessibilityLabel={t('page.perps.pro.account.amount')}
                   allowFontScaling={false}
                   cursorColor={colors2024['brand-default']}

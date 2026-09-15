@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcIconAmountUnitSwitch from '@/assets2024/icons/perps/PerpsProAmountUnitSwitch.svg';
 import { Text, TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
@@ -20,6 +21,7 @@ const suffixFontStyle = getPerpsProTradeSelectFontStyle(Platform.OS);
 type PerpsProTradePriceFieldProps = {
   canonicalizeValueOnBlur?: (value: string) => string;
   editable?: boolean;
+  displayMarketPrice?: boolean;
   fillRevision?: number;
   label: string;
   maxDecimals: number;
@@ -38,6 +40,7 @@ export const PerpsProTradePriceField = React.memo(
     const {
       canonicalizeValueOnBlur,
       editable = true,
+      displayMarketPrice = false,
       fillRevision = 0,
       label,
       maxDecimals,
@@ -54,7 +57,11 @@ export const PerpsProTradePriceField = React.memo(
     const [focused, setFocused] = useState(false);
     const animatedInputStyle = usePerpsProPriceFillAnimation(fillRevision);
     const showFloatingLabel = focused || !!value;
-    const fieldContent = (
+    const isMarketExecution =
+      variant === 'conditionalExecution' && displayMarketPrice;
+    const fieldContent = isMarketExecution ? (
+      <Text style={styles.marketPrice}>{label}</Text>
+    ) : (
       <View style={styles.inputArea}>
         {showFloatingLabel ? (
           <Text
@@ -73,6 +80,7 @@ export const PerpsProTradePriceField = React.memo(
           </Text>
         )}
         <PerpsProDecimalTextInput
+          keyboardScrollTrade
           accessibilityLabel={label}
           canonicalizeValueOnBlur={canonicalizeValueOnBlur}
           cursorColor={colors2024['brand-default']}
@@ -95,9 +103,7 @@ export const PerpsProTradePriceField = React.memo(
     );
     const fieldStyle = [
       styles.fieldArea,
-      variant === 'conditionalExecution' && !editable
-        ? styles.conditionalDisabledField
-        : null,
+      variant === 'conditionalExecution' ? styles.conditionalField : null,
     ];
     return (
       <View style={styles.container} testID="perps-pro-trade-price-field">
@@ -206,6 +212,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     top: 4,
   },
   input: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
@@ -243,7 +250,26 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 10,
     width: 60,
   },
+  conditionalField: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-5'],
+    justifyContent: 'center',
+  },
+  marketPrice: {
+    paddingHorizontal: 8,
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 18,
+    textAlign: 'center',
+  },
   conditionalSuffixArea: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-5'],
+    width: 72,
     borderRadius: 8,
     flexDirection: 'row',
     gap: 4,
@@ -263,11 +289,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   disabledSuffix: {
     opacity: 0.45,
   },
-  conditionalDisabledField: {
-    opacity: 0.5,
-  },
   conditionalSuffix: {
-    fontSize: 10,
-    lineHeight: 12,
+    fontSize: 12,
+    lineHeight: 16,
   },
 }));

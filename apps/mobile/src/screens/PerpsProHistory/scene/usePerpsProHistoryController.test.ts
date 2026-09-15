@@ -700,6 +700,192 @@ describe('usePerpsProHistoryController', () => {
     );
   });
 
+  it('keeps successful empty results silent across tab changes', async () => {
+    const hook = renderHook(() => usePerpsProHistoryController());
+    await waitFor(() =>
+      expect(
+        Object.values(hook.result.current.state).every(
+          state => state.status === 'empty',
+        ),
+      ).toBe(true),
+    );
+    for (const tab of ['trade', 'transaction', 'funding', 'orders'] as const) {
+      await act(async () => hook.result.current.setActiveTab(tab));
+      expect(hook.result.current.tabState).toMatchObject({
+        rows: [],
+        status: 'empty',
+      });
+    }
+    expect(mockShowToast).not.toHaveBeenCalled();
+  });
+
+  it.each(['orders', 'trade', 'transaction', 'funding'] as const)(
+    'retains the successful empty %s baseline silently when background refresh fails',
+    async tab => {
+      const hook = renderHook(
+        ({ active }: { active: boolean }) =>
+          usePerpsProHistoryController(tab, active, true),
+        { initialProps: { active: false } },
+      );
+      await waitFor(() =>
+        expect(hook.result.current.tabState.status).toBe('empty'),
+      );
+      const fetchLatest = {
+        orders: mockFetchOrders,
+        trade: mockFetchLatestTrades,
+        transaction: mockFetchTransactionsWindow,
+        funding: mockFetchFundingWindow,
+      }[tab];
+      fetchLatest.mockRejectedValueOnce(new Error('offline'));
+      hook.rerender({ active: true });
+      await waitFor(() =>
+        expect(hook.result.current.tabState.refreshError).toBe('offline'),
+      );
+      expect(hook.result.current.tabState).toMatchObject({
+        rows: [],
+        status: 'empty',
+        refreshing: false,
+      });
+      expect(mockShowToast).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['orders', 'trade', 'transaction', 'funding'] as const)(
+    'reports a failed manual refresh of the current empty %s tab',
+    async tab => {
+      const hook = renderHook(() => usePerpsProHistoryController(tab));
+      await waitFor(() =>
+        expect(hook.result.current.tabState.status).toBe('empty'),
+      );
+      const fetchLatest = {
+        orders: mockFetchOrders,
+        trade: mockFetchLatestTrades,
+        transaction: mockFetchTransactionsWindow,
+        funding: mockFetchFundingWindow,
+      }[tab];
+      fetchLatest.mockRejectedValueOnce(new Error('offline'));
+      await act(async () => hook.result.current.refresh());
+      expect(hook.result.current.tabState).toMatchObject({
+        rows: [],
+        status: 'empty',
+        refreshing: false,
+        refreshError: 'offline',
+      });
+      expect(mockShowToast).toHaveBeenCalledTimes(1);
+      expect(mockShowToast).toHaveBeenCalledWith(
+        'page.perps.pro.history.refreshFailed',
+        'error',
+      );
+    },
+  );
+
+  it.each([
+    'switch tab',
+    'return to tab',
+    'hide sheet',
+    'reopen sheet',
+  ] as const)(
+    'retains the refresh error without a stale Toast after %s',
+    async transition => {
+      const hook = renderHook(
+        ({ active }: { active: boolean }) =>
+          usePerpsProHistoryController('trade', active, true),
+        { initialProps: { active: true } },
+      );
+      await waitFor(() =>
+        expect(hook.result.current.tabState.status).toBe('empty'),
+      );
+      let rejectRefresh: (error: Error) => void = () => undefined;
+      mockFetchLatestTrades.mockReturnValueOnce(
+        new Promise<WsFill[]>((_, reject) => {
+          rejectRefresh = reject;
+        }),
+      );
+      let pending = Promise.resolve();
+      act(() => {
+        pending = hook.result.current.refresh();
+      });
+      if (transition === 'switch tab' || transition === 'return to tab') {
+        await act(async () => hook.result.current.setActiveTab('orders'));
+        if (transition === 'return to tab') {
+          await act(async () => hook.result.current.setActiveTab('trade'));
+        }
+      } else {
+        hook.rerender({ active: false });
+        if (transition === 'reopen sheet') {
+          hook.rerender({ active: true });
+        }
+      }
+      await act(async () => {
+        rejectRefresh(new Error('late offline'));
+        await pending;
+      });
+      expect(hook.result.current.state.trade).toMatchObject({
+        rows: [],
+        status: 'empty',
+        refreshing: false,
+        refreshError: 'late offline',
+      });
+      expect(mockFetchLatestTrades).toHaveBeenCalledTimes(2);
+      expect(mockShowToast).not.toHaveBeenCalled();
+    },
+  );
+
+  it('retains cached rows when a previous tab background refresh fails', async () => {
+    mockFetchLatestTrades.mockResolvedValueOnce([makeFill({ time: 100 })]);
+    const hook = renderHook(() => usePerpsProHistoryController('trade'));
+    await waitFor(() =>
+      expect(hook.result.current.tabState.status).toBe('ready'),
+    );
+    await act(async () => hook.result.current.setActiveTab('orders'));
+    let rejectRefresh: (error: Error) => void = () => undefined;
+    mockFetchLatestTrades.mockReturnValueOnce(
+      new Promise<WsFill[]>((_, reject) => {
+        rejectRefresh = reject;
+      }),
+    );
+    await act(async () => hook.result.current.setActiveTab('trade'));
+    await act(async () => hook.result.current.setActiveTab('transaction'));
+    await act(async () => rejectRefresh(new Error('late offline')));
+    expect(hook.result.current.state.trade).toMatchObject({
+      status: 'ready',
+      refreshing: false,
+      refreshError: 'late offline',
+    });
+    expect(hook.result.current.state.trade.rows.map(row => row.time)).toEqual([
+      100,
+    ]);
+    expect(mockShowToast).not.toHaveBeenCalled();
+  });
+
+  it('still merges a successful manual response after its presentation ends', async () => {
+    mockFetchLatestTrades.mockResolvedValueOnce([makeFill({ time: 100 })]);
+    const hook = renderHook(() => usePerpsProHistoryController('trade'));
+    await waitFor(() =>
+      expect(hook.result.current.tabState.status).toBe('ready'),
+    );
+    let resolveRefresh: (fills: WsFill[]) => void = () => undefined;
+    mockFetchLatestTrades.mockReturnValueOnce(
+      new Promise<WsFill[]>(resolve => {
+        resolveRefresh = resolve;
+      }),
+    );
+    let pending = Promise.resolve();
+    act(() => {
+      pending = hook.result.current.refresh();
+    });
+    await act(async () => hook.result.current.setActiveTab('orders'));
+    await act(async () => {
+      resolveRefresh([makeFill({ tid: 2, time: 200 })]);
+      await pending;
+    });
+    expect(hook.result.current.state.trade.rows.map(row => row.time)).toEqual([
+      200, 100,
+    ]);
+    expect(hook.result.current.state.trade.refreshing).toBe(false);
+    expect(mockShowToast).not.toHaveBeenCalled();
+  });
+
   it('advances an explicit Transaction window and stops on an empty window', async () => {
     const now = 6_000_000_000;
     const firstWindow = { endTime: now, startTime: now - 1000 };

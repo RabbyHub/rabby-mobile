@@ -1,5 +1,6 @@
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { RabbyFeePopup } from '@/components/RabbyFeePopup';
+import { CompareFee } from '@/components/RabbyFeePopup/CompareFee';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
@@ -49,6 +50,7 @@ import {
   useSwapUnlimitedAllowance,
   useTokenPair,
   isMEVProtectionSupported,
+  SWAP_FEE_RATE,
 } from '../Swap/hooks';
 import { refreshIdAtom, useRabbyFeeVisible } from '../Swap/hooks/atom';
 import { buildDexSwap, dexSwap } from '../Swap/hooks/swap';
@@ -252,6 +254,7 @@ const Swap = ({
     isSlippageLow,
 
     feeRate,
+    feeTier,
 
     openQuotesList,
     closeQuotesList,
@@ -350,7 +353,13 @@ const Swap = ({
   const refresh = useSetAtom(refreshIdAtom);
   const refreshId = useAtomValue(refreshIdAtom);
   const [
-    { visible: isShowRabbyFeePopup, dexName, dexFeeDesc },
+    {
+      visible: isShowRabbyFeePopup,
+      compareVisible: isShowCompareFee,
+      feeTier: popupFeeTier,
+      dexName,
+      dexFeeDesc,
+    },
     setIsShowRabbyFeePopup,
   ] = useRabbyFeeVisible();
   const switchPreferMEV = useMemoizedFn((bool: boolean) => {
@@ -940,19 +949,32 @@ const Swap = ({
     return _lowCreditToken;
   }, [_lowCreditToken, navState]);
 
-  const openFeePopup = useCallback(() => {
-    if (isWrapToken) {
-      return;
+  useEffect(() => {
+    const clearFeePopups = () => {
+      setIsShowRabbyFeePopup(prev =>
+        prev.visible || prev.compareVisible || prev.feeTier
+          ? { visible: false, compareVisible: false }
+          : prev,
+      );
+    };
+    if (!sceneActive) {
+      clearFeePopups();
     }
+    return clearFeePopups;
+  }, [sceneActive, setIsShowRabbyFeePopup]);
+
+  const openFeePopup = useCallback(() => {
     setIsShowRabbyFeePopup({
-      visible: true,
+      visible: feeTier !== 'default',
+      compareVisible: feeTier === 'default',
+      feeTier,
       dexName: activeProvider?.name || undefined,
       dexFeeDesc: activeProvider?.quote?.dexFeeDesc || undefined,
     });
   }, [
+    feeTier,
     activeProvider?.name,
     activeProvider?.quote?.dexFeeDesc,
-    isWrapToken,
     setIsShowRabbyFeePopup,
   ]);
 
@@ -1336,8 +1358,8 @@ const Swap = ({
       setIsCustomSlippage={setIsCustomSlippage}
       type="swap"
       isWrapToken={isWrapToken}
-      isRabbyFeeFree={!isWrapToken && feeRate === '0'}
-      isRabbyFeeHalf={feeRate === '0.12'}
+      isRabbyFeeFree={feeRate === SWAP_FEE_RATE.FREE}
+      isRabbyFeeHalf={feeRate === SWAP_FEE_RATE.HALF}
       isBestQuote={
         !!activeProvider &&
         !!bestQuoteDex &&
@@ -1939,10 +1961,29 @@ const Swap = ({
         ) : null}
         <RabbyFeePopup
           type="swap"
+          feeTier={popupFeeTier}
           visible={isShowRabbyFeePopup}
           dexName={dexName}
           dexFeeDesc={dexFeeDesc}
-          onClose={() => setIsShowRabbyFeePopup({ visible: false })}
+          onClose={() =>
+            setIsShowRabbyFeePopup(prev =>
+              prev.visible ? { visible: false, compareVisible: false } : prev,
+            )
+          }
+        />
+
+        <CompareFee
+          type="swap"
+          visible={isShowCompareFee}
+          dexName={dexName}
+          dexFeeDesc={dexFeeDesc}
+          onClose={() =>
+            setIsShowRabbyFeePopup(prev =>
+              prev.compareVisible
+                ? { visible: false, compareVisible: false }
+                : prev,
+            )
+          }
         />
 
         <LowCreditModal

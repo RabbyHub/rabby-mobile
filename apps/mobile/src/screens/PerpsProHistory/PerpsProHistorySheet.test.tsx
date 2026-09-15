@@ -1,6 +1,6 @@
 import { act, render, screen, within } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
 const mockPresent = jest.fn();
 const mockDismiss = jest.fn();
@@ -79,6 +79,7 @@ jest.mock(
 );
 
 jest.mock('@/screens/PerpsPro/components/common/perpsProVisual', () => ({
+  ...jest.requireActual('@/screens/PerpsPro/components/common/perpsProVisual'),
   PERPS_PRO_FONT_FAMILY: 'SF Pro Rounded',
   getPerpsProFontStyle: () => ({ fontFamily: 'SF Pro Rounded Heavy' }),
 }));
@@ -116,11 +117,13 @@ import {
 
 const getLatestSheetProps = () =>
   mockSheetProps.mock.calls.at(-1)?.[0] as {
+    backgroundStyle: StyleProp<ViewStyle>;
     enableContentPanningGesture: boolean;
     enablePanDownToClose: boolean;
     onAnimate: (fromIndex: number, toIndex: number) => void;
     onDismiss: () => void;
     snapPoints: number[];
+    style: StyleProp<ViewStyle>;
   };
 
 describe('PerpsProHistorySheetHost', () => {
@@ -165,6 +168,15 @@ describe('PerpsProHistorySheetHost', () => {
     });
     expect(mockSetActiveTab).toHaveBeenCalledWith('orders');
     expect(getLatestSheetProps().snapPoints).toEqual([748]);
+    for (const style of [
+      getLatestSheetProps().style,
+      getLatestSheetProps().backgroundStyle,
+    ]) {
+      expect(StyleSheet.flatten(style)).toMatchObject({
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
+      });
+    }
     expect(
       StyleSheet.flatten(
         screen.getByText('page.perps.pro.history.title').props.style,

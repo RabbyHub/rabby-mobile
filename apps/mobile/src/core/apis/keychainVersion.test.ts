@@ -53,11 +53,11 @@ describe('core/apis/keychainVersion', () => {
       '10.0.0',
     ],
     [
-      'legacy plain state',
+      'plain state',
       JSON.stringify({
-        [VERSION_FIELD]: '8.2.0-fork',
+        [VERSION_FIELD]: '9.0.0',
       }),
-      '8.2.0-fork',
+      '9.0.0',
     ],
     [
       'duplicated JSON encoding',
@@ -101,7 +101,7 @@ describe('core/apis/keychainVersion', () => {
     expect(getCurrentKeychainVersion()).toBe('9.0.0');
   });
 
-  it('reads the latest persisted version on every call', () => {
+  it('coerces the removed v8 selection to v9 and reads later changes', () => {
     let persistedValue = JSON.stringify({
       state: {
         [VERSION_FIELD]: '8.2.0-fork',
@@ -114,7 +114,7 @@ describe('core/apis/keychainVersion', () => {
       getString,
     });
 
-    expect(getCurrentKeychainVersion()).toBe('8.2.0-fork');
+    expect(getCurrentKeychainVersion()).toBe('9.0.0');
 
     persistedValue = JSON.stringify({
       state: {
@@ -125,4 +125,30 @@ describe('core/apis/keychainVersion', () => {
 
     expect(getCurrentKeychainVersion()).toBe('10.0.0');
   });
+});
+
+describe('core/apis/keychainVersionShared', () => {
+  it.each([
+    ['9', '9.0.0'],
+    ['v9', '9.0.0'],
+    ['9.0.0', '9.0.0'],
+    ['10', '10.0.0'],
+    ['V10', '10.0.0'],
+    ['10.0.0', '10.0.0'],
+  ] as const)('parses deeplink value %s', (value, expected) => {
+    const { parseKeychainVersionDeepLinkValue } =
+      require('./keychainVersionShared') as typeof import('./keychainVersionShared');
+
+    expect(parseKeychainVersionDeepLinkValue(value)).toBe(expected);
+  });
+
+  it.each([null, '', '8', '8.2.0-fork', 'latest'])(
+    'rejects unsupported deeplink value %#',
+    value => {
+      const { parseKeychainVersionDeepLinkValue } =
+        require('./keychainVersionShared') as typeof import('./keychainVersionShared');
+
+      expect(parseKeychainVersionDeepLinkValue(value)).toBeNull();
+    },
+  );
 });

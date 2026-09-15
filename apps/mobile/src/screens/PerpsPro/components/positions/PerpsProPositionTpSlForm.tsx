@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text, TextInput } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import {
@@ -728,6 +729,7 @@ const getStyle = createGetStyles2024(
       top: 14,
     },
     input: {
+      ...PERPS_PRO_NUMBER_STYLE,
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
@@ -769,6 +771,10 @@ const getStyle = createGetStyles2024(
       justifyContent: 'space-between',
     },
     duplicateOrderPrice: {
+      ...PERPS_PRO_NUMBER_STYLE,
+      flexShrink: 1,
+      minWidth: 0,
+      marginRight: 8,
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 12,
@@ -776,6 +782,8 @@ const getStyle = createGetStyles2024(
     },
     amountSection: { gap: 8, marginTop: 24 },
     sliderAmountValue: {
+      ...PERPS_PRO_NUMBER_STYLE,
+      right: 72,
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
@@ -786,6 +794,7 @@ const getStyle = createGetStyles2024(
       top: 18,
     },
     amountAvailable: {
+      ...PERPS_PRO_NUMBER_STYLE,
       color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 12,

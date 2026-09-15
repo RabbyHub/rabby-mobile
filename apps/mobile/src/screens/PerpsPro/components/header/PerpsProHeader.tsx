@@ -12,8 +12,7 @@ export { PERPS_PRO_HEADER_HEIGHT } from './constants';
 export const PerpsProHeader: React.FC<{
   isModeSwitching: boolean;
   onSwitchToSimple: () => void;
-  showBottomDivider: boolean;
-}> = React.memo(({ isModeSwitching, onSwitchToSimple, showBottomDivider }) => {
+}> = React.memo(({ isModeSwitching, onSwitchToSimple }) => {
   const account = perpsStore(state => state.currentPerpsAccount);
   const [popupState, setPopupState] = usePerpsPopupState();
 
@@ -51,12 +50,12 @@ export const PerpsProHeader: React.FC<{
       accountBrandName={account?.brandName}
       accountExpanded={popupState.isShowLoginPopup}
       accountLabel={accountLabel}
-      accountTriggerVariant="wallet"
+      accountTriggerVariant="wallet-icon"
       activeMode="pro"
       isModeSwitching={isModeSwitching}
       onPressAccount={account ? handlePressAccount : undefined}
       onSelectMode={handleSelectMode}
-      showBottomDivider={showBottomDivider}
+      showBottomDivider={false}
     />
   );
 });

@@ -766,6 +766,16 @@
     },
     "swap": {
       "rabbyFee": {
+        "discountTitle": "Diskon Biaya Rabby",
+        "case": "Kondisi",
+        "free": "Gratis",
+        "cases": {
+          "wrap": "Wrap/Unwrap Token Native",
+          "stablecoins": "Stablecoin",
+          "lstLrt": "Token LST/LRT",
+          "million": "Vol. $1M+",
+          "hundredThousand": "Vol. $100k - $1M"
+        },
         "title": "Biaya Rabby",
         "wallet": "Dompet",
         "bridgeDesc": "Rabby Wallet selalu menemukan kurs terbaik dari agregator terkemuka dan memverifikasi keandalan penawarannya. Rabby mengenakan biaya <1>0,25%</1> yang otomatis disertakan dalam penawaran.",
@@ -2092,6 +2102,7 @@
           "liquidationPrice": "Harga Likuidasi",
           "triggerPrice": "Harga Pemicu",
           "amount": "Jumlah",
+          "keyboardMinimum": "Min. {{amount}}",
           "available": "Tersedia",
           "reduceOnly": "Hanya Kurangi",
           "confirmationReduceOnly": "Hanya Kurangi",

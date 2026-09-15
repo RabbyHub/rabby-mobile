@@ -11,7 +11,6 @@ import {
   TouchableOpacity,
   View,
   type LayoutChangeEvent,
-  useWindowDimensions,
 } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -75,7 +74,6 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
   const { t } = useTranslation();
 
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const { width: screenWidth } = useWindowDimensions();
   const { bottom } = useSafeAreaInsets();
 
   const navigation = useRabbyAppNavigation();
@@ -271,15 +269,7 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
 
   return (
     <>
-      <NormalScreenContainer2024
-        bgImageHeight={isLight ? undefined : screenWidth}
-        bgImageSource={
-          isLight
-            ? undefined
-            : require('@/assets2024/icons/perps/ImgPerpsHomeBg.png')
-        }
-        noHeader
-        type={isLight ? 'bg0' : 'bg1'}>
+      <NormalScreenContainer2024 noHeader type={isLight ? 'bg0' : 'bg1'}>
         <PerpsSimpleHeader
           account={currentPerpsAccount}
           isModeSwitching={isModeSwitching}

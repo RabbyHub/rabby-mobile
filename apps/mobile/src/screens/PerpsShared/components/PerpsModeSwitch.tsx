@@ -1,6 +1,5 @@
 import { Text } from '@/components/Typography';
 import type { PerpsViewMode } from '@/core/services/perpsService';
-import { FontNames } from '@/core/utils/fonts';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
@@ -36,7 +35,6 @@ export const PerpsModeSwitch: React.FC<PerpsModeSwitchProps> = ({
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const useRoundedTypography = activeMode === 'pro';
 
   return (
     <View
@@ -61,23 +59,15 @@ export const PerpsModeSwitch: React.FC<PerpsModeSwitchProps> = ({
             onPress={() => onSelectMode(option.value)}
             onPressIn={() => onPressInMode?.(option.value)}
             onPressOut={() => onPressOutMode?.(option.value)}
-            style={
+            style={[
+              styles.optionTarget,
               option.value === 'pro' && extendProHitAreaRight
                 ? styles.extendedProTarget
-                : undefined
-            }
+                : null,
+            ]}
             testID={`perps-mode-${option.value}`}>
             <View style={styles.optionContent}>
-              <Text
-                style={
-                  useRoundedTypography
-                    ? selected
-                      ? styles.roundedActiveText
-                      : styles.roundedInactiveText
-                    : selected
-                    ? styles.activeText
-                    : styles.inactiveText
-                }>
+              <Text style={selected ? styles.activeText : styles.inactiveText}>
                 {option.label}
               </Text>
               {option.value === 'pro' && showProNewBadge ? (
@@ -102,12 +92,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
+    height: 44,
   },
   extendedContainer: {
     flex: 1,
-    height: 26,
     minWidth: 0,
+  },
+  optionTarget: {
+    height: '100%',
+    justifyContent: 'center',
   },
   extendedProTarget: {
     alignItems: 'flex-start',
@@ -116,53 +110,41 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'center',
   },
   optionContent: {
-    position: 'relative',
+    alignItems: 'flex-start',
+    flexDirection: 'row',
   },
   newBadge: {
     backgroundColor: colors2024['red-light-1'],
     borderRadius: 4,
-    left: 16,
-    paddingHorizontal: 2,
-    position: 'absolute',
-    top: -10,
+    // Keep the overlap in the content row; legacy Yoga percentage insets use
+    // the expanded press target's available width instead of the label width.
+    flexShrink: 0,
+    marginLeft: -4,
+    paddingHorizontal: 4,
+    transform: [{ translateY: -8 }],
   },
   newBadgeText: {
     color: colors2024['red-default'],
-    fontFamily: FontNames.sf_pro_rounded_medium,
-    fontSize: 12,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 10,
+    fontWeight: '600',
     includeFontPadding: false,
     lineHeight: 16,
   },
   activeText: {
-    fontFamily: FontNames.sf_pro,
-    fontSize: 18,
-    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    fontWeight: '800',
     includeFontPadding: false,
-    lineHeight: 22,
+    lineHeight: 24,
     color: colors2024['neutral-title-1'],
   },
   inactiveText: {
-    fontFamily: FontNames.sf_pro,
-    fontSize: 14,
-    fontWeight: '500',
-    includeFontPadding: false,
-    lineHeight: 18,
-    color: colors2024['neutral-secondary'],
-  },
-  roundedActiveText: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     includeFontPadding: false,
-    lineHeight: 22,
-    color: colors2024['neutral-title-1'],
-  },
-  roundedInactiveText: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    includeFontPadding: false,
-    lineHeight: 18,
+    lineHeight: 24,
     color: colors2024['neutral-secondary'],
   },
 }));

@@ -1469,6 +1469,10 @@ const TokenSelectorSheetModalContent = ({
                     chainItem: chain ? findChainByEnum(chain) : null,
                     keyword: query,
                   });
+                  listRef.current?.scrollToOffset({
+                    offset: 0,
+                    animated: true,
+                  });
                 }}
               />
             ) : null}
@@ -1504,6 +1508,10 @@ const TokenSelectorSheetModalContent = ({
                       chainItem: null,
                       chainServerId: '',
                       keyword: query,
+                    });
+                    listRef.current?.scrollToOffset({
+                      offset: 0,
+                      animated: true,
                     });
                   }}
                 />

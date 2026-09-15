@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcAlarm from '@/assets2024/icons/perps/PerpsProMarginAlarm.svg';
 import RcWarning from '@/assets2024/icons/perps/PerpsProMarginWarning.svg';
 import AutoLockView from '@/components/AutoLockView';
@@ -406,6 +407,11 @@ const getStyle = createGetStyles2024(
       lineHeight: 16,
     },
     factValue: {
+      ...PERPS_PRO_NUMBER_STYLE,
+      flexShrink: 1,
+      minWidth: 0,
+      marginLeft: 8,
+      textAlign: 'right',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 12,
@@ -413,6 +419,11 @@ const getStyle = createGetStyles2024(
       lineHeight: 16,
     },
     factValueRounded: {
+      ...PERPS_PRO_NUMBER_STYLE,
+      flexShrink: 1,
+      minWidth: 0,
+      marginLeft: 8,
+      textAlign: 'right',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 12,
@@ -443,6 +454,7 @@ const getStyle = createGetStyles2024(
     },
     amountCardError: { height: 184 },
     minimumValue: {
+      ...PERPS_PRO_NUMBER_STYLE,
       color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 12,
@@ -453,6 +465,7 @@ const getStyle = createGetStyles2024(
       top: 62,
     },
     maximumValue: {
+      ...PERPS_PRO_NUMBER_STYLE,
       color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 12,
@@ -491,7 +504,13 @@ const getStyle = createGetStyles2024(
       top: 318,
     },
     riskGroupError: { top: 364 },
-    riskValue: { alignItems: 'center', flexDirection: 'row', gap: 4 },
+    riskValue: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: 4,
+      flexShrink: 1,
+      minWidth: 0,
+    },
     footer: {
       bottom: Math.max(40, safeAreaInsets.bottom),
       left: 15,

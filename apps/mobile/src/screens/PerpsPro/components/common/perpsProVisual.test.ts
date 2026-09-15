@@ -29,15 +29,15 @@ describe('Perps Pro visual contract', () => {
     ).toBe('#192945');
   });
 
-  it('keeps every Pro bottom sheet on the 16px and 40x4px chrome', () => {
+  it('keeps every Pro bottom sheet on the 32px and 40x4px chrome', () => {
     const lightChrome = getPerpsProBottomSheetChromeStyles(
       ThemeColors2024.light,
     );
     const darkChrome = getPerpsProBottomSheetChromeStyles(ThemeColors2024.dark);
 
     expect(lightChrome.modal).toMatchObject({
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
+      borderTopLeftRadius: 32,
+      borderTopRightRadius: 32,
     });
     expect(lightChrome.handle).toMatchObject({
       height: 40,

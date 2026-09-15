@@ -25,6 +25,7 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { resolvePerpsProEmptyInputSelection } from '../common/perpsProInputSelection';
+import { usePerpsProKeyboardInput } from '../common/usePerpsProKeyboardInput';
 import { PerpsProNativeSearchInput } from './PerpsProNativeSearchInput';
 
 export type PerpsProMarketSearchBarHandle = {
@@ -51,6 +52,13 @@ const PerpsProMarketSearchBarComponent = forwardRef<
     useRef<React.ElementRef<typeof PerpsProNativeSearchInput>>(null);
   const bottomSheetInputRef =
     useRef<React.ElementRef<typeof BottomSheetTextInput>>(null);
+  const {
+    onFocus: onKeyboardFocus,
+    onBlur: onKeyboardBlur,
+    inputAccessoryViewID,
+  } = usePerpsProKeyboardInput(
+    Platform.OS === 'ios' ? nativeInputRef : bottomSheetInputRef,
+  );
   const initialNativeValueRef = useRef(value);
   const [focused, setFocused] = useState(false);
   const isResting = !focused && !value;
@@ -88,13 +96,15 @@ const PerpsProMarketSearchBarComponent = forwardRef<
   );
 
   const handleFocus = useCallback(() => {
+    onKeyboardFocus();
     setFocused(true);
     onFocusChange(true);
-  }, [onFocusChange]);
+  }, [onFocusChange, onKeyboardFocus]);
   const handleBlur = useCallback(() => {
+    onKeyboardBlur();
     setFocused(false);
     onFocusChange(false);
-  }, [onFocusChange]);
+  }, [onFocusChange, onKeyboardBlur]);
   const handleCancel = useCallback(() => {
     clearInput();
     onChangeText('');
@@ -108,6 +118,7 @@ const PerpsProMarketSearchBarComponent = forwardRef<
   const commonInputProps: React.ComponentProps<
     typeof PerpsProNativeSearchInput
   > = {
+    inputAccessoryViewID,
     accessibilityLabel: placeholder,
     accessible: !isResting,
     allowFontScaling: false,
@@ -133,9 +144,9 @@ const PerpsProMarketSearchBarComponent = forwardRef<
         testID="perps-pro-market-search-input-container">
         <RcNextSearchCC
           color={colors2024['neutral-secondary']}
-          height={16}
+          height={20}
           style={isResting ? styles.hiddenInputContent : undefined}
-          width={16}
+          width={20}
         />
         <View style={styles.inputArea}>
           {!isResting && !value ? (
@@ -200,8 +211,8 @@ const PerpsProMarketSearchBarComponent = forwardRef<
             <View pointerEvents="none" style={styles.restingContent}>
               <RcNextSearchCC
                 color={colors2024['neutral-secondary']}
-                height={16}
-                width={16}
+                height={20}
+                width={20}
               />
               <Text style={styles.placeholder}>{placeholder}</Text>
             </View>
@@ -233,31 +244,31 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 12,
-    height: 34,
+    gap: 16,
+    height: 46,
   },
   inputContainer: {
     alignItems: 'center',
     backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
+      ? colors2024['neutral-bg-5']
       : colors2024['neutral-bg-2'],
-    borderRadius: 6,
+    borderRadius: 12,
     flex: 1,
     flexDirection: 'row',
-    gap: 8,
-    height: 34,
+    gap: 16,
+    height: 46,
     overflow: 'hidden',
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
   },
   restingInputContainer: {
-    marginRight: 1,
+    marginRight: 4,
   },
   hiddenInputContent: {
     opacity: 0,
   },
   inputArea: {
     flex: 1,
-    height: 18,
+    height: 20,
     minWidth: 0,
     position: 'relative',
   },
@@ -265,11 +276,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     bottom: 0,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
-    height: 18,
+    height: 20,
     includeFontPadding: false,
-    lineHeight: 18,
+    lineHeight: 20,
     left: 0,
     paddingHorizontal: 0,
     paddingVertical: 0,
@@ -281,10 +292,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   activePlaceholder: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '400',
-    left: 2,
-    lineHeight: 18,
+    fontSize: 16,
+    fontWeight: '500',
+    left: 0,
+    lineHeight: 20,
     position: 'absolute',
     top: 0,
   },
@@ -292,27 +303,27 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     flex: 1,
     flexDirection: 'row',
-    gap: 8,
+    gap: 7,
     justifyContent: 'center',
   },
   placeholder: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '400',
-    lineHeight: 18,
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 20,
   },
   cancel: {
     alignItems: 'center',
-    height: 34,
+    height: 46,
     justifyContent: 'center',
-    width: 46,
+    width: 49,
   },
   cancelText: {
-    color: colors2024['neutral-secondary'],
+    color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '400',
-    lineHeight: 18,
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 20,
   },
 }));

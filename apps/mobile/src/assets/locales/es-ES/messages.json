@@ -1031,6 +1031,16 @@
       "transaction-might-be-frontrun-because-of-high-slippage-tolerance": "La transacción podría ser adelantada debido a una alta tolerancia al deslizamiento.",
       "recommend-slippage": "Para prevenir el front-running, recomendamos un deslizamiento de <2>{{ slippage }}</2>%.",
       "rabbyFee": {
+        "discountTitle": "Descuento en la tarifa de Rabby",
+        "case": "Condición",
+        "free": "Gratis",
+        "cases": {
+          "wrap": "Wrap/Unwrap del token nativo",
+          "stablecoins": "Stablecoins",
+          "lstLrt": "Token LST/LRT",
+          "million": "Vol. $1M+",
+          "hundredThousand": "Vol. $100k - $1M"
+        },
         "rate": "Tasa de comisión",
         "button": "Entendido",
         "wallet": "Cartera",
@@ -2282,6 +2292,7 @@
           "liquidationPrice": "Precio de liquidación",
           "triggerPrice": "Precio de activación",
           "amount": "Cantidad",
+          "keyboardMinimum": "Mín. {{amount}}",
           "available": "Disponible",
           "reduceOnly": "Solo reducir",
           "confirmationReduceOnly": "Solo reducir",

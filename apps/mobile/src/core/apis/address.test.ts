@@ -4,6 +4,7 @@ const KEYRING_TYPE = {
   WalletConnectKeyring: 'WalletConnectKeyring',
   SimpleKeyring: 'SimpleKeyring',
   HdKeyring: 'HdKeyring',
+  LedgerKeyring: 'LedgerKeyring',
 } as const;
 
 type Account = {
@@ -193,9 +194,12 @@ function loadAddressModule({
   }));
 
   const addressModule = require('./address') as typeof import('./address');
+  const { setWalletUnlockRequester } =
+    require('@/utils/walletUnlockGuard') as typeof import('@/utils/walletUnlockGuard');
 
   return {
     ...addressModule,
+    setWalletUnlockRequester,
     mocks: {
       mockAddNewAccount,
       mockAddNewWatchAccounts,
@@ -382,7 +386,7 @@ describe('core/apis/address', () => {
 
     await removeAddress(walletConnectAccount);
 
-    expect(mocks.mockIsUnlocked).not.toHaveBeenCalled();
+    expect(mocks.mockIsUnlocked).toHaveBeenCalledTimes(1);
     expect(mocks.mockRemoveAccount).toHaveBeenCalledWith(
       '0xwalletconnect',
       KEYRING_TYPE.WalletConnectKeyring,
@@ -401,22 +405,67 @@ describe('core/apis/address', () => {
     expect(mocks.mockSetCurrentAccount).not.toHaveBeenCalled();
   });
 
-  it('requires an unlocked wallet before removing sensitive keyring accounts', async () => {
-    const { removeAddress, mocks } = loadAddressModule({
-      isUnlocked: false,
+  it.each(Object.values(KEYRING_TYPE))(
+    'requires an unlocked wallet before removing %s accounts',
+    async type => {
+      const { removeAddress, mocks } = loadAddressModule({
+        isUnlocked: false,
+      });
+
+      await expect(removeAddress(createAccount({ type }))).rejects.toThrow(
+        'background.error.unlock',
+      );
+
+      expect(mocks.mockRemoveAccount).not.toHaveBeenCalled();
+      expect(mocks.mockRemoveAgentWallet).not.toHaveBeenCalled();
+      expect(
+        mocks.mockDisconnectWalletConnectSessionsForRemovedAccount,
+      ).not.toHaveBeenCalled();
+    },
+  );
+
+  it('waits for hardware account unlock before deletion and Agent cleanup', async () => {
+    const { removeAddress, setWalletUnlockRequester, mocks } =
+      loadAddressModule({ isUnlocked: false });
+    const account = createAccount({ type: KEYRING_TYPE.LedgerKeyring });
+    let finishUnlock!: () => void;
+    const unlockPromise = new Promise<void>(resolve => {
+      finishUnlock = resolve;
+    });
+    const requestUnlock = jest.fn(() => unlockPromise);
+    setWalletUnlockRequester(requestUnlock);
+
+    const removal = removeAddress(account);
+
+    expect(requestUnlock).toHaveBeenCalledTimes(1);
+    expect(mocks.mockRemoveAccount).not.toHaveBeenCalled();
+    expect(mocks.mockRemoveAgentWallet).not.toHaveBeenCalled();
+
+    mocks.mockIsUnlocked.mockReturnValue(true);
+    finishUnlock();
+    await expect(removal).resolves.toBeUndefined();
+
+    expect(mocks.mockRemoveAccount).toHaveBeenCalledWith(
+      account.address,
+      account.type,
+      account.brandName,
+      true,
+    );
+    expect(mocks.mockRemoveAgentWallet).toHaveBeenCalledWith(account.address);
+  });
+
+  it('keeps the hardware account and Agent data when unlock is cancelled', async () => {
+    const { removeAddress, setWalletUnlockRequester, mocks } =
+      loadAddressModule({ isUnlocked: false });
+    setWalletUnlockRequester(async () => {
+      throw new Error('Unlock cancelled');
     });
 
     await expect(
-      removeAddress(
-        createAccount({
-          type: KEYRING_TYPE.SimpleKeyring,
-        }),
-      ),
-    ).rejects.toThrow('background.error.unlock');
+      removeAddress(createAccount({ type: KEYRING_TYPE.LedgerKeyring })),
+    ).rejects.toThrow('Unlock cancelled');
 
     expect(mocks.mockRemoveAccount).not.toHaveBeenCalled();
-    expect(
-      mocks.mockDisconnectWalletConnectSessionsForRemovedAccount,
-    ).not.toHaveBeenCalled();
+    expect(mocks.mockRemoveAgentWallet).not.toHaveBeenCalled();
   });
 });

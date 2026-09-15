@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -353,6 +354,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 18,
   },
   coverage: {
+    ...PERPS_PRO_NUMBER_STYLE,
+    flexShrink: 1,
+    minWidth: 0,
+    marginLeft: 8,
+    textAlign: 'right',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -380,7 +386,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   orderMetric: { height: 36, minWidth: 0 },
   orderMetricRight: {
     alignItems: 'flex-end',
-    // Keep auto-width absolute Text in Yoga's MaxContent measurement mode.
+    // Keep right-anchored text in Yoga's natural-width measurement mode.
     flexDirection: 'row',
     overflow: 'visible',
     position: 'relative',
@@ -407,6 +413,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
   },
   orderMetricValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -415,6 +422,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 4,
   },
   positiveMetricValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -423,6 +431,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 4,
   },
   negativeMetricValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -431,6 +440,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 4,
   },
   takeProfitValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
+    flexShrink: 1,
+    minWidth: 0,
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
@@ -438,6 +450,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 18,
   },
   stopLossValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
+    flexShrink: 1,
+    minWidth: 0,
     color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,

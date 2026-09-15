@@ -227,6 +227,36 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
     expect(screen.queryByTestId('history-arrow')).toBeNull();
   });
 
+  it('keeps long history amounts complete and allows the detail row to grow', () => {
+    render(
+      <PerpsProHistoryRowView
+        amountUnit="base"
+        onShowFeeExplanation={onShowFeeExplanation}
+        row={{
+          amount: '11111111111.11',
+          asset: 'USDC',
+          direction: 'deposit',
+          hash: '0xlong',
+          key: 'long',
+          kind: 'transaction',
+          rawType: 'deposit',
+          status: 'success',
+          time: 300,
+        }}
+      />,
+    );
+    const amount = screen.getByText('+11,111,111,111.11');
+    expect(amount.props.numberOfLines).toBeUndefined();
+    expect(amount.props.ellipsizeMode).toBeUndefined();
+    expect(StyleSheet.flatten(amount.props.style)).toMatchObject({
+      fontVariant: ['tabular-nums'],
+      flexShrink: 1,
+    });
+    expect(
+      StyleSheet.flatten(amount.parent?.props.style).height,
+    ).toBeUndefined();
+  });
+
   it.each([
     ['pending', 'pending-icon'],
     ['failed', 'failed-icon'],

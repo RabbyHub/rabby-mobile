@@ -98,7 +98,6 @@ type DebugKeychainStorageByVersion = Record<
 
 function makeDefaultDebugKeychainStorageByVersion(): DebugKeychainStorageByVersion {
   return {
-    '8.2.0-fork': DEFAULT_DEBUG_KEYCHAIN_STORAGE,
     '9.0.0': DEFAULT_DEBUG_KEYCHAIN_STORAGE,
     '10.0.0': DEFAULT_DEBUG_KEYCHAIN_STORAGE,
   };
@@ -113,7 +112,6 @@ function coerceDebugKeychainStorageByVersion(
       : null;
 
   return {
-    '8.2.0-fork': coerceKeychainStorageType(raw?.['8.2.0-fork']),
     '9.0.0': coerceKeychainStorageType(raw?.['9.0.0']),
     '10.0.0': coerceKeychainStorageType(raw?.['10.0.0']),
   };

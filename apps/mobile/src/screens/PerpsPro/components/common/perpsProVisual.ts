@@ -5,6 +5,8 @@ import { Platform, type TextStyle, type ViewStyle } from 'react-native';
 
 export const PERPS_PRO_FONT_FAMILY = 'SF Pro Rounded';
 
+export const PERPS_PRO_SHEET_CORNER_RADIUS = 32;
+
 export const PERPS_PRO_LIGHT_FIELD_BACKGROUND = '#F4F5F5';
 
 export const resolvePerpsProFieldBackground = ({
@@ -87,14 +89,14 @@ export const getPerpsProBottomSheetChromeStyles = (
 ): Record<'modal' | 'background' | 'handle' | 'handleIndicator', ViewStyle> => {
   return {
     modal: {
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
+      borderTopLeftRadius: PERPS_PRO_SHEET_CORNER_RADIUS,
+      borderTopRightRadius: PERPS_PRO_SHEET_CORNER_RADIUS,
       overflow: 'hidden',
     },
     background: {
       backgroundColor,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
+      borderTopLeftRadius: PERPS_PRO_SHEET_CORNER_RADIUS,
+      borderTopRightRadius: PERPS_PRO_SHEET_CORNER_RADIUS,
     },
     handle: {
       backgroundColor,

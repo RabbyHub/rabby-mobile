@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -99,6 +100,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 12,
   },
   rate: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 10,
@@ -112,6 +114,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 12,
   },
   countdown: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 10,

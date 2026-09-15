@@ -97,8 +97,8 @@ describe('PerpsProPrecisionSheet', () => {
       expect.objectContaining({ linearGradientType: 'bg1' }),
     );
     expect(StyleSheet.flatten(sheet.props.style)).toMatchObject({
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
+      borderTopLeftRadius: 32,
+      borderTopRightRadius: 32,
     });
     expect(
       StyleSheet.flatten(sheet.props.backgroundStyle).backgroundColor,

@@ -138,8 +138,8 @@ describe('Perps Pro trade selection sheets', () => {
     expect(
       StyleSheet.flatten(screen.getByTestId('selection-sheet').props.style),
     ).toMatchObject({
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
+      borderTopLeftRadius: 32,
+      borderTopRightRadius: 32,
       overflow: 'hidden',
     });
     expect(
@@ -148,8 +148,8 @@ describe('Perps Pro trade selection sheets', () => {
       ),
     ).toMatchObject({
       backgroundColor: '#192945',
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
+      borderTopLeftRadius: 32,
+      borderTopRightRadius: 32,
     });
     expect(
       StyleSheet.flatten(
@@ -295,8 +295,8 @@ describe('Perps Pro trade selection sheets', () => {
       ),
     ).toMatchObject({
       backgroundColor: '#192945',
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
+      borderTopLeftRadius: 32,
+      borderTopRightRadius: 32,
     });
     expect(
       StyleSheet.flatten(

@@ -12,6 +12,7 @@ jest.mock('react-native-reanimated', () => ({
 
 import {
   getPerpsProTabIndicatorFrame,
+  getPerpsProTabIndicatorTransform,
   PerpsProTabIndicator,
 } from './PerpsProTabIndicator';
 
@@ -66,6 +67,59 @@ describe('PerpsProTabIndicator', () => {
       width: 35,
     });
     expect(style).not.toHaveProperty('transform');
+  });
+
+  it('encodes the same measured frame in one transform without animated layout', () => {
+    const position = { value: 1.5 } as SharedValue<number>;
+
+    render(
+      React.createElement(PerpsProTabIndicator, {
+        geometryMode: 'transform',
+        layouts,
+        position,
+        testID: 'transform-indicator',
+      }),
+    );
+
+    const indicator = screen.getByTestId('transform-indicator', {
+      includeHiddenElements: true,
+    });
+    const style = StyleSheet.flatten(indicator.props.style);
+    expect(style).toMatchObject({
+      left: 0,
+      opacity: 1,
+      position: 'absolute',
+      transform: [{ translateX: 92.5 }, { scaleX: 1.75 }],
+      width: 20,
+    });
+
+    const animatedStyle = indicator.props.style.find(
+      (item: object | undefined) =>
+        item != null && Object.prototype.hasOwnProperty.call(item, 'transform'),
+    );
+    expect(animatedStyle).toEqual({
+      opacity: 1,
+      transform: [{ translateX: 92.5 }, { scaleX: 1.75 }],
+    });
+    expect(animatedStyle).not.toHaveProperty('left');
+    expect(animatedStyle).not.toHaveProperty('width');
+
+    const transform = getPerpsProTabIndicatorTransform(
+      getPerpsProTabIndicatorFrame(position.value, layouts),
+      style.width,
+    );
+    const renderedLeft =
+      style.width / 2 +
+      transform.translateX -
+      (style.width * transform.scaleX) / 2;
+    const renderedRight =
+      style.width / 2 +
+      transform.translateX +
+      (style.width * transform.scaleX) / 2;
+    expect({ renderedLeft, renderedRight }).toEqual({
+      renderedLeft: 85,
+      renderedRight: 120,
+    });
   });
 
   it('clamps invalid and out-of-range pager positions', () => {

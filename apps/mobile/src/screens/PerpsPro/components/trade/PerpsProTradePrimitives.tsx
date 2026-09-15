@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcIconCheckboxEmpty from '@/assets2024/icons/common/checkbox-empty-cc.svg';
 import RcIconCheckboxFilled from '@/assets2024/icons/common/checkbox-filled-brand.svg';
 import { Text } from '@/components/Typography';
@@ -255,6 +256,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 16,
   },
   summaryValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     flexShrink: 1,
     fontFamily: 'SF Pro Rounded',
@@ -293,7 +295,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'center',
   },
   tradeButtonWithSubtitle: { height: 40 },
-  tradeButtonCopy: { alignItems: 'center', gap: 2 },
+  tradeButtonCopy: {
+    alignItems: 'center',
+    gap: 2,
+    maxWidth: '100%',
+    paddingHorizontal: 4,
+  },
   buyButton: {
     backgroundColor: colors2024['green-default'],
   },
@@ -308,9 +315,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
   },
   tradeButtonSubtitle: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-InvertHighlight'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 10,
     fontWeight: '400',
+    lineHeight: 12,
   },
 }));

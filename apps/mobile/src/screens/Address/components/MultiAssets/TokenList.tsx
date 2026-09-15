@@ -93,7 +93,10 @@ const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
 const MemoizedTokenRowSectionHeader = React.memo(TokenRowSectionLpTokenHeader);
 
 const MemoizedItemLoader = React.memo(ItemLoader);
-const TOKEN_LIST_INITIAL_RENDER_COUNT = 8;
+// SectionList counts its synthetic section cells against initialNumToRender.
+// Inside the collapsible tab, follow-up batches can wait for the first scroll
+// event, so cover one tall-device viewport (plus section overhead) up front.
+const TOKEN_LIST_INITIAL_RENDER_COUNT = 16;
 const TOKEN_LIST_RENDER_BATCH_SIZE = 6;
 const TOKEN_LIST_WINDOW_SIZE = 7;
 const TOKEN_LIST_BATCHING_PERIOD_MS = 32;

@@ -6,6 +6,9 @@ describe('core/apis/keychainV9_0_0', () => {
     trustedVaultKeyString?: string | null;
     embeddedVaultKeyString?: string | null;
     platform?: 'android' | 'ios';
+    platformVersion?: number;
+    api29FingerprintFallbackEligible?: boolean;
+    api29FingerprintPromptProbeEligible?: boolean;
   }) => {
     jest.resetModules();
     const {
@@ -15,6 +18,9 @@ describe('core/apis/keychainV9_0_0', () => {
       trustedVaultKeyString = null,
       embeddedVaultKeyString = null,
       platform = 'android',
+      platformVersion = 33,
+      api29FingerprintFallbackEligible = false,
+      api29FingerprintPromptProbeEligible = false,
     } = options || {};
 
     const mockEncrypt = jest.fn(
@@ -119,16 +125,32 @@ describe('core/apis/keychainV9_0_0', () => {
       success: true,
     }));
     const mockUpdateUnlockTime = jest.fn();
+    const mockCaptureException = jest.fn();
     const mockSimplePrompt = jest.fn(async () => ({ success: true }));
+    const mockPrepareSimplePrompt = jest.fn(async () => true);
+    const mockGetSupportedBiometryType = jest.fn(async () => 'Fingerprint');
+    const mockIsPasscodeAuthAvailable = jest.fn(async () => true);
+    const mockGetAndroidBiometricPromptOptimization = jest.fn(async () => ({
+      api29FingerprintFallbackEligible,
+      api29FingerprintPromptProbeEligible,
+      effectiveStrongSource: api29FingerprintFallbackEligible
+        ? 'fingerprint-api29-fallback'
+        : 'androidx-strong',
+    }));
 
     jest.doMock('react-native', () => ({
       Platform: {
         OS: platform,
-        Version: 33,
+        Version: platformVersion,
         select: (obj: any) => obj[platform],
       },
       NativeModules: {
+        ReactNativeBiometrics: {
+          prepareSimplePrompt: mockPrepareSimplePrompt,
+        },
         RNRabbyKeychainV9Manager: {
+          getAndroidBiometricPromptOptimization:
+            mockGetAndroidBiometricPromptOptimization,
           getGenericPasswordEntryStateForOptions:
             mockGetGenericPasswordEntryStateForOptions,
           debugGetGenericPasswordStateForOptions:
@@ -145,8 +167,8 @@ describe('core/apis/keychainV9_0_0', () => {
         getGenericPassword: mockGetGenericPassword,
         setGenericPassword: mockSetGenericPassword,
         resetGenericPassword: mockResetGenericPassword,
-        getSupportedBiometryType: jest.fn(async () => 'Fingerprint'),
-        isPasscodeAuthAvailable: jest.fn(async () => true),
+        getSupportedBiometryType: mockGetSupportedBiometryType,
+        isPasscodeAuthAvailable: mockIsPasscodeAuthAvailable,
         canImplyAuthentication: mockCanImplyAuthentication,
         ACCESSIBLE: {
           WHEN_UNLOCKED_THIS_DEVICE_ONLY:
@@ -156,6 +178,8 @@ describe('core/apis/keychainV9_0_0', () => {
           BIOMETRY_CURRENT_SET: 'BiometryCurrentSet',
           DEVICE_PASSCODE: 'DevicePasscode',
           BIOMETRY_ANY_OR_DEVICE_PASSCODE: 'BiometryAnyOrDevicePasscode',
+          BIOMETRY_CURRENT_SET_OR_DEVICE_PASSCODE:
+            'BiometryCurrentSetOrDevicePasscode',
         },
         AUTHENTICATION_TYPE: {
           BIOMETRICS: 'AuthenticationWithBiometrics',
@@ -234,6 +258,9 @@ describe('core/apis/keychainV9_0_0', () => {
         warn: jest.fn(),
       },
     }));
+    jest.doMock('@sentry/react-native', () => ({
+      captureException: (...args: unknown[]) => mockCaptureException(...args),
+    }));
 
     let module!: typeof import('./keychainV9_0_0');
     jest.isolateModules(() => {
@@ -253,7 +280,12 @@ describe('core/apis/keychainV9_0_0', () => {
       mockDebugDecryptGenericPasswordForOptions,
       mockSafeVerifyPasswordAndUpdateUnlockTime,
       mockUpdateUnlockTime,
+      mockCaptureException,
       mockSimplePrompt,
+      mockPrepareSimplePrompt,
+      mockGetSupportedBiometryType,
+      mockIsPasscodeAuthAvailable,
+      mockGetAndroidBiometricPromptOptimization,
     };
   };
 
@@ -699,7 +731,224 @@ describe('core/apis/keychainV9_0_0', () => {
         allowDeviceCredentials: true,
       }),
     );
+    expect(mockSimplePrompt.mock.calls[0]?.[0]).not.toHaveProperty(
+      'androidUsePreparedPrompt',
+    );
     expect(mockSetGenericPassword).not.toHaveBeenCalled();
+    expect(module.shouldRequireBiometricProofForSetup()).toBe(false);
+  });
+
+  it('prepares the API 29 fingerprint fallback prompt without requiring biometric-only setup proof', async () => {
+    const {
+      module,
+      mockGetSupportedBiometryType,
+      mockIsPasscodeAuthAvailable,
+      mockGetAndroidBiometricPromptOptimization,
+      mockPrepareSimplePrompt,
+      mockSimplePrompt,
+    } = await setup({
+      storage: 'KeystoreAESGCM_NoAuth',
+      authType: 4,
+      platformVersion: 29,
+      api29FingerprintFallbackEligible: true,
+    });
+
+    await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.VERIFY,
+    });
+    await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.VERIFY,
+    });
+
+    expect(mockGetAndroidBiometricPromptOptimization).toHaveBeenCalledTimes(1);
+    expect(mockPrepareSimplePrompt).toHaveBeenCalledTimes(1);
+    expect(mockGetSupportedBiometryType).toHaveBeenCalledTimes(1);
+    expect(mockIsPasscodeAuthAvailable).not.toHaveBeenCalled();
+    expect(mockSimplePrompt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        allowDeviceCredentials: false,
+        androidUsePreparedPrompt: true,
+      }),
+    );
+    expect(mockSimplePrompt).toHaveBeenCalledTimes(2);
+    expect(module.shouldRequireBiometricProofForSetup()).toBe(false);
+  });
+
+  it('opens the API 29 device credential prompt when the user selects the fallback button', async () => {
+    const { module, mockIsPasscodeAuthAvailable, mockSimplePrompt } =
+      await setup({
+        storage: 'KeystoreAESGCM_NoAuth',
+        authType: 4,
+        platformVersion: 29,
+        api29FingerprintFallbackEligible: true,
+      });
+    mockSimplePrompt
+      .mockResolvedValueOnce({
+        success: false,
+        error: 'User cancellation',
+        errorCode: 13,
+      })
+      .mockResolvedValueOnce({ success: true });
+
+    await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.VERIFY,
+    });
+
+    expect(mockSimplePrompt).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        allowDeviceCredentials: false,
+        androidUsePreparedPrompt: true,
+        cancelButtonText: 'page.setting.useDevicePassword',
+      }),
+    );
+    expect(mockIsPasscodeAuthAvailable).toHaveBeenCalledTimes(1);
+    expect(mockSimplePrompt).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        allowDeviceCredentials: true,
+        androidUseDeviceCredentialOnly: true,
+      }),
+    );
+  });
+
+  it('falls back to device credentials when an API 29 fingerprint probe is unavailable', async () => {
+    const { module, mockIsPasscodeAuthAvailable, mockSimplePrompt } =
+      await setup({
+        storage: 'KeystoreAESGCM_NoAuth',
+        authType: 4,
+        platformVersion: 29,
+        api29FingerprintPromptProbeEligible: true,
+      });
+    const promptError = Object.assign(new Error('No fingerprints enrolled'), {
+      code: 'BIOMETRIC_PROMPT_ERROR_11',
+    });
+    mockSimplePrompt
+      .mockRejectedValueOnce(promptError)
+      .mockResolvedValueOnce({ success: true });
+
+    await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.VERIFY,
+    });
+
+    expect(mockSimplePrompt).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        allowDeviceCredentials: false,
+        androidUsePreparedPrompt: true,
+      }),
+    );
+    expect(mockIsPasscodeAuthAvailable).toHaveBeenCalledTimes(1);
+    expect(mockSimplePrompt).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        allowDeviceCredentials: true,
+        androidUseDeviceCredentialOnly: true,
+      }),
+    );
+  });
+
+  it('falls back to device credentials when an API 29 ROM cancels the fingerprint prompt', async () => {
+    const {
+      module,
+      mockCaptureException,
+      mockIsPasscodeAuthAvailable,
+      mockSimplePrompt,
+    } = await setup({
+      storage: 'KeystoreAESGCM_NoAuth',
+      authType: 4,
+      platformVersion: 29,
+      api29FingerprintPromptProbeEligible: true,
+    });
+    const promptError = Object.assign(
+      new Error('Fingerprint prompt canceled by system'),
+      {
+        code: 'BIOMETRIC_PROMPT_ERROR_5',
+      },
+    );
+    mockSimplePrompt
+      .mockRejectedValueOnce(promptError)
+      .mockResolvedValueOnce({ success: true });
+
+    await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.VERIFY,
+    });
+    await Promise.resolve();
+
+    expect(mockIsPasscodeAuthAvailable).toHaveBeenCalledTimes(1);
+    expect(mockSimplePrompt).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        allowDeviceCredentials: true,
+        androidUseDeviceCredentialOnly: true,
+      }),
+    );
+    expect(mockCaptureException).toHaveBeenCalledWith(
+      promptError,
+      expect.objectContaining({
+        tags: expect.objectContaining({
+          prompt_error_code: 'BIOMETRIC_PROMPT_ERROR_5',
+          fallback_attempted: 'true',
+        }),
+        extra: expect.objectContaining({
+          nativeErrorCode: 5,
+          fallbackSucceeded: true,
+        }),
+      }),
+    );
+  });
+
+  it('keeps a native user cancellation out of Sentry and preserves its error code', async () => {
+    const { module, mockCaptureException, mockSimplePrompt } = await setup({
+      storage: 'KeystoreAESGCM_NoAuth',
+      authType: 4,
+      platformVersion: 29,
+      api29FingerprintPromptProbeEligible: true,
+    });
+    mockSimplePrompt.mockResolvedValueOnce({
+      success: false,
+      error: 'User cancellation',
+      errorCode: 10,
+    });
+
+    let promptError: unknown;
+    try {
+      await module.requestGenericPassword({
+        purpose: module.RequestGenericPurpose.VERIFY,
+      });
+    } catch (error) {
+      promptError = error;
+    }
+
+    expect(promptError).toBeInstanceOf(Error);
+    expect((promptError as Error).message).toContain('code: 10');
+    expect(module.parseKeychainError(promptError).isCancelledByUser).toBe(true);
+    expect(mockCaptureException).not.toHaveBeenCalled();
+  });
+
+  it('does not accept device credentials when enabling biometrics requires proof', async () => {
+    const { module, mockIsPasscodeAuthAvailable, mockSimplePrompt } =
+      await setup({
+        storage: 'KeystoreAESGCM_NoAuth',
+        authType: 4,
+        platformVersion: 29,
+        api29FingerprintPromptProbeEligible: true,
+      });
+    mockSimplePrompt.mockRejectedValueOnce(
+      Object.assign(new Error('No fingerprints enrolled'), {
+        code: 'BIOMETRIC_PROMPT_ERROR_11',
+      }),
+    );
+
+    await expect(
+      module.requestGenericPassword({
+        purpose: module.RequestGenericPurpose.VERIFY,
+        androidRequireBiometricProof: true,
+      }),
+    ).rejects.toThrow('No fingerprints enrolled');
+
+    expect(mockSimplePrompt).toHaveBeenCalledTimes(1);
+    expect(mockIsPasscodeAuthAvailable).not.toHaveBeenCalled();
   });
 
   it('passes the Android authenticated-session reuse option through business reads when requested', async () => {

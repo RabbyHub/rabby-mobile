@@ -9,6 +9,7 @@ import type { PerpsRegionAlertLayout } from '@/screens/Perps/components/PerpsReg
 import { PERPS_PORTFOLIO_BREAKDOWN_TIPS_OWNER } from '@/screens/PerpsShared/constants';
 import React, { useCallback, useMemo, useRef } from 'react';
 
+import { PerpsProKeyboardAccessory } from './components/common/PerpsProKeyboardAccessory';
 import { PerpsProScene } from './scene/PerpsProScene';
 import { PerpsProSheetNavigationHost } from './components/common/PerpsProSheetNavigationGuard';
 import { usePerpsProSheetNavigationRegistration } from './components/common/perpsProSheetNavigationRegistry';
@@ -48,6 +49,7 @@ export const PerpsProScreen: React.FC<PerpsProScreenProps> = ({
   return (
     <NormalScreenContainer2024 noHeader type="bg1">
       <PerpsProSheetNavigationHost />
+      <PerpsProKeyboardAccessory />
       <PerpsProPortfolioBreakdownNavigationRegistration />
       <PerpsProScene
         historyEnabled={historyEnabled}

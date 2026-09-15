@@ -2,6 +2,14 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
+let mockIsIOS = true;
+
+jest.mock('@/core/native/utils', () => ({
+  get IS_IOS() {
+    return mockIsIOS;
+  },
+}));
+
 jest.mock('@/assets2024/icons/perps/PerpsProFavoriteStar.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -12,7 +20,7 @@ jest.mock('@/assets2024/icons/perps/PerpsProFavoriteStar.svg', () => {
     });
 });
 
-jest.mock('@/assets/icons/dapp/icon-star.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProFavoriteStarInactive.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) =>
@@ -105,8 +113,49 @@ const createMarketData = (
   ...overrides,
 });
 
-describe('PerpsProMarketRow', () => {
-  it('matches the approved 56px row geometry and typography', () => {
+describe.each([true, false])('PerpsProMarketRow (iOS=%s)', isIOS => {
+  beforeEach(() => {
+    mockIsIOS = isIOS;
+  });
+
+  it.each([
+    ['111111.11', 2, '111,111.11'],
+    ['0.00000123', 8, '0.00000123'],
+  ])(
+    'keeps %s at 16pt beside a long market name',
+    (markPx, pxDecimals, price) => {
+      const model = buildPerpsProMarketRowModel(
+        createMarketData('xyz:LONGMARKETNAME', {
+          dexId: 'xyz',
+          displayName: 'LONGMARKETNAME',
+          markPx,
+          pxDecimals,
+        }),
+      );
+      render(
+        <PerpsProMarketRow
+          favorite={false}
+          model={model}
+          onSelect={jest.fn()}
+          onToggleFavorite={jest.fn()}
+          selected={false}
+        />,
+      );
+      const text = screen.getByText(price);
+      const style = StyleSheet.flatten(text.props.style);
+      expect(text.props.adjustsFontSizeToFit).toBeUndefined();
+      expect(text.props.numberOfLines).toBe(1);
+      expect(style).toMatchObject({
+        fontSize: 16,
+        lineHeight: 20,
+        fontVariant: ['tabular-nums'],
+      });
+      expect(style.maxWidth).toBeUndefined();
+      expect(style.flexShrink).toBeUndefined();
+    },
+  );
+
+  it('matches the approved 60px row geometry and typography', () => {
     const model = buildPerpsProMarketRowModel(
       createMarketData('xyz:ALPHA', {
         brief: 'Alpha',
@@ -131,10 +180,10 @@ describe('PerpsProMarketRow', () => {
       ),
     ).toEqual(
       expect.objectContaining({
-        alignItems: 'flex-start',
-        height: 56,
-        paddingHorizontal: 15,
-        paddingVertical: 8,
+        alignItems: 'center',
+        height: 60,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
       }),
     );
     expect(
@@ -144,18 +193,22 @@ describe('PerpsProMarketRow', () => {
         ).props.style,
       ),
     ).toEqual(
-      expect.objectContaining({ height: 24, marginRight: 6, width: 16 }),
+      expect.objectContaining({ height: 32, marginRight: 6, width: 16 }),
     );
     expect(screen.getByTestId('favorite-star-empty').props).toEqual(
-      expect.objectContaining({ height: 16, width: 16 }),
+      expect.objectContaining({
+        color: 'neutral-line',
+        height: 12.9307,
+        width: 13.0288,
+      }),
     );
     expect(screen.getByTestId('market-logo').props).toEqual(
-      expect.objectContaining({ size: 24 }),
+      expect.objectContaining({ size: 32 }),
     );
     expect(
       StyleSheet.flatten(screen.getByTestId('market-logo').props.style),
     ).toEqual(
-      expect.objectContaining({ borderRadius: 12, height: 24, width: 24 }),
+      expect.objectContaining({ borderRadius: 16, height: 32, width: 32 }),
     );
     expect(screen.getByText('ALPHAUSDC').props.style).toEqual(
       expect.objectContaining({
@@ -173,7 +226,11 @@ describe('PerpsProMarketRow', () => {
         lineHeight: 20,
       }),
     );
-    const sourceStyle = StyleSheet.flatten(screen.getByText('xyz').props.style);
+    const source = screen.getByText('xyz');
+    const { overflow, ...sourceStyle } = StyleSheet.flatten(source.props.style);
+    expect(overflow).toBe(isIOS ? 'hidden' : undefined);
+    expect(source.props.numberOfLines).toBe(1);
+    expect(source.props.adjustsFontSizeToFit).toBeUndefined();
     expect(sourceStyle).toEqual({
       backgroundColor: 'neutral-bg-5',
       borderRadius: 4,

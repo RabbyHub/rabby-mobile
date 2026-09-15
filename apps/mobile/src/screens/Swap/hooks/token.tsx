@@ -1,9 +1,6 @@
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import {
-  isSameTypeTokenPair,
-  WrapTokenAddressMap,
-} from '@rabby-wallet/rabby-swap';
+import { WrapTokenAddressMap } from '@rabby-wallet/rabby-swap';
 import BigNumber from 'bignumber.js';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 import {
@@ -57,7 +54,7 @@ import {
 import { useSwapService } from '../swapServiceDependencies';
 import { mergeSwapQuoteBatch } from './quoteResultBatch';
 import { useSceneActiveAsync } from '@/screens/SwapBridge/hooks/useSceneActiveAsync';
-import { getRabbyFeeRate, type SwapFeeRate } from './fee';
+import { getRabbyFeeInfo, type SwapFeeRate } from './fee';
 
 export const enableInsufficientQuote = true;
 
@@ -859,6 +856,7 @@ export const useTokenPair = ({
       if (!/^\d*(\.\d*)?$/.test(v)) {
         return;
       }
+      setSwapUseSlider(false);
       if (v !== payAmount) {
         setQuotesList([]);
       }
@@ -878,7 +876,6 @@ export const useTokenPair = ({
         }
       }
       setUseGasPrice(false);
-      setSwapUseSlider(false);
     },
     [payAmount, payToken, setUseGasPrice],
   );
@@ -893,11 +890,6 @@ export const useTokenPair = ({
     }
     return false;
   }, [payToken, receiveToken]);
-
-  const isFreeTokenPair = useMemo(
-    () => isSameTypeTokenPair(payToken, receiveToken),
-    [payToken, receiveToken],
-  );
 
   const autoSlippageValue = getSwapAutoSlippageValue(isStableCoin);
 
@@ -914,15 +906,16 @@ export const useTokenPair = ({
     return [false, ''];
   }, [payToken, receiveToken, chain]);
 
-  const feeRate = useMemo<FeeProps['fee']>(
+  const { feeRate, feeTier } = useMemo(
     () =>
-      getRabbyFeeRate({
+      getRabbyFeeInfo({
         payAmount,
         payTokenPrice: payToken?.price || 0,
-        isFreeTokenPair,
+        payToken,
+        receiveToken,
         isWrapToken,
       }),
-    [isFreeTokenPair, isWrapToken, payAmount, payToken?.price],
+    [isWrapToken, payAmount, payToken, receiveToken],
   );
 
   const inSufficient = useMemo(
@@ -1023,6 +1016,7 @@ export const useTokenPair = ({
   const rateLimitRef = useRef(new RequestRateLimiter(1000 * 30, 10));
 
   const [rateLimit, setRateLimit] = useState(false);
+  const [isDraggingSlider, setIsDraggingSlider] = useState<boolean>(false);
 
   const { error: quotesError, runAsync: _runGetAllQuotes } = useRequest(
     async (currentFetchId: number) => {
@@ -1078,17 +1072,22 @@ export const useTokenPair = ({
           account,
         });
       }
+      return { skipped: true as const };
     },
     {
       manual: true,
-      onFinally(params) {
+      onFinally(params, data) {
         // wait for progress animation finish
         setTimeout(() => {
-          if (params[0] === fetchIdRef.current) {
-            flushPendingQuoteUpdates(params[0]);
-            setQuoteRequestFinished(true);
-            setQuoteLoading(false);
+          if (
+            params[0] !== fetchIdRef.current ||
+            (data != null && 'skipped' in data && data.skipped)
+          ) {
+            return;
           }
+          flushPendingQuoteUpdates(params[0]);
+          setQuoteRequestFinished(true);
+          setQuoteLoading(false);
         }, 300);
       },
     },
@@ -1147,6 +1146,7 @@ export const useTokenPair = ({
     chain,
     feeRate,
     payAmount,
+    isDraggingSlider,
     runGetAllQuotes,
     setActiveProvider,
     // auto slippage
@@ -1346,8 +1346,6 @@ export const useTokenPair = ({
 
   const [swapUseSlider, setSwapUseSlider] = useState<boolean>(false);
 
-  const [isDraggingSlider, setIsDraggingSlider] = useState<boolean>(false);
-
   const handleSlider100 = useCallback(() => {
     if (!payToken) {
       return;
@@ -1528,6 +1526,7 @@ export const useTokenPair = ({
     slippage,
     setSlippage,
     feeRate,
+    feeTier,
     isSlippageHigh,
     isSlippageLow,
 

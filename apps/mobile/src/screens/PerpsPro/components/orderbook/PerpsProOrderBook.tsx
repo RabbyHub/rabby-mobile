@@ -1,3 +1,4 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text } from '@/components/Typography';
 import type { PerpsRealtimeStatus } from '@/hooks/perps/subscriptions/usePerpsFastL2';
 import type { PerpsLatestTrade } from '@/hooks/perps/subscriptions/usePerpsLatestTrade';
@@ -491,6 +492,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'center',
   },
   latestBuy: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
@@ -499,6 +501,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
   },
   latestSell: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
@@ -507,6 +510,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
   },
   markPrice: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -550,6 +554,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 104,
   },
   precisionTriggerText: {
+    ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-title-1'],
     flex: 1,
     fontFamily: 'SF Pro Rounded',
@@ -565,6 +570,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginHorizontal: -12,
   },
   ratioLabel: {
+    ...PERPS_PRO_NUMBER_STYLE,
     flexShrink: 0,
     fontFamily: 'SF Pro Rounded',
     fontSize: 10,

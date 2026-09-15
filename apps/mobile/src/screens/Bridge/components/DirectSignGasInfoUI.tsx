@@ -239,7 +239,7 @@ export const DirectSignGasInfoUI = ({
               </View>
             </TouchableOpacity>
           ) : !loading && empty ? (
-            <View style={styles.valueSlot}>
+            <View style={[styles.valueSlot, styles.errorValueSlot]}>
               {rightPrefix}
               <Text style={styles.noQuotePlaceholder}>{emptyText}</Text>
             </View>
@@ -308,7 +308,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    minHeight: 24,
+    minHeight: 20,
   },
   rightContentTouchable: {
     flexDirection: 'row',
@@ -328,7 +328,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    minHeight: 24,
+    minHeight: 20,
   },
   triggerButton: {
     paddingHorizontal: 4,
@@ -343,19 +343,22 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 18,
   },
   valueSlot: {
-    minHeight: 24,
+    minHeight: 20,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
+  errorValueSlot: {
+    minHeight: 24,
+  },
   skeletonPill: {
     width: 131,
-    height: 24,
+    height: 20,
     borderRadius: 100,
   },
   infoCardSkeletonPill: {
     width: 60,
-    height: 24,
+    height: 20,
     borderRadius: 12,
   },
   arrowIcon: {
@@ -369,7 +372,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     lineHeight: 16,
     paddingHorizontal: 6,
-    paddingVertical: 4,
+    paddingVertical: 2,
     borderRadius: 4,
     backgroundColor: colors2024['brand-light-1'],
     overflow: 'hidden',

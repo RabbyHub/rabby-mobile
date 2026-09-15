@@ -40,7 +40,29 @@ run_android_build_and_hash() {
     "assets/dexopt/baseline.profm"
   )
 
-  zip -d -q $unsigned_apk_path "${files_to_delete[@]}" || true
+  zip -d -q "$unsigned_apk_path" "${files_to_delete[@]}" || true
+
+  # Info-ZIP may invalidate APK entry alignment while rewriting the archive.
+  # Normalize it with the same Android Build Tools version used by Gradle.
+  local android_sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+  local build_tools_version
+  build_tools_version=$(awk -F'"' '/buildToolsVersion[[:space:]]*=/ { print $2; exit }' "$PROJECT_DIR/android/build.gradle")
+  local zipalign_path="$android_sdk_root/build-tools/$build_tools_version/zipalign"
+  local aligned_apk_path="$export_dir/app-hash-unsigned-aligned.apk"
+
+  if [ -z "$android_sdk_root" ] || [ -z "$build_tools_version" ] || [ ! -x "$zipalign_path" ]; then
+    echo "❌ Unable to resolve zipalign for Android Build Tools $build_tools_version"
+    return 1
+  fi
+
+  rm -f "$aligned_apk_path"
+  if ! "$zipalign_path" -f 4 "$unsigned_apk_path" "$aligned_apk_path" || \
+     ! "$zipalign_path" -c 4 "$aligned_apk_path"; then
+    rm -f "$aligned_apk_path"
+    echo "❌ Failed to normalize APK ZIP alignment"
+    return 1
+  fi
+  mv "$aligned_apk_path" "$unsigned_apk_path"
 
   # 计算哈希
   local file_hashes_report="$export_dir/file_hashes_android.txt"

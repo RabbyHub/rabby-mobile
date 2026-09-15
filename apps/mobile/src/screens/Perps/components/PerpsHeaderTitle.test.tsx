@@ -109,7 +109,7 @@ describe('PerpsSimpleHeader', () => {
     expect(mockSharedHeaderProps.mock.lastCall?.[0]).toMatchObject({
       accountAddress: '0x1234567890123456789012345678901234567890',
       accountBrandName: 'Rabby',
-      accountTriggerVariant: 'wallet',
+      accountTriggerVariant: 'wallet-icon',
     });
 
     fireEvent(screen.getByTestId('switch-to-pro'), 'pressIn');
