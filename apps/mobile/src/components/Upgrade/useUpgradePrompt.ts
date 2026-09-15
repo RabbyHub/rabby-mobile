@@ -1,7 +1,6 @@
 import { zustandByMMKV } from '@/core/storage/mmkv';
 import { zCreate } from '@/core/utils/reexports';
 import { parseMarkdown } from '@/components/Markdown/parseMarkdown';
-import { hasMeaningfulChangelog } from './hasMeaningfulChangelog';
 
 type UpgradePromptInfo = {
   version: string;
@@ -38,7 +37,7 @@ export function requestAutoUpgradePrompt(info: UpgradePromptInfo) {
     !info.couldUpgrade ||
     hasPromptedVersion(info.version) ||
     typeof info.changelog !== 'string' ||
-    !hasMeaningfulChangelog(info.changelog)
+    !info.changelog.trim()
   ) {
     return;
   }

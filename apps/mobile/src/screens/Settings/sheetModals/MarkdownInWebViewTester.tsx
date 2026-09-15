@@ -9,8 +9,6 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useUnmountedRef } from '@/hooks/common/useMount';
 import { SELF_HOST_BASE, SELF_HOST_BASE_PROD } from '@/utils/version';
 import { UpgradePromptDialog } from '@/components/Upgrade/UpgradePromptDialog';
-import { hasMeaningfulChangelog } from '@/components/Upgrade/hasMeaningfulChangelog';
-import { toast } from '@/components2024/Toast';
 import { FormInput } from '@/components/Form/Input';
 import { Button } from '@/components2024/Button';
 import {
@@ -95,12 +93,6 @@ export function MarkdownInWebViewInner() {
           const changelog = await response.text();
           if (!changelog.trim()) continue;
           if (!unmountedRef.current && !controller.signal.aborted) {
-            toast.info(
-              hasMeaningfulChangelog(changelog)
-                ? 'Changelog qualifies for an automatic update prompt.'
-                : 'Changelog will skip the automatic update prompt.',
-              { duration: 4000 },
-            );
             setPreview({ version: requestedVersion, changelog });
           }
           return;
