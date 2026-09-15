@@ -1,4 +1,6 @@
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
+// Figma cNPc4bz8P8QBjkPk2huEml / 83992:156879; original 13px circle geometry.
+import RcAmountSliderThumb from '@/assets2024/icons/perps/PerpsProTradeAmountSliderThumb.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -17,7 +19,7 @@ export const PerpsProTradeAmountSlider: React.FC<{
   onChange?: (value: number) => void;
   value?: number;
 }> = React.memo(({ onChange, value = 0 }) => {
-  const { styles } = useTheme2024({ getStyle });
+  const { colors2024, styles } = useTheme2024({ getStyle });
   const [dragging, setDragging] = useState(false);
   const points = useMemo(() => [...TRADE_SLIDER_POINTS], []);
   const sliderHaptics = usePerpsProSliderHaptics({
@@ -73,6 +75,19 @@ export const PerpsProTradeAmountSlider: React.FC<{
         }}
         step={1}
         style={styles.slider}
+        thumbProps={{
+          children: (
+            <RcAmountSliderThumb
+              accessible={false}
+              fill={colors2024['neutral-bg-1']}
+              height={TRADE_SLIDER_THUMB_SIZE}
+              pointerEvents="none"
+              stroke={colors2024['neutral-title-1']}
+              testID="perps-pro-trade-amount-slider-thumb"
+              width={TRADE_SLIDER_THUMB_SIZE}
+            />
+          ),
+        }}
         thumbStyle={styles.thumb}
         trackStyle={styles.track}
         value={value}
@@ -165,10 +180,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderColor: colors2024['neutral-title-1'],
   },
   thumb: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderColor: colors2024['neutral-title-1'],
-    borderRadius: TRADE_SLIDER_THUMB_SIZE / 2,
-    borderWidth: 1,
+    backgroundColor: 'transparent',
+    borderRadius: 0,
+    borderWidth: 0,
     height: TRADE_SLIDER_THUMB_SIZE,
     width: TRADE_SLIDER_THUMB_SIZE,
   },

@@ -567,24 +567,24 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     gap: 2,
     height: 12,
-    marginHorizontal: -12,
   },
   ratioLabel: {
     ...PERPS_PRO_NUMBER_STYLE,
     flexShrink: 0,
     fontFamily: 'SF Pro Rounded',
     fontSize: 10,
-    fontWeight: '500',
+    fontWeight: '400',
     lineHeight: 12,
-    width: 42,
+    // Fits 100.00% in Rounded Regular 10 with tabular digits.
+    width: 41,
   },
   buyRatio: {
     color: colors2024['green-default'],
-    textAlign: 'right',
+    textAlign: 'left',
   },
   sellRatio: {
     color: colors2024['red-default'],
-    textAlign: 'left',
+    textAlign: 'right',
   },
   ratioTrack: {
     flexDirection: 'row',
@@ -594,12 +594,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   buyRatioTrack: {
     backgroundColor: colors2024['green-default'],
-    borderRadius: 2,
+    borderBottomLeftRadius: 2,
+    borderTopLeftRadius: 2,
     flexBasis: 0,
   },
   sellRatioTrack: {
     backgroundColor: colors2024['red-default'],
-    borderRadius: 2,
+    borderBottomRightRadius: 2,
+    borderTopRightRadius: 2,
     flexBasis: 0,
   },
   emptyRatioTrack: {

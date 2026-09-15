@@ -4,6 +4,12 @@ import { Keyboard, StyleSheet } from 'react-native';
 
 const mockTriggerImpact = jest.fn();
 
+jest.mock('@/assets2024/icons/perps/PerpsProTradeAmountSliderThumb.svg', () => {
+  const ReactModule = require('react');
+  return (props: object) =>
+    ReactModule.createElement(require('react-native').View, props);
+});
+
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
@@ -11,7 +17,7 @@ jest.mock('@/components/Typography', () => ({
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
     const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
-    return { styles: getStyle({ colors2024 }) };
+    return { colors2024, styles: getStyle({ colors2024 }) };
   },
 }));
 
@@ -24,13 +30,14 @@ jest.mock('@/utils/styles', () => ({
 }));
 
 jest.mock('@rneui/themed', () => ({
-  Slider: (props: object) => {
+  Slider: (props: { thumbProps?: { children?: React.ReactNode } }) => {
     const ReactModule = require('react');
     const { View } = require('react-native');
-    return ReactModule.createElement(View, {
-      ...props,
-      testID: 'amount-slider-input',
-    });
+    return ReactModule.createElement(
+      View,
+      { ...props, testID: 'amount-slider-input' },
+      props.thumbProps?.children,
+    );
   },
 }));
 
@@ -39,6 +46,28 @@ import { PerpsProTradeAmountSlider } from './PerpsProTradeAmountSlider';
 describe('PerpsProTradeAmountSlider haptics', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('moves the design SVG inside the existing transparent thumb', () => {
+    render(<PerpsProTradeAmountSlider onChange={jest.fn()} value={25} />);
+    const slider = screen.getByTestId('amount-slider-input');
+    const thumb = screen.getByTestId('perps-pro-trade-amount-slider-thumb');
+
+    expect(thumb.props).toMatchObject({
+      accessible: false,
+      fill: 'neutral-bg-1',
+      stroke: 'neutral-title-1',
+      height: 13,
+      width: 13,
+      pointerEvents: 'none',
+    });
+    expect(StyleSheet.flatten(slider.props.thumbStyle)).toMatchObject({
+      backgroundColor: 'transparent',
+      borderRadius: 0,
+      borderWidth: 0,
+      height: 13,
+      width: 13,
+    });
   });
 
   it.each([0, 1, 25, 50, 75, 99, 100])(
