@@ -18,6 +18,7 @@ import { Keyboard, StyleSheet, View as NativeView } from 'react-native';
 import { perpsProKeyboardSession } from '../common/perpsProKeyboardSession';
 
 const ReactNative = jest.requireActual('react-native');
+let mockNativeTextInput: React.ElementType | undefined;
 
 jest.mock('@/core/native/utils', () => ({ IS_ANDROID: true }));
 jest.mock('react-native-reanimated', () => ({
@@ -131,10 +132,13 @@ jest.mock('@gorhom/bottom-sheet', () => {
           focus: mockBottomSheetInputFocus,
           setNativeProps: mockBottomSheetInputSetNativeProps,
         }));
-        return ReactModule.createElement(require('react-native').TextInput, {
-          ...props,
-          testBottomSheetInputHost: true,
-        });
+        return ReactModule.createElement(
+          mockNativeTextInput ?? require('react-native').TextInput,
+          {
+            ...props,
+            testBottomSheetInputHost: true,
+          },
+        );
       },
     ),
     BottomSheetView: require('react-native').View,
@@ -406,8 +410,8 @@ describe.each(['light', 'dark'] as const)(
         opacity: 0,
       });
       expect(StyleSheet.flatten(input.props.style)).toMatchObject({
-        left: 0,
-        right: 0,
+        left: 4,
+        right: 4,
         fontSize: 36,
         fontVariant: ['tabular-nums'],
       });
@@ -550,6 +554,85 @@ describe.each(['light', 'dark'] as const)(
   },
 );
 
+it('keeps natural line metrics when Android selection sync rewrites unchanged text', () => {
+  const setTextAndSelection = jest.fn();
+  let restoreCommands: (() => void) | undefined;
+  jest.resetModules();
+  jest.isolateModules(() => {
+    jest.doMock('react', () => React);
+    jest.doMock('react-native/Libraries/Utilities/Platform.ios', () => ({
+      __esModule: true,
+      default: {
+        ...jest.requireActual('react-native/Libraries/Utilities/Platform.ios')
+          .default,
+        OS: 'android',
+      },
+    }));
+    const native = jest.requireActual(
+      'react-native/Libraries/Components/TextInput/AndroidTextInputNativeComponent',
+    );
+    const commandSpy = jest
+      .spyOn(native.Commands, 'setTextAndSelection')
+      .mockImplementation(setTextAndSelection);
+    restoreCommands = () => commandSpy.mockRestore();
+    // Bypass the Jest preset's TextInput mock to run RN's controlled
+    // text/selection synchronization, with native commands mocked.
+    mockNativeTextInput = jest.requireActual(
+      'react-native/Libraries/Components/TextInput/TextInput',
+    ).default;
+  });
+
+  const onConfirm = jest.fn();
+  let unmount: (() => void) | undefined;
+  try {
+    ({ unmount } = render(
+      <PerpsProLeverageSheet
+        currentLeverage={21}
+        maxLeverage={40}
+        onClose={jest.fn()}
+        onConfirm={onConfirm}
+        pending={false}
+        visible
+      />,
+    ));
+    const input = screen.getByTestId('perps-pro-leverage-input');
+    expect(input.type).toBe('AndroidTextInput');
+    expect(input.props.text).toBe('21');
+    const style = StyleSheet.flatten(input.props.style);
+    expect(style.lineHeight).toBeUndefined();
+    expect(style.height).toBe(54);
+    setTextAndSelection.mockClear();
+
+    fireEvent(input, 'selectionChange', {
+      nativeEvent: { selection: { start: 0, end: 0 } },
+    });
+    fireEvent(input, 'focus', { nativeEvent: { target: 1 } });
+    expect(setTextAndSelection).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.any(Number),
+      '21',
+      2,
+      2,
+    );
+    expect(StyleSheet.flatten(input.props.style)).toEqual(style);
+
+    setTextAndSelection.mockClear();
+    fireEvent(input, 'change', {
+      nativeEvent: { text: '2', eventCount: 1, target: 1 },
+    });
+    expect(input.props.text).toBe('2');
+    expect(StyleSheet.flatten(input.props.style)).toEqual(style);
+    expect(setTextAndSelection).not.toHaveBeenCalled();
+    fireEvent.press(screen.getByTestId('perps-pro-leverage-confirm'));
+    expect(onConfirm).toHaveBeenCalledWith(2);
+  } finally {
+    unmount?.();
+    mockNativeTextInput = undefined;
+    restoreCommands?.();
+    jest.dontMock('react-native/Libraries/Utilities/Platform.ios');
+  }
+});
+
 it.each(['android', 'ios'] as const)(
   'preserves input geometry through editing with the real %s font factory',
   platform => {
@@ -598,12 +681,12 @@ it.each(['android', 'ios'] as const)(
       fontSize: 36,
       fontVariant: ['tabular-nums'],
       height: platform === 'android' ? 54 : 42,
-      top: platform === 'android' ? -6 : 0,
+      padding: 0,
+      top: platform === 'android' ? -9 : 0,
     });
     expect(measureStyle).toMatchObject({ height: 42, lineHeight: 42 });
-    expect(inputStyle.top + inputStyle.height / 2).toBe(
-      measureStyle.height / 2,
-    );
+    const viewport = screen.getByTestId('perps-pro-leverage-input-viewport');
+    const viewportStyle = StyleSheet.flatten(viewport.props.style);
     expect(StyleSheet.flatten(screen.getByText('x').props.style)).toMatchObject(
       {
         fontSize: 36,
@@ -611,15 +694,39 @@ it.each(['android', 'ios'] as const)(
       },
     );
     if (platform === 'android') {
+      // Selection synchronization can rewrite text without its line-height
+      // span. Neither that path nor editing should change the line metrics.
       expect(inputStyle.lineHeight).toBeUndefined();
       expect(inputStyle).toMatchObject({
         includeFontPadding: false,
+        left: 4,
+        right: 4,
         textAlignVertical: 'center',
       });
+      expect(viewportStyle).toMatchObject({
+        height: inputStyle.fontSize,
+        overflow: 'hidden',
+        paddingHorizontal: 4,
+        marginHorizontal: -4,
+      });
+      expect(inputStyle.top + inputStyle.height / 2).toBe(
+        viewportStyle.height / 2,
+      );
+      // Preserve the measured digit width and suffix spacing while allowing
+      // room beside the native cursor inside the clipping window.
+      expect(
+        viewportStyle.paddingHorizontal + viewportStyle.marginHorizontal,
+      ).toBe(0);
+      expect(inputStyle.left).toBe(viewportStyle.paddingHorizontal);
+      expect(inputStyle.right).toBe(viewportStyle.paddingHorizontal);
     } else {
       expect(inputStyle.lineHeight).toBe(42);
       expect(inputStyle.includeFontPadding).toBeUndefined();
       expect(inputStyle.textAlignVertical).toBeUndefined();
+      expect(viewportStyle).toEqual({});
+      expect(inputStyle.top + inputStyle.height / 2).toBe(
+        measureStyle.height / 2,
+      );
     }
 
     fireEvent(input, 'focus');
@@ -629,9 +736,12 @@ it.each(['android', 'ios'] as const)(
     expect(input.props.selection).toBeUndefined();
     for (const draft of ['', '1', '40']) {
       fireEvent.changeText(input, draft);
+      fireEvent(input, 'blur');
+      fireEvent(input, 'focus');
       expect(screen.getByTestId('perps-pro-leverage-input')).toBe(input);
       expect(input.props.value).toBe(draft);
       expect(StyleSheet.flatten(input.props.style)).toEqual(inputStyle);
+      expect(StyleSheet.flatten(viewport.props.style)).toEqual(viewportStyle);
     }
     fireEvent(input, 'blur');
     fireEvent(input, 'focus');

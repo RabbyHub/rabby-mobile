@@ -217,7 +217,9 @@ export const PerpsProLeverageSheet: React.FC<{
                   accessible={false}
                   onPress={() => inputRef.current?.focus()}
                   style={styles.valueEditor}>
-                  <View>
+                  <View
+                    style={styles.valueInputViewport}
+                    testID="perps-pro-leverage-input-viewport">
                     <Text
                       accessible={false}
                       accessibilityElementsHidden
@@ -246,7 +248,7 @@ export const PerpsProLeverageSheet: React.FC<{
                       style={[
                         styles.valueInput,
                         styles.valueInputOverlay,
-                        // Apply after the style factory so undefined clears lineHeight.
+                        // Clear lineHeight after the style factory's JSON copy.
                         PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE,
                       ]}
                       testID="perps-pro-leverage-input"
@@ -390,14 +392,31 @@ const getStyle = createGetStyles2024(
     // Use the same font and draft to size the input, including tabular digits.
     // The overlay keeps native input/cursor ownership and adds no measuring state.
     valueInputMeasure: { opacity: 0 },
+    // Clip the cursor to the font size without shortening native text layout.
+    // Compensated side padding preserves digit width and leaves cursor room.
+    valueInputViewport: IS_ANDROID
+      ? {
+          height: 36,
+          marginHorizontal: -4,
+          overflow: 'hidden',
+          paddingHorizontal: 4,
+        }
+      : {},
     valueInputOverlay: {
       position: 'absolute',
       left: 0,
       right: 0,
       top: 0,
-      // Fit Android's natural font metrics inside the existing 54-high row.
-      // Expand equally around the 42-high measuring slot, keeping its center.
-      ...(IS_ANDROID ? { height: 54, top: -6 } : {}),
+      // Keep the natural line fully visible to Android's selection scrolling.
+      // Its center matches the 36-high clipping window and the unchanged x.
+      ...(IS_ANDROID
+        ? {
+            height: 54,
+            left: 4,
+            right: 4,
+            top: -9,
+          }
+        : {}),
     },
     valueSuffix: {
       color: colors2024['neutral-title-1'],
