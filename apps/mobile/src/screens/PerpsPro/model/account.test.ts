@@ -23,6 +23,7 @@ import {
   computeUnifiedAccountRatio,
   getPerpsAccountMarginRatio,
   getSpotPriceDependencyKeys,
+  getStakedHypeAmount,
   resolveSpotUsdcPrice,
 } from './account';
 
@@ -318,6 +319,53 @@ describe('Perps Pro account facts', () => {
         spotMeta,
       }),
     ).toEqual({ unpricedNonZeroAssets: [], value: '120' });
+  });
+
+  it('counts staking-account HYPE at the spot mark in every mode', () => {
+    const balances = formattedSpotState().rawBalances;
+    const prices = { '@10': { markPx: '2' } };
+
+    expect(
+      getStakedHypeAmount({
+        delegated: '1.5',
+        undelegated: '0.25',
+        totalPendingWithdrawal: '3.25',
+      }),
+    ).toBe('5');
+    expect(getStakedHypeAmount(null)).toBe('0');
+
+    // 100 USDC + 10 HYPE × 2 + 5 staked HYPE × 2 (+ 200 perps)
+    expect(
+      computePerpsPortfolioValue({
+        balances,
+        includePerpsAccountValue: true,
+        perpsAccountValue: '200',
+        spotAssetCtxs: prices,
+        spotMeta,
+        stakingHype: '5',
+      }),
+    ).toEqual({ unpricedNonZeroAssets: [], value: '330' });
+    expect(
+      computePerpsPortfolioValue({
+        balances,
+        includePerpsAccountValue: false,
+        perpsAccountValue: '200',
+        spotAssetCtxs: prices,
+        spotMeta,
+        stakingHype: '5',
+      }),
+    ).toEqual({ unpricedNonZeroAssets: [], value: '130' });
+    // Staked HYPE without a HYPE mark is reported once, not per ledger.
+    expect(
+      computePerpsPortfolioValue({
+        balances,
+        includePerpsAccountValue: false,
+        perpsAccountValue: '0',
+        spotAssetCtxs: {},
+        spotMeta,
+        stakingHype: '5',
+      }),
+    ).toEqual({ unpricedNonZeroAssets: ['HYPE'], value: '100' });
   });
 
   it('matches the Rabby unified ratio scope and reports unresolved dex collateral', () => {
