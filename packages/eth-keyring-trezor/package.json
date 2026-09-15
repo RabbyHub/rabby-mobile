@@ -36,7 +36,7 @@
     "@metamask/eth-sig-util": "^8.2.0",
     "@rabby-wallet/base-utils": "workspace:^",
     "@rabby-wallet/keyring-utils": "workspace:^",
-    "@trezor/connect-plugin-ethereum": "9.1.2-beta.1",
+    "@trezor/connect-plugin-ethereum": "9.1.5",
     "eth-sig-util": "^3.0.1",
     "ethereumjs-util": "^7.1.5",
     "events": "^3.3.0",
@@ -62,7 +62,7 @@
     "typescript": "5.7.3"
   },
   "peerDependencies": {
-    "@trezor/connect-plugin-ethereum": "9.1.2-beta.1"
+    "@trezor/connect-plugin-ethereum": "9.1.5"
   },
   "engines": {
     "node": ">=16.0.0"
