@@ -987,6 +987,16 @@
       "need-to-approve-token-before-swap": "需先授权代币才能兑换",
       "low-slippage-may-cause-failed-transactions-due-to-high-volatility": "低滑点可能由于高波动性导致交易失败",
       "rabbyFee": {
+        "discountTitle": "Rabby 费用优惠",
+        "case": "适用情形",
+        "free": "免费",
+        "cases": {
+          "wrap": "封装/解除封装原生代币",
+          "stablecoins": "稳定币",
+          "lstLrt": "LST/LRT 代币",
+          "million": "交易量 $1M+",
+          "hundredThousand": "交易量 $100k - $1M"
+        },
         "button": "明白了",
         "rate": "费率",
         "wallet": "钱包",
@@ -2239,6 +2249,7 @@
           "liquidationPrice": "强平价格",
           "triggerPrice": "触发价格",
           "amount": "数量",
+          "keyboardMinimum": "最低 {{amount}}",
           "available": "可用",
           "reduceOnly": "只减仓",
           "confirmationReduceOnly": "只减仓",
