@@ -4,6 +4,7 @@ import { getERC20Allowance, getRecommendNonce } from '@/core/apis/provider';
 import { openapi } from '@/core/request';
 import { formatUsdValue } from '@/utils/number';
 import { stats } from '@/utils/stats';
+import * as Sentry from '@sentry/react-native';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import type {
@@ -474,7 +475,13 @@ export const useQuoteMethods = () => {
 
         let preExecResult;
         if (data) {
-          const { isSdkDataPass } = verifySdk({
+          const {
+            isSdkDataPass,
+            routerPass,
+            spenderPass,
+            callDataPass,
+            receiverPass,
+          } = verifySdk({
             chain,
             dexId,
             slippage,
@@ -492,6 +499,26 @@ export const useQuoteMethods = () => {
             nativeTokenAddress: getSwapNativeTokenAddress(chain),
             chainId: getSwapChainId(chain),
           });
+          if (!isSdkDataPass) {
+            const failed = [
+              ...(!routerPass ? ['router'] : []),
+              ...(!spenderPass ? ['spender'] : []),
+              ...(!callDataPass ? ['calldata'] : []),
+              ...(!receiverPass ? ['receiver'] : []),
+            ];
+            const failedKey = failed.join(',') || 'unknown';
+
+            Sentry.captureException(new Error('swap isSdkDataPass false'), {
+              level: 'warning',
+              tags: {
+                swap_dex: dexId,
+                swap_chain: chain,
+                swap_verify_failed: failedKey,
+                swap_token_pair: `${payToken.id}/${receiveToken.id}`,
+              },
+              fingerprint: ['swap-verify-sdk', String(dexId), failedKey],
+            });
+          }
           if (inSufficient) {
             const quote: TDexQuoteData = {
               data,
