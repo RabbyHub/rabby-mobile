@@ -174,6 +174,10 @@ export const TokenMarketInfoScreen = () => {
         usd_value: res?.usd_value,
         price: res?.price,
         support_market_data: res?.support_market_data,
+        is_verified: res?.is_verified ?? token.is_verified,
+        is_suspicious: res?.is_suspicious ?? token.is_suspicious,
+        is_scam: res?.is_scam ?? token.is_scam,
+        is_core: res?.is_core ?? token.is_core,
       } as ITokenItem;
     },
     {
@@ -402,9 +406,11 @@ export const TokenMarketInfoScreen = () => {
     [externalContent, styles.indicator, styles.tabBar, styles.tabsBarContainer],
   );
 
+  const securityToken = tokenWithAmount || token;
   const riskInfo = useMemo(() => {
-    const hasRisk = token.is_verified === false || token.is_suspicious;
-    const isDanger = token.is_verified === false;
+    const hasRisk =
+      securityToken.is_verified === false || securityToken.is_suspicious;
+    const isDanger = securityToken.is_verified === false;
     return {
       hasRisk,
       isDanger,
@@ -426,8 +432,8 @@ export const TokenMarketInfoScreen = () => {
   }, [
     colors2024,
     styles.riskContainer,
-    token.is_suspicious,
-    token.is_verified,
+    securityToken.is_suspicious,
+    securityToken.is_verified,
   ]);
 
   const renderMarketDataLabel = useCallback(

@@ -48,6 +48,44 @@ describe('favorite token resource', () => {
     expect(result.data[50].id).toBe('0x32');
   });
 
+  it('preserves unlabeled is_verified and is_core instead of coercing them to false', async () => {
+    const result = await loadFavoriteTokenResource({
+      address: '0xOwner',
+      cache: createFavoriteTokenCache(),
+      force: false,
+      pinnedTokens: [makePinnedToken('0xAAA')],
+      loadBatch: async () => [
+        {
+          ...makeToken('0xaaa'),
+          is_verified: null,
+          is_core: null,
+        },
+      ],
+    });
+
+    expect(result.data[0].is_verified).toBeNull();
+    expect(result.data[0].is_core).toBeNull();
+  });
+
+  it('keeps explicitly unverified favorite tokens as unverified', async () => {
+    const result = await loadFavoriteTokenResource({
+      address: '0xOwner',
+      cache: createFavoriteTokenCache(),
+      force: false,
+      pinnedTokens: [makePinnedToken('0xAAA')],
+      loadBatch: async () => [
+        {
+          ...makeToken('0xaaa'),
+          is_verified: false,
+          is_core: false,
+        },
+      ],
+    });
+
+    expect(result.data[0].is_verified).toBe(false);
+    expect(result.data[0].is_core).toBe(false);
+  });
+
   it('does not reuse account-specific token amounts for another owner', async () => {
     const pinnedTokens = [makePinnedToken('0xAAA')];
     const loadBatch = jest.fn(async (_keys: string[], address: string) => [
