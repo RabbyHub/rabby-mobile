@@ -23,6 +23,11 @@ const PERPS_PRO_FUNDING_AMOUNT_INPUT_STYLE = {
   ...PERPS_PRO_FUNDING_INPUT_TEXT_STYLE,
   ...PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE,
 };
+const PERPS_PRO_SWAP_AMOUNT_INPUT_STYLE = {
+  ...PERPS_PRO_FUNDING_AMOUNT_INPUT_STYLE,
+  // Keep the Android placeholder and entered amount in the same layout slot.
+  ...(Platform.OS === 'android' ? { height: 36 } : {}),
+};
 
 export type PerpsProFundingMode = 'deposit' | 'withdraw' | 'swap';
 
@@ -118,7 +123,7 @@ export const PerpsProFundingOverlay: React.FC<{
         onSpotOrder={handleStableCoinOrder}
         sourceAsset={sourceAsset}
         targetAsset={sourceAsset ? undefined : targetAsset}
-        inputTextStyle={PERPS_PRO_FUNDING_AMOUNT_INPUT_STYLE}
+        inputTextStyle={PERPS_PRO_SWAP_AMOUNT_INPUT_STYLE}
         tooltipTextStyle={PERPS_PRO_REGULAR_TEXT_STYLE}
         visible
       />

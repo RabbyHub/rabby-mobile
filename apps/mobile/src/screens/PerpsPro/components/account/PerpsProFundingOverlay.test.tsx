@@ -165,11 +165,11 @@ describe('PerpsProFundingOverlay', () => {
         paddingTop: 0,
         paddingBottom: 0,
       });
-      expect(style.height).toBeUndefined();
       expect(style.minHeight).toBeUndefined();
       if (platform === 'android') {
         expect(style.lineHeight).toBeUndefined();
         expect(style).toMatchObject({
+          height: 36,
           includeFontPadding: false,
           textAlignVertical: 'center',
         });
@@ -180,9 +180,14 @@ describe('PerpsProFundingOverlay', () => {
           fontWeight: '700',
         });
       }
-      expect(mockSwapPopupProps?.inputTextStyle).toEqual(
-        mockDepositPopupProps?.inputTextStyle,
+      const depositStyle = StyleSheet.flatten(
+        mockDepositPopupProps?.inputTextStyle as object,
       );
+      expect(depositStyle.height).toBeUndefined();
+      expect(mockSwapPopupProps?.inputTextStyle).toEqual({
+        ...depositStyle,
+        ...(platform === 'android' ? { height: 36 } : {}),
+      });
       expect(mockSwapPopupProps?.onSpotOrder).toBe(mockHandleStableCoinOrder);
       expect(screen.getByTestId('swap-popup')).toBeTruthy();
       expect(screen.getByTestId('deposit-popup')).toBeTruthy();
