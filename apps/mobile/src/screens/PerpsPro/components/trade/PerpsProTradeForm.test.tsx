@@ -6,6 +6,12 @@ jest.mock('react-native-haptic-feedback', () => ({
   trigger: jest.fn(),
 }));
 
+jest.mock('@/assets2024/icons/perps/PerpsProTradeAmountSliderThumb.svg', () => {
+  const ReactModule = require('react');
+  return (props: object) =>
+    ReactModule.createElement(require('react-native').View, props);
+});
+
 const mockFocusTextInput = jest.fn();
 const mockCancelAnimation = jest.fn();
 const mockWithTiming = jest.fn((value: number) => value);
@@ -423,8 +429,8 @@ describe('PerpsProTradeForm order matrix', () => {
     expect(
       screen.getByTestId('perps-pro-trade-bbo-caret-glyph').props,
     ).toMatchObject({
-      height: 4.11638,
-      width: 5.69228,
+      height: 4,
+      width: 6,
     });
     expect(
       StyleSheet.flatten(

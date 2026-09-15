@@ -1,24 +1,34 @@
-import RcDirectionArrow from '@/assets2024/icons/perps/PerpsProTransferDirectionArrow.svg';
-import ImgTransferUSDC from '@/assets2024/icons/perps/PerpsProTransferUSDC.png';
+import RcTransferUSDC from '@/assets2024/icons/perps/PerpsProTransferUSDC.svg';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import { BOTTOM_BUTTON_COMPACT_HEIGHT } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_BOTTOM_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import BigNumber from 'bignumber.js';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Image, Pressable, View } from 'react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { usePerpsProKeyboardInput } from '../common/usePerpsProKeyboardInput';
+import { PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE } from '../common/perpsProSingleLineInput';
 import { formatPerpsProDecimal } from '../../utils/format';
-import {
-  PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
-  PERPS_PRO_CONFIRM_BUTTON_STYLE,
-} from '../common/perpsProVisual';
+import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
+import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
+import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 import { getPerpsProTransferSheetStyles } from './PerpsProTransferSheet.styles';
 
@@ -41,6 +51,16 @@ export const PerpsProTransferSheet: React.FC<{
     getStyle: getPerpsProTransferSheetStyles,
   });
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <PerpsProDialogBackdrop
+        {...props}
+        pressBehavior={pending ? 'none' : 'close'}
+      />
+    ),
+    [pending],
+  );
   usePerpsProSheetNavigationRegistration({
     active: visible,
     dismiss: onClose,
@@ -73,10 +93,10 @@ export const PerpsProTransferSheet: React.FC<{
       ref={modalRef}
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: 'bg1',
+        linearGradientType: 'bg0',
       })}
       backgroundStyle={styles.background}
-      backdropProps={{ pressBehavior: pending ? 'none' : 'close' }}
+      backdropComponent={renderBackdrop}
       enableDynamicSizing={false}
       enablePanDownToClose={!pending}
       keyboardBehavior="interactive"
@@ -87,7 +107,9 @@ export const PerpsProTransferSheet: React.FC<{
         if (!pending) onClose();
       }}
       style={styles.modal}
-      snapPoints={[546]}>
+      snapPoints={[
+        490 + getBottomButtonBottomOffset(bottom) - BOTTOM_BUTTON_BOTTOM_OFFSET,
+      ]}>
       <BottomSheetView style={styles.sheetView}>
         <AutoLockView style={styles.container}>
           <Text style={styles.title}>
@@ -113,13 +135,6 @@ export const PerpsProTransferSheet: React.FC<{
                     {t('page.perps.pro.account.perps')}
                   </Text>
                 </View>
-                <View pointerEvents="none" style={styles.directionIcon}>
-                  <RcDirectionArrow
-                    color={colors2024['neutral-secondary']}
-                    height={9.44115}
-                    width={13.0817}
-                  />
-                </View>
               </View>
             </View>
 
@@ -137,12 +152,15 @@ export const PerpsProTransferSheet: React.FC<{
               <View
                 style={styles.amountField}
                 testID="perps-pro-transfer-amount-field">
+                <Text pointerEvents="none" style={styles.amountPrefix}>
+                  $
+                </Text>
                 <BottomSheetTextInput
                   {...keyboard}
                   ref={inputRef}
                   accessibilityLabel={t('page.perps.pro.account.amount')}
                   allowFontScaling={false}
-                  cursorColor={colors2024['brand-default']}
+                  cursorColor={PERPS_PRO_DIALOG_TOKENS.inputCursor}
                   editable={!pending}
                   keyboardType="decimal-pad"
                   onChangeText={value => {
@@ -150,17 +168,20 @@ export const PerpsProTransferSheet: React.FC<{
                   }}
                   placeholder="0"
                   placeholderTextColor={colors2024['neutral-foot']}
-                  selectionColor={colors2024['brand-default']}
-                  style={styles.amountInput}
+                  selectionColor={PERPS_PRO_DIALOG_TOKENS.inputCursor}
+                  style={[
+                    styles.amountInput,
+                    PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE,
+                  ]}
                   testID="perps-pro-transfer-amount"
                   value={amount}
                 />
                 <View
                   style={styles.tokenPill}
                   testID="perps-pro-transfer-token-pill">
-                  <Image
-                    source={ImgTransferUSDC}
-                    style={styles.tokenIcon}
+                  <RcTransferUSDC
+                    width={24}
+                    height={24}
                     testID="perps-pro-transfer-usdc-icon"
                   />
                   <Text style={styles.tokenText}>USDC</Text>
@@ -202,14 +223,15 @@ export const PerpsProTransferSheet: React.FC<{
             <Button
               disabled={!valid || pending}
               buttonStyle={[
-                PERPS_PRO_CONFIRM_BUTTON_STYLE,
-                styles.confirmButton,
+                styles.button,
+                (!valid || pending) && styles.buttonDisabled,
               ]}
-              height={BOTTOM_BUTTON_COMPACT_HEIGHT}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
               loading={pending}
               onPress={() => onConfirm(amountValue.toFixed())}
               title={t('global.confirm')}
-              titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
+              titleStyle={styles.buttonTitle}
+              disabledTitleStyle={styles.buttonDisabledTitle}
               type="primary"
             />
           </View>
