@@ -1,3 +1,4 @@
+jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
 import {
   act,
   fireEvent,
@@ -23,7 +24,7 @@ const mockUseSliderHaptics = jest.fn();
 let mockLatestTradePrice = '60001';
 let mockLatestTradeStatus: 'ready' | 'stale' = 'ready';
 
-jest.mock('@/assets2024/icons/perps/icon-switch-mode.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProCloseOrderTypeSwitch.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
@@ -247,7 +248,7 @@ describe('PerpsProClosePositionSheet', () => {
     fireEvent.changeText(input, '0.5');
     act(() => show({ endCoordinates: { height: 300, screenY: 500 } }));
     expect(screen.getByTestId('close-position-sheet').props.snapPoints).toEqual(
-      [574],
+      [598],
     );
     expect(perpsProKeyboardSession.getSnapshot()?.id).toBe(owner?.id);
     expect(owner?.sheetId).toBeDefined();
@@ -268,7 +269,7 @@ describe('PerpsProClosePositionSheet', () => {
     mockLatestTradePrice = '60001';
     mockLatestTradeStatus = 'ready';
   });
-  it('uses the 526px sheet, switches the price field to Limit, and seeds latest trade', async () => {
+  it('uses the 550px sheet, switches the price field to Limit, and seeds latest trade', async () => {
     const onReview = jest.fn();
     render(
       <PerpsProClosePositionSheet
@@ -282,7 +283,7 @@ describe('PerpsProClosePositionSheet', () => {
     );
 
     expect(screen.getByTestId('close-position-sheet').props.snapPoints).toEqual(
-      [526],
+      [550],
     );
     expect(screen.getByTestId('close-position-sheet').props).toMatchObject({
       enableDynamicSizing: false,
@@ -329,6 +330,7 @@ describe('PerpsProClosePositionSheet', () => {
     expect(screen.getByTestId('close-position-slider').props).toMatchObject({
       minimumValue: 0,
       pointCount: 5,
+      appearance: 'order-dialog',
       tone: 'neutral',
       value: 100,
     });
@@ -336,17 +338,14 @@ describe('PerpsProClosePositionSheet', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-close-position-footer').props.style,
       ),
-    ).toMatchObject({ paddingBottom: 40, paddingTop: 12 });
+    ).toMatchObject({ paddingBottom: 36, paddingTop: 24 });
     for (const testID of [
       'perps-pro-close-position-header',
       'perps-pro-close-position-summary',
     ]) {
       expect(
         StyleSheet.flatten(screen.getByTestId(testID).props.style),
-      ).toMatchObject({
-        borderBottomColor: 'neutral-bg-5',
-        borderBottomWidth: 1,
-      });
+      ).not.toHaveProperty('borderBottomWidth');
     }
 
     fireEvent.press(screen.getByTestId('perps-pro-close-market-price-field'));
@@ -545,8 +544,12 @@ describe('PerpsProClosePositionSheet', () => {
     expect(mockUsePerpsLatestTrade).toHaveBeenLastCalledWith(
       expect.objectContaining({ enabled: false }),
     );
+    expect(
+      screen.getByTestId('close-position-sheet').props.backdropComponent({})
+        .props.pressBehavior,
+    ).toBe('none');
     expect(screen.getByTestId('close-position-sheet').props).toMatchObject({
-      backdropProps: { pressBehavior: 'none' },
+      backdropComponent: expect.any(Function),
       enablePanDownToClose: false,
     });
     expect(

@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-jest.mock('@/assets2024/icons/common/warning-circle-cc.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProCloseAllWarning.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
@@ -27,12 +27,24 @@ jest.mock('@/components2024/Button', () => {
   const ReactModule = require('react');
   const { Pressable, Text } = require('react-native');
   return {
-    Button: ({ disabled, loading, onPress, testID, title }: any) =>
+    Button: ({
+      disabled,
+      loading,
+      onPress,
+      testID,
+      title,
+      buttonStyle,
+      titleStyle,
+      height,
+    }: any) =>
       ReactModule.createElement(
         Pressable,
         {
           accessibilityState: { busy: loading, disabled },
           disabled,
+          buttonStyle,
+          titleStyle,
+          height,
           onPress,
           testID,
         },
@@ -73,7 +85,7 @@ jest.mock('react-i18next', () => ({
 import { PerpsProCloseAllConfirmationModal } from './PerpsProCloseAllConfirmationModal';
 
 describe('PerpsProCloseAllConfirmationModal', () => {
-  it('uses the approved 297px warning-card shell and exact product copy', () => {
+  it('uses the approved 353px warning-card shell and exact product copy', () => {
     render(
       <PerpsProCloseAllConfirmationModal
         confirmation={{} as any}
@@ -94,6 +106,32 @@ describe('PerpsProCloseAllConfirmationModal', () => {
         screen.getByTestId('perps-pro-close-all-confirmation-copy').props.style,
       ),
     ).toMatchObject({ gap: 8, paddingBottom: 8, width: '100%' });
+    const card = screen
+      .UNSAFE_getAllByType(View)
+      .map(view => StyleSheet.flatten(view.props.style))
+      .find(style => style?.maxWidth === 353);
+    expect(card).toMatchObject({
+      width: '100%',
+      maxWidth: 353,
+      padding: 24,
+      borderRadius: 12,
+      gap: 16,
+    });
+    const confirm = screen.getByTestId('perps-pro-close-all-confirm');
+    expect(confirm.props.height).toBe(40);
+    expect(StyleSheet.flatten(confirm.props.buttonStyle)).toMatchObject({
+      borderRadius: 10,
+      backgroundColor: '#23C0B0',
+    });
+    expect(StyleSheet.flatten(confirm.props.titleStyle)).toMatchObject({
+      fontSize: 16,
+      fontWeight: '700',
+    });
+    expect(
+      screen
+        .UNSAFE_getAllByType(View)
+        .some(view => StyleSheet.flatten(view.props.style)?.opacity === 0.3),
+    ).toBe(true);
     expect(screen.getByText('Confirm Close All Positions')).toBeTruthy();
     expect(
       screen.getByText(

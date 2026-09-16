@@ -1,3 +1,4 @@
+jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
@@ -73,6 +74,8 @@ jest.mock('react-i18next', () => ({
     t: (key: string) =>
       ({
         'global.confirm': 'Confirm',
+        'page.perps.pro.trade.buyLong': 'Buy / Long',
+        'page.perps.pro.trade.sellShort': 'Sell / Short',
         'page.perps.pro.openOrders.buy': 'Buy',
         'page.perps.pro.openOrders.sell': 'Sell',
         'page.perps.pro.positions.amount': 'Amount',
@@ -134,36 +137,14 @@ describe('PerpsProCloseConfirmationSheet', () => {
 
     expect(
       screen.getByTestId('close-confirmation-sheet').props.snapPoints,
-    ).toEqual([318]);
+    ).toEqual([336]);
     expect(screen.getByText('BTCUSDC')).toBeTruthy();
-    expect(screen.getByText('Sell')).toBeTruthy();
-    expect(screen.getByText('Short')).toBeTruthy();
-    for (const testID of [
-      'perps-pro-close-confirmation-side-tag',
-      'perps-pro-close-confirmation-position-tag',
-    ]) {
-      const tagStyle = StyleSheet.flatten(
-        screen.getByTestId(testID).props.style,
-      );
-      expect(tagStyle).toMatchObject({
-        backgroundColor: 'red-light-1',
-        borderRadius: 4,
-        paddingHorizontal: 4,
-        paddingVertical: 1,
-      });
-      expect(tagStyle.borderColor).toBeUndefined();
-      expect(tagStyle.borderWidth).toBeUndefined();
-    }
-    expect(screen.getByText('Sell').props.style).toMatchObject({
+    expect(
+      StyleSheet.flatten(screen.getByText('Sell / Short').props.style),
+    ).toMatchObject({
       color: 'red-default',
       fontSize: 12,
-      fontWeight: '500',
-      lineHeight: 16,
-    });
-    expect(screen.getByText('Short').props.style).toMatchObject({
-      color: 'red-default',
-      fontSize: 12,
-      fontWeight: '500',
+      fontWeight: '700',
       lineHeight: 16,
     });
     expect(screen.getByText('61,000 USDC')).toBeTruthy();
@@ -200,32 +181,14 @@ describe('PerpsProCloseConfirmationSheet', () => {
       />,
     );
 
-    expect(screen.getByText('Buy').props.style).toMatchObject({
+    expect(
+      StyleSheet.flatten(screen.getByText('Buy / Long').props.style),
+    ).toMatchObject({
       color: 'green-default',
       fontSize: 12,
-      fontWeight: '500',
+      fontWeight: '700',
       lineHeight: 16,
     });
-    expect(screen.getByText('Long').props.style).toMatchObject({
-      color: 'green-default',
-      fontSize: 12,
-      fontWeight: '500',
-      lineHeight: 16,
-    });
-    for (const testID of [
-      'perps-pro-close-confirmation-side-tag',
-      'perps-pro-close-confirmation-position-tag',
-    ]) {
-      const tagStyle = StyleSheet.flatten(
-        screen.getByTestId(testID).props.style,
-      );
-      expect(tagStyle).toMatchObject({
-        backgroundColor: 'green-light-1',
-        borderRadius: 4,
-      });
-      expect(tagStyle.borderColor).toBeUndefined();
-      expect(tagStyle.borderWidth).toBeUndefined();
-    }
   });
 
   it('uses Market Price with its own opt-in confirmation preference', () => {
@@ -247,7 +210,7 @@ describe('PerpsProCloseConfirmationSheet', () => {
 
     expect(
       screen.getByTestId('close-confirmation-sheet').props.snapPoints,
-    ).toEqual([318]);
+    ).toEqual([336]);
     expect(screen.getByText('Market Price')).toBeTruthy();
     expect(
       screen.getByText("Don't show this Market Close confirmation again."),
@@ -293,8 +256,12 @@ describe('PerpsProCloseConfirmationSheet', () => {
       fontWeight: '500',
       lineHeight: 16,
     });
+    expect(
+      screen.getByTestId('close-confirmation-sheet').props.backdropComponent({})
+        .props.pressBehavior,
+    ).toBe('none');
     expect(screen.getByTestId('close-confirmation-sheet').props).toMatchObject({
-      backdropProps: { pressBehavior: 'none' },
+      backdropComponent: expect.any(Function),
       enablePanDownToClose: false,
     });
   });
