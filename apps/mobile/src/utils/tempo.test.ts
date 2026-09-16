@@ -1,5 +1,9 @@
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { shouldUseTempoTransaction } from './tempo';
+import {
+  buildTempoTransaction,
+  shouldUseTempoTransaction,
+  toTempoCallsTx,
+} from './tempo';
 
 jest.mock('@/core/apis/readOnlyRpc', () => ({
   requestReadOnlyETHRpc: jest.fn(),
@@ -58,5 +62,80 @@ describe('shouldUseTempoTransaction', () => {
         accountType: KEYRING_TYPE.GnosisKeyring,
       }),
     ).toBe(false);
+  });
+});
+
+describe('toTempoCallsTx', () => {
+  const topLevelTransfer = {
+    type: '0x76',
+    to: '0x0000000000000000000000000000000000000020',
+    data: '0xa9059cbb000000000000000000000000000000000000000000000000000000000000dead',
+    value: '0xde0b6b3a7640000',
+  };
+
+  it('hydrates an explicit empty call from top-level fields', () => {
+    const result = toTempoCallsTx({
+      ...topLevelTransfer,
+      calls: [{}],
+    });
+
+    expect(result.calls).toStrictEqual([
+      {
+        to: topLevelTransfer.to,
+        data: topLevelTransfer.data,
+        value: topLevelTransfer.value,
+      },
+    ]);
+  });
+
+  it('uses top-level fields when calls is empty', () => {
+    const result = toTempoCallsTx({
+      ...topLevelTransfer,
+      calls: [],
+    });
+
+    expect(result.calls).toEqual([
+      {
+        to: topLevelTransfer.to,
+        data: topLevelTransfer.data,
+        value: topLevelTransfer.value,
+      },
+    ]);
+  });
+
+  it('wraps top-level fields when calls is absent', () => {
+    const result = toTempoCallsTx(topLevelTransfer);
+
+    expect(result.calls).toEqual([
+      {
+        to: topLevelTransfer.to,
+        data: topLevelTransfer.data,
+        value: topLevelTransfer.value,
+      },
+    ]);
+  });
+
+  it('builds the same hydrated transfer used by the signing path', () => {
+    const result = buildTempoTransaction(
+      {
+        ...topLevelTransfer,
+        calls: [{}],
+      },
+      { stripTopLevelData: true },
+    );
+
+    expect(result).toMatchObject({
+      type: '0x76',
+      calls: [
+        {
+          to: topLevelTransfer.to,
+          data: topLevelTransfer.data,
+          value: topLevelTransfer.value,
+        },
+      ],
+    });
+    expect(result).not.toHaveProperty('to');
+    expect(result).not.toHaveProperty('data');
+    expect(result).not.toHaveProperty('value');
   });
 });
