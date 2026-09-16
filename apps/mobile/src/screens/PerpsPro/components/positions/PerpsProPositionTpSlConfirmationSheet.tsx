@@ -1,3 +1,7 @@
+import {
+  getPerpsProDialogCheckboxStyles,
+  PERPS_PRO_DIALOG_TOKENS,
+} from '../common/perpsProDialogVisual';
 import { getPerpsProDialogActionStyles } from '../common/perpsProDialogVisual';
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcCheckboxEmptyCC from '@/assets2024/icons/common/checkbox-empty-cc.svg';
@@ -207,7 +211,7 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
                 <RcCheckboxFilledBrand height={20} width={20} />
               ) : (
                 <RcCheckboxEmptyCC
-                  color={colors2024['neutral-secondary']}
+                  color={PERPS_PRO_DIALOG_TOKENS.checkboxBorder}
                   height={20}
                   width={20}
                 />
@@ -343,21 +347,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     fontSize: 12,
     lineHeight: 16,
   },
-  checkboxRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 4,
-    marginBottom: 8,
-    marginTop: 16,
-    minHeight: 20,
-  },
-  checkboxText: {
-    color: colors2024['neutral-body'],
-    flex: 1,
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-  },
+  ...getPerpsProDialogCheckboxStyles(colors2024),
   footer: {
     paddingHorizontal: 5,
     paddingBottom: Math.max(

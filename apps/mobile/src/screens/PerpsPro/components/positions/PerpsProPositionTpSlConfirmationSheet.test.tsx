@@ -193,6 +193,19 @@ describe('PerpsProPositionTpSlConfirmationSheet', () => {
     const checkbox = screen.getByTestId(
       'perps-pro-position-tpsl-skip-confirmation',
     );
+    expect(StyleSheet.flatten(checkbox.props.style)).toMatchObject({
+      justifyContent: 'center',
+      marginTop: 8,
+      minHeight: 20,
+      gap: 4,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByText(
+          "Don't display double confirmation for Limit Order again.",
+        ).props.style,
+      ),
+    ).toMatchObject({ color: 'neutral-foot', flexShrink: 1 });
     expect(checkbox.props.accessibilityState).toMatchObject({ checked: false });
     fireEvent.press(checkbox);
     expect(onToggleSkipConfirmation).toHaveBeenCalledTimes(1);
