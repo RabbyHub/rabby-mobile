@@ -1,3 +1,4 @@
+import { getPerpsProDialogActionStyles } from '../common/perpsProDialogVisual';
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcCheckboxEmptyCC from '@/assets2024/icons/common/checkbox-empty-cc.svg';
 import RcCheckboxFilledBrand from '@/assets2024/icons/common/checkbox-filled-brand.svg';
@@ -7,7 +8,7 @@ import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import {
-  BOTTOM_BUTTON_COMPACT_HEIGHT,
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
@@ -20,11 +21,7 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsPositionViewModel } from '../../model/position';
-import {
-  getPerpsProBottomSheetChromeStyles,
-  PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
-  PERPS_PRO_CONFIRM_BUTTON_STYLE,
-} from '../common/perpsProVisual';
+import { getPerpsProBottomSheetChromeStyles } from '../common/perpsProVisual';
 import {
   getPerpsProTintedTagContainerStyle,
   getPerpsProTintedTagTextStyle,
@@ -105,7 +102,7 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
         handleIndicatorStyle={styles.handleIndicator}
         handleStyle={styles.handle}
         onDismiss={onClose}
-        snapPoints={[302]}
+        snapPoints={[318]}
         style={styles.modal}>
         <BottomSheetView style={styles.sheetView}>
           <AutoLockView style={styles.container}>
@@ -194,13 +191,14 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
 
             <View style={styles.footer}>
               <Button
-                buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
+                buttonStyle={[styles.button, pending && styles.buttonDisabled]}
+                disabledTitleStyle={styles.buttonDisabledTitle}
                 disabled={pending}
-                height={BOTTOM_BUTTON_COMPACT_HEIGHT}
+                height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                 loading={pending}
                 onPress={onConfirm}
                 title={t('global.confirm')}
-                titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
+                titleStyle={styles.buttonTitle}
                 type="primary"
               />
             </View>
@@ -215,6 +213,7 @@ PerpsProCloseConfirmationSheet.displayName = 'PerpsProCloseConfirmationSheet';
 
 const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   ...getPerpsProBottomSheetChromeStyles(colors2024),
+  ...getPerpsProDialogActionStyles(colors2024),
   sheetView: { height: '100%' },
   container: { height: '100%', paddingHorizontal: 15, paddingTop: 8 },
   heading: { gap: 8 },
@@ -275,6 +274,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     lineHeight: 16,
   },
   footer: {
+    paddingHorizontal: 5,
     marginTop: 'auto',
     paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     paddingTop: BOTTOM_BUTTON_TOP_OFFSET,

@@ -1,8 +1,9 @@
+import { getPerpsProDialogActionStyles } from '../common/perpsProDialogVisual';
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text, TextInput } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import {
-  BOTTOM_BUTTON_COMPACT_HEIGHT,
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
@@ -14,11 +15,7 @@ import { Keyboard, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsPositionViewModel } from '../../model/position';
-import {
-  PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
-  PERPS_PRO_CONFIRM_BUTTON_STYLE,
-  resolvePerpsProFieldBackground,
-} from '../common/perpsProVisual';
+import { resolvePerpsProFieldBackground } from '../common/perpsProVisual';
 import type { PerpsProPositionTpSlFormPresentation } from '../../model/layout';
 import {
   buildPositionTpSlSummary,
@@ -618,13 +615,14 @@ export const PerpsProPositionTpSlForm: React.FC<{
           ]}
           testID="perps-pro-position-tpsl-footer">
           <Button
-            buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
+            buttonStyle={[styles.button, !canReview && styles.buttonDisabled]}
+            disabledTitleStyle={styles.buttonDisabledTitle}
             disabled={!canReview}
-            height={BOTTOM_BUTTON_COMPACT_HEIGHT}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
             onPress={submit}
             testID="perps-pro-position-tpsl-review"
             title={t('global.confirm')}
-            titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
+            titleStyle={styles.buttonTitle}
             type="primary"
           />
         </View>
@@ -654,6 +652,7 @@ PerpsProPositionTpSlForm.displayName = 'PerpsProPositionTpSlForm';
 
 const getStyle = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
+    ...getPerpsProDialogActionStyles(colors2024),
     container: {
       flexGrow: 1,
       paddingHorizontal: 15,
@@ -802,6 +801,7 @@ const getStyle = createGetStyles2024(
     },
     hiddenAmountAvailable: { opacity: 0 },
     footer: {
+      paddingHorizontal: 5,
       marginTop: 'auto',
       paddingBottom: Math.max(
         40,

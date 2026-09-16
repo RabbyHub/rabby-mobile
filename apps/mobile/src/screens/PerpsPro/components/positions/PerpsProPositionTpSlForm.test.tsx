@@ -693,7 +693,7 @@ describe('PerpsProPositionTpSlForm', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-review').props.style,
       ),
-    ).not.toHaveProperty('backgroundColor');
+    ).toMatchObject({ backgroundColor: 'brand-disable' });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-footer').props.style,

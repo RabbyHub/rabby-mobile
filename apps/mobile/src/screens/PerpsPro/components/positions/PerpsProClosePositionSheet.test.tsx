@@ -247,7 +247,7 @@ describe('PerpsProClosePositionSheet', () => {
     fireEvent.changeText(input, '0.5');
     act(() => show({ endCoordinates: { height: 300, screenY: 500 } }));
     expect(screen.getByTestId('close-position-sheet').props.snapPoints).toEqual(
-      [558],
+      [574],
     );
     expect(perpsProKeyboardSession.getSnapshot()?.id).toBe(owner?.id);
     expect(owner?.sheetId).toBeDefined();
@@ -268,7 +268,7 @@ describe('PerpsProClosePositionSheet', () => {
     mockLatestTradePrice = '60001';
     mockLatestTradeStatus = 'ready';
   });
-  it('uses the 510px sheet, switches the price field to Limit, and seeds latest trade', async () => {
+  it('uses the 526px sheet, switches the price field to Limit, and seeds latest trade', async () => {
     const onReview = jest.fn();
     render(
       <PerpsProClosePositionSheet
@@ -282,7 +282,7 @@ describe('PerpsProClosePositionSheet', () => {
     );
 
     expect(screen.getByTestId('close-position-sheet').props.snapPoints).toEqual(
-      [510],
+      [526],
     );
     expect(screen.getByTestId('close-position-sheet').props).toMatchObject({
       enableDynamicSizing: false,

@@ -1,3 +1,8 @@
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
+} from '@/constant/layout';
+import { getPerpsProDialogActionStyles } from '../common/perpsProDialogVisual';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { Text } from '@/components/Typography';
@@ -48,7 +53,7 @@ export const PerpsProCancelConfirmationModal: React.FC<{
               accessibilityRole="button"
               onPress={onCancel}
               style={({ pressed }) => [
-                styles.button,
+                styles.actionLayout,
                 styles.cancelButton,
                 pressed && styles.pressed,
               ]}>
@@ -58,11 +63,13 @@ export const PerpsProCancelConfirmationModal: React.FC<{
               accessibilityRole="button"
               onPress={onConfirm}
               style={({ pressed }) => [
+                styles.actionLayout,
                 styles.button,
-                styles.confirmButton,
                 pressed && styles.pressed,
               ]}>
-              <Text style={styles.confirmText}>{t('global.confirm')}</Text>
+              <Text style={[styles.buttonTitle, styles.confirmText]}>
+                {t('global.confirm')}
+              </Text>
             </Pressable>
           </View>
         </View>
@@ -74,6 +81,7 @@ export const PerpsProCancelConfirmationModal: React.FC<{
 PerpsProCancelConfirmationModal.displayName = 'PerpsProCancelConfirmationModal';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  ...getPerpsProDialogActionStyles(colors2024),
   root: {
     alignItems: 'center',
     flex: 1,
@@ -130,18 +138,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 12,
     width: '100%',
   },
-  button: {
+  actionLayout: {
     alignItems: 'center',
     borderRadius: 8,
     flex: 1,
-    height: 36,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
     justifyContent: 'center',
   },
   cancelButton: {
     backgroundColor: colors2024['neutral-bg-2'],
-  },
-  confirmButton: {
-    backgroundColor: colors2024['brand-default'],
   },
   cancelText: {
     color: colors2024['neutral-title-1'],
@@ -151,11 +156,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
   },
   confirmText: {
-    color: colors2024['neutral-bg-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '500',
-    lineHeight: 20,
+    lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
   },
   pressed: {
     opacity: 0.8,

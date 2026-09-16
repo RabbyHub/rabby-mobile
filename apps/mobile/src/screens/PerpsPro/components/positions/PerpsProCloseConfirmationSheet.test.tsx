@@ -134,7 +134,7 @@ describe('PerpsProCloseConfirmationSheet', () => {
 
     expect(
       screen.getByTestId('close-confirmation-sheet').props.snapPoints,
-    ).toEqual([302]);
+    ).toEqual([318]);
     expect(screen.getByText('BTCUSDC')).toBeTruthy();
     expect(screen.getByText('Sell')).toBeTruthy();
     expect(screen.getByText('Short')).toBeTruthy();
@@ -247,7 +247,7 @@ describe('PerpsProCloseConfirmationSheet', () => {
 
     expect(
       screen.getByTestId('close-confirmation-sheet').props.snapPoints,
-    ).toEqual([302]);
+    ).toEqual([318]);
     expect(screen.getByText('Market Price')).toBeTruthy();
     expect(
       screen.getByText("Don't show this Market Close confirmation again."),

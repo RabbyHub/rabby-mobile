@@ -1,3 +1,4 @@
+import { getPerpsProDialogActionStyles } from '../common/perpsProDialogVisual';
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcCheckboxEmptyCC from '@/assets2024/icons/common/checkbox-empty-cc.svg';
 import RcCheckboxFilledBrand from '@/assets2024/icons/common/checkbox-filled-brand.svg';
@@ -6,7 +7,7 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import { BOTTOM_BUTTON_COMPACT_HEIGHT } from '@/constant/layout';
+import { BOTTOM_BUTTON_SINGLE_HEIGHT } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useRegisterBlockingModal } from '@/utils/modalGate';
@@ -16,11 +17,7 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { getOpenOrderEditDisplayAmount } from '../../model/openOrderEdit';
-import {
-  getPerpsProBottomSheetChromeStyles,
-  PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
-  PERPS_PRO_CONFIRM_BUTTON_STYLE,
-} from '../common/perpsProVisual';
+import { getPerpsProBottomSheetChromeStyles } from '../common/perpsProVisual';
 import type {
   PerpsProOpenOrderEditEditorState,
   PerpsProOpenOrderEditReviewState,
@@ -67,7 +64,7 @@ export const PerpsProOpenOrderEditConfirmationSheet: React.FC<{
     if (!review || review.category !== editor.category) return null;
     const basic = review.category === 'basic';
     const triggerLimit = !basic && editor.order.editKind === 'triggerLimit';
-    const sheetHeight = basic ? 302 : 326;
+    const sheetHeight = basic ? 318 : 342;
     const baseSize = basic
       ? review.command.replacement.baseSize
       : review.command.replacement.baseSize;
@@ -192,14 +189,15 @@ export const PerpsProOpenOrderEditConfirmationSheet: React.FC<{
               ]}
               testID="perps-pro-open-order-edit-confirmation-footer">
               <Button
-                buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
+                buttonStyle={[styles.button, pending && styles.buttonDisabled]}
+                disabledTitleStyle={styles.buttonDisabledTitle}
                 disabled={pending}
-                height={BOTTOM_BUTTON_COMPACT_HEIGHT}
+                height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                 loading={pending}
                 onPress={onConfirm}
                 testID="perps-pro-open-order-edit-final-confirm"
                 title={t('global.confirm')}
-                titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
+                titleStyle={styles.buttonTitle}
                 type="primary"
               />
             </View>
@@ -230,6 +228,7 @@ const DetailRow: React.FC<{ label: string; value: string }> = ({
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   ...getPerpsProBottomSheetChromeStyles(colors2024),
+  ...getPerpsProDialogActionStyles(colors2024),
   container: {
     paddingHorizontal: 15,
     paddingTop: 8,
@@ -279,9 +278,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
   },
   footer: {
-    left: 15,
+    left: 20,
     position: 'absolute',
-    right: 15,
+    right: 20,
   },
   basicFooter: {
     top: 186,

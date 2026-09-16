@@ -1,3 +1,5 @@
+import { BOTTOM_BUTTON_SINGLE_HEIGHT } from '@/constant/layout';
+import { getPerpsProDialogActionStyles } from '../common/perpsProDialogVisual';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { Text } from '@/components/Typography';
@@ -56,23 +58,27 @@ export const PerpsProCloseAllConfirmationModal: React.FC<{
               disabled={pending}
               onPress={onCancel}
               style={({ pressed }) => [
-                styles.button,
+                styles.actionLayout,
                 styles.cancelButton,
                 pressed && styles.pressed,
               ]}>
               <Text style={styles.cancelText}>{t('global.cancel')}</Text>
             </Pressable>
             <Button
-              buttonStyle={[styles.button, styles.confirmButton]}
+              buttonStyle={[
+                styles.actionLayout,
+                styles.button,
+                pending && styles.buttonDisabled,
+              ]}
+              disabledTitleStyle={styles.buttonDisabledTitle}
               containerStyle={styles.buttonContainer}
               disabled={pending}
-              height={36}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
               loading={pending}
-              noShadow
               onPress={onConfirm}
               testID="perps-pro-close-all-confirm"
               title={t('global.confirm')}
-              titleStyle={styles.confirmText}
+              titleStyle={styles.buttonTitle}
               type="primary"
             />
           </View>
@@ -86,6 +92,7 @@ PerpsProCloseAllConfirmationModal.displayName =
   'PerpsProCloseAllConfirmationModal';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  ...getPerpsProDialogActionStyles(colors2024),
   root: {
     alignItems: 'center',
     flex: 1,
@@ -135,27 +142,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   actions: { flexDirection: 'row', gap: 12, width: '100%' },
   buttonContainer: { flex: 1 },
-  button: {
+  actionLayout: {
     alignItems: 'center',
     borderRadius: 8,
     flex: 1,
-    height: 36,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
     justifyContent: 'center',
   },
   cancelButton: { backgroundColor: colors2024['neutral-bg-2'] },
-  confirmButton: { backgroundColor: colors2024['brand-default'] },
   cancelText: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '500',
     lineHeight: 20,
-  },
-  confirmText: {
-    color: colors2024['neutral-bg-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '500',
   },
   pressed: { opacity: 0.8 },
 }));

@@ -1,3 +1,4 @@
+import { getPerpsProDialogActionStyles } from '../common/perpsProDialogVisual';
 import { BOTTOM_BUTTON_TOP_OFFSET } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -15,11 +16,12 @@ import {
 export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
     ...getPerpsProBottomSheetChromeStyles(colors2024),
+    ...getPerpsProDialogActionStyles(colors2024),
     sheetView: { height: '100%' },
     scrollContent: { flexGrow: 1 },
     container: {
       ...(IS_ANDROID
-        ? { minHeight: 510 - 40, flexGrow: 1 }
+        ? { minHeight: 526 - 40, flexGrow: 1 }
         : { height: '100%' }),
       paddingHorizontal: 15,
       paddingTop: 8,
@@ -214,6 +216,7 @@ export const getPerpsProClosePositionSheetStyles = createGetStyles2024(
       lineHeight: 16,
     },
     footer: {
+      paddingHorizontal: 5,
       marginTop: 'auto',
       paddingBottom: Math.max(40, safeAreaInsets.bottom),
       paddingTop: BOTTOM_BUTTON_TOP_OFFSET,

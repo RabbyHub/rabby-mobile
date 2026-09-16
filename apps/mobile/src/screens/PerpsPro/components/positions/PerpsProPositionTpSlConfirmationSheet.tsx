@@ -1,3 +1,4 @@
+import { getPerpsProDialogActionStyles } from '../common/perpsProDialogVisual';
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcCheckboxEmptyCC from '@/assets2024/icons/common/checkbox-empty-cc.svg';
 import RcCheckboxFilledBrand from '@/assets2024/icons/common/checkbox-filled-brand.svg';
@@ -7,7 +8,7 @@ import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import {
-  BOTTOM_BUTTON_COMPACT_HEIGHT,
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -20,11 +21,7 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsPositionViewModel } from '../../model/position';
-import {
-  getPerpsProBottomSheetChromeStyles,
-  PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
-  PERPS_PRO_CONFIRM_BUTTON_STYLE,
-} from '../common/perpsProVisual';
+import { getPerpsProBottomSheetChromeStyles } from '../common/perpsProVisual';
 import {
   calculatePositionTpSlEstimatedPnl,
   type PerpsPositionTpSlMarketSnapshot,
@@ -224,14 +221,15 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
               style={styles.footer}
               testID="perps-pro-position-tpsl-confirmation-footer">
               <Button
-                buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
+                buttonStyle={[styles.button, pending && styles.buttonDisabled]}
+                disabledTitleStyle={styles.buttonDisabledTitle}
                 disabled={pending}
-                height={BOTTOM_BUTTON_COMPACT_HEIGHT}
+                height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                 loading={pending}
                 onPress={onConfirm}
                 testID="perps-pro-position-tpsl-confirm"
                 title={t('global.confirm')}
-                titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
+                titleStyle={styles.buttonTitle}
                 type="primary"
               />
             </View>
@@ -274,6 +272,7 @@ const DetailRow: React.FC<{
 
 const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   ...getPerpsProBottomSheetChromeStyles(colors2024),
+  ...getPerpsProDialogActionStyles(colors2024),
   container: { paddingHorizontal: 15, paddingTop: 8 },
   title: {
     color: colors2024['neutral-title-1'],
@@ -360,6 +359,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     lineHeight: 16,
   },
   footer: {
+    paddingHorizontal: 5,
     paddingBottom: Math.max(
       40,
       getBottomButtonBottomOffset(safeAreaInsets.bottom),

@@ -1,10 +1,11 @@
+import { getPerpsProDialogActionStyles } from '../common/perpsProDialogVisual';
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import { BOTTOM_BUTTON_COMPACT_HEIGHT } from '@/constant/layout';
+import { BOTTOM_BUTTON_SINGLE_HEIGHT } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -29,11 +30,7 @@ import {
   getPerpsProPriceInputMaxDecimals,
   isPerpsProPriceProtocolValid,
 } from '../../model/trade';
-import {
-  getPerpsProBottomSheetChromeStyles,
-  PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
-  PERPS_PRO_CONFIRM_BUTTON_STYLE,
-} from '../common/perpsProVisual';
+import { getPerpsProBottomSheetChromeStyles } from '../common/perpsProVisual';
 import type { PerpsProOpenOrderEditEditorState } from '../../scene/usePerpsProOpenOrderEdit';
 import { formatPerpsProDecimal, formatPerpsProPrice } from '../../utils/format';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
@@ -45,7 +42,7 @@ import { PerpsProOpenOrderEditHeader } from './PerpsProOpenOrderEditHeader';
 import { PerpsProOpenOrderEditInput } from './PerpsProOpenOrderEditInput';
 
 const MODAL_ID = 'perps-pro-basic-order-edit';
-const SHEET_HEIGHT = 326;
+const SHEET_HEIGHT = 342;
 const CONTENT_HEIGHT = SHEET_HEIGHT - 40;
 const SheetContent = IS_ANDROID ? BottomSheetScrollView : BottomSheetView;
 
@@ -245,9 +242,13 @@ export const PerpsProBasicOrderEditSheet: React.FC<{
               style={styles.footer}
               testID="perps-pro-basic-order-edit-footer">
               <Button
-                buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
+                buttonStyle={[
+                  styles.button,
+                  (!canReview || interactionLocked) && styles.buttonDisabled,
+                ]}
+                disabledTitleStyle={styles.buttonDisabledTitle}
                 disabled={!canReview || interactionLocked}
-                height={BOTTOM_BUTTON_COMPACT_HEIGHT}
+                height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                 onPress={() =>
                   dismissKeyboardThen(() =>
                     onReview({ amount, amountTouched, price }),
@@ -255,7 +256,7 @@ export const PerpsProBasicOrderEditSheet: React.FC<{
                 }
                 testID="perps-pro-basic-order-edit-confirm"
                 title={t('global.confirm')}
-                titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
+                titleStyle={styles.buttonTitle}
                 type="primary"
               />
             </View>
@@ -270,6 +271,7 @@ PerpsProBasicOrderEditSheet.displayName = 'PerpsProBasicOrderEditSheet';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   ...getPerpsProBottomSheetChromeStyles(colors2024),
+  ...getPerpsProDialogActionStyles(colors2024),
   container: {
     height: CONTENT_HEIGHT,
     paddingHorizontal: 15,
@@ -286,9 +288,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
   },
   footer: {
-    left: 15,
+    left: 20,
     position: 'absolute',
-    right: 15,
+    right: 20,
     top: 210,
   },
 }));

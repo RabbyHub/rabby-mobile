@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native';
 import {
   getPerpsProDialogStyles as getDialogStyles,
   PERPS_PRO_DIALOG_TOKENS,
+  getPerpsProDialogActionStyles,
 } from './perpsProDialogVisual';
 
 describe('Pro dialog surfaces', () => {
@@ -17,6 +18,20 @@ describe('Pro dialog surfaces', () => {
       ]);
       const active = StyleSheet.flatten([styles.option, styles.optionActive]);
 
+      const actions = getPerpsProDialogActionStyles(colors);
+      expect(styles.button).toEqual(actions.button);
+      expect(actions.button.backgroundColor).toBe(
+        PERPS_PRO_DIALOG_TOKENS.actionBackground,
+      );
+      expect(actions.buttonTitle.color).toBe(
+        PERPS_PRO_DIALOG_TOKENS.actionForeground,
+      );
+      expect(actions.buttonDisabled.backgroundColor).toBe(
+        colors['brand-disable'],
+      );
+      expect(actions.buttonDisabledTitle.color).toBe(
+        colors['neutral-InvertHighlight'],
+      );
       expect(styles.background.backgroundColor).toBe(colors['neutral-bg-0']);
       expect(inactive.backgroundColor).toBe(
         colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],

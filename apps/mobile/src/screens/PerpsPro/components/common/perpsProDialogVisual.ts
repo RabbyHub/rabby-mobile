@@ -108,6 +108,12 @@ export const getPerpsProDialogStyles = (
       fontWeight: '400',
       lineHeight: 18,
     },
+    ...getPerpsProDialogActionStyles(colors),
+  } as const);
+
+/** Shared primary action, opted in only by approved Pro dialogs. */
+export const getPerpsProDialogActionStyles = (colors: AppColors2024Variants) =>
+  ({
     button: {
       borderRadius: 12,
       backgroundColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,

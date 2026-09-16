@@ -263,15 +263,15 @@ describe('Android open order edit keyboard avoidance', () => {
     screen.getByLabelText(`page.perps.pro.openOrders.${field}`);
   const getModalProps = () => mockModalProps.mock.calls.at(-1)![0];
   const cases = [
-    { kind: 'basic', height: 326, fields: ['price', 'amount'] },
+    { kind: 'basic', height: 342, fields: ['price', 'amount'] },
     {
       kind: 'conditionalMarket',
-      height: 542,
+      height: 558,
       fields: ['triggerPrice', 'amount'],
     },
     {
       kind: 'conditionalLimit',
-      height: 542,
+      height: 558,
       fields: ['triggerPrice', 'limitPrice', 'amount'],
     },
   ] as const;
@@ -367,7 +367,7 @@ describe('Android open order edit keyboard avoidance', () => {
       ).toBe(height - 40);
       expect(
         StyleSheet.flatten(screen.getByTestId(footerId).props.style).top,
-      ).toBe(height - 116);
+      ).toBe(height - 40 - 52 - 40);
       hideKeyboard();
       expect(getModalProps().snapPoints).toEqual([height]);
       expect(StyleSheet.flatten(scrollView.props.style).marginBottom).toBe(0);
@@ -416,10 +416,10 @@ describe('Android open order edit keyboard avoidance', () => {
     );
     expect(marketField.props.onFocus).toBeUndefined();
     showKeyboard();
-    expect(getModalProps().snapPoints).toEqual([542]);
+    expect(getModalProps().snapPoints).toEqual([558]);
     fireEvent(getInput('triggerPrice'), 'focus');
     const ownInput = perpsProKeyboardSession.getSnapshot()!;
-    expect(getModalProps().snapPoints).toEqual([590]);
+    expect(getModalProps().snapPoints).toEqual([606]);
     act(() => {
       perpsProKeyboardSession.focus({
         ...ownInput,
@@ -427,7 +427,7 @@ describe('Android open order edit keyboard avoidance', () => {
         sheetId: 'other-sheet',
       });
     });
-    expect(getModalProps().snapPoints).toEqual([542]);
+    expect(getModalProps().snapPoints).toEqual([558]);
     expect(
       StyleSheet.flatten(screen.UNSAFE_getByType(ScrollView).props.style)
         .marginBottom,
@@ -438,7 +438,7 @@ describe('Android open order edit keyboard avoidance', () => {
 describe('Perps Pro open order edit sheets', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('locks the Basic editor to the 326px Figma geometry and remaining sz', () => {
+  it('locks the Basic editor to the 342px Figma geometry and remaining sz', () => {
     render(
       <PerpsProBasicOrderEditSheet
         coveredByReview={false}
@@ -454,19 +454,19 @@ describe('Perps Pro open order edit sheets', () => {
         enablePanDownToClose: true,
         keyboardBehavior: 'interactive',
         keyboardBlurBehavior: 'restore',
-        snapPoints: [326],
+        snapPoints: [342],
       }),
     );
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-basic-order-edit-content').props.style,
       ),
-    ).toMatchObject({ height: 286, paddingHorizontal: 15, paddingTop: 8 });
+    ).toMatchObject({ height: 302, paddingHorizontal: 15, paddingTop: 8 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-basic-order-edit-footer').props.style,
       ),
-    ).toMatchObject({ left: 15, right: 15, top: 210 });
+    ).toMatchObject({ left: 20, right: 20, top: 210 });
     expect(
       screen.getByLabelText('page.perps.pro.openOrders.amount').props.value,
     ).toBe('50.00');
@@ -612,7 +612,7 @@ describe('Perps Pro open order edit sheets', () => {
     ).toBe('55');
   });
 
-  it('locks the Conditional editor to 542px with the exact remaining coverage', () => {
+  it('locks the Conditional editor to 558px with the exact remaining coverage', () => {
     render(
       <PerpsProConditionalOrderEditSheet
         coveredByReview={false}
@@ -624,14 +624,14 @@ describe('Perps Pro open order edit sheets', () => {
       />,
     );
     expect(mockModalProps).toHaveBeenLastCalledWith(
-      expect.objectContaining({ snapPoints: [542] }),
+      expect.objectContaining({ snapPoints: [558] }),
     );
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-conditional-order-edit-content').props
           .style,
       ),
-    ).toMatchObject({ height: 502, paddingHorizontal: 15, paddingTop: 8 });
+    ).toMatchObject({ height: 518, paddingHorizontal: 15, paddingTop: 8 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-conditional-order-edit-footer').props
@@ -795,7 +795,7 @@ describe('Perps Pro open order edit sheets', () => {
     expect(screen.getAllByText('--')).toHaveLength(3);
   });
 
-  it('covers the editor with a 302px Basic confirmation and retained checkbox', () => {
+  it('covers the editor with a 318px Basic confirmation and retained checkbox', () => {
     const onToggle = jest.fn();
     const review = {
       category: 'basic',
@@ -828,14 +828,14 @@ describe('Perps Pro open order edit sheets', () => {
       />,
     );
     expect(mockModalProps).toHaveBeenLastCalledWith(
-      expect.objectContaining({ snapPoints: [302] }),
+      expect.objectContaining({ snapPoints: [318] }),
     );
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-open-order-edit-confirmation-content')
           .props.style,
       ),
-    ).toMatchObject({ height: 262, paddingHorizontal: 15, paddingTop: 8 });
+    ).toMatchObject({ height: 278, paddingHorizontal: 15, paddingTop: 8 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-open-order-edit-confirmation-footer')
@@ -853,7 +853,7 @@ describe('Perps Pro open order edit sheets', () => {
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps the root sheet mounted and non-dismissible under the 326px Conditional confirmation', () => {
+  it('keeps the root sheet mounted and non-dismissible under the 342px Conditional confirmation', () => {
     const { unmount } = render(
       <PerpsProConditionalOrderEditSheet
         coveredByReview
@@ -868,7 +868,7 @@ describe('Perps Pro open order edit sheets', () => {
       expect.objectContaining({
         backdropProps: { pressBehavior: 'none' },
         enablePanDownToClose: false,
-        snapPoints: [542],
+        snapPoints: [558],
       }),
     );
     expect(
@@ -914,7 +914,7 @@ describe('Perps Pro open order edit sheets', () => {
       />,
     );
     expect(mockModalProps).toHaveBeenLastCalledWith(
-      expect.objectContaining({ snapPoints: [326] }),
+      expect.objectContaining({ snapPoints: [342] }),
     );
     expect(
       StyleSheet.flatten(
