@@ -272,6 +272,11 @@ describe('PerpsProManageMarginSheet', () => {
     ).toMatchObject({ height: 26, width: 40 });
     expect(
       StyleSheet.flatten(
+        screen.getByText('page.perps.pro.positions.max').props.style,
+      ).textTransform,
+    ).toBeUndefined();
+    expect(
+      StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-amount-editor').props.style,
       ),
     ).toMatchObject({ height: 42, left: 36, right: 44 });

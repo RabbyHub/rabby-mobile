@@ -125,7 +125,7 @@ export const PerpsProManageMarginAmountRow = React.memo(
             onPress={() => range && onSelectTarget(range.max)}
             style={[styles.boundButton, styles.maxButton]}
             testID="perps-pro-manage-margin-max">
-            <Text style={[styles.boundButtonText, styles.maxLabel]}>
+            <Text style={styles.boundButtonText}>
               {t('page.perps.pro.positions.max')}
             </Text>
           </Pressable>
@@ -161,7 +161,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   minButton: { width: MIN_BUTTON_WIDTH },
   maxButton: { width: MAX_BUTTON_WIDTH },
-  maxLabel: { textTransform: 'uppercase' },
   boundButtonText: {
     color: PERPS_PRO_DIALOG_TOKENS.actionBackground,
     fontFamily: 'SF Pro Rounded',

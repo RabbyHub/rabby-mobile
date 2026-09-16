@@ -2223,7 +2223,7 @@
         },
         "marketSelector": {
           "title": "Seleccionar mercado",
-          "search": "Buscar",
+          "search": "Buscar token",
           "favorites": "Favoritos",
           "all": "Todos",
           "name": "Nombre",
@@ -2236,6 +2236,7 @@
         },
         "funding": {
           "title": "Tasa de financiación",
+          "gotIt": "Entendido",
           "summary": "Financiación (1 h) / Cuenta atrás",
           "openDetails": "Ver detalles de la financiación",
           "interval": "Intervalo",
@@ -2253,6 +2254,7 @@
           "explanation": "La tasa de financiación se utiliza para calcular los pagos periódicos entre titulares de posiciones largas y cortas. Cuando la tasa es positiva, los largos pagan a los cortos; cuando es negativa, los cortos pagan a los largos. La tasa anualizada se calcula mediante anualización simple."
         },
         "orderBook": {
+          "grouping": "Agrupación del libro de órdenes",
           "price": "Precio",
           "pnl": "PnL",
           "roi": "ROI %",
@@ -2269,6 +2271,7 @@
           "market": "Mercado",
           "conditional": "Condicional",
           "orderType": "Tipo de orden",
+          "direction": "Dirección",
           "marginMode": "Modo de margen",
           "crossDescription": "Todas las posiciones cruzadas comparten el mismo margen cruzado como garantía. En caso de liquidación, podrían perderse tu saldo de margen y las posiciones cruzadas abiertas restantes en este modo.",
           "isolatedDescription": "Gestiona el riesgo de cada posición asignándole una cantidad de margen. Si la ratio de margen de una posición aislada alcanza el 100 %, la posición se liquidará. En este modo puedes añadir o retirar margen de posiciones individuales.",
@@ -2282,6 +2285,7 @@
           "liquidationPrice": "Precio de liquidación",
           "triggerPrice": "Precio de activación",
           "amount": "Cantidad",
+          "keyboardMinimum": "Mín. {{amount}}",
           "available": "Disponible",
           "reduceOnly": "Solo reducir",
           "confirmationReduceOnly": "Solo reducir",

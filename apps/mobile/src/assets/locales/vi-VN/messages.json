@@ -2148,7 +2148,7 @@
         },
         "marketSelector": {
           "title": "Chọn thị trường",
-          "search": "Tìm kiếm",
+          "search": "Tìm kiếm token",
           "favorites": "Yêu thích",
           "all": "Tất cả",
           "name": "Tên",
@@ -2161,6 +2161,7 @@
         },
         "funding": {
           "title": "Tỷ lệ funding",
+          "gotIt": "Đã hiểu",
           "summary": "Funding (1 giờ) / Đếm ngược",
           "openDetails": "Xem chi tiết funding",
           "interval": "Khoảng thời gian",
@@ -2178,6 +2179,7 @@
           "explanation": "Tỷ lệ funding được dùng để tính các khoản thanh toán định kỳ giữa người giữ vị thế long và short. Khi tỷ lệ funding dương, bên long trả cho bên short; khi tỷ lệ âm, bên short trả cho bên long. Tỷ lệ quy đổi năm được tính theo phương pháp quy đổi đơn."
         },
         "orderBook": {
+          "grouping": "Nhóm sổ lệnh",
           "price": "Giá",
           "pnl": "PnL",
           "roi": "ROI%",
@@ -2194,6 +2196,7 @@
           "market": "Thị trường",
           "conditional": "Có điều kiện",
           "orderType": "Loại lệnh",
+          "direction": "Hướng",
           "marginMode": "Chế độ ký quỹ",
           "crossDescription": "Tất cả vị thế chéo dùng chung một khoản ký quỹ chéo làm tài sản đảm bảo. Khi bị thanh lý, số dư ký quỹ và mọi vị thế chéo còn mở trong chế độ này có thể bị mất.",
           "isolatedDescription": "Quản lý rủi ro của từng vị thế bằng cách phân bổ mức ký quỹ riêng. Nếu tỷ lệ ký quỹ của vị thế cô lập đạt 100%, vị thế sẽ bị thanh lý. Trong chế độ này, bạn có thể thêm hoặc rút ký quỹ cho từng vị thế.",
@@ -2207,6 +2210,7 @@
           "liquidationPrice": "Giá thanh lý",
           "triggerPrice": "Giá kích hoạt",
           "amount": "Số lượng",
+          "keyboardMinimum": "Tối thiểu {{amount}}",
           "available": "Khả dụng",
           "reduceOnly": "Chỉ giảm",
           "confirmationReduceOnly": "Chỉ giảm",

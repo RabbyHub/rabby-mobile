@@ -2323,7 +2323,7 @@
         },
         "marketSelector": {
           "title": "Selecionar mercado",
-          "search": "Pesquisar",
+          "search": "Pesquisar token",
           "favorites": "Favoritos",
           "all": "Todos",
           "name": "Nome",
@@ -2336,6 +2336,7 @@
         },
         "funding": {
           "title": "Taxa de financiamento",
+          "gotIt": "Compreendi",
           "summary": "Financiamento (1 h) / Contagem decrescente",
           "openDetails": "Ver detalhes do financiamento",
           "interval": "Intervalo",
@@ -2353,6 +2354,7 @@
           "explanation": "A taxa de financiamento é utilizada para calcular pagamentos periódicos entre titulares de posições long e short. Quando a taxa é positiva, os longs pagam aos shorts; quando é negativa, os shorts pagam aos longs. A taxa anualizada é calculada através de anualização simples."
         },
         "orderBook": {
+          "grouping": "Agrupamento do livro de ordens",
           "price": "Preço",
           "pnl": "PnL",
           "roi": "ROI%",
@@ -2369,6 +2371,7 @@
           "market": "Mercado",
           "conditional": "Condicional",
           "orderType": "Tipo de ordem",
+          "direction": "Direção",
           "marginMode": "Modo de margem",
           "crossDescription": "Todas as posições cruzadas partilham a mesma margem cruzada como garantia. Em caso de liquidação, o saldo de margem e quaisquer posições cruzadas abertas restantes neste modo poderão ser perdidos.",
           "isolatedDescription": "Faça a gestão do risco de cada posição atribuindo-lhe um montante de margem. Se o rácio de margem de uma posição isolada atingir 100%, a posição será liquidada. Neste modo, pode adicionar ou remover margem de posições individuais.",
@@ -2382,6 +2385,7 @@
           "liquidationPrice": "Preço de liquidação",
           "triggerPrice": "Preço de ativação",
           "amount": "Quantidade",
+          "keyboardMinimum": "Mín. {{amount}}",
           "available": "Disponível",
           "reduceOnly": "Apenas redução",
           "confirmationReduceOnly": "Apenas redução",

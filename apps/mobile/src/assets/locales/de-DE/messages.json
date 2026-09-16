@@ -2323,7 +2323,7 @@
         },
         "marketSelector": {
           "title": "Markt auswählen",
-          "search": "Suchen",
+          "search": "Token suchen",
           "favorites": "Favoriten",
           "all": "Alle",
           "name": "Name",
@@ -2336,6 +2336,7 @@
         },
         "funding": {
           "title": "Funding-Rate",
+          "gotIt": "Verstanden",
           "summary": "Funding (1 Std.) / Restzeit",
           "openDetails": "Funding-Details anzeigen",
           "interval": "Intervall",
@@ -2353,6 +2354,7 @@
           "explanation": "Die Funding-Rate dient zur Berechnung regelmäßiger Zahlungen zwischen Inhabern von Long- und Short-Positionen. Bei einer positiven Funding-Rate zahlen Long-Positionen an Short-Positionen; bei einer negativen Rate zahlen Short-Positionen an Long-Positionen. Die annualisierte Rate wird durch einfache Annualisierung berechnet."
         },
         "orderBook": {
+          "grouping": "Orderbuchgruppierung",
           "price": "Preis",
           "pnl": "PnL",
           "roi": "ROI %",
@@ -2369,6 +2371,7 @@
           "market": "Markt",
           "conditional": "Bedingt",
           "orderType": "Ordertyp",
+          "direction": "Richtung",
           "marginMode": "Margin-Modus",
           "crossDescription": "Alle Cross-Positionen verwenden dieselbe Cross-Margin als Sicherheit. Im Falle einer Liquidation können Ihr Margin-Guthaben und alle verbleibenden offenen Cross-Positionen in diesem Modus verloren gehen.",
           "isolatedDescription": "Verwalten Sie das Risiko einzelner Positionen, indem Sie jeder Position einen Margin-Betrag zuweisen. Erreicht die Margin-Quote einer isolierten Position 100 %, wird die Position liquidiert. In diesem Modus kann Margin zu einzelnen Positionen hinzugefügt oder daraus entfernt werden.",
@@ -2382,6 +2385,7 @@
           "liquidationPrice": "Liquidationspreis",
           "triggerPrice": "Auslösepreis",
           "amount": "Menge",
+          "keyboardMinimum": "Min. {{amount}}",
           "available": "Verfügbar",
           "reduceOnly": "Nur reduzieren",
           "confirmationReduceOnly": "Nur reduzieren",
