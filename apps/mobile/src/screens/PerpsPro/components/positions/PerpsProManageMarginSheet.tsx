@@ -1,12 +1,15 @@
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import RcAlarm from '@/assets2024/icons/perps/PerpsProMarginAlarm.svg';
-import RcWarning from '@/assets2024/icons/perps/PerpsProMarginWarning.svg';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text, TextInput } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import { BOTTOM_BUTTON_COMPACT_HEIGHT } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  getBottomButtonBottomOffset,
+  BOTTOM_BUTTON_BOTTOM_OFFSET,
+} from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
@@ -16,11 +19,11 @@ import { useTranslation } from 'react-i18next';
 
 import type { PerpsProManageMarginView } from '../../scene/usePerpsProManageMargin';
 import {
-  getPerpsProBottomSheetChromeStyles,
-  PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
-  PERPS_PRO_CONFIRM_BUTTON_STYLE,
-  resolvePerpsProFieldBackground,
-} from '../common/perpsProVisual';
+  getPerpsProDialogStyles,
+  resolvePerpsProDialogCardBackground,
+} from '../common/perpsProDialogVisual';
+import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   getPerpsProMetadataTagContainerStyle,
   getPerpsProMetadataTagTextStyle,
@@ -36,7 +39,7 @@ import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetN
 import { PerpsProManageMarginAmountRow } from './PerpsProManageMarginAmountRow';
 import { PerpsProManageMarginSlider } from './PerpsProManageMarginSlider';
 
-const SHEET_HEIGHT = 552;
+const SHEET_HEIGHT = 564;
 const CONTENT_HEIGHT = SHEET_HEIGHT - 40;
 
 const formatManageMarginLiquidationPrice = (
@@ -83,6 +86,9 @@ export const PerpsProManageMarginSheet: React.FC<{
     const inputRef = useRef<TextInput>(null);
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
+    const { bottom } = useSafeAreaInsets();
+    const bottomInset =
+      getBottomButtonBottomOffset(bottom) - BOTTOM_BUTTON_BOTTOM_OFFSET;
     const interactivePresentation = { draft, view };
     const lastInteractivePresentationRef = useRef<ManageMarginPresentation>(
       interactivePresentation,
@@ -156,6 +162,7 @@ export const PerpsProManageMarginSheet: React.FC<{
           linearGradientType: 'bg1',
         })}
         android_keyboardInputMode="adjustPan"
+        backdropComponent={PerpsProDialogBackdrop}
         backdropProps={{ pressBehavior: pending ? 'none' : 'close' }}
         backgroundStyle={styles.background}
         enableDynamicSizing={false}
@@ -166,7 +173,7 @@ export const PerpsProManageMarginSheet: React.FC<{
         keyboardBlurBehavior="restore"
         onDismiss={onClose}
         ref={modalRef}
-        snapPoints={[SHEET_HEIGHT]}
+        snapPoints={[SHEET_HEIGHT + bottomInset]}
         style={styles.modal}>
         <BottomSheetView>
           <AutoLockView
@@ -175,78 +182,80 @@ export const PerpsProManageMarginSheet: React.FC<{
             <Text style={styles.title}>
               {t('page.perps.pro.positions.manageMargin')}
             </Text>
-            <View style={styles.identityRow}>
-              <Text style={styles.pair}>{displayView.displayPair}</Text>
-              {displayView.sourceTag ? (
+            <View style={styles.infoCard}>
+              <View style={styles.identityRow}>
+                <Text style={styles.pair}>{displayView.displayPair}</Text>
+                {displayView.sourceTag ? (
+                  <View
+                    style={styles.sourceTag}
+                    testID="perps-pro-manage-margin-source-tag">
+                    <Text style={styles.sourceText}>
+                      {displayView.sourceTag}
+                    </Text>
+                  </View>
+                ) : null}
                 <View
-                  style={styles.sourceTag}
-                  testID="perps-pro-manage-margin-source-tag">
-                  <Text style={styles.sourceText}>{displayView.sourceTag}</Text>
-                </View>
-              ) : null}
-              <View
-                style={
-                  displayView.direction === 'long'
-                    ? styles.longTag
-                    : styles.shortTag
-                }
-                testID="perps-pro-manage-margin-direction-tag">
-                <Text
                   style={
                     displayView.direction === 'long'
-                      ? styles.longText
-                      : styles.shortText
-                  }>
-                  {displayView.direction === 'long'
-                    ? t('page.perps.pro.positions.long')
-                    : t('page.perps.pro.positions.short')}{' '}
-                  {displayView.leverage}x
-                </Text>
+                      ? styles.longTag
+                      : styles.shortTag
+                  }
+                  testID="perps-pro-manage-margin-direction-tag">
+                  <Text
+                    style={
+                      displayView.direction === 'long'
+                        ? styles.longText
+                        : styles.shortText
+                    }>
+                    {displayView.direction === 'long'
+                      ? t('page.perps.pro.positions.long')
+                      : t('page.perps.pro.positions.short')}{' '}
+                    {displayView.leverage}x
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.priceGroup}>
+                <View style={styles.factRow}>
+                  <Text style={styles.factLabel}>
+                    {t('page.perps.pro.positions.entry')} (
+                    {displayView.quoteAsset})
+                  </Text>
+                  <Text style={styles.factValueRounded}>
+                    {formatPerpsProPrice(
+                      displayView.entryPrice,
+                      displayView.pxDecimals,
+                    )}
+                  </Text>
+                </View>
+                <View style={styles.factRow}>
+                  <Text style={styles.factLabel}>
+                    {t('page.perps.pro.positions.mark')} (
+                    {displayView.quoteAsset})
+                  </Text>
+                  <Text style={styles.factValue}>
+                    {formatPerpsProPrice(
+                      displayView.markPrice,
+                      displayView.pxDecimals,
+                    )}
+                  </Text>
+                </View>
               </View>
             </View>
-            <View style={styles.priceGroup}>
-              <View style={styles.factRow}>
-                <Text style={styles.factLabel}>
-                  {t('page.perps.pro.positions.entry')} (
-                  {displayView.quoteAsset})
-                </Text>
-                <Text style={styles.factValueRounded}>
-                  {formatPerpsProPrice(
-                    displayView.entryPrice,
-                    displayView.pxDecimals,
-                  )}
-                </Text>
-              </View>
-              <View style={styles.factRow}>
-                <Text style={styles.factLabel}>
-                  {t('page.perps.pro.positions.mark')} ({displayView.quoteAsset}
-                  )
-                </Text>
-                <Text style={styles.factValue}>
-                  {formatPerpsProPrice(
-                    displayView.markPrice,
-                    displayView.pxDecimals,
-                  )}
-                </Text>
-              </View>
-            </View>
-
-            <Text style={styles.configureLabel}>
-              {t('page.perps.pro.positions.configureMargin')}
-            </Text>
             <View
-              style={[
-                styles.amountCard,
-                hasBoundaryError && styles.amountCardError,
-              ]}
+              style={styles.amountCard}
               testID="perps-pro-manage-margin-amount-card">
+              <Text style={styles.configureLabel}>
+                {t('page.perps.pro.positions.margin')}{' '}
+                <Text style={styles.configureUnit}>
+                  ({displayView.quoteAsset})
+                </Text>
+              </Text>
               <PerpsProManageMarginAmountRow
                 draft={displayDraft}
                 onBeginEditing={onBeginEditing}
                 onChangeDraft={onChangeDraft}
                 onSelectTarget={selectTarget}
                 pending={pending}
-                quoteAsset={displayView.quoteAsset}
                 range={range}
                 ref={inputRef}
               />
@@ -270,11 +279,6 @@ export const PerpsProManageMarginSheet: React.FC<{
                 <View
                   style={styles.warning}
                   testID="perps-pro-manage-margin-warning">
-                  <RcWarning
-                    color={colors2024['orange-default']}
-                    height={14}
-                    width={14}
-                  />
                   <Text numberOfLines={1} style={styles.warningText}>
                     {displayView.targetState === 'belowMin'
                       ? t('page.perps.pro.positions.minimumMargin', {
@@ -291,10 +295,7 @@ export const PerpsProManageMarginSheet: React.FC<{
             </View>
 
             <View
-              style={[
-                styles.riskGroup,
-                hasBoundaryError && styles.riskGroupError,
-              ]}
+              style={styles.riskGroup}
               testID="perps-pro-manage-margin-risk">
               <View style={styles.factRow}>
                 <Text style={styles.factLabel}>
@@ -322,9 +323,13 @@ export const PerpsProManageMarginSheet: React.FC<{
             </View>
             <View style={styles.footer} testID="perps-pro-manage-margin-footer">
               <Button
-                buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
+                buttonStyle={[
+                  styles.button,
+                  confirmDisabled && styles.buttonDisabled,
+                ]}
+                disabledTitleStyle={styles.buttonDisabledTitle}
                 disabled={confirmDisabled}
-                height={BOTTOM_BUTTON_COMPACT_HEIGHT}
+                height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                 loading={pending}
                 onPress={() => {
                   dismissInput();
@@ -332,7 +337,7 @@ export const PerpsProManageMarginSheet: React.FC<{
                 }}
                 testID="perps-pro-manage-margin-confirm"
                 title={t('global.confirm')}
-                titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
+                titleStyle={styles.buttonTitle}
                 type="primary"
               />
             </View>
@@ -347,33 +352,39 @@ PerpsProManageMarginSheet.displayName = 'PerpsProManageMarginSheet';
 
 const getStyle = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
-    ...getPerpsProBottomSheetChromeStyles(colors2024),
+    ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
     container: {
-      height: CONTENT_HEIGHT,
-      paddingHorizontal: 15,
+      height:
+        CONTENT_HEIGHT +
+        getBottomButtonBottomOffset(safeAreaInsets.bottom) -
+        BOTTOM_BUTTON_BOTTOM_OFFSET,
+      paddingHorizontal: 16,
       paddingTop: 8,
       position: 'relative',
     },
-    title: {
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      fontWeight: '700',
-      lineHeight: 20,
+    infoCard: {
+      backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
+      borderRadius: 12,
+      padding: 16,
+      gap: 10,
+      height: 104,
+      left: 16,
+      right: 16,
+      top: 56,
+      position: 'absolute',
     },
     identityRow: {
       alignItems: 'center',
       flexDirection: 'row',
       gap: 4,
-      height: 18,
-      marginTop: 12,
+      height: 20,
     },
     pair: {
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      fontWeight: '500',
-      lineHeight: 18,
+      fontSize: 16,
+      fontWeight: '700',
+      lineHeight: 20,
     },
     sourceTag: {
       alignItems: 'center',
@@ -393,7 +404,7 @@ const getStyle = createGetStyles2024(
     },
     longText: getPerpsProTintedTagTextStyle(colors2024, 'positive'),
     shortText: getPerpsProTintedTagTextStyle(colors2024, 'negative'),
-    priceGroup: { gap: 8, marginTop: 16 },
+    priceGroup: { gap: 10 },
     factRow: {
       alignItems: 'center',
       flexDirection: 'row',
@@ -433,36 +444,41 @@ const getStyle = createGetStyles2024(
     configureLabel: {
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      fontWeight: '500',
-      lineHeight: 18,
+      fontSize: 16,
+      fontWeight: '700',
+      lineHeight: 20,
       position: 'absolute',
-      left: 15,
-      top: 138,
+      left: 16,
+      top: 16,
+    },
+    configureUnit: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
     },
     amountCard: {
-      backgroundColor: resolvePerpsProFieldBackground({
-        darkBackground: colors2024['neutral-bg-5'],
-        isLight,
-      }),
+      backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
       borderRadius: 12,
-      height: 138,
-      left: 15,
+      height: 162,
+      left: 16,
       position: 'absolute',
-      right: 15,
-      top: 164,
+      right: 16,
+      top: 168,
     },
-    amountCardError: { height: 184 },
     minimumValue: {
       ...PERPS_PRO_NUMBER_STYLE,
       color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       fontWeight: '500',
-      left: 12,
+      left: 16,
+      minWidth: 32,
+      textAlign: 'center',
       lineHeight: 16,
       position: 'absolute',
-      top: 62,
+      top: 82,
     },
     maximumValue: {
       ...PERPS_PRO_NUMBER_STYLE,
@@ -472,38 +488,37 @@ const getStyle = createGetStyles2024(
       fontWeight: '500',
       lineHeight: 16,
       position: 'absolute',
-      right: 12,
-      top: 62,
+      right: 16,
+      minWidth: 40,
+      textAlign: 'center',
+      top: 82,
     },
-    slider: { left: 12, position: 'absolute', right: 12, top: 90 },
+    slider: { left: 16, position: 'absolute', right: 16, top: 114 },
     warning: {
       alignItems: 'center',
-      backgroundColor: colors2024['orange-light-1'],
-      borderRadius: 6,
-      flexDirection: 'row',
-      gap: 4,
-      left: 12,
-      padding: 8,
+      left: 16,
       position: 'absolute',
-      right: 12,
-      top: 134,
+      right: 16,
+      top: 90,
     },
     warningText: {
-      color: colors2024['orange-default'],
-      flex: 1,
+      color: colors2024['red-default'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       fontWeight: '500',
       lineHeight: 16,
     },
     riskGroup: {
-      gap: 8,
-      left: 15,
+      backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
+      borderRadius: 12,
+      padding: 16,
+      height: 74,
+      gap: 10,
+      left: 16,
       position: 'absolute',
-      right: 15,
-      top: 318,
+      right: 16,
+      top: 338,
     },
-    riskGroupError: { top: 364 },
     riskValue: {
       alignItems: 'center',
       flexDirection: 'row',
@@ -512,10 +527,10 @@ const getStyle = createGetStyles2024(
       minWidth: 0,
     },
     footer: {
-      bottom: Math.max(40, safeAreaInsets.bottom),
-      left: 15,
+      bottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+      left: 20,
       position: 'absolute',
-      right: 15,
+      right: 20,
     },
   }),
 );
