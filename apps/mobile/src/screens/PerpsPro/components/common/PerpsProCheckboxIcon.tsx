@@ -1,7 +1,12 @@
 import RcCheckboxChecked from '@/assets2024/icons/perps/PerpsProInfoCheckboxChecked.svg';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import type { SvgProps } from 'react-native-svg';
 import { PERPS_PRO_DIALOG_TOKENS } from './perpsProDialogVisual';
+
+// Keep the checkmark paint off Svg's inherited stroke property.
+const CheckboxChecked: React.FC<SvgProps & { fill2: string }> =
+  RcCheckboxChecked;
 
 /** Visual only: each caller retains its own press and accessibility semantics. */
 export const PerpsProCheckboxIcon = ({
@@ -14,9 +19,9 @@ export const PerpsProCheckboxIcon = ({
   testID?: string;
 }) =>
   checked ? (
-    <RcCheckboxChecked
+    <CheckboxChecked
       color={PERPS_PRO_DIALOG_TOKENS.actionBackground}
-      stroke={checkColor}
+      fill2={checkColor}
       height={20}
       width={20}
       testID={testID}

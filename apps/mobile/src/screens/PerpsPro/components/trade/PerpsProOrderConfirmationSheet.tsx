@@ -1,6 +1,5 @@
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
-import RcCheckboxEmptyCC from '@/assets2024/icons/common/checkbox-empty-cc.svg';
-import RcCheckboxFilledBrand from '@/assets2024/icons/common/checkbox-filled-brand.svg';
+import { PerpsProCheckboxIcon } from '../common/PerpsProCheckboxIcon';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
@@ -26,7 +25,6 @@ import {
 import {
   getPerpsProDialogStyles,
   resolvePerpsProDialogCardBackground,
-  PERPS_PRO_DIALOG_TOKENS,
   PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
 } from '../common/perpsProDialogVisual';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
@@ -274,15 +272,10 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
               accessibilityState={{ checked: skipConfirmation }}
               onPress={onToggleSkip}
               style={styles.checkboxRow}>
-              {skipConfirmation ? (
-                <RcCheckboxFilledBrand height={20} width={20} />
-              ) : (
-                <RcCheckboxEmptyCC
-                  color={PERPS_PRO_DIALOG_TOKENS.checkboxBorder}
-                  height={20}
-                  width={20}
-                />
-              )}
+              <PerpsProCheckboxIcon
+                checked={skipConfirmation}
+                checkColor={colors2024['neutral-InvertHighlight']}
+              />
               <Text style={styles.checkboxText}>
                 {t('page.perps.pro.trade.skipConfirmation')}
               </Text>

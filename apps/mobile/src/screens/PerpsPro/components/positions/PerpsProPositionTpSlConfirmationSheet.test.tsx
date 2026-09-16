@@ -1,15 +1,11 @@
+import { PerpsProCheckboxIcon } from '../common/PerpsProCheckboxIcon';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
 const mockOpenFieldExplanation = jest.fn();
 
-jest.mock('@/assets2024/icons/common/checkbox-empty-cc.svg', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
-  return (props: object) => ReactModule.createElement(View, props);
-});
-jest.mock('@/assets2024/icons/common/checkbox-filled-brand.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProInfoCheckboxChecked.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
@@ -167,49 +163,87 @@ const review = (
 });
 
 describe('PerpsProPositionTpSlConfirmationSheet', () => {
-  it('renders and toggles the Figma checkbox on a partial confirmation', () => {
-    const onToggleSkipConfirmation = jest.fn();
-    render(
-      <PerpsProPositionTpSlConfirmationSheet
-        amountUnit="base"
-        market={market}
-        onClose={jest.fn()}
-        onConfirm={jest.fn()}
-        onToggleSkipConfirmation={onToggleSkipConfirmation}
-        pending={false}
-        position={position}
-        review={review('partial')}
-        skipConfirmation={false}
-      />,
-    );
+  it.each([false, true])(
+    'renders and toggles the Pro checkbox on a partial confirmation (checked=%s)',
+    skipConfirmation => {
+      const onToggleSkipConfirmation = jest.fn();
+      render(
+        <PerpsProPositionTpSlConfirmationSheet
+          amountUnit="base"
+          market={market}
+          onClose={jest.fn()}
+          onConfirm={jest.fn()}
+          onToggleSkipConfirmation={onToggleSkipConfirmation}
+          pending={false}
+          position={position}
+          review={review('partial')}
+          skipConfirmation={skipConfirmation}
+        />,
+      );
 
-    expect(screen.getByText('Confirm TP/SL')).toBeTruthy();
-    expect(screen.getByText('Take Profit')).toBeTruthy();
-    expect(screen.getByText('Stop Loss')).toBeTruthy();
-    expect(screen.getAllByText('Volume')).toHaveLength(2);
-    expect(screen.getByText(/Limit Order/)).toBeTruthy();
-    fireEvent.press(screen.getAllByLabelText('Estimated PnL')[0]!);
-    expect(mockOpenFieldExplanation).toHaveBeenCalledWith('estimatedPnl');
-    const checkbox = screen.getByTestId(
-      'perps-pro-position-tpsl-skip-confirmation',
-    );
-    expect(StyleSheet.flatten(checkbox.props.style)).toMatchObject({
-      justifyContent: 'center',
-      marginTop: 8,
-      minHeight: 20,
-      gap: 4,
-    });
-    expect(
-      StyleSheet.flatten(
-        screen.getByText(
-          "Don't display double confirmation for Limit Order again.",
-        ).props.style,
-      ),
-    ).toMatchObject({ color: 'neutral-foot', flexShrink: 1 });
-    expect(checkbox.props.accessibilityState).toMatchObject({ checked: false });
-    fireEvent.press(checkbox);
-    expect(onToggleSkipConfirmation).toHaveBeenCalledTimes(1);
-  });
+      expect(screen.getByText('Confirm TP/SL')).toBeTruthy();
+      expect(screen.getByText('Take Profit')).toBeTruthy();
+      expect(screen.getByText('Stop Loss')).toBeTruthy();
+      expect(screen.getAllByText('Volume')).toHaveLength(2);
+      expect(screen.getByText(/Limit Order/)).toBeTruthy();
+      fireEvent.press(screen.getAllByLabelText('Estimated PnL')[0]!);
+      expect(mockOpenFieldExplanation).toHaveBeenCalledWith('estimatedPnl');
+      const checkbox = screen.getByTestId(
+        'perps-pro-position-tpsl-skip-confirmation',
+      );
+      expect(StyleSheet.flatten(checkbox.props.style)).toMatchObject({
+        justifyContent: 'center',
+        marginTop: 8,
+        minHeight: 20,
+        gap: 4,
+      });
+      expect(
+        StyleSheet.flatten(
+          screen.getByText(
+            "Don't display double confirmation for Limit Order again.",
+          ).props.style,
+        ),
+      ).toMatchObject({ color: 'neutral-foot', flexShrink: 1 });
+      expect(checkbox.props.accessibilityState).toMatchObject({
+        checked: skipConfirmation,
+      });
+      expect(screen.UNSAFE_getByType(PerpsProCheckboxIcon).props).toMatchObject(
+        {
+          checked: skipConfirmation,
+          checkColor: 'neutral-InvertHighlight',
+        },
+      );
+      fireEvent.press(checkbox);
+      expect(onToggleSkipConfirmation).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it.each(['partial', 'position'] as const)(
+    'keeps the selected %s checkbox locked while pending',
+    scope => {
+      const onToggleSkipConfirmation = jest.fn();
+      render(
+        <PerpsProPositionTpSlConfirmationSheet
+          amountUnit="base"
+          market={market}
+          onClose={jest.fn()}
+          onConfirm={jest.fn()}
+          onToggleSkipConfirmation={onToggleSkipConfirmation}
+          pending
+          position={position}
+          review={review(scope)}
+          skipConfirmation
+        />,
+      );
+      expect(screen.UNSAFE_getByType(PerpsProCheckboxIcon).props.checked).toBe(
+        true,
+      );
+      fireEvent.press(
+        screen.getByTestId('perps-pro-position-tpsl-skip-confirmation'),
+      );
+      expect(onToggleSkipConfirmation).not.toHaveBeenCalled();
+    },
+  );
 
   it('converts partial volume with the reviewed Mark rather than the trigger', () => {
     render(

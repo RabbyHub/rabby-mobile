@@ -1,6 +1,6 @@
 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g id="checkbox-input">
 <rect id="Rectangle 42052" x="2" y="2" width="16" height="16" rx="4" fill="currentColor"/>
-<path id="Vector" d="M6 10.2519L8.51347 13L14 7" stroke=".stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector" d="M6 10.2519L8.51347 13L14 7" stroke=".fill2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 </g>
 </svg>

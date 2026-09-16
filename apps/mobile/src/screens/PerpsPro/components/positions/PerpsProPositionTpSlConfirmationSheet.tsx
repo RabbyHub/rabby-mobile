@@ -1,11 +1,7 @@
-import {
-  getPerpsProDialogCheckboxStyles,
-  PERPS_PRO_DIALOG_TOKENS,
-} from '../common/perpsProDialogVisual';
+import { getPerpsProDialogCheckboxStyles } from '../common/perpsProDialogVisual';
 import { getPerpsProDialogActionStyles } from '../common/perpsProDialogVisual';
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
-import RcCheckboxEmptyCC from '@/assets2024/icons/common/checkbox-empty-cc.svg';
-import RcCheckboxFilledBrand from '@/assets2024/icons/common/checkbox-filled-brand.svg';
+import { PerpsProCheckboxIcon } from '../common/PerpsProCheckboxIcon';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
@@ -207,15 +203,10 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
               onPress={onToggleSkipConfirmation}
               style={styles.checkboxRow}
               testID="perps-pro-position-tpsl-skip-confirmation">
-              {skipConfirmation ? (
-                <RcCheckboxFilledBrand height={20} width={20} />
-              ) : (
-                <RcCheckboxEmptyCC
-                  color={PERPS_PRO_DIALOG_TOKENS.checkboxBorder}
-                  height={20}
-                  width={20}
-                />
-              )}
+              <PerpsProCheckboxIcon
+                checked={skipConfirmation}
+                checkColor={colors2024['neutral-InvertHighlight']}
+              />
               <Text style={styles.checkboxText}>
                 {t('page.perps.pro.positions.skipLimitConfirmation')}
               </Text>

@@ -1,3 +1,4 @@
+import { PerpsProCheckboxIcon } from '../common/PerpsProCheckboxIcon';
 import { ThemeColors2024 } from '@/constant/theme';
 let mockThemeMode: 'light' | 'dark' | undefined;
 beforeEach(() => {
@@ -25,12 +26,7 @@ const mockPresent = jest.fn();
 const mockClose = jest.fn();
 const mockOpenFieldExplanation = jest.fn();
 
-jest.mock('@/assets2024/icons/common/checkbox-empty-cc.svg', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
-  return (props: object) => ReactModule.createElement(View, props);
-});
-jest.mock('@/assets2024/icons/common/checkbox-filled-brand.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProInfoCheckboxChecked.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
@@ -906,67 +902,97 @@ describe('Perps Pro open order edit sheets', () => {
     expect(screen.getAllByText('--')).toHaveLength(3);
   });
 
-  it('covers the editor with a 336px Basic confirmation and retained checkbox', () => {
-    const onToggle = jest.fn();
-    const review = {
-      category: 'basic',
-      command: {
-        account: basicEditor.account,
-        coin: 'BTC',
-        dexId: '',
-        expected: {
-          limitPrice: '100',
-          reduceOnly: false,
-          remainingSize: '0.5',
-          side: 'buy',
-          tif: 'Gtc',
+  it.each([false, true])(
+    'covers the editor with a 336px Basic confirmation and Pro checkbox (checked=%s)',
+    skipConfirmation => {
+      const onToggle = jest.fn();
+      const review = {
+        category: 'basic',
+        command: {
+          account: basicEditor.account,
+          coin: 'BTC',
+          dexId: '',
+          expected: {
+            limitPrice: '100',
+            reduceOnly: false,
+            remainingSize: '0.5',
+            side: 'buy',
+            tif: 'Gtc',
+          },
+          marketKey: 'hyperliquid::BTC',
+          oid: 1,
+          replacement: { baseSize: '0.4', limitPrice: '110' },
+          type: 'modifyOpenOrder',
         },
-        marketKey: 'hyperliquid::BTC',
-        oid: 1,
-        replacement: { baseSize: '0.4', limitPrice: '110' },
-        type: 'modifyOpenOrder',
-      },
-    } as PerpsProOpenOrderEditReviewState;
-    render(
-      <PerpsProOpenOrderEditConfirmationSheet
-        editor={basicEditor}
-        onClose={jest.fn()}
-        onConfirm={jest.fn()}
-        onToggleSkipConfirmation={onToggle}
-        pending={false}
-        review={review}
-        skipConfirmation={false}
-      />,
-    );
-    expect(screen.getByText('page.perps.pro.positions.cross 20x')).toBeTruthy();
-    expect(
-      StyleSheet.flatten(screen.getByRole('checkbox').props.style),
-    ).toMatchObject({ justifyContent: 'center', marginTop: 8, minHeight: 20 });
-    expect(mockModalProps).toHaveBeenLastCalledWith(
-      expect.objectContaining({ snapPoints: [336] }),
-    );
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-open-order-edit-confirmation-content')
-          .props.style,
-      ),
-    ).toMatchObject({ height: 296, paddingHorizontal: 16, paddingTop: 8 });
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-open-order-edit-confirmation-footer')
-          .props.style,
-      ),
-    ).toMatchObject({ top: 208 });
-    expect(
-      StyleSheet.flatten(
-        screen.getByText('page.perps.pro.trade.buyLong').props.style,
-      ),
-    ).toMatchObject({ color: 'green-default', fontWeight: '700' });
-    const checkbox = screen.getByRole('checkbox');
-    expect(checkbox.props.accessibilityState).toMatchObject({ checked: false });
-    fireEvent.press(checkbox);
-    expect(onToggle).toHaveBeenCalledTimes(1);
-  });
+      } as PerpsProOpenOrderEditReviewState;
+      const { rerender } = render(
+        <PerpsProOpenOrderEditConfirmationSheet
+          editor={basicEditor}
+          onClose={jest.fn()}
+          onConfirm={jest.fn()}
+          onToggleSkipConfirmation={onToggle}
+          pending={false}
+          review={review}
+          skipConfirmation={skipConfirmation}
+        />,
+      );
+      expect(
+        screen.getByText('page.perps.pro.positions.cross 20x'),
+      ).toBeTruthy();
+      expect(
+        StyleSheet.flatten(screen.getByRole('checkbox').props.style),
+      ).toMatchObject({
+        justifyContent: 'center',
+        marginTop: 8,
+        minHeight: 20,
+      });
+      expect(mockModalProps).toHaveBeenLastCalledWith(
+        expect.objectContaining({ snapPoints: [336] }),
+      );
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId('perps-pro-open-order-edit-confirmation-content')
+            .props.style,
+        ),
+      ).toMatchObject({ height: 296, paddingHorizontal: 16, paddingTop: 8 });
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId('perps-pro-open-order-edit-confirmation-footer')
+            .props.style,
+        ),
+      ).toMatchObject({ top: 208 });
+      expect(
+        StyleSheet.flatten(
+          screen.getByText('page.perps.pro.trade.buyLong').props.style,
+        ),
+      ).toMatchObject({ color: 'green-default', fontWeight: '700' });
+      const checkbox = screen.getByRole('checkbox');
+      expect(checkbox.props.accessibilityState).toMatchObject({
+        checked: skipConfirmation,
+      });
+      expect(screen.UNSAFE_getByType(PerpsProCheckboxIcon).props).toMatchObject(
+        {
+          checked: skipConfirmation,
+          checkColor: 'neutral-InvertHighlight',
+        },
+      );
+      fireEvent.press(checkbox);
+      expect(onToggle).toHaveBeenCalledTimes(1);
+      rerender(
+        <PerpsProOpenOrderEditConfirmationSheet
+          editor={basicEditor}
+          onClose={jest.fn()}
+          onConfirm={jest.fn()}
+          onToggleSkipConfirmation={onToggle}
+          pending
+          review={review}
+          skipConfirmation={skipConfirmation}
+        />,
+      );
+      fireEvent.press(screen.getByRole('checkbox'));
+      expect(onToggle).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it('keeps the root sheet mounted and non-dismissible under the 362px Conditional confirmation', () => {
     const { unmount } = render(

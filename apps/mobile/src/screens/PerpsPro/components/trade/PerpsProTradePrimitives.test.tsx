@@ -114,7 +114,7 @@ describe('PerpsProTradePrimitives explanations', () => {
           width: 20,
           height: 20,
           color: PERPS_PRO_DIALOG_TOKENS.actionBackground,
-          stroke: ThemeColors2024[mode]['neutral-InvertHighlight'],
+          fill2: ThemeColors2024[mode]['neutral-InvertHighlight'],
         });
         fireEvent.press(screen.getByRole('checkbox'));
         expect(onPress).toHaveBeenCalledTimes(1);

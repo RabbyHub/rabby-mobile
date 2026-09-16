@@ -1,3 +1,4 @@
+import { PerpsProCheckboxIcon } from '../common/PerpsProCheckboxIcon';
 import { ThemeColors2024 } from '@/constant/theme';
 jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
 
@@ -9,13 +10,7 @@ import {
   View as NativeView,
 } from 'react-native';
 
-jest.mock('@/assets2024/icons/common/checkbox-empty-cc.svg', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
-  return (props: object) => ReactModule.createElement(View, props);
-});
-
-jest.mock('@/assets2024/icons/common/checkbox-filled-brand.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProInfoCheckboxChecked.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
@@ -485,13 +480,26 @@ describe.each(['light', 'dark'] as const)(
       expect(detailTexts).not.toContain('-');
     });
 
-    it('keeps attached TP/SL on the same per-type skip preference control', () => {
-      const onToggleSkip = jest.fn();
-      renderSheet(attached, { onToggleSkip });
+    it.each([false, true])(
+      'keeps the Pro checkbox on the same skip preference control (checked=%s)',
+      skipConfirmation => {
+        const onToggleSkip = jest.fn();
+        renderSheet(attached, { onToggleSkip, skipConfirmation });
 
-      fireEvent.press(screen.getByRole('checkbox'));
-      expect(onToggleSkip).toHaveBeenCalledTimes(1);
-    });
+        expect(
+          screen.UNSAFE_getByType(PerpsProCheckboxIcon).props,
+        ).toMatchObject({
+          checked: skipConfirmation,
+          checkColor: colors['neutral-InvertHighlight'],
+        });
+        expect(screen.getByRole('checkbox').props.accessibilityState).toEqual({
+          checked: skipConfirmation,
+        });
+
+        fireEvent.press(screen.getByRole('checkbox'));
+        expect(onToggleSkip).toHaveBeenCalledTimes(1);
+      },
+    );
 
     it('renders a six-digit integer attached TP trigger without truncation', () => {
       renderSheet({

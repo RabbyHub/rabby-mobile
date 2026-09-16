@@ -1,3 +1,4 @@
+import { PerpsProCheckboxIcon } from '../common/PerpsProCheckboxIcon';
 import { ThemeColors2024 } from '@/constant/theme';
 let mockThemeMode: 'light' | 'dark' | undefined;
 beforeEach(() => {
@@ -8,12 +9,7 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
-jest.mock('@/assets2024/icons/common/checkbox-empty-cc.svg', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
-  return (props: object) => ReactModule.createElement(View, props);
-});
-jest.mock('@/assets2024/icons/common/checkbox-filled-brand.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProInfoCheckboxChecked.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
@@ -179,6 +175,12 @@ describe('PerpsProCloseConfirmationSheet', () => {
           colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
         );
         expect(cards[0].backgroundColor).not.toBe(background);
+        expect(
+          screen.UNSAFE_getByType(PerpsProCheckboxIcon).props,
+        ).toMatchObject({
+          checked: false,
+          checkColor: colors['neutral-InvertHighlight'],
+        });
         view.unmount();
       }
     },
@@ -256,33 +258,39 @@ describe('PerpsProCloseConfirmationSheet', () => {
     });
   });
 
-  it('uses Market Price with its own opt-in confirmation preference', () => {
-    const onToggleSkipConfirmation = jest.fn();
-    render(
-      <PerpsProCloseConfirmationSheet
-        amountUnit="base"
-        draft={{ ...draft, limitPrice: null, orderType: 'market' }}
-        market={market}
-        onClose={jest.fn()}
-        onConfirm={jest.fn()}
-        onToggleSkipConfirmation={onToggleSkipConfirmation}
-        pending={false}
-        position={position}
-        skipConfirmation={false}
-        visible
-      />,
-    );
+  it.each([false, true])(
+    'uses Market Price with its own checkbox preference (checked=%s)',
+    skipConfirmation => {
+      const onToggleSkipConfirmation = jest.fn();
+      render(
+        <PerpsProCloseConfirmationSheet
+          amountUnit="base"
+          draft={{ ...draft, limitPrice: null, orderType: 'market' }}
+          market={market}
+          onClose={jest.fn()}
+          onConfirm={jest.fn()}
+          onToggleSkipConfirmation={onToggleSkipConfirmation}
+          pending={false}
+          position={position}
+          skipConfirmation={skipConfirmation}
+          visible
+        />,
+      );
 
-    expect(
-      screen.getByTestId('close-confirmation-sheet').props.snapPoints,
-    ).toEqual([336]);
-    expect(screen.getByText('Market Price')).toBeTruthy();
-    expect(
-      screen.getByText("Don't show this Market Close confirmation again."),
-    ).toBeTruthy();
-    fireEvent.press(screen.getByRole('checkbox'));
-    expect(onToggleSkipConfirmation).toHaveBeenCalledTimes(1);
-  });
+      expect(
+        screen.getByTestId('close-confirmation-sheet').props.snapPoints,
+      ).toEqual([336]);
+      expect(screen.getByText('Market Price')).toBeTruthy();
+      expect(
+        screen.getByText("Don't show this Market Close confirmation again."),
+      ).toBeTruthy();
+      expect(screen.UNSAFE_getByType(PerpsProCheckboxIcon).props.checked).toBe(
+        skipConfirmation,
+      );
+      fireEvent.press(screen.getByRole('checkbox'));
+      expect(onToggleSkipConfirmation).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it('renders the normalized market source instead of a hardcoded Perp tag', () => {
     render(
