@@ -86,6 +86,13 @@ jest.mock('@/components2024/GlobalBottomSheetModal/utils-help', () => ({
 }));
 
 let mockIsLight = true;
+let mockIsIOS = true;
+
+jest.mock('@/core/native/utils', () => ({
+  get IS_IOS() {
+    return mockIsIOS;
+  },
+}));
 
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
@@ -253,7 +260,59 @@ describe.each(['light', 'dark'] as const)(
     const colors = ThemeColors2024[mode];
     beforeEach(() => {
       mockIsLight = mode === 'light';
+      mockIsIOS = true;
     });
+    it.each([
+      [true, 'isolated', 'xyz', 3],
+      [true, 'cross', 'long-source-tag', 20],
+      [true, 'cross', null, 100],
+      [false, 'isolated', 'xyz', 3],
+      [false, 'cross', 'long-source-tag', 20],
+      [false, 'cross', null, 100],
+    ] as const)(
+      'clips metadata only on iOS (%s, %s, source=%s, leverage=%s)',
+      (isIOS, marginMode, sourceTag, leverage) => {
+        mockIsIOS = isIOS;
+        renderSheet({
+          ...parent,
+          reviewFacts: { ...reviewFacts, marginMode, sourceTag, leverage },
+        });
+
+        const marginTag = screen.getByTestId(
+          'perps-pro-order-confirmation-margin-mode-tag',
+        );
+        const source = screen.queryByTestId(
+          'perps-pro-order-confirmation-source-tag',
+        );
+        expect(marginTag).toHaveTextContent(
+          `${marginMode === 'cross' ? 'Cross' : 'Isolated'} ${leverage}x`,
+        );
+        if (sourceTag) {
+          expect(source).toHaveTextContent(sourceTag);
+        } else {
+          expect(source).toBeNull();
+        }
+        for (const tag of source ? [source, marginTag] : [marginTag]) {
+          const { overflow, ...style } = StyleSheet.flatten(tag.props.style);
+          expect(overflow).toBe(isIOS ? 'hidden' : undefined);
+          expect(tag.props.numberOfLines).toBe(1);
+          expect(tag.props.adjustsFontSizeToFit).toBeUndefined();
+          expect(style).toEqual({
+            backgroundColor: colors['neutral-bg-5'],
+            borderRadius: 4,
+            color: colors['neutral-foot'],
+            fontFamily: 'SF Pro Rounded',
+            fontSize: 12,
+            fontWeight: '500',
+            lineHeight: 16,
+            maxWidth: 100,
+            paddingHorizontal: 4,
+            paddingVertical: 1,
+          });
+        }
+      },
+    );
+
     it('uses the Pro layout, live risk fields and Mark Price TP/SL conditions', () => {
       renderSheet(attached);
 

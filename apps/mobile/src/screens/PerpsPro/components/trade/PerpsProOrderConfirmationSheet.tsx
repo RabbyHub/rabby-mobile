@@ -6,6 +6,7 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { IS_IOS } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
@@ -351,6 +352,7 @@ const getStyle = createGetStyles2024(
       ...getPerpsProMetadataTagContainerStyle(colors2024),
       ...getPerpsProMetadataTagTextStyle(colors2024),
       maxWidth: 100,
+      ...(IS_IOS ? { overflow: 'hidden' as const } : {}),
     },
     buyDirection: {
       ...getPerpsProTintedTagTextStyle(colors2024, 'positive'),
