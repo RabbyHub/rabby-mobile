@@ -2142,7 +2142,7 @@
         },
         "funding": {
           "title": "Funding Rate",
-          "gotIt": "I Got it",
+          "gotIt": "I Got It",
           "summary": "Funding (1h) / Countdown",
           "openDetails": "View funding details",
           "interval": "Interval",

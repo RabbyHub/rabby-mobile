@@ -87,7 +87,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) =>
       ({
-        'page.perps.pro.funding.gotIt': 'I Got it',
+        'page.perps.pro.funding.gotIt': 'I Got It',
         'page.perps.pro.fieldExplanations.liquidationDistance.description':
           'Distance explanation',
         'page.perps.pro.fieldExplanations.liquidationDistance.title':
@@ -165,7 +165,7 @@ describe('PerpsProFieldExplanationSheet', () => {
       paddingTop: 8,
     });
     expect(StyleSheet.flatten(container.props.style).minHeight).toBeUndefined();
-    expect(screen.getByText('I Got it')).toBeTruthy();
+    expect(screen.getByText('I Got It')).toBeTruthy();
     expect(screen.getByTestId('field-explanation-confirm').props.height).toBe(
       52,
     );
