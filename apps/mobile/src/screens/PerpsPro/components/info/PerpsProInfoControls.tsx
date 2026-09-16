@@ -1,5 +1,5 @@
-import RcIconCheckboxEmpty from '@/assets2024/icons/common/checkbox-empty-cc.svg';
-import RcIconCheckboxFilled from '@/assets2024/icons/common/checkbox-filled-brand.svg';
+import RcIconCheckboxFilled from '@/assets2024/icons/perps/PerpsProInfoCheckboxChecked.svg';
+import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -41,17 +41,19 @@ export const PerpsProInfoControls: React.FC<PerpsProInfoControlsProps> =
             style={styles.filter}>
             {hideOtherSymbols ? (
               <RcIconCheckboxFilled
-                height={24}
+                color={PERPS_PRO_DIALOG_TOKENS.actionBackground}
+                stroke={colors2024['neutral-InvertHighlight']}
+                height={20}
                 testID="perps-pro-info-filter-checkbox-icon"
-                width={24}
+                width={20}
               />
             ) : (
-              <RcIconCheckboxEmpty
-                color={colors2024['neutral-secondary']}
-                height={24}
-                testID="perps-pro-info-filter-checkbox-icon"
-                width={24}
-              />
+              <View style={styles.checkboxFrame}>
+                <View
+                  style={styles.checkboxEmpty}
+                  testID="perps-pro-info-filter-checkbox-icon"
+                />
+              </View>
             )}
             <Text numberOfLines={1} style={styles.filterText}>
               {t('page.perps.pro.info.hideOtherSymbols')}
@@ -91,21 +93,34 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     flexDirection: 'row',
     gap: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   filter: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 6,
+    gap: 4,
     minWidth: 0,
   },
+  checkboxFrame: {
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxEmpty: {
+    width: 16,
+    height: 16,
+    borderRadius: 4,
+    borderWidth: 1.25,
+    borderColor: PERPS_PRO_DIALOG_TOKENS.checkboxBorder,
+  },
   filterText: {
-    color: colors2024['neutral-secondary'],
+    color: colors2024['neutral-foot'],
     flexShrink: 1,
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '400',
     lineHeight: 16,
   },
   action: {

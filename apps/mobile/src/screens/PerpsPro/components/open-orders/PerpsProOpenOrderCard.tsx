@@ -1,5 +1,5 @@
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
-import RcIconEdit from '@/assets2024/icons/perps/IconPerpEdit.svg';
+import RcIconEdit from '@/assets2024/icons/perps/PerpsProEdit.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -17,6 +17,8 @@ import {
   formatPerpsProVariableDecimal,
 } from '../../utils/format';
 import {
+  getPerpsProSolidSideTagContainerStyle,
+  getPerpsProSolidSideTagTextStyle,
   getPerpsProMetadataTagContainerStyle,
   getPerpsProMetadataTagTextStyle,
   getPerpsProTintedTagContainerStyle,
@@ -81,7 +83,7 @@ const EditableValue: React.FC<{
       </Text>
       <View pointerEvents="none" style={styles.editIcon}>
         <RcIconEdit
-          color={colors2024['neutral-title-1']}
+          color={colors2024['neutral-secondary']}
           height={16}
           width={16}
         />
@@ -134,28 +136,75 @@ export const PerpsProOpenOrderCard: React.FC<{
 
     return (
       <View style={styles.row} testID={`perps-pro-order-${order.key}`}>
-        <View style={styles.header}>
-          <View style={styles.identity}>
-            <View style={styles.titleRow}>
-              <PerpsProMarketPair
-                metadataReady={market.metadataReady}
-                onPress={
-                  onPressMarket ? () => onPressMarket(order.coin) : undefined
-                }
-                style={styles.marketButton}
-                testID={`perps-pro-order-market-${order.key}`}
-                textStyle={styles.coin}
-                value={market.displayPair}
-              />
-              {market.sourceTag ? (
+        <View>
+          <View style={styles.header}>
+            <View style={styles.identity}>
+              <View style={styles.titleRow}>
                 <View
-                  style={styles.sourceTag}
-                  testID={`perps-pro-order-source-${order.key}`}>
-                  <Text style={styles.sourceText}>{market.sourceTag}</Text>
+                  accessibilityLabel={
+                    isBuy
+                      ? t('page.perps.pro.openOrders.buy')
+                      : t('page.perps.pro.openOrders.sell')
+                  }
+                  style={isBuy ? styles.buySide : styles.sellSide}
+                  testID={`perps-pro-order-side-${order.key}`}>
+                  <Text style={styles.sideText}>{isBuy ? 'B' : 'S'}</Text>
+                </View>
+                <PerpsProMarketPair
+                  metadataReady={market.metadataReady}
+                  onPress={
+                    onPressMarket ? () => onPressMarket(order.coin) : undefined
+                  }
+                  style={styles.marketButton}
+                  testID={`perps-pro-order-market-${order.key}`}
+                  textStyle={styles.coin}
+                  value={market.displayPair}
+                />
+                {market.sourceTag ? (
+                  <View
+                    style={styles.sourceTag}
+                    testID={`perps-pro-order-source-${order.key}`}>
+                    <Text style={styles.sourceText}>{market.sourceTag}</Text>
+                  </View>
+                ) : null}
+                {order.category === 'basic' ? (
+                  <View
+                    style={styles.sourceTag}
+                    testID={`perps-pro-order-type-${order.key}`}>
+                    <Text style={styles.sourceText}>{order.orderType}</Text>
+                  </View>
+                ) : null}
+              </View>
+            </View>
+            <View style={styles.headerActions}>
+              {order.category === 'basic' ? (
+                <View
+                  style={styles.progress}
+                  testID={`perps-pro-order-progress-${order.key}`}>
+                  <Text style={styles.progressText}>
+                    {formatPerpsProPercent(filledRatio, 0, false)}
+                  </Text>
+                  <View
+                    style={styles.progressTrack}
+                    testID={`perps-pro-order-progress-track-${order.key}`}>
+                    <View
+                      style={[
+                        isBuy ? styles.buyProgress : styles.sellProgress,
+                        { width: progressWidth },
+                      ]}
+                      testID={`perps-pro-order-progress-fill-${order.key}`}
+                    />
+                  </View>
                 </View>
               ) : null}
+              <CancelButton
+                onPress={() => onCancel(order)}
+                pending={cancelPending}
+              />
             </View>
-            <View style={styles.metaRow}>
+          </View>
+          <View style={styles.metaRow}>
+            {order.category !== 'basic' ? (
               <View
                 style={isBuy ? styles.buyTag : styles.sellTag}
                 testID={`perps-pro-order-type-${order.key}`}>
@@ -163,45 +212,10 @@ export const PerpsProOpenOrderCard: React.FC<{
                   {order.orderType}
                 </Text>
               </View>
-              <View
-                style={isBuy ? styles.buyTag : styles.sellTag}
-                testID={`perps-pro-order-side-${order.key}`}>
-                <Text style={isBuy ? styles.buyText : styles.sellText}>
-                  {isBuy
-                    ? t('page.perps.pro.openOrders.buy')
-                    : t('page.perps.pro.openOrders.sell')}
-                </Text>
-              </View>
-              <Text style={styles.time}>
-                {formatPerpsProTime(order.timestamp)}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.headerActions}>
-            {order.category === 'basic' ? (
-              <View
-                style={styles.progress}
-                testID={`perps-pro-order-progress-${order.key}`}>
-                <Text style={styles.progressText}>
-                  {formatPerpsProPercent(filledRatio, 0, false)}
-                </Text>
-                <View
-                  style={styles.progressTrack}
-                  testID={`perps-pro-order-progress-track-${order.key}`}>
-                  <View
-                    style={[
-                      isBuy ? styles.buyProgress : styles.sellProgress,
-                      { width: progressWidth },
-                    ]}
-                    testID={`perps-pro-order-progress-fill-${order.key}`}
-                  />
-                </View>
-              </View>
             ) : null}
-            <CancelButton
-              onPress={() => onCancel(order)}
-              pending={cancelPending}
-            />
+            <Text style={styles.time}>
+              {formatPerpsProTime(order.timestamp)}
+            </Text>
           </View>
         </View>
 
@@ -288,14 +302,14 @@ PerpsProOpenOrderCard.displayName = 'PerpsProOpenOrderCard';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   row: {
-    borderBottomColor: colors2024['neutral-bg-5'],
-    borderBottomWidth: 1,
     gap: 12,
-    marginHorizontal: 15,
-    paddingVertical: 8,
+    marginLeft: 16,
+    marginRight: 14,
+    paddingBottom: 24,
   },
   header: {
-    alignItems: 'flex-start',
+    minHeight: 26,
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
@@ -324,8 +338,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 4,
-    marginTop: 2,
+    marginTop: 4,
   },
+  buySide: getPerpsProSolidSideTagContainerStyle(colors2024, 'positive'),
+  sellSide: getPerpsProSolidSideTagContainerStyle(colors2024, 'negative'),
+  sideText: getPerpsProSolidSideTagTextStyle(colors2024),
   buyTag: getPerpsProTintedTagContainerStyle(colors2024, 'positive'),
   sellTag: getPerpsProTintedTagContainerStyle(colors2024, 'negative'),
   buyText: getPerpsProTintedTagTextStyle(colors2024, 'positive'),
@@ -345,15 +362,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   progress: {
     alignItems: 'center',
-    gap: 2,
-    height: 16,
+    gap: 4,
+    height: 18,
     justifyContent: 'center',
     width: 32,
   },
   progressText: {
     ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    fontFamily: 'SF Pro',
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 12,
@@ -379,7 +396,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 6,
     height: 26,
     justifyContent: 'center',
-    width: 64,
+    paddingHorizontal: 8,
   },
   cancelButtonPressed: {
     opacity: 0.6,
@@ -398,9 +415,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    minHeight: 18,
+    minHeight: 16,
   },
   label: {
+    fontWeight: '500',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
