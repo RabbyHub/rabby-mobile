@@ -1,6 +1,5 @@
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
-import RcIconCheckboxEmpty from '@/assets2024/icons/common/checkbox-empty-cc.svg';
-import RcIconCheckboxFilled from '@/assets2024/icons/common/checkbox-filled-brand.svg';
+import { PerpsProCheckboxIcon } from '../common/PerpsProCheckboxIcon';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -143,20 +142,11 @@ export const PerpsProTradeCheckbox: React.FC<{
           onPress={onPress}
           style={disabled ? styles.disabled : undefined}
           testID={`perps-pro-trade-checkbox-${label}`}>
-          {checked ? (
-            <RcIconCheckboxFilled
-              height={20}
-              testID="perps-pro-trade-checkbox-icon"
-              width={20}
-            />
-          ) : (
-            <RcIconCheckboxEmpty
-              color={colors2024['neutral-secondary']}
-              height={20}
-              testID="perps-pro-trade-checkbox-icon"
-              width={20}
-            />
-          )}
+          <PerpsProCheckboxIcon
+            checked={checked}
+            checkColor={colors2024['neutral-InvertHighlight']}
+            testID="perps-pro-trade-checkbox-icon"
+          />
         </Pressable>
         <PerpsProDottedUnderlineText
           accessibilityLabel={label}
