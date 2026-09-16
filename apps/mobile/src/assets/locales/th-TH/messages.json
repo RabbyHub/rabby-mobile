@@ -2678,7 +2678,8 @@
         "breakdownPerps": "Perps",
         "breakdownSpot": "Spot",
         "breakdownOtherAssets": "สินทรัพย์อื่น ๆ",
-        "breakdownNetOtherAssets": "สินทรัพย์อื่น ๆ สุทธิ"
+        "breakdownNetOtherAssets": "สินทรัพย์อื่น ๆ สุทธิ",
+        "breakdownStaking": "Staking"
       },
       "PerpsGuidePopup": {
         "step3Title": "Short",

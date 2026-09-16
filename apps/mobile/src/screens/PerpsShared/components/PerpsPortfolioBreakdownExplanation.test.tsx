@@ -9,6 +9,7 @@ import { useShowPerpsPortfolioBreakdown } from './PerpsPortfolioBreakdownExplana
 const mockGetBreakdownValues = jest.fn(() => ({
   perpsValue: 39.96,
   secondaryValue: 221.6,
+  stakingValue: null as number | null,
 }));
 let mockIsFocused = true;
 
@@ -106,6 +107,36 @@ describe('Perps Portfolio Value breakdown integration', () => {
     ).toBeTruthy();
     expect(screen.getByText('$39.96')).toBeTruthy();
     expect(screen.getByText('$221.60')).toBeTruthy();
+
+    fireEvent.press(screen.getByTestId('close-portfolio-breakdown'));
+  });
+
+  it('adds the Staking row only when the breakdown reports staked HYPE', () => {
+    mockGetBreakdownValues.mockReturnValueOnce({
+      perpsValue: 39.96,
+      secondaryValue: 221.6,
+      stakingValue: 12.5,
+    });
+    render(
+      <View>
+        <PortfolioBreakdownTrigger />
+        <TipsPopupStateProbe />
+      </View>,
+    );
+
+    fireEvent.press(screen.getByTestId('open-portfolio-breakdown'));
+
+    expect(
+      screen.getByText('page.perps.PerpsCard.breakdownStaking'),
+    ).toBeTruthy();
+    expect(screen.getByText('$12.50')).toBeTruthy();
+
+    fireEvent.press(screen.getByTestId('close-portfolio-breakdown'));
+    fireEvent.press(screen.getByTestId('open-portfolio-breakdown'));
+
+    expect(
+      screen.queryByText('page.perps.PerpsCard.breakdownStaking'),
+    ).toBeNull();
 
     fireEvent.press(screen.getByTestId('close-portfolio-breakdown'));
   });

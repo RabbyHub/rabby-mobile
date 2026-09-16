@@ -2512,7 +2512,8 @@
         "breakdownPerps": "Perps",
         "breakdownSpot": "Spot",
         "breakdownOtherAssets": "Autres actifs",
-        "breakdownNetOtherAssets": "Autres actifs nets"
+        "breakdownNetOtherAssets": "Autres actifs nets",
+        "breakdownStaking": "Staking"
       },
       "PerpsGuidePopup": {
         "step5Title": "Liquidation",

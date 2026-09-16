@@ -246,33 +246,89 @@ export const computeSpotPortfolioValue = (
   spotMeta: SpotMeta | null,
 ) => computeSpotValue({ balances, spotAssetCtxs, spotMeta });
 
+/** Staking is HYPE-only; this is its token name in spotMeta. */
+export const STAKING_TOKEN_NAME = 'HYPE';
+
+export type StakingSummaryAmounts = {
+  delegated: string;
+  undelegated: string;
+  totalPendingWithdrawal: string;
+};
+
+/**
+ * HYPE held by the staking account — a ledger separate from spot, so none of
+ * it shows in spot balances. The official portfolio series counts all three
+ * buckets (delegated, undelegated, the 7-day unstaking queue) at the HYPE
+ * spot mark; verified 2026-09-10 on an address whose series last point was
+ * exactly that sum × mark + spot, within minutes of price drift.
+ */
+export const getStakedHypeAmount = (
+  summary: StakingSummaryAmounts | null | undefined,
+): string => {
+  if (!summary) {
+    return '0';
+  }
+  return accountDecimal(summary.delegated)
+    .plus(accountDecimal(summary.undelegated))
+    .plus(accountDecimal(summary.totalPendingWithdrawal))
+    .toString();
+};
+
+export const computeStakingValue = (
+  stakingHype: unknown,
+  spotAssetCtxs: Record<string, FFastAssetCtx>,
+  spotMeta: SpotMeta | null,
+): { unpriced: boolean; value: string } => {
+  const amount = accountDecimal(stakingHype);
+  if (amount.lte(0)) {
+    return { unpriced: false, value: '0' };
+  }
+  const price = resolveSpotUsdcPrice(
+    STAKING_TOKEN_NAME,
+    spotAssetCtxs,
+    spotMeta,
+  );
+  if (!price) {
+    return { unpriced: true, value: '0' };
+  }
+  return { unpriced: false, value: amount.multipliedBy(price).toString() };
+};
+
 export const computePerpsPortfolioValue = ({
   balances,
   includePerpsAccountValue,
   perpsAccountValue,
   spotAssetCtxs,
   spotMeta,
+  stakingHype,
 }: {
   balances: RawSpotBalance[];
   includePerpsAccountValue: boolean;
   perpsAccountValue: unknown;
   spotAssetCtxs: Record<string, FFastAssetCtx>;
   spotMeta: SpotMeta | null;
+  /** Staking-account HYPE total (getStakedHypeAmount); counted in every mode. */
+  stakingHype?: unknown;
 }) => {
   const spotPortfolio = computeSpotPortfolioValue(
     balances,
     spotAssetCtxs,
     spotMeta,
   );
+  const staking = computeStakingValue(stakingHype, spotAssetCtxs, spotMeta);
+  const unpricedNonZeroAssets =
+    staking.unpriced &&
+    !spotPortfolio.unpricedNonZeroAssets.includes(STAKING_TOKEN_NAME)
+      ? [...spotPortfolio.unpricedNonZeroAssets, STAKING_TOKEN_NAME]
+      : spotPortfolio.unpricedNonZeroAssets;
+  let value = accountDecimal(spotPortfolio.value).plus(
+    accountDecimal(staking.value),
+  );
+  if (includePerpsAccountValue) {
+    value = value.plus(accountDecimal(perpsAccountValue));
+  }
 
-  return {
-    unpricedNonZeroAssets: spotPortfolio.unpricedNonZeroAssets,
-    value: includePerpsAccountValue
-      ? accountDecimal(spotPortfolio.value)
-          .plus(accountDecimal(perpsAccountValue))
-          .toString()
-      : spotPortfolio.value,
-  };
+  return { unpricedNonZeroAssets, value: value.toString() };
 };
 
 export const computeTotalCollateralBalance = (

@@ -2793,7 +2793,8 @@
         "breakdownPerps": "Perps",
         "breakdownSpot": "Spot",
         "breakdownOtherAssets": "Sonstige Assets",
-        "breakdownNetOtherAssets": "Sonstige Assets (netto)"
+        "breakdownNetOtherAssets": "Sonstige Assets (netto)",
+        "breakdownStaking": "Staking"
       },
       "PerpsGuidePopup": {
         "step1Title": "Perpetual Futures meistern",

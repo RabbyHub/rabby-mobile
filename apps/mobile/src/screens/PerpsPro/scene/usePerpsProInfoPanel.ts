@@ -16,6 +16,7 @@ import type { PerpsProInfoTab } from '@/core/services/perpsService';
 import { usePerpsRuntimeStatus } from '@/hooks/perps/runtime/usePerpsRuntimeStatus';
 import { getPerpsRuntimeIdentity } from '@/hooks/perps/runtime/perpsRuntimeState';
 import {
+  fetchStakingSummaryHttp,
   isPerpsUserAbstractionReadyForAccount,
   perpsStore,
   type PerpsState,
@@ -27,6 +28,8 @@ import {
   buildPerpsAccountViewModel,
   getPerpsAccountMarginRatio,
   getSpotPriceDependencyKeys,
+  getStakedHypeAmount,
+  STAKING_TOKEN_NAME,
 } from '../model/account';
 import {
   buildPerpsOpenOrdersFromTopology,
@@ -86,6 +89,7 @@ export const usePerpsProInfoPanel = (
       spotMeta: state.spotMeta,
       spotMetaStatus: state.spotMetaStatus,
       spotState: state.spotState,
+      stakingSummary: state.stakingSummary,
       userAbstraction: state.userAbstraction,
       userAbstractionReady: isPerpsUserAbstractionReadyForAccount(state),
     })),
@@ -124,15 +128,24 @@ export const usePerpsProInfoPanel = (
   const accountPagePrepared =
     preferences.activeInfoTab !== 'openOrders' ||
     requestedInfoTab === 'account';
+  const stakingHype = useMemo(
+    () => getStakedHypeAmount(facts.stakingSummary),
+    [facts.stakingSummary],
+  );
   const priceDependencyKeys = useMemo(
     () =>
       getSpotPriceDependencyKeys(
-        facts.spotState.rawBalances
-          .filter(balance => Number(balance.total) !== 0)
-          .map(balance => balance.coin),
+        [
+          ...facts.spotState.rawBalances
+            .filter(balance => Number(balance.total) !== 0)
+            .map(balance => balance.coin),
+          // Staked HYPE is priced off the same spot pair even when the spot
+          // balance holds none.
+          ...(Number(stakingHype) > 0 ? [STAKING_TOKEN_NAME] : []),
+        ],
         facts.spotMeta,
       ),
-    [facts.spotMeta, facts.spotState.rawBalances],
+    [facts.spotMeta, facts.spotState.rawBalances, stakingHype],
   );
   const selectSpotPriceValues = useShallow((state: PerpsState) =>
     priceDependencyKeys.map(
@@ -187,6 +200,15 @@ export const usePerpsProInfoPanel = (
     fetchSpotMeta,
   ]);
 
+  // Staking has no WS feed: refresh the REST snapshot whenever the Account
+  // page is revealed (single-flight in the store).
+  const currentAccountAddress = facts.currentAccount?.address;
+  useEffect(() => {
+    if (accountPagePrepared && currentAccountAddress) {
+      fetchStakingSummaryHttp(currentAccountAddress);
+    }
+  }, [accountPagePrepared, currentAccountAddress]);
+
   const account = useMemo(
     () =>
       buildPerpsAccountViewModel({
@@ -195,6 +217,7 @@ export const usePerpsProInfoPanel = (
         spotAssetCtxs,
         spotMeta: facts.spotMeta,
         spotState: facts.spotState,
+        stakingHype,
         userAbstraction: facts.userAbstraction,
       }),
     [
@@ -204,6 +227,7 @@ export const usePerpsProInfoPanel = (
       facts.userAbstraction,
       marketDataMap,
       spotAssetCtxs,
+      stakingHype,
     ],
   );
   const openOrderTopology = useMemo(
@@ -357,6 +381,7 @@ export const usePerpsProInfoPanel = (
     }
     fetchMarketData();
     fetchSpotMeta(true);
+    fetchStakingSummaryHttp();
   }, [fetchMarketData, fetchSpotMeta, runtime]);
 
   return {
