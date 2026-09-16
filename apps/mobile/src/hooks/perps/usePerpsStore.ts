@@ -650,6 +650,7 @@ function stopHomeSpotSubscription() {
 
 function stopAccountSubscriptions() {
   activeUserDataSubscription = null;
+  clearAccountReadinessFallback();
   stopHomeSpotSubscription();
   setPerpsState(prev => {
     prev.wsSubscriptions.forEach(unsubscribe => {
@@ -1307,14 +1308,27 @@ const prepareHomePerpsAccount = async (account: Account) => {
       account.address.toLowerCase()
     ] ?? null;
   setCurrentPerpsAccount(account);
-  setPerpsState(prev => ({
-    ...prev,
-    currentClearinghouseState: cachedClearinghouseState,
-    homePositionPnl: cachedClearinghouseState
-      ? formatPositionPnl(cachedClearinghouseState)
-      : initialState.homePositionPnl,
-    isUserDataReady: !!cachedClearinghouseState,
-  }));
+  setPerpsState(prev => {
+    // The selector map is only a seed. When the account is already live
+    // (full subscription reused, or a newer aggregate in place) keep that —
+    // downgrading isUserDataReady here parked the Perps screens on their
+    // skeleton until the next WS push, which for an idle account never came.
+    const seeded =
+      prev.currentClearinghouseState &&
+      (!cachedClearinghouseState ||
+        (prev.currentClearinghouseState.time ?? 0) >=
+          (cachedClearinghouseState.time ?? 0))
+        ? prev.currentClearinghouseState
+        : cachedClearinghouseState;
+    return {
+      ...prev,
+      currentClearinghouseState: seeded,
+      homePositionPnl: seeded
+        ? formatPositionPnl(seeded)
+        : initialState.homePositionPnl,
+      isUserDataReady: prev.isUserDataReady || !!seeded,
+    };
+  });
 
   const sdk = apisPerps.getPerpsSDK();
   if (!reusesFullSubscription) {
@@ -1993,6 +2007,11 @@ export const subscribeToUserData = (account: Account) => {
           : prev,
       );
     },
+    // Bind every user stream to THIS address. The SDK default is its
+    // masterAddress, which only initAccount sets — a login branch that skips
+    // it (locked wallet) or a rebuilt SDK would stream another account, and
+    // the guards above would drop every frame, so the ready flags never set.
+    address,
   );
 
   const { unsubscribe: unsubscribeOpenOrders } = sdk.ws.subscribeToOpenOrders(
@@ -2030,6 +2049,7 @@ export const subscribeToUserData = (account: Account) => {
           : prev,
       );
     },
+    address,
   );
 
   const { unsubscribe: unsubscribeFills } = sdk.ws.subscribeToUserFills(
@@ -2056,6 +2076,7 @@ export const subscribeToUserData = (account: Account) => {
         kind: 'fills',
       });
     },
+    address,
   );
 
   const { unsubscribe: unsubscribeUserNonFundingLedgerUpdates } =
@@ -2078,7 +2099,7 @@ export const subscribeToUserData = (account: Account) => {
         items: nonFundingLedgerUpdates,
         kind: 'ledger',
       });
-    });
+    }, address);
 
   setWsSubscriptions(prev => {
     return [
@@ -2094,6 +2115,7 @@ export const subscribeToUserData = (account: Account) => {
   activeUserDataSubscription = {
     address,
   };
+  scheduleAccountReadinessFallback(address);
   traceStartupDiagnostic('perps', 'user_subscription_registered', {
     durationMs: Date.now() - startedAt,
   });
@@ -2396,6 +2418,103 @@ export const fetchAllDexsClearinghouseStateHttp = async () => {
   if (results.some(result => result === 'updated')) {
     flushAggregatedClearinghouseState(address);
   }
+};
+
+// Readiness watchdog for the Perps screens. Both the Simple card and the Pro
+// account panel gate "Available" on the first WS frames (clearinghouse, spot)
+// and on a resolved account mode. Each of those can silently never arrive:
+// a subscribe answered with "Already subscribed" (no snapshot), a mode read
+// that failed once with no cache, a frame dropped by the address guard — and
+// nothing retried, so the skeleton stayed until an account switch or a
+// restart. Pull HTTP snapshots for whatever is still missing, with capped
+// backoff while the account stays current; stops as soon as all are ready.
+const ACCOUNT_READINESS_FALLBACK_DELAYS_MS = [8_000, 15_000, 30_000, 60_000];
+let accountReadinessTimer: ReturnType<typeof setTimeout> | null = null;
+let accountReadinessGeneration = 0;
+
+const clearAccountReadinessFallback = () => {
+  accountReadinessGeneration += 1;
+  if (accountReadinessTimer) {
+    clearTimeout(accountReadinessTimer);
+    accountReadinessTimer = null;
+  }
+};
+
+const getMissingAccountReadiness = (state: PerpsState, address: string) => {
+  if (
+    !state.currentPerpsAccount ||
+    !isSameAddress(state.currentPerpsAccount.address, address)
+  ) {
+    return null;
+  }
+  const modeKnown = isPerpsUserAbstractionModeKnown(state);
+  const isSpotCollateralMode =
+    state.userAbstraction === UserAbstractionResp.unifiedAccount ||
+    state.userAbstraction === UserAbstractionResp.portfolioMargin;
+  return {
+    mode: !modeKnown,
+    userData: !state.isUserDataReady,
+    // An unresolved mode may still turn out to be spot-collateral.
+    spot: (!modeKnown || isSpotCollateralMode) && !state.isSpotStateReady,
+  };
+};
+
+const runAccountReadinessFallback = async (
+  address: string,
+  attempt: number,
+  generation: number,
+) => {
+  if (generation !== accountReadinessGeneration) {
+    return;
+  }
+  const state = perpsStore.getState();
+  const missing = getMissingAccountReadiness(state, address);
+  if (!missing || (!missing.mode && !missing.userData && !missing.spot)) {
+    return;
+  }
+  // Don't burn requests in the background; the next tick re-checks.
+  const appState = AppState.currentState;
+  if (appState === 'background' || appState === 'inactive') {
+    scheduleAccountReadinessFallback(address, attempt);
+    return;
+  }
+  const account = state.currentPerpsAccount!;
+  const tasks: Promise<unknown>[] = [];
+  if (missing.mode) {
+    tasks.push(fetchUserAbstraction(account));
+  }
+  if (missing.userData) {
+    tasks.push(fetchAllDexsClearinghouseStateHttp());
+  }
+  if (missing.spot) {
+    tasks.push(fetchSpotStateHttp(address));
+  }
+  const results = await Promise.allSettled(tasks);
+  results.forEach(result => {
+    if (result.status === 'rejected') {
+      console.warn('[perpsReadiness] http fallback failed', result.reason);
+    }
+  });
+  if (generation !== accountReadinessGeneration) {
+    return;
+  }
+  const still = getMissingAccountReadiness(perpsStore.getState(), address);
+  if (still && (still.mode || still.userData || still.spot)) {
+    scheduleAccountReadinessFallback(address, attempt + 1);
+  }
+};
+
+const scheduleAccountReadinessFallback = (address: string, attempt = 0) => {
+  clearAccountReadinessFallback();
+  const generation = accountReadinessGeneration;
+  const delay =
+    ACCOUNT_READINESS_FALLBACK_DELAYS_MS[
+      Math.min(attempt, ACCOUNT_READINESS_FALLBACK_DELAYS_MS.length - 1)
+    ];
+  accountReadinessTimer = setTimeout(() => {
+    accountReadinessTimer = null;
+    void runAccountReadinessFallback(address, attempt, generation);
+  }, delay);
 };
 
 // Home badge fallback for when the WS first frames never arrive: pull one
@@ -2753,6 +2872,10 @@ export const usePerpsStore = () => {
     fetchUserHistoricalOrders();
     if (!canReuseSubscription) {
       subscribeToUserData(account);
+    } else {
+      // Reused streams push only on change: if a reset left a readiness
+      // flag false, nothing else would ever set it again.
+      scheduleAccountReadinessFallback(account.address);
     }
     fetchUserNonFundingLedgerUpdates();
     fetchPerpPermission(account.address);
