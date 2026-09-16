@@ -80,12 +80,14 @@ export const computePortfolioBreakdownValues = (
 };
 
 export const usePerpsPortfolioBreakdown = () => {
-  // Icon visibility only needs "does any spot asset exist" — a boolean that
+  // Icon visibility only needs "does any spot or staking asset exist" — a boolean that
   // flips on balance changes, not on price ticks — plus the account mode.
   const { hasNonPerpsAssets, userAbstraction } = useActivityStore(
     perpsStore,
     useShallow(s => ({
-      hasNonPerpsAssets: s.spotState.rawBalances.some(b => Number(b.total) > 0),
+      hasNonPerpsAssets:
+        s.spotState.rawBalances.some(b => Number(b.total) > 0) ||
+        Number(getStakedHypeAmount(s.stakingSummary)) > 0,
       userAbstraction: s.userAbstraction,
     })),
     Object.is,

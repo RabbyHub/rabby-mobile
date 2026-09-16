@@ -18,7 +18,11 @@ const mockOpenOrders = [
 ];
 const mockAccount = {
   assets: [],
-  diagnostics: { complete: true, unresolvedDexes: [] },
+  diagnostics: {
+    complete: true,
+    unresolvedDexes: [],
+    unpricedNonZeroAssets: [],
+  },
   mode: 'standard',
 };
 const mockPerpsState = {
@@ -43,6 +47,7 @@ const mockPerpsState = {
   spotAssetCtxs: {},
   spotMeta: null,
   spotMetaStatus: 'ready',
+  stakingStatus: 'success',
   spotState: {
     accountValue: '202' as string | null | undefined,
     rawBalances: [],

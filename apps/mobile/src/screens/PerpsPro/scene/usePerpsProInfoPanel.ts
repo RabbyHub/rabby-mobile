@@ -65,6 +65,7 @@ const marketFactSignature = (market: {
 export const usePerpsProInfoPanel = (
   canonicalCoin: string,
   requestedInfoTab: PerpsProInfoTab | null = null,
+  sceneActive = true,
 ) => {
   const preferences = usePerpsProInfoPreferences();
   const runtime = usePerpsRuntimeStatus();
@@ -90,6 +91,7 @@ export const usePerpsProInfoPanel = (
       spotMetaStatus: state.spotMetaStatus,
       spotState: state.spotState,
       stakingSummary: state.stakingSummary,
+      stakingStatus: state.stakingStatus,
       userAbstraction: state.userAbstraction,
       userAbstractionReady: isPerpsUserAbstractionReadyForAccount(state),
     })),
@@ -200,15 +202,6 @@ export const usePerpsProInfoPanel = (
     fetchSpotMeta,
   ]);
 
-  // Staking has no WS feed: refresh the REST snapshot whenever the Account
-  // page is revealed (single-flight in the store).
-  const currentAccountAddress = facts.currentAccount?.address;
-  useEffect(() => {
-    if (accountPagePrepared && currentAccountAddress) {
-      fetchStakingSummaryHttp(currentAccountAddress);
-    }
-  }, [accountPagePrepared, currentAccountAddress]);
-
   const account = useMemo(
     () =>
       buildPerpsAccountViewModel({
@@ -304,6 +297,21 @@ export const usePerpsProInfoPanel = (
     );
   }, [infoTabPresentation.automaticSelection]);
   const activeInfoTab = infoTabPresentation.activeInfoTab;
+  // Prepared neighbours are retained offscreen. Refresh only while Account
+  // is displayed, including a tap before its native pager transition settles.
+  const accountPageActive =
+    sceneActive && (requestedInfoTab ?? activeInfoTab) === 'account';
+  const currentAccountAddress = facts.currentAccount?.address;
+  useEffect(() => {
+    if (!accountPageActive || !currentAccountAddress) {
+      return;
+    }
+    fetchStakingSummaryHttp(currentAccountAddress);
+    const timer = setInterval(() => {
+      fetchStakingSummaryHttp(currentAccountAddress);
+    }, 60_000);
+    return () => clearInterval(timer);
+  }, [accountPageActive, currentAccountAddress]);
   const allOpenOrders = useMemo(
     () => buildPerpsOpenOrdersFromTopology(openOrderTopology),
     [openOrderTopology],
@@ -351,17 +359,24 @@ export const usePerpsProInfoPanel = (
     if (facts.spotMetaStatus === 'error' && !facts.spotMeta) {
       return 'error';
     }
+    if (facts.stakingStatus === 'error') {
+      return 'error';
+    }
     if (
       runtime.status !== 'ready' ||
       !facts.isUserDataReady ||
       !facts.isSpotStateReady ||
       !facts.userAbstractionReady ||
-      !facts.spotMeta
+      !facts.spotMeta ||
+      facts.stakingStatus !== 'success'
     ) {
       return 'loading';
     }
     if (account.diagnostics.unresolvedDexes.length > 0) {
       return 'error';
+    }
+    if (account.diagnostics.unpricedNonZeroAssets.length > 0) {
+      return 'loading';
     }
     return 'ready';
   }, [
@@ -371,6 +386,7 @@ export const usePerpsProInfoPanel = (
     facts.isUserDataReady,
     facts.spotMeta,
     facts.spotMetaStatus,
+    facts.stakingStatus,
     facts.userAbstractionReady,
     runtime.status,
   ]);

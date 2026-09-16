@@ -50,18 +50,19 @@ export const usePerpsPortfolioLiveValue = (enabled = true): number | null => {
       ) {
         return null;
       }
-      const total = Number(
-        computePerpsPortfolioValue({
-          balances: s.spotState.rawBalances,
-          includePerpsAccountValue: !isSpotCollateral,
-          perpsAccountValue:
-            s.currentClearinghouseState?.marginSummary?.accountValue,
-          spotAssetCtxs: s.spotAssetCtxs,
-          spotMeta: s.spotMeta,
-          stakingHype: getStakedHypeAmount(s.stakingSummary),
-        }).value,
-      );
-      return Math.round(total * 100) / 100;
+      const portfolio = computePerpsPortfolioValue({
+        balances: s.spotState.rawBalances,
+        includePerpsAccountValue: !isSpotCollateral,
+        perpsAccountValue:
+          s.currentClearinghouseState?.marginSummary?.accountValue,
+        spotAssetCtxs: s.spotAssetCtxs,
+        spotMeta: s.spotMeta,
+        stakingHype: getStakedHypeAmount(s.stakingSummary),
+      });
+      if (portfolio.unpricedNonZeroAssets.length > 0) {
+        return null;
+      }
+      return Math.round(Number(portfolio.value) * 100) / 100;
     },
     Object.is,
     { storeLabel: 'perps-portfolio-live-value' },
