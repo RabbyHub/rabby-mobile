@@ -17,6 +17,14 @@ import { useTranslation } from 'react-i18next';
 import type { PositionMarginRange } from '../../model/positionMargin';
 import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
 
+const MIN_BUTTON_WIDTH = 32;
+const MAX_BUTTON_WIDTH = 40;
+const AMOUNT_COLUMN_GAP = 4;
+export const PERPS_PRO_MARGIN_AMOUNT_INSETS = {
+  left: MIN_BUTTON_WIDTH + AMOUNT_COLUMN_GAP,
+  right: MAX_BUTTON_WIDTH + AMOUNT_COLUMN_GAP,
+} as const;
+
 const PerpsProManageMarginBottomSheetTextInput = React.forwardRef<
   TextInput,
   React.ComponentProps<typeof TextInput>
@@ -153,8 +161,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'center',
     zIndex: 2,
   },
-  minButton: { width: 32 },
-  maxButton: { width: 40 },
+  minButton: { width: MIN_BUTTON_WIDTH },
+  maxButton: { width: MAX_BUTTON_WIDTH },
   maxLabel: { textTransform: 'uppercase' },
   boundButtonText: {
     color: PERPS_PRO_DIALOG_TOKENS.actionBackground,
@@ -169,8 +177,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     height: 42,
     position: 'absolute',
-    left: 48,
-    right: 48,
+    ...PERPS_PRO_MARGIN_AMOUNT_INSETS,
   },
   unit: {
     ...PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,

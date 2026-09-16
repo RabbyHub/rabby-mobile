@@ -230,6 +230,7 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
                 disabled={pending}
                 height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                 loading={pending}
+                loadingProps={{ color: styles.buttonDisabledTitle.color }}
                 onPress={onConfirm}
                 testID="perps-pro-position-tpsl-confirm"
                 title={t('global.confirm')}

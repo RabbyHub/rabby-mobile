@@ -228,6 +228,7 @@ export const PerpsProTransferSheet: React.FC<{
               ]}
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
               loading={pending}
+              loadingProps={{ color: styles.buttonDisabledTitle.color }}
               onPress={() => onConfirm(amountValue.toFixed())}
               title={t('global.confirm')}
               titleStyle={styles.buttonTitle}

@@ -53,7 +53,7 @@ export const PerpsProFieldExplanationSheet: React.FC<{
       ref={modalRef}
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: 'bg1',
+        linearGradientType: 'bg0',
       })}
       backdropComponent={PerpsProDialogBackdrop}
       backdropProps={{ pressBehavior: 'close' }}

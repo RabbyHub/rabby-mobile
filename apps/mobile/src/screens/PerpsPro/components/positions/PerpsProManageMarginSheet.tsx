@@ -36,7 +36,10 @@ import {
   formatPerpsProPrice,
 } from '../../utils/format';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
-import { PerpsProManageMarginAmountRow } from './PerpsProManageMarginAmountRow';
+import {
+  PerpsProManageMarginAmountRow,
+  PERPS_PRO_MARGIN_AMOUNT_INSETS,
+} from './PerpsProManageMarginAmountRow';
 import { PerpsProManageMarginSlider } from './PerpsProManageMarginSlider';
 
 const SHEET_HEIGHT = 564;
@@ -159,7 +162,7 @@ export const PerpsProManageMarginSheet: React.FC<{
       <AppBottomSheetModal
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: 'bg1',
+          linearGradientType: 'bg0',
         })}
         android_keyboardInputMode="adjustPan"
         backdropComponent={PerpsProDialogBackdrop}
@@ -302,7 +305,7 @@ export const PerpsProManageMarginSheet: React.FC<{
                   {t('page.perps.pro.positions.liquidation')}
                 </Text>
                 <Text style={styles.factValue}>
-                  {currentLiq} → {projectedLiq}
+                  {currentLiq}→ {projectedLiq}
                 </Text>
               </View>
               <View style={styles.factRow}>
@@ -316,7 +319,7 @@ export const PerpsProManageMarginSheet: React.FC<{
                     width={16}
                   />
                   <Text style={styles.factValue}>
-                    {currentDistance} → {projectedDistance}
+                    {currentDistance}→ {projectedDistance}
                   </Text>
                 </View>
               </View>
@@ -331,6 +334,7 @@ export const PerpsProManageMarginSheet: React.FC<{
                 disabled={confirmDisabled}
                 height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                 loading={pending}
+                loadingProps={{ color: styles.buttonDisabledTitle.color }}
                 onPress={() => {
                   dismissInput();
                   onConfirm();
@@ -374,7 +378,7 @@ const getStyle = createGetStyles2024(
       position: 'absolute',
     },
     identityRow: {
-      alignItems: 'center',
+      alignItems: 'flex-start',
       flexDirection: 'row',
       gap: 4,
       height: 20,
@@ -408,6 +412,7 @@ const getStyle = createGetStyles2024(
     factRow: {
       alignItems: 'center',
       flexDirection: 'row',
+      gap: 8,
       height: 16,
       justifyContent: 'space-between',
     },
@@ -421,7 +426,6 @@ const getStyle = createGetStyles2024(
       ...PERPS_PRO_NUMBER_STYLE,
       flexShrink: 1,
       minWidth: 0,
-      marginLeft: 8,
       textAlign: 'right',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
@@ -433,7 +437,6 @@ const getStyle = createGetStyles2024(
       ...PERPS_PRO_NUMBER_STYLE,
       flexShrink: 1,
       minWidth: 0,
-      marginLeft: 8,
       textAlign: 'right',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
@@ -496,9 +499,9 @@ const getStyle = createGetStyles2024(
     slider: { left: 16, position: 'absolute', right: 16, top: 114 },
     warning: {
       alignItems: 'center',
-      left: 16,
+      left: 16 + PERPS_PRO_MARGIN_AMOUNT_INSETS.left,
       position: 'absolute',
-      right: 16,
+      right: 16 + PERPS_PRO_MARGIN_AMOUNT_INSETS.right,
       top: 90,
     },
     warningText: {

@@ -109,7 +109,7 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
         ref={modalRef}
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: 'bg1',
+          linearGradientType: 'bg0',
         })}
         backdropComponent={renderBackdrop}
         backgroundStyle={styles.background}
@@ -204,6 +204,7 @@ export const PerpsProCloseConfirmationSheet: React.FC<{
                 disabled={pending}
                 height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                 loading={pending}
+                loadingProps={{ color: styles.buttonDisabledTitle.color }}
                 onPress={onConfirm}
                 title={t('global.confirm')}
                 titleStyle={styles.buttonTitle}

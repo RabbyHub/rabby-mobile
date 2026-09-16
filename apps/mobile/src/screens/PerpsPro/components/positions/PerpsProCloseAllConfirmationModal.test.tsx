@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import { colord } from 'colord';
+import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
 
 jest.mock('@/assets2024/icons/perps/PerpsProCloseAllWarning.svg', () => {
   const ReactModule = require('react');
@@ -36,6 +38,7 @@ jest.mock('@/components2024/Button', () => {
       buttonStyle,
       titleStyle,
       height,
+      loadingProps,
     }: any) =>
       ReactModule.createElement(
         Pressable,
@@ -45,6 +48,7 @@ jest.mock('@/components2024/Button', () => {
           buttonStyle,
           titleStyle,
           height,
+          loadingProps,
           onPress,
           testID,
         },
@@ -156,5 +160,17 @@ describe('PerpsProCloseAllConfirmationModal', () => {
         .accessibilityState,
     ).toEqual({ busy: true, disabled: true });
     expect(screen.getByText('loading')).toBeTruthy();
+    const confirm = screen.getByTestId('perps-pro-close-all-confirm');
+    expect(
+      colord(
+        StyleSheet.flatten(confirm.props.buttonStyle).backgroundColor,
+      ).toRgb(),
+    ).toEqual({
+      ...colord(PERPS_PRO_DIALOG_TOKENS.actionBackground).toRgb(),
+      a: 0.4,
+    });
+    expect(confirm.props.loadingProps.color).toBe(
+      PERPS_PRO_DIALOG_TOKENS.actionForeground,
+    );
   });
 });

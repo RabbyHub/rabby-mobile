@@ -181,7 +181,7 @@ export const PerpsProBasicOrderEditSheet: React.FC<{
       ref={modalRef}
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: 'bg1',
+        linearGradientType: 'bg0',
       })}
       android_keyboardInputMode="adjustPan"
       backdropComponent={renderBackdrop}

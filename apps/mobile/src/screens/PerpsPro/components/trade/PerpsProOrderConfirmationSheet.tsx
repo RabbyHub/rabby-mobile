@@ -296,6 +296,7 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
                 disabled={pending}
                 height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                 loading={pending}
+                loadingProps={{ color: styles.buttonDisabledTitle.color }}
                 onPress={onConfirm}
                 title={t('global.confirm')}
                 titleStyle={styles.buttonTitle}

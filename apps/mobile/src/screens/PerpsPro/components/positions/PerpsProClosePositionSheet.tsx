@@ -366,7 +366,7 @@ export const PerpsProClosePositionSheet: React.FC<{
         ref={modalRef}
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: 'bg1',
+          linearGradientType: 'bg0',
         })}
         backdropComponent={renderBackdrop}
         backgroundStyle={styles.background}

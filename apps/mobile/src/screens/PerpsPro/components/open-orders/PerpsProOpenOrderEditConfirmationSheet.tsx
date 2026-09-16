@@ -114,7 +114,7 @@ export const PerpsProOpenOrderEditConfirmationSheet: React.FC<{
         ref={modalRef}
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: 'bg1',
+          linearGradientType: 'bg0',
         })}
         backdropComponent={renderBackdrop}
         backgroundStyle={styles.background}
@@ -225,6 +225,7 @@ export const PerpsProOpenOrderEditConfirmationSheet: React.FC<{
                 disabled={pending}
                 height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                 loading={pending}
+                loadingProps={{ color: styles.buttonDisabledTitle.color }}
                 onPress={onConfirm}
                 testID="perps-pro-open-order-edit-final-confirm"
                 title={t('global.confirm')}

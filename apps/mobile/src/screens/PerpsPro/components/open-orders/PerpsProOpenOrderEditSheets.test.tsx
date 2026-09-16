@@ -1,3 +1,8 @@
+import { ThemeColors2024 } from '@/constant/theme';
+let mockThemeMode: 'light' | 'dark' | undefined;
+beforeEach(() => {
+  mockThemeMode = undefined;
+});
 jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
 import {
   act,
@@ -7,7 +12,7 @@ import {
   screen,
 } from '@testing-library/react-native';
 import React from 'react';
-import { Keyboard, ScrollView, StyleSheet } from 'react-native';
+import { Keyboard, ScrollView, StyleSheet, View } from 'react-native';
 import { perpsProKeyboardSession } from '../common/perpsProKeyboardSession';
 
 jest.mock('@/core/native/utils', () => ({ IS_ANDROID: true }));
@@ -52,6 +57,10 @@ jest.mock('@/components/customized/BottomSheet', () => {
         return ReactModule.createElement(
           View,
           { testID: 'bottom-sheet' },
+          ReactModule.createElement(props.backgroundComponent, {
+            style: props.backgroundStyle,
+            testID: 'dialog-background',
+          }),
           props.children,
         );
       },
@@ -79,17 +88,21 @@ jest.mock('@/components2024/Button', () => {
       ),
   };
 });
-jest.mock('@/components2024/GlobalBottomSheetModal/utils-help', () => ({
-  makeBottomSheetProps: () => ({}),
-}));
+// Keep the real background factory and renderer; only the native gradient is stubbed.
+jest.mock('react-native-linear-gradient', () => require('react-native').View);
 jest.mock('@/hooks/theme', () => ({
-  useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
-    const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
+  useTheme2024: ({
+    getStyle,
+  }: { getStyle?: (input: object) => object } = {}) => {
+    const colors2024 = mockThemeMode
+      ? require('@/constant/theme').ThemeColors2024[mockThemeMode]
+      : new Proxy({}, { get: (_target, key) => String(key) });
     return {
       colors2024,
-      styles: getStyle({
+      isLight: mockThemeMode !== 'dark',
+      styles: getStyle?.({
         colors2024,
-        isLight: true,
+        isLight: mockThemeMode !== 'dark',
         safeAreaInsets: { bottom: 0 },
       }),
     };
@@ -448,6 +461,105 @@ describe('Android open order edit keyboard avoidance', () => {
 
 describe('Perps Pro open order edit sheets', () => {
   beforeEach(() => jest.clearAllMocks());
+
+  it.each(
+    (['light', 'dark'] as const).flatMap(mode =>
+      (['basic', 'conditionalMarket', 'conditionalLimit'] as const).flatMap(
+        kind =>
+          [false, true].map(confirmation => ({ mode, kind, confirmation })),
+      ),
+    ),
+  )(
+    'renders the $mode $kind background with confirmation=$confirmation',
+    ({ mode, kind, confirmation }) => {
+      mockThemeMode = mode;
+      const editor =
+        kind === 'basic'
+          ? basicEditor
+          : kind === 'conditionalLimit'
+          ? {
+              ...conditionalEditor,
+              order: {
+                ...conditionalEditor.order,
+                editKind: 'triggerLimit' as const,
+                executionPriceKind: 'limit' as const,
+                orderType: 'Take Profit Limit',
+              },
+            }
+          : conditionalEditor;
+      const review = {
+        category: editor.category,
+        command: {
+          replacement: {
+            baseSize: '0.4',
+            limitPrice: '110',
+            triggerPrice: '112',
+          },
+        },
+      } as PerpsProOpenOrderEditReviewState;
+      render(
+        confirmation ? (
+          <PerpsProOpenOrderEditConfirmationSheet
+            editor={editor}
+            review={review}
+            onClose={jest.fn()}
+            onConfirm={jest.fn()}
+            onToggleSkipConfirmation={jest.fn()}
+            pending={false}
+            skipConfirmation={false}
+          />
+        ) : editor.category === 'basic' ? (
+          <PerpsProBasicOrderEditSheet
+            coveredByReview={false}
+            editor={editor}
+            onClose={jest.fn()}
+            onReview={jest.fn()}
+            visible
+          />
+        ) : (
+          <PerpsProConditionalOrderEditSheet
+            coveredByReview={false}
+            editor={editor}
+            position={position}
+            onClose={jest.fn()}
+            onReview={jest.fn()}
+            visible
+          />
+        ),
+      );
+      const colors = ThemeColors2024[mode];
+      const background = StyleSheet.flatten(
+        screen.getByTestId('dialog-background').props.style,
+      ).backgroundColor;
+      expect(background).toBe(colors['neutral-bg-0']);
+      expect(
+        StyleSheet.flatten(mockModalProps.mock.calls.at(-1)![0].handleStyle)
+          .backgroundColor,
+      ).toBe(background);
+      const cards = screen
+        .UNSAFE_getAllByType(View)
+        .map(view => StyleSheet.flatten(view.props.style))
+        .filter(style => style?.borderRadius === 12);
+      expect(cards).toHaveLength(1);
+      expect(cards[0].backgroundColor).toBe(
+        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
+      );
+      expect(cards[0].backgroundColor).not.toBe(background);
+      if (!confirmation) {
+        const fields = screen
+          .UNSAFE_getAllByType(View)
+          .map(view => StyleSheet.flatten(view.props.style))
+          .filter(style => style?.borderRadius === 6);
+        expect(fields).toHaveLength(kind === 'basic' ? 2 : 4);
+        for (const field of fields) {
+          expect(field.backgroundColor).toBe(
+            colors[mode === 'light' ? 'neutral-bg-0' : 'neutral-bg-5'],
+          );
+          expect(field.backgroundColor).not.toBe(cards[0].backgroundColor);
+        }
+      }
+    },
+  );
 
   it('locks the Basic editor to the 396px Figma geometry and remaining sz', () => {
     render(

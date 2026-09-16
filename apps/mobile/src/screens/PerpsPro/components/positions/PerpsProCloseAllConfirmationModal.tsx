@@ -81,6 +81,7 @@ export const PerpsProCloseAllConfirmationModal: React.FC<{
               disabled={pending}
               height={CLOSE_ALL_ACTION_HEIGHT}
               loading={pending}
+              loadingProps={{ color: styles.buttonDisabledTitle.color }}
               onPress={onConfirm}
               testID="perps-pro-close-all-confirm"
               title={t('global.confirm')}

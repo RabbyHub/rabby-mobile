@@ -1,3 +1,8 @@
+import { ThemeColors2024 } from '@/constant/theme';
+let mockThemeMode: 'light' | 'dark' | undefined;
+beforeEach(() => {
+  mockThemeMode = undefined;
+});
 const mockClose = jest.fn();
 jest.mock('./PerpsProDialogBackdrop', () => ({
   PerpsProDialogBackdrop: () => null,
@@ -20,10 +25,15 @@ jest.mock('@/components/customized/BottomSheet', () => {
           close: mockClose,
           present: jest.fn(),
         }));
-        return ReactModule.createElement(View, {
-          ...props,
-          testID: 'field-explanation-bottom-sheet',
-        });
+        return ReactModule.createElement(
+          View,
+          { ...props, testID: 'field-explanation-bottom-sheet' },
+          ReactModule.createElement(props.backgroundComponent, {
+            style: props.backgroundStyle,
+            testID: 'dialog-background',
+          }),
+          props.children,
+        );
       },
     ),
   };
@@ -40,15 +50,23 @@ jest.mock('@/components2024/Button', () => {
       ),
   };
 });
-jest.mock('@/components2024/GlobalBottomSheetModal/utils-help', () => ({
-  makeBottomSheetProps: () => ({}),
-}));
+// Keep the real background factory and renderer; only the native gradient is stubbed.
+jest.mock('react-native-linear-gradient', () => require('react-native').View);
 jest.mock('@/hooks/theme', () => ({
-  useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
-    const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
+  useTheme2024: ({
+    getStyle,
+  }: { getStyle?: (input: object) => object } = {}) => {
+    const colors2024 = mockThemeMode
+      ? require('@/constant/theme').ThemeColors2024[mockThemeMode]
+      : new Proxy({}, { get: (_target, key) => String(key) });
     return {
       colors2024,
-      styles: getStyle({ colors2024, safeAreaInsets: { bottom: 0 } }),
+      isLight: mockThemeMode !== 'dark',
+      styles: getStyle?.({
+        colors2024,
+        isLight: mockThemeMode !== 'dark',
+        safeAreaInsets: { bottom: 0 },
+      }),
     };
   },
 }));
@@ -81,6 +99,32 @@ jest.mock('react-i18next', () => ({
 import { PerpsProFieldExplanationSheet } from './PerpsProFieldExplanationSheet';
 
 describe('PerpsProFieldExplanationSheet', () => {
+  it.each(['light', 'dark'] as const)(
+    'renders the same %s background below the handle for short and long explanations',
+    mode => {
+      mockThemeMode = mode;
+      for (const explanationKey of ['cost', 'liquidationDistance'] as const) {
+        const view = render(
+          <PerpsProFieldExplanationSheet
+            explanationKey={explanationKey}
+            onDismiss={jest.fn()}
+          />,
+        );
+        const background = StyleSheet.flatten(
+          screen.getByTestId('dialog-background').props.style,
+        ).backgroundColor;
+        expect(background).toBe(ThemeColors2024[mode]['neutral-bg-0']);
+        expect(
+          StyleSheet.flatten(
+            screen.getByTestId('field-explanation-bottom-sheet').props
+              .handleStyle,
+          ).backgroundColor,
+        ).toBe(background);
+        view.unmount();
+      }
+    },
+  );
+
   it('sizes to explanation content and closes through the same button callback', () => {
     render(
       <PerpsProFieldExplanationSheet

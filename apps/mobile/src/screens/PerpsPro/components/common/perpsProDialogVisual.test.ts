@@ -1,4 +1,5 @@
 import { ThemeColors2024 } from '@/constant/theme';
+import { colord } from 'colord';
 import { StyleSheet } from 'react-native';
 import {
   getPerpsProDialogStyles as getDialogStyles,
@@ -47,11 +48,12 @@ describe('Pro dialog surfaces', () => {
       expect(actions.buttonTitle.color).toBe(
         PERPS_PRO_DIALOG_TOKENS.actionForeground,
       );
-      expect(actions.buttonDisabled.backgroundColor).toBe(
-        colors['brand-disable'],
-      );
+      expect(colord(actions.buttonDisabled.backgroundColor).toRgb()).toEqual({
+        ...colord(PERPS_PRO_DIALOG_TOKENS.actionBackground).toRgb(),
+        a: 0.4,
+      });
       expect(actions.buttonDisabledTitle.color).toBe(
-        colors['neutral-InvertHighlight'],
+        PERPS_PRO_DIALOG_TOKENS.actionForeground,
       );
       expect(styles.background.backgroundColor).toBe(colors['neutral-bg-0']);
       expect(inactive.backgroundColor).toBe(

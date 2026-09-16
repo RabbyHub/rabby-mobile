@@ -1,7 +1,12 @@
+import { ThemeColors2024 } from '@/constant/theme';
+let mockThemeMode: 'light' | 'dark' | undefined;
+beforeEach(() => {
+  mockThemeMode = undefined;
+});
 jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 jest.mock('@/assets2024/icons/common/checkbox-empty-cc.svg', () => {
   const ReactModule = require('react');
@@ -27,10 +32,15 @@ jest.mock('@/components/customized/BottomSheet', () => {
           close: jest.fn(),
           present: jest.fn(),
         }));
-        return ReactModule.createElement(View, {
-          ...props,
-          testID: 'close-confirmation-sheet',
-        });
+        return ReactModule.createElement(
+          View,
+          { ...props, testID: 'close-confirmation-sheet' },
+          ReactModule.createElement(props.backgroundComponent, {
+            style: props.backgroundStyle,
+            testID: 'dialog-background',
+          }),
+          props.children,
+        );
       },
     ),
   };
@@ -47,15 +57,23 @@ jest.mock('@/components2024/Button', () => {
       ),
   };
 });
-jest.mock('@/components2024/GlobalBottomSheetModal/utils-help', () => ({
-  makeBottomSheetProps: () => ({}),
-}));
+// Keep the real background factory and renderer; only the native gradient is stubbed.
+jest.mock('react-native-linear-gradient', () => require('react-native').View);
 jest.mock('@/hooks/theme', () => ({
-  useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
-    const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
+  useTheme2024: ({
+    getStyle,
+  }: { getStyle?: (input: object) => object } = {}) => {
+    const colors2024 = mockThemeMode
+      ? require('@/constant/theme').ThemeColors2024[mockThemeMode]
+      : new Proxy({}, { get: (_target, key) => String(key) });
     return {
       colors2024,
-      styles: getStyle({ colors2024, safeAreaInsets: { bottom: 0 } }),
+      isLight: mockThemeMode !== 'dark',
+      styles: getStyle?.({
+        colors2024,
+        isLight: mockThemeMode !== 'dark',
+        safeAreaInsets: { bottom: 0 },
+      }),
     };
   },
 }));
@@ -119,6 +137,53 @@ const draft = {
 } satisfies PerpsProCloseDraft;
 
 describe('PerpsProCloseConfirmationSheet', () => {
+  it.each(['light', 'dark'] as const)(
+    'renders a distinct %s confirmation card for Market and Limit',
+    mode => {
+      mockThemeMode = mode;
+      const colors = ThemeColors2024[mode];
+      for (const orderType of ['market', 'limit'] as const) {
+        const view = render(
+          <PerpsProCloseConfirmationSheet
+            amountUnit="base"
+            draft={{
+              ...draft,
+              orderType,
+              limitPrice: orderType === 'limit' ? '61000' : null,
+            }}
+            market={market}
+            onClose={jest.fn()}
+            onConfirm={jest.fn()}
+            onToggleSkipConfirmation={jest.fn()}
+            pending={false}
+            position={position}
+            skipConfirmation={false}
+            visible
+          />,
+        );
+        const background = StyleSheet.flatten(
+          screen.getByTestId('dialog-background').props.style,
+        ).backgroundColor;
+        expect(background).toBe(colors['neutral-bg-0']);
+        expect(
+          StyleSheet.flatten(
+            screen.getByTestId('close-confirmation-sheet').props.handleStyle,
+          ).backgroundColor,
+        ).toBe(background);
+        const cards = screen
+          .UNSAFE_getAllByType(View)
+          .map(node => StyleSheet.flatten(node.props.style))
+          .filter(style => style?.borderRadius === 12);
+        expect(cards).toHaveLength(1);
+        expect(cards[0].backgroundColor).toBe(
+          colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
+        );
+        expect(cards[0].backgroundColor).not.toBe(background);
+        view.unmount();
+      }
+    },
+  );
+
   it('matches the compact Limit confirmation content and closing direction', () => {
     render(
       <PerpsProCloseConfirmationSheet

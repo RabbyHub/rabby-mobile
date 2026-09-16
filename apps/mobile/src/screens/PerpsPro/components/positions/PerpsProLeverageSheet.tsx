@@ -305,6 +305,7 @@ export const PerpsProLeverageSheet: React.FC<{
                   disabled={pending || !isDraftValid}
                   height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                   loading={pending}
+                  loadingProps={{ color: styles.buttonDisabledTitle.color }}
                   onPress={confirm}
                   title={t('global.confirm')}
                   titleStyle={styles.buttonTitle}

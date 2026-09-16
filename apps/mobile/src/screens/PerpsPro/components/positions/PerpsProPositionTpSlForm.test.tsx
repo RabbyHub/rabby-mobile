@@ -1,6 +1,8 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { Keyboard, StyleSheet } from 'react-native';
+import { colord } from 'colord';
+import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
 
 const mockAmountInputBlur = jest.fn();
 const mockDecimalProps = jest.fn();
@@ -693,7 +695,11 @@ describe('PerpsProPositionTpSlForm', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-review').props.style,
       ),
-    ).toMatchObject({ backgroundColor: 'brand-disable' });
+    ).toMatchObject({
+      backgroundColor: colord(PERPS_PRO_DIALOG_TOKENS.actionBackground)
+        .alpha(0.4)
+        .toRgbString(),
+    });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-footer').props.style,
