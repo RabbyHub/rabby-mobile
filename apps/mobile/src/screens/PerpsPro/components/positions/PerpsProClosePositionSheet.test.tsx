@@ -1,3 +1,4 @@
+import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
 import { ThemeColors2024 } from '@/constant/theme';
 let mockThemeMode: 'light' | 'dark' | undefined;
 beforeEach(() => {
@@ -259,11 +260,18 @@ describe('PerpsProClosePositionSheet', () => {
       const fieldColor =
         colors[mode === 'light' ? 'neutral-bg-0' : 'neutral-bg-5'];
       for (const orderType of ['market', 'limit'] as const) {
+        expect(screen.getByLabelText('Amount').props).toMatchObject({
+          cursorColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+          selectionColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+        });
         if (orderType === 'limit') {
           fireEvent.press(
             screen.getByTestId('perps-pro-close-market-price-field'),
           );
-          expect(screen.getByLabelText('Price')).toBeTruthy();
+          expect(screen.getByLabelText('Price').props).toMatchObject({
+            cursorColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+            selectionColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+          });
         }
         const background = StyleSheet.flatten(
           screen.getByTestId('dialog-background').props.style,

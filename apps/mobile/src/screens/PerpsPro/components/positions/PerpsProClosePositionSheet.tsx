@@ -1,3 +1,4 @@
+import { PERPS_PRO_INPUT_COLOR_PROPS } from '../common/perpsProInputVisual';
 import RcOrderTypeSwitch from '@/assets2024/icons/perps/PerpsProCloseOrderTypeSwitch.svg';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import AutoLockView from '@/components/AutoLockView';
@@ -475,7 +476,6 @@ export const PerpsProClosePositionSheet: React.FC<{
                       <PerpsProDecimalTextInput
                         accessibilityLabel={t('page.perps.pro.positions.price')}
                         canonicalizeValueOnBlur={canonicalizeLimitPrice}
-                        cursorColor={colors2024['brand-default']}
                         inputComponent={PerpsProCloseBottomSheetTextInput}
                         maxDecimals={getPerpsProPriceInputMaxDecimals(
                           market.szDecimals,
@@ -486,7 +486,6 @@ export const PerpsProClosePositionSheet: React.FC<{
                           setLimitPrice(value);
                         }}
                         preserveIntegerZeroRun
-                        selectionColor={colors2024['brand-default']}
                         style={styles.priceInput}
                         value={limitPrice}
                       />
@@ -521,11 +520,11 @@ export const PerpsProClosePositionSheet: React.FC<{
                       {t('page.perps.pro.positions.amount')}
                     </Text>
                     <BottomSheetTextInput
+                      {...PERPS_PRO_INPUT_COLOR_PROPS}
                       inputAccessoryViewID={amountKeyboard.inputAccessoryViewID}
                       onBlur={amountKeyboard.onBlur}
                       ref={amountInputRef}
                       accessibilityLabel={t('page.perps.pro.positions.amount')}
-                      cursorColor={colors2024['brand-default']}
                       keyboardType="decimal-pad"
                       maxFontSizeMultiplier={1.2}
                       multiline={false}
@@ -550,7 +549,6 @@ export const PerpsProClosePositionSheet: React.FC<{
                           ? resolvePerpsProEmptyInputSelection()
                           : undefined
                       }
-                      selectionColor={colors2024['brand-default']}
                       style={styles.amountInput}
                       value={
                         inputSource === 'slider' ? sliderDisplay : manualAmount

@@ -1,3 +1,4 @@
+import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
 jest.mock('@/assets2024/icons/perps/PerpsProTransferUSDC.svg', () => {
   const ReactModule = require('react');
   return (props: object) =>
@@ -145,6 +146,10 @@ describe('PerpsProTransferSheet', () => {
         />,
       );
       const input = screen.getByTestId('perps-pro-transfer-amount');
+      expect(input.props).toMatchObject({
+        cursorColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+        selectionColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+      });
       const style = StyleSheet.flatten(input.props.style);
       expect(style).toMatchObject({
         fontFamily:

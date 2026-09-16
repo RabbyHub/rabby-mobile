@@ -233,7 +233,6 @@ export const PerpsProLeverageSheet: React.FC<{
                       accessibilityLabel={t(
                         'page.perps.pro.positions.adjustLeverage',
                       )}
-                      cursorColor={colors2024['brand-default']}
                       editable={!pending}
                       focusCursorAtEnd
                       focusCursorAtEndMode="initialFocus"
@@ -244,7 +243,6 @@ export const PerpsProLeverageSheet: React.FC<{
                       normalizeValue={normalizeLeverageInput}
                       onChangeText={setDraft}
                       ref={inputRef}
-                      selectionColor={colors2024['brand-default']}
                       style={[
                         styles.valueInput,
                         styles.valueInputOverlay,

@@ -54,7 +54,7 @@ export const PerpsProOpenOrderEditInput: React.FC<{
     unit,
     value,
   }) => {
-    const { colors2024, styles } = useTheme2024({ getStyle });
+    const { styles } = useTheme2024({ getStyle });
     const normalizePriceValue = React.useCallback(
       (nextValue: string) =>
         sanitizePerpsProPriceEditingInput(nextValue, priceSzDecimals ?? 0),
@@ -84,7 +84,6 @@ export const PerpsProOpenOrderEditInput: React.FC<{
         ) : null}
         <PerpsProDecimalTextInput
           accessibilityLabel={accessibilityLabel}
-          cursorColor={colors2024['brand-default']}
           inputComponent={OpenOrderBottomSheetTextInput}
           maxDecimals={maxDecimals}
           normalizeValue={
@@ -96,7 +95,6 @@ export const PerpsProOpenOrderEditInput: React.FC<{
             priceSzDecimals == null ? undefined : canonicalizePriceValue
           }
           preserveIntegerZeroRun={priceSzDecimals != null}
-          selectionColor={colors2024['brand-default']}
           style={[styles.input, unit ? styles.inputWithUnit : null]}
           value={value}
         />

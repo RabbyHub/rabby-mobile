@@ -102,7 +102,6 @@ export const PerpsProManageMarginAmountRow = React.memo(
                 accessibilityLabel={t(
                   'page.perps.pro.positions.configureMargin',
                 )}
-                cursorColor={PERPS_PRO_DIALOG_TOKENS.inputCursor}
                 editable={!pending}
                 inputComponent={PerpsProManageMarginBottomSheetTextInput}
                 keyboardType="decimal-pad"
@@ -110,7 +109,6 @@ export const PerpsProManageMarginAmountRow = React.memo(
                 onChangeText={onChangeDraft}
                 onFocus={onBeginEditing}
                 ref={inputRef}
-                selectionColor={PERPS_PRO_DIALOG_TOKENS.inputCursor}
                 style={[
                   styles.amountInput,
                   styles.inputOverlay,

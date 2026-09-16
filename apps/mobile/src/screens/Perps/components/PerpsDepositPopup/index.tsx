@@ -44,6 +44,7 @@ import {
   View,
   type StyleProp,
   type TextStyle,
+  type TextInputProps,
 } from 'react-native';
 import { useUsdInput } from '@/hooks/useUsdInput';
 import AuthButton from '@/components2024/AuthButton';
@@ -227,6 +228,7 @@ export const PerpsDepositPopup: React.FC<{
   account?: Account | null;
   visible?: boolean;
   inputTextStyle?: StyleProp<TextStyle>;
+  inputColorProps?: Pick<TextInputProps, 'cursorColor' | 'selectionColor'>;
   tooltipTextStyle?: StyleProp<TextStyle>;
   onClose(): void;
   onDeposit?(
@@ -241,6 +243,7 @@ export const PerpsDepositPopup: React.FC<{
   account,
   onDeposit,
   inputTextStyle,
+  inputColorProps,
   tooltipTextStyle,
 }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
@@ -1049,6 +1052,8 @@ export const PerpsDepositPopup: React.FC<{
             <View style={styles.inputContainer}>
               <View style={styles.inputWrapper}>
                 <BottomSheetTextInput
+                  cursorColor={inputColorProps?.cursorColor}
+                  selectionColor={inputColorProps?.selectionColor}
                   keyboardType="numeric"
                   style={[
                     styles.input,

@@ -1,3 +1,4 @@
+import { PERPS_PRO_INPUT_COLOR_PROPS } from '../common/perpsProInputVisual';
 import type { PerpsQuoteAsset } from '@/constant/perps';
 import { createStoreActivityScope } from '@/core/state/storeActivity';
 import { usePerpsFundingActions } from '@/hooks/perps/funding/usePerpsFundingActions';
@@ -52,6 +53,7 @@ const PerpsProScopedWithdrawPopup: React.FC<
     <StoreActivityProvider scope={activityScope}>
       <PerpsWithdrawPopup
         {...props}
+        inputColorProps={PERPS_PRO_INPUT_COLOR_PROPS}
         inputTextStyle={PERPS_PRO_FUNDING_AMOUNT_INPUT_STYLE}
         tooltipTextStyle={PERPS_PRO_REGULAR_TEXT_STYLE}
       />
@@ -97,6 +99,7 @@ export const PerpsProFundingOverlay: React.FC<{
         account={currentPerpsAccount}
         onClose={onClose}
         onDeposit={handleDeposit}
+        inputColorProps={PERPS_PRO_INPUT_COLOR_PROPS}
         inputTextStyle={PERPS_PRO_FUNDING_AMOUNT_INPUT_STYLE}
         tooltipTextStyle={PERPS_PRO_REGULAR_TEXT_STYLE}
         visible
@@ -123,6 +126,7 @@ export const PerpsProFundingOverlay: React.FC<{
         onSpotOrder={handleStableCoinOrder}
         sourceAsset={sourceAsset}
         targetAsset={sourceAsset ? undefined : targetAsset}
+        inputColorProps={PERPS_PRO_INPUT_COLOR_PROPS}
         inputTextStyle={PERPS_PRO_SWAP_AMOUNT_INPUT_STYLE}
         tooltipTextStyle={PERPS_PRO_REGULAR_TEXT_STYLE}
         visible
@@ -132,6 +136,7 @@ export const PerpsProFundingOverlay: React.FC<{
           account={currentPerpsAccount}
           onClose={onCloseDeposit}
           onDeposit={handleDeposit}
+          inputColorProps={PERPS_PRO_INPUT_COLOR_PROPS}
           inputTextStyle={PERPS_PRO_FUNDING_AMOUNT_INPUT_STYLE}
           tooltipTextStyle={PERPS_PRO_REGULAR_TEXT_STYLE}
           visible

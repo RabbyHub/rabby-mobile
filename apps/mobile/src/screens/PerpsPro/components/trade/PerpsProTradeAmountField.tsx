@@ -73,7 +73,6 @@ export const PerpsProTradeAmountField = React.memo(
               getKeyboardMinimum={getKeyboardMinimum}
               keyboardScrollTrade
               accessibilityLabel={label}
-              cursorColor={colors2024['brand-default']}
               maxFontSizeMultiplier={1.2}
               maxDecimals={maxDecimals}
               ref={forwardedRef}
@@ -87,7 +86,6 @@ export const PerpsProTradeAmountField = React.memo(
                 onFocus?.();
               }}
               onPressIn={onPressIn}
-              selectionColor={colors2024['brand-default']}
               style={styles.input}
               value={value}
             />
