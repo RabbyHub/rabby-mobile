@@ -1,3 +1,5 @@
+import DialogPoint from '@/assets2024/icons/perps/PerpsProDialogSliderPoint.svg';
+import { resolvePerpsProDialogCardBackground } from './perpsProDialogVisual';
 import LeverageThumb from '@/assets2024/icons/perps/PerpsProLeverageThumb.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -18,7 +20,7 @@ export const PerpsProSlider: React.FC<{
   showPoints?: boolean;
   step?: number;
   tone?: 'brand' | 'neutral';
-  appearance?: 'default' | 'leverage-dialog';
+  appearance?: 'default' | 'leverage-dialog' | 'order-dialog';
   value: number;
 }> = React.memo(
   ({
@@ -37,9 +39,10 @@ export const PerpsProSlider: React.FC<{
     appearance = 'default',
     value,
   }) => {
-    const { colors2024, styles } = useTheme2024({ getStyle });
+    const { colors2024, styles, isLight } = useTheme2024({ getStyle });
     const isLeverageDialog =
       tone === 'neutral' && appearance === 'leverage-dialog';
+    const isOrderDialog = tone === 'neutral' && appearance === 'order-dialog';
     const showDisabledAppearance = disabled && dimWhenDisabled;
     const points = useMemo(
       () =>
@@ -58,6 +61,7 @@ export const PerpsProSlider: React.FC<{
           styles.container,
           tone === 'neutral' && styles.neutralContainer,
           isLeverageDialog && styles.leverageContainer,
+          isOrderDialog && styles.orderContainer,
         ]}>
         <Slider
           allowTouchTrack={!disabled}
@@ -82,12 +86,14 @@ export const PerpsProSlider: React.FC<{
             styles.slider,
             tone === 'neutral' && styles.neutralSlider,
             isLeverageDialog && styles.leverageSlider,
+            isOrderDialog && styles.orderSlider,
           ]}
           thumbStyle={
             tone === 'neutral'
               ? [
                   styles.invisibleThumb,
-                  isLeverageDialog && styles.leverageInvisibleThumb,
+                  (isLeverageDialog || isOrderDialog) &&
+                    styles.leverageInvisibleThumb,
                 ]
               : showDisabledAppearance
               ? styles.disabledThumb
@@ -105,6 +111,7 @@ export const PerpsProSlider: React.FC<{
               style={[
                 styles.neutralTrack,
                 isLeverageDialog && styles.leverageTrack,
+                isOrderDialog && styles.orderTrack,
                 showDisabledAppearance && styles.neutralTrackDisabled,
               ]}
               testID="perps-pro-slider-neutral-track"
@@ -114,6 +121,7 @@ export const PerpsProSlider: React.FC<{
               style={[
                 styles.neutralTrackProgressStart,
                 isLeverageDialog && styles.leverageProgressStart,
+                isOrderDialog && styles.orderProgressStart,
                 showDisabledAppearance && styles.neutralTrackProgressDisabled,
               ]}
               testID="perps-pro-slider-neutral-track-progress-start"
@@ -123,12 +131,14 @@ export const PerpsProSlider: React.FC<{
               style={[
                 styles.neutralTrackProgressRail,
                 isLeverageDialog && styles.leverageProgressRail,
+                isOrderDialog && styles.orderProgressRail,
               ]}
               testID="perps-pro-slider-neutral-track-progress-rail">
               <View
                 style={[
                   styles.neutralTrackProgress,
                   isLeverageDialog && styles.leverageProgress,
+                  isOrderDialog && styles.orderProgress,
                   showDisabledAppearance && styles.neutralTrackProgressDisabled,
                   { width: `${neutralProgress * 100}%` },
                 ]}
@@ -140,17 +150,18 @@ export const PerpsProSlider: React.FC<{
               style={[
                 styles.neutralThumbRail,
                 isLeverageDialog && styles.leverageThumbRail,
+                isOrderDialog && styles.orderThumbRail,
               ]}
               testID="perps-pro-slider-neutral-thumb-rail">
               <View
                 style={[
                   styles.neutralThumb,
-                  isLeverageDialog && styles.leverageThumb,
+                  (isLeverageDialog || isOrderDialog) && styles.leverageThumb,
                   showDisabledAppearance && styles.neutralThumbDisabled,
                   { left: `${neutralProgress * 100}%` },
                 ]}
                 testID="perps-pro-slider-neutral-thumb">
-                {isLeverageDialog ? (
+                {isLeverageDialog || isOrderDialog ? (
                   <LeverageThumb
                     width={20}
                     height={20}
@@ -169,9 +180,36 @@ export const PerpsProSlider: React.FC<{
         {tone !== 'neutral' || showPoints ? (
           <View
             pointerEvents="none"
-            style={[styles.points, tone === 'neutral' && styles.neutralPoints]}>
+            testID="perps-pro-slider-points"
+            style={[
+              styles.points,
+              tone === 'neutral' && styles.neutralPoints,
+              isOrderDialog && styles.orderPoints,
+            ]}>
             {points.map((point, index) =>
-              hideMinimumPoint && index === 0 ? null : (
+              hideMinimumPoint && index === 0 ? null : isOrderDialog ? (
+                <View
+                  key={point}
+                  style={{
+                    position: 'absolute',
+                    left: `${(index * 100) / (points.length - 1)}%`,
+                  }}
+                  testID="perps-pro-slider-neutral-point">
+                  <DialogPoint
+                    width={8}
+                    height={8}
+                    fill={resolvePerpsProDialogCardBackground(
+                      colors2024,
+                      isLight,
+                    )}
+                    color={
+                      index / (points.length - 1) <= neutralProgress
+                        ? colors2024['neutral-title-1']
+                        : colors2024['neutral-info']
+                    }
+                  />
+                </View>
+              ) : (
                 <View
                   key={point}
                   style={[
@@ -232,6 +270,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: 'transparent',
     borderWidth: 0,
   },
+  // RNEUI travels containerWidth - thumbWidth. The -6 outer margin with
+  // a 20px native thumb makes its center travel 4 .. width-4, exactly the
+  // same rail as the five 8px points and the visible SVG thumb.
+  orderContainer: { height: 40 },
+  orderSlider: { height: 40, marginHorizontal: -6 },
+  orderTrack: { height: 4, borderRadius: 2, top: 18 },
+  orderProgressStart: { width: 4, height: 4, top: 18, borderRadius: 2 },
+  orderProgressRail: { height: 4, left: 4, right: 4, top: 18 },
+  orderProgress: { height: 4, borderRadius: 2 },
+  orderThumbRail: { height: 20, left: -6, right: 14, top: 10 },
+  orderPoints: { top: 16 },
   neutralContainer: {
     height: 32,
   },

@@ -1,11 +1,19 @@
-import { getPerpsProDialogActionStyles } from '../common/perpsProDialogVisual';
+import {
+  getPerpsProDialogStyles,
+  resolvePerpsProDialogCardBackground,
+} from '../common/perpsProDialogVisual';
+import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import { BOTTOM_BUTTON_SINGLE_HEIGHT } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_BOTTOM_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -13,10 +21,17 @@ import { useRegisterBlockingModal } from '@/utils/modalGate';
 import {
   BottomSheetScrollView,
   BottomSheetView,
+  type BottomSheetBackdropProps,
   type BottomSheetScrollViewMethods,
 } from '@gorhom/bottom-sheet';
 import BigNumber from 'bignumber.js';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -30,7 +45,6 @@ import {
   getPerpsProPriceInputMaxDecimals,
   isPerpsProPriceProtocolValid,
 } from '../../model/trade';
-import { getPerpsProBottomSheetChromeStyles } from '../common/perpsProVisual';
 import type { PerpsProOpenOrderEditEditorState } from '../../scene/usePerpsProOpenOrderEdit';
 import { formatPerpsProDecimal, formatPerpsProPrice } from '../../utils/format';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
@@ -38,11 +52,14 @@ import { usePerpsProDismissKeyboard } from '../common/usePerpsProDismissKeyboard
 import { PerpsProKeyboardSheetContext } from '../common/PerpsProKeyboardSheetContext';
 import { PerpsProSheetKeyboardAnimation } from '../common/PerpsProSheetKeyboardAnimation';
 import { usePerpsProSheetKeyboard } from '../common/usePerpsProSheetKeyboard';
-import { PerpsProOpenOrderEditHeader } from './PerpsProOpenOrderEditHeader';
+import {
+  PerpsProOpenOrderEditHeader,
+  PerpsProOpenOrderEditDirection,
+} from './PerpsProOpenOrderEditHeader';
 import { PerpsProOpenOrderEditInput } from './PerpsProOpenOrderEditInput';
 
 const MODAL_ID = 'perps-pro-basic-order-edit';
-const SHEET_HEIGHT = 342;
+const SHEET_HEIGHT = 396;
 const CONTENT_HEIGHT = SHEET_HEIGHT - 40;
 const SheetContent = IS_ANDROID ? BottomSheetScrollView : BottomSheetView;
 
@@ -76,6 +93,15 @@ export const PerpsProBasicOrderEditSheet: React.FC<{
   const [manualAmount, setManualAmount] = useState('');
   const [amountTouched, setAmountTouched] = useState(false);
   const interactionLocked = coveredByReview || reviewRequesting;
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <PerpsProDialogBackdrop
+        {...props}
+        pressBehavior={interactionLocked ? 'none' : 'close'}
+      />
+    ),
+    [interactionLocked],
+  );
   usePerpsProSheetNavigationRegistration({
     active: visible,
     dismiss: onClose,
@@ -158,7 +184,7 @@ export const PerpsProBasicOrderEditSheet: React.FC<{
         linearGradientType: 'bg1',
       })}
       android_keyboardInputMode="adjustPan"
-      backdropProps={{ pressBehavior: interactionLocked ? 'none' : 'close' }}
+      backdropComponent={renderBackdrop}
       backgroundStyle={styles.background}
       enableDynamicSizing={false}
       enablePanDownToClose={!interactionLocked}
@@ -167,7 +193,12 @@ export const PerpsProBasicOrderEditSheet: React.FC<{
       keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
       onDismiss={onClose}
-      snapPoints={[SHEET_HEIGHT + keyboard.accessoryInset]}
+      snapPoints={[
+        SHEET_HEIGHT +
+          styles.content.paddingBottom -
+          BOTTOM_BUTTON_BOTTOM_OFFSET +
+          keyboard.accessoryInset,
+      ]}
       style={styles.modal}>
       <PerpsProKeyboardSheetContext.Provider value={keyboard.sheetId}>
         {IS_ANDROID && visible && !coveredByReview ? (
@@ -193,9 +224,14 @@ export const PerpsProBasicOrderEditSheet: React.FC<{
             testID="perps-pro-basic-order-edit-content">
             <PerpsProOpenOrderEditHeader
               market={editor.market}
-              order={editor.order}
+              leverageConfiguration={
+                editor.category === 'basic'
+                  ? editor.leverageConfiguration
+                  : null
+              }
             />
             <View style={styles.form}>
+              <PerpsProOpenOrderEditDirection order={editor.order} />
               <PerpsProOpenOrderEditInput
                 accessibilityLabel={t('page.perps.pro.openOrders.price')}
                 currentValue={`Current ${formatPerpsProPrice(
@@ -269,28 +305,39 @@ export const PerpsProBasicOrderEditSheet: React.FC<{
 
 PerpsProBasicOrderEditSheet.displayName = 'PerpsProBasicOrderEditSheet';
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  ...getPerpsProBottomSheetChromeStyles(colors2024),
-  ...getPerpsProDialogActionStyles(colors2024),
-  container: {
-    height: CONTENT_HEIGHT,
-    paddingHorizontal: 15,
-    paddingTop: 8,
-    position: 'relative',
-  },
-  form: { gap: 24, marginTop: 16 },
-  amountGroup: { gap: 4 },
-  conversion: {
-    ...PERPS_PRO_NUMBER_STYLE,
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  footer: {
-    left: 20,
-    position: 'absolute',
-    right: 20,
-    top: 210,
-  },
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
+    container: {
+      height:
+        CONTENT_HEIGHT +
+        getBottomButtonBottomOffset(safeAreaInsets.bottom) -
+        BOTTOM_BUTTON_BOTTOM_OFFSET,
+      paddingHorizontal: 16,
+      paddingTop: 8,
+      position: 'relative',
+    },
+    form: {
+      backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
+      borderRadius: 12,
+      padding: 16,
+      gap: 20,
+      marginTop: 24,
+    },
+    amountGroup: { gap: 4 },
+    conversion: {
+      paddingLeft: 12,
+      ...PERPS_PRO_NUMBER_STYLE,
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      lineHeight: 16,
+    },
+    footer: {
+      left: 20,
+      position: 'absolute',
+      right: 20,
+      top: 268,
+    },
+  }),
+);

@@ -131,3 +131,31 @@ export const getPerpsProDialogActionStyles = (colors: AppColors2024Variants) =>
       color: PERPS_PRO_DIALOG_TOKENS.actionForeground,
     },
   } as const);
+
+/** Recessed fields inside the raised cards of the approved order dialogs. */
+export const resolvePerpsProDialogFieldBackground = (
+  colors: AppColors2024Variants,
+  isLight: boolean | undefined,
+) => colors[isLight === false ? 'neutral-bg-5' : 'neutral-bg-0'];
+
+export const getPerpsProDialogCheckboxStyles = (
+  colors: AppColors2024Variants,
+) =>
+  ({
+    checkboxRow: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'row',
+      gap: 4,
+      marginTop: 8,
+      minHeight: 20,
+    },
+    checkboxText: {
+      color: colors['neutral-foot'],
+      flexShrink: 1,
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      fontWeight: '400',
+      lineHeight: 16,
+    },
+  } as const);

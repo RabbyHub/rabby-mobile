@@ -4,6 +4,9 @@ import {
   getPerpsProDialogStyles as getDialogStyles,
   PERPS_PRO_DIALOG_TOKENS,
   getPerpsProDialogActionStyles,
+  resolvePerpsProDialogFieldBackground,
+  resolvePerpsProDialogCardBackground,
+  getPerpsProDialogCheckboxStyles,
 } from './perpsProDialogVisual';
 
 describe('Pro dialog surfaces', () => {
@@ -18,6 +21,24 @@ describe('Pro dialog surfaces', () => {
       ]);
       const active = StyleSheet.flatten([styles.option, styles.optionActive]);
 
+      const field = resolvePerpsProDialogFieldBackground(
+        colors,
+        mode === 'light',
+      );
+      const card = resolvePerpsProDialogCardBackground(
+        colors,
+        mode === 'light',
+      );
+      expect(field).toBe(
+        mode === 'light' ? 'rgba(246, 247, 247, 1)' : 'rgba(47, 49, 53, 0.5)',
+      );
+      expect(card).not.toBe(field);
+      expect(
+        getPerpsProDialogCheckboxStyles(colors).checkboxText,
+      ).toMatchObject({ color: colors['neutral-foot'], flexShrink: 1 });
+      expect(
+        getPerpsProDialogCheckboxStyles(colors).checkboxText,
+      ).not.toHaveProperty('flex');
       const actions = getPerpsProDialogActionStyles(colors);
       expect(styles.button).toEqual(actions.button);
       expect(actions.button.backgroundColor).toBe(

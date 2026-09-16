@@ -1,3 +1,11 @@
+jest.mock('@/assets2024/icons/perps/PerpsProDialogSliderPoint.svg', () => {
+  const ReactModule = require('react');
+  return (props: object) =>
+    ReactModule.createElement(require('react-native').View, {
+      ...props,
+      testID: 'dialog-slider-point-svg',
+    });
+});
 jest.mock('@/assets2024/icons/perps/PerpsProLeverageThumb.svg', () => {
   const ReactModule = require('react');
   return (props: object) =>
@@ -256,4 +264,82 @@ describe('PerpsProSlider neutral design', () => {
       ),
     ).toMatchObject({ borderColor: 'neutral-title-1' });
   });
+});
+
+describe('order dialog slider coordinates', () => {
+  it.each([0, 25, 50, 75, 100])(
+    'keeps the native touch rail, SVG thumb and point aligned at %i%%',
+    value => {
+      const onValueChange = jest.fn();
+      const onSlidingStart = jest.fn();
+      const onSlidingComplete = jest.fn();
+      render(
+        <PerpsProSlider
+          appearance="order-dialog"
+          tone="neutral"
+          pointCount={5}
+          value={value}
+          onValueChange={onValueChange}
+          onSlidingStart={onSlidingStart}
+          onSlidingComplete={onSlidingComplete}
+        />,
+      );
+      const input = screen.getByTestId('slider-input');
+      expect(input.props).toMatchObject({
+        minimumValue: 0,
+        maximumValue: 100,
+        step: 1,
+        onValueChange,
+        onSlidingStart,
+        onSlidingComplete,
+        allowTouchTrack: true,
+      });
+      const inputStyle = StyleSheet.flatten(input.props.style);
+      const nativeThumb = StyleSheet.flatten(input.props.thumbStyle);
+      const rail = StyleSheet.flatten(
+        screen.getByTestId('perps-pro-slider-neutral-thumb-rail').props.style,
+      );
+      const thumb = StyleSheet.flatten(
+        screen.getByTestId('perps-pro-slider-neutral-thumb').props.style,
+      );
+      const points = screen.getAllByTestId('perps-pro-slider-neutral-point');
+      const pointStyle = StyleSheet.flatten(points[value / 25].props.style);
+      const pointRail = StyleSheet.flatten(
+        screen.getByTestId('perps-pro-slider-points').props.style,
+      );
+      for (const width of [304, 329, 366]) {
+        const nativeCenter =
+          inputStyle.marginHorizontal +
+          nativeThumb.width / 2 +
+          ((width - 2 * inputStyle.marginHorizontal - nativeThumb.width) *
+            value) /
+            100;
+        const visualCenter =
+          rail.left +
+          thumb.width / 2 +
+          ((width - rail.left - rail.right) * parseFloat(thumb.left)) / 100;
+        const pointCenter =
+          pointRail.left +
+          4 +
+          ((width - pointRail.left - pointRail.right) *
+            parseFloat(pointStyle.left)) /
+            100;
+        expect(nativeCenter).toBeCloseTo(4 + ((width - 8) * value) / 100);
+        expect(visualCenter).toBeCloseTo(nativeCenter);
+        expect(pointCenter).toBeCloseTo(nativeCenter);
+      }
+      expect(inputStyle.height).toBe(40);
+      expect(rail.top + thumb.height / 2).toBe(20);
+      expect(pointRail.top + 4).toBe(20);
+      const glyphs = screen.getAllByTestId('dialog-slider-point-svg');
+      glyphs.forEach((glyph, index) =>
+        expect(glyph.props).toMatchObject({
+          width: 8,
+          height: 8,
+          fill: 'neutral-bg-1',
+          color: index * 25 <= value ? 'neutral-title-1' : 'neutral-info',
+        }),
+      );
+    },
+  );
 });

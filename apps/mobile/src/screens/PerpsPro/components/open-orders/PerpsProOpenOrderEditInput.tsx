@@ -10,7 +10,7 @@ import {
   sanitizePerpsProPriceEditingInput,
   sanitizePerpsProPriceInput,
 } from '../../model/trade';
-import { resolvePerpsProFieldBackground } from '../common/perpsProVisual';
+import { resolvePerpsProDialogFieldBackground } from '../common/perpsProDialogVisual';
 import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
 import { PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE } from '../common/perpsProSingleLineInput';
 
@@ -114,26 +114,23 @@ PerpsProOpenOrderEditInput.displayName = 'PerpsProOpenOrderEditInput';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   field: {
-    backgroundColor: resolvePerpsProFieldBackground({
-      darkBackground: colors2024['neutral-bg-2'],
-      isLight,
-    }),
+    backgroundColor: resolvePerpsProDialogFieldBackground(colors2024, isLight),
     borderRadius: 6,
     height: 40,
     justifyContent: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
     position: 'relative',
   },
-  disabled: { opacity: 0.5 },
+  disabled: { alignItems: 'center' },
   label: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 10,
     lineHeight: 12,
     position: 'absolute',
-    top: 5,
-    left: 8,
-    right: 8,
+    top: 4,
+    left: 12,
+    right: 12,
   },
   labelTitle: {
     fontFamily: 'SF Pro Rounded',
@@ -159,11 +156,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '500',
     lineHeight: 18,
     position: 'absolute',
-    right: 8,
+    right: 12,
   },
   disabledText: {
     ...PERPS_PRO_NUMBER_STYLE,
-    color: colors2024['neutral-info'],
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
