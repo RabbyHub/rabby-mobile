@@ -1,8 +1,8 @@
-import { render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
-jest.mock('@/assets2024/icons/common/warning-circle-cc.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProCloseAllWarning.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
@@ -12,9 +12,13 @@ jest.mock('@/components/Modal/TrackedModal', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return {
-    TrackedModal: ({ children, visible }: any) =>
+    TrackedModal: ({ children, visible, ...props }: any) =>
       visible
-        ? ReactModule.createElement(View, { testID: 'tracked-modal' }, children)
+        ? ReactModule.createElement(
+            View,
+            { ...props, testID: 'tracked-modal' },
+            children,
+          )
         : null,
   };
 });
@@ -48,6 +52,8 @@ import { PerpsProCancelConfirmationModal } from './PerpsProCancelConfirmationMod
 
 describe('PerpsProCancelConfirmationModal', () => {
   it('matches the approved content spacing and copy treatment', () => {
+    const onCancel = jest.fn();
+    const onConfirm = jest.fn();
     render(
       <PerpsProCancelConfirmationModal
         confirmation={
@@ -56,8 +62,8 @@ describe('PerpsProCancelConfirmationModal', () => {
             title: 'Cancel All Orders',
           } as any
         }
-        onCancel={jest.fn()}
-        onConfirm={jest.fn()}
+        onCancel={onCancel}
+        onConfirm={onConfirm}
       />,
     );
 
@@ -83,8 +89,22 @@ describe('PerpsProCancelConfirmationModal', () => {
           .style,
       ),
     ).toMatchObject({
-      color: 'neutral-title-1',
+      color: 'neutral-body',
+      fontSize: 16,
+      lineHeight: 20,
       textAlign: 'left',
     });
+    const buttons = screen.getAllByRole('button');
+    for (const button of buttons) {
+      expect(StyleSheet.flatten(button.props.style)).toMatchObject({
+        height: 40,
+        borderRadius: 10,
+      });
+    }
+    fireEvent.press(screen.getByText('global.cancel'));
+    fireEvent.press(screen.getByText('global.confirm'));
+    fireEvent(screen.getByTestId('tracked-modal'), 'requestClose');
+    expect(onCancel).toHaveBeenCalledTimes(2);
+    expect(onConfirm).toHaveBeenCalledTimes(1);
   });
 });
