@@ -7,12 +7,27 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 import { IconDefaultNFT } from '@/assets/icons/nft';
 import { Media } from '@/components/Media';
 import { ASSETS_ITEM_HEIGHT_NEW } from '@/constant/layout';
-import { memo } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { NftItemWithCollection } from '../../hooks/nft';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { AccountOverview } from '../AccountOverview';
 import { Text } from '@/components/Typography';
+
+const getNftContentPreviewUrl = (nft?: NFTItem) => {
+  if (!nft) {
+    return undefined;
+  }
+
+  if (
+    (nft.content_type === 'image' || nft.content_type === 'image_url') &&
+    nft.content
+  ) {
+    return nft.content;
+  }
+
+  return nft.thumbnail_url;
+};
 
 export const NftRow = memo(
   ({
@@ -36,9 +51,33 @@ export const NftRow = memo(
 
     const chain = getCHAIN_ID_LIST().get(item.chain);
     const iconUri = chain?.logo;
-    const isSvgURL = isCollection
-      ? item.logo_url?.endsWith('.svg')
-      : (item as NFTItem)?.content?.endsWith('.svg');
+    const primaryNftImageUrl = isCollection
+      ? item.logo_url
+      : (item as NFTItem)?.thumbnail_url;
+    const fallbackNftImageUrl = (
+      isCollection
+        ? item.nft_list.map(nft => getNftContentPreviewUrl(nft)).find(Boolean)
+        : getNftContentPreviewUrl(item as NFTItem)
+    ) as string | undefined;
+    const distinctFallbackNftImageUrl =
+      fallbackNftImageUrl !== primaryNftImageUrl
+        ? fallbackNftImageUrl
+        : undefined;
+    const [failedPrimaryNftImageUrl, setFailedPrimaryNftImageUrl] = useState<
+      string | undefined
+    >();
+    const nftImageUrl =
+      (!primaryNftImageUrl ||
+        failedPrimaryNftImageUrl === primaryNftImageUrl) &&
+      distinctFallbackNftImageUrl
+        ? distinctFallbackNftImageUrl
+        : primaryNftImageUrl;
+    const handleImageError = useCallback(() => {
+      if (nftImageUrl === primaryNftImageUrl && distinctFallbackNftImageUrl) {
+        setFailedPrimaryNftImageUrl(primaryNftImageUrl);
+      }
+    }, [distinctFallbackNftImageUrl, nftImageUrl, primaryNftImageUrl]);
+
     return (
       <TouchableOpacity onPress={onPress} style={[styles.wrpper, style]}>
         <View style={styles.main}>
@@ -52,24 +91,14 @@ export const NftRow = memo(
                 },
               ])}>
               <Media
+                key={nftImageUrl}
+                handleError={handleImageError}
                 failedPlaceholder={
                   <IconDefaultNFT width="100%" height="100%" />
                 }
                 type="image_url"
-                src={
-                  isSvgURL
-                    ? ''
-                    : isCollection
-                    ? item.logo_url
-                    : (item as NFTItem)?.thumbnail_url
-                }
-                thumbnail={
-                  isSvgURL
-                    ? ''
-                    : isCollection
-                    ? item.logo_url
-                    : (item as NFTItem)?.thumbnail_url
-                }
+                src={nftImageUrl}
+                thumbnail={nftImageUrl}
                 mediaStyle={styles.images}
                 style={styles.images}
                 playIconSize={36}
