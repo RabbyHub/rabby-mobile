@@ -2242,7 +2242,7 @@
           "liquidationPrice": "强平价格",
           "triggerPrice": "触发价格",
           "amount": "数量",
-          "keyboardMinimum": "最小 {{amount}}",
+          "keyboardMinimum": "最低 {{amount}}",
           "available": "可用",
           "reduceOnly": "只减仓",
           "confirmationReduceOnly": "只减仓",

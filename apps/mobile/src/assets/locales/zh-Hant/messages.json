@@ -2265,7 +2265,7 @@
           "liquidationPrice": "強平價格",
           "triggerPrice": "觸發價格",
           "amount": "數量",
-          "keyboardMinimum": "最小 {{amount}}",
+          "keyboardMinimum": "最低 {{amount}}",
           "available": "可用",
           "reduceOnly": "只減倉",
           "confirmationReduceOnly": "只減倉",
