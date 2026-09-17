@@ -1,8 +1,13 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { Provider } from 'jotai';
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
-import { useHideTipsPopup, useShowTipsPopup } from '@/hooks/useTipsPopup';
+import {
+  useHideTipsPopup,
+  useShowTipsPopup,
+  useTipsPopup,
+} from '@/hooks/useTipsPopup';
 
 import { GlobalTipsPopup } from './GlobalTipsPopup';
 
@@ -39,9 +44,9 @@ jest.mock('@/components2024/Button', () => {
   const ReactModule = require('react');
   const { Pressable: NativePressable } = require('react-native');
   return {
-    Button: ({ onPress }: { onPress: () => void }) =>
+    Button: (props: Record<string, unknown>) =>
       ReactModule.createElement(NativePressable, {
-        onPress,
+        ...props,
         testID: 'tips-close-button',
       }),
   };
@@ -86,6 +91,10 @@ const PortfolioTipsTrigger = () => {
       onPress={() =>
         showTipsPopup({
           desc: 'Portfolio breakdown',
+          bgType: 'bg0',
+          buttonType: 'hyperliquid',
+          buttonTitle: 'I Got It',
+          retainContentOnClose: true,
           enablePanDownToClose: true,
           owner: 'perps-portfolio-breakdown',
           title: 'Portfolio Margin',
@@ -116,6 +125,28 @@ const PortfolioTipsDismissTrigger = () => {
   const hideTipsPopup = useHideTipsPopup('perps-portfolio-breakdown');
   return <Pressable onPress={hideTipsPopup} testID="dismiss-portfolio-tips" />;
 };
+
+const StateProbe = () => {
+  const { state } = useTipsPopup();
+  return (
+    <Text testID="tips-state">{`${state.visible}:${state.owner ?? ''}:${
+      state.title
+    }`}</Text>
+  );
+};
+
+const renderLifecycle = () =>
+  render(
+    <Provider>
+      <PortfolioTipsTrigger />
+      <OtherTipsTrigger />
+      <PortfolioTipsDismissTrigger />
+      <StateProbe />
+      <GlobalTipsPopup />
+    </Provider>,
+  );
+
+const modalProps = () => mockModalProps.mock.calls.at(-1)![0];
 
 describe('GlobalTipsPopup', () => {
   beforeEach(() => {
@@ -161,5 +192,100 @@ describe('GlobalTipsPopup', () => {
 
     fireEvent.press(screen.getByTestId('dismiss-portfolio-tips'));
     expect(mockClose).toHaveBeenCalledTimes(closeCount);
+  });
+
+  it.each(['tips-close-button', 'dismiss-portfolio-tips'])(
+    'keeps the opted-in presentation through dismissal from %s',
+    trigger => {
+      renderLifecycle();
+      fireEvent.press(screen.getByTestId('show-portfolio-tips'));
+      fireEvent.press(screen.getByTestId(trigger));
+
+      expect(screen.getByTestId('tips-state')).toHaveTextContent('false::');
+      expect(screen.getByText('Portfolio breakdown')).toBeTruthy();
+      expect(screen.getByTestId('tips-close-button').props).toMatchObject({
+        type: 'hyperliquid',
+        title: 'I Got It',
+      });
+      expect(modalProps().enablePanDownToClose).toBe(true);
+
+      act(() => modalProps().onDismiss());
+      expect(screen.queryByText('Portfolio breakdown')).toBeNull();
+      fireEvent.press(screen.getByTestId('show-portfolio-tips'));
+      expect(screen.getByTestId('tips-state')).toHaveTextContent(
+        'true:perps-portfolio-breakdown:Portfolio Margin',
+      );
+      expect(mockPresent).toHaveBeenCalledTimes(2);
+    },
+  );
+
+  it('clears the active owner after a native gesture/backdrop dismissal', () => {
+    renderLifecycle();
+    fireEvent.press(screen.getByTestId('show-portfolio-tips'));
+    act(() => modalProps().onAnimate(0, -1));
+    expect(screen.getByText('Portfolio breakdown')).toBeTruthy();
+    act(() => modalProps().onDismiss());
+    expect(screen.getByTestId('tips-state')).toHaveTextContent('false::');
+    expect(screen.queryByText('Portfolio breakdown')).toBeNull();
+  });
+
+  it.each(['button', 'gesture'])(
+    'preserves a newer popup opened during %s dismissal',
+    method => {
+      renderLifecycle();
+      fireEvent.press(screen.getByTestId('show-portfolio-tips'));
+      if (method === 'button') {
+        fireEvent.press(screen.getByTestId('tips-close-button'));
+      } else {
+        act(() => modalProps().onAnimate(0, -1));
+      }
+      fireEvent.press(screen.getByTestId('show-other-tips'));
+      expect(screen.getByText('Portfolio breakdown')).toBeTruthy();
+      expect(mockPresent).toHaveBeenCalledTimes(1);
+      // Repeated presses on the exiting button must not clear the queued popup.
+      fireEvent.press(screen.getByTestId('tips-close-button'));
+      expect(screen.getByTestId('tips-state')).toHaveTextContent(
+        'true:other-owner:Other popup',
+      );
+      act(() => modalProps().onDismiss());
+      expect(screen.getByTestId('tips-state')).toHaveTextContent(
+        'true:other-owner:Other popup',
+      );
+      expect(screen.queryByText('Portfolio breakdown')).toBeNull();
+      expect(screen.getByTestId('tips-close-button').props).toMatchObject({
+        type: 'primary',
+        title: 'component.GlobalTipsPopup.btn',
+      });
+      expect(mockPresent).toHaveBeenCalledTimes(2);
+    },
+  );
+
+  it('retains a newly opened opted-in popup on its subsequent close', () => {
+    renderLifecycle();
+    fireEvent.press(screen.getByTestId('show-portfolio-tips'));
+    fireEvent.press(screen.getByTestId('tips-close-button'));
+    fireEvent.press(screen.getByTestId('show-portfolio-tips'));
+    act(() => modalProps().onDismiss());
+    expect(screen.getByTestId('tips-state')).toHaveTextContent(
+      'true:perps-portfolio-breakdown:Portfolio Margin',
+    );
+    fireEvent.press(screen.getByTestId('tips-close-button'));
+    expect(screen.getByText('Portfolio breakdown')).toBeTruthy();
+    expect(screen.getByTestId('tips-close-button').props.type).toBe(
+      'hyperliquid',
+    );
+    act(() => modalProps().onDismiss());
+    expect(screen.queryByText('Portfolio breakdown')).toBeNull();
+  });
+
+  it('keeps immediate clearing and the default title for other callers', () => {
+    renderLifecycle();
+    fireEvent.press(screen.getByTestId('show-other-tips'));
+    fireEvent.press(screen.getByTestId('tips-close-button'));
+    expect(screen.getByTestId('tips-state')).toHaveTextContent('false::');
+    expect(screen.queryByText('Other popup')).toBeNull();
+    expect(screen.getByTestId('tips-close-button').props.title).toBe(
+      'component.GlobalTipsPopup.btn',
+    );
   });
 });

@@ -1,6 +1,8 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { Keyboard, StyleSheet } from 'react-native';
+import { colord } from 'colord';
+import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
 
 const mockAmountInputBlur = jest.fn();
 const mockDecimalProps = jest.fn();
@@ -672,7 +674,7 @@ describe('PerpsProPositionTpSlForm', () => {
         screen.getByTestId('perps-pro-position-tpsl-form-inline-empty').props
           .style,
       ),
-    ).toMatchObject({ paddingHorizontal: 15, paddingTop: 24 });
+    ).toMatchObject({ paddingHorizontal: 16, paddingTop: 24 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-amount-section').props
@@ -693,12 +695,20 @@ describe('PerpsProPositionTpSlForm', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-review').props.style,
       ),
-    ).not.toHaveProperty('backgroundColor');
+    ).toMatchObject({
+      backgroundColor: colord(PERPS_PRO_DIALOG_TOKENS.actionBackground)
+        .alpha(0.4)
+        .toRgbString(),
+    });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-footer').props.style,
       ),
-    ).toMatchObject({ paddingBottom: 44, paddingTop: 12 });
+    ).toMatchObject({
+      paddingHorizontal: 4,
+      paddingBottom: 44,
+      paddingTop: 12,
+    });
     expect(mockSliderProps.mock.lastCall?.[0]).toMatchObject({ value: 100 });
 
     fireEvent.changeText(
@@ -709,7 +719,11 @@ describe('PerpsProPositionTpSlForm', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-footer').props.style,
       ),
-    ).toMatchObject({ paddingBottom: 40, paddingTop: 12 });
+    ).toMatchObject({
+      paddingHorizontal: 4,
+      paddingBottom: 40,
+      paddingTop: 12,
+    });
     expect(mockTransProps.mock.lastCall?.[0].values).toMatchObject({
       pnl: '+10.00',
       roi: '+100.00',
@@ -743,13 +757,14 @@ describe('PerpsProPositionTpSlForm', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-form-tab').props.style,
       ),
-    ).toMatchObject({ minHeight: 486, paddingTop: 24 });
+    ).toMatchObject({ minHeight: 486, paddingHorizontal: 16, paddingTop: 24 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-footer').props.style,
       ),
     ).toMatchObject({
       marginTop: 'auto',
+      paddingHorizontal: 4,
       paddingBottom: 40,
       paddingTop: 12,
     });

@@ -9,11 +9,14 @@ import type {
 import { usePerpsProKeyboardInput } from '../common/usePerpsProKeyboardInput';
 import { sanitizePerpsProDecimalEditingInput } from '../../model/trade';
 import { resolvePerpsProEmptyInputSelection } from '../common/perpsProInputSelection';
+import { PERPS_PRO_INPUT_COLOR_PROPS } from '../common/perpsProInputVisual';
 
 const UNRESTRICTED_TEXT_INPUT_MAX_LENGTH = 2147483647;
 
 type PerpsProDecimalTextInputProps = Omit<
   TextInputProps,
+  | 'cursorColor'
+  | 'selectionColor'
   | 'inputMode'
   | 'keyboardType'
   | 'maxLength'
@@ -39,6 +42,11 @@ type PerpsProDecimalTextInputProps = Omit<
   normalizeValue?: (value: string) => string;
   onChangeText: (value: string) => void;
   preserveIntegerZeroRun?: boolean;
+  /** Layout mirrors must use the same local editing buffer as the native input. */
+  renderInput?: (
+    input: React.ReactElement,
+    editingValue: string,
+  ) => React.ReactElement;
   value: string;
 };
 
@@ -63,6 +71,7 @@ export const PerpsProDecimalTextInput = React.memo(
         onKeyPress,
         onTouchStart,
         preserveIntegerZeroRun = false,
+        renderInput,
         value,
         ...inputProps
       },
@@ -260,6 +269,7 @@ export const PerpsProDecimalTextInput = React.memo(
 
       const textInputProps: TextInputProps = {
         ...inputProps,
+        ...PERPS_PRO_INPUT_COLOR_PROPS,
         inputAccessoryViewID,
         allowFontScaling: false,
         inputMode,
@@ -285,7 +295,8 @@ export const PerpsProDecimalTextInput = React.memo(
         value: inputValue,
       };
 
-      return <InputComponent {...textInputProps} ref={inputRef} />;
+      const input = <InputComponent {...textInputProps} ref={inputRef} />;
+      return renderInput ? renderInput(input, inputValue) : input;
     },
   ),
 );

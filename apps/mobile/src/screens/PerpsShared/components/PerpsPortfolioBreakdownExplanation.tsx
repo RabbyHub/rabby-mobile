@@ -97,6 +97,8 @@ export const useShowPerpsPortfolioBreakdown = () => {
         />
       ),
       buttonType: 'hyperliquid',
+      buttonTitle: t('page.perps.pro.funding.gotIt'),
+      retainContentOnClose: true,
       enablePanDownToClose: true,
       owner: PERPS_PORTFOLIO_BREAKDOWN_TIPS_OWNER,
     });

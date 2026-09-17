@@ -1,10 +1,15 @@
-import RcOrderTypeSwitch from '@/assets2024/icons/perps/icon-switch-mode.svg';
+import { PERPS_PRO_INPUT_COLOR_PROPS } from '../common/perpsProInputVisual';
+import RcOrderTypeSwitch from '@/assets2024/icons/perps/PerpsProCloseOrderTypeSwitch.svg';
+import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text, TextInput } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import { BOTTOM_BUTTON_COMPACT_HEIGHT } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_BOTTOM_OFFSET,
+} from '@/constant/layout';
 import { usePerpsLatestTrade } from '@/hooks/perps/subscriptions/usePerpsLatestTrade';
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -12,6 +17,7 @@ import {
   BottomSheetTextInput,
   BottomSheetView,
   type BottomSheetScrollViewMethods,
+  type BottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet';
 import { IS_ANDROID } from '@/core/native/utils';
 import { PerpsProKeyboardSheetContext } from '../common/PerpsProKeyboardSheetContext';
@@ -29,10 +35,6 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsPositionViewModel } from '../../model/position';
-import {
-  PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
-  PERPS_PRO_CONFIRM_BUTTON_STYLE,
-} from '../common/perpsProVisual';
 import {
   resolvePerpsProCloseSize,
   type PerpsProCloseDraft,
@@ -81,7 +83,7 @@ const PerpsProCloseBottomSheetTextInput = React.forwardRef<
 PerpsProCloseBottomSheetTextInput.displayName =
   'PerpsProCloseBottomSheetTextInput';
 
-const SHEET_HEIGHT = 510;
+const SHEET_HEIGHT = 550;
 const SheetContent = IS_ANDROID ? BottomSheetScrollView : BottomSheetView;
 
 const calculateEstimatedPnl = (
@@ -142,6 +144,15 @@ export const PerpsProClosePositionSheet: React.FC<{
       getStyle: getPerpsProClosePositionSheetStyles,
     });
     const { t } = useTranslation();
+    const renderBackdrop = useCallback(
+      (props: BottomSheetBackdropProps) => (
+        <PerpsProDialogBackdrop
+          {...props}
+          pressBehavior={coveredByReview ? 'none' : 'close'}
+        />
+      ),
+      [coveredByReview],
+    );
     usePerpsProSheetNavigationRegistration({
       active: visible,
       dismiss: onClose,
@@ -356,11 +367,9 @@ export const PerpsProClosePositionSheet: React.FC<{
         ref={modalRef}
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: 'bg1',
+          linearGradientType: 'bg0',
         })}
-        backdropProps={{
-          pressBehavior: coveredByReview ? 'none' : 'close',
-        }}
+        backdropComponent={renderBackdrop}
         backgroundStyle={styles.background}
         enableDynamicSizing={false}
         enablePanDownToClose={!coveredByReview}
@@ -369,7 +378,12 @@ export const PerpsProClosePositionSheet: React.FC<{
         keyboardBehavior="interactive"
         keyboardBlurBehavior="restore"
         onDismiss={onClose}
-        snapPoints={[SHEET_HEIGHT + keyboard.accessoryInset]}
+        snapPoints={[
+          SHEET_HEIGHT +
+            styles.footer.paddingBottom -
+            BOTTOM_BUTTON_BOTTOM_OFFSET +
+            keyboard.accessoryInset,
+        ]}
         style={styles.modal}>
         <PerpsProKeyboardSheetContext.Provider value={keyboard.sheetId}>
           {IS_ANDROID && visible && !coveredByReview ? (
@@ -462,7 +476,6 @@ export const PerpsProClosePositionSheet: React.FC<{
                       <PerpsProDecimalTextInput
                         accessibilityLabel={t('page.perps.pro.positions.price')}
                         canonicalizeValueOnBlur={canonicalizeLimitPrice}
-                        cursorColor={colors2024['brand-default']}
                         inputComponent={PerpsProCloseBottomSheetTextInput}
                         maxDecimals={getPerpsProPriceInputMaxDecimals(
                           market.szDecimals,
@@ -473,7 +486,6 @@ export const PerpsProClosePositionSheet: React.FC<{
                           setLimitPrice(value);
                         }}
                         preserveIntegerZeroRun
-                        selectionColor={colors2024['brand-default']}
                         style={styles.priceInput}
                         value={limitPrice}
                       />
@@ -497,7 +509,7 @@ export const PerpsProClosePositionSheet: React.FC<{
                       color={colors2024['neutral-secondary']}
                       height={10}
                       style={styles.orderTypeSwitch}
-                      width={10}
+                      width={11}
                     />
                   </Pressable>
                 </View>
@@ -508,11 +520,11 @@ export const PerpsProClosePositionSheet: React.FC<{
                       {t('page.perps.pro.positions.amount')}
                     </Text>
                     <BottomSheetTextInput
+                      {...PERPS_PRO_INPUT_COLOR_PROPS}
                       inputAccessoryViewID={amountKeyboard.inputAccessoryViewID}
                       onBlur={amountKeyboard.onBlur}
                       ref={amountInputRef}
                       accessibilityLabel={t('page.perps.pro.positions.amount')}
-                      cursorColor={colors2024['brand-default']}
                       keyboardType="decimal-pad"
                       maxFontSizeMultiplier={1.2}
                       multiline={false}
@@ -537,7 +549,6 @@ export const PerpsProClosePositionSheet: React.FC<{
                           ? resolvePerpsProEmptyInputSelection()
                           : undefined
                       }
-                      selectionColor={colors2024['brand-default']}
                       style={styles.amountInput}
                       value={
                         inputSource === 'slider' ? sliderDisplay : manualAmount
@@ -548,6 +559,7 @@ export const PerpsProClosePositionSheet: React.FC<{
                     </Text>
                   </View>
                   <PerpsProSlider
+                    appearance="order-dialog"
                     maximumValue={100}
                     minimumValue={0}
                     onSlidingComplete={sliderHaptics.onSlidingComplete}
@@ -603,9 +615,13 @@ export const PerpsProClosePositionSheet: React.FC<{
                 style={styles.footer}
                 testID="perps-pro-close-position-footer">
                 <Button
-                  buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
+                  buttonStyle={[
+                    styles.button,
+                    (!valid || coveredByReview) && styles.buttonDisabled,
+                  ]}
+                  disabledTitleStyle={styles.buttonDisabledTitle}
                   disabled={!valid || coveredByReview}
-                  height={BOTTOM_BUTTON_COMPACT_HEIGHT}
+                  height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                   onPress={() => {
                     if (!size || coveredByReview) {
                       return;
@@ -626,7 +642,7 @@ export const PerpsProClosePositionSheet: React.FC<{
                     );
                   }}
                   title={t('global.confirm')}
-                  titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
+                  titleStyle={styles.buttonTitle}
                   type="primary"
                 />
               </View>

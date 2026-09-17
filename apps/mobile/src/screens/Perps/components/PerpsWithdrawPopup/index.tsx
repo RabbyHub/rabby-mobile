@@ -44,6 +44,7 @@ import {
   View,
   type StyleProp,
   type TextStyle,
+  type TextInputProps,
 } from 'react-native';
 import { Text } from '@/components/Typography';
 import { IS_ANDROID } from '@/core/native/utils';
@@ -67,6 +68,7 @@ type SelectChainType =
 export const PerpsWithdrawPopup: React.FC<{
   visible?: boolean;
   inputTextStyle?: StyleProp<TextStyle>;
+  inputColorProps?: Pick<TextInputProps, 'cursorColor' | 'selectionColor'>;
   tooltipTextStyle?: StyleProp<TextStyle>;
   onClose?(): void;
   onWithdraw?(
@@ -74,7 +76,14 @@ export const PerpsWithdrawPopup: React.FC<{
     isHypeWithdraw: boolean,
     targetAsset: keyof typeof HYPE_SEND_ASSET_TOKEN_MAP,
   ): void;
-}> = ({ visible, onClose, onWithdraw, inputTextStyle, tooltipTextStyle }) => {
+}> = ({
+  visible,
+  onClose,
+  onWithdraw,
+  inputTextStyle,
+  inputColorProps,
+  tooltipTextStyle,
+}) => {
   const hypeMarkPx = perpsStore(s => s.marketDataMap?.HYPE?.markPx);
   const modalRef = useRef<AppBottomSheetModal>(null);
 
@@ -364,6 +373,8 @@ export const PerpsWithdrawPopup: React.FC<{
             <View style={styles.inputContainer}>
               <View style={styles.inputWrapper}>
                 <BottomSheetTextInput
+                  cursorColor={inputColorProps?.cursorColor}
+                  selectionColor={inputColorProps?.selectionColor}
                   value={amount}
                   onChangeText={setAmount}
                   keyboardType="numeric"

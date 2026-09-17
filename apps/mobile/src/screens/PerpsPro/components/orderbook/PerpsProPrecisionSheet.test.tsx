@@ -1,3 +1,6 @@
+import { ThemeColors2024 } from '@/constant/theme';
+jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
+
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
@@ -40,15 +43,29 @@ jest.mock('@/components2024/GlobalBottomSheetModal/utils-help', () => ({
   makeBottomSheetProps: (input: object) => mockMakeBottomSheetProps(input),
 }));
 
+let mockIsLight = true;
+
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
-    const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
+    const themeColors = require('@/constant/theme').ThemeColors2024;
+    const colors2024 = mockIsLight ? themeColors.light : themeColors.dark;
     return {
       colors2024,
-      isLight: true,
-      styles: getStyle({ colors2024 }),
+      isLight: mockIsLight,
+      styles: getStyle({
+        colors2024,
+        isLight: mockIsLight,
+        safeAreaInsets: { bottom: 0 },
+      }),
     };
   },
+}));
+
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) =>
+      key === 'page.perps.pro.orderBook.grouping' ? 'Order book grouping' : key,
+  }),
 }));
 
 jest.mock('@/utils/styles', () => ({
@@ -75,64 +92,85 @@ const options: PerpsTickOption[] = [
   { displayPrice: 100, mantissa: null, nSigFigs: 2, priceDecimals: 0 },
 ];
 
-describe('PerpsProPrecisionSheet', () => {
-  it('matches the compact no-title option layout and selected icon', () => {
-    const onClose = jest.fn();
-    const onIntentStart = jest.fn();
-    const onSelect = jest.fn();
-    render(
-      <PerpsProPrecisionSheet
-        onClose={onClose}
-        onIntentStart={onIntentStart}
-        onSelect={onSelect}
-        options={options}
-        selected={options[1]}
-      />,
-    );
+describe.each(['light', 'dark'] as const)(
+  'PerpsProPrecisionSheet (%s)',
+  mode => {
+    const colors = ThemeColors2024[mode];
+    beforeEach(() => {
+      mockIsLight = mode === 'light';
+    });
+    it('matches the grouping title, new cards, and existing selection intent', () => {
+      const onClose = jest.fn();
+      const onIntentStart = jest.fn();
+      const onSelect = jest.fn();
+      render(
+        <PerpsProPrecisionSheet
+          onClose={onClose}
+          onIntentStart={onIntentStart}
+          onSelect={onSelect}
+          options={options}
+          selected={options[1]}
+        />,
+      );
 
-    const sheet = screen.getByTestId('perps-pro-precision-sheet');
-    const selectedOption = screen.getByTestId('perps-pro-precision-5-2');
-    expect(sheet.props.snapPoints).toEqual([376]);
-    expect(mockMakeBottomSheetProps).toHaveBeenCalledWith(
-      expect.objectContaining({ linearGradientType: 'bg1' }),
-    );
-    expect(StyleSheet.flatten(sheet.props.style)).toMatchObject({
-      borderTopLeftRadius: 32,
-      borderTopRightRadius: 32,
-    });
-    expect(
-      StyleSheet.flatten(sheet.props.backgroundStyle).backgroundColor,
-    ).toBe('neutral-bg-1');
-    expect(StyleSheet.flatten(selectedOption.props.style).backgroundColor).toBe(
-      StyleSheet.flatten(sheet.props.backgroundStyle).backgroundColor,
-    );
-    expect(StyleSheet.flatten(sheet.props.handleStyle)).toMatchObject({
-      height: 40,
-      paddingBottom: 27,
-      paddingTop: 9,
-    });
-    expect(StyleSheet.flatten(sheet.props.handleIndicatorStyle)).toMatchObject({
-      height: 4,
-      width: 40,
-    });
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-precision-options').props
-          .contentContainerStyle,
-      ),
-    ).toMatchObject({ gap: 8, paddingBottom: 48, paddingHorizontal: 15 });
-    expect(screen.queryByText('Price Aggregation')).toBeNull();
-    expect(screen.getByTestId('perps-pro-precision-selected')).toBeTruthy();
-    expect(StyleSheet.flatten(selectedOption.props.style)).toMatchObject({
-      borderRadius: 12,
-      minHeight: 40,
-      paddingVertical: 8,
-    });
+      const sheet = screen.getByTestId('perps-pro-precision-sheet');
+      const selectedOption = screen.getByTestId('perps-pro-precision-5-2');
+      expect(sheet.props.snapPoints).toEqual([484]);
+      expect(mockMakeBottomSheetProps).toHaveBeenCalledWith(
+        expect.objectContaining({ linearGradientType: 'bg0' }),
+      );
+      expect(StyleSheet.flatten(sheet.props.style)).toMatchObject({
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+      });
+      expect(
+        StyleSheet.flatten(sheet.props.backgroundStyle).backgroundColor,
+      ).toBe(colors['neutral-bg-0']);
+      expect(
+        StyleSheet.flatten(selectedOption.props.style).backgroundColor,
+      ).toBe('rgba(80, 210, 193, 0.1)');
+      const unselected = StyleSheet.flatten(
+        screen.getByTestId('perps-pro-precision-5-null').props.style,
+      );
+      expect(unselected.backgroundColor).toBe(
+        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
+      );
+      expect(unselected.backgroundColor).not.toBe(
+        StyleSheet.flatten(sheet.props.backgroundStyle).backgroundColor,
+      );
+      expect(StyleSheet.flatten(sheet.props.handleStyle)).toMatchObject({
+        height: 40,
+        paddingBottom: 24,
+        paddingTop: 10,
+      });
+      expect(
+        StyleSheet.flatten(sheet.props.handleIndicatorStyle),
+      ).toMatchObject({
+        height: 6,
+        width: 50,
+      });
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId('perps-pro-precision-options').props
+            .contentContainerStyle,
+        ),
+      ).toMatchObject({ gap: 8, paddingBottom: 36, paddingHorizontal: 16 });
+      expect(screen.getByText('Order book grouping')).toBeTruthy();
+      expect(selectedOption.props.accessibilityState).toEqual({
+        checked: true,
+      });
+      expect(screen.queryByTestId('perps-pro-precision-selected')).toBeNull();
+      expect(StyleSheet.flatten(selectedOption.props.style)).toMatchObject({
+        borderRadius: 12,
+        padding: 15,
+        borderWidth: 1,
+      });
 
-    fireEvent(screen.getByTestId('perps-pro-precision-5-2'), 'pressIn');
-    expect(onIntentStart).toHaveBeenCalledWith(options[1]);
-    fireEvent.press(screen.getByTestId('perps-pro-precision-5-2'));
-    expect(onSelect).toHaveBeenCalledWith(options[1]);
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-});
+      fireEvent(screen.getByTestId('perps-pro-precision-5-2'), 'pressIn');
+      expect(onIntentStart).toHaveBeenCalledWith(options[1]);
+      fireEvent.press(screen.getByTestId('perps-pro-precision-5-2'));
+      expect(onSelect).toHaveBeenCalledWith(options[1]);
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+  },
+);

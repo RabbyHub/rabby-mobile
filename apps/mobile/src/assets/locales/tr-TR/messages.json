@@ -2043,7 +2043,7 @@
         },
         "marketSelector": {
           "title": "Piyasa Seç",
-          "search": "Ara",
+          "search": "Token ara",
           "favorites": "Favoriler",
           "all": "Tümü",
           "name": "Ad",
@@ -2056,6 +2056,7 @@
         },
         "funding": {
           "title": "Fonlama Oranı",
+          "gotIt": "Anladım",
           "summary": "Fonlama (1 sa.) / Geri Sayım",
           "openDetails": "Fonlama ayrıntılarını görüntüle",
           "interval": "Aralık",
@@ -2073,6 +2074,7 @@
           "explanation": "Fonlama oranı, long ve short pozisyon sahipleri arasındaki dönemsel ödemeleri hesaplamak için kullanılır. Fonlama oranı pozitif olduğunda longlar shortlara, negatif olduğunda shortlar longlara ödeme yapar. Yıllık oran basit yıllıklandırma yöntemiyle hesaplanır."
         },
         "orderBook": {
+          "grouping": "Emir defteri gruplama",
           "price": "Fiyat",
           "pnl": "PnL",
           "roi": "ROI%",
@@ -2089,6 +2091,7 @@
           "market": "Piyasa",
           "conditional": "Koşullu",
           "orderType": "Emir Türü",
+          "direction": "Yön",
           "marginMode": "Marjin Modu",
           "crossDescription": "Tüm çapraz pozisyonlar teminat olarak aynı çapraz marjini paylaşır. Likidasyon durumunda marjin bakiyeniz ve bu moddaki kalan açık çapraz pozisyonlarınız kaybedilebilir.",
           "isolatedDescription": "Her pozisyona marjin tahsis ederek pozisyonların riskini ayrı ayrı yönetin. İzole bir pozisyonun marjin oranı %100’e ulaşırsa pozisyon likide edilir. Bu modda pozisyonlara ayrı ayrı marjin eklenebilir veya pozisyonlardan marjin çıkarılabilir.",

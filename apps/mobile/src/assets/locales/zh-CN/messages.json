@@ -2190,7 +2190,7 @@
         },
         "marketSelector": {
           "title": "选择市场",
-          "search": "搜索",
+          "search": "搜索代币",
           "favorites": "收藏",
           "all": "全部",
           "name": "名称",
@@ -2203,6 +2203,7 @@
         },
         "funding": {
           "title": "资金费率",
+          "gotIt": "我知道了",
           "summary": "资金费率（1 小时）/倒计时",
           "openDetails": "查看资金费率详情",
           "interval": "周期",
@@ -2220,6 +2221,7 @@
           "explanation": "资金费率用于计算多仓与空仓持有者之间的定期费用。当资金费率为正时，多仓向空仓支付；为负时，空仓向多仓支付。年化费率采用简单年化计算。"
         },
         "orderBook": {
+          "grouping": "盘口分组",
           "price": "价格",
           "pnl": "PnL",
           "roi": "ROI%",
@@ -2236,6 +2238,7 @@
           "market": "市价",
           "conditional": "条件单",
           "orderType": "订单类型",
+          "direction": "方向",
           "marginMode": "保证金模式",
           "crossDescription": "所有全仓仓位共享同一份全仓保证金作为抵押品。发生强平时，您的保证金余额以及该模式下剩余的全仓持仓都可能损失。",
           "isolatedDescription": "通过为每个仓位单独分配保证金来管理风险。当逐仓仓位的保证金率达到 100% 时，该仓位将被强平。在此模式下，您可以为单个仓位增加或减少保证金。",

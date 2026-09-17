@@ -83,7 +83,6 @@ export const PerpsProTradePriceField = React.memo(
           keyboardScrollTrade
           accessibilityLabel={label}
           canonicalizeValueOnBlur={canonicalizeValueOnBlur}
-          cursorColor={colors2024['brand-default']}
           editable={editable}
           inputComponent={PerpsProAnimatedPriceTextInput}
           maxFontSizeMultiplier={1.2}
@@ -95,7 +94,6 @@ export const PerpsProTradePriceField = React.memo(
           onChangeText={onChangeText}
           onFocus={() => setFocused(true)}
           pointerEvents={onPressValue ? 'none' : 'auto'}
-          selectionColor={colors2024['brand-default']}
           style={[styles.input, animatedInputStyle]}
           value={value}
         />

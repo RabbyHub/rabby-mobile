@@ -13,7 +13,7 @@ const {
 }: typeof import('./PerpsProSelectCaret') = require('./PerpsProSelectCaret');
 
 describe('PerpsProSelectCaret', () => {
-  it('centers the exact Figma glyph in the shared 8x6 selection frame', () => {
+  it('centers the glyph at the approved rounded size in the shared 8x6 frame', () => {
     render(<PerpsProSelectCaret color="neutral-secondary" testID="caret" />);
 
     expect(StyleSheet.flatten(screen.getByTestId('caret').props.style)).toEqual(
@@ -26,8 +26,8 @@ describe('PerpsProSelectCaret', () => {
     );
     expect(screen.getByTestId('caret-glyph').props).toMatchObject({
       color: 'neutral-secondary',
-      height: 4.11638,
-      width: 5.69228,
+      height: 4,
+      width: 6,
     });
     expect(
       StyleSheet.flatten(screen.getByTestId('caret-glyph').props.style),

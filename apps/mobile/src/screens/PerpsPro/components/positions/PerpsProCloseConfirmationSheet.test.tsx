@@ -1,13 +1,15 @@
+import { PerpsProCheckboxIcon } from '../common/PerpsProCheckboxIcon';
+import { ThemeColors2024 } from '@/constant/theme';
+let mockThemeMode: 'light' | 'dark' | undefined;
+beforeEach(() => {
+  mockThemeMode = undefined;
+});
+jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-jest.mock('@/assets2024/icons/common/checkbox-empty-cc.svg', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
-  return (props: object) => ReactModule.createElement(View, props);
-});
-jest.mock('@/assets2024/icons/common/checkbox-filled-brand.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProInfoCheckboxChecked.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
@@ -26,10 +28,15 @@ jest.mock('@/components/customized/BottomSheet', () => {
           close: jest.fn(),
           present: jest.fn(),
         }));
-        return ReactModule.createElement(View, {
-          ...props,
-          testID: 'close-confirmation-sheet',
-        });
+        return ReactModule.createElement(
+          View,
+          { ...props, testID: 'close-confirmation-sheet' },
+          ReactModule.createElement(props.backgroundComponent, {
+            style: props.backgroundStyle,
+            testID: 'dialog-background',
+          }),
+          props.children,
+        );
       },
     ),
   };
@@ -46,15 +53,23 @@ jest.mock('@/components2024/Button', () => {
       ),
   };
 });
-jest.mock('@/components2024/GlobalBottomSheetModal/utils-help', () => ({
-  makeBottomSheetProps: () => ({}),
-}));
+// Keep the real background factory and renderer; only the native gradient is stubbed.
+jest.mock('react-native-linear-gradient', () => require('react-native').View);
 jest.mock('@/hooks/theme', () => ({
-  useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
-    const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
+  useTheme2024: ({
+    getStyle,
+  }: { getStyle?: (input: object) => object } = {}) => {
+    const colors2024 = mockThemeMode
+      ? require('@/constant/theme').ThemeColors2024[mockThemeMode]
+      : new Proxy({}, { get: (_target, key) => String(key) });
     return {
       colors2024,
-      styles: getStyle({ colors2024, safeAreaInsets: { bottom: 0 } }),
+      isLight: mockThemeMode !== 'dark',
+      styles: getStyle?.({
+        colors2024,
+        isLight: mockThemeMode !== 'dark',
+        safeAreaInsets: { bottom: 0 },
+      }),
     };
   },
 }));
@@ -73,6 +88,8 @@ jest.mock('react-i18next', () => ({
     t: (key: string) =>
       ({
         'global.confirm': 'Confirm',
+        'page.perps.pro.trade.buyLong': 'Buy / Long',
+        'page.perps.pro.trade.sellShort': 'Sell / Short',
         'page.perps.pro.openOrders.buy': 'Buy',
         'page.perps.pro.openOrders.sell': 'Sell',
         'page.perps.pro.positions.amount': 'Amount',
@@ -116,6 +133,59 @@ const draft = {
 } satisfies PerpsProCloseDraft;
 
 describe('PerpsProCloseConfirmationSheet', () => {
+  it.each(['light', 'dark'] as const)(
+    'renders a distinct %s confirmation card for Market and Limit',
+    mode => {
+      mockThemeMode = mode;
+      const colors = ThemeColors2024[mode];
+      for (const orderType of ['market', 'limit'] as const) {
+        const view = render(
+          <PerpsProCloseConfirmationSheet
+            amountUnit="base"
+            draft={{
+              ...draft,
+              orderType,
+              limitPrice: orderType === 'limit' ? '61000' : null,
+            }}
+            market={market}
+            onClose={jest.fn()}
+            onConfirm={jest.fn()}
+            onToggleSkipConfirmation={jest.fn()}
+            pending={false}
+            position={position}
+            skipConfirmation={false}
+            visible
+          />,
+        );
+        const background = StyleSheet.flatten(
+          screen.getByTestId('dialog-background').props.style,
+        ).backgroundColor;
+        expect(background).toBe(colors['neutral-bg-0']);
+        expect(
+          StyleSheet.flatten(
+            screen.getByTestId('close-confirmation-sheet').props.handleStyle,
+          ).backgroundColor,
+        ).toBe(background);
+        const cards = screen
+          .UNSAFE_getAllByType(View)
+          .map(node => StyleSheet.flatten(node.props.style))
+          .filter(style => style?.borderRadius === 12);
+        expect(cards).toHaveLength(1);
+        expect(cards[0].backgroundColor).toBe(
+          colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
+        );
+        expect(cards[0].backgroundColor).not.toBe(background);
+        expect(
+          screen.UNSAFE_getByType(PerpsProCheckboxIcon).props,
+        ).toMatchObject({
+          checked: false,
+          checkColor: colors['neutral-InvertHighlight'],
+        });
+        view.unmount();
+      }
+    },
+  );
+
   it('matches the compact Limit confirmation content and closing direction', () => {
     render(
       <PerpsProCloseConfirmationSheet
@@ -134,36 +204,14 @@ describe('PerpsProCloseConfirmationSheet', () => {
 
     expect(
       screen.getByTestId('close-confirmation-sheet').props.snapPoints,
-    ).toEqual([302]);
+    ).toEqual([336]);
     expect(screen.getByText('BTCUSDC')).toBeTruthy();
-    expect(screen.getByText('Sell')).toBeTruthy();
-    expect(screen.getByText('Short')).toBeTruthy();
-    for (const testID of [
-      'perps-pro-close-confirmation-side-tag',
-      'perps-pro-close-confirmation-position-tag',
-    ]) {
-      const tagStyle = StyleSheet.flatten(
-        screen.getByTestId(testID).props.style,
-      );
-      expect(tagStyle).toMatchObject({
-        backgroundColor: 'red-light-1',
-        borderRadius: 4,
-        paddingHorizontal: 4,
-        paddingVertical: 1,
-      });
-      expect(tagStyle.borderColor).toBeUndefined();
-      expect(tagStyle.borderWidth).toBeUndefined();
-    }
-    expect(screen.getByText('Sell').props.style).toMatchObject({
+    expect(
+      StyleSheet.flatten(screen.getByText('Sell / Short').props.style),
+    ).toMatchObject({
       color: 'red-default',
       fontSize: 12,
-      fontWeight: '500',
-      lineHeight: 16,
-    });
-    expect(screen.getByText('Short').props.style).toMatchObject({
-      color: 'red-default',
-      fontSize: 12,
-      fontWeight: '500',
+      fontWeight: '700',
       lineHeight: 16,
     });
     expect(screen.getByText('61,000 USDC')).toBeTruthy();
@@ -200,61 +248,49 @@ describe('PerpsProCloseConfirmationSheet', () => {
       />,
     );
 
-    expect(screen.getByText('Buy').props.style).toMatchObject({
+    expect(
+      StyleSheet.flatten(screen.getByText('Buy / Long').props.style),
+    ).toMatchObject({
       color: 'green-default',
       fontSize: 12,
-      fontWeight: '500',
+      fontWeight: '700',
       lineHeight: 16,
     });
-    expect(screen.getByText('Long').props.style).toMatchObject({
-      color: 'green-default',
-      fontSize: 12,
-      fontWeight: '500',
-      lineHeight: 16,
-    });
-    for (const testID of [
-      'perps-pro-close-confirmation-side-tag',
-      'perps-pro-close-confirmation-position-tag',
-    ]) {
-      const tagStyle = StyleSheet.flatten(
-        screen.getByTestId(testID).props.style,
+  });
+
+  it.each([false, true])(
+    'uses Market Price with its own checkbox preference (checked=%s)',
+    skipConfirmation => {
+      const onToggleSkipConfirmation = jest.fn();
+      render(
+        <PerpsProCloseConfirmationSheet
+          amountUnit="base"
+          draft={{ ...draft, limitPrice: null, orderType: 'market' }}
+          market={market}
+          onClose={jest.fn()}
+          onConfirm={jest.fn()}
+          onToggleSkipConfirmation={onToggleSkipConfirmation}
+          pending={false}
+          position={position}
+          skipConfirmation={skipConfirmation}
+          visible
+        />,
       );
-      expect(tagStyle).toMatchObject({
-        backgroundColor: 'green-light-1',
-        borderRadius: 4,
-      });
-      expect(tagStyle.borderColor).toBeUndefined();
-      expect(tagStyle.borderWidth).toBeUndefined();
-    }
-  });
 
-  it('uses Market Price with its own opt-in confirmation preference', () => {
-    const onToggleSkipConfirmation = jest.fn();
-    render(
-      <PerpsProCloseConfirmationSheet
-        amountUnit="base"
-        draft={{ ...draft, limitPrice: null, orderType: 'market' }}
-        market={market}
-        onClose={jest.fn()}
-        onConfirm={jest.fn()}
-        onToggleSkipConfirmation={onToggleSkipConfirmation}
-        pending={false}
-        position={position}
-        skipConfirmation={false}
-        visible
-      />,
-    );
-
-    expect(
-      screen.getByTestId('close-confirmation-sheet').props.snapPoints,
-    ).toEqual([302]);
-    expect(screen.getByText('Market Price')).toBeTruthy();
-    expect(
-      screen.getByText("Don't show this Market Close confirmation again."),
-    ).toBeTruthy();
-    fireEvent.press(screen.getByRole('checkbox'));
-    expect(onToggleSkipConfirmation).toHaveBeenCalledTimes(1);
-  });
+      expect(
+        screen.getByTestId('close-confirmation-sheet').props.snapPoints,
+      ).toEqual([336]);
+      expect(screen.getByText('Market Price')).toBeTruthy();
+      expect(
+        screen.getByText("Don't show this Market Close confirmation again."),
+      ).toBeTruthy();
+      expect(screen.UNSAFE_getByType(PerpsProCheckboxIcon).props.checked).toBe(
+        skipConfirmation,
+      );
+      fireEvent.press(screen.getByRole('checkbox'));
+      expect(onToggleSkipConfirmation).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it('renders the normalized market source instead of a hardcoded Perp tag', () => {
     render(
@@ -293,8 +329,12 @@ describe('PerpsProCloseConfirmationSheet', () => {
       fontWeight: '500',
       lineHeight: 16,
     });
+    expect(
+      screen.getByTestId('close-confirmation-sheet').props.backdropComponent({})
+        .props.pressBehavior,
+    ).toBe('none');
     expect(screen.getByTestId('close-confirmation-sheet').props).toMatchObject({
-      backdropProps: { pressBehavior: 'none' },
+      backdropComponent: expect.any(Function),
       enablePanDownToClose: false,
     });
   });

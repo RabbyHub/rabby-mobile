@@ -112,13 +112,13 @@ const styles = {
   },
   ratioLabelLane: {
     flexShrink: 0,
-    width: 42,
+    width: 41,
   },
   buyRatioLabelLane: {
-    alignItems: 'flex-end' as const,
+    alignItems: 'flex-start' as const,
   },
   sellRatioLabelLane: {
-    alignItems: 'flex-start' as const,
+    alignItems: 'flex-end' as const,
   },
   ratioBarSlot: {
     flex: 1,

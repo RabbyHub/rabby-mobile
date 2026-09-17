@@ -18,6 +18,7 @@ import {
   Pressable,
   type StyleProp,
   type TextStyle,
+  type TextInputProps,
 } from 'react-native';
 import { Text } from '@/components/Typography';
 import { Tip } from '@/components/Tip';
@@ -68,6 +69,7 @@ export const SPOT_STABLE_COIN_NAME: Record<SpotStableCoin, string> = {
 export const PerpsSpotSwapPopup: React.FC<{
   visible?: boolean;
   inputTextStyle?: StyleProp<TextStyle>;
+  inputColorProps?: Pick<TextInputProps, 'cursorColor' | 'selectionColor'>;
   tooltipTextStyle?: StyleProp<TextStyle>;
   sourceAsset?: PerpsQuoteAsset;
   targetAsset?: PerpsQuoteAsset;
@@ -84,6 +86,7 @@ export const PerpsSpotSwapPopup: React.FC<{
 }> = ({
   visible,
   inputTextStyle,
+  inputColorProps,
   tooltipTextStyle,
   sourceAsset,
   targetAsset,
@@ -494,6 +497,8 @@ export const PerpsSpotSwapPopup: React.FC<{
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <View style={styles.inputWrapper}>
                   <BottomSheetTextInput
+                    cursorColor={inputColorProps?.cursorColor}
+                    selectionColor={inputColorProps?.selectionColor}
                     keyboardType="numeric"
                     style={[
                       styles.input,
