@@ -191,7 +191,7 @@ function readRawMMKVEntry(
   try {
     const value = storage.getBuffer(key);
     if (value !== undefined) {
-      return { type: 'buffer', value: Array.from(value) };
+      return { type: 'buffer', value: Array.from(new Uint8Array(value)) };
     }
   } catch (error) {
     errors.push(`buffer: ${getErrorMessage(error)}`);
