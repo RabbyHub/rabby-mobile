@@ -42,6 +42,11 @@ type PerpsProDecimalTextInputProps = Omit<
   normalizeValue?: (value: string) => string;
   onChangeText: (value: string) => void;
   preserveIntegerZeroRun?: boolean;
+  /** Layout mirrors must use the same local editing buffer as the native input. */
+  renderInput?: (
+    input: React.ReactElement,
+    editingValue: string,
+  ) => React.ReactElement;
   value: string;
 };
 
@@ -66,6 +71,7 @@ export const PerpsProDecimalTextInput = React.memo(
         onKeyPress,
         onTouchStart,
         preserveIntegerZeroRun = false,
+        renderInput,
         value,
         ...inputProps
       },
@@ -289,7 +295,8 @@ export const PerpsProDecimalTextInput = React.memo(
         value: inputValue,
       };
 
-      return <InputComponent {...textInputProps} ref={inputRef} />;
+      const input = <InputComponent {...textInputProps} ref={inputRef} />;
+      return renderInput ? renderInput(input, inputValue) : input;
     },
   ),
 );

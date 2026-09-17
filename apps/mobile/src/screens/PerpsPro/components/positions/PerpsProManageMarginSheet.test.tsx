@@ -10,6 +10,7 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
+import { Portal, PortalProvider } from '@gorhom/portal';
 import { Keyboard, StyleSheet, View } from 'react-native';
 
 const mockInputBlur = jest.fn();
@@ -135,6 +136,7 @@ jest.mock('./PerpsProManageMarginSlider', () => ({
 
 import type { PerpsProManageMarginView } from '../../scene/usePerpsProManageMargin';
 import { PerpsProManageMarginSheet } from './PerpsProManageMarginSheet';
+import { PerpsProManageMarginAmountRow } from './PerpsProManageMarginAmountRow';
 
 const baseView: PerpsProManageMarginView = {
   currentLiquidationDistance: '0.2',
@@ -188,6 +190,85 @@ const renderSheet = (
 };
 
 describe('PerpsProManageMarginSheet', () => {
+  it('keeps every portal commit in sync and the native input width stable while editing', () => {
+    // Real Portal scheduling is essential: the parent draft can reach its host
+    // one commit later than DecimalTextInput's local editing buffer.
+    const Harness = () => {
+      const [draft, setDraft] = React.useState('1');
+      return (
+        <Portal>
+          <PerpsProManageMarginAmountRow
+            draft={draft}
+            onBeginEditing={jest.fn()}
+            onChangeDraft={setDraft}
+            onSelectTarget={setDraft}
+            pending={false}
+            range={baseView.range}
+          />
+        </Portal>
+      );
+    };
+    const commits: Array<{ measure: string; input: string }> = [];
+    let readCommit = () => {};
+    render(
+      <React.Profiler id="margin-portal" onRender={() => readCommit()}>
+        <PortalProvider>
+          <Harness />
+        </PortalProvider>
+      </React.Profiler>,
+    );
+    const input = screen.getByTestId('perps-pro-manage-margin-input');
+    fireEvent(screen.getByTestId('perps-pro-manage-margin-unit'), 'layout', {
+      nativeEvent: { layout: { width: 22, height: 42, x: 0, y: 0 } },
+    });
+    const viewport = () =>
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-manage-margin-input-viewport').props
+          .style,
+      );
+    const initialViewport = viewport();
+    expect(initialViewport).toMatchObject({
+      left: 22,
+      right: 0,
+      position: 'absolute',
+    });
+    readCommit = () =>
+      commits.push({
+        input: screen.getByTestId('perps-pro-manage-margin-input').props.value,
+        measure: screen.getByTestId('perps-pro-manage-margin-input-measure', {
+          includeHiddenElements: true,
+        }).props.children,
+      });
+    mockInputSetNativeProps.mockClear();
+    for (const value of [
+      '12',
+      '123',
+      '1234',
+      '1234.',
+      '1234.5',
+      '1234.56',
+      '12.56',
+      '',
+      '0.',
+      '0.01',
+    ]) {
+      commits.length = 0;
+      fireEvent.changeText(input, value);
+      expect(commits.length).toBeGreaterThan(0);
+      for (const commit of commits) {
+        expect(commit.measure).toBe(commit.input || '0');
+      }
+      expect(input.props.value).toBe(value);
+      expect(viewport()).toEqual(initialViewport);
+      expect(screen.getByTestId('perps-pro-manage-margin-input')).toBe(input);
+    }
+    expect(mockInputSetNativeProps).not.toHaveBeenCalled();
+    fireEvent.press(screen.getByTestId('perps-pro-manage-margin-max'));
+    expect(input.props.value).toBe('25');
+    fireEvent.press(screen.getByTestId('perps-pro-manage-margin-min'));
+    expect(input.props.value).toBe('10.1');
+    expect(viewport()).toEqual(initialViewport);
+  });
   it.each(['light', 'dark'] as const)(
     'renders the %s sheet background behind all three margin cards',
     mode => {
