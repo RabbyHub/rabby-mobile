@@ -2771,7 +2771,8 @@
         "breakdownPerps": "Perps",
         "breakdownSpot": "Spot",
         "breakdownOtherAssets": "Outros ativos",
-        "breakdownNetOtherAssets": "Outros ativos líquidos"
+        "breakdownNetOtherAssets": "Outros ativos líquidos",
+        "breakdownStaking": "Staking"
       },
       "PerpsGuidePopup": {
         "step1Title": "Domine os futuros perpétuos",

@@ -2673,7 +2673,8 @@
         "breakdownPerps": "永續合約",
         "breakdownSpot": "現貨",
         "breakdownOtherAssets": "其他資產",
-        "breakdownNetOtherAssets": "其他資產淨值"
+        "breakdownNetOtherAssets": "其他資產淨值",
+        "breakdownStaking": "質押"
       },
       "PerpsGuidePopup": {
         "step3Title": "做空",

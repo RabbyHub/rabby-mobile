@@ -264,6 +264,7 @@ export const PerpsProScene: React.FC<{
   const info = usePerpsProInfoPanel(
     scene.currentMarket?.canonicalCoin ?? '',
     requestedInfoTab,
+    scene.fundingHistoryEnabled,
   );
   const infoTabIndicatorPosition = useSharedValue(
     Math.max(0, PERPS_PRO_INFO_TABS.indexOf(info.activeInfoTab ?? 'positions')),

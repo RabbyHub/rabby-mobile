@@ -2582,7 +2582,8 @@
         "breakdownPerps": "Perps",
         "breakdownSpot": "Spot",
         "breakdownOtherAssets": "Other Assets",
-        "breakdownNetOtherAssets": "Net Other Assets"
+        "breakdownNetOtherAssets": "Net Other Assets",
+        "breakdownStaking": "Staking"
       },
       "selectAccountTitle": "Select a Wallet to Log In",
       "PerpsGuidePopup": {

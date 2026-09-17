@@ -731,6 +731,7 @@ const createSceneState = (overrides: Record<string, unknown> = {}) => ({
   cancelPendingMarketSelection: jest.fn(),
   currentMarket: null,
   executionActive: false,
+  fundingHistoryEnabled: false,
   isResolvingMarket: false,
   klineEnabled: false,
   marketDataStatus: 'success',
@@ -2055,6 +2056,7 @@ describe('PerpsProScene market loading states', () => {
     expect(mockUsePerpsProInfoPanel).toHaveBeenLastCalledWith(
       expect.any(String),
       'openOrders',
+      false,
     );
 
     fireEvent(screen.getByTestId('perps-pro-info-pager'), 'pageSelected', {
@@ -2121,6 +2123,7 @@ describe('PerpsProScene market loading states', () => {
     expect(mockUsePerpsProInfoPanel).toHaveBeenLastCalledWith(
       expect.any(String),
       'positions',
+      false,
     );
     expect(
       screen.getByTestId('perps-pro-info-tab-positions').props

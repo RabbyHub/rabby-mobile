@@ -2618,7 +2618,8 @@
         "breakdownPerps": "Перпы",
         "breakdownSpot": "Спот",
         "breakdownOtherAssets": "Прочие активы",
-        "breakdownNetOtherAssets": "Прочие активы (нетто)"
+        "breakdownNetOtherAssets": "Прочие активы (нетто)",
+        "breakdownStaking": "Стейкинг"
       },
       "PerpsGuidePopup": {
         "step5Title": "Ликвидация",

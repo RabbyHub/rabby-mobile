@@ -2650,7 +2650,8 @@
         "breakdownPerps": "永续合约",
         "breakdownSpot": "现货",
         "breakdownOtherAssets": "其他资产",
-        "breakdownNetOtherAssets": "其他资产净值"
+        "breakdownNetOtherAssets": "其他资产净值",
+        "breakdownStaking": "质押"
       },
       "PerpsGuidePopup": {
         "step5Title": "强平",
