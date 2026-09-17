@@ -1,8 +1,13 @@
 import { ThemeColors2024 } from '@/constant/theme';
+import { colord } from 'colord';
 import { StyleSheet } from 'react-native';
 import {
   getPerpsProDialogStyles as getDialogStyles,
   PERPS_PRO_DIALOG_TOKENS,
+  getPerpsProDialogActionStyles,
+  resolvePerpsProDialogFieldBackground,
+  resolvePerpsProDialogCardBackground,
+  getPerpsProDialogCheckboxStyles,
 } from './perpsProDialogVisual';
 
 describe('Pro dialog surfaces', () => {
@@ -17,6 +22,39 @@ describe('Pro dialog surfaces', () => {
       ]);
       const active = StyleSheet.flatten([styles.option, styles.optionActive]);
 
+      const field = resolvePerpsProDialogFieldBackground(
+        colors,
+        mode === 'light',
+      );
+      const card = resolvePerpsProDialogCardBackground(
+        colors,
+        mode === 'light',
+      );
+      expect(field).toBe(
+        mode === 'light' ? 'rgba(246, 247, 247, 1)' : 'rgba(47, 49, 53, 0.5)',
+      );
+      expect(card).not.toBe(field);
+      expect(
+        getPerpsProDialogCheckboxStyles(colors).checkboxText,
+      ).toMatchObject({ color: colors['neutral-foot'], flexShrink: 1 });
+      expect(
+        getPerpsProDialogCheckboxStyles(colors).checkboxText,
+      ).not.toHaveProperty('flex');
+      const actions = getPerpsProDialogActionStyles(colors);
+      expect(styles.button).toEqual(actions.button);
+      expect(actions.button.backgroundColor).toBe(
+        PERPS_PRO_DIALOG_TOKENS.actionBackground,
+      );
+      expect(actions.buttonTitle.color).toBe(
+        PERPS_PRO_DIALOG_TOKENS.actionForeground,
+      );
+      expect(colord(actions.buttonDisabled.backgroundColor).toRgb()).toEqual({
+        ...colord(PERPS_PRO_DIALOG_TOKENS.actionBackground).toRgb(),
+        a: 0.4,
+      });
+      expect(actions.buttonDisabledTitle.color).toBe(
+        PERPS_PRO_DIALOG_TOKENS.actionForeground,
+      );
       expect(styles.background.backgroundColor).toBe(colors['neutral-bg-0']);
       expect(inactive.backgroundColor).toBe(
         colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],

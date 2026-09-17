@@ -199,6 +199,7 @@ describe.each(['light', 'dark'] as const)(
         fontSize: 12,
         lineHeight: 16,
         marginTop: 12,
+        textAlign: 'left',
       });
 
       expect(

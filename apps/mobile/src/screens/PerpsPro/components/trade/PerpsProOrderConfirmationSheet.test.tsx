@@ -1,3 +1,4 @@
+import { PerpsProCheckboxIcon } from '../common/PerpsProCheckboxIcon';
 import { ThemeColors2024 } from '@/constant/theme';
 jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
 
@@ -9,13 +10,7 @@ import {
   View as NativeView,
 } from 'react-native';
 
-jest.mock('@/assets2024/icons/common/checkbox-empty-cc.svg', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
-  return (props: object) => ReactModule.createElement(View, props);
-});
-
-jest.mock('@/assets2024/icons/common/checkbox-filled-brand.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProInfoCheckboxChecked.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
@@ -86,6 +81,13 @@ jest.mock('@/components2024/GlobalBottomSheetModal/utils-help', () => ({
 }));
 
 let mockIsLight = true;
+let mockIsIOS = true;
+
+jest.mock('@/core/native/utils', () => ({
+  get IS_IOS() {
+    return mockIsIOS;
+  },
+}));
 
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
@@ -253,7 +255,59 @@ describe.each(['light', 'dark'] as const)(
     const colors = ThemeColors2024[mode];
     beforeEach(() => {
       mockIsLight = mode === 'light';
+      mockIsIOS = true;
     });
+    it.each([
+      [true, 'isolated', 'xyz', 3],
+      [true, 'cross', 'long-source-tag', 20],
+      [true, 'cross', null, 100],
+      [false, 'isolated', 'xyz', 3],
+      [false, 'cross', 'long-source-tag', 20],
+      [false, 'cross', null, 100],
+    ] as const)(
+      'clips metadata only on iOS (%s, %s, source=%s, leverage=%s)',
+      (isIOS, marginMode, sourceTag, leverage) => {
+        mockIsIOS = isIOS;
+        renderSheet({
+          ...parent,
+          reviewFacts: { ...reviewFacts, marginMode, sourceTag, leverage },
+        });
+
+        const marginTag = screen.getByTestId(
+          'perps-pro-order-confirmation-margin-mode-tag',
+        );
+        const source = screen.queryByTestId(
+          'perps-pro-order-confirmation-source-tag',
+        );
+        expect(marginTag).toHaveTextContent(
+          `${marginMode === 'cross' ? 'Cross' : 'Isolated'} ${leverage}x`,
+        );
+        if (sourceTag) {
+          expect(source).toHaveTextContent(sourceTag);
+        } else {
+          expect(source).toBeNull();
+        }
+        for (const tag of source ? [source, marginTag] : [marginTag]) {
+          const { overflow, ...style } = StyleSheet.flatten(tag.props.style);
+          expect(overflow).toBe(isIOS ? 'hidden' : undefined);
+          expect(tag.props.numberOfLines).toBe(1);
+          expect(tag.props.adjustsFontSizeToFit).toBeUndefined();
+          expect(style).toEqual({
+            backgroundColor: colors['neutral-bg-5'],
+            borderRadius: 4,
+            color: colors['neutral-foot'],
+            fontFamily: 'SF Pro Rounded',
+            fontSize: 12,
+            fontWeight: '500',
+            lineHeight: 16,
+            maxWidth: 100,
+            paddingHorizontal: 4,
+            paddingVertical: 1,
+          });
+        }
+      },
+    );
+
     it('uses the Pro layout, live risk fields and Mark Price TP/SL conditions', () => {
       renderSheet(attached);
 
@@ -426,13 +480,26 @@ describe.each(['light', 'dark'] as const)(
       expect(detailTexts).not.toContain('-');
     });
 
-    it('keeps attached TP/SL on the same per-type skip preference control', () => {
-      const onToggleSkip = jest.fn();
-      renderSheet(attached, { onToggleSkip });
+    it.each([false, true])(
+      'keeps the Pro checkbox on the same skip preference control (checked=%s)',
+      skipConfirmation => {
+        const onToggleSkip = jest.fn();
+        renderSheet(attached, { onToggleSkip, skipConfirmation });
 
-      fireEvent.press(screen.getByRole('checkbox'));
-      expect(onToggleSkip).toHaveBeenCalledTimes(1);
-    });
+        expect(
+          screen.UNSAFE_getByType(PerpsProCheckboxIcon).props,
+        ).toMatchObject({
+          checked: skipConfirmation,
+          checkColor: colors['neutral-InvertHighlight'],
+        });
+        expect(screen.getByRole('checkbox').props.accessibilityState).toEqual({
+          checked: skipConfirmation,
+        });
+
+        fireEvent.press(screen.getByRole('checkbox'));
+        expect(onToggleSkip).toHaveBeenCalledTimes(1);
+      },
+    );
 
     it('renders a six-digit integer attached TP trigger without truncation', () => {
       renderSheet({

@@ -1,4 +1,6 @@
 import { ThemeColors2024 } from '@/constant/theme';
+import { colord } from 'colord';
+import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
 jest.mock('@/assets2024/icons/perps/PerpsProLeveragePlus.svg', () => {
   const ReactModule = require('react');
   return (props: object) =>
@@ -439,6 +441,18 @@ describe.each(['light', 'dark'] as const)(
       expect(
         screen.getByTestId('perps-pro-leverage-confirm').props.loading,
       ).toBe(true);
+      const confirm = screen.getByTestId('perps-pro-leverage-confirm');
+      expect(
+        colord(
+          StyleSheet.flatten(confirm.props.buttonStyle).backgroundColor,
+        ).toRgb(),
+      ).toEqual({
+        ...colord(PERPS_PRO_DIALOG_TOKENS.actionBackground).toRgb(),
+        a: 0.4,
+      });
+      expect(confirm.props.loadingProps.color).toBe(
+        PERPS_PRO_DIALOG_TOKENS.actionForeground,
+      );
     });
 
     it('clamps values above the market maximum while rejecting illegal characters', () => {

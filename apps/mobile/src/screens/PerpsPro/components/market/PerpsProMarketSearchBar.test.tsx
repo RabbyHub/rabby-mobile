@@ -1,3 +1,4 @@
+import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { Keyboard, Platform, StyleSheet } from 'react-native';
@@ -116,6 +117,43 @@ const getLatestInputProps = () =>
   mockInputProps.mock.calls[mockInputProps.mock.calls.length - 1][0];
 
 describe('PerpsProMarketSearchBar', () => {
+  it.each([
+    ['ios', true],
+    ['ios', false],
+    ['android', true],
+    ['android', false],
+  ] as const)(
+    'uses mint for %s search with isLight=%s',
+    (platform, isLight) => {
+      const previousPlatform = Platform.OS;
+      mockIsLight = isLight;
+      Object.defineProperty(Platform, 'OS', {
+        configurable: true,
+        value: platform,
+      });
+      try {
+        const view = render(
+          <PerpsProMarketSearchBar
+            onChangeText={jest.fn()}
+            onFocusChange={jest.fn()}
+            placeholder="Search Token"
+            value="ETH"
+          />,
+        );
+        expect(screen.getByTestId('market-search').props).toMatchObject({
+          cursorColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+          selectionColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+        });
+        view.unmount();
+      } finally {
+        Object.defineProperty(Platform, 'OS', {
+          configurable: true,
+          value: previousPlatform,
+        });
+      }
+    },
+  );
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockIsLight = true;

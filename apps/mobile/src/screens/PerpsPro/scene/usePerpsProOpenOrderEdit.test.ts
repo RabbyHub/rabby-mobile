@@ -9,6 +9,15 @@ const mockGetSkip = jest.fn();
 const mockSetSkip = jest.fn();
 const mockShowToast = jest.fn();
 
+const mockReadActiveAsset = jest.fn();
+const mockFetchActiveAsset = jest.fn();
+jest.mock('@/hooks/perps/useActiveAssetDataCache', () => ({
+  readActiveAssetDataFromCache: (...args: unknown[]) =>
+    mockReadActiveAsset(...args),
+  fetchActiveAssetDataWithCache: (...args: unknown[]) =>
+    mockFetchActiveAsset(...args),
+}));
+
 jest.mock('@/core/apis/perps', () => ({
   apisPerps: {
     getPerpsSDK: () => ({
@@ -141,6 +150,8 @@ const position = {
 describe('usePerpsProOpenOrderEdit', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockReadActiveAsset.mockReturnValue(null);
+    mockFetchActiveAsset.mockResolvedValue(null);
     mockEnsureApproval.mockResolvedValue(undefined);
     mockGetSkip.mockResolvedValue(false);
     mockSetSkip.mockResolvedValue(undefined);
@@ -219,6 +230,168 @@ describe('usePerpsProOpenOrderEdit', () => {
         },
       },
     });
+  });
+
+  it.each(['cross', 'isolated'] as const)(
+    'captures %s leverage from the matching account/coin cache',
+    async type => {
+      const configuration = { type, value: 20 };
+      mockReadActiveAsset.mockReturnValue({
+        user: account.address.toUpperCase(),
+        coin: 'BTC',
+        leverage: configuration,
+      });
+      const hook = renderHook(() =>
+        usePerpsProOpenOrderEdit('account-a', 'quote'),
+      );
+      await act(async () => hook.result.current.open(basicOrder));
+      expect(mockReadActiveAsset).toHaveBeenCalledWith('BTC', account.address);
+      expect(hook.result.current.editor).toMatchObject({
+        category: 'basic',
+        leverageConfiguration: configuration,
+      });
+      expect(mockFetchActiveAsset).not.toHaveBeenCalled();
+      configuration.value = 5;
+      expect(hook.result.current.editor).toMatchObject({
+        leverageConfiguration: { type, value: 20 },
+      });
+      await act(async () =>
+        hook.result.current.requestBasicReview({
+          amount: '60',
+          amountTouched: false,
+          price: '120',
+        }),
+      );
+      expect(hook.result.current.review?.category).toBe('basic');
+      expect(hook.result.current.editor).toMatchObject({
+        leverageConfiguration: { type, value: 20 },
+      });
+      expect(mockBuildModify.mock.calls[0][0]).not.toHaveProperty(
+        'leverageConfiguration',
+      );
+    },
+  );
+
+  it('prefers the current account position and does not read metadata for conditional edits', async () => {
+    const state = mockGetState();
+    state.isUserDataReady = true;
+    state.currentClearinghouseState.assetPositions = [
+      {
+        position: {
+          coin: 'BTC',
+          szi: '1',
+          leverage: { type: 'isolated', value: 7 },
+        },
+      },
+    ];
+    const hook = renderHook(() =>
+      usePerpsProOpenOrderEdit('account-a', 'quote'),
+    );
+    await act(async () => hook.result.current.open(basicOrder));
+    expect(hook.result.current.editor).toMatchObject({
+      leverageConfiguration: { type: 'isolated', value: 7 },
+    });
+    expect(mockReadActiveAsset).not.toHaveBeenCalled();
+    act(() => hook.result.current.close());
+    await act(async () => hook.result.current.open(conditionalOrder, position));
+    expect(hook.result.current.editor).not.toHaveProperty(
+      'leverageConfiguration',
+    );
+    expect(mockFetchActiveAsset).not.toHaveBeenCalled();
+  });
+
+  it('fills missing metadata without delaying editing or replacing an in-progress review', async () => {
+    let resolveMetadata!: (data: unknown) => void;
+    mockFetchActiveAsset.mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          resolveMetadata = resolve;
+        }),
+    );
+    const hook = renderHook(() =>
+      usePerpsProOpenOrderEdit('account-a', 'quote'),
+    );
+    await act(async () => hook.result.current.open(basicOrder));
+    expect(hook.result.current.editor?.category).toBe('basic');
+    expect(mockFetchActiveAsset).toHaveBeenCalledWith('BTC', account.address);
+    await act(async () =>
+      hook.result.current.requestBasicReview({
+        amount: '60',
+        amountTouched: false,
+        price: '120',
+      }),
+    );
+    const review = hook.result.current.review;
+    await act(async () =>
+      resolveMetadata({
+        user: account.address,
+        coin: 'BTC',
+        leverage: { type: 'cross', value: 12 },
+      }),
+    );
+    expect(hook.result.current.editor).toMatchObject({
+      leverageConfiguration: { type: 'cross', value: 12 },
+    });
+    expect(hook.result.current.review).toBe(review);
+    expect(mockExecuteModify).not.toHaveBeenCalled();
+  });
+
+  it.each(['account', 'coin', 'invalid', 'closed', 'switched'] as const)(
+    'ignores %s metadata without fabricating a default',
+    async mismatch => {
+      let resolveMetadata!: (data: unknown) => void;
+      mockFetchActiveAsset.mockImplementationOnce(
+        () =>
+          new Promise(resolve => {
+            resolveMetadata = resolve;
+          }),
+      );
+      mockReadActiveAsset.mockReturnValue({
+        user: '0xother',
+        coin: 'BTC',
+        leverage: { type: 'cross', value: 40 },
+      });
+      const hook = renderHook(() =>
+        usePerpsProOpenOrderEdit('account-a', 'quote'),
+      );
+      await act(async () => hook.result.current.open(basicOrder));
+      if (mismatch === 'closed') act(() => hook.result.current.close());
+      if (mismatch === 'switched')
+        mockGetState.mockReturnValue({
+          ...mockGetState(),
+          currentPerpsAccount: { ...account, address: '0xother' },
+        });
+      await act(async () =>
+        resolveMetadata({
+          user: mismatch === 'account' ? '0xother' : account.address,
+          coin: mismatch === 'coin' ? 'xyz:BTC' : 'BTC',
+          leverage: { type: 'cross', value: mismatch === 'invalid' ? 0 : 20 },
+        }),
+      );
+      if (mismatch === 'closed') expect(hook.result.current.editor).toBeNull();
+      else
+        expect(hook.result.current.editor).toMatchObject({
+          leverageConfiguration: null,
+        });
+      expect(mockExecuteModify).not.toHaveBeenCalled();
+    },
+  );
+
+  it('leaves the editor usable when metadata fails', async () => {
+    mockFetchActiveAsset.mockRejectedValueOnce(new Error('offline'));
+    const hook = renderHook(() =>
+      usePerpsProOpenOrderEdit('account-a', 'quote'),
+    );
+    await act(async () => hook.result.current.open(basicOrder));
+    expect(hook.result.current.editor?.category).toBe('basic');
+    await act(async () =>
+      hook.result.current.requestBasicReview({
+        amount: '60',
+        amountTouched: false,
+        price: '120',
+      }),
+    );
+    expect(hook.result.current.review?.category).toBe('basic');
   });
 
   it('uses the unfinished sz when only a Basic price is edited', async () => {

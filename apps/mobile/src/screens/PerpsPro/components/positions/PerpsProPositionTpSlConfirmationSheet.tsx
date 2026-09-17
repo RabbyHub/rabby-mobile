@@ -1,13 +1,17 @@
+import {
+  getPerpsProDialogCheckboxStyles,
+  getPerpsProDialogStyles,
+} from '../common/perpsProDialogVisual';
+import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
-import RcCheckboxEmptyCC from '@/assets2024/icons/common/checkbox-empty-cc.svg';
-import RcCheckboxFilledBrand from '@/assets2024/icons/common/checkbox-filled-brand.svg';
+import { PerpsProCheckboxIcon } from '../common/PerpsProCheckboxIcon';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import {
-  BOTTOM_BUTTON_COMPACT_HEIGHT,
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -15,16 +19,11 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useRegisterBlockingModal } from '@/utils/modalGate';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import BigNumber from 'bignumber.js';
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsPositionViewModel } from '../../model/position';
-import {
-  getPerpsProBottomSheetChromeStyles,
-  PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
-  PERPS_PRO_CONFIRM_BUTTON_STYLE,
-} from '../common/perpsProVisual';
 import {
   calculatePositionTpSlEstimatedPnl,
   type PerpsPositionTpSlMarketSnapshot,
@@ -64,6 +63,15 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
     const openFieldExplanation = usePerpsProFieldExplanation();
+    const renderBackdrop = useCallback(
+      (props: React.ComponentProps<typeof PerpsProDialogBackdrop>) => (
+        <PerpsProDialogBackdrop
+          {...props}
+          pressBehavior={pending ? 'none' : 'close'}
+        />
+      ),
+      [pending],
+    );
     usePerpsProSheetNavigationRegistration({
       active: !!review,
       dismiss: onClose,
@@ -91,7 +99,7 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
           colors: colors2024,
           linearGradientType: 'bg1',
         })}
-        backdropProps={{ pressBehavior: pending ? 'none' : 'close' }}
+        backdropComponent={renderBackdrop}
         backgroundStyle={styles.background}
         enableDynamicSizing
         enablePanDownToClose={!pending}
@@ -206,15 +214,10 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
               onPress={onToggleSkipConfirmation}
               style={styles.checkboxRow}
               testID="perps-pro-position-tpsl-skip-confirmation">
-              {skipConfirmation ? (
-                <RcCheckboxFilledBrand height={20} width={20} />
-              ) : (
-                <RcCheckboxEmptyCC
-                  color={colors2024['neutral-secondary']}
-                  height={20}
-                  width={20}
-                />
-              )}
+              <PerpsProCheckboxIcon
+                checked={skipConfirmation}
+                checkColor={colors2024['neutral-InvertHighlight']}
+              />
               <Text style={styles.checkboxText}>
                 {t('page.perps.pro.positions.skipLimitConfirmation')}
               </Text>
@@ -224,14 +227,16 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
               style={styles.footer}
               testID="perps-pro-position-tpsl-confirmation-footer">
               <Button
-                buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
+                buttonStyle={[styles.button, pending && styles.buttonDisabled]}
+                disabledTitleStyle={styles.buttonDisabledTitle}
                 disabled={pending}
-                height={BOTTOM_BUTTON_COMPACT_HEIGHT}
+                height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                 loading={pending}
+                loadingProps={{ color: styles.buttonDisabledTitle.color }}
                 onPress={onConfirm}
                 testID="perps-pro-position-tpsl-confirm"
                 title={t('global.confirm')}
-                titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
+                titleStyle={styles.buttonTitle}
                 type="primary"
               />
             </View>
@@ -272,98 +277,93 @@ const DetailRow: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
-  ...getPerpsProBottomSheetChromeStyles(colors2024),
-  container: { paddingHorizontal: 15, paddingTop: 8 },
-  title: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '700',
-    lineHeight: 20,
+const getStyle = createGetStyles2024(
+  ({ colors2024, safeAreaInsets, isLight }) => {
+    const dialog = getPerpsProDialogStyles(
+      colors2024,
+      safeAreaInsets.bottom,
+      isLight,
+    );
+    // Keep the existing surface contrast with the TP/SL fields.
+    return {
+      ...dialog,
+      background: {
+        ...dialog.background,
+        backgroundColor: colors2024['neutral-bg-1'],
+      },
+      handle: { ...dialog.handle, backgroundColor: colors2024['neutral-bg-1'] },
+      container: { paddingHorizontal: 16, paddingTop: 8 },
+      summary: {
+        borderBottomColor: colors2024['neutral-bg-5'],
+        borderBottomWidth: 1,
+        gap: 8,
+        marginTop: 16,
+        paddingBottom: 12,
+      },
+      leg: {
+        borderBottomColor: colors2024['neutral-bg-5'],
+        borderBottomWidth: 1,
+        gap: 8,
+        marginTop: 16,
+        paddingBottom: 12,
+      },
+      takeProfit: {
+        color: colors2024['neutral-title-1'],
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 14,
+        fontWeight: '500',
+        lineHeight: 18,
+      },
+      stopLoss: {
+        color: colors2024['neutral-title-1'],
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 14,
+        fontWeight: '500',
+        lineHeight: 18,
+      },
+      detailRow: {
+        alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+      },
+      detailLabel: {
+        color: colors2024['neutral-secondary'],
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 12,
+        lineHeight: 16,
+      },
+      detailValue: {
+        ...PERPS_PRO_NUMBER_STYLE,
+        color: colors2024['neutral-title-1'],
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 12,
+        lineHeight: 16,
+        maxWidth: '64%',
+        textAlign: 'right',
+      },
+      positiveValue: {
+        ...PERPS_PRO_NUMBER_STYLE,
+        color: colors2024['green-default'],
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 12,
+        lineHeight: 16,
+      },
+      negativeValue: {
+        ...PERPS_PRO_NUMBER_STYLE,
+        color: colors2024['red-default'],
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 12,
+        lineHeight: 16,
+      },
+      ...getPerpsProDialogCheckboxStyles(colors2024),
+      footer: {
+        paddingHorizontal: 4,
+        paddingBottom: Math.max(
+          40,
+          getBottomButtonBottomOffset(safeAreaInsets.bottom),
+        ),
+        paddingTop: 24,
+      },
+    };
   },
-  summary: {
-    borderBottomColor: colors2024['neutral-bg-5'],
-    borderBottomWidth: 1,
-    gap: 8,
-    marginTop: 16,
-    paddingBottom: 12,
-  },
-  leg: {
-    borderBottomColor: colors2024['neutral-bg-5'],
-    borderBottomWidth: 1,
-    gap: 8,
-    marginTop: 16,
-    paddingBottom: 12,
-  },
-  takeProfit: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-  stopLoss: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-  detailRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  detailLabel: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  detailValue: {
-    ...PERPS_PRO_NUMBER_STYLE,
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-    maxWidth: '64%',
-    textAlign: 'right',
-  },
-  positiveValue: {
-    ...PERPS_PRO_NUMBER_STYLE,
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  negativeValue: {
-    ...PERPS_PRO_NUMBER_STYLE,
-    color: colors2024['red-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  checkboxRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 4,
-    marginBottom: 8,
-    marginTop: 16,
-    minHeight: 20,
-  },
-  checkboxText: {
-    color: colors2024['neutral-body'],
-    flex: 1,
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  footer: {
-    paddingBottom: Math.max(
-      40,
-      getBottomButtonBottomOffset(safeAreaInsets.bottom),
-    ),
-    paddingTop: 24,
-  },
-}));
+);

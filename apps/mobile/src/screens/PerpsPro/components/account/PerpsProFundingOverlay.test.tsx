@@ -1,3 +1,4 @@
+import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
 import {
   act,
   fireEvent,
@@ -148,6 +149,12 @@ describe('PerpsProFundingOverlay', () => {
           targetAsset="USDC"
         />,
       );
+      for (const props of [mockSwapPopupProps, mockDepositPopupProps]) {
+        expect(props?.inputColorProps).toEqual({
+          cursorColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+          selectionColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+        });
+      }
       const base = {
         fontSize: 28,
         lineHeight: 36,
@@ -199,6 +206,10 @@ describe('PerpsProFundingOverlay', () => {
       renderOverlay(mode);
       const props =
         mode === 'deposit' ? mockDepositPopupProps : mockWithdrawPopupProps;
+      expect(props?.inputColorProps).toEqual({
+        cursorColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+        selectionColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+      });
       const style = StyleSheet.flatten([
         { fontSize: 28, lineHeight: 36, minHeight: 52 },
         props?.inputTextStyle as object,

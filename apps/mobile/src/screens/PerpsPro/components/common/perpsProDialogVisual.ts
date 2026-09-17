@@ -1,4 +1,5 @@
 import type { AppColors2024Variants } from '@/constant/theme';
+import { colord } from 'colord';
 import {
   BOTTOM_BUTTON_TITLE_STYLE,
   getBottomButtonBottomOffset,
@@ -28,6 +29,13 @@ export const PERPS_PRO_DIALOG_TOKENS = {
   // Existing Pro Transfer shadow, also present on the new Figma action.
   actionShadow: 'rgba(112, 132, 255, 0.1)',
 } as const;
+
+// Approved disabled/loading treatment: fade only the existing Pro action paint.
+const DISABLED_ACTION_BACKGROUND = colord(
+  PERPS_PRO_DIALOG_TOKENS.actionBackground,
+)
+  .alpha(0.4)
+  .toRgbString();
 
 // bg-0 and bg-1 resolve to the same Dark color. Preserve the Light design
 // binding while using Pro's existing raised surface token in Dark mode.
@@ -108,6 +116,12 @@ export const getPerpsProDialogStyles = (
       fontWeight: '400',
       lineHeight: 18,
     },
+    ...getPerpsProDialogActionStyles(colors),
+  } as const);
+
+/** Shared primary action, opted in only by approved Pro dialogs. */
+export const getPerpsProDialogActionStyles = (_colors: AppColors2024Variants) =>
+  ({
     button: {
       borderRadius: 12,
       backgroundColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
@@ -117,11 +131,39 @@ export const getPerpsProDialogStyles = (
       shadowRadius: 12,
       elevation: 4,
     },
-    buttonDisabled: { backgroundColor: colors['brand-disable'] },
-    buttonDisabledTitle: { color: colors['neutral-InvertHighlight'] },
+    buttonDisabled: { backgroundColor: DISABLED_ACTION_BACKGROUND },
+    buttonDisabledTitle: { color: PERPS_PRO_DIALOG_TOKENS.actionForeground },
     buttonTitle: {
       ...BOTTOM_BUTTON_TITLE_STYLE,
       fontFamily: 'SF Pro Rounded',
       color: PERPS_PRO_DIALOG_TOKENS.actionForeground,
+    },
+  } as const);
+
+/** Recessed fields inside the raised cards of the approved order dialogs. */
+export const resolvePerpsProDialogFieldBackground = (
+  colors: AppColors2024Variants,
+  isLight: boolean | undefined,
+) => colors[isLight === false ? 'neutral-bg-5' : 'neutral-bg-0'];
+
+export const getPerpsProDialogCheckboxStyles = (
+  colors: AppColors2024Variants,
+) =>
+  ({
+    checkboxRow: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'row',
+      gap: 4,
+      marginTop: 8,
+      minHeight: 20,
+    },
+    checkboxText: {
+      color: colors['neutral-foot'],
+      flexShrink: 1,
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      fontWeight: '400',
+      lineHeight: 16,
     },
   } as const);

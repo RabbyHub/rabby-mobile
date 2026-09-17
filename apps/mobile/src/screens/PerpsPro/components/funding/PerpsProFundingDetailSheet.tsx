@@ -334,7 +334,7 @@ const getStyle = createGetStyles2024(
       fontSize: 12,
       lineHeight: 16,
       marginTop: 12,
-      textAlign: 'center',
+      textAlign: 'left',
     },
   }),
 );

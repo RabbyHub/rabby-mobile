@@ -9,11 +9,14 @@ import type {
 import { usePerpsProKeyboardInput } from '../common/usePerpsProKeyboardInput';
 import { sanitizePerpsProDecimalEditingInput } from '../../model/trade';
 import { resolvePerpsProEmptyInputSelection } from '../common/perpsProInputSelection';
+import { PERPS_PRO_INPUT_COLOR_PROPS } from '../common/perpsProInputVisual';
 
 const UNRESTRICTED_TEXT_INPUT_MAX_LENGTH = 2147483647;
 
 type PerpsProDecimalTextInputProps = Omit<
   TextInputProps,
+  | 'cursorColor'
+  | 'selectionColor'
   | 'inputMode'
   | 'keyboardType'
   | 'maxLength'
@@ -260,6 +263,7 @@ export const PerpsProDecimalTextInput = React.memo(
 
       const textInputProps: TextInputProps = {
         ...inputProps,
+        ...PERPS_PRO_INPUT_COLOR_PROPS,
         inputAccessoryViewID,
         allowFontScaling: false,
         inputMode,

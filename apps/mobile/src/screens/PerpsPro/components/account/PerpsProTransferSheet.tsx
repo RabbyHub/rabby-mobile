@@ -26,7 +26,7 @@ import { usePerpsProKeyboardInput } from '../common/usePerpsProKeyboardInput';
 import { PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE } from '../common/perpsProSingleLineInput';
 import { formatPerpsProDecimal } from '../../utils/format';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
-import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
+import { PERPS_PRO_INPUT_COLOR_PROPS } from '../common/perpsProInputVisual';
 import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
@@ -156,11 +156,11 @@ export const PerpsProTransferSheet: React.FC<{
                   $
                 </Text>
                 <BottomSheetTextInput
+                  {...PERPS_PRO_INPUT_COLOR_PROPS}
                   {...keyboard}
                   ref={inputRef}
                   accessibilityLabel={t('page.perps.pro.account.amount')}
                   allowFontScaling={false}
-                  cursorColor={PERPS_PRO_DIALOG_TOKENS.inputCursor}
                   editable={!pending}
                   keyboardType="decimal-pad"
                   onChangeText={value => {
@@ -168,7 +168,6 @@ export const PerpsProTransferSheet: React.FC<{
                   }}
                   placeholder="0"
                   placeholderTextColor={colors2024['neutral-foot']}
-                  selectionColor={PERPS_PRO_DIALOG_TOKENS.inputCursor}
                   style={[
                     styles.amountInput,
                     PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE,
@@ -228,6 +227,7 @@ export const PerpsProTransferSheet: React.FC<{
               ]}
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
               loading={pending}
+              loadingProps={{ color: styles.buttonDisabledTitle.color }}
               onPress={() => onConfirm(amountValue.toFixed())}
               title={t('global.confirm')}
               titleStyle={styles.buttonTitle}

@@ -1,11 +1,11 @@
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
-import RcCheckboxEmptyCC from '@/assets2024/icons/common/checkbox-empty-cc.svg';
-import RcCheckboxFilledBrand from '@/assets2024/icons/common/checkbox-filled-brand.svg';
+import { PerpsProCheckboxIcon } from '../common/PerpsProCheckboxIcon';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { IS_IOS } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
@@ -25,7 +25,6 @@ import {
 import {
   getPerpsProDialogStyles,
   resolvePerpsProDialogCardBackground,
-  PERPS_PRO_DIALOG_TOKENS,
   PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
 } from '../common/perpsProDialogVisual';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
@@ -273,15 +272,10 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
               accessibilityState={{ checked: skipConfirmation }}
               onPress={onToggleSkip}
               style={styles.checkboxRow}>
-              {skipConfirmation ? (
-                <RcCheckboxFilledBrand height={20} width={20} />
-              ) : (
-                <RcCheckboxEmptyCC
-                  color={PERPS_PRO_DIALOG_TOKENS.checkboxBorder}
-                  height={20}
-                  width={20}
-                />
-              )}
+              <PerpsProCheckboxIcon
+                checked={skipConfirmation}
+                checkColor={colors2024['neutral-InvertHighlight']}
+              />
               <Text style={styles.checkboxText}>
                 {t('page.perps.pro.trade.skipConfirmation')}
               </Text>
@@ -295,6 +289,7 @@ export const PerpsProOrderConfirmationSheet: React.FC<{
                 disabled={pending}
                 height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                 loading={pending}
+                loadingProps={{ color: styles.buttonDisabledTitle.color }}
                 onPress={onConfirm}
                 title={t('global.confirm')}
                 titleStyle={styles.buttonTitle}
@@ -351,6 +346,7 @@ const getStyle = createGetStyles2024(
       ...getPerpsProMetadataTagContainerStyle(colors2024),
       ...getPerpsProMetadataTagTextStyle(colors2024),
       maxWidth: 100,
+      ...(IS_IOS ? { overflow: 'hidden' as const } : {}),
     },
     buyDirection: {
       ...getPerpsProTintedTagTextStyle(colors2024, 'positive'),

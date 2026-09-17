@@ -14,6 +14,11 @@ import {
   judgeIsUserAgentIsExpired,
 } from '@/hooks/perps/perpsActionError';
 import { showToast } from '@/hooks/perps/showToast';
+import {
+  fetchActiveAssetDataWithCache,
+  readActiveAssetDataFromCache,
+} from '@/hooks/perps/useActiveAssetDataCache';
+import type { PerpsProLeverageConfiguration } from '../model/leverage';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import * as Sentry from '@sentry/react-native';
 import type { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
@@ -44,7 +49,10 @@ type CommonEditorState = {
 };
 
 export type PerpsProOpenOrderEditEditorState =
-  | (CommonEditorState & { category: 'basic' })
+  | (CommonEditorState & {
+      category: 'basic';
+      leverageConfiguration?: PerpsProLeverageConfiguration | null;
+    })
   | (CommonEditorState & {
       category: 'conditional';
       position: PerpsPositionViewModel | null;
@@ -60,6 +68,37 @@ export type PerpsProOpenOrderEditReviewState =
       command: PerpsModifyOpenOrderCommand;
       referencePrice: string;
     };
+
+const validLeverage = (
+  leverage: PerpsProLeverageConfiguration | null | undefined,
+): PerpsProLeverageConfiguration | null =>
+  leverage &&
+  (leverage.type === 'cross' || leverage.type === 'isolated') &&
+  Number.isFinite(leverage.value) &&
+  leverage.value > 0
+    ? { type: leverage.type, value: leverage.value }
+    : null;
+
+const readEditorLeverage = (coin: string, account: Account) => {
+  const state = perpsStore.getState();
+  if (!isSamePerpsActionAccount(state.currentPerpsAccount, account))
+    return null;
+  const position = state.isUserDataReady
+    ? state.currentClearinghouseState?.assetPositions.find(
+        item =>
+          item.position.coin === coin &&
+          Number.isFinite(Number(item.position.szi)) &&
+          Number(item.position.szi) !== 0,
+      )?.position
+    : null;
+  const positionLeverage = validLeverage(position?.leverage);
+  if (positionLeverage) return positionLeverage;
+  const cached = readActiveAssetDataFromCache(coin, account.address);
+  return cached?.coin === coin &&
+    cached.user?.toLowerCase() === account.address.toLowerCase()
+    ? validLeverage(cached.leverage)
+    : null;
+};
 
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : String(error || '');
@@ -80,6 +119,7 @@ const buildEditorState = ({
       account: { ...account },
       amountUnit,
       category: 'basic' as const,
+      leverageConfiguration: readEditorLeverage(order.coin, account),
       market,
       order: { ...order },
     };
@@ -244,6 +284,33 @@ export const usePerpsProOpenOrderEdit = (
       setSkipConfirmation(false);
       setReview(null);
       setEditor(next);
+      if (next.category === 'basic' && !next.leverageConfiguration) {
+        // Fill display-only metadata without delaying the editor, subscribing to
+        // another market, or changing order validation/submission readiness.
+        const editorSession = sessionRef.current;
+        void fetchActiveAssetDataWithCache(next.order.coin, account.address)
+          .then(data => {
+            if (
+              sessionRef.current !== editorSession ||
+              !isSamePerpsActionAccount(
+                perpsStore.getState().currentPerpsAccount,
+                account,
+              ) ||
+              data?.coin !== next.order.coin ||
+              data.user?.toLowerCase() !== account.address.toLowerCase()
+            )
+              return;
+            const leverageConfiguration = validLeverage(data.leverage);
+            if (leverageConfiguration) {
+              setEditor(current =>
+                current === next ? { ...next, leverageConfiguration } : current,
+              );
+            }
+          })
+          .catch(() => {
+            // Metadata failure must not block editing or fabricate a leverage tag.
+          });
+      }
     },
     [isEditUnavailable, markUnavailable, t, tradeAmountUnit],
   );
