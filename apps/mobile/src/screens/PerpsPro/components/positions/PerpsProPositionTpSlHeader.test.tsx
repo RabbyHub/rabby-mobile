@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
+import { PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE } from '../common/perpsProDialogVisual';
 
 jest.mock('@/assets/icons/header/back-cc.svg', () => () => null);
 jest.mock('@/components/Typography', () => ({
@@ -55,7 +56,7 @@ describe('PerpsProPositionTpSlHeader', () => {
     const header = screen.getByTestId('perps-pro-position-tpsl-header-main');
     expect(StyleSheet.flatten(header.props.style)).toMatchObject({
       height: 146,
-      paddingHorizontal: 15,
+      paddingHorizontal: 16,
       paddingTop: 8,
     });
     expect(
@@ -69,6 +70,14 @@ describe('PerpsProPositionTpSlHeader', () => {
       ),
     ).toMatchObject({ gap: 8, marginTop: 16 });
     expect(screen.getByText('BTCUSDC')).toBeTruthy();
+    expect(
+      StyleSheet.flatten(screen.getByText('tpsl').props.style),
+    ).toMatchObject({
+      ...PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
+      fontSize: 20,
+      lineHeight: 24,
+      textAlign: 'center',
+    });
     expect(screen.getByText('xyz')).toBeTruthy();
     const sourceTagStyle = StyleSheet.flatten(
       screen.getByTestId('perps-pro-close-market-tag').props.style,
@@ -120,6 +129,23 @@ describe('PerpsProPositionTpSlHeader', () => {
     );
 
     expect(screen.getByText('Add TP/SL')).toBeTruthy();
+    expect(
+      StyleSheet.flatten(screen.getByText('Add TP/SL').props.style),
+    ).toMatchObject({
+      ...PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
+      fontSize: 20,
+      lineHeight: 24,
+      textAlign: 'center',
+      maxWidth: 260,
+    });
+    const back = screen.getByTestId('perps-pro-position-tpsl-back');
+    expect(StyleSheet.flatten(back.props.style)).toMatchObject({
+      height: 40,
+      width: 40,
+      left: 0,
+      top: 8,
+    });
+    expect(back.props.hitSlop).toBe(8);
     fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-back'));
     expect(onBack).toHaveBeenCalledTimes(1);
   });
@@ -140,7 +166,7 @@ describe('PerpsProPositionTpSlHeader', () => {
       ),
     ).toMatchObject({
       height: 146,
-      paddingHorizontal: 15,
+      paddingHorizontal: 16,
       paddingTop: 8,
     });
     expect(

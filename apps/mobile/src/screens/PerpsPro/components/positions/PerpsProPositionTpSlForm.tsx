@@ -655,7 +655,7 @@ const getStyle = createGetStyles2024(
     ...getPerpsProDialogActionStyles(colors2024),
     container: {
       flexGrow: 1,
-      paddingHorizontal: 15,
+      paddingHorizontal: 16,
     },
     subpageContainer: { paddingTop: 16 },
     tabContainer: { paddingTop: 24 },
@@ -801,7 +801,7 @@ const getStyle = createGetStyles2024(
     },
     hiddenAmountAvailable: { opacity: 0 },
     footer: {
-      paddingHorizontal: 5,
+      paddingHorizontal: 4,
       marginTop: 'auto',
       paddingBottom: Math.max(
         40,

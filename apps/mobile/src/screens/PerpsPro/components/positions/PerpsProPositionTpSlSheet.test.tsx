@@ -2,8 +2,12 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { Keyboard, Platform, StyleSheet } from 'react-native';
 import { perpsProKeyboardSession } from '../common/perpsProKeyboardSession';
+import { ThemeColors2024 } from '@/constant/theme';
 
 let mockAndroid = false;
+let mockThemeMode: 'light' | 'dark' | undefined;
+jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
+jest.mock('react-native-linear-gradient', () => require('react-native').View);
 jest.mock('@/core/native/utils', () => ({
   get IS_ANDROID() {
     return mockAndroid;
@@ -67,7 +71,21 @@ jest.mock('@/components/customized/BottomSheet', () => {
           dismiss: mockDismiss,
           present: jest.fn(),
         }));
-        return ReactModule.createElement(View, null, children);
+        return ReactModule.createElement(
+          View,
+          null,
+          ReactModule.createElement(props.backgroundComponent, {
+            style: props.backgroundStyle,
+            testID: 'tpsl-background',
+          }),
+          props.backdropComponent
+            ? ReactModule.createElement(props.backdropComponent, {
+                animatedIndex: { value: 0 },
+                animatedPosition: { value: 0 },
+              })
+            : null,
+          children,
+        );
       },
     ),
   };
@@ -77,6 +95,11 @@ jest.mock('@gorhom/bottom-sheet', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return {
+    BottomSheetBackdrop: (props: object) =>
+      ReactModule.createElement(View, {
+        ...props,
+        testID: 'tpsl-backdrop',
+      }),
     ANIMATION_STATUS: { STOPPED: 2 },
     SCROLLABLE_STATUS: { UNLOCKED: 1 },
     useBottomSheetInternal: () => ({
@@ -106,16 +129,21 @@ jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
 
-jest.mock('@/components2024/GlobalBottomSheetModal/utils-help', () => ({
-  makeBottomSheetProps: () => ({}),
-}));
-
 jest.mock('@/hooks/theme', () => ({
-  useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
-    const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
+  useTheme2024: ({
+    getStyle,
+  }: { getStyle?: (input: object) => object } = {}) => {
+    const colors2024 = mockThemeMode
+      ? require('@/constant/theme').ThemeColors2024[mockThemeMode]
+      : new Proxy({}, { get: (_target, key) => String(key) });
     return {
       colors2024,
-      styles: getStyle({ colors2024, safeAreaInsets: { bottom: 0 } }),
+      isLight: mockThemeMode !== 'dark',
+      styles: getStyle?.({
+        colors2024,
+        isLight: mockThemeMode !== 'dark',
+        safeAreaInsets: { bottom: 0 },
+      }),
     };
   },
 }));
@@ -248,6 +276,7 @@ describe('PerpsProPositionTpSlSheet', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockAndroid = false;
+    mockThemeMode = undefined;
     mockAnimatedReactions = [];
     mockNextFormInstanceId = 0;
     mockKeyboardListeners.clear();
@@ -274,6 +303,96 @@ describe('PerpsProPositionTpSlSheet', () => {
     });
     jest.spyOn(global, 'cancelAnimationFrame').mockImplementation(jest.fn());
   });
+
+  it.each(['light', 'dark'] as const)(
+    'uses the new %s shell across pages and preserves every interaction lock',
+    mode => {
+      mockThemeMode = mode;
+      const colors = ThemeColors2024[mode];
+      const props = {
+        amountUnit: 'base' as const,
+        cancelingOids: [],
+        confirmedCancelledOids: [],
+        coveredByReview: false,
+        defaultTab: 'partial' as const,
+        market,
+        onCancelOrder: jest.fn(),
+        onClose: jest.fn(),
+        onReview: jest.fn(),
+        pending: false,
+        position,
+        visible: true,
+      };
+      const view = render(<PerpsProPositionTpSlSheet {...props} />);
+      const expectShell = (snap: number, locked = false) => {
+        const sheet = mockBottomSheetProps.mock.lastCall?.[0];
+        expect(
+          StyleSheet.flatten(screen.getByTestId('tpsl-background').props.style),
+        ).toMatchObject({
+          backgroundColor: colors['neutral-bg-1'],
+          borderTopLeftRadius: 20,
+          borderTopRightRadius: 20,
+        });
+        expect(sheet.style).toMatchObject({
+          borderTopLeftRadius: 20,
+          borderTopRightRadius: 20,
+          overflow: 'hidden',
+        });
+        expect(sheet.handleStyle).toMatchObject({
+          backgroundColor: colors['neutral-bg-1'],
+          height: 40,
+          paddingTop: 10,
+          paddingBottom: 24,
+        });
+        expect(sheet.handleIndicatorStyle).toMatchObject({
+          backgroundColor: colors['neutral-sheet-handle'],
+          width: 50,
+          height: 6,
+          borderRadius: 3,
+        });
+        expect(sheet.snapPoints).toEqual([snap]);
+        expect(sheet.enableDynamicSizing).toBe(false);
+        expect(sheet.enablePanDownToClose).toBe(!locked);
+        expect(screen.getByTestId('tpsl-backdrop').props).toMatchObject({
+          opacity: 0.3,
+          pressBehavior: locked ? 'none' : 'close',
+          appearsOnIndex: 0,
+          disappearsOnIndex: -1,
+        });
+      };
+      expectShell(732);
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId('perps-pro-position-tpsl-tabs').props.style,
+        ),
+      ).toMatchObject({ marginHorizontal: 16 });
+      fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
+      expectShell(718);
+      fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-back'));
+      fireEvent.press(screen.getAllByText('Modify')[0]!);
+      expectShell(718);
+      fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-back'));
+      fireEvent.press(screen.getByText('Position TP/SL'));
+      expectShell(718);
+      for (const lock of ['pending', 'coveredByReview', 'reviewRequesting']) {
+        view.rerender(
+          <PerpsProPositionTpSlSheet {...props} {...{ [lock]: true }} />,
+        );
+        expectShell(718, true);
+        view.rerender(<PerpsProPositionTpSlSheet {...props} />);
+        expectShell(718);
+      }
+      fireEvent.press(screen.getByText('TP/SL'));
+      view.rerender(
+        <PerpsProPositionTpSlSheet
+          {...props}
+          position={{ ...position, tpslOrders: [] }}
+        />,
+      );
+      expect(screen.getByTestId('tpsl-form-add')).toBeTruthy();
+      expectShell(718);
+    },
+  );
 
   it('excludes Done from the Android TP/SL viewport without changing the form height or instance', () => {
     mockAndroid = true;
