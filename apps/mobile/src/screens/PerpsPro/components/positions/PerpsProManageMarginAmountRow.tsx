@@ -10,8 +10,13 @@ import { Text, TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import React, { useCallback, useImperativeHandle, useRef } from 'react';
-import { Pressable, View } from 'react-native';
+import React, {
+  useCallback,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
+import { LayoutChangeEvent, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PositionMarginRange } from '../../model/positionMargin';
@@ -62,6 +67,42 @@ export const PerpsProManageMarginAmountRow = React.memo(
       useImperativeHandle(forwardedRef, () => inputRef.current!);
 
       const focusInput = useCallback(() => inputRef.current?.focus(), []);
+      const [unitWidth, setUnitWidth] = useState(0);
+      const measureUnit = useCallback((event: LayoutChangeEvent) => {
+        setUnitWidth(event.nativeEvent.layout.width);
+      }, []);
+      const renderAmountInput = useCallback(
+        (input: React.ReactElement, editingValue: string) => (
+          <View style={styles.amountPresentation}>
+            <View pointerEvents="none" style={styles.amountMirror}>
+              <Text
+                onLayout={unitWidth === 0 ? measureUnit : undefined}
+                style={styles.unit}
+                testID="perps-pro-manage-margin-unit">
+                $
+              </Text>
+              <Text
+                accessible={false}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+                numberOfLines={1}
+                style={[styles.amountInput, styles.inputMeasure]}
+                testID="perps-pro-manage-margin-input-measure">
+                {editingValue || '0'}
+              </Text>
+            </View>
+            {/* Fixed native width avoids horizontal scroll/clipping on each key.
+                With the left inset equal to '$', the centered number lines up
+                with the centered '$' + measured-number group above. */}
+            <View
+              style={[styles.inputViewport, { left: unitWidth }]}
+              testID="perps-pro-manage-margin-input-viewport">
+              {input}
+            </View>
+          </View>
+        ),
+        [measureUnit, styles, unitWidth],
+      );
 
       return (
         <View
@@ -83,41 +124,24 @@ export const PerpsProManageMarginAmountRow = React.memo(
             onPress={focusInput}
             style={styles.amountEditor}
             testID="perps-pro-manage-margin-amount-editor">
-            <Text pointerEvents="none" style={styles.unit}>
-              $
-            </Text>
-            <View
-              style={styles.inputViewport}
-              testID="perps-pro-manage-margin-input-viewport">
-              <Text
-                accessible={false}
-                accessibilityElementsHidden
-                importantForAccessibility="no-hide-descendants"
-                pointerEvents="none"
-                style={[styles.amountInput, styles.inputMeasure]}
-                testID="perps-pro-manage-margin-input-measure">
-                {draft || '0'}
-              </Text>
-              <PerpsProDecimalTextInput
-                accessibilityLabel={t(
-                  'page.perps.pro.positions.configureMargin',
-                )}
-                editable={!pending}
-                inputComponent={PerpsProManageMarginBottomSheetTextInput}
-                keyboardType="decimal-pad"
-                maxDecimals={2}
-                onChangeText={onChangeDraft}
-                onFocus={onBeginEditing}
-                ref={inputRef}
-                style={[
-                  styles.amountInput,
-                  styles.inputOverlay,
-                  PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE,
-                ]}
-                testID="perps-pro-manage-margin-input"
-                value={draft}
-              />
-            </View>
+            <PerpsProDecimalTextInput
+              accessibilityLabel={t('page.perps.pro.positions.configureMargin')}
+              editable={!pending}
+              inputComponent={PerpsProManageMarginBottomSheetTextInput}
+              keyboardType="decimal-pad"
+              maxDecimals={2}
+              onChangeText={onChangeDraft}
+              onFocus={onBeginEditing}
+              ref={inputRef}
+              renderInput={renderAmountInput}
+              style={[
+                styles.amountInput,
+                styles.inputOverlay,
+                PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE,
+              ]}
+              testID="perps-pro-manage-margin-input"
+              value={draft}
+            />
           </Pressable>
           <Pressable
             accessibilityRole="button"
@@ -182,6 +206,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 36,
     lineHeight: 42,
   },
+  amountPresentation: {
+    height: 42,
+    width: '100%',
+  },
+  amountMirror: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    height: 42,
+    justifyContent: 'center',
+  },
   amountInput: {
     ...PERPS_PRO_NUMBER_STYLE,
     ...PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
@@ -191,14 +225,18 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 42,
     margin: 0,
     padding: 0,
-    textAlign: 'left',
+    textAlign: 'center',
   },
-  inputMeasure: { opacity: 0 },
+  inputMeasure: { flexShrink: 1, opacity: 0 },
   inputViewport: {
-    flexShrink: 1,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    height: 42,
     ...(IS_ANDROID
       ? {
           height: 36,
+          top: 3,
           marginHorizontal: -4,
           overflow: 'hidden',
           paddingHorizontal: 4,

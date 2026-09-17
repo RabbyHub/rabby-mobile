@@ -1,4 +1,10 @@
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
@@ -113,6 +119,41 @@ describe('PerpsProOpenOrderCard', () => {
   beforeEach(() => {
     mockMarketIdentity = mockReadyMarket;
   });
+
+  it.each(['buy', 'sell'] as const)(
+    'places the Basic type beside the timestamp using %s colors',
+    side => {
+      render(
+        <PerpsProOpenOrderCard
+          cancelPending={false}
+          onCancel={jest.fn()}
+          order={order({ side })}
+        />,
+      );
+      const row = screen.getByTestId('perps-pro-order-meta-basic:BTC:1');
+      const label = within(row).getByText('Limit');
+      const tag = within(row).getByTestId('perps-pro-order-type-basic:BTC:1');
+      const color = side === 'buy' ? 'green' : 'red';
+      expect(StyleSheet.flatten(tag.props.style)).toMatchObject({
+        backgroundColor: `${color}-light-1`,
+        borderRadius: 4,
+        paddingHorizontal: 4,
+        paddingVertical: 1,
+      });
+      expect(StyleSheet.flatten(label.props.style)).toMatchObject({
+        color: `${color}-default`,
+        fontSize: 12,
+        lineHeight: 16,
+        fontWeight: '500',
+      });
+      expect(within(row).queryByText('xyz')).toBeNull();
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId('perps-pro-order-source-basic:BTC:1').props.style,
+        ).backgroundColor,
+      ).toBe('neutral-bg-5');
+    },
+  );
 
   it('keeps HIP-3 routing identity out of labels until quote metadata arrives', () => {
     mockMarketIdentity = {

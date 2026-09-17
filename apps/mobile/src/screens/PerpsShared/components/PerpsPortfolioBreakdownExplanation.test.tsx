@@ -72,6 +72,7 @@ const TipsPopupStateProbe = () => {
             }:${String(state.enablePanDownToClose)}`
           : 'closed'}
       </Text>
+      <Text testID="portfolio-breakdown-presentation">{`${state.retainContentOnClose}:${state.buttonTitle}`}</Text>
       {state.visible && React.isValidElement(state.desc) ? state.desc : null}
     </View>
   );
@@ -91,6 +92,9 @@ describe('Perps Portfolio Value breakdown integration', () => {
     );
 
     fireEvent.press(screen.getByTestId('open-portfolio-breakdown'));
+    expect(
+      screen.getByTestId('portfolio-breakdown-presentation'),
+    ).toHaveTextContent('true:page.perps.pro.funding.gotIt');
 
     expect(mockGetBreakdownValues).toHaveBeenCalledWith(261.56);
     expect(screen.getByTestId('portfolio-breakdown-state')).toHaveTextContent(

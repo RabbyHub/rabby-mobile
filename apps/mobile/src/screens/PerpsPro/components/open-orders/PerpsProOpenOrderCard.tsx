@@ -167,13 +167,6 @@ export const PerpsProOpenOrderCard: React.FC<{
                     <Text style={styles.sourceText}>{market.sourceTag}</Text>
                   </View>
                 ) : null}
-                {order.category === 'basic' ? (
-                  <View
-                    style={styles.sourceTag}
-                    testID={`perps-pro-order-type-${order.key}`}>
-                    <Text style={styles.sourceText}>{order.orderType}</Text>
-                  </View>
-                ) : null}
               </View>
             </View>
             <View style={styles.headerActions}>
@@ -203,16 +196,16 @@ export const PerpsProOpenOrderCard: React.FC<{
               />
             </View>
           </View>
-          <View style={styles.metaRow}>
-            {order.category !== 'basic' ? (
-              <View
-                style={isBuy ? styles.buyTag : styles.sellTag}
-                testID={`perps-pro-order-type-${order.key}`}>
-                <Text style={isBuy ? styles.buyText : styles.sellText}>
-                  {order.orderType}
-                </Text>
-              </View>
-            ) : null}
+          <View
+            style={styles.metaRow}
+            testID={`perps-pro-order-meta-${order.key}`}>
+            <View
+              style={isBuy ? styles.buyTag : styles.sellTag}
+              testID={`perps-pro-order-type-${order.key}`}>
+              <Text style={isBuy ? styles.buyText : styles.sellText}>
+                {order.orderType}
+              </Text>
+            </View>
             <Text style={styles.time}>
               {formatPerpsProTime(order.timestamp)}
             </Text>
