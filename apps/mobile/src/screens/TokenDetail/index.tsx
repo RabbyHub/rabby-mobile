@@ -53,6 +53,7 @@ import { IconRightCC } from './components/IconRightCC';
 import { TokenDetailWalletCard } from './components/TokenDetailWalletCard';
 import { findChainByServerID } from '@/utils/chain';
 import { customTestnetTokenToTokenItem } from '@/utils/token';
+import { mergeTokenSecurityFields } from '@/utils/tokenSecurityFlags';
 export type { RelatedDeFiType, TokenFromAddressItem } from './types';
 
 const isAndroid = Platform.OS === 'android';
@@ -159,10 +160,7 @@ const TokenDetailContent = () => {
       price_24h_change: res?.price_24h_change,
       usd_value: res?.usd_value,
       price: res?.price,
-      is_verified: res?.is_verified ?? token.is_verified,
-      is_suspicious: res?.is_suspicious ?? token.is_suspicious,
-      is_scam: res?.is_scam ?? token.is_scam,
-      is_core: res?.is_core ?? token.is_core,
+      ...mergeTokenSecurityFields(token, res),
     } as ITokenItem;
   }, [effectiveAccount?.address, isCustomTestnetToken, token]);
 

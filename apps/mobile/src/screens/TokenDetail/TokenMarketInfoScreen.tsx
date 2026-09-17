@@ -18,6 +18,7 @@ import type { AbstractProject } from '@/screens/Home/types';
 import { getMarketTabToSwapPageAction } from '@/screens/Market/analytics';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
+import { mergeTokenSecurityFields } from '@/utils/tokenSecurityFlags';
 import { CHAINS_ENUM } from '@debank/common';
 import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -174,10 +175,7 @@ export const TokenMarketInfoScreen = () => {
         usd_value: res?.usd_value,
         price: res?.price,
         support_market_data: res?.support_market_data,
-        is_verified: res?.is_verified ?? token.is_verified,
-        is_suspicious: res?.is_suspicious ?? token.is_suspicious,
-        is_scam: res?.is_scam ?? token.is_scam,
-        is_core: res?.is_core ?? token.is_core,
+        ...mergeTokenSecurityFields(token, res),
       } as ITokenItem;
     },
     {
