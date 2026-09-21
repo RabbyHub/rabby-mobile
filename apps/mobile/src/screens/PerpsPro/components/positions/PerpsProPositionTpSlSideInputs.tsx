@@ -16,10 +16,7 @@ import {
   type PerpsPositionTpSlMarketSnapshot,
 } from '../../model/positionTpSl';
 import { getPerpsProPriceInputMaxDecimals } from '../../model/trade';
-import {
-  formatPerpsProPrice,
-  formatPerpsProSignedDecimal,
-} from '../../utils/format';
+import { formatPerpsProSignedDecimal } from '../../utils/format';
 import { PerpsProPositionTpSlInput } from './PerpsProPositionTpSlInput';
 
 export const PerpsProPositionTpSlSideInputs: React.FC<{
@@ -96,9 +93,7 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
     const modeUnit = selectedMode === 'roi' ? '%' : market.quoteAsset;
     const showDescription =
       (value && validationKind !== 'empty') ||
-      (!value &&
-        showEmptyDescription &&
-        (validationKind === 'empty' || !!rawMagnitude));
+      (!value && showEmptyDescription && !!rawMagnitude);
     const showError =
       validationKind === 'invalid' && (!!value || !!errorMessage);
 
@@ -109,7 +104,14 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
             accessibilityLabel={triggerLabel}
             disabled={disabled}
             invalid={highlightInvalidFields && showError}
-            label={triggerLabel}
+            label={`${t('page.perps.pro.positionTpsl.triggerPrice')} (${
+              market.quoteAsset
+            })`}
+            placeholder={t(
+              kind === 'takeProfit'
+                ? 'page.perps.pro.positionTpsl.takeProfitTrigger'
+                : 'page.perps.pro.positionTpsl.stopLossTrigger',
+            )}
             maxDecimals={getPerpsProPriceInputMaxDecimals(market.szDecimals)}
             onChangeText={onChangeTrigger}
             priceSzDecimals={market.szDecimals}
@@ -138,10 +140,9 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
               <Text style={styles.fieldHint}>
                 <Trans
                   components={{
-                    1: <Text style={styles.fieldHintEmphasis} />,
                     2: <Text style={estimatedPnlTone} />,
                   }}
-                  i18nKey="page.perps.pro.positionTpsl.triggerDescription"
+                  i18nKey="page.perps.pro.positionTpsl.estimatedPnlDescription"
                   t={t}
                   values={{
                     pnl:
@@ -153,9 +154,6 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
                       !value || derivedRoi == null
                         ? '--'
                         : formatPerpsProSignedDecimal(derivedRoi, 2),
-                    trigger: value
-                      ? formatPerpsProPrice(value, market.pxDecimals)
-                      : '--',
                   }}
                 />
               </Text>
@@ -176,8 +174,8 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
 PerpsProPositionTpSlSideInputs.displayName = 'PerpsProPositionTpSlSideInputs';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  sideInputs: { flexDirection: 'row', gap: 4 },
-  fieldHintRow: { gap: 4, minHeight: 32 },
+  sideInputs: { flexDirection: 'row', gap: 8 },
+  fieldHintRow: { marginTop: 2 },
   fieldHint: {
     color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',

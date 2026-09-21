@@ -97,14 +97,14 @@ describe('Perps Pro layout model', () => {
         topInset: 47,
         windowHeight: 852,
       }),
-    ).toBe(732);
+    ).toBe(755);
     expect(
       getPerpsProPositionTpSlSnapPoint({
         page: 'form',
         topInset: 47,
         windowHeight: 852,
       }),
-    ).toBe(718);
+    ).toBe(758);
     expect(
       getPerpsProPositionTpSlSnapPoint({
         page: 'form',
@@ -114,24 +114,62 @@ describe('Perps Pro layout model', () => {
     ).toBe(686);
   });
 
-  it('reserves the exact remaining 718px sheet height for every TP/SL form presentation', () => {
+  it('reserves the exact remaining 758px sheet height for every TP/SL form presentation', () => {
     expect(
       getPerpsProPositionTpSlFormMinimumHeight({
         presentation: 'subpage',
-        snapPoint: 718,
+        snapPoint: 758,
       }),
-    ).toBe(508);
+    ).toBe(532);
     expect(
       getPerpsProPositionTpSlFormMinimumHeight({
         presentation: 'tab',
-        snapPoint: 718,
+        snapPoint: 758,
       }),
     ).toBe(486);
     expect(
       getPerpsProPositionTpSlFormMinimumHeight({
         presentation: 'inline-empty',
-        snapPoint: 718,
+        snapPoint: 758,
       }),
-    ).toBe(482);
+    ).toBe(486);
+  });
+  it.each([
+    ['add', 652],
+    ['modify', 604],
+    ['position-modify', 598],
+  ] as const)('sizes the %s page to its approved content', (page, height) => {
+    expect(
+      getPerpsProPositionTpSlSnapPoint({
+        page,
+        topInset: 47,
+        windowHeight: 852,
+      }),
+    ).toBe(height);
+    expect(
+      getPerpsProPositionTpSlSnapPoint({
+        page,
+        topInset: 47,
+        windowHeight: 500,
+      }),
+    ).toBe(437);
+  });
+  it('grows for the error line but clamps long content to the safe viewport', () => {
+    expect(
+      getPerpsProPositionTpSlSnapPoint({
+        page: 'form',
+        topInset: 47,
+        windowHeight: 852,
+        formContentHeight: 502,
+      }),
+    ).toBe(774);
+    expect(
+      getPerpsProPositionTpSlSnapPoint({
+        page: 'form',
+        topInset: 47,
+        windowHeight: 852,
+        formContentHeight: 1500,
+      }),
+    ).toBe(789);
   });
 });

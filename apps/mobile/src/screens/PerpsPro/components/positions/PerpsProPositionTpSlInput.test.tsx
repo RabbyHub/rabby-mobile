@@ -5,7 +5,7 @@ import { StyleSheet } from 'react-native';
 const mockDecimalProps = jest.fn();
 const mockInputFocus = jest.fn();
 
-jest.mock('@/assets2024/icons/perps/PerpsProPrecisionCaret.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProTpSlSelectCaret.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
@@ -70,7 +70,8 @@ describe('PerpsProPositionTpSlInput', () => {
     ).toMatchObject({
       gap: 4,
       height: 40,
-      paddingHorizontal: 8,
+      paddingHorizontal: 11,
+      paddingRight: 7,
     });
     expect(
       StyleSheet.flatten(screen.getByTestId('field-label').props.style),
@@ -93,19 +94,11 @@ describe('PerpsProPositionTpSlInput', () => {
       lineHeight: 18,
       top: 18,
     });
-    expect(
-      StyleSheet.flatten(screen.getByTestId('field-caret').props.style),
-    ).toMatchObject({
-      height: 6,
-      width: 8,
+    expect(screen.getByTestId('field-caret').props).toMatchObject({
+      height: 16,
+      width: 16,
+      color: 'neutral-secondary',
     });
-    expect(screen.getByTestId('field-caret-glyph').props).toMatchObject({
-      height: 4,
-      width: 6,
-    });
-    expect(
-      StyleSheet.flatten(screen.getByTestId('field-caret-glyph').props.style),
-    ).toMatchObject({ transform: [{ rotate: '180deg' }] });
     expect(mockDecimalProps.mock.lastCall?.[0].inputComponent).toBe(
       PerpsProPositionTpSlBottomSheetTextInput,
     );

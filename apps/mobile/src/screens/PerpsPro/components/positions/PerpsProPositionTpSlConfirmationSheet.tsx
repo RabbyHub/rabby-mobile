@@ -1,6 +1,7 @@
 import {
   getPerpsProDialogCheckboxStyles,
   getPerpsProDialogStyles,
+  resolvePerpsProDialogCardBackground,
 } from '../common/perpsProDialogVisual';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
@@ -97,7 +98,7 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
         ref={modalRef}
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: 'bg1',
+          linearGradientType: 'bg0',
         })}
         backdropComponent={renderBackdrop}
         backgroundStyle={styles.background}
@@ -117,18 +118,13 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
               )}
             </Text>
             <View style={styles.summary}>
+              <Text style={styles.symbol}>{market.displayPair}</Text>
               <DetailRow
-                label={t('page.perps.pro.positionTpsl.symbol')}
-                value={market.displayPair}
-              />
-              <DetailRow
-                label={`${t('page.perps.pro.positions.entry')} (${
-                  market.quoteAsset
-                })`}
-                value={formatPerpsProPrice(
+                label={t('page.perps.pro.positions.entry')}
+                value={`${formatPerpsProPrice(
                   position.entryPrice,
                   market.pxDecimals,
-                )}
+                )} ${market.quoteAsset}`}
               />
             </View>
 
@@ -284,42 +280,49 @@ const getStyle = createGetStyles2024(
       safeAreaInsets.bottom,
       isLight,
     );
-    // Keep the existing surface contrast with the TP/SL fields.
     return {
       ...dialog,
-      background: {
-        ...dialog.background,
-        backgroundColor: colors2024['neutral-bg-1'],
-      },
-      handle: { ...dialog.handle, backgroundColor: colors2024['neutral-bg-1'] },
       container: { paddingHorizontal: 16, paddingTop: 8 },
       summary: {
-        borderBottomColor: colors2024['neutral-bg-5'],
-        borderBottomWidth: 1,
-        gap: 8,
-        marginTop: 16,
-        paddingBottom: 12,
+        backgroundColor: resolvePerpsProDialogCardBackground(
+          colors2024,
+          isLight,
+        ),
+        borderRadius: 12,
+        padding: 16,
+        gap: 10,
+        marginTop: 24,
+      },
+      symbol: {
+        color: colors2024['neutral-title-1'],
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 16,
+        fontWeight: '700',
+        lineHeight: 20,
       },
       leg: {
-        borderBottomColor: colors2024['neutral-bg-5'],
-        borderBottomWidth: 1,
-        gap: 8,
-        marginTop: 16,
-        paddingBottom: 12,
+        backgroundColor: resolvePerpsProDialogCardBackground(
+          colors2024,
+          isLight,
+        ),
+        borderRadius: 12,
+        padding: 16,
+        gap: 10,
+        marginTop: 8,
       },
       takeProfit: {
         color: colors2024['neutral-title-1'],
         fontFamily: 'SF Pro Rounded',
-        fontSize: 14,
-        fontWeight: '500',
-        lineHeight: 18,
+        fontSize: 16,
+        fontWeight: '700',
+        lineHeight: 20,
       },
       stopLoss: {
         color: colors2024['neutral-title-1'],
         fontFamily: 'SF Pro Rounded',
-        fontSize: 14,
-        fontWeight: '500',
-        lineHeight: 18,
+        fontSize: 16,
+        fontWeight: '700',
+        lineHeight: 20,
       },
       detailRow: {
         alignItems: 'center',
@@ -337,6 +340,7 @@ const getStyle = createGetStyles2024(
         color: colors2024['neutral-title-1'],
         fontFamily: 'SF Pro Rounded',
         fontSize: 12,
+        fontWeight: '500',
         lineHeight: 16,
         maxWidth: '64%',
         textAlign: 'right',
@@ -346,6 +350,7 @@ const getStyle = createGetStyles2024(
         color: colors2024['green-default'],
         fontFamily: 'SF Pro Rounded',
         fontSize: 12,
+        fontWeight: '500',
         lineHeight: 16,
       },
       negativeValue: {
@@ -353,15 +358,13 @@ const getStyle = createGetStyles2024(
         color: colors2024['red-default'],
         fontFamily: 'SF Pro Rounded',
         fontSize: 12,
+        fontWeight: '500',
         lineHeight: 16,
       },
       ...getPerpsProDialogCheckboxStyles(colors2024),
       footer: {
         paddingHorizontal: 4,
-        paddingBottom: Math.max(
-          40,
-          getBottomButtonBottomOffset(safeAreaInsets.bottom),
-        ),
+        paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
         paddingTop: 24,
       },
     };

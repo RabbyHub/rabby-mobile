@@ -55,7 +55,6 @@ describe('PerpsProPositionTpSlHeader', () => {
 
     const header = screen.getByTestId('perps-pro-position-tpsl-header-main');
     expect(StyleSheet.flatten(header.props.style)).toMatchObject({
-      height: 146,
       paddingHorizontal: 16,
       paddingTop: 8,
     });
@@ -63,12 +62,12 @@ describe('PerpsProPositionTpSlHeader', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-pair-main').props.style,
       ),
-    ).toMatchObject({ marginTop: 12 });
+    ).toMatchObject({ alignItems: 'flex-start', gap: 4 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-metrics-main').props.style,
       ),
-    ).toMatchObject({ gap: 8, marginTop: 16 });
+    ).toMatchObject({ gap: 10, marginTop: 10 });
     expect(screen.getByText('BTCUSDC')).toBeTruthy();
     expect(
       StyleSheet.flatten(screen.getByText('tpsl').props.style),
@@ -143,7 +142,7 @@ describe('PerpsProPositionTpSlHeader', () => {
       height: 40,
       width: 40,
       left: 0,
-      top: 8,
+      top: 0,
     });
     expect(back.props.hitSlop).toBe(8);
     fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-back'));
@@ -165,7 +164,6 @@ describe('PerpsProPositionTpSlHeader', () => {
         screen.getByTestId('perps-pro-position-tpsl-header-empty').props.style,
       ),
     ).toMatchObject({
-      height: 146,
       paddingHorizontal: 16,
       paddingTop: 8,
     });
@@ -173,12 +171,12 @@ describe('PerpsProPositionTpSlHeader', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-metrics-empty').props.style,
       ),
-    ).toMatchObject({ gap: 8, marginTop: 16 });
+    ).toMatchObject({ gap: 10, marginTop: 10 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-pair-empty').props.style,
       ),
-    ).toMatchObject({ marginTop: 12 });
+    ).toMatchObject({ alignItems: 'flex-start', gap: 4 });
     expect(screen.getByText('BTCUSDC')).toBeTruthy();
     expect(screen.getByText('xyz')).toBeTruthy();
     expect(screen.getByText('long 10x')).toBeTruthy();

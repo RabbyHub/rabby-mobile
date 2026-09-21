@@ -232,7 +232,7 @@ describe('PerpsProPositionTpSlConfirmationSheet', () => {
               screen.getByTestId('tpsl-confirmation-background').props.style,
             ),
           ).toMatchObject({
-            backgroundColor: colors['neutral-bg-1'],
+            backgroundColor: colors['neutral-bg-0'],
             borderTopLeftRadius: 20,
             borderTopRightRadius: 20,
           });
@@ -243,7 +243,7 @@ describe('PerpsProPositionTpSlConfirmationSheet', () => {
             overflow: 'hidden',
           });
           expect(sheet.props.handleStyle).toMatchObject({
-            backgroundColor: colors['neutral-bg-1'],
+            backgroundColor: colors['neutral-bg-0'],
             height: 40,
             paddingTop: 10,
             paddingBottom: 24,
@@ -279,7 +279,7 @@ describe('PerpsProPositionTpSlConfirmationSheet', () => {
             ),
           ).toMatchObject({
             paddingHorizontal: 4,
-            paddingBottom: 40,
+            paddingBottom: 36,
             paddingTop: 24,
           });
           expect(
@@ -435,6 +435,6 @@ describe('PerpsProPositionTpSlConfirmationSheet', () => {
         screen.getByTestId('perps-pro-position-tpsl-confirmation-footer').props
           .style,
       ),
-    ).toMatchObject({ paddingBottom: 40, paddingTop: 24 });
+    ).toMatchObject({ paddingBottom: 36, paddingTop: 24 });
   });
 });
