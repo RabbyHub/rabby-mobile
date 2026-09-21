@@ -1070,6 +1070,16 @@
       "low-slippage-may-cause-failed-transactions-due-to-high-volatility": "低滑點可能由於高波動性導致交易失敗",
       "recommend-slippage": "為了防止搶先交易，我們建議滑點為<2>{{ slippage }}</2>%",
       "rabbyFee": {
+        "discountTitle": "Rabby 費用優惠",
+        "case": "適用情形",
+        "free": "免費",
+        "cases": {
+          "wrap": "封裝/解除封裝原生代幣",
+          "stablecoins": "穩定幣",
+          "lstLrt": "LST/LRT 代幣",
+          "million": "交易量 $1M+",
+          "hundredThousand": "交易量 $100k - $1M"
+        },
         "rate": "費率",
         "button": "明白了",
         "wallet": "錢包",
@@ -2203,7 +2213,7 @@
         },
         "marketSelector": {
           "title": "選擇市場",
-          "search": "搜尋",
+          "search": "搜尋代幣",
           "favorites": "收藏",
           "all": "全部",
           "name": "名稱",
@@ -2216,6 +2226,7 @@
         },
         "funding": {
           "title": "資金費率",
+          "gotIt": "我知道了",
           "summary": "資金費率（1 小時）/倒數",
           "openDetails": "查看資金費率詳情",
           "interval": "週期",
@@ -2233,6 +2244,7 @@
           "explanation": "資金費率用於計算多倉與空倉持有者之間的定期費用。當資金費率為正時，多倉向空倉支付；為負時，空倉向多倉支付。年化費率採用簡單年化計算。"
         },
         "orderBook": {
+          "grouping": "盤口分組",
           "price": "價格",
           "pnl": "PnL",
           "roi": "ROI%",
@@ -2249,6 +2261,7 @@
           "market": "市價",
           "conditional": "條件單",
           "orderType": "訂單類型",
+          "direction": "方向",
           "marginMode": "保證金模式",
           "crossDescription": "所有全倉持倉共享同一份全倉保證金作為抵押品。發生強平時，您的保證金餘額以及此模式下剩餘的全倉持倉都可能損失。",
           "isolatedDescription": "透過為每個持倉單獨分配保證金來管理風險。當逐倉持倉的保證金率達到 100% 時，該持倉將被強平。在此模式下，您可以為單個持倉增加或減少保證金。",
@@ -2262,6 +2275,7 @@
           "liquidationPrice": "強平價格",
           "triggerPrice": "觸發價格",
           "amount": "數量",
+          "keyboardMinimum": "最低 {{amount}}",
           "available": "可用",
           "reduceOnly": "只減倉",
           "confirmationReduceOnly": "只減倉",
@@ -2662,7 +2676,8 @@
         "breakdownPerps": "永續合約",
         "breakdownSpot": "現貨",
         "breakdownOtherAssets": "其他資產",
-        "breakdownNetOtherAssets": "其他資產淨值"
+        "breakdownNetOtherAssets": "其他資產淨值",
+        "breakdownStaking": "質押"
       },
       "PerpsGuidePopup": {
         "step3Title": "做空",

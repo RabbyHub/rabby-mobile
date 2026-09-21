@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View as NativeView } from 'react-native';
 
 const mockOpenFieldExplanation = jest.fn();
 const mockCancelAnimation = jest.fn();
@@ -9,6 +9,8 @@ const mockWithTiming = jest.fn((value: number) => value);
 import type { MarketData } from '@/hooks/perps/usePerpsStore';
 
 import { buildPerpsProMarket } from '../../model/market';
+import { getPerpsProColumnLayout } from '../../model/layout';
+import { PerpsProOrderBookRatioSkeleton } from './PerpsProOrderBookSkeleton';
 import { processPerpsOrderBook } from '../../model/orderBook';
 import {
   getPerpsProOrderBookDepthKey,
@@ -631,59 +633,138 @@ describe('PerpsProOrderBook display shell', () => {
     expect(mockCancelAnimation).toHaveBeenCalled();
   });
 
-  it('expands the centered ratio track without destabilizing label lanes', () => {
-    const book = processPerpsOrderBook({
-      coin: 'BTC',
-      levels: [[{ n: 1, px: '101', sz: '1' }], [{ n: 1, px: '100', sz: '1' }]],
-      time: 100,
-    });
-    render(
-      <PerpsProOrderBook
-        {...defaultProps}
-        book={book}
-        bookIdentity="BTC:5:null"
-        bookStatus="ready"
-        hasBookSnapshot
-        market={buildPerpsProMarket(marketData)}
-      />,
-    );
-
-    const buyRatio = screen.getByText('50.25%');
-    const sellRatio = screen.getByText('49.75%');
-    expect(buyRatio.props.numberOfLines).toBe(1);
-    expect(sellRatio.props.numberOfLines).toBe(1);
-    for (const label of [buyRatio, sellRatio]) {
-      expect(label.props.adjustsFontSizeToFit).toBeUndefined();
-      expect(StyleSheet.flatten(label.props.style)).toMatchObject({
-        fontSize: 10,
-        lineHeight: 12,
-        fontVariant: ['tabular-nums'],
+  it.each([0, 3.89, 12.45, 44.77, 50, 99.99, 100])(
+    'keeps complete ratio labels inside the book at %s percent',
+    buy => {
+      const book = processPerpsOrderBook({
+        coin: 'BTC',
+        levels: [
+          [{ n: 1, px: '100', sz: String(buy) }],
+          [{ n: 1, px: '100', sz: String(100 - buy) }],
+        ],
+        time: 100,
       });
-    }
-    const ratioRowStyle = StyleSheet.flatten(
-      buyRatio.parent?.parent?.props.style,
+      render(
+        <PerpsProOrderBook
+          {...defaultProps}
+          book={book}
+          bookIdentity="BTC:5:null"
+          bookStatus="ready"
+          hasBookSnapshot
+          market={btcMarket}
+        />,
+      );
+
+      const [buyLabel, sellLabel] = screen.getAllByText(/^\d+\.\d{2}%$/);
+      const texts = [buy.toFixed(2) + '%', (100 - buy).toFixed(2) + '%'];
+      const labels = [buyLabel, sellLabel];
+      const labelStyles = labels.map(label =>
+        StyleSheet.flatten(label.props.style),
+      );
+      labels.forEach((label, index) => {
+        expect(label).toHaveTextContent(texts[index]);
+        expect(label.props.numberOfLines).toBe(1);
+        expect(label.props.adjustsFontSizeToFit).toBeUndefined();
+        expect(labelStyles[index]).toMatchObject({
+          flexShrink: 0,
+          fontSize: 10,
+          fontWeight: '400',
+          lineHeight: 12,
+          fontVariant: ['tabular-nums'],
+          width: 41,
+        });
+      });
+      expect(labelStyles[0].textAlign).toBe('left');
+      expect(labelStyles[1].textAlign).toBe('right');
+      const rowStyle = StyleSheet.flatten(buyLabel.parent?.parent?.props.style);
+      expect(rowStyle.gap).toBe(2);
+      expect(rowStyle.marginHorizontal ?? 0).toBe(0);
+
+      // CoreText advance widths from the bundled Regular 10 font with tnum.
+      // Native glyph rendering remains a device verification boundary.
+      const measuredWidths: Record<number, number> = {
+        5: 28.4765625,
+        6: 34.521484375,
+        7: 40.56640625,
+      };
+      for (const windowWidth of [320, 360, 375, 393, 430]) {
+        const { orderBookWidth } = getPerpsProColumnLayout(windowWidth);
+        const rowStart = rowStyle.marginHorizontal ?? 0;
+        const rowEnd = orderBookWidth - rowStart;
+        const trackStart = rowStart + labelStyles[0].width + rowStyle.gap;
+        const trackEnd = rowEnd - labelStyles[1].width - rowStyle.gap;
+        expect(trackEnd).toBeGreaterThan(trackStart);
+        expect((trackStart + trackEnd) / 2).toBe(orderBookWidth / 2);
+        if (windowWidth === 393) {
+          expect([trackStart, trackEnd]).toEqual([43, 93]);
+        }
+        texts.forEach((text, index) => {
+          const textWidth = measuredWidths[text.length];
+          const laneStart =
+            index === 0 ? rowStart : rowEnd - labelStyles[index].width;
+          const textStart =
+            laneStart +
+            (labelStyles[index].textAlign === 'right'
+              ? labelStyles[index].width - textWidth
+              : 0);
+          expect(Math.ceil(textWidth)).toBeLessThanOrEqual(
+            labelStyles[index].width,
+          );
+          expect(textStart).toBeGreaterThanOrEqual(0);
+          expect(textStart + textWidth).toBeLessThanOrEqual(orderBookWidth);
+        });
+      }
+      const buyTrack = StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-book-buy-ratio-track').props.style,
+      );
+      const sellTrack = StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-book-sell-ratio-track').props.style,
+      );
+      expect(buyTrack).toMatchObject({
+        borderTopLeftRadius: 2,
+        borderBottomLeftRadius: 2,
+        flexBasis: 0,
+        flexGrow: buy,
+      });
+      expect(sellTrack).toMatchObject({
+        borderTopRightRadius: 2,
+        borderBottomRightRadius: 2,
+        flexBasis: 0,
+        flexGrow: 100 - buy,
+      });
+      expect(buyTrack.borderRadius ?? 0).toBe(0);
+      expect(buyTrack.borderTopRightRadius ?? 0).toBe(0);
+      expect(buyTrack.borderBottomRightRadius ?? 0).toBe(0);
+      expect(sellTrack.borderRadius ?? 0).toBe(0);
+      expect(sellTrack.borderTopLeftRadius ?? 0).toBe(0);
+      expect(sellTrack.borderBottomLeftRadius ?? 0).toBe(0);
+    },
+  );
+
+  it('reserves the same bounded label lanes while the ratio is loading', () => {
+    render(<PerpsProOrderBookRatioSkeleton />);
+    const viewStyles = screen
+      .UNSAFE_getAllByType(NativeView)
+      .map(view => StyleSheet.flatten(view.props.style));
+    const [buyLane, sellLane] = viewStyles.filter(
+      style => style?.flexShrink === 0,
     );
-    expect(ratioRowStyle).toMatchObject({
+    expect(buyLane).toMatchObject({
+      width: 41,
+      flexShrink: 0,
+      alignItems: 'flex-start',
+    });
+    expect(sellLane).toMatchObject({
+      width: 41,
+      flexShrink: 0,
+      alignItems: 'flex-end',
+    });
+    expect(
+      viewStyles.find(style => style?.flexDirection === 'row'),
+    ).toMatchObject({
       gap: 2,
-      marginHorizontal: -12,
+      width: '100%',
     });
-    expect(StyleSheet.flatten(buyRatio.props.style)).toMatchObject({
-      flexShrink: 0,
-      textAlign: 'right',
-      width: 42,
-    });
-    expect(StyleSheet.flatten(sellRatio.props.style)).toMatchObject({
-      flexShrink: 0,
-      textAlign: 'left',
-      width: 42,
-    });
-    const getTrackWidth = (orderBookWidth: number) =>
-      orderBookWidth -
-      2 * 42 -
-      2 * ratioRowStyle.gap -
-      2 * ratioRowStyle.marginHorizontal;
-    expect(getTrackWidth(112)).toBe(48);
-    expect(getTrackWidth(136)).toBe(72);
   });
 
   it('retains a price animation when a new best level moves it to another row', () => {

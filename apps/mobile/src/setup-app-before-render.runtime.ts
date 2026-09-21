@@ -62,11 +62,11 @@ export function registerSetupAppBeforeRenderDeferredTasks(reason = 'unknown') {
   }, STARTUP_TASKS.perpsProAffinityWarmup);
 
   runStartupTask(async () => {
-    const { startSetupRuntimeSecuritySubscriptions } = await import(
-      './startup/deferredTasks/setupRuntimeSecuritySubscriptions'
+    const { startSetupRuntimeScreenshotFeedbackSubscription } = await import(
+      './startup/deferredTasks/setupRuntimeScreenshotFeedbackSubscription'
     );
-    startSetupRuntimeSecuritySubscriptions();
-  }, STARTUP_TASKS.setupRuntimeSecuritySubscriptions);
+    startSetupRuntimeScreenshotFeedbackSubscription();
+  }, STARTUP_TASKS.setupRuntimeScreenshotFeedbackSubscription);
 
   runStartupTask(async () => {
     const { startSetupRuntimeNotificationBootstrap } = await import(

@@ -24,19 +24,9 @@ import type { NavigationContainerRef } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 
 import type { RootStackParamsList } from '@/navigation-type';
-import { setIOSScreenCapture } from './native/security';
-import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import * as apisLock from '@/core/apis/lock';
 import * as apisAccount from '@/core/apis/account';
 import { IS_IOS } from '@/core/native/utils';
-import {
-  atSensitiveSceneState,
-  bottomSheetModalSecurityApis,
-} from '@/components2024/GlobalBottomSheetModal/security';
-import {
-  getExpScreenCapture,
-  useIosForceDisableAlertForSensitiveScene,
-} from './appSettings';
 import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
 import type { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
 import { zCreate } from '@/core/utils/reexports';
@@ -47,7 +37,6 @@ import {
 } from '@/core/utils/store';
 import { RefLikeObject } from '@/utils/type';
 import { perfEvents } from '@/core/utils/perf';
-import { useShallow } from 'zustand/react/shallow';
 import type { CollapsibleRef } from 'react-native-collapsible-tab-view';
 import { autoLockEvent } from '@/core/apis/autoLock';
 import { notificationEvents } from '@/core/notifications/data';
@@ -701,196 +690,6 @@ export function usePreventGoBack({
   return {
     registerPreventEffect,
   };
-}
-
-export const enum ProtectType {
-  NONE = 0,
-  SafeTipModal = 1,
-}
-
-export type ProtectedConf = {
-  iosBlurType: ProtectType | null;
-  // alertOnScreenShot?: {
-  //   title: string;
-  //   message: string;
-  // };
-  warningScreenshotBackup: boolean;
-  onOk?: (ctx: { navigation?: NavigationInstance | null }) => void;
-};
-const defaultOnOk = ctx => {
-  ctx.navigation?.goBack();
-};
-const defaultProtectedConf: ProtectedConf = {
-  iosBlurType: ProtectType.NONE,
-  onOk: defaultOnOk,
-  warningScreenshotBackup: false,
-};
-function getProtectedConf() {
-  return {
-    ...defaultProtectedConf,
-    warningScreenshotBackup: true,
-    iosBlurType: ProtectType.SafeTipModal,
-  };
-}
-
-const PROTECTED_SCREENS: {
-  [P in AppRootName]?: ProtectedConf;
-} = {
-  [RootNames.CreateMnemonic]: getProtectedConf(),
-  [RootNames.ImportMnemonic]: getProtectedConf(),
-  [RootNames.ImportPrivateKey]: getProtectedConf(),
-  [RootNames.ImportMnemonic2024]: getProtectedConf(),
-  [RootNames.ImportPrivateKey2024]: getProtectedConf(),
-  [RootNames.CreateMnemonicBackup]: getProtectedConf(),
-  [RootNames.CreateMnemonicVerify]: getProtectedConf(),
-  [RootNames.BackupPrivateKey]: getProtectedConf(),
-  [RootNames.ImportSecret]: getProtectedConf(),
-};
-
-function getAtSensitiveScreenInfo(routeName: string | undefined) {
-  const result = {
-    // $routeName: routeName,
-    $protectedConf: { ...defaultProtectedConf },
-    _atSensitiveScreen: false,
-  };
-
-  if (!routeName || !PROTECTED_SCREENS[routeName]) return result;
-
-  result.$protectedConf = {
-    ...defaultProtectedConf,
-    ...PROTECTED_SCREENS[routeName],
-  };
-
-  result._atSensitiveScreen = !!PROTECTED_SCREENS[routeName];
-
-  return result;
-}
-
-type AtSensitiveScreenInfo = ReturnType<typeof getAtSensitiveScreenInfo>;
-type AtSensitiveScreenState = {
-  anySensitiveModalOpened: boolean;
-  screenInfo: AtSensitiveScreenInfo;
-};
-const atSensitiveScreenStore = zCreate<AtSensitiveScreenState>(() => ({
-  anySensitiveModalOpened: false,
-  screenInfo: getAtSensitiveScreenInfo(undefined),
-}));
-
-function setAtSensitiveScreenInfo(
-  valOrFunc: UpdaterOrPartials<AtSensitiveScreenInfo>,
-) {
-  atSensitiveScreenStore.setState(prev => {
-    const { newVal, changed } = resolveValFromUpdater(
-      prev.screenInfo,
-      valOrFunc,
-      {
-        strict: true,
-      },
-    );
-
-    if (!changed) return prev;
-
-    return { ...prev, screenInfo: newVal };
-  });
-}
-
-perfEvents.addListener('EVENT_ROUTE_CHANGE', ({ currentRouteName }) => {
-  setAtSensitiveScreenInfo(getAtSensitiveScreenInfo(currentRouteName));
-});
-
-atSensitiveSceneState.subscribe(s => {
-  const anySensitiveModalOpened =
-    bottomSheetModalSecurityApis.isAnySensitiveModalOpened(s);
-
-  atSensitiveScreenStore.setState(prev => {
-    if (prev.anySensitiveModalOpened === anySensitiveModalOpened) {
-      return prev;
-    }
-    return {
-      ...prev,
-      anySensitiveModalOpened,
-    };
-  });
-});
-
-export function useAtSensitiveScene() {
-  const { iosForceDisableAlertForSensitiveScene } =
-    useIosForceDisableAlertForSensitiveScene();
-
-  return atSensitiveScreenStore(
-    useShallow(s => {
-      const ret = getAtSensitiveScene(s);
-
-      if (iosForceDisableAlertForSensitiveScene) {
-        ret.atSensitiveScene = false;
-        ret.iosBlurType = ProtectType.NONE;
-        ret.warningScreenshotBackup = false;
-      }
-
-      return ret;
-    }),
-  );
-}
-
-export function getAtSensitiveScene(s = atSensitiveScreenStore.getState()) {
-  const srnInfo = s.screenInfo;
-  const anySensitiveModalOpened = s.anySensitiveModalOpened;
-
-  return {
-    anySensitiveModalOpened,
-    atSensitiveScene: srnInfo._atSensitiveScreen || anySensitiveModalOpened,
-    iosBlurType: srnInfo.$protectedConf.iosBlurType,
-    warningScreenshotBackup: srnInfo.$protectedConf.warningScreenshotBackup,
-    onOk: srnInfo.$protectedConf.onOk,
-  };
-}
-
-export function startSubscribeAtSensitiveScene() {
-  atSensitiveScreenStore.subscribe(s => {
-    const shouldPreventScreenCapturing =
-      getAtSensitiveScene(s).atSensitiveScene &&
-      !getExpScreenCapture().forceAllowScreenshot;
-
-    perfEvents.emit('CHANGE_PREVENT_SCREENSHOT', shouldPreventScreenCapturing);
-  });
-}
-
-export function startSubscribeIOSJustScreenshotted() {
-  const subscription = RNScreenshotPrevent.onUserDidTakeScreenshot(() => {
-    const setScreenshotted = (val?: boolean) =>
-      setIOSScreenCapture(prev => ({ ...prev, isScreenshotJustNow: !!val }));
-
-    setScreenshotted(getAtSensitiveScene().warningScreenshotBackup);
-  });
-
-  return subscription;
-}
-
-export function startSubscribeIOSScreenRecording() {
-  if (!IS_IOS && !__DEV__) return;
-
-  const subscription = RNScreenshotPrevent.iosOnScreenCaptureChanged(ctx => {
-    setIOSScreenCapture(prev => ({
-      ...prev,
-      isBeingCaptured: ctx.isBeingCaptured,
-    }));
-
-    if (!IS_IOS && !__DEV__) return;
-    const atSensitiveInfo = getAtSensitiveScene();
-    if (atSensitiveInfo.iosBlurType === ProtectType.SafeTipModal) return;
-
-    const forceAllowScreenshot = getExpScreenCapture().forceAllowScreenshot;
-    const shouldPreventScreenCapturing =
-      atSensitiveInfo.atSensitiveScene && !forceAllowScreenshot;
-
-    if (ctx.isBeingCaptured && shouldPreventScreenCapturing) {
-      RNScreenshotPrevent.iosProtectFromScreenRecording();
-    } else {
-      RNScreenshotPrevent.iosUnprotectFromScreenRecording();
-    }
-  });
-
-  return subscription;
 }
 
 export function startSubscribeRemoteNotification() {

@@ -32,7 +32,11 @@ import {
   getLatestPortfolioValue,
   isPortfolioAllZero,
 } from '@/hooks/perps/perpsPortfolio';
-import { fetchSpotMeta, perpsStore } from '@/hooks/perps/usePerpsStore';
+import {
+  fetchSpotMeta,
+  fetchStakingSummaryHttp,
+  perpsStore,
+} from '@/hooks/perps/usePerpsStore';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { Text } from '@/components/Typography';
 import ImgLearnMore from '@/assets2024/icons/perps/ImgLearnMore.png';
@@ -117,9 +121,13 @@ export const PerpsAccountCard: React.FC = () => {
     // The live PV needs the spot pricing index; only Pro used to fetch it
     // (idempotent: cached after the first success, in-flight deduped).
     fetchSpotMeta();
+    // Staked HYPE is part of the live PV and has no WS feed; ride the same
+    // 60s cadence (single-flight in the store).
+    fetchStakingSummaryHttp(currentAddress);
     const timer = setInterval(() => {
       if (AppState.currentState === 'active') {
         fetchPerpsPortfolio(currentAddress, { force: true });
+        fetchStakingSummaryHttp(currentAddress);
       }
     }, 60_000);
     return () => clearInterval(timer);

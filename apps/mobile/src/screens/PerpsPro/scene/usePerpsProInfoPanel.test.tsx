@@ -18,7 +18,11 @@ const mockOpenOrders = [
 ];
 const mockAccount = {
   assets: [],
-  diagnostics: { complete: true, unresolvedDexes: [] },
+  diagnostics: {
+    complete: true,
+    unresolvedDexes: [],
+    unpricedNonZeroAssets: [],
+  },
   mode: 'standard',
 };
 const mockPerpsState = {
@@ -43,6 +47,7 @@ const mockPerpsState = {
   spotAssetCtxs: {},
   spotMeta: null,
   spotMetaStatus: 'ready',
+  stakingStatus: 'success',
   spotState: {
     accountValue: '202' as string | null | undefined,
     rawBalances: [],
@@ -64,6 +69,7 @@ jest.mock('@/hooks/perps/runtime/perpsRuntimeState', () => ({
 }));
 
 jest.mock('@/hooks/perps/usePerpsStore', () => ({
+  fetchStakingSummaryHttp: jest.fn(async () => true),
   isPerpsUserAbstractionReadyForAccount: () => mockUserAbstractionReady,
   perpsStore: Object.assign(
     (selector: (state: typeof mockPerpsState) => unknown) =>
@@ -87,7 +93,9 @@ jest.mock('../model/account', () => ({
   buildPerpsAccountViewModel: () => mockAccount,
   getPerpsAccountMarginRatio: () => null,
   getSpotPriceDependencyKeys: () => [],
+  getStakedHypeAmount: () => '0',
   resolvePerpsAccountMode: () => 'standard',
+  STAKING_TOKEN_NAME: 'HYPE',
 }));
 
 jest.mock('../model/openOrderTopology', () => ({

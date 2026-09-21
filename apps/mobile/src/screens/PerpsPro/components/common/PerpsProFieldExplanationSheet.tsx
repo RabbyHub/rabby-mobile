@@ -4,7 +4,7 @@ import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import {
-  BOTTOM_BUTTON_COMPACT_HEIGHT,
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -21,15 +21,10 @@ import {
   type PerpsProFieldExplanationKey,
 } from '../../model/fieldExplanation';
 import { usePerpsProSheetNavigationRegistration } from './perpsProSheetNavigationRegistry';
-import {
-  getPerpsProBottomSheetChromeStyles,
-  PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
-  PERPS_PRO_CONFIRM_BUTTON_STYLE,
-} from './perpsProVisual';
+import { getPerpsProDialogStyles } from './perpsProDialogVisual';
+import { PerpsProDialogBackdrop } from './PerpsProDialogBackdrop';
 
-export const PERPS_PRO_FIELD_EXPLANATION_MIN_HEIGHT = 240;
-const PERPS_PRO_FIELD_EXPLANATION_HANDLE_HEIGHT = 40;
-const PERPS_PRO_FIELD_EXPLANATION_ACTION_GAP = 44;
+const PERPS_PRO_FIELD_EXPLANATION_ACTION_GAP = 24;
 
 export const PerpsProFieldExplanationSheet: React.FC<{
   explanationKey: PerpsProFieldExplanationKey;
@@ -41,10 +36,7 @@ export const PerpsProFieldExplanationSheet: React.FC<{
   const { height } = useWindowDimensions();
   const { top } = useSafeAreaInsets();
   const explanation = PERPS_PRO_FIELD_EXPLANATIONS[explanationKey];
-  const maxDynamicContentSize = Math.max(
-    PERPS_PRO_FIELD_EXPLANATION_MIN_HEIGHT,
-    height - top,
-  );
+  const maxDynamicContentSize = Math.max(0, height - top);
   usePerpsProSheetNavigationRegistration({
     active: true,
     dismiss: onDismiss,
@@ -61,8 +53,9 @@ export const PerpsProFieldExplanationSheet: React.FC<{
       ref={modalRef}
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: 'bg1',
+        linearGradientType: 'bg0',
       })}
+      backdropComponent={PerpsProDialogBackdrop}
       backdropProps={{ pressBehavior: 'close' }}
       backgroundStyle={styles.background}
       enableDynamicSizing
@@ -79,11 +72,11 @@ export const PerpsProFieldExplanationSheet: React.FC<{
           </Text>
           <View style={styles.footer}>
             <Button
-              buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
-              height={BOTTOM_BUTTON_COMPACT_HEIGHT}
+              buttonStyle={styles.button}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
               onPress={() => modalRef.current?.close()}
-              title={t('global.confirm')}
-              titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
+              title={t('page.perps.pro.funding.gotIt')}
+              titleStyle={styles.buttonTitle}
               type="primary"
             />
           </View>
@@ -95,31 +88,25 @@ export const PerpsProFieldExplanationSheet: React.FC<{
 
 PerpsProFieldExplanationSheet.displayName = 'PerpsProFieldExplanationSheet';
 
-const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
-  ...getPerpsProBottomSheetChromeStyles(colors2024),
-  container: {
-    minHeight:
-      PERPS_PRO_FIELD_EXPLANATION_MIN_HEIGHT -
-      PERPS_PRO_FIELD_EXPLANATION_HANDLE_HEIGHT,
-    paddingHorizontal: 15,
-    paddingTop: 8,
-  },
-  title: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '700',
-    lineHeight: 20,
-  },
-  description: {
-    color: colors2024['neutral-body'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    marginTop: 16,
-  },
-  footer: {
-    paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
-    paddingTop: PERPS_PRO_FIELD_EXPLANATION_ACTION_GAP,
-  },
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, safeAreaInsets, isLight }) => ({
+    ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
+    container: {
+      paddingHorizontal: 16,
+      paddingTop: 8,
+    },
+    description: {
+      color: colors2024['neutral-foot'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      fontWeight: '400',
+      lineHeight: 20,
+      marginTop: 12,
+    },
+    footer: {
+      marginHorizontal: 4,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+      paddingTop: PERPS_PRO_FIELD_EXPLANATION_ACTION_GAP,
+    },
+  }),
+);

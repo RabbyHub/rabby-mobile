@@ -15,6 +15,7 @@ import {
   getPerpsProTintedTagTextStyle,
 } from '../common/perpsProSemanticTagStyles';
 import { PerpsProCloseMarketTag } from './PerpsProCloseMarketTag';
+import { PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE } from '../common/perpsProDialogVisual';
 
 export const PerpsProPositionTpSlPageHeader: React.FC<{
   onBack: () => void;
@@ -155,35 +156,34 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 40,
   },
   pageTitle: {
+    ...PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '700',
-    lineHeight: 20,
+    fontSize: 20,
+    lineHeight: 24,
     maxWidth: 260,
     textAlign: 'center',
   },
   mainHeader: {
     height: 146,
-    paddingHorizontal: 15,
+    paddingHorizontal: 16,
     paddingTop: 8,
   },
   emptyHeader: {
     height: 146,
-    paddingHorizontal: 15,
+    paddingHorizontal: 16,
     paddingTop: 8,
   },
   summaryHeader: {
     height: 114,
-    paddingHorizontal: 15,
+    paddingHorizontal: 16,
     paddingTop: 8,
   },
   mainTitle: {
+    ...PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '700',
-    lineHeight: 20,
+    fontSize: 20,
+    lineHeight: 24,
+    textAlign: 'center',
   },
   mainPairRow: {
     alignItems: 'center',

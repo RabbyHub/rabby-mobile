@@ -759,20 +759,29 @@ export const GasSelectorHeader = ({
   };
   const [loadingGasEstimated, setLoadingGasEstimated] = useState(false);
 
-  // reset loading state when custom gas change
   useEffect(() => {
-    setLoadingGasEstimated(true);
-  }, [customGas]);
+    if (
+      (!isReady && isFirstTimeLoad) ||
+      customGas === undefined ||
+      customGas === ''
+    ) {
+      setLoadingGasEstimated(false);
+      return;
+    }
 
-  useEffect(() => {
-    setTimeout(() => {
-      if (isReady || !isFirstTimeLoad) {
-        if (customGas === undefined) return;
-        loadCustomGasData(Number(customGas) * 1e9).then(data => {
-          if (!data) {
+    let active = true;
+    setLoadingGasEstimated(true);
+    const timer = setTimeout(() => {
+      loadCustomGasData(Number(customGas) * 1e9)
+        // Time estimation is optional for a manually entered gas price.
+        .catch(() => null)
+        .then(data => {
+          if (!active) {
             return;
           }
-          if (data) setCustomGasEstimated(data.estimated_seconds);
+          // Custom networks have no time estimate, but the entered price
+          // still needs to become the selected gas.
+          setCustomGasEstimated(data?.estimated_seconds ?? 0);
           setSelectedGas(gas => ({
             ...gas,
             level: 'custom',
@@ -780,14 +789,21 @@ export const GasSelectorHeader = ({
             front_tx_count: 0,
             estimated_seconds: data?.estimated_seconds ?? 0,
             priority_price: gas?.priority_price ?? null,
-            base_fee: data?.base_fee ?? 0,
+            base_fee: data?.base_fee ?? gas?.base_fee ?? 0,
           }));
-          setLoadingGasEstimated(false);
+        })
+        .finally(() => {
+          if (active) {
+            setLoadingGasEstimated(false);
+          }
         });
-      }
     }, 500);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customGas]);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [customGas, isReady, isFirstTimeLoad, loadCustomGasData, chainId]);
 
   useEffect(() => {
     setGasLimit(Number(gasLimit));

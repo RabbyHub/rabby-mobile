@@ -89,7 +89,10 @@ import { add0x } from '@/utils/address';
 import { removeLeadingZeroes } from '@/utils/7702';
 import { handleGasAccountLoginSuccess } from '@/utils/gasAccountAnalytics';
 import type { TempoTxCall, TxWithTempoExtras } from '@/utils/tempo';
-import { shouldUseTempoTransaction } from '@/utils/tempo';
+import {
+  buildTempoTransaction,
+  shouldUseTempoTransaction,
+} from '@/utils/tempo';
 // import eventBus from '@/eventBus';
 
 const SIGN_TIMEOUT = 100;
@@ -215,43 +218,25 @@ const normalizeTempoCalls = (params: {
   txParams: Record<string, any>;
 }): TempoTxCall[] => {
   const { approvalRes, txParams } = params;
-  const typedApprovalRes = approvalRes as any;
-
-  const rawCalls =
-    Array.isArray(typedApprovalRes.calls) && typedApprovalRes.calls.length
-      ? typedApprovalRes.calls
-      : [
-          {
-            to: approvalRes.to ?? txParams.to,
-            data:
-              typeof approvalRes.data !== 'undefined'
-                ? approvalRes.data
-                : txParams.data,
-            value:
-              typeof approvalRes.value !== 'undefined'
-                ? approvalRes.value
-                : txParams.value,
-          },
-        ];
-
-  return rawCalls.map((call: any) =>
-    omitUndefined({
-      to: call?.to ?? approvalRes.to ?? txParams.to,
+  const tempoTx = buildTempoTransaction(
+    {
+      ...txParams,
+      ...approvalRes,
+      to: approvalRes.to ?? txParams.to,
       data:
-        typeof call?.data !== 'undefined'
-          ? call.data
-          : typeof approvalRes.data !== 'undefined'
+        typeof approvalRes.data !== 'undefined'
           ? approvalRes.data
           : txParams.data,
-      value: normalizeHexValue(
-        typeof call?.value !== 'undefined'
-          ? call.value
-          : typeof approvalRes.value !== 'undefined'
+      value:
+        typeof approvalRes.value !== 'undefined'
           ? approvalRes.value
           : txParams.value,
-      ),
-    }),
+      calls: (approvalRes as any).calls ?? txParams.calls,
+    } as any,
+    { stripTopLevelData: true, forceTempoType: true },
   );
+
+  return (tempoTx.calls || []) as TempoTxCall[];
 };
 
 const toTempoRpcQuantity = (value: unknown) => {
@@ -962,11 +947,16 @@ class ProviderController extends BaseController {
       }
     }
     const requestChain = getProviderRequestChain(options as any);
-    const chain = requestChain
-      ? requestChain.enum
-      : isInternalDappSnapshot(origin)
-      ? findChain({ id: approvalRes.chainId })!.enum
-      : getConnectedDappSnapshot(origin)!.chainId;
+    // Pin the broadcast chain to the approved transaction's chain; the
+    // connected dapp's chain is attacker-mutable mid-approval via a silent
+    // wallet_switchEthereumChain.
+    const chain =
+      requestChain?.enum ??
+      findChain({ id: approvalRes.chainId })?.enum ??
+      getConnectedDappSnapshot(origin)?.chainId;
+    if (!chain) {
+      throw new Error('Cannot determine broadcast chain for approved tx');
+    }
 
     const approvingTx = await transactionHistoryServiceApi.getSigningTx(
       signingTxId!,
@@ -1027,38 +1017,41 @@ class ProviderController extends BaseController {
         const has1559FeeFields =
           typeof approvalRes.maxFeePerGas !== 'undefined' ||
           typeof approvalRes.maxPriorityFeePerGas !== 'undefined';
-        const tempoTxData: any = omitUndefined({
-          chainId: Number(approvalRes.chainId),
-          type: '0x76',
-          from: txParams.from,
-          to: approvalRes.to ?? (txParams as any).to,
-          data:
-            typeof approvalRes.data !== 'undefined'
-              ? approvalRes.data
-              : (txParams as any).data,
-          value: normalizedTxValue,
-          calls: tempoCalls,
-          gas: normalizedTempoGas,
-          gasPrice: has1559FeeFields ? undefined : approvalRes.gasPrice,
-          maxFeePerGas: approvalRes.maxFeePerGas,
-          maxPriorityFeePerGas: approvalRes.maxPriorityFeePerGas,
-          nonce: approvalRes.nonce,
-          nonceKey: typedApprovalRes.nonceKey,
-          keyAuthorization: typedApprovalRes.keyAuthorization,
-          validBefore: typedApprovalRes.validBefore,
-          validAfter: typedApprovalRes.validAfter,
-          authorizationList: typedApprovalRes.authorizationList,
-          feePayerSignature: optionalValue(normalizedFeePayerSignature),
-          feePayer:
-            shouldBackendSponsorTempo ||
-            (typedApprovalRes.feePayer === true &&
-              typeof typedApprovalRes.feePayerSignature === 'undefined')
-              ? true
-              : undefined,
-          feeToken: shouldBackendSponsorTempo
-            ? undefined
-            : typedApprovalRes.feeToken,
-        });
+        const tempoTxData: any = buildTempoTransaction(
+          omitUndefined({
+            chainId: Number(approvalRes.chainId),
+            type: '0x76',
+            from: txParams.from,
+            to: approvalRes.to ?? (txParams as any).to,
+            data:
+              typeof approvalRes.data !== 'undefined'
+                ? approvalRes.data
+                : (txParams as any).data,
+            value: normalizedTxValue as string | number | bigint | undefined,
+            calls: tempoCalls,
+            gas: normalizedTempoGas,
+            gasPrice: has1559FeeFields ? undefined : approvalRes.gasPrice,
+            maxFeePerGas: approvalRes.maxFeePerGas,
+            maxPriorityFeePerGas: approvalRes.maxPriorityFeePerGas,
+            nonce: approvalRes.nonce,
+            nonceKey: typedApprovalRes.nonceKey,
+            keyAuthorization: typedApprovalRes.keyAuthorization,
+            validBefore: typedApprovalRes.validBefore,
+            validAfter: typedApprovalRes.validAfter,
+            authorizationList: typedApprovalRes.authorizationList,
+            feePayerSignature: optionalValue(normalizedFeePayerSignature),
+            feePayer:
+              shouldBackendSponsorTempo ||
+              (typedApprovalRes.feePayer === true &&
+                typeof typedApprovalRes.feePayerSignature === 'undefined')
+                ? true
+                : undefined,
+            feeToken: shouldBackendSponsorTempo
+              ? undefined
+              : typedApprovalRes.feeToken,
+          }),
+          { stripTopLevelData: true, forceTempoType: true },
+        );
 
         if (!shouldUseKeyringTempoSign) {
           throw new Error(

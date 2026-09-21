@@ -765,6 +765,16 @@
       },
       "recommend-slippage": "フロントランニングを防ぐために、<2>{{ slippage }}</2>% のスリッページをお勧めします。",
       "rabbyFee": {
+        "discountTitle": "Rabby 手数料割引",
+        "case": "条件",
+        "free": "無料",
+        "cases": {
+          "wrap": "ネイティブトークンのラップ/アンラップ",
+          "stablecoins": "ステーブルコイン",
+          "lstLrt": "LST/LRT トークン",
+          "million": "取引量 $1M+",
+          "hundredThousand": "取引量 $100k - $1M"
+        },
         "button": "了解しました",
         "wallet": "ウォレット",
         "title": "Rabby 手数料",
@@ -2083,7 +2093,7 @@
         },
         "marketSelector": {
           "title": "市場を選択",
-          "search": "検索",
+          "search": "トークンを検索",
           "favorites": "お気に入り",
           "all": "すべて",
           "name": "名前",
@@ -2096,6 +2106,7 @@
         },
         "funding": {
           "title": "資金調達率",
+          "gotIt": "了解しました",
           "summary": "資金調達（1時間）/ カウントダウン",
           "openDetails": "資金調達の詳細を表示",
           "interval": "間隔",
@@ -2113,6 +2124,7 @@
           "explanation": "資金調達率は、ロングとショートのポジション保有者間で定期的に行われる支払いの計算に使用されます。資金調達率がプラスの場合はロング側がショート側に、マイナスの場合はショート側がロング側に支払います。年率は単利換算で計算されます。"
         },
         "orderBook": {
+          "grouping": "板の価格刻み",
           "price": "価格",
           "pnl": "PnL",
           "roi": "ROI%",
@@ -2129,6 +2141,7 @@
           "market": "成行",
           "conditional": "条件付き",
           "orderType": "注文タイプ",
+          "direction": "方向",
           "marginMode": "証拠金モード",
           "crossDescription": "すべてのクロスポジションは、同じクロス証拠金を担保として共有します。清算が発生した場合、このモードの証拠金残高と残りの未決済クロスポジションが失われる可能性があります。",
           "isolatedDescription": "ポジションごとに割り当てる証拠金額を設定して、個別にリスクを管理します。アイソレートポジションの証拠金率が100%に達すると、そのポジションは清算されます。このモードでは、個別のポジションに証拠金を追加したり、引き出したりできます。",
@@ -2142,6 +2155,7 @@
           "liquidationPrice": "清算価格",
           "triggerPrice": "トリガー価格",
           "amount": "数量",
+          "keyboardMinimum": "最小 {{amount}}",
           "available": "利用可能",
           "reduceOnly": "決済専用",
           "confirmationReduceOnly": "決済専用",
@@ -2542,7 +2556,8 @@
         "breakdownPerps": "無期限先物",
         "breakdownSpot": "現物",
         "breakdownOtherAssets": "その他の資産",
-        "breakdownNetOtherAssets": "その他の資産（純額）"
+        "breakdownNetOtherAssets": "その他の資産（純額）",
+        "breakdownStaking": "ステーキング"
       },
       "PerpsGuidePopup": {
         "step5Title": "清算",

@@ -1,3 +1,4 @@
+import RcThumb from '@/assets2024/icons/perps/PerpsProLeverageThumb.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Slider } from '@rneui/themed';
@@ -51,7 +52,7 @@ export const PerpsProManageMarginSlider: React.FC<{
     onValueChange,
     value,
   }) => {
-    const { styles } = useTheme2024({ getStyle });
+    const { colors2024, styles } = useTheme2024({ getStyle });
     const min = toFinite(minimum) ?? 0;
     const max = toFinite(maximum) ?? min;
     const input = toFinite(value) ?? min;
@@ -154,8 +155,14 @@ export const PerpsProManageMarginSlider: React.FC<{
           testID="perps-pro-manage-margin-slider-thumb-rail">
           <View
             style={[styles.thumb, thumbStyle]}
-            testID="perps-pro-manage-margin-slider-thumb"
-          />
+            testID="perps-pro-manage-margin-slider-thumb">
+            <RcThumb
+              color={colors2024['neutral-title-1']}
+              fill={colors2024['neutral-bg-0']}
+              width={20}
+              height={20}
+            />
+          </View>
         </View>
       </View>
     );
@@ -166,67 +173,65 @@ PerpsProManageMarginSlider.displayName = 'PerpsProManageMarginSlider';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    height: 32,
+    height: 40,
     justifyContent: 'center',
     position: 'relative',
     width: '100%',
   },
   disabled: { opacity: 0.5 },
-  nativeSlider: { height: 32, zIndex: 4 },
-  invisibleTrack: { height: 2 },
+  nativeSlider: { height: 40, zIndex: 4 },
+  invisibleTrack: { height: 4 },
   invisibleThumb: {
     backgroundColor: 'transparent',
     borderWidth: 0,
-    height: 16,
-    width: 16,
+    height: 20,
+    width: 20,
   },
   track: {
     backgroundColor: colors2024['neutral-line'],
     borderRadius: 999,
-    height: 2,
+    height: 4,
     left: 0,
     position: 'absolute',
     right: 0,
-    top: 15,
+    top: 18,
     zIndex: 1,
   },
   progress: {
     backgroundColor: colors2024['neutral-title-1'],
-    height: 2,
+    height: 4,
   },
   progressStart: {
     backgroundColor: colors2024['neutral-title-1'],
-    height: 2,
+    borderTopLeftRadius: 2,
+    borderBottomLeftRadius: 2,
+    height: 4,
     left: 0,
     position: 'absolute',
-    top: 15,
-    width: 8,
+    top: 18,
+    width: 10,
     zIndex: 2,
   },
   progressRail: {
-    height: 2,
-    left: 8,
+    height: 4,
+    left: 10,
     overflow: 'hidden',
     position: 'absolute',
-    right: 8,
-    top: 15,
+    right: 10,
+    top: 18,
     zIndex: 2,
   },
   thumbRail: {
-    height: 16,
+    height: 20,
     left: 0,
     position: 'absolute',
-    right: 16,
-    top: 8,
+    right: 20,
+    top: 10,
     zIndex: 3,
   },
   thumb: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderColor: colors2024['neutral-title-1'],
-    borderRadius: 8,
-    borderWidth: 1,
-    height: 16,
+    height: 20,
     position: 'absolute',
-    width: 16,
+    width: 20,
   },
 }));

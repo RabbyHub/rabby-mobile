@@ -766,6 +766,16 @@
     },
     "swap": {
       "rabbyFee": {
+        "discountTitle": "Diskon Biaya Rabby",
+        "case": "Kondisi",
+        "free": "Gratis",
+        "cases": {
+          "wrap": "Wrap/Unwrap Token Native",
+          "stablecoins": "Stablecoin",
+          "lstLrt": "Token LST/LRT",
+          "million": "Vol. $1M+",
+          "hundredThousand": "Vol. $100k - $1M"
+        },
         "title": "Biaya Rabby",
         "wallet": "Dompet",
         "bridgeDesc": "Rabby Wallet selalu menemukan kurs terbaik dari agregator terkemuka dan memverifikasi keandalan penawarannya. Rabby mengenakan biaya <1>0,25%</1> yang otomatis disertakan dalam penawaran.",
@@ -2033,7 +2043,7 @@
         },
         "marketSelector": {
           "title": "Pilih Pasar",
-          "search": "Cari",
+          "search": "Cari token",
           "favorites": "Favorit",
           "all": "Semua",
           "name": "Nama",
@@ -2046,6 +2056,7 @@
         },
         "funding": {
           "title": "Tingkat Pendanaan",
+          "gotIt": "Saya mengerti",
           "summary": "Pendanaan (1 jam) / Hitung Mundur",
           "openDetails": "Lihat detail pendanaan",
           "interval": "Interval",
@@ -2063,6 +2074,7 @@
           "explanation": "Tingkat pendanaan digunakan untuk menghitung pembayaran berkala antara pemegang posisi long dan short. Saat tingkat pendanaan positif, long membayar short; saat negatif, short membayar long. Tingkat tahunan dihitung menggunakan annualisasi sederhana."
         },
         "orderBook": {
+          "grouping": "Pengelompokan buku order",
           "price": "Harga",
           "pnl": "PnL",
           "roi": "ROI%",
@@ -2079,6 +2091,7 @@
           "market": "Pasar",
           "conditional": "Bersyarat",
           "orderType": "Jenis Order",
+          "direction": "Arah",
           "marginMode": "Mode Margin",
           "crossDescription": "Semua posisi cross menggunakan margin cross yang sama sebagai jaminan. Jika terjadi likuidasi, saldo margin dan posisi cross terbuka yang tersisa dalam mode ini dapat hilang.",
           "isolatedDescription": "Kelola risiko pada setiap posisi dengan menetapkan jumlah margin untuk masing-masing posisi. Jika rasio margin posisi terisolasi mencapai 100%, posisi akan dilikuidasi. Dalam mode ini, margin dapat ditambahkan ke atau ditarik dari setiap posisi.",
@@ -2092,6 +2105,7 @@
           "liquidationPrice": "Harga Likuidasi",
           "triggerPrice": "Harga Pemicu",
           "amount": "Jumlah",
+          "keyboardMinimum": "Min. {{amount}}",
           "available": "Tersedia",
           "reduceOnly": "Hanya Kurangi",
           "confirmationReduceOnly": "Hanya Kurangi",
@@ -2492,7 +2506,8 @@
         "breakdownPerps": "Perps",
         "breakdownSpot": "Spot",
         "breakdownOtherAssets": "Aset Lainnya",
-        "breakdownNetOtherAssets": "Aset Lainnya Bersih"
+        "breakdownNetOtherAssets": "Aset Lainnya Bersih",
+        "breakdownStaking": "Staking"
       },
       "PerpsGuidePopup": {
         "step3Title": "Short",

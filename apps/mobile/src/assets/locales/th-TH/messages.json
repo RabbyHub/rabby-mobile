@@ -1069,6 +1069,16 @@
       },
       "slippage-tolerance": "ค่าความคลาดเคลื่อนของราคา",
       "rabbyFee": {
+        "discountTitle": "ส่วนลดค่าธรรมเนียม Rabby",
+        "case": "เงื่อนไข",
+        "free": "ฟรี",
+        "cases": {
+          "wrap": "Wrap/Unwrap โทเคนดั้งเดิม",
+          "stablecoins": "สเตเบิลคอยน์",
+          "lstLrt": "โทเคน LST/LRT",
+          "million": "ปริมาณ $1M+",
+          "hundredThousand": "ปริมาณ $100k - $1M"
+        },
         "title": "ค่าธรรมเนียม Rabby",
         "button": "เข้าใจแล้ว",
         "rate": "อัตราค่าธรรมเนียม",
@@ -2208,7 +2218,7 @@
         },
         "marketSelector": {
           "title": "เลือกตลาด",
-          "search": "ค้นหา",
+          "search": "ค้นหาโทเค็น",
           "favorites": "รายการโปรด",
           "all": "ทั้งหมด",
           "name": "ชื่อ",
@@ -2221,6 +2231,7 @@
         },
         "funding": {
           "title": "อัตราฟันดิง",
+          "gotIt": "เข้าใจแล้ว",
           "summary": "ฟันดิง (1 ชม.) / นับถอยหลัง",
           "openDetails": "ดูรายละเอียดฟันดิง",
           "interval": "ช่วงเวลา",
@@ -2238,6 +2249,7 @@
           "explanation": "อัตราฟันดิงใช้คำนวณยอดชำระเป็นระยะระหว่างผู้ถือโพซิชัน Long และ Short เมื่ออัตราฟันดิงเป็นบวก Long จะจ่ายให้ Short และเมื่อเป็นลบ Short จะจ่ายให้ Long อัตรารายปีคำนวณด้วยการแปลงเป็นรายปีแบบง่าย"
         },
         "orderBook": {
+          "grouping": "การจัดกลุ่มสมุดคำสั่งซื้อขาย",
           "price": "ราคา",
           "pnl": "PnL",
           "roi": "ROI%",
@@ -2254,6 +2266,7 @@
           "market": "Market",
           "conditional": "แบบมีเงื่อนไข",
           "orderType": "ประเภทคำสั่ง",
+          "direction": "ทิศทาง",
           "marginMode": "โหมดมาร์จิ้น",
           "crossDescription": "โพซิชันแบบ Cross ทั้งหมดใช้ Cross Margin เดียวกันเป็นหลักประกัน หากเกิดการชำระบัญชี ยอดมาร์จิ้นและโพซิชัน Cross ที่ยังเปิดอยู่ในโหมดนี้อาจสูญเสียไป",
           "isolatedDescription": "จัดการความเสี่ยงของแต่ละโพซิชันด้วยการกำหนดจำนวนมาร์จิ้นให้แต่ละโพซิชัน หากอัตราส่วนมาร์จิ้นของโพซิชัน Isolated ถึง 100% โพซิชันจะถูกชำระบัญชี ในโหมดนี้สามารถเพิ่มหรือลดมาร์จิ้นของแต่ละโพซิชันได้",
@@ -2267,6 +2280,7 @@
           "liquidationPrice": "ราคาชำระบัญชี",
           "triggerPrice": "ราคาทริกเกอร์",
           "amount": "จำนวน",
+          "keyboardMinimum": "ขั้นต่ำ {{amount}}",
           "available": "พร้อมใช้งาน",
           "reduceOnly": "ลดโพซิชันเท่านั้น",
           "confirmationReduceOnly": "ลดโพซิชันเท่านั้น",
@@ -2667,7 +2681,8 @@
         "breakdownPerps": "Perps",
         "breakdownSpot": "Spot",
         "breakdownOtherAssets": "สินทรัพย์อื่น ๆ",
-        "breakdownNetOtherAssets": "สินทรัพย์อื่น ๆ สุทธิ"
+        "breakdownNetOtherAssets": "สินทรัพย์อื่น ๆ สุทธิ",
+        "breakdownStaking": "Staking"
       },
       "PerpsGuidePopup": {
         "step3Title": "Short",

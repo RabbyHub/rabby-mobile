@@ -1,6 +1,17 @@
+import { ThemeColors2024 } from '@/constant/theme';
+import { colord } from 'colord';
+import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
+let mockThemeMode: 'light' | 'dark' | undefined;
+jest.mock('../common/PerpsProDialogBackdrop', () => ({
+  PerpsProDialogBackdrop: () => null,
+}));
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ bottom: 34, left: 0, right: 0, top: 47 }),
+}));
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { Keyboard, StyleSheet } from 'react-native';
+import { Portal, PortalProvider } from '@gorhom/portal';
+import { Keyboard, StyleSheet, View } from 'react-native';
 
 const mockInputBlur = jest.fn();
 const mockInputFocus = jest.fn();
@@ -24,18 +35,25 @@ jest.mock('@/components/customized/BottomSheet', () => {
   return {
     AppBottomSheetModal: ReactModule.forwardRef(
       (
-        { children, ...props }: { children: React.ReactNode },
+        {
+          children,
+          ...props
+        }: { children: React.ReactNode; [key: string]: unknown },
         ref: React.Ref<unknown>,
       ) => {
         ReactModule.useImperativeHandle(ref, () => ({
           close: jest.fn(),
           present: jest.fn(),
         }));
-        return ReactModule.createElement(View, {
-          ...props,
+        return ReactModule.createElement(
+          View,
+          { ...props, testID: 'manage-margin-modal' },
+          ReactModule.createElement(props.backgroundComponent, {
+            style: props.backgroundStyle,
+            testID: 'dialog-background',
+          }),
           children,
-          testID: 'manage-margin-modal',
-        });
+        );
       },
     ),
   };
@@ -55,15 +73,23 @@ jest.mock('@/components2024/Button', () => ({
     );
   },
 }));
-jest.mock('@/components2024/GlobalBottomSheetModal/utils-help', () => ({
-  makeBottomSheetProps: () => ({}),
-}));
+// Keep the real background factory and renderer; only the native gradient is stubbed.
+jest.mock('react-native-linear-gradient', () => require('react-native').View);
 jest.mock('@/hooks/theme', () => ({
-  useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
-    const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
+  useTheme2024: ({
+    getStyle,
+  }: { getStyle?: (input: object) => object } = {}) => {
+    const colors2024 = mockThemeMode
+      ? require('@/constant/theme').ThemeColors2024[mockThemeMode]
+      : new Proxy({}, { get: (_target, key) => String(key) });
     return {
       colors2024,
-      styles: getStyle({ colors2024, safeAreaInsets: { bottom: 34 } }),
+      isLight: mockThemeMode !== 'dark',
+      styles: getStyle?.({
+        colors2024,
+        isLight: mockThemeMode !== 'dark',
+        safeAreaInsets: { bottom: 34 },
+      }),
     };
   },
 }));
@@ -110,6 +136,7 @@ jest.mock('./PerpsProManageMarginSlider', () => ({
 
 import type { PerpsProManageMarginView } from '../../scene/usePerpsProManageMargin';
 import { PerpsProManageMarginSheet } from './PerpsProManageMarginSheet';
+import { PerpsProManageMarginAmountRow } from './PerpsProManageMarginAmountRow';
 
 const baseView: PerpsProManageMarginView = {
   currentLiquidationDistance: '0.2',
@@ -163,13 +190,124 @@ const renderSheet = (
 };
 
 describe('PerpsProManageMarginSheet', () => {
-  beforeEach(() => jest.clearAllMocks());
+  it('keeps every portal commit in sync and the native input width stable while editing', () => {
+    // Real Portal scheduling is essential: the parent draft can reach its host
+    // one commit later than DecimalTextInput's local editing buffer.
+    const Harness = () => {
+      const [draft, setDraft] = React.useState('1');
+      return (
+        <Portal>
+          <PerpsProManageMarginAmountRow
+            draft={draft}
+            onBeginEditing={jest.fn()}
+            onChangeDraft={setDraft}
+            onSelectTarget={setDraft}
+            pending={false}
+            range={baseView.range}
+          />
+        </Portal>
+      );
+    };
+    const commits: Array<{ measure: string; input: string }> = [];
+    let readCommit = () => {};
+    render(
+      <React.Profiler id="margin-portal" onRender={() => readCommit()}>
+        <PortalProvider>
+          <Harness />
+        </PortalProvider>
+      </React.Profiler>,
+    );
+    const input = screen.getByTestId('perps-pro-manage-margin-input');
+    fireEvent(screen.getByTestId('perps-pro-manage-margin-unit'), 'layout', {
+      nativeEvent: { layout: { width: 22, height: 42, x: 0, y: 0 } },
+    });
+    const viewport = () =>
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-manage-margin-input-viewport').props
+          .style,
+      );
+    const initialViewport = viewport();
+    expect(initialViewport).toMatchObject({
+      left: 22,
+      right: 0,
+      position: 'absolute',
+    });
+    readCommit = () =>
+      commits.push({
+        input: screen.getByTestId('perps-pro-manage-margin-input').props.value,
+        measure: screen.getByTestId('perps-pro-manage-margin-input-measure', {
+          includeHiddenElements: true,
+        }).props.children,
+      });
+    mockInputSetNativeProps.mockClear();
+    for (const value of [
+      '12',
+      '123',
+      '1234',
+      '1234.',
+      '1234.5',
+      '1234.56',
+      '12.56',
+      '',
+      '0.',
+      '0.01',
+    ]) {
+      commits.length = 0;
+      fireEvent.changeText(input, value);
+      expect(commits.length).toBeGreaterThan(0);
+      for (const commit of commits) {
+        expect(commit.measure).toBe(commit.input || '0');
+      }
+      expect(input.props.value).toBe(value);
+      expect(viewport()).toEqual(initialViewport);
+      expect(screen.getByTestId('perps-pro-manage-margin-input')).toBe(input);
+    }
+    expect(mockInputSetNativeProps).not.toHaveBeenCalled();
+    fireEvent.press(screen.getByTestId('perps-pro-manage-margin-max'));
+    expect(input.props.value).toBe('25');
+    fireEvent.press(screen.getByTestId('perps-pro-manage-margin-min'));
+    expect(input.props.value).toBe('10.1');
+    expect(viewport()).toEqual(initialViewport);
+  });
+  it.each(['light', 'dark'] as const)(
+    'renders the %s sheet background behind all three margin cards',
+    mode => {
+      mockThemeMode = mode;
+      renderSheet();
+      const colors = ThemeColors2024[mode];
+      const background = StyleSheet.flatten(
+        screen.getByTestId('dialog-background').props.style,
+      ).backgroundColor;
+      expect(background).toBe(colors['neutral-bg-0']);
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId('manage-margin-modal').props.handleStyle,
+        ).backgroundColor,
+      ).toBe(background);
+      const cards = screen
+        .UNSAFE_getAllByType(View)
+        .map(view => StyleSheet.flatten(view.props.style))
+        .filter(style => style?.borderRadius === 12);
+      expect(cards).toHaveLength(3);
+      for (const card of cards) {
+        expect(card.backgroundColor).toBe(
+          colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
+        );
+        expect(card.backgroundColor).not.toBe(background);
+      }
+    },
+  );
 
-  it('matches the normal 552-point Figma geometry and dynamic market facts', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockThemeMode = undefined;
+  });
+
+  it('matches the normal 564-point Figma geometry and dynamic market facts', () => {
     renderSheet();
 
     expect(screen.getByTestId('manage-margin-modal').props.snapPoints).toEqual([
-      552,
+      564,
     ]);
     expect(screen.getByTestId('manage-margin-modal').props).toMatchObject({
       android_keyboardInputMode: 'adjustPan',
@@ -189,51 +327,55 @@ describe('PerpsProManageMarginSheet', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-amount-card').props.style,
       ),
-    ).toMatchObject({ borderRadius: 12, height: 138, top: 164 });
+    ).toMatchObject({ borderRadius: 12, height: 162, top: 168 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-amount-row').props.style,
       ),
     ).toMatchObject({
-      alignItems: 'center',
+      alignItems: 'flex-start',
       flexDirection: 'row',
-      height: 58,
+      height: 62,
       justifyContent: 'space-between',
-      left: 12,
-      right: 12,
-      top: 16,
+      left: 16,
+      right: 16,
+      top: 44,
     });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-min').props.style,
       ),
-    ).toMatchObject({ height: 26, width: 37 });
+    ).toMatchObject({ height: 26, width: 32 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-max').props.style,
       ),
-    ).toMatchObject({ height: 26, width: 44 });
+    ).toMatchObject({ height: 26, width: 40 });
+    expect(
+      StyleSheet.flatten(
+        screen.getByText('page.perps.pro.positions.max').props.style,
+      ).textTransform,
+    ).toBeUndefined();
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-amount-editor').props.style,
       ),
-    ).toMatchObject({ flex: 1, height: 58 });
+    ).toMatchObject({ height: 42, left: 36, right: 44 });
     expect(
       StyleSheet.flatten(
-        screen.getByText('page.perps.pro.positions.configureMargin').props
-          .style,
+        screen.getByText('page.perps.pro.positions.margin (USDC)').props.style,
       ),
-    ).toMatchObject({ left: 15, top: 138 });
+    ).toMatchObject({ left: 16, top: 16 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-risk').props.style,
       ).top,
-    ).toBe(318);
+    ).toBe(338);
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-footer').props.style,
       ).bottom,
-    ).toBe(40);
+    ).toBe(36);
   });
 
   it('uses the shared metadata and direction-leverage tag contracts', () => {
@@ -305,23 +447,27 @@ describe('PerpsProManageMarginSheet', () => {
     ).toMatchObject({ color: 'red-default', fontSize: 12, lineHeight: 16 });
   });
 
-  it('expands the amount area and moves risk facts for boundary warnings', () => {
+  it('reserves the error line without shifting the slider or risk facts', () => {
     renderSheet({
       draft: '9',
       view: { ...baseView, targetState: 'belowMin' },
     });
 
-    expect(screen.getByTestId('perps-pro-manage-margin-warning')).toBeTruthy();
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-manage-margin-warning').props.style,
+      ),
+    ).toMatchObject({ left: 52, right: 60, top: 90 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-amount-card').props.style,
       ).height,
-    ).toBe(184);
+    ).toBe(162);
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-risk').props.style,
       ).top,
-    ).toBe(364);
+    ).toBe(338);
   });
 
   it('renders unavailable liquidation prices with double dashes', () => {
@@ -333,8 +479,8 @@ describe('PerpsProManageMarginSheet', () => {
       },
     });
 
-    expect(screen.getByText('-- → --')).toBeTruthy();
-    expect(screen.queryByText('- → -')).toBeNull();
+    expect(screen.getByText('--→ --')).toBeTruthy();
+    expect(screen.queryByText('-→ -')).toBeNull();
   });
 
   it('renders current and projected liquidation floors as zero and 100%', () => {
@@ -348,8 +494,8 @@ describe('PerpsProManageMarginSheet', () => {
       },
     });
 
-    expect(screen.getByText('0 → 0')).toBeTruthy();
-    expect(screen.getByText('100.00% → 100.00%')).toBeTruthy();
+    expect(screen.getByText('0→ 0')).toBeTruthy();
+    expect(screen.getByText('100.00%→ 100.00%')).toBeTruthy();
   });
 
   it('sanitizes decimal input and wires Min, Max, slider, and confirm actions', () => {
@@ -388,6 +534,9 @@ describe('PerpsProManageMarginSheet', () => {
     expect(
       screen.getByTestId('perps-pro-manage-margin-confirm').props.loading,
     ).toBe(true);
+    expect(
+      screen.getByTestId('perps-pro-manage-margin-confirm').props.loadingProps,
+    ).toEqual({ color: PERPS_PRO_DIALOG_TOKENS.actionForeground });
     fireEvent.press(screen.getByTestId('perps-pro-manage-margin-confirm'));
     expect(props.onConfirm).not.toHaveBeenCalled();
     expect(
@@ -443,8 +592,8 @@ describe('PerpsProManageMarginSheet', () => {
       minimum: '10.1',
       value: '20',
     });
-    expect(screen.getByText('80.00 → 70.00')).toBeTruthy();
-    expect(screen.getByText('20.00% → 30.00%')).toBeTruthy();
+    expect(screen.getByText('80.00→ 70.00')).toBeTruthy();
+    expect(screen.getByText('20.00%→ 30.00%')).toBeTruthy();
 
     rerender(
       <PerpsProManageMarginSheet
@@ -504,4 +653,50 @@ describe('PerpsProManageMarginSheet', () => {
     fireEvent.press(screen.getByTestId('perps-pro-manage-margin-min'));
     expect(props.onSelectTarget).toHaveBeenCalledWith('0.32');
   });
+  it.each(['light', 'dark'] as const)(
+    'keeps %s cards distinct and pending button appearance disabled',
+    mode => {
+      mockThemeMode = mode;
+      const colors = ThemeColors2024[mode];
+      const { props, rerender } = renderSheet();
+      const sheet = screen.getByTestId('manage-margin-modal');
+      const card = screen.getByTestId('perps-pro-manage-margin-amount-card');
+      expect(
+        StyleSheet.flatten(sheet.props.backgroundStyle).backgroundColor,
+      ).toBe(colors['neutral-bg-0']);
+      expect(StyleSheet.flatten(card.props.style).backgroundColor).toBe(
+        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
+      );
+      expect(StyleSheet.flatten(card.props.style).backgroundColor).not.toBe(
+        StyleSheet.flatten(sheet.props.backgroundStyle).backgroundColor,
+      );
+      const input = screen.getByTestId('perps-pro-manage-margin-input');
+      expect(input.props.cursorColor).toBe(PERPS_PRO_DIALOG_TOKENS.inputCursor);
+      expect(input.props.selectionColor).toBe(
+        PERPS_PRO_DIALOG_TOKENS.inputCursor,
+      );
+      expect(StyleSheet.flatten(input.props.style).color).toBe(
+        colors['neutral-title-1'],
+      );
+      const confirm = screen.getByTestId('perps-pro-manage-margin-confirm');
+      expect(confirm.props.height).toBe(52);
+      expect(
+        StyleSheet.flatten(confirm.props.buttonStyle).backgroundColor,
+      ).toBe(PERPS_PRO_DIALOG_TOKENS.actionBackground);
+      rerender(<PerpsProManageMarginSheet {...props} pending />);
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId('perps-pro-manage-margin-confirm').props
+            .buttonStyle,
+        ).backgroundColor,
+      ).toBe(
+        colord(PERPS_PRO_DIALOG_TOKENS.actionBackground)
+          .alpha(0.4)
+          .toRgbString(),
+      );
+      expect(
+        screen.getByTestId('manage-margin-modal').props.backdropProps,
+      ).toEqual({ pressBehavior: 'none' });
+    },
+  );
 });

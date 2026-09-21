@@ -19,6 +19,7 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, View } from 'react-native';
 import { Text } from '@/components/Typography';
+import { getActionTypeTextByType } from '@/components/Approval/components/Actions/utils';
 
 export type ConfirmationProps = {
   owner: string;
@@ -128,7 +129,7 @@ export const GnosisTransactionExplain: React.FC<Props> = ({
           {t('page.safeQueue.action.cancel')}
         </Text>
       );
-    } else if (explain?.contract_call) {
+    } else {
       icon = contractProtocol?.logo_url ? (
         <Image
           source={{ uri: contractProtocol?.logo_url }}
@@ -137,10 +138,9 @@ export const GnosisTransactionExplain: React.FC<Props> = ({
       ) : (
         <RcIconUnknown style={styles.icon} />
       );
-
       content = (
         <Text style={styles.explainText} numberOfLines={2}>
-          {explain.contract_call.func}
+          {getActionTypeTextByType(explain?.action?.type || '')}
         </Text>
       );
     }

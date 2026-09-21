@@ -1,6 +1,7 @@
+import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { TextInput as RNTextInput } from 'react-native';
+import { Platform, TextInput as RNTextInput } from 'react-native';
 
 import {
   sanitizePerpsProPriceEditingInput,
@@ -37,6 +38,49 @@ const MockInputComponent = React.forwardRef<
 ));
 
 describe('PerpsProDecimalTextInput', () => {
+  it.each(['ios', 'android'] as const)(
+    'passes the action mint to both %s native input hosts',
+    platform => {
+      const previousPlatform = Platform.OS;
+      Object.defineProperty(Platform, 'OS', {
+        configurable: true,
+        value: platform,
+      });
+      try {
+        const view = render(
+          <>
+            <PerpsProDecimalTextInput
+              maxDecimals={2}
+              onChangeText={jest.fn()}
+              testID="plain-input"
+              value="12.34"
+            />
+            <PerpsProDecimalTextInput
+              inputComponent={MockInputComponent}
+              maxDecimals={2}
+              onChangeText={jest.fn()}
+              testID="sheet-input"
+              value="12.34"
+            />
+          </>,
+        );
+        for (const id of ['plain-input', 'sheet-input']) {
+          expect(screen.getByTestId(id).props).toMatchObject({
+            cursorColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+            selectionColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+            value: '12.34',
+          });
+        }
+        view.unmount();
+      } finally {
+        Object.defineProperty(Platform, 'OS', {
+          configurable: true,
+          value: previousPlatform,
+        });
+      }
+    },
+  );
+
   beforeEach(() => {
     mockSetNativeProps.mockClear();
   });

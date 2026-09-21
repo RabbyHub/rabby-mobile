@@ -1,15 +1,9 @@
+import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
-jest.mock('@/assets2024/icons/common/checkbox-empty-cc.svg', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
-  return (props: object) =>
-    ReactModule.createElement(View, { ...props, checkboxVariant: 'empty' });
-});
-
-jest.mock('@/assets2024/icons/common/checkbox-filled-brand.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProInfoCheckboxChecked.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) =>
@@ -40,7 +34,7 @@ jest.mock('react-i18next', () => ({
 import { PerpsProInfoControls } from './PerpsProInfoControls';
 
 describe('PerpsProInfoControls', () => {
-  it('uses the canonical 24px filled checkbox and preserves row semantics', () => {
+  it('uses the Pro 20px filled checkbox and preserves row semantics', () => {
     const onToggle = jest.fn();
     render(
       <PerpsProInfoControls
@@ -55,13 +49,13 @@ describe('PerpsProInfoControls', () => {
     expect(checkbox.props.accessibilityState).toEqual({ checked: true });
     expect(
       screen.getByTestId('perps-pro-info-filter-checkbox-icon').props,
-    ).toMatchObject({ checkboxVariant: 'filled', height: 24, width: 24 });
+    ).toMatchObject({ checkboxVariant: 'filled', height: 20, width: 20 });
 
     fireEvent.press(checkbox);
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
 
-  it('uses the canonical empty checkbox with the Pro secondary token', () => {
+  it('uses the 16px empty checkbox inside a 20px frame', () => {
     render(
       <PerpsProInfoControls
         actionLabel="Cancel All"
@@ -72,12 +66,15 @@ describe('PerpsProInfoControls', () => {
     );
 
     expect(
-      screen.getByTestId('perps-pro-info-filter-checkbox-icon').props,
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-info-filter-checkbox-icon').props.style,
+      ),
     ).toMatchObject({
-      checkboxVariant: 'empty',
-      color: 'neutral-secondary',
-      height: 24,
-      width: 24,
+      borderColor: PERPS_PRO_DIALOG_TOKENS.checkboxBorder,
+      borderWidth: 1.25,
+      borderRadius: 4,
+      height: 16,
+      width: 16,
     });
     expect(
       StyleSheet.flatten(screen.getByRole('button').props.style),
