@@ -1,10 +1,14 @@
-import React, { useMemo } from 'react';
-import { TouchableOpacity as RNTouchableOpacity, View } from 'react-native';
+import React, { useCallback, useMemo, useRef } from 'react';
+import { View } from 'react-native';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 
 import { RateModal } from '@/components/RateModal/RateModal';
 import { RateModalTriggerOnHome } from '@/components/RateModal/RateModalTriggerOnHome';
-import { useExposureRateGuide } from '@/components/RateModal/hooks';
-import { TipFeedbackByScreenshot } from '@/components/Screenshot/HomeCenterTip';
+import {
+  useExposureRateGuide,
+  rateGuideLastExposureState,
+} from '@/components/RateModal/hooks';
+import { ScreenshotFeedbackHomeTip } from '@/components/Screenshot/SubmitFeedback/HomeTip';
 import { useViewedHomeTip } from '@/components/Screenshot/hooks';
 import { ITEM_LAYOUT_PADDING_HORIZONTAL } from '@/constant/home';
 import {
@@ -14,46 +18,89 @@ import {
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useAccountHomeShowReceiveTip } from '@/screens/Address/components/MultiAssets/hooks';
-import { ReceiveOnNoAssets } from './ReceiveOnNoAssets';
+import { useMockDataForHomeCenterArea } from '../hooks/homeCenterArea';
+import { DepositAssetsCard } from './DepositAssetsCard';
+import { ConvertDustBanner } from './ConvertDustBanner';
+import { useConvertDustBanner } from '../hooks/useConvertDustBanner';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { RootNames } from '@/constant/layout';
+import {
+  resolveHomeCenterAreaVisibility,
+  type HomeCenterAreaVisibility,
+} from './homeCenterAreaVisibility';
 
 export function HomeCenterArea() {
-  const { styles, colors2024 } = useTheme2024({
+  const { styles } = useTheme2024({
     getStyle,
   });
+  const navigation = useRabbyAppNavigation();
 
-  const { accountToShowReceiveTip } = useAccountHomeShowReceiveTip();
+  const { accountToShowReceiveTip, isLoadingAccountToShowReceiveTip } =
+    useAccountHomeShowReceiveTip();
   const { shouldShowRateGuideOnHome } = useExposureRateGuide();
   const offlineChainData = useOfflineChain();
+  const txCount = rateGuideLastExposureState(state => state.txCount);
+  const { mockData } = useMockDataForHomeCenterArea();
+  const forceShowDepositAssetsCard = mockData?.forceShowDepositAssetsCard;
+  const { shouldShowConvertDustBanner, dismissConvertDustBanner } =
+    useConvertDustBanner();
+
+  const prevAccountToShowReceiveTipRef = useRef(accountToShowReceiveTip);
+  const previousResolvedVisibilityRef = useRef<HomeCenterAreaVisibility | null>(
+    null,
+  );
+  if (!isLoadingAccountToShowReceiveTip) {
+    prevAccountToShowReceiveTipRef.current = accountToShowReceiveTip;
+  }
+
+  const displayAccount = isLoadingAccountToShowReceiveTip
+    ? prevAccountToShowReceiveTipRef.current
+    : accountToShowReceiveTip;
 
   const { viewedHomeTip: viewedScreenShotReportTip } = useViewedHomeTip();
 
+  const handlePressConvertDustBanner = useCallback(() => {
+    dismissConvertDustBanner();
+    navigation.push(RootNames.StackTransaction, {
+      screen: RootNames.ConvertDust,
+      params: {
+        fromHomeConvertDustBanner: true,
+      },
+    });
+  }, [dismissConvertDustBanner, navigation]);
+
   const { blocksVisibility, noBetweenContent, onlyOneContent } = useMemo(() => {
-    const blocks = {
-      soloAccountToShowReceiveTip: false as boolean,
-      rateGuideOnHome: false as boolean,
-      offlineChainData: !!(
-        offlineChainData.displayWillClosedChain &&
-        offlineChainData.offlineChainInfo
-      ),
-      tipScreenshot: false as boolean,
-    };
+    const hasOfflineChainData = !!(
+      offlineChainData.displayWillClosedChain &&
+      offlineChainData.offlineChainInfo
+    );
+    const hasCompletedTransaction = txCount > 0;
+    const visibility = resolveHomeCenterAreaVisibility({
+      previousResolvedVisibility: previousResolvedVisibilityRef.current,
+      isLoadingAccountToShowReceiveTip,
+      hasAccountToShowReceiveTip: !!accountToShowReceiveTip,
+      forceShowDepositAssetsCard: !!forceShowDepositAssetsCard,
+      shouldShowConvertDustBanner,
+      hasCompletedTransaction,
+      hasOfflineChainData,
+      viewedScreenShotReportTip,
+      shouldShowRateGuideOnHome,
+    });
 
-    if (accountToShowReceiveTip) blocks.soloAccountToShowReceiveTip = true;
-    else if (!viewedScreenShotReportTip) blocks.tipScreenshot = true;
-    else if (shouldShowRateGuideOnHome) blocks.rateGuideOnHome = true;
+    if (!isLoadingAccountToShowReceiveTip) {
+      previousResolvedVisibilityRef.current = visibility;
+    }
 
-    const visibleEls = Object.values(blocks);
-    const hasBetweenContent = visibleEls.some(Boolean);
-    return {
-      blocksVisibility: blocks,
-      noBetweenContent: !hasBetweenContent,
-      onlyOneContent: visibleEls.filter(Boolean).length === 1,
-    };
+    return visibility;
   }, [
     shouldShowRateGuideOnHome,
+    shouldShowConvertDustBanner,
     offlineChainData,
     accountToShowReceiveTip,
     viewedScreenShotReportTip,
+    isLoadingAccountToShowReceiveTip,
+    txCount,
+    forceShowDepositAssetsCard,
   ]);
 
   return (
@@ -65,35 +112,48 @@ export function HomeCenterArea() {
         onlyOneContent ? styles.contentBetweenHeaderAndMatrixOnlyOne : null,
       ]}>
       {blocksVisibility.offlineChainData && (
-        <OfflineChainNotify data={offlineChainData} />
+        <Animated.View entering={FadeInUp.duration(200)}>
+          <OfflineChainNotify data={offlineChainData} />
+        </Animated.View>
       )}
 
       {blocksVisibility.soloAccountToShowReceiveTip && (
-        <ReceiveOnNoAssets.BgWrapper isForSingle={false}>
-          <ReceiveOnNoAssets
-            account={accountToShowReceiveTip}
-            isForSingle={false}
-          />
-        </ReceiveOnNoAssets.BgWrapper>
+        <Animated.View entering={FadeInUp.duration(200)}>
+          <DepositAssetsCard account={displayAccount || null} />
+        </Animated.View>
       )}
 
-      {blocksVisibility.tipScreenshot && <TipFeedbackByScreenshot />}
+      {blocksVisibility.tipScreenshot && (
+        <Animated.View entering={FadeInUp.duration(200)}>
+          <ScreenshotFeedbackHomeTip />
+        </Animated.View>
+      )}
 
       {blocksVisibility.rateGuideOnHome && (
-        <View
+        <Animated.View
+          entering={FadeInUp.duration(200)}
           style={{
             paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
           }}>
           <RateModalTriggerOnHome /* totalBalanceText={combineData.netWorth} */
           />
           <RateModal /* totalBalanceText={combineData.netWorth} */ />
-        </View>
+        </Animated.View>
+      )}
+
+      {blocksVisibility.convertDustBanner && (
+        <Animated.View entering={FadeInUp.duration(200)}>
+          <ConvertDustBanner
+            onPress={handlePressConvertDustBanner}
+            onClose={dismissConvertDustBanner}
+          />
+        </Animated.View>
       )}
     </View>
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyle = createGetStyles2024(() => ({
   contentBetweenHeaderAndMatrix: {
     marginTop: 12,
     marginBottom: 12,

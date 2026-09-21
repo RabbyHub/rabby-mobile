@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Dimensions, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { atom, useAtom } from 'jotai';
-import { DisplayPoolReserveInfo } from '../type';
+import type { DisplayPoolReserveInfo } from '../type';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { createGetStyles2024 } from '@/utils/styles';
 import ToggleCollateralOverView from '../components/actions/ToggleCollateralOverView';
@@ -21,21 +21,20 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { Button } from '@/components2024/Button';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { toast } from '@/components2024/Toast';
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
 } from '@/screens/Transaction/components/type';
-import {
-  MINI_SIGN_ERROR,
-  useSignatureStore,
-} from '@/components2024/MiniSignV2/state/SignatureManager';
+import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
+import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
+import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { apiProvider } from '@/core/apis';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { last, noop } from 'lodash';
-import { transactionHistoryService } from '@/core/services';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import {
   API_ETH_MOCK_ADDRESS,
   HF_RISK_CHECKBOX_THRESHOLD,
@@ -45,7 +44,13 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import IconCloseCC from '@/assets2024/icons/common/close-cc.svg';
 import { useCurrentRouteName } from '@/hooks/navigation';
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
+  RootNames,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { useCollateralWaring } from '../hooks/useCollateralWaring';
 import { Text } from '@/components/Typography';
 
@@ -89,12 +94,16 @@ function ToggleCollateralContent({}: {}) {
   const [isChecked, setIsChecked] = useState(false);
   const [txs, setTxs] = useState<Tx[]>([]);
 
-  const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
+  const {
+    openDirect,
+    prefetch: prefetchMiniSigner,
+    instance,
+  } = useMiniSigner({
     account: currentAccount!,
     chainServerId: txs.length ? txs?.[0]?.chainId + '' : '',
     autoResetGasStoreOnChainChange: true,
   });
-  const { ctx } = useSignatureStore();
+  const { ctx } = useSignatureStoreOf(instance);
 
   const afterHF = useMemo(() => {
     if (!currentToggleReserve || !userSummary) {
@@ -162,7 +171,7 @@ function ToggleCollateralContent({}: {}) {
   const buildTx = useCallback(async () => {
     if (
       !currentToggleReserve ||
-      !currentAccount ||
+      !currentAccount?.address ||
       !pools ||
       !chainInfo ||
       isRiskToLiquidation ||
@@ -207,7 +216,7 @@ function ToggleCollateralContent({}: {}) {
     }
   }, [
     chainInfo,
-    currentAccount,
+    currentAccount?.address,
     currentToggleReserve,
     isNativeToken,
     isRiskToLiquidation,
@@ -352,7 +361,7 @@ function ToggleCollateralContent({}: {}) {
 
         const txId = last(results);
         if (txId && txs[0]) {
-          transactionHistoryService.setCustomTxItem(
+          await transactionHistoryServiceApi.setCustomTxItem(
             currentAccount.address,
             txs[0].chainId,
             txId,
@@ -386,7 +395,7 @@ function ToggleCollateralContent({}: {}) {
 
   useEffect(() => {
     if (
-      currentAccount &&
+      currentAccount?.address &&
       canShowDirectSubmit &&
       !isRiskToLiquidation &&
       !isError &&
@@ -399,7 +408,7 @@ function ToggleCollateralContent({}: {}) {
     }
   }, [
     canShowDirectSubmit,
-    currentAccount,
+    currentAccount?.address,
     isRiskToLiquidation,
     isError,
     isShowToggleCollateralModal,
@@ -460,126 +469,150 @@ function ToggleCollateralContent({}: {}) {
     return null;
   }
   return (
-    <View style={styles.modal}>
-      <View
-        style={styles.overlay}
-        onTouchEnd={() => setIsShowToggleCollateralModal(false)}>
-        <View style={[styles.container]} onTouchEnd={e => e.stopPropagation()}>
-          <View style={styles.closeButton}>
-            <TouchableOpacity
-              onPress={() => setIsShowToggleCollateralModal(false)}>
-              <IconCloseCC
-                width={20}
-                height={20}
-                color={colors2024['neutral-foot']}
-              />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.header}>
-            <Text style={styles.title}>{title}</Text>
-            {!!desc && (
-              <View
-                style={[
-                  styles.errorMessageContainer,
-                  {
-                    backgroundColor: cardColors.bgColor,
-                  },
-                ]}>
-                <RcIconWarningCircleCC
-                  width={15}
-                  height={15}
-                  color={cardColors.iconColor}
+    <SignatureInstanceProvider instance={instance}>
+      <View style={styles.modal}>
+        <View
+          style={styles.overlay}
+          onTouchEnd={() => setIsShowToggleCollateralModal(false)}>
+          <View
+            style={[styles.container]}
+            onTouchEnd={e => e.stopPropagation()}>
+            <View style={styles.closeButton}>
+              <TouchableOpacity
+                onPress={() => setIsShowToggleCollateralModal(false)}>
+                <IconCloseCC
+                  width={20}
+                  height={20}
+                  color={colors2024['neutral-foot']}
                 />
-                <Text
+              </TouchableOpacity>
+            </View>
+            <View style={styles.header}>
+              <Text style={styles.title}>{title}</Text>
+              {!!desc && (
+                <View
                   style={[
-                    styles.errorMessage,
+                    styles.errorMessageContainer,
                     {
-                      color: cardColors.textColor,
+                      backgroundColor: cardColors.bgColor,
                     },
                   ]}>
-                  {desc}
-                </Text>
-              </View>
-            )}
-          </View>
-          <View style={styles.bodyContainer}>
-            {!!currentToggleReserve && userSummary && (
-              <ToggleCollateralOverView
-                reserve={currentToggleReserve}
-                afterHF={afterHF}
-                userSummary={userSummary}
-              />
-            )}
-            {!!txs.length &&
-              canShowDirectSubmit &&
-              !isRiskToLiquidation &&
-              !isError && (
-                <View style={styles.gasPreContainer}>
-                  <DirectSignGasInfo
-                    supportDirectSign={true}
-                    loading={isLoading}
-                    openShowMore={noop}
-                    chainServeId={chainInfo?.serverId || ''}
+                  <RcIconWarningCircleCC
+                    width={15}
+                    height={15}
+                    color={cardColors.iconColor}
                   />
+                  <Text
+                    style={[
+                      styles.errorMessage,
+                      {
+                        color: cardColors.textColor,
+                      },
+                    ]}>
+                    {desc}
+                  </Text>
                 </View>
               )}
-          </View>
-          {RiskContent}
-          <View style={styles.btnContainer}>
-            {canShowDirectSubmit ? (
-              <DirectSignBtn
-                loading={isLoading}
-                loadingType="circle"
-                key={`${currentToggleReserve?.underlyingAsset}`}
-                showTextOnLoading
-                wrapperStyle={styles.directSignBtn}
-                authTitle={btnTitle}
-                title={btnTitle}
-                titleStyle={styles.directSignBtnTitle}
-                onFinished={() => handleToggleCollateral()}
-                disabled={
-                  !txs.length ||
-                  isLoading ||
-                  !currentAccount ||
-                  !!ctx?.disabledProcess ||
-                  (isRisky && !isChecked) ||
-                  isRiskToLiquidation ||
-                  isError
-                }
-                type="aave"
-                syncUnlockTime
-                account={currentAccount}
-                showHardWalletProcess
-              />
-            ) : (
-              <Button
-                loadingType="circle"
-                showTextOnLoading
-                containerStyle={styles.fullWidthButton}
-                onPress={() => handleToggleCollateral()}
-                title={btnTitle}
-                loading={isLoading}
-                disabled={
-                  !txs.length ||
-                  isLoading ||
-                  !currentAccount ||
-                  (isRisky && !isChecked) ||
-                  isRiskToLiquidation ||
-                  isError
-                }
-              />
-            )}
+            </View>
+            <View style={styles.bodyContainer}>
+              {!!currentToggleReserve && userSummary && (
+                <ToggleCollateralOverView
+                  reserve={currentToggleReserve}
+                  afterHF={afterHF}
+                  userSummary={userSummary}
+                />
+              )}
+              {!!txs.length &&
+                canShowDirectSubmit &&
+                !isRiskToLiquidation &&
+                !isError && (
+                  <View style={styles.gasPreContainer}>
+                    <DirectSignGasInfo
+                      supportDirectSign={true}
+                      loading={false}
+                      openShowMore={noop}
+                      chainServeId={chainInfo?.serverId || ''}
+                    />
+                  </View>
+                )}
+            </View>
+            {RiskContent}
+            <View style={styles.btnContainer}>
+              {canShowDirectSubmit ? (
+                <DirectSignBtn
+                  loading={isLoading}
+                  loadingType="circle"
+                  key={`${currentToggleReserve?.underlyingAsset}`}
+                  showTextOnLoading
+                  wrapperStyle={styles.directSignBtn}
+                  authTitle={btnTitle}
+                  title={btnTitle}
+                  titleStyle={styles.directSignBtnTitle}
+                  height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                  onFinished={() => handleToggleCollateral()}
+                  disabled={
+                    !txs.length ||
+                    isLoading ||
+                    !currentAccount ||
+                    !!ctx?.disabledProcess ||
+                    (isRisky && !isChecked) ||
+                    isRiskToLiquidation ||
+                    isError
+                  }
+                  type="aave"
+                  iconColor={colors2024['neutral-contrast']}
+                  syncUnlockTime
+                  account={currentAccount}
+                  showHardWalletProcess
+                />
+              ) : (
+                <Button
+                  loadingType="circle"
+                  showTextOnLoading
+                  containerStyle={styles.fullWidthButton}
+                  height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                  titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+                  onPress={() => handleToggleCollateral()}
+                  title={btnTitle}
+                  loading={isLoading}
+                  disabled={
+                    !txs.length ||
+                    isLoading ||
+                    !currentAccount ||
+                    (isRisky && !isChecked) ||
+                    isRiskToLiquidation ||
+                    isError
+                  }
+                />
+              )}
+            </View>
           </View>
         </View>
       </View>
-    </View>
+    </SignatureInstanceProvider>
   );
 }
 
 export const ToggleCollateralModal = () => {
   const { hasUserSummary } = useHasUserSummary();
   const { currentRouteName } = useCurrentRouteName();
+  const [, setIsShowToggleCollateralModal] = useAtom(toggleCollateralModalAtom);
+  const [, setCurrentToggleReserve] = useAtom(currentToggleReserveAtom);
   const isLendingRoute = currentRouteName === RootNames.Lending;
+
+  useEffect(() => {
+    if (!currentRouteName || isLendingRoute) {
+      return;
+    }
+    setIsShowToggleCollateralModal(false);
+    setCurrentToggleReserve(null);
+  }, [
+    currentRouteName,
+    isLendingRoute,
+    setCurrentToggleReserve,
+    setIsShowToggleCollateralModal,
+  ]);
+
   if (!hasUserSummary || !isLendingRoute) {
     return null;
   }
@@ -589,7 +622,7 @@ export const ToggleCollateralModal = () => {
 const ScreenWidth = Dimensions.get('screen').width;
 const ScreenHeight = Dimensions.get('screen').height;
 
-const getStyles = createGetStyles2024(({ colors2024 }) => ({
+const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   modal: {
     width: ScreenWidth,
     height: ScreenHeight,
@@ -642,16 +675,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     paddingLeft: 15,
     paddingRight: 16,
   },
-  body: {
-    paddingHorizontal: 20,
-    marginTop: 12,
-    fontSize: 14,
-    color: colors2024['neutral-body'],
-    textAlign: 'center',
-  },
   btnContainer: {
     marginTop: 16,
-    marginBottom: 32,
+    marginBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     //flex: 1,
     //height: 50,
     width: '100%',
@@ -678,9 +704,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   directSignBtnTitle: {
-    fontSize: 17,
-    lineHeight: 22,
-    fontWeight: '700',
+    ...BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
     fontFamily: 'SF Pro Rounded',
   },
   directSignBtn: {
@@ -721,8 +745,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-foot'],
   },
   fullWidthButton: {
-    flex: 1,
-    paddingBottom: 58,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
   },
   gasPreContainer: {
     paddingHorizontal: 8,

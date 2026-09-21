@@ -5,35 +5,30 @@ import React, {
   useState,
   useEffect,
 } from 'react';
-import { Alert, LayoutChangeEvent } from 'react-native';
+import type { LayoutChangeEvent } from 'react-native';
+import { Alert, InteractionManager } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as Yup from 'yup';
 import { intToHex } from '@ethereumjs/util';
 import { EventEmitter } from 'events';
 
-import { preferenceService } from '@/core/services';
 import { findChain, findChainByEnum, findChainByServerID } from '@/utils/chain';
-import { CHAINS_ENUM, Chain } from '@/constant/chains';
-import {
+import type { Chain } from '@/constant/chains';
+import { CHAINS_ENUM } from '@/constant/chains';
+import type {
   AddrDescResponse,
   GasLevel,
   NFTItem,
-  ProjectItem,
   Tx,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { atom, useAtom } from 'jotai';
 import { openapi } from '@/core/request';
-import { TFunction } from 'i18next';
+import type { TFunction } from 'i18next';
 import { isValidAddress } from '@ethereumjs/util';
 import BigNumber from 'bignumber.js';
-import { useWhitelist } from '@/hooks/whitelist';
-import { addressUtils } from '@rabby-wallet/base-utils';
-import { useContactAccounts } from '@/hooks/contact';
-import { UIContactBookItem } from '@/core/apis/contact';
-import { Account, ChainGas } from '@/core/services/preference';
+import type { UIContactBookItem } from '@/core/apis/contact';
+import type { Account, ChainGas } from '@/core/startupServices/preference';
 import { apiContact, apiProvider, apiToken } from '@/core/apis';
 import { formatSpeicalAmount } from '@/utils/number';
-import { useFormik, useFormikContext } from 'formik';
 import { getKRCategoryByType } from '@/utils/transaction';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { toast } from '@/components2024/Toast';
@@ -44,13 +39,10 @@ import { StackActions, useIsFocused } from '@react-navigation/native';
 import {
   isAccountSupportDirectSign,
   isAccountSupportMiniApproval,
-  makeAccountObject,
 } from '@/utils/account';
-import { useCexSupportList } from '@/hooks/useCexSupportList';
-import { useRecentSendToHistoryFor } from '@/screens/Send/hooks/useRecentSend';
-import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
+import type { EventBusListeners } from '@/utils/events';
+import { eventBus, EVENTS } from '@/utils/events';
 import { useMiniSigner } from '@/hooks/useSigner';
-import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { useMemoizedFn } from 'ahooks';
 import { abiCoder } from '@/core/apis/sendRequest';
@@ -61,9 +53,18 @@ import {
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { useFindAddressByWhitelist } from '@/screens/Send/hooks/useWhiteListAddress';
-import { TextInput } from '@/components/Typography';
+import { useStore } from 'zustand';
+import { useShallow } from 'zustand/shallow';
+import { createStore } from 'zustand/vanilla';
+import type { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import type { TextInput } from '@/components/Typography';
+import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
+import { zMutative } from '@/core/utils/reexports';
+import { isEqual } from 'lodash';
+import {
+  useSendRecipientState,
+  type SendRecipientDerivedState,
+} from '@/screens/Send/hooks/useSendRecipientState';
 
 export const enum SendNFTEvents {
   'ON_PRESS_DISMISS' = 'ON_PRESS_DISMISS',
@@ -134,35 +135,71 @@ const DFLT_SEND_STATE: SendScreenState = {
 
   toAddrDesc: null,
 };
-const sendTokenScreenStateAtom = atom<SendScreenState>({ ...DFLT_SEND_STATE });
+const createSendNFTScreenStateStore = (initialState: SendScreenState) =>
+  createStore<SendScreenState>()(
+    zMutative<SendScreenState>(() => initialState),
+  );
+const sendNFTScreenStateStore = createSendNFTScreenStateStore({
+  ...DFLT_SEND_STATE,
+});
+function putScreenState(
+  patchOrUpdateFunc:
+    | Partial<SendScreenState>
+    | ((prev: SendScreenState) => Partial<SendScreenState>),
+) {
+  const prev = sendNFTScreenStateStore.getState();
+  const patch =
+    typeof patchOrUpdateFunc === 'function'
+      ? patchOrUpdateFunc(prev)
+      : patchOrUpdateFunc;
+  const nextState = {
+    ...prev,
+    ...patch,
+  };
+
+  if (!isEqual(prev, nextState)) {
+    sendNFTScreenStateStore.setState(nextState, true);
+  }
+}
+
+function resetScreenState() {
+  sendNFTScreenStateStore.setState({ ...DFLT_SEND_STATE }, true);
+}
+
+export const apiSendNFT = {
+  putScreenState,
+  resetScreenState,
+};
+
 export function useSendNFTScreenState() {
-  const [sendNFTScreenState, setSendNFTScreenState] = useAtom(
-    sendTokenScreenStateAtom,
-  );
-
-  const putScreenState = useCallback<InternalContext['fns']['putScreenState']>(
-    patchOrUpdateFunc => {
-      setSendNFTScreenState(prev => {
-        const patch =
-          typeof patchOrUpdateFunc === 'function'
-            ? patchOrUpdateFunc(prev)
-            : patchOrUpdateFunc;
-
-        return {
-          ...prev,
-          ...patch,
-        };
-      });
-    },
-    [setSendNFTScreenState],
-  );
-
-  const resetScreenState = useCallback(() => {
-    setSendNFTScreenState({ ...DFLT_SEND_STATE });
-  }, [setSendNFTScreenState]);
+  const sendNFTScreenState = useStore(sendNFTScreenStateStore);
 
   return {
     sendNFTScreenState,
+    putScreenState,
+    resetScreenState,
+  };
+}
+
+export function useSendNFTScreenStateSelector<T>(
+  selector: (state: SendScreenState) => T,
+) {
+  return useStore(sendNFTScreenStateStore, selector);
+}
+
+export function useSendNFTScreenStateShallowSelector<T>(
+  selector: (state: SendScreenState) => T,
+) {
+  const shallowSelector = useShallow(selector);
+  return useStore(sendNFTScreenStateStore, shallowSelector);
+}
+
+export function getSendNFTScreenState() {
+  return sendNFTScreenStateStore.getState();
+}
+
+export function useSendNFTScreenStateActions() {
+  return {
     putScreenState,
     resetScreenState,
   };
@@ -200,28 +237,99 @@ const DF_SEND_TOKEN_FORM: FormSendNFT = {
   to: '',
   amount: 1,
 };
+const createSendNFTFormValuesStore = (initialState: FormSendNFT) =>
+  createStore<FormSendNFT>()(zMutative<FormSendNFT>(() => initialState));
+type SendNFTFormValuesStore = ReturnType<typeof createSendNFTFormValuesStore>;
+const defaultSendNFTFormValuesStore = createSendNFTFormValuesStore({
+  ...DF_SEND_TOKEN_FORM,
+});
+function shouldSyncSendNFTReactiveFormValues(
+  prev: FormSendNFT,
+  next: FormSendNFT,
+) {
+  return prev.to !== next.to;
+}
 export function useSendNFTForm({
   toAddress,
-  toAddressBrandName,
   nftToken,
   currentAccount,
 }: {
   toAddress?: string;
-  toAddressBrandName?: string;
   nftToken?: NFTItem;
   currentAccount: Account;
 }) {
   const { t } = useTranslation();
+  const isFocused = useIsFocused();
 
   const sendNFTEventsRef = useRef(new EventEmitter());
 
-  const { sendNFTScreenState: screenState, putScreenState } =
-    useSendNFTScreenState();
+  const screenState = useSendNFTScreenStateShallowSelector(state => ({
+    balanceError: state.balanceError,
+    isLoading: state.isLoading,
+  }));
+  const cacheAmountRef = useRef(DFLT_SEND_STATE.cacheAmount);
 
   const [formValues, setFormValues] = React.useState<FormSendNFT>({
     ...DF_SEND_TOKEN_FORM,
     to: toAddress || '',
   });
+  const formValuesStoreRef = useRef<SendNFTFormValuesStore | null>(null);
+  if (!formValuesStoreRef.current) {
+    formValuesStoreRef.current = createSendNFTFormValuesStore(formValues);
+  }
+  const formValuesLatestRef = useRef<FormSendNFT>(formValues);
+  const getLatestFormValues = useMemoizedFn(() => formValuesLatestRef.current);
+  const setCommittedFormValues = useCallback(
+    (next: FormSendNFT | ((prev: FormSendNFT) => FormSendNFT)) => {
+      setFormValues(prev => {
+        const latest = formValuesLatestRef.current;
+        const nextValues = typeof next === 'function' ? next(latest) : next;
+        if (isEqual(latest, nextValues)) {
+          return prev;
+        }
+        formValuesLatestRef.current = nextValues;
+        formValuesStoreRef.current?.setState(nextValues, true);
+        if (isEqual(prev, nextValues)) {
+          return prev;
+        }
+        if (!shouldSyncSendNFTReactiveFormValues(prev, nextValues)) {
+          return prev;
+        }
+        return nextValues;
+      });
+    },
+    [],
+  );
+  useEffect(() => {
+    formValuesLatestRef.current = formValues;
+    formValuesStoreRef.current?.setState(formValues, true);
+  }, [formValues]);
+
+  const [stableAmountValue, setStableAmountValue] = useState(formValues.amount);
+  useEffect(() => {
+    const formValuesStore = formValuesStoreRef.current;
+    if (!formValuesStore) return;
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const unsubscribe = formValuesStore.subscribe((values, prevValues) => {
+      if (values.amount === prevValues.amount) {
+        return;
+      }
+      if (timer) {
+        clearTimeout(timer);
+      }
+      timer = setTimeout(() => {
+        setStableAmountValue(values.amount);
+      }, 300);
+    });
+
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+      unsubscribe();
+    };
+  }, []);
 
   const { validationSchema } = useMemo(() => {
     return {
@@ -231,7 +339,11 @@ export function useSendNFTForm({
 
   const chainItem = findChain({ serverId: nftToken?.chain });
 
-  const { openDirect, prefetch } = useMiniSigner({
+  const {
+    openDirect,
+    prefetch,
+    instance: miniSignInstance,
+  } = useMiniSigner({
     account: currentAccount,
     chainServerId: chainItem?.serverId,
     autoResetGasStoreOnChainChange: true,
@@ -289,35 +401,18 @@ export function useSendNFTForm({
     [svBottomAreaHeight],
   );
 
-  /** @notice the formik will be new object every-time re-render, but most of its fields keep same */
-  const formik = useFormik({
-    initialValues: formValues,
-    validationSchema,
-    onSubmit: values => {
-      const formattedValues = {
-        ...values,
-        amount: formatSpeicalAmount(values.amount),
-      };
-      handleSubmit(formattedValues);
-    },
-  });
-
   const patchFormValues = useCallback(
     (changedValues: Partial<FormSendNFT>) => {
-      setFormValues(prev => {
-        let nextState = {
+      setCommittedFormValues(prev => {
+        const nextState = {
           ...prev,
           ...changedValues,
         };
 
-        formik.setFormikState(fprev => {
-          return { ...fprev, values: nextState };
-        });
-
         return nextState;
       });
     },
-    [formik, setFormValues],
+    [setCommittedFormValues],
   );
 
   const handleFormValuesChange = useCallback(
@@ -329,7 +424,7 @@ export function useSendNFTForm({
     ) => {
       let { currentPartials } = opts || {};
       const currentValues = {
-        ...formik.values,
+        ...getLatestFormValues(),
         ...currentPartials,
       };
 
@@ -344,7 +439,7 @@ export function useSendNFTForm({
       }
       let resultAmount = currentValues.amount;
       if (!/^\d*(\.\d*)?$/.test(currentValues.amount + '')) {
-        resultAmount = screenState.cacheAmount;
+        resultAmount = cacheAmountRef.current;
       }
 
       // Validate amount for NFT
@@ -362,47 +457,50 @@ export function useSendNFTForm({
         amount: resultAmount,
       };
 
-      formik.setFormikState(prev => ({ ...prev, values: nextFormValues }));
       patchFormValues(nextFormValues);
-      putScreenState({
-        cacheAmount: resultAmount,
-        ...(!resultAmount && { showGasReserved: false }),
-      });
+      cacheAmountRef.current = resultAmount;
       const aliasName = apiContact.getAliasName(currentValues.to.toLowerCase());
       if (aliasName) {
         putScreenState({
           showContactInfo: true,
           contactInfo: { address: currentValues.to, name: aliasName },
         });
-      } else if (screenState.contactInfo) {
+      } else if (getSendNFTScreenState().contactInfo) {
         putScreenState({ contactInfo: null });
       }
     },
-    [
-      patchFormValues,
-      screenState.cacheAmount,
-      screenState.contactInfo,
-      formik,
-      putScreenState,
-      t,
-    ],
+    [patchFormValues, getLatestFormValues, t],
   );
 
-  const handleFieldChange = useCallback(
-    <T extends keyof FormSendNFT>(f: T, value: FormSendNFT[T]) => {
-      formik.setFieldValue(f, value);
-      setFormValues(prev => ({ ...prev, [f]: value }));
+  const submitForm = useMemoizedFn(async () => {
+    const values = {
+      ...getLatestFormValues(),
+      amount: formatSpeicalAmount(getLatestFormValues().amount),
+    };
 
-      const nextVal = { ...formik.values, [f]: value };
+    try {
+      await validationSchema.validate(values, { abortEarly: false });
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('[SendNFT] submit validation failed', error);
+      }
+      return;
+    }
+
+    handleSubmit(values);
+  });
+
+  const handleFieldChange = useMemoizedFn(
+    <T extends keyof FormSendNFT>(f: T, value: FormSendNFT[T]) => {
+      const nextVal = { ...getLatestFormValues(), [f]: value };
       handleFormValuesChange({ [f]: value }, { currentPartials: nextVal });
     },
-    [formik, setFormValues, handleFormValuesChange],
   );
 
   const prepareDirectSubmitMiniTx = useMemoizedFn(async (ref: number) => {
     if (!nftToken || !currentAccount) return;
 
-    const { to, amount } = formValues;
+    const { to, amount } = getLatestFormValues();
 
     if (
       ref === prepareCountRef.current &&
@@ -614,157 +712,81 @@ export function useSendNFTForm({
       prepareDirectSubmitMiniTx,
       toAddress,
       currentAccount,
-      putScreenState,
       chainItem?.name,
       nftToken,
       navigation,
     ],
   );
 
-  const handleGasLevelChanged = useCallback(
-    async (gl?: GasLevel | null) => {
-      // let gasLevel = gl
-      //   ? gl
-      //   : await loadGasListAndResolve().then(
-      //     result => result.normalGasLevel || result.instantGasLevel,
-      //   );
-      // if (gasLevel) {
-      //   putScreenState({ reserveGasOpen: false, selectedGasLevel: gasLevel });
-      //   handleMaxInfoChanged({ gasLevel });
-      // } else {
-      //   putScreenState({ reserveGasOpen: false });
-      // }
-    },
-    [
-      /* putScreenState */
-    ],
-  );
+  const handleGasLevelChanged = useMemoizedFn(async (gl?: GasLevel | null) => {
+    // let gasLevel = gl
+    //   ? gl
+    //   : await loadGasListAndResolve().then(
+    //     result => result.normalGasLevel || result.instantGasLevel,
+    //   );
+    // if (gasLevel) {
+    //   putScreenState({ reserveGasOpen: false, selectedGasLevel: gasLevel });
+    //   handleMaxInfoChanged({ gasLevel });
+    // } else {
+    //   putScreenState({ reserveGasOpen: false });
+    // }
+  });
 
-  const { isAddrOnContactBook } = useContactAccounts({ autoFetch: true });
-  const { list: cexList } = useCexSupportList();
-
-  const {
-    whitelist,
-    enabled: whitelistEnabled,
-    findAccountWithoutBalance,
-  } = useFindAddressByWhitelist();
-  const { recentHistory: recentSendToHistory, reFetch } =
-    useRecentSendToHistoryFor(formValues.to);
-
-  useEffect(() => {
-    const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] =
-      txDetail => {
-        reFetch();
-        setTimeout(() => {
-          reFetch();
-        }, 5000);
-      };
-    eventBus.addListener(EVENTS.TX_COMPLETED, onTxCompleted);
-
-    return () => {
-      eventBus.removeListener(EVENTS.TX_COMPLETED, onTxCompleted);
-    };
-  }, [reFetch]);
-
-  const foundToAccountInfo = useMemo(() => {
-    return findAccountWithoutBalance(formValues.to, {
-      brandName: toAddressBrandName,
-    });
-  }, [formValues.to, toAddressBrandName, findAccountWithoutBalance]);
-  const toAddressIsRecentlySend = recentSendToHistory.length > 0;
-  const toAccount = useMemo(() => {
-    return (
-      foundToAccountInfo?.account ||
-      makeAccountObject({
-        address: formValues.to,
-        brandName: toAddressBrandName,
-      })
-    );
-  }, [foundToAccountInfo?.account, formValues.to, toAddressBrandName]);
   const computed = useMemo(() => {
-    const toAddressInWhitelist = !!whitelist.find(item =>
-      addressUtils.isSameAddress(item, formValues.to),
-    );
-    const toAddressPositiveTips = {
-      hasPositiveTips:
-        toAddressIsRecentlySend ||
-        toAddressInWhitelist ||
-        !!foundToAccountInfo?.isMyImported,
-      inWhitelist: toAddressInWhitelist,
-      isRecentlySend: toAddressIsRecentlySend,
-      isMyImported: foundToAccountInfo?.isMyImported,
-    };
     return {
-      toAccount,
-      toAddressPositiveTips,
-      toAddressIsCex:
-        !!screenState.toAddrDesc?.cex?.id &&
-        !!screenState.toAddrDesc?.cex?.is_deposit,
-      toAddressInContactBook: isAddrOnContactBook(formValues.to),
-
-      toAddrCex: cexList.find(
-        item => item.id === screenState.toAddrDesc?.cex?.id,
-      ),
-
-      canSubmit:
-        isValidAddress(formValues.to) &&
-        !screenState.balanceError &&
-        new BigNumber(formValues.amount).gt(0) &&
-        !screenState.isLoading,
-
       canDirectSign:
         isAccountSupportMiniApproval(currentAccount?.type || '') &&
         !chainItem?.isTestnet,
     };
-  }, [
-    whitelist,
-    isAddrOnContactBook,
-    formValues.to,
-    toAccount,
-    foundToAccountInfo?.isMyImported,
-    toAddressIsRecentlySend,
-    screenState,
-    formValues.amount,
-    cexList,
-    currentAccount?.type,
-    chainItem?.isTestnet,
-  ]);
+  }, [currentAccount?.type, chainItem?.isTestnet]);
 
   const resetFormValues = useCallback(() => {
-    setFormValues({ ...DF_SEND_TOKEN_FORM });
-    formik.resetForm();
-  }, [setFormValues, formik]);
+    cacheAmountRef.current = DFLT_SEND_STATE.cacheAmount;
+    setCommittedFormValues({ ...DF_SEND_TOKEN_FORM });
+  }, [setCommittedFormValues]);
 
   const prepareRef = useRef<Promise<Tx | void>>(undefined);
   const prepareCountRef = useRef(0);
 
-  const isFocused = useIsFocused();
-  const stableAmountValue = useDebouncedValue(formValues.amount, 300);
-
   useEffect(() => {
     if (
+      isFocused &&
+      isValidAddress(formValues.to) &&
       isAccountSupportMiniApproval(currentAccount?.type || '') &&
       !chainItem?.isTestnet
     ) {
-      prefetchMiniSigner({
-        txs: [],
+      const task = InteractionManager.runAfterInteractions(() => {
+        prefetchMiniSigner({
+          txs: [],
+        });
       });
+
+      return () => {
+        task.cancel();
+      };
     }
   }, [
+    isFocused,
     prefetchMiniSigner,
     chainItem?.id,
     formValues.to,
     currentAccount?.type,
+    currentAccount?.address,
     chainItem?.isTestnet,
-    toAddress,
   ]);
 
   useEffect(() => {
+    const canPrepareDirectSubmit =
+      isValidAddress(formValues.to) &&
+      !screenState.balanceError &&
+      new BigNumber(stableAmountValue || 0).gt(0) &&
+      !screenState.isLoading;
+
     if (
       isFocused &&
       isAccountSupportMiniApproval(currentAccount?.type || '') &&
       !chainItem?.isTestnet &&
-      computed.canSubmit &&
+      canPrepareDirectSubmit &&
       formValues.to &&
       stableAmountValue
     ) {
@@ -773,13 +795,13 @@ export function useSendNFTForm({
       prepareRef.current = prepareDirectSubmitMiniTx(prepareCountRef.current);
     }
   }, [
-    putScreenState,
     isFocused,
     chainItem?.id,
     chainItem?.isTestnet,
-    computed.canSubmit,
     formValues.to,
     stableAmountValue,
+    screenState.balanceError,
+    screenState.isLoading,
     currentAccount?.type,
     prepareDirectSubmitMiniTx,
   ]);
@@ -788,7 +810,8 @@ export function useSendNFTForm({
     chainItem,
 
     sendNFTEvents: sendNFTEventsRef.current,
-    formik,
+    formValuesStore: formValuesStoreRef.current,
+    submitForm,
     formValues,
     resetFormValues,
     handleFieldChange,
@@ -802,60 +825,40 @@ export function useSendNFTForm({
     scrollViewStyle,
     scrollToBottom,
 
-    whitelist,
-    whitelistEnabled,
     computed,
+    miniSignInstance,
   };
 }
-export function useSendNFTFormikContext() {
-  return useFormikContext<FormSendNFT>();
-}
-
-export function useSendNFTFormik() {
-  const { formik } = useSendNFTInternalContext();
-
-  return formik;
-}
-
-type FoundAccountResult = Awaited<
-  ReturnType<ReturnType<typeof useFindAddressByWhitelist>['findAccount']>
->;
-type ToAddressPositiveTips = {
-  hasPositiveTips: boolean;
-  inWhitelist: boolean;
-  isRecentlySend: boolean;
-  isMyImported?: boolean;
-};
 type InternalContext = {
-  screenState: SendScreenState;
-  formValues: FormSendNFT;
   computed: {
+    account: Account | null;
+    addrDesc: AddrDescResponse['desc'] | null;
+    collectionName?: string;
     fromAddress: string;
     chainItem: Chain | null;
     currentNFT: NFTItem | null;
     whitelistEnabled: boolean;
-    canSubmit: boolean;
     canDirectSign: boolean;
     // toAddressInWhitelist: boolean;
     // toAddressIsRecentlySend: boolean;
 
-    toAccount: FoundAccountResult['account'] | null;
+    toAccount: SendRecipientDerivedState['toAccount'];
     toAddressInContactBook: boolean;
-    toAddressPositiveTips: ToAddressPositiveTips | null;
-    toAddrCex: null | undefined | ProjectItem;
+    toAddressPositiveTips:
+      | SendRecipientDerivedState['toAddressPositiveTips']
+      | null;
+    toAddrCex: SendRecipientDerivedState['toAddrCex'];
   };
 
-  formik: ReturnType<typeof useFormik<FormSendNFT>>;
   events: EventEmitter;
+  formValuesStore: SendNFTFormValuesStore;
+  scrollViewRef: React.MutableRefObject<KeyboardAwareScrollView | null>;
+  scrollViewStyle: any;
   fns: {
-    putScreenState: (
-      patch:
-        | Partial<SendScreenState>
-        | ((prev: SendScreenState) => Partial<SendScreenState>),
-    ) => void;
     fetchContactAccounts: () => void;
   };
   callbacks: {
+    submitForm: () => void;
     handleFieldChange: <T extends keyof FormSendNFT>(
       f: T,
       value: FormSendNFT[T],
@@ -866,15 +869,15 @@ type InternalContext = {
     onGasInfoDebouncedLoaded: () => void;
   };
 };
-const SendNFTInternalContext = React.createContext<InternalContext>({
-  screenState: { ...DFLT_SEND_STATE },
-  formValues: { ...DF_SEND_TOKEN_FORM },
+const DEFAULT_SEND_NFT_INTERNAL_CONTEXT: InternalContext = {
   computed: {
+    account: null,
+    addrDesc: null,
+    collectionName: undefined,
     fromAddress: '',
     chainItem: null,
     currentNFT: null,
     whitelistEnabled: false,
-    canSubmit: false,
     canDirectSign: false,
     toAccount: null,
     toAddressPositiveTips: null,
@@ -882,25 +885,206 @@ const SendNFTInternalContext = React.createContext<InternalContext>({
     toAddrCex: null,
   },
 
-  formik: null as any,
   events: null as any,
+  formValuesStore: defaultSendNFTFormValuesStore,
+  scrollViewRef: { current: null },
+  scrollViewStyle: null,
   fns: {
-    putScreenState: () => {},
     fetchContactAccounts: () => {},
   },
   callbacks: {
+    submitForm: () => {},
     handleFieldChange: () => {},
     handleGasLevelChanged: () => {},
     handleIgnoreGasFeeChange: () => {},
     onBottomAreaLayout: () => {},
     onGasInfoDebouncedLoaded: () => {},
   },
-});
+};
 
-export const SendNFTInternalContextProvider = SendNFTInternalContext.Provider;
+const createSendNFTInternalStore = (initialState: InternalContext) =>
+  createStore<InternalContext>()(
+    zMutative<InternalContext>(() => initialState),
+  );
+
+type SendNFTInternalStore = ReturnType<typeof createSendNFTInternalStore>;
+
+const defaultSendNFTInternalStore = createSendNFTInternalStore(
+  DEFAULT_SEND_NFT_INTERNAL_CONTEXT,
+);
+
+const SendNFTInternalStoreContext =
+  React.createContext<SendNFTInternalStore | null>(null);
+
+export function SendNFTInternalContextProvider({
+  value,
+  children,
+}: React.PropsWithChildren<{ value: InternalContext }>) {
+  const storeRef = React.useRef<SendNFTInternalStore | null>(null);
+  if (!storeRef.current) {
+    storeRef.current = createSendNFTInternalStore(value);
+  }
+
+  React.useLayoutEffect(() => {
+    const store = storeRef.current;
+    if (!store) {
+      return;
+    }
+    const prev = store.getState();
+    store.setState(
+      {
+        ...value,
+        computed: {
+          ...value.computed,
+          whitelistEnabled: prev.computed.whitelistEnabled,
+          toAccount: prev.computed.toAccount,
+          toAddressInContactBook: prev.computed.toAddressInContactBook,
+          toAddressPositiveTips: prev.computed.toAddressPositiveTips,
+          toAddrCex: prev.computed.toAddrCex,
+        },
+        fns: {
+          ...value.fns,
+          fetchContactAccounts: prev.fns.fetchContactAccounts,
+        },
+      },
+      true,
+    );
+  }, [value]);
+
+  return React.createElement(
+    SendNFTInternalStoreContext.Provider,
+    { value: storeRef.current },
+    children,
+  );
+}
+
+function useSendNFTInternalStoreApi() {
+  return (
+    React.useContext(SendNFTInternalStoreContext) || defaultSendNFTInternalStore
+  );
+}
 
 export function useSendNFTInternalContext() {
-  return React.useContext(SendNFTInternalContext);
+  return useStore(useSendNFTInternalStoreApi());
+}
+
+export function useSendNFTInternalSelector<T>(
+  selector: (ctx: InternalContext) => T,
+) {
+  const store = useSendNFTInternalStoreApi();
+  return useStore(store, selector);
+}
+
+export function useSendNFTInternalShallowSelector<T>(
+  selector: (ctx: InternalContext) => T,
+) {
+  const store = useSendNFTInternalStoreApi();
+  const shallowSelector = useShallow(selector);
+  return useStore(store, shallowSelector);
+}
+
+export function useSendNFTFormValuesSelector<T>(
+  selector: (values: FormSendNFT) => T,
+) {
+  const formValuesStore = useSendNFTInternalSelector(
+    ctx => ctx.formValuesStore,
+  );
+  return useStore(formValuesStore, selector);
+}
+
+export function useSendNFTFormValuesShallowSelector<T>(
+  selector: (values: FormSendNFT) => T,
+) {
+  const formValuesStore = useSendNFTInternalSelector(
+    ctx => ctx.formValuesStore,
+  );
+  const shallowSelector = useShallow(selector);
+  return useStore(formValuesStore, shallowSelector);
+}
+
+export function SendNFTRecipientController({
+  toAddressBrandName,
+}: {
+  toAddressBrandName?: string;
+}) {
+  const store = useSendNFTInternalStoreApi();
+  const { account } = useSendNFTInternalShallowSelector(ctx => ({
+    account: ctx.computed.account,
+  }));
+  const toAddress = useSendNFTFormValuesSelector(values => values.to);
+  const toAddrDesc = useSendNFTScreenStateSelector(state => state.toAddrDesc);
+  const { fetchContactAccounts, reFetch, state } = useSendRecipientState({
+    currentAccount: account,
+    toAddress,
+    toAddressBrandName,
+    toAddrDesc,
+  });
+
+  React.useLayoutEffect(() => {
+    const prev = store.getState();
+    store.setState(
+      {
+        ...prev,
+        computed: {
+          ...prev.computed,
+          ...state,
+        },
+        fns: {
+          ...prev.fns,
+          fetchContactAccounts,
+        },
+      },
+      true,
+    );
+  }, [fetchContactAccounts, state, store]);
+
+  React.useEffect(() => {
+    let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+    const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] = () => {
+      if (isGasAccountDepositFlowActive()) {
+        return;
+      }
+      void reFetch();
+      if (refreshTimer) {
+        clearTimeout(refreshTimer);
+      }
+      refreshTimer = setTimeout(() => {
+        if (!isGasAccountDepositFlowActive()) {
+          void reFetch();
+        }
+      }, 5000);
+    };
+    eventBus.addListener(EVENTS.TX_COMPLETED, onTxCompleted);
+
+    return () => {
+      eventBus.removeListener(EVENTS.TX_COMPLETED, onTxCompleted);
+      if (refreshTimer) {
+        clearTimeout(refreshTimer);
+      }
+    };
+  }, [reFetch]);
+
+  return null;
+}
+
+export function useSendNFTCanSubmit() {
+  const { balanceError, isLoading } = useSendNFTScreenStateShallowSelector(
+    state => ({
+      balanceError: state.balanceError,
+      isLoading: state.isLoading,
+    }),
+  );
+  const { amount, to } = useSendNFTFormValuesShallowSelector(values => ({
+    amount: values.amount,
+    to: values.to,
+  }));
+
+  return (
+    isValidAddress(to) &&
+    !balanceError &&
+    new BigNumber(amount || 0).gt(0) &&
+    !isLoading
+  );
 }
 
 export function subscribeEvent<T extends SendNFTEvents>(
@@ -925,7 +1109,7 @@ export function subscribeEvent<T extends SendNFTEvents>(
 export function useInputBlurOnEvents(
   inputRef: React.RefObject<TextInput | null>,
 ) {
-  const { events } = useSendNFTInternalContext();
+  const events = useSendNFTInternalSelector(ctx => ctx.events);
   useEffect(() => {
     const disposeRets = [] as Function[];
     subscribeEvent(

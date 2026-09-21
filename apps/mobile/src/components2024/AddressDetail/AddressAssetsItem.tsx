@@ -4,7 +4,7 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { splitNumberByStep } from '@/utils/number';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
-import { useAccountsInfo } from '@/hooks/useAccountInfo';
+import { LedgerHDPathTypeLabel, useAccountsInfo } from '@/hooks/useAccountInfo';
 import { useAddressSource } from '@/hooks/useAddressSource';
 import { GnosisSafeInfoBar } from './GnosisSafeInfoBar';
 import { SeedPhraseBar } from './SeedPhraseBar';
@@ -36,9 +36,23 @@ export const AddressAssetsItem: React.FC<AddressInfoProps> = props => {
   const source = useAddressSource({
     type: account.type,
     brandName: account.brandName,
-    byImport: (account as any).byImport,
+    byImport: account.byImport,
     address: account.address,
+    needPassphrase: account.needPassphrase,
   });
+
+  const fallbackHdPathTypeLabel = account.hdPathType
+    ? LedgerHDPathTypeLabel[
+        account.hdPathType as keyof typeof LedgerHDPathTypeLabel
+      ] || account.hdPathType
+    : '';
+  const fallbackHdPathValue =
+    fallbackHdPathTypeLabel && account.hdPathIndex !== undefined
+      ? `${fallbackHdPathTypeLabel} #${account.hdPathIndex + 1}`
+      : '';
+  const hdPathValue = accountInfo
+    ? `${accountInfo.hdPathTypeLabel} #${accountInfo.index}`
+    : fallbackHdPathValue;
 
   return (
     <Card style={styles.card}>
@@ -59,12 +73,9 @@ export const AddressAssetsItem: React.FC<AddressInfoProps> = props => {
         />
       ) : null}
 
-      {accountInfo && (
-        <Item
-          label={t('page.addressDetail.hd-path')}
-          value={`${accountInfo.hdPathTypeLabel} #${accountInfo.index}`}
-        />
-      )}
+      {hdPathValue ? (
+        <Item label={t('page.addressDetail.hd-path')} value={hdPathValue} />
+      ) : null}
     </Card>
   );
 };

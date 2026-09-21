@@ -11,7 +11,7 @@ import type {
   ActionRequireData,
   ParsedTransactionActionData,
 } from '@rabby-wallet/rabby-action';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import type { GasTokenInfo } from '@/utils/tempo';
 
 export type CalcItem = {
@@ -42,6 +42,7 @@ export type SecurityResult = {
 
 export type SignerConfig = {
   account: Account;
+  purpose?: 'default' | 'gasAccountTopUp';
   title?: React.ReactNode;
   ga?: Record<string, any>;
   session?: any;
@@ -74,6 +75,7 @@ export type PreparedContext = {
   nativeTokenPrice?: number;
   nativeTokenBalance: string;
   gasToken?: GasTokenInfo;
+  tempoPreferredFeeTokenId?: string;
   checkErrors?: {
     code: number;
     msg: string;

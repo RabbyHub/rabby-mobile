@@ -1,16 +1,25 @@
 import { useMemo } from 'react';
 import { Platform } from 'react-native';
-import { useMemoizedFn } from 'ahooks';
 import { last, omit, sortBy } from 'lodash';
 import { v4 as uuid } from 'uuid';
-import { ContentMode } from 'react-native-webview/lib/WebViewTypes';
+import type { ContentMode } from 'react-native-webview/lib/WebViewTypes';
 
 import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
-import { browserService } from '@/core/services';
-import { Tab } from '@/core/services/browserService';
+import {
+  browserServiceApi,
+  removeBrowserScreenshot,
+} from '@/core/serviceApi/browser';
+import {
+  dappServiceApi,
+  getDappSnapshot,
+  isDappServiceReady,
+} from '@/core/serviceApi/dapp';
+import type { BrowserService, Tab } from '@/core/services/browserService';
+import type { DappService } from '@/core/services/dappService';
 import { isGoogle } from '@/utils/browser';
 import {
   EVENT_SHOW_BROWSER,
+  EVENT_SHOW_BROWSER_DAPP_INFO,
   EVENT_SHOW_BROWSER_MANAGE,
   eventBus,
 } from '@/utils/events';
@@ -19,14 +28,13 @@ import {
   safeGetOrigin,
 } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
-import { useDappsValue } from '../useDapps';
 import { zCreate } from '@/core/utils/reexports';
-import {
-  resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
-} from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
+import { runStartupTask } from '@/core/utils/startupScheduler';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { perfEvents } from '@/core/utils/perf';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 type TabsState = {
   tabs: Tab[];
@@ -38,7 +46,9 @@ const tabsStore = zCreate<TabsState>(() => ({
   activeTabId: '',
 }));
 
-function setTabsStore(valOrFunc: UpdaterOrPartials<TabsState>) {
+let tabsStoreRevision = 0;
+
+function applyTabsStore(valOrFunc: UpdaterOrPartials<TabsState>) {
   tabsStore.setState(prev => {
     const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
       strict: false,
@@ -47,21 +57,75 @@ function setTabsStore(valOrFunc: UpdaterOrPartials<TabsState>) {
   });
 }
 
+function setTabsStore(valOrFunc: UpdaterOrPartials<TabsState>) {
+  ++tabsStoreRevision;
+  applyTabsStore(valOrFunc);
+}
+
 export function resetTabsStore() {
-  tabsStore.setState({
+  setTabsStore({
     tabs: [],
     activeTabId: '',
   });
 }
 
-export function setTabs(val: UpdaterOrPartials<TabsState['tabs']>) {
-  tabsStore.setState(prev => {
-    const { newVal } = resolveValFromUpdater(prev.tabs, val, { strict: false });
+export async function hydrateBrowserTabs(
+  loadTabs: () => Promise<TabsState> = () => browserServiceApi.getBrowserTabs(),
+  mergeTabs: (current: TabsState, loaded: TabsState) => TabsState = (
+    _current,
+    loaded,
+  ) => loaded,
+) {
+  const hydrationRevision = tabsStoreRevision;
+  const tabs = await loadTabs();
+  if (hydrationRevision === tabsStoreRevision) {
+    applyTabsStore(current => mergeTabs(current, tabs));
+  }
+  return tabs;
+}
 
-    return {
-      ...prev,
-      tabs: newVal,
-    };
+function normalizePersistedBrowserTabs(
+  tabsState: TabsState,
+  dappService: DappService,
+): TabsState {
+  return {
+    ...tabsState,
+    tabs: tabsState.tabs.map(tab => {
+      if (tab.isDapp) {
+        return tab;
+      }
+
+      const isDapp = !!dappService.getDapp(
+        safeGetOrigin(tab.url || tab.initialUrl),
+      )?.isDapp;
+      return isDapp ? { ...tab, isDapp } : tab;
+    }),
+  };
+}
+
+export function prepareBrowserTabsFromServices(
+  browserService: BrowserService,
+  dappService: DappService,
+) {
+  const loaded = normalizePersistedBrowserTabs(
+    browserService.getBrowserTabs(),
+    dappService,
+  );
+  const current = tabsStore.getState();
+
+  if (!current.tabs.length && !current.activeTabId) {
+    applyTabsStore(loaded);
+    return;
+  }
+
+  const currentById = new Map(current.tabs.map(tab => [tab.id, tab]));
+  const loadedIds = new Set(loaded.tabs.map(tab => tab.id));
+  applyTabsStore({
+    tabs: [
+      ...loaded.tabs.map(tab => currentById.get(tab.id) || tab),
+      ...current.tabs.filter(tab => !loadedIds.has(tab.id)),
+    ],
+    activeTabId: current.activeTabId || loaded.activeTabId,
   });
 }
 
@@ -96,6 +160,8 @@ type BrowserStateType = {
   searchTabId: string;
   trigger: string;
   isEditingFavorite?: boolean;
+  isShowDappInfo?: boolean;
+  dappInfoUrl?: string;
 };
 
 const browserStateStore = zCreate<BrowserStateType>(() => ({
@@ -103,6 +169,8 @@ const browserStateStore = zCreate<BrowserStateType>(() => ({
   isShowSearch: false,
   isShowManage: false,
   isShowFavorite: false,
+  isShowDappInfo: false,
+  dappInfoUrl: '',
   searchText: '',
   searchTabId: '',
   trigger: '',
@@ -171,18 +239,17 @@ function useDisplayedTabs() {
 }
 
 export function useHomeDisplayedTabs() {
-  const tabs = tabsStore(s => s.tabs);
-  const { dapps } = useDappsValue();
+  const tabs = useActivityStore(tabsStore, state => state.tabs, Object.is, {
+    storeLabel: 'home-overview-browser-tabs',
+  });
 
   const homeDisplayedTabs = useMemo(
     () =>
       sortBy(
-        tabs.filter(item => {
-          return dapps[safeGetOrigin(item.url || item.initialUrl)]?.isDapp;
-        }),
+        getDisplayedTabs(tabs),
         tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
       ).slice(0, 4),
-    [tabs, dapps],
+    [tabs],
   );
 
   return { homeDisplayedTabs };
@@ -204,12 +271,15 @@ export const browserApis = {
   },
 
   getBrowserTabs: () => {
-    setTabsStore(browserService.getBrowserTabs());
+    void hydrateBrowserTabs().catch(console.error);
   },
 
   updateBrowserTabs: (payload: Partial<TabsState>) => {
-    browserService.updateBrowserTabs(payload);
-    browserApis.getBrowserTabs();
+    setTabsStore(prev => ({
+      ...prev,
+      ...payload,
+    }));
+    void browserServiceApi.updateBrowserTabs(payload).catch(console.error);
   },
 
   navigateToBrowserScreen: () => {
@@ -227,14 +297,26 @@ export const browserApis = {
     setIsShowManagePopup(false);
   },
 
-  switchToTab: (tabId: string) => {
+  switchToTab: (
+    tabId: string,
+    options?: {
+      url: string;
+    },
+  ) => {
     browserApis.updateTab(tabId, {
       isTerminate: false,
       openTime: Date.now(),
-    }),
-      browserApis.updateBrowserTabs({
-        activeTabId: tabId,
-      });
+      ...(options?.url
+        ? {
+            initialUrl: options.url,
+            url: options.url,
+            key: uuid(),
+          }
+        : {}),
+    });
+    browserApis.updateBrowserTabs({
+      activeTabId: tabId,
+    });
     browserApis.setPartialBrowserState({
       isShowBrowser: true,
       isShowManage: false,
@@ -258,13 +340,13 @@ export const browserApis = {
     browserApis.updateBrowserTabs({
       tabs: newTabs,
     });
-    browserService.removeScreenshot({ tabId });
+    void removeBrowserScreenshot({ tabId }).catch(console.error);
   },
 
   closeAllTabs: () => {
     const store = tabsStore.getState();
     store.tabs.forEach(tab => {
-      browserService.removeScreenshot({ tabId: tab.id });
+      void removeBrowserScreenshot({ tabId: tab.id }).catch(console.error);
     });
     browserApis.updateBrowserTabs({
       tabs: [],
@@ -302,7 +384,7 @@ export const browserApis = {
           tabs: finalTabs,
         };
 
-        browserService.updateBrowserTabs(result);
+        void browserServiceApi.updateBrowserTabs(result).catch(console.error);
         return result;
       });
     });
@@ -326,7 +408,7 @@ export const browserApis = {
           return item;
         }),
       };
-      browserService.updateBrowserTabs(res);
+      void browserServiceApi.updateBrowserTabs(res).catch(console.error);
       return res;
     });
   },
@@ -336,11 +418,40 @@ export const browserApis = {
     options?: {
       isDapp?: boolean;
       isNewTab?: boolean;
+      isRemindOpen?: boolean;
+      isDirect?: boolean;
     },
   ) => {
     const { isNewTab = false } = options || {};
     if (!url?.trim() || !/^https?:\/\//.test(url)) {
       // switchToTab(emptyTab.id);
+      return;
+    }
+    if (options?.isRemindOpen && !isDappServiceReady()) {
+      void dappServiceApi
+        .getDapp(safeGetOrigin(url))
+        .then(() => {
+          browserApis.openTab(url, options);
+        })
+        .catch(error => {
+          console.error('[browserApis.openTab] load dapp state failed', error);
+          browserApis.setPartialBrowserState({
+            isShowDappInfo: true,
+            dappInfoUrl: url,
+          });
+          browserApis.forceShowBrowserDappInfo();
+        });
+      return;
+    }
+    if (
+      options?.isRemindOpen &&
+      !getDappSnapshot(safeGetOrigin(url))?.isSkipRemind
+    ) {
+      browserApis.setPartialBrowserState({
+        isShowDappInfo: true,
+        dappInfoUrl: url,
+      });
+      browserApis.forceShowBrowserDappInfo();
       return;
     }
     const newTab: Tab = {
@@ -358,11 +469,16 @@ export const browserApis = {
     const sameOriginTab = isNewTab
       ? undefined
       : getDisplayedTabs().find(
-          item => safeGetOrigin(item.url || item.initialUrl) === targetOrigin,
+          item =>
+            safeGetOrigin(item.url || item.initialUrl) ===
+            targetOrigin?.toLowerCase(),
         );
 
     if (sameOriginTab && !isGoogle(targetOrigin)) {
-      browserApis.switchToTab(sameOriginTab.id);
+      browserApis.switchToTab(
+        sameOriginTab.id,
+        options?.isDirect ? { url } : undefined,
+      );
       return true;
     }
 
@@ -395,6 +511,10 @@ export const browserApis = {
     eventBus.emit(EVENT_SHOW_BROWSER_MANAGE, true);
   },
 
+  forceShowBrowserDappInfo: () => {
+    eventBus.emit(EVENT_SHOW_BROWSER_DAPP_INFO, true);
+  },
+
   showBrowser: () => {
     browserApis.setPartialBrowserState({
       isShowBrowser: true,
@@ -420,7 +540,7 @@ export const browserApis = {
         activeTabId,
         tabs,
       };
-      browserService.updateBrowserTabs(res);
+      void browserServiceApi.updateBrowserTabs(res).catch(console.error);
       return res;
     });
   },
@@ -460,8 +580,8 @@ export function useBrowser() {
   };
 }
 
-runIIFEFunc(() => {
+runStartupTask(() => {
   perfEvents.subscribe('GLOBAL_CLEAR_ALL_COVERED_COMPONENTS', () => {
     browserApis.hideBrowser();
   });
-});
+}, STARTUP_TASKS.browserGlobalClearListener);

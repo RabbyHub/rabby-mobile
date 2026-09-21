@@ -4,8 +4,9 @@ import { Pressable, TouchableOpacity, View } from 'react-native';
 import { SilentTouchableView } from '@/components/Touchable/TouchableView';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { formatSpeicalAmount, splitNumberByStep } from '@/utils/number';
+import { formatTokenAmountInput, splitNumberByStep } from '@/utils/number';
 import { NumericInput } from '@/components/Form/NumbericInput';
+import { AutoShrinkAmountTextInput } from '@/components/AutoShrinkAmountTextInput';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import LinearGradient from 'react-native-linear-gradient';
 import TokenIcon from '../TokenIcon';
@@ -17,22 +18,33 @@ interface TokenAmountInputProps {
   symbol: string;
   value?: string;
   tokenAmount: number;
+  tokenDecimals?: number;
   price?: number;
   chain: CHAINS_ENUM;
   onChange?(amount: string): void;
   handleClickMaxButton?: () => Promise<void> | void;
   inlinePrize?: boolean;
-  className?: string;
   placeholder?: string;
   isEstimatingGas?: boolean;
   onClickToken?: () => void;
+  tokenSelectContent?: React.ReactNode;
 }
+
+const shouldSyncAmountImmediately = (amount: string) => {
+  if (!amount) {
+    return false;
+  }
+
+  const numericAmount = Number(amount);
+  return Number.isFinite(numericAmount) && numericAmount === 0;
+};
 
 export const TokenAmountInput = ({
   symbol,
   value,
   price = 1,
   tokenAmount,
+  tokenDecimals,
   onChange,
   chain,
   inlinePrize,
@@ -40,6 +52,7 @@ export const TokenAmountInput = ({
   handleClickMaxButton,
   isEstimatingGas,
   onClickToken,
+  tokenSelectContent,
 }: React.PropsWithChildren<RNViewProps & TokenAmountInputProps>) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
@@ -68,19 +81,58 @@ export const TokenAmountInput = ({
     );
   }, [colors2024]);
 
-  const handleChangeText = useMemo(
+  const formatAmountInput = useCallback(
+    (v: string) => {
+      return formatTokenAmountInput(v, tokenDecimals);
+    },
+    [tokenDecimals],
+  );
+
+  const debouncedChangeText = useMemo(
     () =>
       debounce((v: string) => {
-        onChange?.(formatSpeicalAmount(v));
+        onChange?.(v);
       }, 200),
     [onChange],
   );
 
+  const handleChangeText = useCallback(
+    (v: string) => {
+      const formatted = formatAmountInput(v);
+      if (Number(formatted) >= tokenAmount && tokenAmount > 0) {
+        debouncedChangeText.cancel();
+        handleClickMaxButton?.();
+        return false;
+      }
+
+      if (formatted !== v) {
+        debouncedChangeText.cancel();
+        onChange?.(formatted);
+        return false;
+      }
+
+      if (shouldSyncAmountImmediately(formatted)) {
+        debouncedChangeText.cancel();
+        onChange?.(formatted);
+        return;
+      }
+
+      debouncedChangeText(formatted);
+    },
+    [
+      debouncedChangeText,
+      formatAmountInput,
+      handleClickMaxButton,
+      onChange,
+      tokenAmount,
+    ],
+  );
+
   useEffect(() => {
     return () => {
-      handleChangeText.cancel();
+      debouncedChangeText.cancel();
     };
-  }, [handleChangeText]);
+  }, [debouncedChangeText]);
 
   const showTokenSelect = useMemo(() => {
     return !!onClickToken;
@@ -105,6 +157,7 @@ export const TokenAmountInput = ({
             />
           ) : (
             <NumericInput
+              TextInputComponent={AutoShrinkAmountTextInput}
               style={[
                 inlinePrize && !!valueText && styles.inputHasInlinePrize,
                 styles.input,
@@ -140,7 +193,9 @@ export const TokenAmountInput = ({
             </TouchableOpacity>
           ))}
         <View style={styles.placeholder} />
-        {showTokenSelect ? (
+        {tokenSelectContent ? (
+          <View style={styles.tokenSelectContent}>{tokenSelectContent}</View>
+        ) : showTokenSelect ? (
           <Pressable onPress={onClickToken} style={styles.tokenInfoContainer}>
             <TokenIcon
               size={26}
@@ -187,30 +242,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       marginHorizontal: 12,
     },
 
-    rightToken: {},
-    rightInner: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: 4,
-      backgroundColor: colors2024['neutral-line'],
-      borderRadius: 12,
-    },
-    rightTokenInfo: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-    },
-    rightArrow: {
-      marginLeft: 2,
-    },
-    rightTokenSymbol: {
-      color: colors2024['neutral-title-1'],
-      fontSize: 16,
-      fontWeight: '700',
-      lineHeight: 20,
-      fontFamily: 'SF Pro Rounded',
-    },
-
     leftInputContainer: {
       flex: 1,
       paddingLeft: PADDING,
@@ -226,8 +257,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       color: colors2024['neutral-title-1'],
       marginLeft: 8,
       flex: 1,
+      height: 36,
+      lineHeight: 36,
       paddingTop: 0,
       paddingBottom: 0,
+      textAlignVertical: 'center',
+      includeFontPadding: false,
+      overflow: 'hidden',
     },
     inputHasInlinePrize: {
       // ...makeDebugBorder(),
@@ -258,7 +294,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       lineHeight: 18,
       fontFamily: 'SF Pro Rounded',
     },
-    maxButtonLoading: { width: 30, height: '100%', marginLeft: 2 },
     skeleton: {
       marginTop: 16,
       marginBottom: 10,
@@ -275,6 +310,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       backgroundColor: colors2024['neutral-line'],
       padding: 4,
       justifyContent: 'space-between',
+    },
+    tokenSelectContent: {
+      flexShrink: 0,
     },
     tokenInfoContainerHidden: {
       flexDirection: 'row',

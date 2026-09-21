@@ -1,13 +1,15 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { Platform, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import {
   apiSendToken,
   SendTokenEvents,
   subscribeEvent,
-  useSendTokenFormik,
-  useSendTokenInternalContext,
+  useSendTokenCanSubmit,
+  useSendTokenFormValuesSelector,
+  useSendTokenInternalShallowSelector,
   useSendTokenScreenChainToken,
+  useSendTokenScreenStateShallowSelector,
 } from '../hooks/useSendToken';
 import {
   createGetStyles2024,
@@ -25,58 +27,96 @@ import {
   DirectSignBtn,
   DirectSignBtnMethods,
 } from '@/components2024/DirectSignBtn';
-import { Account } from '@/core/services/preference';
 import { RiskType, sortRisksDesc, useRisks } from '@/components/SendLike/risk';
-import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
-import { useSignatureStore } from '@/components2024/MiniSignV2';
+import { useSignatureStore } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { BottomRiskTip } from '@/components/SendLike/BottomRiskTip';
 import { resolveBgColorByType } from '@/components2024/ScreenContainer/LinearGradientContainer';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
+import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { Text } from '@/components/Typography';
+import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
-const isAndroid = Platform.OS === 'android';
-
-export default function BottomArea({ account }: { account: Account | null }) {
+function BottomArea() {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
-
-  const { handleSubmit } = useSendTokenFormik();
+  const canSubmit = useSendTokenCanSubmit();
+  const to = useSendTokenFormValuesSelector(values => values.to);
 
   const {
-    formValues,
-    screenState,
-    computed: {
-      fromAddress,
-      canSubmit,
-      canDirectSign: canShowDirectSign,
-      toAddressPositiveTips,
-      toAddressInContactBook,
-      toAddrCex,
-    },
+    addressToAddAsContacts,
+    agreeRequiredForToAddress,
+    agreeRequiredForToken,
+    buildTxsCount,
+    initialTokenReady,
+    isSubmitLoading,
+  } = useSendTokenScreenStateShallowSelector(state => ({
+    addressToAddAsContacts: state.addressToAddAsContacts,
+    agreeRequiredForToAddress: state.agreeRequiredChecks.forToAddress,
+    agreeRequiredForToken: state.agreeRequiredChecks.forToken,
+    buildTxsCount: state.buildTxsCount,
+    initialTokenReady: state.initialTokenReady,
+    isSubmitLoading: state.isSubmitLoading,
+  }));
+
+  const {
+    account,
+    canShowDirectSign,
     directSignBtnRef,
+    disableItemCheck,
+    fetchContactAccounts,
     formValuesRef,
-    callbacks: {
-      handleIgnoreGasFeeChange,
-      onBottomAreaLayout,
-      onGasInfoDebouncedLoaded,
-    },
+    fromAddress,
+    handleIgnoreGasFeeChange,
+    onBottomAreaLayout,
+    onGasInfoDebouncedLoaded,
+    saveCurrentFormValuesSnapshot,
+    sendTokenEvents,
+    submitForm,
+    toAddrCex,
+    toAddressInContactBook,
+    toAddressPositiveTips,
+  } = useSendTokenInternalShallowSelector(ctx => ({
+    account: ctx.computed.account,
+    canShowDirectSign: ctx.computed.canDirectSign,
+    directSignBtnRef: ctx.directSignBtnRef,
+    disableItemCheck: ctx.fns.disableItemCheck,
+    fetchContactAccounts: ctx.fns.fetchContactAccounts,
+    formValuesRef: ctx.formValuesRef,
+    fromAddress: ctx.computed.fromAddress,
+    handleIgnoreGasFeeChange: ctx.callbacks.handleIgnoreGasFeeChange,
+    onBottomAreaLayout: ctx.callbacks.onBottomAreaLayout,
+    onGasInfoDebouncedLoaded: ctx.callbacks.onGasInfoDebouncedLoaded,
+    saveCurrentFormValuesSnapshot: ctx.callbacks.saveCurrentFormValuesSnapshot,
+    sendTokenEvents: ctx.sendTokenEvents,
+    submitForm: ctx.callbacks.submitForm,
+    toAddrCex: ctx.computed.toAddrCex,
+    toAddressInContactBook: ctx.computed.toAddressInContactBook,
+    toAddressPositiveTips: ctx.computed.toAddressPositiveTips,
+  }));
 
-    fns: { fetchContactAccounts, disableItemCheck },
-  } = useSendTokenInternalContext();
-
-  const { currentToken } = useSendTokenScreenChainToken();
-
-  const { isSubmitLoading, addressToAddAsContacts } = screenState;
+  const { currentToken: screenCurrentToken } = useSendTokenScreenChainToken();
+  const currentToken = initialTokenReady ? screenCurrentToken : null;
 
   const [isAllowTransferModalVisible, setIsAllowTransferModalVisible] =
     React.useState(false);
 
-  const { status, ctx } = useSignatureStore();
-  const [calcCount, setCalcCount] = useState(ctx?.txsCalc?.length);
-  useEffect(() => {
-    setCalcCount(ctx?.txsCalc?.length);
-  }, [ctx?.txsCalc?.length]);
-  const debouncedCalcCount = useDebouncedValue(calcCount, 300);
+  const signatureStatus = useSignatureStore(state => state.status);
+  const signatureDisabledProcess = useSignatureStore(
+    state => !!state.ctx?.disabledProcess,
+  );
+  const signatureGasFeeTooHigh = useSignatureStore(
+    state => !!state.ctx?.gasFeeTooHigh,
+  );
+  const txsCalcLength = useSignatureStore(state => state.ctx?.txsCalc?.length);
+  const debouncedCalcCount = useDebouncedValue(txsCalcLength, 300);
   useEffect(() => {
     if (!debouncedCalcCount) return;
     if (debouncedCalcCount > 0) {
@@ -84,10 +124,9 @@ export default function BottomArea({ account }: { account: Account | null }) {
     }
   }, [debouncedCalcCount, onGasInfoDebouncedLoaded]);
 
-  const isDirectSigning = status === 'signing';
-
-  const canDirectSign = !ctx?.disabledProcess;
-  const showRiskTipsForMiniSign = !!ctx?.gasFeeTooHigh;
+  const isDirectSigning = signatureStatus === 'signing';
+  const canDirectSign = !signatureDisabledProcess;
+  const showRiskTipsForMiniSign = signatureGasFeeTooHigh;
 
   const {
     loading: loadingRisks,
@@ -96,16 +135,16 @@ export default function BottomArea({ account }: { account: Account | null }) {
   } = useRisks({
     // balance: !!screenState.toAddrAccountInfo?.account?.balance,
     fromAddress: fromAddress,
-    toAddress: formValues.to,
+    toAddress: initialTokenReady ? to : '',
     cex: toAddrCex,
     forbiddenCheck: useMemo(() => {
       return {
         user_addr: fromAddress || '',
-        to_addr: formValues.to || '',
+        to_addr: to || '',
         chain_id: currentToken?.chain || '',
         id: currentToken?.id || '',
       };
-    }, [fromAddress, formValues.to, currentToken?.chain, currentToken?.id]),
+    }, [fromAddress, to, currentToken?.chain, currentToken?.id]),
     onLoadFinished: useCallback(ctx => {
       apiSendToken.putScreenState(prev => ({
         ...prev,
@@ -118,19 +157,29 @@ export default function BottomArea({ account }: { account: Account | null }) {
   });
 
   useEffect(() => {
-    const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] =
-      txDetail => {
+    const disposeRets = [] as Function[];
+    subscribeEvent(
+      sendTokenEvents,
+      SendTokenEvents.ON_SIGNED_SUCCESS,
+      () => {
+        if (isGasAccountDepositFlowActive()) {
+          return;
+        }
         fetchRisks();
         setTimeout(() => {
+          if (isGasAccountDepositFlowActive()) {
+            return;
+          }
           fetchRisks();
         }, 5000);
-      };
-    eventBus.addListener(EVENTS.TX_COMPLETED, onTxCompleted);
+      },
+      { disposeRets },
+    );
 
     return () => {
-      eventBus.removeListener(EVENTS.TX_COMPLETED, onTxCompleted);
+      disposeRets.forEach(dispose => dispose());
     };
-  }, [fetchRisks]);
+  }, [fetchRisks, sendTokenEvents]);
 
   const { mostImportantRisks, hasRiskForToAddress, hasRiskForToken } =
     React.useMemo(() => {
@@ -187,8 +236,8 @@ export default function BottomArea({ account }: { account: Account | null }) {
     ]);
 
   const agreeRequiredChecked =
-    (hasRiskForToAddress && screenState.agreeRequiredChecks.forToAddress) ||
-    (hasRiskForToken && screenState.agreeRequiredChecks.forToken);
+    (hasRiskForToAddress && agreeRequiredForToAddress) ||
+    (hasRiskForToken && agreeRequiredForToken);
 
   const disableSubmitDueToBasic =
     !canSubmit || (!!mostImportantRisks.length && !agreeRequiredChecked);
@@ -220,21 +269,19 @@ export default function BottomArea({ account }: { account: Account | null }) {
         <DirectSignBtn
           ref={directSignBtnRef}
           // refresh  risk check
-          key={screenState?.buildTxsCount + ''}
+          key={buildTxsCount + ''}
           showTextOnLoading
           loadingType="circle"
           authTitle={t('page.whitelist.confirmPassword')}
           title={t('global.confirm')}
           onFinished={p => {
             handleIgnoreGasFeeChange(p?.ignoreGasFee || false);
-            handleSubmit();
+            submitForm();
           }}
           onBeforeAuth={() => {
             // Disable input during authentication to prevent autofill
             // Save amount snapshot before authentication starts
-            formValuesRef.current.save({
-              amount: formValues.amount || '',
-            });
+            saveCurrentFormValuesSnapshot();
           }}
           onCancel={() => {
             formValuesRef.current.clear();
@@ -246,11 +293,14 @@ export default function BottomArea({ account }: { account: Account | null }) {
             disableSubmitDueToBasic || !canDirectSign || isDirectSigning
           }
           loading={isSubmitLoading}
+          height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+          titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
           type={'primary'}
           syncUnlockTime
           account={account}
           showHardWalletProcess
           showRiskTips={showRiskTipsForMiniSign && canSubmit}
+          {...makeTestIDProps(E2E_ID.send.confirmButton)}
         />
       ) : (
         <Button
@@ -258,12 +308,15 @@ export default function BottomArea({ account }: { account: Account | null }) {
           type="primary"
           title={'Send'}
           loading={isSubmitLoading}
-          onPress={() => handleSubmit()}
+          height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+          titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+          onPress={submitForm}
+          {...makeTestIDProps(E2E_ID.send.confirmButton)}
         />
       )}
 
       <ModalConfirmAllowTransfer
-        toAddr={formValues.to}
+        toAddr={to}
         visible={isAllowTransferModalVisible}
         showAddToWhitelist={toAddressInContactBook}
         onFinished={() => {
@@ -294,11 +347,11 @@ export default function BottomArea({ account }: { account: Account | null }) {
   );
 }
 
+export default React.memo(BottomArea);
+
 const SIZES = {
-  containerPt: 16,
-  containerPb: 48,
+  containerPt: BOTTOM_BUTTON_TOP_OFFSET,
   // height: 220,
-  bottom: 48,
 };
 
 const getStyle = createGetStyles2024(
@@ -307,10 +360,10 @@ const getStyle = createGetStyles2024(
       bottomDockArea: {
         bottom: 0,
         width: '100%',
-        paddingHorizontal: 24,
+        paddingHorizontal: 20,
         position: 'absolute',
         paddingTop: SIZES.containerPt,
-        paddingBottom: SIZES.containerPb + safeAreaInsets.bottom,
+        paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
         backgroundColor: resolveBgColorByType('bg1', {
           isLight: isLight ?? true,
           colors,

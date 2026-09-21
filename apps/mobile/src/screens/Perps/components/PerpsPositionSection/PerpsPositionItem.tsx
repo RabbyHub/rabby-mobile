@@ -12,6 +12,7 @@ import { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 import { useTranslation } from 'react-i18next';
 import { formatPerpsCoin } from '@/utils/perps';
 import { Text } from '@/components/Typography';
+import { PerpsDisplayCoinName } from '../PerpsDisplayCoinName';
 
 export const PerpsPositionItem: React.FC<{
   item: PositionAndOpenOrder['position'];
@@ -87,17 +88,10 @@ export const PerpsPositionItem: React.FC<{
         {/* Left section: icon + coin info */}
         <View style={styles.leftSection}>
           <View style={styles.coinInfoRow}>
-            <AssetAvatar logo={logoUrl} size={28} style={styles.icon} />
+            <AssetAvatar logo={logoUrl} size={28} logoStyle={styles.icon} />
             <View style={styles.coinInfo}>
               <View style={styles.coinNameRow}>
-                <Text style={styles.coinName}>{formatPerpsCoin(coin)}</Text>
-                <View style={styles.crossTag}>
-                  <Text style={styles.crossText}>
-                    {leverageType === 'cross'
-                      ? t('page.perpsDetail.PerpsPosition.cross')
-                      : t('page.perpsDetail.PerpsPosition.isolated')}
-                  </Text>
-                </View>
+                <PerpsDisplayCoinName item={marketData} coin={coin} />
               </View>
             </View>
           </View>
@@ -120,7 +114,14 @@ export const PerpsPositionItem: React.FC<{
                 {side} {leverageText}
               </Text>
             </View>
-            {!hasStopLoss && (
+            <View style={styles.crossTag}>
+              <Text style={styles.crossText}>
+                {leverageType === 'cross'
+                  ? t('page.perpsDetail.PerpsPosition.cross')
+                  : t('page.perpsDetail.PerpsPosition.isolated')}
+              </Text>
+            </View>
+            {!hasStopLoss && marketData && (
               <DistanceToLiquidationTag
                 liquidationPrice={liquidationPx}
                 markPrice={marketData?.markPx}
@@ -177,9 +178,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
-    borderRadius: 16,
+    borderRadius: 14,
     // paddingHorizontal: 14,
     paddingVertical: 14,
+    ...(isLight ? { boxShadow: '0 18 40 0 rgba(55, 56, 63, 0.04)' } : null),
   },
   mainContent: {
     flexDirection: 'row',
@@ -189,7 +191,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   leftSection: {
     flexDirection: 'column',
-    gap: 4,
+    gap: 8,
     flex: 1,
   },
   coinInfoRow: {
@@ -202,7 +204,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 6,
   },
   icon: {
+    width: 28,
+    height: 28,
     backgroundColor: 'white',
+    flexShrink: 0,
     borderRadius: 1000,
   },
   coinNameRow: {
@@ -221,13 +226,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '700',
+    fontWeight: '500',
     color: colors2024['neutral-foot'],
   },
   crossTag: {
     borderRadius: 4,
     paddingHorizontal: 4,
-    paddingVertical: 1,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-5'],
   },
   tagRow: {
@@ -240,7 +247,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 4,
     justifyContent: 'center',
     alignItems: 'center',
-    height: 20,
+    height: 18,
   },
   leverageText: {
     fontFamily: 'SF Pro Rounded',
@@ -289,18 +296,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   rightSection: {
     alignItems: 'flex-end',
-    gap: 4,
+    gap: 5,
   },
   priceText: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: '500',
     color: colors2024['neutral-title-1'],
   },
   pnlText: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 18,
     fontWeight: '500',
   },
@@ -316,7 +323,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingTop: 10,
     borderTopWidth: 0.5,
     paddingHorizontal: 14,
-    borderTopColor: colors2024['neutral-line'],
+    borderTopColor: colors2024['neutral-bg-5'],
   },
   tpSlText: {
     fontFamily: 'SF Pro Rounded',

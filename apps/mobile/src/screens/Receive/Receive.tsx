@@ -1,7 +1,6 @@
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { toast } from '@/components2024/Toast';
 import { Chain, CHAINS_ENUM } from '@/constant/chains';
-import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChainByEnum, findChainByID } from '@/utils/chain';
 import { navigationRef } from '@/utils/navigation';
@@ -9,7 +8,6 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { Button } from '@/components2024/Button';
 import { createGetStyles2024 } from '@/utils/styles';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useRoute } from '@react-navigation/native';
 import React, {
@@ -20,7 +18,7 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, View, Pressable, Image } from 'react-native';
+import { View, Pressable, Image, ScrollView, Dimensions } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
 import QRCode from 'react-native-qrcode-svg';
 import { default as RcIconMCopy } from '@/assets2024/icons/address/mcopy-cc.svg';
@@ -38,11 +36,26 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useGnosisNetworks } from '@/hooks/gnosis/useGnosisNetworks';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { Text } from '@/components/Typography';
+import { BackupReminderCard } from '@/components2024/BackupReminderCard';
+import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
+import { useBackupReminder } from '@/hooks/account';
+import {
+  OfflineChainNotify,
+  useOfflineChain,
+} from '@/screens/Home/components/OfflineChainNotify';
+import { rateGuideLastExposureState } from '@/components/RateModal/hooks';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
+
+function formatSafeAddress(address: string) {
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
 
 function ReceiveScreen(): JSX.Element {
   const [selectedChain, setSelectedChain] = useState<CHAINS_ENUM | null>(null);
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const regressionScenario = useRegressionScenario<'Receive'>();
 
   const route =
     useRoute<
@@ -88,7 +101,6 @@ function ReceiveScreen(): JSX.Element {
 
     return [prefix, middle, suffix];
   }, [account]);
-
   const isWatchMode = useMemo(
     () => account?.type === KEYRING_CLASS.WATCH,
     [account?.type],
@@ -98,6 +110,11 @@ function ReceiveScreen(): JSX.Element {
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
   const [showName, setShowName] = useState(true);
+
+  // Backup reminder logic
+  const needsBackupReminder = useBackupReminder(account);
+  const offlineChainData = useOfflineChain();
+  const txCount = rateGuideLastExposureState(state => state.txCount);
 
   const headerTitle = useMemo(
     () => (
@@ -166,6 +183,34 @@ function ReceiveScreen(): JSX.Element {
     }
   }, [isWatchMode]);
 
+  useEffect(() => {
+    if (
+      !regressionScenario.active ||
+      regressionScenario.scenario !== 'send-receive' ||
+      !account?.address ||
+      isShowWatchModeModal
+    ) {
+      return;
+    }
+
+    if (!regressionScenario.claimOnce('receive-address-ready')) {
+      return;
+    }
+
+    regressionScenario.report('assertion', {
+      assertion: 'receive-address-ready',
+      passed: true,
+      address: formatSafeAddress(account.address),
+      chain: selectedChain || 'all-evm',
+      hasQr: true,
+    });
+  }, [
+    account?.address,
+    isShowWatchModeModal,
+    regressionScenario,
+    selectedChain,
+  ]);
+
   const navState = route.params;
 
   useEffect(() => {
@@ -224,7 +269,7 @@ function ReceiveScreen(): JSX.Element {
       return;
     }
     triggerLight();
-    toast.success('Copied successfully');
+    toast.success(t('global.copiedSuccessfully'));
     copyAddress();
   };
 
@@ -287,57 +332,87 @@ function ReceiveScreen(): JSX.Element {
     <FooterButtonScreenContainer
       as="View"
       style={styles.screen}
-      footerBottomOffset={56}>
+      footerBottomOffset={48}
+      buttonProps={{
+        title: t('page.receive.copyAddress'),
+        icon: <RcIconMCopy color={colors2024['neutral-InvertHighlight']} />,
+        onPress: handleCopy,
+        disabled: isShowWatchModeModal,
+      }}>
       <View style={styles.container}>
-        <View style={styles.receiveContainer}>
-          <View style={styles.qrCard}>
-            <Text style={styles.qrCardHeader}>
-              {t('page.receive.newTitle')}
-            </Text>
-            <Button
-              titleStyle={styles.selectChainText}
-              title={isSafe ? safeChainsUI : nonSafeChainUI}
-              buttonStyle={styles.selectChain}
-              iconRight={
-                <RcArrowRightCC
-                  width={15}
-                  height={15}
-                  color={colors2024['neutral-title-1']}
-                />
-              }
-              onPress={handleSelectChain}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollViewContent}
+          showsVerticalScrollIndicator={false}
+          contentInsetAdjustmentBehavior="never"
+          automaticallyAdjustContentInsets={false}>
+          <View style={styles.receiveContainer}>
+            {/* Offline Chain Notify */}
+            {txCount > 0 && (
+              <OfflineChainNotify
+                data={offlineChainData}
+                style={styles.offlineChainNotify}
+              />
+            )}
+
+            {/* Backup Reminder Card */}
+            <BackupReminderCard
+              visible={needsBackupReminder}
+              account={account}
+              style={styles.backupReminderCard}
             />
-            <View style={styles.qrCardCode}>
-              {account?.address && !isShowWatchModeModal ? (
-                <QRCode value={account.address} size={190} />
-              ) : (
-                <View style={styles.qrCodePlaceholder} />
-              )}
-            </View>
 
-            <Pressable
-              style={styles.addressDetailContainer}
-              onPress={handleCopy}>
-              <Text style={styles.qrCardAddress}>
-                <Text style={styles.highlightAddrPart}>{addressSplit[0]}</Text>
-                {addressSplit[1]}
-                <Text style={styles.highlightAddrPart}>{addressSplit[2]}</Text>
+            {/* Original QR Card */}
+            <View style={styles.qrCard}>
+              <Text style={styles.qrCardHeader}>
+                {t('page.receive.newTitle')}
               </Text>
-            </Pressable>
-          </View>
-          <Button
-            title={t('page.receive.copyAddress')}
-            icon={<RcIconMCopy color={colors2024['neutral-InvertHighlight']} />}
-            onPress={handleCopy}
-            disabled={isShowWatchModeModal}
-            type="primary"
-            containerStyle={{
-              width: '100%',
-            }}
-          />
-        </View>
+              <Button
+                titleStyle={styles.selectChainText}
+                title={isSafe ? safeChainsUI : nonSafeChainUI}
+                buttonStyle={styles.selectChain}
+                iconRight={
+                  <RcArrowRightCC
+                    width={15}
+                    height={15}
+                    color={colors2024['neutral-title-1']}
+                  />
+                }
+                onPress={handleSelectChain}
+              />
+              <View style={styles.qrCardCode}>
+                {account?.address && !isShowWatchModeModal ? (
+                  <QRCode value={account.address} size={190} />
+                ) : (
+                  <View style={styles.qrCodePlaceholder} />
+                )}
+              </View>
 
-        <Modal
+              <Pressable
+                style={styles.addressDetailContainer}
+                onPress={handleCopy}>
+                <Text style={styles.qrCardAddress}>
+                  {showName ? (
+                    <>
+                      <Text style={styles.highlightAddrPart}>
+                        {addressSplit[0]}
+                      </Text>
+                      {addressSplit[1]}
+                      <Text style={styles.highlightAddrPart}>
+                        {addressSplit[2]}
+                      </Text>
+                    </>
+                  ) : (
+                    '******'
+                  )}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </ScrollView>
+
+        <TrackedModal
+          modalId={MODAL_GATE_IDS.receiveWatchMode}
           visible={isShowWatchModeModal}
           onRequestClose={() => {
             setIsShowWatchModeModal(false);
@@ -360,44 +435,68 @@ function ReceiveScreen(): JSX.Element {
               />
             </View>
           </View>
-        </Modal>
+        </TrackedModal>
       </View>
     </FooterButtonScreenContainer>
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   headerTitle: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
+    maxWidth: SCREEN_WIDTH - 100,
   },
   screen: {
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-0'],
   },
   container: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+  },
+  scrollView: {
+    flex: 1,
+    width: '100%',
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
   },
   receiveContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
+    paddingTop: 0,
     width: '100%',
   },
+  offlineChainNotify: {
+    marginHorizontal: 0,
+    marginBottom: 12,
+    marginTop: 8,
+    width: '100%',
+  },
+  // Backup Reminder Card styles
+  backupReminderCard: {
+    marginHorizontal: 0,
+    marginBottom: 16,
+    marginTop: 8,
+    width: '100%',
+  },
+  // Original QR Card styles
   qrCard: {
     alignItems: 'center',
     borderRadius: 30,
-    width: 320,
+    width: '100%',
     paddingTop: 23,
     paddingBottom: 35,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     paddingHorizontal: 30,
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
-    marginBottom: 48,
   },
   qrCardHeader: {
     fontSize: 17,
@@ -488,7 +587,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingLeft: 12,
     paddingRight: 6,
     backgroundColor: colors2024['neutral-bg-2'],
-    // borderRadius: 100,
     alignItems: 'center',
     marginBottom: 20,
     width: 'auto',
@@ -503,9 +601,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   selectChainText: {
     fontFamily: 'SF Pro',
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '700',
-    lineHeight: 22,
     color: colors2024['neutral-title-1'],
   },
   highlightAddrPart: {

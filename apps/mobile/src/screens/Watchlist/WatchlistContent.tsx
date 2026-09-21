@@ -1,12 +1,22 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAtom, useSetAtom } from 'jotai';
-import { Pressable, RefreshControl, View, ViewToken } from 'react-native';
+import type { ViewToken } from 'react-native';
+import { Platform, Pressable, RefreshControl, View } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
 
 import { Button } from '@/components2024/Button';
 import { Text } from '@/components/Typography';
-import { preferenceService } from '@/core/services';
-import { RootNames } from '@/constant/layout';
+import {
+  getWatchlistSkipSnapshot,
+  pinUserToken,
+  setWatchlistSkip,
+} from '@/core/serviceApi/preference';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  getBottomButtonBottomOffset,
+  RootNames,
+} from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import {
   buildMarketTokenDetailFrom,
@@ -16,7 +26,7 @@ import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { tokenItemToITokenItem } from '@/utils/token';
 import { useFocusEffect } from '@react-navigation/native';
-import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
+import type { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { useFocusedTab } from 'react-native-collapsible-tab-view';
 import { useTranslation } from 'react-i18next';
 
@@ -33,10 +43,14 @@ import {
 } from './sort';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { marketRealtimePriceAtom } from '../Market/atom';
+import { TAB_BAR_HEIGHT } from '../Market/constants';
+import { setWatchlistTopCache } from './cache';
 
+const isAndroid = Platform.OS === 'android';
 const VIEWABILITY_CONFIG = {
   itemVisiblePercentThreshold: 0,
 };
+const STICKY_HEADER_INDICES = [0];
 
 export function WatchlistContent({
   onVisibleUuidsChange,
@@ -60,7 +74,7 @@ export function WatchlistContent({
 
   const [tokenSort, setTokenSort] = useAtom(watchlistTokenSortAtom);
   const [changeSort, setChangeSort] = useAtom(watchlistChangeSortAtom);
-  const [skip, setSkip] = useState(() => preferenceService.getWatchlistSkip());
+  const [skip, setSkip] = useState(() => getWatchlistSkipSnapshot());
   const [selectedTokens, setSelectedTokens] = useState<Set<string>>(new Set());
   const [hasInitialized, setHasInitialized] = useState(false);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
@@ -87,7 +101,7 @@ export function WatchlistContent({
   );
 
   useEffect(() => {
-    setSkip(preferenceService.getWatchlistSkip());
+    setSkip(getWatchlistSkipSnapshot());
   }, []);
 
   useEffect(() => {
@@ -116,19 +130,26 @@ export function WatchlistContent({
     const tokens = hotTokenList.filter(token =>
       selectedTokens.has(`${token.chain}:${token.id}`),
     );
-    tokens.forEach(token => {
-      preferenceService.pinToken({
-        chainId: token.chain,
-        tokenId: token.id,
-      });
-    });
-    handleFetchTokens();
+    void Promise.all(
+      tokens.map(token =>
+        pinUserToken({
+          chainId: token.chain,
+          tokenId: token.id,
+        }),
+      ),
+    )
+      .then(() => handleFetchTokens())
+      .catch(console.error);
   }, [handleFetchTokens, hotTokenList, selectedTokens]);
 
   const list = useMemo(
     () => sortWatchlistTokens(watchlistTokens, tokenSort, changeSort),
     [watchlistTokens, tokenSort, changeSort],
   );
+
+  useEffect(() => {
+    setWatchlistTopCache(list);
+  }, [list]);
 
   const handleOpenTokenDetail = useCallback(
     (token: TokenDetailWithPriceCurve) => {
@@ -202,10 +223,14 @@ export function WatchlistContent({
   ]);
 
   const renderItem = useCallback(
-    ({ item }: { item: TokenDetailWithPriceCurve }) => (
-      <TokenListItem item={item} onPress={handleOpenTokenDetail} />
+    ({ item, index }: { item: TokenDetailWithPriceCurve; index: number }) => (
+      <TokenListItem
+        item={item}
+        onPress={handleOpenTokenDetail}
+        style={index === 0 ? styles.firstItemPadding : undefined}
+      />
     ),
-    [handleOpenTokenDetail],
+    [handleOpenTokenDetail, styles.firstItemPadding],
   );
 
   const keyExtractor = useCallback(
@@ -240,6 +265,7 @@ export function WatchlistContent({
             }
             key={item.id}
             item={item}
+            style={styles.tokenItem}
             onPress={() => handleTokenSelect(`${item.chain}:${item.id}`)}
           />
         ))}
@@ -256,6 +282,7 @@ export function WatchlistContent({
       styles.bottomPadding,
       styles.topEmpty,
       watchlistLoading,
+      styles.tokenItem,
     ],
   );
 
@@ -265,10 +292,12 @@ export function WatchlistContent({
         {!!list.length && (
           <View style={styles.stickyHeader}>
             <WatchListHeader
-              tokenSort={tokenSort}
-              onTokenSort={handleTokenSort}
+              fdvSort={tokenSort}
+              onFdvSort={handleTokenSort}
               changeSort={changeSort}
               onChangeSort={handleChangeSort}
+              disableLeftSort
+              showFdvSort
             />
           </View>
         )}
@@ -349,7 +378,7 @@ export function WatchlistContent({
           style={styles.scrollView}
           contentContainerStyle={styles.scrollViewContent}
           ListHeaderComponent={renderListHeader}
-          stickyHeaderIndices={[0]}
+          stickyHeaderIndices={STICKY_HEADER_INDICES}
           ListEmptyComponent={renderListEmptyComponent}
           ListFooterComponent={renderListFooter}
           onViewableItemsChanged={onViewableItemsChanged}
@@ -367,13 +396,15 @@ export function WatchlistContent({
           <Pressable
             onPress={() => {
               setSkip(true);
-              preferenceService.setWatchlistSkip(true);
+              void setWatchlistSkip(true).catch(console.error);
             }}>
             <Text style={styles.skipText}>
               {t('page.watchlist.footer.skip')}
             </Text>
           </Pressable>
           <Button
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
             title={t('page.watchlist.footer.add', {
               count: selectedTokens.size,
             })}
@@ -386,62 +417,58 @@ export function WatchlistContent({
   );
 }
 
-const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
-  container: {
-    flex: 1,
-  },
-  header: {
-    height: 8,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollViewContent: {
-    paddingHorizontal: 12,
-    flexGrow: 1,
-  },
-  stickyHeader: {
-    paddingTop: 8,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
-  },
-  centerEmpty: {
-    marginTop: '50%',
-  },
-  footer: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    paddingHorizontal: 20,
-    paddingBottom: 48,
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  skipText: {
-    fontSize: 16,
-    lineHeight: 20,
-    color: colors2024['neutral-secondary'],
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'center',
-    paddingBottom: 17,
-    paddingTop: 14,
-  },
-  bottomPadding: {
-    height: 160,
-  },
-  skeletonBlock: {
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
-    width: '100%',
-    height: 74,
-    padding: 0,
-    borderRadius: 16,
-    marginTop: 8,
-  },
-  topEmpty: {
-    marginTop: 26,
-  },
-}));
+const getStyle = createGetStyles2024(
+  ({ isLight, colors2024, safeAreaInsets }) => ({
+    header: {
+      height: 8,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollViewContent: {
+      paddingHorizontal: 16,
+      paddingTop: 0,
+      marginTop: isAndroid ? TAB_BAR_HEIGHT : 0,
+      flexGrow: 1,
+    },
+    stickyHeader: {
+      paddingTop: 14,
+      paddingBottom: 4,
+      backgroundColor: colors2024['neutral-bg-1'],
+    },
+    centerEmpty: {
+      marginTop: '50%',
+    },
+    footer: {
+      backgroundColor: colors2024['neutral-bg-1'],
+      paddingHorizontal: 20,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+    },
+    skipText: {
+      fontSize: 16,
+      lineHeight: 20,
+      color: colors2024['neutral-secondary'],
+      fontWeight: '500',
+      fontFamily: 'SF Pro Rounded',
+      textAlign: 'center',
+      paddingBottom: 17,
+      paddingTop: 14,
+    },
+    bottomPadding: {
+      height: 160,
+    },
+    topEmpty: {
+      marginTop: 26,
+    },
+    tokenItem: {
+      paddingHorizontal: 12,
+    },
+    firstItemPadding: {
+      paddingTop: 8,
+    },
+  }),
+);

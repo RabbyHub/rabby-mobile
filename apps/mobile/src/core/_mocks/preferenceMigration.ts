@@ -1,4 +1,4 @@
-import type { ITokenManageSettingMap } from '../services/preference';
+import type { ITokenManageSettingMap } from '@/types/assets';
 
 export function makeTokenManageSettingMap(): ITokenManageSettingMap {
   return {

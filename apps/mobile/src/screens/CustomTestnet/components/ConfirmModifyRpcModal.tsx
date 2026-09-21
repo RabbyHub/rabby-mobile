@@ -68,7 +68,6 @@ export const ConfirmModifyRpcModal = ({
           />
           <Button
             type="primary"
-            className="w-[172px]"
             onPress={onConfirm}
             title={t('global.Confirm')}
             containerStyle={styles.button}

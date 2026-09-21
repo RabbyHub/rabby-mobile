@@ -1,28 +1,10 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import {
-  Dimensions,
-  Platform,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { Platform, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import usePrevious from 'react-use/lib/usePrevious';
 
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  createGetStyles2024,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 
-import { useLoadBalanceFromApiStage } from '@/hooks/useAccountsBalance';
 import { matomoRequestEvent } from '@/utils/analytics';
 
 import { BlurShadowView } from '@/components2024/BluerShadow';
@@ -33,8 +15,6 @@ import { sortBy } from 'lodash';
 import RNLinearGradient from 'react-native-linear-gradient';
 import { BALANCE_HIDE_TYPE, useHideBalance } from '../hooks/useHideBalance';
 import { HomeAddressItem } from './HomeAddressItem';
-import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
-import { IS_IOS } from '@/core/native/utils';
 import {
   MultiChart,
   setIsFoldMultiChart,
@@ -43,15 +23,18 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
+import { apisHomeTabIndex } from '@/hooks/navigation';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import {
-  useScene24hBalanceCombinedData,
-  useScene24hBalanceMulti24hBalance,
-  useSceneIsLoading,
-} from '@/hooks/useScene24hBalance';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
-import balanceStore from '@/store/balance';
-import { RNGHTouchableOpacity } from '@/components/customized/reexports';
+import { balance24hStore } from '@/store/balance24h';
+import { buildPortfolioAddressChange } from '@/store/homePortfolio/consistency';
+import Animated, { Easing, FadeInUp } from 'react-native-reanimated';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { useShallow } from 'zustand/react/shallow';
+
+const PINNED_ADDRESS_LIST_ENTERING = FadeInUp.duration(460).easing(
+  Easing.out(Easing.cubic),
+);
 
 function MultiPinnedAddressList({
   pinnedAccountList,
@@ -61,36 +44,57 @@ function MultiPinnedAddressList({
   hideType: BALANCE_HIDE_TYPE;
 }) {
   const { styles } = useTheme2024({ getStyle });
-
-  const balanceMap = balanceStore(s => s.balanceMap);
-  const { multi24hBalance } = useScene24hBalanceMulti24hBalance('Home');
+  const pinnedAddresses = useMemo(() => {
+    return pinnedAccountList.map(item => item.address.toLowerCase());
+  }, [pinnedAccountList]);
+  const balance24hValues = useActivityStore(
+    balance24hStore.useStore,
+    useShallow(state =>
+      pinnedAddresses.map(address => state.valueMap[address]),
+    ),
+    Object.is,
+    { storeLabel: 'home-pinned-account-24h-balances' },
+  );
 
   const addressListData = useMemo(() => {
+    const multi24hBalance = pinnedAddresses.reduce(
+      (acc, address, index) => {
+        const balance24h = balance24hValues[index];
+        if (balance24h) {
+          acc[address] = balance24h;
+        }
+        return acc;
+      },
+      {} as Record<
+        string,
+        {
+          total_usd_value?: number;
+          updateTime?: number;
+        }
+      >,
+    );
+
     return sortBy(
       pinnedAccountList.map(item => {
         const lcAddr = item.address.toLowerCase();
         const address24hBalanceData = multi24hBalance[lcAddr];
-        const balanceAccount = balanceMap?.[lcAddr];
-        const total_usd_value = address24hBalanceData?.total_usd_value || 0;
-        const assetsChange =
-          (balanceAccount?.evmBalance || 0) - total_usd_value;
-        let changePercent =
-          total_usd_value !== 0
-            ? `${Math.abs((assetsChange * 100) / total_usd_value).toFixed(2)}%`
-            : `${balanceAccount?.evmBalance === 0 ? '0' : '100.00'}%`;
+        const change = buildPortfolioAddressChange({
+          currentEvmBalance: item.evmBalance,
+          previousEvmBalance: address24hBalanceData?.total_usd_value,
+        });
 
         return {
           ...item,
           updateTime: address24hBalanceData?.updateTime,
-          balance: balanceAccount?.totalBalance || item.balance || 0,
-          evmBalance: balanceAccount?.evmBalance || item.evmBalance || 0,
-          changePercent: address24hBalanceData ? changePercent : undefined,
-          isLoss: address24hBalanceData ? assetsChange < 0 : undefined,
+          balance: item.balance ?? 0,
+          evmBalance: item.evmBalance ?? 0,
+          changePercent: change?.changePercent,
+          isLoss: change?.isLoss,
         };
       }),
       item => -(item.balance || 0),
     ).slice(0, 3);
-  }, [pinnedAccountList, multi24hBalance, balanceMap]);
+  }, [balance24hValues, pinnedAccountList, pinnedAddresses]);
 
   useEffect(() => {
     if (!addressListData?.length) {
@@ -109,18 +113,22 @@ function MultiPinnedAddressList({
         styles.accountList,
         hideType === 'HALF_HIDE' ? styles.addressOpacity : null,
       ]}>
-      {addressListData?.map(item => {
-        return (
-          <HomeAddressItem
-            hideType={hideType}
-            account={item}
-            updateTime={item.updateTime}
-            key={`${item.type}-${item.address}`}
-            isLoss={item.isLoss}
-            changePercent={item.changePercent}
-          />
-        );
-      })}
+      <Animated.View
+        entering={PINNED_ADDRESS_LIST_ENTERING}
+        style={styles.accountListContent}>
+        {addressListData?.map(item => {
+          return (
+            <HomeAddressItem
+              hideType={hideType}
+              account={item}
+              updateTime={item.updateTime}
+              key={`${item.type}-${item.address}`}
+              isLoss={item.isLoss}
+              changePercent={item.changePercent}
+            />
+          );
+        })}
+      </Animated.View>
     </View>
   );
 }
@@ -131,54 +139,12 @@ export function MultiAddressHomeHeader(
   } & RNViewProps,
 ): JSX.Element {
   const { style, onRefresh } = props;
-
-  const { combinedData: data } = useScene24hBalanceCombinedData('Home');
-
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { isDisConnect } = useGlobalStatus();
 
   const pinnedAccountList = usePinnedAccountList();
   const [hideType] = useHideBalance();
-
-  const [couldRenderLocalWebView, setCouldRenderLocalWebView] = useState(false);
-
-  const gasketWebViewRef = useRef<LocalWebView>(null);
-
-  const { loadBalanceFromApiStage } = useLoadBalanceFromApiStage();
-  const previousLoading = usePrevious(loadBalanceFromApiStage);
-  const [isAnimRunning, setIsAnimRunning] = useState(false);
-  const animTimerRef = useRef<NodeJS.Timeout | null>(null);
-  useEffect(() => {
-    if (!__DEV__ && data.isLoss) return;
-
-    const durationMs = IS_IOS ? 2000 : 2500;
-
-    if (
-      data.rawChange &&
-      loadBalanceFromApiStage !== 'loading' &&
-      previousLoading === 'loading'
-    ) {
-      setIsAnimRunning(true);
-      gasketWebViewRef.current?.sendMessage?.({
-        type: 'GASKETVIEW:TOGGLE_LOADING',
-        info: {
-          loading: previousLoading,
-          isPositive: !data.isLoss,
-        },
-        animationDurationMs: durationMs,
-        animationGradientBorderRadius: SIZES.cardContentRadius,
-      });
-    }
-
-    if (animTimerRef.current) {
-      clearTimeout(animTimerRef.current);
-    }
-    animTimerRef.current = setTimeout(
-      () => setIsAnimRunning(false),
-      durationMs,
-    );
-  }, [data.isLoss, data.rawChange, loadBalanceFromApiStage, previousLoading]);
 
   const modalRef =
     useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>(undefined);
@@ -208,7 +174,7 @@ export function MultiAddressHomeHeader(
         },
       },
       onDone: () => {
-        removeGlobalBottomSheetModal2024(modalRef.current);
+        removeGlobalBottomSheetModal2024(modalRef.current, { duration: 0 });
         modalRef.current = undefined;
       },
     });
@@ -233,65 +199,35 @@ export function MultiAddressHomeHeader(
           style: [styles.homecardWrapper],
         }}>
         <View
-          pointerEvents="none"
-          style={[
-            styles.localWebViewWrapper,
-            couldRenderLocalWebView ? styles.localWebViewWrapperShow : {},
-          ]}>
-          <LocalWebView
-            ref={gasketWebViewRef}
-            style={[styles.curveBoxChildMH, styles.localWebView]}
-            entryPath={'/pages/gasket-blurview.html'}
-            // forceUseLocalResource
-            webviewSize={{
-              width: styles.localWebView.minWidth,
-            }}
-          />
-        </View>
-        <RNLinearGradient
-          colors={
-            isLight
-              ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 0.6)']
-              : ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0)']
-          }
           style={[
             styles.curveBoxChildMH,
             styles.curveBox,
             // loading && styles.curveBoxLoading,
             {},
-          ]}
-          onLayout={event => {
-            if (IS_IOS) {
-              setTimeout(() => setCouldRenderLocalWebView(true), 500);
-            } else {
-              setCouldRenderLocalWebView(true);
-            }
-          }}>
+          ]}>
           <RNLinearGradient
             pointerEvents="none"
             colors={
               isLight
-                ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 0.6)']
-                : ['rgba(0, 0, 0, 0.40)', 'rgba(0, 0, 0, 0.10)']
+                ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, .54)']
+                : ['rgba(0, 0, 0, 0.10)', '#232428']
             }
-            start={isLight ? { x: 0.25, y: 0.5 } : { x: 0.02, y: 1.04 }}
-            end={isLight ? { x: 0.75, y: 0.5 } : { x: 1, y: 0.1 }}
-            style={[
-              styles.curveCardGradientBg,
-              isAnimRunning && styles.curveCardGradientBgWithAnim,
-            ]}
+            start={isLight ? { x: 0.25, y: 0.5 } : { x: 1.07, y: 0.42 }}
+            end={isLight ? { x: 0.75, y: 0.5 } : { x: -0.14, y: 0.59 }}
+            style={styles.curveCardGradientBg}
           />
-          <TouchableOpacity
+          <View
             style={[
               styles.curveCard,
               styles.shadowView,
               // !pinnedAccountList.length && styles.noAddressCard,
-            ]}
-            onPress={() => {
-              handleWalletsListPress();
-            }}>
+            ]}>
             <MultiChart
               hideType={hideType}
+              onPressNetWorth={() => {
+                apisHomeTabIndex.homeTabScrollerRef.current?.setIndex(1);
+              }}
+              onPressWalletList={handleWalletsListPress}
               style={[
                 styles.multiChart,
                 !pinnedAccountList?.length && styles.multiChartNoAccountsFollow,
@@ -303,8 +239,8 @@ export function MultiAddressHomeHeader(
                 pinnedAccountList={pinnedAccountList}
               />
             ) : null}
-          </TouchableOpacity>
-        </RNLinearGradient>
+          </View>
+        </View>
       </BlurShadowView>
     </View>
   );
@@ -328,23 +264,18 @@ const SIZES = {
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
-  const curveBoxBorderWidth = 1;
   const curveCardBorderWidth = !isLight ? 2 : 1;
-  const cardMinW =
-    Dimensions.get('window').width - SIZES.cardLayoutPaddingHorizontal * 2;
 
   return {
     container: {
       marginTop: 0,
       paddingVertical: 0,
       width: '100%',
-      // ...makeDebugBorder('orange'),
     },
     homecardWrapper: {
       position: 'relative',
       paddingTop: 0,
       backgroundColor: 'transparent',
-      // ...makeDebugBorder('yellow'),
       paddingVertical: 0,
       paddingHorizontal: SIZES.cardLayoutPaddingHorizontal,
       minHeight: SIZES.homecardMinHeight,
@@ -352,32 +283,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       alignItems: 'center',
       justifyContent: 'center',
       width: '100%',
-      // ...makeDebugBorder('blue'),
-    },
-    localWebViewWrapper: {
-      position: 'absolute',
-      top: 0,
-      bottom: 0,
-      left: 0,
-      right: 0,
-      zIndex: IS_IOS ? 1 : -1,
-      // paddingVertical: 0,
-      marginHorizontal:
-        isLight && IS_IOS ? 0 : SIZES.cardLayoutPaddingHorizontal,
-      borderRadius: SIZES.cardContentRadius,
-      display: 'none',
-      // it helps to check the position of webview wrapper
-      // if you see .localWebViewWrapper not filled by content in .curveBox, the sizes are wrong
-      // uncomment below line to see the border
-      // ...makeDebugBorder('green'),
-    },
-    localWebView: {
-      minWidth: cardMinW,
-      marginHorizontal: 'auto',
-      backgroundColor: 'transparent',
-    },
-    localWebViewWrapperShow: {
-      display: 'flex',
+      maxWidth: '100%',
     },
     curveBoxWrapperLoading: {},
     curveBoxChildMH: {
@@ -389,12 +295,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderWidth: isLight ? curveCardBorderWidth : 0,
       borderColor: 'transparent',
       borderRadius: SIZES.cardContentRadius,
-      // ...makeDevOnlyStyle({
-      //   opacity: 0,
-      // }),
-      minWidth: cardMinW,
-      // ...makeDebugBorder('yellow'),
       width: '100%',
+      maxWidth: '100%',
+      alignSelf: 'stretch',
       alignItems: 'center',
       position: 'relative',
     },
@@ -413,9 +316,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingVertical: SIZES.curveCardPy,
       paddingHorizontal: 0,
       borderWidth: 0,
-      borderColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-line'],
       backgroundColor: 'transparent',
       // ...makeDebugBorder('purple'),
     },
@@ -429,15 +329,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       left: 0,
       right: 0,
       borderRadius: SIZES.cardContentRadius,
-      ...(!isLight && {
-        borderWidth: 2,
-        borderColor: 'rgba(37, 38, 40, 1)',
-      }),
-    },
-    curveCardGradientBgWithAnim: {
-      ...(!isLight && {
-        borderColor: 'rgba(37, 38, 40, 0.1)',
-      }),
+      borderWidth: 1,
+      borderColor: isLight ? 'rgba(255, 255, 255, 1)' : 'rgba(35, 36, 40, 1)',
     },
     shadowView: {
       ...Platform.select({
@@ -459,25 +352,29 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
 
     multiChart: {
-      paddingTop: 24,
-      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingHorizontal: 16,
       width: '100%',
-      minWidth: cardMinW,
-      // ...makeDebugBorder('purple'),
+      maxWidth: '100%',
     },
 
     multiChartNoAccountsFollow: {
-      marginBottom: 24,
+      marginBottom: 20,
     },
 
     accountList: {
       display: 'flex',
       flexDirection: 'column',
-      gap: 8,
       width: '100%',
       marginTop: 20,
       paddingHorizontal: 8,
       marginBottom: 12,
+    },
+    accountListContent: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 8,
+      width: '100%',
     },
     addressOpacity: {
       opacity: 0.3,

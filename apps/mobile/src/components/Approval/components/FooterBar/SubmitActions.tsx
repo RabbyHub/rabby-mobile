@@ -1,4 +1,4 @@
-import { Button } from '@/components/Button';
+import { Button } from '@/components2024/Button';
 import { globalBottomSheetModalAddListener } from '@/components/GlobalBottomSheetModal';
 import { EVENT_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { Tip } from '@/components/Tip';
@@ -8,13 +8,15 @@ import { extend } from 'colord';
 import mixPlugin from 'colord/plugins/mix';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
-import { ActionsContainer, PropsWithAuthSession } from './ActionsContainer';
+import { View } from 'react-native';
+import type { PropsWithAuthSession } from './ActionsContainer';
+import { ActionsContainer } from './ActionsContainer';
 import { GasLessAnimatedWrapper } from './GasLessComponents';
 import { useSubmitAction } from './useSubmitAction';
-import { preferenceService } from '@/core/services';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { setReportActionTs } from '@/core/serviceApi/preference';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { Text } from '@/components/Typography';
+import { BOTTOM_BUTTON_DOUBLE_HEIGHT } from '@/constant/layout';
 
 extend([mixPlugin]);
 
@@ -35,17 +37,19 @@ export const SubmitActions: React.FC<PropsWithAuthSession> = ({
   const { t } = useTranslation();
   const [isSign, setIsSign] = React.useState(false);
 
+  React.useEffect(() => {
+    if (disabledProcess) setIsSign(false);
+  }, [disabledProcess]);
+
   const handleClickSign = React.useCallback(() => {
+    if (disabledProcess) return;
     setIsSign(true);
 
     isSwap &&
-      preferenceService.setReportActionTs(
-        REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN,
-        {
-          chain: chain?.serverId as string,
-        },
-      );
-  }, [chain, isSwap]);
+      void setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN, {
+        chain: chain?.serverId as string,
+      });
+  }, [chain, isSwap, disabledProcess]);
   const colors = useThemeColors();
   const { styles } = useTheme2024({ getStyle: getStyles2024 });
   const [pressedConfirm, setPressedConfirm] = React.useState(false);
@@ -53,6 +57,7 @@ export const SubmitActions: React.FC<PropsWithAuthSession> = ({
     useLastUnlockedAuth,
   });
   const handlePress = React.useCallback(() => {
+    if (disabledProcess || pressedConfirm) return;
     setPressedConfirm(true);
     globalBottomSheetModalAddListener(
       EVENT_NAMES.DISMISS,
@@ -62,7 +67,7 @@ export const SubmitActions: React.FC<PropsWithAuthSession> = ({
       true,
     );
     onPress(onSubmit, () => setPressedConfirm(false));
-  }, [onSubmit, setPressedConfirm, onPress]);
+  }, [onSubmit, setPressedConfirm, onPress, disabledProcess, pressedConfirm]);
 
   return (
     <ActionsContainer onCancel={onCancel} isMiniSignTx={isMiniSignTx}>
@@ -70,12 +75,9 @@ export const SubmitActions: React.FC<PropsWithAuthSession> = ({
         <Button
           disabled={disabledProcess || pressedConfirm}
           type="primary"
-          buttonStyle={StyleSheet.flatten([
-            styles.button,
-            styles.buttonConfirm,
-          ])}
+          height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+          buttonStyle={[styles.button, styles.buttonConfirm]}
           titleStyle={styles.buttonText}
-          disabledStyle={styles.buttonDisabled}
           onPress={handlePress}
           title={
             <View style={styles.submitButtonWrapper}>
@@ -112,6 +114,7 @@ export const SubmitActions: React.FC<PropsWithAuthSession> = ({
                 <Button
                   disabled={disabledProcess}
                   type="primary"
+                  height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
                   buttonStyle={[
                     styles.button,
                     gasLess && gasLessThemeColor
@@ -122,7 +125,6 @@ export const SubmitActions: React.FC<PropsWithAuthSession> = ({
                       : {},
                   ]}
                   titleStyle={styles.buttonText}
-                  disabledStyle={styles.buttonDisabled}
                   onPress={handleClickSign}
                   title={t('page.signFooterBar.signAndSubmitButton')}
                 />
@@ -137,24 +139,17 @@ export const SubmitActions: React.FC<PropsWithAuthSession> = ({
 
 const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
   button: {
-    height: 56,
-    borderColor: colors2024['brand-default'],
-    borderWidth: 1,
-    borderRadius: 100,
+    height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
+    borderRadius: 12,
   },
   buttonConfirm: {
     width: 220,
-    borderColor: colors2024['brand-default'],
-    backgroundColor: colors2024['brand-default'],
   },
   buttonText: {
     color: colors2024['neutral-InvertHighlight'],
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
-  },
-  buttonDisabled: {
-    borderColor: 'transparent', //colors2024['brand-default'],
   },
   buttonWrapper: {},
   submitButtonWrapper: {

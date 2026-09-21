@@ -1,5 +1,6 @@
-import type { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
+import type { GasLevel, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import BigNumber from 'bignumber.js';
 
 import type {
   SignatureAction,
@@ -9,13 +10,13 @@ import type {
 
 import { signatureReducer } from './machine';
 import { findChain } from '@/utils/chain';
-import { SignerCtx } from '../domain/ctx';
+import type { SignerCtx } from '../domain/ctx';
 import { signatureService } from '../services/SignatureService';
-import { SignerConfig } from '../domain/types';
+import type { SignerConfig } from '../domain/types';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { t } from 'i18next';
-import { useSyncExternalStore } from 'react';
+
 import { apiLedger, apiOneKey } from '@/core/apis';
 import {
   callConnectLedgerModal,
@@ -25,10 +26,8 @@ import {
   callConnectOneKeyModal,
   setOneKeyStatus,
 } from '@/hooks/onekey/useOneKeyStatus';
-import {
-  notificationService,
-  transactionHistoryService,
-} from '@/core/services';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import { getMiniSignGasPanelController } from './MiniSignGasPanelController';
 
 const ETH_GAS_USD_LIMIT = 15;
 const OTHER_GAS_USD_LIMIT = 5;
@@ -38,6 +37,7 @@ export const MINI_SIGN_ERROR = {
   PREFETCH_FAILURE: 'prepare failure',
   USER_CANCELLED: 'User cancelled',
   CANT_PROCESS: 'Can not process',
+  GAS_NOT_ENOUGH: 'Gas not enough',
 };
 
 type Subscriber = (state: SignatureFlowState) => void;
@@ -56,7 +56,11 @@ const defaultError = {
 const createErrorMessage = (err: unknown) =>
   err instanceof Error ? err.message : String(err ?? 'Unknown error');
 
-class SignatureManager {
+let nextInstanceId = 0;
+
+export class SignatureManager {
+  public readonly instanceId: string;
+  private signingTxIds = new Set<string>();
   private state: SignatureFlowState = {
     status: 'idle',
   };
@@ -65,10 +69,17 @@ class SignatureManager {
   private seq = 0;
   private pendingCtx = new Map<string, Promise<SignerCtx>>();
   private notifyScheduled = false;
+  private manualGasMethod?: SignerCtx['gasMethod'];
+  private manualGasFingerprint?: string;
+
   private pendingResult: {
     resolve: (hashes: string[]) => void;
     reject: (reason: any) => void;
   } | null = null;
+
+  constructor(instanceId?: string) {
+    this.instanceId = instanceId ?? `sig-${++nextInstanceId}`;
+  }
 
   private dispatch(action: SignatureAction) {
     const next = signatureReducer(this.state, action);
@@ -131,6 +142,30 @@ class SignatureManager {
     this.pendingCtx.clear();
   }
 
+  private getManualGasMethod(fingerprint?: string) {
+    return fingerprint && this.manualGasFingerprint === fingerprint
+      ? this.manualGasMethod
+      : undefined;
+  }
+
+  private withManualGasMethod(ctx: SignerCtx, fingerprint = ctx.fingerprint) {
+    const manualGasMethod = this.getManualGasMethod(fingerprint);
+    return manualGasMethod
+      ? ({
+          ...ctx,
+          gasMethod: manualGasMethod,
+          manualGasMethod,
+          useGasless: manualGasMethod === 'gasAccount' ? false : ctx.useGasless,
+        } as SignerCtx)
+      : ctx;
+  }
+
+  private bindManualGasMethodToFingerprint(fingerprint: string) {
+    if (this.manualGasMethod) {
+      this.manualGasFingerprint = fingerprint;
+    }
+  }
+
   private markRun(fingerprint: string, currentPendingId?: number) {
     if (currentPendingId && this.run?.fingerprint === fingerprint) {
       return currentPendingId;
@@ -148,6 +183,7 @@ class SignatureManager {
 
   private ensureContext(request: SignatureRequest, opId?: number) {
     const fingerprint = this.getFingerprint(request.txs);
+    this.bindManualGasMethodToFingerprint(fingerprint);
 
     this.dispatch({ type: 'SET_CONFIG', payload: request.config });
 
@@ -156,13 +192,18 @@ class SignatureManager {
       this.state.ctx &&
       this.state.status !== 'error'
     ) {
-      return Promise.resolve(this.state.ctx);
+      return Promise.resolve(
+        this.withManualGasMethod(this.state.ctx, fingerprint),
+      );
     }
 
     const cached = this.pendingCtx.get(fingerprint);
     if (cached) return cached;
     const currentOpId = this.markRun(fingerprint, opId);
-    const skeleton = this.createSkeletonCtx(request.txs, fingerprint);
+    const skeleton = this.withManualGasMethod(
+      this.createSkeletonCtx(request.txs, fingerprint),
+      fingerprint,
+    );
 
     this.dispatch({
       type: 'PREFETCH_START',
@@ -179,10 +220,15 @@ class SignatureManager {
         gasSelection: request.gasSelection,
       })
       .then(ctx => {
+        const nextCtx = this.withManualGasMethod(ctx, fingerprint);
         if (this.isActive(currentOpId, fingerprint)) {
-          this.dispatch({ type: 'PREFETCH_SUCCESS', fingerprint, ctx });
+          this.dispatch({
+            type: 'PREFETCH_SUCCESS',
+            fingerprint,
+            ctx: nextCtx,
+          });
         }
-        return ctx;
+        return nextCtx;
       })
       .catch(error => {
         console.error('PREFETCH_FAILURE error', error);
@@ -283,6 +329,9 @@ class SignatureManager {
       !!canUseGasLess;
 
     if (autoUseGasFreeMethod && state.ctx) {
+      if (state.ctx.gasMethod === 'gasAccount') {
+        state.ctx.gasMethod = 'native';
+      }
       state.ctx.useGasless = true;
       return true;
     }
@@ -290,31 +339,39 @@ class SignatureManager {
     return !disabledProcess;
   }
 
-  public getState() {
+  public getState = () => {
     return this.state;
-  }
+  };
 
-  public subscribe(fn: Subscriber) {
+  public subscribe = (fn: Subscriber) => {
     this.subscribers.push(fn);
     return () => {
       this.subscribers = this.subscribers.filter(e => e !== fn);
     };
-  }
+  };
 
   public prefetch(request: SignatureRequest) {
-    this.close();
+    const fingerprint = this.getFingerprint(request.txs);
+
+    this.close({ preserveManualGasMethod: true });
+    this.bindManualGasMethodToFingerprint(fingerprint);
+
     return this.ensureContext(request);
   }
 
   public async openUI(request: SignatureRequest) {
     const fingerprint = this.getFingerprint(request.txs);
+    this.bindManualGasMethodToFingerprint(fingerprint);
     const opId = this.markRun(fingerprint);
     this.dispatch({ type: 'SET_CONFIG', payload: request.config });
 
     const prepared =
       this.pendingCtx.get(fingerprint) || this.ensureContext(request, opId);
 
-    const skeleton = this.createSkeletonCtx(request.txs, fingerprint);
+    const skeleton = this.withManualGasMethod(
+      this.createSkeletonCtx(request.txs, fingerprint),
+      fingerprint,
+    );
     this.dispatch({ type: 'OPEN_UI_SKELETON', fingerprint, ctx: skeleton });
 
     try {
@@ -326,8 +383,9 @@ class SignatureManager {
         prepared,
       });
       if (!this.isActive(opId, fingerprint)) return ctx;
-      this.dispatch({ type: 'OPEN_UI_SUCCESS', fingerprint, ctx });
-      return ctx;
+      const nextCtx = this.withManualGasMethod(ctx, fingerprint);
+      this.dispatch({ type: 'OPEN_UI_SUCCESS', fingerprint, ctx: nextCtx });
+      return nextCtx;
     } catch (error) {
       if (!this.isActive(opId, fingerprint)) return;
       const message = createErrorMessage(error);
@@ -382,7 +440,20 @@ class SignatureManager {
 
       const nextCtx = await nextCtxPromise;
       if (!this.isActive(opId, fingerprint)) return;
-      this.dispatch({ type: 'UPDATE_CTX', fingerprint, ctx: nextCtx });
+      const latestCtx =
+        this.state.fingerprint === fingerprint ? this.state.ctx : undefined;
+      const manualGasMethod = this.getManualGasMethod(fingerprint);
+      this.dispatch({
+        type: 'UPDATE_CTX',
+        fingerprint,
+        ctx: {
+          ...nextCtx,
+          gasMethod:
+            manualGasMethod ?? latestCtx?.gasMethod ?? nextCtx.gasMethod,
+          manualGasMethod: manualGasMethod ?? latestCtx?.manualGasMethod,
+          useGasless: latestCtx?.useGasless ?? nextCtx.useGasless,
+        } as SignerCtx,
+      });
     } catch (error) {
       if (!this.isActive(opId, fingerprint)) return;
       throw error instanceof Error ? error : new Error(String(error));
@@ -393,22 +464,81 @@ class SignatureManager {
     return this.updateGas(gas);
   }
 
-  public async send(retry?: boolean) {
+  public replaceTxs(nextTxs: Tx[]) {
+    const { ctx, fingerprint } = this.state;
+    if (!ctx || !fingerprint) return;
+
+    const nextCalc = ctx.txsCalc.map((item, index) => {
+      const nextTx = nextTxs[index];
+      if (!nextTx) {
+        return item;
+      }
+
+      return {
+        ...item,
+        tx: {
+          ...item.tx,
+          nonce: nextTx.nonce ?? item.tx.nonce,
+        },
+      };
+    });
+
+    this.dispatch({
+      type: 'UPDATE_CTX',
+      fingerprint,
+      ctx: {
+        ...ctx,
+        txs: nextTxs,
+        txsCalc: nextCalc,
+      } as SignerCtx,
+    });
+  }
+
+  public async send(
+    options?: boolean | { retry?: boolean; isHideErrorUI?: boolean },
+  ) {
+    const retry = typeof options === 'boolean' ? options : options?.retry;
+    const isHideErrorUI =
+      typeof options === 'boolean' ? undefined : options?.isHideErrorUI;
     const { ctx, config, fingerprint } = this.state;
     if (!ctx || !config || !fingerprint) {
       throw new Error('Signature is not ready');
     }
     if (!this.canProcess()) {
-      this.rejectPending(MINI_SIGN_ERROR.CANT_PROCESS);
-      throw MINI_SIGN_ERROR.CANT_PROCESS;
+      if (ctx.isGasNotEnough) {
+        this.rejectPending(MINI_SIGN_ERROR.GAS_NOT_ENOUGH);
+        throw MINI_SIGN_ERROR.GAS_NOT_ENOUGH;
+      } else {
+        this.rejectPending(MINI_SIGN_ERROR.CANT_PROCESS);
+        throw MINI_SIGN_ERROR.CANT_PROCESS;
+      }
     }
     const opId = this.markRun(fingerprint);
     this.dispatch({ type: 'SEND_START', fingerprint });
     try {
+      const latestCtx =
+        this.state.fingerprint === fingerprint && this.state.ctx
+          ? this.state.ctx
+          : ctx;
+      const sendCtx = this.withManualGasMethod(latestCtx, fingerprint);
       const res = await signatureService.send({
-        ctx,
+        ctx: sendCtx,
         config,
         retry,
+        onSigningTxCreated: signingTxId => {
+          if (!this.isActive(opId, fingerprint)) {
+            void transactionHistoryServiceApi
+              .removeSigningTx(signingTxId)
+              .catch(error => {
+                console.error(
+                  '[SignatureManager] remove stale signing tx failed',
+                  error,
+                );
+              });
+            return;
+          }
+          this.signingTxIds.add(signingTxId);
+        },
         onProgress: nextCtx => {
           if (!this.isActive(opId, fingerprint)) return;
           this.dispatch({ type: 'SEND_PROGRESS', fingerprint, ctx: nextCtx });
@@ -422,6 +552,11 @@ class SignatureManager {
         return hashes;
       }
       if (res.error) {
+        if (isHideErrorUI) {
+          this.rejectPending(res.error.description);
+          return res;
+        }
+
         this.dispatch({
           type: 'SEND_FAILURE',
           fingerprint,
@@ -444,16 +579,27 @@ class SignatureManager {
   }
 
   private removeSigningTx() {
-    const signingTxId = notificationService.currentMiniApproval?.signingTxId;
-    if (signingTxId) {
-      transactionHistoryService.removeSigningTx(signingTxId);
-      notificationService.currentMiniApproval = null;
+    if (!this.signingTxIds.size) {
+      return;
     }
+    for (const signingTxId of this.signingTxIds) {
+      void transactionHistoryServiceApi
+        .removeSigningTx(signingTxId)
+        .catch(error => {
+          console.error('[SignatureManager] remove signing tx failed', error);
+        });
+    }
+    this.signingTxIds.clear();
   }
 
-  public reset() {
+  public reset(options?: { preserveManualGasMethod?: boolean }) {
+    if (!options?.preserveManualGasMethod) {
+      this.manualGasMethod = undefined;
+      this.manualGasFingerprint = undefined;
+    }
     this.clearRunState();
     this.seq++;
+    getMiniSignGasPanelController(this).reset();
     if (this.pendingResult) {
       this.pendingResult.reject(MINI_SIGN_ERROR.USER_CANCELLED);
       this.pendingResult = null;
@@ -466,8 +612,13 @@ class SignatureManager {
     this.dispatch({ type: 'SET_CONFIG', payload: config });
   }
 
-  public close() {
-    this.reset();
+  public close(options?: { preserveManualGasMethod?: boolean }) {
+    this.reset(options);
+  }
+
+  public clearManualGasMethod() {
+    this.manualGasMethod = undefined;
+    this.manualGasFingerprint = undefined;
   }
 
   private async checkHardWareConnected(cb: () => void) {
@@ -524,8 +675,12 @@ class SignatureManager {
     return;
   }
 
-  public async openDirect(request: SignatureRequest) {
+  public async openDirect(
+    request: SignatureRequest,
+    opts?: { isHideErrorUI?: boolean },
+  ) {
     const fingerprint = this.getFingerprint(request.txs);
+    this.bindManualGasMethodToFingerprint(fingerprint);
     const resultPromise = this.createResultPromise();
     if (this.state.status === 'prefetch_failure') {
       this.rejectPending(MINI_SIGN_ERROR.PREFETCH_FAILURE);
@@ -536,7 +691,10 @@ class SignatureManager {
     this.dispatch({
       type: 'UPDATE_CTX',
       fingerprint,
-      ctx: { ...this.state.ctx, mode: 'direct' } as SignerCtx,
+      ctx: this.withManualGasMethod(
+        { ...this.state.ctx, mode: 'direct' } as SignerCtx,
+        fingerprint,
+      ),
     });
 
     try {
@@ -560,11 +718,16 @@ class SignatureManager {
       this.dispatch({
         type: 'UPDATE_CTX',
         fingerprint,
-        ctx: { ...this.state.ctx, mode: 'direct' } as SignerCtx,
+        ctx: this.withManualGasMethod(
+          { ...this.state.ctx, mode: 'direct' } as SignerCtx,
+          fingerprint,
+        ),
       });
 
       await this.checkHardWareConnected(() =>
-        this.send().catch(() => undefined),
+        this.send({ isHideErrorUI: opts?.isHideErrorUI }).catch(
+          () => undefined,
+        ),
       );
     } catch (error) {
       const message = createErrorMessage(error);
@@ -585,13 +748,87 @@ class SignatureManager {
     });
   }
 
-  public setGasMethod(method: 'native' | 'gasAccount') {
+  public setGasMethod(
+    method: 'native' | 'gasAccount',
+    options?: { manual?: boolean },
+  ) {
     const { ctx, fingerprint } = this.state;
     if (!ctx || !fingerprint) return;
+    if (options?.manual) {
+      this.manualGasMethod = method;
+      this.manualGasFingerprint = fingerprint;
+    }
+    const nextGasMethod = this.getManualGasMethod(fingerprint) ?? method;
     this.dispatch({
       type: 'UPDATE_CTX',
       fingerprint,
-      ctx: { ...ctx, gasMethod: method } as SignerCtx,
+      ctx: {
+        ...ctx,
+        gasMethod: nextGasMethod,
+        manualGasMethod:
+          this.manualGasFingerprint === fingerprint
+            ? this.manualGasMethod
+            : ctx.manualGasMethod,
+        useGasless: nextGasMethod === 'gasAccount' ? false : ctx.useGasless,
+      } as SignerCtx,
+    });
+  }
+
+  public setTempoFeeToken(
+    token: TokenItem,
+    options?: {
+      applyFeeToken?: boolean;
+      tempoPreferredFeeTokenId?: string;
+    },
+  ) {
+    const { ctx, fingerprint } = this.state;
+    if (!ctx || !fingerprint) {
+      return;
+    }
+    const shouldApplyFeeToken =
+      ctx.gasMethod !== 'gasAccount' && options?.applyFeeToken !== false;
+    const tokenId = token.id;
+
+    const txs = ctx.txs.map(tx => {
+      const next = { ...tx } as Tx & { feeToken?: string };
+      if (shouldApplyFeeToken) {
+        next.feeToken = tokenId;
+      }
+      return next as Tx;
+    });
+
+    const txsCalc = ctx.txsCalc.map(item => {
+      const nextTx = { ...item.tx } as Tx & { feeToken?: string };
+      if (shouldApplyFeeToken) {
+        nextTx.feeToken = tokenId;
+      }
+      return {
+        ...item,
+        tx: nextTx as Tx,
+      };
+    });
+
+    this.dispatch({
+      type: 'UPDATE_CTX',
+      fingerprint,
+      ctx: {
+        ...ctx,
+        txs,
+        txsCalc,
+        gasToken: {
+          tokenId,
+          symbol: token.display_symbol || token.symbol,
+          decimals: token.decimals || 18,
+          logoUrl: token.logo_url,
+        },
+        nativeTokenBalance: new BigNumber(
+          token.raw_amount_hex_str || 0,
+          16,
+        ).toFixed(0),
+        tempoPreferredFeeTokenId:
+          options?.tempoPreferredFeeTokenId ||
+          (shouldApplyFeeToken ? tokenId : ctx.tempoPreferredFeeTokenId),
+      } as SignerCtx,
     });
   }
 
@@ -642,17 +879,5 @@ class SignatureManager {
 
 export const signatureManager = new SignatureManager();
 
-export const useSignatureStore = <T = SignatureFlowState>(
-  selector?: (state: SignatureFlowState) => T,
-) =>
-  useSyncExternalStore(
-    signatureManager.subscribe.bind(signatureManager),
-    () => {
-      const snapshot = signatureManager.getState();
-      return (selector ? selector(snapshot) : snapshot) as T;
-    },
-    () => {
-      const snapshot = signatureManager.getState();
-      return (selector ? selector(snapshot) : snapshot) as T;
-    },
-  );
+// Note: useSignatureStore is now defined in useSignatureStore.ts to avoid circular deps
+// Re-exported from state/index.ts for backward compatibility

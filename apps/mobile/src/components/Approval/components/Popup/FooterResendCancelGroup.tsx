@@ -26,7 +26,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   buttonTitleStyle: {
     color: colors2024['blue-default'],
-    fontSize: 15,
+    fontSize: 18,
+    lineHeight: 22,
   },
   wrapper: {
     flexDirection: 'row',

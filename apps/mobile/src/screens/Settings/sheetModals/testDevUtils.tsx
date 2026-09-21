@@ -2,6 +2,7 @@ import { RcArrowRightCC } from '@/assets/icons/common';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { type E2ETestID, makeTestIDProps } from '@/utils/makeTestIDProps';
 import { View } from 'react-native';
 import { Text } from '@/components/Typography';
 
@@ -17,6 +18,8 @@ export type DevTestItem = {
   disabled?: boolean;
   visible?: boolean;
   label: string;
+  testID?: E2ETestID | null;
+  accessibilityLabel?: E2ETestID | null;
   icon?: /* ((ctx: GenerateNodeCtx) => React.ReactNode) |  */ React.ReactNode;
   rightNode?: React.ReactNode | ((ctx?: GenerateNodeCtx) => React.ReactNode);
   onPress?: () => ItOrItsPromise<PressResult>;
@@ -41,6 +44,7 @@ export function GeneralTestItem({
 
   return (
     <TouchableView
+      {...makeTestIDProps(item.testID ?? null, item.accessibilityLabel ?? null)}
       style={[
         styles.settingItem,
         itemIndex > 0 && styles.notFirstOne,

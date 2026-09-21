@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useGasAccountSign } from './atom';
 import { openapi } from '@/core/request';
 import useDebounce from 'react-use/lib/useDebounce';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useRequest } from 'ahooks';
 
 export const GAS_ACCOUNT_INSUFFICIENT_TIP =
@@ -65,8 +65,7 @@ export const useGasAccountTxsCheck = ({
     [sig, accountId, isReady, txs],
   );
 
-  const gasAccountCanPay =
-    gasMethod === 'gasAccount' &&
+  const canUseGasAccount =
     isSupportedAddr &&
     noCustomRPC &&
     !!gasAccountCost?.balance_is_enough &&
@@ -74,23 +73,19 @@ export const useGasAccountTxsCheck = ({
     !!gasAccountCost.is_gas_account &&
     !gasAccountCost.err_msg;
 
+  const gasAccountCanPay = gasMethod === 'gasAccount' && canUseGasAccount;
+
   const canGotoUseGasAccount =
     isSupportedAddr &&
     noCustomRPC &&
-    gasAccountCost &&
     !!gasAccountCost?.balance_is_enough &&
-    !gasAccountCost.chain_not_support;
-  // &&
-  // !!gasAccountCost.is_gas_account;
+    !gasAccountCost?.chain_not_support;
 
   const canDepositUseGasAccount =
     isSupportedAddr &&
     noCustomRPC &&
-    gasAccountCost &&
     !gasAccountCost?.balance_is_enough &&
-    !gasAccountCost.chain_not_support;
-  // &&
-  // !!gasAccountCost.is_gas_account;
+    !gasAccountCost?.chain_not_support;
 
   return {
     gasAccountCost,
@@ -99,6 +94,7 @@ export const useGasAccountTxsCheck = ({
     isGasAccountLogin,
     setIsGasAccountLogin,
     gasAccountCanPay,
+    canUseGasAccount,
     canGotoUseGasAccount,
     canDepositUseGasAccount,
     gasAccountCostFn,

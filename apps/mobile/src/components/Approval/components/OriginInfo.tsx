@@ -1,15 +1,16 @@
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { findChain } from '@/utils/chain';
-import { CHAINS, Chain } from '@debank/common';
+import type { Chain } from '@debank/common';
+import { CHAINS } from '@debank/common';
 import React, { useEffect, useMemo } from 'react';
 import SecurityLevelTagNoText from './SecurityEngine/SecurityLevelTagNoText';
-import { Result } from '@rabby-wallet/rabby-security-engine';
+import type { Result } from '@rabby-wallet/rabby-security-engine';
 import { useApprovalSecurityEngine } from '../hooks/useApprovalSecurityEngine';
-import { dappService } from '@/core/services';
+import { dappServiceApi, getDappSnapshot } from '@/core/serviceApi/dapp';
 import { Image, View } from 'react-native';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { useTheme2024 } from '@/hooks/theme';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { Tip } from '@/components';
 import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -33,9 +34,11 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     position: 'relative',
     paddingTop: 10,
     paddingBottom: 8,
+    paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
+    alignSelf: 'stretch',
   },
   originText: {
     color: colors2024['neutral-title-1'],
@@ -45,6 +48,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     fontStyle: 'normal',
     fontWeight: '900',
     lineHeight: 24,
+    flexShrink: 1,
   },
   chainLogo: {
     position: 'absolute',
@@ -57,6 +61,20 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   originLogo: {
     position: 'relative',
     marginRight: 8,
+  },
+  securityTagContainer: {
+    position: 'absolute',
+    top: 0,
+    right: -14,
+    bottom: 0,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  securityTag: {
+    position: 'relative',
+    top: 0,
+    right: 0,
+    marginTop: 0,
   },
 }));
 
@@ -74,19 +92,19 @@ export const OriginInfo: React.FC<Props> = ({
   const { styles } = useTheme2024({ getStyle });
 
   const currentChain = useMemo(() => {
-    if (inDappAction) {
-      return chain || CHAINS.ETH;
+    if (chain) {
+      return chain;
     }
-    if (origin === INTERNAL_REQUEST_ORIGIN) {
-      return chain || CHAINS.ETH;
-    } else {
-      if (!connectedSite) {
-        return CHAINS.ETH;
-      }
-      return findChain({
+
+    if (inDappAction || origin === INTERNAL_REQUEST_ORIGIN || !connectedSite) {
+      return CHAINS.ETH;
+    }
+
+    return (
+      findChain({
         enum: connectedSite.chainId,
-      })!;
-    }
+      }) || CHAINS.ETH
+    );
   }, [inDappAction, origin, chain, connectedSite]);
 
   const displayOrigin = useMemo(() => {
@@ -97,10 +115,29 @@ export const OriginInfo: React.FC<Props> = ({
   }, [origin]);
 
   useEffect(() => {
+    let cancelled = false;
+
     if (origin) {
-      const result = dappService.getDapp(origin);
-      result && setConnectedSite(result);
+      const snapshot = getDappSnapshot(origin);
+      if (snapshot) {
+        setConnectedSite(snapshot);
+      } else {
+        void dappServiceApi
+          .getDapp(origin)
+          .then(result => {
+            if (!cancelled && result) {
+              setConnectedSite(result);
+            }
+          })
+          .catch(error => {
+            console.error('[OriginInfo] load dapp failed', error);
+          });
+      }
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [origin]);
 
   const engineResultMap = useMemo(() => {
@@ -171,30 +208,38 @@ export const OriginInfo: React.FC<Props> = ({
           )}
         </Tip>
       </View>
-      <Text style={styles.originText}>{displayOrigin}</Text>
+      <Text style={styles.originText} numberOfLines={1} ellipsizeMode="tail">
+        {displayOrigin}
+      </Text>
       {engineResultMap['1088'] && (
-        <SecurityLevelTagNoText
-          enable={engineResultMap['1088'].enable}
-          level={
-            security.currentTx.processedRules.includes('1088')
-              ? 'proceed'
-              : engineResultMap['1088'].level
-          }
-          onClick={() => handleClickRule('1088')}
-          right={-14}
-        />
+        <View style={styles.securityTagContainer}>
+          <SecurityLevelTagNoText
+            enable={engineResultMap['1088'].enable}
+            level={
+              security.currentTx.processedRules.includes('1088')
+                ? 'proceed'
+                : engineResultMap['1088'].level
+            }
+            onClick={() => handleClickRule('1088')}
+            right={0}
+            style={styles.securityTag}
+          />
+        </View>
       )}
       {engineResultMap['1089'] && (
-        <SecurityLevelTagNoText
-          enable={engineResultMap['1089'].enable}
-          level={
-            security.currentTx.processedRules.includes('1089')
-              ? 'proceed'
-              : engineResultMap['1089'].level
-          }
-          onClick={() => handleClickRule('1089')}
-          right={-14}
-        />
+        <View style={styles.securityTagContainer}>
+          <SecurityLevelTagNoText
+            enable={engineResultMap['1089'].enable}
+            level={
+              security.currentTx.processedRules.includes('1089')
+                ? 'proceed'
+                : engineResultMap['1089'].level
+            }
+            onClick={() => handleClickRule('1089')}
+            right={0}
+            style={styles.securityTag}
+          />
+        </View>
       )}
     </View>
   );

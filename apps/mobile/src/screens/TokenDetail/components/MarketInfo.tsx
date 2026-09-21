@@ -1,13 +1,19 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 
+import AnimatedTickerText from '@/components/Animated/AnimatedTickerText';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { View } from 'react-native';
+import { useSharedValue } from 'react-native-reanimated';
 import { formatPrice, formatUsdValue } from '@/utils/number';
 import { useTranslation } from 'react-i18next';
-import { formatAmountValueKMB } from '../util';
+import { formatAmountValueKMB, formatUsdValueKMB } from '../util';
 import { Text } from '@/components/Typography';
 import { isNumber } from 'lodash';
+
+const PRICE_VALUE_MAX_LENGTH = 7;
+const PRICE_VALUE_BASE_FONT_SIZE = 38;
+const PRICE_VALUE_MIN_FONT_SIZE = 22;
 
 const MarketInfo = ({
   price,
@@ -29,6 +35,19 @@ const MarketInfo = ({
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const currentIsLoss = isNumber(price24hChange) ? price24hChange < 0 : false;
+  const priceText = `$${formatPrice(price)}`;
+  const priceValue = useSharedValue(priceText);
+  const previousPriceTextRef = useRef(priceText);
+
+  useEffect(() => {
+    if (previousPriceTextRef.current === priceText) {
+      return;
+    }
+
+    previousPriceTextRef.current = priceText;
+    priceValue.value = priceText;
+  }, [priceText, priceValue]);
+
   const percentChangeText = useMemo(() => {
     const changeValue = isNumber(price24hChange)
       ? formatUsdValue(price24hChange * price)
@@ -49,7 +68,19 @@ const MarketInfo = ({
   return (
     <View style={styles.container}>
       <View style={styles.priceContainer}>
-        <Text style={styles.priceValue}>{`$${formatPrice(price)}`}</Text>
+        <AnimatedTickerText
+          value={priceValue}
+          maxLength={16}
+          duration={320}
+          lineHeight={46}
+          style={styles.priceValue}
+          fontSizeByLength={{
+            maxFontSize: PRICE_VALUE_BASE_FONT_SIZE,
+            minFontSize: PRICE_VALUE_MIN_FONT_SIZE,
+            threshold: PRICE_VALUE_MAX_LENGTH,
+            step: 3,
+          }}
+        />
         <View style={styles.priceChangeContainer}>
           <Text
             style={[
@@ -72,7 +103,7 @@ const MarketInfo = ({
             {t('page.tokenDetail.marketInfo.marketCap')}
           </Text>
           <Text style={styles.infoItemValue}>
-            {marketCap ? formatUsdValue(marketCap) : '-'}
+            {marketCap ? formatUsdValueKMB(marketCap) : '-'}
           </Text>
         </View>
         <View style={styles.infoItem}>
@@ -88,7 +119,7 @@ const MarketInfo = ({
             {t('page.tokenDetail.marketInfo.volume24h')}
           </Text>
           <Text style={styles.infoItemValue}>
-            {volume24h ? formatUsdValue(volume24h, undefined, true) : '-'}
+            {volume24h ? formatUsdValueKMB(volume24h) : '-'}
           </Text>
         </View>
         <View style={styles.infoItem}>
@@ -101,7 +132,9 @@ const MarketInfo = ({
           <Text style={styles.infoItemText}>
             {t('page.tokenDetail.marketInfo.holders')}
           </Text>
-          <Text style={styles.infoItemValue}>{holders ? holders : '-'}</Text>
+          <Text style={styles.infoItemValue}>
+            {holders ? formatAmountValueKMB(holders) : '-'}
+          </Text>
         </View>
       </View>
     </View>
@@ -114,7 +147,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
     marginTop: 0,
   },
   priceContainer: {
@@ -149,7 +181,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontSize: 42,
     lineHeight: 46,
-    fontWeight: '900',
+    fontWeight: '700',
   },
   priceChangeContainer: {
     flexDirection: 'row',
@@ -165,5 +197,4 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     position: 'relative',
   },
-  priceChangeBalance: {},
 }));

@@ -1,23 +1,29 @@
-import { preferenceService } from '@/core/services';
+import {
+  getUserTokenSettings,
+  getUserTokenSettingsSnapshot,
+  pinUserToken,
+  removePinnedUserToken,
+  type UserTokenSettings,
+} from '@/core/serviceApi/preference';
 import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
+import { filterCustomTestnetUserTokenSettings } from '@/utils/favoriteToken';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
-type UserTokenSettingsState = Awaited<
-  ReturnType<typeof preferenceService.getUserTokenSettings>
->;
-const userTokenSettingsStore = zCreate<UserTokenSettingsState>(() => {
-  return {
-    foldTokens: [],
-    unfoldTokens: [],
-    includeDefiAndTokens: [],
-    excludeDefiAndTokens: [],
-    pinedQueue: [],
-    foldNfts: [],
-    unfoldNfts: [],
-    foldDefis: [],
-    unFoldDefis: [],
-    ...preferenceService.getUserTokenSettings(),
+type UserTokenSettingsState = UserTokenSettings;
+
+export const getDisplayUserTokenSettingsSync = (): UserTokenSettingsState => {
+  return filterCustomTestnetUserTokenSettings(getUserTokenSettingsSnapshot());
+};
+
+export const getDisplayUserTokenSettings =
+  async (): Promise<UserTokenSettingsState> => {
+    return filterCustomTestnetUserTokenSettings(await getUserTokenSettings());
   };
+
+const userTokenSettingsStore = zCreate<UserTokenSettingsState>(() => {
+  return getDisplayUserTokenSettingsSync();
 });
 
 function setUserTokenSettings(
@@ -28,7 +34,7 @@ function setUserTokenSettings(
       strict: false,
     });
 
-    return newVal;
+    return filterCustomTestnetUserTokenSettings(newVal);
   });
 }
 
@@ -37,32 +43,69 @@ export function getUserTokenSettingsInMemory() {
 }
 
 const fetchUserTokenSettings = async () => {
-  const data = await preferenceService.getUserTokenSettings();
+  const data = await getDisplayUserTokenSettings();
   setUserTokenSettings(data);
 };
 
 const pinToken = <T extends { id: string; chain: string }>(token: T) => {
-  preferenceService.pinToken({
+  // TODO: improve, can only update tokens about list on store
+  void pinUserToken({
     tokenId: token.id,
     chainId: token.chain,
-  });
-  // TODO: improve, can only update tokens about list on store
-  fetchUserTokenSettings();
+  }).then(fetchUserTokenSettings);
 };
 
 const removePinedToken = <T extends { id: string; chain: string }>(
   token: T,
 ) => {
-  preferenceService.removePinedToken({
+  // TODO: improve, can only update tokens about list on store
+  void removePinnedUserToken({
     tokenId: token.id,
     chainId: token.chain,
-  });
-  // TODO: improve, can only update tokens about list on store
-  fetchUserTokenSettings();
+  }).then(fetchUserTokenSettings);
 };
 
+export function isUserTokenPinnedInMemory<
+  T extends { id: string; chain: string },
+>(token: T) {
+  return userTokenSettingsStore
+    .getState()
+    .pinedQueue.some(
+      pinned => pinned.chainId === token.chain && pinned.tokenId === token.id,
+    );
+}
+
+export function toggleUserTokenPinned<T extends { id: string; chain: string }>(
+  token: T,
+) {
+  if (isUserTokenPinnedInMemory(token)) {
+    removePinedToken(token);
+  } else {
+    pinToken(token);
+  }
+}
+
+export function useIsUserTokenPinned<T extends { id: string; chain: string }>(
+  token: T,
+) {
+  return useActivityStore(
+    userTokenSettingsStore,
+    state =>
+      state.pinedQueue.some(
+        pinned => pinned.chainId === token.chain && pinned.tokenId === token.id,
+      ),
+    Object.is,
+    { storeLabel: 'user-token-pinned' },
+  );
+}
+
 export const useUserTokenSettings = () => {
-  const userTokenSettings = userTokenSettingsStore(s => s);
+  const userTokenSettings = useActivityStore(
+    userTokenSettingsStore,
+    state => state,
+    Object.is,
+    { storeLabel: 'user-token-settings' },
+  );
 
   return {
     userTokenSettings,

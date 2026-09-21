@@ -1,7 +1,9 @@
-import { Account } from '@/core/services/preference';
-import AuthButton, { IAuthButtonProps } from '../AuthButton';
+import type { Account } from '@/core/startupServices/preference';
+import type { IAuthButtonProps } from '../AuthButton';
+import AuthButton from '../AuthButton';
 import { isHardWareAccountAccountSupportMiniApproval } from '@/utils/account';
-import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
@@ -19,7 +21,8 @@ import React, {
 } from 'react';
 import { Button } from '../Button';
 import { CheckBoxRect } from '../CheckBox';
-import { SignatureFlowState, useSignatureStore } from '../MiniSignV2';
+import type { SignatureFlowState } from '../MiniSignV2/state/types';
+import { useSignatureStore } from '../MiniSignV2/state/useSignatureStore';
 import { Text } from '@/components/Typography';
 
 export type DirectSignBtnMethods = {
@@ -200,7 +203,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 8,
     backgroundColor: colors2024['neutral-bg-4'],
     borderRadius: 16,
-    height: 56,
+    height: 52,
     marginTop: 12,
   },
   statusContainerSuccess: {
@@ -208,8 +211,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   statusText: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
+    fontSize: 18,
+    lineHeight: 22,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
   },

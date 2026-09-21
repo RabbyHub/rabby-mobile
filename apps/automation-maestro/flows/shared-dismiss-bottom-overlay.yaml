@@ -1,0 +1,14 @@
+appId: ${RABBY_MAESTRO_APP_ID}
+name: Shared dismiss bottom overlay
+tags:
+  - shared
+  - maestro
+  - utility
+---
+- runFlow:
+    when:
+      visible:
+        text: ${BOTTOM_OVERLAY_TEXT_REGEX}
+    commands:
+      - tapOn:
+          point: ${BOTTOM_OVERLAY_CLOSE_POINT}

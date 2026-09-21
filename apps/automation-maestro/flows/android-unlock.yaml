@@ -1,0 +1,61 @@
+appId: ${RABBY_MAESTRO_APP_ID}
+name: Android unlock
+tags:
+  - android
+  - maestro
+  - unlock
+env:
+  UNLOCK_PASSWORD_INPUT_ID: e2e.unlock.password.input
+  UNLOCK_SUBMIT_ID: e2e.unlock.submit
+  UNLOCK_SWITCH_AUTH_TYPE_ID: e2e.unlock.switch-auth-type
+  UNLOCK_SWITCH_AUTH_TYPE_PASSWORD_LABEL: e2e.unlock.switch-auth-type.password
+  HOME_ADD_ADDRESS_BUTTON_ID: e2e.home.add-address.button
+---
+- runFlow: shared-dismiss-debug-warnings-overlay.yaml
+
+- runFlow:
+    when:
+      visible:
+        text: ${UNLOCK_SWITCH_AUTH_TYPE_PASSWORD_LABEL}
+    commands:
+      - tapOn:
+          id: ${UNLOCK_SWITCH_AUTH_TYPE_ID}
+
+- extendedWaitUntil:
+    visible:
+      id: ${UNLOCK_PASSWORD_INPUT_ID}
+    timeout: 15000
+
+- assertVisible:
+    id: ${UNLOCK_PASSWORD_INPUT_ID}
+
+- tapOn:
+    id: ${UNLOCK_PASSWORD_INPUT_ID}
+
+- eraseText: 100
+
+- inputText: ${RABBY_MAESTRO_APP_PASSWORD}
+
+- hideKeyboard:
+    optional: true
+
+- assertVisible:
+    id: ${UNLOCK_SUBMIT_ID}
+
+- tapOn:
+    id: ${UNLOCK_SUBMIT_ID}
+
+- retry:
+    maxRetries: 2
+    commands:
+      - tapOn:
+          text: "取消|Cancel|Not now"
+          optional: true
+          label: Dismiss fingerprint prompt if it exists
+      - extendedWaitUntil:
+          visible:
+            id: ${HOME_ADD_ADDRESS_BUTTON_ID}
+          timeout: 8000
+
+- assertVisible:
+    id: ${HOME_ADD_ADDRESS_BUTTON_ID}

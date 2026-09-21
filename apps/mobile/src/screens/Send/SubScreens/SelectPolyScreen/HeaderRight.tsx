@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Keyboard,
 } from 'react-native';
+import { IS_IOS } from '@/core/native/utils';
 import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
 import { SendHistory } from './SendHistory';
 import {
@@ -16,6 +17,8 @@ import {
   useReadSendSuccessTxList,
 } from '../../hooks/useSendPendingCount';
 import { useFocusEffect } from '@react-navigation/native';
+
+const SEND_IOS_HEADER_ICON_OFFSET = 6;
 
 interface IProps {
   isForMultipleAddress?: boolean;
@@ -53,7 +56,7 @@ export const SendHeaderRight = ({
 
   return (
     <>
-      <View style={styles.container}>
+      <View style={[styles.container, styles.headerIconOffset, style]}>
         <TouchableOpacity onPress={openHistory} style={styles.iconContainer}>
           <RcIconSwapHistory color={colors2024['neutral-body']} />
           {/* not very accurate */}
@@ -75,6 +78,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     gap: 20,
     alignItems: 'center',
+  },
+  headerIconOffset: {
+    transform: [{ translateY: IS_IOS ? SEND_IOS_HEADER_ICON_OFFSET : 0 }],
   },
   iconContainer: {
     position: 'relative',

@@ -1,32 +1,26 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { SelectedBridgeQuote, useSetRefreshId } from '../hooks';
-import BigNumber from 'bignumber.js';
+import React, { useEffect, useMemo, useRef } from 'react';
+import { useSetRefreshId } from '../hooks/context';
+import type { SelectedBridgeQuote } from '../types';
 import { useTranslation } from 'react-i18next';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
-import {
-  Animated,
-  Easing,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
+import { useTheme2024 } from '@/hooks/theme';
+import { TouchableOpacity, View } from 'react-native';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { AppBottomSheetModal } from '@/components';
-import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
-import { RcIconSwapChecked, RcIconSwapUnchecked } from '@/assets/icons/swap';
-import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
-import { Radio } from '@/components/Radio';
-import { SwapRefreshBtn } from '@/screens/Swap/components/SwapRefreshBtn';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { createGetStyles2024 } from '@/utils/styles';
 import { RcIconEmptyCC } from '@/assets/icons/gnosis';
-import { CHAINS_ENUM } from '@/constant/chains';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import RcIconLoading from '@/assets2024/icons/bridge/IconLoading.svg';
+import RcIconRefreshCC from '@/assets2024/icons/bridge/IconRefreshCC.svg';
 import { BridgeQuoteItem } from './BridgeQuoteItem';
+import {
+  bridgeQuoteEstimatedValueBn,
+  bridgeQuoteScore,
+} from '../utils/bridgeQuote';
 import { QuoteLoading } from './loading';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { Text } from '@/components/Typography';
+import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoundary';
 
 const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   bottomBg: {
@@ -56,6 +50,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   },
 
   headerText: {
+    marginTop: 14,
     fontSize: 20,
     lineHeight: 24,
     fontWeight: '800',
@@ -63,26 +58,22 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     textAlign: 'center',
   },
-  refreshText: {
-    color: colors2024['neutral-title-1'],
+  subtitleText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontStyle: 'normal',
-    fontWeight: '700',
-    lineHeight: 20,
+    color: colors2024['neutral-secondary'],
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 10,
   },
-  refreshContent: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontStyle: 'normal',
-    fontWeight: '700',
-    color: colors2024['brand-default'],
+  refreshIconBtn: {
+    position: 'absolute',
+    top: -2,
+    right: 24,
+    zIndex: 1,
   },
-  radioContainer: {
-    margin: 0,
-    padding: 0,
-  },
-
   container: {
     flexGrow: 1,
     padding: 12,
@@ -120,7 +111,6 @@ interface QuotesProps {
   onClose: () => void;
   payAmount: string;
   setSelectedBridgeQuote: (quote?: SelectedBridgeQuote) => void;
-  sortIncludeGasFee: boolean;
   currentSelectedQuote?: SelectedBridgeQuote;
 }
 
@@ -128,7 +118,6 @@ export const Quotes = ({
   list,
   activeName,
   inSufficient,
-  sortIncludeGasFee,
   ...other
 }: QuotesProps) => {
   const { styles, colors2024, colors } = useTheme2024({ getStyle });
@@ -136,29 +125,36 @@ export const Quotes = ({
   const { t } = useTranslation();
 
   const sortedList = useMemo(() => {
-    return list?.sort((b, a) => {
-      return new BigNumber(a.to_token_amount)
-        .times(other.receiveToken.price || 1)
-        .minus(sortIncludeGasFee ? a.gas_fee.usd_value : 0)
-        .minus(
-          new BigNumber(b.to_token_amount)
-            .times(other.receiveToken.price || 1)
-            .minus(sortIncludeGasFee ? b.gas_fee.usd_value : 0),
-        )
+    return [...(list || [])].sort((a, b) => {
+      return bridgeQuoteEstimatedValueBn(b, other.receiveToken)
+        .minus(bridgeQuoteEstimatedValueBn(a, other.receiveToken))
         .toNumber();
     });
-  }, [list, sortIncludeGasFee, other.receiveToken]);
+  }, [list, other.receiveToken]);
 
-  const bestQuoteUsd = useMemo(() => {
-    const bestQuote = sortedList?.[0];
-    if (!bestQuote) {
+  const bestIndex = useMemo(() => {
+    if (!sortedList?.length) {
+      return 0;
+    }
+    let bestIdx = 0;
+    let bestScore = bridgeQuoteScore(sortedList[0]!, other.receiveToken);
+    for (let i = 1; i < sortedList.length; i++) {
+      const score = bridgeQuoteScore(sortedList[i]!, other.receiveToken);
+      if (score.gt(bestScore)) {
+        bestScore = score;
+        bestIdx = i;
+      }
+    }
+    return bestIdx;
+  }, [sortedList, other.receiveToken]);
+
+  const bestAmountUsd = useMemo(() => {
+    const first = sortedList?.[0];
+    if (!first) {
       return '0';
     }
-    return new BigNumber(bestQuote.to_token_amount)
-      .times(other.receiveToken.price || 1)
-      .minus(sortIncludeGasFee ? bestQuote.gas_fee.usd_value : 0)
-      .toString();
-  }, [sortedList, other.receiveToken, sortIncludeGasFee]);
+    return bridgeQuoteEstimatedValueBn(first, other.receiveToken).toString();
+  }, [sortedList, other.receiveToken]);
 
   return (
     <BottomSheetScrollView contentContainerStyle={styles.container}>
@@ -167,9 +163,9 @@ export const Quotes = ({
           <BridgeQuoteItem
             key={item.aggregator.id + item.bridge_id}
             {...item}
-            sortIncludeGasFee={!!sortIncludeGasFee}
-            isBestQuote={idx === 0}
-            bestQuoteUsd={bestQuoteUsd}
+            isBestQuote={idx === bestIndex}
+            isTopAmount={idx === 0}
+            bestQuoteUsd={bestAmountUsd}
             payToken={other.payToken}
             receiveToken={other.receiveToken}
             setSelectedBridgeQuote={other.setSelectedBridgeQuote}
@@ -199,49 +195,19 @@ export const Quotes = ({
   );
 };
 
-export const QuoteList = (props: Omit<QuotesProps, 'sortIncludeGasFee'>) => {
-  const { visible, onClose, loading } = props;
+export const QuoteList = (props: QuotesProps) => {
+  const { visible, onClose } = props;
   const refresh = useSetRefreshId();
 
   const { styles, colors2024, colors, isLight } = useTheme2024({ getStyle });
 
   const bottomRef = useRef<BottomSheetModalMethods>(null);
-  // const [loading, setLoading] = useState(false);
-
-  const spinValue = useRef(new Animated.Value(0)).current;
-  const spin = spinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-
-  useEffect(() => {
-    if (loading) {
-      Animated.loop(
-        Animated.timing(spinValue, {
-          toValue: 1,
-          duration: 1600,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        }),
-      ).start();
-    } else {
-      spinValue.resetAnimation();
-    }
-  }, [loading, spinValue]);
 
   const refreshQuote = React.useCallback(() => {
     refresh(e => e + 1);
   }, [refresh]);
 
   const { t } = useTranslation();
-
-  const [sortIncludeGasFee, setSortIncludeGasFee] = useState(true);
-
-  useEffect(() => {
-    if (!visible) {
-      setSortIncludeGasFee(true);
-    }
-  }, [visible]);
 
   useEffect(() => {
     if (visible) {
@@ -261,44 +227,31 @@ export const QuoteList = (props: Omit<QuotesProps, 'sortIncludeGasFee'>) => {
         colors: colors2024,
         linearGradientType: isLight ? 'bg0' : 'bg1',
       })}>
-      <BottomSheetView style={{ flex: 1 }}>
-        <Text style={styles.headerText}>
-          {t('page.bridge.the-following-bridge-route-are-found')}
-        </Text>
-        <View style={styles.headerContainer}>
-          <View>
-            <Radio
-              checked={!!sortIncludeGasFee}
-              onPress={() => setSortIncludeGasFee(e => !e)}
-              title={t('page.swap.sort-with-gas')}
-              checkedIcon={<RcIconSwapChecked width={24} height={24} />}
-              uncheckedIcon={<RcIconSwapUnchecked width={24} height={24} />}
-              textStyle={styles.refreshText}
-              right={true}
-              containerStyle={styles.radioContainer}
-            />
-          </View>
-          <TouchableOpacity onPress={refreshQuote} style={styles.refreshBox}>
-            <Animated.View
-              style={{
-                transform: [{ rotate: spin }],
-                marginRight: 4,
-              }}>
-              <RcIconLoading />
-            </Animated.View>
-            <Text style={styles.refreshContent}>{t('global.refresh')}</Text>
-          </TouchableOpacity>
-          {/* <SwapRefreshBtn onPress={refreshQuote} /> */}
+      <View style={{ flex: 1, position: 'relative' }}>
+        <TouchableOpacity
+          hitSlop={10}
+          onPress={refreshQuote}
+          style={styles.refreshIconBtn}>
+          <RcIconRefreshCC color={colors2024['neutral-body']} />
+        </TouchableOpacity>
+        <View
+          style={{
+            paddingHorizontal: 12,
+          }}>
+          <Text style={styles.headerText}>
+            {t('page.bridge.the-following-bridge-route-are-found')}
+          </Text>
+          <Text style={styles.subtitleText}>
+            {t('page.bridge.best-subtitle')}
+          </Text>
         </View>
-        <BottomSheetScrollView style={{ flex: 1 }}>
-          <Quotes
-            {...props}
-            loading={props.loading}
-            sortIncludeGasFee={sortIncludeGasFee}
-          />
-          <View style={{ height: 120 }} />
-        </BottomSheetScrollView>
-      </BottomSheetView>
+        <View style={{ flex: 1 }}>
+          <RenderActivityBoundary active={visible} label="bridge-quotes-modal">
+            <Quotes {...props} loading={props.loading} />
+          </RenderActivityBoundary>
+          <View style={{ height: 20 }} />
+        </View>
+      </View>
     </AppBottomSheetModal>
   );
 };

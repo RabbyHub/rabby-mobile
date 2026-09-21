@@ -1,20 +1,14 @@
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
-import { Chain, CHAINS_ENUM } from '@/constant/chains';
-import { Account } from '@/core/services/preference';
+import type { Chain, CHAINS_ENUM } from '@/constant/chains';
+import type { Account } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChainByEnum } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Image,
-  StyleProp,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -32,6 +26,7 @@ interface ChainSelectorProps {
   modalHeight?: number;
   style?: StyleProp<ViewStyle>;
   supportChains?: CHAINS_ENUM[];
+  unsupportedChainMode?: 'disabled' | 'hidden';
   disabledTips?: string | ((ctx: { chain: Chain }) => string);
   hideTestnetTab?: boolean;
   hideMainnetTab?: boolean;
@@ -49,6 +44,7 @@ export const ChainSelector = ({
   style,
   onAfterOpen,
   supportChains,
+  unsupportedChainMode,
   disabledTips,
   hideTestnetTab = false,
   hideMainnetTab = false,
@@ -68,7 +64,9 @@ export const ChainSelector = ({
   const { t } = useTranslation();
 
   const activeSelectChainPopup = () => {
-    if (!account) return;
+    if (!account) {
+      return;
+    }
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY,
       value: value,
@@ -77,6 +75,7 @@ export const ChainSelector = ({
         onClose?.();
       },
       supportChains,
+      unsupportedChainMode,
       disabledTips,
       hideTestnetTab,
       hideMainnetTab,

@@ -12,7 +12,7 @@ import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
 import { apisAppWin } from './appWin';
 import type { EVENT_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { findChain } from '@/utils/chain';
-import { Account } from './preference';
+import type { Account } from '@/types/account';
 
 export interface Approval {
   id: string;
@@ -97,7 +97,7 @@ export class NotificationService extends Events {
   isLocked = false;
   currentRequestDeferFn?: (isRetry?: boolean) => void;
   statsData: StatsData | undefined;
-  preferenceService: import('./preference').PreferenceService;
+  preferenceService: import('../startupServices/preference').PreferenceService;
   transactionHistoryService: import('./transactionHistory').TransactionHistoryService;
 
   get approvals() {
@@ -396,7 +396,12 @@ export class NotificationService extends Events {
       this.notifyWindowId = null;
     }
     this.notifyWindowId =
-      apisAppWin.createGlobalBottomSheetModal(winProps) ?? null;
+      apisAppWin.createGlobalBottomSheetModal({
+        ...winProps,
+        approvalComponent:
+          winProps?.approvalComponent ??
+          this.currentApproval?.data.approvalComponent,
+      }) ?? null;
   };
 
   setCurrentRequestDeferFn = (fn: (isRetry?: boolean) => void) => {

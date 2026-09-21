@@ -8,48 +8,45 @@ import {
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
-import { forwardRef, useRef, useMemo, useImperativeHandle } from 'react';
+import { useRef, useMemo, useImperativeHandle, type Ref } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AutoLockView from '../AutoLockView';
 import { Text } from '@/components/Typography';
 
-export const BottomSheetModalConfirmContainer = forwardRef<
-  BottomSheetModal,
-  React.PropsWithChildren<{
-    height: number;
-    bodyStyle?: React.ComponentProps<typeof BottomSheetView>['style'];
-    /**
-     * @description strict `false` value means not confirmed
-     * @returns
-     */
-    onConfirm?: () => Promise<boolean | void> | boolean | void;
-    onCancel?: () => void;
-    centerGap?: number;
-    noCancelButton?: boolean;
-    cancelText?: string;
-    cancelButtonProps?: React.ComponentProps<typeof Button>;
-    confirmText?: string;
-    confirmButtonProps?: React.ComponentProps<typeof Button>;
-    bottomSheetModalProps?: Partial<
-      React.ComponentProps<typeof BottomSheetModal>
-    >;
-  }>
->((props, ref) => {
-  const {
-    height = 0,
-    children,
-    bodyStyle,
-    onConfirm,
-    onCancel,
-    centerGap = 13,
-    noCancelButton = false,
-    cancelText = 'Cancel',
-    cancelButtonProps,
-    confirmText = 'Confirm',
-    confirmButtonProps,
-    bottomSheetModalProps,
-  } = props;
+export const BottomSheetModalConfirmContainer = ({
+  ref,
+  height = 0,
+  children,
+  bodyStyle,
+  onConfirm,
+  onCancel,
+  centerGap = 13,
+  noCancelButton = false,
+  cancelText = 'Cancel',
+  cancelButtonProps,
+  confirmText = 'Confirm',
+  confirmButtonProps,
+  bottomSheetModalProps,
+}: React.PropsWithChildren<{
+  height: number;
+  bodyStyle?: React.ComponentProps<typeof BottomSheetView>['style'];
+  /**
+   * @description strict `false` value means not confirmed
+   * @returns
+   */
+  onConfirm?: () => Promise<boolean | void> | boolean | void;
+  onCancel?: () => void;
+  centerGap?: number;
+  noCancelButton?: boolean;
+  cancelText?: string;
+  cancelButtonProps?: React.ComponentProps<typeof Button>;
+  confirmText?: string;
+  confirmButtonProps?: React.ComponentProps<typeof Button>;
+  bottomSheetModalProps?: Partial<
+    React.ComponentProps<typeof BottomSheetModal>
+  >;
+}> & { ref?: Ref<BottomSheetModal> }) => {
   const sheetModalRef = useRef<BottomSheetModal>(null);
   const insets = useSafeAreaInsets();
 
@@ -150,7 +147,7 @@ export const BottomSheetModalConfirmContainer = forwardRef<
       </AutoLockView>
     </AppBottomSheetModal>
   );
-});
+};
 
 const getStyles = createGetStyles(colors => ({
   sheet: {

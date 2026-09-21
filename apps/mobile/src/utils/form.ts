@@ -11,6 +11,8 @@ export type FormFieldComparer<T> = {
   [K in keyof T]?: (oldValue: T[K], newValue: T[K]) => boolean;
 };
 
+export type FormAmountMode = 'exact' | 'max';
+
 export interface FormValuesOnSubmitOptions<T extends Record<string, any>> {
   /** Custom comparers for specific fields */
   comparers?: FormFieldComparer<T>;
@@ -151,4 +153,24 @@ export function createAmountComparer<T>(): (
     const newAmount = new BigNumber(newValue || '0');
     return !oldAmount.eq(newAmount);
   };
+}
+
+export function shouldIgnoreAmountChangeInMaxMode<
+  T extends {
+    amount?: string;
+    amountMode?: FormAmountMode;
+  },
+>(comparison: FormComparisonResult<T>, snapshot: T, currentValues: T): boolean {
+  if (!comparison.isChanged) {
+    return false;
+  }
+
+  if (
+    comparison.changedFields.length !== 1 ||
+    comparison.changedFields[0] !== ('amount' as keyof T)
+  ) {
+    return false;
+  }
+
+  return snapshot.amountMode === 'max' && currentValues.amountMode === 'max';
 }

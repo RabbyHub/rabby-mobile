@@ -197,7 +197,7 @@ export const BridgeTxHistory = ({
       onDismiss={onClose}
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: isDarkTheme ? 'bg1' : 'bg2',
+        linearGradientType: isDarkTheme ? 'bg1' : 'bg0',
       })}>
       <HistoryList recentShowTime={recentShowTime} />
     </AppBottomSheetModal>
@@ -233,7 +233,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     backgroundColor: isLight
-      ? colors2024['neutral-bg-2']
+      ? colors2024['neutral-bg-0']
       : colors2024['neutral-bg-1'],
   },
   flatList: {

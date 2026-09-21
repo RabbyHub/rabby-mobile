@@ -15,7 +15,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { WalletIcon, WalletIconProps } from '../WalletIcon/WalletIcon';
 import RcIconPin from '@/assets2024/icons/address/pin-cc.svg';
-import { useCurrency } from '@/hooks/useCurrency';
 import BigNumber from 'bignumber.js';
 
 const { isSameAddress } = addressUtils;
@@ -66,8 +65,8 @@ export const AddressItem = (props: AddressItemProps) => {
   );
 
   const walletName = useMemo(
-    () => account?.aliasName || account?.brandName,
-    [account?.aliasName, account?.brandName],
+    () => account?.aliasName || ellipsisAddress(account.address),
+    [account?.aliasName, account.address],
   );
 
   const address = useMemo(
@@ -75,24 +74,22 @@ export const AddressItem = (props: AddressItemProps) => {
     [account?.address],
   );
 
-  const { currency } = useCurrency();
-
   const usdValue = useMemo(() => {
-    const b = new BigNumber(account.balance || 0).times(currency.usd_rate);
-    return `${currency.symbol}${splitNumberByStep(
+    const b = new BigNumber(account.balance || 0);
+    return `$${splitNumberByStep(
       b.isGreaterThan(10)
         ? b.decimalPlaces(0, BigNumber.ROUND_FLOOR).toString()
         : b.toFixed(2),
     )}`;
-  }, [account.balance, currency.symbol, currency.usd_rate]);
+  }, [account.balance]);
 
   const WalletIconWrapper = useCallback(
-    (_props: Omit<WalletIconProps, 'type'>) => {
+    (props: Omit<WalletIconProps, 'type'>) => {
       return (
         <WalletIcon
           type={account.brandName}
           address={account.address}
-          {..._props}
+          {...props}
         />
       );
     },
@@ -103,7 +100,8 @@ export const AddressItem = (props: AddressItemProps) => {
       return (
         <Text
           style={StyleSheet.flatten([styles.aliasNameText, style])}
-          numberOfLines={1}>
+          numberOfLines={1}
+          ellipsizeMode="tail">
           {walletName}
         </Text>
       );
@@ -175,6 +173,7 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
   },
   leftContainer: {
+    flex: 1,
     gap: 10,
     alignItems: 'center',
     flexDirection: 'row',
@@ -192,6 +191,8 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   middle: {
     gap: 4,
+    flex: 1,
+    flexShrink: 1,
   },
   addressText: {
     fontSize: 16,

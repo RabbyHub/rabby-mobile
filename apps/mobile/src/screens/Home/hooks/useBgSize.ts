@@ -1,5 +1,5 @@
 import {
-  FOLD_ASSETS_HEADER_HEIGHT,
+  FOLD_ASSETS_HEADER_HEIGHT_WITH_PADDING,
   UNFOLD_ASSETS_HEADER_HEIGHT,
   TAB_HEADER_HEIGHT,
 } from '@/constant/layout';
@@ -11,8 +11,8 @@ export const useBgSize = () => {
   const { safeTop, safeOffHeader } = useSafeSizes();
 
   const sizes = useMemo(() => {
-    const topHeight = safeOffHeader - 11;
-    const centerFoldHeight = FOLD_ASSETS_HEADER_HEIGHT;
+    const topHeight = safeOffHeader - 2;
+    const centerFoldHeight = FOLD_ASSETS_HEADER_HEIGHT_WITH_PADDING;
     const centerUnfoldHeight = UNFOLD_ASSETS_HEADER_HEIGHT;
     const endHeight = TAB_HEADER_HEIGHT;
 

@@ -1,0 +1,1935 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index f1e2f0ff9e121d790d574ad2a3effc36a2853585..ab5cb28877a4c1763cde37e9ac01d3f90c40a3ba 100755
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -81,6 +81,8 @@ dependencies {
+
+   // Used to store encrypted data
+   implementation("androidx.datastore:datastore-preferences:1.1.1")
++
++  testImplementation 'junit:junit:4.13.2'
+ }
+
+ if (isNewArchitectureEnabled()) {
+diff --git a/android/src/main/java/com/oblador/keychain/DataStorePrefsStorage.kt b/android/src/main/java/com/oblador/keychain/DataStorePrefsStorage.kt
+index 70912a95a36d1e1b2998916cb3f9604eda435bbd..781ba911f2cca3ae2a1f652b369450e9c0a1c4bf 100644
+--- a/android/src/main/java/com/oblador/keychain/DataStorePrefsStorage.kt
++++ b/android/src/main/java/com/oblador/keychain/DataStorePrefsStorage.kt
+@@ -10,11 +10,13 @@ import androidx.datastore.preferences.core.edit
+ import androidx.datastore.preferences.core.stringPreferencesKey
+ import androidx.datastore.preferences.preferencesDataStore
+ import com.facebook.react.bridge.ReactApplicationContext
++import com.oblador.keychain.KeychainModule.KnownCiphers
+ import com.oblador.keychain.PrefsStorageBase.Companion.KEYCHAIN_DATA
+ import com.oblador.keychain.PrefsStorageBase.Companion.getKeyForCipherStorage
+ import com.oblador.keychain.PrefsStorageBase.Companion.getKeyForPassword
+ import com.oblador.keychain.PrefsStorageBase.Companion.getKeyForUsername
+ import com.oblador.keychain.PrefsStorageBase.Companion.isKeyForCipherStorage
++import com.oblador.keychain.PrefsStorageBase.DebugEntry
+ import com.oblador.keychain.PrefsStorageBase.ResultSet
+ import com.oblador.keychain.cipherStorage.CipherStorage
+ import kotlinx.coroutines.CoroutineScope
+@@ -41,9 +43,12 @@ class DataStorePrefsStorage(
+   override fun getEncryptedEntry(service: String): ResultSet? {
+     val bytesForUsername = getBytesForUsername(service)
+     val bytesForPassword = getBytesForPassword(service)
+-    val cipherStorageName = getCipherStorageName(service)
++    var cipherStorageName = getCipherStorageName(service)
+
+-    if (bytesForUsername == null || bytesForPassword == null || cipherStorageName == null) return null
++    if (bytesForUsername == null || bytesForPassword == null) return null
++    if (cipherStorageName == null) {
++      cipherStorageName = KnownCiphers.RSA
++    }
+
+     return ResultSet(cipherStorageName, bytesForUsername, bytesForPassword)
+   }
+@@ -77,6 +82,62 @@ class DataStorePrefsStorage(
+     }
+   }
+
++  override fun getDebugEntry(service: String): DebugEntry {
++    val storedUsernameBase64 = getString(getKeyForUsername(service))
++    val storedPasswordBase64 = getString(getKeyForPassword(service))
++    val usernameBytes = getBytesForUsername(service)
++    val passwordBytes = getBytesForPassword(service)
++    val storedCipherStorageName = getCipherStorageName(service)
++    val hasUsername = usernameBytes != null
++    val hasPassword = passwordBytes != null
++    val hasCipherStorageMarker = storedCipherStorageName != null
++    val hasEntry = hasUsername || hasPassword || hasCipherStorageMarker
++    val candidateCipherStorageNames =
++      if (hasUsername && hasPassword) {
++        getCandidateCipherStorageNamesForDebug(storedCipherStorageName)
++      } else {
++        emptyList()
++      }
++    val resolvedCipherStorageName = candidateCipherStorageNames.firstOrNull()
++    val cipherStorageResolutionStrategy =
++      if (hasUsername && hasPassword) {
++        getCipherStorageResolutionStrategyForDebug(storedCipherStorageName)
++      } else {
++        null
++      }
++
++    return DebugEntry(
++      service = service,
++      hasEntry = hasEntry,
++      hasUsername = hasUsername,
++      hasPassword = hasPassword,
++      hasCipherStorageMarker = hasCipherStorageMarker,
++      storedUsernameBase64 = storedUsernameBase64,
++      storedPasswordBase64 = storedPasswordBase64,
++      storedCipherStorageMarkerValue = storedCipherStorageName,
++      storedCipherStorageName = storedCipherStorageName,
++      resolvedCipherStorageName = resolvedCipherStorageName,
++      candidateCipherStorageNames = candidateCipherStorageNames,
++      cipherStorageResolutionStrategy = cipherStorageResolutionStrategy,
++      usernameByteSize = usernameBytes?.size,
++      passwordByteSize = passwordBytes?.size,
++    )
++  }
++
++  override fun removeCipherStorageMarker(service: String): Boolean {
++    val keyForCipherStorage = stringPreferencesKey(getKeyForCipherStorage(service))
++    if (!prefsData.contains(keyForCipherStorage)) {
++      return false
++    }
++
++    callSuspendable {
++      prefs.edit {
++        it.remove(keyForCipherStorage)
++      }
++    }
++    return true
++  }
++
+   override val usedCipherNames: Set<String?>
+     get() {
+       val result: MutableSet<String?> = HashSet()
+@@ -114,4 +175,31 @@ class DataStorePrefsStorage(
+   private fun getBytes(prefKey: Preferences.Key<String>): ByteArray? {
+     return prefsData[prefKey]?.let { Base64.decode(it, Base64.DEFAULT) }
+   }
++
++  private fun getString(key: String): String? {
++    return prefsData[stringPreferencesKey(key)]
++  }
++
++  private fun getCandidateCipherStorageNamesForDebug(storedCipherStorageName: String?): List<String> {
++    if (storedCipherStorageName != null) {
++      return listOf(storedCipherStorageName)
++    }
++
++    return listOf(
++      KnownCiphers.RSA,
++      KnownCiphers.AES_CBC,
++      KnownCiphers.AES_GCM,
++      KnownCiphers.AES_GCM_NO_AUTH,
++    )
++  }
++
++  private fun getCipherStorageResolutionStrategyForDebug(
++    storedCipherStorageName: String?,
++  ): String {
++    return if (storedCipherStorageName != null) {
++      "stored-marker"
++    } else {
++      "missing-marker/default-rsa"
++    }
++  }
+ }
+diff --git a/android/src/main/java/com/oblador/keychain/DeviceAvailability.kt b/android/src/main/java/com/oblador/keychain/DeviceAvailability.kt
+index a4e7b3d5a20eaaeca3b7b63e8b5dab7f73cdb2eb..4d4cc94b0fe987e6fa3605125931f9cd858eb5ba 100644
+--- a/android/src/main/java/com/oblador/keychain/DeviceAvailability.kt
++++ b/android/src/main/java/com/oblador/keychain/DeviceAvailability.kt
+@@ -6,6 +6,7 @@ import android.content.Context
+ import android.content.pm.PackageManager
+ import android.os.Build
+ import androidx.biometric.BiometricManager
++import androidx.core.hardware.fingerprint.FingerprintManagerCompat
+
+ /**
+  * @see
+@@ -13,6 +14,18 @@ import androidx.biometric.BiometricManager
+  */
+ @Suppress("deprecation")
+ object DeviceAvailability {
++  data class StrongBiometricAvailability(
++    val androidXStatusCode: Int,
++    val androidXWeakStatusCode: Int,
++    val permissionsGranted: Boolean,
++    val legacyFingerprintHardwareDetected: Boolean,
++    val legacyFingerprintEnrolled: Boolean,
++    val api29FingerprintFallbackEligible: Boolean,
++    val api29FingerprintPromptProbeEligible: Boolean,
++    val available: Boolean,
++    val promptProbeAvailable: Boolean,
++    val source: String
++  )
+
+   fun isStrongboxAvailable(context: Context): Boolean {
+     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+@@ -23,9 +36,137 @@ object DeviceAvailability {
+   }
+
+   fun isStrongBiometricAuthAvailable(context: Context): Boolean {
+-    return BiometricManager.from(context)
+-      .canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) ==
+-      BiometricManager.BIOMETRIC_SUCCESS
++    return getStrongBiometricAuthAvailability(context).available
++  }
++
++  fun getStrongBiometricAuthAvailability(context: Context): StrongBiometricAvailability {
++    val androidXStatusCode =
++      runCatching {
++          BiometricManager.from(context)
++            .canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)
++        }
++        .getOrDefault(BiometricManager.BIOMETRIC_STATUS_UNKNOWN)
++    val androidXWeakStatusCode =
++      if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
++        runCatching {
++            BiometricManager.from(context)
++              .canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK)
++          }
++          .getOrDefault(BiometricManager.BIOMETRIC_STATUS_UNKNOWN)
++      } else {
++        BiometricManager.BIOMETRIC_STATUS_UNKNOWN
++      }
++    val permissionsGranted = runCatching { isPermissionsGranted(context) }.getOrDefault(false)
++    val hasFingerprintFeature = isFingerprintAuthAvailable(context)
++    val shouldProbeLegacyFingerprint =
++      Build.VERSION.SDK_INT == Build.VERSION_CODES.Q &&
++        permissionsGranted &&
++        hasFingerprintFeature &&
++        androidXStatusCode != BiometricManager.BIOMETRIC_SUCCESS
++    val fingerprintManager =
++      if (shouldProbeLegacyFingerprint) FingerprintManagerCompat.from(context) else null
++    val legacyFingerprintHardwareDetected =
++      fingerprintManager?.let { runCatching { it.isHardwareDetected }.getOrDefault(false) } ?: false
++    val legacyFingerprintEnrolled =
++      fingerprintManager?.let { runCatching { it.hasEnrolledFingerprints() }.getOrDefault(false) }
++        ?: false
++    val api29FingerprintFallbackEligible =
++      shouldUseApi29FingerprintFallback(
++        apiLevel = Build.VERSION.SDK_INT,
++        androidXStrongStatusCode = androidXStatusCode,
++        androidXWeakStatusCode = androidXWeakStatusCode,
++        permissionsGranted = permissionsGranted,
++        hasFingerprintFeature = hasFingerprintFeature,
++        legacyFingerprintHardwareDetected = legacyFingerprintHardwareDetected,
++        legacyFingerprintEnrolled = legacyFingerprintEnrolled
++      )
++    val api29FingerprintPromptProbeEligible =
++      shouldAllowApi29FingerprintPromptProbe(
++        apiLevel = Build.VERSION.SDK_INT,
++        androidXStrongStatusCode = androidXStatusCode,
++        androidXWeakStatusCode = androidXWeakStatusCode,
++        permissionsGranted = permissionsGranted,
++        hasFingerprintFeature = hasFingerprintFeature,
++        legacyFingerprintHardwareDetected = legacyFingerprintHardwareDetected,
++        legacyFingerprintEnrolled = legacyFingerprintEnrolled
++      )
++    val androidXStrongAvailable = androidXStatusCode == BiometricManager.BIOMETRIC_SUCCESS
++    val available = androidXStrongAvailable || api29FingerprintFallbackEligible
++
++    return StrongBiometricAvailability(
++      androidXStatusCode = androidXStatusCode,
++      androidXWeakStatusCode = androidXWeakStatusCode,
++      permissionsGranted = permissionsGranted,
++      legacyFingerprintHardwareDetected = legacyFingerprintHardwareDetected,
++      legacyFingerprintEnrolled = legacyFingerprintEnrolled,
++      api29FingerprintFallbackEligible = api29FingerprintFallbackEligible,
++      api29FingerprintPromptProbeEligible = api29FingerprintPromptProbeEligible,
++      available = available,
++      promptProbeAvailable = available || api29FingerprintPromptProbeEligible,
++      source =
++        when {
++          androidXStrongAvailable -> STRONG_BIOMETRIC_SOURCE_ANDROIDX
++          api29FingerprintFallbackEligible -> STRONG_BIOMETRIC_SOURCE_FINGERPRINT_API_29
++          else -> STRONG_BIOMETRIC_SOURCE_UNAVAILABLE
++        }
++    )
++  }
++
++  internal fun shouldUseApi29FingerprintFallback(
++    apiLevel: Int,
++    androidXStrongStatusCode: Int,
++    androidXWeakStatusCode: Int,
++    permissionsGranted: Boolean,
++    hasFingerprintFeature: Boolean,
++    legacyFingerprintHardwareDetected: Boolean,
++    legacyFingerprintEnrolled: Boolean
++  ): Boolean {
++    if (
++      apiLevel != Build.VERSION_CODES.Q ||
++        androidXStrongStatusCode == BiometricManager.BIOMETRIC_SUCCESS ||
++        !permissionsGranted ||
++        !hasFingerprintFeature
++    ) {
++      return false
++    }
++
++    val legacyFingerprintConfirmed =
++      legacyFingerprintHardwareDetected && legacyFingerprintEnrolled
++    return when (androidXStrongStatusCode) {
++      BiometricManager.BIOMETRIC_STATUS_UNKNOWN,
++      BiometricManager.BIOMETRIC_ERROR_UNSUPPORTED,
++      BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED,
++      BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> legacyFingerprintConfirmed
++      else -> false
++    }
++  }
++
++  /**
++   * Android 10 devices can report a usable strong fingerprint prompt as UNKNOWN/WEAK even when
++   * FingerprintManagerCompat cannot observe enrollment. This signal is only permission to try a
++   * BIOMETRIC_STRONG prompt; it must never be treated as confirmed enrollment or remove a device
++   * credential fallback.
++   */
++  internal fun shouldAllowApi29FingerprintPromptProbe(
++    apiLevel: Int,
++    androidXStrongStatusCode: Int,
++    androidXWeakStatusCode: Int,
++    permissionsGranted: Boolean,
++    hasFingerprintFeature: Boolean,
++    legacyFingerprintHardwareDetected: Boolean,
++    legacyFingerprintEnrolled: Boolean
++  ): Boolean {
++    if (
++      apiLevel != Build.VERSION_CODES.Q ||
++        androidXStrongStatusCode != BiometricManager.BIOMETRIC_STATUS_UNKNOWN ||
++        androidXWeakStatusCode != BiometricManager.BIOMETRIC_SUCCESS ||
++        !permissionsGranted ||
++        !hasFingerprintFeature
++    ) {
++      return false
++    }
++
++    return !(legacyFingerprintHardwareDetected && legacyFingerprintEnrolled)
+   }
+
+   fun isDevicePasscodeAvailable(context: Context): Boolean {
+@@ -33,6 +174,9 @@ object DeviceAvailability {
+       BiometricManager.from(context)
+         .canAuthenticate(BiometricManager.Authenticators.DEVICE_CREDENTIAL) ==
+         BiometricManager.BIOMETRIC_SUCCESS
++    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
++      val keyguardManager = context.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
++      keyguardManager.isDeviceSecure
+     } else {
+       false
+     }
+@@ -66,4 +210,8 @@ object DeviceAvailability {
+
+     // before api28
+   }
++
++  const val STRONG_BIOMETRIC_SOURCE_ANDROIDX = "androidx-strong"
++  const val STRONG_BIOMETRIC_SOURCE_FINGERPRINT_API_29 = "fingerprint-api29-fallback"
++  const val STRONG_BIOMETRIC_SOURCE_UNAVAILABLE = "unavailable"
+ }
+diff --git a/android/src/main/java/com/oblador/keychain/KeychainModule.kt b/android/src/main/java/com/oblador/keychain/KeychainModule.kt
+index 722a5ed990c2a1baa15546351d36928ec2b6d268..48e402889dd8e325e40ff99110bec60ba9ed90fe 100644
+--- a/android/src/main/java/com/oblador/keychain/KeychainModule.kt
++++ b/android/src/main/java/com/oblador/keychain/KeychainModule.kt
+@@ -1,5 +1,6 @@
+ package com.oblador.keychain
+
++import android.content.Context
+ import android.os.Build
+ import android.text.TextUtils
+ import android.util.Log
+@@ -12,6 +13,7 @@ import com.facebook.react.bridge.ReactApplicationContext
+ import com.facebook.react.bridge.ReactContextBaseJavaModule
+ import com.facebook.react.bridge.ReactMethod
+ import com.facebook.react.bridge.ReadableMap
++import com.facebook.react.bridge.WritableMap
+ import com.facebook.react.module.annotations.ReactModule
+ import com.oblador.keychain.cipherStorage.CipherCache
+ import com.oblador.keychain.cipherStorage.CipherStorage
+@@ -77,6 +79,9 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+       const val ACCESS_CONTROL = "accessControl"
+       const val ACCESS_GROUP = "accessGroup"
+       const val ACCESSIBLE = "accessible"
++      const val ANDROID_ALLOW_AUTHENTICATED_SESSION_REUSE =
++        "androidAllowAuthenticatedSessionReuse"
++      const val ANDROID_ALLOW_KEY_STORE_RECOVERY = "androidAllowKeyStoreRecovery"
+       const val AUTH_PROMPT = "authenticationPrompt"
+       const val AUTH_TYPE = "authenticationType"
+       const val SERVICE = "service"
+@@ -190,7 +195,8 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+           val usePasscode = getUsePasscode(accessControl) && isPasscodeAvailable
+           val useBiometry =
+             getUseBiometry(accessControl) && (isFingerprintAuthAvailable || isFaceAuthAvailable || isIrisAuthAvailable)
+-          val promptInfo = getPromptInfo(options, usePasscode, useBiometry)
++          val promptInfo =
++            getPromptInfo(options, usePasscode, useBiometry, reactApplicationContext)
+           val result =
+             encryptToResult(alias, storage, username, password, level, promptInfo)
+           prefsStorage.storeEncryptedEntry(alias, result)
+@@ -257,10 +263,11 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+           val usePasscode = getUsePasscode(accessControl) && isPasscodeAvailable
+           val useBiometry =
+             getUseBiometry(accessControl) && (isFingerprintAuthAvailable || isFaceAuthAvailable || isIrisAuthAvailable)
+-          val promptInfo = getPromptInfo(options, usePasscode, useBiometry)
++          val promptInfo =
++            getPromptInfo(options, usePasscode, useBiometry, reactApplicationContext)
+           val cipher = getCipherStorageByName(storageName)
+           val decryptionResult =
+-            decryptCredentials(alias, cipher!!, resultSet, promptInfo)
++            decryptCredentials(alias, cipher!!, resultSet, promptInfo, options)
+           val credentials = Arguments.createMap()
+           credentials.putString(Maps.SERVICE, alias)
+           credentials.putString(Maps.USERNAME, decryptionResult.username)
+@@ -405,17 +412,38 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+   fun getSupportedBiometryType(promise: Promise) {
+     try {
+       var reply: String? = null
+-      if (!DeviceAvailability.isStrongBiometricAuthAvailable(reactApplicationContext)) {
++      val strongAvailability =
++        DeviceAvailability.getStrongBiometricAuthAvailability(reactApplicationContext)
++      if (!strongAvailability.promptProbeAvailable) {
+         reply = null
+       } else {
+-        if (isFingerprintAuthAvailable) {
++        if (DeviceAvailability.isFingerprintAuthAvailable(reactApplicationContext)) {
+           reply = FINGERPRINT_SUPPORTED_NAME
+-        } else if (isFaceAuthAvailable) {
++        } else if (DeviceAvailability.isFaceAuthAvailable(reactApplicationContext)) {
+           reply = FACE_SUPPORTED_NAME
+-        } else if (isIrisAuthAvailable) {
++        } else if (DeviceAvailability.isIrisAuthAvailable(reactApplicationContext)) {
+           reply = IRIS_SUPPORTED_NAME
+         }
+       }
++      if (
++        strongAvailability.androidXStatusCode != BiometricManager.BIOMETRIC_SUCCESS ||
++          strongAvailability.api29FingerprintFallbackEligible ||
++          strongAvailability.api29FingerprintPromptProbeEligible
++      ) {
++        Log.i(
++          KEYCHAIN_MODULE,
++          "Strong biometric availability: api=${Build.VERSION.SDK_INT}, " +
++            "androidXStatus=${strongAvailability.androidXStatusCode}, " +
++            "androidXWeakStatus=${strongAvailability.androidXWeakStatusCode}, " +
++            "permissionsGranted=${strongAvailability.permissionsGranted}, " +
++            "legacyFingerprintHardwareDetected=" +
++            "${strongAvailability.legacyFingerprintHardwareDetected}, " +
++            "legacyFingerprintEnrolled=${strongAvailability.legacyFingerprintEnrolled}, " +
++            "promptProbeEligible=" +
++            "${strongAvailability.api29FingerprintPromptProbeEligible}, " +
++            "source=${strongAvailability.source}"
++        )
++      }
+       promise.resolve(reply)
+     } catch (e: Exception) {
+       Log.e(KEYCHAIN_MODULE, e.message, e)
+@@ -426,6 +454,245 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+     }
+   }
+
++  @ReactMethod
++  fun getAndroidBiometricPromptOptimization(promise: Promise) {
++    try {
++      val strongAvailability =
++        DeviceAvailability.getStrongBiometricAuthAvailability(reactApplicationContext)
++      val result = Arguments.createMap()
++      result.putBoolean(
++        "api29FingerprintFallbackEligible",
++        strongAvailability.api29FingerprintFallbackEligible
++      )
++      result.putBoolean(
++        "api29FingerprintPromptProbeEligible",
++        strongAvailability.api29FingerprintPromptProbeEligible
++      )
++      result.putString("effectiveStrongSource", strongAvailability.source)
++      promise.resolve(result)
++    } catch (fail: Throwable) {
++      Log.e(KEYCHAIN_MODULE, fail.message, fail)
++      promise.reject(Errors.E_UNKNOWN_ERROR, fail)
++    }
++  }
++
++  @ReactMethod
++  fun debugGetGenericPasswordStateForOptions(options: ReadableMap?, promise: Promise) {
++    try {
++      val service = getServiceOrDefault(options)
++      val debugEntry = prefsStorage.getDebugEntry(service)
++      val keyDebugInfo =
++        debugEntry.resolvedCipherStorageName
++          ?.let { getCipherStorageByName(it) as? CipherStorageBase }
++          ?.getKeyDebugInfo(service)
++      val result = Arguments.createMap()
++
++      result.putString(Maps.SERVICE, debugEntry.service)
++      result.putMap("androidBiometricHardware", buildAndroidBiometricHardware())
++      result.putMap("androidAuthenticatorCapabilities", buildAndroidAuthenticatorCapabilities())
++      result.putBoolean("hasEntry", debugEntry.hasEntry)
++      result.putBoolean("hasUsername", debugEntry.hasUsername)
++      result.putBoolean("hasPassword", debugEntry.hasPassword)
++      result.putBoolean("hasCipherStorageMarker", debugEntry.hasCipherStorageMarker)
++      result.putBoolean(
++        "isCipherStorageMarkerMissing",
++        debugEntry.hasEntry && !debugEntry.hasCipherStorageMarker
++      )
++      result.putString("storedUsernameBase64", debugEntry.storedUsernameBase64)
++      result.putString("storedPasswordBase64", debugEntry.storedPasswordBase64)
++      result.putString("storedCipherStorageMarkerValue", debugEntry.storedCipherStorageMarkerValue)
++      result.putString("storedCipherStorageName", debugEntry.storedCipherStorageName)
++      result.putString("resolvedCipherStorageName", debugEntry.resolvedCipherStorageName)
++
++      val candidateCipherStorageNames = Arguments.createArray()
++      debugEntry.candidateCipherStorageNames.forEach { candidate ->
++        candidateCipherStorageNames.pushString(candidate)
++      }
++      result.putArray("candidateCipherStorageNames", candidateCipherStorageNames)
++
++      result.putString("cipherStorageResolutionStrategy", debugEntry.cipherStorageResolutionStrategy)
++      putNullableInt(result, "usernameByteSize", debugEntry.usernameByteSize)
++      putNullableInt(result, "passwordByteSize", debugEntry.passwordByteSize)
++
++      if (keyDebugInfo != null) {
++        result.putString("keystoreAlias", keyDebugInfo.alias)
++        result.putBoolean("hasKeystoreAlias", keyDebugInfo.hasAlias)
++        result.putString("keystoreKeyAlgorithm", keyDebugInfo.keyAlgorithm)
++        result.putString("keystoreSecurityLevel", keyDebugInfo.securityLevelName)
++        putNullableBoolean(
++          result,
++          "keystoreInsideSecureHardware",
++          keyDebugInfo.isInsideSecureHardware
++        )
++        putNullableBoolean(
++          result,
++          "keystoreUserAuthenticationRequired",
++          keyDebugInfo.isUserAuthenticationRequired
++        )
++        putNullableInt(
++          result,
++          "keystoreUserAuthenticationValidityDurationSeconds",
++          keyDebugInfo.userAuthenticationValidityDurationSeconds
++        )
++        putNullableInt(result, "keystoreUserAuthenticationType", keyDebugInfo.userAuthenticationType)
++        if (keyDebugInfo.blockModes != null) {
++          result.putString("keystoreBlockModes", TextUtils.join(",", keyDebugInfo.blockModes))
++        } else {
++          result.putNull("keystoreBlockModes")
++        }
++        putNullableInt(result, "keystorePurposes", keyDebugInfo.purposes)
++        putNullableBoolean(
++          result,
++          "keystoreIsCompatibleWithCurrentCipher",
++          keyDebugInfo.isCompatibleWithCurrentCipher
++        )
++        result.putString("keystorePublicKeySha256", keyDebugInfo.publicKeySha256)
++        result.putString("keystoreDebugErrorMessage", keyDebugInfo.errorMessage)
++      } else {
++        result.putString("keystoreAlias", service)
++        result.putBoolean("hasKeystoreAlias", false)
++        result.putNull("keystoreKeyAlgorithm")
++        result.putNull("keystoreSecurityLevel")
++        result.putNull("keystoreInsideSecureHardware")
++        result.putNull("keystoreUserAuthenticationRequired")
++        result.putNull("keystoreUserAuthenticationValidityDurationSeconds")
++        result.putNull("keystoreUserAuthenticationType")
++        result.putNull("keystoreBlockModes")
++        result.putNull("keystorePurposes")
++        result.putNull("keystoreIsCompatibleWithCurrentCipher")
++        result.putNull("keystorePublicKeySha256")
++        result.putNull("keystoreDebugErrorMessage")
++      }
++
++      promise.resolve(result)
++    } catch (fail: Throwable) {
++      Log.e(KEYCHAIN_MODULE, fail.message, fail)
++      promise.reject(Errors.E_UNKNOWN_ERROR, fail)
++    }
++  }
++
++  private fun buildAndroidBiometricHardware(): WritableMap {
++    val result = Arguments.createMap()
++    val strongAvailability =
++      DeviceAvailability.getStrongBiometricAuthAvailability(reactApplicationContext)
++    result.putBoolean(
++      "fingerprint",
++      DeviceAvailability.isFingerprintAuthAvailable(reactApplicationContext)
++    )
++    result.putBoolean(
++      "face",
++      DeviceAvailability.isFaceAuthAvailable(reactApplicationContext)
++    )
++    result.putBoolean(
++      "iris",
++      DeviceAvailability.isIrisAuthAvailable(reactApplicationContext)
++    )
++    result.putBoolean("permissionsGranted", strongAvailability.permissionsGranted)
++    result.putInt("androidXStrongStatusCode", strongAvailability.androidXStatusCode)
++    result.putInt("androidXWeakStatusCode", strongAvailability.androidXWeakStatusCode)
++    result.putBoolean(
++      "legacyFingerprintHardwareDetected",
++      strongAvailability.legacyFingerprintHardwareDetected
++    )
++    result.putBoolean(
++      "legacyFingerprintEnrolled",
++      strongAvailability.legacyFingerprintEnrolled
++    )
++    result.putBoolean(
++      "api29FingerprintFallbackEligible",
++      strongAvailability.api29FingerprintFallbackEligible
++    )
++    result.putBoolean(
++      "api29FingerprintPromptProbeEligible",
++      strongAvailability.api29FingerprintPromptProbeEligible
++    )
++    result.putBoolean("effectiveStrongAvailable", strongAvailability.available)
++    result.putString("effectiveStrongSource", strongAvailability.source)
++    return result
++  }
++
++  private fun buildAndroidAuthenticatorCapabilities(): WritableMap {
++    val result = Arguments.createMap()
++    result.putInt("apiLevel", Build.VERSION.SDK_INT)
++    putAndroidAuthenticatorCapability(
++      result,
++      "biometricStrong",
++      "BIOMETRIC_STRONG",
++      BiometricManager.Authenticators.BIOMETRIC_STRONG
++    )
++    putAndroidAuthenticatorCapability(
++      result,
++      "deviceCredential",
++      "DEVICE_CREDENTIAL",
++      BiometricManager.Authenticators.DEVICE_CREDENTIAL
++    )
++    putAndroidAuthenticatorCapability(
++      result,
++      "biometricStrongOrDeviceCredential",
++      "BIOMETRIC_STRONG | DEVICE_CREDENTIAL",
++      BiometricManager.Authenticators.BIOMETRIC_STRONG or
++        BiometricManager.Authenticators.DEVICE_CREDENTIAL
++    )
++    putAndroidAuthenticatorCapability(
++      result,
++      "biometricWeak",
++      "BIOMETRIC_WEAK",
++      BiometricManager.Authenticators.BIOMETRIC_WEAK
++    )
++    return result
++  }
++
++  private fun putAndroidAuthenticatorCapability(
++    result: WritableMap,
++    key: String,
++    name: String,
++    authenticators: Int
++  ) {
++    val capability = Arguments.createMap()
++    capability.putString("name", name)
++    capability.putInt("authenticators", authenticators)
++
++    try {
++      val statusCode =
++        BiometricManager.from(reactApplicationContext).canAuthenticate(authenticators)
++      capability.putInt("statusCode", statusCode)
++      capability.putString("statusLabel", getAndroidAuthenticatorStatusLabel(statusCode))
++      capability.putBoolean("available", statusCode == BiometricManager.BIOMETRIC_SUCCESS)
++      capability.putNull("errorMessage")
++    } catch (fail: Throwable) {
++      capability.putNull("statusCode")
++      capability.putString("statusLabel", "ERROR")
++      capability.putBoolean("available", false)
++      capability.putString("errorMessage", fail.message ?: fail.javaClass.simpleName)
++    }
++
++    result.putMap(key, capability)
++  }
++
++  private fun getAndroidAuthenticatorStatusLabel(statusCode: Int): String {
++    return when (statusCode) {
++      0 -> "BIOMETRIC_SUCCESS"
++      1 -> "BIOMETRIC_ERROR_HW_UNAVAILABLE"
++      11 -> "BIOMETRIC_ERROR_NONE_ENROLLED"
++      12 -> "BIOMETRIC_ERROR_NO_HARDWARE"
++      15 -> "BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED"
++      -1 -> "BIOMETRIC_STATUS_UNKNOWN"
++      -2 -> "BIOMETRIC_ERROR_UNSUPPORTED"
++      else -> "BIOMETRIC_STATUS_$statusCode"
++    }
++  }
++
++  @ReactMethod
++  fun debugRemoveCipherStorageMarkerForOptions(options: ReadableMap?, promise: Promise) {
++    try {
++      val service = getServiceOrDefault(options)
++      promise.resolve(prefsStorage.removeCipherStorageMarker(service))
++    } catch (fail: Throwable) {
++      Log.e(KEYCHAIN_MODULE, fail.message, fail)
++      promise.reject(Errors.E_UNKNOWN_ERROR, fail)
++    }
++  }
++
+   @ReactMethod
+   fun getSecurityLevel(options: ReadableMap?, promise: Promise) {
+     val accessControl = getAccessControlOrDefault(options)
+@@ -434,6 +701,22 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+     promise.resolve(getSecurityLevel(useBiometry, usePasscode).name)
+   }
+
++  private fun putNullableBoolean(result: WritableMap, key: String, value: Boolean?) {
++    if (value != null) {
++      result.putBoolean(key, value)
++    } else {
++      result.putNull(key)
++    }
++  }
++
++  private fun putNullableInt(result: WritableMap, key: String, value: Int?) {
++    if (value != null) {
++      result.putInt(key, value)
++    } else {
++      result.putNull(key)
++    }
++  }
++
+   private fun addCipherStorageToMap(cipherStorage: CipherStorage) {
+     cipherStorageMap[cipherStorage.getCipherStorageName()] = cipherStorage
+   }
+@@ -447,14 +730,15 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+     alias: String,
+     current: CipherStorage,
+     resultSet: PrefsStorageBase.ResultSet,
+-    promptInfo: PromptInfo
++    promptInfo: PromptInfo,
++    options: ReadableMap?
+   ): DecryptionResult {
+     val storageName = resultSet.cipherStorageName
+
+     // The encrypted data is encrypted using the current CipherStorage, so we just decrypt and
+     // return
+     if (storageName == current.getCipherStorageName()) {
+-      return decryptToResult(alias, current, resultSet, promptInfo)
++      return decryptToResult(alias, current, resultSet, promptInfo, options)
+     }
+
+     // The encrypted data is encrypted using an older CipherStorage, so we need to decrypt the data
+@@ -467,7 +751,7 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+         )
+
+     // decrypt using the older cipher storage
+-    val decryptionResult = decryptToResult(alias, oldStorage, resultSet, promptInfo)
++    val decryptionResult = decryptToResult(alias, oldStorage, resultSet, promptInfo, options)
+     return decryptionResult
+   }
+
+@@ -477,15 +761,18 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+     alias: String,
+     storage: CipherStorage,
+     resultSet: PrefsStorageBase.ResultSet,
+-    promptInfo: PromptInfo
++    promptInfo: PromptInfo,
++    options: ReadableMap?
+   ): DecryptionResult {
+     val handler = getInteractiveHandler(storage, promptInfo)
+-    storage.decrypt(
++    storage.decryptWithPromptPolicy(
+       handler,
+       alias,
+       resultSet.username!!,
+       resultSet.password!!,
+-      SecurityLevel.ANY
++      SecurityLevel.ANY,
++      getAndroidAllowAuthenticatedSessionReuseOrDefault(options),
++      getAndroidAllowKeyStoreRecoveryOrDefault(options)
+     )
+     CryptoFailedException.reThrowOnError(handler.error)
+     if (null == handler.decryptionResult) {
+@@ -679,6 +966,20 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+       return storageName
+     }
+
++    private fun getAndroidAllowAuthenticatedSessionReuseOrDefault(options: ReadableMap?): Boolean {
++      return options != null &&
++        options.hasKey(Maps.ANDROID_ALLOW_AUTHENTICATED_SESSION_REUSE) &&
++        options.getBoolean(Maps.ANDROID_ALLOW_AUTHENTICATED_SESSION_REUSE)
++    }
++
++    private fun getAndroidAllowKeyStoreRecoveryOrDefault(options: ReadableMap?): Boolean {
++      if (options != null && options.hasKey(Maps.ANDROID_ALLOW_KEY_STORE_RECOVERY)) {
++        return options.getBoolean(Maps.ANDROID_ALLOW_KEY_STORE_RECOVERY)
++      }
++
++      return true
++    }
++
+     /** Get access control value from options or fallback to [AccessControl.NONE]. */
+     @AccessControl
+     private fun getAccessControlOrDefault(options: ReadableMap?): String {
+@@ -742,8 +1043,23 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+     private fun getPromptInfo(
+       options: ReadableMap?,
+       usePasscode: Boolean,
+-      useBiometry: Boolean
++      useBiometry: Boolean,
++      context: Context
+     ): PromptInfo {
++      val api29FingerprintFallbackEligible =
++        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q && useBiometry) {
++          DeviceAvailability.getStrongBiometricAuthAvailability(context)
++            .api29FingerprintFallbackEligible
++        } else {
++          false
++        }
++      val promptAuthenticatorPolicy =
++        PromptAuthenticatorPolicyResolver.resolve(
++          apiLevel = Build.VERSION.SDK_INT,
++          useBiometry = useBiometry,
++          usePasscode = usePasscode,
++          api29FingerprintFallbackEligible = api29FingerprintFallbackEligible
++        )
+       val promptInfoOptionsMap =
+         if (options != null && options.hasKey(Maps.AUTH_PROMPT)) options.getMap(Maps.AUTH_PROMPT)
+         else null
+@@ -759,22 +1075,33 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+         promptInfoBuilder.setDescription(it)
+       }
+
+-      val allowedAuthenticators = when {
+-        usePasscode && useBiometry ->
+-          BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
++      val allowedAuthenticators = promptAuthenticatorPolicy.allowedAuthenticators
+
+-        usePasscode ->
+-          BiometricManager.Authenticators.DEVICE_CREDENTIAL
++      if (promptAuthenticatorPolicy.usesApi29FingerprintFallback) {
++        Log.i(
++          KEYCHAIN_MODULE,
++          "Using API 29 fingerprint prompt fallback with BIOMETRIC_STRONG"
++        )
++      }
+
+-        else ->
+-          null
++      if (promptAuthenticatorPolicy.usesApi29LegacyDeviceCredentialApi) {
++        Log.i(
++          KEYCHAIN_MODULE,
++          "Using API 29 legacy device-credential-compatible prompt"
++        )
++        @Suppress("DEPRECATION")
++        promptInfoBuilder.setDeviceCredentialAllowed(true)
+       }
+
+       if (allowedAuthenticators != null) {
+         promptInfoBuilder.setAllowedAuthenticators(allowedAuthenticators)
+       }
+
+-      if (!usePasscode) {
++      if (
++        !promptAuthenticatorPolicy.usesApi29LegacyDeviceCredentialApi &&
++          allowedAuthenticators != null &&
++          (allowedAuthenticators and BiometricManager.Authenticators.DEVICE_CREDENTIAL) == 0
++      ) {
+         promptInfoOptionsMap?.getString(AuthPromptOptions.CANCEL)?.let {
+           promptInfoBuilder.setNegativeButtonText(it)
+         }
+diff --git a/android/src/main/java/com/oblador/keychain/PrefsStorageBase.kt b/android/src/main/java/com/oblador/keychain/PrefsStorageBase.kt
+index d165f3ef7cc97937b9b3b9e0babc6c190fda72f8..8c1033c2281a8ca33096c5f95e1ffe0c9ef56b6d 100644
+--- a/android/src/main/java/com/oblador/keychain/PrefsStorageBase.kt
++++ b/android/src/main/java/com/oblador/keychain/PrefsStorageBase.kt
+@@ -11,12 +11,33 @@ interface PrefsStorageBase {
+     passwordBytes: ByteArray?,
+   ) : CipherResult<ByteArray?>(usernameBytes, passwordBytes)
+
++  class DebugEntry(
++    val service: String,
++    val hasEntry: Boolean,
++    val hasUsername: Boolean,
++    val hasPassword: Boolean,
++    val hasCipherStorageMarker: Boolean,
++    val storedUsernameBase64: String?,
++    val storedPasswordBase64: String?,
++    val storedCipherStorageMarkerValue: String?,
++    val storedCipherStorageName: String?,
++    val resolvedCipherStorageName: String?,
++    val candidateCipherStorageNames: List<String>,
++    val cipherStorageResolutionStrategy: String?,
++    val usernameByteSize: Int?,
++    val passwordByteSize: Int?,
++  )
++
+   fun getEncryptedEntry(service: String): ResultSet?
+
+   fun removeEntry(service: String)
+
+   fun storeEncryptedEntry(service: String, encryptionResult: EncryptionResult)
+
++  fun getDebugEntry(service: String): DebugEntry
++
++  fun removeCipherStorageMarker(service: String): Boolean
++
+   /**
+    * List all types of cipher which are involved in en/decryption of the data stored herein.
+    *
+diff --git a/android/src/main/java/com/oblador/keychain/PromptAuthenticatorPolicy.kt b/android/src/main/java/com/oblador/keychain/PromptAuthenticatorPolicy.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..d1956c7965ab5ef7c5236dbcec68a7eaf1b6ae03
+--- /dev/null
++++ b/android/src/main/java/com/oblador/keychain/PromptAuthenticatorPolicy.kt
+@@ -0,0 +1,45 @@
++package com.oblador.keychain
++
++import android.os.Build
++import androidx.biometric.BiometricManager
++
++internal data class PromptAuthenticatorPolicy(
++  val allowedAuthenticators: Int?,
++  val usesApi29FingerprintFallback: Boolean,
++  val usesApi29LegacyDeviceCredentialApi: Boolean
++)
++
++internal object PromptAuthenticatorPolicyResolver {
++  fun resolve(
++    apiLevel: Int,
++    useBiometry: Boolean,
++    usePasscode: Boolean,
++    api29FingerprintFallbackEligible: Boolean
++  ): PromptAuthenticatorPolicy {
++    val usesApi29LegacyDeviceCredentialApi =
++      apiLevel == Build.VERSION_CODES.Q &&
++        usePasscode
++    val usesApi29FingerprintFallback =
++      apiLevel == Build.VERSION_CODES.Q &&
++        useBiometry &&
++        !usePasscode &&
++        api29FingerprintFallbackEligible
++
++    val allowedAuthenticators =
++      when {
++        usesApi29LegacyDeviceCredentialApi -> null
++        useBiometry && usePasscode ->
++          BiometricManager.Authenticators.BIOMETRIC_STRONG or
++            BiometricManager.Authenticators.DEVICE_CREDENTIAL
++        useBiometry -> BiometricManager.Authenticators.BIOMETRIC_STRONG
++        usePasscode -> BiometricManager.Authenticators.DEVICE_CREDENTIAL
++        else -> null
++      }
++
++    return PromptAuthenticatorPolicy(
++      allowedAuthenticators = allowedAuthenticators,
++      usesApi29FingerprintFallback = usesApi29FingerprintFallback,
++      usesApi29LegacyDeviceCredentialApi = usesApi29LegacyDeviceCredentialApi
++    )
++  }
++}
+diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorage.kt b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorage.kt
+index 2be22861c76ab0064040660bc91933ae4706330f..bce8de63a9f94b8447bf46bcda3c689c89ff33c8 100644
+--- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorage.kt
++++ b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorage.kt
+@@ -71,6 +71,24 @@ interface CipherStorage {
+     level: SecurityLevel
+   )
+
++  /**
++   * Decrypt the credentials with an explicit Android prompt policy when the storage supports it.
++   *
++   * Storages that don't need an interactive prompt can keep the default implementation.
++   */
++  @Throws(CryptoFailedException::class)
++  fun decryptWithPromptPolicy(
++    handler: ResultHandler,
++    alias: String,
++    username: ByteArray,
++    password: ByteArray,
++    level: SecurityLevel,
++    allowAuthenticatedSessionReuse: Boolean,
++    allowKeyStoreRecovery: Boolean = true
++  ) {
++    decrypt(handler, alias, username, password, level)
++  }
++
+   /** Remove key (by alias) from storage. */
+   @Throws(KeyStoreAccessException::class)
+   fun removeKey(alias: String)
+diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageBase.kt b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageBase.kt
+index adc9c007c602481c5a202639294a34975e97f39b..408584e2b2bf1a8e8e99b2c33725e72af94a3dd5 100644
+--- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageBase.kt
++++ b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageBase.kt
+@@ -24,9 +24,11 @@ import java.security.GeneralSecurityException
+ import java.security.Key
+ import java.security.KeyStore
+ import java.security.KeyStoreException
++import java.security.MessageDigest
+ import java.security.NoSuchAlgorithmException
+ import java.security.ProviderException
+ import java.security.UnrecoverableKeyException
++import java.security.cert.Certificate
+ import java.util.Collections
+ import java.util.concurrent.atomic.AtomicInteger
+ import javax.crypto.Cipher
+@@ -36,6 +38,22 @@ import javax.crypto.NoSuchPaddingException
+
+ @Suppress("unused", "MemberVisibilityCanBePrivate", "UnusedReturnValue")
+ abstract class CipherStorageBase(protected val applicationContext: Context) : CipherStorage {
++  data class StoredKeyDebugInfo(
++    val alias: String,
++    val hasAlias: Boolean,
++    val keyAlgorithm: String?,
++    val securityLevelName: String?,
++    val isInsideSecureHardware: Boolean?,
++    val isUserAuthenticationRequired: Boolean?,
++    val userAuthenticationValidityDurationSeconds: Int?,
++    val userAuthenticationType: Int?,
++    val blockModes: Array<String>?,
++    val purposes: Int?,
++    val isCompatibleWithCurrentCipher: Boolean?,
++    val publicKeySha256: String?,
++    val errorMessage: String?,
++  )
++
+   // region Constants
+   /** Logging tag. */
+   protected val LOG_TAG = CipherStorageBase::class.java.simpleName
+@@ -178,13 +196,17 @@ abstract class CipherStorageBase(protected val applicationContext: Context) : Ci
+   protected fun extractGeneratedKey(
+     safeAlias: String,
+     level: SecurityLevel,
+-    retries: AtomicInteger
++    retries: AtomicInteger,
++    allowKeyStoreRecovery: Boolean = true
+   ): Key {
+     var key: Key?
+     do {
+       val keyStore = getKeyStoreAndLoad()
+       // Check if the key exists
+       if (!keyStore.containsAlias(safeAlias)) {
++        if (!allowKeyStoreRecovery) {
++          throw KeyStoreAccessException("No key found for alias: $safeAlias")
++        }
+         // Key does not exist, generate a new one
+         generateKeyAndStoreUnderAlias(safeAlias, level)
+       } else {
+@@ -195,6 +217,11 @@ abstract class CipherStorageBase(protected val applicationContext: Context) : Ci
+             getEncryptionAlgorithm()
+           )
+         ) {
++          if (!allowKeyStoreRecovery) {
++            throw KeyStoreAccessException(
++              "Incompatible key found for alias: $safeAlias. Expected cipher: ${getEncryptionTransformation()}"
++            )
++          }
+           Log.w(
+             LOG_TAG,
+             "Incompatible key found for alias: $safeAlias. Expected cipher: ${getEncryptionTransformation()}. " +
+@@ -210,7 +237,7 @@ abstract class CipherStorageBase(protected val applicationContext: Context) : Ci
+       }
+
+       // Attempt to retrieve the key
+-      key = extractKey(keyStore, safeAlias, retries)
++      key = extractKey(keyStore, safeAlias, retries, allowKeyStoreRecovery)
+     } while (key == null)
+
+     return key
+@@ -220,14 +247,19 @@ abstract class CipherStorageBase(protected val applicationContext: Context) : Ci
+    * Try to extract key by alias from keystore, in case of 'known android bug' reduce retry counter.
+    */
+   @Throws(GeneralSecurityException::class)
+-  protected fun extractKey(keyStore: KeyStore, safeAlias: String, retry: AtomicInteger): Key? {
++  protected fun extractKey(
++    keyStore: KeyStore,
++    safeAlias: String,
++    retry: AtomicInteger,
++    allowKeyStoreRecovery: Boolean = true
++  ): Key? {
+     val key: Key?
+
+     try {
+       key = keyStore.getKey(safeAlias, null)
+     } catch (ex: UnrecoverableKeyException) {
+       // try one more time
+-      if (retry.getAndDecrement() > 0) {
++      if (allowKeyStoreRecovery && retry.getAndDecrement() > 0) {
+         keyStore.deleteEntry(safeAlias)
+         return null
+       }
+@@ -242,6 +274,91 @@ abstract class CipherStorageBase(protected val applicationContext: Context) : Ci
+     return key
+   }
+
++  fun getKeyDebugInfo(alias: String): StoredKeyDebugInfo {
++    val safeAlias = getDefaultAliasIfEmpty(alias, getDefaultAliasServiceName())
++
++    return try {
++      val keyStore = getKeyStoreAndLoad()
++      if (!keyStore.containsAlias(safeAlias)) {
++        return StoredKeyDebugInfo(
++          alias = safeAlias,
++          hasAlias = false,
++          keyAlgorithm = null,
++          securityLevelName = null,
++          isInsideSecureHardware = null,
++          isUserAuthenticationRequired = null,
++          userAuthenticationValidityDurationSeconds = null,
++          userAuthenticationType = null,
++          blockModes = null,
++          purposes = null,
++          isCompatibleWithCurrentCipher = null,
++          publicKeySha256 = null,
++          errorMessage = null,
++        )
++      }
++
++      val certificate: Certificate? = keyStore.getCertificate(safeAlias)
++      val publicKeySha256 =
++        if (certificate?.publicKey != null) {
++          getSha256Fingerprint(certificate.publicKey.encoded)
++        } else {
++          null
++        }
++
++      StoredKeyDebugInfo(
++        alias = safeAlias,
++        hasAlias = true,
++        keyAlgorithm = certificate?.publicKey?.algorithm,
++        securityLevelName = null,
++        isInsideSecureHardware = null,
++        isUserAuthenticationRequired = null,
++        userAuthenticationValidityDurationSeconds = null,
++        userAuthenticationType = null,
++        blockModes = null,
++        purposes = null,
++        isCompatibleWithCurrentCipher = null,
++        publicKeySha256 = publicKeySha256,
++        errorMessage = null,
++      )
++    } catch (fail: Throwable) {
++      StoredKeyDebugInfo(
++        alias = safeAlias,
++        hasAlias = false,
++        keyAlgorithm = null,
++        securityLevelName = null,
++        isInsideSecureHardware = null,
++        isUserAuthenticationRequired = null,
++        userAuthenticationValidityDurationSeconds = null,
++        userAuthenticationType = null,
++        blockModes = null,
++        purposes = null,
++        isCompatibleWithCurrentCipher = null,
++        publicKeySha256 = null,
++        errorMessage = "${fail::class.java.simpleName}:${fail.message}",
++      )
++    }
++  }
++
++  @Throws(NoSuchAlgorithmException::class)
++  private fun getSha256Fingerprint(input: ByteArray): String {
++    val digest = MessageDigest.getInstance("SHA-256").digest(input)
++    val builder = StringBuilder(digest.size * 3 - 1)
++
++    digest.forEachIndexed { index, value ->
++      if (index > 0) {
++        builder.append(':')
++      }
++
++      val unsignedValue = value.toInt() and 0xFF
++      if (unsignedValue < 0x10) {
++        builder.append('0')
++      }
++      builder.append(unsignedValue.toString(16).uppercase())
++    }
++
++    return builder.toString()
++  }
++
+   /** Verify that provided key satisfy minimal needed level. */
+   @Throws(GeneralSecurityException::class)
+   protected fun validateKeySecurityLevel(level: SecurityLevel, key: Key): Boolean {
+diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesGcm.kt b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesGcm.kt
+index 6b6e626161945d21d2cf1392a5d16d41d1675b57..8c91a89cec651af964f36fcc31d6ca0b3449b221 100644
+--- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesGcm.kt
++++ b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesGcm.kt
+@@ -119,6 +119,19 @@ class CipherStorageKeystoreAesGcm(
+         username: ByteArray,
+         password: ByteArray,
+         level: SecurityLevel
++    ) {
++        decryptWithPromptPolicy(handler, alias, username, password, level, false, true)
++    }
++
++    @Throws(CryptoFailedException::class)
++    override fun decryptWithPromptPolicy(
++        handler: ResultHandler,
++        alias: String,
++        username: ByteArray,
++        password: ByteArray,
++        level: SecurityLevel,
++        allowAuthenticatedSessionReuse: Boolean,
++        allowKeyStoreRecovery: Boolean
+     ) {
+         throwIfInsufficientLevel(level)
+
+@@ -127,12 +140,22 @@ class CipherStorageKeystoreAesGcm(
+         var key: Key? = null
+
+         try {
+-            key = extractGeneratedKey(safeAlias, level, retries)
+-            val results = CipherStorage.DecryptionResult(
+-                decryptBytes(key, username), decryptBytes(key, password)
+-            )
++            val extractedKey = extractGeneratedKey(safeAlias, level, retries, allowKeyStoreRecovery)
++            key = extractedKey
++
++            if (allowAuthenticatedSessionReuse || !requiresAuth) {
++                val results = CipherStorage.DecryptionResult(
++                    decryptBytes(extractedKey, username), decryptBytes(extractedKey, password)
++                )
++
++                handler.onDecrypt(results, null)
++                return
++            }
++
++            val context =
++                CryptoContext(safeAlias, extractedKey, password, username, CryptoOperation.DECRYPT)
+
+-            handler.onDecrypt(results, null)
++            handler.askAccessPermissions(context)
+         } catch (ex: UserNotAuthenticatedException) {
+             Log.d(LOG_TAG, "Unlock of keystore is needed. Error: ${ex.message}", ex)
+             // expected that KEY instance is extracted and we caught exception on decryptBytes operation
+diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.kt b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.kt
+index fc8ebf18c60c1efb5f2b44ec7d8e0762c519213c..16aa2c4c58c639a0409ae69d70d4c1a146e0153e 100644
+--- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.kt
++++ b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.kt
+@@ -98,6 +98,19 @@ class CipherStorageKeystoreRsaEcb(reactContext: ReactApplicationContext) :
+         username: ByteArray,
+         password: ByteArray,
+         level: SecurityLevel
++    ) {
++        decryptWithPromptPolicy(handler, alias, username, password, level, false, true)
++    }
++
++    @Throws(CryptoFailedException::class)
++    override fun decryptWithPromptPolicy(
++        handler: ResultHandler,
++        alias: String,
++        username: ByteArray,
++        password: ByteArray,
++        level: SecurityLevel,
++        allowAuthenticatedSessionReuse: Boolean,
++        allowKeyStoreRecovery: Boolean
+     ) {
+         throwIfInsufficientLevel(level)
+
+@@ -107,15 +120,24 @@ class CipherStorageKeystoreRsaEcb(reactContext: ReactApplicationContext) :
+
+         try {
+             // key is always NOT NULL otherwise GeneralSecurityException raised
+-            key = extractGeneratedKey(safeAlias, level, retries)
++            val extractedKey = extractGeneratedKey(safeAlias, level, retries, allowKeyStoreRecovery)
++            key = extractedKey
++
++            if (allowAuthenticatedSessionReuse) {
++                val results =
++                    CipherStorage.DecryptionResult(
++                        decryptBytes(extractedKey, username),
++                        decryptBytes(extractedKey, password)
++                    )
++
++                handler.onDecrypt(results, null)
++                return
++            }
+
+-            val results =
+-                CipherStorage.DecryptionResult(
+-                    decryptBytes(key, username),
+-                    decryptBytes(key, password)
+-                )
++            val context =
++                CryptoContext(safeAlias, extractedKey, password, username, CryptoOperation.DECRYPT)
+
+-            handler.onDecrypt(results, null)
++            handler.askAccessPermissions(context)
+         } catch (ex: UserNotAuthenticatedException) {
+             Log.d(LOG_TAG, "Unlock of keystore is needed. Error: ${ex.message}", ex)
+
+diff --git a/android/src/test/java/com/oblador/keychain/DeviceAvailabilityTest.kt b/android/src/test/java/com/oblador/keychain/DeviceAvailabilityTest.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..a0639c017629bc587697b1069db86180dd4ea539
+--- /dev/null
++++ b/android/src/test/java/com/oblador/keychain/DeviceAvailabilityTest.kt
+@@ -0,0 +1,120 @@
++package com.oblador.keychain
++
++import androidx.biometric.BiometricManager
++import org.junit.Assert.assertFalse
++import org.junit.Assert.assertTrue
++import org.junit.Test
++
++class DeviceAvailabilityTest {
++  @Test
++  fun allowsApi29LegacyFingerprintWhenAndroidXStrongCannotResolveIt() {
++    assertTrue(
++      DeviceAvailability.shouldUseApi29FingerprintFallback(
++        apiLevel = 29,
++        androidXStrongStatusCode = BiometricManager.BIOMETRIC_STATUS_UNKNOWN,
++        androidXWeakStatusCode = BiometricManager.BIOMETRIC_STATUS_UNKNOWN,
++        permissionsGranted = true,
++        hasFingerprintFeature = true,
++        legacyFingerprintHardwareDetected = true,
++        legacyFingerprintEnrolled = true
++      )
++    )
++  }
++
++  @Test
++  fun weakBiometricSignalDoesNotBecomeConfirmedFingerprintFallback() {
++    assertFalse(
++      DeviceAvailability.shouldUseApi29FingerprintFallback(
++        apiLevel = 29,
++        androidXStrongStatusCode = BiometricManager.BIOMETRIC_STATUS_UNKNOWN,
++        androidXWeakStatusCode = BiometricManager.BIOMETRIC_SUCCESS,
++        permissionsGranted = true,
++        hasFingerprintFeature = true,
++        legacyFingerprintHardwareDetected = false,
++        legacyFingerprintEnrolled = false
++      )
++    )
++    assertTrue(
++      DeviceAvailability.shouldAllowApi29FingerprintPromptProbe(
++        apiLevel = 29,
++        androidXStrongStatusCode = BiometricManager.BIOMETRIC_STATUS_UNKNOWN,
++        androidXWeakStatusCode = BiometricManager.BIOMETRIC_SUCCESS,
++        permissionsGranted = true,
++        hasFingerprintFeature = true,
++        legacyFingerprintHardwareDetected = false,
++        legacyFingerprintEnrolled = false
++      )
++    )
++  }
++
++  @Test
++  fun hardwareUnavailableNeverActivatesFingerprintFallbackOrProbe() {
++    assertFalse(
++      DeviceAvailability.shouldUseApi29FingerprintFallback(
++        apiLevel = 29,
++        androidXStrongStatusCode = BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE,
++        androidXWeakStatusCode = BiometricManager.BIOMETRIC_SUCCESS,
++        permissionsGranted = true,
++        hasFingerprintFeature = true,
++        legacyFingerprintHardwareDetected = true,
++        legacyFingerprintEnrolled = true
++      )
++    )
++    assertFalse(
++      DeviceAvailability.shouldAllowApi29FingerprintPromptProbe(
++        apiLevel = 29,
++        androidXStrongStatusCode = BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE,
++        androidXWeakStatusCode = BiometricManager.BIOMETRIC_SUCCESS,
++        permissionsGranted = true,
++        hasFingerprintFeature = true,
++        legacyFingerprintHardwareDetected = false,
++        legacyFingerprintEnrolled = false
++      )
++    )
++  }
++
++  @Test
++  fun doesNotOverrideSecurityUpdateRequired() {
++    assertFalse(
++      DeviceAvailability.shouldUseApi29FingerprintFallback(
++        apiLevel = 29,
++        androidXStrongStatusCode = 15,
++        androidXWeakStatusCode = BiometricManager.BIOMETRIC_SUCCESS,
++        permissionsGranted = true,
++        hasFingerprintFeature = true,
++        legacyFingerprintHardwareDetected = true,
++        legacyFingerprintEnrolled = true
++      )
++    )
++  }
++
++  @Test
++  fun doesNotApplyFallbackOutsideApi29() {
++    assertFalse(
++      DeviceAvailability.shouldUseApi29FingerprintFallback(
++        apiLevel = 30,
++        androidXStrongStatusCode = BiometricManager.BIOMETRIC_STATUS_UNKNOWN,
++        androidXWeakStatusCode = BiometricManager.BIOMETRIC_SUCCESS,
++        permissionsGranted = true,
++        hasFingerprintFeature = true,
++        legacyFingerprintHardwareDetected = true,
++        legacyFingerprintEnrolled = true
++      )
++    )
++  }
++
++  @Test
++  fun weakBiometricHeuristicStillRequiresFingerprintHardwareFeature() {
++    assertFalse(
++      DeviceAvailability.shouldAllowApi29FingerprintPromptProbe(
++        apiLevel = 29,
++        androidXStrongStatusCode = BiometricManager.BIOMETRIC_STATUS_UNKNOWN,
++        androidXWeakStatusCode = BiometricManager.BIOMETRIC_SUCCESS,
++        permissionsGranted = true,
++        hasFingerprintFeature = false,
++        legacyFingerprintHardwareDetected = false,
++        legacyFingerprintEnrolled = false
++      )
++    )
++  }
++}
+diff --git a/android/src/test/java/com/oblador/keychain/PromptAuthenticatorPolicyTest.kt b/android/src/test/java/com/oblador/keychain/PromptAuthenticatorPolicyTest.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..1eb51d62b80060ca458e90a1edb3633a3cb04695
+--- /dev/null
++++ b/android/src/test/java/com/oblador/keychain/PromptAuthenticatorPolicyTest.kt
+@@ -0,0 +1,61 @@
++package com.oblador.keychain
++
++import androidx.biometric.BiometricManager
++import org.junit.Assert.assertEquals
++import org.junit.Assert.assertFalse
++import org.junit.Assert.assertTrue
++import org.junit.Test
++
++class PromptAuthenticatorPolicyTest {
++  @Test
++  fun api29PasscodeCapableAccessPreservesDeviceCredentialFallback() {
++    val policy =
++      PromptAuthenticatorPolicyResolver.resolve(
++        apiLevel = 29,
++        useBiometry = true,
++        usePasscode = true,
++        api29FingerprintFallbackEligible = true
++      )
++
++    assertEquals(null, policy.allowedAuthenticators)
++    assertFalse(policy.usesApi29FingerprintFallback)
++    assertTrue(policy.usesApi29LegacyDeviceCredentialApi)
++  }
++
++  @Test
++  fun modernAndroidKeepsStrongBiometricAndDeviceCredentialCombination() {
++    val policy =
++      PromptAuthenticatorPolicyResolver.resolve(
++        apiLevel = 30,
++        useBiometry = true,
++        usePasscode = true,
++        api29FingerprintFallbackEligible = true
++      )
++
++    assertEquals(
++      BiometricManager.Authenticators.BIOMETRIC_STRONG or
++        BiometricManager.Authenticators.DEVICE_CREDENTIAL,
++      policy.allowedAuthenticators
++    )
++    assertFalse(policy.usesApi29FingerprintFallback)
++    assertFalse(policy.usesApi29LegacyDeviceCredentialApi)
++  }
++
++  @Test
++  fun biometricOnlyAlwaysUsesStrongAuthenticator() {
++    val policy =
++      PromptAuthenticatorPolicyResolver.resolve(
++        apiLevel = 29,
++        useBiometry = true,
++        usePasscode = false,
++        api29FingerprintFallbackEligible = true
++      )
++
++    assertEquals(
++      BiometricManager.Authenticators.BIOMETRIC_STRONG,
++      policy.allowedAuthenticators
++    )
++    assertTrue(policy.usesApi29FingerprintFallback)
++    assertFalse(policy.usesApi29LegacyDeviceCredentialApi)
++  }
++}
+diff --git a/ios/RNKeychainManager/RNKeychainManager.m b/ios/RNKeychainManager/RNKeychainManager.m
+index 6888ff0d7ab0dbcef57452f3b0575570f0c1d3fe..a97747b8835607d35fad4ec4452f1ab07a8a94d4 100644
+--- a/ios/RNKeychainManager/RNKeychainManager.m
++++ b/ios/RNKeychainManager/RNKeychainManager.m
+@@ -92,6 +92,96 @@ void rejectWithError(RCTPromiseRejectBlock reject, NSError *error)
+   return reject(codeForError(error), messageForError(error), nil);
+ }
+
++static id nullableValue(id value)
++{
++  return value ?: (id)[NSNull null];
++}
++
++static NSNumber *booleanNumberFromKeychainValue(id value)
++{
++  if (value == nil || value == (id)kCFNull) {
++    return nil;
++  }
++
++  if (CFGetTypeID((__bridge CFTypeRef)value) == CFBooleanGetTypeID()) {
++    return @([(NSNumber *)value boolValue]);
++  }
++
++  if ([value isKindOfClass:[NSNumber class]]) {
++    return @([(NSNumber *)value boolValue]);
++  }
++
++  return nil;
++}
++
++static NSString *accessibleAttributeName(id accessible)
++{
++  if (accessible == nil) {
++    return nil;
++  }
++
++  if ([accessible isEqual:(__bridge id)kSecAttrAccessibleWhenUnlocked]) {
++    return @"AccessibleWhenUnlocked";
++  }
++  if ([accessible isEqual:(__bridge id)kSecAttrAccessibleAfterFirstUnlock]) {
++    return @"AccessibleAfterFirstUnlock";
++  }
++  if ([accessible isEqual:(__bridge id)kSecAttrAccessibleAlways]) {
++    return @"AccessibleAlways";
++  }
++  if ([accessible isEqual:(__bridge id)kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly]) {
++    return @"AccessibleWhenPasscodeSetThisDeviceOnly";
++  }
++  if ([accessible isEqual:(__bridge id)kSecAttrAccessibleWhenUnlockedThisDeviceOnly]) {
++    return @"AccessibleWhenUnlockedThisDeviceOnly";
++  }
++  if ([accessible isEqual:(__bridge id)kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly]) {
++    return @"AccessibleAfterFirstUnlockThisDeviceOnly";
++  }
++
++  return [accessible isKindOfClass:[NSString class]] ? accessible : [accessible description];
++}
++
++static NSString *itemClassName(id itemClass)
++{
++  if (itemClass == nil) {
++    return nil;
++  }
++
++  if ([itemClass isEqual:(__bridge id)kSecClassGenericPassword]) {
++    return @"genericPassword";
++  }
++  if ([itemClass isEqual:(__bridge id)kSecClassInternetPassword]) {
++    return @"internetPassword";
++  }
++  if ([itemClass isKindOfClass:[NSString class]]) {
++    return itemClass;
++  }
++
++  return [itemClass description];
++}
++
++static NSString *accessControlDescription(SecAccessControlRef accessControl)
++{
++  if (accessControl == NULL) {
++    return nil;
++  }
++
++  return CFBridgingRelease(CFCopyDescription(accessControl));
++}
++
++static NSString *accessControlConstraintsDescription(SecAccessControlRef accessControl)
++{
++  if (accessControl == NULL) {
++    return nil;
++  }
++
++  // `SecAccessControlCopyConstraints` isn't declared in the public iOS SDK
++  // headers we build against, so keep the debug payload limited to the public
++  // access-control description for now.
++  return nil;
++}
++
+ CFStringRef accessibleValue(NSDictionary *options)
+ {
+   if (options && options[@"accessible"] != nil) {
+@@ -442,6 +532,122 @@ - (OSStatus)deleteCredentialsForServer:(NSString *)server withOptions:(NSDiction
+ }
+ #endif
+
++RCT_EXPORT_METHOD(debugGetGenericPasswordStateForOptions:(NSDictionary * __nullable)options
++                  resolver:(RCTPromiseResolveBlock)resolve
++                  rejecter:(RCTPromiseRejectBlock)reject)
++{
++  NSString *service = serviceValue(options);
++  NSMutableDictionary *result = [@{
++    @"storageName": @"keychain",
++    @"service": nullableValue(service),
++    @"hasEntry": @NO,
++    @"hasUsername": @NO,
++    @"hasPassword": @NO,
++    @"account": [NSNull null],
++    @"accessGroup": [NSNull null],
++    @"accessible": [NSNull null],
++    @"synchronizable": [NSNull null],
++    @"hasAccessControl": @NO,
++    @"accessControlDescription": [NSNull null],
++    @"accessControlConstraints": [NSNull null],
++    @"itemClass": [NSNull null],
++    @"authenticationUIBlocked": @NO,
++    @"nativeDebugErrorMessage": [NSNull null],
++  } mutableCopy];
++
++  NSMutableDictionary *presenceQuery = [@{
++    (__bridge NSString *)kSecClass: (__bridge id)kSecClassGenericPassword,
++    (__bridge NSString *)kSecAttrService: service,
++    (__bridge NSString *)kSecMatchLimit: (__bridge NSString *)kSecMatchLimitOne,
++  } mutableCopy];
++
++  if (@available(iOS 9, *)) {
++    presenceQuery[(__bridge NSString *)kSecUseAuthenticationUI] =
++      (__bridge NSString *)kSecUseAuthenticationUIFail;
++  }
++
++  OSStatus presenceStatus =
++    SecItemCopyMatching((__bridge CFDictionaryRef)[presenceQuery copy], nil);
++
++  if (presenceStatus == errSecItemNotFound) {
++    return resolve([result copy]);
++  }
++
++  if (presenceStatus == errSecInteractionNotAllowed) {
++    result[@"hasEntry"] = @YES;
++    result[@"hasPassword"] = @YES;
++    result[@"authenticationUIBlocked"] = @YES;
++  } else if (presenceStatus == noErr) {
++    result[@"hasEntry"] = @YES;
++    result[@"hasPassword"] = @YES;
++  } else {
++    NSError *error =
++      [NSError errorWithDomain:NSOSStatusErrorDomain code:presenceStatus userInfo:nil];
++    result[@"nativeDebugErrorMessage"] = nullableValue(messageForError(error));
++    return resolve([result copy]);
++  }
++
++  NSMutableDictionary *attributeQuery = [presenceQuery mutableCopy];
++  attributeQuery[(__bridge NSString *)kSecReturnAttributes] =
++    (__bridge id)kCFBooleanTrue;
++
++  CFTypeRef foundTypeRef = NULL;
++  OSStatus attributeStatus = SecItemCopyMatching(
++    (__bridge CFDictionaryRef)[attributeQuery copy],
++    (CFTypeRef *)&foundTypeRef
++  );
++
++  if (attributeStatus == errSecInteractionNotAllowed) {
++    result[@"authenticationUIBlocked"] = @YES;
++    return resolve([result copy]);
++  }
++
++  if (attributeStatus != noErr && attributeStatus != errSecItemNotFound) {
++    NSError *error =
++      [NSError errorWithDomain:NSOSStatusErrorDomain code:attributeStatus userInfo:nil];
++    result[@"nativeDebugErrorMessage"] = nullableValue(messageForError(error));
++    if (foundTypeRef != NULL) {
++      CFRelease(foundTypeRef);
++    }
++    return resolve([result copy]);
++  }
++
++  NSDictionary *attributes = CFBridgingRelease(foundTypeRef);
++  if (attributes == nil) {
++    return resolve([result copy]);
++  }
++
++  NSString *account = attributes[(__bridge id)kSecAttrAccount];
++  if (account != nil) {
++    result[@"account"] = account;
++    result[@"hasUsername"] = @YES;
++  }
++
++  result[@"accessGroup"] =
++    nullableValue(attributes[(__bridge id)kSecAttrAccessGroup]);
++  result[@"accessible"] = nullableValue(
++    accessibleAttributeName(attributes[(__bridge id)kSecAttrAccessible])
++  );
++  result[@"synchronizable"] = nullableValue(
++    booleanNumberFromKeychainValue(attributes[(__bridge id)kSecAttrSynchronizable])
++  );
++  result[@"itemClass"] = nullableValue(
++    itemClassName(attributes[(__bridge id)kSecClass])
++  );
++
++  SecAccessControlRef accessControl =
++    (__bridge SecAccessControlRef)attributes[(__bridge id)kSecAttrAccessControl];
++  if (accessControl != NULL) {
++    result[@"hasAccessControl"] = @YES;
++    result[@"accessControlDescription"] =
++      nullableValue(accessControlDescription(accessControl));
++    result[@"accessControlConstraints"] =
++      nullableValue(accessControlConstraintsDescription(accessControl));
++  }
++
++  return resolve([result copy]);
++}
++
+ RCT_EXPORT_METHOD(setGenericPasswordForOptions:(NSDictionary *)options
+                   withUsername:(NSString *)username
+                   withPassword:(NSString *)password
+diff --git a/lib/commonjs/enums.js b/lib/commonjs/enums.js
+index f70993a89fc1f9707f8294c7f9beea53c69e9416..887610fe912373e8b338577cb6cb2f8b133edd9b 100644
+--- a/lib/commonjs/enums.js
++++ b/lib/commonjs/enums.js
+@@ -3,7 +3,7 @@
+ Object.defineProperty(exports, "__esModule", {
+   value: true
+ });
+-exports.STORAGE_TYPE = exports.SECURITY_LEVEL = exports.BIOMETRY_TYPE = exports.AUTHENTICATION_TYPE = exports.ACCESS_CONTROL = exports.ACCESSIBLE = void 0;
++exports.STORAGE_TYPE = exports.SECURITY_RULES = exports.SECURITY_LEVEL = exports.BIOMETRY_TYPE = exports.AUTHENTICATION_TYPE = exports.ACCESS_CONTROL = exports.ACCESSIBLE = void 0;
+ var _reactNative = require("react-native");
+ const {
+   RNKeychainManager
+@@ -88,4 +88,15 @@ let STORAGE_TYPE = exports.STORAGE_TYPE = /*#__PURE__*/function (STORAGE_TYPE) {
+   STORAGE_TYPE["RSA"] = "KeystoreRSAECB";
+   return STORAGE_TYPE;
+ }({});
++/**
++ * Enum representing security rules for storage.
++ * Kept for compatibility with earlier react-native-keychain releases.
++ *
++ * @platform Android
++ */
++let SECURITY_RULES = exports.SECURITY_RULES = /*#__PURE__*/function (SECURITY_RULES) {
++  SECURITY_RULES["NONE"] = "none";
++  SECURITY_RULES["AUTOMATIC_UPGRADE"] = "automaticUpgradeToMoreSecuredStorage";
++  return SECURITY_RULES;
++}({});
+ //# sourceMappingURL=enums.js.map
+\ No newline at end of file
+diff --git a/lib/commonjs/index.js b/lib/commonjs/index.js
+index da7ccb9c56950200bd41fd9c33cdf1b256c6c05f..9e91d07a05b21fcc16ad4c9be17dc3b906d5afa4 100644
+--- a/lib/commonjs/index.js
++++ b/lib/commonjs/index.js
+@@ -364,6 +364,7 @@ var _default = exports.default = {
+   AUTHENTICATION_TYPE: _enums.AUTHENTICATION_TYPE,
+   BIOMETRY_TYPE: _enums.BIOMETRY_TYPE,
+   STORAGE_TYPE: _enums.STORAGE_TYPE,
++  SECURITY_RULES: _enums.SECURITY_RULES,
+   getSecurityLevel,
+   canImplyAuthentication,
+   getSupportedBiometryType,
+diff --git a/lib/module/enums.js b/lib/module/enums.js
+index e0d6a76fa397ea0bc7b32602826f871aaf146233..ac304528b5a720f0bbf0bf76dd011fdb9cd0d1c7 100644
+--- a/lib/module/enums.js
++++ b/lib/module/enums.js
+@@ -89,4 +89,15 @@ export let STORAGE_TYPE = /*#__PURE__*/function (STORAGE_TYPE) {
+   STORAGE_TYPE["RSA"] = "KeystoreRSAECB";
+   return STORAGE_TYPE;
+ }({});
++/**
++ * Enum representing security rules for storage.
++ * Kept for compatibility with earlier react-native-keychain releases.
++ *
++ * @platform Android
++ */
++export let SECURITY_RULES = /*#__PURE__*/function (SECURITY_RULES) {
++  SECURITY_RULES["NONE"] = "none";
++  SECURITY_RULES["AUTOMATIC_UPGRADE"] = "automaticUpgradeToMoreSecuredStorage";
++  return SECURITY_RULES;
++}({});
+ //# sourceMappingURL=enums.js.map
+\ No newline at end of file
+diff --git a/lib/module/index.js b/lib/module/index.js
+index b4f2bb6e8e1326094a960f648582db03f0234c3e..9aef23e65b6f8c7e75545647a5d21e5317a3d497 100644
+--- a/lib/module/index.js
++++ b/lib/module/index.js
+@@ -1,7 +1,7 @@
+ "use strict";
+
+ import { NativeModules, Platform } from 'react-native';
+-import { ACCESSIBLE, ACCESS_CONTROL, AUTHENTICATION_TYPE, SECURITY_LEVEL, STORAGE_TYPE, BIOMETRY_TYPE } from "./enums.js";
++import { ACCESSIBLE, ACCESS_CONTROL, AUTHENTICATION_TYPE, SECURITY_LEVEL, SECURITY_RULES, STORAGE_TYPE, BIOMETRY_TYPE } from "./enums.js";
+ import { normalizeAuthPrompt } from "./normalizeOptions.js";
+ const {
+   RNKeychainManager
+@@ -307,6 +307,7 @@ export default {
+   AUTHENTICATION_TYPE,
+   BIOMETRY_TYPE,
+   STORAGE_TYPE,
++  SECURITY_RULES,
+   getSecurityLevel,
+   canImplyAuthentication,
+   getSupportedBiometryType,
+diff --git a/lib/typescript/enums.d.ts b/lib/typescript/enums.d.ts
+index e465f91f2544bc22073f614041b0201a3e5de3fa..d5a2a1f324af1b8ffce826aa972a9632af43490e 100644
+--- a/lib/typescript/enums.d.ts
++++ b/lib/typescript/enums.d.ts
+@@ -126,4 +126,16 @@ export declare enum STORAGE_TYPE {
+      */
+     RSA = "KeystoreRSAECB"
+ }
++/**
++ * Enum representing security rules for storage.
++ * Kept for compatibility with earlier react-native-keychain releases.
++ *
++ * @platform Android
++ */
++export declare enum SECURITY_RULES {
++    /** No special security rules applied. */
++    NONE = "none",
++    /** Read legacy markerless secrets through the best available compatible storage. */
++    AUTOMATIC_UPGRADE = "automaticUpgradeToMoreSecuredStorage"
++}
+ //# sourceMappingURL=enums.d.ts.map
+\ No newline at end of file
+diff --git a/lib/typescript/index.d.ts b/lib/typescript/index.d.ts
+index b86889949b46e3350f3ba8984632e3a4da9acff3..1039f1ed24f8c5bc266ae4299237bf1bdb7ee0b0 100644
+--- a/lib/typescript/index.d.ts
++++ b/lib/typescript/index.d.ts
+@@ -1,4 +1,4 @@
+-import { ACCESSIBLE, ACCESS_CONTROL, AUTHENTICATION_TYPE, SECURITY_LEVEL, STORAGE_TYPE, BIOMETRY_TYPE } from './enums';
++import { ACCESSIBLE, ACCESS_CONTROL, AUTHENTICATION_TYPE, SECURITY_LEVEL, SECURITY_RULES, STORAGE_TYPE, BIOMETRY_TYPE } from './enums';
+ import type { Result, UserCredentials, SharedWebCredentials, GetOptions, GetAllOptions, BaseOptions, SetOptions, AuthenticationTypeOption, AccessControlOption } from './types';
+ /**
+  * Saves the `username` and `password` combination for the given service.
+@@ -238,6 +238,7 @@ declare const _default: {
+     AUTHENTICATION_TYPE: typeof AUTHENTICATION_TYPE;
+     BIOMETRY_TYPE: typeof BIOMETRY_TYPE;
+     STORAGE_TYPE: typeof STORAGE_TYPE;
++    SECURITY_RULES: typeof SECURITY_RULES;
+     getSecurityLevel: typeof getSecurityLevel;
+     canImplyAuthentication: typeof canImplyAuthentication;
+     getSupportedBiometryType: typeof getSupportedBiometryType;
+diff --git a/lib/typescript/types.d.ts b/lib/typescript/types.d.ts
+index ff6a12e2667e152bcc2a4fcd6eb0c10a1e61372f..f5e6fff1b2558f1ea426be0b6f3294d9121d9bf3 100644
+--- a/lib/typescript/types.d.ts
++++ b/lib/typescript/types.d.ts
+@@ -1,4 +1,4 @@
+-import type { ACCESS_CONTROL, ACCESSIBLE, AUTHENTICATION_TYPE, SECURITY_LEVEL, STORAGE_TYPE } from './enums';
++import type { ACCESS_CONTROL, ACCESSIBLE, AUTHENTICATION_TYPE, SECURITY_RULES, SECURITY_LEVEL, STORAGE_TYPE } from './enums';
+ /**
+  * Options for authentication prompt displayed to the user.
+  */
+@@ -49,6 +49,10 @@ export type SetOptions = {
+      * @default 'Best available storage'
+      */
+     storage?: STORAGE_TYPE;
++    /** The security rules to apply when storing the keychain item.
++     * @platform Android
++     */
++    rules?: SECURITY_RULES;
+     /** Authentication prompt details or a title string.
+      * @default
+      * ```json
+@@ -64,6 +68,27 @@ export type SetOptions = {
+ export type GetOptions = {
+     /** The access control policy to use for the keychain item. */
+     accessControl?: ACCESS_CONTROL;
++    /** Authentication type for retrieving keychain item. */
++    authenticationType?: AUTHENTICATION_TYPE;
++    /** The desired security level of the keychain item.
++     * @platform Android
++     */
++    securityLevel?: SECURITY_LEVEL;
++    /** The storage type.
++     * @platform Android
++     */
++    storage?: STORAGE_TYPE;
++    /** The security rules to apply when reading the keychain item.
++     * @platform Android
++     */
++    rules?: SECURITY_RULES;
++    /**
++     * Allow Android keystore reads to reuse a still-valid authenticated session instead of forcing
++     * the interactive biometric flow first.
++     *
++     * @platform Android
++     */
++    androidAllowAuthenticatedSessionReuse?: boolean;
+     /** Authentication prompt details or a title string.
+      * @default
+      * ```json
+diff --git a/src/enums.ts b/src/enums.ts
+index e360a4645219ab144b6507bb208057be1e602028..522cfb907280d40c4274c5210ed02d140ae56071 100644
+--- a/src/enums.ts
++++ b/src/enums.ts
+@@ -137,3 +137,16 @@ export enum STORAGE_TYPE {
+    */
+   RSA = 'KeystoreRSAECB',
+ }
++
++/**
++ * Enum representing security rules for storage.
++ * Kept for compatibility with earlier react-native-keychain releases.
++ *
++ * @platform Android
++ */
++export enum SECURITY_RULES {
++  /** No special security rules applied. */
++  NONE = 'none',
++  /** Read legacy markerless secrets through the best available compatible storage. */
++  AUTOMATIC_UPGRADE = 'automaticUpgradeToMoreSecuredStorage',
++}
+diff --git a/src/index.ts b/src/index.ts
+index 1de35dad7edd71da5e581bd2c75b63dbd535c536..2eadd0b3ba459bf2909b152462386b011e2d03ac 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -4,6 +4,7 @@ import {
+   ACCESS_CONTROL,
+   AUTHENTICATION_TYPE,
+   SECURITY_LEVEL,
++  SECURITY_RULES,
+   STORAGE_TYPE,
+   BIOMETRY_TYPE,
+ } from './enums';
+@@ -378,6 +379,7 @@ export default {
+   AUTHENTICATION_TYPE,
+   BIOMETRY_TYPE,
+   STORAGE_TYPE,
++  SECURITY_RULES,
+   getSecurityLevel,
+   canImplyAuthentication,
+   getSupportedBiometryType,
+diff --git a/src/types.ts b/src/types.ts
+index 00448d3a17a062a0453541a5cdd0c5c4a3eceb39..a864d11543abc4619d9877d139489b609bb36b7c 100644
+--- a/src/types.ts
++++ b/src/types.ts
+@@ -2,6 +2,7 @@ import type {
+   ACCESS_CONTROL,
+   ACCESSIBLE,
+   AUTHENTICATION_TYPE,
++  SECURITY_RULES,
+   SECURITY_LEVEL,
+   STORAGE_TYPE,
+ } from './enums';
+@@ -58,6 +59,10 @@ export type SetOptions = {
+    * @default 'Best available storage'
+    */
+   storage?: STORAGE_TYPE;
++  /** The security rules to apply when storing the keychain item.
++   * @platform Android
++   */
++  rules?: SECURITY_RULES;
+   /** Authentication prompt details or a title string.
+    * @default
+    * ```json
+@@ -75,6 +80,27 @@ export type SetOptions = {
+ export type GetOptions = {
+   /** The access control policy to use for the keychain item. */
+   accessControl?: ACCESS_CONTROL;
++  /** Authentication type for retrieving keychain item. */
++  authenticationType?: AUTHENTICATION_TYPE;
++  /** The desired security level of the keychain item.
++   * @platform Android
++   */
++  securityLevel?: SECURITY_LEVEL;
++  /** The storage type.
++   * @platform Android
++   */
++  storage?: STORAGE_TYPE;
++  /** The security rules to apply when reading the keychain item.
++   * @platform Android
++   */
++  rules?: SECURITY_RULES;
++  /**
++   * Allow Android keystore reads to reuse a still-valid authenticated session instead of forcing
++   * the interactive biometric flow first.
++   *
++   * @platform Android
++   */
++  androidAllowAuthenticatedSessionReuse?: boolean;
+   /** Authentication prompt details or a title string.
+    * @default
+    * ```json

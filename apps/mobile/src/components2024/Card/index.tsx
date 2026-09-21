@@ -28,12 +28,14 @@ export const Card = (props: CardProps) => {
     Component = onPress || onLongPress ? TouchableOpacity : View,
     hasArrow = false,
     arrowStyle,
+    ...rest
   } = props;
 
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   return (
     <Component
+      {...rest}
       style={StyleSheet.flatten([styles.container, style])}
       onPress={onPress}
       onLongPress={onLongPress}>

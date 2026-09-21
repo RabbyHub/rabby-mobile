@@ -1,9 +1,12 @@
 import { DEX_ENUM } from '@rabby-wallet/rabby-swap';
 import { CHAINS_ENUM } from '@debank/common';
-import { GasCache, ChainGas } from './preference';
+import cloneDeep from 'lodash/cloneDeep';
+import type { Draft } from 'mutative';
+import type { GasCache, ChainGas } from '../startupServices/preference';
 import { OpenApiService } from '@rabby-wallet/rabby-api';
-import createPersistStore, {
+import {
   StorageAdapaterOptions,
+  StoreServiceBase,
 } from '@rabby-wallet/persist-store';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '../request';
@@ -14,7 +17,8 @@ import {
   SWAP_SUPPORT_CHAINS,
 } from '@/constant/swap';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
-import { findChainByServerID } from '@/utils/chain';
+import { findChainByEnum, findChainByServerID } from '@/utils/chain';
+import { getTxMatchData } from '@/utils/tempoTx';
 
 export type ViewKey = keyof typeof CEX | keyof typeof DEX;
 
@@ -25,7 +29,7 @@ export type SwapServiceStore = {
   selectedChain: CHAINS_ENUM | null;
   selectedFromToken?: TokenItem;
   selectedToToken?: TokenItem;
-  preferMEVGuarded: boolean;
+  mevProtection: boolean;
   recentToTokens?: TokenItem[];
   openSwapHistoryTs: Record<string, number>;
 
@@ -58,63 +62,90 @@ export type SwapServiceStore = {
    */
 };
 
-export class SwapService {
-  store: SwapServiceStore = {
-    autoSlippage: true,
-    slippage: '0.1',
-    gasPriceCache: {},
-    selectedChain: null,
-    selectedFromToken: undefined,
-    selectedToToken: undefined,
-    selectedDex: null,
-    unlimitedAllowance: false,
-    viewList: {} as SwapServiceStore['viewList'],
-    tradeList: {} as SwapServiceStore['tradeList'],
-    sortIncludeGasFee: false,
-    preferMEVGuarded: false,
-    openSwapHistoryTs: {},
-    recentToTokens: [],
-  };
+const getSelectedChainServerId = (chain: CHAINS_ENUM | null) => {
+  if (!chain) {
+    return undefined;
+  }
+
+  return findChainByEnum(chain)?.serverId;
+};
+
+const isTokenOnSelectedChain = (
+  token: TokenItem | undefined,
+  chain: CHAINS_ENUM | null,
+) => {
+  if (!token) {
+    return true;
+  }
+
+  const chainServerId = getSelectedChainServerId(chain);
+  return (
+    !!chainServerId &&
+    token.chain?.toLowerCase() === chainServerId.toLowerCase()
+  );
+};
+
+const sanitizeSelectedTokens = (store: Draft<SwapServiceStore>) => {
+  if (!store.selectedChain) {
+    store.selectedFromToken = undefined;
+    store.selectedToToken = undefined;
+    return;
+  }
+
+  if (!isTokenOnSelectedChain(store.selectedFromToken, store.selectedChain)) {
+    store.selectedFromToken = undefined;
+  }
+
+  if (!isTokenOnSelectedChain(store.selectedToToken, store.selectedChain)) {
+    store.selectedToToken = undefined;
+  }
+};
+
+export class SwapService extends StoreServiceBase<
+  SwapServiceStore,
+  APP_STORE_NAMES.swap
+> {
   constructor(options?: StorageAdapaterOptions) {
-    const storage = createPersistStore<SwapServiceStore>(
+    super(
+      APP_STORE_NAMES.swap,
       {
-        name: APP_STORE_NAMES.swap,
-        template: {
-          autoSlippage: true,
-          slippage: '0.1',
-          gasPriceCache: {},
-          selectedChain: null,
-          selectedDex: null,
-          unlimitedAllowance: false,
-          viewList: {} as SwapServiceStore['viewList'],
-          tradeList: {} as SwapServiceStore['tradeList'],
-          preferMEVGuarded: false,
-          sortIncludeGasFee: true,
-          recentToTokens: [],
-          openSwapHistoryTs: {},
-        },
+        autoSlippage: true,
+        slippage: '0.1',
+        gasPriceCache: {},
+        selectedChain: null,
+        selectedDex: null,
+        unlimitedAllowance: false,
+        viewList: {} as SwapServiceStore['viewList'],
+        tradeList: {} as SwapServiceStore['tradeList'],
+        mevProtection: true,
+        sortIncludeGasFee: true,
+        recentToTokens: [],
+        openSwapHistoryTs: {},
       },
       {
-        storage: options?.storageAdapter,
+        storageAdapter: options?.storageAdapter,
       },
     );
-    if (storage) {
+
+    this.mutateStore(draft => {
       const values = Object.values(DEX_ENUM);
-      if (storage.selectedDex && !values.includes(storage.selectedDex)) {
-        storage.selectedDex = null;
+      if (draft.selectedDex && !values.includes(draft.selectedDex)) {
+        draft.selectedDex = null;
       }
 
       if (
-        storage?.selectedChain &&
-        !SWAP_SUPPORT_CHAINS.includes(storage?.selectedChain)
+        draft.selectedChain &&
+        !SWAP_SUPPORT_CHAINS.includes(draft.selectedChain)
       ) {
-        storage.selectedChain = null;
-        storage.selectedFromToken = undefined;
-        storage.selectedToToken = undefined;
+        draft.selectedChain = null;
+        draft.selectedFromToken = undefined;
+        draft.selectedToToken = undefined;
       }
 
-      if (storage.recentToTokens?.length) {
-        storage.recentToTokens = storage.recentToTokens.filter(item => {
+      sanitizeSelectedTokens(draft);
+
+      if (draft.recentToTokens?.length) {
+        draft.recentToTokens = draft.recentToTokens.filter(item => {
           const chainEnum = findChainByServerID(item.chain)?.enum;
           if (chainEnum) {
             const chainDefaultToken = getChainDefaultToken(chainEnum);
@@ -129,33 +160,36 @@ export class SwapService {
         });
       }
 
-      if (typeof storage.openSwapHistoryTs !== 'object') {
-        storage.openSwapHistoryTs = {};
+      if (typeof draft.openSwapHistoryTs !== 'object') {
+        draft.openSwapHistoryTs = {};
       }
-    }
-    this.store = storage || this.store;
+    });
   }
 
   handleUnsupportedChain = () => {
-    if (
-      this.store.selectedChain &&
-      !SWAP_SUPPORT_CHAINS.includes(this.store.selectedChain)
-    ) {
-      this.store.selectedChain = null;
-      this.store.selectedFromToken = undefined;
-      this.store.selectedToToken = undefined;
-    }
+    this.mutateStore(draft => {
+      if (
+        draft.selectedChain &&
+        !SWAP_SUPPORT_CHAINS.includes(draft.selectedChain)
+      ) {
+        draft.selectedChain = null;
+        draft.selectedFromToken = undefined;
+        draft.selectedToToken = undefined;
+        return;
+      }
+      sanitizeSelectedTokens(draft);
+    });
   };
 
   getSwap = <K extends keyof SwapServiceStore>(key?: K) => {
-    return key ? this.store[key] : this.store;
+    return cloneDeep(key ? this.store[key] : this.store);
   };
 
   getLastTimeGasSelection = (chainId: keyof GasCache): ChainGas | null => {
     const cache = this.store.gasPriceCache[chainId];
     if (cache && cache.lastTimeSelect === 'gasPrice') {
       if (Date.now() <= (cache.expireAt || 0)) {
-        return cache;
+        return cloneDeep(cache);
       } else if (cache.gasLevel) {
         return {
           lastTimeSelect: 'gasLevel',
@@ -165,29 +199,20 @@ export class SwapService {
         return null;
       }
     } else {
-      return cache;
+      return cloneDeep(cache);
     }
   };
 
   updateLastTimeGasSelection = (chainId: keyof GasCache, gas: ChainGas) => {
-    if (gas.lastTimeSelect === 'gasPrice') {
-      this.store.gasPriceCache = {
-        ...this.store.gasPriceCache,
-        [chainId]: {
-          ...this.store.gasPriceCache[chainId],
-          ...gas,
-          expireAt: Date.now() + 3600000, // custom gasPrice will expire at 1h later
-        },
+    this.mutateStore(draft => {
+      draft.gasPriceCache[chainId] = {
+        ...draft.gasPriceCache[chainId],
+        ...gas,
+        ...(gas.lastTimeSelect === 'gasPrice'
+          ? { expireAt: Date.now() + 3600000 }
+          : {}),
       };
-    } else {
-      this.store.gasPriceCache = {
-        ...this.store.gasPriceCache,
-        [chainId]: {
-          ...this.store.gasPriceCache[chainId],
-          ...gas,
-        },
-      };
-    }
+    });
   };
 
   getSelectedDex = () => {
@@ -195,29 +220,48 @@ export class SwapService {
   };
 
   setSelectedDex = (dexId: DEX_ENUM) => {
-    this.store.selectedDex = dexId;
+    this.mutateStore(draft => {
+      draft.selectedDex = dexId;
+    });
   };
 
   getSelectedChain = () => {
+    this.handleUnsupportedChain();
     return this.store.selectedChain;
   };
 
   setSelectedChain = (chain: CHAINS_ENUM) => {
-    this.store.selectedChain = chain;
+    this.mutateStore(draft => {
+      draft.selectedChain = chain;
+      sanitizeSelectedTokens(draft);
+    });
   };
 
   getSelectedFromToken = () => {
-    return this.store.selectedFromToken;
+    this.handleUnsupportedChain();
+    return this.getStoreFieldSnapshot('selectedFromToken');
   };
   getSelectedToToken = () => {
-    return this.store.selectedToToken;
+    this.handleUnsupportedChain();
+    return this.getStoreFieldSnapshot('selectedToToken');
   };
 
   setSelectedFromToken = (token?: TokenItem) => {
-    this.store.selectedFromToken = token;
+    this.mutateStore(draft => {
+      draft.selectedFromToken = isTokenOnSelectedChain(
+        token,
+        draft.selectedChain,
+      )
+        ? cloneDeep(token)
+        : undefined;
+    });
   };
   setSelectedToToken = (token?: TokenItem) => {
-    this.store.selectedToToken = token;
+    this.mutateStore(draft => {
+      draft.selectedToToken = isTokenOnSelectedChain(token, draft.selectedChain)
+        ? cloneDeep(token)
+        : undefined;
+    });
   };
 
   getUnlimitedAllowance = () => {
@@ -225,35 +269,31 @@ export class SwapService {
   };
 
   setUnlimitedAllowance = (bool: boolean) => {
-    this.store.unlimitedAllowance = bool;
+    this.mutateStore(draft => {
+      draft.unlimitedAllowance = bool;
+    });
   };
 
   getSwapViewList = () => {
-    return this.store.viewList;
+    return this.getStoreFieldSnapshot('viewList');
   };
 
   setSwapView = (id: ViewKey, bool: boolean) => {
-    if (!this.store.viewList) {
-      this.store.viewList = {} as SwapServiceStore['viewList'];
-    }
-    this.store.viewList = {
-      ...this.store.viewList,
-      [id]: bool,
-    };
+    this.mutateStore(draft => {
+      draft.viewList ||= {} as SwapServiceStore['viewList'];
+      draft.viewList[id] = bool;
+    });
   };
 
   getSwapTradeList = () => {
-    return this.store.tradeList;
+    return this.getStoreFieldSnapshot('tradeList');
   };
 
   setSwapTrade = (dexId: ViewKey, bool: boolean) => {
-    if (!this.store.tradeList) {
-      this.store.tradeList = {} as SwapServiceStore['tradeList'];
-    }
-    this.store.tradeList = {
-      ...this.store.tradeList,
-      [dexId]: bool,
-    };
+    this.mutateStore(draft => {
+      draft.tradeList ||= {} as SwapServiceStore['tradeList'];
+      draft.tradeList[dexId] = bool;
+    });
   };
 
   getSwapSortIncludeGasFee = () => {
@@ -261,7 +301,9 @@ export class SwapService {
   };
 
   setSwapSortIncludeGasFee = (bool: boolean) => {
-    this.store.sortIncludeGasFee = bool;
+    this.mutateStore(draft => {
+      draft.sortIncludeGasFee = bool;
+    });
   };
 
   txQuotes: Record<
@@ -284,7 +326,7 @@ export class SwapService {
   ) => {
     const { postSwap } = openapi;
     const { txQuotes } = this;
-    const key = `${chain}-${tx.data}`;
+    const key = `${chain}-${getTxMatchData(tx as any)}`;
     const quoteInfo = txQuotes[key];
     if (quoteInfo) {
       delete txQuotes[key];
@@ -297,11 +339,13 @@ export class SwapService {
   };
 
   getSwapPreferMEVGuarded = () => {
-    return this.store.preferMEVGuarded ?? false;
+    return this.store.mevProtection ?? true;
   };
 
   setSwapPreferMEVGuarded = (bool: boolean) => {
-    this.store.preferMEVGuarded = bool;
+    this.mutateStore(draft => {
+      draft.mevProtection = bool;
+    });
   };
 
   getAutoSlippage = () => {
@@ -317,19 +361,25 @@ export class SwapService {
   };
 
   setAutoSlippage = (auto: boolean) => {
-    this.store.autoSlippage = auto;
+    this.mutateStore(draft => {
+      draft.autoSlippage = auto;
+    });
   };
 
   setIsCustomSlippage = (isCustomSlippage: boolean) => {
-    this.store.isCustomSlippage = isCustomSlippage;
+    this.mutateStore(draft => {
+      draft.isCustomSlippage = isCustomSlippage;
+    });
   };
 
   setSlippage = (slippage: string) => {
-    this.store.slippage = slippage;
+    this.mutateStore(draft => {
+      draft.slippage = slippage;
+    });
   };
 
   getRecentSwapToTokens = () => {
-    return this.store.recentToTokens || [];
+    return this.getStoreFieldSnapshot('recentToTokens') || [];
   };
 
   getOpenSwapHistoryTs = (address: string) => {
@@ -337,16 +387,20 @@ export class SwapService {
   };
 
   setOpenSwapHistoryTs = (address: string) => {
-    this.store.openSwapHistoryTs[address] = Date.now();
+    this.mutateStore(draft => {
+      draft.openSwapHistoryTs[address] = Date.now();
+    });
   };
 
   setRecentSwapToToken = (token: TokenItem) => {
-    const recentToTokens = this.store.recentToTokens || [];
-    this.store.recentToTokens = [
-      token,
-      ...recentToTokens.filter(
-        item => item.id !== token.id || item.chain !== token.chain,
-      ),
-    ].slice(0, 5);
+    this.mutateStore(draft => {
+      const recentToTokens = draft.recentToTokens || [];
+      draft.recentToTokens = [
+        cloneDeep(token),
+        ...recentToTokens.filter(
+          item => item.id !== token.id || item.chain !== token.chain,
+        ),
+      ].slice(0, 5);
+    });
   };
 }

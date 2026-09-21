@@ -1,30 +1,48 @@
-import {
+import type {
   AllDexsClearinghouseState,
   MarketData,
 } from '@/hooks/perps/usePerpsStore';
-import { PERPS_MAX_NTL_VALUE } from '@/constant/perps';
+import type { PerpsMarketMarginMode, PerpsQuoteAsset } from '@/constant/perps';
 import {
+  PERPS_MAX_NTL_VALUE,
+  COLLATERAL_TOKEN_TO_QUOTE,
+  DEFAULT_TOP_ASSET,
+} from '@/constant/perps';
+import type {
   Meta,
-  AssetCtx,
   MarginTable,
   ClearinghouseState,
   SpotClearinghouseState,
+  OpenOrder,
+  WsFastAssetCtxs,
 } from '@rabby-wallet/hyperliquid-sdk';
 import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/types/account';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { apisPerps } from '@/core/apis';
-import { perpsService } from '@/core/services';
-import { PerpTopToken } from '@rabby-wallet/rabby-api/dist/types';
+import { apisPerps } from '@/core/apis/perps';
+import { perpsServiceApi } from '@/core/serviceApi/perps';
+import type { PerpTopTokenV3 } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
+import { buildPerpsMaintenanceMarginTiers } from './perpsMargin';
 
-const getPxDecimals = (markPx: string) => {
-  const parts = markPx.split('.');
-  if (!parts[1]) {
-    return 2;
+// Hyperliquid price-axis precision, ported from the official app bundle:
+// decimals = clamp(4 - floor(log10(0.95 * px)), 0, cap) — i.e. 5
+// significant figures derived from the price magnitude (BTC at 64,026 →
+// whole numbers; 0.123456 → 5 decimals). The ×0.95 is HL's hysteresis:
+// prices just above a power of ten keep the finer precision, so the axis
+// doesn't flap when hovering around a boundary (it also keeps log10 away
+// from exact powers of ten where floats have edges). We cap by
+// 6 - szDecimals (the perp tick bound) where HL's chart caps by a flat 6;
+// ours is never looser. Recomputed per tick but only changes when the
+// price crosses a magnitude.
+export const getPxDecimals = (szDecimals: number, refPx?: string | number) => {
+  const maxBySz = Math.max(0, 6 - Number(szDecimals ?? 0));
+  const px = Math.abs(Number(refPx));
+  if (!Number.isFinite(px) || px === 0) {
+    return maxBySz;
   }
-  const decimalPart = parts[1];
-  return decimalPart.length;
+  const sigDecimals = 4 - Math.floor(Math.log10(0.95 * px));
+  return Math.max(0, Math.min(sigDecimals, maxBySz));
 };
 
 export const normalizeHyperliquidCoinForLogo = (coin: string) => {
@@ -46,102 +64,166 @@ export const getHyperliquidCoinLogoUrl = (coin: string) => {
   return `https://app.hyperliquid.xyz/coins/${iconKey}.svg`;
 };
 
+// Logo fallback when marketDataMap hasn't loaded: bundled DeBank PNG first
+// (reachable in degraded networks where HL's domain isn't), HL svg last.
+let defaultTopAssetLogoMap: Record<string, string> | null = null;
+
+export const getFallbackCoinLogoUrl = (coin: string) => {
+  if (!defaultTopAssetLogoMap) {
+    const map: Record<string, string> = {};
+    DEFAULT_TOP_ASSET.forEach(asset => {
+      if (asset.full_logo_url) {
+        map[asset.name] = asset.full_logo_url;
+      }
+    });
+    defaultTopAssetLogoMap = map;
+  }
+  return defaultTopAssetLogoMap[coin] || getHyperliquidCoinLogoUrl(coin);
+};
+
+/**
+ * Determine quote asset from Meta.collateralToken.
+ */
+export const getQuoteAssetFromMeta = (meta: Meta): PerpsQuoteAsset => {
+  return COLLATERAL_TOKEN_TO_QUOTE[meta.collateralToken] ?? 'USDC';
+};
+
+export const normalizePerpsMarketMarginMode = (
+  marginMode: unknown,
+  onlyIsolated = false,
+): PerpsMarketMarginMode => {
+  if (
+    marginMode === 'normal' ||
+    marginMode === 'noCross' ||
+    marginMode === 'strictIsolated'
+  ) {
+    return marginMode;
+  }
+  // Legacy onlyIsolated is ambiguous: it can mean either noCross or
+  // strictIsolated. Preserve the safe isolated-only behavior without claiming
+  // that margin removal is supported.
+  return onlyIsolated ? 'strictIsolated' : 'normal';
+};
+
+export const isPerpsMarketIsolatedOnly = ({
+  marginMode,
+  onlyIsolated,
+}: Pick<MarketData, 'marginMode' | 'onlyIsolated'>) =>
+  normalizePerpsMarketMarginMode(marginMode, onlyIsolated) !== 'normal';
+
 export const formatMarkData = (
-  marketData: [Meta, AssetCtx[]],
-  topAssets: PerpTopToken[],
-  xyzMarketData: [Meta, AssetCtx[]],
+  allMetas: Meta[],
+  topAssets: PerpTopTokenV3[],
+  dexIdMap: Record<number, string>,
 ): MarketData[] => {
   try {
-    if (!Array.isArray(marketData) || marketData.length < 2) {
-      console.error(
-        'Failed to format market data: marketData is not an array or has less than 2 items',
-      );
+    if (!Array.isArray(allMetas) || allMetas.length === 0) {
+      console.error('Failed to format market data: allMetas is empty');
       return [];
     }
 
-    const meta = marketData[0];
-    const metrics = marketData[1];
-    if (!meta || !Array.isArray(meta.universe) || !Array.isArray(metrics)) {
-      console.error(
-        'Failed to format market data: meta or metrics is not an array',
-      );
-      return [];
-    }
+    // Build a lookup: dexId → { meta, marginTableMap, quoteAsset }
+    const dexLookup: Record<
+      string,
+      {
+        meta: Meta;
+        marginTableMap: Record<number, MarginTable>;
+        quoteAsset: PerpsQuoteAsset;
+      }
+    > = {};
 
-    const marginTableMap: Record<number, MarginTable> = {};
-    if (Array.isArray(meta.marginTables)) {
-      for (const entry of meta.marginTables) {
-        const [id, table] = entry || [];
-        if (id != null) {
-          marginTableMap[id] = table;
+    allMetas.forEach((meta, idx) => {
+      const dexId = dexIdMap[idx] ?? String(idx);
+      const marginTableMap: Record<number, MarginTable> = {};
+      if (Array.isArray(meta.marginTables)) {
+        for (const entry of meta.marginTables) {
+          const [id, table] = entry || [];
+          if (id != null) {
+            marginTableMap[id] = table;
+          }
         }
       }
-    }
-
-    const xyzMarginTableMap: Record<number, MarginTable> = {};
-    if (
-      xyzMarketData?.[0]?.marginTables &&
-      Array.isArray(xyzMarketData[0].marginTables)
-    ) {
-      for (const entry of xyzMarketData[0].marginTables) {
-        const [id, table] = entry || [];
-        if (id != null) {
-          xyzMarginTableMap[id] = table;
-        }
-      }
-    }
+      dexLookup[dexId] = {
+        meta,
+        marginTableMap,
+        quoteAsset: getQuoteAssetFromMeta(meta),
+      };
+    });
 
     const result: MarketData[] = topAssets
       .map(topAsset => {
-        const index = topAsset.id;
-        const dexId = topAsset.dex_id;
-        const meta = dexId === 'xyz' ? xyzMarketData[0] : marketData[0];
-        const metrics = dexId === 'xyz' ? xyzMarketData[1] : marketData[1];
-        const tableMap = dexId === 'xyz' ? xyzMarginTableMap : marginTableMap;
+        const index = topAsset.token_id;
+        const dexId = topAsset.dex_id ?? '';
+        const dexInfo = dexLookup[dexId];
+        if (!dexInfo) {
+          return null;
+        }
+
+        const { meta, marginTableMap, quoteAsset } = dexInfo;
         const hlDataAsset = meta.universe[index];
-
-        if (!hlDataAsset) {
+        if (
+          !hlDataAsset ||
+          hlDataAsset.isDelisted ||
+          hlDataAsset.name !== topAsset.name
+        ) {
           return null;
         }
 
-        if (hlDataAsset.isDelisted) {
-          return null;
-        }
-
-        const m = metrics[index];
-        const table = tableMap[hlDataAsset?.marginTableId];
-        const tiers = table?.marginTiers || [];
-        const firstTier =
-          Array.isArray(tiers) && tiers.length > 0 ? tiers[0] : undefined;
-        const nextTier =
-          Array.isArray(tiers) && tiers.length > 1 ? tiers[1] : undefined;
+        const marginTableId = Number(hlDataAsset.marginTableId);
+        const assetMaxLeverage = Number(hlDataAsset.maxLeverage);
+        const table = Number.isFinite(marginTableId)
+          ? marginTableMap[marginTableId]
+          : undefined;
+        const implicitSingleTier =
+          !table &&
+          Number.isInteger(marginTableId) &&
+          marginTableId > 0 &&
+          marginTableId < 50 &&
+          Number.isFinite(assetMaxLeverage) &&
+          assetMaxLeverage === marginTableId
+            ? [{ lowerBound: '0', maxLeverage: marginTableId }]
+            : [];
+        // Hyperliquid reserves table IDs below 50 for a complete single-tier
+        // table whose max leverage equals the ID. Explicit tables always win;
+        // inconsistent implicit metadata fails closed instead of guessing.
+        const tiers = table?.marginTiers || implicitSingleTier;
+        const firstTier = tiers[0];
+        const nextTier = tiers[1];
+        const marginMode = normalizePerpsMarketMarginMode(
+          hlDataAsset.marginMode,
+          hlDataAsset.onlyIsolated,
+        );
 
         const item: MarketData = {
           index,
-          dexId: topAsset.dex_id,
+          dexId: topAsset.dex_id ?? '',
           name: String(topAsset.name ?? ''),
-          // 取保证金表第一档的最大杠杆；若无表则回退 asset.maxLeverage
+          quoteAsset,
           maxLeverage: Number(
             firstTier?.maxLeverage ?? hlDataAsset?.maxLeverage,
           ),
+          displayName: topAsset.display_name || topAsset.name,
           minLeverage: 1,
-          // 第一档的最大名义值 = 下一档的 lowerBound；若不存在下一档则为兜底1000000
           maxUsdValueSize: String(nextTier?.lowerBound ?? PERPS_MAX_NTL_VALUE),
+          maintenanceMarginTiers: buildPerpsMaintenanceMarginTiers(tiers),
           szDecimals: Number(hlDataAsset.szDecimals ?? 0),
-          // 根据 markPx 推断价格精度
-          onlyIsolated: hlDataAsset.onlyIsolated,
-          pxDecimals: getPxDecimals(m?.markPx ?? ''),
-          dayBaseVlm: String(m?.dayBaseVlm ?? '0'),
-          dayNtlVlm: String(m?.dayNtlVlm ?? '0'),
-          funding: String(m?.funding ?? '0'),
-          markPx: String(m?.markPx ?? ''),
-          midPx: String(m?.midPx ?? ''),
-          openInterest: String(m?.openInterest ?? '0'),
-          oraclePx: String(m?.oraclePx ?? ''),
-          premium: String(m?.premium ?? '0'),
-          prevDayPx: String(m?.prevDayPx ?? ''),
+          marginMode,
+          onlyIsolated: marginMode !== 'normal',
+          pxDecimals: getPxDecimals(Number(hlDataAsset.szDecimals ?? 0)),
+          dayBaseVlm: '0',
+          dayNtlVlm: '0',
+          funding: '0',
+          markPx: '',
+          midPx: '',
+          openInterest: '0',
+          oraclePx: '',
+          premium: '0',
+          prevDayPx: '',
           logoUrl:
             topAsset.full_logo_url || getHyperliquidCoinLogoUrl(topAsset.name),
+          category: topAsset.category || '',
+          categoryId: topAsset.category_id || '',
+          brief: topAsset.brief || '',
         };
         return item;
       })
@@ -168,6 +250,13 @@ export const calLiquidationPrice = (
   // const nationalValue = positionSize * markPrice;
   const maintenance_margin_required = nationalValue * MMR;
   const margin_available = margin - maintenance_margin_required;
+  // When margin_available <= 0 (account hasn't loaded, or an abstraction mode
+  // we haven't mapped surfaces 0 collateral) the formula below produces a
+  // sign-inverted price — short below entry, long above. Bail out so callers
+  // hide the value rather than show a misleading number.
+  if (!Number.isFinite(margin_available) || margin_available <= 0) {
+    return 0;
+  }
   const liq_price =
     markPrice - (side * margin_available) / positionSize / (1 - MMR * side);
   // liq_price = price - side * margin_available / position_size / (1 - l * side)
@@ -288,6 +377,56 @@ export const calcAccountValueByAllDexs = (
   }, 0);
 };
 
+export interface PerDexClearinghouseSummary {
+  accountValue: string;
+  crossAccountValue: string;
+  crossMaintenanceMarginUsed: string;
+  time: number;
+  withdrawable: string;
+}
+
+export type AggregatedClearinghouseState = ClearinghouseState & {
+  crossMaintByDex: Record<string, string>;
+  perDexSummaries: Record<string, PerDexClearinghouseSummary>;
+};
+
+export interface RawSpotBalance {
+  coin: string;
+  token: number;
+  total: string;
+  hold: string;
+  available: string;
+  entryNtl: string;
+  spotHold?: string;
+  ltv?: string;
+  borrowed?: string;
+  supplied?: string;
+}
+
+export const mergeFastAssetCtxs = (
+  previous: WsFastAssetCtxs,
+  delta: WsFastAssetCtxs,
+): WsFastAssetCtxs => {
+  let next = previous;
+  for (const key of Object.keys(delta)) {
+    const incoming = delta[key];
+    if (!incoming) {
+      continue;
+    }
+    const current = previous[key];
+    const markPx = incoming.markPx ?? current?.markPx;
+    const midPx = incoming.midPx ?? current?.midPx;
+    if (current?.markPx === markPx && current?.midPx === midPx) {
+      continue;
+    }
+    if (next === previous) {
+      next = { ...previous };
+    }
+    next[key] = { markPx, midPx };
+  }
+  return next;
+};
+
 export const formatPositionPnl = (clearinghouseState: ClearinghouseState) => {
   return {
     pnl: Number(
@@ -305,30 +444,78 @@ export const formatPositionPnl = (clearinghouseState: ClearinghouseState) => {
 
 export const formatAllDexsClearinghouseState = (
   allClearinghouseState: AllDexsClearinghouseState,
-): ClearinghouseState | null => {
+): AggregatedClearinghouseState | null => {
   if (!allClearinghouseState || !allClearinghouseState[0]) {
     return null;
   }
-  const hyperDexState = allClearinghouseState[0][1];
+  // Hyper is the basis for the aggregate's marginSummary / time. WS pushes
+  // hyper at index 0 by HL convention, but callers that rebuild from a Map
+  // (insertion-order) can deliver it in any position — find by name.
+  const hyperDexState =
+    allClearinghouseState.find(([name]) => name === '')?.[1] ??
+    allClearinghouseState[0][1];
+  if (!hyperDexState) {
+    return null;
+  }
 
   const assetPositions = allClearinghouseState
     .map(item => item[1]?.assetPositions || [])
     .flat();
 
-  const withdrawable = allClearinghouseState.reduce((acc, item) => {
-    return acc + Number(item[1]?.withdrawable || 0);
-  }, 0);
+  const withdrawable = allClearinghouseState.reduce(
+    (acc, item) => acc.plus(item[1]?.withdrawable || 0),
+    new BigNumber(0),
+  );
+  const accountValue = allClearinghouseState.reduce(
+    (acc, item) => acc.plus(item[1]?.marginSummary?.accountValue || 0),
+    new BigNumber(0),
+  );
+
+  let crossMaintenanceMarginUsed = new BigNumber(0);
+  let crossAccountValue = new BigNumber(0);
+  const crossMaintByDex: Record<string, string> = {};
+  const perDexSummaries: Record<string, PerDexClearinghouseSummary> = {};
+  // time = max across all dexes, not just hyper — otherwise a sub-dex-only
+  // refresh wouldn't advance the aggregate timestamp and downstream
+  // freshness guards would reject the update.
+  let maxTime = 0;
+  for (const [dexName, state] of allClearinghouseState) {
+    if (!state) {
+      continue;
+    }
+    const dexCrossMaintenance = state.crossMaintenanceMarginUsed || '0';
+    crossMaintByDex[dexName] = dexCrossMaintenance;
+    crossMaintenanceMarginUsed =
+      crossMaintenanceMarginUsed.plus(dexCrossMaintenance);
+    crossAccountValue = crossAccountValue.plus(
+      state.crossMarginSummary?.accountValue || 0,
+    );
+    perDexSummaries[dexName] = {
+      accountValue: state.marginSummary?.accountValue || '0',
+      crossAccountValue: state.crossMarginSummary?.accountValue || '0',
+      crossMaintenanceMarginUsed: dexCrossMaintenance,
+      time: state.time ?? 0,
+      withdrawable: state.withdrawable || '0',
+    };
+    if ((state.time ?? 0) > maxTime) {
+      maxTime = state.time;
+    }
+  }
 
   return {
     assetPositions: assetPositions,
-    crossMaintenanceMarginUsed:
-      hyperDexState?.crossMaintenanceMarginUsed || '0',
-    crossMarginSummary: hyperDexState?.crossMarginSummary || {},
+    crossMaintenanceMarginUsed: crossMaintenanceMarginUsed.toString(),
+    crossMaintByDex,
+    perDexSummaries,
+    crossMarginSummary: {
+      ...hyperDexState.crossMarginSummary,
+      accountValue: crossAccountValue.toString(),
+    },
     marginSummary: {
       ...hyperDexState.marginSummary,
-      accountValue: calcAccountValueByAllDexs(allClearinghouseState).toString(),
+      accountValue: accountValue.toString(),
     },
-    time: hyperDexState?.time || 0,
+    time: maxTime,
     withdrawable: withdrawable.toString(),
   };
 };
@@ -336,10 +523,22 @@ export const formatAllDexsClearinghouseState = (
 export const formatPerpsCoin = (coin: string) => {
   if (coin.includes(':')) {
     // is hip-3 coin
-    return coin.split(':')[1];
+    return coin.split(':')[1] || '';
   } else {
     return coin;
   }
+};
+
+/**
+ * Format a perps market name for display with its quote asset.
+ * Examples: 'BTC' + 'USDC' → 'BTC/USDC', 'xyz:TSLA' + 'USDC' → 'TSLA/USDC'
+ */
+export const formatPerpsDisplayName = (
+  coinName: string,
+  quoteAsset: string = 'USDC',
+): string => {
+  const baseCoin = formatPerpsCoin(coinName);
+  return `${baseCoin}/${quoteAsset}`;
 };
 
 export const findDefaultAccount = (
@@ -369,7 +568,7 @@ export const checkPerpsReference = async ({
       return false;
     }
     let accountTypes = Object.values(KEYRING_CLASS.HARDWARE);
-    const inviteConfig = perpsService.getInviteConfig(address) || {};
+    const inviteConfig = (await perpsServiceApi.getInviteConfig(address)) || {};
     let lastTime = inviteConfig.lastInvitedAt || 0;
     let duration = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -413,36 +612,110 @@ export const checkPerpsReference = async ({
 };
 
 export const formatSpotState = (spotState: SpotClearinghouseState) => {
+  // `tokenToAvailableAfterMaintenance` is the server-computed net free
+  // collateral per token (after LTV weighting and existing-position MM).
+  // Surfaced raw so consumers can decide how to use it based on the user's
+  // abstraction mode — portfolio margin needs it, unifiedAccount has its own
+  // accounting via stablecoin totals.
+  const tokenToAvailableAfterMaintenance = Array.isArray(
+    spotState?.tokenToAvailableAfterMaintenance,
+  )
+    ? spotState.tokenToAvailableAfterMaintenance ?? null
+    : null;
+  const portfolioMarginEnabled = spotState?.portfolioMarginEnabled;
+  const portfolioMarginRatio = spotState?.portfolioMarginRatio;
+  const tokenToPortfolioBorrowRatio = Array.isArray(
+    spotState?.tokenToPortfolioBorrowRatio,
+  )
+    ? spotState.tokenToPortfolioBorrowRatio
+    : undefined;
+
   if (!spotState || !spotState.balances || spotState.balances.length === 0) {
     return {
       accountValue: '0',
       availableToTrade: '0',
+      balances: [],
+      balancesMap: {},
+      rawBalances: [] as RawSpotBalance[],
+      rawBalancesMap: {} as Record<string, RawSpotBalance>,
+      rawBalancesByToken: {} as Record<number, RawSpotBalance>,
+      tokenToAvailableAfterMaintenance,
+      portfolioMarginEnabled,
+      portfolioMarginRatio,
+      tokenToPortfolioBorrowRatio,
     };
   }
-  const availableToTrade = new BigNumber(
-    spotState.balances?.[0]?.total || '0',
-  ).minus(spotState.balances?.[0]?.hold || '0');
-  return {
-    accountValue: spotState.balances?.[0]?.total || '0',
-    availableToTrade: availableToTrade.toString(),
-  };
-  // const token = spotState.balances.find((i) => i.token === USDC_TOKEN_ID);
-  // const availableToTrade = spotState.tokenToAvailableAfterMaintenance?.find(
-  //   (i) => i?.[0] === USDC_TOKEN_ID
-  // );
 
-  // return {
-  //   accountValue: token?.total || '0',
-  //   availableToTrade: availableToTrade?.[1] || '0',
-  // };
-};
+  const rawBalances: RawSpotBalance[] = spotState.balances.map(balance => ({
+    coin: balance.coin,
+    token: balance.token,
+    total: balance.total || '0',
+    hold: balance.hold || '0',
+    available: new BigNumber(balance.total || '0')
+      .minus(balance.hold || '0')
+      .toString(),
+    entryNtl: balance.entryNtl || '0',
+    spotHold: balance.spotHold,
+    ltv: balance.ltv,
+    borrowed: balance.borrowed,
+    supplied: balance.supplied,
+  }));
 
-export const getStatsReportSide = (isBuy: boolean, isReduceOnly: boolean) => {
-  if (isReduceOnly) {
-    return isBuy ? 'close short' : 'close long';
+  const rawBalancesMap: Record<string, RawSpotBalance> = {};
+  const rawBalancesByToken: Record<number, RawSpotBalance> = {};
+  for (const balance of rawBalances) {
+    rawBalancesMap[balance.coin] = balance;
+    rawBalancesByToken[balance.token] = balance;
   }
-  return isBuy ? 'open long' : 'open short';
+
+  // Only extract the 4 stablecoins we support, filter by token ID
+  const STABLECOIN_TOKEN_IDS = new Set(
+    Object.keys(COLLATERAL_TOKEN_TO_QUOTE).map(Number),
+  );
+
+  const balances = rawBalances
+    .filter(b => STABLECOIN_TOKEN_IDS.has(b.token))
+    .map(b => {
+      return {
+        coin: b.coin,
+        token: b.token,
+        total: b.total || '0',
+        hold: b.hold || '0',
+        available: b.available,
+      };
+    });
+
+  // Assumes all stablecoins at 1:1 USD parity (matches Hyperliquid internal accounting)
+  const totalAccountValue = balances
+    .reduce((sum, b) => sum.plus(b.total), new BigNumber(0))
+    .toString();
+
+  const totalAvailable = balances
+    .reduce((sum, b) => sum.plus(b.available), new BigNumber(0))
+    .toString();
+
+  // Key by coin name for quick lookup (e.g. balancesMap['USDT'])
+  const balancesMap: Record<string, (typeof balances)[number]> = {};
+  for (const b of balances) {
+    balancesMap[b.coin] = b;
+  }
+
+  return {
+    accountValue: totalAccountValue,
+    availableToTrade: totalAvailable,
+    balances,
+    balancesMap,
+    rawBalances,
+    rawBalancesMap,
+    rawBalancesByToken,
+    tokenToAvailableAfterMaintenance,
+    portfolioMarginEnabled,
+    portfolioMarginRatio,
+    tokenToPortfolioBorrowRatio,
+  };
 };
+
+export { getStatsReportSide } from './perpsStats';
 
 export const handleDisplayFundingPayments = (fundingPayments: string) => {
   const bn = new BigNumber(fundingPayments || 0);
@@ -456,4 +729,74 @@ export const handleDisplayFundingPayments = (fundingPayments: string) => {
   }
 
   return sign + '$' + bn.abs().toFixed(2);
+};
+
+// Hyperliquid spot balance keys: USDT is keyed as 'USDT0' on the spot side.
+export const getSpotBalanceKey = (asset: string): string =>
+  asset === 'USDT' ? 'USDT0' : asset;
+
+export const isLimitOrder = (order: OpenOrder): boolean =>
+  !order.isTrigger &&
+  !order.isPositionTpsl &&
+  order.orderType === 'Limit' &&
+  order.coin.includes('@') === false; // filter out spot orders with coin like "@123"
+
+export const computeFilledPct = (origSz: string, sz: string): number => {
+  const orig = new BigNumber(origSz || 0);
+  if (orig.isZero()) {
+    return 0;
+  }
+  const filled = orig.minus(sz || 0);
+  return filled.div(orig).times(100).toNumber();
+};
+
+// `sz` is the *remaining* open size of the order — for partially filled
+// orders this is `order.sz`, not `order.origSz`, so margin usage reflects the
+// live notional still sitting on the book.
+export const computeMarginUsage = (
+  limitPx: string,
+  sz: string,
+  leverage: number,
+): number => {
+  if (!leverage || leverage <= 0) {
+    return 0;
+  }
+  return new BigNumber(limitPx || 0)
+    .times(sz || 0)
+    .div(leverage)
+    .toNumber();
+};
+
+/**
+ * Absolute deviation of a user-entered limit price from the current mark price,
+ * expressed as a unit ratio (0.05 == 5%). Returns Infinity for non-numeric input
+ * or a zero/negative mark so callers always trip the confirm threshold safely.
+ */
+export const computeLimitPriceDeviation = (
+  limitPx: string,
+  markPx: number,
+): number => {
+  const limit = Number(limitPx);
+  if (!Number.isFinite(limit) || !markPx || markPx <= 0) {
+    return Infinity;
+  }
+  return Math.abs(limit - markPx) / markPx;
+};
+
+/**
+ * True when a limit-open order would cross the spread at submission time and
+ * therefore likely execute immediately. Long ≥ mark, Short ≤ mark.
+ */
+export const isMarketableLimit = (params: {
+  direction: 'Long' | 'Short';
+  limitPx: string;
+  markPx: number;
+}): boolean => {
+  const limit = Number(params.limitPx);
+  if (!Number.isFinite(limit) || limit <= 0) {
+    return false;
+  }
+  return params.direction === 'Long'
+    ? limit >= params.markPx
+    : limit <= params.markPx;
 };

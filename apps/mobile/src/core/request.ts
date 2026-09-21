@@ -1,10 +1,10 @@
 import { OpenApiService } from '@rabby-wallet/rabby-api';
-import { RabbyApiPlugin } from '@rabby-wallet/rabby-api/dist/plugins/intf';
+import type { RabbyApiPlugin } from '@rabby-wallet/rabby-api/dist/plugins/intf';
 
 import { gS } from '@rabby-wallet/rabby-sign-bvm/es/sign-rabby';
-import { APP_VERSIONS, INITIAL_OPENAPI_URL } from '@/constant';
-import { isNonPublicProductionEnv } from '@/constant';
-import { openApiStore } from './services/openapiStore';
+import { APP_VERSIONS } from '@/constant';
+import { openApiStore } from './storage/openapiStore';
+import { instrumentOpenApiRequestDiagnostics } from '@/utils/openapiRequestDiagnostics';
 
 const SIGN_HDS = [
   'x-api-ts',
@@ -12,6 +12,7 @@ const SIGN_HDS = [
   'x-api-ver',
   'x-api-sign',
 ] as const;
+const API_KEY_HDS = ['X-API-Key', 'X-API-Time'] as const;
 
 export const SignApiPlugin: RabbyApiPlugin = {
   async onSignRequest(ctx) {
@@ -20,6 +21,14 @@ export const SignApiPlugin: RabbyApiPlugin = {
     const res = gS(params, method, url);
 
     config.headers = config.headers || {};
+    if (openApiStore.apiKey && openApiStore.apiTime) {
+      config.headers[API_KEY_HDS[0]] = openApiStore.apiKey;
+      config.headers[API_KEY_HDS[1]] = openApiStore.apiTime;
+    } else {
+      delete config.headers[API_KEY_HDS[0]];
+      delete config.headers[API_KEY_HDS[1]];
+    }
+
     config.headers[SIGN_HDS[0]] = encodeURIComponent(res.ts);
     config.headers[SIGN_HDS[1]] = encodeURIComponent(res.nonce);
     config.headers[SIGN_HDS[2]] = encodeURIComponent(res.version);
@@ -34,6 +43,7 @@ export const openapi = new OpenApiService({
   clientVersion: APP_VERSIONS.fromJs,
 });
 openapi.initSync();
+instrumentOpenApiRequestDiagnostics(openapi, 'openapi');
 
 // TODO: REMOVE ME
 export const testOpenapi = new OpenApiService({
@@ -49,6 +59,7 @@ export const testOpenapi = new OpenApiService({
   clientVersion: APP_VERSIONS.fromJs,
 });
 testOpenapi.initSync();
+instrumentOpenApiRequestDiagnostics(testOpenapi, 'testOpenapi');
 
 export async function getOpenApiService(
   type: 'mainnet' | 'testnet' = 'mainnet',

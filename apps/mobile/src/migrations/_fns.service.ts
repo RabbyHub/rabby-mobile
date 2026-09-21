@@ -9,6 +9,7 @@ import {
   STORE_SERVICE_MAP,
 } from '@/core/storage/storeConstant';
 import { appStorage } from '@/core/storage/mmkv';
+import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import {
   isUsedDateVer,
   sortMigrationByUTC0DateVer,
@@ -19,13 +20,12 @@ const APP_VER = APP_VERSIONS.fromJs;
 
 /* ====================== service migrate :start ====================== */
 
-const serviceMigrationKey = '@ServiceMigrations';
 export function setLatestServiceMigration(
   serviceName: MIGRATABLE_STORE_SERVICE,
   dateVer: string,
 ) {
-  const prev = { ...appStorage.getItem(serviceMigrationKey) };
-  appStorage.setItem(serviceMigrationKey, {
+  const prev = { ...appStorage.getItem(APP_MMKV_WEAK_KEYS.SERVICE_MIGRATIONS) };
+  appStorage.setItem(APP_MMKV_WEAK_KEYS.SERVICE_MIGRATIONS, {
     ...prev,
     [serviceName]: dateVer,
   });
@@ -34,7 +34,10 @@ export function setLatestServiceMigration(
 export function getLatestServiceMigration(
   serviceName: MIGRATABLE_STORE_SERVICE,
 ) {
-  return appStorage.getItem(serviceMigrationKey)?.[serviceName] || null;
+  return (
+    appStorage.getItem(APP_MMKV_WEAK_KEYS.SERVICE_MIGRATIONS)?.[serviceName] ||
+    null
+  );
 }
 
 type IServiceMigrate<T extends STORE_BASED_SERVICE> = (

@@ -76,6 +76,7 @@ export const getAlertMessage = (protocol: string) => {
     }
     case 'blob:': {
       result.needAlert = false;
+      result.allowOpenLink = true;
       result.message = '';
       break;
     }

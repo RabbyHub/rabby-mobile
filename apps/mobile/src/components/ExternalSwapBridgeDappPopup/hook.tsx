@@ -6,7 +6,6 @@ import { CHAINS_ENUM } from '@debank/common';
 import { atom, useAtom } from 'jotai';
 import { loadable } from 'jotai/utils';
 import { useMemo } from 'react';
-import useAsync from 'react-use/lib/useAsync';
 
 type SwapBridgeDapps = {
   chain_ids: string[];
@@ -33,22 +32,24 @@ const swapDappsAtom = loadable(atom(async () => fetchSwapDapps()));
 
 const bridgeDappsAtom = loadable(atom(async () => fetchBridgeDapps()));
 
+const inactiveDappsAtom = atom({
+  state: 'hasData' as const,
+  data: [] as SwapBridgeDapps[],
+});
+
 export const useExternalSwapBridgeDapps = (
   chain: CHAINS_ENUM | CHAINS_ENUM[],
   type: 'swap' | 'bridge',
+  enabled = true,
 ) => {
   const bridgeSupportedChains = useBridgeSupportedChains();
 
-  const [swapValue] = useAtom(swapDappsAtom);
-
-  const [bridgeValue] = useAtom(bridgeDappsAtom);
-
-  const { value, loading } = useAsync(async () => {
-    if (swapValue.state === 'hasData' && bridgeValue.state === 'hasData') {
-      return type === 'swap' ? swapValue.data : bridgeValue.data;
-    }
-    return [] as SwapBridgeDapps[];
-  }, [type, swapValue, bridgeValue]);
+  const selectedDappsAtom = enabled
+    ? type === 'swap'
+      ? swapDappsAtom
+      : bridgeDappsAtom
+    : inactiveDappsAtom;
+  const [dappsValue] = useAtom(selectedDappsAtom);
 
   const isSupportedChain = useMemo(() => {
     const supportedChains =
@@ -59,6 +60,10 @@ export const useExternalSwapBridgeDapps = (
   }, [chain, type, bridgeSupportedChains]);
 
   const data = useMemo(() => {
+    const value =
+      dappsValue.state === 'hasData'
+        ? dappsValue.data
+        : ([] as SwapBridgeDapps[]);
     if (!isSupportedChain && value) {
       let filterData: SwapBridgeDapps[] = [];
       if (type === 'swap') {
@@ -91,17 +96,14 @@ export const useExternalSwapBridgeDapps = (
       }));
     }
     return [];
-  }, [isSupportedChain, value, type, chain]);
+  }, [chain, dappsValue, isSupportedChain, type]);
 
   const { openTab } = useBrowser();
 
   return {
     data,
     isSupportedChain,
-    loading:
-      loading ||
-      swapValue.state === 'loading' ||
-      bridgeValue.state === 'loading',
+    loading: dappsValue.state === 'loading',
     openTab,
   };
 };

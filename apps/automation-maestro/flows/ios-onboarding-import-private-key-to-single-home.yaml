@@ -1,0 +1,178 @@
+appId: ${RABBY_MAESTRO_APP_ID}
+name: iOS onboarding import private key to single home
+tags:
+  - ios
+  - maestro
+  - onboarding
+  - single-home
+env:
+  WELCOME_IMPORT_EXISTING_ID: e2e.onboarding.welcome.import-existing
+  IMPORT_METHOD_PRIVATE_KEY_ID: e2e.onboarding.import-method.private-key
+  PRIVATE_KEY_TAB_ID: e2e.onboarding.private-key.tab
+  PRIVATE_KEY_INPUT_ID: e2e.onboarding.private-key.input
+  PRIVATE_KEY_SUBMIT_ID: e2e.onboarding.private-key.submit
+  SET_PASSWORD_INPUT_ID: e2e.onboarding.set-password.password
+  SET_PASSWORD_CONFIRM_INPUT_ID: e2e.onboarding.set-password.confirm-password
+  SET_PASSWORD_BIOMETRICS_ID: e2e.onboarding.set-password.biometrics
+  SET_PASSWORD_BIOMETRICS_ON_LABEL: e2e.onboarding.set-password.biometrics.on
+  SET_PASSWORD_SUBMIT_ID: e2e.onboarding.set-password.submit
+  SINGLE_HOME_BALANCE_LOADING_ID: e2e.home.single-address.balance.loading
+  SINGLE_HOME_CHANGE_LOADING_ID: e2e.home.single-address.change.loading
+  SINGLE_HOME_CURVE_LOADING_ID: e2e.home.single-address.curve.loading
+  SINGLE_HOME_BACK_ID: e2e.home.single-address.back
+---
+- runFlow: shared-dismiss-debug-warnings-overlay.yaml
+
+- extendedWaitUntil:
+    visible:
+      id: ${WELCOME_IMPORT_EXISTING_ID}
+    timeout: 30000
+
+- assertVisible:
+    id: ${WELCOME_IMPORT_EXISTING_ID}
+
+- tapOn:
+    id: ${WELCOME_IMPORT_EXISTING_ID}
+
+- extendedWaitUntil:
+    visible:
+      id: ${IMPORT_METHOD_PRIVATE_KEY_ID}
+    timeout: 15000
+
+- assertVisible:
+    id: ${IMPORT_METHOD_PRIVATE_KEY_ID}
+
+- tapOn:
+    id: ${IMPORT_METHOD_PRIVATE_KEY_ID}
+
+- extendedWaitUntil:
+    visible:
+      id: ${PRIVATE_KEY_TAB_ID}
+    timeout: 15000
+
+- assertVisible:
+    id: ${PRIVATE_KEY_TAB_ID}
+
+- tapOn:
+    id: ${PRIVATE_KEY_TAB_ID}
+
+- extendedWaitUntil:
+    visible:
+      id: ${PRIVATE_KEY_INPUT_ID}
+    timeout: 15000
+
+- assertVisible:
+    id: ${PRIVATE_KEY_INPUT_ID}
+
+- tapOn:
+    text: "粘贴|Paste"
+
+- runFlow: ios-allow-paste-permission.yaml
+
+- tapOn:
+    text: "粘贴|Paste"
+    optional: true
+
+- hideKeyboard:
+    optional: true
+
+- assertVisible:
+    id: ${PRIVATE_KEY_SUBMIT_ID}
+
+- retry:
+    maxRetries: 2
+    commands:
+      - tapOn:
+          point: "50%,91%"
+      - extendedWaitUntil:
+          visible:
+            id: ${SET_PASSWORD_INPUT_ID}
+          timeout: 20000
+
+- assertVisible:
+    id: ${SET_PASSWORD_INPUT_ID}
+
+- tapOn:
+    id: ${SET_PASSWORD_INPUT_ID}
+
+- eraseText: 100
+
+- inputText: ${RABBY_MAESTRO_APP_PASSWORD}
+
+- hideKeyboard:
+    optional: true
+
+- tapOn:
+    point: "50%,24%"
+
+- extendedWaitUntil:
+    visible:
+      id: ${SET_PASSWORD_CONFIRM_INPUT_ID}
+    timeout: 10000
+
+- tapOn:
+    id: ${SET_PASSWORD_CONFIRM_INPUT_ID}
+
+- eraseText: 100
+
+- inputText: ${RABBY_MAESTRO_APP_PASSWORD}
+
+- hideKeyboard:
+    optional: true
+
+- tapOn:
+    point: "50%,24%"
+
+- runFlow:
+    when:
+      visible:
+        text: ${SET_PASSWORD_BIOMETRICS_ON_LABEL}
+    commands:
+      - tapOn:
+          id: ${SET_PASSWORD_BIOMETRICS_ID}
+
+- runFlow: shared-dismiss-debug-warnings-overlay.yaml
+
+- assertVisible:
+    id: ${SET_PASSWORD_SUBMIT_ID}
+
+- tapOn:
+    id: ${SET_PASSWORD_SUBMIT_ID}
+
+- extendedWaitUntil:
+    visible:
+      id: ${SINGLE_HOME_BACK_ID}
+    timeout: 20000
+
+- assertVisible:
+    id: ${SINGLE_HOME_BACK_ID}
+
+- runFlow:
+    when:
+      visible:
+        id: ${SINGLE_HOME_BALANCE_LOADING_ID}
+    commands:
+      - extendedWaitUntil:
+          notVisible:
+            id: ${SINGLE_HOME_BALANCE_LOADING_ID}
+          timeout: 30000
+
+- runFlow:
+    when:
+      visible:
+        id: ${SINGLE_HOME_CHANGE_LOADING_ID}
+    commands:
+      - extendedWaitUntil:
+          notVisible:
+            id: ${SINGLE_HOME_CHANGE_LOADING_ID}
+          timeout: 30000
+
+- runFlow:
+    when:
+      visible:
+        id: ${SINGLE_HOME_CURVE_LOADING_ID}
+    commands:
+      - extendedWaitUntil:
+          notVisible:
+            id: ${SINGLE_HOME_CURVE_LOADING_ID}
+          timeout: 30000

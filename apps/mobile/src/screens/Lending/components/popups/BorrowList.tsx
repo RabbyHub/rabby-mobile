@@ -1,8 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
-import { RefreshControl, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import { Skeleton } from '@rneui/themed';
 import { useTheme2024 } from '@/hooks/theme';
@@ -24,7 +23,6 @@ import { PoolListLoading } from '../Loading';
 import { DisplayPoolReserveInfo } from '../../type';
 import { assetCanBeBorrowedByUser } from '../../utils/borrow';
 import {
-  useFetchLendingData,
   useLendingIsLoading,
   useLendingRemoteData,
   useLendingSummary,
@@ -41,14 +39,19 @@ type BorrowListItem =
   | { type: 'reserve'; data: DisplayPoolReserveInfo }
   | { type: 'toggle_fold' };
 
-const LendingBorrowList: React.FC = () => {
+type LendingBorrowListContentProps = {
+  hideHeader?: boolean;
+};
+
+export const LendingBorrowListContent: React.FC<
+  LendingBorrowListContentProps
+> = ({ hideHeader = false }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { reserves } = useLendingRemoteData();
   const { loading } = useLendingIsLoading();
   const { displayPoolReserves, iUserSummary, getTargetReserve } =
     useLendingSummary();
   const { t } = useTranslation();
-  const { fetchData } = useFetchLendingData();
   const [search, setSearch] = useState('');
   const [isInputActive, setIsInputActive] = useState(false);
 
@@ -76,18 +79,6 @@ const LendingBorrowList: React.FC = () => {
     return displayPoolReserves
       ?.filter(item => {
         if (isSameAddress(item.underlyingAsset, API_ETH_MOCK_ADDRESS)) {
-          return false;
-        }
-        if (item.variableBorrows && item.variableBorrows !== '0') {
-          return true;
-        }
-        // emode开启，但是不支持该池子借贷
-        const eModeBorrowDisabled =
-          !!iUserSummary?.userEmodeCategoryId &&
-          !item.reserve.eModes.find(
-            e => e.id === iUserSummary.userEmodeCategoryId,
-          );
-        if (eModeBorrowDisabled) {
           return false;
         }
         // 贷款上限
@@ -201,14 +192,14 @@ const LendingBorrowList: React.FC = () => {
             iUserSummary?.availableBorrowsUSD === '0') ||
           isInIsolationMode ? (
             <RcIconWarningCircleCC
-              width={14}
-              height={14}
+              width={18}
+              height={18}
               color={
                 isInIsolationMode
                   ? colors2024['orange-default']
                   : colors2024['neutral-info']
               }
-              style={{ position: 'relative', top: 1 }}
+              style={{ position: 'relative', top: 0 }}
             />
           ) : null}
           <Text
@@ -336,7 +327,7 @@ const LendingBorrowList: React.FC = () => {
           onPress={() => handlePressItem(data)}>
           <View style={styles.left}>
             <TokenIcon
-              size={46}
+              size={40}
               chainSize={0}
               tokenSymbol={data.reserve.symbol}
             />
@@ -369,53 +360,51 @@ const LendingBorrowList: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.titleContainer}>
-        <Text style={styles.titleText}>
-          {t('page.Lending.borrowDetail.actions')}
-        </Text>
-        <NextSearchBar
-          style={styles.searchBar}
-          value={search}
-          onChangeText={setSearch}
-          placeholder={t('component.TokenSelector.searchPlaceHolder2')}
-          returnKeyType="search"
-          inputContainerStyle={{
-            justifyContent: inputNotActiveAndNoQuery ? 'center' : 'flex-start',
-          }}
-          inputStyle={{
-            flex: inputNotActiveAndNoQuery ? 0 : 1,
-          }}
-          placeholderTextColor={colors2024['neutral-secondary']}
-          onFocus={handleInputFocus}
-          onBlur={handleInputBlur}
-          onCancel={() => {
-            setSearch('');
-            setTimeout(() => {
-              inputRef.current?.blur();
-            }, 50);
-          }}
-          ref={inputRef}
-        />
-        {/* for mask touch event in input to emit focus event */}
-        {inputNotActiveAndNoQuery && (
-          <TouchableOpacity
-            style={[styles.absoluteContainer]}
-            onPress={() => {
-              inputRef.current?.focus();
+      {!hideHeader && (
+        <View style={styles.titleContainer}>
+          <Text style={styles.titleText}>
+            {t('page.Lending.borrowDetail.actions')}
+          </Text>
+          <NextSearchBar
+            style={styles.searchBar}
+            value={search}
+            onChangeText={setSearch}
+            placeholder={t('component.TokenSelector.searchPlaceHolder2')}
+            returnKeyType="search"
+            inputContainerStyle={{
+              justifyContent: inputNotActiveAndNoQuery
+                ? 'center'
+                : 'flex-start',
             }}
+            inputStyle={{
+              flex: inputNotActiveAndNoQuery ? 0 : 1,
+            }}
+            placeholderTextColor={colors2024['neutral-secondary']}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
+            onCancel={() => {
+              setSearch('');
+              setTimeout(() => {
+                inputRef.current?.blur();
+              }, 50);
+            }}
+            ref={inputRef}
           />
-        )}
-      </View>
+          {/* for mask touch event in input to emit focus event */}
+          {inputNotActiveAndNoQuery && (
+            <TouchableOpacity
+              style={[styles.absoluteContainer]}
+              onPress={() => {
+                inputRef.current?.focus();
+              }}
+            />
+          )}
+        </View>
+      )}
       <BottomSheetFlatList
         data={loading ? [] : dataList}
         style={styles.list}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={false}
-            onRefresh={() => fetchData(true)}
-          />
-        }
         keyExtractor={keyExtractor}
         ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={loading ? <PoolListLoading /> : null}
@@ -426,16 +415,18 @@ const LendingBorrowList: React.FC = () => {
   );
 };
 
+const LendingBorrowList: React.FC = () => {
+  return <LendingBorrowListContent />;
+};
+
 export default LendingBorrowList;
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flex: 1,
     paddingHorizontal: 16,
     width: '100%',
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   titleContainer: {
     paddingTop: 12,
@@ -459,14 +450,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   item: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 14,
+    paddingHorizontal: 4,
+    paddingVertical: 12,
     justifyContent: 'space-between',
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-    borderRadius: 16,
-    marginTop: 8,
   },
   left: {
     flex: 1,
@@ -477,19 +463,20 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   apy: {
     flex: 0,
     width: 80,
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 17,
+    lineHeight: 22,
     textAlign: 'right',
-    fontWeight: '700',
+    fontWeight: '500',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
   totalBorrowed: {
     width: 100,
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 18,
     fontWeight: '500',
-    textAlign: 'right',
+    textAlign: 'left',
+    paddingLeft: 8,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
   },
@@ -510,39 +497,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     maxWidth: 80,
     overflow: 'hidden',
   },
-  yourSupplied: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'right',
-  },
-  zeroBorrowed: {
-    color: colors2024['neutral-info'],
-  },
-  yourBalanceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  walletIcon: {
-    width: 16,
-    height: 16,
-    color: colors2024['neutral-secondary'],
-    marginTop: -2,
-  },
-  yourBalance: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'right',
-  },
   listHeader: {
     paddingVertical: 2,
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -560,6 +517,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 14,
     lineHeight: 18,
     color: colors2024['neutral-secondary'],
+    paddingLeft: 4,
     flex: 1,
   },
   headerApy: {
@@ -567,6 +525,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
     color: colors2024['neutral-secondary'],
     width: 80,
+    paddingRight: 4,
     textAlign: 'right',
   },
   headerMyBorrows: {
@@ -574,28 +533,24 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
     color: colors2024['neutral-secondary'],
     flex: 0,
-    marginLeft: 10,
     width: 100,
-    textAlign: 'right',
+    textAlign: 'left',
   },
   sectionHeader: {
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-1'],
     marginTop: 8,
+    marginBottom: 8,
     paddingLeft: 0,
   },
   buttonHeader: {
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-2'],
   },
   availableCard: {
-    paddingHorizontal: 12,
-    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     backgroundColor: colors2024['neutral-bg-5'],
     borderRadius: 6,
-    marginTop: 8,
+    marginTop: 0,
     gap: 2,
   },
   availableCardIsolated: {

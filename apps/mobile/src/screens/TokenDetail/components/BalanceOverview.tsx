@@ -14,7 +14,7 @@ const BalanceOverview: React.FC<Props> = ({ usdValue, amount }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.amount}>{formatAmountValueKMB(amount)}</Text>
+      <Text style={styles.amount}>{formatAmountValueKMB(amount, 4, true)}</Text>
       <View style={styles.usdValueContainer}>
         <Text style={styles.usdValue}>≈${usdValue}</Text>
       </View>
@@ -31,20 +31,13 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     overflow: 'hidden',
   },
   amount: {
-    fontSize: 36,
+    fontSize: 38,
     lineHeight: 42,
-    fontWeight: '900',
+    fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
   usdValue: {
-    fontSize: 16,
-    lineHeight: 20,
-    color: colors2024['neutral-secondary'],
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-  },
-  percentChange: {
     fontSize: 16,
     lineHeight: 20,
     color: colors2024['neutral-secondary'],

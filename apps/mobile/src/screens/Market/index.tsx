@@ -21,6 +21,7 @@ import { MarketCategoryContent } from './components/MarketCategoryContent';
 import { useMarketVisibleTokenPriceRefresh } from './hooks/useMarketVisibleTokenPriceRefresh';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { TAB_BAR_HEIGHT } from './constants';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -44,7 +45,7 @@ const MARKET_TABS: { id: string; name: string; sort_fields: string[] }[] = [
   },
   {
     id: 'meme',
-    name: 'Memecoin',
+    name: 'Meme',
     sort_fields: ['volume_24h', 'fdv', 'price_change_24h'],
   },
   {
@@ -65,7 +66,7 @@ const VALID_MARKET_TABS = new Set<MarketTabKey>([
 ]);
 
 export default function MarketScreen() {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { safeOffHeader } = useSafeSizes();
 
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
@@ -124,6 +125,14 @@ export default function MarketScreen() {
     };
   }, [storedActiveTab]);
 
+  const marketTabLabelMap = useMemo(
+    () => ({
+      stock: t('page.market.tabs.stock'),
+      commodities: t('page.market.tabs.commodities'),
+    }),
+    [t],
+  );
+
   const tabs = useMemo(
     () => [
       {
@@ -132,11 +141,11 @@ export default function MarketScreen() {
       },
       ...MARKET_TABS.map(category => ({
         key: category.id,
-        label: category.name,
+        label: marketTabLabelMap[category.id] ?? category.name,
         sortFields: category.sort_fields,
       })),
     ],
-    [t],
+    [marketTabLabelMap, t],
   );
 
   const initialTabItemsLayout = useMemo(() => {
@@ -181,6 +190,7 @@ export default function MarketScreen() {
         index={index}
         indexDecimal={indexDecimal}
         text=""
+        style={styles.tabLabel}
         containerStyle={styles.watchlistLabelContainer}
         icon={
           <RcIconFavorite
@@ -195,12 +205,12 @@ export default function MarketScreen() {
         }
       />
     ),
-    [colors2024, styles.watchlistLabelContainer],
+    [colors2024, styles.watchlistLabelContainer, styles.tabLabel],
   );
 
   return (
     <NormalScreenContainer2024
-      type={isLight ? 'bg0' : 'bg1'}
+      type="bg1"
       overwriteStyle={[
         styles.overwriteStyle,
         {
@@ -210,7 +220,7 @@ export default function MarketScreen() {
       ]}>
       <Tabs.Container
         renderTabBar={renderTabBar}
-        tabBarHeight={36}
+        tabBarHeight={TAB_BAR_HEIGHT}
         lazy
         containerStyle={styles.container}
         headerContainerStyle={styles.tabBarWrap}
@@ -229,9 +239,10 @@ export default function MarketScreen() {
             const renderCategoryLabel = ({ index, indexDecimal }) => (
               <CustomLabel
                 index={index}
+                style={styles.tabLabel}
                 containerStyle={styles.categoryLabelContainer}
                 indexDecimal={indexDecimal}
-                text={category.name}
+                text={marketTabLabelMap[category.id] ?? category.name}
               />
             );
 
@@ -257,66 +268,69 @@ export default function MarketScreen() {
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  overwriteStyle: {
-    position: 'relative',
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
-  },
-  container: {
-    flex: 1,
-  },
-  headerRight: {
-    paddingRight: 4,
-    paddingVertical: 4,
-  },
-  tabBarWrap: {
-    shadowColor: 'transparent',
-    shadowOpacity: 0,
-    elevation: 0,
-    borderBottomWidth: 1,
-    borderBottomColor: colors2024['neutral-line'],
-  },
-  tabBar: {
-    height: 36,
-    width: 'auto',
-    flexShrink: 0,
-    flex: 0,
-    paddingHorizontal: 0,
-  },
-  firstTabBar: {
-    marginRight: FIRST_TAB_GAP,
-  },
-  restTabBar: {
-    marginRight: TAB_GAP,
-  },
-  tabsBarContainer: {
-    display: 'flex',
-    paddingLeft: 20,
-    position: 'relative',
-    height: 36,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
-    overflow: 'hidden',
-  },
-  indicator: {
-    backgroundColor: colors2024['neutral-body'],
-    height: 4,
-    borderRadius: 100,
-  },
-  content: {
-    flex: 1,
-  },
-  categoryLabelContainer: {
-    height: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  watchlistLabelContainer: {
-    height: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-}));
+const getStyle = createGetStyles2024(({ colors2024 }) => {
+  const bgColor = colors2024['neutral-bg-1'];
+  return {
+    overwriteStyle: {
+      position: 'relative',
+      backgroundColor: bgColor,
+    },
+    container: {
+      flex: 1,
+    },
+    headerRight: {
+      paddingRight: 4,
+      paddingVertical: 4,
+    },
+    tabBarWrap: {
+      shadowColor: 'transparent',
+      shadowOpacity: 0,
+      elevation: 0,
+      borderBottomWidth: 1,
+      backgroundColor: bgColor,
+      borderBottomColor: colors2024['neutral-bg-5'],
+    },
+    tabBar: {
+      height: TAB_BAR_HEIGHT,
+      width: 'auto',
+      flexShrink: 0,
+      flex: 0,
+      paddingHorizontal: 0,
+    },
+    firstTabBar: {
+      marginRight: FIRST_TAB_GAP,
+    },
+    restTabBar: {
+      marginRight: TAB_GAP,
+    },
+    tabsBarContainer: {
+      display: 'flex',
+      paddingLeft: 20,
+      position: 'relative',
+      height: TAB_BAR_HEIGHT,
+      backgroundColor: bgColor,
+      overflow: 'hidden',
+    },
+    indicator: {
+      backgroundColor: colors2024['neutral-body'],
+      height: 3,
+      borderRadius: 100,
+    },
+    content: {
+      flex: 1,
+    },
+    categoryLabelContainer: {
+      height: TAB_BAR_HEIGHT,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    watchlistLabelContainer: {
+      height: TAB_BAR_HEIGHT,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    tabLabel: {
+      marginTop: 0,
+    },
+  };
+});

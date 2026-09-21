@@ -30,13 +30,16 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { useSetPasswordFirst } from '@/hooks/useLock';
 import { useImportAddressProc } from '@/hooks/address/useNewUser';
-import { preferenceService } from '@/core/services';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { setReportActionTs } from '@/core/serviceApi/preference';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import {
   isNewlyInputTextSameWithContentFromClipboard,
   onPastedSensitiveData,
 } from '@/utils/clipboard';
 import { Text } from '@/components/Typography';
+import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
+import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 export const ImportPrivateKeyScreen2024 = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -104,11 +107,15 @@ export const ImportPrivateKeyScreen2024 = () => {
         isFirstImportPassword: true,
       })
     ) {
-      preferenceService.setReportActionTs(
+      void setReportActionTs(
         REPORT_TIMEOUT_ACTION_KEY.IMPORT_PRIVATE_KEY_CONFIRM,
-      );
+      ).catch(console.error);
 
       setConfirmCB(importPrivateKey);
+      return;
+    }
+
+    if (!(await ensureWalletUnlockedForAction())) {
       return;
     }
 
@@ -126,6 +133,7 @@ export const ImportPrivateKeyScreen2024 = () => {
 
   React.useEffect(() => {
     if (scanner.text) {
+      setError(undefined);
       setPrivateKey(scanner.text);
       scanner.clear();
     }
@@ -133,18 +141,19 @@ export const ImportPrivateKeyScreen2024 = () => {
 
   return (
     <FooterButtonScreenContainer
-      as="View"
+      as="KeyboardAvoidingView"
       buttonProps={{
         title: t('global.Confirm'),
         onPress: handleConfirm,
         disabled: !privateKey || !!error,
+        ...makeTestIDProps(E2E_ID.onboarding.privateKeySubmit),
       }}
       style={styles.screen}
       footerBottomOffset={56}
       footerContainerStyle={{
         paddingHorizontal: 20,
       }}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <View style={styles.container}>
           <View style={styles.topContent}>
             <PrivateKeyIcon style={styles.icon} />
@@ -170,6 +179,7 @@ export const ImportPrivateKeyScreen2024 = () => {
                   textContentType: 'none',
                   blurOnSubmit: true,
                   returnKeyType: 'done',
+                  ...makeTestIDProps(E2E_ID.onboarding.privateKeyInput),
                   onChangeText: (text: string) => {
                     setPrivateKey(text);
                     isNewlyInputTextSameWithContentFromClipboard(text).then(

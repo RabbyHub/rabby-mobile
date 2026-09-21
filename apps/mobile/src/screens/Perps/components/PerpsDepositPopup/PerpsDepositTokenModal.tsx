@@ -1,18 +1,25 @@
 import { RcArrowRightCC } from '@/assets2024/icons/perps';
 import { AssetAvatar } from '@/components';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { Button } from '@/components2024/Button';
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_DOUBLE_HEIGHT,
+  BOTTOM_BUTTON_GAP,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  RootNames,
+} from '@/constant/layout';
 import { ARB_USDC_TOKEN_ITEM } from '@/constant/perps';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
+import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { ITokenItem } from '@/store/tokens';
 import { findChain } from '@/utils/chain';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, View } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '@/components/Typography';
 
 interface Props {
@@ -36,14 +43,15 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
   const isSwap = token?.chain === ARB_USDC_TOKEN_ITEM?.chain;
   const navigation = useRabbyAppNavigation();
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const { state } = usePerpsStore();
+  const currentPerpsAccount = perpsStore(s => s.currentPerpsAccount);
 
   if (!token) {
     return null;
   }
 
   return (
-    <Modal
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.perpsDepositToken}
       transparent={true}
       visible={visible}
       animationType="fade"
@@ -75,6 +83,8 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
               <Button
                 type="ghost"
                 title={t('global.cancel')}
+                height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+                titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
                 onPress={onCancel}
               />
             </View>
@@ -86,16 +96,19 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
                     ? t('page.perps.PerpsDepositTokenModal.swapBtn')
                     : t('page.perps.PerpsDepositTokenModal.bridgeBtn')
                 }
+                height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+                titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
                 onPress={async () => {
                   await switchSceneCurrentAccount(
                     'MakeTransactionAbout',
-                    state.currentPerpsAccount,
+                    currentPerpsAccount,
                   );
                   if (isSwap) {
                     navigation.navigateDeprecated(RootNames.StackTransaction, {
-                      screen: RootNames.MultiSwap,
+                      screen: RootNames.MultiSwapBridge,
 
                       params: {
+                        activeTab: 'swap',
                         swapAgain: true,
                         chainEnum: findChain({ serverId: token.chain })?.enum,
                         swapTokenId: [token.id, ARB_USDC_TOKEN_ITEM.id],
@@ -103,9 +116,10 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
                     });
                   } else {
                     navigation.navigateDeprecated(RootNames.StackTransaction, {
-                      screen: RootNames.MultiBridge,
+                      screen: RootNames.MultiSwapBridge,
 
                       params: {
+                        activeTab: 'bridge',
                         chainEnum: findChain({ serverId: token.chain })?.enum,
                         tokenId: token.id,
                         toChainEnum: findChain({
@@ -123,7 +137,7 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
           </View>
         </View>
       </View>
-    </Modal>
+    </TrackedModal>
   );
 };
 
@@ -150,7 +164,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: BOTTOM_BUTTON_GAP,
   },
   tokenSwap: {
     display: 'flex',
@@ -180,6 +194,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     // width: '100%',
     // height: 40,
     flex: 1,
+    height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
   },
   buttonStyle: {},
 }));

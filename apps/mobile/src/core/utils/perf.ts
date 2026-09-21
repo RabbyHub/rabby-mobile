@@ -1,11 +1,7 @@
-import { makeJsEEClass } from '@/core/services/_utils';
-import {
-  AddressBalanceUpdaterSource,
-  BalanceState,
-} from '@/hooks/useCurrentBalance';
-import { Multi24hBalanceState } from '@/hooks/useScene24hBalance';
-import { ContactBookStore } from '@rabby-wallet/service-address';
-import { Account, PreferenceStore } from '../services/preference';
+import { makeJsEEClass } from '@/core/utils/makeJsEEClass';
+import type { Multi24hBalanceState } from '@/store/balance24h';
+import type { ContactBookStore } from '@rabby-wallet/service-address';
+import type { PreferenceStore } from '../startupServices/preference';
 
 export type PerfEventBusListeners = {
   EVENT_ROUTE_CHANGE: (ctx: {
@@ -14,6 +10,8 @@ export type PerfEventBusListeners = {
   }) => void;
 
   APP_NAVIGATION_READY: (ctx: { readyRootName: string }) => void;
+
+  BOOT_SPLASH_EXITED: () => void;
 
   CONTACTS_ALIASES_UPDATE: (ctx: {
     nextState: ContactBookStore['aliases'];
@@ -35,15 +33,17 @@ export type PerfEventBusListeners = {
     combinedData: Multi24hBalanceState['combinedData'][keyof Multi24hBalanceState['combinedData']];
   }) => void;
 
-  'TMP_UPDATED:SINGLE_HOME_BALANCE': (data: {
-    address: string;
-    newBalance: BalanceState | null;
-    prevBalance: BalanceState | null;
-    force: boolean;
-    fromScene: AddressBalanceUpdaterSource;
-  }) => void;
+  WALLET_AUTH_UNLOCKED: (ctx: { isFirstTimeAfterLaunch: boolean }) => void;
 
+  POST_UNLOCK_UI_READY: (ctx: { isFirstTimeAfterLaunch: boolean }) => void;
+
+  /** @deprecated use WALLET_AUTH_UNLOCKED */
   USER_MANUALLY_UNLOCK: (ctx: { isFirstTimeAfterLaunch: boolean }) => void;
+
+  /** @deprecated use POST_UNLOCK_UI_READY */
+  USER_MANUALLY_UNLOCK_UI_READY: (ctx: {
+    isFirstTimeAfterLaunch: boolean;
+  }) => void;
 
   AUTO_TRIGGER_UNLOCK: () => void;
 

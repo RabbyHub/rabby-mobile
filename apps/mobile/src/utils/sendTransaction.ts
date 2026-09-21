@@ -4,7 +4,7 @@ import {
   is7702Tx,
 } from '@/utils/transaction';
 
-import {
+import type {
   ExplainTxResponse,
   GasLevel,
   ParseTxResponse,
@@ -12,13 +12,11 @@ import {
   TxPushType,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { findChain, isTestnet } from './chain';
-import {
-  keyringService,
-  notificationService,
-  preferenceService,
-  transactionHistoryService,
-  whitelistService,
-} from '@/core/services';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
+import { miscServiceApi } from '@/core/serviceApi/misc';
+import { notificationServiceApi } from '@/core/serviceApi/notification';
 import { apiKeyring, apiProvider } from '@/core/apis';
 import { openapi, testOpenapi } from '@/core/request';
 import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
@@ -48,9 +46,15 @@ import { getCexInfo } from '@/hooks/useCexSupportList';
 import { isNonPublicProductionEnv } from '@/constant';
 import { getDefaultStore } from 'jotai';
 import { mockBatchRevokeStore } from '@/hooks/appSettings';
-import { Account } from '@/core/services/preference';
-import miscService from '@/core/services/misc';
-import { isTempoChain } from './tempo';
+import type { Account } from '@/types/account';
+import type { TxWithTempoExtras } from './tempo';
+import {
+  buildTempoTransaction,
+  isTempoBatchSupportedAccountType,
+  isTempoChain,
+  shouldUseTempoTransaction,
+  toTempoCallsTx,
+} from './tempo';
 
 // fail code
 export enum FailedCode {
@@ -69,7 +73,7 @@ const checkEnoughUseGasAccount = async ({
   transaction,
   currentAccountType,
 }: {
-  transaction: Tx;
+  transaction: TxWithTempoExtras<Tx>;
   currentAccountType: string;
   gasAccount?: {
     sig: string | undefined;
@@ -172,6 +176,10 @@ export const sendTransaction = async ({
   })!;
   const support1559 = chain.eip['1559'];
   const { address, ...currentAccount } = account;
+  const shouldUseTempoCallsForGasAccount = (gasAccountEnabled?: boolean) =>
+    !!gasAccountEnabled &&
+    isTempoChain(chainServerId) &&
+    isTempoBatchSupportedAccountType(currentAccount.type);
 
   const recommendNonce =
     tx.nonce ||
@@ -179,6 +187,11 @@ export const sendTransaction = async ({
       from: tx.from,
       chainId: chain.id,
       account,
+      nonceKey: (tx as TxWithTempoExtras<Tx>).nonceKey as
+        | string
+        | number
+        | bigint
+        | undefined,
     }));
 
   // get gas
@@ -194,10 +207,10 @@ export const sendTransaction = async ({
     normalGas = gasMarket.find(item => item.level === 'normal')!;
   }
 
-  const signingTxId = await transactionHistoryService.addSigningTx(tx);
+  const signingTxId = await transactionHistoryServiceApi.addSigningTx(tx);
 
   const reportGasLevel =
-    normalGas.level || miscService.getCurrentGasLevel() || 'normal';
+    normalGas.level || miscServiceApi.getCurrentGasLevel() || 'normal';
 
   stats.report('createTransaction', {
     type: currentAccount.brandName,
@@ -215,13 +228,24 @@ export const sendTransaction = async ({
   const preExecResult =
     extra?.preExecResult ||
     (await openapi.preExecTx({
-      tx: {
-        ...tx,
-        nonce: recommendNonce,
-        data: tx.data,
-        value: tx.value || '0x0',
-        gasPrice: intToHex(Math.round(normalGas.price)),
-      },
+      tx: shouldUseTempoCallsForGasAccount(isGasAccount)
+        ? (toTempoCallsTx(
+            {
+              ...tx,
+              nonce: recommendNonce,
+              data: tx.data,
+              value: tx.value || '0x0',
+              gasPrice: intToHex(Math.round(normalGas.price)),
+            },
+            { stripTopLevelData: true },
+          ) as any)
+        : ({
+            ...tx,
+            nonce: recommendNonce,
+            data: tx.data,
+            value: tx.value || '0x0',
+            gasPrice: intToHex(Math.round(normalGas.price)),
+          } as any),
       origin: INTERNAL_REQUEST_ORIGIN,
       address: address,
       updateNonce: true,
@@ -320,7 +344,7 @@ export const sendTransaction = async ({
     : false;
 
   // generate tx with gas
-  const transaction: Tx = {
+  const transaction: TxWithTempoExtras<Tx> = {
     from: tx.from,
     to: tx.to,
     data: tx.data,
@@ -328,6 +352,15 @@ export const sendTransaction = async ({
     value: tx.value,
     chainId: tx.chainId,
     gas: gasLimit,
+    type: (tx as TxWithTempoExtras<Tx>).type,
+    calls: (tx as TxWithTempoExtras<Tx>).calls,
+    feeToken: (tx as TxWithTempoExtras<Tx>).feeToken,
+    feePayer: (tx as TxWithTempoExtras<Tx>).feePayer,
+    feePayerSignature: (tx as TxWithTempoExtras<Tx>).feePayerSignature,
+    nonceKey: (tx as TxWithTempoExtras<Tx>).nonceKey,
+    keyAuthorization: (tx as TxWithTempoExtras<Tx>).keyAuthorization,
+    validBefore: (tx as TxWithTempoExtras<Tx>).validBefore,
+    validAfter: (tx as TxWithTempoExtras<Tx>).validAfter,
   };
 
   let failedCode;
@@ -350,11 +383,20 @@ export const sendTransaction = async ({
       const gasAccountCanPay = await checkEnoughUseGasAccount({
         gasAccount,
         currentAccountType: currentAccount.type,
-        transaction: {
-          ...transaction,
-          gas: gasLimit,
-          gasPrice: intToHex(normalGas.price),
-        },
+        transaction: shouldUseTempoCallsForGasAccount(true)
+          ? (toTempoCallsTx(
+              {
+                ...transaction,
+                gas: gasLimit,
+                gasPrice: intToHex(normalGas.price),
+              },
+              { stripTopLevelData: true },
+            ) as any)
+          : {
+              ...transaction,
+              gas: gasLimit,
+              gasPrice: intToHex(normalGas.price),
+            },
       });
       if (gasAccountCanPay) {
         onUseGasAccount?.();
@@ -400,19 +442,45 @@ export const sendTransaction = async ({
     (transaction as Tx).gasPrice = maxFeePerGas;
   }
 
+  const shouldUseGasAccountMode = autoUseGasAccount
+    ? canUseGasAccount
+    : isGasAccount;
+  const transactionForSubmit = shouldUseTempoCallsForGasAccount(
+    shouldUseGasAccountMode,
+  )
+    ? ({
+        ...(toTempoCallsTx(transaction as any, {
+          stripTopLevelData: true,
+        }) as any),
+        feePayer: true,
+      } as any)
+    : transaction;
+
   // fetch action data
   const actionData =
     extra?.actionData ||
     (await openapi.parseTx({
       chainId: chain.serverId,
-      tx: {
-        ...tx,
-        gas: '0x0',
-        nonce: recommendNonce || '0x1',
-        value: tx.value || '0x0',
-        to: tx.to || '',
-        type: is7702Tx(tx) ? 4 : support1559 ? 2 : undefined,
-      } as any,
+      tx: shouldUseTempoCallsForGasAccount(shouldUseGasAccountMode)
+        ? (toTempoCallsTx(
+            {
+              ...tx,
+              gas: '0x0',
+              nonce: recommendNonce || '0x1',
+              value: tx.value || '0x0',
+              to: tx.to || '',
+              type: '0x76',
+            },
+            { stripTopLevelData: true },
+          ) as any)
+        : ({
+            ...tx,
+            gas: '0x0',
+            nonce: recommendNonce || '0x1',
+            value: tx.value || '0x0',
+            to: tx.to || '',
+            type: is7702Tx(tx) ? 4 : support1559 ? 2 : undefined,
+          } as any),
       origin: INTERNAL_REQUEST_SESSION.origin || '',
       addr: address,
     }));
@@ -420,12 +488,23 @@ export const sendTransaction = async ({
     type: 'transaction',
     data: actionData.action,
     balanceChange: preExecResult.balance_change,
-    tx: {
-      ...tx,
-      gas: '0x0',
-      nonce: recommendNonce || '0x1',
-      value: tx.value || '0x0',
-    },
+    tx: shouldUseTempoCallsForGasAccount(shouldUseGasAccountMode)
+      ? (toTempoCallsTx(
+          {
+            ...tx,
+            gas: '0x0',
+            nonce: recommendNonce || '0x1',
+            value: tx.value || '0x0',
+            type: '0x76',
+          },
+          { stripTopLevelData: true },
+        ) as any)
+      : {
+          ...tx,
+          gas: '0x0',
+          nonce: recommendNonce || '0x1',
+          value: tx.value || '0x0',
+        },
     preExecVersion: preExecResult.pre_exec_version,
     gasUsed: preExecResult.gas.gas_used,
     sender: tx.from,
@@ -439,25 +518,39 @@ export const sendTransaction = async ({
     sender: address,
     cex: cexInfo,
     walletProvider: {
+      ethRpc: apiProvider.requestETHRpc,
       hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
-      hasAddress: keyringService.hasAddress.bind(keyringService),
-      getWhitelist: async () => whitelistService.getWhitelist(),
-      isWhitelistEnabled: async () => whitelistService.isWhitelistEnabled(),
+      hasAddress: keyringServiceApi.hasAddress,
+      getWhitelist: async () => whitelistServiceApi.getWhitelist(),
+      isWhitelistEnabled: async () => whitelistServiceApi.isWhitelistEnabled(),
       getPendingTxsByNonce: async (...args) =>
-        transactionHistoryService.getPendingTxsByNonce(...args),
+        transactionHistoryServiceApi.getPendingTxsByNonce(...args),
       findChain,
       ALIAS_ADDRESS,
     },
     tx: {
-      ...tx,
-      gas: '0x0',
-      nonce: recommendNonce || '0x1',
-      value: tx.value || '0x0',
+      ...(shouldUseTempoCallsForGasAccount(shouldUseGasAccountMode)
+        ? (toTempoCallsTx(
+            {
+              ...tx,
+              gas: '0x0',
+              nonce: recommendNonce || '0x1',
+              value: tx.value || '0x0',
+              type: '0x76',
+            },
+            { stripTopLevelData: true },
+          ) as any)
+        : {
+            ...tx,
+            gas: '0x0',
+            nonce: recommendNonce || '0x1',
+            value: tx.value || '0x0',
+          }),
     },
     apiProvider: openapi,
   });
 
-  await transactionHistoryService.updateSigningTx(signingTxId, {
+  await transactionHistoryServiceApi.updateSigningTx(signingTxId, {
     rawTx: {
       nonce: recommendNonce,
     },
@@ -493,7 +586,7 @@ export const sendTransaction = async ({
   }
 
   const handleSendAfter = async () => {
-    const statsData = await notificationService.getStatsData();
+    const statsData = await notificationServiceApi.getStatsData();
 
     if (statsData?.signed) {
       const sData: any = {
@@ -545,16 +638,16 @@ export const sendTransaction = async ({
         $ctx: {
           ga,
         },
-        params: [transaction],
+        params: [transactionForSubmit],
       },
       session: INTERNAL_REQUEST_SESSION,
       approvalRes: {
-        ...transaction,
+        ...transactionForSubmit,
         signingTxId,
-        // logId: logId,
+        logId,
         lowGasDeadline,
         isGasLess,
-        isGasAccount: autoUseGasAccount ? canUseGasAccount : isGasAccount,
+        isGasAccount: shouldUseGasAccountMode,
         pushType,
         sig,
       },
@@ -624,6 +717,7 @@ export const sendTransactionByMiniSignV2 = async ({
   session,
   account: _account,
   preExecResult,
+  onSigningTxCreated,
 }: {
   tx: Tx;
   chainServerId: string;
@@ -637,7 +731,16 @@ export const sendTransactionByMiniSignV2 = async ({
   session?: Parameters<typeof apiProvider.ethSendTransaction>[0]['session'];
   account: Account;
   preExecResult: ExplainTxResponse;
+  onSigningTxCreated?: (signingTxId: string) => void;
 }) => {
+  const buildTempoTx = (
+    rawTx: Tx & Record<string, unknown>,
+    opts?: { stripTopLevelData?: boolean; feePayer?: boolean },
+  ) =>
+    buildTempoTransaction(rawTx as any, {
+      stripTopLevelData: opts?.stripTopLevelData ?? true,
+      feePayer: opts?.feePayer,
+    });
   onProgress?.('building');
 
   const chain = findChain({
@@ -646,10 +749,21 @@ export const sendTransactionByMiniSignV2 = async ({
   const support1559 = chain.eip['1559'];
 
   const currentAccount = _account;
+  const shouldUseTempoCallsForGasAccount =
+    !!isGasAccount &&
+    isTempoChain(chainServerId) &&
+    isTempoBatchSupportedAccountType(currentAccount.type);
+  const shouldUseTempoTx = shouldUseTempoTransaction({
+    tx: tx as Tx & Record<string, unknown>,
+    chainServerId,
+    isGasAccount: shouldUseTempoCallsForGasAccount,
+    accountType: currentAccount.type,
+  });
 
-  const signingTxId = await transactionHistoryService.addSigningTx(tx);
+  const signingTxId = await transactionHistoryServiceApi.addSigningTx(tx);
+  onSigningTxCreated?.(signingTxId);
 
-  const reportGasLevel = miscService.getCurrentGasLevel() || 'normal';
+  const reportGasLevel = miscServiceApi.getCurrentGasLevel() || 'normal';
 
   stats.report('createTransaction', {
     type: currentAccount.brandName,
@@ -663,7 +777,7 @@ export const sendTransactionByMiniSignV2 = async ({
     gasLevel: reportGasLevel,
   });
 
-  const transaction: Tx = {
+  const transaction: TxWithTempoExtras<Tx> = {
     from: tx.from,
     to: tx.to,
     data: tx.data,
@@ -671,6 +785,15 @@ export const sendTransactionByMiniSignV2 = async ({
     value: tx.value,
     chainId: tx.chainId,
     gas: tx.gas,
+    type: (tx as TxWithTempoExtras<Tx>).type,
+    calls: (tx as TxWithTempoExtras<Tx>).calls,
+    feeToken: (tx as TxWithTempoExtras<Tx>).feeToken,
+    feePayer: (tx as TxWithTempoExtras<Tx>).feePayer,
+    feePayerSignature: (tx as TxWithTempoExtras<Tx>).feePayerSignature,
+    nonceKey: (tx as TxWithTempoExtras<Tx>).nonceKey,
+    keyAuthorization: (tx as TxWithTempoExtras<Tx>).keyAuthorization,
+    validBefore: (tx as TxWithTempoExtras<Tx>).validBefore,
+    validAfter: (tx as TxWithTempoExtras<Tx>).validAfter,
   };
 
   const maxPriorityFee = +(tx.maxPriorityFeePerGas || '');
@@ -686,17 +809,40 @@ export const sendTransactionByMiniSignV2 = async ({
     (transaction as Tx).gasPrice = maxFeePerGas;
   }
 
+  const transactionForSubmit = shouldUseTempoTx
+    ? ({
+        ...(buildTempoTx(transaction as any, {
+          stripTopLevelData: true,
+          feePayer: shouldUseTempoCallsForGasAccount,
+        }) as any),
+      } as any)
+    : transaction;
+
   // fetch action data
   const actionData = await openapi.parseTx({
     chainId: chain.serverId,
-    tx: {
-      ...tx,
-      gas: '0x0',
-      nonce: tx.nonce || '0x1',
-      value: tx.value || '0x0',
-      to: tx.to || '',
-      type: is7702Tx(tx) ? 4 : support1559 ? 2 : undefined,
-    } as any,
+    tx: shouldUseTempoTx
+      ? (buildTempoTx(
+          {
+            ...tx,
+            gas: '0x0',
+            nonce: tx.nonce || '0x1',
+            value: tx.value || '0x0',
+            to: tx.to || '',
+          },
+          {
+            stripTopLevelData: true,
+            feePayer: shouldUseTempoCallsForGasAccount,
+          },
+        ) as any)
+      : ({
+          ...tx,
+          gas: '0x0',
+          nonce: tx.nonce || '0x1',
+          value: tx.value || '0x0',
+          to: tx.to || '',
+          type: is7702Tx(tx) ? 4 : support1559 ? 2 : undefined,
+        } as any),
     origin: INTERNAL_REQUEST_SESSION.origin || '',
     addr: currentAccount.address,
   });
@@ -704,12 +850,25 @@ export const sendTransactionByMiniSignV2 = async ({
     type: 'transaction',
     data: actionData.action,
     balanceChange: preExecResult.balance_change,
-    tx: {
-      ...tx,
-      gas: '0x0',
-      nonce: tx.nonce || '0x1',
-      value: tx.value || '0x0',
-    },
+    tx: shouldUseTempoTx
+      ? (buildTempoTx(
+          {
+            ...tx,
+            gas: '0x0',
+            nonce: tx.nonce || '0x1',
+            value: tx.value || '0x0',
+          },
+          {
+            stripTopLevelData: true,
+            feePayer: shouldUseTempoCallsForGasAccount,
+          },
+        ) as any)
+      : {
+          ...tx,
+          gas: '0x0',
+          nonce: tx.nonce || '0x1',
+          value: tx.value || '0x0',
+        },
     preExecVersion: preExecResult.pre_exec_version,
     gasUsed: preExecResult.gas.gas_used,
     sender: tx.from,
@@ -723,25 +882,41 @@ export const sendTransactionByMiniSignV2 = async ({
     sender: currentAccount.address,
     cex: cexInfo,
     walletProvider: {
+      ethRpc: apiProvider.requestETHRpc,
       hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
-      hasAddress: keyringService.hasAddress.bind(keyringService),
-      getWhitelist: async () => whitelistService.getWhitelist(),
-      isWhitelistEnabled: async () => whitelistService.isWhitelistEnabled(),
+      hasAddress: keyringServiceApi.hasAddress,
+      getWhitelist: async () => whitelistServiceApi.getWhitelist(),
+      isWhitelistEnabled: async () => whitelistServiceApi.isWhitelistEnabled(),
       getPendingTxsByNonce: async (...args) =>
-        transactionHistoryService.getPendingTxsByNonce(...args),
+        transactionHistoryServiceApi.getPendingTxsByNonce(...args),
       findChain,
       ALIAS_ADDRESS,
     },
     tx: {
-      ...tx,
-      gas: '0x0',
-      nonce: tx.nonce || '0x1',
-      value: tx.value || '0x0',
+      ...(shouldUseTempoTx
+        ? (buildTempoTx(
+            {
+              ...tx,
+              gas: '0x0',
+              nonce: tx.nonce || '0x1',
+              value: tx.value || '0x0',
+            },
+            {
+              stripTopLevelData: true,
+              feePayer: shouldUseTempoCallsForGasAccount,
+            },
+          ) as any)
+        : {
+            ...tx,
+            gas: '0x0',
+            nonce: tx.nonce || '0x1',
+            value: tx.value || '0x0',
+          }),
     },
     apiProvider: openapi,
   });
 
-  await transactionHistoryService.updateSigningTx(signingTxId, {
+  await transactionHistoryServiceApi.updateSigningTx(signingTxId, {
     rawTx: {
       nonce: tx.nonce,
     },
@@ -758,7 +933,7 @@ export const sendTransactionByMiniSignV2 = async ({
   onProgress?.('builded');
 
   const handleSendAfter = async () => {
-    const statsData = await notificationService.getStatsData();
+    const statsData = await notificationServiceApi.getStatsData();
 
     if (statsData?.signed) {
       const sData: any = {
@@ -813,7 +988,7 @@ export const sendTransactionByMiniSignV2 = async ({
         },
         params: [
           {
-            ...transaction,
+            ...transactionForSubmit,
             isSpeedUp: (tx as any)?.isSpeedUp,
             isCancel: (tx as any)?.isCancel,
           },
@@ -821,7 +996,7 @@ export const sendTransactionByMiniSignV2 = async ({
       },
       session: INTERNAL_REQUEST_SESSION,
       approvalRes: {
-        ...transaction,
+        ...transactionForSubmit,
         signingTxId,
         lowGasDeadline,
         isGasLess,

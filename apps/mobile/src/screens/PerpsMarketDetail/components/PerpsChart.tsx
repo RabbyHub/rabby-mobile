@@ -454,7 +454,7 @@ export const PerpsChart: React.FC<{
           <View style={styles.skeletonContainer}>
             <Skeleton
               width={'100%'}
-              height={150}
+              height={Dimensions.get('screen').width - 128}
               style={styles.skeleton}
               LinearGradientComponent={LoadingLinear}
             />
@@ -464,9 +464,9 @@ export const PerpsChart: React.FC<{
           style={isReady ? null : styles.opacity0}
           ref={chartWebViewRef}
           height={Dimensions.get('screen').width - 128}
-          // backGroundColor={
-          //   isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2']
-          // }
+          backGroundColor={
+            isLight ? colors2024['neutral-bg-0'] : colors2024['neutral-bg-1']
+          }
           onChartReady={handleChartReady}
         />
       </View>
@@ -550,7 +550,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 40,
     lineHeight: 40,
-    fontWeight: '900',
+    fontWeight: '700',
     color: colors2024['neutral-title-1'],
   },
   changeText: {
@@ -577,9 +577,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     zIndex: 1,
   },
   skeleton: {
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-2'],
+    // backgroundColor: colors2024['neutral-bg-5'],
   },
   opacity0: {
     opacity: 0,

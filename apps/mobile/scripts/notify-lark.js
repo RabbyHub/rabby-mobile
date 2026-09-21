@@ -1,13 +1,8 @@
 #!/usr/bin/env node
 
 const Axios = require('axios');
-
-const {
-  getLarkToken,
-  makeSign,
-  generateQRCodeImageBuffer,
-  uploadImageToLark,
-} = require('./libs/lark');
+const { createHmac } = require('crypto');
+const fs = require('fs');
 
 const chatURL =
   process.env.RABBY_MOBILE_LARK_CHAT_URL || process.env.LARK_CHAT_URL;
@@ -20,17 +15,38 @@ if (!chatSecret) {
   throw new Error('RABBY_MOBILE_LARK_CHAT_SECRET is not set');
 }
 
+function loadLarkHelpers() {
+  return require('./libs/lark');
+}
+
+function makeLarkSign(secret) {
+  const timestamp = Date.now();
+  const timeSec = Math.floor(timestamp / 1000);
+  const stringToSign = `${timeSec}\n${secret}`;
+  const Signature = createHmac('sha256', stringToSign)
+    .digest()
+    .toString('base64');
+
+  return {
+    timeSec,
+    Signature,
+  };
+}
+
 // sendMessage with axios
 async function sendMessage({
   platform = 'android',
-  isAndroidResigned = false,
+  isFastBuild = false,
   downloadURL = '',
+  larkDriveURL = '',
   actionsJobUrl = '',
   gitCommitURL = '',
   gitRefURL = '',
   triggers = [],
+  android16kbReportText = '',
 }) {
-  const { timeSec, Signature } = makeSign(chatSecret);
+  const { generateQRCodeImageBuffer, uploadImageToLark } = loadLarkHelpers();
+  const { timeSec, Signature } = makeLarkSign(chatSecret);
 
   // dedupe
   triggers = [...new Set(triggers)];
@@ -109,13 +125,20 @@ async function sendMessage({
               { tag: 'text', text: `下载链接: ` },
               { tag: 'a', href: downloadURL, text: downloadURL },
             ],
+            larkDriveURL && [
+              { tag: 'text', text: `Lark Drive: ` },
+              { tag: 'a', href: larkDriveURL, text: larkDriveURL },
+            ],
+            isFastBuild && [
+              { tag: 'text', text: `📢📢📢 注意: ` },
+              {
+                tag: 'text',
+                text: `该预览包来自 FastBuild, 若存在其它安装问题请联系开发者重新打包`,
+              },
+            ],
             platform === 'android' &&
-              isAndroidResigned && [
-                { tag: 'text', text: `📢📢📢 注意: ` },
-                {
-                  tag: 'text',
-                  text: `该 APK 来自 FastBuild, 预期启动会比线上慢一半左右, 若存在其它安装问题请联系开发者重新打包`,
-                },
+              android16kbReportText && [
+                { tag: 'text', text: android16kbReportText },
               ],
             [
               { tag: 'text', text: `二维码，拿 📱 扫一下 🔽` },
@@ -151,17 +174,58 @@ async function sendMessage({
   console.log(res.data);
 }
 
+async function sendTextMessage({ title, lines = [] }) {
+  const { timeSec, Signature } = makeLarkSign(chatSecret);
+
+  const headers = {
+    'Content-Type': 'application/json',
+    Signature: Signature,
+  };
+
+  const content = lines.filter(Boolean).map(text => [{ tag: 'text', text }]);
+
+  const body = {
+    timestamp: timeSec,
+    sign: Signature,
+    msg_type: 'post',
+    content: {
+      post: {
+        zh_cn: {
+          title,
+          content,
+        },
+      },
+    },
+  };
+
+  const res = await Axios.post(chatURL, body, { headers });
+  console.log(res.data);
+}
+
 const args = process.argv.slice(2);
 
 if (!process.env.CI && args[0] === 'get-token') {
+  const { getLarkToken } = loadLarkHelpers();
   getLarkToken().then(accessToken => {
     console.log(`[notify-lark] get-token accessToken: ${accessToken}`);
   });
+} else if (args[0] === 'text') {
+  sendTextMessage({
+    title: args[1] || 'Rabby Mobile Notification',
+    lines: args.slice(2),
+  });
 } else if (args[0]) {
+  const android16kbReportTextPath =
+    process.env.RABBY_MOBILE_ANDROID_16KB_REPORT_TEXT;
+  const android16kbReportText =
+    android16kbReportTextPath && fs.existsSync(android16kbReportTextPath)
+      ? fs.readFileSync(android16kbReportTextPath, 'utf8').trim()
+      : '';
   sendMessage({
     downloadURL: args[0],
+    larkDriveURL: process.env.RABBY_MOBILE_LARK_DRIVE_URL || '',
     platform: args[1],
-    isAndroidResigned: args[2] === 'true',
+    isFastBuild: args[2] === 'true',
     actionsJobUrl: process.env.GIT_ACTIONS_JOB_URL,
     gitCommitURL: process.env.GIT_COMMIT_URL,
     gitRefURL: process.env.GIT_REF_URL,
@@ -169,6 +233,7 @@ if (!process.env.CI && args[0] === 'get-token') {
       process.env.GITHUB_TRIGGERING_ACTOR,
       process.env.GITHUB_ACTOR,
     ].filter(Boolean),
+    android16kbReportText,
   });
 } else {
   console.log('[notify-lark] no message');

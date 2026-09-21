@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <base href="%BASE_URL%" />
+    <title>TradingView Candle Chart Demo Frame</title>
+    <style>
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: transparent;
+      }
+
+      #container {
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+    <script>
+      (function () {
+        var PARENT_SOURCE = 'RABBY_TV_DEMO_PARENT';
+        var CHILD_SOURCE = 'RABBY_TV_DEMO_CHILD';
+
+        function buildRuntimeInfo() {
+          return {
+            runtimeBaseUrl: new URL('../', window.location.href).toString(),
+            platform: 'ios',
+            useDevResource: true,
+            isDark: false,
+            language: 'en-US',
+            i18nTexts: {},
+          };
+        }
+
+        window.__RABBY_TV_DEMO_RUNTIME_INFO__ = buildRuntimeInfo();
+
+        window.ReactNativeWebView = {
+          postMessage: function (message) {
+            if (window.parent && window.parent !== window) {
+              window.parent.postMessage(
+                {
+                  source: CHILD_SOURCE,
+                  raw: message,
+                },
+                '*',
+              );
+            }
+          },
+          injectedObjectJson: function () {
+            return JSON.stringify(window.__RABBY_TV_DEMO_RUNTIME_INFO__);
+          },
+        };
+
+        window.addEventListener('message', function (event) {
+          var payload = event.data;
+
+          if (
+            !payload ||
+            payload.source !== PARENT_SOURCE ||
+            !payload.message
+          ) {
+            return;
+          }
+
+          if (
+            payload.message.type === 'GOT_RUNTIME_INFO' &&
+            payload.message.info
+          ) {
+            window.__RABBY_TV_DEMO_RUNTIME_INFO__ = payload.message.info;
+          }
+
+          var messageEvent = new CustomEvent('messageFromRN', {
+            detail: payload.message,
+            bubbles: true,
+            cancelable: true,
+          });
+
+          window.dispatchEvent(messageEvent);
+        });
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="container"></div>
+    <script
+      type="module"
+      src="/src/pages/tradingview-candle-chart/index.tsx"></script>
+  </body>
+</html>

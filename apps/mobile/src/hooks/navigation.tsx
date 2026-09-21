@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { Alert, AppState, StyleSheet } from 'react-native';
 import { debounce, get, merge } from 'lodash';
 
-import {
+import type {
   NativeStackHeaderLeftProps,
   NativeStackNavigationOptions,
   NativeStackScreenProps,
@@ -17,37 +17,27 @@ import {
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
-import { AppRootName, RootNames, makeHeadersPresets } from '@/constant/layout';
-import {
-  NavigationContainerRef,
-  useNavigation,
-} from '@react-navigation/native';
+import type { AppRootName } from '@/constant/layout';
+import { RootNames, makeHeadersPresets } from '@/constant/layout';
+import { APP_FEATURE_SWITCH } from '@/constant';
+import type { NavigationContainerRef } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 
 import type { RootStackParamsList } from '@/navigation-type';
-import { setIOSScreenCapture } from './native/security';
-import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
-import { apisAccount, apisLock } from '@/core/apis';
+import * as apisLock from '@/core/apis/lock';
+import * as apisAccount from '@/core/apis/account';
 import { IS_IOS } from '@/core/native/utils';
-import {
-  atSensitiveSceneState,
-  bottomSheetModalSecurityApis,
-} from '@/components2024/GlobalBottomSheetModal/security';
-import {
-  getExpScreenCapture,
-  useIosForceDisableAlertForSensitiveScene,
-} from './appSettings';
 import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
-import { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
+import type { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
 import { zCreate } from '@/core/utils/reexports';
+import type { UpdaterOrPartials } from '@/core/utils/store';
 import {
   makeAvoidParallelAsyncFunc,
   resolveValFromUpdater,
-  UpdaterOrPartials,
 } from '@/core/utils/store';
 import { RefLikeObject } from '@/utils/type';
 import { perfEvents } from '@/core/utils/perf';
-import { useShallow } from 'zustand/react/shallow';
-import { CollapsibleRef } from 'react-native-collapsible-tab-view';
+import type { CollapsibleRef } from 'react-native-collapsible-tab-view';
 import { autoLockEvent } from '@/core/apis/autoLock';
 import { notificationEvents } from '@/core/notifications/data';
 import {
@@ -55,7 +45,12 @@ import {
   txResultToToHistoryDisplayItem,
 } from '@/utils/transaction';
 // import { SampleNotifiedTxResult } from '@/core/notifications/sample-data';
-import { preferenceService, transactionHistoryService } from '@/core/services';
+import { bindKeyringEventAfterRegistration } from '@/core/serviceApi/keyring';
+import { getPinnedTokenSnapshot } from '@/core/serviceApi/preference';
+import {
+  getTransactionHistoryCustomTxItemMap,
+  getTransactionHistoryTransactions,
+} from '@/core/serviceApi/transactionHistory';
 import { browserApis } from './browser/useBrowser';
 import { notificationOpenapi } from '@/core/notifications/openapi';
 import { toast, toastLoading } from '@/components2024/Toast';
@@ -64,6 +59,8 @@ import { switchSceneCurrentAccount } from './accountsSwitcher';
 import { findMyAccountByOwnerAddress } from '@/core/notifications/utils';
 import { makeMutable, runOnJS } from 'react-native-reanimated';
 import PQueue from 'p-queue';
+import { resolveWalletEntryDestination } from '@/core/utils/walletEntryState';
+import { createAutoUnlockGate } from '@/utils/autoUnlockGate';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -97,10 +94,10 @@ autoLockEvent.addListener('timeout', ctx => {
   const routeName = navigationRouteStore.getState().currentRouteName;
 
   const atUnlock = routeName === RootNames.Unlock;
-  if (!atUnlock) {
-    requestLockWalletAndBackToUnlockScreen();
-  } else {
+  if (atUnlock) {
     ctx.delayLock();
+  } else {
+    requestExpireUnlockSessionAndBackToUnlockScreen();
   }
 });
 
@@ -130,20 +127,22 @@ export function navBack() {
 }
 
 export function HeaderBackPressable({
+  tintColor,
   style,
-  ...props
+  ...touchableProps
 }: Pick<NativeStackHeaderLeftProps, 'tintColor'> & RNViewProps) {
   const themeMode = useGetBinaryMode();
   const { colors2024 } = apisTheme.getColors2024(themeMode);
   return (
     <CustomTouchableOpacity
+      {...touchableProps}
       style={[styles.backButtonStyle, style]}
       hitSlop={hitSlop}
       onPress={navBack}>
       <RcIconHeaderBack
         width={24}
         height={24}
-        color={props.tintColor || colors2024['neutral-body']}
+        color={tintColor || colors2024['neutral-body']}
       />
     </CustomTouchableOpacity>
   );
@@ -375,7 +374,7 @@ export const apisHomeTabIndex = {
 
 export function resetNavigationTo(
   navigation: NavigationInstance,
-  type: 'Home' | 'Unlock' | 'GetStartedScreen2024' = 'Home',
+  type: 'Home' | 'Unlock' | 'GetStarted' = 'Home',
 ) {
   switch (type) {
     default:
@@ -395,6 +394,7 @@ export function resetNavigationTo(
       break;
     }
     case 'Unlock': {
+      perfEvents.emit('GLOBAL_CLEAR_ALL_COVERED_COMPONENTS');
       navigation.reset({
         index: 0,
         routes: [
@@ -416,14 +416,14 @@ export function resetNavigationTo(
 
       break;
     }
-    case 'GetStartedScreen2024': {
+    case 'GetStarted': {
       navigation.reset({
         index: 0,
         routes: [
           {
             name: RootNames.StackGetStarted,
             params: {
-              screen: RootNames.GetStartedScreen2024,
+              screen: RootNames.GetStarted,
             },
           },
         ],
@@ -458,16 +458,32 @@ export const resetNavigationOnTopOfHome: typeof naviReplace = (
   apisHomeTabIndex.setTabIndex(0);
 };
 
+export const requestLockWallet = makeAvoidParallelAsyncFunc(async () => {
+  const lockInfo = await apisLock.getRabbyLockInfo();
+  const result = { canLockWallet: false };
+  if (!lockInfo.isUseCustomPwd) return result;
+
+  const isUnlocked = apisLock.isUnlocked();
+  if (isUnlocked) {
+    result.canLockWallet = true;
+    await apisLock.lockWallet();
+  }
+
+  return result;
+});
+
 export const requestLockWalletAndBackToUnlockScreen =
   makeAvoidParallelAsyncFunc(async () => {
     const lockInfo = await apisLock.getRabbyLockInfo();
     const result = { canLockWallet: false };
     if (!lockInfo.isUseCustomPwd) return result;
 
-    const isUnlocked = apisLock.isUnlocked();
-    if (isUnlocked) {
+    if (apisLock.isUnlocked()) {
       result.canLockWallet = true;
       await apisLock.lockWallet();
+    } else {
+      result.canLockWallet = true;
+      apisLock.clearUnlockTime();
     }
 
     console.debug('will back to unlock screen');
@@ -476,6 +492,45 @@ export const requestLockWalletAndBackToUnlockScreen =
 
     return result;
   });
+
+export const requestExpireUnlockSessionAndBackToUnlockScreen =
+  makeAvoidParallelAsyncFunc(async () => {
+    const lockInfo = await apisLock.getRabbyLockInfo();
+    const result = { canLockWallet: false };
+    if (!lockInfo.isUseCustomPwd) return result;
+
+    if (apisLock.isUnlocked()) {
+      result.canLockWallet = true;
+      await apisLock.lockWallet();
+    } else {
+      apisLock.clearUnlockTime();
+    }
+
+    console.debug('will expire unlock session and back to unlock screen');
+    const navigation = getReadyNavigationInstance();
+    if (navigation) resetNavigationTo(navigation, 'Unlock');
+
+    return result;
+  });
+
+export const requestLockWalletAndBackToHomeScreen = makeAvoidParallelAsyncFunc(
+  async () => {
+    const result = await requestLockWallet();
+    if (!result.canLockWallet) return result;
+
+    console.debug('will back to home screen');
+    const navigation = getReadyNavigationInstance();
+    if (navigation) {
+      const hasAccountsInKeyring = await apisAccount.hasVisibleAccounts();
+      resetNavigationTo(
+        navigation,
+        hasAccountsInKeyring ? 'Home' : 'GetStarted',
+      );
+    }
+
+    return result;
+  },
+);
 
 type ResetNaviOnUIUnlockFn = (ctx: {
   navigation: NavigationInstance;
@@ -492,33 +547,46 @@ const unlockUIState = {
   finishedUnlockResetNav: false,
   resetNaviOnTopOfHomeWhenUnlockRef: null as null | ResetNaviOnUIUnlockFn,
 };
-// keyringService.addListener('lock', () => {
-//   unlockUIState.finishedUnlockResetNav = false;
-// });
+const autoUnlockGate = createAutoUnlockGate({
+  isAtUnlock: () =>
+    navigationRouteStore.getState().currentRouteName === RootNames.Unlock,
+  dispatch: () => perfEvents.emit('AUTO_TRIGGER_UNLOCK'),
+});
+perfEvents.addListener('EVENT_ROUTE_CHANGE', ({ currentRouteName }) => {
+  if (currentRouteName === RootNames.Unlock) {
+    autoUnlockGate.dispatchIfReady();
+  }
+});
+bindKeyringEventAfterRegistration('lock', () => {
+  unlockUIState.finishedUnlockResetNav = false;
+  autoUnlockGate.clearPending();
+});
 export class UnlockUIManager {
-  static triggerAutoUnlock(delay = 500) {
-    const action = () => {
-      const currentRouteName = navigationRef.current?.getCurrentRoute()?.name;
-      if (!currentRouteName || currentRouteName !== RootNames.Unlock) return;
-      perfEvents.emit('AUTO_TRIGGER_UNLOCK');
-    };
-    if (delay) {
-      setTimeout(action, delay);
-    } else {
-      action();
-    }
+  static triggerAutoUnlock(options?: { bypassPresentationReady?: boolean }) {
+    autoUnlockGate.request(options);
+  }
+
+  static setAutoUnlockScreenReady(ready: boolean) {
+    autoUnlockGate.setScreenReady(ready);
+  }
+
+  static setAutoUnlockPresentationReady(ready: boolean) {
+    autoUnlockGate.setPresentationReady(ready);
   }
 
   static markUnlockedOnce() {
     unlockUIState.unlockOnceRef = true;
   }
 
-  static queueResetNaviOnTopOfHomeWhenUnlock(fn: ResetNaviOnUIUnlockFn) {
+  static queueResetNaviOnTopOfHomeWhenUnlock(
+    fn: ResetNaviOnUIUnlockFn,
+    options?: { forceWaitUnlock?: boolean },
+  ) {
     const navigation = getReadyNavigationInstance();
     if (!navigation) return;
 
     // previous reset nav has been processed, do it immediately
-    if (unlockUIState.finishedUnlockResetNav) {
+    if (unlockUIState.finishedUnlockResetNav && !options?.forceWaitUnlock) {
       fn({
         navigation,
         hasUnlockOnce: unlockUIState.unlockOnceRef,
@@ -534,6 +602,10 @@ export class UnlockUIManager {
     }
   }
 
+  static clearQueuedResetNaviOnTopOfHomeWhenUnlock() {
+    unlockUIState.resetNaviOnTopOfHomeWhenUnlockRef = null;
+  }
+
   static async resetNavOnUIUnlock() {
     const navigation = getReadyNavigationInstance();
     if (!navigation) return;
@@ -545,14 +617,26 @@ export class UnlockUIManager {
         navigationRouteStore.getState().currentRouteName !== RootNames.Unlock
       )
         return;
-      const hasAccountsInKeyring = await apisAccount.hasVisibleAccounts();
-
-      resetNavigationTo(
-        navigation,
-        !hasAccountsInKeyring && !hasUnlockOnce
-          ? RootNames.GetStartedScreen2024
-          : RootNames.Home,
-      );
+      let hasVisibleAccounts: boolean | null = null;
+      try {
+        hasVisibleAccounts = await apisAccount.hasVisibleAccounts();
+      } catch (error) {
+        console.error(
+          'UnlockUIManager.resetNavOnUIUnlock::account-check-error',
+          error,
+        );
+      }
+      const destination = resolveWalletEntryDestination({
+        accountState:
+          hasVisibleAccounts === null
+            ? 'unknown'
+            : hasVisibleAccounts
+            ? 'available'
+            : 'empty',
+        isAppUnlocked: true,
+        isUnlockSessionValid: true,
+      });
+      resetNavigationTo(navigation, destination || 'Home');
       unlockUIState.finishedUnlockResetNav = true;
     };
     if (unlockUIState.resetNaviOnTopOfHomeWhenUnlockRef) {
@@ -608,201 +692,19 @@ export function usePreventGoBack({
   };
 }
 
-export const enum ProtectType {
-  NONE = 0,
-  SafeTipModal = 1,
-}
-
-export type ProtectedConf = {
-  iosBlurType: ProtectType | null;
-  // alertOnScreenShot?: {
-  //   title: string;
-  //   message: string;
-  // };
-  warningScreenshotBackup: boolean;
-  onOk?: (ctx: { navigation?: NavigationInstance | null }) => void;
-};
-const defaultOnOk = ctx => {
-  ctx.navigation?.goBack();
-};
-const defaultProtectedConf: ProtectedConf = {
-  iosBlurType: ProtectType.NONE,
-  onOk: defaultOnOk,
-  warningScreenshotBackup: false,
-};
-function getProtectedConf() {
-  return {
-    ...defaultProtectedConf,
-    warningScreenshotBackup: true,
-    iosBlurType: ProtectType.SafeTipModal,
-  };
-}
-
-const PROTECTED_SCREENS: {
-  [P in AppRootName]?: ProtectedConf;
-} = {
-  [RootNames.CreateMnemonic]: getProtectedConf(),
-  [RootNames.ImportMnemonic]: getProtectedConf(),
-  [RootNames.ImportPrivateKey]: getProtectedConf(),
-  [RootNames.ImportMnemonic2024]: getProtectedConf(),
-  [RootNames.ImportPrivateKey2024]: getProtectedConf(),
-  [RootNames.CreateMnemonicBackup]: getProtectedConf(),
-  [RootNames.CreateMnemonicVerify]: getProtectedConf(),
-  [RootNames.BackupPrivateKey]: getProtectedConf(),
-};
-
-function getAtSensitiveScreenInfo(routeName: string | undefined) {
-  const result = {
-    // $routeName: routeName,
-    $protectedConf: { ...defaultProtectedConf },
-    _atSensitiveScreen: false,
-  };
-
-  if (!routeName || !PROTECTED_SCREENS[routeName]) return result;
-
-  result.$protectedConf = {
-    ...defaultProtectedConf,
-    ...PROTECTED_SCREENS[routeName],
-  };
-
-  result._atSensitiveScreen = !!PROTECTED_SCREENS[routeName];
-
-  return result;
-}
-
-type AtSensitiveScreenInfo = ReturnType<typeof getAtSensitiveScreenInfo>;
-type AtSensitiveScreenState = {
-  anySensitiveModalOpened: boolean;
-  screenInfo: AtSensitiveScreenInfo;
-};
-const atSensitiveScreenStore = zCreate<AtSensitiveScreenState>(() => ({
-  anySensitiveModalOpened: false,
-  screenInfo: getAtSensitiveScreenInfo(undefined),
-}));
-
-function setAtSensitiveScreenInfo(
-  valOrFunc: UpdaterOrPartials<AtSensitiveScreenInfo>,
-) {
-  atSensitiveScreenStore.setState(prev => {
-    const { newVal, changed } = resolveValFromUpdater(
-      prev.screenInfo,
-      valOrFunc,
-      {
-        strict: true,
-      },
-    );
-
-    if (!changed) return prev;
-
-    return { ...prev, screenInfo: newVal };
-  });
-}
-
-perfEvents.addListener('EVENT_ROUTE_CHANGE', ({ currentRouteName }) => {
-  setAtSensitiveScreenInfo(getAtSensitiveScreenInfo(currentRouteName));
-});
-
-atSensitiveSceneState.subscribe(s => {
-  const anySensitiveModalOpened =
-    bottomSheetModalSecurityApis.isAnySensitiveModalOpened(s);
-
-  atSensitiveScreenStore.setState(prev => {
-    if (prev.anySensitiveModalOpened === anySensitiveModalOpened) {
-      return prev;
-    }
-    return {
-      ...prev,
-      anySensitiveModalOpened,
-    };
-  });
-});
-
-export function useAtSensitiveScene() {
-  const { iosForceDisableAlertForSensitiveScene } =
-    useIosForceDisableAlertForSensitiveScene();
-
-  return atSensitiveScreenStore(
-    useShallow(s => {
-      const ret = getAtSensitiveScene(s);
-
-      if (iosForceDisableAlertForSensitiveScene) {
-        ret.atSensitiveScene = false;
-        ret.iosBlurType = ProtectType.NONE;
-        ret.warningScreenshotBackup = false;
-      }
-
-      return ret;
-    }),
-  );
-}
-
-export function getAtSensitiveScene(s = atSensitiveScreenStore.getState()) {
-  const srnInfo = s.screenInfo;
-  const anySensitiveModalOpened = s.anySensitiveModalOpened;
-
-  return {
-    anySensitiveModalOpened,
-    atSensitiveScene: srnInfo._atSensitiveScreen || anySensitiveModalOpened,
-    iosBlurType: srnInfo.$protectedConf.iosBlurType,
-    warningScreenshotBackup: srnInfo.$protectedConf.warningScreenshotBackup,
-    onOk: srnInfo.$protectedConf.onOk,
-  };
-}
-
-export function startSubscribeAtSensitiveScene() {
-  atSensitiveScreenStore.subscribe(s => {
-    const shouldPreventScreenCapturing =
-      getAtSensitiveScene(s).atSensitiveScene &&
-      !getExpScreenCapture().forceAllowScreenshot;
-
-    perfEvents.emit('CHANGE_PREVENT_SCREENSHOT', shouldPreventScreenCapturing);
-  });
-}
-
-export function startSubscribeIOSJustScreenshotted() {
-  const subscription = RNScreenshotPrevent.onUserDidTakeScreenshot(() => {
-    const setScreenshotted = (val?: boolean) =>
-      setIOSScreenCapture(prev => ({ ...prev, isScreenshotJustNow: !!val }));
-
-    setScreenshotted(getAtSensitiveScene().warningScreenshotBackup);
-  });
-
-  return subscription;
-}
-
-export function startSubscribeIOSScreenRecording() {
-  if (!IS_IOS && !__DEV__) return;
-
-  const subscription = RNScreenshotPrevent.iosOnScreenCaptureChanged(ctx => {
-    setIOSScreenCapture(prev => ({
-      ...prev,
-      isBeingCaptured: ctx.isBeingCaptured,
-    }));
-
-    if (!IS_IOS && !__DEV__) return;
-    const atSensitiveInfo = getAtSensitiveScene();
-    if (atSensitiveInfo.iosBlurType === ProtectType.SafeTipModal) return;
-
-    const forceAllowScreenshot = getExpScreenCapture().forceAllowScreenshot;
-    const shouldPreventScreenCapturing =
-      atSensitiveInfo.atSensitiveScene && !forceAllowScreenshot;
-
-    if (ctx.isBeingCaptured && shouldPreventScreenCapturing) {
-      RNScreenshotPrevent.iosProtectFromScreenRecording();
-    } else {
-      RNScreenshotPrevent.iosUnprotectFromScreenRecording();
-    }
-  });
-
-  return subscription;
-}
-
 export function startSubscribeRemoteNotification() {
+  if (!APP_FEATURE_SWITCH.transactionNotification) {
+    return;
+  }
+
   function earlyReturnL1<T = any>(retValue?: T) {
     return retValue;
   }
 
   const notificationProcessQueue = new PQueue({ concurrency: 1 });
+
+  const canOpenNotificationTransaction = () =>
+    apisLock.isUnlocked() || apisLock.isUnlockSessionValid();
 
   notificationEvents.subscribe(
     'onParsedReceivedData',
@@ -841,9 +743,9 @@ export function startSubscribeRemoteNotification() {
             return null;
           });
 
-        UnlockUIManager.triggerAutoUnlock();
-
-        UnlockUIManager.queueResetNaviOnTopOfHomeWhenUnlock(async ctx => {
+        const openNotificationTransaction = async (ctx?: {
+          defaultAction?: () => void;
+        }) => {
           const foundAccount = await findMyAccountByOwnerAddress(ownerAddress);
           const hideToastRef = {
             current: toastLoading(
@@ -858,7 +760,7 @@ export function startSubscribeRemoteNotification() {
             earlyReturnL1();
             hideToastRef.current();
             if (shouldExecuteDefaultAction) {
-              ctx.defaultAction?.();
+              ctx?.defaultAction?.();
             }
           };
 
@@ -885,11 +787,7 @@ export function startSubscribeRemoteNotification() {
             const currentRouteName =
               navigationRouteStore.getState().currentRouteName;
             const needReplace = currentRouteName === RootNames.History;
-            const naviFn = ctx.defaultAction
-              ? resetNavigationOnTopOfHome
-              : needReplace
-              ? naviReplace
-              : naviPush;
+            const naviFn = needReplace ? naviReplace : naviPush;
 
             await switchSceneCurrentAccount('History', foundAccount);
             hideToastRef.current();
@@ -905,14 +803,17 @@ export function startSubscribeRemoteNotification() {
 
           hideToastRef.current();
 
-          const pinedQueue = preferenceService.getPinToken();
-          const customTxItemsMap =
-            transactionHistoryService.getCustomTxItemMap();
+          const pinedQueue = getPinnedTokenSnapshot();
+          const [customTxItemsMap, transactions] = await Promise.all([
+            getTransactionHistoryCustomTxItemMap(),
+            getTransactionHistoryTransactions(),
+          ]);
           const historyDisplayItem = txResultToToHistoryDisplayItem({
             address: parsedData.txInfo?.ownerAddress || '',
             res: txDetail,
             pinedQueue,
             customTxItemsMap,
+            transactions,
           })[0];
           console.debug(
             '[notifications] [startSubscribeRemoteNotification] received parsedData',
@@ -931,11 +832,7 @@ export function startSubscribeRemoteNotification() {
             navigationRouteStore.getState().currentRouteName;
           const needReplace = currentRouteName === RootNames.HistoryDetail;
 
-          const naviFn = ctx.defaultAction
-            ? resetNavigationOnTopOfHome
-            : needReplace
-            ? naviReplace
-            : naviPush;
+          const naviFn = needReplace ? naviReplace : naviPush;
           naviFn(RootNames.StackTransaction, {
             screen: RootNames.HistoryDetail,
             params: {
@@ -948,7 +845,23 @@ export function startSubscribeRemoteNotification() {
           });
 
           perfEvents.emit('GLOBAL_CLEAR_ALL_COVERED_COMPONENTS');
-        });
+        };
+
+        if (canOpenNotificationTransaction()) {
+          await openNotificationTransaction();
+          return earlyReturnL1();
+        }
+
+        UnlockUIManager.queueResetNaviOnTopOfHomeWhenUnlock(
+          ctx =>
+            openNotificationTransaction({
+              defaultAction: ctx.defaultAction,
+            }),
+          { forceWaitUnlock: true },
+        );
+        await requestExpireUnlockSessionAndBackToUnlockScreen();
+        UnlockUIManager.triggerAutoUnlock();
+        return earlyReturnL1();
       });
     },
   );

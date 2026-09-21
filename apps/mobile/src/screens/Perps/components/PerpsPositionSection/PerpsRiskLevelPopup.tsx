@@ -122,13 +122,10 @@ export const PerpsRiskLevelPopup: React.FC<PerpsRiskLevelPopupProps> = ({
                     t={t}
                     i18nKey={
                       direction === 'Long'
-                        ? t('page.perps.PerpsRiskPopup.liqDistanceTipsLong', {
-                            distance: formatPct(distanceLiquidation),
-                          })
-                        : t('page.perps.PerpsRiskPopup.liqDistanceTipsShort', {
-                            distance: formatPct(distanceLiquidation),
-                          })
+                        ? 'page.perps.PerpsRiskPopup.liqDistanceTipsLong'
+                        : 'page.perps.PerpsRiskPopup.liqDistanceTipsShort'
                     }
+                    values={{ distance: formatPct(distanceLiquidation) }}
                     components={{
                       1: <Text style={styles.strong} />,
                     }}

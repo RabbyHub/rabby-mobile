@@ -3,18 +3,28 @@ import 'react-native-gesture-handler';
 import { useThemeColors } from '@/hooks/theme';
 
 import { DEFAULT_NAVBAR_FONT_SIZE, RootNames } from '@/constant/layout';
+import { WebViewControlPreload } from '@/perfs/loadables/rootNavigatorScreens';
 
 import { HomeNavigatorParamsList } from '@/navigation-type';
 import React, { useLayoutEffect } from 'react';
-import WebViewControlPreload from '@/components/WebView/WebViewControlPreload';
-import ApprovalTokenDetailSheetModalStub from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
-import BiometricsStubModal from '@/components/AuthenticationModal/BiometricsStubModal';
 import MultiAddressHome from '@/screens/Home/MultiAddressHome';
-import { DappWebViewStubScreen } from '../Dapps/DappWebViewScreen';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { preloadSettingsScreen } from '@/perfs/preloads';
+import { preloadHomeShortcutNavigators } from '@/perfs/preloads';
+import { runAfterHomePostStartupReady } from '@/core/utils/homeStartupReady';
+import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
+import { withScreenRenderActivityAudit } from '@/hooks/storeActivity/withScreenRenderActivityAudit';
 
 const HomeHiddenTabStack = createBottomTabNavigator<HomeNavigatorParamsList>();
+const AuditedMultiAddressHome = withScreenRenderActivityAudit(
+  MultiAddressHome,
+  'home-screen',
+);
+const RegressionMultiAddressHome = withRegressionScenario(
+  AuditedMultiAddressHome,
+  {
+    screen: 'Home',
+  },
+);
 
 const TabBarComponent = () => null;
 
@@ -26,9 +36,27 @@ export function HomeScreenNavigator() {
   }
 
   useLayoutEffect(() => {
-    const timer = setTimeout(() => preloadSettingsScreen(), 200);
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const cancelHomePostReadyWait = runAfterHomePostStartupReady(
+      () => {
+        timer = setTimeout(() => {
+          preloadHomeShortcutNavigators().catch(error => {
+            console.error('preloadHomeShortcutNavigators::error', error);
+          });
+        }, 300);
+      },
+      {
+        fallbackMs: 6000,
+        label: 'preload_home_shortcuts',
+      },
+    );
 
-    return () => clearTimeout(timer);
+    return () => {
+      cancelHomePostReadyWait();
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
   }, []);
 
   return (
@@ -54,7 +82,7 @@ export function HomeScreenNavigator() {
         tabBar={TabBarComponent}>
         <HomeHiddenTabStack.Screen
           name={RootNames.Home}
-          component={MultiAddressHome}
+          component={RegressionMultiAddressHome}
           options={{
             headerShown: false,
             freezeOnBlur: false,
@@ -82,10 +110,6 @@ export function HomeScreenNavigator() {
           }}
         /> */}
       </HomeHiddenTabStack.Navigator>
-
-      <BiometricsStubModal />
-
-      <ApprovalTokenDetailSheetModalStub />
 
       <WebViewControlPreload />
     </>

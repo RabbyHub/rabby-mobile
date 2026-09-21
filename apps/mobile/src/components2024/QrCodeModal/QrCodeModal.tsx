@@ -1,9 +1,11 @@
 import DeviceUtils from '@/core/utils/device';
 import { useTheme2024 } from '@/hooks/theme';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useAtom } from 'jotai';
 import React from 'react';
-import { Modal, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { visibleAtom, dataAtom } from './useQrCodeModal';
 import CloseCircleSVG from '@/assets2024/icons/common/close-circle.svg';
@@ -18,7 +20,8 @@ export const QrCodeModal: React.FC = () => {
   }
 
   return (
-    <Modal
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.qrCode}
       style={styles.root}
       visible={visible}
       transparent
@@ -36,11 +39,11 @@ export const QrCodeModal: React.FC = () => {
           <CloseCircleSVG color={colors2024['neutral-InvertHighlight']} />
         </View>
       </TouchableOpacity>
-    </Modal>
+    </TrackedModal>
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(() => ({
   root: {},
   overlay: {
     flex: 1,

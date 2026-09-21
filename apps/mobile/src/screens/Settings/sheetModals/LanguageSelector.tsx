@@ -12,7 +12,7 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import AutoLockView from '@/components/AutoLockView';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { useAppLanguage } from '@/hooks/lang';
-import { SupportedLangs } from '@/utils/i18n';
+import { SupportedLang, SupportedLangs } from '@/utils/i18n';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
@@ -37,8 +37,10 @@ export function useCurrentLanguageModalVisible() {
 
 export default function CurrentLanguageSelectorModal({
   onCancel,
+  onSelectLanguage,
 }: RNViewProps & {
   onCancel?(): void;
+  onSelectLanguage?(lang: SupportedLang): void;
 }) {
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { safeSizes } = useSafeAndroidBottomSizes({
@@ -99,7 +101,10 @@ export default function CurrentLanguageSelectorModal({
                 style={[styles.settingItem, idx > 0 && styles.notFirstOne]}
                 key={itemKey}
                 onPress={() => {
-                  setCurrentLanguage(item.lang);
+                  if (!isSelected) {
+                    setCurrentLanguage(item.lang);
+                    onSelectLanguage?.(item.lang);
+                  }
                   setCurrentLanguageModalVisible(false);
                 }}>
                 <Text style={styles.settingItemLabel}>{item.label}</Text>

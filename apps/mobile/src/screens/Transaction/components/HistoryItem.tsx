@@ -1,18 +1,17 @@
 /* eslint-disable react-native/no-inline-styles */
 import { getChain } from '@/utils/chain';
-import { ProjectItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { HistoryDisplayItem } from '../MultiAddressHistory';
+import { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { HistoryDisplayItem } from '@/types/history';
 import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { TxChange } from './TokenChange';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { getAliasName } from '@/core/apis/contact';
-import { ellipsisAddress } from '@/utils/address';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
-import { TxStatusItem } from '../HistoryDetailScreen';
+import { TxStatusItem } from './TxStatusItem';
 import { useTranslation } from 'react-i18next';
 import { CUSTOM_HISTORY_TITLE_TYPE, HistoryItemCateType } from './type';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
@@ -20,6 +19,10 @@ import { HistoryItemTokenArea } from './HistoryItemTokenArea';
 import { getTokenSymbol } from '@/utils/token';
 import FastImage from 'react-native-fast-image';
 import { Text } from '@/components/Typography';
+import type { TokenChangeDataItem } from '@/types/history';
+import { Account } from '@/types/account';
+
+export type { TokenChangeDataItem } from '@/types/history';
 
 type HistoryItemProps = {
   style?: StyleProp<ViewStyle>;
@@ -27,14 +30,14 @@ type HistoryItemProps = {
   isForMultipleAddress?: boolean;
   getCexInfoByAddress?: (address: string) => ProjectItem;
   onPress?: (data: HistoryDisplayItem) => void;
+  account?: Account | null;
 };
 
-export type TokenChangeDataItem = {
-  amount: number;
-  token?: TokenItem;
-  token_id: string;
-  price?: number;
-  type: 'send' | 'receive' | 'approve';
+const ellipsisAddress = (address: string) => {
+  if (!address) {
+    return '';
+  }
+  return address.slice(0, 8) + '...';
 };
 
 export const HistoryItem = React.memo(
@@ -44,11 +47,12 @@ export const HistoryItem = React.memo(
     isForMultipleAddress,
     onPress,
     getCexInfoByAddress,
+    account,
   }: HistoryItemProps) => {
     const { t } = useTranslation();
     const isFailed = data.tx?.status === 0;
     const isShowSuccess = data.isShowSuccess;
-    const isScam = data.is_scam || data.isSmallUsdTx;
+    const isScam = data.is_scam;
     const chainItem = getChain(data.chain);
     const { styles, isLight } = useTheme2024({ getStyle });
 
@@ -166,10 +170,10 @@ export const HistoryItem = React.memo(
       switch (formatType) {
         case HistoryItemCateType.GAS_RECEIVED:
         case HistoryItemCateType.GAS_WITHDRAW:
-          address = FromText + t('page.home.services.gasAccount');
+          address = FromText + t('page.home.services.gasDeposit');
           break;
         case HistoryItemCateType.GAS_DEPOSIT:
-          address = ToText + t('page.home.services.gasAccount');
+          address = ToText + t('page.home.services.gasDeposit');
           break;
 
         case HistoryItemCateType.Send:
@@ -183,12 +187,22 @@ export const HistoryItem = React.memo(
 
           const name = project
             ? project.name
-            : getAliasName(addr) || ellipsisAddress(addr);
+            : getAliasName(addr, {
+                keepEmptyIfNotFound: true,
+              }) || ellipsisAddress(addr);
 
           if (cexInfo) {
             address = (
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={styles.describeText}>{ToText}</Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}>
+                <Text
+                  style={[styles.describeText, { flexShrink: 0 }]}
+                  numberOfLines={1}>
+                  {ToText}
+                </Text>
                 <FastImage
                   source={{ uri: cexInfo.logo_url }}
                   style={{
@@ -198,8 +212,17 @@ export const HistoryItem = React.memo(
                     marginHorizontal: 4,
                   }}
                 />
-                <Text style={styles.describeText}>
-                  {getAliasName(addr) || ellipsisAddress(addr)}
+                <Text
+                  style={[
+                    styles.describeText,
+                    {
+                      flexShrink: 1,
+                      minWidth: 0,
+                    },
+                  ]}
+                  numberOfLines={1}>
+                  {getAliasName(addr, { keepEmptyIfNotFound: true }) ||
+                    ellipsisAddress(addr)}
                 </Text>
               </View>
             );
@@ -209,7 +232,9 @@ export const HistoryItem = React.memo(
           break;
 
         case HistoryItemCateType.Cancel:
-          address = getAliasName(data.address) || ellipsisAddress(data.address);
+          address =
+            getAliasName(data.address, { keepEmptyIfNotFound: true }) ||
+            ellipsisAddress(data.address);
           break;
         case HistoryItemCateType.Contract:
         case HistoryItemCateType.Revoke:
@@ -221,7 +246,12 @@ export const HistoryItem = React.memo(
       }
 
       return (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 4,
+          }}>
           <ChainIconImage
             size={16}
             chainEnum={chainItem?.enum}
@@ -231,7 +261,7 @@ export const HistoryItem = React.memo(
             <Text
               numberOfLines={1}
               ellipsizeMode="tail"
-              style={styles.describeText}>
+              style={[styles.describeText, { flex: 1 }]}>
               {address}
             </Text>
           ) : (
@@ -261,9 +291,10 @@ export const HistoryItem = React.memo(
           data,
           title: formatTitle,
           treatSmallAssetsAsScam: true,
+          account,
         },
       });
-    }, [onPress, navigation, isForMultipleAddress, data, formatTitle]);
+    }, [onPress, navigation, isForMultipleAddress, data, formatTitle, account]);
 
     const noNeedTokenChangeType = useMemo(
       () =>
@@ -325,20 +356,29 @@ export const HistoryItem = React.memo(
                 styles.leftContent,
                 {
                   width: noNeedTokenChangeType ? '95%' : '50%',
+                  minWidth: 0,
+                  flex: 1,
                 },
               ]}>
               <HistoryItemTokenArea
                 type={formatType as HistoryItemCateType}
                 tokenChangeData={tokenChangeData}
                 tokenApproveData={tokenApproveData}
+                isFailure={isFailed}
               />
               <View
                 style={[
                   styles.textBox,
                   noNeedTokenChangeType && styles.textBoxNotChange,
+                  {
+                    minWidth: 0,
+                    flex: 1,
+                  },
                 ]}>
-                <View style={styles.titleBox}>
-                  <Text style={styles.titleText} numberOfLines={1}>
+                <View style={[styles.titleBox, { minWidth: 0, width: '100%' }]}>
+                  <Text
+                    style={[styles.titleText, { minWidth: 0, flexShrink: 1 }]}
+                    numberOfLines={1}>
                     {formatTitle}
                   </Text>
                   {isScam ? (
@@ -403,6 +443,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flex: 1,
     // width: '55%',
   },
   textBox: {
@@ -495,7 +536,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   txInterAddressExplain: { flexShrink: 1, width: '60%' },
   txInterAddressExplainApprove: { width: '100%' },
-  txChange: { flexShrink: 0, maxWidth: '50%', minWidth: 0 },
+  txChange: {
+    flexShrink: 0,
+    maxWidth: '50%',
+    minWidth: 0,
+  },
   divider: {
     height: 0.5,
     backgroundColor: colors2024['neutral-line'],

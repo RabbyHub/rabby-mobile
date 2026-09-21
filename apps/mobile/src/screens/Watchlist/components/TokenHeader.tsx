@@ -9,8 +9,8 @@ import { Text } from '@/components/Typography';
 export type SortState = 'desc' | 'asc' | 'default';
 
 interface TokenHeaderProps {
-  tokenSort: SortState;
-  onTokenSort: () => void;
+  tokenSort?: SortState;
+  onTokenSort?: () => void;
   changeSort: SortState;
   onChangeSort: () => void;
   fdvSort?: SortState;
@@ -24,8 +24,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
   },
   headerCell: {
     flexDirection: 'row',
@@ -38,12 +38,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-  },
-  priceCell: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 'auto',
-    marginRight: 11.6,
   },
   changeCell: {
     justifyContent: 'flex-end',
@@ -91,7 +85,7 @@ const WatchListHeader: React.FC<TokenHeaderProps> = ({
   const { t } = useTranslation();
 
   const getArrowColor = useCallback(
-    (sort: SortState, direction: 'asc' | 'desc') => {
+    (sort?: SortState, direction?: 'asc' | 'desc') => {
       if (sort === direction) {
         return colors2024['brand-default'];
       }
@@ -101,7 +95,7 @@ const WatchListHeader: React.FC<TokenHeaderProps> = ({
   );
 
   const getTextStyle = useCallback(
-    (sort: SortState) => {
+    (sort?: SortState) => {
       if (sort === 'default') {
         return styles.headerText;
       }
@@ -111,7 +105,7 @@ const WatchListHeader: React.FC<TokenHeaderProps> = ({
   );
 
   const renderArrows = useCallback(
-    (sort: SortState) => (
+    (sort?: SortState) => (
       <View style={styles.iconWrap}>
         <RcIconArrowDownCC
           style={[styles.icon, styles.iconUp]}

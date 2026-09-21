@@ -2,16 +2,25 @@
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { Button } from '@/components2024/Button';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_DOUBLE_HEIGHT,
+  BOTTOM_BUTTON_GAP,
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  RootNames,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { openapi } from '@/core/request';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
-import { AbstractProject } from '@/screens/Home/types';
+import type { AbstractProject } from '@/screens/Home/types';
 import { getMarketTabToSwapPageAction } from '@/screens/Market/analytics';
-import { findChain } from '@/utils/chain';
+import { findChain, findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
+import { mergeTokenSecurityFields } from '@/utils/tokenSecurityFlags';
 import { CHAINS_ENUM } from '@debank/common';
-import { preferenceService } from '@/core/services';
+import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
@@ -27,13 +36,14 @@ import {
   RefreshControl,
 } from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
-import { TokenChartRef, TokenPriceChart } from './components/TokenPriceChart';
+import type { TokenChartRef } from './components/TokenPriceChart';
+import { TokenPriceChart } from './components/TokenPriceChart';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
-import { GetRootScreenNavigationProps } from '@/navigation-type';
+import type { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
+import type { GetRootScreenNavigationProps } from '@/navigation-type';
 import { TokenChainAndContract } from './components/TokenChainAndContract';
 import { IssuerAndListSite } from './components/IssuerAndListSite';
 import RcIconWarningCC from '@/assets2024/icons/common/warning-circle-cc.svg';
@@ -52,16 +62,15 @@ import { Tabs } from 'react-native-collapsible-tab-view';
 import { DynamicCustomMaterialTabBar } from './components/CustomTabBar';
 import CustomLabel from './components/CustomLabel';
 import { CandlePeriod } from '@/components2024/TradingViewCandleChart/type';
-import TradingViewCandleChart, {
-  TradingViewChartRef,
-} from '@/components2024/TradingViewCandleChart';
+import type { TradingViewChartRef } from '@/components2024/TradingViewCandleChart';
+import TradingViewCandleChart from '@/components2024/TradingViewCandleChart';
 import TimePanel from './components/TimePanel';
 import MarketInfo from './components/MarketInfo';
 import { atomByMMKV } from '@/core/storage/mmkv';
 import ActivityAndHolders from './components/Market/ActivityAndHolders';
 import { scrollEndCallBack } from './components/Market/hooks';
 import { every10sEvent, useEvery10sEvent } from './event';
-import { ITokenItem } from '@/store/tokens';
+import type { ITokenItem } from '@/store/tokens';
 import { formatAmountValueKMB } from './util';
 import { Text } from '@/components/Typography';
 
@@ -71,6 +80,7 @@ const currentIntervalAtom = atomByMMKV<CandlePeriod>(
 );
 
 const isAndroid = Platform.OS === 'android';
+const TOKEN_MARKET_TAB_BAR_HEIGHT = 30;
 
 export type TokenFromAddressItem = {
   address: string;
@@ -125,7 +135,6 @@ export const TokenMarketInfoScreen = () => {
   const route =
     useRoute<GetRootScreenNavigationProps<'TokenMarketInfo'>['route']>();
   const { token, account, tokenSelectType, from } = route.params || {};
-  console.log('token', token);
   const { styles, isLight, colors2024 } = useTheme2024({
     getStyle,
   });
@@ -136,8 +145,12 @@ export const TokenMarketInfoScreen = () => {
 
   const { safeOffBottom } = useSafeSizes();
 
+  const isCustomTestnet = useMemo(() => {
+    return token.chain && !!findChainByServerID(token.chain)?.isTestnet;
+  }, [token]);
+
   const finalAccount = useMemo(() => {
-    return account || accounts[0] || preferenceService.getFallbackAccount();
+    return account || accounts[0] || getFallbackAccountSnapshot();
   }, [account, accounts]);
 
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
@@ -148,6 +161,9 @@ export const TokenMarketInfoScreen = () => {
     loading: tokenWithAmountLoading,
   } = useRequest(
     async () => {
+      if (!token || !token.id || isCustomTestnet) {
+        return;
+      }
       const res = await openapi.getToken(
         finalAccount!.address,
         token.chain,
@@ -159,6 +175,7 @@ export const TokenMarketInfoScreen = () => {
         usd_value: res?.usd_value,
         price: res?.price,
         support_market_data: res?.support_market_data,
+        ...mergeTokenSecurityFields(token, res),
       } as ITokenItem;
     },
     {
@@ -172,7 +189,7 @@ export const TokenMarketInfoScreen = () => {
     refreshAsync: refreshTokenEntity,
   } = useRequest(
     async () => {
-      if (!token || !token.id) {
+      if (!token || !token.id || isCustomTestnet) {
         return;
       }
 
@@ -205,7 +222,7 @@ export const TokenMarketInfoScreen = () => {
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const getHeaderRight = useCallback(() => {
-    return (
+    return isCustomTestnet ? null : (
       <RightMore
         token={token}
         triggerUpdate={() =>
@@ -218,10 +235,9 @@ export const TokenMarketInfoScreen = () => {
         }
         isMultiAddress={false}
         refreshTags={refreshTag}
-        unHold
       />
     );
-  }, [token, refreshTag, finalAccount?.address]);
+  }, [isCustomTestnet, token, refreshTag, finalAccount?.address]);
 
   useFocusEffect(
     useCallback(() => {
@@ -285,8 +301,9 @@ export const TokenMarketInfoScreen = () => {
         });
       }
       navigation.push(RootNames.StackTransaction, {
-        screen: account ? RootNames.Swap : RootNames.MultiSwap,
+        screen: account ? RootNames.SwapBridge : RootNames.MultiSwapBridge,
         params: {
+          activeTab: 'swap',
           chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
           tokenId: token?.id,
           type: tokenSelectType === 'swapTo' ? 'Buy' : type,
@@ -314,8 +331,9 @@ export const TokenMarketInfoScreen = () => {
       // 关闭弹窗隐藏
       setIsFromBack(false);
       navigation.push(RootNames.StackTransaction, {
-        screen: account ? RootNames.Bridge : RootNames.MultiBridge,
+        screen: account ? RootNames.SwapBridge : RootNames.MultiSwapBridge,
         params: {
+          activeTab: 'bridge',
           toChainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
           toTokenId: token?.id,
         },
@@ -376,7 +394,7 @@ export const TokenMarketInfoScreen = () => {
           },
           {
             x: 120,
-            width: 120,
+            width: 160,
           },
         ]}
         initPaddingLeft={styles.tabsBarContainer?.paddingLeft ?? 0}
@@ -386,9 +404,11 @@ export const TokenMarketInfoScreen = () => {
     [externalContent, styles.indicator, styles.tabBar, styles.tabsBarContainer],
   );
 
+  const securityToken = tokenWithAmount || token;
   const riskInfo = useMemo(() => {
-    const hasRisk = token.is_verified === false || token.is_suspicious;
-    const isDanger = token.is_verified === false;
+    const hasRisk =
+      securityToken.is_verified === false || securityToken.is_suspicious;
+    const isDanger = securityToken.is_verified === false;
     return {
       hasRisk,
       isDanger,
@@ -410,8 +430,8 @@ export const TokenMarketInfoScreen = () => {
   }, [
     colors2024,
     styles.riskContainer,
-    token.is_suspicious,
-    token.is_verified,
+    securityToken.is_suspicious,
+    securityToken.is_verified,
   ]);
 
   const renderMarketDataLabel = useCallback(
@@ -529,7 +549,7 @@ export const TokenMarketInfoScreen = () => {
 
       <Tabs.Container
         renderTabBar={renderTabBar}
-        tabBarHeight={30}
+        tabBarHeight={TOKEN_MARKET_TAB_BAR_HEIGHT}
         containerStyle={styles.container}
         headerContainerStyle={styles.tabBarWrap}
         pagerProps={{ scrollEnabled: !isAndroid }}>
@@ -538,12 +558,16 @@ export const TokenMarketInfoScreen = () => {
             onScroll={handleScroll}
             scrollEventThrottle={200}
             refreshControl={
-              <RefreshControl refreshing={false} onRefresh={handleRefresh} />
+              <RefreshControl
+                refreshing={false}
+                onRefresh={handleRefresh}
+                progressViewOffset={isAndroid ? TOKEN_MARKET_TAB_BAR_HEIGHT : 0}
+              />
             }
             style={styles.innerContainer}>
             {!!account && (
               <HeaderBalanceCard
-                amount={formatAmountValueKMB(amountSum)}
+                amount={formatAmountValueKMB(amountSum, 4, true)}
                 usdValue={usdValue}
                 percentChange={percentChange}
                 isLoss={isLoss}
@@ -552,11 +576,7 @@ export const TokenMarketInfoScreen = () => {
                 onPress={handleOpenTokenDetail}
               />
             )}
-            <View
-              style={{
-                position: 'relative',
-                marginTop: 12,
-              }}>
+            <View style={styles.chartContainer}>
               {tokenWithAmountLoading && !tokenWithAmount ? (
                 <View style={styles.skeleton} />
               ) : tokenWithAmount?.support_market_data ? (
@@ -624,7 +644,11 @@ export const TokenMarketInfoScreen = () => {
         <Tabs.Tab label={renderTokenSecurityLabel} name="tokenSecurity">
           <ScrollView
             refreshControl={
-              <RefreshControl refreshing={false} onRefresh={handleRefresh} />
+              <RefreshControl
+                refreshing={false}
+                onRefresh={handleRefresh}
+                progressViewOffset={isAndroid ? TOKEN_MARKET_TAB_BAR_HEIGHT : 0}
+              />
             }
             style={styles.innerContainer}>
             {riskInfo.content}
@@ -641,11 +665,13 @@ export const TokenMarketInfoScreen = () => {
       <View
         style={[
           styles.buttonGroup,
-          isAndroid && { paddingBottom: 50 + safeOffBottom },
+          { paddingBottom: getBottomButtonBottomOffset(safeOffBottom) },
         ]}>
         {isTransactionTo ? (
           <Button
             title={t('global.Confirm')}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
             containerStyle={StyleSheet.flatten([styles.btnContainer])}
             onPress={() => {
               if (isSwapTo) {
@@ -664,6 +690,8 @@ export const TokenMarketInfoScreen = () => {
             <Button
               type="ghost"
               title={t('page.tokenDetail.action.Buy')}
+              height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               containerStyle={StyleSheet.flatten([styles.btnContainer])}
               buttonStyle={[styles.btnInnerContainer, styles.ghostBtn]}
               onPress={() =>
@@ -673,6 +701,8 @@ export const TokenMarketInfoScreen = () => {
             <View style={styles.btnContainer}>
               <Button
                 title={t('page.tokenDetail.action.Sell')}
+                height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+                titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
                 containerStyle={StyleSheet.flatten([styles.btnContainer])}
                 onPress={() =>
                   handleSwap('Sell', finalAccount?.address, finalAccount?.type)
@@ -693,7 +723,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
         ? colors2024['neutral-bg-0']
         : colors2024['neutral-bg-1'],
     },
-
+    chartContainer: {
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+      borderRadius: 16,
+      position: 'relative',
+      marginTop: 12,
+      marginHorizontal: 12,
+      padding: 12,
+    },
     riskContainer: {
       paddingHorizontal: 20,
       marginTop: 12,
@@ -703,7 +742,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     innerContainer: {
       height: '100%',
-      paddingTop: 30,
+      paddingTop: TOKEN_MARKET_TAB_BAR_HEIGHT,
     },
     buttonGroup: {
       backgroundColor: isLight
@@ -713,13 +752,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       position: 'absolute',
       bottom: 0,
       // display: 'flex',
-      gap: 16,
+      gap: BOTTOM_BUTTON_GAP,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingTop: 20,
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
       paddingHorizontal: 20,
-      paddingBottom: 50,
+      paddingBottom: 36,
     },
 
     btnContainer: {
@@ -785,7 +824,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderBottomColor: colors2024['neutral-line'],
     },
     tabBar: {
-      height: 30,
+      height: TOKEN_MARKET_TAB_BAR_HEIGHT,
       width: 'auto',
       flexShrink: 0,
       flex: 0,
@@ -796,24 +835,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       display: 'flex',
       paddingLeft: 20,
       position: 'relative',
-      height: 30,
+      height: TOKEN_MARKET_TAB_BAR_HEIGHT,
       overflow: 'hidden',
     },
     indicator: {
       backgroundColor: colors2024['neutral-body'],
-      height: 4,
+      height: 3,
       borderRadius: 100,
     },
     skeleton: {
-      marginTop: 12,
-      width: screenWidth - 32,
+      width: '100%',
       height: 200,
       borderRadius: 12,
-      marginHorizontal: 16,
     },
-    klineContainer: {
-      paddingHorizontal: 16,
-      marginBottom: 12,
-    },
+    klineContainer: {},
   };
 });

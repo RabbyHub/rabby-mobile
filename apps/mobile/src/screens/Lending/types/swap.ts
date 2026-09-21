@@ -114,4 +114,6 @@ export type SwappableToken = {
   totalDebtUSD?: string;
   underlyingUsdValue?: string;
   usageAsCollateralEnabled?: boolean;
+  supplyCapReached?: boolean;
+  isFrozen?: boolean;
 };

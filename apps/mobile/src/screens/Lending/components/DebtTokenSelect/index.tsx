@@ -13,6 +13,7 @@ import AssetItem from './AssetItem';
 import { EmodeCategory } from '../../type';
 import { useMode } from '../../hooks/useMode';
 import { getTokensTo } from '../../utils/swap';
+import { getBorrowUsage } from '../../utils/borrow';
 import { SwappableToken } from '../../types/swap';
 import { useLendingSummary, useSelectedMarket } from '../../hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -51,9 +52,19 @@ export default function DebtTokenSelectModal({
           chainInfo?.id,
           marketKey,
         )
-          .filter(
-            item => !isSameAddress(item.underlyingAddress, excludeTokenAddress),
-          )
+          .filter(item => {
+            if (isSameAddress(item.underlyingAddress, excludeTokenAddress)) {
+              return false;
+            }
+            const displayPoolReserve = displayPoolReserves.find(x =>
+              isSameAddress(x.underlyingAsset, item.underlyingAddress),
+            );
+            if (!displayPoolReserve) {
+              return true;
+            }
+            const { borrowReached } = getBorrowUsage(displayPoolReserve);
+            return !borrowReached;
+          })
           .map(item => {
             const displayPoolReserve = displayPoolReserves.find(
               x => x.underlyingAsset === item.underlyingAddress,
@@ -158,9 +169,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: '100%',
     paddingHorizontal: 16,
   },
-  searchBar: {
-    flex: 1,
-  },
   titleText: {
     color: colors2024['neutral-title-1'],
     fontSize: 20,
@@ -169,60 +177,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
     lineHeight: 24,
   },
-  desc: {
-    fontWeight: '400',
-    fontSize: 16,
-    lineHeight: 24,
-    color: colors2024['neutral-foot'],
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'center',
-    marginTop: 8,
-  },
   titleTextWrapper: {
     flex: 1,
-  },
-  netSwitchTabs: {
-    marginBottom: 20,
-  },
-  innerBlock: {
-    paddingHorizontal: 0,
-  },
-  inputContainerStyle: {
-    height: 46,
-    borderRadius: 12,
-    paddingHorizontal: 20,
-    borderBottomWidth: 0,
-  },
-  inputText: {
-    color: colors2024['neutral-title-1'],
-    marginLeft: 7,
-    fontSize: 17,
-    fontWeight: '400',
-    paddingTop: 0,
-    paddingBottom: 0,
-    fontFamily: 'SF Pro Rounded',
   },
 
   chainListWrapper: {
     flexShrink: 1,
     height: '100%',
-  },
-
-  emptyDataWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-    maxHeight: 400,
-    // ...makeDebugBorder()
-  },
-
-  emptyText: {
-    paddingTop: 21,
-    textAlign: 'center',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    color: colors2024['neutral-info'],
   },
 
   titleView: {
@@ -233,26 +194,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginBottom: 12,
   },
 
-  inputWrapper: {
-    marginRight: 15,
-    flex: 1,
-    overflow: 'hidden',
-  },
-
-  cancelText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
-    fontSize: 17,
-    lineHeight: 22,
-  },
-
   titleViewWithText: {
     marginBottom: 34,
-  },
-
-  iconSearch: {
-    position: 'absolute',
-    right: 4,
   },
   flatList: {
     paddingHorizontal: 0,

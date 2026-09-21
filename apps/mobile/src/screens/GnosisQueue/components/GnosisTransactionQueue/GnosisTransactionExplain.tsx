@@ -6,6 +6,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { RcIconUnknown } from '@/screens/Approvals/icons';
 import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles } from '@/utils/styles';
+import { renderText } from '@/utils/renderNode';
 import { getTokenSymbol } from '@/utils/token';
 import {
   ApproveAction,
@@ -18,6 +19,7 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, View } from 'react-native';
 import { Text } from '@/components/Typography';
+import { getActionTypeTextByType } from '@/components/Approval/components/Actions/utils';
 
 export type ConfirmationProps = {
   owner: string;
@@ -127,7 +129,7 @@ export const GnosisTransactionExplain: React.FC<Props> = ({
           {t('page.safeQueue.action.cancel')}
         </Text>
       );
-    } else if (explain?.contract_call) {
+    } else {
       icon = contractProtocol?.logo_url ? (
         <Image
           source={{ uri: contractProtocol?.logo_url }}
@@ -136,10 +138,9 @@ export const GnosisTransactionExplain: React.FC<Props> = ({
       ) : (
         <RcIconUnknown style={styles.icon} />
       );
-
       content = (
         <Text style={styles.explainText} numberOfLines={2}>
-          {explain.contract_call.func}
+          {getActionTypeTextByType(explain?.action?.type || '')}
         </Text>
       );
     }
@@ -149,11 +150,10 @@ export const GnosisTransactionExplain: React.FC<Props> = ({
     <View style={styles.container}>
       {icon || <RcIconUnknown style={styles.icon} />}
       <View style={styles.content}>
-        {content || (
-          <Text style={styles.explainText}>
-            {t('page.safeQueue.unknownTx')}
-          </Text>
-        )}
+        {renderText(content || t('page.safeQueue.unknownTx'), {
+          style: styles.explainText,
+          numberOfLines: 2,
+        })}
       </View>
       <Button
         title={t('page.safeQueue.viewBtn')}
@@ -192,8 +192,8 @@ const getStyles = createGetStyles(colors => ({
     backgroundColor: 'rgba(134, 151, 255, 0.2)',
   },
   buttonTitle: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 18,
+    lineHeight: 22,
     fontWeight: '500',
   },
   buttonTitleCanExec: {

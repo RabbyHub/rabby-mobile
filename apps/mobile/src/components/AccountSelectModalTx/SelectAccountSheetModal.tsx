@@ -1,8 +1,6 @@
 import { AppBottomSheetModal } from '@/components';
-import {
-  AccountsPanelInSheetModal,
-  SelectAccountSheetModalType,
-} from '@/components/AccountSelectModalTx/AccountsPanel';
+import type { SelectAccountSheetModalType } from '@/components/AccountSelectModalTx/AccountsPanel';
+import { AccountsPanelInSheetModal } from '@/components/AccountSelectModalTx/AccountsPanel';
 import AutoLockView from '@/components/AutoLockView';
 import { IS_IOS } from '@/core/native/utils';
 import { FontWeightEnum } from '@/core/utils/fonts';
@@ -13,25 +11,27 @@ import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dimensions, Keyboard, Pressable, View } from 'react-native';
-import {
-  AccountSelectModalProvider,
+import type {
   SelectAccountSheetModalScreen,
   SelectAccountSheetModalValues,
 } from './hooks';
+import { AccountSelectModalProvider } from './hooks';
 import { RcIconHistory, RcIconNavLeft } from './icons';
 import ScreenPanelEnterAddress from './modalScreens/EnterAddress';
 import { SelectAccountSheetModalSizes } from './layout';
 import { ScreenAddNewWhitelistAddress } from './modalScreens/AddNewWhitelistAddress';
 import { ScreenSentHistory } from './modalScreens/SentHistory';
 import { ScreenHistoryLocalDetail } from './modalScreens/TxHistoryDetail';
-import { HistoryLocalDetailParams } from '@/screens/TransactionRecord/components/TransactionItem2025';
-import { Account } from '@/core/services/preference';
+import type { HistoryLocalDetailParams } from '@/screens/TransactionRecord/components/TransactionItem2025';
+import type { Account } from '@/core/startupServices/preference';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';
 import { touchedFeedback } from '@/utils/touch';
 import { ScreenPanelScanner } from './modalScreens/ScanQrcode';
 import { Button } from '@/components2024/Button';
 import { Text } from '@/components/Typography';
+import { MODAL_GATE_IDS, useRegisterBlockingModal } from '@/utils/modalGate';
+import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoundary';
 
 function getDefaultScreenStates(): {
   isScanning: boolean;
@@ -77,6 +77,8 @@ export function SheetModalSelectAccountSend({
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
   const { sheetModalRef, toggleShowSheetModal } = useSheetModal(null);
+  useRegisterBlockingModal(MODAL_GATE_IDS.accountSelectSheet, !!visible);
+
   const mountRef = useRef(false);
   useEffect(() => {
     if (visible) {
@@ -402,60 +404,70 @@ export function SheetModalSelectAccountSend({
             paddingBottom: safeSizes.containerPb,
           },
         ]}>
-        <AccountSelectModalProvider value={providerValues}>
-          <View style={styles.modalHeader}>
-            <View style={[styles.headerIconPlaceholder, styles.navBack]}>
-              {!!providerValues.computed.canNavBack && (
-                <Pressable
-                  disabled={!providerValues.computed.canNavBack}
-                  onPress={onPressNavBack}>
-                  <RcIconNavLeft
-                    color={screenStyles.title?.color}
-                    width={24}
-                    height={24}
-                  />
-                </Pressable>
-              )}
+        <RenderActivityBoundary
+          active={!!visible}
+          label={`send-account-selector-${type}`}>
+          <AccountSelectModalProvider value={providerValues}>
+            <View style={styles.modalHeader}>
+              <View style={[styles.headerIconPlaceholder, styles.navBack]}>
+                {!!providerValues.computed.canNavBack && (
+                  <Pressable
+                    disabled={!providerValues.computed.canNavBack}
+                    onPress={onPressNavBack}>
+                    <RcIconNavLeft
+                      color={screenStyles.title?.color}
+                      width={24}
+                      height={24}
+                    />
+                  </Pressable>
+                )}
+              </View>
+              <Text style={[styles.title, screenStyles.title]}>
+                {modalTitle}
+              </Text>
+              <View style={[styles.headerIconPlaceholder, styles.rightIcon]}>
+                {!!providerValues.computed.needShowHistory && (
+                  <Pressable
+                    disabled={!providerValues.computed.needShowHistory}
+                    onPress={() => {
+                      touchedFeedback();
+                      fnNavTo('select-from-history');
+                    }}>
+                    <RcIconHistory width={24} height={24} />
+                  </Pressable>
+                )}
+              </View>
             </View>
-            <Text style={[styles.title, screenStyles.title]}>{modalTitle}</Text>
-            <View style={[styles.headerIconPlaceholder, styles.rightIcon]}>
-              {!!providerValues.computed.needShowHistory && (
-                <Pressable
-                  disabled={!providerValues.computed.needShowHistory}
-                  onPress={() => {
-                    touchedFeedback();
-                    fnNavTo('select-from-history');
-                  }}>
-                  <RcIconHistory width={24} height={24} />
-                </Pressable>
+            <View style={styles.mainContainer}>
+              {currentScreen === 'default' && (
+                <AccountsPanelInSheetModal
+                  parentVisible={!!visible}
+                  scene="SendTo"
+                />
               )}
+              {currentScreen === 'enter-addr' && (
+                <ScreenPanelEnterAddress
+                  onCleanupInput={() => {
+                    fnNavTo('default');
+                  }}
+                  newValue={
+                    screenStates.nextInitValues['enter-addr'].inputValue
+                  }
+                />
+              )}
+              {currentScreen === 'add-new-whitelist-addr' && (
+                <ScreenAddNewWhitelistAddress
+                  newValue={
+                    screenStates.nextInitValues['add-new-whitelist-addr']
+                  }
+                />
+              )}
+              {currentScreen === 'select-from-history' && <ScreenSentHistory />}
+              {currentScreen === 'view-sent-tx' && <ScreenHistoryLocalDetail />}
+              {currentScreen === 'scan-qr-code' && <ScreenPanelScanner />}
             </View>
-          </View>
-          <View style={styles.mainContainer}>
-            {currentScreen === 'default' && (
-              <AccountsPanelInSheetModal
-                parentVisible={!!visible}
-                scene="SendTo"
-              />
-            )}
-            {currentScreen === 'enter-addr' && (
-              <ScreenPanelEnterAddress
-                onCleanupInput={() => {
-                  fnNavTo('default');
-                }}
-                newValue={screenStates.nextInitValues['enter-addr'].inputValue}
-              />
-            )}
-            {currentScreen === 'add-new-whitelist-addr' && (
-              <ScreenAddNewWhitelistAddress
-                newValue={screenStates.nextInitValues['add-new-whitelist-addr']}
-              />
-            )}
-            {currentScreen === 'select-from-history' && <ScreenSentHistory />}
-            {currentScreen === 'view-sent-tx' && <ScreenHistoryLocalDetail />}
-            {currentScreen === 'scan-qr-code' && <ScreenPanelScanner />}
-          </View>
-        </AccountSelectModalProvider>
+          </AccountSelectModalProvider>
+        </RenderActivityBoundary>
       </AutoLockView>
     </AppBottomSheetModal>
   );
@@ -521,7 +533,8 @@ const getStyle = createGetStyles2024(ctx => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
       fontWeight: FontWeightEnum.heavy,
-      lineHeight: 20,
+      //lineHeight: 20,
+      lineHeight: 24,
       color: ctx.colors2024['neutral-title-1'],
       textAlign: 'center',
 

@@ -2,23 +2,18 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   GestureResponderEvent,
   Pressable,
-  Animated as RNAnimated,
-  Easing as RNEasing,
+  StyleSheet,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import usePrevious from 'react-use/lib/usePrevious';
 
-import RcIconLoading from '@/assets2024/icons/home/Iconloading.svg';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { E2E_ID } from '@/constant/e2e';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  createGetStyles2024,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
 import { useUpgradeInfo } from '@/hooks/version';
@@ -27,40 +22,49 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import RcIconEyeCC from '@/assets2024/icons/home/eye-cc.svg';
 import RcIconEyeCloseCC from '@/assets2024/icons/home/eye-close-cc.svg';
 import RcIconEyeHalfCloseCC from '@/assets2024/icons/home/eye-half-close-cc.svg';
-import { FeedbackEntryOnHeader } from '@/components/Screenshot/FeedbackEntryOnHeader';
+import { FeedbackHistoryHeaderEntry } from '@/components/Screenshot/FeedbackHistory/HeaderEntry';
 import {
   HOME_TOP_HEADER_SIZES,
   ITEM_LAYOUT_PADDING_HORIZONTAL,
+  SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
 } from '@/constant/home';
 import { useMemoizedFn } from 'ahooks';
 import { useHideBalance } from '../hooks/useHideBalance';
 import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
 import { AddressListScreenButton } from '@/screens/Address/AddressListScreenButton';
-import { formatSmallCurrencyValue } from '@/hooks/useCurve';
 import { useCurrency } from '@/hooks/useCurrency';
+import { formatSmallCurrencyValueParts } from '@/utils/currency';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
-import { useFocusedTab } from 'react-native-collapsible-tab-view';
 import Animated, {
   Extrapolate,
   interpolate,
-  SharedValue,
   useAnimatedStyle,
+  useSharedValue,
 } from 'react-native-reanimated';
-import { apisHomeTabIndex, useHomeTabIndex } from '@/hooks/navigation';
-import {
-  useScene24hBalanceCombinedData,
-  useSceneIsLoading,
-} from '@/hooks/useScene24hBalance';
-import useTokenList from '@/store/tokens';
+import { apisHomeTabIndex, HomeTabName } from '@/hooks/navigation';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
-import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
-import balanceStore from '@/store/balance';
+import useTokenList from '@/store/tokens';
 import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
-import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { IS_ANDROID } from '@/core/native/utils';
-import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
-import { SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import { Text } from '@/components/Typography';
+import { useReportTokenTabView } from '../hooks/useReportTokenTabView';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
+import { useShallow } from 'zustand/react/shallow';
+import { MultiHeaderRightHistory } from '../MultiHeaderRightHistory';
+import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerText';
+import { useValueFromSharedValue } from '@/hooks/reanimated';
+import {
+  isHomeProjectionWaitingForValue,
+  useHome24hProjection,
+  useHomeBalanceProjection,
+  useHomeRefreshProjection,
+} from '@/store/homePortfolio';
+
+const EMPTY_CHANGE_DATA = {
+  rawChange: 0,
+  changePercent: '',
+  isLoss: false,
+};
 
 const HeaderHeight = 30;
 const handleSwitchToTokenTab = (index: number) => {
@@ -70,14 +74,30 @@ const handleSwitchToTokenTab = (index: number) => {
 export function TabsTopHeader(): JSX.Element {
   const focusedTab = useValueFromSharedValue(apisHomeTabIndex.svTabName);
 
-  // const indexDecimalValue = useSVFromMutable(apisHomeTabIndex.svTabIndexDecimal);
-  // const tabIndexFromSv = useValueFromSharedValue(indexDecimalValue);
-  const tabIndexFromSv = useValueFromSharedValue(
-    apisHomeTabIndex.svTabIndexDecimal,
+  const { balanceAvailability, totalBalance } = useHomeBalanceProjection(
+    useShallow(state => ({
+      balanceAvailability: state.availability,
+      totalBalance: state.value?.totalBalance || 0,
+    })),
   );
-  const showNetWorth = tabIndexFromSv > 0.7;
-  const { isLoading: loading } = useSceneIsLoading('Home');
-  const { combinedData: data } = useScene24hBalanceCombinedData('Home');
+  const { changeAvailability, changeData, changeActivity } =
+    useHome24hProjection(
+      useShallow(state => ({
+        changeAvailability: state.availability,
+        changeData: state.value || EMPTY_CHANGE_DATA,
+        changeActivity: state.activity,
+      })),
+    );
+  const isAnyRemoteRefreshing = useHomeRefreshProjection(
+    state => state.isAnyRemoteRefreshing,
+  );
+  const showBalanceLoadingWithoutLocal =
+    isHomeProjectionWaitingForValue(balanceAvailability);
+  const showChangeLoadingWithoutLocal =
+    isHomeProjectionWaitingForValue(changeAvailability);
+  const isChangeAnyLoading = changeActivity.isActive;
+  const data = changeData;
+  const scene24hLoading = isChangeAnyLoading;
 
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
@@ -96,29 +116,17 @@ export function TabsTopHeader(): JSX.Element {
     }
   });
   const { currency } = useCurrency();
-  const { myTop10Addresses } = useAccountInfo();
-  const balanceMap = balanceStore(s => s.balanceMap);
-  const isTop10BalanceLoading = balanceStore(s => {
-    return s.getIsTop10BalanceLoading(myTop10Addresses, s.isLoadingByAddress)
-      .isTop10BalanceLoading;
-  });
-
-  const totalBalance = useMemo(() => {
-    if (!myTop10Addresses.length) {
-      return 0;
-    }
-    return myTop10Addresses.reduce((acc, address) => {
-      const balance = balanceMap[address.toLowerCase()];
-      return acc + (balance?.totalBalance || 0);
-    }, 0);
-  }, [balanceMap, myTop10Addresses]);
-
   const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
   const setTokenDisplayMode = useTokenList(s => s.setTokenDisplayMode);
 
   const showRightArea = useMemo(() => {
-    return focusedTab !== TabName.token;
+    return focusedTab !== HomeTabName.token;
   }, [focusedTab]);
+
+  const InOverViewTab = useMemo(() => {
+    return focusedTab === HomeTabName.overview;
+  }, [focusedTab]);
+
   const tokenDisplayModeLabel = useMemo(() => {
     if (tokenDisplayMode === 'bySymbol') {
       return 'By Symbol';
@@ -128,6 +136,10 @@ export function TabsTopHeader(): JSX.Element {
     }
     return 'By Address';
   }, [tokenDisplayMode]);
+  useReportTokenTabView({
+    focusedTab,
+    tokenDisplayModeLabel,
+  });
   const handleToggleTokenDisplayMode = useCallback(() => {
     if (tokenDisplayMode === 'byAddress') {
       setTokenDisplayMode('byAsset');
@@ -139,20 +151,39 @@ export function TabsTopHeader(): JSX.Element {
   }, [setTokenDisplayMode, tokenDisplayMode]);
 
   const netWorth = useMemo(() => {
-    return formatSmallCurrencyValue(totalBalance, { currency });
+    return formatSmallCurrencyValueParts(totalBalance, {
+      currency,
+      formatMillion: false,
+      decimalOverMillion: 2,
+    }).text;
   }, [currency, totalBalance]);
+  const netWorthValue = useSharedValue(netWorth);
+  useEffect(() => {
+    netWorthValue.value = netWorth;
+  }, [netWorth, netWorthValue]);
   const changePercent = useMemo(() => {
+    if (!data.changePercent) {
+      return '';
+    }
     return `${data.isLoss ? '-' : '+'}${data.changePercent}`;
   }, [data.changePercent, data.isLoss]);
+  const showChangeLoading = showChangeLoadingWithoutLocal;
+  const showHeaderSideLoadingIndicator = useMemo(() => {
+    return showBalanceLoadingWithoutLocal || isAnyRemoteRefreshing;
+  }, [isAnyRemoteRefreshing, showBalanceLoadingWithoutLocal]);
+  const showNetWorthSideLoadingIndicator =
+    showHeaderSideLoadingIndicator &&
+    !showBalanceLoadingWithoutLocal &&
+    !showChangeLoading;
 
   const gasketWebViewRef = useRef<LocalWebView>(null);
 
-  const previousLoading = usePrevious(loading);
+  const previousLoading = usePrevious(scene24hLoading);
   useEffect(() => {
     if (data.isLoss) {
       return;
     }
-    if (!loading && previousLoading) {
+    if (!scene24hLoading && previousLoading) {
       gasketWebViewRef.current?.sendMessage?.({
         type: 'GASKETVIEW:TOGGLE_LOADING',
         info: {
@@ -160,7 +191,7 @@ export function TabsTopHeader(): JSX.Element {
         },
       });
     }
-  }, [data.isLoss, loading, previousLoading]);
+  }, [data.isLoss, previousLoading, scene24hLoading]);
 
   const { opacityStyle, pullPercent } = useHomeDrawerOpacityStyle();
 
@@ -172,32 +203,37 @@ export function TabsTopHeader(): JSX.Element {
       Extrapolate.CLAMP,
     ),
   }));
+  const totalBalanceStyle = useAnimatedStyle(() => {
+    const netWorthProgress = interpolate(
+      apisHomeTabIndex.svTabIndexDecimal.value,
+      [0.62, 0.82],
+      [0, 1],
+      Extrapolate.CLAMP,
+    );
+
+    return {
+      opacity: 1 - netWorthProgress,
+    };
+  });
+  const netWorthStyle = useAnimatedStyle(() => {
+    const netWorthProgress = interpolate(
+      apisHomeTabIndex.svTabIndexDecimal.value,
+      [0.62, 0.82],
+      [0, 1],
+      Extrapolate.CLAMP,
+    );
+
+    return {
+      opacity: netWorthProgress,
+    };
+  });
 
   return (
     <Animated.View style={[styles.headerBox, opacityStyle, headerStyle]}>
-      {showNetWorth ? (
-        <Pressable
-          style={styles.leftBox}
-          onPress={() => handleSwitchToTokenTab(0)}>
-          <Text style={styles.balanceTextBox}>{netWorth}</Text>
-          <Text
-            style={[
-              styles.changePercentText,
-              {
-                color: data.isLoss
-                  ? colors2024['red-default']
-                  : colors2024['green-default'],
-              },
-            ]}>
-            {changePercent}
-          </Text>
-          {!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
-          isTop10BalanceLoading ? (
-            <LoadingCircle />
-          ) : null}
-        </Pressable>
-      ) : (
-        <View style={styles.leftBox}>
+      <View style={styles.leftBox}>
+        <Animated.View
+          pointerEvents={focusedTab === HomeTabName.overview ? 'auto' : 'none'}
+          style={[styles.leftContent, totalBalanceStyle]}>
           <Text style={styles.balanceTextBox}>
             {t('page.nextComponent.multiAddressHome.totalBalance')}
           </Text>
@@ -225,22 +261,73 @@ export function TabsTopHeader(): JSX.Element {
             )}
           </TouchableOpacity>
           {!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
-          isTop10BalanceLoading ? (
+          showHeaderSideLoadingIndicator ? (
             <LoadingCircle />
           ) : null}
-        </View>
-      )}
+        </Animated.View>
+        <Animated.View
+          pointerEvents={focusedTab === HomeTabName.overview ? 'none' : 'auto'}
+          style={[styles.leftContent, netWorthStyle]}>
+          <Pressable
+            style={styles.netWorthPressable}
+            onPress={() => handleSwitchToTokenTab(0)}>
+            {showBalanceLoadingWithoutLocal ? (
+              <View style={styles.balanceLoadingBox}>
+                <LoadingCircle />
+              </View>
+            ) : (
+              <RefreshNudgedTickerText
+                value={netWorthValue}
+                maxLength={16}
+                lineHeight={22}
+                duration={320}
+                style={styles.balanceTextBox}
+                fontSizeByLength={{
+                  maxFontSize: 18,
+                  minFontSize: 18,
+                  threshold: 16,
+                }}
+              />
+            )}
+            {!showBalanceLoadingWithoutLocal && changePercent ? (
+              <Text
+                style={[
+                  styles.changePercentText,
+                  {
+                    color: data.isLoss
+                      ? colors2024['red-default']
+                      : colors2024['green-default'],
+                  },
+                ]}>
+                {changePercent}
+              </Text>
+            ) : null}
+            {showChangeLoading ? (
+              <View style={styles.changeLoadingBox}>
+                <LoadingCircle />
+              </View>
+            ) : null}
+            {!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
+            showNetWorthSideLoadingIndicator ? (
+              <LoadingCircle />
+            ) : null}
+          </Pressable>
+        </Animated.View>
+      </View>
 
       <Pressable
         style={styles.rightArea}
         onPress={() => handleSwitchToTokenTab(1)}>
         {showRightArea ? (
           <>
-            <FeedbackEntryOnHeader style={styles.feedbackEntry} />
+            {focusedTab === HomeTabName.overview ? (
+              <FeedbackHistoryHeaderEntry style={styles.feedbackEntry} />
+            ) : null}
 
             <AddressListScreenButton type="address" />
             <Pressable
               style={styles.settingEntry}
+              {...makeTestIDProps(E2E_ID.home.settingsButton)}
               onPress={event => {
                 event?.stopPropagation?.();
                 navigation.navigateDeprecated(RootNames.StackSettings, {
@@ -262,16 +349,24 @@ export function TabsTopHeader(): JSX.Element {
                 {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
               </View>
             </Pressable>
+            {!InOverViewTab && (
+              <MultiHeaderRightHistory style={styles.pendingHistoryBox} />
+            )}
           </>
         ) : (
-          <TouchableOpacity onPress={handleToggleTokenDisplayMode}>
-            <View style={styles.displayModeButton}>
-              <Text style={styles.displayModeText}>
-                {tokenDisplayModeLabel}
-              </Text>
-              <IconPerpEdit color={colors2024['neutral-body']} />
-            </View>
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity onPress={handleToggleTokenDisplayMode}>
+              <View style={styles.displayModeButton}>
+                <Text style={styles.displayModeText}>
+                  {tokenDisplayModeLabel}
+                </Text>
+                <IconPerpEdit color={colors2024['neutral-body']} />
+              </View>
+            </TouchableOpacity>
+            <MultiHeaderRightHistory
+              style={styles.pendingHistoryBoxInOverview}
+            />
+          </>
         )}
       </Pressable>
     </Animated.View>
@@ -294,23 +389,38 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'relative',
   },
   leftBox: {
-    // ...makeDebugBorder('yellow'),
     height: '100%',
+    flex: 1,
+    position: 'relative',
+  },
+  leftContent: {
+    ...StyleSheet.absoluteFillObject,
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'center',
     gap: 4,
+  },
+  netWorthPressable: {
+    height: '100%',
     flex: 1,
-    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    gap: 4,
   },
   balanceTextBox: {
     color: colors2024['neutral-title-1'],
-    fontWeight: '900',
-    fontSize: 20,
-    lineHeight: 24,
+    fontWeight: '700',
+    fontSize: 18,
+    lineHeight: 22,
     textAlign: 'left',
     fontFamily: 'SF Pro Rounded',
-    // ...makeDebugBorder('green'),
+  },
+  balanceLoadingBox: {
+    minWidth: 24,
+    minHeight: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   changePercentText: {
     fontSize: 16,
@@ -318,6 +428,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
+  },
+  changeLoadingBox: {
+    minWidth: 20,
+    minHeight: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   rightArea: {
     flexDirection: 'row',
@@ -357,7 +473,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   feedbackEntry: {
     height: '100%',
-    paddingRight: 6,
+    paddingRight: 12,
     // ...makeDebugBorder('yellow'),
   },
   settingEntry: {
@@ -379,5 +495,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'absolute',
     top: 0,
     right: -3,
+  },
+  pendingHistoryBox: {
+    marginLeft: 16,
+  },
+  pendingHistoryBoxInOverview: {
+    marginLeft: 12,
   },
 }));

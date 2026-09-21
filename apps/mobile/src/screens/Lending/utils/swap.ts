@@ -2,6 +2,8 @@ import {
   assetCanBeBorrowedByUser,
   getMaxAmountAvailableToBorrow,
 } from './borrow';
+import { valueToBigNumber } from '@aave/math-utils';
+import BigNumber from 'bignumber.js';
 import { SwappableToken } from '../types/swap';
 import { UserSummary } from '../type';
 import { CustomMarket } from '../config/market';
@@ -18,6 +20,40 @@ const HIDDEN_ASSETS: Partial<Record<CustomMarket, string[]>> = {
 
 const isAssetHidden = (market: CustomMarket, underlyingAsset: string) => {
   return HIDDEN_ASSETS[market]?.includes(underlyingAsset.toLowerCase());
+};
+
+type SwapLiquidityReserve = Pick<
+  FormattedReservesAndIncentives,
+  'formattedAvailableLiquidity' | 'borrowCap' | 'totalDebt'
+>;
+
+export const hasInsufficientSwapLiquidity = ({
+  reserve,
+  amount,
+  checkBorrowCap = false,
+}: {
+  reserve?: SwapLiquidityReserve;
+  amount: string;
+  checkBorrowCap?: boolean;
+}) => {
+  if (!reserve || !amount) {
+    return false;
+  }
+
+  const liquidity = BigNumber.max(
+    valueToBigNumber(reserve.formattedAvailableLiquidity),
+    0,
+  );
+  const borrowCapRoom =
+    checkBorrowCap && reserve.borrowCap !== '0'
+      ? valueToBigNumber(reserve.borrowCap).minus(reserve.totalDebt)
+      : liquidity;
+  const effectiveLimit = BigNumber.max(
+    BigNumber.min(liquidity, borrowCapRoom),
+    0,
+  );
+
+  return valueToBigNumber(amount).gt(effectiveLimit);
 };
 
 // Tokens to are all potential borrow assets

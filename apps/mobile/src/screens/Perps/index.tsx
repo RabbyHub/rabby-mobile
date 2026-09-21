@@ -1,663 +1,229 @@
-import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import {
-  FlatList,
-  ImageBackground,
-  RefreshControl,
-  TouchableOpacity,
-  View,
-  useWindowDimensions,
-} from 'react-native';
-import { Button } from '@/components2024/Button';
-import { PerpsAccountCard } from './components/PerpsAccountCard';
-import { PerpsAgentsLimitModal } from './components/PerpsAgentsLimitModal';
-import { PerpsGuidePopup } from './components/PerpsGuidePopup';
-import { PerpsDepositPopup } from './components/PerpsDepositPopup';
-import { PerpsWithdrawPopup } from './components/PerpsWithdrawPopup';
+import { useEnsurePerpsRuntime } from '@/hooks/perps/runtime/useEnsurePerpsRuntime';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { usePerpsState } from '@/hooks/perps/usePerpsState';
-import RcIconBackTopCC from '@/assets2024/icons/perps/IconBackTopCC.svg';
-import { usePerpsPopupState } from './hooks/usePerpsPopupState';
-import { useMemoizedFn, useRequest } from 'ahooks';
-import { Account } from '@/core/services/preference';
-import { PerpsAccountLogoutPopup } from './components/PerpsAccountLogoutPopup';
-import { usePerpsDeposit } from './hooks/usePerpsDeposit';
-import { PerpsMarketSectionHeader } from './components/PerpsMarketSection';
-import { PerpsMarketItem } from './components/PerpsMarketSection/PerpsMarketItem';
-import { PerpsPositionSection } from './components/PerpsPositionSection';
-import { sortBy } from 'lodash';
-import { apisPerps } from '@/core/apis';
-import { PerpsAccountSelectorPopup } from './components/PerpsAccountSelectorPopup';
-import { PerpsRegionAlert } from './components/PerpsRegionAlert';
-import { PerpsNativeHeader } from './components/PerpsHeaderTitle';
-import { PerpSearchListPopup } from './components/PerpSearchListPopup';
+import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import { useHideTipsPopup, useIsTipsPopupVisible } from '@/hooks/useTipsPopup';
+import { perpsServiceApi } from '@/core/serviceApi/perps';
+import { IS_IOS } from '@/core/native/utils';
+import { useRoute } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import type { LayoutChangeEvent } from 'react-native';
+
 import { RootNames } from '@/constant/layout';
-import { naviPush } from '@/utils/navigation';
-import { calculateDistanceToLiquidation } from './components/PerpsPositionSection/utils';
-import { PerpsRiskLevelPopup } from './components/PerpsPositionSection/PerpsRiskLevelPopup';
-import { PerpsSkeletonLoader } from './components/PerpsSkeletonLoader';
-import { usePerpsPosition } from '../PerpsMarketDetail/hooks/usePerpsPosition';
-import { PerpsInvitePopup } from './components/PerpsInvitePopup';
-import { checkPerpsReference, getStatsReportSide } from '@/utils/perps';
-import { perpsService } from '@/core/services';
-import { toast } from '@/components2024/Toast';
-import { stats } from '@/utils/stats';
-import { APP_VERSIONS } from '@/constant';
-import BigNumber from 'bignumber.js';
+import type { TransactionNavigatorParamList } from '@/navigation-type';
+import { PerpsProScreen } from '../PerpsPro';
+import { PERPS_PORTFOLIO_BREAKDOWN_TIPS_OWNER } from '../PerpsShared/constants';
+import { buildPerpsProMarkets } from '../PerpsPro/model/market';
+import { resolveInitialPerpsProMarket } from '../PerpsPro/model/resolveInitialMarket';
+import { getPerpsProMarketSession } from '../PerpsPro/session/perpsProMarketSession';
+import { prefetchPerpsProZeroAddressLeverageBaseline } from '../PerpsPro/scene/perpsProZeroAddressLeverageBaseline';
+import { prewarmPerpsProEntryIntent } from '../PerpsPro/scene/perpsProEntryIntent';
+import { usePerpsViewMode } from './hooks/usePerpsViewMode';
+import { PerpsSimpleScreen } from './PerpsSimpleScreen';
+import { PerpsGuideEntryPopup } from './components/PerpsGuideEntryPopup';
+import type { PerpsRegionAlertLayout } from './components/PerpsRegionAlert';
 
 export const PerpsOriginScreen = () => {
-  const { t } = useTranslation();
+  useEnsurePerpsRuntime();
 
-  const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const { width: screenWidth } = useWindowDimensions();
-
+  const route =
+    useRoute<
+      RouteProp<TransactionNavigatorParamList, typeof RootNames.Perps>
+    >();
   const navigation = useRabbyAppNavigation();
+  const fromSource = route.params?.fromSource;
+  const { hasVisitedPro, hydrated, savingMode, setViewMode, viewMode } =
+    usePerpsViewMode();
+  const marketDataStatus = perpsStore(state => state.marketDataStatus);
+  const proIntentCancelRef = useRef<(() => void) | null>(null);
+  const proIntentCommittedRef = useRef(false);
+  const regionAlertLayoutRef = useRef<PerpsRegionAlertLayout | null>(null);
+  const proIntentCancelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const hasShownGuideRef = useRef(true);
+  const [showGuideEntryPopup, setShowGuideEntryPopup] = useState(false);
+  const portfolioBreakdownVisible = useIsTipsPopupVisible(
+    PERPS_PORTFOLIO_BREAKDOWN_TIPS_OWNER,
+  );
+  const hidePortfolioBreakdown = useHideTipsPopup(
+    PERPS_PORTFOLIO_BREAKDOWN_TIPS_OWNER,
+  );
 
-  const {
-    positionAndOpenOrders,
-    currentPerpsAccount,
-    isLogin,
-    isInitialized,
-    marketData,
-    userFills,
-    marketDataMap,
-    logout,
-    login,
-    handleWithdraw,
-    homeHistoryList,
-    handleDeleteAgent,
-    hasPermission,
-    refreshData,
-    fetchMarketData,
-    perpFee,
-
-    localLoadingHistory,
-
-    handleActionApproveStatus,
-    handleSafeSetReference,
-    setInitialized,
-
-    favoriteMarkets,
-  } = usePerpsState();
-  const { handleClosePosition } = usePerpsPosition();
-
-  const [popupState, setPopupState] = usePerpsPopupState();
-
-  // Scroll related states
-  const flatListRef = useRef<FlatList>(null);
-  const [showBackToTop, setShowBackToTop] = useState(false);
-
-  // Prepare sorted market data with header as first item
-  const listData = useMemo(() => {
-    // Separate favorite and non-favorite markets
-    const favoriteItems: typeof marketData = [];
-    const nonFavoriteItems: typeof marketData = [];
-
-    marketData.forEach(item => {
-      const isFavorite = favoriteMarkets.includes(item.name.toUpperCase());
-      if (isFavorite) {
-        favoriteItems.push(item);
-      } else {
-        nonFavoriteItems.push(item);
-      }
-    });
-
-    // Sort each group by dayNtlVlm (descending)
-    const sortedFavorites = sortBy(
-      favoriteItems,
-      item => -(item.dayNtlVlm || 0),
-    );
-    const sortedNonFavorites = sortBy(
-      nonFavoriteItems,
-      item => -(item.dayNtlVlm || 0),
-    );
-
-    // Combine: favorites first, then non-favorites
-    const sorted = [...sortedFavorites, ...sortedNonFavorites];
-
-    // Add a special header item as first element for sticky header
-    return [{ _isStickyHeader: true }, ...sorted];
-  }, [marketData, favoriteMarkets]);
-  const [selectedCoin, setSelectedCoin] = useState<string | null>(null);
-
-  const positionCoinSet = useMemo(() => {
-    const set = new Set();
-    positionAndOpenOrders?.forEach(order => {
-      set.add(order.position.coin);
-    });
-    return set;
-  }, [positionAndOpenOrders]);
-
-  const handleLogin = useMemoizedFn(async (v: Account) => {
-    // if (currentPerpsAccount?.address) {
-    //   logout(currentPerpsAccount?.address || '');
-    // }
-    await login(v);
-    setPopupState(prev => ({
-      ...prev,
-      isShowLoginPopup: false,
-    }));
-  });
-
-  const handleLogout = useMemoizedFn(() => {
-    try {
-      logout(currentPerpsAccount?.address || '');
-      setPopupState(prev => ({
-        ...prev,
-        isShowLogoutPopup: false,
-      }));
-    } catch (e) {
-      console.error(e);
+  useEffect(() => {
+    if (IS_IOS || fromSource !== 'homePagePositionList') {
+      return;
     }
-  });
-
-  const { handleDeposit } = usePerpsDeposit({
-    currentPerpsAccount,
-  });
-
-  // Guide popup is now triggered by LearnMore card in PerpsAccountCard
-
-  const onRefresh = useMemoizedFn(() => {
-    if (isLogin) {
-      refreshData();
-    }
-    fetchMarketData();
-  });
-
-  // Handle scroll event
-  const handleScroll = useMemoizedFn((event: any) => {
-    const scrollY = event.nativeEvent.contentOffset.y;
-
-    // Show back to top button when scrolling down 200px
-    const shouldShow = scrollY > 200;
-    if (shouldShow !== showBackToTop) {
-      setShowBackToTop(shouldShow);
-    }
-  });
-
-  // Scroll to top
-  const scrollToTop = useMemoizedFn(() => {
-    setShowBackToTop(false);
-    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-  });
-
-  const handleShowRiskPopup = useMemoizedFn((coin: string) => {
-    setSelectedCoin(coin);
-  });
-
-  const handleCloseRiskPopup = useMemoizedFn(() => {
-    setSelectedCoin(null);
-  });
-
-  const { data: isShowInvite, mutate: setIsShowInvite } = useRequest(
-    async () => {
-      return checkPerpsReference({
-        account: currentPerpsAccount,
-        scene: 'invite',
+    void perpsServiceApi
+      .getHasShownPerpsGuidePopup()
+      .then(hasShown => {
+        hasShownGuideRef.current = hasShown;
+      })
+      .catch(error => {
+        console.error('[Perps] read guide popup state failed', error);
       });
-    },
-    {
-      refreshDeps: [currentPerpsAccount],
-      ready: !!currentPerpsAccount?.address,
-      onSuccess: shouldShow => {
-        if (shouldShow) {
-          perpsService.setInviteConfig(currentPerpsAccount?.address || '', {
-            lastInvitedAt: Date.now(),
-          });
+  }, [fromSource]);
+
+  useEffect(
+    () =>
+      navigation.addListener('beforeRemove', event => {
+        if (portfolioBreakdownVisible) {
+          event.preventDefault();
+          hidePortfolioBreakdown();
+          return;
         }
-      },
-    },
+        if (
+          IS_IOS ||
+          fromSource !== 'homePagePositionList' ||
+          hasShownGuideRef.current
+        ) {
+          return;
+        }
+        event.preventDefault();
+        setShowGuideEntryPopup(true);
+      }),
+    [fromSource, hidePortfolioBreakdown, navigation, portfolioBreakdownVisible],
   );
 
-  // Calculate real-time popup data based on selectedCoin
-  const riskPopupData = useMemo(() => {
-    if (!selectedCoin) {
-      return null;
+  useEffect(
+    () => navigation.addListener('blur', hidePortfolioBreakdown),
+    [hidePortfolioBreakdown, navigation],
+  );
+
+  useEffect(
+    () => () => {
+      hidePortfolioBreakdown();
+    },
+    [hidePortfolioBreakdown],
+  );
+
+  const closeGuideEntryPopup = useCallback(() => {
+    void perpsServiceApi.setHasShownPerpsGuidePopup(true).catch(error => {
+      console.error('[Perps] persist guide popup state failed', error);
+    });
+    setShowGuideEntryPopup(false);
+    hasShownGuideRef.current = true;
+    navigation.goBack();
+  }, [navigation]);
+
+  const cancelProIntent = useCallback(() => {
+    if (proIntentCancelTimerRef.current) {
+      clearTimeout(proIntentCancelTimerRef.current);
+      proIntentCancelTimerRef.current = null;
     }
+    proIntentCancelRef.current?.();
+    proIntentCancelRef.current = null;
+  }, []);
 
-    const selectedPosition = positionAndOpenOrders?.find(
-      item => item.position.coin === selectedCoin,
-    );
-    if (!selectedPosition) {
-      return null;
+  const resolveProTarget = useCallback(() => {
+    const state = perpsStore.getState();
+    const markets = buildPerpsProMarkets(state.marketData);
+    return resolveInitialPerpsProMarket({
+      markets,
+      navigationMarket: route.params?.market,
+      navigationMarketCandidates: route.params?.marketCandidates,
+      sessionMarketKey: getPerpsProMarketSession().marketKey,
+    });
+  }, [route.params?.market, route.params?.marketCandidates]);
+
+  const startProIntent = useCallback(() => {
+    cancelProIntent();
+    const target = resolveProTarget();
+    if (!target) {
+      return;
     }
+    proIntentCancelRef.current = prewarmPerpsProEntryIntent({
+      accountAddress: perpsStore.getState().currentPerpsAccount?.address,
+      market: target,
+    });
+  }, [cancelProIntent, resolveProTarget]);
 
-    const marketDataItem = marketDataMap[selectedCoin];
-    const markPrice = Number(marketDataItem?.markPx || 0);
-    const liquidationPrice = Number(
-      selectedPosition.position.liquidationPx || 0,
-    );
+  const handlePressInPro = useCallback(() => {
+    proIntentCommittedRef.current = false;
+    startProIntent();
+  }, [startProIntent]);
 
-    const distanceLiquidation = calculateDistanceToLiquidation(
-      selectedPosition.position.liquidationPx,
-      marketDataItem?.markPx,
-    );
-    return {
-      distanceLiquidation,
-      isCross: selectedPosition.position.leverage.type === 'cross',
-      direction:
-        Number(selectedPosition.position.szi || 0) > 0
-          ? 'Long'
-          : ('Short' as 'Long' | 'Short'),
-      currentPrice: markPrice,
-      pxDecimals: marketDataItem?.pxDecimals || 2,
-      liquidationPrice,
-    };
-  }, [selectedCoin, positionAndOpenOrders, marketDataMap]);
+  const handlePressOutPro = useCallback(() => {
+    if (proIntentCancelTimerRef.current) {
+      clearTimeout(proIntentCancelTimerRef.current);
+    }
+    proIntentCancelTimerRef.current = setTimeout(() => {
+      proIntentCancelTimerRef.current = null;
+      if (!proIntentCommittedRef.current) {
+        cancelProIntent();
+      }
+    }, 0);
+  }, [cancelProIntent]);
 
-  // Render header component (account card and positions)
-  const renderListHeader = useCallback(() => {
+  useEffect(() => {
+    if (!hydrated || viewMode !== 'simple' || marketDataStatus !== 'success') {
+      return;
+    }
+    const target = resolveProTarget();
+    if (target) {
+      prefetchPerpsProZeroAddressLeverageBaseline(target.canonicalCoin);
+    }
+  }, [hydrated, marketDataStatus, resolveProTarget, viewMode]);
+
+  useEffect(() => cancelProIntent, [cancelProIntent]);
+
+  const switchToPro = useCallback(() => {
+    hidePortfolioBreakdown();
+    proIntentCommittedRef.current = true;
+    if (!proIntentCancelRef.current) {
+      startProIntent();
+      proIntentCommittedRef.current = true;
+    }
+    setViewMode('pro').then(success => {
+      if (!success) {
+        cancelProIntent();
+      }
+    });
+  }, [cancelProIntent, hidePortfolioBreakdown, setViewMode, startProIntent]);
+
+  const switchToSimple = useCallback(() => {
+    hidePortfolioBreakdown();
+    cancelProIntent();
+    setViewMode('simple');
+  }, [cancelProIntent, hidePortfolioBreakdown, setViewMode]);
+
+  const captureRegionAlertLayout = useCallback((event: LayoutChangeEvent) => {
+    const height = Math.ceil(event.nativeEvent.layout.height);
+    const width = Math.ceil(event.nativeEvent.layout.width);
+    if (height <= 0 || width <= 0) {
+      return;
+    }
+    regionAlertLayoutRef.current = { height, width };
+  }, []);
+
+  if (!hydrated) {
+    return null;
+  }
+
+  if (viewMode === 'pro') {
     return (
-      <>
-        <PerpsAccountCard
-          localLoadingHistory={localLoadingHistory}
-          isLogin={isLogin}
-          positionAndOpenOrders={positionAndOpenOrders}
-        />
-        <PerpsPositionSection
-          handleShowRiskPopup={handleShowRiskPopup}
-          handleCloseRiskPopup={handleCloseRiskPopup}
-          positionAndOpenOrders={positionAndOpenOrders}
-          handleActionApproveStatus={handleActionApproveStatus}
-          marketDataMap={marketDataMap}
-          onClosePosition={async position => {
-            const marketDataItem = marketDataMap[position.coin];
-            const res = await handleClosePosition({
-              coin: position.coin,
-              size: Math.abs(Number(position.szi || 0)).toString() || '0',
-              direction: Number(position.szi || 0) > 0 ? 'Long' : 'Short',
-              price: marketDataItem?.markPx || '0',
-            });
-            if (res) {
-              const { avgPx, totalSz } = res;
-              const isBuy = Number(position.szi || 0) > 0;
-              stats.report('perpsTradeHistory', {
-                created_at: new Date().getTime(),
-                user_addr: currentPerpsAccount?.address || '',
-                trade_type: 'close all position',
-                leverage: position.leverage.value.toString(),
-                trade_side: getStatsReportSide(!isBuy, true),
-                margin_mode:
-                  position.leverage.type === 'cross' ? 'cross' : 'isolated',
-                coin: position.coin,
-                size: totalSz,
-                price: avgPx,
-                trade_usd_value: new BigNumber(avgPx).times(totalSz).toFixed(2),
-                service_provider: 'hyperliquid',
-                app_version: APP_VERSIONS.fromNative || '0',
-                address_type: currentPerpsAccount?.type || '',
-              });
-            }
-          }}
-        />
-      </>
+      <PerpsProScreen
+        initialRegionAlertLayout={regionAlertLayoutRef.current}
+        isModeSwitching={savingMode !== null}
+        onSwitchToSimple={switchToSimple}
+      />
     );
-  }, [
-    localLoadingHistory,
-    currentPerpsAccount,
-    isLogin,
-    positionAndOpenOrders,
-    marketDataMap,
-    handleClosePosition,
-    handleShowRiskPopup,
-    handleCloseRiskPopup,
-    handleActionApproveStatus,
-  ]);
-
-  // Render item - either sticky header or market item
-  const renderItem = useCallback(
-    ({ item }: { item: any }) => {
-      // First item is the sticky market section header
-      if (item._isStickyHeader) {
-        return <PerpsMarketSectionHeader />;
-      }
-
-      // Rest are market items
-      return (
-        <PerpsMarketItem
-          item={item}
-          isFavorite={favoriteMarkets.includes(item.name.toUpperCase())}
-          hasPosition={positionCoinSet.has(item.name)}
-          onPress={() => {
-            scrollToTop();
-            naviPush(RootNames.StackTransaction, {
-              screen: RootNames.PerpsMarketDetail,
-              params: {
-                market: item.name,
-                fromSource: 'openPosition',
-                showOpenPosition: true,
-              },
-            });
-          }}
-        />
-      );
-    },
-    [positionCoinSet, scrollToTop, favoriteMarkets],
-  );
-
-  const keyExtractor = useCallback(
-    (item: any) => (item._isStickyHeader ? 'sticky-header' : item.name),
-    [],
-  );
-
-  const ItemSeparator = useCallback(
-    ({ leadingItem }: any) => {
-      // No separator after sticky header
-      if (leadingItem?._isStickyHeader) {
-        return null;
-      }
-      return <View style={styles.itemSeparator} />;
-    },
-    [styles],
-  );
+  }
 
   return (
     <>
-      <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
-        {!isLight && (
-          <ImageBackground
-            source={require('@/assets2024/icons/perps/ImgPerpsHomeBg.png')}
-            resizeMode="cover"
-            style={[styles.topBg, { width: screenWidth, height: screenWidth }]}
-          />
-        )}
-        <PerpsNativeHeader
-          account={currentPerpsAccount}
-          localLoadingHistory={localLoadingHistory}
-        />
-        {!hasPermission ? <PerpsRegionAlert /> : null}
-        {!isInitialized ? (
-          <PerpsSkeletonLoader />
-        ) : (
-          <View style={styles.screenContainer}>
-            <FlatList
-              ref={flatListRef}
-              data={listData}
-              renderItem={renderItem}
-              keyExtractor={keyExtractor}
-              ListHeaderComponent={renderListHeader}
-              ItemSeparatorComponent={ItemSeparator}
-              style={styles.container}
-              contentContainerStyle={styles.scrollContent}
-              showsVerticalScrollIndicator={false}
-              onScroll={handleScroll}
-              scrollEventThrottle={16}
-              refreshControl={
-                <RefreshControl refreshing={false} onRefresh={onRefresh} />
-              }
-              removeClippedSubviews={true}
-              maxToRenderPerBatch={10}
-              initialNumToRender={10}
-              windowSize={5}
-              onEndReachedThreshold={0.5}
-            />
-
-            {/* Back to Top Button */}
-            {showBackToTop && (
-              <TouchableOpacity
-                style={styles.backToTopButton}
-                onPress={scrollToTop}>
-                <RcIconBackTopCC color={colors2024['neutral-body']} />
-              </TouchableOpacity>
-            )}
-            {hasPermission && isLogin && (
-              <View style={styles.footer}>
-                <View style={styles.footerBtns}>
-                  <View style={styles.footerBtnItem}>
-                    <Button
-                      type="primary"
-                      titleStyle={styles.openPositionBtn}
-                      buttonStyle={styles.longBtn}
-                      title={t('page.perpsDetail.action.long')}
-                      onPress={() => {
-                        setPopupState(prev => ({
-                          ...prev,
-                          isShowSearchListPopup: true,
-                          searchListOpenFrom: 'openPosition',
-                          searchListDirection: 'Long' as const,
-                        }));
-                      }}
-                    />
-                  </View>
-                  <View style={styles.footerBtnItem}>
-                    <Button
-                      type="primary"
-                      titleStyle={styles.openPositionBtn}
-                      buttonStyle={styles.shortBtn}
-                      title={t('page.perpsDetail.action.short')}
-                      onPress={() => {
-                        setPopupState(prev => ({
-                          ...prev,
-                          isShowSearchListPopup: true,
-                          searchListOpenFrom: 'openPosition',
-                          searchListDirection: 'Short' as const,
-                        }));
-                      }}
-                    />
-                  </View>
-                </View>
-              </View>
-            )}
-          </View>
-        )}
-      </NormalScreenContainer2024>
-      <PerpsAccountSelectorPopup
-        visible={popupState.isShowLoginPopup}
-        onClose={() => {
-          setPopupState(prev => ({
-            ...prev,
-            isShowLoginPopup: false,
-          }));
-        }}
-        value={currentPerpsAccount}
-        onChange={handleLogin}
-        title={t('page.perps.selectAccountTitle')}
+      <PerpsSimpleScreen
+        isModeSwitching={savingMode !== null}
+        onPressInPro={handlePressInPro}
+        onPressOutPro={handlePressOutPro}
+        onRegionAlertLayout={captureRegionAlertLayout}
+        onSwitchToPro={switchToPro}
+        showProNewBadge={!hasVisitedPro}
       />
-      <PerpsAccountLogoutPopup
-        visible={popupState.isShowLogoutPopup}
-        onClose={() => {
-          setPopupState(prev => ({
-            ...prev,
-            isShowLogoutPopup: false,
-          }));
-        }}
-        onLogout={handleLogout}
-        account={currentPerpsAccount}
-      />
-      <PerpsAgentsLimitModal
-        visible={popupState.isShowDeleteAgentPopup}
-        onCancel={() => {
-          setPopupState(prev => ({
-            ...prev,
-            isShowDeleteAgentPopup: false,
-          }));
-        }}
-        onConfirm={() => {
-          handleDeleteAgent();
-          setPopupState(prev => ({
-            ...prev,
-            isShowDeleteAgentPopup: false,
-          }));
-        }}
-      />
-      <PerpsGuidePopup
-        visible={popupState.isShowGuidePopup}
-        onClose={async () => {
-          setPopupState(prev => ({
-            ...prev,
-            isShowGuidePopup: false,
-          }));
-        }}
-        onComplete={() => {
-          apisPerps.setHasDoneNewUserProcess(true);
-          setPopupState(prev => ({
-            ...prev,
-            isShowGuidePopup: false,
-          }));
-        }}
-      />
-      <PerpsDepositPopup
-        account={currentPerpsAccount}
-        visible={popupState.isShowDepositPopup}
-        onClose={() => {
-          setPopupState(prev => ({
-            ...prev,
-            isShowDepositPopup: false,
-          }));
-        }}
-        onDeposit={async (txs, amount, cacheBridgeHistory, options) => {
-          try {
-            return await handleDeposit(
-              txs,
-              amount,
-              cacheBridgeHistory,
-              options,
-            );
-          } catch (e) {
-            console.error(e);
-          }
-        }}
-      />
-      <PerpsWithdrawPopup
-        visible={popupState.isShowWithdrawPopup}
-        onWithdraw={async v => {
-          await handleWithdraw(v);
-          setPopupState(prev => ({
-            ...prev,
-            isShowWithdrawPopup: false,
-          }));
-        }}
-        onClose={() => {
-          setPopupState(prev => ({
-            ...prev,
-            isShowWithdrawPopup: false,
-          }));
-        }}
-      />
-      <PerpSearchListPopup
-        visible={popupState.isShowSearchListPopup}
-        openFromSource={popupState.searchListOpenFrom}
-        onSelect={name => {
-          scrollToTop();
-          const hasPosition = positionCoinSet.has(name);
-          naviPush(RootNames.StackTransaction, {
-            screen: RootNames.PerpsMarketDetail,
-            params: {
-              market: name,
-              fromSource: 'openPosition',
-              showOpenPosition: !hasPosition,
-              direction: hasPosition
-                ? undefined
-                : popupState.searchListDirection,
-            },
-          });
-        }}
-        onCancel={() => {
-          setPopupState(prev => ({
-            ...prev,
-            isShowSearchListPopup: false,
-          }));
-        }}
-        marketData={marketData}
-        positionAndOpenOrders={positionAndOpenOrders}
-      />
-      {/* Shared Risk Level Popup */}
-      {riskPopupData && (
-        <PerpsRiskLevelPopup
-          isCross={riskPopupData.isCross}
-          direction={riskPopupData.direction}
-          visible={!!riskPopupData}
-          pxDecimals={riskPopupData?.pxDecimals || 2}
-          onClose={handleCloseRiskPopup}
-          distanceLiquidation={riskPopupData.distanceLiquidation}
-          currentPrice={riskPopupData.currentPrice}
-          liquidationPrice={riskPopupData.liquidationPrice}
-        />
-      )}
-      <PerpsInvitePopup
-        visible={isShowInvite}
-        onClose={() => setIsShowInvite(false)}
-        onInvite={async () => {
-          await handleActionApproveStatus({
-            isHideToast: true,
-          });
-          await handleSafeSetReference();
-          setIsShowInvite(false);
-        }}
+      <PerpsGuideEntryPopup
+        visible={showGuideEntryPopup}
+        onClose={closeGuideEntryPopup}
       />
     </>
   );
 };
-
-const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
-  topBg: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    zIndex: -1,
-  },
-  container: {
-    flex: 1,
-    height: '100%',
-    paddingHorizontal: 12,
-  },
-  screenContainer: {
-    position: 'relative',
-    flex: 1,
-    height: '100%',
-  },
-  webviewWrapper: {
-    flex: 1,
-  },
-  scrollContent: {
-    // paddingBottom: 10,
-  },
-  footer: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    paddingTop: 16,
-    paddingHorizontal: 12,
-    paddingBottom: 48,
-  },
-  backToTopButton: {
-    position: 'absolute',
-    right: 12,
-    bottom: 140,
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: colors2024['neutral-bg-1'],
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 100,
-  },
-  itemSeparator: {
-    height: 8,
-  },
-  listFooter: {
-    height: 56,
-  },
-  footerBtns: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  footerBtnItem: {
-    flex: 1,
-  },
-  longBtn: {
-    backgroundColor: colors2024['green-default'],
-    height: 52,
-  },
-  shortBtn: {
-    backgroundColor: colors2024['red-default'],
-    height: 52,
-  },
-  openPositionBtn: {
-    fontSize: 18,
-    lineHeight: 22,
-    fontWeight: '700',
-  },
-}));

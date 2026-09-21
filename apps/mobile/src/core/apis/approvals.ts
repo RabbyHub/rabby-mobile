@@ -2,7 +2,6 @@ import { type ApprovalSpenderItemToBeRevoked } from '@rabby-wallet/biz-utils/dis
 import { t } from 'i18next';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { abiCoder, sendRequest } from './sendRequest';
-import { preferenceService } from '../services';
 import type PQueue from 'p-queue';
 import { findChain } from '@/utils/chain';
 import { TokenSpenderPair } from '@rabby-wallet/biz-utils/dist/isomorphic/permit2';
@@ -11,7 +10,7 @@ import { AbiCoder } from 'web3-eth-abi';
 import { requestETHRpc } from './provider';
 import { isZeroAddress, toChecksumAddress } from '@ethereumjs/util';
 import { decodeAbiParameters } from 'viem';
-import { Account } from '../services/preference';
+import type { Account } from '@/types/account';
 
 export async function approveToken({
   chainServerId,

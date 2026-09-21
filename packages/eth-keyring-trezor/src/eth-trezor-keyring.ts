@@ -12,6 +12,7 @@ import {
   toChecksumAddress,
   addHexPrefix,
   stripHexPrefix,
+  hexToBytes,
 } from '@ethereumjs/util';
 import transformTypedData from '@trezor/connect-plugin-ethereum';
 import * as ethUtil from 'ethereumjs-util';
@@ -454,9 +455,20 @@ class TrezorKeyring {
       console.log('after ethereumSignTransaction');
 
       if (response.success) {
-        const newOrMutatedTx: TypedTransaction = handleSigning(
-          response.payload,
-        );
+        const { serializedTx } = response.payload;
+        let newOrMutatedTx: TypedTransaction;
+
+        if (serializedTx) {
+          newOrMutatedTx = TransactionFactory.fromSerializedData(
+            hexToBytes(serializedTx),
+            {
+              common: tx.common,
+              freeze: Object.isFrozen(tx),
+            },
+          );
+        } else {
+          newOrMutatedTx = handleSigning(response.payload);
+        }
 
         const addressSignedWith = toChecksumAddress(
           addHexPrefix(newOrMutatedTx.getSenderAddress().toString()),

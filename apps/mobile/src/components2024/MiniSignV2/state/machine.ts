@@ -1,4 +1,5 @@
 import type { SignatureAction, SignatureFlowState } from './types';
+import { normalizeMiniSignGasState } from './gasPaymentState';
 
 export const signatureReducer = (
   state: SignatureFlowState,
@@ -18,7 +19,7 @@ export const signatureReducer = (
         status: 'prefetching',
         fingerprint: action.fingerprint,
         config: action.config,
-        ctx: action.ctx,
+        ctx: normalizeMiniSignGasState(action.ctx),
       };
 
     case 'PREFETCH_SUCCESS':
@@ -26,7 +27,11 @@ export const signatureReducer = (
       return {
         ...state,
         status: state.status === 'ui-open' ? state.status : 'ready',
-        ctx: { ...state.ctx, ...action.ctx, open: !!state?.ctx?.open },
+        ctx: normalizeMiniSignGasState({
+          ...state.ctx,
+          ...action.ctx,
+          open: !!state?.ctx?.open,
+        }),
         error: undefined,
       };
 
@@ -43,7 +48,7 @@ export const signatureReducer = (
       return {
         ...state,
         status: 'ui-open',
-        ctx: action.ctx,
+        ctx: normalizeMiniSignGasState(action.ctx),
         error: undefined,
       };
 
@@ -52,7 +57,7 @@ export const signatureReducer = (
       return {
         ...state,
         status: 'ui-open',
-        ctx: action.ctx,
+        ctx: normalizeMiniSignGasState(action.ctx),
         error: undefined,
       };
 
@@ -68,7 +73,7 @@ export const signatureReducer = (
       if (state.fingerprint !== action.fingerprint) return state;
       return {
         ...state,
-        ctx: action.ctx,
+        ctx: normalizeMiniSignGasState(action.ctx),
       };
 
     case 'SEND_START': {
@@ -97,7 +102,7 @@ export const signatureReducer = (
       return {
         ...state,
         status: 'signing',
-        ctx: action.ctx,
+        ctx: normalizeMiniSignGasState(action.ctx),
       };
 
     case 'SEND_SUCCESS':

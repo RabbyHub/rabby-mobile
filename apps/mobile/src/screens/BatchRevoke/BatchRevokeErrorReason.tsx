@@ -8,6 +8,7 @@ import {
   FooterButtonContainer2024Props,
   FooterButtonScreenContainer,
 } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
+import { BOTTOM_BUTTON_BOTTOM_OFFSET } from '@/constant/layout';
 import BigNumber from 'bignumber.js';
 import React from 'react';
 import { FailReason } from './useBatchRevokeTask';
@@ -53,7 +54,7 @@ export const BatchRevokeErrorReason: React.FC<{
     <FooterButtonScreenContainer
       {...footerButtonProps}
       noHeader
-      footerBottomOffset={56}
+      footerBottomOffset={BOTTOM_BUTTON_BOTTOM_OFFSET}
       style={styles.root}>
       <View style={styles.title}>
         <FailedSVG />

@@ -1,6 +1,6 @@
 // patch from file:///./../../../../node_modules/react-native-collapsible-tab-view/src/ScrollView.tsx
 
-import React from 'react';
+import React, { type Ref } from 'react';
 import {
   ScrollViewProps as RNScrollViewProps,
   ScrollView as RNScrollView,
@@ -39,132 +39,127 @@ type FinalScrolViewType = RNGHScrollView;
  * See: https://github.com/facebook/react/issues/15156#issuecomment-474590693
  */
 const ScrollViewMemo = React.memo(
-  React.forwardRef<
-    FinalScrolViewType,
-    React.PropsWithChildren<FinalScrollViewProps>
-  >((props, passRef) => {
-    return <FinalScrollView ref={passRef} {...props} />;
-  }),
+  ({
+    ref,
+    ...props
+  }: React.PropsWithChildren<FinalScrollViewProps> & {
+    ref?: Ref<FinalScrolViewType>;
+  }) => {
+    return <FinalScrollView ref={ref} {...props} />;
+  },
 );
 
 export type TabsScrollViewProps = React.PropsWithChildren<
   Omit<FinalScrollViewProps, 'onScroll'>
 > &
-  ScrollHandlerProps;
+  ScrollHandlerProps & { ref?: Ref<FinalScrolViewType> };
 
 /**
  * Use like a regular ScrollView.
  */
-export const TabsScrollView = React.forwardRef<
-  FinalScrolViewType,
-  TabsScrollViewProps
->(
-  (
-    {
-      contentContainerStyle,
-      style,
-      onContentSizeChange,
-      children,
-      refreshControl,
-      onScroll,
-      onAnimatedScrollBeginDrag,
-      onAnimatedScrollEndDrag,
-      onAnimatedScrollMomentumBegin,
-      onAnimatedScrollMomentumEnd,
-      scrollableEnabled,
-      ...rest
-    },
-    passRef,
-  ) => {
-    const name = useTabNameContext();
-    const ref = useSharedAnimatedRef<FinalScrolViewType>(passRef);
-    const { setRef, contentInset } = useTabsContext();
-    const {
-      style: _style,
-      contentContainerStyle: _contentContainerStyle,
-      progressViewOffset,
-    } = useCollapsibleStyle();
-    const { scrollHandler, enable } = useScrollHandlerY(name, {
-      onScroll,
-      onAnimatedScrollBeginDrag,
-      onAnimatedScrollEndDrag,
-      onAnimatedScrollMomentumBegin,
-      onAnimatedScrollMomentumEnd,
-      scrollableEnabled,
-    });
-    const onLayout = useAfterMountEffect(rest.onLayout, () => {
-      'worklet';
-      // we enable the scroll event after mounting
-      // otherwise we get an `onScroll` call with the initial scroll position which can break things
-      enable(true);
-    });
+export function TabsScrollView({
+  contentContainerStyle,
+  style,
+  onContentSizeChange,
+  children,
+  refreshControl,
+  onScroll,
+  onAnimatedScrollBeginDrag,
+  onAnimatedScrollEndDrag,
+  onAnimatedScrollMomentumBegin,
+  onAnimatedScrollMomentumEnd,
+  scrollableEnabled,
+  ref,
+  ...rest
+}: TabsScrollViewProps) {
+  const name = useTabNameContext();
+  const innerRef = useSharedAnimatedRef<FinalScrolViewType>(ref ?? null);
+  const { setRef, contentInset } = useTabsContext();
+  const {
+    style: _style,
+    contentContainerStyle: _contentContainerStyle,
+    progressViewOffset,
+  } = useCollapsibleStyle();
+  const { scrollHandler, enable } = useScrollHandlerY(name, {
+    onScroll,
+    onAnimatedScrollBeginDrag,
+    onAnimatedScrollEndDrag,
+    onAnimatedScrollMomentumBegin,
+    onAnimatedScrollMomentumEnd,
+    scrollableEnabled,
+  });
+  const onLayout = useAfterMountEffect(rest.onLayout, () => {
+    'worklet';
+    // we enable the scroll event after mounting
+    // otherwise we get an `onScroll` call with the initial scroll position which can break things
+    enable(true);
+  });
 
-    React.useEffect(() => {
-      setRef(name, ref);
-    }, [name, ref, setRef]);
+  React.useEffect(() => {
+    setRef(name, innerRef);
+  }, [name, innerRef, setRef]);
 
-    const scrollContentSizeChange = useUpdateScrollViewContentSize({
-      name,
-    });
+  const scrollContentSizeChange = useUpdateScrollViewContentSize({
+    name,
+  });
 
-    const scrollContentSizeChangeHandlers = useChainCallback(
-      React.useMemo(
-        () => [scrollContentSizeChange, onContentSizeChange],
-        [onContentSizeChange, scrollContentSizeChange],
-      ),
-    );
+  const scrollContentSizeChangeHandlers = useChainCallback(
+    React.useMemo(
+      () => [scrollContentSizeChange, onContentSizeChange],
+      [onContentSizeChange, scrollContentSizeChange],
+    ),
+  );
 
-    const memoRefreshControl = React.useMemo(
-      () =>
-        refreshControl &&
-        React.cloneElement(refreshControl, {
-          progressViewOffset,
-          ...refreshControl.props,
-        }),
-      [progressViewOffset, refreshControl],
-    );
+  const memoRefreshControl = React.useMemo(
+    () =>
+      refreshControl &&
+      React.cloneElement(refreshControl, {
+        progressViewOffset,
+        ...refreshControl.props,
+      }),
+    [progressViewOffset, refreshControl],
+  );
 
-    const contentInsetValue = useConvertAnimatedToValue(contentInset);
+  const contentInsetValue = useConvertAnimatedToValue(contentInset);
 
-    const memoContentInset = React.useMemo(
-      () => ({ top: contentInsetValue }),
-      [contentInsetValue],
-    );
+  const memoContentInset = React.useMemo(
+    () => ({ top: contentInsetValue }),
+    [contentInsetValue],
+  );
 
-    const memoContentOffset = React.useMemo(
-      () => ({ x: 0, y: -contentInsetValue }),
-      [contentInsetValue],
-    );
+  const memoContentOffset = React.useMemo(
+    () => ({ x: 0, y: -contentInsetValue }),
+    [contentInsetValue],
+  );
 
-    const memoContentContainerStyle = React.useMemo(
-      () => [
-        _contentContainerStyle,
-        // TODO: investigate types
-        contentContainerStyle as any,
-      ],
-      [_contentContainerStyle, contentContainerStyle],
-    );
-    const memoStyle = React.useMemo(() => [_style, style], [_style, style]);
+  const memoContentContainerStyle = React.useMemo(
+    () => [
+      _contentContainerStyle,
+      // TODO: investigate types
+      contentContainerStyle as any,
+    ],
+    [_contentContainerStyle, contentContainerStyle],
+  );
+  const memoStyle = React.useMemo(() => [_style, style], [_style, style]);
 
-    return (
-      <ScrollViewMemo
-        {...rest}
-        onLayout={onLayout}
-        ref={ref}
-        bouncesZoom={false}
-        style={memoStyle}
-        contentContainerStyle={memoContentContainerStyle}
-        onScroll={scrollHandler}
-        onContentSizeChange={scrollContentSizeChangeHandlers}
-        scrollEventThrottle={16}
-        contentInset={memoContentInset}
-        contentOffset={memoContentOffset}
-        automaticallyAdjustContentInsets={false}
-        refreshControl={memoRefreshControl}
-        // workaround for: https://github.com/software-mansion/react-native-reanimated/issues/2735
-        onMomentumScrollEnd={() => {}}>
-        {children}
-      </ScrollViewMemo>
-    );
-  },
-);
+  return (
+    <ScrollViewMemo
+      {...rest}
+      onLayout={onLayout}
+      ref={innerRef}
+      bouncesZoom={false}
+      style={memoStyle}
+      contentContainerStyle={memoContentContainerStyle}
+      onScroll={scrollHandler}
+      onContentSizeChange={scrollContentSizeChangeHandlers}
+      scrollEventThrottle={16}
+      contentInset={memoContentInset}
+      contentOffset={memoContentOffset}
+      automaticallyAdjustContentInsets={false}
+      refreshControl={memoRefreshControl}
+      // workaround for: https://github.com/software-mansion/react-native-reanimated/issues/2735
+      onMomentumScrollEnd={() => {}}>
+      {children}
+    </ScrollViewMemo>
+  );
+}

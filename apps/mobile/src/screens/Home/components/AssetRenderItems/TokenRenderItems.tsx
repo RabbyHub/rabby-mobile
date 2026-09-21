@@ -16,20 +16,8 @@ import RcNextRightCC from '@/assets/icons/common/arrow-right-cc.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
-import { AbstractPortfolioToken } from '../../types';
-import {
-  ContextMenuView,
-  MenuAction,
-} from '@/components2024/ContextMenuView/ContextMenuView';
-import { trigger } from 'react-native-haptic-feedback';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { TextBadge } from '@/screens/Address/components/PinBadge';
+import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
 import { ASSETS_SECTION_HEADER } from '@/constant/layout';
-import { IS_ANDROID } from '@/core/native/utils';
 import { getTokenSymbol } from '@/utils/token';
 import {
   TokenItem,
@@ -41,8 +29,6 @@ import { ellipsisAddress } from '@/utils/address';
 import { ExchangeLogos } from './ExchangeLogos';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { formatNetworth } from '@/utils/math';
-import BigNumber from 'bignumber.js';
-import { useCurrency } from '@/hooks/useCurrency';
 import { StyleProp } from 'react-native';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { AccountOverview } from '../AccountOverview';
@@ -51,6 +37,7 @@ import { ITokenItem } from '@/store/tokens';
 import { isLpToken } from '@/utils/lpToken';
 import LpTokenIcon from '../LpTokenIcon';
 import LpTokenSwitch from '../LpTokenSwitch';
+import { colord } from 'colord';
 import { isNumber } from 'lodash';
 import { Text } from '@/components/Typography';
 
@@ -63,240 +50,6 @@ export const formatPercentage = (x: number, ignoreSign = false) => {
     ? `${x >= 0 ? '+' : ''}${percentage}%`
     : `(${x >= 0 ? '+' : ''}${percentage}%)`;
 };
-
-const hitSlop = {
-  top: 10,
-  bottom: 10,
-  left: 10,
-  right: 10,
-};
-
-// TODO：删掉，没有入口了
-export const TokenRow = memo(
-  ({
-    data,
-    style,
-    logoSize = 40,
-    chainLogoSize = 16,
-    logoStyle,
-    getMenuActions,
-    onTokenPress,
-    hideFoldTag,
-    disableMenu,
-    account,
-  }: {
-    data: AbstractPortfolioToken;
-    style?: ViewStyle;
-    logoStyle?: ViewStyle;
-    logoSize?: number;
-    chainLogoSize?: number;
-    getMenuActions?: (token: AbstractPortfolioToken) => MenuAction[];
-    hideFoldTag?: boolean;
-    disableMenu?: boolean;
-    onTokenPress?(token: AbstractPortfolioToken): void;
-    account?: KeyringAccountWithAlias;
-  }) => {
-    const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-    const { t } = useTranslation();
-    const [showContextMenu, setShowContextMenu] = React.useState(IS_ANDROID);
-    const { currency } = useCurrency();
-    const showAccount = !!account;
-    const percentColor = useMemo(() => {
-      if (
-        !data?.price_24h_change ||
-        Math.abs(Number(data.price_24h_change)) < 0.00001
-      ) {
-        return colors2024['neutral-secondary'];
-      }
-      if (Number(data.price_24h_change) > 0) {
-        return colors2024['green-default'];
-      }
-      return colors2024['red-default'];
-    }, [colors2024, data.price_24h_change]);
-
-    const mediaStyle = useMemo(
-      () => StyleSheet.flatten([styles.tokenRowLogo, logoStyle]),
-      [logoStyle, styles.tokenRowLogo],
-    );
-
-    const onPressToken = useCallback(() => {
-      return onTokenPress?.(data);
-    }, [data, onTokenPress]);
-
-    const handleShowExcludeTips = useCallback(() => {
-      const modalId = createGlobalBottomSheetModal2024({
-        name: MODAL_NAMES.DESCRIPTION,
-        title: t('page.tokenDetail.excludeBalanceTips'),
-        sections: [],
-        bottomSheetModalProps: {
-          enableContentPanningGesture: true,
-          enablePanDownToClose: true,
-          enableDismissOnClose: true,
-          snapPoints: ['40%'],
-        },
-        nextButtonProps: {
-          title: (
-            <Text style={styles.modalNextButtonText}>
-              {t('page.tokenDetail.excludeBalanceTipsButton')}
-            </Text>
-          ),
-          titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
-          onPress: () => {
-            removeGlobalBottomSheetModal2024(modalId);
-          },
-        },
-      });
-    }, [styles.modalNextButtonText, t]);
-    const children = useMemo(() => {
-      const amountContent = data._priceStr ? (
-        <Text numberOfLines={1} ellipsizeMode="tail" style={styles.amountStr}>
-          {data._amountStr}
-        </Text>
-      ) : null;
-
-      return (
-        <TouchableOpacity
-          style={StyleSheet.flatten([styles.tokenRowWrap, style])}
-          delayLongPress={200}
-          onLongPress={() => {
-            if (disableMenu) {
-              return;
-            }
-            setShowContextMenu(true);
-            trigger('impactLight', {
-              enableVibrateFallback: true,
-              ignoreAndroidSystemSettings: false,
-            });
-          }}
-          onPress={onPressToken}>
-          <View style={styles.tokenRowTokenWrap}>
-            <View>
-              <AssetAvatar
-                logo={data?.logo_url}
-                chain={data?.chain}
-                style={mediaStyle}
-                size={logoSize}
-                chainSize={chainLogoSize}
-              />
-            </View>
-            <View style={styles.tokenRowTokenInner}>
-              <View style={styles.tokenHeader}>
-                <Text
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                  style={styles.tokenSymbol}>
-                  {getTokenSymbol(data)}
-                </Text>
-                {!hideFoldTag && data._isManualFold && (
-                  <TextBadge type="folded" />
-                )}
-              </View>
-
-              {showAccount ? (
-                <AccountOverview account={account} />
-              ) : (
-                amountContent
-              )}
-            </View>
-          </View>
-
-          <View style={styles.tokenRowUsdValueWrap}>
-            <Text
-              style={[
-                data._amountStr
-                  ? styles.tokenRowAmount
-                  : styles.tokenRowUsdValue,
-                data._isExcludeBalance &&
-                  (data._usdValue || 0) > 0 &&
-                  styles.exclude,
-              ]}>
-              {formatNetworth(
-                new BigNumber(data._usdValue || 0)
-                  .times(currency.usd_rate)
-                  .toNumber(),
-                false,
-                currency.symbol,
-              )}
-            </Text>
-            {showAccount ? (
-              <Text
-                style={StyleSheet.compose(styles.percent, {
-                  ...(data._isExcludeBalance && (data._usdValue || 0) > 0
-                    ? styles.exclude
-                    : {}),
-                  color: percentColor,
-                })}>
-                {formatPercentage(Number(data.price_24h_change) || 0)}
-              </Text>
-            ) : data._isExcludeBalance && (data._usdValue || 0) > 0 ? (
-              <TouchableOpacity
-                hitSlop={hitSlop}
-                onPress={handleShowExcludeTips}>
-                <RcTipCC
-                  style={styles.tips}
-                  color={colors2024['neutral-info']}
-                />
-              </TouchableOpacity>
-            ) : data._amountStr ? (
-              <Text
-                style={StyleSheet.compose(styles.percent, {
-                  ...(data._isExcludeBalance && (data._usdValue || 0) > 0
-                    ? styles.exclude
-                    : {}),
-                  color: percentColor,
-                })}>
-                {formatPercentage(Number(data.price_24h_change) || 0)}
-              </Text>
-            ) : null}
-          </View>
-        </TouchableOpacity>
-      );
-    }, [
-      data,
-      styles.amountStr,
-      styles.tokenRowWrap,
-      styles.tokenRowTokenWrap,
-      styles.tokenRowTokenInner,
-      styles.tokenHeader,
-      styles.tokenSymbol,
-      styles.tokenRowUsdValueWrap,
-      styles.tokenRowAmount,
-      styles.tokenRowUsdValue,
-      styles.exclude,
-      styles.percent,
-      styles.tips,
-      style,
-      onPressToken,
-      mediaStyle,
-      logoSize,
-      chainLogoSize,
-      hideFoldTag,
-      showAccount,
-      account,
-      currency.usd_rate,
-      currency.symbol,
-      percentColor,
-      handleShowExcludeTips,
-      colors2024,
-      disableMenu,
-    ]);
-    if (disableMenu) {
-      return children;
-    }
-
-    return (
-      <ContextMenuView
-        menuConfig={{
-          menuActions:
-            showContextMenu && getMenuActions ? getMenuActions(data) : [],
-        }}
-        preViewBorderRadius={12}
-        triggerProps={{ action: 'longPress' }}>
-        {children}
-      </ContextMenuView>
-    );
-  },
-);
 
 export const TokenRowV2 = memo(
   ({
@@ -324,8 +77,6 @@ export const TokenRowV2 = memo(
     scene?: 'default' | 'portfolio'; // portfolio 适用于展示用户拥有的资产，比如资产页、用户持有 token 的选择器
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-    const { t } = useTranslation();
-    const { currency } = useCurrency();
     const showAccount = !!account;
     const percentColor = useMemo(() => {
       if (
@@ -349,34 +100,9 @@ export const TokenRowV2 = memo(
       return onTokenPress?.(data);
     }, [data, onTokenPress]);
 
-    const handleShowExcludeTips = useCallback(() => {
-      const modalId = createGlobalBottomSheetModal2024({
-        name: MODAL_NAMES.DESCRIPTION,
-        title: t('page.tokenDetail.excludeBalanceTips'),
-        sections: [],
-        bottomSheetModalProps: {
-          enableContentPanningGesture: true,
-          enablePanDownToClose: true,
-          enableDismissOnClose: true,
-          snapPoints: ['40%'],
-        },
-        nextButtonProps: {
-          title: (
-            <Text style={styles.modalNextButtonText}>
-              {t('page.tokenDetail.excludeBalanceTipsButton')}
-            </Text>
-          ),
-          titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
-          onPress: () => {
-            removeGlobalBottomSheetModal2024(modalId);
-          },
-        },
-      });
-    }, [styles.modalNextButtonText, t]);
-
     const amountContent = (
       <Text numberOfLines={1} ellipsizeMode="tail" style={styles.amountStr}>
-        {formatAmount(data.amount)}
+        {formatAmount(data.amount, 4, true)}
       </Text>
     );
 
@@ -385,6 +111,7 @@ export const TokenRowV2 = memo(
         style={StyleSheet.flatten([styles.tokenRowWrap, style])}
         delayLongPress={200}
         onPress={onPressToken}>
+        <View pointerEvents="none" style={styles.tokenRowWrapV2InnerBorder} />
         <View style={styles.tokenRowTokenWrap}>
           <View>
             <AssetAvatar
@@ -392,6 +119,7 @@ export const TokenRowV2 = memo(
               chain={hideChainLogo ? false : data?.chain}
               style={mediaStyle}
               size={logoSize}
+              innerChainStyle={styles.innerChainStyle}
               chainSize={chainLogoSize}
             />
           </View>
@@ -408,7 +136,7 @@ export const TokenRowV2 = memo(
               )}
             </View>
             {showAccount ? (
-              <AccountOverview account={account} />
+              <AccountOverview textStyle={styles.aliasName} account={account} />
             ) : (
               amountContent
             )}
@@ -421,17 +149,15 @@ export const TokenRowV2 = memo(
               styles.tokenRowAmount,
               scene === 'portfolio' && !data.is_core ? styles.exclude : null,
             ]}>
-            {formatNetworth(
-              new BigNumber(data.usd_value || 0)
-                .times(currency.usd_rate)
-                .toNumber(),
-              false,
-              currency.symbol,
-            )}
+            {formatNetworth(data.usd_value || 0)}
           </Text>
           {showAccount ? (
             <View style={styles.priceInfo}>
-              <Text style={styles.price}>{`$${formatPrice(data.price)}`}</Text>
+              {isNumber(data.price) && (
+                <Text style={styles.price}>{`$${formatPrice(
+                  data.price,
+                )}`}</Text>
+              )}
               {isNumber(data.price_24h_change) && (
                 <Text
                   style={StyleSheet.compose(styles.percent, {
@@ -446,7 +172,11 @@ export const TokenRowV2 = memo(
             </View>
           ) : scene === 'portfolio' ? (
             <View style={styles.priceInfo}>
-              <Text style={styles.price}>{`$${formatPrice(data.price)}`}</Text>
+              {isNumber(data.price) && (
+                <Text style={styles.price}>{`$${formatPrice(
+                  data.price,
+                )}`}</Text>
+              )}
               {isNumber(data.price_24h_change) && (
                 <Text
                   style={StyleSheet.compose(styles.percent, {
@@ -512,7 +242,6 @@ export const ExternalTokenRow = memo(
     afterNode?: ReactNode;
     rightInfoMode?: 'priceChange' | 'balance';
   }) => {
-    const { t } = useTranslation();
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
     const mediaStyle = useMemo(
@@ -867,6 +596,8 @@ export const TokenRowSectionLpTokenHeader = memo(
   },
 );
 
+const TOKEN_ROW_BORDER_RADIUS = 14;
+
 const getStyles = createGetStyles2024(ctx => ({
   tokenRowWrap: {
     // height: ASSETS_ITEM_HEIGHT_NEW,
@@ -876,11 +607,25 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-1']
+      ? colord(ctx.colors2024['neutral-bg-1']).alpha(0.9).toRgbString()
       : ctx.colors2024['neutral-bg-2'],
-    borderRadius: 16,
+    borderRadius: TOKEN_ROW_BORDER_RADIUS,
+    overflow: 'hidden',
     paddingLeft: 12,
     paddingRight: 16,
+    gap: 20,
+  },
+  tokenRowWrapV2InnerBorder: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    borderRadius: TOKEN_ROW_BORDER_RADIUS,
+    borderWidth: 1,
+    borderColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-5'],
   },
   tokenSectionHeader: {
     backgroundColor: ctx.isLight
@@ -919,10 +664,12 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   tokenRowTokenWrap: {
     flexShrink: 1,
+    flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     height: '100%',
-    maxWidth: '70%',
+    //maxWidth: '70%',
   },
   tokenHeader: {
     width: '100%',
@@ -933,13 +680,16 @@ const getStyles = createGetStyles2024(ctx => ({
     gap: 4,
     // overflow: 'hidden',
   },
+  aliasName: {
+    fontSize: 13,
+  },
   tokenSymbol: {
     color: ctx.colors2024['neutral-title-1'],
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-    maxWidth: 150,
+    maxWidth: '100%',
     // ...makeDebugBorder(),
   },
   lpTokenIconContainer: {
@@ -963,24 +713,14 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     gap: 2,
   },
-  usdValue: {
-    color: ctx.colors2024['neutral-secondary'],
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-  },
   tokenRowLogo: {
     marginRight: 12,
-  },
-  smallTokenRowLogo: {
-    marginRight: 12,
-    width: 40,
-    height: 40,
   },
   tokenRowTokenInner: {
     flexShrink: 1,
     justifyContent: 'center',
+    flex: 1,
+    minWidth: 0,
     gap: 2,
   },
   searchTokenExtraInfo: {
@@ -1031,13 +771,8 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     gap: 4,
   },
-  tokenAssetItemContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
   tokenFdv: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     color: ctx.colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
@@ -1061,15 +796,6 @@ const getStyles = createGetStyles2024(ctx => ({
     gap: 0,
     flex: 0,
   },
-  tokenHeaderAmount: {
-    color: ctx.colors2024['neutral-secondary'],
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-    width: '100%',
-    maxWidth: '100%',
-    fontFamily: 'SF Pro Rounded',
-  },
   leftColContent: {
     maxWidth: '70%',
     justifyContent: 'flex-start',
@@ -1077,16 +803,6 @@ const getStyles = createGetStyles2024(ctx => ({
     flex: 1,
     gap: 2,
     overflow: 'hidden',
-  },
-  verticalLine: {
-    width: 1,
-    height: 12,
-    backgroundColor: ctx.colors2024['neutral-secondary'],
-    marginHorizontal: 4,
-  },
-  siteList: {
-    gap: 4,
-    flexDirection: 'row',
   },
   gasBadgeText: {
     fontSize: 12,
@@ -1130,20 +846,10 @@ const getStyles = createGetStyles2024(ctx => ({
   amountStr: {
     marginTop: 2,
     color: ctx.colors2024['neutral-secondary'],
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 18,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
-  },
-  searchSubText: {
-    color: ctx.colors2024['neutral-secondary'],
-    fontSize: 14,
-    lineHeight: 18,
-    fontFamily: 'SF Pro Rounded',
-    fontWeight: '500',
-  },
-  fdvValue: {
-    color: ctx.colors2024['neutral-title-1'],
   },
   tokenRowUsdValueWrap: {
     flexShrink: 0,
@@ -1154,14 +860,14 @@ const getStyles = createGetStyles2024(ctx => ({
     marginBottom: 2,
     textAlign: 'right',
     color: ctx.colors2024['neutral-title-1'],
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
   },
   searchAmountStr: {
     color: ctx.colors2024['neutral-secondary'],
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 18,
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
@@ -1169,71 +875,20 @@ const getStyles = createGetStyles2024(ctx => ({
     textAlign: 'right',
     maxWidth: 100,
   },
-  searchTokenIssuedby: {
-    color: ctx.colors2024['neutral-secondary'],
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-  },
-  searchTokenDomain: {
-    color: ctx.colors2024['neutral-body'],
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-  },
-  searchTokenWarningText: {
-    color: ctx.colors2024['orange-default'],
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-  },
-  searchTokenDangerText: {
-    color: ctx.colors2024['red-default'],
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-  },
   tokenRowContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
   caValue: {
-    color: ctx.colors2024['neutral-foot'],
-    fontSize: 14,
+    color: ctx.colors2024['neutral-secondary'],
+    fontSize: 13,
     lineHeight: 18,
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '500',
+    fontWeight: '400',
   },
   caValueText: {
-    color: ctx.colors2024['neutral-foot'],
-  },
-  searchTokenDanger: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-    width: '100%',
-    padding: 8,
-    backgroundColor: ctx.colors2024['red-light-1'],
-    borderRadius: 8,
-    marginTop: 12,
-  },
-  searchTokenWarning: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-    width: '100%',
-    padding: 8,
-    backgroundColor: ctx.colors2024['orange-light-1'],
-    borderRadius: 8,
-    marginTop: 12,
-  },
-  highlightText: {
-    color: ctx.colors2024['brand-default'],
+    color: ctx.colors2024['neutral-secondary'],
   },
   exclude: {
     color: ctx.colors2024['neutral-info'],
@@ -1252,42 +907,25 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   price: {
     color: ctx.colors2024['neutral-secondary'],
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 18,
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
   },
   percent: {
     textAlign: 'right',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     lineHeight: 18,
     fontFamily: 'SF Pro Rounded',
-  },
-  smallTokenSymbol: {
-    color: ctx.colors2024['neutral-body'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '400',
-    width: 'auto',
   },
   arrow: {
     width: 10,
     height: 8,
   },
-  modalNextButtonText: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    fontWeight: '700',
-    lineHeight: 24,
-    textAlign: 'center',
-    color: ctx.colors2024['neutral-InvertHighlight'],
-    backgroundColor: ctx.colors2024['brand-default'],
-  },
   changeText: {
     fontWeight: '500',
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 18,
     color: ctx.colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
@@ -1295,5 +933,11 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   changeTextPositive: {
     color: ctx.colors2024['red-default'],
+  },
+  innerChainStyle: {
+    borderColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
+    borderWidth: 1.7,
   },
 }));

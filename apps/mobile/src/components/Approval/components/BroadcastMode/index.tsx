@@ -1,9 +1,10 @@
-import { CHAINS_ENUM } from '@/constant/chains';
-import { TxPushType } from '@rabby-wallet/rabby-api/dist/types';
+import type { CHAINS_ENUM } from '@/constant/chains';
+import type { TxPushType } from '@rabby-wallet/rabby-api/dist/types';
 import { useRequest } from 'ahooks';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import {
   AppBottomSheetModal,
   AppBottomSheetModalTitle,
@@ -17,7 +18,7 @@ import { TouchableOpacity } from 'react-native';
 import { Card } from '../Actions/components/Card';
 import { Radio } from '@/components/Radio';
 import { findChain } from '@/utils/chain';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 
 interface BroadcastModeProps {

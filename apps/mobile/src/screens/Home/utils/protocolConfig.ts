@@ -8,30 +8,19 @@ import {
   isSameAccount,
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
-import { CustomMarket } from '@/screens/Lending/config/market';
+import {
+  isAave3Portfolio,
+  keyToMarketKey,
+  marketKeyToProtocolId,
+} from '@/screens/Lending/config/protocol';
 import { SvgProps } from 'react-native-svg';
-import { switchPerpsAccountBeforeNavigate } from '@/hooks/perps/usePerpsStore';
+import { navigateToPreferredPerps } from '@/hooks/perps/navigation/navigateToPreferredPerps';
 import { useSelectedMarket } from '@/screens/Lending/hooks';
+import { clearLendingActionPopupState } from '@/screens/Lending/utils/actionPopup';
 import { IProtocolPortfolio } from '@/store/protocols';
 import { matomoRequestEvent } from '@/utils/analytics';
 
-const keyToMarketKey: Record<string, CustomMarket> = {
-  aave3: CustomMarket.proto_mainnet_v3,
-  op_aave3: CustomMarket.proto_optimism_v3,
-  avax_aave3: CustomMarket.proto_avalanche_v3,
-  matic_aave3: CustomMarket.proto_polygon_v3,
-  arb_aave3: CustomMarket.proto_arbitrum_v3,
-  base_aave3: CustomMarket.proto_base_v3,
-  bsc_aave3: CustomMarket.proto_bnb_v3,
-  scrl_aave3: CustomMarket.proto_scroll_v3,
-  plasma_aave3: CustomMarket.proto_plasma_v3,
-  ink_aave3: CustomMarket.proto_ink_v3,
-  era_aave3: CustomMarket.proto_zksync_v3,
-  linea_aave3: CustomMarket.proto_linea_v3,
-  sonic_aave3: CustomMarket.proto_sonic_v3,
-  celo_aave3: CustomMarket.proto_celo_v3,
-  xdai_aave3: CustomMarket.proto_gnosis_v3,
-};
+export { isAave3Portfolio, keyToMarketKey, marketKeyToProtocolId };
 
 export type TonTokenManageAction = (
   account?: KeyringAccountWithAlias,
@@ -53,16 +42,42 @@ interface ProtocolConfigItemType {
     account?: KeyringAccountWithAlias | null,
   ) => boolean;
   onManage?: TonManageAction;
+  onTokenManage?: TonTokenManageAction;
 }
 
 export const useProtocolConfig = () => {
   const { navigation } = useSafeSetNavigationOptions();
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const { accounts } = useMyAccounts();
+  const { accounts } = useMyAccounts({ disableAutoFetch: true });
   const { setMarketKey } = useSelectedMarket();
 
   const generateAAVEConfig = useCallback(
     (key: string): ProtocolConfigItemType => {
+      const openLending = async (
+        account?: KeyringAccountWithAlias,
+        tokenAddress?: string,
+        direction?: 'supply' | 'borrow',
+        source?: string,
+      ) => {
+        const marketKey = keyToMarketKey[key];
+        if (account && marketKey) {
+          await switchSceneCurrentAccount('Lending', account);
+          setMarketKey(marketKey);
+        }
+        clearLendingActionPopupState();
+
+        navigation.navigate(RootNames.StackTransaction, {
+          screen: RootNames.Lending,
+          params: {
+            dappId: 'aave',
+            account,
+            tokenAddress,
+            direction,
+            source,
+          },
+        });
+      };
+
       return {
         icon: AAVE3_ICON,
         bgColor1: 'rgba(147, 145, 247, 0.2)',
@@ -70,21 +85,9 @@ export const useProtocolConfig = () => {
         showManage: (item, _account) => {
           return item.name?.toLowerCase() === 'lending';
         },
-        onManage: async account => {
-          const marketKey = keyToMarketKey[key];
-          if (account && marketKey) {
-            await switchSceneCurrentAccount('Lending', account);
-            setMarketKey(marketKey);
-          }
-
-          navigation.navigate(RootNames.StackTransaction, {
-            screen: RootNames.Lending,
-            params: {
-              dappId: 'aave',
-              account,
-            },
-          });
-        },
+        onManage: account => openLending(account),
+        onTokenManage: (account, tokenAddress, direction) =>
+          openLending(account, tokenAddress, direction, 'Portfolio Defi'),
       };
     },
     [navigation, setMarketKey, switchSceneCurrentAccount],
@@ -138,32 +141,32 @@ export const useProtocolConfig = () => {
           const isNavigateDetail =
             !!item?._originPortfolio?.detail?.position_token?.name;
 
-          switchPerpsAccountBeforeNavigate(account);
           if (isNavigateDetail) {
             matomoRequestEvent({
               category: 'Rabby Perps',
               action: 'Perps_ManageToPosition',
             });
-            return navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.PerpsMarketDetail,
-              params: {
-                market:
-                  item?._originPortfolio?.detail?.position_token?.name || '',
-              },
+            const positionToken =
+              item?._originPortfolio?.detail?.position_token;
+            const market = positionToken?.symbol || '';
+            await navigateToPreferredPerps({
+              account,
+              marketCandidates: [market, positionToken?.name || ''],
+              navigation,
+              simpleDetail: { market },
+              source: 'defi-manage-position',
             });
-          } else {
-            matomoRequestEvent({
-              category: 'Rabby Perps',
-              action: 'Perps_ManageToPerps',
-            });
-            return navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.Perps,
-              params: {
-                dappId: 'hyperliquid',
-                account,
-              },
-            });
+            return;
           }
+          matomoRequestEvent({
+            category: 'Rabby Perps',
+            action: 'Perps_ManageToPerps',
+          });
+          await navigateToPreferredPerps({
+            account,
+            navigation,
+            source: 'defi-manage-root',
+          });
         },
       },
     };

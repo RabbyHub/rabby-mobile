@@ -18,6 +18,8 @@ import { useLendingSummary, useSelectedMarket } from '../../hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { Text } from '@/components/Typography';
+import { toast } from '@/components2024/Toast';
+import { hasNonZeroEffectiveLtv } from '../../utils/hfUtils';
 
 export type EModeCategoryDisplay = EmodeCategory & {
   available: boolean; // indicates if the user can enter this category
@@ -50,10 +52,22 @@ export default function CollateralTokenSelectModal({
             const displayPoolReserve = displayPoolReserves.find(
               x => x.underlyingAsset === item.underlyingAddress,
             );
+            const emodeEntry = displayPoolReserve?.reserve.eModes.find(
+              e => e.id === iUserSummary.userEmodeCategoryId,
+            );
             return {
               ...item,
-              baseLTVasCollateral:
-                displayPoolReserve?.reserve.baseLTVasCollateral,
+              hasNonZeroEffectiveLtv:
+                !displayPoolReserve ||
+                hasNonZeroEffectiveLtv({
+                  baseLTVasCollateral:
+                    displayPoolReserve.reserve.baseLTVasCollateral,
+                  isInEmode: iUserSummary.userEmodeCategoryId !== 0,
+                  emodeEntry,
+                  isEModeIsolated:
+                    !!eModes[iUserSummary.userEmodeCategoryId]?.isolated,
+                }),
+              isFrozen: !!(displayPoolReserve?.reserve as any)?.isFrozen,
               totalBorrowsUSD: displayPoolReserve?.totalBorrowsUSD,
               walletBalanceUSD: displayPoolReserve?.walletBalanceUSD,
               underlyingUsdValue:
@@ -76,6 +90,7 @@ export default function CollateralTokenSelectModal({
     marketKey,
     excludeTokenAddress,
     displayPoolReserves,
+    eModes,
   ]);
 
   const hasLtvZeroCollateral = useMemo(() => {
@@ -86,13 +101,13 @@ export default function CollateralTokenSelectModal({
           item.balance !== '0' &&
           item.usageAsCollateralEnabled,
       )
-      .some(item => item.baseLTVasCollateral === '0');
+      .some(item => !item.hasNonZeroEffectiveLtv);
   }, [tokenToDisplay]);
 
   const formatData = useMemo(() => {
     // 如果有ltv 为 0的抵押物，必须优先还款
     return hasLtvZeroCollateral
-      ? tokenToDisplay.filter(item => item.baseLTVasCollateral === '0')
+      ? tokenToDisplay.filter(item => !item.hasNonZeroEffectiveLtv)
       : tokenToDisplay;
   }, [hasLtvZeroCollateral, tokenToDisplay]);
 
@@ -171,7 +186,18 @@ export default function CollateralTokenSelectModal({
                   isSectionFirst && styles.sectionFirst,
                   isSectionLast && styles.sectionLast,
                 ]}>
-                <AssetItem token={item} onPress={() => onChange(item)} />
+                <AssetItem
+                  token={item}
+                  onPress={() => {
+                    if (item.isFrozen) {
+                      toast.info(
+                        t('page.Lending.repayWithCollateral.frozenCollateral'),
+                      );
+                      return;
+                    }
+                    onChange(item);
+                  }}
+                />
               </View>
             );
           }}
@@ -188,9 +214,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: '100%',
     paddingHorizontal: 16,
   },
-  searchBar: {
-    flex: 1,
-  },
   titleText: {
     color: colors2024['neutral-title-1'],
     fontSize: 20,
@@ -199,60 +222,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
     lineHeight: 24,
   },
-  desc: {
-    fontWeight: '400',
-    fontSize: 16,
-    lineHeight: 24,
-    color: colors2024['neutral-foot'],
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'center',
-    marginTop: 8,
-  },
   titleTextWrapper: {
     flex: 1,
-  },
-  netSwitchTabs: {
-    marginBottom: 20,
-  },
-  innerBlock: {
-    paddingHorizontal: 0,
-  },
-  inputContainerStyle: {
-    height: 46,
-    borderRadius: 12,
-    paddingHorizontal: 20,
-    borderBottomWidth: 0,
-  },
-  inputText: {
-    color: colors2024['neutral-title-1'],
-    marginLeft: 7,
-    fontSize: 17,
-    fontWeight: '400',
-    paddingTop: 0,
-    paddingBottom: 0,
-    fontFamily: 'SF Pro Rounded',
   },
 
   chainListWrapper: {
     flexShrink: 1,
     height: '100%',
-  },
-
-  emptyDataWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-    maxHeight: 400,
-    // ...makeDebugBorder()
-  },
-
-  emptyText: {
-    paddingTop: 21,
-    textAlign: 'center',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    color: colors2024['neutral-info'],
   },
 
   titleView: {
@@ -263,26 +239,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginBottom: 12,
   },
 
-  inputWrapper: {
-    marginRight: 15,
-    flex: 1,
-    overflow: 'hidden',
-  },
-
-  cancelText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
-    fontSize: 17,
-    lineHeight: 22,
-  },
-
   titleViewWithText: {
     marginBottom: 34,
-  },
-
-  iconSearch: {
-    position: 'absolute',
-    right: 4,
   },
   flatList: {
     paddingHorizontal: 0,

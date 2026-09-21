@@ -1,5 +1,5 @@
-import * as DropdownMenu from 'zeego/src/dropdown-menu';
-import { MenuItemCommonProps } from 'zeego/src/menu';
+import * as DropdownMenu from '@rabby-wallet/zeego/dropdown-menu';
+import { MenuItemCommonProps } from '@rabby-wallet/zeego/menu';
 import type { DropdownMenuContentProps } from '@radix-ui/react-dropdown-menu';
 import { ImageSourcePropType, Pressable } from 'react-native';
 import { IS_ANDROID } from '@/core/native/utils';

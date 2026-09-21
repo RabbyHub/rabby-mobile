@@ -9,9 +9,11 @@ import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { navigateDeprecated } from '@/utils/navigation';
-import { isValidHexAddress, Hex } from '@metamask/utils';
+import type { Hex } from '@metamask/utils';
+import { isValidHexAddress } from '@metamask/utils';
 import {
   Keyboard,
+  Platform,
   TouchableOpacity,
   View,
   TouchableWithoutFeedback,
@@ -38,11 +40,19 @@ import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';
 import { setWhitelist } from '@/hooks/whitelist';
-import { contactService, whitelistService } from '@/core/services';
-import { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  contactServiceApi,
+  getContactAliasSnapshot,
+} from '@/core/serviceApi/contact';
+import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
+import type { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
-import { setCexId } from '@/utils/addressCexId';
+import { removeCexId, setCexId } from '@/utils/addressCexId';
+import {
+  findSupportedExchange,
+  resolveSupportedDepositExchange,
+} from '@/utils/cex';
 import { useAtom } from 'jotai';
 import { toast } from '@/components2024/Toast';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -57,7 +67,8 @@ import { SelectAccountSheetModalSizes } from '../layout';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { touchedFeedback } from '@/utils/touch';
-import { IS_IOS } from '@/core/native/utils';
+import type { TextInput as TextInputRef } from '@/components/Typography';
+import { normalizeAddressInputAndSyncNativeText } from './addressInput';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -83,11 +94,20 @@ export const ScreenAddNewWhitelistAddress = ({
   const [input, setInput] = useState(newValue);
   const [isCex, setIsCex] = useState(false);
   const [aliasName, setAliasName] = useState('');
+  const [isAliasEditing, setIsAliasEditing] = useState(false);
   const [cex, setCex] = useState<ProjectItem | undefined>();
   const [error, setError] = useState<INPUT_ERROR>();
   const [loading, setLoading] = useState(false);
+  const addressInputRef = useRef<TextInputRef>(null);
+  const aliasInputRef = useRef<TextInputRef>(null);
+  const pendingAliasCursorPositionRef = useRef<number | null>(null);
+  const detectAddressRequestIdRef = useRef(0);
 
   const { list } = useCexSupportList();
+  const supportedSelectedCex = useMemo(
+    () => findSupportedExchange(list, cex?.id),
+    [cex?.id, list],
+  );
 
   const { findAccountWithoutBalance } = useFindAddressByWhitelist();
 
@@ -95,7 +115,7 @@ export const ScreenAddNewWhitelistAddress = ({
   const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
 
   const getWhitelist = React.useCallback(async () => {
-    const data = await whitelistService.getWhitelist();
+    const data = await whitelistServiceApi.getWhitelist();
     setWhitelist(data);
   }, []);
   // TODO: make auto focus
@@ -114,6 +134,7 @@ export const ScreenAddNewWhitelistAddress = ({
         setError(INPUT_ERROR.INVALID_ADDRESS);
         return;
       }
+      const confirmedCex = isCex ? supportedSelectedCex : undefined;
       try {
         setLoading(true);
         Keyboard.dismiss();
@@ -134,7 +155,7 @@ export const ScreenAddNewWhitelistAddress = ({
               aliasName: aliasName || account.aliasName,
             },
             title: t('page.confirmAddress.addToWhitelist'),
-            cex: isCex ? cex : undefined,
+            cex: confirmedCex,
             disableWhiteSwitch: true,
             bottomSheetModalProps: {
               enableDynamicSizing: true,
@@ -156,16 +177,18 @@ export const ScreenAddNewWhitelistAddress = ({
                   ? 'Send_AddWhitelist_imported'
                   : 'Send_AddWhitelist_notImported',
               });
-              if (isCex && cex?.id) {
-                setCexId(address, cex.id);
+              if (confirmedCex) {
+                setCexId(address, confirmedCex.id);
+              } else {
+                removeCexId(address);
               }
-              contactService.updateAlias({
+              await contactServiceApi.updateAlias({
                 address,
                 name: aliasName || ellipsisAddress(address),
               });
               fetchAccounts();
               setInput('');
-              await whitelistService.addWhitelist(address);
+              await whitelistServiceApi.addWhitelist(address);
               await getWhitelist();
               toast.success(t('page.whitelist.addSuccessful'));
               fnNavTo('default');
@@ -186,8 +209,34 @@ export const ScreenAddNewWhitelistAddress = ({
   });
 
   const handleInputChange = useCallback((text: string) => {
+    const normalizedText = normalizeAddressInputAndSyncNativeText(
+      text,
+      addressInputRef.current,
+    );
     setError(undefined);
-    setInput(text);
+    setInput(normalizedText);
+  }, []);
+  const startAliasEditing = useCallback(() => {
+    pendingAliasCursorPositionRef.current = aliasName.length;
+    setIsAliasEditing(true);
+  }, [aliasName.length]);
+  const handleAliasFocus = useCallback(() => {
+    const pendingPosition = pendingAliasCursorPositionRef.current;
+    if (pendingPosition === null) {
+      return;
+    }
+
+    pendingAliasCursorPositionRef.current = null;
+    const position = Math.min(pendingPosition, aliasName.length);
+    aliasInputRef.current?.setSelection(position, position);
+  }, [aliasName.length]);
+  const handleAliasNameChange = useCallback((text: string) => {
+    pendingAliasCursorPositionRef.current = null;
+    setAliasName(text);
+  }, []);
+  const handleAliasBlur = useCallback(() => {
+    pendingAliasCursorPositionRef.current = null;
+    setIsAliasEditing(false);
   }, []);
   const openSendHistory = useCallback(() => {
     touchedFeedback();
@@ -196,7 +245,7 @@ export const ScreenAddNewWhitelistAddress = ({
   }, [fnNavTo]);
 
   const onSelectCex = useCallback(() => {
-    let tmpCex = cex;
+    let tmpCex = supportedSelectedCex;
     globalBottomSheetModalAddListener2024(
       EVENT_NAMES.DISMISS,
       () => {
@@ -217,6 +266,7 @@ export const ScreenAddNewWhitelistAddress = ({
         },
       },
       onSelect: item => {
+        detectAddressRequestIdRef.current += 1;
         tmpCex = item;
         setCex(item);
         removeGlobalBottomSheetModal2024(id);
@@ -225,44 +275,93 @@ export const ScreenAddNewWhitelistAddress = ({
         removeGlobalBottomSheetModal2024(id);
       },
     });
-  }, [cex, colors2024]);
+  }, [colors2024, supportedSelectedCex]);
 
   const onSwitch = useCallback(
     (bool: boolean) => {
       if (isValidHexAddress(input as Hex)) {
+        detectAddressRequestIdRef.current += 1;
         setIsCex(!!bool);
-        if (bool && !cex) {
+        if (bool && !supportedSelectedCex) {
           onSelectCex();
         }
       }
     },
-    [cex, input, onSelectCex],
+    [input, onSelectCex, supportedSelectedCex],
   );
 
   useEffect(() => {
+    const requestId = ++detectAddressRequestIdRef.current;
     setIsCex(false);
     setCex(undefined);
     setAliasName('');
+    setIsAliasEditing(false);
+    pendingAliasCursorPositionRef.current = null;
     if (isValidHexAddress(input as Hex)) {
-      const aliasInfo = contactService.getAliasByAddress(input);
+      const aliasInfo = getContactAliasSnapshot(input);
       setAliasName(aliasInfo?.isDefaultAlias ? '' : aliasInfo?.alias || '');
       getAddrDescWithCexLocalCacheSync(input).then(res => {
-        if (res?.cex?.id && res?.cex?.is_deposit) {
+        if (requestId !== detectAddressRequestIdRef.current) {
+          return;
+        }
+        const supportedExchange = resolveSupportedDepositExchange(
+          res?.cex,
+          list,
+        );
+        if (supportedExchange) {
           setIsCex(true);
-          setCex(list.find(item => item.id === res?.cex?.id));
+          setCex(supportedExchange);
         }
       });
     }
+    return () => {
+      if (requestId === detectAddressRequestIdRef.current) {
+        detectAddressRequestIdRef.current += 1;
+      }
+    };
   }, [input, list]);
+
+  useEffect(() => {
+    if (!cex) {
+      return;
+    }
+    if (!supportedSelectedCex) {
+      detectAddressRequestIdRef.current += 1;
+      setIsCex(false);
+      setCex(undefined);
+      return;
+    }
+    if (supportedSelectedCex !== cex) {
+      setCex(supportedSelectedCex);
+    }
+  }, [cex, supportedSelectedCex]);
+
   const onRepeatAdd = useCallback(() => {
+    detectAddressRequestIdRef.current += 1;
     setError(undefined);
     setInput('');
     setIsCex(false);
     setLoading(false);
     setAliasName('');
+    setIsAliasEditing(false);
+    pendingAliasCursorPositionRef.current = null;
     setCex(undefined);
   }, []);
   useAlertAddress(input, onRepeatAdd);
+
+  useEffect(() => {
+    if (!isAliasEditing) {
+      return;
+    }
+
+    const frameId = requestAnimationFrame(() => {
+      aliasInputRef.current?.focus?.();
+    });
+
+    return () => cancelAnimationFrame(frameId);
+  }, [isAliasEditing]);
+
+  const aliasNamePlaceholder = t('page.whitelist.placeholder.name');
 
   return (
     <View style={[styles.container, { paddingBottom: safeSizes.containerPb }]}>
@@ -280,6 +379,7 @@ export const ScreenAddNewWhitelistAddress = ({
         </View>
         <View>
           <NextInput.TextArea
+            ref={addressInputRef}
             as="TextInput"
             style={styles.textContainer}
             inputStyle={styles.textArea}
@@ -355,21 +455,49 @@ export const ScreenAddNewWhitelistAddress = ({
               {t('page.whitelist.header.name')}
             </Text>
           </View>
-          <NextInput
-            as="BottomSheetTextInput"
-            style={styles.editContainer}
-            inputStyle={styles.aliasName}
-            tipText={''}
-            hasError={!!error}
-            inputProps={{
-              placeholder: t('page.whitelist.placeholder.name'),
-              placeholderTextColor: colors2024['neutral-secondary'],
-              value: aliasName,
-              onChangeText: setAliasName,
-            }}
-            containerStyle={styles.nameInput}
-            fieldErrorTextStyle={styles.error}
-          />
+          {isAliasEditing ? (
+            <NextInput
+              ref={aliasInputRef}
+              as="BottomSheetTextInput"
+              style={styles.editContainer}
+              inputStyle={styles.aliasName}
+              tipText={''}
+              hasError={!!error}
+              inputProps={{
+                placeholder: aliasNamePlaceholder,
+                placeholderTextColor: colors2024['neutral-secondary'],
+                value: aliasName,
+                onChangeText: handleAliasNameChange,
+                multiline: false,
+                numberOfLines: 1,
+                maxLength: 80,
+                onBlur: handleAliasBlur,
+                onFocus: handleAliasFocus,
+              }}
+              containerStyle={styles.nameInput}
+              fieldErrorTextStyle={styles.error}
+            />
+          ) : (
+            <TouchableOpacity
+              activeOpacity={1}
+              style={[
+                styles.editContainer,
+                styles.nameInput,
+                styles.aliasDisplayContainer,
+              ]}
+              onPress={startAliasEditing}>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={[
+                  styles.aliasName,
+                  styles.aliasDisplayText,
+                  !aliasName && styles.aliasNamePlaceholder,
+                ]}>
+                {aliasName || aliasNamePlaceholder}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
         <View style={styles.exChangeContent}>
           <View style={styles.header}>
@@ -381,17 +509,17 @@ export const ScreenAddNewWhitelistAddress = ({
           {isCex && (
             <TouchableView style={styles.selectCex} onPress={onSelectCex}>
               <View style={styles.addressRow}>
-                {cex ? (
+                {supportedSelectedCex ? (
                   <View style={styles.cexContainer}>
                     <View>
                       <Image
                         source={{
-                          uri: cex.logo_url,
+                          uri: supportedSelectedCex.logo_url,
                         }}
                         style={styles.logo}
                       />
                     </View>
-                    <Text style={styles.name}>{cex.name}</Text>
+                    <Text style={styles.name}>{supportedSelectedCex.name}</Text>
                   </View>
                 ) : (
                   <Text style={styles.toSelect}>
@@ -425,7 +553,11 @@ export const ScreenAddNewWhitelistAddress = ({
             title: t('global.Confirm'),
             onPress: handleDone,
             loading: loading,
-            disabled: !input || !!error || !aliasName,
+            disabled:
+              !input ||
+              !!error ||
+              !aliasName ||
+              (isCex && !supportedSelectedCex),
           }}
         />
       </View>
@@ -437,7 +569,7 @@ export default ScreenAddNewWhitelistAddress;
 
 const SIZES = {
   bottomContentH: 56,
-  bottomContentBottom: IS_IOS ? 48 : 0,
+  bottomContentBottom: 48,
   containerPb: 20,
 };
 const getStyles = createGetStyles2024(ctx => ({
@@ -524,14 +656,31 @@ const getStyles = createGetStyles2024(ctx => ({
     fontWeight: '400',
     color: ctx.colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
+    paddingVertical: 0,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+        textAlignVertical: 'center',
+      },
+    }),
   },
   editContainer: {
     backgroundColor: ctx.colors2024['neutral-bg-2'],
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'transparent',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     height: 58,
+    width: '100%',
+  },
+  aliasDisplayContainer: {
+    justifyContent: 'center',
+  },
+  aliasDisplayText: {
+    flex: 1,
+    paddingHorizontal: 12,
   },
   exChangeContent: {
     width: '100%',

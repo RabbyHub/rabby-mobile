@@ -1,0 +1,37 @@
+{
+  "name": "@rabby-wallet/react-native-fs",
+  "version": "2.20.0-rabby.0",
+  "description": "Rabby scoped fork of react-native-fs",
+  "main": "FS.common.js",
+  "typings": "index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:itinance/react-native-fs.git"
+  },
+  "keywords": [
+    "react-component",
+    "react-native",
+    "ios",
+    "android",
+    "fs",
+    "filesystem",
+    "download",
+    "upload",
+    "file-transfer"
+  ],
+  "author": "Johannes Lumpe <johannes@lum.pe> (https://github.com/johanneslumpe)",
+  "license": "MIT",
+  "dependencies": {
+    "base-64": "^0.1.0",
+    "utf8": "^3.0.0"
+  },
+  "peerDependencies": {
+    "react-native": "*",
+    "react-native-windows": "*"
+  },
+  "peerDependenciesMeta": {
+    "react-native-windows": {
+      "optional": true
+    }
+  }
+}

@@ -21,6 +21,12 @@ import { CategorySelector } from '../components/EmodeCategory/CategorySelector';
 import WarningFillCC from '@/assets2024/icons/common/WarningFill-cc.svg';
 import { formatPercent } from '@/screens/TokenDetail/util';
 import { Text } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_BOTTOM_OFFSET,
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 const DisableEmodeOverviewModal = ({ onClose }: { onClose: () => void }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -60,7 +66,7 @@ const DisableEmodeOverviewModal = ({ onClose }: { onClose: () => void }) => {
         },
         containerStyle: {
           position: 'absolute',
-          bottom: 48,
+          bottom: BOTTOM_BUTTON_BOTTOM_OFFSET,
           width: '100%',
         },
       },
@@ -128,11 +134,12 @@ const DisableEmodeOverviewModal = ({ onClose }: { onClose: () => void }) => {
         <Button
           loadingType="circle"
           showTextOnLoading
+          type="aave"
           containerStyle={styles.fullWidthButton}
+          height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+          titleStyle={[BOTTOM_BUTTON_TITLE_STYLE]}
           onPress={() => handlePressManageEMode()}
           title={t('page.Lending.manageEmode.disableTitle')}
-          titleStyle={styles.closeButtonTitle}
-          buttonStyle={styles.closeButton}
         />
       </View>
     </AutoLockView>
@@ -181,27 +188,14 @@ const getStyles = createGetStyles2024(ctx => ({
     marginTop: 8,
     textAlign: 'center',
   },
-  button: {
-    position: 'absolute',
-    bottom: 56,
-    width: '100%',
-  },
-  disabledButton: {
-    backgroundColor: ctx.colors2024['neutral-line'],
-  },
-  disabledTitle: {
-    color: ctx.colors2024['neutral-title-1'],
-  },
-  gasPreContainer: {
-    paddingHorizontal: 8,
-    marginTop: 12,
-    width: '100%',
-  },
   buttonContainer: {
     position: 'absolute',
     paddingHorizontal: 25,
     bottom: 0,
-    height: 116,
+    height:
+      12 +
+      BOTTOM_BUTTON_SINGLE_HEIGHT +
+      getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
     paddingTop: 12,
     width: '100%',
     display: 'flex',
@@ -209,17 +203,9 @@ const getStyles = createGetStyles2024(ctx => ({
     gap: 12,
     backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
-  directSignBtn: {
-    width: '100%',
-  },
   fullWidthButton: {
     flex: 1,
-  },
-  closeButtonTitle: {
-    color: ctx.colors2024['neutral-title-1'],
-  },
-  closeButton: {
-    backgroundColor: ctx.colors2024['neutral-line'],
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
   },
   item: {
     width: '100%',

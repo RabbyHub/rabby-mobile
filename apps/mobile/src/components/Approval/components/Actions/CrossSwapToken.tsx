@@ -62,7 +62,9 @@ const CrossSwapToken = ({
 
   const handleClickRule = (id: string) => {
     const rule = rules.find(item => item.id === id);
-    if (!rule) return;
+    if (!rule) {
+      return;
+    }
     const result = engineResultMap[id];
     openRuleDrawer({
       ruleConfig: rule,
@@ -214,7 +216,7 @@ const CrossSwapToken = ({
                 <Values.Percentage
                   style={commonStyle.subRowText}
                   value={usdValuePercentage!}
-                />{' '}
+                />
                 <Text style={commonStyle.subRowText}>
                   ({formatUsdValue(usdValueDiff || '')})
                 </Text>

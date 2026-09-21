@@ -23,31 +23,46 @@ export const useAddressSource = ({
   brandName,
   byImport = false,
   address,
+  needPassphrase,
 }: {
   type: string;
   brandName: string;
   byImport?: boolean;
   address?: string;
+  needPassphrase?: boolean;
 }) => {
   const { t } = useTranslation();
   const [source, setSource] = useState<string>('');
 
   useEffect(() => {
     if (byImport === true && KEYRING_TYPE.HdKeyring === type) {
-      if (address) {
-        apiMnemonic
-          .getMnemonicKeyringIfNeedPassphrase('address', address)
-          .then(needPassphrase => {
-            if (needPassphrase) {
-              setSource(t('constant.IMPORTED_HD_KEYRING_NEED_PASSPHRASE'));
-            } else {
-              setSource(t('constant.IMPORTED_HD_KEYRING'));
-            }
-          });
-      } else {
-        setSource(t('constant.IMPORTED_HD_KEYRING'));
+      const getImportedSource = (nextNeedPassphrase?: boolean) =>
+        nextNeedPassphrase
+          ? t('constant.IMPORTED_HD_KEYRING_NEED_PASSPHRASE')
+          : t('constant.IMPORTED_HD_KEYRING');
+
+      setSource(getImportedSource(needPassphrase));
+
+      if (typeof needPassphrase === 'boolean' || !address) {
+        return;
       }
-      return;
+
+      let cancelled = false;
+      apiMnemonic
+        .getMnemonicKeyringIfNeedPassphrase('address', address)
+        .then(nextNeedPassphrase => {
+          if (cancelled) {
+            return;
+          }
+          setSource(getImportedSource(nextNeedPassphrase));
+        })
+        .catch(() => {
+          // Keep the public imported-source fallback when the wallet is locked.
+        });
+
+      return () => {
+        cancelled = true;
+      };
     }
     const dict = {
       [KEYRING_TYPE.HdKeyring]: t('constant.KEYRING_TYPE_TEXT.HdKeyring'),
@@ -70,7 +85,8 @@ export const useAddressSource = ({
       setSource(WALLET_INFO[brandName].name);
       return;
     }
-  }, [type, brandName, byImport, address, t]);
+    setSource('');
+  }, [type, brandName, byImport, address, needPassphrase, t]);
 
   return source;
 };

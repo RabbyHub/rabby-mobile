@@ -6,15 +6,16 @@ import React, {
   useState,
 } from 'react';
 
-import { ChainId } from '@aave/contract-helpers';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
-import { OptimalRate } from '@paraswap/sdk';
+import type { ChainId } from '@aave/contract-helpers';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { OptimalRate } from '@paraswap/sdk';
 import { last, noop } from 'lodash';
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
-import { PopulatedTransaction } from 'ethers';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { PopulatedTransaction } from 'ethers';
 
 import { apiProvider } from '@/core/apis';
 import { useTheme2024 } from '@/hooks/theme';
@@ -25,42 +26,47 @@ import AutoLockView from '@/components/AutoLockView';
 import { createGetStyles2024 } from '@/utils/styles';
 import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
-import { transactionHistoryService } from '@/core/services';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { isAccountSupportMiniApproval } from '@/utils/account';
-import {
-  DirectSignBtn,
-  DirectSignBtnMethods,
-} from '@/components2024/DirectSignBtn';
+import type { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
+import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { BridgeSlippage } from '@/screens/Bridge/components/BridgeSlippage';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
-import { formatSpeicalAmount, formatTokenAmount } from '@/utils/number';
+import { formatTokenAmount, formatTokenAmountInput } from '@/utils/number';
 import { WarningText } from '@/screens/Bridge/components/WarningText';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
-import {
-  MINI_SIGN_ERROR,
-  useSignatureStore,
-} from '@/components2024/MiniSignV2/state/SignatureManager';
+import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
+import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
+import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
   LendingReportType,
+  LendingSignType,
 } from '@/screens/Transaction/components/type';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
+import { AutoShrinkAmountTextInput } from '@/components/AutoShrinkAmountTextInput';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 import { SwapType } from '../../types/swap';
 import DebtSwapModalOverview from './Overview';
 import TokenIcon from '../../components/TokenIcon';
 import { APP_CODE_LENDING_DEBT_SWAP } from '../../utils/constant';
-import { ParaswapRatesType, SwappableToken } from '../../types/swap';
+import type { ParaswapRatesType, SwappableToken } from '../../types/swap';
 import { getParaswap } from '../../config/paraswap';
 import { getParaswapSellRates } from '../../components/actions/DebtSwap/paraswap';
 import {
@@ -92,15 +98,9 @@ import {
   getToAmountAfterSlippage,
 } from './warning';
 import BridgeSwitchBtn from '@/screens/Bridge/components/BridgeSwitchBtn';
-import { Text, TextInput } from '@/components/Typography';
+import { Text } from '@/components/Typography';
 import { stats } from '@/utils/stats';
-import { FormValuesOnSubmit, createAmountComparer } from '@/utils/form';
-import { Alert } from 'react-native';
-
-/** DebtSwap form snapshot for validation */
-interface DebtSwapFormSnapshot {
-  fromAmount: string;
-}
+import { hasInsufficientSwapLiquidity } from '../../utils/swap';
 
 interface DebtSwapModalProps {
   fromToken: SwappableToken;
@@ -108,7 +108,7 @@ interface DebtSwapModalProps {
 }
 
 const BOTTOM_SIZE = {
-  BUTTON: 116,
+  BUTTON: 12 + BOTTOM_BUTTON_SINGLE_HEIGHT,
   CHECKBOX: 40,
   TIPS: 80,
 };
@@ -119,13 +119,15 @@ export default function DebtSwapModal({
 }: DebtSwapModalProps) {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
+  const bottomButtonAreaHeight =
+    BOTTOM_SIZE.BUTTON + getBottomButtonBottomOffset(bottom);
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
 
   const { chainEnum, chainInfo, selectedMarketData } = useSelectedMarket();
   const { pools } = usePoolDataProviderContract();
-  const { ctx } = useSignatureStore();
   const { refresh } = useRefreshHistoryId();
   const { iUserSummary } = useLendingSummary();
 
@@ -152,7 +154,11 @@ export default function DebtSwapModal({
     maxInputAmountWithSlippage?: string;
   }>({});
 
-  const [currentTxs, setCurrentTxs] = useState<Tx[]>([]);
+  const [builtTxs, setBuiltTxs] = useState<{
+    txs: Tx[];
+    build: () => Promise<Tx[]>;
+    slippage: string;
+  } | null>(null);
 
   const lastQuoteParamsRef = useRef<{
     rawAmount: string;
@@ -162,16 +168,6 @@ export default function DebtSwapModal({
 
   const quoteExpiredTimerRef = useRef<NodeJS.Timeout>(undefined);
   const enableQuoteAutoRefreshRef = useRef(false);
-
-  // Form snapshot for iOS autofill protection
-  const formValuesRef = useRef(
-    new FormValuesOnSubmit<DebtSwapFormSnapshot>({
-      comparers: {
-        fromAmount: createAmountComparer(),
-      },
-    }),
-  );
-  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
 
   const { fromBalanceBn, fromBalanceDisplay, fromUsdValue, toUsdValue } =
     useFormatValues({
@@ -223,6 +219,7 @@ export default function DebtSwapModal({
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
   );
+  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
 
   const clearQuoteExpiredTimer = useCallback(() => {
     if (quoteExpiredTimerRef.current) {
@@ -257,11 +254,8 @@ export default function DebtSwapModal({
 
   const onInputChange = useCallback(
     (text: string) => {
-      // Ignore changes during authentication (iOS autofill protection)
-      if (directSignBtnRef.current?.isAuthInProgress()) {
-        return;
-      }
-      const formatted = formatSpeicalAmount(text);
+      if (directSignBtnRef.current?.isAuthInProgress()) return;
+      const formatted = formatTokenAmountInput(text, fromToken.decimals);
       if (!/^\d*(\.\d*)?$/.test(formatted)) {
         return;
       }
@@ -288,7 +282,7 @@ export default function DebtSwapModal({
       const clampedPercentage = Math.min(100, Math.max(0, percentage));
       setSlider(Math.round(clampedPercentage));
     },
-    [fromBalanceBn],
+    [fromBalanceBn, fromToken.decimals],
   );
 
   const handleOpenTokenSelect = useCallback(() => {
@@ -444,10 +438,19 @@ export default function DebtSwapModal({
     openDirect,
     prefetch: prefetchMiniSigner,
     close: closeMiniSigner,
+    instance,
   } = useMiniSigner({
     account: currentAccount!,
     chainServerId: chainInfo?.serverId || '',
     autoResetGasStoreOnChainChange: true,
+  });
+
+  const { ctx } = useSignatureStoreOf(instance);
+
+  const isInsufficientLiquidity = hasInsufficientSwapLiquidity({
+    reserve: toReserve,
+    amount: toAmountAfterSlippage,
+    checkBorrowCap: true,
   });
 
   const buildDebtSwapTxs = useCallback(async (): Promise<Tx[]> => {
@@ -459,7 +462,8 @@ export default function DebtSwapModal({
       !selectedMarketData?.addresses?.DEBT_SWITCH_ADAPTER ||
       !pools?.provider ||
       !toReserve ||
-      !fromReserve
+      !fromReserve ||
+      isInsufficientLiquidity
     ) {
       return [];
     }
@@ -570,13 +574,41 @@ export default function DebtSwapModal({
     swapRate.slippageBps,
     toReserve,
     toToken,
+    isInsufficientLiquidity,
+  ]);
+
+  // Only expose transactions built for the current inputs and quote.
+  const currentTxs = useMemo(() => {
+    if (
+      builtTxs?.build !== buildDebtSwapTxs ||
+      builtTxs.slippage !== displaySlippage ||
+      fromAmount !== debouncedFromAmount ||
+      !new BigNumber(swapRate.outputAmount || 0).eq(
+        normalizeBN(fromAmount || '0', -1 * fromToken.decimals),
+      ) ||
+      isQuoteLoading ||
+      noQuote
+    ) {
+      return [];
+    }
+    return builtTxs.txs;
+  }, [
+    builtTxs,
+    buildDebtSwapTxs,
+    displaySlippage,
+    fromAmount,
+    debouncedFromAmount,
+    swapRate.outputAmount,
+    fromToken.decimals,
+    isQuoteLoading,
+    noQuote,
   ]);
 
   useEffect(() => {
     let cancelled = false;
     const buildTxs = async () => {
       if (
-        !currentAccount ||
+        !currentAccount?.address ||
         !toToken ||
         !quote ||
         !swapRate.optimalRateData ||
@@ -585,10 +617,11 @@ export default function DebtSwapModal({
         !toReserve ||
         !fromReserve ||
         !debouncedFromAmount ||
-        new BigNumber(debouncedFromAmount).lte(0)
+        new BigNumber(debouncedFromAmount).lte(0) ||
+        isInsufficientLiquidity
       ) {
         if (!cancelled) {
-          setCurrentTxs([]);
+          setBuiltTxs(null);
         }
         return;
       }
@@ -596,11 +629,15 @@ export default function DebtSwapModal({
       try {
         const txs = await buildDebtSwapTxs();
         if (!cancelled) {
-          setCurrentTxs(txs);
+          setBuiltTxs({
+            txs,
+            build: buildDebtSwapTxs,
+            slippage: displaySlippage,
+          });
         }
       } catch (error) {
         if (!cancelled) {
-          setCurrentTxs([]);
+          setBuiltTxs(null);
         }
       }
     };
@@ -610,7 +647,8 @@ export default function DebtSwapModal({
     };
   }, [
     buildDebtSwapTxs,
-    currentAccount,
+    displaySlippage,
+    currentAccount?.address,
     debouncedFromAmount,
     fromReserve,
     pools?.provider,
@@ -619,6 +657,7 @@ export default function DebtSwapModal({
     swapRate.optimalRateData,
     toReserve,
     toToken,
+    isInsufficientLiquidity,
   ]);
 
   const { currentHF, isHFLow, isLiquidatable, afterSwapInfo } =
@@ -681,7 +720,12 @@ export default function DebtSwapModal({
   ]);
 
   useEffect(() => {
-    if (!currentAccount || !canShowDirectSubmit || !currentTxs?.length) {
+    if (
+      !currentAccount?.address ||
+      !canShowDirectSubmit ||
+      !currentTxs?.length ||
+      isInsufficientLiquidity
+    ) {
       closeMiniSigner();
       return;
     }
@@ -693,8 +737,9 @@ export default function DebtSwapModal({
   }, [
     canShowDirectSubmit,
     closeMiniSigner,
-    currentAccount,
+    currentAccount?.address,
     currentTxs,
+    isInsufficientLiquidity,
     prefetchMiniSigner,
   ]);
 
@@ -703,22 +748,15 @@ export default function DebtSwapModal({
       if (!toToken || !fromAmount || !currentAccount) {
         return;
       }
+      if (isInsufficientLiquidity) {
+        toast.error(
+          t('page.Lending.repayWithCollateral.insufficientLiquidity'),
+        );
+        return;
+      }
       if (isExceedMaxLtvAfterSwap) {
         toast.error(t('page.Lending.debtSwap.maxLtvWarning'));
         return;
-      }
-
-      if (canShowDirectSubmit && formValuesRef.current.hasSnapshot()) {
-        const formCheck = formValuesRef.current.compare({ fromAmount });
-        if (formCheck.isChanged) {
-          Alert.alert(
-            t('page.Lending.popup.formChangedTitle'),
-            t('page.Lending.popup.formChangedAmount'),
-            [{ text: t('global.ok'), onPress: () => {} }],
-          );
-          formValuesRef.current.clear();
-          return;
-        }
       }
 
       try {
@@ -729,6 +767,10 @@ export default function DebtSwapModal({
         }
 
         let results: string[] = [];
+        const signType =
+          canShowDirectSubmit && !p?.forceFullSign
+            ? LendingSignType.Simplified
+            : LendingSignType.Full;
         if (canShowDirectSubmit && !p?.forceFullSign) {
           try {
             results = await openDirect({
@@ -749,6 +791,9 @@ export default function DebtSwapModal({
               return;
             }
             if (error === MINI_SIGN_ERROR.PREFETCH_FAILURE) {
+              toast.error(
+                t('page.Lending.signFallback.preExecFailedUseFullSign'),
+              );
               await handleSwap({
                 ...p,
                 forceFullSign: true,
@@ -772,7 +817,7 @@ export default function DebtSwapModal({
 
         const txId = last(results);
         if (txId && chainInfo?.id) {
-          transactionHistoryService.setCustomTxItem(
+          await transactionHistoryServiceApi.setCustomTxItem(
             currentAccount.address,
             chainInfo?.id,
             txId,
@@ -793,6 +838,7 @@ export default function DebtSwapModal({
           usd_value: usdValue,
           create_at: Date.now(),
           app_version: APP_VERSIONS.fromNative || '0',
+          signType,
         });
         toast.success(
           `${t('page.Lending.debtSwap.actions.title')} ${t(
@@ -806,7 +852,6 @@ export default function DebtSwapModal({
         console.error('debt swap error', error);
       } finally {
         setIsLoading(false);
-        formValuesRef.current.clear();
       }
     },
     [
@@ -823,6 +868,7 @@ export default function DebtSwapModal({
       openDirect,
       ctx?.gasFeeTooHigh,
       refresh,
+      isInsufficientLiquidity,
       isExceedMaxLtvAfterSwap,
       debouncedFromAmount,
       fromToken.usdPrice,
@@ -867,339 +913,355 @@ export default function DebtSwapModal({
   const buttonDisabled = useMemo(() => {
     return (
       !canSwap ||
+      !currentTxs.length ||
       (isRisky && !riskChecked) ||
       isLiquidatable ||
+      isInsufficientLiquidity ||
       isExceedMaxLtvAfterSwap
     );
-  }, [canSwap, isExceedMaxLtvAfterSwap, isLiquidatable, isRisky, riskChecked]);
+  }, [
+    canSwap,
+    currentTxs.length,
+    isExceedMaxLtvAfterSwap,
+    isInsufficientLiquidity,
+    isLiquidatable,
+    isRisky,
+    riskChecked,
+  ]);
 
   return (
-    <AutoLockView style={styles.container}>
-      <BottomSheetScrollView
-        showsVerticalScrollIndicator
-        persistentScrollbar
-        style={styles.scrollableBlock}
-        contentContainerStyle={[styles.contentContainer]}>
-        <BottomSheetHandlableView>
-          <View style={styles.header}>
-            <Text style={styles.titleText}>
-              {t('page.Lending.debtSwap.title')}
-            </Text>
-          </View>
-        </BottomSheetHandlableView>
-
-        <Text style={styles.sectionTitle}>
-          {t('page.Lending.debtSwap.actions.amount')}
-        </Text>
-        <View style={styles.content}>
-          {/* From Token */}
-          <View style={styles.tokenContainer}>
-            <View style={styles.tokenHeader}>
-              <Text style={styles.label}>
-                {t('page.Lending.debtSwap.actions.borrowed')}
+    <SignatureInstanceProvider instance={instance}>
+      <AutoLockView style={styles.container}>
+        <BottomSheetScrollView
+          showsVerticalScrollIndicator
+          persistentScrollbar
+          style={styles.scrollableBlock}
+          contentContainerStyle={[styles.contentContainer]}>
+          <BottomSheetHandlableView>
+            <View style={styles.header}>
+              <Text style={styles.titleText}>
+                {t('page.Lending.debtSwap.title')}
               </Text>
-              <View style={styles.sliderContainer}>
-                <DebtSwapModalSlider
-                  fromToken={fromToken}
-                  slider={slider}
-                  onChangeSlider={onChangeSlider}
-                />
-                <Text style={styles.sliderValue}>{slider}%</Text>
-              </View>
             </View>
+          </BottomSheetHandlableView>
 
-            <View style={styles.tokenBody}>
-              <TextInput
-                style={styles.amountInput}
-                value={fromAmount}
-                onChangeText={onInputChange}
-                placeholder="0"
-                keyboardType="numeric"
-                textAlign="left"
-                numberOfLines={1}
-                multiline={false}
-                spellCheck={false}
-                inputMode="decimal"
-                scrollEnabled={true}
-                placeholderTextColor={colors2024['neutral-info']}
-              />
-              {slider !== 100 && (
-                <Pressable
-                  style={styles.maxButtonWrapper}
-                  onPress={() => onChangeSlider(100)}>
-                  <Text style={styles.maxButtonText}>MAX</Text>
-                </Pressable>
-              )}
-              <View style={styles.divider} />
-              <View style={styles.tokenInfo}>
-                <TokenIcon
-                  size={26}
-                  chainSize={12}
-                  chain={chainEnum}
-                  tokenSymbol={fromToken.symbol}
+          <Text style={styles.sectionTitle}>
+            {t('page.Lending.debtSwap.actions.amount')}
+          </Text>
+          <View style={styles.content}>
+            {/* From Token */}
+            <View style={styles.tokenContainer}>
+              <View style={styles.tokenHeader}>
+                <Text style={styles.label}>
+                  {t('page.Lending.debtSwap.actions.borrowed')}
+                </Text>
+                <View style={styles.sliderContainer}>
+                  <DebtSwapModalSlider
+                    fromToken={fromToken}
+                    slider={slider}
+                    onChangeSlider={onChangeSlider}
+                  />
+                  <Text style={styles.sliderValue}>{slider}%</Text>
+                </View>
+              </View>
+
+              <View style={styles.tokenBody}>
+                <AutoShrinkAmountTextInput
+                  style={styles.amountInput}
+                  value={fromAmount}
+                  onChangeText={onInputChange}
+                  placeholder="0"
+                  keyboardType="numeric"
+                  textAlign="left"
+                  numberOfLines={1}
+                  multiline={false}
+                  spellCheck={false}
+                  inputMode="decimal"
+                  scrollEnabled={false}
+                  placeholderTextColor={colors2024['neutral-info']}
                 />
-                <View style={styles.tokenDetails}>
-                  <Text
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                    style={styles.tokenSymbol}>
-                    {fromToken.symbol}
+                {slider !== 100 && (
+                  <Pressable
+                    style={styles.maxButtonWrapper}
+                    onPress={() => onChangeSlider(100)}>
+                    <Text style={styles.maxButtonText}>MAX</Text>
+                  </Pressable>
+                )}
+                <View style={styles.divider} />
+                <View style={styles.tokenInfo}>
+                  <TokenIcon
+                    size={26}
+                    chainSize={12}
+                    chain={chainEnum}
+                    tokenSymbol={fromToken.symbol}
+                  />
+                  <View style={styles.tokenDetails}>
+                    <Text
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                      style={styles.tokenSymbol}>
+                      {fromToken.symbol}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.usdValueRow}>
+                <Text style={styles.usdValue}>{fromUsdValue}</Text>
+                <View style={styles.balanceRow}>
+                  <Text style={styles.balanceText}>
+                    {t('page.Lending.debtSwap.borrowBalance')}{' '}
+                    {fromBalanceDisplay}
                   </Text>
                 </View>
               </View>
             </View>
 
-            <View style={styles.usdValueRow}>
-              <Text style={styles.usdValue}>{fromUsdValue}</Text>
-              <View style={styles.balanceRow}>
-                <Text style={styles.balanceText}>
-                  {t('page.Lending.debtSwap.borrowBalance')}{' '}
-                  {fromBalanceDisplay}
-                </Text>
+            {/* Arrow Divider */}
+            <View style={styles.dividerContainer}>
+              <View style={styles.dividerLine} />
+              <View style={styles.arrowContainer}>
+                <BridgeSwitchBtn
+                  style={styles.arrowWrapper}
+                  loading={isQuoteLoading}
+                />
               </View>
             </View>
-          </View>
 
-          {/* Arrow Divider */}
-          <View style={styles.dividerContainer}>
-            <View style={styles.dividerLine} />
-            <View style={styles.arrowContainer}>
-              <BridgeSwitchBtn
-                style={styles.arrowWrapper}
+            {/* To Token */}
+            <Pressable
+              style={styles.tokenContainer}
+              onPress={handleOpenTokenSelect}>
+              <View style={styles.tokenHeader}>
+                <Text style={styles.label}>
+                  {t('page.Lending.debtSwap.actions.swapTo')}
+                </Text>
+              </View>
+
+              <View style={styles.tokenBody}>
+                <Text
+                  style={[
+                    styles.amountDisplay,
+                    !toAmount && styles.amountDisplayPlaceholder,
+                    isQuoteLoading && styles.loadingOpacity,
+                  ]}>
+                  {toAmount ? formatTokenAmount(toAmount) : '0'}
+                </Text>
+                <View
+                  style={[
+                    styles.tokenInfo,
+                    !toToken && styles.placeholderTokenInfo,
+                  ]}>
+                  {toToken ? (
+                    <>
+                      <TokenIcon
+                        size={26}
+                        chainSize={12}
+                        chain={chainEnum}
+                        tokenSymbol={toToken.symbol}
+                      />
+                      <View style={styles.tokenDetails}>
+                        <Text style={styles.tokenSymbol}>{toToken.symbol}</Text>
+                      </View>
+                    </>
+                  ) : (
+                    <>
+                      <Text style={styles.selectTokenText}>
+                        {t('page.Lending.debtSwap.actions.select')}
+                      </Text>
+                    </>
+                  )}
+                  <RcIconSwapBottomArrow />
+                </View>
+              </View>
+
+              {toToken && (
+                <View style={styles.usdValueRow}>
+                  <Text
+                    style={[
+                      styles.usdValue,
+                      isQuoteLoading && styles.loadingOpacity,
+                    ]}>
+                    {toUsdValue}
+                  </Text>
+                  <View style={styles.balanceRow}>
+                    <RcIconWalletCC
+                      width={16}
+                      height={16}
+                      color={colors2024['neutral-foot']}
+                    />
+                    <Text style={styles.balanceText}>
+                      {formatTokenAmount(
+                        toDisplayReserve?.variableBorrows || '0',
+                      )}
+                    </Text>
+                  </View>
+                </View>
+              )}
+            </Pressable>
+          </View>
+          {noQuote && !isQuoteLoading && (
+            <Text style={styles.errorText}>
+              {t('page.swap.no-quote-found')}
+            </Text>
+          )}
+
+          {canSwap && !noQuote && (
+            <View style={styles.slippageContainer}>
+              <BridgeSlippage
+                value={slippage}
+                displaySlippage={displaySlippage}
+                onChange={setSlippage}
+                autoSlippage={autoSlippage}
+                isCustomSlippage={isCustomSlippage}
+                setAutoSlippage={setAutoSlippage}
+                setIsCustomSlippage={setIsCustomSlippage}
+                type="swap"
                 loading={isQuoteLoading}
               />
             </View>
-          </View>
-
-          {/* To Token */}
-          <Pressable
-            style={styles.tokenContainer}
-            onPress={handleOpenTokenSelect}>
-            <View style={styles.tokenHeader}>
-              <Text style={styles.label}>
-                {t('page.Lending.debtSwap.actions.swapTo')}
-              </Text>
-            </View>
-
-            <View style={styles.tokenBody}>
-              <Text
-                style={[
-                  styles.amountDisplay,
-                  !toAmount && styles.amountDisplayPlaceholder,
-                  isQuoteLoading && styles.loadingOpacity,
-                ]}>
-                {toAmount ? formatTokenAmount(toAmount) : '0'}
-              </Text>
-              <View
-                style={[
-                  styles.tokenInfo,
-                  !toToken && styles.placeholderTokenInfo,
-                ]}>
-                {toToken ? (
-                  <>
-                    <TokenIcon
-                      size={26}
-                      chainSize={12}
-                      chain={chainEnum}
-                      tokenSymbol={toToken.symbol}
-                    />
-                    <View style={styles.tokenDetails}>
-                      <Text style={styles.tokenSymbol}>{toToken.symbol}</Text>
-                    </View>
-                  </>
-                ) : (
-                  <>
-                    <Text style={styles.selectTokenText}>
-                      {t('page.Lending.debtSwap.actions.select')}
-                    </Text>
-                  </>
-                )}
-                <RcIconSwapBottomArrow />
-              </View>
-            </View>
-
-            {toToken && (
-              <View style={styles.usdValueRow}>
-                <Text
-                  style={[
-                    styles.usdValue,
-                    isQuoteLoading && styles.loadingOpacity,
-                  ]}>
-                  {toUsdValue}
-                </Text>
-                <View style={styles.balanceRow}>
-                  <RcIconWalletCC
-                    width={16}
-                    height={16}
-                    color={colors2024['neutral-foot']}
-                  />
-                  <Text style={styles.balanceText}>
-                    {formatTokenAmount(
-                      toDisplayReserve?.variableBorrows || '0',
-                    )}
+          )}
+          {canSwap &&
+            !noQuote &&
+            priceImpactData.showWarning &&
+            !isQuoteLoading && (
+              <View style={styles.priceImpactContainer}>
+                <View style={styles.priceImpactRow}>
+                  <Text style={styles.priceImpactText}>
+                    {t('page.bridge.price-impact')}
                   </Text>
+                  <View style={styles.priceImpactDiffBox}>
+                    <Text style={styles.priceImpactLossAmount}>
+                      {(priceImpactData.lostValue * 100).toFixed(1)}%
+                    </Text>
+                    <RcIconBluePolygon color={colors2024['orange-default']} />
+                  </View>
                 </View>
+
+                <WarningText>
+                  <Text>
+                    {t('page.Lending.debtSwap.priceImpactTips', {
+                      lostValue: `${(priceImpactData.lostValue * 100).toFixed(
+                        1,
+                      )}%`,
+                    })}
+                  </Text>
+                </WarningText>
               </View>
             )}
-          </Pressable>
-        </View>
-        {noQuote && !isQuoteLoading && (
-          <Text style={styles.errorText}>{t('page.swap.no-quote-found')}</Text>
-        )}
-
-        {canSwap && !noQuote && (
-          <View style={styles.slippageContainer}>
-            <BridgeSlippage
-              value={slippage}
-              displaySlippage={displaySlippage}
-              onChange={setSlippage}
-              autoSlippage={autoSlippage}
-              isCustomSlippage={isCustomSlippage}
-              setAutoSlippage={setAutoSlippage}
-              setIsCustomSlippage={setIsCustomSlippage}
-              type="swap"
-              loading={isQuoteLoading}
-            />
-          </View>
-        )}
-        {canSwap &&
-          !noQuote &&
-          priceImpactData.showWarning &&
-          !isQuoteLoading && (
-            <View style={styles.priceImpactContainer}>
-              <View style={styles.priceImpactRow}>
-                <Text style={styles.priceImpactText}>
-                  {t('page.bridge.price-impact')}
-                </Text>
-                <View style={styles.priceImpactDiffBox}>
-                  <Text style={styles.priceImpactLossAmount}>
-                    {(priceImpactData.lostValue * 100).toFixed(1)}%
-                  </Text>
-                  <RcIconBluePolygon color={colors2024['orange-default']} />
-                </View>
-              </View>
-
-              <WarningText>
-                <Text>
-                  {t('page.Lending.debtSwap.priceImpactTips', {
-                    lostValue: `${(priceImpactData.lostValue * 100).toFixed(
-                      1,
-                    )}%`,
-                  })}
-                </Text>
-              </WarningText>
+          {canShowDirectSubmit && canSwap && (
+            <View style={styles.gasPreContainer}>
+              <DirectSignGasInfo
+                supportDirectSign={true}
+                loading={false}
+                openShowMore={noop}
+                chainServeId={chainInfo?.serverId || ''}
+              />
             </View>
           )}
-        {canShowDirectSubmit && canSwap && (
-          <View style={styles.gasPreContainer}>
-            <DirectSignGasInfo
-              supportDirectSign={true}
-              loading={false}
-              openShowMore={noop}
-              chainServeId={chainInfo?.serverId || ''}
+          {noQuote && !isQuoteLoading ? null : (
+            <DebtSwapModalOverview
+              fromToken={fromToken}
+              toToken={toToken}
+              chainEnum={chainEnum}
+              fromAmount={debouncedFromAmount}
+              currentToAmount={toDisplayReserve?.variableBorrows || '0'}
+              toAmount={toAmountAfterSlippage}
+              fromBalanceBn={fromBalanceBn.toString()}
+              isQuoteLoading={isQuoteLoading}
+              currentHF={currentHF}
+              afterHF={afterSwapInfo?.hfAfterSwap.toString()}
+              showHF={isHFLow || isLiquidatable}
             />
-          </View>
-        )}
-        {noQuote && !isQuoteLoading ? null : (
-          <DebtSwapModalOverview
-            fromToken={fromToken}
-            toToken={toToken}
-            chainEnum={chainEnum}
-            fromAmount={debouncedFromAmount}
-            currentToAmount={toDisplayReserve?.variableBorrows || '0'}
-            toAmount={toAmountAfterSlippage}
-            fromBalanceBn={fromBalanceBn.toString()}
-            isQuoteLoading={isQuoteLoading}
-            currentHF={currentHF}
-            afterHF={afterSwapInfo?.hfAfterSwap.toString()}
-            showHF={isHFLow || isLiquidatable}
-          />
-        )}
-      </BottomSheetScrollView>
+          )}
+        </BottomSheetScrollView>
 
-      <View
-        style={[
-          styles.buttonContainer,
-          {
-            height:
-              BOTTOM_SIZE.BUTTON +
-              (isLiquidatable || isExceedMaxLtvAfterSwap
-                ? BOTTOM_SIZE.TIPS
-                : isRisky
-                ? BOTTOM_SIZE.CHECKBOX
-                : 0),
-          },
-        ]}>
-        {isExceedMaxLtvAfterSwap ? (
-          <View style={styles.riskContainer}>
-            <Text style={styles.dangerWarningText}>
-              {t('page.Lending.debtSwap.maxLtvWarning')}
-            </Text>
-          </View>
-        ) : isLiquidatable ? (
-          <View style={styles.riskContainer}>
-            <Text style={styles.dangerWarningText}>
-              {t('page.Lending.debtSwap.lpDangerWarning')}
-            </Text>
-          </View>
-        ) : isRisky ? (
-          <Pressable
-            style={styles.riskContainer}
-            onPress={() => {
-              setRiskChecked(!riskChecked);
-            }}>
-            <CheckBoxRect checked={riskChecked} size={16} />
-            <Text style={styles.warningText}>{riskDesc}</Text>
-          </Pressable>
-        ) : null}
-        {canShowDirectSubmit ? (
-          <DirectSignBtn
-            ref={directSignBtnRef}
-            loading={isLoading}
-            loadingType="circle"
-            key={`${fromToken.underlyingAddress}-${toToken?.underlyingAddress}-${debouncedFromAmount}`}
-            showTextOnLoading
-            wrapperStyle={styles.directSignBtn}
-            authTitle={t('page.Lending.debtSwap.button.swap')}
-            title={t('page.Lending.debtSwap.button.swap')}
-            onBeforeAuth={() => {
-              formValuesRef.current.save({ fromAmount });
-            }}
-            onCancel={() => {
-              formValuesRef.current.clear();
-            }}
-            onAuthModalDismiss={() => {
-              formValuesRef.current.clear();
-            }}
-            onFinished={() => handleSwap()}
-            disabled={buttonDisabled || !!ctx?.disabledProcess}
-            type="primary"
-            syncUnlockTime
-            account={currentAccount}
-            showHardWalletProcess
-          />
-        ) : (
-          <Button
-            loadingType="circle"
-            showTextOnLoading
-            containerStyle={styles.fullWidthButton}
-            onPress={() => handleSwap()}
-            title={t('page.Lending.debtSwap.button.swap')}
-            loading={isLoading}
-            disabled={buttonDisabled}
-          />
-        )}
-      </View>
-    </AutoLockView>
+        <View
+          style={[
+            styles.buttonContainer,
+            {
+              height:
+                bottomButtonAreaHeight +
+                (isLiquidatable ||
+                isExceedMaxLtvAfterSwap ||
+                isInsufficientLiquidity
+                  ? BOTTOM_SIZE.TIPS
+                  : isRisky
+                  ? BOTTOM_SIZE.CHECKBOX
+                  : 0),
+            },
+          ]}>
+          {isInsufficientLiquidity ? (
+            <View style={styles.riskContainer}>
+              <Text style={styles.dangerWarningText}>
+                {t('page.Lending.repayWithCollateral.insufficientLiquidity')}
+              </Text>
+            </View>
+          ) : isExceedMaxLtvAfterSwap ? (
+            <View style={styles.riskContainer}>
+              <Text style={styles.dangerWarningText}>
+                {t('page.Lending.debtSwap.maxLtvWarning')}
+              </Text>
+            </View>
+          ) : isLiquidatable ? (
+            <View style={styles.riskContainer}>
+              <Text style={styles.dangerWarningText}>
+                {t('page.Lending.debtSwap.lpDangerWarning')}
+              </Text>
+            </View>
+          ) : isRisky ? (
+            <Pressable
+              style={styles.riskContainer}
+              onPress={() => {
+                setRiskChecked(!riskChecked);
+              }}>
+              <CheckBoxRect checked={riskChecked} size={16} />
+              <Text style={styles.warningText}>{riskDesc}</Text>
+            </Pressable>
+          ) : null}
+          {canShowDirectSubmit ? (
+            <DirectSignBtn
+              loading={isLoading}
+              loadingType="circle"
+              key={`${fromToken.underlyingAddress}-${toToken?.underlyingAddress}-${debouncedFromAmount}`}
+              showTextOnLoading
+              wrapperStyle={styles.directSignBtn}
+              authTitle={t('page.Lending.debtSwap.button.swap')}
+              title={t('page.Lending.debtSwap.button.swap')}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
+              onFinished={() => handleSwap()}
+              disabled={buttonDisabled || !!ctx?.disabledProcess}
+              type="aave"
+              iconColor={colors2024['neutral-contrast']}
+              syncUnlockTime
+              account={currentAccount}
+              showHardWalletProcess
+            />
+          ) : (
+            <Button
+              loadingType="circle"
+              type="aave"
+              showTextOnLoading
+              containerStyle={styles.fullWidthButton}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+              onPress={() => handleSwap()}
+              title={t('page.Lending.debtSwap.button.swap')}
+              loading={isLoading}
+              disabled={buttonDisabled}
+            />
+          )}
+        </View>
+      </AutoLockView>
+    </SignatureInstanceProvider>
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   container: {
     height: '100%',
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   scrollableBlock: {
     flex: 1,
@@ -1351,6 +1413,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     textAlign: 'left',
     minWidth: 100,
     flex: 1,
+    height: 36,
+    lineHeight: 36,
+    paddingVertical: 0,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+    overflow: 'hidden',
   },
   amountDisplay: {
     fontSize: 28,
@@ -1390,8 +1458,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: colors2024['neutral-line'],
   },
   arrowContainer: {
-    width: 45,
-    height: 45,
+    width: 36,
+    height: 36,
     borderRadius: 22.5,
     backgroundColor: colors2024['neutral-bg-1'],
     justifyContent: 'center',
@@ -1402,11 +1470,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     position: 'absolute',
     left: '50%',
     top: '50%',
-    transform: [{ translateX: -45 / 2 }, { translateY: -45 / 2 }],
-  },
-  arrowText: {
-    fontSize: 22,
-    color: colors2024['neutral-secondary'],
+    transform: [{ translateX: -18 }, { translateY: -18 }],
   },
   gasPreContainer: {
     paddingHorizontal: 8,
@@ -1417,7 +1481,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     position: 'absolute',
     paddingHorizontal: 25,
     bottom: 0,
-    height: 116,
+    height:
+      BOTTOM_SIZE.BUTTON + getBottomButtonBottomOffset(safeAreaInsets.bottom),
     paddingTop: 12,
     width: '100%',
     display: 'flex',
@@ -1430,6 +1495,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   fullWidthButton: {
     flex: 1,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
   },
   loadingOpacity: {
     opacity: 0.5,
@@ -1481,13 +1547,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 20,
     color: colors2024['orange-default'],
     marginRight: 4,
-  },
-  priceImpactTooltipText: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-title-1'],
   },
   errorText: {
     fontSize: 14,

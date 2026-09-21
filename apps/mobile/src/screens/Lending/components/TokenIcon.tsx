@@ -31,7 +31,9 @@ const TokenIcon = ({
       chain={chainInfo?.serverId}
       chainIconPosition="br"
       chainSize={chainSize}
-      innerChainStyle={styles.innerChainStyle}
+      innerChainStyle={
+        chainSize && chainSize > 0 ? styles.innerChainStyle : undefined
+      }
     />
   );
 };

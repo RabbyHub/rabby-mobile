@@ -1,7 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
-import { View, Dimensions, TouchableOpacity, Modal } from 'react-native';
+import { View, Dimensions, TouchableOpacity } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
 import { AssetAvatar } from '@/components';
 import { useLongPressTokenAtom } from '../hooks';
@@ -18,11 +18,14 @@ import { RootNames } from '@/constant/layout';
 import { navigateDeprecated } from '@/utils/navigation';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { Text } from '@/components/Typography';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
+import { colord } from 'colord';
 
 export const TokenInfoPopup = () => {
   const windowWidth = Dimensions.get('window').width;
   const windowHeight = Dimensions.get('window').height;
-  const { styles, isLight } = useTheme2024({ getStyle });
+  const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
   const [longPressToken, setLongPressToken] = useLongPressTokenAtom();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
@@ -57,7 +60,8 @@ export const TokenInfoPopup = () => {
   }, [usdValue]);
 
   return (
-    <Modal
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.swapTokenInfo}
       transparent
       visible={longPressToken.visible}
       animationType="none"
@@ -98,7 +102,6 @@ export const TokenInfoPopup = () => {
               {
                 ...longPressToken.tokenEntity,
                 _isPined: false,
-                _isFold: false,
                 _isExcludeBalance: false,
                 _usdValueStr: usdValueStr,
                 _amountStr: formatAmount(longPressToken.tokenItem?.amount),
@@ -144,17 +147,21 @@ export const TokenInfoPopup = () => {
             <BlurView
               blurType={isLight ? 'dark' : 'light'}
               blurAmount={10}
-              reducedTransparencyFallbackColor="white"
+              reducedTransparencyFallbackColor={colord(
+                colors2024['neutral-bg-4'],
+              )
+                .alpha(0.9)
+                .toRgbString()}
               style={styles.blurView}
             />
           </TouchableOpacity>
         )}
       </View>
-    </Modal>
+    </TrackedModal>
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     position: 'absolute',
     zIndex: 10,
@@ -206,6 +213,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: '100%',
   },
   renderItemWrapper: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     position: 'absolute',
     zIndex: 3,
     elevation: 3,

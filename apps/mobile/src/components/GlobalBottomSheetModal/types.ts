@@ -91,6 +91,17 @@ export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> = {
    * @default false
    */
   allowAndroidHarewareBack?: boolean;
+  /**
+   * @description global sheets are singleton by modal name by default. Set this
+   * only when the same modal name intentionally needs multiple active instances.
+   * @default false
+   */
+  allowMultipleInstances?: boolean;
+  /**
+   * @description optional discriminator for singleton reuse when one modal name
+   * needs separate singleton buckets.
+   */
+  singletonKey?: string;
   [key: string]: any;
 } & (T extends keyof MODAL_CREATE_PARAMS ? MODAL_CREATE_PARAMS[T] : {});
 

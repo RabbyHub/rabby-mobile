@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'react-i18next';
-import { Platform, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
@@ -13,7 +13,6 @@ import {
 import TokenIcon from '../TokenIcon';
 import IsolatedTag from '../IsolatedTag';
 import { useLendingSummary, useSelectedMarket } from '../../hooks';
-import { getSupplyCapData } from '../../utils/supply';
 import { CollateralSwitch } from '../CollateralSwitch';
 import { formatApy, formatListNetWorth } from '../../utils/format';
 import { useToggleCollateralModal } from '../../modals/ToggleCollateralModal';
@@ -22,77 +21,90 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import wrapperToken from '../../config/wrapperToken';
 import { Text } from '@/components/Typography';
 import { colord } from 'colord';
+import { openLendingActionPopup } from '../../utils/actionPopup';
+import { PositionTokenSelector } from './PositionTokenSelector';
+import type {
+  BasicPositionTokenOption,
+  PositionTokenOption,
+} from '../../utils/positionTokenSelector';
 
 interface SupplyItemProps extends RNViewProps {
   underlyingAsset: string;
+  activeUnderlyingAsset: string;
+  tokenOptions?: PositionTokenOption[];
+  onChangeActiveUnderlyingAsset: (underlyingAsset: string) => void;
 }
 
-const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
+const SupplyItem: React.FC<SupplyItemProps> = ({
+  underlyingAsset,
+  activeUnderlyingAsset,
+  tokenOptions,
+  onChangeActiveUnderlyingAsset,
+  style,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
   const { iUserSummary: userSummary, getTargetReserve } = useLendingSummary();
   const { openCollateralChange } = useToggleCollateralModal();
   const { chainEnum } = useSelectedMarket();
+  const currentUnderlyingAsset =
+    tokenOptions?.length && activeUnderlyingAsset
+      ? activeUnderlyingAsset
+      : underlyingAsset;
+
   const reserve = useMemo(() => {
-    return getTargetReserve(underlyingAsset);
-  }, [getTargetReserve, underlyingAsset]);
+    return getTargetReserve(currentUnderlyingAsset);
+  }, [currentUnderlyingAsset, getTargetReserve]);
 
-  const {
-    isSupplied,
-    apyText,
-    suppliedUsdText,
-    suppliedTokenText,
-    isIsolated,
-  } = useMemo(() => {
-    if (!reserve) {
-      return {
-        isSupplied: false,
-        apyText: '',
-        suppliedUsdText: '',
-        suppliedTokenText: '',
-        isIsolated: false,
-      };
-    }
-    const hasSupplied =
-      !!reserve.underlyingBalanceUSD && reserve.underlyingBalanceUSD !== '0';
-
-    const apy = formatApy(Number(reserve.reserve.supplyAPY || '0'));
-    const suppliedUsd = formatListNetWorth(
-      Number(reserve.underlyingBalanceUSD || '0'),
-    );
-
-    const tokenAmountNum = Number(reserve.underlyingBalance || '0');
-    let tokenAmount = '';
-    if (tokenAmountNum) {
-      if (tokenAmountNum >= 1) {
-        tokenAmount = tokenAmountNum.toFixed(4);
-      } else {
-        tokenAmount = tokenAmountNum.toPrecision(4);
+  const { apyText, suppliedUsdText, suppliedTokenText, isIsolated } =
+    useMemo(() => {
+      if (!reserve) {
+        return {
+          isSupplied: false,
+          apyText: '',
+          suppliedUsdText: '',
+          suppliedTokenText: '',
+          isIsolated: false,
+        };
       }
-    } else {
-      tokenAmount = '0';
-    }
+      const hasSupplied =
+        !!reserve.underlyingBalanceUSD && reserve.underlyingBalanceUSD !== '0';
 
-    return {
-      isSupplied: hasSupplied,
-      apyText: apy,
-      suppliedUsdText: suppliedUsd,
-      suppliedTokenText: `${formatTokenAmount(tokenAmount)} ${
-        reserve.reserve.symbol
-      }`,
-      isIsolated: reserve.reserve.isIsolated,
-    };
-  }, [reserve]);
+      const apy = formatApy(Number(reserve.reserve.supplyAPY || '0'));
+      const suppliedUsd = formatListNetWorth(
+        Number(reserve.underlyingBalanceUSD || '0'),
+      );
+
+      const tokenAmountNum = Number(reserve.underlyingBalance || '0');
+      let tokenAmount = '';
+      if (tokenAmountNum) {
+        if (tokenAmountNum >= 1) {
+          tokenAmount = tokenAmountNum.toFixed(4);
+        } else {
+          tokenAmount = tokenAmountNum.toPrecision(4);
+        }
+      } else {
+        tokenAmount = '0';
+      }
+
+      return {
+        isSupplied: hasSupplied,
+        apyText: apy,
+        suppliedUsdText: suppliedUsd,
+        suppliedTokenText: `${formatTokenAmount(tokenAmount)} ${
+          reserve.reserve.symbol
+        }`,
+        isIsolated: reserve.reserve.isIsolated,
+      };
+    }, [reserve]);
 
   const canBeEnabledAsCollateral = useMemo(() => {
     if (!reserve) {
       return false;
     }
-    const { supplyCapReached } = getSupplyCapData(reserve);
     return userSummary
-      ? !supplyCapReached &&
-          reserve.reserve.reserveLiquidationThreshold !== '0' &&
+      ? reserve.reserve.reserveLiquidationThreshold !== '0' &&
           ((!reserve.reserve.isIsolated && !userSummary.isInIsolationMode) ||
             userSummary.isolatedReserve?.underlyingAsset ===
               reserve.underlyingAsset ||
@@ -105,21 +117,11 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
     if (!reserve || !userSummary) {
       return;
     }
-    const modalId = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.SUPPLY_ACTION_DETAIL,
+    openLendingActionPopup({
+      popup: 'supply',
       reserve,
       userSummary,
-      onClose: () => {
-        removeGlobalBottomSheetModal2024(modalId);
-      },
-      bottomSheetModalProps: {
-        enableContentPanningGesture: true,
-        enablePanDownToClose: true,
-        enableDismissOnClose: true,
-        handleStyle: {
-          backgroundColor: colors2024['neutral-bg-1'],
-        },
-      },
+      colors2024,
     });
   }, [colors2024, reserve, userSummary]);
 
@@ -153,6 +155,7 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
         )
       : false;
   }, [chainEnum, reserve]);
+  const shouldUseWrapperTokenStyle = isWrapperToken && !tokenOptions?.length;
 
   if (!reserve) {
     return null;
@@ -160,28 +163,42 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
 
   return (
     <View
-      style={[styles.container, isWrapperToken && styles.wrapperToken, style]}>
-      {isWrapperToken && <View style={styles.wrapperTokenArrow} />}
+      style={[
+        styles.container,
+        shouldUseWrapperTokenStyle && styles.wrapperToken,
+        style,
+      ]}>
+      {shouldUseWrapperTokenStyle && <View style={styles.wrapperTokenArrow} />}
       <View style={styles.content}>
         <View style={styles.headerRow}>
           <View style={styles.tokenInfo}>
-            <TokenIcon
-              size={46}
-              chainSize={0}
-              tokenSymbol={reserve?.reserve?.symbol || ''}
-              chain={reserve?.chain}
-            />
-            <View style={styles.tokenTextArea}>
-              <View style={styles.symbolArea}>
-                <Text
-                  style={styles.symbol}
-                  numberOfLines={1}
-                  ellipsizeMode="tail">
-                  {reserve.reserve.symbol}
-                </Text>
-                <View style={styles.apyTag}>
-                  <Text style={styles.apyTagText}>{`Apy ${apyText}`}</Text>
+            <View style={styles.tokenInfoContainer}>
+              <TokenIcon
+                size={28}
+                chainSize={0}
+                tokenSymbol={reserve?.reserve?.symbol || ''}
+                chain={reserve?.chain}
+              />
+              <View style={styles.tokenTextArea}>
+                <View style={styles.symbolArea}>
+                  <PositionTokenSelector
+                    activeUnderlyingAsset={currentUnderlyingAsset}
+                    options={tokenOptions as BasicPositionTokenOption[]}
+                    symbol={reserve.reserve.symbol}
+                    chain={reserve.chain}
+                    onChange={onChangeActiveUnderlyingAsset}
+                  />
                 </View>
+              </View>
+            </View>
+            <View style={styles.badgeContainer}>
+              <View style={styles.suppliedBadge}>
+                <Text style={styles.suppliedBadgeText}>
+                  {t('page.Lending.supplyDetail.supplied')}
+                </Text>
+              </View>
+              <View style={styles.apyTag}>
+                <Text style={styles.apyTagText}>{`Apy ${apyText}`}</Text>
               </View>
               {isIsolated ? <IsolatedTag /> : null}
             </View>
@@ -225,14 +242,6 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
           </TouchableOpacity>
         </View>
       </View>
-
-      {isSupplied ? (
-        <View style={styles.suppliedBadge}>
-          <Text style={styles.suppliedBadgeText}>
-            {t('page.Lending.supplyDetail.supplied')}
-          </Text>
-        </View>
-      ) : null}
     </View>
   );
 };
@@ -240,35 +249,19 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
 export default SupplyItem;
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
-  const cardBgColor = isLight
-    ? colors2024['neutral-bg-1']
-    : colors2024['neutral-bg-2'];
+  const cardBgColor = colors2024['neutral-bg-2'];
   const wrapperTokenCardBgColor = colord(cardBgColor).alpha(0.5).toRgbString();
 
   return {
     container: {
       borderRadius: 16,
-      paddingTop: 40,
-      paddingBottom: 12,
+      paddingVertical: 14,
       paddingHorizontal: 0,
       marginTop: 12,
-      backgroundColor: cardBgColor,
-      ...Platform.select({
-        ios: {
-          shadowColor: '#000',
-          shadowOpacity: 0.07,
-          shadowRadius: 16,
-          shadowOffset: {
-            width: 0,
-            height: 8,
-          },
-        },
-        android: {
-          elevation: 0,
-        },
-        default: {},
-      }),
+      backgroundColor: isLight ? 'rgba(255, 255, 255, 0.9)' : cardBgColor,
       position: 'relative',
+      borderWidth: 1,
+      borderColor: colors2024['neutral-bg-1'],
     },
     wrapperToken: {
       backgroundColor: wrapperTokenCardBgColor,
@@ -289,7 +282,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     content: {
       paddingHorizontal: 14,
-      gap: 12,
+      gap: 10,
     },
     headerRow: {
       flexDirection: 'row',
@@ -297,10 +290,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       justifyContent: 'space-between',
     },
     tokenInfo: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: 'column',
+      alignItems: 'flex-start',
       gap: 8,
       flexShrink: 1,
+    },
+    tokenInfoContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
     },
     tokenTextArea: {
       flexDirection: 'column',
@@ -312,16 +310,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       gap: 4,
       flexShrink: 1,
     },
-    symbol: {
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '800',
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-    },
     apyTag: {
       paddingHorizontal: 4,
-      paddingVertical: 2,
+      paddingVertical: 1,
       borderRadius: 4,
       backgroundColor: colors2024['green-light-1'],
     },
@@ -332,38 +323,25 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       color: colors2024['green-default'],
       fontFamily: 'SF Pro Rounded',
     },
-    isolatedTag: {
-      paddingHorizontal: 4.8,
-      paddingVertical: 2.8,
-      borderRadius: 6,
-      borderWidth: 0.8,
-      borderColor: colors2024['orange-light-2'],
-      backgroundColor: colors2024['orange-light-1'],
+    badgeContainer: {
+      display: 'flex',
       flexDirection: 'row',
-      alignItems: 'center',
-      gap: 2,
-    },
-    isolatedTagText: {
-      fontSize: 12,
-      lineHeight: 16,
-      fontWeight: '500',
-      color: colors2024['orange-default'],
-      fontFamily: 'SF Pro Rounded',
+      gap: 4,
     },
     amountArea: {
       alignItems: 'flex-end',
       justifyContent: 'center',
+      gap: 5,
     },
     amountUsd: {
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '700',
+      fontSize: 18,
+      lineHeight: 22,
+      fontWeight: '500',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
     },
     amountToken: {
-      marginTop: 2,
-      fontSize: 14,
+      fontSize: 13,
       lineHeight: 18,
       fontWeight: '500',
       color: colors2024['neutral-secondary'],
@@ -417,35 +395,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
     },
-    buttonPrimary: {
-      flex: 1,
-      height: 32,
-      borderRadius: 8,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors2024['brand-light-1'],
-    },
-    buttonPrimaryText: {
-      fontSize: 14,
-      lineHeight: 18,
-      fontWeight: '700',
-      color: colors2024['brand-default'],
-      fontFamily: 'SF Pro Rounded',
-    },
     suppliedBadge: {
-      position: 'absolute',
-      top: 9,
-      left: 9,
       paddingHorizontal: 4,
       paddingVertical: 2,
       borderRadius: 4,
-      backgroundColor: colors2024['green-default'],
+      width: 'auto',
+      backgroundColor: colors2024['green-light-1'],
     },
     suppliedBadgeText: {
       fontSize: 12,
       lineHeight: 16,
       fontWeight: '700',
-      color: colors2024['neutral-InvertHighlight'],
+      color: colors2024['green-default'],
       fontFamily: 'SF Pro Rounded',
     },
   };

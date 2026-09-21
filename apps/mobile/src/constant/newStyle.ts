@@ -16,6 +16,7 @@ export enum MultiHomeFeatTitle {
   Meme = 'Meme',
   Perps = 'Perps',
   Lending = 'Lending',
+  ConvertDust = 'Convert Dust',
   /** @deprecated */
   TEST_DAPP = 'TEST_DAPP',
 }
@@ -43,6 +44,9 @@ export const HOME_FEATURE_NEW_TAG_CONFIG: Partial<
 > = {
   // 配置是否显示NEW标签在这里
   [MultiHomeFeatTitle.Market]: {
+    enableNewTag: true,
+  },
+  [MultiHomeFeatTitle.ConvertDust]: {
     enableNewTag: true,
   },
 };

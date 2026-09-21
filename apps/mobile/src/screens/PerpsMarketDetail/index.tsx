@@ -1,14 +1,10 @@
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { apisPerps } from '@/core/apis';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
+import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  CancelOrderParams,
-  WsActiveAssetCtx,
-} from '@rabby-wallet/hyperliquid-sdk';
 import { useRoute } from '@react-navigation/native';
 import { useMemoizedFn } from 'ahooks';
 import { sortBy } from 'lodash';
@@ -20,8 +16,10 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AppState, AppStateStatus, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { PerpsDepositPopup } from '../Perps/components/PerpsDepositPopup';
+import { EnableUnifiedAccountPopup } from '../Perps/components/EnableUnifiedAccountPopup';
+import { PerpsSpotSwapPopup } from '../Perps/components/PerpsSpotSwapPopup';
 import BigNumber from 'bignumber.js';
 import { PerpsHistorySection } from '../Perps/components/PerpsHistorySection';
 import { usePerpsDeposit } from '../Perps/hooks/usePerpsDeposit';
@@ -31,48 +29,44 @@ import { PerpsDepositCard } from './components/PerpsDepositCard';
 import { PerpsFooter } from './components/PerpsFooter';
 import { PerpsHeaderTitle } from './components/PerpsHeaderTitle';
 import { PerpsInfo } from './components/PerpsInfo';
-import { PerpsIntro } from './components/PerpsIntro';
+import { PerpsAbout } from './components/PerpsAbout';
 import { PerpsOpenPositionPopup } from './components/PerpsOpenPositionPopup';
 import { PerpsPosition } from './components/PerpsPosition';
 import { usePerpsPosition } from './hooks/usePerpsPosition';
+import { useActiveAssetSubscription } from './hooks/useActiveAssetSubscription';
 import { toast } from '@/components2024/Toast';
-import * as Sentry from '@sentry/react-native';
-import {
-  ARB_USDC_TOKEN_ID,
-  ARB_USDC_TOKEN_SERVER_CHAIN,
-  HYPE_USDC_TOKEN_ID,
-  HYPE_USDC_TOKEN_SERVER_CHAIN,
-  CANDLE_MENU_KEY_V2,
-  PERPS_MAX_NTL_VALUE,
-} from '@/constant/perps';
+import { CANDLE_MENU_KEY_V2, PERPS_MAX_NTL_VALUE } from '@/constant/perps';
 import { PerpsRegionAlert } from '../Perps/components/PerpsRegionAlert';
-import { trigger } from 'react-native-haptic-feedback';
-import { useAppState } from '@react-native-community/hooks';
 
 import { usePerpsPopupState } from '../Perps/hooks/usePerpsPopupState';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { openapi } from '@/core/request';
 
 import Toast from 'react-native-root-toast';
-import { PerpSearchListPopup } from '../Perps/components/PerpSearchListPopup';
+import { naviReplace } from '@/utils/navigation';
+import { RootNames, getBottomButtonBottomOffset } from '@/constant/layout';
 import { PerpsAddPositionPopup } from './components/PerpsAddPositionPopup';
+import { PerpsLimitOrdersForCoin } from './components/PerpsLimitOrdersForCoin';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
+import {
+  toCanonicalPerpsCandleInterval,
+  toSimplePerpsCandleInterval,
+} from '@/hooks/perps/candles/interval';
 import { showToast } from '@/hooks/perps/showToast';
 import { PerpsAgentsLimitModal } from '../Perps/components/PerpsAgentsLimitModal';
 import { PerpsPositionSkeletonLoader } from '../Perps/components/PerpsSkeletonLoader';
-import { PerpsHeaderRight } from './components/PerpsHeaderRight';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
 import { stats } from '@/utils/stats';
-import { getStatsReportSide } from '@/utils/perps';
+import { getStatsReportSide, isLimitOrder } from '@/utils/perps';
 import { APP_VERSIONS } from '@/constant';
 import { Text } from '@/components/Typography';
-import { PerpsGuideEntryPopup } from './components/PerpsGuideEntryPopup';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
+import { withWalletUnlock } from '@/utils/walletUnlockGuard';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
 
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const [popupState, setPopupState] = usePerpsPopupState();
+  const [isShowDepositPopup, setIsShowDepositPopup] = useState(false);
 
   const navigation = useRabbyAppNavigation();
 
@@ -95,9 +89,7 @@ export const PerpsMarketDetailScreen = () => {
   const {
     isInitialized,
     positionAndOpenOrders,
-    marketDataMap,
     perpFee,
-    marketData,
     hasPermission,
     currentPerpsAccount,
     isLogin,
@@ -107,51 +99,51 @@ export const PerpsMarketDetailScreen = () => {
     handleActionApproveStatus,
 
     handleDeleteAgent,
+    handleEnableUnifiedAccount,
   } = usePerpsState();
+
+  const currentAssetCtx = perpsStore(s => s.marketDataMap[coin]);
   // const hasPermission = true;
   const [showRiskPopup, setShowRiskPopup] = useState(false);
-  const [selectedInterval, setSelectedInterval] =
+  const [selectedInterval, setSelectedIntervalState] =
     React.useState<CANDLE_MENU_KEY_V2>(CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES);
-  const [showSearchListPopup, setShowSearchListPopup] = useState(false);
-  const [showGuideEntryPopup, setShowGuideEntryPopup] = useState(false);
+  useEffect(() => {
+    let active = true;
+    apisPerps.getSelectedKlineInterval().then(v => {
+      if (active) {
+        setSelectedIntervalState(toSimplePerpsCandleInterval(v));
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+  const setSelectedInterval = useMemoizedFn((v: CANDLE_MENU_KEY_V2) => {
+    setSelectedIntervalState(v);
+    apisPerps.setSelectedKlineInterval(toCanonicalPerpsCandleInterval(v));
+  });
   const coinNameRef = useRef(coin);
   useEffect(() => {
     coinNameRef.current = coin;
   }, [coin]);
 
-  // Pre-fetch guide popup status on mount, then use synchronously in beforeRemove
-  const hasShownGuideRef = useRef(true);
-  useEffect(() => {
-    if (fromSource !== 'homePagePositionList') {
-      return;
-    }
-    apisPerps.getHasShownPerpsGuidePopup().then(hasShown => {
-      hasShownGuideRef.current = hasShown;
-    });
-  }, [fromSource]);
+  // useEffect(() => {
+  //   const needDepositFirst =
+  //     Number(accountValue) === 0 && Number(availableBalance) === 0;
+  //   const isLocalWallet =
+  //     currentPerpsAccount?.type === KEYRING_CLASS.PRIVATE_KEY ||
+  //     currentPerpsAccount?.type === KEYRING_CLASS.MNEMONIC;
+  //   if (isLocalWallet && !needDepositFirst) {
+  //     // deposit first before approve agent
+  //     handleActionApproveStatus({
+  //       isHideToast: true,
+  //     });
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, []);
 
-  // Intercept back navigation to show guide popup for homePagePositionList users
-  useEffect(() => {
-    if (fromSource !== 'homePagePositionList') {
-      return;
-    }
-    const unsubscribe = navigation.addListener('beforeRemove', e => {
-      if (hasShownGuideRef.current) {
-        return;
-      }
-      e.preventDefault();
-      setShowGuideEntryPopup(true);
-    });
-    return unsubscribe;
-  }, [navigation, fromSource]);
-
-  const market = useMemo(() => {
-    return marketDataMap[coin];
-  }, [marketDataMap, coin]);
-
-  const [activeAssetCtx, setActiveAssetCtx] = React.useState<
-    WsActiveAssetCtx['ctx'] | null
-  >(null);
+  const { activeAssetCtx, activeAssetData, refreshActiveAssetData } =
+    useActiveAssetSubscription(coin);
 
   const [positionDirection, setPositionDirection] = React.useState<
     'Long' | 'Short'
@@ -159,20 +151,13 @@ export const PerpsMarketDetailScreen = () => {
   const [closePositionVisible, setClosePositionVisible] = React.useState(false);
   const [addPositionVisible, setAddPositionVisible] = React.useState(false);
 
-  // 查找当前币种的仓位信息
   const currentPosition = useMemo(() => {
     return positionAndOpenOrders?.find(
       asset => asset.position.coin.toLowerCase() === coin?.toLowerCase(),
     );
   }, [positionAndOpenOrders, coin]);
 
-  const providerFee = React.useMemo(() => {
-    return perpFee;
-  }, [perpFee]);
-
-  const currentAssetCtx = useMemo(() => {
-    return marketDataMap[coin];
-  }, [marketDataMap, coin]);
+  const providerFee = perpFee;
 
   const { tpPrice, slPrice, tpOid, slOid } = useMemo(() => {
     if (
@@ -243,6 +228,7 @@ export const PerpsMarketDetailScreen = () => {
     handleSetAutoClose,
     handleCancelOrder,
     handleUpdateMargin,
+    handleStableCoinOrder,
   } = usePerpsPosition();
 
   const { handleDeposit } = usePerpsDeposit({
@@ -274,7 +260,30 @@ export const PerpsMarketDetailScreen = () => {
     return !!currentPosition;
   }, [currentPosition]);
 
-  const { accountValue, availableBalance } = usePerpsAccount();
+  const hasLimitOrders = perpsStore(s =>
+    (s.openOrders || []).some(o => o.coin === coin && isLimitOrder(o)),
+  );
+
+  const { accountValue, isUnifiedAccount, getAvailableByAsset } =
+    usePerpsAccount();
+
+  const quoteAsset = currentAssetCtx?.quoteAsset;
+
+  const availableBalance = useMemo(() => {
+    if (activeAssetData?.availableToTrade) {
+      const isShort = hasPosition && Number(currentPosition?.position.szi) < 0;
+
+      // type availableToTrade : [longAvailable, shortAvailable]
+      return Number(activeAssetData.availableToTrade[isShort ? 1 : 0]);
+    }
+    return getAvailableByAsset(quoteAsset || 'USDC') || 0;
+  }, [
+    activeAssetData?.availableToTrade,
+    quoteAsset,
+    getAvailableByAsset,
+    hasPosition,
+    currentPosition?.position.szi,
+  ]);
 
   const needDepositFirst = useMemo(() => {
     return Number(accountValue) === 0 && Number(availableBalance) === 0;
@@ -284,6 +293,10 @@ export const PerpsMarketDetailScreen = () => {
     return accountNeedApproveAgent || accountNeedApproveBuilderFee;
   }, [accountNeedApproveAgent, accountNeedApproveBuilderFee]);
 
+  const needEnableUnifiedAccount = useMemo(() => {
+    return !isUnifiedAccount && (!currentAssetCtx || !!currentAssetCtx.dexId);
+  }, [isUnifiedAccount, currentAssetCtx]);
+
   const canOpenPosition = useMemo(() => {
     return (
       hasPermission &&
@@ -291,6 +304,7 @@ export const PerpsMarketDetailScreen = () => {
       !hasPosition &&
       !needDepositFirst &&
       !accountNeedApprove &&
+      !needEnableUnifiedAccount &&
       showOpenPosition
     );
   }, [
@@ -300,89 +314,92 @@ export const PerpsMarketDetailScreen = () => {
     needDepositFirst,
     showOpenPosition,
     accountNeedApprove,
+    needEnableUnifiedAccount,
   ]);
 
-  const [openPositionVisible, setOpenPositionVisible] = React.useState(
-    fromSource === 'openPosition' && canOpenPosition,
-  );
+  const [openPositionVisible, setOpenPositionVisible] = React.useState(false);
+  const [isShowSwapPopup, setIsShowSwapPopup] = useState(false);
+  const [isShowEnableUnifiedPopup, setIsShowEnableUnifiedPopup] =
+    useState(false);
 
-  const subscribeActiveAssetCtx = useMemoizedFn(() => {
-    const sdk = apisPerps.getPerpsSDK();
-    const { unsubscribe } = sdk.ws.subscribeToActiveAssetCtx(coin, data => {
-      if (coinNameRef.current !== data.coin) {
-        return;
-      }
-      setActiveAssetCtx(data.ctx);
-    });
+  const unifiedEnableSourceRef = useRef<'swap' | 'other'>('swap');
 
-    return () => {
-      unsubscribe();
-    };
-  });
-
-  const unsubscribeActiveAssetRef = useRef<() => void>(() => {});
-
-  // Subscribe to real-time candle updates
-  useEffect(() => {
-    if (unsubscribeActiveAssetRef.current) {
-      unsubscribeActiveAssetRef.current();
+  const gateUnifiedForNonDefaultDex = useCallback((): boolean => {
+    if (needEnableUnifiedAccount) {
+      unifiedEnableSourceRef.current = 'other';
+      setIsShowEnableUnifiedPopup(true);
+      return false;
     }
-    const unsubscribe = subscribeActiveAssetCtx();
-    unsubscribeActiveAssetRef.current = unsubscribe;
-    return () => {
-      unsubscribe?.();
-    };
-  }, [subscribeActiveAssetCtx, coin]);
+    return true;
+  }, [needEnableUnifiedAccount]);
 
-  // Re-subscribe activeAssetCtx when app returns to foreground
+  const initAutoOpenPositionRef = useRef(false);
   useEffect(() => {
-    let appStateRef = AppState.currentState;
-    const subscription = AppState.addEventListener(
-      'change',
-      (nextAppState: AppStateStatus) => {
-        if (
-          appStateRef.match(/inactive|background/) &&
-          nextAppState === 'active'
-        ) {
-          if (unsubscribeActiveAssetRef.current) {
-            unsubscribeActiveAssetRef.current();
-          }
-          const unsubscribe = subscribeActiveAssetCtx();
-          unsubscribeActiveAssetRef.current = unsubscribe;
+    const autoOpenPosition = async () => {
+      try {
+        if (initAutoOpenPositionRef.current) {
+          return;
         }
-        appStateRef = nextAppState;
-      },
-    );
-    return () => subscription.remove();
-  }, [subscribeActiveAssetCtx]);
+        initAutoOpenPositionRef.current = true;
+        const isAutoOpen = fromSource === 'openPosition' && !!canOpenPosition;
+        if (isAutoOpen) {
+          await handleActionApproveStatus();
+          setOpenPositionVisible(true);
+        }
+      } catch (e) {}
+    };
+    autoOpenPosition();
+  }, [fromSource, canOpenPosition, handleActionApproveStatus]);
 
-  // Available balance for trading
+  const handleSwapPress = useCallback(async () => {
+    await handleActionApproveStatus();
+
+    if (!isUnifiedAccount && !accountNeedApproveAgent) {
+      unifiedEnableSourceRef.current = 'swap';
+      setIsShowEnableUnifiedPopup(true);
+      return;
+    }
+    setIsShowSwapPopup(true);
+  }, [isUnifiedAccount, handleActionApproveStatus, accountNeedApproveAgent]);
+
+  const handleEnableUnifiedConfirm = useCallback(async () => {
+    const success = await handleEnableUnifiedAccount();
+    setIsShowEnableUnifiedPopup(false);
+    if (success && unifiedEnableSourceRef.current === 'swap') {
+      setIsShowSwapPopup(true);
+    }
+  }, [handleEnableUnifiedAccount]);
 
   const markPrice = useMemo(() => {
     return Number(activeAssetCtx?.markPx || currentAssetCtx?.markPx || 0);
   }, [activeAssetCtx?.markPx, currentAssetCtx?.markPx]);
 
   // Position data if exists
-  const positionData = currentPosition
-    ? {
-        pnl: Number(currentPosition.position.unrealizedPnl || 0),
-        positionValue: Number(currentPosition.position.positionValue || 0),
-        size: Math.abs(Number(currentPosition.position.szi || 0)),
-        marginUsed: Number(currentPosition.position.marginUsed || 0),
-        type: currentPosition.position.leverage.type,
-        leverage: Number(currentPosition.position.leverage.value || 1),
-        entryPrice: Number(currentPosition.position.entryPx || 0),
-        liquidationPrice: Number(
-          currentPosition.position.liquidationPx || 0,
-        ).toFixed(currentAssetCtx?.pxDecimals || 2),
-        autoClose: false, // This would come from SDK
-        direction: (Number(currentPosition.position.szi || 0) > 0
-          ? 'Long'
-          : 'Short') as 'Long' | 'Short',
-        pnlPercent: Number(currentPosition.position.returnOnEquity || 0) * 100,
-        fundingPayments: currentPosition.position.cumFunding.sinceOpen,
-      }
-    : null;
+  const positionData = useMemo(
+    () =>
+      currentPosition
+        ? {
+            pnl: Number(currentPosition.position.unrealizedPnl || 0),
+            positionValue: Number(currentPosition.position.positionValue || 0),
+            size: Math.abs(Number(currentPosition.position.szi || 0)),
+            marginUsed: Number(currentPosition.position.marginUsed || 0),
+            type: currentPosition.position.leverage.type,
+            leverage: Number(currentPosition.position.leverage.value || 1),
+            entryPrice: Number(currentPosition.position.entryPx || 0),
+            liquidationPrice: Number(
+              currentPosition.position.liquidationPx || 0,
+            ).toFixed(currentAssetCtx?.pxDecimals || 2),
+            autoClose: false, // This would come from SDK
+            direction: (Number(currentPosition.position.szi || 0) > 0
+              ? 'Long'
+              : 'Short') as 'Long' | 'Short',
+            pnlPercent:
+              Number(currentPosition.position.returnOnEquity || 0) * 100,
+            fundingPayments: currentPosition.position.cumFunding.sinceOpen,
+          }
+        : null,
+    [currentPosition, currentAssetCtx?.pxDecimals],
+  );
 
   const handleCancelAutoClose = useMemoizedFn(
     async (actionType: 'tp' | 'sl') => {
@@ -416,19 +433,27 @@ export const PerpsMarketDetailScreen = () => {
     return (
       <PerpsHeaderTitle
         // account={currentPerpsAccount}
-        popupIsOpen={showSearchListPopup}
+        popupIsOpen={false}
+        quoteCoin={currentAssetCtx?.quoteAsset}
+        displayName={currentAssetCtx?.displayName || coin}
         coin={coin}
         logoUrl={currentAssetCtx?.logoUrl}
         onSelectCoin={() => {
-          setShowSearchListPopup(true);
+          naviReplace(RootNames.StackTransaction, {
+            screen: RootNames.PerpsSearch,
+            params: {
+              openFromSource: 'marketDetail',
+              initialTab: 'topVolume',
+            },
+          });
         }}
       />
     );
   }, [
-    setShowSearchListPopup,
-    showSearchListPopup,
     coin,
     currentAssetCtx?.logoUrl,
+    currentAssetCtx?.quoteAsset,
+    currentAssetCtx?.displayName,
     // currentPerpsAccount,
   ]);
 
@@ -443,6 +468,7 @@ export const PerpsMarketDetailScreen = () => {
   //   toast.error('Market not found');
   //   return null;
   // }
+  const displayName = currentAssetCtx?.displayName || coin;
 
   return (
     <>
@@ -465,16 +491,26 @@ export const PerpsMarketDetailScreen = () => {
             />
             {isLogin && isInitialized && !hasPosition ? (
               <PerpsDepositCard
+                accountValue={accountValue}
                 availableBalance={availableBalance}
+                quoteAsset={currentAssetCtx?.quoteAsset}
                 onDepositPress={() => {
-                  setPopupState(prev => ({
-                    ...prev,
-                    isShowDepositPopup: true,
-                  }));
+                  if (!needDepositFirst && !gateUnifiedForNonDefaultDex()) {
+                    return;
+                  }
+                  setIsShowDepositPopup(true);
                 }}
+                onSwapPress={handleSwapPress}
               />
             ) : null}
           </View>
+          {!hasPosition && (
+            <PerpsLimitOrdersForCoin
+              coin={coin}
+              leverage={activeAssetData?.leverage ?? null}
+              handleActionApproveStatus={handleActionApproveStatus}
+            />
+          )}
           {!isInitialized ? (
             <PerpsPositionSkeletonLoader />
           ) : (
@@ -508,14 +544,21 @@ export const PerpsMarketDetailScreen = () => {
               handleUpdateMargin={handleUpdateMargin}
             />
           )}
-          <PerpsInfo market={market} activeAssetCtx={activeAssetCtx} />
+          {hasPosition && (
+            <PerpsLimitOrdersForCoin
+              coin={coin}
+              leverage={currentPosition?.position.leverage ?? null}
+              handleActionApproveStatus={handleActionApproveStatus}
+            />
+          )}
+          {!hasPosition && !hasLimitOrders && <PerpsAbout coin={coin} />}
+          <PerpsInfo market={currentAssetCtx} activeAssetCtx={activeAssetCtx} />
 
           <PerpsHistorySection
             coin={coin}
-            marketDataMap={marketDataMap}
             historyList={singleCoinHistoryList}
           />
-          <PerpsIntro />
+          {(hasPosition || hasLimitOrders) && <PerpsAbout coin={coin} />}
         </ScrollView>
         {isLogin ? (
           <PerpsFooter
@@ -531,6 +574,9 @@ export const PerpsMarketDetailScreen = () => {
                 showToast(t('page.perpsDetail.needDepositFirst'), 'error');
                 return;
               }
+              if (!gateUnifiedForNonDefaultDex()) {
+                return;
+              }
 
               await handleActionApproveStatus();
               setPositionDirection('Long');
@@ -539,6 +585,9 @@ export const PerpsMarketDetailScreen = () => {
             onShortPress={async () => {
               if (needDepositFirst) {
                 showToast(t('page.perpsDetail.needDepositFirst'), 'error');
+                return;
+              }
+              if (!gateUnifiedForNonDefaultDex()) {
                 return;
               }
 
@@ -556,12 +605,9 @@ export const PerpsMarketDetailScreen = () => {
 
       <PerpsDepositPopup
         account={currentPerpsAccount}
-        visible={popupState.isShowDepositPopup}
+        visible={isShowDepositPopup}
         onClose={() => {
-          setPopupState(prev => ({
-            ...prev,
-            isShowDepositPopup: false,
-          }));
+          setIsShowDepositPopup(false);
         }}
         onDeposit={async (txs, amount, cacheBridgeHistory, options) => {
           try {
@@ -594,8 +640,10 @@ export const PerpsMarketDetailScreen = () => {
       />
       <PerpsOpenPositionPopup
         activeAssetCtx={activeAssetCtx}
+        activeAssetData={activeAssetData}
+        refreshActiveAssetData={refreshActiveAssetData}
         currentAssetCtx={currentAssetCtx}
-        marketDataItem={marketDataMap[coin]}
+        marketDataItem={currentAssetCtx}
         visible={openPositionVisible}
         direction={positionDirection}
         providerFee={providerFee}
@@ -612,6 +660,15 @@ export const PerpsMarketDetailScreen = () => {
         onCancel={() => setOpenPositionVisible(false)}
         setCurrentTpOrSl={setCurrentTpOrSl}
         handleOpenPosition={handleOpenPosition}
+        quoteAsset={currentAssetCtx?.quoteAsset}
+        onDepositPress={() => {
+          setOpenPositionVisible(false);
+          setIsShowDepositPopup(true);
+        }}
+        onSwapPress={() => {
+          setOpenPositionVisible(false);
+          handleSwapPress();
+        }}
         onConfirm={() => {
           setOpenPositionVisible(false);
           if (fromSource === 'openPosition') {
@@ -630,11 +687,13 @@ export const PerpsMarketDetailScreen = () => {
           direction={positionData?.direction as 'Long' | 'Short'}
           positionSize={positionData?.size.toString() || '0'}
           pnl={positionData?.pnl || 0}
+          szDecimals={currentAssetCtx?.szDecimals || 0}
+          quoteAsset={currentAssetCtx?.quoteAsset}
           onCancel={() => setClosePositionVisible(false)}
           onConfirm={() => {
             setClosePositionVisible(false);
           }}
-          handleClosePosition={async (closePercent: number) => {
+          handleClosePosition={async ({ closePercent, orderType, limitPx }) => {
             let sizeStr = '0';
             if (closePercent < 100) {
               const size = (positionData?.size * closePercent) / 100;
@@ -646,19 +705,29 @@ export const PerpsMarketDetailScreen = () => {
               coin,
               size: sizeStr,
               direction: positionData?.direction as 'Long' | 'Short',
-              price: (activeAssetCtx?.markPx as unknown as string) || '0',
+              price: activeAssetCtx?.markPx || currentAssetCtx?.markPx || '0',
+              orderType,
+              limitPx,
             });
-            setCurrentTpOrSl({
-              tpPrice: undefined,
-              slPrice: undefined,
-            });
+            // A resting limit close leaves the position open, so existing
+            // TP/SL orders stay attached — clear only on market close or a
+            // marketable limit close that filled immediately.
+            if (orderType === 'market' || (res && !res.resting)) {
+              setCurrentTpOrSl({
+                tpPrice: undefined,
+                slPrice: undefined,
+              });
+            }
             if (res) {
               const { avgPx, totalSz } = res;
               const isBuy = positionData?.direction === 'Long';
               stats.report('perpsTradeHistory', {
                 created_at: new Date().getTime(),
                 user_addr: currentPerpsAccount?.address || '',
-                trade_type: 'close position',
+                trade_type:
+                  orderType === 'limit'
+                    ? 'close position limit'
+                    : 'close position',
                 leverage: positionData?.leverage.toString(),
                 trade_side: getStatsReportSide(!isBuy, true),
                 margin_mode:
@@ -679,6 +748,8 @@ export const PerpsMarketDetailScreen = () => {
       {positionData ? (
         <PerpsAddPositionPopup
           visible={addPositionVisible}
+          providerFee={providerFee}
+          availableBalance={Number(availableBalance || 0)}
           pnl={Number(positionData?.pnl || 0)}
           pnlPercent={Number(positionData?.pnlPercent || 0)}
           liquidationPx={Number(positionData?.liquidationPrice || 0)}
@@ -694,6 +765,8 @@ export const PerpsMarketDetailScreen = () => {
           markPrice={markPrice}
           direction={positionData?.direction as 'Long' | 'Short'}
           positionSize={positionData?.size.toString() || '0'}
+          entryPrice={positionData?.entryPrice || 0}
+          positionValue={positionData?.positionValue || 0}
           szDecimals={currentAssetCtx?.szDecimals || 0}
           pxDecimals={currentAssetCtx?.pxDecimals || 2}
           leverage={positionData?.leverage || 1}
@@ -701,6 +774,15 @@ export const PerpsMarketDetailScreen = () => {
           onCancel={() => setAddPositionVisible(false)}
           onConfirm={() => {
             setAddPositionVisible(false);
+          }}
+          quoteAsset={currentAssetCtx?.quoteAsset}
+          onDepositPress={() => {
+            setAddPositionVisible(false);
+            setIsShowDepositPopup(true);
+          }}
+          onSwapPress={() => {
+            setAddPositionVisible(false);
+            handleSwapPress();
           }}
           handleAddPosition={async (tradeSize: string) => {
             const res = await handleOpenPosition({
@@ -736,72 +818,52 @@ export const PerpsMarketDetailScreen = () => {
         />
       ) : null}
 
-      <PerpSearchListPopup
-        openFromSource="searchPerps"
-        visible={showSearchListPopup}
-        onSelect={item => {
-          coinNameRef.current = item;
-          const positionItem = positionAndOpenOrders?.find(
-            asset => asset.position.coin.toLowerCase() === coin?.toLowerCase(),
-          );
-          const tpItem = positionItem?.openOrders?.find(
-            order =>
-              order.orderType === 'Take Profit Market' &&
-              order.isTrigger &&
-              order.isPositionTpsl &&
-              order.reduceOnly,
-          );
-          const slItem = positionItem?.openOrders?.find(
-            order =>
-              order.orderType === 'Stop Market' &&
-              order.isTrigger &&
-              order.isPositionTpsl &&
-              order.reduceOnly,
-          );
-          setCoin(item);
-          setCurrentTpOrSl({
-            tpPrice: tpItem?.triggerPx ?? undefined,
-            slPrice: slItem?.triggerPx ?? undefined,
-          });
-        }}
-        onCancel={() => {
-          setShowSearchListPopup(false);
-        }}
-        marketData={marketData}
-        positionAndOpenOrders={positionAndOpenOrders}
+      <EnableUnifiedAccountPopup
+        visible={isShowEnableUnifiedPopup}
+        onClose={() => setIsShowEnableUnifiedPopup(false)}
+        onConfirm={handleEnableUnifiedConfirm}
       />
-      <PerpsGuideEntryPopup
-        visible={showGuideEntryPopup}
-        onClose={() => {
-          apisPerps.setHasShownPerpsGuidePopup(true);
-          setShowGuideEntryPopup(false);
-          hasShownGuideRef.current = true;
-          navigation.goBack();
+      <PerpsSpotSwapPopup
+        visible={isShowSwapPopup}
+        disableSwitch={true}
+        targetAsset={currentAssetCtx?.quoteAsset || 'USDT'}
+        onClose={() => setIsShowSwapPopup(false)}
+        onSpotOrder={handleStableCoinOrder}
+        onSwapSuccess={() => {
+          // Balance refreshed via WebSocket subscription
+        }}
+        onDepositPress={() => {
+          setIsShowDepositPopup(true);
         }}
       />
     </>
   );
 };
 
-const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
-  container: {
-    flex: 1,
-    height: '100%',
-    paddingHorizontal: 12,
-    position: 'relative',
-  },
-  scrollContent: {
-    paddingBottom: 56,
-  },
-  header: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 12,
-    marginBottom: 30,
-  },
-  chart: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    height: 322,
-    borderRadius: 20,
-  },
-}));
+const getStyles = createGetStyles2024(ctx => {
+  const { colors2024, isLight, safeAreaInsets } = ctx;
+  return {
+    container: {
+      flex: 1,
+      height: '100%',
+      paddingHorizontal: 12,
+      position: 'relative',
+    },
+    scrollContent: {
+      // paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+    },
+    header: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12,
+      marginBottom: 30,
+    },
+    chart: {
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+      height: 322,
+      borderRadius: 20,
+    },
+  };
+});

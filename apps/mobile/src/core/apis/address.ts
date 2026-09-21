@@ -2,20 +2,24 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import WatchKeyring from '@rabby-wallet/eth-keyring-watch';
 
-import { isSameAccount } from '@/hooks/accountsSwitcher';
-import { KeyringAccountWithAlias } from '@/hooks/account';
+import { isSameAccount } from '@/utils/isSameAccount';
+import type { KeyringAccountWithAlias } from '@/types/account';
+import { contactServiceApi } from '@/core/serviceApi/contact';
+import { dappServiceApi } from '@/core/serviceApi/dapp';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { perpsServiceApi } from '@/core/serviceApi/perps';
 import {
-  contactService,
-  dappService,
-  keyringService,
-  perpsService,
-  preferenceService,
-  sessionService,
-  transactionHistoryService,
-  whitelistService,
-} from '../services';
+  getFallbackAccountSnapshot,
+  preferenceServiceApi,
+} from '@/core/serviceApi/preference';
+import { sessionServiceApi } from '@/core/serviceApi/session';
+import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { getKeyring } from './keyring';
 import { BroadcastEvent } from '@/constant/event';
+import { removeTestnetAddressBalanceCache } from '@/utils/testnetAddressBalanceCache';
+import { withWalletUnlock } from '@/utils/walletUnlockGuard';
+import { disconnectWalletConnectSessionsForRemovedAccount } from '../walletconnect/accountRemoval';
 
 export async function addWatchAddress(address: string) {
   const keyring = await getKeyring<WatchKeyring>(
@@ -23,8 +27,21 @@ export async function addWatchAddress(address: string) {
   );
 
   keyring.setAccountToAdd(address);
-  const result = await keyringService.addNewAccount(keyring);
-  preferenceService.initCurrentAccount();
+  const result = await keyringServiceApi.addNewAccount(keyring);
+  await preferenceServiceApi.initCurrentAccount();
+
+  return result;
+}
+
+export async function addWatchAddresses(addresses: string[]) {
+  const keyring = await getKeyring<WatchKeyring>(
+    KEYRING_TYPE.WatchAddressKeyring,
+  );
+  const result = await keyringServiceApi.addNewWatchAccounts(
+    keyring,
+    addresses,
+  );
+  await preferenceServiceApi.initCurrentAccount();
 
   return result;
 }
@@ -35,80 +52,88 @@ export async function addWatchAddress(address: string) {
 export const addWatchAddressOnly = addWatchAddress;
 
 export function getCurrentAccount() {
-  return preferenceService.getFallbackAccount();
+  return getFallbackAccountSnapshot();
 }
 
 async function resetCurrentAccount() {
   const [account] = await getAllAccounts();
   if (account) {
-    preferenceService.setCurrentAccount(account);
+    await preferenceServiceApi.setCurrentAccount(account);
   } else {
-    preferenceService.setCurrentAccount(null);
+    await preferenceServiceApi.setCurrentAccount(null);
   }
 }
 
-export async function removeAddress(account: KeyringAccountWithAlias) {
-  const isRemoveEmptyKeyring =
-    account.type !== KEYRING_TYPE.WalletConnectKeyring;
+export const removeAddress = withWalletUnlock(
+  async (account: KeyringAccountWithAlias) => {
+    const isRemoveEmptyKeyring =
+      account.type !== KEYRING_TYPE.WalletConnectKeyring;
 
-  await keyringService.removeAccount(
-    account.address,
-    account.type,
-    account.brandName,
-    isRemoveEmptyKeyring,
-  );
+    await keyringServiceApi.removeAccount(
+      account.address,
+      account.type,
+      account.brandName,
+      isRemoveEmptyKeyring,
+    );
+    await disconnectWalletConnectSessionsForRemovedAccount(account);
 
-  const hasSameAddressLeft = await keyringService.hasAddress(account.address);
-  if (!hasSameAddressLeft) {
-    preferenceService.removeAddressBalance(account.address);
-    preferenceService.removeAddressAvatar(account.address);
-    contactService.removeAlias(account.address);
-    whitelistService.removeWhitelist(account.address);
-    transactionHistoryService.removeList(account.address);
-    perpsService.removeAgentWallet(account.address);
-  }
-  preferenceService.removePinAddress(account);
-
-  const currentAccount = getCurrentAccount();
-
-  if (
-    addressUtils.isSameAddress(
-      currentAccount?.address || '',
-      account?.address,
-    ) &&
-    currentAccount?.type === account.type &&
-    currentAccount?.brandName === account.brandName
-  ) {
-    await resetCurrentAccount();
-  }
-
-  const newCurrentAccount = getCurrentAccount();
-  Object.entries(dappService.getDapps()).forEach(([origin, dapp]) => {
-    if (isSameAccount(account, dapp.currentAccount)) {
-      dappService.updateDapp({
-        ...dapp,
-        origin,
-        currentAccount: newCurrentAccount,
-      });
-      if (dapp?.isConnected) {
-        sessionService.broadcastEvent(
-          BroadcastEvent.accountsChanged,
-          newCurrentAccount?.address
-            ? [newCurrentAccount.address.toLowerCase()]
-            : [],
-          origin,
-        );
-      }
+    const hasSameAddressLeft = await keyringServiceApi.hasAddress(
+      account.address,
+    );
+    if (!hasSameAddressLeft) {
+      removeTestnetAddressBalanceCache(account.address);
+      await preferenceServiceApi.removeAddressAvatar(account.address);
+      await contactServiceApi.removeAlias(account.address);
+      await whitelistServiceApi.removeWhitelist(account.address);
+      await transactionHistoryServiceApi.removeList(account.address);
+      await perpsServiceApi.removeAgentWallet(account.address);
     }
-  });
-}
+    await preferenceServiceApi.removePinAddress(account);
+
+    const currentAccount = getCurrentAccount();
+
+    if (
+      addressUtils.isSameAddress(
+        currentAccount?.address || '',
+        account?.address,
+      ) &&
+      currentAccount?.type === account.type &&
+      currentAccount?.brandName === account.brandName
+    ) {
+      await resetCurrentAccount();
+    }
+
+    const newCurrentAccount = getCurrentAccount();
+    const dapps = await dappServiceApi.getDapps();
+    await Promise.all(
+      Object.entries(dapps).map(async ([origin, dapp]) => {
+        if (isSameAccount(account, dapp.currentAccount)) {
+          await dappServiceApi.updateDapp({
+            ...dapp,
+            origin,
+            currentAccount: newCurrentAccount,
+          });
+          if (dapp?.isConnected) {
+            await sessionServiceApi.broadcastEvent(
+              BroadcastEvent.accountsChanged,
+              newCurrentAccount?.address
+                ? [newCurrentAccount.address.toLowerCase()]
+                : [],
+              origin,
+            );
+          }
+        }
+      }),
+    );
+  },
+);
 
 export async function getAllAccounts() {
-  return await keyringService.getAllVisibleAccountsArray();
+  return await keyringServiceApi.getAllVisibleAccountsArray();
 }
 
 export async function getAllMyAccount() {
-  const accouts = await keyringService.getAllVisibleAccountsArray();
+  const accouts = await keyringServiceApi.getAllVisibleAccountsArray();
   return accouts.filter(item => {
     return (
       item.type !== KEYRING_TYPE.WatchAddressKeyring &&

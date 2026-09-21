@@ -1,5 +1,11 @@
-import React, { useCallback, useMemo } from 'react';
-import { StyleSheet, View, PressableProps } from 'react-native';
+import React, { useCallback, useEffect, useMemo } from 'react';
+import {
+  StyleSheet,
+  View,
+  PressableProps,
+  type StyleProp,
+  type TextStyle,
+} from 'react-native';
 import { Platform, StatusBar, Pressable } from 'react-native';
 import Tooltip, { TooltipProps } from 'react-native-walkthrough-tooltip';
 import { colord } from 'colord';
@@ -8,6 +14,7 @@ import { useSwitch } from '@/hooks/useSwitch';
 import { AppColorsVariants } from '@/constant/theme';
 import { RNGHPressable, RNGHPressableProps } from './customized/reexports';
 import { Text } from '@/components/Typography';
+import { TrackedModal } from './Modal/TrackedModal';
 
 type PressableComponent = 'RNPressable' | 'RNGHPressable';
 type PressableComProps<T extends PressableComponent> = T extends 'RNPressable'
@@ -16,6 +23,7 @@ type PressableComProps<T extends PressableComponent> = T extends 'RNPressable'
 type TipProps<T extends PressableComponent> = Omit<TooltipProps, 'content'> & {
   as?: T;
   content: string | TooltipProps['content'];
+  contentTextStyle?: StyleProp<TextStyle>;
   hideArrow?: boolean;
   isLight?: boolean;
   pressableProps?: Omit<PressableComProps<T>, 'onPress'> & {
@@ -26,11 +34,47 @@ type TipProps<T extends PressableComponent> = Omit<TooltipProps, 'content'> & {
     }) => void;
   };
   noPressable?: boolean;
+  modalGateId?: string;
+  modalGateBlocking?: boolean;
 };
 
-export const Tip = <T extends PressableComponent = 'RNPressable'>({
+const destroyListeners = new Set<() => void>();
+
+const TipModalGateContext = React.createContext<{
+  modalGateId: string;
+  modalGateBlocking: boolean;
+} | null>(null);
+
+const TipModalWithGate = ({
+  children,
+  ...modalProps
+}: React.PropsWithChildren<Record<string, unknown>>) => {
+  const modalGate = React.useContext(TipModalGateContext);
+
+  if (!modalGate) {
+    return null;
+  }
+
+  return (
+    <TrackedModal
+      {...modalProps}
+      modalId={modalGate.modalGateId}
+      blocking={modalGate.modalGateBlocking}>
+      {children}
+    </TrackedModal>
+  );
+};
+
+function destroyTips() {
+  destroyListeners.forEach(listener => {
+    listener();
+  });
+}
+
+const TipBase = <T extends PressableComponent = 'RNPressable'>({
   as: propAs = 'RNPressable' as T,
   content,
+  contentTextStyle,
   tooltipStyle,
   pressableProps,
   contentStyle,
@@ -39,11 +83,22 @@ export const Tip = <T extends PressableComponent = 'RNPressable'>({
   isLight,
   children,
   noPressable = false,
+  modalGateId,
+  modalGateBlocking = true,
+  modalComponent,
   ...rest
 }: TipProps<T>) => {
   const { colors, styles } = useThemeStyles(getStyle);
 
   const { on, turnOn, turnOff } = useSwitch();
+
+  useEffect(() => {
+    destroyListeners.add(turnOff);
+
+    return () => {
+      destroyListeners.delete(turnOff);
+    };
+  }, [turnOff]);
 
   const PressableComponent =
     propAs === 'RNPressable' ? Pressable : RNGHPressable;
@@ -54,6 +109,7 @@ export const Tip = <T extends PressableComponent = 'RNPressable'>({
         <Text
           style={StyleSheet.flatten([
             styles.contentText,
+            contentTextStyle,
             isLight && {
               color: colors['neutral-black'],
             },
@@ -64,7 +120,14 @@ export const Tip = <T extends PressableComponent = 'RNPressable'>({
     ) : (
       content
     );
-  }, [content, isLight, colors, styles.content, styles.contentText]);
+  }, [
+    colors,
+    content,
+    contentTextStyle,
+    isLight,
+    styles.content,
+    styles.contentText,
+  ]);
 
   const controlled = useMemo(
     () => typeof rest.isVisible !== 'undefined',
@@ -74,6 +137,17 @@ export const Tip = <T extends PressableComponent = 'RNPressable'>({
   const _arrowSize = useMemo(
     () => (hideArrow ? { width: 0, height: 0 } : arrowSize),
     [arrowSize, hideArrow],
+  );
+
+  const modalGateContextValue = useMemo(
+    () =>
+      modalGateId
+        ? {
+            modalGateId,
+            modalGateBlocking,
+          }
+        : null,
+    [modalGateBlocking, modalGateId],
   );
 
   const onPress = pressableProps?.onPress;
@@ -89,7 +163,7 @@ export const Tip = <T extends PressableComponent = 'RNPressable'>({
     [onPress, turnOff, turnOn],
   );
 
-  return (
+  const tooltipNode = (
     <Tooltip
       isVisible={on}
       placement="top"
@@ -103,6 +177,7 @@ export const Tip = <T extends PressableComponent = 'RNPressable'>({
       content={_content}
       showChildInTooltip={false}
       arrowSize={_arrowSize}
+      modalComponent={modalGateId ? TipModalWithGate : modalComponent}
       {...rest}
       contentStyle={StyleSheet.flatten([
         styles.tooltipContent,
@@ -127,7 +202,21 @@ export const Tip = <T extends PressableComponent = 'RNPressable'>({
       )}
     </Tooltip>
   );
+
+  if (modalGateContextValue) {
+    return (
+      <TipModalGateContext.Provider value={modalGateContextValue}>
+        {tooltipNode}
+      </TipModalGateContext.Provider>
+    );
+  }
+
+  return tooltipNode;
 };
+
+export const Tip = Object.assign(TipBase, {
+  destroy: destroyTips,
+});
 
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({

@@ -3,11 +3,14 @@ import {
   useBottomSheetInternal,
 } from '@gorhom/bottom-sheet';
 import { BottomSheetInternalProvider } from '@gorhom/bottom-sheet/src/contexts/internal';
+import type { StyleProp, ViewStyle } from 'react-native';
 
 export function LocalPannableDraggableView({
   children,
+  style,
 }: {
   children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
 }) {
   const { enableContentPanningGesture, ...restValue } =
     useBottomSheetInternal();
@@ -15,7 +18,9 @@ export function LocalPannableDraggableView({
   return (
     <BottomSheetInternalProvider
       value={{ enableContentPanningGesture: true, ...restValue }}>
-      <BottomSheetDraggableView>{children}</BottomSheetDraggableView>
+      <BottomSheetDraggableView style={style}>
+        {children}
+      </BottomSheetDraggableView>
     </BottomSheetInternalProvider>
   );
 }

@@ -9,6 +9,11 @@ import { HealthFactorBar } from './HealthFactorBar';
 import { HF_COLOR_GOOD_THRESHOLD } from '../utils/constant';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 export const HFDescription: React.FC<{
   hf: string;
@@ -71,6 +76,8 @@ export const HFDescription: React.FC<{
 
       <Button
         containerStyle={styles.button}
+        height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+        titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
         title={t('page.Lending.gotIt')}
         onPress={onClose}
       />
@@ -122,22 +129,6 @@ const getStyles = createGetStyles2024(ctx => ({
     marginTop: 9,
     marginRight: 12,
   },
-  redBullet: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: ctx.colors2024['red-default'],
-    marginTop: 9,
-    marginRight: 12,
-  },
-  greyBullet: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: ctx.colors2024['neutral-foot'],
-    marginTop: 9,
-    marginRight: 12,
-  },
   greenRuleText: {
     flex: 1,
     fontSize: 16,
@@ -179,7 +170,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   button: {
     position: 'absolute',
-    bottom: 56,
+    bottom: getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
     width: '100%',
   },
 }));

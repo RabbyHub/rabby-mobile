@@ -1,13 +1,8 @@
 /* eslint-disable react-native/no-inline-styles */
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  Dimensions,
-  StyleProp,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { Dimensions, TouchableOpacity, View } from 'react-native';
 
 import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
 import TouchableView from '../Touchable/TouchableView';
@@ -16,9 +11,10 @@ import {
   useSceneAccountInfo,
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
-import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
+import type { AccountSwitcherAopProps } from './hooks';
+import { useAccountSceneVisible } from './hooks';
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { LinearGradientContainer } from '@/components2024/ScreenContainer/LinearGradientContainer';
 import {
   AddressItemInPanel,
@@ -32,8 +28,13 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
-import { ITokenItem } from '@/store/tokens';
+import type { ITokenItem } from '@/store/tokens';
 import { Text } from '@/components/Typography';
+
+export type AccountDisabledTipsResolver = (
+  account: Account,
+) => string | undefined;
+
 const SectionCollapsableNav = function ({
   isCollapsed = false,
   title,
@@ -89,6 +90,7 @@ export function AccountsPanelInModal({
   onSwitchSceneAccount,
   token,
   scrollToBottom,
+  getAccountDisabledTips,
 }: // isVisible = false,
 AccountSwitcherAopProps<{
   // isVisible?: boolean;
@@ -100,6 +102,7 @@ AccountSwitcherAopProps<{
   }) => void;
   token?: ITokenItem;
   scrollToBottom(): void;
+  getAccountDisabledTips?: AccountDisabledTipsResolver;
 }>) {
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getPanelStyle,
@@ -251,6 +254,7 @@ AccountSwitcherAopProps<{
                   addressItemProps={{ account }}
                   isCurrent={isCurrent}
                   token={token}
+                  disabledTips={getAccountDisabledTips?.(account)}
                   // isPinned={false}
                   onPressAddress={handlePressAccount}
                   style={[
@@ -268,6 +272,7 @@ AccountSwitcherAopProps<{
       ItemRenderItem,
       finalSceneCurrentAccount,
       handlePressAccount,
+      getAccountDisabledTips,
       isSceneUsingAllAccounts,
       styles.addressItem,
       styles.addressItemTopGap,
@@ -422,6 +427,7 @@ AccountSwitcherAopProps<{
                       token={token}
                       addressItemProps={{ account }}
                       isCurrent={isCurrent}
+                      disabledTips={getAccountDisabledTips?.(account)}
                       onPressAddress={handlePressAccount}
                       style={[
                         styles.addressItem,
@@ -459,6 +465,7 @@ AccountSwitcherAopProps<{
                       token={token}
                       addressItemProps={{ account }}
                       isCurrent={isCurrent}
+                      disabledTips={getAccountDisabledTips?.(account)}
                       onPressAddress={handlePressAccount}
                       style={[
                         styles.addressItem,
@@ -489,6 +496,7 @@ AccountSwitcherAopProps<{
     ItemRenderItem,
     token,
     handlePressAccount,
+    getAccountDisabledTips,
   ]);
 
   const myAddressesList = useCreationWithShallowCompare(() => {
@@ -545,6 +553,7 @@ AccountSwitcherAopProps<{
                     addressItemProps={{ account }}
                     isCurrent={isCurrent}
                     isHideToken={isHideToken}
+                    disabledTips={getAccountDisabledTips?.(account)}
                     onPressAddress={handlePressAccount}
                     style={[
                       styles.addressItem,

@@ -92,6 +92,7 @@ export const formatNumber = (
   decimal = 2,
   opt = {} as BigNumber.Format,
   formatMillion = false,
+  decimalOverMillion = 0,
 ) => {
   const n = new BigNumber(num);
   const format = {
@@ -113,7 +114,7 @@ export const formatNumber = (
     if (formatMillion) {
       return `${n.div(1e6).toFormat(decimal, format)}M`;
     }
-    return n.decimalPlaces(0).toFormat(format);
+    return n.decimalPlaces(decimalOverMillion).toFormat(format);
   }
   return n.toFormat(decimal, format);
 };
@@ -153,6 +154,9 @@ export const formatUsdValue = (
 ) => {
   const bnValue = new BigNumber(value);
   if (bnValue.lt(0)) {
+    if (bnValue.gt(-0.01)) {
+      return `-<$0.01`;
+    }
     return `-$${formatNumber(
       Math.abs(Number(value)),
       decimal,
@@ -254,15 +258,21 @@ export const formatPerpsUsdValue = (
   return '<$0.01';
 };
 
-export const formatAmount = (amount: string | number, decimals = 4) => {
+export const formatAmount = (
+  amount: string | number,
+  decimals = 4,
+  ignoreZeroTail = false,
+) => {
+  const bnValue = new BigNumber(amount);
+  const shouldIgnoreZeroTail = ignoreZeroTail && bnValue.mod(1).isZero();
   if ((amount as number) > 1e9) {
-    return `${new BigNumber(amount).div(1e9).toFormat(4)}B`;
+    return `${bnValue.div(1e9).toFormat(4)}B`;
   }
   if ((amount as number) > 10000) {
-    return formatNumber(amount);
+    return formatNumber(amount, shouldIgnoreZeroTail ? 0 : 2);
   }
   if ((amount as number) > 1) {
-    return formatNumber(amount, 4);
+    return formatNumber(amount, shouldIgnoreZeroTail ? 0 : 4);
   }
   if ((amount as number) < 0.0001) {
     const str = new BigNumber(amount).toFixed();
@@ -322,20 +332,7 @@ export function formatSpeicalAmount(input: number | string) {
   return input.toString();
 }
 
-export const formatGasHeaderUsdValue = (value: string | number) => {
-  const bnValue = new BigNumber(value);
-  if (bnValue.lt(0)) {
-    return `-$${formatNumber(Math.abs(Number(value)))}`;
-  }
-  if (bnValue.gte(0.01)) {
-    return `$${formatNumber(value)}`;
-  }
-  if (bnValue.lt(0.0001)) {
-    return '<$0.0001';
-  }
-
-  return `$${formatNumber(value, 4)}`;
-};
+export const formatGasHeaderUsdValue = formatUsdValue;
 
 export const formatGasCostUsd = (gasCostUsd: BigNumber) => {
   const bn = gasCostUsd!;

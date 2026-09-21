@@ -36,13 +36,14 @@ import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/Fo
 import { useSetPasswordFirst } from '@/hooks/useLock';
 import { useImportAddressProc } from '@/hooks/address/useNewUser';
 import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
-import { preferenceService } from '@/core/services';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { setReportActionTs } from '@/core/serviceApi/preference';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import {
   isNewlyInputTextSameWithContentFromClipboard,
   onPastedSensitiveData,
 } from '@/utils/clipboard';
 import { Text } from '@/components/Typography';
+import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 const getStyles = createGetStyles2024(ctx => ({
   screen: {
@@ -275,12 +276,17 @@ export const ImportSeedPhraseScreen2024 = () => {
         isFirstImportPassword: true,
       })
     ) {
-      preferenceService.setReportActionTs(
+      void setReportActionTs(
         REPORT_TIMEOUT_ACTION_KEY.IMPORT_SEED_PHRASE_CONFIRM,
-      );
+      ).catch(console.error);
       setConfirmCB(importSeedPhrase);
       return;
     }
+
+    if (!(await ensureWalletUnlockedForAction())) {
+      return;
+    }
+
     setImporting(true);
     importToastHiddenRef.current = toast.show('Importing...', {
       duration: 100000,
@@ -302,6 +308,7 @@ export const ImportSeedPhraseScreen2024 = () => {
 
   React.useEffect(() => {
     if (scanner.text) {
+      setError(undefined);
       setMnemonics(scanner.text);
       scanner.clear();
     }
@@ -315,7 +322,7 @@ export const ImportSeedPhraseScreen2024 = () => {
 
   return (
     <FooterButtonScreenContainer
-      as="View"
+      as="KeyboardAvoidingView"
       buttonProps={{
         title: t('global.Confirm'),
         onPress: handleConfirm,

@@ -1,4 +1,5 @@
 import { useApproval } from '@/hooks/useApproval';
+import { ApprovalIdentityContext } from '@/hooks/approvalIdentity';
 import {
   eventBus,
   EVENT_ACTIVE_WINDOW,
@@ -17,6 +18,10 @@ import {
 } from '@/core/bridges/state';
 // import TouchableText from '../Touchable/TouchableText';
 import { Text } from '@/components/Typography';
+import {
+  APPROVAL_REQUEST_SERVICE_DEPENDENCIES,
+  withApprovalServices,
+} from './approvalServiceDependencies';
 
 function ShouldntRenderApproveDueToDappDisappeared() {
   return (
@@ -40,7 +45,7 @@ function ShouldntRenderApproveDueToDappDisappeared() {
   );
 }
 
-export const Approval = () => {
+const ApprovalContent = () => {
   const [getApproval, ,] = useApproval();
   type IApproval = Exclude<
     IExtractFromPromise<ReturnType<typeof getApproval>>,
@@ -94,6 +99,11 @@ export const Approval = () => {
     data?.$mobileCtx?.isFromMobileInnerDapp ||
     params?.session?.$mobileCtx?.isFromMobileInnerDapp;
 
+  const isFromWalletConnect =
+    params?.$mobileCtx?.isFromWalletConnect ||
+    data?.$mobileCtx?.isFromWalletConnect ||
+    params?.session?.$mobileCtx?.isFromWalletConnect;
+
   const fromOrigin = origin || params?.origin;
   const shouldDisallow =
     !isInternalSession(fromOrigin) &&
@@ -108,7 +118,12 @@ export const Approval = () => {
       { allowSecondaryDomainMatch: false },
     );
 
-  if (shouldDisallow && !shouldAllowForLegacy && !isFromMobileInnerDapp) {
+  if (
+    shouldDisallow &&
+    !shouldAllowForLegacy &&
+    !isFromMobileInnerDapp &&
+    !isFromWalletConnect
+  ) {
     return <ShouldntRenderApproveDueToDappDisappeared />;
   }
 
@@ -116,10 +131,20 @@ export const Approval = () => {
     ApprovalComponent[approvalComponent] ?? ApprovalComponent.Unknown;
 
   return (
-    <CurrentApprovalComponent
-      params={params}
-      origin={origin}
-      account={account}
-    />
+    <ApprovalIdentityContext.Provider
+      key={approval.id}
+      value={{ id: approval.id, component: approvalComponent }}>
+      <CurrentApprovalComponent
+        params={params}
+        origin={origin}
+        account={account}
+      />
+    </ApprovalIdentityContext.Provider>
   );
 };
+
+export const Approval = withApprovalServices(
+  APPROVAL_REQUEST_SERVICE_DEPENDENCIES,
+  ApprovalContent,
+  { fallback: <View /> },
+);

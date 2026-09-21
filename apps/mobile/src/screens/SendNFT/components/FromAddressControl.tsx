@@ -7,7 +7,7 @@ import { AccountSwitcher } from '@/components/AccountSwitcher/InScreenSwitch';
 import { AccountSwitcherScene } from '@/components/AccountSwitcher/hooks';
 import { Text } from '@/components/Typography';
 
-export default function FromAddressControl2024({
+function FromAddressControl2024({
   style,
   disableSwitch,
 }: React.PropsWithChildren<
@@ -26,6 +26,8 @@ export default function FromAddressControl2024({
     </View>
   );
 }
+
+export default React.memo(FromAddressControl2024);
 
 const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {

@@ -30,7 +30,8 @@ const getStyles = (colors: AppColorsVariants) =>
 
     footerButtonTitle: {
       fontWeight: '600',
-      fontSize: 16,
+      fontSize: 18,
+      lineHeight: 22,
     },
     footerButtonDisabled: {
       backgroundColor: colors['blue-disable'],

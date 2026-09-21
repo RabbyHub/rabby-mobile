@@ -93,37 +93,52 @@ export function ScreenHeaderAccountSwitcher({
             <AddressItem
               style={styles.addressItem}
               account={finalSceneCurrentAccount}>
-              {({ WalletIcon, WalletAddress }) => {
+              {({ WalletIcon }) => {
                 return (
                   <View style={styles.addressRow}>
                     <WalletIcon style={styles.walletIcon} />
-                    <Text
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                      style={styles.address}>
-                      {finalSceneCurrentAccount.aliasName ||
-                        ellipsisAddress(finalSceneCurrentAccount?.address)}
-                    </Text>
+                    <View style={styles.nameBox}>
+                      <Text
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                        style={styles.address}>
+                        {finalSceneCurrentAccount.aliasName ||
+                          ellipsisAddress(finalSceneCurrentAccount?.address)}
+                      </Text>
+                    </View>
+                    {!disableSwitch && (
+                      <IconCom
+                        style={[
+                          styles.addressCaretIcon,
+                          isOpen && styles.reverseCaret,
+                        ]}
+                        width={18}
+                        height={18}
+                        color={colors2024['neutral-bg-4']}
+                      />
+                    )}
                   </View>
                 );
               }}
             </AddressItem>
           )
         ) : (
-          <Text style={styles.address}>
-            {t('component.accountSwitcher.all')}{' '}
-            {t('component.accountSwitcher.screenHeaderSubTitle', {
-              count: len,
-            })}
-          </Text>
-        )}
-        {!disableSwitch && (
-          <IconCom
-            style={[styles.addressCaretIcon, isOpen && styles.reverseCaret]}
-            width={18}
-            height={18}
-            color={colors2024['neutral-bg-4']}
-          />
+          <>
+            <Text style={styles.multipleAddress}>
+              {t('component.accountSwitcher.all')}{' '}
+              {t('component.accountSwitcher.screenHeaderSubTitle', {
+                count: len,
+              })}
+            </Text>
+            {!disableSwitch && (
+              <IconCom
+                style={[styles.addressCaretIcon, isOpen && styles.reverseCaret]}
+                width={18}
+                height={18}
+                color={colors2024['neutral-bg-4']}
+              />
+            )}
+          </>
         )}
       </View>
     </TouchableView>
@@ -139,7 +154,6 @@ const getStyle = createGetStyles2024(ctx => {
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 199,
-      width: SCREEN_WIDTH - 160,
       marginTop: -4,
     },
     titleText: {
@@ -152,31 +166,46 @@ const getStyle = createGetStyles2024(ctx => {
     wrapperAddressRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      width: '100%',
       justifyContent: 'center',
+      width: SCREEN_WIDTH - 140,
     },
     addressRow: {
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
+      width: '100%',
     },
     addressItem: {
-      flexShrink: 1,
+      maxWidth: '100%',
+      overflow: 'hidden',
     },
     walletIcon: {
       borderRadius: 4,
       width: 18,
       height: 18,
       marginRight: 4,
+      flexShrink: 0,
+    },
+    nameBox: {
+      flexShrink: 1,
+      minWidth: 0,
+      margin: 4,
     },
     address: {
-      flexShrink: 1,
-      margin: 4,
       fontFamily: 'SF Pro Rounded',
       fontWeight: '500',
       lineHeight: 20,
       fontSize: 16,
-      maxWidth: '90%',
+      width: '100%',
+      color: ctx.colors2024['neutral-foot'],
+    },
+    multipleAddress: {
+      flexShrink: 1,
+      minWidth: 0,
+      fontFamily: 'SF Pro Rounded',
+      fontWeight: '500',
+      lineHeight: 20,
+      fontSize: 16,
       color: ctx.colors2024['neutral-foot'],
     },
     addressCaretIcon: {

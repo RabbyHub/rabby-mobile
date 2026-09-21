@@ -6,14 +6,20 @@ import BigNumber from 'bignumber.js';
 import { getCHAIN_ID_LIST } from '@/constant/projectLists';
 import { useTheme2024 } from '@/hooks/theme';
 import { Text } from '@/components';
-import { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Media } from '@/components/Media';
 import { IconDefaultNFT, IconNumberNFT } from '@/assets/icons/nft';
 import { CHAINS_ENUM } from '@/constant/chains';
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+  RootNames,
+} from '@/constant/layout';
 import { useRoute } from '@react-navigation/native';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { GetRootScreenRouteProp } from '@/navigation-type';
+import type { GetRootScreenRouteProp } from '@/navigation-type';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -29,8 +35,7 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useLoadAssets } from '../Search/useAssets';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { ellipsisAddress } from '@/utils/address';
-import { useTriggerTagAssets } from '../Home/hooks/refresh';
-import { preferenceService } from '@/core/services';
+import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 
 const ListItem = (props: {
   title: string;
@@ -55,7 +60,7 @@ const ListItem = (props: {
 };
 
 export const NFTDetailScreen = () => {
-  const { styles, colors } = useTheme2024({ getStyle });
+  const { styles, colors, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const route = useRoute<GetRootScreenRouteProp<'NftDetail'>>();
@@ -131,7 +136,7 @@ export const NFTDetailScreen = () => {
   );
 
   // todo check this
-  const currentAccount = preferenceService.getFallbackAccount();
+  const currentAccount = getFallbackAccountSnapshot();
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
@@ -261,7 +266,7 @@ export const NFTDetailScreen = () => {
     (type: KEYRING_TYPE, aliasName: string, address?: string) => {
       return (
         <View style={styles.accountBox}>
-          <View className="relative">
+          <View style={styles.relative}>
             <WalletIcon
               type={type as KEYRING_TYPE}
               address={address}
@@ -276,7 +281,7 @@ export const NFTDetailScreen = () => {
         </View>
       );
     },
-    [styles.accountBox, styles.titleText, styles.walletIcon],
+    [styles.accountBox, styles.relative, styles.titleText, styles.walletIcon],
   );
 
   const renderSingeleNft = useCallback(
@@ -285,11 +290,13 @@ export const NFTDetailScreen = () => {
       iToken,
       type,
       aliasName,
+      showInlineButton = true,
     }: {
       address?: string;
       type?: KEYRING_TYPE;
       aliasName?: string;
       iToken: NFTItem;
+      showInlineButton?: boolean;
     }) => {
       return (
         <View key={`${address}-${iToken.id}`}>
@@ -341,14 +348,15 @@ export const NFTDetailScreen = () => {
             <ListItem title="Purchase Date" value={calDate(iToken)} />
             <ListItem title="Last Price" value={calPrice(iToken)} />
           </View>
-          {!!address && (
+          {showInlineButton && !!address && (
             <View style={[styles.buttonContainer]}>
               <Button
                 onPress={() =>
                   address && type && handleSend(iToken, address, type)
                 }
                 title={t('page.sendNFT.sendButton')}
-                titleStyle={styles.btnTitle}
+                height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                titleStyle={[BOTTOM_BUTTON_TITLE_STYLE, styles.btnTitle]}
               />
             </View>
           )}
@@ -358,186 +366,228 @@ export const NFTDetailScreen = () => {
     [calDate, calPrice, renderAccountHeader, t, handleSend, colors, styles],
   );
 
+  const footerItem = useMemo(() => {
+    if (itemList.length !== 1) {
+      return null;
+    }
+
+    const [item] = itemList;
+    return item?.address && item?.type ? item : null;
+  }, [itemList]);
+
   return (
-    <NormalScreenContainer2024 type="bg1" overwriteStyle={styles.container}>
+    <NormalScreenContainer2024
+      type="linear"
+      linearProp={{
+        colors: [colors2024['neutral-bg-1'], colors2024['neutral-bg-1']],
+        style: styles.screenRoot,
+      }}
+      overwriteStyle={styles.container}>
       <ScrollView style={styles.scrollContainer}>
         {itemList.map(({ data, address, type, aliasName }) =>
-          renderSingeleNft({ address, iToken: data, type, aliasName }),
+          renderSingeleNft({
+            address,
+            iToken: data,
+            type,
+            aliasName,
+            showInlineButton: !footerItem,
+          }),
         )}
-        <View style={{ height: 40 }} />
       </ScrollView>
+      {footerItem ? (
+        <View style={styles.buttonContainer}>
+          <Button
+            onPress={() =>
+              footerItem.address &&
+              footerItem.type &&
+              handleSend(footerItem.data, footerItem.address, footerItem.type)
+            }
+            title={t('page.sendNFT.sendButton')}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={[BOTTOM_BUTTON_TITLE_STYLE, styles.btnTitle]}
+          />
+        </View>
+      ) : null}
     </NormalScreenContainer2024>
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
-  scrollContainer: {
-    flex: 1,
-    width: '100%',
-    marginTop: 8,
-    // backgroundColor: colors2024['neutral-bg-4'],
-  },
-  accountBox: {
-    flexDirection: 'row',
-    marginLeft: 25,
-    gap: 4,
-    marginTop: 10,
-    marginBottom: 8,
-  },
-  titleText: {
-    flexShrink: 1,
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '500',
-    flexWrap: 'nowrap',
-  },
-  walletIcon: {
-    width: 18,
-    height: 18,
-    borderRadius: 4,
-  },
-  buttonContainer: {
-    height: 100,
-    width: '100%',
-    padding: 20,
-  },
-  btnTitle: {
-    color: colors['neutral-title-2'],
-  },
-  imagesView: {
-    borderRadius: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-    marginBottom: 0,
-  },
-  headerArea: {
-    width: '100%',
-    height: 'auto',
-    marginLeft: 8,
-    display: 'flex',
-    flexDirection: 'row',
-    gap: 8,
-    alignItems: 'center',
-  },
-  assetIcon: {
-    borderRadius: 8,
-  },
-  tokenSymbol: {
-    flexShrink: 1,
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '700',
-    flexWrap: 'nowrap',
-  },
-  container: {
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-  },
-  innerImages: {
-    borderRadius: 16,
-    // width: '100%',
-    // height: 'auto',
-  },
-  avator: {
-    width: 40,
-    height: 40,
-    borderColor: 'red',
-    position: 'relative',
-  },
-  chainIcon: {
-    width: 16,
-    height: 16,
-    borderRadius: 16,
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-  },
-  imagesAvatar: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 8,
-  },
-  images: {
-    width: '100%',
-    height: 360,
-    // flex: 1,
-    paddingHorizontal: 16,
-    borderRadius: 0,
-    resizeMode: 'cover',
-    backgroundColor: 'transparent',
-  },
-  titleView: {
-    paddingTop: 16,
-    paddingBottom: 16,
-    width: '100%',
-  },
-  title: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '700',
-  },
-  subtitle: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  numbernft: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: colors['neutral-title-1'],
-    lineHeight: 17,
-    marginLeft: 8,
-  },
-  listItem: {
-    flexDirection: 'row',
-    paddingTop: 16,
-    justifyContent: 'space-between',
-  },
-  price: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-  },
-  value: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '500',
-    alignSelf: 'flex-end',
-    alignItems: 'flex-end',
-    alignContent: 'flex-end',
-    maxWidth: 227,
-    marginLeft: 24,
-    textAlign: 'right',
-  },
-  borderTop: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderColor: colors['neutral-line'],
-  },
-  bottom: {
-    paddingHorizontal: 20,
-    width: '100%',
-  },
-  left: {
-    alignSelf: 'flex-start',
-  },
-  right: {
-    alignItems: 'flex-end',
-    justifyContent: 'flex-end',
-    alignSelf: 'flex-end',
-    flexWrap: 'wrap',
-    alignContent: 'flex-end',
-  },
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, colors, safeAreaInsets }) => ({
+    screenRoot: {
+      flex: 1,
+    },
+    scrollContainer: {
+      flex: 1,
+      width: '100%',
+      marginTop: 8,
+      // backgroundColor: colors2024['neutral-bg-4'],
+    },
+    accountBox: {
+      flexDirection: 'row',
+      marginLeft: 25,
+      gap: 4,
+      marginTop: 10,
+      marginBottom: 8,
+    },
+    titleText: {
+      flexShrink: 1,
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '500',
+      flexWrap: 'nowrap',
+    },
+    walletIcon: {
+      width: 18,
+      height: 18,
+      borderRadius: 4,
+    },
+    relative: {
+      position: 'relative',
+    },
+    buttonContainer: {
+      width: '100%',
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+      paddingHorizontal: 20,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+    },
+    btnTitle: {
+      color: colors['neutral-title-2'],
+    },
+    imagesView: {
+      borderRadius: 4,
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'relative',
+      marginBottom: 0,
+    },
+    headerArea: {
+      width: '100%',
+      height: 'auto',
+      marginLeft: 8,
+      display: 'flex',
+      flexDirection: 'row',
+      gap: 8,
+      alignItems: 'center',
+    },
+    tokenSymbol: {
+      flexShrink: 1,
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 20,
+      lineHeight: 24,
+      fontWeight: '700',
+      flexWrap: 'nowrap',
+    },
+    container: {
+      flex: 1,
+      flexDirection: 'column',
+      justifyContent: 'flex-start',
+      alignItems: 'flex-start',
+    },
+    innerImages: {
+      borderRadius: 16,
+      // width: '100%',
+      // height: 'auto',
+    },
+    avator: {
+      width: 44,
+      height: 44,
+      position: 'relative',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    chainIcon: {
+      width: 16,
+      height: 16,
+      borderRadius: 16,
+      position: 'absolute',
+      bottom: 0,
+      right: 0,
+    },
+    imagesAvatar: {
+      width: '100%',
+      height: '100%',
+      borderRadius: 8,
+    },
+    images: {
+      width: '100%',
+      height: 360,
+      // flex: 1,
+      paddingHorizontal: 16,
+      borderRadius: 0,
+      resizeMode: 'cover',
+      backgroundColor: 'transparent',
+    },
+    titleView: {
+      paddingTop: 16,
+      paddingBottom: 16,
+      width: '100%',
+    },
+    title: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 20,
+      lineHeight: 24,
+      fontWeight: '700',
+    },
+    subtitle: {
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+      marginTop: 16,
+    },
+    numbernft: {
+      fontSize: 15,
+      fontWeight: '500',
+      color: colors['neutral-title-1'],
+      lineHeight: 17,
+      marginLeft: 8,
+    },
+    listItem: {
+      flexDirection: 'row',
+      paddingTop: 16,
+      justifyContent: 'space-between',
+    },
+    price: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+    },
+    value: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '500',
+      alignSelf: 'flex-end',
+      alignItems: 'flex-end',
+      alignContent: 'flex-end',
+      maxWidth: 227,
+      marginLeft: 24,
+      textAlign: 'right',
+    },
+    borderTop: {
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderColor: colors['neutral-line'],
+    },
+    bottom: {
+      paddingHorizontal: 20,
+      width: '100%',
+    },
+    left: {
+      alignSelf: 'flex-start',
+    },
+    right: {
+      alignItems: 'flex-end',
+      justifyContent: 'flex-end',
+      alignSelf: 'flex-end',
+      flexWrap: 'wrap',
+      alignContent: 'flex-end',
+    },
+  }),
+);

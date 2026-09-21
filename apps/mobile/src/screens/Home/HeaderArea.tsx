@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 
 import RcIconCopy from '@/assets2024/singleHome/copy.svg';
@@ -16,12 +16,10 @@ import { trigger } from 'react-native-haptic-feedback';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import {
   apisSingleHome,
-  useSingleHomeAccount,
   useSingleHomeAccountAlias,
   useSingleHomeLoading,
 } from './hooks/singleHome';
 import { navBack } from '@/hooks/navigation';
-import { useAlias2 } from '@/hooks/alias';
 import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 
 export default function HomeHeaderArea({ style }: RNViewProps) {
@@ -70,20 +68,22 @@ export default function HomeHeaderArea({ style }: RNViewProps) {
                 <WalletIcon
                   type={brandName as KEYRING_TYPE}
                   address={currentAddress}
-                  width={22}
-                  height={22}
-                  borderRadius={6}
+                  width={18}
+                  height={18}
+                  borderRadius={5}
                 />
               </TouchableOpacity>
             </View>
           </View>
-          <TouchableOpacity style={styles.touchBox} onPress={handleCopyAddress}>
-            <Text
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              style={styles.titleText}>
-              {nameText}
-            </Text>
+          <TouchableOpacity style={styles.aliasBox} onPress={handleCopyAddress}>
+            <View style={styles.nameBox}>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={styles.titleText}>
+                {nameText}
+              </Text>
+            </View>
             {currentAddress && !aliasExist && (
               <TouchableOpacity
                 onPress={evt => {
@@ -94,7 +94,7 @@ export default function HomeHeaderArea({ style }: RNViewProps) {
               </TouchableOpacity>
             )}
             {isLoadingCurve || balanceLoading ? (
-              <LoadingCircle />
+              <LoadingCircle size={20} />
             ) : (
               <RcIconCopy style={styles.copy} />
             )}
@@ -108,20 +108,37 @@ export default function HomeHeaderArea({ style }: RNViewProps) {
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     flexShrink: 1,
+    minWidth: 0,
   },
   innerBox: {
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    flexShrink: 0,
+    flexShrink: 1,
   },
   touchBox: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     flexShrink: 1,
+    minWidth: 0,
+    backgroundColor: ctx.colors2024['neutral-bg-5'],
+    padding: 6,
+    borderRadius: 8,
     gap: 6,
+  },
+  aliasBox: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    flexShrink: 1,
+    minWidth: 0,
+    gap: 6,
+  },
+  nameBox: {
+    flexShrink: 1,
+    minWidth: 0,
   },
   accountBox: {
     flexDirection: 'row',
@@ -130,6 +147,7 @@ const getStyles = createGetStyles2024(ctx => ({
     borderWidth: 1,
     borderColor: 'transparent',
     overflow: 'visible',
+    flexShrink: 0,
     // ...makeDebugBorder(),
   },
   walletIcon: {
@@ -140,12 +158,12 @@ const getStyles = createGetStyles2024(ctx => ({
     // ...makeDebugBorder('yellow'),
   },
   titleText: {
-    flexShrink: 1,
-    color: ctx.colors2024['neutral-title-1'],
+    width: '100%',
+    color: ctx.colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
     flexWrap: 'nowrap',
   },
   editIcon: {
@@ -156,5 +174,6 @@ const getStyles = createGetStyles2024(ctx => ({
   copy: {
     width: 18,
     height: 18,
+    flexShrink: 0,
   },
 }));

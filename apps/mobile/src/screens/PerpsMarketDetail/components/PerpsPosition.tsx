@@ -140,13 +140,19 @@ export const PerpsPosition: React.FC<{
     return null;
   }
 
+  const displayName = currentAssetCtx?.displayName || coin;
+  const quoteAsset = currentAssetCtx?.quoteAsset || 'USDC';
+
   return (
     <>
       <View style={styles.section}>
         <View style={styles.header}>
-          <Text style={styles.title}>
-            {t('page.perpsDetail.PerpsPosition.title')}
-          </Text>
+          <View style={styles.sectionTitleRow}>
+            <View style={styles.sectionTitleBar} />
+            <Text style={styles.title}>
+              {t('page.perpsDetail.PerpsPosition.title')}
+            </Text>
+          </View>
           <View
             style={[
               styles.leverageTag,
@@ -209,27 +215,32 @@ export const PerpsPosition: React.FC<{
             {Math.abs(positionData?.pnl || 0).toFixed(2)}
           </Text>
           <View style={styles.positionValueWrapper}>
-            <Text style={styles.positionValueTitle}>
-              {t('page.perpsDetail.PerpsPosition.positionValue')}
-            </Text>
+            <TouchableOpacity
+              onPress={() => {
+                showTipsPopup({
+                  title: t('page.perpsDetail.PerpsPosition.size'),
+                  desc: t('page.perpsDetail.PerpsPosition.sizeTips'),
+                  buttonType: 'hyperliquid',
+                });
+              }}>
+              <View style={styles.listItemMain}>
+                <Text style={styles.label}>
+                  {t('page.perpsDetail.PerpsPosition.size')}
+                </Text>
+                <RcIconInfoCC
+                  width={18}
+                  height={18}
+                  color={colors2024['neutral-info']}
+                />
+              </View>
+            </TouchableOpacity>
             <Text style={styles.positionValue}>
-              {formatUsdValue(Number(positionData?.positionValue || 0))}
+              {`${Number(positionData?.positionValue || 0).toFixed(2)} `}
+              {quoteAsset} = {positionData?.size} {formatPerpsCoin(displayName)}
             </Text>
           </View>
         </View>
-        <View style={styles.list}>
-          <View style={styles.listItem}>
-            <View style={styles.listItemMain}>
-              <Text style={styles.label}>
-                {t('page.perpsDetail.PerpsPosition.currentPrice')}
-              </Text>
-            </View>
-            <View>
-              <Text style={styles.value}>
-                ${splitNumberByStep(currentAssetCtx?.markPx || 0)}
-              </Text>
-            </View>
-          </View>
+        <View style={[styles.list, styles.listPadded]}>
           <View style={styles.listItem}>
             <View style={styles.listItemMain}>
               <Text style={styles.label}>
@@ -266,12 +277,12 @@ export const PerpsPosition: React.FC<{
             </View>
           )}
         </View>
-        <View style={[styles.header, styles.paddingTopHeader]}>
-          <Text style={styles.title}>
-            {t('page.perpsDetail.PerpsPosition.settings')}
-          </Text>
-        </View>
-        <View style={styles.list}>
+        <View style={[styles.list, styles.listPadded]}>
+          <View style={styles.cardTitleRow}>
+            <Text style={styles.cardTitle}>
+              {t('page.perpsDetail.PerpsPosition.settings')}
+            </Text>
+          </View>
           <View style={styles.listItem}>
             <View style={styles.listItemMain}>
               <Text style={styles.label}>
@@ -289,10 +300,10 @@ export const PerpsPosition: React.FC<{
                     setEditMarginVisible(true);
                   }}>
                   <Text style={[styles.tagText]}>
-                    $
                     {splitNumberByStep(
                       Number(positionData?.marginUsed || 0).toFixed(2),
-                    )}
+                    )}{' '}
+                    {quoteAsset}
                   </Text>
                   <IconPerpEdit
                     width={16}
@@ -326,7 +337,7 @@ export const PerpsPosition: React.FC<{
               <View style={styles.tagWrapper}>
                 <PerpEditTpSlPriceTag
                   handleActionApproveStatus={handleActionApproveStatus}
-                  coin={coin}
+                  coin={displayName}
                   actionType="tp"
                   type="hasPosition"
                   entryPrice={positionData?.entryPrice}
@@ -339,6 +350,7 @@ export const PerpsPosition: React.FC<{
                   liqPrice={Number(positionData?.liquidationPrice || 0)}
                   pxDecimals={pxDecimals}
                   szDecimals={szDecimals}
+                  quoteAsset={quoteAsset}
                   handleCancelAutoClose={async () => {
                     await handleCancelAutoClose('tp');
                   }}
@@ -416,7 +428,7 @@ export const PerpsPosition: React.FC<{
               <View style={styles.tagWrapper}>
                 <PerpEditTpSlPriceTag
                   leverage={positionData?.leverage}
-                  coin={coin}
+                  coin={displayName}
                   actionType="sl"
                   handleActionApproveStatus={handleActionApproveStatus}
                   type="hasPosition"
@@ -429,6 +441,7 @@ export const PerpsPosition: React.FC<{
                   liqPrice={Number(positionData?.liquidationPrice || 0)}
                   pxDecimals={pxDecimals}
                   szDecimals={szDecimals}
+                  quoteAsset={quoteAsset}
                   handleCancelAutoClose={async () => {
                     await handleCancelAutoClose('sl');
                   }}
@@ -491,12 +504,12 @@ export const PerpsPosition: React.FC<{
             )}
           </View>
         </View>
-        <View style={[styles.header, styles.paddingTopHeader]}>
-          <Text style={styles.title}>
-            {t('page.perpsDetail.PerpsPosition.details')}
-          </Text>
-        </View>
-        <View style={styles.list}>
+        <View style={[styles.list, styles.listPadded]}>
+          <View style={styles.cardTitleRow}>
+            <Text style={styles.cardTitle}>
+              {t('page.perpsDetail.PerpsPosition.details')}
+            </Text>
+          </View>
           <View style={styles.listItem}>
             <View style={styles.listItemMain}>
               <Text style={styles.label}>
@@ -506,62 +519,6 @@ export const PerpsPosition: React.FC<{
             <View>
               <Text style={styles.value}>
                 ${splitNumberByStep(positionData?.entryPrice || 0)}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.listItem}>
-            <TouchableOpacity
-              onPress={() => {
-                showTipsPopup({
-                  title: t('page.perpsDetail.PerpsPosition.size'),
-                  desc: t('page.perpsDetail.PerpsPosition.sizeTips'),
-                  buttonType: 'hyperliquid',
-                });
-              }}>
-              <View style={styles.listItemMain}>
-                <Text style={styles.label}>
-                  {t('page.perpsDetail.PerpsPosition.size')}
-                </Text>
-                <RcIconInfoCC
-                  width={18}
-                  height={18}
-                  color={colors2024['neutral-info']}
-                />
-              </View>
-            </TouchableOpacity>
-            <View>
-              <Text style={styles.value}>
-                $
-                {splitNumberByStep(
-                  Number(positionData?.positionValue || 0).toFixed(2),
-                )}{' '}
-                = {positionData?.size} {formatPerpsCoin(coin)}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.listItem}>
-            <View style={styles.listItemMain}>
-              <Text style={styles.label}>
-                {t('page.perpsDetail.PerpsPosition.direction')}
-              </Text>
-            </View>
-            <View>
-              <Text style={styles.value}>
-                {positionData?.direction} {positionData?.leverage}x
-              </Text>
-            </View>
-          </View>
-          <View style={styles.listItem}>
-            <View style={styles.listItemMain}>
-              <Text style={styles.label}>
-                {t('page.perpsDetail.PerpsPosition.marginMode')}
-              </Text>
-            </View>
-            <View>
-              <Text style={styles.value}>
-                {positionData?.type === 'cross'
-                  ? t('page.perpsDetail.PerpsPosition.cross')
-                  : t('page.perpsDetail.PerpsPosition.isolated')}
               </Text>
             </View>
           </View>
@@ -701,12 +658,31 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 6,
     flexDirection: 'row',
   },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  sectionTitleBar: {
+    width: 4,
+    height: 20,
+    borderRadius: 100,
+    backgroundColor: '#50D2C1',
+  },
   title: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     lineHeight: 22,
-    fontWeight: '900',
+    fontWeight: '700',
     color: colors2024['neutral-title-1'],
+  },
+  cardTitleRow: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 6,
+  },
+  cardTitle: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: colors2024['neutral-body'],
   },
   unrealizedPnlTitle: {
     fontFamily: 'SF Pro Rounded',
@@ -718,7 +694,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   distanceCardWrapper: {
     paddingHorizontal: 8,
-    paddingBottom: 16,
+    paddingBottom: 10,
   },
   distanceCard: {
     borderRadius: 6,
@@ -742,14 +718,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '800',
     color: isLight ? colors2024['neutral-title-1'] : '#50D2C1',
   },
-  paddingTopHeader: {
-    marginTop: 12,
-  },
   unrealizedPnl: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 36,
     lineHeight: 42,
-    fontWeight: '800',
+    fontWeight: '700',
     textAlign: 'center',
   },
   positionValueWrapper: {
@@ -788,6 +761,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
   },
+  listPadded: {
+    paddingVertical: 6,
+  },
   listItemContainer: {
     padding: 16,
   },
@@ -821,7 +797,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    paddingVertical: 12,
+    paddingVertical: 6,
     justifyContent: 'space-between',
   },
   listItemRow: {
@@ -863,7 +839,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '500',
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-secondary'],
   },
   leverageTag: {
     borderRadius: 4,
@@ -886,8 +862,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   value: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
   },
@@ -903,7 +879,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   listItemColumn: {
     display: 'flex',
     flexDirection: 'column',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
   },
   listItemHeader: {
     display: 'flex',
@@ -913,9 +890,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   expectedPnlContainer: {
     backgroundColor: isLight
-      ? colors2024['neutral-bg-2']
+      ? colors2024['neutral-bg-3']
       : colors2024['neutral-card-1'],
-    borderRadius: 8,
+    borderRadius: 6,
     flex: 1,
     width: '100%',
     justifyContent: 'space-between',
@@ -923,7 +900,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 8,
     alignSelf: 'flex-end',
     position: 'relative',
-    marginTop: 12,
+    marginTop: 10,
     // marginRight: 4,
   },
   expectedPnlArrow: {
@@ -940,7 +917,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
     borderBottomColor: isLight
-      ? colors2024['neutral-bg-2']
+      ? colors2024['neutral-bg-3']
       : colors2024['neutral-card-1'],
   },
   expectedPnlContent: {

@@ -79,8 +79,8 @@ const getStyles = createGetStyles(colors => ({
     width: '100%',
   },
   cancelTitleStyle: {
-    fontSize: 15,
-    lineHeight: 18,
+    fontSize: 18,
+    lineHeight: 22,
     fontWeight: '500',
     color: colors['blue-default'],
     flex: 1,
@@ -95,8 +95,8 @@ const getStyles = createGetStyles(colors => ({
     height: '100%',
   },
   confirmTitleStyle: {
-    fontSize: 15,
-    lineHeight: 18,
+    fontSize: 18,
+    lineHeight: 22,
     fontWeight: '500',
     color: colors['neutral-title2'],
     flex: 1,

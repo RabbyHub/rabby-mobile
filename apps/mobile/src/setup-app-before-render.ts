@@ -1,139 +1,189 @@
-import {
-  loadJavaScriptBeforeContentLoadedOnBoot,
-  subscribeUnlockToFetchAccounts,
-} from './hooks/useBootstrap';
+import { traceAndroidInstant } from './core/utils/androidTrace';
+import type { ReadableAccountStoreWarmupTarget } from './setup-readable-account-stores';
+import { setupRuntimeLoaders } from '@/startup/moduleLoading/setupRuntimeLoaders';
+import { observeStartupModuleLoad } from './startup/runtimeDiagnostics';
 
-import { runIIFEFunc } from './core/utils/store';
-import { startSubscribeLangChange } from './hooks/lang';
-import { connectPushServerOnBootstrap } from './core/notifications';
+type SetupBeforeRenderRuntime =
+  typeof import('./setup-app-before-render.runtime');
+type ReadableAccountBootstrapRuntime =
+  typeof import('./setup-readable-account-bootstrap-warmups');
+type ReadableAccountStoresRuntime =
+  typeof import('./setup-readable-account-stores');
 
-import { startManageAccountStoreLifecycle } from './hooks/account';
+const setupBeforeRenderRuntimeRef = {
+  promise: null as Promise<SetupBeforeRenderRuntime> | null,
+};
+const readableAccountBootstrapRuntimeRef = {
+  promise: null as Promise<ReadableAccountBootstrapRuntime> | null,
+};
+const readableAccountStoresRuntimeRef = {
+  promise: null as Promise<ReadableAccountStoresRuntime> | null,
+};
 
-import {
-  loadLockInfoOnBootstrap,
-  startSubscribeAppStateChange,
-} from './hooks/useLock';
-import { startSyncDefaultRPCs } from './hooks/defaultRPCs';
-import { startSubscribePerpsOnAppState } from './hooks/perps/usePerpsStore';
-import { startSubscribeBalanceUpdated } from './hooks/useCurve';
-import { storeApiGasAccount } from './screens/GasAccount/hooks/atom';
-import { startSubscribeOnekeyDevices } from './core/apis/onekey';
-import { startSubscribeTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
-import { startFetchOnceTop5TokensForAllAccounts } from './components/AccountSwitcher/hooks';
-import { startSyncOnlineConfig } from './core/config/online';
-import { loadVersionInfoOnBootstrap } from './hooks/version';
-import { autoGoogleSignIfPreviousSignedOnBoot } from './hooks/cloudStorage';
-import {
-  screenshotModalStartSyncNetworth,
-  startSubscribeUserDidTakeScreenshot,
-} from './components/Screenshot/hooks';
-import { startSubscribeWhetherPreventScreenshot } from './hooks/native/security';
-import {
-  startSubscribeAtSensitiveScene,
-  startSubscribeIOSJustScreenshotted,
-  startSubscribeIOSScreenRecording,
-  startSubscribeRemoteNotification,
-} from './hooks/navigation';
-import { startComputationThread } from './perfs/thread';
-import { rateModalStartSyncNetworth } from './components/RateModal/hooks';
-import { trimNoLongerSupportsOnUnlock } from './components2024/NoLongerSupports/useNoLongerSupports';
-import { startCheckClearAction } from './utils/clipboard';
-import tokenListStore from './store/tokens';
-import { startProcessScene24hBalanceEvents } from './hooks/useScene24hBalance';
-import { startProcessMultiCurveEvents } from './hooks/useMultiCurve';
-import useProtocolListStore from './store/protocols';
-import { useAppChainStore } from './store/appchain';
-import balanceStore from './store/balance';
-import { apisAutoLock } from './core/apis';
-import { startProcessAccountBalanceEvents } from './hooks/useAccountsBalance';
-import { startWatchLayoutChange } from './hooks/useAppLayout';
-import { startCareAppNotificationPermissions } from './hooks/appNotification';
-import nftListStore from './store/nfts';
-import { keyringService } from './core/services';
+async function loadSetupBeforeRenderRuntime(_reason: string) {
+  if (setupBeforeRenderRuntimeRef.promise) {
+    traceAndroidInstant('startup.load_setup_before_render_runtime.reuse', {
+      reason: _reason,
+    });
+    return setupBeforeRenderRuntimeRef.promise;
+  }
 
-startComputationThread();
-startSubscribeLangChange();
+  const startedAt = Date.now();
+  traceAndroidInstant('startup.load_setup_before_render_runtime.start', {
+    reason: _reason,
+  });
+  const runtimePromise = observeStartupModuleLoad(
+    {
+      name: 'setup/setup-app-before-render.runtime',
+      group: 'setup',
+      taskStage: 'homePostStartupReady',
+      reason: _reason,
+    },
+    setupRuntimeLoaders.setupBeforeRender,
+  )
+    .then(runtime => {
+      traceAndroidInstant('startup.load_setup_before_render_runtime.end', {
+        reason: _reason,
+        elapsedMs: Date.now() - startedAt,
+      });
+      return runtime;
+    })
+    .catch(error => {
+      traceAndroidInstant('startup.load_setup_before_render_runtime.error', {
+        reason: _reason,
+        elapsedMs: Date.now() - startedAt,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setupBeforeRenderRuntimeRef.promise = null;
+      throw error;
+    });
 
-connectPushServerOnBootstrap();
-
-startManageAccountStoreLifecycle();
-loadLockInfoOnBootstrap();
-apisAutoLock.setupAutoLockChecker();
-startFetchOnceTop5TokensForAllAccounts();
-subscribeUnlockToFetchAccounts();
-startSubscribeAppStateChange();
-
-startSyncOnlineConfig();
-loadVersionInfoOnBootstrap();
-
-loadJavaScriptBeforeContentLoadedOnBoot();
-
-startSubscribeOnekeyDevices();
-startSubscribeTrezorConnectOnUrl();
-
-autoGoogleSignIfPreviousSignedOnBoot();
-startSubscribeBalanceUpdated();
-startSyncDefaultRPCs();
-runIIFEFunc(() => {
-  storeApiGasAccount.fetchGasAccountInfo();
-});
-startSubscribePerpsOnAppState();
-startWatchLayoutChange();
-
-startSubscribeUserDidTakeScreenshot();
-startSubscribeAtSensitiveScene();
-startSubscribeIOSJustScreenshotted();
-startSubscribeWhetherPreventScreenshot();
-startSubscribeIOSScreenRecording();
-
-rateModalStartSyncNetworth();
-screenshotModalStartSyncNetworth();
-
-startProcessAccountBalanceEvents();
-startProcessScene24hBalanceEvents();
-startProcessMultiCurveEvents();
-
-trimNoLongerSupportsOnUnlock();
-
-startCheckClearAction();
-
-startCareAppNotificationPermissions();
-startSubscribeRemoteNotification();
-
-async function initStores() {
-  console.time('initStore');
-  await useAppChainStore.getState().initStore();
-  await balanceStore.getState().initStore();
-  await tokenListStore.getState().initStore();
-  await nftListStore.getState().initStore();
-  await useProtocolListStore.getState().initStore();
-  console.timeEnd('initStore');
+  setupBeforeRenderRuntimeRef.promise = runtimePromise;
+  return runtimePromise;
 }
 
-const initStoresStateRef = {
-  started: false,
-};
-const startInitStores = async () => {
-  if (initStoresStateRef.started) {
-    return;
-  }
-  initStoresStateRef.started = true;
-  await initStores();
-};
-
-function startInitStoresOnUnlock() {
-  if (keyringService.isUnlocked()) {
-    startInitStores().catch(error => {
-      console.error('startInitStoresOnUnlock::error', error);
+async function loadReadableAccountBootstrapRuntime(_reason: string) {
+  if (readableAccountBootstrapRuntimeRef.promise) {
+    traceAndroidInstant('startup.load_readable_account_bootstrap.reuse', {
+      reason: _reason,
     });
-    return;
+    return readableAccountBootstrapRuntimeRef.promise;
   }
 
-  keyringService.once('unlock', () => {
-    startInitStores().catch(error => {
-      console.error('startInitStoresOnUnlock::error', error);
+  const startedAt = Date.now();
+  traceAndroidInstant('startup.load_readable_account_bootstrap.start', {
+    reason: _reason,
+  });
+  const runtimePromise = observeStartupModuleLoad(
+    {
+      name: 'setup/readable-account-bootstrap-warmups',
+      group: 'setup',
+      taskStage: 'homePostStartupReady',
+      reason: _reason,
+    },
+    setupRuntimeLoaders.readableAccountBootstrap,
+  )
+    .then(runtime => {
+      traceAndroidInstant('startup.load_readable_account_bootstrap.end', {
+        reason: _reason,
+        elapsedMs: Date.now() - startedAt,
+      });
+      return runtime;
+    })
+    .catch(error => {
+      traceAndroidInstant('startup.load_readable_account_bootstrap.error', {
+        reason: _reason,
+        elapsedMs: Date.now() - startedAt,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      readableAccountBootstrapRuntimeRef.promise = null;
+      throw error;
     });
+
+  readableAccountBootstrapRuntimeRef.promise = runtimePromise;
+  return runtimePromise;
+}
+
+async function loadReadableAccountStoresRuntime(_reason: string) {
+  if (readableAccountStoresRuntimeRef.promise) {
+    traceAndroidInstant('startup.load_readable_account_stores.reuse', {
+      reason: _reason,
+    });
+    return readableAccountStoresRuntimeRef.promise;
+  }
+
+  const startedAt = Date.now();
+  traceAndroidInstant('startup.load_readable_account_stores.start', {
+    reason: _reason,
+  });
+  const runtimePromise = observeStartupModuleLoad(
+    {
+      name: 'setup/readable-account-stores',
+      group: 'setup',
+      taskStage: 'homePostStartupIdle',
+      reason: _reason,
+    },
+    setupRuntimeLoaders.readableAccountStores,
+  )
+    .then(runtime => {
+      traceAndroidInstant('startup.load_readable_account_stores.end', {
+        reason: _reason,
+        elapsedMs: Date.now() - startedAt,
+      });
+      return runtime;
+    })
+    .catch(error => {
+      traceAndroidInstant('startup.load_readable_account_stores.error', {
+        reason: _reason,
+        elapsedMs: Date.now() - startedAt,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      readableAccountStoresRuntimeRef.promise = null;
+      throw error;
+    });
+
+  readableAccountStoresRuntimeRef.promise = runtimePromise;
+  return runtimePromise;
+}
+
+export async function startSetupAppBeforeRenderDeferred(
+  reason = 'app_could_render',
+) {
+  traceAndroidInstant('startup.start_setup_before_render_deferred.start', {
+    reason,
+  });
+  const runtime = await loadSetupBeforeRenderRuntime(reason);
+  runtime.registerSetupAppBeforeRenderDeferredTasks(reason);
+  traceAndroidInstant('startup.start_setup_before_render_deferred.end', {
+    reason,
   });
 }
 
-startInitStoresOnUnlock();
+export async function startInitPersistedStores() {
+  return (
+    await loadReadableAccountBootstrapRuntime('start_init_persisted_stores')
+  ).startInitPersistedStores();
+}
+
+export async function startUnlockScreenBootstrapWarmups() {
+  return (
+    await loadReadableAccountBootstrapRuntime('unlock_screen_bootstrap_warmups')
+  ).startUnlockScreenBootstrapWarmups();
+}
+
+export async function startReadableAccountBootstrapWarmups() {
+  return (
+    await loadReadableAccountBootstrapRuntime(
+      'readable_account_bootstrap_warmups',
+    )
+  ).startReadableAccountBootstrapWarmups();
+}
+
+export async function startInitReadableAccountStores(
+  target: ReadableAccountStoreWarmupTarget = 'all',
+  reason = 'unknown',
+) {
+  return (
+    await loadReadableAccountStoresRuntime('start_init_readable_account_stores')
+  ).startInitReadableAccountStores(target, reason);
+}

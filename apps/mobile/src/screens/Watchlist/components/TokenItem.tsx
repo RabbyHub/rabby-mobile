@@ -1,5 +1,12 @@
 import React, { useMemo } from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+  View,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Tip } from '@/components/Tip';
@@ -15,7 +22,7 @@ import { Skeleton } from '@rneui/themed';
 import { isLpToken } from '@/utils/lpToken';
 import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
 import { Text } from '@/components/Typography';
-import { formatPercentageKMB } from '@/screens/Meme/components/TokenItem';
+import { formatPercentageKMB } from '@/screens/Market/utils/formatPercentageKMB';
 import { isNumber } from 'lodash';
 import { useAtomValue } from 'jotai';
 import { selectAtom } from 'jotai/utils';
@@ -96,6 +103,7 @@ interface TokenListItemProps {
   onPress: (item: TokenDetailWithPriceCurve) => void;
   leftSlot?: React.ReactNode;
   rightSlot?: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
 }
 
 const TokenListItemComponent = ({
@@ -103,6 +111,7 @@ const TokenListItemComponent = ({
   onPress,
   leftSlot,
   rightSlot,
+  style,
 }: TokenListItemProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const uuid = `${item.chain}:${item.id}`;
@@ -116,8 +125,14 @@ const TokenListItemComponent = ({
   const displayPriceChange =
     realtimePrice?.price_24h_change ?? item.price_24h_change;
 
+  const hideSubLine = useMemo(() => {
+    return !item.asset && !item.identity?.fdv;
+  }, [item.asset, item.identity?.fdv]);
+
   return (
-    <TouchableOpacity style={styles.tokenItem} onPress={() => onPress(item)}>
+    <TouchableOpacity
+      style={[styles.tokenItem, style]}
+      onPress={() => onPress(item)}>
       {/* 左slot */}
       {leftSlot && <View style={styles.leftSlot}>{leftSlot}</View>}
       <View style={styles.tokenLeftSection}>
@@ -125,28 +140,61 @@ const TokenListItemComponent = ({
           {/* Token Chain Logo */}
           <AssetAvatar
             logo={item.logo_url}
-            size={46}
+            size={40}
             chain={item.chain}
-            chainSize={18}
+            chainSize={16}
             innerChainStyle={styles.chainLogo}
           />
           <View style={styles.tokenInfo}>
             {/* symbol */}
             <View style={styles.tokenNameContainer}>
-              <Text style={styles.tokenName}>
+              <Text
+                style={styles.tokenName}
+                numberOfLines={1}
+                ellipsizeMode="tail">
                 {ellipsisOverflowedText(getTokenSymbol(item), 12)}
               </Text>
+              {item.launchpad?.logo ? (
+                <Image
+                  source={{ uri: item.launchpad?.logo }}
+                  style={styles.fourMemeIcon}
+                  width={18}
+                  height={18}
+                />
+              ) : null}
               {isLpToken(item) && (
                 <View style={styles.lpTokenIconContainer}>
                   <LpTokenIcon protocolId={item.protocol_id || ''} />
                 </View>
               )}
             </View>
-            {/* FDV */}
-            {!!item.identity?.fdv && (
-              <Text style={styles.tokenFdv}>
-                {formatUsdValueKMB(item.identity.fdv)}
-              </Text>
+            {!hideSubLine && (
+              <View style={styles.tokenAssetContainer}>
+                {!!item.asset && (
+                  <>
+                    {item.asset?.logo ? (
+                      <Image
+                        source={{ uri: item.asset?.logo }}
+                        style={styles.fourMemeIcon}
+                        width={16}
+                        height={16}
+                      />
+                    ) : null}
+                    <Text
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                      style={styles.rwaName}>
+                      {item.asset?.name}
+                    </Text>
+                    <Text style={styles.tokenFdvSeparator}>|</Text>
+                  </>
+                )}
+                {!!item.identity?.fdv && (
+                  <Text numberOfLines={1} style={styles.tokenFdv}>
+                    {formatUsdValueKMB(item.identity?.fdv ?? 0)}
+                  </Text>
+                )}
+              </View>
             )}
             {/* Chain Logo */}
           </View>
@@ -191,18 +239,12 @@ export const TokenItemSkeleton = () => {
 
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   tokenItem: {
-    paddingVertical: 12,
-    paddingLeft: 12,
-    paddingRight: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
     gap: 8,
-    marginBottom: 8,
     display: 'flex',
     flexDirection: 'row',
     alignContent: 'center',
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-    borderRadius: 16,
   },
   tokenLeftSection: {
     justifyContent: 'center',
@@ -225,8 +267,16 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     gap: 4,
   },
+  rwaName: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 18,
+    flexShrink: 1,
+  },
   tokenFdv: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
@@ -238,6 +288,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     lineHeight: 20,
+    flexShrink: 1,
+    minWidth: 0,
   },
   chainLogo: {
     borderWidth: 1.5,
@@ -257,9 +309,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 4,
   },
   priceText: {
-    fontWeight: '700',
-    fontSize: 14,
-    lineHeight: 18,
+    fontWeight: '500',
+    fontSize: 17,
+    lineHeight: 22,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
@@ -272,9 +324,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     textAlign: 'center',
     //width: '100%',
   },
-  changeTextPositive: {
-    color: colors2024['red-default'],
-  },
   trendContainer: {
     display: 'flex',
     flexDirection: 'row',
@@ -282,15 +331,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     alignContent: 'center',
     paddingVertical: 6,
     borderRadius: 6,
-    width: 68,
+    width: 78,
     gap: 2,
     alignItems: 'center',
-  },
-  closedTipIcon: {
-    width: 12,
-    height: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   leftSlot: {
     width: 24,
@@ -316,14 +359,28 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   skeletonItem: {
     backgroundColor: 'transparent',
   },
-  trendChartWrapper: {
-    height: 30,
-    marginTop: -10,
-    marginBottom: 10,
-  },
   lpTokenIconContainer: {
     marginLeft: 0,
     flexShrink: 0,
     justifyContent: 'flex-start',
+    width: 16,
+  },
+  tokenAssetContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    flex: 1,
+  },
+  tokenFdvSeparator: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors2024['neutral-line'],
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 18,
+  },
+  fourMemeIcon: {
+    width: 18,
+    height: 18,
+    flexShrink: 0,
   },
 }));

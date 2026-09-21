@@ -6,7 +6,7 @@ import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { toast } from '@/components2024/Toast';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
-import { transactionHistoryService } from '@/core/services';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { useMyAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -28,14 +28,16 @@ export const ClearPendingPopup: React.FC<{
   const [isClearNonce, setIsClearNonce] = useState(false);
   const { accounts } = useMyAccounts({ disableAutoFetch: true });
 
-  const handleClearPending = useMemoizedFn(() => {
+  const handleClearPending = useMemoizedFn(async () => {
     try {
-      accounts.forEach(item => {
-        apisTransactionHistory.clearPendingTxs(item.address);
-        if (isClearNonce) {
-          transactionHistoryService.removeList(item.address);
-        }
-      });
+      await Promise.all(
+        accounts.map(async item => {
+          await apisTransactionHistory.clearPendingTxs(item.address);
+          if (isClearNonce) {
+            await transactionHistoryServiceApi.removeList(item.address);
+          }
+        }),
+      );
       toast.success(t('page.setting.clearPendingToast'));
       onConfirm?.();
     } catch (e) {

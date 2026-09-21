@@ -5,34 +5,49 @@ import React, {
   useEffect,
   useMemo,
   useRef,
-  useState,
   forwardRef,
   useImperativeHandle,
+  Ref,
 } from 'react';
 import {
   AppState,
   AppStateStatus,
-  Platform,
   StyleProp,
   View,
   ViewStyle,
 } from 'react-native';
-import { WebView } from 'react-native-webview';
-import { createTradingViewChartTemplate } from './template';
 import { CandleData, CandleStick } from './type';
 import { openExternalUrl } from '@/core/utils/linking';
+import { useAppLanguage } from '@/hooks/lang';
 import { useTranslation } from 'react-i18next';
-import { IS_IOS } from '@/core/native/utils';
-import { WEBVIEW_BASEURL } from '@/core/storage/webviewAssets';
 import { Text } from '@/components/Typography';
-import { getLocalWebViewDefaultProps } from '@/components/WebView/LocalWebView/utils';
+import {
+  LocalWebView,
+  type LocalWebView as LocalWebViewType,
+} from '@/components/WebView/LocalWebView/LocalWebView';
 
 interface ChartProps {
   height: number;
   onChartReady?: () => void;
+  onChartError?: () => void;
+  onDataApplied?: (data: CandleDataApplied) => void;
+  onPriceScaleAutoScaleChange?: (autoScale: boolean) => void;
+  onRequestOlderCandles?: (request: OlderCandlesRequest) => void;
   style?: StyleProp<ViewStyle>;
   backGroundColor?: string;
+  variant?: 'perps-pro';
 }
+
+export type CandleDataApplied = {
+  identity: string;
+  revision: number;
+};
+
+export type OlderCandlesRequest = {
+  earliestTime: number;
+  identity: string;
+};
+
 interface TPSLPriceLines {
   tpPrice?: number;
   slPrice?: number;
@@ -41,12 +56,19 @@ interface TPSLPriceLines {
 }
 
 export interface TradingViewChartRef {
+  clearCrosshair: () => void;
+  completeOlderCandlesRequest: (
+    request: OlderCandlesRequest & { outcome: 'exhausted' | 'retry' },
+  ) => void;
+  resetPriceScale: () => void;
   setData: (data: CandleData) => void;
   updateCandleData: (data: CandleStick) => void;
   updateTPSLPriceLines: (data: TPSLPriceLines) => void;
 }
 
-const { iosWebViewProps, androidWebViewProps } = getLocalWebViewDefaultProps();
+const PERPS_PRO_KLINE_PROTOCOL_VERSION = 3;
+const PERPS_PRO_KLINE_PROTOCOL_ERROR =
+  'Perps Pro K-line resource protocol mismatch';
 
 const formatCandleItem = (candle: CandleStick) => {
   const timeInSeconds = Math.floor(candle.time);
@@ -57,6 +79,10 @@ const formatCandleItem = (candle: CandleStick) => {
     low: candle.low,
     close: candle.close,
     volume: candle.volume,
+    ...(candle.trades !== undefined ? { trades: candle.trades ?? null } : {}),
+    ...(candle.quoteTurnover !== undefined
+      ? { quoteTurnover: candle.quoteTurnover ?? null }
+      : {}),
   };
   // Validate all values are valid numbers (volume is optional for aggregated candles like weekly)
   const isValid =
@@ -90,238 +116,494 @@ const formatCandleData = (data: CandleData) => {
   return formatted;
 };
 
-const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
-  ({ style, height, onChartReady, backGroundColor }, ref) => {
-    const webViewRef = useRef<WebView>(null);
-    const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-    const [webViewError, setWebViewError] = useState<string | null>(null);
-    const [isChartReady, setIsChartReady] = useState(false);
-    const [webViewKey, setWebViewKey] = useState(0);
-    const { t } = useTranslation();
+const TradingViewCandleChart = ({
+  style,
+  height,
+  onChartReady,
+  onChartError,
+  onDataApplied,
+  onPriceScaleAutoScaleChange,
+  onRequestOlderCandles,
+  backGroundColor,
+  variant,
+  ref,
+}: ChartProps & { ref?: Ref<TradingViewChartRef> }) => {
+  const localWebViewRef = useRef<LocalWebViewType>(null);
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const [webViewError, setWebViewError] = React.useState<string | null>(null);
+  const [isChartReady, setIsChartReady] = React.useState(false);
+  const explicitSurfaceStyle = useMemo(
+    () =>
+      variant === 'perps-pro' && backGroundColor
+        ? { backgroundColor: backGroundColor }
+        : undefined,
+    [backGroundColor, variant],
+  );
+  const supportsDataAppliedAckRef = useRef(false);
+  const pendingLegacyAppliedFrameRef = useRef<number | null>(null);
+  const protocolReloadAttemptedRef = useRef(false);
+  const protocolErrorReportedRef = useRef(false);
+  const { t } = useTranslation();
 
-    // Force remount WebView (reload() doesn't work with source={{ html }})
-    const remountWebView = useCallback(() => {
-      setWebViewKey(k => k + 1);
-      setIsChartReady(false);
-      setWebViewError(null);
-    }, []);
+  const cancelPendingLegacyApplied = useCallback(() => {
+    if (pendingLegacyAppliedFrameRef.current === null) {
+      return;
+    }
+    cancelAnimationFrame(pendingLegacyAppliedFrameRef.current);
+    pendingLegacyAppliedFrameRef.current = null;
+  }, []);
 
-    // Handle WebView content process termination
-    const handleContentProcessDidTerminate = useCallback(() => {
-      remountWebView();
-    }, [remountWebView]);
+  useEffect(
+    () => () => {
+      cancelPendingLegacyApplied();
+    },
+    [cancelPendingLegacyApplied],
+  );
 
-    // Remount WebView when app returns to foreground after being background for 30+ seconds
-    useEffect(() => {
-      let appStateRef = AppState.currentState;
-      let backgroundTimestamp = 0;
-      const subscription = AppState.addEventListener(
-        'change',
-        (nextAppState: AppStateStatus) => {
-          if (nextAppState.match(/inactive|background/)) {
-            backgroundTimestamp = Date.now();
-          } else if (
-            appStateRef.match(/inactive|background/) &&
-            nextAppState === 'active' &&
-            Date.now() - backgroundTimestamp > 30000
-          ) {
-            remountWebView();
-          }
-          appStateRef = nextAppState;
+  // Chart colors based on theme
+  const chartColors = useMemo(
+    () => ({
+      background:
+        backGroundColor ||
+        (variant === 'perps-pro'
+          ? colors2024['neutral-bg-1']
+          : isLight
+          ? colors2024['neutral-bg-1']
+          : colors2024['neutral-bg-2']),
+      text: colors2024['neutral-title-1'],
+      border: colors2024['neutral-bg-5'],
+      secondaryText: colors2024['neutral-secondary'],
+      greenLineColor:
+        variant === 'perps-pro'
+          ? colors2024['green-default']
+          : 'rgba(42, 187, 127, 1)',
+      redLineColor:
+        variant === 'perps-pro'
+          ? colors2024['red-default']
+          : 'rgba(227, 73, 53, 1)',
+      highPriceLineColor: colors2024['neutral-body'],
+      lowPriceLineColor: colors2024['neutral-body'],
+      emptyPrimary: colors2024['brand-light-1'],
+      emptySecondary: colors2024['brand-light-2'],
+      emptyStroke: colors2024['brand-disable'],
+      ma: {
+        7: colors2024['orange-default'],
+        25: colors2024['red-default'],
+        99: colors2024['brand-default'],
+      },
+      tooltip: {
+        bg:
+          variant === 'perps-pro'
+            ? colors2024['neutral-bg-1']
+            : isLight
+            ? colors2024['neutral-bg-1']
+            : colors2024['neutral-bg-2'],
+        border: colors2024['neutral-line'],
+        title: colors2024['neutral-body'],
+        value: colors2024['neutral-title-1'],
+      },
+      crosshairLabel: {
+        background:
+          variant === 'perps-pro' && !isLight
+            ? colors2024['neutral-body']
+            : colors2024['neutral-black'],
+        text:
+          variant === 'perps-pro'
+            ? colors2024['neutral-contrast']
+            : colors2024['neutral-InvertHighlight'],
+      },
+    }),
+    [backGroundColor, colors2024, isLight, variant],
+  );
+
+  // Chart description labels
+  const chartDescription = useMemo(
+    () => ({
+      tp: t('component.kline.tp'),
+      entry: t('component.kline.entry'),
+      sl: t('component.kline.sl'),
+      liq: t('component.kline.liq'),
+      high: t('component.kline.high'),
+      low: t('component.kline.low'),
+      time: t('component.kline.time'),
+      open: t('component.kline.open'),
+      close: t('component.kline.close'),
+      chg: t('component.kline.chg'),
+      chgPercent: t('component.kline.chgPercent'),
+      volume: t('component.kline.volume'),
+      vol: t('component.kline.vol'),
+      range: t('component.kline.range'),
+      txn: t('component.kline.txn'),
+      empty: t('page.tokenDetail.marketInfo.empty'),
+    }),
+    [t],
+  );
+
+  // Send theme to WebView when chart is ready
+  useEffect(() => {
+    if (isChartReady && localWebViewRef.current) {
+      localWebViewRef.current.sendMessage?.({
+        type: 'TRADINGVIEW_MESSAGE',
+        data: {
+          type: 'UPDATE_THEME',
+          colors: chartColors,
+          description: chartDescription,
         },
-      );
-      return () => subscription.remove();
-    }, [remountWebView]);
+      });
+    }
+  }, [isChartReady, chartColors, chartDescription]);
 
-    // Handle WebView errors
-    const handleWebViewError = useCallback(
-      (event: { nativeEvent?: { description?: string } }) => {
-        const errorDescription =
-          event.nativeEvent?.description || 'WebView error occurred';
-        setWebViewError(errorDescription);
-        console.error('WebView error:', event.nativeEvent);
-      },
-      [],
-    );
+  // Handle messages from WebView
+  const handleWebViewMessage = useCallback(
+    (event: any) => {
+      try {
+        const message = JSON.parse(event.nativeEvent.data);
 
-    // Handle messages from WebView
-    const handleWebViewMessage = useCallback(
-      (event: any) => {
-        try {
-          const message = JSON.parse(event.nativeEvent.data);
-
-          switch (message.type) {
-            case 'CHART_READY':
-              setIsChartReady(true);
-              onChartReady?.();
+        switch (message.type) {
+          case 'CHART_READY': {
+            cancelPendingLegacyApplied();
+            if (
+              variant === 'perps-pro' &&
+              (!Number.isInteger(
+                message.capabilities?.perpsProKlineProtocolVersion,
+              ) ||
+                message.capabilities.perpsProKlineProtocolVersion <
+                  PERPS_PRO_KLINE_PROTOCOL_VERSION)
+            ) {
+              supportsDataAppliedAckRef.current = false;
+              setIsChartReady(false);
+              onPriceScaleAutoScaleChange?.(true);
+              if (
+                !protocolReloadAttemptedRef.current &&
+                typeof localWebViewRef.current?.reload === 'function'
+              ) {
+                protocolReloadAttemptedRef.current = true;
+                localWebViewRef.current.reload();
+                break;
+              }
+              if (!protocolErrorReportedRef.current) {
+                protocolErrorReportedRef.current = true;
+                console.error(
+                  'TradingViewChart: Perps Pro K-line protocol mismatch',
+                  {
+                    actualVersion:
+                      message.capabilities?.perpsProKlineProtocolVersion ??
+                      null,
+                    requiredVersion: PERPS_PRO_KLINE_PROTOCOL_VERSION,
+                  },
+                );
+                setWebViewError(PERPS_PRO_KLINE_PROTOCOL_ERROR);
+                onChartError?.();
+              }
               break;
-            case 'ATTR_LOGO_CLICK':
-              openExternalUrl('https://www.tradingview.com');
-              break;
-            default:
-              break;
+            }
+            supportsDataAppliedAckRef.current =
+              message.capabilities?.candleDataAppliedAck === true;
+            setIsChartReady(true);
+            if (variant === 'perps-pro') {
+              onPriceScaleAutoScaleChange?.(true);
+            }
+            onChartReady?.();
+            break;
           }
-        } catch (error) {
-          console.error(
-            'TradingViewChart: Error parsing WebView message:',
-            error,
-          );
+          case 'ATTR_LOGO_CLICK':
+            openExternalUrl('https://www.tradingview.com');
+            break;
+          case 'CANDLE_DATA_APPLIED':
+            if (
+              typeof message.identity === 'string' &&
+              Number.isInteger(message.revision)
+            ) {
+              cancelPendingLegacyApplied();
+              onDataApplied?.({
+                identity: message.identity,
+                revision: message.revision,
+              });
+            }
+            break;
+          case 'REQUEST_OLDER_CANDLES':
+            if (
+              typeof message.identity === 'string' &&
+              Number.isFinite(message.earliestTime)
+            ) {
+              onRequestOlderCandles?.({
+                earliestTime: message.earliestTime,
+                identity: message.identity,
+              });
+            }
+            break;
+          case 'PERPS_PRO_PRICE_SCALE_AUTO_SCALE_CHANGED':
+            if (
+              variant === 'perps-pro' &&
+              typeof message.autoScale === 'boolean'
+            ) {
+              onPriceScaleAutoScaleChange?.(message.autoScale);
+            }
+            break;
+          default:
+            break;
         }
-      },
-      [onChartReady],
-    );
+      } catch (error) {
+        console.error(
+          'TradingViewChart: Error parsing WebView message:',
+          error,
+        );
+      }
+    },
+    [
+      cancelPendingLegacyApplied,
+      onChartReady,
+      onChartError,
+      onDataApplied,
+      onPriceScaleAutoScaleChange,
+      onRequestOlderCandles,
+      variant,
+    ],
+  );
 
-    const handleSetData = useCallback(
-      (data: CandleData) => {
-        if (!isChartReady || !webViewRef.current) {
-          return;
-        }
+  // Handle WebView errors
+  const handleWebViewError = useCallback(
+    (event: { nativeEvent?: { description?: string } }) => {
+      const errorDescription =
+        event.nativeEvent?.description || 'WebView error occurred';
+      cancelPendingLegacyApplied();
+      setWebViewError(errorDescription);
+      if (variant === 'perps-pro') {
+        onPriceScaleAutoScaleChange?.(true);
+      }
+      onChartError?.();
+      console.error('WebView error:', event.nativeEvent);
+    },
+    [
+      cancelPendingLegacyApplied,
+      onChartError,
+      onPriceScaleAutoScaleChange,
+      variant,
+    ],
+  );
 
-        let dataToSend: any = null;
-        let dataSource = 'none';
+  // Imperative API
+  const handleSetData = useCallback(
+    (data: CandleData) => {
+      if (!isChartReady || !localWebViewRef.current) {
+        return;
+      }
 
-        // Prioritize real data over sample data
-        if (data?.candles && data.candles.length > 0) {
-          dataToSend = formatCandleData(data);
-          dataSource = 'real';
-        }
+      const dataToSend = formatCandleData(data);
+      const dataSource = dataToSend.length > 0 ? 'real' : 'empty';
 
-        if (dataToSend) {
-          const message = {
-            type: 'SET_CANDLESTICK_DATA',
-            data: dataToSend,
-            source: dataSource,
-            showVolume: data.showVolume ?? false,
-            fitContent: data.fitContent ?? false,
-            noTime: data.noTime ?? false,
-          };
-          webViewRef.current.postMessage(JSON.stringify(message));
-        }
-      },
-      [isChartReady],
-    );
+      localWebViewRef.current.sendMessage?.({
+        type: 'TRADINGVIEW_MESSAGE',
+        data: {
+          type: 'SET_CANDLESTICK_DATA',
+          data: dataToSend,
+          source: dataSource,
+          showVolume: data.showVolume ?? false,
+          fitContent: data.fitContent ?? false,
+          noTime: data.noTime ?? false,
+          ...(data.identity !== undefined ? { identity: data.identity } : {}),
+          ...(data.revision !== undefined ? { revision: data.revision } : {}),
+          ...(data.proConfig ? { proConfig: data.proConfig } : {}),
+          ...(data.preserveVisibleRange ? { preserveVisibleRange: true } : {}),
+        },
+      });
 
-    const handleUpdateCandleData = useCallback(
-      (data: CandleStick) => {
-        if (!isChartReady || !webViewRef.current) {
-          return;
-        }
+      if (
+        typeof data.identity === 'string' &&
+        Number.isInteger(data.revision) &&
+        !supportsDataAppliedAckRef.current
+      ) {
+        cancelPendingLegacyApplied();
+        const identity = data.identity;
+        const revision = data.revision!;
+        pendingLegacyAppliedFrameRef.current = requestAnimationFrame(() => {
+          pendingLegacyAppliedFrameRef.current = null;
+          onDataApplied?.({ identity, revision });
+        });
+      }
+    },
+    [cancelPendingLegacyApplied, isChartReady, onDataApplied],
+  );
 
-        let dataToSend: any = null;
+  const handleUpdateCandleData = useCallback(
+    (data: CandleStick) => {
+      if (!isChartReady || !localWebViewRef.current) {
+        return;
+      }
 
-        if (data) {
-          dataToSend = formatCandleItem(data);
-        }
+      const dataToSend = formatCandleItem(data);
 
-        if (dataToSend) {
-          const message = {
+      if (dataToSend) {
+        localWebViewRef.current.sendMessage?.({
+          type: 'TRADINGVIEW_MESSAGE',
+          data: {
             type: 'UPDATE_CANDLESTICK_DATA',
             data: dataToSend,
-          };
-          webViewRef.current.postMessage(JSON.stringify(message));
-        }
-      },
-      [isChartReady],
-    );
+          },
+        });
+      }
+    },
+    [isChartReady],
+  );
 
-    const handleUpdateTPSLPriceLines = useCallback(
-      (data: TPSLPriceLines) => {
-        if (!isChartReady || !webViewRef.current) {
-          return;
-        }
-        const message = {
+  const handleUpdateTPSLPriceLines = useCallback(
+    (data: TPSLPriceLines) => {
+      if (!isChartReady || !localWebViewRef.current) {
+        return;
+      }
+      localWebViewRef.current.sendMessage?.({
+        type: 'TRADINGVIEW_MESSAGE',
+        data: {
           type: 'UPDATE_TPSL_PRICE_LINES',
           data: data,
-        };
-        webViewRef.current.postMessage(JSON.stringify(message));
+        },
+      });
+    },
+    [isChartReady],
+  );
+
+  const handleClearCrosshair = useCallback(() => {
+    if (!isChartReady || !localWebViewRef.current) {
+      return;
+    }
+    localWebViewRef.current.sendMessage?.({
+      type: 'TRADINGVIEW_MESSAGE',
+      data: {
+        type: 'CLEAR_CROSSHAIR',
       },
-      [isChartReady],
+    });
+  }, [isChartReady]);
+
+  const handleResetPriceScale = useCallback(() => {
+    if (variant !== 'perps-pro' || !isChartReady || !localWebViewRef.current) {
+      return;
+    }
+    localWebViewRef.current.sendMessage?.({
+      type: 'TRADINGVIEW_MESSAGE',
+      data: {
+        type: 'RESET_PERPS_PRO_PRICE_SCALE',
+      },
+    });
+  }, [isChartReady, variant]);
+
+  const handleCompleteOlderCandlesRequest = useCallback(
+    (request: OlderCandlesRequest & { outcome: 'exhausted' | 'retry' }) => {
+      if (!isChartReady || !localWebViewRef.current) {
+        return;
+      }
+      localWebViewRef.current.sendMessage?.({
+        type: 'TRADINGVIEW_MESSAGE',
+        data: {
+          type: 'COMPLETE_OLDER_CANDLES_REQUEST',
+          ...request,
+        },
+      });
+    },
+    [isChartReady],
+  );
+
+  useImperativeHandle(ref, () => ({
+    clearCrosshair: handleClearCrosshair,
+    completeOlderCandlesRequest: handleCompleteOlderCandlesRequest,
+    resetPriceScale: handleResetPriceScale,
+    setData: handleSetData,
+    updateCandleData: handleUpdateCandleData,
+    updateTPSLPriceLines: handleUpdateTPSLPriceLines,
+  }));
+
+  // Remount WebView when app returns to foreground after being background for 30+ seconds
+  const [webViewKey, setWebViewKey] = React.useState(0);
+  useEffect(() => {
+    let appStateRef = AppState.currentState;
+    let backgroundTimestamp = 0;
+    const subscription = AppState.addEventListener(
+      'change',
+      (nextAppState: AppStateStatus) => {
+        if (nextAppState.match(/inactive|background/)) {
+          backgroundTimestamp = Date.now();
+        } else if (
+          appStateRef.match(/inactive|background/) &&
+          nextAppState === 'active' &&
+          Date.now() - backgroundTimestamp > 30000
+        ) {
+          cancelPendingLegacyApplied();
+          supportsDataAppliedAckRef.current = false;
+          protocolReloadAttemptedRef.current = false;
+          protocolErrorReportedRef.current = false;
+          setWebViewKey(k => k + 1);
+          setIsChartReady(false);
+          if (variant === 'perps-pro') {
+            onPriceScaleAutoScaleChange?.(true);
+          }
+        }
+        appStateRef = nextAppState;
+      },
     );
+    return () => subscription.remove();
+  }, [cancelPendingLegacyApplied, onPriceScaleAutoScaleChange, variant]);
 
-    useImperativeHandle(ref, () => ({
-      setData: handleSetData,
-      updateCandleData: handleUpdateCandleData,
-      updateTPSLPriceLines: handleUpdateTPSLPriceLines,
-    }));
-
-    const htmlContent = useMemo(
-      () =>
-        createTradingViewChartTemplate(
-          {
-            background:
-              backGroundColor ||
-              (isLight
-                ? colors2024['neutral-bg-0']
-                : colors2024['neutral-bg-1']),
-            text: colors2024['neutral-title-1'],
-            border: colors2024['neutral-bg-5'],
-            greenLineColor: 'rgba(42, 187, 127, 1)',
-            redLineColor: 'rgba(227, 73, 53, 1)',
-            highPriceLineColor: colors2024['neutral-body'],
-            lowPriceLineColor: colors2024['neutral-body'],
-            tooltip: {
-              bg: isLight
-                ? colors2024['neutral-bg-1']
-                : colors2024['neutral-bg-2'],
-              title: colors2024['neutral-body'],
-              value: colors2024['neutral-title-1'],
-            },
-          },
-          {
-            tp: t('component.kline.tp'),
-            entry: t('component.kline.entry'),
-            sl: t('component.kline.sl'),
-            liq: t('component.kline.liq'),
-            high: t('component.kline.high'),
-            low: t('component.kline.low'),
-
-            time: t('component.kline.time'),
-            open: t('component.kline.open'),
-            close: t('component.kline.close'),
-            chg: t('component.kline.chg'),
-            chgPercent: t('component.kline.chgPercent'),
-            volume: t('component.kline.volume'),
-          },
-        ),
-      [backGroundColor, colors2024, isLight, t],
-    );
-
-    if (webViewError) {
+  if (webViewError) {
+    if (variant === 'perps-pro') {
       return (
-        <View style={{ height }}>
-          <Text>Chart Error: {webViewError}</Text>
-        </View>
+        <View
+          style={[
+            styles.container,
+            style,
+            explicitSurfaceStyle,
+            { height, width: '100%', minHeight: height },
+          ]}
+        />
       );
     }
-
     return (
-      <View
-        style={[
-          styles.container,
-          style,
-          { height, width: '100%', minHeight: height },
-        ]}>
-        <WebView
-          key={webViewKey}
-          ref={webViewRef}
-          style={styles.webView}
-          {...(IS_IOS && { allowFileAccess: true })}
-          source={{ html: htmlContent, baseUrl: WEBVIEW_BASEURL }}
-          onMessage={handleWebViewMessage}
-          onError={handleWebViewError}
-          onContentProcessDidTerminate={handleContentProcessDidTerminate}
-          {...(Platform.OS === 'ios' ? iosWebViewProps : androidWebViewProps)}
-        />
+      <View style={{ height }}>
+        <Text>Chart Error: {webViewError}</Text>
       </View>
     );
-  },
-);
+  }
 
-const getStyle = createGetStyles2024(ctx => ({
+  return (
+    <View
+      style={[
+        styles.container,
+        style,
+        explicitSurfaceStyle,
+        { height, width: '100%', minHeight: height },
+      ]}>
+      <LocalWebView
+        key={webViewKey}
+        ref={localWebViewRef}
+        entryPath="/pages/tradingview-candle-chart.html"
+        webviewSize={{ height }}
+        onMessage={handleWebViewMessage}
+        onError={handleWebViewError}
+        backGroundColor={backGroundColor}
+        style={explicitSurfaceStyle}
+        i18nTexts={{
+          'component.kline.tp': t('component.kline.tp'),
+          'component.kline.entry': t('component.kline.entry'),
+          'component.kline.sl': t('component.kline.sl'),
+          'component.kline.liq': t('component.kline.liq'),
+          'component.kline.high': t('component.kline.high'),
+          'component.kline.low': t('component.kline.low'),
+          'component.kline.time': t('component.kline.time'),
+          'component.kline.open': t('component.kline.open'),
+          'component.kline.close': t('component.kline.close'),
+          'component.kline.chg': t('component.kline.chg'),
+          'component.kline.chgPercent': t('component.kline.chgPercent'),
+          'component.kline.volume': t('component.kline.volume'),
+          'component.kline.vol': t('component.kline.vol'),
+          'component.kline.range': t('component.kline.range'),
+          'component.kline.txn': t('component.kline.txn'),
+          'component.kline.empty': t('page.tokenDetail.marketInfo.empty'),
+        }}
+      />
+    </View>
+  );
+};
+
+const getStyle = createGetStyles2024(() => ({
   container: {
-    flex: 1,
-  },
-  webView: {
     flex: 1,
   },
 }));

@@ -14,16 +14,16 @@ import {
 } from '@/components2024/GlobalBottomSheetModal/types';
 import ArrowDownSVG from '@/assets/icons/common/arrow-down-cc.svg';
 import { useTranslation } from 'react-i18next';
-import { apisLending, useFetchLendingData, useSelectedMarket } from '../hooks';
-import { getMarketLogo } from '../config/market';
+import { apisLending, useSelectedMarket } from '../hooks';
+import { CustomMarket, getMarketLogo } from '../config/market';
 import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ isLight, colors2024 }) => {
   return {
     container: {
       borderRadius: 16,
-      paddingHorizontal: 22,
-      paddingVertical: 16,
+      paddingHorizontal: 16,
+      paddingVertical: 13,
       backgroundColor: colors2024['neutral-bg-5'],
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -77,10 +77,16 @@ export function ChainSelector({
       removeGlobalBottomSheetModal2024(modalRef.current);
     }
   }, []);
+  const setDefaultMarket = React.useCallback(() => {
+    apisLending.setLoading(true, { marketKey: CustomMarket.proto_mainnet_v3 });
+    removeChainModal();
+    setMarketKey?.(CustomMarket.proto_mainnet_v3);
+  }, [removeChainModal, setMarketKey]);
 
   const createChainModal = React.useCallback(() => {
     removeChainModal();
     if (!selectedMarketData?.market) {
+      setDefaultMarket();
       return;
     }
     modalRef.current = createGlobalBottomSheetModal2024({
@@ -108,6 +114,7 @@ export function ChainSelector({
     t,
     isLight,
     colors2024,
+    setDefaultMarket,
     setMarketKey,
   ]);
 

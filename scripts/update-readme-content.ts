@@ -15,6 +15,7 @@ const DEPENDENCY_GRAPH_END_MARKER = '<!-- end dependency graph -->';
 const PACKAGE_LIST_START_MARKER = '<!-- start package list -->';
 const PACKAGE_LIST_END_MARKER = '<!-- end package list -->';
 const README_PATH = path.resolve(__dirname, '../README.md');
+const YARNRC_PATH = path.resolve(__dirname, '../.yarnrc.yml');
 
 main().catch((error) => {
   console.error(error);
@@ -48,7 +49,8 @@ async function main() {
  * @returns The list of workspaces.
  */
 async function retrieveWorkspaces(): Promise<Workspace[]> {
-  const { stdout } = await execa('yarn', [
+  const { stdout } = await execa(process.execPath, [
+    await getYarnCliPath(),
     'workspaces',
     'list',
     '--json',
@@ -59,6 +61,23 @@ async function retrieveWorkspaces(): Promise<Workspace[]> {
     .split('\n')
     .map((line) => JSON.parse(line))
     .slice(1);
+}
+
+async function getYarnCliPath(): Promise<string> {
+  const npmExecPath = process.env.npm_execpath;
+
+  if (npmExecPath && /yarn/i.test(path.basename(npmExecPath))) {
+    return npmExecPath;
+  }
+
+  const yarnrc = await fs.promises.readFile(YARNRC_PATH, 'utf8');
+  const match = yarnrc.match(/^yarnPath:\s+(.+)$/m);
+
+  if (!match) {
+    throw new Error('Unable to determine the Yarn CLI path from .yarnrc.yml');
+  }
+
+  return path.resolve(__dirname, '..', match[1]);
 }
 
 /**
@@ -84,9 +103,7 @@ function getDependencyGraph(workspaces: Workspace[]): string {
 function buildMermaidNodeLines(workspaces: Workspace[]): string[] {
   return workspaces.map((workspace) => {
     const fullPackageName = workspace.name;
-    const shortPackageName = fullPackageName
-      .replace(/^@rabby-wallet\//u, '')
-      .replace(/-/gu, '_');
+    const shortPackageName = getShortWorkspaceName(fullPackageName);
     return `${shortPackageName}(["${fullPackageName}"]);`;
   });
 }
@@ -101,19 +118,27 @@ function buildMermaidNodeLines(workspaces: Workspace[]): string[] {
  */
 function buildMermaidConnectionLines(workspaces: Workspace[]): string[] {
   const connections: string[] = [];
+  const workspaceNamesByLocation = new Map(
+    workspaces.map((workspace) => [workspace.location, workspace.name]),
+  );
+
   workspaces.forEach((workspace) => {
     const fullPackageName = workspace.name;
-    const shortPackageName = fullPackageName
-      .replace(/^@rabby-wallet\//u, '')
-      .replace(/-/gu, '_');
+    const shortPackageName = getShortWorkspaceName(fullPackageName);
+
     workspace.workspaceDependencies.forEach((dependency) => {
-      const shortDependencyName = dependency
-        .replace(/^packages\//u, '')
-        .replace(/-/gu, '_');
+      const fullDependencyName =
+        workspaceNamesByLocation.get(dependency) ?? dependency;
+      const shortDependencyName = getShortWorkspaceName(fullDependencyName);
+
       connections.push(`${shortPackageName} --> ${shortDependencyName};`);
     });
   });
   return connections;
+}
+
+function getShortWorkspaceName(fullPackageName: string): string {
+  return fullPackageName.replace(/^@rabby-wallet\//, '').replace(/-/g, '_');
 }
 
 /**
@@ -167,8 +192,8 @@ async function updateReadme(newGraph: string, newPackageList: string) {
   // Dependency graph
   let newReadmeContent = readmeContent.replace(
     new RegExp(
-      `(${DEPENDENCY_GRAPH_START_MARKER}).+(${DEPENDENCY_GRAPH_END_MARKER})`,
-      'su',
+      `(${DEPENDENCY_GRAPH_START_MARKER})[\\s\\S]+?(${DEPENDENCY_GRAPH_END_MARKER})`,
+      '',
     ),
     (_match, startMarker, endMarker) =>
       [startMarker, '', newGraph, '', endMarker].join('\n'),
@@ -177,8 +202,8 @@ async function updateReadme(newGraph: string, newPackageList: string) {
   // Package list
   newReadmeContent = newReadmeContent.replace(
     new RegExp(
-      `(${PACKAGE_LIST_START_MARKER}).+(${PACKAGE_LIST_END_MARKER})`,
-      'su',
+      `(${PACKAGE_LIST_START_MARKER})[\\s\\S]+?(${PACKAGE_LIST_END_MARKER})`,
+      '',
     ),
     (_match, startMarker, endMarker) =>
       [startMarker, '', newPackageList, '', endMarker].join('\n'),

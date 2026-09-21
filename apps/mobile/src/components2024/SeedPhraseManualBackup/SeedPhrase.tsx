@@ -23,7 +23,7 @@ import { WordsMatrix } from '@/components2024/WordsMatrix';
 import { replaceToFirst } from '@/utils/navigation';
 import { toast, toastWithIcon } from '@/components2024/Toast';
 import { addKeyringAndactiveAndPersistAccounts } from '@/core/apis/mnemonic';
-import { keyringService } from '@/core/services';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
@@ -394,10 +394,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   copyConfirmTitle: {
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
+    fontSize: 18,
     fontStyle: 'normal',
     fontWeight: '700',
-    lineHeight: 24,
+    lineHeight: 22,
   },
 }));
 
@@ -538,7 +538,7 @@ export const SeedPhrase: React.FC<Props> = ({
           accountsToCreate as any,
           true,
         );
-        keyringService.removePreMnemonics();
+        await keyringServiceApi.removePreMnemonics();
         replaceToFirst(RootNames.StackAddress, {
           screen: RootNames.ImportSuccess2024,
           params: {
@@ -754,13 +754,15 @@ export const SeedPhrase: React.FC<Props> = ({
         {(!isHidden || readMode) && (
           <>
             <Button
-              disabled={currentSelecting && selectArr.length < 3}
+              disabled={
+                readMode ? isHidden : currentSelecting && selectArr.length < 3
+              }
               containerStyle={styles.btnContainer}
               loading={currentSelecting ? loading : false}
               type="primary"
               title={
                 readMode
-                  ? t('global.Done')
+                  ? t('global.SavedSeedPhrase')
                   : currentSelecting
                   ? t('page.nextComponent.createNewAddress.Verify')
                   : t('global.Confirm')

@@ -1,8 +1,4 @@
-import {
-  AccountHistoryItem,
-  MarketDataMap,
-  usePerpsStore,
-} from '@/hooks/perps/usePerpsStore';
+import { AccountHistoryItem, perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { WsFill } from '@rabby-wallet/hyperliquid-sdk';
@@ -14,16 +10,16 @@ import { PerpsHistoryAccountItem } from './PerpsHistoryAccountItem';
 import { PerpsHistoryDetailPopup } from './PerpsHistoryDetailPopup';
 import { PerpsHistoryEmpty } from './PerpsHistoryEmpty';
 import { PerpsHistoryItem } from './PerpsHistoryItem';
+import { PerpsHistoryTransferPopup } from './PerpsHistoryTransferPopup';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import RcArrowRight2CC from '@/assets2024/icons/copyTrading/IconRrightArrowCC.svg';
 import { Text } from '@/components/Typography';
 
 export const PerpsHistorySection: React.FC<{
-  marketDataMap: MarketDataMap;
   historyList?: (AccountHistoryItem | WsFill)[];
   coin?: string;
-}> = ({ marketDataMap, historyList: list, coin }) => {
+}> = ({ historyList: list, coin }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
@@ -31,28 +27,41 @@ export const PerpsHistorySection: React.FC<{
     return (list || []).slice(0, 3);
   }, [list]);
 
-  const {
-    state: { fillsOrderTpOrSl },
-  } = usePerpsStore();
+  const marketDataMap = perpsStore(s => s.marketDataMap);
+  const fillsOrderTpOrSl = perpsStore(s => s.fillsOrderTpOrSl);
 
   const [selectedFill, setSelectedFill] = useState<
-    (WsFill & { logoUrl: string }) | null
+    (WsFill & { logoUrl: string; quoteAsset: string }) | null
   >(null);
   const [detailVisible, setDetailVisible] = useState(false);
+  const [selectedTransfer, setSelectedTransfer] =
+    useState<AccountHistoryItem | null>(null);
+  const [transferVisible, setTransferVisible] = useState(false);
   const navigation = useRabbyAppNavigation();
 
   const handleItemClick = useMemoizedFn((fill: WsFill) => {
     const obj = {
       ...fill,
       logoUrl: marketDataMap[fill.coin]?.logoUrl || '',
+      quoteAsset: marketDataMap[fill.coin]?.quoteAsset || 'USDC',
     };
     setSelectedFill(obj);
     setDetailVisible(true);
   });
 
+  const handleTransferClick = useMemoizedFn((item: AccountHistoryItem) => {
+    setSelectedTransfer(item);
+    setTransferVisible(true);
+  });
+
   const handleCloseDetail = () => {
     setDetailVisible(false);
     setSelectedFill(null);
+  };
+
+  const handleCloseTransfer = () => {
+    setTransferVisible(false);
+    setSelectedTransfer(null);
   };
 
   return (
@@ -86,7 +95,11 @@ export const PerpsHistorySection: React.FC<{
             <>
               {displayedList.map(item => {
                 return 'usdValue' in item ? (
-                  <PerpsHistoryAccountItem data={item} key={item.hash} />
+                  <PerpsHistoryAccountItem
+                    data={item}
+                    key={item.hash}
+                    onPress={handleTransferClick}
+                  />
                 ) : (
                   <PerpsHistoryItem
                     fill={item}
@@ -114,16 +127,20 @@ export const PerpsHistorySection: React.FC<{
         fill={selectedFill}
         onClose={handleCloseDetail}
       />
+      <PerpsHistoryTransferPopup
+        visible={transferVisible}
+        item={selectedTransfer}
+        onClose={handleCloseTransfer}
+      />
     </>
   );
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  container: {},
-  list: {},
-  contentContainer: {
-    paddingBottom: 56,
+  container: {
+    paddingBottom: 24,
   },
+  list: {},
   sectionHeader: {
     marginTop: 24,
     marginBottom: 12,

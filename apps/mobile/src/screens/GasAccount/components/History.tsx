@@ -1,4 +1,10 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   View,
   FlatList,
@@ -7,9 +13,8 @@ import {
   ListRenderItem,
   TouchableOpacity,
   Image,
+  InteractionManager,
 } from 'react-native';
-import RcIconEmpty from '@/assets/icons/dapp/dapp-history-empty.svg';
-import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
 import { useTranslation } from 'react-i18next';
 import { formatUsdValue } from '@/utils/number';
 import { Skeleton } from '@rneui/themed';
@@ -19,84 +24,125 @@ import RcIconHistoryLoading from '@/assets/icons/gas-account/IconHistoryLoading.
 import { sinceTime } from '@/utils/time';
 import { useGasAccountHistory } from '../hooks';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { EmptyHolder } from '@/components/EmptyHolder';
 import IconGift from '@/assets2024/icons/home/IconGift.svg';
 import { GiftInfoModal } from './GiftInfoModal';
 import ImgEmpty from '@/assets2024/images/gasAccount/empty.png';
 import ImgEmptyDark from '@/assets2024/images/gasAccount/empty-dark.png';
 import { Text } from '@/components/Typography';
+import { StyleProp, ViewStyle } from 'react-native';
+import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 
-const HistoryItem = ({
-  time,
-  isPending = false,
-  value = 0,
-  sign = '-',
-  borderT = false,
-  chainServerId,
-  txId,
-  isWithdraw = false,
-  source,
-  onGiftIconPress,
+type GasAccountHistoryState = ReturnType<typeof useGasAccountHistory>;
+const HISTORY_END_REACHED_THRESHOLD = 0.6;
+type GasAccountPendingHistoryItem =
+  GasAccountHistoryState['txList']['rechargeList'][number];
+type GasAccountConfirmedHistoryItem =
+  GasAccountHistoryState['txList']['list'][number];
+
+const getPendingHistoryKey = ({
+  item,
+  type,
+  index,
 }: {
-  time: number;
-  value: number;
-  sign: string;
-  className?: string;
-  isPending?: boolean;
-  borderT?: boolean;
-  isWithdraw?: boolean;
-  chainServerId?: string;
-  txId?: string;
-  source?: string;
-  onGiftIconPress?: () => void;
-}) => {
+  item: GasAccountPendingHistoryItem;
+  type: 'recharge' | 'withdraw';
+  index: number;
+}) =>
+  [
+    'pending',
+    type,
+    item.tx_id || 'no-tx',
+    item.chain_id || 'no-chain',
+    item.user_addr || 'no-user',
+    item.gas_account_id || 'no-gas-account',
+    item.create_at,
+    index,
+  ].join('-');
+
+const traceGasAccountHistory = (
+  event: string,
+  data: Record<string, unknown> = {},
+) => {
+  traceStartupDiagnostic('gas-account', event, data);
+};
+
+const PendingHistorySpinner = React.memo(function PendingHistorySpinner() {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const { t } = useTranslation();
+  const [transAnim] = useState(() => new Animated.Value(0));
 
-  const transAnim = React.useRef(new Animated.Value(0));
-
-  React.useEffect(() => {
-    Animated.loop(
-      Animated.timing(transAnim.current, {
+  useEffect(() => {
+    transAnim.setValue(0);
+    const animation = Animated.loop(
+      Animated.timing(transAnim, {
         toValue: 360,
         duration: 1000,
         easing: Easing.linear,
         useNativeDriver: true,
       }),
-    ).start();
-  }, []);
+    );
+    animation.start();
 
-  const rotate = transAnim.current.interpolate({
+    return () => {
+      animation.stop();
+      transAnim.stopAnimation();
+    };
+  }, [transAnim]);
+
+  const rotate = transAnim.interpolate({
     inputRange: [0, 360],
     outputRange: ['0deg', '360deg'],
   });
 
-  // 判断是否显示gift icon
+  return (
+    <Animated.View
+      style={{
+        ...styles.pendingIcon,
+        transform: [{ rotate }],
+      }}>
+      <RcIconHistoryLoading width={16} height={16} />
+    </Animated.View>
+  );
+});
+
+type HistoryItemProps = {
+  time: number;
+  value: number;
+  sign: string;
+  isPending?: boolean;
+  borderT?: boolean;
+  isWithdraw?: boolean;
+  source?: string;
+  onGiftIconPress?: () => void;
+};
+
+const HistoryItem = React.memo(function HistoryItem({
+  time,
+  isPending = false,
+  value = 0,
+  sign = '-',
+  borderT = false,
+  isWithdraw = false,
+  source,
+  onGiftIconPress,
+}: HistoryItemProps) {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
+
   const showGiftIcon = source === 'gas_account_airdrop';
 
   return (
     <TouchableOpacity
       onPress={showGiftIcon ? onGiftIconPress : undefined}
+      activeOpacity={showGiftIcon ? 0.7 : 1}
       style={[
         styles.historyItem,
         borderT && styles.borderTop,
-        isPending && { height: 64 },
+        isPending && styles.pendingHistoryItem,
       ]}>
       <View style={styles.leftContainer}>
         {isPending ? (
           <View style={styles.pendingContainer}>
-            <Animated.View
-              style={{
-                ...styles.pendingIcon,
-                transform: [
-                  {
-                    rotate,
-                  },
-                ],
-              }}>
-              <RcIconHistoryLoading width={16} height={16} />
-            </Animated.View>
-
+            <PendingHistorySpinner />
             <Text style={styles.pendingText}>
               {isWithdraw
                 ? t('page.gasAccount.withdraw')
@@ -121,9 +167,9 @@ const HistoryItem = ({
       </Text>
     </TouchableOpacity>
   );
-};
+});
 
-const LoadingItem = ({ borderT }) => {
+const LoadingItem = ({ borderT }: { borderT?: boolean }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   return (
@@ -134,199 +180,372 @@ const LoadingItem = ({ borderT }) => {
   );
 };
 
-export const GasAccountHistory = () => {
-  const { t } = useTranslation();
-  const { loading, txList, loadingMore, loadMore, noMore } =
-    useGasAccountHistory();
-  const { styles, isLight } = useTheme2024({ getStyle: getStyles });
-  const [isModalVisible, setIsModalVisible] = useState(false);
+type GasAccountHistoryProps = {
+  style?: StyleProp<ViewStyle>;
+  listStyle?: StyleProp<ViewStyle>;
+};
 
-  const { bottom } = useSafeAreaInsets();
+export const GasAccountHistory = React.memo<GasAccountHistoryProps>(
+  function GasAccountHistory({ style, listStyle }) {
+    const renderStartedAt = Date.now();
+    const { t } = useTranslation();
+    const historyState = useGasAccountHistory();
+    const { loading, loadingMore, txList, loadMore, noMore, hasHistory } =
+      historyState;
+    const { styles, isLight } = useTheme2024({ getStyle: getStyles });
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const listHeightRef = useRef(0);
+    const contentHeightRef = useRef(0);
+    const renderSeqRef = useRef(0);
+    const itemRenderCountRef = useRef(0);
+    const hasUserScrolledRef = useRef(false);
+    const autoLoadMoreTaskRef = useRef<ReturnType<
+      typeof InteractionManager.runAfterInteractions
+    > | null>(null);
+    const autoLoadMoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+      null,
+    );
+    const hasRechargeHistory = Boolean(txList?.rechargeList.length);
 
-  const handleGiftIconPress = useCallback(() => {
-    console.log('Gift icon pressed!');
-    setIsModalVisible(true);
-  }, []);
+    const { bottom } = useSafeAreaInsets();
 
-  const handleCloseGiftInfo = useCallback(() => {
-    setIsModalVisible(false);
-  }, []);
+    const handleGiftIconPress = useCallback(() => {
+      setIsModalVisible(true);
+    }, []);
 
-  const ListEmptyComponent = useMemo(
-    () =>
-      loading ? (
+    const handleCloseGiftInfo = useCallback(() => {
+      setIsModalVisible(false);
+    }, []);
+
+    const ListEmptyComponent = useMemo(
+      () =>
+        loading ? (
+          <>
+            {Array.from({ length: 10 }).map((_, idx) => (
+              <LoadingItem key={idx} borderT={idx !== 0} />
+            ))}
+          </>
+        ) : null,
+      [loading],
+    );
+
+    const ListEndLoader = useCallback(() => {
+      if (!loadingMore || noMore) {
+        return null;
+      }
+      return <LoadingItem borderT />;
+    }, [loadingMore, noMore]);
+
+    const clearScheduledAutoLoadMore = useCallback(() => {
+      autoLoadMoreTaskRef.current?.cancel();
+      autoLoadMoreTaskRef.current = null;
+      if (autoLoadMoreTimerRef.current) {
+        clearTimeout(autoLoadMoreTimerRef.current);
+        autoLoadMoreTimerRef.current = null;
+      }
+    }, []);
+
+    const canAutoLoadMore = useCallback(() => {
+      if (
+        loading ||
+        loadingMore ||
+        noMore ||
+        !listHeightRef.current ||
+        !contentHeightRef.current
+      ) {
+        return false;
+      }
+
+      return (
+        contentHeightRef.current - listHeightRef.current <=
+        listHeightRef.current * HISTORY_END_REACHED_THRESHOLD
+      );
+    }, [loading, loadingMore, noMore]);
+
+    const scheduleAutoLoadMore = useCallback(() => {
+      if (!canAutoLoadMore() || autoLoadMoreTaskRef.current) {
+        return;
+      }
+
+      traceGasAccountHistory('history_auto_load_more_scheduled', {
+        listHeight: listHeightRef.current,
+        contentHeight: contentHeightRef.current,
+        confirmedCount: txList?.list.length || 0,
+        rechargeCount: txList?.rechargeList.length || 0,
+        withdrawCount: txList?.withdrawList.length || 0,
+      });
+
+      autoLoadMoreTaskRef.current = InteractionManager.runAfterInteractions(
+        () => {
+          autoLoadMoreTimerRef.current = setTimeout(() => {
+            autoLoadMoreTaskRef.current = null;
+            autoLoadMoreTimerRef.current = null;
+
+            if (!canAutoLoadMore()) {
+              return;
+            }
+
+            traceGasAccountHistory('history_auto_load_more', {
+              listHeight: listHeightRef.current,
+              contentHeight: contentHeightRef.current,
+              confirmedCount: txList?.list.length || 0,
+              rechargeCount: txList?.rechargeList.length || 0,
+              withdrawCount: txList?.withdrawList.length || 0,
+            });
+            loadMore();
+          }, 600);
+        },
+      );
+    }, [
+      canAutoLoadMore,
+      loadMore,
+      txList?.list.length,
+      txList?.rechargeList.length,
+      txList?.withdrawList.length,
+    ]);
+
+    useEffect(() => {
+      return clearScheduledAutoLoadMore;
+    }, [clearScheduledAutoLoadMore]);
+
+    const handleEndReached = useCallback(() => {
+      if (!hasUserScrolledRef.current) {
+        traceGasAccountHistory('history_end_reached_ignored', {
+          listHeight: listHeightRef.current,
+          contentHeight: contentHeightRef.current,
+          confirmedCount: txList?.list.length || 0,
+          rechargeCount: txList?.rechargeList.length || 0,
+          withdrawCount: txList?.withdrawList.length || 0,
+        });
+        return;
+      }
+
+      traceGasAccountHistory('history_end_reached', {
+        confirmedCount: txList?.list.length || 0,
+        rechargeCount: txList?.rechargeList.length || 0,
+        withdrawCount: txList?.withdrawList.length || 0,
+      });
+      loadMore();
+    }, [
+      loadMore,
+      txList?.list.length,
+      txList?.rechargeList.length,
+      txList?.withdrawList.length,
+    ]);
+
+    useEffect(() => {
+      scheduleAutoLoadMore();
+    }, [
+      scheduleAutoLoadMore,
+      txList?.list.length,
+      txList?.rechargeList.length,
+      txList?.withdrawList.length,
+    ]);
+
+    const sourceByTxKey = useMemo(() => {
+      const map = new Map<string, string | undefined>();
+      txList?.list?.forEach(item => {
+        map.set(`${item.tx_id}-${item.chain_id}`, item.source);
+      });
+      return map;
+    }, [txList?.list]);
+
+    const shouldShowTopBorder = useCallback(
+      (index: number) => (hasRechargeHistory ? true : index !== 0),
+      [hasRechargeHistory],
+    );
+
+    useEffect(() => {
+      renderSeqRef.current += 1;
+      traceGasAccountHistory('history_render_commit', {
+        seq: renderSeqRef.current,
+        renderCommitMs: Date.now() - renderStartedAt,
+        loading,
+        loadingMore,
+        noMore,
+        hasHistory,
+        confirmedCount: txList?.list.length || 0,
+        rechargeCount: txList?.rechargeList.length || 0,
+        withdrawCount: txList?.withdrawList.length || 0,
+        listHeight: listHeightRef.current,
+        contentHeight: contentHeightRef.current,
+      });
+    });
+
+    itemRenderCountRef.current = 0;
+
+    const ListHeaderComponent = useCallback(() => {
+      return (
         <>
-          {Array.from({ length: 10 }).map((_, idx) => (
-            <LoadingItem key={idx} borderT={idx !== 0} />
-          ))}
+          {!loading &&
+            txList?.withdrawList?.map((item, index) => {
+              return (
+                <HistoryItem
+                  isWithdraw={true}
+                  key={getPendingHistoryKey({
+                    item,
+                    type: 'withdraw',
+                    index,
+                  })}
+                  time={item.create_at}
+                  value={item.amount}
+                  sign={'-'}
+                  borderT={shouldShowTopBorder(index)}
+                  isPending={true}
+                  source={sourceByTxKey.get(`${item.tx_id}-${item.chain_id}`)}
+                  onGiftIconPress={handleGiftIconPress}
+                />
+              );
+            })}
+          {!loading &&
+            txList?.rechargeList?.map((item, index) => {
+              return (
+                <HistoryItem
+                  key={getPendingHistoryKey({
+                    item,
+                    type: 'recharge',
+                    index,
+                  })}
+                  time={item.create_at}
+                  value={item.amount}
+                  sign={'+'}
+                  borderT={true}
+                  isPending={true}
+                  source={sourceByTxKey.get(`${item.tx_id}-${item.chain_id}`)}
+                  onGiftIconPress={handleGiftIconPress}
+                />
+              );
+            })}
         </>
-      ) : null,
-    [loading],
-  );
+      );
+    }, [
+      loading,
+      shouldShowTopBorder,
+      txList?.rechargeList,
+      txList?.withdrawList,
+      handleGiftIconPress,
+      sourceByTxKey,
+    ]);
 
-  const ListEndLoader = useCallback(() => {
-    if (noMore) {
-      return null;
-    }
-    return <LoadingItem borderT />;
-  }, [noMore]);
+    const renderItem: ListRenderItem<GasAccountConfirmedHistoryItem> =
+      useCallback(
+        ({ item, index }) => {
+          itemRenderCountRef.current += 1;
+          if (itemRenderCountRef.current <= 5) {
+            traceGasAccountHistory('history_render_item', {
+              index,
+              renderCountInCommit: itemRenderCountRef.current,
+              historyType: item.history_type,
+              hasSource: !!item.source,
+            });
+          }
 
-  const ListHeaderComponent = useCallback(() => {
-    return (
-      <>
-        {!loading &&
-          txList?.withdrawList?.map((item, index) => {
-            // 从txList.list中查找对应的item来获取source字段
-            const sourceItem = txList?.list?.find(
-              listItem =>
-                listItem.tx_id === item.tx_id &&
-                listItem.chain_id === item.chain_id,
-            );
-            return (
-              <HistoryItem
-                isWithdraw={true}
-                key={item.create_at}
-                time={item.create_at}
-                value={item.amount}
-                sign={'-'}
-                borderT={!txList.rechargeList.length ? index !== 0 : true}
-                isPending={true}
-                chainServerId={item?.chain_id}
-                txId={item?.tx_id}
-                source={sourceItem?.source}
-                onGiftIconPress={handleGiftIconPress}
-              />
-            );
-          })}
-        {!loading &&
-          txList?.rechargeList?.map((item, index) => {
-            // 从txList.list中查找对应的item来获取source字段
-            const sourceItem = txList?.list?.find(
-              listItem =>
-                listItem.tx_id === item.tx_id &&
-                listItem.chain_id === item.chain_id,
-            );
-            return (
-              <HistoryItem
-                key={item.tx_id + item.chain_id}
-                time={item.create_at}
-                value={item.amount}
-                sign={'+'}
-                borderT={
-                  !txList?.rechargeList.length && !txList?.withdrawList.length
-                    ? index !== 0
-                    : true
-                }
-                isPending={true}
-                chainServerId={item?.chain_id}
-                txId={item?.tx_id}
-                source={sourceItem?.source}
-                onGiftIconPress={handleGiftIconPress}
-              />
-            );
-          })}
-      </>
-    );
-  }, [
-    loading,
-    txList?.rechargeList,
-    txList?.withdrawList,
-    txList?.list,
-    handleGiftIconPress,
-  ]);
+          return (
+            <HistoryItem
+              time={item.create_at}
+              value={item.usd_value}
+              sign={item.history_type === 'recharge' ? '+' : '-'}
+              borderT={shouldShowTopBorder(index)}
+              source={item.source}
+              onGiftIconPress={handleGiftIconPress}
+            />
+          );
+        },
+        [handleGiftIconPress, shouldShowTopBorder],
+      );
 
-  const renderItem: ListRenderItem<{
-    id: string;
-    chain_id: string;
-    create_at: number;
-    gas_cost_usd_value: number;
-    gas_account_id: string;
-    tx_id: string;
-    usd_value: number;
-    user_addr: string;
-    history_type: 'tx' | 'recharge' | 'withdraw';
-    source?: string;
-  }> = useCallback(
-    ({ item, index }) => (
-      <HistoryItem
-        key={item.tx_id + item.chain_id}
-        time={item.create_at}
-        value={item.usd_value}
-        sign={item.history_type === 'recharge' ? '+' : '-'}
-        borderT={!txList?.rechargeList.length ? index !== 0 : true}
-        source={item.source}
-        onGiftIconPress={handleGiftIconPress}
-      />
-    ),
-    [txList?.rechargeList, handleGiftIconPress],
-  );
-
-  if (
-    !loading &&
-    !txList?.rechargeList.length &&
-    !txList?.withdrawList.length &&
-    !txList?.list.length
-  ) {
-    return (
-      <View
-        style={[
-          styles.container,
-          { height: 254 },
-          isLight ? styles.containerLight : styles.containerDark,
-        ]}>
-        <View style={styles.emptyContent}>
-          <Image
-            source={isLight ? ImgEmpty : ImgEmptyDark}
-            style={styles.emptyImg}
-            resizeMode="contain"
-          />
-          <Text style={styles.emptyText}>
-            {t('page.gasAccount.history.noHistory')}
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
-  return (
-    <>
-      <FlatList
-        style={[
-          styles.container,
-          { marginBottom: bottom },
-          isLight ? styles.containerLight : styles.containerDark,
-        ]}
-        data={txList?.list}
-        contentInset={{ bottom: 12 }}
-        ListHeaderComponent={ListHeaderComponent}
-        renderItem={renderItem}
-        extraData={txList?.rechargeList.length}
-        keyExtractor={item =>
-          `${item.tx_id}-${item.chain_id}-${item.id || item.user_addr}-${
-            item.create_at
-          }`
-        }
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.6}
-        ListFooterComponent={ListEndLoader}
-        ListEmptyComponent={ListEmptyComponent}
-      />
-      <GiftInfoModal
-        visible={isModalVisible}
-        snapPoints={[209]}
-        header={
-          <View style={styles.giftInfoHeader}>
-            <IconGift width={18} height={18} />
-            <Text style={styles.giftInfoHeaderText}>
-              {t('component.gasAccount.giftInfo.giftTips')}
+    if (!loading && !hasHistory) {
+      return (
+        <View
+          style={[
+            styles.container,
+            styles.emptyContainer,
+            style,
+            isLight ? styles.containerLight : styles.containerDark,
+          ]}>
+          <View style={styles.emptyContent}>
+            <Image
+              source={isLight ? ImgEmpty : ImgEmptyDark}
+              style={styles.emptyImg}
+              resizeMode="contain"
+            />
+            <Text style={styles.emptyText}>
+              {t('page.gasAccount.history.noHistory')}
             </Text>
           </View>
-        }
-        onClose={handleCloseGiftInfo}
-      />
-    </>
-  );
-};
+        </View>
+      );
+    }
+
+    return (
+      <>
+        <FlatList
+          style={[
+            styles.container,
+            listStyle,
+            { marginBottom: bottom },
+            style,
+            isLight ? styles.containerLight : styles.containerDark,
+          ]}
+          data={txList?.list}
+          contentInset={{ bottom: 12 }}
+          onLayout={event => {
+            listHeightRef.current = event.nativeEvent.layout.height;
+            traceGasAccountHistory('history_list_layout', {
+              height: listHeightRef.current,
+              confirmedCount: txList?.list.length || 0,
+              rechargeCount: txList?.rechargeList.length || 0,
+              withdrawCount: txList?.withdrawList.length || 0,
+            });
+            scheduleAutoLoadMore();
+          }}
+          onContentSizeChange={(_, height) => {
+            contentHeightRef.current = height;
+            traceGasAccountHistory('history_content_size', {
+              height,
+              listHeight: listHeightRef.current,
+              confirmedCount: txList?.list.length || 0,
+              rechargeCount: txList?.rechargeList.length || 0,
+              withdrawCount: txList?.withdrawList.length || 0,
+            });
+            scheduleAutoLoadMore();
+          }}
+          ListHeaderComponent={ListHeaderComponent}
+          renderItem={renderItem}
+          extraData={txList?.rechargeList.length}
+          keyExtractor={item =>
+            `${item.tx_id}-${item.chain_id}-${item.id || item.user_addr}-${
+              item.create_at
+            }`
+          }
+          onScrollBeginDrag={() => {
+            hasUserScrolledRef.current = true;
+          }}
+          onMomentumScrollBegin={() => {
+            hasUserScrolledRef.current = true;
+          }}
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={HISTORY_END_REACHED_THRESHOLD}
+          ListFooterComponent={ListEndLoader}
+          ListEmptyComponent={ListEmptyComponent}
+        />
+        <GiftInfoModal
+          visible={isModalVisible}
+          snapPoints={[209]}
+          header={
+            <View style={styles.giftInfoHeader}>
+              <IconGift width={18} height={18} />
+              <Text style={styles.giftInfoHeaderText}>
+                {t('component.gasAccount.giftInfo.giftTips')}
+              </Text>
+            </View>
+          }
+          onClose={handleCloseGiftInfo}
+        />
+      </>
+    );
+  },
+);
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
@@ -346,6 +565,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     height: 50,
+  },
+  pendingHistoryItem: {
+    height: 64,
   },
   pendingContainer: {
     flexDirection: 'row',
@@ -409,23 +631,12 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
     color: colors2024['neutral-title-1'],
   },
-  // loadingItem: {
-  //   paddingHorizontal: 20,
-  //   height: 50,
-
-  //   flexDirection: 'row',
-  //   justifyContent: 'space-between',
-  //   paddingVertical: 12,
-  // },
   skeletonStyle: {
     height: 16,
     borderRadius: 4,
     width: 68,
   },
-  borderTop: {
-    // borderTopWidth: 0.5,
-    // borderTopColor: colors['neutral-card2'],
-  },
+  borderTop: {},
 
   emptyImg: {
     marginTop: 36,
@@ -439,6 +650,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'column',
     alignItems: 'center',
     gap: 6,
+  },
+  emptyContainer: {
+    height: 234,
   },
 
   emptyText: {

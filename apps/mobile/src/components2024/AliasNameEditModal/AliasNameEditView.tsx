@@ -3,9 +3,11 @@ import { useTheme2024 } from '@/hooks/theme';
 import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { Image, Platform, StyleSheet, View } from 'react-native';
 import { WalletIcon } from '../WalletIcon/WalletIcon';
 import { Text, TextInput } from '@/components/Typography';
+
+const isAndroid = Platform.OS === 'android';
 
 export interface Props {
   account: KeyringAccountWithAlias;
@@ -24,13 +26,43 @@ export const AliasNameEditView: React.FC<Props> = ({
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [aliasName, setAliasName] = React.useState<string>();
-  const defaultAliasName =
+  const [selection, setSelection] = React.useState<
+    { start: number; end: number } | undefined
+  >();
+  const placeholder =
     account.aliasName || ellipsisAddress(account.address || '');
-  const [placeholder, setPlaceholder] = React.useState(defaultAliasName);
+  const showAndroidPlaceholder = isAndroid && !aliasName;
 
   React.useEffect(() => {
-    setPlaceholder(defaultAliasName);
-  }, [defaultAliasName]);
+    setAliasName(undefined);
+
+    if (isAndroid) {
+      setSelection({ start: 0, end: 0 });
+    }
+  }, [account.address, account.aliasName]);
+
+  const focusAtStartOnAndroid = React.useCallback(() => {
+    if (!isAndroid) {
+      return;
+    }
+
+    if (!aliasName) {
+      setSelection({ start: 0, end: 0 });
+    }
+  }, [aliasName]);
+
+  const handleSelectionChange = React.useCallback(() => {
+    setSelection(undefined);
+  }, []);
+
+  const handleChangeText = React.useCallback(
+    (_aliasName: string) => {
+      setAliasName(_aliasName);
+      setSelection(undefined);
+      onChange(_aliasName);
+    },
+    [onChange],
+  );
 
   return (
     <View style={styles.itemContainer}>
@@ -50,19 +82,32 @@ export const AliasNameEditView: React.FC<Props> = ({
           borderRadius={iconBorderRadius}
         />
       )}
-      <TextInput
-        autoFocus
-        style={styles.inputInner}
-        value={aliasName}
-        placeholder={placeholder}
-        placeholderTextColor={colors2024['neutral-info']}
-        onChange={nativeEvent => {
-          const _aliasName = nativeEvent.nativeEvent.text;
-          setAliasName(_aliasName);
-          onChange(_aliasName);
-        }}
-        blurOnSubmit
-      />
+      <View style={styles.inputWrapper}>
+        {showAndroidPlaceholder ? (
+          <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={[
+              styles.inputInner,
+              styles.inputInnerInWrapper,
+              styles.androidPlaceholder,
+            ]}>
+            {placeholder}
+          </Text>
+        ) : null}
+        <TextInput
+          autoFocus
+          style={[styles.inputInner, styles.inputInnerInWrapper]}
+          value={aliasName ?? ''}
+          placeholder={isAndroid ? '' : placeholder}
+          placeholderTextColor={colors2024['neutral-info']}
+          onChangeText={handleChangeText}
+          onFocus={focusAtStartOnAndroid}
+          onSelectionChange={handleSelectionChange}
+          selection={isAndroid && !aliasName ? selection : undefined}
+          blurOnSubmit
+        />
+      </View>
       <Text style={StyleSheet.flatten([styles.addressText])}>
         {ellipsisAddress(account.address)}
       </Text>
@@ -91,19 +136,34 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     marginTop: 7,
   },
+  inputWrapper: {
+    width: '100%',
+    height: 54,
+    marginTop: 15,
+    position: 'relative',
+  },
   inputInner: {
     width: '100%',
-    marginTop: 15,
     textAlignVertical: 'center',
     height: 54,
     padding: 0,
     fontSize: 36,
     borderWidth: 0,
     backgroundColor: 'transparent',
-    lineHeight: 42,
+    ...Platform.select({
+      ios: { lineHeight: 42 },
+      android: { includeFontPadding: false },
+    }),
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
+  },
+  inputInnerInWrapper: {
+    marginTop: 0,
+  },
+  androidPlaceholder: {
+    position: 'absolute',
+    color: colors2024['neutral-info'],
   },
 }));

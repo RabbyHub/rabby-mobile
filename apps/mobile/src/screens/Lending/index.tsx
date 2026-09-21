@@ -1,63 +1,70 @@
-import React, { useCallback } from 'react';
-import { Platform, View } from 'react-native';
-
+import React, { useCallback, useEffect } from 'react';
+import { View } from 'react-native';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
-import {
-  DappFrameAccountHeader,
-  DappSelectItem,
-} from '@/components2024/DappFrameAccountHeader';
-import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { Account } from '@/core/services/preference';
-import {
-  useSceneAccountInfo,
-  useSwitchSceneCurrentAccount,
-} from '@/hooks/accountsSwitcher';
+
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-
-import { useInitOpenDetail } from './hooks/useInitOpenDetail';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import {
+  PropsForAccountSwitchScreen,
+  ScreenSceneAccountProvider,
+  useSceneAccountInfo,
+} from '@/hooks/accountsSwitcher';
+import { useFetchLendingData, useSelectedMarket } from './hooks';
+import { LendingNativeHeader } from './components/LendingHeaderTitle';
 import MyAssetHome from './MyAssetHome';
+import useProtocols from '@/store/protocols';
+import { marketKeyToProtocolId } from './config/protocol';
 
-const isAndroid = Platform.OS === 'android';
-
-type LendingNativeScreenProps = {
-  activeId: string;
-  dappList: DappSelectItem[];
-  onSelectDapp: (item: DappSelectItem) => void;
-  dappSelectTitle?: string;
-};
-
-export function LendingNativeScreen({
-  activeId,
-  dappList,
-  onSelectDapp,
-  dappSelectTitle,
-}: LendingNativeScreenProps): JSX.Element {
+function DashBoardScreen(): JSX.Element {
   const { styles, isLight } = useTheme2024({ getStyle });
-  useInitOpenDetail();
+  const { fetchData } = useFetchLendingData();
   const { finalSceneCurrentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-
-  const handleSelectAccount = useCallback(
-    (account: Account) => {
-      switchSceneCurrentAccount('Lending', account);
-    },
-    [switchSceneCurrentAccount],
+  const updateSpecificProtocol = useProtocols(
+    state => state.updateSpecificProtocol,
   );
+
+  const { chainInfo, marketKey } = useSelectedMarket();
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handlePendingClear = useCallback(() => {
+    setTimeout(() => {
+      fetchData(true);
+
+      // lending和 protocol 两个数据源，这里让两个数据源看着更加一致
+      const protocolId = marketKeyToProtocolId(marketKey);
+      if (
+        protocolId &&
+        finalSceneCurrentAccount?.address &&
+        chainInfo?.serverId
+      ) {
+        updateSpecificProtocol(
+          finalSceneCurrentAccount?.address,
+          protocolId,
+          chainInfo?.serverId,
+        );
+      }
+    }, 200);
+  }, [
+    chainInfo?.serverId,
+    fetchData,
+    finalSceneCurrentAccount?.address,
+    marketKey,
+    updateSpecificProtocol,
+  ]);
 
   return (
     <NormalScreenContainer2024
       type={isLight ? 'bg0' : 'bg1'}
       overwriteStyle={styles.overwriteStyle}>
-      <DappFrameAccountHeader
-        dappSelectTitle={dappSelectTitle}
-        account={finalSceneCurrentAccount || undefined}
-        onSelectAccount={handleSelectAccount}
-        activeId={activeId}
-        dAppList={dappList}
-        onSelectDapp={onSelectDapp}
+      <LendingNativeHeader
+        account={finalSceneCurrentAccount}
+        onPendingClear={handlePendingClear}
       />
       <AccountSwitcherModal forScene="Lending" inScreen />
       <View style={styles.container}>
@@ -67,18 +74,37 @@ export function LendingNativeScreen({
   );
 }
 
-const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
+const ForMultipleAddress = (
+  props: Omit<
+    React.ComponentProps<typeof DashBoardScreen>,
+    keyof PropsForAccountSwitchScreen
+  >,
+) => {
+  const { sceneCurrentAccountDepKey } = useSceneAccountInfo({
+    forScene: 'Lending',
+  });
+  return (
+    <ScreenSceneAccountProvider
+      value={{
+        forScene: 'Lending',
+        ofScreen: 'Lending',
+        sceneScreenRenderId: `${sceneCurrentAccountDepKey}-Lending`,
+      }}>
+      <DashBoardScreen {...props} />
+    </ScreenSceneAccountProvider>
+  );
+};
+
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   overwriteStyle: {
     position: 'relative',
     backgroundColor: isLight
       ? colors2024['neutral-bg-0']
       : colors2024['neutral-bg-1'],
   },
-  header: {
-    height: isAndroid ? 46 : 44,
-  },
   container: {
     flex: 1,
-    paddingTop: 6,
   },
 }));
+
+export default ForMultipleAddress;

@@ -1,109 +1,34 @@
 import 'react-native-gesture-handler';
 import { RootNames } from '@/constant/layout';
+import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
-
-import { registerAppScreen } from '@/perfs/apis';
 import {
-  preloadNonProductionScreens,
-  TESTKITS_PRELOAD_SCREENS,
-} from '@/perfs/preloads';
-import { useLayoutEffect } from 'react';
-import { devOnlyDelayNavi } from '../Testkits/testkits-utils';
-import { isNonPublicProductionEnv } from '@/constant';
-
-const GetStartedScreen2024 = registerAppScreen<
-  typeof import('@/screens/GetStarted/NewUserGetStarted2024').default
->({
-  loader: () => import('@/screens/GetStarted/NewUserGetStarted2024'),
-  name: TESTKITS_PRELOAD_SCREENS.NewUserGetStarted2024,
-});
-const DevUIAnimatedTextAndView = registerAppScreen<
-  typeof import('@/screens/Testkits/DevUIAnimatedTextAndView').default
->({
-  loader: () => import('@/screens/Testkits/DevUIAnimatedTextAndView'),
-  name: TESTKITS_PRELOAD_SCREENS.DevUIAnimatedTextAndView,
-});
-const DevUIFontShowCase = registerAppScreen<
-  typeof import('@/screens/Testkits/DevUIFontShowCase').default
->({
-  loader: () => import('@/screens/Testkits/DevUIFontShowCase'),
-  name: TESTKITS_PRELOAD_SCREENS.DevUIFontShowCase,
-});
-const DevUIFormShowCase = registerAppScreen<
-  typeof import('@/screens/Testkits/DevUIFormShowCase').default
->({
-  loader: () => import('@/screens/Testkits/DevUIFormShowCase'),
-  name: TESTKITS_PRELOAD_SCREENS.DevUIFormShowCase,
-});
-const DevUIAccountShowCase = registerAppScreen<
-  typeof import('@/screens/Testkits/DevUIAccountShowCase').default
->({
-  loader: () => import('@/screens/Testkits/DevUIAccountShowCase'),
-  name: TESTKITS_PRELOAD_SCREENS.DevUIAccountShowCase,
-});
-const DevUIToast = registerAppScreen<
-  typeof import('@/screens/Testkits/DevUIToast').default
->({
-  loader: () => import('@/screens/Testkits/DevUIToast'),
-  name: TESTKITS_PRELOAD_SCREENS.DevUIToast,
-});
-const DevUINotifications = registerAppScreen<
-  typeof import('@/screens/Testkits/DevUINotifications').default
->({
-  loader: () => import('@/screens/Testkits/DevUINotifications'),
-  name: TESTKITS_PRELOAD_SCREENS.DevUINotifications,
-});
-const DevUIScreenContainerShowCase = registerAppScreen<
-  typeof import('@/screens/Testkits/DevUIScreenContainerShowCase').default
->({
-  loader: () => import('@/screens/Testkits/DevUIScreenContainerShowCase'),
-  name: TESTKITS_PRELOAD_SCREENS.DevUIScreenContainerShowCase,
-});
-const DevUIDapps = registerAppScreen<
-  typeof import('@/screens/Testkits/DevUIDapps').default
->({
-  loader: () => import('@/screens/Testkits/DevUIDapps'),
-  name: TESTKITS_PRELOAD_SCREENS.DevUIDapps,
-});
-const DevUIBuiltInPages = registerAppScreen<
-  typeof import('@/screens/Testkits/DevUIBuiltInPages').default
->({
-  loader: () => import('@/screens/Testkits/DevUIBuiltInPages'),
-  name: TESTKITS_PRELOAD_SCREENS.DevUIBuiltInPages,
-});
-const DevUIPermissions = registerAppScreen<
-  typeof import('@/screens/Testkits/DevUIPermissions').default
->({
-  loader: () => import('@/screens/Testkits/DevUIPermissions'),
-  name: TESTKITS_PRELOAD_SCREENS.DevUIPermissions,
-});
-const DevDataSQLite = registerAppScreen<
-  typeof import('@/screens/Testkits/DevDataSQLite').default
->({
-  loader: () => import('@/screens/Testkits/DevDataSQLite'),
-  name: TESTKITS_PRELOAD_SCREENS.DevDataSQLite,
-});
-const DevSwitches = !isNonPublicProductionEnv
-  ? registerAppScreen<typeof import('@/screens/Testkits/DevSwitches').default>({
-      loader: () => import('@/screens/Testkits/DevSwitches'),
-      name: TESTKITS_PRELOAD_SCREENS.DevSwitches,
-    })
-  : require('@/screens/Testkits/DevSwitches').default;
-const DevPerf = !isNonPublicProductionEnv
-  ? registerAppScreen<typeof import('@/screens/Testkits/DevPerf').default>({
-      loader: () => import('@/screens/Testkits/DevPerf'),
-      name: TESTKITS_PRELOAD_SCREENS.DevPerf,
-    })
-  : require('@/screens/Testkits/DevPerf').default;
-const DebugLogViewer = !isNonPublicProductionEnv
-  ? registerAppScreen<
-      typeof import('@/screens/Testkits/DebugLogViewer').default
-    >({
-      loader: () => import('@/screens/Testkits/DebugLogViewer'),
-      name: TESTKITS_PRELOAD_SCREENS.DebugLogViewer,
-    })
-  : require('@/screens/Testkits/DebugLogViewer').default;
+  DebugLogViewer,
+  StartupPerformanceLogViewer,
+  DevCapabilityFile,
+  InMemoryLogViewer,
+  DevDataContactService,
+  DevDataSQLite,
+  DevWatchAddressFixtureImport,
+  DevDataKeychain,
+  DevDataKeyringVault,
+  DevDataWhitelist,
+  DevPerf,
+  DevSwitches,
+  DevUIAccountShowCase,
+  DevUIAnimatedTextAndView,
+  DevUIBuiltInPages,
+  DevUIComponents2024ShowCase,
+  DevUIWalletConnect,
+  DevUIDapps,
+  DevUIFontShowCase,
+  DevUIFormShowCase,
+  DevUINotifications,
+  DevUIPermissions,
+  DevUIScreenContainerShowCase,
+  DevUIToast,
+} from '@/perfs/loadables/testkitsNavigatorScreens';
 
 const Stack = createNativeStackNavigator();
 
@@ -117,7 +42,7 @@ const Stack = createNativeStackNavigator();
 // );
 
 export function TestkitsNavigator() {
-  // const { mergeScreenOptions } = useStackScreenConfig();
+  const { mergeScreenOptions2024 } = useStackScreenConfig();
   const colors = useThemeColors();
   // console.log('============== TestkitsNavigator Render =========');
 
@@ -131,13 +56,6 @@ export function TestkitsNavigator() {
         headerShown: false,
         statusBarBackgroundColor: colors['blue-default'],
       }}>
-      <Stack.Screen
-        name={RootNames.NewUserGetStarted2024}
-        component={GetStartedScreen2024}
-        // options={{
-        //   navigationBarHidden: true,
-        // }}
-      />
       <Stack.Screen
         name={RootNames.DevUIAnimatedTextAndView}
         component={DevUIAnimatedTextAndView}
@@ -153,6 +71,10 @@ export function TestkitsNavigator() {
       <Stack.Screen
         name={RootNames.DevUIAccountShowCase}
         component={DevUIAccountShowCase}
+      />
+      <Stack.Screen
+        name={RootNames.DevUIComponents2024ShowCase}
+        component={DevUIComponents2024ShowCase}
       />
       <Stack.Screen
         name={RootNames.DevUIScreenContainerShowCase}
@@ -172,8 +94,85 @@ export function TestkitsNavigator() {
         name={RootNames.DevUIPermissions}
         component={DevUIPermissions}
       />
+      <Stack.Screen
+        name={RootNames.DevUIWalletConnect}
+        component={DevUIWalletConnect}
+        options={mergeScreenOptions2024([
+          {
+            headerShown: true,
+            headerTitle: 'WalletConnect Log',
+            title: 'WalletConnect Log',
+          },
+        ])}
+      />
+      <Stack.Screen
+        name={RootNames.DevCapabilityFile}
+        component={DevCapabilityFile}
+        options={mergeScreenOptions2024([
+          {
+            headerShown: true,
+            headerTitle: 'File Capability',
+            title: 'File Capability',
+          },
+        ])}
+      />
 
       <Stack.Screen name={RootNames.DevDataSQLite} component={DevDataSQLite} />
+      <Stack.Screen
+        name={RootNames.DevWatchAddressFixtureImport}
+        component={DevWatchAddressFixtureImport}
+        options={mergeScreenOptions2024([
+          {
+            headerShown: true,
+            headerTitle: 'Benchmark Watch addresses',
+            title: 'Benchmark Watch addresses',
+          },
+        ])}
+      />
+      <Stack.Screen
+        name={RootNames.DevDataKeychain}
+        component={DevDataKeychain}
+        options={mergeScreenOptions2024([
+          {
+            headerShown: true,
+            headerTitle: 'Keychain Data',
+            title: 'Keychain Data',
+          },
+        ])}
+      />
+      <Stack.Screen
+        name={RootNames.DevDataKeyringVault}
+        component={DevDataKeyringVault}
+        options={mergeScreenOptions2024([
+          {
+            headerShown: true,
+            headerTitle: 'Keyring Vault',
+            title: 'Keyring Vault',
+          },
+        ])}
+      />
+      <Stack.Screen
+        name={RootNames.DevDataContactService}
+        component={DevDataContactService}
+        options={mergeScreenOptions2024([
+          {
+            headerShown: true,
+            headerTitle: 'Contact Service',
+            title: 'Contact Service',
+          },
+        ])}
+      />
+      <Stack.Screen
+        name={RootNames.DevDataWhitelist}
+        component={DevDataWhitelist}
+        options={mergeScreenOptions2024([
+          {
+            headerShown: true,
+            headerTitle: 'Whitelist Data',
+            title: 'Whitelist Data',
+          },
+        ])}
+      />
 
       <Stack.Screen
         name={RootNames.DevSwitches}
@@ -196,6 +195,23 @@ export function TestkitsNavigator() {
         component={DebugLogViewer}
         options={{
           headerShown: true,
+          title: 'App Log Verification',
+        }}
+      />
+      <Stack.Screen
+        name={RootNames.StartupPerformanceLogViewer}
+        component={StartupPerformanceLogViewer}
+        options={{
+          headerShown: true,
+          title: 'Startup Performance Logs',
+        }}
+      />
+      <Stack.Screen
+        name={RootNames.InMemoryLogViewer}
+        component={InMemoryLogViewer}
+        options={{
+          headerShown: true,
+          title: 'In-Memory Logs',
         }}
       />
     </Stack.Navigator>

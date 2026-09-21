@@ -1,0 +1,249 @@
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+
+function loadPerpsModule({ isUnlocked = true }: { isUnlocked?: boolean } = {}) {
+  jest.resetModules();
+
+  const mockCreateAgentWallet = jest.fn();
+  const mockDisconnect = jest.fn();
+  const mockGetAgentWallet = jest.fn();
+  const mockGetAgentWalletPreference = jest.fn();
+  const mockGetCurrentAccount = jest.fn();
+  const mockGetHasClosedLearnMoreCard = jest.fn();
+  const mockGetHasDoneNewUserProcess = jest.fn();
+  const mockGetHasShownPerpsGuidePopup = jest.fn();
+  const mockGetLastUsedAccount = jest.fn();
+  const mockGetSelectedKlineInterval = jest.fn();
+  const mockGetSendApproveAfterDeposit = jest.fn();
+  const mockInitAccount = jest.fn();
+  const mockSetExternalSign = jest.fn();
+  const mockSignTypedData = jest.fn();
+  const mockHyperliquidSDK = jest.fn().mockImplementation(params => ({
+    initAccount: mockInitAccount,
+    params,
+    setExternalSign: mockSetExternalSign,
+    ws: {
+      disconnect: mockDisconnect,
+    },
+  }));
+  const mockIsUnlocked = jest.fn(() => isUnlocked);
+  const mockSetCurrentAccount = jest.fn();
+  const mockSetHasClosedLearnMoreCard = jest.fn();
+  const mockSetHasDoneNewUserProcess = jest.fn();
+  const mockSetHasShownPerpsGuidePopup = jest.fn();
+  const mockSetSelectedKlineInterval = jest.fn();
+  const mockSetSendApproveAfterDeposit = jest.fn();
+  const mockUpdateAgentWalletPreference = jest.fn();
+  const mockInstallPerpsSdkTimeoutReport = jest.fn();
+  const mockAttachPerpsWsReconnectReport = jest.fn();
+
+  class MockExternalSignUserCancelledError extends Error {
+    constructor() {
+      super('External signing cancelled');
+      this.name = 'ExternalSignUserCancelledError';
+    }
+  }
+  jest.doMock('@rabby-wallet/hyperliquid-sdk', () => ({
+    ExternalSignUserCancelledError: MockExternalSignUserCancelledError,
+    HyperliquidSDK: mockHyperliquidSDK,
+  }));
+  // Covered by perpsSdkNetworkReport.test.ts; the fake SDK above has no
+  // HttpClient / ws event API for the real module to hook into.
+  jest.doMock('./perpsSdkNetworkReport', () => ({
+    installPerpsSdkTimeoutReport: mockInstallPerpsSdkTimeoutReport,
+    attachPerpsWsReconnectReport: mockAttachPerpsWsReconnectReport,
+  }));
+  jest.doMock('@/core/apis/lock', () => ({
+    isUnlocked: (...args: unknown[]) => mockIsUnlocked(...args),
+    ensureKeyringRuntimeReady: jest.fn(async () => undefined),
+  }));
+  jest.doMock('@/core/serviceApi/perps', () => ({
+    perpsServiceApi: {
+      createAgentWallet: mockCreateAgentWallet,
+      getAgentWallet: mockGetAgentWallet,
+      getAgentWalletPreference: mockGetAgentWalletPreference,
+      getCurrentAccount: mockGetCurrentAccount,
+      getHasClosedLearnMoreCard: mockGetHasClosedLearnMoreCard,
+      getHasDoneNewUserProcess: mockGetHasDoneNewUserProcess,
+      getHasShownPerpsGuidePopup: mockGetHasShownPerpsGuidePopup,
+      getLastUsedAccount: mockGetLastUsedAccount,
+      getSelectedKlineInterval: mockGetSelectedKlineInterval,
+      getSendApproveAfterDeposit: mockGetSendApproveAfterDeposit,
+      setCurrentAccount: mockSetCurrentAccount,
+      setHasClosedLearnMoreCard: mockSetHasClosedLearnMoreCard,
+      setHasDoneNewUserProcess: mockSetHasDoneNewUserProcess,
+      setHasShownPerpsGuidePopup: mockSetHasShownPerpsGuidePopup,
+      setSelectedKlineInterval: mockSetSelectedKlineInterval,
+      setSendApproveAfterDeposit: mockSetSendApproveAfterDeposit,
+      updateAgentWalletPreference: mockUpdateAgentWalletPreference,
+    },
+  }));
+  jest.doMock('./keyring', () => ({
+    apisKeyring: { signTypedData: mockSignTypedData },
+  }));
+
+  const { apisPerps } = require('./perps') as typeof import('./perps');
+
+  return {
+    apisPerps,
+    mocks: {
+      mockAttachPerpsWsReconnectReport,
+      mockCreateAgentWallet,
+      mockDisconnect,
+      mockGetAgentWallet,
+      mockHyperliquidSDK,
+      mockInitAccount,
+      mockInstallPerpsSdkTimeoutReport,
+      mockIsUnlocked,
+      mockSetExternalSign,
+      mockSignTypedData,
+    },
+  };
+}
+
+describe('core/apis/perps', () => {
+  afterEach(() => {
+    jest.resetModules();
+  });
+
+  it('lazily creates, reuses, and destroys the Hyperliquid SDK singleton', () => {
+    const { apisPerps, mocks } = loadPerpsModule();
+
+    const firstSDK = apisPerps.getPerpsSDK();
+    const secondSDK = apisPerps.getPerpsSDK();
+
+    expect(secondSDK).toBe(firstSDK);
+    expect(mocks.mockHyperliquidSDK).toHaveBeenCalledTimes(1);
+    expect(mocks.mockHyperliquidSDK).toHaveBeenCalledWith({
+      isTestnet: false,
+      timeout: 10000,
+    });
+    expect(mocks.mockInstallPerpsSdkTimeoutReport).toHaveBeenCalledTimes(1);
+    expect(mocks.mockAttachPerpsWsReconnectReport).toHaveBeenCalledWith(
+      firstSDK.ws,
+    );
+
+    apisPerps.destroyPerpsSDK();
+    expect(mocks.mockDisconnect).toHaveBeenCalledTimes(1);
+
+    const recreatedSDK = apisPerps.getPerpsSDK();
+    expect(recreatedSDK).not.toBe(firstSDK);
+    expect(mocks.mockHyperliquidSDK).toHaveBeenCalledTimes(2);
+    // A rebuilt SDK owns a fresh WebSocketClient, so the outage listener must
+    // be attached again.
+    expect(mocks.mockAttachPerpsWsReconnectReport).toHaveBeenCalledTimes(2);
+    expect(mocks.mockAttachPerpsWsReconnectReport).toHaveBeenLastCalledWith(
+      recreatedSDK.ws,
+    );
+  });
+
+  it('requires an unlocked wallet before creating an agent wallet', async () => {
+    const unlocked = loadPerpsModule({
+      isUnlocked: true,
+    });
+    unlocked.mocks.mockCreateAgentWallet.mockResolvedValue({
+      agentAddress: '0xagent',
+      vault: '0xvault',
+    });
+
+    await expect(
+      unlocked.apisPerps.createPerpsAgentWallet('0xmaster'),
+    ).resolves.toEqual({
+      agentAddress: '0xagent',
+      vault: '0xvault',
+    });
+    expect(unlocked.mocks.mockCreateAgentWallet).toHaveBeenCalledWith(
+      '0xmaster',
+    );
+
+    const locked = loadPerpsModule({
+      isUnlocked: false,
+    });
+    await expect(
+      locked.apisPerps.createPerpsAgentWallet('0xmaster'),
+    ).rejects.toThrow('background.error.unlock');
+    expect(locked.mocks.mockCreateAgentWallet).not.toHaveBeenCalled();
+  });
+
+  it('returns an existing agent wallet preference without creating a new wallet', async () => {
+    const { apisPerps, mocks } = loadPerpsModule();
+    mocks.mockGetAgentWallet.mockResolvedValue({
+      preference: {
+        agentAddress: '0xexisting-agent',
+      },
+      vault: '0xexisting-vault',
+    });
+
+    await expect(
+      apisPerps.getOrCreatePerpsAgentWallet('0xmaster'),
+    ).resolves.toEqual({
+      agentAddress: '0xexisting-agent',
+      vault: '0xexisting-vault',
+      isCreate: false,
+    });
+
+    expect(mocks.mockGetAgentWallet).toHaveBeenCalledWith('0xmaster');
+    expect(mocks.mockCreateAgentWallet).not.toHaveBeenCalled();
+  });
+
+  it('creates an agent wallet when no existing perps wallet is stored', async () => {
+    const { apisPerps, mocks } = loadPerpsModule();
+    mocks.mockGetAgentWallet.mockResolvedValue(null);
+    mocks.mockCreateAgentWallet.mockResolvedValue({
+      agentAddress: '0xnew-agent',
+      vault: '0xnew-vault',
+    });
+
+    await expect(
+      apisPerps.getOrCreatePerpsAgentWallet('0xmaster'),
+    ).resolves.toEqual({
+      agentAddress: '0xnew-agent',
+      vault: '0xnew-vault',
+      isCreate: true,
+    });
+
+    expect(mocks.mockGetAgentWallet).toHaveBeenCalledWith('0xmaster');
+    expect(mocks.mockCreateAgentWallet).toHaveBeenCalledWith('0xmaster');
+  });
+
+  it('isSelfSignPerpsAccount: true for private-key & mnemonic, false otherwise', () => {
+    const { apisPerps } = loadPerpsModule();
+    expect(apisPerps.isSelfSignPerpsAccount(KEYRING_CLASS.PRIVATE_KEY)).toBe(
+      true,
+    );
+    expect(apisPerps.isSelfSignPerpsAccount(KEYRING_CLASS.MNEMONIC)).toBe(true);
+    expect(
+      apisPerps.isSelfSignPerpsAccount(KEYRING_CLASS.HARDWARE.LEDGER),
+    ).toBe(false);
+    expect(apisPerps.isSelfSignPerpsAccount('WalletConnect')).toBe(false);
+    expect(apisPerps.isSelfSignPerpsAccount(undefined)).toBe(false);
+  });
+
+  it('maps only explicit wallet-unlock cancellation to the SDK marker', async () => {
+    const { apisPerps, mocks } = loadPerpsModule();
+    await apisPerps.applyPerpsSigner({
+      address: '0xabc',
+      brandName: 'PrivateKey',
+      type: KEYRING_CLASS.PRIVATE_KEY,
+    });
+    const externalSign = mocks.mockSetExternalSign.mock.calls[0]?.[0] as (
+      data: unknown,
+    ) => Promise<string>;
+    const cancelled = new Error('Wallet unlock cancelled');
+    cancelled.name = 'WalletUnlockCancelledError';
+    mocks.mockSignTypedData.mockRejectedValueOnce(cancelled);
+
+    await expect(externalSign({ message: {} })).rejects.toMatchObject({
+      name: 'ExternalSignUserCancelledError',
+    });
+
+    const ordinary = new Error('hardware disconnected');
+    mocks.mockSignTypedData.mockRejectedValueOnce(ordinary);
+    await expect(externalSign({ message: {} })).rejects.toBe(ordinary);
+    expect(mocks.mockInitAccount).toHaveBeenCalledWith(
+      '0xabc',
+      undefined,
+      '0xabc',
+      expect.any(String),
+    );
+  });
+});

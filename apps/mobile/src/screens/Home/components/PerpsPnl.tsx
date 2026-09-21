@@ -1,62 +1,48 @@
 import { usePerpsHomePnl } from '@/hooks/perps/usePerpsHomePnl';
 import { useTheme2024 } from '@/hooks/theme';
-import { useCurrency } from '@/hooks/useCurrency';
-import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
-import { useCurrentInnerDappTypeValue } from '@/hooks/useInnerDappValue';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import { matomoRequestEvent } from '@/utils/analytics';
-import { useEffect } from 'react';
 import { RNGHText as Text } from '@/components/Typography';
+import { CustomSkeleton } from '@/components2024/CustomSkeleton';
+import { BALANCE_HIDE_TYPE, useHideBalance } from '../hooks/useHideBalance';
 
 const PerpsPnlByHyperliquid: React.FC<{}> = () => {
   const { perpsPositionInfo } = usePerpsHomePnl();
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const { formatCurrentCurrency } = useCurrency();
   const { type } = perpsPositionInfo;
+  const [hideType] = useHideBalance();
 
-  return perpsPositionInfo.show ? (
-    type === 'pnl' ? (
+  return perpsPositionInfo.isLoading ? (
+    <CustomSkeleton width={50} height={18} style={styles.skeleton} />
+  ) : perpsPositionInfo.show ? (
+    hideType === BALANCE_HIDE_TYPE.HIDE ? (
+      <Text style={styles.accountValue}>****</Text>
+    ) : type === 'pnl' ? (
       <Text
         style={[
           styles.text,
           perpsPositionInfo.pnl > 0 ? styles.green : styles.red,
         ]}>
         {perpsPositionInfo.pnl >= 0 ? '+' : '-'}
-        {formatCurrentCurrency(Math.abs(perpsPositionInfo.pnl))}
+        {formatUsdValue(Math.abs(perpsPositionInfo.pnl))}
       </Text>
-    ) : Number(perpsPositionInfo.accountValue) > 0 ? (
+    ) : Number(perpsPositionInfo.availableBalance) >= 0 ? (
       <Text style={styles.accountValue}>
-        {formatCurrentCurrency(perpsPositionInfo.accountValue)}
+        {formatUsdValue(perpsPositionInfo.availableBalance)}
       </Text>
     ) : null
   ) : null;
 };
 
-const PerpsPnlByDapp: React.FC<{}> = () => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
-
-  const { value } = useCurrentInnerDappTypeValue('PERPS');
-  if (typeof value === 'undefined') {
-    return null;
-  }
-
-  return <Text style={[styles.textValue]}>{formatUsdValue(value)}</Text>;
-};
-
 export const PerpsPnl = () => {
-  const { perps } = useInnerDappSelection();
-  if (perps === 'hyperliquid') {
-    return <PerpsPnlByHyperliquid />;
-  }
-  return <PerpsPnlByDapp />;
+  return <PerpsPnlByHyperliquid />;
 };
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   text: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   accountValue: {
     color: colors2024['neutral-secondary'],
@@ -70,6 +56,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   red: {
     color: colors2024['red-default'],
+  },
+  skeleton: {
+    borderRadius: 8,
   },
   textValue: {
     fontFamily: 'SF Pro Rounded',

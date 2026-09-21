@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo } from 'react';
 import {
   ColorSchemeName,
   Appearance,
@@ -29,6 +29,7 @@ import { runDevIIFEFunc } from '@/core/utils/store';
 import { useCreationWithShallowCompare } from './common/useMemozied';
 import { isWorkletFunction, useAnimatedStyle } from 'react-native-reanimated';
 import { svsLayout } from './useAppLayout';
+import { applyAppAppearanceWhenReady } from '@/core/utils/appAppearanceHandoff';
 
 export const SHOULD_SUPPORT_DARK_MODE = true;
 
@@ -74,13 +75,19 @@ function appThemeToColorScheme(appTheme: AppThemeScheme): ColorSchemeName {
     : 'light';
 }
 
+function applyAppThemeToAppearance(appTheme: AppThemeScheme) {
+  return applyAppAppearanceWhenReady(() => {
+    Appearance.setColorScheme(appThemeToColorScheme(appTheme));
+  });
+}
+
 // runDevIIFEFunc(() => {
 //   appJsonStore.setItem('@AppTheme', 'dark');
 // });
 
 const themeModeStore = zustandByMMKV<{ appTheme: AppThemeScheme }>(
   '@AppTheme',
-  { appTheme: 'light' },
+  { appTheme: 'system' },
   {
     storage: MMKVStorageStrategy.compatString,
     migrateFromAtom(ctx) {
@@ -88,7 +95,7 @@ const themeModeStore = zustandByMMKV<{ appTheme: AppThemeScheme }>(
         state: {
           appTheme: (isValidAppTheme(ctx.oldData)
             ? ctx.oldData
-            : 'light') as AppThemeScheme,
+            : 'system') as AppThemeScheme,
         },
         version: 0,
       };
@@ -109,12 +116,12 @@ function toggleThemeMode(nextTheme?: AppThemeScheme) {
           (AppColorSchemes.indexOf(prev.appTheme) + 1) % AppColorSchemes.length
         ];
     }
-    Appearance.setColorScheme(appThemeToColorScheme(nextTheme));
+    applyAppThemeToAppearance(nextTheme);
     return { ...prev, appTheme: nextTheme };
   });
 }
 
-function getBinaryMode(appTheme = themeModeStore.getState().appTheme) {
+export function getBinaryMode(appTheme = themeModeStore.getState().appTheme) {
   const colorScheme = Appearance.getColorScheme();
 
   return coerceBinaryTheme(appTheme, colorScheme);
@@ -164,7 +171,7 @@ export const useAppTheme = (options?: { isAppTop?: boolean }) => {
   React.useEffect(() => {
     if (!options?.isAppTop) return;
 
-    Appearance.setColorScheme(appThemeToColorScheme(appTheme));
+    return applyAppThemeToAppearance(appTheme);
   }, [options?.isAppTop, appTheme]);
 
   const { setMode: rneui_setMode } = useThemeMode();
@@ -173,8 +180,8 @@ export const useAppTheme = (options?: { isAppTop?: boolean }) => {
   React.useEffect(() => {
     if (!options?.isAppTop) return;
 
-    setRneuiMode(colorScheme === 'dark' ? 'dark' : 'light');
-  }, [options?.isAppTop, setRneuiMode, colorScheme]);
+    setRneuiMode(binaryTheme === 'dark' ? 'dark' : 'light');
+  }, [options?.isAppTop, setRneuiMode, binaryTheme]);
 
   React.useEffect(() => {
     if (!options?.isAppTop) return;

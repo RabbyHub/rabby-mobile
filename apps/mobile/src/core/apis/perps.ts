@@ -1,100 +1,186 @@
-import { HyperliquidSDK } from '@rabby-wallet/hyperliquid-sdk';
-import { perpsService } from '../services';
+import {
+  ExternalSignUserCancelledError,
+  HyperliquidSDK,
+} from '@rabby-wallet/hyperliquid-sdk';
+import { perpsServiceApi } from '@/core/serviceApi/perps';
+import { withWalletUnlock } from '@/utils/walletUnlockGuard';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { apisKeyring } from './keyring';
+import { PERPS_AGENT_NAME } from '@/constant/perps';
+import type { Account } from '../startupServices/preference';
+import type { ApproveSignatures } from '@/core/services/perpsService';
+import { isWalletUnlockCancelled } from '@/utils/walletUnlockError';
+import {
+  installPerpsSdkTimeoutReport,
+  attachPerpsWsReconnectReport,
+} from './perpsSdkNetworkReport';
 
 let sdkInstance: HyperliquidSDK | null = null;
-let currentMasterAddress: string | null = null;
-
-// interface InitPerpsSDKParams {
-//   masterAddress: string;
-//   agentPrivateKey: string;
-//   agentPublicKey: string;
-//   agentName: string;
-// }
-
-// export const initPerpsSDK = (params: InitPerpsSDKParams) => {
-//   const { masterAddress, agentPrivateKey, agentPublicKey, agentName } = params;
-//   if (
-//     sdkInstance &&
-//     currentMasterAddress &&
-//     currentMasterAddress.toLowerCase() === masterAddress.toLowerCase()
-//   ) {
-//     (window as any).__HyperliquidSDK = sdkInstance;
-//     return sdkInstance;
-//   }
-
-//   if (sdkInstance) {
-//     sdkInstance.ws?.disconnect();
-//   }
-
-//   sdkInstance = new HyperliquidSDK({
-//     masterAddress,
-//     agentPrivateKey,
-//     agentPublicKey,
-//     agentName,
-//   });
-//   // connect when subscribe
-//   // sdkInstance.ws.connect();
-//   currentMasterAddress = masterAddress;
-//   (window as any).__HyperliquidSDK = sdkInstance;
-//   return sdkInstance;
-// };
 
 class ApisPerps {
   getPerpsSDK() {
     if (!sdkInstance) {
+      installPerpsSdkTimeoutReport();
       sdkInstance = new HyperliquidSDK({
         isTestnet: false,
         timeout: 10000,
       });
+      attachPerpsWsReconnectReport(sdkInstance.ws);
       return sdkInstance;
     }
 
     return sdkInstance;
   }
 
-  // destroyPerpsSDK() {
-  //   sdkInstance?.ws.disconnect();
-  //   sdkInstance = null;
-  //   currentMasterAddress = null;
-  // }
+  getPerpsSDKSnapshot() {
+    return sdkInstance;
+  }
 
-  createPerpsAgentWallet = async (masterWallet: string) => {
-    return perpsService.createAgentWallet(masterWallet);
-  };
-  setPerpsCurrentAccount = perpsService.setCurrentAccount;
-  getPerpsCurrentAccount = perpsService.getCurrentAccount;
-  getPerpsLastUsedAccount = perpsService.getLastUsedAccount;
+  destroyPerpsSDK() {
+    sdkInstance?.ws.disconnect();
+    sdkInstance = null;
+  }
+
+  createPerpsAgentWallet = withWalletUnlock(async (masterWallet: string) => {
+    return perpsServiceApi.createAgentWallet(masterWallet);
+  });
+  setPerpsCurrentAccount = (account: Account | null) =>
+    perpsServiceApi.setCurrentAccount(account);
+  getPerpsCurrentAccount = () => perpsServiceApi.getCurrentAccount();
+  getPerpsLastUsedAccount = () => perpsServiceApi.getLastUsedAccount();
   getAgentWalletPreference = async (masterWallet: string) => {
-    return perpsService.getAgentWalletPreference(masterWallet);
+    return perpsServiceApi.getAgentWalletPreference(masterWallet);
   };
-  updatePerpsAgentWalletPreference = perpsService.updateAgentWalletPreference;
-  setSendApproveAfterDeposit = perpsService.setSendApproveAfterDeposit;
+  getPerpsAgentAddress = async (masterWallet: string) => {
+    return (await perpsServiceApi.getAgentWalletPreference(masterWallet))
+      ?.agentAddress;
+  };
+  updatePerpsAgentWalletPreference = (
+    masterAddress: string,
+    agentPreference: Parameters<
+      typeof perpsServiceApi.updateAgentWalletPreference
+    >[1],
+  ) =>
+    perpsServiceApi.updateAgentWalletPreference(masterAddress, agentPreference);
+  setSendApproveAfterDeposit = (
+    masterAddress: string,
+    sendApproveAfterDeposit: ApproveSignatures,
+  ) =>
+    perpsServiceApi.setSendApproveAfterDeposit(
+      masterAddress,
+      sendApproveAfterDeposit,
+    );
   getSendApproveAfterDeposit = async (masterAddress: string) => {
-    return perpsService.getSendApproveAfterDeposit(masterAddress);
+    return perpsServiceApi.getSendApproveAfterDeposit(masterAddress);
   };
-  setHasDoneNewUserProcess = perpsService.setHasDoneNewUserProcess;
-  getHasDoneNewUserProcess = perpsService.getHasDoneNewUserProcess;
-  setHasShownPerpsGuidePopup = perpsService.setHasShownPerpsGuidePopup;
-  getHasShownPerpsGuidePopup = perpsService.getHasShownPerpsGuidePopup;
-  setHasClosedLearnMoreCard = perpsService.setHasClosedLearnMoreCard;
-  getHasClosedLearnMoreCard = perpsService.getHasClosedLearnMoreCard;
-  getPerpsAgentWallet = async (masterWallet: string) => {
-    return perpsService.getAgentWallet(masterWallet);
+  setHasDoneNewUserProcess = (hasDone: boolean) =>
+    perpsServiceApi.setHasDoneNewUserProcess(hasDone);
+  getHasDoneNewUserProcess = () => perpsServiceApi.getHasDoneNewUserProcess();
+  setHasShownPerpsGuidePopup = (value: boolean) =>
+    perpsServiceApi.setHasShownPerpsGuidePopup(value);
+  getHasShownPerpsGuidePopup = () =>
+    perpsServiceApi.getHasShownPerpsGuidePopup();
+  setHasClosedLearnMoreCard = (value: boolean) =>
+    perpsServiceApi.setHasClosedLearnMoreCard(value);
+  getHasClosedLearnMoreCard = () => perpsServiceApi.getHasClosedLearnMoreCard();
+  setSelectedKlineInterval = (
+    value: Parameters<typeof perpsServiceApi.setSelectedKlineInterval>[0],
+  ) => perpsServiceApi.setSelectedKlineInterval(value);
+  getSelectedKlineInterval = () => perpsServiceApi.getSelectedKlineInterval();
+  getPerpsAgentWallet = withWalletUnlock(async (masterWallet: string) => {
+    return perpsServiceApi.getAgentWallet(masterWallet);
+  });
+  getOrCreatePerpsAgentWallet = withWalletUnlock(
+    async (masterWallet: string) => {
+      const res = await perpsServiceApi.getAgentWallet(masterWallet);
+      if (!res) {
+        const resp = await perpsServiceApi.createAgentWallet(masterWallet);
+        return {
+          vault: resp.vault,
+          agentAddress: resp.agentAddress,
+          isCreate: true,
+        };
+      } else {
+        return {
+          vault: res.vault,
+          agentAddress: res.preference.agentAddress,
+          isCreate: false,
+        };
+      }
+    },
+  );
+
+  isSelfSignPerpsAccount = (type?: string) =>
+    type === KEYRING_CLASS.PRIVATE_KEY || type === KEYRING_CLASS.MNEMONIC;
+
+  /**
+   * Bind the SDK to an agent-signed account. Always drops any externalSign
+   * installed by a previous self-sign session first — sdk.initAccount alone
+   * keeps it, and signL1Action prefers externalSign over the agent key, so a
+   * leftover signer would sign the new account's actions with the old
+   * account's key.
+   */
+  initPerpsAgentAccount = (
+    masterAddress: string,
+    vault: string | undefined,
+    agentAddress: string,
+    agentName: string = PERPS_AGENT_NAME,
+  ) => {
+    const sdk = this.getPerpsSDK();
+    sdk.setExternalSign(undefined);
+    sdk.initAccount(masterAddress, vault, agentAddress, agentName);
   };
-  getOrCreatePerpsAgentWallet = async (masterWallet: string) => {
-    const res = await perpsService.getAgentWallet(masterWallet);
-    if (!res) {
-      const resp = await this.createPerpsAgentWallet(masterWallet);
+
+  /**
+   * Build the SDK externalSign callback for a self-sign account: signs
+   * Hyperliquid L1 typed data (EIP-712 V4) with the account's OWN keyring key —
+   * no agent wallet, no plaintext export. apisKeyring.signTypedData is wrapped
+   * with withWalletUnlockIf, so wallet unlock is deferred to this signing
+   * moment. Returns a 0x-prefixed hex signature (r+s+v) per the SDK's
+   * ExternalSign contract.
+   */
+  private makePerpsExternalSign =
+    (account: Account) =>
+    async (typedData: any): Promise<string> => {
+      try {
+        return await apisKeyring.signTypedData(
+          account.type,
+          account.address,
+          typedData,
+          { version: 'V4' },
+        );
+      } catch (error) {
+        if (isWalletUnlockCancelled(error)) {
+          throw new ExternalSignUserCancelledError();
+        }
+        throw error;
+      }
+    };
+
+  // Configure the SDK's signing identity for an account. NO top-level
+  // withWalletUnlock: self-sign just installs the signer (reads no key), staying
+  // locked until an action is actually signed. The agent branch unlocks via
+  // getOrCreatePerpsAgentWallet (withWalletUnlock), which decrypts/encrypts vault.
+  applyPerpsSigner = async (account: Account) => {
+    const sdk = this.getPerpsSDK();
+    if (this.isSelfSignPerpsAccount(account.type)) {
+      sdk.initAccount(
+        account.address,
+        undefined,
+        account.address,
+        PERPS_AGENT_NAME,
+      );
+      sdk.setExternalSign(this.makePerpsExternalSign(account));
       return {
-        vault: resp.vault,
-        agentAddress: resp.agentAddress,
-      };
-    } else {
-      return {
-        vault: res.vault,
-        agentAddress: res.preference.agentAddress,
+        agentAddress: account.address,
+        isSelfSign: true,
+        isCreate: false,
       };
     }
+    const { vault, agentAddress, isCreate } =
+      await this.getOrCreatePerpsAgentWallet(account.address);
+    this.initPerpsAgentAccount(account.address, vault, agentAddress);
+    return { agentAddress, isSelfSign: false, isCreate };
   };
 }
 

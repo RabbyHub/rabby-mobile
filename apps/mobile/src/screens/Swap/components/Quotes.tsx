@@ -1,13 +1,10 @@
-import {
-  RcIconSwapChecked,
-  RcIconSwapHiddenArrow,
-  RcIconSwapUnchecked,
-} from '@/assets/icons/swap';
+/* eslint-disable react-native/no-inline-styles */
+import { RcIconSwapHiddenArrow } from '@/assets/icons/swap';
 import { AppBottomSheetModal } from '@/components';
-import { Radio } from '@/components/Radio';
 import { DEX_WITH_WRAP } from '@/constant/swap';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import RcIconRefreshCC from '@/assets2024/icons/bridge/IconRefreshCC.svg';
 import { getTokenSymbol } from '@/utils/token';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
@@ -16,7 +13,12 @@ import { useSetAtom } from 'jotai';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, Easing, TouchableOpacity, View } from 'react-native';
-import { TDexQuoteData, useSwapSettings, useSwapViewDexIdList } from '../hooks';
+import {
+  getSwapQuoteScore,
+  TDexQuoteData,
+  useSwapSettings,
+  useSwapViewDexIdList,
+} from '../hooks';
 import { refreshIdAtom } from '../hooks/atom';
 import { isSwapWrapToken } from '../utils';
 import { QuoteListLoading, QuoteLoading } from './loading';
@@ -25,10 +27,9 @@ import {
   QuoteItemProps as QuoteItemPropsOld,
 } from './QuoteItem';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import LinearGradient from 'react-native-linear-gradient';
-import RcIconLoading from '@/assets2024/icons/bridge/IconLoading.svg';
 import { IS_ANDROID } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
+import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoundary';
 
 interface QuotesProps
   extends Omit<
@@ -45,12 +46,17 @@ interface QuotesProps
   activeName?: string;
   visible: boolean;
   onClose: () => void;
+  onSelect?: () => void;
+  noPadding?: boolean;
 }
 
 export const Quotes = ({
   list,
-  activeName,
   inSufficient,
+  visible: _visible,
+  onClose,
+  onSelect,
+  noPadding,
   ...other
 }: QuotesProps) => {
   const colors = useThemeColors();
@@ -59,39 +65,18 @@ export const Quotes = ({
   const { sortIncludeGasFee } = useSwapSettings();
 
   const sortedList = useMemo(
-    () => [
-      ...(list?.sort((a, b) => {
-        const getNumber = (quote: typeof a) => {
-          const price = other.receiveToken.price ? other.receiveToken.price : 0;
-          if (inSufficient) {
-            return new BigNumber(quote.data?.toTokenAmount || 0)
-              .div(
-                10 **
-                  (quote.data?.toTokenDecimals || other.receiveToken.decimals),
-              )
-              .times(price);
-          }
-          if (!quote.preExecResult) {
-            return new BigNumber(Number.MIN_SAFE_INTEGER);
-          }
-          const receiveTokenAmount =
-            new BigNumber(quote?.data?.toTokenAmount || 0)
-              .div(
-                10 **
-                  (quote?.data?.toTokenDecimals || other.receiveToken.decimals),
-              )
-              .toString() || 0;
-          if (sortIncludeGasFee) {
-            return new BigNumber(receiveTokenAmount)
-              .times(price)
-              .minus(quote?.preExecResult?.gasUsdValue || 0);
-          }
+    () =>
+      [...(list || [])].sort((a, b) => {
+        const getScore = (quote: typeof a) =>
+          getSwapQuoteScore({
+            quote,
+            receiveToken: other.receiveToken,
+            inSufficient,
+            sortIncludeGasFee,
+          }) || new BigNumber(Number.MIN_SAFE_INTEGER);
 
-          return new BigNumber(receiveTokenAmount).times(price);
-        };
-        return getNumber(b).minus(getNumber(a)).toNumber();
-      }) || []),
-    ],
+        return getScore(b).minus(getScore(a)).toNumber();
+      }),
     [inSufficient, list, other.receiveToken, sortIncludeGasFee],
   );
 
@@ -111,7 +96,7 @@ export const Quotes = ({
 
     return [
       inSufficient
-        ? new BigNumber(bestQuote.data?.toTokenAmount || 0)
+        ? new BigNumber(bestQuote?.data?.toTokenAmount || 0)
             .div(
               10 **
                 (bestQuote?.data?.toTokenDecimals ||
@@ -129,7 +114,7 @@ export const Quotes = ({
     const dex = sortedList.find(e => e.isDex) as TDexQuoteData | undefined;
 
     return (
-      <View style={{ paddingHorizontal: 20 }}>
+      <View style={{ paddingHorizontal: noPadding ? 0 : 12 }}>
         {dex ? (
           <DexQuoteItemOld
             inSufficient={inSufficient}
@@ -151,6 +136,8 @@ export const Quotes = ({
               name: t('page.swap.wrap-contract'),
               logo: other?.receiveToken?.logo_url,
             }}
+            onCloseQuoteList={onClose}
+            onSelect={onSelect}
             {...other}
           />
         ) : (
@@ -175,7 +162,7 @@ export const Quotes = ({
     );
   }
   return (
-    <View style={{ paddingHorizontal: 20 }}>
+    <View style={{ paddingHorizontal: noPadding ? 0 : 12 }}>
       <View style={{ gap: 12 }}>
         {sortedList.map((params, idx) => {
           const { name, data, isDex } = params;
@@ -197,6 +184,8 @@ export const Quotes = ({
               quoteProviderInfo={
                 DEX_WITH_WRAP[name as keyof typeof DEX_WITH_WRAP]
               }
+              onCloseQuoteList={onClose}
+              onSelect={onSelect}
               {...other}
             />
           );
@@ -283,6 +272,7 @@ export const Quotes = ({
               quoteProviderInfo={
                 DEX_WITH_WRAP[name as keyof typeof DEX_WITH_WRAP]
               }
+              onCloseQuoteList={onClose}
               {...other}
             />
           );
@@ -295,6 +285,7 @@ export const Quotes = ({
 export const QuoteList = (props: QuotesProps) => {
   const { visible, onClose, loading } = props;
   const bottomRef = useRef<BottomSheetModalMethods>(null);
+  const presentedRef = useRef(false);
 
   const refresh = useSetAtom(refreshIdAtom);
 
@@ -304,15 +295,21 @@ export const QuoteList = (props: QuotesProps) => {
 
   const { t } = useTranslation();
 
-  const { sortIncludeGasFee, setSwapSortIncludeGasFee } = useSwapSettings();
-
   useEffect(() => {
     if (visible) {
-      bottomRef.current?.present();
-    } else {
+      if (!presentedRef.current) {
+        presentedRef.current = true;
+        bottomRef.current?.present();
+      }
+    } else if (presentedRef.current) {
       bottomRef.current?.dismiss();
     }
   }, [visible]);
+
+  const handleDismiss = React.useCallback(() => {
+    presentedRef.current = false;
+    onClose();
+  }, [onClose]);
 
   const {
     styles,
@@ -327,81 +324,54 @@ export const QuoteList = (props: QuotesProps) => {
   });
 
   useEffect(() => {
-    if (loading) {
-      Animated.loop(
-        Animated.timing(spinValue, {
-          toValue: 1,
-          duration: 1600,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        }),
-      ).start();
-    } else {
+    if (!visible || !loading) {
       spinValue.resetAnimation();
+      return;
     }
-  }, [loading, spinValue]);
+
+    const animation = Animated.loop(
+      Animated.timing(spinValue, {
+        toValue: 1,
+        duration: 1600,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [loading, spinValue, visible]);
 
   return (
     <AppBottomSheetModal
-      snapPoints={['90%']}
+      snapPoints={['78%']}
       ref={bottomRef}
-      onDismiss={onClose}
+      onDismiss={handleDismiss}
       enableDismissOnClose
       {...makeBottomSheetProps({
-        linearGradientType: 'linear',
         colors: colors2024,
-      })}
-      handleStyle={styles.bottomBg}
-      backgroundStyle={styles.bottomBg}>
-      <LinearGradient
-        colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
-        locations={[0.0745, 0.2242]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={{ flex: 1 }}>
-        <View style={styles.headerContainer}>
-          <Text style={styles.headerText}>
-            {t('page.bridge.the-following-bridge-route-are-found')}
-          </Text>
-          <TouchableOpacity onPress={refreshQuote} style={styles.refreshBox}>
-            <Animated.View
-              style={{
-                transform: [{ rotate: spin }],
-                marginRight: 4,
-              }}>
-              <RcIconLoading />
-            </Animated.View>
-            <Text style={styles.refreshContent}>{t('global.refresh')}</Text>
-          </TouchableOpacity>
-        </View>
+        linearGradientType: isLight ? 'bg0' : 'bg1',
+      })}>
+      <View style={{ flex: 1, position: 'relative' }}>
+        <TouchableOpacity
+          hitSlop={10}
+          onPress={refreshQuote}
+          style={styles.refreshIconBtn}>
+          <RcIconRefreshCC color={colors2024['neutral-body']} />
+        </TouchableOpacity>
+        <Text style={styles.headerText}>
+          {t('page.bridge.the-following-bridge-route-are-found')}
+        </Text>
+        <Text style={styles.subtitleText}>
+          {t('page.bridge.swap-best-subtitle')}
+        </Text>
 
         <BottomSheetScrollView style={styles.flex1}>
-          <Quotes {...props} />
-          <View style={{ height: IS_ANDROID ? 140 : 120 }} />
+          <RenderActivityBoundary active={visible} label="swap-quotes-modal">
+            <Quotes {...props} />
+          </RenderActivityBoundary>
+          <View style={{ height: IS_ANDROID ? 40 : 20 }} />
         </BottomSheetScrollView>
-
-        <LinearGradient
-          colors={
-            isLight
-              ? ['#FFF', 'rgba(249, 249, 249, 0.30)']
-              : [colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]
-          }
-          locations={[0.6393, 1]}
-          start={{ x: 0, y: 1 }}
-          end={{ x: 0, y: 0 }}
-          style={styles.floatBottom}>
-          <Radio
-            checked={!!sortIncludeGasFee}
-            onPress={() => setSwapSortIncludeGasFee(!sortIncludeGasFee)}
-            title={t('page.swap.sort-with-gas')}
-            checkedIcon={<RcIconSwapChecked width={24} height={24} />}
-            uncheckedIcon={<RcIconSwapUnchecked width={24} height={24} />}
-            textStyle={styles.refreshText}
-            right={true}
-            containerStyle={styles.radioContainer}
-          />
-        </LinearGradient>
-      </LinearGradient>
+      </View>
     </AppBottomSheetModal>
   );
 };
@@ -409,6 +379,21 @@ export const QuoteList = (props: QuotesProps) => {
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   bottomBg: {
     backgroundColor: colors2024['neutral-bg-1'],
+  },
+  subtitleText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-secondary'],
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 10,
+  },
+  refreshIconBtn: {
+    position: 'absolute',
+    top: -2,
+    right: 24,
   },
   headerContainer: {
     flexDirection: 'row',
@@ -436,10 +421,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 
   headerText: {
+    marginTop: 14,
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '700',
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
     color: colors2024['neutral-title-1'],
   },
   refreshText: {

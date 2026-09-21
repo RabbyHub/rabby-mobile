@@ -15,6 +15,11 @@ import pt_PT from '@/assets/locales/pt-PT/messages.json';
 import id_ID from '@/assets/locales/id-ID/messages.json';
 import tr_TR from '@/assets/locales/tr-TR/messages.json';
 import codeConfig from '@/assets/locales/index.json';
+import { APP_RUNTIME_ENV } from '@/constant/env';
+
+declare global {
+  var __RABBY_I18N__: typeof i18n | undefined;
+}
 
 export enum SupportedLang {
   'en-US' = 'en-US',
@@ -77,7 +82,7 @@ export function filterSupportedLang(lang: string): SupportedLang {
   return DEFAULT_LANG;
 }
 
-i18n
+export const i18nInitPromise = i18n
   .use(initReactI18next) // passes i18n down to react-i18next
   .init({
     fallbackLng: 'en-US',
@@ -87,7 +92,12 @@ i18n
       skipOnVariables: true,
     },
     returnNull: false,
+    returnEmptyString: false,
   });
+
+export async function waitForI18nInitialized() {
+  await i18nInitPromise;
+}
 
 export const I18N_NS = 'translations';
 
@@ -99,6 +109,14 @@ export function addResourceBundle(locale: SupportedLang) {
 }
 
 addResourceBundle('en-US' as SupportedLang);
+
+const shouldExposeI18nGlobal =
+  APP_RUNTIME_ENV === 'development' || APP_RUNTIME_ENV === 'regression';
+
+if (shouldExposeI18nGlobal) {
+  // Exposed for the Metro-injected live preview runtime.
+  globalThis.__RABBY_I18N__ = i18n;
+}
 
 i18n.on('languageChanged', function (lng: string) {
   addResourceBundle(filterSupportedLang(lng));

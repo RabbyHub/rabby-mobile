@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { type Ref, useImperativeHandle } from 'react';
 import {
   AppSwitch2024,
   SwitchToggleType,
@@ -9,15 +9,17 @@ export type UseValueHook = () => {
   setValue: (value: boolean) => void;
 };
 
-export const SwitchSettingCommon = React.forwardRef<
-  SwitchToggleType,
-  React.ComponentProps<typeof AppSwitch2024> & {
-    useValueHook: UseValueHook;
-  }
->(({ useValueHook, ...props }, ref) => {
+export const SwitchSettingCommon = ({
+  useValueHook,
+  ref,
+  ...props
+}: React.ComponentProps<typeof AppSwitch2024> & {
+  useValueHook: UseValueHook;
+  ref?: Ref<SwitchToggleType>;
+}) => {
   const { value, setValue } = useValueHook();
 
-  React.useImperativeHandle(ref, () => ({
+  useImperativeHandle(ref, () => ({
     toggle: async (enabled?: boolean) => {
       setValue(enabled ?? !value);
     },
@@ -36,4 +38,4 @@ export const SwitchSettingCommon = React.forwardRef<
       // }}
     />
   );
-});
+};

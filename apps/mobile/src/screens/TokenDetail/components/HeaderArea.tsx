@@ -6,19 +6,16 @@ import {
   View,
   ViewStyle,
   TouchableOpacity,
-  Clipboard,
 } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 
 import { AssetAvatar } from '@/components';
-import { AbstractPortfolioToken } from '@/screens/Home/types';
-import { ellipsisOverflowedText } from '@/utils/text';
 import { getTokenSymbol } from '@/utils/token';
 import { useAssetsRefreshing } from '@/screens/Search/useAssets';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
-import RcIconCopy from '@/assets2024/singleHome/copy.svg';
+import RcIconCopyCC from '@/assets2024/singleHome/copy-cc.svg';
 import { trigger } from 'react-native-haptic-feedback';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { findChain } from '@/utils/chain';
@@ -27,6 +24,8 @@ import { isLpToken } from '@/utils/lpToken';
 import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
+import { ellipsisAddress } from '@/utils/address';
+import Clipboard from '@react-native-clipboard/clipboard';
 
 const screenWidth = Dimensions.get('window').width;
 interface Props {
@@ -82,6 +81,11 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
     [isNativeToken, t, token.id],
   );
 
+  const displayCopy = useMemo(
+    () => showCopyIcon && !isNativeToken,
+    [isNativeToken, showCopyIcon],
+  );
+
   return (
     <View style={[styles.root, rootStyle]}>
       <View style={[styles.container, style]}>
@@ -94,24 +98,34 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
             chainSize={chainSize}
             innerChainStyle={borderChain ? styles.chainLogo : undefined}
           />
-          <Text
-            style={[styles.tokenSymbol, titleStyle]}
-            numberOfLines={1}
-            ellipsizeMode="tail">
-            {title || ellipsisOverflowedText(getTokenSymbol(token), 15)}
-          </Text>
-          {isLpToken(token) && (
-            <View style={styles.lpTokenIconContainer}>
-              <LpTokenIcon protocolId={token.protocol_id || ''} />
+          <View style={styles.middleContainer}>
+            <View style={styles.titleContainer}>
+              <Text
+                style={[
+                  displayCopy ? styles.showCopySymbol : styles.tokenSymbol,
+                  titleStyle,
+                ]}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {title || getTokenSymbol(token)}
+              </Text>
+              {isLpToken(token) && (
+                <View style={styles.lpTokenIconContainer}>
+                  <LpTokenIcon protocolId={token.protocol_id || ''} />
+                </View>
+              )}
             </View>
-          )}
-          {showCopyIcon && !isNativeToken && (
-            <TouchableOpacity
-              style={styles.touchBox}
-              onPress={handleCopyAddress}>
-              <RcIconCopy style={styles.copy} />
-            </TouchableOpacity>
-          )}
+            {displayCopy && (
+              <TouchableOpacity
+                style={styles.touchBox}
+                onPress={handleCopyAddress}>
+                <Text style={styles.contractAddress}>
+                  {ellipsisAddress(token.id)}
+                </Text>
+                <RcIconCopyCC style={styles.copy} />
+              </TouchableOpacity>
+            )}
+          </View>
           {!disableRefresh && refreshing && <LoadingCircle />}
         </View>
       </View>
@@ -124,15 +138,17 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     width: screenWidth - 140,
   },
   container: {
-    width: screenWidth - 140,
+    width: screenWidth - 100,
     marginLeft: 0,
     display: 'flex',
-    flexDirection: 'row',
+    flexDirection: 'column',
   },
   token: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 1,
+    minWidth: 0,
     gap: 8,
   },
   lpTokenIconContainer: {
@@ -142,50 +158,54 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   tokenSymbol: {
     flexShrink: 1,
+    minWidth: 0,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     fontWeight: '900',
     flexWrap: 'nowrap',
   },
-  contract: {
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  address: {
-    color: colors2024['neutral-foot'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '400',
-  },
-  icon: {
-    width: 14,
-    height: 14,
-  },
-  iconJump: {
-    marginLeft: 8,
-  },
   chainLogo: {
     borderWidth: 1.5,
+    overflow: 'hidden',
     borderColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
   },
   touchBox: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
+    gap: 2,
+  },
+  middleContainer: {
+    flexShrink: 1,
+    flex: 1,
+    minWidth: 0,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    flex: 1,
   },
   copy: {
-    width: 18,
-    height: 18,
+    width: 12,
+    height: 12,
+  },
+  contractAddress: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '400',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  showCopySymbol: {
+    flexShrink: 1,
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    flexWrap: 'nowrap',
   },
 }));

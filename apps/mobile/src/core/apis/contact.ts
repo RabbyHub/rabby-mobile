@@ -1,5 +1,8 @@
 import { ContactBookItem } from '@rabby-wallet/service-address';
-import { contactService } from '../services';
+import {
+  getContactAliasSnapshot,
+  getContactsByMapSnapshot,
+} from '@/core/serviceApi/contact';
 
 export interface UIContactBookItem {
   name: string;
@@ -7,15 +10,15 @@ export interface UIContactBookItem {
 }
 
 export function getAliasName(
-  ...[address, opts]: Parameters<typeof contactService.getAliasByAddress>
+  ...[address, opts]: Parameters<typeof getContactAliasSnapshot>
 ) {
-  const aliasItem = contactService.getAliasByAddress(address, opts);
+  const aliasItem = getContactAliasSnapshot(address, opts);
 
   return aliasItem?.alias || undefined;
 }
 
 export function getContactsByAddress(): Record<string, ContactBookItem> {
-  const contactsByAddr = contactService.getContactsByMap();
+  const contactsByAddr = getContactsByMapSnapshot();
 
   Object.values(contactsByAddr).forEach(item => {
     if (item) {

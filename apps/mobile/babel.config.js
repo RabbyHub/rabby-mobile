@@ -1,119 +1,138 @@
-const child_process = require('child_process');
 const pkg = require('./package.json');
+const loadableAliases = require('./scripts/loadables-aliases.generated.cjs');
+const {
+  resolveStartupProfilerWorkerDeferral,
+} = require('./scripts/react-native-architecture.cjs');
 
-const { version } = pkg;
+/** @type {import('@babel/core').ConfigFunction} */
+module.exports = api => {
+  const callerName = api.caller(caller => caller?.name) || '';
+  const callerDev = api.caller(caller => caller?.dev);
+  const isDevTransform =
+    typeof callerDev === 'boolean'
+      ? callerDev
+      : process.env.BABEL_ENV === 'development' ||
+        process.env.NODE_ENV === 'development';
+  const isJestTransform = callerName === 'babel-jest';
 
-const buildGitInfo = (function getBuildEnvVars() {
-  const NORMAL_GET_GIT_HASH = `git log --format="%H" -n1`;
-  const BUILD_GIT_HASH_RAW = child_process
-    .execSync(
-      !process.env.LOCAL_PACK
-        ? NORMAL_GET_GIT_HASH
-        : `[[ -z $(git diff) || ! -z $CI ]] && (${NORMAL_GET_GIT_HASH}) || (git log --format="%H-dirty" -n 1)`,
-    )
-    .toString()
-    .trim();
+  const { version } = pkg;
+  const inputBuildEnv = process.env.RABBY_MOBILE_BUILD_ENV;
+  if (!process.env.APP_ENV && inputBuildEnv) {
+    process.env.APP_ENV = inputBuildEnv;
+  }
+  const inputBuildChannel =
+    process.env.buildchannel || process.env.RABBY_MOBILE_BUILD_CHANNEL;
+  const resolvedBuildEnv = inputBuildEnv || 'production';
+  const resolvedBuildChannel = inputBuildChannel || 'selfhost-reg';
+  const shouldEnableRozenite = process.env.WITH_ROZENITE === 'true';
+  const shouldStripConsole =
+    inputBuildEnv === 'production' ||
+    (!inputBuildEnv && ['appstore', 'selfhost'].includes(resolvedBuildChannel));
+  const moduleLoadingMode =
+    process.env.RABBY_MOBILE_MODULE_LOADING_MODE || 'lazy';
+  if (!['eager', 'lazy'].includes(moduleLoadingMode)) {
+    throw new Error(
+      `Unsupported RABBY_MOBILE_MODULE_LOADING_MODE: ${moduleLoadingMode}`,
+    );
+  }
+  const shouldInlineDevDynamicImports =
+    isDevTransform && moduleLoadingMode === 'lazy';
+  const shouldDeferStartupProfilerWorker =
+    resolveStartupProfilerWorkerDeferral();
+  const regressionScenarioImplExt =
+    isDevTransform || resolvedBuildChannel === 'selfhost-reg'
+      ? 'nonprod'
+      : 'prod';
 
-  const isDirty = BUILD_GIT_HASH_RAW.endsWith('-dirty');
-  const BUILD_GIT_HASH = `${BUILD_GIT_HASH_RAW.slice(0, 8)}${
-    isDirty ? '-dirty' : ''
-  }`;
-
-  const BUILD_GIT_HASH_TIME =
-    process.platform === 'win32'
-      ? ''
-      : child_process
-          .execSync(
-            `git show --quiet --date='format-local:%Y-%m-%dT%H:%M:%S+00:00' --format="%cd"`,
-            { env: { ...process.env, TZ: 'UTC0' } },
-          )
-          .toString()
-          .trim();
-
-  const BUILD_TIME = new Date().toISOString();
-
-  const buildchannel = process.env.buildchannel || 'selfhost-reg';
-
-  const BUILD_GIT_COMMITOR =
-    buildchannel !== 'selfhost-reg'
-      ? ''
-      : child_process
-          .execSync('git show --quiet --format="%cn"')
-          .toString()
-          .trim();
+  api.cache.using(() =>
+    JSON.stringify({
+      buildChannel: resolvedBuildChannel,
+      buildEnv: resolvedBuildEnv,
+      dotenvEnv: process.env.APP_ENV || '',
+      callerName,
+      isDevTransform,
+      moduleLoadingMode,
+      regressionScenarioImplExt,
+      shouldEnableRozenite,
+      shouldDeferStartupProfilerWorker,
+      shouldInlineDevDynamicImports,
+    }),
+  );
 
   return {
-    BUILD_GIT_HASH,
-    BUILD_GIT_HASH_TIME,
-    BUILD_TIME,
-    BUILD_GIT_COMMITOR,
-  };
-})();
-
-module.exports = {
-  presets: [
-    [
-      '@react-native/babel-preset',
-      {
-        runtime: 'automatic',
-        reactTransform: true,
-      },
-    ],
-  ],
-  plugins: [
-    [
-      'transform-define',
-      {
-        'process.env.APP_VERSION': version,
-        'process.env.BUILD_TIME':
-          process.env.ZERO_AR_DATE || buildGitInfo.BUILD_TIME,
-        'process.env.RABBY_MOBILE_BUILD_ENV':
-          process.env.RABBY_MOBILE_BUILD_ENV || 'production',
-        'process.env.buildchannel':
-          process.env.buildchannel ||
-          process.env.RABBY_MOBILE_BUILD_CHANNEL ||
-          'selfhost-reg',
-        'process.env.BUILD_GIT_INFO': JSON.stringify({
-          BUILD_GIT_HASH: buildGitInfo.BUILD_GIT_HASH,
-          BUILD_GIT_HASH_TIME: buildGitInfo.BUILD_GIT_HASH_TIME,
-          BUILD_GIT_COMMITOR: buildGitInfo.BUILD_GIT_COMMITOR,
-        }),
-        'process.env.RABBY_MOBILE_FE_SERVICE_URL':
-          process.env.RABBY_MOBILE_FE_SERVICE_URL || '',
-      },
-    ],
-    [
-      'module-resolver',
-      {
-        root: ['.'],
-        extensions: [
-          '.js',
-          '.jsx',
-          '.ts',
-          '.tsx',
-          '.android.js',
-          '.android.tsx',
-          '.ios.js',
-          '.ios.tsx',
-        ],
-        alias: {
-          '@': './src',
-          'styled-components/native': 'styled-components/native',
-          'styled-components': 'styled-components/native',
+    presets: [
+      [
+        '@react-native/babel-preset',
+        {
+          runtime: 'automatic',
+          reactTransform: true,
         },
-      },
+      ],
     ],
-    ['@babel/plugin-transform-export-namespace-from'],
+    plugins: [
+      [
+        'transform-define',
+        {
+          'process.env.APP_VERSION': version,
+          'process.env.RABBY_MOBILE_BUILD_ENV': resolvedBuildEnv,
+          'process.env.RABBY_MOBILE_STRIP_CONSOLE': shouldStripConsole
+            ? 'true'
+            : 'false',
+          'process.env.RABBY_MOBILE_MODULE_LOADING_MODE': moduleLoadingMode,
+          'process.env.RABBY_STARTUP_PROFILER_DEFER_WORKER':
+            shouldDeferStartupProfilerWorker ? 'true' : 'false',
+          'process.env.WITH_ROZENITE': shouldEnableRozenite ? 'true' : 'false',
+          'process.env.buildchannel': resolvedBuildChannel,
+          'process.env.RABBY_MOBILE_FE_SERVICE_URL':
+            process.env.RABBY_MOBILE_FE_SERVICE_URL || '',
+        },
+      ],
+      [
+        'module-resolver',
+        {
+          root: ['.'],
+          extensions: [
+            '.js',
+            '.jsx',
+            '.ts',
+            '.tsx',
+            '.android.js',
+            '.android.tsx',
+            '.ios.js',
+            '.ios.tsx',
+          ],
+          alias: {
+            '^@/devtools/regressionScenarios/entry$': `./src/devtools/regressionScenarios/entry.${regressionScenarioImplExt}`,
+            '^@/devtools/regressionScenarios/runtime$': `./src/devtools/regressionScenarios/runtime.${regressionScenarioImplExt}`,
+            '^@/devtools/regressionScenarios/react$': `./src/devtools/regressionScenarios/react.${regressionScenarioImplExt}`,
+            '^@/hooks/useFeatureActivationDiagnostics$': `./src/hooks/useFeatureActivationDiagnostics.${regressionScenarioImplExt}`,
+            '^@/startup/moduleLoading/launchTaskLoaders$': `./src/startup/moduleLoading/launchTaskLoaders.${moduleLoadingMode}`,
+            '^@/startup/moduleLoading/setupRuntimeLoaders$': `./src/startup/moduleLoading/setupRuntimeLoaders.${moduleLoadingMode}`,
+            ...(loadableAliases[moduleLoadingMode] || {}),
+            '@': './src',
+            'styled-components/native': 'styled-components/native',
+            'styled-components': 'styled-components/native',
+          },
+        },
+      ],
+      ['@babel/plugin-transform-export-namespace-from'],
 
-    ['module:react-native-dotenv', { moduleName: '@env' }],
-    ['nativewind/babel', {}],
-    ['@babel/plugin-proposal-decorators', { legacy: true }],
-    ['@babel/plugin-transform-class-static-block'],
-    ['react-native-reanimated/plugin'],
-  ],
-  env: {
-    production: {
-      plugins: ['transform-remove-console'],
-    },
-  },
+      ['module:react-native-dotenv', { moduleName: '@env' }],
+      ['@babel/plugin-proposal-decorators', { legacy: true }],
+      ['@babel/plugin-transform-class-static-block'],
+      ...(isJestTransform || shouldInlineDevDynamicImports
+        ? ['@babel/plugin-transform-dynamic-import']
+        : []),
+      ['react-native-reanimated/plugin'],
+    ],
+    ...(shouldStripConsole
+      ? {
+          env: {
+            production: {
+              plugins: ['transform-remove-console'],
+            },
+          },
+        }
+      : {}),
+  };
 };

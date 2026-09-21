@@ -1,10 +1,14 @@
 import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
-import { CurvePoint, formatSmallCurrencyValue } from '@/hooks/useCurve';
-import React, { memo, useCallback, useEffect, useMemo } from 'react';
-import { Dimensions, Pressable, useWindowDimensions, View } from 'react-native';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { CurvePoint } from '@/hooks/useCurve';
+import {
+  formatCurrencyValueParts,
+  formatSmallCurrencyValueParts,
+} from '@/utils/currency';
+import React, { memo, useMemo } from 'react';
+import { Pressable, useWindowDimensions, View } from 'react-native';
+import { createGetStyles2024 } from '@/utils/styles';
 import Animated, {
   Easing,
   makeMutable,
@@ -20,31 +24,40 @@ import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 import RcIconSmallWalletCC from '@/assets2024/icons/home/IconSmallWalletCC.svg';
 import RcIconSmallArrowCC from '@/assets2024/icons/home/IconSmallArrowCC.svg';
+import { E2E_ID } from '@/constant/e2e';
 import Svg, { Path } from 'react-native-svg';
-import {
-  refreshDayCurve,
-  useMultiDayCurve,
-  useMultiCurveIsAnyAddrLoading,
-} from '@/hooks/useMultiCurve';
-import { useAccountInfo } from '../hooks';
-import { ThemeColors2024 } from '@rabby-wallet/base-utils';
-import { useIsFocused } from '@react-navigation/native';
+import { refreshDayCurve } from '@/store/curve24h';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
-import { create } from 'zustand';
-import balanceStore from '@/store/balance';
-import {
-  useMultiHome24hBalanceCurveChart,
-  useSceneIsLoadingNew,
-} from '@/hooks/useScene24hBalance';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
-import { useValueFromSharedValue } from '@/hooks/reanimated';
-import { RNGHPressable } from '@/components/customized/reexports';
+import { useHomeStartupReady } from '@/core/utils/homeStartupReady';
 import { Text, AnimateableText } from '@/components/Typography';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
+import { useShallow } from 'zustand/react/shallow';
+import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerText';
+import {
+  EMPTY_HOME_CURVE_LIST,
+  getHomeCurveProjectionList,
+  isHomeProjectionWaitingForValue,
+  useHome24hProjection,
+  useHomeAccountProjection,
+  useHomeBalanceProjection,
+  useHomeCurveProjection,
+} from '@/store/homePortfolio';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedSVG = Animated.createAnimatedComponent(Svg);
-const ScreenWidth = Dimensions.get('screen').width;
+const CHART_HORIZONTAL_INSET = 66;
+
+const MAX_NETWORTH_FS = 38;
+const MIN_NETWORTH_FS = 24;
+const NETWORTH_FIT_LEN = 9;
+
+const EMPTY_CHANGE_DATA = {
+  rawChange: 0,
+  changePercent: '',
+  isLoss: false,
+};
 
 const svIsFoldMultiChart = makeMutable(true);
 
@@ -60,17 +73,22 @@ export function setIsFoldMultiChart(valOrFunc: UpdaterOrPartials<boolean>) {
   svIsFoldMultiChart.value = newVal;
 }
 
+export function getIsFoldMultiChart() {
+  return !!svIsFoldMultiChart.value;
+}
+
 const ChartContent = memo(function ChartContent({
   data: chartsData,
   isLoss,
+  isAnyAddrLoading,
   hideType,
 }: {
   isLoss: boolean;
+  isAnyAddrLoading: boolean;
   hideType: BALANCE_HIDE_TYPE;
   data: CurvePoint[];
 }) {
   const { styles, colors2024, colors } = useTheme2024({ getStyle });
-  const { isAnyAddrLoading } = useMultiCurveIsAnyAddrLoading();
   const { width: winWidth } = useWindowDimensions();
 
   const pathColor = useMemo(
@@ -100,7 +118,7 @@ const ChartContent = memo(function ChartContent({
       {!chartsData.length ? null : !isAnyAddrLoading ? (
         <LineChart
           height={CHART_HEIGHT}
-          width={winWidth - 72}
+          width={winWidth - CHART_HORIZONTAL_INSET}
           shape={d3Shape.curveCatmullRom}
           style={[
             styles.relative,
@@ -118,7 +136,10 @@ const ChartContent = memo(function ChartContent({
           />
         </LineChart>
       ) : (
-        <CurveLoader style={styles.loading} />
+        <CurveLoader
+          {...makeTestIDProps(E2E_ID.home.portfolioCurveLoading)}
+          style={styles.loading}
+        />
       )}
     </Animated.View>
   );
@@ -127,30 +148,50 @@ const ChartContent = memo(function ChartContent({
 export const MultiChart = memo(function MultiChart({
   hideType,
   style,
+  onPressNetWorth,
+  onPressWalletList,
 }: {
   hideType: BALANCE_HIDE_TYPE;
+  onPressNetWorth?: () => void;
+  onPressWalletList?: () => void;
 } & RNViewProps) {
   const { styles } = useTheme2024({ getStyle });
-
-  const { combinedData: data } = useMultiHome24hBalanceCurveChart();
+  const { curveAvailability, curveList } = useHomeCurveProjection(
+    useShallow(state => ({
+      curveAvailability: state.availability,
+      curveList: getHomeCurveProjectionList(state),
+    })),
+  );
+  const { matteredAccountLength, isPendingMatteredAccountLength } =
+    useHomeAccountProjection(
+      useShallow(state => ({
+        matteredAccountLength: state.matteredAccountLength,
+        isPendingMatteredAccountLength: state.isPendingMatteredAccountLength,
+      })),
+    );
+  const { balanceAvailability, totalBalance } = useHomeBalanceProjection(
+    useShallow(state => ({
+      balanceAvailability: state.availability,
+      totalBalance: state.value?.totalBalance || 0,
+    })),
+  );
+  const { changeAvailability, changeData } = useHome24hProjection(
+    useShallow(state => ({
+      changeAvailability: state.availability,
+      changeData: state.value || EMPTY_CHANGE_DATA,
+    })),
+  );
+  const startupReady = useHomeStartupReady();
 
   useRendererDetect({ name: 'MultiAssets-MultiChart' });
 
-  const { matteredAccountCount, myTop10Addresses } = useAccountInfo();
-  const balanceMap = balanceStore(s => s.balanceMap);
-  const totalBalance = useMemo(() => {
-    if (!myTop10Addresses.length) {
-      return 0;
-    }
-    return myTop10Addresses.reduce((acc, address) => {
-      const balance = balanceMap[address.toLowerCase()];
-      return acc + (balance?.totalBalance || 0);
-    }, 0);
-  }, [balanceMap, myTop10Addresses]);
-
-  const { dayCurveData: dayCurveData } = useMultiDayCurve();
-
-  const chartsData = dayCurveData.list;
+  const chartsData = startupReady ? curveList : EMPTY_HOME_CURVE_LIST;
+  const showBalanceLoading =
+    !startupReady || isHomeProjectionWaitingForValue(balanceAvailability);
+  const showChangeLoading =
+    !startupReady || isHomeProjectionWaitingForValue(changeAvailability);
+  const isCurveLoading =
+    !startupReady || isHomeProjectionWaitingForValue(curveAvailability);
 
   return (
     <View
@@ -166,17 +207,25 @@ export const MultiChart = memo(function MultiChart({
         <LineChart.Provider data={chartsData}>
           <ChartHeader
             rawNetWorth={totalBalance}
-            rawChange={data.rawChange}
-            changePercent={data.changePercent}
-            isLoss={data.isLoss}
+            rawChange={changeData.rawChange}
+            changePercent={changeData.changePercent}
+            isLoss={changeData.isLoss}
             data={chartsData}
             hideType={hideType}
-            matteredAccountCount={matteredAccountCount}
+            matteredAccountCount={matteredAccountLength}
+            isMatteredAccountCountPending={
+              !startupReady || isPendingMatteredAccountLength
+            }
+            showBalanceLoadingWithoutLocal={showBalanceLoading}
+            showChangeLoadingWithoutLocal={showChangeLoading}
+            onPressNetWorth={onPressNetWorth}
+            onPressWalletList={onPressWalletList}
           />
           <ChartContent
             data={chartsData}
             hideType={hideType}
-            isLoss={data.isLoss}
+            isLoss={changeData.isLoss}
+            isAnyAddrLoading={isCurveLoading}
           />
         </LineChart.Provider>
       </View>
@@ -191,7 +240,12 @@ interface IHeaderProps {
   isLoss: boolean;
   data: CurvePoint[];
   hideType: BALANCE_HIDE_TYPE;
-  matteredAccountCount?: number;
+  matteredAccountCount: number;
+  isMatteredAccountCountPending: boolean;
+  showBalanceLoadingWithoutLocal: boolean;
+  showChangeLoadingWithoutLocal: boolean;
+  onPressNetWorth?: () => void;
+  onPressWalletList?: () => void;
 }
 const ChartHeader = React.memo(
   ({
@@ -202,37 +256,55 @@ const ChartHeader = React.memo(
     hideType,
     data: _data,
     matteredAccountCount,
+    isMatteredAccountCountPending,
+    showBalanceLoadingWithoutLocal,
+    showChangeLoadingWithoutLocal,
+    onPressNetWorth,
+    onPressWalletList,
   }: IHeaderProps) => {
-    const { reanimatedStyles, styles, colors2024 } = useTheme2024({ getStyle });
-    const rStyles = {
-      charHeader: useAnimatedStyle(reanimatedStyles.charHeader),
-    };
+    const { styles, colors2024 } = useTheme2024({ getStyle });
     const { currentIndex } = LineChart.useChart();
-    const { currency, formatCurrentCurrency } = useCurrency();
-    const debouncedRawNetWorth = useDebouncedValue(rawNetWorth, 300);
+    const { currency } = useCurrency();
     const debouncedRawChange = useDebouncedValue(rawChange, 300);
-
-    const { isLoadingNew: loading } = useSceneIsLoadingNew('Home');
+    const showNetWorthLoading = useMemo(() => {
+      return showBalanceLoadingWithoutLocal;
+    }, [showBalanceLoadingWithoutLocal]);
+    const changePercent = useDebouncedValue(_changePercent, 300);
+    const showChangeLoading =
+      showNetWorthLoading || showChangeLoadingWithoutLocal;
+    const displayMatteredAccountCount =
+      matteredAccountCount >= 10 ? '10' : String(matteredAccountCount);
 
     const netWorth = useMemo(() => {
-      return formatSmallCurrencyValue(debouncedRawNetWorth, { currency });
-    }, [debouncedRawNetWorth, currency]);
+      return formatSmallCurrencyValueParts(rawNetWorth, {
+        currency,
+        formatMillion: false,
+        decimalOverMillion: 2,
+      }).text;
+    }, [currency, rawNetWorth]);
     const change = useMemo(() => {
-      return formatCurrentCurrency(Math.abs(debouncedRawChange));
-    }, [formatCurrentCurrency, debouncedRawChange]);
-    const changePercent = useDebouncedValue(_changePercent, 300);
+      return formatCurrencyValueParts(Math.abs(debouncedRawChange), {
+        currency,
+      }).text;
+    }, [currency, debouncedRawChange]);
 
     const data = useMemo(() => {
       return (
         _data?.map(item => {
           return {
             ...item,
-            netWorth: formatSmallCurrencyValue(item.value, { currency }),
-            change: formatCurrentCurrency(item.rawChange),
+            netWorth: formatSmallCurrencyValueParts(item.value, {
+              currency,
+              formatMillion: false,
+              decimalOverMillion: 2,
+            }).text,
+            change: formatCurrencyValueParts(Math.abs(item.rawChange), {
+              currency,
+            }).text,
           };
         }) || []
       );
-    }, [_data, currency, formatCurrentCurrency]);
+    }, [_data, currency]);
 
     const percentChange = useDerivedValue(() => {
       if (hideType === 'HIDE') {
@@ -249,6 +321,9 @@ const ChartHeader = React.memo(
       const formatLoss = isActiveIndexData
         ? data?.[currentIndex.value]?.isLoss ?? isLoss
         : isLoss;
+      if (!formatChangePercent) {
+        return '';
+      }
       return `${formatLoss ? '-' : '+'}${formatChangePercent}(${
         formatLoss ? '-' : '+'
       }${formatChangeValue})`;
@@ -263,11 +338,13 @@ const ChartHeader = React.memo(
     }, [data, currentIndex, netWorth]);
 
     const formatNetWorth = useDerivedValue(() => {
-      return hideType === 'HIDE'
-        ? '******'
-        : svIsFoldMultiChart.value
-        ? netWorth
-        : data?.[currentIndex?.value]?.netWorth || netWorth;
+      if (hideType === 'HIDE') {
+        return '******';
+      }
+      if (svIsFoldMultiChart.value) {
+        return netWorth;
+      }
+      return data?.[currentIndex?.value]?.netWorth || netWorth;
     }, [data, currentIndex, netWorth, hideType]);
 
     const lossStyleProps = useAnimatedStyle(() => {
@@ -293,12 +370,6 @@ const ChartHeader = React.memo(
         color: isLoss ? colors2024['red-default'] : colors2024['green-default'],
       };
     }, [isLoss, data, currentIndex, colors2024, styles, hideType]);
-
-    const netWorthAnimatedProps = useAnimatedProps(() => {
-      return {
-        text: formatNetWorth.value,
-      };
-    });
 
     const percentChangeAnimatedProps = useAnimatedProps(() => {
       return {
@@ -335,44 +406,78 @@ const ChartHeader = React.memo(
     }, [hideType]);
 
     return (
-      <Animated.View style={rStyles.charHeader}>
+      <Animated.View style={styles.charHeader}>
         <View style={styles.netWorthContainer}>
-          <AnimateableText
+          <Pressable
             style={[
-              styles.netWorth,
-              loading && styles.hidden,
-              // 用hide原因是：AnimateableText持续订阅netWorthAnimatedProps的变化，会出现订阅不到值或值不更新的问题
-              hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
+              styles.netWorthTextContainer,
+              showNetWorthLoading ? styles.hidden : undefined,
             ]}
-            animatedProps={netWorthAnimatedProps}
-          />
+            onPress={onPressNetWorth}
+            {...makeTestIDProps(E2E_ID.home.portfolioBalanceValue)}>
+            <RefreshNudgedTickerText
+              value={formatNetWorth}
+              animateWidth={false}
+              maxLength={24}
+              lineHeight={42}
+              duration={320}
+              style={[
+                styles.netWorth,
+                hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
+              ]}
+              fontSizeByLength={{
+                maxFontSize: MAX_NETWORTH_FS,
+                minFontSize: MIN_NETWORTH_FS,
+                threshold: NETWORTH_FIT_LEN,
+              }}
+            />
+          </Pressable>
 
           <Skeleton
+            {...makeTestIDProps(E2E_ID.home.portfolioBalanceLoading)}
             width={181}
-            height={44}
-            style={[styles.skeletonNetWorth, !loading && styles.hidden]}
+            height={42}
+            style={[
+              styles.skeletonNetWorth,
+              !showNetWorthLoading && styles.hidden,
+            ]}
             LinearGradientComponent={LoadingLinear}
           />
 
-          <View style={[styles.accountBg]}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.accountBg,
+              pressed && { opacity: 0.6 },
+            ]}
+            onPress={onPressWalletList}
+            hitSlop={8}>
             <RcIconSmallWalletCC color={colors2024['neutral-title-1']} />
-            <Text style={styles.accountText}>
-              {matteredAccountCount && matteredAccountCount >= 10
-                ? '10'
-                : matteredAccountCount}
-            </Text>
+            {isMatteredAccountCountPending ? (
+              <Skeleton
+                width={18}
+                height={16}
+                style={styles.accountCountSkeleton}
+                LinearGradientComponent={LoadingLinear}
+              />
+            ) : (
+              <Text style={styles.accountText}>
+                {displayMatteredAccountCount}
+              </Text>
+            )}
             <RcIconSmallArrowCC color={colors2024['neutral-title-1']} />
-          </View>
+          </Pressable>
         </View>
-        {loading ? (
+        {showChangeLoading ? (
           <Skeleton
+            {...makeTestIDProps(E2E_ID.home.portfolioChangeLoading)}
             width={100}
-            height={22}
-            style={styles.skeletonNetWorth}
+            height={18}
+            style={styles.skeletonChange}
             LinearGradientComponent={LoadingLinear}
           />
         ) : (
           <Pressable
+            {...makeTestIDProps(E2E_ID.home.portfolioCurveToggle)}
             onPress={e => {
               e.stopPropagation();
               const nextValue = !svIsFoldMultiChart.value;
@@ -391,7 +496,7 @@ const ChartHeader = React.memo(
               hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
             ]}>
             {isHidden ? (
-              <Text>***</Text>
+              <Text style={{ color: colors2024['neutral-title-1'] }}>***</Text>
             ) : (
               <>
                 <AnimateableText
@@ -426,147 +531,126 @@ const ChartHeader = React.memo(
     );
   },
 );
-const winWidth = Dimensions.get('window').width;
-const getStyle = createGetStyles2024(
-  {
-    reanimatedStyles: {
-      charHeader: ({ colors2024, winLayout }) => {
-        'worklet';
-        return {
-          alignContent: 'flex-start',
-          justifyContent: 'flex-start',
-          flexDirection: 'column',
-          maxWidth: Math.max(winWidth, winLayout.value.width) - 72,
-          gap: 6,
-          // ...makeDebugBorder('blue'),
-        };
-      },
-    },
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  charHeader: {
+    alignContent: 'flex-start',
+    justifyContent: 'flex-start',
+    flexDirection: 'column',
+    width: '100%',
+    maxWidth: '100%',
+    gap: 2,
+    // ...makeDebugBorder('blue'),
   },
-  ({ colors2024, isLight }) => ({
-    skeleton: {
-      marginTop: 20,
-      borderRadius: 8,
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
-    },
-    skeletonNetWorth: {
-      borderRadius: 8,
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
-    },
-    netWorth: {
-      fontSize: 42,
-      lineHeight: 46,
-      fontWeight: '900',
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-    },
-    changeSection: {
-      flexDirection: 'row',
-      gap: 2,
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-    },
-    changeValue: {
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '700',
-      color: colors2024['green-default'],
-      fontFamily: 'SF Pro Rounded',
-    },
-    changePercent: {
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '700',
-      color: colors2024['green-default'],
-      fontFamily: 'SF Pro Rounded',
-    },
-    changeTime: {
-      fontSize: 16,
-      fontWeight: '400',
-      lineHeight: 20,
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      marginLeft: 4,
-    },
-    container: {
-      maxWidth: '100%',
-      // height: HEADER_CHART_HEIGHT,
-      paddingHorizontal: 0,
-      // backgroundColor: isLight
-      //   ? colors2024['neutral-bg-0']
-      //   : colors2024['neutral-bg-1'],
-      overflow: 'hidden',
-      // ...makeDebugBorder('red'),
-    },
-    chartContainer: {},
-    globalWarning: {
-      marginHorizontal: 16,
-      marginBottom: 13,
-    },
-    loading: {
-      width: ScreenWidth - 72,
-      height: 114,
-      paddingHorizontal: 0,
-    },
-    relative: { position: 'relative' },
-    bg: {
-      position: 'absolute',
-      left: 0,
-      width: ScreenWidth,
-      height: 32,
-      zIndex: -100,
-    },
-    balanceOpacity: {
-      opacity: 0.2,
-    },
-    netWorthContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      // ...makeDebugBorder('orange'),
-      lineHeight: 46,
-    },
-    hidden: {
-      display: 'none',
-    },
-    accountBg: {
-      minWidth: 74,
-      padding: 8,
-      paddingLeft: 11,
-      borderRadius: 10,
-      backgroundColor: isLight
-        ? colors2024['neutral-line']
-        : colors2024['brand-default'],
-      shadowColor: colors2024['brand-light-1'],
-      shadowOffset: { width: 0, height: 9.411 },
-      shadowOpacity: 0.1,
-      shadowRadius: 22.587,
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 30,
-      // position: 'absolute',
-      // top: 28,
-      // right: 20,
-      // elevation: 500,
-    },
-    accountText: {
-      fontSize: 16,
-      fontWeight: '700',
-      textAlign: 'left',
-      color: colors2024['neutral-title-1'],
-      lineHeight: 20,
-      fontFamily: 'SF Pro Rounded',
-      paddingLeft: 6,
-    },
-    percentChangeContainer: {
-      // flexDirection: 'row',
-      // alignItems: 'center',
-      // justifyContent: 'flex-end',
-    },
-  }),
-);
+  skeletonNetWorth: {
+    borderRadius: 8,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+  },
+  skeletonChange: {
+    borderRadius: 8,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+  },
+  netWorth: {
+    lineHeight: 42,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  changeSection: {
+    flexDirection: 'row',
+    gap: 2,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  changePercent: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '600',
+    color: colors2024['green-default'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  changeTime: {
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 18,
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    marginLeft: 4,
+  },
+  container: {
+    maxWidth: '100%',
+    // height: HEADER_CHART_HEIGHT,
+    paddingHorizontal: 0,
+    // backgroundColor: isLight
+    //   ? colors2024['neutral-bg-0']
+    //   : colors2024['neutral-bg-1'],
+    overflow: 'hidden',
+    // ...makeDebugBorder('red'),
+  },
+  chartContainer: {},
+  loading: {
+    width: '100%',
+    height: 114,
+    paddingHorizontal: 0,
+  },
+  relative: { position: 'relative' },
+  balanceOpacity: {
+    opacity: 0.2,
+  },
+  netWorthContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    // ...makeDebugBorder('orange'),
+    lineHeight: 42,
+  },
+  netWorthTextContainer: {
+    flex: 1,
+    marginRight: 12,
+  },
+  hidden: {
+    display: 'none',
+  },
+  accountBg: {
+    minWidth: 74,
+    padding: 8,
+    paddingLeft: 11,
+    borderRadius: 10,
+    backgroundColor: isLight
+      ? colors2024['neutral-line']
+      : colors2024['brand-default'],
+    shadowColor: colors2024['brand-light-1'],
+    shadowOffset: { width: 0, height: 9.411 },
+    shadowOpacity: 0.1,
+    shadowRadius: 22.587,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 30,
+    // position: 'absolute',
+    // top: 28,
+    // right: 20,
+    // elevation: 500,
+  },
+  accountText: {
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'left',
+    color: colors2024['neutral-title-1'],
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
+    paddingLeft: 6,
+  },
+  accountCountSkeleton: {
+    marginLeft: 6,
+    borderRadius: 4,
+  },
+  percentChangeContainer: {
+    // flexDirection: 'row',
+    // alignItems: 'center',
+    // justifyContent: 'flex-end',
+  },
+}));

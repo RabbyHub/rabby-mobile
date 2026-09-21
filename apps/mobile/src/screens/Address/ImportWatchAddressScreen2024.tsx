@@ -2,8 +2,8 @@ import { RcIconScannerCC } from '@/assets/icons/address';
 import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
 import { apisAddress } from '@/core/apis';
-import { openapi } from '@/core/request';
 import { useTheme2024 } from '@/hooks/theme';
+import { resolveEnsAddressByName, resolveEnsNameByAddress } from '@/utils/ens';
 import { navigateDeprecated, replaceToFirst } from '@/utils/navigation';
 import { isValidHexAddress } from '@metamask/utils';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -17,13 +17,15 @@ import {
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
 import { createGetStyles2024 } from '@/utils/styles';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
-import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { NextInput } from '@/components2024/Form/Input';
 import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
 import { useScanner } from '../Scanner/ScannerScreen';
 import { ellipsisAddress } from '@/utils/address';
 import { debounce } from 'lodash';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -39,18 +41,6 @@ const ERROR_MESSAGE = {
   [INPUT_ERROR.REQUIRED]: 'Please input address',
 };
 
-const debouncedGetEnsAddress = debounce(
-  (
-    input: string,
-    callback: (result: any) => void,
-    errorCallback: (e: any) => void,
-  ) => {
-    openapi.getEnsAddressByName(input).then(callback).catch(errorCallback);
-  },
-  500,
-  { leading: false, trailing: true },
-);
-
 export const ImportWatchAddressScreen2024 = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [input, setInput] = React.useState('');
@@ -60,9 +50,37 @@ export const ImportWatchAddressScreen2024 = () => {
     addr: string;
     name: string;
   }>(null);
+  const latestInputRef = React.useRef<string>('');
 
   const { t } = useTranslation();
   const duplicateAddressModal = useDuplicateAddressModal();
+  const debouncedResolveEns = React.useMemo(
+    () =>
+      debounce(
+        async (
+          value: string,
+          callback: (result: { addr: string; name: string } | null) => void,
+        ) => {
+          const result = await resolveEnsAddressByName(value);
+          callback(result);
+        },
+        500,
+        { leading: false, trailing: true },
+      ),
+    [],
+  );
+  const debouncedResolveEnsName = React.useMemo(
+    () =>
+      debounce(
+        async (value: string, callback: (name: string | null) => void) => {
+          const name = await resolveEnsNameByAddress(value);
+          callback(name);
+        },
+        500,
+        { leading: false, trailing: true },
+      ),
+    [],
+  );
 
   const handleDone = async () => {
     if (!input) {
@@ -75,19 +93,19 @@ export const ImportWatchAddressScreen2024 = () => {
       address = ensResult.addr;
     }
 
-    if (!isValidHexAddress(address as any)) {
+    const normalizedAddress = address.trim().toLowerCase();
+    if (!isValidHexAddress(normalizedAddress as any)) {
       setError(INPUT_ERROR.INVALID_ADDRESS);
       return;
     }
     try {
       Keyboard.dismiss();
-      await apisAddress.addWatchAddress(address);
+      await apisAddress.addWatchAddress(normalizedAddress);
       replaceToFirst(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess2024,
         params: {
           type: KEYRING_TYPE.WatchAddressKeyring,
-          address: address,
-          alias: ellipsisAddress(address),
+          address: normalizedAddress,
           brandName: KEYRING_CLASS.WATCH,
         },
       });
@@ -123,54 +141,74 @@ export const ImportWatchAddressScreen2024 = () => {
   }, [scanner]);
 
   useEffect(() => {
+    latestInputRef.current = input;
     if (!input) {
       setError(undefined);
+      setEnsResult(null);
+      debouncedResolveEnsName.cancel();
       return;
     }
-    if (isValidHexAddress(input as `0x${string}`)) {
+    const normalizedInput = input.trim().toLowerCase();
+    if (isValidHexAddress(normalizedInput as `0x${string}`)) {
       setError(undefined);
+      debouncedResolveEns.cancel();
+      debouncedResolveEnsName(normalizedInput, name => {
+        if (!name) {
+          setEnsResult(null);
+          return;
+        }
+        setEnsResult({
+          addr: normalizedInput,
+          name,
+        });
+      });
       return;
     }
-    debouncedGetEnsAddress(
-      input,
-      result => {
-        if (result && result.addr) {
-          setEnsResult(result);
-          setError(undefined);
-        } else {
-          setEnsResult(null);
-          setError(INPUT_ERROR.INVALID_ADDRESS);
-        }
-      },
-      () => {
+    const currentInput = input;
+    debouncedResolveEnsName.cancel();
+    debouncedResolveEns(input, result => {
+      // Ignore stale results if input has changed
+      if (latestInputRef.current !== currentInput) {
+        return;
+      }
+      if (result && result.addr) {
+        setEnsResult(result);
+        setError(undefined);
+      } else {
         setEnsResult(null);
         setError(INPUT_ERROR.INVALID_ADDRESS);
-      },
-    );
+      }
+    });
+  }, [input, debouncedResolveEns, debouncedResolveEnsName]);
+
+  useEffect(() => {
+    return () => {
+      debouncedResolveEns.cancel();
+      debouncedResolveEnsName.cancel();
+    };
+  }, [debouncedResolveEns, debouncedResolveEnsName]);
+
+  useEffect(() => {
+    if (!isValidHexAddress(input.toLowerCase() as `0x${string}`)) {
+      setEnsResult(null);
+    }
   }, [input]);
 
   return (
     <FooterButtonScreenContainer
-      as="View"
+      as="KeyboardAvoidingView"
       buttonProps={{
         title: t('global.Confirm'),
         onPress: handleDone,
         disabled: !input || !!error,
+        ...makeTestIDProps(E2E_ID.home.watchAddressSubmit),
       }}
       style={styles.screen}
       footerBottomOffset={56}
-      footerContainerStyle={{
-        paddingHorizontal: 20,
-      }}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      footerContainerStyle={styles.footerContainer}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <View style={styles.container}>
           <View style={styles.topContent}>
-            <WalletIcon
-              type={KEYRING_TYPE.WatchAddressKeyring}
-              width={40}
-              height={40}
-              style={styles.icon}
-            />
             <View>
               <NextInput.TextArea
                 style={styles.textContainer}
@@ -191,6 +229,7 @@ export const ImportWatchAddressScreen2024 = () => {
                   value: input,
                   blurOnSubmit: true,
                   returnKeyType: 'done',
+                  ...makeTestIDProps(E2E_ID.home.watchAddressInput),
                   onSubmitEditing: onSubmitEditing,
                   onChangeText: handleSubmit,
                 }}
@@ -209,13 +248,14 @@ export const ImportWatchAddressScreen2024 = () => {
                 )}
               />
 
-              {!error && ensResult && input === ensResult.addr && (
+              {!error && ensResult && isSameAddress(input, ensResult.addr) && (
                 <Text style={styles.ensText}>ENS: {ensResult.name}</Text>
               )}
 
-              {!error && ensResult && input !== ensResult.addr && (
+              {!error && ensResult && !isSameAddress(input, ensResult.addr) && (
                 <TouchableOpacity
                   style={styles.ensResultBox}
+                  {...makeTestIDProps(E2E_ID.home.watchAddressEnsResult)}
                   onPress={() => {
                     Keyboard.dismiss();
                     setInput(ensResult.addr);
@@ -245,6 +285,9 @@ export const ImportWatchAddressScreen2024 = () => {
 const getStyles = createGetStyles2024(ctx => ({
   screen: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
+  },
+  footerContainer: {
+    paddingHorizontal: 20,
   },
   container: {
     display: 'flex',
@@ -291,10 +334,6 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-body'],
     marginVertical: 12,
     marginHorizontal: 8,
-  },
-  icon: {
-    width: 40,
-    height: 40,
   },
   itemAddressWrap: {
     flexDirection: 'row',

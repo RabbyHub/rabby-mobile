@@ -9,6 +9,7 @@ module.exports = {
     'docs',
     'coverage',
     'merged-packages',
+    'packages/react-native-bootsplash/src',
   ],
   overrides: [
     {

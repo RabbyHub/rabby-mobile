@@ -208,7 +208,8 @@ const getStyles = createGetStyles(colors => ({
   btnConfirmContainer: {},
   btnActionTitle: {
     color: colors['neutral-title-2'],
-    fontSize: 16,
+    fontSize: 18,
+    lineHeight: 22,
     ...(!isAndroid && {
       width: '100%',
     }),

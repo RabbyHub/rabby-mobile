@@ -50,8 +50,13 @@ export type DisplayedKeyring = {
     // /** @deprecated use aliasName! this field is pointless */
     // alianName?: string;
     aliasName?: string;
+    hdPathBasePublicKey?: string;
+    hdPathType?: string;
+    hdPathIndex?: number;
   }[];
   keyring: DisplayKeyring;
   byImport?: boolean;
   publicKey?: string;
+  hasBackup?: boolean;
+  needPassphrase?: boolean;
 };

@@ -869,7 +869,11 @@ class LedgerKeyring {
   fixDeviceId(address: string, deviceId: string) {
     const checksummedAddress = ethUtil.toChecksumAddress(address);
     const detail = this.accountDetails[checksummedAddress];
-    if (!detail.deviceId) {
+    if (!detail) {
+      return;
+    }
+
+    if (detail.deviceId !== deviceId) {
       this.accountDetails[checksummedAddress] = {
         ...detail,
         deviceId,

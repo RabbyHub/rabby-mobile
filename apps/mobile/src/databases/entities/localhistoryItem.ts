@@ -10,8 +10,10 @@ import {
 import { prepareAppDataSource } from '../imports';
 import BigNumber from 'bignumber.js';
 import { findChain } from '@/utils/chain';
-import { TransactionHistoryItem } from '@/core/services/transactionHistory';
-import { HistoryItemCateType } from '@/screens/Transaction/components/type';
+import {
+  HistoryItemCateType,
+  type LocalSendHistorySource,
+} from '@/types/history';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
 import { ParseEntity } from '@/core/utils/typeorm';
@@ -142,7 +144,7 @@ export class LocalHistoryItemEntity extends EntityAddressAssetBase {
 
   static fillEntityFromLocalSend(
     e: LocalHistoryItemEntity,
-    input: TransactionHistoryItem,
+    input: LocalSendHistorySource,
   ) {
     e.owner_addr = input.address;
 

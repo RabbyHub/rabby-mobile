@@ -5,6 +5,7 @@ import { APP_VERSIONS } from '@/constant';
 import { StorageAdapater } from '@rabby-wallet/persist-store';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { appStorage } from '@/core/storage/mmkv';
+import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import {
   isUsedDateVer,
   sortMigrationByUTC0DateVer,
@@ -15,20 +16,21 @@ const APP_VER = APP_VERSIONS.fromJs;
 
 /* ====================== store migration :start ====================== */
 
-const storeMigrationKey = '@StoreMigrations';
 export function setLatestStoreMigration(
   storeName: APP_STORE_NAMES,
   dateVer: string,
 ) {
-  const prev = { ...appStorage.getItem(storeMigrationKey) };
-  appStorage.setItem(storeMigrationKey, {
+  const prev = { ...appStorage.getItem(APP_MMKV_WEAK_KEYS.STORE_MIGRATIONS) };
+  appStorage.setItem(APP_MMKV_WEAK_KEYS.STORE_MIGRATIONS, {
     ...prev,
     [storeName]: dateVer,
   });
 }
 
 export function getLatestStoreMigration(storeName: APP_STORE_NAMES) {
-  return appStorage.getItem(storeMigrationKey)?.[storeName] || null;
+  return (
+    appStorage.getItem(APP_MMKV_WEAK_KEYS.STORE_MIGRATIONS)?.[storeName] || null
+  );
 }
 
 type StoreMigrator = (data: IMigrationStorageContext) => any;

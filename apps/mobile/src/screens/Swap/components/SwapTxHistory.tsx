@@ -6,7 +6,7 @@ import { ActivityIndicator, TouchableOpacity, View, Image } from 'react-native';
 import { ModalLayouts, RootNames } from '@/constant/layout';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
+import type { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { Skeleton } from '@rneui/themed';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,20 +14,33 @@ import { useSwapHistory, useSwapTxHistoryVisible } from '../hooks/history';
 import { SwapHistoryItem } from '@/components2024/HistoryItem/SwapHistoryItem';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { navigateDeprecated } from '@/utils/navigation';
+import { naviPush } from '@/utils/navigation';
 import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/utils';
 import { syncSingleAddress } from '@/databases/hooks/history';
 import IconEmpty from '@/assets2024/images/lending/empty.png';
 import IconEmptyDark from '@/assets2024/images/lending/empty-dark.png';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
-import { transactionHistoryService } from '@/core/services';
-import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { getPinnedTokenSnapshot } from '@/core/serviceApi/preference';
+import {
+  getTransactionHistoryCustomTxItemMap,
+  getTransactionHistoryTransactions,
+  transactionHistoryServiceApi,
+} from '@/core/serviceApi/transactionHistory';
+import {
+  switchSceneCurrentAccount,
+  useSceneAccountInfo,
+} from '@/hooks/accountsSwitcher';
 import { HistoryItemCateType } from '@/screens/Transaction/components/type';
-import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
+import type { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';
 import { Text } from '@/components/Typography';
+import { notificationOpenapi } from '@/core/notifications/openapi';
+import { txResultToToHistoryDisplayItem } from '@/utils/transaction';
+import { useDebugSwapHistorySkipLocalLookup } from '@/hooks/appSettings';
+import { Account } from '@/types/account';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   flatList: {
@@ -41,7 +54,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     backgroundColor: isLight
-      ? colors2024['neutral-bg-2']
+      ? colors2024['neutral-bg-0']
       : colors2024['neutral-bg-1'],
   },
   addressRow: {
@@ -102,7 +115,7 @@ const HistoryList = ({
   onGotoDetail,
   recentShowTime,
 }: {
-  onGotoDetail: (txId: string) => void;
+  onGotoDetail: (txId: string, chain: string) => void;
   recentShowTime: number;
 }) => {
   const { txList, loading, loadMore, noMore } = useSwapHistory();
@@ -114,7 +127,7 @@ const HistoryList = ({
 
   const renderItem = useCallback(
     ({ item }) => (
-      <TouchableOpacity onPress={() => onGotoDetail(item.tx_id)}>
+      <TouchableOpacity onPress={() => onGotoDetail(item.tx_id, item.chain)}>
         <SwapHistoryItem data={item} recentShowTime={recentShowTime} />
       </TouchableOpacity>
     ),
@@ -249,54 +262,126 @@ export const SwapTxHistory = ({
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
+  const { debugSwapHistorySkipLocalLookup } =
+    useDebugSwapHistorySkipLocalLookup();
 
   const onDismiss = useCallback(() => {
     setVisible(false);
   }, [setVisible]);
 
   const goToDetail = useCallback(
-    async (txId: string) => {
-      const historyItem = await HistoryItemEntity.findOne({
-        where: { txHash: txId },
-      });
-
-      if (historyItem) {
-        const detailData = {
-          ...ensureHistoryListItemFromDb(historyItem),
-        } as HistoryDisplayItem;
-
-        onDismiss();
-        navigateDeprecated(RootNames.StackTransaction, {
-          screen: RootNames.HistoryDetail,
-          params: {
-            isForMultipleAddress,
-            data: detailData,
-            title: t('page.swap.swapped'),
-            treatSmallAssetsAsScam: true,
-          },
+    async (txId: string, chain: string) => {
+      if (!debugSwapHistorySkipLocalLookup) {
+        const historyItem = await HistoryItemEntity.findOne({
+          where: { txHash: txId },
         });
-      } else {
-        const { pendings, completeds } = transactionHistoryService.getList(
-          currentAccount?.address ?? '',
-        );
-        const arr = pendings.concat(completeds);
-        const itemData = arr.find(i => i.txs[0].hash === txId);
+        if (historyItem) {
+          onDismiss();
+          naviPush(RootNames.StackTransaction, {
+            screen: RootNames.HistoryDetail,
+            params: {
+              isForMultipleAddress,
+              data: {
+                ...ensureHistoryListItemFromDb(historyItem),
+              } as HistoryDisplayItem,
+              title: t('page.swap.swapped'),
+              treatSmallAssetsAsScam: true,
+              account: currentAccount,
+            },
+          });
+          return;
+        }
 
+        const { pendings, completeds } = await transactionHistoryServiceApi
+          .getList(currentAccount?.address ?? '')
+          .catch(error => {
+            console.error(
+              '[SwapTxHistory] load local transaction history failed',
+              error,
+            );
+            return {
+              pendings: [] as TransactionGroup[],
+              completeds: [] as TransactionGroup[],
+            };
+          });
+        const itemData = pendings
+          .concat(completeds)
+          .find(i => i.txs[0]?.hash === txId);
         if (itemData) {
           onDismiss();
-          navigateDeprecated(RootNames.StackTransaction, {
+          naviPush(RootNames.StackTransaction, {
             screen: RootNames.HistoryLocalDetail,
             params: {
               isForMultipleAddress,
               data: itemData,
               type: HistoryItemCateType.Swap,
               title: t('page.swap.swapped'),
+              account: currentAccount,
             },
           });
+          return;
         }
       }
+
+      // Fallback: fetch single tx detail from API for transactions older than
+      // 90 days that are not persisted locally
+      console.debug(
+        '[SwapTxHistory] goToDetail: tx not found locally, fetching from API',
+        txId,
+        chain,
+      );
+      const txDetail = await notificationOpenapi
+        .getUserTxDetail({
+          chainId: chain,
+          txId,
+          userAddr: currentAccount?.address ?? '',
+        })
+        .catch(err => {
+          console.error(
+            '[SwapTxHistory] goToDetail: getUserTxDetail failed',
+            err,
+          );
+          return null;
+        });
+
+      if (!txDetail) {
+        return;
+      }
+
+      const pinedQueue = getPinnedTokenSnapshot();
+      const [customTxItemsMap, transactions] = await Promise.all([
+        getTransactionHistoryCustomTxItemMap(),
+        getTransactionHistoryTransactions(),
+      ]);
+      const historyDisplayItem = txResultToToHistoryDisplayItem({
+        address: currentAccount?.address || '',
+        res: txDetail,
+        pinedQueue,
+        customTxItemsMap,
+        transactions,
+      })[0];
+
+      if (historyDisplayItem) {
+        onDismiss();
+        naviPush(RootNames.StackTransaction, {
+          screen: RootNames.HistoryDetail,
+          params: {
+            isForMultipleAddress,
+            data: historyDisplayItem,
+            title: t('page.swap.swapped'),
+            treatSmallAssetsAsScam: true,
+            account: currentAccount,
+          },
+        });
+      }
     },
-    [onDismiss, t, isForMultipleAddress, currentAccount?.address],
+    [
+      debugSwapHistorySkipLocalLookup,
+      currentAccount,
+      onDismiss,
+      isForMultipleAddress,
+      t,
+    ],
   );
 
   useEffect(() => {
@@ -333,7 +418,7 @@ export const SwapTxHistory = ({
       enableDismissOnClose
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: isDarkTheme ? 'bg1' : 'bg2',
+        linearGradientType: isDarkTheme ? 'bg1' : 'bg0',
       })}>
       <HistoryList onGotoDetail={goToDetail} recentShowTime={recentShowTime} />
     </AppBottomSheetModal>

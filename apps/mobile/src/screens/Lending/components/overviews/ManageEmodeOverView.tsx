@@ -23,6 +23,7 @@ import { useLendingISummary } from '../../hooks';
 import HealthFactorText from '../HealthFactorText';
 import { CategorySelector } from '../EmodeCategory/CategorySelector';
 import { Text } from '@/components/Typography';
+import { BOTTOM_BUTTON_BOTTOM_OFFSET } from '@/constant/layout';
 
 export const PairTable = ({
   data,
@@ -164,7 +165,7 @@ const ManageEmodeOverView: React.FC<{
         },
         containerStyle: {
           position: 'absolute',
-          bottom: 48,
+          bottom: BOTTOM_BUTTON_BOTTOM_OFFSET,
           width: '100%',
         },
       },
@@ -360,35 +361,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   apyContainer: {
     marginTop: 26,
-  },
-  collateralizationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  availableValue: {
-    textAlign: 'right',
-    flex: 1,
-    color: colors2024['neutral-title-1'],
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-  },
-  collateralizationValue: {
-    textAlign: 'right',
-    flex: 1,
-    color: colors2024['neutral-title-1'],
-    fontSize: 17,
-    lineHeight: 22,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-  },
-  enabled: {
-    color: colors2024['green-default'],
-  },
-  unavailable: {
-    color: colors2024['red-default'],
   },
   ltv: {
     color: colors2024['neutral-title-1'],

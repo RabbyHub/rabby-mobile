@@ -1,6 +1,5 @@
 import { makeTxPageBackgroundColors } from '@/constant/layout';
 import { getTheme2024, useTheme2024 } from '@/hooks/theme';
-import { useBottomSheetOpenEnd } from '@/hooks/useBottomSheetOpenEnd';
 import React from 'react';
 import { View } from 'react-native';
 import LinearGradient, {
@@ -59,30 +58,22 @@ export const LinearGradientContainer: React.FC<
 > = ({ type, inBottomSheet, ...props }) => {
   const theme2024 = useTheme2024();
   const { colors2024 } = theme2024;
-  const [showLinearGradient, setShowLinearGradient] =
-    React.useState<boolean>(false);
-
-  useBottomSheetOpenEnd(() => {
-    setShowLinearGradient(true);
-  });
 
   if (type === 'linear') {
     if (inBottomSheet) {
       return (
         <View {...props}>
-          {showLinearGradient ? (
-            <LinearGradient
-              colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
-              // eslint-disable-next-line react-native/no-inline-styles
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-              }}
-            />
-          ) : null}
+          <LinearGradient
+            colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
+            // eslint-disable-next-line react-native/no-inline-styles
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+          />
           {props.children}
         </View>
       );

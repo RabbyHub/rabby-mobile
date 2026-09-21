@@ -7,19 +7,21 @@ import {
   MMKVStorageStrategy,
   zustandByMMKV,
 } from '@/core/storage/mmkv';
+import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 import { openapi } from '@/core/request';
 import { APP_URLS, APP_VERSIONS, APPLICATION_ID } from '@/constant';
 import { isNonPublicProductionEnv } from '@/constant';
 import { Platform } from 'react-native';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { getDeviceInfoForFeedbackText } from '@/utils/deviceInfo';
 import { openExternalUrl } from '@/core/utils/linking';
 import {
   resolveValFromUpdater,
   runDevIIFEFunc,
-  runIIFEFunc,
   UpdaterOrPartials,
 } from '@/core/utils/store';
+import { runStartupTask } from '@/core/utils/startupScheduler';
 import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
 import { perfEvents } from '@/core/utils/perf';
@@ -90,8 +92,8 @@ function userCouldRated(
 //   })
 // })
 
-const rateGuideLastExposureState = zustandByMMKV(
-  '@RateGuideLastExposure',
+export const rateGuideLastExposureState = zustandByMMKV(
+  APP_MMKV_WEAK_KEYS.RATE_GUIDE_LAST_EXPOSURE,
   getDefaultRateGuideLastExposure(),
   { storage: MMKVStorageStrategy.compatJson },
 );
@@ -293,6 +295,7 @@ const pushRateDetails = async (params?: { userStar?: number }) => {
   const starText = `${makeStarText(userStar, 5)} (${userStar})`;
   const balanceText = rmState.totalBalanceText;
   const versionText = APP_VERSIONS.forFeedback;
+  const { deviceText, osText } = getDeviceInfoForFeedbackText();
 
   const feedbackContent = [
     ...(!needFeedbackText
@@ -302,6 +305,8 @@ const pushRateDetails = async (params?: { userStar?: number }) => {
           `Rate: ${starText}`,
           `Total Balance: ${balanceText}`,
           `App Version: ${versionText}`,
+          `Device: ${deviceText}`,
+          `OS: ${osText}`,
           '  ',
         ]),
   ]

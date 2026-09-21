@@ -1,22 +1,25 @@
 import { AssetAvatar } from '@/components';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { RootNames } from '@/constant/layout';
-import {
+import type {
   SwapTxHistoryItem,
   SendTxHistoryItem,
   ApproveTokenTxHistoryItem,
 } from '@/core/services/transactionHistory';
 import {
-  bridgeService,
-  swapService,
-  transactionHistoryService,
-} from '@/core/services';
+  getTransactionHistoryListSnapshot,
+  transactionHistoryServiceApi,
+} from '@/core/serviceApi/transactionHistory';
+import { swapServiceApi } from '@/core/serviceApi/swap';
 import { SendRequireData } from '@rabby-wallet/rabby-action/dist/types/actionRequireData';
 import { getAliasName } from '@/core/apis/contact';
-import { TransactionGroup } from '@/core/services/transactionHistory';
-import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
+import {
+  switchSceneCurrentAccount,
+  useSceneAccountInfo,
+} from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
-import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
+import { TxStatusItem } from '@/screens/Transaction/components/TxStatusItem';
 import { ellipsisAddress } from '@/utils/address';
 import { findChain } from '@/utils/chain';
 import { naviPush } from '@/utils/navigation';
@@ -35,16 +38,44 @@ import { noop } from 'lodash';
 import useAsync from 'react-use/lib/useAsync';
 import useMount from 'react-use/lib/useMount';
 import { Text } from '@/components/Typography';
+import type { Account } from '@/types/account';
+
+export const PendingTxDivider = ({
+  placement = 'top',
+}: {
+  placement?: 'top' | 'bottom';
+}) => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+
+  return (
+    <View
+      style={[
+        styles.divider,
+        placement === 'top' ? styles.dividerTop : styles.dividerBottom,
+      ]}>
+      <View style={styles.dottedLine} />
+      <View style={styles.dot} />
+      <View style={styles.dottedLine} />
+    </View>
+  );
+};
+
 export const PendingTxItem = ({
   data,
   clearLocalPendingTxData,
   isForMultipleAddress,
   type,
+  account,
+  showHeaderDivider = true,
+  showFooterDivider = false,
 }: {
   data: SwapTxHistoryItem | SendTxHistoryItem | ApproveTokenTxHistoryItem;
   clearLocalPendingTxData: () => void;
   isForMultipleAddress: boolean;
   type: 'send' | 'swap' | 'approveSwap';
+  account?: Account | null;
+  showHeaderDivider?: boolean;
+  showFooterDivider?: boolean;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -63,17 +94,21 @@ export const PendingTxItem = ({
   });
 
   const handlePress = useMemoizedFn(() => {
-    if (type === 'approveSwap') {
-      return;
-    }
     if (!isPending) {
       clearLocalPendingTxData();
       type === 'send' &&
-        swapService.setOpenSwapHistoryTs(currentAccount?.address ?? '');
+        void swapServiceApi
+          .setOpenSwapHistoryTs(currentAccount?.address ?? '')
+          .catch(error => {
+            console.error(
+              '[PendingTxItem] persist history open time failed',
+              error,
+            );
+          });
     }
 
-    const { pendings, completeds } = transactionHistoryService.getList(
-      currentAccount?.address ?? '',
+    const { pendings, completeds } = getTransactionHistoryListSnapshot(
+      data.address,
     );
     const naviData = isPending ? pendings : completeds;
     const groupData = naviData.find(
@@ -84,17 +119,25 @@ export const PendingTxItem = ({
     if (!groupData) {
       return;
     }
+
+    let historyType = HistoryItemCateType.Swap;
+    let title = t('page.transactions.itemTitle.Swap');
+    if (type === 'send') {
+      historyType = HistoryItemCateType.Send;
+      title = t('page.transactions.itemTitle.Send');
+    } else if (type === 'approveSwap') {
+      historyType = HistoryItemCateType.Approve;
+      title = t('page.transactions.itemTitle.Approve');
+    }
+
     naviPush(RootNames.StackTransaction, {
       screen: RootNames.HistoryLocalDetail,
       params: {
         isForMultipleAddress,
         data: groupData,
-        type:
-          type === 'send' ? HistoryItemCateType.Send : HistoryItemCateType.Swap,
-        title:
-          type === 'send'
-            ? t('page.transactions.itemTitle.Send')
-            : t('page.transactions.itemTitle.Swap'),
+        type: historyType,
+        title,
+        account,
       },
     });
   });
@@ -126,11 +169,7 @@ export const PendingTxItem = ({
 
   return (
     <>
-      <View style={styles.header}>
-        <View style={styles.dottedLine} />
-        <View style={styles.dot} />
-        <View style={styles.dottedLine} />
-      </View>
+      {showHeaderDivider ? <PendingTxDivider placement="top" /> : null}
       <TouchableOpacity style={styles.container} onPress={handlePress}>
         <View style={styles.leftContainer}>
           <View style={styles.mainContainer}>
@@ -144,7 +183,12 @@ export const PendingTxItem = ({
                     size={25}
                     innerChainStyle={styles.innerChainStyle}
                   />
-                  <Text style={styles.titleText}>{sendTitleTextStr}</Text>
+                  <Text
+                    style={styles.titleText}
+                    numberOfLines={1}
+                    ellipsizeMode="tail">
+                    {sendTitleTextStr}
+                  </Text>
                 </>
               ) : type === 'send' ? (
                 <>
@@ -155,7 +199,12 @@ export const PendingTxItem = ({
                     size={25}
                     innerChainStyle={styles.innerChainStyle}
                   />
-                  <Text style={styles.titleText}>{sendTitleTextStr}</Text>
+                  <Text
+                    style={styles.titleText}
+                    numberOfLines={1}
+                    ellipsizeMode="tail">
+                    {sendTitleTextStr}
+                  </Text>
                 </>
               ) : (
                 <>
@@ -166,12 +215,13 @@ export const PendingTxItem = ({
                     size={25}
                     innerChainStyle={styles.innerChainStyle}
                   />
-                  <Text style={styles.titleText}>
-                    {` ${getTokenSymbol(
-                      (data as SwapTxHistoryItem)?.fromToken,
-                    )}`}
+                  <Text
+                    style={styles.titleText}
+                    numberOfLines={1}
+                    ellipsizeMode="tail">
+                    {getTokenSymbol((data as SwapTxHistoryItem)?.fromToken)}
                   </Text>
-                  <Text style={styles.titleText}>{'→'}</Text>
+                  <Text style={styles.arrowText}>{'→'}</Text>
                   <AssetAvatar
                     logo={(data as SwapTxHistoryItem)?.toToken?.logo_url}
                     chain={(data as SwapTxHistoryItem)?.toToken?.chain}
@@ -179,7 +229,10 @@ export const PendingTxItem = ({
                     size={25}
                     innerChainStyle={styles.innerChainStyle}
                   />
-                  <Text style={styles.titleText}>
+                  <Text
+                    style={styles.titleText}
+                    numberOfLines={1}
+                    ellipsizeMode="tail">
                     {getTokenSymbol((data as SwapTxHistoryItem)?.toToken)}
                   </Text>
                 </>
@@ -209,6 +262,7 @@ export const PendingTxItem = ({
           )}
         </View>
       </TouchableOpacity>
+      {showFooterDivider ? <PendingTxDivider placement="bottom" /> : null}
     </>
   );
 };
@@ -219,16 +273,19 @@ export const ApprovePendingTxItem = ({
   isForMultipleAddress,
   hash,
   chainId,
-}: // hash,
-{
+  showHeaderDivider = true,
+  showFooterDivider = false,
+}: {
   type: 'approveSwap';
   isForMultipleAddress: boolean;
   address: string;
   chainId: number;
   hash: string;
+  showHeaderDivider?: boolean;
+  showFooterDivider?: boolean;
 }) => {
   const [{ value: data }, getApproveItem] = useAsyncFn(async () => {
-    const v = await transactionHistoryService.getRecentTxHistory(
+    const v = await transactionHistoryServiceApi.getRecentTxHistory(
       address,
       hash,
       chainId,
@@ -263,6 +320,8 @@ export const ApprovePendingTxItem = ({
       data={data}
       clearLocalPendingTxData={noop}
       isForMultipleAddress={isForMultipleAddress}
+      showHeaderDivider={showHeaderDivider}
+      showFooterDivider={showFooterDivider}
     />
   );
 };
@@ -270,8 +329,10 @@ export const ApprovePendingTxItem = ({
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 12,
+    width: '100%',
   },
   IconContainer: {
     position: 'relative',
@@ -311,6 +372,19 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 18,
     justifyContent: 'center',
   },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dividerTop: {
+    marginTop: 18,
+    marginBottom: 12,
+  },
+  dividerBottom: {
+    marginTop: 12,
+    marginBottom: 12,
+  },
   dottedLine: {
     flex: 1,
     borderBottomWidth: 1,
@@ -326,6 +400,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   mainContainer: {
     gap: 2,
+    minWidth: 0,
+    width: '100%',
   },
   arrowIcon: {
     width: 16,
@@ -335,6 +411,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    width: '100%',
+    minWidth: 0,
   },
   subTitleText: {
     color: colors2024['neutral-secondary'],
@@ -349,23 +427,34 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     gap: 4,
   },
-  titleText: {
+  arrowText: {
     color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '500',
   },
+  titleText: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 15,
+    lineHeight: 18,
+    fontWeight: '700',
+    flexShrink: 1,
+    minWidth: 0,
+  },
   leftContainer: {
     gap: 12,
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    minWidth: 0,
   },
   rightContainer: {
     justifyContent: 'center',
     alignItems: 'flex-end',
     gap: 2,
-    flex: 1,
+    flexShrink: 0,
   },
   statusContainer: {
     flexDirection: 'row',

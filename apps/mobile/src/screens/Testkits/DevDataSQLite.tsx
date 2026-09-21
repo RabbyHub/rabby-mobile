@@ -1,21 +1,21 @@
-import { useCallback, useEffect, useRef } from 'react';
 import {
   Alert,
   Dimensions,
   FlatList,
+  Platform,
   ScrollView,
-  StyleSheet,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useMemo, useState } from 'react';
 
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { useSQLiteInfo } from '@/core/databases/hooks';
 import { Button } from '@/components2024/Button';
 import { useAssetsBasicInfo } from '@/databases/hooks/assets';
-import { preferenceService } from '@/core/services';
+import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 import { makeNoop } from '../Settings/sheetModals/testDevUtils';
 import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
 import {
@@ -34,9 +34,19 @@ import { accountEvents } from '@/core/apis/account';
 import { AddressItemContextMenuDev } from '../Address/components/AddressItemContextMenuDev';
 import { touchedFeedback } from '@/utils/touch';
 import { ALL_ORM_ENTITIES } from '@/databases/entities';
-import { Divider } from '@rneui/base';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { Text, AnimateableText } from '@/components/Typography';
+import { AppSwitch2024 } from '@/components/customized/Switch2024';
+import {
+  clearSyncSchedulerRecentTasks,
+  pauseSyncScheduler,
+  resumeSyncScheduler,
+  setSyncSchedulerCriticalMode,
+  type SyncTaskSnapshot,
+  useSyncSchedulerSnapshot,
+} from '@/databases/sync/scheduler';
+import { useToggleShowDbSyncSummaryPanel } from '../Settings/components/FloatingDbSyncSummaryPanel';
+import type { NativeMemoryAppDataSourceContractResult } from '@/databases/nativeMemoryContract';
 
 function UpdatedTimeCount({ updatedAt }: { updatedAt: number }) {
   const { countdownTextStyles, countdownTextProps } = useRestCountDownLabel({
@@ -59,7 +69,7 @@ function NewlyAddedAccountItem({
 }: {
   item: ReturnType<typeof useDevNewlyAddedAccounts>['newlyAddedAccounts'][0];
 }) {
-  const { styles, colors2024 } = useTheme2024({
+  const { colors2024 } = useTheme2024({
     getStyle: getStyles,
     isLight: true,
   });
@@ -114,7 +124,7 @@ function NewlyAddedAccountItem({
 }
 
 function DevORMEntities() {
-  const { styles, colors2024 } = useTheme2024({
+  const { styles } = useTheme2024({
     getStyle: getStyles,
     isLight: true,
   });
@@ -169,12 +179,67 @@ function DevORMEntities() {
   );
 }
 
+function stringifyInfoValue(value: unknown) {
+  if (typeof value === 'boolean') {
+    return value ? 'true' : 'false';
+  }
+
+  if (value === null || typeof value === 'undefined' || value === '') {
+    return '-';
+  }
+
+  return String(value);
+}
+
+function DevSQLiteInfoItem({
+  label,
+  value,
+}: {
+  label: string;
+  value: unknown;
+}) {
+  return (
+    <View style={{ width: '100%', marginBottom: 8 }}>
+      <Text style={{ width: '100%' }}>
+        {label}: {stringifyInfoValue(value)}
+        {' '.repeat(100)}
+      </Text>
+    </View>
+  );
+}
+
 function DevSQLiteInfo() {
-  const { styles, colors2024 } = useTheme2024({
+  const { styles } = useTheme2024({
     getStyle: getStyles,
     isLight: true,
   });
-  const { sqliteInfo } = useSQLiteInfo({ enableAutoFetch: true });
+  const { sqliteInfo, getSqliteInfo, isLoading } = useSQLiteInfo({
+    enableAutoFetch: true,
+  });
+  const [nativeMemoryContract, setNativeMemoryContract] =
+    useState<NativeMemoryAppDataSourceContractResult>();
+  const [nativeMemoryContractError, setNativeMemoryContractError] =
+    useState<string>();
+  const [isNativeMemoryContractRunning, setIsNativeMemoryContractRunning] =
+    useState(false);
+
+  const runNativeMemoryContract = async () => {
+    setIsNativeMemoryContractRunning(true);
+    setNativeMemoryContract(undefined);
+    setNativeMemoryContractError(undefined);
+    try {
+      const { runNativeMemoryAppDataSourceContract } = await import(
+        '@/databases/nativeMemoryContract'
+      );
+      setNativeMemoryContract(await runNativeMemoryAppDataSourceContract());
+    } catch (error) {
+      setNativeMemoryContractError(
+        error instanceof Error ? error.message : String(error),
+      );
+    } finally {
+      setIsNativeMemoryContractRunning(false);
+    }
+  };
 
   return (
     <View style={styles.showCaseRowsContainer}>
@@ -183,29 +248,176 @@ function DevSQLiteInfo() {
       </Text>
       <View
         style={[styles.propertyDesc, { marginVertical: 12, flexWrap: 'wrap' }]}>
-        <View style={styles.propertyView}>
-          <Text>
-            version: {sqliteInfo?.version || '-'}
-            {' '.repeat(100)}
-          </Text>
-        </View>
+        <Text style={[styles.subMarkedTitle, { marginBottom: 12 }]}>
+          Runtime
+        </Text>
+        <DevSQLiteInfoItem label="version" value={sqliteInfo?.version} />
+        <DevSQLiteInfoItem label="source_id" value={sqliteInfo?.source_id} />
+        <DevSQLiteInfoItem
+          label="thread_safe"
+          value={sqliteInfo?.thread_safe}
+        />
+        <DevSQLiteInfoItem
+          label="temp_store"
+          value={
+            typeof sqliteInfo?.temp_store === 'number'
+              ? `${sqliteInfo.temp_store} (${sqliteInfo.temp_store_label})`
+              : null
+          }
+        />
+        <DevSQLiteInfoItem
+          label="test_db_path"
+          value={sqliteInfo?.test_db_path}
+        />
 
-        <View style={[styles.propertyView]}>
-          <Text style={{ width: '100%' }}>
-            source_id: {sqliteInfo?.source_id || '-'}
-            {' '.repeat(50)}
-          </Text>
-        </View>
+        <Text style={[styles.subMarkedTitle, { marginBottom: 12 }]}>
+          Compile options
+        </Text>
+        <DevSQLiteInfoItem
+          label="OMIT_DEPRECATED"
+          value={sqliteInfo?.compile_options?.omit_deprecated}
+        />
+        <DevSQLiteInfoItem
+          label="TEMP_STORE=2"
+          value={sqliteInfo?.compile_options?.temp_store_2}
+        />
+        <DevSQLiteInfoItem
+          label="TEMP_STORE=3"
+          value={sqliteInfo?.compile_options?.temp_store_3}
+        />
 
-        <View style={styles.propertyView}>
-          <Text>
-            thread_safe:{' '}
-            {typeof sqliteInfo?.thread_safe === 'boolean'
-              ? sqliteInfo?.thread_safe + ''
-              : '-'}
-            {' '.repeat(100)}
-          </Text>
-        </View>
+        <Text style={[styles.subMarkedTitle, { marginBottom: 12 }]}>
+          Runtime policy
+        </Text>
+        <DevSQLiteInfoItem
+          label="target_temp_store"
+          value={sqliteInfo?.runtime_policy?.targetTempStore}
+        />
+        <DevSQLiteInfoItem
+          label="apply_memory_pragma"
+          value={sqliteInfo?.runtime_policy?.shouldApplyMemoryPragma}
+        />
+        <DevSQLiteInfoItem
+          label="policy_reason"
+          value={sqliteInfo?.runtime_policy?.reason}
+        />
+        <DevSQLiteInfoItem
+          label="platform"
+          value={sqliteInfo?.runtime_policy?.platform}
+        />
+        <DevSQLiteInfoItem
+          label="android_api_level"
+          value={sqliteInfo?.runtime_policy?.androidApiLevel}
+        />
+        <DevSQLiteInfoItem
+          label="system_version"
+          value={sqliteInfo?.runtime_policy?.systemVersion}
+        />
+        <DevSQLiteInfoItem
+          label="manufacturer"
+          value={sqliteInfo?.runtime_policy?.manufacturer}
+        />
+        <DevSQLiteInfoItem
+          label="model"
+          value={sqliteInfo?.runtime_policy?.model}
+        />
+        <DevSQLiteInfoItem
+          label="device_id"
+          value={sqliteInfo?.runtime_policy?.deviceId}
+        />
+        <DevSQLiteInfoItem
+          label="app_db_directory"
+          value={sqliteInfo?.runtime_policy?.appDbDirectory}
+        />
+        <DevSQLiteInfoItem
+          label="candidate_temp_directory"
+          value={sqliteInfo?.runtime_policy?.candidateTempDirectory}
+        />
+
+        {Platform.OS === 'android' && (
+          <>
+            <Text style={[styles.subMarkedTitle, { marginBottom: 12 }]}>
+              Android disk probe
+            </Text>
+            <DevSQLiteInfoItem
+              label="fs_total_space"
+              value={sqliteInfo?.android_disk_probe?.fsInfo?.totalSpace}
+            />
+            <DevSQLiteInfoItem
+              label="fs_free_space"
+              value={sqliteInfo?.android_disk_probe?.fsInfo?.freeSpace}
+            />
+            {sqliteInfo?.android_disk_probe?.probes?.map(probe => {
+              return (
+                <View
+                  key={`${probe.label}-${probe.path || 'null'}`}
+                  style={[
+                    styles.propertyView,
+                    {
+                      width: '100%',
+                      marginBottom: 12,
+                    },
+                  ]}>
+                  <Text style={{ width: '100%', fontWeight: '700' }}>
+                    {probe.label}
+                  </Text>
+                  <Text style={{ width: '100%' }}>
+                    path: {stringifyInfoValue(probe.path)}
+                    {' '.repeat(100)}
+                  </Text>
+                  <Text style={{ width: '100%' }}>
+                    exists: {stringifyInfoValue(probe.exists)}
+                    {' '.repeat(100)}
+                  </Text>
+                  <Text style={{ width: '100%' }}>
+                    can_write: {stringifyInfoValue(probe.canWrite)}
+                    {' '.repeat(100)}
+                  </Text>
+                  <Text style={{ width: '100%' }}>
+                    bytes_written: {stringifyInfoValue(probe.bytesWritten)}
+                    {' '.repeat(100)}
+                  </Text>
+                  <Text style={{ width: '100%' }}>
+                    error: {stringifyInfoValue(probe.error)}
+                    {' '.repeat(100)}
+                  </Text>
+                </View>
+              );
+            })}
+          </>
+        )}
+      </View>
+
+      <Button
+        title={isLoading ? 'Refreshing SQLite info...' : 'Refresh SQLite info'}
+        height={48}
+        containerStyle={[styles.rowWrapper, { marginBottom: 12 }]}
+        onPress={() => getSqliteInfo()}
+      />
+
+      <Button
+        title={
+          isNativeMemoryContractRunning
+            ? 'Running native memory contract...'
+            : 'Run native memory SQLite contract'
+        }
+        disabled={isNativeMemoryContractRunning}
+        height={48}
+        containerStyle={[styles.rowWrapper, { marginBottom: 12 }]}
+        onPress={runNativeMemoryContract}
+      />
+      <View
+        style={[styles.propertyDesc, { marginBottom: 12, flexWrap: 'wrap' }]}>
+        <DevSQLiteInfoItem
+          label="native_memory_contract"
+          value={
+            nativeMemoryContract
+              ? JSON.stringify(nativeMemoryContract)
+              : nativeMemoryContractError
+              ? `error: ${nativeMemoryContractError}`
+              : 'not run'
+          }
+        />
       </View>
 
       <Button
@@ -235,12 +447,231 @@ function DevSQLiteInfo() {
   );
 }
 
+function formatMs(value?: number) {
+  if (typeof value !== 'number') {
+    return '-';
+  }
+
+  if (value >= 1000) {
+    return `${(value / 1000).toFixed(1)}s`;
+  }
+
+  return `${value}ms`;
+}
+
+function shortenOwner(owner: string) {
+  if (!owner) {
+    return '-';
+  }
+
+  if (owner.length <= 16) {
+    return owner;
+  }
+
+  return `${owner.slice(0, 8)}...${owner.slice(-6)}`;
+}
+
+function DevSyncTaskInfoRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: unknown;
+}) {
+  const { styles } = useTheme2024({
+    getStyle: getStyles,
+    isLight: true,
+  });
+
+  return (
+    <View style={styles.schedulerInfoRow}>
+      <Text style={styles.schedulerInfoLabel}>{label}</Text>
+      <Text
+        numberOfLines={2}
+        ellipsizeMode="middle"
+        style={styles.schedulerInfoValue}>
+        {stringifyInfoValue(value)}
+      </Text>
+    </View>
+  );
+}
+
+function DevSyncTaskCard({ task }: { task: SyncTaskSnapshot }) {
+  const { styles, colors2024 } = useTheme2024({
+    getStyle: getStyles,
+    isLight: true,
+  });
+  const statusColor =
+    task.status === 'error' || task.status === 'aborted'
+      ? colors2024['red-default']
+      : task.status === 'success'
+      ? colors2024['green-default']
+      : colors2024['blue-default'];
+  const duration =
+    task.durationMs ??
+    (task.startedAt
+      ? Date.now() - task.startedAt
+      : Date.now() - task.createdAt);
+
+  return (
+    <View style={styles.schedulerTaskCard}>
+      <View style={styles.schedulerTaskHeader}>
+        <Text numberOfLines={1} style={styles.schedulerTaskTitle}>
+          {task.taskFor} / {task.entityName}
+        </Text>
+        <Text style={[styles.schedulerTaskStatus, { color: statusColor }]}>
+          {task.status}
+        </Text>
+      </View>
+
+      <View style={styles.schedulerTaskBody}>
+        <DevSyncTaskInfoRow label="owner" value={shortenOwner(task.owner)} />
+        <DevSyncTaskInfoRow label="priority" value={task.priority} />
+        <DevSyncTaskInfoRow
+          label="rows"
+          value={`${task.rowCount} rows / ${task.completedBatches}/${task.totalBatches} batches`}
+        />
+        <DevSyncTaskInfoRow label="batch size" value={task.batchSize} />
+        <DevSyncTaskInfoRow label="method" value={task.method || '-'} />
+        <DevSyncTaskInfoRow label="stage" value={task.stage} />
+        <DevSyncTaskInfoRow label="duration" value={formatMs(duration)} />
+        {task.lastBatch && (
+          <DevSyncTaskInfoRow
+            label="last batch"
+            value={`#${task.lastBatch.round + 1}, ${
+              task.lastBatch.count
+            } rows, ${formatMs(task.lastBatch.durationMs)}`}
+          />
+        )}
+        {task.lastError && (
+          <DevSyncTaskInfoRow label="error" value={task.lastError} />
+        )}
+      </View>
+    </View>
+  );
+}
+
+function DevDbSyncSummaryToggleRow() {
+  const { styles, colors2024 } = useTheme2024({
+    getStyle: getStyles,
+    isLight: true,
+  });
+  const { showDbSyncSummaryPanel, toggleShowDbSyncSummaryPanel } =
+    useToggleShowDbSyncSummaryPanel();
+
+  return (
+    <View style={styles.schedulerInfoRow}>
+      <View style={styles.schedulerToggleText}>
+        <Text style={styles.schedulerToggleTitle}>Floating summary</Text>
+        <Text style={styles.schedulerToggleDesc}>
+          Persisted overlay for startup DB sync tasks
+        </Text>
+      </View>
+      <AppSwitch2024
+        circleSize={20}
+        value={!!showDbSyncSummaryPanel}
+        changeValueImmediately={false}
+        onValueChange={nextEnabled => {
+          toggleShowDbSyncSummaryPanel(nextEnabled);
+        }}
+        backgroundActive={colors2024['green-default']}
+        circleBorderActiveColor={colors2024['green-default']}
+      />
+    </View>
+  );
+}
+
+function DevSyncTaskPanel() {
+  const { styles } = useTheme2024({
+    getStyle: getStyles,
+    isLight: true,
+  });
+  const snapshot = useSyncSchedulerSnapshot();
+  const liveTasks = snapshot.tasks;
+  const recentTasks = useMemo(
+    () => snapshot.recentTasks.slice(0, 12),
+    [snapshot.recentTasks],
+  );
+  const isManuallyPaused = snapshot.pauseReasons.includes('dev-panel');
+  const isDevCritical = snapshot.criticalReasons.includes('dev-panel-critical');
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <Text style={[styles.componentName, { fontSize: 24, marginBottom: 12 }]}>
+        SQLite / Sync task queue
+      </Text>
+
+      <View style={styles.schedulerSummaryGrid}>
+        <DevDbSyncSummaryToggleRow />
+        <DevSyncTaskInfoRow label="active" value={snapshot.activeCount} />
+        <DevSyncTaskInfoRow label="queued" value={snapshot.queuedCount} />
+        <DevSyncTaskInfoRow label="recent" value={snapshot.recentCount} />
+        <DevSyncTaskInfoRow
+          label="pause"
+          value={snapshot.pauseReasons.join(', ') || '-'}
+        />
+        <DevSyncTaskInfoRow
+          label="critical"
+          value={snapshot.criticalReasons.join(', ') || '-'}
+        />
+      </View>
+
+      <View style={styles.schedulerActions}>
+        <Button
+          title={isManuallyPaused ? 'Resume Sync' : 'Pause Sync'}
+          height={40}
+          containerStyle={styles.schedulerActionButton}
+          onPress={() => {
+            if (isManuallyPaused) {
+              resumeSyncScheduler('dev-panel');
+            } else {
+              pauseSyncScheduler('dev-panel');
+            }
+          }}
+        />
+        <Button
+          title={isDevCritical ? 'End Critical' : 'Start Critical'}
+          height={40}
+          containerStyle={styles.schedulerActionButton}
+          onPress={() => {
+            setSyncSchedulerCriticalMode(!isDevCritical, 'dev-panel-critical');
+          }}
+        />
+        <Button
+          title="Clear Recent"
+          height={40}
+          containerStyle={styles.schedulerActionButton}
+          onPress={clearSyncSchedulerRecentTasks}
+        />
+      </View>
+
+      <Text style={[styles.subMarkedTitle, { marginTop: 12, marginBottom: 8 }]}>
+        Live tasks
+      </Text>
+      {liveTasks.length ? (
+        liveTasks.map(task => <DevSyncTaskCard key={task.id} task={task} />)
+      ) : (
+        <Text style={styles.schedulerEmptyText}>No live sync task</Text>
+      )}
+
+      <Text style={[styles.subMarkedTitle, { marginTop: 12, marginBottom: 8 }]}>
+        Recent tasks
+      </Text>
+      {recentTasks.length ? (
+        recentTasks.map(task => <DevSyncTaskCard key={task.id} task={task} />)
+      ) : (
+        <Text style={styles.schedulerEmptyText}>No recent sync task</Text>
+      )}
+    </View>
+  );
+}
+
 function DevDataAccount() {
   const { styles } = useTheme2024({
     getStyle: getStyles,
     isLight: true,
   });
-  const currentAccount = preferenceService.getFallbackAccount();
+  const currentAccount = getFallbackAccountSnapshot();
   const { assetsInfo, fetchAssetsInfo } = useAssetsBasicInfo({
     enableAutoFetch: true,
   });
@@ -253,21 +684,19 @@ function DevDataAccount() {
         Account's data
       </Text>
       <View style={[styles.propertyDesc, { marginTop: 12 }]}>
-        <Text style={[styles.subMarkedTitle]}>
-          Table tokenitem{' '.repeat(100)}
-        </Text>
+        <Text style={[styles.subMarkedTitle]}>Table tokenitem</Text>
         <Text style={{ marginTop: 8 }}>
-          Current Address: {currentAccount?.address || '-'} {' '.repeat(50)}
+          Current Address: {currentAccount?.address || '-'}
         </Text>
         <View style={styles.propertyView}>
           <Text style={{ marginTop: 8 }}>
             uniq id on tokenitem table:{' '}
-            {assetsInfo.uniqueChainAddressCount || 0} {' '.repeat(100)}
+            {assetsInfo.uniqueChainAddressCount || 0}
           </Text>
         </View>
         <View style={styles.propertyView}>
           <Text style={{ marginTop: 8 }}>
-            Total records: {assetsInfo.totalRecords || 0} {' '.repeat(100)}
+            Total records: {assetsInfo.totalRecords || 0}
           </Text>
         </View>
       </View>
@@ -330,7 +759,7 @@ function DevDataAccount() {
 }
 
 function DevDataSQLite() {
-  const { styles, colors2024, colors } = useTheme2024({
+  const { styles, colors } = useTheme2024({
     getStyle: getStyles,
     isLight: true,
   });
@@ -345,14 +774,16 @@ function DevDataSQLite() {
         contentContainerStyle={[styles.screenScrollableView]}
         horizontal={false}>
         <Text style={styles.areaTitle}>SQLite</Text>
-        <Text style={[styles.propertyDesc, { marginVertical: 12 }]}>
-          <Text style={[styles.subMarkedTitle]}>Summary{' '.repeat(100)}</Text>
+        <View style={[styles.propertyDesc, { marginVertical: 12, gap: 8 }]}>
+          <Text style={styles.subMarkedTitle}>Summary</Text>
           <Text style={{ marginBottom: 12 }}>
             This screen shows the basic capability for high-performance Data
             Workflow, which is based on the SQLite database.
           </Text>
-        </Text>
+        </View>
         <DevSQLiteInfo />
+
+        <DevSyncTaskPanel />
 
         <DevDataAccount />
 
@@ -459,6 +890,107 @@ const getStyles = createGetStyles2024(ctx => {
       fontSize: 18,
       fontWeight: '700',
       color: ctx.colors2024['neutral-title-1'],
+    },
+    schedulerSummaryGrid: {
+      width: '100%',
+      maxWidth: CONTENT_W,
+      flexDirection: 'column',
+      gap: 8,
+      marginBottom: 12,
+    },
+    schedulerInfoRow: {
+      width: '100%',
+      minHeight: 36,
+      borderRadius: 8,
+      backgroundColor: ctx.colors2024['neutral-bg-1'],
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
+    },
+    schedulerInfoLabel: {
+      width: 96,
+      flexShrink: 0,
+      fontSize: 13,
+      color: ctx.colors2024['neutral-secondary'],
+    },
+    schedulerInfoValue: {
+      flex: 1,
+      minWidth: 0,
+      textAlign: 'right',
+      fontSize: 13,
+      fontWeight: '600',
+      color: ctx.colors2024['neutral-title-1'],
+    },
+    schedulerToggleText: {
+      flex: 1,
+      minWidth: 0,
+      flexDirection: 'column',
+      gap: 2,
+    },
+    schedulerToggleTitle: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: ctx.colors2024['neutral-title-1'],
+    },
+    schedulerToggleDesc: {
+      fontSize: 12,
+      color: ctx.colors2024['neutral-secondary'],
+    },
+    schedulerActions: {
+      width: '100%',
+      maxWidth: CONTENT_W,
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginBottom: 8,
+    },
+    schedulerActionButton: {
+      minWidth: 128,
+      flexGrow: 1,
+    },
+    schedulerTaskCard: {
+      width: '100%',
+      maxWidth: CONTENT_W,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: ctx.colors2024['neutral-line'],
+      padding: 12,
+      marginBottom: 10,
+      backgroundColor: ctx.colors2024['neutral-bg-1'],
+      gap: 8,
+    },
+    schedulerTaskHeader: {
+      width: '100%',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
+    },
+    schedulerTaskTitle: {
+      flex: 1,
+      minWidth: 0,
+      fontSize: 16,
+      fontWeight: '700',
+      color: ctx.colors2024['neutral-title-1'],
+    },
+    schedulerTaskStatus: {
+      flexShrink: 0,
+      fontSize: 13,
+      fontWeight: '700',
+      textTransform: 'uppercase',
+    },
+    schedulerTaskBody: {
+      width: '100%',
+      flexDirection: 'column',
+      gap: 6,
+    },
+    schedulerEmptyText: {
+      fontSize: 14,
+      color: ctx.colors2024['neutral-secondary'],
+      marginBottom: 8,
     },
 
     openedDappRecord: {

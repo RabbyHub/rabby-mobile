@@ -1,6 +1,6 @@
 import { openapi } from '@/core/request';
 import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
-import balanceStore from '@/store/balance';
+import addressBalanceStore from '@/store/balance';
 
 export type EvmTotalBalanceResponse = TotalBalanceResponse & {
   evm_usd_value?: number;
@@ -25,12 +25,15 @@ export const batchBalanceWithLocalCache = async (
     return { total_usd_value: 0, chain_list: [] };
   }
 
-  // 通过 balanceStore 获取数据（内部已处理缓存和过期逻辑）
-  await balanceStore.getState().getTotalBalance(address, force);
+  // 通过 addressBalance resource 获取数据（内部已处理缓存和过期逻辑）
+  await addressBalanceStore.getTotalBalance(address, force, {
+    scene: 'Database',
+    requester: 'batchBalanceWithLocalCache',
+    endpoint: 'openapi.getTotalBalanceV2',
+  });
 
-  const state = balanceStore.getState();
-  const balance = state.balanceMap[lowerAddress];
-  const chainList = state.chainUSDMap[lowerAddress];
+  const balance = addressBalanceStore.getAddressValue(lowerAddress);
+  const chainList = addressBalanceStore.getAddressChainList(lowerAddress);
 
   return {
     total_usd_value: balance?.totalBalance ?? 0,

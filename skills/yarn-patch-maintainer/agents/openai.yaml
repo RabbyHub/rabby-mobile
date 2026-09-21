@@ -1,0 +1,6 @@
+interface:
+  display_name: "Yarn Patch Maintainer"
+  short_description: "Maintain clean Yarn patch dependencies without build artifacts"
+  default_prompt: "Use $yarn-patch-maintainer to update or regenerate a Yarn patch dependency cleanly in this repository."
+policy:
+  allow_implicit_invocation: true

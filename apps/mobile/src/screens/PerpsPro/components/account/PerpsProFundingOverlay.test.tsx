@@ -1,0 +1,371 @@
+import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react-native';
+import React from 'react';
+import { StyleSheet } from 'react-native';
+import { createStore } from 'zustand/vanilla';
+
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+
+const ReactNative = jest.requireActual('react-native');
+
+jest.mock('@/core/native/utils', () => ({ IS_ANDROID: true }));
+
+const mockHandleDeposit = jest.fn();
+const mockHandleStableCoinOrder = jest.fn();
+const mockHandleWithdraw = jest.fn(async () => true);
+const mockUsePerpsFundingActions = jest.fn((_options?: unknown) => ({
+  currentPerpsAccount: { address: '0x1', type: 'SimpleKeyring' },
+  handleDeposit: mockHandleDeposit,
+  handleStableCoinOrder: mockHandleStableCoinOrder,
+  handleWithdraw: mockHandleWithdraw,
+}));
+let mockDepositPopupProps: Record<string, unknown> | null = null;
+let mockSwapPopupProps: Record<string, unknown> | null = null;
+let mockWithdrawPopupProps: Record<string, unknown> | null = null;
+const mockWithdrawBalanceStore = createStore(() => ({ availableBalance: 0 }));
+const mockWithdrawBalanceRenders: number[] = [];
+
+jest.mock('@/hooks/perps/funding/usePerpsFundingActions', () => ({
+  usePerpsFundingActions: (...args: unknown[]) =>
+    mockUsePerpsFundingActions(...args),
+}));
+
+jest.mock('@/screens/Perps/components/PerpsDepositPopup', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    PerpsDepositPopup: (props: Record<string, unknown>) => {
+      mockDepositPopupProps = props;
+      return ReactModule.createElement(View, { testID: 'deposit-popup' });
+    },
+  };
+});
+
+jest.mock('@/screens/Perps/components/PerpsWithdrawPopup', () => {
+  const ReactModule = require('react');
+  const { Pressable } = require('react-native');
+  const {
+    useActivityStore: useMockActivityStore,
+  } = require('@/hooks/storeActivity/useActivityStore');
+  return {
+    PerpsWithdrawPopup: (props: {
+      onWithdraw: (
+        amount: string,
+        isHypeWithdraw: boolean,
+        targetAsset: string,
+      ) => Promise<unknown>;
+    }) => {
+      mockWithdrawPopupProps = props;
+      const { onWithdraw } = props;
+      const availableBalance = useMockActivityStore(
+        mockWithdrawBalanceStore,
+        (state: { availableBalance: number }) => state.availableBalance,
+      );
+      mockWithdrawBalanceRenders.push(availableBalance);
+      return ReactModule.createElement(Pressable, {
+        onPress: () => onWithdraw('12', true, 'USDT'),
+        testID: 'withdraw-popup',
+      });
+    },
+  };
+});
+
+jest.mock('@/screens/Perps/components/PerpsSpotSwapPopup', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    PerpsSpotSwapPopup: (props: Record<string, unknown>) => {
+      mockSwapPopupProps = props;
+      return ReactModule.createElement(View, { testID: 'swap-popup' });
+    },
+  };
+});
+
+import { PerpsProFundingOverlay } from './PerpsProFundingOverlay';
+
+const GlobalBalanceProbe = () => {
+  useActivityStore(mockWithdrawBalanceStore, state => state.availableBalance);
+  return null;
+};
+
+const renderOverlay = (
+  mode: React.ComponentProps<typeof PerpsProFundingOverlay>['mode'],
+  onClose = jest.fn(),
+  sourceAsset?: React.ComponentProps<
+    typeof PerpsProFundingOverlay
+  >['sourceAsset'],
+) =>
+  render(
+    <PerpsProFundingOverlay
+      depositFromSwapVisible={false}
+      mode={mode}
+      onClose={onClose}
+      onCloseDeposit={jest.fn()}
+      onOpenDeposit={jest.fn()}
+      sourceAsset={sourceAsset}
+      targetAsset="USDC"
+    />,
+  );
+
+describe('PerpsProFundingOverlay', () => {
+  it.each(['android', 'ios'] as const)(
+    'uses consistent %s Swap metrics while preserving nested Deposit',
+    platform => {
+      let Overlay = PerpsProFundingOverlay;
+      const nativePlatform = { ...ReactNative.Platform, OS: platform };
+      jest.resetModules();
+      jest.isolateModules(() => {
+        jest.doMock('react', () => React);
+        jest.doMock(
+          'react-native',
+          () =>
+            new Proxy(ReactNative, {
+              get: (target, key) =>
+                key === 'Platform' ? nativePlatform : Reflect.get(target, key),
+            }),
+        );
+        jest.doMock('@/core/native/utils', () => ({
+          IS_ANDROID: platform === 'android',
+          IS_IOS: platform === 'ios',
+        }));
+        Overlay = jest.requireActual(
+          './PerpsProFundingOverlay',
+        ).PerpsProFundingOverlay;
+      });
+      render(
+        <Overlay
+          depositFromSwapVisible
+          mode="swap"
+          onClose={jest.fn()}
+          onCloseDeposit={jest.fn()}
+          onOpenDeposit={jest.fn()}
+          sourceAsset="USDC"
+          targetAsset="USDC"
+        />,
+      );
+      for (const props of [mockSwapPopupProps, mockDepositPopupProps]) {
+        expect(props?.inputColorProps).toEqual({
+          cursorColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+          selectionColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+        });
+      }
+      const base = {
+        fontSize: 28,
+        lineHeight: 36,
+        paddingTop: 0,
+        paddingBottom: 0,
+      };
+      const style = StyleSheet.flatten([
+        base,
+        mockSwapPopupProps?.inputTextStyle as object,
+      ]);
+      expect(style).toMatchObject({
+        fontSize: 28,
+        fontFamily:
+          platform === 'android' ? 'SF-Pro-Rounded-Bold' : 'SF Pro Rounded',
+        paddingTop: 0,
+        paddingBottom: 0,
+      });
+      expect(style.minHeight).toBeUndefined();
+      if (platform === 'android') {
+        expect(style.lineHeight).toBeUndefined();
+        expect(style).toMatchObject({
+          height: 36,
+          includeFontPadding: false,
+          textAlignVertical: 'center',
+        });
+      } else {
+        expect(style).toEqual({
+          ...base,
+          fontFamily: 'SF Pro Rounded',
+          fontWeight: '700',
+        });
+      }
+      const depositStyle = StyleSheet.flatten(
+        mockDepositPopupProps?.inputTextStyle as object,
+      );
+      expect(depositStyle.height).toBeUndefined();
+      expect(mockSwapPopupProps?.inputTextStyle).toEqual({
+        ...depositStyle,
+        ...(platform === 'android' ? { height: 36 } : {}),
+      });
+      expect(mockSwapPopupProps?.onSpotOrder).toBe(mockHandleStableCoinOrder);
+      expect(screen.getByTestId('swap-popup')).toBeTruthy();
+      expect(screen.getByTestId('deposit-popup')).toBeTruthy();
+    },
+  );
+  it.each(['deposit', 'withdraw'] as const)(
+    'uses stable Android font metrics only for the %s amount',
+    mode => {
+      renderOverlay(mode);
+      const props =
+        mode === 'deposit' ? mockDepositPopupProps : mockWithdrawPopupProps;
+      expect(props?.inputColorProps).toEqual({
+        cursorColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+        selectionColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+      });
+      const style = StyleSheet.flatten([
+        { fontSize: 28, lineHeight: 36, minHeight: 52 },
+        props?.inputTextStyle as object,
+      ]);
+      expect(style).toMatchObject({
+        fontSize: 28,
+        minHeight: 52,
+        includeFontPadding: false,
+        textAlignVertical: 'center',
+      });
+      expect(style.lineHeight).toBeUndefined();
+    },
+  );
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockDepositPopupProps = null;
+    mockSwapPopupProps = null;
+    mockWithdrawPopupProps = null;
+    mockWithdrawBalanceRenders.length = 0;
+  });
+
+  it.each([
+    ['deposit', 'deposit-popup'],
+    ['withdraw', 'withdraw-popup'],
+    ['swap', 'swap-popup'],
+  ] as const)('mounts only the active %s popup', (mode, testID) => {
+    renderOverlay(mode);
+
+    expect(screen.getByTestId(testID)).toBeTruthy();
+    expect(screen.queryAllByTestId(/-popup$/)).toHaveLength(1);
+  });
+
+  it('closes the Pro overlay after the shared withdraw action settles', async () => {
+    const onClose = jest.fn();
+    renderOverlay('withdraw', onClose);
+
+    fireEvent.press(screen.getByTestId('withdraw-popup'));
+
+    await waitFor(() => {
+      expect(mockHandleWithdraw).toHaveBeenCalledWith('12', true, 'USDT');
+    });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('reads the latest balance on the first Pro withdraw render', () => {
+    act(() => {
+      mockWithdrawBalanceStore.setState({ availableBalance: 0 });
+    });
+    const globalProbe = render(<GlobalBalanceProbe />);
+    globalProbe.unmount();
+
+    act(() => {
+      mockWithdrawBalanceStore.setState({ availableBalance: 42 });
+    });
+    mockWithdrawBalanceRenders.length = 0;
+
+    renderOverlay('withdraw');
+
+    expect(mockWithdrawBalanceRenders[0]).toBe(42);
+  });
+
+  it('opts Pro into live mode validation', () => {
+    renderOverlay('withdraw');
+
+    expect(mockUsePerpsFundingActions).toHaveBeenCalledWith({
+      withdrawModeValidation: 'live',
+    });
+  });
+
+  it.each(['deposit', 'withdraw', 'swap'] as const)(
+    'opts the shared %s popup into Pro rounded typography',
+    mode => {
+      renderOverlay(mode);
+
+      const popupProps =
+        mode === 'deposit'
+          ? mockDepositPopupProps
+          : mode === 'withdraw'
+          ? mockWithdrawPopupProps
+          : mockSwapPopupProps;
+      expect(popupProps?.inputTextStyle).toMatchObject({
+        fontFamily: expect.stringContaining('Rounded'),
+      });
+      expect(popupProps?.tooltipTextStyle).toMatchObject({
+        fontFamily: expect.stringContaining('Rounded'),
+      });
+    },
+  );
+
+  it('keeps the Pro withdraw popup open after a handled failure', async () => {
+    mockHandleWithdraw.mockResolvedValueOnce(false);
+    const onClose = jest.fn();
+    renderOverlay('withdraw', onClose);
+
+    fireEvent.press(screen.getByTestId('withdraw-popup'));
+
+    await waitFor(() => expect(mockHandleWithdraw).toHaveBeenCalledTimes(1));
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('opens USDC as an editable Pro-only swap source', () => {
+    renderOverlay('swap', jest.fn(), 'USDC');
+
+    expect(mockSwapPopupProps).toMatchObject({
+      disableSwitch: false,
+      sourceAsset: 'USDC',
+      targetAsset: undefined,
+      visible: true,
+    });
+  });
+
+  it('keeps non-USDC Pro swaps on the existing fixed-target path', () => {
+    render(
+      <PerpsProFundingOverlay
+        depositFromSwapVisible={false}
+        mode="swap"
+        onClose={jest.fn()}
+        onCloseDeposit={jest.fn()}
+        onOpenDeposit={jest.fn()}
+        targetAsset="USDE"
+      />,
+    );
+
+    expect(mockSwapPopupProps).toMatchObject({
+      disableSwitch: true,
+      sourceAsset: undefined,
+      targetAsset: 'USDE',
+      visible: true,
+    });
+  });
+
+  it('keeps Swap mounted below the nested Deposit popup', () => {
+    const onCloseDeposit = jest.fn();
+    const onOpenDeposit = jest.fn();
+    render(
+      <PerpsProFundingOverlay
+        depositFromSwapVisible
+        mode="swap"
+        onClose={jest.fn()}
+        onCloseDeposit={onCloseDeposit}
+        onOpenDeposit={onOpenDeposit}
+        sourceAsset="USDC"
+        targetAsset="USDC"
+      />,
+    );
+
+    expect(screen.getByTestId('swap-popup')).toBeTruthy();
+    expect(screen.getByTestId('deposit-popup')).toBeTruthy();
+    expect(mockSwapPopupProps).toMatchObject({
+      onDepositPress: onOpenDeposit,
+      visible: true,
+    });
+    expect(mockDepositPopupProps).toMatchObject({
+      onClose: onCloseDeposit,
+      onDeposit: mockHandleDeposit,
+      visible: true,
+    });
+  });
+});

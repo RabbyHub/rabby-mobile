@@ -21,11 +21,7 @@ import { Tabs } from 'react-native-collapsible-tab-view';
 import { useFocusEffect } from '@react-navigation/native';
 import { SkeletonListByAssets } from './components/Skeleton';
 import { ApprovalsLayouts } from './layout';
-import {
-  EIP7702Delegated,
-  EIP7702_REVOKE_SUPPORTED_CHAINS,
-  useEIP7702Approvals,
-} from './useEIP7702Approvals';
+import { EIP7702Delegated, useEIP7702Approvals } from './useEIP7702Approvals';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { findChainByEnum } from '@/utils/chain';
 import {
@@ -219,13 +215,12 @@ function EIP7702Row({ item }: { item: EIP7702Delegated }) {
 
 export default function EIP7702RevokeList() {
   const { styles } = useTheme2024({ getStyle });
-  const { isLoading, data, refresh, isSupportedAccount } =
+  const { isLoading, data, refresh, isSupportedAccount, supportedChains } =
     useEIP7702Approvals();
   const {
     searchKw,
     safeSizeInfo: { safeSizes },
   } = useApprovalsPage();
-  const supportedChains = EIP7702_REVOKE_SUPPORTED_CHAINS;
   const headerChainEnums = supportedChains.slice(0, 3);
 
   const keyExtractor = React.useCallback(

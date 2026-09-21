@@ -8,6 +8,7 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import BigNumber from 'bignumber.js';
 import { useTheme2024 } from '@/hooks/theme';
 import {
+  formatPerpsNumber,
   formatPerpsUsdValue,
   formatUsdValue,
   splitNumberByStep,
@@ -43,6 +44,12 @@ import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { calculateDistanceToLiquidation } from '@/screens/Perps/components/PerpsPositionSection/utils';
 import { formatPerpsCoin } from '@/utils/perps';
 import { Text } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 export const PerpsEditMarginPopup: React.FC<{
   visible: boolean;
@@ -275,6 +282,9 @@ export const PerpsEditMarginPopup: React.FC<{
     },
   );
 
+  const displayName = currentAssetCtx?.displayName || coin;
+  const quoteAsset = currentAssetCtx?.quoteAsset || 'USDC';
+
   return (
     <>
       <AppBottomSheetModal
@@ -298,8 +308,8 @@ export const PerpsEditMarginPopup: React.FC<{
             </View>
             <View>
               <AssetPriceInfo
-                coin={coin}
-                logoUrl={coinLogo!}
+                displayName={formatPerpsCoin(displayName)}
+                quoteAsset={quoteAsset}
                 activeAssetCtx={activeAssetCtx}
                 currentAssetCtx={currentAssetCtx}
               />
@@ -308,14 +318,12 @@ export const PerpsEditMarginPopup: React.FC<{
               <View style={styles.leftSection}>
                 <View style={styles.coinInfoRow}>
                   <AssetAvatar logo={coinLogo} size={28} />
-                  <Text style={styles.coinName}>{formatPerpsCoin(coin)}</Text>
-                  <View style={styles.crossTag}>
-                    <Text style={styles.crossText}>
-                      {marginMode === 'cross'
-                        ? t('page.perpsDetail.PerpsPosition.cross')
-                        : t('page.perpsDetail.PerpsPosition.isolated')}
-                    </Text>
-                  </View>
+                  <Text style={styles.coinName}>
+                    {formatPerpsCoin(displayName)}
+                    <Text style={styles.quote}>{`/${
+                      currentAssetCtx?.quoteAsset || 'USDC'
+                    }`}</Text>
+                  </Text>
                 </View>
                 <View style={styles.tagRow}>
                   <View
@@ -338,11 +346,13 @@ export const PerpsEditMarginPopup: React.FC<{
                       {direction} {`${leverage}x`}
                     </Text>
                   </View>
-                  {/* <DistanceToLiquidationTag
-                    liquidationPrice={liquidationPx}
-                    markPrice={markPrice}
-                    onPress={handlePressRiskTag}
-                  /> */}
+                  <View style={styles.crossTag}>
+                    <Text style={styles.crossText}>
+                      {marginMode === 'cross'
+                        ? t('page.perpsDetail.PerpsPosition.cross')
+                        : t('page.perpsDetail.PerpsPosition.isolated')}
+                    </Text>
+                  </View>
                 </View>
               </View>
               <View style={styles.rightSection}>
@@ -354,18 +364,19 @@ export const PerpsEditMarginPopup: React.FC<{
                     styles.pnlText,
                     pnl >= 0 ? styles.pnlTextUp : styles.pnlTextDown,
                   ]}>
-                  {pnl >= 0 ? '+' : '-'}${Math.abs(pnl || 0).toFixed(2)} (
-                  {pnl >= 0 ? '+' : ''}
-                  {pnlPercent.toFixed(2)}%)
+                  {pnl >= 0 ? '+' : '-'}${Math.abs(pnl || 0).toFixed(2)}
                 </Text>
               </View>
             </View>
 
             {/* Margin Section */}
             <View style={styles.marginSection}>
-              <Text style={styles.marginLabel}>
-                {t('page.perpsDetail.PerpsOpenPositionPopup.margin')}
-              </Text>
+              <View style={styles.marginQuoteLabel}>
+                <Text style={styles.marginLabel}>
+                  {t('page.perpsDetail.PerpsOpenPositionPopup.margin')}
+                </Text>
+                <Text style={styles.marginQuoteLabelText}>({quoteAsset})</Text>
+              </View>
 
               <View style={styles.marginInputWrapper}>
                 <TouchableOpacity
@@ -396,7 +407,12 @@ export const PerpsEditMarginPopup: React.FC<{
 
               <View style={styles.marginAvailableWrapper}>
                 <Text style={styles.marginAvailable}>
-                  {formatPerpsUsdValue(Number(minMargin), BigNumber.ROUND_DOWN)}
+                  {formatPerpsNumber(
+                    minMargin,
+                    2,
+                    undefined,
+                    BigNumber.ROUND_DOWN,
+                  )}
                 </Text>
                 <View style={styles.errorMsgContainer}>
                   {marginValidation.error ? (
@@ -406,7 +422,12 @@ export const PerpsEditMarginPopup: React.FC<{
                   ) : null}
                 </View>
                 <Text style={styles.marginAvailable}>
-                  {formatPerpsUsdValue(maxMargin, BigNumber.ROUND_DOWN)}
+                  {formatPerpsNumber(
+                    maxMargin,
+                    2,
+                    undefined,
+                    BigNumber.ROUND_DOWN,
+                  )}
                 </Text>
               </View>
               {/*
@@ -511,6 +532,8 @@ export const PerpsEditMarginPopup: React.FC<{
             <Button
               type="hyperliquid"
               title={t('global.confirm')}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               loading={loading}
               disabled={!marginValidation.isValid || noChangeMargin}
               onPress={handleConfirm}
@@ -522,7 +545,8 @@ export const PerpsEditMarginPopup: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
+const getStyle = createGetStyles2024(ctx => {
+  const { colors2024, isLight, safeAreaInsets } = ctx;
   return {
     container: {
       height: '100%',
@@ -623,9 +647,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     footer: {
       backgroundColor: colors2024['neutral-bg-1'],
-      paddingTop: 16,
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
       paddingHorizontal: 16,
-      paddingBottom: 48,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     },
     liqPrice: {
       fontFamily: 'SF Pro Rounded',
@@ -844,6 +868,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
     },
+    quote: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '500',
+      fontFamily: 'SF Pro Rounded',
+      color: colors2024['neutral-info'],
+    },
     crossText: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 12,
@@ -854,7 +885,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     crossTag: {
       borderRadius: 4,
       paddingHorizontal: 4,
-      height: 18,
+      height: 20,
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: colors2024['neutral-bg-5'],
@@ -916,6 +947,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       display: 'flex',
       flexDirection: 'column',
       // alignItems: 'center',
+    },
+    marginQuoteLabel: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+    },
+    marginQuoteLabelText: {
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: '500',
+      // marginBottom: 4,
+      color: '#50D2C1',
+      fontFamily: 'SF Pro Rounded',
     },
     marginBtn: {
       padding: 4,

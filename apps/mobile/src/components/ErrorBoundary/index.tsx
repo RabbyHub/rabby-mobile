@@ -13,16 +13,24 @@ const appErrorHandler = (error: Error) => {
   });
 };
 
-const ErrorFallback: React.ComponentType<FallbackProps> = ({
-  error,
-  resetErrorBoundary,
-}) => {
+const ErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => {
+  let message = 'Unknown error';
+
+  try {
+    if (typeof error === 'string') {
+      message = error;
+    } else if (error instanceof Error) {
+      message = error.message;
+    } else if (error != null) {
+      message = JSON.stringify(error);
+    }
+  } catch {
+    message = String(error);
+  }
   return (
     <View style={[styles.container]}>
       <View>
-        <Text>
-          Something went wrong: {JSON.stringify(error?.message || error)}
-        </Text>
+        <Text>{`Something went wrong: ${message}`}</Text>
         <Button title="Try Again" onPress={resetErrorBoundary} />
       </View>
     </View>

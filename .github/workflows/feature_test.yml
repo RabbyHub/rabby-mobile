@@ -11,7 +11,7 @@ on:
         required: false
         type: boolean
         default: false
-      FAST_BUILD_ON_ANDROID:
+      I18N_LIVE_PREVIEW:
         required: false
         type: boolean
         default: false
@@ -19,6 +19,18 @@ on:
         required: false
         type: boolean
         default: false
+      LARK_DRIVE_UPLOAD:
+        required: false
+        type: boolean
+        default: true
+      ANDROID_16KB_CHECK:
+        required: false
+        type: choice
+        options:
+          - 'warn'
+          - 'strict'
+          - 'off'
+        default: 'warn'
       macos_machine_location:
         required: true
         type: choice
@@ -38,6 +50,10 @@ on:
         required: false
         type: boolean
         default: true
+      RABBY_MOBILE_METRO_USE_CACHE:
+        required: false
+        type: boolean
+        default: true
       __DANGEROUS_NO_VERIFY_SSL:
         required: false
         type: boolean
@@ -50,6 +66,10 @@ on:
         required: false
         type: boolean
         default: false
+      NEW_VERSION_NAME:
+        required: false
+        type: string
+        default: ''
 
 defaults:
   run:
@@ -73,12 +93,15 @@ jobs:
       NODE_OPTIONS: '--max_old_space_size=12288'
       RABBY_MOBILE_POD_USE_CACHE: ${{ inputs.RABBY_MOBILE_POD_USE_CACHE }}
       RABBY_MOBILE_GRADLE_USE_CACHE: ${{ inputs.RABBY_MOBILE_GRADLE_USE_CACHE }}
+      RABBY_MOBILE_METRO_USE_CACHE: ${{ inputs.RABBY_MOBILE_METRO_USE_CACHE }}
+      I18N_LIVE_PREVIEW: ${{ inputs.I18N_LIVE_PREVIEW && '1' || '0' }}
       SKIP_BUILD: ${{ inputs.__SKIP_BUILD }}
       RABBY_MOBILE_NM_USE_CACHE: ${{ inputs.RABBY_MOBILE_NM_USE_CACHE }}
+      RABBY_MOBILE_ANDROID_16KB_CHECK: ${{ inputs.ANDROID_16KB_CHECK }}
       XCODE_VER: '26.3'
     steps:
       - name: Checkout git repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
         with:
           clean: false
 
@@ -86,29 +109,49 @@ jobs:
         run: |
           OS_TYPE=$(uname -s);
           echo "OS_TYPE is $OS_TYPE";
+          yarn_exclude_args=()
           if [ "$RABBY_MOBILE_NM_USE_CACHE" = "true" ]; then
-            echo "Use yarn installed node_modules";
-            yarn_exclude_files="-e node_modules -e apps/mobile/node_modules -e apps/mobile/packages/*/node_modules"
-          else
-            yarn_exclude_files="";
+            echo "Keep yarn install outputs";
+            yarn_exclude_args+=(
+              -e node_modules
+              -e 'apps/*/node_modules'
+              -e 'packages/*/node_modules'
+              -e .yarn/install-state.gz
+              -e .yarn/unplugged
+            )
           fi
 
           if [ "$OS_TYPE" == "Linux" ]; then
             if [ "$RABBY_MOBILE_GRADLE_USE_CACHE" = "true" ]; then
               echo "Keep gradle cache";
-              git clean -ffdx $yarn_exclude_files -e apps/mobile/android/.gradle -e apps/mobile/android/app/build;
+              git clean -ffdx "${yarn_exclude_args[@]}" \
+                -e .turbo-build \
+                -e apps/mobile/.turbo-build \
+                -e apps/mobile/assets/android/builtin-pages \
+                -e apps/mobile/android/app/src/main/assets/custom \
+                -e apps/mobile/android/app/src/main/assets/fonts \
+                -e apps/mobile/android/app/src/main/assets/threads \
+                -e apps/mobile/android/.gradle \
+                -e apps/mobile/android/app/build;
               rm -rf apps/mobile/android/app/build/outputs;
             else
               echo "Clean gradle cache";
-              git clean -ffdx $yarn_exclude_files;
+              git clean -ffdx "${yarn_exclude_args[@]}";
             fi
           elif [ "$OS_TYPE" == "Darwin" ]; then
             if [ "$RABBY_MOBILE_POD_USE_CACHE" = "true" ]; then
               echo "Keep cocoapods cache";
-              git clean -ffdx $yarn_exclude_files -e apps/mobile/ios/Pods -e apps/mobile/ios/build;
+              git clean -ffdx "${yarn_exclude_args[@]}" \
+                -e .turbo-build \
+                -e apps/mobile/.turbo-build \
+                -e apps/mobile/assets/ios/builtin-pages \
+                -e apps/mobile/assets/ios/threads \
+                -e apps/mobile/ios/RabbyMobile/Resources \
+                -e apps/mobile/ios/Pods \
+                -e apps/mobile/ios/build;
             else
               echo "Clean cocoapods cache";
-              git clean -ffdx $yarn_exclude_files;
+              git clean -ffdx "${yarn_exclude_args[@]}";
             fi
           fi
           git reset --hard HEAD;
@@ -123,27 +166,30 @@ jobs:
 
       - name: '[Linux] Setup Nodejs and Yarn'
         if: runner.os == 'Linux'
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
         with:
           node-version: 22
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: '[Linux] Setup Ruby & Fastlane'
         if: runner.os == 'Linux'
-        uses: heisenberg-2077/setup-ruby@master
+        uses: heisenberg-2077/setup-ruby@ad02358aa4017fc234098879ef04707472008690 # master
         with:
           ruby-version: '2.7.2'
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
 
       - name: '[Linux] Setup Java'
         if: runner.os == 'Linux'
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@17f84c3641ba7b8f6deff6309fc4c864478f5d62 # v3
         with:
           distribution: 'zulu' # See 'Supported distributions' for available options
           java-version: '17'
 
       - name: '[Linux] Setup Android SDK'
         if: runner.os == 'Linux'
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
         with:
           # https://github.com/android-actions/setup-android?tab=readme-ov-file#sdk-version-selection
           # use 16.0
@@ -151,7 +197,7 @@ jobs:
 
       # - name: '[Linux] Cache Gradle'
       #   if: runner.os == 'Linux'
-      #   uses: actions/cache@v4
+      #   uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
       #   with:
       #     path: |
       #       ~/.gradle/caches
@@ -162,7 +208,7 @@ jobs:
 
       - name: '[macOS] Setup Xcode'
         if: runner.os == 'macOS'
-        uses: maxim-lobanov/setup-xcode@v1
+        uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1
         id: setup-xcode
         with:
           # use specific version rather than 'latest-stable' if multiple Xcodes installed
@@ -170,19 +216,31 @@ jobs:
 
       - name: Install and build
         run: |
+          unset MATCH_GIT_BASIC_AUTHORIZATION
+          # The interactive self-hosted shell may inherit stale runner/profile values.
+          # Reassert the credentials supplied by this workflow before any build script runs.
+          export RABBY_MOBILE_LARK_CHAT_URL="$RABBY_MOBILE_LARK_CHAT_URL_FROM_GITHUB"
+          export RABBY_MOBILE_LARK_CHAT_SECRET="$RABBY_MOBILE_LARK_CHAT_SECRET_FROM_GITHUB"
+          export RABBY_ROBOT_LARK_APP_ID="$RABBY_ROBOT_LARK_APP_ID_FROM_GITHUB"
+          export RABBY_ROBOT_LARK_APP_SECRET="$RABBY_ROBOT_LARK_APP_SECRET_FROM_GITHUB"
           echo "REALLY_UPLOAD value: $REALLY_UPLOAD";
           cd apps/mobile;
-          nvm use;
-          rm -rf node_modules;
-          yarn install;
-          bundle install;
+          bash ./scripts/ci/prepare-mobile-build.sh;
 
           OS_TYPE=$(uname -s);
           echo "OS_TYPE is $OS_TYPE";
 
           if [ "$OS_TYPE" == "Linux" ]; then
+            export RABBY_MOBILE_TURBO_BUILD=false
+            if [ "$RABBY_MOBILE_GRADLE_USE_CACHE" = "true" ]; then
+              echo "Enable Gradle cache for Linux regression package"
+            fi
             buildchannel=selfhost-reg ./scripts/deploy-android.sh
           elif [ "$OS_TYPE" == "Darwin" ]; then
+            export RABBY_MOBILE_TURBO_BUILD=false
+            if [ "$RABBY_MOBILE_POD_USE_CACHE" = "true" ]; then
+              echo "Enable pod cache for iOS regression package"
+            fi
             if [ "$INPUT_MOBILE_LOC" == "mobile-local" ]; then
               export SENTRY_DISABLE_AUTO_UPLOAD=true
               export NODE_OPTIONS="--max_old_space_size=20480"
@@ -212,6 +270,7 @@ jobs:
           RABBY_MOBILE_FE_SERVICE_URL: ${{ vars.RABBY_MOBILE_FE_SERVICE_URL || vars.RABBY_MOBILE_PUSH_TEST_SERVER_URL }}
           SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
           MATCH_PASSWORD: ${{ secrets.RABBY_MOBILE_MATCH_PASSWORD }}
+          RABBY_MOBILE_MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.RABBY_MOBILE_MATCH_GIT_BASIC_AUTHORIZATION }}
           INPUT_MOBILE_LOC: ${{ inputs.macos_machine_location }}
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
           SENTRY_DISABLE_AUTO_UPLOAD: ${{ inputs.SENTRY_DISABLE_AUTO_UPLOAD }}
@@ -221,12 +280,17 @@ jobs:
           CONFIGURATION: release
           TYPE: adhoc
           RABBY_MOBILE_BUILD_ENV: regression
-          USE_RESIGN_APK: ${{ inputs.FAST_BUILD_ON_ANDROID }}
           SKIP_NOTIFY_LARK: ${{ inputs.SKIP_NOTIFY_LARK }}
+          RABBY_MOBILE_LARK_DRIVE_UPLOAD: ${{ inputs.LARK_DRIVE_UPLOAD }}
+          RABBY_MOBILE_LARK_DRIVE_UPLOAD_REQUIRED: 'false'
           RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.LARK_CHAT_URL }}
           RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}
+          RABBY_MOBILE_LARK_CHAT_URL_FROM_GITHUB: ${{ secrets.LARK_CHAT_URL }}
+          RABBY_MOBILE_LARK_CHAT_SECRET_FROM_GITHUB: ${{ secrets.LARK_CHAT_SECRET }}
           RABBY_ROBOT_LARK_APP_ID: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
           RABBY_ROBOT_LARK_APP_SECRET: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
+          RABBY_ROBOT_LARK_APP_ID_FROM_GITHUB: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
+          RABBY_ROBOT_LARK_APP_SECRET_FROM_GITHUB: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
           # see more details on https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
           GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GITHUB_ACTOR: ${{ github.actor }}
@@ -235,9 +299,10 @@ jobs:
           GIT_REF_NAME: ${{ github.ref_name }}
           GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
           GITHUB_REF: ${{ github.ref }}
+          INPUT_NEW_VERSION_NAME: ${{ inputs.NEW_VERSION_NAME }}
 
       # - name: Upload artifact
-      #   uses: actions/upload-artifact@v3
+      #   uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
       #   with:
       #     name: rabbymobile-${{ steps.actionvars.outputs.flatten_refname }}-${{ steps.actionvars.outputs.trigger_date }}
       #     path: |

@@ -29,6 +29,7 @@ export type SignerCtx = {
   gasAccount?: GasAccountCheckResult;
   engineResults?: SecurityResult;
   gasMethod?: 'native' | 'gasAccount';
+  manualGasMethod?: 'native' | 'gasAccount';
   useGasless?: boolean;
   noCustomRPC?: boolean;
   supportedAddrType?: boolean;

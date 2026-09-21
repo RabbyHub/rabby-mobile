@@ -1,73 +1,109 @@
 import { addressUtils } from '@rabby-wallet/base-utils';
-import createPersistStore from '@rabby-wallet/persist-store';
-import { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
+import cloneDeep from 'lodash/cloneDeep';
+import {
+  StorageAdapaterOptions,
+  StoreServiceBase,
+} from '@rabby-wallet/persist-store';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
+import {
+  addWhitelistRecord,
+  normalizeWhitelistRecords,
+  reorderWhitelistRecords,
+  syncWhitelistRecords,
+  type WhitelistRecord,
+} from '@/utils/whitelist';
 
 const { isSameAddress } = addressUtils;
 
 export type WhitelistStore = {
   enabled: boolean;
-  whitelists: string[];
+  whitelists: WhitelistRecord[];
 };
 
-export class WhitelistService {
-  store: WhitelistStore = {
-    enabled: true,
-    whitelists: [],
-  };
-
+export class WhitelistService extends StoreServiceBase<
+  WhitelistStore,
+  APP_STORE_NAMES.whitelist
+> {
   constructor(options?: StorageAdapaterOptions) {
-    const storage = createPersistStore<WhitelistStore>(
+    super(
+      APP_STORE_NAMES.whitelist,
       {
-        name: APP_STORE_NAMES.whitelist,
-        template: {
-          enabled: true,
-          whitelists: [],
-        },
+        enabled: true,
+        whitelists: [],
       },
       {
-        storage: options?.storageAdapter,
+        storageAdapter: options?.storageAdapter,
       },
     );
-    this.store = storage || this.store;
-    if (!this.store.enabled) {
-      this.store.enabled = true;
-    }
+    this.mutateStore(draft => {
+      if (!draft.enabled) {
+        draft.enabled = true;
+      }
+      draft.whitelists = normalizeWhitelistRecords(draft.whitelists);
+    });
   }
 
   getWhitelist = () => {
-    return this.store.whitelists;
+    return this.store.whitelists.map(item => item.address);
+  };
+
+  getWhitelistRecords = () => {
+    return this.getStoreFieldSnapshot('whitelists');
+  };
+
+  applyWhitelistMigration = (
+    records: ReadonlyArray<string | Readonly<WhitelistRecord>>,
+  ) => {
+    this.mutateStore(draft => {
+      draft.whitelists = normalizeWhitelistRecords([...records]);
+    });
   };
 
   enableWhitelist = () => {
-    this.store.enabled = true;
+    this.mutateStore(draft => {
+      draft.enabled = true;
+    });
   };
 
   disableWhiteList = () => {
-    this.store.enabled = false;
+    this.mutateStore(draft => {
+      draft.enabled = false;
+    });
   };
 
   setWhitelist = (addresses: string[]) => {
-    this.store.whitelists = addresses.map(address => address.toLowerCase());
+    this.mutateStore(draft => {
+      draft.whitelists = syncWhitelistRecords(draft.whitelists, addresses);
+    });
+  };
+
+  updateWhitelistOrder = (addresses: string[]) => {
+    this.mutateStore(draft => {
+      draft.whitelists = reorderWhitelistRecords(draft.whitelists, addresses);
+    });
   };
 
   removeWhitelist = (address: string) => {
-    if (!this.store.whitelists.find(item => isSameAddress(item, address))) {
+    if (
+      !this.store.whitelists.find(item => isSameAddress(item.address, address))
+    ) {
       return;
     }
-    this.store.whitelists = this.store.whitelists.filter(
-      item => !isSameAddress(item, address),
-    );
+    this.mutateStore(draft => {
+      draft.whitelists = draft.whitelists.filter(
+        item => !isSameAddress(item.address, address),
+      );
+    });
   };
 
   addWhitelist = (address: string) => {
     if (!address) {
       return;
     }
-    if (this.store.whitelists.find(item => isSameAddress(item, address))) {
-      return;
-    }
-    this.store.whitelists = [...this.store.whitelists, address.toLowerCase()];
+
+    this.mutateStore(draft => {
+      draft.whitelists = addWhitelistRecord(draft.whitelists, address);
+    });
   };
 
   isWhitelistEnabled = () => {
@@ -75,6 +111,8 @@ export class WhitelistService {
   };
 
   isInWhiteList = (address: string) => {
-    return this.store.whitelists.some(item => isSameAddress(item, address));
+    return this.store.whitelists.some(item =>
+      isSameAddress(item.address, address),
+    );
   };
 }

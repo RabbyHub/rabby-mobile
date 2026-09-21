@@ -50,29 +50,38 @@ import { SettingTrezor } from '@/components/HDSetting/SettingTrezor';
 import { NotMatterAddressDialog } from '@/screens/Address/NotMatterAddressDialog';
 import { AddressHightDesc } from '../AddressHightDesc';
 import SelectLendingChain from '@/screens/Lending/ChainSelector/SelectLendingChain';
-import { SupplyDetailPopup } from '@/screens/Lending/components/SupplyDetailPopup';
-import { BorrowDetailPopup } from '@/screens/Lending/components/BorrowDetailPopup';
 import { SupplyActionPopup } from '@/screens/Lending/components/actions/SupplyActionPopup';
 import { WithdrawActionPopup } from '@/screens/Lending/components/actions/WithdrawActionPopup';
 import { BorrowActionPopup } from '@/screens/Lending/components/actions/BorrowActionPopup';
 import { RepayActionPopup } from '@/screens/Lending/components/actions/RepayActionPopup';
 import { HFDescription } from '@/screens/Lending/components/HFDescription';
 import { AddressListModal } from '@/screens/Address/components/MultiAssets/AddressList';
+import { ReceiveAddressListSheet } from '@/screens/Address/ReceiveAddressListSheet';
 import { ManageEmodeModal } from '@/screens/Lending/modals/ManageEmode';
 import ManageEmodeFullModal from '@/screens/Lending/modals/ManangeEmodeFullModal';
 import SelectCategoryModal from '@/screens/Lending/components/EmodeCategory/SelectCategoryModal';
 import DisableEmodeOverviewModal from '@/screens/Lending/modals/DisableOverViewModal';
 import LendingSupplyList from '@/screens/Lending/components/popups/SupplyList';
 import LendingBorrowList from '@/screens/Lending/components/popups/BorrowList';
+import LendingTokenList from '@/screens/Lending/components/popups/LendingTokenList';
 import DebtTokenSelectModal from '@/screens/Lending/components/DebtTokenSelect';
 import DebtSwapModal from '@/screens/Lending/modals/DebtSwapModal';
 import { SeedPhraseQrCode } from '../AddressDetail/SeedPhraseQrCode';
 import { LpTokenDescription } from '../LpTokenDescription';
 import CollateralTokenSelectModal from '@/screens/Lending/components/CollateralTokenSelect';
 import TokenGroupDetailSheet from '@/screens/Address/components/MultiAssets/TokenGroupDetailSheet';
+import { CustomTestnetAddTokenSheet } from '@/screens/Address/components/MultiAssets/CustomTestnetAssets/CustomTestnetAddTokenSheet';
 import RepayTokenSelectModal from '@/screens/Lending/components/RepayTokenModal';
+import {
+  WalletConnectConnectSheet,
+  WalletConnectPairingLoading,
+} from '@/components2024/WalletConnect/WalletConnectSheets';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
+const RECEIVE_ADDRESS_LIST_MODAL_HEIGHT = Math.max(
+  Dimensions.get('window').height - 200,
+  453,
+);
 
 function getDefaultViewTypePropsPreset(
   input?: Partial<GlobalBottomSheetModalProps>,
@@ -206,6 +215,14 @@ export const MODAL_CONFIGS = {
       rootViewType: 'View',
     }),
   },
+  [MODAL_NAMES.RECEIVE_ADDRESS_LIST]: {
+    snapPoints: [RECEIVE_ADDRESS_LIST_MODAL_HEIGHT],
+    Component: ReceiveAddressListSheet,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset({
+      enableContentPanningGesture: true,
+      rootViewType: 'View',
+    }),
+  },
   [MODAL_NAMES.ADD_WHITELIST_SELECT_METHOD]: {
     snapPoints: [492],
     Component: AddWhitelistSelectMethod,
@@ -303,24 +320,16 @@ export const MODAL_CONFIGS = {
     snapPoints: undefined,
     Component: BatchRevokeErrorReason,
   },
-  [MODAL_NAMES.SUPPLY_DETAIL]: {
-    snapPoints: [606],
-    Component: SupplyDetailPopup,
-  },
-  [MODAL_NAMES.BORROW_DETAIL]: {
-    snapPoints: ['85%'],
-    Component: BorrowDetailPopup,
-  },
   [MODAL_NAMES.SUPPLY_ACTION_DETAIL]: {
-    snapPoints: [686],
+    snapPoints: [MODAL_MAX_HEIGHT],
     Component: SupplyActionPopup,
   },
   [MODAL_NAMES.WITHDRAW_ACTION_DETAIL]: {
-    snapPoints: [734],
+    snapPoints: [MODAL_MAX_HEIGHT],
     Component: WithdrawActionPopup,
   },
   [MODAL_NAMES.BORROW_ACTION_DETAIL]: {
-    snapPoints: [686],
+    snapPoints: [MODAL_MAX_HEIGHT],
     Component: BorrowActionPopup,
   },
   [MODAL_NAMES.REPAY_ACTION_DETAIL]: {
@@ -354,6 +363,11 @@ export const MODAL_CONFIGS = {
     Component: LendingBorrowList,
     globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
+  [MODAL_NAMES.LENDING_TOKEN_LIST]: {
+    snapPoints: [MODAL_MAX_HEIGHT],
+    Component: LendingTokenList,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
+  },
   [MODAL_NAMES.DEBT_TOKEN_SELECT]: {
     snapPoints: ['85%'],
     Component: DebtTokenSelectModal,
@@ -376,8 +390,25 @@ export const MODAL_CONFIGS = {
     Component: TokenGroupDetailSheet,
     globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
+  [MODAL_NAMES.CUSTOM_TESTNET_ADD_TOKEN]: {
+    snapPoints: [600],
+    Component: CustomTestnetAddTokenSheet,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
+  },
   [MODAL_NAMES.REPAY_TOKEN_SELECT]: {
     snapPoints: [360],
     Component: RepayTokenSelectModal,
+  },
+  [MODAL_NAMES.WALLETCONNECT_PAIRING]: {
+    snapPoints: [317],
+    Component: WalletConnectPairingLoading,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset({
+      linearGradientType: 'bg1',
+    }),
+  },
+  [MODAL_NAMES.WALLETCONNECT_CONNECT]: {
+    snapPoints: ['80%'],
+    Component: WalletConnectConnectSheet,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
 };

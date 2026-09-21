@@ -2,7 +2,7 @@ import { AppBottomSheetModal } from '@/components';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
@@ -11,6 +11,14 @@ import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { Text } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_DOUBLE_HEIGHT,
+  BOTTOM_BUTTON_GAP,
+  BOTTOM_BUTTON_TEXT_SIZE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const PerpsAccountLogoutPopup: React.FC<{
   visible: boolean;
@@ -21,6 +29,7 @@ export const PerpsAccountLogoutPopup: React.FC<{
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyle });
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
 
   useEffect(() => {
     if (!visible) {
@@ -78,17 +87,23 @@ export const PerpsAccountLogoutPopup: React.FC<{
             </AddressItem>
           </View>
 
-          <View style={[styles.buttonContainer]}>
+          <View
+            style={[
+              styles.buttonContainer,
+              { marginBottom: getBottomButtonBottomOffset(bottom) },
+            ]}>
             <Button
               type="ghost"
               title={t('global.Cancel')}
               onPress={onClose}
               containerStyle={{ flex: 1 }}
+              height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
               titleStyle={styles.btnText}
             />
             <Button
               type="primary"
               containerStyle={{ flex: 1 }}
+              height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
               title={t('page.perps.PerpsAccountLogoutPopup.logout')}
               onPress={onLogout}
               titleStyle={styles.btnText}
@@ -144,14 +159,15 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     color: colors['red-default'],
   },
   buttonContainer: {
-    gap: 12,
+    gap: BOTTOM_BUTTON_GAP,
     // width: '100%',
-    paddingVertical: 20,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+    paddingBottom: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 'auto',
-    marginBottom: 56,
+    marginBottom: 36,
   },
 
   logoutContainer: {
@@ -166,7 +182,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   logoutTitle: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
+    fontSize: BOTTOM_BUTTON_TEXT_SIZE,
     fontStyle: 'normal',
     fontWeight: '900',
     lineHeight: 24,
@@ -188,9 +204,8 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   btnText: {
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
+    fontSize: BOTTOM_BUTTON_TEXT_SIZE,
     fontStyle: 'normal',
     fontWeight: '600',
-    lineHeight: 28,
   },
 }));

@@ -64,6 +64,7 @@ window.addEventListener('messageFromRN', function (event) {
       setRuntimeInfo(message.info);
       break;
     }
+    case 'TRADINGVIEW_MESSAGE':
     case 'GASKETVIEW:TOGGLE_LOADING':
     case 'GOT_WINDOW_INFO': {
       break;
@@ -122,4 +123,12 @@ export function setRuntimeInfo(runtimeInfo: Partial<RuntimeInfo>) {
 
     return newInfo;
   });
+}
+
+export function getRuntimeInfo() {
+  return pageStore.get(runtimeInfoAtom);
+}
+
+if (window) {
+  (window as any).getRuntimeInfo = getRuntimeInfo;
 }

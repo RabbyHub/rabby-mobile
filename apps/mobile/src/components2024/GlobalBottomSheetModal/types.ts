@@ -51,6 +51,7 @@ export enum MODAL_NAMES {
   'NFT_DETAIL' = 'NFT_DETAIL',
   'DESCRIPTION' = 'DESCRIPTION',
   'ADDRESS_HIGHT_DESC' = 'ADDRESS_HIGHT_DESC',
+  'RECEIVE_ADDRESS_LIST' = 'RECEIVE_ADDRESS_LIST',
   'RESTORE_FROM_CLOUD' = 'RESTORE_FROM_CLOUD',
   'ADDRESS_QUICK_MANAGER' = 'ADDRESS_QUICK_MANAGER',
   'ADDRESS_DETAIL' = 'ADDRESS_DETAIL',
@@ -58,8 +59,6 @@ export enum MODAL_NAMES {
   'NO_LONGER_SUPPORTS' = 'NO_LONGER_SUPPORTS',
   'COLLECTION_NFTS' = 'COLLECTION_NFTS',
   'BATCH_REVOKE_ERROR_REASON' = 'BATCH_REVOKE_ERROR_REASON',
-  'SUPPLY_DETAIL' = 'SUPPLY_DETAIL',
-  'BORROW_DETAIL' = 'BORROW_DETAIL',
   'SUPPLY_ACTION_DETAIL' = 'SUPPLY_ACTION_DETAIL',
   'BORROW_ACTION_DETAIL' = 'BORROW_ACTION_DETAIL',
   'WITHDRAW_ACTION_DETAIL' = 'WITHDRAW_ACTION_DETAIL',
@@ -71,13 +70,17 @@ export enum MODAL_NAMES {
   'SELECT_EMODE_CATEGORY' = 'SELECT_EMODE_CATEGORY',
   'LENDING_SUPPLY_LIST' = 'LENDING_SUPPLY_LIST',
   'LENDING_BORROW_LIST' = 'LENDING_BORROW_LIST',
+  'LENDING_TOKEN_LIST' = 'LENDING_TOKEN_LIST',
   'DEBT_TOKEN_SELECT' = 'DEBT_TOKEN_SELECT',
   'DEBT_SWAP' = 'DEBT_SWAP',
   'SEED_PHRASE_QR_CODE' = 'SEED_PHRASE_QR_CODE',
   'LP_TOKEN_DETAIL' = 'LP_TOKEN_DETAIL',
   'COLLATERAL_TOKEN_SELECT' = 'COLLATERAL_TOKEN_SELECT',
   'TOKEN_GROUP_DETAIL' = 'TOKEN_GROUP_DETAIL',
+  'CUSTOM_TESTNET_ADD_TOKEN' = 'CUSTOM_TESTNET_ADD_TOKEN',
   'REPAY_TOKEN_SELECT' = 'REPAY_TOKEN_SELECT',
+  'WALLETCONNECT_PAIRING' = 'WALLETCONNECT_PAIRING',
+  'WALLETCONNECT_CONNECT' = 'WALLETCONNECT_CONNECT',
 }
 
 export enum APPROVAL_MODAL_NAMES {
@@ -112,7 +115,7 @@ export type GlobalBottomSheetModalProps = Partial<BottomSheetModalProps> & {
 type CreateParamsBase<T extends MODAL_NAMES = MODAL_NAMES> = {
   name: T;
   approvalComponent?: APPROVAL_MODAL_NAMES;
-  onCancel?: () => void;
+  onCancel?: () => void | Promise<void>;
   bottomSheetModalProps?: GlobalBottomSheetModalProps;
   /**
    * @description by default, every global modal instance will prevent the hardware back button on android,
@@ -127,6 +130,17 @@ type CreateParamsBase<T extends MODAL_NAMES = MODAL_NAMES> = {
    * @description specify whether to disable screenshot report before modal close
    */
   screenshotReportFreeBeforeModalClose?: boolean;
+  /**
+   * @description global sheets are singleton by modal name by default. Set this
+   * only when the same modal name intentionally needs multiple active instances.
+   * @default false
+   */
+  allowMultipleInstances?: boolean;
+  /**
+   * @description optional discriminator for singleton reuse when one modal name
+   * needs separate singleton buckets.
+   */
+  singletonKey?: string;
 };
 
 export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> =
@@ -146,6 +160,8 @@ export type RemoveParams = Partial<
   Parameters<BottomSheetMethods['close']>[0]
 > & {
   duration?: number;
+  /** Keep the modal mounted until the native close animation finishes. */
+  waitForDismiss?: boolean;
 };
 
 export enum EVENT_NAMES {

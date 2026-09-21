@@ -208,7 +208,7 @@ const LiquidityDetail = ({
             ))}
           </View>
           <Text style={[styles.amountItem]}>
-            {formatUsdValueKMB(item.usd_value)}
+            {formatUsdValueKMB(item.usd_value, 2)}
           </Text>
           <View style={styles.addressItem}>
             <Pressable
@@ -448,7 +448,7 @@ const Top5Pools = ({
                   </View>
                   <View style={styles.usdValueItem}>
                     <Text style={styles.poolUsdValue}>
-                      {formatUsdValueKMB(item.usd_value)}
+                      {formatUsdValueKMB(item.usd_value, 2)}
                     </Text>
                   </View>
                 </View>
@@ -580,9 +580,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 4,
     flex: 1,
   },
-  chatTopRight: {
-    justifyContent: 'flex-end',
-  },
   chatTop: {
     display: 'flex',
     flexDirection: 'row',
@@ -682,12 +679,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   firstAmountItemValue: {
     color: colors2024['neutral-title-1'],
-  },
-  amountItemGreen: {
-    color: colors2024['green-default'],
-  },
-  amountItemRed: {
-    color: colors2024['red-default'],
   },
   addressItem: {
     display: 'flex',

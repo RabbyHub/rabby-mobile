@@ -1,19 +1,20 @@
 import { RcIconScannerCC } from '@/assets/icons/address';
 import WatchLogoSVG from '@/assets/icons/address/watch-logo.svg';
-import { FocusAwareStatusBar, Text } from '@/components';
+import { Text } from '@/components';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { RootNames } from '@/constant/layout';
 import { AppColorsVariants } from '@/constant/theme';
 import { apisAddress } from '@/core/apis';
-import { openapi } from '@/core/request';
 import { useThemeColors } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { resolveEnsAddressByName, resolveEnsNameByAddress } from '@/utils/ens';
 import { navigateDeprecated } from '@/utils/navigation';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { isValidHexAddress } from '@metamask/utils';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { debounce } from 'lodash';
 import React, { useEffect, useRef } from 'react';
 import {
   Keyboard,
@@ -28,7 +29,6 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { Code } from 'react-native-vision-camera';
 import { CameraPopup } from './components/CameraPopup';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
-import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { TextInput } from '@/components/Typography';
 
 enum INPUT_ERROR {
@@ -61,13 +61,39 @@ export const ImportWatchAddressScreen = () => {
     [colors, safeOffHeader],
   );
   const duplicateAddressModal = useDuplicateAddressModal();
+  const debouncedResolveEns = React.useMemo(
+    () =>
+      debounce(
+        async (
+          value: string,
+          callback: (result: { addr: string; name: string } | null) => void,
+        ) => {
+          const result = await resolveEnsAddressByName(value);
+          callback(result);
+        },
+        300,
+      ),
+    [],
+  );
+  const debouncedResolveEnsName = React.useMemo(
+    () =>
+      debounce(
+        async (value: string, callback: (name: string | null) => void) => {
+          const name = await resolveEnsNameByAddress(value);
+          callback(name);
+        },
+        300,
+      ),
+    [],
+  );
 
   const handleDone = async () => {
     if (!input) {
       setError(INPUT_ERROR.REQUIRED);
       return;
     }
-    if (!isValidHexAddress(input as any)) {
+    const normalizedInput = input.trim().toLowerCase();
+    if (!isValidHexAddress(normalizedInput as any)) {
       setError(INPUT_ERROR.INVALID_ADDRESS);
       return;
     }
@@ -113,38 +139,54 @@ export const ImportWatchAddressScreen = () => {
   }, [error, ensResult, input]);
 
   const onCodeScanned = (codes: Code[]) => {
-    if (codes[0].value && isValidHexAddress(codes[0].value as `0x${string}`)) {
+    const scanned = codes[0].value?.trim().toLowerCase();
+    if (scanned && isValidHexAddress(scanned as `0x${string}`)) {
       codeRef.current?.close();
-      setInput(codes[0].value);
+      setInput(scanned);
     }
   };
 
   useEffect(() => {
     if (!input) {
       setError(undefined);
+      setEnsResult(null);
+      debouncedResolveEnsName.cancel();
       return;
     }
-    if (isValidHexAddress(input as `0x${string}`)) {
+    const normalizedInput = input.trim().toLowerCase();
+    if (isValidHexAddress(normalizedInput as `0x${string}`)) {
       setError(undefined);
+      debouncedResolveEns.cancel();
+      debouncedResolveEnsName(normalizedInput, name => {
+        if (!name) {
+          setEnsResult(null);
+          return;
+        }
+        setEnsResult({
+          addr: normalizedInput,
+          name,
+        });
+      });
       return;
     }
-    openapi
-      .getEnsAddressByName(input)
-      .then(result => {
-        if (result && result.addr) {
-          setEnsResult(result);
-          setError(undefined);
-        } else {
-          setEnsResult(null);
-          setError(INPUT_ERROR.INVALID_ADDRESS);
-        }
-      })
-      .catch(e => {
-        console.log(e);
+    debouncedResolveEnsName.cancel();
+    debouncedResolveEns(input, result => {
+      if (result && result.addr) {
+        setEnsResult(result);
+        setError(undefined);
+      } else {
         setEnsResult(null);
         setError(INPUT_ERROR.INVALID_ADDRESS);
-      });
-  }, [input]);
+      }
+    });
+  }, [input, debouncedResolveEns, debouncedResolveEnsName]);
+
+  useEffect(() => {
+    return () => {
+      debouncedResolveEns.cancel();
+      debouncedResolveEnsName.cancel();
+    };
+  }, [debouncedResolveEns, debouncedResolveEnsName]);
 
   return (
     <RootScreenContainer hideBottomBar style={styles.rootContainer}>
@@ -220,7 +262,6 @@ export const ImportWatchAddressScreen = () => {
         onPress={handleDone}
       />
       <CameraPopup ref={codeRef} onCodeScanned={onCodeScanned} />
-      <ScreenSpecificStatusBar screenName={RootNames.ImportWatchAddress} />
     </RootScreenContainer>
   );
 };

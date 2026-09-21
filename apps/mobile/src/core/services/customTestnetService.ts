@@ -5,8 +5,8 @@ import {
 import { findChain } from '@/utils/chain';
 import { CHAINS_ENUM } from '@debank/common';
 import { BigNumber } from 'bignumber.js';
-import { intToHex } from 'ethereumjs-util';
-import { omit, sortBy } from 'lodash';
+import { sortBy } from 'lodash';
+import cloneDeep from 'lodash/cloneDeep';
 import {
   Client,
   createClient,
@@ -26,50 +26,29 @@ import {
 import { GasLevel, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import axios from 'axios';
 // import { matomoRequestEvent } from '@/utils/analytics';
-import createPersistStore, {
+import {
   StorageAdapaterOptions,
+  StoreServiceBase,
 } from '@rabby-wallet/persist-store';
 import { updateChainStore } from '@/constant/chains';
+import { syncCustomTestnetStore } from '@/store/customTestnet';
 import { appStorage } from '../storage/mmkv';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
-import { matomoRequestEvent } from '@/utils/analytics';
+import type {
+  CustomTestnetToken,
+  CustomTestnetTokenBase,
+  TestnetChain,
+  TestnetChainBase,
+} from '@/types/customTestnet';
+import { withTimeoutFallback } from '@/utils/async';
+import { createTestnetChain } from '@/core/utils/customTestnetChain';
 
-export interface TestnetChainBase {
-  id: number;
-  name: string;
-  nativeTokenSymbol: string;
-  rpcUrl: string;
-  scanLink?: string;
-}
-
-export interface TestnetChain extends TestnetChainBase {
-  nativeTokenAddress: string;
-  hex: string;
-  network: string;
-  enum: CHAINS_ENUM;
-  serverId: string;
-  nativeTokenLogo: string;
-  eip: Record<string, any>;
-  nativeTokenDecimals: number;
-  scanLink: string;
-  isTestnet?: boolean;
-  logo: string;
-  whiteLogo?: string;
-  needEstimateGas?: boolean;
-  severity: number;
-}
-
-export interface CustomTestnetTokenBase {
-  id: string;
-  chainId: number;
-  symbol: string;
-  decimals: number;
-}
-
-export interface CustomTestnetToken extends CustomTestnetTokenBase {
-  amount: number;
-  rawAmount: string;
-}
+export type {
+  CustomTestnetToken,
+  CustomTestnetTokenBase,
+  TestnetChain,
+  TestnetChainBase,
+} from '@/types/customTestnet';
 
 export type CutsomTestnetServiceStore = {
   customTestnet: Record<string, TestnetChain>;
@@ -84,32 +63,43 @@ function getUniqueId(): number {
   return idCounter;
 }
 
-export class CustomTestnetService {
-  store: CutsomTestnetServiceStore = {
-    customTestnet: {},
-    customTokenList: [],
-  };
+async function reportCustomNetworkStatus(value: number) {
+  const { matomoRequestEvent } = await import('@/utils/analytics');
+  matomoRequestEvent({
+    category: 'Custom Network',
+    action: 'Custom Network Status',
+    value,
+  });
+}
 
+export class CustomTestnetService extends StoreServiceBase<
+  CutsomTestnetServiceStore,
+  APP_STORE_NAMES.customTestnet
+> {
   chains: Record<string, Client> = {};
 
   constructor(options?: StorageAdapaterOptions) {
+    super();
     this.init(options);
   }
 
+  initFromStorage = () => {
+    this.init({
+      storageAdapter: appStorage,
+    });
+  };
+
   init = (options?: StorageAdapaterOptions) => {
-    const storage = createPersistStore<CutsomTestnetServiceStore>(
+    this.initializePersistStore(
+      APP_STORE_NAMES.customTestnet,
       {
-        name: APP_STORE_NAMES.customTestnet,
-        template: {
-          customTestnet: {},
-          customTokenList: [],
-        },
+        customTestnet: {},
+        customTokenList: [],
       },
       {
-        storage: options?.storageAdapter,
+        storageAdapter: options?.storageAdapter,
       },
     );
-    this.store = storage || this.store;
     Object.values(this.store.customTestnet).forEach(chain => {
       const client = createClientByChain(chain);
       this.chains[chain.id] = client;
@@ -119,6 +109,7 @@ export class CustomTestnetService {
         return createTestnetChain(item);
       }),
     });
+    this.syncStore();
   };
   add = async (chain: TestnetChainBase) => {
     return this._update(chain, true);
@@ -180,36 +171,32 @@ export class CustomTestnetService {
       };
     }
 
-    this.store.customTestnet = {
-      ...this.store.customTestnet,
-      [chain.id]: createTestnetChain(chain),
-    };
+    const nextChain = createTestnetChain(chain);
+    this.mutateStore(draft => {
+      draft.customTestnet[chain.id] = nextChain;
+    });
     this.chains[chain.id] = createClientByChain(chain);
     this.syncChainList();
+    this.syncStore();
 
     if (this.getList().length) {
-      matomoRequestEvent({
-        category: 'Custom Network',
-        action: 'Custom Network Status',
-        value: this.getList().length,
-      });
+      reportCustomNetworkStatus(this.getList().length);
     }
-    return this.store.customTestnet[chain.id];
+    return nextChain;
   };
 
   remove = (chainId: number) => {
-    this.store.customTestnet = omit(this.store.customTestnet, chainId);
-    this.store.customTokenList = this.store.customTokenList.filter(item => {
-      return item.chainId !== chainId;
+    this.mutateStore(draft => {
+      delete draft.customTestnet[chainId];
+      draft.customTokenList = draft.customTokenList.filter(item => {
+        return item.chainId !== chainId;
+      });
     });
     delete this.chains[chainId];
     this.syncChainList();
+    this.syncStore();
     if (this.getList().length) {
-      matomoRequestEvent({
-        category: 'Custom Network',
-        action: 'Custom Network Status',
-        value: this.getList().length,
-      });
+      reportCustomNetworkStatus(this.getList().length);
     }
   };
 
@@ -259,7 +246,7 @@ export class CustomTestnetService {
           ...res,
           hash: res.transactionHash,
           code: 0,
-          status: 1,
+          status: parseInt(res.status, 16),
           gas_used: Number(res.gasUsed),
           token: customTestnetTokenToTokenItem({
             amount: 0,
@@ -432,13 +419,19 @@ export class CustomTestnetService {
     if (this.hasToken(params)) {
       throw new Error('Token already added');
     }
-    this.store.customTokenList = [...this.store.customTokenList, params];
+    this.mutateStore(draft => {
+      draft.customTokenList.push(params);
+    });
+    this.syncStore();
   };
 
   removeToken = (params: Pick<CustomTestnetTokenBase, 'chainId' | 'id'>) => {
-    this.store.customTokenList = this.store.customTokenList.filter(item => {
-      return !isSameTestnetToken(item, params);
+    this.mutateStore(draft => {
+      draft.customTokenList = draft.customTokenList.filter(item => {
+        return !isSameTestnetToken(item, params);
+      });
     });
+    this.syncStore();
   };
 
   hasToken = (params: Pick<CustomTestnetTokenBase, 'id' | 'chainId'>) => {
@@ -569,7 +562,7 @@ export class CustomTestnetService {
       });
     });
     if (local) {
-      return local;
+      return cloneDeep(local);
     }
 
     // todo: multicall
@@ -614,7 +607,7 @@ export class CustomTestnetService {
         };
       },
     );
-    const list = this.store.customTokenList || [];
+    const list = cloneDeep(this.store.customTokenList || []);
     let tokenList = [...nativeTokenList, ...list];
     if (chainId) {
       tokenList = tokenList.filter(item => {
@@ -653,7 +646,7 @@ export class CustomTestnetService {
 
     const res = await Promise.all(
       queryList.map(item =>
-        this.getToken(item).catch(e => {
+        withTimeoutFallback(this.getToken(item), 10000, null).catch(e => {
           console.error(e);
           return null;
         }),
@@ -687,6 +680,13 @@ export class CustomTestnetService {
       testnetList: testnetList,
     });
   };
+
+  syncStore = () => {
+    syncCustomTestnetStore({
+      customTestnet: this.getStoreFieldSnapshot('customTestnet'),
+      customTokenList: this.getStoreFieldSnapshot('customTokenList'),
+    });
+  };
 }
 
 const createClientByChain = (chain: TestnetChainBase) => {
@@ -708,30 +708,3 @@ const createClientByChain = (chain: TestnetChainBase) => {
     transport: http(chain.rpcUrl),
   });
 };
-
-export const createTestnetChain = (chain: TestnetChainBase): TestnetChain => {
-  return {
-    ...chain,
-    id: +chain.id,
-    hex: intToHex(+chain.id),
-    network: '' + chain.id,
-    enum: `CUSTOM_${chain.id}` as CHAINS_ENUM,
-    serverId: `custom_${chain.id}`,
-    nativeTokenAddress: `custom_${chain.id}`,
-    nativeTokenDecimals: 18,
-    nativeTokenLogo: '',
-    scanLink: chain.scanLink || '',
-    logo: `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='16' fill='%236A7587'></circle><text x='16' y='17' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='12' font-weight='400'>${encodeURIComponent(
-      chain.name.substring(0, 3),
-    )}</text></svg>`,
-    eip: {
-      1559: false,
-    },
-    isTestnet: true,
-    severity: 0,
-  };
-};
-
-export const customTestnetService = new CustomTestnetService({
-  storageAdapter: appStorage,
-});

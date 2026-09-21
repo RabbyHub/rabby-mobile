@@ -1,29 +1,28 @@
-import { StyleProp, TextStyle, TouchableOpacity, View } from 'react-native';
-import { CHAINS_ENUM } from '@/constant/chains';
+import type { StyleProp, TextStyle } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
+import type { CHAINS_ENUM } from '@/constant/chains';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { SelectSortedChainProps } from '@/components2024/SelectChainWithSummary';
+import type { SelectSortedChainProps } from '@/components2024/SelectChainWithSummary';
 import { useFindChain } from '@/hooks/useFindChain';
 import React from 'react';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import {
-  MODAL_ID,
-  MODAL_NAMES,
-} from '@/components2024/GlobalBottomSheetModal/types';
+import type { MODAL_ID } from '@/components2024/GlobalBottomSheetModal/types';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { useTranslation } from 'react-i18next';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     container: {
       borderRadius: 16,
-      paddingHorizontal: 22,
+      paddingHorizontal: 16,
       paddingVertical: 16,
       backgroundColor: colors2024['neutral-bg-2'],
       flexDirection: 'row',
@@ -44,6 +43,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     icon: {
       transform: [{ rotate: '90deg' }],
     },
+    disabled: {
+      opacity: 0.3,
+    },
   };
 });
 
@@ -52,23 +54,27 @@ export function ChainInfo2024({
   style,
   onChange,
   supportChains,
+  unsupportedChainMode,
   disabledTips,
   hideMainnetTab,
   hideTestnetTab,
   rightArrowIcon,
   titleStyle,
   account,
+  disabled,
 }: React.PropsWithChildren<
   RNViewProps & {
     chainEnum?: CHAINS_ENUM;
     onChange?: (chain: CHAINS_ENUM) => void;
     supportChains?: SelectSortedChainProps['supportChains'];
+    unsupportedChainMode?: SelectSortedChainProps['unsupportedChainMode'];
     disabledTips?: SelectSortedChainProps['disabledTips'];
     hideMainnetTab?: SelectSortedChainProps['hideMainnetTab'];
     hideTestnetTab?: SelectSortedChainProps['hideTestnetTab'];
     rightArrowIcon?: React.ReactNode;
     titleStyle?: StyleProp<TextStyle>;
     account: Account;
+    disabled?: boolean;
   }
 >) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -93,6 +99,7 @@ export function ChainInfo2024({
       value: chainEnum,
       onClose: removeChainModal,
       supportChains,
+      unsupportedChainMode,
       disabledTips,
       hideMainnetTab,
       hideTestnetTab,
@@ -111,6 +118,7 @@ export function ChainInfo2024({
     chainEnum,
     removeChainModal,
     supportChains,
+    unsupportedChainMode,
     disabledTips,
     hideMainnetTab,
     hideTestnetTab,
@@ -122,8 +130,9 @@ export function ChainInfo2024({
     <>
       <TouchableOpacity
         style={[styles.container, style]}
+        disabled={disabled}
         onPress={createChainModal}>
-        <View style={styles.left}>
+        <View style={[styles.left, disabled && styles.disabled]}>
           <ChainIconImage
             size={24}
             chainEnum={chainEnum}
@@ -137,7 +146,7 @@ export function ChainInfo2024({
             rightArrowIcon
           ) : (
             <ArrowRightSVG
-              style={styles.icon}
+              style={[styles.icon, disabled && styles.disabled]}
               color={colors2024['neutral-title-1']}
             />
           )}

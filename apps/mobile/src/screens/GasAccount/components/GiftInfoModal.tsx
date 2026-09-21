@@ -1,13 +1,17 @@
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, TouchableOpacity } from 'react-native';
+import { TouchableOpacity } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import IconGift from '@/assets2024/icons/home/IconGift.svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Text } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TEXT_SIZE,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 export const GiftInfoModal = ({
   visible,
@@ -45,7 +49,10 @@ export const GiftInfoModal = ({
       onDismiss={onClose}
       enableDynamicSizing={false}>
       <BottomSheetView
-        style={[styles.modalContent, { paddingBottom: bottom + 20 }]}>
+        style={[
+          styles.modalContent,
+          { paddingBottom: getBottomButtonBottomOffset(bottom) },
+        ]}>
         {header}
         {description}
         <TouchableOpacity
@@ -67,42 +74,17 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     padding: 24,
     alignItems: 'center',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  title: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    fontStyle: 'normal',
-    fontWeight: '700',
-    lineHeight: 24,
-    color: colors2024['neutral-title-1'],
-    marginLeft: 12,
-  },
-  description: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontStyle: 'normal',
-    fontWeight: '400',
-    lineHeight: 20,
-    color: colors2024['neutral-info'],
-    textAlign: 'center',
-    marginBottom: 24,
-  },
   gotItButton: {
     backgroundColor: colors2024['brand-default'],
     borderRadius: 12,
-    paddingVertical: 16,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
     marginTop: 30,
-    marginBottom: 56,
   },
   gotItButtonText: {
-    fontSize: 20,
+    fontSize: BOTTOM_BUTTON_TEXT_SIZE,
     fontStyle: 'normal',
     fontWeight: '700',
     color: colors2024['neutral-InvertHighlight'],

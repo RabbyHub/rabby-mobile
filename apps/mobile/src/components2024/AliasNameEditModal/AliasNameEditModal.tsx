@@ -1,13 +1,13 @@
 import DeviceUtils from '@/core/utils/device';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { useAlias } from '@/hooks/alias';
 import { useTheme2024 } from '@/hooks/theme';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useAtom } from 'jotai';
 import React from 'react';
 import {
   KeyboardAvoidingView,
-  Modal,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -57,11 +57,13 @@ export const AliasNameEditModal: React.FC = () => {
   }, [account]);
 
   return (
-    <Modal
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.aliasNameEdit}
       style={styles.root}
       visible={visible}
       transparent
-      animationType="fade">
+      animationType="fade"
+      onRequestClose={onCancel}>
       <KeyboardAvoidingView behavior="padding" style={styles.overlay}>
         <View style={styles.container}>
           <View style={styles.body}>
@@ -106,7 +108,7 @@ export const AliasNameEditModal: React.FC = () => {
           </View>
         </View>
       </KeyboardAvoidingView>
-    </Modal>
+    </TrackedModal>
   );
 };
 

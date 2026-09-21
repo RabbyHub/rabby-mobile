@@ -13,7 +13,7 @@ describe('KeyringService setup', () => {
   let keyringService: KeyringService;
 
   beforeAll(() => {
-    keyringService = new KeyringService();
+    keyringService = new KeyringService({ encryptor: mockEncryptor as any });
   });
 
   afterEach(() => {
@@ -35,7 +35,9 @@ describe('KeyringService setup', () => {
   describe('setLocked', () => {
     it('setLocked correctly sets lock state', async () => {
       await keyringService.setLocked();
-      expect(keyringService.password).toBeNull();
+      await expect(keyringService.persistAllKeyrings()).rejects.toThrow(
+        'KeyringService - password is not a string',
+      );
       expect(keyringService.memStore.getState().isUnlocked).toBe(false);
       expect(keyringService.keyrings).toHaveLength(0);
     });
@@ -53,7 +55,7 @@ describe('keyringService#keyrings, accounts', () => {
   let keyringService: KeyringService;
 
   beforeEach(async () => {
-    keyringService = new KeyringService();
+    keyringService = new KeyringService({ encryptor: mockEncryptor as any });
     keyringService.loadStore({});
     await keyringService.boot(password);
     await keyringService.clearKeyrings();
@@ -78,7 +80,6 @@ describe('keyringService#keyrings, accounts', () => {
     //   );
     //   expect(allAccounts).toStrictEqual(expectedAllAccounts);
     // });
-
     // it('should add HD Key Tree', async () => {
     //   expect(keyringService.keyrings).toHaveLength(0);
     //   await keyringService.addNewKeyring('HD Key Tree');
@@ -106,12 +107,12 @@ describe('keyringService#keyrings, accounts', () => {
       keyringService.keyrings = [
         {
           getAccounts() {
-            return Promise.resolve([ '0x01', '0x02', '0x03' ]);
+            return Promise.resolve(['0x01', '0x02', '0x03']);
           },
         } as any,
         {
           getAccounts() {
-            return Promise.resolve([ '0x04', '0x05', '0x06' ]);
+            return Promise.resolve(['0x04', '0x05', '0x06']);
           },
         } as any,
       ];

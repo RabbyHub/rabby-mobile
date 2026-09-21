@@ -1,12 +1,17 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
 project_dir=$(dirname $script_dir)
 
 . $script_dir/fns.sh --source-only
+. $script_dir/libs/node-runtime.sh
+. $script_dir/turbo-build/_fns.sh --source-only
+
+ensure_mobile_node_runtime
 
 export buildchannel="appstore";
 export BUILD_TARGET_PLATFORM="ios";
+export RABBY_MOBILE_BUILD_ENV="production";
 check_build_params;
 check_s3_params;
 checkout_s3_pub_deployment_params;
@@ -23,17 +28,6 @@ deployment_local_dir="$script_dir/deployments/ios-appstore"
 rm -rf $deployment_local_dir && mkdir -p $deployment_local_dir;
 
 mkdir -p "$script_dir/deployments/tmp"
-
-xcodebuild -project $project_dir/ios/RabbyMobile.xcodeproj -target "RabbyMobile" -showBuildSettings -json | plutil -convert xml1 - -o "$script_dir/deployments/tmp/RabbyMobileAppStore.plist"
-
-ios_version_name=$(/usr/libexec/PlistBuddy -c "Print:CFBundleShortVersionString" $project_dir/ios/RabbyMobile/Info.plist)
-ios_version_code=$(/usr/libexec/PlistBuddy -c "Print:0:buildSettings:CURRENT_PROJECT_VERSION" $script_dir/deployments/tmp/RabbyMobileAppStore.plist)
-cd $project_dir/ios;
-
-unix_replace_variables $script_dir/tpl/ios/version.json $deployment_local_dir/version.json \
-  --var-DOWNLOAD_URL=$cdn_deployment_urlbase/ios/ \
-  --var-APP_VER_CODE=$ios_version_code \
-  --var-APP_VER="$proj_version"
 
 # ============ prepare changelogs :start ============== #
 possible_changelogs=(
@@ -54,22 +48,60 @@ build_appstore() {
   export RABBY_MOBILE_BUILD_ENV="production";
   cd $project_dir;
   sh ./ios/patches/override-xcconfig-release.sh;
-  yarn;
-  yarn check-nodeengines && yarn ../mobile-local-pages bundle:all && yarn link-assets && yarn buildworker:prod:ios;
-  yarn syncrnversion;
-  cd $project_dir/ios;
-  bundle install;
-  [ ! -z $CI ] && bundle exec pod cache clean --all;
-  bundle exec pod install --repo-update;
-  cd $project_dir;
-  bundle exec fastlane ios appstore;
+  turbo_prepare_js_dependencies || return $?
+  ensure_inpage_bridge_assets || return $?
+  yarn check-nodeengines &&
+    yarn ../mobile-local-pages bundle:all &&
+    yarn link-assets &&
+    yarn buildworker:prod:ios &&
+    yarn syncrnversion
+  build_status=$?
+
+  if [ $build_status -ne 0 ]; then
+    return $build_status
+  fi
+
+  turbo_prepare_ruby_bundle || return $?
+
+  if [ ! -z $CI ]; then
+    cd $project_dir/ios || return 1
+    turbo_bundle_pod cache clean --all || return $?
+    cd $project_dir || return 1
+  fi
+
+  turbo_prepare_cocoapods || return $?
+  turbo_bundle_exec exec fastlane ios appstore
 }
 
 if [[ -z $SKIP_BUILD || ! -f $ouput_dir/RabbyMobile.ipa ]]; then
   echo "[deploy-ios-appstore] start build..."
-  build_appstore;
+  build_appstore
+  build_status=$?
+  if [ $build_status -ne 0 ]; then
+    echo "[deploy-ios-appstore] build failed with status $build_status"
+    exit $build_status
+  fi
   echo "[deploy-ios-appstore] finish build."
 fi
+
+if [ ! -f $ouput_dir/RabbyMobile.ipa ]; then
+  echo "[deploy-ios-appstore] build failed: $ouput_dir/RabbyMobile.ipa was not created"
+  exit 1
+fi
+
+tmp_ipa_extract_dir=$(mktemp -d)
+unzip -qq $ouput_dir/RabbyMobile.ipa -d $tmp_ipa_extract_dir
+ipa_info_plist="$tmp_ipa_extract_dir/Payload/RabbyMobile.app/Info.plist"
+ios_version_name=$(/usr/libexec/PlistBuddy -c "Print:CFBundleShortVersionString" "$ipa_info_plist")
+ios_version_code=$(/usr/libexec/PlistBuddy -c "Print:CFBundleVersion" "$ipa_info_plist")
+rm -rf $tmp_ipa_extract_dir
+
+cd $project_dir/ios;
+
+unix_replace_variables $script_dir/tpl/ios/version.json $deployment_local_dir/version.json \
+  --var-DOWNLOAD_URL=$cdn_deployment_urlbase/ios/ \
+  --var-APP_VER_CODE=$ios_version_code \
+  --var-APP_VER="$proj_version"
 
 file_date=$(date -r $ouput_dir/RabbyMobile.ipa '+%Y%m%d_%H%M%S')
 version_bundle_name="${ios_version_name}.${ios_version_code}-$file_date"

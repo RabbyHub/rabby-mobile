@@ -17,6 +17,7 @@ import { Skeleton } from '@rneui/themed';
 import { calcGasEstimated } from '@/utils/time';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Text, RNGHTextInput as TextInput } from '@/components/Typography';
+import { IS_ANDROID } from '@/core/native/utils';
 
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;
@@ -24,7 +25,7 @@ export interface GasSelectorResponse extends GasLevel {
   maxPriorityFee: number;
 }
 
-const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
+const getStyles = createGetStyles2024(({ colors2024 }) => ({
   cardBody: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -41,7 +42,7 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
   },
   cardActive: {
     backgroundColor: colors2024['brand-light-1'],
-    borderColor: colors['blue-default'],
+    borderColor: colors2024['brand-default'],
     shadowColor: 'transparent',
   },
   cardItem: {},
@@ -63,10 +64,15 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     height: 16,
     lineHeight: 16,
     padding: 0,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
     marginTop: 4,
   },
-  cardItemTextActive: {
-    // color: colors['blue-default'],
+  cardItemTextActive: {},
+  cardItemPlaceholder: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
   },
   cardBodyDisabled: {},
   cardTime: {
@@ -165,23 +171,33 @@ export const GasSelectContainer = ({
                   -
                 </Text>
               ) : (
-                <BottomSheetTextInput
-                  keyboardType="numeric"
-                  style={StyleSheet.flatten([
-                    styles.cardItemText,
-                    selectedGas?.level === item.level &&
-                      styles.cardItemTextActive,
-                  ])}
-                  defaultValue={customGas ? customGas.toString() : ''}
-                  onChange={handleCustomGasChange}
-                  // onSubmitEditing={customGasConfirm}
-                  onFocus={e => handlePanelSelection(e, item)}
-                  ref={customerInputRef}
-                  // autoFocus={selectedGas?.level === item.level}
-                  // disabled={disabled}
-                  placeholder="0"
-                  selectTextOnFocus
-                />
+                <>
+                  {IS_ANDROID && !customGas && (
+                    <Text
+                      accessible={false}
+                      pointerEvents="none"
+                      style={[styles.cardItemText, styles.cardItemPlaceholder]}>
+                      0
+                    </Text>
+                  )}
+                  <BottomSheetTextInput
+                    keyboardType="numeric"
+                    style={StyleSheet.flatten([
+                      styles.cardItemText,
+                      selectedGas?.level === item.level &&
+                        styles.cardItemTextActive,
+                    ])}
+                    defaultValue={customGas ? customGas.toString() : ''}
+                    onChange={handleCustomGasChange}
+                    // onSubmitEditing={customGasConfirm}
+                    onFocus={e => handlePanelSelection(e, item)}
+                    ref={customerInputRef}
+                    // autoFocus={selectedGas?.level === item.level}
+                    // disabled={disabled}
+                    placeholder={IS_ANDROID ? undefined : '0'}
+                    selectTextOnFocus
+                  />
+                </>
               )
             ) : (
               <Text

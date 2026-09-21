@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
-import { View, TouchableOpacity, Pressable } from 'react-native';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { View, TouchableOpacity } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
 import { AddressEntry } from './RenderRow/AddressEntry';
@@ -8,20 +8,22 @@ import { Card } from '@/components2024/Card';
 import { useTheme2024 } from '@/hooks/theme';
 import RightArrowSVG from '@/assets2024/icons/common/right-cc.svg';
 import { useTranslation } from 'react-i18next';
-import { useAccountInfo } from './hooks';
+import { useHomeAssetAccountInfo } from './hooks';
 import { createGetStyles2024 } from '@/utils/styles';
 import WalletSVG from '@/assets2024/icons/common/wallet-cc.svg';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { NotMatterAddressDialog } from '../../NotMatterAddressDialog';
 import AutoLockView from '@/components/AutoLockView';
-import { ManageSetting } from '../ManageSetting';
-import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
-import { useScene24hBalanceMulti24hBalance } from '@/hooks/useScene24hBalance';
-import { computeBalanceChange } from '@/core/apis/balance';
-import balanceStore from '@/store/balance';
+import { balance24hStore } from '@/store/balance24h';
+import addressBalanceStore from '@/store/balance';
+import {
+  buildPortfolioAddressChange,
+  resolvePortfolioAddressBalance,
+} from '@/store/homePortfolio/consistency';
 import { Text } from '@/components/Typography';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 
 const SPACING_HEIGHT = 8;
 interface AddressListProps {
@@ -29,102 +31,116 @@ interface AddressListProps {
   onAddAddressPress?: () => void;
   onDone?: () => void;
   onMoreAddressListPress?: () => void;
-  isManageMode?: boolean;
+  variant?: 'manage';
 }
 const AddressList = ({
   showMarkIfNewlyAdded = true,
   onAddAddressPress,
   onDone,
   onMoreAddressListPress,
-  isManageMode,
+  variant,
 }: AddressListProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
   const { myTop10Accounts, myTop10Records, notMatteredAccounts } =
-    useAccountInfo();
-
-  const balanceMap = balanceStore(s => s.balanceMap);
-
-  const { multi24hBalance } = useScene24hBalanceMulti24hBalance('Home');
+    useHomeAssetAccountInfo();
+  const top10Addresses = useMemo(() => {
+    return myTop10Accounts.map(item => item.address.toLowerCase());
+  }, [myTop10Accounts]);
+  const balanceSnapshots =
+    addressBalanceStore.useAddressesSnapshot(top10Addresses);
+  const balance24hSnapshots =
+    balance24hStore.useAddresses24hBalanceSnapshots(top10Addresses);
 
   const addressListData = useMemo(() => {
+    const balanceMap = balanceSnapshots.reduce(
+      (acc, snapshot) => {
+        if (snapshot.value) {
+          acc[snapshot.address] = snapshot.value;
+        }
+
+        return acc;
+      },
+      {} as Record<
+        string,
+        {
+          totalBalance: number;
+          evmBalance: number;
+        }
+      >,
+    );
+    const multi24hBalance = balance24hSnapshots.reduce(
+      (acc, snapshot) => {
+        if (snapshot.value) {
+          acc[snapshot.address] = snapshot.value;
+        }
+
+        return acc;
+      },
+      {} as Record<
+        string,
+        {
+          total_usd_value?: number;
+        }
+      >,
+    );
+
     return myTop10Accounts
       .map(item => {
-        const account = balanceMap[item.address.toLowerCase()];
-
-        const balance = account?.totalBalance || item.balance || 0;
-        const evmBalance = account?.evmBalance || item.evmBalance || 0;
-
-        const changeData = multi24hBalance[item.address.toLowerCase()];
-        const startValue = changeData?.total_usd_value || 0;
-        const { changePercent, assetsChange } = computeBalanceChange(
-          evmBalance,
-          startValue,
-        );
+        const address = item.address.toLowerCase();
+        const account = balanceMap[address];
+        const resolvedBalance = resolvePortfolioAddressBalance({
+          resource: account,
+          fallback: {
+            totalBalance: item.balance,
+            evmBalance: item.evmBalance,
+          },
+        });
+        const change = buildPortfolioAddressChange({
+          currentEvmBalance: account?.evmBalance,
+          previousEvmBalance: multi24hBalance[address]?.total_usd_value,
+        });
         return {
           ...item,
-          balance,
-          evmBalance,
-          changPercent: changeData ? changePercent : undefined,
-          isLoss: changeData ? assetsChange < 0 : undefined,
+          balance: resolvedBalance.totalBalance,
+          evmBalance: resolvedBalance.evmBalance,
+          changPercent: change?.changePercent,
+          isLoss: change?.isLoss,
         };
       })
       .sort((a, b) => b.balance - a.balance);
-  }, [balanceMap, myTop10Accounts, multi24hBalance]);
+  }, [balance24hSnapshots, balanceSnapshots, myTop10Accounts]);
 
   const renderItem = useCallback(
     ({ item }) => {
-      if (isManageMode) {
-        const gotoAddressDetail = () => {
-          onDone?.();
-          naviPush(RootNames.StackAddress, {
-            screen: RootNames.AddressDetail,
-            params: {
-              address: item.address,
-              type: item.type,
-              brandName: item.brandName,
-            },
-          });
-        };
-        return (
-          <View style={[styles.itemGap, styles.manageModeItem]}>
-            <Pressable onPress={gotoAddressDetail} style={styles.manageBtn}>
-              <RcIconSettingCC
-                width={20}
-                height={20}
-                color={colors2024['neutral-secondary']}
-              />
-            </Pressable>
-            <View style={{ width: '100%' }}>
-              <AddressEntry
-                showMarkIfNewlyAdded={showMarkIfNewlyAdded}
-                data={item}
-                onSelect={onDone}
-              />
-            </View>
-          </View>
-        );
-      }
+      const gotoAddressDetail = () => {
+        onDone?.();
+        naviPush(RootNames.StackAddress, {
+          screen: RootNames.AddressDetail,
+          params: {
+            address: item.address,
+            type: item.type,
+            brandName: item.brandName,
+          },
+        });
+      };
+
       return (
         <View style={styles.itemGap}>
           <AddressEntry
             showMarkIfNewlyAdded={showMarkIfNewlyAdded}
             data={item}
-            onSelect={onDone}
+            onSelect={variant === 'manage' ? gotoAddressDetail : onDone}
+            onManage={variant === 'manage' ? undefined : gotoAddressDetail}
+            manageAccessibilityLabel={t('component.portfolios.manage')}
+            disableNavigate={variant === 'manage'}
+            isShowBackupBadge
           />
         </View>
       );
     },
-    [
-      isManageMode,
-      styles.itemGap,
-      styles.manageModeItem,
-      styles.manageBtn,
-      onDone,
-      colors2024,
-      showMarkIfNewlyAdded,
-    ],
+    [styles.itemGap, showMarkIfNewlyAdded, variant, onDone, t],
   );
 
   const handleMoreWalletsPress = useCallback(() => {
@@ -133,7 +149,12 @@ const AddressList = ({
 
   const notMatterAvatarList = useMemo(() => {
     return notMatteredAccounts
-      .filter(x => !myTop10Records.has(x.address.toLowerCase()))
+      .filter(
+        account =>
+          account.type === KEYRING_CLASS.WATCH ||
+          account.type === KEYRING_CLASS.GNOSIS ||
+          !myTop10Records.has(account.address.toLowerCase()),
+      )
       .slice(0, 3);
   }, [notMatteredAccounts, myTop10Records]);
 
@@ -250,7 +271,7 @@ const AddressList = ({
       showsHorizontalScrollIndicator={false}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.list}
-      ListFooterComponent={isManageMode ? null : renderFooter}
+      ListFooterComponent={renderFooter}
       style={styles.listContainer}
       ListHeaderComponent={<View style={{ height: SPACING_HEIGHT }} />}
     />
@@ -260,44 +281,35 @@ const AddressList = ({
 export const AddressListModal = ({
   onAddAddressPress,
   onDone,
-}: AddressListProps) => {
+  variant,
+  subTitle,
+}: AddressListProps & {
+  subTitle?: string;
+}) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const [moreAddressList, setMoreAddressList] = useState(false);
-  const [isManageMode, setIsManageMode] = useState(false);
-
-  const switchManageMode = () => {
-    setIsManageMode(e => !e);
-  };
 
   if (moreAddressList) {
     return (
       <NotMatterAddressDialog
         onDone={onDone}
         onBack={() => setMoreAddressList(false)}
+        variant={variant}
+        isShowBackupBadge
       />
     );
   }
   return (
     <AutoLockView as="View" style={styles.container}>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'flex-end',
-          paddingRight: 20,
-        }}>
-        <ManageSetting
-          isManageMode={isManageMode}
-          switchManageMode={switchManageMode}
-        />
-      </View>
       <Text style={styles.title}>{t('component.multiAddressModal.title')}</Text>
+      {subTitle ? <Text style={styles.subTitle}>{subTitle}</Text> : null}
 
       <AddressList
         onAddAddressPress={onAddAddressPress}
         onDone={onDone}
+        variant={variant}
         onMoreAddressListPress={() => setMoreAddressList(true)}
-        isManageMode={isManageMode}
       />
     </AutoLockView>
   );
@@ -310,22 +322,23 @@ const getStyles = createGetStyles2024(ctx => ({
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],
   },
-  done: {
-    color: ctx.colors2024['neutral-secondary'],
-    textAlign: 'center',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontStyle: 'normal',
-    fontWeight: '700',
-    lineHeight: 20,
-  },
   title: {
+    marginTop: 20,
     fontSize: 20,
     fontWeight: '800',
     lineHeight: 24,
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
     color: ctx.colors2024['neutral-title-1'],
+  },
+  subTitle: {
+    marginTop: 7,
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 20,
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    color: ctx.colors2024['neutral-secondary'],
   },
   footerGap: {
     height: 70,
@@ -354,29 +367,11 @@ const getStyles = createGetStyles2024(ctx => ({
   itemGap: {
     marginTop: SPACING_HEIGHT,
   },
-  manageModeItem: {
-    overflow: 'hidden',
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: -16,
-  },
-  manageBtn: {
-    width: 64,
-    height: 64,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   listContainer: {
     flex: 1,
     marginTop: 8,
   },
   list: {
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-0']
-      : ctx.colors2024['neutral-bg-1'],
-    paddingHorizontal: 16,
-  },
-  bgContainer: {
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],
@@ -433,11 +428,6 @@ const getStyles = createGetStyles2024(ctx => ({
     borderWidth: 2,
     borderColor: ctx.colors2024['neutral-bg-1'],
     borderRadius: 10,
-  },
-  moreWalletsButtonIconImage: {
-    width: 24,
-    height: 24,
-    borderRadius: 8,
   },
   horizontalLine: {
     // width: 100,

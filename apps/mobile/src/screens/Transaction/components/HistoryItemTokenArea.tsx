@@ -2,6 +2,7 @@
 import React, { useMemo } from 'react';
 import RcIconSwitch from '@/assets2024/icons/history/IconSwitch.svg';
 import RcIconYes from '@/assets2024/icons/history/IconTxYes.svg';
+import RcIconYesFailure from '@/assets2024/icons/history/IconYesFailure.svg';
 import RcIconNo from '@/assets2024/icons/history/IconTxNo.svg';
 import RcIconNoDark from '@/assets2024/icons/history/IconTxNoDark.svg';
 import { View, ViewStyle } from 'react-native';
@@ -11,13 +12,14 @@ import { IconDefaultNFT } from '@/assets/icons/nft';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { HistoryItemCateType } from './type';
-import { TokenChangeDataItem } from './HistoryItem';
+import type { TokenChangeDataItem } from '@/types/history';
 import { isNFTTokenId } from './utils';
 
 interface ItemIconProps {
   type?: HistoryItemCateType | undefined;
   tokenChangeData: TokenChangeDataItem[];
   tokenApproveData: TokenChangeDataItem[];
+  isFailure?: boolean;
 }
 
 const LEN_ENUM = {
@@ -43,7 +45,7 @@ const Avatar = ({
       {isNft ? (
         <Media
           failedPlaceholder={<IconDefaultNFT width={size} height={size} />}
-          type="image_url"
+          type={item?.token?.content_type || 'image_url'}
           src={
             item?.token?.content?.endsWith('.svg') ? '' : item?.token?.content
           }
@@ -77,6 +79,7 @@ export const HistoryItemTokenArea = ({
   type,
   tokenChangeData,
   tokenApproveData,
+  isFailure,
 }: ItemIconProps) => {
   const { styles, isLight } = useTheme2024({ getStyle });
 
@@ -129,7 +132,11 @@ export const HistoryItemTokenArea = ({
           <RcIconNoDark style={[styles.image]} />
         );
       } else {
-        return <RcIconYes style={[styles.image]} />;
+        return isFailure ? (
+          <RcIconYesFailure style={[styles.image]} />
+        ) : (
+          <RcIconYes style={[styles.image]} />
+        );
       }
     case LEN_ENUM.THREE:
     default:

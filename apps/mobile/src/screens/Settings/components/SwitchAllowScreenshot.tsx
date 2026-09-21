@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { type Ref, useImperativeHandle, useCallback } from 'react';
 
 import { AppSwitch, SwitchToggleType } from '@/components';
 import { useThemeColors } from '@/hooks/theme';
@@ -6,10 +6,12 @@ import { useForceAllowScreenshot } from '@/hooks/appSettings';
 import { IS_IOS } from '@/core/native/utils';
 import { Alert } from 'react-native';
 
-export const SwitchAllowScreenshot = React.forwardRef<
-  SwitchToggleType,
-  React.ComponentProps<typeof AppSwitch>
->((props, ref) => {
+export const SwitchAllowScreenshot = ({
+  ref,
+  ...props
+}: React.ComponentProps<typeof AppSwitch> & {
+  ref?: Ref<SwitchToggleType>;
+}) => {
   const { forceAllowScreenshot, setAllowScreenshot } =
     useForceAllowScreenshot();
   const colors = useThemeColors();
@@ -27,7 +29,7 @@ export const SwitchAllowScreenshot = React.forwardRef<
     [setAllowScreenshot],
   );
 
-  React.useImperativeHandle(ref, () => ({
+  useImperativeHandle(ref, () => ({
     toggle: (enabled?: boolean) => {
       handleToggle(enabled);
     },
@@ -46,4 +48,4 @@ export const SwitchAllowScreenshot = React.forwardRef<
       circleBorderActiveColor={colors['green-default']}
     />
   );
-});
+};

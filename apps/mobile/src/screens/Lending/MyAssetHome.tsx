@@ -1,8 +1,15 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import { FlatList, RefreshControl, View } from 'react-native';
+import {
+  useIsFocused,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RouteProp } from '@react-navigation/native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { Button } from '@/components2024/Button';
@@ -23,16 +30,45 @@ import SupplyItem from './components/ItemRender/SupplyItem';
 import { displayGhoForMintableMarket } from './utils/supply';
 import SummaryItem from './components/ItemRender/SummaryItem';
 import {
+  getWrappedNativeReservePair,
+  getWrappedNativeTokenOptions,
+  type PositionTokenOption,
+} from './utils/positionTokenSelector';
+import {
   useFetchLendingData,
   useLendingIsLoading,
   useLendingRemoteData,
+  useRefreshLendingWalletBalances,
   useLendingSummary,
   useSelectedMarket,
 } from './hooks';
 import { ItemListLoading } from './components/ItemRender/ItemLoading';
 import EmptyItem from './components/ItemRender/EmptyItem';
-import { DisableBorrowTip } from './components/DisableBorrowTip';
-import { LendingHeader } from './components/Header';
+import {
+  BOTTOM_BUTTON_DOUBLE_HEIGHT,
+  BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
+  BOTTOM_BUTTON_TEXT_SIZE,
+  RootNames,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
+import type { TransactionNavigatorParamList } from '@/navigation-type';
+import {
+  clearLendingActionPopupState,
+  consumeLendingActionPopupToRestore,
+  hideActiveLendingActionPopupForBlur,
+  openLendingActionPopup,
+  peekLendingActionPopupToRestore,
+} from './utils/actionPopup';
+
+type LendingRouteProp = RouteProp<
+  TransactionNavigatorParamList,
+  typeof RootNames.Lending
+>;
+
+type LendingNavigationProp = NativeStackNavigationProp<
+  TransactionNavigatorParamList,
+  typeof RootNames.Lending
+>;
 
 type MyAssetItem =
   | {
@@ -44,16 +80,24 @@ type MyAssetItem =
       type: 'supply';
       underlyingAsset: string;
       usdValue: number;
+      tokenOptions?: PositionTokenOption[];
     };
 
 const MyAssetHome: React.FC = () => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { chainEnum, marketKey } = useSelectedMarket();
   const { reserves } = useLendingRemoteData();
   const { loading: isFetching } = useLendingIsLoading();
   const { fetchData } = useFetchLendingData();
+  const { refreshWalletBalances } = useRefreshLendingWalletBalances();
   const { displayPoolReserves, iUserSummary, apyInfo } = useLendingSummary();
+  const route = useRoute<LendingRouteProp>();
+  const navigation = useNavigation<LendingNavigationProp>();
+  const isFocused = useIsFocused();
+  const openedRouteActionKeyRef = useRef<string | null>(null);
+  const restoringPopupRefreshKeyRef = useRef<string | null>(null);
+  const [activeUnderlyingAsset, setActiveUnderlyingAsset] = useState('');
 
   const loading = isFetching || !iUserSummary || !displayPoolReserves;
 
@@ -103,13 +147,49 @@ const MyAssetHome: React.FC = () => {
         item.reserve.eModes,
       );
     });
+    const {
+      nativeReserve: nativeSupplyReserve,
+      wrappedReserve: wrappedNativeSupplyReserve,
+    } = getWrappedNativeReservePair(supplyList, chainEnum);
+    const shouldMergeWrappedNativeSupply =
+      nativeSupplyReserve &&
+      wrappedNativeSupplyReserve &&
+      nativeSupplyReserve.underlyingBalance ===
+        wrappedNativeSupplyReserve.underlyingBalance &&
+      nativeSupplyReserve.underlyingBalanceUSD ===
+        wrappedNativeSupplyReserve.underlyingBalanceUSD;
+    const wrappedNativeTokenOptions = shouldMergeWrappedNativeSupply
+      ? getWrappedNativeTokenOptions({
+          displayPoolReserves: supplyList,
+          chainEnum,
+        })
+      : undefined;
+
     supplyList?.forEach(item => {
+      if (
+        shouldMergeWrappedNativeSupply &&
+        wrappedNativeSupplyReserve &&
+        isSameAddress(
+          item.underlyingAsset,
+          wrappedNativeSupplyReserve.underlyingAsset,
+        )
+      ) {
+        return;
+      }
       const supplyUsd = Number(item.underlyingBalanceUSD || '0');
       if (supplyUsd > 0) {
         list.push({
           type: 'supply',
           underlyingAsset: item.underlyingAsset,
           usdValue: supplyUsd,
+          tokenOptions:
+            nativeSupplyReserve &&
+            isSameAddress(
+              item.underlyingAsset,
+              nativeSupplyReserve.underlyingAsset,
+            )
+              ? wrappedNativeTokenOptions
+              : undefined,
         });
       }
     });
@@ -135,39 +215,38 @@ const MyAssetHome: React.FC = () => {
 
   const handleOpenSupplyList = useCallback(() => {
     const modalId = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.LENDING_SUPPLY_LIST,
+      name: MODAL_NAMES.LENDING_TOKEN_LIST,
+      initialTab: 'supply',
+      onBeforeSwapNavigate: () => {
+        removeGlobalBottomSheetModal2024(modalId);
+      },
       onCancel: () => {
         removeGlobalBottomSheetModal2024(modalId);
       },
       bottomSheetModalProps: {
-        enableContentPanningGesture: true,
         rootViewType: 'View',
         handleStyle: {
-          backgroundColor: isLight
-            ? colors2024['neutral-bg-0']
-            : colors2024['neutral-bg-1'],
+          backgroundColor: colors2024['neutral-bg-1'],
         },
       },
     });
-  }, [colors2024, isLight]);
+  }, [colors2024]);
 
   const handleOpenBorrowList = useCallback(() => {
     const modalId = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.LENDING_BORROW_LIST,
+      name: MODAL_NAMES.LENDING_TOKEN_LIST,
+      initialTab: 'borrow',
       bottomSheetModalProps: {
-        enableContentPanningGesture: true,
         rootViewType: 'View',
         handleStyle: {
-          backgroundColor: isLight
-            ? colors2024['neutral-bg-0']
-            : colors2024['neutral-bg-1'],
+          backgroundColor: colors2024['neutral-bg-1'],
         },
       },
       onCancel: () => {
         removeGlobalBottomSheetModal2024(modalId);
       },
     });
-  }, [colors2024, isLight]);
+  }, [colors2024]);
 
   const keyExtractor = useCallback(
     (item: MyAssetItem) => {
@@ -190,33 +269,174 @@ const MyAssetHome: React.FC = () => {
       return (
         <SupplyItem
           underlyingAsset={item.underlyingAsset}
+          activeUnderlyingAsset={activeUnderlyingAsset}
+          tokenOptions={item.tokenOptions}
+          onChangeActiveUnderlyingAsset={setActiveUnderlyingAsset}
           style={styles.item}
         />
       );
     },
-    [styles.item],
+    [activeUnderlyingAsset, styles.item],
   );
 
   React.useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  const handlePendingClear = useCallback(() => {
-    setTimeout(() => {
-      fetchData(true);
-    }, 200);
+  const findReserveByTokenAddress = useCallback(
+    (tokenAddress: string) => {
+      const keyword = tokenAddress.toLowerCase();
+      const matchesToken = (address?: string) => {
+        if (!address) {
+          return false;
+        }
+        try {
+          return isSameAddress(address, tokenAddress);
+        } catch {
+          return false;
+        }
+      };
+      return displayPoolReserves?.find(item => {
+        return (
+          matchesToken(item.underlyingAsset) ||
+          matchesToken(item.reserve.underlyingAsset) ||
+          item.reserve.symbol.toLowerCase() === keyword
+        );
+      });
+    },
+    [displayPoolReserves],
+  );
+
+  React.useEffect(() => {
+    if (!isFocused) {
+      hideActiveLendingActionPopupForBlur();
+      return;
+    }
+    if (loading || !iUserSummary) {
+      return;
+    }
+
+    const popupToRestore = peekLendingActionPopupToRestore();
+    if (!popupToRestore) {
+      restoringPopupRefreshKeyRef.current = null;
+      return;
+    }
+
+    const restoreKey = `${popupToRestore.popup}-${
+      popupToRestore.tokenAddress
+    }-${popupToRestore.source || ''}`;
+    if (restoringPopupRefreshKeyRef.current !== restoreKey) {
+      restoringPopupRefreshKeyRef.current = restoreKey;
+      refreshWalletBalances(true).catch(() => {
+        restoringPopupRefreshKeyRef.current = null;
+      });
+    }
+
+    const reserve = findReserveByTokenAddress(popupToRestore.tokenAddress);
+    if (!reserve) {
+      restoringPopupRefreshKeyRef.current = null;
+      clearLendingActionPopupState();
+      return;
+    }
+
+    openLendingActionPopup({
+      popup: popupToRestore.popup,
+      reserve,
+      userSummary: iUserSummary,
+      colors2024,
+      source: popupToRestore.source,
+    });
+    restoringPopupRefreshKeyRef.current = null;
+    consumeLendingActionPopupToRestore();
+  }, [
+    colors2024,
+    findReserveByTokenAddress,
+    iUserSummary,
+    isFocused,
+    loading,
+    refreshWalletBalances,
+  ]);
+
+  React.useEffect(() => {
+    const tokenAddress = route.params?.tokenAddress;
+    const direction = route.params?.direction;
+    const source = route.params?.source;
+    if (!tokenAddress || !direction || loading || !iUserSummary) {
+      return;
+    }
+
+    const reserve = findReserveByTokenAddress(tokenAddress);
+
+    if (!reserve) {
+      return;
+    }
+
+    const actionKey = `${marketKey}-${direction}-${tokenAddress}`;
+    if (openedRouteActionKeyRef.current === actionKey) {
+      return;
+    }
+    openedRouteActionKeyRef.current = actionKey;
+
+    if (direction !== 'supply' && direction !== 'borrow') {
+      return;
+    }
+
+    if (direction === 'borrow') {
+      openLendingActionPopup({
+        popup: 'repay',
+        reserve,
+        userSummary: iUserSummary,
+        colors2024,
+        source,
+      });
+    } else {
+      const modalId = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.WITHDRAW_ACTION_DETAIL,
+        reserve,
+        userSummary: iUserSummary,
+        source: source === 'Portfolio Defi' ? source : undefined,
+        onClose: () => {
+          removeGlobalBottomSheetModal2024(modalId);
+        },
+        bottomSheetModalProps: {
+          enableContentPanningGesture: true,
+          enablePanDownToClose: true,
+          enableDismissOnClose: true,
+          handleStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+          },
+        },
+      });
+    }
+
+    navigation.setParams({
+      tokenAddress: undefined,
+      direction: undefined,
+      source: undefined,
+    });
+  }, [
+    colors2024,
+    findReserveByTokenAddress,
+    iUserSummary,
+    loading,
+    marketKey,
+    navigation,
+    route.params?.direction,
+    route.params?.source,
+    route.params?.tokenAddress,
+  ]);
+
+  const handleRefresh = useCallback(() => {
+    fetchData(true);
   }, [fetchData]);
 
   const renderHeader = useCallback(() => {
     return (
       <View style={styles.headerContainer}>
-        <View style={styles.headerLeft}>
-          <ChainSelector />
-        </View>
-        <LendingHeader onPendingClear={handlePendingClear} />
+        <ChainSelector />
       </View>
     );
-  }, [styles.headerContainer, styles.headerLeft, handlePendingClear]);
+  }, [styles.headerContainer]);
 
   const renderEmpty = useCallback(() => {
     if (loading) {
@@ -224,13 +444,6 @@ const MyAssetHome: React.FC = () => {
     }
     return <EmptyItem />;
   }, [loading]);
-
-  const disableBorrowButton = useMemo(() => {
-    return (
-      !iUserSummary?.availableBorrowsUSD ||
-      iUserSummary?.availableBorrowsUSD === '0'
-    );
-  }, [iUserSummary?.availableBorrowsUSD]);
 
   return (
     <View style={styles.container}>
@@ -259,10 +472,7 @@ const MyAssetHome: React.FC = () => {
           ) : null
         }
         refreshControl={
-          <RefreshControl
-            refreshing={false}
-            onRefresh={() => fetchData(true)}
-          />
+          <RefreshControl refreshing={false} onRefresh={handleRefresh} />
         }
       />
       <View style={styles.actionBar}>
@@ -271,6 +481,7 @@ const MyAssetHome: React.FC = () => {
             type="primary"
             containerStyle={[styles.actionButton]}
             buttonStyle={styles.normalButton}
+            height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
             titleStyle={styles.actionGhostTitle}
             title={t('page.Lending.supplyDetail.actions')}
             disabled={loading}
@@ -278,16 +489,16 @@ const MyAssetHome: React.FC = () => {
           />
         </View>
         <View style={styles.actionBtnContainer}>
-          <DisableBorrowTip showTip={disableBorrowButton}>
-            <Button
-              type="aave"
-              containerStyle={styles.actionButton}
-              titleStyle={styles.actionPrimaryTitle}
-              title={t('page.Lending.borrowDetail.actions')}
-              disabled={loading || disableBorrowButton}
-              onPress={handleOpenBorrowList}
-            />
-          </DisableBorrowTip>
+          <Button
+            type="aave"
+            containerStyle={styles.actionButton}
+            height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+            titleStyle={styles.actionPrimaryTitle}
+            title={t('page.Lending.borrowDetail.actions')}
+            splitAndroidCJKTitle
+            disabled={loading}
+            onPress={handleOpenBorrowList}
+          />
         </View>
       </View>
     </View>
@@ -296,78 +507,66 @@ const MyAssetHome: React.FC = () => {
 
 export default MyAssetHome;
 
-const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
-  container: {
-    flex: 1,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  headerLeft: {
-    flex: 1,
-  },
-  listContentContainer: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  footer: {
-    paddingTop: 12,
-    paddingBottom: 118,
-  },
-  actionBar: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-    paddingTop: 12,
-    paddingHorizontal: 16,
-    paddingBottom: 34,
-    backgroundColor: colors2024['neutral-bg-1'],
-  },
-  actionBtnContainer: {
-    flex: 1,
-    backgroundColor: colors2024['neutral-bg-1'],
-  },
-  actionButton: {
-    borderRadius: 12,
-  },
-  normalButton: {
-    backgroundColor: colors2024['neutral-line'],
-  },
-  actionGhostTitle: {
-    fontSize: 17,
-    lineHeight: 22,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-title-1'],
-  },
-  actionPrimaryTitle: {
-    fontSize: 17,
-    lineHeight: 22,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-  },
-  item: {
-    marginHorizontal: 0,
-  },
-  emptyContainer: {
-    paddingTop: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyText: {
-    fontSize: 14,
-    lineHeight: 18,
-    color: colors2024['neutral-secondary'],
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-  },
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, safeAreaInsets, isLight }) => ({
+    container: {
+      flex: 1,
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-0']
+        : colors2024['neutral-bg-1'],
+    },
+    headerContainer: {
+      //flexDirection: 'row',
+      //gap: 16,
+    },
+    listContentContainer: {
+      paddingVertical: 6,
+      paddingHorizontal: 16,
+    },
+    footer: {
+      paddingTop: 12,
+      paddingBottom: 118,
+    },
+    actionBar: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
+      paddingTop: 12,
+      paddingHorizontal: 16,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+      backgroundColor: colors2024['neutral-bg-1'],
+    },
+    actionBtnContainer: {
+      flex: 1,
+      backgroundColor: colors2024['neutral-bg-1'],
+    },
+    actionButton: {
+      borderRadius: 12,
+      height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
+    },
+    normalButton: {
+      backgroundColor: colors2024['neutral-line'],
+    },
+    actionGhostTitle: {
+      fontSize: BOTTOM_BUTTON_TEXT_SIZE,
+      lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+      color: colors2024['neutral-title-1'],
+    },
+    actionPrimaryTitle: {
+      fontSize: BOTTOM_BUTTON_TEXT_SIZE,
+      lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+    },
+    item: {
+      marginHorizontal: 0,
+    },
+  }),
+);

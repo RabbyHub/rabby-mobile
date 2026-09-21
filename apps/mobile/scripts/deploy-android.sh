@@ -9,49 +9,129 @@ project_dir=$(dirname $script_dir)
 
 . $script_dir/fns.sh --source-only
 . $script_dir/fast-build/_fns.sh --source-only
+. $script_dir/turbo-build/_fns.sh --source-only
 
-USE_RESIGN_APK=${USE_RESIGN_APK:-"false"}
+export RABBY_MOBILE_ANDROID_FAST_BUILD="${RABBY_MOBILE_ANDROID_FAST_BUILD:-false}"
+FAST_BUILD_ENABLED=$(fast_build_enabled_value)
+UPLOAD_TEMPLATE_APK=${RABBY_MOBILE_UPLOAD_TEMPLATE_APK:-${FAST_BUILD_ENABLED}}
 export BUILD_TARGET_PLATFORM="android";
+export RABBY_MOBILE_BUILD_ENV="regression";
 check_build_params;
 check_s3_params;
 checkout_s3_pub_deployment_params;
 
 cd $project_dir;
 
-# prepare variables
-# TODO: read from gradle
-proj_version=$(node --eval="process.stdout.write(require('./package.json').version)");
-app_display_name=$(node --eval="process.stdout.write(require('./app.json').displayName)");
-android_version_name=$(grep -m1 "versionName" ./android/app/build.gradle | cut -d'"' -f2)
-android_version_code=$(grep -m1 "versionCode" ./android/app/build.gradle | xargs | cut -c 13-)
+refresh_android_version_metadata() {
+  proj_version=$(node --eval="process.stdout.write(require('./package.json').version)")
+  app_display_name=$(node --eval="process.stdout.write(require('./app.json').displayName)")
+  android_version_name=$(resolve_google_play_android_version_name)
+  android_version_code=$(resolve_google_play_android_version_code)
 
-BUILD_DATE=`date '+%Y%m%d_%H%M%S'`
+  BUILD_DATE=$(date '+%Y%m%d_%H%M%S')
+  version_bundle_name="$BUILD_DATE-${android_version_name}.${android_version_code}"
+}
 
-version_bundle_name="$BUILD_DATE-${android_version_name}.${android_version_code}"
+prepare_appstore_android_version_code() {
+  local package_name latest_version_code target_version_code
+
+  if ! resolve_google_play_service_account_json >/dev/null 2>&1; then
+    echo "[deploy-android] skip Google Play versionCode auto-bump because no service account credentials are available."
+    return 0
+  fi
+
+  package_name=$(resolve_google_play_package_name "") || {
+    echo "[deploy-android] skip Google Play versionCode auto-bump because package name could not be resolved."
+    return 0
+  }
+
+  latest_version_code=$(resolve_google_play_latest_version_code "$package_name" 2>/dev/null || true)
+  if [ -z "$latest_version_code" ]; then
+    echo "[deploy-android] skip Google Play versionCode auto-bump because latest Google Play versionCode could not be determined."
+    return 0
+  fi
+
+  if [ "$android_version_code" -gt "$latest_version_code" ]; then
+    echo "[deploy-android] Google Play versionCode preflight passed before build: local=$android_version_code latest=$latest_version_code"
+    return 0
+  fi
+
+  target_version_code=$((latest_version_code + 1))
+  echo "[deploy-android] local Android versionCode $android_version_code is not ahead of Google Play latest $latest_version_code; bumping local build number to at least $target_version_code before appstore build."
+
+  ./node_modules/.bin/react-native-version \
+    --never-amend \
+    --target android \
+    --set-build "$target_version_code" || return 1
+  refresh_android_version_metadata
+
+  echo "[deploy-android] Android versionCode prepared for appstore build: $android_version_code"
+}
+
+refresh_android_version_metadata
+
 version_bundle_suffix=""
 apk_name="rabby-mobile.apk"
 deployment_local_dir="$script_dir/deployments/android"
 
 rm -rf $deployment_local_dir && mkdir -p $deployment_local_dir;
 
+if [ "$buildchannel" == "appstore" ]; then
+  prepare_appstore_android_version_code || exit $?
+fi
+
+prepare_android_build_artifacts() {
+  turbo_prepare_js_dependencies || return $?
+  turbo_prepare_ruby_bundle || return $?
+
+  if turbo_build_enabled; then
+    android_build_artifacts_key=$(turbo_compute_android_build_artifacts_key)
+
+    if turbo_android_build_artifacts_ready "$android_build_artifacts_key"; then
+      turbo_log "android build artifacts already up to date"
+      return 0
+    fi
+  fi
+
+  ensure_inpage_bridge_assets || return $?
+
+  yarn check-nodeengines &&
+    yarn ../mobile-local-pages make-theme &&
+    yarn ../mobile-local-pages build --mode android &&
+    yarn react-native-asset &&
+    sh ./scripts/fns.sh reset_builtin_assets &&
+    yarn buildworker:prod:android
+  prepare_status=$?
+
+  if [ $prepare_status -eq 0 ] && turbo_build_enabled; then
+    turbo_mark_android_build_artifacts_ready "$android_build_artifacts_key"
+  fi
+
+  return $prepare_status
+}
+
 build_selfhost() {
   export RABBY_MOBILE_BUILD_ENV="regression";
-  [ -z "$CI" ] && yarn;
-  yarn check-nodeengines && yarn ../mobile-local-pages bundle:all && yarn link-assets && yarn buildworker:prod:android;
+  prepare_android_build_artifacts || return $?
   if [ $RABBY_HOST_OS != "Windows" ]; then
-    if [ "$USE_RESIGN_APK" == "true" ]; then
-      echo "[deploy-android] try to resign template.apk to get the new one."
+    if [ "$FAST_BUILD_ENABLED" = "true" ]; then
+      echo "[deploy-android] try to fast-build from template.apk."
+      echo "[deploy-android] fast build scope: ${RABBY_MOBILE_FAST_BUILD_SCOPE:-bundle-only}"
       CI="$CI" SKIP_YARN=true sh $script_dir/fast-build/android.sh resign
       if [ $? -eq 0 ]; then
-        echo "[deploy-android] APK resigned successfully."
+        echo "[deploy-android] APK fast-build succeeded."
         android_export_target="$script_dir/.fast-build-work/app-resigned.apk"
         return ;
       fi
-      echo "Failed to resign APK. Will Build it again."
-      USE_RESIGN_APK="false"
+      echo "Failed to fast-build APK. Will build it again."
+      FAST_BUILD_ENABLED="false"
     fi
     echo "[deploy-android] build with fastlane."
-    bundle exec fastlane android selfhost
+    turbo_restore_gradle_state
+    turbo_bundle_exec exec fastlane android selfhost
+    fastlane_status=$?
+    [ $fastlane_status -eq 0 ] && turbo_save_gradle_state
+    return $fastlane_status
   else
     echo "[deploy-android] run build.sh script directly."
     if [ $buildchannel == "selfhost" ]; then
@@ -64,10 +144,26 @@ build_selfhost() {
 
 build_appstore() {
   export RABBY_MOBILE_BUILD_ENV="production";
-  yarn && yarn check-nodeengines && yarn ../mobile-local-pages bundle:all && yarn link-assets && yarn buildworker:prod:android;
+  if turbo_build_enabled; then
+    prepare_android_build_artifacts || return $?
+  else
+    ensure_inpage_bridge_assets || return $?
+    yarn &&
+      yarn check-nodeengines &&
+      yarn ../mobile-local-pages bundle:all &&
+      yarn link-assets &&
+      yarn buildworker:prod:android
+  fi
+
+  turbo_prepare_ruby_bundle || return $?
+
   if [ $RABBY_HOST_OS != "Windows" ]; then
     echo "[deploy-android] build with fastlane."
-    bundle exec fastlane android playstore
+    turbo_restore_gradle_state
+    turbo_bundle_exec exec fastlane android playstore
+    fastlane_status=$?
+    [ $fastlane_status -eq 0 ] && turbo_save_gradle_state
+    return $fastlane_status
   else
     echo "[deploy-android] run build.sh script directly."
     sh $project_dir/android/build.sh buildAppStore
@@ -97,6 +193,7 @@ done
 
 echo "[deploy-android] start build..."
 if [ $buildchannel == "appstore" ]; then
+  google_play_warn_if_version_code_not_ahead "$android_version_code" "" "Android appstore build preflight"
   version_bundle_suffix=".aab"
   staging_dir_suffix="-appstore"
   [ -z $android_export_target ] && android_export_target="$project_dir/android/app/build/outputs/bundle/release/app-release.aab"
@@ -143,7 +240,7 @@ fi
 
 file_date=$(date -r $android_export_target '+%Y%m%d_%H%M%S')
 version_bundle_name="$file_date-${android_version_name}.${android_version_code}"
-if [ "$USE_RESIGN_APK" == "true" ]; then
+if [ "$FAST_BUILD_ENABLED" = "true" ]; then
   version_bundle_name="${version_bundle_name}-resigned"
   apk_name="rabby-mobile-resigned.apk"
 fi
@@ -168,6 +265,21 @@ fi
 
 cp $android_export_target $deployment_local_dir/$apk_name
 
+android_16kb_check_mode="${RABBY_MOBILE_ANDROID_16KB_CHECK:-warn}"
+android_16kb_report_json="$deployment_local_dir/android-16kb-page-size.json"
+android_16kb_report_text="$deployment_local_dir/android-16kb-page-size.txt"
+if [[ "$version_bundle_suffix" =~ .*\.apk ]] && [ "$android_16kb_check_mode" != "off" ]; then
+  echo "[deploy-android] check APK 16KB page-size support..."
+  if ! node $script_dir/check-android-apk-16kb.js \
+    --apk "$android_export_target" \
+    --json "$android_16kb_report_json" \
+    --text "$android_16kb_report_text" \
+    --mode "$android_16kb_check_mode"; then
+    echo "[deploy-android] APK 16KB page-size check failed in $android_16kb_check_mode mode."
+    exit 1
+  fi
+fi
+
 print_manual_upload_sentry_sourcemap() {
   if [ ! -z $SENTRY_DISABLE_AUTO_UPLOAD ]; then
     echo "[deploy-android] manual upload sourcemap to sentry:"
@@ -182,8 +294,8 @@ print_manual_upload_sentry_sourcemap() {
   fi
 }
 
-# only upload apk as template when it is not resigned
-if [ "$USE_RESIGN_APK" != "true" ] && [ $buildchannel = "selfhost-reg" ] && [ ! -z $RABBY_MOBILE_REG_PUB_DEPLOYMENT ]; then
+# only upload apk as template when it is not fast-built from a template
+if [ "$UPLOAD_TEMPLATE_APK" = "true" ] && [ "$FAST_BUILD_ENABLED" != "true" ] && [ $buildchannel = "selfhost-reg" ] && [ ! -z $RABBY_MOBILE_REG_PUB_DEPLOYMENT ]; then
   template_apk_s3_dir=$RABBY_MOBILE_REG_PUB_DEPLOYMENT/.templates/android;
   native_part_hash=$(collect_android_native_entries)
   echo "[deploy-android] will set apk $android_export_target to $template_apk_s3_dir/$native_part_hash.apk"
@@ -198,6 +310,7 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
   echo "[deploy-android] will be backup at $backup_s3_dir (not public)"
   aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.json" --acl authenticated-read --content-type application/json --exact-timestamps
   aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.md" --acl authenticated-read --content-type text/plain --exact-timestamps
+  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.txt" --acl authenticated-read --content-type text/plain --exact-timestamps
   aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.apk" --acl authenticated-read --content-type application/vnd.android.package-archive --exact-timestamps
   aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.aab" --acl authenticated-read --content-type application/x-authorware-bin --exact-timestamps
 
@@ -216,13 +329,22 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
     echo "[deploy-android] aws s3 sync $backup_s3_dir/ $release_s3_dir/ --acl public-read"
   else
     echo "[deploy-android] open directory and upload to google play store "
-    echo "[deploy-android] you can find the .aar from $backup_s3_dir";
+    echo "[deploy-android] you can find the .aab from $backup_s3_dir";
   fi
 
   if [ ! -z $apk_url ]; then
     echo "[deploy-android] publish as $apk_name, with version.json"
 
-    [ ! -z "$CI" ] && [ "$SKIP_NOTIFY_LARK" != "true" ] && node $script_dir/notify-lark.js "$apk_url" android "$USE_RESIGN_APK"
+    lark_drive_url=""
+    if [ "$RABBY_MOBILE_LARK_DRIVE_UPLOAD" = "true" ] && [ "$SKIP_NOTIFY_LARK" != "true" ]; then
+      echo "[deploy-android] upload APK to Lark Drive..."
+      if ! lark_drive_url=$(node "$script_dir/ci/upload-package-to-lark-drive.js" "$deployment_local_dir/$apk_name" "$version_bundle_filename"); then
+        echo "[deploy-android] ⚠️ Lark Drive upload failed; keeping AWS notification only."
+        [ "$RABBY_MOBILE_LARK_DRIVE_UPLOAD_REQUIRED" = "true" ] && exit 1
+      fi
+    fi
+
+    [ ! -z "$CI" ] && [ "$SKIP_NOTIFY_LARK" != "true" ] && RABBY_MOBILE_ANDROID_16KB_REPORT_TEXT="$android_16kb_report_text" RABBY_MOBILE_LARK_DRIVE_URL="$lark_drive_url" node $script_dir/notify-lark.js "$apk_url" android "$FAST_BUILD_ENABLED"
   fi
 fi
 

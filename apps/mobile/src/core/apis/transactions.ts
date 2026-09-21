@@ -15,7 +15,7 @@ import type {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
-import { Account } from '../services/preference';
+import type { Account } from '@/types/account';
 import { TX_GAS_LIMIT_CHAIN_MAPPING } from '@/constant/txGasLimit';
 import {
   GasTokenBalanceInfo,
@@ -100,7 +100,12 @@ export async function calcGasLimit({
   gasTokenDecimals?: number;
   checkTxValueInBalance?: boolean;
 }) {
-  let block: null | BlockInfo = preparedBlock ? await preparedBlock : null;
+  let block: null | BlockInfo = null;
+  try {
+    block = preparedBlock ? await preparedBlock : null;
+  } catch (error) {
+    // NOTHING
+  }
   try {
     if (!block) {
       block = await apiProvider.requestETHRpc<BlockInfo>(

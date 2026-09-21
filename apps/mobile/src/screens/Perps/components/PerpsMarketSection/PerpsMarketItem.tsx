@@ -1,5 +1,5 @@
 import { AssetAvatar } from '@/components';
-import { MarketData, PositionAndOpenOrder } from '@/hooks/perps/usePerpsStore';
+import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatUsdValueKMB } from '@/screens/Home/utils/price';
 import { splitNumberByStep } from '@/utils/number';
@@ -8,46 +8,58 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 import { FavoriteTag } from '@/components2024/Favorite';
-import { formatPerpsCoin } from '@/utils/perps';
+import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { Text } from '@/components/Typography';
+import { PerpsDisplayCoinName } from '../PerpsDisplayCoinName';
+import { PerpsRankBadge } from './PerpsRankBadge';
 const formatPct = (v: number) => `${(v * 100).toFixed(2)}%`;
 
 const PerpsMarketItemComponent: React.FC<{
   item: MarketData;
-  isFavorite?: boolean;
-  hasPosition?: boolean;
+  rank?: number;
   onPress?(): void;
-}> = ({ item, onPress, hasPosition, isFavorite }) => {
+}> = ({ item, onPress, rank }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
+  // markPx/prevDayPx are '' until the first ticker lands (fresh fetch or
+  // hydrated cache) — render placeholders instead of $NaN.
+  const hasPrice = !!item.markPx && Number.isFinite(Number(item.markPx));
+  const hasChange = hasPrice && !!item.prevDayPx && Number(item.prevDayPx) > 0;
   const isUp = Number(item.markPx) - Number(item.prevDayPx) > 0;
   const absPnlUsd = Math.abs(Number(item.markPx) - Number(item.prevDayPx));
   const absPnlPct = Math.abs(absPnlUsd / Number(item.prevDayPx));
-  const pnlText = `${isUp ? '+' : '-'}${formatPct(absPnlPct)}`;
+  const pnlText = hasChange
+    ? `${isUp ? '+' : '-'}${formatPct(absPnlPct)}`
+    : '-';
 
   return (
     <TouchableOpacity onPress={onPress}>
       <View style={styles.card}>
-        <AssetAvatar logo={item.logoUrl} logoStyle={styles.icon} size={46} />
+        <View style={styles.logoWrap}>
+          <AssetAvatar logo={item.logoUrl} logoStyle={styles.icon} size={40} />
+          {rank != null && <PerpsRankBadge rank={rank} />}
+        </View>
         <View style={styles.content}>
           <View style={styles.row}>
             <View style={styles.nameContainer}>
-              <Text style={styles.name}>{formatPerpsCoin(item.name)}</Text>
-              {hasPosition && (
-                <View style={styles.positionContainer}>
-                  <Text style={styles.positionText}>1 Position</Text>
+              <PerpsDisplayCoinName item={item} />
+              {/* HIP-3 markets carry their builder dex as the source tag;
+                  the native dex has an empty dexId and shows nothing. */}
+              {item.dexId ? (
+                <View style={styles.tag}>
+                  <Text style={styles.tagText}>{item.dexId}</Text>
                 </View>
-              )}
+              ) : null}
             </View>
             <Text style={styles.price}>
-              {`$${splitNumberByStep(item.markPx)}`}
+              {hasPrice ? `$${splitNumberByStep(item.markPx)}` : '-'}
             </Text>
           </View>
           <View style={styles.row}>
             <View style={styles.infoContainer}>
-              <View style={styles.leverageContainer}>
-                <Text style={styles.leverage}>{item.maxLeverage}x</Text>
+              <View style={styles.tag}>
+                <Text style={styles.tagText}>{item.maxLeverage}x</Text>
               </View>
               <Text style={styles.volText}>
                 VOL: {formatUsdValueKMB(item.dayNtlVlm || 0)}
@@ -56,36 +68,62 @@ const PerpsMarketItemComponent: React.FC<{
             <Text
               style={[
                 styles.priceChange,
-                isUp ? null : styles.priceChangeDown,
+                hasChange
+                  ? isUp
+                    ? null
+                    : styles.priceChangeDown
+                  : styles.priceChangeMuted,
               ]}>
               {pnlText}
             </Text>
           </View>
         </View>
-        {isFavorite && <FavoriteTag style={styles.favoriteTag} />}
+        {/* {isFavorite && (
+          <RcIconFavorite
+            width={13}
+            height={12}
+            style={styles.favoriteTag}
+            color={colors2024['orange-default']}
+          />
+        )} */}
       </View>
     </TouchableOpacity>
   );
 };
 
-export const PerpsMarketItem = React.memo(PerpsMarketItemComponent);
+export const PerpsMarketItem = React.memo(
+  PerpsMarketItemComponent,
+  (prev, next) => {
+    // Only re-render when visible data actually changes
+    return (
+      prev.item.name === next.item.name &&
+      prev.item.markPx === next.item.markPx &&
+      prev.item.prevDayPx === next.item.prevDayPx &&
+      prev.item.dayNtlVlm === next.item.dayNtlVlm &&
+      prev.item.maxLeverage === next.item.maxLeverage &&
+      prev.item.logoUrl === next.item.logoUrl &&
+      prev.item.quoteAsset === next.item.quoteAsset &&
+      prev.item.dexId === next.item.dexId &&
+      prev.rank === next.rank
+    );
+  },
+);
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
-    borderRadius: 16,
     paddingVertical: 14,
     paddingHorizontal: 12,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-3'],
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
+  logoWrap: {
+    flexShrink: 0,
+  },
   icon: {
-    width: 46,
-    height: 46,
+    width: 40,
+    height: 40,
     borderRadius: 1000,
     backgroundColor: 'white',
     flexShrink: 0,
@@ -95,7 +133,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
 
     display: 'flex',
     flexDirection: 'column',
-    gap: 4,
+    gap: 2,
   },
   row: {
     display: 'flex',
@@ -114,7 +152,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
   },
   positionText: {
     fontFamily: 'SF Pro Rounded',
@@ -137,34 +175,35 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   volText: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 18,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
   },
   price: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: '500',
     color: colors2024['neutral-title-1'],
   },
-  leverageContainer: {
+  // Shared by the leverage pill and the HIP-3 source tag (same design token).
+  tag: {
     backgroundColor: colors2024['neutral-bg-5'],
     borderRadius: 4,
     paddingHorizontal: 4,
     paddingVertical: 1,
   },
-  leverage: {
+  tagText: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
     fontWeight: '500',
-    color: colors2024['neutral-secondary'],
+    color: colors2024['neutral-foot'],
   },
   priceChange: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 18,
     fontWeight: '500',
     color: colors2024['green-default'],
@@ -172,9 +211,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   priceChangeDown: {
     color: colors2024['red-default'],
   },
+  priceChangeMuted: {
+    color: colors2024['neutral-secondary'],
+  },
   favoriteTag: {
     position: 'absolute',
-    right: 0,
+    right: 8,
     top: 0,
   },
 }));

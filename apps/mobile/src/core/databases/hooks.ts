@@ -1,12 +1,8 @@
 import { atom, useAtom } from 'jotai';
 import { useCallback, useEffect, useState } from 'react';
-import { getSQLiteInfo } from './apis';
+import { getSQLiteInfo, type SQLiteInfo } from './apis';
 
-const sqliteInfoAtom = atom<{
-  version?: string;
-  source_id?: string;
-  thread_safe?: boolean;
-} | null>(null);
+const sqliteInfoAtom = atom<SQLiteInfo | null>(null);
 
 export function useSQLiteInfo(options?: { enableAutoFetch?: boolean }) {
   const [sqliteInfo, setSqliteInfo] = useAtom(sqliteInfoAtom);
@@ -18,18 +14,10 @@ export function useSQLiteInfo(options?: { enableAutoFetch?: boolean }) {
   const getSqliteInfo = useCallback(async () => {
     setIsLoading(true);
 
-    return Promise.allSettled([
-      getSQLiteInfo().then(res => {
-        setSqliteInfo(prev => ({
-          ...prev,
-          version: res.version,
-          source_id: res.source_id,
-          thread_safe: res.thread_safe,
-        }));
-      }),
-    ])
-      .then(([reqSqliteInfo]) => {
-        return { reqSqliteInfo };
+    return getSQLiteInfo()
+      .then(res => {
+        setSqliteInfo(res);
+        return res;
       })
       .finally(() => {
         setIsLoading(false);
@@ -42,5 +30,5 @@ export function useSQLiteInfo(options?: { enableAutoFetch?: boolean }) {
     }
   }, [enableAutoFetch, getSqliteInfo]);
 
-  return { isLoading, sqliteInfo };
+  return { isLoading, sqliteInfo, getSqliteInfo };
 }

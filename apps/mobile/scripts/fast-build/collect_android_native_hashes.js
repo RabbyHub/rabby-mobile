@@ -1,43 +1,26 @@
-// collect-native-hash.js
+/* eslint-env node */
+
 const fs = require('fs');
 const path = require('path');
 const { createHash } = require('crypto');
+const { execFileSync } = require('child_process');
 const glob = require('glob');
+const minimatch = require('minimatch');
 
-// eslint-disable-next-line no-undef
-const fscript_dir = path.dirname(__filename);
-const script_dir = path.dirname(fscript_dir);
-const project_dir = path.dirname(script_dir);
-const work_dir = path.join(script_dir, '.fast-build-work');
-const root_dir = path.join(project_dir, '..', '..');
+const fscriptDir = path.dirname(__filename);
+const scriptDir = path.dirname(fscriptDir);
+const projectDir = path.dirname(scriptDir);
+const workDir = path.join(scriptDir, '.fast-build-work');
+const repoRoot = path.join(projectDir, '..', '..');
 
 const WORK_FILES = {
-  android_native_files: path.join(work_dir, 'android_native_hashes.json'),
-  fingerprint_txt: path.join(fscript_dir, 'android_native_files_sha256.txt'),
+  metadataJson: path.join(workDir, 'android_native_hashes.json'),
+  templateHashTxt: path.join(fscriptDir, 'android_native_files_sha256.txt'),
+  payloadHashTxt: path.join(fscriptDir, 'android_patchable_payload_sha256.txt'),
+  fingerprintTxt: path.join(fscriptDir, 'android_template_fingerprint.txt'),
 };
 
-// ==================== Include Patterns ====================
-const includePatterns = [
-  `${project_dir}/android/app/src/**/*`,
-  `${project_dir}/android/build.gradle`,
-  `${project_dir}/android/*.json`,
-  `${project_dir}/android/app/*.json`,
-  `${project_dir}/android/proguard-rules.pro`,
-  `${project_dir}/fastlane/Fastfile`,
-
-  // # 3rd deps parts
-  `${project_dir}/../../.yarn/patches/*.patch`,
-  `${project_dir}/../../package.json`,
-  `${project_dir}/../../yarn.lock`,
-  // # changes of react-native-* may affect the native part
-  `${project_dir}/package.json`,
-  `${project_dir}/app.json`,
-  `${project_dir}/react-native.config.js`,
-  // # "$project_dir/assets/fonts"
-];
-
-// ==================== Exclude Patterns ====================
-const excludePatterns = [
+const STRUCTURAL_EXCLUDE_PATTERNS = [
   '**/*.iml',
   '**/*.log',
   '**/*.tmp',
@@ -51,34 +34,85 @@ const excludePatterns = [
   '**/.vscode/**',
   '**/.git/**',
   '**/__pycache__/**',
-  '**/*.md',
-  '**/*.txt',
-  '**/*.jpg',
-  '**/*.jpeg',
-  '**/*.png',
-  '**/*.gif',
-  '**/*.webp',
-  // '**/*.otf',
-  // '**/*.ttf',
-  '**/*.pdf',
-  '**/.*',
 ];
 
-// ==================== Utility Functions ====================
+const TEMPLATE_SHELL_INCLUDE_PATTERNS = [
+  `${projectDir}/android/build.gradle`,
+  `${projectDir}/android/settings.gradle`,
+  `${projectDir}/android/gradle.properties`,
+  `${projectDir}/android/gradle/wrapper/gradle-wrapper.properties`,
+  `${projectDir}/android/*.json`,
+  `${projectDir}/android/app/*.json`,
+  `${projectDir}/android/proguard-rules.pro`,
+  `${projectDir}/android/hashcheck.gradle`,
+  `${projectDir}/android/hashcheck.cmake`,
+  `${projectDir}/android/app/build.gradle`,
+  `${projectDir}/android/app/hashcheck.gradle`,
+  `${projectDir}/android/app/src/**/*`,
+  `${projectDir}/fastlane/Fastfile`,
+  `${repoRoot}/.yarn/patches/*.patch`,
+  `${repoRoot}/package.json`,
+  `${repoRoot}/yarn.lock`,
+  `${projectDir}/package.json`,
+  `${projectDir}/app.json`,
+  `${projectDir}/react-native.config.js`,
+];
+
+const TEMPLATE_SHELL_EXCLUDE_PATTERNS = [
+  ...STRUCTURAL_EXCLUDE_PATTERNS,
+  'apps/mobile/android/app/src/main/assets/fonts/**',
+  'apps/mobile/android/app/src/main/assets/custom/**',
+  'apps/mobile/android/app/src/main/assets/threads/**',
+];
+
+const PATCHABLE_PAYLOAD_INCLUDE_PATTERNS = [
+  `${repoRoot}/.yarn/patches/*.patch`,
+  `${repoRoot}/package.json`,
+  `${repoRoot}/yarn.lock`,
+  `${projectDir}/package.json`,
+  `${projectDir}/app.json`,
+  `${projectDir}/babel.config.js`,
+  `${projectDir}/metro.config.js`,
+  `${projectDir}/react-native.config.js`,
+  `${projectDir}/tsconfig.worker.json`,
+  `${projectDir}/scripts/fns.sh`,
+  `${projectDir}/android/link-assets-manifest.json`,
+  `${projectDir}/assets/fonts/**/*`,
+  `${projectDir}/assets/custom/**/*`,
+  `${projectDir}/worker-src/**/*`,
+  `${repoRoot}/apps/mobile-local-pages/**/*`,
+  `${repoRoot}/packages/base-utils/**/*`,
+];
+
+const PATCHABLE_PAYLOAD_EXCLUDE_PATTERNS = [
+  ...STRUCTURAL_EXCLUDE_PATTERNS,
+  '**/*.md',
+];
+
 function getFilesFromGlob(patterns) {
   const options = {
     nodir: true,
     dot: false,
-    absolute: false,
+    absolute: true,
     follow: false,
   };
+
   const files = new Set();
-  patterns.forEach(pattern => {
-    glob.sync(pattern, options).forEach(file => {
+  for (const pattern of patterns) {
+    for (const file of glob.sync(pattern, options)) {
       files.add(path.normalize(file));
-    });
-  });
+    }
+  }
   return Array.from(files).sort();
+}
+
+function matchesAnyPattern(relpath, patterns) {
+  return patterns.some(pattern =>
+    minimatch(relpath, pattern, {
+      dot: false,
+      nocase: true,
+    }),
+  );
 }
 
 function sha256(buffer) {
@@ -89,101 +123,131 @@ function getFileSha256(filePath) {
   return sha256(fs.readFileSync(filePath));
 }
 
-// ==================== Main Logic ====================
-function calculate_hash() {
-  console.log('🔍 Collecting Android native files...');
+function ensureWorkDir() {
+  if (!fs.existsSync(workDir)) {
+    fs.mkdirSync(workDir, { recursive: true });
+  }
+}
 
-  // 1. Collect all matching files
+function getGitValue(args, fallback = '') {
+  try {
+    return execFileSync('git', ['-C', repoRoot, ...args], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+  } catch {
+    return fallback;
+  }
+}
+
+function collectManifest(sectionName, includePatterns, excludePatterns) {
   let files = getFilesFromGlob(includePatterns);
-
-  // 2. Exclude unnecessary files
-  const excludeRegex = new RegExp(
-    excludePatterns
-      .map(
-        p =>
-          p
-            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // Escape regex
-            .replace(/\\\*\\\*/g, '.*') // ** -> .*
-            .replace(/\\\*/g, '[^/]*'), // * -> [^/]*
-      )
-      .join('|'),
-    'i',
-  );
-  files = files.filter(file => !excludeRegex.test(file));
+  files = files.filter(file => {
+    const relpath = path.relative(repoRoot, file);
+    return !matchesAnyPattern(relpath, excludePatterns);
+  });
 
   if (files.length === 0) {
-    console.error(
-      '❌ No matching files found, please check the paths and permissions',
-    );
-    process.exit(1);
+    throw new Error(`No matching files found for section: ${sectionName}`);
   }
 
-  // 3. Create output directory
-  if (!fs.existsSync(work_dir)) {
-    fs.mkdirSync(work_dir, { recursive: true });
-  }
+  const entries = files
+    .map(file => {
+      const relpath = path.relative(repoRoot, file);
+      return {
+        relpath,
+        hash: getFileSha256(file),
+      };
+    })
+    .sort((a, b) => a.relpath.localeCompare(b.relpath));
 
-  // 4. Generate native-files-sha256.txt
-  const android_native_json = [];
-  const hashes = [];
-
-  files.forEach(file => {
-    try {
-      const hash = getFileSha256(file);
-      const relpath = path.relative(root_dir, file);
-      android_native_json.push({ relpath, hash });
-      hashes.push(hash);
-    } catch (err) {
-      console.warn(`⚠️  Unable to read file: ${file}`, err.message);
-    }
-  });
-  android_native_json.sort((a, b) => a.relpath.localeCompare(b.relpath));
-
-  const result = {
-    total_files: files.length,
-    hashes: hashes,
-    files: android_native_json,
-  };
-  fs.writeFileSync(
-    WORK_FILES.android_native_files,
-    JSON.stringify(result, null, 2),
-  );
-
-  console.log(`✅ Generated file list: ${WORK_FILES.android_native_files}`);
-  console.log(
-    `✅ Collected ${files.length} files, hashes saved to ${WORK_FILES.android_native_files}`,
-  );
-
-  // 5. Calculate .txt file's own SHA256 (as template ID)
-  const txtHash = sha256(fs.readFileSync(WORK_FILES.android_native_files));
-
-  console.log(`✅ Template ID: ${txtHash}`);
-
-  // 6. Return fingerprint (for Bash retrieval)
-  console.log(`TEMPLATE_HASH="${txtHash}"`);
-
-  const d = new Date();
-  const fingerprint = [
-    d.getFullYear() /*  '-', */,
-    (d.getMonth() + 1).toString().padStart(2, '0') /*  '-', */,
-    `${txtHash.slice(0, 8)}_${txtHash.slice(-8)}`,
-  ].join('-');
-  fs.writeFileSync(WORK_FILES.fingerprint_txt, fingerprint);
-  console.log(`✅ Saved fingerprint to: ${WORK_FILES.fingerprint_txt}`);
-  console.log(`export TEMPLATE_FINGERPRINT="${fingerprint}"`);
+  const canonicalManifest = entries
+    .map(entry => `${entry.relpath}:${entry.hash}`)
+    .join('\n');
 
   return {
-    txtHash,
-    fingerprint,
+    section: sectionName,
+    total_files: entries.length,
+    digest: sha256(Buffer.from(canonicalManifest, 'utf8')),
+    files: entries,
   };
 }
 
-// ==================== Execute ====================
+function buildTemplateFingerprint(commitDate, templateHash) {
+  const fallbackDate = commitDate || 'unknown-date';
+  return `${fallbackDate}-${templateHash.slice(0, 8)}_${templateHash.slice(
+    -8,
+  )}`;
+}
+
+function writeTextFile(filepath, value) {
+  fs.writeFileSync(filepath, `${value}\n`);
+}
+
+function calculateHash() {
+  console.log(
+    'Collecting Android template shell and patchable payload manifests...',
+  );
+
+  ensureWorkDir();
+
+  const templateShell = collectManifest(
+    'template_shell',
+    TEMPLATE_SHELL_INCLUDE_PATTERNS,
+    TEMPLATE_SHELL_EXCLUDE_PATTERNS,
+  );
+  const patchablePayload = collectManifest(
+    'patchable_payload',
+    PATCHABLE_PAYLOAD_INCLUDE_PATTERNS,
+    PATCHABLE_PAYLOAD_EXCLUDE_PATTERNS,
+  );
+
+  const gitHead = getGitValue(['rev-parse', '--short=12', 'HEAD']);
+  const commitDate = getGitValue(['show', '-s', '--format=%cs', 'HEAD']);
+  const templateHash = templateShell.digest;
+  const payloadHash = patchablePayload.digest;
+  const templateFingerprint = buildTemplateFingerprint(
+    commitDate,
+    templateHash,
+  );
+
+  const metadata = {
+    version: 2,
+    template_hash: templateHash,
+    template_fingerprint: templateFingerprint,
+    patchable_payload_hash: payloadHash,
+    git: {
+      head: gitHead,
+      commit_date: commitDate,
+    },
+    sections: {
+      template_shell: templateShell,
+      patchable_payload: patchablePayload,
+    },
+  };
+
+  fs.writeFileSync(WORK_FILES.metadataJson, JSON.stringify(metadata, null, 2));
+  writeTextFile(WORK_FILES.templateHashTxt, templateHash);
+  writeTextFile(WORK_FILES.payloadHashTxt, payloadHash);
+  writeTextFile(WORK_FILES.fingerprintTxt, templateFingerprint);
+
+  console.log(`Template shell hash: ${templateHash}`);
+  console.log(`Patchable payload hash: ${payloadHash}`);
+  console.log(`Template fingerprint: ${templateFingerprint}`);
+  console.log(`Saved metadata to: ${WORK_FILES.metadataJson}`);
+  console.log(`Saved template hash to: ${WORK_FILES.templateHashTxt}`);
+  console.log(`Saved payload hash to: ${WORK_FILES.payloadHashTxt}`);
+  console.log(`Saved template fingerprint to: ${WORK_FILES.fingerprintTxt}`);
+  console.log(`TEMPLATE_HASH="${templateHash}"`);
+  console.log(`PATCHABLE_PAYLOAD_HASH="${payloadHash}"`);
+  console.log(`export TEMPLATE_FINGERPRINT="${templateFingerprint}"`);
+}
+
 const command = process.argv[2];
 
 switch (command) {
   case 'calculate_hash':
-    calculate_hash();
+    calculateHash();
     break;
   default:
     console.error(`Unknown command: ${command}`);

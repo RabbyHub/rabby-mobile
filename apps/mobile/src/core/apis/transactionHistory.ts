@@ -1,18 +1,19 @@
 import BigNumber from 'bignumber.js';
+import { transactionBroadcastWatcherServiceApi } from '@/core/serviceApi/transactionBroadcastWatcher';
 import {
-  transactionBroadcastWatcherService,
-  transactionHistoryService,
-  transactionWatcherService,
-} from '../services/shared';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+  getTransactionHistoryTransactions,
+  transactionHistoryServiceApi,
+} from '@/core/serviceApi/transactionHistory';
+import { transactionWatcherServiceApi } from '@/core/serviceApi/transactionWatcher';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { groupBy } from 'lodash';
 import { findChain } from '@/utils/chain';
 import { requestETHRpc } from './provider';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { Account } from '../services/preference';
+import type { Account } from '@/types/account';
 
 class ApisTransactionHistory {
-  removeLocalPendingTx = ({
+  removeLocalPendingTx = async ({
     address,
     nonce,
     chainId,
@@ -21,28 +22,31 @@ class ApisTransactionHistory {
     nonce?: number;
     chainId?: number;
   }) => {
-    transactionHistoryService.removeLocalPendingTx({
-      address,
-      nonce,
-      chainId,
-    });
-    transactionWatcherService.removeLocalPendingTx({
-      address,
-      nonce,
-      chainId,
-    });
-    transactionBroadcastWatcherService.removeLocalPendingTx({
-      address,
-      nonce,
-      chainId,
-    });
-    return;
+    await Promise.all([
+      transactionHistoryServiceApi.removeLocalPendingTx({
+        address,
+        nonce,
+        chainId,
+      }),
+      transactionWatcherServiceApi.removeLocalPendingTx({
+        address,
+        nonce,
+        chainId,
+      }),
+      transactionBroadcastWatcherServiceApi.removeLocalPendingTx({
+        address,
+        nonce,
+        chainId,
+      }),
+    ]);
   };
 
-  clearPendingTxs = (address: string) => {
-    transactionHistoryService.clearPendingTransactions(address);
-    transactionWatcherService.clearPendingTx(address);
-    transactionBroadcastWatcherService.clearPendingTx(address);
+  clearPendingTxs = async (address: string) => {
+    await Promise.all([
+      transactionHistoryServiceApi.clearPendingTransactions(address),
+      transactionWatcherServiceApi.clearPendingTx(address),
+      transactionBroadcastWatcherServiceApi.clearPendingTx(address),
+    ]);
   };
 
   getPendingTxs = async ({
@@ -54,14 +58,20 @@ class ApisTransactionHistory {
     address: string;
     chainId: number;
   }) => {
-    const { pendings } = await transactionHistoryService.getList(address);
+    const { pendings } = await transactionHistoryServiceApi.getList(address);
 
     return pendings
-      .filter(item => new BigNumber(item.nonce).lt(recommendNonce))
+      .filter(
+        item =>
+          item.chainId === chainId &&
+          new BigNumber(item.nonce).lt(recommendNonce),
+      )
+      .sort((a, b) =>
+        new BigNumber(a.nonce).minus(new BigNumber(b.nonce)).toNumber(),
+      )
       .reduce((result, item) => {
         return result.concat(item.txs.map(tx => tx.rawTx));
       }, [] as Tx[])
-      .filter(item => item.chainId === chainId)
       .map(item => ({
         from: item.from,
         to: item.to,
@@ -78,7 +88,7 @@ class ApisTransactionHistory {
 
   getSkipedTxs = async (address: string, account?: Account) => {
     const { pendings: pendingList } =
-      transactionHistoryService.getList(address);
+      await transactionHistoryServiceApi.getList(address);
     const dict = groupBy(pendingList, item => item.chainId);
 
     const res: Record<
@@ -101,7 +111,10 @@ class ApisTransactionHistory {
         account,
       );
       const localNonce =
-        transactionHistoryService.getNonceByChain(address, +chainId) || 0;
+        (await transactionHistoryServiceApi.getNonceByChain(
+          address,
+          +chainId,
+        )) || 0;
       for (let nonce = +onChainNonce; nonce < +localNonce; nonce++) {
         if (
           !list.find(txGroup => {
@@ -120,8 +133,8 @@ class ApisTransactionHistory {
     return res;
   };
 
-  getRabbySendPendingTxs = ({ address }: { address: string }) => {
-    const { pendings } = transactionHistoryService.getList(address);
+  getRabbySendPendingTxs = async ({ address }: { address: string }) => {
+    const { pendings } = await transactionHistoryServiceApi.getList(address);
 
     return pendings.filter(
       item =>
@@ -129,6 +142,54 @@ class ApisTransactionHistory {
         item.action?.actionData.send &&
         item.$ctx?.ga?.source === 'sendToken',
     );
+  };
+
+  updateBridgeGasAccountTx = async ({
+    address,
+    chainId,
+    hash,
+  }: {
+    address: string;
+    chainId?: number;
+    hash: string;
+  }) => {
+    if (!chainId) {
+      return;
+    }
+    const transactions = await getTransactionHistoryTransactions();
+    const tx = transactions.find(item => {
+      return (
+        isSameAddress(item.address, address) &&
+        item.chainId === chainId &&
+        item.hash === hash
+      );
+    });
+
+    if (tx) {
+      await transactionHistoryServiceApi.updateTx({
+        ...tx,
+        isGasDeposit: true,
+      });
+    }
+  };
+
+  checkIsGasDepositTx = async ({
+    chainId,
+    hash,
+  }: {
+    chainId?: number;
+    hash: string;
+  }) => {
+    if (!hash || !chainId) {
+      return false;
+    }
+
+    const transactions = await getTransactionHistoryTransactions();
+    return transactions.some(item => {
+      return (
+        item.chainId === chainId && item.hash === hash && item.isGasDeposit
+      );
+    });
   };
 }
 

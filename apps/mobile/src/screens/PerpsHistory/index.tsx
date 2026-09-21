@@ -1,12 +1,14 @@
 /* eslint-disable react-native/no-inline-styles */
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { IS_ANDROID } from '@/core/native/utils';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
+import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import { useShallow } from 'zustand/react/shallow';
 import { useTheme2024 } from '@/hooks/theme';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useRoute } from '@react-navigation/native';
-import { sortBy } from 'lodash';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -18,14 +20,14 @@ export const PerpsHistoryScreen = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
   const navigation = useRabbyAppNavigation();
-  const { state } = usePerpsStore();
-
-  const { marketDataMap, userFills, localLoadingHistory, userAccountHistory } =
-    state || {};
-
-  const data = React.useMemo(() => {
-    return sortBy(state.marketData, item => -(item.dayNtlVlm || 0));
-  }, [state.marketData]);
+  const { safeOffHeader } = useSafeSizes();
+  const { userFills, localLoadingHistory, userAccountHistory } = perpsStore(
+    useShallow(s => ({
+      userFills: s.userFills,
+      localLoadingHistory: s.localLoadingHistory,
+      userAccountHistory: s.userAccountHistory,
+    })),
+  );
 
   const route =
     useRoute<
@@ -51,9 +53,16 @@ export const PerpsHistoryScreen = () => {
   }, [coin, coinHistoryList, homeHistoryList]);
 
   return (
-    <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
+    <NormalScreenContainer2024
+      type={isLight ? 'bg0' : 'bg1'}
+      // safeOffHeader assumes a 56-tall header: on iOS the native bar is only
+      // 44pt so the list gets 12pt of breathing room for free, while Android's
+      // is exactly 56dp and the list hugs the header — add the same gap.
+      overwriteStyle={
+        IS_ANDROID ? { paddingTop: safeOffHeader + 12 } : undefined
+      }>
       <View style={styles.container}>
-        <PerpsHistoryList marketDataMap={marketDataMap} historyList={list} />
+        <PerpsHistoryList historyList={list} />
       </View>
     </NormalScreenContainer2024>
   );

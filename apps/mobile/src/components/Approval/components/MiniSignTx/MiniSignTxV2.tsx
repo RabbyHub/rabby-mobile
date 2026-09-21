@@ -3,17 +3,22 @@ import { MiniFooterBar } from './MiniFooterBar';
 import BalanceChange from '../TxComponents/BalanceChange';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BalanceChangeLoading } from './BalanceChangeLoanding';
-import {
-  GasSelectorHeader,
-  GasSelectorResponse,
-} from '../TxComponents/GasSelector/GasSelectorHeader';
+import type { GasSelectorResponse } from '../TxComponents/GasSelector/GasSelectorHeader';
+import { GasSelectorHeader } from '../TxComponents/GasSelector/GasSelectorHeader';
+import type { ApprovalGasMethod } from '../TxComponents/GasSelector/approvalGasDisplay';
 import { useTranslation } from 'react-i18next';
-import {
-  MiniSecurityHeader,
-  signatureStore,
-  useSignatureStore,
-} from '@/components2024/MiniSignV2';
-import React, { useCallback, useEffect } from 'react';
+import { MiniSecurityHeader } from '@/components2024/MiniSignV2/components/MiniSecurityHeader';
+import type { SignatureFlowState } from '@/components2024/MiniSignV2/state/types';
+import type { SignatureManager } from '@/components2024/MiniSignV2/state/SignatureManager';
+import { useSignatureStore } from '@/components2024/MiniSignV2/state/useSignatureStore';
+import { useSignatureInstance } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useGasAccountSign } from '@/screens/GasAccount/hooks/atom';
 import { findChain } from '@/utils/chain';
 import { useMemoizedFn } from 'ahooks';
@@ -28,8 +33,23 @@ import { useMiniSignFixedMode } from '@/hooks/miniSignGasStore';
 import BigNumber from 'bignumber.js';
 import { toast as toast2024 } from '@/components2024/Toast';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
-import miscService from '@/core/services/misc';
-import { isTempoChain } from '@/utils/tempo';
+import { miscServiceApi } from '@/core/serviceApi/misc';
+import type { GasAccountTopUpResult } from '@/screens/GasAccount/components/topUpContinuation';
+import { buildTopUpResumedTxs } from '@/screens/GasAccount/components/topUpContinuation';
+import type { TempoFeeTokenOption, TxWithTempoExtras } from '@/utils/tempo';
+import {
+  calcTempoMaxGasCostRawAmountIn18,
+  isTempoBatchSupportedAccountType,
+  isTempoChain,
+  listTempoFeeTokenOptionsFromCache,
+  loadTempoFeeTokenOptionsState,
+} from '@/utils/tempo';
+import { SignMainnetGasSelectorHeader } from '../TxComponents/GasSelector/SignMainnetGasSelectorHeader';
+import tokenListStore from '@/store/tokens';
+import type {
+  GasAccountCheckResult,
+  TokenItem,
+} from '@rabby-wallet/rabby-api/dist/types';
 
 const rawAmountToBn = (
   value: string | number | BigNumber | null | undefined,
@@ -44,17 +64,24 @@ const MiniSignTxV2 = ({
   showCheckSecurity,
   onToggleCheckSecurity,
   synGasHeaderInfo,
+  instanceOverride,
+  stateOverride,
 }: {
   showCheckSecurity: boolean;
   onToggleCheckSecurity: () => void;
   synGasHeaderInfo?: boolean;
+  instanceOverride?: SignatureManager;
+  stateOverride?: SignatureFlowState;
 }) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({
     getStyle: getSheetStyles,
   });
 
-  const state = useSignatureStore();
+  const contextInstance = useSignatureInstance();
+  const contextState = useSignatureStore();
+  const instance = instanceOverride || contextInstance;
+  const state = stateOverride || contextState;
 
   const { ctx, config, error, status } = state;
 
@@ -63,30 +90,100 @@ const MiniSignTxV2 = ({
   const fixedModeOnCurrentChain = useMiniSignFixedMode(ctx?.txs[0]?.chainId);
 
   const currentAccount = config?.account;
+  const isGasAccountTopUpFlow = config?.purpose === 'gasAccountTopUp';
 
   const loading =
     status === 'prefetching' || status === 'signing' || !ctx?.txsCalc.length;
 
   const { sig, accountId: gasAccountAddress } = useGasAccountSign();
+  const [manualGasMethod, setManualGasMethod] = useState<
+    ApprovalGasMethod | undefined
+  >(undefined);
+  const manualGasScopeKey = useMemo(() => {
+    if (!currentAccount?.address || !ctx?.chainId) {
+      return '';
+    }
 
-  const handleChangeGasMethod = useCallback(
-    async (method: 'native' | 'gasAccount') => {
+    return `${currentAccount.type}:${currentAccount.address}:${ctx.chainId}`;
+  }, [ctx?.chainId, currentAccount?.address, currentAccount?.type]);
+  const manualGasScopeKeyRef = useRef('');
+
+  useEffect(() => {
+    if (!manualGasScopeKey) {
+      return;
+    }
+
+    if (
+      manualGasScopeKeyRef.current &&
+      manualGasScopeKeyRef.current !== manualGasScopeKey
+    ) {
+      setManualGasMethod(undefined);
+    }
+
+    manualGasScopeKeyRef.current = manualGasScopeKey;
+  }, [manualGasScopeKey]);
+
+  const handleAutoChangeGasMethod = useCallback(
+    async (method: ApprovalGasMethod) => {
       try {
-        signatureStore.setGasMethod(method);
+        instance.setGasMethod(method);
       } catch (error) {
         console.error('Gas method change error:', error);
       }
     },
-    [],
+    [instance],
   );
 
-  const handleGasChange = useCallback(async gas => {
-    try {
-      await signatureStore.updateGasLevel(gas);
-    } catch (error) {
-      console.error('Gas change error:', error);
+  const handleChangeGasMethod = useCallback(
+    async (method: ApprovalGasMethod) => {
+      setManualGasMethod(method);
+      try {
+        instance.setGasMethod(method, { manual: true });
+      } catch (error) {
+        console.error('Gas method change error:', error);
+      }
+    },
+    [instance],
+  );
+
+  const handleGasChange = useCallback(
+    async gas => {
+      try {
+        await instance.updateGasLevel(gas);
+      } catch (error) {
+        console.error('Gas change error:', error);
+      }
+    },
+    [instance],
+  );
+
+  const handleChangeGasAccount = useMemoizedFn(async () => {
+    await handleChangeGasMethod('gasAccount');
+    if (ctx?.selectedGas) {
+      await handleGasChange(ctx.selectedGas as any);
     }
-  }, []);
+  });
+
+  const handleTopUpWaitResult = useMemoizedFn(
+    async (result: GasAccountTopUpResult) => {
+      if (!ctx || !config || !ctx.txs.length) {
+        return;
+      }
+
+      const nextTxs = await buildTopUpResumedTxs({
+        txs: ctx.txs,
+        originalAccount: config.account,
+        originalChainServerId: chain.serverId,
+        topUpResult: result,
+      });
+      instance.replaceTxs(nextTxs);
+      if (ctx.selectedGas) {
+        await handleGasChange(ctx.selectedGas as any);
+      }
+      setManualGasMethod('gasAccount');
+      instance.setGasMethod('gasAccount', { manual: true });
+    },
+  );
 
   const isReady = (ctx?.txsCalc?.length || 0) > 0;
   const chain = findChain({ id: ctx?.chainId })!;
@@ -99,12 +196,148 @@ const MiniSignTxV2 = ({
   };
   const checkTxValueInBalance = !isTempoChain(chain?.serverId);
   const support1559 = !!ctx?.is1559;
+  const [tempoGasTokenList, setTempoGasTokenList] = useState<
+    TempoFeeTokenOption[]
+  >([]);
+  const [tempoGasTokenLoading, setTempoGasTokenLoading] = useState(false);
+  const txFeeToken =
+    ((ctx?.txs?.[0] as unknown as TxWithTempoExtras | undefined)?.feeToken as
+      | string
+      | undefined) || '';
+  const maxGasCostRawAmount = useMemo(
+    () =>
+      (ctx?.txsCalc || []).reduce(
+        (sum, item) =>
+          sum.plus(new BigNumber(item.gasCost.maxGasCostRawAmount || 0)),
+        new BigNumber(0),
+      ),
+    [ctx?.txsCalc],
+  );
+  const maxGasCostRawAmountText = useMemo(
+    () => maxGasCostRawAmount.toFixed(),
+    [maxGasCostRawAmount],
+  );
+  const maxGasCostRawAmountIn18 = useMemo(
+    () => calcTempoMaxGasCostRawAmountIn18(ctx?.txs || []),
+    [ctx?.txs],
+  );
+  const maxGasCostRawAmountIn18Text = useMemo(
+    () => maxGasCostRawAmountIn18.toFixed(),
+    [maxGasCostRawAmountIn18],
+  );
+  const currentTempoTokenId =
+    txFeeToken || ctx?.tempoPreferredFeeTokenId || gasToken.tokenId || '';
+  const showTempoGasTokenSelector =
+    !!chain &&
+    isTempoChain(chain.serverId) &&
+    (manualGasMethod ?? ctx?.gasMethod) !== 'gasAccount' &&
+    isTempoBatchSupportedAccountType(currentAccount?.type);
+
+  const getCachedTokenItems = useCallback(() => {
+    if (!currentAccount?.address) {
+      return [];
+    }
+
+    return (tokenListStore.getState().tokenListMap[
+      currentAccount.address.toLowerCase()
+    ] || []) as unknown as TokenItem[];
+  }, [currentAccount?.address]);
+
+  const handleSelectTempoGasToken = useCallback(
+    async (
+      token: TempoFeeTokenOption,
+      options?: Parameters<typeof instance.setTempoFeeToken>[1],
+    ) => {
+      instance.setTempoFeeToken(token, options);
+      if (ctx?.selectedGas) {
+        await instance.updateGasLevel(ctx.selectedGas as any);
+      }
+    },
+    [ctx?.selectedGas, instance],
+  );
+
+  useEffect(() => {
+    if (!currentAccount?.address || !chain || !showTempoGasTokenSelector) {
+      setTempoGasTokenList([]);
+      setTempoGasTokenLoading(false);
+      return;
+    }
+
+    let mounted = true;
+    const cachedTokenItems = getCachedTokenItems();
+    const cachedOptions = listTempoFeeTokenOptionsFromCache({
+      tokenList: cachedTokenItems,
+      chainServerId: chain.serverId,
+      maxGasCostRawAmount,
+      maxGasCostRawAmountDecimals: gasToken.decimals || 18,
+      maxGasCostRawAmountIn18,
+    });
+
+    if (cachedOptions.length) {
+      setTempoGasTokenList(cachedOptions);
+    }
+
+    setTempoGasTokenLoading(true);
+    loadTempoFeeTokenOptionsState({
+      account: currentAccount,
+      userAddress: currentAccount.address,
+      chainServerId: chain.serverId,
+      tokenList: cachedTokenItems,
+      txFeeToken,
+      maxGasCostRawAmount,
+      maxGasCostRawAmountDecimals: gasToken.decimals || 18,
+      maxGasCostRawAmountIn18,
+    })
+      .then(({ options, preferredTokenId, selectedOption }) => {
+        if (!mounted) {
+          return;
+        }
+        setTempoGasTokenList(options);
+        if (
+          selectedOption &&
+          currentTempoTokenId.toLowerCase() !== selectedOption.id.toLowerCase()
+        ) {
+          const shouldApplyFallbackFeeToken =
+            !!txFeeToken &&
+            txFeeToken.toLowerCase() !== selectedOption.id.toLowerCase();
+          handleSelectTempoGasToken(selectedOption, {
+            applyFeeToken: shouldApplyFallbackFeeToken,
+            tempoPreferredFeeTokenId: preferredTokenId,
+          });
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (mounted) {
+          setTempoGasTokenLoading(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [
+    chain,
+    chain?.serverId,
+    currentAccount,
+    currentAccount?.address,
+    currentTempoTokenId,
+    gasToken.decimals,
+    getCachedTokenItems,
+    handleSelectTempoGasToken,
+    maxGasCostRawAmount,
+    maxGasCostRawAmountIn18,
+    maxGasCostRawAmountIn18Text,
+    maxGasCostRawAmountText,
+    showTempoGasTokenSelector,
+    txFeeToken,
+  ]);
 
   const checkGasLevelIsNotEnough = useMemoizedFn(
     (
       gas: GasSelectorResponse,
       type?: 'gasAccount' | 'native',
-    ): Promise<[boolean, number]> => {
+    ): Promise<[boolean, number, GasAccountCheckResult?]> => {
       const initdTxs = ctx?.txsCalc || [];
       let _txsResult = initdTxs;
       if (!isReady || !initdTxs.length) {
@@ -164,6 +397,8 @@ const MiniSignTxV2 = ({
               isGnosisAccount: false,
               nativeTokenBalance: balance,
               gasTokenDecimals: gasToken.decimals || 18,
+              gasTokenId: gasToken.tokenId,
+              tempoPreferredFeeTokenId: ctx?.tempoPreferredFeeTokenId,
               checkTxValueInBalance,
             });
             const txValueRaw = checkTxValueInBalance
@@ -197,6 +432,7 @@ const MiniSignTxV2 = ({
               !gasAccountRes.balance_is_enough,
               (gasAccountRes.gas_account_cost.estimate_tx_cost || 0) +
                 (gasAccountRes.gas_account_cost?.gas_cost || 0),
+              gasAccountRes,
             ];
           });
       });
@@ -204,7 +440,7 @@ const MiniSignTxV2 = ({
   );
 
   useEffect(() => {
-    miscService.setCurrentGasLevel(ctx?.selectedGas?.level);
+    miscServiceApi.setCurrentGasLevel(ctx?.selectedGas?.level);
   }, [ctx?.selectedGas?.level]);
 
   if (!ctx || !config?.account || !ctx?.txs?.length || !currentAccount) {
@@ -215,19 +451,21 @@ const MiniSignTxV2 = ({
     normalizeTxParams(ctx.txs[0]);
 
   const handleToggleGasless = value => {
-    signatureStore.toggleGasless(value);
+    instance.toggleGasless(value);
   };
   const handleConfirm = () => {
-    if (!ctx?.txsCalc?.length) return;
-    signatureStore.send().catch(() => undefined);
+    if (!ctx?.txsCalc?.length) {
+      return;
+    }
+    instance.send().catch(() => undefined);
   };
 
   const handleCancel = () => {
-    signatureStore.close();
+    instance.close();
   };
 
   const handleRetry = () => {
-    signatureStore.retry().catch(() => undefined);
+    instance.retry().catch(() => undefined);
   };
 
   const totalGasCost = ctx.txsCalc?.reduce(
@@ -296,7 +534,8 @@ const MiniSignTxV2 = ({
 
   const showGasLess = isReady && (isGasNotEnough || !!gasLessConfig);
 
-  const noCustomRPC = !!ctx?.noCustomRPC;
+  const noCustomRPC = ctx?.noCustomRPC ?? true;
+  const effectiveGasMethod = manualGasMethod ?? ctx?.gasMethod;
 
   const canGotoUseGasAccount =
     // isSupportedAddr &&
@@ -313,7 +552,7 @@ const MiniSignTxV2 = ({
     !ctx?.gasAccount.chain_not_support;
 
   const gasAccountCanPay =
-    ctx?.gasMethod === 'gasAccount' &&
+    effectiveGasMethod === 'gasAccount' &&
     // isSupportedAddr &&
     noCustomRPC &&
     !!ctx?.gasAccount?.balance_is_enough &&
@@ -366,7 +605,6 @@ const MiniSignTxV2 = ({
   const checkErrors = ctx.checkErrors || [];
   const engineResults = ctx.engineResults;
   const gasPriceMedian = ctx.gasPriceMedian || null;
-  const isGasAccountLogin = !!sig && !!gasAccountAddress;
   const isWalletConnect = false;
   const isWatchAddr = false;
   const gasLessFailedReason = ctx.gasless?.desc;
@@ -376,51 +614,15 @@ const MiniSignTxV2 = ({
     !ctx?.txsCalc?.length ||
     !!ctx.checkErrors?.some(e => e.level === 'forbidden');
   const nativeTokenInsufficient = !!ctx.checkErrors?.some(e => e.code === 3001);
-
   if (synGasHeaderInfo) {
-    return (
-      <View style={{ position: 'absolute', left: -999999, bottom: -999999 }}>
-        <GasSelectorHeader
-          fixedMode
-          defaultFixedModeOnCurrentChain={fixedModeOnCurrentChain}
-          tx={txs[0]}
-          gasAccountCost={gasAccountCost}
-          gasMethod={gasMethod}
-          onChangeGasMethod={setGasMethod}
-          pushType={pushType}
-          isDisabledGasPopup={task.status !== 'idle'}
-          disabled={false}
-          isReady={isReady}
-          gasLimit={gasLimit}
-          noUpdate={false}
-          gasList={gasList}
-          selectedGas={selectedGas}
-          version={txsResult?.[0]?.preExecResult?.pre_exec_version || 'v0'}
-          recommendGasLimit={recommendGasLimit}
-          recommendNonce={recommendNonce}
-          chainId={chainId}
-          onChange={handleGasChange}
-          nonce={realNonce}
-          disableNonce={true}
-          isSpeedUp={false}
-          isCancel={false}
-          is1559={support1559}
-          isHardware={isHardware}
-          manuallyChangeGasLimit={manuallyChangeGasLimit}
-          errors={checkErrors}
-          engineResults={engineResults?.engineResult}
-          nativeTokenBalance={nativeTokenBalance}
-          gasToken={gasToken}
-          gasPriceMedian={gasPriceMedian}
-          gas={totalGasCost}
-          gasCalcMethod={gasCalcMethod}
-          directSubmit={true}
-          checkGasLevelIsNotEnough={checkGasLevelIsNotEnough}
-          account={currentAccount}
-        />
-      </View>
-    );
+    return null;
   }
+
+  console.log('SignMainnetHeaderContent  tx render', {
+    ctx,
+    gasMethod: effectiveGasMethod,
+  });
+
   return (
     <View style={showCheckSecurity ? styles.wrapper : undefined}>
       {showCheckSecurity ? (
@@ -458,11 +660,11 @@ const MiniSignTxV2 = ({
                       <ScrollView style={styles.balanceChangeScrollContainer}>
                         <BalanceChange
                           version={
-                            txsResult?.[txsResult?.length - 1].preExecResult
-                              .pre_exec_version
+                            txsResult?.[txsResult?.length - 1]?.preExecResult
+                              .pre_exec_version || 'v0'
                           }
                           data={
-                            txsResult?.[txsResult?.length - 1].preExecResult
+                            txsResult?.[txsResult?.length - 1]?.preExecResult
                               .balance_change
                           }
                           style={styles.balanceChangeContainer}
@@ -475,67 +677,84 @@ const MiniSignTxV2 = ({
                 ) : null}
               </View>
             ) : null}
-            <GasSelectorHeader
-              fixedMode
-              defaultFixedModeOnCurrentChain={fixedModeOnCurrentChain}
-              tx={txs[0]}
-              gasAccountCost={gasAccountCost}
-              gasMethod={gasMethod}
-              onChangeGasMethod={setGasMethod}
-              pushType={pushType}
-              isDisabledGasPopup={task.status !== 'idle'}
-              disabled={false}
-              isReady={isReady}
-              gasLimit={gasLimit}
-              noUpdate={false}
-              gasList={gasList}
-              selectedGas={selectedGas}
-              version={txsResult?.[0]?.preExecResult?.pre_exec_version || 'v0'}
-              recommendGasLimit={recommendGasLimit}
-              recommendNonce={recommendNonce}
-              chainId={chainId}
-              onChange={handleGasChange}
-              nonce={realNonce}
-              disableNonce={true}
-              isSpeedUp={false}
-              isCancel={false}
-              is1559={support1559}
-              isHardware={isHardware}
-              manuallyChangeGasLimit={manuallyChangeGasLimit}
-              errors={checkErrors}
-              engineResults={engineResults?.engineResult}
-              nativeTokenBalance={nativeTokenBalance}
-              gasToken={gasToken}
-              gasPriceMedian={gasPriceMedian}
-              gas={totalGasCost}
-              gasCalcMethod={gasCalcMethod}
-              directSubmit={true}
-              checkGasLevelIsNotEnough={checkGasLevelIsNotEnough}
-              account={currentAccount}
-              nativeTokenInsufficient={nativeTokenInsufficient}
-            />
+            <View style={{ paddingBottom: 10 }}>
+              <SignMainnetGasSelectorHeader
+                fixedMode={!isGasAccountTopUpFlow}
+                defaultFixedModeOnCurrentChain={
+                  !isGasAccountTopUpFlow && fixedModeOnCurrentChain
+                }
+                tx={txs[0]!}
+                gasAccountCost={gasAccountCost}
+                noCustomRPC={noCustomRPC}
+                gasMethod={effectiveGasMethod}
+                onChangeGasMethod={setGasMethod}
+                onAutoChangeGasMethod={handleAutoChangeGasMethod}
+                disableAutoGasLevelSwitch={!!manualGasMethod}
+                showGasMethodShortcut
+                pushType={pushType}
+                isDisabledGasPopup={task.status !== 'idle'}
+                disabled={false}
+                isReady={isReady}
+                gasLimit={gasLimit}
+                noUpdate={false}
+                gasList={gasList}
+                selectedGas={selectedGas}
+                version={
+                  txsResult?.[0]?.preExecResult?.pre_exec_version || 'v0'
+                }
+                recommendGasLimit={recommendGasLimit}
+                recommendNonce={recommendNonce}
+                chainId={chainId}
+                onChange={handleGasChange}
+                nonce={realNonce}
+                disableNonce={true}
+                isSpeedUp={false}
+                isCancel={false}
+                is1559={support1559}
+                isHardware={isHardware}
+                manuallyChangeGasLimit={manuallyChangeGasLimit}
+                errors={checkErrors}
+                engineResults={engineResults?.engineResult}
+                nativeTokenBalance={nativeTokenBalance}
+                gasToken={gasToken}
+                showTempoGasTokenSelector={showTempoGasTokenSelector}
+                tempoGasTokenList={tempoGasTokenList}
+                tempoPreferredFeeTokenId={ctx?.tempoPreferredFeeTokenId}
+                onSelectTempoGasToken={handleSelectTempoGasToken}
+                tempoGasTokenLoading={tempoGasTokenLoading}
+                gasPriceMedian={gasPriceMedian}
+                gas={totalGasCost}
+                gasCalcMethod={gasCalcMethod}
+                directSubmit={true}
+                checkGasLevelIsNotEnough={checkGasLevelIsNotEnough}
+                account={currentAccount}
+                nativeTokenInsufficient={nativeTokenInsufficient}
+                freeGasAvailable={canUseGasLess}
+              />
+            </View>
           </View>
         }
         isSwap={isSwap}
         noCustomRPC={noCustomRPC}
-        gasMethod={gasMethod}
+        gasMethod={effectiveGasMethod}
         gasAccountCost={gasAccountCost}
         isFirstGasCostLoading={!ctx?.txsCalc.length}
         isFirstGasLessLoading={!ctx?.txsCalc.length}
+        disableAutoGasAccountSwitch={!!manualGasMethod}
         gasAccountCanPay={gasAccountCanPay}
         canGotoUseGasAccount={canGotoUseGasAccount}
         canDepositUseGasAccount={canDepositUseGasAccount}
+        disableGasAccountDeposit={isGasAccountTopUpFlow}
         // rejectApproval={onReject}
         onDeposit={() => {
           toast2024.success(t('page.gasAccount.depositSuccess'), {
             position: toast2024.positions.CENTER,
           });
-          handleGasChange(ctx?.selectedGas);
         }}
+        onWaitDepositResult={handleTopUpWaitResult}
         gasAccountAddress={gasAccountAddress}
-        isGasAccountLogin={isGasAccountLogin}
         isWalletConnect={isWalletConnect}
-        onChangeGasAccount={() => setGasMethod('gasAccount')}
+        onChangeGasAccount={handleChangeGasAccount}
         isWatchAddr={isWatchAddr}
         gasLessConfig={gasLessConfig}
         gasLessFailedReason={gasLessFailedReason}
@@ -627,6 +846,7 @@ const getSheetStyles = createGetStyles2024(({ colors2024 }) => ({
     margin: 0,
     padding: 0,
     borderRadius: 0,
+    marginTop: 0,
   },
 }));
 

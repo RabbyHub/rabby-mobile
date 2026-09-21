@@ -7,6 +7,7 @@ import { Button } from '@/components';
 import { useTranslation } from 'react-i18next';
 import { RcIconCreateSeed } from '@/assets/icons/address';
 import { Text } from '@/components/Typography';
+import { withWhitelistService } from '@/hooks/whitelistServiceDependencies';
 
 interface Props {
   index: number;
@@ -15,7 +16,7 @@ interface Props {
   style?: StyleProp<ViewStyle>;
 }
 
-export const SeedPhraseGroup: React.FC<Props> = ({
+const SeedPhraseGroupContent: React.FC<Props> = ({
   index,
   data,
   onAddAddress,
@@ -56,6 +57,8 @@ export const SeedPhraseGroup: React.FC<Props> = ({
   );
 };
 
+export const SeedPhraseGroup = withWhitelistService(SeedPhraseGroupContent);
+
 const getStyle = createGetStyles(colors => {
   return {
     main: {
@@ -88,7 +91,7 @@ const getStyle = createGetStyles(colors => {
     },
     buttonText: {
       color: colors['blue-default'],
-      fontSize: 14,
+      fontSize: 18,
       fontWeight: '500',
     },
   };

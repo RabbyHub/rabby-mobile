@@ -1,14 +1,16 @@
-import { KeyringAccountWithAlias, storeApiAccounts } from '@/hooks/account';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
+import { storeApiAccounts } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '../GlobalBottomSheetModal';
-import { MODAL_ID, MODAL_NAMES } from '../GlobalBottomSheetModal/types';
+import type { MODAL_ID } from '../GlobalBottomSheetModal/types';
+import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 import { apisAccount } from '@/core/apis';
 import { redirectToAddAddressEntry } from '@/utils/navigation';
-import { RefLikeObject } from '@/utils/type';
-import { keyringService } from '@/core/services';
+import type { RefLikeObject } from '@/utils/type';
+import { bindKeyringEventOnce } from '@/core/serviceApi/keyring';
 
 const modalIdRef: RefLikeObject<MODAL_ID | null> = { current: null };
 
@@ -28,7 +30,7 @@ const removeWalletConnect = async (accounts: KeyringAccountWithAlias[]) => {
 };
 
 export const trimNoLongerSupportsOnUnlock = () => {
-  keyringService.once('unlock', async () => {
+  void bindKeyringEventOnce('unlock', async () => {
     if (modalIdRef.current) return;
 
     const accounts = await storeApiAccounts.fetchAccounts();
@@ -53,5 +55,5 @@ export const trimNoLongerSupportsOnUnlock = () => {
         removeGlobalBottomSheetModal2024(modalIdRef.current);
       },
     });
-  });
+  }).catch(console.error);
 };

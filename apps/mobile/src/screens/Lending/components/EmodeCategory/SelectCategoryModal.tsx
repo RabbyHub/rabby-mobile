@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
 
-import { useAtomValue } from 'jotai';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, View } from 'react-native';
 
@@ -13,7 +12,10 @@ import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHan
 import CategoryItem from './CategoryItem';
 import { EmodeCategory } from '../../type';
 import { useMode } from '../../hooks/useMode';
-import { useLendingISummary } from '../../hooks';
+import {
+  useFormattedPoolReservesAndIncentivesAtom,
+  useLendingISummary,
+} from '../../hooks';
 import { isEModeCategoryAvailable } from '../../utils/emode';
 import { Text } from '@/components/Typography';
 
@@ -32,6 +34,7 @@ export default function SelectCategoryModal({ value, onChange }: IProps) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { iUserSummary } = useLendingISummary();
+  const formattedPoolReserves = useFormattedPoolReservesAndIncentivesAtom();
   const { eModes } = useMode();
   const eModeCategories: Record<number, EModeCategoryDisplay> = useMemo(
     () =>
@@ -41,12 +44,16 @@ export default function SelectCategoryModal({ value, onChange }: IProps) {
           {
             ..._value,
             available: iUserSummary
-              ? isEModeCategoryAvailable(iUserSummary, _value)
+              ? isEModeCategoryAvailable(
+                  iUserSummary,
+                  _value,
+                  formattedPoolReserves,
+                )
               : false,
           },
         ]),
       ),
-    [eModes, iUserSummary],
+    [eModes, formattedPoolReserves, iUserSummary],
   );
   const sortedEModeCategories = useMemo(() => {
     return Object.values(eModeCategories)
@@ -136,9 +143,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: '100%',
     paddingHorizontal: 16,
   },
-  searchBar: {
-    flex: 1,
-  },
   titleText: {
     color: colors2024['neutral-title-1'],
     fontSize: 20,
@@ -147,60 +151,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
     lineHeight: 24,
   },
-  desc: {
-    fontWeight: '400',
-    fontSize: 16,
-    lineHeight: 24,
-    color: colors2024['neutral-foot'],
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'center',
-    marginTop: 8,
-  },
   titleTextWrapper: {
     flex: 1,
-  },
-  netSwitchTabs: {
-    marginBottom: 20,
-  },
-  innerBlock: {
-    paddingHorizontal: 0,
-  },
-  inputContainerStyle: {
-    height: 46,
-    borderRadius: 12,
-    paddingHorizontal: 20,
-    borderBottomWidth: 0,
-  },
-  inputText: {
-    color: colors2024['neutral-title-1'],
-    marginLeft: 7,
-    fontSize: 17,
-    fontWeight: '400',
-    paddingTop: 0,
-    paddingBottom: 0,
-    fontFamily: 'SF Pro Rounded',
   },
 
   chainListWrapper: {
     flexShrink: 1,
     height: '100%',
-  },
-
-  emptyDataWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-    maxHeight: 400,
-    // ...makeDebugBorder()
-  },
-
-  emptyText: {
-    paddingTop: 21,
-    textAlign: 'center',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    color: colors2024['neutral-info'],
   },
 
   titleView: {
@@ -211,26 +168,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginBottom: 12,
   },
 
-  inputWrapper: {
-    marginRight: 15,
-    flex: 1,
-    overflow: 'hidden',
-  },
-
-  cancelText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
-    fontSize: 17,
-    lineHeight: 22,
-  },
-
   titleViewWithText: {
     marginBottom: 34,
-  },
-
-  iconSearch: {
-    position: 'absolute',
-    right: 4,
   },
   flatList: {
     paddingHorizontal: 0,

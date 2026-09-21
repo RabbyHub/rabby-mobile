@@ -19,7 +19,7 @@ import {
 import { NextInput } from '@/components2024/Form/Input';
 import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
-import { openapi } from '@/core/request';
+import { resolveEnsAddressByName, resolveEnsNameByAddress } from '@/utils/ens';
 import { debounce, throttle } from 'lodash';
 import { useFindAddressByWhitelist } from '@/screens/Send/hooks/useWhiteListAddress';
 import { useAccountSelectModalCtx } from '../hooks';
@@ -30,11 +30,12 @@ import { Button } from '@/components2024/Button';
 import { AddressEditorBadge } from '../AddressEditorBadge';
 import { touchedFeedback } from '@/utils/touch';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { useSortedAccounts } from '@/screens/Address/useSortAddressList';
 import { SearchedAddressItemInSheetModal } from '../AddressItem/SearchedItem';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import type { TextInput as TextInputRef } from '@/components/Typography';
+import { normalizeAddressInputAndSyncNativeText } from './addressInput';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -50,18 +51,6 @@ const ERROR_MESSAGE = {
   [INPUT_ERROR.REQUIRED]: 'Please input address',
 };
 
-const debouncedGetEnsAddress = debounce(
-  (
-    input: string,
-    callback: (result: any) => void,
-    errorCallback: (e: any) => void,
-  ) => {
-    openapi.getEnsAddressByName(input).then(callback).catch(errorCallback);
-  },
-  500,
-  { leading: false, trailing: true },
-);
-
 const ScreenPanelEnterAddress = ({
   onCleanupInput,
   newValue,
@@ -72,6 +61,7 @@ const ScreenPanelEnterAddress = ({
   const { fnNavTo, cbOnSelectedAccount } = useAccountSelectModalCtx();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [input, _setInput] = React.useState('');
+  const addressInputRef = React.useRef<TextInputRef>(null);
   const setInput = useCallback((text: string) => {
     _setInput(text);
     setEnsResult(null);
@@ -82,6 +72,33 @@ const ScreenPanelEnterAddress = ({
     addr: string;
     name: string;
   }>(null);
+  const debouncedResolveEns = React.useMemo(
+    () =>
+      debounce(
+        async (
+          value: string,
+          callback: (result: { addr: string; name: string } | null) => void,
+        ) => {
+          const result = await resolveEnsAddressByName(value);
+          callback(result);
+        },
+        500,
+        { leading: false, trailing: true },
+      ),
+    [],
+  );
+  const debouncedResolveEnsName = React.useMemo(
+    () =>
+      debounce(
+        async (value: string, callback: (name: string | null) => void) => {
+          const name = await resolveEnsNameByAddress(value);
+          callback(name);
+        },
+        500,
+        { leading: false, trailing: true },
+      ),
+    [],
+  );
 
   const isValidAddr = useMemo(
     () => isValidAddress(input as `0x${string}`),
@@ -188,8 +205,12 @@ const ScreenPanelEnterAddress = ({
 
   const handleInputChange = React.useCallback(
     (text: string) => {
+      const normalizedText = normalizeAddressInputAndSyncNativeText(
+        text,
+        addressInputRef.current,
+      );
       setError(undefined);
-      setInput(text);
+      setInput(normalizedText);
     },
     [setInput],
   );
@@ -209,30 +230,44 @@ const ScreenPanelEnterAddress = ({
   useEffect(() => {
     if (!input) {
       setError(undefined);
+      setEnsResult(null);
+      debouncedResolveEnsName.cancel();
       return;
     }
     if (isValidAddress(input as `0x${string}`)) {
       setError(undefined);
+      debouncedResolveEns.cancel();
+      debouncedResolveEnsName(input, name => {
+        if (!name) {
+          setEnsResult(null);
+          return;
+        }
+        setEnsResult({
+          addr: input,
+          name,
+        });
+      });
       return;
     }
+    debouncedResolveEnsName.cancel();
 
-    debouncedGetEnsAddress(
-      input,
-      result => {
-        if (result && result.addr) {
-          setEnsResult(result);
-          setError(undefined);
-        } else {
-          setEnsResult(null);
-          setError(INPUT_ERROR.INVALID_ADDRESS);
-        }
-      },
-      () => {
+    debouncedResolveEns(input, result => {
+      if (result && result.addr) {
+        setEnsResult(result);
+        setError(undefined);
+      } else {
         setEnsResult(null);
         setError(INPUT_ERROR.INVALID_ADDRESS);
-      },
-    );
-  }, [input]);
+      }
+    });
+  }, [input, debouncedResolveEns, debouncedResolveEnsName]);
+
+  useEffect(() => {
+    return () => {
+      debouncedResolveEns.cancel();
+      debouncedResolveEnsName.cancel();
+    };
+  }, [debouncedResolveEns, debouncedResolveEnsName]);
 
   useEffect(() => {
     if (newValue) {
@@ -261,6 +296,7 @@ const ScreenPanelEnterAddress = ({
           keyboardShouldPersistTaps="handled">
           <View style={styles.inputAreaContainer}>
             <NextInput.TextArea
+              ref={addressInputRef}
               as="TextInput"
               style={styles.textContainer}
               inputStyle={styles.textArea}
@@ -419,7 +455,7 @@ export default ScreenPanelEnterAddress;
 
 const SIZES = {
   bottomContentH: 56,
-  bottomContentBottom: IS_IOS ? 48 : 0,
+  bottomContentBottom: 48,
   containerPb: 20,
   itemH: 78,
 };

@@ -29,7 +29,7 @@ import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressP
 
 export const ConnectLedger: React.FC<{
   onDone?: () => void;
-  onSelectDevice?: (d: Device) => void;
+  onSelectDevice?: (d: Device) => void | Promise<void>;
   deviceId?: string;
 }> = ({ onDone, onSelectDevice, deviceId }) => {
   const { searchAndPair, devices, errorCode } = useLedgerImport();
@@ -147,9 +147,9 @@ export const ConnectLedger: React.FC<{
 
   const handleSelectDevice = React.useCallback(
     async device => {
-      apiLedger.setDeviceId(device.id);
+      await apiLedger.setDeviceId(device.id);
       if (onSelectDevice) {
-        onSelectDevice(device);
+        await onSelectDevice(device);
       } else {
         if (await checkEthApp()) {
           await importFirstAddress(1);

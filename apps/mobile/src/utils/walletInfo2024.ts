@@ -9,30 +9,37 @@ import PrivateKeyPNG from '@/assets2024/icons/wallet/private-key.png';
 import SeedPNG from '@/assets2024/icons/wallet/seed.png';
 import WatchPNG from '@/assets2024/icons/wallet/watch.png';
 import WatchDarkDark from '@/assets2024/icons/wallet/watch_dark.png';
+import UnknownPNG from '@/assets2024/icons/wallet/unknown.png';
+import UnknownDarkPNG from '@/assets2024/icons/wallet/unknown_dark.png';
 import SafePNG from '@/assets2024/icons/wallet/safe.png';
 import TrezorPNG from '@/assets2024/icons/wallet/trezor.png';
 import blockies from 'ethereum-blockies-base64';
-import { preferenceService } from '@/core/services';
+import {
+  addAddressAvatar,
+  getAddressAvatarSnapshot,
+} from '@/core/serviceApi/preference';
 
 export const getWalletAvator2024 = (
   brandName: string | undefined,
   isLight?: boolean,
   address?: string,
+  isWatchAddress?: boolean,
 ) => {
   const watchAvator = isLight ? WatchPNG : WatchDarkDark;
+  const unknownAvator = isLight ? UnknownPNG : UnknownDarkPNG;
   if (brandName === KEYRING_CLASS.GNOSIS) {
     return SafePNG;
   }
   if (brandName === KEYRING_CLASS.WATCH) {
-    return watchAvator;
+    return isWatchAddress ? watchAvator : unknownAvator;
   }
   if (address) {
-    const cacheAvatar = preferenceService.getAddressAvatar(address);
+    const cacheAvatar = getAddressAvatarSnapshot(address);
     if (cacheAvatar) {
       return { uri: cacheAvatar };
     }
     const avatar = blockies(address);
-    preferenceService.addAddressAvatar(address, avatar);
+    void addAddressAvatar(address, avatar).catch(console.error);
     return { uri: avatar };
   }
   return undefined;
@@ -41,6 +48,7 @@ export const getWalletAvator2024 = (
 export const getWalletIcon2024 = (
   brandName: string | undefined,
   isLight?: boolean,
+  isWatchAddress?: boolean,
 ) => {
   if (brandName === KEYRING_CLASS.HARDWARE.LEDGER) {
     return LedgerPNG;
@@ -71,6 +79,9 @@ export const getWalletIcon2024 = (
 
   if (brandName === KEYRING_CLASS.MNEMONIC) {
     return SeedPNG;
+  }
+  if (isWatchAddress === false) {
+    return isLight ? UnknownPNG : UnknownDarkPNG;
   }
   return isLight ? WatchPNG : WatchDarkDark;
 };

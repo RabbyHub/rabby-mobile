@@ -1,0 +1,24 @@
+appId: ${RABBY_MAESTRO_APP_ID}
+name: Android single home back to home
+tags:
+  - android
+  - maestro
+  - single-home
+  - home
+env:
+  SINGLE_HOME_BACK_ID: e2e.home.single-address.back
+  HOME_ADD_ADDRESS_BUTTON_ID: e2e.home.add-address.button
+---
+- assertVisible:
+    id: ${SINGLE_HOME_BACK_ID}
+
+- tapOn:
+    id: ${SINGLE_HOME_BACK_ID}
+
+- extendedWaitUntil:
+    visible:
+      id: ${HOME_ADD_ADDRESS_BUTTON_ID}
+    timeout: 15000
+
+- assertVisible:
+    id: ${HOME_ADD_ADDRESS_BUTTON_ID}

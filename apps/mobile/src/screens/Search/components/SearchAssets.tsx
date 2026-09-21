@@ -17,30 +17,27 @@ import { useTheme2024 } from '@/hooks/theme';
 import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ExternalTokenRow } from '@/screens/Home/components/AssetRenderItems';
-import {
-  MODAL_ID,
-  MODAL_NAMES,
-} from '@/components2024/GlobalBottomSheetModal/types';
+import type { MODAL_ID } from '@/components2024/GlobalBottomSheetModal/types';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import { CHAINS_ENUM } from '@debank/common';
+import type { CHAINS_ENUM } from '@debank/common';
 import { Image } from 'react-native';
 import { findChainByEnum } from '@/utils/chain';
 import { add0x, ellipsisAddress } from '@/utils/address';
 import { isValidHexAddress } from '@metamask/utils';
-import { IManageToken } from '@/core/services/preference';
-import { preferenceService } from '@/core/services';
-import { toast } from '@/components2024/Toast';
+import type { IManageToken } from '@/core/startupServices/preference';
 import { useFocusEffect } from '@react-navigation/native';
 import { TokenItemSkeleton } from '@/screens/Watchlist/components/TokenItem';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { tokenItemToITokenItem } from '@/utils/token';
-import { ITokenItem } from '@/store/tokens';
+import type { ITokenItem } from '@/store/tokens';
 import { FavoriteTag } from '@/components2024/Favorite';
 import { Text } from '@/components/Typography';
 import { SearchTokenHeader } from './SearchTokenHeader';
+import { getDisplayUserTokenSettings } from '@/hooks/useTokenSettings';
 
 interface Props {
   resultTokens: ITokenItem[];
@@ -77,33 +74,10 @@ export const SearchAssets: React.FC<Props> = ({
   }, []);
 
   const fetchPinedTokenList = useCallback(() => {
-    preferenceService.getUserTokenSettings().then(res => {
-      setWatchlistTokenList(res.pinedQueue || []);
+    getDisplayUserTokenSettings().then(res => {
+      setWatchlistTokenList(res.pinedQueue);
     });
   }, []);
-
-  const handlePressFavorite = useCallback(
-    (tokenId: string, chainId: string) => {
-      if (
-        watchlistTokenList.some(
-          t => t.chainId === chainId && t.tokenId === tokenId,
-        )
-      ) {
-        preferenceService.removePinedToken({
-          chainId: chainId,
-          tokenId: tokenId,
-        });
-        toast.success(t('page.watchlist.toast.remove'));
-      } else {
-        preferenceService.pinToken({
-          chainId: chainId,
-          tokenId: tokenId,
-        });
-      }
-      fetchPinedTokenList();
-    },
-    [fetchPinedTokenList, t, watchlistTokenList],
-  );
 
   useFocusEffect(fetchPinedTokenList);
 
@@ -127,7 +101,7 @@ export const SearchAssets: React.FC<Props> = ({
               data={item}
               style={styles.renderItemWrapper}
               onTokenPress={handleOpenTokenDetail}
-              logoSize={46}
+              logoSize={40}
               decimalPrecision
             />
             {isPined ? <FavoriteTag style={styles.favoriteTag} /> : null}
@@ -171,7 +145,7 @@ export const SearchAssets: React.FC<Props> = ({
 
   const ListEmptyComponent = useMemo(
     () =>
-      !loading && (!resultTokens || !resultTokens?.length) ? (
+      !loading && (!filterTokens || !filterTokens?.length) ? (
         <View style={styles.emptyView}>
           {isLight ? (
             <RcIconEmpty style={styles.image} />
@@ -193,7 +167,7 @@ export const SearchAssets: React.FC<Props> = ({
       loading,
       styles.image,
       isLight,
-      resultTokens,
+      filterTokens,
       styles.emptyView,
       styles.emptyText,
       t,
@@ -270,7 +244,9 @@ export const SearchAssets: React.FC<Props> = ({
       <FlatList
         keyExtractor={(_, index) => index.toString()}
         data={filterTokens}
-        ListHeaderComponent={<SearchTokenHeader />}
+        ListHeaderComponent={
+          filterTokens.length > 0 ? <SearchTokenHeader /> : null
+        }
         ListEmptyComponent={ListEmptyComponent}
         onScrollBeginDrag={Keyboard.dismiss}
         showsVerticalScrollIndicator={false}
@@ -284,16 +260,6 @@ export const SearchAssets: React.FC<Props> = ({
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     flex: 1,
-  },
-  skeletonBlock: {
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-0']
-      : ctx.colors2024['neutral-bg-1'],
-    width: '100%',
-    height: 74,
-    padding: 0,
-    borderRadius: 16,
-    marginTop: 8,
   },
   emptyView: {
     flex: 1,
@@ -368,13 +334,6 @@ const getStyles = createGetStyles2024(ctx => ({
       : ctx.colors2024['neutral-bg-1'],
     paddingHorizontal: 24,
   },
-  emptyHolder: {
-    marginTop: 65,
-  },
-  emptyImg: {
-    width: 160,
-    height: 117,
-  },
   emptyText: {
     marginTop: 21,
     fontSize: 16,
@@ -408,12 +367,6 @@ const getStyles = createGetStyles2024(ctx => ({
   image: {
     marginTop: 200,
     // marginBottom: 16,
-  },
-  footer: {
-    height: 200,
-  },
-  rightSlot: {
-    marginLeft: 8,
   },
   favoriteTag: {
     position: 'absolute',

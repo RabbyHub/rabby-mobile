@@ -11,6 +11,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { Text } from '@/components/Typography';
+import { BOTTOM_BUTTON_BOTTOM_OFFSET } from '@/constant/layout';
 
 const IsolatedTag = ({
   disablePress,
@@ -55,7 +56,7 @@ const IsolatedTag = ({
         },
         containerStyle: {
           position: 'absolute',
-          bottom: 48,
+          bottom: BOTTOM_BUTTON_BOTTOM_OFFSET,
           width: '100%',
         },
       },

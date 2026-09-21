@@ -1,0 +1,41 @@
+appId: ${RABBY_MAESTRO_APP_ID}
+name: Android home ready for existing user
+tags:
+  - android
+  - maestro
+  - bootstrap
+  - existing-user
+env:
+  WELCOME_IMPORT_EXISTING_ID: e2e.onboarding.welcome.import-existing
+  UNLOCK_PASSWORD_INPUT_ID: e2e.unlock.password.input
+  SINGLE_HOME_BACK_ID: e2e.home.single-address.back
+  HOME_ADD_ADDRESS_BUTTON_ID: e2e.home.add-address.button
+---
+- retry:
+    maxRetries: 2
+    commands:
+      - runFlow:
+          file: shared-dismiss-debug-warnings-overlay.yaml
+
+      - assertNotVisible:
+          id: ${WELCOME_IMPORT_EXISTING_ID}
+
+      - runFlow:
+          when:
+            visible:
+              id: ${UNLOCK_PASSWORD_INPUT_ID}
+          file: android-unlock.yaml
+
+      - runFlow:
+          when:
+            visible:
+              id: ${SINGLE_HOME_BACK_ID}
+          file: android-single-home-back-to-home.yaml
+
+      - extendedWaitUntil:
+          visible:
+            id: ${HOME_ADD_ADDRESS_BUTTON_ID}
+          timeout: 8000
+
+- assertVisible:
+    id: ${HOME_ADD_ADDRESS_BUTTON_ID}

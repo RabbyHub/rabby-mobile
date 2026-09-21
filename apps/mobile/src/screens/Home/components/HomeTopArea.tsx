@@ -6,15 +6,10 @@ import { View } from 'react-native';
 import { HomeTopChart } from './HomeTopChart';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
 import { CenterBg } from './BgComponents';
-import useCurrentBalance, {
-  apisAddressBalance,
-} from '@/hooks/useCurrentBalance';
-import {
-  useHomeReachTop,
-  useSingleHomeAddress,
-  useSingleHomeIsLoss,
-} from '../hooks/singleHome';
+import { apisAddressBalance } from '@/hooks/useCurrentBalance';
+import { useSingleHomeAddress, useSingleHomeIsLoss } from '../hooks/singleHome';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
+import { FOLD_ASSETS_HEADER_HEIGHT } from '@/constant/layout';
 
 export const HomeTopArea = () => {
   const { t } = useTranslation();
@@ -29,17 +24,17 @@ export const HomeTopArea = () => {
     [colors2024, isLoss],
   );
 
-  const { reachTop } = useHomeReachTop();
-
   return (
     <View style={[styles.container]}>
-      {reachTop ? null : <CenterBg />}
+      <CenterBg />
       <GlobalWarning
         hasError={isDisConnect}
         description={t('component.globalWarning.networkError.globalDesc')}
         style={styles.globalWarning}
         onRefresh={() => {
-          if (!currentAddress) return;
+          if (!currentAddress) {
+            return;
+          }
           apisAddressBalance.triggerUpdate({
             address: currentAddress,
             force: true,
@@ -60,6 +55,8 @@ export const HomeTopArea = () => {
 const getStyles = createGetStyles2024(() => ({
   container: {
     position: 'relative',
+    marginBottom: 20,
+    minHeight: FOLD_ASSETS_HEADER_HEIGHT,
     // overflow: 'hidden',
     // height: HEADER_TOP_AREA_HEIGHT,
   },

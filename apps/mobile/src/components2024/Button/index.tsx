@@ -13,10 +13,10 @@ import {
   ViewStyle,
   TouchableOpacityProps,
   TouchableOpacity,
-  TouchableWithoutFeedback,
 } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
+import { Text } from '@/components/Text';
 import { renderText } from '@/utils/renderNode';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CircleSpinnerCC } from '../CircleSpinner/CircleSpinnerCC';
@@ -33,6 +33,7 @@ export type ButtonProps = Omit<
       buttonStyle?: StyleProp<ViewStyle> | StyleProp<ViewStyle>[];
       type?:
         | 'primary'
+        | 'plain'
         | 'ghost'
         | 'success'
         | 'danger'
@@ -42,6 +43,7 @@ export type ButtonProps = Omit<
         | 'aave';
       loading?: boolean;
       loadingStyle?: StyleProp<ViewStyle>;
+      loadingProps?: ActivityIndicatorProps;
       containerStyle?: StyleProp<ViewStyle>;
       TouchableComponent?:
         | React.FC<React.ComponentProps<typeof TouchableOpacity>>
@@ -54,9 +56,25 @@ export type ButtonProps = Omit<
       iconRight?: ReactNode | ((ctx: { titleStyle?: TextStyle }) => ReactNode);
       showTextOnLoading?: boolean;
       loadingType?: 'indicator' | 'circle';
+      splitAndroidCJKTitle?: boolean;
     },
   'children'
 >;
+
+const SHORT_CJK_TITLE_RE =
+  /^[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uac00-\ud7af]{1,4}$/;
+
+function shouldSplitAndroidCJKTitle(
+  textNode: ReactNode,
+  enabled: boolean,
+): textNode is string {
+  return (
+    enabled &&
+    Platform.OS === 'android' &&
+    typeof textNode === 'string' &&
+    SHORT_CJK_TITLE_RE.test(textNode)
+  );
+}
 
 export const Button = ({
   height = undefined,
@@ -69,6 +87,7 @@ export const Button = ({
   type = 'primary',
   loading = false,
   loadingStyle,
+  loadingProps: passedLoadingProps,
   loadingType = 'indicator',
   noShadow = false,
   disabled = false,
@@ -76,6 +95,7 @@ export const Button = ({
   disabledTitleStyle,
   icon,
   iconRight,
+  splitAndroidCJKTitle = false,
   ViewComponent = View,
   ...rest
 }: ButtonProps) => {
@@ -86,6 +106,12 @@ export const Button = ({
       primary: {
         bg: colors2024['brand-default'],
         currentColor: colors2024['neutral-InvertHighlight'],
+      },
+      plain: {
+        bg: colors2024['neutral-bg-5'],
+        currentColor: disabled
+          ? colors2024['neutral-info']
+          : colors2024['neutral-title-1'],
       },
       ghost: {
         bg: colors2024['neutral-bg-1'],
@@ -115,9 +141,7 @@ export const Button = ({
       },
       aave: {
         bg: isLight ? '#131416' : '#fff',
-        currentColor: isLight
-          ? colors2024['neutral-InvertHighlight']
-          : '#192945',
+        currentColor: colors2024['neutral-contrast'],
       },
     };
     return {
@@ -150,7 +174,10 @@ export const Button = ({
     return StyleSheet.flatten([
       { color: currentColor },
       styles.title,
-      typeof height === 'number' && styles.titleWithLeading,
+      // 默认行高 = 按钮高度：固定 22 行高下 CJK 字体（PingFang / Noto Sans CJK）
+      // 的 ascent/descent 不对称，中文标题会整体偏上。titleStyle 里显式写的
+      // lineHeight 优先（多行标题需要小行高时用）
+      typeof height === 'number' && { lineHeight: height },
       passedTitleStyle,
       disabled && disabledTitleStyle,
     ]);
@@ -158,7 +185,6 @@ export const Button = ({
     currentColor,
     styles.title,
     height,
-    styles.titleWithLeading,
     passedTitleStyle,
     disabled,
     disabledTitleStyle,
@@ -184,6 +210,10 @@ export const Button = ({
         (type === 'ghost'
           ? {
               borderColor: colors2024['brand-disable'],
+            }
+          : type === 'plain'
+          ? {
+              backgroundColor: colors2024['neutral-bg-5'],
             }
           : type === 'hyperliquid'
           ? {
@@ -216,6 +246,7 @@ export const Button = ({
   const loadingProps: ActivityIndicatorProps = {
     color: currentColor,
     size: 'small',
+    ...passedLoadingProps,
   };
 
   const accessibilityState = {
@@ -238,6 +269,34 @@ export const Button = ({
     return i;
   }, [icon, iconRight, titleStyle]);
 
+  const splitCJKTitle = shouldSplitAndroidCJKTitle(
+    textNode,
+    splitAndroidCJKTitle,
+  )
+    ? textNode
+    : undefined;
+  const titleNode = useMemo(() => {
+    if (!textNode) {
+      return null;
+    }
+
+    if (splitCJKTitle) {
+      return (
+        <View style={styles.cjkTitleRow}>
+          {Array.from(splitCJKTitle).map((char, index) => (
+            <Text key={`${char}-${index}`} style={titleStyle}>
+              {char}
+            </Text>
+          ))}
+        </View>
+      );
+    }
+
+    return renderText(textNode, {
+      style: titleStyle,
+    });
+  }, [splitCJKTitle, styles.cjkTitleRow, textNode, titleStyle]);
+
   return (
     <View
       style={StyleSheet.flatten([
@@ -253,6 +312,7 @@ export const Button = ({
         accessibilityRole="button"
         accessibilityState={accessibilityState}
         {...rest}
+        accessibilityLabel={rest.accessibilityLabel ?? splitCJKTitle}
         style={StyleSheet.flatten([rest.style, styleWithHeight])}>
         <ViewComponent style={innerStyle}>
           {/* Activity Indicator on loading */}
@@ -268,11 +328,7 @@ export const Button = ({
               ) : (
                 <CircleSpinnerCC size={24} style={loadingStyle} />
               )}
-              {!!showTextOnLoading &&
-                !!textNode &&
-                renderText(textNode, {
-                  style: titleStyle,
-                })}
+              {!!showTextOnLoading && !!titleNode && titleNode}
             </>
           )}
           {!loading && (
@@ -283,10 +339,7 @@ export const Button = ({
                 </View>
               )}
               {/* Title for Button */}
-              {!!textNode &&
-                renderText(textNode, {
-                  style: titleStyle,
-                })}
+              {!!titleNode && titleNode}
               {iconNode && iconRight && (
                 <View style={StyleSheet.flatten([styles.iconContainer])}>
                   {iconNode}
@@ -323,14 +376,17 @@ const getStyle = createGetStyles2024(ctx => ({
     // elevation: 4,
   },
   title: {
-    fontSize: 20,
+    fontSize: 18,
+    // lineHeight: 22,
     textAlign: 'center',
     paddingVertical: 1,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
   },
-  titleWithLeading: {
-    lineHeight: 24,
+  cjkTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   iconContainer: {
     marginHorizontal: 8,

@@ -1,18 +1,18 @@
-import React, { useCallback, useRef, useEffect } from 'react';
+import type React from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 
 import { BackgroundBridge } from './BackgroundBridge';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import type { WebViewNavigation } from 'react-native-webview';
-import { dappService, sessionService } from '../services/shared';
-import {
-  allowLinkOpen,
-  getAlertMessage,
-  protocolAllowList,
-  trustedProtocolToDeeplink,
-} from '@/constant/dappView';
-import { createDappBySession } from '../apis/dapp';
+import { type BackgroundBridgeServices } from './backgroundBridgeServices';
+import { createDappBySession } from '@/core/utils/createDappBySession';
 import { useRefState } from '@/hooks/common/useRefState';
-import { RABBY_DECLARED_PREFIX } from '@rabby-wallet/rn-webview-bridge';
+import {
+  BRIDGE_FRAME_CAPABILITY_KEY,
+  BRIDGE_FRAME_PAYLOAD_KEY,
+  JSBridgeHarden,
+  RABBY_DECLARED_PREFIX,
+} from '@rabby-wallet/rn-webview-bridge';
 
 export const BLANK_PAGE = 'about:blank';
 export const BLANK_RABBY_PAGE = 'about:rabby';
@@ -36,12 +36,12 @@ type WebViewDataPayload<P = any> = {
   payload?: P;
 };
 
-export function useSetupWebview({
-  siteInfoRefs: { urlRef, titleRef, iconRef },
-  webviewRef,
-  webviewIdRef,
-  isFromMobileInnerDapp,
-}: {
+type WebViewCapabilityEnvelope = {
+  [BRIDGE_FRAME_CAPABILITY_KEY]?: unknown;
+  [BRIDGE_FRAME_PAYLOAD_KEY]?: unknown;
+};
+
+export type SetupWebviewParams = {
   /** @deprecated */
   dappOrigin?: string;
   siteInfoRefs: {
@@ -52,20 +52,50 @@ export function useSetupWebview({
   webviewIdRef: React.MutableRefObject<string>;
   webviewRef: React.MutableRefObject<WebView | null>;
   isFromMobileInnerDapp?: boolean;
+};
+
+export function useSetupWebviewWithServices({
+  siteInfoRefs: { urlRef, titleRef, iconRef },
+  webviewRef,
+  webviewIdRef,
+  isFromMobileInnerDapp,
+  coreServices,
+}: SetupWebviewParams & {
+  coreServices: BackgroundBridgeServices;
 }) {
   const { setRefState: putBackgroundBridge, stateRef: currentBridgeRef } =
     useRefState<BackgroundBridge | null>(null);
+  const bridgeFrameCapabilityRef = useRef<{
+    value: string;
+    injectedJavaScript: string;
+  } | null>(null);
+
+  if (!bridgeFrameCapabilityRef.current) {
+    const randomBytes = new Uint8Array(32);
+    crypto.getRandomValues(randomBytes);
+    const value = Array.from(randomBytes, byte =>
+      byte.toString(16).padStart(2, '0'),
+    ).join('');
+
+    bridgeFrameCapabilityRef.current = {
+      value,
+      injectedJavaScript: JSBridgeHarden(value),
+    };
+  }
+
+  const bridgeFrameCapability = bridgeFrameCapabilityRef.current;
 
   const destroyCurrentBridge = useCallback(() => {
     if (currentBridgeRef.current) {
       currentBridgeRef.current.onDisconnect();
-      sessionService.deleteSession(currentBridgeRef.current);
+      coreServices.sessionService.deleteSession(currentBridgeRef.current);
       currentBridgeRef.current = null;
     }
-  }, [currentBridgeRef]);
+  }, [coreServices, currentBridgeRef]);
 
   const initializeBackgroundBridge = useCallback(
     (urlBridge: string, isMainFrame: boolean = true) => {
+      const { dappService, sessionService } = coreServices;
       urlRef.current = urlBridge;
       const newBridge = new BackgroundBridge({
         webview: webviewRef,
@@ -92,6 +122,7 @@ export function useSetupWebview({
     },
     [
       isFromMobileInnerDapp,
+      coreServices,
       urlRef,
       webviewRef,
       webviewIdRef,
@@ -126,22 +157,63 @@ export function useSetupWebview({
       try {
         fromData =
           typeof fromData === 'string' ? JSON.parse(fromData) : fromData;
-        if (!fromData || (!fromData.type && !fromData.name)) return;
+        const hasCapabilityEnvelope =
+          fromData != null &&
+          typeof fromData === 'object' &&
+          Object.prototype.hasOwnProperty.call(
+            fromData,
+            BRIDGE_FRAME_CAPABILITY_KEY,
+          ) &&
+          Object.prototype.hasOwnProperty.call(
+            fromData,
+            BRIDGE_FRAME_PAYLOAD_KEY,
+          );
+        const capabilityEnvelope = hasCapabilityEnvelope
+          ? (fromData as WebViewCapabilityEnvelope)
+          : null;
+        const messageData = capabilityEnvelope
+          ? capabilityEnvelope[BRIDGE_FRAME_PAYLOAD_KEY]
+          : fromData;
 
-        const data = fromData as WebViewDataPayload;
+        if (
+          !messageData ||
+          typeof messageData !== 'object' ||
+          (!(messageData as WebViewDataPayload).type &&
+            !(messageData as WebViewDataPayload).name)
+        ) {
+          return;
+        }
+
+        const data = messageData as WebViewDataPayload;
         if (data.name) {
-          const msgOrigin = (data as any).origin;
-          const bridgeOrigin = currentBridgeRef.current?.origin;
-          // if the bridge origin is null, just ignore the message
-          if (bridgeOrigin == null) {
+          if (
+            capabilityEnvelope?.[BRIDGE_FRAME_CAPABILITY_KEY] !==
+            bridgeFrameCapability.value
+          ) {
             return;
           }
 
-          const msgHost = new URL(msgOrigin).host;
-          const bridgeHost = new URL(bridgeOrigin).host;
-          if (msgHost !== bridgeHost) {
+          const msgOrigin =
+            typeof (data as any).origin === 'string'
+              ? (data as any).origin
+              : null;
+          const bridgeOrigin = currentBridgeRef.current?.origin;
+          // Ignore bridge messages before either side has a stable origin.
+          if (!msgOrigin || bridgeOrigin == null) {
+            return;
+          }
+
+          let normalizedMsgOrigin = '';
+          let normalizedBridgeOrigin = '';
+          try {
+            normalizedMsgOrigin = new URL(msgOrigin).origin;
+            normalizedBridgeOrigin = new URL(bridgeOrigin).origin;
+          } catch {
+            return;
+          }
+          if (normalizedMsgOrigin !== normalizedBridgeOrigin) {
             console.warn(
-              `[onMessage] host mismatch: msgHost=${msgHost},bridgeHost=${bridgeHost}`,
+              `[onMessage] origin mismatch: msgOrigin=${normalizedMsgOrigin},bridgeOrigin=${normalizedBridgeOrigin}`,
             );
             return;
           }
@@ -155,7 +227,12 @@ export function useSetupWebview({
         console.error(e, `Browser::onMessage on ${urlRef.current}`);
       }
     },
-    [currentBridgeRef, onRabbyDeclaredMessage, urlRef],
+    [
+      bridgeFrameCapability.value,
+      currentBridgeRef,
+      onRabbyDeclaredMessage,
+      urlRef,
+    ],
   );
 
   const changeUrl = useCallback(
@@ -170,8 +247,10 @@ export function useSetupWebview({
   const onReloadingRef = useRef<boolean>(false);
   // would be called every time the url changes
   const onLoadStart: OnLoadStart = useCallback(
-    async ({ nativeEvent }, treatAsReload = false) => {
-      if (onReloadingRef.current) return;
+    ({ nativeEvent }, treatAsReload = false) => {
+      if (onReloadingRef.current) {
+        return;
+      }
       onReloadingRef.current = treatAsReload;
 
       try {
@@ -232,6 +311,7 @@ export function useSetupWebview({
   }, [destroyCurrentBridge]);
 
   return {
+    bridgeHardenScript: bridgeFrameCapability.injectedJavaScript,
     onLoadStart,
     onMessage,
   };

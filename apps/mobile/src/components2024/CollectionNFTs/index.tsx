@@ -1,7 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, ScrollView } from 'react-native';
-import { CollectionList, NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { NftCollectionResourceValue } from '@/store/nftAssetsIndex';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import AutoLockView from '@/components/AutoLockView';
@@ -14,7 +15,7 @@ import { AccountOverview } from '@/screens/Home/components/AccountOverview';
 import { Text } from '@/components/Typography';
 
 interface Props {
-  data: CollectionList;
+  data: NftCollectionResourceValue;
   titleText?: string;
   onPressItem: (item: NFTItem) => void;
   /** @deprecated */

@@ -2,7 +2,7 @@ import {
   FooterButtonContainer2024Props,
   FooterButtonScreenContainer,
 } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
-import { RootNames } from '@/constant/layout';
+import { BOTTOM_BUTTON_BOTTOM_OFFSET, RootNames } from '@/constant/layout';
 import { TransactionNavigatorParamList } from '@/navigation-type';
 import { usePreventRemove, useRoute } from '@react-navigation/native';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
@@ -222,7 +222,9 @@ export const BatchRevokeScreen = () => {
   }
 
   return (
-    <FooterButtonScreenContainer footerBottomOffset={56} {...buttonProps}>
+    <FooterButtonScreenContainer
+      footerBottomOffset={BOTTOM_BUTTON_BOTTOM_OFFSET}
+      {...buttonProps}>
       <View style={styles.root}>
         <ListHeader />
         <FlatList

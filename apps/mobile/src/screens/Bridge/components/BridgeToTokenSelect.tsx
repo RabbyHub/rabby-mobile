@@ -8,8 +8,7 @@ import React, {
 import { View, TouchableOpacity } from 'react-native';
 import { uniqBy } from 'lodash';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { TokenSelectorSheetModal } from '@/components/Token';
-import useAsync from 'react-use/lib/useAsync';
+import { DeferredTokenSelectorSheetModal } from '@/components/Token';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { openapi } from '@/core/request';
 import { useTranslation } from 'react-i18next';
@@ -28,8 +27,13 @@ import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTokenSelectorModalVisible } from '@/components/Token/TokenSelectorSheetModal';
 import { useFavoriteTokens } from '@/components/Token/hooks/favorite';
+import {
+  makeTokenListRequestKey,
+  useTokenListAsyncResource,
+} from '@/components/Token/hooks/useTokenListAsyncResource';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { Text } from '@/components/Typography';
+import { useRegressionScenarioComponentAction } from '@/devtools/regressionScenarios/react';
 
 interface BridgeToTokenSelectProps {
   // allowClearAccountFilter?: boolean;
@@ -78,8 +82,19 @@ const BridgeToTokenSelect = ({
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
-  const [favoriteFilterValue, setFavoriteFilterValue] =
+  const [_favoriteFilterValue, setFavoriteFilterValue] =
     useState<FavoriteFilterType>('all');
+  const hasSearchKeyword = useMemo(
+    () => queryConds.keyword.trim().length > 0,
+    [queryConds.keyword],
+  );
+
+  const favoriteFilterValue = useMemo(() => {
+    if (hasSearchKeyword) {
+      return 'all';
+    }
+    return _favoriteFilterValue;
+  }, [_favoriteFilterValue, hasSearchKeyword]);
 
   const handleCurrentTokenChange = (token: TokenItem) => {
     onChange && onChange('');
@@ -88,8 +103,6 @@ const BridgeToTokenSelect = ({
     // The state update will be handled by handleTokenSelectorClose (via onCancel)
     // when the modal finishes closing, which avoids a race condition
     setTokenSelectorVisible(false, { noTriggerRerender: true });
-
-    setQueryConds(prev => ({ ...prev }));
   };
 
   const { userTokenSettings, fetchUserTokenSettings } = useUserTokenSettings();
@@ -108,25 +121,47 @@ const BridgeToTokenSelect = ({
     }, [currentAccount?.address, fetchUserTokenSettings]),
   );
 
-  const { value: tokenList, loading: tokenListLoading } = useAsync(async () => {
-    if (fromChainId && chainId) {
-      const list = await openapi.getBridgeToTokenList({
-        from_chain_id: fromChainId,
-        from_token_id: fromTokenId,
-        to_chain_id: chainId,
-        q: queryConds.keyword,
-        user_addr: address,
-      });
-      return list?.token_list;
+  const tokenListRequestKey = useMemo(
+    () =>
+      makeTokenListRequestKey([
+        fromChainId,
+        fromTokenId,
+        chainId,
+        queryConds.keyword,
+        address,
+      ]),
+    [address, chainId, fromChainId, fromTokenId, queryConds.keyword],
+  );
+  const loadTokenList = useCallback(async () => {
+    if (!fromChainId || !chainId) {
+      return [];
     }
-    return [];
-  }, [currentAccount, chainId, tokenSelectorVisible, queryConds.keyword]);
+
+    const list = await openapi.getBridgeToTokenList({
+      from_chain_id: fromChainId,
+      from_token_id: fromTokenId,
+      to_chain_id: chainId,
+      q: queryConds.keyword,
+      user_addr: address,
+    });
+    return list?.token_list || [];
+  }, [address, chainId, fromChainId, fromTokenId, queryConds.keyword]);
+  const {
+    data: tokenList,
+    isLoading: tokenListLoading,
+    isSettled: isTokenListSettled,
+  } = useTokenListAsyncResource({
+    enabled: Boolean(fromChainId && chainId),
+    requestKey: tokenListRequestKey,
+    load: loadTokenList,
+  });
 
   const { data: favoriteTokens, loading: favoriteTokensLoading } =
     useFavoriteTokens({
       focus: favoriteFilterValue === 'favorite',
       address,
       chainId,
+      pinnedTokens: pinedQueue,
     });
 
   const displayTokenList = useMemo(() => {
@@ -157,8 +192,16 @@ const BridgeToTokenSelect = ({
   const isListLoading = useMemo(() => {
     return favoriteFilterValue === 'favorite'
       ? favoriteTokensLoading
-      : tokenListLoading;
-  }, [favoriteFilterValue, favoriteTokensLoading, tokenListLoading]);
+      : Boolean(fromChainId && chainId) &&
+          (tokenListLoading || !isTokenListSettled);
+  }, [
+    chainId,
+    favoriteFilterValue,
+    favoriteTokensLoading,
+    fromChainId,
+    isTokenListSettled,
+    tokenListLoading,
+  ]);
 
   const handleSearchTokens = React.useCallback(async keyword => {
     setQueryConds({
@@ -166,17 +209,22 @@ const BridgeToTokenSelect = ({
     });
   }, []);
 
-  const handleTokenSelectorClose = () => {
+  const handleTokenSelectorClose = useCallback(() => {
     setTokenSelectorVisible(false);
+  }, [setTokenSelectorVisible]);
 
-    setQueryConds(prev => ({
-      ...prev,
-    }));
-  };
-
-  const handleSelectToken = () => {
+  const handleSelectToken = useCallback(() => {
     setTokenSelectorVisible(true);
-  };
+  }, [setTokenSelectorVisible]);
+
+  useRegressionScenarioComponentAction(
+    'token-selector.bridgeTo.open',
+    handleSelectToken,
+  );
+  useRegressionScenarioComponentAction(
+    'token-selector.bridgeTo.close',
+    handleTokenSelectorClose,
+  );
 
   useEffect(() => {
     setQueryConds(prev => ({
@@ -264,7 +312,7 @@ const BridgeToTokenSelect = ({
         )}
       </TouchableOpacity>
 
-      <TokenSelectorSheetModal
+      <DeferredTokenSelectorSheetModal
         ref={tokenSelectorModalRef}
         visible={tokenSelectorVisible}
         list={displayTokenList}
@@ -276,7 +324,7 @@ const BridgeToTokenSelect = ({
         disableSort
         // filterAccount={account}
         hideChainFilter={true}
-        showFavoriteFilter
+        showFavoriteFilter={!hasSearchKeyword}
         favoriteFilterValue={favoriteFilterValue}
         onFavoriteFilterChange={setFavoriteFilterValue}
         selectToken={token}
@@ -292,7 +340,7 @@ const BridgeToTokenSelect = ({
 };
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   wrapper: {
-    borderRadius: 12,
+    borderRadius: 100,
     backgroundColor: colors2024['neutral-line'],
     padding: 4,
     paddingHorizontal: 8,

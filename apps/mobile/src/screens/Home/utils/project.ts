@@ -1,5 +1,3 @@
-import PQueue from 'p-queue';
-
 import {
   PortfolioItem,
   WithdrawAction,
@@ -8,11 +6,7 @@ import { AbstractPortfolio, AbstractProject, PortfolioProject } from '../types';
 import { formatUsdValue } from '@/utils/number';
 import { DisplayedToken } from '@/utils/token';
 
-export const pQueue = new PQueue({
-  interval: 1000,
-  intervalCap: 100,
-  concurrency: 40,
-});
+export { pQueue } from '@/utils/requestQueue';
 
 export class DisplayedProject implements AbstractProject {
   // [immerable] = true;
@@ -23,8 +17,6 @@ export class DisplayedProject implements AbstractProject {
   netWorth: number;
   _netWorth: string;
   _isExcludeBalance?: boolean;
-  _isFold?: boolean;
-  _isManualFold?: boolean;
   _portfolioDict: Record<string, DisplayedPortfolio> = {};
   _portfolios: DisplayedPortfolio[] = [];
   _historyPatched?: boolean;

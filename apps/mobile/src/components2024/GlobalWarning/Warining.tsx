@@ -85,11 +85,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
     fontWeight: '800',
     fontSize: 14,
+    lineHeight: 18,
     fontFamily: 'SF Pro Rounded',
   },
   text: {
     color: colors2024['neutral-title-1'],
     fontSize: 14,
+    lineHeight: 18,
     fontFamily: 'SF Pro Rounded',
   },
   refreshText: {

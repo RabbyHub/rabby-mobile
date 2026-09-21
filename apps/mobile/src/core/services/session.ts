@@ -1,15 +1,26 @@
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { BroadcastEvent } from '@/constant/event';
-import { BackgroundBridge } from '../bridges/BackgroundBridge';
 import { globalSerivceEvents } from '../apis/serviceEvent';
-import { MobileSession } from '../controllers/type';
 
 // import { permissionService } from 'background/service';
 // import PortMessage from '@/utils/message/portMessage';
 
-export type SessionProp = MobileSession;
+export type SessionProp = {
+  name: string;
+  origin: string;
+  icon: string;
+  $mobileCtx?: {
+    fromTabId?: string;
+    isFromMobileInnerDapp?: boolean;
+  };
+};
 
-type SessionKey = BackgroundBridge;
+type SessionPort = {
+  port: {
+    postMessage: (message: any, origin: string) => void;
+  };
+};
+type SessionKey = SessionPort;
 export class Session {
   origin = '';
 
@@ -17,7 +28,7 @@ export class Session {
 
   name = '';
 
-  pms: BackgroundBridge[] = [];
+  pms: SessionPort[] = [];
 
   pushMessage(event: BroadcastEvent, data: any) {
     this.pms.forEach(pm => {
@@ -45,7 +56,7 @@ export class Session {
     }
   }
 
-  setPortMessage(pm: BackgroundBridge) {
+  setPortMessage(pm: SessionPort) {
     if (this.pms.includes(pm)) {
       return;
     }
@@ -62,7 +73,7 @@ export class Session {
 }
 
 // for each tab
-const sessionMap = new Map<BackgroundBridge, Session | null>();
+const sessionMap = new Map<SessionKey, Session | null>();
 
 const createSession = (key: SessionKey, data?: null | SessionProp) => {
   const session = new Session(data);

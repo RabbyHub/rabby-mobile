@@ -1,30 +1,27 @@
+import { useTranslation } from 'react-i18next';
+
 import { RootNames, makeHeadersPresets } from '@/constant/layout';
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
+import {
+  ProviderControllerTester,
+  SetPasswordScreen,
+  SettingsScreen,
+  WalletConnectScreen,
+} from '@/perfs/loadables/settingsNavigatorScreens';
 import { CustomTestnetScreen } from '../CustomTestnet';
-import { registerAppScreen } from '@/perfs/apis';
-
-const SettingsScreen = registerAppScreen<
-  typeof import('../Settings/Settings').default
->({
-  loader: () => import('../Settings/Settings'),
-});
-const SetPasswordScreen = registerAppScreen<
-  typeof import('../ManagePassword/SetPassword').default
->({
-  loader: () => import('../ManagePassword/SetPassword'),
-});
-const ProviderControllerTester = registerAppScreen<
-  typeof import('../ProviderControllerTester/ProviderControllerTester').default
->({
-  loader: () => import('../ProviderControllerTester/ProviderControllerTester'),
-});
 import { I18nRouteScreenTitle } from '@/components2024/i18n/RouteScreen';
+import { withScreenRenderActivityAudit } from '@/hooks/storeActivity/withScreenRenderActivityAudit';
 
 const SettingsStack = createNativeStackNavigator();
+const AuditedSettingsScreen = withScreenRenderActivityAudit(
+  SettingsScreen,
+  'settings-screen',
+);
 
 export function SettingNavigator() {
+  const { t } = useTranslation();
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
   const colors = useThemeColors();
   // console.log('============== SettingNavigator Render =========');
@@ -46,7 +43,7 @@ export function SettingNavigator() {
       })}>
       <SettingsStack.Screen
         name={RootNames.Settings}
-        component={SettingsScreen}
+        component={AuditedSettingsScreen}
         options={mergeScreenOptions2024([
           {
             headerTitle: () => (
@@ -77,6 +74,24 @@ export function SettingNavigator() {
           // ...(isOnSettingsWaiting && {
           // }),
         }}
+      />
+      <SettingsStack.Screen
+        name={RootNames.WalletConnect}
+        component={WalletConnectScreen}
+        options={mergeScreenOptions({
+          title: t('page.walletConnect.screenTitle'),
+          headerTitle: t('page.walletConnect.screenTitle'),
+          headerShadowVisible: false,
+          headerStyle: {
+            backgroundColor: colors['neutral-black'],
+          },
+          headerTintColor: colors['neutral-title-2'],
+          headerTitleStyle: {
+            color: colors['neutral-title-2'],
+            fontWeight: '900',
+            fontFamily: 'SF Pro Rounded',
+          },
+        })}
       />
       <SettingsStack.Screen
         name={RootNames.CustomTestnet}

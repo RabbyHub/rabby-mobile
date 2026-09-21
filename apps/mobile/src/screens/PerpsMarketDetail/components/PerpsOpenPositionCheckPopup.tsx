@@ -7,7 +7,12 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { useTheme2024 } from '@/hooks/theme';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { formatPercent } from '@/screens/Home/utils/price';
-import { formatUsdValue, splitNumberByStep } from '@/utils/number';
+import {
+  formatPerpsNumber,
+  formatUsdValue,
+  splitNumberByStep,
+} from '@/utils/number';
+import { PerpsOpenOrderType } from '@/constant/perps';
 import { formatPerpsCoin } from '@/utils/perps';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
@@ -18,12 +23,25 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Text, TextInput } from '@/components/Typography';
+import { MarketSlippage } from './MarketSlippage';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 export const PerpsOpenPositionCheckPopup: React.FC<{
   visible?: boolean;
   onClose?(): void;
   onConfirm?(): Promise<void>;
-  info: {
+  slippage?: number;
+  depthInsufficient?: boolean;
+  slippageReady?: boolean;
+  /** Sticky visibility from useMarketSlippage: stays true once slippage exceeded the display threshold. */
+  shouldShowSlippage?: boolean;
+  onSwitchToLimit?: () => void;
+  summary: {
     coin: string;
     coinLogo?: string;
     margin: string;
@@ -38,8 +56,22 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
     slTriggerPx: string;
     selectedMarginMode: 'cross' | 'isolated';
     estimatedLiquidationPrice: string | number;
+    quoteAsset?: string;
+    orderType?: PerpsOpenOrderType;
+    limitPx?: string;
+    isMarketable?: boolean;
   };
-}> = ({ visible, onClose, info, onConfirm }) => {
+}> = ({
+  visible,
+  onClose,
+  summary,
+  onConfirm,
+  slippage = 0,
+  depthInsufficient,
+  slippageReady,
+  shouldShowSlippage,
+  onSwitchToLimit,
+}) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
   const [loading, setLoading] = React.useState<boolean>(false);
   const { styles, colors2024, isLight } = useTheme2024({
@@ -63,7 +95,10 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
     tpTriggerPx,
     slTriggerPx,
     selectedMarginMode,
-  } = info;
+    orderType = 'market',
+    limitPx,
+    isMarketable = false,
+  } = summary;
 
   const { t } = useTranslation();
 
@@ -95,7 +130,9 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
         <BottomSheetScrollView contentContainerStyle={styles.scrollViewContent}>
           <View>
             <Text style={styles.title}>
-              {t('page.perpsDetail.PerpsOpenPositionCheckPopup.title')}
+              {orderType === 'limit'
+                ? t('page.perpsDetail.PerpsOpenPositionCheckPopup.limitTitle')
+                : t('page.perpsDetail.PerpsOpenPositionCheckPopup.marketTitle')}
             </Text>
           </View>
 
@@ -108,7 +145,12 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </View>
               <View style={styles.coinContainer}>
                 <AssetAvatar size={24} logo={coinLogo} />
-                <Text style={styles.value}>{formatPerpsCoin(coin)} - USD</Text>
+                <Text style={styles.value}>
+                  {formatPerpsCoin(coin)}-{summary.quoteAsset || 'USDC'}
+                </Text>
+                {/* <Text style={styles.quote}>
+                  /{summary.quoteAsset || 'USDC'}
+                </Text> */}
               </View>
             </View>
             <View style={styles.listItem}>
@@ -140,12 +182,22 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </View>
             </View>
             <View style={styles.listItem}>
+              <View style={styles.listItemMain}>
+                <Text style={styles.label}>
+                  {t('page.perpsDetail.PerpsOpenPositionCheckPopup.size')}
+                </Text>
+              </View>
+              <View>
+                <Text style={styles.value}>
+                  {tradeSize} {formatPerpsCoin(coin)}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.listItem}>
               <TouchableOpacity
                 onPress={() => {
                   showTipsPopup({
-                    title: t(
-                      'page.perpsDetail.PerpsOpenPositionCheckPopup.size',
-                    ),
+                    title: t('page.perps.historyDetail.tradeValue'),
                     desc: t(
                       'page.perpsDetail.PerpsOpenPositionCheckPopup.sizeTips',
                     ),
@@ -154,7 +206,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                 }}>
                 <View style={styles.listItemMain}>
                   <Text style={styles.label}>
-                    {t('page.perpsDetail.PerpsOpenPositionCheckPopup.size')}
+                    {t('page.perps.historyDetail.tradeValue')}
                   </Text>
                   <RcIconInfoCC
                     width={18}
@@ -165,8 +217,8 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </TouchableOpacity>
               <View>
                 <Text style={styles.value}>
-                  {formatUsdValue(Number(tradeAmount))} = {tradeSize}{' '}
-                  {formatPerpsCoin(coin)}
+                  {formatPerpsNumber(Number(tradeAmount))}{' '}
+                  {summary.quoteAsset || 'USDC'}
                 </Text>
               </View>
             </View>
@@ -203,7 +255,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
             <View style={styles.listItem}>
               <View style={styles.listItemMain}>
                 <Text style={styles.label}>
-                  {formatPerpsCoin(coin)}-USD{' '}
+                  {formatPerpsCoin(coin)}-{summary.quoteAsset || 'USDC'}{' '}
                   {t('page.perpsDetail.PerpsOpenPositionCheckPopup.price')}
                 </Text>
               </View>
@@ -213,6 +265,22 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                 </Text>
               </View>
             </View>
+            {orderType === 'limit' && limitPx ? (
+              <View style={styles.listItem}>
+                <View style={styles.listItemMain}>
+                  <Text style={styles.label}>
+                    {t(
+                      'page.perpsDetail.PerpsOpenPositionCheckPopup.limitPrice',
+                    )}
+                  </Text>
+                </View>
+                <View>
+                  <Text style={styles.value}>
+                    @ ${splitNumberByStep(limitPx)}
+                  </Text>
+                </View>
+              </View>
+            ) : null}
             <View style={styles.listItem}>
               <TouchableOpacity
                 onPress={() => {
@@ -241,18 +309,50 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </TouchableOpacity>
               <View>
                 <Text style={styles.value}>
-                  ${splitNumberByStep(Number(estimatedLiquidationPrice))}
+                  {Number(estimatedLiquidationPrice) <= 0
+                    ? '-'
+                    : `$${splitNumberByStep(
+                        Number(estimatedLiquidationPrice),
+                      )}`}
                 </Text>
               </View>
             </View>
           </View>
+          {orderType === 'market' &&
+          slippageReady &&
+          Number(tradeSize) > 0 &&
+          shouldShowSlippage ? (
+            <View style={styles.list}>
+              <MarketSlippage
+                slippage={slippage}
+                depthInsufficient={depthInsufficient}
+                onSwitchToLimit={onSwitchToLimit}
+                rowStyle={styles.listItem}
+              />
+            </View>
+          ) : null}
         </BottomSheetScrollView>
         <View style={styles.footer}>
+          {isMarketable ? (
+            <Text style={styles.marketableWarning}>
+              {t(
+                'page.perpsDetail.PerpsOpenPositionCheckPopup.mayExecuteImmediately',
+              )}
+            </Text>
+          ) : null}
           <Button
             type="hyperliquid"
-            title={t('page.perpsDetail.PerpsOpenPositionCheckPopup.btn', {
-              direction,
-            })}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+            title={
+              orderType === 'limit'
+                ? t(
+                    'page.perpsDetail.PerpsOpenPositionCheckPopup.setLimitOrderBtn',
+                  )
+                : direction === 'Long'
+                ? t('page.perpsDetail.action.long')
+                : t('page.perpsDetail.action.short')
+            }
             onPress={async () => {
               setLoading(true);
               await onConfirm?.();
@@ -266,7 +366,8 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
+const getStyle = createGetStyles2024(ctx => {
+  const { colors2024, isLight, safeAreaInsets } = ctx;
   return {
     feeContainer: {
       flexDirection: 'row',
@@ -290,13 +391,22 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     scrollViewContent: {
       paddingHorizontal: 20,
-      flex: 1,
     },
     footer: {
       backgroundColor: colors2024['neutral-bg-1'],
-      paddingTop: 16,
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
       paddingHorizontal: 16,
-      paddingBottom: 56,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+    },
+    marketableWarning: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      color: colors2024['orange-default'],
+      textAlign: 'center',
+      marginBottom: 12,
+      paddingHorizontal: 20,
     },
     title: {
       fontFamily: 'SF Pro Rounded',
@@ -312,7 +422,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: isLight
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
-      marginBottom: 18,
+      marginBottom: 12,
     },
     listItemContainer: {
       padding: 16,
@@ -369,17 +479,25 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       color: colors2024['neutral-info'],
     },
     value: {
+      marginLeft: 6,
       fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      lineHeight: 20,
+      fontSize: 14,
+      lineHeight: 18,
       fontWeight: '700',
       color: colors2024['neutral-title-1'],
+    },
+    quote: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '700',
+      color: colors2024['neutral-info'],
     },
     coinContainer: {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 6,
+      // gap: 6,
     },
     tagContainer: {
       paddingVertical: 2,

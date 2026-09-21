@@ -1,46 +1,32 @@
 import { RootNames } from '@/constant/layout';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
-import {
-  MarketDataMap,
-  PositionAndOpenOrder,
-} from '@/hooks/perps/usePerpsStore';
+import { perpsStore, PositionAndOpenOrder } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { sortBy } from 'lodash';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Alert,
-  Dimensions,
-  Platform,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Alert, TouchableOpacity, View } from 'react-native';
 import { PerpsPositionItem } from './PerpsPositionItem';
-import { AssetPosition } from '@rabby-wallet/hyperliquid-sdk';
 import { useMemoizedFn } from 'ahooks';
-import { sleep } from '@/utils/async';
-import Toast from 'react-native-root-toast';
-import { toast } from '@/components2024/Toast';
 import { Text } from '@/components/Typography';
 export const PerpsPositionSection: React.FC<{
   positionAndOpenOrders?: PositionAndOpenOrder[];
-  marketDataMap: MarketDataMap;
   handleShowRiskPopup: (coin: string) => void;
   handleCloseRiskPopup: () => void;
   handleActionApproveStatus: () => Promise<void>;
-  onClosePosition: (position: AssetPosition['position']) => Promise<void>;
+  onCloseAllPositions: () => Promise<void>;
 }> = ({
   positionAndOpenOrders,
-  marketDataMap,
   handleShowRiskPopup,
   handleCloseRiskPopup,
   handleActionApproveStatus,
-  onClosePosition,
+  onCloseAllPositions,
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const navigation = useRabbyAppNavigation();
+  const marketDataMap = perpsStore(s => s.marketDataMap);
   const list = useMemo(() => {
     return sortBy(
       positionAndOpenOrders || [],
@@ -61,11 +47,8 @@ export const PerpsPositionSection: React.FC<{
         {
           text: t('global.confirm'),
           style: 'default',
-          onPress: async () => {
-            for (const item of list) {
-              await onClosePosition(item.position);
-              await sleep(10);
-            }
+          onPress: () => {
+            onCloseAllPositions();
           },
         },
       ],
@@ -142,7 +125,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     lineHeight: 22,
-    fontWeight: '900',
+    fontWeight: '700',
     color: colors2024['neutral-title-1'],
   },
   sectionAction: {
@@ -153,9 +136,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   sectionActionText: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
     color: colors2024['neutral-secondary'],
     textAlign: 'right',
   },

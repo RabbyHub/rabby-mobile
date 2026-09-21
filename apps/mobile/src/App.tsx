@@ -9,9 +9,7 @@ import AppNavigation from '@/AppNavigation';
 import AppErrorBoundary from '@/components/ErrorBoundary';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { ThemeProvider, createTheme } from '@rneui/themed';
-import { withExpoSnack } from 'nativewind';
 import React, { Suspense, useEffect } from 'react';
-import { withIAPContext } from 'react-native-iap';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootSiblingParent } from 'react-native-root-siblings';
 import {
@@ -39,6 +37,15 @@ import {
 import { isEqual } from 'lodash';
 import { svsLayout } from './hooks/useAppLayout';
 import { openapi } from './core/request';
+import { DEFAULT_RABBY_MOBILE_CODE, IS_ROZENITE_ENABLED } from './constant/env';
+import { startSetupAppBeforeRenderDeferred } from './setup-app-before-render';
+import { runAfterHomePostStartupReady } from './core/utils/homeStartupReady';
+import { traceAndroidInstant } from './core/utils/androidTrace';
+import { startLaunchPhase } from './startup/launchPlan';
+import { StartupRuntimePanelHost } from './screens/Settings/components/StartupRuntimePanelHost';
+import { NEED_DEVSETTINGBLOCKS } from './constant';
+import { AnimatedBootSplash } from './components/BootSplash/AnimatedBootSplash';
+import { RegressionScenarioHost } from '@/devtools/regressionScenarios/react';
 
 Safe.openapiService = openapi;
 
@@ -58,10 +65,12 @@ const rneuiTheme = createTheme({
 type AppProps = { rabbitCode: string };
 
 const MemoziedAppNav = React.memo(AppNavigation);
+const RozeniteDevTools = IS_ROZENITE_ENABLED
+  ? require('./devtools/RozeniteDevTools').default
+  : null;
 
 const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
   useInitializeAppOnTop();
-
   useSetupServiceStub();
   useUniversalLinkOnTop();
   useIAPListener();
@@ -71,7 +80,52 @@ const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
 
   const { couldRender } = useAppCouldRender();
 
-  const safeAreaInsets = useSafeAreaInsets();
+  React.useEffect(() => {
+    traceAndroidInstant('react.MainScreen.mounted');
+  }, []);
+
+  React.useEffect(() => {
+    traceAndroidInstant('bootstrap.couldRender.changed', {
+      couldRender,
+    });
+  }, [couldRender]);
+
+  React.useEffect(() => {
+    if (!couldRender) {
+      return;
+    }
+
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let cancelHomePostReadyWait: (() => void) | null = null;
+    const frameId = requestAnimationFrame(() => {
+      timeoutId = setTimeout(() => {
+        cancelHomePostReadyWait = runAfterHomePostStartupReady(
+          () => {
+            startSetupAppBeforeRenderDeferred('home_post_startup_ready').catch(
+              error => {
+                console.error(
+                  'startSetupAppBeforeRenderDeferred::error',
+                  error,
+                );
+              },
+            );
+          },
+          {
+            fallbackMs: 5000,
+            label: 'setup_before_render_deferred',
+          },
+        );
+      }, 120);
+    });
+
+    return () => {
+      cancelHomePostReadyWait?.();
+      cancelAnimationFrame(frameId);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [couldRender]);
 
   return (
     <AppProvider
@@ -79,7 +133,7 @@ const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
       <RerenderDetector name="UnderAppProvider" />
       <BottomSheetModalProvider>
         <ScreenSceneAccountProvider>
-          {couldRender && <MemoziedAppNav />}
+          {couldRender ? <MemoziedAppNav /> : null}
         </ScreenSceneAccountProvider>
       </BottomSheetModalProvider>
     </AppProvider>
@@ -91,7 +145,9 @@ function SizeWatcher() {
 
   useEffect(() => {
     const prevInsets = svsLayout.insets.value;
-    if (isEqual(prevInsets, insets)) return;
+    if (isEqual(prevInsets, insets)) {
+      return;
+    }
     svsLayout.insets.value = insets;
   }, [insets]);
 
@@ -99,7 +155,11 @@ function SizeWatcher() {
 }
 
 function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
-  const rabbitCode = __DEV__ ? 'RABBY_MOBILE_CODE_DEV' : propRabbitCode;
+  const rabbitCode = __DEV__ ? DEFAULT_RABBY_MOBILE_CODE : propRabbitCode || '';
+  useEffect(() => {
+    traceAndroidInstant('react.App.mounted');
+    startLaunchPhase();
+  }, []);
   useBootstrapApp({ rabbitCode });
 
   return (
@@ -107,14 +167,18 @@ function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
       <ThemeProvider theme={rneuiTheme}>
         <SafeAreaProvider>
           <RootSiblingParent>
+            {RozeniteDevTools ? <RozeniteDevTools /> : null}
             <SizeWatcher />
             <Suspense fallback={null}>
               {/* TODO: measure to check if memory leak occured when refresh on iOS */}
               <GestureHandlerRootView style={{ flex: 1 }}>
+                {NEED_DEVSETTINGBLOCKS ? <StartupRuntimePanelHost /> : null}
+                <RegressionScenarioHost />
                 {/* read from native bundle on production */}
                 <MainScreen rabbitCode={rabbitCode} />
               </GestureHandlerRootView>
             </Suspense>
+            <AnimatedBootSplash />
           </RootSiblingParent>
         </SafeAreaProvider>
       </ThemeProvider>
@@ -122,4 +186,4 @@ function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
   );
 }
 
-export default withExpoSnack(withIAPContext(App));
+export default App;

@@ -1,0 +1,1036 @@
+describe('core/apis/keychainV9_0_0', () => {
+  const setup = async (options?: {
+    storage?: string;
+    authType?: number;
+    salt?: string;
+    trustedVaultKeyString?: string | null;
+    embeddedVaultKeyString?: string | null;
+    platform?: 'android' | 'ios';
+    platformVersion?: number;
+    api29FingerprintFallbackEligible?: boolean;
+    api29FingerprintPromptProbeEligible?: boolean;
+  }) => {
+    jest.resetModules();
+    const {
+      storage = 'KeystoreRSAECB',
+      authType = 1,
+      salt = 'salt',
+      trustedVaultKeyString = null,
+      embeddedVaultKeyString = null,
+      platform = 'android',
+      platformVersion = 33,
+      api29FingerprintFallbackEligible = false,
+      api29FingerprintPromptProbeEligible = false,
+    } = options || {};
+
+    const mockEncrypt = jest.fn(
+      async (
+        _salt: string,
+        payload: { password: string; vaultKeyString?: string },
+      ) => {
+        return `enc:${payload.password}`;
+      },
+    );
+    const mockDecrypt = jest.fn(async () => ({
+      password: 'plain-password',
+      ...(embeddedVaultKeyString
+        ? { vaultKeyString: embeddedVaultKeyString }
+        : null),
+    }));
+    const mockGetGenericPassword = jest.fn(
+      async (keychainOptions?: { service?: string }) => {
+        if (keychainOptions?.service === 'com.debank.trusted-vault-key') {
+          if (!trustedVaultKeyString) {
+            return false;
+          }
+
+          return {
+            service: 'com.debank.trusted-vault-key',
+            username: 'rabbymobile-vault-key',
+            password: trustedVaultKeyString,
+            storage,
+          };
+        }
+
+        return {
+          service: 'com.debank',
+          username: 'rabbymobile-user',
+          password: 'enc:plain-password',
+          storage,
+        };
+      },
+    );
+    const mockSetGenericPassword = jest.fn(async () => true);
+    const mockResetGenericPassword = jest.fn(async () => true);
+    const mockCanImplyAuthentication = jest.fn(async () => true);
+    const mockDebugGetGenericPasswordStateForOptions = jest.fn(async () => ({
+      service: 'com.debank',
+      hasEntry: true,
+      hasUsername: true,
+      hasPassword: true,
+      androidBiometricHardware: {
+        fingerprint: true,
+        face: true,
+        iris: false,
+      },
+      androidAuthenticatorCapabilities: {
+        apiLevel: 33,
+        biometricStrong: {
+          name: 'BIOMETRIC_STRONG',
+          authenticators: 15,
+          statusCode: 0,
+          statusLabel: 'BIOMETRIC_SUCCESS',
+          available: true,
+          errorMessage: null,
+        },
+      },
+      hasCipherStorageMarker: false,
+      isCipherStorageMarkerMissing: true,
+      storedCipherStorageName: null,
+      resolvedCipherStorageName: 'KeystoreRSAECB',
+      candidateCipherStorageNames: ['KeystoreRSAECB'],
+      cipherStorageResolutionStrategy: 'missing-marker/default-rsa',
+      usernameByteSize: 32,
+      passwordByteSize: 64,
+      keystoreAlias: 'com.debank',
+      hasKeystoreAlias: true,
+      keystoreKeyAlgorithm: 'RSA',
+      keystoreSecurityLevel: 'SECURE_HARDWARE',
+      keystoreInsideSecureHardware: true,
+      keystoreUserAuthenticationRequired: true,
+      keystoreUserAuthenticationValidityDurationSeconds: 1,
+      keystoreUserAuthenticationType: 2,
+      keystoreBlockModes: 'ECB',
+      keystorePurposes: 3,
+      keystoreIsCompatibleWithCurrentCipher: true,
+      keystorePublicKeySha256: 'debug-public-key',
+      keystoreDebugErrorMessage: null,
+    }));
+    const mockGetGenericPasswordEntryStateForOptions = jest.fn(async () => ({
+      service: 'com.debank',
+      hasEntry: true,
+      hasUsername: true,
+      hasPassword: true,
+    }));
+    const mockDebugDecryptGenericPasswordForOptions = jest.fn(async () => ({
+      service: 'com.debank',
+      username: 'rabbymobile-user',
+      password: 'enc:plain-password',
+      storage,
+    }));
+    const mockDebugRemoveCipherStorageMarkerForOptions = jest.fn(
+      async () => true,
+    );
+    const mockSafeVerifyPasswordAndUpdateUnlockTime = jest.fn(async () => ({
+      success: true,
+    }));
+    const mockUpdateUnlockTime = jest.fn();
+    const mockCaptureException = jest.fn();
+    const mockSimplePrompt = jest.fn(async () => ({ success: true }));
+    const mockPrepareSimplePrompt = jest.fn(async () => true);
+    const mockGetSupportedBiometryType = jest.fn(async () => 'Fingerprint');
+    const mockIsPasscodeAuthAvailable = jest.fn(async () => true);
+    const mockGetAndroidBiometricPromptOptimization = jest.fn(async () => ({
+      api29FingerprintFallbackEligible,
+      api29FingerprintPromptProbeEligible,
+      effectiveStrongSource: api29FingerprintFallbackEligible
+        ? 'fingerprint-api29-fallback'
+        : 'androidx-strong',
+    }));
+
+    jest.doMock('react-native', () => ({
+      Platform: {
+        OS: platform,
+        Version: platformVersion,
+        select: (obj: any) => obj[platform],
+      },
+      NativeModules: {
+        ReactNativeBiometrics: {
+          prepareSimplePrompt: mockPrepareSimplePrompt,
+        },
+        RNRabbyKeychainV9Manager: {
+          getAndroidBiometricPromptOptimization:
+            mockGetAndroidBiometricPromptOptimization,
+          getGenericPasswordEntryStateForOptions:
+            mockGetGenericPasswordEntryStateForOptions,
+          debugGetGenericPasswordStateForOptions:
+            mockDebugGetGenericPasswordStateForOptions,
+          debugDecryptGenericPasswordForOptions:
+            mockDebugDecryptGenericPasswordForOptions,
+          debugRemoveCipherStorageMarkerForOptions:
+            mockDebugRemoveCipherStorageMarkerForOptions,
+        },
+      },
+    }));
+    jest.doMock('@rabby-wallet/react-native-keychain-9', () => {
+      const OfficialKeychain = {
+        getGenericPassword: mockGetGenericPassword,
+        setGenericPassword: mockSetGenericPassword,
+        resetGenericPassword: mockResetGenericPassword,
+        getSupportedBiometryType: mockGetSupportedBiometryType,
+        isPasscodeAuthAvailable: mockIsPasscodeAuthAvailable,
+        canImplyAuthentication: mockCanImplyAuthentication,
+        ACCESSIBLE: {
+          WHEN_UNLOCKED_THIS_DEVICE_ONLY:
+            'AccessibleWhenUnlockedThisDeviceOnly',
+        },
+        ACCESS_CONTROL: {
+          BIOMETRY_CURRENT_SET: 'BiometryCurrentSet',
+          DEVICE_PASSCODE: 'DevicePasscode',
+          BIOMETRY_ANY_OR_DEVICE_PASSCODE: 'BiometryAnyOrDevicePasscode',
+          BIOMETRY_CURRENT_SET_OR_DEVICE_PASSCODE:
+            'BiometryCurrentSetOrDevicePasscode',
+        },
+        AUTHENTICATION_TYPE: {
+          BIOMETRICS: 'AuthenticationWithBiometrics',
+          DEVICE_PASSCODE_OR_BIOMETRICS: 'DevicePasscodeOrBiometrics',
+        },
+        SECURITY_RULES: {
+          AUTOMATIC_UPGRADE: 'automaticUpgradeToMoreSecuredStorage',
+        },
+      };
+
+      return {
+        __esModule: true,
+        default: OfficialKeychain,
+      };
+    });
+    jest.doMock('react-native-biometrics', () => {
+      return jest.fn().mockImplementation(() => ({
+        simplePrompt: mockSimplePrompt,
+      }));
+    });
+    jest.doMock('react-native-device-info', () => ({
+      __esModule: true,
+      default: {
+        isPinOrFingerprintSet: jest.fn(async () => true),
+      },
+    }));
+    jest.doMock('@/core/serviceApi/appEncryptor', () => ({
+      appEncryptorApi: {
+        encrypt: mockEncrypt,
+        decrypt: mockDecrypt,
+      },
+    }));
+    jest.doMock('@/core/serviceApi/preference', () => ({
+      getPasswordIsAutoGeneratedSnapshot: jest.fn(() => false),
+    }));
+    jest.doMock('./lock', () => ({
+      safeVerifyPasswordAndUpdateUnlockTime:
+        mockSafeVerifyPasswordAndUpdateUnlockTime,
+      updateUnlockTime: mockUpdateUnlockTime,
+      clearCustomPassword: jest.fn(async () => ({ error: null })),
+    }));
+    jest.doMock('../storage/mmkvInstances', () => ({
+      keychainMMKV: {
+        getNumber: jest.fn(() => authType),
+        set: jest.fn(),
+      },
+    }));
+    jest.doMock('../storage/mmkvConstants', () => ({
+      KEYCHAIN_MMKV_KEYS: {
+        AUTHENTICATION_TYPE: 'AUTHENTICATION_TYPE',
+      },
+    }));
+    jest.doMock('@/components2024/Toast', () => ({
+      toast: {
+        show: jest.fn(),
+        info: jest.fn(),
+        success: jest.fn(),
+        error: jest.fn(),
+        positions: { TOP: 20, BOTTOM: 30, CENTER: 40 },
+      },
+    }));
+    jest.doMock('@/utils/i18n', () => ({
+      __esModule: true,
+      default: {
+        t: (key: string) => key,
+      },
+    }));
+    jest.doMock('./androidBiometricsRegression', () => ({
+      getAndroidBiometricSecurityLevelOptions: jest.fn(() => ({
+        androidBiometricSecurityLevel: 'strong',
+      })),
+    }));
+    jest.doMock('@/utils/logger', () => ({
+      logger: {
+        info: jest.fn(),
+        warn: jest.fn(),
+      },
+    }));
+    jest.doMock('@sentry/react-native', () => ({
+      captureException: (...args: unknown[]) => mockCaptureException(...args),
+    }));
+
+    let module!: typeof import('./keychainV9_0_0');
+    jest.isolateModules(() => {
+      module = require('./keychainV9_0_0');
+    });
+    module.makeSecureKeyChainInstance({ salt });
+
+    return {
+      module,
+      mockEncrypt,
+      mockDecrypt,
+      mockGetGenericPassword,
+      mockSetGenericPassword,
+      mockCanImplyAuthentication,
+      mockGetGenericPasswordEntryStateForOptions,
+      mockDebugGetGenericPasswordStateForOptions,
+      mockDebugDecryptGenericPasswordForOptions,
+      mockSafeVerifyPasswordAndUpdateUnlockTime,
+      mockUpdateUnlockTime,
+      mockCaptureException,
+      mockSimplePrompt,
+      mockPrepareSimplePrompt,
+      mockGetSupportedBiometryType,
+      mockIsPasscodeAuthAvailable,
+      mockGetAndroidBiometricPromptOptimization,
+    };
+  };
+
+  it('falls back to the default rabbit code and silently rewrites stored credentials', async () => {
+    const currentRabbitCode = 'CURRENT_RABBIT_CODE';
+    const {
+      module,
+      mockEncrypt,
+      mockDecrypt,
+      mockSetGenericPassword,
+      mockUpdateUnlockTime,
+    } = await setup({
+      salt: currentRabbitCode,
+      storage: 'keychain',
+    });
+
+    mockDecrypt.mockImplementation(async (salt: string) => {
+      if (salt === currentRabbitCode) {
+        throw new Error('decrypt failed with current rabbit code');
+      }
+
+      if (salt === 'RABBY_MOBILE_CODE_DEV') {
+        return { password: 'plain-password' };
+      }
+
+      throw new Error(`unexpected rabbit code: ${salt}`);
+    });
+
+    const onPlainPassword = jest.fn();
+    const result = await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.DECRYPT_PWD,
+      onPlainPassword,
+    });
+
+    expect(mockDecrypt.mock.calls.map(call => call[0])).toEqual([
+      currentRabbitCode,
+      'RABBY_MOBILE_CODE_DEV',
+    ]);
+    expect(onPlainPassword).toHaveBeenCalledWith(
+      'plain-password',
+      expect.objectContaining({ password: 'plain-password' }),
+    );
+    expect(mockUpdateUnlockTime).toHaveBeenCalled();
+    expect(mockEncrypt).toHaveBeenCalledWith(currentRabbitCode, {
+      androidKeychainAuthProfile: 'biometric-or-device-credential-v1',
+      password: 'plain-password',
+    });
+    expect(mockSetGenericPassword).toHaveBeenCalledTimes(1);
+    expect(result?.actionSuccess).toBe(true);
+  });
+
+  it('reads cached vault keys from a separate Android keychain service', async () => {
+    const { module, mockGetGenericPassword } = await setup({
+      trustedVaultKeyString: 'trusted-vault-key',
+    });
+
+    const onPlainPassword = jest.fn();
+    await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.DECRYPT_PWD,
+      onPlainPassword,
+    });
+
+    expect(mockGetGenericPassword).toHaveBeenCalledWith(
+      expect.objectContaining({
+        service: 'com.debank.trusted-vault-key',
+        androidAllowAuthenticatedSessionReuse: true,
+      }),
+    );
+    expect(onPlainPassword).toHaveBeenCalledWith(
+      'plain-password',
+      expect.objectContaining({
+        password: 'plain-password',
+        vaultKeyString: 'trusted-vault-key',
+      }),
+    );
+  });
+
+  it('can skip separate cached vault key reads on the unlock critical path', async () => {
+    const { module, mockGetGenericPassword } = await setup({
+      trustedVaultKeyString: 'trusted-vault-key',
+    });
+
+    const onPlainPassword = jest.fn();
+    await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.DECRYPT_PWD,
+      shouldAttachTrustedVaultKeyString: false,
+      onPlainPassword,
+    });
+
+    expect(
+      mockGetGenericPassword.mock.calls.some(
+        ([options]) => options?.service === 'com.debank.trusted-vault-key',
+      ),
+    ).toBe(false);
+    expect(onPlainPassword).toHaveBeenCalledWith(
+      'plain-password',
+      expect.objectContaining({
+        password: 'plain-password',
+      }),
+    );
+    expect(onPlainPassword.mock.calls[0]?.[1]).not.toHaveProperty(
+      'vaultKeyString',
+    );
+  });
+
+  it('debug-decrypts the stored password without business unlock side effects', async () => {
+    const {
+      module,
+      mockGetGenericPassword,
+      mockSetGenericPassword,
+      mockDebugDecryptGenericPasswordForOptions,
+      mockSafeVerifyPasswordAndUpdateUnlockTime,
+      mockUpdateUnlockTime,
+    } = await setup();
+
+    const result = await module.debugDecryptGenericPassword({
+      androidAuthPromptPolicy:
+        module.ANDROID_AUTH_PROMPT_POLICIES.ALLOW_AUTHENTICATED_SESSION_REUSE,
+    });
+
+    expect(result.decryptedPayload).toEqual({ password: 'plain-password' });
+    expect(result.credentials).toEqual(
+      expect.objectContaining({
+        service: 'com.debank',
+        username: 'rabbymobile-user',
+        password: 'enc:plain-password',
+        storage: 'KeystoreRSAECB',
+      }),
+    );
+    expect(result.usedFallbackRabbitCode).toBe(false);
+    expect(mockDebugDecryptGenericPasswordForOptions).toHaveBeenCalledTimes(1);
+    expect(mockDebugDecryptGenericPasswordForOptions).toHaveBeenCalledWith(
+      expect.objectContaining({
+        service: 'com.debank',
+        rules: 'automaticUpgradeToMoreSecuredStorage',
+        androidAllowAuthenticatedSessionReuse: true,
+      }),
+    );
+    expect(mockGetGenericPassword).not.toHaveBeenCalled();
+    expect(mockSafeVerifyPasswordAndUpdateUnlockTime).not.toHaveBeenCalled();
+    expect(mockUpdateUnlockTime).not.toHaveBeenCalled();
+    expect(mockSetGenericPassword).not.toHaveBeenCalled();
+  });
+
+  it('writes cached vault keys only to the separate Android keychain entry', async () => {
+    const { module, mockSetGenericPassword, mockEncrypt } = await setup();
+
+    await module.cacheTrustedVaultKeyString(
+      'plain-password',
+      'trusted-vault-key',
+    );
+
+    expect(mockEncrypt).not.toHaveBeenCalled();
+    expect(mockSetGenericPassword).toHaveBeenCalledTimes(1);
+    expect(mockSetGenericPassword).toHaveBeenCalledWith(
+      'rabbymobile-vault-key',
+      'trusted-vault-key',
+      expect.objectContaining({
+        service: 'com.debank.trusted-vault-key',
+        accessible: 'AccessibleWhenUnlockedThisDeviceOnly',
+        accessControl: 'BiometryAnyOrDevicePasscode',
+        androidKeychainAuthProfile: 'biometric-or-device-credential-v1',
+        storage: 'KeystoreAESGCM_NoAuth',
+      }),
+    );
+  });
+
+  it('keeps primary Android credentials simple when a vault key is provided', async () => {
+    const { module, mockSetGenericPassword, mockEncrypt } = await setup();
+
+    await module.setGenericPassword(
+      'plain-password',
+      module.KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+      {
+        vaultKeyString: 'trusted-vault-key',
+      },
+    );
+
+    expect(mockEncrypt).toHaveBeenCalledWith('salt', {
+      androidKeychainAuthProfile: 'biometric-strong-v1',
+      password: 'plain-password',
+    });
+    expect(mockSetGenericPassword).toHaveBeenCalledTimes(2);
+    expect(mockSetGenericPassword).toHaveBeenNthCalledWith(
+      1,
+      'rabbymobile-user',
+      'enc:plain-password',
+      expect.objectContaining({
+        service: 'com.debank',
+        accessible: 'AccessibleWhenUnlockedThisDeviceOnly',
+        accessControl: 'BiometryCurrentSet',
+        androidKeychainAuthProfile: 'biometric-strong-v1',
+        storage: 'KeystoreAESGCM_NoAuth',
+      }),
+    );
+    expect(mockSetGenericPassword).toHaveBeenNthCalledWith(
+      2,
+      'rabbymobile-vault-key',
+      'trusted-vault-key',
+      expect.objectContaining({
+        service: 'com.debank.trusted-vault-key',
+        accessControl: 'BiometryCurrentSet',
+        androidKeychainAuthProfile: 'biometric-strong-v1',
+        storage: 'KeystoreAESGCM_NoAuth',
+      }),
+    );
+  });
+
+  it('writes default iOS biometric entries with device passcode fallback', async () => {
+    const { module, mockEncrypt, mockSetGenericPassword } = await setup({
+      platform: 'ios',
+      storage: 'keychain',
+    });
+
+    await module.setGenericPassword('plain-password');
+
+    expect(mockEncrypt).toHaveBeenCalledWith('salt', {
+      password: 'plain-password',
+    });
+    expect(mockSetGenericPassword).toHaveBeenCalledWith(
+      'rabbymobile-user',
+      'enc:plain-password',
+      expect.objectContaining({
+        service: 'com.debank',
+        accessible: 'AccessibleWhenUnlockedThisDeviceOnly',
+        accessControl: 'BiometryAnyOrDevicePasscode',
+        storage: 'keychain',
+      }),
+    );
+  });
+
+  it('checks iOS passcode availability through owner authentication policy', async () => {
+    const { module, mockCanImplyAuthentication } = await setup({
+      platform: 'ios',
+    });
+
+    await expect(module.isPasscodeAuthAvailable()).resolves.toBe(true);
+    expect(mockCanImplyAuthentication).toHaveBeenCalledWith({
+      authenticationType: 'DevicePasscodeOrBiometrics',
+    });
+  });
+
+  it('normalizes embedded vault keys out of the primary Android credentials', async () => {
+    const {
+      module,
+      mockEncrypt,
+      mockSetGenericPassword,
+      mockUpdateUnlockTime,
+    } = await setup({
+      embeddedVaultKeyString: 'embedded-vault-key',
+    });
+
+    const onPlainPassword = jest.fn();
+    await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.DECRYPT_PWD,
+      shouldAttachTrustedVaultKeyString: false,
+      onPlainPassword,
+    });
+
+    expect(onPlainPassword).toHaveBeenCalledWith(
+      'plain-password',
+      expect.objectContaining({
+        password: 'plain-password',
+        vaultKeyString: 'embedded-vault-key',
+      }),
+    );
+    expect(mockUpdateUnlockTime).toHaveBeenCalled();
+    expect(mockEncrypt).toHaveBeenCalledWith('salt', {
+      androidKeychainAuthProfile: 'biometric-or-device-credential-v1',
+      password: 'plain-password',
+    });
+    expect(mockSetGenericPassword).toHaveBeenCalledTimes(2);
+    expect(mockSetGenericPassword).toHaveBeenNthCalledWith(
+      1,
+      'rabbymobile-user',
+      'enc:plain-password',
+      expect.objectContaining({
+        service: 'com.debank',
+        accessControl: 'BiometryAnyOrDevicePasscode',
+        androidKeychainAuthProfile: 'biometric-or-device-credential-v1',
+        storage: 'KeystoreAESGCM_NoAuth',
+      }),
+    );
+    expect(mockSetGenericPassword).toHaveBeenNthCalledWith(
+      2,
+      'rabbymobile-vault-key',
+      'embedded-vault-key',
+      expect.objectContaining({
+        service: 'com.debank.trusted-vault-key',
+        accessControl: 'BiometryAnyOrDevicePasscode',
+        androidKeychainAuthProfile: 'biometric-or-device-credential-v1',
+        storage: 'KeystoreAESGCM_NoAuth',
+      }),
+    );
+  });
+
+  it('rewrites iOS pure biometric entries with device passcode fallback after a successful read', async () => {
+    const {
+      module,
+      mockSetGenericPassword,
+      mockSafeVerifyPasswordAndUpdateUnlockTime,
+    } = await setup({
+      platform: 'ios',
+      storage: 'keychain',
+      authType: 1,
+    });
+
+    const result = await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.VERIFY,
+    });
+
+    expect(mockSafeVerifyPasswordAndUpdateUnlockTime).toHaveBeenCalledWith(
+      'plain-password',
+    );
+    expect(mockSetGenericPassword).toHaveBeenCalledWith(
+      'rabbymobile-user',
+      'enc:plain-password',
+      expect.objectContaining({
+        service: 'com.debank',
+        accessible: 'AccessibleWhenUnlockedThisDeviceOnly',
+        accessControl: 'BiometryAnyOrDevicePasscode',
+        storage: 'keychain',
+      }),
+    );
+    expect(result?.actionSuccess).toBe(true);
+  });
+
+  it('keeps automatic-upgrade reads on Android for legacy biometrics entries', async () => {
+    const {
+      module,
+      mockGetGenericPassword,
+      mockSetGenericPassword,
+      mockSafeVerifyPasswordAndUpdateUnlockTime,
+    } = await setup();
+
+    const result = await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.VERIFY,
+    });
+
+    expect(mockGetGenericPassword).toHaveBeenCalledWith(
+      expect.objectContaining({
+        service: 'com.debank',
+        rules: 'automaticUpgradeToMoreSecuredStorage',
+      }),
+    );
+    expect(mockSafeVerifyPasswordAndUpdateUnlockTime).toHaveBeenCalledWith(
+      'plain-password',
+    );
+    expect(mockSetGenericPassword).toHaveBeenCalledWith(
+      'rabbymobile-user',
+      'enc:plain-password',
+      expect.objectContaining({
+        service: 'com.debank',
+        accessible: 'AccessibleWhenUnlockedThisDeviceOnly',
+        accessControl: 'BiometryAnyOrDevicePasscode',
+        androidKeychainAuthProfile: 'biometric-or-device-credential-v1',
+      }),
+    );
+    expect(mockSetGenericPassword.mock.calls[0]?.[2]).toHaveProperty(
+      'storage',
+      'KeystoreAESGCM_NoAuth',
+    );
+    expect(result?.actionSuccess).toBe(true);
+  });
+
+  it('rewrites Android biometric entries with the library default secure storage', async () => {
+    const { module, mockSetGenericPassword } = await setup();
+
+    await module.setGenericPassword(
+      'plain-password',
+      module.KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+    );
+
+    expect(mockSetGenericPassword).toHaveBeenCalledWith(
+      'rabbymobile-user',
+      'enc:plain-password',
+      expect.objectContaining({
+        service: 'com.debank',
+        accessible: 'AccessibleWhenUnlockedThisDeviceOnly',
+        accessControl: 'BiometryCurrentSet',
+        androidKeychainAuthProfile: 'biometric-strong-v1',
+      }),
+    );
+    expect(mockSetGenericPassword.mock.calls[0]?.[2]).toHaveProperty(
+      'storage',
+      'KeystoreAESGCM_NoAuth',
+    );
+  });
+
+  it('passes an explicit storage when rewriting Android biometric entries', async () => {
+    const { module, mockSetGenericPassword } = await setup();
+
+    await module.setGenericPassword(
+      'plain-password',
+      module.KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+      {
+        storage: module.KEYCHAIN_STORAGE_TYPES.AES,
+      },
+    );
+
+    expect(mockSetGenericPassword).toHaveBeenCalledWith(
+      'rabbymobile-user',
+      'enc:plain-password',
+      expect.objectContaining({
+        service: 'com.debank',
+        storage: 'KeystoreAESCBC',
+      }),
+    );
+  });
+
+  it('rewrites Android biometric auth storage to no-auth storage after a successful read', async () => {
+    const { module, mockSetGenericPassword } = await setup({
+      storage: 'KeystoreAESGCM',
+      authType: 4,
+    });
+
+    await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.VERIFY,
+    });
+
+    expect(mockSetGenericPassword).toHaveBeenCalledWith(
+      'rabbymobile-user',
+      'enc:plain-password',
+      expect.objectContaining({
+        service: 'com.debank',
+        storage: 'KeystoreAESGCM_NoAuth',
+      }),
+    );
+  });
+
+  it('does not rewrite Android biometrics storage when the entry is already no-auth', async () => {
+    const { module, mockSetGenericPassword, mockSimplePrompt } = await setup({
+      storage: 'KeystoreAESGCM_NoAuth',
+      authType: 4,
+    });
+
+    await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.VERIFY,
+    });
+
+    expect(mockSimplePrompt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        allowDeviceCredentials: true,
+      }),
+    );
+    expect(mockSimplePrompt.mock.calls[0]?.[0]).not.toHaveProperty(
+      'androidUsePreparedPrompt',
+    );
+    expect(mockSetGenericPassword).not.toHaveBeenCalled();
+    expect(module.shouldRequireBiometricProofForSetup()).toBe(false);
+  });
+
+  it('prepares the API 29 fingerprint fallback prompt without requiring biometric-only setup proof', async () => {
+    const {
+      module,
+      mockGetSupportedBiometryType,
+      mockIsPasscodeAuthAvailable,
+      mockGetAndroidBiometricPromptOptimization,
+      mockPrepareSimplePrompt,
+      mockSimplePrompt,
+    } = await setup({
+      storage: 'KeystoreAESGCM_NoAuth',
+      authType: 4,
+      platformVersion: 29,
+      api29FingerprintFallbackEligible: true,
+    });
+
+    await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.VERIFY,
+    });
+    await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.VERIFY,
+    });
+
+    expect(mockGetAndroidBiometricPromptOptimization).toHaveBeenCalledTimes(1);
+    expect(mockPrepareSimplePrompt).toHaveBeenCalledTimes(1);
+    expect(mockGetSupportedBiometryType).toHaveBeenCalledTimes(1);
+    expect(mockIsPasscodeAuthAvailable).not.toHaveBeenCalled();
+    expect(mockSimplePrompt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        allowDeviceCredentials: false,
+        androidUsePreparedPrompt: true,
+      }),
+    );
+    expect(mockSimplePrompt).toHaveBeenCalledTimes(2);
+    expect(module.shouldRequireBiometricProofForSetup()).toBe(false);
+  });
+
+  it('opens the API 29 device credential prompt when the user selects the fallback button', async () => {
+    const { module, mockIsPasscodeAuthAvailable, mockSimplePrompt } =
+      await setup({
+        storage: 'KeystoreAESGCM_NoAuth',
+        authType: 4,
+        platformVersion: 29,
+        api29FingerprintFallbackEligible: true,
+      });
+    mockSimplePrompt
+      .mockResolvedValueOnce({
+        success: false,
+        error: 'User cancellation',
+        errorCode: 13,
+      })
+      .mockResolvedValueOnce({ success: true });
+
+    await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.VERIFY,
+    });
+
+    expect(mockSimplePrompt).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        allowDeviceCredentials: false,
+        androidUsePreparedPrompt: true,
+        cancelButtonText: 'page.setting.useDevicePassword',
+      }),
+    );
+    expect(mockIsPasscodeAuthAvailable).toHaveBeenCalledTimes(1);
+    expect(mockSimplePrompt).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        allowDeviceCredentials: true,
+        androidUseDeviceCredentialOnly: true,
+      }),
+    );
+  });
+
+  it('falls back to device credentials when an API 29 fingerprint probe is unavailable', async () => {
+    const { module, mockIsPasscodeAuthAvailable, mockSimplePrompt } =
+      await setup({
+        storage: 'KeystoreAESGCM_NoAuth',
+        authType: 4,
+        platformVersion: 29,
+        api29FingerprintPromptProbeEligible: true,
+      });
+    const promptError = Object.assign(new Error('No fingerprints enrolled'), {
+      code: 'BIOMETRIC_PROMPT_ERROR_11',
+    });
+    mockSimplePrompt
+      .mockRejectedValueOnce(promptError)
+      .mockResolvedValueOnce({ success: true });
+
+    await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.VERIFY,
+    });
+
+    expect(mockSimplePrompt).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        allowDeviceCredentials: false,
+        androidUsePreparedPrompt: true,
+      }),
+    );
+    expect(mockIsPasscodeAuthAvailable).toHaveBeenCalledTimes(1);
+    expect(mockSimplePrompt).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        allowDeviceCredentials: true,
+        androidUseDeviceCredentialOnly: true,
+      }),
+    );
+  });
+
+  it('falls back to device credentials when an API 29 ROM cancels the fingerprint prompt', async () => {
+    const {
+      module,
+      mockCaptureException,
+      mockIsPasscodeAuthAvailable,
+      mockSimplePrompt,
+    } = await setup({
+      storage: 'KeystoreAESGCM_NoAuth',
+      authType: 4,
+      platformVersion: 29,
+      api29FingerprintPromptProbeEligible: true,
+    });
+    const promptError = Object.assign(
+      new Error('Fingerprint prompt canceled by system'),
+      {
+        code: 'BIOMETRIC_PROMPT_ERROR_5',
+      },
+    );
+    mockSimplePrompt
+      .mockRejectedValueOnce(promptError)
+      .mockResolvedValueOnce({ success: true });
+
+    await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.VERIFY,
+    });
+    await Promise.resolve();
+
+    expect(mockIsPasscodeAuthAvailable).toHaveBeenCalledTimes(1);
+    expect(mockSimplePrompt).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        allowDeviceCredentials: true,
+        androidUseDeviceCredentialOnly: true,
+      }),
+    );
+    expect(mockCaptureException).toHaveBeenCalledWith(
+      promptError,
+      expect.objectContaining({
+        tags: expect.objectContaining({
+          prompt_error_code: 'BIOMETRIC_PROMPT_ERROR_5',
+          fallback_attempted: 'true',
+        }),
+        extra: expect.objectContaining({
+          nativeErrorCode: 5,
+          fallbackSucceeded: true,
+        }),
+      }),
+    );
+  });
+
+  it('keeps a native user cancellation out of Sentry and preserves its error code', async () => {
+    const { module, mockCaptureException, mockSimplePrompt } = await setup({
+      storage: 'KeystoreAESGCM_NoAuth',
+      authType: 4,
+      platformVersion: 29,
+      api29FingerprintPromptProbeEligible: true,
+    });
+    mockSimplePrompt.mockResolvedValueOnce({
+      success: false,
+      error: 'User cancellation',
+      errorCode: 10,
+    });
+
+    let promptError: unknown;
+    try {
+      await module.requestGenericPassword({
+        purpose: module.RequestGenericPurpose.VERIFY,
+      });
+    } catch (error) {
+      promptError = error;
+    }
+
+    expect(promptError).toBeInstanceOf(Error);
+    expect((promptError as Error).message).toContain('code: 10');
+    expect(module.parseKeychainError(promptError).isCancelledByUser).toBe(true);
+    expect(mockCaptureException).not.toHaveBeenCalled();
+  });
+
+  it('does not accept device credentials when enabling biometrics requires proof', async () => {
+    const { module, mockIsPasscodeAuthAvailable, mockSimplePrompt } =
+      await setup({
+        storage: 'KeystoreAESGCM_NoAuth',
+        authType: 4,
+        platformVersion: 29,
+        api29FingerprintPromptProbeEligible: true,
+      });
+    mockSimplePrompt.mockRejectedValueOnce(
+      Object.assign(new Error('No fingerprints enrolled'), {
+        code: 'BIOMETRIC_PROMPT_ERROR_11',
+      }),
+    );
+
+    await expect(
+      module.requestGenericPassword({
+        purpose: module.RequestGenericPurpose.VERIFY,
+        androidRequireBiometricProof: true,
+      }),
+    ).rejects.toThrow('No fingerprints enrolled');
+
+    expect(mockSimplePrompt).toHaveBeenCalledTimes(1);
+    expect(mockIsPasscodeAuthAvailable).not.toHaveBeenCalled();
+  });
+
+  it('passes the Android authenticated-session reuse option through business reads when requested', async () => {
+    const { module, mockGetGenericPassword } = await setup();
+
+    await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.DECRYPT_PWD,
+      androidAuthPromptPolicy:
+        module.ANDROID_AUTH_PROMPT_POLICIES.ALLOW_AUTHENTICATED_SESSION_REUSE,
+    });
+
+    expect(mockGetGenericPassword).toHaveBeenCalledWith(
+      expect.objectContaining({
+        service: 'com.debank',
+        androidAllowAuthenticatedSessionReuse: true,
+        androidAllowKeyStoreRecovery: false,
+      }),
+    );
+  });
+
+  it('reports the supported Android storage types from the debug config', async () => {
+    const { module } = await setup();
+
+    const result = await module.getSupportedStorageTypes();
+
+    expect(result).toEqual([
+      module.KEYCHAIN_STORAGE_TYPES.RSA,
+      module.KEYCHAIN_STORAGE_TYPES.AES,
+    ]);
+  });
+
+  it('reads Android entry presence without a KeyStore debug probe', async () => {
+    const {
+      module,
+      mockGetGenericPasswordEntryStateForOptions,
+      mockDebugGetGenericPasswordStateForOptions,
+    } = await setup();
+
+    await expect(module.getKeychainEntryState()).resolves.toEqual({
+      service: 'com.debank',
+      hasEntry: true,
+      hasUsername: true,
+      hasPassword: true,
+      sourceLabel: '@rabby-wallet/react-native-keychain-9@9.2.3-rabby.0',
+    });
+    expect(mockGetGenericPasswordEntryStateForOptions).toHaveBeenCalledWith({
+      service: 'com.debank',
+    });
+    expect(mockDebugGetGenericPasswordStateForOptions).not.toHaveBeenCalled();
+  });
+
+  it('exposes Android keychain debug state from the native storage layer', async () => {
+    const { module, mockDebugGetGenericPasswordStateForOptions } = await setup({
+      authType: 0,
+    });
+
+    const result = await module.getKeychainDebugState();
+
+    expect(mockDebugGetGenericPasswordStateForOptions).toHaveBeenCalledWith(
+      expect.objectContaining({
+        service: 'com.debank',
+        rules: 'automaticUpgradeToMoreSecuredStorage',
+      }),
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        service: 'com.debank',
+        resolvedCipherStorageName: 'KeystoreRSAECB',
+        isCipherStorageMarkerMissing: true,
+        androidBiometricHardware: {
+          fingerprint: true,
+          face: true,
+          iris: false,
+        },
+        androidAuthenticatorCapabilities: expect.objectContaining({
+          biometricStrong: expect.objectContaining({
+            statusLabel: 'BIOMETRIC_SUCCESS',
+            available: true,
+          }),
+        }),
+        authenticationTypeLabel: 'APPLICATION_PASSWORD',
+      }),
+    );
+  });
+});

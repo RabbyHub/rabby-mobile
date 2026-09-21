@@ -1,49 +1,56 @@
 /* eslint-disable react-native/no-inline-styles */
-import { TransactionGroup } from '@/core/services/transactionHistory';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import {
+import type {
   ApproveAction,
   ApproveNFTAction,
-  GasLevel,
   ProjectItem,
   SendAction,
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
+import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { TxChange } from '@/screens/Transaction/components/TokenChange';
-import {
+import type {
   ApproveTokenRequireData,
-  ParsedTransactionActionData,
   ReceiveTokenItem,
   SendRequireData,
   SwapRequireData,
 } from '@rabby-wallet/rabby-action';
+import { ParsedTransactionActionData } from '@rabby-wallet/rabby-action';
 import TokenLabel from '@/screens/Transaction/components/TokenLabel';
 import { getTokenSymbol } from '@/utils/token';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
-import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
+import { TxStatusItem } from '@/screens/Transaction/components/TxStatusItem';
 import { getAliasName } from '@/core/apis/contact';
 import { findChain } from '@/utils/chain';
-import { transactionHistoryService } from '@/core/services';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import {
   CUSTOM_HISTORY_TITLE_TYPE,
   HistoryItemCateType,
 } from '@/screens/Transaction/components/type';
-import { TokenChangeDataItem } from '@/screens/Transaction/components/HistoryItem';
+import type { TokenChangeDataItem } from '@/screens/Transaction/components/HistoryItem';
 import { HistoryItemTokenArea } from '@/screens/Transaction/components/HistoryItemTokenArea';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
-import { ellipsisAddress } from '@/utils/address';
 import { L2_DEPOSIT_ADDRESS_MAP } from '@/constant/gas-account';
 import { naviPush } from '@/utils/navigation';
 import FastImage from 'react-native-fast-image';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
+import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { Text } from '@/components/Typography';
+import type { Account } from '@/types/account';
+
+const ellipsisAddress = (address: string) => {
+  if (!address) {
+    return '';
+  }
+  return address.slice(0, 8) + '...';
+};
 
 export type HistoryLocalDetailParams = GetNestedScreenRouteProp<
   'TransactionNavigatorParamList',
@@ -61,6 +68,7 @@ export const TransactionItem = ({
   onPressAddToWhitelistButton,
   closeHistoryPopup,
   getCexInfoByAddress,
+  account,
 }: {
   historySuccessList?: string[];
   isForMultipleAddress?: boolean;
@@ -72,6 +80,7 @@ export const TransactionItem = ({
   onPressItem?: (ctx: HistoryLocalDetailParams) => void;
   onPressAddToWhitelistButton?: (data: SendAction) => void;
   closeHistoryPopup?: () => void;
+  account?: Account | null;
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -88,7 +97,10 @@ export const TransactionItem = ({
   );
 
   const formatType: HistoryItemCateType = useMemo(() => {
-    if (data.maxGasTx.action?.actionData.send) {
+    if (data.maxGasTx?.isGasDeposit) {
+      return HistoryItemCateType.GAS_DEPOSIT;
+    }
+    if (data.maxGasTx?.action?.actionData.send) {
       if (
         Object.values(L2_DEPOSIT_ADDRESS_MAP).includes(
           data.maxGasTx.action?.actionData.send.to.toLowerCase() || '',
@@ -101,13 +113,13 @@ export const TransactionItem = ({
     }
 
     if (
-      data.maxGasTx.action?.actionData.wrapToken ||
-      data.maxGasTx.action?.actionData.unWrapToken
+      data.maxGasTx?.action?.actionData.wrapToken ||
+      data.maxGasTx?.action?.actionData.unWrapToken
     ) {
       return HistoryItemCateType.Swap;
     }
 
-    if (data.maxGasTx.action?.actionData.swap) {
+    if (data.maxGasTx?.action?.actionData.swap) {
       if (
         data.maxGasTx.action?.actionData.swap?.payToken?.is_core &&
         data.maxGasTx.action?.actionData.swap?.receiveToken?.is_core
@@ -117,18 +129,18 @@ export const TransactionItem = ({
     }
 
     if (
-      data.maxGasTx.action?.actionData.approveToken ||
-      data.maxGasTx.action?.actionData.approveNFT ||
-      data.maxGasTx.action?.actionData.approveNFTCollection
+      data.maxGasTx?.action?.actionData.approveToken ||
+      data.maxGasTx?.action?.actionData.approveNFT ||
+      data.maxGasTx?.action?.actionData.approveNFTCollection
     ) {
       return HistoryItemCateType.Approve;
     }
 
     if (
-      data.maxGasTx.action?.actionData.revokeToken ||
-      data.maxGasTx.action?.actionData.revokeNFT ||
-      data.maxGasTx.action?.actionData.revokeNFTCollection ||
-      data.maxGasTx.action?.actionData.revokePermit2
+      data.maxGasTx?.action?.actionData.revokeToken ||
+      data.maxGasTx?.action?.actionData.revokeNFT ||
+      data.maxGasTx?.action?.actionData.revokeNFTCollection ||
+      data.maxGasTx?.action?.actionData.revokePermit2
     ) {
       return HistoryItemCateType.Revoke;
     }
@@ -330,12 +342,12 @@ export const TransactionItem = ({
         return (
           t('page.transactions.itemTitle.Approve') +
           ' ' +
-          ellipsisOverflowedText(getTokenSymbol(tokenApproveData[0].token), 6)
+          ellipsisOverflowedText(getTokenSymbol(tokenApproveData[0]?.token), 6)
         );
       case HistoryItemCateType.Revoke:
         return t('page.transactions.itemTitle.Revoke', {
           token: ellipsisOverflowedText(
-            getTokenSymbol(tokenApproveData[0].token),
+            getTokenSymbol(tokenApproveData[0]?.token),
             6,
           ),
         });
@@ -351,12 +363,12 @@ export const TransactionItem = ({
   const formatDescribe = useMemo(() => {
     const ToText = t('page.swap.to') + ' ';
 
-    const chain = findChain({ id: data.maxGasTx.chainId });
+    const chain = findChain({ id: data.maxGasTx?.chainId });
     let address: string | React.ReactNode = '';
 
     switch (formatType) {
       case HistoryItemCateType.GAS_DEPOSIT:
-        address = ToText + t('page.home.services.gasAccount');
+        address = ToText + t('page.home.services.gasDeposit');
         break;
       case HistoryItemCateType.Send:
         const acData = data.maxGasTx?.action?.actionData.send;
@@ -371,7 +383,11 @@ export const TransactionItem = ({
           if (cexInfo) {
             address = (
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={styles.describeText}>{ToText}</Text>
+                <Text
+                  style={[styles.describeText, { flexShrink: 0 }]}
+                  numberOfLines={1}>
+                  {ToText}
+                </Text>
                 <FastImage
                   source={{ uri: cexInfo.logo_url }}
                   style={{
@@ -381,19 +397,33 @@ export const TransactionItem = ({
                     marginHorizontal: 4,
                   }}
                 />
-                <Text style={styles.describeText}>
-                  {getAliasName(addr) || ellipsisAddress(addr)}
+                <Text
+                  style={[
+                    styles.describeText,
+                    {
+                      flexShrink: 1,
+                      minWidth: 0,
+                    },
+                  ]}
+                  numberOfLines={1}>
+                  {getAliasName(addr, {
+                    keepEmptyIfNotFound: true,
+                  }) || ellipsisAddress(addr)}
                 </Text>
               </View>
             );
             break;
           } else {
-            address = ToText + (getAliasName(addr) || ellipsisAddress(addr));
+            address =
+              ToText +
+              (getAliasName(addr, {
+                keepEmptyIfNotFound: true,
+              }) || ellipsisAddress(addr));
           }
         }
         break;
       case HistoryItemCateType.Swap:
-        const requireData = data.maxGasTx.action
+        const requireData = data.maxGasTx?.action
           ?.requiredData as SwapRequireData;
         address =
           requireData?.protocol?.name || t('page.transactions.detail.Unknown');
@@ -402,11 +432,15 @@ export const TransactionItem = ({
       case HistoryItemCateType.Approve:
       case HistoryItemCateType.Cancel:
       default:
-        const appRequireData = data.maxGasTx.action
+        const appRequireData = data.maxGasTx?.action
           ?.requiredData as ApproveTokenRequireData;
         const name = appRequireData?.protocol?.name;
         address =
-          name || getAliasName(data.address) || ellipsisAddress(data.address);
+          name ||
+          getAliasName(data.address, {
+            keepEmptyIfNotFound: true,
+          }) ||
+          ellipsisAddress(data.address);
         break;
       // case HistoryItemCateType.Cancel:
       // default:
@@ -426,7 +460,9 @@ export const TransactionItem = ({
           isShowRPCStatus={true}
         />
         {typeof address === 'string' ? (
-          <Text style={styles.describeText}>{address}</Text>
+          <Text style={styles.describeText} numberOfLines={1}>
+            {address}
+          </Text>
         ) : (
           address
         )}
@@ -458,27 +494,38 @@ export const TransactionItem = ({
         canCancel,
         title: formatTitle,
         onPressAddToWhitelistButton: onPressAddToWhitelistButton,
+        account,
       },
     });
   }, [
     onPressItem,
-    isForMultipleAddress,
-    canCancel,
-    data,
-    formatTitle,
-    formatType,
     isInSendHistory,
+    isForMultipleAddress,
+    data,
+    formatType,
+    canCancel,
+    formatTitle,
     onPressAddToWhitelistButton,
+    account,
     closeHistoryPopup,
   ]);
 
   useEffect(() => {
+    let cancelled = false;
     if (!data.isPending && !isInSendHistory) {
-      const rawId = `${data.address.toLowerCase()}-${data.maxGasTx.hash}`;
-      const isShowStatus =
-        transactionHistoryService.clearSuccessAndFailSingleId(rawId);
-      isShowStatus && setShowSuccess(true);
+      const rawId = `${data.address.toLowerCase()}-${data.maxGasTx?.hash}`;
+      transactionHistoryServiceApi
+        .clearSuccessAndFailSingleId(rawId)
+        .then(isShowStatus => {
+          if (!cancelled && isShowStatus) {
+            setShowSuccess(true);
+          }
+        })
+        .catch(() => undefined);
     }
+    return () => {
+      cancelled = true;
+    };
   }, [data, isInSendHistory]);
 
   const noNeedTokenChangeType = useMemo(
@@ -508,6 +555,7 @@ export const TransactionItem = ({
           type={formatType as HistoryItemCateType}
           tokenChangeData={tokenChangeData}
           tokenApproveData={tokenApproveData}
+          isFailure={isFailed}
         />
         <View style={styles.textBox}>
           <View style={styles.titleBox}>

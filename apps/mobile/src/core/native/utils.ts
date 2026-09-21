@@ -6,9 +6,12 @@ import {
   Platform,
   UIManager,
 } from 'react-native';
-import { enableLayoutAnimations } from 'react-native-reanimated';
-
-const isTurboModuleEnabled = global.__turboModuleProxy != null;
+import type {
+  NativeAccessibleVisualMediaList,
+  NativeAccessibleVisualMediaQueryOptions,
+  NativeFileCapabilityRequestOptions,
+  NativeFileCapabilitySnapshot,
+} from './fileCapability';
 
 interface NativeModulesStatic {
   ReactNativeSecurity: /* NativeModule &  */ {
@@ -20,6 +23,7 @@ interface NativeModulesStatic {
     startScreenCaptureDetection: () => Promise<void>;
     stopScreenCaptureDetection: () => Promise<void>;
     togglePreventScreenshot: (isPrevent: boolean) => void;
+    setAppSwitcherBlurEnabled: (isEnabled: boolean) => void;
     iosIsBeingCaptured(): boolean;
     // iosToggleBlurView(isProtected: boolean): void;
     iosProtectFromScreenRecording(): Promise<void>;
@@ -29,7 +33,36 @@ interface NativeModulesStatic {
     exitAppForSecurity(): void;
   };
   RNHelpers: NativeModule & {
+    getConstants?(): {
+      buildInfo?: {
+        BUILD_GIT_HASH?: string;
+        BUILD_GIT_HASH_TIME?: string;
+        BUILD_TIME?: string;
+        BUILD_GIT_COMMITOR?: string;
+        METRO_CACHE_ENABLED?: boolean;
+      };
+    };
+    buildInfo?: {
+      BUILD_GIT_HASH?: string;
+      BUILD_GIT_HASH_TIME?: string;
+      BUILD_TIME?: string;
+      BUILD_GIT_COMMITOR?: string;
+      METRO_CACHE_ENABLED?: boolean;
+    };
     forceExitApp(): void;
+    androidTraceInstant?(name: string): void;
+    androidTraceBeginSection?(name: string): void;
+    androidTraceEndSection?(): void;
+    androidTraceBeginAsyncSection?(name: string, cookie: number): void;
+    androidTraceEndAsyncSection?(name: string, cookie: number): void;
+    androidTraceCounter?(name: string, value: number): void;
+    moveTaskToBack?(): Promise<boolean>;
+    shareFile?(options: {
+      filePath: string;
+      mimeType?: string;
+      title?: string;
+      subject?: string;
+    }): Promise<void>;
     /**
      * @description try to set a file to not be backed up by iCloud
      * @param filePath
@@ -39,6 +72,15 @@ interface NativeModulesStatic {
     //  * @description try to set a directory's files(including files in subdirectories) to not be backed up by iCloud
     //  */
     // iosExcludeDirectoryFromBackup?(directoryPath: string): Promise<boolean>;
+  };
+  RNFileHelpers: NativeModule & {
+    getFileCapabilitySnapshot?(): Promise<NativeFileCapabilitySnapshot>;
+    requestVisualMediaAccess?(
+      options?: NativeFileCapabilityRequestOptions,
+    ): Promise<NativeFileCapabilitySnapshot>;
+    listAccessibleVisualMedia?(
+      options?: NativeAccessibleVisualMediaQueryOptions,
+    ): Promise<NativeAccessibleVisualMediaList>;
   };
   RNThread: NativeModule & {
     startThread(
@@ -56,20 +98,30 @@ export const IS_ANDROID = Platform.OS === 'android';
 export const IS_IOS = Platform.OS === 'ios';
 
 if (IS_ANDROID) {
-  enableLayoutAnimations(false);
+  try {
+    (
+      require('react-native-reanimated') as {
+        enableLayoutAnimations?: (enabled: boolean) => void;
+      }
+    ).enableLayoutAnimations?.(false);
+  } catch {
+    // react-native-reanimated is best-effort here; tests and non-native
+    // runtimes may not be able to evaluate it.
+  }
   UIManager.setLayoutAnimationEnabledExperimental &&
     UIManager.setLayoutAnimationEnabledExperimental(false);
 }
 
 export function resolveNativeModule<T extends keyof NativeModulesStatic>(
   name: T,
+  codegenModule?: unknown,
 ) {
   const NATIVE_ERROR =
     `The native module '${name}' doesn't seem to be added. Make sure: \n\n` +
     '- You rebuilt the app after native code changed\n' +
     '- You are not using Expo managed workflow\n';
 
-  const nModule = NativeModules[name];
+  const nModule = codegenModule || NativeModules[name];
 
   const module: NativeModulesStatic[T] = nModule
     ? nModule

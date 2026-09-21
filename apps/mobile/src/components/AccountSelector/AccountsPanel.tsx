@@ -1,21 +1,19 @@
 /* eslint-disable react-native/no-inline-styles */
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  FlatList,
-  StyleProp,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import Clipboard from '@react-native-clipboard/clipboard';
 
 import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
 import React, { useCallback, useMemo } from 'react';
-import { AddressItem } from '@/components2024/AddressItem/AddressItem';
+import {
+  AddressItem,
+  WalletPin,
+} from '@/components2024/AddressItem/AddressItem';
 import { RcIconCopy, RcIconQR } from './icons';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { trigger } from 'react-native-haptic-feedback';
 import { toast } from '@/components2024/Toast';
 import { useSortAccountOnSelector } from '@/hooks/accountsSelector';
@@ -37,6 +35,20 @@ interface CombineDataInterface {
     | 'watchAddresses'];
   type: string;
 }
+
+type ReceiveSheetListItem =
+  | {
+      kind: 'sectionHeader';
+      title: AccountPannelSectionTitle;
+      key: string;
+    }
+  | {
+      kind: 'account';
+      account: Account;
+      sectionIndex: number;
+      sectionTitle: AccountPannelSectionTitle;
+      key: string;
+    };
 
 const MY_ADDRESS_LIMIT = 3;
 
@@ -81,7 +93,8 @@ function AddressItemInSheetModal({
   /** @deprecated */
   isReceive?: boolean;
 } & RNViewProps) {
-  const { styles, colors2024 } = useTheme2024({
+  const { t } = useTranslation();
+  const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getAddressItemInPanelStyle,
   });
 
@@ -98,15 +111,41 @@ function AddressItemInSheetModal({
       return;
     }
     Clipboard.setString(account.address);
-    toast.success('Copied successfully');
+    toast.success(t('global.copiedSuccessfully'));
   };
+
+  const handleRowFeedbackLongPress = useCallback(() => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
+  }, []);
+  const rowFeedbackLongPressProps = useMemo<
+    Pick<
+      React.ComponentProps<typeof TouchableOpacity>,
+      'delayLongPress' | 'onLongPress'
+    >
+  >(() => {
+    if (isReceive) {
+      return {};
+    }
+
+    return {
+      delayLongPress: 200,
+      onLongPress: handleRowFeedbackLongPress,
+    };
+  }, [handleRowFeedbackLongPress, isReceive]);
 
   return (
     <AddressItemShadowView
-      style={isCurrent || isPressing ? styles.active : null}>
+      style={[
+        isReceive && styles.receiveAddressItemShadow,
+        isCurrent || isPressing ? styles.active : null,
+      ]}>
       <TouchableOpacity
         style={StyleSheet.flatten([
           styles.addressItemContainer,
+          isReceive && styles.receiveAddressItemContainer,
           style,
           isCurrent && styles.addressItemContainerCurrent,
           isPressing && styles.containerPressing,
@@ -114,13 +153,7 @@ function AddressItemInSheetModal({
         activeOpacity={1}
         onPressIn={() => setIsPressing(true)}
         onPressOut={() => setIsPressing(false)}
-        delayLongPress={200}
-        onLongPress={() => {
-          trigger('impactLight', {
-            enableVibrateFallback: true,
-            ignoreAndroidSystemSettings: false,
-          });
-        }}
+        {...rowFeedbackLongPressProps}
         onPress={() => {
           triggerLight();
           defaultPressAction === 'copy'
@@ -181,7 +214,11 @@ function AddressItemInSheetModal({
                         style={styles.iconWrapper}>
                         <QrCircleCC
                           color={colors2024['neutral-body']}
-                          backgroundColor={colors2024['neutral-bg-2']}
+                          backgroundColor={
+                            !isReceive || isLight
+                              ? colors2024['neutral-bg-2']
+                              : colors2024['neutral-bg-1']
+                          }
                         />
                       </TouchableOpacity>
                     </View>
@@ -191,6 +228,9 @@ function AddressItemInSheetModal({
             );
           }}
         </AddressItem>
+        {isPinned ? (
+          <WalletPin style={isReceive ? styles.receiveWalletPin : undefined} />
+        ) : null}
       </TouchableOpacity>
     </AddressItemShadowView>
   );
@@ -198,6 +238,9 @@ function AddressItemInSheetModal({
 
 const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
   return {
+    receiveAddressItemShadow: {
+      borderRadius: 20,
+    },
     active: {
       borderColor: ctx.colors2024['brand-light-2'],
     },
@@ -208,9 +251,17 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
     addressItemContainer: {
       borderRadius: 16,
       backgroundColor: ctx.colors2024['neutral-bg-1'],
+      overflow: 'hidden',
       padding: 16,
       paddingRight: 24,
+      position: 'relative',
       height: SIZES.itemH,
+    },
+    receiveAddressItemContainer: {
+      borderRadius: 20,
+      backgroundColor: ctx.isLight
+        ? ctx.colors2024['neutral-bg-1']
+        : ctx.colors2024['neutral-bg-2'],
     },
     addressItemContainerCurrent: {
       backgroundColor: ctx.colors2024['brand-light-1'],
@@ -307,6 +358,11 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       width: 13,
       height: 13,
     },
+    receiveWalletPin: {
+      top: -1,
+      right: -1,
+      borderTopRightRadius: 20,
+    },
   };
 });
 
@@ -360,6 +416,7 @@ export function AccountsPanelInSheetModal({
   onSelectAccount,
   scene,
   defaultPressItemAction = 'asPress',
+  isReceiveSheet = false,
 }: {
   containerStyle?: StyleProp<ViewStyle>;
   onSelectAccount?: (account: Account | null) => void;
@@ -367,6 +424,7 @@ export function AccountsPanelInSheetModal({
   defaultPressItemAction?: React.ComponentProps<
     typeof AddressItemInSheetModal
   >['defaultPressAction'];
+  isReceiveSheet?: boolean;
 }) {
   const { styles } = useTheme2024({ getStyle: getPanelStyle });
 
@@ -375,10 +433,13 @@ export function AccountsPanelInSheetModal({
   const { isPinnedAccount, myAddresses, safeAddresses, watchAddresses } =
     useSortAccountOnSelector();
 
-  const scrollViewRef = React.useRef<FlatList>(null);
+  const scrollViewRef = React.useRef<FlatList<CombineDataInterface>>(null);
   const scrollToBottom = useCallback(() => {
+    if (isReceiveSheet) {
+      return;
+    }
     scrollViewRef.current?.scrollToEnd({ animated: true });
-  }, []);
+  }, [isReceiveSheet]);
 
   const [safeAddressNavCollapsed, setSafeAddressNavCollapsed] = React.useState(
     !isGasAccount && !isReceive,
@@ -484,6 +545,148 @@ export function AccountsPanelInSheetModal({
 
   const { safeOffBottom } = useSafeSizes();
 
+  const renderAddressItem = useCallback(
+    (item: Account, index: number, isReceiveSectionFirstItem = false) => {
+      const Content = (
+        <AddressItemInSheetModal
+          addressItemProps={{ account: item }}
+          isPinned={isPinnedAccount(item)}
+          onPressAccount={onSelectAccount}
+          replaceNameWithAliasAddress={isReceive}
+          isReceive={isReceive}
+          showCopyAndQR={!isGasAccount}
+          defaultPressAction={defaultPressItemAction}
+          style={isGasAccount ? { backgroundColor: 'transparent' } : {}}
+        />
+      );
+
+      return (
+        <View
+          key={`${item.address}-${item.type}-${item.brandName}-${index}`}
+          style={[
+            { borderRadius: isReceive ? 20 : 16 },
+            isReceiveSectionFirstItem && styles.receiveSectionFirstItemGap,
+            index > 0 && styles.addressItemTopGap,
+          ]}>
+          {isReceive ? (
+            <AddressItemContextMenu account={item} actions={['copy', 'edit']}>
+              {Content}
+            </AddressItemContextMenu>
+          ) : (
+            Content
+          )}
+        </View>
+      );
+    },
+    [
+      defaultPressItemAction,
+      isGasAccount,
+      isPinnedAccount,
+      isReceive,
+      onSelectAccount,
+      styles.receiveSectionFirstItemGap,
+      styles.addressItemTopGap,
+    ],
+  );
+
+  const receiveSheetData = useMemo<ReceiveSheetListItem[]>(() => {
+    const items: ReceiveSheetListItem[] = [];
+
+    myAddresses.forEach((account, index) => {
+      items.push({
+        kind: 'account',
+        account,
+        sectionIndex: index,
+        sectionTitle: AccountPannelSectionTitle.MyAddresses,
+        key: `myAddresses-${account.address}-${account.brandName}-${index}`,
+      });
+    });
+
+    if (safeAddresses.length && !isGasAccount) {
+      items.push({
+        kind: 'sectionHeader',
+        title: AccountPannelSectionTitle.SafeAddresses,
+        key: 'safeAddresses-section',
+      });
+
+      if (shouldShowDatalist(AccountPannelSectionTitle.SafeAddresses)) {
+        safeAddresses.forEach((account, index) => {
+          items.push({
+            kind: 'account',
+            account,
+            sectionIndex: index,
+            sectionTitle: AccountPannelSectionTitle.SafeAddresses,
+            key: `safeAddresses-${account.address}-${account.brandName}-${index}`,
+          });
+        });
+      }
+    }
+
+    if (watchAddresses.length && !isGasAccount) {
+      items.push({
+        kind: 'sectionHeader',
+        title: AccountPannelSectionTitle.WatchAddresses,
+        key: 'watchAddresses-section',
+      });
+
+      if (shouldShowDatalist(AccountPannelSectionTitle.WatchAddresses)) {
+        watchAddresses.forEach((account, index) => {
+          items.push({
+            kind: 'account',
+            account,
+            sectionIndex: index,
+            sectionTitle: AccountPannelSectionTitle.WatchAddresses,
+            key: `watchAddresses-${account.address}-${account.brandName}-${index}`,
+          });
+        });
+      }
+    }
+
+    return items;
+  }, [
+    isGasAccount,
+    myAddresses,
+    safeAddresses,
+    shouldShowDatalist,
+    watchAddresses,
+  ]);
+
+  if (isReceiveSheet) {
+    return (
+      <View style={[styles.panel, styles.receiveSheetPanel, containerStyle]}>
+        <View style={styles.scrollViewContainer}>
+          <BottomSheetFlatList<ReceiveSheetListItem>
+            style={styles.receiveSheetList}
+            contentContainerStyle={[
+              styles.receiveSheetListContentContainer,
+              { paddingBottom: 40 + safeOffBottom },
+            ]}
+            data={receiveSheetData}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyExtractor={item => item.key}
+            renderItem={({ item }) => {
+              if (item.kind === 'sectionHeader') {
+                return (
+                  <View style={styles.section}>
+                    {ListHeaderComponent(item.title)}
+                  </View>
+                );
+              }
+
+              return renderAddressItem(
+                item.account,
+                item.sectionIndex,
+                item.sectionIndex === 0 &&
+                  item.sectionTitle !== AccountPannelSectionTitle.MyAddresses,
+              );
+            }}
+          />
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.panel, containerStyle]}>
       <View style={styles.scrollViewContainer}>
@@ -505,38 +708,7 @@ export function AccountsPanelInSheetModal({
                   data={combinedItem.data}
                   style={styles.addressListContainer}
                   renderItem={({ item, index }) => {
-                    const Content = (
-                      <AddressItemInSheetModal
-                        addressItemProps={{ account: item }}
-                        isPinned={isPinnedAccount(item)}
-                        onPressAccount={onSelectAccount}
-                        replaceNameWithAliasAddress={isReceive}
-                        isReceive={isReceive}
-                        showCopyAndQR={!isGasAccount}
-                        defaultPressAction={defaultPressItemAction}
-                        style={
-                          isGasAccount ? { backgroundColor: 'transparent' } : {}
-                        }
-                      />
-                    );
-                    return (
-                      <View
-                        key={`${item.address}-${item.type}-${item.brandName}-${index}`}
-                        style={[
-                          { borderRadius: 16 },
-                          index > 0 && styles.addressItemTopGap,
-                        ]}>
-                        {isReceive ? (
-                          <AddressItemContextMenu
-                            account={item}
-                            actions={['copy', 'edit']}>
-                            {Content}
-                          </AddressItemContextMenu>
-                        ) : (
-                          Content
-                        )}
-                      </View>
-                    );
+                    return renderAddressItem(item, index);
                   }}
                   keyExtractor={(account, index) =>
                     `account-${account.address}-${account.brandName}-${index}`
@@ -562,6 +734,17 @@ const getPanelStyle = createGetStyles2024(ctx => {
       minHeight: 453,
       maxHeight: '80%',
       flexDirection: 'column',
+    },
+    receiveSheetPanel: {
+      backgroundColor: 'transparent',
+      minHeight: 0,
+      maxHeight: '100%',
+    },
+    receiveSheetList: {
+      flex: 1,
+    },
+    receiveSheetListContentContainer: {
+      paddingHorizontal: 20,
     },
     scrollViewContainer: {
       height: '100%',
@@ -604,6 +787,9 @@ const getPanelStyle = createGetStyles2024(ctx => {
       width: '100%',
     },
     addressItemTopGap: {
+      marginTop: SIZES.itemGap,
+    },
+    receiveSectionFirstItemGap: {
       marginTop: SIZES.itemGap,
     },
     bottomBarContainer: {

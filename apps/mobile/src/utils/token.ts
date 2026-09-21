@@ -11,17 +11,17 @@ import { hexToString } from 'web3-utils';
 
 import type { AbstractPortfolioToken } from '@/screens/Home/types';
 import { findChain } from './chain';
-import { CustomTestnetToken } from '@/core/services/customTestnetService';
+import type { CustomTestnetToken } from '@/types/customTestnet';
 import BigNumber from 'bignumber.js';
 import { MINIMUM_GAS_LIMIT } from '@/constant/gas';
 import { calcPercent } from '@/utils/math';
 import { formatUsdValue, formatAmount } from '@/utils/number';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
-import { Account } from '@/core/services/preference';
+import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
+import type { Account } from '@/types/account';
 import { type TokenItemMaybeWithOwner } from '@/databases/hooks/token';
-import { TokenItemEntity } from '@/databases/entities/tokenitem';
-import { ITokenItem } from '@/store/tokens';
-import { columnConverter } from '@/databases/entities/_helpers';
+import type { ITokenItem } from '@/types/assets';
+import { unlabeledCustomTokenSecurityFlags } from './tokenSecurityFlags';
 
 export const SMALL_TOKEN_ID = '_SMALL_TOKEN_';
 export const geTokenDecimals = async (
@@ -179,10 +179,8 @@ export function isTokenMarketClosed(token?: { market_status?: string | null }) {
 export type TokenItemFromAbstractPortfolioToken = TokenItemMaybeWithOwner & {
   cex_ids?: string[];
   isFakerFoldRow?: boolean;
-  isManualFold?: boolean;
   smallTokenAllUsdValue?: string;
   isPined?: boolean;
-  isFold?: boolean;
   isExcludeBalance?: boolean;
   pinIndex?: number;
 };
@@ -218,8 +216,6 @@ export const abstractTokenToTokenItem = (
     smallTokenAllUsdValue:
       token?.id === SMALL_TOKEN_ID ? token?._usdValueStr : undefined,
     isPined: token?._isPined,
-    isFold: token?._isFold,
-    isManualFold: token?._isManualFold,
     isExcludeBalance: token?._isExcludeBalance,
     pinIndex: token?._pinIndex,
   };
@@ -385,11 +381,7 @@ export const customTestnetTokenToTokenItem = (
     raw_amount_hex_str: `0x${new BigNumber(token.rawAmount || 0).toString(16)}`,
     decimals: token.decimals,
     display_symbol: token.symbol,
-    is_core: false,
-    is_verified: false,
-    is_wallet: false,
-    is_scam: false,
-    is_suspicious: false,
+    ...unlabeledCustomTokenSecurityFlags,
     logo_url: '',
     name: token.symbol,
     optimized_symbol: token.symbol,
@@ -470,22 +462,27 @@ export function checkIfTokenBalanceEnough(
 }
 
 export const tokenItemEntityToTokenItem = (
-  token: TokenItemEntity,
+  token: Omit<ITokenItem, 'usd_value' | 'cex_ids' | 'launchpad' | 'asset'> & {
+    usd_value?: number;
+    cex_ids?: string | string[] | null;
+    launchpad?: string | TokenItem['launchpad'];
+    asset?: string | TokenItem['asset'];
+  },
 ): ITokenItem => {
   return {
     ...token,
     usd_value: token.price * token.amount,
     cex_ids:
       typeof token.cex_ids === 'string' // TODO: 处理干净后移除兼容逻辑
-        ? columnConverter.jsonStringToObj(token.cex_ids)
-        : token.cex_ids,
+        ? safeParseJSON(token.cex_ids) || []
+        : token.cex_ids || [],
     launchpad:
       typeof token.launchpad === 'string'
-        ? columnConverter.jsonStringToObj(token.launchpad)
+        ? safeParseJSON(token.launchpad)
         : token.launchpad,
     asset:
       typeof token.asset === 'string'
-        ? columnConverter.jsonStringToObj(token.asset)
+        ? safeParseJSON(token.asset)
         : token.asset,
   };
 };

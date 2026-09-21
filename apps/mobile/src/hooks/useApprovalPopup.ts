@@ -1,4 +1,7 @@
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+import {
+  MODAL_NAMES,
+  type APPROVAL_MODAL_NAMES,
+} from '@/components/GlobalBottomSheetModal/types';
 import {
   createGlobalBottomSheetModal,
   removeGlobalBottomSheetModal,
@@ -6,7 +9,6 @@ import {
 } from '@/components/GlobalBottomSheetModal';
 import { atom, useAtom } from 'jotai';
 import React, { useCallback } from 'react';
-import { getActiveDappState } from '@/core/bridges/state';
 
 const ids = new Set<string>();
 const idAtom = atom<string | null>(null);
@@ -23,13 +25,17 @@ const clearPopup = (idToClear: string | null) => {
 export const useApprovalPopup = () => {
   const [id, setId] = useAtom(idAtom);
 
-  const showPopup = useCallback(() => {
-    const _id = createGlobalBottomSheetModal({
-      name: MODAL_NAMES.APPROVAL,
-    });
-    setId(_id);
-    ids.add(_id);
-  }, [setId]);
+  const showPopup = useCallback(
+    (approvalComponent?: APPROVAL_MODAL_NAMES) => {
+      const _id = createGlobalBottomSheetModal({
+        name: MODAL_NAMES.APPROVAL,
+        approvalComponent,
+      });
+      setId(_id);
+      ids.add(_id);
+    },
+    [setId],
+  );
 
   const enablePopup = useCallback((type: string) => {
     if (type) {

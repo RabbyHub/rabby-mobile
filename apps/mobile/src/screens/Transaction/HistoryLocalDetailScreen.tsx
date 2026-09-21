@@ -1,43 +1,38 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import { useInterval, useMemoizedFn, useMount, useRequest } from 'ahooks';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { createGetStyles2024 } from '@/utils/styles';
-import { StackActions, useRoute } from '@react-navigation/native';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useFocusEffect, useRoute } from '@react-navigation/native';
+import { useInterval } from 'ahooks';
+import React, { useCallback, useEffect, useMemo } from 'react';
+import { ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { TransactionGroup } from '@/core/services/transactionHistory';
-import { transactionHistoryService } from '@/core/services';
-import { CHAINS_ENUM } from '@debank/common';
-import { findMaxGasTx } from '@/core/utils/tx';
-import BigNumber from 'bignumber.js';
-import { ApproveToken } from './components/Actions/ApproveToken';
+import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
+import { useMyAccounts } from '@/hooks/account';
+import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import type { GetNestedScreenRouteProp } from '@/navigation-type';
+import { findAccountByPriority } from '@/utils/account';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { useTranslation } from 'react-i18next';
 import { ApproveNFT } from './components/Actions/ApproveNFT';
 import { ApproveNFTCollection } from './components/Actions/ApproveNFTCollection';
+import { ApproveToken } from './components/Actions/ApproveToken';
+import { CancelTx } from './components/Actions/CancelTx';
+import { DeployContact } from './components/Actions/DeployContract';
 import { RevokeNFT } from './components/Actions/RevokeNFT';
 import { RevokeNFTCollection } from './components/Actions/RevokeNFTCollection';
 import { RevokeToken } from './components/Actions/RevokeToken';
-import { CancelTx } from './components/Actions/CancelTx';
-import { DeployContact } from './components/Actions/DeployContract';
-import { Swap } from './components/Actions/Swap';
 import { Send } from './components/Actions/Send';
-import { useTranslation } from 'react-i18next';
+import { Swap } from './components/Actions/Swap';
 import { UnknownAction } from './components/Actions/UnknownAction';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
-import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { findAccountByPriority } from '@/utils/account';
 import { HistoryItemCateType } from './components/type';
+import { Text } from '@/components/Typography';
 
 function HistoryLocalDetailScreen(): JSX.Element {
   const route =
@@ -54,15 +49,15 @@ function HistoryLocalDetailScreen(): JSX.Element {
     title,
     type,
     onPressAddToWhitelistButton,
+    account,
   } = route.params || {};
   const [data, setData] = React.useState<TransactionGroup>(_data);
   const isPending = useMemo(() => data.isPending, [data]);
   const isFailed = useMemo(() => data.isFailed, [data]);
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  const { bottom } = useSafeAreaInsets();
   const { t } = useTranslation();
 
-  const fetchRefreshData = useCallback(() => {
+  const fetchRefreshData = useCallback(async () => {
     if (!isPending) {
       // has done
       return;
@@ -71,7 +66,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
     const address = data.address;
     const chainId = data.chainId;
     const nonce = data.nonce;
-    const groups = transactionHistoryService.getPendingTxsByNonce(
+    const groups = await transactionHistoryServiceApi.getPendingTxsByNonce(
       address,
       chainId,
       nonce,
@@ -87,16 +82,29 @@ function HistoryLocalDetailScreen(): JSX.Element {
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const getHeaderTitle = React.useCallback(() => {
     return (
-      <HeaderTitleText2024 style={styles.headerTitleStyle}>
-        {title || t('page.transactions.itemTitle.Default')}
-      </HeaderTitleText2024>
+      <ScreenHeaderAccountSwitcher
+        forScene="HistoryDetail"
+        titleText={
+          <Text style={styles.headerTitleStyle} numberOfLines={1}>
+            {title || t('page.transactions.itemTitle.Default')}
+          </Text>
+        }
+        disableSwitch={true}
+      />
     );
-  }, [title, styles.headerTitleStyle, t]);
+  }, [styles.headerTitleStyle, title, t]);
 
   useEffect(() => {
     if (!data.isPending) {
-      const rawId = `${data.address.toLowerCase()}-${data.maxGasTx.hash}`;
-      transactionHistoryService.clearSuccessAndFailSingleId(rawId);
+      const rawId = `${data.address.toLowerCase()}-${data.maxGasTx?.hash}`;
+      void transactionHistoryServiceApi
+        .clearSuccessAndFailSingleId(rawId)
+        .catch(error => {
+          console.error(
+            '[HistoryLocalDetail] clear local status failed',
+            error,
+          );
+        });
     }
   }, [data]);
 
@@ -134,85 +142,92 @@ function HistoryLocalDetailScreen(): JSX.Element {
     return account;
   }, [accounts, data.address, data.keyringType]);
 
+  const currentAccount = useMemo(() => {
+    return account && isSameAddress(account.address, data.address)
+      ? account
+      : accounts.find(item => isSameAddress(item.address, data.address));
+  }, [account, accounts, data.address]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (currentAccount) {
+        switchSceneCurrentAccount('HistoryDetail', currentAccount);
+      }
+    }, [currentAccount]),
+  );
+
+  const actionElement = data.maxGasTx?.action?.actionData?.approveToken ? (
+    <ApproveToken
+      data={data}
+      isSingleAddress={!isForMultipleAddress}
+      account={txAccount}
+    />
+  ) : data.maxGasTx?.action?.actionData?.approveNFT ? (
+    <ApproveNFT
+      data={data}
+      isSingleAddress={!isForMultipleAddress}
+      account={txAccount}
+    />
+  ) : data.maxGasTx?.action?.actionData?.approveNFTCollection ? (
+    <ApproveNFTCollection
+      data={data}
+      isSingleAddress={!isForMultipleAddress}
+      account={txAccount}
+    />
+  ) : data.maxGasTx?.action?.actionData?.revokeNFT ? (
+    <RevokeNFT
+      data={data}
+      isSingleAddress={!isForMultipleAddress}
+      account={txAccount}
+    />
+  ) : data.maxGasTx?.action?.actionData?.revokeNFTCollection ? (
+    <RevokeNFTCollection
+      data={data}
+      isSingleAddress={!isForMultipleAddress}
+      account={txAccount}
+    />
+  ) : data.maxGasTx?.action?.actionData?.revokeToken ? (
+    <RevokeToken
+      data={data}
+      isSingleAddress={!isForMultipleAddress}
+      account={txAccount}
+    />
+  ) : data.maxGasTx?.action?.actionData?.cancelTx ? (
+    <CancelTx
+      data={data}
+      isSingleAddress={!isForMultipleAddress}
+      account={txAccount}
+    />
+  ) : data.maxGasTx?.action?.actionData?.deployContract ? (
+    <DeployContact
+      data={data}
+      isSingleAddress={!isForMultipleAddress}
+      account={txAccount}
+    />
+  ) : needUseSwap ? (
+    <Swap
+      data={data}
+      isSingleAddress={!isForMultipleAddress}
+      account={txAccount}
+    />
+  ) : data.maxGasTx?.action?.actionData?.send ? (
+    <Send
+      data={data}
+      isSingleAddress={!isForMultipleAddress}
+      onPressAddToWhitelistButton={onPressAddToWhitelistButton}
+      account={txAccount}
+    />
+  ) : (
+    <UnknownAction
+      data={data}
+      isSingleAddress={!isForMultipleAddress}
+      account={txAccount}
+    />
+  );
+
   return (
-    <NormalScreenContainer2024
-      type={!isLight ? 'bg1' : 'bg2'}
-      style={{
-        // position: 'relative',
-        paddingBottom:
-          needUseSwap || data.maxGasTx.action?.actionData?.send ? 0 : bottom,
-        paddingTop: 24,
-        paddingHorizontal:
-          needUseSwap || data.maxGasTx.action?.actionData?.send ? 0 : 16,
-      }}>
-      {data.maxGasTx.action?.actionData?.approveToken ? (
-        <ApproveToken
-          data={data}
-          isSingleAddress={!isForMultipleAddress}
-          account={txAccount}
-        />
-      ) : data.maxGasTx.action?.actionData?.approveNFT ? (
-        <ApproveNFT
-          data={data}
-          isSingleAddress={!isForMultipleAddress}
-          account={txAccount}
-        />
-      ) : data.maxGasTx.action?.actionData?.approveNFTCollection ? (
-        <ApproveNFTCollection
-          data={data}
-          isSingleAddress={!isForMultipleAddress}
-          account={txAccount}
-        />
-      ) : data.maxGasTx.action?.actionData?.revokeNFT ? (
-        <RevokeNFT
-          data={data}
-          isSingleAddress={!isForMultipleAddress}
-          account={txAccount}
-        />
-      ) : data.maxGasTx.action?.actionData?.revokeNFTCollection ? (
-        <RevokeNFTCollection
-          data={data}
-          isSingleAddress={!isForMultipleAddress}
-          account={txAccount}
-        />
-      ) : data.maxGasTx.action?.actionData?.revokeToken ? (
-        <RevokeToken
-          data={data}
-          isSingleAddress={!isForMultipleAddress}
-          account={txAccount}
-        />
-      ) : data.maxGasTx.action?.actionData?.cancelTx ? (
-        <CancelTx
-          data={data}
-          isSingleAddress={!isForMultipleAddress}
-          account={txAccount}
-        />
-      ) : data.maxGasTx.action?.actionData?.deployContract ? (
-        <DeployContact
-          data={data}
-          isSingleAddress={!isForMultipleAddress}
-          account={txAccount}
-        />
-      ) : needUseSwap ? (
-        <Swap
-          data={data}
-          isSingleAddress={!isForMultipleAddress}
-          account={txAccount}
-        />
-      ) : data.maxGasTx.action?.actionData?.send ? (
-        <Send
-          data={data}
-          isSingleAddress={!isForMultipleAddress}
-          onPressAddToWhitelistButton={onPressAddToWhitelistButton}
-          account={txAccount}
-        />
-      ) : (
-        <UnknownAction
-          data={data}
-          isSingleAddress={!isForMultipleAddress}
-          account={txAccount}
-        />
-      )}
+    <NormalScreenContainer2024 type={!isLight ? 'bg1' : 'bg0'}>
+      {actionElement}
     </NormalScreenContainer2024>
   );
 }
@@ -293,7 +308,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   singleBox: {
     width: '100%',
-    height: 92,
+    // height: 92,
     backgroundColor: colors2024['neutral-bg-1'],
     justifyContent: 'space-between',
     alignContent: 'center',
@@ -305,9 +320,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tokenAmountText: {
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 28,
-    lineHeight: 36,
-    fontWeight: '700',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '800',
   },
   mutliBox: {
     width: '100%',
@@ -373,7 +388,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   headerTitleStyle: {
     color: colors2024['neutral-title-1'],
-    fontWeight: '900',
+    fontWeight: '800',
     fontSize: 20,
     fontFamily: 'SF Pro Rounded',
     lineHeight: 24,

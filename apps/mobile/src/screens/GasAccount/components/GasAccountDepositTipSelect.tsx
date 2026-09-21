@@ -1,8 +1,5 @@
 import { RcArrowRight2CC } from '@/assets/icons/common';
-import {
-  RcIconApplePayCC,
-  RcIconGooglePayCC,
-} from '@/assets2024/icons/gas-account';
+import { RcIconGooglePayCC } from '@/assets2024/icons/gas-account';
 import { Button } from '@/components2024/Button';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -11,6 +8,12 @@ import { useTranslation } from 'react-i18next';
 import { Platform, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Text } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_GAP,
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
+  BOTTOM_BUTTON_TEXT_SIZE,
+} from '@/constant/layout';
 
 export const GasAccountDepositTipSelect: React.FC<{
   onSelect(type: 'token' | 'pay'): void;
@@ -25,11 +28,10 @@ export const GasAccountDepositTipSelect: React.FC<{
       enableOnAndroid
       scrollEnabled={false}
       keyboardOpeningTime={0}
-      // style={styles.container}
       contentContainerStyle={styles.container}>
       <View style={styles.containerHorizontal}>
         <Text style={styles.title}>
-          {t('page.gasAccount.depositSelectPopup.title')}
+          {t('page.gasAccount.depositPopup.gasDepositTitle')}
         </Text>
         <Text style={styles.description}>
           {t('page.gasAccount.depositSelectPopup.desc')}
@@ -161,14 +163,14 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
 
   accountDepositGroup: {
     flexDirection: 'column',
-    gap: 20,
+    gap: BOTTOM_BUTTON_GAP,
     width: '100%',
     marginTop: 30,
     paddingHorizontal: 20,
   },
 
   depositWithPayBtn: {
-    height: 60,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
     ...(isLight
       ? {
           backgroundColor: '#000',
@@ -194,8 +196,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   btnTitle: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
+    fontSize: BOTTOM_BUTTON_TEXT_SIZE,
+    lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
     fontStyle: 'normal',
     fontWeight: '700',
     color: colors2024['neutral-InvertHighlight'],

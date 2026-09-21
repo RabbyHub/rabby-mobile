@@ -5,7 +5,7 @@ import { View, Animated, Easing, StyleSheet } from 'react-native';
 import { Card } from '../Card';
 import RcPending from '@/assets/icons/swap/pending.svg';
 import RcIconFail from '@/assets2024/icons/history/IconFail.svg';
-import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
+import { TxStatusItem } from '@/screens/Transaction/components/TxStatusItem';
 import { Text } from '@/components/Typography';
 
 interface Props {
@@ -137,7 +137,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   titleText: {
     color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 17,
+    fontSize: 16,
     lineHeight: 20,
     fontWeight: '500',
   },
@@ -156,14 +156,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   payTokenAmountText: {
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 17,
+    fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
   },
   receiveTokenAmountText: {
     color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 17,
+    fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
   },

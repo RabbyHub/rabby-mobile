@@ -2,64 +2,116 @@ import { RootNames } from '@/constant/layout';
 import { openapi } from '@/core/request';
 import { openExternalUrl } from '@/core/utils/linking';
 import { navigationRef } from '@/utils/navigation';
-import useInfiniteScroll from 'ahooks/lib/useInfiniteScroll';
-import { uniqBy } from 'lodash';
 import { useCallback, useEffect, useMemo } from 'react';
 import { Linking, Platform } from 'react-native';
 import useAsync from 'react-use/lib/useAsync';
-import {
-  storeApiGasAccount,
-  useGasAccountHistoryRefresh,
-  useGasAccountSign,
-  useGasBalanceRefresh,
-} from './atom';
-import { useRequest } from 'ahooks';
+import { gasAccountStore, storeApiGasAccount, useGasAccountSign } from './atom';
+import { useMemoizedFn, useRequest } from 'ahooks';
 import { apisHomeTabIndex } from '@/hooks/navigation';
+import { getIsGasAccountLoggedIn } from './loginState';
+import { addressUtils } from '@rabby-wallet/base-utils';
+import { useShallow } from 'zustand/react/shallow';
 
 export const useGasAccountInfo = () => {
-  const { sig, accountId } = useGasAccountSign();
-
-  const { refreshId } = useGasBalanceRefresh();
-
-  const {
-    data: value,
-    runAsync: runFetchGasAccountInfo,
-    loading,
-    error,
-  } = useRequest(
-    async () => {
-      return storeApiGasAccount.fetchGasAccountInfo();
-    },
-    {
-      refreshDeps: [sig, accountId, refreshId],
-      cacheKey: `current-gas-account-info-${accountId}`,
-      onError() {
-        storeApiGasAccount.setGasAccount();
-      },
-    },
+  const { value, status } = gasAccountStore(
+    useShallow(state => ({
+      value: state.snapshot.accountInfo,
+      status: state.snapshot.status,
+    })),
   );
-
-  if (
-    error?.message?.includes('gas account verified failed') &&
-    sig &&
-    accountId
-  ) {
-    storeApiGasAccount.setGasAccount();
-  }
+  const loading = status === 'refreshing' && !value;
+  const runFetchGasAccountInfo = useCallback(() => {
+    return storeApiGasAccount.refreshSnapshot();
+  }, []);
 
   return { loading, value, runFetchGasAccountInfo };
 };
 
-export const useGasAccountInfoV2 = ({ address }: { address: string }) => {
-  return useRequest(
-    async () => {
-      return openapi.getGasAccountInfoV2({ id: address });
-    },
+const getSnapshotAccountId = (
+  accountInfo: ReturnType<
+    typeof gasAccountStore.getState
+  >['snapshot']['accountInfo'],
+) =>
+  (
+    accountInfo as
+      | {
+          account?: {
+            id?: string;
+          };
+        }
+      | undefined
+  )?.account?.id;
+
+const activateGasAccountSnapshot = () => {
+  const state = gasAccountStore.getState();
+  const { sig, accountId } = state.session;
+  if (!sig || !accountId || state.snapshot.status === 'refreshing') {
+    return;
+  }
+
+  const snapshotAccountId = getSnapshotAccountId(state.snapshot.accountInfo);
+  if (
+    state.snapshot.accountInfo &&
+    !state.snapshot.dirty &&
+    (!snapshotAccountId ||
+      addressUtils.isSameAddress(snapshotAccountId, accountId))
+  ) {
+    return;
+  }
+
+  void storeApiGasAccount.refreshSnapshot().catch(error => {
+    console.error('activateGasAccountSnapshot refresh error', error);
+  });
+};
+
+/**
+ * Activates the snapshot resource without subscribing the caller's render tree
+ * to Gas Account state. Large approval screens only need the side effect.
+ */
+export const useGasAccountSnapshotActivation = () => {
+  useEffect(() => {
+    activateGasAccountSnapshot();
+
+    return gasAccountStore.subscribe((state, previousState) => {
+      const sessionChanged =
+        state.session.sig !== previousState.session.sig ||
+        state.session.accountId !== previousState.session.accountId;
+      const snapshotInvalidated =
+        state.snapshot.dirty && !previousState.snapshot.dirty;
+      const snapshotCleared =
+        !state.snapshot.accountInfo && !!previousState.snapshot.accountInfo;
+
+      if (sessionChanged || snapshotInvalidated || snapshotCleared) {
+        activateGasAccountSnapshot();
+      }
+    });
+  }, []);
+};
+
+export const useGasAccountInfoV2 = ({ address }: { address?: string }) => {
+  const targetAddress = address;
+
+  const request = useRequest(
+    () => openapi.getGasAccountInfoV2({ id: targetAddress! }),
     {
-      refreshDeps: [address],
-      cacheKey: `gas-account-info-v2-${address}`,
+      refreshDeps: [targetAddress],
+      ready: !!targetAddress,
+      ...(targetAddress
+        ? { cacheKey: `gas-account-info-v2-${targetAddress}` }
+        : {}),
     },
   );
+  const refreshWhenIdle = useMemoizedFn(() => {
+    if (!targetAddress || request.loading) {
+      return;
+    }
+    request.refresh();
+  });
+
+  return {
+    ...request,
+    refresh: refreshWhenIdle,
+  };
 };
 
 export const useGasAccountGoBack = () => {
@@ -87,151 +139,85 @@ export const useGasAccountGoBack = () => {
 export const useGasAccountMethods = () => {
   return {
     login: storeApiGasAccount.loginGasAccount,
-    logout: storeApiGasAccount.logoutGasAccount,
   };
 };
 
-export const useGasAccountLogin = ({
-  loading,
-  value,
-}: Pick<ReturnType<typeof useGasAccountInfo>, 'loading' | 'value'>) => {
+export const useGasAccountLogin = () => {
   const { sig, accountId } = useGasAccountSign();
 
-  const { login, logout } = useGasAccountMethods();
+  const { login } = useGasAccountMethods();
 
   const isLogin = useMemo(
-    () => (!loading ? !!value?.account?.id : !!sig && !!accountId),
-    [sig, accountId, loading, value?.account?.id],
+    () => getIsGasAccountLoggedIn({ sig, accountId }),
+    [sig, accountId],
   );
 
-  return { login, logout, isLogin };
+  return { login, isLogin };
 };
 
 export const useGasAccountHistory = () => {
-  const { sig, accountId } = useGasAccountSign();
+  const history = gasAccountStore(
+    useShallow(state => ({
+      list: state.history.list,
+      rechargeList: state.history.rechargeList,
+      withdrawList: state.history.withdrawList,
+      totalCount: state.history.totalCount,
+      status: state.history.status,
+      lastFetchedAt: state.history.lastFetchedAt,
+      loadingMore: state.history.loadingMore,
+    })),
+  );
+  const confirmedCount = history.list.length;
+  const pendingCount =
+    history.rechargeList.length + history.withdrawList.length;
+  const hasHistory = confirmedCount > 0 || pendingCount > 0;
+  const hasPendingHistory = pendingCount > 0;
 
-  const { refreshId: refreshTxListCount, refresh: refreshListTx } =
-    useGasAccountHistoryRefresh();
-
-  const { refresh: refreshGasAccountBalance } = useGasBalanceRefresh();
-
-  type History = Awaited<ReturnType<typeof openapi.getGasAccountHistory>>;
-
-  const {
-    data: txList,
-    loading,
-    loadMore,
-    loadingMore,
-    noMore,
-    mutate,
-  } = useInfiniteScroll<{
-    rechargeList: History['recharge_list'];
-    withdrawList: History['recharge_list'];
-    list: History['history_list'];
-    totalCount: number;
-  }>(
-    async d => {
-      if (!sig || !accountId) {
-        return {
-          rechargeList: [],
-          withdrawList: [],
-          list: [],
-          totalCount: 0,
-        };
-      }
-      const data = await openapi.getGasAccountHistory({
-        sig: sig!,
-        account_id: accountId!,
-        start: d?.list?.length && d?.list?.length > 1 ? d?.list?.length : 0,
-        limit: 10,
-      });
-
-      const rechargeList = data.recharge_list;
-      const historyList = data.history_list;
-      const withdrawList = data.withdraw_list;
-      return {
-        rechargeList: rechargeList || [],
-        withdrawList: withdrawList || [],
-        list: historyList,
-        totalCount: data.pagination.total,
-      };
-    },
-
-    {
-      reloadDeps: [sig],
-      isNoMore(data) {
-        if (data) {
-          return (
-            data.totalCount <=
-            (data.list.length || 0) +
-              (data?.rechargeList?.length || 0) +
-              (data?.withdrawList?.length || 0)
-          );
-        }
-        return true;
-      },
-      manual: !sig || !accountId,
-    },
+  const txList = useMemo(
+    () => ({
+      rechargeList: history.rechargeList,
+      withdrawList: history.withdrawList,
+      list: history.list,
+      totalCount: history.totalCount,
+    }),
+    [
+      history.list,
+      history.rechargeList,
+      history.totalCount,
+      history.withdrawList,
+    ],
   );
 
-  const { value } = useAsync(async () => {
-    if (sig && accountId && refreshTxListCount) {
-      return openapi.getGasAccountHistory({
-        sig,
-        account_id: accountId,
-        start: 0,
-        limit: 5,
-      });
-    }
-  }, [sig, refreshTxListCount, accountId]);
-
-  useEffect(() => {
-    if (value?.history_list) {
-      mutate(d => {
-        if (!d) {
-          return;
-        }
-
-        if (
-          value?.recharge_list?.length !== d.rechargeList.length ||
-          value?.withdraw_list?.length !== d.withdrawList.length
-        ) {
-          refreshGasAccountBalance();
-        }
-        return {
-          withdrawList: value?.withdraw_list,
-          rechargeList: value?.recharge_list,
-          totalCount: value.pagination.total,
-          list: uniqBy(
-            [...(value?.history_list || []), ...(d?.list || [])],
-            e => `${e?.create_at}` as string,
-          ),
-        };
-      });
-    }
-  }, [mutate, refreshGasAccountBalance, value]);
-
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    const hasSomePending = Boolean(
-      txList?.rechargeList?.length || txList?.withdrawList?.length,
-    );
-    if (!loading && !loadingMore && hasSomePending) {
-      timer = setTimeout(refreshListTx, 2000);
-    }
-    return () => {
-      if (timer) {
-        clearTimeout(timer);
-      }
-    };
-  }, [loading, loadingMore, refreshListTx, txList]);
+  const noMore = history.totalCount <= confirmedCount;
 
   return {
-    loading,
+    loading: history.status === 'refreshing' && !history.lastFetchedAt,
     txList,
-    loadingMore,
-    loadMore,
+    loadingMore: !!history.loadingMore,
+    loadMore: storeApiGasAccount.loadMoreHistory,
     noMore,
+    hasHistory,
+    hasPendingHistory,
+  };
+};
+
+export const useGasAccountHistorySummary = () => {
+  const summary = gasAccountStore(
+    useShallow(state => ({
+      status: state.history.status,
+      lastFetchedAt: state.history.lastFetchedAt,
+      confirmedCount: state.history.list.length,
+      rechargeCount: state.history.rechargeList.length,
+      withdrawCount: state.history.withdrawList.length,
+    })),
+  );
+  const hasHistory =
+    summary.confirmedCount + summary.rechargeCount + summary.withdrawCount > 0;
+
+  return {
+    ...summary,
+    loading: summary.status === 'refreshing' && !summary.lastFetchedAt,
+    hasHistory,
   };
 };
 

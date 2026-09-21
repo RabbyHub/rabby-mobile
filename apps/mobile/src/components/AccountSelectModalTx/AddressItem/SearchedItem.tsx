@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useMemo, useState } from 'react';
 import { AddressItem as InnerAddressItem } from '@/components2024/AddressItem/AddressItem';
-import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
+import { apisTheme, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Card } from '@/components2024/Card';
 import {
@@ -9,33 +9,27 @@ import {
   StyleProp,
   ViewStyle,
   TouchableOpacity,
-  Pressable,
   Image,
 } from 'react-native';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import {
   ContextMenuView,
-  MenuAction,
+  type MenuAction,
+  type MenuConfig,
 } from '@/components2024/ContextMenuView/ContextMenuView';
-import { trigger } from 'react-native-haptic-feedback';
 import { ellipsisAddress } from '@/utils/address';
-import { RcIconLockCC, RcIconSwitchCC } from '@/assets/icons/send';
-import { useWhitelist } from '@/hooks/whitelist';
+import { RcIconLockCC } from '@/assets/icons/send';
 import { AddrDescResponse, Cex } from '@rabby-wallet/rabby-api/dist/types';
-import { useTranslation } from 'react-i18next';
-import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
+import { aliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { getCexWithLocalCache } from '@/databases/hooks/cex';
 import { IS_ANDROID } from '@/core/native/utils';
 import { touchedFeedback } from '@/utils/touch';
 import { Text } from '@/components/Typography';
+import { SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS } from '../layout';
+import i18n from '@/utils/i18n';
 
 const SIZES = {
   itemH: 78,
@@ -67,13 +61,9 @@ export const SearchedAddressItemInSheetModal = ({
   // const { removeWhitelist } = useWhitelist({
   //   disableAutoFetch: true,
   // });
-  const isDarkTheme = useGetBinaryMode() === 'dark';
-  const { t } = useTranslation();
   const showCexInfo = useMemo(() => {
     return cexInfo?.id && cexInfo.is_deposit;
   }, [cexInfo?.id, cexInfo?.is_deposit]);
-
-  const editAliasName = useAliasNameEditModal();
 
   useLayoutEffect(() => {
     if (cexInfo) {
@@ -86,10 +76,11 @@ export const SearchedAddressItemInSheetModal = ({
     });
   }, [account.address, cexInfo]);
 
-  const menuActions = React.useMemo(() => {
-    return [
+  const getMenuConfig = (): MenuConfig => {
+    const isDarkTheme = apisTheme.getBinaryMode() === 'dark';
+    const menuActions: MenuAction[] = [
       {
-        title: t('page.whitelist.copyAddress'),
+        title: i18n.t('page.whitelist.copyAddress'),
         icon: isDarkTheme
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy.png'),
@@ -101,14 +92,14 @@ export const SearchedAddressItemInSheetModal = ({
         },
       },
       {
-        title: t('page.addressDetail.addressListScreen.edit'),
+        title: i18n.t('page.addressDetail.addressListScreen.edit'),
         icon: isDarkTheme
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit.png'),
         androidIconName: 'ic_rabby_menu_edit',
         key: 'edit',
         action() {
-          editAliasName.show(account);
+          aliasNameEditModal.show(account);
         },
       },
       // ...(inWhiteList
@@ -131,13 +122,12 @@ export const SearchedAddressItemInSheetModal = ({
       //       },
       //     ]
       //   : []),
-    ] as MenuAction[];
-  }, [
-    account,
-    editAliasName,
-    /* inWhiteList,  */ isDarkTheme,
-    /* removeWhitelist, */ t,
-  ]);
+    ];
+
+    return {
+      menuActions,
+    };
+  };
 
   const { formatName, hideTail } = useMemo(() => {
     const ellipisName = ellipsisAddress(account.address);
@@ -184,7 +174,9 @@ export const SearchedAddressItemInSheetModal = ({
           // }
         }}
         onLongPress={() => {
-          if (enableMenu) return;
+          if (enableMenu) {
+            return;
+          }
 
           touchedFeedback();
         }}>
@@ -268,11 +260,9 @@ export const SearchedAddressItemInSheetModal = ({
   }
   return (
     <ContextMenuView
-      menuConfig={{
-        menuTitle: account.address,
-        menuActions: menuActions,
-      }}
-      preViewBorderRadius={16}
+      menuTitle={account.address}
+      getMenuConfig={getMenuConfig}
+      preViewBorderRadius={SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS}
       triggerProps={{ action: 'longPress' }}>
       {children}
     </ContextMenuView>
@@ -281,7 +271,7 @@ export const SearchedAddressItemInSheetModal = ({
 
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   root: {
-    // borderRadius: 20,
+    borderRadius: SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS,
     overflow: 'hidden',
     // backgroundColor: colors2024['neutral-bg-1'],
   },
@@ -289,7 +279,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     // borderColor: colors2024['brand-light-2'],
   },
   shadowView: {
-    borderRadius: 20,
+    borderRadius: SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
@@ -299,7 +289,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
     borderWidth: 0,
     // borderColor: colors2024['neutral-line'],
-    borderRadius: 20,
+    borderRadius: SELECT_ACCOUNT_ADDRESS_ITEM_RADIUS,
     flex: 1,
     flexGrow: 1,
     backgroundColor: isLight
@@ -380,7 +370,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   cardPressing: {
     backgroundColor: colors2024['brand-light-1'],
-    borderRadius: 16,
   },
   walletIcon: {
     borderRadius: 12,

@@ -2,7 +2,11 @@ import { RcIconBridge } from '@/assets2024/singleHome';
 import { BSheetModal } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { toast } from '@/components2024/Toast';
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_DOUBLE_HEIGHT,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  RootNames,
+} from '@/constant/layout';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { RootStackParamsList } from '@/navigation-type';
@@ -31,6 +35,7 @@ import RcIconApprovalCC from '@/assets2024/singleHome/approvals-cc.svg';
 import RcIconQueueCC from '@/assets2024/singleHome/queue-cc.svg';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Text } from '@/components/Typography';
+import { enterSingleAddressTransactionFeature } from '../transactionFeatureEntry';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -104,17 +109,21 @@ export const BottomBtns = ({
       title: t('page.home.services.bridge'),
       Icon: RcIconBridge,
       onPress: async () => {
-        if (!currentAccount) {
-          return;
-        }
-        await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
-        navigation.push(RootNames.StackTransaction, {
-          screen: RootNames.Bridge,
+        await enterSingleAddressTransactionFeature('bridge', currentAccount, {
+          switchSceneCurrentAccount: account =>
+            switchSceneCurrentAccount('MakeTransactionAbout', account),
+          navigateToSend: () => navigateToSendPolyScreen(true),
+          navigateToSwapBridge: activeTab => {
+            navigation.push(RootNames.StackTransaction, {
+              screen: RootNames.SwapBridge,
+              params: { activeTab },
+            });
+          },
         });
       },
     },
     {
-      title: 'Approvals',
+      title: t('page.home.services.approvals'),
       key: t('page.home.services.approvals'),
       iconColor: colors2024['red-default'],
       Icon: RcIconApprovalCC,
@@ -157,19 +166,29 @@ export const BottomBtns = ({
       : []),
   ];
   const handleSend = async () => {
-    if (!currentAccount) {
-      return;
-    }
-    await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
-    navigateToSendPolyScreen(true);
+    await enterSingleAddressTransactionFeature('send', currentAccount, {
+      switchSceneCurrentAccount: account =>
+        switchSceneCurrentAccount('MakeTransactionAbout', account),
+      navigateToSend: () => navigateToSendPolyScreen(true),
+      navigateToSwapBridge: activeTab => {
+        navigation.push(RootNames.StackTransaction, {
+          screen: RootNames.SwapBridge,
+          params: { activeTab },
+        });
+      },
+    });
   };
   const handleSwap = async () => {
-    if (!currentAccount) {
-      return;
-    }
-    await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
-    navigation.push(RootNames.StackTransaction, {
-      screen: RootNames.Swap,
+    await enterSingleAddressTransactionFeature('swap', currentAccount, {
+      switchSceneCurrentAccount: account =>
+        switchSceneCurrentAccount('MakeTransactionAbout', account),
+      navigateToSend: () => navigateToSendPolyScreen(true),
+      navigateToSwapBridge: activeTab => {
+        navigation.push(RootNames.StackTransaction, {
+          screen: RootNames.SwapBridge,
+          params: { activeTab },
+        });
+      },
     });
   };
   const handleMore = () => {
@@ -253,12 +272,11 @@ export const BottomBtns = ({
   );
 };
 
-const BADGE_SIZE = 18;
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     position: 'relative',
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
   },
   group: {
     // justifyContent: 'space-between',
@@ -272,7 +290,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   action: {
     gap: 4,
-    height: 52,
+    height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
     flex: 1,
     paddingHorizontal: 37,
     backgroundColor: ctx.colors2024['green-default'],
@@ -308,8 +326,8 @@ const getStyles = createGetStyles2024(ctx => ({
     height: 22,
   },
   moreAction: {
-    height: 52,
-    width: 52,
+    height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
+    width: BOTTOM_BUTTON_DOUBLE_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 12,
@@ -333,12 +351,6 @@ const getStyles = createGetStyles2024(ctx => ({
     maxWidth: '50%',
     // ...makeDebugBorder(),
   },
-  chevron: {
-    marginLeft: 'auto',
-    width: 16,
-    height: 16,
-    color: ctx.colors2024['neutral-foot'],
-  },
   list: {
     gap: 40,
     paddingTop: 16,
@@ -347,28 +359,11 @@ const getStyles = createGetStyles2024(ctx => ({
   sheetModal: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
-  actionBadgeWrapper: {
-    position: 'absolute',
-    top: -4,
-    right: -(BADGE_SIZE / 2),
-    // ...makeDebugBorder(),
-  },
-  rightZero: {
-    right: 0,
-  },
   actionText: {
     color: ctx.colors2024['neutral-InvertHighlight'],
     textAlign: 'center',
     fontSize: 18,
-    lineHeight: 22,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-  },
-  actionIconWrapper: {
-    flexDirection: 'row',
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: ctx.colors2024['green-default'],
   },
 }));

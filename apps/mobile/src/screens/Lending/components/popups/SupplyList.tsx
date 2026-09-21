@@ -1,18 +1,13 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { RefreshControl, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
 import {
   GlobalModalViewProps,
   MODAL_NAMES,
 } from '@/components2024/GlobalBottomSheetModal/types';
 import {
-  useFetchLendingData,
   useLendingIsLoading,
   useLendingRemoteData,
   useLendingSummary,
@@ -27,6 +22,7 @@ import { formatApy } from '../../utils/format';
 import { CHAINS_ENUM } from '@debank/common';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { DisplayPoolReserveInfo } from '../../type';
+import { openLendingActionPopup } from '../../utils/actionPopup';
 import { displayGhoForMintableMarket } from '../../utils/supply';
 import { API_ETH_MOCK_ADDRESS } from '../../utils/constant';
 import wrapperToken from '../../config/wrapperToken';
@@ -37,6 +33,14 @@ import { TokenRowSectionHeader } from '@/screens/Home/components/AssetRenderItem
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { Text, TextInput } from '@/components/Typography';
 import { colord } from 'colord';
+import { PositionTokenSelector } from '../ItemRender/PositionTokenSelector';
+import {
+  getWrappedNativeReservePair,
+  getWrappedNativeTokenOptions,
+  isWrappedNativeSelectorReserve,
+  isWrappedNativeTokenReserve,
+  type BasicPositionTokenOption,
+} from '../../utils/positionTokenSelector';
 
 const FOOT_HEIGHT = 86;
 
@@ -44,9 +48,14 @@ type SupplyListItem =
   | { type: 'reserve'; data: DisplayPoolReserveInfo }
   | { type: 'toggle_fold' };
 
-const LendingSupplyList: React.FC<
-  GlobalModalViewProps<MODAL_NAMES.LENDING_SUPPLY_LIST>
-> = ({}) => {
+type LendingSupplyListContentProps = {
+  hideHeader?: boolean;
+  onBeforeSwapNavigate?: () => void;
+};
+
+export const LendingSupplyListContent: React.FC<
+  LendingSupplyListContentProps
+> = ({ hideHeader = false, onBeforeSwapNavigate }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { reserves } = useLendingRemoteData();
@@ -54,9 +63,11 @@ const LendingSupplyList: React.FC<
   const { displayPoolReserves, iUserSummary, getTargetReserve } =
     useLendingSummary();
   const { t } = useTranslation();
-  const { fetchData } = useFetchLendingData();
   const [search, setSearch] = useState('');
   const [isInputActive, setIsInputActive] = useState(false);
+  const [selectedTokenByGroup, setSelectedTokenByGroup] = useState<
+    Record<string, string>
+  >({});
 
   const [foldHideList, setFoldHideList] = useState(true);
   const { chainEnum, marketKey } = useSelectedMarket();
@@ -141,12 +152,26 @@ const LendingSupplyList: React.FC<
     return iUserSummary?.isInIsolationMode;
   }, [iUserSummary?.isInIsolationMode]);
 
+  const shouldMergeWrappedNativeRow = useMemo(() => {
+    const { nativeReserve, wrappedReserve } = getWrappedNativeReservePair(
+      filteredReserves,
+      chainEnum,
+    );
+    return !search.trim() && !!nativeReserve && !!wrappedReserve;
+  }, [chainEnum, filteredReserves, search]);
+
   const dataList = useMemo<SupplyListItem[]>(() => {
     if (loading) {
       return [];
     }
     const list: SupplyListItem[] = [];
     unFoldList.forEach(item => {
+      if (
+        shouldMergeWrappedNativeRow &&
+        isWrappedNativeTokenReserve(item, chainEnum)
+      ) {
+        return;
+      }
       list.push({
         type: 'reserve',
         data: item,
@@ -156,6 +181,12 @@ const LendingSupplyList: React.FC<
       list.push({ type: 'toggle_fold' });
       if (!foldHideList) {
         foldList.forEach(item => {
+          if (
+            shouldMergeWrappedNativeRow &&
+            isWrappedNativeTokenReserve(item, chainEnum)
+          ) {
+            return;
+          }
           list.push({
             type: 'reserve',
             data: item,
@@ -164,7 +195,14 @@ const LendingSupplyList: React.FC<
       }
     }
     return list;
-  }, [foldHideList, foldList, loading, unFoldList]);
+  }, [
+    chainEnum,
+    foldHideList,
+    foldList,
+    loading,
+    shouldMergeWrappedNativeRow,
+    unFoldList,
+  ]);
 
   const isolatedCard = useMemo(() => {
     if (loading || !isInIsolationMode) {
@@ -196,30 +234,21 @@ const LendingSupplyList: React.FC<
   ]);
 
   const handlePressItem = useCallback(
-    (item: DisplayPoolReserveInfo) => {
-      const reserve = getTargetReserve(item.reserve.underlyingAsset);
+    (underlyingAsset: string) => {
+      const reserve = getTargetReserve(underlyingAsset);
       const userSummary = iUserSummary;
       if (!reserve || !userSummary) {
         return;
       }
-      const modalId = createGlobalBottomSheetModal2024({
-        name: MODAL_NAMES.SUPPLY_ACTION_DETAIL,
+      openLendingActionPopup({
+        popup: 'supply',
         reserve,
         userSummary,
-        onClose: () => {
-          removeGlobalBottomSheetModal2024(modalId);
-        },
-        bottomSheetModalProps: {
-          enableContentPanningGesture: true,
-          enablePanDownToClose: true,
-          enableDismissOnClose: true,
-          handleStyle: {
-            backgroundColor: colors2024['neutral-bg-1'],
-          },
-        },
+        colors2024,
+        onBeforeSwapNavigate,
       });
     },
-    [colors2024, getTargetReserve, iUserSummary],
+    [colors2024, getTargetReserve, iUserSummary, onBeforeSwapNavigate],
   );
 
   const ListHeaderComponent = useCallback(() => {
@@ -275,34 +304,77 @@ const LendingSupplyList: React.FC<
       }
 
       const data = item.data;
+      const tokenOptions = isWrappedNativeSelectorReserve(data, chainEnum)
+        ? getWrappedNativeTokenOptions({
+            displayPoolReserves: sortReserves,
+            chainEnum,
+          })
+        : undefined;
+      const selectorGroupKey = tokenOptions?.length
+        ? `wrapped-native-${chainEnum || 'unknown'}`
+        : undefined;
+      const activeUnderlyingAsset =
+        selectorGroupKey && selectedTokenByGroup[selectorGroupKey]
+          ? selectedTokenByGroup[selectorGroupKey]
+          : data.underlyingAsset;
+      const activeData = tokenOptions?.length
+        ? getTargetReserve(activeUnderlyingAsset) || data
+        : data;
       const isWrapperToken = chainEnum
         ? isSameAddress(
             wrapperToken[chainEnum]?.address,
-            data.reserve.underlyingAsset,
+            activeData.reserve.underlyingAsset,
           )
         : false;
+      const shouldUseWrapperTokenStyle =
+        isWrapperToken && !tokenOptions?.length && !search;
       return (
         <TouchableOpacity
-          style={[styles.item, isWrapperToken && styles.wrapperToken]}
-          onPress={() => handlePressItem(data)}>
-          {isWrapperToken && !search && (
+          style={[
+            styles.item,
+            shouldUseWrapperTokenStyle && styles.wrapperToken,
+          ]}
+          onPress={() => handlePressItem(activeData.underlyingAsset)}>
+          {shouldUseWrapperTokenStyle && (
             <View style={styles.wrapperTokenArrow} />
           )}
           <View style={styles.left}>
             <TokenIcon
-              tokenSymbol={data.reserve.symbol}
+              size={40}
+              tokenSymbol={activeData.reserve.symbol}
               chainSize={0}
               chain={chainEnum || CHAINS_ENUM.ETH}
             />
             <View style={styles.symbolContainer}>
-              <Text
-                style={styles.symbol}
-                numberOfLines={1}
-                ellipsizeMode="tail">
-                {data.reserve.symbol}
-              </Text>
-              {!!isWrapperToken && chainEnum && (
-                <Text style={styles.wrapperTokenText}>
+              {tokenOptions?.length ? (
+                <PositionTokenSelector
+                  activeUnderlyingAsset={activeUnderlyingAsset}
+                  options={tokenOptions as BasicPositionTokenOption[]}
+                  symbol={activeData.reserve.symbol}
+                  chain={activeData.chain}
+                  onChange={underlyingAsset => {
+                    if (!selectorGroupKey) {
+                      return;
+                    }
+                    setSelectedTokenByGroup(prev => ({
+                      ...prev,
+                      [selectorGroupKey]: underlyingAsset,
+                    }));
+                  }}
+                />
+              ) : (
+                <Text
+                  style={styles.symbol}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
+                  {activeData.reserve.symbol}
+                </Text>
+              )}
+              {!!shouldUseWrapperTokenStyle && chainEnum && (
+                <Text
+                  style={styles.wrapperTokenText}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
                   {t('page.Lending.list.item.wrapperToken', {
                     name: wrapperToken[chainEnum]?.origin?.symbol,
                   })}
@@ -310,18 +382,34 @@ const LendingSupplyList: React.FC<
               )}
             </View>
           </View>
-          <Text style={styles.tvl}>
-            {formatUsdValueKMB(Number(data.reserve.totalLiquidityUSD || '0'))}
-          </Text>
-          <View style={styles.right}>
-            <Text style={styles.apy}>
-              {formatApy(Number(data.reserve.supplyAPY || '0'))}
+          {!shouldUseWrapperTokenStyle && (
+            <Text style={styles.tvl}>
+              {formatUsdValueKMB(
+                Number(activeData.reserve.totalLiquidityUSD || '0'),
+              )}
             </Text>
-          </View>
+          )}
+          {!shouldUseWrapperTokenStyle && (
+            <View style={styles.right}>
+              <Text style={styles.apy}>
+                {formatApy(Number(activeData.reserve.supplyAPY || '0'))}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       );
     },
-    [chainEnum, foldHideList, handlePressItem, search, styles, t],
+    [
+      chainEnum,
+      foldHideList,
+      getTargetReserve,
+      handlePressItem,
+      search,
+      selectedTokenByGroup,
+      sortReserves,
+      styles,
+      t,
+    ],
   );
 
   const renderFooterComponent = useCallback(() => {
@@ -330,53 +418,51 @@ const LendingSupplyList: React.FC<
 
   return (
     <View style={styles.container}>
-      <View style={styles.titleContainer}>
-        <Text style={styles.titleText}>
-          {t('page.Lending.supplyDetail.actions')}
-        </Text>
-        <NextSearchBar
-          style={styles.searchBar}
-          value={search}
-          onChangeText={setSearch}
-          inputContainerStyle={{
-            justifyContent: inputNotActiveAndNoQuery ? 'center' : 'flex-start',
-          }}
-          inputStyle={{
-            flex: inputNotActiveAndNoQuery ? 0 : 1,
-          }}
-          placeholder={t('component.TokenSelector.searchPlaceHolder2')}
-          returnKeyType="search"
-          placeholderTextColor={colors2024['neutral-secondary']}
-          onFocus={handleInputFocus}
-          onBlur={handleInputBlur}
-          onCancel={() => {
-            setSearch('');
-            setTimeout(() => {
-              inputRef.current?.blur();
-            }, 50);
-          }}
-          ref={inputRef}
-        />
-        {/* for mask touch event in input to emit focus event */}
-        {inputNotActiveAndNoQuery && (
-          <TouchableOpacity
-            style={[styles.absoluteContainer]}
-            onPress={() => {
-              inputRef.current?.focus();
+      {!hideHeader && (
+        <View style={styles.titleContainer}>
+          <Text style={styles.titleText}>
+            {t('page.Lending.supplyDetail.actions')}
+          </Text>
+          <NextSearchBar
+            style={styles.searchBar}
+            value={search}
+            onChangeText={setSearch}
+            inputContainerStyle={{
+              justifyContent: inputNotActiveAndNoQuery
+                ? 'center'
+                : 'flex-start',
             }}
+            inputStyle={{
+              flex: inputNotActiveAndNoQuery ? 0 : 1,
+            }}
+            placeholder={t('component.TokenSelector.searchPlaceHolder2')}
+            returnKeyType="search"
+            placeholderTextColor={colors2024['neutral-secondary']}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
+            onCancel={() => {
+              setSearch('');
+              setTimeout(() => {
+                inputRef.current?.blur();
+              }, 50);
+            }}
+            ref={inputRef}
           />
-        )}
-      </View>
+          {/* for mask touch event in input to emit focus event */}
+          {inputNotActiveAndNoQuery && (
+            <TouchableOpacity
+              style={[styles.absoluteContainer]}
+              onPress={() => {
+                inputRef.current?.focus();
+              }}
+            />
+          )}
+        </View>
+      )}
       <BottomSheetFlatList
         data={loading ? [] : dataList}
         style={styles.list}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={false}
-            onRefresh={() => fetchData(true)}
-          />
-        }
         keyExtractor={keyExtractor}
         ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={loading ? <PoolListLoading /> : null}
@@ -387,22 +473,29 @@ const LendingSupplyList: React.FC<
   );
 };
 
+const LendingSupplyList: React.FC<
+  GlobalModalViewProps<MODAL_NAMES.LENDING_SUPPLY_LIST> & {
+    onBeforeSwapNavigate?: () => void;
+  }
+> = ({ onBeforeSwapNavigate }) => {
+  return (
+    <LendingSupplyListContent onBeforeSwapNavigate={onBeforeSwapNavigate} />
+  );
+};
+
 export default LendingSupplyList;
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
-  const cardBgColor = isLight
-    ? colors2024['neutral-bg-1']
-    : colors2024['neutral-bg-2'];
-  const wrapperTokenCardBgColor = colord(cardBgColor).alpha(0.5).toRgbString();
+const getStyle = createGetStyles2024(({ colors2024 }) => {
+  const wrapperTokenCardBgColor = colord(colors2024['neutral-line'])
+    .alpha(0.3)
+    .toRgbString();
 
   return {
     container: {
       flex: 1,
       paddingHorizontal: 16,
       width: '100%',
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-0']
-        : colors2024['neutral-bg-1'],
+      backgroundColor: colors2024['neutral-bg-1'],
     },
     titleContainer: {
       paddingTop: 12,
@@ -426,28 +519,27 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     item: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: 12,
-      paddingVertical: 14,
+      paddingHorizontal: 4,
+      paddingVertical: 12,
       justifyContent: 'space-between',
-      backgroundColor: cardBgColor,
       borderRadius: 16,
-      marginTop: 8,
       overflow: 'visible',
     },
     wrapperToken: {
       backgroundColor: wrapperTokenCardBgColor,
-      borderWidth: 1,
-      borderColor: cardBgColor,
+      //borderWidth: 1,
+      paddingHorizontal: 12,
+      //borderColor: cardBgColor,
     },
     wrapperTokenArrow: {
       position: 'absolute',
       top: -14,
-      left: 30,
+      left: 20,
       zIndex: 1,
       ...makeTriangleStyle({
         dir: 'up',
         size: 7,
-        color: cardBgColor,
+        color: wrapperTokenCardBgColor,
         backgroundColor: 'transparent',
       }),
     },
@@ -460,9 +552,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     apy: {
       width: 80,
       textAlign: 'right',
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '700',
+      fontSize: 17,
+      lineHeight: 22,
+      fontWeight: '500',
       color: colors2024['green-default'],
       fontFamily: 'SF Pro Rounded',
     },
@@ -473,15 +565,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     tvl: {
       width: 80,
-      fontSize: 14,
+      fontSize: 13,
       lineHeight: 18,
       fontWeight: '500',
-      textAlign: 'right',
+      textAlign: 'left',
       color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
     },
     symbolContainer: {
       gap: 2,
+      flexShrink: 1,
+      minWidth: 0,
     },
     wrapperTokenText: {
       fontSize: 12,
@@ -489,6 +583,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontWeight: '500',
       color: colors2024['neutral-info'],
       fontFamily: 'SF Pro Rounded',
+      maxWidth: '100%',
     },
     symbol: {
       fontSize: 16,
@@ -498,44 +593,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontFamily: 'SF Pro Rounded',
       maxWidth: 80,
       overflow: 'hidden',
-    },
-    yourSupplied: {
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '700',
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      textAlign: 'right',
-    },
-    zeroSupplied: {
-      color: colors2024['neutral-info'],
-    },
-    yourBalanceContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 2,
-    },
-    walletIcon: {
-      width: 16,
-      height: 16,
-      color: colors2024['neutral-secondary'],
-      marginTop: -2,
-    },
-    yourBalance: {
-      fontSize: 14,
-      lineHeight: 18,
-      fontWeight: '500',
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      textAlign: 'right',
+      textAlign: 'left',
     },
     listHeader: {
       paddingVertical: 2,
-      paddingHorizontal: 16,
+      paddingHorizontal: 4,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginTop: 16,
+      marginTop: 0,
       marginBottom: 2,
     },
     loading: {
@@ -555,6 +621,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
+      paddingLeft: 4,
       gap: 4,
     },
     headerTvl: {
@@ -563,23 +630,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       color: colors2024['neutral-secondary'],
       width: 80,
       flex: 0,
-      textAlign: 'right',
+      textAlign: 'left',
+      marginLeft: 8,
     },
     headerApy: {
       fontSize: 14,
       lineHeight: 18,
       color: colors2024['neutral-secondary'],
       width: 80,
+      paddingRight: 4,
       textAlign: 'right',
       flex: 0,
-    },
-    headerMySupplies: {
-      fontSize: 14,
-      lineHeight: 18,
-      color: colors2024['neutral-secondary'],
-      flex: 0,
-      marginLeft: 10,
-      width: 80,
     },
     absoluteContainer: {
       position: 'absolute',
@@ -590,17 +651,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       zIndex: 1,
     },
     sectionHeader: {
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-0']
-        : colors2024['neutral-bg-1'],
+      backgroundColor: colors2024['neutral-bg-1'],
       marginTop: 8,
+      marginBottom: 8,
       paddingHorizontal: 0,
       paddingLeft: 0,
     },
     buttonHeader: {
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
+      backgroundColor: colors2024['neutral-bg-2'],
     },
     //headerContainer: {
     //  backgroundColor: isLight
@@ -612,7 +670,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingVertical: 12,
       backgroundColor: colors2024['orange-light-1'],
       borderRadius: 6,
-      marginTop: 8,
+      marginTop: 0,
+      marginBottom: 8,
       gap: 2,
     },
     availableCardHeader: {

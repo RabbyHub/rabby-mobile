@@ -12,7 +12,8 @@ export interface Props {
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     text: {
-      fontSize: 15,
+      fontSize: 18,
+      lineHeight: 22,
       textDecorationLine: 'underline',
       color: colors['neutral-body'],
     },

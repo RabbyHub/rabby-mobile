@@ -1,6 +1,6 @@
 import { APPROVAL_MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { ApprovalComponentType } from '.';
+import type { ApprovalComponentType } from '.';
 
 export const WaitingSignComponent: Record<string, ApprovalComponentType> = {
   [KEYRING_CLASS.MNEMONIC]: 'PrivatekeyWaiting',

@@ -1,9 +1,11 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { atom, useAtom } from 'jotai';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, View } from 'react-native';
+import { View } from 'react-native';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
@@ -40,7 +42,13 @@ export const DuplicateAddressModal: React.FC = () => {
   const [account] = useAtom(accountAtom);
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const { accounts } = useAccounts();
+  const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
+
+  React.useEffect(() => {
+    if (visible) {
+      fetchAccounts();
+    }
+  }, [fetchAccounts, visible]);
 
   const currentAccount = React.useMemo(() => {
     if (!account) {
@@ -71,11 +79,13 @@ export const DuplicateAddressModal: React.FC = () => {
   }, [handleSwitch, setVisible]);
 
   return (
-    <Modal
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.duplicateAddress}
       style={styles.modal}
       visible={visible}
       transparent
-      animationType="fade">
+      animationType="fade"
+      onRequestClose={onCancel}>
       <View style={styles.overlay}>
         <View style={styles.container}>
           <Text style={styles.title}>
@@ -92,7 +102,7 @@ export const DuplicateAddressModal: React.FC = () => {
           />
         </View>
       </View>
-    </Modal>
+    </TrackedModal>
   );
 };
 

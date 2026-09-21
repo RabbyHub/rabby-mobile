@@ -1,7 +1,7 @@
 import { RcIconCheckedCC } from '@/assets/icons/common';
 import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
 import OneKeySvg from '@/assets/icons/wallet/onekey.svg';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { Loading } from '@/screens/Bridge/components/BridgeSwitchBtn';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -108,8 +108,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   statusText: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
+    fontSize: 18,
+    lineHeight: 22,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
   },

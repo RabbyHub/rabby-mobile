@@ -1,5 +1,11 @@
 import React, { useMemo } from 'react';
-import { View, TouchableOpacity, Image } from 'react-native';
+import {
+  View,
+  TouchableOpacity,
+  Image,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import { TokenMarketTokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useTheme2024 } from '@/hooks/theme';
@@ -17,30 +23,6 @@ import { isNumber } from 'lodash';
 import { useAtomValue } from 'jotai';
 import { selectAtom } from 'jotai/utils';
 
-export const formatPercentageKMB = (x: number) => {
-  if (Math.abs(x) < 0.00001) {
-    return '0%';
-  }
-  const percentageValue = x * 100;
-  const absPercentage = Math.abs(percentageValue);
-  let formattedValue: string;
-
-  if (absPercentage >= 1e9) {
-    formattedValue = `${(absPercentage / 1e9).toFixed(1)}B`;
-  } else if (absPercentage >= 1e6) {
-    formattedValue = `${(absPercentage / 1e6).toFixed(1)}M`;
-  } else if (absPercentage >= 1e3) {
-    formattedValue = `${(absPercentage / 1e3).toFixed(1)}K`;
-  } else if (absPercentage >= 10) {
-    formattedValue = absPercentage.toFixed(1);
-  } else {
-    formattedValue = absPercentage.toFixed(2);
-  }
-
-  const sign = x >= 0 ? '+' : '-';
-  return `${sign}${formattedValue}%`;
-};
-
 interface TokenListItemProps {
   item: TokenMarketTokenItem;
   onPress: (item: TokenMarketTokenItem) => void;
@@ -48,6 +30,7 @@ interface TokenListItemProps {
   rightSlot?: React.ReactNode;
   showChainLogo?: boolean;
   showFdvOnly?: boolean;
+  style?: StyleProp<ViewStyle>;
 }
 
 const TokenListItemComponent = ({
@@ -57,6 +40,7 @@ const TokenListItemComponent = ({
   rightSlot,
   showChainLogo = false,
   showFdvOnly = false,
+  style,
 }: TokenListItemProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const uuid = `${item.chain}:${item.id}`;
@@ -79,7 +63,9 @@ const TokenListItemComponent = ({
       .market_status === 'closed';
 
   return (
-    <TouchableOpacity style={styles.tokenItem} onPress={() => onPress(item)}>
+    <TouchableOpacity
+      style={[styles.tokenItem, style]}
+      onPress={() => onPress(item)}>
       {/* 左slot */}
       {leftSlot && <View style={styles.leftSlot}>{leftSlot}</View>}
       <View style={styles.tokenLeftSection}>
@@ -87,10 +73,10 @@ const TokenListItemComponent = ({
           {/* Token Chain Logo */}
           <AssetAvatar
             logo={item.logo_url}
-            size={46}
+            size={40}
             chain={item.chain}
             chainSize={showChainLogo ? 18 : 0}
-            innerChainStyle={styles.chainLogo}
+            innerChainStyle={showChainLogo ? styles.chainLogo : undefined}
           />
           <View style={styles.tokenInfo}>
             {/* symbol */}
@@ -171,17 +157,11 @@ export const TokenItemSkeleton = () => {
 
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   tokenItem: {
-    paddingVertical: 12,
-    paddingLeft: 12,
-    paddingRight: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
     gap: 8,
-    marginBottom: 8,
     display: 'flex',
     flexDirection: 'row',
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-    borderRadius: 16,
   },
   tokenLeftSection: {
     justifyContent: 'center',
@@ -205,14 +185,14 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 4,
   },
   tokenFdv: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     lineHeight: 18,
   },
   tokenFdvSeparator: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     color: colors2024['neutral-line'],
     fontFamily: 'SF Pro Rounded',
@@ -242,32 +222,11 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'center',
   },
   priceText: {
-    fontWeight: '700',
-    fontSize: 14,
-    lineHeight: 18,
+    fontWeight: '500',
+    fontSize: 17,
+    lineHeight: 22,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-  },
-  changeText: {
-    fontWeight: '700',
-    fontSize: 14,
-    lineHeight: 18,
-    color: colors2024['neutral-InvertHighlight'],
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'center',
-    width: 60,
-  },
-  changeTextPositive: {
-    color: colors2024['red-default'],
-  },
-  trendChartContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    //paddingHorizontal: 6.5,
-    paddingVertical: 6,
-    borderRadius: 6,
-    width: 60,
-    alignItems: 'flex-end',
   },
   leftSlot: {
     width: 24,
@@ -292,16 +251,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   skeletonItem: {
     backgroundColor: 'transparent',
-  },
-  trendChartWrapper: {
-    height: 30,
-    marginTop: -10,
-    marginBottom: 10,
-  },
-  lpTokenIconContainer: {
-    marginLeft: 0,
-    flexShrink: 0,
-    justifyContent: 'flex-start',
   },
   tokenAssetContainer: {
     flexDirection: 'row',

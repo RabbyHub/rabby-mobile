@@ -4,12 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a **React Native cryptocurrency wallet mobile app** (Rabby Mobile) organized as a **Yarn 3 monorepo**. It supports iOS/Android with multiple hardware wallet integrations.
+This is a **React Native cryptocurrency wallet mobile app** (Rabby Mobile) organized as a **Yarn 4 monorepo**. It supports iOS/Android with multiple hardware wallet integrations.
 
 - **Repository**: https://github.com/RabbyHub/rabby-mobile
-- **Package Manager**: Yarn 3.3.0
+- **Package Manager**: Yarn 4.12.0 (via Corepack)
 - **React Native**: 0.81.6
 - **TypeScript**: 5.7.3
+
+## Local Playbooks
+
+The playbook triggers below are shared with all agents and maintained in `AGENTS.md`.
+Do not copy them here — edit `AGENTS.md` so both entry points stay in sync.
+
+@AGENTS.md
 
 ## Common Commands
 
@@ -51,6 +58,16 @@ yarn android
 # TypeScript type checking
 yarn typecheck
 
+# Import-cycle detection
+yarn lint:cycles
+yarn lint:cycles:eslint
+
+# Jest unit and component tests
+yarn test --runInBand
+
+# Jest/RNTL integration tests with real internal modules
+yarn test:integration:ci
+
 # Build web worker
 yarn buildworker
 yarn buildworker:prod:ios
@@ -76,7 +93,6 @@ yarn link-assets
 │   ├── mobile/              # Main React Native app
 │   ├── mobile-local-pages/  # Local pages for WebView
 │   ├── dev-console-cra/     # Dev console (CRA)
-│   └── go.rabby.io/         # Go service
 ├── packages/                # Shared packages
 │   ├── base-utils/          # Base utilities
 │   ├── biz-utils/           # Business utilities
@@ -178,6 +194,7 @@ yarn link-assets
 - Pre-push hook runs `yarn lint`
 - Lint-staged runs on commit for staged files
 - Main branch is `develop`
+- For `apps/mobile` code changes, run the import-cycle suite (`yarn workspace rabby-mobile lint:cycles`, `yarn workspace rabby-mobile lint:cycles:eslint`), `yarn workspace rabby-mobile typecheck`, `yarn workspace rabby-mobile test --runInBand`, and `yarn workspace rabby-mobile test:integration:ci` before handoff. If one is intentionally skipped, state the reason.
 
 ## File Organization
 

@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   View,
   TouchableOpacity,
@@ -38,6 +44,7 @@ interface SlippageProps {
   isWrapToken?: boolean;
   autoSuggestSlippage?: string;
   loading?: boolean;
+  onOptionsOpenChange?: (open: boolean) => void;
 }
 
 const SlippageItem = (props: TouchableOpacityProps & { active?: boolean }) => {
@@ -91,8 +98,13 @@ export const BridgeSlippage = (props: SlippageProps) => {
     isWrapToken,
     autoSuggestSlippage,
     loading,
+    onOptionsOpenChange,
   } = props;
   const [slippageOpen, setSlippageOpen] = useState(false);
+  const [customInputValue, setCustomInputValue] = useState(value);
+  const customInputFocusedRef = useRef(false);
+  const slippageOpenRef = useRef(false);
+  const skipNextBlurCommitRef = useRef(false);
 
   const [minimumSlippage, maximumSlippage] = useMemo(() => {
     if (type === 'swap') {
@@ -131,11 +143,43 @@ export const BridgeSlippage = (props: SlippageProps) => {
     }
   }, [SLIPPAGE, autoSlippage, isCustomSlippage, setIsCustomSlippage, value]);
 
+  const setSlippageOptionsOpen = useCallback(
+    (open: boolean) => {
+      if (slippageOpenRef.current === open) {
+        return;
+      }
+
+      slippageOpenRef.current = open;
+      if (!open) {
+        customInputFocusedRef.current = false;
+      }
+      setSlippageOpen(open);
+      onOptionsOpenChange?.(open);
+    },
+    [onOptionsOpenChange],
+  );
+
+  const setCustomInputFocused = useCallback((focused: boolean) => {
+    customInputFocusedRef.current = focused;
+  }, []);
+
   const setRecommendValue = useCallback(() => {
-    onChange(new BigNumber(recommendValue || 0).times(100).toString());
+    const nextValue = new BigNumber(recommendValue || 0).times(100).toString();
+    setCustomInputValue(nextValue);
+    setCustomInputFocused(false);
+    onChange(nextValue);
     setAutoSlippage(false);
     setIsCustomSlippage(false);
-  }, [onChange, recommendValue, setAutoSlippage, setIsCustomSlippage]);
+    setSlippageOptionsOpen(false);
+  }, [
+    onChange,
+    recommendValue,
+    setCustomInputValue,
+    setAutoSlippage,
+    setIsCustomSlippage,
+    setCustomInputFocused,
+    setSlippageOptionsOpen,
+  ]);
 
   const tips = useMemo(() => {
     if (isLow) {
@@ -150,23 +194,27 @@ export const BridgeSlippage = (props: SlippageProps) => {
     }
     if (recommendValue) {
       return (
-        <Trans
-          i18nKey="page.swap.recommend-slippage"
-          value={{
-            slippage: new BigNumber(recommendValue || 0).times(100).toString(),
-          }}
-          t={t}>
-          To prevent front-running, we recommend a slippage of{' '}
-          <Text onPress={setRecommendValue}>
-            {{
-              //@ts-expect-error  No overload matches this call.
+        <Text>
+          <Trans
+            i18nKey="page.swap.recommend-slippage"
+            value={{
               slippage: new BigNumber(recommendValue || 0)
                 .times(100)
                 .toString(),
             }}
-          </Text>
-          %
-        </Trans>
+            t={t}>
+            To prevent front-running, we recommend a slippage of{' '}
+            <Text onPress={setRecommendValue}>
+              {{
+                //@ts-expect-error  No overload matches this call.
+                slippage: new BigNumber(recommendValue || 0)
+                  .times(100)
+                  .toString(),
+              }}
+            </Text>
+            %
+          </Trans>
+        </Text>
       );
     }
 
@@ -176,29 +224,60 @@ export const BridgeSlippage = (props: SlippageProps) => {
   const onInputChange = useCallback(
     (input: string) => {
       const text = formatSpeicalAmount(input);
-      setAutoSlippage(false);
-      setIsCustomSlippage(true);
       const v = formatSpeicalAmount(text);
       if (/^\d*(\.\d*)?$/.test(v)) {
-        onChange(Number(text) > MAX_SLIPPAGE ? `${MAX_SLIPPAGE}` : text);
+        setIsCustomSlippage(true);
+        setCustomInputValue(
+          Number(text) > MAX_SLIPPAGE ? `${MAX_SLIPPAGE}` : text,
+        );
       }
     },
-    [MAX_SLIPPAGE, onChange, setAutoSlippage, setIsCustomSlippage],
+    [MAX_SLIPPAGE, setCustomInputValue, setIsCustomSlippage],
   );
 
   useEffect(() => {
     if (tips) {
-      setSlippageOpen(true);
+      setSlippageOptionsOpen(true);
     }
-  }, [tips]);
+  }, [setSlippageOptionsOpen, tips]);
+
+  useEffect(() => {
+    return () => {
+      if (slippageOpenRef.current) {
+        onOptionsOpenChange?.(false);
+      }
+    };
+  }, [onOptionsOpenChange]);
+
+  useEffect(() => {
+    if (!customInputFocusedRef.current) {
+      setCustomInputValue(value);
+    }
+  }, [value]);
+
+  const commitCustomInput = useCallback(() => {
+    if (skipNextBlurCommitRef.current) {
+      skipNextBlurCommitRef.current = false;
+      return;
+    }
+    if (customInputValue === value) {
+      return;
+    }
+
+    setAutoSlippage(false);
+    setIsCustomSlippage(true);
+    onChange(customInputValue);
+  }, [customInputValue, onChange, setAutoSlippage, setIsCustomSlippage, value]);
 
   if (type === 'swap' && isWrapToken) {
     return (
       <View style={styles.container}>
         <Text style={styles.text}>{t('page.swap.slippage-tolerance')}</Text>
-        <Text style={styles.wrapSlippage}>
-          {t('page.swap.no-slippage-for-wrap')}
-        </Text>
+        <View style={styles.valueContainer}>
+          <Text style={styles.wrapSlippage}>
+            {t('page.swap.no-slippage-for-wrap')}
+          </Text>
+        </View>
       </View>
     );
   }
@@ -207,17 +286,11 @@ export const BridgeSlippage = (props: SlippageProps) => {
     <View>
       <TouchableOpacity
         style={styles.container}
-        onPress={() => setSlippageOpen(open => !open)}>
+        onPress={() => setSlippageOptionsOpen(!slippageOpenRef.current)}>
         <Text style={styles.text}>{t('page.swap.slippage-tolerance')}</Text>
         <View style={styles.valueContainer}>
           {type === 'swap' && autoSlippage && loading ? (
-            <CustomSkeleton
-              style={{
-                width: 131,
-                height: 24,
-                borderRadius: 100,
-              }}
-            />
+            <CustomSkeleton style={styles.autoSlippageSkeleton} />
           ) : (
             <>
               <Text style={[styles.value, !!tips && styles.warning]}>
@@ -247,13 +320,22 @@ export const BridgeSlippage = (props: SlippageProps) => {
           <View style={styles.listContainer}>
             <SlippageItem
               active={autoSlippage}
+              onPressIn={() => {
+                if (customInputFocusedRef.current) {
+                  skipNextBlurCommitRef.current = true;
+                }
+              }}
               onPress={() => {
                 if (autoSlippage) {
+                  setSlippageOptionsOpen(false);
                   return;
                 }
+                setCustomInputValue(value);
+                setCustomInputFocused(false);
                 onChange(value);
                 setAutoSlippage(true);
                 setIsCustomSlippage(false);
+                setSlippageOptionsOpen(false);
               }}>
               <Text style={[styles.input, autoSlippage && styles.activeText]}>
                 {t('page.swap.Auto')}
@@ -264,10 +346,18 @@ export const BridgeSlippage = (props: SlippageProps) => {
               <SlippageItem
                 key={e}
                 active={!autoSlippage && !isCustomSlippage && e === value}
+                onPressIn={() => {
+                  if (customInputFocusedRef.current) {
+                    skipNextBlurCommitRef.current = true;
+                  }
+                }}
                 onPress={() => {
+                  setCustomInputValue(e);
+                  setCustomInputFocused(false);
                   setIsCustomSlippage(false);
                   setAutoSlippage(false);
                   onChange(e);
+                  setSlippageOptionsOpen(false);
                 }}>
                 <Text
                   style={[
@@ -292,12 +382,35 @@ export const BridgeSlippage = (props: SlippageProps) => {
                 errorStyle={styles.errorStyle}
                 inputContainerStyle={styles.inputContainerStyle}
                 inputStyle={styles.input}
-                value={value}
+                value={customInputValue}
                 onPressIn={() => {
+                  skipNextBlurCommitRef.current = false;
+                  if (!customInputFocusedRef.current) {
+                    setCustomInputValue(value);
+                  }
                   setIsCustomSlippage(true);
-                  setAutoSlippage(false);
+                }}
+                onFocus={() => {
+                  if (!customInputFocusedRef.current) {
+                    setCustomInputValue(value);
+                  }
+                  setCustomInputFocused(true);
+                  setIsCustomSlippage(true);
                 }}
                 onChangeText={onInputChange}
+                onBlur={() => {
+                  const shouldSkipCommit = skipNextBlurCommitRef.current;
+                  setCustomInputFocused(false);
+                  commitCustomInput();
+                  if (!shouldSkipCommit) {
+                    setSlippageOptionsOpen(false);
+                  }
+                }}
+                onSubmitEditing={() => {
+                  setCustomInputFocused(false);
+                  commitCustomInput();
+                  setSlippageOptionsOpen(false);
+                }}
                 placeholder="0.1"
                 keyboardType="numeric"
                 rightIcon={<Text style={styles.input}>%</Text>}
@@ -316,6 +429,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    height: 20,
   },
   text: {
     fontSize: 14,
@@ -328,11 +442,18 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    height: 20,
+  },
+  autoSlippageSkeleton: {
+    width: 131,
+    height: 20,
+    borderRadius: 100,
   },
   value: {
     fontSize: 16,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+    lineHeight: 18,
     color: colors2024['brand-default'],
   },
   warning: {
@@ -387,6 +508,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 16,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
+    lineHeight: 18,
   },
   activeText: {
     color: colors2024['brand-default'],

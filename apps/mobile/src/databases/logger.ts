@@ -13,6 +13,7 @@ import {
 import { getOnlineConfig } from '@/core/config/online';
 import { type ReactotronReactNative } from 'reactotron-react-native';
 import { tryGetReadyTron } from '@/core/utils/reactotron-plugins/_utils';
+import { logger } from '@/utils/logger';
 
 // slice query string, [0...500] + [-500...end]
 function formatQueryString(query: string, len = 500): string {
@@ -285,6 +286,12 @@ export class RabbyOrmDeployedConsoleLogger
     parameters?: any[],
     queryRunner?: QueryRunner,
   ): void {
+    logger.warn('[TypeORM] slow query detected', {
+      time,
+      query: formatQueryString(query, 1000),
+      parameters: logger.mask(parameters),
+      database: queryRunner?.manager.connection.options.database,
+    });
     this.#sentryReport(time, query, parameters, queryRunner);
   }
 }

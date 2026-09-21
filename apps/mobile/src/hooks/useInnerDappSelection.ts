@@ -34,6 +34,7 @@ function setInnerDappSelection(
 }
 
 export function useInnerDappSelection() {
+  // lending is deprecated
   const lending = innerDappSelectionStore(s => s.lending);
   const perps = innerDappSelectionStore(s => s.perps);
   const prediction = innerDappSelectionStore(s => s.prediction);

@@ -81,7 +81,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginHorizontal: 16,
     marginTop: 24,
     marginBottom: 10,
     height: 24,

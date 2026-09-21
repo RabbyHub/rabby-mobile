@@ -1,66 +1,96 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Platform, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo } from 'react';
+import { View } from 'react-native';
 import { Button } from '@/components2024/Button';
 import {
-  useSendNFTFormik,
-  useSendNFTInternalContext,
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
+import {
+  apiSendNFT,
+  useSendNFTCanSubmit,
+  useSendNFTFormValuesSelector,
+  useSendNFTInternalShallowSelector,
+  useSendNFTScreenStateShallowSelector,
 } from '../hooks/useSendNFT';
 import { useTranslation } from 'react-i18next';
 
 import { ModalConfirmAllowTransfer } from '@/components/Address/SheetModalConfirmAllowTransfer';
 import { ModalAddToContacts } from '@/components/Address/SheetModalAddToContacts';
 import { apiBalance } from '@/core/apis';
-import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { useTheme2024 } from '@/hooks/theme';
 
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { useSignatureStore } from '@/components2024/MiniSignV2';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useSignatureStore } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
-import { Account } from '@/core/services/preference';
 import { RiskType, sortRisksDesc, useRisks } from '@/components/SendLike/risk';
 import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 import { BottomRiskTip } from '@/components/SendLike/BottomRiskTip';
 import { resolveBgColorByType } from '@/components2024/ScreenContainer/LinearGradientContainer';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
+import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 
-export default function BottomArea({ account }: { account: Account | null }) {
+function BottomArea() {
   const { t } = useTranslation();
 
   const { styles } = useTheme2024({ getStyle: getStyles });
-
-  const { handleSubmit } = useSendNFTFormik();
+  const canSubmit = useSendNFTCanSubmit();
+  const to = useSendNFTFormValuesSelector(values => values.to);
 
   const {
-    formValues,
-    screenState,
-    computed: {
-      fromAddress,
-      canSubmit,
-      canDirectSign: canShowDirectSign,
-      toAddressPositiveTips,
-      toAddressInContactBook,
-      toAddrCex,
-      currentNFT: nftItem,
-    },
-    callbacks: {
-      handleIgnoreGasFeeChange,
-      onBottomAreaLayout,
-      onGasInfoDebouncedLoaded,
-    },
-    fns: { putScreenState, fetchContactAccounts },
-  } = useSendNFTInternalContext();
+    addressToAddAsContacts,
+    agreeRequiredForToAddress,
+    buildTxsCount,
+    isSubmitLoading,
+  } = useSendNFTScreenStateShallowSelector(state => ({
+    addressToAddAsContacts: state.addressToAddAsContacts,
+    agreeRequiredForToAddress: state.agreeRequiredChecks.forToAddress,
+    buildTxsCount: state.buildTxsCount,
+    isSubmitLoading: state.isSubmitLoading,
+  }));
 
-  const { isSubmitLoading, addressToAddAsContacts } = screenState;
+  const {
+    account,
+    canShowDirectSign,
+    fetchContactAccounts,
+    fromAddress,
+    handleIgnoreGasFeeChange,
+    nftItem,
+    onBottomAreaLayout,
+    onGasInfoDebouncedLoaded,
+    submitForm,
+    toAddrCex,
+    toAddressInContactBook,
+    toAddressPositiveTips,
+  } = useSendNFTInternalShallowSelector(ctx => ({
+    account: ctx.computed.account,
+    canShowDirectSign: ctx.computed.canDirectSign,
+    fetchContactAccounts: ctx.fns.fetchContactAccounts,
+    fromAddress: ctx.computed.fromAddress,
+    handleIgnoreGasFeeChange: ctx.callbacks.handleIgnoreGasFeeChange,
+    nftItem: ctx.computed.currentNFT,
+    onBottomAreaLayout: ctx.callbacks.onBottomAreaLayout,
+    onGasInfoDebouncedLoaded: ctx.callbacks.onGasInfoDebouncedLoaded,
+    submitForm: ctx.callbacks.submitForm,
+    toAddrCex: ctx.computed.toAddrCex,
+    toAddressInContactBook: ctx.computed.toAddressInContactBook,
+    toAddressPositiveTips: ctx.computed.toAddressPositiveTips,
+  }));
 
   const [isAllowTransferModalVisible, setIsAllowTransferModalVisible] =
     React.useState(false);
 
-  const { status, ctx } = useSignatureStore();
-  const [calcCount, setCalcCount] = useState(ctx?.txsCalc?.length);
-  useEffect(() => {
-    setCalcCount(ctx?.txsCalc?.length);
-  }, [ctx?.txsCalc?.length]);
-  const debouncedCalcCount = useDebouncedValue(calcCount, 300);
+  const signatureStatus = useSignatureStore(state => state.status);
+  const signatureDisabledProcess = useSignatureStore(
+    state => !!state.ctx?.disabledProcess,
+  );
+  const signatureGasFeeTooHigh = useSignatureStore(
+    state => !!state.ctx?.gasFeeTooHigh,
+  );
+  const txsCalcLength = useSignatureStore(state => state.ctx?.txsCalc?.length);
+  const debouncedCalcCount = useDebouncedValue(txsCalcLength, 300);
   useEffect(() => {
     if (!debouncedCalcCount) return;
     if (debouncedCalcCount > 0) {
@@ -68,9 +98,9 @@ export default function BottomArea({ account }: { account: Account | null }) {
     }
   }, [debouncedCalcCount, onGasInfoDebouncedLoaded]);
 
-  const isDirectSigning = status === 'signing';
-  const canDirectSign = !ctx?.disabledProcess;
-  const showRiskTipsForMiniSign = !!ctx?.gasFeeTooHigh;
+  const isDirectSigning = signatureStatus === 'signing';
+  const canDirectSign = !signatureDisabledProcess;
+  const showRiskTipsForMiniSign = signatureGasFeeTooHigh;
 
   const {
     loading: loadingRisks,
@@ -79,36 +109,39 @@ export default function BottomArea({ account }: { account: Account | null }) {
   } = useRisks({
     // balance: !!screenState.toAddrAccountInfo?.account?.balance,
     fromAddress,
-    toAddress: formValues.to,
+    toAddress: to,
     cex: toAddrCex,
     forbiddenCheck: useMemo(() => {
       return {
         user_addr: fromAddress || '',
-        to_addr: formValues.to || '',
+        to_addr: to || '',
         chain_id: nftItem?.chain,
         // id: nftItem?.id || '',
-        id: formValues.to || '',
+        id: to || '',
       };
-    }, [fromAddress, formValues.to, nftItem?.chain /* , nftItem?.id */]),
-    onLoadFinished: useCallback(
-      ctx => {
-        putScreenState(prev => ({
-          ...prev,
-          agreeRequiredChecks: {
-            ...prev.agreeRequiredChecks,
-            forToAddress: false,
-          },
-        }));
-      },
-      [putScreenState],
-    ),
+    }, [fromAddress, to, nftItem?.chain /* , nftItem?.id */]),
+    onLoadFinished: useCallback(() => {
+      apiSendNFT.putScreenState(prev => ({
+        ...prev,
+        agreeRequiredChecks: {
+          ...prev.agreeRequiredChecks,
+          forToAddress: false,
+        },
+      }));
+    }, []),
   });
 
   useEffect(() => {
     const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] =
       txDetail => {
+        if (isGasAccountDepositFlowActive()) {
+          return;
+        }
         fetchRisks();
         setTimeout(() => {
+          if (isGasAccountDepositFlowActive()) {
+            return;
+          }
           fetchRisks();
         }, 5000);
       };
@@ -144,8 +177,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
     };
   }, [risks, toAddressPositiveTips?.hasPositiveTips]);
 
-  const agreeRequiredChecked =
-    hasRiskForToAddress && screenState.agreeRequiredChecks.forToAddress;
+  const agreeRequiredChecked = hasRiskForToAddress && agreeRequiredForToAddress;
 
   const disableSubmitDueToBasic =
     !canSubmit || (!!mostImportantRisks.length && !agreeRequiredChecked);
@@ -157,7 +189,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
         mostImportantRisks={mostImportantRisks}
         agreeRequiredChecked={agreeRequiredChecked}
         onToggleAgreeRequiredChecked={() => {
-          putScreenState(prev => {
+          apiSendNFT.putScreenState(prev => {
             return {
               ...prev,
               agreeRequiredChecks: {
@@ -173,20 +205,22 @@ export default function BottomArea({ account }: { account: Account | null }) {
       {canShowDirectSign ? (
         <DirectSignBtn
           // refresh  risk check
-          key={screenState?.buildTxsCount + ''}
+          key={buildTxsCount + ''}
           showTextOnLoading
           loadingType="circle"
           authTitle={t('page.whitelist.confirmPassword')}
           title={t('global.confirm')}
           onFinished={p => {
             handleIgnoreGasFeeChange(p?.ignoreGasFee || false);
-            handleSubmit();
+            submitForm();
           }}
           disabled={
             disableSubmitDueToBasic || !canDirectSign || isDirectSigning
           }
           loading={isSubmitLoading}
           type={'primary'}
+          height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+          titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
           syncUnlockTime
           account={account}
           showHardWalletProcess
@@ -198,16 +232,18 @@ export default function BottomArea({ account }: { account: Account | null }) {
           type="primary"
           title={'Send'}
           loading={isSubmitLoading}
-          onPress={() => handleSubmit()}
+          height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+          titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+          onPress={submitForm}
         />
       )}
 
       <ModalConfirmAllowTransfer
-        toAddr={formValues.to}
+        toAddr={to}
         visible={isAllowTransferModalVisible}
         showAddToWhitelist={toAddressInContactBook}
         onFinished={result => {
-          putScreenState?.({ temporaryGrant: true });
+          apiSendNFT.putScreenState({ temporaryGrant: true });
           setIsAllowTransferModalVisible(false);
         }}
         onCancel={() => {
@@ -218,7 +254,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
       <ModalAddToContacts
         addrToAdd={addressToAddAsContacts || ''}
         onFinished={async result => {
-          putScreenState({ addressToAddAsContacts: null });
+          apiSendNFT.putScreenState({ addressToAddAsContacts: null });
           fetchContactAccounts();
 
           // trigger get balance of address
@@ -227,18 +263,18 @@ export default function BottomArea({ account }: { account: Account | null }) {
           });
         }}
         onCancel={() => {
-          putScreenState({ addressToAddAsContacts: null });
+          apiSendNFT.putScreenState({ addressToAddAsContacts: null });
         }}
       />
     </View>
   );
 }
 
+export default React.memo(BottomArea);
+
 export const SIZES = {
-  containerPt: 16,
-  containerPb: 48,
+  containerPt: BOTTOM_BUTTON_TOP_OFFSET,
   // height: 308,
-  bottom: 48,
 };
 
 const getStyles = createGetStyles2024(
@@ -250,7 +286,7 @@ const getStyles = createGetStyles2024(
         paddingHorizontal: 24,
         position: 'absolute',
         paddingTop: SIZES.containerPt,
-        paddingBottom: SIZES.containerPb + safeAreaInsets.bottom,
+        paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
         backgroundColor: resolveBgColorByType('bg1', {
           isLight: isLight ?? true,
           colors,

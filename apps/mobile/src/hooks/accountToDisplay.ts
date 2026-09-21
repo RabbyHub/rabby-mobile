@@ -1,20 +1,11 @@
-import { apiAccount, apiBalance, apiKeyring } from '@/core/apis';
 import { getAllAccountsToDisplay } from '@/core/apis/account';
-import { contactService, keyringService } from '@/core/services';
 import { sortAccountsByBalance } from '@/utils/account';
-import { DisplayedKeyring } from '@rabby-wallet/keyring-utils';
-import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtom } from 'jotai';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
+import type { IDisplayedAccountWithBalance } from '@/types/account';
+import { isEqual } from 'lodash';
 
-type IDisplayedAccount = Required<DisplayedKeyring['accounts'][number]>;
-export type IDisplayedAccountWithBalance = IDisplayedAccount & {
-  balance: number;
-  byImport?: boolean;
-  publicKey?: string;
-  hdPathBasePublicKey?: string;
-  hdPathType?: string;
-};
+export type { IDisplayedAccountWithBalance } from '@/types/account';
 
 type IState = {
   accountsList: IDisplayedAccountWithBalance[];
@@ -24,39 +15,44 @@ const accountToDisplayStateAtom = atom<IState>({
   accountsList: [],
 });
 
+let accountsToDisplayRequest: Promise<
+  IDisplayedAccountWithBalance[] | null
+> | null = null;
+
 export function useAccountsToDisplay() {
   const [{ accountsList }, setAccountToDisplayState] = useAtom(
     accountToDisplayStateAtom,
   );
-  const loadingAccountsRef = React.useRef(false);
 
   const fetchAllAccountsToDisplay = useCallback(async () => {
-    if (loadingAccountsRef.current) return null;
-    loadingAccountsRef.current = true;
-
-    try {
-      const result = await getAllAccountsToDisplay();
-      setAccountToDisplayState(prev => {
-        let withBalanceList: IDisplayedAccountWithBalance[] = result;
-        if (result) {
-          withBalanceList = sortAccountsByBalance(result);
-        }
-        return {
-          ...prev,
-          accountsList: withBalanceList,
-        };
-      });
-    } catch (err) {
-    } finally {
-      loadingAccountsRef.current = false;
-      setAccountToDisplayState(prev => ({
-        ...prev,
-      }));
+    if (accountsToDisplayRequest) {
+      return accountsToDisplayRequest;
     }
+
+    accountsToDisplayRequest = getAllAccountsToDisplay()
+      .then(result => {
+        const withBalanceList = sortAccountsByBalance(result);
+        setAccountToDisplayState(prev => {
+          if (isEqual(prev.accountsList, withBalanceList)) {
+            return prev;
+          }
+          return {
+            ...prev,
+            accountsList: withBalanceList,
+          };
+        });
+        return withBalanceList;
+      })
+      .catch(() => null)
+      .finally(() => {
+        accountsToDisplayRequest = null;
+      });
+
+    return accountsToDisplayRequest;
   }, [setAccountToDisplayState]);
 
   return {
-    isLoadingAccounts: loadingAccountsRef.current,
+    isLoadingAccounts: !!accountsToDisplayRequest,
     accountsList,
     fetchAllAccountsToDisplay,
   };

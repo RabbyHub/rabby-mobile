@@ -1,0 +1,16 @@
+appId: ${RABBY_MAESTRO_APP_ID}
+name: iOS allow paste permission
+tags:
+  - ios
+  - maestro
+  - system
+---
+- extendedWaitUntil:
+    visible:
+      text: "允许粘贴|Allow Paste"
+    timeout: 4000
+    optional: true
+
+- tapOn:
+    text: "允许粘贴|Allow Paste"
+    optional: true

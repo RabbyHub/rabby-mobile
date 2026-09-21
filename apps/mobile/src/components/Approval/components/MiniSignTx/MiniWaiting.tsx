@@ -4,13 +4,13 @@ import { useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { MiniLedgerHardwareWaiting } from './MiniLedgerHardwareWaiting';
 import { MiniPrivatekeyWaiting } from './MiniPrivatekeyWaiting';
-import { BatchSignTxTaskType } from './useBatchSignTxTask';
+import type { BatchSignTxTaskType } from './useBatchSignTxTask';
 import { MiniOneKeyHardwareWaiting } from './MiniOneKeyHardwareWaiting';
 import { useMemoizedFn } from 'ahooks';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 
 export const MiniWaiting = ({
   visible,
@@ -44,9 +44,11 @@ export const MiniWaiting = ({
   });
 
   const { sheetModalRef } = useSheetModal();
+  const cancelHandledRef = useRef(false);
 
   useEffect(() => {
     if (visible) {
+      cancelHandledRef.current = false;
       sheetModalRef.current?.present();
     } else {
       sheetModalRef.current?.dismiss();
@@ -55,8 +57,21 @@ export const MiniWaiting = ({
 
   const currentAccount = account;
 
+  const handleCancelOnce = useMemoizedFn((reason?: any) => {
+    if (cancelHandledRef.current) {
+      return;
+    }
+    cancelHandledRef.current = true;
+    onCancel?.(reason);
+  });
+
   const handleCancel = useMemoizedFn(() => {
-    onCancel?.(error?.description);
+    handleCancelOnce(error?.description);
+  });
+
+  const handleRetry = useMemoizedFn(() => {
+    cancelHandledRef.current = true;
+    onRetry?.();
   });
 
   return (
@@ -65,7 +80,7 @@ export const MiniWaiting = ({
       enableDismissOnClose
       onDismiss={() => {
         if (visible) {
-          onCancel?.();
+          handleCancelOnce();
         }
       }}
       handleStyle={styles.handleStyle}
@@ -80,21 +95,21 @@ export const MiniWaiting = ({
                 error={error}
                 onCancel={handleCancel}
                 onDone={onDone}
-                onRetry={onRetry}
+                onRetry={handleRetry}
               />
             ) : currentAccount?.type === KEYRING_TYPE.OneKeyKeyring ? (
               <MiniOneKeyHardwareWaiting
                 error={error}
                 onCancel={handleCancel}
                 onDone={onDone}
-                onRetry={onRetry}
+                onRetry={handleRetry}
               />
             ) : (
               <MiniPrivatekeyWaiting
                 error={error}
                 onCancel={handleCancel}
                 onDone={onDone}
-                onRetry={onRetry}
+                onRetry={handleRetry}
               />
             )}
           </>

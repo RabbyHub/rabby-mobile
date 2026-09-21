@@ -2,6 +2,7 @@
  * @format
  */
 import 'react-native-gesture-handler';
+import './src/core/utils/hermesStartupProfiler';
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
@@ -10,16 +11,33 @@ import { enableFreeze, enableScreens } from 'react-native-screens';
 // enableFreeze();
 enableScreens(true);
 
+import { traceAndroidInstant } from './src/core/utils/androidTrace';
+
+traceAndroidInstant('js.index.body.start');
+
 import { initSentry } from './src/core/sentry';
 // Init Sentry before polyfills as it patches global Promise
 // @see https://docs.sentry.io/platforms/react-native/integrations/unhandled-rejections/#auto-patching-default-behavior
 if (!__DEV__) {
+  traceAndroidInstant('js.sentry.init.start');
   initSentry();
+  traceAndroidInstant('js.sentry.init.end');
 }
 
+import './src/utils/logging/install';
 import './global';
 import './src/setup-app';
-if (__DEV__) {
+import './src/utils/walletUnlock';
+import { ENABLE_REACTOTRON } from './src/core/utils/reactotron-plugins/featureFlag';
+
+if (process.env.WITH_ROZENITE === 'true') {
+  const {
+    withOnBootNetworkActivityRecording,
+  } = require('@rozenite/network-activity-plugin');
+  withOnBootNetworkActivityRecording();
+}
+
+if (__DEV__ && ENABLE_REACTOTRON) {
   import('./ReactotronConfig');
 }
 
@@ -31,7 +49,9 @@ import { name as appName } from './app.json';
 import './src/setup-app-before-render';
 
 // must be called synchoronously immediately
+traceAndroidInstant('js.appRegistry.register.start');
 AppRegistry.registerComponent(appName, () => App);
+traceAndroidInstant('js.appRegistry.register.end');
 
 // This is the default configuration
 configureReanimatedLogger({

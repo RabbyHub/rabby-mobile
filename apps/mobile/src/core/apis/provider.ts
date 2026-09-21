@@ -7,25 +7,31 @@ import {
   isValidAddress,
   toChecksumAddress,
 } from '@ethereumjs/util';
-import { Chain, CHAINS_ENUM } from '@/constant/chains';
+import type { Chain } from '@/constant/chains';
+import { CHAINS_ENUM } from '@/constant/chains';
 import { addresses, abis } from '@eth-optimism/contracts-ts';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import providerController from '../controllers/provider';
 import {
-  customRPCService,
-  notificationService,
-  preferenceService,
-  transactionHistoryService,
-} from '@/core/services';
+  ensureNotificationServiceReady,
+  setCurrentMiniApprovalSync,
+} from '@/core/serviceApi/notification';
+import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
+import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { OP_STACK_ENUMS } from '@/constant/gas';
 import { openapi } from '@/core/request';
 import BigNumber from 'bignumber.js';
 import { t } from 'i18next';
-import abiCoder, { AbiCoder } from 'web3-eth-abi';
-import { IExtractFromPromise } from '@/utils/type';
+import type { AbiCoder } from 'web3-eth-abi';
+import abiCoder from 'web3-eth-abi';
+import type { IExtractFromPromise } from '@/utils/type';
 import { findChain } from '@/utils/chain';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
-import { Account } from '../services/preference';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { Account } from '@/types/account';
+import { getRecommendNonce } from './recommendNonce';
+
+export { getRecommendNonce } from './recommendNonce';
 
 function buildTxParams(txMeta) {
   return {
@@ -77,7 +83,7 @@ export const scrollL1FeeEstimate = async (
   txParams: any,
   _account?: Account,
 ) => {
-  const account = _account || preferenceService.getFallbackAccount();
+  const account = _account || getFallbackAccountSnapshot();
   const iface = new ethers.utils.Interface([
     {
       type: 'constructor',
@@ -99,7 +105,7 @@ export const scrollL1FeeEstimate = async (
   const calldata = iface.encodeFunctionData('getL1Fee', [
     bytesToHex(serializedTransaction),
   ]);
-  const res = await customRPCService.defaultEthRPC({
+  const res = await customRPCServiceApi.defaultEthRPC({
     chainServerId: findChain({ enum: CHAINS_ENUM.SCRL })!.serverId,
     method: 'eth_call',
     params: [
@@ -120,7 +126,7 @@ export const opStackL1FeeEstimate = async (
   chain: CHAINS_ENUM,
   _account?: Account,
 ) => {
-  const account = _account || preferenceService.getFallbackAccount();
+  const account = _account || getFallbackAccountSnapshot();
   const address = addresses.GasPriceOracle[420];
   const abi = abis.GasPriceOracle;
   const serializedTransaction = buildUnserializedTransaction({
@@ -130,7 +136,7 @@ export const opStackL1FeeEstimate = async (
   const calldata = iface.encodeFunctionData('getL1Fee', [
     bytesToHex(serializedTransaction),
   ]);
-  const res = await customRPCService.defaultEthRPC({
+  const res = await customRPCServiceApi.defaultEthRPC({
     chainServerId: findChain({ enum: chain })!.serverId,
     method: 'eth_call',
     params: [
@@ -144,6 +150,45 @@ export const opStackL1FeeEstimate = async (
   return res;
 };
 
+// https://docs.citrea.xyz/advanced/fee-model#l1-fee-rate-source
+export const citreaL1FeeEstimate = async (txParams: any) => {
+  try {
+    const chainServerId = findChain({ serverId: 'citrea' })?.serverId;
+
+    if (!chainServerId) {
+      return '0x0';
+    }
+
+    const [diffSizeRes, latestBlock] = await Promise.all([
+      customRPCServiceApi.defaultEthRPC({
+        chainServerId,
+        method: 'eth_estimateDiffSize',
+        params: [txParams],
+      }),
+      customRPCServiceApi.defaultEthRPC({
+        chainServerId,
+        method: 'eth_getBlockByNumber',
+        params: ['latest', false],
+      }),
+    ]);
+
+    const l1DiffSize = diffSizeRes?.l1DiffSize;
+    const l1FeeRate = latestBlock?.l1FeeRate;
+
+    if (!l1DiffSize || !l1FeeRate) {
+      return '0x0';
+    }
+
+    const l1Fee = new BigNumber(l1DiffSize)
+      .times(l1FeeRate)
+      .integerValue(BigNumber.ROUND_CEIL);
+
+    return `0x${l1Fee.toString(16)}`;
+  } catch {
+    return '0x0';
+  }
+};
+
 export const fetchEstimatedL1Fee = async (
   {
     txParams,
@@ -154,40 +199,15 @@ export const fetchEstimatedL1Fee = async (
   },
   chain = CHAINS_ENUM.OP,
 ): Promise<string> => {
+  if (String(chain).toLowerCase() === 'citrea') {
+    return citreaL1FeeEstimate(txParams);
+  }
   if (OP_STACK_ENUMS.includes(chain)) {
     return opStackL1FeeEstimate(txParams, chain, account);
   } else if (chain === CHAINS_ENUM.SCRL) {
     return scrollL1FeeEstimate(txParams, account);
   }
   return Promise.resolve('0x0');
-};
-
-export const getRecommendNonce = async ({
-  from,
-  chainId,
-  account,
-}: {
-  from: string;
-  chainId: number;
-  account: Account | null;
-}) => {
-  const chain = findChain({
-    id: chainId,
-  });
-  if (!chain) {
-    throw new Error(t('background.error.invalidChainId'));
-  }
-  const onChainNonce = await requestETHRpc(
-    {
-      method: 'eth_getTransactionCount',
-      params: [from, 'latest'],
-    },
-    chain.serverId,
-    account,
-  );
-  const localNonce =
-    (await transactionHistoryService.getNonceByChain(from, chainId)) || 0;
-  return `0x${BigNumber.max(onChainNonce, localNonce).toString(16)}`;
 };
 
 export const getERC20Allowance = async (
@@ -299,14 +319,15 @@ export const ethSendTransaction = async (
 ) => {
   const signingTxId = args?.[0]?.approvalRes?.signingTxId;
   try {
-    notificationService.currentMiniApproval = {
+    await ensureNotificationServiceReady();
+    setCurrentMiniApprovalSync({
       signingTxId,
-    };
+    });
     const res = await providerController.ethSendTransaction(...args);
     return res;
   } catch (e) {
     if (signingTxId != null) {
-      transactionHistoryService.removeSigningTx(signingTxId);
+      await transactionHistoryServiceApi.removeSigningTx(signingTxId);
     }
 
     throw e;

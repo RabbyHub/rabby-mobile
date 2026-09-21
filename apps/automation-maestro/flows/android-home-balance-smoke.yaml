@@ -1,0 +1,65 @@
+appId: ${RABBY_MAESTRO_APP_ID}
+name: Android home balance smoke
+tags:
+  - android
+  - maestro
+  - home
+  - balance
+env:
+  HOME_ADD_ADDRESS_BUTTON_ID: e2e.home.add-address.button
+  HOME_PORTFOLIO_BALANCE_VALUE_ID: e2e.home.portfolio.balance.value
+  HOME_PORTFOLIO_BALANCE_LOADING_ID: e2e.home.portfolio.balance.loading
+  HOME_PORTFOLIO_CHANGE_LOADING_ID: e2e.home.portfolio.change.loading
+  HOME_PORTFOLIO_CURVE_LOADING_ID: e2e.home.portfolio.curve.loading
+  HOME_PORTFOLIO_CURVE_TOGGLE_ID: e2e.home.portfolio.curve.toggle
+---
+- runFlow: android-ensure-home-ready.yaml
+
+- assertVisible:
+    id: ${HOME_ADD_ADDRESS_BUTTON_ID}
+
+- runFlow:
+    when:
+      visible:
+        id: ${HOME_PORTFOLIO_BALANCE_LOADING_ID}
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: ${HOME_PORTFOLIO_BALANCE_VALUE_ID}
+          timeout: 20000
+
+- runFlow:
+    when:
+      visible:
+        id: ${HOME_PORTFOLIO_CHANGE_LOADING_ID}
+    commands:
+      - extendedWaitUntil:
+          notVisible:
+            id: ${HOME_PORTFOLIO_CHANGE_LOADING_ID}
+          timeout: 20000
+
+- runFlow:
+    when:
+      visible:
+        id: ${HOME_PORTFOLIO_CURVE_LOADING_ID}
+    commands:
+      - extendedWaitUntil:
+          notVisible:
+            id: ${HOME_PORTFOLIO_CURVE_LOADING_ID}
+          timeout: 20000
+
+- extendedWaitUntil:
+    visible:
+      id: ${HOME_PORTFOLIO_BALANCE_VALUE_ID}
+    timeout: 20000
+
+- extendedWaitUntil:
+    visible:
+      id: ${HOME_PORTFOLIO_CURVE_TOGGLE_ID}
+    timeout: 20000
+
+- assertVisible:
+    id: ${HOME_PORTFOLIO_BALANCE_VALUE_ID}
+
+- assertVisible:
+    id: ${HOME_PORTFOLIO_CURVE_TOGGLE_ID}

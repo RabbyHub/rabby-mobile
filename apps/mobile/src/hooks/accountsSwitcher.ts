@@ -1,20 +1,25 @@
-import type { Account, IPinAddress } from '@/core/services/preference';
+import type { Account, IPinAddress } from '@/core/startupServices/preference';
 import { storeApiAccounts, useAccounts, usePinAddresses } from './account';
 import React, { useCallback, useMemo } from 'react';
-import { useAtom } from 'jotai';
-import { KEYRING_CLASS, KeyringAccount } from '@rabby-wallet/keyring-utils';
-import cloneDeep from 'lodash/cloneDeep';
-import { RootNames } from '@/constant/layout';
+import type { KeyringAccount } from '@rabby-wallet/keyring-utils';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import type { RootNames } from '@/constant/layout';
 import { Platform } from 'react-native';
 import { sortAccountList } from '@/utils/sortAccountList';
-import {
+import { isSameAccount } from '@/utils/isSameAccount';
+import type {
   AccountSwitcherScene,
-  makeSceneAccount,
   SceneAccountInfo,
+} from './sceneAccountInfoAtom';
+import {
+  makeSceneAccount,
   sceneAccountInfoStore,
   zResetSceneAccountInfo,
   zSetSceneAccountInfo,
 } from './sceneAccountInfoAtom';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+
+export { isSameAccount };
 
 export type PropsForAccountSwitchScreen<T extends void | object = void> = {
   isForMultipleAddress?: boolean;
@@ -212,27 +217,12 @@ export async function switchSceneSigningAccount(
 }
 
 export function useSwitchSceneCurrentAccount() {
-  const sceneAccountInfo = sceneAccountInfoStore(s => s);
-
   return {
     /** @deprecated use global switchSceneCurrentAccount instead */
     switchSceneCurrentAccount,
     switchSceneSigningAccount,
     toggleUseAllAccountsOnScene,
   };
-}
-
-export function isSameAccount(
-  account: Account,
-  saccount?: SceneAccount | null,
-) {
-  if (!saccount) return false;
-
-  return (
-    saccount?.address?.toLowerCase() === account.address.toLowerCase() &&
-    saccount?.brandName === account.brandName &&
-    saccount?.type === account.type
-  );
 }
 
 const ScenesSupportAllAccounts: AccountSwitcherScene[] = [
@@ -326,8 +316,11 @@ export function useSceneAccountInfo(options: {
   const { accounts } = useAccounts({ disableAutoFetch: true });
 
   const { forScene } = options || {};
-  const sceneAccountInfo = sceneAccountInfoStore(s =>
-    !forScene ? null : s[forScene],
+  const sceneAccountInfo = useActivityStore(
+    sceneAccountInfoStore,
+    state => (!forScene ? null : state[forScene]),
+    Object.is,
+    { storeLabel: 'account-switcher-scene' },
   );
 
   const { pinAddresses } = usePinAddresses({
@@ -443,8 +436,7 @@ function getDefaultSceneAccountInfo() {
   };
 }
 type OfSceneScreen =
-  | typeof RootNames.MultiSwap
-  | typeof RootNames.MultiBridge
+  | typeof RootNames.MultiSwapBridge
   | typeof RootNames.MultiSend
   | typeof RootNames.TokenDetail
   | typeof RootNames.Lending;

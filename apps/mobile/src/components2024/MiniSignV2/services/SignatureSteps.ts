@@ -6,12 +6,14 @@ import {
   convertLegacyTo1559,
 } from '@/utils/transaction';
 
+import type {
+  ParsedTransactionActionData,
+  ActionRequireData,
+} from '@rabby-wallet/rabby-action';
 import {
   parseAction,
   fetchActionRequiredData,
   formatSecurityEngineContext,
-  ParsedTransactionActionData,
-  ActionRequireData,
 } from '@rabby-wallet/rabby-action';
 import type { Result } from '@rabby-wallet/rabby-security-engine';
 
@@ -29,14 +31,14 @@ import type {
   SendOptions,
   SignerConfig,
 } from '../domain/types';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { intToHex } from '@/utils/number';
 import {
   explainGas,
   getGasTokenBalance,
-  getRecommendGas,
   getRecommendNonce,
 } from '@/components/Approval/components/SignTx/calc';
+import { getRecommendGas } from '@/components/Approval/components/SignTx/getRecommendGas';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { getCexInfo } from '@/hooks/useCexSupportList';
 import { ALIAS_ADDRESS, CAN_ESTIMATE_L1_FEE_CHAINS } from '@/constant/gas';
@@ -47,24 +49,25 @@ import {
 } from '../domain/gasSelection';
 import { SUPPORT_1559_KEYRING_TYPE } from '@/constant/tx';
 import { normalizeTxParams } from '@/components/Approval/components/SignTx/util';
-import { BlockInfo, calcGasLimit } from '@/core/apis/transactions';
+import type { BlockInfo } from '@/core/apis/transactions';
+import { calcGasLimit } from '@/core/apis/transactions';
 import {
   FailedCode,
   sendTransactionByMiniSignV2 as sendTransaction,
 } from '@/utils/sendTransaction';
 import { isLedgerLockError } from '@/utils/ledger';
-import { buildFingerprint, SignerCtx } from '../domain/ctx';
+import type { SignerCtx } from '../domain/ctx';
+import { buildFingerprint } from '../domain/ctx';
 import { openapi, testOpenapi } from '@/core/request';
-import {
-  customRPCService,
-  gasAccountService,
-  keyringService,
-  transactionHistoryService,
-  whitelistService,
-} from '@/core/services';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { gasAccountServiceApi } from '@/core/serviceApi/gasAccount';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
 import { apiCustomRPC, apiKeyring, apiProvider } from '@/core/apis';
+import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
 import { executeSecurityEngine } from '@/core/apis/securityEngine';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
+import { miscServiceApi } from '@/core/serviceApi/misc';
 import {
   getRetryTxRecommendNonce,
   getRetryTxType,
@@ -72,9 +75,114 @@ import {
   setRetryTxRecommendNonce,
 } from '@/utils/errorTxRetry';
 import { t } from 'i18next';
-import miscService from '@/core/services/misc';
 import { requestETHRpc } from '@/core/apis/provider';
-import { isTempoChain } from '@/utils/tempo';
+import type { TxWithTempoExtras } from '@/utils/tempo';
+import {
+  buildTempoTransaction,
+  isTempoBatchSupportedAccountType,
+  isTempoChain,
+  shouldUseTempoTransaction,
+  toTempoCallsTx,
+} from '@/utils/tempo';
+import { resolveMiniSignSubmitGasMode } from '../state/gasPaymentState';
+import { shouldAutoSwitchToApprovalGasAccount } from '@/components/Approval/components/TxComponents/GasSelector/approvalGasDisplay';
+
+const pickTempoTxFields = (tx: TxWithTempoExtras<Tx>) => ({
+  type: tx.type,
+  calls: tx.calls,
+  feeToken: tx.feeToken,
+  feePayer: tx.feePayer,
+  feePayerSignature: tx.feePayerSignature,
+  nonceKey: tx.nonceKey,
+  keyAuthorization: tx.keyAuthorization,
+  validBefore: tx.validBefore,
+  validAfter: tx.validAfter,
+});
+
+const buildMiniSignPreExecTx = (params: {
+  tx: TxWithTempoExtras<Tx>;
+  chainId: number;
+  chainServerId: string;
+  gas: string;
+  nonce: string;
+  gasPrice: string;
+  is1559Capable: boolean;
+  maxPriorityFee: number;
+  accountType?: string | null;
+}) => {
+  const {
+    tx,
+    chainId,
+    chainServerId,
+    gas,
+    nonce,
+    gasPrice,
+    is1559Capable,
+    maxPriorityFee,
+    accountType,
+  } = params;
+  const shouldUseTempoTx = shouldUseTempoTransaction({
+    tx: tx as unknown as Record<string, unknown>,
+    chainServerId,
+    accountType,
+  });
+  const buildTxBase: TxWithTempoExtras<Tx> = {
+    chainId,
+    data: tx.data || '0x',
+    from: tx.from,
+    gas,
+    nonce,
+    to: tx.to,
+    value: tx.value,
+    gasPrice,
+    ...(shouldUseTempoTx ? pickTempoTxFields(tx) : {}),
+  };
+
+  let buildTx = buildTxBase;
+  if (is1559Capable) {
+    buildTx = {
+      ...(convertLegacyTo1559(buildTxBase) as TxWithTempoExtras<Tx>),
+      ...(shouldUseTempoTx ? pickTempoTxFields(tx) : {}),
+    };
+    buildTx.maxPriorityFeePerGas =
+      maxPriorityFee < 0
+        ? buildTx.maxFeePerGas
+        : intToHex(Math.round(maxPriorityFee));
+  }
+
+  return shouldUseTempoTx
+    ? (buildTempoTransaction(buildTx as any, {
+        stripTopLevelData: true,
+      }) as unknown as TxWithTempoExtras<Tx>)
+    : buildTx;
+};
+
+const buildHistoryGasUsedTx = (
+  tx: TxWithTempoExtras<Tx>,
+  accountType?: string | null,
+) => {
+  const shouldUseTempoTx = shouldUseTempoTransaction({
+    tx: tx as unknown as Record<string, unknown>,
+    chainServerId: findChain({ id: tx.chainId })?.serverId,
+    accountType,
+  });
+
+  if (shouldUseTempoTx) {
+    return {
+      ...tx,
+      nonce: tx.nonce || '0x1',
+      gas: tx.gas || '',
+    };
+  }
+
+  return {
+    ...tx,
+    nonce: tx.nonce || '0x1',
+    data: tx.data,
+    value: tx.value || '0x0',
+    gas: tx.gas || '',
+  };
+};
 
 const rawAmountToBn = (
   value: string | number | BigNumber | null | undefined,
@@ -162,14 +270,22 @@ async function computeGasless(params: {
 
 async function computeGasAccount(params: {
   txsCalc: CalcItem[];
+  accountType?: string | null;
 }): Promise<PreparedContext['gasAccount'] | undefined> {
-  const { txsCalc } = params;
+  const { txsCalc, accountType } = params;
   try {
-    const sig = gasAccountService.getGasAccountSig();
+    if (!txsCalc.length) return undefined;
+    const sig = await gasAccountServiceApi.getGasAccountSig();
+    const chain = findChain({ id: txsCalc[0]?.tx.chainId })!;
     const res = await openapi.checkGasAccountTxs({
       sig: sig.sig || '',
       account_id: sig.accountId || txsCalc[0].tx.from,
-      tx_list: txsCalc.map(i => i.tx),
+      tx_list: txsCalc.map(i =>
+        isTempoChain(chain.serverId) &&
+        isTempoBatchSupportedAccountType(accountType)
+          ? (toTempoCallsTx(i.tx as any, { stripTopLevelData: true }) as any)
+          : i.tx,
+      ),
     });
     return res as any;
   } catch (e) {
@@ -182,12 +298,14 @@ function aggregateCheckErrors(params: {
   txsCalc: CalcItem[];
   nativeTokenBalance?: string;
   gasTokenDecimals?: number;
+  gasTokenId?: string;
   checkTxValueInBalance?: boolean;
 }): PreparedContext['checkErrors'] {
   const {
     txsCalc,
     nativeTokenBalance,
     gasTokenDecimals = 18,
+    gasTokenId,
     checkTxValueInBalance = true,
   } = params;
   let checkErrors: PreparedContext['checkErrors'] = [];
@@ -207,6 +325,7 @@ function aggregateCheckErrors(params: {
       isGnosisAccount: false,
       nativeTokenBalance: balanceLeft,
       gasTokenDecimals,
+      gasTokenId,
       checkTxValueInBalance,
     });
     checkErrors = [...checkErrors, ...errs];
@@ -283,13 +402,14 @@ export class SignatureSteps {
               chainId: chain.serverId,
               sender: account.address,
               walletProvider: {
+                ethRpc: requestETHRpc,
                 hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
-                hasAddress: keyringService.hasAddress.bind(keyringService),
-                getWhitelist: async () => whitelistService.getWhitelist(),
+                hasAddress: address => keyringServiceApi.hasAddress(address),
+                getWhitelist: async () => whitelistServiceApi.getWhitelist(),
                 isWhitelistEnabled: async () =>
-                  whitelistService.isWhitelistEnabled(),
+                  whitelistServiceApi.isWhitelistEnabled(),
                 getPendingTxsByNonce: async (...args) =>
-                  transactionHistoryService.getPendingTxsByNonce(...args),
+                  transactionHistoryServiceApi.getPendingTxsByNonce(...args),
                 findChain,
                 ALIAS_ADDRESS,
               },
@@ -314,7 +434,7 @@ export class SignatureSteps {
               isTestnet: isTestnet(chain.serverId),
               provider: {
                 getTimeSpan,
-                hasAddress: keyringService.hasAddress.bind(keyringService),
+                hasAddress: address => keyringServiceApi.hasAddress(address),
               },
             });
           }),
@@ -341,13 +461,14 @@ export class SignatureSteps {
           chainId: chain.serverId,
           sender: account.address,
           walletProvider: {
+            ethRpc: requestETHRpc,
             hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
-            hasAddress: keyringService.hasAddress.bind(keyringService),
-            getWhitelist: async () => whitelistService.getWhitelist(),
+            hasAddress: address => keyringServiceApi.hasAddress(address),
+            getWhitelist: async () => whitelistServiceApi.getWhitelist(),
             isWhitelistEnabled: async () =>
-              whitelistService.isWhitelistEnabled(),
+              whitelistServiceApi.isWhitelistEnabled(),
             getPendingTxsByNonce: async (...args) =>
-              transactionHistoryService.getPendingTxsByNonce(...args),
+              transactionHistoryServiceApi.getPendingTxsByNonce(...args),
             findChain,
             ALIAS_ADDRESS,
           },
@@ -362,7 +483,7 @@ export class SignatureSteps {
           isTestnet: isTestnet(chain.serverId),
           provider: {
             getTimeSpan,
-            hasAddress: keyringService.hasAddress.bind(keyringService),
+            hasAddress: address => keyringServiceApi.hasAddress(address),
           },
         });
         engineResult = await executeSecurityEngine(ctx);
@@ -416,7 +537,7 @@ export class SignatureSteps {
       hasCustomChainRPC,
       baseRecommendNonce,
     ] = await Promise.all([
-      customRPCService.syncDefaultRPC().catch(() => {}),
+      customRPCServiceApi.syncDefaultRPC().catch(() => {}),
       apiProvider.gasMarketV2(
         {
           chain,
@@ -466,29 +587,24 @@ export class SignatureSteps {
       false,
     );
 
-    const tempTxs: Tx[] = txs.map((e, index) => {
+    const tempTxs: TxWithTempoExtras<Tx>[] = txs.map((e, index) => {
       const normalizedTx = normalizeTxParams(e);
-      let buildTx: Tx = {
+      return buildMiniSignPreExecTx({
+        tx: {
+          ...normalizedTx,
+          ...pickTempoTxFields(e as TxWithTempoExtras<Tx>),
+        } as TxWithTempoExtras<Tx>,
         chainId,
-        data: normalizedTx.data || '0x', // can not execute with empty string, use 0x instead
-        from: normalizedTx.from,
-        gas: normalizedTx.gas || e.gasLimit,
+        chainServerId: chain.serverId,
+        gas: normalizedTx.gas || e.gasLimit || '',
         nonce:
           normalizedTx.nonce ||
           intToHex(new BigNumber(baseRecommendNonce).plus(index).toNumber()),
-        to: normalizedTx.to,
-        value: normalizedTx.value,
         gasPrice: intToHex(selectedGas.price),
-      };
-
-      if (is1559Capable) {
-        buildTx = convertLegacyTo1559(buildTx) as any;
-        (buildTx as any).maxPriorityFeePerGas =
-          maxPriorityFee < 0
-            ? (buildTx as any).maxFeePerGas
-            : intToHex(Math.round(maxPriorityFee));
-      }
-      return buildTx;
+        is1559Capable,
+        maxPriorityFee,
+        accountType: account.type,
+      });
     });
 
     const pending_tx_list_promise = apisTransactionHistory.getPendingTxs({
@@ -497,47 +613,13 @@ export class SignatureSteps {
       chainId: txs[0].chainId,
     });
 
-    let L1feePromises;
-
-    if (CAN_ESTIMATE_L1_FEE_CHAINS.includes(chain.enum)) {
-      L1feePromises = Promise.all(
-        tempTxs.map(tx =>
-          apiProvider.fetchEstimatedL1Fee(
-            {
-              txParams: tx,
-              account,
-            },
-            chain.enum,
-          ),
-        ),
-      );
-    }
-
     const preExecProcess = async (index: number) => {
       const buildTx = tempTxs[index];
 
       const preparedHistoryGasUsed = openapi.historyGasUsed({
-        tx: {
-          ...buildTx,
-          nonce: buildTx.nonce || '0x1', // set a mock nonce for explain if dapp not set it
-          data: buildTx.data,
-          value: buildTx.value || '0x0',
-          gas: buildTx.gas || '', // set gas limit if dapp not set
-        },
+        tx: buildHistoryGasUsedTx(buildTx, account.type) as any,
         user_addr: buildTx.from,
       });
-
-      let L1feePromises;
-
-      if (CAN_ESTIMATE_L1_FEE_CHAINS.includes(chain.enum)) {
-        L1feePromises = apiProvider.fetchEstimatedL1Fee(
-          {
-            txParams: buildTx,
-            account,
-          },
-          chain.enum,
-        );
-      }
 
       const preExecResult = await openapi.preExecTx({
         tx: buildTx,
@@ -588,6 +670,18 @@ export class SignatureSteps {
         gasLimit = _gl;
         recommendGasLimitRatio = _ratio;
       }
+      let L1feePromises;
+
+      if (CAN_ESTIMATE_L1_FEE_CHAINS.includes(chain.enum)) {
+        L1feePromises = apiProvider.fetchEstimatedL1Fee(
+          {
+            txParams: { ...buildTx, gas: buildTx?.gas || gasLimit } as Tx,
+            account,
+          },
+          chain.enum,
+        );
+      }
+
       const gasCost = await explainGas({
         gasUsed,
         gasPrice: selectedGas.price,
@@ -601,7 +695,7 @@ export class SignatureSteps {
       });
 
       nativeTokenPrice = preExecResult.native_token.price;
-      const finalTx = { ...buildTx, gas: gasLimit } as Tx;
+      const finalTx = { ...buildTx, gas: gasLimit } as TxWithTempoExtras<Tx>;
       return {
         tx: finalTx,
         gasUsed,
@@ -625,7 +719,10 @@ export class SignatureSteps {
       txsCalc,
       gasPriceWei: selectedGas.price,
     });
-    const gasAccountTask = computeGasAccount({ txsCalc });
+    const gasAccountTask = computeGasAccount({
+      txsCalc,
+      accountType: account.type,
+    });
     const selectedGasCostTask = SignatureSteps.computeGasCost({
       account,
       chainId: chain.id,
@@ -647,6 +744,7 @@ export class SignatureSteps {
       txsCalc,
       nativeTokenBalance,
       gasTokenDecimals,
+      gasTokenId: gasToken?.tokenId,
       checkTxValueInBalance,
     });
     const isGasNotEnough = !!checkErrors?.some(e => e.code === 3001);
@@ -739,7 +837,10 @@ export class SignatureSteps {
 
     const [gasless, gasAccount] = await Promise.all([
       computeGasless({ txsCalc: nextCalc, gasPriceWei: newGas.price }),
-      computeGasAccount({ txsCalc: nextCalc }),
+      computeGasAccount({
+        txsCalc: nextCalc,
+        accountType: account.type,
+      }),
     ]);
 
     // lightweight re-validation: recompute gas warnings using cached balance
@@ -827,6 +928,7 @@ export class SignatureSteps {
     txsCalc: CalcItem[];
     selectedGas: GasLevel | null;
     options: SendOptions;
+    onSigningTxCreated?: (signingTxId: string) => void;
     onSendedTx: (prams: { hash: string; idx: number }) => void;
     account: Account;
     retry?: boolean;
@@ -840,12 +942,13 @@ export class SignatureSteps {
         };
       }
   > {
-    miscService.setCurrentGasLevel(params?.selectedGas?.level);
+    miscServiceApi.setCurrentGasLevel(params?.selectedGas?.level);
 
     const {
       chainServerId,
       txsCalc,
       options,
+      onSigningTxCreated,
       onSendedTx,
       retry: isRetry,
       account,
@@ -902,7 +1005,7 @@ export class SignatureSteps {
         }
         let sig: string | undefined;
         if (options?.isGasAccount) {
-          sig = gasAccountService.getGasAccountSig().sig;
+          sig = (await gasAccountServiceApi.getGasAccountSig()).sig;
         }
 
         const result = await sendTransaction({
@@ -916,6 +1019,7 @@ export class SignatureSteps {
           sig,
           account: account,
           preExecResult: txsCalc[i]?.preExecResult,
+          onSigningTxCreated,
         });
         onSendedTx?.({ hash: result.txHash, idx: i });
         txHashes.push({ ...result });
@@ -994,18 +1098,13 @@ export class SignatureSteps {
 
     let switchGasAccount = false;
     if (autoSwitchGasAccount && prepared.txsCalc?.length) {
-      const chain = findChain({
-        id: prepared.txsCalc[0]?.tx.chainId,
-      })!;
-      const hasCustomRPC = apiCustomRPC.hasCustomRPC(chain?.enum);
-      const gasAccountSupported =
-        !!prepared.gasAccount?.balance_is_enough &&
-        !prepared.gasAccount.chain_not_support &&
-        !!prepared.gasAccount.is_gas_account &&
-        !(prepared.gasAccount as any).err_msg;
-      if (prepared.isGasNotEnough && !hasCustomRPC && gasAccountSupported) {
-        switchGasAccount = true;
-      }
+      switchGasAccount = shouldAutoSwitchToApprovalGasAccount({
+        nativeTokenInsufficient: !!prepared.isGasNotEnough,
+        freeGasAvailable: !!prepared.gasless?.is_gasless,
+        gasAccountChainSupported:
+          !!prepared.gasAccount && !prepared.gasAccount.chain_not_support,
+        noCustomRPC: !!prepared.noCustomRPC,
+      });
     }
 
     return SignatureSteps.toCtxFromPrepared({
@@ -1091,6 +1190,7 @@ export class SignatureSteps {
     chainServerId: string;
     ctx: SignerCtx;
     config: SignerConfig;
+    onSigningTxCreated?: (signingTxId: string) => void;
     onSendedTx: (prams: { hash: string; idx: number }) => void;
     account: Account;
     retry?: boolean;
@@ -1106,21 +1206,34 @@ export class SignatureSteps {
         };
       }
   > {
-    const { chainServerId, ctx, config, onSendedTx, account, retry } = params;
+    const {
+      chainServerId,
+      ctx,
+      config,
+      onSigningTxCreated,
+      onSendedTx,
+      account,
+      retry,
+    } = params;
     const { txs, txsCalc, selectedGas, gasMethod, useGasless } = ctx;
+    const submitGasMode = resolveMiniSignSubmitGasMode({
+      gasMethod,
+      useGasless,
+    });
     const res = await SignatureSteps.sendBatch({
       chainServerId,
       txsCalc: txsCalc,
       selectedGas: selectedGas!,
       options: {
-        isGasLess: !!useGasless,
-        isGasAccount: gasMethod === 'gasAccount',
+        isGasLess: submitGasMode === 'gasless',
+        isGasAccount: submitGasMode === 'gasAccount',
         ga: config?.ga,
         session: config?.session,
         pushType: normalizeTxParams(txs[0])?.swapPreferMEVGuarded
           ? 'mev'
           : 'default',
       },
+      onSigningTxCreated,
       onSendedTx,
       retry,
       account,

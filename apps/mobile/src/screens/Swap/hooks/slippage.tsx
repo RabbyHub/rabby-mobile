@@ -1,41 +1,40 @@
-import { swapService } from '@/core/services';
-import { atom, useAtom } from 'jotai';
+import { swapServiceApi } from '@/core/serviceApi/swap';
+import type { SwapService } from '@/core/services/swap';
+import { useAtom } from 'jotai';
+import { createRaceSafeHydratedAtom } from './raceSafeHydratedAtom';
 
-const slippageAtom = atom(
-  swapService.getSlippage(),
-  (get, set, slippage: string) => {
-    swapService.setSlippage(slippage);
-    set(slippageAtom, slippage);
+const slippageAtom = createRaceSafeHydratedAtom({
+  initialValue: '0.1',
+  hydrate: () => swapServiceApi.getSlippage(),
+  commitUpdate: async (_previous, slippage: string) => {
+    await swapServiceApi.setSlippage(slippage);
+    return slippage;
   },
-);
+});
 
-slippageAtom.onMount = set => {
-  set(swapService.getSlippage());
-};
-
-const autoSlippageAtom = atom(
-  swapService.getAutoSlippage(),
-  (get, set, bool: boolean) => {
-    swapService.setAutoSlippage(bool);
-    set(autoSlippageAtom, bool);
+const autoSlippageAtom = createRaceSafeHydratedAtom({
+  initialValue: true,
+  hydrate: () => swapServiceApi.getAutoSlippage(),
+  commitUpdate: async (_previous, value: boolean) => {
+    await swapServiceApi.setAutoSlippage(value);
+    return value;
   },
-);
+});
 
-autoSlippageAtom.onMount = set => {
-  set(swapService.getAutoSlippage());
-};
-
-const isCustomSlippageAtom = atom(
-  !!swapService.getIsCustomSlippage(),
-  (get, set, bool: boolean) => {
-    swapService.setIsCustomSlippage(bool);
-    set(isCustomSlippageAtom, bool);
+const isCustomSlippageAtom = createRaceSafeHydratedAtom({
+  initialValue: false,
+  hydrate: async () => !!(await swapServiceApi.getIsCustomSlippage()),
+  commitUpdate: async (_previous, value: boolean) => {
+    await swapServiceApi.setIsCustomSlippage(value);
+    return value;
   },
-);
+});
 
-isCustomSlippageAtom.onMount = set => {
-  set(!!swapService.getIsCustomSlippage());
-};
+export function prepareSwapSlippageFromService(service: SwapService) {
+  slippageAtom.prepare(service.getSlippage());
+  autoSlippageAtom.prepare(service.getAutoSlippage());
+  isCustomSlippageAtom.prepare(!!service.getIsCustomSlippage());
+}
 
 export const useSlippageStore = () => {
   const [slippage, setSlippage] = useAtom(slippageAtom);

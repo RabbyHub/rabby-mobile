@@ -14,11 +14,23 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 import { PerpsSlider } from './PerpsSlider';
+import { MarketSlippage } from './MarketSlippage';
+import { useMarketSlippage } from '../hooks/useMarketSlippage';
+import { PerpEditLimitPriceTag } from './PerpEditLimitPriceTag';
+import IconOrderTypeSwitch from '@/assets2024/icons/perps/IconOrderTypeSwitch.svg';
+import { formatTpOrSlPrice, isMarketableLimit } from '@/utils/perps';
 import {
   PERPS_EXCHANGE_FEE_NUMBER,
   PERPS_MINI_USD_VALUE,
+  type PerpsOpenOrderType,
 } from '@/constant/perps';
 import { Text } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 export const PerpsClosePositionPopup: React.FC<{
   visible?: boolean;
@@ -28,20 +40,28 @@ export const PerpsClosePositionPopup: React.FC<{
   marginUsed: number;
   markPrice: number;
   entryPrice: number;
+  szDecimals: number;
+  quoteAsset?: string;
   providerFee: number;
   pnl: number;
   onCancel: () => void;
   onConfirm: () => void;
-  handleClosePosition: (closePercent: number) => Promise<void>;
+  handleClosePosition: (params: {
+    closePercent: number;
+    orderType: PerpsOpenOrderType;
+    limitPx?: string;
+  }) => Promise<void>;
 }> = ({
   visible,
-  coin: _coin,
+  coin,
   direction,
   positionSize,
   marginUsed,
   pnl,
   markPrice,
   entryPrice,
+  szDecimals,
+  quoteAsset = 'USDC',
   providerFee,
   onCancel,
   onConfirm,
@@ -58,35 +78,102 @@ export const PerpsClosePositionPopup: React.FC<{
 
   const [loading, setLoading] = useState<boolean>(false);
   const [closePercent, setClosePercent] = useState<number>(100);
+  const [orderType, setOrderType] = useState<PerpsOpenOrderType>('market');
+  const [limitPx, setLimitPx] = useState<string>('');
 
   const closePosition = useMemoizedFn(async () => {
     setLoading(true);
     try {
-      await handleClosePosition(closePercent);
+      await handleClosePosition({
+        closePercent,
+        orderType,
+        limitPx: orderType === 'limit' ? limitPx : undefined,
+      });
       onConfirm();
     } finally {
       setLoading(false);
     }
   });
 
+  // User's intended exit price: limitPx in limit mode, markPrice otherwise
+  // (also the fallback during transient empty limitPx). Mirrors the open
+  // popup's effectivePx; estimates below use estimatePx instead.
+  const effectivePx = useMemo(() => {
+    if (orderType === 'limit' && limitPx && Number(limitPx) > 0) {
+      return Number(limitPx);
+    }
+    return markPrice;
+  }, [orderType, limitPx, markPrice]);
+
+  // A marketable limit close (closing long = sell at/below mark, closing
+  // short = buy at/above mark) fills immediately at ~mark, so estimates use
+  // markPrice as the true exit price — mirrors the open popup's isMarketable.
+  const isMarketable = useMemo(
+    () =>
+      orderType === 'limit' &&
+      isMarketableLimit({
+        direction: direction === 'Long' ? 'Short' : 'Long',
+        limitPx,
+        markPx: markPrice,
+      }),
+    [orderType, limitPx, direction, markPrice],
+  );
+  const estimatePx = isMarketable ? markPrice : effectivePx;
+
   const minClosePercent = useMemo(() => {
-    const minSizeValue = PERPS_MINI_USD_VALUE / markPrice;
+    const minSizeValue = PERPS_MINI_USD_VALUE / estimatePx;
     const percentValue = (minSizeValue / Number(positionSize)) * 100;
 
     // add one percent to avoid rounding error
     return Math.min(100, Math.round(percentValue + 1));
-  }, [markPrice, positionSize]);
+  }, [estimatePx, positionSize]);
 
   useEffect(() => {
     if (!visible) {
       setLoading(false);
       setClosePercent(100);
+      setOrderType('market');
+      setLimitPx('');
     }
   }, [visible]);
 
   const closedPnl = useMemo(() => {
+    if (orderType === 'limit') {
+      // Always price against the limit the user typed, even when it is
+      // marketable: silently switching to markPrice makes the shown PnL
+      // disagree with the price on screen and reads as a bug to users.
+      const sign = direction === 'Long' ? 1 : -1;
+      return (
+        (effectivePx - entryPrice) *
+        sign *
+        Number(positionSize) *
+        (closePercent / 100)
+      );
+    }
     return (pnl * closePercent) / 100;
-  }, [pnl, closePercent]);
+  }, [
+    orderType,
+    effectivePx,
+    entryPrice,
+    direction,
+    positionSize,
+    pnl,
+    closePercent,
+  ]);
+
+  // Close trades opposite the position: long -> sell (bids), short -> buy (asks)
+  const {
+    slippage,
+    depthInsufficient,
+    isReady: slippageReady,
+    shouldShow: shouldShowSlippage,
+  } = useMarketSlippage({
+    coin,
+    isBuy: direction === 'Short',
+    size: Number(positionSize) * (closePercent / 100),
+    markPrice,
+    enabled: !!visible && orderType === 'market',
+  });
 
   const bothFee = useMemo(() => {
     return providerFee + PERPS_EXCHANGE_FEE_NUMBER;
@@ -108,6 +195,21 @@ export const PerpsClosePositionPopup: React.FC<{
     }
   }, [visible]);
 
+  const toggleOrderType = useMemoizedFn(() => {
+    const next = orderType === 'market' ? 'limit' : 'market';
+    setOrderType(next);
+    if (next === 'market') {
+      setLimitPx('');
+    } else {
+      setLimitPx(formatTpOrSlPrice(markPrice, szDecimals));
+    }
+  });
+
+  const snapPoints = useMemo(
+    () => [orderType === 'limit' ? 622 : 578],
+    [orderType],
+  );
+
   return (
     <AppBottomSheetModal
       ref={modalRef}
@@ -116,8 +218,8 @@ export const PerpsClosePositionPopup: React.FC<{
         linearGradientType: 'bg1',
       })}
       onDismiss={onCancel}
-      snapPoints={[460]}>
-      <BottomSheetView>
+      snapPoints={snapPoints}>
+      <BottomSheetView style={styles.sheetView}>
         <AutoLockView style={[styles.container]}>
           <View>
             <Text style={styles.title}>
@@ -162,10 +264,49 @@ export const PerpsClosePositionPopup: React.FC<{
             />
           </View>
 
+          <View style={styles.orderTypeCard}>
+            <View style={styles.orderTypeItem}>
+              <Text style={styles.pnlLabel}>
+                {t('page.perpsDetail.PerpsOpenPositionPopup.orderType')}
+              </Text>
+              <TouchableOpacity
+                style={styles.orderTypeToggle}
+                onPress={toggleOrderType}>
+                <Text style={styles.orderTypeToggleText}>
+                  {orderType === 'market'
+                    ? t(
+                        'page.perpsDetail.PerpsOpenPositionPopup.orderTypeMarket',
+                      )
+                    : t(
+                        'page.perpsDetail.PerpsOpenPositionPopup.orderTypeLimit',
+                      )}
+                </Text>
+                <IconOrderTypeSwitch width={14} height={14} />
+              </TouchableOpacity>
+            </View>
+            {orderType === 'limit' ? (
+              <View style={styles.orderTypeItem}>
+                <Text style={styles.pnlLabel}>
+                  {t('page.perpsDetail.PerpsOpenPositionPopup.limitPrice')}
+                </Text>
+                <PerpEditLimitPriceTag
+                  coin={coin}
+                  quoteAsset={quoteAsset}
+                  markPrice={markPrice}
+                  szDecimals={szDecimals}
+                  // Closing trades the opposite side: long -> limit sell.
+                  direction={direction === 'Long' ? 'Short' : 'Long'}
+                  initLimitPrice={limitPx}
+                  handleSetLimitPx={async (price: string) => setLimitPx(price)}
+                />
+              </View>
+            ) : null}
+          </View>
+
           <View style={styles.pnlCard}>
             <View style={styles.pnlCardRow}>
               <Text style={styles.pnlLabel}>
-                {t('page.perpsDetail.PerpsClosePositionPopup.receive')}
+                {t('page.perpsDetail.PerpsClosePositionPopup.estReceive')}
               </Text>
               <Text style={[styles.pnlValue]}>
                 {'+'}$
@@ -176,7 +317,7 @@ export const PerpsClosePositionPopup: React.FC<{
             </View>
             <View style={styles.pnlCardRow}>
               <Text style={styles.pnlLabel}>
-                {t('page.perpsDetail.PerpsClosePositionPopup.closedPnl')}
+                {t('page.perpsDetail.PerpsClosePositionPopup.estClosedPnl')}
               </Text>
               <Text
                 style={[
@@ -188,26 +329,52 @@ export const PerpsClosePositionPopup: React.FC<{
               </Text>
             </View>
           </View>
-
-          <Button
-            type="hyperliquid"
-            title={t('page.perpsDetail.PerpsClosePositionPopup.confirm')}
-            loading={loading}
-            disabled={!isValidClosePercent}
-            onPress={closePosition}
+          <MarketSlippage
+            style={styles.slippageContainer}
+            visible={
+              orderType === 'market' &&
+              slippageReady &&
+              Number(positionSize) > 0 &&
+              shouldShowSlippage
+            }
+            slippage={slippage}
+            depthInsufficient={depthInsufficient}
           />
+
+          <View style={styles.footer}>
+            <Button
+              type="hyperliquid"
+              title={t('page.perpsDetail.PerpsClosePositionPopup.confirm')}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+              loading={loading}
+              disabled={
+                !isValidClosePercent ||
+                (orderType === 'limit' && !(Number(limitPx) > 0))
+              }
+              onPress={closePosition}
+            />
+          </View>
         </AutoLockView>
       </BottomSheetView>
     </AppBottomSheetModal>
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
+const getStyle = createGetStyles2024(ctx => {
+  const { colors2024, isLight, safeAreaInsets } = ctx;
   return {
+    sheetView: {
+      height: '100%',
+    },
     container: {
       height: '100%',
-      paddingBottom: 56,
       paddingHorizontal: 20,
+    },
+    footer: {
+      marginTop: 'auto',
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     },
     title: {
       fontFamily: 'SF Pro Rounded',
@@ -291,6 +458,32 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       alignItems: 'center',
       justifyContent: 'space-between',
     },
+    orderTypeCard: {
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
+      borderRadius: 16,
+      width: '100%',
+      marginBottom: 12,
+    },
+    orderTypeItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+    },
+    orderTypeToggle: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    orderTypeToggleText: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '500',
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+    },
     pnlCard: {
       borderWidth: 1,
       borderColor: colors2024['neutral-line'],
@@ -302,7 +495,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       width: '100%',
       alignContent: 'center',
       alignItems: 'center',
-      marginBottom: 20,
+      marginBottom: 12,
+    },
+    slippageContainer: {
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
+      borderRadius: 16,
+      paddingHorizontal: 16,
+      paddingVertical: 16,
     },
     pnlLabel: {
       fontFamily: 'SF Pro Rounded',

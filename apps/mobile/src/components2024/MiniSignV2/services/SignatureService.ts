@@ -3,10 +3,15 @@ import type { Tx, GasLevel } from '@rabby-wallet/rabby-api/dist/types';
 import { SignatureSteps } from './SignatureSteps';
 import { findChain } from '@/utils/chain';
 import BigNumber from 'bignumber.js';
-import { CalcItem, GasSelectionOptions, SignerConfig } from '../domain/types';
+import type {
+  CalcItem,
+  GasSelectionOptions,
+  SignerConfig,
+} from '../domain/types';
 import { explainGas } from '@/components/Approval/components/SignTx/calc';
-import { buildFingerprint, SignerCtx } from '../domain/ctx';
-import { Account } from '@/core/services/preference';
+import type { SignerCtx } from '../domain/ctx';
+import { buildFingerprint } from '../domain/ctx';
+import type { Account } from '@/core/startupServices/preference';
 
 type PrepareParams = {
   txs: Tx[];
@@ -29,6 +34,7 @@ type SendParams = {
   ctx: SignerCtx;
   config: SignerConfig;
   retry?: boolean;
+  onSigningTxCreated?: (signingTxId: string) => void;
   onProgress?: (ctx: SignerCtx) => void;
 };
 
@@ -72,7 +78,13 @@ export const signatureService = {
       account,
     }),
 
-  send: async ({ ctx, config, retry, onProgress }: SendParams) => {
+  send: async ({
+    ctx,
+    config,
+    retry,
+    onSigningTxCreated,
+    onProgress,
+  }: SendParams) => {
     const chainMeta = findChain({ id: ctx.chainId });
     const chainServerId = (chainMeta as any)?.serverId || '';
     let currentCtx = ctx;
@@ -82,6 +94,7 @@ export const signatureService = {
       config,
       retry,
       account: config.account,
+      onSigningTxCreated,
       onSendedTx: ({ hash, idx }) => {
         if (!onProgress) return;
         const txsCalc = currentCtx.txsCalc.map((item, index) =>

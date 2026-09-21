@@ -120,8 +120,8 @@ const getStyles = createGetStyles(colors => ({
     backgroundColor: 'rgba(134, 151, 255, 0.2)',
   },
   buttonTitle: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 18,
+    lineHeight: 22,
     fontWeight: '500',
   },
   buttonTitleCanExec: {

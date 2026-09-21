@@ -1,17 +1,11 @@
 import React from 'react';
-import {
-  View,
-  SectionListProps,
-  ActivityIndicator,
-  SectionList,
-} from 'react-native';
+import type { SectionListProps } from 'react-native';
+import { View, ActivityIndicator, SectionList } from 'react-native';
 import { AppBottomSheetModal } from '@/components';
+import type { BottomSheetModalProps } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import type { ApprovalAssetsItem } from '../useApprovalsPage';
 import {
-  BottomSheetModalProps,
-  BottomSheetScrollView,
-} from '@gorhom/bottom-sheet';
-import {
-  ApprovalAssetsItem,
   useApprovalsPage,
   useFocusedApprovalOnApprovals,
   useRevokeAssetSpenders,
@@ -29,7 +23,7 @@ import AutoLockView from '@/components/AutoLockView';
 import { useTranslation } from 'react-i18next';
 import { useBatchRevoke } from '@/screens/BatchRevoke/useBatchRevoke';
 import { querySelectedAssetSpender } from '../utils';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 
 const MemoInModalApprovalAssetRow = React.memo(
@@ -170,7 +164,10 @@ export default function BottomSheetApprovalAsset({
               />
 
               <View style={styles.listHeadOps}>
-                <Text style={styles.listHeadText}>
+                <Text
+                  style={styles.listHeadText}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
                   {t('page.approvals.approvedAssets')}
                 </Text>
                 <MiniButton
@@ -184,8 +181,8 @@ export default function BottomSheetApprovalAsset({
                     )
                   }>
                   {nextShouldPickAllFocusingAsset
-                    ? 'Select All'
-                    : 'Unselect All'}
+                    ? t('page.approvals.selectAll')
+                    : t('page.approvals.unselectAll')}
                 </MiniButton>
               </View>
             </View>
@@ -271,6 +268,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontSize: 14,
       fontWeight: '700',
       lineHeight: 18,
+      minWidth: 0,
+      flex: 1,
     },
     miniBtn: {
       backgroundColor: 'transparent',

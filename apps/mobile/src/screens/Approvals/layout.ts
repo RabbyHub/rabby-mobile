@@ -1,4 +1,9 @@
 import { Platform, Dimensions } from 'react-native';
+import {
+  BOTTOM_BUTTON_BOTTOM_OFFSET,
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TOP_OFFSET,
+} from '@/constant/layout';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -14,7 +19,10 @@ export const ApprovalsLayouts = {
   contentInsetTopOffset: isAndroid ? 0 : 40 /* same with tabbarHeight */,
   bottomAreaHeight: isAndroid ? 100 : 120,
 
-  bottomSheetConfirmAreaHeight: isAndroid ? 100 : 120,
+  bottomSheetConfirmAreaHeight:
+    BOTTOM_BUTTON_TOP_OFFSET +
+    BOTTOM_BUTTON_SINGLE_HEIGHT +
+    BOTTOM_BUTTON_BOTTOM_OFFSET,
 
   searchBarMarginOffset: 16,
   searchBarHeight: 46,

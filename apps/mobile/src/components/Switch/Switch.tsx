@@ -192,7 +192,18 @@ const Switch = ({
   );
 
   return (
-    <TouchableWithoutFeedback onPress={handleSwitch} {...restProps}>
+    <TouchableWithoutFeedback
+      {...restProps}
+      accessible={restProps.accessible ?? true}
+      accessibilityRole={restProps.accessibilityRole ?? 'switch'}
+      accessibilityState={
+        restProps.accessibilityState ?? {
+          disabled: !!disabled,
+          checked: !!propValue,
+        }
+      }
+      onPress={handleSwitch}
+      testID={testID}>
       <Animated.View
         style={[
           styles.container,

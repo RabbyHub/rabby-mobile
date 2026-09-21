@@ -2,10 +2,34 @@ module.exports = {
   root: true,
   // extends: '@react-native',
   extends: '@react-native-community',
+  plugins: ['import'],
   rules: {
     'react/react-in-jsx-scope': 'off',
     'react-hooks/exhaustive-deps': 'error',
     '@typescript-eslint/no-unused-vars': 'warn',
+    'no-restricted-syntax': [
+      'error',
+      {
+        selector: "JSXAttribute[name.name='className']",
+        message:
+          'Do not use className in the React Native app. Use style, containerStyle, or a typed variant prop instead.',
+      },
+      {
+        selector: "TSPropertySignature[key.name='className']",
+        message:
+          'Do not expose className props in the React Native app. Use style, containerStyle, or a typed variant prop instead.',
+      },
+    ],
+    'no-runtime-service-imports': 'error',
+    'no-floating-deferred-service-api-calls': 'error',
+    'no-persist-store-direct-mutation': 'error',
+    'import/no-cycle': [
+      'warn',
+      {
+        maxDepth: 12,
+        ignoreExternal: true,
+      },
+    ],
     'no-restricted-imports': [
       'error',
       {
@@ -27,6 +51,12 @@ module.exports = {
               "Please import Text/TextInput from '@/components/Typography' instead",
           },
           {
+            name: 'react-native',
+            importNames: ['Modal'],
+            message:
+              "Please import TrackedModal from '@/components/Modal/TrackedModal' instead of importing Modal directly from react-native",
+          },
+          {
             name: 'react-native-gesture-handler',
             importNames: ['Text', 'TextInput'],
             message:
@@ -44,8 +74,33 @@ module.exports = {
             message:
               "Please import RNEUIText from '@/components/Typography' instead",
           },
+          {
+            name: '@rabby-wallet/zeego/context-menu',
+            message:
+              "Use ContextMenuView from '@/components2024/ContextMenuView/ContextMenuView' so menu actions are resolved at open time",
+          },
+          {
+            name: '@rabby-wallet/react-native-menu',
+            message:
+              "Use ContextMenuView from '@/components2024/ContextMenuView/ContextMenuView' instead of accessing the native context-menu package directly",
+          },
+          {
+            name: 'zeego/context-menu',
+            message:
+              'Use the Rabby ContextMenuView boundary instead of importing an unscoped context-menu runtime',
+          },
+          {
+            name: '@react-native-menu/menu',
+            message:
+              'Use the Rabby ContextMenuView boundary instead of importing an unscoped native menu runtime',
+          },
         ],
       },
     ],
+  },
+  settings: {
+    'import/resolver': {
+      typescript: {},
+    },
   },
 };

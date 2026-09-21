@@ -1,7 +1,11 @@
 import { AppState, NativeEventSubscription } from 'react-native';
 
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
-import { preferenceService } from '../services';
+import {
+  getPreferenceSnapshot,
+  setPreferenceSync,
+} from '@/core/serviceApi/preference';
+import { isKeyringUnlockedSnapshot } from '@/core/serviceApi/keyring';
 import { makeEEClass } from './event';
 
 const MILLISECS_PER_MIN = 60 * 1e3;
@@ -24,6 +28,11 @@ export function isValidAutoLockTime(ms: number) {
 function calc(ms: number = AUTO_LOCK_SECS.TIMEOUT_MILLISECS) {
   if (!isValidAutoLockTime(ms)) return -1;
   return Date.now() + ms;
+}
+
+function calcExpireTimeFromBaseTime(baseTime: number) {
+  const { timeoutMs } = getPersistedAutoLockTimes();
+  return isValidAutoLockTime(timeoutMs) ? baseTime + timeoutMs : -1;
 }
 
 const autoLockTimerRef = {
@@ -74,8 +83,7 @@ export function coerceAutoLockTimeout(ms: number) {
 export function getPersistedAutoLockTimes() {
   // enforce zero to default value
   const minutes =
-    preferenceService.getPreference('autoLockTime') ||
-    DEFAULT_AUTO_LOCK_MINUTES;
+    getPreferenceSnapshot('autoLockTime') || DEFAULT_AUTO_LOCK_MINUTES;
 
   const formatted = coerceAutoLockTimeout(minutes * MILLISECS_PER_MIN);
 
@@ -85,13 +93,60 @@ export function getPersistedAutoLockTimes() {
   };
 }
 
+function normalizeUnlockTime(time: unknown) {
+  return typeof time === 'number' && Number.isFinite(time) && time > 0
+    ? time
+    : 0;
+}
+
+function normalizeUnlockSessionExpireTime(time: unknown) {
+  if (time === -1) return -1;
+  return typeof time === 'number' && Number.isFinite(time) && time > 0
+    ? time
+    : 0;
+}
+
+export function getPersistedUnlockSessionExpireTime() {
+  const expireTime = normalizeUnlockSessionExpireTime(
+    getPreferenceSnapshot('unlockSessionExpireTime'),
+  );
+  if (expireTime) return expireTime;
+
+  const unlockTime = normalizeUnlockTime(
+    getPreferenceSnapshot('lastUnlockTime'),
+  );
+  if (!unlockTime) return 0;
+
+  return calcExpireTimeFromBaseTime(unlockTime);
+}
+
+function canRefreshUnlockSession(now = Date.now()) {
+  const unlockTime = normalizeUnlockTime(
+    getPreferenceSnapshot('lastUnlockTime'),
+  );
+  if (!unlockTime || unlockTime > now) return false;
+  if (isKeyringUnlockedSnapshot()) return true;
+
+  const expireTime = getPersistedUnlockSessionExpireTime();
+  return expireTime === -1 || expireTime > now;
+}
+
+function refreshPersistedUnlockSessionExpireTime(expireTime: number) {
+  if (!canRefreshUnlockSession()) return;
+
+  setPreferenceSync({
+    unlockSessionExpireTime: expireTime,
+  });
+}
+
 export function refreshAutolockTimeout(type?: 'clear') {
   if (type === 'clear') {
-    setAutoLockExpireTime(-1);
-  } else {
-    const { expireTime } = getPersistedAutoLockTimes();
-    setAutoLockExpireTime(expireTime);
+    return setAutoLockExpireTime(-1);
   }
+
+  const { expireTime } = getPersistedAutoLockTimes();
+  refreshPersistedUnlockSessionExpireTime(expireTime);
+  return setAutoLockExpireTime(expireTime);
 }
 
 export function uiRefreshTimeout() {
@@ -139,12 +194,12 @@ export function setupAutoLockChecker() {
   }
   autoLockTimerRef.timer = setInterval(() => {
     const unlockExpire = autoLockTimerRef.foregroundExpire;
-    console.debug(
-      '[autoLock] app to foreground unlockExpire, AppState.isAvailable, AppState.currentState',
-      unlockExpire,
-      AppState.isAvailable,
-      AppState.currentState,
-    );
+    // console.debug(
+    //   '[autoLock] app to foreground unlockExpire, AppState.isAvailable, AppState.currentState',
+    //   unlockExpire,
+    //   AppState.isAvailable,
+    //   AppState.currentState,
+    // );
     if (!AppState.isAvailable || AppState.currentState === 'active') {
       checkExpire(unlockExpire, 'foreground');
     }
@@ -175,6 +230,7 @@ export function setupAutoLockChecker() {
         autoLockTimerRef,
       );
       const { expireTime, timeoutMs } = getPersistedAutoLockTimes();
+      refreshPersistedUnlockSessionExpireTime(expireTime);
       console.debug(
         '[autoLock] app to background expireTime, timeoutMs',
         expireTime,

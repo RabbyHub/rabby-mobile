@@ -3,6 +3,14 @@ import BigNumber from 'bignumber.js';
 import { formatNetworth } from '@/utils/math';
 import { formatPercent, formatUsdValueKMB } from '@/screens/TokenDetail/util';
 
+export const ellipsisSymbol = (symbol: string) => {
+  if (symbol.length <= 16) {
+    return symbol;
+  }
+
+  return `${symbol.slice(0, 6)}...${symbol.slice(-6)}`;
+};
+
 export const estDaily = (netWorth: string, netApy: number) => {
   if (!netWorth || !netApy) {
     return '--';

@@ -1,31 +1,30 @@
-import {
-  makeRnEEClass,
-  resolveNativeModule,
-  wrapPlatformOnlyMethod,
-} from './utils';
+import { resolveNativeModule, wrapPlatformOnlyMethod } from './utils';
+import NativeRNHelpers from './specs/NativeRNHelpers';
 
-const { RNHelpers: nativeModule } = resolveNativeModule('RNHelpers');
+const { RNHelpers: nativeModule } = resolveNativeModule(
+  'RNHelpers',
+  NativeRNHelpers,
+);
 
-type Listeners = {};
-const { NativeEventEmitter } = makeRnEEClass<Listeners>();
-const eventEmitter = new NativeEventEmitter(nativeModule);
-
-function makeDefaultHandler<T extends keyof Listeners>(fn: Listeners[T]) {
-  if (typeof fn !== 'function') {
-    console.error('RNHelpers: addListener requires valid callback function');
-
-    return {
-      remove: (): void => {
-        console.error(
-          'RNHelpers: remove not work because addListener requires valid callback function',
-        );
-      },
-    };
-  }
-}
+const buildInfo =
+  nativeModule.buildInfo || nativeModule.getConstants?.().buildInfo;
 
 const RNHelpers = Object.freeze({
-  ...nativeModule,
+  forceExitApp: nativeModule.forceExitApp,
+  buildInfo,
+  moveTaskToBack: wrapPlatformOnlyMethod({
+    method: nativeModule.moveTaskToBack,
+    platform: 'android',
+    fallbackFn: () => Promise.resolve(false),
+  }),
+  shareFile: wrapPlatformOnlyMethod({
+    method: nativeModule.shareFile,
+    platform: 'android',
+    fallbackFn: () =>
+      Promise.reject(
+        new Error('RNHelpers.shareFile is only available on Android'),
+      ),
+  }),
   iosExcludeFileFromBackup: wrapPlatformOnlyMethod({
     method: nativeModule.iosExcludeFileFromBackup,
     platform: 'ios',

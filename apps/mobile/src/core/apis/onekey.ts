@@ -1,7 +1,8 @@
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { getKeyring } from './keyring';
 import type { OneKeyKeyring } from '@/core/keyring-bridge/onekey/onekey-keyring';
-import { keyringService, preferenceService } from '../services/shared';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { preferenceServiceApi } from '@/core/serviceApi/preference';
 import { bindOneKeyEvents } from '@/utils/onekey';
 import HardwareBleSdk from '@onekeyfe/hd-ble-sdk';
 import { DEVICE } from '@onekeyfe/hd-core';
@@ -9,7 +10,8 @@ import { atom, useAtom } from 'jotai';
 import type { SearchDevice } from '@onekeyfe/hd-core';
 import React from 'react';
 import { zCreate } from '../utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '../utils/store';
+import type { UpdaterOrPartials } from '../utils/store';
+import { resolveValFromUpdater } from '../utils/store';
 
 // export const oneKeyDevices = atom<SearchDevice[]>([]);
 
@@ -60,43 +62,47 @@ export function startSubscribeOnekeyDevices() {
   });
 }
 
+async function getOneKeyKeyring() {
+  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  bindOneKeyEvents(keyring);
+  return keyring;
+}
+
 export async function initOneKeyKeyring() {
-  return getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring, keyring => {
-    bindOneKeyEvents(keyring);
-  });
+  return getOneKeyKeyring();
 }
 
 export async function importAddress(index: number) {
-  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  const keyring = await getOneKeyKeyring();
 
   keyring.setAccountToUnlock(index.toString());
-  const result = await keyringService.addNewAccount(keyring as any);
-  preferenceService.initCurrentAccount();
+  const result = await keyringServiceApi.addNewAccount(keyring as any);
+  await preferenceServiceApi.initCurrentAccount();
   return result;
 }
 
 export async function getAddresses(start: number, end: number) {
-  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  const keyring = await getOneKeyKeyring();
   return keyring.getAddresses(start, end);
 }
 
 export async function unlockDevice() {
-  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  const keyring = await getOneKeyKeyring();
 
   await keyring.unlock();
 }
 
 export async function fixConnectId(address: string, connectId: string) {
-  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  const keyring = await getOneKeyKeyring();
 
   await keyring.fixConnectId(address, connectId);
-  await keyringService.persistAllKeyrings();
+  await keyringServiceApi.persistKeyringsForKeyring(keyring);
 
   return;
 }
 
 export async function searchDevices() {
-  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  const keyring = await getOneKeyKeyring();
 
   let retryCount = 0;
   const MAX_RETRY_COUNT = 10;
@@ -118,7 +124,7 @@ export async function searchDevices() {
 }
 
 export async function setDeviceConnectId(deviceConnectId: string) {
-  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  const keyring = await getOneKeyKeyring();
 
   return keyring.setDeviceConnectId(deviceConnectId);
 }
@@ -157,12 +163,12 @@ export async function importFirstAddress({
 }
 
 export async function getCurrentAccounts() {
-  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  const keyring = await getOneKeyKeyring();
   return keyring.getCurrentAccounts();
 }
 
 export async function cleanUp() {
-  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  const keyring = await getOneKeyKeyring();
   // keyring.bridge.dispose();
   return keyring.cleanUp();
 }
@@ -170,7 +176,7 @@ export async function cleanUp() {
 export async function isConnected(
   address: string,
 ): Promise<[boolean, string?]> {
-  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  const keyring = await getOneKeyKeyring();
   const detail = keyring.getAccountInfo(address);
 
   if (!detail?.connectId) {
@@ -180,7 +186,7 @@ export async function isConnected(
   keyring.setDeviceConnectId(detail.connectId);
 
   try {
-    await keyring.trySearchDevice(true);
+    await keyring.trySearchDevice();
     return [true, detail.connectId];
   } catch (e) {
     return [false, detail.connectId];

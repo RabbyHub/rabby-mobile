@@ -1,13 +1,15 @@
 import { CloudStorage } from 'react-native-cloud-storage';
 import { IS_ANDROID, IS_IOS } from '../native/utils';
-import {
-  GoogleSignin,
+import type {
   SignInResponse,
   User,
 } from '@react-native-google-signin/google-signin';
-import { appEncryptor } from '../services/shared';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { appEncryptorApi } from '@/core/serviceApi/appEncryptor';
+import { isKeyringUnlockedSnapshot } from '@/core/serviceApi/keyring';
 import { APPLICATION_ID, FIREBASE_WEBCLIENT_ID } from '@/constant';
 import { getAddressFromMnemonic } from './mnemonic';
+import { getMnemonicByAddress } from '../apis/mnemonic';
 import { sortBy } from 'lodash';
 import { devLog } from '@/utils/logger';
 
@@ -60,7 +62,7 @@ export const saveMnemonicToCloud = async ({
   await makeDirIfNeeded();
 
   const data: Omit<BackupData, 'filename'> = {
-    mnemonicEncrypted: await appEncryptor.encrypt(password, mnemonic),
+    mnemonicEncrypted: await appEncryptorApi.encrypt(password, mnemonic),
     address: getAddressFromMnemonic(mnemonic, 0),
     createdAt: new Date().getTime() + '',
     version: CURRENT_VERSION,
@@ -94,7 +96,7 @@ export const decryptFiles = async ({
 
   for (const file of files) {
     try {
-      const mnemonic = await appEncryptor.decrypt(
+      const mnemonic = await appEncryptorApi.decrypt(
         password,
         file.mnemonicEncrypted,
       );
@@ -288,4 +290,32 @@ export const refreshAccessToken = async () => {
   const accountToken = await (await GoogleSignin.getTokens()).accessToken;
   CloudStorage.setGoogleDriveAccessToken(accountToken);
   return accountToken;
+};
+
+/**
+ * Check if a cloud backup exists for the given address (requires unlocked keyring)
+ * @param address - The wallet address to check
+ * @returns true if backup exists, false otherwise
+ */
+export const checkCloudBackupExists = async (
+  address: string,
+): Promise<boolean> => {
+  if (!isKeyringUnlockedSnapshot()) {
+    return false;
+  }
+
+  const mnemonic = getMnemonicByAddress(address);
+  if (!mnemonic) return false;
+  // Derive the index-0 address (this is the backup filename)
+  const index0Address = getAddressFromMnemonic(mnemonic, 0);
+  const filePath = `${REMOTE_BACKUP_WALLET_DIR}/${index0Address}`;
+  try {
+    if (IS_ANDROID) {
+      await refreshAccessToken();
+    }
+    return await CloudStorage.exists(filePath);
+  } catch (error) {
+    console.error('Failed to check cloud backup existence:', error);
+    return false;
+  }
 };

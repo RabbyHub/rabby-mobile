@@ -1,40 +1,46 @@
-import React, { ReactNode, useEffect, useMemo, useState, useRef } from 'react';
+import type { ReactNode } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Result } from '@rabby-wallet/rabby-security-engine';
 import { WaitingSignComponent } from './map';
 import { FooterBar } from './FooterBar/FooterBar';
 import RuleDrawer from './SecurityEngine/RuleDrawer';
 import Actions from './TypedDataActions';
+import type {
+  ActionRequireData,
+  ParsedTypedDataActionData,
+} from '@rabby-wallet/rabby-action';
 import {
   parseAction,
   formatSecurityEngineContext,
   fetchActionRequiredData,
-  ActionRequireData,
-  ParsedTypedDataActionData,
 } from '@rabby-wallet/rabby-action';
-import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import { findChain, isTestnetChainId } from '@/utils/chain';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
-import { useSecurityEngine } from '@/hooks/securityEngine';
 import { useApproval } from '@/hooks/useApproval';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Skeleton } from '@rneui/themed';
-import { useApprovalSecurityEngine } from '../hooks/useApprovalSecurityEngine';
-import { apiKeyring, apiSecurityEngine } from '@/core/apis';
-import { parseSignTypedDataMessage } from './SignTypedDataExplain/parseSignTypedDataMessage';
 import {
-  dappService,
-  keyringService,
-  preferenceService,
-  transactionHistoryService,
-  whitelistService,
-} from '@/core/services';
+  useApprovalSecurityEngine,
+  SecurityEngineScopeProvider,
+} from '../hooks/useApprovalSecurityEngine';
+import {
+  useActionSecurity,
+  type PreparedSecurityActions,
+} from '../hooks/useActionSecurity';
+import { SecurityEngineError } from './SecurityEngine/SecurityEngineError';
+import type { ContextActionData } from '@rabby-wallet/rabby-security-engine/dist/rules';
+import { apiKeyring, apiProvider, apiSecurityEngine } from '@/core/apis';
+import { parseSignTypedDataMessage } from './SignTypedDataExplain/parseSignTypedDataMessage';
+import { dappServiceApi, getDappSnapshot } from '@/core/serviceApi/dapp';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
 import { openapi, testOpenapi } from '@/core/request';
 import { View } from 'react-native';
-import useAsync from 'react-use/lib/useAsync';
-import { useThemeColors } from '@/hooks/theme';
+import useAsyncRetry from 'react-use/lib/useAsyncRetry';
+import { useTheme2024 } from '@/hooks/theme';
 import { getStyles } from './SignTx/style';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { getKRCategoryByType } from '@/utils/transaction';
@@ -60,11 +66,19 @@ import { GnosisSameMessageModal } from './TxComponents/GnosisSameMessageModal';
 import { underline2Camelcase } from '@/core/utils/common';
 import { getCexInfo } from '@/hooks/useCexSupportList';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import {
+import type {
   MultiAction,
   TypeDataActionItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { Text } from '@/components/Typography';
+import type { ProviderRequestContext } from '@/core/controllers/type';
+import {
+  tokenizeSignTypedDataMessage,
+  type SignMessageHighlightToken,
+} from './signMessageTokenizer';
+import { useSignMessageAddressData } from './useSignMessageAddressData';
+import { addSignMessageOriginFallback } from './signMessageOrigin';
+import { SignMessageTagProvider } from './SignMessageHighlighter';
 
 interface SignTypedDataProps {
   method: string;
@@ -78,6 +92,7 @@ interface SignTypedDataProps {
   isSend?: boolean;
   account?: Account;
   $ctx?: any;
+  requestContext?: ProviderRequestContext;
 }
 
 export const SignTypedData = ({
@@ -88,26 +103,20 @@ export const SignTypedData = ({
   account: Account;
 }) => {
   const currentAccount = params.isGnosis ? params.account! : $account;
-  const [, resolveApproval, rejectApproval] = useApproval();
   const { t } = useTranslation();
+  const [approvalViewportHeight, setApprovalViewportHeight] = useState(0);
   const { data, session, method, isGnosis, isSend } = params;
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isWatch, setIsWatch] = useState(false);
   const [isLedger, setIsLedger] = useState(false);
   const [useLedgerLive, setUseLedgerLive] = useState(false);
   const [footerShowShadow, setFooterShowShadow] = useState(false);
-  const { executeEngine } = useSecurityEngine();
-  const [engineResults, setEngineResults] = useState<Result[]>([]);
-  const { userData, rules, currentTx, ...apiApprovalSecurityEngine } =
-    useApprovalSecurityEngine();
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
-  const site = dappService.getDapp(params.session.origin);
+  const apiApprovalSecurityEngine = useApprovalSecurityEngine();
+  const { currentTx } = apiApprovalSecurityEngine;
+  const { colors2024 } = useTheme2024();
+  const styles = useMemo(() => getStyles(colors2024), [colors2024]);
+  const site = getDappSnapshot(params.session.origin);
 
-  const [currentChainId, setCurrentChainId] = useState<number | undefined>(
-    undefined,
-  );
   const isGnosisAccount = currentAccount?.type === KEYRING_TYPE.GnosisKeyring;
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [gnosisFooterBarVisible, setGnosisFooterBarVisible] = useState(false);
@@ -117,6 +126,7 @@ export const SignTypedData = ({
   const [sameMessageState, setSameMessageState] = useSetState({
     visible: false,
     preparedSignature: '',
+    requestKey: '',
   });
 
   const isViewGnosisSafe = params?.$ctx?.isViewGnosisSafe;
@@ -127,56 +137,15 @@ export const SignTypedData = ({
   //     handleCancel();
   //   },
   // });
-  const [actionRequireData, setActionRequireData] =
-    useState<ActionRequireData>(null);
-  const [parsedActionData, setParsedActionData] =
-    useState<ParsedTypedDataActionData | null>(null);
-  const [multiActionList, setMultiActionList] = useState<
-    ParsedTypedDataActionData[]
-  >([]);
-  const [multiActionRequireDataList, setMultiActionRequireDataList] = useState<
-    ActionRequireData[]
-  >([]);
-  const [multiActionEngineResultList, setMultiActionEngineResultList] =
-    useState<Result[][]>([]);
-  const isMultiActions = useMemo(() => {
-    return !parsedActionData && multiActionList.length > 0;
-  }, [parsedActionData, multiActionList]);
+  const [preparedActions, setPreparedActions] = useState<
+    | (PreparedSecurityActions<ParsedTypedDataActionData> & {
+        requestKey: string;
+      })
+    | null
+  >(null);
+  const [preparationError, setPreparationError] = useState(false);
   const [cantProcessReason, setCantProcessReason] =
     useState<ReactNode | null>();
-  const securityLevel = useMemo(() => {
-    const enableResults = engineResults.filter(result => {
-      return result.enable && !currentTx.processedRules.includes(result.id);
-    });
-    if (enableResults.some(result => result.level === Level.FORBIDDEN))
-      return Level.FORBIDDEN;
-    if (enableResults.some(result => result.level === Level.DANGER))
-      return Level.DANGER;
-    if (enableResults.some(result => result.level === Level.WARNING))
-      return Level.WARNING;
-    return undefined;
-  }, [engineResults, currentTx]);
-  const hasUnProcessSecurityResult = useMemo(() => {
-    const { processedRules } = currentTx;
-    const enableResults = engineResults.filter(item => item.enable);
-    // const hasForbidden = enableResults.find(
-    //   (result) => result.level === Level.FORBIDDEN
-    // );
-    const hasSafe = !!enableResults.find(result => result.level === Level.SAFE);
-    const needProcess = enableResults.filter(
-      result =>
-        (result.level === Level.DANGER ||
-          result.level === Level.WARNING ||
-          result.level === Level.FORBIDDEN) &&
-        !processedRules.includes(result.id),
-    );
-    // if (hasForbidden) return true;
-    if (needProcess.length > 0) {
-      return !hasSafe;
-    } else {
-      return false;
-    }
-  }, [engineResults, currentTx]);
 
   let parsedMessage = '';
   let _message = '';
@@ -202,13 +171,15 @@ export const SignTypedData = ({
     [method],
   );
 
+  const requestChainId = params.requestContext?.chainId ?? params.$ctx?.chainId;
+
   const [signTypedData, rawMessage]: (null | Record<string, any>)[] =
     useMemo(() => {
       if (!isSignTypedDataV1) {
         try {
-          const v = JSON.parse(data[1]);
-          const normalized = normalizeTypeData(v);
-          return [normalized, v];
+          const raw = JSON.parse(data[1]);
+          const normalized = normalizeTypeData(JSON.parse(data[1]));
+          return [normalized, raw];
         } catch (error) {
           console.error('parse signTypedData error: ', error);
           return [null, null];
@@ -218,6 +189,14 @@ export const SignTypedData = ({
     }, [data, isSignTypedDataV1]);
 
   const chain = useMemo(() => {
+    if (requestChainId) {
+      return (
+        findChain({
+          id: requestChainId,
+        }) || undefined
+      );
+    }
+
     if (!isSignTypedDataV1 && signTypedData) {
       let chainId;
       try {
@@ -237,52 +216,143 @@ export const SignTypedData = ({
 
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, isSignTypedDataV1, signTypedData]);
+  }, [data, isSignTypedDataV1, signTypedData, requestChainId]);
 
-  const getCurrentChainId = async () => {
-    if (params.session.origin !== INTERNAL_REQUEST_ORIGIN) {
-      const site = await dappService.getDapp(params.session.origin);
-      if (site) {
-        return findChain({
-          enum: site?.chainId,
-        })?.id;
-      }
-    } else if (params.$ctx.chainId) {
-      return params.$ctx.chainId;
-    } else {
-      return chain?.id;
+  const currentChainId =
+    requestChainId ||
+    (params.session.origin !== INTERNAL_REQUEST_ORIGIN
+      ? findChain({ enum: site?.chainId })?.id
+      : params.$ctx?.chainId || chain?.id);
+
+  const messageTokens = useMemo<SignMessageHighlightToken[]>(() => {
+    if (!parsedMessage) return [];
+    if (isSignTypedDataV1) {
+      const fields = (Array.isArray(data[0]) ? data[0] : []) as Array<{
+        name: string;
+        type: string;
+        value: unknown;
+      }>;
+      return tokenizeSignTypedDataMessage(
+        {
+          primaryType: 'RabbySignTypedDataV1',
+          types: {
+            RabbySignTypedDataV1: fields.map(({ name, type }) => ({
+              name,
+              type,
+            })),
+          },
+          message: Object.fromEntries(
+            fields.map(({ name, value }) => [name, value]),
+          ),
+        },
+        parsedMessage,
+      );
     }
-  };
-  useEffect(() => {
-    getCurrentChainId().then(id => {
-      setCurrentChainId(id);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.session.origin]);
 
+    return rawMessage
+      ? tokenizeSignTypedDataMessage(rawMessage, parsedMessage)
+      : [{ type: 'text', value: parsedMessage }];
+  }, [data, isSignTypedDataV1, parsedMessage, rawMessage]);
+  const resolvedAddressChain =
+    chain ||
+    (currentChainId ? findChain({ id: currentChainId }) : undefined) ||
+    CHAINS.ETH;
+  const addressData = useSignMessageAddressData({
+    tokens: messageTokens,
+    chain: resolvedAddressChain,
+    accountAddress: currentAccount.address,
+  });
+
+  const requestKey = useMemo(
+    () =>
+      JSON.stringify([
+        method,
+        data,
+        session.origin,
+        currentAccount.address,
+        currentAccount.type,
+        currentChainId,
+      ]),
+    [
+      method,
+      data,
+      session.origin,
+      currentAccount.address,
+      currentAccount.type,
+      currentChainId,
+    ],
+  );
   const {
-    value: typedDataActionData,
+    value: parsedResponse,
     loading,
     error,
-  } = useAsync(async () => {
-    if (isGnosisAccount) {
-      if (!isViewGnosisSafe) {
-        apisSafe.clearGnosisMessage();
-      }
+    retry: retryParse,
+  } = useAsyncRetry(async () => {
+    if (isGnosisAccount && !isViewGnosisSafe) {
+      await apisSafe.clearGnosisMessage();
     }
-    if (!isSignTypedDataV1 && signTypedData) {
-      const chainId = signTypedData?.domain?.chainId;
-      if (isTestnetChainId(chainId)) {
-        return null;
-      }
-      return await openapi.parseCommon({
+    if (
+      !isSignTypedDataV1 &&
+      signTypedData &&
+      !isTestnetChainId(signTypedData.domain?.chainId)
+    ) {
+      const response = await openapi.parseCommon({
         typed_data: signTypedData,
-        user_addr: currentAccount!.address,
+        user_addr: currentAccount.address,
         origin: session.origin,
       });
+      if (!response) throw new Error('Missing typed-data parse response');
+      return { requestKey, response };
     }
-    return;
-  }, [data, isSignTypedDataV1, signTypedData]);
+    return { requestKey, response: null };
+  }, [requestKey, isSignTypedDataV1, signTypedData]);
+  const typedDataActionData =
+    parsedResponse?.requestKey === requestKey ? parsedResponse.response : null;
+  const currentPreparedActions =
+    !loading && !error && preparedActions?.requestKey === requestKey
+      ? preparedActions
+      : null;
+  const security = useActionSecurity(
+    currentPreparedActions,
+    apiApprovalSecurityEngine,
+    'typedData',
+  );
+  const {
+    securityLevel,
+    hasUnProcessSecurityResult,
+    blocked: securityBlocked,
+  } = security;
+  const isMultiActions = currentPreparedActions?.type === 'multi';
+  const parsedActionData = isMultiActions
+    ? null
+    : currentPreparedActions?.actions[0]?.data || null;
+  const actionRequireData = isMultiActions
+    ? null
+    : currentPreparedActions?.actions[0]?.requireData || null;
+  const multiActionList = useMemo(
+    () => currentPreparedActions?.actions.map(action => action.data) || [],
+    [currentPreparedActions],
+  );
+  const multiActionRequireDataList = useMemo(
+    () =>
+      currentPreparedActions?.actions.map(action => action.requireData) || [],
+    [currentPreparedActions],
+  );
+  const multiActionEngineResultList = security.resultList;
+  const engineResults = isMultiActions ? [] : security.engineResults;
+  const securityCheckFailed = !!error || preparationError || security.error;
+  const isLoading = !securityCheckFailed && !security.ready;
+  const [getApproval, resolveApproval, rejectApproval] = useApproval({
+    canResolve: () => !isWatch && security.canSubmit(),
+  });
+  const executeSecurityEngine = security.retry;
+  const retrySecurityCheck = () => {
+    security.invalidate();
+    setPreparedActions(null);
+    setPreparationError(false);
+    retryParse();
+  };
+  const isUnparsedAction = typedDataActionData?.action === null;
 
   if (error) {
     console.error('error', error);
@@ -330,6 +400,7 @@ export const SignTypedData = ({
           setSameMessageState({
             visible: true,
             preparedSignature: res.safeMessage.preparedSignature,
+            requestKey,
           });
         }
       },
@@ -364,6 +435,7 @@ export const SignTypedData = ({
   };
 
   const handleCancel = () => {
+    security.invalidate();
     report('cancelSignText');
     rejectApproval('User rejected the request.');
   };
@@ -372,7 +444,7 @@ export const SignTypedData = ({
   const invokeEnterPassphrase = useEnterPassphraseModal('address');
 
   const handleAllow = async () => {
-    if (activeApprovalPopup()) {
+    if (isWatch || !security.canSubmit() || activeApprovalPopup()) {
       return;
     }
 
@@ -380,6 +452,8 @@ export const SignTypedData = ({
       await invokeEnterPassphrase(currentAccount.address);
     }
 
+    if (!security.canSubmit()) return;
+    if (!(await getApproval()) || !security.canSubmit()) return;
     if (isGnosisAccount) {
       setDrawerVisible(true);
       return;
@@ -467,8 +541,10 @@ export const SignTypedData = ({
   const init = async () => {};
 
   const getRequireData = async (data: ParsedTypedDataActionData) => {
-    if (params.session.origin !== INTERNAL_REQUEST_ORIGIN) {
-      const site = await dappService.getDapp(params.session.origin);
+    if (requestChainId) {
+      data.chainId = requestChainId.toString();
+    } else if (params.session.origin !== INTERNAL_REQUEST_ORIGIN) {
+      const site = await dappServiceApi.getDapp(params.session.origin);
       if (site) {
         data.chainId = findChain({
           enum: site.chainId,
@@ -490,12 +566,14 @@ export const SignTypedData = ({
       sender: currentAccount.address,
       chainId: chainServerId || CHAINS.ETH.serverId,
       walletProvider: {
+        ethRpc: apiProvider.requestETHRpc,
         hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
-        hasAddress: keyringService.hasAddress.bind(keyringService),
-        getWhitelist: async () => whitelistService.getWhitelist(),
-        isWhitelistEnabled: async () => whitelistService.isWhitelistEnabled(),
+        hasAddress: address => keyringServiceApi.hasAddress(address),
+        getWhitelist: async () => whitelistServiceApi.getWhitelist(),
+        isWhitelistEnabled: async () =>
+          whitelistServiceApi.isWhitelistEnabled(),
         getPendingTxsByNonce: async (...args) =>
-          transactionHistoryService.getPendingTxsByNonce(...args),
+          transactionHistoryServiceApi.getPendingTxsByNonce(...args),
         findChain,
         ALIAS_ADDRESS,
       },
@@ -505,7 +583,15 @@ export const SignTypedData = ({
     return requireData;
   };
 
-  const getSecurityEngineResult = async ({
+  const withOriginFallback = (ctx: ContextActionData) =>
+    addSignMessageOriginFallback(ctx, {
+      isUnparsedAction,
+      isInternalOrigin: params.session.origin === INTERNAL_REQUEST_ORIGIN,
+      message: parsedMessage,
+      origin: params.session.origin,
+    });
+
+  const getSecurityEngineContext = async ({
     data,
     requireData,
   }: {
@@ -518,7 +604,7 @@ export const SignTypedData = ({
         id: Number(data.chainId),
       })?.serverId;
     }
-    const ctx = await formatSecurityEngineContext({
+    const baseCtx = await formatSecurityEngineContext({
       type: 'typed_data',
       actionData: data,
       requireData,
@@ -526,62 +612,49 @@ export const SignTypedData = ({
       isTestnet: isTestnetChainId(data.chainId),
       provider: {
         getTimeSpan,
-        hasAddress: keyringService.hasAddress.bind(keyringService),
+        hasAddress: address => keyringServiceApi.hasAddress(address),
       },
       origin: params.session.origin,
     });
-    const result = await executeEngine(ctx);
-    return result;
-  };
-
-  const executeSecurityEngine = async () => {
-    if (!parsedActionData) {
-      return;
-    }
-    let chainServerId: string | undefined;
-    if (parsedActionData.chainId) {
-      chainServerId = findChain({
-        id: Number(parsedActionData.chainId),
-      })?.serverId;
-    }
-    const ctx = await formatSecurityEngineContext({
-      type: 'typed_data',
-      actionData: parsedActionData,
-      requireData: actionRequireData,
-      chainId: chainServerId || CHAINS.ETH.serverId,
-      isTestnet: isTestnetChainId(parsedActionData.chainId),
-      provider: {
-        getTimeSpan,
-        hasAddress: keyringService.hasAddress.bind(keyringService),
-      },
-      origin: params.session.origin,
-    });
-    const result = await executeEngine(ctx);
-    setEngineResults(result);
+    return withOriginFallback(baseCtx);
   };
 
   const handleIgnoreAllRules = () => {
-    apiApprovalSecurityEngine.processAllRules(
-      engineResults.map(result => result.id),
-    );
+    if (!security.ready) return;
+    apiApprovalSecurityEngine.processAllRules([
+      ...currentTx.processedRules,
+      ...security.pendingRuleKeys,
+    ]);
   };
 
   const handleIgnoreRule = (id: string) => {
-    apiApprovalSecurityEngine.processRule(id);
+    apiApprovalSecurityEngine.processRule(
+      id,
+      currentTx.ruleDrawer.selectRule?.scope,
+    );
     apiApprovalSecurityEngine.closeRuleDrawer();
   };
 
   const handleUndoIgnore = (id: string) => {
-    apiApprovalSecurityEngine.unProcessRule(id);
+    apiApprovalSecurityEngine.unProcessRule(
+      id,
+      currentTx.ruleDrawer.selectRule?.scope,
+    );
     apiApprovalSecurityEngine.closeRuleDrawer();
   };
 
   const handleRuleEnableStatusChange = async (id: string, value: boolean) => {
-    if (currentTx.processedRules.includes(id)) {
-      apiApprovalSecurityEngine.unProcessRule(id);
+    security.invalidate();
+    apiApprovalSecurityEngine.unProcessRule(
+      id,
+      currentTx.ruleDrawer.selectRule?.scope,
+    );
+    try {
+      await apiSecurityEngine.ruleEnableStatusChange(id, value);
+      await apiApprovalSecurityEngine.init();
+    } finally {
+      security.retry();
     }
-    await apiSecurityEngine.ruleEnableStatusChange(id, value);
-    apiApprovalSecurityEngine.init();
   };
 
   const handleRuleDrawerClose = (update: boolean) => {
@@ -602,6 +675,7 @@ export const SignTypedData = ({
   };
 
   const handleGnosisSign = async () => {
+    if (!security.canSubmit()) return;
     const account = currentGnosisAdmin;
     const signTypedData = rawMessage;
     if (!safeInfo || !account || !signTypedData) {
@@ -629,6 +703,8 @@ export const SignTypedData = ({
       );
     }
 
+    if (!security.canSubmit()) return;
+    if (!(await getApproval()) || !security.canSubmit()) return;
     const typedData = generateTypedData({
       safeAddress: safeInfo.address,
       safeVersion: safeInfo.version,
@@ -673,56 +749,27 @@ export const SignTypedData = ({
   };
 
   useEffect(() => {
-    executeSecurityEngine();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rules]);
-
-  useEffect(() => {
-    const sender = isSignTypedDataV1 ? params.data[1] : params.data[0];
-    if (!loading) {
-      console.log('typedDataActionData', typedDataActionData);
-      if (typedDataActionData) {
-        if (typedDataActionData?.action?.type === 'multi_actions') {
-          const actions = typedDataActionData.action.data as MultiAction;
-          const res = actions.map(action =>
-            parseAction({
-              type: 'typed_data',
-              data: action as TypeDataActionItem,
-              typedData: signTypedData,
-              sender,
-              balanceChange:
-                typedDataActionData.pre_exec_result?.balance_change,
-              preExecVersion:
-                typedDataActionData.pre_exec_result?.pre_exec_version,
-              gasUsed: typedDataActionData.pre_exec_result?.gas.gas_used,
-            }),
-          );
-          setMultiActionList(res);
-          Promise.all(
-            res.map(item => {
-              if (!item.contractId) {
-                item.contractId =
-                  typedDataActionData.contract_call_data?.contract.id;
-              }
-              return getRequireData(item);
-            }),
-          ).then(async requireDataList => {
-            setMultiActionRequireDataList(requireDataList);
-            const results = await Promise.all(
-              requireDataList.map((requireData, index) => {
-                return getSecurityEngineResult({
-                  data: res[index],
-                  requireData,
-                });
-              }),
-            );
-            setMultiActionEngineResultList(results);
-            setIsLoading(false);
-          });
-        } else {
-          const parsed = parseAction({
+    let cancelled = false;
+    setPreparedActions(null);
+    setPreparationError(false);
+    if (loading || error || parsedResponse?.requestKey !== requestKey) return;
+    const prepare = async () => {
+      const sender = isSignTypedDataV1 ? params.data[1] : params.data[0];
+      if (!typedDataActionData) {
+        setPreparedActions({ requestKey, type: 'single', actions: [] });
+        return;
+      }
+      const multi = typedDataActionData.action?.type === 'multi_actions';
+      const actionsToParse = multi
+        ? (typedDataActionData.action!.data as MultiAction)
+        : [typedDataActionData.action];
+      if (!actionsToParse.length)
+        throw new Error('Empty typed-data action batch');
+      const actions = await Promise.all(
+        actionsToParse.map(async action => {
+          const data = parseAction({
             type: 'typed_data',
-            data: typedDataActionData.action as any,
+            data: action as TypeDataActionItem,
             typedData: signTypedData,
             sender,
             balanceChange: typedDataActionData.pre_exec_result?.balance_change,
@@ -730,27 +777,29 @@ export const SignTypedData = ({
               typedDataActionData.pre_exec_result?.pre_exec_version,
             gasUsed: typedDataActionData.pre_exec_result?.gas.gas_used,
           });
-          setParsedActionData(parsed);
-          if (!parsed.contractId) {
-            parsed.contractId =
+          if (!data.contractId)
+            data.contractId =
               typedDataActionData.contract_call_data?.contract.id;
-          }
-          getRequireData(parsed).then(async requireData => {
-            setActionRequireData(requireData);
-            const securityEngineResult = await getSecurityEngineResult({
-              data: parsed,
-              requireData,
-            });
-            setEngineResults(securityEngineResult);
-            setIsLoading(false);
-          });
-        }
-      } else {
-        setIsLoading(false);
-      }
-    }
+          const requireData = await getRequireData(data);
+          const ctx = await getSecurityEngineContext({ data, requireData });
+          return { data, requireData, ctx };
+        }),
+      );
+      if (!cancelled)
+        setPreparedActions({
+          requestKey,
+          type: multi ? 'multi' : 'single',
+          actions,
+        });
+    };
+    prepare().catch(() => {
+      if (!cancelled) setPreparationError(true);
+    });
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, typedDataActionData, signTypedData, params, isSignTypedDataV1]);
+  }, [loading, error, parsedResponse, requestKey, signTypedData]);
 
   useEffect(() => {
     init();
@@ -760,119 +809,137 @@ export const SignTypedData = ({
   }, []);
 
   return (
-    <View style={styles.wrapper}>
-      <BottomSheetScrollView style={styles.approvalTx} nestedScrollEnabled>
-        {isLoading && (
-          <Skeleton
-            style={{
-              width: '100%',
-              height: 400,
-            }}
-          />
-        )}
-        {!isLoading && (
-          <Actions
-            account={currentAccount}
-            data={parsedActionData}
-            requireData={actionRequireData}
-            chain={chain}
-            engineResults={engineResults}
-            raw={isSignTypedDataV1 ? data[0] : signTypedData || data[1]}
-            message={parsedMessage}
-            origin={params.session.origin}
-            originLogo={site?.icon}
-            typedDataActionData={typedDataActionData}
-            multiAction={
-              isMultiActions
-                ? {
-                    actionList: multiActionList,
-                    requireDataList: multiActionRequireDataList,
-                    engineResultList: multiActionEngineResultList,
-                  }
+    <SecurityEngineScopeProvider scope={security.securityScopes[0]}>
+      <SignMessageTagProvider style={styles.wrapper}>
+        <BottomSheetScrollView
+          style={styles.approvalTx}
+          nestedScrollEnabled
+          onLayout={event =>
+            setApprovalViewportHeight(event.nativeEvent.layout.height)
+          }>
+          {isLoading && (
+            <Skeleton
+              style={{
+                width: '100%',
+                height: 400,
+              }}
+            />
+          )}
+          {securityCheckFailed && (
+            <SecurityEngineError onRetry={retrySecurityCheck} />
+          )}
+          {!isLoading && !securityCheckFailed && (
+            <Actions
+              account={currentAccount}
+              data={parsedActionData}
+              requireData={actionRequireData}
+              chain={resolvedAddressChain || CHAINS.ETH}
+              engineResults={engineResults}
+              raw={isSignTypedDataV1 ? data[0] : signTypedData || data[1]}
+              copyMessage={
+                isSignTypedDataV1 ? JSON.stringify(data[0]) : data[1]
+              }
+              message={parsedMessage}
+              messageTokens={messageTokens}
+              addressData={addressData}
+              origin={params.session.origin}
+              originLogo={site?.icon}
+              typedDataActionData={typedDataActionData}
+              approvalViewportHeight={approvalViewportHeight}
+              multiAction={
+                isMultiActions
+                  ? {
+                      actionList: multiActionList,
+                      requireDataList: multiActionRequireDataList,
+                      engineResultList: multiActionEngineResultList,
+                      securityScopes: security.securityScopes,
+                    }
+                  : undefined
+              }
+            />
+          )}
+          {chain?.isTestnet ? (
+            <TestnetTag
+              style={{
+                right: 0,
+                top: 320,
+              }}
+            />
+          ) : null}
+        </BottomSheetScrollView>
+
+        {isGnosisAccount && safeInfo ? (
+          <GnosisDrawer
+            visible={drawerVisible}
+            safeInfo={safeInfo}
+            onCancel={handleDrawerCancel}
+            onConfirm={handleGnosisConfirm}
+            confirmations={
+              isGnosisAccount
+                ? currentSafeMessage?.safeMessage?.confirmations || []
                 : undefined
             }
           />
-        )}
-        {chain?.isTestnet ? (
-          <TestnetTag
-            style={{
-              right: 0,
-              top: 320,
-            }}
-          />
         ) : null}
-      </BottomSheetScrollView>
+        {isGnosisAccount && safeInfo && currentGnosisAdmin && (
+          <GnosisAdminFooterBarPopup
+            visible={gnosisFooterBarVisible}
+            origin={params.session.origin}
+            originLogo={site?.icon}
+            // chain={chain}
+            gnosisAccount={currentGnosisAdmin}
+            account={currentGnosisAdmin}
+            onCancel={() => {
+              setGnosisFooterBarVisible(false);
+              handleCancel();
+            }}
+            securityLevel={securityLevel}
+            hasUnProcessSecurityResult={hasUnProcessSecurityResult}
+            securityBlocked={securityBlocked}
+            onSubmit={handleGnosisSign}
+            enableTooltip={
+              currentGnosisAdmin?.type === KEYRING_TYPE.WatchAddressKeyring
+            }
+            tooltipContent={
+              currentGnosisAdmin?.type === KEYRING_TYPE.WatchAddressKeyring ? (
+                <Text>{t('page.signTx.canOnlyUseImportedAddress')}</Text>
+              ) : null
+            }
+            disabledProcess={
+              currentGnosisAdmin?.type === KEYRING_TYPE.WatchAddressKeyring
+            }
+            // isSubmitting={isSubmittingGnosis}
+            onIgnoreAllRules={handleIgnoreAllRules}
+          />
+        )}
 
-      {isGnosisAccount && safeInfo ? (
-        <GnosisDrawer
-          visible={drawerVisible}
-          safeInfo={safeInfo}
-          onCancel={handleDrawerCancel}
-          onConfirm={handleGnosisConfirm}
-          confirmations={
-            isGnosisAccount
-              ? currentSafeMessage?.safeMessage?.confirmations || []
-              : undefined
-          }
-        />
-      ) : null}
-      {isGnosisAccount && safeInfo && currentGnosisAdmin && (
-        <GnosisAdminFooterBarPopup
-          visible={gnosisFooterBarVisible}
+        <FooterBar
+          hasShadow={footerShowShadow}
           origin={params.session.origin}
           originLogo={site?.icon}
-          // chain={chain}
-          gnosisAccount={currentGnosisAdmin}
-          account={currentGnosisAdmin}
-          onCancel={() => {
-            setGnosisFooterBarVisible(false);
-            handleCancel();
-          }}
-          // securityLevel={securityLevel}
-          // hasUnProcessSecurityResult={hasUnProcessSecurityResult}
-          onSubmit={handleGnosisSign}
-          enableTooltip={
-            currentGnosisAdmin?.type === KEYRING_TYPE.WatchAddressKeyring
-          }
-          tooltipContent={
-            currentGnosisAdmin?.type === KEYRING_TYPE.WatchAddressKeyring ? (
-              <Text>{t('page.signTx.canOnlyUseImportedAddress')}</Text>
-            ) : null
-          }
-          disabledProcess={
-            currentGnosisAdmin?.type === KEYRING_TYPE.WatchAddressKeyring
-          }
-          // isSubmitting={isSubmittingGnosis}
+          chain={chain}
+          gnosisAccount={isGnosis ? params.account : undefined}
+          account={currentAccount}
+          onCancel={handleCancel}
+          securityLevel={securityLevel}
+          securityBlocked={securityBlocked}
+          hasUnProcessSecurityResult={hasUnProcessSecurityResult}
+          onSubmit={() => handleAllow()}
+          enableTooltip={isWatch}
+          tooltipContent={cantProcessReason}
+          disabledProcess={isWatch || securityBlocked}
+          isTestnet={chain?.isTestnet}
           onIgnoreAllRules={handleIgnoreAllRules}
         />
-      )}
-
-      <FooterBar
-        hasShadow={footerShowShadow}
-        origin={params.session.origin}
-        originLogo={site?.icon}
-        chain={chain}
-        gnosisAccount={isGnosis ? params.account : undefined}
-        account={currentAccount}
-        onCancel={handleCancel}
-        securityLevel={securityLevel}
-        hasUnProcessSecurityResult={hasUnProcessSecurityResult}
-        onSubmit={() => handleAllow()}
-        enableTooltip={isWatch}
-        tooltipContent={cantProcessReason}
-        disabledProcess={isLoading || isWatch || hasUnProcessSecurityResult}
-        isTestnet={chain?.isTestnet}
-        onIgnoreAllRules={handleIgnoreAllRules}
-      />
-      <RuleDrawer
-        selectRule={currentTx.ruleDrawer.selectRule}
-        visible={currentTx.ruleDrawer.visible}
-        onIgnore={handleIgnoreRule}
-        onUndo={handleUndoIgnore}
-        onRuleEnableStatusChange={handleRuleEnableStatusChange}
-        onClose={handleRuleDrawerClose}
-      />
-      {/* <TokenDetailPopup
+        <RuleDrawer
+          selectRule={currentTx.ruleDrawer.selectRule}
+          visible={currentTx.ruleDrawer.visible}
+          onIgnore={handleIgnoreRule}
+          onUndo={handleUndoIgnore}
+          onRuleEnableStatusChange={handleRuleEnableStatusChange}
+          onClose={handleRuleDrawerClose}
+        />
+        {/* <TokenDetailPopup
         token={tokenDetail.selectToken}
         visible={tokenDetail.popupVisible}
         onClose={() => dispatch.sign.closeTokenDetailPopup()}
@@ -881,21 +948,31 @@ export const SignTypedData = ({
         variant="add"
       /> */}
 
-      <GnosisSameMessageModal
-        visible={sameMessageState.visible}
-        onCancel={() => {
-          setSameMessageState({
-            visible: false,
-          });
-          rejectApproval('');
-        }}
-        onConfirm={() => {
-          setSameMessageState({
-            visible: false,
-          });
-          resolveApproval(sameMessageState.preparedSignature);
-        }}
-      />
-    </View>
+        <GnosisSameMessageModal
+          visible={
+            sameMessageState.visible &&
+            sameMessageState.requestKey === requestKey &&
+            !securityBlocked
+          }
+          onCancel={() => {
+            setSameMessageState({
+              visible: false,
+            });
+            rejectApproval('');
+          }}
+          onConfirm={() => {
+            if (
+              !security.canSubmit() ||
+              sameMessageState.requestKey !== requestKey
+            )
+              return;
+            setSameMessageState({
+              visible: false,
+            });
+            resolveApproval(sameMessageState.preparedSignature);
+          }}
+        />
+      </SignMessageTagProvider>
+    </SecurityEngineScopeProvider>
   );
 };

@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 
 const MAKE_DEFAULT_MOCK_DATA = () => ({
   forceShowOffchainNotify: false,
+  forceShowDepositAssetsCard: false,
 });
 
 // const homeCenterAreaMockData = atom({ ...MAKE_DEFAULT_MOCK_DATA() });

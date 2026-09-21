@@ -5,14 +5,13 @@ import type {
   RouteProp,
 } from '@react-navigation/native';
 
-import { KeyringAccountWithAlias } from '@/hooks/account';
+import type { Account, KeyringAccountWithAlias } from '@/types/account';
 import {} from '@react-navigation/bottom-tabs';
 
 import type { RootNames } from './constant/layout';
 import type { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import type { Chain, CHAINS_ENUM } from './constant/chains';
 import type {
-  CopyTradeTokenItemV2,
   NFTItem,
   SendAction,
   TokenItem,
@@ -23,16 +22,15 @@ import type {
   AbstractProject,
 } from './screens/Home/types';
 import type { DappInfo } from './core/services/dappService';
-import type { HistoryDisplayItem } from './screens/Transaction/MultiAddressHistory';
+import type { HistoryDisplayItem } from './types/history';
 import type { TransactionGroup } from './core/services/transactionHistory';
-import { Account } from './core/services/preference';
 import {
   ApprovalSpenderItemToBeRevoked,
   AssetApprovalSpender,
 } from './screens/Approvals/useApprovalsPage';
-import { HistoryItemCateType } from './screens/Transaction/components/type';
+import { HistoryItemCateType } from './types/history';
 import type { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
-import { ITokenItem } from './store/tokens';
+import type { ITokenItem } from './types/assets';
 
 /**
  * Learn more about using TypeScript with React Navigation:
@@ -46,6 +44,24 @@ export type FromSceneParam = {
   symbol?: string;
 };
 
+export type SwapBridgeTab = 'swap' | 'bridge';
+
+export type SwapBridgeParams = {
+  activeTab?: SwapBridgeTab;
+  chainEnum?: CHAINS_ENUM | undefined;
+  tokenId?: TokenItem['id'];
+  type?: 'Buy' | 'Sell';
+  address?: string;
+  swapAgain?: boolean;
+  swapTokenId?: TokenItem['id'][];
+  isSwapToTokenDetail?: boolean;
+  isFromSwap?: boolean;
+  isFromCopyTrading?: boolean;
+  from?: FromSceneParam;
+  toChainEnum?: CHAINS_ENUM;
+  toTokenId?: TokenItem['id'];
+};
+
 export type RootStackParamsList = {
   [RootNames.StackRoot]?: NavigatorScreenParams<HomeNavigatorParamsList>;
   [RootNames.StackHomeNonTab]?: NavigatorScreenParams<HomeNonTabNavigatorParamsList>;
@@ -53,7 +69,13 @@ export type RootStackParamsList = {
   [RootNames.NotFound]?: {};
   [RootNames.Unlock]?: {
     disableAutoTriggerUnlock?: boolean;
+    allowCancel?: boolean;
+    unlockRequestId?: number;
   };
+  SetupWallet?:
+    | { seedPhraseVaultId: string }
+    | { privateKeyVaultId: string }
+    | undefined;
   [RootNames.AccountTransaction]: NavigatorScreenParams<AccountNavigatorParamList>;
   [RootNames.StackSettings]: NavigatorScreenParams<SettingNavigatorParamList>;
   [RootNames.StackTransaction]: NavigatorScreenParams<TransactionNavigatorParamList>;
@@ -73,6 +95,21 @@ export type RootStackParamsList = {
   };
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;
+  [RootNames.SelectImportMethod]?: {};
+  [RootNames.ImportRabbyWallet]?: {
+    flow?: 'onboarding' | 'in_app';
+  };
+  [RootNames.ImportSecret]?: {
+    initialTab?: 'seedPhrase' | 'privateKey';
+    flow?: 'onboarding' | 'in_app';
+  };
+  [RootNames.SelectAddMethod]?: {};
+  [RootNames.MoreImportMethods]?: {};
+  [RootNames.Backup]?: {
+    address?: string;
+    type?: string;
+    brandName?: string;
+  };
   [RootNames.TokenDetail]: {
     token: ITokenItem;
     fromPortfolio?: boolean;
@@ -82,6 +119,7 @@ export type RootStackParamsList = {
     rawPortfolios?: AbstractProject[]; // only for single address
     unHold?: boolean;
     isSwapToTokenDetail?: boolean;
+    isCustomTestnetToken?: boolean;
     tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
   };
   [RootNames.TokenMarketInfo]: {
@@ -133,21 +171,36 @@ export type BrowserNavigatorParamsList = {
 
 type GetStartedNavigatorParamsList = {
   [RootNames.GetStarted]?: {};
-  [RootNames.GetStartedScreen2024]?: {};
 };
 
 type TestKitsNavigatorParamsList = {
-  [RootNames.NewUserGetStarted2024]?: {};
   [RootNames.DevUIFontShowCase]?: {};
   [RootNames.DevUIFormShowCase]?: {};
   [RootNames.DevUIAccountShowCase]?: {};
+  [RootNames.DevUIComponents2024ShowCase]?: {};
   [RootNames.DevUIScreenContainerShowCase]?: {};
   [RootNames.DevUIDapps]?: {};
   [RootNames.DevDataSQLite]?: {};
+  [RootNames.DevWatchAddressFixtureImport]?: {};
+  [RootNames.DevDataKeychain]?: {
+    keychainVersion?: import('@/core/apis/keychainVersionShared').CurrentKeychainVersion;
+  };
+  [RootNames.DevDataKeyringVault]?: {};
+  [RootNames.DevDataContactService]?: {};
+  [RootNames.DevDataWhitelist]?: {};
   [RootNames.DevUIBuiltInPages]?: {};
   [RootNames.DevUIPermissions]?: {};
-  [RootNames.DevSwitches]?: {};
+  [RootNames.DevUIWalletConnect]?: {};
+  [RootNames.DevCapabilityFile]?: {
+    tab?: 'overview' | 'debug';
+  };
+  [RootNames.DevSwitches]?: {
+    appLaunchLock?: boolean;
+  };
   [RootNames.DevPerf]?: {};
+  [RootNames.DebugLogViewer]?: {};
+  [RootNames.StartupPerformanceLogViewer]?: {};
+  [RootNames.InMemoryLogViewer]?: {};
 };
 
 export type AddressNavigatorParamList = {
@@ -220,6 +273,7 @@ export type AddressNavigatorParamList = {
     keyringId?: number;
     alias?: string;
     isExistedKR?: boolean;
+    showBackup?: boolean;
   };
   [RootNames.ImportWatchAddress]?: {};
   [RootNames.ImportSafeAddress]?: {};
@@ -288,6 +342,7 @@ export type TransactionNavigatorParamList = {
      * @default false
      */
     treatSmallAssetsAsScam?: boolean;
+    account?: Account | null;
   };
   [RootNames.HistoryLocalDetail]: {
     data: TransactionGroup;
@@ -297,6 +352,7 @@ export type TransactionNavigatorParamList = {
     type?: HistoryItemCateType;
     onPressAddToWhitelistButton?: (data: SendAction) => void;
     isInSendHistory?: boolean;
+    account?: Account | null;
   };
   [RootNames.Send]?:
     | {
@@ -305,12 +361,14 @@ export type TransactionNavigatorParamList = {
         toAddress?: string;
         addressBrandName?: string;
         addrDesc?: AddrDescResponse['desc'];
+        regressionRunId?: string;
       }
     | {
         safeInfo: { nonce: number; chainId: number };
         toAddress?: string;
         addressBrandName?: string;
         addrDesc?: AddrDescResponse['desc'];
+        regressionRunId?: string;
       };
   [RootNames.MultiSend]?: TransactionNavigatorParamList['Send'] & object;
   [RootNames.SendNFT]: {
@@ -322,19 +380,8 @@ export type TransactionNavigatorParamList = {
     addressBrandName?: string;
     addrDesc?: AddrDescResponse['desc'];
   };
-  [RootNames.Swap]?: {
-    chainEnum?: CHAINS_ENUM | undefined;
-    tokenId?: TokenItem['id'];
-    type?: 'Buy' | 'Sell';
-    address?: string;
-    swapAgain?: boolean;
-    swapTokenId?: TokenItem['id'][];
-    isSwapToTokenDetail?: boolean;
-    isFromSwap?: boolean;
-    isFromCopyTrading?: boolean;
-    from?: FromSceneParam;
-  };
-  [RootNames.MultiSwap]?: TransactionNavigatorParamList['Swap'] & object;
+  [RootNames.SwapBridge]?: SwapBridgeParams;
+  [RootNames.MultiSwapBridge]?: SwapBridgeParams & object;
   [RootNames.GnosisTransactionQueue]: {
     account: Account;
   };
@@ -346,13 +393,10 @@ export type TransactionNavigatorParamList = {
   [RootNames.Approvals]: {
     account: Account;
   };
-  [RootNames.Bridge]?: {
-    chainEnum?: CHAINS_ENUM | undefined;
-    tokenId?: TokenItem['id'];
-    toChainEnum?: CHAINS_ENUM;
-    toTokenId?: TokenItem['id'];
+  [RootNames.ConvertDust]?: {
+    disableAccountSwitch?: boolean;
+    fromHomeConvertDustBanner?: boolean;
   };
-  [RootNames.MultiBridge]?: TransactionNavigatorParamList['Bridge'] & object;
   [RootNames.GasAccount]?: {};
   [RootNames.BatchRevoke]: {
     revokeList: ApprovalSpenderItemToBeRevoked[];
@@ -364,20 +408,39 @@ export type TransactionNavigatorParamList = {
     account?: KeyringAccountWithAlias;
     fromName?: string;
     dappId?: string;
+    market?: string;
+    marketCandidates?: string[];
+    /** set when this screen is the underlay pushed beneath the market detail page */
+    fromSource?: 'homePagePositionList';
   };
   [RootNames.PerpsMarketList]?: {};
   [RootNames.PerpsHistory]?: {
     coin?: string;
   };
+  [RootNames.PerpsProHistory]?: {
+    initialTab?: 'orders' | 'trade' | 'transaction' | 'funding';
+  };
   [RootNames.PerpsMarketDetail]: {
     market: string;
-    fromSource?: 'homePagePositionList' | 'openPosition' | '';
+    fromSource?:
+      | 'homePagePositionList'
+      | 'openPosition'
+      | 'marketDetail'
+      | 'searchPerps'
+      | '';
     showOpenPosition?: boolean;
     direction?: 'Long' | 'Short';
+  };
+  [RootNames.PerpsSearch]?: {
+    initialTab?: string;
+    openFromSource?: 'openPosition' | 'searchPerps' | 'marketDetail';
+    direction?: 'Long' | 'Short';
+    autoFocus?: boolean;
   };
   [RootNames.Lending]?: {
     tokenAddress?: string;
     direction?: 'supply' | 'borrow';
+    source?: string;
     account?: KeyringAccountWithAlias;
     dappId?: string;
   };
@@ -389,6 +452,7 @@ export type SettingNavigatorParamList = {
     // enterActionType?: 'setBiometrics' | 'setAutoLockExpireTime';
   };
   [RootNames.ProviderControllerTester]?: {};
+  [RootNames.WalletConnect]?: {};
   [RootNames.SetPassword]?:
     | {
         actionAfterSetup: 'backScreen';
@@ -405,7 +469,11 @@ export type SettingNavigatorParamList = {
     | {
         actionAfterSetup: 'testkits:fromSettings';
         // actionType: (SettingNavigatorParamList['Settings'] & object)['enterActionType'];
-        actionType: 'setBiometrics' | 'setAutoLockExpireTime';
+        actionType:
+          | 'setBiometrics'
+          | 'setAutoLockExpireTime'
+          | 'setAppLaunchLock'
+          | 'lockWallet';
       };
   [RootNames.SetBiometricsAuthentication]: {};
   [RootNames.CustomTestnet]?: {};

@@ -64,7 +64,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     backgroundColor: colors2024['neutral-bg-2'],
     padding: 16,
-    borderRadius: 30,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: colors2024['neutral-bg-2'],
     overflow: 'hidden',

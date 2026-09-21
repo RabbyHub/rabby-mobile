@@ -20,7 +20,7 @@ import { makeDebugBorder } from '@/utils/styles';
 
 export const ConnectOneKey: React.FC<{
   onDone?: () => void;
-  onSelectDeviceId?: (id: string) => void;
+  onSelectDeviceId?: (id: string) => void | Promise<void>;
   deviceId?: string;
 }> = ({ onDone, onSelectDeviceId, deviceId }) => {
   const [_2, setSetting] = useAtom(settingAtom);
@@ -81,10 +81,10 @@ export const ConnectOneKey: React.FC<{
 
   const handleSelectDevice = React.useCallback(
     async ({ id }) => {
-      apiOneKey.setDeviceConnectId(id);
+      await apiOneKey.setDeviceConnectId(id);
 
       if (onSelectDeviceId) {
-        onSelectDeviceId(id);
+        await onSelectDeviceId(id);
         return;
       }
 

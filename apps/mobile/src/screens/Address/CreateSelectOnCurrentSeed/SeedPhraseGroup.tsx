@@ -10,11 +10,10 @@ import { useTheme2024 } from '@/hooks/theme';
 import { TypeKeyringGroup } from '@/hooks/useWalletTypeData';
 import { Button } from '@/components2024/Button';
 import { useTranslation } from 'react-i18next';
-import { default as RcIconCreateSeed } from '@/assets2024/icons/common/IconAddCreate.svg';
+import AddAddressIcon from '@/assets2024/icons/common/add-address.svg';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import IcRightArrow from '@/assets2024/icons/common/IcRightArrow.svg';
 import { useCallback, useMemo, useState } from 'react';
-import { useCurrency } from '@/hooks/useCurrency';
 import BigNumber from 'bignumber.js';
 import { splitNumberByStep } from '@/utils/number';
 import { Text } from '@/components/Typography';
@@ -33,20 +32,18 @@ export const SeedPhraseGroup: React.FC<Props> = ({
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const { currency } = useCurrency();
 
   const allAddrBalance = (data?.list || []).reduce((pre, now) => {
     return pre.plus(now.balance);
   }, new BigNumber(0));
 
   const totalValue = useMemo(() => {
-    const b = allAddrBalance.times(currency.usd_rate);
-    return `${currency.symbol}${splitNumberByStep(
-      b.isGreaterThan(10)
-        ? b.decimalPlaces(0, BigNumber.ROUND_FLOOR).toString()
-        : b.toFixed(2),
+    return `$${splitNumberByStep(
+      allAddrBalance.isGreaterThan(10)
+        ? allAddrBalance.decimalPlaces(0, BigNumber.ROUND_FLOOR).toString()
+        : allAddrBalance.toFixed(2),
     )}`;
-  }, [allAddrBalance, currency.symbol, currency.usd_rate]);
+  }, [allAddrBalance]);
 
   const [isFold, setFold] = useState(false);
 
@@ -102,7 +99,9 @@ export const SeedPhraseGroup: React.FC<Props> = ({
                 onPress={() => {
                   setShowMoreWallet(e => !e);
                 }}>
-                <Text style={styles.moreText}>More wallet</Text>
+                <Text style={styles.moreText}>
+                  {t('page.manageAddress.moreWallets')}
+                </Text>
                 <IcRightArrow style={styles.moreTextArrow} />
               </TouchableOpacity>
             )}
@@ -118,10 +117,10 @@ export const SeedPhraseGroup: React.FC<Props> = ({
               titleStyle={styles.buttonText}
               title={t('page.manageAddress.add-address')}
               icon={
-                <RcIconCreateSeed
-                  color={colors2024['blue-default']}
-                  width={20}
-                  height={20}
+                <AddAddressIcon
+                  color={colors2024['brand-default']}
+                  width={24}
+                  height={24}
                 />
               }
             />
@@ -228,14 +227,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   button: {
     backgroundColor: colors2024['brand-light-1'],
-    height: 42,
+    height: 48,
+    borderRadius: 12,
   },
   buttonText: {
     color: colors2024['brand-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
-    lineHeight: 20,
     textAlign: 'left',
   },
 }));

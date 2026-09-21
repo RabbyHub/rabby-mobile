@@ -7,22 +7,53 @@ import {
   KeyringIntf,
 } from '@rabby-wallet/keyring-utils';
 import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
+import { Platform } from 'react-native';
 import * as Sentry from '@sentry/react-native';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import { KeyringEventAccount } from '@rabby-wallet/service-keyring';
 
-import { IDisplayedAccountWithBalance } from '@/hooks/accountToDisplay';
-import { contactService, keyringService, preferenceService } from '../services';
-import balanceStore from '@/store/balance';
+import {
+  getContactAliasMapSnapshot,
+  getContactAliasSnapshot,
+} from '../serviceApi/contact';
+import {
+  getPublicAccountSnapshotAccounts,
+  keyringServiceApi,
+} from '../serviceApi/keyring';
+import { getPinnedAddressSnapshot } from '../serviceApi/preference';
+import addressBalanceStore from '@/store/balance';
 
 import { getAddressCacheBalance } from './balance';
 import { requestKeyring } from './keyring';
 import { isEqual } from 'lodash';
-import { type IPinAddress, type Account } from '../services/preference';
+import type {
+  Account,
+  IDisplayedAccountWithBalance,
+  IPinAddress,
+  KeyringAccountWithAlias,
+} from '@/types/account';
 import { makeAvoidParallelAsyncFunc } from '../utils/concurrency';
 
 import BigNumber from 'bignumber.js';
-import { makeJsEEClass } from '@/core/services/_utils';
+import { logger } from '@/utils/logger';
+import { isNonProductionDiagnosticsEnabled } from '../utils/diagnosticEnv';
+import { markStartupPerf } from '../utils/startupPerfMarks';
+
+const isAndroid = Platform.OS === 'android';
+
+function traceAndroidUnlockAccountPerf(
+  event: string,
+  data: Record<string, unknown> = {},
+) {
+  if (!isAndroid || !isNonProductionDiagnosticsEnabled) {
+    return;
+  }
+
+  logger.info(`[RabbyUnlockPerf:account] ${event}`, data);
+}
+
+function getTraceErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
+}
 
 function ensureDisplayKeyring(keyring: KeyringIntf | DisplayKeyring) {
   if (keyring instanceof DisplayKeyring) {
@@ -33,12 +64,31 @@ function ensureDisplayKeyring(keyring: KeyringIntf | DisplayKeyring) {
 }
 
 export async function hasVisibleAccounts() {
-  const restAccountsCount = await keyringService.getCountOfAccountsInKeyring();
-  return restAccountsCount > 0;
+  const startedAt = Date.now();
+
+  traceAndroidUnlockAccountPerf('has_visible_accounts_start');
+
+  try {
+    const restAccountsCount =
+      await keyringServiceApi.getCountOfAccountsInKeyring();
+
+    traceAndroidUnlockAccountPerf('has_visible_accounts_end', {
+      elapsedMs: Date.now() - startedAt,
+      count: restAccountsCount,
+    });
+
+    return restAccountsCount > 0;
+  } catch (error) {
+    traceAndroidUnlockAccountPerf('has_visible_accounts_error', {
+      elapsedMs: Date.now() - startedAt,
+      error: getTraceErrorMessage(error),
+    });
+    throw error;
+  }
 }
 
 async function getAllVisibleAccounts(): Promise<DisplayedKeyring[]> {
-  const typedAccounts = await keyringService.getAllTypedVisibleAccounts();
+  const typedAccounts = await keyringServiceApi.getAllTypedVisibleAccounts();
 
   return typedAccounts.map(account => ({
     ...account,
@@ -49,7 +99,7 @@ async function getAllVisibleAccounts(): Promise<DisplayedKeyring[]> {
 export async function getAllAccountsToDisplay() {
   const [displayedKeyrings, allAliasNames] = await Promise.all([
     getAllVisibleAccounts(),
-    contactService.getAliasByMap(),
+    getContactAliasMapSnapshot(),
   ]);
 
   const result = await Promise.all(
@@ -65,6 +115,8 @@ export async function getAllAccountsToDisplay() {
               allAliasNames[account?.address?.toLowerCase()]?.alias || '',
             keyring: item.keyring,
             publicKey: item?.publicKey,
+            hasBackup: item.hasBackup,
+            needPassphrase: item.needPassphrase,
           } as IDisplayedAccountWithBalance;
         });
       })
@@ -75,6 +127,7 @@ export async function getAllAccountsToDisplay() {
         let accountInfo = {} as {
           hdPathBasePublicKey?: string;
           hdPathType?: string;
+          index?: number;
         };
 
         await Promise.allSettled([
@@ -98,8 +151,10 @@ export async function getAllAccountsToDisplay() {
         return {
           ...item,
           balance: balance?.total_usd_value || 0,
-          hdPathBasePublicKey: accountInfo?.hdPathBasePublicKey,
-          hdPathType: accountInfo?.hdPathType,
+          hdPathBasePublicKey:
+            accountInfo?.hdPathBasePublicKey ?? item.hdPathBasePublicKey,
+          hdPathType: accountInfo?.hdPathType ?? item.hdPathType,
+          hdPathIndex: accountInfo?.index ?? item.hdPathIndex,
         };
       }),
   );
@@ -107,53 +162,136 @@ export async function getAllAccountsToDisplay() {
   return result;
 }
 
-export type KeyringAccountWithAlias = KeyringAccount & {
-  aliasName?: string;
-  balance?: number;
-  evmBalance?: number;
-};
+export type { KeyringAccountWithAlias } from '@/types/account';
 
 /**
  * @description if new fetched accounts are same from the existing ones, return the existing ones
  * to keep same ref to avoid later re-renders on React Hooks
  */
 const existedAccountsRef = { current: [] as KeyringAccountWithAlias[] };
+const FETCH_ALL_ACCOUNTS_CACHE_TTL_MS = 2000;
+const fetchAllAccountsCacheRef = {
+  current: null as null | {
+    updatedAt: number;
+    accounts: KeyringAccountWithAlias[];
+  },
+};
+
+type FetchAllAccountsOptions = {
+  force?: boolean;
+};
+
+export function invalidateFetchAllAccountsCache() {
+  fetchAllAccountsCacheRef.current = null;
+}
+
 async function fetchAllAccountsProcess() {
   let nextAccounts: KeyringAccountWithAlias[] = [];
-  try {
-    const balanceMap = balanceStore.getState().balanceMap;
-    nextAccounts = await keyringService
-      .getAllVisibleAccountsArray()
-      .then(list => {
-        return list.map(account => {
-          const balance = balanceMap[account.address.toLowerCase()];
-          return {
-            ...account,
-            aliasName: '',
-            evmBalance: balance?.evmBalance || 0,
-            balance: balance?.totalBalance || 0,
-          };
-        });
-      });
+  const startedAt = Date.now();
 
+  traceAndroidUnlockAccountPerf('get_all_visible_accounts_start');
+  markStartupPerf('account', 'get_all_visible_accounts_start');
+
+  try {
+    const keyringStartedAt = Date.now();
+    const snapshotAccounts = getPublicAccountSnapshotAccounts();
+    const visibleAccounts = snapshotAccounts.length
+      ? snapshotAccounts
+      : await keyringServiceApi.getAllVisibleAccountsArray();
+    markStartupPerf('account', 'keyring_visible_accounts_end', {
+      elapsedMs: Date.now() - keyringStartedAt,
+      count: visibleAccounts.length,
+      source: snapshotAccounts.length ? 'public_snapshot' : 'runtime',
+    });
+
+    const hydrateStartedAt = Date.now();
+    await addressBalanceStore.hydrateCachedBalancesForAccounts(
+      visibleAccounts,
+      {
+        startupFastPath: true,
+      },
+    );
+    markStartupPerf('account', 'hydrate_cached_balances_end', {
+      elapsedMs: Date.now() - hydrateStartedAt,
+      count: visibleAccounts.length,
+    });
+
+    const mapStartedAt = Date.now();
+    const balanceMap = addressBalanceStore.getAddressValueMap();
+    nextAccounts = visibleAccounts.map(account => {
+      const balance = balanceMap[account.address.toLowerCase()];
+      return {
+        ...account,
+        aliasName: '',
+        evmBalance: balance?.evmBalance || 0,
+        balance: balance?.totalBalance || 0,
+      };
+    });
+    markStartupPerf('account', 'map_visible_accounts_end', {
+      elapsedMs: Date.now() - mapStartedAt,
+      count: nextAccounts.length,
+    });
+
+    const aliasStartedAt = Date.now();
     await Promise.allSettled(
-      nextAccounts.map(async (account, idx) => {
-        const aliasName = contactService.getAliasByAddress(account.address);
+      nextAccounts.map((account, idx) => {
+        const aliasName = getContactAliasSnapshot(account.address);
         nextAccounts[idx] = {
           ...account,
           aliasName: aliasName?.alias || '',
         };
       }),
     );
+    markStartupPerf('account', 'alias_visible_accounts_end', {
+      elapsedMs: Date.now() - aliasStartedAt,
+      count: nextAccounts.length,
+    });
   } catch (err) {
+    traceAndroidUnlockAccountPerf('get_all_visible_accounts_error', {
+      elapsedMs: Date.now() - startedAt,
+      error: getTraceErrorMessage(err),
+    });
     Sentry.captureException(err);
   } finally {
+    traceAndroidUnlockAccountPerf('get_all_visible_accounts_end', {
+      elapsedMs: Date.now() - startedAt,
+      count: nextAccounts.length,
+    });
+    markStartupPerf('account', 'get_all_visible_accounts_end', {
+      elapsedMs: Date.now() - startedAt,
+      count: nextAccounts.length,
+    });
+
     if (!isEqual(existedAccountsRef.current, nextAccounts)) {
       existedAccountsRef.current = nextAccounts;
     }
 
     return existedAccountsRef.current;
   }
+}
+
+async function fetchAllAccountsCached(options?: FetchAllAccountsOptions) {
+  const now = Date.now();
+  const cache = fetchAllAccountsCacheRef.current;
+  if (
+    !options?.force &&
+    cache &&
+    now - cache.updatedAt <= FETCH_ALL_ACCOUNTS_CACHE_TTL_MS
+  ) {
+    traceAndroidUnlockAccountPerf('get_all_visible_accounts_cache_hit', {
+      elapsedMs: Date.now() - now,
+      ageMs: now - cache.updatedAt,
+      count: cache.accounts.length,
+    });
+    return cache.accounts;
+  }
+
+  const accounts = await fetchAllAccountsProcess();
+  fetchAllAccountsCacheRef.current = {
+    updatedAt: Date.now(),
+    accounts,
+  };
+  return accounts;
 }
 
 export const sortAccountsByBalance = <
@@ -281,7 +419,7 @@ export function sortAccountList(
 }
 
 export const fetchAllAccounts = makeAvoidParallelAsyncFunc(
-  fetchAllAccountsProcess,
+  fetchAllAccountsCached,
 );
 
 export async function getAccountList(options?: {
@@ -306,7 +444,7 @@ export async function getAccountList(options?: {
   let sortedAccounts = accounts;
 
   if (sortBy.includes('highlight')) {
-    const pinAddresses = preferenceService.getPinAddresses();
+    const pinAddresses = getPinnedAddressSnapshot();
     sortedAccounts = sortAccountList(accounts, {
       highlightedAddresses: pinAddresses,
     });
@@ -449,13 +587,5 @@ export const getTop50PrivateKeyAccounts = makeAvoidParallelAsyncFunc(
   },
 );
 
-export type PerfAccountEventBusListeners = {
-  ACCOUNT_ADDED: (ctx: {
-    accounts: KeyringEventAccount[];
-    scene?: 'privateKey' | 'memonics' | 'hardware' | 'syncExtension';
-  }) => void;
-  ACCOUNT_REMOVED: (ctx: { removedAccounts: KeyringEventAccount[] }) => void;
-};
-const { EventEmitter: AccountEE } =
-  makeJsEEClass<PerfAccountEventBusListeners>();
-export const accountEvents = new AccountEE();
+export type { PerfAccountEventBusListeners } from './accountEventBus';
+export { accountEvents } from './accountEventBus';

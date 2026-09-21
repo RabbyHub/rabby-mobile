@@ -1,9 +1,10 @@
 import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
+import { APP_MMKV_KEYS } from '@/core/storage/mmkvConstants';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useState } from 'react';
 
 export const fixedCustomGasAtom = atomByMMKV(
-  'miniSignCustomGas',
+  APP_MMKV_KEYS.MINI_SIGN_CUSTOM_GAS,
   {} as {
     [key: number]: number;
   },
@@ -117,19 +118,24 @@ export const useMiniSignGasStore = (chainId: number) => {
 // - 每次重进页面重置为默认档位 Fast。
 export const useClearMiniGasStateEffect = ({
   chainServerId,
+  enabled = true,
 }: {
   chainServerId?: string;
+  enabled?: boolean;
 }) => {
   const { miniGasLevel, reset } = useMemoMiniSignGasStore();
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
     reset();
     return reset;
-  }, [reset]);
+  }, [enabled, reset]);
 
   const [previousChainServerId, setPreviousChainServerId] =
     useState(chainServerId);
 
-  if (previousChainServerId !== chainServerId) {
+  if (enabled && previousChainServerId !== chainServerId) {
     setPreviousChainServerId(chainServerId);
     if (miniGasLevel === 'custom') {
       reset();

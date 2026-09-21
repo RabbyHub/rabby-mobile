@@ -7,7 +7,7 @@ import { getTokenSymbol } from '@/utils/token';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ellipsisOverflowedText } from '@/utils/text';
-import { TokenChangeDataItem } from './HistoryItem';
+import type { TokenChangeDataItem } from '@/types/history';
 import { Text } from '@/components/Typography';
 
 const TxChangeItem = ({
@@ -74,11 +74,13 @@ export const TxChange = ({
   }, [tokenChangeData]);
 
   const calcUsdValue = useCallback((item: TokenChangeDataItem) => {
-    const { amount, price, token_id } = item;
+    const { amount, price: _price, token_id } = item;
     const isNft = token_id?.length === 32;
     if (isNft) {
       return '';
     }
+
+    const price = _price ?? (item.token as TokenItem)?.price;
 
     if (price) {
       return formatUsdValue(amount * price);
@@ -156,8 +158,8 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     borderRadius: 2,
   },
   text: {
-    fontSize: 17,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
     color: colors2024['green-default'],
     minWidth: 0,
@@ -179,7 +181,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   textNegative: {
     color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 17,
+    fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
   },

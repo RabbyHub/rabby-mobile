@@ -1,0 +1,9 @@
+//
+//  AppConfig.Release.xcconfig
+//  RabbyMobile
+//
+//  Release wrapper for local build overrides.
+//
+
+#include "AppConfig.xcconfig"
+#include? "AppConfig.Release.local.xcconfig"

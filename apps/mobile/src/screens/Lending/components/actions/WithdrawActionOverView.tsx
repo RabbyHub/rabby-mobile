@@ -9,6 +9,7 @@ import { formatTokenAmount } from '@/utils/number';
 import { useTranslation } from 'react-i18next';
 import { formatNetworth } from '@/utils/math';
 import { Text } from '@/components/Typography';
+import { ellipsisSymbol } from '../../utils/format';
 
 const WithdrawActionOverView: React.FC<
   PopupDetailProps & {
@@ -26,6 +27,10 @@ const WithdrawActionOverView: React.FC<
   const availableText = useMemo(() => {
     return `${formatNetworth(Number(reserve.underlyingBalanceUSD || '0'))}`;
   }, [reserve.underlyingBalanceUSD]);
+  const displaySymbol = useMemo(
+    () => ellipsisSymbol(reserve.reserve.symbol),
+    [reserve.reserve.symbol],
+  );
 
   return (
     <View style={styles.container}>
@@ -38,14 +43,14 @@ const WithdrawActionOverView: React.FC<
           <View style={styles.availableValueContainer}>
             <Text style={styles.availableValue}>
               {amount
-                ? `${formatTokenAmount(reserve?.underlyingBalance || '0')} ${
-                    reserve.reserve.symbol
-                  } → ${formatTokenAmount(afterSupply?.balance || '0')} ${
-                    reserve.reserve.symbol
-                  }`
-                : `${formatTokenAmount(reserve?.underlyingBalance || '0')} ${
-                    reserve.reserve.symbol
-                  }`}
+                ? `${formatTokenAmount(
+                    reserve?.underlyingBalance || '0',
+                  )} ${displaySymbol} → ${formatTokenAmount(
+                    afterSupply?.balance || '0',
+                  )} ${displaySymbol}`
+                : `${formatTokenAmount(
+                    reserve?.underlyingBalance || '0',
+                  )} ${displaySymbol}`}
             </Text>
           </View>
         </View>
@@ -135,9 +140,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     gap: 4,
     flex: 1,
-  },
-  apyContainer: {
-    marginTop: 26,
   },
   availableValue: {
     flex: 1,

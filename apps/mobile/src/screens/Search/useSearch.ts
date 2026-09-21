@@ -2,8 +2,6 @@ import { useDebounce } from 'ahooks';
 import { useEffect, useRef, useState } from 'react';
 import { CombineNFTItem, CombineTokensItem } from '../Home/hooks/store';
 import { openapi } from '@/core/request';
-import { TokenItemEntity } from '@/databases/entities/tokenitem';
-import { useAccountInfo } from '../Address/components/MultiAssets/hooks/index';
 import { ITokenItem } from '@/store/tokens';
 import { tokenItemToITokenItem } from '@/utils/token';
 export const useSearch = () => {
@@ -60,7 +58,6 @@ export const useSearchTokens = (filterText?: string) => {
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const searchedRef = useRef<string>('');
-  const { myTop10Addresses } = useAccountInfo();
 
   const handleSearch = async (text?: string) => {
     if (!text) {
@@ -73,49 +70,7 @@ export const useSearchTokens = (filterText?: string) => {
       const res = await openapi.searchTokensV2({
         q: text,
       });
-
-      // 查询本地数据库获取 amount 数据
-      const tokenList = res.map(token => ({
-        chain: token.chain,
-        tokenId: token.id,
-      }));
-
-      let localAmounts: Array<{
-        chain: string;
-        tokenId: string;
-        amount: number;
-      }> = [];
-      if (myTop10Addresses.length > 0 && tokenList.length > 0) {
-        try {
-          localAmounts = await TokenItemEntity.getTokenListAmount({
-            owner_addr: myTop10Addresses,
-            tokenList,
-          });
-        } catch (error) {
-          console.error('Failed to get local token amounts:', error);
-        }
-      }
-
-      const amountMap = new Map<string, number>();
-      localAmounts.forEach(item => {
-        const key = `${item.chain}-${item.tokenId}`;
-        amountMap.set(key, item.amount);
-      });
-
-      setResultTokens(
-        res.map(token => {
-          const key = `${token.chain}-${token.id}`;
-          const localAmount = amountMap.get(key) || 0;
-
-          return tokenItemToITokenItem(
-            {
-              ...token,
-              amount: localAmount,
-            },
-            '',
-          );
-        }),
-      );
+      setResultTokens(res.map(token => tokenItemToITokenItem(token, '')));
       setSearched(true);
     } catch (error) {
       console.log('get web chain error)', filterText, error);

@@ -1,6 +1,4 @@
 import React, {
-  Dispatch,
-  SetStateAction,
   useCallback,
   useEffect,
   useMemo,
@@ -14,39 +12,67 @@ import {
   Animated,
   Pressable,
   StyleSheet,
-  Dimensions,
 } from 'react-native';
-import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { useTranslation } from 'react-i18next';
 import { getTokenSymbol } from '@/utils/token';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { BridgeSlippage, useSlippageTooLowOrTooHigh } from './BridgeSlippage';
+import {
+  GasAccountCheckResult,
+  TokenItem,
+} from '@rabby-wallet/rabby-api/dist/types';
+import { BridgeSlippage } from './BridgeSlippage';
 import { tokenPriceImpact } from '../hooks/token';
-import { AppSwitch, AssetAvatar, Tip } from '@/components';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { AppSwitch, AssetAvatar } from '@/components';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
 import { formatGasHeaderUsdValue, formatTokenAmount } from '@/utils/number';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
-import ShowMoreGasSelectModal, { useGetGasInfoByUI } from './ShowMoreGasModal';
-import { getGasLevelI18nKey } from '@/utils/trans';
-import RcIconInfoCC from '@/assets2024/icons/offlineChain/info-cc.svg';
-import { IS_ANDROID } from '@/core/native/utils';
-import { findChainByServerID } from '@/utils/chain';
+import { findChain, findChainByServerID } from '@/utils/chain';
 import { noop } from 'lodash';
 import { WarningText } from './WarningText';
-import { signatureStore, useSignatureStore } from '@/components2024/MiniSignV2';
+import { useSignatureInstance } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
+import { useSignatureStore } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { useGasAccountSign } from '@/screens/GasAccount/hooks/atom';
 import { GasLessActivityToSign } from '@/components/Approval/components/FooterBar/GasLessComponents/GasLessActivityToSign';
 import { GasLessNotEnough } from '@/components/Approval/components/FooterBar/GasLessComponents/GasLessNotEnough';
-import { navigate } from '@/utils/navigation';
-import { RootNames } from '@/constant/layout';
+import {
+  shouldAutoSwitchToGasAccountFromGasless,
+  shouldShowGasLessNotEnough,
+} from '@/components/Approval/components/FooterBar/gasLessDecision';
 import { GasAccountTips } from '@/components/Approval/components/FooterBar/GasLessComponents/GasAccountTips';
 import { useMemoizedFn } from 'ahooks';
-import IconBestQuoteTag from '@/assets2024/icons/bridge/IconBestQuoteTag.svg';
+import IconBestQuoteBackground from '@/assets2024/icons/bridge/BestQuoteBackground.svg';
 import { Text } from '@/components/Typography';
+import { SignMainnetHeaderContent } from '@/components/Approval/components/TxComponents/GasSelector/SignMainnetGasSelectorHeader';
+import type { ApprovalGasMethod } from '@/components/Approval/components/TxComponents/GasSelector/approvalGasDisplay';
+import { useMiniSignFixedMode } from '@/hooks/miniSignGasStore';
+import BigNumber from 'bignumber.js';
+import { normalizeTxParams } from '@/components/Approval/components/SignTx/util';
+import { explainGas } from '@/components/Approval/components/SignTx/calc';
+import { checkGasAndNonce } from '@/utils/transaction';
+import { intToHex } from '@/utils/number';
+import _ from 'lodash';
+import { openapi } from '@/core/request';
+import {
+  buildTopUpResumedTxs,
+  GasAccountTopUpResult,
+} from '@/screens/GasAccount/components/topUpContinuation';
+import {
+  calcTempoMaxGasCostRawAmountIn18,
+  isTempoBatchSupportedAccountType,
+  isTempoChain,
+  listTempoFeeTokenOptionsFromCache,
+  loadTempoFeeTokenOptionsState,
+  TempoFeeTokenOption,
+  TxWithTempoExtras,
+} from '@/utils/tempo';
+import tokenListStore from '@/store/tokens';
+import RcIconFeeFreeLogo from '@/assets2024/icons/swap/fee-free-logo.svg';
+import RcIconFeeQuestion from '@/assets2024/icons/swap/fee-question.svg';
+import { SWAP_FEE_RATE } from '@/screens/Swap/hooks/fee';
 
-const RABBY_FEE = '0.25%';
+const RABBY_FEE = `${SWAP_FEE_RATE.DEFAULT}%`;
+const RABBY_HALF_FEE = `${SWAP_FEE_RATE.HALF}%`;
 
 const BridgeShowMore = ({
   openQuotesList,
@@ -65,8 +91,6 @@ const BridgeShowMore = ({
   isCustomSlippage,
   setAutoSlippage,
   setIsCustomSlippage,
-  open,
-  setOpen,
   type,
   isWrapToken,
   isBestQuote,
@@ -78,11 +102,16 @@ const BridgeShowMore = ({
   supportDirectSign,
   autoSuggestSlippage,
   duration,
-  sourceAlwaysShow,
+  isRabbyFeeFree = false,
+  isRabbyFeeHalf = false,
   insufficient,
+  onDepositPopupVisibleChange,
+  onSlippageOptionsOpenChange,
+  onGasSettingsOpenChange,
+  renderSwapQuotes,
+  onRefreshSwapQuotes,
+  swapQuotesLoading,
 }: {
-  open: boolean;
-  setOpen: Dispatch<SetStateAction<boolean>>;
   openQuotesList: () => void;
   sourceName: string;
   sourceLogo: string;
@@ -114,12 +143,20 @@ const BridgeShowMore = ({
   recommendValue?: number;
   supportDirectSign: boolean;
   autoSuggestSlippage?: string;
-  sourceAlwaysShow?: boolean;
+  isRabbyFeeFree?: boolean;
+  isRabbyFeeHalf?: boolean;
   textColor?: string;
+  onDepositPopupVisibleChange?: (visible: boolean) => void;
+  onSlippageOptionsOpenChange?: (open: boolean) => void;
+  onGasSettingsOpenChange?: (open: boolean) => void;
+  renderSwapQuotes?: (onSelect: () => void) => React.ReactNode;
+  onRefreshSwapQuotes?: () => void;
+  swapQuotesLoading?: boolean;
 }) => {
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, colors } = useTheme2024({ getStyle });
   const [lossImpactOpen, setLossImpactOpen] = useState(false);
+  const [swapGasQuoteVisible, setSwapGasQuoteVisible] = useState(false);
 
   const data = useMemo(() => {
     if (quoteLoading || (!sourceLogo && !sourceName)) {
@@ -147,10 +184,7 @@ const BridgeShowMore = ({
     [data?.showLoss, quoteLoading],
   );
 
-  const showSlippageWarning = useSlippageTooLowOrTooHigh({
-    type: type,
-    value: slippage,
-  });
+  const showSourceFallback = !!insufficient || !fromToken || !supportDirectSign;
 
   const durationColor = useMemo(() => {
     const mins = Math.ceil((duration || 0) / 60);
@@ -161,7 +195,7 @@ const BridgeShowMore = ({
       return colors2024['orange-default'];
     }
     return colors2024['brand-default'];
-  }, [colors2024, duration]);
+  }, [duration, colors2024]);
 
   const QuoteContent = useMemo(
     () => (
@@ -171,39 +205,37 @@ const BridgeShowMore = ({
             source={
               typeof sourceLogo === 'string' ? { uri: sourceLogo } : sourceLogo
             }
-            style={styles.sourceLogo}
+            style={isBestQuote ? styles.bestSourceLogo : styles.sourceLogo}
           />
         )}
         {sourceName && (
-          <Text
-            style={
-              isBestQuote
-                ? [
-                    styles.sourceName,
-                    {
-                      fontSize: 12,
-                      fontWeight: 900,
-                      lineHeight: 16,
-                    },
-                  ]
-                : styles.sourceName
-            }>
+          <Text style={isBestQuote ? styles.bestSourceName : styles.sourceName}>
             {sourceName}
           </Text>
         )}
       </>
     ),
-    [isBestQuote, sourceLogo, sourceName, styles.sourceLogo, styles.sourceName],
+    [
+      isBestQuote,
+      sourceLogo,
+      sourceName,
+      styles.bestSourceLogo,
+      styles.bestSourceName,
+      styles.sourceLogo,
+      styles.sourceName,
+    ],
   );
 
   const BestQuoteContent = useMemo(
     () => (
-      <View style={[styles.bestQuoteWrapper, { height: 24 }]}>
-        <View>
-          <IconBestQuoteTag height={24} style={styles.bestQuoteTag} />
-          <View style={styles.bestTagWrapper}>
-            <Text style={styles.bestText}>{t('page.swap.best')}</Text>
-          </View>
+      <View style={styles.bestQuoteWrapper}>
+        <View style={styles.bestTagWrapper}>
+          <IconBestQuoteBackground
+            width={83}
+            height={20}
+            style={styles.bestQuoteTag}
+          />
+          <Text style={styles.bestText}>{t('page.swap.best')}</Text>
         </View>
 
         <View style={styles.bestRightWrapper}>{QuoteContent}</View>
@@ -212,28 +244,31 @@ const BridgeShowMore = ({
     [QuoteContent, styles, t],
   );
 
-  const sourceContentRender = useMemoizedFn(() => (
-    <ListItem
-      name={
-        type === 'bridge'
-          ? t('page.bridge.showMore.source')
-          : t('page.swap.source')
+  const sourceSelectorRender = useMemoizedFn(
+    (
+      options:
+        | boolean
+        | {
+            clickable?: boolean;
+            showArrow?: boolean;
+          } = true,
+    ) => {
+      const { clickable, showArrow } =
+        typeof options === 'boolean'
+          ? { clickable: options, showArrow: options }
+          : {
+              clickable: options.clickable ?? true,
+              showArrow: options.showArrow ?? true,
+            };
+
+      if (quoteLoading) {
+        return <CustomSkeleton style={styles.sourceSkeleton} />;
       }
-      style={styles.listItem}>
-      {quoteLoading ? (
-        <CustomSkeleton
-          style={{
-            width: 131,
-            height: 24,
-            borderRadius: 100,
-          }}
-        />
-      ) : (
-        <TouchableOpacity
-          onPress={openQuotesList}
-          style={styles.quoteContainer}>
+
+      const content = (
+        <>
           {isBestQuote ? BestQuoteContent : QuoteContent}
-          {duration ? (
+          {type === 'bridge' && duration ? (
             <Text style={[styles.sourceName, { color: durationColor }]}>
               {' · '}
               {t('page.bridge.duration', {
@@ -241,7 +276,7 @@ const BridgeShowMore = ({
               })}
             </Text>
           ) : null}
-          {sourceName || sourceLogo ? (
+          {showArrow && (sourceName || sourceLogo) ? (
             <RcIconBluePolygon
               style={styles.arrowIcon}
               color={colors2024['brand-default']}
@@ -250,140 +285,176 @@ const BridgeShowMore = ({
           {!sourceLogo && !sourceName ? (
             <Text style={styles.noQuotePlaceholder}>-</Text>
           ) : null}
+        </>
+      );
+
+      if (!clickable) {
+        return <View style={styles.quoteContainer}>{content}</View>;
+      }
+
+      return (
+        <TouchableOpacity
+          onPress={openQuotesList}
+          style={styles.quoteContainer}>
+          {content}
         </TouchableOpacity>
-      )}
+      );
+    },
+  );
+
+  const swapGasRowSourceSelector =
+    type === 'swap' && (quoteLoading || sourceLogo || sourceName)
+      ? sourceSelectorRender({ clickable: false, showArrow: false })
+      : undefined;
+  const swapGasRowFallbackSourceSelector =
+    type === 'swap' && (quoteLoading || sourceLogo || sourceName)
+      ? sourceSelectorRender({ clickable: true, showArrow: false })
+      : undefined;
+
+  const sourceContentRender = useMemoizedFn(() => (
+    <ListItem
+      name={
+        type === 'bridge'
+          ? t('page.bridge.showMore.source')
+          : t('page.swap.source')
+      }>
+      {sourceSelectorRender()}
     </ListItem>
   ));
 
+  const priceImpactContent = showLossInfo ? (
+    <View style={[styles.lossInfo, { marginBottom: 0 }]}>
+      <View style={styles.flexRow}>
+        <Text style={styles.impactText}>{t('page.bridge.price-impact')}</Text>
+        <TouchableOpacity
+          style={styles.diffBox}
+          onPress={() => setLossImpactOpen(i => !i)}>
+          <Text style={styles.lossAmount}>-{data?.diff}%</Text>
+          <Animated.View
+            style={{
+              transform: [{ rotate: !lossImpactOpen ? '180deg' : '0deg' }],
+            }}>
+            <RcIconBluePolygon color={colors2024['orange-default']} />
+          </Animated.View>
+        </TouchableOpacity>
+      </View>
+
+      <WarningText>
+        <Text>{t('page.bridge.loss-tips', { usd: data?.lossUsd })}</Text>
+        {lossImpactOpen && (
+          <>
+            {'\n'}
+            {'\n'}
+            <Text style={styles.impactTooltipText}>
+              {t('page.bridge.est-payment')} {formatTokenAmount(amount || '0')}
+              {getTokenSymbol(fromToken)} ≈ {data?.fromUsd}
+            </Text>
+            {'\n'}
+
+            <Text style={styles.impactTooltipText}>
+              {t('page.bridge.est-receiving')}{' '}
+              {formatTokenAmount(toAmount || '0')}
+              {getTokenSymbol(toToken)} ≈ {data?.toUsd}
+            </Text>
+            {'\n'}
+
+            <Text style={styles.impactTooltipText}>
+              {t('page.bridge.est-difference')} {data?.lossUsd}
+            </Text>
+          </>
+        )}
+      </WarningText>
+    </View>
+  ) : null;
+
   return (
     <View style={StyleSheet.flatten([styles.container])}>
-      <View style={{ gap: 12 }}>
-        {sourceAlwaysShow && sourceContentRender()}
+      <View style={styles.containerContent}>
+        {priceImpactContent}
 
-        {showLossInfo && (
-          <View style={[styles.lossInfo, { marginBottom: 0 }]}>
-            <View style={styles.flexRow}>
-              <Text style={styles.impactText}>
-                {t('page.bridge.price-impact')}
-              </Text>
-              <TouchableOpacity
-                style={styles.diffBox}
-                onPress={() => setLossImpactOpen(i => !i)}>
-                <Text style={styles.lossAmount}>-{data?.diff}%</Text>
-                <Animated.View
-                  style={{
-                    transform: [
-                      { rotate: !lossImpactOpen ? '180deg' : '0deg' },
-                    ],
-                  }}>
-                  <RcIconBluePolygon color={colors2024['orange-default']} />
-                </Animated.View>
-              </TouchableOpacity>
-            </View>
+        {type === 'bridge' && sourceContentRender()}
 
-            <WarningText>
-              <Text>{t('page.bridge.loss-tips', { usd: data?.lossUsd })}</Text>
-              {lossImpactOpen && (
-                <>
-                  {'\n'}
-                  {'\n'}
-                  <Text style={styles.impactTooltipText}>
-                    {t('page.bridge.est-payment')}{' '}
-                    {formatTokenAmount(amount || '0')}
-                    {getTokenSymbol(fromToken)} ≈ {data?.fromUsd}
-                  </Text>
-                  {'\n'}
-
-                  <Text style={styles.impactTooltipText}>
-                    {t('page.bridge.est-receiving')}{' '}
-                    {formatTokenAmount(toAmount || '0')}
-                    {getTokenSymbol(toToken)} ≈ {data?.toUsd}
-                  </Text>
-                  {'\n'}
-
-                  <Text style={styles.impactTooltipText}>
-                    {t('page.bridge.est-difference')} {data?.lossUsd}
-                  </Text>
-                </>
-              )}
-            </WarningText>
-          </View>
-        )}
-
-        {!insufficient && fromToken ? (
+        {!showSourceFallback && fromToken ? (
           <DirectSignGasInfo
             supportDirectSign={supportDirectSign}
             loading={!!quoteLoading}
             openShowMore={noop}
             noQuote={!sourceLogo && !sourceName}
             chainServeId={fromToken?.chain}
+            hideGasLevelInSummary
+            sourceSelector={swapGasRowSourceSelector}
+            fallbackSourceSelector={swapGasRowFallbackSourceSelector}
+            onDepositPopupVisibleChange={onDepositPopupVisibleChange}
+            onGasSettingsOpenChange={onGasSettingsOpenChange}
+            renderSwapQuotes={renderSwapQuotes}
+            onRefreshSwapQuotes={onRefreshSwapQuotes}
+            swapQuotesLoading={swapQuotesLoading}
+            swapGasQuoteVisible={swapGasQuoteVisible}
+            onSwapGasQuoteVisibleChange={setSwapGasQuoteVisible}
+            gasFeeLabel={
+              type === 'swap' ? t('page.signTx.gasSelectorTitle') : undefined
+            }
           />
+        ) : type === 'swap' ? (
+          sourceContentRender()
         ) : null}
 
-        {showSlippageWarning ? (
-          <BridgeSlippage
-            autoSuggestSlippage={autoSuggestSlippage}
-            value={slippage}
-            displaySlippage={displaySlippage}
-            onChange={onSlippageChange}
-            autoSlippage={autoSlippage}
-            isCustomSlippage={isCustomSlippage}
-            setAutoSlippage={setAutoSlippage}
-            setIsCustomSlippage={setIsCustomSlippage}
-            type={type}
-            isWrapToken={isWrapToken}
-            recommendValue={recommendValue}
-            loading={quoteLoading}
-          />
-        ) : null}
-      </View>
-
-      <View style={styles.header}>
-        <View style={styles.dottedLine} />
-        <TouchableOpacity
-          onPress={() => setOpen(e => !e)}
-          style={styles.headerTextWrapper}>
-          <Text style={styles.headerText}>
-            {t('page.bridge.showMore.title')}
-          </Text>
-          <ArrowRightSVG
-            width={14}
-            height={14}
-            style={[styles.icon, open && { transform: [{ rotate: '-90deg' }] }]}
-            color={colors2024['neutral-secondary']}
-          />
-        </TouchableOpacity>
-        <View style={styles.dottedLine} />
-      </View>
-
-      <View style={[styles.body, !open && { height: 0 }]}>
-        {!sourceAlwaysShow && sourceContentRender()}
-
-        {!showSlippageWarning && (
-          <BridgeSlippage
-            autoSuggestSlippage={autoSuggestSlippage}
-            value={slippage}
-            displaySlippage={displaySlippage}
-            onChange={onSlippageChange}
-            autoSlippage={autoSlippage}
-            isCustomSlippage={isCustomSlippage}
-            setAutoSlippage={setAutoSlippage}
-            setIsCustomSlippage={setIsCustomSlippage}
-            type={type}
-            isWrapToken={isWrapToken}
-            recommendValue={recommendValue}
-            loading={quoteLoading}
-          />
-        )}
+        <BridgeSlippage
+          autoSuggestSlippage={autoSuggestSlippage}
+          value={slippage}
+          displaySlippage={displaySlippage}
+          onChange={onSlippageChange}
+          autoSlippage={autoSlippage}
+          isCustomSlippage={isCustomSlippage}
+          setAutoSlippage={setAutoSlippage}
+          setIsCustomSlippage={setIsCustomSlippage}
+          type={type}
+          isWrapToken={isWrapToken}
+          recommendValue={recommendValue}
+          loading={quoteLoading}
+          onOptionsOpenChange={onSlippageOptionsOpenChange}
+        />
 
         <ListItem name={t('page.swap.rabbyFee.title')}>
-          <Pressable onPress={openFeePopup}>
-            <Text style={isWrapToken ? styles.wrapTokenFee : styles.fee}>
-              {isWrapToken && type === 'swap'
-                ? t('page.swap.no-fees-for-wrap')
-                : RABBY_FEE}
-            </Text>
-          </Pressable>
+          {isRabbyFeeFree ? (
+            <Pressable onPress={openFeePopup} style={styles.feeValueSlot}>
+              <View style={styles.freeFeeContainer}>
+                <View style={styles.freeFeeLabel}>
+                  <RcIconFeeFreeLogo width={14} height={14} />
+                  <Text style={styles.freeFeeText}>
+                    {t('page.swap.rabbyFee.free')}
+                  </Text>
+                </View>
+                <RcIconFeeQuestion
+                  width={14}
+                  height={14}
+                  color={colors2024['neutral-InvertHighlight']}
+                />
+              </View>
+            </Pressable>
+          ) : isRabbyFeeHalf ? (
+            <Pressable onPress={openFeePopup}>
+              <View style={styles.feeValueSlot}>
+                <View style={styles.halfFeeContainer}>
+                  <Text style={styles.halfOriginalFee}>{RABBY_FEE}</Text>
+                  <View style={styles.halfFeeBadge}>
+                    <Text style={styles.halfFee}>{RABBY_HALF_FEE}</Text>
+                    <RcIconFeeQuestion
+                      width={14}
+                      height={14}
+                      color={colors['green-default']}
+                    />
+                  </View>
+                </View>
+              </View>
+            </Pressable>
+          ) : (
+            <Pressable onPress={openFeePopup}>
+              <View style={styles.feeValueSlot}>
+                <Text style={styles.fee}>{RABBY_FEE}</Text>
+              </View>
+            </Pressable>
+          )}
         </ListItem>
 
         {showMEVGuardedSwitch && (
@@ -391,7 +462,7 @@ const BridgeShowMore = ({
             <AppSwitch
               value={originPreferMEVGuarded}
               onValueChange={switchPreferMEV}
-              barHeight={22}
+              barHeight={20}
               circleBorderInactiveColor={colors2024['neutral-bg-2']}
               backgroundInactive={colors2024['neutral-bg-2']}
             />
@@ -400,6 +471,35 @@ const BridgeShowMore = ({
       </View>
     </View>
   );
+};
+
+const rawAmountToBn = (
+  value: string | number | BigNumber | null | undefined,
+) => {
+  if (BigNumber.isBigNumber(value)) {
+    return value;
+  }
+  return new BigNumber(value || 0);
+};
+
+const StableSignMainnetHeaderContent = ({
+  headerProps,
+  dynamicProps,
+}: {
+  headerProps?: React.ComponentProps<typeof SignMainnetHeaderContent>;
+  dynamicProps?: Partial<React.ComponentProps<typeof SignMainnetHeaderContent>>;
+}) => {
+  const lastHeaderPropsRef = useRef(headerProps);
+  if (headerProps) {
+    lastHeaderPropsRef.current = headerProps;
+  }
+
+  const cachedHeaderProps = lastHeaderPropsRef.current;
+  if (!cachedHeaderProps) {
+    return null;
+  }
+
+  return <SignMainnetHeaderContent {...cachedHeaderProps} {...dynamicProps} />;
 };
 
 export const DirectSignGasInfo = ({
@@ -411,6 +511,17 @@ export const DirectSignGasInfo = ({
   gasFeeListItemStyle,
   gasFeeListItemInnerStyle,
   textColor,
+  onDepositPopupVisibleChange,
+  onGasSettingsOpenChange,
+  renderSwapQuotes,
+  onRefreshSwapQuotes,
+  swapQuotesLoading,
+  swapGasQuoteVisible,
+  onSwapGasQuoteVisibleChange,
+  hideGasLevelInSummary,
+  sourceSelector,
+  fallbackSourceSelector,
+  gasFeeLabel,
 }: {
   supportDirectSign: boolean;
   loading: boolean;
@@ -420,53 +531,71 @@ export const DirectSignGasInfo = ({
   gasFeeListItemStyle?: RNViewProps['style'];
   gasFeeListItemInnerStyle?: RNViewProps['style'];
   textColor?: string;
+  hideGasLevelInSummary?: boolean;
+  sourceSelector?: React.ReactNode;
+  fallbackSourceSelector?: React.ReactNode;
+  onDepositPopupVisibleChange?: (visible: boolean) => void;
+  onGasSettingsOpenChange?: (open: boolean) => void;
+  renderSwapQuotes?: (onSelect: () => void) => React.ReactNode;
+  onRefreshSwapQuotes?: () => void;
+  swapQuotesLoading?: boolean;
+  swapGasQuoteVisible?: boolean;
+  onSwapGasQuoteVisibleChange?: (visible: boolean) => void;
+  gasFeeLabel?: React.ReactNode;
 } & RNViewProps) => {
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({ getStyle });
-  const [gasModalVisible, setGasModalVisible] = useState(false);
-  const ref = useRef<View>(null);
-  const [gasModalXY, setGasModalXY] = useState({
-    x: 0,
-    y: 0,
-    width: 0,
-    height: 0,
-  });
-
+  const resolvedGasFeeLabel =
+    gasFeeLabel ?? t('page.transactions.detail.GasFee');
+  const { styles } = useTheme2024({ getStyle });
   const chainId = useMemo(
-    () => findChainByServerID(chainServeId)?.id,
+    () => findChainByServerID(chainServeId)?.id || 0,
     [chainServeId],
   );
 
-  const calcGasAccountUsd = useCallback((n: number | string) => {
-    const v = Number(n);
-    if (!Number.isNaN(v) && v < 0.0001) {
-      return `$${n}`;
-    }
-    return formatGasHeaderUsdValue(n || '0');
-  }, []);
+  const { accountId, sig } = useGasAccountSign();
+  const instance = useSignatureInstance();
 
-  const { accountId } = useGasAccountSign();
-
-  const { ctx, config, status } = useSignatureStore();
-
-  const gasInfoByUI = useGetGasInfoByUI();
-
-  const { gasCostUsdStr, gasAccountCost } = gasInfoByUI || {};
-
-  const gasCostUsd =
-    ctx?.gasMethod === 'gasAccount'
-      ? calcGasAccountUsd(
-          (gasAccountCost?.estimate_tx_cost || 0) +
-            Number(gasAccountCost?.gas_cost || 0),
-        )
-      : gasCostUsdStr;
-
-  const showGasContent = !!ctx?.txsCalc?.length && !loading && !noQuote;
+  const { ctx, config } = useSignatureStore();
+  const fixedModeOnCurrentChain = useMiniSignFixedMode(
+    ctx?.txs?.[0]?.chainId || chainId,
+  );
+  const showGasContent =
+    !!ctx?.txsCalc?.length && !loading && !noQuote && !!config?.account;
 
   const isReady = (ctx?.txsCalc?.length || 0) > 0;
   const isGasNotEnough = !!ctx?.isGasNotEnough;
   const canUseGasLess = !!ctx?.gasless?.is_gasless;
-  const noCustomRPC = !!ctx?.noCustomRPC;
+  const noCustomRPC = ctx?.noCustomRPC ?? true;
+  const [manualGasMethod, setManualGasMethod] = useState<
+    ApprovalGasMethod | undefined
+  >(undefined);
+  const accountAddress = config?.account?.address;
+  const accountType = config?.account?.type;
+  const manualGasScopeKey = useMemo(() => {
+    const scopeChainId = ctx?.chainId || chainId;
+
+    if (!accountAddress || !scopeChainId) {
+      return '';
+    }
+
+    return `${accountType}:${accountAddress}:${scopeChainId}`;
+  }, [accountAddress, accountType, chainId, ctx?.chainId]);
+  const manualGasScopeKeyRef = useRef('');
+
+  useEffect(() => {
+    if (!manualGasScopeKey) {
+      return;
+    }
+
+    if (
+      manualGasScopeKeyRef.current &&
+      manualGasScopeKeyRef.current !== manualGasScopeKey
+    ) {
+      setManualGasMethod(undefined);
+    }
+
+    manualGasScopeKeyRef.current = manualGasScopeKey;
+  }, [manualGasScopeKey]);
 
   let gasLessConfig =
     canUseGasLess && ctx?.gasless?.promotion
@@ -487,14 +616,13 @@ export const DirectSignGasInfo = ({
     !!ctx?.gasAccount.is_gas_account;
 
   const showGasLess = isReady && (isGasNotEnough || !!gasLessConfig);
+  const effectiveGasMethod = manualGasMethod ?? ctx?.gasMethod;
+  const payGasByGasAccount = effectiveGasMethod === 'gasAccount';
 
-  const showGasLessToSign =
-    showGasLess && !canGotoUseGasAccount && canUseGasLess;
+  const showGasLessToSign = showGasLess && !payGasByGasAccount && canUseGasLess;
 
   const useGasLess =
     (isGasNotEnough || !!gasLessConfig) && !!canUseGasLess && !!ctx?.useGasless;
-
-  const payGasByGasAccount = ctx?.gasMethod === 'gasAccount';
 
   const canDepositUseGasAccount =
     // isSupportedAddr &&
@@ -504,7 +632,7 @@ export const DirectSignGasInfo = ({
     !ctx?.gasAccount.chain_not_support;
 
   const gasAccountCanPay =
-    ctx?.gasMethod === 'gasAccount' &&
+    effectiveGasMethod === 'gasAccount' &&
     // isSupportedAddr &&
     noCustomRPC &&
     !!ctx?.gasAccount?.balance_is_enough &&
@@ -512,54 +640,431 @@ export const DirectSignGasInfo = ({
     !!ctx?.gasAccount.is_gas_account &&
     !(ctx?.gasAccount as any).err_msg;
 
-  const isSigning = status === 'signing';
+  const chain = findChain({ id: ctx?.chainId })!;
 
-  const disabledProcess = isSigning
-    ? false
-    : payGasByGasAccount
-    ? !gasAccountCanPay
-    : useGasLess
-    ? false
-    : !ctx?.txsCalc?.length ||
-      !!ctx.checkErrors?.some(e => e.level === 'forbidden');
+  const gasToken = ctx?.gasToken || {
+    tokenId: chain?.nativeTokenAddress || '',
+    symbol: chain?.nativeTokenSymbol || '',
+    decimals: chain?.nativeTokenDecimals || 18,
+    logoUrl: chain?.nativeTokenLogo || '',
+  };
+  const checkTxValueInBalance = !isTempoChain(chain?.serverId);
 
   const handleToggleGasless = value => {
-    signatureStore.toggleGasless(value);
+    instance.toggleGasless(value);
   };
 
-  const handleChangeGasMethod = useCallback(
-    async (method: 'native' | 'gasAccount') => {
+  const currentAccount = config?.account;
+  const txs = useMemo(() => ctx?.txs || [], [ctx?.txs]);
+  const txsResult = ctx?.txsCalc;
+  const currentTx = txs[0];
+  const { isSpeedUp, isCancel } = currentTx
+    ? normalizeTxParams(currentTx)
+    : { isSpeedUp: false, isCancel: false };
+  const gasAccountCost = ctx?.gasAccount as any;
+  const [tempoGasTokenList, setTempoGasTokenList] = useState<
+    TempoFeeTokenOption[]
+  >([]);
+  const [tempoGasTokenLoading, setTempoGasTokenLoading] = useState(false);
+  const txFeeToken =
+    ((currentTx as unknown as TxWithTempoExtras | undefined)?.feeToken as
+      | string
+      | undefined) || '';
+  const totalGasCost = useMemo(
+    () =>
+      (txsResult || []).reduce(
+        (sum, item) => {
+          sum.gasCostAmount = sum.gasCostAmount.plus(
+            item.gasCost?.gasCostAmount || 0,
+          );
+          sum.gasCostUsd = sum.gasCostUsd.plus(item.gasCost?.gasCostUsd || 0);
+          return sum;
+        },
+        {
+          gasCostUsd: new BigNumber(0),
+          gasCostAmount: new BigNumber(0),
+          success: true,
+        },
+      ),
+    [txsResult],
+  );
+  const maxGasCostRawAmount = useMemo(
+    () =>
+      (txsResult || []).reduce(
+        (sum, item) =>
+          sum.plus(new BigNumber(item.gasCost.maxGasCostRawAmount || 0)),
+        new BigNumber(0),
+      ),
+    [txsResult],
+  );
+  const maxGasCostRawAmountText = useMemo(
+    () => maxGasCostRawAmount.toFixed(),
+    [maxGasCostRawAmount],
+  );
+  const maxGasCostRawAmountIn18 = useMemo(
+    () => calcTempoMaxGasCostRawAmountIn18(txs),
+    [txs],
+  );
+  const maxGasCostRawAmountIn18Text = useMemo(
+    () => maxGasCostRawAmountIn18.toFixed(),
+    [maxGasCostRawAmountIn18],
+  );
+  const currentTempoTokenId =
+    txFeeToken || ctx?.tempoPreferredFeeTokenId || gasToken.tokenId || '';
+  const showTempoGasTokenSelector =
+    !!chain &&
+    isTempoChain(chain.serverId) &&
+    effectiveGasMethod !== 'gasAccount' &&
+    isTempoBatchSupportedAccountType(currentAccount?.type);
+  const getCachedTokenItems = useCallback(() => {
+    if (!currentAccount?.address) {
+      return [];
+    }
+
+    return (tokenListStore.getState().tokenListMap[
+      currentAccount.address.toLowerCase()
+    ] || []) as unknown as TokenItem[];
+  }, [currentAccount?.address]);
+  const gasCalcMethod = useCallback(
+    async (price: number) => {
+      if (!currentAccount) {
+        return {
+          gasCostUsd: new BigNumber(0),
+          gasCostAmount: new BigNumber(0),
+        };
+      }
+
+      const res = await Promise.all(
+        (txsResult || []).map(item =>
+          explainGas({
+            gasUsed: item.gasUsed,
+            gasPrice: price,
+            chainId,
+            nativeTokenPrice:
+              item.preExecResult.native_token.price ||
+              ctx?.nativeTokenPrice ||
+              0,
+            tx: item.tx,
+            gasLimit: item.gasLimit,
+            account: currentAccount,
+            preparedL1Fee: item.L1feeCache,
+            gasTokenDecimals: gasToken.decimals || 18,
+          }),
+        ),
+      );
+
+      return res.reduce(
+        (sum, item) => {
+          sum.gasCostAmount = sum.gasCostAmount.plus(item.gasCostAmount);
+          sum.gasCostUsd = sum.gasCostUsd.plus(item.gasCostUsd);
+          return sum;
+        },
+        {
+          gasCostUsd: new BigNumber(0),
+          gasCostAmount: new BigNumber(0),
+        },
+      );
+    },
+    [
+      chainId,
+      ctx?.nativeTokenPrice,
+      currentAccount,
+      gasToken.decimals,
+      txsResult,
+    ],
+  );
+  const checkGasLevelIsNotEnough = useMemoizedFn(
+    (
+      gas,
+      type?: 'gasAccount' | 'native',
+    ): Promise<[boolean, number, GasAccountCheckResult?]> => {
+      const initialTxs = ctx?.txsCalc || [];
+      let nextTxs = initialTxs;
+
+      if (!isReady || !initialTxs.length || !currentAccount) {
+        return Promise.resolve([true, 0]);
+      }
+
+      return Promise.all(
+        initialTxs.map(async item => {
+          const tx = {
+            ...item.tx,
+            ...(ctx?.is1559
+              ? {
+                  maxFeePerGas: intToHex(Math.round(gas.price || 0)),
+                  maxPriorityFeePerGas:
+                    gas.maxPriorityFee < 0
+                      ? item.tx.maxFeePerGas
+                      : intToHex(Math.round(gas.maxPriorityFee)),
+                }
+              : { gasPrice: intToHex(Math.round(gas.price)) }),
+          };
+          return {
+            ...item,
+            tx,
+            gasCost: await explainGas({
+              gasUsed: item.gasUsed,
+              gasPrice: gas.price,
+              chainId,
+              nativeTokenPrice: item.preExecResult.native_token.price,
+              tx,
+              gasLimit: item.gasLimit,
+              account: currentAccount,
+              preparedL1Fee: item.L1feeCache,
+              gasTokenDecimals: gasToken.decimals || 18,
+            }),
+          };
+        }),
+      ).then(arr => {
+        let balance = ctx?.nativeTokenBalance || '';
+        nextTxs = arr;
+
+        if (!nextTxs.length) {
+          return [true, 0] as [boolean, number];
+        }
+
+        if (type === 'native') {
+          const checkResult = nextTxs.map(item => {
+            const result = checkGasAndNonce({
+              recommendGasLimitRatio: item.recommendGasLimitRatio,
+              recommendGasLimit: item.gasLimit,
+              recommendNonce: item.tx.nonce,
+              tx: item.tx,
+              gasLimit: item.gasLimit,
+              nonce: item.tx.nonce,
+              isCancel,
+              gasExplainResponse: item.gasCost,
+              isSpeedUp,
+              isGnosisAccount: false,
+              nativeTokenBalance: balance,
+              gasTokenDecimals: gasToken.decimals || 18,
+              gasTokenId: gasToken.tokenId,
+              tempoPreferredFeeTokenId: ctx?.tempoPreferredFeeTokenId,
+              checkTxValueInBalance,
+            });
+            const txValueRaw = checkTxValueInBalance
+              ? rawAmountToBn(item.tx.value || 0)
+              : new BigNumber(0);
+            balance = new BigNumber(balance)
+              .minus(txValueRaw)
+              .minus(new BigNumber(item.gasCost.maxGasCostRawAmount || 0))
+              .toFixed();
+            return result;
+          });
+
+          return [_.flatten(checkResult)?.some(e => e.code === 3001), 0] as [
+            boolean,
+            number,
+          ];
+        }
+
+        return openapi
+          .checkGasAccountTxs({
+            sig: sig || '',
+            account_id: accountId || currentAccount.address,
+            tx_list: arr.map(item => ({
+              ...item.tx,
+              gas: item.gasLimit,
+              gasPrice: intToHex(gas.price),
+            })),
+          })
+          .then(gasAccountRes => [
+            !gasAccountRes.balance_is_enough,
+            (gasAccountRes.gas_account_cost.estimate_tx_cost || 0) +
+              (gasAccountRes.gas_account_cost?.gas_cost || 0),
+            gasAccountRes,
+          ]);
+      });
+    },
+  );
+
+  const handleAutoChangeGasMethod = useCallback(
+    async (method: ApprovalGasMethod) => {
       try {
-        signatureStore.setGasMethod(method);
+        instance.setGasMethod(method);
       } catch (error) {
         console.error('Gas method change error:', error);
       }
     },
-    [],
+    [instance],
   );
 
-  const handleGasChange = useCallback(async gas => {
-    try {
-      await signatureStore.updateGasLevel(gas);
-    } catch (error) {
-      console.error('Gas change error:', error);
-    }
-  }, []);
+  const handleChangeGasMethod = useCallback(
+    async (method: ApprovalGasMethod) => {
+      setManualGasMethod(method);
+      try {
+        instance.setGasMethod(method, { manual: true });
+      } catch (error) {
+        console.error('Gas method change error:', error);
+      }
+    },
+    [instance],
+  );
 
-  const handleCancel = () => {
-    signatureStore.close();
-  };
+  const handleGasChange = useCallback(
+    async gas => {
+      try {
+        await instance.updateGasLevel(gas);
+      } catch (error) {
+        console.error('Gas change error:', error);
+      }
+    },
+    [instance],
+  );
 
-  const [isGasAccountHovering, setIsGasAccountHovering] = useState(false);
+  const handleSelectTempoGasToken = useCallback(
+    async (
+      token: TempoFeeTokenOption,
+      options?: Parameters<typeof instance.setTempoFeeToken>[1],
+    ) => {
+      instance.setTempoFeeToken(token, options);
+      if (ctx?.selectedGas) {
+        await handleGasChange(ctx.selectedGas as any);
+      }
+    },
+    [ctx?.selectedGas, handleGasChange, instance],
+  );
 
   useEffect(() => {
-    if (loading || !showGasContent || noQuote) {
-      setIsGasAccountHovering(false);
-      setGasModalVisible(false);
+    if (!currentAccount?.address || !chain || !showTempoGasTokenSelector) {
+      setTempoGasTokenList([]);
+      setTempoGasTokenLoading(false);
+      return;
     }
-  }, [loading, noQuote, showGasContent]);
+
+    let mounted = true;
+    const cachedTokenItems = getCachedTokenItems();
+    const cachedOptions = listTempoFeeTokenOptionsFromCache({
+      tokenList: cachedTokenItems,
+      chainServerId: chain.serverId,
+      maxGasCostRawAmount,
+      maxGasCostRawAmountDecimals: gasToken.decimals || 18,
+      maxGasCostRawAmountIn18,
+    });
+
+    if (cachedOptions.length) {
+      setTempoGasTokenList(cachedOptions);
+    }
+
+    setTempoGasTokenLoading(true);
+    loadTempoFeeTokenOptionsState({
+      account: currentAccount,
+      userAddress: currentAccount.address,
+      chainServerId: chain.serverId,
+      tokenList: cachedTokenItems,
+      txFeeToken,
+      maxGasCostRawAmount,
+      maxGasCostRawAmountDecimals: gasToken.decimals || 18,
+      maxGasCostRawAmountIn18,
+    })
+      .then(({ options, preferredTokenId, selectedOption }) => {
+        if (!mounted) {
+          return;
+        }
+        setTempoGasTokenList(options);
+        if (
+          selectedOption &&
+          currentTempoTokenId.toLowerCase() !== selectedOption.id.toLowerCase()
+        ) {
+          const shouldApplyFallbackFeeToken =
+            !!txFeeToken &&
+            txFeeToken.toLowerCase() !== selectedOption.id.toLowerCase();
+          handleSelectTempoGasToken(selectedOption, {
+            applyFeeToken: shouldApplyFallbackFeeToken,
+            tempoPreferredFeeTokenId: preferredTokenId,
+          });
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (mounted) {
+          setTempoGasTokenLoading(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [
+    chain,
+    chain?.serverId,
+    currentAccount,
+    currentAccount?.address,
+    currentTempoTokenId,
+    gasToken.decimals,
+    getCachedTokenItems,
+    handleSelectTempoGasToken,
+    maxGasCostRawAmount,
+    maxGasCostRawAmountIn18,
+    maxGasCostRawAmountIn18Text,
+    maxGasCostRawAmountText,
+    showTempoGasTokenSelector,
+    txFeeToken,
+  ]);
+
+  const handleChangeGasAccount = useMemoizedFn(async () => {
+    await handleChangeGasMethod('gasAccount');
+    if (ctx?.selectedGas) {
+      await handleGasChange(ctx.selectedGas as any);
+    }
+  });
+
+  const handleTopUpWaitResult = useMemoizedFn(
+    async (result: GasAccountTopUpResult) => {
+      if (!ctx || !config || !ctx.txs.length) {
+        return;
+      }
+
+      const nextTxs = await buildTopUpResumedTxs({
+        txs: ctx.txs,
+        originalAccount: config.account,
+        originalChainServerId: chain.serverId,
+        topUpResult: result,
+      });
+
+      instance.replaceTxs(nextTxs);
+      setManualGasMethod('gasAccount');
+      instance.setGasMethod('gasAccount', { manual: true });
+      handleGasChange(ctx?.selectedGas);
+    },
+  );
 
   const showGasFeeTooHighTips = ctx?.gasFeeTooHigh && !loading && !noQuote;
+  const showGasLessNotEnoughTip = shouldShowGasLessNotEnough({
+    showGasLess,
+    isGasNotEnough,
+    payGasByGasAccount: !!payGasByGasAccount,
+    canUseGasLess,
+  });
+  const showGasAccountTip = payGasByGasAccount && !gasAccountCanPay;
+  const showGasTips =
+    showGasLessToSign || showGasLessNotEnoughTip || showGasAccountTip;
+
+  useEffect(() => {
+    if (manualGasMethod) {
+      return;
+    }
+
+    if (
+      shouldAutoSwitchToGasAccountFromGasless({
+        showGasLess,
+        isGasNotEnough,
+        canUseGasLess,
+        canGotoUseGasAccount: !!canGotoUseGasAccount,
+      }) &&
+      !payGasByGasAccount
+    ) {
+      handleAutoChangeGasMethod('gasAccount');
+    }
+  }, [
+    canGotoUseGasAccount,
+    canUseGasLess,
+    handleAutoChangeGasMethod,
+    isGasNotEnough,
+    manualGasMethod,
+    payGasByGasAccount,
+    showGasLess,
+  ]);
 
   if (!supportDirectSign) {
     return null;
@@ -577,240 +1082,151 @@ export const DirectSignGasInfo = ({
         />
       ) : null}
 
-      {showGasLess && !payGasByGasAccount && !canUseGasLess ? (
+      {showGasLessNotEnoughTip ? (
         <GasLessNotEnough
           inShowMore
+          nativeTokenInsufficient={isGasNotEnough}
           canGotoUseGasAccount={canGotoUseGasAccount}
           canDepositUseGasAccount={canDepositUseGasAccount}
-          onChangeGasAccount={() => handleChangeGasMethod('gasAccount')}
+          onChangeGasAccount={handleChangeGasAccount}
           gasAccountAddress={accountId || config?.account.address || ''}
           gasAccountCost={ctx?.gasAccount as any}
+          onDepositPopupVisibleChange={onDepositPopupVisibleChange}
+          onWaitDepositResult={handleTopUpWaitResult}
           onDeposit={() => {
             // onDeposit?.();
-            handleGasChange(ctx?.selectedGas);
-
-            handleChangeGasMethod('gasAccount');
-          }}
-          onGotoGasAccount={() => {
-            handleCancel?.();
-            navigate(RootNames.StackTransaction, {
-              screen: RootNames.GasAccount,
-              params: {},
-            });
+            // handleGasChange(ctx?.selectedGas);
+            // handleChangeGasMethod('gasAccount');
           }}
         />
       ) : null}
 
-      {payGasByGasAccount && !gasAccountCanPay ? (
+      {showGasAccountTip ? (
         <GasAccountTips
           inShowMore
           gasAccountAddress={accountId || config?.account.address || ''}
           gasAccountCost={ctx?.gasAccount as any}
-          isGasAccountLogin={false}
+          onChangeGasAccount={handleChangeGasAccount}
           isWalletConnect={false}
           noCustomRPC={noCustomRPC}
+          nativeTokenInsufficient={isGasNotEnough}
+          onDepositPopupVisibleChange={onDepositPopupVisibleChange}
+          onWaitDepositResult={handleTopUpWaitResult}
           onDeposit={() => {
-            // onDeposit?.();
-            handleGasChange(ctx?.selectedGas);
-
-            handleChangeGasMethod('gasAccount');
-          }}
-          onGotoGasAccount={() => {
-            handleCancel?.();
-            navigate(RootNames.StackTransaction, {
-              screen: RootNames.GasAccount,
-              params: {},
-            });
+            //   // onDeposit?.();
+            //   handleGasChange(ctx?.selectedGas);
+            // handleChangeGasMethod('gasAccount');
           }}
         />
       ) : null}
     </>
   );
 
+  const gasSelectorHeaderProps: React.ComponentProps<
+    typeof SignMainnetHeaderContent
+  > | null =
+    showGasContent && currentTx && currentAccount
+      ? {
+          textColor,
+          gasFeeListItemStyle,
+          gasFeeListItemInnerStyle,
+          fixedMode: true,
+          defaultFixedModeOnCurrentChain: fixedModeOnCurrentChain,
+          tx: currentTx,
+          gasAccountCost,
+          gasMethod: effectiveGasMethod,
+          onChangeGasMethod: handleChangeGasMethod,
+          onAutoChangeGasMethod: handleAutoChangeGasMethod,
+          disableAutoGasLevelSwitch: !!manualGasMethod,
+          showGasMethodShortcut: false,
+          hideGasLevelInSummary,
+          rightPrefix: sourceSelector,
+          disabled: false,
+          isReady,
+          gasLimit: ctx?.txs?.[0]?.gas,
+          gasList: ctx?.gasList || [],
+          selectedGas: ctx?.selectedGas || null,
+          version: txsResult?.[0]?.preExecResult?.pre_exec_version || 'v0',
+          chainId: ctx?.chainId || chainId,
+          onChange: handleGasChange,
+          nonce: ctx?.txsCalc?.[0]?.tx?.nonce || '0x1',
+          isSpeedUp: !!isSpeedUp,
+          isCancel: !!isCancel,
+          is1559: !!ctx?.is1559,
+          isHardware: false,
+          nativeTokenBalance: ctx?.nativeTokenBalance || '0x0',
+          gasToken,
+          showTempoGasTokenSelector,
+          tempoGasTokenList,
+          tempoPreferredFeeTokenId: ctx?.tempoPreferredFeeTokenId,
+          onSelectTempoGasToken: handleSelectTempoGasToken,
+          tempoGasTokenLoading,
+          gasPriceMedian: ctx?.gasPriceMedian || null,
+          gas: totalGasCost,
+          gasCalcMethod,
+          checkGasLevelIsNotEnough,
+          account: currentAccount,
+          gasCostUsdStr: formatGasHeaderUsdValue(
+            totalGasCost.gasCostUsd.toString(10),
+          ),
+          nativeTokenInsufficient: isGasNotEnough,
+          freeGasAvailable: canUseGasLess,
+          onGasSettingsOpenChange,
+          renderSwapQuotes,
+          onRefreshSwapQuotes,
+          swapQuotesLoading,
+          swapGasInteractionDisabled: false,
+          swapGasQuoteVisible,
+          onSwapGasQuoteVisibleChange,
+          gasFeeLabel: resolvedGasFeeLabel,
+        }
+      : null;
+  const keepCombinedGasHeaderMounted =
+    !!renderSwapQuotes && !!swapGasQuoteVisible;
+
   return (
     <View style={style}>
-      <ListItem
-        name={<>{'Gas Fee'}</>}
-        style={gasFeeListItemStyle}
-        innerStyle={gasFeeListItemInnerStyle}
-        LeftIcon={
-          <>
-            {ctx?.gasMethod === 'gasAccount' &&
-              !loading &&
-              showGasContent &&
-              !noQuote && (
-                <Tip
-                  isVisible={isGasAccountHovering}
-                  // contentStyle={{ minHeight: 0 }}
-                  onClose={() => {
-                    setIsGasAccountHovering(false);
-                  }}
-                  content={
-                    <View
-                      style={[
-                        styles.gasAccountTipsBox,
-                        IS_ANDROID
-                          ? {
-                              minHeight: 116,
-                            }
-                          : {},
-                      ]}>
-                      <View>
-                        <Text style={styles.gasAccountTip}>
-                          {t('page.signTx.gasAccount.description')}
-                        </Text>
-                      </View>
-                      <View>
-                        <Text style={styles.gasAccountTip}>
-                          {t('page.signTx.gasAccount.estimatedGas')}{' '}
-                          {calcGasAccountUsd(
-                            gasAccountCost?.estimate_tx_cost || 0,
-                          )}
-                        </Text>
-                      </View>
-                      <View>
-                        <Text style={styles.gasAccountTip}>
-                          {t('page.signTx.gasAccount.maxGas')}{' '}
-                          {calcGasAccountUsd(gasAccountCost?.total_cost || '0')}
-                        </Text>
-                      </View>
-                      <View>
-                        <Text style={styles.gasAccountTip}>
-                          {t('page.signTx.gasAccount.sendGas')}{' '}
-                          {calcGasAccountUsd(gasAccountCost?.total_cost || '0')}
-                        </Text>
-                      </View>
-
-                      <View>
-                        <Text style={styles.gasAccountTip}>
-                          {t('page.signTx.gasAccount.gasCost')}{' '}
-                          {calcGasAccountUsd(gasAccountCost?.gas_cost || '0')}
-                        </Text>
-                      </View>
-                    </View>
-                  }>
-                  <Pressable
-                    onPress={() => {
-                      setIsGasAccountHovering(true);
-                    }}>
-                    <RcIconInfoCC
-                      style={{ marginLeft: 4 }}
-                      width={16}
-                      height={16}
-                      color={colors2024['neutral-info']}
-                    />
-                  </Pressable>
-                </Tip>
-              )}
-          </>
-        }>
-        {showGasContent ? (
-          <>
-            <TouchableOpacity
-              ref={ref}
-              onPress={() => {
-                setGasModalVisible(true);
-              }}
-              onLayout={() => {
-                ref.current?.measureInWindow((x, y, width, height) => {
-                  setGasModalXY({ x, y, height, width });
-                });
-              }}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  height: 24,
-                  gap: 8,
-                }}>
-                <Text
-                  style={{
-                    color: textColor || colors2024['brand-default'],
-                    fontFamily: 'SF Pro Rounded',
-                    fontSize: 14,
-                    fontStyle: 'normal',
-                    fontWeight: '500',
-                    lineHeight: 16,
-                    paddingHorizontal: 6,
-                    paddingVertical: 4,
-                    borderRadius: 4,
-                    backgroundColor: colors2024['brand-light-1'],
-                    overflow: 'hidden',
-                  }}>
-                  {ctx?.selectedGas?.level
-                    ? t(getGasLevelI18nKey(ctx.selectedGas.level))
-                    : t(getGasLevelI18nKey('normal'))}
-                </Text>
-
-                <Text
-                  style={[
-                    {
-                      color: textColor || colors2024['brand-default'],
-                      fontFamily: 'SF Pro Rounded',
-                      fontSize: 16,
-                      fontStyle: 'normal',
-                      fontWeight: '700',
-                      lineHeight: 18,
-                    },
-                    showGasFeeTooHighTips && {
-                      color: colors2024['orange-default'],
-                    },
-                    disabledProcess && {
-                      color: colors2024['red-default'],
-                    },
-                  ]}>
-                  {gasCostUsd}
-                </Text>
-                <Animated.View
-                  style={{
-                    transform: [
-                      { rotate: gasModalVisible ? '-90deg' : '90deg' },
-                    ],
-                  }}>
-                  <RcIconBluePolygon
-                    style={styles.arrowIcon}
-                    color={
-                      disabledProcess
-                        ? colors2024['red-default']
-                        : showGasFeeTooHighTips
-                        ? colors2024['orange-default']
-                        : textColor || colors2024['brand-default']
-                    }
-                  />
-                </Animated.View>
-              </View>
-            </TouchableOpacity>
-
-            <ShowMoreGasSelectModal
-              layout={gasModalXY}
-              visible={gasModalVisible}
-              onCancel={() => {
-                setGasModalVisible(false);
-              }}
-              onConfirm={() => {
-                setGasModalVisible(false);
-              }}
-              chainId={chainId}
-            />
-          </>
-        ) : !loading && noQuote ? (
-          <Text style={styles.noQuotePlaceholder}>-</Text>
-        ) : (
-          <CustomSkeleton
-            style={{
-              width: 131,
-              height: 24,
-              borderRadius: 100,
-            }}
-          />
-        )}
-      </ListItem>
+      {showGasContent || keepCombinedGasHeaderMounted ? (
+        <StableSignMainnetHeaderContent
+          headerProps={gasSelectorHeaderProps || undefined}
+          dynamicProps={{
+            onGasSettingsOpenChange,
+            renderSwapQuotes,
+            onRefreshSwapQuotes,
+            swapQuotesLoading,
+            swapGasInteractionDisabled: !showGasContent,
+            swapGasQuoteVisible,
+            onSwapGasQuoteVisibleChange,
+            rightPrefix: sourceSelector,
+          }}
+        />
+      ) : (
+        <ListItem
+          name={<>{resolvedGasFeeLabel}</>}
+          style={gasFeeListItemStyle}
+          innerStyle={gasFeeListItemInnerStyle}>
+          <View style={styles.previewValueSlot}>
+            {fallbackSourceSelector ?? sourceSelector}
+            {!loading && noQuote ? (
+              <Text style={styles.noQuotePlaceholder}>-</Text>
+            ) : (
+              <CustomSkeleton
+                style={
+                  hideGasLevelInSummary
+                    ? styles.infoCardGasSkeleton
+                    : styles.gasSkeleton
+                }
+              />
+            )}
+          </View>
+        </ListItem>
+      )}
       {showGasFeeTooHighTips ? (
         <WarningText style={{ marginTop: 10 }}>
           {t('page.bridge.gasFeeTooHight')}
         </WarningText>
       ) : null}
-      {showGasContent ? (
+      {showGasContent && showGasTips ? (
         <View style={{ marginTop: 6 }}>{gasTipsComponent()}</View>
       ) : null}
     </View>
@@ -885,39 +1301,17 @@ export const RecommendFromToken = ({
 };
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
-  container: { marginHorizontal: 24, marginTop: 12 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    marginTop: 12,
-    paddingHorizontal: 12,
-    justifyContent: 'center',
+  container: { marginHorizontal: 24, marginTop: 10 },
+  containerContent: {
+    gap: 10,
+    paddingHorizontal: 6,
   },
-  dottedLine: {
-    flex: 1,
-    borderBottomWidth: 1,
-    borderColor: colors2024['neutral-line'],
-    opacity: 0.5,
-    marginHorizontal: -12,
-  },
-
   impactTooltipText: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
-  },
-  icon: {
-    marginLeft: 4,
-    transform: [{ rotate: '90deg' }],
-  },
-  headerTextWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    // opacity: 0.3,
   },
   listItemText: {
     fontSize: 14,
@@ -926,14 +1320,6 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     lineHeight: 18,
     color: colors2024['neutral-secondary'],
   },
-  headerText: {
-    fontSize: 16,
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-    lineHeight: 20,
-    color: colors2024['neutral-secondary'],
-  },
-  body: { overflow: 'hidden', gap: 12 },
   lossInfo: { marginBottom: 12, fontSize: 12, color: '#5B5B5B' },
   flexRow: { flexDirection: 'row', justifyContent: 'space-between' },
   lossAmount: {
@@ -971,8 +1357,8 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     // borderRadius: 8,
     // overflow: 'hidden',
   },
-  listItem: {},
   listItemContainer: {
+    height: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -992,16 +1378,62 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     fontSize: 16,
     fontStyle: 'normal',
     fontWeight: '700',
-    lineHeight: 20,
+    lineHeight: 18,
   },
-  wrapTokenFee: {
-    color: colors2024['neutral-foot'],
-    textAlign: 'right',
+  freeFeeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 1,
+    borderRadius: 5,
+    backgroundColor: colors['green-default'],
+    overflow: 'hidden',
+  },
+  freeFeeLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  freeFeeText: {
+    color: colors2024['neutral-InvertHighlight'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontStyle: 'normal',
-    fontWeight: '500',
-    lineHeight: 20,
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
+  },
+  halfFeeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  halfFeeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+    paddingHorizontal: 6,
+    paddingVertical: 0,
+    borderWidth: 1,
+    borderColor: colors['green-default'],
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  halfFee: {
+    color: colors['green-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
+  },
+  halfOriginalFee: {
+    color: colors2024['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
+    textDecorationLine: 'line-through',
   },
   recommendFromToken: {
     // flexDirection: 'row',
@@ -1072,6 +1504,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    height: 20,
   },
 
   afterLabel: {
@@ -1082,6 +1515,34 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   noQuotePlaceholder: {
     color: colors2024['neutral-foot'],
     fontSize: 12,
+    lineHeight: 18,
+  },
+  previewValueSlot: {
+    height: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  feeValueSlot: {
+    height: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sourceSkeleton: {
+    width: 60,
+    height: 20,
+    borderRadius: 12,
+  },
+  gasSkeleton: {
+    width: 131,
+    height: 20,
+    borderRadius: 100,
+  },
+  infoCardGasSkeleton: {
+    width: 60,
+    height: 20,
+    borderRadius: 12,
   },
   arrowIcon: {
     transform: [{ rotate: '-90deg' }],
@@ -1098,40 +1559,60 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   },
 
   bestQuoteWrapper: {
-    borderColor: colors2024['brand-default'],
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    borderRadius: 4,
+    height: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    overflow: 'hidden',
-  },
-  bestQuoteTag: {
-    left: -StyleSheet.hairlineWidth * 2,
   },
   bestTagWrapper: {
-    position: 'absolute',
-    top: StyleSheet.hairlineWidth * 2,
-    left: 7,
-    height: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
+    width: 38,
+    height: 20,
+    borderTopLeftRadius: 4,
+    borderBottomLeftRadius: 4,
+    overflow: 'hidden',
     justifyContent: 'center',
+    paddingLeft: 3,
+    zIndex: 1,
+  },
+  bestQuoteTag: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    transform: [{ rotate: '180deg' }],
   },
   bestText: {
     color: colors2024['neutral-InvertHighlight'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    fontStyle: 'normal',
+    fontSize: 14,
+    fontStyle: 'italic',
     fontWeight: '500',
-    lineHeight: 16,
+    lineHeight: 18,
   },
   bestRightWrapper: {
+    height: 20,
+    marginLeft: -7,
     flexDirection: 'row',
-    gap: 4,
-    paddingRight: 6,
-    paddingLeft: 2,
+    gap: 2,
+    paddingRight: 4,
+    paddingLeft: 11,
     alignItems: 'center',
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderRightWidth: 1,
+    borderColor: colors2024['brand-default'],
+    borderTopRightRadius: 4,
+    borderBottomRightRadius: 4,
+  },
+  bestSourceLogo: {
+    width: 12,
+    height: 12,
+    borderRadius: 90,
+  },
+  bestSourceName: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
+    color: colors2024['brand-default'],
   },
 }));
 
-export default BridgeShowMore;
+export default React.memo(BridgeShowMore);

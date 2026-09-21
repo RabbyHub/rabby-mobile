@@ -9,16 +9,11 @@ import { useLendingSummary } from '../../hooks';
 import TokenIcon from '../TokenIcon';
 import { formatApy } from '../../utils/format';
 import { formatUsdValueKMB } from '@/screens/Home/utils/price';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { DisplayPoolReserveInfo } from '../../type';
+import { openLendingActionPopup } from '../../utils/actionPopup';
 import { CHAINS_ENUM } from '@debank/common';
 import { useSelectedMarket } from '../../hooks';
 import { API_ETH_MOCK_ADDRESS } from '@aave/contract-helpers';
-import RightArrowCC from '@/assets2024/icons/common/right-cc.svg';
 import { CustomMarket } from '../../config/market';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { Text } from '@/components/Typography';
@@ -60,21 +55,11 @@ const EmptyItem = () => {
       if (!reserve || !userSummary) {
         return;
       }
-      const modalId = createGlobalBottomSheetModal2024({
-        name: MODAL_NAMES.SUPPLY_ACTION_DETAIL,
+      openLendingActionPopup({
+        popup: 'supply',
         reserve,
         userSummary,
-        onClose: () => {
-          removeGlobalBottomSheetModal2024(modalId);
-        },
-        bottomSheetModalProps: {
-          enableContentPanningGesture: true,
-          enablePanDownToClose: true,
-          enableDismissOnClose: true,
-          handleStyle: {
-            backgroundColor: colors2024['neutral-bg-1'],
-          },
-        },
+        colors2024,
       });
     },
     [colors2024, getTargetReserve, iUserSummary],
@@ -108,11 +93,17 @@ const EmptyItem = () => {
             <View style={styles.left}>
               <TokenIcon
                 tokenSymbol={item.reserve.symbol}
+                size={40}
                 chainSize={0}
                 chain={chainEnum || CHAINS_ENUM.ETH}
               />
               <View style={styles.symbolContainer}>
-                <Text style={styles.symbol}>{item.reserve.symbol}</Text>
+                <Text
+                  style={styles.symbol}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
+                  {item.reserve.symbol}
+                </Text>
               </View>
             </View>
             <Text style={styles.tvl}>
@@ -122,11 +113,6 @@ const EmptyItem = () => {
               <Text style={styles.apy}>
                 {formatApy(Number(item.reserve.supplyAPY || '0'))}
               </Text>
-              <RightArrowCC
-                width={14}
-                height={14}
-                color={colors2024['green-default']}
-              />
             </View>
           </TouchableOpacity>
         ))}
@@ -137,28 +123,28 @@ const EmptyItem = () => {
 
 export default EmptyItem;
 
-const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
     position: 'relative',
     gap: 12,
     borderRadius: 16,
-    marginTop: 12,
     marginBottom: 120,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+    marginTop: 12,
+    //backgroundColor: colors2024['neutral-bg-1'],
   },
   listContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 30,
-    paddingBottom: 24,
+    paddingHorizontal: 12,
+    paddingTop: 14,
+    paddingBottom: 4,
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderRadius: 14,
   },
   listHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    marginBottom: 8,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
   },
   headerToken: {
     flex: 1,
@@ -180,20 +166,11 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-secondary'],
     textAlign: 'right',
   },
-  headerMySupplies: {
-    width: 80,
-    marginLeft: 8,
-    fontSize: 14,
-    lineHeight: 18,
-    color: colors2024['neutral-secondary'],
-    textAlign: 'right',
-  },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 14,
-    marginTop: 8,
+    paddingVertical: 12,
   },
   left: {
     flex: 1,
@@ -203,6 +180,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   symbolContainer: {
     gap: 2,
+    flex: 1,
   },
   symbol: {
     fontSize: 16,
@@ -213,7 +191,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   tvl: {
     width: 100,
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 18,
     fontWeight: '500',
     textAlign: 'right',
@@ -222,9 +200,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   apy: {
     width: 60,
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '500',
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'right',
@@ -235,12 +213,5 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-  },
-  yourSupplied: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
   },
 }));

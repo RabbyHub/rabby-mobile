@@ -3,7 +3,7 @@ import { findChain } from '@/utils/chain';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
-import { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
+import type { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
 import React, {
   useCallback,
   useEffect,
@@ -39,7 +39,7 @@ import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { AssetAvatar } from '@/components';
 import { ONE_DAY_MS, ONE_HOUR_MS, ONE_MINUTE_MS } from '../constants';
 import { openapi } from '@/core/request';
-import { transactionHistoryService } from '@/core/services';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { Button } from '@/components2024/Button';
 import {
   useSafeAreaFrame,
@@ -48,7 +48,7 @@ import {
 import { naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
-import { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';
+import type { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { Text } from '@/components/Typography';
 
@@ -88,6 +88,7 @@ const getStepIndicatorStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   indicatorArrow: {
     marginHorizontal: 6,
@@ -727,10 +728,11 @@ const PendingStatusDetail = ({
           onClose();
           naviPush(RootNames.StackTransaction, {
             screen:
-              ofScreen === RootNames.MultiBridge
-                ? RootNames.MultiSwap
-                : RootNames.Swap,
+              ofScreen === RootNames.MultiSwapBridge
+                ? RootNames.MultiSwapBridge
+                : RootNames.SwapBridge,
             params: {
+              activeTab: 'swap',
               chainEnum: findChain({ serverId: data.toToken?.chain })?.enum,
               swapTokenId: [data.actualToToken?.id, data.toToken.id],
               swapAgain: true,
@@ -742,10 +744,11 @@ const PendingStatusDetail = ({
           onClose();
           naviPush(RootNames.StackTransaction, {
             screen:
-              ofScreen === RootNames.MultiBridge
-                ? RootNames.MultiSwap
-                : RootNames.Swap,
+              ofScreen === RootNames.MultiSwapBridge
+                ? RootNames.MultiSwapBridge
+                : RootNames.SwapBridge,
             params: {
+              activeTab: 'swap',
               chainEnum: findChain({ serverId: data.toToken?.chain })?.enum,
               tokenId: data.actualToToken?.id,
               isFromSwap: true,
@@ -981,26 +984,29 @@ const PendingStatusDetail = ({
 };
 export const BridgePendingTxItem = ({
   userAddress,
+  onDisplayChange,
 }: {
   userAddress: string;
+  onDisplayChange?: (visible: boolean) => void;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getItemStyles });
-  const { t } = useTranslation();
   const sheetRef = useRef<AppBottomSheetModal>(null);
   const [data, setData] = useState<BridgeTxHistoryItem | null>(null);
+  const isDisplayed = !!data;
 
   const fetchHistory = useCallback(async () => {
-    const historyData = transactionHistoryService.getRecentPendingTxHistory(
-      userAddress,
-      'bridge',
-    ) as BridgeTxHistoryItem;
+    const historyData =
+      (await transactionHistoryServiceApi.getRecentPendingTxHistory(
+        userAddress,
+        'bridge',
+      )) as BridgeTxHistoryItem;
 
     // tx create time is more than one day, set this tx failed and no show in loading pendingTxItem
     if (
       historyData?.createdAt &&
       Date.now() - historyData.createdAt > ONE_DAY_MS
     ) {
-      transactionHistoryService.completeBridgeTxHistory(
+      await transactionHistoryServiceApi.completeBridgeTxHistory(
         historyData?.hash,
         historyData.fromChainId!,
         'failed',
@@ -1033,7 +1039,7 @@ export const BridgePendingTxItem = ({
           const txCreateTime = historyData.createdAt;
           if (currentTime - txCreateTime > ONE_HOUR_MS) {
             // tx create time is more than 60 minutes, set this tx failed
-            transactionHistoryService.completeBridgeTxHistory(
+            await transactionHistoryServiceApi.completeBridgeTxHistory(
               historyData.hash,
               historyData.fromChainId!,
               'failed',
@@ -1052,7 +1058,7 @@ export const BridgePendingTxItem = ({
               completedAt: Date.now(),
             };
             setData(updateData as BridgeTxHistoryItem);
-            transactionHistoryService.completeBridgeTxHistory(
+            await transactionHistoryServiceApi.completeBridgeTxHistory(
               historyData.hash,
               historyData.fromChainId!,
               status,
@@ -1067,29 +1073,38 @@ export const BridgePendingTxItem = ({
   }, [userAddress]);
 
   useEffect(() => {
-    fetchHistory();
+    void fetchHistory().catch(error => {
+      console.error('[BridgePendingTxItem] load local history failed', error);
+    });
   }, [fetchHistory]);
 
-  const fetchRefreshLocalData = useMemoizedFn((data: BridgeTxHistoryItem) => {
-    if (data.status !== 'pending') {
-      // has done
-      return;
-    }
+  useEffect(() => {
+    onDisplayChange?.(isDisplayed);
+    return () => onDisplayChange?.(false);
+  }, [isDisplayed, onDisplayChange]);
 
-    const address = data.address;
-    const chainId = data.fromChainId;
-    const hash = data.hash;
-    const newData = transactionHistoryService.getRecentTxHistory(
-      address,
-      hash,
-      chainId!,
-      'bridge',
-    );
+  const fetchRefreshLocalData = useMemoizedFn(
+    async (data: BridgeTxHistoryItem) => {
+      if (data.status !== 'pending') {
+        // has done
+        return;
+      }
 
-    if (newData?.status !== 'pending') {
-      return newData;
-    }
-  });
+      const address = data.address;
+      const chainId = data.fromChainId;
+      const hash = data.hash;
+      const newData = await transactionHistoryServiceApi.getRecentTxHistory(
+        address,
+        hash,
+        chainId!,
+        'bridge',
+      );
+
+      if (newData?.status !== 'pending') {
+        return newData;
+      }
+    },
+  );
 
   const handleBridgeHistoryUpdate = useMemoizedFn(
     (bridgeHistoryList: BridgeHistory[]) => {
@@ -1110,11 +1125,18 @@ export const BridgePendingTxItem = ({
         const txCreateTime = data?.createdAt;
         if (currentTime - txCreateTime > ONE_HOUR_MS) {
           // tx create time is more than 60 minutes, set this tx failed
-          transactionHistoryService.completeBridgeTxHistory(
-            recentlyTxHash,
-            data?.fromChainId,
-            'failed',
-          );
+          void transactionHistoryServiceApi
+            .completeBridgeTxHistory(
+              recentlyTxHash,
+              data?.fromChainId,
+              'failed',
+            )
+            .catch(error => {
+              console.error(
+                '[BridgeHistory] persist failed status failed',
+                error,
+              );
+            });
           setData(null);
           return;
         }
@@ -1133,12 +1155,16 @@ export const BridgePendingTxItem = ({
           completedAt: Date.now(),
         };
         setData(updateData as BridgeTxHistoryItem);
-        transactionHistoryService.completeBridgeTxHistory(
-          recentlyTxHash,
-          data.fromChainId,
-          status,
-          findTx,
-        );
+        void transactionHistoryServiceApi
+          .completeBridgeTxHistory(
+            recentlyTxHash,
+            data.fromChainId,
+            status,
+            findTx,
+          )
+          .catch(error => {
+            console.error('[BridgeHistory] persist completion failed', error);
+          });
       }
     },
   );
@@ -1216,40 +1242,10 @@ export const BridgePendingTxItem = ({
 
   return (
     <>
-      <View
-        style={{
-          flex: 1,
-          flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'center',
-          position: 'relative',
-          overflow: 'hidden',
-          gap: 10,
-          paddingTop: 12,
-          marginHorizontal: 20,
-        }}>
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: colors2024['neutral-line'],
-            height: 1,
-          }}
-        />
-        <View
-          style={{
-            width: 3,
-            height: 3,
-            borderRadius: 9999,
-            backgroundColor: colors2024['neutral-info'],
-          }}
-        />
-        <View
-          style={{
-            height: 1,
-            flex: 1,
-            backgroundColor: colors2024['neutral-line'],
-          }}
-        />
+      <View style={styles.header}>
+        <View style={styles.dottedLine} />
+        <View style={styles.dot} />
+        <View style={styles.dottedLine} />
       </View>
       <TouchableOpacity style={styles.card} onPress={openDetail}>
         <View style={styles.tokenRow}>
@@ -1260,7 +1256,9 @@ export const BridgePendingTxItem = ({
             size={24}
             innerChainStyle={styles.innerChainStyle}
           />
-          <Text style={styles.tokenText}>{getTokenSymbol(data.fromToken)}</Text>
+          <Text style={styles.tokenText} numberOfLines={1} ellipsizeMode="tail">
+            {getTokenSymbol(data.fromToken)}
+          </Text>
           <Text style={styles.arrowText}>→</Text>
           <AssetAvatar
             logo={data.toToken?.logo_url}
@@ -1269,7 +1267,9 @@ export const BridgePendingTxItem = ({
             size={24}
             innerChainStyle={styles.innerChainStyle}
           />
-          <Text style={styles.tokenText}>{getTokenSymbol(data.toToken)}</Text>
+          <Text style={styles.tokenText} numberOfLines={1} ellipsizeMode="tail">
+            {getTokenSymbol(data.toToken)}
+          </Text>
         </View>
 
         <StepStatusIndicator
@@ -1304,19 +1304,38 @@ export const BridgePendingTxItem = ({
 };
 
 const getItemStyles = createGetStyles2024(({ colors2024 }) => ({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingTop: 12,
+    marginHorizontal: 22,
+  },
+  dottedLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors2024['neutral-line'],
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors2024['neutral-info'],
+  },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingRight: 0,
+    gap: 12,
     paddingVertical: 14,
     borderRadius: 12,
-    marginHorizontal: 16,
+    marginHorizontal: 22,
   },
   tokenRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    minWidth: 0,
   },
   tokenText: {
     color: colors2024['neutral-title-1'],
@@ -1325,6 +1344,8 @@ const getItemStyles = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 18,
     fontWeight: '700',
     marginLeft: 6,
+    flexShrink: 1,
+    minWidth: 0,
   },
   arrowText: {
     marginHorizontal: 8,

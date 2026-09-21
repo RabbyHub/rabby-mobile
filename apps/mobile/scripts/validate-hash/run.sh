@@ -6,7 +6,7 @@
 #   ./run.sh android      # 只运行 Android 校验
 #   ./run.sh all          # (默认) 运行两个平台并计算组合哈希
 
-set -e
+set -eu
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
@@ -15,6 +15,20 @@ source "$SCRIPT_DIR/ios.sh"
 source "$SCRIPT_DIR/android.sh"
 
 PLATFORM=${1:-all}
+
+run_and_capture_hash() {
+  local output_file="$1"
+  shift
+
+  : >"$output_file"
+
+  set +e
+  "$@" | tee "$output_file" >"$TEE_TARGET"
+  local command_status=${PIPESTATUS[0]}
+  set -e
+
+  return "$command_status"
+}
 
 # 运行通用设置
 setup_workspace
@@ -34,13 +48,17 @@ android_hash=""
 if [[ "$PLATFORM" == "all" || "$PLATFORM" == "ios" ]]; then
   IOS_EXPORT_DIR="$EXPORT_BASE_DIR/ios"
   mkdir -p "$IOS_EXPORT_DIR"
-  ios_hash=$(run_ios_build_and_hash "$IOS_EXPORT_DIR" | tee "${TEE_TARGET}" | tail -n 1)
+  ios_output_file="$IOS_EXPORT_DIR/hash_output.log"
+  run_and_capture_hash "$ios_output_file" run_ios_build_and_hash "$IOS_EXPORT_DIR"
+  ios_hash=$(tail -n 1 "$ios_output_file")
 fi
 
 if [[ "$PLATFORM" == "all" || "$PLATFORM" == "android" ]]; then
   ANDROID_EXPORT_DIR="$EXPORT_BASE_DIR/android"
   mkdir -p "$ANDROID_EXPORT_DIR"
-  android_hash=$(run_android_build_and_hash "$ANDROID_EXPORT_DIR" | tee "${TEE_TARGET}" | tail -n 1)
+  android_output_file="$ANDROID_EXPORT_DIR/hash_output.log"
+  run_and_capture_hash "$android_output_file" run_android_build_and_hash "$ANDROID_EXPORT_DIR"
+  android_hash=$(tail -n 1 "$android_output_file")
 fi
 
 # 获取操作系统信息

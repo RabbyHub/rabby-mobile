@@ -6,12 +6,14 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
-import { formatPerpsUsdValue } from '@/utils/number';
+import { formatPerpsUsdValue, splitNumberByStep } from '@/utils/number';
 import {
   calLiquidationPrice,
   formatPerpsCoin,
   formatPerpsPct,
+  formatTpOrSlPrice,
   getStatsReportSide,
+  isMarketableLimit,
 } from '@/utils/perps';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
@@ -29,27 +31,57 @@ import {
   View,
   StyleSheet,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { PerpsOpenPositionCheckPopup } from './PerpsOpenPositionCheckPopup';
 
 const isAndroid = Platform.OS === 'android';
-import { PERPS_MAX_NTL_VALUE, PERPS_MINI_USD_VALUE } from '@/constant/perps';
+import {
+  PERPS_EXCHANGE_FEE_NUMBER,
+  PERPS_MAX_NTL_VALUE,
+  PERPS_MINI_USD_VALUE,
+  PerpsOpenOrderType,
+} from '@/constant/perps';
 import BigNumber from 'bignumber.js';
 import { useUsdInput } from '@/hooks/useUsdInput';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
-import { MarketData, perpsStore } from '@/hooks/perps/usePerpsStore';
+import {
+  MarketData,
+  perpsStore,
+  setMarginModeForCoin,
+} from '@/hooks/perps/usePerpsStore';
 import { PerpEditTpSlPriceTag } from './PerpEditTpSlPriceTag';
+import { PerpEditLimitPriceTag } from './PerpEditLimitPriceTag';
+import { useMarketSlippage } from '../hooks/useMarketSlippage';
+import { useCrossMarginAvailableAfterMaintenance } from '../hooks/useCrossMarginAvailable';
 import { PerpsSlider } from './PerpsSlider';
-import { AssetPriceInfo } from './PerpsPriceInfo';
-import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
+import {
+  WsActiveAssetCtx,
+  WsActiveAssetData,
+} from '@rabby-wallet/hyperliquid-sdk';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
+import IconOrderTypeSwitch from '@/assets2024/icons/perps/IconOrderTypeSwitch.svg';
 import { PerpMarginModePopup } from './PerpMarginModePopup';
 import { useShallow } from 'zustand/shallow';
-import { PERPS_EXCHANGE_FEE_NUMBER } from '@/constant/perps';
-import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
+import { resolvePerpsProProjectedTradeRisk } from '@/screens/PerpsPro/model/tradeRisk';
+import { usePerpsProLeverageUpdate } from '@/screens/PerpsPro/scene/usePerpsProLeverageUpdate';
 import { showToast } from '@/hooks/perps/showToast';
 import { stats } from '@/utils/stats';
 import { APP_VERSIONS } from '@/constant';
 import { Text, TextInput } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
+import { formatPerpsNumber } from '../../../../../../packages/biz-utils/src/isomorphic/biz-number';
 
 export const PerpsOpenPositionPopup: React.FC<{
   visible?: boolean;
@@ -68,6 +100,8 @@ export const PerpsOpenPositionPopup: React.FC<{
   onConfirm: () => void;
   marketDataItem?: MarketData;
   activeAssetCtx?: WsActiveAssetCtx['ctx'] | null;
+  activeAssetData?: WsActiveAssetData | null;
+  refreshActiveAssetData: () => Promise<unknown>;
   currentAssetCtx?: MarketData | null;
   handleOpenPosition: (params: {
     coin: string;
@@ -78,6 +112,8 @@ export const PerpsOpenPositionPopup: React.FC<{
     midPx: string;
     tpTriggerPx?: string;
     slTriggerPx?: string;
+    orderType?: PerpsOpenOrderType;
+    limitPx?: string;
   }) => Promise<
     | {
         oid: number;
@@ -86,6 +122,9 @@ export const PerpsOpenPositionPopup: React.FC<{
       }
     | undefined
   >;
+  quoteAsset?: string;
+  onDepositPress?(): void;
+  onSwapPress?(): void;
 }> = ({
   visible,
   direction: _direction,
@@ -104,7 +143,12 @@ export const PerpsOpenPositionPopup: React.FC<{
   maxNtlValue,
   marketDataItem,
   activeAssetCtx,
+  activeAssetData,
+  refreshActiveAssetData,
   currentAssetCtx,
+  quoteAsset = 'USDC',
+  onDepositPress,
+  onSwapPress,
 }) => {
   const currentPerpsAccount = perpsStore(
     useShallow(s => s.currentPerpsAccount),
@@ -115,11 +159,18 @@ export const PerpsOpenPositionPopup: React.FC<{
     getStyle: getStyle,
   });
 
-  const { accountValue, crossMaintenanceMarginUsed } = usePerpsAccount();
+  // 对齐 Pro:全仓可用保证金按账户模式(unified/标准/PM)解析;
+  // 弹窗隐藏时冻结订阅,避免热数据帧唤醒隐藏子树
+  const crossMarginAvailableAfterMaintenance =
+    useCrossMarginAvailableAfterMaintenance({
+      dexId: currentAssetCtx?.dexId ?? '',
+      quoteAsset,
+      enabled: !!visible,
+    });
 
-  const crossMargin = React.useMemo(() => {
-    return Number(accountValue) - Number(crossMaintenanceMarginUsed || 0);
-  }, [accountValue, crossMaintenanceMarginUsed]);
+  const { update: updateLeverageRequest } = usePerpsProLeverageUpdate({
+    refreshActiveAssetData,
+  });
 
   const { t } = useTranslation();
   const [isReviewMode, setIsReviewMode] = React.useState(false);
@@ -143,16 +194,64 @@ export const PerpsOpenPositionPopup: React.FC<{
   const leverage = selectedLeverage || 1;
   const [tpTriggerPx, setTpTriggerPx] = React.useState<string>('');
   const [slTriggerPx, setSlTriggerPx] = React.useState<string>('');
+  const [orderType, setOrderType] =
+    React.useState<PerpsOpenOrderType>('market');
+  const [limitPx, setLimitPx] = React.useState<string>('');
   const leverageInputRef = useRef<TextInput>(null);
+
+  const clampLeverage = useMemoizedFn((value: number) =>
+    Math.min(leverageRang[1], Math.max(leverageRang[0], Math.round(value))),
+  );
+
+  // activeAsset 订阅流里后端记录的该币对杠杆/保证金模式
+  const backendLeverage = activeAssetData?.leverage;
+  const backendMarginMode =
+    backendLeverage?.type === 'cross' || backendLeverage?.type === 'isolated'
+      ? backendLeverage.type
+      : undefined;
+  const backendLeverageValue =
+    Number(backendLeverage?.value) > 0
+      ? Number(backendLeverage?.value)
+      : undefined;
+
+  const displayName = currentAssetCtx?.displayName || coin;
+
+  // Entry price for derived size / notional / liquidation: user's limitPx in
+  // limit mode, markPrice otherwise (also the fallback during transient empty
+  // limitPx).
+  const effectivePx = React.useMemo(() => {
+    if (orderType === 'limit' && limitPx && Number(limitPx) > 0) {
+      return Number(limitPx);
+    }
+    return markPrice;
+  }, [orderType, limitPx, markPrice]);
+
+  const bothFee = React.useMemo(() => {
+    return providerFee + PERPS_EXCHANGE_FEE_NUMBER;
+  }, [providerFee]);
+
+  // Opening consumes margin plus taker fees charged on the notional
+  // (margin × leverage), and the availableToTrade snapshot can be slightly
+  // stale by fill time — margin set to the full balance gets rejected by the
+  // exchange with "insufficient margin". Reserve the fee cost plus a small
+  // drift cushion, so the slider's 100% maps to a margin that still clears.
+  const maxSliderMargin = React.useMemo(() => {
+    return BigNumber.max(
+      new BigNumber(availableBalance)
+        .div(1 + bothFee * leverage + 0.001)
+        .decimalPlaces(2, BigNumber.ROUND_DOWN),
+      0,
+    ).toNumber();
+  }, [availableBalance, bothFee, leverage]);
 
   // Calculate slider percentage
   const sliderPercentage = React.useMemo(() => {
     const marginValue = Number(margin) || 0;
-    if (marginValue === 0 || availableBalance === 0) {
+    if (marginValue === 0 || maxSliderMargin === 0) {
       return 0;
     }
-    return Math.min((marginValue / availableBalance) * 100, 100);
-  }, [margin, availableBalance]);
+    return Math.min((marginValue / maxSliderMargin) * 100, 100);
+  }, [margin, maxSliderMargin]);
 
   // 计算交易金额, 不是真实的交易金额，估算
   const tradeAmount = React.useMemo(() => {
@@ -162,32 +261,74 @@ export const PerpsOpenPositionPopup: React.FC<{
 
   // 计算交易数量
   const tradeSize = React.useMemo(() => {
-    if (!markPrice || !tradeAmount) {
+    if (!effectivePx || !tradeAmount) {
       return '0';
     }
-    return Number(tradeAmount / markPrice).toFixed(szDecimals);
-  }, [markPrice, tradeAmount, szDecimals]);
+    return Number(tradeAmount / effectivePx).toFixed(szDecimals);
+  }, [effectivePx, tradeAmount, szDecimals]);
 
-  // 计算预估清算价格
+  const {
+    slippage,
+    depthInsufficient,
+    isReady: slippageReady,
+    shouldShow: shouldShowSlippage,
+  } = useMarketSlippage({
+    coin,
+    isBuy: direction === 'Long',
+    size: Number(tradeSize),
+    markPrice,
+    enabled: !!visible && orderType === 'market',
+  });
+
+  // Marketable limit fills immediately at mark, so liq uses markPrice as the
+  // true entry price (not limitPx, which is just the user's price ceiling).
+  const isMarketable = React.useMemo(
+    () =>
+      orderType === 'limit' &&
+      isMarketableLimit({ direction, limitPx, markPx: markPrice }),
+    [orderType, limitPx, direction, markPrice],
+  );
+
+  // 计算预估清算价格;全仓分支复用 Pro 的推导逻辑。
+  // 返回 0/"0.00" 表示暂无有效估算,确认页会展示为 "-"
   const estimatedLiquidationPrice = React.useMemo(() => {
-    if (!markPrice || !leverage) {
+    const entryPx = isMarketable ? markPrice : effectivePx;
+    if (!visible || !entryPx || !leverage) {
       return 0;
     }
 
-    const realMargin = selectedMarginMode === 'cross' ? crossMargin : margin;
-
     const maxLeverage = leverageRang[1];
+    if (selectedMarginMode === 'cross') {
+      const risk = resolvePerpsProProjectedTradeRisk({
+        baseSize: tradeSize,
+        calculateLiquidationPrice: calLiquidationPrice,
+        crossMarginAvailableAfterMaintenance,
+        currentPosition: null,
+        entryPrice: String(entryPx),
+        leverage,
+        marginMode: 'cross',
+        markPrice: String(markPrice || entryPx),
+        maxLeverage,
+        pxDecimals,
+        side: direction === 'Long' ? 'buy' : 'sell',
+      });
+      return risk?.liquidationPrice ?? (0).toFixed(pxDecimals);
+    }
+
     return calLiquidationPrice(
-      markPrice,
-      Number(realMargin),
+      entryPx,
+      Number(margin),
       direction,
       Number(tradeSize),
-      Number(tradeSize) * markPrice,
+      Number(tradeSize) * entryPx,
       maxLeverage,
     ).toFixed(pxDecimals);
   }, [
+    visible,
+    isMarketable,
     markPrice,
-    crossMargin,
+    effectivePx,
+    crossMarginAvailableAfterMaintenance,
     selectedMarginMode,
     leverage,
     leverageRang,
@@ -197,15 +338,57 @@ export const PerpsOpenPositionPopup: React.FC<{
     pxDecimals,
   ]);
 
-  const bothFee = React.useMemo(() => {
-    return providerFee + PERPS_EXCHANGE_FEE_NUMBER;
-  }, [providerFee]);
+  // Snapshot of everything CheckPopup needs to render the confirm page.
+  // Memoized so the child's props identity is stable across unrelated re-renders.
+  const checkSummary = React.useMemo(
+    () => ({
+      coin: displayName,
+      margin,
+      direction,
+      leverage,
+      tradeAmount: Number(tradeSize) * effectivePx,
+      tradeSize,
+      markPrice,
+      providerFee,
+      bothFee,
+      // TP/SL UI is hidden in limit mode; suppress display here too.
+      tpTriggerPx: tpTriggerPx && orderType === 'market' ? tpTriggerPx : '',
+      slTriggerPx: slTriggerPx && orderType === 'market' ? slTriggerPx : '',
+      selectedMarginMode,
+      estimatedLiquidationPrice,
+      coinLogo,
+      quoteAsset,
+      orderType,
+      limitPx,
+      isMarketable,
+    }),
+    [
+      displayName,
+      margin,
+      direction,
+      leverage,
+      tradeSize,
+      effectivePx,
+      markPrice,
+      providerFee,
+      bothFee,
+      tpTriggerPx,
+      slTriggerPx,
+      selectedMarginMode,
+      estimatedLiquidationPrice,
+      coinLogo,
+      quoteAsset,
+      orderType,
+      limitPx,
+      isMarketable,
+    ],
+  );
 
   // 验证 margin 输入
   const marginValidation = React.useMemo(() => {
     const marginValue = Number(margin) || 0;
     const usdValue = marginValue * leverage;
-    const sizeValue = Number(tradeSize) * markPrice;
+    const sizeValue = Number(tradeSize) * effectivePx;
     const maxValue = maxNtlValue || PERPS_MAX_NTL_VALUE;
 
     if (marginValue === 0) {
@@ -261,7 +444,7 @@ export const PerpsOpenPositionPopup: React.FC<{
     margin,
     leverage,
     tradeSize,
-    markPrice,
+    effectivePx,
     maxNtlValue,
     availableBalance,
     t,
@@ -303,6 +486,7 @@ export const PerpsOpenPositionPopup: React.FC<{
   const resetInitValue = useMemoizedFn(() => {
     setTpTriggerPx('');
     setSlTriggerPx('');
+    setLimitPx('');
   });
 
   React.useEffect(() => {
@@ -310,17 +494,65 @@ export const PerpsOpenPositionPopup: React.FC<{
       availableBalance > 2
         ? setMargin(Math.round(availableBalance / 2).toString())
         : setMargin('');
-      setLeverage(leverageRang[1]);
+      // 杠杆只在初始化时取一次后端记录的值,无则默认最大杠杆
+      setLeverage(
+        backendLeverageValue
+          ? clampLeverage(backendLeverageValue)
+          : leverageRang[1],
+      );
       resetInitValue();
       setIsReviewMode(false);
+      setOrderType('market');
+      // 不允许 cross 时强制 isolated；否则优先后端记录的模式,
+      // 其次按币对持久化的选择,默认 isolated
+      const persisted = perpsStore.getState().marginModeByCoin[coin];
+      const nextMode: 'cross' | 'isolated' = marketDataItem?.onlyIsolated
+        ? 'isolated'
+        : backendMarginMode ?? persisted ?? 'isolated';
+      setSelectedMarginMode(nextMode);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
+
+  // 保证金模式立即生效后以后端值为准,订阅流更新时持续同步
+  React.useEffect(() => {
+    if (!visible || !backendMarginMode || marketDataItem?.onlyIsolated) {
+      return;
+    }
+    setSelectedMarginMode(backendMarginMode);
+  }, [visible, backendMarginMode, marketDataItem?.onlyIsolated]);
 
   useEffect(() => {
     setSelectedDirection(_direction);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
+
+  // Flash highlight on the order-type row after switching to limit from the
+  // check popup, so the user notices what changed.
+  const orderTypeFlash = useSharedValue(0);
+  const orderTypeFlashStyle = useAnimatedStyle(() => ({
+    opacity: orderTypeFlash.value,
+  }));
+
+  // Back out of review and flip the order to limit, seeding limitPx the same
+  // way the manual order-type toggle does.
+  const handleSwitchToLimit = useMemoizedFn(() => {
+    setIsReviewMode(false);
+    setOrderType('limit');
+    setLimitPx(formatTpOrSlPrice(markPrice, szDecimals));
+    orderTypeFlash.value = 0;
+    // Delay past the check popup's dismiss animation so the flash is visible.
+    orderTypeFlash.value = withDelay(
+      300,
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: 300 }),
+          withTiming(0, { duration: 300 }),
+        ),
+        3,
+      ),
+    );
+  });
 
   const openPosition = useMemoizedFn(async () => {
     const res = await handleOpenPosition({
@@ -332,18 +564,22 @@ export const PerpsOpenPositionPopup: React.FC<{
       midPx: markPrice.toString(),
       tpTriggerPx: tpTriggerPx ? tpTriggerPx : undefined,
       slTriggerPx: slTriggerPx ? slTriggerPx : undefined,
+      orderType,
+      limitPx: orderType === 'limit' ? limitPx : undefined,
     });
-    setCurrentTpOrSl({
-      tpPrice: tpTriggerPx ? Number(tpTriggerPx).toString() : undefined,
-      slPrice: slTriggerPx ? Number(slTriggerPx).toString() : undefined,
-    });
+    orderType === 'market' &&
+      setCurrentTpOrSl({
+        tpPrice: tpTriggerPx ? Number(tpTriggerPx).toString() : undefined,
+        slPrice: slTriggerPx ? Number(slTriggerPx).toString() : undefined,
+      });
     if (res) {
+      const isLimit = orderType === 'limit';
       const { avgPx, totalSz } = res;
       const isBuy = direction === 'Long';
       stats.report('perpsTradeHistory', {
         created_at: new Date().getTime(),
         user_addr: currentPerpsAccount?.address || '',
-        trade_type: 'open position',
+        trade_type: isLimit ? 'open position limit' : 'open position',
         leverage: leverage.toString(),
         trade_side: getStatsReportSide(isBuy, false),
         margin_mode: selectedMarginMode === 'cross' ? 'cross' : 'isolated',
@@ -356,6 +592,7 @@ export const PerpsOpenPositionPopup: React.FC<{
         address_type: currentPerpsAccount?.type || '',
       });
       tpTriggerPx &&
+        !isLimit &&
         stats.report('perpsTradeHistory', {
           created_at: new Date().getTime(),
           user_addr: currentPerpsAccount?.address || '',
@@ -372,6 +609,7 @@ export const PerpsOpenPositionPopup: React.FC<{
           address_type: currentPerpsAccount?.type || '',
         });
       slTriggerPx &&
+        !isLimit &&
         stats.report('perpsTradeHistory', {
           created_at: new Date().getTime(),
           user_addr: currentPerpsAccount?.address || '',
@@ -389,12 +627,13 @@ export const PerpsOpenPositionPopup: React.FC<{
         });
     }
 
+    setIsReviewMode(false);
     onConfirm();
   });
 
   // Handle slider change
   const handleSliderChange = useMemoizedFn((value: number) => {
-    const newMargin = (availableBalance * value) / 100;
+    const newMargin = (maxSliderMargin * value) / 100;
     setMargin(
       new BigNumber(newMargin).decimalPlaces(2, BigNumber.ROUND_DOWN).toFixed(),
     );
@@ -450,18 +689,10 @@ export const PerpsOpenPositionPopup: React.FC<{
             <View>
               <Text style={styles.title}>
                 {t('page.perpsDetail.PerpsOpenPositionPopup.title', {
-                  defaultValue: 'Open Position',
+                  coin: formatPerpsCoin(displayName),
+                  defaultValue: 'Open {{coin}} Position',
                 })}
               </Text>
-            </View>
-
-            <View>
-              <AssetPriceInfo
-                coin={coin}
-                logoUrl={marketDataItem?.logoUrl || ''}
-                activeAssetCtx={activeAssetCtx}
-                currentAssetCtx={marketDataItem}
-              />
             </View>
 
             {/* Long/Short Toggle */}
@@ -518,9 +749,14 @@ export const PerpsOpenPositionPopup: React.FC<{
             {/* Margin Section */}
             <View style={styles.marginSection}>
               <View style={styles.marginLabelWrapper}>
-                <Text style={styles.marginLabel}>
-                  {t('page.perpsDetail.PerpsOpenPositionPopup.margin')}
-                </Text>
+                <View style={styles.marginQuoteLabel}>
+                  <Text style={styles.marginLabel}>
+                    {t('page.perpsDetail.PerpsOpenPositionPopup.margin')}
+                  </Text>
+                  <Text style={styles.marginQuoteLabelText}>
+                    ({quoteAsset})
+                  </Text>
+                </View>
                 <TouchableOpacity
                   style={styles.marginModeButton}
                   onPress={() => {
@@ -556,15 +792,55 @@ export const PerpsOpenPositionPopup: React.FC<{
                       alignItems: 'flex-start',
                     },
                   ])}>
-                  <Text style={styles.marginTitle}>
-                    {formatPerpsUsdValue(
+                  <Text
+                    style={[
+                      styles.marginTitle,
+                      availableBalance < 0.1 && {
+                        color: colors2024['red-default'],
+                      },
+                    ]}>
+                    {formatPerpsNumber(
                       availableBalance,
+                      2,
+                      undefined,
                       BigNumber.ROUND_DOWN,
                     )}
                   </Text>
-                  <Text style={styles.marginAvailable}>
-                    {t('page.perpsDetail.PerpsOpenPositionPopup.available')}
-                  </Text>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}>
+                    <Text
+                      style={[
+                        styles.marginAvailable,
+                        availableBalance < 0.1 && {
+                          color: colors2024['red-default'],
+                        },
+                      ]}>
+                      {t('page.perpsDetail.PerpsOpenPositionPopup.available')}
+                    </Text>
+                    {(availableBalance < 0.1 ||
+                      marginValidation.error === 'insufficient_balance') && (
+                      <TouchableOpacity
+                        onPress={
+                          quoteAsset === 'USDC' ? onDepositPress : onSwapPress
+                        }>
+                        <Text
+                          style={{
+                            color: '#50D2C1',
+                            fontSize: 13,
+                            fontWeight: '700',
+                            fontFamily: 'SF Pro Rounded',
+                          }}>
+                          {quoteAsset === 'USDC'
+                            ? t('page.perps.PerpsSpotSwap.toDepositEntry')
+                            : t('page.perps.PerpsSpotSwap.toSwapEntry')}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 </View>
                 <BottomSheetTextInput
                   keyboardType="numeric"
@@ -575,8 +851,8 @@ export const PerpsOpenPositionPopup: React.FC<{
                       : null,
                   ]}
                   placeholderTextColor={colors2024['neutral-info']}
-                  placeholder="$0"
-                  value={Number(margin) > 0 ? displayedValue : ''}
+                  placeholder="0"
+                  value={Number(margin) > 0 ? margin : ''}
                   onChangeText={setMargin}
                 />
               </View>
@@ -681,6 +957,78 @@ export const PerpsOpenPositionPopup: React.FC<{
             </View>
             <View style={styles.list}>
               <View style={styles.listItem}>
+                <Text style={styles.label}>
+                  {t('page.perpsDetail.PerpsOpenPositionPopup.currentPrice')}
+                </Text>
+                <Text style={styles.value}>
+                  ${splitNumberByStep(markPrice)}
+                </Text>
+              </View>
+              <View style={styles.listItem}>
+                <Animated.View
+                  pointerEvents="none"
+                  style={[
+                    StyleSheet.absoluteFill,
+                    { left: 16, right: 16 },
+                    orderTypeFlashStyle,
+                  ]}>
+                  <LinearGradient
+                    colors={[
+                      'rgba(35, 192, 176, 0)',
+                      'rgba(35, 192, 176, 0.12)',
+                    ]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={StyleSheet.absoluteFill}
+                  />
+                </Animated.View>
+                <Text style={styles.label}>
+                  {t('page.perpsDetail.PerpsOpenPositionPopup.orderType')}
+                </Text>
+                <TouchableOpacity
+                  style={styles.orderTypeToggle}
+                  onPress={() => {
+                    const next = orderType === 'market' ? 'limit' : 'market';
+                    setOrderType(next);
+                    if (next === 'market') {
+                      setLimitPx('');
+                    } else {
+                      setLimitPx(formatTpOrSlPrice(markPrice, szDecimals));
+                    }
+                  }}>
+                  <Text style={styles.orderTypeToggleText}>
+                    {orderType === 'market'
+                      ? t(
+                          'page.perpsDetail.PerpsOpenPositionPopup.orderTypeMarket',
+                        )
+                      : t(
+                          'page.perpsDetail.PerpsOpenPositionPopup.orderTypeLimit',
+                        )}
+                  </Text>
+                  <IconOrderTypeSwitch width={14} height={14} />
+                </TouchableOpacity>
+              </View>
+              {orderType === 'limit' ? (
+                <View style={styles.listItem}>
+                  <Text style={styles.label}>
+                    {t('page.perpsDetail.PerpsOpenPositionPopup.limitPrice')}
+                  </Text>
+                  <PerpEditLimitPriceTag
+                    coin={displayName}
+                    quoteAsset={quoteAsset}
+                    markPrice={markPrice}
+                    szDecimals={szDecimals}
+                    direction={direction}
+                    initLimitPrice={limitPx}
+                    handleSetLimitPx={async (price: string) =>
+                      setLimitPx(price)
+                    }
+                  />
+                </View>
+              ) : null}
+            </View>
+            <View style={styles.list}>
+              <View style={styles.listItem}>
                 <TouchableOpacity
                   onPress={() => {
                     showTipsPopup({
@@ -705,83 +1053,93 @@ export const PerpsOpenPositionPopup: React.FC<{
                 <View>
                   <Text style={styles.value}>
                     {formatPerpsUsdValue(
-                      Number(tradeSize) * markPrice,
+                      Number(tradeSize) * effectivePx,
                       BigNumber.ROUND_DOWN,
                     )}{' '}
-                    = {tradeSize} {formatPerpsCoin(coin)}
+                    = {tradeSize} {formatPerpsCoin(displayName)}
                   </Text>
                 </View>
               </View>
-              <View style={styles.listItem}>
-                <Text style={styles.label}>
-                  {direction === 'Long'
-                    ? t(
-                        'page.perpsDetail.PerpsOpenPositionPopup.takeProfitWhenPriceAbove',
-                      )
-                    : t(
-                        'page.perpsDetail.PerpsOpenPositionPopup.takeProfitWhenPriceBelow',
-                      )}
-                </Text>
-                <PerpEditTpSlPriceTag
-                  coin={coin}
-                  actionType="tp"
-                  type="openPosition"
-                  leverage={leverage}
-                  markPrice={markPrice}
-                  initTpOrSlPrice={tpTriggerPx}
-                  direction={direction}
-                  size={Number(tradeSize)}
-                  margin={Number(margin)}
-                  liqPrice={Number(estimatedLiquidationPrice)}
-                  pxDecimals={pxDecimals}
-                  szDecimals={szDecimals}
-                  handleCancelAutoClose={async () => {
-                    setTpTriggerPx('');
-                  }}
-                  handleSetAutoClose={async (price: string) => {
-                    setTpTriggerPx(price);
-                  }}
-                />
-              </View>
-              <View style={styles.listItem}>
-                <Text style={styles.label}>
-                  {direction === 'Long'
-                    ? t(
-                        'page.perpsDetail.PerpsOpenPositionPopup.stopLossWhenPriceBelow',
-                      )
-                    : t(
-                        'page.perpsDetail.PerpsOpenPositionPopup.stopLossWhenPriceAbove',
-                      )}
-                </Text>
-                <PerpEditTpSlPriceTag
-                  coin={coin}
-                  actionType="sl"
-                  type="openPosition"
-                  leverage={leverage}
-                  markPrice={markPrice}
-                  initTpOrSlPrice={slTriggerPx}
-                  direction={direction}
-                  size={Number(tradeSize)}
-                  margin={Number(margin)}
-                  liqPrice={Number(estimatedLiquidationPrice)}
-                  pxDecimals={pxDecimals}
-                  szDecimals={szDecimals}
-                  handleCancelAutoClose={async () => {
-                    setSlTriggerPx('');
-                  }}
-                  handleSetAutoClose={async (price: string) => {
-                    setSlTriggerPx(price);
-                  }}
-                />
-              </View>
+              {orderType === 'market' ? (
+                <>
+                  <View style={styles.listItem}>
+                    <Text style={styles.label}>
+                      {direction === 'Long'
+                        ? t(
+                            'page.perpsDetail.PerpsOpenPositionPopup.takeProfitWhenPriceAbove',
+                          )
+                        : t(
+                            'page.perpsDetail.PerpsOpenPositionPopup.takeProfitWhenPriceBelow',
+                          )}
+                    </Text>
+                    <PerpEditTpSlPriceTag
+                      coin={displayName}
+                      actionType="tp"
+                      type="openPosition"
+                      leverage={leverage}
+                      markPrice={markPrice}
+                      initTpOrSlPrice={tpTriggerPx}
+                      direction={direction}
+                      size={Number(tradeSize)}
+                      margin={Number(margin)}
+                      liqPrice={Number(estimatedLiquidationPrice)}
+                      pxDecimals={pxDecimals}
+                      szDecimals={szDecimals}
+                      quoteAsset={quoteAsset}
+                      handleCancelAutoClose={async () => {
+                        setTpTriggerPx('');
+                      }}
+                      handleSetAutoClose={async (price: string) => {
+                        setTpTriggerPx(price);
+                      }}
+                    />
+                  </View>
+                  <View style={styles.listItem}>
+                    <Text style={styles.label}>
+                      {direction === 'Long'
+                        ? t(
+                            'page.perpsDetail.PerpsOpenPositionPopup.stopLossWhenPriceBelow',
+                          )
+                        : t(
+                            'page.perpsDetail.PerpsOpenPositionPopup.stopLossWhenPriceAbove',
+                          )}
+                    </Text>
+                    <PerpEditTpSlPriceTag
+                      coin={displayName}
+                      actionType="sl"
+                      type="openPosition"
+                      leverage={leverage}
+                      markPrice={markPrice}
+                      initTpOrSlPrice={slTriggerPx}
+                      direction={direction}
+                      size={Number(tradeSize)}
+                      margin={Number(margin)}
+                      liqPrice={Number(estimatedLiquidationPrice)}
+                      pxDecimals={pxDecimals}
+                      szDecimals={szDecimals}
+                      quoteAsset={quoteAsset}
+                      handleCancelAutoClose={async () => {
+                        setSlTriggerPx('');
+                      }}
+                      handleSetAutoClose={async (price: string) => {
+                        setSlTriggerPx(price);
+                      }}
+                    />
+                  </View>
+                </>
+              ) : null}
             </View>
           </BottomSheetScrollView>
           <View style={styles.footer}>
             <Button
               type="hyperliquid"
-              title={t('global.check')}
+              title={t('page.perpsDetail.PerpsOpenPositionCheckPopup.title')}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               disabled={
-                !marginValidation.isValid || leverageRangeValidation.error
+                !marginValidation.isValid ||
+                leverageRangeValidation.error ||
+                (orderType === 'limit' && !limitPx)
               }
               onPress={() => {
                 Keyboard.dismiss();
@@ -792,23 +1150,13 @@ export const PerpsOpenPositionPopup: React.FC<{
         </AutoLockView>
       </AppBottomSheetModal>
       <PerpsOpenPositionCheckPopup
-        info={{
-          coin: coin,
-          margin,
-          direction,
-          leverage,
-          tradeAmount: Number(tradeSize) * markPrice,
-          tradeSize,
-          markPrice,
-          providerFee,
-          bothFee,
-          tpTriggerPx,
-          slTriggerPx,
-          selectedMarginMode,
-          estimatedLiquidationPrice,
-          coinLogo,
-        }}
+        summary={checkSummary}
         visible={isReviewMode}
+        slippage={slippage}
+        depthInsufficient={depthInsufficient}
+        slippageReady={slippageReady}
+        shouldShowSlippage={shouldShowSlippage}
+        onSwitchToLimit={handleSwitchToLimit}
         onClose={() => {
           setIsReviewMode(false);
         }}
@@ -820,16 +1168,41 @@ export const PerpsOpenPositionPopup: React.FC<{
         onClose={() => {
           setIsShowMarginModePopup(false);
         }}
-        onConfirm={(mode: 'cross' | 'isolated') => {
+        onConfirm={async (mode: 'cross' | 'isolated') => {
           setIsShowMarginModePopup(false);
-          setSelectedMarginMode(mode);
+          if (mode === selectedMarginMode) {
+            return;
+          }
+          if (!currentPerpsAccount) {
+            return;
+          }
+          // 立即向后端提交保证金模式(对齐 Pro),成功后才更新本地选择;
+          // 杠杆优先用后端已记录的值,避免把弹窗本地草稿杠杆写回交易所
+          const requestLeverage = clampLeverage(
+            backendLeverageValue || selectedLeverage || 1,
+          );
+          const success = await updateLeverageRequest({
+            account: currentPerpsAccount,
+            action: 'marginMode',
+            coin,
+            currentIsCross: selectedMarginMode === 'cross',
+            currentLeverage: requestLeverage,
+            isCross: mode === 'cross',
+            leverage: requestLeverage,
+            maxLeverage: leverageRang[1],
+          });
+          if (success) {
+            setSelectedMarginMode(mode);
+            setMarginModeForCoin(coin, mode);
+          }
         }}
       />
     </>
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
+const getStyle = createGetStyles2024(ctx => {
+  const { colors2024, isLight, safeAreaInsets } = ctx;
   return {
     container: {
       height: '100%',
@@ -924,6 +1297,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
       lineHeight: 24,
+      marginTop: 12,
       fontWeight: '900',
       color: colors2024['neutral-title-1'],
       marginBottom: 6,
@@ -939,7 +1313,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: colors2024['neutral-bg-1'],
       paddingTop: 12,
       paddingHorizontal: 16,
-      paddingBottom: 56,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     },
     row: {
       display: 'flex',
@@ -987,7 +1361,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
-      padding: 16,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
       justifyContent: 'space-between',
     },
     listItemRow: {
@@ -1036,8 +1411,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     value: {
       fontFamily: 'SF Pro Rounded',
-      fontSize: 17,
-      lineHeight: 22,
+      fontSize: 14,
+      lineHeight: 18,
       fontWeight: '700',
       color: colors2024['neutral-title-1'],
     },
@@ -1186,6 +1561,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       alignItems: 'center',
       gap: 8,
     },
+    marginQuoteLabel: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+    },
     marginModeButton: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -1194,7 +1574,21 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingHorizontal: 4,
       paddingLeft: 6,
       borderRadius: 4,
-      backgroundColor: 'rgba(80, 210, 193, 0.12)',
+      backgroundColor: colors2024['neutral-line'],
+    },
+    orderTypeToggle: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      // paddingHorizontal: 6,
+      // paddingVertical: 2,
+    },
+    orderTypeToggleText: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '900',
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
     },
     marginModeText: {
       fontSize: 12,
@@ -1207,6 +1601,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontSize: 20,
       lineHeight: 24,
       fontWeight: '800',
+      // marginBottom: 4,
+      color: '#50D2C1',
+      fontFamily: 'SF Pro Rounded',
+    },
+    marginQuoteLabelText: {
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: '500',
       // marginBottom: 4,
       color: '#50D2C1',
       fontFamily: 'SF Pro Rounded',

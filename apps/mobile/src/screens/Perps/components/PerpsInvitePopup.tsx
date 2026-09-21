@@ -18,6 +18,11 @@ import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRequest, useUnmount } from 'ahooks';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+} from '@/constant/layout';
 
 interface Props {
   visible?: boolean;
@@ -139,6 +144,8 @@ export const PerpsInvitePopup: React.FC<Props> = ({
             <Button
               title={t('page.perps.invitePopup.activateNow')}
               type="primary"
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               onPress={handleInvite}
               loading={loading}
             />
@@ -215,6 +222,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   footer: {
     paddingHorizontal: 20,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
   },
 
   banner: {
