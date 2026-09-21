@@ -199,6 +199,13 @@ export interface SpotBalance {
 
 export type MarketDataStatus = 'idle' | 'loading' | 'success' | 'error';
 
+/** HYPE amounts in the staking account (REST `delegatorSummary`). */
+export type PerpsStakingSummary = {
+  delegated: string;
+  undelegated: string;
+  totalPendingWithdrawal: string;
+};
+
 export interface PerpsState {
   // positionAndOpenOrders: PositionAndOpenOrder[];
   currentClearinghouseState: AggregatedClearinghouseState | null;
@@ -245,6 +252,11 @@ export interface PerpsState {
   isUserDataReady: boolean;
   // First WS snapshot received for the current account's spot state.
   isSpotStateReady: boolean;
+  // Staking-account HYPE for the current account. REST only (no WS feed).
+  // Staked HYPE is outside spotState, yet the official portfolio series
+  // counts it — the live Portfolio Value needs it to match.
+  stakingSummary: PerpsStakingSummary | null;
+  stakingStatus: MarketDataStatus;
   // First WS push received for global asset ticker (AllDexsAssetCtxs).
   isMarketTickerReady: boolean;
   approveSignatures: ApproveSignatures;
@@ -328,6 +340,8 @@ export const initialState: PerpsState = {
   isInitialized: false,
   isUserDataReady: false,
   isSpotStateReady: false,
+  stakingSummary: null,
+  stakingStatus: 'idle',
   isMarketTickerReady: false,
   userFills: [],
   approveSignatures: [],
@@ -636,6 +650,7 @@ function stopHomeSpotSubscription() {
 
 function stopAccountSubscriptions() {
   activeUserDataSubscription = null;
+  clearAccountReadinessFallback();
   stopHomeSpotSubscription();
   setPerpsState(prev => {
     prev.wsSubscriptions.forEach(unsubscribe => {
@@ -788,6 +803,8 @@ const setCurrentPerpsAccount = (payload: Account) => {
         ? prev.isUserDataReady
         : !!cachedClearinghouseState,
       isSpotStateReady: sameAccount ? prev.isSpotStateReady : false,
+      stakingSummary: sameAccount ? prev.stakingSummary : null,
+      stakingStatus: sameAccount ? prev.stakingStatus : 'idle',
       userAbstractionReady: sameAccount ? prev.userAbstractionReady : false,
       userAbstractionOwnerAddress: sameAccount
         ? prev.userAbstractionOwnerAddress
@@ -838,6 +855,8 @@ export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
       isInitialized: false,
       isUserDataReady: false,
       isSpotStateReady: false,
+      stakingSummary: sameAccount ? prev.stakingSummary : null,
+      stakingStatus: sameAccount ? prev.stakingStatus : 'idle',
       userAbstraction: sameAccount
         ? prev.userAbstraction
         : UserAbstractionResp.default,
@@ -1289,14 +1308,27 @@ const prepareHomePerpsAccount = async (account: Account) => {
       account.address.toLowerCase()
     ] ?? null;
   setCurrentPerpsAccount(account);
-  setPerpsState(prev => ({
-    ...prev,
-    currentClearinghouseState: cachedClearinghouseState,
-    homePositionPnl: cachedClearinghouseState
-      ? formatPositionPnl(cachedClearinghouseState)
-      : initialState.homePositionPnl,
-    isUserDataReady: !!cachedClearinghouseState,
-  }));
+  setPerpsState(prev => {
+    // The selector map is only a seed. When the account is already live
+    // (full subscription reused, or a newer aggregate in place) keep that —
+    // downgrading isUserDataReady here parked the Perps screens on their
+    // skeleton until the next WS push, which for an idle account never came.
+    const seeded =
+      prev.currentClearinghouseState &&
+      (!cachedClearinghouseState ||
+        (prev.currentClearinghouseState.time ?? 0) >=
+          (cachedClearinghouseState.time ?? 0))
+        ? prev.currentClearinghouseState
+        : cachedClearinghouseState;
+    return {
+      ...prev,
+      currentClearinghouseState: seeded,
+      homePositionPnl: seeded
+        ? formatPositionPnl(seeded)
+        : initialState.homePositionPnl,
+      isUserDataReady: prev.isUserDataReady || !!seeded,
+    };
+  });
 
   const sdk = apisPerps.getPerpsSDK();
   if (!reusesFullSubscription) {
@@ -1417,6 +1449,8 @@ const resetAccountState = () => {
     accountNeedApproveBuilderFee: false,
     isUserDataReady: false,
     isSpotStateReady: false,
+    stakingSummary: null,
+    stakingStatus: 'idle',
     userAbstractionReady: false,
     currentClearinghouseState: null,
     spotState: initialState.spotState,
@@ -1914,6 +1948,9 @@ export const subscribeToUserData = (account: Account) => {
   const sdk = apisPerps.getPerpsSDK();
   const address = account.address;
   stopAccountSubscriptions();
+  // Staking has no WS feed: one REST snapshot per fresh subscription. The
+  // Simple card's poll and Pro's Account page refresh it afterwards.
+  fetchStakingSummaryHttp(address);
   const { unsubscribe: unsubscribeClearinghouseState } =
     sdk.ws.subscribeToAllDexsClearinghouseState(address, data => {
       const { clearinghouseStates, user } = data;
@@ -1970,6 +2007,11 @@ export const subscribeToUserData = (account: Account) => {
           : prev,
       );
     },
+    // Bind every user stream to THIS address. The SDK default is its
+    // masterAddress, which only initAccount sets — a login branch that skips
+    // it (locked wallet) or a rebuilt SDK would stream another account, and
+    // the guards above would drop every frame, so the ready flags never set.
+    address,
   );
 
   const { unsubscribe: unsubscribeOpenOrders } = sdk.ws.subscribeToOpenOrders(
@@ -2007,6 +2049,7 @@ export const subscribeToUserData = (account: Account) => {
           : prev,
       );
     },
+    address,
   );
 
   const { unsubscribe: unsubscribeFills } = sdk.ws.subscribeToUserFills(
@@ -2033,6 +2076,7 @@ export const subscribeToUserData = (account: Account) => {
         kind: 'fills',
       });
     },
+    address,
   );
 
   const { unsubscribe: unsubscribeUserNonFundingLedgerUpdates } =
@@ -2055,7 +2099,7 @@ export const subscribeToUserData = (account: Account) => {
         items: nonFundingLedgerUpdates,
         kind: 'ledger',
       });
-    });
+    }, address);
 
   setWsSubscriptions(prev => {
     return [
@@ -2071,6 +2115,7 @@ export const subscribeToUserData = (account: Account) => {
   activeUserDataSubscription = {
     address,
   };
+  scheduleAccountReadinessFallback(address);
   traceStartupDiagnostic('perps', 'user_subscription_registered', {
     durationMs: Date.now() - startedAt,
   });
@@ -2183,6 +2228,99 @@ export const fetchSpotStateHttp = async (expectedAddress?: string) => {
   return true;
 };
 
+const toStakingSummary = (raw: {
+  delegated?: unknown;
+  undelegated?: unknown;
+  totalPendingWithdrawal?: unknown;
+}): PerpsStakingSummary => ({
+  delegated: String(raw?.delegated ?? '0'),
+  undelegated: String(raw?.undelegated ?? '0'),
+  totalPendingWithdrawal: String(raw?.totalPendingWithdrawal ?? '0'),
+});
+
+const isSameStakingSummary = (a: PerpsStakingSummary, b: PerpsStakingSummary) =>
+  a.delegated === b.delegated &&
+  a.undelegated === b.undelegated &&
+  a.totalPendingWithdrawal === b.totalPendingWithdrawal;
+
+// Single-flight per address: the account start, the Simple card's poll and
+// Pro's Account page can all ask at once.
+const stakingSummaryInFlight = new Map<string, Promise<boolean>>();
+
+/**
+ * REST snapshot of the current account's staking-account HYPE. Same guards
+ * as fetchSpotStateHttp: a response landing after the account switched away
+ * is dropped. A refresh over existing data keeps `success` (and the object
+ * identity when nothing changed) so subscribers do not churn every poll.
+ */
+export const fetchStakingSummaryHttp = (
+  expectedAddress?: string,
+): Promise<boolean> => {
+  const account = perpsStore.getState().currentPerpsAccount;
+  if (
+    !account?.address ||
+    (expectedAddress && !isSameAddress(account.address, expectedAddress))
+  ) {
+    return Promise.resolve(false);
+  }
+  const address = expectedAddress || account.address;
+  const key = address.toLowerCase();
+  const existing = stakingSummaryInFlight.get(key);
+  if (existing) {
+    return existing;
+  }
+  setPerpsState(prev =>
+    prev.stakingStatus === 'success' || prev.stakingStatus === 'loading'
+      ? prev
+      : { ...prev, stakingStatus: 'loading' },
+  );
+  const task = (async () => {
+    try {
+      const raw = await apisPerps
+        .getPerpsSDK()
+        .info.getDelegatorSummary(address);
+      if (!isCurrentPerpsAccountAddress(address)) {
+        return false;
+      }
+      const next = toStakingSummary(raw);
+      setPerpsState(prev => {
+        if (
+          !prev.currentPerpsAccount ||
+          !isSameAddress(prev.currentPerpsAccount.address, address)
+        ) {
+          return prev;
+        }
+        const unchanged =
+          !!prev.stakingSummary &&
+          isSameStakingSummary(prev.stakingSummary, next);
+        if (unchanged && prev.stakingStatus === 'success') {
+          return prev;
+        }
+        return {
+          ...prev,
+          stakingStatus: 'success',
+          stakingSummary: unchanged ? prev.stakingSummary : next,
+        };
+      });
+      return true;
+    } catch (error) {
+      console.error('[perpsStaking] fetch failed', error);
+      if (isCurrentPerpsAccountAddress(address)) {
+        setPerpsState(prev =>
+          prev.stakingStatus === 'success'
+            ? prev
+            : { ...prev, stakingStatus: 'error' },
+        );
+      }
+      return false;
+    } finally {
+      stakingSummaryInFlight.delete(key);
+    }
+  })();
+  stakingSummaryInFlight.set(key, task);
+  return task;
+};
+
 const fetchAndCacheOpenOrdersForDex = async (
   dex: string,
   expectedAddress: string,
@@ -2280,6 +2418,103 @@ export const fetchAllDexsClearinghouseStateHttp = async () => {
   if (results.some(result => result === 'updated')) {
     flushAggregatedClearinghouseState(address);
   }
+};
+
+// Readiness watchdog for the Perps screens. Both the Simple card and the Pro
+// account panel gate "Available" on the first WS frames (clearinghouse, spot)
+// and on a resolved account mode. Each of those can silently never arrive:
+// a subscribe answered with "Already subscribed" (no snapshot), a mode read
+// that failed once with no cache, a frame dropped by the address guard — and
+// nothing retried, so the skeleton stayed until an account switch or a
+// restart. Pull HTTP snapshots for whatever is still missing, with capped
+// backoff while the account stays current; stops as soon as all are ready.
+const ACCOUNT_READINESS_FALLBACK_DELAYS_MS = [8_000, 15_000, 30_000, 60_000];
+let accountReadinessTimer: ReturnType<typeof setTimeout> | null = null;
+let accountReadinessGeneration = 0;
+
+const clearAccountReadinessFallback = () => {
+  accountReadinessGeneration += 1;
+  if (accountReadinessTimer) {
+    clearTimeout(accountReadinessTimer);
+    accountReadinessTimer = null;
+  }
+};
+
+const getMissingAccountReadiness = (state: PerpsState, address: string) => {
+  if (
+    !state.currentPerpsAccount ||
+    !isSameAddress(state.currentPerpsAccount.address, address)
+  ) {
+    return null;
+  }
+  const modeKnown = isPerpsUserAbstractionModeKnown(state);
+  const isSpotCollateralMode =
+    state.userAbstraction === UserAbstractionResp.unifiedAccount ||
+    state.userAbstraction === UserAbstractionResp.portfolioMargin;
+  return {
+    mode: !modeKnown,
+    userData: !state.isUserDataReady,
+    // An unresolved mode may still turn out to be spot-collateral.
+    spot: (!modeKnown || isSpotCollateralMode) && !state.isSpotStateReady,
+  };
+};
+
+const runAccountReadinessFallback = async (
+  address: string,
+  attempt: number,
+  generation: number,
+) => {
+  if (generation !== accountReadinessGeneration) {
+    return;
+  }
+  const state = perpsStore.getState();
+  const missing = getMissingAccountReadiness(state, address);
+  if (!missing || (!missing.mode && !missing.userData && !missing.spot)) {
+    return;
+  }
+  // Don't burn requests in the background; the next tick re-checks.
+  const appState = AppState.currentState;
+  if (appState === 'background' || appState === 'inactive') {
+    scheduleAccountReadinessFallback(address, attempt);
+    return;
+  }
+  const account = state.currentPerpsAccount!;
+  const tasks: Promise<unknown>[] = [];
+  if (missing.mode) {
+    tasks.push(fetchUserAbstraction(account));
+  }
+  if (missing.userData) {
+    tasks.push(fetchAllDexsClearinghouseStateHttp());
+  }
+  if (missing.spot) {
+    tasks.push(fetchSpotStateHttp(address));
+  }
+  const results = await Promise.allSettled(tasks);
+  results.forEach(result => {
+    if (result.status === 'rejected') {
+      console.warn('[perpsReadiness] http fallback failed', result.reason);
+    }
+  });
+  if (generation !== accountReadinessGeneration) {
+    return;
+  }
+  const still = getMissingAccountReadiness(perpsStore.getState(), address);
+  if (still && (still.mode || still.userData || still.spot)) {
+    scheduleAccountReadinessFallback(address, attempt + 1);
+  }
+};
+
+const scheduleAccountReadinessFallback = (address: string, attempt = 0) => {
+  clearAccountReadinessFallback();
+  const generation = accountReadinessGeneration;
+  const delay =
+    ACCOUNT_READINESS_FALLBACK_DELAYS_MS[
+      Math.min(attempt, ACCOUNT_READINESS_FALLBACK_DELAYS_MS.length - 1)
+    ];
+  accountReadinessTimer = setTimeout(() => {
+    accountReadinessTimer = null;
+    void runAccountReadinessFallback(address, attempt, generation);
+  }, delay);
 };
 
 // Home badge fallback for when the WS first frames never arrive: pull one
@@ -2614,6 +2849,8 @@ export const usePerpsStore = () => {
           ? prev.isUserDataReady
           : !!seededClearinghouseState,
         isSpotStateReady: sameAccount ? prev.isSpotStateReady : false,
+        stakingSummary: sameAccount ? prev.stakingSummary : null,
+        stakingStatus: sameAccount ? prev.stakingStatus : 'idle',
         spotState: sameAccount ? prev.spotState : initialState.spotState,
         openOrders: sameAccount ? prev.openOrders : [],
         isOpenOrdersReady: sameAccount ? prev.isOpenOrdersReady : false,
@@ -2635,6 +2872,10 @@ export const usePerpsStore = () => {
     fetchUserHistoricalOrders();
     if (!canReuseSubscription) {
       subscribeToUserData(account);
+    } else {
+      // Reused streams push only on change: if a reset left a readiness
+      // flag false, nothing else would ever set it again.
+      scheduleAccountReadinessFallback(account.address);
     }
     fetchUserNonFundingLedgerUpdates();
     fetchPerpPermission(account.address);

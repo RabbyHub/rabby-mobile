@@ -2,6 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { PortalProvider } from '@gorhom/portal';
 import React from 'react';
 
+jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
+
 jest.mock('react-native-reanimated', () => {
   const ReactModule = require('react');
   return {

@@ -151,6 +151,7 @@ import type {
 } from '@/utils/tempo';
 import {
   calcTempoMaxGasCostRawAmountIn18,
+  buildTempoTransaction,
   isTempoBatchSupportedAccountType,
   isTempoChain,
   listTempoFeeTokenOptionsFromCache,
@@ -391,8 +392,19 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     validBefore,
     validAfter,
   } = useMemo(() => {
-    return normalizeTxParams(params.data[0]);
-  }, [params.data]);
+    const normalizedTx = normalizeTxParams(params.data[0]);
+    if (
+      !shouldUseTempoTransaction({
+        tx: normalizedTx as Record<string, unknown>,
+        chainServerId: chain.serverId,
+      })
+    ) {
+      return normalizedTx;
+    }
+    return buildTempoTransaction(normalizedTx as any, {
+      stripTopLevelData: true,
+    });
+  }, [chain.serverId, params.data]);
 
   const is7702 = is7702Tx({ authorizationList } as any);
 

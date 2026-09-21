@@ -1,8 +1,5 @@
 import { ThemeColors, ThemeColors2024 } from '@/constant/theme';
-import {
-  BOTTOM_BUTTON_BOTTOM_OFFSET,
-  getBottomButtonBottomOffset,
-} from '@/constant/layout';
+import { getBottomButtonBottomOffset } from '@/constant/layout';
 import { StyleSheet } from 'react-native';
 
 import { getPerpsProTransferSheetStyles } from './PerpsProTransferSheet.styles';
@@ -17,63 +14,64 @@ const getStyles = (isLight: boolean) =>
   });
 
 describe('PerpsProTransferSheet Figma styles', () => {
-  it('matches the exact Light geometry, typography, surfaces, and button treatment', () => {
+  it('matches the approved Light geometry, typography, surfaces, and button treatment', () => {
     const styles = getStyles(true);
+    const handle = StyleSheet.flatten(styles.handle);
+    const indicator = StyleSheet.flatten(styles.handleIndicator);
 
-    expect(StyleSheet.flatten(styles.handle)).toMatchObject({
+    expect(handle).toMatchObject({
       height: 40,
-      paddingBottom: 27,
-      paddingTop: 9,
+      paddingBottom: 24,
+      paddingTop: 10,
     });
-    expect(StyleSheet.flatten(styles.handleIndicator)).toMatchObject({
+    expect(indicator).toMatchObject({
       backgroundColor: ThemeColors2024.light['neutral-sheet-handle'],
-      borderRadius: 2,
-      height: 4,
-      width: 40,
+      borderRadius: 3,
+      height: 6,
+      width: 50,
     });
+    expect(handle.paddingTop + indicator.height + handle.paddingBottom).toBe(
+      handle.height,
+    );
     expect(StyleSheet.flatten(styles.title)).toMatchObject({
       fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      fontWeight: '700',
-      lineHeight: 20,
+      fontSize: 20,
+      fontWeight: '800',
+      lineHeight: 24,
     });
     expect(StyleSheet.flatten(styles.directionCard)).toMatchObject({
-      backgroundColor: '#F4F5F5',
-      borderRadius: 6,
-      height: 76,
-    });
-    expect(StyleSheet.flatten(styles.amountHeader)).toMatchObject({
-      paddingRight: 13,
+      backgroundColor: ThemeColors2024.light['neutral-bg-1'],
+      borderRadius: 12,
+      height: 92,
     });
     expect(StyleSheet.flatten(styles.amountField)).toMatchObject({
-      backgroundColor: '#F4F5F5',
-      borderRadius: 6,
-      height: 72,
+      backgroundColor: ThemeColors2024.light['neutral-bg-1'],
+      borderRadius: 16,
+      height: 82,
     });
     expect(StyleSheet.flatten(styles.tokenPill)).toMatchObject({
-      borderColor: ThemeColors2024.light['neutral-info'],
+      backgroundColor: ThemeColors2024.light['neutral-bg-5'],
       borderRadius: 8,
-      borderWidth: 0.5,
       height: 40,
-      width: 100,
+      width: 99,
     });
     expect(StyleSheet.flatten(styles.shortcuts)).toMatchObject({
       gap: 8,
-      paddingLeft: 3,
+      marginTop: 4,
     });
     expect(StyleSheet.flatten(styles.shortcut)).toMatchObject({
-      backgroundColor: '#F4F5F5',
+      backgroundColor: ThemeColors2024.light['neutral-bg-1'],
       borderRadius: 6,
       height: 40,
     });
     expect(StyleSheet.flatten(styles.shortcutText)).toMatchObject({
       fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
+      fontSize: 14,
       fontWeight: '500',
-      lineHeight: 16,
+      lineHeight: 18,
     });
-    expect(StyleSheet.flatten(styles.confirmButton)).toMatchObject({
-      borderRadius: 8,
+    expect(StyleSheet.flatten(styles.button)).toMatchObject({
+      borderRadius: 12,
       elevation: 4,
       shadowColor: 'rgba(112, 132, 255, 0.1)',
       shadowOffset: { height: 8, width: 0 },
@@ -81,13 +79,12 @@ describe('PerpsProTransferSheet Figma styles', () => {
       shadowRadius: 12,
     });
     expect(StyleSheet.flatten(styles.footer)).toMatchObject({
-      paddingBottom:
-        getBottomButtonBottomOffset(0) - (BOTTOM_BUTTON_BOTTOM_OFFSET - 30),
-      paddingTop: 12,
+      paddingBottom: getBottomButtonBottomOffset(0),
+      paddingTop: 24,
     });
   });
 
-  it('keeps the approved Dark surfaces and handle token', () => {
+  it('keeps Dark cards distinct from the sheet and the nested token pill', () => {
     const styles = getStyles(false);
 
     expect(StyleSheet.flatten(styles.directionCard)).toMatchObject({
@@ -99,6 +96,18 @@ describe('PerpsProTransferSheet Figma styles', () => {
     expect(StyleSheet.flatten(styles.shortcut)).toMatchObject({
       backgroundColor: ThemeColors2024.dark['neutral-bg-2'],
     });
+    for (const card of [
+      styles.directionCard,
+      styles.amountField,
+      styles.shortcut,
+    ]) {
+      expect(StyleSheet.flatten(card).backgroundColor).not.toBe(
+        StyleSheet.flatten(styles.background).backgroundColor,
+      );
+    }
+    expect(StyleSheet.flatten(styles.tokenPill).backgroundColor).toBe(
+      ThemeColors2024.dark['neutral-bg-5'],
+    );
     expect(StyleSheet.flatten(styles.handleIndicator)).toMatchObject({
       backgroundColor: ThemeColors2024.dark['neutral-sheet-handle'],
     });

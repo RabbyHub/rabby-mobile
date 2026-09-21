@@ -1,9 +1,17 @@
 import { resolveNativeModule, wrapPlatformOnlyMethod } from './utils';
+import NativeRNHelpers from './specs/NativeRNHelpers';
 
-const { RNHelpers: nativeModule } = resolveNativeModule('RNHelpers');
+const { RNHelpers: nativeModule } = resolveNativeModule(
+  'RNHelpers',
+  NativeRNHelpers,
+);
+
+const buildInfo =
+  nativeModule.buildInfo || nativeModule.getConstants?.().buildInfo;
 
 const RNHelpers = Object.freeze({
-  ...nativeModule,
+  forceExitApp: nativeModule.forceExitApp,
+  buildInfo,
   moveTaskToBack: wrapPlatformOnlyMethod({
     method: nativeModule.moveTaskToBack,
     platform: 'android',

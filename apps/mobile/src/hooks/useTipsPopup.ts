@@ -15,6 +15,9 @@ type TipsPopupState = {
   bgType?: 'bg0' | 'bg1';
   buttonStyle?: StyleProp<ViewStyle>;
   buttonTitleStyle?: StyleProp<TextStyle>;
+  buttonTitle?: string;
+  /** Keep this popup's presentation until the sheet finishes dismissing. */
+  retainContentOnClose?: boolean;
   buttonType?:
     | 'primary'
     | 'ghost'
@@ -86,9 +89,16 @@ export const useTipsPopup = () => {
     setState(getHiddenTipsPopupState());
   });
 
+  const hideTipsPopupIfCurrent = useMemoizedFn((expected: TipsPopupState) => {
+    setState(current =>
+      current === expected ? getHiddenTipsPopupState() : current,
+    );
+  });
+
   return {
     showTipsPopup,
     hideTipsPopup,
+    hideTipsPopupIfCurrent,
     state,
     setState,
   };

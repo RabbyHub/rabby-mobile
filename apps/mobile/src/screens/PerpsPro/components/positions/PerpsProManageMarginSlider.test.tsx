@@ -2,6 +2,11 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
+jest.mock(
+  '@/assets2024/icons/perps/PerpsProLeverageThumb.svg',
+  () => require('react-native').View,
+);
+
 const mockSliderHapticComplete = jest.fn();
 const mockSliderHapticOptions = jest.fn();
 const mockSliderHapticStart = jest.fn();
@@ -10,7 +15,7 @@ const mockSliderHapticValueChange = jest.fn();
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
     const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
-    return { styles: getStyle({ colors2024 }) };
+    return { colors2024, styles: getStyle({ colors2024 }) };
   },
 }));
 jest.mock('@/utils/styles', () => ({
@@ -41,7 +46,7 @@ import { PerpsProManageMarginSlider } from './PerpsProManageMarginSlider';
 describe('PerpsProManageMarginSlider', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('uses one token-aware 32/2/16 control with aligned progress rails', () => {
+  it('uses one token-aware 40/4/20 control with aligned progress rails', () => {
     render(
       <PerpsProManageMarginSlider
         maximum="30"
@@ -55,12 +60,12 @@ describe('PerpsProManageMarginSlider', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-slider').props.style,
       ).height,
-    ).toBe(32);
+    ).toBe(40);
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-slider-track').props.style,
       ).height,
-    ).toBe(2);
+    ).toBe(4);
     expect(
       screen.queryByTestId('perps-pro-manage-margin-slider-endpoints'),
     ).toBeNull();
@@ -75,24 +80,22 @@ describe('PerpsProManageMarginSlider', () => {
         screen.getByTestId('perps-pro-manage-margin-slider-thumb').props.style,
       ),
     ).toMatchObject({
-      backgroundColor: 'neutral-bg-1',
-      borderColor: 'neutral-title-1',
-      height: 16,
+      height: 20,
       left: '25%',
-      width: 16,
+      width: 20,
     });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-slider-progress-rail').props
           .style,
       ),
-    ).toMatchObject({ left: 8, right: 8, top: 15 });
+    ).toMatchObject({ left: 10, right: 10, top: 18 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-manage-margin-slider-thumb-rail').props
           .style,
       ),
-    ).toMatchObject({ left: 0, right: 16, top: 8 });
+    ).toMatchObject({ left: 0, right: 20, top: 10 });
     expect(screen.getByTestId('native-margin-slider').props).toMatchObject({
       disabled: false,
       maximumValue: 30,

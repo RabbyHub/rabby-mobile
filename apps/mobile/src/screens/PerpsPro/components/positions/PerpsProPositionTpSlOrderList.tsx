@@ -308,7 +308,7 @@ const OrderMetric: React.FC<{
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  list: { paddingBottom: 40, paddingHorizontal: 15 },
+  list: { paddingBottom: 40, paddingHorizontal: 16 },
   addRow: { alignItems: 'flex-end', height: 42, paddingTop: 8 },
   addButton: {
     alignItems: 'center',

@@ -100,8 +100,8 @@ describe('PerpsProPositionTpSlInput', () => {
       width: 8,
     });
     expect(screen.getByTestId('field-caret-glyph').props).toMatchObject({
-      height: 4.11638,
-      width: 5.69228,
+      height: 4,
+      width: 6,
     });
     expect(
       StyleSheet.flatten(screen.getByTestId('field-caret-glyph').props.style),

@@ -1,3 +1,10 @@
+import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
+import { ThemeColors2024 } from '@/constant/theme';
+let mockThemeMode: 'light' | 'dark' | undefined;
+beforeEach(() => {
+  mockThemeMode = undefined;
+});
+jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
 import {
   act,
   fireEvent,
@@ -6,7 +13,7 @@ import {
   waitFor,
 } from '@testing-library/react-native';
 import React from 'react';
-import { Keyboard, StyleSheet } from 'react-native';
+import { Keyboard, StyleSheet, View } from 'react-native';
 import { perpsProKeyboardSession } from '../common/perpsProKeyboardSession';
 
 jest.mock('@/core/native/utils', () => ({ IS_ANDROID: true }));
@@ -23,7 +30,7 @@ const mockUseSliderHaptics = jest.fn();
 let mockLatestTradePrice = '60001';
 let mockLatestTradeStatus: 'ready' | 'stale' = 'ready';
 
-jest.mock('@/assets2024/icons/perps/icon-switch-mode.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProCloseOrderTypeSwitch.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
@@ -44,10 +51,15 @@ jest.mock('@/components/customized/BottomSheet', () => {
           close: jest.fn(),
           present: jest.fn(),
         }));
-        return ReactModule.createElement(View, {
-          ...props,
-          testID: 'close-position-sheet',
-        });
+        return ReactModule.createElement(
+          View,
+          { ...props, testID: 'close-position-sheet' },
+          ReactModule.createElement(props.backgroundComponent, {
+            style: props.backgroundStyle,
+            testID: 'dialog-background',
+          }),
+          props.children,
+        );
       },
     ),
   };
@@ -73,9 +85,8 @@ jest.mock('@/components2024/Button', () => {
   };
 });
 
-jest.mock('@/components2024/GlobalBottomSheetModal/utils-help', () => ({
-  makeBottomSheetProps: () => ({}),
-}));
+// Keep the real background factory and renderer; only the native gradient is stubbed.
+jest.mock('react-native-linear-gradient', () => require('react-native').View);
 
 jest.mock('@/hooks/perps/subscriptions/usePerpsLatestTrade', () => ({
   usePerpsLatestTrade: (options: object) => {
@@ -90,11 +101,20 @@ jest.mock('@/hooks/perps/subscriptions/usePerpsLatestTrade', () => ({
 }));
 
 jest.mock('@/hooks/theme', () => ({
-  useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
-    const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
+  useTheme2024: ({
+    getStyle,
+  }: { getStyle?: (input: object) => object } = {}) => {
+    const colors2024 = mockThemeMode
+      ? require('@/constant/theme').ThemeColors2024[mockThemeMode]
+      : new Proxy({}, { get: (_target, key) => String(key) });
     return {
       colors2024,
-      styles: getStyle({ colors2024, safeAreaInsets: { bottom: 0 } }),
+      isLight: mockThemeMode !== 'dark',
+      styles: getStyle?.({
+        colors2024,
+        isLight: mockThemeMode !== 'dark',
+        safeAreaInsets: { bottom: 0 },
+      }),
     };
   },
 }));
@@ -220,6 +240,70 @@ const market = {
 };
 
 describe('PerpsProClosePositionSheet', () => {
+  it.each(['light', 'dark'] as const)(
+    'renders distinct %s sheet, card and field backgrounds in Market and Limit',
+    mode => {
+      mockThemeMode = mode;
+      render(
+        <PerpsProClosePositionSheet
+          amountUnit="base"
+          market={market}
+          position={position}
+          onClose={jest.fn()}
+          onReview={jest.fn()}
+          visible
+        />,
+      );
+      const colors = ThemeColors2024[mode];
+      const cardColor =
+        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'];
+      const fieldColor =
+        colors[mode === 'light' ? 'neutral-bg-0' : 'neutral-bg-5'];
+      for (const orderType of ['market', 'limit'] as const) {
+        expect(screen.getByLabelText('Amount').props).toMatchObject({
+          cursorColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+          selectionColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+        });
+        if (orderType === 'limit') {
+          fireEvent.press(
+            screen.getByTestId('perps-pro-close-market-price-field'),
+          );
+          expect(screen.getByLabelText('Price').props).toMatchObject({
+            cursorColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+            selectionColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+          });
+        }
+        const background = StyleSheet.flatten(
+          screen.getByTestId('dialog-background').props.style,
+        ).backgroundColor;
+        expect(background).toBe(colors['neutral-bg-0']);
+        expect(
+          StyleSheet.flatten(
+            screen.getByTestId('close-position-sheet').props.handleStyle,
+          ).backgroundColor,
+        ).toBe(background);
+        const cards = screen
+          .UNSAFE_getAllByType(View)
+          .map(view => StyleSheet.flatten(view.props.style))
+          .filter(style => style?.borderRadius === 12);
+        expect(cards).toHaveLength(2);
+        for (const card of cards) {
+          expect(card.backgroundColor).toBe(cardColor);
+          expect(card.backgroundColor).not.toBe(background);
+        }
+        const fields = screen
+          .UNSAFE_getAllByType(View)
+          .map(view => StyleSheet.flatten(view.props.style))
+          .filter(style => style?.borderRadius === 6);
+        expect(fields).toHaveLength(3);
+        for (const field of fields) {
+          expect(field.backgroundColor).toBe(fieldColor);
+          expect(field.backgroundColor).not.toBe(cardColor);
+        }
+      }
+    },
+  );
+
   it('keeps Android Amount editing mounted while reserving the Done bar', () => {
     const show = jest.fn();
     const listener = jest
@@ -247,7 +331,7 @@ describe('PerpsProClosePositionSheet', () => {
     fireEvent.changeText(input, '0.5');
     act(() => show({ endCoordinates: { height: 300, screenY: 500 } }));
     expect(screen.getByTestId('close-position-sheet').props.snapPoints).toEqual(
-      [558],
+      [598],
     );
     expect(perpsProKeyboardSession.getSnapshot()?.id).toBe(owner?.id);
     expect(owner?.sheetId).toBeDefined();
@@ -268,7 +352,7 @@ describe('PerpsProClosePositionSheet', () => {
     mockLatestTradePrice = '60001';
     mockLatestTradeStatus = 'ready';
   });
-  it('uses the 510px sheet, switches the price field to Limit, and seeds latest trade', async () => {
+  it('uses the 550px sheet, switches the price field to Limit, and seeds latest trade', async () => {
     const onReview = jest.fn();
     render(
       <PerpsProClosePositionSheet
@@ -282,7 +366,7 @@ describe('PerpsProClosePositionSheet', () => {
     );
 
     expect(screen.getByTestId('close-position-sheet').props.snapPoints).toEqual(
-      [510],
+      [550],
     );
     expect(screen.getByTestId('close-position-sheet').props).toMatchObject({
       enableDynamicSizing: false,
@@ -329,6 +413,7 @@ describe('PerpsProClosePositionSheet', () => {
     expect(screen.getByTestId('close-position-slider').props).toMatchObject({
       minimumValue: 0,
       pointCount: 5,
+      appearance: 'order-dialog',
       tone: 'neutral',
       value: 100,
     });
@@ -336,17 +421,14 @@ describe('PerpsProClosePositionSheet', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-close-position-footer').props.style,
       ),
-    ).toMatchObject({ paddingBottom: 40, paddingTop: 12 });
+    ).toMatchObject({ paddingBottom: 36, paddingTop: 24 });
     for (const testID of [
       'perps-pro-close-position-header',
       'perps-pro-close-position-summary',
     ]) {
       expect(
         StyleSheet.flatten(screen.getByTestId(testID).props.style),
-      ).toMatchObject({
-        borderBottomColor: 'neutral-bg-5',
-        borderBottomWidth: 1,
-      });
+      ).not.toHaveProperty('borderBottomWidth');
     }
 
     fireEvent.press(screen.getByTestId('perps-pro-close-market-price-field'));
@@ -545,8 +627,12 @@ describe('PerpsProClosePositionSheet', () => {
     expect(mockUsePerpsLatestTrade).toHaveBeenLastCalledWith(
       expect.objectContaining({ enabled: false }),
     );
+    expect(
+      screen.getByTestId('close-position-sheet').props.backdropComponent({})
+        .props.pressBehavior,
+    ).toBe('none');
     expect(screen.getByTestId('close-position-sheet').props).toMatchObject({
-      backdropProps: { pressBehavior: 'none' },
+      backdropComponent: expect.any(Function),
       enablePanDownToClose: false,
     });
     expect(

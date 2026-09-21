@@ -1,10 +1,20 @@
+import {
+  getPerpsProDialogStyles,
+  resolvePerpsProDialogCardBackground,
+  resolvePerpsProDialogFieldBackground,
+} from '../common/perpsProDialogVisual';
+import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import { BOTTOM_BUTTON_COMPACT_HEIGHT } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_BOTTOM_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -12,10 +22,17 @@ import { useRegisterBlockingModal } from '@/utils/modalGate';
 import {
   BottomSheetScrollView,
   BottomSheetView,
+  type BottomSheetBackdropProps,
   type BottomSheetScrollViewMethods,
 } from '@gorhom/bottom-sheet';
 import BigNumber from 'bignumber.js';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Keyboard, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -24,11 +41,6 @@ import {
   getOpenOrderEditDisplayAmount,
   type PerpsProConditionalOrderEditDraft,
 } from '../../model/openOrderEdit';
-import {
-  getPerpsProBottomSheetChromeStyles,
-  PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
-  PERPS_PRO_CONFIRM_BUTTON_STYLE,
-} from '../common/perpsProVisual';
 import {
   getPerpsProAmountInputDecimals,
   getPerpsProPriceInputMaxDecimals,
@@ -51,11 +63,14 @@ import { PerpsProSheetKeyboardAnimation } from '../common/PerpsProSheetKeyboardA
 import { usePerpsProSheetKeyboard } from '../common/usePerpsProSheetKeyboard';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 import { usePerpsProSliderHaptics } from '../common/usePerpsProSliderHaptics';
-import { PerpsProOpenOrderEditHeader } from './PerpsProOpenOrderEditHeader';
+import {
+  PerpsProOpenOrderEditHeader,
+  PerpsProOpenOrderEditDirection,
+} from './PerpsProOpenOrderEditHeader';
 import { PerpsProOpenOrderEditInput } from './PerpsProOpenOrderEditInput';
 
 const MODAL_ID = 'perps-pro-conditional-order-edit';
-const SHEET_HEIGHT = 542;
+const SHEET_HEIGHT = 560;
 const CONTENT_HEIGHT = SHEET_HEIGHT - 40;
 const SheetContent = IS_ANDROID ? BottomSheetScrollView : BottomSheetView;
 
@@ -108,6 +123,15 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
     >('initial');
     const [manualAmount, setManualAmount] = useState('');
     const interactionLocked = coveredByReview || reviewRequesting;
+    const renderBackdrop = useCallback(
+      (props: BottomSheetBackdropProps) => (
+        <PerpsProDialogBackdrop
+          {...props}
+          pressBehavior={interactionLocked ? 'none' : 'close'}
+        />
+      ),
+      [interactionLocked],
+    );
     const sliderSizeBasis = isPositionSize
       ? position?.baseSize || ''
       : initialSize;
@@ -226,10 +250,10 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
         ref={modalRef}
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: 'bg1',
+          linearGradientType: 'bg0',
         })}
         android_keyboardInputMode="adjustPan"
-        backdropProps={{ pressBehavior: interactionLocked ? 'none' : 'close' }}
+        backdropComponent={renderBackdrop}
         backgroundStyle={styles.background}
         enableDynamicSizing={false}
         enablePanDownToClose={!interactionLocked}
@@ -238,7 +262,12 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
         keyboardBehavior="interactive"
         keyboardBlurBehavior="restore"
         onDismiss={onClose}
-        snapPoints={[SHEET_HEIGHT + keyboard.accessoryInset]}
+        snapPoints={[
+          SHEET_HEIGHT +
+            styles.content.paddingBottom -
+            BOTTOM_BUTTON_BOTTOM_OFFSET +
+            keyboard.accessoryInset,
+        ]}
         style={styles.modal}>
         <PerpsProKeyboardSheetContext.Provider value={keyboard.sheetId}>
           {IS_ANDROID && visible && !coveredByReview ? (
@@ -262,110 +291,128 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
               pointerEvents={interactionLocked ? 'none' : 'auto'}
               style={styles.container}
               testID="perps-pro-conditional-order-edit-content">
-              <PerpsProOpenOrderEditHeader
-                market={editor.market}
-                order={editor.order}
-              />
-              <View style={styles.entryRow}>
-                <Text style={styles.summaryLabel}>
-                  {t('page.perps.pro.openOrders.entryPrice')} (
-                  {editor.market.quoteAsset})
-                </Text>
-                <Text style={styles.summaryValue}>
-                  {position
-                    ? formatPerpsProPrice(
-                        position.entryPrice,
-                        editor.market.pxDecimals,
-                      )
-                    : '--'}
-                </Text>
-              </View>
-              <View style={styles.form}>
-                <PerpsProOpenOrderEditInput
-                  accessibilityLabel={t(
-                    'page.perps.pro.openOrders.triggerPrice',
-                  )}
-                  currentValue={`Current ${formatPerpsProPrice(
-                    initialTrigger,
-                    editor.market.pxDecimals,
-                  )}`}
-                  label={t('page.perps.pro.openOrders.triggerPrice')}
-                  maxDecimals={getPerpsProPriceInputMaxDecimals(
-                    editor.market.szDecimals,
-                  )}
-                  onChangeText={setTriggerPrice}
-                  priceSzDecimals={editor.market.szDecimals}
-                  testID="perps-pro-conditional-order-edit-trigger"
-                  unit={editor.market.quoteAsset}
-                  value={triggerPrice}
-                />
-                {isTriggerLimit ? (
+              <PerpsProOpenOrderEditHeader market={editor.market} />
+              <View style={styles.card}>
+                <View style={styles.entryRow}>
+                  <Text style={styles.summaryLabel}>
+                    {t('page.perps.pro.openOrders.entryPrice')} (
+                    {editor.market.quoteAsset})
+                  </Text>
+                  <Text style={styles.summaryValue}>
+                    {position
+                      ? formatPerpsProPrice(
+                          position.entryPrice,
+                          editor.market.pxDecimals,
+                        )
+                      : '--'}
+                  </Text>
+                </View>
+                <View style={styles.direction}>
+                  <PerpsProOpenOrderEditDirection order={editor.order} />
+                </View>
+                <View style={styles.form}>
                   <PerpsProOpenOrderEditInput
                     accessibilityLabel={t(
-                      'page.perps.pro.openOrders.limitPrice',
+                      'page.perps.pro.openOrders.triggerPrice',
                     )}
                     currentValue={`Current ${formatPerpsProPrice(
-                      initialLimit,
+                      initialTrigger,
                       editor.market.pxDecimals,
                     )}`}
-                    label={t('page.perps.pro.openOrders.limitPrice')}
+                    label={t('page.perps.pro.openOrders.triggerPrice')}
                     maxDecimals={getPerpsProPriceInputMaxDecimals(
                       editor.market.szDecimals,
                     )}
-                    onChangeText={setLimitPrice}
+                    onChangeText={setTriggerPrice}
                     priceSzDecimals={editor.market.szDecimals}
-                    testID="perps-pro-conditional-order-edit-limit"
+                    testID="perps-pro-conditional-order-edit-trigger"
                     unit={editor.market.quoteAsset}
-                    value={limitPrice}
+                    value={triggerPrice}
                   />
-                ) : (
-                  <PerpsProOpenOrderEditInput
-                    accessibilityLabel={t('page.perps.pro.openOrders.price')}
-                    disabled
-                    maxDecimals={0}
-                    onChangeText={() => undefined}
-                    testID="perps-pro-conditional-order-edit-market"
-                    value={t('page.perps.pro.openOrders.marketPrice')}
-                  />
-                )}
-                <View style={styles.amountGroup}>
-                  <PerpsProOpenOrderEditInput
-                    accessibilityLabel={t('page.perps.pro.openOrders.amount')}
-                    label={t('page.perps.pro.openOrders.amount')}
-                    maxDecimals={getPerpsProAmountInputDecimals({
-                      amountUnit: editor.amountUnit,
-                      szDecimals: editor.market.szDecimals,
-                    })}
-                    onChangeText={value => {
-                      setAmountSource('manual');
-                      setManualAmount(value);
-                    }}
-                    onFocus={beginManualAmount}
-                    testID="perps-pro-conditional-order-edit-amount"
-                    unit={displayUnit}
-                    value={amountValue}
-                  />
-                  <PerpsProSlider
-                    dimWhenDisabled={false}
-                    disabled={interactionLocked || !sliderSizeBasis}
-                    maximumValue={100}
-                    minimumValue={0}
-                    onSlidingComplete={sliderHaptics.onSlidingComplete}
-                    onSlidingStart={value => {
-                      Keyboard.dismiss();
-                      sliderHaptics.onSlidingStart(value);
-                    }}
-                    onValueChange={value => {
-                      const rounded = Math.round(value);
-                      sliderHaptics.onValueChange(rounded);
-                      setAmountSource('slider');
-                      setPercent(rounded);
-                    }}
-                    pointCount={5}
-                    step={1}
-                    tone="neutral"
-                    value={activePercent}
-                  />
+                  <View style={styles.executionRow}>
+                    <View style={styles.executionPrice}>
+                      {isTriggerLimit ? (
+                        <PerpsProOpenOrderEditInput
+                          accessibilityLabel={t(
+                            'page.perps.pro.openOrders.limitPrice',
+                          )}
+                          currentValue={`Current ${formatPerpsProPrice(
+                            initialLimit,
+                            editor.market.pxDecimals,
+                          )}`}
+                          label={t('page.perps.pro.openOrders.limitPrice')}
+                          maxDecimals={getPerpsProPriceInputMaxDecimals(
+                            editor.market.szDecimals,
+                          )}
+                          onChangeText={setLimitPrice}
+                          priceSzDecimals={editor.market.szDecimals}
+                          testID="perps-pro-conditional-order-edit-limit"
+                          unit={editor.market.quoteAsset}
+                          value={limitPrice}
+                        />
+                      ) : (
+                        <PerpsProOpenOrderEditInput
+                          accessibilityLabel={t(
+                            'page.perps.pro.openOrders.price',
+                          )}
+                          disabled
+                          maxDecimals={0}
+                          onChangeText={() => undefined}
+                          testID="perps-pro-conditional-order-edit-market"
+                          value={t('page.perps.pro.openOrders.marketPrice')}
+                        />
+                      )}
+                    </View>
+                    <View style={styles.executionType}>
+                      <Text style={styles.executionTypeText}>
+                        {t(
+                          isTriggerLimit
+                            ? 'page.perps.pro.trade.limit'
+                            : 'page.perps.pro.trade.market',
+                        )}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.amountGroup}>
+                    <PerpsProOpenOrderEditInput
+                      accessibilityLabel={t('page.perps.pro.openOrders.amount')}
+                      label={t('page.perps.pro.openOrders.amount')}
+                      maxDecimals={getPerpsProAmountInputDecimals({
+                        amountUnit: editor.amountUnit,
+                        szDecimals: editor.market.szDecimals,
+                      })}
+                      onChangeText={value => {
+                        setAmountSource('manual');
+                        setManualAmount(value);
+                      }}
+                      onFocus={beginManualAmount}
+                      testID="perps-pro-conditional-order-edit-amount"
+                      unit={displayUnit}
+                      value={amountValue}
+                    />
+                    <PerpsProSlider
+                      appearance="order-dialog"
+                      dimWhenDisabled={false}
+                      disabled={interactionLocked || !sliderSizeBasis}
+                      maximumValue={100}
+                      minimumValue={0}
+                      onSlidingComplete={sliderHaptics.onSlidingComplete}
+                      onSlidingStart={value => {
+                        Keyboard.dismiss();
+                        sliderHaptics.onSlidingStart(value);
+                      }}
+                      onValueChange={value => {
+                        const rounded = Math.round(value);
+                        sliderHaptics.onValueChange(rounded);
+                        setAmountSource('slider');
+                        setPercent(rounded);
+                      }}
+                      pointCount={5}
+                      step={1}
+                      tone="neutral"
+                      value={activePercent}
+                    />
+                  </View>
                 </View>
                 <View style={styles.summary}>
                   <View style={styles.summaryRow}>
@@ -412,9 +459,13 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
                 style={styles.footer}
                 testID="perps-pro-conditional-order-edit-footer">
                 <Button
-                  buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
+                  buttonStyle={[
+                    styles.button,
+                    (!canReview || interactionLocked) && styles.buttonDisabled,
+                  ]}
+                  disabledTitleStyle={styles.buttonDisabledTitle}
                   disabled={!canReview || interactionLocked}
-                  height={BOTTOM_BUTTON_COMPACT_HEIGHT}
+                  height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                   onPress={() =>
                     dismissKeyboardThen(() => {
                       if (!baseSize) return;
@@ -427,7 +478,7 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
                   }
                   testID="perps-pro-conditional-order-edit-confirm"
                   title={t('global.confirm')}
-                  titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
+                  titleStyle={styles.buttonTitle}
                   type="primary"
                 />
               </View>
@@ -442,67 +493,95 @@ export const PerpsProConditionalOrderEditSheet: React.FC<{
 PerpsProConditionalOrderEditSheet.displayName =
   'PerpsProConditionalOrderEditSheet';
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  ...getPerpsProBottomSheetChromeStyles(colors2024),
-  container: {
-    height: CONTENT_HEIGHT,
-    paddingHorizontal: 15,
-    paddingTop: 8,
-    position: 'relative',
-  },
-  entryRow: {
-    alignItems: 'center',
-    borderBottomColor: colors2024['neutral-bg-5'],
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 16,
-    paddingBottom: 12,
-  },
-  form: { gap: 24, marginTop: 16 },
-  amountGroup: { gap: 8 },
-  summary: { gap: 8, paddingBottom: 12 },
-  summaryRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  summaryLabel: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  summaryValue: {
-    ...PERPS_PRO_NUMBER_STYLE,
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
-    maxWidth: '64%',
-    textAlign: 'right',
-  },
-  positiveValue: {
-    ...PERPS_PRO_NUMBER_STYLE,
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
-  },
-  negativeValue: {
-    ...PERPS_PRO_NUMBER_STYLE,
-    color: colors2024['red-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
-  },
-  footer: {
-    left: 15,
-    position: 'absolute',
-    right: 15,
-    top: 426,
-  },
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
+    container: {
+      height:
+        CONTENT_HEIGHT +
+        getBottomButtonBottomOffset(safeAreaInsets.bottom) -
+        BOTTOM_BUTTON_BOTTOM_OFFSET,
+      paddingHorizontal: 16,
+      paddingTop: 8,
+      position: 'relative',
+    },
+    entryRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    card: {
+      backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
+      borderRadius: 12,
+      padding: 16,
+      marginTop: 24,
+    },
+    direction: { marginTop: 10 },
+    form: { gap: 20, marginTop: 20 },
+    executionRow: { flexDirection: 'row', gap: 8 },
+    executionPrice: { flex: 1, minWidth: 0 },
+    executionType: {
+      width: 100,
+      height: 40,
+      borderRadius: 6,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: resolvePerpsProDialogFieldBackground(
+        colors2024,
+        isLight,
+      ),
+    },
+    executionTypeText: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      fontWeight: '500',
+      lineHeight: 18,
+    },
+    amountGroup: { gap: 10 },
+    summary: { gap: 8, marginTop: 8 },
+    summaryRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    summaryLabel: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      lineHeight: 16,
+    },
+    summaryValue: {
+      ...PERPS_PRO_NUMBER_STYLE,
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+      maxWidth: '64%',
+      textAlign: 'right',
+    },
+    positiveValue: {
+      ...PERPS_PRO_NUMBER_STYLE,
+      color: colors2024['green-default'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    },
+    negativeValue: {
+      ...PERPS_PRO_NUMBER_STYLE,
+      color: colors2024['red-default'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    },
+    footer: {
+      left: 20,
+      position: 'absolute',
+      right: 20,
+      top: 432,
+    },
+  }),
+);

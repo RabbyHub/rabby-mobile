@@ -149,7 +149,6 @@ export const PerpsProTpSlInput: React.FC<{
               canonicalizeValueOnBlur={
                 usesPriceEditingPolicy ? canonicalizePriceInput : undefined
               }
-              cursorColor={colors2024['brand-default']}
               inputComponent={PerpsProAnimatedPriceTextInput}
               maxFontSizeMultiplier={1.2}
               maxDecimals={maxDecimals}
@@ -166,7 +165,6 @@ export const PerpsProTpSlInput: React.FC<{
                 onFocus();
               }}
               preserveIntegerZeroRun={usesPriceEditingPolicy}
-              selectionColor={colors2024['brand-default']}
               style={[
                 styles.input,
                 showNegativePrefix ? styles.inputWithNegativePrefix : null,

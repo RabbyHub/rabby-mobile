@@ -1,4 +1,5 @@
 import type { ITokenItem, TokenDisplayMode } from '@/types/assets';
+import { unlabeledCustomTokenSecurityFlags } from '@/utils/tokenSecurityFlags';
 import type { CustomTestnetAssetSectionToken } from './types';
 
 export type CustomTestnetTokenDisplayRow = {
@@ -24,11 +25,7 @@ export const makeMetadataTokenItem = (
   decimals: token.decimals,
   display_symbol: token.symbol,
   id: token.id,
-  is_core: false,
-  is_verified: false,
-  is_wallet: false,
-  is_scam: false,
-  is_suspicious: false,
+  ...unlabeledCustomTokenSecurityFlags,
   logo_url: '',
   name: token.symbol,
   optimized_symbol: token.symbol,

@@ -1,4 +1,3 @@
-import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
@@ -6,7 +5,14 @@ import { useTheme2024 } from '@/hooks/theme';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useReducer,
+  useRef,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWindowDimensions, View } from 'react-native';
 import { Text } from '@/components/Typography';
@@ -14,20 +20,59 @@ import { Text } from '@/components/Typography';
 export const GlobalTipsPopup: React.FC<{}> = ({}) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
-  const { state, hideTipsPopup } = useTipsPopup();
+  const { state, hideTipsPopup, hideTipsPopupIfCurrent } = useTipsPopup();
+  const retainedRef = useRef<typeof state | null>(null);
+  const closingRef = useRef<typeof state | null>(null);
+  const [dismissalCount, finishDismissal] = useReducer(count => count + 1, 0);
+  const { visible } = state;
+
+  // The atom still clears immediately on close (including owner visibility).
+  // Only opted-in presentations survive until the native sheet is unmounted.
+  const presentation =
+    closingRef.current ?? (visible ? state : retainedRef.current ?? state);
+
+  useLayoutEffect(() => {
+    if (closingRef.current) {
+      return;
+    }
+    if (visible) {
+      retainedRef.current = state.retainContentOnClose ? state : null;
+    } else if (retainedRef.current) {
+      closingRef.current = retainedRef.current;
+    }
+  }, [dismissalCount, state, visible]);
+
+  const handleAnimate = useCallback((_fromIndex: number, toIndex: number) => {
+    if (toIndex === -1 && retainedRef.current) {
+      closingRef.current = retainedRef.current;
+    }
+  }, []);
+
+  const handleDismiss = useCallback(() => {
+    const dismissed = closingRef.current ?? retainedRef.current;
+    if (!dismissed) {
+      hideTipsPopup();
+      return;
+    }
+    closingRef.current = null;
+    retainedRef.current = null;
+    // A newer popup may have arrived during the closing animation.
+    hideTipsPopupIfCurrent(dismissed);
+    finishDismissal();
+  }, [hideTipsPopup, hideTipsPopupIfCurrent]);
 
   const {
     title,
     desc,
-    visible,
     buttonStyle,
     buttonTitleStyle,
     buttonType,
+    buttonTitle,
     bgType,
     enablePanDownToClose,
-  } = state || {};
+  } = presentation;
 
-  const { styles, colors2024, isLight } = useTheme2024({
+  const { styles, colors2024 } = useTheme2024({
     getStyle: getStyle,
   });
 
@@ -40,11 +85,13 @@ export const GlobalTipsPopup: React.FC<{}> = ({}) => {
 
   useEffect(() => {
     if (visible) {
-      modalRef.current?.present();
+      if (!closingRef.current) {
+        modalRef.current?.present();
+      }
     } else {
       modalRef.current?.close();
     }
-  }, [visible]);
+  }, [dismissalCount, visible]);
 
   return (
     <>
@@ -55,7 +102,8 @@ export const GlobalTipsPopup: React.FC<{}> = ({}) => {
           colors: colors2024,
           linearGradientType: bgType || 'bg1',
         })}
-        onDismiss={hideTipsPopup}
+        onAnimate={handleAnimate}
+        onDismiss={handleDismiss}
         enablePanDownToClose={enablePanDownToClose}
         enableDynamicSizing
         maxDynamicContentSize={maxHeight}>
@@ -73,8 +121,12 @@ export const GlobalTipsPopup: React.FC<{}> = ({}) => {
           </View>
           <Button
             type={buttonType || 'primary'}
-            title={t('component.GlobalTipsPopup.btn')}
-            onPress={hideTipsPopup}
+            title={buttonTitle ?? t('component.GlobalTipsPopup.btn')}
+            onPress={
+              presentation.retainContentOnClose
+                ? () => hideTipsPopupIfCurrent(presentation)
+                : hideTipsPopup
+            }
             buttonStyle={buttonStyle}
             titleStyle={buttonTitleStyle}
           />

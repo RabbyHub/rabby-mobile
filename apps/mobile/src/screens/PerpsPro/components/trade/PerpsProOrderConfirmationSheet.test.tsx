@@ -1,14 +1,16 @@
+import { PerpsProCheckboxIcon } from '../common/PerpsProCheckboxIcon';
+import { ThemeColors2024 } from '@/constant/theme';
+jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
+
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet, Text as NativeText } from 'react-native';
+import {
+  StyleSheet,
+  Text as NativeText,
+  View as NativeView,
+} from 'react-native';
 
-jest.mock('@/assets2024/icons/common/checkbox-empty-cc.svg', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
-  return (props: object) => ReactModule.createElement(View, props);
-});
-
-jest.mock('@/assets2024/icons/common/checkbox-filled-brand.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProInfoCheckboxChecked.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
@@ -78,12 +80,27 @@ jest.mock('@/components2024/GlobalBottomSheetModal/utils-help', () => ({
   makeBottomSheetProps: () => ({}),
 }));
 
+let mockIsLight = true;
+let mockIsIOS = true;
+
+jest.mock('@/core/native/utils', () => ({
+  get IS_IOS() {
+    return mockIsIOS;
+  },
+}));
+
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
-    const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
+    const themeColors = require('@/constant/theme').ThemeColors2024;
+    const colors2024 = mockIsLight ? themeColors.light : themeColors.dark;
     return {
       colors2024,
-      styles: getStyle({ colors2024, safeAreaInsets: { bottom: 0 } }),
+      isLight: mockIsLight,
+      styles: getStyle({
+        colors2024,
+        isLight: mockIsLight,
+        safeAreaInsets: { bottom: 0 },
+      }),
     };
   },
 }));
@@ -232,291 +249,346 @@ const renderSheet = (
     />,
   );
 
-describe('PerpsProOrderConfirmationSheet', () => {
-  it('uses the Pro layout, live risk fields and Mark Price TP/SL conditions', () => {
-    renderSheet(attached);
+describe.each(['light', 'dark'] as const)(
+  'PerpsProOrderConfirmationSheet (%s)',
+  mode => {
+    const colors = ThemeColors2024[mode];
+    beforeEach(() => {
+      mockIsLight = mode === 'light';
+      mockIsIOS = true;
+    });
+    it.each([
+      [true, 'isolated', 'xyz', 3],
+      [true, 'cross', 'long-source-tag', 20],
+      [true, 'cross', null, 100],
+      [false, 'isolated', 'xyz', 3],
+      [false, 'cross', 'long-source-tag', 20],
+      [false, 'cross', null, 100],
+    ] as const)(
+      'clips metadata only on iOS (%s, %s, source=%s, leverage=%s)',
+      (isIOS, marginMode, sourceTag, leverage) => {
+        mockIsIOS = isIOS;
+        renderSheet({
+          ...parent,
+          reviewFacts: { ...reviewFacts, marginMode, sourceTag, leverage },
+        });
 
-    expect(screen.getByText('BTCUSDC')).toBeTruthy();
-    expect(screen.getByText('xyz')).toBeTruthy();
-    expect(screen.getByText('Isolated 10x')).toBeTruthy();
-    expect(screen.getByText('Buy')).toBeTruthy();
-    expect(screen.getByText('Long')).toBeTruthy();
-    const buyTagStyle = StyleSheet.flatten(
-      screen.getByTestId('perps-pro-order-confirmation-side-tag').props.style,
+        const marginTag = screen.getByTestId(
+          'perps-pro-order-confirmation-margin-mode-tag',
+        );
+        const source = screen.queryByTestId(
+          'perps-pro-order-confirmation-source-tag',
+        );
+        expect(marginTag).toHaveTextContent(
+          `${marginMode === 'cross' ? 'Cross' : 'Isolated'} ${leverage}x`,
+        );
+        if (sourceTag) {
+          expect(source).toHaveTextContent(sourceTag);
+        } else {
+          expect(source).toBeNull();
+        }
+        for (const tag of source ? [source, marginTag] : [marginTag]) {
+          const { overflow, ...style } = StyleSheet.flatten(tag.props.style);
+          expect(overflow).toBe(isIOS ? 'hidden' : undefined);
+          expect(tag.props.numberOfLines).toBe(1);
+          expect(tag.props.adjustsFontSizeToFit).toBeUndefined();
+          expect(style).toEqual({
+            backgroundColor: colors['neutral-bg-5'],
+            borderRadius: 4,
+            color: colors['neutral-foot'],
+            fontFamily: 'SF Pro Rounded',
+            fontSize: 12,
+            fontWeight: '500',
+            lineHeight: 16,
+            maxWidth: 100,
+            paddingHorizontal: 4,
+            paddingVertical: 1,
+          });
+        }
+      },
     );
-    expect(buyTagStyle).toMatchObject({
-      backgroundColor: 'green-light-1',
-      borderRadius: 4,
-      paddingHorizontal: 4,
-      paddingVertical: 1,
-    });
-    expect(buyTagStyle.borderColor).toBeUndefined();
-    expect(buyTagStyle.borderWidth).toBeUndefined();
-    const longTagStyle = StyleSheet.flatten(
-      screen.getByTestId('perps-pro-order-confirmation-position-tag').props
-        .style,
-    );
-    expect(longTagStyle).toMatchObject({
-      backgroundColor: 'green-light-1',
-      borderRadius: 4,
-      paddingHorizontal: 4,
-      paddingVertical: 1,
-    });
-    expect(longTagStyle.borderColor).toBeUndefined();
-    expect(longTagStyle.borderWidth).toBeUndefined();
-    expect(screen.getByText('Buy').props.style).toMatchObject({
-      color: 'green-default',
-      fontSize: 12,
-      fontWeight: '500',
-      lineHeight: 16,
-    });
-    expect(screen.getByText('Long').props.style).toMatchObject({
-      color: 'green-default',
-      fontSize: 12,
-      fontWeight: '500',
-      lineHeight: 16,
-    });
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-order-confirmation-source-tag').props
+
+    it('uses the Pro layout, live risk fields and Mark Price TP/SL conditions', () => {
+      renderSheet(attached);
+
+      const details = screen.getByTestId(
+        'perps-pro-order-confirmation-details',
+      );
+      const tpSlDetails = screen
+        .UNSAFE_getAllByType(NativeView)
+        .find(
+          node =>
+            StyleSheet.flatten(node.props.style)?.marginTop === 8 &&
+            node.findAllByProps({ children: 'Mark Price ≥ 110 USDC' }).length >
+              0,
+        );
+      expect(tpSlDetails).toBeDefined();
+      for (const card of [details, tpSlDetails]) {
+        const background = StyleSheet.flatten(
+          card?.props.style,
+        ).backgroundColor;
+        expect(background).toBe(
+          colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'],
+        );
+        expect(background).not.toBe(
+          StyleSheet.flatten(
+            screen.getByTestId('confirmation-sheet').props.backgroundStyle,
+          ).backgroundColor,
+        );
+      }
+
+      expect(screen.getByText('BTCUSDC')).toBeTruthy();
+      expect(screen.getByText('xyz')).toBeTruthy();
+      expect(screen.getByText('Isolated 10x')).toBeTruthy();
+      expect(
+        StyleSheet.flatten(screen.getByText('Buy / Long').props.style),
+      ).toMatchObject({
+        color: colors['green-default'],
+        fontSize: 12,
+        lineHeight: 16,
+        fontWeight: '700',
+      });
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId('perps-pro-order-confirmation-source-tag').props
+            .style,
+        ),
+      ).toMatchObject({
+        backgroundColor: colors['neutral-bg-5'],
+        borderRadius: 4,
+        color: colors['neutral-foot'],
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 12,
+        fontWeight: '500',
+        lineHeight: 16,
+        paddingHorizontal: 4,
+        paddingVertical: 1,
+      });
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId('perps-pro-order-confirmation-source-tag').props
+            .style,
+        ).borderColor,
+      ).toBeUndefined();
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId('perps-pro-order-confirmation-source-tag').props
+            .style,
+        ).borderWidth,
+      ).toBeUndefined();
+      const marginModeTagStyle = StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-confirmation-margin-mode-tag').props
           .style,
-      ),
-    ).toMatchObject({
-      backgroundColor: 'neutral-bg-5',
-      borderRadius: 4,
-      color: 'neutral-foot',
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      fontWeight: '500',
-      lineHeight: 16,
-      paddingHorizontal: 4,
-      paddingVertical: 1,
+      );
+      expect(marginModeTagStyle).toMatchObject({
+        backgroundColor: colors['neutral-bg-5'],
+        borderRadius: 4,
+        color: colors['neutral-foot'],
+        fontSize: 12,
+        fontWeight: '500',
+        lineHeight: 16,
+        paddingHorizontal: 4,
+        paddingVertical: 1,
+      });
+      expect(marginModeTagStyle.borderColor).toBeUndefined();
+      expect(marginModeTagStyle.borderWidth).toBeUndefined();
+      expect(marginModeTagStyle.fontVariant).toBeUndefined();
+      expect(screen.getByText('No')).toBeTruthy();
+      expect(screen.getByText('105.00 USDC')).toBeTruthy();
+      expect(screen.getByText('55.00 USDC (-40.00%)')).toBeTruthy();
+      expect(screen.getByText('Mark Price ≥ 110 USDC')).toBeTruthy();
+      expect(screen.getByText('Mark Price ≤ 90 USDC')).toBeTruthy();
+      expect(screen.getByText('skipConfirmation')).toBeTruthy();
+      expect(screen.queryByText('confirmAttachedTpSl')).toBeNull();
+      expect(screen.queryByText('tpSlFullFillWarning')).toBeNull();
+      expect(screen.queryByText('estimatedTpPnlRoi')).toBeNull();
+      expect(
+        screen.getByTestId('confirmation-sheet').props.enableDynamicSizing,
+      ).toBe(true);
+      expect(
+        screen.getByTestId('confirmation-sheet').props.snapPoints,
+      ).toBeUndefined();
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId('perps-pro-order-confirmation-footer').props.style,
+        ),
+      ).toMatchObject({ paddingBottom: 36, paddingTop: 24 });
+      expect(
+        StyleSheet.flatten(screen.getByText('Isolated 10x').props.style),
+      ).not.toHaveProperty('fontVariant');
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId('perps-pro-order-confirmation-footer').props.style,
+        ).marginTop,
+      ).toBeUndefined();
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId('confirmation-sheet').props.handleIndicatorStyle,
+        ),
+      ).toMatchObject({ height: 6, width: 50 });
+      expect(
+        screen.getByTestId('confirm-button').props.accessibilityValue,
+      ).toEqual({ text: '52:primary' });
+      expect(
+        StyleSheet.flatten(screen.getByTestId('confirm-button').props.style),
+      ).toMatchObject({ borderRadius: 12 });
     });
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-order-confirmation-source-tag').props
-          .style,
-      ).borderColor,
-    ).toBeUndefined();
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-order-confirmation-source-tag').props
-          .style,
-      ).borderWidth,
-    ).toBeUndefined();
-    const marginModeTagStyle = StyleSheet.flatten(
-      screen.getByTestId('perps-pro-order-confirmation-margin-mode-tag').props
-        .style,
+
+    it.each(['plain', 'attached'] as const)(
+      'preserves the parent sell direction for a %s order',
+      kind => {
+        renderSheet(
+          kind === 'plain'
+            ? { ...parent, side: 'sell' }
+            : { ...attached, parent: { ...parent, side: 'sell' } },
+        );
+        expect(
+          StyleSheet.flatten(screen.getByText('Sell / Short').props.style),
+        ).toMatchObject({
+          color: colors['red-default'],
+          fontSize: 12,
+          lineHeight: 16,
+          fontWeight: '700',
+        });
+        expect(screen.queryByText('Buy / Long')).toBeNull();
+      },
     );
-    expect(marginModeTagStyle).toMatchObject({
-      backgroundColor: 'neutral-bg-5',
-      borderRadius: 4,
-      color: 'neutral-foot',
-      fontSize: 12,
-      fontWeight: '500',
-      lineHeight: 16,
-      paddingHorizontal: 4,
-      paddingVertical: 1,
+
+    it('omits only the source metadata tag when the reviewed market is native', () => {
+      renderSheet({
+        ...parent,
+        reviewFacts: { ...reviewFacts, sourceTag: null },
+      });
+
+      expect(
+        screen.queryByTestId('perps-pro-order-confirmation-source-tag'),
+      ).toBeNull();
+      expect(
+        screen.getByTestId('perps-pro-order-confirmation-margin-mode-tag'),
+      ).toBeTruthy();
+      expect(screen.getByText('Isolated 10x')).toBeTruthy();
     });
-    expect(marginModeTagStyle.borderColor).toBeUndefined();
-    expect(marginModeTagStyle.borderWidth).toBeUndefined();
-    expect(marginModeTagStyle.fontVariant).toBeUndefined();
-    expect(screen.getByText('No')).toBeTruthy();
-    expect(screen.getByText('105.00 USDC')).toBeTruthy();
-    expect(screen.getByText('55.00 USDC (-40.00%)')).toBeTruthy();
-    expect(screen.getByText('Mark Price ≥ 110 USDC')).toBeTruthy();
-    expect(screen.getByText('Mark Price ≤ 90 USDC')).toBeTruthy();
-    expect(screen.getByText('skipConfirmation')).toBeTruthy();
-    expect(screen.queryByText('confirmAttachedTpSl')).toBeNull();
-    expect(screen.queryByText('tpSlFullFillWarning')).toBeNull();
-    expect(screen.queryByText('estimatedTpPnlRoi')).toBeNull();
-    expect(
-      screen.getByTestId('confirmation-sheet').props.enableDynamicSizing,
-    ).toBe(true);
-    expect(
-      screen.getByTestId('confirmation-sheet').props.snapPoints,
-    ).toBeUndefined();
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-order-confirmation-footer').props.style,
-      ),
-    ).toMatchObject({ paddingBottom: 40, paddingTop: 24 });
-    expect(
-      StyleSheet.flatten(screen.getByText('Isolated 10x').props.style),
-    ).not.toHaveProperty('fontVariant');
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-order-confirmation-footer').props.style,
-      ).marginTop,
-    ).toBeUndefined();
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('confirmation-sheet').props.handleIndicatorStyle,
-      ),
-    ).toMatchObject({ height: 4, width: 40 });
-    expect(
-      screen.getByTestId('confirm-button').props.accessibilityValue,
-    ).toEqual({ text: '36:primary' });
-    expect(
-      StyleSheet.flatten(screen.getByTestId('confirm-button').props.style),
-    ).toMatchObject({ borderRadius: 8 });
-  });
 
-  it('uses the negative direction tag contract for Sell and Short', () => {
-    renderSheet({ ...parent, side: 'sell' });
+    it('renders unavailable liquidation as a double dash', () => {
+      renderSheet(parent, { estimatedLiquidation: null });
 
-    const sellTagStyle = StyleSheet.flatten(
-      screen.getByTestId('perps-pro-order-confirmation-side-tag').props.style,
+      const detailTexts = screen
+        .getByTestId('perps-pro-order-confirmation-details')
+        .findAllByType(NativeText)
+        .map(node => node.props.children);
+      expect(detailTexts).toContain('--');
+      expect(detailTexts).not.toContain('-');
+    });
+
+    it.each([false, true])(
+      'keeps the Pro checkbox on the same skip preference control (checked=%s)',
+      skipConfirmation => {
+        const onToggleSkip = jest.fn();
+        renderSheet(attached, { onToggleSkip, skipConfirmation });
+
+        expect(
+          screen.UNSAFE_getByType(PerpsProCheckboxIcon).props,
+        ).toMatchObject({
+          checked: skipConfirmation,
+          checkColor: colors['neutral-InvertHighlight'],
+        });
+        expect(screen.getByRole('checkbox').props.accessibilityState).toEqual({
+          checked: skipConfirmation,
+        });
+
+        fireEvent.press(screen.getByRole('checkbox'));
+        expect(onToggleSkip).toHaveBeenCalledTimes(1);
+      },
     );
-    expect(sellTagStyle).toMatchObject({
-      backgroundColor: 'red-light-1',
-      borderRadius: 4,
-      paddingHorizontal: 4,
-      paddingVertical: 1,
-    });
-    expect(sellTagStyle.borderColor).toBeUndefined();
-    expect(sellTagStyle.borderWidth).toBeUndefined();
-    const shortTagStyle = StyleSheet.flatten(
-      screen.getByTestId('perps-pro-order-confirmation-position-tag').props
-        .style,
-    );
-    expect(shortTagStyle).toMatchObject({
-      backgroundColor: 'red-light-1',
-      borderRadius: 4,
-    });
-    expect(shortTagStyle.borderColor).toBeUndefined();
-    expect(shortTagStyle.borderWidth).toBeUndefined();
-    expect(screen.getByText('Sell').props.style).toMatchObject({
-      color: 'red-default',
-      fontSize: 12,
-      lineHeight: 16,
-    });
-    expect(screen.getByText('Short').props.style).toMatchObject({
-      color: 'red-default',
-      fontSize: 12,
-      lineHeight: 16,
-    });
-  });
 
-  it('omits only the source metadata tag when the reviewed market is native', () => {
-    renderSheet({
-      ...parent,
-      reviewFacts: { ...reviewFacts, sourceTag: null },
-    });
-
-    expect(
-      screen.queryByTestId('perps-pro-order-confirmation-source-tag'),
-    ).toBeNull();
-    expect(
-      screen.getByTestId('perps-pro-order-confirmation-margin-mode-tag'),
-    ).toBeTruthy();
-    expect(screen.getByText('Isolated 10x')).toBeTruthy();
-  });
-
-  it('renders unavailable liquidation as a double dash', () => {
-    renderSheet(parent, { estimatedLiquidation: null });
-
-    const detailTexts = screen
-      .getByTestId('perps-pro-order-confirmation-details')
-      .findAllByType(NativeText)
-      .map(node => node.props.children);
-    expect(detailTexts).toContain('--');
-    expect(detailTexts).not.toContain('-');
-  });
-
-  it('keeps attached TP/SL on the same per-type skip preference control', () => {
-    const onToggleSkip = jest.fn();
-    renderSheet(attached, { onToggleSkip });
-
-    fireEvent.press(screen.getByRole('checkbox'));
-    expect(onToggleSkip).toHaveBeenCalledTimes(1);
-  });
-
-  it('renders a six-digit integer attached TP trigger without truncation', () => {
-    renderSheet({
-      ...attached,
-      attached: {
-        ...attached.attached,
-        tp: {
-          ...attached.attached.tp!,
-          rawMagnitude: '111111',
-          triggerPrice: '111111',
+    it('renders a six-digit integer attached TP trigger without truncation', () => {
+      renderSheet({
+        ...attached,
+        attached: {
+          ...attached.attached,
+          tp: {
+            ...attached.attached.tp!,
+            rawMagnitude: '111111',
+            triggerPrice: '111111',
+          },
         },
-      },
+      });
+
+      expect(screen.getByText('Mark Price ≥ 111,111 USDC')).toBeTruthy();
     });
 
-    expect(screen.getByText('Mark Price ≥ 111,111 USDC')).toBeTruthy();
-  });
+    it('shows the reviewed Reduce Only value', () => {
+      renderSheet({ ...parent, reduceOnly: true });
 
-  it('shows the reviewed Reduce Only value', () => {
-    renderSheet({ ...parent, reduceOnly: true });
+      expect(screen.getByText('Reduce Only')).toBeTruthy();
+      expect(screen.getByText('Yes')).toBeTruthy();
 
-    expect(screen.getByText('Reduce Only')).toBeTruthy();
-    expect(screen.getByText('Yes')).toBeTruthy();
-
-    const detailTexts = screen
-      .getByTestId('perps-pro-order-confirmation-details')
-      .findAllByType(NativeText)
-      .map(node => node.props.children);
-    expect(detailTexts).toEqual([
-      'price',
-      '100 USDC',
-      'amount',
-      '100.00 USDC',
-      'Mark Price',
-      '105.00 USDC',
-      'estimatedLiquidationPrice',
-      '55.00 USDC (-40.00%)',
-      'Reduce Only',
-      'Yes',
-    ]);
-  });
-
-  it('renders Conditional Trigger Price and fixed Limit Price without Order Type', () => {
-    renderSheet({
-      ...parent,
-      execution: {
-        kind: 'conditionalLimit',
-        limitPrice: '102',
-        referencePrice: '100',
-        tpsl: 'tp',
-        triggerPrice: '110',
-      },
-      orderType: 'conditional',
+      const detailTexts = screen
+        .getByTestId('perps-pro-order-confirmation-details')
+        .findAllByType(NativeText)
+        .map(node => node.props.children);
+      expect(detailTexts).toEqual([
+        'direction',
+        ['Buy', ' / ', 'Long'],
+        'price',
+        '100 USDC',
+        'amount',
+        '100.00 USDC',
+        'Mark Price',
+        '105.00 USDC',
+        'estimatedLiquidationPrice',
+        '55.00 USDC (-40.00%)',
+        'Reduce Only',
+        'Yes',
+      ]);
     });
 
-    expect(screen.getByText('triggerPrice')).toBeTruthy();
-    expect(screen.getByText('110 USDC')).toBeTruthy();
-    expect(screen.getByText('102 USDC')).toBeTruthy();
-    expect(screen.queryByText('orderType')).toBeNull();
-  });
+    it('renders Conditional Trigger Price and fixed Limit Price without Order Type', () => {
+      renderSheet({
+        ...parent,
+        execution: {
+          kind: 'conditionalLimit',
+          limitPrice: '102',
+          referencePrice: '100',
+          tpsl: 'tp',
+          triggerPrice: '110',
+        },
+        orderType: 'conditional',
+      });
 
-  it('keeps meaningful frozen command decimals without market padding', () => {
-    renderSheet({
-      ...parent,
-      execution: {
-        kind: 'conditionalLimit',
-        limitPrice: '123.4',
-        referencePrice: '100',
-        tpsl: 'tp',
-        triggerPrice: '0.12345',
-      },
-      orderType: 'conditional',
+      expect(screen.getByText('triggerPrice')).toBeTruthy();
+      expect(screen.getByText('110 USDC')).toBeTruthy();
+      expect(screen.getByText('102 USDC')).toBeTruthy();
+      expect(screen.queryByText('orderType')).toBeNull();
     });
 
-    expect(screen.getByText('0.12345 USDC')).toBeTruthy();
-    expect(screen.getByText('123.4 USDC')).toBeTruthy();
-    expect(screen.queryByText('123.40 USDC')).toBeNull();
-  });
+    it('keeps meaningful frozen command decimals without market padding', () => {
+      renderSheet({
+        ...parent,
+        execution: {
+          kind: 'conditionalLimit',
+          limitPrice: '123.4',
+          referencePrice: '100',
+          tpsl: 'tp',
+          triggerPrice: '0.12345',
+        },
+        orderType: 'conditional',
+      });
 
-  it('shows the BBO level instead of freezing a reviewed numeric price', () => {
-    renderSheet({
-      ...parent,
-      bboSessionKey: 'BTC:1',
-      execution: { kind: 'bboLimit', strategy: 'cp1' },
+      expect(screen.getByText('0.12345 USDC')).toBeTruthy();
+      expect(screen.getByText('123.4 USDC')).toBeTruthy();
+      expect(screen.queryByText('123.40 USDC')).toBeNull();
     });
 
-    expect(screen.getByText('Counterparty 1')).toBeTruthy();
-    expect(screen.getAllByText('100.00 USDC')).toHaveLength(1);
-  });
-});
+    it('shows the BBO level instead of freezing a reviewed numeric price', () => {
+      renderSheet({
+        ...parent,
+        bboSessionKey: 'BTC:1',
+        execution: { kind: 'bboLimit', strategy: 'cp1' },
+      });
+
+      expect(screen.getByText('Counterparty 1')).toBeTruthy();
+      expect(screen.getAllByText('100.00 USDC')).toHaveLength(1);
+    });
+  },
+);

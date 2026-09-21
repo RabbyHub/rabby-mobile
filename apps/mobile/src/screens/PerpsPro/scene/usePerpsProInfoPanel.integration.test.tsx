@@ -4,6 +4,7 @@ import {
   cleanupAsync,
   fireEvent,
   render,
+  renderHook,
   screen,
 } from '@testing-library/react-native';
 import { PixelRatio, Platform, StyleSheet } from 'react-native';
@@ -34,6 +35,10 @@ const { perpsStore } =
   require('@/hooks/perps/usePerpsStore') as typeof import('@/hooks/perps/usePerpsStore');
 const { usePerpsProInfoPanel } =
   require('./usePerpsProInfoPanel') as typeof import('./usePerpsProInfoPanel');
+const { usePerpsPortfolioLiveValue } =
+  require('@/hooks/perps/usePerpsPortfolioLiveValue') as typeof import('@/hooks/perps/usePerpsPortfolioLiveValue');
+const { usePerpsPortfolioBreakdown } =
+  require('@/hooks/perps/usePerpsPortfolioBreakdown') as typeof import('@/hooks/perps/usePerpsPortfolioBreakdown');
 
 const initialState = perpsStore.getState();
 const spotMeta: SpotMeta = {
@@ -77,11 +82,13 @@ let latest: ReturnType<typeof usePerpsProInfoPanel>;
 let renderedValues: string[];
 function AccountHarness({
   requested = null,
+  active = true,
 }: {
   requested?: PerpsProInfoTab | null;
+  active?: boolean;
   revision?: number;
 }) {
-  const info = usePerpsProInfoPanel('BTC', requested);
+  const info = usePerpsProInfoPanel('BTC', requested, active);
   renderedValues.push(info.account.primaryValue);
   useLayoutEffect(() => {
     latest = info;
@@ -130,6 +137,13 @@ const updatePrice = (markPx: string, key = '@10') => {
 
 describe('Perps Pro account price publication integration', () => {
   let unregisterService: () => void;
+  let fetchSpy: jest.SpyInstance;
+  let delegated: string;
+  let stakingError: Error | null;
+  const stakingRequests = () =>
+    fetchSpy.mock.calls.filter(
+      ([, init]) => JSON.parse(String(init?.body)).type === 'delegatorSummary',
+    );
   beforeAll(() => {
     const values = new Map<string, unknown>();
     const storageAdapter: StorageAdapater = {
@@ -158,7 +172,36 @@ describe('Perps Pro account price publication integration', () => {
     );
   });
   beforeEach(() => {
+    jest.clearAllTimers();
     jest.spyOn(PixelRatio, 'get').mockReturnValue(3);
+    delegated = '0';
+    stakingError = null;
+    fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockImplementation(async (_url, init) => {
+        const request = JSON.parse(String(init?.body));
+        if (request.type === 'allPerpMetas') {
+          return {
+            ok: true,
+            json: async () => [{ universe: [], marginTables: [] }],
+          } as unknown as Response;
+        }
+        if (request.type !== 'delegatorSummary') {
+          throw new Error(`Unexpected info request: ${request.type}`);
+        }
+        if (stakingError) {
+          throw stakingError;
+        }
+        return {
+          ok: true,
+          json: async () => ({
+            delegated,
+            undelegated: '0',
+            totalPendingWithdrawal: '0',
+            nPendingWithdrawals: 0,
+          }),
+        } as Response;
+      });
     renderedValues = [];
     perpsStore.setState({
       ...initialState,
@@ -174,6 +217,12 @@ describe('Perps Pro account price publication integration', () => {
       spotMetaStatus: 'success',
       spotState: spotState(),
       spotAssetCtxs: { '@10': { markPx: '30' } },
+      stakingStatus: 'success',
+      stakingSummary: {
+        delegated: '0',
+        undelegated: '0',
+        totalPendingWithdrawal: '0',
+      },
     });
     adoptExternalPerpsRuntime(getPerpsRuntimeIdentity(account));
   });
@@ -325,5 +374,93 @@ describe('Perps Pro account price publication integration', () => {
     expectAmount('$194,262,049.75', 17);
     await selectTab('account');
     expectAmount('$194,262,049.75', 17);
+  });
+
+  it('keeps an initial staking failure explicit and recovers when Account is reopened', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    perpsStore.setState({ stakingSummary: null, stakingStatus: 'idle' });
+    const view = render(<AccountHarness active={false} />);
+    await selectTab('account');
+    expect(latest.accountState).toBe('loading');
+    stakingError = new Error('offline');
+    await act(async () => view.rerender(<AccountHarness />));
+    expect(perpsStore.getState().stakingStatus).toBe('error');
+    expect(latest.accountState).toBe('error');
+
+    await selectTab('positions');
+    stakingError = null;
+    delegated = '2';
+    await selectTab('account');
+    expect(latest.accountState).toBe('ready');
+    expect(latest.account.primaryValue).toBe('233.25');
+  });
+
+  it('refreshes on Positions -> Account, pauses offscreen, and resumes on foreground', async () => {
+    const view = render(<AccountHarness active={false} />);
+    await selectTab('positions');
+    await act(async () => view.rerender(<AccountHarness />));
+    expect(stakingRequests()).toHaveLength(0);
+    delegated = '2';
+    await selectTab('account');
+    expect(latest.account.primaryValue).toBe('233.25');
+    expect(stakingRequests()).toHaveLength(1);
+
+    delegated = '3';
+    await act(async () => jest.advanceTimersByTimeAsync(60_000));
+    expect(latest.account.primaryValue).toBe('263.25');
+    await selectTab('positions');
+    const callsBeforePause = stakingRequests().length;
+    await act(async () => jest.advanceTimersByTimeAsync(60_000));
+    expect(stakingRequests()).toHaveLength(callsBeforePause);
+
+    await selectTab('account');
+    view.rerender(<AccountHarness active={false} />);
+    const callsBeforeBackground = stakingRequests().length;
+    delegated = '4';
+    await act(async () => jest.advanceTimersByTimeAsync(60_000));
+    expect(stakingRequests()).toHaveLength(callsBeforeBackground);
+    await act(async () => view.rerender(<AccountHarness />));
+    expect(latest.account.primaryValue).toBe('293.25');
+    expect(stakingRequests()).toHaveLength(callsBeforeBackground + 1);
+    await view.unmountAsync();
+    await act(async () => jest.advanceTimersByTimeAsync(60_000));
+    expect(stakingRequests()).toHaveLength(callsBeforeBackground + 1);
+  });
+
+  it('fetches once for a requested Account tab before the pager settles', async () => {
+    const view = render(<AccountHarness active={false} />);
+    await selectTab('positions');
+    await act(async () =>
+      view.rerender(<AccountHarness requested="account" />),
+    );
+    expect(stakingRequests()).toHaveLength(1);
+    await selectTab('account');
+    view.rerender(<AccountHarness />);
+    expect(stakingRequests()).toHaveLength(1);
+  });
+
+  it('keeps a staking-only portfolio unresolved until HYPE is priced and exposes its breakdown', async () => {
+    perpsStore.setState({
+      spotState: spotState('100', '0'),
+      spotAssetCtxs: {},
+      stakingSummary: {
+        delegated: '5',
+        undelegated: '0',
+        totalPendingWithdrawal: '0',
+      },
+    });
+    const value = renderHook(() => usePerpsPortfolioLiveValue());
+    render(<AccountHarness active={false} />);
+    expect(value.result.current).toBeNull();
+    expect(latest.accountState).toBe('loading');
+    updatePrice('40');
+    expect(value.result.current).toBe(300);
+    expect(latest.accountState).toBe('ready');
+    act(() => perpsStore.setState({ spotState: spotState('0', '0') }));
+    const breakdown = renderHook(() => usePerpsPortfolioBreakdown());
+    expect(breakdown.result.current.hasNonPerpsAssets).toBe(true);
+    act(() => perpsStore.setState({ stakingSummary: null }));
+    expect(breakdown.result.current.hasNonPerpsAssets).toBe(false);
+    expect(value.result.current).toBe(0);
   });
 });

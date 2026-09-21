@@ -31,9 +31,12 @@ export {
   computeLtvAdjustedPortfolioValue,
   computePerpsPortfolioValue,
   computeSpotPortfolioValue,
+  computeStakingValue,
   computeTotalCollateralBalance,
   getSpotPriceDependencyKeys,
+  getStakedHypeAmount,
   resolveSpotUsdcPrice,
+  STAKING_TOKEN_NAME,
 } from './accountPricing';
 
 export type PerpsAccountMode = 'standard' | 'unified' | 'portfolioMargin';
@@ -103,6 +106,8 @@ export interface BuildPerpsAccountViewModelInput {
   spotAssetCtxs: Record<string, FFastAssetCtx>;
   spotMeta: SpotMeta | null;
   spotState: PerpsAccountSpotStateFact;
+  /** Staking-account HYPE total (getStakedHypeAmount); omitted = none. */
+  stakingHype?: string;
   userAbstraction: UserAbstractionResp | string;
 }
 
@@ -370,6 +375,7 @@ export const buildPerpsAccountViewModel = (
     perpsAccountValue: clearinghouse?.marginSummary?.accountValue,
     spotAssetCtxs: input.spotAssetCtxs,
     spotMeta: input.spotMeta,
+    stakingHype: input.stakingHype,
   });
   const assets = buildAccountAssets({ ...input, mode });
 

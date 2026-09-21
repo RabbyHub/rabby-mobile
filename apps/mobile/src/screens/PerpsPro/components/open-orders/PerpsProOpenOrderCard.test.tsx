@@ -1,4 +1,10 @@
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
@@ -22,7 +28,7 @@ const mockReadyMarket: MockMarketIdentity = {
 };
 let mockMarketIdentity: MockMarketIdentity = mockReadyMarket;
 
-jest.mock('@/assets2024/icons/perps/IconPerpEdit.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProEdit.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);
@@ -114,6 +120,41 @@ describe('PerpsProOpenOrderCard', () => {
     mockMarketIdentity = mockReadyMarket;
   });
 
+  it.each(['buy', 'sell'] as const)(
+    'places the Basic type beside the timestamp using %s colors',
+    side => {
+      render(
+        <PerpsProOpenOrderCard
+          cancelPending={false}
+          onCancel={jest.fn()}
+          order={order({ side })}
+        />,
+      );
+      const row = screen.getByTestId('perps-pro-order-meta-basic:BTC:1');
+      const label = within(row).getByText('Limit');
+      const tag = within(row).getByTestId('perps-pro-order-type-basic:BTC:1');
+      const color = side === 'buy' ? 'green' : 'red';
+      expect(StyleSheet.flatten(tag.props.style)).toMatchObject({
+        backgroundColor: `${color}-light-1`,
+        borderRadius: 4,
+        paddingHorizontal: 4,
+        paddingVertical: 1,
+      });
+      expect(StyleSheet.flatten(label.props.style)).toMatchObject({
+        color: `${color}-default`,
+        fontSize: 12,
+        lineHeight: 16,
+        fontWeight: '500',
+      });
+      expect(within(row).queryByText('xyz')).toBeNull();
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId('perps-pro-order-source-basic:BTC:1').props.style,
+        ).backgroundColor,
+      ).toBe('neutral-bg-5');
+    },
+  );
+
   it('keeps HIP-3 routing identity out of labels until quote metadata arrives', () => {
     mockMarketIdentity = {
       displayBase: 'BTC',
@@ -189,8 +230,8 @@ describe('PerpsProOpenOrderCard', () => {
         screen.getByTestId('perps-pro-order-basic:BTC:1').props.style,
       ),
     ).toMatchObject({
-      borderBottomColor: 'neutral-bg-5',
-      borderBottomWidth: 1,
+      marginLeft: 16,
+      marginRight: 14,
     });
   });
 
@@ -210,24 +251,24 @@ describe('PerpsProOpenOrderCard', () => {
       screen.getByTestId('perps-pro-order-side-basic:BTC:1').props.style,
     );
     expect(buySideTagStyle).toMatchObject({
-      backgroundColor: 'green-light-1',
+      backgroundColor: 'green-default',
       borderRadius: 4,
       paddingHorizontal: 4,
-      paddingVertical: 1,
+      height: 16,
     });
     expect(buySideTagStyle.borderColor).toBeUndefined();
     expect(buySideTagStyle.borderWidth).toBeUndefined();
-    expect(screen.getByText('Buy').props.style).toMatchObject({
-      color: 'green-default',
+    expect(screen.getByText('B').props.style).toMatchObject({
+      color: 'neutral-InvertHighlight',
       fontFamily: 'SF Pro Rounded',
       fontSize: 12,
-      fontWeight: '500',
+      fontWeight: '700',
       lineHeight: 16,
     });
     expect(screen.getByText('50%')).toBeTruthy();
     expect(screen.getByText('50%').props.style).toMatchObject({
       color: 'neutral-secondary',
-      fontFamily: 'SF Pro Rounded',
+      fontFamily: 'SF Pro',
       fontSize: 10,
       fontWeight: '500',
       lineHeight: 12,
@@ -238,8 +279,8 @@ describe('PerpsProOpenOrderCard', () => {
       ),
     ).toMatchObject({
       alignItems: 'center',
-      gap: 2,
-      height: 16,
+      gap: 4,
+      height: 18,
       justifyContent: 'center',
       width: 32,
     });
@@ -278,7 +319,7 @@ describe('PerpsProOpenOrderCard', () => {
       backgroundColor: 'neutral-bg-2',
       borderRadius: 6,
       height: 26,
-      width: 64,
+      paddingHorizontal: 8,
     });
     const pressabilityConfig =
       cancelButton.props.onStartShouldSetResponder.testOnly_pressabilityConfig();
@@ -338,10 +379,10 @@ describe('PerpsProOpenOrderCard', () => {
       screen.getByTestId('perps-pro-order-side-conditional:BTC:2').props.style,
     );
     expect(sellSideTagStyle).toMatchObject({
-      backgroundColor: 'red-light-1',
+      backgroundColor: 'red-default',
       borderRadius: 4,
       paddingHorizontal: 4,
-      paddingVertical: 1,
+      height: 16,
     });
     expect(sellSideTagStyle.borderColor).toBeUndefined();
     expect(sellSideTagStyle.borderWidth).toBeUndefined();
@@ -352,8 +393,8 @@ describe('PerpsProOpenOrderCard', () => {
       fontWeight: '500',
       lineHeight: 16,
     });
-    expect(screen.getByText('Sell').props.style).toMatchObject({
-      color: 'red-default',
+    expect(screen.getByText('S').props.style).toMatchObject({
+      color: 'neutral-InvertHighlight',
       fontSize: 12,
       lineHeight: 16,
     });

@@ -28,7 +28,7 @@ jest.mock('@/assets2024/icons/common/checkbox-empty-cc.svg', () => {
   return (props: object) => ReactModule.createElement(View, props);
 });
 
-jest.mock('@/assets2024/icons/common/checkbox-filled-brand.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProInfoCheckboxChecked.svg', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return (props: object) => ReactModule.createElement(View, props);

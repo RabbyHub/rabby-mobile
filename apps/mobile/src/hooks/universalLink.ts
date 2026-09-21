@@ -61,8 +61,10 @@ import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 import { switchSceneCurrentAccount } from './accountsSwitcher';
 import {
   setCurrentKeychainVersion,
+  setSensitiveSceneProtectionEnabled,
   type CurrentKeychainVersion,
 } from './appSettings';
+import { IS_IOS } from '@/core/native/utils';
 import { parseKeychainVersionDeepLinkValue } from '@/core/apis/keychainVersionShared';
 import RNHelpers from '@/core/native/RNHelpers';
 
@@ -108,6 +110,7 @@ type OnParseUrlAndProcessAction = (payload: {
   testkitParams?: {
     tab?: 'overview' | 'debug';
     appLaunchLock?: boolean;
+    sensitiveSceneProtection?: boolean;
     keychainVersion?: CurrentKeychainVersion;
   };
   debugDbSyncPolicy?: {
@@ -183,6 +186,15 @@ function parseNonProductionTestkitLink(appLink: string) {
       : appLaunchLockRaw === 'disabled'
       ? false
       : undefined;
+  const sensitiveSceneProtectionRaw = urlInfo.searchParams.get(
+    'sensitiveSceneProtection',
+  );
+  const sensitiveSceneProtection =
+    sensitiveSceneProtectionRaw === 'enabled'
+      ? true
+      : sensitiveSceneProtectionRaw === 'disabled'
+      ? false
+      : undefined;
   const keychainVersion = parseKeychainVersionDeepLinkValue(
     urlInfo.searchParams.get('keychainVersion'),
   );
@@ -194,12 +206,16 @@ function parseNonProductionTestkitLink(appLink: string) {
       tabRaw === 'debug' ||
       tabRaw === 'overview' ||
       appLaunchLock !== undefined ||
+      sensitiveSceneProtection !== undefined ||
       keychainVersion !== null
         ? {
             ...(tabRaw === 'debug' || tabRaw === 'overview'
               ? { tab: tabRaw }
               : {}),
             ...(appLaunchLock !== undefined ? { appLaunchLock } : {}),
+            ...(sensitiveSceneProtection !== undefined
+              ? { sensitiveSceneProtection }
+              : {}),
             ...(keychainVersion ? { keychainVersion } : {}),
           }
         : undefined,
@@ -679,6 +695,21 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
         console.info('[useUniversalLinkOnTop] App Launch Lock set by testkit', {
           enabled: payload.testkitParams.appLaunchLock,
         });
+      }
+      if (
+        isNonPublicProductionEnv &&
+        typeof payload.testkitParams?.sensitiveSceneProtection === 'boolean'
+      ) {
+        setSensitiveSceneProtectionEnabled(
+          payload.testkitParams.sensitiveSceneProtection,
+        );
+        console.info(
+          '[useUniversalLinkOnTop] Sensitive Scene Protection set by testkit',
+          {
+            enabled: payload.testkitParams.sensitiveSceneProtection,
+            restartRequired: IS_IOS,
+          },
+        );
       }
       if (
         isNonPublicProductionEnv &&

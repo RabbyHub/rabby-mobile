@@ -1,3 +1,5 @@
+import { ThemeColors2024 } from '@/constant/theme';
+let mockIsLight = true;
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
@@ -8,8 +10,11 @@ jest.mock('@/components/Typography', () => ({
 
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
-    const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
-    return { styles: getStyle({ colors2024 }) };
+    const colors2024 =
+      require('@/constant/theme').ThemeColors2024[
+        mockIsLight ? 'light' : 'dark'
+      ];
+    return { styles: getStyle({ colors2024, isLight: mockIsLight }) };
   },
 }));
 
@@ -62,58 +67,68 @@ describe('PerpsProOpenOrdersControls', () => {
     });
   });
 
-  it('uses the latest neutral 24px tab treatment and changes category', () => {
-    const onSetCategory = jest.fn();
-    render(
-      <PerpsProOpenOrdersControls
-        basicCount={2}
-        category="basic"
-        conditionalCount={1}
-        hideOtherSymbols={false}
-        isCancelAllPending={false}
-        onCancelAll={jest.fn()}
-        onSetCategory={onSetCategory}
-        onToggleHideOtherSymbols={jest.fn()}
-      />,
-    );
+  it.each([true, false])(
+    'uses theme-aware 30px tabs and preserves category changes (light=%s)',
+    isLight => {
+      mockIsLight = isLight;
+      const colors = ThemeColors2024[isLight ? 'light' : 'dark'];
+      const onSetCategory = jest.fn();
+      render(
+        <PerpsProOpenOrdersControls
+          basicCount={2}
+          category="basic"
+          conditionalCount={1}
+          hideOtherSymbols={false}
+          isCancelAllPending={false}
+          onCancelAll={jest.fn()}
+          onSetCategory={onSetCategory}
+          onToggleHideOtherSymbols={jest.fn()}
+        />,
+      );
 
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-open-orders-tab-basic').props.style,
-      ),
-    ).toMatchObject({
-      backgroundColor: 'neutral-line',
-      borderRadius: 6,
-      height: 24,
-      paddingHorizontal: 8,
-    });
-    expect(screen.getByText('Basic (2)').props.style).toMatchObject({
-      color: 'neutral-body',
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      fontWeight: '500',
-      lineHeight: 16,
-    });
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-open-orders-tab-conditional').props.style,
-      ),
-    ).toMatchObject({
-      borderRadius: 6,
-      height: 24,
-      paddingHorizontal: 8,
-    });
-    expect(screen.getByText('Conditional (1)').props.style).toMatchObject({
-      color: 'neutral-foot',
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      fontWeight: '400',
-      lineHeight: 16,
-    });
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId('perps-pro-open-orders-tab-basic').props.style,
+        ),
+      ).toMatchObject({
+        backgroundColor: isLight
+          ? ThemeColors2024.dark['neutral-bg-0']
+          : colors['neutral-title-1'],
+        borderRadius: 8,
+        height: 30,
+        paddingHorizontal: 12,
+      });
+      expect(screen.getByText('Basic  2').props.style).toMatchObject({
+        color: isLight
+          ? ThemeColors2024.dark['neutral-title-1']
+          : colors['neutral-bg-0'],
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 14,
+        fontWeight: '700',
+        lineHeight: 18,
+      });
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId('perps-pro-open-orders-tab-conditional').props
+            .style,
+        ),
+      ).toMatchObject({
+        borderRadius: 8,
+        height: 30,
+        paddingHorizontal: 12,
+      });
+      expect(screen.getByText('Conditional  1').props.style).toMatchObject({
+        color: colors['neutral-secondary'],
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 14,
+        fontWeight: '500',
+        lineHeight: 18,
+      });
 
-    fireEvent.press(
-      screen.getByTestId('perps-pro-open-orders-tab-conditional'),
-    );
-    expect(onSetCategory).toHaveBeenCalledWith('conditional');
-  });
+      fireEvent.press(
+        screen.getByTestId('perps-pro-open-orders-tab-conditional'),
+      );
+      expect(onSetCategory).toHaveBeenCalledWith('conditional');
+    },
+  );
 });
