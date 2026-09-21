@@ -8,7 +8,7 @@ import React, {
 import { useTheme2024 } from '@/hooks/theme';
 import type { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useInfiniteScroll, useMemoizedFn } from 'ahooks';
+import { useMemoizedFn } from 'ahooks';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
 import {
   ensureHistoryListItemFromDb,
@@ -30,7 +30,7 @@ import type {
   TxAllHistoryResult,
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { debounce, last, orderBy } from 'lodash';
+import { debounce, last } from 'lodash';
 import { toast } from '@/components2024/Toast';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { Empty } from '@/screens/Transaction/components/Empty';
@@ -42,6 +42,9 @@ import {
   useTransactionHistoryServiceReady,
   withTransactionHistoryService,
 } from '@/core/serviceApi/transactionHistoryHooks';
+import { useTokenHistoryResource } from './useTokenHistoryResource';
+import { useAppOrmSyncEvents } from '@/databases/sync/_event';
+import { useIsFocused } from '@react-navigation/native';
 
 interface IFetchHistory {
   last: number;
@@ -71,6 +74,7 @@ const TokenDetailHistoryListContent = ({
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const isFocused = useIsFocused();
 
   const { isSceneUsingAllAccounts, sceneCurrentAccountDepKey } =
     useSceneAccountInfo({
@@ -78,11 +82,6 @@ const TokenDetailHistoryListContent = ({
     });
   const tokenItem = token;
   const currentAddress = finalAccount?.address;
-
-  const isReady = useRef(false);
-  const lastMap = useRef<Record<string, number>>({});
-  const dbLastCursorRef = useRef<number>(0);
-  const hasMoreMap = useRef<Record<string, boolean>>({});
 
   const [historySuccessList, setHistorySuccessList] = useState<string[]>(
     getTransactionHistorySucceedListSnapshot(),
@@ -104,196 +103,165 @@ const TokenDetailHistoryListContent = ({
     chain_id: string,
     token_id: string,
     isMyAddress?: boolean,
+    count = PAGE_COUNT,
   ): Promise<IFetchHistory> => {
     if (!address) {
       throw new Error('no account');
     }
 
-    try {
-      if (isMyAddress) {
-        const historyList =
-          await HistoryItemEntity.getTokenHistoryItemSortedByTime(
-            address,
-            startTime,
-            token_id,
-            chain_id,
-            PAGE_COUNT,
-          );
-        const list = historyList.map(item => {
-          return {
-            ...ensureHistoryListItemFromDb(item),
-            // hidden small and scam no need this prop
-            isSmallUsdTx: false,
-            isShowSuccess: false,
-          } as HistoryDisplayItem;
-        });
+    if (isMyAddress) {
+      const historyList =
+        await HistoryItemEntity.getTokenHistoryItemSortedByTime(
+          address,
+          startTime,
+          token_id,
+          chain_id,
+          count,
+        );
+      const list = historyList.map(item => {
         return {
-          last: last(historyList)?.time_at || 0,
-          list,
-        };
-      } else {
-        const [res, transactions] = await Promise.all([
-          openapi.listTxHisotry({
-            id: address,
-            start_time: startTime,
-            page_count: PAGE_COUNT,
-            chain_id,
-            token_id,
-          }),
-          getTransactionHistoryTransactions(),
-        ]);
-
-        const { project_dict, history_list: list } = res;
-        const token_dict = (res as TxHistoryResult).token_dict;
-        const token_uuid_dict = (res as unknown as TxAllHistoryResult)
-          .token_uuid_dict;
-        const tokenDict = token_dict || token_uuid_dict;
-
-        const displayList = list
-          .map(item => ({
-            ...item,
-            address,
-            key: `${address}_${item.chain}_${item.id}`,
-            project_item: project_dict[item.project_id || ''] || null,
-            token_approve: item.token_approve
-              ? {
-                  ...item.token_approve,
-                  token: fetchHistoryTokenItem(
-                    item.token_approve?.token_id || '',
-                    item.chain,
-                    tokenDict,
-                  ),
-                }
-              : null,
-            receives: item.receives.map(e => ({
-              ...e,
-              token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
-            })),
-            sends: item.sends.map(e => ({
-              ...e,
-              token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
-            })),
-            historyType: getHistoryItemType(item, transactions),
-          }))
-          .sort((v1, v2) => v2.time_at - v1.time_at);
-        return {
-          last: last(displayList)?.time_at || 0,
-          list: displayList,
-        };
-      }
-    } catch (e) {
-      toast.error(`${address} fetch failed, ${e}`);
+          ...ensureHistoryListItemFromDb(item),
+          // hidden small and scam no need this prop
+          isSmallUsdTx: false,
+          isShowSuccess: false,
+        } as HistoryDisplayItem;
+      });
       return {
-        last: 0,
-        list: [],
+        last: last(historyList)?.time_at || 0,
+        list,
+      };
+    } else {
+      const [res, transactions] = await Promise.all([
+        openapi.listTxHisotry({
+          id: address,
+          start_time: startTime,
+          page_count: count,
+          chain_id,
+          token_id,
+        }),
+        getTransactionHistoryTransactions(),
+      ]);
+
+      const { project_dict, history_list: list } = res;
+      const token_dict = (res as TxHistoryResult).token_dict;
+      const token_uuid_dict = (res as unknown as TxAllHistoryResult)
+        .token_uuid_dict;
+      const tokenDict = token_dict || token_uuid_dict;
+
+      const displayList = list
+        .map(item => ({
+          ...item,
+          address,
+          key: `${address}_${item.chain}_${item.id}`,
+          project_item: project_dict[item.project_id || ''] || null,
+          token_approve: item.token_approve
+            ? {
+                ...item.token_approve,
+                token: fetchHistoryTokenItem(
+                  item.token_approve?.token_id || '',
+                  item.chain,
+                  tokenDict,
+                ),
+              }
+            : null,
+          receives: item.receives.map(e => ({
+            ...e,
+            token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
+          })),
+          sends: item.sends.map(e => ({
+            ...e,
+            token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
+          })),
+          historyType: getHistoryItemType(item, transactions),
+        }))
+        .sort((v1, v2) => v2.time_at - v1.time_at);
+      return {
+        last: last(displayList)?.time_at || 0,
+        list: displayList,
       };
     }
   };
 
   const isMyAddress = useMemo(() => {
     return (
-      finalAccount?.type !== KEYRING_CLASS.WATCH &&
+      !!finalAccount &&
+      finalAccount.type !== KEYRING_CLASS.WATCH &&
       finalAccount?.type !== KEYRING_CLASS.GNOSIS
     );
   }, [finalAccount]);
 
-  const batchFetchData = useMemoizedFn(async () => {
-    const list: HistoryDisplayItem[] = [];
-    if (disableHistoryRequest) {
-      return {
-        list,
-        hasMore: false,
-      };
-    }
-
+  const requestKey = JSON.stringify([
+    currentAddress?.toLowerCase(),
+    finalAccount?.type,
+    finalAccount?.brandName,
+    tokenItem.chain,
+    tokenItem.id,
+    isMyAddress ? 'db' : 'api',
+    sceneCurrentAccountDepKey,
+    isSceneUsingAllAccounts,
+  ]);
+  const requestEnabled = !!currentAddress && !disableHistoryRequest;
+  const fetchHistoryPage = async (
+    cursor: number,
+    count: number,
+  ): Promise<IFetchHistory> => {
     const account = finalAccount;
-    if (!account) {
-      return {
-        list: [],
-        hasMore: false,
-      };
-    }
+    if (!account) return { list: [], last: 0 };
     const addr = account.address.toLowerCase();
-    if (addr in hasMoreMap.current && !hasMoreMap.current[addr]) {
-      return {
-        list: [],
-        hasMore: false,
-      };
-    }
-
     const result = await fetchData(
       addr,
-      lastMap.current[addr] || 0,
+      cursor,
       tokenItem.chain,
       tokenItem.id,
       isMyAddress,
+      count,
     );
-    if (result.list.length < PAGE_COUNT) {
-      hasMoreMap.current[addr] = false;
-    } else {
-      hasMoreMap.current[addr] = true;
-    }
-    lastMap.current[addr] = result.last || 0;
-    list.push(
-      ...result.list.map(item => {
-        return {
-          ...item,
-          account,
-        };
-      }),
-    );
-
-    if (!isReady.current) {
-      isReady.current = true;
-    }
     return {
-      list: orderBy(list, 'time_at', 'desc'),
-      hasMore: Object.values(hasMoreMap.current).some(item => item),
+      last: result.last,
+      list: result.list.map(item => ({ ...item, account })),
     };
-  });
+  };
 
   const {
-    data: fetchApiData,
+    list: historyRows,
     loading,
     loadingMore,
     loadMore,
-    noMore,
-    reloadAsync,
-    cancel,
-  } = useInfiniteScroll(() => batchFetchData(), {
-    isNoMore: d => disableHistoryRequest || (d ? !d.hasMore : false),
-    onSuccess() {},
+    hasMore,
+    firstFetchDone,
+    error,
+    refresh: reloadHistory,
+    revalidate: revalidateHistory,
+  } = useTokenHistoryResource({
+    requestKey,
+    enabled: requestEnabled,
+    pageSize: PAGE_COUNT,
+    fetchPage: fetchHistoryPage,
   });
+  const noMore = !requestEnabled || (firstFetchDone && !hasMore);
 
   const refresh = useMemoizedFn(() => {
-    lastMap.current = {};
-    hasMoreMap.current = {};
-    if (!disableHistoryRequest) {
-      reloadAsync();
-    }
+    void reloadHistory();
     onRefresh?.();
   });
 
   useEffect(() => {
-    if (isReady.current) {
-      cancel();
-      refresh();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
-
-  const batchFetchDataFromDbUpsert = useMemoizedFn(async () => {
-    dbLastCursorRef.current = 0;
-    reloadAsync();
-  });
+    if (error) toast.error(`${currentAddress} fetch failed, ${error}`);
+  }, [currentAddress, error]);
 
   const throttleBatchFetchData = useMemo(
     () =>
-      debounce(batchFetchDataFromDbUpsert, 1000, {
-        leading: true,
-        trailing: true,
-      }),
-    [batchFetchDataFromDbUpsert],
+      debounce(
+        () => {
+          if (isFocused) void revalidateHistory();
+        },
+        1000,
+        {
+          leading: true,
+          trailing: true,
+        },
+      ),
+    [isFocused, revalidateHistory],
   );
 
   useEffect(() => {
@@ -301,6 +269,27 @@ const TokenDetailHistoryListContent = ({
       throttleBatchFetchData.cancel();
     };
   }, [throttleBatchFetchData]);
+
+  useAppOrmSyncEvents({
+    taskFor: 'all-history',
+    onRemoteDataUpserted: ctx => {
+      if (
+        isFocused &&
+        requestEnabled &&
+        isMyAddress &&
+        ctx.success &&
+        ctx.owner_addr.toLowerCase() === currentAddress?.toLowerCase()
+      ) {
+        throttleBatchFetchData();
+      }
+    },
+  });
+
+  const wasFocusedRef = useRef(isFocused);
+  useEffect(() => {
+    if (isFocused && !wasFocusedRef.current) void revalidateHistory();
+    wasFocusedRef.current = isFocused;
+  }, [isFocused, revalidateHistory]);
 
   useEffect(() => {
     if (!transactionHistoryReady || hasConsumedLocalStatusRef.current) {
@@ -318,12 +307,12 @@ const TokenDetailHistoryListContent = ({
 
   const displayList = useMemo(() => {
     return (
-      fetchApiData?.list.filter(tx => {
+      historyRows.filter(tx => {
         const shouldShowBasedOnType = !tx.is_scam;
         return shouldShowBasedOnType;
       }) || []
     );
-  }, [fetchApiData]);
+  }, [historyRows]);
 
   return (
     <HistoryList
@@ -359,10 +348,10 @@ const TokenDetailHistoryListContent = ({
       scrollEventThrottle={16}
       loadMore={() => {
         // avoid exec multi times loadMore
-        if (loadingMore || noMore) {
+        if (loading || loadingMore || noMore || !firstFetchDone) {
           return;
         }
-        loadMore();
+        void loadMore();
       }}
       onRefresh={refresh}
     />
