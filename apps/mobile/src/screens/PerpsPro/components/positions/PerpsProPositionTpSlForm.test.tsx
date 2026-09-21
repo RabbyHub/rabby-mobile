@@ -27,7 +27,7 @@ const mockSliderHapticValueChange = jest.fn();
 const mockUseSliderHaptics = jest.fn();
 
 jest.mock(
-  '@/assets2024/icons/perps/PerpsProPrecisionCaret.svg',
+  '@/assets2024/icons/perps/PerpsProTpSlSelectCaret.svg',
   () => () => null,
 );
 
@@ -440,7 +440,9 @@ describe('PerpsProPositionTpSlForm', () => {
       scope: 'partial',
     });
     expect(
-      screen.getAllByText('page.perps.pro.positionTpsl.triggerDescription'),
+      screen.getAllByText(
+        'page.perps.pro.positionTpsl.estimatedPnlDescription',
+      ),
     ).toHaveLength(2);
     expect(mockSliderProps.mock.lastCall?.[0]).toMatchObject({
       maximumValue: 100,
@@ -455,7 +457,7 @@ describe('PerpsProPositionTpSlForm', () => {
         screen.getByTestId('perps-pro-position-tpsl-amount-section').props
           .style,
       ),
-    ).toMatchObject({ gap: 8, marginTop: 24 });
+    ).toMatchObject({ marginTop: 20 });
     expect(mockTransProps.mock.calls.map(call => call[0].values)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ pnl: '+10.00', roi: '+100.00' }),
@@ -493,7 +495,6 @@ describe('PerpsProPositionTpSlForm', () => {
     expect(mockTransProps.mock.lastCall?.[0].values).toMatchObject({
       pnl: '--',
       roi: '--',
-      trigger: '--',
     });
     expect(
       StyleSheet.flatten(
@@ -598,7 +599,6 @@ describe('PerpsProPositionTpSlForm', () => {
     expect(mockTransProps.mock.lastCall?.[0].values).toMatchObject({
       pnl: '--',
       roi: '--',
-      trigger: '--',
     });
     expect(
       screen.getByTestId('perps-pro-position-tpsl-review').props
@@ -630,7 +630,7 @@ describe('PerpsProPositionTpSlForm', () => {
     expect(input.onCancelOrder).toHaveBeenCalledWith(second);
   });
 
-  it('keeps both Position descriptions visible with placeholders and natural wrapping when no order exists', () => {
+  it('omits estimate placeholders for genuinely empty Position inputs', () => {
     render(
       <PerpsProPositionTpSlForm
         {...props()}
@@ -638,24 +638,18 @@ describe('PerpsProPositionTpSlForm', () => {
         position={position()}
       />,
     );
-
-    const takeProfitHint = screen.getByTestId(
-      'perps-pro-position-tpsl-takeProfit-hint',
-    );
-    const stopLossHint = screen.getByTestId(
-      'perps-pro-position-tpsl-stopLoss-hint',
-    );
-    expect(StyleSheet.flatten(takeProfitHint.props.style)).toMatchObject({
-      minHeight: 32,
-    });
     expect(
-      StyleSheet.flatten(takeProfitHint.props.style).height,
-    ).toBeUndefined();
-    expect(StyleSheet.flatten(stopLossHint.props.style).height).toBeUndefined();
-    expect(mockTransProps.mock.calls.map(call => call[0].values)).toEqual([
-      expect.objectContaining({ pnl: '--', roi: '--', trigger: '--' }),
-      expect.objectContaining({ pnl: '--', roi: '--', trigger: '--' }),
-    ]);
+      screen.queryByTestId('perps-pro-position-tpsl-takeProfit-hint'),
+    ).toBeNull();
+    expect(
+      screen.queryByTestId('perps-pro-position-tpsl-stopLoss-hint'),
+    ).toBeNull();
+    expect(mockTransProps).not.toHaveBeenCalled();
+    expect(
+      screen.getByTestId(
+        'perps-pro-position-tpsl-takeProfit-price-placeholder',
+      ),
+    ).toHaveTextContent('page.perps.pro.positionTpsl.takeProfitTrigger');
   });
 
   it('uses the inline-empty geometry, defaults to the full position, and shows a standard disabled Confirm when pristine', () => {
@@ -674,13 +668,13 @@ describe('PerpsProPositionTpSlForm', () => {
         screen.getByTestId('perps-pro-position-tpsl-form-inline-empty').props
           .style,
       ),
-    ).toMatchObject({ paddingHorizontal: 16, paddingTop: 24 });
+    ).toMatchObject({ paddingHorizontal: 16 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-amount-section').props
           .style,
       ),
-    ).toMatchObject({ gap: 8, marginTop: 24 });
+    ).toMatchObject({ marginTop: 20 });
     expect(
       screen.getByTestId('perps-pro-position-tpsl-slider-amount'),
     ).toHaveTextContent(/100%/);
@@ -706,7 +700,7 @@ describe('PerpsProPositionTpSlForm', () => {
       ),
     ).toMatchObject({
       paddingHorizontal: 4,
-      paddingBottom: 44,
+      paddingBottom: 36,
       paddingTop: 12,
     });
     expect(mockSliderProps.mock.lastCall?.[0]).toMatchObject({ value: 100 });
@@ -721,7 +715,7 @@ describe('PerpsProPositionTpSlForm', () => {
       ),
     ).toMatchObject({
       paddingHorizontal: 4,
-      paddingBottom: 40,
+      paddingBottom: 36,
       paddingTop: 12,
     });
     expect(mockTransProps.mock.lastCall?.[0].values).toMatchObject({
@@ -757,7 +751,7 @@ describe('PerpsProPositionTpSlForm', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-form-tab').props.style,
       ),
-    ).toMatchObject({ minHeight: 486, paddingHorizontal: 16, paddingTop: 24 });
+    ).toMatchObject({ minHeight: 486, paddingHorizontal: 16 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-footer').props.style,
@@ -765,7 +759,7 @@ describe('PerpsProPositionTpSlForm', () => {
     ).toMatchObject({
       marginTop: 'auto',
       paddingHorizontal: 4,
-      paddingBottom: 40,
+      paddingBottom: 36,
       paddingTop: 12,
     });
   });
@@ -871,7 +865,6 @@ describe('PerpsProPositionTpSlForm', () => {
     expect(mockTransProps.mock.lastCall?.[0].values).toMatchObject({
       pnl: '-40.00',
       roi: '-400.00',
-      trigger: '60.00',
     });
     expect(
       StyleSheet.flatten(
@@ -950,13 +943,14 @@ describe('PerpsProPositionTpSlForm', () => {
       screen.getByTestId('perps-pro-position-tpsl-stopLoss-hint'),
     ).toBeTruthy();
     expect(
-      screen.getAllByText('page.perps.pro.positionTpsl.triggerDescription'),
-    ).toHaveLength(2);
-    expect(mockTransProps).toHaveBeenCalledTimes(2);
+      screen.getAllByText(
+        'page.perps.pro.positionTpsl.estimatedPnlDescription',
+      ),
+    ).toHaveLength(1);
+    expect(mockTransProps).toHaveBeenCalledTimes(1);
     expect(mockTransProps.mock.lastCall?.[0].values).toMatchObject({
       pnl: '--',
       roi: '--',
-      trigger: '--',
     });
     expect(
       StyleSheet.flatten(
@@ -988,7 +982,6 @@ describe('PerpsProPositionTpSlForm', () => {
     expect(mockTransProps.mock.lastCall?.[0].values).toMatchObject({
       pnl: '-10.00',
       roi: '-100.00',
-      trigger: '90.00',
     });
     expect(
       screen.getByTestId('perps-pro-position-tpsl-review').props
@@ -1014,13 +1007,14 @@ describe('PerpsProPositionTpSlForm', () => {
       ),
     ).toBeTruthy();
     expect(
-      screen.getAllByText('page.perps.pro.positionTpsl.triggerDescription'),
-    ).toHaveLength(2);
-    expect(mockTransProps).toHaveBeenCalledTimes(2);
+      screen.getAllByText(
+        'page.perps.pro.positionTpsl.estimatedPnlDescription',
+      ),
+    ).toHaveLength(1);
+    expect(mockTransProps).toHaveBeenCalledTimes(1);
     expect(mockTransProps.mock.lastCall?.[0].values).toMatchObject({
       pnl: '--',
       roi: '--',
-      trigger: '--',
     });
     expect(
       screen.getByTestId('perps-pro-position-tpsl-review').props
@@ -1057,6 +1051,100 @@ describe('PerpsProPositionTpSlForm', () => {
 
     expect(mockModeSheetProps.mock.lastCall?.[0]).toMatchObject({
       selected: 'roi',
+    });
+  });
+  it('prefills both full-position legs and replaces only the changed leg', () => {
+    const input = props();
+    const tp = order('takeProfit', 7, '110', 'position');
+    const sl = order('stopLoss', 8, '90', 'position');
+    render(
+      <PerpsProPositionTpSlForm
+        {...input}
+        mode="position"
+        presentation="position-modify"
+        position={position([tp, sl])}
+      />,
+    );
+    expect(screen.queryByTestId('perps-pro-position-tpsl-amount')).toBeNull();
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-price').props
+        .value,
+    ).toBe('110');
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-price').props.value,
+    ).toBe('90');
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+    expect(input.onReview).not.toHaveBeenCalled();
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-price'),
+      '115',
+    );
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+    expect(input.onReview).toHaveBeenCalledWith({
+      mode: 'position',
+      scope: 'position',
+      legs: [
+        { kind: 'takeProfit', replaceOid: 7, size: null, triggerPrice: '115' },
+      ],
+    });
+  });
+
+  it('adds a missing full-position leg without replacing its unchanged companion', () => {
+    const input = props();
+    render(
+      <PerpsProPositionTpSlForm
+        {...input}
+        mode="position"
+        presentation="position-modify"
+        position={position([order('takeProfit', 7, '110', 'position')])}
+      />,
+    );
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-price').props.value,
+    ).toBe('');
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-price'),
+      '90',
+    );
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+    expect(input.onReview).toHaveBeenCalledWith({
+      mode: 'position',
+      scope: 'position',
+      legs: [
+        { kind: 'stopLoss', replaceOid: null, size: null, triggerPrice: '90' },
+      ],
+    });
+  });
+
+  it('does not interpret clearing a full-position field as cancellation', () => {
+    const input = props();
+    render(
+      <PerpsProPositionTpSlForm
+        {...input}
+        mode="position"
+        presentation="position-modify"
+        position={position([
+          order('takeProfit', 7, '110', 'position'),
+          order('stopLoss', 8, '90', 'position'),
+        ])}
+      />,
+    );
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-price'),
+      '',
+    );
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-stopLoss-price'),
+      '85',
+    );
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+    expect(input.onCancelOrder).not.toHaveBeenCalled();
+    expect(input.onReview).toHaveBeenCalledWith({
+      mode: 'position',
+      scope: 'position',
+      legs: [
+        { kind: 'stopLoss', replaceOid: 8, size: null, triggerPrice: '85' },
+      ],
     });
   });
 });

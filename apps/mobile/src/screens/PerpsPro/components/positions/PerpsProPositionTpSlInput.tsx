@@ -9,8 +9,8 @@ import {
   sanitizePerpsProPriceEditingInput,
   sanitizePerpsProPriceInput,
 } from '../../model/trade';
-import { resolvePerpsProFieldBackground } from '../common/perpsProVisual';
-import { PerpsProSelectCaret } from '../common/PerpsProSelectCaret';
+import { resolvePerpsProDialogFieldBackground } from '../common/perpsProDialogVisual';
+import RcSelectCaret from '@/assets2024/icons/perps/PerpsProTpSlSelectCaret.svg';
 import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
 import { PerpsProPositionTpSlBottomSheetTextInput } from './PerpsProPositionTpSlBottomSheetTextInput';
 
@@ -27,6 +27,7 @@ export const PerpsProPositionTpSlInput: React.FC<{
   disabled: boolean;
   invalid?: boolean;
   label: string;
+  placeholder?: string;
   maxDecimals: number;
   negative?: boolean;
   onChangeText: (value: string) => void;
@@ -41,6 +42,7 @@ export const PerpsProPositionTpSlInput: React.FC<{
     disabled,
     invalid = false,
     label,
+    placeholder = label,
     maxDecimals,
     negative = false,
     onChangeText,
@@ -71,7 +73,11 @@ export const PerpsProPositionTpSlInput: React.FC<{
 
     return (
       <View
-        style={[styles.field, invalid ? styles.invalidField : null]}
+        style={[
+          styles.field,
+          onPressMode ? styles.modeField : null,
+          invalid ? styles.invalidField : null,
+        ]}
         testID={`${testID}-field`}>
         <Pressable
           accessible={false}
@@ -95,7 +101,7 @@ export const PerpsProPositionTpSlInput: React.FC<{
               pointerEvents="none"
               style={styles.centeredPlaceholder}
               testID={`${testID}-placeholder`}>
-              {label}
+              {placeholder}
             </Text>
           )}
           {!focused && value ? (
@@ -156,7 +162,9 @@ export const PerpsProPositionTpSlInput: React.FC<{
             <Text numberOfLines={1} style={styles.unit}>
               {unit}
             </Text>
-            <PerpsProSelectCaret
+            <RcSelectCaret
+              width={16}
+              height={16}
               color={colors2024['neutral-secondary']}
               testID={`${testID}-caret`}
             />
@@ -172,10 +180,7 @@ PerpsProPositionTpSlInput.displayName = 'PerpsProPositionTpSlInput';
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   field: {
     alignItems: 'center',
-    backgroundColor: resolvePerpsProFieldBackground({
-      darkBackground: colors2024['neutral-bg-2'],
-      isLight,
-    }),
+    backgroundColor: resolvePerpsProDialogFieldBackground(colors2024, isLight),
     borderRadius: 6,
     borderColor: 'transparent',
     borderWidth: 1,
@@ -184,8 +189,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 4,
     height: 40,
     minWidth: 0,
-    paddingHorizontal: 8,
+    // Include the 1px validation border in the Figma 12px inset.
+    paddingHorizontal: 11,
   },
+  modeField: { paddingRight: 7 },
   invalidField: { borderColor: colors2024['red-default'] },
   inputArea: {
     flex: 1,
@@ -205,10 +212,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     top: 4,
   },
   centeredPlaceholder: {
-    color: colors2024['neutral-info'],
+    color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '400',
     left: 0,
     lineHeight: 18,
     position: 'absolute',

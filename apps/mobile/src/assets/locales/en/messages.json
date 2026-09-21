@@ -2502,6 +2502,7 @@
           "takeProfit": "Take Profit",
           "takeProfitTrigger": "TP Trigger",
           "triggeredByMark": "Triggered by Mark",
+          "estimatedPnlDescription": "Estimated PnL <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "triggerDescription": "When <1>Mark Price</1> reaches <1>{{trigger}} {{quoteAsset}}</1>, it will trigger a <1>Market</1> order. Estimated PnL will be <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "triggerPrice": "Trigger Price",
           "unavailable": "Position TP/SL is temporarily unavailable",

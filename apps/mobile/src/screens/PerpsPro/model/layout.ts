@@ -27,6 +27,7 @@ const PERPS_PRO_POSITION_TPSL_INLINE_EMPTY_CHROME_HEIGHT = 196;
 
 export type PerpsProPositionTpSlFormPresentation =
   | 'inline-empty'
+  | 'position-modify'
   | 'subpage'
   | 'tab';
 
