@@ -73,3 +73,76 @@ describe('diagnostic export build-time switch', () => {
     expect(() => configure({ input: 'yes' })).toThrow('must be true or false');
   });
 });
+
+describe('diagnostic export Metro cache', () => {
+  function metroCacheVersion(input) {
+    const metroPath = resolve(__dirname, '../metro.config.js');
+    const identity = config => config;
+    // Keep all non-environment inputs fixed and avoid reading local .env files
+    // or starting native bundling/serializer plugins in this config-unit test.
+    const dependencies = new Map([
+      ['crypto', require('crypto')],
+      ['path', require('path')],
+      ['fs', { readdirSync: () => [], existsSync: () => false }],
+      [
+        '@react-native/metro-config',
+        {
+          getDefaultConfig: () => ({
+            cacheVersion: 'fixture',
+            resolver: { assetExts: [], sourceExts: [] },
+          }),
+          mergeConfig: (defaults, config) => ({ ...defaults, ...config }),
+        },
+      ],
+      ['@sentry/react-native/metro', { withSentryConfig: identity }],
+      ['@rozenite/metro', { withRozenite: identity }],
+      [
+        'react-native-reanimated/metro-config',
+        { wrapWithReanimatedMetroConfig: identity },
+      ],
+      ['warden.rn', { createWardenSerializer: () => () => {} }],
+      [
+        './scripts/i18n-live-preview/metro-serializer',
+        { createI18nLivePreviewSerializer: () => () => {} },
+      ],
+      [
+        './scripts/react-native-architecture.cjs',
+        {
+          resolveReactNativeArchitecture: () => 'legacy',
+          isLegacyReactNativeArchitecture: () => true,
+        },
+      ],
+      ['node-libs-react-native', {}],
+    ]);
+    const mockRequire = name => {
+      if (!dependencies.has(name)) {
+        throw new Error(`Unexpected Metro dependency: ${name}`);
+      }
+      return dependencies.get(name);
+    };
+    mockRequire.resolve = name => `/fixture/${name}`;
+    const context = {
+      __dirname: resolve(__dirname, '..'),
+      module: { exports: {} },
+      require: mockRequire,
+      process: {
+        env: {
+          NODE_ENV: 'production',
+          buildchannel: 'appstore',
+          RABBY_MOBILE_BUILD_ENV: 'production',
+          RABBY_MOBILE_ENABLE_LOCAL_STORAGE_EXPORT: input,
+        },
+      },
+    };
+    runInNewContext(readFileSync(metroPath, 'utf8'), context);
+    return context.module.exports.cacheVersion;
+  }
+
+  it('isolates outer transform caches when production diagnostics are toggled', () => {
+    const disabled = metroCacheVersion('false');
+    const enabled = metroCacheVersion('true');
+    expect(enabled).not.toBe(disabled);
+    expect(metroCacheVersion('false')).toBe(disabled);
+    expect(metroCacheVersion()).not.toBe(enabled);
+  });
+});
