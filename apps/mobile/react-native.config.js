@@ -1,6 +1,9 @@
 const {
   isLegacyReactNativeArchitecture,
 } = require('./scripts/react-native-architecture.cjs');
+const {
+  getCryptoNativeDependencies,
+} = require('./scripts/crypto-architecture.cjs');
 
 const isLegacyArchitecture = isLegacyReactNativeArchitecture();
 
@@ -16,6 +19,7 @@ module.exports = {
     // './assets/ios/builtin-pages'
   ],
   dependencies: {
+    ...getCryptoNativeDependencies(isLegacyArchitecture ? 'legacy' : 'new'),
     'react-native-mmkv': isLegacyArchitecture
       ? { platforms: { android: null, ios: null } }
       : {},

@@ -294,37 +294,6 @@ PODS:
   - openiap (3.2.1)
   - OpenSSL-Universal (3.6.2000)
   - PromisesObjC (2.4.1)
-  - QuickCrypto (1.1.6):
-    - boost
-    - DoubleConversion
-    - fast_float
-    - fmt
-    - glog
-    - hermes-engine
-    - NitroModules
-    - OpenSSL-Universal (~> 3.6.2000)
-    - RCT-Folly
-    - RCT-Folly/Fabric
-    - RCTRequired
-    - RCTTypeSafety
-    - React-callinvoker
-    - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - SocketRocket
-    - Yoga
   - RabbyRNKeychainV9 (9.2.3-rabby.0):
     - boost
     - DoubleConversion
@@ -2413,17 +2382,19 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-quick-base64 (3.0.1):
+  - react-native-quick-crypto (0.7.13):
     - boost
     - DoubleConversion
     - fast_float
     - fmt
     - glog
     - hermes-engine
+    - OpenSSL-Universal
     - RCT-Folly
     - RCT-Folly/Fabric
     - RCTRequired
     - RCTTypeSafety
+    - React
     - React-Core
     - React-debug
     - React-Fabric
@@ -3463,7 +3434,6 @@ DEPENDENCIES:
   - NitroModules (from `../node_modules/react-native-nitro-modules`)
   - "op-sqlite (from `../node_modules/@op-engineering/op-sqlite`)"
   - OpenSSL-Universal (= 3.6.2000)
-  - QuickCrypto (from `../node_modules/react-native-quick-crypto`)
   - "RabbyRNKeychainV9 (from `../node_modules/@rabby-wallet/react-native-keychain-9`)"
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCTDeprecation (from `../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
@@ -3514,7 +3484,7 @@ DEPENDENCIES:
   - react-native-mmkv (from `../node_modules/react-native-mmkv-legacy`)
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-pager-view (from `../node_modules/react-native-pager-view`)
-  - react-native-quick-base64 (from `../node_modules/react-native-quick-base64`)
+  - react-native-quick-crypto (from `../node_modules/react-native-quick-crypto-legacy`)
   - react-native-randombytes (from `../node_modules/react-native-randombytes`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-version-check (from `../node_modules/react-native-version-check`)
@@ -3638,8 +3608,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-nitro-modules"
   op-sqlite:
     :path: "../node_modules/@op-engineering/op-sqlite"
-  QuickCrypto:
-    :path: "../node_modules/react-native-quick-crypto"
   RabbyRNKeychainV9:
     :path: "../node_modules/@rabby-wallet/react-native-keychain-9"
   RCT-Folly:
@@ -3738,8 +3706,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-community/netinfo"
   react-native-pager-view:
     :path: "../node_modules/react-native-pager-view"
-  react-native-quick-base64:
-    :path: "../node_modules/react-native-quick-base64"
+  react-native-quick-crypto:
+    :path: "../node_modules/react-native-quick-crypto-legacy"
   react-native-randombytes:
     :path: "../node_modules/react-native-randombytes"
   react-native-safe-area-context:
@@ -3902,7 +3870,6 @@ SPEC CHECKSUMS:
   openiap: 5fd63f4544bd4cc34da1e514f27eba6d3f30eed5
   OpenSSL-Universal: ecee7b138fa75a74ecf00d7ffd248fb584739b9e
   PromisesObjC: 752c3227f599e3467650e47ea36f433eeb10c273
-  QuickCrypto: 5d9895c12af84f6872bc576255afb93844fb7c05
   RabbyRNKeychainV9: 149a60d8e00ab5ce9e5a2d27361994d60c332264
   RCT-Folly: 59ec0ac1f2f39672a0c6e6cecdd39383b764646f
   RCTDeprecation: d4ef510f229cea15314176aee5e3ba10064a8496
@@ -3952,7 +3919,7 @@ SPEC CHECKSUMS:
   react-native-mmkv: ad3e50fbf39b994dfedbec010cd9e295946245bb
   react-native-netinfo: b54effb58887516971e6c273ee0ff0dd853021d3
   react-native-pager-view: 10be7c7df9b34e57d56860892069261f11b2d946
-  react-native-quick-base64: 905b12905b5680622503bafa7ef353d91dbfa585
+  react-native-quick-crypto: 324688800acf6a351c53597d627684b0d3ac14fa
   react-native-randombytes: 421f1c7d48c0af8dbcd471b0324393ebf8fe7846
   react-native-safe-area-context: e48706fb09fde89f82e12bfb49b140cfdcb761f7
   react-native-version-check: 6cd36aad4e30b8e3216747e3b4ddeb09e0647af8
