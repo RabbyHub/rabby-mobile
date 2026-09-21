@@ -44,6 +44,7 @@ export const FOCUSED_REGRESSION_SCENARIO_IDS = [
   'rabby-points-entry',
   'convert-dust-entry',
   'worker-thread',
+  'crypto-compatibility',
 ] as const;
 
 export const REGRESSION_SCENARIO_IDS = [
