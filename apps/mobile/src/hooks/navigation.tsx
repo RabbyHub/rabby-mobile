@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { Alert, AppState, StyleSheet } from 'react-native';
 import { debounce, get, merge } from 'lodash';
 
-import {
+import type {
   NativeStackHeaderLeftProps,
   NativeStackNavigationOptions,
   NativeStackScreenProps,
@@ -17,38 +17,27 @@ import {
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
-import { AppRootName, RootNames, makeHeadersPresets } from '@/constant/layout';
-import {
-  NavigationContainerRef,
-  useNavigation,
-} from '@react-navigation/native';
+import type { AppRootName } from '@/constant/layout';
+import { RootNames, makeHeadersPresets } from '@/constant/layout';
+import { APP_FEATURE_SWITCH } from '@/constant';
+import type { NavigationContainerRef } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 
 import type { RootStackParamsList } from '@/navigation-type';
-import { setIOSScreenCapture } from './native/security';
-import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import * as apisLock from '@/core/apis/lock';
 import * as apisAccount from '@/core/apis/account';
 import { IS_IOS } from '@/core/native/utils';
-import {
-  atSensitiveSceneState,
-  bottomSheetModalSecurityApis,
-} from '@/components2024/GlobalBottomSheetModal/security';
-import {
-  getExpScreenCapture,
-  useIosForceDisableAlertForSensitiveScene,
-} from './appSettings';
 import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
-import { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
+import type { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
 import { zCreate } from '@/core/utils/reexports';
+import type { UpdaterOrPartials } from '@/core/utils/store';
 import {
   makeAvoidParallelAsyncFunc,
   resolveValFromUpdater,
-  UpdaterOrPartials,
 } from '@/core/utils/store';
 import { RefLikeObject } from '@/utils/type';
 import { perfEvents } from '@/core/utils/perf';
-import { useShallow } from 'zustand/react/shallow';
-import { CollapsibleRef } from 'react-native-collapsible-tab-view';
+import type { CollapsibleRef } from 'react-native-collapsible-tab-view';
 import { autoLockEvent } from '@/core/apis/autoLock';
 import { notificationEvents } from '@/core/notifications/data';
 import {
@@ -56,11 +45,12 @@ import {
   txResultToToHistoryDisplayItem,
 } from '@/utils/transaction';
 // import { SampleNotifiedTxResult } from '@/core/notifications/sample-data';
+import { bindKeyringEventAfterRegistration } from '@/core/serviceApi/keyring';
+import { getPinnedTokenSnapshot } from '@/core/serviceApi/preference';
 import {
-  keyringService,
-  preferenceService,
-  transactionHistoryService,
-} from '@/core/services';
+  getTransactionHistoryCustomTxItemMap,
+  getTransactionHistoryTransactions,
+} from '@/core/serviceApi/transactionHistory';
 import { browserApis } from './browser/useBrowser';
 import { notificationOpenapi } from '@/core/notifications/openapi';
 import { toast, toastLoading } from '@/components2024/Toast';
@@ -69,6 +59,8 @@ import { switchSceneCurrentAccount } from './accountsSwitcher';
 import { findMyAccountByOwnerAddress } from '@/core/notifications/utils';
 import { makeMutable, runOnJS } from 'react-native-reanimated';
 import PQueue from 'p-queue';
+import { resolveWalletEntryDestination } from '@/core/utils/walletEntryState';
+import { createAutoUnlockGate } from '@/utils/autoUnlockGate';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -402,6 +394,7 @@ export function resetNavigationTo(
       break;
     }
     case 'Unlock': {
+      perfEvents.emit('GLOBAL_CLEAR_ALL_COVERED_COMPONENTS');
       navigation.reset({
         index: 0,
         routes: [
@@ -554,21 +547,31 @@ const unlockUIState = {
   finishedUnlockResetNav: false,
   resetNaviOnTopOfHomeWhenUnlockRef: null as null | ResetNaviOnUIUnlockFn,
 };
-keyringService.addListener('lock', () => {
+const autoUnlockGate = createAutoUnlockGate({
+  isAtUnlock: () =>
+    navigationRouteStore.getState().currentRouteName === RootNames.Unlock,
+  dispatch: () => perfEvents.emit('AUTO_TRIGGER_UNLOCK'),
+});
+perfEvents.addListener('EVENT_ROUTE_CHANGE', ({ currentRouteName }) => {
+  if (currentRouteName === RootNames.Unlock) {
+    autoUnlockGate.dispatchIfReady();
+  }
+});
+bindKeyringEventAfterRegistration('lock', () => {
   unlockUIState.finishedUnlockResetNav = false;
+  autoUnlockGate.clearPending();
 });
 export class UnlockUIManager {
-  static triggerAutoUnlock(delay = 500) {
-    const action = () => {
-      const currentRouteName = navigationRef.current?.getCurrentRoute()?.name;
-      if (!currentRouteName || currentRouteName !== RootNames.Unlock) return;
-      perfEvents.emit('AUTO_TRIGGER_UNLOCK');
-    };
-    if (delay) {
-      setTimeout(action, delay);
-    } else {
-      action();
-    }
+  static triggerAutoUnlock(options?: { bypassPresentationReady?: boolean }) {
+    autoUnlockGate.request(options);
+  }
+
+  static setAutoUnlockScreenReady(ready: boolean) {
+    autoUnlockGate.setScreenReady(ready);
+  }
+
+  static setAutoUnlockPresentationReady(ready: boolean) {
+    autoUnlockGate.setPresentationReady(ready);
   }
 
   static markUnlockedOnce() {
@@ -614,13 +617,26 @@ export class UnlockUIManager {
         navigationRouteStore.getState().currentRouteName !== RootNames.Unlock
       )
         return;
-      if (hasUnlockOnce) {
-        resetNavigationTo(navigation, 'Home');
-        unlockUIState.finishedUnlockResetNav = true;
-        return;
+      let hasVisibleAccounts: boolean | null = null;
+      try {
+        hasVisibleAccounts = await apisAccount.hasVisibleAccounts();
+      } catch (error) {
+        console.error(
+          'UnlockUIManager.resetNavOnUIUnlock::account-check-error',
+          error,
+        );
       }
-
-      resetNavigationTo(navigation, 'Home');
+      const destination = resolveWalletEntryDestination({
+        accountState:
+          hasVisibleAccounts === null
+            ? 'unknown'
+            : hasVisibleAccounts
+            ? 'available'
+            : 'empty',
+        isAppUnlocked: true,
+        isUnlockSessionValid: true,
+      });
+      resetNavigationTo(navigation, destination || 'Home');
       unlockUIState.finishedUnlockResetNav = true;
     };
     if (unlockUIState.resetNaviOnTopOfHomeWhenUnlockRef) {
@@ -676,197 +692,11 @@ export function usePreventGoBack({
   };
 }
 
-export const enum ProtectType {
-  NONE = 0,
-  SafeTipModal = 1,
-}
-
-export type ProtectedConf = {
-  iosBlurType: ProtectType | null;
-  // alertOnScreenShot?: {
-  //   title: string;
-  //   message: string;
-  // };
-  warningScreenshotBackup: boolean;
-  onOk?: (ctx: { navigation?: NavigationInstance | null }) => void;
-};
-const defaultOnOk = ctx => {
-  ctx.navigation?.goBack();
-};
-const defaultProtectedConf: ProtectedConf = {
-  iosBlurType: ProtectType.NONE,
-  onOk: defaultOnOk,
-  warningScreenshotBackup: false,
-};
-function getProtectedConf() {
-  return {
-    ...defaultProtectedConf,
-    warningScreenshotBackup: true,
-    iosBlurType: ProtectType.SafeTipModal,
-  };
-}
-
-const PROTECTED_SCREENS: {
-  [P in AppRootName]?: ProtectedConf;
-} = {
-  [RootNames.CreateMnemonic]: getProtectedConf(),
-  [RootNames.ImportMnemonic]: getProtectedConf(),
-  [RootNames.ImportPrivateKey]: getProtectedConf(),
-  [RootNames.ImportMnemonic2024]: getProtectedConf(),
-  [RootNames.ImportPrivateKey2024]: getProtectedConf(),
-  [RootNames.CreateMnemonicBackup]: getProtectedConf(),
-  [RootNames.CreateMnemonicVerify]: getProtectedConf(),
-  [RootNames.BackupPrivateKey]: getProtectedConf(),
-  [RootNames.ImportSecret]: getProtectedConf(),
-};
-
-function getAtSensitiveScreenInfo(routeName: string | undefined) {
-  const result = {
-    // $routeName: routeName,
-    $protectedConf: { ...defaultProtectedConf },
-    _atSensitiveScreen: false,
-  };
-
-  if (!routeName || !PROTECTED_SCREENS[routeName]) return result;
-
-  result.$protectedConf = {
-    ...defaultProtectedConf,
-    ...PROTECTED_SCREENS[routeName],
-  };
-
-  result._atSensitiveScreen = !!PROTECTED_SCREENS[routeName];
-
-  return result;
-}
-
-type AtSensitiveScreenInfo = ReturnType<typeof getAtSensitiveScreenInfo>;
-type AtSensitiveScreenState = {
-  anySensitiveModalOpened: boolean;
-  screenInfo: AtSensitiveScreenInfo;
-};
-const atSensitiveScreenStore = zCreate<AtSensitiveScreenState>(() => ({
-  anySensitiveModalOpened: false,
-  screenInfo: getAtSensitiveScreenInfo(undefined),
-}));
-
-function setAtSensitiveScreenInfo(
-  valOrFunc: UpdaterOrPartials<AtSensitiveScreenInfo>,
-) {
-  atSensitiveScreenStore.setState(prev => {
-    const { newVal, changed } = resolveValFromUpdater(
-      prev.screenInfo,
-      valOrFunc,
-      {
-        strict: true,
-      },
-    );
-
-    if (!changed) return prev;
-
-    return { ...prev, screenInfo: newVal };
-  });
-}
-
-perfEvents.addListener('EVENT_ROUTE_CHANGE', ({ currentRouteName }) => {
-  setAtSensitiveScreenInfo(getAtSensitiveScreenInfo(currentRouteName));
-});
-
-atSensitiveSceneState.subscribe(s => {
-  const anySensitiveModalOpened =
-    bottomSheetModalSecurityApis.isAnySensitiveModalOpened(s);
-
-  atSensitiveScreenStore.setState(prev => {
-    if (prev.anySensitiveModalOpened === anySensitiveModalOpened) {
-      return prev;
-    }
-    return {
-      ...prev,
-      anySensitiveModalOpened,
-    };
-  });
-});
-
-export function useAtSensitiveScene() {
-  const { iosForceDisableAlertForSensitiveScene } =
-    useIosForceDisableAlertForSensitiveScene();
-
-  return atSensitiveScreenStore(
-    useShallow(s => {
-      const ret = getAtSensitiveScene(s);
-
-      if (iosForceDisableAlertForSensitiveScene) {
-        ret.atSensitiveScene = false;
-        ret.iosBlurType = ProtectType.NONE;
-        ret.warningScreenshotBackup = false;
-      }
-
-      return ret;
-    }),
-  );
-}
-
-export function getAtSensitiveScene(s = atSensitiveScreenStore.getState()) {
-  const srnInfo = s.screenInfo;
-  const anySensitiveModalOpened = s.anySensitiveModalOpened;
-
-  return {
-    anySensitiveModalOpened,
-    atSensitiveScene: srnInfo._atSensitiveScreen || anySensitiveModalOpened,
-    iosBlurType: srnInfo.$protectedConf.iosBlurType,
-    warningScreenshotBackup: srnInfo.$protectedConf.warningScreenshotBackup,
-    onOk: srnInfo.$protectedConf.onOk,
-  };
-}
-
-export function startSubscribeAtSensitiveScene() {
-  atSensitiveScreenStore.subscribe(s => {
-    const shouldPreventScreenCapturing =
-      getAtSensitiveScene(s).atSensitiveScene &&
-      !getExpScreenCapture().forceAllowScreenshot;
-
-    perfEvents.emit('CHANGE_PREVENT_SCREENSHOT', shouldPreventScreenCapturing);
-  });
-}
-
-export function startSubscribeIOSJustScreenshotted() {
-  const subscription = RNScreenshotPrevent.onUserDidTakeScreenshot(() => {
-    const setScreenshotted = (val?: boolean) =>
-      setIOSScreenCapture(prev => ({ ...prev, isScreenshotJustNow: !!val }));
-
-    setScreenshotted(getAtSensitiveScene().warningScreenshotBackup);
-  });
-
-  return subscription;
-}
-
-export function startSubscribeIOSScreenRecording() {
-  if (!IS_IOS && !__DEV__) return;
-
-  const subscription = RNScreenshotPrevent.iosOnScreenCaptureChanged(ctx => {
-    setIOSScreenCapture(prev => ({
-      ...prev,
-      isBeingCaptured: ctx.isBeingCaptured,
-    }));
-
-    if (!IS_IOS && !__DEV__) return;
-    const atSensitiveInfo = getAtSensitiveScene();
-    if (atSensitiveInfo.iosBlurType === ProtectType.SafeTipModal) return;
-
-    const forceAllowScreenshot = getExpScreenCapture().forceAllowScreenshot;
-    const shouldPreventScreenCapturing =
-      atSensitiveInfo.atSensitiveScene && !forceAllowScreenshot;
-
-    if (ctx.isBeingCaptured && shouldPreventScreenCapturing) {
-      RNScreenshotPrevent.iosProtectFromScreenRecording();
-    } else {
-      RNScreenshotPrevent.iosUnprotectFromScreenRecording();
-    }
-  });
-
-  return subscription;
-}
-
 export function startSubscribeRemoteNotification() {
+  if (!APP_FEATURE_SWITCH.transactionNotification) {
+    return;
+  }
+
   function earlyReturnL1<T = any>(retValue?: T) {
     return retValue;
   }
@@ -973,14 +803,17 @@ export function startSubscribeRemoteNotification() {
 
           hideToastRef.current();
 
-          const pinedQueue = preferenceService.getPinToken();
-          const customTxItemsMap =
-            transactionHistoryService.getCustomTxItemMap();
+          const pinedQueue = getPinnedTokenSnapshot();
+          const [customTxItemsMap, transactions] = await Promise.all([
+            getTransactionHistoryCustomTxItemMap(),
+            getTransactionHistoryTransactions(),
+          ]);
           const historyDisplayItem = txResultToToHistoryDisplayItem({
             address: parsedData.txInfo?.ownerAddress || '',
             res: txDetail,
             pinedQueue,
             customTxItemsMap,
+            transactions,
           })[0];
           console.debug(
             '[notifications] [startSubscribeRemoteNotification] received parsedData',

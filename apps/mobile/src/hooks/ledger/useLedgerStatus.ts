@@ -44,8 +44,9 @@ export const useLedgerStatus = (
         onSelectDevice: async (d: Device) => {
           console.log('selected device', d.id);
           try {
-            await TransportBLE.open(d.id);
-            apiLedger.fixDeviceId(address, d.id);
+            const transport = await TransportBLE.open(d.id);
+            await transport.close();
+            await apiLedger.fixDeviceId(address, d.id);
             setStatus('CONNECTED');
             isConnected = true;
             cb?.();
@@ -106,8 +107,9 @@ export const callConnectLedgerModal = ({
     onSelectDevice: async (d: Device) => {
       console.log('selected device', d.id);
       try {
-        await TransportBLE.open(d.id);
-        apiLedger.fixDeviceId(address, d.id);
+        const transport = await TransportBLE.open(d.id);
+        await transport.close();
+        await apiLedger.fixDeviceId(address, d.id);
         isConnected = true;
         setLedgerStatus(true);
         cb?.();

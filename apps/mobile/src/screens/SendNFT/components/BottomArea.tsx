@@ -1,6 +1,13 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { Platform, View } from 'react-native';
+import { View } from 'react-native';
 import { Button } from '@/components2024/Button';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import {
   apiSendNFT,
   useSendNFTCanSubmit,
@@ -13,10 +20,9 @@ import { useTranslation } from 'react-i18next';
 import { ModalConfirmAllowTransfer } from '@/components/Address/SheetModalConfirmAllowTransfer';
 import { ModalAddToContacts } from '@/components/Address/SheetModalAddToContacts';
 import { apiBalance } from '@/core/apis';
-import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { useTheme2024 } from '@/hooks/theme';
 
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useSignatureStore } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { RiskType, sortRisksDesc, useRisks } from '@/components/SendLike/risk';
@@ -213,6 +219,8 @@ function BottomArea() {
           }
           loading={isSubmitLoading}
           type={'primary'}
+          height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+          titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
           syncUnlockTime
           account={account}
           showHardWalletProcess
@@ -224,6 +232,8 @@ function BottomArea() {
           type="primary"
           title={'Send'}
           loading={isSubmitLoading}
+          height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+          titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
           onPress={submitForm}
         />
       )}
@@ -263,10 +273,8 @@ function BottomArea() {
 export default React.memo(BottomArea);
 
 export const SIZES = {
-  containerPt: 16,
-  containerPb: 48,
+  containerPt: BOTTOM_BUTTON_TOP_OFFSET,
   // height: 308,
-  bottom: 48,
 };
 
 const getStyles = createGetStyles2024(
@@ -278,7 +286,7 @@ const getStyles = createGetStyles2024(
         paddingHorizontal: 24,
         position: 'absolute',
         paddingTop: SIZES.containerPt,
-        paddingBottom: SIZES.containerPb + safeAreaInsets.bottom,
+        paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
         backgroundColor: resolveBgColorByType('bg1', {
           isLight: isLight ?? true,
           colors,

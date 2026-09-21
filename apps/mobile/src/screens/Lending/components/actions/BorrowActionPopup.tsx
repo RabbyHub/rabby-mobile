@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
-import { PopupDetailProps } from '../../type';
+import type { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import { TokenAmountInput } from './TokenAmountInput';
 import {
@@ -21,15 +21,13 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { buildBorrowTx, optimizedPath } from '../../poolService';
-import {
-  DirectSignBtn,
-  DirectSignBtnMethods,
-} from '@/components2024/DirectSignBtn';
+import type { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
+import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { last, noop } from 'lodash';
 import { isAccountSupportMiniApproval } from '@/utils/account';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { toast } from '@/components2024/Toast';
 import BorrowActionOverView from './BorrowActionOverView';
 import {
@@ -53,7 +51,7 @@ import {
   LendingReportType,
   LendingSignType,
 } from '@/screens/Transaction/components/type';
-import { transactionHistoryService } from '@/core/services/shared';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { useRefreshHistoryId } from '../../hooks';
 import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiProvider } from '@/core/apis';
@@ -73,13 +71,14 @@ import {
   BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
+import { assetCanBeBorrowedByUser } from '../../utils/borrow';
 
 export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
   userSummary,
   onClose,
 }) => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [amount, setAmount] = useState<string | undefined>(undefined);
   const { refresh } = useRefreshHistoryId();
   const [isLoading, setIsLoading] = useState(false);
@@ -114,6 +113,15 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
       !userSummary?.totalLiquidityUSD || userSummary.totalLiquidityUSD === '0'
     );
   }, [userSummary?.totalLiquidityUSD]);
+  const canBorrow = useMemo(
+    () =>
+      assetCanBeBorrowedByUser(
+        reserve.reserve,
+        userSummary,
+        reserve.reserve.eModes,
+      ),
+    [reserve.reserve, userSummary],
+  );
 
   const afterHF = useMemo(() => {
     if (hasNoSupply || !amount || isZeroAmount(amount)) {
@@ -151,7 +159,13 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   }, [afterHF]);
 
   const buildTransactions = useCallback(async () => {
-    if (!amount || isZeroAmount(amount) || !currentAccount || hasNoSupply) {
+    if (
+      !amount ||
+      isZeroAmount(amount) ||
+      !currentAccount?.address ||
+      hasNoSupply ||
+      !canBorrow
+    ) {
       setTxs([]);
       return;
     }
@@ -175,7 +189,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
       const borrowTx = await buildBorrowTx({
         poolBundle: pools.poolBundle,
         amount: parseUnits(amount, targetPool.decimals).toString(),
-        address: currentAccount.address,
+        address: currentAccount?.address,
         reserve: reserve.underlyingAsset,
         debtTokenAddress: targetPool?.variableDebtTokenAddress || '',
         useOptimizedPath: optimizedPath(selectedMarketData?.chainId),
@@ -197,8 +211,9 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
     }
   }, [
     amount,
+    canBorrow,
     chainInfo,
-    currentAccount,
+    currentAccount?.address,
     formattedPoolReservesAndIncentives,
     hasNoSupply,
     pools,
@@ -264,7 +279,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
         }
         const txId = last(results);
         if (txId && txs[0]?.chainId) {
-          transactionHistoryService.setCustomTxItem(
+          await transactionHistoryServiceApi.setCustomTxItem(
             currentAccount.address,
             txs[0].chainId,
             txId,
@@ -364,8 +379,9 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
 
   useEffect(() => {
     if (
-      currentAccount &&
+      currentAccount?.address &&
       canShowDirectSubmit &&
+      canBorrow &&
       amount &&
       !isZeroAmount(amount)
     ) {
@@ -374,7 +390,14 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
         synGasHeaderInfo: true,
       });
     }
-  }, [canShowDirectSubmit, currentAccount, amount, txs, prefetchMiniSigner]);
+  }, [
+    canShowDirectSubmit,
+    canBorrow,
+    currentAccount?.address,
+    amount,
+    txs,
+    prefetchMiniSigner,
+  ]);
 
   const showBorrowToCapTip = useMemo(() => {
     if (!reserve?.reserve?.totalDebt || !reserve?.reserve?.borrowCap) {
@@ -384,6 +407,9 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   }, [reserve?.reserve?.totalDebt, reserve?.reserve?.borrowCap]);
 
   const errorMessage = useMemo(() => {
+    if (!canBorrow) {
+      return t('page.Lending.borrowDetail.borrowingUnavailable');
+    }
     if (!reserve?.reserve?.totalDebt || !reserve?.reserve?.borrowCap) {
       return undefined;
     }
@@ -407,7 +433,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
       return t('page.Lending.borrowDetail.almostReachedError');
     }
     return undefined;
-  }, [reserve.reserve.borrowCap, reserve.reserve.totalDebt, t]);
+  }, [canBorrow, reserve.reserve.borrowCap, reserve.reserve.totalDebt, t]);
 
   return (
     <SignatureInstanceProvider instance={instance}>
@@ -461,6 +487,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
 
           {canShowDirectSubmit &&
             !hasNoSupply &&
+            canBorrow &&
             !!amount &&
             !isZeroAmount(amount) && (
               <View style={styles.gasPreContainer}>
@@ -530,6 +557,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
               onFinished={() => handleBorrow()}
               disabled={
                 hasNoSupply ||
+                !canBorrow ||
                 !amount ||
                 isZeroAmount(amount) ||
                 !txs.length ||
@@ -541,9 +569,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
               type="aave"
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
               titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
-              iconColor={
-                isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
-              }
+              iconColor={colors2024['neutral-contrast']}
               syncUnlockTime
               account={currentAccount}
               showHardWalletProcess
@@ -561,6 +587,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
               loading={isLoading}
               disabled={
                 hasNoSupply ||
+                !canBorrow ||
                 !amount ||
                 isZeroAmount(amount) ||
                 !txs.length ||
@@ -610,16 +637,6 @@ const getStyles = createGetStyles2024(ctx => ({
   amountInput: {
     marginTop: 12,
   },
-  card: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
-    padding: 12,
-    borderRadius: 16,
-    width: '100%',
-  },
-  contentContainer: {
-    paddingHorizontal: 16,
-    width: '100%',
-  },
   bottomSheetScrollView: {
     width: '100%',
   },
@@ -630,33 +647,6 @@ const getStyles = createGetStyles2024(ctx => ({
   gasPreContainer: {
     paddingHorizontal: 8,
   },
-  poolInfoContainer: {
-    marginTop: 16,
-  },
-  userInfoContainer: {
-    marginTop: 12,
-    gap: 24,
-  },
-  tokenInfos: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  poolInfoItems: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-    marginTop: 12,
-  },
-  poolInfoItem: {
-    flex: 1,
-    borderRadius: 8,
-    backgroundColor: ctx.colors2024['neutral-bg-2'],
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    gap: 4,
-  },
   title: {
     color: ctx.colors2024['neutral-title-1'],
     fontSize: 20,
@@ -664,34 +654,6 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 24,
     textAlign: 'center',
     marginTop: 0,
-    fontFamily: 'SF Pro Rounded',
-  },
-  userInfoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  sectionContainer: {
-    paddingBottom: 32,
-    width: '100%',
-  },
-  section: {
-    marginTop: 28,
-    lineHeight: 24,
-  },
-  sectionTitle: {
-    marginBottom: 5,
-    fontWeight: '700',
-    fontSize: 20,
-    lineHeight: 24,
-    color: ctx.colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  sectionDesc: {
-    fontWeight: '400',
-    fontSize: 16,
-    lineHeight: 24,
-    color: ctx.colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
   },
   buttonContainer: {
@@ -704,18 +666,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   directSignBtn: {
     width: '100%',
-  },
-  button: {
-    flex: 1,
-  },
-  leftTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  repayButton: {
-    borderWidth: 0,
-    backgroundColor: ctx.colors2024['neutral-line'],
   },
   checkbox: {
     display: 'flex',
@@ -763,11 +713,6 @@ const getStyles = createGetStyles2024(ctx => ({
   noSupplyMessageHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-  },
-  noSupplyMessageContent: {
-    flexDirection: 'column',
-    display: 'flex',
     gap: 8,
   },
   noSupplyMessagePrefix: {

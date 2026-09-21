@@ -20,6 +20,7 @@ import { useDevServerModalVisible } from '../Modals/DevModalDevServer';
 import { toast } from '@/components2024/Toast';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Text } from '@/components/Typography';
+import { useShowMarkdownInWebVIewTester } from './MarkdownInWebViewTester';
 
 const devUIPlaygroundModalVisibleAtom = atom(false);
 export function useDevUIPlaygroundModalVisible() {
@@ -60,12 +61,18 @@ export default function DevUIPlaygroundModal({
   }, [setDevUIPlaygroundModalVisible, onCancel]);
 
   const navigation = useRabbyAppNavigation();
+  const { viewMarkdownInWebView } = useShowMarkdownInWebVIewTester();
 
   const { haventSetDevServer, setDevServerSettingsModalVisible } =
     useDevServerModalVisible();
 
   const Items = (() => {
     const list: DevTestItem[] = [
+      {
+        label: 'Upgrade Prompt Preview',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: viewMarkdownInWebView,
+      },
       {
         label: 'Animated View & Text',
         icon: <RcCode style={styles.labelIcon} />,

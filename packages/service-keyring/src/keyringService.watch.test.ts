@@ -2,6 +2,7 @@ import * as sinon from 'sinon';
 import { KeyringService } from '../src/keyringService';
 import mockEncryptor from '../test/mock-encryptor';
 import { KEYRING_TYPE, KeyringTypeName } from '@rabby-wallet/keyring-utils';
+import { keyringSdks } from '../src/types';
 
 const password = 'password123';
 const walletOneSeedWords =
@@ -53,7 +54,54 @@ describe('keyringService support eth-keyring-watch', () => {
   let keyringService: KeyringService;
 
   const TEST_ADDR = '0x39b97205b9826f21fd39b535cf972c809e160e5f';
+  const TEST_ADDR_2 = '0x2222222222222222222222222222222222222222';
   const TEST_HD_ADDR = '0x1111111111111111111111111111111111111111';
+
+  class TestHdKeyring {
+    static type = KEYRING_TYPE.HdKeyring;
+
+    type = KEYRING_TYPE.HdKeyring;
+
+    byImport = true;
+
+    publicKey = 'base-public-key';
+
+    hasBackup = true;
+
+    needPassphrase = true;
+
+    private accounts = [TEST_HD_ADDR];
+
+    async serialize() {
+      return {
+        mnemonic: walletOneSeedWords,
+        accounts: this.accounts,
+      };
+    }
+
+    async deserialize(data: { accounts?: string[] }) {
+      this.accounts = data.accounts || [];
+    }
+
+    async getAccounts() {
+      return this.accounts;
+    }
+
+    async getAccountsWithBrand() {
+      return this.accounts.map(address => ({
+        address,
+        brandName: 'Rabby Wallet',
+      }));
+    }
+
+    async getInfoByAddress() {
+      return {
+        basePublicKey: 'base-public-key',
+        hdPathType: 'LedgerLive',
+        index: 0,
+      };
+    }
+  }
 
   beforeEach(async () => {
     keyringService = new KeyringService({ encryptor: mockEncryptor as any });
@@ -125,6 +173,45 @@ describe('keyringService support eth-keyring-watch', () => {
       expect(spyCallback.calledOnce).toBe(true);
     });
 
+    it('adds multiple Watch addresses with one persistence and alias update', async () => {
+      const onSetAddressAliases = sinon.spy(
+        async (_keyring: unknown, _accounts: unknown[]) => undefined,
+      );
+      keyringService = new KeyringService({
+        encryptor: mockEncryptor as any,
+        onSetAddressAliases,
+      });
+      keyringService.loadStore({});
+      await keyringService.boot(password);
+      await keyringService.clearKeyrings();
+      const keyring = await keyringService.addNewKeyring(
+        KEYRING_TYPE.WatchAddressKeyring as KeyringTypeName,
+      );
+      const persistSpy = sinon.spy(keyringService, 'persistAllKeyrings');
+      const newAccountSpy = sinon.spy();
+      keyringService.on('newAccount', newAccountSpy);
+
+      await expect(
+        keyringService.addNewWatchAccounts(keyring, [
+          TEST_ADDR,
+          TEST_ADDR_2,
+          TEST_ADDR,
+        ]),
+      ).resolves.toEqual([TEST_ADDR, TEST_ADDR_2]);
+
+      await expect(keyring.getAccounts()).resolves.toEqual([
+        TEST_ADDR,
+        TEST_ADDR_2,
+      ]);
+      expect(persistSpy.calledOnce).toBe(true);
+      expect(onSetAddressAliases.calledOnce).toBe(true);
+      expect(onSetAddressAliases.firstCall.args[1]).toEqual([
+        expect.objectContaining({ address: TEST_ADDR }),
+        expect.objectContaining({ address: TEST_ADDR_2 }),
+      ]);
+      expect(newAccountSpy.callCount).toBe(2);
+    });
+
     it('restores unencrypted watch keyrings while locked', async () => {
       await addWatchAddress();
       await keyringService.setLocked();
@@ -174,6 +261,156 @@ describe('keyringService support eth-keyring-watch', () => {
       );
     });
 
+    it('preserves an authoritative empty snapshot after removing the last account', async () => {
+      await addWatchAddress();
+      await keyringService.removeAccount(
+        TEST_ADDR,
+        KEYRING_TYPE.WatchAddressKeyring as KeyringTypeName,
+      );
+      const persistedState = keyringService.store.getState();
+      const restoredService = new KeyringService({
+        encryptor: mockEncryptor as any,
+      });
+
+      restoredService.loadStore(persistedState);
+
+      expect(persistedState.publicAccountSnapshot?.accounts).toEqual([]);
+      expect(restoredService.hasPersistedPublicAccountSnapshot()).toBe(true);
+      expect(restoredService.hasPublicAccountSnapshot()).toBe(false);
+      await expect(restoredService.getCountOfAccountsInKeyring()).resolves.toBe(
+        0,
+      );
+    });
+
+    it('preserves locked sensitive vault data when updating password', async () => {
+      const service = new KeyringService({
+        encryptor: mockEncryptor as any,
+        keyringClasses: [TestHdKeyring as any],
+      });
+      service.loadStore({});
+      await service.boot(password);
+      service.keyrings = [new TestHdKeyring() as any];
+      await service.persistAllKeyrings();
+      await service.setLocked();
+
+      expect(service.isUnlocked()).toBe(false);
+      expect(service.keyrings).toHaveLength(0);
+
+      await service.updatePassword(password, 'new-password');
+
+      expect(service.isUnlocked()).toBe(false);
+      expect(service.store.getState().hasEncryptedKeyringData).toBe(true);
+
+      await service.submitPassword('new-password');
+
+      const accounts = await service.getAllVisibleAccountsArray();
+      expect(accounts).toEqual([
+        expect.objectContaining({
+          address: TEST_HD_ADDR,
+          brandName: 'Rabby Wallet',
+          type: KEYRING_TYPE.HdKeyring,
+        }),
+      ]);
+    });
+
+    it('commits password ciphertext and auth metadata in one store update', async () => {
+      const atomicEncryptor = {
+        encrypt: async (currentPassword: string, value: unknown) =>
+          JSON.stringify({ password: currentPassword, value }),
+        decrypt: async (currentPassword: string, payload: string) => {
+          const parsed = JSON.parse(payload);
+          if (parsed.password !== currentPassword) {
+            throw new Error('incorrect password');
+          }
+          return parsed.value;
+        },
+      };
+      const service = new KeyringService({
+        encryptor: atomicEncryptor as any,
+      });
+      service.loadStore({});
+      await service.boot(password);
+      await service.clearKeyrings();
+
+      const updates: Array<ReturnType<typeof service.store.getState>> = [];
+      service.store.subscribe(state => updates.push(state));
+
+      await service.updatePassword(password, 'new-password', {
+        passwordState: {
+          version: 1,
+          origin: 'user',
+          pendingAuthTransition: 'disable-biometrics',
+        },
+      });
+
+      expect(updates).toHaveLength(1);
+      expect(JSON.parse(updates[0].booted || '').password).toBe('new-password');
+      expect(JSON.parse(updates[0].vault || '').password).toBe('new-password');
+      expect(updates[0].passwordState).toEqual({
+        version: 1,
+        origin: 'user',
+        pendingAuthTransition: 'disable-biometrics',
+      });
+
+      expect(service.completeAuthTransition('disable-biometrics')).toBe(true);
+      expect(service.completeAuthTransition('disable-biometrics')).toBe(false);
+    });
+
+    it('waits for deferred runtime restore when typed unencrypted keyring is not loaded', async () => {
+      const service = new KeyringService({
+        encryptor: mockEncryptor as any,
+        keyringClasses: [
+          TestHdKeyring as any,
+          ...Object.values(keyringSdks),
+        ] as any,
+      });
+      service.loadStore({});
+      await service.boot(password);
+      service.keyrings = [new TestHdKeyring() as any];
+
+      const watchKeyring = await service.addNewKeyring(
+        KEYRING_TYPE.WatchAddressKeyring as KeyringTypeName,
+      );
+      watchKeyring.setAccountToAdd(TEST_ADDR);
+      await service.addNewAccount(watchKeyring);
+      await service.setLocked();
+
+      expect(service.isUnlocked()).toBe(false);
+      expect(service.keyrings.map(keyring => keyring.type)).toEqual([
+        KEYRING_TYPE.WatchAddressKeyring,
+      ]);
+
+      await service.submitPassword(password, {
+        deferKeyringRuntimeRestore: true,
+        deferMemStoreKeyringsUpdate: true,
+      });
+
+      expect(service.isUnlocked()).toBe(true);
+      expect(service.isKeyringRuntimeReady()).toBe(false);
+      expect(service.keyrings).toHaveLength(0);
+
+      const keyring = await service.getKeyringForAccount(
+        TEST_ADDR,
+        KEYRING_TYPE.WatchAddressKeyring,
+      );
+
+      expect(keyring.type).toBe(KEYRING_TYPE.WatchAddressKeyring);
+      expect(service.isKeyringRuntimeReady()).toBe(true);
+      expect(service.memStore.getState().keyrings).toEqual([
+        expect.objectContaining({
+          type: KEYRING_TYPE.HdKeyring,
+        }),
+        expect.objectContaining({
+          type: KEYRING_TYPE.WatchAddressKeyring,
+          accounts: [
+            expect.objectContaining({
+              address: TEST_ADDR,
+            }),
+          ],
+        }),
+      ]);
+    });
+
     it('ignores legacy public account snapshot versions', async () => {
       setSensitiveHdKeyringInRuntime();
       await keyringService.persistAllKeyrings();
@@ -191,9 +428,9 @@ describe('keyringService support eth-keyring-watch', () => {
       } as any);
       await keyringService.setLocked();
 
-      await expect(keyringService.getAllVisibleAccountsArray()).resolves.toEqual(
-        [],
-      );
+      await expect(
+        keyringService.getAllVisibleAccountsArray(),
+      ).resolves.toEqual([]);
       expect(keyringService.hasPublicAccountSnapshot()).toBe(false);
     });
 

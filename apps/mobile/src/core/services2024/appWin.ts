@@ -1,15 +1,17 @@
-import {
+import type {
   CreateParams,
-  EVENT_NAMES,
   MODAL_ID,
-  MODAL_NAMES,
   RemoveParams,
+} from '@/components2024/GlobalBottomSheetModal/types';
+import {
+  EVENT_NAMES,
+  MODAL_NAMES,
 } from '@/components2024/GlobalBottomSheetModal/types';
 import { uniqueId } from 'lodash';
 
 import { sleep } from '@/utils/async';
 import { globalSheetModalEvents } from '@/components2024/GlobalBottomSheetModal/event';
-import { makeGlobalBottomSheetSingletonRegistry } from '@/core/services/globalBottomSheetSingleton';
+import { makeGlobalBottomSheetSingletonRegistry } from '@/core/utils/globalBottomSheetSingleton';
 
 const globalBottomSheetSingletonRegistry =
   makeGlobalBottomSheetSingletonRegistry<MODAL_ID>();

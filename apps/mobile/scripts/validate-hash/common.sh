@@ -129,6 +129,8 @@ setup_environment() {
   export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
   export SENTRY_DISABLE_AUTO_UPLOAD=true
   export APP_ENV=hashing
+  # 避免宿主 DEBUG 变量影响 Babel/Metro 对 process.env.DEBUG 的内联
+  unset DEBUG
 
   # --- 覆盖代码中用到的环境变量 ---
   export RABBY_MOBILE_CODE="RABBY_MOBILE_CODE_DEV"

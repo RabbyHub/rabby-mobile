@@ -2,18 +2,50 @@ import type {
   TokenItem,
   TxHistoryItem,
 } from '@rabby-wallet/rabby-api/dist/types';
+import type { TransactionHistoryItem } from '@/core/services/transactionHistory';
 import {
   GAS_ACCOUNT_RECEIVED_ADDRESS,
   GAS_ACCOUNT_WITHDRAWED_ADDRESS,
   L2_DEPOSIT_ADDRESS_MAP,
 } from '@/constant/gas-account';
 import { HistoryItemCateType } from '@/types/history';
+import { findChain } from './chain';
 
 export const isNFTTokenId = (tokenId: string) => {
   return tokenId.length === 32;
 };
 
-export function getHistoryItemType(data: TxHistoryItem): HistoryItemCateType {
+export const checkIsGasDepositTx = ({
+  chainId,
+  hash,
+  transactions,
+}: {
+  chainId?: number;
+  hash: string;
+  transactions: readonly TransactionHistoryItem[];
+}) => {
+  if (!hash || !chainId) {
+    return false;
+  }
+
+  return transactions.some(item => {
+    return item.chainId === chainId && item.hash === hash && item.isGasDeposit;
+  });
+};
+
+export function getHistoryItemType(
+  data: TxHistoryItem,
+  transactions: readonly TransactionHistoryItem[],
+): HistoryItemCateType {
+  if (
+    checkIsGasDepositTx({
+      chainId: findChain({ serverId: data.chain })?.id,
+      hash: data.id,
+      transactions,
+    })
+  ) {
+    return HistoryItemCateType.GAS_DEPOSIT;
+  }
   if (data.cate_id === 'approve') {
     if (!data.token_approve?.value) {
       return HistoryItemCateType.Revoke;

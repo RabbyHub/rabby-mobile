@@ -11,11 +11,9 @@ import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { useFindAccountByAddress } from '@/screens/Address/components/MultiAssets/hooks/share';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useShallow } from 'zustand/react/shallow';
-import { Account } from '@/core/services/preference';
-import {
-  AssetPosition,
-  ClearinghouseState,
-} from '@rabby-wallet/hyperliquid-sdk';
+import type { Account } from '@/core/startupServices/preference';
+import type { AssetPosition } from '@rabby-wallet/hyperliquid-sdk';
+import { ClearinghouseState } from '@rabby-wallet/hyperliquid-sdk';
 import RcIconHyperliquid from '@/assets2024/icons/perps/IconHyper.svg';
 // import RcIconHyperliquid from '@/assets2024/icons/perps/IconHyperliquid.svg';
 import { AssetAvatar } from '@/components';
@@ -28,12 +26,13 @@ import { ellipsisAddress } from '@/utils/address';
 import { calculateDistanceToLiquidation } from '../PerpsPositionSection/utils';
 import { useMemoizedFn } from 'ahooks';
 import { PerpsRiskLevelPopup } from '../PerpsPositionSection/PerpsRiskLevelPopup';
-import { RootNames } from '@/constant/layout';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { switchPerpsAccountBeforeNavigate } from '@/hooks/perps/usePerpsStore';
-import { formatPerpsCoin } from '@/utils/perps';
+import { navigateToPreferredPerps } from '@/hooks/perps/navigation/navigateToPreferredPerps';
+import { formatPerpsCoin, getFallbackCoinLogoUrl } from '@/utils/perps';
+import { SvgUri } from 'react-native-svg';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { Text } from '@/components/Typography';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 const calculateMarkPrice = (position: AssetPosition['position']) => {
   const entryPxDecimals = position.entryPx?.split('.')[1]?.length || 2;
@@ -48,6 +47,33 @@ interface AssetPositionWithAccount {
   quoteAsset: string;
   displayName: string;
 }
+
+// AssetAvatar deliberately won't render remote svg (virtual-list constraint);
+// this card isn't virtualized, so render the svg fallback locally.
+const CoinAvatar = ({ logo, size }: { logo: string; size: number }) => {
+  const svgStyle = useMemo(
+    () => ({
+      width: size,
+      height: size,
+      borderRadius: size / 2,
+      overflow: 'hidden' as const,
+    }),
+    [size],
+  );
+  if (!/\.svg(\?|$)/i.test(logo)) {
+    return <AssetAvatar logo={logo} size={size} />;
+  }
+  return (
+    <View style={svgStyle}>
+      <SvgUri
+        uri={logo}
+        width={size}
+        height={size}
+        fallback={<AssetAvatar logo="" size={size} />}
+      />
+    </View>
+  );
+};
 
 const AssetPositionItem = ({
   item,
@@ -79,30 +105,21 @@ const AssetPositionItem = ({
   const pnlText = `${isUp ? '+' : '-'}${formatUsdValue(absPnlUsd)}`;
 
   const handleHyperliquidPress = useCallback(() => {
-    try {
-      switchPerpsAccountBeforeNavigate(item.account);
-      matomoRequestEvent({
-        category: 'Rabby Perps',
-        action: 'Perps_CardToPerps',
-      });
-      // navigation.push(RootNames.StackTransaction, {
-      //   screen: RootNames.Perps,
-      //   params: {
-      //     dappId: 'hyperliquid',
-      //     account: item.account,
-      //   },
-      // })
-      navigation.push(RootNames.StackTransaction, {
-        screen: RootNames.PerpsMarketDetail,
-        params: {
-          market: coin,
-          fromSource: 'homePagePositionList',
-          showOpenPosition: false,
-        },
-      });
-    } catch (error) {
-      console.error('Failed to navigate to Perps screen:', error);
-    }
+    matomoRequestEvent({
+      category: 'Rabby Perps',
+      action: 'Perps_CardToPerps',
+    });
+    void navigateToPreferredPerps({
+      account: item.account,
+      canonicalMarket: coin,
+      navigation,
+      simpleDetail: {
+        market: coin,
+        fromSource: 'homePagePositionList',
+        showOpenPosition: false,
+      },
+      source: 'home-position-card',
+    });
   }, [item, navigation, coin]);
 
   return (
@@ -111,7 +128,7 @@ const AssetPositionItem = ({
         {/* Left section: icon + coin info */}
         <View style={styles.leftSection}>
           <View style={styles.coinInfoRow}>
-            <AssetAvatar logo={logoUrl} size={28} />
+            <CoinAvatar logo={logoUrl} size={28} />
             <View style={styles.coinInfo}>
               <View style={styles.coinNameRow}>
                 <Text style={styles.coinName}>
@@ -321,11 +338,14 @@ const AssetPositionItem = ({
 
 export const PerpsMultiAssetPosition: React.FC = () => {
   const getAccountByAddress = useFindAccountByAddress();
-  const { clearinghouseStateMap, marketDataMap } = perpsStore(
+  const { clearinghouseStateMap, marketDataMap } = useActivityStore(
+    perpsStore,
     useShallow(s => ({
       clearinghouseStateMap: s.clearinghouseStateMap,
       marketDataMap: s.marketDataMap,
     })),
+    Object.is,
+    { storeLabel: 'home-overview-perps-positions' },
   );
   const [selectedPositionKey, setSelectedPositionKey] = useState<{
     address: string;
@@ -353,7 +373,11 @@ export const PerpsMultiAssetPosition: React.FC = () => {
           account,
           quoteAsset,
           assetPositions: assetPosition,
-          logoUrl: marketDataMap[assetPosition.position.coin]?.logoUrl || '',
+          // Meta can be missing while the boot fetch retries — fall back to
+          // the bundled PNG, then HL's svg.
+          logoUrl:
+            marketDataMap[assetPosition.position.coin]?.logoUrl ||
+            getFallbackCoinLogoUrl(assetPosition.position.coin),
           displayName:
             marketDataMap[assetPosition.position.coin]?.displayName ||
             assetPosition.position.coin,
@@ -479,6 +503,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   homeContainer: {
     marginTop: 24,
+    marginBottom: 0,
     ...Platform.select({
       ios: {
         shadowColor: isLight ? 'rgba(55, 56, 63, 0.12)' : 'rgba(0, 0, 0, 0.4)',

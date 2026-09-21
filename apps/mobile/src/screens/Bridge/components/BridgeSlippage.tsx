@@ -273,9 +273,11 @@ export const BridgeSlippage = (props: SlippageProps) => {
     return (
       <View style={styles.container}>
         <Text style={styles.text}>{t('page.swap.slippage-tolerance')}</Text>
-        <Text style={styles.wrapSlippage}>
-          {t('page.swap.no-slippage-for-wrap')}
-        </Text>
+        <View style={styles.valueContainer}>
+          <Text style={styles.wrapSlippage}>
+            {t('page.swap.no-slippage-for-wrap')}
+          </Text>
+        </View>
       </View>
     );
   }
@@ -427,6 +429,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    height: 20,
   },
   text: {
     fontSize: 14,
@@ -439,16 +442,18 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    height: 20,
   },
   autoSlippageSkeleton: {
     width: 131,
-    height: 24,
+    height: 20,
     borderRadius: 100,
   },
   value: {
     fontSize: 16,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+    lineHeight: 18,
     color: colors2024['brand-default'],
   },
   warning: {
@@ -503,6 +508,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 16,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
+    lineHeight: 18,
   },
   activeText: {
     color: colors2024['brand-default'],

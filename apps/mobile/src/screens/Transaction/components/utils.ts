@@ -42,13 +42,13 @@ export const judgeIsSmallUsdTx = (
     return false;
   }
 
-  const receives = item.receives;
-  if (!receives || !receives.length) {
+  const transfers = [...(item.receives || []), ...(item.sends || [])];
+  if (!transfers.length) {
     return true;
   }
   let allUsd = new BigNumber(0);
 
-  for (const i of receives) {
+  for (const i of transfers) {
     const token = i.token;
     const tokenIsNft = i.token_id?.length === 32;
     if (tokenIsNft) {
@@ -87,13 +87,13 @@ export const judgeIsSmallUsdTxInApi = (
     return false;
   }
 
-  const receives = item.receives;
-  if (!receives || !receives.length) {
+  const transfers = [...(item.receives || []), ...(item.sends || [])];
+  if (!transfers.length) {
     return false;
   }
   let allUsd = new BigNumber(0);
 
-  for (const i of receives) {
+  for (const i of transfers) {
     const token =
       tokenDict[fetchHistoryTokenUUId(i.token_id, item.chain)] ||
       tokenDict[i.token_id];

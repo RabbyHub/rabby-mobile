@@ -2,14 +2,13 @@ import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 /* eslint-disable @typescript-eslint/no-shadow */
 // import { useOpenDappView } from '../hooks/useDappView';
 import { openapi } from '@/core/request';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useDapps } from '@/hooks/useDapps';
 import { stringUtils } from '@rabby-wallet/base-utils';
-import { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';
+import type { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';
 import { useDebounce, useInfiniteScroll } from 'ahooks';
 import { useMemo } from 'react';
-import { dappService } from '@/core/services';
 
 export const useSearchDapps = (searchText: string) => {
   const { dapps } = useDapps();

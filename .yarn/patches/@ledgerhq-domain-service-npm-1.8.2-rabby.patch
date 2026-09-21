@@ -1,0 +1,22 @@
+diff --git a/lib-es/types.d.ts b/lib-es/types.d.ts
+index 81998fc870d40d6c0473825a28bfce3689c14b19..0467088223fca4286ce0f1c60cf78575661f7d09 100644
+--- a/lib-es/types.d.ts
++++ b/lib-es/types.d.ts
+@@ -1,5 +1,5 @@
+ import { CoinType } from "@ledgerhq/types-cryptoassets";
+-import type { SupportedRegistries, DomainServiceResolution } from "@ledgerhq/types-live/domain";
++import type { SupportedRegistries, DomainServiceResolution } from "@ledgerhq/types-live/lib/domain";
+ export type Registry = {
+     name: SupportedRegistries;
+     resolvers: {
+diff --git a/lib/types.d.ts b/lib/types.d.ts
+index 81998fc870d40d6c0473825a28bfce3689c14b19..0467088223fca4286ce0f1c60cf78575661f7d09 100644
+--- a/lib/types.d.ts
++++ b/lib/types.d.ts
+@@ -1,5 +1,5 @@
+ import { CoinType } from "@ledgerhq/types-cryptoassets";
+-import type { SupportedRegistries, DomainServiceResolution } from "@ledgerhq/types-live/domain";
++import type { SupportedRegistries, DomainServiceResolution } from "@ledgerhq/types-live/lib/domain";
+ export type Registry = {
+     name: SupportedRegistries;
+     resolvers: {

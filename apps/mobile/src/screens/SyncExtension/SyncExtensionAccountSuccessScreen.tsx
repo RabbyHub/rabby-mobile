@@ -9,22 +9,20 @@ import {
   resetNavigationTo,
   useRabbyAppNavigation,
 } from '@/hooks/navigation';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
+import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { useRoute } from '@react-navigation/native';
 import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import addressBalanceStore from '@/store/balance';
-import { preferenceService } from '@/core/services';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { setReportActionTs } from '@/core/serviceApi/preference';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { apisSingleHome } from '../Home/hooks/singleHome';
 import { syncMultiAddressesHistory } from '@/databases/hooks/history';
 import { accountEvents } from '@/core/apis/account';
 import { Button } from '@/components2024/Button';
-import {
-  WalletSuccessCard,
-  AddressItem,
-} from '@/components2024/WalletSuccessCard';
+import type { AddressItem } from '@/components2024/WalletSuccessCard';
+import { WalletSuccessCard } from '@/components2024/WalletSuccessCard';
 
 export const SyncExtensionAccountSuccessfulScreen = () => {
   const { t } = useTranslation();
@@ -45,18 +43,39 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
   const { accounts: acc } = useAccounts();
 
   const list = useSortAddressList(acc);
+  const newAccounts = useMemo(
+    () => navState?.newAccounts ?? [],
+    [navState?.newAccounts],
+  );
 
-  const accounts = useMemo(
+  const matchedAccounts = useMemo(
     () =>
       list.filter(account =>
-        navState?.newAccounts.some(
+        newAccounts.some(
           newAccount =>
             isSameAddress(account.address, newAccount.address) &&
             account.type === (newAccount.type || newAccount.brandName),
         ),
       ),
-    [list, navState?.newAccounts],
+    [list, newAccounts],
   );
+
+  const fallbackAccounts = useMemo(
+    () =>
+      newAccounts.map(account => ({
+        ...account,
+        type: account.type || account.brandName,
+        brandName: account.brandName || account.type,
+        aliasName: account.aliasName || '',
+        balance: account.balance || 0,
+        evmBalance: account.evmBalance || 0,
+      })),
+    [newAccounts],
+  );
+
+  // The global account store may still be refreshing immediately after extension
+  // sync, especially when first-time password setup also updates keychain state.
+  const accounts = matchedAccounts.length ? matchedAccounts : fallbackAccounts;
   const balanceSnapshots = addressBalanceStore.useAddressesSnapshot(
     useMemo(() => {
       return accounts.map(account => account.address.toLowerCase());
@@ -134,9 +153,9 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
     }
     apisHomeTabIndex.setTabIndex(0);
 
-    preferenceService.setReportActionTs(
+    void setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.SCAN_SYNC_EXTENSION_DONE,
-    );
+    ).catch(console.error);
   };
 
   return (

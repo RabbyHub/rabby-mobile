@@ -1,0 +1,448 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
+import RcIconEdit from '@/assets2024/icons/perps/PerpsProEdit.svg';
+import { Text } from '@/components/Typography';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import React from 'react';
+import { Pressable, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+
+import type { PerpsOpenOrderViewModel } from '../../model/openOrder';
+import type { PerpsProTradeAmountUnit } from '../../model/trade';
+import { usePerpsProMarketIdentity } from '../../scene/usePerpsProMarketIdentity';
+import {
+  formatPerpsProDecimal,
+  formatPerpsProPercent,
+  formatPerpsProTime,
+  formatPerpsProVariableDecimal,
+} from '../../utils/format';
+import {
+  getPerpsProSolidSideTagContainerStyle,
+  getPerpsProSolidSideTagTextStyle,
+  getPerpsProMetadataTagContainerStyle,
+  getPerpsProMetadataTagTextStyle,
+  getPerpsProTintedTagContainerStyle,
+  getPerpsProTintedTagTextStyle,
+} from '../common/perpsProSemanticTagStyles';
+import { PerpsProMarketPair } from '../common/PerpsProMarketPair';
+
+const EDITABLE_VALUE_HIT_SLOP = {
+  bottom: 4,
+  left: 0,
+  right: 0,
+  top: 4,
+};
+
+const withOptionalUnit = (label: string, unit: string | null) =>
+  unit ? `${label} (${unit})` : label;
+
+const CancelButton: React.FC<{
+  onPress: () => void;
+  pending: boolean;
+}> = ({ onPress, pending }) => {
+  const { styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ busy: pending, disabled: pending }}
+      disabled={pending}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.cancelButton,
+        pressed && styles.cancelButtonPressed,
+      ]}>
+      <Text style={styles.cancelText}>
+        {t('page.perps.pro.openOrders.cancel')}
+      </Text>
+    </Pressable>
+  );
+};
+
+const EditableValue: React.FC<{
+  enabled: boolean;
+  label: string;
+  onPress: () => void;
+  testID: string;
+  value: string;
+}> = ({ enabled, label, onPress, testID, value }) => {
+  const { colors2024, styles } = useTheme2024({ getStyle });
+  if (!enabled) {
+    return <Text style={styles.detailValue}>{value}</Text>;
+  }
+  return (
+    <Pressable
+      accessibilityLabel={label}
+      accessibilityRole="button"
+      hitSlop={EDITABLE_VALUE_HIT_SLOP}
+      onPress={onPress}
+      style={styles.editableValue}
+      testID={testID}>
+      <Text style={[styles.detailValue, styles.editableDetailValue]}>
+        {value}
+      </Text>
+      <View pointerEvents="none" style={styles.editIcon}>
+        <RcIconEdit
+          color={colors2024['neutral-secondary']}
+          height={16}
+          width={16}
+        />
+      </View>
+    </Pressable>
+  );
+};
+
+export const PerpsProOpenOrderCard: React.FC<{
+  amountUnit?: PerpsProTradeAmountUnit;
+  cancelPending: boolean;
+  editEnabled?: boolean;
+  onCancel: (order: PerpsOpenOrderViewModel) => void;
+  onEdit?: (order: PerpsOpenOrderViewModel) => void;
+  onPressMarket?: (coin: string) => void;
+  order: PerpsOpenOrderViewModel;
+}> = React.memo(
+  ({
+    amountUnit = 'quote',
+    cancelPending,
+    editEnabled = false,
+    onCancel,
+    onEdit = () => undefined,
+    onPressMarket,
+    order,
+  }) => {
+    const { styles } = useTheme2024({ getStyle });
+    const { t } = useTranslation();
+    const market = usePerpsProMarketIdentity(order.coin);
+    const isBuy = order.side === 'buy';
+    const displayBaseAmount = (value: string) =>
+      formatPerpsProDecimal(value, market.szDecimals);
+    const displayQuoteAmount = (value: string | null) =>
+      formatPerpsProDecimal(value, 2);
+    const amountLabel: string | null =
+      amountUnit === 'base' ? market.displayBase : market.quoteAsset;
+    const displayAmount = (base: string, quote: string | null) =>
+      amountUnit === 'base'
+        ? displayBaseAmount(base)
+        : displayQuoteAmount(quote);
+    const executionPrice =
+      order.executionPriceKind === 'market'
+        ? t('page.perps.pro.openOrders.market')
+        : formatPerpsProVariableDecimal(order.executionPrice);
+    const numericFilledRatio = Number(order.filledRatio);
+    const filledRatio = Number.isFinite(numericFilledRatio)
+      ? Math.max(0, Math.min(numericFilledRatio, 1))
+      : 0;
+    const progressWidth = `${filledRatio * 100}%` as `${number}%`;
+
+    return (
+      <View style={styles.row} testID={`perps-pro-order-${order.key}`}>
+        <View>
+          <View style={styles.header}>
+            <View style={styles.identity}>
+              <View style={styles.titleRow}>
+                <View
+                  accessibilityLabel={
+                    isBuy
+                      ? t('page.perps.pro.openOrders.buy')
+                      : t('page.perps.pro.openOrders.sell')
+                  }
+                  style={isBuy ? styles.buySide : styles.sellSide}
+                  testID={`perps-pro-order-side-${order.key}`}>
+                  <Text style={styles.sideText}>{isBuy ? 'B' : 'S'}</Text>
+                </View>
+                <PerpsProMarketPair
+                  metadataReady={market.metadataReady}
+                  onPress={
+                    onPressMarket ? () => onPressMarket(order.coin) : undefined
+                  }
+                  style={styles.marketButton}
+                  testID={`perps-pro-order-market-${order.key}`}
+                  textStyle={styles.coin}
+                  value={market.displayPair}
+                />
+                {market.sourceTag ? (
+                  <View
+                    style={styles.sourceTag}
+                    testID={`perps-pro-order-source-${order.key}`}>
+                    <Text style={styles.sourceText}>{market.sourceTag}</Text>
+                  </View>
+                ) : null}
+              </View>
+            </View>
+            <View style={styles.headerActions}>
+              {order.category === 'basic' ? (
+                <View
+                  style={styles.progress}
+                  testID={`perps-pro-order-progress-${order.key}`}>
+                  <Text style={styles.progressText}>
+                    {formatPerpsProPercent(filledRatio, 0, false)}
+                  </Text>
+                  <View
+                    style={styles.progressTrack}
+                    testID={`perps-pro-order-progress-track-${order.key}`}>
+                    <View
+                      style={[
+                        isBuy ? styles.buyProgress : styles.sellProgress,
+                        { width: progressWidth },
+                      ]}
+                      testID={`perps-pro-order-progress-fill-${order.key}`}
+                    />
+                  </View>
+                </View>
+              ) : null}
+              <CancelButton
+                onPress={() => onCancel(order)}
+                pending={cancelPending}
+              />
+            </View>
+          </View>
+          <View
+            style={styles.metaRow}
+            testID={`perps-pro-order-meta-${order.key}`}>
+            <View
+              style={isBuy ? styles.buyTag : styles.sellTag}
+              testID={`perps-pro-order-type-${order.key}`}>
+              <Text style={isBuy ? styles.buyText : styles.sellText}>
+                {order.orderType}
+              </Text>
+            </View>
+            <Text style={styles.time}>
+              {formatPerpsProTime(order.timestamp)}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.details}>
+          {order.category === 'basic' ? (
+            <>
+              <View style={styles.detailRow}>
+                <Text style={styles.label}>
+                  {withOptionalUnit(
+                    `${t('page.perps.pro.openOrders.filled')} / ${t(
+                      'page.perps.pro.openOrders.amount',
+                    )}`,
+                    amountLabel,
+                  )}
+                </Text>
+                <Text style={styles.detailValue}>
+                  {displayAmount(order.filledSize, order.filledQuote)} /{' '}
+                  {displayAmount(order.amountBase, order.amountQuote)}
+                </Text>
+              </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.label}>
+                  {t('page.perps.pro.openOrders.price')}
+                </Text>
+                <EditableValue
+                  enabled={editEnabled && !!order.editKind}
+                  label={t('page.perps.pro.openOrders.edit')}
+                  onPress={() => onEdit(order)}
+                  testID={`perps-pro-order-price-edit-${order.key}`}
+                  value={executionPrice}
+                />
+              </View>
+            </>
+          ) : (
+            <>
+              <View style={styles.detailRow}>
+                <Text style={styles.label}>
+                  {withOptionalUnit(
+                    t('page.perps.pro.openOrders.amount'),
+                    amountLabel,
+                  )}
+                </Text>
+                <Text style={styles.detailValue}>
+                  {displayAmount(order.amountBase, order.displayAmountQuote)}
+                </Text>
+              </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.label}>
+                  {t('page.perps.pro.openOrders.price')}
+                </Text>
+                <Text style={styles.detailValue}>{executionPrice}</Text>
+              </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.label}>
+                  {t('page.perps.pro.openOrders.conditions')}
+                </Text>
+                <EditableValue
+                  enabled={editEnabled && !!order.editKind}
+                  label={t('page.perps.pro.openOrders.edit')}
+                  onPress={() => onEdit(order)}
+                  testID={`perps-pro-order-conditions-edit-${order.key}`}
+                  value={order.triggerCondition || '-'}
+                />
+              </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.label}>
+                  {t('page.perps.pro.openOrders.reduceOnly')}
+                </Text>
+                <Text style={styles.detailValue}>
+                  {order.reduceOnly
+                    ? t('page.perps.pro.openOrders.yes')
+                    : t('page.perps.pro.openOrders.no')}
+                </Text>
+              </View>
+            </>
+          )}
+        </View>
+      </View>
+    );
+  },
+);
+
+PerpsProOpenOrderCard.displayName = 'PerpsProOpenOrderCard';
+
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  row: {
+    gap: 12,
+    marginLeft: 16,
+    marginRight: 14,
+    paddingBottom: 24,
+  },
+  header: {
+    minHeight: 26,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  identity: {
+    flex: 1,
+    minWidth: 0,
+  },
+  titleRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
+  },
+  coin: {
+    color: colors2024['neutral-title-1'],
+    flexShrink: 1,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontWeight: '700',
+    lineHeight: 20,
+  },
+  marketButton: { flexShrink: 1 },
+  sourceTag: getPerpsProMetadataTagContainerStyle(colors2024),
+  sourceText: getPerpsProMetadataTagTextStyle(colors2024),
+  metaRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    marginTop: 4,
+  },
+  buySide: getPerpsProSolidSideTagContainerStyle(colors2024, 'positive'),
+  sellSide: getPerpsProSolidSideTagContainerStyle(colors2024, 'negative'),
+  sideText: getPerpsProSolidSideTagTextStyle(colors2024),
+  buyTag: getPerpsProTintedTagContainerStyle(colors2024, 'positive'),
+  sellTag: getPerpsProTintedTagContainerStyle(colors2024, 'negative'),
+  buyText: getPerpsProTintedTagTextStyle(colors2024, 'positive'),
+  sellText: getPerpsProTintedTagTextStyle(colors2024, 'negative'),
+  time: {
+    ...PERPS_PRO_NUMBER_STYLE,
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  headerActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    marginLeft: 8,
+  },
+  progress: {
+    alignItems: 'center',
+    gap: 4,
+    height: 18,
+    justifyContent: 'center',
+    width: 32,
+  },
+  progressText: {
+    ...PERPS_PRO_NUMBER_STYLE,
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro',
+    fontSize: 10,
+    fontWeight: '500',
+    lineHeight: 12,
+  },
+  progressTrack: {
+    backgroundColor: colors2024['neutral-line'],
+    borderRadius: 1,
+    height: 2,
+    overflow: 'hidden',
+    width: 32,
+  },
+  buyProgress: {
+    backgroundColor: colors2024['green-default'],
+    height: 2,
+  },
+  sellProgress: {
+    backgroundColor: colors2024['red-default'],
+    height: 2,
+  },
+  cancelButton: {
+    alignItems: 'center',
+    backgroundColor: colors2024['neutral-bg-2'],
+    borderRadius: 6,
+    height: 26,
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+  },
+  cancelButtonPressed: {
+    opacity: 0.6,
+  },
+  cancelText: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+  details: {
+    gap: 8,
+  },
+  detailRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    minHeight: 16,
+  },
+  label: {
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  detailValue: {
+    ...PERPS_PRO_NUMBER_STYLE,
+    color: colors2024['neutral-title-1'],
+    flexShrink: 1,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
+    marginLeft: 12,
+    textAlign: 'right',
+  },
+  editableValue: {
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    flex: 1,
+    flexDirection: 'row',
+    gap: 4,
+    justifyContent: 'flex-end',
+    marginLeft: 12,
+    minWidth: 0,
+  },
+  editableDetailValue: { marginLeft: 0 },
+  editIcon: {
+    alignItems: 'center',
+    height: 16,
+    justifyContent: 'center',
+    width: 16,
+  },
+}));

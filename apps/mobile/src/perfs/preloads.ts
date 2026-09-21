@@ -2,8 +2,13 @@ import { isNonPublicProductionEnv } from '@/constant';
 import { AppRootName, RootNames } from '@/constant/layout';
 import { isCached, preload } from 'react-native-bundle-splitter';
 
+const loadablesAreEager =
+  process.env.RABBY_MOBILE_MODULE_LOADING_MODE === 'eager';
+const pendingNamedComponentPreloads = new Map<string, Promise<void>>();
+
 export const PRELOAD_SCREENS = {
   [RootNames.Settings]: 'SettingsScreen',
+  [RootNames.SingleAddressHome]: 'SingleAddressHomeScreen',
 };
 
 export const PRELOAD_NAVIGATORS = {
@@ -11,12 +16,37 @@ export const PRELOAD_NAVIGATORS = {
   [RootNames.SingleAddressStack]: RootNames.SingleAddressStack,
 };
 
-async function preloadNamedComponent(name?: string) {
-  if (__DEV__ || !name || isCached(name)) {
+async function preloadNamedComponent(
+  name?: string,
+  { allowInDev = false }: { allowInDev?: boolean } = {},
+) {
+  if (
+    (__DEV__ && !allowInDev) ||
+    loadablesAreEager ||
+    !name ||
+    isCached(name)
+  ) {
     return;
   }
 
-  await preload().component(name);
+  const pendingPreload = pendingNamedComponentPreloads.get(name);
+  if (pendingPreload) {
+    await pendingPreload;
+    return;
+  }
+
+  const preloadPromise = Promise.resolve(preload().component(name)).then(
+    () => undefined,
+  );
+  pendingNamedComponentPreloads.set(name, preloadPromise);
+
+  try {
+    await preloadPromise;
+  } finally {
+    if (pendingNamedComponentPreloads.get(name) === preloadPromise) {
+      pendingNamedComponentPreloads.delete(name);
+    }
+  }
 }
 
 export async function preloadSettingsScreen() {
@@ -32,8 +62,21 @@ export async function preloadTransactionHotNavigator() {
   await preloadNamedComponent(PRELOAD_NAVIGATORS[RootNames.StackTransaction]);
 }
 
+/**
+ * Resolve the lazy TransactionNavigator before an explicit Perps route push.
+ *
+ * General startup preloads remain disabled in development, but entering Perps
+ * must not transition to bundle-splitter's null Suspense fallback while the
+ * shared navigator is still loading.
+ */
+export async function prepareTransactionNavigatorForPerpsNavigation() {
+  await preloadNamedComponent(PRELOAD_NAVIGATORS[RootNames.StackTransaction], {
+    allowInDev: true,
+  });
+}
+
 export async function preloadSingleAddressNavigator() {
-  await preloadNamedComponent(PRELOAD_NAVIGATORS[RootNames.SingleAddressStack]);
+  await preloadNamedComponent(PRELOAD_SCREENS[RootNames.SingleAddressHome]);
 }
 
 export async function preloadHomeShortcutNavigators() {
@@ -51,9 +94,11 @@ export const TESTKITS_PRELOAD_SCREENS: { [P in AppRootName]?: P } = {
   [RootNames.DevUINotifications]: 'DevUINotifications',
   [RootNames.DevUIDapps]: 'DevUIDapps',
   [RootNames.DevUIPermissions]: 'DevUIPermissions',
+  [RootNames.DevUIWalletConnect]: 'DevUIWalletConnect',
   [RootNames.DevCapabilityFile]: 'DevCapabilityFile',
   [RootNames.DevUIBuiltInPages]: 'DevUIBuiltInPages',
   [RootNames.DevDataSQLite]: 'DevDataSQLite',
+  [RootNames.DevWatchAddressFixtureImport]: 'DevWatchAddressFixtureImport',
   [RootNames.DevDataKeychain]: 'DevDataKeychain',
   [RootNames.DevDataKeyringVault]: 'DevDataKeyringVault',
   [RootNames.DevDataContactService]: 'DevDataContactService',
@@ -61,10 +106,12 @@ export const TESTKITS_PRELOAD_SCREENS: { [P in AppRootName]?: P } = {
   [RootNames.DevSwitches]: 'DevSwitches',
   [RootNames.DevPerf]: 'DevPerf',
   [RootNames.DebugLogViewer]: 'DebugLogViewer',
+  [RootNames.StartupPerformanceLogViewer]: 'StartupPerformanceLogViewer',
+  [RootNames.InMemoryLogViewer]: 'InMemoryLogViewer',
 };
 
 export async function preloadNonProductionScreens() {
-  if (!isNonPublicProductionEnv) {
+  if (!isNonPublicProductionEnv || loadablesAreEager) {
     return;
   }
 

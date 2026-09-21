@@ -1,18 +1,25 @@
 import { debounce } from 'lodash';
 
-import { getTop10MyAccounts } from '@/core/apis/account';
-import { transactionHistoryService } from '@/core/services';
+import {
+  getTransactionHistoryFailedCountSnapshot,
+  getTransactionHistorySucceedCountSnapshot,
+  transactionHistoryServiceApi,
+} from '@/core/serviceApi/transactionHistory';
 import { makeAvoidParallelAsyncFunc } from '@/core/utils/concurrency';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { onAppOrmSyncEvents } from '@/databases/sync/_event';
 import { zCreate } from '@/core/utils/reexports';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
+import { runStartupTask } from '@/core/utils/startupScheduler';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
+import type { RefLikeObject } from '@/utils/type';
 import {
-  resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
-} from '@/core/utils/store';
-import { RefLikeObject } from '@/utils/type';
-import { balanceAccountsStore } from '@/store/balance';
+  balanceAccountsStore,
+  getSelectedBalanceAddressesSnapshot,
+} from '@/store/balance';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { useShallow } from 'zustand/react/shallow';
 
 type HomeHistoryState = {
   pendingTxCount: number;
@@ -31,18 +38,33 @@ const homeHistoryStore = zCreate<HomeHistoryState>(() => ({
 }));
 
 export function useHomeHistoryStore() {
-  return {
-    pendingTxCount: homeHistoryStore(s => s.pendingTxCount),
-    historyCount: homeHistoryStore(s => s.historyCount),
-  };
+  return useActivityStore(
+    homeHistoryStore,
+    useShallow(state => ({
+      pendingTxCount: state.pendingTxCount,
+      historyCount: state.historyCount,
+    })),
+    Object.is,
+    { storeLabel: 'home-history-badges' },
+  );
 }
 
 export function useHomePendingTxCount() {
-  return homeHistoryStore(s => s.pendingTxCount);
+  return useActivityStore(
+    homeHistoryStore,
+    state => state.pendingTxCount,
+    Object.is,
+    { storeLabel: 'home-history-badges' },
+  );
 }
 
 export function useHomeHistoryCount() {
-  return homeHistoryStore(s => s.historyCount);
+  return useActivityStore(
+    homeHistoryStore,
+    state => state.historyCount,
+    Object.is,
+    { storeLabel: 'home-history-badges' },
+  );
 }
 
 function setHistoryCount(
@@ -63,25 +85,29 @@ function setHistoryCount(
 
 export const refreshSuccessAndFailList = makeAvoidParallelAsyncFunc(
   async () => {
-    const { top10Addresses } = await getTop10MyAccounts();
+    const top10Addresses = getSelectedBalanceAddressesSnapshot();
     if (!top10Addresses.length) return;
-    const timestamp = transactionHistoryService.getClearSuccessAndFailListTs();
+    const timestamp =
+      await transactionHistoryServiceApi.getClearSuccessAndFailListTs();
     const list = await HistoryItemEntity.getUnreadHistoryCount(
       top10Addresses,
       timestamp / 1000,
     );
-    list.forEach(i => {
-      const status = i.status ?? 1;
-      const id = `${i.owner_addr.toLowerCase()}-${i.txHash}`;
-      if (status === 1) {
-        transactionHistoryService.setSucceedList(id);
-      } else {
-        transactionHistoryService.setFailedList(id);
-      }
-    });
+    await Promise.all(
+      list.map(i => {
+        const status = i.status ?? 1;
+        const id = `${i.owner_addr.toLowerCase()}-${i.txHash}`;
+        if (status === 1) {
+          return transactionHistoryServiceApi.setSucceedList(id);
+        }
+        return transactionHistoryServiceApi.setFailedList(id);
+      }),
+    );
 
-    const count = transactionHistoryService.getFailedCount();
-    const success = transactionHistoryService.getSucceedCount();
+    const [count, success] = await Promise.all([
+      transactionHistoryServiceApi.getFailedCount(),
+      transactionHistoryServiceApi.getSucceedCount(),
+    ]);
 
     setHistoryCount({ success, fail: count });
 
@@ -113,7 +139,7 @@ export const resetFetchHistoryTxCount = makeAvoidParallelAsyncFunc(async () => {
     return;
   }
   const { pendingsLength } =
-    transactionHistoryService.getPendingsAddresses(addresses);
+    await transactionHistoryServiceApi.getPendingsAddresses(addresses);
   setPendingTxCount(pendingsLength);
   timeRef.current = pendingsLength
     ? setInterval(resetFetchHistoryTxCount, 5000)
@@ -122,7 +148,7 @@ export const resetFetchHistoryTxCount = makeAvoidParallelAsyncFunc(async () => {
 
 const thorttleGetSuccessAndFailList = debounce(refreshSuccessAndFailList, 1000);
 
-runIIFEFunc(() => {
+runStartupTask(() => {
   onAppOrmSyncEvents({
     taskFor: ['all-history'],
     onRemoteDataUpserted: ctx => {
@@ -137,4 +163,4 @@ runIIFEFunc(() => {
   });
 
   resetFetchHistoryTxCount();
-});
+}, STARTUP_TASKS.homeHistorySyncListener);

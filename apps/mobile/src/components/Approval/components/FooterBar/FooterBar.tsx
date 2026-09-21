@@ -1,29 +1,33 @@
+import { isApprovalProcessDisabled } from './securityGate';
 import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
-import { Chain } from '@/constant/chains';
+import type { Chain } from '@/constant/chains';
 import { SecurityEngineLevel } from '@/constant/security';
-import { AppColorsVariants } from '@/constant/theme';
-import { dappService, preferenceService } from '@/core/services';
-import { DappInfo } from '@/core/services/dappService';
-import { Account } from '@/core/services/preference';
-import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
-import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
-import { Result } from '@rabby-wallet/rabby-security-engine';
+import type {
+  AppColors2024Variants,
+  AppColorsVariants,
+} from '@/constant/theme';
+import { getDappSnapshot } from '@/core/serviceApi/dapp';
+import type { DappInfo } from '@/core/services/dappService';
+import type { Account } from '@/core/startupServices/preference';
+import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
+import type { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
+import type { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
-import clsx from 'clsx';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { AccountInfo } from './AccountInfo';
-import { ActionGroup, Props as ActionGroupProps } from './ActionGroup';
+import type { Props as ActionGroupProps } from './ActionGroup';
+import { ActionGroup } from './ActionGroup';
 import { GasAccountTips } from './GasLessComponents/GasAccountTips';
 import { GasLessNotEnough } from './GasLessComponents/GasLessNotEnough';
-import { GasLessConfig } from './GasLessComponents';
+import type { GasLessConfig } from './GasLessComponents';
 import { GasLessActivityToSign } from './GasLessComponents/GasLessActivityToSign';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Text } from '@/components/Typography';
 import { shouldUseLegacyApprovalFooterAutoSwitch } from '../TxComponents/GasSelector/approvalGasDisplay';
-import { GasAccountTopUpWaitCallback } from '@/screens/GasAccount/components/topUpContinuation';
+import type { GasAccountTopUpWaitCallback } from '@/screens/GasAccount/components/topUpContinuation';
 import {
   BOTTOM_BUTTON_BOTTOM_OFFSET,
   BOTTOM_BUTTON_TOP_OFFSET,
@@ -38,6 +42,7 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   origin?: string;
   originLogo?: string;
   hasUnProcessSecurityResult?: boolean;
+  securityBlocked?: boolean;
   hasShadow?: boolean;
   isTestnet?: boolean;
   engineResults?: Result[];
@@ -68,7 +73,10 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   isFirstGasLessLoading?: boolean;
 }
 
-const getStyles = (colors: AppColorsVariants) =>
+const getStyles = (
+  colors: AppColorsVariants,
+  colors2024: AppColors2024Variants,
+) =>
   StyleSheet.create({
     wrapper: {
       paddingHorizontal: 20,
@@ -76,7 +84,7 @@ const getStyles = (colors: AppColorsVariants) =>
       paddingBottom: BOTTOM_BUTTON_BOTTOM_OFFSET,
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
-      backgroundColor: colors['neutral-bg-1'],
+      backgroundColor: colors2024['neutral-bg-1'],
       position: 'relative',
       // shadow
       shadowColor: colors['neutral-line'],
@@ -155,6 +163,14 @@ const getStyles = (colors: AppColorsVariants) =>
       fontSize: 13,
       lineHeight: 15,
     },
+    securityLevelTipMessage: {
+      flex: 1,
+    },
+    ignoreAllText: {
+      fontSize: 13,
+      fontWeight: '500',
+      textDecorationLine: 'underline',
+    },
     iconLevel: {
       width: 14,
       height: 14,
@@ -194,7 +210,8 @@ export const FooterBar: React.FC<Props> = ({
   securityLevel,
   engineResults = [],
   hasUnProcessSecurityResult,
-  hasShadow = false,
+  securityBlocked = false,
+  hasShadow: _hasShadow = false,
   showGasLess = false,
   useGasLess = false,
   canUseGasLess = false,
@@ -226,7 +243,11 @@ export const FooterBar: React.FC<Props> = ({
   );
   const { t } = useTranslation();
   const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { colors2024 } = useTheme2024();
+  const styles = React.useMemo(
+    () => getStyles(colors, colors2024),
+    [colors, colors2024],
+  );
   const SecurityLevelTipColor = getSecurityLevelTipColor(colors);
 
   const displayOrigin = useMemo(() => {
@@ -286,7 +307,7 @@ export const FooterBar: React.FC<Props> = ({
 
   useEffect(() => {
     if (origin) {
-      const site = dappService.getDapp(origin);
+      const site = getDappSnapshot(origin);
       site && setConnectedSite(site);
     }
   }, [origin]);
@@ -338,11 +359,7 @@ export const FooterBar: React.FC<Props> = ({
   return (
     <View style={styles.container}>
       {/* {!isDarkTheme && hasShadow && <Shadow />} */}
-      <View
-        style={styles.wrapper}
-        className={clsx({
-          // 'has-shadow': !isDarkTheme && hasShadow,
-        })}>
+      <View style={styles.wrapper}>
         {Header}
 
         {isFirstGasCostLoading || isFirstGasLessLoading ? null : (
@@ -378,6 +395,7 @@ export const FooterBar: React.FC<Props> = ({
                     await onWaitDepositResult?.(result);
                     onChangeGasAccount?.();
                   }}
+                  fallbackDirectSignToOpenUI
                 />
               )
             ) : null}
@@ -395,6 +413,7 @@ export const FooterBar: React.FC<Props> = ({
                   onDeposit={onDeposit}
                   onWaitDepositResult={onWaitDepositResult}
                   disableDepositAction={disableGasAccountDeposit}
+                  fallbackDirectSignToOpenUI
                 />
               )
             ) : null}
@@ -410,14 +429,14 @@ export const FooterBar: React.FC<Props> = ({
           account={account}
           gasLess={useGasLess && !payGasByGasAccount}
           {...props}
-          disabledProcess={
-            payGasByGasAccount
-              ? !gasAccountCanPay ||
-                (!!securityLevel && !!hasUnProcessSecurityResult)
-              : useGasLess
-              ? false
-              : props.disabledProcess
-          }
+          disabledProcess={isApprovalProcessDisabled({
+            securityBlocked,
+            hasUnprocessedSecurityResult: !!hasUnProcessSecurityResult,
+            payGasByGasAccount,
+            gasAccountCanPay,
+            useGasLess,
+            disabledProcess: !!props.disabledProcess,
+          })}
           enableTooltip={
             account.type === KEYRING_TYPE.WatchAddressKeyring
               ? true
@@ -433,7 +452,6 @@ export const FooterBar: React.FC<Props> = ({
         />
         {securityLevel && hasUnProcessSecurityResult && (
           <View
-            className="security-level-tip"
             style={StyleSheet.flatten([
               styles.securityLevelTip,
               {
@@ -442,9 +460,9 @@ export const FooterBar: React.FC<Props> = ({
             ])}>
             <Icon style={styles.iconLevel} />
             <Text
-              className="flex-1"
               style={StyleSheet.flatten([
                 styles.securityLevelTipText,
+                styles.securityLevelTipMessage,
                 {
                   color: SecurityLevelTipColor[securityLevel].text,
                 },
@@ -453,9 +471,9 @@ export const FooterBar: React.FC<Props> = ({
             </Text>
             <TouchableOpacity onPress={onIgnoreAllRules}>
               <Text
-                className="underline text-13 font-medium"
                 style={StyleSheet.flatten([
                   styles.securityLevelTipText,
+                  styles.ignoreAllText,
                   {
                     color: SecurityLevelTipColor[securityLevel].text,
                   },

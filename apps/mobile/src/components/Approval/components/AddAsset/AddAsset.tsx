@@ -1,8 +1,6 @@
 import { RcIconInfoFillCC } from '@/assets/icons/common';
-import {
-  CopyAddressIcon,
-  CopyAddressIconType,
-} from '@/components/AddressViewer/CopyAddress';
+import type { CopyAddressIconType } from '@/components/AddressViewer/CopyAddress';
+import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Button } from '@/components/Button';
 import { ChainIconFastImage } from '@/components/Chain/ChainIconImage';
@@ -17,13 +15,15 @@ import { Tip } from '@/components/Tip';
 import { HistoryItem } from '@/components/TokenDetailPopup/HistoryItem';
 import { SkeletonHistoryListOfTokenDetail } from '@/components/TokenDetailPopup/Skeleton';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { Chain, CHAINS_ENUM } from '@/constant/chains';
+import type { Chain } from '@/constant/chains';
+import { CHAINS_ENUM } from '@/constant/chains';
 import { ModalLayouts } from '@/constant/layout';
 import { apiCustomTestnet } from '@/core/apis';
 import { openapi } from '@/core/request';
-import { dappService, preferenceService } from '@/core/services';
-import { CustomTestnetToken } from '@/core/services/customTestnetService';
-import { Account, Token } from '@/core/services/preference';
+import { dappServiceApi } from '@/core/serviceApi/dapp';
+import { getCustomizedToken } from '@/core/serviceApi/preference';
+import type { CustomTestnetToken } from '@/core/services/customTestnetService';
+import type { Account, Token } from '@/core/startupServices/preference';
 import { useThemeStyles } from '@/hooks/theme';
 import { useApproval } from '@/hooks/useApproval';
 import { ellipsisAddress } from '@/utils/address';
@@ -33,12 +33,10 @@ import { createGetStyles } from '@/utils/styles';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { getTokenSymbol } from '@/utils/token';
 import { formatTokenAmount } from '@debank/common';
-import {
-  BottomSheetFlatList,
-  BottomSheetFlatListMethods,
-} from '@gorhom/bottom-sheet';
+import type { BottomSheetFlatListMethods } from '@gorhom/bottom-sheet';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import {
+import type {
   TokenItem,
   TxDisplayItem,
   TxHistoryItem,
@@ -55,6 +53,7 @@ import React, {
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Dimensions, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Typography';
+import type { ProviderRequestContext } from '@/core/controllers/type';
 
 interface AddAssetProps {
   data: {
@@ -71,6 +70,7 @@ interface AddAssetProps {
     icon: string;
     name: string;
   };
+  requestContext?: ProviderRequestContext;
 }
 
 interface TokenHistoryItem extends TxHistoryItem {
@@ -200,53 +200,62 @@ export const AddAsset = ({
 
   // console.log(token, customTokens, customTestnetToken, params);
   const init = useMemoizedFn(async () => {
-    const site = await dappService.getDapp(params.session.origin);
-    const chain = findChain({
-      enum: site?.chainId,
-    });
+    const requestChain = params.requestContext?.chainId
+      ? findChain({ id: params.requestContext.chainId })
+      : undefined;
+    const site = await dappServiceApi.getDapp(params.session.origin);
+    const chain =
+      requestChain ||
+      findChain({
+        enum: site?.chainId,
+      });
     setCurrentChain(chain);
-    if (chain?.isTestnet) {
-      if (account) {
-        const { address } = params.data.options;
-        const isAdded = await apiCustomTestnet.isAddedCustomTestnetToken({
-          id: address,
-          chainId: chain.id,
-        });
-        const result = await apiCustomTestnet.getCustomTestnetToken({
-          chainId: chain.id,
-          address: account?.address,
-          tokenId: address,
-        });
-        setCustomTestnetToken(result);
-        setIsCustomTestnetTokenAdded(isAdded);
-      }
-    } else {
-      const customTokens = await preferenceService.getCustomizedToken();
-      if (account) {
-        const { address } = params.data.options;
-        const result = await openapi.searchToken(
-          account.address,
-          address,
-          undefined,
-          true,
-        );
-        setTokens(result);
-        if (result.length === 1) {
-          setToken(result[0]);
-        }
-        if (result.length > 1) {
-          setChainSelectorVisible(true);
-          activeSelectChainPopup();
-        }
-        const token = result[0];
-        if (token) {
-          const target = findChain({
-            serverId: token.chain,
+    try {
+      if (chain?.isTestnet) {
+        if (account) {
+          const { address } = params.data.options;
+          const isAdded = await apiCustomTestnet.isAddedCustomTestnetToken({
+            id: address,
+            chainId: chain.id,
           });
-          setCurrentChain(target || findChain({ enum: CHAINS_ENUM.ETH })!);
+          const result = await apiCustomTestnet.getCustomTestnetToken({
+            chainId: chain.id,
+            address: account?.address,
+            tokenId: address,
+          });
+          setCustomTestnetToken(result);
+          setIsCustomTestnetTokenAdded(isAdded);
         }
+      } else {
+        const customTokens = await getCustomizedToken();
+        if (account) {
+          const { address } = params.data.options;
+          const result = await openapi.searchToken(
+            account.address,
+            address,
+            undefined,
+            true,
+          );
+          setTokens(result);
+          if (result.length === 1) {
+            setToken(result[0]);
+          }
+          if (result.length > 1) {
+            setChainSelectorVisible(true);
+            activeSelectChainPopup();
+          }
+          const token = result[0];
+          if (token) {
+            const target = findChain({
+              serverId: token.chain,
+            });
+            setCurrentChain(target || findChain({ enum: CHAINS_ENUM.ETH })!);
+          }
+        }
+        setCustomTokens(customTokens);
       }
-      setCustomTokens(customTokens);
+    } catch (e) {
+      console.error(e);
     }
 
     setIsLoading(false);
@@ -355,7 +364,6 @@ export const AddAsset = ({
     return (
       <View style={styles.tokenNotFound}>
         <View style={styles.tokenNotFoundMain}>
-          {/* <img src={IconWarning} className="icon icon-warning" /> */}
           <RcIconInfoFillCC color={colors['neutral-line']} />
           <Text style={styles.tokenNotFoundText}>
             {t('page.addToken.tokenNotFound')}

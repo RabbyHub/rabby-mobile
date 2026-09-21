@@ -3,6 +3,7 @@ import { ORM_TABLE_NAMES } from '@/databases/constant';
 import type { IAppChainItem } from './appchain';
 import { ResourceBaseStore } from './_resourceBase';
 import type { ResourceLocalTarget } from './_resourceFlowDebug';
+import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 
 type AppChainResourceDetail = {
   trigger: 'initStore' | 'batchGetAppChains' | 'getAppChains';
@@ -11,6 +12,16 @@ type AppChainResourceDetail = {
   count?: number;
   chainId?: string;
 };
+
+function pickAppChainPersistDiagnosticDetail(detail: AppChainResourceDetail) {
+  return {
+    trigger: detail.trigger,
+    force: detail.force,
+    reason: detail.reason,
+    count: detail.count,
+    chainId: detail.chainId,
+  };
+}
 
 const APPCHAIN_RESOURCE_KEY_SEPARATOR = '::';
 
@@ -271,14 +282,61 @@ class AppChainResourceStore extends ResourceBaseStore<IAppChainItem> {
     persist: () => Promise<void>,
     detail: AppChainResourceDetail,
   ) {
+    const startedAt = Date.now();
+    traceStartupDiagnostic('resource', 'persist_queued', {
+      family: 'appchain',
+      ...pickAppChainPersistDiagnosticDetail(detail),
+    });
+    const persistWithDiag = () => {
+      traceStartupDiagnostic('resource', 'persist_start', {
+        family: 'appchain',
+        queuedMs: Date.now() - startedAt,
+        ...pickAppChainPersistDiagnosticDetail(detail),
+      });
+
+      let persistResult: Promise<void> | void;
+      try {
+        persistResult = persist();
+      } catch (error) {
+        traceStartupDiagnostic('resource', 'persist_end', {
+          family: 'appchain',
+          status: 'error',
+          durationMs: Date.now() - startedAt,
+          error: error instanceof Error ? error.message : String(error),
+          ...pickAppChainPersistDiagnosticDetail(detail),
+        });
+        throw error;
+      }
+
+      return Promise.resolve(persistResult)
+        .then(() => {
+          traceStartupDiagnostic('resource', 'persist_end', {
+            family: 'appchain',
+            status: 'success',
+            durationMs: Date.now() - startedAt,
+            ...pickAppChainPersistDiagnosticDetail(detail),
+          });
+        })
+        .catch(error => {
+          traceStartupDiagnostic('resource', 'persist_end', {
+            family: 'appchain',
+            status: 'error',
+            durationMs: Date.now() - startedAt,
+            error: error instanceof Error ? error.message : String(error),
+            ...pickAppChainPersistDiagnosticDetail(detail),
+          });
+          throw error;
+        });
+    };
+
     if (!this.enabled) {
-      return persist();
+      return persistWithDiag();
     }
 
     const resourceKeys = this.getKnownResourceKeys(ownerAddr);
 
     if (!resourceKeys.length) {
-      return persist();
+      return persistWithDiag();
     }
 
     resourceKeys.forEach(resourceKey => {
@@ -290,6 +348,11 @@ class AppChainResourceStore extends ResourceBaseStore<IAppChainItem> {
 
     return Promise.resolve()
       .then(() => {
+        traceStartupDiagnostic('resource', 'persist_start', {
+          family: 'appchain',
+          queuedMs: Date.now() - startedAt,
+          ...pickAppChainPersistDiagnosticDetail(detail),
+        });
         resourceKeys.forEach(resourceKey => {
           this.markPersistStarted(
             resourceKey,
@@ -306,6 +369,12 @@ class AppChainResourceStore extends ResourceBaseStore<IAppChainItem> {
             this.getLifecycleOptionsByResourceKey(resourceKey, detail),
           );
         });
+        traceStartupDiagnostic('resource', 'persist_end', {
+          family: 'appchain',
+          status: 'success',
+          durationMs: Date.now() - startedAt,
+          ...pickAppChainPersistDiagnosticDetail(detail),
+        });
       })
       .catch(error => {
         console.error(`Failed to persist appchains for ${ownerAddr}:`, error);
@@ -317,6 +386,13 @@ class AppChainResourceStore extends ResourceBaseStore<IAppChainItem> {
             error,
             this.getLifecycleOptionsByResourceKey(resourceKey, detail),
           );
+        });
+        traceStartupDiagnostic('resource', 'persist_end', {
+          family: 'appchain',
+          status: 'error',
+          durationMs: Date.now() - startedAt,
+          error: error instanceof Error ? error.message : String(error),
+          ...pickAppChainPersistDiagnosticDetail(detail),
         });
       });
   }

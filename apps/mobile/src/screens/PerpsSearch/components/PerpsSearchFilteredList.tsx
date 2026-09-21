@@ -67,7 +67,7 @@ export const PerpsSearchFilteredList: React.FC<{
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: { flex: 1 },
-  content: { paddingHorizontal: 12, paddingBottom: 24 },
+  content: { paddingTop: 8, paddingHorizontal: 8, paddingBottom: 24 },
   empty: {
     paddingTop: 120,
     alignItems: 'center',

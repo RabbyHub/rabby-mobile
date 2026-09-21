@@ -1,6 +1,12 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useIsFocused, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
@@ -15,12 +21,28 @@ import {
   type SwapBridgeTab,
 } from '@/navigation-type';
 import { createGetStyles2024 } from '@/utils/styles';
+import { isNonProductionDiagnosticsEnabled } from '@/core/utils/diagnosticEnv';
+import { useFeatureActivationDiagnostics } from '@/hooks/useFeatureActivationDiagnostics';
+import {
+  ensureFeatureActivation,
+  markFeatureActivation,
+} from '@/core/utils/featureActivationDiagnostics';
+import {
+  useRegressionScenario,
+  useRegressionScenarioComponentAction,
+} from '@/devtools/regressionScenarios/react';
 
 import { Bridge } from './Bridge';
 import { BridgeHeader } from '../Bridge/components/BridgeHeader';
 import Swap from './Swap';
 import { SwapHeader } from '../Swap/components/Header';
 import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
+import { withSwapService } from '../Swap/swapServiceDependencies';
+import { isSwapBridgeSceneActive } from './sceneActivation';
+import {
+  createInitialMountedSwapBridgeScenes,
+  mountSwapBridgeScene,
+} from './sceneMounting';
 
 type SwapBridgeRoute = GetNestedScreenRouteProp<
   'TransactionNavigatorParamList',
@@ -30,6 +52,15 @@ type SwapBridgeRoute = GetNestedScreenRouteProp<
 type SwapBridgeScreenProps = {
   isForMultipleAddress?: boolean;
 };
+
+function SwapBridgeActivationProbe({
+  activeTab,
+}: {
+  activeTab: SwapBridgeTab;
+}) {
+  useFeatureActivationDiagnostics(activeTab);
+  return null;
+}
 
 const TABS: { key: SwapBridgeTab; title: string }[] = [
   { key: 'swap', title: 'Swap' },
@@ -113,10 +144,12 @@ function SwapBridgeHeaderRight({
 function SwapBridgeNativeHeader({
   activeTab,
   isForMultipleAddress,
+  isScreenFocused,
   onTabPress,
 }: {
   activeTab: SwapBridgeTab;
   isForMultipleAddress: boolean;
+  isScreenFocused: boolean;
   onTabPress: (tab: SwapBridgeTab) => void;
 }) {
   const { styles } = useTheme2024({ getStyle });
@@ -132,23 +165,100 @@ function SwapBridgeNativeHeader({
             onTabPress={onTabPress}
           />
         </View>
-        <SwapBridgeHeaderRight
-          activeTab={activeTab}
-          isForMultipleAddress={isForMultipleAddress}
-        />
+        {isScreenFocused && (
+          <SwapBridgeHeaderRight
+            activeTab={activeTab}
+            isForMultipleAddress={isForMultipleAddress}
+          />
+        )}
       </View>
     </View>
   );
 }
 
-function SwapBridgeScreen({
+function SwapBridgeScreenContent({
   isForMultipleAddress = false,
 }: SwapBridgeScreenProps) {
   const route = useRoute<SwapBridgeRoute>();
   const initialTab = useMemo(() => getInitialTab(route), [route]);
+  const didMarkContentRender = useRef(false);
+  if (!didMarkContentRender.current) {
+    didMarkContentRender.current = true;
+    const activationCycleId = ensureFeatureActivation(
+      initialTab,
+      'swap_bridge_content_render_fallback',
+    );
+    markFeatureActivation(initialTab, 'content-render-start', {
+      cycleId: activationCycleId,
+      reason: 'swap_bridge_content_render_started',
+    });
+  }
   const [activeTab, setActiveTab] = useState<SwapBridgeTab>(initialTab);
+  const [mountedScenes, setMountedScenes] = useState(() =>
+    createInitialMountedSwapBridgeScenes(initialTab),
+  );
+  // Swap-again can leave an earlier SwapBridge route mounted. Shared scene
+  // modals must have only one focused host.
+  const isScreenFocused = useIsFocused();
   const { styles } = useTheme2024({ getStyle });
   const { setNavigationOptions } = useSafeSetNavigationOptions();
+  const regressionScenario = useRegressionScenario<'SwapBridge'>();
+
+  const activateTab = useCallback((tab: SwapBridgeTab) => {
+    setMountedScenes(current => mountSwapBridgeScene(current, tab));
+    setActiveTab(tab);
+  }, []);
+  const activateTabForRegression = useCallback(
+    async (tab: SwapBridgeTab) => {
+      activateTab(tab);
+      await new Promise<void>(resolve => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
+    },
+    [activateTab],
+  );
+  const activateSwapForRegression = useCallback(
+    () => activateTabForRegression('swap'),
+    [activateTabForRegression],
+  );
+  const activateBridgeForRegression = useCallback(
+    () => activateTabForRegression('bridge'),
+    [activateTabForRegression],
+  );
+
+  useRegressionScenarioComponentAction(
+    'swap-bridge.activate-swap',
+    activateSwapForRegression,
+  );
+  useRegressionScenarioComponentAction(
+    'swap-bridge.activate-bridge',
+    activateBridgeForRegression,
+  );
+
+  useEffect(() => {
+    if (
+      !regressionScenario.active ||
+      regressionScenario.scenario !== 'swap-bridge'
+    ) {
+      return;
+    }
+    regressionScenario.report('assertion', {
+      assertion: `swap-bridge-${activeTab}-active`,
+      passed: true,
+      activeTab,
+    });
+  }, [activeTab, regressionScenario]);
+
+  const swapSceneActive = isSwapBridgeSceneActive({
+    activeTab,
+    scene: 'swap',
+    screenFocused: isScreenFocused,
+  });
+  const bridgeSceneActive = isSwapBridgeSceneActive({
+    activeTab,
+    scene: 'bridge',
+    screenFocused: isScreenFocused,
+  });
 
   const handleTabPress = useCallback(
     (tab: SwapBridgeTab) => {
@@ -156,9 +266,9 @@ function SwapBridgeScreen({
         return;
       }
 
-      setActiveTab(tab);
+      activateTab(tab);
     },
-    [activeTab],
+    [activateTab, activeTab],
   );
 
   const renderHeader = useCallback(
@@ -166,10 +276,11 @@ function SwapBridgeScreen({
       <SwapBridgeNativeHeader
         activeTab={activeTab}
         isForMultipleAddress={isForMultipleAddress}
+        isScreenFocused={isScreenFocused}
         onTabPress={handleTabPress}
       />
     ),
-    [activeTab, handleTabPress, isForMultipleAddress],
+    [activeTab, handleTabPress, isForMultipleAddress, isScreenFocused],
   );
 
   useEffect(() => {
@@ -181,47 +292,103 @@ function SwapBridgeScreen({
 
   return (
     <View style={styles.container}>
-      <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
-      <View
-        pointerEvents={activeTab === 'swap' ? 'auto' : 'none'}
-        style={[
-          styles.tabScene,
-          activeTab !== 'swap' && styles.inactiveTabScene,
-        ]}>
-        {isForMultipleAddress ? (
-          <Swap.ForMultipleAddress
-            disableHeaderRight
-            disableAccountSwitcherModal
-          />
-        ) : (
-          <Swap disableHeaderRight disableAccountSwitcherModal />
-        )}
-      </View>
-      <View
-        pointerEvents={activeTab === 'bridge' ? 'auto' : 'none'}
-        style={[
-          styles.tabScene,
-          activeTab !== 'bridge' && styles.inactiveTabScene,
-        ]}>
-        {isForMultipleAddress ? (
-          <Bridge.ForMultipleAddress
-            disableHeaderRight
-            disableAccountSwitcherModal
-          />
-        ) : (
-          <Bridge disableHeaderRight disableAccountSwitcherModal />
-        )}
-      </View>
+      {isNonProductionDiagnosticsEnabled ? (
+        <SwapBridgeActivationProbe activeTab={activeTab} />
+      ) : null}
+      {isScreenFocused && (
+        <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
+      )}
+      {mountedScenes.swap ? (
+        <View
+          pointerEvents={activeTab === 'swap' ? 'auto' : 'none'}
+          style={[
+            styles.tabScene,
+            activeTab !== 'swap' && styles.inactiveTabScene,
+          ]}>
+          {isForMultipleAddress ? (
+            <Swap.ForMultipleAddress
+              disableHeaderRight
+              disableAccountSwitcherModal
+              sceneActive={swapSceneActive}
+              diagnosticActive={
+                isNonProductionDiagnosticsEnabled && swapSceneActive
+              }
+            />
+          ) : (
+            <Swap
+              disableHeaderRight
+              disableAccountSwitcherModal
+              sceneActive={swapSceneActive}
+              diagnosticActive={
+                isNonProductionDiagnosticsEnabled && swapSceneActive
+              }
+            />
+          )}
+        </View>
+      ) : null}
+      {mountedScenes.bridge ? (
+        <View
+          pointerEvents={activeTab === 'bridge' ? 'auto' : 'none'}
+          style={[
+            styles.tabScene,
+            activeTab !== 'bridge' && styles.inactiveTabScene,
+          ]}>
+          {isForMultipleAddress ? (
+            <Bridge.ForMultipleAddress
+              disableHeaderRight
+              disableAccountSwitcherModal
+              sceneActive={bridgeSceneActive}
+              diagnosticActive={
+                isNonProductionDiagnosticsEnabled && bridgeSceneActive
+              }
+            />
+          ) : (
+            <Bridge
+              disableHeaderRight
+              disableAccountSwitcherModal
+              sceneActive={bridgeSceneActive}
+              diagnosticActive={
+                isNonProductionDiagnosticsEnabled && bridgeSceneActive
+              }
+            />
+          )}
+        </View>
+      ) : null}
       <TokenInfoPopup />
     </View>
   );
 }
 
-function ForMultipleAddress() {
-  return <SwapBridgeScreen isForMultipleAddress />;
+const SwapBridgeScreenBase = withSwapService(SwapBridgeScreenContent, {
+  fallback: <View />,
+});
+
+function SwapBridgeScreenRouteEntry(props: SwapBridgeScreenProps) {
+  const route = useRoute<SwapBridgeRoute>();
+  const initialTab = getInitialTab(route);
+  const didMarkRouteRender = useRef(false);
+  if (!didMarkRouteRender.current) {
+    didMarkRouteRender.current = true;
+    const cycleId = ensureFeatureActivation(
+      initialTab,
+      'swap_bridge_route_render_fallback',
+    );
+    markFeatureActivation(initialTab, 'route-render-start', {
+      cycleId,
+      reason: 'swap_bridge_route_render_started',
+    });
+  }
+
+  return <SwapBridgeScreenBase {...props} />;
 }
 
-SwapBridgeScreen.ForMultipleAddress = ForMultipleAddress;
+function ForMultipleAddress() {
+  return <SwapBridgeScreenRouteEntry isForMultipleAddress />;
+}
+
+const SwapBridgeScreen = Object.assign(SwapBridgeScreenRouteEntry, {
+  ForMultipleAddress,
+});
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {

@@ -71,7 +71,7 @@ export const ProcessActions: React.FC<Props> = ({
               titleStyle={buttonTextStyle}
               buttonStyle={buttonStyle}
               gasLess={gasLess}
-              showOrigin={!gasLess && !disabledProcess}
+              showOrigin={!gasLess}
               icon={buttonIcon}
               type="process">
               <Button

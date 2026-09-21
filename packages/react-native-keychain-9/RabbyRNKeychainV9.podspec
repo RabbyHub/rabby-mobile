@@ -7,7 +7,7 @@ Pod::Spec.new do |s|
 
   s.name           = "RabbyRNKeychainV9"
   s.version        = version
-  s.summary        = "Local Rabby fork of react-native-keychain 9.0.0."
+  s.summary        = "Local Rabby fork of react-native-keychain 9.2.3."
   s.homepage       = "https://github.com/RabbyHub/rabby-mobile"
   s.license        = "MIT"
   s.author         = { "Rabby Mobile" => "mobile@rabby.io" }

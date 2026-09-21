@@ -1,0 +1,151 @@
+import { apisPerps } from '@/core/apis/perps';
+import {
+  perpsStore,
+  setAccountNeedApproveAgent,
+  setAccountNeedApproveBuilderFee,
+} from '@/hooks/perps/usePerpsStore';
+import { showToast } from '@/hooks/perps/showToast';
+import * as Sentry from '@sentry/react-native';
+
+import { isPerpsActionUserCancelled } from './actions/actionError';
+import { invalidatePerpsActionApprovalCache } from './actions/perpsActionApproval';
+
+// Returns true when the error came from an expired agent. It invalidates the
+// preflight cache so the user's next attempt must recheck remote authorization;
+// the failed financial action is never replayed automatically.
+export const judgeIsUserAgentIsExpired = async (
+  errorMessage: string,
+): Promise<boolean> => {
+  const currentAccount = perpsStore.getState().currentPerpsAccount;
+  const masterAddress = currentAccount?.address;
+  if (!masterAddress) {
+    return false;
+  }
+  // self-sign master signs its own orders — there is no agent to expire.
+  if (apisPerps.isSelfSignPerpsAccount(currentAccount?.type)) {
+    return false;
+  }
+
+  const agentWalletPreference = await apisPerps.getAgentWalletPreference(
+    masterAddress,
+  );
+  const agentAddress = agentWalletPreference?.agentAddress;
+  if (agentAddress && errorMessage.includes(agentAddress)) {
+    console.warn('handle action agent is expired, reauthorize on next attempt');
+    setAccountNeedApproveAgent(true);
+    invalidatePerpsActionApprovalCache();
+    showToast('Agent expired. Authorize again to continue.', 'error');
+    return true;
+  }
+  return false;
+};
+
+// Hyperliquid rejects orders carrying a builder field when the user has not yet
+// approved the builder fee, e.g. "Builder fee has not been approved."
+const BUILDER_FEE_NOT_APPROVED_RE = /builder fee has not been approved/i;
+
+// Returns true when the error came from an unapproved builder fee. Side-effect:
+// toast + flips `accountNeedApproveBuilderFee`. Callers should treat true as
+// "stop retrying".
+export const judgeIsBuilderFeeNeedApprove = (errorMessage: string): boolean => {
+  if (BUILDER_FEE_NOT_APPROVED_RE.test(errorMessage)) {
+    console.warn('handle action builder fee is not approved');
+    showToast('Builder fee has not been approved, please try again', 'error');
+    setAccountNeedApproveBuilderFee(true);
+    return true;
+  }
+  return false;
+};
+
+// User-cancelled signatures are not errors: never toast an error or hit Sentry
+// for them. Covers the three cancel shapes the perps sign flow can produce:
+//   - hardware mini-sign rethrows the string 'Canceled' (executeSignatures)
+//   - local-wallet unlock / biometrics throw WalletUnlockCancelledError
+export function isUserCancelledSignature(error: unknown): boolean {
+  return isPerpsActionUserCancelled(error);
+}
+
+// Normalize a thrown value into an Error without losing information.
+// `String(obj)` yields "[object Object]" and `JSON.stringify(err)` yields "{}"
+// (Error props are non-enumerable) — both produced message-less Sentry issues.
+function toError(value: unknown): Error {
+  if (value instanceof Error) {
+    return value;
+  }
+  if (typeof value === 'string') {
+    return new Error(value);
+  }
+  try {
+    return new Error(JSON.stringify(value) ?? String(value));
+  } catch {
+    return new Error(String(value));
+  }
+}
+
+type RunPerpsActionConfig<T> = {
+  /** Value returned when an error is caught (after the side effects below). */
+  fallback: T;
+  /**
+   * Short operation label, e.g. 'open position'. Drives the console / Sentry
+   * message and the default toast text (`${label} error`).
+   */
+  label: string;
+  /**
+   * Override the user-facing toast. Defaults to
+   * `error.message || `${label} error``. Pass a fixed string for flows that
+   * should not surface the raw error (e.g. cancel / swap).
+   */
+  getToastMessage?: (error: any) => string;
+  /** Extra serialisable context appended to the Sentry error, e.g. the params. */
+  context?: unknown;
+};
+
+/**
+ * Wraps a perps action so every handler shares one error path:
+ *   1. swallow known, self-handled errors (expired agent / unapproved builder
+ *      fee) — expired agents invalidate preflight and require a user retry;
+ *   2. otherwise console + toast + Sentry, then return `fallback`.
+ * Lets each handler declare only what differs (fallback / label / toast /
+ * context) instead of repeating the catch block on every new action.
+ */
+export async function runPerpsAction<T>(
+  config: RunPerpsActionConfig<T>,
+  action: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await action();
+  } catch (error: any) {
+    if (isUserCancelledSignature(error)) {
+      return config.fallback;
+    }
+    const message = error?.message || '';
+    if (await judgeIsUserAgentIsExpired(message)) {
+      return config.fallback;
+    }
+    if (judgeIsBuilderFeeNeedApprove(message)) {
+      return config.fallback;
+    }
+    const title = `PERPS ${config.label} error`;
+    console.error(title, error);
+    showToast(
+      config.getToastMessage?.(error) ??
+        (error?.message || `${config.label} error`),
+      'error',
+    );
+    Sentry.captureException(toError(error), {
+      // Searchable in the issue stream (`perps_action:*`) — the captured
+      // error's own message rarely contains "PERPS".
+      tags: { perps_action: config.label },
+      // Appended to the default grouping so that un-symbolicated builds
+      // (minified single-line stacks) can't lump perps errors into the same
+      // catch-all issue as unrelated errors sharing that stack shape.
+      fingerprint: ['{{ default }}', 'perps-action', config.label],
+      extra: {
+        title,
+        context: config.context,
+        rawError: error?.message ?? error,
+      },
+    });
+    return config.fallback;
+  }
+}

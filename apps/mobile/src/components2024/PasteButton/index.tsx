@@ -19,6 +19,7 @@ interface IProps {
   disableTrigger?: boolean;
   /** @default true */
   cleanClipboardAfterPaste?: boolean;
+  iconColor?: string;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -27,6 +28,7 @@ const PasteButton: React.FC<IProps> = ({
   style,
   disableTrigger,
   cleanClipboardAfterPaste = false,
+  iconColor,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -49,7 +51,11 @@ const PasteButton: React.FC<IProps> = ({
       hitSlop={6}
       onPress={onPressPaste}
       style={StyleSheet.flatten([styles.button, style])}>
-      <IconPaste width={16} height={16} color={colors2024['neutral-foot']} />
+      <IconPaste
+        width={16}
+        height={16}
+        color={iconColor || colors2024['neutral-foot']}
+      />
       <Text style={styles.pasteButtonText}>{t('global.Paste')}</Text>
     </TouchableOpacity>
   );

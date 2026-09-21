@@ -4,6 +4,8 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.view.View;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import android.util.Base64;
 
 /**
@@ -13,6 +15,19 @@ import android.util.Base64;
  * or complex layered content.
  */
 public class ScreenshotUtils {
+    public static class ScreenshotCaptureResult {
+        public final String path;
+        public final String name;
+        public final int width;
+        public final int height;
+
+        ScreenshotCaptureResult(String path, String name, int width, int height) {
+            this.path = path;
+            this.name = name;
+            this.width = width;
+            this.height = height;
+        }
+    }
 
     /**
      * Captures the provided View as a PNG image and returns its Base64 representation.
@@ -61,6 +76,59 @@ public class ScreenshotUtils {
         String pngBase64 = bitmapToPngBase64(bitmap);
         bitmap.recycle(); // Free native memory promptly to avoid OOM.
         return pngBase64;
+    }
+
+    /**
+     * Captures the provided View as a PNG image and writes it directly to a sandbox file.
+     */
+    public static ScreenshotCaptureResult captureViewToPngFile(View view, File baseDir) {
+        if (view == null || baseDir == null) {
+            return null;
+        }
+
+        int width = view.getWidth();
+        int height = view.getHeight();
+
+        if (width <= 0 || height <= 0) {
+            view.measure(
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+            );
+            view.layout(0, 0, view.getMeasuredWidth(), view.getMeasuredHeight());
+            width = view.getMeasuredWidth();
+            height = view.getMeasuredHeight();
+        }
+
+        if (width <= 0 || height <= 0) {
+            return null;
+        }
+
+        File outputDir = new File(baseDir, "rabby-screen-capture");
+        if (!outputDir.exists() && !outputDir.mkdirs()) {
+            return null;
+        }
+
+        String fileName = "rabby-screen-capture-" + System.currentTimeMillis() + ".png";
+        File outputFile = new File(outputDir, fileName);
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+
+        try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
+            view.draw(canvas);
+            boolean success = bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+            outputStream.flush();
+            if (!success) {
+                outputFile.delete();
+                return null;
+            }
+            return new ScreenshotCaptureResult(outputFile.getAbsolutePath(), fileName, width, height);
+        } catch (Exception e) {
+            e.printStackTrace();
+            outputFile.delete();
+            return null;
+        } finally {
+            bitmap.recycle();
+        }
     }
 
     /**

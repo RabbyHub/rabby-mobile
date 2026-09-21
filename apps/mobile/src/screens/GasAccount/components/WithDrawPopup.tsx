@@ -96,8 +96,11 @@ const WithDrawInitContent = ({
       }
       storeApiGasAccount.markSnapshotDirty('withdraw');
       await Promise.all([
-        storeApiGasAccount.refreshHistory(),
-        storeApiGasAccount.refreshSnapshot(),
+        storeApiGasAccount.refreshHistory({
+          reason: 'withdraw',
+          revalidateIfInFlight: true,
+        }),
+        storeApiGasAccount.refreshSnapshot({ reason: 'withdraw' }),
       ]);
       onClose();
       onAfterConfirm?.();

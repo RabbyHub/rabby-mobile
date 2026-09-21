@@ -1,6 +1,6 @@
 import { RcIconScannerCC } from '@/assets/icons/address';
 import WatchLogoSVG from '@/assets/icons/address/watch-logo.svg';
-import { FocusAwareStatusBar, Text } from '@/components';
+import { Text } from '@/components';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 import TouchableView from '@/components/Touchable/TouchableView';
@@ -29,7 +29,6 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { Code } from 'react-native-vision-camera';
 import { CameraPopup } from './components/CameraPopup';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
-import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { TextInput } from '@/components/Typography';
 
 enum INPUT_ERROR {
@@ -263,7 +262,6 @@ export const ImportWatchAddressScreen = () => {
         onPress={handleDone}
       />
       <CameraPopup ref={codeRef} onCodeScanned={onCodeScanned} />
-      <ScreenSpecificStatusBar screenName={RootNames.ImportWatchAddress} />
     </RootScreenContainer>
   );
 };

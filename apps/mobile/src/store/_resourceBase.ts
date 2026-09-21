@@ -102,9 +102,17 @@ export function buildResourceFamilyFlowState(
   const normalized = Array.from(new Set(resourceKeys.filter(Boolean)));
   const loadingResourceKeys: string[] = [];
   const missingResourceKeys: string[] = [];
+  let hasAnyValue = false;
+  let isAnyLoadingWithoutValue = false;
 
   normalized.forEach(resourceKey => {
     const flow = buildResourceFlowState(metaMap[resourceKey]);
+    if (flow.hasValue) {
+      hasAnyValue = true;
+    }
+    if (flow.isLoadingWithoutValue) {
+      isAnyLoadingWithoutValue = true;
+    }
     if (!flow.hasValue) {
       missingResourceKeys.push(resourceKey);
     }
@@ -117,13 +125,9 @@ export function buildResourceFamilyFlowState(
     resourceKeys: normalized,
     loadingResourceKeys,
     missingResourceKeys,
-    hasAnyValue: normalized.some(resourceKey => {
-      return buildResourceFlowState(metaMap[resourceKey]).hasValue;
-    }),
+    hasAnyValue,
     isAnyLoading: loadingResourceKeys.length > 0,
-    isAnyLoadingWithoutValue: normalized.some(resourceKey => {
-      return buildResourceFlowState(metaMap[resourceKey]).isLoadingWithoutValue;
-    }),
+    isAnyLoadingWithoutValue,
     hasAllValues: normalized.length > 0 && missingResourceKeys.length === 0,
   };
 }
@@ -135,9 +139,17 @@ function buildResourceFamilyFlowStateFromSelectedEntries(
   const normalized = normalizeResourceKeys(resourceKeys);
   const loadingResourceKeys: string[] = [];
   const missingResourceKeys: string[] = [];
+  let hasAnyValue = false;
+  let isAnyLoadingWithoutValue = false;
 
   normalized.forEach((resourceKey, index) => {
     const flow = buildResourceFlowState(metaList[index]);
+    if (flow.hasValue) {
+      hasAnyValue = true;
+    }
+    if (flow.isLoadingWithoutValue) {
+      isAnyLoadingWithoutValue = true;
+    }
     if (!flow.hasValue) {
       missingResourceKeys.push(resourceKey);
     }
@@ -150,13 +162,9 @@ function buildResourceFamilyFlowStateFromSelectedEntries(
     resourceKeys: normalized,
     loadingResourceKeys,
     missingResourceKeys,
-    hasAnyValue: normalized.some((_, index) => {
-      return buildResourceFlowState(metaList[index]).hasValue;
-    }),
+    hasAnyValue,
     isAnyLoading: loadingResourceKeys.length > 0,
-    isAnyLoadingWithoutValue: normalized.some((_, index) => {
-      return buildResourceFlowState(metaList[index]).isLoadingWithoutValue;
-    }),
+    isAnyLoadingWithoutValue,
     hasAllValues: normalized.length > 0 && missingResourceKeys.length === 0,
   };
 }

@@ -1,10 +1,7 @@
 import 'reflect-metadata';
-import {
-  BuyServiceProvider,
-  NFTItem,
-  TokenItem,
-} from '@rabby-wallet/rabby-api/dist/types';
-import { TxHistoryItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { BuyServiceProvider } from '@rabby-wallet/rabby-api/dist/types';
+import type { TxHistoryItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Entity, Column, Brackets } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import {
@@ -13,22 +10,30 @@ import {
   jsonTransformer,
 } from './_helpers';
 import { prepareAppDataSource } from '../imports';
+import type { ProjectItemType } from '@/types/history';
 import {
   CUSTOM_HISTORY_TITLE_TYPE,
   HistoryItemCateType,
-  ProjectItemType,
 } from '@/types/history';
-import { fetchHistoryTokenItem, isNFTTokenId } from '@/utils/history';
+import {
+  checkIsGasDepositTx,
+  fetchHistoryTokenItem,
+  isNFTTokenId,
+} from '@/utils/history';
 import type { IManageToken } from '@/types/assets';
 import {
   GAS_ACCOUNT_RECEIVED_ADDRESS,
   GAS_ACCOUNT_WITHDRAWED_ADDRESS,
   L2_DEPOSIT_ADDRESS_MAP,
 } from '@/constant/gas-account';
-import { CustomTxItem } from '@/core/services/transactionHistory';
+import type {
+  CustomTxItem,
+  TransactionHistoryItem,
+} from '@/core/services/transactionHistory';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
 import { ParseEntity } from '@/core/utils/typeorm';
+import { findChain } from '@/utils/chain';
 
 export type { ProjectItemType } from '@/types/history';
 
@@ -179,7 +184,8 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     tokenDict: Record<string, TokenItem>,
     projectDict: Record<string, ProjectItemType>,
     pinedQueue: IManageToken[],
-    customTxItem?: CustomTxItem,
+    customTxItem: CustomTxItem | undefined,
+    transactions: readonly TransactionHistoryItem[],
   ) {
     e.owner_addr = owner_addr;
     e.other_addr = input.other_addr ?? '';
@@ -220,7 +226,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     e.tx_eth_gas_fee = input.tx?.eth_gas_fee ?? 0;
     e.is_small_tx = this.judgeIsSmallUsdTx(e, pinedQueue);
     e.makeDbId();
-    e.history_type = this.getHistoryItemType(e);
+    e.history_type = this.getHistoryItemType(e, transactions);
     if (customTxItem) {
       e.history_custom_type = customTxItem.actionType;
     }
@@ -234,14 +240,14 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
       return false;
     }
 
-    const receives = item.receives;
+    const transfers = [...(item.receives || []), ...(item.sends || [])];
 
-    if (!receives || !receives.length) {
+    if (!transfers.length) {
       return true;
     }
     let allUsd = 0;
 
-    for (const i of receives) {
+    for (const i of transfers) {
       const token = i.token;
       const tokenIsNft = i.token_id?.length === 32;
       if (tokenIsNft) {
@@ -271,8 +277,20 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return false;
   }
 
-  static getHistoryItemType(data: HistoryItemEntity) {
+  static getHistoryItemType(
+    data: HistoryItemEntity,
+    transactions: readonly TransactionHistoryItem[],
+  ) {
     try {
+      if (
+        checkIsGasDepositTx({
+          chainId: findChain({ serverId: data.chain })?.id,
+          hash: data.txHash,
+          transactions,
+        })
+      ) {
+        return HistoryItemCateType.GAS_DEPOSIT;
+      }
       if (data.cate_id === 'approve') {
         if (!data.token_approve_value) {
           return HistoryItemCateType.Revoke;

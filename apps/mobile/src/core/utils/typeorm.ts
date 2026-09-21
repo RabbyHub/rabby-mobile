@@ -5,6 +5,7 @@ import {
   ColumnType,
   getMetadataArgsStorage,
 } from 'typeorm/browser';
+import { Scalar } from '@op-engineering/op-sqlite';
 import { ColumnMetadataArgs } from 'typeorm/browser/metadata-args/ColumnMetadataArgs';
 
 type ColumnInfo = {
@@ -83,7 +84,9 @@ export function parseEntityColumns<T extends EntityConstructor>(
   // const metadata = entityCls.getRepository().metadata;
   allColumns.forEach(column => {
     const target = column.target as Function;
-    if (!ancestorsSet.has(target)) return;
+    if (!ancestorsSet.has(target)) {
+      return;
+    }
 
     const col = {
       $col: column,
@@ -133,6 +136,37 @@ export function generateUpsertSql<T extends EntityConstructor>(
 export function ParseEntity() {
   return function <T extends EntityConstructor>(constructor: T) {
     const parseResult = parseEntityColumns(constructor);
+    const upsertParamReaders = parseResult.orderedPropertyNames.map(
+      propName => {
+        const column = parseResult.propMapToColumn[propName];
+        const colOptions = column?.$col.options;
+        const optTransformers = colOptions?.transformer;
+        const transformers = !optTransformers
+          ? []
+          : Array.isArray(optTransformers)
+          ? optTransformers
+          : [optTransformers].filter(Boolean);
+        const optDefaultValue = colOptions?.default;
+
+        return function readUpsertParam(entity: Record<string, unknown>) {
+          let transformedValue = entity[propName];
+          for (let i = 0; i < transformers.length; i += 1) {
+            const transformer = transformers[i];
+            if (typeof transformer.to === 'function') {
+              transformedValue = transformer.to(transformedValue);
+            }
+          }
+
+          if (transformedValue === undefined && optDefaultValue !== undefined) {
+            return typeof optDefaultValue === 'function'
+              ? optDefaultValue()
+              : optDefaultValue;
+          }
+
+          return transformedValue;
+        };
+      },
+    );
     console.debug(
       `[codestub][${parseResult.tableName}] ParseEntity constructor`,
       constructor,
@@ -160,42 +194,23 @@ export function ParseEntity() {
       configurable: false,
     });
 
+    Object.defineProperty(constructor.prototype, 'getUpsertParams', {
+      value: function (): Scalar[] {
+        const params = new Array(upsertParamReaders.length);
+        for (let i = 0; i < upsertParamReaders.length; i += 1) {
+          params[i] = upsertParamReaders[i](this as Record<string, unknown>);
+        }
+
+        return params as Scalar[];
+      },
+      writable: false,
+      enumerable: false,
+      configurable: false,
+    });
+
     Object.defineProperty(constructor.prototype, 'bindUpsertParams', {
       value: function (stm: any) {
-        const params = parseResult.orderedPropertyNames.map(propName => {
-          let value = (this as any)[propName];
-          const column = parseResult.propMapToColumn[propName];
-
-          const colOptions = column?.$col.options;
-          if (!colOptions) return value;
-
-          const optTransformers = colOptions.transformer;
-          const transformers = !optTransformers
-            ? []
-            : Array.isArray(optTransformers)
-            ? optTransformers
-            : [optTransformers].filter(Boolean);
-
-          let transformedValue = value;
-          if (transformers.length) {
-            transformedValue = transformers.reduce(
-              (val, transformer) =>
-                typeof transformer.to === 'function'
-                  ? transformer.to(val)
-                  : val,
-              value,
-            );
-          }
-          const optDefaultValue = colOptions.default;
-          if (transformedValue === undefined && optDefaultValue !== undefined) {
-            transformedValue =
-              typeof optDefaultValue === 'function'
-                ? optDefaultValue()
-                : optDefaultValue;
-          }
-
-          return transformedValue;
-        });
+        const params = this.getUpsertParams();
 
         stm.bindSync(params);
         return stm;

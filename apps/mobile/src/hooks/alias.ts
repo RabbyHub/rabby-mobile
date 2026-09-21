@@ -1,12 +1,16 @@
-import { contactService } from '@/core/services';
+import {
+  getContactAliasSnapshot,
+  updateContactAliasSync,
+} from '@/core/serviceApi/contact';
 import { useCallback, useEffect, useState } from 'react';
 import { useAccounts } from './account';
 import { apiContact } from '@/core/apis';
 import { zCreate, zMutative } from '@/core/utils/reexports';
 import { perfEvents } from '@/core/utils/perf';
-import { AddressAliasItem } from '@rabby-wallet/service-address';
+import type { AddressAliasItem } from '@rabby-wallet/service-address';
 import { useShallow } from 'zustand/react/shallow';
 import { addressUtils } from '@rabby-wallet/base-utils';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 export const useAlias = (address?: string) => {
   const [name, setName] = useState<string>('');
@@ -14,7 +18,7 @@ export const useAlias = (address?: string) => {
   const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
   useEffect(() => {
     if (address) {
-      setName(contactService.getAliasByAddress(address)?.alias || '');
+      setName(getContactAliasSnapshot(address)?.alias || '');
     } else {
       setName('');
     }
@@ -26,7 +30,7 @@ export const useAlias = (address?: string) => {
         return;
       }
       setName(alias);
-      contactService.updateAlias({ address, name: alias });
+      updateContactAliasSync({ address, name: alias });
       fetchAccounts();
     },
     [address, fetchAccounts],
@@ -88,7 +92,8 @@ export function useAlias2(
   },
 ) {
   const { autoFetch = false, FETCH_AFTER_UPDATE = false } = options || {};
-  const { adderssAlias, isDefaultAlias } = addressAliasStore(
+  const { adderssAlias, isDefaultAlias } = useActivityStore(
+    addressAliasStore,
     useShallow(s => {
       const lcAddr = address.toLowerCase();
       const item = s.aliasesMap[lcAddr];
@@ -101,12 +106,14 @@ export function useAlias2(
               addressUtils.ellipsis(address, 6).toLowerCase(),
       };
     }),
+    Object.is,
+    { storeLabel: 'address-alias' },
   );
 
   const fetchAlias = useCallback(() => {
     if (!address) return;
 
-    const aliasItem = contactService.getAliasByAddress(address, {
+    const aliasItem = getContactAliasSnapshot(address, {
       keepEmptyIfNotFound: false,
     });
     if (aliasItem) setName(address, aliasItem);
@@ -122,7 +129,7 @@ export function useAlias2(
 
   const updateAlias = useCallback(
     (alias: string) => {
-      contactService.updateAlias({ address, name: alias });
+      updateContactAliasSync({ address, name: alias });
       if (FETCH_AFTER_UPDATE) {
         fetchAlias();
       }

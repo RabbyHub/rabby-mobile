@@ -1,0 +1,216 @@
+import React, { useCallback, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import {
+  MODAL_ID,
+  MODAL_NAMES,
+} from '@/components2024/GlobalBottomSheetModal/types';
+import { toast } from '@/components2024/Toast';
+import {
+  approveWalletConnectProposal,
+  getWalletConnectDebugState,
+  rejectWalletConnectProposal,
+} from '@/core/walletconnect';
+import { getWalletConnectErrorMessage } from '@/core/walletconnect/error';
+import { subscribeWalletConnectUiEvents } from '@/core/walletconnect/uiEvents';
+import type { CHAINS_ENUM } from '@/constant/chains';
+import type { Account } from '@/types/account';
+import type { WalletConnectProposalViewModel } from '@/core/walletconnect/types';
+import { useTheme2024 } from '@/hooks/theme';
+
+const WALLETCONNECT_PAIRING_SINGLETON_KEY = 'walletconnect-pairing';
+const WALLETCONNECT_CONNECT_SINGLETON_KEY = 'walletconnect-connect';
+
+export function WalletConnectModalHost() {
+  const { t } = useTranslation();
+  const { isLight, colors2024 } = useTheme2024();
+  const modalIdsRef = useRef<{
+    loading: MODAL_ID | null;
+    connect: MODAL_ID | null;
+    proposalId: number | null;
+  }>({
+    loading: null,
+    connect: null,
+    proposalId: null,
+  });
+  const lastErrorToastRef = useRef({ message: '', ts: 0 });
+
+  const closeLoading = useCallback(() => {
+    const id = modalIdsRef.current.loading;
+    if (!id) {
+      return;
+    }
+    modalIdsRef.current.loading = null;
+    removeGlobalBottomSheetModal2024(id, { waitMaxtime: 0 });
+  }, []);
+
+  const closeConnect = useCallback(() => {
+    const id = modalIdsRef.current.connect;
+    if (!id) {
+      return;
+    }
+    modalIdsRef.current.connect = null;
+    modalIdsRef.current.proposalId = null;
+    removeGlobalBottomSheetModal2024(id, { waitMaxtime: 0 });
+  }, []);
+
+  const showErrorToast = useCallback(
+    (message?: string) => {
+      const nextMessage = message || t('page.walletConnect.pairingFailed');
+      const now = Date.now();
+      const last = lastErrorToastRef.current;
+
+      if (last.message === nextMessage && now - last.ts < 1000) {
+        return;
+      }
+
+      lastErrorToastRef.current = {
+        message: nextMessage,
+        ts: now,
+      };
+      toast.error(nextMessage, {
+        duration: 3000,
+        hideOnPress: true,
+      });
+    },
+    [t],
+  );
+
+  const openLoading = useCallback(() => {
+    if (modalIdsRef.current.loading) {
+      return;
+    }
+
+    modalIdsRef.current.loading = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.WALLETCONNECT_PAIRING,
+      singletonKey: WALLETCONNECT_PAIRING_SINGLETON_KEY,
+      bottomSheetModalProps: {
+        enablePanDownToClose: false,
+      },
+    });
+  }, []);
+
+  const openConnect = useCallback(
+    (proposal: WalletConnectProposalViewModel) => {
+      if (
+        modalIdsRef.current.connect &&
+        modalIdsRef.current.proposalId === proposal.id
+      ) {
+        return;
+      }
+
+      closeConnect();
+      modalIdsRef.current.proposalId = proposal.id;
+      modalIdsRef.current.connect = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.WALLETCONNECT_CONNECT,
+        singletonKey: WALLETCONNECT_CONNECT_SINGLETON_KEY,
+        proposal,
+        bottomSheetModalProps: {
+          enablePanDownToClose: false,
+          handleStyle: {
+            backgroundColor: isLight
+              ? colors2024['neutral-bg-0']
+              : colors2024['neutral-bg-1'],
+          },
+          backgroundStyle: {
+            backgroundColor: isLight
+              ? colors2024['neutral-bg-0']
+              : colors2024['neutral-bg-1'],
+          },
+        },
+        onApprove: async (account: Account, fallbackChain: CHAINS_ENUM) => {
+          try {
+            closeLoading();
+            const didRedirect = await approveWalletConnectProposal({
+              proposalId: proposal.id,
+              account,
+              fallbackChain,
+            });
+            if (!didRedirect) {
+              toast.success(t('page.walletConnect.connected'), {
+                duration: 3000,
+                hideOnPress: true,
+              });
+            }
+            closeConnect();
+          } catch (error: unknown) {
+            showErrorToast(getWalletConnectErrorMessage(error));
+          }
+        },
+        onReject: async () => {
+          try {
+            closeLoading();
+            await rejectWalletConnectProposal(proposal.id);
+            closeConnect();
+          } catch (error: unknown) {
+            showErrorToast(getWalletConnectErrorMessage(error));
+          }
+        },
+      });
+    },
+    [closeConnect, closeLoading, colors2024, isLight, showErrorToast, t],
+  );
+
+  useEffect(() => {
+    const syncCurrentUiState = () => {
+      const { pairing, proposal } = getWalletConnectDebugState();
+      if (proposal) {
+        closeLoading();
+        openConnect(proposal);
+        return;
+      }
+      if (pairing.status === 'pairing') {
+        openLoading();
+      }
+    };
+
+    syncCurrentUiState();
+    return subscribeWalletConnectUiEvents(event => {
+      if (event.type === 'pairingStarted') {
+        closeConnect();
+        openLoading();
+        return;
+      }
+      if (event.type === 'pairingError') {
+        closeLoading();
+        showErrorToast(event.message);
+        return;
+      }
+      if (event.type === 'proposalReceived') {
+        closeLoading();
+        openConnect(event.proposal);
+        return;
+      }
+      if (event.type === 'proposalCleared') {
+        closeLoading();
+        closeConnect();
+        return;
+      }
+      if (event.type === 'toast') {
+        const options = {
+          duration: 3000,
+          hideOnPress: true,
+        };
+
+        if (event.variant === 'success') {
+          toast.success(event.message, options);
+        } else {
+          toast.error(event.message, options);
+        }
+      }
+    });
+  }, [closeConnect, closeLoading, openConnect, openLoading, showErrorToast]);
+
+  useEffect(() => {
+    return () => {
+      closeLoading();
+      closeConnect();
+    };
+  }, [closeConnect, closeLoading]);
+
+  return null;
+}

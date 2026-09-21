@@ -174,10 +174,10 @@ export function useTipedUserEnableBiometrics() {
       return new Promise<typeof result>((resolve, reject) => {
         Alert.alert(
           t('page.unlock.biometrics.enableBiometricAlert.title', {
-            bioType: computed.defaultTypeLabel,
+            bioType: computed.systemAuthTypeLabel,
           }),
           t('page.unlock.biometrics.enableBiometricAlert.content', {
-            bioType: computed.defaultTypeLabel,
+            bioType: computed.systemAuthTypeLabel,
           }),
           [
             {
@@ -201,7 +201,7 @@ export function useTipedUserEnableBiometrics() {
     [
       shouldTipedUserEnableBiometrics,
       toggleBiometrics,
-      computed.defaultTypeLabel,
+      computed.systemAuthTypeLabel,
     ],
   );
 

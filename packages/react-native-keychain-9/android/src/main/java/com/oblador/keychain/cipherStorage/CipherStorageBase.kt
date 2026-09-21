@@ -1,11 +1,18 @@
 package com.rabbywallet.keychain9.cipherStorage
 
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyInfo
+import android.security.keystore.UserNotAuthenticatedException
+import android.text.TextUtils
 import android.util.Log
 import androidx.annotation.VisibleForTesting
 import com.rabbywallet.keychain9.SecurityLevel
+import com.rabbywallet.keychain9.cipherStorage.CipherStorageBase.DecryptBytesHandler
+import com.rabbywallet.keychain9.cipherStorage.CipherStorageBase.EncryptStringHandler
 import com.rabbywallet.keychain9.exceptions.CryptoFailedException
 import com.rabbywallet.keychain9.exceptions.KeyStoreAccessException
 import java.io.ByteArrayInputStream
@@ -19,37 +26,36 @@ import java.security.GeneralSecurityException
 import java.security.Key
 import java.security.KeyStore
 import java.security.KeyStoreException
-import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.security.ProviderException
 import java.security.UnrecoverableKeyException
+import java.security.cert.Certificate
 import java.util.Collections
-import java.util.HashSet
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import java.security.cert.Certificate
+import java.security.MessageDigest
 import javax.crypto.Cipher
 import javax.crypto.CipherInputStream
 import javax.crypto.CipherOutputStream
 import javax.crypto.NoSuchPaddingException
-import javax.crypto.spec.IvParameterSpec
+
 
 @Suppress("unused", "MemberVisibilityCanBePrivate", "UnusedReturnValue")
-abstract class CipherStorageBase : CipherStorage {
+abstract class CipherStorageBase(protected val applicationContext: Context) : CipherStorage {
   data class StoredKeyDebugInfo(
-      val alias: String,
-      val hasAlias: Boolean,
-      val keyAlgorithm: String?,
-      val securityLevelName: String?,
-      val isInsideSecureHardware: Boolean?,
-      val isUserAuthenticationRequired: Boolean?,
-      val userAuthenticationValidityDurationSeconds: Int?,
-      val userAuthenticationType: Int?,
-      val blockModes: Array<String>?,
-      val purposes: Int?,
-      val isCompatibleWithCurrentCipher: Boolean?,
-      val publicKeySha256: String?,
-      val errorMessage: String?
+    val alias: String,
+    val hasAlias: Boolean,
+    val keyAlgorithm: String?,
+    val securityLevelName: String?,
+    val isInsideSecureHardware: Boolean?,
+    val isUserAuthenticationRequired: Boolean?,
+    val userAuthenticationValidityDurationSeconds: Int?,
+    val userAuthenticationType: Int?,
+    val blockModes: Array<String>?,
+    val purposes: Int?,
+    val isCompatibleWithCurrentCipher: Boolean?,
+    val publicKeySha256: String?,
+    val errorMessage: String?,
   )
 
   // region Constants
@@ -100,22 +106,26 @@ abstract class CipherStorageBase : CipherStorage {
   /** Guard object for [isSupportsSecureHardware] field. */
   protected val _sync = Any()
 
+  /** Try to resolve support of the StrongBox feature. */
+  protected val isStrongboxAvailable: Boolean by lazy {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+      applicationContext.packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
+    } else {
+      false
+    }
+  }
+
   /** Try to resolve it only once and cache result for all future calls. */
-  @Transient protected var isSupportsSecureHardware: AtomicBoolean? = null
-
-  /** Guard for [isStrongboxAvailable] field assignment. */
-  protected val _syncStrongbox = Any()
-
-  /** Try to resolve support of the strongbox and cache result for future calls. */
-  @Transient protected var isStrongboxAvailable: AtomicBoolean? = null
+  @Transient
+  protected var isSupportsSecureHardware: AtomicBoolean? = null
 
   /** Get cached instance of cipher. Get instance operation is slow. */
-  @Transient protected var cachedCipher: Cipher? = null
+  @Transient
+  protected var cachedCipher: Cipher? = null
 
   /** Cached instance of the Keystore. */
-  @Transient protected var cachedKeyStore: KeyStore? = null
-
-  // endregion
+  @Transient
+  protected var cachedKeyStore: KeyStore? = null
 
   // region Overrides
 
@@ -151,7 +161,8 @@ abstract class CipherStorageBase : CipherStorage {
         sdk = SelfDestroyKey(TEST_KEY_ALIAS)
         val newValue = validateKeySecurityLevel(SecurityLevel.SECURE_HARDWARE, sdk.key)
         isSupportsSecureHardware!!.set(newValue)
-      } catch (ignored: Throwable) {} finally {
+      } catch (ignored: Throwable) {
+      } finally {
         sdk?.close()
       }
     }
@@ -198,12 +209,13 @@ abstract class CipherStorageBase : CipherStorage {
 
   @Throws(GeneralSecurityException::class)
   protected abstract fun getKeyGenSpecBuilder(
-      alias: String,
-      isForTesting: Boolean
+    alias: String,
+    isForTesting: Boolean
   ): KeyGenParameterSpec.Builder
 
   /** Get information about provided key. */
-  @Throws(GeneralSecurityException::class) protected abstract fun getKeyInfo(key: Key): KeyInfo
+  @Throws(GeneralSecurityException::class)
+  protected abstract fun getKeyInfo(key: Key): KeyInfo
 
   /** Try to generate key from provided specification. */
   @Throws(GeneralSecurityException::class)
@@ -237,31 +249,57 @@ abstract class CipherStorageBase : CipherStorage {
   protected fun throwIfInsufficientLevel(level: SecurityLevel) {
     if (!securityLevel().satisfiesSafetyThreshold(level)) {
       throw CryptoFailedException(
-          "Insufficient security level (wants $level; got ${securityLevel()})")
+        "Insufficient security level (wants $level; got ${securityLevel()})"
+      )
     }
   }
 
   /** Extract existing key or generate a new one. In case of problems raise exception. */
   @Throws(GeneralSecurityException::class)
   protected fun extractGeneratedKey(
-      safeAlias: String,
-      level: SecurityLevel,
-      retries: AtomicInteger,
-      allowKeyStoreRecovery: Boolean = true
+    safeAlias: String,
+    level: SecurityLevel,
+    retries: AtomicInteger,
+    allowKeyStoreRecovery: Boolean = true
   ): Key {
     var key: Key?
     do {
       val keyStore = getKeyStoreAndLoad()
-
-      // if key is not available yet, try to generate the strongest possible
+      // Check if the key exists
       if (!keyStore.containsAlias(safeAlias)) {
         if (!allowKeyStoreRecovery) {
           throw KeyStoreAccessException("No key found for alias: $safeAlias")
         }
+        // Key does not exist, generate a new one
         generateKeyAndStoreUnderAlias(safeAlias, level)
+      } else {
+        // Key exists, check if it's compatible
+        key = keyStore.getKey(safeAlias, null)
+        if (key != null && !isKeyAlgorithmSupported(
+            key,
+            getEncryptionAlgorithm()
+          )
+        ) {
+          if (!allowKeyStoreRecovery) {
+            throw KeyStoreAccessException(
+              "Incompatible key found for alias: $safeAlias. Expected cipher: ${getEncryptionTransformation()}."
+            )
+          }
+          Log.w(
+            LOG_TAG,
+            "Incompatible key found for alias: $safeAlias. Expected cipher: ${getEncryptionTransformation()}. " +
+              "This can happen if you try to overwrite credentials that were previously saved with a different encryption algorithm."
+          )
+          // Key is not compatible, delete it
+          keyStore.deleteEntry(safeAlias)
+          // Generate a new compatible key
+          generateKeyAndStoreUnderAlias(safeAlias, level)
+          key = null // Set key to null to retry the loop
+          continue
+        }
       }
 
-      // throw exception if cannot extract key in several retries
+      // Attempt to retrieve the key
       key = extractKey(keyStore, safeAlias, retries, allowKeyStoreRecovery)
     } while (key == null)
 
@@ -273,10 +311,10 @@ abstract class CipherStorageBase : CipherStorage {
    */
   @Throws(GeneralSecurityException::class)
   protected fun extractKey(
-      keyStore: KeyStore,
-      safeAlias: String,
-      retry: AtomicInteger,
-      allowKeyStoreRecovery: Boolean = true
+    keyStore: KeyStore,
+    safeAlias: String,
+    retry: AtomicInteger,
+    allowKeyStoreRecovery: Boolean = true
   ): Key? {
     val key: Key?
 
@@ -306,45 +344,6 @@ abstract class CipherStorageBase : CipherStorage {
       val keyStore = getKeyStoreAndLoad()
       if (!keyStore.containsAlias(safeAlias)) {
         return StoredKeyDebugInfo(
-            alias = safeAlias,
-            hasAlias = false,
-            keyAlgorithm = null,
-            securityLevelName = null,
-            isInsideSecureHardware = null,
-            isUserAuthenticationRequired = null,
-            userAuthenticationValidityDurationSeconds = null,
-            userAuthenticationType = null,
-            blockModes = null,
-            purposes = null,
-            isCompatibleWithCurrentCipher = null,
-            publicKeySha256 = null,
-            errorMessage = null)
-      }
-
-      val certificate: Certificate? = keyStore.getCertificate(safeAlias)
-      val publicKeySha256 =
-          if (certificate?.publicKey != null) {
-            getSha256Fingerprint(certificate.publicKey.encoded)
-          } else {
-            null
-          }
-
-      StoredKeyDebugInfo(
-          alias = safeAlias,
-          hasAlias = true,
-          keyAlgorithm = certificate?.publicKey?.algorithm,
-          securityLevelName = null,
-          isInsideSecureHardware = null,
-          isUserAuthenticationRequired = null,
-          userAuthenticationValidityDurationSeconds = null,
-          userAuthenticationType = null,
-          blockModes = null,
-          purposes = null,
-          isCompatibleWithCurrentCipher = null,
-          publicKeySha256 = publicKeySha256,
-          errorMessage = null)
-    } catch (fail: Throwable) {
-      StoredKeyDebugInfo(
           alias = safeAlias,
           hasAlias = false,
           keyAlgorithm = null,
@@ -357,7 +356,95 @@ abstract class CipherStorageBase : CipherStorage {
           purposes = null,
           isCompatibleWithCurrentCipher = null,
           publicKeySha256 = null,
-          errorMessage = "${fail::class.java.simpleName}:${fail.message}")
+          errorMessage = null,
+        )
+      }
+
+      val key = keyStore.getKey(safeAlias, null)
+      if (key == null) {
+        return StoredKeyDebugInfo(
+          alias = safeAlias,
+          hasAlias = true,
+          keyAlgorithm = null,
+          securityLevelName = null,
+          isInsideSecureHardware = null,
+          isUserAuthenticationRequired = null,
+          userAuthenticationValidityDurationSeconds = null,
+          userAuthenticationType = null,
+          blockModes = null,
+          purposes = null,
+          isCompatibleWithCurrentCipher = null,
+          publicKeySha256 = null,
+          errorMessage = "KeyStore alias exists but key is null",
+        )
+      }
+
+      val keyInfo = getKeyInfo(key)
+      val encryptionAlgorithm = getEncryptionAlgorithm()
+      val certificate: Certificate? = keyStore.getCertificate(safeAlias)
+      val publicKeySha256 =
+        if (certificate?.publicKey != null) {
+          getSha256Fingerprint(certificate.publicKey.encoded)
+        } else {
+          null
+        }
+
+      StoredKeyDebugInfo(
+        alias = safeAlias,
+        hasAlias = true,
+        keyAlgorithm = key.algorithm,
+        securityLevelName = getSecurityLevel(key).name,
+        isInsideSecureHardware =
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            keyInfo.isInsideSecureHardware
+          } else {
+            null
+          },
+        isUserAuthenticationRequired =
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            keyInfo.isUserAuthenticationRequired
+          } else {
+            null
+          },
+        userAuthenticationValidityDurationSeconds =
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            keyInfo.userAuthenticationValidityDurationSeconds
+          } else {
+            null
+          },
+        userAuthenticationType =
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            keyInfo.userAuthenticationType
+          } else {
+            null
+          },
+        blockModes = keyInfo.blockModes,
+        purposes = keyInfo.purposes,
+        isCompatibleWithCurrentCipher =
+          if (!TextUtils.isEmpty(encryptionAlgorithm)) {
+            encryptionAlgorithm.equals(key.algorithm, ignoreCase = true)
+          } else {
+            null
+          },
+        publicKeySha256 = publicKeySha256,
+        errorMessage = null,
+      )
+    } catch (fail: Throwable) {
+      StoredKeyDebugInfo(
+        alias = safeAlias,
+        hasAlias = false,
+        keyAlgorithm = null,
+        securityLevelName = null,
+        isInsideSecureHardware = null,
+        isUserAuthenticationRequired = null,
+        userAuthenticationValidityDurationSeconds = null,
+        userAuthenticationType = null,
+        blockModes = null,
+        purposes = null,
+        isCompatibleWithCurrentCipher = null,
+        publicKeySha256 = null,
+        errorMessage = "${fail::class.java.simpleName}:${fail.message}",
+      )
     }
   }
 
@@ -442,7 +529,6 @@ abstract class CipherStorageBase : CipherStorage {
     val cipher = getCachedInstance()
     try {
       ByteArrayOutputStream().use { output ->
-        // write initialization vector to the beginning of the stream
         if (handler != null) {
           handler.initialize(cipher, key, output)
           output.flush()
@@ -459,22 +545,32 @@ abstract class CipherStorageBase : CipherStorage {
   }
 
   /** Decrypt provided bytes to a string. */
+  @SuppressLint("NewApi")
   @Throws(GeneralSecurityException::class, IOException::class)
   protected open fun decryptBytes(
-      key: Key,
-      bytes: ByteArray,
-      handler: DecryptBytesHandler?
+    key: Key,
+    bytes: ByteArray,
+    handler: DecryptBytesHandler?
   ): String {
     val cipher = getCachedInstance()
     try {
       ByteArrayInputStream(bytes).use { input ->
         ByteArrayOutputStream().use { output ->
-          // read the initialization vector from the beginning of the stream
-          if (handler != null) {
-            handler.initialize(cipher, key, input)
-          }
+          handler?.initialize(cipher, key, input)
 
-          CipherInputStream(input, cipher).use { decrypt -> copy(decrypt, output) }
+          try {
+            val decrypted = cipher.doFinal(input.readBytes())
+            output.write(decrypted)
+          } catch (e: Exception) {
+            when {
+              e is UserNotAuthenticatedException -> throw e
+              e.cause is android.security.KeyStoreException &&
+                e.cause?.message?.contains("Key user not authenticated") == true -> {
+                throw UserNotAuthenticatedException()
+              }
+              else -> throw e
+            }
+          }
 
           return String(output.toByteArray(), UTF8)
         }
@@ -493,25 +589,19 @@ abstract class CipherStorageBase : CipherStorage {
 
     var secretKey: Key? = null
 
-    // multi-threaded usage is possible
-    synchronized(_syncStrongbox) {
-      if (isStrongboxAvailable == null || isStrongboxAvailable!!.get()) {
-        if (isStrongboxAvailable == null) isStrongboxAvailable = AtomicBoolean(false)
-
-        try {
-          secretKey = tryGenerateStrongBoxSecurityKey(alias)
-          isStrongboxAvailable!!.set(true)
-        } catch (ex: GeneralSecurityException) {
-          Log.w(LOG_TAG, "StrongBox security storage is not available.", ex)
-        } catch (ex: ProviderException) {
-          Log.w(LOG_TAG, "StrongBox security storage is not available.", ex)
-        }
+    if (isStrongboxAvailable) {
+      try {
+        secretKey = tryGenerateStrongBoxSecurityKey(alias)
+      } catch (ex: GeneralSecurityException) {
+        Log.w(LOG_TAG, "StrongBox security storage is not available.", ex)
+      } catch (ex: ProviderException) {
+        Log.w(LOG_TAG, "StrongBox security storage is not available.", ex)
       }
     }
 
     // If that is not possible, we generate the key in a regular way
     // (it still might be generated in hardware, but not in StrongBox)
-    if (secretKey == null || !isStrongboxAvailable!!.get()) {
+    if (secretKey == null || !isStrongboxAvailable) {
       try {
         secretKey = tryGenerateRegularSecurityKey(alias)
       } catch (fail: GeneralSecurityException) {
@@ -525,6 +615,42 @@ abstract class CipherStorageBase : CipherStorage {
     }
   }
 
+  @Throws(GeneralSecurityException::class)
+  protected fun isKeyAlgorithmSupported(
+    key: Key,
+    expectedAlgorithm: String
+  ): Boolean {
+    if (!key.algorithm.equals(expectedAlgorithm, ignoreCase = true)) {
+      return false
+    }
+
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+      return false
+    }
+
+    try {
+      val keyInfo = getKeyInfo(key)
+      val blockModes = keyInfo.blockModes
+      if (shouldValidateAuthenticationRequirement() &&
+        keyInfo.isUserAuthenticationRequired != isBiometrySupported()
+      ) {
+        return false
+      }
+      val expectedBlockMode = getEncryptionTransformation()
+        .split("/")[1] // Split "AES/GCM/NoPadding" and get "GCM"
+      return blockModes.any { mode ->
+        mode.equals(expectedBlockMode, ignoreCase = true)
+      }
+    } catch (e: GeneralSecurityException) {
+      Log.w(LOG_TAG, "Failed to check cipher configuration: ${e.message}")
+      return false
+    }
+  }
+
+  protected open fun shouldValidateAuthenticationRequirement(): Boolean {
+    return true
+  }
+
   /** Try to get secured keystore instance. */
   @Throws(GeneralSecurityException::class)
   protected fun tryGenerateRegularSecurityKey(alias: String): Key {
@@ -535,7 +661,8 @@ abstract class CipherStorageBase : CipherStorage {
   protected fun tryGenerateRegularSecurityKey(alias: String, isForTesting: Boolean): Key {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
       throw KeyStoreAccessException(
-          "Regular security keystore is not supported for old API${Build.VERSION.SDK_INT}.")
+        "Regular security keystore is not supported for old API${Build.VERSION.SDK_INT}."
+      )
     }
 
     val specification = getKeyGenSpecBuilder(alias, isForTesting).build()
@@ -552,7 +679,8 @@ abstract class CipherStorageBase : CipherStorage {
   protected fun tryGenerateStrongBoxSecurityKey(alias: String, isForTesting: Boolean): Key {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
       throw KeyStoreAccessException(
-          "Strong box security keystore is not supported for old API${Build.VERSION.SDK_INT}.")
+        "Strong box security keystore is not supported for old API${Build.VERSION.SDK_INT}."
+      )
     }
 
     val specification = getKeyGenSpecBuilder(alias, isForTesting).setIsStrongBoxBacked(true).build()
@@ -588,49 +716,6 @@ abstract class CipherStorageBase : CipherStorage {
     }
     val decrypt = DecryptBytesHandler { cipher, key, input ->
       cipher.init(Cipher.DECRYPT_MODE, key)
-    }
-  }
-
-  /** Initialization vector support. */
-  object IV {
-    /** Encryption/Decryption initialization vector length. */
-    const val IV_LENGTH = 16
-
-    /** Save Initialization vector to output stream. */
-    val encrypt = EncryptStringHandler { cipher, key, output ->
-      cipher.init(Cipher.ENCRYPT_MODE, key)
-      val iv = cipher.iv
-      output.write(iv, 0, iv.size)
-    }
-
-    /** Read initialization vector from input stream and configure cipher by it. */
-    val decrypt = DecryptBytesHandler { cipher, key, input ->
-      val iv = readIv(input)
-      cipher.init(Cipher.DECRYPT_MODE, key, iv)
-    }
-
-    /** Extract initialization vector from provided bytes array. */
-    @Throws(IOException::class)
-    fun readIv(bytes: ByteArray): IvParameterSpec {
-      val iv = ByteArray(IV_LENGTH)
-
-      if (IV_LENGTH >= bytes.size)
-          throw IOException("Insufficient length of input data for IV extracting.")
-
-      System.arraycopy(bytes, 0, iv, 0, IV_LENGTH)
-
-      return IvParameterSpec(iv)
-    }
-
-    /** Extract initialization vector from provided input stream. */
-    @Throws(IOException::class)
-    fun readIv(inputStream: InputStream): IvParameterSpec {
-      val iv = ByteArray(IV_LENGTH)
-      val result = inputStream.read(iv, 0, IV_LENGTH)
-
-      if (result != IV_LENGTH) throw IOException("Input stream has insufficient data.")
-
-      return IvParameterSpec(iv)
     }
   }
 

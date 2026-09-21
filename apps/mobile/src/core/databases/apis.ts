@@ -3,13 +3,13 @@ import './setup';
 import { MakeSurePromise } from '@rabby-wallet/base-utils';
 import { getRabbyAppDbDir } from '@/databases/constant';
 import { Platform } from 'react-native';
-import RNFS from 'react-native-fs';
+import RNFS from '@rabby-wallet/react-native-fs';
 import { SQLite, SQLiteDriverType } from './exports';
 import {
   formatSQLiteTempStoreValue,
   resolveSQLiteConnectionTempStorePolicy,
 } from './op-sqlite/policy';
-import type { OPSQliteConnectionType } from './op-sqlite/typeorm';
+import type { TypeormSQLiteConnection } from './typeormConnection';
 
 const rabbyTestDBRef = {
   // TODO: maybe we can try to run it in non-UI Thread provided by react-native-reanimated
@@ -49,7 +49,7 @@ const stringifyError = (error: unknown) => {
 };
 
 async function getSingleRow(
-  db: OPSQliteConnectionType,
+  db: TypeormSQLiteConnection,
   sql: string,
 ): Promise<Record<string, any>> {
   return db.executeSql<any>(sql, []).then(getFirstResultRow);

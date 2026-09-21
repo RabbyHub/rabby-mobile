@@ -2,6 +2,7 @@
 
 const Axios = require('axios');
 const { createHmac } = require('crypto');
+const fs = require('fs');
 
 const chatURL =
   process.env.RABBY_MOBILE_LARK_CHAT_URL || process.env.LARK_CHAT_URL;
@@ -37,10 +38,12 @@ async function sendMessage({
   platform = 'android',
   isFastBuild = false,
   downloadURL = '',
+  larkDriveURL = '',
   actionsJobUrl = '',
   gitCommitURL = '',
   gitRefURL = '',
   triggers = [],
+  android16kbReportText = '',
 }) {
   const { generateQRCodeImageBuffer, uploadImageToLark } = loadLarkHelpers();
   const { timeSec, Signature } = makeLarkSign(chatSecret);
@@ -122,6 +125,10 @@ async function sendMessage({
               { tag: 'text', text: `下载链接: ` },
               { tag: 'a', href: downloadURL, text: downloadURL },
             ],
+            larkDriveURL && [
+              { tag: 'text', text: `Lark Drive: ` },
+              { tag: 'a', href: larkDriveURL, text: larkDriveURL },
+            ],
             isFastBuild && [
               { tag: 'text', text: `📢📢📢 注意: ` },
               {
@@ -129,6 +136,10 @@ async function sendMessage({
                 text: `该预览包来自 FastBuild, 若存在其它安装问题请联系开发者重新打包`,
               },
             ],
+            platform === 'android' &&
+              android16kbReportText && [
+                { tag: 'text', text: android16kbReportText },
+              ],
             [
               { tag: 'text', text: `二维码，拿 📱 扫一下 🔽` },
               { tag: 'img', image_key },
@@ -204,8 +215,15 @@ if (!process.env.CI && args[0] === 'get-token') {
     lines: args.slice(2),
   });
 } else if (args[0]) {
+  const android16kbReportTextPath =
+    process.env.RABBY_MOBILE_ANDROID_16KB_REPORT_TEXT;
+  const android16kbReportText =
+    android16kbReportTextPath && fs.existsSync(android16kbReportTextPath)
+      ? fs.readFileSync(android16kbReportTextPath, 'utf8').trim()
+      : '';
   sendMessage({
     downloadURL: args[0],
+    larkDriveURL: process.env.RABBY_MOBILE_LARK_DRIVE_URL || '',
     platform: args[1],
     isFastBuild: args[2] === 'true',
     actionsJobUrl: process.env.GIT_ACTIONS_JOB_URL,
@@ -215,6 +233,7 @@ if (!process.env.CI && args[0] === 'get-token') {
       process.env.GITHUB_TRIGGERING_ACTOR,
       process.env.GITHUB_ACTOR,
     ].filter(Boolean),
+    android16kbReportText,
   });
 } else {
   console.log('[notify-lark] no message');

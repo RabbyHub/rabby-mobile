@@ -6,12 +6,20 @@ import React, {
   useImperativeHandle,
   type Ref,
 } from 'react';
-import { FlatList, Platform, StyleProp, View, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import {
+  FlatList,
+  Platform,
+  View,
+  type FlatListProps,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { HistoryItem } from './HistoryItem';
 import { SkeletonCard } from './SkeletonCard';
 import { TransactionItem } from '@/screens/TransactionRecord/components/TransactionItem2025';
-import { TransactionGroup } from '@/core/services/transactionHistory';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
 import type { HistoryDisplayItem } from '@/types/history';
 import { Empty } from '../components/Empty';
 import { formatTimestamp } from '@/utils/time';
@@ -21,9 +29,8 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGetCexList } from '../hook';
 import { useMemoizedFn } from 'ahooks';
-import { Tabs } from 'react-native-collapsible-tab-view';
 import { Text } from '@/components/Typography';
-import { Account } from '@/types/account';
+import type { Account } from '@/types/account';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -32,6 +39,9 @@ interface DisplayHistoryItem {
   time: number;
   data: HistoryDisplayItem | TransactionGroup;
 }
+
+export type HistoryListHeaderComponent =
+  FlatListProps<DisplayHistoryItem>['ListHeaderComponent'];
 
 function markFirstItems(
   arr: (HistoryDisplayItem | TransactionGroup)[],
@@ -86,8 +96,11 @@ export const HistoryList = ({
   isNeedFetchFromApi,
   appendBottom,
   moreLoadingLength = 1,
-  tabList,
   style,
+  ListHeaderComponent,
+  emptyComponent,
+  onScroll,
+  scrollEventThrottle,
   ref,
 }: {
   firstFetchDone?: boolean;
@@ -104,8 +117,11 @@ export const HistoryList = ({
   isNeedFetchFromApi?: boolean;
   appendBottom?: number;
   moreLoadingLength?: number;
-  tabList?: boolean;
   style?: StyleProp<ViewStyle>;
+  ListHeaderComponent?: HistoryListHeaderComponent;
+  emptyComponent?: React.ReactElement | null;
+  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  scrollEventThrottle?: number;
   account?: Account | null;
   ref?: Ref<{ scrollToTop: () => void }>;
 }) => {
@@ -203,10 +219,6 @@ export const HistoryList = ({
       );
     }
   });
-  const RenderList = useMemo(
-    () => (tabList ? Tabs.FlatList : FlatList),
-    [tabList],
-  );
 
   if (loading) {
     return (
@@ -219,14 +231,16 @@ export const HistoryList = ({
   }
 
   return (
-    <RenderList
+    <FlatList
       ref={flatListRef}
       data={markedList}
       renderItem={renderItem}
       windowSize={5}
       initialNumToRender={Math.min(markedList.length, 20)}
       ListEmptyComponent={
-        loading ? null : firstFetchDone ? (
+        loading ? null : emptyComponent ? (
+          emptyComponent
+        ) : firstFetchDone ? (
           <Empty
             title={
               isNeedFetchFromApi
@@ -236,6 +250,7 @@ export const HistoryList = ({
           />
         ) : null
       }
+      ListHeaderComponent={ListHeaderComponent}
       style={[styles.container, style]}
       keyExtractor={item =>
         'id' in item.data
@@ -244,6 +259,8 @@ export const HistoryList = ({
       }
       onEndReached={loadMore}
       onEndReachedThreshold={0.5}
+      onScroll={onScroll}
+      scrollEventThrottle={scrollEventThrottle}
       removeClippedSubviews={true}
       ListFooterComponent={
         loadingMore ? (

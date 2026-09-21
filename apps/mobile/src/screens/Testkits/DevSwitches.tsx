@@ -24,7 +24,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { NextInput } from '@/components2024/Form/Input';
 import { RcIconCorrectCC } from '@/assets/icons/common';
-import { RcIconScannerCC } from '@/assets/icons/address';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import {
@@ -42,8 +41,10 @@ import {
   useDebugSwapHistorySkipLocalLookup,
   useEnablePerpsWatchAddress,
   useExpScreenCapture,
+  useHomeAssetSelectionSettings,
   useIosForceDisableAlertForSensitiveScene,
   useMockBatchRevoke,
+  useScreenE2EEnabled,
   useTimeTipAboutSeedPhraseAndPrivateKey,
   useToastOpenApiHttpErrorStatus,
   useToggleShowAutoLockCountdown,
@@ -51,7 +52,9 @@ import {
   WIDE_SCREEN_DEBUG_PANEL_MIN_ALLOWED_WIDTH,
   WIDE_SCREEN_DEBUG_PANEL_WIDTH,
 } from '@/hooks/appSettings';
-import { AppBottomSheetModal, SwitchToggleType } from '@/components';
+import { HOME_ASSET_TOP_N_OPTIONS } from '@/constant/homeAssetSelection';
+import type { SwitchToggleType } from '@/components';
+import { AppBottomSheetModal } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import {
   FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
@@ -66,6 +69,10 @@ import { SwitchAllowScreenshot } from '../Settings/components/SwitchAllowScreens
 import { LabelScreenshotToReport } from '../Settings/components/SwitchScreenshotToReport';
 import { useAutoLockCountDown } from '../Settings/components/LockAbout';
 import { SwitchShowFloatingAutoLockCountdown } from '../Settings/components/SwitchFloatingView';
+import { useToggleShowOpenApiSummaryPanel } from '../Settings/components/FloatingOpenApiSummaryPanel';
+import { useToggleShowKeyringRuntimePanel } from '../Settings/components/FloatingKeyringRuntimePanel';
+import { useToggleShowStartupTaskSummaryPanel } from '../Settings/components/FloatingStartupTaskSummaryPanel';
+import { useToggleShowStartupRuntimePanel } from '../Settings/components/startupRuntimePanelSetting';
 import { useGoogleSign } from '@/hooks/cloudStorage';
 import {
   deleteAllBackups,
@@ -77,6 +84,7 @@ import {
   useMakeMockDataForRateGuideExposure,
 } from '@/components/RateModal/hooks';
 import { useMakeMockDataForHomeCenterArea } from '@/screens/Home/hooks/homeCenterArea';
+import { useConvertDustBannerDebugControls } from '@/screens/Home/hooks/useConvertDustBanner';
 import { useMockClearOfflineChainTips } from '@/screens/Home/components/OfflineChainNotify';
 import {
   toggleViewedGuidance,
@@ -87,14 +95,15 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { NextSearchBar } from '@/components2024/SearchBar';
 import { toast } from '@/components2024/Toast';
 import RNHelpers from '@/core/native/RNHelpers';
-import { keyringService, preferenceService } from '@/core/services';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { dangerouslySetTokenManageSettingMapForDev } from '@/core/serviceApi/preference';
 import { makeTokenManageSettingMap } from '@/core/_mocks/preferenceMigration';
 import { getKeyring } from '@/core/apis/keyring';
-import { MockWalletConnectKeyring } from '@/core/keyring-bridge/walletconnect/mock-walletconnect-keyring';
+import type { MockWalletConnectKeyring } from '@/core/keyring-bridge/walletconnect/mock-walletconnect-keyring';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import type { SharedValue } from 'react-native-reanimated';
 import {
-  SharedValue,
   useAnimatedProps,
   useAnimatedStyle,
   useFrameCallback,
@@ -114,6 +123,12 @@ import {
 import { Text, AnimateableText } from '@/components/Typography';
 import { useAppLogFileSwitch } from '@/utils/logging/settings';
 import { APP_LOG_ROOT_PATH, logger } from '@/utils/logger';
+import { useAndroidWeakFaceBiometricsRegressionSwitch } from '@/core/apis/androidBiometricsRegression';
+import { storeApisBiometrics } from '@/hooks/biometrics';
+import {
+  resetUpgradePromptExposure,
+  useLastPromptedUpgradeVersion,
+} from '@/components/Upgrade/useUpgradePrompt';
 
 export const makeNoop = () => () => {};
 
@@ -754,6 +769,8 @@ function DevSwitchAboutOpenApiDebug() {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { toastOpenApiHttpErrorStatus, toggleToastOpenApiHttpErrorStatus } =
     useToastOpenApiHttpErrorStatus();
+  const { showOpenApiSummaryPanel, toggleShowOpenApiSummaryPanel } =
+    useToggleShowOpenApiSummaryPanel();
 
   return (
     <View style={styles.showCaseRowsContainer}>
@@ -788,6 +805,23 @@ function DevSwitchAboutOpenApiDebug() {
             : 'Keep HTTP 4xx/5xx openapi responses silent and only log them'}
         </Text>
       </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.switchRowWrapper}
+        onPress={() => {
+          toggleShowOpenApiSummaryPanel();
+        }}>
+        <AppSwitch2024
+          value={showOpenApiSummaryPanel}
+          onPress={evt => evt.stopPropagation()}
+          onValueChange={toggleShowOpenApiSummaryPanel}
+        />
+        <Text style={styles.switchLabel}>
+          {showOpenApiSummaryPanel
+            ? 'Hide Floating OpenAPI Diagnostics Panel'
+            : 'Show Floating OpenAPI Diagnostics Panel'}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -801,6 +835,12 @@ function DevSwitchAboutAutoLock() {
     useAutoLockCountDown();
 
   const { showAutoLockCountdown } = useToggleShowAutoLockCountdown();
+  const { showKeyringRuntimePanel, toggleShowKeyringRuntimePanel } =
+    useToggleShowKeyringRuntimePanel();
+  const { showStartupTaskSummaryPanel, toggleShowStartupTaskSummaryPanel } =
+    useToggleShowStartupTaskSummaryPanel();
+  const { showStartupRuntimePanel, toggleShowStartupRuntimePanel } =
+    useToggleShowStartupRuntimePanel();
 
   return (
     <View style={styles.showCaseRowsContainer}>
@@ -831,6 +871,54 @@ function DevSwitchAboutAutoLock() {
               : 'Show Floating Diagnostics Panel'}
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.switchRowWrapper}
+          onPress={() => {
+            toggleShowKeyringRuntimePanel();
+          }}>
+          <AppSwitch2024
+            value={showKeyringRuntimePanel}
+            onPress={evt => evt.stopPropagation()}
+            onValueChange={toggleShowKeyringRuntimePanel}
+          />
+          <Text style={styles.switchLabel}>
+            {showKeyringRuntimePanel
+              ? 'Hide Floating Keyring Runtime Panel'
+              : 'Show Floating Keyring Runtime Panel'}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.switchRowWrapper}
+          onPress={() => {
+            toggleShowStartupTaskSummaryPanel();
+          }}>
+          <AppSwitch2024
+            value={showStartupTaskSummaryPanel}
+            onPress={evt => evt.stopPropagation()}
+            onValueChange={toggleShowStartupTaskSummaryPanel}
+          />
+          <Text style={styles.switchLabel}>
+            {showStartupTaskSummaryPanel
+              ? 'Hide Floating Startup Task Panel'
+              : 'Show Floating Startup Task Panel'}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.switchRowWrapper}
+          onPress={() => {
+            toggleShowStartupRuntimePanel();
+          }}>
+          <AppSwitch2024
+            value={showStartupRuntimePanel}
+            onPress={evt => evt.stopPropagation()}
+            onValueChange={toggleShowStartupRuntimePanel}
+          />
+          <Text style={styles.switchLabel}>
+            {showStartupRuntimePanel
+              ? 'Hide Floating Startup Phase and Module Panel'
+              : 'Show Floating Startup Phase and Module Panel'}
+          </Text>
+        </TouchableOpacity>
         <View style={[styles.rowWrapper, { marginTop: 12 }]}>
           <RcCountdown
             width={18}
@@ -847,6 +935,78 @@ function DevSwitchAboutAutoLock() {
         </View>
         <Text style={[styles.metaLabel, styles.devModalHint]}>
           The panel shows autolock info together with modal diagnostics.
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+function DevSwitchAndroidWeakBiometrics() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const {
+    canUse,
+    allowWeakFaceBiometricsForRegression,
+    setAllowWeakFaceBiometricsForRegression,
+  } = useAndroidWeakFaceBiometricsRegressionSwitch();
+
+  const toggleSwitch = useCallback(
+    (nextVal?: boolean) => {
+      const next = setAllowWeakFaceBiometricsForRegression(nextVal);
+
+      void storeApisBiometrics.fetchBiometrics();
+      toast.show(
+        next
+          ? 'Weak Android face biometrics probe enabled. App Password unlock still uses strong biometrics.'
+          : 'Weak Android face biometrics probe disabled. App Password unlock uses strong biometrics.',
+      );
+    },
+    [setAllowWeakFaceBiometricsForRegression],
+  );
+
+  if (!IS_ANDROID || !canUse) {
+    return null;
+  }
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <RcCode
+          width={24}
+          height={24}
+          color={styles.secondarySectionTitle.color}
+        />
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          Android Biometrics Regression
+        </Text>
+      </View>
+
+      <View
+        style={[styles.secondarySectionContent, { flexDirection: 'column' }]}>
+        <TouchableOpacity
+          style={styles.switchRowWrapper}
+          onPress={() => {
+            toggleSwitch();
+          }}>
+          <AppSwitch2024
+            value={allowWeakFaceBiometricsForRegression}
+            onPress={evt => evt.stopPropagation()}
+            onValueChange={toggleSwitch}
+          />
+          <Text style={styles.switchLabel}>
+            {allowWeakFaceBiometricsForRegression
+              ? 'Weak Android face biometrics probe enabled'
+              : 'Use strong Android biometrics for App Password'}
+          </Text>
+        </TouchableOpacity>
+
+        <Text style={styles.metaLabel}>
+          Regression-only. App Password read and write always stay on strong
+          Android biometrics; weak face support should be tested through a
+          separate probe.
         </Text>
       </View>
     </View>
@@ -956,6 +1116,11 @@ function DevTestHomeCenterArea() {
   const { mockData, setMockData } = useMakeMockDataForHomeCenterArea();
   const { clearOfflineChainTips } = useMockClearOfflineChainTips();
   const { viewedHomeTip, mockResetViewedHomeTip } = useViewedHomeTip();
+  const {
+    convertDustBannerVisited,
+    resetConvertDustBannerVisited,
+    markConvertDustBannerVisited,
+  } = useConvertDustBannerDebugControls();
   const { multiTabs20251205Viewed } = useGuidanceShown();
   const [isShow0331SnapshotModal, setIsShow0331SnapshotModal] = useState(false);
 
@@ -1044,6 +1209,34 @@ function DevTestHomeCenterArea() {
             }}
           />
         )}
+
+        <Text style={[styles.metaLabel, { marginTop: 12 }]}>
+          Convert Dust Banner Visited: {convertDustBannerVisited ? 'yes' : 'no'}
+        </Text>
+
+        <Button
+          title={'Reset Convert Dust Banner Visited'}
+          type="ghost"
+          height={48}
+          containerStyle={{ marginTop: 12 }}
+          disabled={!convertDustBannerVisited}
+          onPress={() => {
+            resetConvertDustBannerVisited();
+            toast.success('Convert Dust banner visited reset');
+          }}
+        />
+
+        <Button
+          title={'Mark Convert Dust Banner Visited'}
+          type="ghost"
+          height={48}
+          containerStyle={{ marginTop: 12 }}
+          disabled={convertDustBannerVisited}
+          onPress={() => {
+            markConvertDustBannerVisited();
+            toast.success('Convert Dust banner marked visited');
+          }}
+        />
       </View>
 
       <View style={[styles.secondarySectionHeader, { marginTop: 24 }]}>
@@ -1091,6 +1284,33 @@ function DevTestHomeCenterArea() {
           setIsShow0331SnapshotModal(false);
         }}
       />
+    </View>
+  );
+}
+
+function DevSwitchUpgradePrompt() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const lastPromptedVersion = useLastPromptedUpgradeVersion();
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionContent}>
+        <Text style={styles.metaLabel}>
+          Last Prompted Version: {lastPromptedVersion || 'none'}
+        </Text>
+
+        <Button
+          title={'Reset Upgrade Prompt Exposure'}
+          type="ghost"
+          height={48}
+          disabled={!lastPromptedVersion}
+          containerStyle={{ marginTop: 12 }}
+          onPress={() => {
+            resetUpgradePromptExposure();
+            toast.success('Upgrade prompt exposure reset');
+          }}
+        />
+      </View>
     </View>
   );
 }
@@ -1430,6 +1650,121 @@ function DevSwitchPerpsWatchAddress() {
   );
 }
 
+function DevSwitchHomeAssetSelection() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const {
+    topN,
+    includeWatchAddresses,
+    isExperimentEnabled,
+    setTopN,
+    setIncludeWatchAddresses,
+  } = useHomeAssetSelectionSettings();
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <RcCode
+          width={24}
+          height={24}
+          color={styles.secondarySectionTitle.color}
+        />
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          Home Asset Selection
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        style={styles.switchRowWrapper}
+        onPress={() => {
+          setIncludeWatchAddresses(!includeWatchAddresses);
+        }}>
+        <AppSwitch2024
+          value={includeWatchAddresses}
+          onPress={evt => evt.stopPropagation()}
+          onValueChange={setIncludeWatchAddresses}
+        />
+        <Text style={styles.switchLabel}>
+          {includeWatchAddresses
+            ? 'Include Watch and other non-owned addresses in Home Top-N'
+            : 'Use owned addresses only (default)'}
+        </Text>
+      </TouchableOpacity>
+      <View
+        style={[
+          styles.secondarySectionContent,
+          { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
+        ]}>
+        {HOME_ASSET_TOP_N_OPTIONS.map(option => (
+          <Button
+            key={option}
+            title={'Top ' + option}
+            type={option === topN ? 'primary' : 'ghost'}
+            height={40}
+            containerStyle={{ minWidth: 84 }}
+            onPress={() => setTopN(option)}
+          />
+        ))}
+      </View>
+      <Text style={[styles.metaLabel, { marginTop: 4 }]}>
+        {isExperimentEnabled
+          ? 'Test-only policy active: Top ' +
+            topN +
+            (includeWatchAddresses ? ' with Watch addresses.' : '.')
+          : 'Production-compatible default: Top 10 owned addresses.'}{' '}
+        Production builds always keep the default policy.
+      </Text>
+    </View>
+  );
+}
+
+function DevSwitchRegressionScenarioE2E() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { screenE2EEnabled, setScreenE2EEnabled } = useScreenE2EEnabled();
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <RcCode
+          width={24}
+          height={24}
+          color={styles.secondarySectionTitle.color}
+        />
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          Lifecycle E2E
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        style={styles.switchRowWrapper}
+        onPress={() => {
+          setScreenE2EEnabled(!screenE2EEnabled);
+        }}>
+        <AppSwitch2024
+          value={screenE2EEnabled}
+          onPress={evt => evt.stopPropagation()}
+          onValueChange={setScreenE2EEnabled}
+        />
+        <Text style={styles.switchLabel}>
+          {screenE2EEnabled
+            ? 'Accept explicit lifecycle E2E commands'
+            : 'Reject lifecycle E2E commands'}
+        </Text>
+      </TouchableOpacity>
+      <Text style={[styles.metaLabel, { marginTop: 4 }]}>
+        Non-production only. A valid one-time deep link is still required to
+        activate a scenario.
+      </Text>
+    </View>
+  );
+}
+
 async function importWalletConnectAddress({
   address,
   brandName,
@@ -1452,7 +1787,7 @@ async function importWalletConnectAddress({
     realBrandUrl,
   });
 
-  await keyringService.addNewAccount(keyring as any);
+  await keyringServiceApi.addNewAccount(keyring as any);
 }
 
 function DevMock() {
@@ -1499,8 +1834,8 @@ function DevMock() {
           title={'Mock assets data <= 0.5.4'}
           type="ghost"
           height={48}
-          onPress={() => {
-            preferenceService._dangerouslySetTokenManageSettingMap(
+          onPress={async () => {
+            await dangerouslySetTokenManageSettingMapForDev(
               makeTokenManageSettingMap(),
             );
 
@@ -1609,12 +1944,16 @@ function DevSwitches(): JSX.Element {
         <DevSwitchAboutOpenApiDebug />
         <DevSwitchAboutExpData />
         <DevSwitchAboutAutoLock />
+        <DevSwitchAndroidWeakBiometrics />
 
         <Text style={styles.areaTitle}>Cloud Drive</Text>
         <DevTestCloudDrive />
 
         <Text style={styles.areaTitle}>Home Notifications</Text>
         <DevTestHomeCenterArea />
+
+        <Text style={styles.areaTitle}>App Update</Text>
+        <DevSwitchUpgradePrompt />
 
         <Text style={styles.areaTitle}>Batch Revoke</Text>
         <DevSwitchBatchRevoke />
@@ -1628,6 +1967,12 @@ function DevSwitches(): JSX.Element {
 
         <Text style={styles.areaTitle}>Perps</Text>
         <DevSwitchPerpsWatchAddress />
+
+        <Text style={styles.areaTitle}>Asset Scale</Text>
+        <DevSwitchHomeAssetSelection />
+
+        <Text style={styles.areaTitle}>Lifecycle E2E</Text>
+        <DevSwitchRegressionScenarioE2E />
       </ScrollView>
     </NormalScreenContainer>
   );

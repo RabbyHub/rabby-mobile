@@ -7,17 +7,16 @@ import {
   filterDirectlySignableAccounts,
   getAccountList,
 } from '@/core/apis/account';
+import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
-import { Account } from '@/core/services/preference';
+import { useFeatureActivationDiagnostics } from '@/hooks/useFeatureActivationDiagnostics';
+import type { Account } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { useFocusEffect } from '@react-navigation/native';
-import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
-import useTokenList from '@/store/tokens';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { GasAccountDepositPopup } from './components/GasAccountDepositPopup';
@@ -25,19 +24,24 @@ import { GasAccountLoginPopup } from './components/GasAccountLoginPopup';
 import { GasAccountHeader } from './components/HeaderRight';
 import { WithDrawPopup } from './components/WithDrawPopup';
 import { useGasAccountBalanceWithPendingHardware } from './hooks/useGasAccountBalanceWithPendingHardware';
-import {
-  storeApiGasAccountDeposit,
-  storeApiGasAccount,
-  useGasAccountLoginVisible,
-} from './hooks/atom';
+import { storeApiGasAccount, useGasAccountLoginVisible } from './hooks/atom';
 import NormalScreenContainer from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { refreshAccountsWithGasAccountBalance } from '@/utils/autoLoginGasAccount';
 import { GasAccountEmptyState } from './components/GasAccountEmptyState';
 import { getGasAccountEmptyStatePrimaryMode } from './components/GasAccountEmptyState.utils';
 import { GasAccountUserState } from './components/GasAccountUserState';
-import { useGasAccountHistory, useGasAccountMethods } from './hooks';
+import { useGasAccountHistorySummary, useGasAccountMethods } from './hooks';
+import { withGasAccountService } from './gasAccountServiceDependencies';
+import { useGasAccountScreenActivation } from './hooks/useGasAccountScreenActivation';
 
-export const GasAccountScreen = () => {
+const traceGasAccount = (event: string, data: Record<string, unknown> = {}) => {
+  traceStartupDiagnostic('gas-account', event, data);
+};
+
+const GasAccountScreenContent = () => {
+  const renderStartedAt = Date.now();
+  const renderSeqRef = useRef(0);
+  useFeatureActivationDiagnostics('gas-account');
+
   const { t } = useTranslation();
   const [depositState, setDepositState] = useState<{
     isOpen?: boolean;
@@ -61,13 +65,19 @@ export const GasAccountScreen = () => {
     pendingHardwareAddress,
     refreshPendingHardwareGasAccountInfo,
     displayBalance: gasBalance,
+    isDisplayBalanceLoading,
   } = useGasAccountBalanceWithPendingHardware();
-  const historyState = useGasAccountHistory();
-  const { myTop10Addresses } = useAccountInfo();
+  const historySummary = useGasAccountHistorySummary();
 
   const { login } = useGasAccountMethods();
-  const { claimGift, currentEligibleAddress, checkAddressesEligibility } =
-    useGasAccountEligibility();
+  const { claimGift, currentEligibleAddress } = useGasAccountEligibility();
+  useGasAccountScreenActivation({
+    isLogin,
+    hasPendingHardwareAccount: !!pendingHardwareAccount,
+    pendingHardwareAddress,
+    isDisplayBalanceLoading,
+    refreshPendingHardwareBalance: refreshPendingHardwareGasAccountInfo,
+  });
 
   const handleDeposit = useMemoizedFn((type?: 'token' | 'pay') => {
     setDepositState({
@@ -90,60 +100,29 @@ export const GasAccountScreen = () => {
     setNavigationOptions({ headerRight: headerRight });
   }, [setNavigationOptions, headerRight]);
 
-  useFocusEffect(
-    useCallback(() => {
-      storeApiGasAccount.setHistoryRefreshEnabled(true);
-      storeApiGasAccount.refreshSnapshot().catch(error => {
-        console.error('refreshSnapshot on GasAccountScreen focus error', error);
-      });
-      storeApiGasAccount.refreshHistory().catch(error => {
-        console.error('refreshHistory on GasAccountScreen focus error', error);
-      });
-      refreshAccountsWithGasAccountBalance().catch(error => {
-        console.error('refreshAccountsWithGasAccountBalance error', error);
-      });
-      if (pendingHardwareAddress) {
-        refreshPendingHardwareGasAccountInfo();
-      }
-
-      return () => {
-        storeApiGasAccount.setHistoryRefreshEnabled(false);
-      };
-    }, [pendingHardwareAddress, refreshPendingHardwareGasAccountInfo]),
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      Promise.allSettled([
-        myTop10Addresses.length
-          ? useTokenList.getState().batchGetTokenList(myTop10Addresses)
-          : Promise.resolve(),
-        storeApiGasAccountDeposit.fetchBridgeSupportTokenList(),
-      ]);
-    }, [myTop10Addresses]),
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      if (isLogin || pendingHardwareAccount) {
-        return;
-      }
-
-      checkAddressesEligibility().catch(error => {
-        console.error(
-          'checkAddressesEligibility on GasAccountScreen error',
-          error,
-        );
-      });
-    }, [checkAddressesEligibility, isLogin, pendingHardwareAccount]),
-  );
-
   const showEmptyState =
     (!isLogin && !pendingHardwareAccount) ||
     (isLogin &&
-      !historyState.loading &&
+      !historySummary.loading &&
       gasBalance === 0 &&
-      !historyState.hasHistory);
+      !historySummary.hasHistory);
+
+  useEffect(() => {
+    renderSeqRef.current += 1;
+    traceGasAccount('screen_render_commit', {
+      seq: renderSeqRef.current,
+      renderCommitMs: Date.now() - renderStartedAt,
+      isLogin,
+      showEmptyState,
+      historyLoading: historySummary.loading,
+      hasHistory: historySummary.hasHistory,
+      confirmedCount: historySummary.confirmedCount,
+      rechargeCount: historySummary.rechargeCount,
+      withdrawCount: historySummary.withdrawCount,
+      isDisplayBalanceLoading,
+      hasGasBalance: gasBalance > 0,
+    });
+  });
   const emptyStatePrimaryMode = getGasAccountEmptyStatePrimaryMode({
     isLogin,
     hasPendingHardwareAccount: !!pendingHardwareAccount,
@@ -163,7 +142,10 @@ export const GasAccountScreen = () => {
       try {
         await claimGift(currentEligibleAddress.address);
         await runFetchGasAccountInfo();
-        await storeApiGasAccount.refreshHistory();
+        await storeApiGasAccount.refreshHistory({
+          reason: 'gift_claimed',
+          revalidateIfInFlight: true,
+        });
       } catch (error) {
         console.error('handleEmptyStatePrimaryPress claimGift error', error);
         toast.error(t('page.gasAccount.loginFailed'));
@@ -193,7 +175,10 @@ export const GasAccountScreen = () => {
 
     await login(targetAccount);
     const latest = await runFetchGasAccountInfo();
-    await storeApiGasAccount.refreshHistory();
+    await storeApiGasAccount.refreshHistory({
+      reason: 'login_for_deposit',
+      revalidateIfInFlight: true,
+    });
     return latest?.account?.id || targetAccount.address;
   });
 
@@ -207,7 +192,10 @@ export const GasAccountScreen = () => {
       try {
         await login(pendingHardwareAccount as Account);
         await runFetchGasAccountInfo();
-        await storeApiGasAccount.refreshHistory();
+        await storeApiGasAccount.refreshHistory({
+          reason: 'pending_hardware_login',
+          revalidateIfInFlight: true,
+        });
         toast.success(t('page.gasAccount.loginSuccess'));
       } catch (error) {
         console.error('handleOldUserStatePrimaryPress error', error);
@@ -270,7 +258,6 @@ export const GasAccountScreen = () => {
       ) : (
         <GasAccountUserState
           balance={gasBalance}
-          historyState={historyState}
           onDepositPress={handleOldUserStatePrimaryPress}
           isLoading={emptyStateLoading}
         />
@@ -286,7 +273,10 @@ export const GasAccountScreen = () => {
             setDepositState({
               isOpen: false,
             });
-            await storeApiGasAccount.refreshHistory();
+            await storeApiGasAccount.refreshHistory({
+              reason: 'deposit_submitted',
+              revalidateIfInFlight: true,
+            });
             await runFetchGasAccountInfo();
             toast.success(t('page.gasAccount.depositSubmitted'), {
               position: toast.positions.CENTER,
@@ -313,7 +303,10 @@ export const GasAccountScreen = () => {
           setLoginVisible(false);
         }}
         onLogin={async () => {
-          await storeApiGasAccount.refreshHistory();
+          await storeApiGasAccount.refreshHistory({
+            reason: 'login_popup',
+            revalidateIfInFlight: true,
+          });
           await runFetchGasAccountInfo();
           setLoginVisible(false);
         }}
@@ -321,6 +314,10 @@ export const GasAccountScreen = () => {
     </NormalScreenContainer>
   );
 };
+
+export const GasAccountScreen = withGasAccountService(GasAccountScreenContent, {
+  fallback: <View />,
+});
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   giftPrimaryButtonContainer: {

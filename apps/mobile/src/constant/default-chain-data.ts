@@ -2,9 +2,7 @@
 
 import { supportedChainToChain } from '@/isomorphic/chain';
 import type { Chain } from '@debank/common';
-import { ChainRaw, CHAINS_RAW_LIST } from '@debank/common/dist/chain-data';
 import { SupportedChain } from '@rabby-wallet/rabby-api/dist/types';
-import { keyBy } from 'lodash';
 
 const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = {
   "eth": {
@@ -62,7 +60,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://gnosisscan.io",
     "need_estimate_gas": false,
     "severity": 1,
-    "block_interval": 5.16
+    "block_interval": 1
   },
   "matic": {
     "id": "matic",
@@ -81,26 +79,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://polygonscan.com",
     "need_estimate_gas": false,
     "severity": 0,
-    "block_interval": 2.13
-  },
-  "ftm": {
-    "id": "ftm",
-    "community_id": 250,
-    "name": "Fantom",
-    "native_token": {
-      "id": "ftm",
-      "symbol": "FTM",
-      "logo": "https://static.debank.com/image/ftm_token/logo_url/ftm/33fdb9c5067e94f3a1b9e78f6fa86984.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/ftm/14133435f89637157a4405e954e1b1b2.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/ftm/64178bae592be3a33c160b1d9b9a124a.png",
-    "eip_1559": false,
-    "is_disabled": false,
-    "explorer_host": "https://explorer.fantom.network",
-    "need_estimate_gas": false,
-    "severity": 1,
-    "block_interval": 0.87
+    "block_interval": 1.51
   },
   "avax": {
     "id": "avax",
@@ -119,7 +98,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://snowscan.xyz",
     "need_estimate_gas": false,
     "severity": 0,
-    "block_interval": 1.38
+    "block_interval": 1
   },
   "op": {
     "id": "op",
@@ -138,7 +117,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://optimistic.etherscan.io",
     "need_estimate_gas": false,
     "severity": 0,
-    "block_interval": 2
+    "block_interval": 1
   },
   "arb": {
     "id": "arb",
@@ -157,7 +136,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://arbiscan.io",
     "need_estimate_gas": true,
     "severity": 0,
-    "block_interval": 0.25
+    "block_interval": 1
   },
   "celo": {
     "id": "celo",
@@ -175,27 +154,8 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "is_disabled": false,
     "explorer_host": "https://celoscan.io",
     "need_estimate_gas": false,
-    "severity": 2,
+    "severity": 1,
     "block_interval": 1
-  },
-  "movr": {
-    "id": "movr",
-    "community_id": 1285,
-    "name": "Moonriver",
-    "native_token": {
-      "id": "movr",
-      "symbol": "MOVR",
-      "logo": "https://static.debank.com/image/movr_token/logo_url/movr/bfa51dfae3e231daab070f3463828090.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/movr/cfdc1aef482e322abd02137b0e484dba.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/movr/7cf3b2c4406b3a5a59190f348e406b43.png",
-    "eip_1559": true,
-    "is_disabled": false,
-    "explorer_host": "https://moonriver.moonscan.io",
-    "need_estimate_gas": false,
-    "severity": 2,
-    "block_interval": 6.29
   },
   "cro": {
     "id": "cro",
@@ -211,29 +171,10 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/cro/555a092be8378d6e55000b3846043bec.png",
     "eip_1559": true,
     "is_disabled": false,
-    "explorer_host": "https://cronoscan.com",
+    "explorer_host": "https://explorer.cronos.org",
     "need_estimate_gas": false,
     "severity": 2,
-    "block_interval": 5.66
-  },
-  "boba": {
-    "id": "boba",
-    "community_id": 288,
-    "name": "Boba",
-    "native_token": {
-      "id": "boba",
-      "symbol": "ETH",
-      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/boba/e43d79cd8088ceb3ea3e4a240a75728f.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/boba/aea02e2a1cf1087f299f4d501777d0cd.png",
-    "eip_1559": false,
-    "is_disabled": false,
-    "explorer_host": "https://bobascan.com",
-    "need_estimate_gas": true,
-    "severity": 2,
-    "block_interval": 2
+    "block_interval": 1
   },
   "metis": {
     "id": "metis",
@@ -252,26 +193,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://explorer.metis.io",
     "need_estimate_gas": false,
     "severity": 1,
-    "block_interval": 11.58
-  },
-  "mobm": {
-    "id": "mobm",
-    "community_id": 1284,
-    "name": "Moonbeam",
-    "native_token": {
-      "id": "mobm",
-      "symbol": "GLMR",
-      "logo": "https://static.debank.com/image/mobm_token/logo_url/mobm/6772b139c54c653789cb0ad27d0e76d0.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/mobm/fcfe3dee0e55171580545cf4d4940257.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/mobm/f81571ea549a63e6ea3d990e93f2a6f6.png",
-    "eip_1559": true,
-    "is_disabled": false,
-    "explorer_host": "https://moonscan.io",
-    "need_estimate_gas": false,
-    "severity": 2,
-    "block_interval": 6.07
+    "block_interval": 1
   },
   "fuse": {
     "id": "fuse",
@@ -290,7 +212,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://explorer.fuse.io",
     "need_estimate_gas": false,
     "severity": 2,
-    "block_interval": 5
+    "block_interval": 1
   },
   "klay": {
     "id": "klay",
@@ -311,44 +233,6 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "severity": 2,
     "block_interval": 1
   },
-  "astar": {
-    "id": "astar",
-    "community_id": 592,
-    "name": "Astar",
-    "native_token": {
-      "id": "astar",
-      "symbol": "ASTR",
-      "logo": "https://static.debank.com/image/astar_token/logo_url/astar/a827be92d88617a918ea060a9a6f1572.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/astar/398c7e0014bdada3d818367a7273fabe.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/astar/116f17a7abe800b7675377857fac1dcd.png",
-    "eip_1559": true,
-    "is_disabled": false,
-    "explorer_host": "https://blockscout.com/astar",
-    "need_estimate_gas": false,
-    "severity": 2,
-    "block_interval": 12.19
-  },
-  "iotx": {
-    "id": "iotx",
-    "community_id": 4689,
-    "name": "IoTeX",
-    "native_token": {
-      "id": "iotx",
-      "symbol": "IOTX",
-      "logo": "https://static.debank.com/image/iotx_token/logo_url/iotx/d3be2cd8677f86bd9ab7d5f3701afcc9.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/iotx/d3be2cd8677f86bd9ab7d5f3701afcc9.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/iotx/419fdcf87eceb9b8c34af0c5e3985d44.png",
-    "eip_1559": false,
-    "is_disabled": false,
-    "explorer_host": "https://iotexscan.io",
-    "need_estimate_gas": false,
-    "severity": 2,
-    "block_interval": 5
-  },
   "rsk": {
     "id": "rsk",
     "community_id": 30,
@@ -356,7 +240,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "rsk",
       "symbol": "RBTC",
-      "logo": "https://static.debank.com/image/rsk_token/logo_url/rsk/1dae003fa89234ac011c0dac51126770.png",
+      "logo": "https://static.debank.com/image/rsk_token/logo_url/rsk/c03df025af9fde162a9e064ecb423089.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/rsk/ff47def89fba98394168bf5f39920c8c.png",
@@ -366,102 +250,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://rootstock.blockscout.com",
     "need_estimate_gas": false,
     "severity": 2,
-    "block_interval": 25.43
-  },
-  "dfk": {
-    "id": "dfk",
-    "community_id": 53935,
-    "name": "DFK",
-    "native_token": {
-      "id": "dfk",
-      "symbol": "JEWEL",
-      "logo": "https://static.debank.com/image/dfk_token/logo_url/dfk/09b4ee0e9d0695201fcc7e912ac31595.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/dfk/233867c089c5b71be150aa56003f3f7a.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/dfk/bab611be6bf763da73c6179c2150ffdf.png",
-    "eip_1559": true,
-    "is_disabled": false,
-    "explorer_host": "https://subnets.avax.network/defi-kingdoms/dfk-chain/explorer",
-    "need_estimate_gas": false,
-    "severity": 1,
-    "block_interval": 2.09
-  },
-  "tlos": {
-    "id": "tlos",
-    "community_id": 40,
-    "name": "Telos EVM",
-    "native_token": {
-      "id": "tlos",
-      "symbol": "TLOS",
-      "logo": "https://static.debank.com/image/tlos_token/logo_url/tlos/6191b8e0b261536044fc70ba746ba2c9.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/tlos/6191b8e0b261536044fc70ba746ba2c9.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/tlos/4db183821aac84407962bab4dcd5790e.png",
-    "eip_1559": false,
-    "is_disabled": false,
-    "explorer_host": "https://www.teloscan.io",
-    "need_estimate_gas": false,
-    "severity": 2,
-    "block_interval": 0.5
-  },
-  "nova": {
-    "id": "nova",
-    "community_id": 42170,
-    "name": "Arbitrum Nova",
-    "native_token": {
-      "id": "nova",
-      "symbol": "ETH",
-      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/nova/06eb2b7add8ba443d5b219c04089c326.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/nova/b61c3a7723f39265c8b98967407e46db.png",
-    "eip_1559": true,
-    "is_disabled": false,
-    "explorer_host": "https://nova.arbiscan.io",
-    "need_estimate_gas": true,
-    "severity": 2,
-    "block_interval": 21.67
-  },
-  "canto": {
-    "id": "canto",
-    "community_id": 7700,
-    "name": "Canto",
-    "native_token": {
-      "id": "canto",
-      "symbol": "CANTO",
-      "logo": "https://static.debank.com/image/canto_token/logo_url/canto/47574ef619e057d2c6bbce1caba57fb6.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/canto/47574ef619e057d2c6bbce1caba57fb6.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/canto/29bd07f96ac7805a1b14649f356d3eee.png",
-    "eip_1559": true,
-    "is_disabled": false,
-    "explorer_host": "https://tuber.build",
-    "need_estimate_gas": false,
-    "severity": 2,
-    "block_interval": 5.61
-  },
-  "doge": {
-    "id": "doge",
-    "community_id": 2000,
-    "name": "Dogechain",
-    "native_token": {
-      "id": "doge",
-      "symbol": "DOGE",
-      "logo": "https://static.debank.com/image/doge_token/logo_url/doge/2538141079688a7a43bc22c7b60fb45f.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/doge/2538141079688a7a43bc22c7b60fb45f.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/doge/aa18ed341ae19e5e381dfac1062fee73.png",
-    "eip_1559": false,
-    "is_disabled": false,
-    "explorer_host": "https://explorer.dogechain.dog",
-    "need_estimate_gas": false,
-    "severity": 2,
-    "block_interval": 2
+    "block_interval": 36.56
   },
   "kava": {
     "id": "kava",
@@ -480,7 +269,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://kavascan.com",
     "need_estimate_gas": false,
     "severity": 2,
-    "block_interval": 5.91
+    "block_interval": 1
   },
   "cfx": {
     "id": "cfx",
@@ -499,7 +288,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://evm.confluxscan.io",
     "need_estimate_gas": false,
     "severity": 2,
-    "block_interval": 1.28
+    "block_interval": 1
   },
   "era": {
     "id": "era",
@@ -515,10 +304,10 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/era/ae1951502c3514d43374d7e6718bda9a.png",
     "eip_1559": true,
     "is_disabled": false,
-    "explorer_host": "https://era.zksync.network",
+    "explorer_host": "https://explorer.zksync.io",
     "need_estimate_gas": true,
-    "severity": 0,
-    "block_interval": 2.03
+    "severity": 1,
+    "block_interval": 1
   },
   "ron": {
     "id": "ron",
@@ -537,26 +326,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://explorer.roninchain.com",
     "need_estimate_gas": false,
     "severity": 2,
-    "block_interval": 3
-  },
-  "pze": {
-    "id": "pze",
-    "community_id": 1101,
-    "name": "Polygon zkEVM",
-    "native_token": {
-      "id": "pze",
-      "symbol": "ETH",
-      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/pze/a2276dce2d6a200c6148fb975f0eadd3.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/pze/94d0cff539cb8f18c93f11a454f894b3.png",
-    "eip_1559": false,
-    "is_disabled": false,
-    "explorer_host": "https://zkevm.polygonscan.com",
-    "need_estimate_gas": false,
-    "severity": 1,
-    "block_interval": 3.23
+    "block_interval": 1
   },
   "core": {
     "id": "core",
@@ -575,7 +345,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://scan.coredao.org",
     "need_estimate_gas": false,
     "severity": 2,
-    "block_interval": 3.01
+    "block_interval": 1
   },
   "wemix": {
     "id": "wemix",
@@ -613,26 +383,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://flare-explorer.flare.network",
     "need_estimate_gas": false,
     "severity": 2,
-    "block_interval": 1.7
-  },
-  "oas": {
-    "id": "oas",
-    "community_id": 248,
-    "name": "Oasys",
-    "native_token": {
-      "id": "oas",
-      "symbol": "OAS",
-      "logo": "https://static.debank.com/image/oas_token/logo_url/oas/322b2cb0935af95b9cabd8a59b629566.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/oas/61dfecab1ba8a404354ce94b5a54d4b3.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/oas/95888aa80c9eb4dbde714c69b3cc7425.png",
-    "eip_1559": true,
-    "is_disabled": false,
-    "explorer_host": "https://scan.oasys.games",
-    "need_estimate_gas": false,
-    "severity": 2,
-    "block_interval": 6.03
+    "block_interval": 1
   },
   "zora": {
     "id": "zora",
@@ -651,7 +402,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://explorer.zora.energy",
     "need_estimate_gas": false,
     "severity": 1,
-    "block_interval": 2
+    "block_interval": 1
   },
   "base": {
     "id": "base",
@@ -688,8 +439,8 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "is_disabled": false,
     "explorer_host": "https://lineascan.build",
     "need_estimate_gas": false,
-    "severity": 0,
-    "block_interval": 2.29
+    "severity": 1,
+    "block_interval": 1
   },
   "mnt": {
     "id": "mnt",
@@ -708,7 +459,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://mantlescan.xyz",
     "need_estimate_gas": true,
     "severity": 1,
-    "block_interval": 2.01
+    "block_interval": 1
   },
   "manta": {
     "id": "manta",
@@ -727,7 +478,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://pacific-explorer.manta.network",
     "need_estimate_gas": true,
     "severity": 1,
-    "block_interval": 9.96
+    "block_interval": 1
   },
   "scrl": {
     "id": "scrl",
@@ -760,31 +511,12 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/opbnb/07e2e686e363a842d0982493638e1285.png",
     "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/opbnb/8e44e643d6e2fd335a72b4cda6368e1a.png",
-    "eip_1559": false,
-    "is_disabled": false,
-    "explorer_host": "https://mainnet.opbnbscan.com",
-    "need_estimate_gas": false,
-    "severity": 1,
-    "block_interval": 0.5
-  },
-  "shib": {
-    "id": "shib",
-    "community_id": 109,
-    "name": "Shibarium",
-    "native_token": {
-      "id": "shib",
-      "symbol": "BONE",
-      "logo": "https://static.debank.com/image/shib_token/logo_url/shib/e49e9a98f5fb1fb04ad96bb536457df9.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/shib/4ec79ed9ee4988dfdfc41e1634a447be.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/shib/574d888cbdce3a08ea8a5f636fc2ae3e.png",
     "eip_1559": true,
     "is_disabled": false,
-    "explorer_host": "https://shibariumscan.io",
+    "explorer_host": "https://opbnbscan.com",
     "need_estimate_gas": false,
-    "severity": 2,
-    "block_interval": 5.02
+    "severity": 1,
+    "block_interval": 1
   },
   "mode": {
     "id": "mode",
@@ -803,7 +535,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://explorer.mode.network",
     "need_estimate_gas": false,
     "severity": 1,
-    "block_interval": 2
+    "block_interval": 1
   },
   "zeta": {
     "id": "zeta",
@@ -822,26 +554,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://zetachain.blockscout.com",
     "need_estimate_gas": false,
     "severity": 1,
-    "block_interval": 6.06
-  },
-  "rari": {
-    "id": "rari",
-    "community_id": 1380012617,
-    "name": "RARI",
-    "native_token": {
-      "id": "rari",
-      "symbol": "ETH",
-      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/rari/67fc6abba5cfc6bb3a57bb6afcf5afee.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/rari/73456a9386ce19d00584fec493206005.png",
-    "eip_1559": true,
-    "is_disabled": false,
-    "explorer_host": "https://mainnet.explorer.rarichain.org",
-    "need_estimate_gas": false,
-    "severity": 2,
-    "block_interval": 3.93
+    "block_interval": 3.77
   },
   "merlin": {
     "id": "merlin",
@@ -859,8 +572,8 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "is_disabled": false,
     "explorer_host": "https://scan.merlinchain.io",
     "need_estimate_gas": false,
-    "severity": 1,
-    "block_interval": 3.12
+    "severity": 2,
+    "block_interval": 1
   },
   "blast": {
     "id": "blast",
@@ -878,27 +591,8 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "is_disabled": false,
     "explorer_host": "https://blastscan.io",
     "need_estimate_gas": false,
-    "severity": 1,
-    "block_interval": 2
-  },
-  "karak": {
-    "id": "karak",
-    "community_id": 2410,
-    "name": "Karak",
-    "native_token": {
-      "id": "karak",
-      "symbol": "ETH",
-      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/karak/a9e47f00f6eeb2c9cc8f9551cff5fe68.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/karak/5d5ca3507b4a1d64a85406f7382412d7.png",
-    "eip_1559": true,
-    "is_disabled": false,
-    "explorer_host": "https://explorer.karak.network",
-    "need_estimate_gas": false,
     "severity": 2,
-    "block_interval": 2
+    "block_interval": 1
   },
   "frax": {
     "id": "frax",
@@ -917,7 +611,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://fraxscan.com",
     "need_estimate_gas": false,
     "severity": 2,
-    "block_interval": 2
+    "block_interval": 1
   },
   "xlayer": {
     "id": "xlayer",
@@ -936,7 +630,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://www.oklink.com/xlayer",
     "need_estimate_gas": false,
     "severity": 1,
-    "block_interval": 0.7
+    "block_interval": 1
   },
   "itze": {
     "id": "itze",
@@ -955,7 +649,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://explorer.immutable.com",
     "need_estimate_gas": false,
     "severity": 2,
-    "block_interval": 2
+    "block_interval": 1
   },
   "btr": {
     "id": "btr",
@@ -974,7 +668,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://www.btrscan.com",
     "need_estimate_gas": false,
     "severity": 2,
-    "block_interval": 3
+    "block_interval": 1
   },
   "b2": {
     "id": "b2",
@@ -993,7 +687,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://explorer.bsquared.network",
     "need_estimate_gas": false,
     "severity": 2,
-    "block_interval": 2
+    "block_interval": 1
   },
   "bob": {
     "id": "bob",
@@ -1011,27 +705,8 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "is_disabled": false,
     "explorer_host": "https://explorer.gobob.xyz",
     "need_estimate_gas": false,
-    "severity": 2,
-    "block_interval": 2
-  },
-  "reya": {
-    "id": "reya",
-    "community_id": 1729,
-    "name": "Reya",
-    "native_token": {
-      "id": "reya",
-      "symbol": "ETH",
-      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/reya/20d71aad4279c33229297da1f00d8ae1.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/reya/7643e04c35af62a7572aecbdc4565040.png",
-    "eip_1559": true,
-    "is_disabled": false,
-    "explorer_host": "https://explorer.reya.network",
-    "need_estimate_gas": true,
-    "severity": 2,
-    "block_interval": 1.42
+    "severity": 1,
+    "block_interval": 1
   },
   "bb": {
     "id": "bb",
@@ -1050,7 +725,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://bbscan.io",
     "need_estimate_gas": false,
     "severity": 2,
-    "block_interval": 3.74
+    "block_interval": 3.52
   },
   "taiko": {
     "id": "taiko",
@@ -1068,8 +743,8 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "is_disabled": false,
     "explorer_host": "https://taikoscan.io",
     "need_estimate_gas": false,
-    "severity": 0,
-    "block_interval": 58.28
+    "severity": 1,
+    "block_interval": 1
   },
   "cyber": {
     "id": "cyber",
@@ -1088,7 +763,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://cyberscan.co",
     "need_estimate_gas": false,
     "severity": 2,
-    "block_interval": 2
+    "block_interval": 1
   },
   "sei": {
     "id": "sei",
@@ -1104,29 +779,10 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/sei/632af17fefaa435817bd6bc3c549280d.png",
     "eip_1559": false,
     "is_disabled": false,
-    "explorer_host": "https://seitrace.com",
-    "need_estimate_gas": false,
-    "severity": 2,
-    "block_interval": 0.53
-  },
-  "mint": {
-    "id": "mint",
-    "community_id": 185,
-    "name": "Mint",
-    "native_token": {
-      "id": "mint",
-      "symbol": "ETH",
-      "logo": "https://static.debank.com/image/mint_token/logo_url/mint/48bfb74adddd170e936578aec422836d.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/mint/86404f93cd4e51eafcc2e244d417c03f.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/mint/1bc50cbf5ec022d40efe48c4ec68c25d.png",
-    "eip_1559": true,
-    "is_disabled": false,
-    "explorer_host": "https://mintscan.org",
+    "explorer_host": "https://seiscan.io",
     "need_estimate_gas": false,
     "severity": 1,
-    "block_interval": 2
+    "block_interval": 0.4
   },
   "chiliz": {
     "id": "chiliz",
@@ -1145,7 +801,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://chiliscan.com",
     "need_estimate_gas": false,
     "severity": 2,
-    "block_interval": 3
+    "block_interval": 1
   },
   "dbk": {
     "id": "dbk",
@@ -1166,25 +822,6 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "severity": 1,
     "block_interval": 2
   },
-  "croze": {
-    "id": "croze",
-    "community_id": 388,
-    "name": "Cronos zkEVM",
-    "native_token": {
-      "id": "croze",
-      "symbol": "zkCRO",
-      "logo": "https://static.debank.com/image/croze_token/logo_url/croze/e9572bb5f00a04dd2e828dae75456abe.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/croze/e9572bb5f00a04dd2e828dae75456abe.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/croze/0cd7713510320f906a8c55421e0474fe.png",
-    "eip_1559": true,
-    "is_disabled": false,
-    "explorer_host": "https://explorer.zkevm.cronos.org",
-    "need_estimate_gas": true,
-    "severity": 2,
-    "block_interval": 27.86
-  },
   "gravity": {
     "id": "gravity",
     "community_id": 1625,
@@ -1202,7 +839,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://explorer.gravity.xyz",
     "need_estimate_gas": false,
     "severity": 1,
-    "block_interval": 0.3
+    "block_interval": 1
   },
   "lisk": {
     "id": "lisk",
@@ -1221,26 +858,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://blockscout.lisk.com",
     "need_estimate_gas": false,
     "severity": 1,
-    "block_interval": 2
-  },
-  "orderly": {
-    "id": "orderly",
-    "community_id": 291,
-    "name": "Orderly",
-    "native_token": {
-      "id": "orderly",
-      "symbol": "ETH",
-      "logo": "https://static.debank.com/image/orderly_token/logo_url/orderly/48bfb74adddd170e936578aec422836d.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/orderly/aedf85948240dddcf334205794d2a6c9.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/orderly/ecc7f748276e001bc14c9233e2342426.png",
-    "eip_1559": true,
-    "is_disabled": false,
-    "explorer_host": "https://explorer.orderly.network",
-    "need_estimate_gas": false,
-    "severity": 2,
-    "block_interval": 2
+    "block_interval": 1
   },
   "ape": {
     "id": "ape",
@@ -1259,7 +877,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://apescan.io",
     "need_estimate_gas": true,
     "severity": 2,
-    "block_interval": 3.21
+    "block_interval": 1
   },
   "ethlink": {
     "id": "ethlink",
@@ -1278,7 +896,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://explorer.etherlink.com",
     "need_estimate_gas": true,
     "severity": 2,
-    "block_interval": 0.81
+    "block_interval": 1
   },
   "zircuit": {
     "id": "zircuit",
@@ -1297,7 +915,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://explorer.zircuit.com",
     "need_estimate_gas": false,
     "severity": 2,
-    "block_interval": 1.99
+    "block_interval": 3
   },
   "world": {
     "id": "world",
@@ -1315,8 +933,8 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "is_disabled": false,
     "explorer_host": "https://worldscan.org",
     "need_estimate_gas": false,
-    "severity": 2,
-    "block_interval": 2
+    "severity": 1,
+    "block_interval": 1
   },
   "morph": {
     "id": "morph",
@@ -1328,52 +946,14 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
       "logo": "https://static.debank.com/image/morph_token/logo_url/morph/48bfb74adddd170e936578aec422836d.png",
       "decimals": 18
     },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/morph/2b5255a6c3a36d4b39e1dea02aa2f097.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/morph/f0bbba51d75fca1797c9c90654a71632.png",
+    "logo_url": "https://static.debank.com/image/chain/logo_url/morph/cc885669202d5541d484211117eccee1.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/morph/b8d5e62523b43cd9d863fdab1870a02c.png",
     "eip_1559": true,
     "is_disabled": false,
     "explorer_host": "https://explorer.morphl2.io",
     "need_estimate_gas": false,
     "severity": 2,
-    "block_interval": 3.89
-  },
-  "swell": {
-    "id": "swell",
-    "community_id": 1923,
-    "name": "SwellChain",
-    "native_token": {
-      "id": "swell",
-      "symbol": "ETH",
-      "logo": "https://static.debank.com/image/swell_token/logo_url/swell/48bfb74adddd170e936578aec422836d.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/swell/3e98b1f206af5f2c0c2cc4d271ee1070.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/swell/630df2f6a1c5933209268437873a4ffe.png",
-    "eip_1559": true,
-    "is_disabled": false,
-    "explorer_host": "https://explorer.swellnetwork.io",
-    "need_estimate_gas": false,
-    "severity": 2,
-    "block_interval": 2
-  },
-  "zero": {
-    "id": "zero",
-    "community_id": 543210,
-    "name": "ZERϴ",
-    "native_token": {
-      "id": "zero",
-      "symbol": "ETH",
-      "logo": "https://static.debank.com/image/zero_token/logo_url/zero/48bfb74adddd170e936578aec422836d.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/zero/d9551d98b98482204b93544f90b43985.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/zero/bba7ede18928b06c8986bfcc7415de9a.png",
-    "eip_1559": true,
-    "is_disabled": false,
-    "explorer_host": "https://zero-network.calderaexplorer.xyz",
-    "need_estimate_gas": true,
-    "severity": 2,
-    "block_interval": 27.86
+    "block_interval": 1
   },
   "sonic": {
     "id": "sonic",
@@ -1392,45 +972,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://sonicscan.org",
     "need_estimate_gas": false,
     "severity": 0,
-    "block_interval": 0.35
-  },
-  "corn": {
-    "id": "corn",
-    "community_id": 21000000,
-    "name": "Corn",
-    "native_token": {
-      "id": "corn",
-      "symbol": "BTCN",
-      "logo": "https://static.debank.com/image/corn_token/logo_url/corn/fe230e468272b84aba78d08bb4140456.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/corn/2ac7405fee5fdeee5964ba0bcf2216f4.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/corn/a4e8a975e17b574786f9ac51bf9ba87a.png",
-    "eip_1559": true,
-    "is_disabled": false,
-    "explorer_host": "https://cornscan.io",
-    "need_estimate_gas": false,
-    "severity": 2,
-    "block_interval": 41.79
-  },
-  "hsk": {
-    "id": "hsk",
-    "community_id": 177,
-    "name": "HashKey",
-    "native_token": {
-      "id": "hsk",
-      "symbol": "HSK",
-      "logo": "https://static.debank.com/image/hsk_token/logo_url/hsk/40e9b6f97343db46f97392a552f6d9b8.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/hsk/3f35eb1691403fe4eae7a1d1c45b704c.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/hsk/9f65d77bebc45001227ab49e91253a79.png",
-    "eip_1559": true,
-    "is_disabled": false,
-    "explorer_host": "https://explorer.hsk.xyz",
-    "need_estimate_gas": false,
-    "severity": 2,
-    "block_interval": 2
+    "block_interval": 1
   },
   "ink": {
     "id": "ink",
@@ -1451,25 +993,6 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "severity": 1,
     "block_interval": 1
   },
-  "vana": {
-    "id": "vana",
-    "community_id": 1480,
-    "name": "Vana",
-    "native_token": {
-      "id": "vana",
-      "symbol": "VANA",
-      "logo": "https://static.debank.com/image/vana_token/logo_url/vana/4e286c230ccb1e83967dc85edefbc513.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/vana/b2827795c1556eeeaeb58cb3411d0b15.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/vana/86f5ec38b5d764c49855cd086eb7ca01.png",
-    "eip_1559": true,
-    "is_disabled": false,
-    "explorer_host": "https://vanascan.io",
-    "need_estimate_gas": false,
-    "severity": 2,
-    "block_interval": 6
-  },
   "sophon": {
     "id": "sophon",
     "community_id": 50104,
@@ -1484,29 +1007,10 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/sophon/a14020d6bff4832660dd3df13f4398b6.png",
     "eip_1559": true,
     "is_disabled": false,
-    "explorer_host": "https://sophscan.xyz",
-    "need_estimate_gas": false,
+    "explorer_host": "https://explorer.sophon.xyz",
+    "need_estimate_gas": true,
     "severity": 2,
-    "block_interval": 1.04
-  },
-  "duck": {
-    "id": "duck",
-    "community_id": 5545,
-    "name": "DuckChain",
-    "native_token": {
-      "id": "duck",
-      "symbol": "TON",
-      "logo": "https://static.debank.com/image/duck_token/logo_url/duck/a041e6cb0f419657457b23ceb89e849a.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/duck/b0b13c10586f03bcfc12358c48a22c95.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/duck/054c478f68f458c5f523bd45a815d394.png",
-    "eip_1559": true,
-    "is_disabled": false,
-    "explorer_host": "https://scan.duckchain.io",
-    "need_estimate_gas": false,
-    "severity": 2,
-    "block_interval": 19.83
+    "block_interval": 1
   },
   "abs": {
     "id": "abs",
@@ -1524,8 +1028,8 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "is_disabled": false,
     "explorer_host": "https://abscan.org",
     "need_estimate_gas": true,
-    "severity": 2,
-    "block_interval": 1.02
+    "severity": 1,
+    "block_interval": 1
   },
   "soneium": {
     "id": "soneium",
@@ -1543,8 +1047,8 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "is_disabled": false,
     "explorer_host": "https://soneium.blockscout.com",
     "need_estimate_gas": false,
-    "severity": 0,
-    "block_interval": 2
+    "severity": 1,
+    "block_interval": 1
   },
   "bera": {
     "id": "bera",
@@ -1562,8 +1066,8 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "is_disabled": false,
     "explorer_host": "https://berascan.com",
     "need_estimate_gas": false,
-    "severity": 0,
-    "block_interval": 1.97
+    "severity": 1,
+    "block_interval": 1
   },
   "uni": {
     "id": "uni",
@@ -1587,21 +1091,21 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
   "story": {
     "id": "story",
     "community_id": 1514,
-    "name": "Story",
+    "name": "DATA Network",
     "native_token": {
       "id": "story",
-      "symbol": "IP",
-      "logo": "https://static.debank.com/image/story_token/logo_url/story/13274216322fec134ab08594d5afb457.png",
+      "symbol": "DATA",
+      "logo": "https://static.debank.com/image/story_token/logo_url/story/78c4f46571aefdc8bd05866333a1e951.png",
       "decimals": 18
     },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/story/d2311c0952f9801e0d42e3b87b4bd755.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/story/ea3699b98a9d331e0545b8358229b7ef.png",
+    "logo_url": "https://static.debank.com/image/chain/logo_url/story/0983f3a3d3d1d0452f5dbebb4a771795.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/story/3fd42d58b0377bc3cd08024d79e742c7.png",
     "eip_1559": true,
     "is_disabled": false,
-    "explorer_host": "https://www.storyscan.xyz",
+    "explorer_host": "https://www.datanetscan.io",
     "need_estimate_gas": false,
     "severity": 2,
-    "block_interval": 2.47
+    "block_interval": 1
   },
   "lens": {
     "id": "lens",
@@ -1619,8 +1123,8 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "is_disabled": false,
     "explorer_host": "https://explorer.lens.xyz",
     "need_estimate_gas": false,
-    "severity": 1,
-    "block_interval": 3.88
+    "severity": 2,
+    "block_interval": 1
   },
   "hyper": {
     "id": "hyper",
@@ -1636,10 +1140,10 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/hyper/3584b246dce2a56b696eec09824191e9.png",
     "eip_1559": true,
     "is_disabled": false,
-    "explorer_host": "https://www.hyperscan.com",
+    "explorer_host": "https://hyperevmscan.io",
     "need_estimate_gas": false,
-    "severity": 1,
-    "block_interval": 2.15
+    "severity": 0,
+    "block_interval": 0.99
   },
   "hemi": {
     "id": "hemi",
@@ -1657,10 +1161,237 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "is_disabled": false,
     "explorer_host": "https://explorer.hemi.xyz",
     "need_estimate_gas": false,
+    "severity": 2,
+    "block_interval": 1
+  },
+  "plume": {
+    "id": "plume",
+    "community_id": 98866,
+    "name": "Plume",
+    "native_token": {
+      "id": "plume",
+      "symbol": "PLUME",
+      "logo": "https://static.debank.com/image/plume_token/logo_url/plume/20ecb01558edaac59ad4cd20b9ccc51d.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/plume/f74d0d202dd8af7baf6940864ee79006.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/plume/4fe2a83f0533b5e83fa6b090971a624a.png",
+    "eip_1559": true,
+    "is_disabled": false,
+    "explorer_host": "https://explorer.plume.org",
+    "need_estimate_gas": true,
     "severity": 1,
-    "block_interval": 11.94
+    "block_interval": 1
+  },
+  "katana": {
+    "id": "katana",
+    "community_id": 747474,
+    "name": "Katana",
+    "native_token": {
+      "id": "katana",
+      "symbol": "ETH",
+      "logo": "https://static.debank.com/image/katana_token/logo_url/katana/48bfb74adddd170e936578aec422836d.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/katana/0202d6aecd963a9c0b2afb56c4d731b5.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/katana/7b9c62314be807a5a5c60fbc9b9e2fbf.png",
+    "eip_1559": true,
+    "is_disabled": false,
+    "explorer_host": "https://katanascan.com",
+    "need_estimate_gas": false,
+    "severity": 1,
+    "block_interval": 1
+  },
+  "plasma": {
+    "id": "plasma",
+    "community_id": 9745,
+    "name": "Plasma",
+    "native_token": {
+      "id": "plasma",
+      "symbol": "XPL",
+      "logo": "https://static.debank.com/image/plasma_token/logo_url/plasma/baafefce3b9d43b12b0c016f30aff140.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/plasma/baafefce3b9d43b12b0c016f30aff140.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/plasma/ababa793ba3e472641d628b046223ae0.png",
+    "eip_1559": true,
+    "is_disabled": false,
+    "explorer_host": "https://plasmascan.to",
+    "need_estimate_gas": false,
+    "severity": 1,
+    "block_interval": 1
+  },
+  "monad": {
+    "id": "monad",
+    "community_id": 143,
+    "name": "Monad",
+    "native_token": {
+      "id": "monad",
+      "symbol": "MON",
+      "logo": "https://static.debank.com/image/monad_token/logo_url/monad/2e15c2c3048173ac714efc9d42f9d9f2.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/monad/fd667522b8e0d6504ca07696f4d5c064.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/monad/d2847e4eae8a70c93d1b3e18f5f20a23.png",
+    "eip_1559": true,
+    "is_disabled": false,
+    "explorer_host": "https://monadscan.com",
+    "need_estimate_gas": false,
+    "severity": 1,
+    "block_interval": 1
+  },
+  "stable": {
+    "id": "stable",
+    "community_id": 988,
+    "name": "Stable",
+    "native_token": {
+      "id": "stable",
+      "symbol": "USDT0",
+      "logo": "https://static.debank.com/image/stable_token/logo_url/stable/7e7e60ac609149aea68762989375de51.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/stable/b1028c6b47f8e248147facb8005d7472.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/stable/71ba0aff2cd1067aa90c6e863364d3db.png",
+    "eip_1559": true,
+    "is_disabled": false,
+    "explorer_host": "https://stablescan.xyz",
+    "need_estimate_gas": false,
+    "severity": 2,
+    "block_interval": 1
+  },
+  "g0": {
+    "id": "g0",
+    "community_id": 16661,
+    "name": "0G",
+    "native_token": {
+      "id": "g0",
+      "symbol": "0G",
+      "logo": "https://static.debank.com/image/g0_token/logo_url/g0/5ead81ee3973083987af41b9456263ed.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/g0/0a0e2e70164a138b92f282363f63c5bb.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/g0/d7906e1c59f471614e97101f9b3c5aa7.png",
+    "eip_1559": true,
+    "is_disabled": false,
+    "explorer_host": "https://chainscan.0g.ai",
+    "need_estimate_gas": false,
+    "severity": 2,
+    "block_interval": 1
+  },
+  "megaeth": {
+    "id": "megaeth",
+    "community_id": 4326,
+    "name": "MegaETH",
+    "native_token": {
+      "id": "megaeth",
+      "symbol": "ETH",
+      "logo": "https://static.debank.com/image/megaeth_token/logo_url/megaeth/48bfb74adddd170e936578aec422836d.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/megaeth/e4257fe8cffdea21f7bb06928f9faf83.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/megaeth/cdd80d85a1f0df3c416bdd7a6e6639da.png",
+    "eip_1559": true,
+    "is_disabled": false,
+    "explorer_host": "https://mega.etherscan.io",
+    "need_estimate_gas": true,
+    "severity": 2,
+    "block_interval": 1
+  },
+  "xdc": {
+    "id": "xdc",
+    "community_id": 50,
+    "name": "XDC",
+    "native_token": {
+      "id": "xdc",
+      "symbol": "XDC",
+      "logo": "https://static.debank.com/image/xdc_token/logo_url/xdc/24931ce65d3df4fa996e0bbbbe5d5d1b.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/xdc/095c52b68b02816fa51d898609f8768e.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/xdc/385e51deafac389d50fc452e77985040.png",
+    "eip_1559": true,
+    "is_disabled": false,
+    "explorer_host": "https://xdcscan.com",
+    "need_estimate_gas": false,
+    "severity": 2,
+    "block_interval": 1
+  },
+  "citrea": {
+    "id": "citrea",
+    "community_id": 4114,
+    "name": "Citrea",
+    "native_token": {
+      "id": "citrea",
+      "symbol": "cBTC",
+      "logo": "https://static.debank.com/image/citrea_token/logo_url/citrea/4c7dbe6b05c868434371e41bfd2e14c5.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/citrea/58b6953f7e1a0be287bac02eef85ba56.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/citrea/e1d904af281765ae1e2ed47aa2a249a3.png",
+    "eip_1559": true,
+    "is_disabled": false,
+    "explorer_host": "https://explorer.mainnet.citrea.xyz",
+    "need_estimate_gas": false,
+    "severity": 2,
+    "block_interval": 1
+  },
+  "tempo": {
+    "id": "tempo",
+    "community_id": 4217,
+    "name": "Tempo",
+    "native_token": {
+      "id": "tempo",
+      "symbol": "USD",
+      "logo": "https://static.debank.com/image/tempo_token/logo_url/tempo/100e33b5fcdd719d1296f69adf363be7.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/tempo/100e33b5fcdd719d1296f69adf363be7.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/tempo/58e33be61e9bbaf6a12d02cdeee8978d.png",
+    "eip_1559": true,
+    "is_disabled": false,
+    "explorer_host": "https://explore.tempo.xyz",
+    "need_estimate_gas": false,
+    "severity": 1,
+    "block_interval": 1
+  },
+  "kite": {
+    "id": "kite",
+    "community_id": 2366,
+    "name": "KiteAI",
+    "native_token": {
+      "id": "kite",
+      "symbol": "KITE",
+      "logo": "https://static.debank.com/image/kite_token/logo_url/kite/8e2d306807e141b33e6633f2285063f5.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/kite/fa38774f88bd764d064f7c1257b101c4.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/kite/11380e721f5ec6bfc4ef2792977aeb92.png",
+    "eip_1559": true,
+    "is_disabled": false,
+    "explorer_host": "https://kitescan.ai",
+    "need_estimate_gas": false,
+    "severity": 1,
+    "block_interval": 1
+  },
+  "hood": {
+    "id": "hood",
+    "community_id": 4663,
+    "name": "Robinhood",
+    "native_token": {
+      "id": "hood",
+      "symbol": "ETH",
+      "logo": "https://static.debank.com/image/hood_token/logo_url/hood/80dd95753396b5619cf84b0df135eae5.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/hood/7fdc992246b4d96bd91d1cf19e39b35d.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/hood/560e3f7e13cd06bd0b5445a2b8d2387f.png",
+    "eip_1559": true,
+    "is_disabled": false,
+    "explorer_host": "https://robinhoodchain.blockscout.com/",
+    "need_estimate_gas": true,
+    "severity": 1,
+    "block_interval": 1
   }
 };
 
-const chainByServerId = keyBy(CHAINS_RAW_LIST, 'serverId')
 export const DEFAULT_CHAIN_LIST: Chain[] = Object.values(SupportedChainsByServerId).map(item => supportedChainToChain(item));

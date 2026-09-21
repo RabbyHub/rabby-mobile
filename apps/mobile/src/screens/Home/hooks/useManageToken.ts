@@ -1,11 +1,16 @@
-import { preferenceService } from '@/core/services';
+import {
+  addBlockedToken as addBlockedTokenPreference,
+  addCustomizedToken,
+  removeBlockedToken as removeBlockedTokenPreference,
+  removeCustomizedToken,
+} from '@/core/serviceApi/preference';
 import { useMemoizedFn } from 'ahooks';
-import { AbstractPortfolioToken } from '../types';
+import type { AbstractPortfolioToken } from '../types';
 
 export const useManageTokenList = () => {
   const addCustomToken = useMemoizedFn(
     async (token: AbstractPortfolioToken) => {
-      const isAdded = await preferenceService.addCustomizedToken({
+      const isAdded = await addCustomizedToken({
         address: token._tokenId,
         chain: token.chain,
       });
@@ -22,7 +27,7 @@ export const useManageTokenList = () => {
 
   const removeCustomToken = useMemoizedFn(
     async (token: AbstractPortfolioToken) => {
-      await preferenceService.removeCustomizedToken({
+      await removeCustomizedToken({
         address: token._tokenId,
         chain: token.chain,
       });
@@ -39,7 +44,7 @@ export const useManageTokenList = () => {
 
   const addBlockedToken = useMemoizedFn(
     async (token: AbstractPortfolioToken) => {
-      await preferenceService.addBlockedToken({
+      await addBlockedTokenPreference({
         address: token._tokenId,
         chain: token.chain,
       });
@@ -55,7 +60,7 @@ export const useManageTokenList = () => {
 
   const removeBlockedToken = useMemoizedFn(
     async (token: AbstractPortfolioToken) => {
-      await preferenceService.removeBlockedToken({
+      await removeBlockedTokenPreference({
         address: token._tokenId,
         chain: token.chain,
       });

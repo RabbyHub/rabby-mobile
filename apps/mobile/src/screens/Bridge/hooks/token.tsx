@@ -12,8 +12,6 @@ import {
   useRef,
   useState,
 } from 'react';
-// import { useAsyncFn, useDebounce } from 'react-use';
-import useAsync from 'react-use/lib/useAsync';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 import useDebounce from 'react-use/lib/useDebounce';
 import { stats } from '@/utils/stats';
@@ -34,7 +32,6 @@ import { useAggregatorsList, useBridgeSupportedChains } from './atom';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { apiProvider } from '@/core/apis';
 import { getGasTokenBalance } from '@/core/apis/transactions';
-import { useMount } from 'ahooks';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
@@ -49,9 +46,18 @@ import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/deposi
 import { getQuoteList as getBridgeQuoteList } from '@rabby-wallet/rabby-bridge';
 import { convert18RawToTokenRaw, isTempoChain } from '@/utils/tempo';
 import type { SelectedBridgeQuote } from '../types';
+import { createBridgeInitializationController } from '../bridgeInitialization';
+import {
+  getBridgeAllowanceRequestKey,
+  getOrCreateBridgeAllowanceRequest,
+  mergeBridgeQuoteBatch,
+} from '../utils/quoteResultBatch';
+import { useSceneActiveAsync } from '@/screens/SwapBridge/hooks/useSceneActiveAsync';
+import { getRabbyFeeInfo } from '@/screens/Swap/hooks/fee';
 
 export const enableInsufficientQuote = true;
 const BRIDGE_QUOTE_REFRESH_INTERVAL = 1000 * 30;
+const EARLY_QUOTE_DISPLAY_MIN_TO_FROM_USD_RATIO = 0.03;
 
 export const tokenPriceImpact = (
   fromToken?: TokenItem,
@@ -81,11 +87,52 @@ export const tokenPriceImpact = (
   };
 };
 
+const getTokenUsdValue = ({
+  token,
+  amount,
+}: {
+  token?: TokenItem;
+  amount: string;
+}) => new BigNumber(amount || 0).times(token?.price || 0);
+
+const getBridgeQuoteToTokenUsdValue = ({
+  quote,
+  toToken,
+}: {
+  quote: SelectedBridgeQuote;
+  toToken: TokenItem;
+}) => new BigNumber(quote.to_token_amount || 0).times(toToken.price || 0);
+
+const canDisplayBridgeQuoteBeforeAllQuotesLoaded = ({
+  quote,
+  fromToken,
+  toToken,
+  amount,
+}: {
+  quote: SelectedBridgeQuote;
+  fromToken?: TokenItem;
+  toToken: TokenItem;
+  amount: string;
+}) => {
+  const fromUsdValue = getTokenUsdValue({
+    token: fromToken,
+    amount,
+  });
+
+  if (!fromUsdValue.gt(0)) {
+    return true;
+  }
+
+  return getBridgeQuoteToTokenUsdValue({ quote, toToken }).gte(
+    fromUsdValue.times(EARLY_QUOTE_DISPLAY_MIN_TO_FROM_USD_RATIO),
+  );
+};
+
 const tokenRefreshIdAtom = atom(0);
 const useTokenRefreshId = () => useAtomValue(tokenRefreshIdAtom);
 const useSetTokenRefreshId = () => useSetAtom(tokenRefreshIdAtom);
 
-const useToken = (type: 'from' | 'to') => {
+const useToken = (type: 'from' | 'to', active: boolean) => {
   const refreshId = useTokenRefreshId();
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
@@ -131,31 +178,38 @@ const useToken = (type: 'from' | 'to') => {
       [type],
     );
 
-  const { value, loading, error } = useAsync(async () => {
-    if (userAddress && token?.id && chain) {
-      const data = await openapi.getToken(
-        userAddress,
-        findChainByEnum(chain)!.serverId,
-        token.id,
-      );
-      return { ...data, tokenId: token.id };
-    }
-  }, [refreshId, userAddress, token?.id, chain]);
+  const { value, loading, error } = useSceneActiveAsync(
+    async () => {
+      if (userAddress && token?.id && chain) {
+        const data = await openapi.getToken(
+          userAddress,
+          findChainByEnum(chain)!.serverId,
+          token.id,
+        );
+        return { ...data, tokenId: token.id };
+      }
+    },
+    active,
+    [refreshId, userAddress, token?.id, chain],
+  );
 
   useDebounce(
     () => {
-      if (value && !error && !loading) {
+      if (active && value && !error && !loading) {
         setToken(value);
       }
     },
     300,
-    [value, error, loading],
+    [active, value, error, loading],
   );
 
   return [chain, token, setToken, switchChain] as const;
 };
 
-export const useBridge = (isForMultipleAddress?: boolean) => {
+export const useBridge = (
+  isForMultipleAddress?: boolean,
+  { active = true }: { active?: boolean } = {},
+) => {
   const setTokenRefreshId = useSetTokenRefreshId();
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
@@ -166,9 +220,13 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
   const setRefreshId = useSetRefreshId();
 
-  const [fromChain, fromToken, setFromToken, switchFromChain] =
-    useToken('from');
-  const [toChain, toToken, setToToken, switchToChain] = useToken('to');
+  const [fromChain, fromToken, setFromToken, switchFromChain] = useToken(
+    'from',
+    active,
+  );
+  const [toChain, toToken, setToToken, switchToChain] = useToken('to', active);
+  const latestFromChainRef = useRef(fromChain);
+  latestFromChainRef.current = fromChain;
 
   // 标记是否已经初始化过 fromChain，避免重复初始化
   const isFromChainInitializedRef = useRef(false);
@@ -178,6 +236,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   // 包装 switchFromChain，更新初始化标记
   const wrappedSwitchFromChain = useCallback(
     (chain?: CHAINS_ENUM, resetToken?: boolean) => {
+      latestFromChainRef.current = chain;
       if (chain) {
         isFromChainInitializedRef.current = true;
       }
@@ -197,9 +256,11 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     [switchToChain],
   );
 
-  if (!toChain && toToken) {
-    wrappedSwitchToChain();
-  }
+  useEffect(() => {
+    if (active && !toChain && toToken) {
+      setToToken(undefined);
+    }
+  }, [active, setToToken, toChain, toToken]);
 
   const [amount, setAmount] = useState('');
 
@@ -213,6 +274,10 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
   const expiredTimer = useRef<NodeJS.Timeout>(undefined);
   const autoQuoteRefreshDeadlineRef = useRef<number | null>(null);
+  const [quoteRefreshCountdown, setQuoteRefreshCountdown] = useState<{
+    startedAt: number;
+    deadline: number;
+  } | null>(null);
   const autoQuoteRefreshPausedRef = useRef(false);
   const reloadTxRefreshPausedRef = useRef(false);
 
@@ -233,77 +298,37 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     [fromToken, toToken],
   );
   const canRequestQuote = useMemo(
-    () => inSufficientCanGetQuote && !quoteBlockedByClosedMarket,
-    [inSufficientCanGetQuote, quoteBlockedByClosedMarket],
+    () => active && inSufficientCanGetQuote && !quoteBlockedByClosedMarket,
+    [active, inSufficientCanGetQuote, quoteBlockedByClosedMarket],
   );
 
-  const getRecommendToChain = async (chain: CHAINS_ENUM) => {
-    if (userAddress) {
-      // const getRemoteRecommendChain = async () => {
-      //   const data = await openapi.getRecommendBridgeToChain({
-      //     from_chain_id: findChainByEnum(chain)!.serverId,
-      //   });
-      //   switchToChain(findChainByServerID(data.to_chain_id)?.enum);
-      // };
-      const getRemoteRecommendChain = async () => {
-        const data = await openapi.getRecommendBridgeToChain({
-          from_chain_id: findChainByEnum(chain)!.serverId,
-        });
-        return findChainByServerID(data.to_chain_id)?.enum;
-      };
-
-      const getBridgeHistory = async () => {
-        const latestTx = await openapi.getBridgeHistoryList({
-          user_addr: userAddress,
-          start: 0,
-          limit: 1,
-          is_all: true,
-        });
-        return latestTx?.history_list?.[0]?.to_token;
-      };
-
-      const [remoteChain, latestToToken] = await Promise.all([
-        getRemoteRecommendChain(),
-        getBridgeHistory(),
-      ]);
-
-      if (latestToToken) {
-        const lastBridgeChain = findChainByServerID(latestToToken.chain);
-        if (lastBridgeChain && lastBridgeChain.enum !== chain) {
-          wrappedSwitchToChain(lastBridgeChain.enum);
-          setToToken(latestToToken);
-        } else {
-          wrappedSwitchToChain(remoteChain);
-        }
-      } else {
-        wrappedSwitchToChain(remoteChain);
-      }
-    }
-  };
-
   const { value: isSameToken, loading: isSameTokenLoading } =
-    useAsync(async () => {
-      if (fromChain && fromToken?.id && toChain && toToken?.id) {
-        try {
-          const data = await openapi.isSameBridgeToken({
-            from_chain_id: findChainByEnum(fromChain)!.serverId,
-            from_token_id: fromToken?.id,
-            to_chain_id: findChainByEnum(toChain)!.serverId,
-            to_token_id: toToken?.id,
-          });
-          return data?.every(e => e.is_same);
-        } catch (error) {
-          return false;
+    useSceneActiveAsync(
+      async () => {
+        if (fromChain && fromToken?.id && toChain && toToken?.id) {
+          try {
+            const data = await openapi.isSameBridgeToken({
+              from_chain_id: findChainByEnum(fromChain)!.serverId,
+              from_token_id: fromToken?.id,
+              to_chain_id: findChainByEnum(toChain)!.serverId,
+              to_token_id: toToken?.id,
+            });
+            return data?.every(e => e.is_same);
+          } catch (error) {
+            return false;
+          }
         }
-      }
-      return false;
-    }, [fromChain, fromToken?.id, toChain, toToken?.id]);
+        return false;
+      },
+      active,
+      [fromChain, fromToken?.id, toChain, toToken?.id],
+    );
 
   useEffect(() => {
-    if (!isSameTokenLoading && slippageObj.autoSlippage) {
+    if (active && !isSameTokenLoading && slippageObj.autoSlippage) {
       slippageObj.setSlippage(isSameToken ? '0.5' : '1');
     }
-  }, [slippageObj, isSameToken, isSameTokenLoading]);
+  }, [active, slippageObj, isSameToken, isSameTokenLoading]);
 
   const { fetchOrderedChainList } = useLoadMatteredChainBalances({
     account: currentAccount!,
@@ -327,35 +352,26 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     >();
   const navState = route.params;
 
-  // init from token and chain
-  useMount(() => {
-    if (!navState?.chainEnum || !navState?.tokenId) {
+  useEffect(() => {
+    if (
+      !active ||
+      !toChain ||
+      toToken?.id ||
+      navState?.toTokenId ||
+      (navState?.toChainEnum && navState.toChainEnum !== toChain)
+    ) {
       return;
     }
 
-    const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
-    wrappedSwitchFromChain(chainItem?.enum || CHAINS_ENUM.ETH, false);
-    setFromToken({
-      ...getChainDefaultToken(chainItem?.enum || CHAINS_ENUM.ETH),
-      id: navState?.tokenId,
-    });
-  });
-
-  // init to token and chain
-  useMount(() => {
-    if (!navState?.toChainEnum || !navState?.toTokenId) {
-      return;
-    }
-
-    const chainItem = findChainByEnum(navState?.toChainEnum, {
-      fallback: true,
-    });
-    wrappedSwitchToChain(chainItem?.enum || CHAINS_ENUM.ETH, false);
-    setToToken({
-      ...getChainDefaultToken(chainItem?.enum || CHAINS_ENUM.ETH),
-      id: navState?.toTokenId,
-    });
-  });
+    setToToken(getChainDefaultToken(toChain));
+  }, [
+    active,
+    navState?.toChainEnum,
+    navState?.toTokenId,
+    setToToken,
+    toChain,
+    toToken?.id,
+  ]);
 
   const switchToken = useCallback(() => {
     wrappedSwitchFromChain(toChain, false);
@@ -385,6 +401,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   const clearExpiredTimer = useCallback(() => {
     stopExpiredTimer();
     autoQuoteRefreshDeadlineRef.current = null;
+    setQuoteRefreshCountdown(null);
   }, [stopExpiredTimer]);
 
   const runScheduledQuoteRefresh = useCallback(() => {
@@ -395,13 +412,17 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     }
 
     autoQuoteRefreshDeadlineRef.current = null;
+    setQuoteRefreshCountdown(null);
     setRefreshId(e => e + 1);
   }, [setRefreshId]);
 
   const scheduleQuoteRefresh = useCallback(
     (delay: number) => {
       stopExpiredTimer();
-      autoQuoteRefreshDeadlineRef.current = Date.now() + delay;
+      const startedAt = Date.now();
+      const deadline = startedAt + delay;
+      autoQuoteRefreshDeadlineRef.current = deadline;
+      setQuoteRefreshCountdown({ startedAt, deadline });
 
       if (autoQuoteRefreshPausedRef.current) {
         return;
@@ -464,8 +485,27 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     reloadTxRefreshPausedRef.current = paused;
   }, []);
 
+  useEffect(() => {
+    return () => {
+      stopExpiredTimer();
+      autoQuoteRefreshDeadlineRef.current = null;
+    };
+  }, [stopExpiredTimer]);
+
   // const aggregatorsList = useBridgeSupportedChains(s => s.bridge.aggregatorsList || []);
   const aggregatorsList = useAggregatorsList();
+  const { feeRate, feeTier } = useMemo(
+    () =>
+      getRabbyFeeInfo({
+        payToken: fromToken,
+        payAmount: amount,
+        payTokenPrice: fromToken?.price || 0,
+        type: 'bridge',
+        receiveToken: toToken,
+        isWrapToken: false,
+      }),
+    [amount, fromToken, toToken],
+  );
 
   const [bestQuoteId, setBestQuoteId] = useState<
     | {
@@ -504,31 +544,38 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   );
 
   const { value: tempoGasTokenInfo, loading: isTempoGasTokenLoading } =
-    useAsync(async () => {
-      if (!currentAccount?.address || !isTempoBridgeChain) {
-        return null;
-      }
+    useSceneActiveAsync(
+      async () => {
+        if (!currentAccount?.address || !isTempoBridgeChain) {
+          return null;
+        }
 
-      return getGasTokenBalance({
-        account: currentAccount,
-        address: currentAccount.address,
-        chainId: chainInfo.id,
-      });
-    }, [
-      currentAccount,
-      currentAccount?.address,
-      chainInfo.id,
-      isTempoBridgeChain,
-    ]);
-
-  const { value: gasList, loading: isGasMarketLoading } = useAsync(() => {
-    return apiProvider.gasMarketV2(
-      {
-        chainId: chainInfo.serverId,
+        return getGasTokenBalance({
+          account: currentAccount,
+          address: currentAccount.address,
+          chainId: chainInfo.id,
+        });
       },
-      currentAccount!,
+      active,
+      [
+        currentAccount,
+        currentAccount?.address,
+        chainInfo.id,
+        isTempoBridgeChain,
+      ],
     );
-  }, [chainInfo?.serverId]);
+
+  const { value: gasList, loading: isGasMarketLoading } = useSceneActiveAsync(
+    () =>
+      apiProvider.gasMarketV2(
+        {
+          chainId: chainInfo.serverId,
+        },
+        currentAccount!,
+      ),
+    active,
+    [chainInfo.serverId, currentAccount],
+  );
 
   const [passGasPrice, setUseGasPrice] = useState(false);
   const isMaxRef = useRef(false);
@@ -723,10 +770,65 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   ]);
 
   const fetchIdRef = useRef(0);
+  const pendingQuoteUpdatesRef = useRef(new Map<string, SelectedBridgeQuote>());
+  const quoteFlushFrameRef = useRef<number | null>(null);
+
+  const cancelPendingQuoteFlush = useCallback(() => {
+    if (quoteFlushFrameRef.current !== null) {
+      cancelAnimationFrame(quoteFlushFrameRef.current);
+      quoteFlushFrameRef.current = null;
+    }
+    pendingQuoteUpdatesRef.current.clear();
+  }, []);
+
+  const flushPendingQuoteUpdates = useCallback((id: number) => {
+    if (quoteFlushFrameRef.current !== null) {
+      cancelAnimationFrame(quoteFlushFrameRef.current);
+      quoteFlushFrameRef.current = null;
+    }
+    if (id !== fetchIdRef.current) {
+      pendingQuoteUpdatesRef.current.clear();
+      return;
+    }
+
+    const updates = Array.from(pendingQuoteUpdatesRef.current.values());
+    pendingQuoteUpdatesRef.current.clear();
+    if (updates.length) {
+      setQuotesList(current => mergeBridgeQuoteBatch(current, updates));
+    }
+  }, []);
+
+  const scheduleQuoteUpdates = useCallback(
+    (id: number, quotes: SelectedBridgeQuote[]) => {
+      if (!quotes.length || id !== fetchIdRef.current) {
+        return;
+      }
+
+      quotes.forEach(quote => {
+        pendingQuoteUpdatesRef.current.set(
+          `${quote.aggregator.id}:${quote.bridge.id}`,
+          quote,
+        );
+      });
+      if (quoteFlushFrameRef.current === null) {
+        quoteFlushFrameRef.current = requestAnimationFrame(() => {
+          quoteFlushFrameRef.current = null;
+          flushPendingQuoteUpdates(id);
+        });
+      }
+    },
+    [flushPendingQuoteUpdates],
+  );
+
+  const [quoteRequestId, setQuoteRequestId] = useState(0);
   const [{ loading: quoteLoading, error: quotesError }, getQuoteList] =
     useAsyncFn(async () => {
+      if (!active) {
+        return;
+      }
       fetchIdRef.current += 1;
       const currentFetchId = fetchIdRef.current;
+      setQuoteRequestId(currentFetchId);
 
       if (
         canRequestQuote &&
@@ -745,6 +847,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         setQuotesList(e => e?.map(e => ({ ...e, loading: true })));
 
         const originData: Omit<BridgeQuote, 'tx'>[] = [];
+        const allowanceRequestCache = new Map<string, Promise<string>>();
 
         const getQuoteWithApproval = async (
           quote: Omit<BridgeQuote, 'tx'>,
@@ -761,13 +864,25 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
           } else if (!quote.approve_contract_id) {
             tokenApproved = true;
           } else {
-            allowance = await getERC20Allowance(
-              fromToken.chain,
-              fromToken.id,
-              quote.approve_contract_id,
-              currentAccount.address,
-              currentAccount,
+            const allowanceKey = getBridgeAllowanceRequestKey({
+              chainId: fromToken.chain,
+              tokenId: fromToken.id,
+              spender: quote.approve_contract_id,
+              account: currentAccount.address,
+            });
+            const allowanceRequest = getOrCreateBridgeAllowanceRequest(
+              allowanceRequestCache,
+              allowanceKey,
+              () =>
+                getERC20Allowance(
+                  fromToken.chain,
+                  fromToken.id,
+                  quote.approve_contract_id!,
+                  currentAccount.address,
+                  currentAccount,
+                ),
             );
+            allowance = await allowanceRequest;
             tokenApproved = new BigNumber(allowance).gte(
               new BigNumber(amount).times(10 ** fromToken.decimals),
             );
@@ -789,24 +904,6 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
             shouldTwoStepApprove,
             shouldApproveToken: !tokenApproved,
           };
-        };
-
-        const upsertQuotes = (quotes: SelectedBridgeQuote[]) => {
-          if (!quotes.length || currentFetchId !== fetchIdRef.current) {
-            return;
-          }
-
-          setQuotesList(prev => {
-            const filteredArr = prev.filter(
-              item =>
-                !quotes.some(
-                  quote =>
-                    item.aggregator.id === quote.aggregator.id &&
-                    item.bridge.id === quote.bridge.id,
-                ),
-            );
-            return [...filteredArr, ...quotes];
-          });
         };
 
         const getQUoteV2 = async (alternativeToken?: TokenItem) =>
@@ -831,9 +928,10 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
                         .toString(),
                   toChainId: toToken.chain,
                   toTokenId: toToken.id,
-                  slippage: new BigNumber(slippageObj.slippageState)
+                  slippage: new BigNumber(slippageObj.slippageState || '1')
                     .div(100)
                     .toString(10),
+                  feeRate: Number(feeRate),
                 },
                 openapi,
               ).catch(e => {
@@ -886,7 +984,8 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
                 ) || [];
 
               if (validData.length && currentFetchId === fetchIdRef.current) {
-                upsertQuotes(
+                scheduleQuoteUpdates(
+                  currentFetchId,
                   validData.map(quote => ({ ...quote, loading: true })),
                 );
 
@@ -898,7 +997,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
                       currentFetchId === fetchIdRef.current &&
                       Number(amount) > 0
                     ) {
-                      upsertQuotes([nextQuote]);
+                      scheduleQuoteUpdates(currentFetchId, [nextQuote]);
                     }
                   }),
                 );
@@ -919,6 +1018,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         );
 
         if (currentFetchId === fetchIdRef.current) {
+          flushPendingQuoteUpdates(currentFetchId);
           setPending(false);
 
           if (data.length < 1) {
@@ -957,6 +1057,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         }
       }
     }, [
+      active,
       canRequestQuote,
       aggregatorsList,
       refreshId,
@@ -966,26 +1067,37 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
       fromChain,
       toChain,
       amount,
+      feeRate,
       slippageObj.slippage,
       isDraggingSlider,
+      flushPendingQuoteUpdates,
+      scheduleQuoteUpdates,
     ]);
 
   const [pending, setPending] = useState(false);
 
   useLayoutEffect(() => {
+    if (!active) {
+      return;
+    }
     fetchIdRef.current += 1;
+    cancelPendingQuoteFlush();
+    setQuoteRequestId(fetchIdRef.current);
     setQuotesList([]);
     setRecommendFromToken(undefined);
     setSelectedBridgeQuote(undefined);
     setPending(false);
   }, [
+    active,
     userAddress,
     fromToken?.id,
     toToken?.id,
     fromChain,
     toChain,
     amount,
+    feeRate,
     slippageObj.slippage,
+    cancelPendingQuoteFlush,
     setSelectedBridgeQuote,
   ]);
 
@@ -1012,6 +1124,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     fromChain,
     toChain,
     amount,
+    feeRate,
     aggregatorsList.length,
     refreshId,
   ]);
@@ -1025,11 +1138,41 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   );
 
   useEffect(() => {
-    if (!toToken?.id) {
+    if (active) {
+      return;
+    }
+    fetchIdRef.current += 1;
+    cancelPendingQuoteFlush();
+    cancelDebounce();
+  }, [active, cancelDebounce, cancelPendingQuoteFlush]);
+
+  useEffect(
+    () => () => {
+      cancelPendingQuoteFlush();
+    },
+    [cancelPendingQuoteFlush],
+  );
+
+  const hasPendingBridgeQuote = pending || quoteLoading;
+  const bridgeQuoteRequestFinished = !hasPendingBridgeQuote;
+
+  useEffect(() => {
+    if (!active || !toToken?.id) {
       return;
     }
 
-    const best = getBestBridgeQuote(quoteList, toToken);
+    const selectableQuoteList = bridgeQuoteRequestFinished
+      ? quoteList
+      : quoteList.filter(quote =>
+          canDisplayBridgeQuoteBeforeAllQuotesLoaded({
+            quote,
+            fromToken,
+            toToken,
+            amount,
+          }),
+        );
+
+    const best = getBestBridgeQuote(selectableQuoteList, toToken);
     if (!best) {
       return;
     }
@@ -1046,7 +1189,18 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
           !quote.loading && isSameBridgeQuote(quote, selectedBridgeQuote),
       );
       if (selectedQuoteLoaded && selectedBridgeQuote?.manualClick) {
-        return;
+        const canDisplaySelectedQuote =
+          bridgeQuoteRequestFinished ||
+          canDisplayBridgeQuoteBeforeAllQuotesLoaded({
+            quote: selectedBridgeQuote,
+            fromToken,
+            toToken,
+            amount,
+          });
+
+        if (canDisplaySelectedQuote) {
+          return;
+        }
       }
 
       const shouldUpdateSelectedQuote =
@@ -1058,95 +1212,204 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         setSelectedBridgeQuote(bestQuote);
       }
     }
-    // ignore toToken price update
+    // toToken price is needed by the early-display USD guard.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quoteList, toToken?.id, selectedBridgeQuote, setSelectedBridgeQuote]);
-
-  if (quotesError) {
-    console.error('quotesError', quotesError);
-  }
-
-  const initIdRef = useRef(0); // just work on lastest fetch and clear old fetch
-  const initChainByCache = useCallback(async () => {
-    initIdRef.current += 1;
-    const currentFetchId = initIdRef.current;
-    const { firstChain } = await fetchOrderedChainList({
-      address: currentAccount?.address,
-      supportChains: supportedChains,
-    });
-    if (initIdRef.current !== currentFetchId) {
-      return;
-    }
-    const firstChainEnum = firstChain?.enum || CHAINS_ENUM.ETH;
-    setAmount('');
-    setSlider(0);
-    setUseSlider(false);
-    setIsDraggingSlider(false);
-    // 只有在没有导航状态且未初始化时才设置 chain
-    if (!navState?.chainEnum && !isFromChainInitializedRef.current) {
-      console.log('initChainByCache - setting initial chain:', firstChainEnum);
-      wrappedSwitchFromChain(firstChainEnum);
-    }
-    const getRemoteRecommendChain = async () => {
-      if (initIdRef.current === currentFetchId) {
-        const data = await openapi.getRecommendBridgeToChain({
-          from_chain_id: findChainByEnum(firstChainEnum)!.serverId,
-        });
-        // 只有在未初始化时才设置 to chain
-        if (
-          initIdRef.current === currentFetchId &&
-          !isToChainInitializedRef.current
-        ) {
-          console.log(
-            'initChainByCache - setting initial to chain:',
-            findChainByServerID(data.to_chain_id)?.enum,
-          );
-          wrappedSwitchToChain(findChainByServerID(data.to_chain_id)?.enum);
-        }
-      }
-    };
-    if (userAddress) {
-      const latestTx = await openapi.getBridgeHistoryList({
-        user_addr: userAddress,
-        start: 0,
-        limit: 1,
-        is_all: true,
-      });
-      if (initIdRef.current !== currentFetchId) {
-        return;
-      }
-      const latestToToken = latestTx?.history_list?.[0]?.to_token;
-      if (latestToToken && !isToChainInitializedRef.current) {
-        const lastBridgeChain = findChainByServerID(latestToToken.chain);
-        if (lastBridgeChain && lastBridgeChain.enum !== firstChainEnum) {
-          wrappedSwitchToChain(lastBridgeChain.enum);
-          setToToken(latestToToken);
-        } else {
-          await getRemoteRecommendChain();
-        }
-      } else if (!isToChainInitializedRef.current) {
-        await getRemoteRecommendChain();
-      }
-    }
   }, [
-    currentAccount?.address,
-    fetchOrderedChainList,
-    supportedChains,
-    setSlider,
-    setUseSlider,
-    setIsDraggingSlider,
-    navState?.chainEnum,
-    wrappedSwitchFromChain,
-    userAddress,
-    wrappedSwitchToChain,
-    setToToken,
-    isFromChainInitializedRef,
-    isToChainInitializedRef,
+    active,
+    quoteList,
+    bridgeQuoteRequestFinished,
+    fromToken,
+    amount,
+    toToken?.id,
+    toToken?.price,
+    selectedBridgeQuote,
+    setSelectedBridgeQuote,
   ]);
 
   useEffect(() => {
-    initChainByCache();
-  }, [initChainByCache]);
+    if (quotesError) {
+      console.error('quotesError', quotesError);
+    }
+  }, [quotesError]);
+
+  const initializationControllerRef = useRef(
+    createBridgeInitializationController(),
+  );
+  const initializationKey = JSON.stringify({
+    account: currentAccount?.address?.toLowerCase() || '',
+    chainEnum: navState?.chainEnum || '',
+    tokenId: navState?.tokenId?.toLowerCase() || '',
+    toChainEnum: navState?.toChainEnum || '',
+    toTokenId: navState?.toTokenId?.toLowerCase() || '',
+  });
+
+  useEffect(() => {
+    if (!active) {
+      return;
+    }
+
+    const controller = initializationControllerRef.current;
+    const run = controller.begin(initializationKey);
+    if (!run) {
+      return;
+    }
+
+    const canCommit = () => controller.isCurrent(run);
+
+    const initializeBridge = async () => {
+      setAmount('');
+      setSlider(0);
+      setUseSlider(false);
+      setIsDraggingSlider(false);
+
+      let effectiveFromChain = latestFromChainRef.current;
+      const routeFromChain = navState?.chainEnum
+        ? findChainByEnum(navState.chainEnum, { fallback: true })?.enum ||
+          CHAINS_ENUM.ETH
+        : undefined;
+      const routeToChain = navState?.toChainEnum
+        ? findChainByEnum(navState.toChainEnum, { fallback: true })?.enum ||
+          CHAINS_ENUM.ETH
+        : undefined;
+
+      if (routeFromChain && canCommit()) {
+        wrappedSwitchFromChain(routeFromChain, false);
+        setFromToken({
+          ...getChainDefaultToken(routeFromChain),
+          id: navState?.tokenId || getChainDefaultToken(routeFromChain).id,
+        });
+        effectiveFromChain = routeFromChain;
+      } else if (!isFromChainInitializedRef.current) {
+        let firstChainEnum = CHAINS_ENUM.ETH;
+        try {
+          const { firstChain } = await fetchOrderedChainList({
+            address: currentAccount?.address,
+            supportChains: supportedChains,
+          });
+          firstChainEnum = firstChain?.enum || CHAINS_ENUM.ETH;
+        } catch (error) {
+          console.error('Bridge fetchOrderedChainList error', error);
+        }
+
+        if (!canCommit()) {
+          return;
+        }
+
+        if (!isFromChainInitializedRef.current) {
+          wrappedSwitchFromChain(firstChainEnum);
+          effectiveFromChain = firstChainEnum;
+        } else {
+          effectiveFromChain = latestFromChainRef.current;
+        }
+      }
+
+      if (routeToChain && canCommit()) {
+        wrappedSwitchToChain(routeToChain, false);
+        setToToken({
+          ...getChainDefaultToken(routeToChain),
+          id: navState?.toTokenId || getChainDefaultToken(routeToChain).id,
+        });
+        return;
+      }
+
+      if (
+        !canCommit() ||
+        !userAddress ||
+        !effectiveFromChain ||
+        isToChainInitializedRef.current
+      ) {
+        return;
+      }
+
+      try {
+        const latestTx = await openapi.getBridgeHistoryList({
+          user_addr: userAddress,
+          start: 0,
+          limit: 1,
+          is_all: true,
+        });
+        if (
+          !canCommit() ||
+          latestFromChainRef.current !== effectiveFromChain ||
+          isToChainInitializedRef.current
+        ) {
+          return;
+        }
+
+        const latestToToken = latestTx?.history_list?.[0]?.to_token;
+        const latestToChain = latestToToken
+          ? findChainByServerID(latestToToken.chain)?.enum
+          : undefined;
+        if (
+          latestToToken &&
+          latestToChain &&
+          latestToChain !== effectiveFromChain
+        ) {
+          wrappedSwitchToChain(latestToChain);
+          setToToken(latestToToken);
+          return;
+        }
+      } catch (error) {
+        console.error('Bridge getBridgeHistoryList error', error);
+      }
+
+      if (
+        !canCommit() ||
+        latestFromChainRef.current !== effectiveFromChain ||
+        isToChainInitializedRef.current
+      ) {
+        return;
+      }
+
+      try {
+        const data = await openapi.getRecommendBridgeToChain({
+          from_chain_id: findChainByEnum(effectiveFromChain)!.serverId,
+        });
+        if (
+          !canCommit() ||
+          latestFromChainRef.current !== effectiveFromChain ||
+          isToChainInitializedRef.current
+        ) {
+          return;
+        }
+
+        wrappedSwitchToChain(findChainByServerID(data.to_chain_id)?.enum);
+      } catch (error) {
+        console.error('Bridge getRecommendBridgeToChain error', error);
+      }
+    };
+
+    initializeBridge()
+      .then(() => {
+        controller.complete(run);
+      })
+      .catch(error => {
+        controller.fail(run);
+        console.error('Bridge initialization error', error);
+      });
+
+    return () => {
+      controller.cancel(run);
+    };
+  }, [
+    active,
+    currentAccount?.address,
+    fetchOrderedChainList,
+    initializationKey,
+    navState?.chainEnum,
+    navState?.tokenId,
+    navState?.toChainEnum,
+    navState?.toTokenId,
+    setFromToken,
+    setIsDraggingSlider,
+    setSlider,
+    setToToken,
+    setUseSlider,
+    supportedChains,
+    userAddress,
+    wrappedSwitchFromChain,
+    wrappedSwitchToChain,
+  ]);
 
   useEffect(() => {
     setQuotesList([]);
@@ -1155,12 +1418,12 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   }, [fromToken?.id, toToken?.id, fromChain, toChain, setSelectedBridgeQuote]);
 
   useEffect(() => {
-    if (!canRequestQuote) {
+    if (active && !canRequestQuote) {
       setQuotesList([]);
       setRecommendFromToken(undefined);
       setSelectedBridgeQuote(undefined);
     }
-  }, [canRequestQuote, setSelectedBridgeQuote]);
+  }, [active, canRequestQuote, setSelectedBridgeQuote]);
 
   useEffect(() => {
     if (!enableInsufficientQuote || !amount || Number(amount) === 0) {
@@ -1179,6 +1442,9 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
   useFocusEffect(
     useCallback(() => {
+      if (!active) {
+        return;
+      }
       const refresh = () => {
         if (
           autoQuoteRefreshPausedRef.current ||
@@ -1193,15 +1459,31 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
       return () => {
         eventBus.removeListener(EVENTS.RELOAD_TX, refresh);
       };
-    }, [setTokenRefreshId]),
+    }, [active, setTokenRefreshId]),
   );
 
   useClearMiniGasStateEffect({
     chainServerId: findChainByEnum(fromChain)?.serverId || '',
+    enabled: active,
   });
 
-  const hasLoadedQuote = quoteList.some(quote => !quote.loading);
-  const quoteDisplayLoading = !hasLoadedQuote && (pending || quoteLoading);
+  const selectedBridgeQuoteLoaded =
+    !!selectedBridgeQuote &&
+    quoteList.some(
+      quote => !quote.loading && isSameBridgeQuote(quote, selectedBridgeQuote),
+    );
+  const selectedBridgeQuoteCanDisplay =
+    !!toToken &&
+    selectedBridgeQuoteLoaded &&
+    (bridgeQuoteRequestFinished ||
+      canDisplayBridgeQuoteBeforeAllQuotesLoaded({
+        quote: selectedBridgeQuote,
+        fromToken,
+        toToken,
+        amount,
+      }));
+  const quoteDisplayLoading =
+    !selectedBridgeQuoteCanDisplay && hasPendingBridgeQuote;
 
   return {
     clearExpiredTimer,
@@ -1224,10 +1506,14 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     quoteBlockedByClosedMarket,
     amount,
     handleAmountChange,
+    feeRate,
+    feeTier,
     showLoss,
 
     openQuotesList,
     quoteLoading: quoteDisplayLoading,
+    allQuotesLoaded: bridgeQuoteRequestFinished,
+    quoteRequestId,
     quoteList,
     setQuotesList,
 
@@ -1245,6 +1531,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     setSelectedBridgeQuote,
     setAutoQuoteRefreshPaused,
     setReloadTxRefreshPaused,
+    quoteRefreshCountdown,
     ...slippageObj,
 
     onChangeSlider,

@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from 'react-i18next';
-import { RefreshControl, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import { Skeleton } from '@rneui/themed';
 import { useTheme2024 } from '@/hooks/theme';
@@ -23,7 +23,6 @@ import { PoolListLoading } from '../Loading';
 import { DisplayPoolReserveInfo } from '../../type';
 import { assetCanBeBorrowedByUser } from '../../utils/borrow';
 import {
-  useFetchLendingData,
   useLendingIsLoading,
   useLendingRemoteData,
   useLendingSummary,
@@ -53,7 +52,6 @@ export const LendingBorrowListContent: React.FC<
   const { displayPoolReserves, iUserSummary, getTargetReserve } =
     useLendingSummary();
   const { t } = useTranslation();
-  const { fetchData } = useFetchLendingData();
   const [search, setSearch] = useState('');
   const [isInputActive, setIsInputActive] = useState(false);
 
@@ -81,18 +79,6 @@ export const LendingBorrowListContent: React.FC<
     return displayPoolReserves
       ?.filter(item => {
         if (isSameAddress(item.underlyingAsset, API_ETH_MOCK_ADDRESS)) {
-          return false;
-        }
-        if (item.variableBorrows && item.variableBorrows !== '0') {
-          return true;
-        }
-        // emode开启，但是不支持该池子借贷
-        const eModeBorrowDisabled =
-          !!iUserSummary?.userEmodeCategoryId &&
-          !item.reserve.eModes.find(
-            e => e.id === iUserSummary.userEmodeCategoryId,
-          );
-        if (eModeBorrowDisabled) {
           return false;
         }
         // 贷款上限
@@ -341,7 +327,7 @@ export const LendingBorrowListContent: React.FC<
           onPress={() => handlePressItem(data)}>
           <View style={styles.left}>
             <TokenIcon
-              size={46}
+              size={40}
               chainSize={0}
               tokenSymbol={data.reserve.symbol}
             />
@@ -419,12 +405,6 @@ export const LendingBorrowListContent: React.FC<
         data={loading ? [] : dataList}
         style={styles.list}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={false}
-            onRefresh={() => fetchData(true)}
-          />
-        }
         keyExtractor={keyExtractor}
         ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={loading ? <PoolListLoading /> : null}
@@ -483,16 +463,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   apy: {
     flex: 0,
     width: 80,
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 17,
+    lineHeight: 22,
     textAlign: 'right',
-    fontWeight: '700',
+    fontWeight: '500',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
   totalBorrowed: {
     width: 100,
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 18,
     fontWeight: '500',
     textAlign: 'left',
@@ -517,39 +497,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     maxWidth: 80,
     overflow: 'hidden',
   },
-  yourSupplied: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'right',
-  },
-  zeroBorrowed: {
-    color: colors2024['neutral-info'],
-  },
-  yourBalanceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  walletIcon: {
-    width: 16,
-    height: 16,
-    color: colors2024['neutral-secondary'],
-    marginTop: -2,
-  },
-  yourBalance: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'right',
-  },
   listHeader: {
     paddingVertical: 2,
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -567,6 +517,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 14,
     lineHeight: 18,
     color: colors2024['neutral-secondary'],
+    paddingLeft: 4,
     flex: 1,
   },
   headerApy: {
@@ -574,6 +525,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 18,
     color: colors2024['neutral-secondary'],
     width: 80,
+    paddingRight: 4,
     textAlign: 'right',
   },
   headerMyBorrows: {

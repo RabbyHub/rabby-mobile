@@ -1,10 +1,6 @@
 import { useTheme2024 } from '@/hooks/theme';
-import React, {
-  useMemo,
-  useCallback,
-  useEffect,
-  useDeferredValue,
-} from 'react';
+import React, { useCallback, useEffect, useDeferredValue, useRef } from 'react';
+import PagerView from 'react-native-pager-view';
 import { useTranslation, Trans } from 'react-i18next';
 import { navigateDeprecated, replaceToFirst } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
@@ -12,13 +8,7 @@ import { useScanner } from '../Scanner/ScannerScreen';
 import PasteButton from '@/components2024/PasteButton';
 import { NextInput } from '@/components2024/Form/Input';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  Keyboard,
-  Pressable,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
-} from 'react-native';
+import { Keyboard, Pressable, TouchableOpacity, View } from 'react-native';
 import { validateAndCleanPrivateKey } from '@/core/apis/privateKey';
 import { apiPrivateKey, apiMnemonic } from '@/core/apis';
 import { validateAndCleanMnemonic } from '@/core/apis/mnemonic';
@@ -29,19 +19,23 @@ import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/Fo
 import { onPastedSensitiveData } from '@/utils/clipboard';
 import { Text } from '@/components/Typography';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamsList } from '@/navigation-type';
-import { preferenceService } from '@/core/services';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { RootStackParamsList } from '@/navigation-type';
+import { setReportActionTs } from '@/core/serviceApi/preference';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
 import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
 import * as SecretVault from '@/core/utils/secretVault';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+import { IS_ANDROID } from '@/core/native/utils';
 
 /** Toast position at the top of screen */
 const TOAST_POSITION_TOP = 30;
+
+// Android needs touch-start dismissal without Pressable claiming the swipe.
+const Container = IS_ANDROID ? View : Pressable;
 
 type TabType = 'seedPhrase' | 'privateKey';
 
@@ -60,6 +54,7 @@ export const ImportSecret = ({ route }: ScreenProps) => {
   const [activeTab, setActiveTab] = React.useState<TabType>(
     initialTab ?? 'seedPhrase',
   );
+  const pagerRef = useRef<PagerView>(null);
 
   // Seed phrase state
   const [mnemonics, setMnemonics] = React.useState<string>('');
@@ -68,61 +63,122 @@ export const ImportSecret = ({ route }: ScreenProps) => {
   // Private key state
   const [privateKey, setPrivateKey] = React.useState<string>('');
   const [privateKeyError, setPrivateKeyError] = React.useState<string>();
+  const [importing, setImporting] = React.useState(false);
 
   const scanner = useScanner();
 
-  // Derived values based on active tab
-  const inputPlaceholder = useMemo(() => {
-    return activeTab === 'seedPhrase'
-      ? t('page.newUserOnboarding.importSecret.seedPhrasePlaceholder')
-      : t('page.newUserOnboarding.importSecret.privateKeyPlaceholder');
-  }, [activeTab, t]);
-
-  const inputValue = activeTab === 'seedPhrase' ? mnemonics : privateKey;
-  const inputError =
-    activeTab === 'seedPhrase' ? mnemonicError : privateKeyError;
-
   // Clear errors when switching tabs
   const handleTabChange = React.useCallback((tab: TabType) => {
+    Keyboard.dismiss();
     setActiveTab(tab);
     setMnemonicError(undefined);
     setPrivateKeyError(undefined);
+    pagerRef.current?.setPage(tab === 'seedPhrase' ? 0 : 1);
   }, []);
 
   // Handle input change
-  const handleInputChange = React.useCallback(
-    (text: string) => {
-      if (activeTab === 'seedPhrase') {
-        setMnemonicError(undefined);
-        setMnemonics(text);
-      } else {
-        setPrivateKeyError(undefined);
-        setPrivateKey(text);
-      }
-    },
-    [activeTab],
-  );
+  const handleInputChange = React.useCallback((tab: TabType, text: string) => {
+    if (tab === 'seedPhrase') {
+      setMnemonicError(undefined);
+      setMnemonics(text);
+    } else {
+      setPrivateKeyError(undefined);
+      setPrivateKey(text);
+    }
+  }, []);
 
   // Handle paste
-  const handlePaste = React.useCallback(
-    (text: string) => {
-      if (activeTab === 'seedPhrase') {
-        setMnemonicError(undefined);
-        setMnemonics(text);
-        onPastedSensitiveData({
-          type: 'seedPhrase',
-          toastOptions: { position: TOAST_POSITION_TOP },
-        });
-      } else {
-        setPrivateKeyError(undefined);
-        setPrivateKey(text);
-        onPastedSensitiveData({
-          type: 'privateKey',
-          toastOptions: { position: TOAST_POSITION_TOP },
-        });
-      }
+  const handlePaste = React.useCallback((tab: TabType, text: string) => {
+    if (tab === 'seedPhrase') {
+      setMnemonicError(undefined);
+      setMnemonics(text);
+      onPastedSensitiveData({
+        type: 'seedPhrase',
+        toastOptions: { position: TOAST_POSITION_TOP },
+      });
+    } else {
+      setPrivateKeyError(undefined);
+      setPrivateKey(text);
+      onPastedSensitiveData({
+        type: 'privateKey',
+        toastOptions: { position: TOAST_POSITION_TOP },
+      });
+    }
+  }, []);
+
+  const renderInputPage = useCallback(
+    (tab: TabType) => {
+      const isSeedPhrase = tab === 'seedPhrase';
+      const inputError = isSeedPhrase ? mnemonicError : privateKeyError;
+      const inputValue = isSeedPhrase ? mnemonics : privateKey;
+
+      return (
+        <View collapsable={false} key={tab} style={styles.pagerPage}>
+          <View style={styles.topContent}>
+            <NextInput.TextArea
+              style={styles.textContainer}
+              tipText={inputError}
+              hasError={!!inputError}
+              inputStyle={styles.textArea}
+              containerStyle={Object.assign(
+                {},
+                inputError
+                  ? {}
+                  : {
+                      borderColor: 'transparent',
+                    },
+              )}
+              inputProps={{
+                placeholder: t(
+                  isSeedPhrase
+                    ? 'page.newUserOnboarding.importSecret.seedPhrasePlaceholder'
+                    : 'page.newUserOnboarding.importSecret.privateKeyPlaceholder',
+                ),
+                value: inputValue,
+                secureTextEntry: true,
+                textContentType: 'none',
+                blurOnSubmit: true,
+                returnKeyType: 'done',
+                rejectResponderTermination: false,
+                ...makeTestIDProps(
+                  !isSeedPhrase ? E2E_ID.onboarding.privateKeyInput : null,
+                ),
+                onChangeText: (text: string) => handleInputChange(tab, text),
+              }}
+              // eslint-disable-next-line react/no-unstable-nested-components
+              customIcon={ctx => (
+                <TouchableOpacity
+                  style={[ctx.wrapperStyle, styles.scanButtonHitArea]}
+                  onPress={() => {
+                    navigateDeprecated(RootNames.Scanner);
+                  }}>
+                  <RcIconScannerCC
+                    style={ctx.iconStyle}
+                    color={colors2024['neutral-title-1']}
+                  />
+                </TouchableOpacity>
+              )}
+            />
+
+            <PasteButton
+              style={styles.pasteButton}
+              onPaste={text => handlePaste(tab, text)}
+            />
+          </View>
+        </View>
+      );
     },
-    [activeTab],
+    [
+      colors2024,
+      handleInputChange,
+      handlePaste,
+      mnemonicError,
+      mnemonics,
+      privateKey,
+      privateKeyError,
+      styles,
+      t,
+    ],
   );
 
   // Navigate to CreateNewWallet
@@ -170,7 +226,7 @@ export const ImportSecret = ({ route }: ScreenProps) => {
   }, [navigation, TabToggle]);
 
   // Handle confirm button - navigate based on flow type
-  const handleConfirm = React.useCallback(async () => {
+  const handleConfirmImpl = React.useCallback(async () => {
     if (activeTab === 'seedPhrase') {
       // Clean and validate mnemonic
       let cleanedMnemonic: string;
@@ -265,9 +321,9 @@ export const ImportSecret = ({ route }: ScreenProps) => {
           seedPhraseVaultId: vaultId,
         });
       }
-      preferenceService.setReportActionTs(
+      void setReportActionTs(
         REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_SEED_PHRASE,
-      );
+      ).catch(console.error);
     } else {
       // Clean and validate private key
       let cleanedPrivateKey: string;
@@ -314,9 +370,9 @@ export const ImportSecret = ({ route }: ScreenProps) => {
           privateKeyVaultId: vaultId,
         });
       }
-      preferenceService.setReportActionTs(
+      void setReportActionTs(
         REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_PRIVATE_KEY,
-      );
+      ).catch(console.error);
     }
   }, [
     activeTab,
@@ -329,17 +385,26 @@ export const ImportSecret = ({ route }: ScreenProps) => {
     showImportMorePopup,
   ]);
 
+  const handleConfirm = React.useCallback(async () => {
+    if (importing) {
+      return;
+    }
+
+    setImporting(true);
+    try {
+      await handleConfirmImpl();
+    } finally {
+      setImporting(false);
+    }
+  }, [handleConfirmImpl, importing]);
+
   // Handle scanner result
   React.useEffect(() => {
     if (scanner.text) {
-      if (activeTab === 'seedPhrase') {
-        setMnemonics(scanner.text);
-      } else {
-        setPrivateKey(scanner.text);
-      }
+      handleInputChange(activeTab, scanner.text);
       scanner.clear();
     }
-  }, [scanner, activeTab]);
+  }, [scanner, activeTab, handleInputChange]);
 
   const isConfirmDisabled = React.useMemo(() => {
     if (activeTab === 'seedPhrase') {
@@ -354,11 +419,12 @@ export const ImportSecret = ({ route }: ScreenProps) => {
 
   return (
     <FooterButtonScreenContainer
-      as="View"
+      as="KeyboardAvoidingView"
       buttonProps={{
         title: t('global.Confirm'),
         onPress: handleConfirm,
-        disabled: isConfirmDisabled,
+        disabled: isConfirmDisabled || importing,
+        loading: importing,
         ...makeTestIDProps(
           activeTab === 'privateKey'
             ? E2E_ID.onboarding.privateKeySubmit
@@ -367,80 +433,51 @@ export const ImportSecret = ({ route }: ScreenProps) => {
       }}
       style={styles.screen}
       footerBottomOffset={48}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-        <View style={styles.container}>
-          <View style={styles.content}>
-            <View style={styles.topContent}>
-              {/* Input Area */}
-              <NextInput.TextArea
-                style={styles.textContainer}
-                tipText={inputError}
-                hasError={!!inputError}
-                inputStyle={styles.textArea}
-                containerStyle={Object.assign(
-                  {},
-                  inputError
-                    ? {}
-                    : {
-                        borderColor: 'transparent',
-                      },
-                )}
-                inputProps={{
-                  placeholder: inputPlaceholder,
-                  value: inputValue,
-                  secureTextEntry: true,
-                  textContentType: 'none',
-                  blurOnSubmit: true,
-                  returnKeyType: 'done',
-                  ...makeTestIDProps(
-                    activeTab === 'privateKey'
-                      ? E2E_ID.onboarding.privateKeyInput
-                      : null,
-                  ),
-                  onChangeText: handleInputChange,
-                }}
-                // eslint-disable-next-line react/no-unstable-nested-components
-                customIcon={ctx => (
-                  <TouchableOpacity
-                    style={[ctx.wrapperStyle, styles.scanButtonHitArea]}
-                    onPress={() => {
-                      navigateDeprecated(RootNames.Scanner);
-                    }}>
-                    <RcIconScannerCC
-                      style={ctx.iconStyle}
-                      color={colors2024['neutral-title-1']}
-                    />
-                  </TouchableOpacity>
-                )}
-              />
-
-              <PasteButton style={styles.pasteButton} onPaste={handlePaste} />
-            </View>
-          </View>
-
-          {/* Create New Wallet Link - hidden for in_app flow */}
-          {!isInAppFlow && !deferredHasInputContent && (
-            <View style={styles.linkWrapper}>
-              <Text style={styles.linkText}>
-                <Trans
-                  i18nKey="page.newUserOnboarding.common.orYouCanCreateNewWallet"
-                  t={t}
-                  components={{
-                    clickable: (
-                      <Text
-                        key="clickable"
-                        style={styles.linkTextHighlight}
-                        onPress={handleCreateNewWallet}
-                        suppressHighlighting
-                      />
-                    ),
-                  }}
-                />
-              </Text>
-            </View>
-          )}
+      <Container
+        accessible={false}
+        style={styles.container}
+        onTouchStart={IS_ANDROID ? Keyboard.dismiss : undefined}
+        onPress={IS_ANDROID ? undefined : Keyboard.dismiss}>
+        <View style={styles.content}>
+          <PagerView
+            ref={pagerRef}
+            keyboardDismissMode="on-drag"
+            style={styles.pager}
+            initialPage={initialTab === 'privateKey' ? 1 : 0}
+            onPageSelected={({ nativeEvent }) => {
+              setActiveTab(
+                nativeEvent.position === 1 ? 'privateKey' : 'seedPhrase',
+              );
+              setMnemonicError(undefined);
+              setPrivateKeyError(undefined);
+            }}>
+            {renderInputPage('seedPhrase')}
+            {renderInputPage('privateKey')}
+          </PagerView>
         </View>
-      </TouchableWithoutFeedback>
+
+        {/* Create New Wallet Link - hidden for in_app flow */}
+        {!isInAppFlow && !deferredHasInputContent && (
+          <View style={styles.linkWrapper}>
+            <Text style={styles.linkText}>
+              <Trans
+                i18nKey="page.newUserOnboarding.common.orYouCanCreateNewWallet"
+                t={t}
+                components={{
+                  clickable: (
+                    <Text
+                      key="clickable"
+                      style={styles.linkTextHighlight}
+                      onPress={handleCreateNewWallet}
+                      suppressHighlighting
+                    />
+                  ),
+                }}
+              />
+            </Text>
+          </View>
+        )}
+      </Container>
     </FooterButtonScreenContainer>
   );
 };
@@ -458,6 +495,14 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingTop: 16,
   },
   content: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  pager: {
+    flex: 1,
+    width: '100%',
+  },
+  pagerPage: {
     flex: 1,
     alignItems: 'center',
   },

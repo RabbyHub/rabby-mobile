@@ -11,6 +11,11 @@ import {
   View,
 } from 'react-native';
 
+const LOGO_SLOT_SIZE = 32;
+const MAIN_LOGO_SIZE = 24;
+const BRIDGE_LOGO_SIZE = 14;
+const BRIDGE_LOGO_OFFSET = 2;
+
 export const QuoteLogo = ({
   isLoading,
   logo,
@@ -24,22 +29,20 @@ export const QuoteLogo = ({
   const styles = useMemo(() => getStyles(colors), [colors]);
 
   const imageStyle = useMemo(() => {
-    const size = 24;
     return {
-      width: size,
-      height: size,
+      width: MAIN_LOGO_SIZE,
+      height: MAIN_LOGO_SIZE,
       borderRadius: 999999,
     };
   }, []);
 
   const bridgeImageStyle: StyleProp<ImageStyle> = useMemo(() => {
-    const size = 14;
     return {
       position: 'absolute',
-      right: -2,
-      bottom: -2,
-      width: size,
-      height: size,
+      right: BRIDGE_LOGO_OFFSET,
+      bottom: BRIDGE_LOGO_OFFSET,
+      width: BRIDGE_LOGO_SIZE,
+      height: BRIDGE_LOGO_SIZE,
       borderRadius: 999999,
     };
   }, []);
@@ -91,7 +94,7 @@ export const QuoteLogo = ({
               transform: [{ rotate: spin }],
             },
           ]}>
-          <IconQuoteLoading width={33} height={33} />
+          <IconQuoteLoading width={LOGO_SLOT_SIZE} height={LOGO_SLOT_SIZE} />
         </Animated.View>
       )}
     </View>
@@ -103,9 +106,16 @@ const getStyles = createGetStyles(_ => ({
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
+    width: LOGO_SLOT_SIZE,
+    height: LOGO_SLOT_SIZE,
+    flexShrink: 0,
   },
   loadingWrapper: {
     position: 'absolute',
+    left: 0,
+    top: 0,
+    width: LOGO_SLOT_SIZE,
+    height: LOGO_SLOT_SIZE,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',

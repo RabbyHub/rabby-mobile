@@ -5,9 +5,12 @@ import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import {
   DebugLogViewer,
+  StartupPerformanceLogViewer,
   DevCapabilityFile,
+  InMemoryLogViewer,
   DevDataContactService,
   DevDataSQLite,
+  DevWatchAddressFixtureImport,
   DevDataKeychain,
   DevDataKeyringVault,
   DevDataWhitelist,
@@ -17,6 +20,7 @@ import {
   DevUIAnimatedTextAndView,
   DevUIBuiltInPages,
   DevUIComponents2024ShowCase,
+  DevUIWalletConnect,
   DevUIDapps,
   DevUIFontShowCase,
   DevUIFormShowCase,
@@ -91,6 +95,17 @@ export function TestkitsNavigator() {
         component={DevUIPermissions}
       />
       <Stack.Screen
+        name={RootNames.DevUIWalletConnect}
+        component={DevUIWalletConnect}
+        options={mergeScreenOptions2024([
+          {
+            headerShown: true,
+            headerTitle: 'WalletConnect Log',
+            title: 'WalletConnect Log',
+          },
+        ])}
+      />
+      <Stack.Screen
         name={RootNames.DevCapabilityFile}
         component={DevCapabilityFile}
         options={mergeScreenOptions2024([
@@ -103,6 +118,17 @@ export function TestkitsNavigator() {
       />
 
       <Stack.Screen name={RootNames.DevDataSQLite} component={DevDataSQLite} />
+      <Stack.Screen
+        name={RootNames.DevWatchAddressFixtureImport}
+        component={DevWatchAddressFixtureImport}
+        options={mergeScreenOptions2024([
+          {
+            headerShown: true,
+            headerTitle: 'Benchmark Watch addresses',
+            title: 'Benchmark Watch addresses',
+          },
+        ])}
+      />
       <Stack.Screen
         name={RootNames.DevDataKeychain}
         component={DevDataKeychain}
@@ -170,6 +196,22 @@ export function TestkitsNavigator() {
         options={{
           headerShown: true,
           title: 'App Log Verification',
+        }}
+      />
+      <Stack.Screen
+        name={RootNames.StartupPerformanceLogViewer}
+        component={StartupPerformanceLogViewer}
+        options={{
+          headerShown: true,
+          title: 'Startup Performance Logs',
+        }}
+      />
+      <Stack.Screen
+        name={RootNames.InMemoryLogViewer}
+        component={InMemoryLogViewer}
+        options={{
+          headerShown: true,
+          title: 'In-Memory Logs',
         }}
       />
     </Stack.Navigator>

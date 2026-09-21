@@ -1,7 +1,9 @@
 import { InteractionManager, Platform } from 'react-native';
 
 import { zCreate, zMutative } from '@/core/utils/reexports';
-import { logger } from '@/utils/logger';
+import { traceAndroidInstant } from './androidTrace';
+import { isNonProductionDiagnosticsEnabled } from './diagnosticEnv';
+import { markStartupRuntimePhase } from '@/startup/runtimeDiagnostics';
 
 const HOME_CRITICAL_READY_DELAY_MS = 32;
 const HOME_POST_STARTUP_DEFER_MS = 450;
@@ -13,6 +15,11 @@ type HomeStartupReadyState = {
   postReady: boolean;
   postReadyAt: number;
   generation: number;
+};
+
+type RunAfterHomeReadyOptions = {
+  fallbackMs?: number;
+  label?: string;
 };
 
 const homeStartupReadyStore = zCreate(
@@ -31,11 +38,12 @@ const homeStartupReadyStore = zCreate(
 );
 
 function traceHomeStartup(event: string, data: Record<string, unknown> = {}) {
-  if (!isAndroid) {
+  if (!isAndroid || !isNonProductionDiagnosticsEnabled) {
     return;
   }
 
-  logger.info(`[RabbyUnlockPerf:home] ${event}`, data);
+  console.info(`[RabbyUnlockPerf:home] ${event}`, data);
+  traceAndroidInstant(`home.${event}`, data);
 }
 
 export function useHomeStartupReady() {
@@ -52,6 +60,68 @@ export function getHomeStartupReady() {
 
 export function getHomePostStartupReady() {
   return homeStartupReadyStore.getState().postReady;
+}
+
+export function runAfterHomePostStartupReady(
+  callback: () => void,
+  options: RunAfterHomeReadyOptions = {},
+) {
+  if (homeStartupReadyStore.getState().postReady) {
+    traceHomeStartup('home_post_startup_ready_callback_now', {
+      label: options.label,
+    });
+    callback();
+    return () => undefined;
+  }
+
+  let disposed = false;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  traceHomeStartup('home_post_startup_ready_callback_wait', {
+    label: options.label,
+    fallbackMs: options.fallbackMs,
+  });
+
+  const unsubscribe = homeStartupReadyStore.subscribe(state => {
+    if (disposed || !state.postReady) {
+      return;
+    }
+
+    disposed = true;
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    unsubscribe();
+    traceHomeStartup('home_post_startup_ready_callback_run', {
+      label: options.label,
+      source: 'home_post_ready',
+    });
+    callback();
+  });
+
+  if (typeof options.fallbackMs === 'number') {
+    timeoutId = setTimeout(() => {
+      if (disposed) {
+        return;
+      }
+
+      disposed = true;
+      unsubscribe();
+      traceHomeStartup('home_post_startup_ready_callback_run', {
+        label: options.label,
+        source: 'fallback',
+      });
+      callback();
+    }, options.fallbackMs);
+  }
+
+  return () => {
+    disposed = true;
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    unsubscribe();
+  };
 }
 
 export function resetHomeStartupReady() {
@@ -78,6 +148,7 @@ function markHomeStartupReady(
   }
 
   traceHomeStartup('home_startup_ready');
+  markStartupRuntimePhase('home', 'ready', 'home_startup_ready');
   homeStartupReadyStore.setState(state => {
     state.ready = true;
     state.readyAt = Date.now();
@@ -98,6 +169,11 @@ function markHomePostStartupReady(
   }
 
   traceHomeStartup('home_post_startup_ready');
+  markStartupRuntimePhase(
+    'home',
+    'post-startup-ready',
+    'home_post_startup_ready',
+  );
   homeStartupReadyStore.setState(state => {
     state.postReady = true;
     state.postReadyAt = Date.now();
@@ -105,12 +181,28 @@ function markHomePostStartupReady(
 }
 
 export function scheduleHomeStartupReady() {
+  markStartupRuntimePhase('home', 'mounted', 'home_screen_mounted');
   const scheduledGeneration = homeStartupReadyStore.getState().generation;
   let disposed = false;
   let criticalTimeoutId: ReturnType<typeof setTimeout> | null = null;
   let postTimeoutId: ReturnType<typeof setTimeout> | null = null;
   let frameId: number | null = null;
   let secondFrameId: number | null = null;
+  let interactionHandle: ReturnType<
+    typeof InteractionManager.runAfterInteractions
+  > | null = null;
+
+  function schedulePostStartupReady() {
+    traceHomeStartup('home_post_startup_defer_start', {
+      delayMs: HOME_POST_STARTUP_DEFER_MS,
+    });
+
+    interactionHandle = InteractionManager.runAfterInteractions(() => {
+      postTimeoutId = setTimeout(() => {
+        markHomePostStartupReady(scheduledGeneration, () => disposed);
+      }, HOME_POST_STARTUP_DEFER_MS);
+    });
+  }
 
   traceHomeStartup('home_startup_defer_start', {
     delayMs: HOME_CRITICAL_READY_DELAY_MS,
@@ -120,23 +212,14 @@ export function scheduleHomeStartupReady() {
     secondFrameId = requestAnimationFrame(() => {
       criticalTimeoutId = setTimeout(() => {
         markHomeStartupReady(scheduledGeneration, () => disposed);
+        schedulePostStartupReady();
       }, HOME_CRITICAL_READY_DELAY_MS);
     });
   });
 
-  traceHomeStartup('home_post_startup_defer_start', {
-    delayMs: HOME_POST_STARTUP_DEFER_MS,
-  });
-
-  const interactionHandle = InteractionManager.runAfterInteractions(() => {
-    postTimeoutId = setTimeout(() => {
-      markHomePostStartupReady(scheduledGeneration, () => disposed);
-    }, HOME_POST_STARTUP_DEFER_MS);
-  });
-
   return () => {
     disposed = true;
-    interactionHandle.cancel?.();
+    interactionHandle?.cancel?.();
     if (frameId !== null) {
       cancelAnimationFrame(frameId);
     }

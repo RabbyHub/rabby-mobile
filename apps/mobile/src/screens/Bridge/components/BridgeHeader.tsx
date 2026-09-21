@@ -1,28 +1,23 @@
 import React, {
   useCallback,
-  useMemo,
   useState,
   useImperativeHandle,
   type Ref,
 } from 'react';
 import {
   useClearBridgeHistoryRedDot,
-  useReadBridgeHistoryRedDot,
-  useReadBridgePendingCount,
   useSetSettingVisible,
   useSettingVisible,
 } from '../hooks';
-import TouchableView from '@/components/Touchable/TouchableView';
 import { BridgeTxHistory } from './BridgeHistory';
 import { RabbyFeePopup } from '@/components/RabbyFeePopup';
+import { CompareFee } from '@/components/RabbyFeePopup/CompareFee';
 import { Keyboard, TouchableOpacity, View } from 'react-native';
-// import { RcIconSwapHistory } from '@/assets/icons/swap';
 import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
-import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
-import PendingTx from './PendingTx';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 
-const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
+const getStyle = createGetStyles2024(() => ({
   container: {
     flexDirection: 'row',
     gap: 20,
@@ -31,15 +26,6 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   icon: {
     width: 24,
     height: 24,
-  },
-  greenDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors2024['green-default'],
-    position: 'absolute',
-    top: 0,
-    right: 0,
   },
   iconContainer: {
     position: 'relative',
@@ -54,37 +40,47 @@ export const BridgeHeader = ({
   clearBridgeHistoryRedDot,
   ref,
 }: {
-  clearBridgeHistoryRedDot?: () => number;
+  clearBridgeHistoryRedDot?: () => number | Promise<number>;
   ref?: Ref<BridgeHeaderRef>;
 }) => {
-  const { styles, colors, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const clearBridgeHistoryRedDotFromScene = useClearBridgeHistoryRedDot();
 
-  const feePopupVisible = useSettingVisible();
+  const {
+    visible: feePopupVisible,
+    compareVisible,
+    feeTier,
+  } = useSettingVisible();
   const setFeePopupVisible = useSetSettingVisible();
   const [recentShowTime, setRecentShowTime] = React.useState<number>(0);
   const [historyVisible, setHistoryVisible] = useState(false);
-
-  const showRedDot = useReadBridgeHistoryRedDot();
-  const loadingNumber = useReadBridgePendingCount();
 
   const closeHistory = useCallback(() => {
     setHistoryVisible(false);
   }, []);
 
-  const openHistory = useCallback(() => {
+  const openHistory = useCallback(async () => {
     Keyboard.dismiss();
     setHistoryVisible(true);
     const currentTs = (
       clearBridgeHistoryRedDot || clearBridgeHistoryRedDotFromScene
     )();
-    if (currentTs) {
-      setRecentShowTime(currentTs);
+    const resolvedCurrentTs = await currentTs;
+    if (resolvedCurrentTs) {
+      setRecentShowTime(resolvedCurrentTs);
     }
   }, [clearBridgeHistoryRedDot, clearBridgeHistoryRedDotFromScene]);
 
   const closeFeePopup = useCallback(() => {
-    setFeePopupVisible(false);
+    setFeePopupVisible(prev =>
+      prev.visible ? { visible: false, compareVisible: false } : prev,
+    );
+  }, [setFeePopupVisible]);
+
+  const closeCompareFee = useCallback(() => {
+    setFeePopupVisible(prev =>
+      prev.compareVisible ? { visible: false, compareVisible: false } : prev,
+    );
   }, [setFeePopupVisible]);
 
   useImperativeHandle(
@@ -100,8 +96,6 @@ export const BridgeHeader = ({
       <View style={styles.container}>
         <TouchableOpacity onPress={openHistory} style={styles.iconContainer}>
           <RcIconSwapHistory color={colors2024['neutral-body']} />
-          {/* not very accurate */}
-          {/* {Boolean(showRedDot) && <View style={styles.greenDot} />} */}
         </TouchableOpacity>
       </View>
 
@@ -113,7 +107,13 @@ export const BridgeHeader = ({
       <RabbyFeePopup
         type="bridge"
         visible={feePopupVisible}
+        feeTier={feeTier}
         onClose={closeFeePopup}
+      />
+      <CompareFee
+        type="bridge"
+        visible={compareVisible}
+        onClose={closeCompareFee}
       />
     </>
   );

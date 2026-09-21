@@ -11,7 +11,9 @@ export interface IWalletBalance {
   amount: string;
 }
 
-export type DisplayPoolReserveInfo = ComputedUserReserve & {
+export type DisplayPoolReserveInfo = ComputedUserReserve<
+  ReserveDataHumanized & FormatReserveUSDResponse
+> & {
   walletBalance?: string;
   walletBalanceUSD?: string;
   chain: CHAINS_ENUM;
@@ -38,11 +40,13 @@ export type EmodeCategory = {
   ltv: string;
   liquidationThreshold: string;
   liquidationBonus: string;
+  isolated: boolean;
   assets: Array<{
     underlyingAsset: string;
     symbol: string;
     iconSymbol: string;
     collateral: boolean;
     borrowable: boolean;
+    ltvzero: boolean;
   }>;
 };

@@ -16,19 +16,23 @@ import {
 import { useTheme2024 } from '@/hooks/theme';
 import {
   StackActions,
+  useIsFocused,
   useNavigation,
   useRoute,
 } from '@react-navigation/native';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
+import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
 import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
 import {
   apiSendToken,
   getSendChainToken,
+  SendTokenRecipientController,
   SendTokenEvents,
   SendTokenInternalContextProvider,
+  subscribeEvent,
   useSendTokenCanSubmit,
   useSendTokenForm,
+  useSendTokenFormValuesShallowSelector,
   useSendTokenInternalShallowSelector,
   useSendTokenScreenChainToken,
   useSendTokenScreenStateShallowSelector,
@@ -40,8 +44,8 @@ import {
   findChainByServerID,
   makeTokenFromChain,
 } from '@/utils/chain';
-import { preferenceService } from '@/core/services';
-import {
+import { getLastTimeSendToken } from '@/core/serviceApi/preference';
+import type {
   TokenItem,
   TokenItemWithEntity,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -49,17 +53,16 @@ import { apiPageStateCache } from '@/core/apis';
 import { useLoadMatteredChainBalances } from '@/hooks/accountChainBalance';
 import { redirectBackErrorHandler } from '@/utils/navigation';
 import { BalanceSection } from './Section';
+import { formatSendTokenBalanceText } from './utils';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useContactAccounts } from '@/hooks/contact';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { toastLoading } from '@/components2024/Toast';
 import { sleep } from '@/utils/async';
 import BigNumber from 'bignumber.js';
-import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import type { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
 import {
-  PropsForAccountSwitchScreen,
   ScreenSceneAccountProvider,
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
@@ -69,8 +72,6 @@ import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
 import { openapi } from '@/core/request';
 import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
 import FromAddressControl2024 from './components/FromAddressControl';
-import { useAtomValue } from 'jotai';
-import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 import { SendHeaderRight } from './SubScreens/SelectPolyScreen/HeaderRight';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
@@ -78,7 +79,7 @@ import { getRecommendToken } from '@/utils/addressSupport';
 import { lowcaseSame } from '@/utils/common';
 import { ShowMoreOnSend } from './components/ShowMoreOnSend';
 import { PendingTxItem } from '../Swap/components/PendingTxItem';
-import { SendTxHistoryItem } from '@/core/services/transactionHistory';
+import type { SendTxHistoryItem } from '@/core/services/transactionHistory';
 import { useRecentSendPendingTx } from './hooks/useRecentSend';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
 import { globalSupportCexList } from '@/hooks/useCexSupportList';
@@ -88,6 +89,22 @@ import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import Animated from 'react-native-reanimated';
+import { markStartupPerf } from '@/core/utils/startupPerfMarks';
+import {
+  claimSendScreenSession,
+  getSendScreenActivationPlan,
+  isSendScreenSessionActive,
+  releaseSendScreenSession,
+  type SendScreenSession,
+} from './sendScreenSession';
+import { withWhitelistService } from '@/hooks/whitelistServiceDependencies';
+import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
+import { useFeatureActivationDiagnostics } from '@/hooks/useFeatureActivationDiagnostics';
+import {
+  ensureFeatureActivation,
+  markFeatureActivation,
+} from '@/core/utils/featureActivationDiagnostics';
+import { getInitialDisplayToken } from './initialDisplayToken';
 
 const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
   KeyboardAwareScrollView,
@@ -100,7 +117,7 @@ const EMPTY_TOKEN_ITEM = {
   display_symbol: '',
   optimized_symbol: '',
   is_core: false,
-  is_verified: false,
+  is_verified: null,
   is_wallet: false,
   is_scam: false,
   is_suspicious: false,
@@ -109,6 +126,71 @@ const EMPTY_TOKEN_ITEM = {
   amount: 0,
   price: 0,
 };
+
+const SEND_SCREEN_RENDER_MARK_LIMIT = 20;
+let nextSendScreenCycleId = 0;
+
+type SendInitialTokenLoadState = {
+  status: 'idle' | 'running' | 'ready';
+  initialAccountAddress: string;
+  loadedAccountAddress: string;
+  promise: Promise<void> | null;
+};
+
+function createInitialTokenLoadState(): SendInitialTokenLoadState {
+  return {
+    status: 'idle',
+    initialAccountAddress: '',
+    loadedAccountAddress: '',
+    promise: null,
+  };
+}
+
+function normalizeAccountAddress(address?: string) {
+  return address?.toLowerCase() || '';
+}
+
+function formatSafeAddress(address: string) {
+  if (!address) {
+    return '';
+  }
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+function formatSafeHash(hash?: string) {
+  if (!hash) {
+    return '';
+  }
+  return `${hash.slice(0, 10)}...${hash.slice(-6)}`;
+}
+
+function isRegressionBroadcastRequested(
+  params: Readonly<Record<string, string>>,
+) {
+  const value = params.broadcast;
+  return !!value && ['1', 'true', 'yes', 'on'].includes(value.toLowerCase());
+}
+
+function markSendScreenPerf(event: string, data: Record<string, unknown> = {}) {
+  markStartupPerf('sendScreen', event, data);
+}
+
+function markSendScreenRenderPerf(
+  renderSeq: number,
+  event: string,
+  data: Record<string, unknown> = {},
+) {
+  if (renderSeq > SEND_SCREEN_RENDER_MARK_LIMIT) {
+    return;
+  }
+
+  markSendScreenPerf(event, {
+    renderSeq,
+    ...data,
+  });
+}
+
+markSendScreenPerf('module_loaded');
 
 const SendPendingTxItem = React.memo(function SendPendingTxItem({
   clearLocalPendingTxData,
@@ -139,6 +221,161 @@ const SendPendingTxItem = React.memo(function SendPendingTxItem({
   );
 });
 
+function SendTransferRegressionProbe() {
+  const regressionScenario = useRegressionScenario<'Send'>();
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<
+        'TransactionNavigatorParamList',
+        'Send' | 'MultiSend'
+      >
+    >();
+  const canSubmit = useSendTokenCanSubmit();
+  const { chainItem, currentToken } = useSendTokenScreenChainToken();
+  const { balanceError, initialTokenReady, isLoading } =
+    useSendTokenScreenStateShallowSelector(state => ({
+      balanceError: state.balanceError,
+      initialTokenReady: state.initialTokenReady,
+      isLoading: state.isLoading,
+    }));
+  const { amount, to } = useSendTokenFormValuesShallowSelector(values => ({
+    amount: values.amount,
+    to: values.to,
+  }));
+  const { sendTokenEvents, submitForm, saveCurrentFormValuesSnapshot } =
+    useSendTokenInternalShallowSelector(ctx => ({
+      sendTokenEvents: ctx.sendTokenEvents,
+      submitForm: ctx.callbacks.submitForm,
+      saveCurrentFormValuesSnapshot:
+        ctx.callbacks.saveCurrentFormValuesSnapshot,
+    }));
+  const shouldBroadcast =
+    regressionScenario.active &&
+    regressionScenario.scenario === 'send-transfer' &&
+    isRegressionBroadcastRequested(regressionScenario.params);
+  const isRegressionRouteMatched =
+    regressionScenario.active &&
+    regressionScenario.scenario === 'send-transfer' &&
+    route.params?.regressionRunId === regressionScenario.runId;
+
+  useEffect(() => {
+    if (
+      !shouldBroadcast ||
+      !isRegressionRouteMatched ||
+      !regressionScenario.active ||
+      regressionScenario.scenario !== 'send-transfer'
+    ) {
+      return;
+    }
+
+    return subscribeEvent(
+      sendTokenEvents,
+      SendTokenEvents.ON_SIGNED_SUCCESS,
+      payload => {
+        if (!regressionScenario.claimOnce('send-transfer-broadcast-success')) {
+          return;
+        }
+        regressionScenario.report('assertion', {
+          assertion: 'send-transfer-broadcast-success',
+          passed: true,
+          mode: 'broadcast',
+          txHash: formatSafeHash(payload?.hash),
+          chain: chainItem?.serverId,
+          token: currentToken.symbol,
+          tokenId: currentToken.id,
+          amount,
+          to: formatSafeAddress(String(to || '')),
+        });
+      },
+    );
+  }, [
+    amount,
+    chainItem?.serverId,
+    currentToken.id,
+    currentToken.symbol,
+    regressionScenario,
+    isRegressionRouteMatched,
+    sendTokenEvents,
+    shouldBroadcast,
+    to,
+  ]);
+
+  useEffect(() => {
+    if (
+      !regressionScenario.active ||
+      regressionScenario.scenario !== 'send-transfer' ||
+      !isRegressionRouteMatched
+    ) {
+      return;
+    }
+
+    const requestedChain = (
+      regressionScenario.params.chain || 'polygon'
+    ).toLowerCase();
+    const expectedServerId =
+      requestedChain === 'polygon' ? 'matic' : requestedChain;
+    const expectedTo = regressionScenario.params.toAddress || '';
+    const chainReady =
+      !expectedServerId || chainItem?.serverId === expectedServerId;
+    const toReady =
+      !expectedTo || lowcaseSame(String(to || ''), expectedTo || '');
+    const amountReady = new BigNumber(amount || 0).gt(0);
+
+    if (
+      !canSubmit ||
+      !initialTokenReady ||
+      isLoading ||
+      balanceError ||
+      !chainReady ||
+      !toReady ||
+      !amountReady
+    ) {
+      return;
+    }
+
+    const assertion = shouldBroadcast
+      ? 'send-transfer-submit-started'
+      : 'send-transfer-dry-run-ready';
+    if (!regressionScenario.claimOnce(assertion)) {
+      return;
+    }
+
+    regressionScenario.report('assertion', {
+      assertion,
+      passed: true,
+      mode: shouldBroadcast ? 'broadcast' : 'dry-run',
+      chain: chainItem?.serverId,
+      token: currentToken.symbol,
+      tokenId: currentToken.id,
+      amount,
+      to: formatSafeAddress(String(to || '')),
+      canSubmit,
+    });
+
+    if (shouldBroadcast) {
+      saveCurrentFormValuesSnapshot();
+      submitForm();
+    }
+  }, [
+    amount,
+    balanceError,
+    canSubmit,
+    chainItem?.serverId,
+    currentToken.id,
+    currentToken.symbol,
+    initialTokenReady,
+    isLoading,
+    isRegressionRouteMatched,
+    regressionScenario,
+    saveCurrentFormValuesSnapshot,
+    shouldBroadcast,
+    submitForm,
+    to,
+  ]);
+
+  return null;
+}
+
 const SendScreenBody = React.memo(function SendScreenBody({
   clearLocalPendingTxData,
   isForMultipleAddress,
@@ -161,7 +398,7 @@ const SendScreenBody = React.memo(function SendScreenBody({
 
   const toAddressControlStyle = useMemo(
     () => ({
-      marginTop: 24,
+      marginTop: 16,
       marginBottom: 0,
     }),
     [],
@@ -235,22 +472,66 @@ const SendScreenBody = React.memo(function SendScreenBody({
 function SendScreen({
   isForMultipleAddress = false,
 }: PropsForAccountSwitchScreen): JSX.Element {
+  const activationCycleId = ensureFeatureActivation(
+    'send',
+    'send_content_render_fallback',
+  );
+  markFeatureActivation('send', 'content-render-start', {
+    cycleId: activationCycleId,
+    reason: 'send_screen_render_started',
+  });
+  useFeatureActivationDiagnostics('send');
+
+  const cycleIdRef = useRef(0);
+  const renderSeqRef = useRef(0);
+  if (!cycleIdRef.current) {
+    cycleIdRef.current = ++nextSendScreenCycleId;
+  }
+  const cycleId = cycleIdRef.current;
+  const renderSeq = ++renderSeqRef.current;
+  markSendScreenRenderPerf(renderSeq, 'render_start', {
+    cycleId,
+    isForMultipleAddress,
+  });
+
   const navigation = useNavigation();
   const { t } = useTranslation();
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const [isShowBlockedTransactionDialog, setIsShowBlockedTransactionDialog] =
     useState(false);
-  const { localPendingTxData, clearLocalPendingTxData } =
-    useRecentSendPendingTx(isForMultipleAddress);
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
+  });
+  markSendScreenRenderPerf(renderSeq, 'scene_account_hook_end', {
+    hasCurrentAccount: !!currentAccount,
+    accountType: currentAccount?.type,
+    brandName: currentAccount?.brandName,
+  });
+
+  const {
+    localPendingTxData,
+    clearLocalPendingTxData,
+    runFetchLocalPendingTx,
+  } = useRecentSendPendingTx(currentAccount?.address);
+  markSendScreenRenderPerf(renderSeq, 'recent_pending_tx_hook_end', {
+    hasLocalPendingTx: !!localPendingTxData,
   });
 
   useRendererDetect({ name: 'SendScreen' });
 
   useEffect(() => {
-    clearLocalPendingTxData();
-  }, [clearLocalPendingTxData]);
+    markSendScreenPerf('mounted', {
+      cycleId,
+      isForMultipleAddress,
+    });
+
+    return () => {
+      markSendScreenPerf('unmounted', {
+        cycleId,
+        isForMultipleAddress,
+      });
+    };
+  }, [cycleId, isForMultipleAddress]);
 
   const route =
     useRoute<
@@ -260,9 +541,26 @@ function SendScreen({
       >
     >();
   const navParams = route.params;
+  const isFocused = useIsFocused();
+  const currentAccountAddress = normalizeAccountAddress(
+    currentAccount?.address,
+  );
+  const currentAccountAddressRef = useRef(currentAccountAddress);
+  currentAccountAddressRef.current = currentAccountAddress;
+  const initialTokenLoadRef = useRef<SendInitialTokenLoadState>(
+    createInitialTokenLoadState(),
+  );
+  const initialTokenCommitGuardRef = useRef<() => boolean>(() => true);
+  const sendScreenSessionRef = useRef<SendScreenSession | null>(null);
+  const hasClaimedSendScreenSessionRef = useRef(false);
 
   const { chainItem, currentToken } = useSendTokenScreenChainToken();
-  const routeParams = useAtomValue(sendScreenParamsAtom);
+  markSendScreenRenderPerf(renderSeq, 'route_and_chain_hook_end', {
+    hasNavParams: !!navParams,
+    chain: chainItem?.serverId,
+    tokenChain: currentToken.chain,
+    tokenId: currentToken.id,
+  });
 
   const screenState = useSendTokenScreenStateShallowSelector(state => ({
     clickedMax: state.clickedMax,
@@ -270,6 +568,38 @@ function SendScreen({
     selectedGasLevel: state.selectedGasLevel,
     toAddrDesc: state.toAddrDesc,
   }));
+  markSendScreenRenderPerf(renderSeq, 'screen_state_selector_end', {
+    inited: screenState.inited,
+    hasToAddrDesc: !!screenState.toAddrDesc,
+    clickedMax: screenState.clickedMax,
+    hasSelectedGasLevel: !!screenState.selectedGasLevel,
+  });
+
+  useEffect(() => {
+    if (!currentAccount || !isFocused) {
+      return;
+    }
+
+    const hadClaimedSession = hasClaimedSendScreenSessionRef.current;
+    const { ownerChanged, session } = claimSendScreenSession(route.key);
+    sendScreenSessionRef.current = session;
+    hasClaimedSendScreenSessionRef.current = true;
+    const activationPlan = getSendScreenActivationPlan({
+      hadClaimedSession,
+      ownerChanged,
+      screenStateInited: screenState.inited,
+    });
+
+    if (activationPlan.restartInitialization) {
+      initialTokenLoadRef.current = createInitialTokenLoadState();
+    }
+    if (activationPlan.resetSharedState) {
+      apiSendToken.resetScreenState();
+    }
+
+    apiSendToken.putScreenState({ inited: true });
+    markSendScreenPerf('screen_inited_set');
+  }, [currentAccount, isFocused, route.key, screenState.inited]);
 
   const Header = useCallback(
     () => <SendHeaderRight isForMultipleAddress={isForMultipleAddress} />,
@@ -355,6 +685,7 @@ function SendScreen({
     handleFieldChange,
     handleClickMaxButton,
     onChangeSlider,
+    setSlider,
     handleGasLevelChanged,
     handleIgnoreGasFeeChange,
     setReloadTxRefreshPaused,
@@ -373,40 +704,69 @@ function SendScreen({
     formValuesStore,
     saveCurrentFormValuesSnapshot,
 
-    whitelistEnabled,
-    computed: {
-      toAccount,
-      toAddressInContactBook,
-      toAddressIsCex,
-      toAddressPositiveTips,
-      canDirectSign,
-      toAddrCex,
-    },
+    computed: { canDirectSign },
     miniSignInstance,
   } = useSendTokenForm({
     toAddress: navParams?.toAddress,
-    toAddressBrandName: navParams?.addressBrandName,
     isForMultipleAddress: isForMultipleAddress,
     disableItemCheck,
     currentAccount,
+    runFetchLocalPendingTx,
+  });
+  markSendScreenRenderPerf(renderSeq, 'send_token_form_hook_end', {
+    hasTo: !!formValues.to,
+    hasMiniSignInstance: !!miniSignInstance,
+    canDirectSign,
+    hasCurrentAccount: !!currentAccount,
   });
 
   useEffect(() => {
     if (!formValues.to) return;
     if (!isValidHexAddress(formValues.to as `0x${string}`)) return;
 
+    const session = sendScreenSessionRef.current;
+    if (!isFocused || !session || !isSendScreenSessionActive(session)) {
+      return;
+    }
+
+    let disposed = false;
+
+    markSendScreenPerf('to_addr_desc_start');
     getAddrDescWithCexLocalCacheSync(formValues.to).then(res => {
+      if (disposed || !isSendScreenSessionActive(session)) {
+        return;
+      }
+      markSendScreenPerf('to_addr_desc_end', {
+        hasCex: !!res?.cex,
+        contractChainCount: Object.keys(res?.contract || {}).length,
+      });
       apiSendToken.putScreenState({
         toAddrDesc: res,
       });
     });
-  }, [formValues.to]);
+
+    return () => {
+      disposed = true;
+    };
+  }, [formValues.to, isFocused]);
 
   const { fetchOrderedChainList } = useLoadMatteredChainBalances({
     account: currentAccount,
   });
-  const initByCacheFinishedRef = useRef(false);
   const initByCache = useCallback(async () => {
+    const startedAt = Date.now();
+    markSendScreenPerf('init_by_cache_start', {
+      hasNavParams: !!navParams,
+      hasCurrentAccount: !!currentAccount,
+      isForMultipleAddress,
+    });
+    const session = sendScreenSessionRef.current;
+    if (!session) return;
+    const isSessionActive = () =>
+      isSendScreenSessionActive(session) &&
+      initialTokenCommitGuardRef.current();
+    if (!isSessionActive()) return;
+
     let targetToken: TokenItem | null = null;
     const { chainItem: latestChainItem, currentToken } = getSendChainToken();
 
@@ -433,47 +793,43 @@ function SendScreen({
       navParams?.chainEnum &&
       navParams?.tokenId
     ) {
-      const isManualChangeToken =
-        routeParams?.tokenId && routeParams?.chainEnum;
-      const target = findChainByEnum(
-        isManualChangeToken ? routeParams.chainEnum : navParams?.chainEnum,
-      );
+      const target = findChainByEnum(navParams.chainEnum);
 
       targetToken = {
         chain: target ? target?.serverId : currentToken.chain,
-        id: target
-          ? isManualChangeToken
-            ? routeParams.tokenId
-            : navParams?.tokenId
-          : currentToken.id,
+        id: target ? navParams.tokenId : currentToken.id,
         ...EMPTY_TOKEN_ITEM,
       };
       target && apiSendToken.setChainEnum(target.enum);
     } else {
-      const isManualChangeToken =
-        routeParams?.tokenId && routeParams?.chainEnum;
-      if (isManualChangeToken) {
-        const target = findChainByEnum(routeParams.chainEnum);
-        if (target) {
-          targetToken = {
-            chain: target.serverId,
-            id: routeParams.tokenId,
-            ...EMPTY_TOKEN_ITEM,
-          };
-        }
-      }
-
-      if (!targetToken && currentAccount?.address) {
+      if (currentAccount?.address) {
+        const lastTokenStartedAt = Date.now();
+        markSendScreenPerf('last_time_send_token_start');
         targetToken =
-          (await preferenceService.getLastTimeSendToken(
-            currentAccount?.address,
-          )) ?? null;
+          (await getLastTimeSendToken(currentAccount?.address)) ?? null;
+        markSendScreenPerf('last_time_send_token_end', {
+          elapsedMs: Date.now() - lastTokenStartedAt,
+          hasToken: !!targetToken,
+          chain: targetToken?.chain,
+          tokenId: targetToken?.id,
+        });
+        if (!isSessionActive()) return;
       }
       if (!targetToken) {
+        const orderedChainStartedAt = Date.now();
+        markSendScreenPerf('fetch_ordered_chain_list_start', {
+          hasAddress: !!currentAccount?.address,
+        });
         const { firstChain } = await fetchOrderedChainList({
           address: currentAccount?.address,
           supportChains: undefined,
         });
+        markSendScreenPerf('fetch_ordered_chain_list_end', {
+          elapsedMs: Date.now() - orderedChainStartedAt,
+          hasFirstChain: !!firstChain,
+          firstChain: firstChain?.serverId,
+        });
+        if (!isSessionActive()) return;
         targetToken = firstChain ? makeTokenFromChain(firstChain) : null;
       }
       if (!targetToken) {
@@ -482,12 +838,23 @@ function SendScreen({
     }
 
     if (navParams?.toAddress && currentAccount?.address) {
+      const recommendStartedAt = Date.now();
+      markSendScreenPerf('recommend_token_start', {
+        chain: targetToken.chain,
+        tokenId: targetToken.id,
+      });
       const res = await getRecommendToken({
         from: currentAccount?.address,
         to: navParams?.toAddress || '',
         tokenId: targetToken.id,
         chain: targetToken.chain,
       });
+      markSendScreenPerf('recommend_token_end', {
+        elapsedMs: Date.now() - recommendStartedAt,
+        chain: res.chain,
+        tokenId: res.tokenId,
+      });
+      if (!isSessionActive()) return;
       if (
         !lowcaseSame(res.chain, targetToken.chain) ||
         !lowcaseSame(res.tokenId, targetToken.id)
@@ -499,92 +866,272 @@ function SendScreen({
         };
       }
     }
+    if (!isSessionActive()) return;
     if (latestChainItem && targetToken.chain !== latestChainItem.serverId) {
       const target = findChainByServerID(targetToken.chain);
       if (target?.enum) {
         apiSendToken.setChainEnum(target.enum);
       }
     }
-    await Promise.race([
-      currentAccount?.address &&
-        (await loadCurrentToken(
+    const initialDisplayToken = getInitialDisplayToken(targetToken);
+    if (initialDisplayToken) {
+      markSendScreenPerf('initial_display_token_apply', {
+        chain: initialDisplayToken.chain,
+        tokenId: initialDisplayToken.id,
+        hasSymbol: !!(
+          initialDisplayToken.optimized_symbol ||
+          initialDisplayToken.display_symbol ||
+          initialDisplayToken.symbol
+        ),
+      });
+      apiSendToken.putChainToken({ currentToken: initialDisplayToken });
+      if (currentAccount?.address) {
+        apiSendToken.markBalanceLoading({
+          tokenId: targetToken.id,
+          chainId: targetToken.chain,
+          currentAddress: currentAccount.address,
+        });
+      }
+      apiSendToken.putScreenState({ initialTokenIdentityReady: true });
+    }
+
+    const loadCurrentTokenStartedAt = Date.now();
+    markSendScreenPerf('load_current_token_start', {
+      enabled: !!currentAccount?.address,
+      chain: targetToken.chain,
+      tokenId: targetToken.id,
+    });
+    const loadedTokenPromise = currentAccount?.address
+      ? loadCurrentToken(
           targetToken.id,
           targetToken.chain,
-          currentAccount?.address,
-        )),
-      sleep(5000),
-    ]);
+          currentAccount.address,
+          false,
+          isSessionActive,
+        )
+          .then(loadedToken => {
+            markSendScreenPerf('load_current_token_end', {
+              elapsedMs: Date.now() - loadCurrentTokenStartedAt,
+              hasLoadedToken: !!loadedToken,
+            });
+            return loadedToken;
+          })
+          .catch(error => {
+            markSendScreenPerf('load_current_token_error', {
+              elapsedMs: Date.now() - loadCurrentTokenStartedAt,
+              error: error instanceof Error ? error.message : String(error),
+            });
+            console.error('SendScreen loadCurrentToken error', error);
+            return null;
+          })
+      : Promise.resolve(null).then(value => {
+          markSendScreenPerf('load_current_token_skip', {
+            elapsedMs: Date.now() - loadCurrentTokenStartedAt,
+          });
+          return value;
+        });
+
+    if (!initialDisplayToken) {
+      void loadedTokenPromise.then(loadedToken => {
+        if (loadedToken && isSessionActive()) {
+          apiSendToken.putScreenState({ initialTokenIdentityReady: true });
+        }
+      });
+    }
+
+    await Promise.race([loadedTokenPromise, sleep(5000)]);
+    markSendScreenPerf('init_by_cache_end', {
+      elapsedMs: Date.now() - startedAt,
+      hasInitialDisplayToken: !!initialDisplayToken,
+      chain: targetToken.chain,
+      tokenId: targetToken.id,
+    });
   }, [
     navParams,
-    routeParams,
     currentAccount,
     fetchOrderedChainList,
     loadCurrentToken,
+    isForMultipleAddress,
   ]);
 
   const checkIsAddressBlocked = useCallback(async (to?: string) => {
     if (!to) return;
 
     try {
+      const startedAt = Date.now();
+      markSendScreenPerf('blocked_address_check_start');
       const { is_blocked } = await openapi.isBlockedAddress(to);
+      markSendScreenPerf('blocked_address_check_end', {
+        elapsedMs: Date.now() - startedAt,
+        isBlocked: is_blocked,
+      });
       if (is_blocked) {
         apiPageStateCache.clearPageStateCache();
         setIsShowBlockedTransactionDialog(true);
       }
     } catch (e) {
+      markSendScreenPerf('blocked_address_check_error', {
+        error: e instanceof Error ? e.message : String(e),
+      });
       console.error('checkIsAddressBlocked error', e);
     }
   }, []);
 
   useEffect(() => {
-    if (screenState.inited) {
-      (async () => {
-        if (initByCacheFinishedRef.current) return;
-        initByCacheFinishedRef.current = true;
+    const loadState = initialTokenLoadRef.current;
+    markSendScreenPerf('init_effect_commit', {
+      inited: screenState.inited,
+      hasToAddress: !!navParams?.toAddress,
+      initializationStatus: loadState.status,
+    });
 
+    if (screenState.inited && isFocused) {
+      const session = sendScreenSessionRef.current;
+      if (!session || !isSendScreenSessionActive(session)) {
+        return;
+      }
+
+      if (loadState.status !== 'idle') {
+        return;
+      }
+
+      const initialAccountAddress = currentAccountAddress;
+      const shouldCommit = () =>
+        isSendScreenSessionActive(session) &&
+        currentAccountAddressRef.current === initialAccountAddress;
+      loadState.status = 'running';
+      loadState.initialAccountAddress = initialAccountAddress;
+      initialTokenCommitGuardRef.current = shouldCommit;
+      const initializationPromise = (async () => {
         try {
           await initByCache();
         } catch (e) {
+          markSendScreenPerf('init_by_cache_error', {
+            error: e instanceof Error ? e.message : String(e),
+          });
           console.error('SendScreen initByCache error', e);
-          initByCacheFinishedRef.current = false;
+        } finally {
+          if (shouldCommit()) {
+            loadState.status = 'ready';
+            loadState.loadedAccountAddress = initialAccountAddress;
+            apiSendToken.putScreenState({ initialTokenReady: true });
+            markSendScreenPerf('initial_token_ready_set');
+          } else {
+            loadState.status = 'idle';
+          }
+          loadState.promise = null;
         }
       })();
+      loadState.promise = initializationPromise;
       checkIsAddressBlocked(navParams?.toAddress);
     }
   }, [
     screenState.inited,
+    isFocused,
+    currentAccountAddress,
     initByCache,
     checkIsAddressBlocked,
     navParams?.toAddress,
   ]);
 
   useEffect(() => {
-    (async () => {
-      if (!initByCacheFinishedRef.current) return;
-      if (!currentAccount?.address) return;
+    if (!screenState.inited || !isFocused || !currentAccountAddress) {
+      return;
+    }
 
-      await refreshCurrentTokenBalance();
-    })();
-  }, [currentAccount?.address, refreshCurrentTokenBalance]);
+    const loadState = initialTokenLoadRef.current;
+    if (
+      loadState.status === 'running' &&
+      loadState.initialAccountAddress === currentAccountAddress
+    ) {
+      return;
+    }
+    if (loadState.loadedAccountAddress === currentAccountAddress) {
+      return;
+    }
+
+    let disposed = false;
+    const refreshForCurrentAccount = async () => {
+      const session = sendScreenSessionRef.current;
+      if (!session || !isSendScreenSessionActive(session)) return;
+      const pendingInitialization = loadState.promise;
+      if (pendingInitialization) {
+        await pendingInitialization;
+      }
+
+      const shouldCommit = () =>
+        !disposed &&
+        isSendScreenSessionActive(session) &&
+        currentAccountAddressRef.current === currentAccountAddress;
+      if (!shouldCommit()) {
+        return;
+      }
+
+      const startedAt = Date.now();
+      markSendScreenPerf('refresh_current_token_balance_start');
+      try {
+        await refreshCurrentTokenBalance(shouldCommit);
+        if (!shouldCommit()) {
+          return;
+        }
+        loadState.status = 'ready';
+        loadState.loadedAccountAddress = currentAccountAddress;
+        apiSendToken.putScreenState({
+          initialTokenIdentityReady: true,
+          initialTokenReady: true,
+        });
+        markSendScreenPerf('refresh_current_token_balance_end', {
+          elapsedMs: Date.now() - startedAt,
+        });
+      } catch (error) {
+        markSendScreenPerf('refresh_current_token_balance_error', {
+          elapsedMs: Date.now() - startedAt,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        throw error;
+      }
+    };
+
+    refreshForCurrentAccount().catch(error => {
+      console.error('SendScreen refresh account token error', error);
+    });
+    return () => {
+      disposed = true;
+    };
+  }, [
+    currentAccountAddress,
+    isFocused,
+    refreshCurrentTokenBalance,
+    screenState.inited,
+  ]);
 
   useEffect(() => {
+    markSendScreenPerf('account_ready_effect_commit', {
+      hasCurrentAccount: !!currentAccount,
+    });
+
     if (!currentAccount) {
-      redirectBackErrorHandler(navigation);
-      return;
-    } else {
-      apiSendToken.putScreenState({ inited: true });
-
-      return () => {
-        apiPageStateCache.clearPageStateCache();
-      };
+      if (isFocused) {
+        redirectBackErrorHandler(navigation);
+      }
     }
-  }, [currentAccount, navigation]);
+  }, [currentAccount, isFocused, navigation]);
 
-  const { fetchContactAccounts } = useContactAccounts();
+  useEffect(() => {
+    if (!currentAccount) return;
+    return () => {
+      apiPageStateCache.clearPageStateCache();
+      markSendScreenPerf('page_state_cache_clear_on_account_effect_cleanup');
+    };
+  }, [currentAccount]);
 
   useLayoutEffect(() => {
     return () => {
-      apiSendToken.resetScreenState();
+      const session = sendScreenSessionRef.current;
+      if (session && releaseSendScreenSession(session)) {
+        markSendScreenPerf('layout_cleanup_reset_screen_state');
+        apiSendToken.resetScreenState();
+      }
     };
   }, []);
 
@@ -596,10 +1143,7 @@ function SendScreen({
       screenState.clickedMax || screenState.selectedGasLevel ? 8 : 4;
 
     return {
-      balanceNumText: bizNumberUtils.formatTokenAmount(
-        balanceNum.toFixed(decimalPlaces, BigNumber.ROUND_FLOOR),
-        decimalPlaces,
-      ),
+      balanceNumText: formatSendTokenBalanceText(balanceNum, decimalPlaces),
     };
   }, [
     currentToken.raw_amount_hex_str,
@@ -617,13 +1161,13 @@ function SendScreen({
       computed: {
         account: currentAccount || null,
         fromAddress: currentAccount?.address || '',
-        toAccount,
-        toAddressIsCex,
-        whitelistEnabled,
-        toAddressInContactBook,
-        toAddressPositiveTips,
+        toAccount: null,
+        toAddressIsCex: false,
+        whitelistEnabled: false,
+        toAddressInContactBook: false,
+        toAddressPositiveTips: null,
         canDirectSign,
-        toAddrCex,
+        toAddrCex: null,
 
         chainItem,
         currentToken,
@@ -633,7 +1177,7 @@ function SendScreen({
       scrollViewRef,
       scrollViewStyle,
       fns: {
-        fetchContactAccounts,
+        fetchContactAccounts: () => {},
         disableItemCheck,
       },
 
@@ -647,6 +1191,7 @@ function SendScreen({
         checkCexSupport,
         handleClickMaxButton,
         onChangeSlider,
+        setSlider,
         handleGasLevelChanged,
         handleIgnoreGasFeeChange,
         saveCurrentFormValuesSnapshot,
@@ -664,7 +1209,6 @@ function SendScreen({
       currentToken,
       directSignBtnRef,
       disableItemCheck,
-      fetchContactAccounts,
       formValuesRef,
       formValuesStore,
       handleClickMaxButton,
@@ -675,24 +1219,32 @@ function SendScreen({
       handleIgnoreGasFeeChange,
       onBottomAreaLayout,
       onChangeSlider,
+      setSlider,
       scrollToBottom,
       scrollViewRef,
       scrollViewStyle,
       saveCurrentFormValuesSnapshot,
       sendTokenEvents,
       setReloadTxRefreshPaused,
-      toAccount,
-      toAddrCex,
-      toAddressInContactBook,
-      toAddressIsCex,
-      toAddressPositiveTips,
-      whitelistEnabled,
     ],
   );
+
+  markSendScreenRenderPerf(renderSeq, 'render_end', {
+    inited: screenState.inited,
+    hasCurrentAccount: !!currentAccount,
+    chain: chainItem?.serverId,
+    tokenChain: currentToken.chain,
+    tokenId: currentToken.id,
+    hasTo: !!formValues.to,
+  });
 
   return (
     <SignatureInstanceProvider instance={miniSignInstance}>
       <SendTokenInternalContextProvider value={sendTokenInternalValue}>
+        <SendTokenRecipientController
+          toAddressBrandName={navParams?.addressBrandName}
+        />
+        <SendTransferRegressionProbe />
         <SendScreenBody
           clearLocalPendingTxData={clearLocalPendingTxData}
           isForMultipleAddress={isForMultipleAddress}
@@ -735,16 +1287,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       flexDirection: 'column',
       justifyContent: 'space-between',
       flex: 1,
-      paddingTop: 16,
+      paddingTop: 4,
       position: 'relative',
       height: '100%',
     },
     mainContent: {
-      paddingHorizontal: 24,
+      paddingHorizontal: 20,
       paddingBottom: 280,
     },
     balance: {
-      marginTop: 24,
+      marginTop: 16,
     },
     screenRoot: {
       flex: 1,
@@ -758,5 +1310,35 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     },
   }),
 );
-SendScreen.ForMultipleAddress = ForMultipleAddress;
-export default SendScreen;
+const SendScreenWithWhitelist = withWhitelistService(SendScreen);
+const ForMultipleAddressWithWhitelist =
+  withWhitelistService(ForMultipleAddress);
+
+function SendScreenRouteEntry(
+  props: React.ComponentProps<typeof SendScreenWithWhitelist>,
+) {
+  const cycleId = ensureFeatureActivation('send', 'send_route_render_fallback');
+  markFeatureActivation('send', 'route-render-start', {
+    cycleId,
+    reason: 'send_route_render_started',
+  });
+  return <SendScreenWithWhitelist {...props} />;
+}
+
+function ForMultipleAddressRouteEntry(
+  props: React.ComponentProps<typeof ForMultipleAddressWithWhitelist>,
+) {
+  const cycleId = ensureFeatureActivation(
+    'send',
+    'multi_send_route_render_fallback',
+  );
+  markFeatureActivation('send', 'route-render-start', {
+    cycleId,
+    reason: 'multi_send_route_render_started',
+  });
+  return <ForMultipleAddressWithWhitelist {...props} />;
+}
+
+export default Object.assign(SendScreenRouteEntry, {
+  ForMultipleAddress: ForMultipleAddressRouteEntry,
+});

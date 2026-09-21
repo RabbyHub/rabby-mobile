@@ -22,7 +22,7 @@ const hitSlop = {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerRight: {
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
     paddingVertical: 4,
   },
   headerRightText: {

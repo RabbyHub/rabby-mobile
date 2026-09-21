@@ -281,7 +281,10 @@ export function fetchIconSymbolAndName({
   };
 
   const lowerUnderlyingAsset = underlyingAsset.toLowerCase();
-  if (underlyingAssetMap.hasOwnProperty(lowerUnderlyingAsset)) {
+  if (
+    underlyingAssetMap.hasOwnProperty(lowerUnderlyingAsset) &&
+    underlyingAssetMap[lowerUnderlyingAsset]
+  ) {
     return {
       symbol,
       ...underlyingAssetMap[lowerUnderlyingAsset],

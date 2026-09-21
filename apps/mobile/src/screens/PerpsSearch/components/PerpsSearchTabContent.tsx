@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { View } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { PerpsCategoryId } from '../../Perps/constants/perpsCategories';
@@ -30,14 +31,20 @@ export const PerpsSearchTabContent: React.FC<{
       data={items}
       keyExtractor={item => `${categoryId}-${item.name}`}
       renderItem={renderItem}
+      // Collapsible tab view injects its own paddingTop into
+      // contentContainerStyle; use a spacer header instead of overriding it.
+      ListHeaderComponent={<View style={styles.listHeader} />}
       contentContainerStyle={styles.listContent}
     />
   );
 };
 
 const getStyle = createGetStyles2024(() => ({
+  listHeader: {
+    height: 8,
+  },
   listContent: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     paddingBottom: 24,
   },
 }));

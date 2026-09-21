@@ -1,164 +1,130 @@
-const mockGetPreference = jest.fn();
-const mockSetPreference = jest.fn();
-const mockIsUnlocked = jest.fn();
+type PreferenceStore = Record<string, unknown>;
 
-const createEventClass = () =>
-  class EventEmitter {
-    private listeners: Record<string, Array<(...args: unknown[]) => void>> = {};
-
-    on(event: string, listener: (...args: unknown[]) => void) {
-      this.listeners[event] = [...(this.listeners[event] || []), listener];
-      return this;
-    }
-
-    emit(event: string, ...args: unknown[]) {
-      (this.listeners[event] || []).forEach(listener => listener(...args));
-      return true;
-    }
-  };
-
-const loadAutoLockModule = () => {
+function loadAutoLockModule({
+  isUnlocked = true,
+  preferences = {},
+}: {
+  isUnlocked?: boolean;
+  preferences?: PreferenceStore;
+} = {}) {
   jest.resetModules();
+
+  const store: PreferenceStore = {
+    ...preferences,
+  };
+  const mockGetPreference = jest.fn((key: string) => store[key]);
+  const mockSetPreference = jest.fn((value: PreferenceStore) => {
+    Object.assign(store, value);
+  });
+  const mockIsUnlocked = jest.fn(() => isUnlocked);
 
   jest.doMock('react-native', () => ({
     AppState: {
+      addEventListener: jest.fn(),
       currentState: 'active',
       isAvailable: true,
-      addEventListener: jest.fn(() => ({
-        remove: jest.fn(),
-      })),
     },
   }));
-
   jest.doMock('@/constant/autoLock', () => ({
-    DEFAULT_AUTO_LOCK_MINUTES: 15,
+    DEFAULT_AUTO_LOCK_MINUTES: 5,
+  }));
+  jest.doMock('@/core/serviceApi/keyring', () => ({
+    isKeyringUnlockedSnapshot: mockIsUnlocked,
+  }));
+  jest.doMock('@/core/serviceApi/preference', () => ({
+    getPreferenceSnapshot: (...args: unknown[]) => mockGetPreference(...args),
+    setPreferenceSync: (...args: unknown[]) => mockSetPreference(...args),
   }));
 
-  jest.doMock('../services', () => ({
-    keyringService: {
-      isUnlocked: (...args: unknown[]) => mockIsUnlocked(...args),
+  const autoLockModule = require('./autoLock') as typeof import('./autoLock');
+
+  return {
+    ...autoLockModule,
+    mocks: {
+      mockGetPreference,
+      mockIsUnlocked,
+      mockSetPreference,
+      store,
     },
-    preferenceService: {
-      getPreference: (...args: unknown[]) => mockGetPreference(...args),
-      setPreference: (...args: unknown[]) => mockSetPreference(...args),
-    },
-  }));
-
-  jest.doMock('./event', () => ({
-    makeEEClass: () => ({
-      EventEmitter: createEventClass(),
-    }),
-  }));
-
-  return require('./autoLock') as typeof import('./autoLock');
-};
+  };
+}
 
 describe('core/apis/autoLock', () => {
-  beforeEach(() => {
-    jest.useFakeTimers().setSystemTime(new Date('2026-05-30T12:00:00.000Z'));
-    jest.clearAllMocks();
-    mockGetPreference.mockImplementation((key: string) => {
-      if (key === 'autoLockTime') {
-        return 2;
-      }
-      if (key === 'lastUnlockTime') {
-        return Date.now() - 1000;
-      }
-      if (key === 'unlockSessionExpireTime') {
-        return 0;
-      }
-      return undefined;
-    });
-    mockIsUnlocked.mockReturnValue(true);
-  });
-
   afterEach(() => {
-    jest.useRealTimers();
+    jest.restoreAllMocks();
+    jest.resetModules();
   });
 
-  it('coerces auto-lock timeout values into minute and millisecond precision', () => {
+  it('normalizes auto-lock timeout values to whole-second millisecond durations', () => {
     const { coerceAutoLockTimeout, isValidAutoLockTime } = loadAutoLockModule();
 
     expect(isValidAutoLockTime(1)).toBe(true);
     expect(isValidAutoLockTime(0)).toBe(false);
-    expect(coerceAutoLockTimeout(90_123)).toEqual({
-      minutes: 1.5,
-      timeoutMs: 90_000,
-    });
     expect(coerceAutoLockTimeout(0)).toEqual({
       minutes: -1,
       timeoutMs: -1,
     });
+    expect(coerceAutoLockTimeout(90_500)).toEqual({
+      minutes: 1.51,
+      timeoutMs: 90_000,
+    });
   });
 
-  it('builds persisted auto-lock times from the configured preference', () => {
-    const { getPersistedAutoLockTimes } = loadAutoLockModule();
+  it('derives persisted auto-lock expire time from the stored minute preference', () => {
+    jest.spyOn(Date, 'now').mockReturnValue(10_000);
+    const { getPersistedAutoLockTimes } = loadAutoLockModule({
+      preferences: {
+        autoLockTime: 1.5,
+      },
+    });
 
     expect(getPersistedAutoLockTimes()).toEqual({
-      minutes: 2,
-      timeoutMs: 120_000,
-      expireTime: Date.now() + 120_000,
+      expireTime: 100_000,
+      minutes: 1.5,
+      timeoutMs: 90_000,
     });
   });
 
-  it('derives unlock session expiry from explicit preference or last unlock time', () => {
-    const { getPersistedUnlockSessionExpireTime } = loadAutoLockModule();
-
-    mockGetPreference.mockImplementation((key: string) => {
-      if (key === 'unlockSessionExpireTime') {
-        return -1;
-      }
-      return undefined;
+  it('derives unlock-session expiry from explicit preference or last unlock time', () => {
+    const explicit = loadAutoLockModule({
+      preferences: {
+        unlockSessionExpireTime: -1,
+      },
     });
-    expect(getPersistedUnlockSessionExpireTime()).toBe(-1);
+    expect(explicit.getPersistedUnlockSessionExpireTime()).toBe(-1);
 
-    mockGetPreference.mockImplementation((key: string) => {
-      if (key === 'unlockSessionExpireTime') {
-        return Date.now() + 10_000;
-      }
-      return undefined;
+    const fromLastUnlock = loadAutoLockModule({
+      preferences: {
+        autoLockTime: 2,
+        lastUnlockTime: 5_000,
+      },
     });
-    expect(getPersistedUnlockSessionExpireTime()).toBe(Date.now() + 10_000);
+    expect(fromLastUnlock.getPersistedUnlockSessionExpireTime()).toBe(125_000);
+  });
 
-    mockGetPreference.mockImplementation((key: string) => {
-      if (key === 'autoLockTime') {
-        return 2;
-      }
-      if (key === 'lastUnlockTime') {
-        return Date.now() - 1_000;
-      }
-      return 0;
-    });
-    expect(getPersistedUnlockSessionExpireTime()).toBe(
-      Date.now() - 1_000 + 120_000,
+  it('refreshes foreground and persisted unlock-session expiry when the wallet session can be extended', () => {
+    jest.spyOn(Date, 'now').mockReturnValue(20_000);
+    const { autoLockEvent, refreshAutolockTimeout, mocks } = loadAutoLockModule(
+      {
+        isUnlocked: true,
+        preferences: {
+          autoLockTime: 1,
+          lastUnlockTime: 10_000,
+        },
+      },
     );
-  });
-
-  it('refreshes foreground expiry and persisted unlock session when refresh is allowed', () => {
-    const { autoLockEvent, refreshAutolockTimeout } = loadAutoLockModule();
     const changes: number[] = [];
     autoLockEvent.on('change', expireTime => {
-      changes.push(expireTime as number);
+      changes.push(expireTime);
     });
 
-    expect(refreshAutolockTimeout()).toBe(Date.now() + 120_000);
-
-    expect(mockSetPreference).toHaveBeenCalledWith({
-      unlockSessionExpireTime: Date.now() + 120_000,
-    });
-    expect(changes).toEqual([Date.now() + 120_000]);
-  });
-
-  it('clears foreground expiry without writing persisted unlock session', () => {
-    const { autoLockEvent, refreshAutolockTimeout } = loadAutoLockModule();
-    const changes: number[] = [];
-    autoLockEvent.on('change', expireTime => {
-      changes.push(expireTime as number);
+    expect(refreshAutolockTimeout()).toBe(80_000);
+    expect(mocks.store.unlockSessionExpireTime).toBe(80_000);
+    expect(mocks.mockSetPreference).toHaveBeenCalledWith({
+      unlockSessionExpireTime: 80_000,
     });
 
     expect(refreshAutolockTimeout('clear')).toBe(-1);
-
-    expect(mockSetPreference).not.toHaveBeenCalled();
-    expect(changes).toEqual([-1]);
+    expect(changes).toEqual([80_000, -1]);
   });
 });

@@ -40,10 +40,12 @@ export const TokenDetailBottomBtns = ({
   token,
   finalAccount,
   tokenSelectType,
+  disableSwapBridge,
 }: {
   token: ITokenItem;
   finalAccount: KeyringAccountWithAlias | null;
   tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
+  disableSwapBridge?: boolean;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -58,7 +60,7 @@ export const TokenDetailBottomBtns = ({
     !!tokenSelectType && ['swapTo', 'swapFrom'].includes(tokenSelectType);
 
   const toastDisabledAction = useCallback(() => {
-    toast.show(t('page.dashboard.assets.comingSoon'));
+    toast.error(t('page.tokenDetail.customTestnetNotSupported'));
   }, [t]);
 
   const moreItems: {
@@ -101,6 +103,7 @@ export const TokenDetailBottomBtns = ({
       key: 'Bridge',
       title: t('page.home.services.bridge'),
       Icon: RcIconBridge,
+      disabled: disableSwapBridge,
       onPress: async () => {
         const chain = findChain({
           serverId: token.chain,
@@ -108,7 +111,7 @@ export const TokenDetailBottomBtns = ({
 
         await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
         setIsFromBack(false);
-        navigation.navigateDeprecated(RootNames.StackTransaction, {
+        navigation.push(RootNames.StackTransaction, {
           screen: RootNames.SwapBridge,
           params: {
             activeTab: 'bridge',
@@ -134,10 +137,14 @@ export const TokenDetailBottomBtns = ({
     const chain = findChain({
       serverId: token.chain,
     });
+    if (disableSwapBridge) {
+      toast.error(t('page.tokenDetail.customTestnetNotSupported'));
+      return;
+    }
 
     await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
     setIsFromBack(false);
-    navigation.navigateDeprecated(RootNames.StackTransaction, {
+    navigation.push(RootNames.StackTransaction, {
       screen: RootNames.SwapBridge,
       params: {
         activeTab: 'swap',
@@ -168,7 +175,11 @@ export const TokenDetailBottomBtns = ({
               </Text>
             </Pressable>
             <Pressable
-              style={[styles.action, styles.blueAction]}
+              style={[
+                styles.action,
+                styles.blueAction,
+                disableSwapBridge && styles.disabledAction,
+              ]}
               onPress={handleSwap}>
               <RcIconSwapCC width={22} height={22} style={styles.actionIcon} />
               <Text
@@ -223,7 +234,6 @@ export const TokenDetailBottomBtns = ({
   );
 };
 
-const BADGE_SIZE = 18;
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     position: 'relative',
@@ -295,20 +305,6 @@ const getStyles = createGetStyles2024(ctx => ({
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
   },
-  sheetModalItemRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    flexShrink: 0,
-    maxWidth: '50%',
-    // ...makeDebugBorder(),
-  },
-  chevron: {
-    marginLeft: 'auto',
-    width: 16,
-    height: 16,
-    color: ctx.colors2024['neutral-foot'],
-  },
   list: {
     gap: 40,
     paddingTop: 16,
@@ -317,15 +313,6 @@ const getStyles = createGetStyles2024(ctx => ({
   sheetModal: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
-  actionBadgeWrapper: {
-    position: 'absolute',
-    top: -4,
-    right: -(BADGE_SIZE / 2),
-    // ...makeDebugBorder(),
-  },
-  rightZero: {
-    right: 0,
-  },
   actionText: {
     color: ctx.colors2024['neutral-InvertHighlight'],
     textAlign: 'center',
@@ -333,12 +320,5 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 22,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-  },
-  actionIconWrapper: {
-    flexDirection: 'row',
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: ctx.colors2024['green-default'],
   },
 }));

@@ -1,6 +1,4 @@
 import RcIconInfoCC from '@/assets2024/icons/perps/IconInfoCC.svg';
-import RcIconHyper from '@/assets2024/icons/perps/IconHyper.svg';
-import RcIconRabby from '@/assets2024/icons/common/rabby-wallet.svg';
 import { AssetAvatar } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
@@ -9,13 +7,14 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { useTheme2024 } from '@/hooks/theme';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { formatPercent } from '@/screens/Home/utils/price';
+import { useShowPerpsTradeFeeExplanation } from '@/screens/PerpsShared/components/PerpsTradeFeeExplanation';
 import { formatPerpsNumber, splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { sinceTime } from '@/utils/time';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { WsFill } from '@rabby-wallet/hyperliquid-sdk';
 import React, { useEffect, useMemo, useRef } from 'react';
-import { Trans, useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Text } from '@/components/Typography';
 import { SPOT_STABLE_COIN_NAME } from '../PerpsSpotSwapPopup';
@@ -45,6 +44,7 @@ export const PerpsHistoryDetailPopup: React.FC<{
 
   const { t } = useTranslation();
   const { showTipsPopup } = useTipsPopup();
+  const showTradeFeeExplanation = useShowPerpsTradeFeeExplanation();
 
   const {
     coin,
@@ -60,6 +60,9 @@ export const PerpsHistoryDetailPopup: React.FC<{
   const tradeValue = Number(sz) * Number(px);
   const pnlValue = Number(closedPnl) - Number(fee);
   const isClose = (dir === 'Close Long' || dir === 'Close Short') && closedPnl;
+  const isSettlement = dir === 'Settlement';
+  const showClosedPnl = Boolean((isClose || isSettlement) && closedPnl);
+  const isLiquidation = Boolean(fill?.liquidation);
   const logoUrl = fill?.logoUrl;
 
   // Stablecoin swap detection
@@ -70,7 +73,6 @@ export const PerpsHistoryDetailPopup: React.FC<{
     if (isStableCoinTrade) {
       return `${fill?.dir} ${stableCoinName}`;
     }
-    const isLiquidation = Boolean(fill?.liquidation);
     if (fill?.dir === 'Close Long') {
       if (orderTpOrSl === 'tp') {
         return t('page.perps.historyDetail.title.closeLongTp');
@@ -104,7 +106,7 @@ export const PerpsHistoryDetailPopup: React.FC<{
     return fill?.dir;
   }, [
     fill?.dir,
-    fill?.liquidation,
+    isLiquidation,
     orderTpOrSl,
     t,
     isStableCoinTrade,
@@ -113,7 +115,7 @@ export const PerpsHistoryDetailPopup: React.FC<{
 
   const { height } = useWindowDimensions();
   const maxHeight = useMemo(() => {
-    return height - 200;
+    return height - 120;
   }, [height]);
 
   useEffect(() => {
@@ -231,7 +233,7 @@ export const PerpsHistoryDetailPopup: React.FC<{
                       </View>
                     </View>
                   ) : null}
-                  {isClose ? (
+                  {showClosedPnl ? (
                     <View style={styles.listItem}>
                       <View style={styles.listItemMain}>
                         <Text style={styles.label}>
@@ -303,51 +305,7 @@ export const PerpsHistoryDetailPopup: React.FC<{
                   {fee ? (
                     <View style={styles.listItem}>
                       <TouchableOpacity
-                        onPress={() => {
-                          showTipsPopup({
-                            title: t('page.perps.historyDetail.feeTitle'),
-                            desc: (
-                              <View>
-                                <Text style={styles.feeDesc}>
-                                  <Trans
-                                    i18nKey="page.perps.historyDetail.feeDesc"
-                                    components={{
-                                      1: <Text style={styles.feeBold} />,
-                                      2: <Text style={styles.feeBold} />,
-                                    }}
-                                  />
-                                </Text>
-                                <View style={styles.feeTable}>
-                                  <View style={styles.feeRow}>
-                                    <View style={styles.feeRowLeft}>
-                                      <RcIconHyper width={20} height={20} />
-                                      <Text style={styles.feeRowLabel}>
-                                        {t(
-                                          'page.perps.historyDetail.feeHyperliquid',
-                                        )}
-                                      </Text>
-                                    </View>
-                                    <Text style={styles.feeRowValue}>
-                                      0.045%
-                                    </Text>
-                                  </View>
-                                  <View style={styles.feeRow}>
-                                    <View style={styles.feeRowLeft}>
-                                      <RcIconRabby width={20} height={20} />
-                                      <Text style={styles.feeRowLabel}>
-                                        {t('page.perps.historyDetail.feeRabby')}
-                                      </Text>
-                                    </View>
-                                    <Text style={styles.feeRowValue}>
-                                      0.02%
-                                    </Text>
-                                  </View>
-                                </View>
-                              </View>
-                            ),
-                            buttonType: 'hyperliquid',
-                          });
-                        }}>
+                        onPress={() => showTradeFeeExplanation(isLiquidation)}>
                         <View style={styles.listItemMain}>
                           <Text style={styles.label}>
                             {t('page.perps.historyDetail.fee')}
@@ -494,54 +452,6 @@ const getStyle = createGetStyles2024(ctx => {
     },
     red: {
       color: colors2024['red-default'],
-    },
-    feeDesc: {
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      lineHeight: 18,
-      fontWeight: '400',
-      color: colors2024['neutral-secondary'],
-      textAlign: 'center',
-      marginBottom: 20,
-    },
-    feeBold: {
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '700',
-      color: colors2024['neutral-title-1'],
-    },
-    feeTable: {
-      borderRadius: 12,
-      backgroundColor: colors2024['neutral-bg-2'],
-      overflow: 'hidden',
-    },
-    feeRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: 16,
-      paddingVertical: 14,
-      borderBottomWidth: 0.5,
-      borderBottomColor: colors2024['neutral-line'],
-    },
-    feeRowLeft: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-    },
-    feeRowLabel: {
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      lineHeight: 18,
-      fontWeight: '500',
-      color: colors2024['neutral-title-1'],
-    },
-    feeRowValue: {
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      lineHeight: 18,
-      fontWeight: '700',
-      color: colors2024['neutral-title-1'],
     },
   };
 });

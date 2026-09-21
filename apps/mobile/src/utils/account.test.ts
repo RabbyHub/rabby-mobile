@@ -4,10 +4,9 @@ const mockEllipsisAddress = jest.fn();
 function loadAccountModule() {
   jest.resetModules();
 
-  jest.doMock('@/core/services', () => ({
-    contactService: {
-      getAliasByAddress: (address: string) => mockGetAliasByAddress(address),
-    },
+  jest.doMock('@/core/serviceApi/contact', () => ({
+    getContactAliasSnapshot: (address: string) =>
+      mockGetAliasByAddress(address),
   }));
 
   jest.doMock('@/core/apis/account', () => ({
@@ -37,6 +36,11 @@ function loadAccountModule() {
       OneKeyKeyring: 'OneKeyKeyring',
       KeystoneKeyring: 'KeystoneKeyring',
       GnosisKeyring: 'GnosisKeyring',
+    },
+    HARDWARE_KEYRING_TYPES: {
+      Ledger: { type: 'LEDGER', brandName: 'Ledger' },
+      OneKey: { type: 'ONEKEY', brandName: 'OneKey' },
+      Keystone: { type: 'KEYSTONE', brandName: 'Keystone' },
     },
   }));
 
@@ -119,5 +123,27 @@ describe('account utils', () => {
     expect(account.aliasName).toBe('0xabc...def');
     expect(account.brandName).toBe('CUSTOM');
     expect(mockEllipsisAddress).toHaveBeenCalledWith('0xabc');
+  });
+
+  it.each([
+    ['MNEMONIC', true],
+    ['PRIVATE_KEY', true],
+    ['GNOSIS', true],
+    ['LEDGER', true],
+    ['ONEKEY', true],
+    ['KEYSTONE', true],
+    ['WATCH', false],
+    ['WALLETCONNECT', false],
+  ])('classifies %s database history support', (type, expected) => {
+    const { isSupportDBAccount } = loadAccountModule();
+
+    expect(isSupportDBAccount({ type } as any)).toBe(expected);
+  });
+
+  it('does not support database history without an account', () => {
+    const { isSupportDBAccount } = loadAccountModule();
+
+    expect(isSupportDBAccount()).toBe(false);
+    expect(isSupportDBAccount(null)).toBe(false);
   });
 });

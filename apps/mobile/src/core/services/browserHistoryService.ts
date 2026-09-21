@@ -32,14 +32,17 @@ export class BrowserHistoryService extends StoreServiceBase<
       },
     );
 
-    this.store.browserHistory = Object.entries(
-      this.store.browserHistory || {},
-    ).reduce((result, [origin, item]) => {
-      if (item.createdAt > Date.now() - 30 * 24 * 60 * 60 * 1000) {
-        result[origin.toLowerCase()] = item;
-      }
-      return result;
-    }, {});
+    this.mutateStore(draft => {
+      draft.browserHistory = Object.entries(draft.browserHistory || {}).reduce(
+        (result, [origin, item]) => {
+          if (item.createdAt > Date.now() - 30 * 24 * 60 * 60 * 1000) {
+            result[origin.toLowerCase()] = item;
+          }
+          return result;
+        },
+        {},
+      );
+    });
   }
 
   setHistory({
@@ -50,13 +53,12 @@ export class BrowserHistoryService extends StoreServiceBase<
     createdAt?: number;
   }) {
     const origin = _origin.toLowerCase();
-    this.store.browserHistory = {
-      ...this.store.browserHistory,
-      [origin]: {
+    this.mutateStore(draft => {
+      draft.browserHistory[origin] = {
         origin,
         createdAt: createdAt || Date.now(),
-      },
-    };
+      };
+    });
   }
 
   getHistoryList() {
@@ -75,8 +77,8 @@ export class BrowserHistoryService extends StoreServiceBase<
   }
 
   removeHistory(origin: string) {
-    this.store.browserHistory = omit(this.store.browserHistory, [
-      origin.toLowerCase(),
-    ]);
+    this.mutateStore(draft => {
+      draft.browserHistory = omit(draft.browserHistory, [origin.toLowerCase()]);
+    });
   }
 }

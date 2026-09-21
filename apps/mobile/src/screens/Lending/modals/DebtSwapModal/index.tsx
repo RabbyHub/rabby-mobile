@@ -6,16 +6,16 @@ import React, {
   useState,
 } from 'react';
 
-import { ChainId } from '@aave/contract-helpers';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
-import { OptimalRate } from '@paraswap/sdk';
+import type { ChainId } from '@aave/contract-helpers';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { OptimalRate } from '@paraswap/sdk';
 import { last, noop } from 'lodash';
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { PopulatedTransaction } from 'ethers';
+import type { PopulatedTransaction } from 'ethers';
 
 import { apiProvider } from '@/core/apis';
 import { useTheme2024 } from '@/hooks/theme';
@@ -26,13 +26,11 @@ import AutoLockView from '@/components/AutoLockView';
 import { createGetStyles2024 } from '@/utils/styles';
 import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
-import { transactionHistoryService } from '@/core/services';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { isAccountSupportMiniApproval } from '@/utils/account';
-import {
-  DirectSignBtn,
-  DirectSignBtnMethods,
-} from '@/components2024/DirectSignBtn';
+import type { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
+import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
@@ -68,7 +66,7 @@ import { SwapType } from '../../types/swap';
 import DebtSwapModalOverview from './Overview';
 import TokenIcon from '../../components/TokenIcon';
 import { APP_CODE_LENDING_DEBT_SWAP } from '../../utils/constant';
-import { ParaswapRatesType, SwappableToken } from '../../types/swap';
+import type { ParaswapRatesType, SwappableToken } from '../../types/swap';
 import { getParaswap } from '../../config/paraswap';
 import { getParaswapSellRates } from '../../components/actions/DebtSwap/paraswap';
 import {
@@ -102,6 +100,7 @@ import {
 import BridgeSwitchBtn from '@/screens/Bridge/components/BridgeSwitchBtn';
 import { Text } from '@/components/Typography';
 import { stats } from '@/utils/stats';
+import { hasInsufficientSwapLiquidity } from '../../utils/swap';
 
 interface DebtSwapModalProps {
   fromToken: SwappableToken;
@@ -155,7 +154,11 @@ export default function DebtSwapModal({
     maxInputAmountWithSlippage?: string;
   }>({});
 
-  const [currentTxs, setCurrentTxs] = useState<Tx[]>([]);
+  const [builtTxs, setBuiltTxs] = useState<{
+    txs: Tx[];
+    build: () => Promise<Tx[]>;
+    slippage: string;
+  } | null>(null);
 
   const lastQuoteParamsRef = useRef<{
     rawAmount: string;
@@ -444,6 +447,12 @@ export default function DebtSwapModal({
 
   const { ctx } = useSignatureStoreOf(instance);
 
+  const isInsufficientLiquidity = hasInsufficientSwapLiquidity({
+    reserve: toReserve,
+    amount: toAmountAfterSlippage,
+    checkBorrowCap: true,
+  });
+
   const buildDebtSwapTxs = useCallback(async (): Promise<Tx[]> => {
     if (
       !currentAccount ||
@@ -453,7 +462,8 @@ export default function DebtSwapModal({
       !selectedMarketData?.addresses?.DEBT_SWITCH_ADAPTER ||
       !pools?.provider ||
       !toReserve ||
-      !fromReserve
+      !fromReserve ||
+      isInsufficientLiquidity
     ) {
       return [];
     }
@@ -564,13 +574,41 @@ export default function DebtSwapModal({
     swapRate.slippageBps,
     toReserve,
     toToken,
+    isInsufficientLiquidity,
+  ]);
+
+  // Only expose transactions built for the current inputs and quote.
+  const currentTxs = useMemo(() => {
+    if (
+      builtTxs?.build !== buildDebtSwapTxs ||
+      builtTxs.slippage !== displaySlippage ||
+      fromAmount !== debouncedFromAmount ||
+      !new BigNumber(swapRate.outputAmount || 0).eq(
+        normalizeBN(fromAmount || '0', -1 * fromToken.decimals),
+      ) ||
+      isQuoteLoading ||
+      noQuote
+    ) {
+      return [];
+    }
+    return builtTxs.txs;
+  }, [
+    builtTxs,
+    buildDebtSwapTxs,
+    displaySlippage,
+    fromAmount,
+    debouncedFromAmount,
+    swapRate.outputAmount,
+    fromToken.decimals,
+    isQuoteLoading,
+    noQuote,
   ]);
 
   useEffect(() => {
     let cancelled = false;
     const buildTxs = async () => {
       if (
-        !currentAccount ||
+        !currentAccount?.address ||
         !toToken ||
         !quote ||
         !swapRate.optimalRateData ||
@@ -579,10 +617,11 @@ export default function DebtSwapModal({
         !toReserve ||
         !fromReserve ||
         !debouncedFromAmount ||
-        new BigNumber(debouncedFromAmount).lte(0)
+        new BigNumber(debouncedFromAmount).lte(0) ||
+        isInsufficientLiquidity
       ) {
         if (!cancelled) {
-          setCurrentTxs([]);
+          setBuiltTxs(null);
         }
         return;
       }
@@ -590,11 +629,15 @@ export default function DebtSwapModal({
       try {
         const txs = await buildDebtSwapTxs();
         if (!cancelled) {
-          setCurrentTxs(txs);
+          setBuiltTxs({
+            txs,
+            build: buildDebtSwapTxs,
+            slippage: displaySlippage,
+          });
         }
       } catch (error) {
         if (!cancelled) {
-          setCurrentTxs([]);
+          setBuiltTxs(null);
         }
       }
     };
@@ -604,7 +647,8 @@ export default function DebtSwapModal({
     };
   }, [
     buildDebtSwapTxs,
-    currentAccount,
+    displaySlippage,
+    currentAccount?.address,
     debouncedFromAmount,
     fromReserve,
     pools?.provider,
@@ -613,6 +657,7 @@ export default function DebtSwapModal({
     swapRate.optimalRateData,
     toReserve,
     toToken,
+    isInsufficientLiquidity,
   ]);
 
   const { currentHF, isHFLow, isLiquidatable, afterSwapInfo } =
@@ -675,7 +720,12 @@ export default function DebtSwapModal({
   ]);
 
   useEffect(() => {
-    if (!currentAccount || !canShowDirectSubmit || !currentTxs?.length) {
+    if (
+      !currentAccount?.address ||
+      !canShowDirectSubmit ||
+      !currentTxs?.length ||
+      isInsufficientLiquidity
+    ) {
       closeMiniSigner();
       return;
     }
@@ -687,14 +737,21 @@ export default function DebtSwapModal({
   }, [
     canShowDirectSubmit,
     closeMiniSigner,
-    currentAccount,
+    currentAccount?.address,
     currentTxs,
+    isInsufficientLiquidity,
     prefetchMiniSigner,
   ]);
 
   const handleSwap = useCallback(
     async (p?: { ignoreGasFee?: boolean; forceFullSign?: boolean }) => {
       if (!toToken || !fromAmount || !currentAccount) {
+        return;
+      }
+      if (isInsufficientLiquidity) {
+        toast.error(
+          t('page.Lending.repayWithCollateral.insufficientLiquidity'),
+        );
         return;
       }
       if (isExceedMaxLtvAfterSwap) {
@@ -760,7 +817,7 @@ export default function DebtSwapModal({
 
         const txId = last(results);
         if (txId && chainInfo?.id) {
-          transactionHistoryService.setCustomTxItem(
+          await transactionHistoryServiceApi.setCustomTxItem(
             currentAccount.address,
             chainInfo?.id,
             txId,
@@ -811,6 +868,7 @@ export default function DebtSwapModal({
       openDirect,
       ctx?.gasFeeTooHigh,
       refresh,
+      isInsufficientLiquidity,
       isExceedMaxLtvAfterSwap,
       debouncedFromAmount,
       fromToken.usdPrice,
@@ -855,11 +913,21 @@ export default function DebtSwapModal({
   const buttonDisabled = useMemo(() => {
     return (
       !canSwap ||
+      !currentTxs.length ||
       (isRisky && !riskChecked) ||
       isLiquidatable ||
+      isInsufficientLiquidity ||
       isExceedMaxLtvAfterSwap
     );
-  }, [canSwap, isExceedMaxLtvAfterSwap, isLiquidatable, isRisky, riskChecked]);
+  }, [
+    canSwap,
+    currentTxs.length,
+    isExceedMaxLtvAfterSwap,
+    isInsufficientLiquidity,
+    isLiquidatable,
+    isRisky,
+    riskChecked,
+  ]);
 
   return (
     <SignatureInstanceProvider instance={instance}>
@@ -1114,14 +1182,22 @@ export default function DebtSwapModal({
             {
               height:
                 bottomButtonAreaHeight +
-                (isLiquidatable || isExceedMaxLtvAfterSwap
+                (isLiquidatable ||
+                isExceedMaxLtvAfterSwap ||
+                isInsufficientLiquidity
                   ? BOTTOM_SIZE.TIPS
                   : isRisky
                   ? BOTTOM_SIZE.CHECKBOX
                   : 0),
             },
           ]}>
-          {isExceedMaxLtvAfterSwap ? (
+          {isInsufficientLiquidity ? (
+            <View style={styles.riskContainer}>
+              <Text style={styles.dangerWarningText}>
+                {t('page.Lending.repayWithCollateral.insufficientLiquidity')}
+              </Text>
+            </View>
+          ) : isExceedMaxLtvAfterSwap ? (
             <View style={styles.riskContainer}>
               <Text style={styles.dangerWarningText}>
                 {t('page.Lending.debtSwap.maxLtvWarning')}
@@ -1157,6 +1233,7 @@ export default function DebtSwapModal({
               onFinished={() => handleSwap()}
               disabled={buttonDisabled || !!ctx?.disabledProcess}
               type="aave"
+              iconColor={colors2024['neutral-contrast']}
               syncUnlockTime
               account={currentAccount}
               showHardWalletProcess
@@ -1395,10 +1472,6 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     top: '50%',
     transform: [{ translateX: -18 }, { translateY: -18 }],
   },
-  arrowText: {
-    fontSize: 22,
-    color: colors2024['neutral-secondary'],
-  },
   gasPreContainer: {
     paddingHorizontal: 8,
     marginTop: 12,
@@ -1474,13 +1547,6 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     lineHeight: 20,
     color: colors2024['orange-default'],
     marginRight: 4,
-  },
-  priceImpactTooltipText: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-title-1'],
   },
   errorText: {
     fontSize: 14,

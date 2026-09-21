@@ -4,9 +4,9 @@ import { Dimensions, ScrollView, StyleSheet, View } from 'react-native';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import { preferenceService } from '@/core/services';
+import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 import { FontNames } from '@/core/utils/fonts';
-import { KeyringAccountWithAlias } from '@/hooks/account';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -30,7 +30,7 @@ function DevUIAccountShowCase(): JSX.Element {
 
   const navigation = useNavigation();
 
-  const currentAccount = preferenceService.getFallbackAccount();
+  const currentAccount = getFallbackAccountSnapshot();
 
   return (
     <NormalScreenContainer

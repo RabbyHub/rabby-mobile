@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Dimensions, TouchableOpacity } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -9,8 +9,16 @@ import Animated, {
 } from 'react-native-reanimated';
 import Lottie from 'lottie-react-native';
 
-import { RootNames } from '@/constant/layout';
-import { keyringService, preferenceService } from '@/core/services';
+import {
+  BOTTOM_BUTTON_GAP,
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  RootNames,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { setReportActionTs } from '@/core/serviceApi/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { navigateDeprecated } from '@/utils/navigation';
 import { Button } from '@/components2024/Button';
@@ -27,12 +35,13 @@ import {
 import { isNonPublicProductionEnv } from '@/constant';
 import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { Text } from '@/components/Typography';
 import ChevronRightSmallCC from '@/assets/icons/common/chevron-right-small-cc.svg';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+import { promptLocalStorageArchiveShare } from '@/utils/promptLocalStorageArchive';
 
 import StartScreenAnimation from '@/assets2024/animations/start-screen-animation.min.json';
 import StartScreenAnimationDark from '@/assets2024/animations/start-screen-animation-dark.min.json';
@@ -45,21 +54,54 @@ import logoDark from '@/assets/images/get-started/logo-dark.png';
 
 // Lottie animation dimensions
 const HERO_ASPECT_RATIO = 452 / 393;
+const LOCAL_STORAGE_EXPORT_TAP_COUNT = 20;
+const LOCAL_STORAGE_EXPORT_TAP_INTERVAL_MS = 500;
 
 // Hero illustration component using Lottie animation
 const HeroIllustration = ({ isLight }: { isLight: boolean }) => {
   const { styles } = useTheme2024({ getStyle });
+  const animationCompletedRef = useRef(false);
+  const rapidTapRef = useRef({ count: 0, lastTappedAt: 0 });
 
   const heroHeight = Math.ceil(SCREEN_WIDTH * HERO_ASPECT_RATIO);
 
+  const handleAnimationTap = useCallback(() => {
+    if (!isNonPublicProductionEnv || !animationCompletedRef.current) {
+      return;
+    }
+
+    const now = Date.now();
+    const isRapidTap =
+      now - rapidTapRef.current.lastTappedAt <=
+      LOCAL_STORAGE_EXPORT_TAP_INTERVAL_MS;
+    const count = isRapidTap ? rapidTapRef.current.count + 1 : 1;
+
+    rapidTapRef.current = { count, lastTappedAt: now };
+
+    if (count < LOCAL_STORAGE_EXPORT_TAP_COUNT) {
+      return;
+    }
+
+    rapidTapRef.current = { count: 0, lastTappedAt: 0 };
+    promptLocalStorageArchiveShare();
+  }, []);
+
   return (
     <View style={[styles.heroContainer, { height: heroHeight }]}>
-      <Lottie
-        source={isLight ? StartScreenAnimation : StartScreenAnimationDark}
-        style={[styles.heroBackground, { height: heroHeight }]}
-        loop={false}
-        autoPlay
-      />
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={handleAnimationTap}
+        disabled={!isNonPublicProductionEnv}>
+        <Lottie
+          source={isLight ? StartScreenAnimation : StartScreenAnimationDark}
+          style={[styles.heroBackground, { height: heroHeight }]}
+          loop={false}
+          autoPlay
+          onAnimationFinish={() => {
+            animationCompletedRef.current = true;
+          }}
+        />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -105,9 +147,9 @@ function NewUserGetStartedScreen() {
     }
 
     startCreateAddressProc(ProcDataType.Seed, '');
-    preferenceService.setReportActionTs(
+    void setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.CLICK_CREATE_NEW_ADDRESS,
-    );
+    ).catch(console.error);
     navigateDeprecated(RootNames.SetupWallet);
   }, [getStarted.processedInit, startCreateAddressProc]);
 
@@ -115,8 +157,8 @@ function NewUserGetStartedScreen() {
     if (!getStarted.processedInit) {
       return;
     }
-    preferenceService.setReportActionTs(
-      REPORT_TIMEOUT_ACTION_KEY.CLICK_HAVE_ADDRESS,
+    void setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_HAVE_ADDRESS).catch(
+      console.error,
     );
     navigateDeprecated(RootNames.SelectImportMethod);
   }, [getStarted.processedInit]);
@@ -127,15 +169,15 @@ function NewUserGetStartedScreen() {
     }
 
     navigateDeprecated(RootNames.ImportRabbyWallet);
-    preferenceService.setReportActionTs(
+    void setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.CLICK_SCAN_SYNC_EXTENSION,
-    );
+    ).catch(console.error);
   }, [getStarted.processedInit]);
 
   const initAccounts = useMemoizedFn(async () => {
     setGetStarted(prev => ({ ...prev, processedInit: false }));
     try {
-      const accounts = await keyringService.getAllVisibleAccountsArray();
+      const accounts = await keyringServiceApi.getAllVisibleAccountsArray();
       setGetStarted(prev => ({ ...prev, localHasAccounts: !!accounts.length }));
       if (accounts?.length) {
         resetNavigationTo(navigation, 'Home');
@@ -216,7 +258,10 @@ function NewUserGetStartedScreen() {
           <View
             style={[
               styles.bottomActions,
-              { flexShrink: 0, paddingBottom: Math.max(bottom, 16) },
+              {
+                flexShrink: 0,
+                paddingBottom: getBottomButtonBottomOffset(bottom),
+              },
             ]}>
             {!getStarted.localHasAccounts ? (
               <>
@@ -238,7 +283,8 @@ function NewUserGetStartedScreen() {
                 <Button
                   type="primary"
                   title={t('page.getStart.createNewAddress')}
-                  titleStyle={{ fontSize: 18 }}
+                  height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                  titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
                   disabled={
                     !getStarted.processedInit || getStarted.localHasAccounts
                   }
@@ -250,7 +296,8 @@ function NewUserGetStartedScreen() {
                   }
                   type="ghost"
                   title={t('page.getStart.alreadyHaveAddress')}
-                  titleStyle={{ fontSize: 18 }}
+                  height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                  titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
                   onPress={handleGoToImport}
                   buttonStyle={styles.secondaryButton}
                   {...makeTestIDProps(E2E_ID.onboarding.welcomeImportExisting)}
@@ -260,7 +307,8 @@ function NewUserGetStartedScreen() {
               <Button
                 type="primary"
                 title={t('page.getStart.goToHome') || 'Go to Home'}
-                titleStyle={{ fontSize: 18 }}
+                height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
                 disabled={
                   !getStarted.processedInit || !getStarted.localHasAccounts
                 }
@@ -351,9 +399,9 @@ const getStyle = createGetStyles2024(ctx => ({
     minHeight: 16,
   },
   bottomActions: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    gap: 12,
+    paddingHorizontal: 20,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+    gap: BOTTOM_BUTTON_GAP,
   },
   secondaryButton: {
     backgroundColor: ctx.colors2024['brand-light-1'],

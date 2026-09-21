@@ -1,121 +1,185 @@
-const mockFindChain = jest.fn();
-const mockIsTempoChain = jest.fn();
-const mockRequestReadOnlyETHRpc = jest.fn();
-const mockGetNonceByChain = jest.fn();
-const mockTranslate = jest.fn((key: string) => `translated:${key}`);
-const mockEncodeFunctionData = jest.fn(() => '0xencodedNonceCall');
-const mockDecodeFunctionResult = jest.fn(() => 31n);
+function loadRecommendNonceModule() {
+  jest.resetModules();
 
-jest.mock('@/utils/chain', () => ({
-  findChain: (...args: unknown[]) => mockFindChain(...args),
-}));
+  const mockDecodeFunctionResult = jest.fn();
+  const mockEncodeFunctionData = jest.fn();
+  const mockFindChain = jest.fn();
+  const mockGetNonceByChain = jest.fn();
+  const mockIsTempoChain = jest.fn();
+  const mockRequestReadOnlyETHRpc = jest.fn();
 
-jest.mock('@/utils/tempoChain', () => ({
-  isTempoChain: (...args: unknown[]) => mockIsTempoChain(...args),
-}));
+  jest.doMock('i18next', () => ({
+    t: (key: string) => key,
+  }));
+  jest.doMock('viem', () => ({
+    decodeFunctionResult: (...args: unknown[]) =>
+      mockDecodeFunctionResult(...args),
+    encodeFunctionData: (...args: unknown[]) => mockEncodeFunctionData(...args),
+  }));
+  jest.doMock('viem/tempo', () => ({
+    Abis: {
+      nonce: ['nonce-abi'],
+    },
+    Addresses: {
+      nonceManager: '0xnonce',
+    },
+  }));
+  jest.doMock('@/core/serviceApi/transactionHistory', () => ({
+    transactionHistoryServiceApi: {
+      getNonceByChain: (...args: unknown[]) => mockGetNonceByChain(...args),
+    },
+  }));
+  jest.doMock('@/utils/chain', () => ({
+    findChain: (...args: unknown[]) => mockFindChain(...args),
+  }));
+  jest.doMock('@/utils/tempoChain', () => ({
+    isTempoChain: (...args: unknown[]) => mockIsTempoChain(...args),
+  }));
+  jest.doMock('./readOnlyRpc', () => ({
+    requestReadOnlyETHRpc: (...args: unknown[]) =>
+      mockRequestReadOnlyETHRpc(...args),
+  }));
 
-jest.mock('@/core/services', () => ({
-  transactionHistoryService: {
-    getNonceByChain: (...args: unknown[]) => mockGetNonceByChain(...args),
-  },
-}));
+  const { getRecommendNonce } =
+    require('./recommendNonce') as typeof import('./recommendNonce');
 
-jest.mock('./readOnlyRpc', () => ({
-  requestReadOnlyETHRpc: (...args: unknown[]) =>
-    mockRequestReadOnlyETHRpc(...args),
-}));
+  return {
+    getRecommendNonce,
+    mocks: {
+      mockDecodeFunctionResult,
+      mockEncodeFunctionData,
+      mockFindChain,
+      mockGetNonceByChain,
+      mockIsTempoChain,
+      mockRequestReadOnlyETHRpc,
+    },
+  };
+}
 
-jest.mock('i18next', () => ({
-  t: (...args: unknown[]) => mockTranslate(...args),
-}));
+describe('core/apis/recommendNonce', () => {
+  afterEach(() => {
+    jest.resetModules();
+  });
 
-jest.mock('viem', () => ({
-  encodeFunctionData: (...args: unknown[]) => mockEncodeFunctionData(...args),
-  decodeFunctionResult: (...args: unknown[]) =>
-    mockDecodeFunctionResult(...args),
-}));
+  it('rejects unsupported chain ids before reading local or remote nonce', async () => {
+    const { getRecommendNonce, mocks } = loadRecommendNonceModule();
+    mocks.mockFindChain.mockReturnValue(null);
 
-jest.mock('viem/tempo', () => ({
-  Abis: {
-    nonce: [{ type: 'function', name: 'getNonce' }],
-  },
-  Addresses: {
-    nonceManager: '0x0000000000000000000000000000000000001000',
-  },
-}));
+    await expect(
+      getRecommendNonce({
+        account: null,
+        chainId: 12345,
+        from: '0xabc',
+      }),
+    ).rejects.toThrow('background.error.invalidChainId');
 
-import { getRecommendNonce } from './recommendNonce';
+    expect(mocks.mockRequestReadOnlyETHRpc).not.toHaveBeenCalled();
+    expect(mocks.mockGetNonceByChain).not.toHaveBeenCalled();
+  });
 
-describe('getRecommendNonce', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockFindChain.mockReturnValue({
+  it('uses the larger value between standard on-chain and local transaction-history nonce', async () => {
+    const { getRecommendNonce, mocks } = loadRecommendNonceModule();
+    const account = {
+      address: '0xabc',
+    };
+    mocks.mockFindChain.mockReturnValue({
       id: 1,
       serverId: 'eth',
     });
-    mockIsTempoChain.mockReturnValue(false);
-    mockRequestReadOnlyETHRpc.mockResolvedValue('0x9');
-    mockGetNonceByChain.mockResolvedValue(0);
-  });
-
-  it('throws a translated invalid-chain error when chain id is unknown', async () => {
-    mockFindChain.mockReturnValue(null);
+    mocks.mockIsTempoChain.mockReturnValue(false);
+    mocks.mockRequestReadOnlyETHRpc.mockResolvedValue('0x5');
+    mocks.mockGetNonceByChain.mockResolvedValue(7);
 
     await expect(
       getRecommendNonce({
-        from: '0xabc',
-        chainId: 999_999,
-        account: null,
-      }),
-    ).rejects.toThrow('translated:background.error.invalidChainId');
-
-    expect(mockTranslate).toHaveBeenCalledWith(
-      'background.error.invalidChainId',
-    );
-    expect(mockRequestReadOnlyETHRpc).not.toHaveBeenCalled();
-  });
-
-  it('uses the larger value between on-chain and local nonce for normal chains', async () => {
-    mockRequestReadOnlyETHRpc.mockResolvedValue('0x9');
-    mockGetNonceByChain.mockResolvedValue(12);
-
-    await expect(
-      getRecommendNonce({
-        from: '0xabc',
+        account: account as never,
         chainId: 1,
-        account: { address: '0xabc' } as never,
+        from: '0xabc',
       }),
-    ).resolves.toBe('0xc');
+    ).resolves.toBe('0x7');
 
-    expect(mockRequestReadOnlyETHRpc).toHaveBeenCalledWith(
+    expect(mocks.mockRequestReadOnlyETHRpc).toHaveBeenCalledWith(
       {
         method: 'eth_getTransactionCount',
         params: ['0xabc', 'latest'],
       },
       'eth',
-      { address: '0xabc' },
+      account,
     );
-    expect(mockGetNonceByChain).toHaveBeenCalledWith('0xabc', 1);
+    expect(mocks.mockGetNonceByChain).toHaveBeenCalledWith('0xabc', 1);
   });
 
-  it('falls back to transaction count when a Tempo nonce key is empty or non-positive', async () => {
-    mockFindChain.mockReturnValue({
-      id: 777,
+  it('reads Tempo keyed nonce with eth_call when a positive nonce key is provided', async () => {
+    const { getRecommendNonce, mocks } = loadRecommendNonceModule();
+    const account = {
+      address: '0xabc',
+    };
+    mocks.mockFindChain.mockReturnValue({
+      id: 999,
       serverId: 'tempo',
     });
-    mockIsTempoChain.mockReturnValue(true);
+    mocks.mockIsTempoChain.mockReturnValue(true);
+    mocks.mockEncodeFunctionData.mockReturnValue('0xencoded');
+    mocks.mockRequestReadOnlyETHRpc.mockResolvedValue('0xresult');
+    mocks.mockDecodeFunctionResult.mockReturnValue(10n);
 
     await expect(
       getRecommendNonce({
+        account: account as never,
+        chainId: 999,
         from: '0xabc',
-        chainId: 777,
-        account: null,
-        nonceKey: '0x',
+        nonceKey: ' 0x2 ',
       }),
-    ).resolves.toBe('0x9');
+    ).resolves.toBe('0xa');
 
-    expect(mockEncodeFunctionData).not.toHaveBeenCalled();
-    expect(mockRequestReadOnlyETHRpc).toHaveBeenCalledWith(
+    expect(mocks.mockEncodeFunctionData).toHaveBeenCalledWith({
+      abi: ['nonce-abi'],
+      args: ['0xabc', 2n],
+      functionName: 'getNonce',
+    });
+    expect(mocks.mockRequestReadOnlyETHRpc).toHaveBeenCalledWith(
+      {
+        method: 'eth_call',
+        params: [
+          {
+            data: '0xencoded',
+            to: '0xnonce',
+          },
+          'latest',
+        ],
+      },
+      'tempo',
+      account,
+    );
+    expect(mocks.mockDecodeFunctionResult).toHaveBeenCalledWith({
+      abi: ['nonce-abi'],
+      data: '0xresult',
+      functionName: 'getNonce',
+    });
+    expect(mocks.mockGetNonceByChain).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the standard nonce path for Tempo chains when the nonce key is empty or non-positive', async () => {
+    const { getRecommendNonce, mocks } = loadRecommendNonceModule();
+    mocks.mockFindChain.mockReturnValue({
+      id: 999,
+      serverId: 'tempo',
+    });
+    mocks.mockIsTempoChain.mockReturnValue(true);
+    mocks.mockRequestReadOnlyETHRpc.mockResolvedValue('0x8');
+    mocks.mockGetNonceByChain.mockResolvedValue(3);
+
+    await expect(
+      getRecommendNonce({
+        account: null,
+        chainId: 999,
+        from: '0xabc',
+        nonceKey: 0n,
+      }),
+    ).resolves.toBe('0x8');
+
+    expect(mocks.mockEncodeFunctionData).not.toHaveBeenCalled();
+    expect(mocks.mockRequestReadOnlyETHRpc).toHaveBeenCalledWith(
       {
         method: 'eth_getTransactionCount',
         params: ['0xabc', 'latest'],
@@ -123,51 +187,6 @@ describe('getRecommendNonce', () => {
       'tempo',
       null,
     );
-  });
-
-  it('reads Tempo nonce manager when a positive nonce key is provided', async () => {
-    mockFindChain.mockReturnValue({
-      id: 777,
-      serverId: 'tempo',
-    });
-    mockIsTempoChain.mockReturnValue(true);
-    mockRequestReadOnlyETHRpc.mockResolvedValue('0xencodedNonceResult');
-
-    await expect(
-      getRecommendNonce({
-        from: '0xabc',
-        chainId: 777,
-        account: null,
-        nonceKey: 2.9,
-      }),
-    ).resolves.toBe('0x1f');
-
-    expect(mockEncodeFunctionData).toHaveBeenCalledWith(
-      expect.objectContaining({
-        functionName: 'getNonce',
-        args: ['0xabc', 2n],
-      }),
-    );
-    expect(mockRequestReadOnlyETHRpc).toHaveBeenCalledWith(
-      {
-        method: 'eth_call',
-        params: [
-          {
-            to: '0x0000000000000000000000000000000000001000',
-            data: '0xencodedNonceCall',
-          },
-          'latest',
-        ],
-      },
-      'tempo',
-      null,
-    );
-    expect(mockDecodeFunctionResult).toHaveBeenCalledWith(
-      expect.objectContaining({
-        functionName: 'getNonce',
-        data: '0xencodedNonceResult',
-      }),
-    );
-    expect(mockGetNonceByChain).not.toHaveBeenCalled();
+    expect(mocks.mockGetNonceByChain).toHaveBeenCalledWith('0xabc', 999);
   });
 });

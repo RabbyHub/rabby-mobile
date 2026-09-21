@@ -1,4 +1,4 @@
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
@@ -7,7 +7,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleProp, View, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { View } from 'react-native';
 import { BrowserHistoryEmpty } from './BrowserHistoryEmpty';
 import { BrowserHistorySiteList } from './BrowserHistorySiteList';
 import { matomoRequestEvent } from '@/utils/analytics';

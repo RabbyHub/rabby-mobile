@@ -51,6 +51,7 @@ export enum MODAL_NAMES {
   'NFT_DETAIL' = 'NFT_DETAIL',
   'DESCRIPTION' = 'DESCRIPTION',
   'ADDRESS_HIGHT_DESC' = 'ADDRESS_HIGHT_DESC',
+  'RECEIVE_ADDRESS_LIST' = 'RECEIVE_ADDRESS_LIST',
   'RESTORE_FROM_CLOUD' = 'RESTORE_FROM_CLOUD',
   'ADDRESS_QUICK_MANAGER' = 'ADDRESS_QUICK_MANAGER',
   'ADDRESS_DETAIL' = 'ADDRESS_DETAIL',
@@ -76,7 +77,10 @@ export enum MODAL_NAMES {
   'LP_TOKEN_DETAIL' = 'LP_TOKEN_DETAIL',
   'COLLATERAL_TOKEN_SELECT' = 'COLLATERAL_TOKEN_SELECT',
   'TOKEN_GROUP_DETAIL' = 'TOKEN_GROUP_DETAIL',
+  'CUSTOM_TESTNET_ADD_TOKEN' = 'CUSTOM_TESTNET_ADD_TOKEN',
   'REPAY_TOKEN_SELECT' = 'REPAY_TOKEN_SELECT',
+  'WALLETCONNECT_PAIRING' = 'WALLETCONNECT_PAIRING',
+  'WALLETCONNECT_CONNECT' = 'WALLETCONNECT_CONNECT',
 }
 
 export enum APPROVAL_MODAL_NAMES {
@@ -111,7 +115,7 @@ export type GlobalBottomSheetModalProps = Partial<BottomSheetModalProps> & {
 type CreateParamsBase<T extends MODAL_NAMES = MODAL_NAMES> = {
   name: T;
   approvalComponent?: APPROVAL_MODAL_NAMES;
-  onCancel?: () => void;
+  onCancel?: () => void | Promise<void>;
   bottomSheetModalProps?: GlobalBottomSheetModalProps;
   /**
    * @description by default, every global modal instance will prevent the hardware back button on android,
@@ -156,6 +160,8 @@ export type RemoveParams = Partial<
   Parameters<BottomSheetMethods['close']>[0]
 > & {
   duration?: number;
+  /** Keep the modal mounted until the native close animation finishes. */
+  waitForDismiss?: boolean;
 };
 
 export enum EVENT_NAMES {

@@ -242,9 +242,6 @@ const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
     overflow: 'hidden',
     // backgroundColor: colors2024['neutral-bg-2'],
   },
-  rootPressing: {
-    borderColor: colors2024['brand-light-2'],
-  },
   card: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -307,23 +304,6 @@ const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontWeight: '700',
   },
-  itemNameTextHasPinned: {
-    paddingRight: 52,
-  },
-  itemNamePinned: {
-    marginLeft: -52,
-  },
-  itemBalanceText: {
-    fontSize: 16,
-    lineHeight: 20,
-    color: colors2024['neutral-title-1'],
-    fontWeight: '700',
-  },
-  itemName: {
-    gap: 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   itemNameNoBalance: {
     flexDirection: 'column',
     gap: 4,
@@ -333,13 +313,6 @@ const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
-    color: colors2024['neutral-info'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  address: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '500',
     color: colors2024['neutral-info'],
     fontFamily: 'SF Pro Rounded',
   },
@@ -378,13 +351,6 @@ const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  cardPressing: {
-    backgroundColor: colors2024['brand-light-1'],
-    borderRadius: 16,
-  },
-  arrowPressing: {
-    backgroundColor: colors2024['brand-light-1'],
   },
   walletIcon: {
     borderRadius: 12,

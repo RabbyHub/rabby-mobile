@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Dimensions, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { atom, useAtom } from 'jotai';
-import { DisplayPoolReserveInfo } from '../type';
+import type { DisplayPoolReserveInfo } from '../type';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { createGetStyles2024 } from '@/utils/styles';
 import ToggleCollateralOverView from '../components/actions/ToggleCollateralOverView';
@@ -21,7 +21,7 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { Button } from '@/components2024/Button';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { toast } from '@/components2024/Toast';
 import {
@@ -34,7 +34,7 @@ import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignat
 import { apiProvider } from '@/core/apis';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { last, noop } from 'lodash';
-import { transactionHistoryService } from '@/core/services';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import {
   API_ETH_MOCK_ADDRESS,
   HF_RISK_CHECKBOX_THRESHOLD,
@@ -171,7 +171,7 @@ function ToggleCollateralContent({}: {}) {
   const buildTx = useCallback(async () => {
     if (
       !currentToggleReserve ||
-      !currentAccount ||
+      !currentAccount?.address ||
       !pools ||
       !chainInfo ||
       isRiskToLiquidation ||
@@ -216,7 +216,7 @@ function ToggleCollateralContent({}: {}) {
     }
   }, [
     chainInfo,
-    currentAccount,
+    currentAccount?.address,
     currentToggleReserve,
     isNativeToken,
     isRiskToLiquidation,
@@ -361,7 +361,7 @@ function ToggleCollateralContent({}: {}) {
 
         const txId = last(results);
         if (txId && txs[0]) {
-          transactionHistoryService.setCustomTxItem(
+          await transactionHistoryServiceApi.setCustomTxItem(
             currentAccount.address,
             txs[0].chainId,
             txId,
@@ -395,7 +395,7 @@ function ToggleCollateralContent({}: {}) {
 
   useEffect(() => {
     if (
-      currentAccount &&
+      currentAccount?.address &&
       canShowDirectSubmit &&
       !isRiskToLiquidation &&
       !isError &&
@@ -408,7 +408,7 @@ function ToggleCollateralContent({}: {}) {
     }
   }, [
     canShowDirectSubmit,
-    currentAccount,
+    currentAccount?.address,
     isRiskToLiquidation,
     isError,
     isShowToggleCollateralModal,
@@ -529,7 +529,7 @@ function ToggleCollateralContent({}: {}) {
                   <View style={styles.gasPreContainer}>
                     <DirectSignGasInfo
                       supportDirectSign={true}
-                      loading={isLoading}
+                      loading={false}
                       openShowMore={noop}
                       chainServeId={chainInfo?.serverId || ''}
                     />
@@ -560,6 +560,7 @@ function ToggleCollateralContent({}: {}) {
                     isError
                   }
                   type="aave"
+                  iconColor={colors2024['neutral-contrast']}
                   syncUnlockTime
                   account={currentAccount}
                   showHardWalletProcess
@@ -595,7 +596,23 @@ function ToggleCollateralContent({}: {}) {
 export const ToggleCollateralModal = () => {
   const { hasUserSummary } = useHasUserSummary();
   const { currentRouteName } = useCurrentRouteName();
+  const [, setIsShowToggleCollateralModal] = useAtom(toggleCollateralModalAtom);
+  const [, setCurrentToggleReserve] = useAtom(currentToggleReserveAtom);
   const isLendingRoute = currentRouteName === RootNames.Lending;
+
+  useEffect(() => {
+    if (!currentRouteName || isLendingRoute) {
+      return;
+    }
+    setIsShowToggleCollateralModal(false);
+    setCurrentToggleReserve(null);
+  }, [
+    currentRouteName,
+    isLendingRoute,
+    setCurrentToggleReserve,
+    setIsShowToggleCollateralModal,
+  ]);
+
   if (!hasUserSummary || !isLendingRoute) {
     return null;
   }
@@ -657,13 +674,6 @@ const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     width: '100%',
     paddingLeft: 15,
     paddingRight: 16,
-  },
-  body: {
-    paddingHorizontal: 20,
-    marginTop: 12,
-    fontSize: 14,
-    color: colors2024['neutral-body'],
-    textAlign: 'center',
   },
   btnContainer: {
     marginTop: 16,
@@ -735,7 +745,6 @@ const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     color: colors2024['neutral-foot'],
   },
   fullWidthButton: {
-    flex: 1,
     height: BOTTOM_BUTTON_SINGLE_HEIGHT,
   },
   gasPreContainer: {

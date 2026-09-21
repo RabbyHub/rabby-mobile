@@ -14,11 +14,7 @@ import { useAutoLockCountDown } from './LockAbout';
 import { colord } from 'colord';
 import { NEED_DEVSETTINGBLOCKS } from '@/constant';
 import { useFloatingView } from '@/hooks/appSettings';
-import {
-  Gesture,
-  GestureDetector,
-  GestureHandlerRootView,
-} from 'react-native-gesture-handler';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { RcIconLogo } from '@/assets/icons/common';
 import { Text, AnimateableText } from '@/components/Typography';
 import {
@@ -26,7 +22,10 @@ import {
   subscribeModalGateDebugSnapshot,
 } from '@/utils/modalGate';
 import type { ModalGateDebugSnapshot } from '@/utils/modalGate';
-import { keyringService } from '@/core/services';
+import {
+  bindKeyringEvent,
+  isKeyringUnlockedSnapshot,
+} from '@/core/serviceApi/keyring';
 
 const modalDebugCount = makeMutable(0);
 const modalDebugSummary = makeMutable('No blocking modals');
@@ -160,21 +159,39 @@ export function FloatingDiagnosticsPanel() {
 
 function useKeyringUnlockStatus() {
   const [isUnlocked, setIsUnlocked] = React.useState(() =>
-    keyringService.isUnlocked(),
+    isKeyringUnlockedSnapshot(),
   );
 
   React.useEffect(() => {
+    let disposed = false;
+    const cleanups: Array<() => void> = [];
+
     const syncUnlockStatus = () => {
-      setIsUnlocked(keyringService.isUnlocked());
+      if (!disposed) {
+        setIsUnlocked(isKeyringUnlockedSnapshot());
+      }
     };
 
-    keyringService.on('lock', syncUnlockStatus);
-    keyringService.on('unlock', syncUnlockStatus);
     syncUnlockStatus();
 
+    void Promise.all([
+      bindKeyringEvent('lock', syncUnlockStatus),
+      bindKeyringEvent('unlock', syncUnlockStatus),
+    ])
+      .then(nextCleanups => {
+        if (disposed) {
+          nextCleanups.forEach(cleanup => cleanup());
+          return;
+        }
+
+        cleanups.push(...nextCleanups);
+        syncUnlockStatus();
+      })
+      .catch(console.error);
+
     return () => {
-      keyringService.off('lock', syncUnlockStatus);
-      keyringService.off('unlock', syncUnlockStatus);
+      disposed = true;
+      cleanups.forEach(cleanup => cleanup());
     };
   }, []);
 
@@ -232,9 +249,7 @@ function FloatingUnlockStatusBar() {
   }, [dragStartLeft, dragStartTop, positionLeft, positionTop]);
 
   return (
-    <GestureHandlerRootView
-      pointerEvents="box-none"
-      style={styles.unlockStatusPortal}>
+    <View pointerEvents="box-none" style={styles.unlockStatusPortal}>
       <GestureDetector gesture={panGesture}>
         <Animated.View
           style={[
@@ -257,7 +272,7 @@ function FloatingUnlockStatusBar() {
           </Text>
         </Animated.View>
       </GestureDetector>
-    </GestureHandlerRootView>
+    </View>
   );
 }
 
@@ -504,7 +519,7 @@ function FloatingDiagnosticsPanelContent({
   }, [handleTop]);
 
   return (
-    <GestureHandlerRootView pointerEvents="box-none" style={styles.portal}>
+    <View pointerEvents="box-none" style={styles.portal}>
       <Animated.View style={[styles.container, rootAnimatedStyles]}>
         <Animated.View
           pointerEvents="none"
@@ -567,7 +582,7 @@ function FloatingDiagnosticsPanelContent({
           </Animated.View>
         </GestureDetector>
       </Animated.View>
-    </GestureHandlerRootView>
+    </View>
   );
 }
 

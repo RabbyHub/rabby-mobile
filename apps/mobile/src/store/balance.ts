@@ -1,33 +1,34 @@
 import { openapi } from '@/core/request';
-import { keyringService } from '@/core/services';
-import { makeJsEEClass } from '@/core/services/_utils';
+import { bindKeyringEvent, keyringServiceApi } from '@/core/serviceApi/keyring';
+import { makeJsEEClass } from '@/core/utils/makeJsEEClass';
+import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
+import { isNonProductionDiagnosticsEnabled } from '@/core/utils/diagnosticEnv';
 import { ORM_TABLE_NAMES } from '@/databases/constant';
-import { BalanceEntity } from '@/databases/entities/balance';
 import type { EvmTotalBalanceResponse } from '@/databases/hooks/balance';
-import { syncBalance } from '@/databases/sync/assets';
 import { HOME_REFRESH_INTERVAL } from '@/constant/home';
 import { appStorage } from '@/core/storage/mmkv';
 import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import {
-  CORE_KEYRING_TYPES,
-  KeyringTypeName,
-} from '@rabby-wallet/keyring-utils';
-import { ChainWithBalance } from '@rabby-wallet/rabby-api/dist/types';
+  getHomeAssetSelectionSettings,
+  getHomeAssetSelectionSettingsKey,
+  isHomeAssetSelectionExperimentEnabled,
+} from '@/hooks/appSettings';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import type { KeyringTypeName } from '@rabby-wallet/keyring-utils';
+import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
+import type { ChainWithBalance } from '@rabby-wallet/rabby-api/dist/types';
 import PQueue from 'p-queue';
 import { useCallback, useMemo, useRef } from 'react';
 import type { Account } from '@/types/account';
 import { perfEvents } from '@/core/utils/perf';
 import { zCreate, zMutative } from '@/core/utils/reexports';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
-import {
-  ResourceBaseStore,
-  ResourceFlowState,
-  ResourceSnapshot,
-} from './_resourceBase';
-import { ResourceLocalTarget } from './_resourceFlowDebug';
-import { useAppChainStore } from './appchain';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
+import type { ResourceFlowState, ResourceSnapshot } from './_resourceBase';
+import { ResourceBaseStore } from './_resourceBase';
+import type { ResourceLocalTarget } from './_resourceFlowDebug';
+import { ensureAppChainStoreInitialized, useAppChainStore } from './appchain';
 
 export interface CURVE_STEP_ITEM {
   timestamp: number;
@@ -49,6 +50,31 @@ const getTotalBalanceQueue = new PQueue({
   intervalCap: 10,
 });
 
+let balanceEntityModulePromise: Promise<
+  typeof import('@/databases/entities/balance')
+> | null = null;
+function loadBalanceEntityModule() {
+  if (!balanceEntityModulePromise) {
+    balanceEntityModulePromise = import('@/databases/entities/balance');
+  }
+  return balanceEntityModulePromise;
+}
+
+let balanceSyncModulePromise: Promise<
+  typeof import('@/databases/sync/assets')
+> | null = null;
+async function syncBalanceToDb(
+  address: string,
+  isCore: boolean,
+  balance: EvmTotalBalanceResponse,
+) {
+  if (!balanceSyncModulePromise) {
+    balanceSyncModulePromise = import('@/databases/sync/assets');
+  }
+  const { syncBalance } = await balanceSyncModulePromise;
+  return syncBalance(address, isCore, balance);
+}
+
 const buildBalanceLocalTargets = (address: string): ResourceLocalTarget[] => [
   {
     kind: 'sqlite',
@@ -63,15 +89,30 @@ const buildPersistedBalanceValue = (
   balance: EvmTotalBalanceResponse,
   appChainUsdValue: number,
   isCore: boolean,
+  options?: {
+    preferPersistedTotal?: boolean;
+  },
 ): AddressBalanceResourceValue => {
   const evmBalance = balance.evm_usd_value || 0;
+  const totalBalance = options?.preferPersistedTotal
+    ? Number(balance.total_usd_value) || 0
+    : evmBalance + appChainUsdValue;
 
   return {
     evmBalance,
-    totalBalance: evmBalance + appChainUsdValue,
+    totalBalance,
     chainList: balance.chain_list,
     isCore,
   };
+};
+
+const canUseStartupPersistedTotal = (balance: EvmTotalBalanceResponse) => {
+  const totalBalance = Number(balance.total_usd_value) || 0;
+  const evmBalance = Number(balance.evm_usd_value) || 0;
+
+  // Older cache rows may have evm_usd_value added by migration as 0 without
+  // backfill. In that ambiguous case keep the old appchain-store path.
+  return totalBalance === 0 || evmBalance > 0;
 };
 
 const buildRemoteBalancePayload = (
@@ -348,6 +389,46 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     );
   };
 
+  syncAppChainTotalsForAddresses = (
+    addresses: string[],
+    detail?: Record<string, unknown>,
+  ) => {
+    let hasChanged = false;
+
+    normalizeBalanceAddresses(addresses).forEach(address => {
+      const current = this.getAddressValue(address);
+      if (!current) {
+        return;
+      }
+
+      const appChainUsdValue = getAppChainUsdValue(address);
+      const totalBalance = current.evmBalance + appChainUsdValue;
+      if (current.totalBalance === totalBalance) {
+        return;
+      }
+
+      hasChanged = true;
+      this.applyHydratedValue(
+        address,
+        {
+          ...current,
+          totalBalance,
+        },
+        {
+          localTargets: buildBalanceLocalTargets(address),
+          detail: {
+            source: 'syncAppChainTotalsForAddresses',
+            ...detail,
+            appChainUsdValue,
+            totalBalance,
+          },
+        },
+      );
+    });
+
+    return hasChanged;
+  };
+
   useAddressesFlowState = (addresses: string[]) => {
     const normalizedAddresses = useMemo(
       () =>
@@ -369,6 +450,8 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     }, [flow]);
   };
   initStore = async () => {
+    await ensureAppChainStoreInitialized();
+    const { BalanceEntity } = await loadBalanceEntityModule();
     const result = await BalanceEntity.queryAllBalance();
     const appChainMap = useAppChainStore.getState().appChainMap;
 
@@ -410,9 +493,15 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
 
   hydrateCachedBalancesForAccounts = async (
     accounts: Array<Pick<Account, 'address' | 'type'>>,
+    options?: { startupFastPath?: boolean },
   ) => {
     if (!accounts.length) {
       return;
+    }
+    const useStartupFastPath = !!options?.startupFastPath;
+
+    if (!useStartupFastPath) {
+      await ensureAppChainStoreInitialized();
     }
 
     const lowerAddresses = Array.from(
@@ -427,7 +516,30 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
       return;
     }
 
+    const { BalanceEntity } = await loadBalanceEntityModule();
     const coreAddressSet = buildCoreAddressSet(accounts as Account[]);
+    const startupBalanceCacheMap = options?.startupFastPath
+      ? await BalanceEntity.queryBalanceCacheMapForStartup(
+          lowerAddresses.map(address => ({
+            owner_addr: address,
+            isCore: coreAddressSet.has(address),
+          })),
+        )
+      : null;
+    const shouldFallbackStartupPersistedTotal =
+      useStartupFastPath &&
+      lowerAddresses.some(address => {
+        const isCore = coreAddressSet.has(address);
+        const cacheBalance =
+          startupBalanceCacheMap?.[`${address}-${isCore ? 'core' : 'nocore'}`];
+
+        return !!cacheBalance && !canUseStartupPersistedTotal(cacheBalance);
+      });
+
+    if (shouldFallbackStartupPersistedTotal) {
+      await ensureAppChainStoreInitialized();
+    }
+
     for (const address of lowerAddresses) {
       const localTargets = buildBalanceLocalTargets(address);
 
@@ -449,10 +561,12 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         },
       });
 
-      const cacheBalance = await BalanceEntity.queryBalanceCache(
-        address,
-        coreAddressSet.has(address),
-      );
+      const isCore = coreAddressSet.has(address);
+      const cacheBalance =
+        startupBalanceCacheMap?.[`${address}-${isCore ? 'core' : 'nocore'}`] ||
+        (!startupBalanceCacheMap
+          ? await BalanceEntity.queryBalanceCache(address, isCore)
+          : null);
 
       if (!cacheBalance) {
         this.markHydrateSkipped(address, {
@@ -465,11 +579,24 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         continue;
       }
 
-      const appChainUsdValue = getAppChainUsdValue(address);
+      const preferPersistedTotal =
+        useStartupFastPath &&
+        !shouldFallbackStartupPersistedTotal &&
+        canUseStartupPersistedTotal(cacheBalance);
+      const appChainUsdValue = preferPersistedTotal
+        ? Math.max(
+            (Number(cacheBalance.total_usd_value) || 0) -
+              (Number(cacheBalance.evm_usd_value) || 0),
+            0,
+          )
+        : getAppChainUsdValue(address);
       const value = buildPersistedBalanceValue(
         cacheBalance,
         appChainUsdValue,
-        coreAddressSet.has(address),
+        isCore,
+        {
+          preferPersistedTotal,
+        },
       );
 
       this.applyHydratedValue(address, value, {
@@ -477,7 +604,8 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         detail: {
           source: 'hydrateCachedBalancesForAccounts',
           appChainUsdValue,
-          isCore: coreAddressSet.has(address),
+          isCore,
+          preferPersistedTotal,
           totalBalance: value.totalBalance,
         },
       });
@@ -496,10 +624,27 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     const lowerAddresses = Array.from(
       new Set(top10Addresses.map(item => item.toLowerCase())),
     );
-    const addresses = await keyringService.getAllAddresses();
+    const diagnostic =
+      isNonProductionDiagnosticsEnabled &&
+      trace?.scene === 'Home' &&
+      trace.requester === 'fetchTotalBalance'
+        ? beginAssetDataLoadDiagnostic('home-balance-refresh', 'balance', {
+            addressCount: lowerAddresses.length,
+            force,
+          })
+        : null;
+    const addresses = await keyringServiceApi.getAllAddresses();
     const coreAddressSet = buildCoreAddressSet(addresses as Account[]);
+    diagnostic?.mark('account-scope-resolved', {
+      coreAddressCount: coreAddressSet.size,
+    });
 
     const fetchList: Array<{ address: string; isCore: boolean }> = [];
+    if (!force) {
+      await ensureAppChainStoreInitialized();
+    }
+
+    const balanceEntityModule = !force ? await loadBalanceEntityModule() : null;
 
     for (const address of lowerAddresses) {
       const isCore = coreAddressSet.has(address);
@@ -517,12 +662,16 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
           ),
         });
 
-        const isExpired = await BalanceEntity.isExpired(address, isCore);
+        const isExpired = await balanceEntityModule!.BalanceEntity.isExpired(
+          address,
+          isCore,
+        );
         if (!isExpired) {
-          const cachedBalance = await BalanceEntity.queryBalance(
-            address,
-            isCore,
-          );
+          const cachedBalance =
+            await balanceEntityModule!.BalanceEntity.queryBalance(
+              address,
+              isCore,
+            );
           const appChainUsdValue = getAppChainUsdValue(address);
           const value = buildPersistedBalanceValue(
             cachedBalance,
@@ -563,12 +712,42 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
       fetchList.push({ address, isCore });
     }
 
+    diagnostic?.mark('fetch-targets-resolved', {
+      fetchAddressCount: fetchList.length,
+    });
+
     if (!fetchList.length) {
+      diagnostic?.finish({
+        path: 'local-cache-only',
+      });
       return;
     }
 
     const fetchAddresses = fetchList.map(item => item.address);
-    await useAppChainStore.getState().batchGetAppChains(fetchAddresses, force);
+    diagnostic?.mark('app-chain-refresh-started', {
+      fetchAddressCount: fetchAddresses.length,
+    });
+    try {
+      await useAppChainStore
+        .getState()
+        .batchGetAppChains(fetchAddresses, force, diagnostic || undefined);
+    } catch (error) {
+      diagnostic?.fail({
+        phase: 'app-chain-refresh',
+      });
+      throw error;
+    }
+    diagnostic?.mark('app-chain-refresh-settled');
+
+    const queuedAt = Date.now();
+    const queueSizeAtStart = getTotalBalanceQueue.size;
+    const queuePendingAtStart = getTotalBalanceQueue.pending;
+    const queueWaits: number[] = [];
+    const requestDurations: number[] = [];
+    diagnostic?.mark('remote-balance-requests-started', {
+      queueSizeAtStart,
+      queuePendingAtStart,
+    });
 
     const results = await Promise.all(
       fetchList.map(async ({ address, isCore }) => {
@@ -587,14 +766,20 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
 
         try {
           const queuedBalance = await getTotalBalanceQueue.add(async () => {
-            return openapi.getTotalBalanceV2({
-              address,
-              isCore,
-              included_token_uuids: [],
-              excluded_token_uuids: [],
-              excluded_protocol_ids: [],
-              excluded_chain_ids: [],
-            });
+            queueWaits.push(Date.now() - queuedAt);
+            const requestStartedAt = Date.now();
+            try {
+              return await openapi.getTotalBalanceV2({
+                address,
+                isCore,
+                included_token_uuids: [],
+                excluded_token_uuids: [],
+                excluded_protocol_ids: [],
+                excluded_chain_ids: [],
+              });
+            } finally {
+              requestDurations.push(Date.now() - requestStartedAt);
+            }
           });
           if (!queuedBalance) {
             throw new Error(
@@ -623,6 +808,24 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
       }),
     );
 
+    const getAverage = (values: number[]) =>
+      values.length
+        ? Math.round(
+            values.reduce((total, value) => total + value, 0) / values.length,
+          )
+        : 0;
+    const succeededCount = results.filter(result => result.ok).length;
+    diagnostic?.mark('remote-balance-requests-settled', {
+      fetchAddressCount: fetchList.length,
+      succeededCount,
+      failedCount: fetchList.length - succeededCount,
+      queueWaitAverageMs: getAverage(queueWaits),
+      queueWaitMaxMs: Math.max(0, ...queueWaits),
+      requestAverageMs: getAverage(requestDurations),
+      requestMaxMs: Math.max(0, ...requestDurations),
+    });
+
+    const applyStartedAt = Date.now();
     results.forEach(result => {
       if (!result.ok) {
         this.markError(result.address, 'remote', result.error, {
@@ -671,7 +874,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
 
       this.persistInBackground(
         result.address,
-        () => syncBalance(result.address, result.isCore, formatBalance),
+        () => syncBalanceToDb(result.address, result.isCore, formatBalance),
         {
           requestId: result.requestId,
           localTargets: result.localTargets,
@@ -687,6 +890,12 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         },
       );
     });
+    diagnostic?.mark('remote-values-applied', {
+      elapsedMs: Date.now() - applyStartedAt,
+    });
+    diagnostic?.finish({
+      path: 'remote-refresh',
+    });
   };
 
   getTotalBalance = async (
@@ -696,7 +905,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
   ) => {
     const lowerAddress = address.toLowerCase();
 
-    const addresses = await keyringService.getAllAddresses();
+    const addresses = await keyringServiceApi.getAllAddresses();
     const isCore = addresses
       .filter(item => isSameAddress(item.address, address))
       .some(item => CORE_KEYRING_TYPES.includes(item.type as any));
@@ -705,6 +914,8 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
 
     try {
       if (!force) {
+        await ensureAppChainStoreInitialized();
+        const { BalanceEntity } = await loadBalanceEntityModule();
         this.markHydrateStarted(lowerAddress, {
           localTargets,
           detail: buildBalanceTraceDetail(
@@ -806,7 +1017,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
 
       this.persistInBackground(
         lowerAddress,
-        () => syncBalance(lowerAddress, isCore, formatBalance),
+        () => syncBalanceToDb(lowerAddress, isCore, formatBalance),
         {
           requestId,
           localTargets,
@@ -911,8 +1122,12 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
           return nextBalance;
         }
 
+        const selectionPolicyKey = getHomeAssetSelectionSettingsKey();
         const selectionSnapshot = await getAccountBalanceSelectionSnapshot();
         if (!selectionSnapshot) {
+          return retBalances;
+        }
+        if (selectionPolicyKey !== getHomeAssetSelectionSettingsKey()) {
           return retBalances;
         }
         const { selectedAccounts, selectedAddresses } = selectionSnapshot;
@@ -927,6 +1142,10 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
               endpoint: 'openapi.getTotalBalanceV2',
             },
           );
+        }
+
+        if (selectionPolicyKey !== getHomeAssetSelectionSettingsKey()) {
+          return retBalances;
         }
 
         Object.assign(
@@ -1007,6 +1226,7 @@ export type AccountsBalanceState = {
   matteredAccountLength: number;
   totalBalance: number;
   hasAnyBalanceValue: boolean;
+  hasAllBalanceValue: boolean;
   isAnyBalanceLoading: boolean;
   isAnyBalanceLoadingWithoutValue: boolean;
   isAnyBalanceFetchingRemote: boolean;
@@ -1058,12 +1278,13 @@ const { EventEmitter: AccountsBalanceEE } =
 export const balanceAccountsStore = zCreate(
   zMutative<AccountsBalanceState>(() => ({
     balance: {},
-    selectedAddresses: getCachedHomeTop10Addresses(),
+    selectedAddresses: getCachedHomeSelectedAddresses(),
     hasResolvedSelection: false,
     hasResolvedMatteredAccountLength: false,
     matteredAccountLength: 0,
     totalBalance: 0,
     hasAnyBalanceValue: false,
+    hasAllBalanceValue: false,
     isAnyBalanceLoading: false,
     isAnyBalanceLoadingWithoutValue: false,
     isAnyBalanceFetchingRemote: false,
@@ -1073,14 +1294,28 @@ export const balanceAccountsStore = zCreate(
 export const accountsBalanceEvents = new AccountsBalanceEE();
 
 const CACHE_TIME = HOME_REFRESH_INTERVAL;
+const ACCOUNT_BALANCE_SELECTION_GETTER_WAIT_TIMEOUT_MS = 3000;
 let hasStartedAddressBalanceLifecycle = false;
 let accountBalanceSelectionSnapshotGetter: AccountBalanceSelectionSnapshotGetter | null =
   null;
+// Wait briefly for deferred selection registration, then fail open.
+let resolveAccountBalanceSelectionSnapshotGetterReady: (() => void) | null =
+  null;
+let accountBalanceSelectionSnapshotGetterReady: Promise<void> | null = null;
+
+export function getSelectedBalanceAddressesSnapshot() {
+  const state = balanceAccountsStore.getState();
+  return state.selectedAddresses.length
+    ? state.selectedAddresses
+    : Object.keys(state.balance);
+}
 
 export function setAccountBalanceSelectionSnapshotGetter(
   getter: AccountBalanceSelectionSnapshotGetter,
 ) {
   accountBalanceSelectionSnapshotGetter = getter;
+  resolveAccountBalanceSelectionSnapshotGetterReady?.();
+  resolveAccountBalanceSelectionSnapshotGetterReady = null;
 }
 
 async function getAccountBalanceSelectionSnapshot() {
@@ -1088,16 +1323,25 @@ async function getAccountBalanceSelectionSnapshot() {
     if (__DEV__) {
       console.warn('account balance selection snapshot getter is not ready');
     }
-    return null;
+    accountBalanceSelectionSnapshotGetterReady ??= new Promise<void>(
+      resolve => {
+        resolveAccountBalanceSelectionSnapshotGetterReady = resolve;
+        setTimeout(resolve, ACCOUNT_BALANCE_SELECTION_GETTER_WAIT_TIMEOUT_MS);
+      },
+    );
+    await accountBalanceSelectionSnapshotGetterReady;
+    resolveAccountBalanceSelectionSnapshotGetterReady = null;
   }
 
-  return accountBalanceSelectionSnapshotGetter();
+  return accountBalanceSelectionSnapshotGetter?.() ?? null;
 }
 
-function getCachedHomeTop10Addresses() {
-  const cached = appStorage.getItem(APP_MMKV_WEAK_KEYS.HOME_TOP10_ADDRESSES) as
-    | string[]
-    | null;
+function getCachedHomeAddresses(
+  key:
+    | typeof APP_MMKV_WEAK_KEYS.HOME_TOP10_ADDRESSES
+    | typeof APP_MMKV_WEAK_KEYS.HOME_NONPROD_ASSET_SELECTION,
+) {
+  const cached = appStorage.getItem(key) as string[] | null;
   if (!Array.isArray(cached)) {
     return [];
   }
@@ -1111,12 +1355,64 @@ function getCachedHomeTop10Addresses() {
   );
 }
 
-function persistCachedHomeTop10Addresses(addresses: string[]) {
+function getCachedHomeTop10Addresses() {
+  return getCachedHomeAddresses(APP_MMKV_WEAK_KEYS.HOME_TOP10_ADDRESSES);
+}
+
+type CachedNonprodHomeAssetSelection = {
+  topN?: unknown;
+  includeWatchAddresses?: unknown;
+  addresses?: unknown;
+};
+
+function getCachedHomeNonprodAssetSelectionAddresses() {
+  const cached = appStorage.getItem(
+    APP_MMKV_WEAK_KEYS.HOME_NONPROD_ASSET_SELECTION,
+  ) as CachedNonprodHomeAssetSelection | null;
+  const settings = getHomeAssetSelectionSettings();
+
+  if (
+    !cached ||
+    cached.topN !== settings.topN ||
+    cached.includeWatchAddresses !== settings.includeWatchAddresses ||
+    !Array.isArray(cached.addresses)
+  ) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      cached.addresses
+        .filter(address => typeof address === 'string' && !!address)
+        .map(address => address.toLowerCase()),
+    ),
+  );
+}
+
+function getCachedHomeSelectedAddresses() {
+  return isHomeAssetSelectionExperimentEnabled()
+    ? getCachedHomeNonprodAssetSelectionAddresses()
+    : getCachedHomeTop10Addresses();
+}
+
+function persistCachedHomeSelectedAddresses(addresses: string[]) {
+  const normalizedAddresses = Array.from(
+    new Set(addresses.filter(Boolean).map(address => address.toLowerCase())),
+  );
+
+  if (isHomeAssetSelectionExperimentEnabled()) {
+    const { topN, includeWatchAddresses } = getHomeAssetSelectionSettings();
+    appStorage.setItem(APP_MMKV_WEAK_KEYS.HOME_NONPROD_ASSET_SELECTION, {
+      topN,
+      includeWatchAddresses,
+      addresses: normalizedAddresses,
+    });
+    return;
+  }
+
   appStorage.setItem(
     APP_MMKV_WEAK_KEYS.HOME_TOP10_ADDRESSES,
-    Array.from(
-      new Set(addresses.filter(Boolean).map(address => address.toLowerCase())),
-    ),
+    normalizedAddresses,
   );
 }
 
@@ -1170,16 +1466,17 @@ function setAccountsBalanceState(
   },
 ) {
   const prevState = balanceAccountsStore.getState();
-  balanceAccountsStore.setState(prev => {
-    const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
-      strict: true,
-    });
-    if (!changed) {
-      return prev;
-    }
-
-    return newVal;
+  const { newVal, changed } = resolveValFromUpdater(prevState, valOrFunc, {
+    strict: true,
   });
+  if (!changed) {
+    return;
+  }
+
+  // This path produces an already-resolved Zustand partial/state object.
+  // Passing it through a Mutative producer wraps every large cache hydration
+  // in an unnecessary draft and treats the plain return as a raw return.
+  balanceAccountsStore.setState(newVal);
 
   const nextState = balanceAccountsStore.getState();
   if (nextState === prevState || !meta) {
@@ -1197,7 +1494,7 @@ function setAccountsBalanceState(
   );
 
   if (selectionChanged) {
-    persistCachedHomeTop10Addresses(nextState.selectedAddresses);
+    persistCachedHomeSelectedAddresses(nextState.selectedAddresses);
     accountsBalanceEvents.emit('SELECTION_CHANGED', {
       prevAddresses: prevState.selectedAddresses,
       nextAddresses: nextState.selectedAddresses,
@@ -1267,6 +1564,9 @@ function buildSelectedBalanceDerivedState(
     {
       totalBalance: 0,
       hasAnyBalanceValue: false,
+      hasAllBalanceValue:
+        snapshots.length > 0 &&
+        snapshots.every(snapshot => snapshot.flow.hasValue),
       isAnyBalanceLoading: false,
       isAnyBalanceLoadingWithoutValue: false,
       isAnyBalanceFetchingRemote: false,
@@ -1274,23 +1574,16 @@ function buildSelectedBalanceDerivedState(
   );
 }
 
-export async function applyAccountBalanceSelectionSnapshot(
+export function commitAccountBalanceSelectionSnapshot(
   {
     selectedAccounts,
     selectedAddresses,
     matteredAccountLength,
   }: AccountBalanceSelectionSnapshot,
   options: {
-    hydrate: boolean;
     source: AccountsBalanceChangeSource;
   },
 ) {
-  if (options.hydrate) {
-    await addressBalanceStore.hydrateCachedBalancesForAccounts(
-      selectedAccounts,
-    );
-  }
-
   const nextBalance = buildBalanceAccountsFromList(
     selectedAccounts,
     addressBalanceStore.getAddressValueMap(),
@@ -1312,6 +1605,22 @@ export async function applyAccountBalanceSelectionSnapshot(
   );
 
   return nextBalance;
+}
+
+export async function applyAccountBalanceSelectionSnapshot(
+  snapshot: AccountBalanceSelectionSnapshot,
+  options: {
+    hydrate: boolean;
+    source: AccountsBalanceChangeSource;
+  },
+) {
+  if (options.hydrate) {
+    await addressBalanceStore.hydrateCachedBalancesForAccounts(
+      snapshot.selectedAccounts,
+    );
+  }
+
+  return commitAccountBalanceSelectionSnapshot(snapshot, options);
 }
 
 export const syncBalanceAccountStore = () => {
@@ -1343,23 +1652,24 @@ export function startProcessAddressBalanceEvents() {
   }
   hasStartedAddressBalanceLifecycle = true;
 
-  keyringService.on('removedAccount', async account => {
-    const addresses = await keyringService.getAllAddresses();
+  void bindKeyringEvent('removedAccount', async account => {
+    const removedAccount = account as Account;
+    const addresses = await keyringServiceApi.getAllAddresses();
     const stillExists = addresses.some(item => {
-      return isSameAddress(item.address, account.address);
+      return isSameAddress(item.address, removedAccount.address);
     });
 
     if (stillExists) {
       return;
     }
 
-    addressBalanceStore.removeAddressBalance(account.address, {
+    addressBalanceStore.removeAddressBalance(removedAccount.address, {
       source: 'keyringService.removedAccount',
       reason: 'address_deleted',
     });
-  });
+  }).catch(console.error);
 
-  perfEvents.subscribe('USER_MANUALLY_UNLOCK_UI_READY', async () => {
+  perfEvents.subscribe('POST_UNLOCK_UI_READY', async () => {
     syncBalanceAccountStore();
   });
 
@@ -1389,8 +1699,29 @@ export function startProcessAddressBalanceEvents() {
       },
     );
   });
+
+  let prevAppChainMap = useAppChainStore.getState().appChainMap;
+  useAppChainStore.subscribe(state => {
+    if (state.appChainMap === prevAppChainMap) {
+      return;
+    }
+    prevAppChainMap = state.appChainMap;
+
+    const addresses = Object.keys(addressBalanceStore.getAddressValueMap());
+    if (!addresses.length) {
+      return;
+    }
+
+    addressBalanceStore.syncAppChainTotalsForAddresses(addresses, {
+      trigger: 'appchain_store_changed',
+    });
+  });
 }
 
 export const addressBalanceStore = new AddressBalanceStore();
 export default addressBalanceStore;
-export { getCachedHomeTop10Addresses };
+export {
+  getCachedHomeNonprodAssetSelectionAddresses,
+  getCachedHomeSelectedAddresses,
+  getCachedHomeTop10Addresses,
+};

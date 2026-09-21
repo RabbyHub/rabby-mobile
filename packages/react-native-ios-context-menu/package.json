@@ -1,0 +1,45 @@
+{
+  "name": "@rabby-wallet/react-native-ios-context-menu",
+  "version": "1.15.3-rabby.0",
+  "private": true,
+  "description": "A react-native component to use context menu's (UIMenu) on iOS 13/14+",
+  "keywords": [
+    "react-native",
+    "ios",
+    "android"
+  ],
+  "homepage": "https://github.com/dominicstop/react-native-ios-context-menu#readme",
+  "bugs": {
+    "url": "https://github.com/dominicstop/react-native-ios-context-menu/issues"
+  },
+  "repository": "https://github.com/indominicstop/react-native-ios-context-menu",
+  "license": "MIT",
+  "author": "Dominic Go <18517029+dominicstop@users.noreply.github.com> (https://github.com/dominicstop)",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "source": "./src/index.ts",
+  "react-native": "./src/index.ts",
+  "types": "./src/index.ts",
+  "files": [
+    "src",
+    "android",
+    "ios",
+    "cpp",
+    "react-native-ios-context-menu.podspec",
+    "!android/build",
+    "!ios/build",
+    "!**/__tests__",
+    "!**/__fixtures__",
+    "!**/__mocks__"
+  ],
+  "dependencies": {
+    "@dominicstop/ts-event-emitter": "^1.1.0"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  }
+}

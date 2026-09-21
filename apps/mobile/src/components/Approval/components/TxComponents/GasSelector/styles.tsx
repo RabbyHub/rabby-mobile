@@ -217,9 +217,16 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
     opacity: 0.5,
   },
   modalWrap: {
-    position: 'relative',
     flex: 1,
     backgroundColor: colors2024['neutral-bg-1'],
+  },
+  modalBackground: {
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  modalScrollView: {
+    flex: 1,
   },
   gasLimitLabel: {
     paddingHorizontal: 20,
@@ -354,6 +361,8 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   footer: {
     backgroundColor: colors2024['neutral-bg-1'],
+    paddingHorizontal: 20,
+    paddingTop: 16,
   },
   cardBody: {
     padding: 12,

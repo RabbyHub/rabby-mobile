@@ -19,6 +19,8 @@ const hdPathString = "m/44'/60'/0'/0";
 const pathBase = 'm';
 const MAX_INDEX = 1000;
 const DELAY_BETWEEN_POPUPS = 1000;
+const NULL_TYPED_DATA_ERROR =
+  'Invalid EIP-712 typed data: null is not a valid value for typed signing';
 
 export enum LedgerHDPathType {
   LedgerLive = 'LedgerLive',
@@ -58,6 +60,22 @@ type AccountDetail = {
  */
 function isOldStyleEthereumjsTx(tx: { getChainId: any }): boolean {
   return typeof tx.getChainId === 'function';
+}
+
+function normalizeTypedDataHashError(error: unknown) {
+  const message =
+    error instanceof Error ? error.message : String(error || 'Unknown error');
+
+  if (
+    message.includes('toArray') ||
+    message.includes('Received null') ||
+    message.includes('received "null"') ||
+    message.includes('got "null"')
+  ) {
+    return new Error(NULL_TYPED_DATA_ERROR);
+  }
+
+  return new Error(`Invalid EIP-712 typed data: ${message}`);
 }
 
 class OneKeyKeyring extends EventEmitter {
@@ -105,7 +123,7 @@ class OneKeyKeyring extends EventEmitter {
   }
 
   init() {
-    this.bridge.init();
+    return this.bridge.init();
   }
 
   _deviceConnectId?: string;
@@ -148,6 +166,8 @@ class OneKeyKeyring extends EventEmitter {
   }
 
   async trySearchDevice(needCancel = false) {
+    await this.init();
+
     const devicePromise = this._deviceConnectId
       ? this.bridge.getFeatures(this._deviceConnectId).then(res => {
           if (!res.success) {
@@ -571,20 +591,36 @@ class OneKeyKeyring extends EventEmitter {
   ) {
     return new Promise((resolve, reject) => {
       const isV4 = opts.version === 'V4';
-      const { domain, types, primaryType, message } =
-        sigUtil.TypedDataUtils.sanitizeData(typedData);
-      const domainSeparatorHex = sigUtil.TypedDataUtils.hashStruct(
-        'EIP712Domain',
-        domain,
-        types,
-        isV4,
-      ).toString('hex');
-      const hashStructMessageHex = sigUtil.TypedDataUtils.hashStruct(
-        primaryType as string,
-        message,
-        types,
-        isV4,
-      ).toString('hex');
+      let domain: Record<string, any>;
+      let domainSeparatorHex: string;
+      let hashStructMessageHex: string;
+
+      try {
+        const {
+          domain: sanitizedDomain,
+          types,
+          primaryType,
+          message,
+        } = sigUtil.TypedDataUtils.sanitizeData(typedData);
+
+        domain = sanitizedDomain;
+        domainSeparatorHex = sigUtil.TypedDataUtils.hashStruct(
+          'EIP712Domain',
+          domain,
+          types,
+          isV4,
+        ).toString('hex');
+        hashStructMessageHex = sigUtil.TypedDataUtils.hashStruct(
+          primaryType as string,
+          message,
+          types,
+          isV4,
+        ).toString('hex');
+      } catch (error) {
+        reject(normalizeTypedDataHashError(error));
+        return;
+      }
+
       this.unlock()
         .then(status => {
           setTimeout(
@@ -604,15 +640,25 @@ class OneKeyKeyring extends EventEmitter {
                   })
                   .then(response => {
                     if (response.success) {
-                      if (
-                        response.payload.address !==
-                        ethUtil.toChecksumAddress(address)
-                      ) {
+                      const signature = ethUtil.addHexPrefix(
+                        response.payload.signature,
+                      );
+                      const addressSignedWith = isV4
+                        ? sigUtil.recoverTypedSignature_v4({
+                            data: typedData,
+                            sig: signature,
+                          })
+                        : sigUtil.recoverTypedSignature({
+                            data: typedData,
+                            sig: signature,
+                          });
+
+                      if (!isSameAddress(addressSignedWith, address)) {
                         reject(
                           new Error('signature doesnt match the right address'),
                         );
+                        return;
                       }
-                      const signature = `0x${response.payload.signature}`;
                       resolve(signature);
                     } else {
                       let code =
@@ -806,7 +852,11 @@ class OneKeyKeyring extends EventEmitter {
   fixConnectId(address: string, connectId: string) {
     const checksummedAddress = ethUtil.toChecksumAddress(address);
     const detail = this.accountDetails[checksummedAddress];
-    if (!detail.connectId) {
+    if (!detail) {
+      return;
+    }
+
+    if (detail.connectId !== connectId) {
       this.accountDetails[checksummedAddress] = {
         ...detail,
         connectId,

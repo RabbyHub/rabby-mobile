@@ -8,6 +8,7 @@ import {
 describe('lpToken utils', () => {
   it('defaultTokenFilter excludes suspicious, unverified, and protocol-backed non-core tokens', () => {
     expect(defaultTokenFilter({ is_verified: false })).toBe(false);
+    expect(defaultTokenFilter({ is_verified: null, is_core: true })).toBe(true);
     expect(defaultTokenFilter({ is_suspicious: true })).toBe(false);
     expect(defaultTokenFilter({ is_core: false })).toBe(false);
     expect(defaultTokenFilter({ is_core: null, protocol_id: 'uni' })).toBe(

@@ -96,12 +96,11 @@ function parseSignTypedData(typedData: {
       }
       return decodedArray;
     } else if (types[dataType]) {
-      const decodedStruct: Record<string, any> = {};
       for (const field of types[dataType]) {
         const { name, type } = field;
-        decodedStruct[name] = parseAndDecode(data?.[name], type);
+        data[name] = parseAndDecode(data[name], type);
       }
-      return decodedStruct;
+      return data;
     } else {
       if (dataType.startsWith('bytes')) {
         // bytes type is complex and no need to normalize
@@ -140,6 +139,10 @@ function parseSignTypedData(typedData: {
     }
   }
 
+  for (const { name, type } of types.EIP712Domain) {
+    domain[name] = parseAndDecode(domain[name], type);
+  }
+
   typedData.message = parseAndDecode(message, primaryType);
 
   // Filter out the fields that are not part of the primary type
@@ -149,11 +152,10 @@ function parseSignTypedData(typedData: {
     message: typedData.message,
   });
 
-  typedData.domain = parseAndDecode(domain, 'EIP712Domain');
   typedData.domain = filterPrimaryType({
     primaryType: 'EIP712Domain',
     types,
-    message: typedData.domain,
+    message: domain,
   });
 
   return typedData;

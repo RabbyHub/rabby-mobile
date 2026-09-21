@@ -1,14 +1,21 @@
-import * as ContextMenu from 'zeego/src/context-menu';
-import { MenuTriggerProps } from 'zeego/src/menu';
+// Context menus are centralized here so app code cannot bypass open-time
+// action snapshots or the platform-specific native menu fixes.
+// eslint-disable-next-line no-restricted-imports
+import * as ContextMenu from '@rabby-wallet/zeego/context-menu';
+import { MenuTriggerProps } from '@rabby-wallet/zeego/menu';
 import type { ContextMenuContentProps } from '@radix-ui/react-context-menu';
-import { ImageSourcePropType } from 'react-native';
+import { ImageSourcePropType, Platform } from 'react-native';
 import { IS_ANDROID } from '@/core/native/utils';
-import { useTheme2024 } from '@/hooks/theme';
-import { useCallback, useLayoutEffect, useRef } from 'react';
-import { MenuComponentRef } from '@react-native-menu/menu';
+import { apisTheme } from '@/hooks/theme';
+import { useCallback, useRef } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { MenuComponentRef } from '@rabby-wallet/react-native-menu';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 // import { touchedFeedback } from '@/utils/touch';
+
+const IS_IOS_27_OR_ABOVE =
+  Platform.OS === 'ios' && Number.parseInt(String(Platform.Version), 10) >= 27;
 
 export interface MenuAction {
   title: string;
@@ -23,20 +30,58 @@ export interface MenuAction {
   androidIconColor?: string;
 }
 
+export interface MenuConfig {
+  menuActions: MenuAction[];
+}
+
 type Props = {
-  menuConfig: {
-    menuTitle?: string;
-    menuActions: MenuAction[];
-  };
+  menuTitle?: string;
+  /**
+   * Read action state only when the native menu opens. This avoids subscribing
+   * the trigger and its ancestors to state used exclusively by menu actions.
+   */
+  getMenuConfig: () => MenuConfig;
   preViewBorderRadius?: number;
   children: React.ReactElement<any>;
   triggerProps?: Omit<MenuTriggerProps, 'children'>;
   androidLongPressDuration?: number;
 } & ContextMenuContentProps;
 
+function renderMenuActions(config: MenuConfig) {
+  const { colors2024 } = apisTheme.getColors2024();
+  return config.menuActions.map(action => {
+    const defaultAndroidColor = action.destructive
+      ? colors2024['red-default']
+      : colors2024['neutral-body'];
+
+    return (
+      <ContextMenu.Item
+        androidTitleColor={action.titleColor || defaultAndroidColor}
+        destructive={action.destructive}
+        disabled={action.disabled}
+        key={action.key}
+        onSelect={action.action}>
+        <ContextMenu.ItemTitle>{action.title}</ContextMenu.ItemTitle>
+
+        {IS_ANDROID ? (
+          <ContextMenu.ItemIcon
+            androidIcon={{
+              color: action.androidIconColor || defaultAndroidColor,
+            }}
+            androidIconName={action.androidIconName}
+          />
+        ) : (
+          <ContextMenu.ItemImage source={action.icon} />
+        )}
+      </ContextMenu.Item>
+    );
+  });
+}
+
 export const ContextMenuView: React.FC<Props> = ({
   children,
-  menuConfig,
+  menuTitle,
+  getMenuConfig,
   loop = true,
   alignOffset = 5,
   avoidCollisions = true,
@@ -44,8 +89,6 @@ export const ContextMenuView: React.FC<Props> = ({
   preViewBorderRadius = 30,
   androidLongPressDuration = 350,
 }) => {
-  const { colors2024 } = useTheme2024();
-
   const androidMenuViewRef = useRef<MenuComponentRef>(null);
 
   const androidShowMenu = useCallback(() => {
@@ -56,17 +99,34 @@ export const ContextMenuView: React.FC<Props> = ({
   const longPressGesture = Gesture.LongPress()
     .minDuration(androidLongPressDuration)
     .runOnJS(false)
-    .onStart(e => {
+    .onStart(() => {
       runOnJS(androidShowMenu)();
     });
 
   const needUseGdOnAndroid = IS_ANDROID && triggerProps?.action === 'longPress';
+  const getDynamicMenuChildren = useCallback(
+    () => renderMenuActions(getMenuConfig()),
+    [getMenuConfig],
+  );
+
+  const previewTheme = IS_IOS_27_OR_ABOVE
+    ? apisTheme.getColors2024()
+    : undefined;
 
   return (
     <ContextMenu.Root
       __unsafeIosProps={{
         previewConfig: {
           borderRadius: preViewBorderRadius,
+          // iOS 27 can composite a transparent target against black during
+          // the transition into the native context-menu preview.
+          ...(IS_IOS_27_OR_ABOVE
+            ? {
+                backgroundColor: previewTheme?.isLight
+                  ? previewTheme.colors2024['neutral-bg-1']
+                  : previewTheme?.colors2024['neutral-bg-2'],
+              }
+            : {}),
         },
       }}
       androidMenuViewRef={androidMenuViewRef}>
@@ -88,40 +148,12 @@ export const ContextMenuView: React.FC<Props> = ({
       </ContextMenu.Trigger>
 
       <ContextMenu.Content
+        getChildren={getDynamicMenuChildren}
         loop={loop}
         alignOffset={alignOffset}
         avoidCollisions={avoidCollisions}
         collisionPadding={10}>
-        {menuConfig.menuTitle && (
-          <ContextMenu.Label>{menuConfig.menuTitle}</ContextMenu.Label>
-        )}
-        {menuConfig.menuActions?.map(action => {
-          const defaultAndroidColor = action.destructive
-            ? colors2024['red-default']
-            : colors2024['neutral-body'];
-
-          return (
-            <ContextMenu.Item
-              androidTitleColor={action.titleColor || defaultAndroidColor}
-              destructive={action.destructive}
-              disabled={action.disabled}
-              key={action.key}
-              onSelect={action.action}>
-              <ContextMenu.ItemTitle>{action.title}</ContextMenu.ItemTitle>
-
-              {IS_ANDROID ? (
-                <ContextMenu.ItemIcon
-                  androidIcon={{
-                    color: action.androidIconColor || defaultAndroidColor,
-                  }}
-                  androidIconName={action.androidIconName}
-                />
-              ) : (
-                <ContextMenu.ItemImage source={action.icon} />
-              )}
-            </ContextMenu.Item>
-          );
-        })}
+        {menuTitle ? <ContextMenu.Label>{menuTitle}</ContextMenu.Label> : null}
       </ContextMenu.Content>
     </ContextMenu.Root>
   );

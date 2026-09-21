@@ -1,8 +1,16 @@
 import { SectionList } from 'react-native';
-import { browserService } from '@/core/services';
-import { BrowserHistoryItem } from '@/core/services/browserService';
-import { DappInfo } from '@/core/services/dappService';
-import { EntityState } from '@/core/utils/createEntryAdapter';
+import {
+  addBrowserHistoryItem,
+  getBrowserHistory,
+  removeBrowserHistoryItem,
+  resetBrowserHistory,
+} from '@/core/serviceApi/browser';
+import type {
+  BrowserHistoryItem,
+  BrowserService,
+} from '@/core/services/browserService';
+import type { DappInfo } from '@/core/services/dappService';
+import type { EntityState } from '@/core/utils/createEntryAdapter';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { useMemoizedFn } from 'ahooks';
 import { atom, useAtom } from 'jotai';
@@ -18,7 +26,8 @@ import dayjs from 'dayjs';
 import { formatTimestamp } from '@/utils/time';
 import { useTranslation } from 'react-i18next';
 import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 
 // export const browserHistoryAtom = atom<EntityState<BrowserHistoryItem, string>>(
 //   {
@@ -32,7 +41,9 @@ const browserHistoryStore = zCreate<BrowserHistoryState>(() => ({
   entities: {},
 }));
 
-function setBrowserHistoryStore(
+let browserHistoryReadRevision = 0;
+
+function applyBrowserHistoryStore(
   valOrFunc: UpdaterOrPartials<BrowserHistoryState>,
 ) {
   browserHistoryStore.setState(prev => {
@@ -43,20 +54,35 @@ function setBrowserHistoryStore(
   });
 }
 
-export const getBrowserHistoryList = () => {
-  const entities = browserService.history.selectors.selectEntities();
-  const ids = browserService.history.selectors.selectIds();
-  setBrowserHistoryStore({
-    ids,
-    entities,
-  });
+export const getBrowserHistoryList = async () => {
+  const readRevision = ++browserHistoryReadRevision;
+  const { entities, ids } = await getBrowserHistory();
+  if (readRevision === browserHistoryReadRevision) {
+    applyBrowserHistoryStore({
+      ids,
+      entities,
+    });
+  }
 };
 
+export function prepareBrowserHistoryStoreFromService(service: BrowserService) {
+  ++browserHistoryReadRevision;
+  applyBrowserHistoryStore({
+    ids: service.history.selectors.selectIds(),
+    entities: service.history.selectors.selectEntities(),
+  });
+}
+
 export function resetBrowserHistoryStore() {
-  setBrowserHistoryStore({
+  ++browserHistoryReadRevision;
+  applyBrowserHistoryStore({
     ids: [],
     entities: {},
   });
+}
+
+export function useBrowserHistoryCount() {
+  return browserHistoryStore(s => s.ids.length);
 }
 
 export function useBrowserHistory() {
@@ -72,25 +98,29 @@ export function useBrowserHistory() {
     const historyId = ids.find(
       id => safeGetOrigin(id) === safeGetOrigin(item.url),
     );
-    try {
-      if (historyId) {
-        browserService.history.removeOne(historyId);
+    void (async () => {
+      try {
+        if (historyId) {
+          await removeBrowserHistoryItem(historyId);
+        }
+        await addBrowserHistoryItem(item);
+        await getBrowserHistoryList();
+      } catch (e) {
+        console.error(e);
       }
-      browserService.history.addOne(item);
-      getBrowserHistoryList();
-    } catch (e) {
-      console.error(e);
-    }
+    })();
   });
 
   const removeBrowserHistory = useMemoizedFn((url: string) => {
-    browserService.history.removeOne(url);
-    getBrowserHistoryList();
+    void removeBrowserHistoryItem(url)
+      .then(() => getBrowserHistoryList())
+      .catch(console.error);
   });
 
   const removeAllBrowserHistory = useMemoizedFn(() => {
-    browserService.history.reset();
-    getBrowserHistoryList();
+    void resetBrowserHistory()
+      .then(() => getBrowserHistoryList())
+      .catch(console.error);
   });
 
   const { list: browserHistoryList, sectionList: browserHistorySectionList } =

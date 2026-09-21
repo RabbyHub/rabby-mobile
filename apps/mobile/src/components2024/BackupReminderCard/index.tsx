@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import RcArrowRight2CC from '@/assets/icons/common/right-2-cc.svg';
+import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 // Background image for the backup reminder card
 import backupBgImage from '@/assets/icons/backup/backup-reminder-bg.png';
@@ -44,8 +45,12 @@ export const BackupReminderCard: React.FC<BackupReminderCardProps> = ({
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const navigation = useRabbyAppNavigation();
 
-  const handlePress = React.useCallback(() => {
+  const handlePress = React.useCallback(async () => {
     if (account) {
+      if (!(await ensureWalletUnlockedForAction())) {
+        return;
+      }
+
       navigation.navigate(RootNames.Backup, {
         address: account.address,
         type: account.type,

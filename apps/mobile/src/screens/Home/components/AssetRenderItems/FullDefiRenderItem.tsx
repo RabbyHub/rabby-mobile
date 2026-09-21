@@ -1,14 +1,16 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, ViewStyle, StyleProp, Pressable } from 'react-native';
+import type { ViewStyle, StyleProp } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { WrapperDappActionsMemoItem } from '../../components/ProtocolMoreItem';
-import { KeyringAccountWithAlias } from '@/hooks/account';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
+import type { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import BigNumber from 'bignumber.js';
 import { formatNetworth } from '@/utils/math';
 import { ellipsisAddress } from '@/utils/address';
 import { useBrowser } from '@/hooks/browser/useBrowser';
+import { navigateToPreferredPerps } from '@/hooks/perps/navigation/navigateToPreferredPerps';
 import { isAppChain } from '../../utils/appchain';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -22,15 +24,16 @@ import {
 import JumpIconCC from '@/assets2024/icons/home/jump-cc.svg';
 import { resetFetchHistoryTxCount } from '../../hooks/history';
 import { setRefreshHistoryId } from '../../SingleHomeRightArea';
-import { dappService } from '@/core/services';
+import { ensureDappServiceReady, patchDappsSync } from '@/core/serviceApi/dapp';
 import { CHAINS_ENUM } from '@debank/common';
 import { findChain } from '@/utils/chain';
 import RcExpandCC from '@/assets/icons/home/defi-expand.svg';
 import { isBlacklistMethod, isWhitelistSpender } from '../DappActions/hook';
-import { IProtocolItem, IProtocolPortfolio } from '@/store/protocols';
+import type { IProtocolItem, IProtocolPortfolio } from '@/store/protocols';
 import { formatUsdValue } from '@/utils/number';
 import useProtocols from '@/store/protocols';
 import { Text } from '@/components/Typography';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 
 type SectionListItem = {
   data: IProtocolPortfolio[];
@@ -62,33 +65,55 @@ export const FullDefiRenderItem = ({
     return isAppChain(data?.chain || '');
   }, [data?.chain]);
 
-  const updateSpecificProtocol = useProtocols(
-    state => state.updateSpecificProtocol,
-  );
+  const updateSpecificProtocol = useProtocols.getState().updateSpecificProtocol;
 
   const { openTab } = useBrowser();
 
-  const handleOpenSite = useCallback(() => {
+  const { navigation } = useSafeSetNavigationOptions();
+  const handleOpenSite = useCallback(async () => {
     if (data?.site_url) {
-      openTab(data?.site_url);
-      const origin = safeGetOrigin(data?.site_url);
-      const chain = findChain({ serverId: data.chain });
-      dappService.patchDapps({
-        [origin]: {
-          currentAccount: account,
-          chainId: isFromAppChain ? undefined : chain?.enum || CHAINS_ENUM.ETH,
-          isDapp: true,
-        },
-      });
-      if (origin) {
-        matomoRequestEvent({
-          category: 'Websites Usage',
-          action: 'Website_Visit_Defi Detail',
-          label: origin,
+      if (data?.id === 'hyperliquid' && account) {
+        await navigateToPreferredPerps({
+          account,
+          navigation,
+          source: 'defi-protocol-site',
         });
+      } else {
+        const origin = safeGetOrigin(data?.site_url);
+        const chain = findChain({ serverId: data.chain });
+        try {
+          await ensureDappServiceReady();
+          patchDappsSync({
+            [origin]: {
+              currentAccount: account,
+              chainId: isFromAppChain
+                ? undefined
+                : chain?.enum || CHAINS_ENUM.ETH,
+              isDapp: true,
+            },
+          });
+        } catch (error) {
+          console.error('[FullDefiRenderItem] persist dapp failed', error);
+        }
+        openTab(data?.site_url);
+        if (origin) {
+          matomoRequestEvent({
+            category: 'Websites Usage',
+            action: 'Website_Visit_Defi Detail',
+            label: origin,
+          });
+        }
       }
     }
-  }, [account, data.chain, data?.site_url, isFromAppChain, openTab]);
+  }, [
+    account,
+    data.chain,
+    data?.site_url,
+    data?.id,
+    isFromAppChain,
+    openTab,
+    navigation,
+  ]);
 
   const sectionsMultiProject = useMemo(() => {
     if (!account) {
@@ -212,7 +237,7 @@ export const FullDefiRenderItem = ({
   ]);
 
   const portfolios = useMemo(() => {
-    return data._portfolios.sort((a, b) => b.netWorth - a.netWorth) || [];
+    return [...data._portfolios].sort((a, b) => b.netWorth - a.netWorth);
   }, [data]);
 
   if (!data || !account) {
@@ -338,30 +363,6 @@ export const FullDefiRenderItem = ({
 };
 
 const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
-  scrollContainer: {
-    flex: 1,
-    width: '100%',
-    marginTop: 8,
-    // backgroundColor: colors2024['neutral-bg-4'],
-  },
-  backButtonStyle: {
-    // width: 56,
-    // height: 56,
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginLeft: -16,
-    paddingLeft: 16,
-  },
-  projectHeaderBalance: {
-    color: colors2024['neutral-secondary'],
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'left',
-    marginLeft: 25,
-    marginBottom: 7,
-  },
   projectHeaderNetWorth: {
     color: colors2024['neutral-title-1'],
     fontSize: 17,
@@ -433,7 +434,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-3'],
-    marginHorizontal: 16,
+    marginHorizontal: 12,
     borderRadius: 16,
     paddingTop: 14,
     paddingBottom: 14,
@@ -446,45 +447,15 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     paddingHorizontal: 12,
     paddingTop: 12,
   },
-  footer: {
-    width: '100%',
-    paddingBottom: 56,
-    paddingHorizontal: 16,
-  },
-  appChainHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    paddingVertical: 6,
-    backgroundColor: colors2024['neutral-bg-5'],
-    marginHorizontal: 16,
-    borderRadius: 6,
-    marginBottom: 20,
-  },
-  appChainHeaderText: {
-    color: colors2024['neutral-title-1'],
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-  },
   innerProtocolContainer: {
     position: 'absolute',
     top: -12,
     right: 0,
   },
-  gradientBg: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    borderRadius: 16,
-    right: 0,
-    height: 82,
-  },
   protocolActionsList: {
     display: 'flex',
     flexDirection: 'row',
+    justifyContent: 'flex-end',
     gap: 4,
   },
   protocolActionsItemWrapper: {

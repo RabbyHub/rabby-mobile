@@ -57,10 +57,11 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-    borderRadius: 16,
+    backgroundColor: 'transparent',
+    //backgroundColor: isLight
+    //  ? colors2024['neutral-bg-1']
+    //  : colors2024['neutral-bg-2'],
+    //borderRadius: 16,
     marginHorizontal: 16,
   },
   empty: {
@@ -76,10 +77,4 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     lineHeight: 20,
     fontWeight: '400',
   },
-  desc: {
-    color: colors['neutral-body'],
-    fontSize: 14,
-    lineHeight: 17,
-  },
-  image: {},
 }));

@@ -9,15 +9,15 @@ import React, {
   useState,
 } from 'react';
 
-import { ChainId, InterestRate } from '@aave/contract-helpers';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
-import { OptimalRate } from '@paraswap/sdk';
+import type { ChainId } from '@aave/contract-helpers';
+import { InterestRate } from '@aave/contract-helpers';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { OptimalRate } from '@paraswap/sdk';
 import { last, noop } from 'lodash';
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { apiProvider } from '@/core/apis';
 import { useTheme2024 } from '@/hooks/theme';
@@ -26,7 +26,7 @@ import { Button } from '@/components2024/Button';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { createGetStyles2024 } from '@/utils/styles';
 import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
-import { transactionHistoryService } from '@/core/services';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
@@ -50,7 +50,6 @@ import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { normalizeBN, valueToBigNumber } from '@aave/math-utils';
 import { approveToken } from '@/core/apis/approvals';
 import { getERC20Allowance } from '@/core/apis/provider';
-import { ETH_USDT_CONTRACT } from '@/constant/swap';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -70,7 +69,7 @@ import {
   APP_CODE_LENDING_REPAY_WITH_COLLATERAL,
   LIQUIDATION_SAFETY_THRESHOLD,
 } from '../../../utils/constant';
-import { ParaswapRatesType, SwappableToken } from '../../../types/swap';
+import type { ParaswapRatesType, SwappableToken } from '../../../types/swap';
 import { getParaswap } from '../../../config/paraswap';
 import { getParaswapSellRates } from '../DebtSwap/paraswap';
 import {
@@ -97,11 +96,13 @@ import {
 import BridgeSwitchBtn from '@/screens/Bridge/components/BridgeSwitchBtn';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
-import { ethers, PopulatedTransaction } from 'ethers';
+import type { PopulatedTransaction } from 'ethers';
+import { ethers } from 'ethers';
 import { DEFAULT_REPAY_WITH_COLLATERAL_SLIPPAGE } from './utils';
 import RepayWithCollateralOverview from './Overview';
 import { Text } from '@/components/Typography';
 import { stats } from '@/utils/stats';
+import { hasInsufficientSwapLiquidity } from '../../../utils/swap';
 
 interface RepayWithCollateralProps {
   repayToken: SwappableToken;
@@ -109,12 +110,6 @@ interface RepayWithCollateralProps {
   onClose?: () => void;
   source?: string;
 }
-
-const BOTTOM_SIZE = {
-  BUTTON: 12 + BOTTOM_BUTTON_SINGLE_HEIGHT,
-  CHECKBOX: 40,
-  TIPS: 80,
-};
 
 export default function RepayWithCollateral({
   repayToken,
@@ -124,15 +119,11 @@ export default function RepayWithCollateral({
 }: RepayWithCollateralProps) {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const { bottom } = useSafeAreaInsets();
-  const bottomButtonAreaHeight =
-    BOTTOM_SIZE.BUTTON + getBottomButtonBottomOffset(bottom);
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
 
-  const { chainEnum, chainInfo, selectedMarketData, isMainnet } =
-    useSelectedMarket();
+  const { chainEnum, chainInfo, selectedMarketData } = useSelectedMarket();
   const { pools } = usePoolDataProviderContract();
   const { refresh } = useRefreshHistoryId();
 
@@ -159,7 +150,11 @@ export default function RepayWithCollateral({
     maxInputAmountWithSlippage?: string;
   }>({});
 
-  const [currentTxs, setCurrentTxs] = useState<Tx[]>([]);
+  const [builtTxs, setBuiltTxs] = useState<{
+    txs: Tx[];
+    build: () => Promise<Tx[]>;
+    slippage: string;
+  } | null>(null);
 
   const lastQuoteParamsRef = useRef<{
     rawAmount: string;
@@ -454,6 +449,18 @@ export default function RepayWithCollateral({
       repayAmount: debouncedRepayAmount,
     });
 
+  const useFlashLoan =
+    currentHF !== '-1' &&
+    valueToBigNumber(currentHF || 0)
+      .minus(valueToBigNumber(afterSwapInfo?.hfEffectOfFromAmount || 0))
+      .lt(LIQUIDATION_SAFETY_THRESHOLD);
+  const isInsufficientLiquidity = hasInsufficientSwapLiquidity({
+    reserve: collateralReserve,
+    amount: collateralAmountAfterSlippage,
+  });
+  const isFlashLoanDisabled =
+    useFlashLoan && !!collateralReserve && !collateralReserve.flashLoanEnabled;
+
   const buildRepayWithCollateralTxs = useCallback(async (): Promise<Tx[]> => {
     if (
       !currentAccount ||
@@ -466,7 +473,9 @@ export default function RepayWithCollateral({
       !collateralReserve ||
       !pools?.pool ||
       !chainInfo ||
-      collateralNotEnough
+      collateralNotEnough ||
+      isInsufficientLiquidity ||
+      isFlashLoanDisabled
     ) {
       return [];
     }
@@ -529,12 +538,6 @@ export default function RepayWithCollateral({
       swapRate.inputAmount ||
       swapRate.optimalRateData.srcAmount ||
       '0';
-    const useFlashLoan =
-      currentHF !== '-1' &&
-      valueToBigNumber(currentHF || 0)
-        .minus(valueToBigNumber(afterSwapInfo?.hfEffectOfFromAmount || 0))
-        .lt(LIQUIDATION_SAFETY_THRESHOLD);
-
     const repayWithCollateralParams = {
       fromUnderlyingAsset: selectedCollateralToken.underlyingAddress,
       fromATokenAddress: collateralReserve.aTokenAddress,
@@ -586,39 +589,6 @@ export default function RepayWithCollateral({
       );
 
       if (actualNeedApprove) {
-        let shouldTwoStepApprove = false;
-        if (
-          isMainnet &&
-          isSameAddress(
-            selectedCollateralToken.underlyingAddress,
-            ETH_USDT_CONTRACT,
-          ) &&
-          Number(allowance) !== 0 &&
-          !new BigNumber(allowance || '0').gte(requiredAmount)
-        ) {
-          shouldTwoStepApprove = true;
-        }
-
-        // 如果需要两步approve，先执行0额度approve
-        if (shouldTwoStepApprove) {
-          const zeroApproveResult = await approveToken({
-            chainServerId: chainInfo.serverId,
-            id: aTokenAddress,
-            spender: selectedMarketData.addresses.REPAY_WITH_COLLATERAL_ADAPTER,
-            amount: 0,
-            account: currentAccount,
-            isBuild: true,
-          });
-
-          const zeroApproveTxBuilt = {
-            ...zeroApproveResult.params[0],
-            from: zeroApproveResult.params[0].from || currentAccount.address,
-            value: zeroApproveResult.params[0].value ?? '0x0',
-            chainId: zeroApproveResult.params[0].chainId || chainInfo.id,
-          };
-
-          txs.push(zeroApproveTxBuilt);
-        }
         const approveResult = await approveToken({
           chainServerId: chainInfo.serverId,
           id: aTokenAddress,
@@ -692,16 +662,43 @@ export default function RepayWithCollateral({
     repayToken.underlyingAddress,
     debtBalance,
     collateralAmount,
-    isMainnet,
-    currentHF,
-    afterSwapInfo?.hfEffectOfFromAmount,
+    useFlashLoan,
+    isInsufficientLiquidity,
+    isFlashLoanDisabled,
+  ]);
+
+  // Only expose transactions built for the current inputs and quote.
+  const currentTxs = useMemo(() => {
+    if (
+      builtTxs?.build !== buildRepayWithCollateralTxs ||
+      builtTxs.slippage !== displaySlippage ||
+      repayAmount !== debouncedRepayAmount ||
+      !new BigNumber(swapRate.outputAmount || 0).eq(
+        normalizeBN(repayAmount || '0', -1 * repayToken.decimals),
+      ) ||
+      isQuoteLoading ||
+      noQuote
+    ) {
+      return [];
+    }
+    return builtTxs.txs;
+  }, [
+    builtTxs,
+    buildRepayWithCollateralTxs,
+    displaySlippage,
+    repayAmount,
+    debouncedRepayAmount,
+    swapRate.outputAmount,
+    repayToken.decimals,
+    isQuoteLoading,
+    noQuote,
   ]);
 
   useEffect(() => {
     let cancelled = false;
     const buildTxs = async () => {
       if (
-        !currentAccount ||
+        !currentAccount?.address ||
         !selectedCollateralToken ||
         !quote ||
         !swapRate.optimalRateData ||
@@ -711,10 +708,12 @@ export default function RepayWithCollateral({
         !collateralReserve ||
         !debouncedRepayAmount ||
         new BigNumber(debouncedRepayAmount).lte(0) ||
-        collateralNotEnough
+        collateralNotEnough ||
+        isInsufficientLiquidity ||
+        isFlashLoanDisabled
       ) {
         if (!cancelled) {
-          setCurrentTxs([]);
+          setBuiltTxs(null);
         }
         return;
       }
@@ -722,11 +721,15 @@ export default function RepayWithCollateral({
       try {
         const txs = await buildRepayWithCollateralTxs();
         if (!cancelled) {
-          setCurrentTxs(txs.filter(tx => !!tx));
+          setBuiltTxs({
+            txs: txs.filter(tx => !!tx),
+            build: buildRepayWithCollateralTxs,
+            slippage: displaySlippage,
+          });
         }
       } catch (error) {
         if (!cancelled) {
-          setCurrentTxs([]);
+          setBuiltTxs(null);
         }
       }
     };
@@ -736,7 +739,8 @@ export default function RepayWithCollateral({
     };
   }, [
     buildRepayWithCollateralTxs,
-    currentAccount,
+    displaySlippage,
+    currentAccount?.address,
     collateralReserve,
     pools?.provider,
     quote,
@@ -746,14 +750,18 @@ export default function RepayWithCollateral({
     selectedCollateralToken,
     debouncedRepayAmount,
     collateralNotEnough,
+    isInsufficientLiquidity,
+    isFlashLoanDisabled,
   ]);
 
   useEffect(() => {
     if (
-      !currentAccount ||
+      !currentAccount?.address ||
       !canShowDirectSubmit ||
       !currentTxs?.length ||
-      collateralNotEnough
+      collateralNotEnough ||
+      isInsufficientLiquidity ||
+      isFlashLoanDisabled
     ) {
       closeMiniSigner();
       return;
@@ -767,8 +775,10 @@ export default function RepayWithCollateral({
     canShowDirectSubmit,
     closeMiniSigner,
     collateralNotEnough,
-    currentAccount,
+    currentAccount?.address,
     currentTxs,
+    isFlashLoanDisabled,
+    isInsufficientLiquidity,
     prefetchMiniSigner,
   ]);
 
@@ -779,6 +789,16 @@ export default function RepayWithCollateral({
         !debouncedRepayAmount ||
         !currentAccount
       ) {
+        return;
+      }
+      if (isFlashLoanDisabled) {
+        toast.error(t('page.Lending.repayWithCollateral.flashLoanDisabled'));
+        return;
+      }
+      if (isInsufficientLiquidity) {
+        toast.error(
+          t('page.Lending.repayWithCollateral.insufficientLiquidity'),
+        );
         return;
       }
 
@@ -840,7 +860,7 @@ export default function RepayWithCollateral({
 
         const txId = last(results);
         if (txId && chainInfo?.id) {
-          transactionHistoryService.setCustomTxItem(
+          await transactionHistoryServiceApi.setCustomTxItem(
             currentAccount.address,
             chainInfo?.id,
             txId,
@@ -897,6 +917,8 @@ export default function RepayWithCollateral({
       refresh,
       repayToken.usdPrice,
       source,
+      isFlashLoanDisabled,
+      isInsufficientLiquidity,
     ],
   );
 
@@ -940,11 +962,52 @@ export default function RepayWithCollateral({
   const buttonDisabled = useMemo(() => {
     return (
       !canRepay ||
+      !currentTxs.length ||
       (isRisky && !riskChecked) ||
       isLiquidatable ||
-      collateralNotEnough
+      collateralNotEnough ||
+      isInsufficientLiquidity ||
+      isFlashLoanDisabled
     );
-  }, [canRepay, collateralNotEnough, isLiquidatable, isRisky, riskChecked]);
+  }, [
+    canRepay,
+    currentTxs.length,
+    collateralNotEnough,
+    isFlashLoanDisabled,
+    isInsufficientLiquidity,
+    isLiquidatable,
+    isRisky,
+    riskChecked,
+  ]);
+
+  const activeBottomWarning = useMemo(() => {
+    const warningConfigs = [
+      {
+        enabled: isFlashLoanDisabled,
+        text: t('page.Lending.repayWithCollateral.flashLoanDisabled'),
+      },
+      {
+        enabled: isInsufficientLiquidity,
+        text: t('page.Lending.repayWithCollateral.insufficientLiquidity'),
+      },
+      {
+        enabled: collateralNotEnough,
+        text: t('page.Lending.repayWithCollateral.collateralNotEnough'),
+      },
+      {
+        enabled: isLiquidatable,
+        text: t('page.Lending.debtSwap.lpDangerWarning'),
+      },
+    ];
+
+    return warningConfigs.find(item => item.enabled) || null;
+  }, [
+    collateralNotEnough,
+    isFlashLoanDisabled,
+    isInsufficientLiquidity,
+    isLiquidatable,
+    t,
+  ]);
 
   return (
     <SignatureInstanceProvider instance={instance}>
@@ -1165,27 +1228,11 @@ export default function RepayWithCollateral({
         )}
       </BottomSheetScrollView>
 
-      <View
-        style={[
-          styles.buttonContainer,
-          {
-            height:
-              bottomButtonAreaHeight +
-              (isLiquidatable
-                ? BOTTOM_SIZE.TIPS
-                : isRisky
-                ? BOTTOM_SIZE.CHECKBOX
-                : 0),
-          },
-        ]}>
-        {isLiquidatable || collateralNotEnough ? (
+      <View style={[styles.buttonContainer]}>
+        {activeBottomWarning ? (
           <View style={styles.riskContainer}>
             <Text style={styles.dangerWarningText}>
-              {collateralNotEnough
-                ? t('page.Lending.repayWithCollateral.collateralNotEnough')
-                : isLiquidatable
-                ? t('page.Lending.debtSwap.lpDangerWarning')
-                : ''}
+              {activeBottomWarning.text}
             </Text>
           </View>
         ) : isRisky ? (
@@ -1212,9 +1259,7 @@ export default function RepayWithCollateral({
             onFinished={() => handleRepay()}
             disabled={buttonDisabled || !!ctx?.disabledProcess}
             type="aave"
-            iconColor={
-              isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
-            }
+            iconColor={colors2024['neutral-contrast']}
             syncUnlockTime
             account={currentAccount}
             showHardWalletProcess
@@ -1250,27 +1295,6 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     //paddingHorizontal: 25,
     paddingBottom: 220,
   },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
-  },
-  titleText: {
-    fontSize: 20,
-    fontWeight: '900',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-title-1'],
-    textAlign: 'center',
-  },
-  sectionTitle: {
-    fontSize: 17,
-    lineHeight: 22,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-title-1'],
-    marginBottom: 12,
-    paddingLeft: 4,
-  },
   content: {
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 16,
@@ -1298,22 +1322,6 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-body'],
-  },
-  sliderContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  slider: {
-    width: 100,
-  },
-  sliderValue: {
-    //width: 40,
-    textAlign: 'right',
-    color: colors2024['brand-default'],
-    fontSize: 13,
-    fontWeight: '500',
-    fontFamily: 'SF Pro',
   },
   tokenBody: {
     flexDirection: 'row',
@@ -1453,10 +1461,6 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     top: '50%',
     transform: [{ translateX: -18 }, { translateY: -18 }],
   },
-  arrowText: {
-    fontSize: 22,
-    color: colors2024['neutral-secondary'],
-  },
   gasPreContainer: {
     paddingHorizontal: 8,
     marginTop: 12,
@@ -1465,9 +1469,8 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   buttonContainer: {
     position: 'absolute',
     bottom: 0,
-    height:
-      BOTTOM_SIZE.BUTTON + getBottomButtonBottomOffset(safeAreaInsets.bottom),
     paddingTop: 12,
+    paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     width: '100%',
     display: 'flex',
     flexDirection: 'column',
@@ -1488,15 +1491,18 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 8,
     gap: 8,
   },
   warningText: {
+    flexShrink: 1,
     fontSize: 12,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
   },
   dangerWarningText: {
+    flexShrink: 1,
     fontSize: 13,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
@@ -1531,13 +1537,6 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     lineHeight: 20,
     color: colors2024['orange-default'],
     marginRight: 4,
-  },
-  priceImpactTooltipText: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-title-1'],
   },
   errorText: {
     fontSize: 14,

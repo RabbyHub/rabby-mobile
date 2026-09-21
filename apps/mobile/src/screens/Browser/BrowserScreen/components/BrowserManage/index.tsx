@@ -304,10 +304,8 @@ export function BrowserManage(): JSX.Element {
               });
             }
           }}
-          onOpenURL={url => {
-            openTab(url, {
-              isDapp: true,
-            });
+          onOpenURL={(url, opts) => {
+            openTab(url, { ...opts, isDapp: true });
           }}
         />
       ) : null}

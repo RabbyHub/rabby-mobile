@@ -134,7 +134,7 @@ export function assetCanBeBorrowedByUser(
   eModes: FormattedReserveEMode[],
 ) {
   const isInEmode = user.userEmodeCategoryId !== 0;
-  if (!borrowingEnabled || !isActive || isFrozen || isPaused) {
+  if (!isActive || isFrozen || isPaused) {
     return false;
   }
   if (isInEmode) {
@@ -149,7 +149,7 @@ export function assetCanBeBorrowedByUser(
   if (user?.isInIsolationMode && !borrowableInIsolation) {
     return false;
   }
-  return true;
+  return borrowingEnabled;
 }
 
 export const getBorrowUsage = (asset: DisplayPoolReserveInfo) => {

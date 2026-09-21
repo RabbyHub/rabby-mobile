@@ -1,23 +1,18 @@
 import * as Sentry from '@sentry/react-native';
 import { toast } from '@/components2024/Toast';
-import {
-  notificationService,
-  preferenceService,
-  transactionHistoryService,
-} from '@/core/services/shared';
-import { Account } from '@/core/services/preference';
+import { notificationServiceApi } from '@/core/serviceApi/notification';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import type { Account } from '@/core/startupServices/preference';
 import { useApproval } from '@/hooks/useApproval';
 import { APPROVAL_STATUS_MAP, eventBus, EVENTS } from '@/utils/events';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ApprovalPopupContainer,
-  Props as ApprovalPopupContainerProps,
-} from '../Popup/ApprovalPopupContainer';
+import type { Props as ApprovalPopupContainerProps } from '../Popup/ApprovalPopupContainer';
+import { ApprovalPopupContainer } from '../Popup/ApprovalPopupContainer';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { StyleSheet, View } from 'react-native';
 import TrezorSVG from '@/assets/icons/wallet/trezor.svg';
-import { AppColorsVariants } from '@/constant/theme';
+import type { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { stats } from '@/utils/stats';
 import {
@@ -121,7 +116,7 @@ export const TrezorHardwareWaiting = ({
       return;
     }
     setConnectStatus(APPROVAL_STATUS_MAP.WAITING);
-    notificationService.callCurrentRequestDeferFn();
+    await notificationServiceApi.callCurrentRequestDeferFn();
     if (showToast) {
       toast.success(t('page.signFooterBar.ledger.resent'));
     }
@@ -139,7 +134,7 @@ export const TrezorHardwareWaiting = ({
     if (!isSignText) {
       const signingTxId = approval.data.params.signingTxId;
       if (signingTxId) {
-        const signingTx = await transactionHistoryService.getSigningTx(
+        const signingTx = await transactionHistoryServiceApi.getSigningTx(
           signingTxId,
         );
 

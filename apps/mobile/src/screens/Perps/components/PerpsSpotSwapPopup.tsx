@@ -4,7 +4,7 @@ import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { PerpsQuoteAsset } from '@/constant/perps';
+import type { PerpsQuoteAsset } from '@/constant/perps';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
 import { useUsdInput } from '@/hooks/useUsdInput';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
@@ -16,6 +16,9 @@ import {
   Platform,
   Keyboard,
   Pressable,
+  type StyleProp,
+  type TextStyle,
+  type TextInputProps,
 } from 'react-native';
 import { Text } from '@/components/Typography';
 import { Tip } from '@/components/Tip';
@@ -34,6 +37,12 @@ import {
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
+import {
+  PERPS_SPOT_SWAP_COINS,
+  resolvePerpsSpotSwapFromOptions,
+  resolvePerpsSpotSwapPairAfterSelection,
+  resolvePerpsSpotSwapPreset,
+} from './perpsSpotSwapPreset';
 
 const COIN_ICONS: Record<string, (size: number) => React.ReactNode> = {
   USDC: (s: number) => <RcIconUSDC width={s} height={s} />,
@@ -44,7 +53,7 @@ const COIN_ICONS: Record<string, (size: number) => React.ReactNode> = {
 
 type SpotStableCoin = 'USDT' | 'USDH' | 'USDE';
 
-const ALL_COINS: string[] = ['USDC', 'USDT', 'USDH', 'USDE'];
+const ALL_COINS = PERPS_SPOT_SWAP_COINS;
 const STABLECOIN_SLIPPAGE = 0.01;
 
 const isSpotStableCoin = (coin: string): coin is SpotStableCoin =>
@@ -59,6 +68,10 @@ export const SPOT_STABLE_COIN_NAME: Record<SpotStableCoin, string> = {
 
 export const PerpsSpotSwapPopup: React.FC<{
   visible?: boolean;
+  inputTextStyle?: StyleProp<TextStyle>;
+  inputColorProps?: Pick<TextInputProps, 'cursorColor' | 'selectionColor'>;
+  tooltipTextStyle?: StyleProp<TextStyle>;
+  sourceAsset?: PerpsQuoteAsset;
   targetAsset?: PerpsQuoteAsset;
   disableSwitch?: boolean;
   onClose(): void;
@@ -72,6 +85,10 @@ export const PerpsSpotSwapPopup: React.FC<{
   }): Promise<unknown>;
 }> = ({
   visible,
+  inputTextStyle,
+  inputColorProps,
+  tooltipTextStyle,
+  sourceAsset,
   targetAsset,
   disableSwitch,
   onClose,
@@ -87,8 +104,8 @@ export const PerpsSpotSwapPopup: React.FC<{
   const [tipVisible, setTipVisible] = useState(false);
   const hideTip = useCallback(() => setTipVisible(false), []);
 
-  const [fromCoin, setFromCoin] = useState<string>('USDC');
-  const [toCoin, setToCoin] = useState<string>(targetAsset || 'USDT');
+  const [fromCoin, setFromCoin] = useState<PerpsQuoteAsset>('USDC');
+  const [toCoin, setToCoin] = useState<PerpsQuoteAsset>(targetAsset || 'USDT');
   const [showFromDropdown, setShowFromDropdown] = useState(false);
   const [showToDropdown, setShowToDropdown] = useState(false);
 
@@ -137,10 +154,10 @@ export const PerpsSpotSwapPopup: React.FC<{
       setAmount('');
       fetchMidPrices();
 
-      if (targetAsset) {
-        // From detail page: fixed target
-        setFromCoin('USDC');
-        setToCoin(targetAsset);
+      const preset = resolvePerpsSpotSwapPreset({ sourceAsset, targetAsset });
+      if (preset) {
+        setFromCoin(preset.fromCoin);
+        setToCoin(preset.toCoin);
       } else {
         // USDC is the only hub — either from=USDC (buy) or to=USDC (sell).
         const top1 = sortedByBalance[0];
@@ -165,7 +182,7 @@ export const PerpsSpotSwapPopup: React.FC<{
       modalRef.current?.dismiss();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, targetAsset]);
+  }, [visible, sourceAsset, targetAsset]);
 
   const fromBalance = useMemo(() => {
     return getSpotBalance(fromCoin);
@@ -176,33 +193,40 @@ export const PerpsSpotSwapPopup: React.FC<{
   // From: depends on Swap To selection
   // To=USDC → From can be any non-USDC; To=non-USDC → From must be USDC
   const fromOptions = useMemo(() => {
-    if (toCoin === 'USDC') {
-      return ALL_COINS.filter(c => c !== 'USDC');
-    }
-    return ['USDC'];
-  }, [toCoin]);
+    return resolvePerpsSpotSwapFromOptions({
+      editableSource: !!sourceAsset && !disableSwitch,
+      toCoin,
+    });
+  }, [disableSwitch, sourceAsset, toCoin]);
 
-  const handleFromChange = useCallback((coin: string) => {
-    setFromCoin(coin);
-    setShowFromDropdown(false);
-  }, []);
+  const handleFromChange = useCallback(
+    (coin: PerpsQuoteAsset) => {
+      const pair = resolvePerpsSpotSwapPairAfterSelection({
+        coin,
+        currentFromCoin: fromCoin,
+        currentToCoin: toCoin,
+        side: 'from',
+      });
+      setFromCoin(pair.fromCoin);
+      setToCoin(pair.toCoin);
+      setShowFromDropdown(false);
+    },
+    [fromCoin, toCoin],
+  );
 
   const handleToChange = useCallback(
-    (coin: string) => {
-      setToCoin(coin);
+    (coin: PerpsQuoteAsset) => {
+      const pair = resolvePerpsSpotSwapPairAfterSelection({
+        coin,
+        currentFromCoin: fromCoin,
+        currentToCoin: toCoin,
+        side: 'to',
+      });
+      setFromCoin(pair.fromCoin);
+      setToCoin(pair.toCoin);
       setShowToDropdown(false);
-      // Auto-adjust From based on new To
-      if (coin === 'USDC') {
-        // To=USDC, From should be non-USDC; keep current if valid, else pick first non-USDC
-        if (fromCoin === 'USDC') {
-          setFromCoin('USDT');
-        }
-      } else {
-        // To=non-USDC, From must be USDC
-        setFromCoin('USDC');
-      }
     },
-    [fromCoin],
+    [fromCoin, toCoin],
   );
 
   const closeAllDropdowns = useCallback(() => {
@@ -364,9 +388,9 @@ export const PerpsSpotSwapPopup: React.FC<{
 
   // Render dropdown with all coins, disabled ones greyed out
   const renderDropdown = (
-    selected: string,
-    selectableCoins: string[],
-    onSelect: (c: string) => void,
+    selected: PerpsQuoteAsset,
+    selectableCoins: readonly PerpsQuoteAsset[],
+    onSelect: (coin: PerpsQuoteAsset) => void,
   ) => (
     <View style={styles.dropdown}>
       {sortedByBalance.map(coin => {
@@ -473,9 +497,12 @@ export const PerpsSpotSwapPopup: React.FC<{
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <View style={styles.inputWrapper}>
                   <BottomSheetTextInput
+                    cursorColor={inputColorProps?.cursorColor}
+                    selectionColor={inputColorProps?.selectionColor}
                     keyboardType="numeric"
                     style={[
                       styles.input,
+                      inputTextStyle,
                       {
                         color: validation.error
                           ? colors2024['red-default']
@@ -553,7 +580,11 @@ export const PerpsSpotSwapPopup: React.FC<{
                     onClose={hideTip}
                     content={
                       <View style={{ width: 280, padding: 8 }}>
-                        <Text style={{ fontSize: 12, color: '#fff' }}>
+                        <Text
+                          style={[
+                            { fontSize: 12, color: '#fff' },
+                            tooltipTextStyle,
+                          ]}>
                           {t('page.perps.PerpsSpotSwap.estReceiveTooltip')}
                         </Text>
                       </View>

@@ -1,35 +1,37 @@
-import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
+import type { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { RootNames } from '@/constant/layout';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { useAlias2 } from '@/hooks/alias';
 import { resetNavigationOnTopOfHome } from '@/hooks/navigation';
 import {
   useAddressBalance,
   useIsLoadingBalance,
 } from '@/hooks/useCurrentBalance';
-import {
-  makeDefaultSelectData,
-  useAddressCurveSelectData,
-  useIsLoadingCurve,
-} from '@/hooks/useCurve';
+import type { makeDefaultSelectData } from '@/hooks/useCurve';
+import { useAddressCurveSelectData, useIsLoadingCurve } from '@/hooks/useCurve';
 import { addressCurve24hStore } from '@/store/curve24h';
 import {
   balance24hStore,
   useAddress24hChangeFlowState,
 } from '@/store/balance24h';
-import { computeCurveBalanceChange } from '@/store/curveShared';
+import { buildPortfolioAddressChange } from '@/store/homePortfolio/consistency';
 import { navigateDeprecated } from '@/utils/navigation';
 import { ellipsisAddress } from '@/utils/address';
+import {
+  beginFeatureActivation,
+  markFeatureActivation,
+} from '@/core/utils/featureActivationDiagnostics';
 import { useEffect, useMemo, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 type SingleHomeState = {
   currentAccount: Account | null;
   selectedChain: ChainListItem | null;
   foldChart: boolean;
-  reachTop: boolean;
 };
 
 function isSameSingleHomeAccount(prev: Account | null, next: Account) {
@@ -70,7 +72,6 @@ function getDefault(): SingleHomeState {
     currentAccount: null,
     selectedChain: null,
     foldChart: true,
-    reachTop: false,
   };
 }
 const singleHomeState = zCreate<SingleHomeState>(() => getDefault());
@@ -79,7 +80,6 @@ function presetSingHomeAccount(account: Account) {
   singleHomeState.setState(prev => {
     const nextState = {
       ...getDefault(),
-      reachTop: prev.reachTop,
       currentAccount: account,
     };
 
@@ -95,26 +95,43 @@ function presetSingHomeAccount(account: Account) {
   });
 }
 export const apisSingleHome = {
-  navigateToSingleHome: (account: Account, options?: { replace?: boolean }) => {
+  navigateToSingleHome: (
+    account: Account,
+    options?: { replace?: boolean; activationCycleId?: number },
+  ) => {
+    const cycleId =
+      options?.activationCycleId ||
+      beginFeatureActivation(
+        'single-address',
+        'single_address_navigation_requested',
+      );
     presetSingHomeAccount(account);
-    requestAnimationFrame(() => {
-      const { replace } = options || {};
-      if (replace) {
-        resetNavigationOnTopOfHome(RootNames.SingleAddressStack, {
-          screen: RootNames.SingleAddressHome,
-          params: {
-            account: account,
-          },
-        });
-      } else {
-        navigateDeprecated(RootNames.SingleAddressStack, {
-          screen: RootNames.SingleAddressHome,
-          params: {
-            account: account,
-          },
-        });
-      }
+    markFeatureActivation('single-address', 'state-prepared', {
+      cycleId,
+      reason: 'single_home_account_preset',
     });
+    const { replace } = options || {};
+    markFeatureActivation('single-address', 'navigation-dispatched', {
+      cycleId,
+      reason: replace
+        ? 'replace_after_state_preset'
+        : 'navigate_after_state_preset',
+    });
+    if (replace) {
+      resetNavigationOnTopOfHome(RootNames.SingleAddressStack, {
+        screen: RootNames.SingleAddressHome,
+        params: {
+          account: account,
+        },
+      });
+    } else {
+      navigateDeprecated(RootNames.SingleAddressStack, {
+        screen: RootNames.SingleAddressHome,
+        params: {
+          account: account,
+        },
+      });
+    }
   },
   clearCurrentAccount: () => {
     singleHomeState.setState(prev => ({
@@ -154,35 +171,28 @@ export const apisSingleHome = {
       return { ...prev, foldChart: newVal };
     });
   },
-  setReachTop(valOrFunc: UpdaterOrPartials<boolean>) {
-    singleHomeState.setState(prev => {
-      const { newVal, changed } = resolveValFromUpdater(
-        prev.reachTop,
-        valOrFunc,
-        {
-          strict: true,
-        },
-      );
-      if (!changed) {
-        return prev;
-      }
-      return { ...prev, reachTop: newVal };
-    });
-  },
 };
 
 export function useSingleHomeAccount() {
   return {
-    currentAccount: singleHomeState(s => s.currentAccount),
+    currentAccount: useActivityStore(
+      singleHomeState,
+      state => state.currentAccount,
+      Object.is,
+      { storeLabel: 'single-home-state' },
+    ),
   };
 }
 
 export function useSingleHomeAccountAlias() {
-  const { address, brandName } = singleHomeState(
+  const { address, brandName } = useActivityStore(
+    singleHomeState,
     useShallow(s => ({
       address: s.currentAccount?.address,
       brandName: s.currentAccount?.brandName,
     })),
+    Object.is,
+    { storeLabel: 'single-home-state' },
   );
   const { adderssAlias, isDefaultAlias } = useAlias2(address || '', {
     autoFetch: true,
@@ -201,11 +211,14 @@ export function useSingleHomeAccountAlias() {
 }
 
 export function useSingleHomeAddress() {
-  const { currentAddress, lcAddress } = singleHomeState(
+  const { currentAddress, lcAddress } = useActivityStore(
+    singleHomeState,
     useShallow(s => ({
       currentAddress: s.currentAccount?.address,
       lcAddress: s.currentAccount?.address.toLowerCase() || '',
     })),
+    Object.is,
+    { storeLabel: 'single-home-state' },
   );
 
   return { currentAddress, lcAddress };
@@ -213,25 +226,35 @@ export function useSingleHomeAddress() {
 
 export function useSingleHomeChain() {
   return {
-    selectedChain: singleHomeState(s => s.selectedChain?.chain),
+    selectedChain: useActivityStore(
+      singleHomeState,
+      state => state.selectedChain?.chain,
+      Object.is,
+      { storeLabel: 'single-home-state' },
+    ),
   };
 }
 
 export function useHomeFoldChart() {
   return {
-    isFoldChart: singleHomeState(s => s.foldChart),
-  };
-}
-
-export function useHomeReachTop() {
-  return {
-    reachTop: singleHomeState(s => s.reachTop),
+    isFoldChart: useActivityStore(
+      singleHomeState,
+      state => state.foldChart,
+      Object.is,
+      { storeLabel: 'single-home-state' },
+    ),
   };
 }
 
 export function useSingleHomeHasNoData() {
   const { lcAddress } = useSingleHomeAddress();
-  const curveList = addressCurve24hStore.useAddressCurve(lcAddress) || [];
+  const curveList =
+    useActivityStore(
+      addressCurve24hStore.useStore,
+      state => state.valueMap[lcAddress],
+      Object.is,
+      { storeLabel: 'single-home-curve' },
+    ) || [];
   const { isLoadingCurve } = useIsLoadingCurve(lcAddress);
   const hasNoData = !curveList.length && !isLoadingCurve;
 
@@ -241,7 +264,12 @@ export function useSingleHomeHasNoData() {
 export function useSingleHomeSelectData() {
   const { lcAddress } = useSingleHomeAddress();
   const { evmBalance, balance } = useAddressBalance(lcAddress);
-  const { balance24h } = balance24hStore.useAddress24hBalance(lcAddress);
+  const balance24h = useActivityStore(
+    balance24hStore.useStore,
+    state => state.valueMap[lcAddress],
+    Object.is,
+    { storeLabel: 'single-home-24h-balance' },
+  );
   const { isLoadingCurve } = useIsLoadingCurve(lcAddress);
   const selectData = useAddressCurveSelectData(lcAddress, {
     realtimeNetWorth: evmBalance,
@@ -260,17 +288,21 @@ export function useSingleHomeSelectData() {
       return selectData;
     }
 
-    const { assetsChange, changePercent } = computeCurveBalanceChange(
-      evmBalance,
-      balance24h.total_usd_value,
-    );
+    const change = buildPortfolioAddressChange({
+      currentEvmBalance: evmBalance,
+      previousEvmBalance: balance24h.total_usd_value,
+    });
+
+    if (!change) {
+      return selectData;
+    }
 
     return {
       ...selectData,
-      rawChange: assetsChange,
+      rawChange: change.rawChange,
       change: '',
-      changePercent,
-      isLoss: assetsChange < 0,
+      changePercent: change.changePercent,
+      isLoss: change.isLoss,
     };
   }, [balance24h?.total_usd_value, evmBalance, selectData]);
   const lastStableSelectDataRef = useRef(selectDataWithFallback);

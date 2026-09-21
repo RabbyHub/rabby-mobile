@@ -19,6 +19,7 @@ export const GasAccountDepositPopup: React.FC<{
   onDeposit?(): void;
   minDepositPrice?: number;
   disableL2Deposit?: boolean;
+  fallbackDirectSignToOpenUI?: boolean;
   /**
    * When provided, after the deposit tx is sent the form will poll
    * `openapi.getGasAccountBridgeStatus` and wait for the deposit to
@@ -37,6 +38,7 @@ export const GasAccountDepositPopup: React.FC<{
     onDeposit,
     minDepositPrice,
     disableL2Deposit: disableL2DepositProp,
+    fallbackDirectSignToOpenUI,
     onWaitDepositResult,
   } = props;
   const { styles, colors2024 } = useTheme2024({
@@ -95,6 +97,7 @@ export const GasAccountDepositPopup: React.FC<{
           onWaitDepositResult={onWaitDepositResult}
           minDepositPrice={minDepositPrice}
           disableL2Deposit={disableL2Deposit}
+          fallbackDirectSignToOpenUI={fallbackDirectSignToOpenUI}
         />
       ) : step === 'pay' ? (
         <BottomSheetScrollView key="pay" contentContainerStyle={styles.content}>

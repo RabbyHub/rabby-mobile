@@ -1,4 +1,3 @@
-/// <reference types="nativewind/types" />
 /// <reference path="./assets/assets.d.ts" />
 /// <reference path="./types/token.d.ts" />
 
@@ -13,6 +12,7 @@ declare module '@env' {
     DEV_SERVER_HOSTNAME?: string;
 
     RABBY_MOBILE_FE_SERVICE_URL?: string;
+    RABBY_MOBILE_WALLETCONNECT_PROJECT_ID?: string;
   };
 
   export = Env;
@@ -32,7 +32,6 @@ type RNViewProps = {
   style?: import('react').ComponentProps<
     typeof import('react-native').View
   >['style'];
-  className?: string;
   testID?: import('react').ComponentProps<
     typeof import('react-native').View
   >['testID'];
@@ -48,6 +47,7 @@ type RabbyDevToolsBridgeMethodName =
   | 'ping'
   | 'getHomePortfolioSnapshot'
   | 'getSingleHomeSnapshot'
+  | 'getPortfolioConsistencySnapshot'
   | 'openSendScreen'
   | 'getSendScreenSnapshot'
   | 'clearWhitelistData'
@@ -60,6 +60,7 @@ interface RabbyDevToolsBridge {
   ping(): unknown;
   getHomePortfolioSnapshot(): unknown;
   getSingleHomeSnapshot(): unknown;
+  getPortfolioConsistencySnapshot(): unknown;
   openSendScreen(input: unknown): unknown;
   getSendScreenSnapshot(): unknown;
   clearWhitelistData(): unknown;

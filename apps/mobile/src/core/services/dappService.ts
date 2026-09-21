@@ -6,7 +6,7 @@ import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import type { Account } from '@/types/account';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { omit } from 'lodash';
+import { cloneDeep, omit } from 'lodash';
 import * as Sentry from '@sentry/react-native';
 
 export interface DappInfo {
@@ -47,16 +47,14 @@ export class DappService extends StoreServiceBase<
       },
     );
 
-    Object.keys(this.store.dapps).forEach(origin => {
-      const dapp = this.store.dapps[origin];
-      if (dapp && (!dapp.origin || !/^https?:\/\//.test(dapp.origin))) {
-        this.store.dapps[origin] = {
-          ...dapp,
-          origin,
-        };
-      }
+    this.mutateStore(draft => {
+      Object.keys(draft.dapps).forEach(origin => {
+        const dapp = draft.dapps[origin];
+        if (dapp && (!dapp.origin || !/^https?:\/\//.test(dapp.origin))) {
+          dapp.origin = origin;
+        }
+      });
     });
-    this.store.dapps = { ...this.store.dapps };
 
     this.patchDapps(
       ['https://www.google.com', 'https://x.com', 'https://github.com'].reduce(
@@ -73,18 +71,19 @@ export class DappService extends StoreServiceBase<
 
   addDapp(dapp: DappInfo | DappInfo[]) {
     const dapps = Array.isArray(dapp) ? dapp : [dapp];
-    dapps.forEach(item => {
-      this.store.dapps[item.origin] = item;
+    this.mutateStore(draft => {
+      dapps.forEach(item => {
+        draft.dapps[item.origin] = item;
+      });
     });
-    this.store.dapps = { ...this.store.dapps };
   }
 
   getDapp(dappOrigin: string): DappInfo | undefined {
-    return this.store.dapps[dappOrigin];
+    return cloneDeep(this.store.dapps[dappOrigin]) as DappInfo | undefined;
   }
 
   getDapps() {
-    return this.store.dapps;
+    return this.getStoreFieldSnapshot('dapps');
   }
 
   getConnectedDapp(dappOrigin: string) {
@@ -96,16 +95,21 @@ export class DappService extends StoreServiceBase<
   }
 
   getFavoriteDapps() {
-    return Object.values(this.store.dapps).filter(dapp => dapp.isFavorite);
+    return cloneDeep(
+      Object.values(this.store.dapps).filter(dapp => dapp.isFavorite),
+    );
   }
 
   getConnectedDapps() {
-    return Object.values(this.store.dapps).filter(dapp => dapp.isConnected);
+    return cloneDeep(
+      Object.values(this.store.dapps).filter(dapp => dapp.isConnected),
+    );
   }
 
   removeDapp(dappOrigin: string) {
-    delete this.store.dapps[dappOrigin];
-    this.store.dapps = { ...this.store.dapps };
+    this.mutateStore(draft => {
+      delete draft.dapps[dappOrigin];
+    });
   }
 
   updateDapp(dapp: DappInfo) {
@@ -120,11 +124,12 @@ export class DappService extends StoreServiceBase<
       });
       return;
     }
-    this.store.dapps[dapp.origin] = {
-      ...this.store.dapps[dapp.origin],
-      ...dapp,
-    };
-    this.store.dapps = { ...this.store.dapps };
+    this.mutateStore(draft => {
+      draft.dapps[dapp.origin] = {
+        ...draft.dapps[dapp.origin],
+        ...dapp,
+      };
+    });
   }
 
   // patchDapp(dappOrigin: string, dapp: Partial<DappInfo>) {
@@ -136,37 +141,37 @@ export class DappService extends StoreServiceBase<
   // }
 
   patchDapps(dapps: Record<string, Partial<DappInfo>>) {
-    Object.keys(dapps).forEach(origin => {
-      this.store.dapps[origin] = {
-        ...this.store.dapps[origin],
-        ...dapps[origin],
-        origin,
-      };
+    this.mutateStore(draft => {
+      Object.keys(dapps).forEach(origin => {
+        draft.dapps[origin] = {
+          ...draft.dapps[origin],
+          ...dapps[origin],
+          origin,
+        };
+      });
     });
-    this.store.dapps = { ...this.store.dapps };
   }
 
   updateFavorite(origin: string, isFavorite: boolean) {
     if (!this.store.dapps[origin]) {
       return;
     }
-    this.store.dapps[origin] = {
-      ...this.store.dapps[origin],
-      isFavorite,
-      favoriteAt: isFavorite ? Date.now() : null,
-    };
-
-    this.store.dapps = { ...this.store.dapps };
+    this.mutateStore(draft => {
+      draft.dapps[origin] = {
+        ...draft.dapps[origin],
+        isFavorite,
+        favoriteAt: isFavorite ? Date.now() : null,
+      };
+    });
   }
 
   disconnect(origin: string) {
     if (!this.store.dapps[origin]) {
       return;
     }
-    this.store.dapps = {
-      ...this.store.dapps,
-      [origin]: { ...this.store.dapps[origin], isConnected: false },
-    };
+    this.mutateStore(draft => {
+      draft.dapps[origin].isConnected = false;
+    });
   }
 
   hasPermission(origin: string) {

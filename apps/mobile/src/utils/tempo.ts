@@ -341,13 +341,13 @@ export const shouldUseTempoTransaction = (params: {
   if (!isTempoChain(chainServerId)) {
     return false;
   }
-  if (!isTempoBatchSupportedAccountType(accountType)) {
-    return false;
-  }
-  if (isGasAccount) {
+  if (isTempoSpecialTransaction(tx)) {
     return true;
   }
-  return isTempoSpecialTransaction(tx);
+  if (isGasAccount) {
+    return isTempoBatchSupportedAccountType(accountType);
+  }
+  return false;
 };
 
 export const shouldUseTempoBatchTransaction = (params: {
@@ -367,28 +367,7 @@ export const shouldUseTempoBatchTransaction = (params: {
   return count > 1;
 };
 
-export const getTxMatchData = (
-  tx?: Partial<
-    TempoTxLike & {
-      calls?: Array<{
-        data?: unknown;
-      }>;
-    }
-  > | null,
-) => {
-  if (typeof tx?.data === 'string' && tx.data) {
-    return tx.data;
-  }
-
-  if (Array.isArray(tx?.calls) && tx.calls.length) {
-    const lastCall = tx.calls[tx.calls.length - 1];
-    if (typeof lastCall?.data === 'string' && lastCall.data) {
-      return lastCall.data;
-    }
-  }
-
-  return '0x';
-};
+export { getTxMatchData } from './tempoTx';
 
 const normalizeCall = (
   call: NonNullable<TempoTxExtras['calls']>[number],

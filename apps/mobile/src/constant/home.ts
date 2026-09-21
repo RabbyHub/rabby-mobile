@@ -41,5 +41,5 @@ export const HOME_TOP_HEADER_SIZES = {
   get tabInnerHomeTopOffset() {
     return HOME_TOP_HEADER_SIZES.homecardOffsetFromIndicator;
   },
-  portfolioContainerPx: 16,
+  portfolioContainerPx: 14,
 };

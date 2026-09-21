@@ -1,105 +1,124 @@
-const mockRpcCacheGet = jest.fn();
-const mockRpcCacheSet = jest.fn();
-const mockFindChain = jest.fn();
-const mockHasCustomRPC = jest.fn();
-const mockRequestCustomRPC = jest.fn();
-const mockDefaultEthRPC = jest.fn();
-const mockGetTestnetClient = jest.fn();
-const mockTestnetRequest = jest.fn();
+function loadReadOnlyRpcModule() {
+  jest.resetModules();
 
-jest.mock('@/constant', () => ({
-  INTERNAL_REQUEST_SESSION: {
-    origin: 'rabby-internal',
-  },
-}));
+  const mockFindChain = jest.fn();
+  const mockRpcCacheGet = jest.fn();
+  const mockRpcCacheSet = jest.fn();
+  const mockHasCustomRPC = jest.fn();
+  const mockRequestCustomRPC = jest.fn();
+  const mockDefaultEthRPC = jest.fn();
+  const mockGetClient = jest.fn();
+  const mockClientRequest = jest.fn();
 
-jest.mock('@/constant/chains', () => ({
-  CHAINS_ENUM: {
-    ETH: 'ETH',
-  },
-}));
+  jest.doMock('@/constant', () => ({
+    INTERNAL_REQUEST_SESSION: {
+      origin: 'internal://rabby',
+    },
+  }));
+  jest.doMock('@/constant/chains', () => ({
+    CHAINS_ENUM: {
+      ETH: 'eth',
+    },
+  }));
+  jest.doMock('@/utils/chain', () => ({
+    findChain: (...args: unknown[]) => mockFindChain(...args),
+  }));
+  jest.doMock('@/core/serviceApi/customRPC', () => ({
+    customRPCServiceApi: {
+      defaultEthRPC: (...args: unknown[]) => mockDefaultEthRPC(...args),
+      hasCustomRPC: (...args: unknown[]) => mockHasCustomRPC(...args),
+      requestCustomRPC: (...args: unknown[]) => mockRequestCustomRPC(...args),
+    },
+  }));
+  jest.doMock('@/core/serviceApi/customTestnet', () => ({
+    customTestnetServiceApi: {
+      getClient: (...args: unknown[]) => mockGetClient(...args),
+    },
+  }));
+  jest.doMock('@/core/utils/rpcCache', () => ({
+    __esModule: true,
+    default: {
+      get: (...args: unknown[]) => mockRpcCacheGet(...args),
+      set: (...args: unknown[]) => mockRpcCacheSet(...args),
+    },
+  }));
 
-jest.mock('@/core/services/customRPCService', () => ({
-  customRPCService: {
-    hasCustomRPC: (...args: unknown[]) => mockHasCustomRPC(...args),
-    requestCustomRPC: (...args: unknown[]) => mockRequestCustomRPC(...args),
-    defaultEthRPC: (...args: unknown[]) => mockDefaultEthRPC(...args),
-  },
-}));
-
-jest.mock('@/core/services/customTestnetService', () => ({
-  customTestnetService: {
-    getClient: (...args: unknown[]) => mockGetTestnetClient(...args),
-  },
-}));
-
-jest.mock('@/core/services/rpcCache', () => ({
-  __esModule: true,
-  default: {
-    get: (...args: unknown[]) => mockRpcCacheGet(...args),
-    set: (...args: unknown[]) => mockRpcCacheSet(...args),
-  },
-}));
-
-jest.mock('@/utils/chain', () => ({
-  findChain: (...args: unknown[]) => mockFindChain(...args),
-}));
-
-import { requestReadOnlyETHRpc } from './readOnlyRpc';
-
-const mainnetChain = {
-  id: 1,
-  enum: 'ETH',
-  serverId: 'eth',
-  isTestnet: false,
-};
-const testnetChain = {
-  id: 9001,
-  enum: 'TESTNET',
-  serverId: 'testnet',
-  isTestnet: true,
-};
-
-describe('requestReadOnlyETHRpc', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockRpcCacheGet.mockReturnValue(undefined);
-    mockFindChain.mockReturnValue(mainnetChain);
-    mockHasCustomRPC.mockReturnValue(false);
-    mockRequestCustomRPC.mockResolvedValue('custom-result');
-    mockDefaultEthRPC.mockResolvedValue('default-result');
-    mockTestnetRequest.mockResolvedValue('testnet-result');
-    mockGetTestnetClient.mockReturnValue({
-      request: (...args: unknown[]) => mockTestnetRequest(...args),
-    });
+  mockGetClient.mockReturnValue({
+    request: mockClientRequest,
   });
 
-  it('returns cached read-only RPC results without hitting any transport', async () => {
-    mockRpcCacheGet.mockReturnValue('cached-result');
+  const { requestReadOnlyETHRpc } =
+    require('./readOnlyRpc') as typeof import('./readOnlyRpc');
+
+  return {
+    requestReadOnlyETHRpc,
+    mocks: {
+      mockClientRequest,
+      mockDefaultEthRPC,
+      mockFindChain,
+      mockGetClient,
+      mockHasCustomRPC,
+      mockRequestCustomRPC,
+      mockRpcCacheGet,
+      mockRpcCacheSet,
+    },
+  };
+}
+
+describe('core/apis/readOnlyRpc', () => {
+  afterEach(() => {
+    jest.resetModules();
+  });
+
+  it('returns an account-scoped cached RPC result without touching services', async () => {
+    const { requestReadOnlyETHRpc, mocks } = loadReadOnlyRpcModule();
+    mocks.mockRpcCacheGet.mockReturnValue('cached-result');
 
     await expect(
       requestReadOnlyETHRpc(
         {
-          method: 'eth_blockNumber',
-          params: [],
+          method: 'eth_call',
+          params: [
+            {
+              to: '0xcontract',
+            },
+            'latest',
+          ],
         },
         'eth',
-        { address: '0xABC' } as never,
+        {
+          address: '0xABC',
+        } as never,
       ),
     ).resolves.toBe('cached-result');
 
-    expect(mockRpcCacheGet).toHaveBeenCalledWith('0xabc', {
-      method: 'eth_blockNumber',
-      params: [],
+    expect(mocks.mockRpcCacheGet).toHaveBeenCalledWith('0xabc', {
       chainId: 'eth',
+      method: 'eth_call',
+      params: [
+        {
+          to: '0xcontract',
+        },
+        'latest',
+      ],
     });
-    expect(mockRequestCustomRPC).not.toHaveBeenCalled();
-    expect(mockDefaultEthRPC).not.toHaveBeenCalled();
-    expect(mockRpcCacheSet).not.toHaveBeenCalled();
+    expect(mocks.mockFindChain).not.toHaveBeenCalled();
+    expect(mocks.mockRequestCustomRPC).not.toHaveBeenCalled();
+    expect(mocks.mockDefaultEthRPC).not.toHaveBeenCalled();
+    expect(mocks.mockClientRequest).not.toHaveBeenCalled();
   });
 
-  it('routes mainnet requests through custom RPC when enabled and caches the promise and result', async () => {
-    mockHasCustomRPC.mockReturnValue(true);
+  it('routes mainnet requests through a configured custom RPC and caches the pending promise and final result', async () => {
+    const { requestReadOnlyETHRpc, mocks } = loadReadOnlyRpcModule();
+    mocks.mockRpcCacheGet.mockReturnValue(undefined);
+    mocks.mockFindChain.mockReturnValue({
+      enum: 'eth',
+      id: 1,
+      isTestnet: false,
+      serverId: 'eth',
+    });
+    mocks.mockHasCustomRPC.mockReturnValue(true);
+    mocks.mockRequestCustomRPC.mockResolvedValue('0x123');
 
     await expect(
       requestReadOnlyETHRpc(
@@ -108,93 +127,92 @@ describe('requestReadOnlyETHRpc', () => {
           params: ['0xabc', 'latest'],
         },
         'eth',
-        { address: '0xABC' } as never,
+        {
+          address: '0xabc',
+        } as never,
       ),
-    ).resolves.toBe('custom-result');
+    ).resolves.toBe('0x123');
 
-    expect(mockRequestCustomRPC).toHaveBeenCalledWith('ETH', 'eth_getBalance', [
-      '0xabc',
-      'latest',
-    ]);
-    expect(mockRpcCacheSet).toHaveBeenNthCalledWith(1, '0xabc', {
+    expect(mocks.mockRequestCustomRPC).toHaveBeenCalledWith(
+      'eth',
+      'eth_getBalance',
+      ['0xabc', 'latest'],
+    );
+    expect(mocks.mockRpcCacheSet).toHaveBeenNthCalledWith(1, '0xabc', {
+      chainId: 'eth',
       method: 'eth_getBalance',
       params: ['0xabc', 'latest'],
       result: expect.any(Promise),
-      chainId: 'eth',
     });
-    expect(mockRpcCacheSet).toHaveBeenNthCalledWith(2, '0xabc', {
+    expect(mocks.mockRpcCacheSet).toHaveBeenNthCalledWith(2, '0xabc', {
+      chainId: 'eth',
       method: 'eth_getBalance',
       params: ['0xabc', 'latest'],
-      result: 'custom-result',
-      chainId: 'eth',
+      result: '0x123',
     });
   });
 
-  it('routes mainnet requests through default RPC when no custom RPC is enabled', async () => {
+  it('falls back to the default ETH RPC when no chain-specific custom RPC exists', async () => {
+    const { requestReadOnlyETHRpc, mocks } = loadReadOnlyRpcModule();
+    mocks.mockRpcCacheGet.mockReturnValue(undefined);
+    mocks.mockFindChain.mockImplementation(({ enum: chainEnum }) =>
+      chainEnum === 'eth'
+        ? {
+            enum: 'eth',
+            id: 1,
+            isTestnet: false,
+            serverId: 'eth',
+          }
+        : null,
+    );
+    mocks.mockHasCustomRPC.mockReturnValue(false);
+    mocks.mockDefaultEthRPC.mockResolvedValue('0x456');
+
     await expect(
       requestReadOnlyETHRpc(
         {
-          method: 'eth_chainId',
+          method: 'eth_blockNumber',
           params: [],
         },
-        'eth',
+        'unknown',
         null,
       ),
-    ).resolves.toBe('default-result');
+    ).resolves.toBe('0x456');
 
-    expect(mockDefaultEthRPC).toHaveBeenCalledWith({
-      chainServerId: 'eth',
-      origin: 'rabby-internal',
-      method: 'eth_chainId',
+    expect(mocks.mockDefaultEthRPC).toHaveBeenCalledWith({
+      chainServerId: 'unknown',
+      method: 'eth_blockNumber',
+      origin: 'internal://rabby',
       params: [],
     });
   });
 
-  it('falls back unknown chains to ETH default routing', async () => {
-    mockFindChain.mockImplementation(({ serverId, enum: chainEnum }) => {
-      if (serverId === 'unknown') {
-        return undefined;
-      }
-      if (chainEnum === 'ETH') {
-        return mainnetChain;
-      }
-      return undefined;
-    });
-
-    await requestReadOnlyETHRpc(
-      {
-        method: 'eth_chainId',
-        params: [],
-      },
-      'unknown',
-    );
-
-    expect(mockDefaultEthRPC).toHaveBeenCalledWith(
-      expect.objectContaining({
-        chainServerId: 'unknown',
-      }),
-    );
-  });
-
   it('routes testnet requests through the custom testnet client', async () => {
-    mockFindChain.mockReturnValue(testnetChain);
+    const { requestReadOnlyETHRpc, mocks } = loadReadOnlyRpcModule();
+    mocks.mockRpcCacheGet.mockReturnValue(undefined);
+    mocks.mockFindChain.mockReturnValue({
+      enum: 'custom9001',
+      id: 9001,
+      isTestnet: true,
+      serverId: 'custom9001',
+    });
+    mocks.mockClientRequest.mockResolvedValue('0xtestnet');
 
     await expect(
       requestReadOnlyETHRpc(
         {
-          method: 'eth_call',
-          params: [{ to: '0xabc' }, 'latest'],
+          method: 'eth_getTransactionCount',
+          params: ['0xabc', 'latest'],
         },
-        'testnet',
-        { address: '0xABC' } as never,
+        'custom9001',
+        undefined,
       ),
-    ).resolves.toBe('testnet-result');
+    ).resolves.toBe('0xtestnet');
 
-    expect(mockGetTestnetClient).toHaveBeenCalledWith(9001);
-    expect(mockTestnetRequest).toHaveBeenCalledWith({
-      method: 'eth_call',
-      params: [{ to: '0xabc' }, 'latest'],
+    expect(mocks.mockGetClient).toHaveBeenCalledWith(9001);
+    expect(mocks.mockClientRequest).toHaveBeenCalledWith({
+      method: 'eth_getTransactionCount',
+      params: ['0xabc', 'latest'],
     });
-    expect(mockDefaultEthRPC).not.toHaveBeenCalled();
   });
 });

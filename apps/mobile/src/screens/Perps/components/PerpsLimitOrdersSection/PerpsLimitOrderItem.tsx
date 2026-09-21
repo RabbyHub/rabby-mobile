@@ -151,9 +151,12 @@ export const PerpsLimitOrderItem: React.FC<Props> = ({
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 16,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    borderRadius: 14,
     paddingVertical: 14,
+    ...(isLight ? { boxShadow: '0 18 40 0 rgba(55, 56, 63, 0.04)' } : null),
   },
   mainContent: {
     flexDirection: 'row',
@@ -161,7 +164,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  leftSection: { flexDirection: 'column', gap: 4, flex: 1 },
+  leftSection: { flexDirection: 'column', gap: 8, flex: 1 },
   coinInfoRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   icon: {
     width: 28,
@@ -183,23 +186,23 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 4,
     justifyContent: 'center',
     alignItems: 'center',
-    height: 20,
+    height: 18,
     backgroundColor: colors2024['neutral-bg-5'],
   },
   crossText: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '700',
+    fontWeight: '500',
     color: colors2024['neutral-foot'],
   },
-  tagRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  tagRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   directionTag: {
     borderRadius: 4,
     paddingHorizontal: 4,
     justifyContent: 'center',
     alignItems: 'center',
-    height: 20,
+    height: 18,
   },
   directionText: {
     fontFamily: 'SF Pro Rounded',
@@ -211,23 +214,23 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   shortText: { color: colors2024['red-default'] },
   limitPriceText: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
+    fontSize: 13,
     lineHeight: 16,
     fontWeight: '500',
     color: colors2024['neutral-body'],
   },
-  rightSection: { alignItems: 'flex-end', gap: 4 },
+  rightSection: { alignItems: 'flex-end', gap: 12 },
   marginText: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: '500',
     color: colors2024['neutral-title-1'],
   },
   filledRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   filledText: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
+    fontSize: 13,
     lineHeight: 16,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],

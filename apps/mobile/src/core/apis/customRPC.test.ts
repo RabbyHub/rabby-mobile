@@ -1,67 +1,86 @@
-const mockFindChain = jest.fn();
-const mockCustomRPCService = {
-  setRPC: jest.fn(),
-  removeCustomRPC: jest.fn(),
-  getAllRPC: jest.fn(),
-  getRPCByChain: jest.fn(),
-  ping: jest.fn(),
-  setRPCEnable: jest.fn(),
-  request: jest.fn(),
-  hasCustomRPC: jest.fn(),
-};
-
-const loadCustomRPCModule = () => {
+function loadCustomRPCModule() {
   jest.resetModules();
 
-  jest.doMock('../services/shared', () => ({
-    customRPCService: mockCustomRPCService,
-  }));
+  const mockFindChain = jest.fn();
+  const mockPing = jest.fn();
+  const mockRequest = jest.fn();
 
   jest.doMock('@/utils/chain', () => ({
     findChain: (...args: unknown[]) => mockFindChain(...args),
   }));
+  jest.doMock('@/core/serviceApi/customRPC', () => ({
+    customRPCServiceApi: {
+      getAllRPC: jest.fn(),
+      getRPCByChain: jest.fn(),
+      hasCustomRPC: jest.fn(),
+      ping: mockPing,
+      removeCustomRPC: jest.fn(),
+      request: mockRequest,
+      setRPC: jest.fn(),
+      setRPCEnable: jest.fn(),
+    },
+  }));
 
-  return require('./customRPC') as typeof import('./customRPC');
-};
+  const { apiCustomRPC } =
+    require('./customRPC') as typeof import('./customRPC');
 
-describe('apiCustomRPC', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockFindChain.mockReturnValue({
-      id: 1,
-      enum: 'ETH',
-    });
-    mockCustomRPCService.ping.mockResolvedValue(true);
-    mockCustomRPCService.request.mockResolvedValue('0x1');
+  return {
+    apiCustomRPC,
+    mocks: {
+      mockFindChain,
+      mockPing,
+      mockRequest,
+    },
+  };
+}
+
+describe('core/apis/customRPC', () => {
+  afterEach(() => {
+    jest.resetModules();
   });
 
-  it('rejects validation for unsupported chain ids before touching the RPC url', async () => {
-    const { apiCustomRPC } = loadCustomRPCModule();
-    mockFindChain.mockReturnValue(undefined);
+  it('rejects RPC validation for unsupported chain ids before making network calls', async () => {
+    const { apiCustomRPC, mocks } = loadCustomRPCModule();
+    mocks.mockFindChain.mockReturnValue(null);
 
     await expect(
-      apiCustomRPC.validateRPC('https://rpc.example', 999_999),
-    ).rejects.toThrow('ChainId 999999 is not supported');
+      apiCustomRPC.validateRPC('https://rpc.example', 12345),
+    ).rejects.toThrow('ChainId 12345 is not supported');
 
-    expect(mockCustomRPCService.ping).not.toHaveBeenCalled();
-    expect(mockCustomRPCService.request).not.toHaveBeenCalled();
+    expect(mocks.mockPing).not.toHaveBeenCalled();
+    expect(mocks.mockRequest).not.toHaveBeenCalled();
   });
 
-  it('validates RPC endpoints by pinging the chain and comparing eth_chainId', async () => {
-    const { apiCustomRPC } = loadCustomRPCModule();
+  it('pings the built-in chain and validates the candidate RPC eth_chainId', async () => {
+    const { apiCustomRPC, mocks } = loadCustomRPCModule();
+    mocks.mockFindChain.mockReturnValue({
+      enum: 'eth',
+      id: 1,
+    });
+    mocks.mockPing.mockResolvedValue(undefined);
+    mocks.mockRequest.mockResolvedValue('0x1');
 
     await expect(
       apiCustomRPC.validateRPC('https://rpc.example', 1),
     ).resolves.toBe(true);
 
-    expect(mockCustomRPCService.ping).toHaveBeenCalledWith('ETH');
-    expect(mockCustomRPCService.request).toHaveBeenCalledWith(
+    expect(mocks.mockPing).toHaveBeenCalledWith('eth');
+    expect(mocks.mockRequest).toHaveBeenCalledWith(
       'https://rpc.example',
       'eth_chainId',
       [],
     );
+  });
 
-    mockCustomRPCService.request.mockResolvedValue('0x38');
+  it('returns false when the candidate RPC reports a different chain id', async () => {
+    const { apiCustomRPC, mocks } = loadCustomRPCModule();
+    mocks.mockFindChain.mockReturnValue({
+      enum: 'eth',
+      id: 1,
+    });
+    mocks.mockPing.mockResolvedValue(undefined);
+    mocks.mockRequest.mockResolvedValue('0x2');
+
     await expect(
       apiCustomRPC.validateRPC('https://rpc.example', 1),
     ).resolves.toBe(false);

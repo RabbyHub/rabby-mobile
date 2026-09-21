@@ -1,22 +1,16 @@
-import React, { useMemo, useState } from 'react';
-import {
-  LayoutChangeEvent,
-  StyleSheet,
-  TextInputProps,
-  TextStyle,
-  TextLayoutEventData,
-  NativeSyntheticEvent,
-} from 'react-native';
+import React, { useMemo } from 'react';
+import { LayoutChangeEvent, StyleSheet, TextInputProps } from 'react-native';
 
 import {
   Text,
   TextInput as AppTextInput,
   type TextInput as AppTextInputRef,
 } from '@/components/Typography';
-
-const DEFAULT_MAX_FONT_SIZE = 28;
-const DEFAULT_MIN_FONT_SIZE = 18;
-const DEFAULT_FONT_SIZE_STEP = 2;
+import {
+  DEFAULT_FONT_SIZE_STEP,
+  DEFAULT_MIN_FONT_SIZE,
+  useFittingFontSize,
+} from '@/components/AutoShrinkAmountTextSizing';
 
 type AutoShrinkAmountTextInputProps = TextInputProps & {
   maxFontSize?: number;
@@ -29,81 +23,6 @@ type AutoShrinkAmountTextProps = React.ComponentProps<typeof Text> & {
   minFontSize?: number;
   fontSizeStep?: number;
 };
-
-function getMeasureTextStyle(style?: TextStyle): TextStyle {
-  if (!style) {
-    return {};
-  }
-
-  return {
-    fontFamily: style.fontFamily,
-    fontStyle: style.fontStyle,
-    fontVariant: style.fontVariant,
-    fontWeight: style.fontWeight,
-    letterSpacing: style.letterSpacing,
-    textTransform: style.textTransform,
-  };
-}
-
-function useFittingFontSize({
-  style,
-  maxFontSize,
-  minFontSize = DEFAULT_MIN_FONT_SIZE,
-  fontSizeStep = DEFAULT_FONT_SIZE_STEP,
-}: {
-  style?: AutoShrinkAmountTextInputProps['style'];
-  maxFontSize?: number;
-  minFontSize?: number;
-  fontSizeStep?: number;
-}) {
-  const flattenedStyle = useMemo(() => StyleSheet.flatten(style), [style]);
-  const measureTextStyle = useMemo(
-    () => getMeasureTextStyle(flattenedStyle),
-    [flattenedStyle],
-  );
-  const baseFontSize =
-    maxFontSize || Number(flattenedStyle?.fontSize) || DEFAULT_MAX_FONT_SIZE;
-  const [inputWidth, setInputWidth] = useState(0);
-  const [textWidthAtBaseFontSize, setTextWidthAtBaseFontSize] = useState(0);
-
-  const fittingFontSize = useMemo(() => {
-    if (!inputWidth || !textWidthAtBaseFontSize) {
-      return baseFontSize;
-    }
-
-    for (
-      let fontSize = baseFontSize;
-      fontSize >= minFontSize;
-      fontSize -= fontSizeStep
-    ) {
-      if ((textWidthAtBaseFontSize * fontSize) / baseFontSize <= inputWidth) {
-        return fontSize;
-      }
-    }
-
-    return minFontSize;
-  }, [
-    baseFontSize,
-    fontSizeStep,
-    inputWidth,
-    minFontSize,
-    textWidthAtBaseFontSize,
-  ]);
-
-  const handleMeasureTextLayout = (
-    event: NativeSyntheticEvent<TextLayoutEventData>,
-  ) => {
-    setTextWidthAtBaseFontSize(event.nativeEvent.lines[0]?.width || 0);
-  };
-
-  return {
-    baseFontSize,
-    fittingFontSize,
-    measureTextStyle,
-    setInputWidth,
-    handleMeasureTextLayout,
-  };
-}
 
 export const AutoShrinkAmountTextInput = React.forwardRef<
   AppTextInputRef,

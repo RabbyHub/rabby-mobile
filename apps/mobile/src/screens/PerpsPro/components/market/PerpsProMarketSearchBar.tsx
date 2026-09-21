@@ -1,0 +1,329 @@
+import { PERPS_PRO_INPUT_COLOR_PROPS } from '../common/perpsProInputVisual';
+import RcNextCloseCircleDark from '@/assets/icons/common/next-close-circle-dark.svg';
+import RcNextCloseCircle from '@/assets/icons/common/next-close-circle.svg';
+import RcNextSearchCC from '@/assets/icons/common/next-search-cc.svg';
+import { Text } from '@/components/Typography';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import React, {
+  forwardRef,
+  useCallback,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
+import {
+  Keyboard,
+  Platform,
+  Pressable,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
+import { useTranslation } from 'react-i18next';
+
+import { resolvePerpsProEmptyInputSelection } from '../common/perpsProInputSelection';
+import { usePerpsProKeyboardInput } from '../common/usePerpsProKeyboardInput';
+import { PerpsProNativeSearchInput } from './PerpsProNativeSearchInput';
+
+export type PerpsProMarketSearchBarHandle = {
+  blur: () => void;
+  clear: () => void;
+  focus: () => void;
+};
+
+type PerpsProMarketSearchBarProps = {
+  onChangeText: (value: string) => void;
+  onFocusChange: (focused: boolean) => void;
+  placeholder: string;
+  style?: StyleProp<ViewStyle>;
+  value: string;
+};
+
+const PerpsProMarketSearchBarComponent = forwardRef<
+  PerpsProMarketSearchBarHandle,
+  PerpsProMarketSearchBarProps
+>(({ onChangeText, onFocusChange, placeholder, style, value }, ref) => {
+  const { colors2024, isLight, styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
+  const nativeInputRef =
+    useRef<React.ElementRef<typeof PerpsProNativeSearchInput>>(null);
+  const bottomSheetInputRef =
+    useRef<React.ElementRef<typeof BottomSheetTextInput>>(null);
+  const {
+    onFocus: onKeyboardFocus,
+    onBlur: onKeyboardBlur,
+    inputAccessoryViewID,
+  } = usePerpsProKeyboardInput(
+    Platform.OS === 'ios' ? nativeInputRef : bottomSheetInputRef,
+  );
+  const initialNativeValueRef = useRef(value);
+  const [focused, setFocused] = useState(false);
+  const isResting = !focused && !value;
+
+  const blurInput = useCallback(() => {
+    if (Platform.OS === 'ios') {
+      nativeInputRef.current?.blur();
+    } else {
+      bottomSheetInputRef.current?.blur();
+    }
+  }, []);
+  const focusInput = useCallback(() => {
+    if (Platform.OS === 'ios') {
+      nativeInputRef.current?.focus();
+    } else {
+      bottomSheetInputRef.current?.focus();
+    }
+  }, []);
+  const clearInput = useCallback(() => {
+    if (Platform.OS === 'ios') {
+      nativeInputRef.current?.clear();
+    } else {
+      bottomSheetInputRef.current?.clear();
+    }
+  }, []);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      blur: blurInput,
+      clear: clearInput,
+      focus: focusInput,
+    }),
+    [blurInput, clearInput, focusInput],
+  );
+
+  const handleFocus = useCallback(() => {
+    onKeyboardFocus();
+    setFocused(true);
+    onFocusChange(true);
+  }, [onFocusChange, onKeyboardFocus]);
+  const handleBlur = useCallback(() => {
+    onKeyboardBlur();
+    setFocused(false);
+    onFocusChange(false);
+  }, [onFocusChange, onKeyboardBlur]);
+  const handleCancel = useCallback(() => {
+    clearInput();
+    onChangeText('');
+    blurInput();
+    Keyboard.dismiss();
+  }, [blurInput, clearInput, onChangeText]);
+  const handleClear = useCallback(() => {
+    clearInput();
+    onChangeText('');
+  }, [clearInput, onChangeText]);
+  const commonInputProps: React.ComponentProps<
+    typeof PerpsProNativeSearchInput
+  > = {
+    ...PERPS_PRO_INPUT_COLOR_PROPS,
+    inputAccessoryViewID,
+    accessibilityLabel: placeholder,
+    accessible: !isResting,
+    allowFontScaling: false,
+    autoCorrect: false,
+    onBlur: handleBlur,
+    onChangeText,
+    onFocus: handleFocus,
+    returnKeyType: 'done',
+    spellCheck: false,
+    style: styles.input,
+    testID: 'market-search',
+  };
+
+  return (
+    <View style={[styles.container, style]}>
+      <View
+        style={[
+          styles.inputContainer,
+          isResting ? styles.restingInputContainer : null,
+        ]}
+        testID="perps-pro-market-search-input-container">
+        <RcNextSearchCC
+          color={colors2024['neutral-secondary']}
+          height={20}
+          style={isResting ? styles.hiddenInputContent : undefined}
+          width={20}
+        />
+        <View style={styles.inputArea}>
+          {!isResting && !value ? (
+            <Text
+              pointerEvents="none"
+              style={styles.activePlaceholder}
+              testID="perps-pro-market-search-active-placeholder">
+              {placeholder}
+            </Text>
+          ) : null}
+          {Platform.OS === 'ios' ? (
+            // Keep UIKit as the text owner while an IME has marked text. Query
+            // state still follows onChangeText, but must not echo through value.
+            <PerpsProNativeSearchInput
+              {...commonInputProps}
+              defaultValue={initialNativeValueRef.current}
+              ref={nativeInputRef}
+            />
+          ) : (
+            <BottomSheetTextInput
+              {...commonInputProps}
+              ref={bottomSheetInputRef}
+              selection={
+                focused && !value
+                  ? resolvePerpsProEmptyInputSelection('android')
+                  : undefined
+              }
+              value={value}
+            />
+          )}
+        </View>
+        {!isResting && value ? (
+          <TouchableOpacity
+            accessibilityLabel="Clear search"
+            accessibilityRole="button"
+            activeOpacity={1}
+            hitSlop={8}
+            onPress={handleClear}
+            testID="market-search-clear">
+            {isLight ? (
+              <RcNextCloseCircle
+                height={16}
+                testID="perps-pro-market-search-clear-light"
+                width={16}
+              />
+            ) : (
+              <RcNextCloseCircleDark
+                height={16}
+                testID="perps-pro-market-search-clear-dark"
+                width={16}
+              />
+            )}
+          </TouchableOpacity>
+        ) : null}
+        {isResting ? (
+          <Pressable
+            accessibilityLabel={placeholder}
+            accessibilityRole="button"
+            onPress={focusInput}
+            style={StyleSheet.absoluteFill}
+            testID="perps-pro-market-search-focus-mask">
+            <View pointerEvents="none" style={styles.restingContent}>
+              <RcNextSearchCC
+                color={colors2024['neutral-secondary']}
+                height={20}
+                width={20}
+              />
+              <Text style={styles.placeholder}>{placeholder}</Text>
+            </View>
+          </Pressable>
+        ) : null}
+      </View>
+      {!isResting ? (
+        <Pressable
+          accessibilityLabel={t('global.Cancel')}
+          accessibilityRole="button"
+          hitSlop={{ bottom: 5, top: 5 }}
+          onPress={handleCancel}
+          style={styles.cancel}
+          testID="market-search-cancel">
+          <Text style={styles.cancelText}>{t('global.Cancel')}</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+});
+
+PerpsProMarketSearchBarComponent.displayName = 'PerpsProMarketSearchBar';
+
+export const PerpsProMarketSearchBar = React.memo(
+  PerpsProMarketSearchBarComponent,
+);
+
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  container: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 16,
+    height: 46,
+  },
+  inputContainer: {
+    alignItems: 'center',
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-5']
+      : colors2024['neutral-bg-2'],
+    borderRadius: 12,
+    flex: 1,
+    flexDirection: 'row',
+    gap: 16,
+    height: 46,
+    overflow: 'hidden',
+    paddingHorizontal: 16,
+  },
+  restingInputContainer: {
+    marginRight: 4,
+  },
+  hiddenInputContent: {
+    opacity: 0,
+  },
+  inputArea: {
+    flex: 1,
+    height: 20,
+    minWidth: 0,
+    position: 'relative',
+  },
+  input: {
+    bottom: 0,
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontWeight: '700',
+    height: 20,
+    includeFontPadding: false,
+    lineHeight: 20,
+    left: 0,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    position: 'absolute',
+    right: 0,
+    textAlignVertical: 'center',
+    top: 0,
+  },
+  activePlaceholder: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontWeight: '500',
+    left: 0,
+    lineHeight: 20,
+    position: 'absolute',
+    top: 0,
+  },
+  restingContent: {
+    alignItems: 'center',
+    flex: 1,
+    flexDirection: 'row',
+    gap: 7,
+    justifyContent: 'center',
+  },
+  placeholder: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 20,
+  },
+  cancel: {
+    alignItems: 'center',
+    height: 46,
+    justifyContent: 'center',
+    width: 49,
+  },
+  cancelText: {
+    color: colors2024['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 20,
+  },
+}));

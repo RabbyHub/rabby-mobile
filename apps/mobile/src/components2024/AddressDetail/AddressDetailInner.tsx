@@ -18,6 +18,7 @@ import { useQrCodeModal } from '../QrCodeModal/useQrCodeModal';
 import { useTranslation } from 'react-i18next';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Text } from '@/components/Typography';
+import { withWhitelistService } from '@/hooks/whitelistServiceDependencies';
 
 interface AddressInfoProps {
   account: KeyringAccountWithAlias;
@@ -26,7 +27,7 @@ interface AddressInfoProps {
   showQRcode?: boolean;
 }
 
-export const AddressDetailInner: React.FC<
+const AddressDetailInnerContent: React.FC<
   AddressInfoProps & {
     __IN_SHEET_MODAL__?: boolean;
   }
@@ -148,6 +149,10 @@ export const AddressDetailInner: React.FC<
     </View>
   );
 };
+
+export const AddressDetailInner = withWhitelistService(
+  AddressDetailInnerContent,
+);
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {

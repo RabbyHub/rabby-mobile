@@ -17,15 +17,19 @@ import { useAppTheme, useThemeColors } from '@/hooks/theme';
 
 import { navigationRef } from '@/utils/navigation';
 import { RootNames } from './constant/layout';
-import { apisHomeTabIndex, useStackScreenConfig } from './hooks/navigation';
+import {
+  apisHomeTabIndex,
+  UnlockUIManager,
+  useStackScreenConfig,
+} from './hooks/navigation';
 import { analytics, matomoLogScreenView } from './utils/analytics';
-import * as apisAccount from './core/apis/account';
 
 import { AppStatusBar } from './components/AppStatusBar';
 import AutoLockView from './components/AutoLockView';
 import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/GlobalBottomSheetModal';
 import { GlobalBottomSheetModal2024 } from './components2024/GlobalBottomSheetModal/GlobalBottomSheetModal';
 import { useAppUnlocked } from './hooks/useLock';
+import { resolveWalletEntryDestination } from './core/utils/walletEntryState';
 
 import type {
   AccountNavigatorParamList,
@@ -53,7 +57,9 @@ import MoreImportMethods from '@/screens/Address/MoreImportMethods';
 import SelectAddMethod from '@/screens/Address/SelectAddMethod';
 import Backup from '@/screens/Address/Backup';
 import BiometricsStubModal from './components/AuthenticationModal/BiometricsStubModal';
+import { ScreenshotFeedbackHost } from './components/Screenshot/SubmitFeedback/GlobalHost';
 import { perfEvents } from './core/utils/perf';
+import { hasBootSplashExited } from './core/utils/bootSplashExit';
 import { RefLikeObject } from './utils/type';
 import { useRendererDetect } from './components/Perf/PerfDetector';
 import { useTranslation } from 'react-i18next';
@@ -66,16 +72,21 @@ import {
   BrowserFavoritePopup,
   BrowserManagePopup,
   DuplicateAddressModal,
+  FloatingDbSyncSummaryPanel,
   FloatingDiagnosticsPanel,
+  FloatingKeyringRuntimePanel,
+  FloatingOpenApiSummaryPanel,
+  FloatingStartupTaskSummaryPanel,
   GlobalMiniApproval,
   GlobalMiniSignTypedDataPortal,
   GlobalSecurityTipStubModal,
   GlobalSignerPortal,
   GlobalTipsPopup,
   InnerDappWebViewPreloadEntry,
-  ModalsSubmitFeedbackByScreenshotStub,
   QrCodeModal,
   ToggleCollateralModal,
+  UpgradePromptModal,
+  WalletConnectModalHost,
   WideScreenDebugPanel,
 } from '@/perfs/loadables/appNavigationGlobals';
 import {
@@ -83,65 +94,43 @@ import {
   DappsNavigator,
   HomeNonTabNavigator,
   SettingNavigator,
-  SingleAddressNavigator,
   TestkitsNavigator,
   TransactionNavigator,
 } from '@/perfs/loadables/navigators';
+import { SingleAddressNavigator } from '@/screens/Navigators/SingleAddressNavigator';
 import { HomeScreenNavigator } from '@/perfs/loadables/homeRootNavigator';
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
-import { NEED_DEVSETTINGBLOCKS } from './constant';
+import { APP_TEST_PASSWORD, NEED_DEVSETTINGBLOCKS } from './constant';
 import { startReadableAccountBootstrapWarmups } from './setup-app-before-render';
+import { useHomePostStartupReady } from './core/utils/homeStartupReady';
+import { FeedbackHistoryHost } from './components/Screenshot/FeedbackHistory/GlobalHost';
+import { setServiceRuntimeDiagnosticsContextProvider } from './core/serviceApi/serviceRuntimeDiagnostics';
+import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
+import { createAutoUnlockPresentationPolicy } from '@/utils/autoUnlockPresentationPolicy';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
-
-type AppInitialRouteName =
-  | typeof RootNames.StackGetStarted
-  | typeof RootNames.StackRoot
-  | typeof RootNames.Unlock;
-
-function useAppInitialRouteName(isAppUnlocked: boolean) {
-  const [initialRouteName, setInitialRouteName] =
-    React.useState<AppInitialRouteName | null>(() =>
-      isAppUnlocked ? null : RootNames.Unlock,
-    );
-
-  React.useEffect(() => {
-    if (!isAppUnlocked) {
-      setInitialRouteName(prev => prev || RootNames.Unlock);
-      return;
-    }
-    if (initialRouteName) {
-      return;
-    }
-
-    let cancelled = false;
-
-    apisAccount
-      .hasVisibleAccounts()
-      .then(hasVisibleAccounts => {
-        if (cancelled) {
-          return;
-        }
-
-        setInitialRouteName(
-          hasVisibleAccounts ? RootNames.StackRoot : RootNames.StackGetStarted,
-        );
-      })
-      .catch(error => {
-        console.error('useAppInitialRouteName::error', error);
-        if (!cancelled) {
-          setInitialRouteName(RootNames.StackRoot);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [initialRouteName, isAppUnlocked]);
-
-  return initialRouteName;
-}
+const autoUnlockPresentationPolicy = createAutoUnlockPresentationPolicy({
+  isIOS: IS_IOS,
+  bootSplashExited: hasBootSplashExited(),
+  setPresentationReady: ready =>
+    UnlockUIManager.setAutoUnlockPresentationReady(ready),
+});
+const RegressionUnlockScreen = withRegressionScenario(UnlockScreen, {
+  screen: 'Unlock',
+  injectProps: context => ({
+    regressionScenario: {
+      runId: context.runId,
+      autoSubmit:
+        context.scenario === 'lock-unlock' &&
+        context.params.autoSubmit === 'true',
+      claimAutoSubmit: () => context.claimOnce('unlock-password-auto-submit'),
+      skipBiometricsEnrollmentPrompt: context.scenario === 'lock-unlock',
+      password: APP_TEST_PASSWORD,
+      report: context.report,
+    },
+  }),
+});
 
 const RootAnimOptions: React.ComponentProps<
   typeof RootStack.Navigator
@@ -263,6 +252,9 @@ const onRouteChange = (
     currentRouteName,
     previousRouteName: previousRouteName ?? undefined,
   });
+  autoUnlockPresentationPolicy.onRouteChange(
+    currentRouteName === RootNames.Unlock,
+  );
 };
 
 const onStateChange: React.ComponentProps<
@@ -326,9 +318,11 @@ function useRenderDeferredGlobalsAfterFirstUnlock(isAppUnlocked: boolean) {
 function useReadableAccountWarmupsOnHomeVisible({
   shouldWarmupReadableAccounts,
   hasVisibleAccounts,
+  homePostStartupReady,
 }: {
   shouldWarmupReadableAccounts: boolean;
   hasVisibleAccounts: boolean;
+  homePostStartupReady: boolean;
 }) {
   const startedRef = React.useRef(false);
 
@@ -336,7 +330,8 @@ function useReadableAccountWarmupsOnHomeVisible({
     if (
       startedRef.current ||
       !shouldWarmupReadableAccounts ||
-      !hasVisibleAccounts
+      !hasVisibleAccounts ||
+      !homePostStartupReady
     ) {
       return;
     }
@@ -346,7 +341,7 @@ function useReadableAccountWarmupsOnHomeVisible({
       startedRef.current = false;
       console.error('useReadableAccountWarmupsOnHomeVisible::error', error);
     });
-  }, [shouldWarmupReadableAccounts, hasVisibleAccounts]);
+  }, [shouldWarmupReadableAccounts, hasVisibleAccounts, homePostStartupReady]);
 }
 
 function AppNavigationDeferredGlobals({
@@ -388,20 +383,22 @@ function AppNavigationOverlayGlobals({
   deferredGlobalsEnabled: boolean;
   postUnlockGlobalsEnabled: boolean;
 }) {
-  const showDiagnostics = deferredGlobalsEnabled || NEED_DEVSETTINGBLOCKS;
-
-  if (!showDiagnostics && !postUnlockGlobalsEnabled) {
-    return null;
-  }
+  const showDiagnostics = NEED_DEVSETTINGBLOCKS;
 
   return (
     <>
-      {deferredGlobalsEnabled && <ModalsSubmitFeedbackByScreenshotStub />}
+      <ScreenshotFeedbackHost />
+      <FeedbackHistoryHost />
       {postUnlockGlobalsEnabled && <ToggleCollateralModal />}
 
       {/** @warning put all business stub components before this modal */}
       {deferredGlobalsEnabled && <GlobalSecurityTipStubModal />}
+      {postUnlockGlobalsEnabled && <UpgradePromptModal />}
       {showDiagnostics && <FloatingDiagnosticsPanel />}
+      {showDiagnostics && <FloatingDbSyncSummaryPanel />}
+      {showDiagnostics && <FloatingKeyringRuntimePanel />}
+      {showDiagnostics && <FloatingOpenApiSummaryPanel />}
+      {showDiagnostics && <FloatingStartupTaskSummaryPanel />}
       {postUnlockGlobalsEnabled && (
         <GlobalMiniApproval key="global-mini-approval" />
       )}
@@ -429,6 +426,7 @@ function AppNavigationPostUnlockGlobals({ enabled }: { enabled: boolean }) {
       <BrowserManagePopup />
       <BrowserFavoritePopup />
       <BottomSheetDappInfoPopup />
+      <WalletConnectModalHost />
     </>
   );
 }
@@ -440,28 +438,58 @@ export default function AppNavigation() {
 
   const colors = useThemeColors();
 
+  React.useEffect(
+    () =>
+      setServiceRuntimeDiagnosticsContextProvider(() => ({
+        route: navigationRef.getCurrentRoute()?.name,
+      })),
+    [],
+  );
+
   const {
     isAppUnlocked,
     isUnlockSessionValid,
     hasVisibleAccounts,
-    hasStoredKeyrings,
+    accountState,
   } = useAppUnlocked();
-  const canSkipInitialUnlock = isAppUnlocked || isUnlockSessionValid;
-
-  const initialRouteName = hasVisibleAccounts
-    ? canSkipInitialUnlock
+  const homePostStartupReady = useHomePostStartupReady();
+  const entryDestination = resolveWalletEntryDestination({
+    accountState,
+    isAppUnlocked,
+    isUnlockSessionValid,
+  });
+  const initialRouteName =
+    entryDestination === 'Home'
       ? RootNames.StackRoot
-      : RootNames.Unlock
-    : isAppUnlocked || !hasStoredKeyrings
-    ? RootNames.StackGetStarted
-    : RootNames.Unlock;
+      : entryDestination === 'Unlock'
+      ? RootNames.Unlock
+      : entryDestination === 'GetStarted'
+      ? RootNames.StackGetStarted
+      : undefined;
   const shouldRenderDeferredGlobals =
     useRenderDeferredGlobalsAfterFirstUnlock(isAppUnlocked);
   const shouldRenderPostUnlockGlobals =
     shouldRenderDeferredGlobals || isUnlockSessionValid;
+
+  React.useEffect(() => {
+    const onBootSplashExited = () => {
+      autoUnlockPresentationPolicy.onBootSplashExited(
+        navigationRef.getCurrentRoute()?.name === RootNames.Unlock,
+      );
+    };
+    const sub = perfEvents.subscribe('BOOT_SPLASH_EXITED', onBootSplashExited);
+
+    if (hasBootSplashExited()) {
+      onBootSplashExited();
+    }
+
+    return () => sub.remove();
+  }, []);
+
   useReadableAccountWarmupsOnHomeVisible({
     shouldWarmupReadableAccounts: !isAppUnlocked && isUnlockSessionValid,
     hasVisibleAccounts,
+    homePostStartupReady,
   });
 
   const onReady = useCallback<
@@ -472,6 +500,9 @@ export default function AppNavigation() {
       readyRootName,
     });
     onRouteChange(readyRootName);
+    autoUnlockPresentationPolicy.onInitialRouteReady(
+      readyRootName === RootNames.Unlock,
+    );
 
     analytics.logScreenView({
       screen_name: readyRootName,
@@ -488,7 +519,7 @@ export default function AppNavigation() {
     return (
       <AutoLockView.ForAppNav
         style={{ flex: 1, backgroundColor: colors['neutral-bg-2'] }}>
-        <AppStatusBar __isTop__ />
+        <AppStatusBar />
       </AutoLockView.ForAppNav>
     );
   }
@@ -496,7 +527,7 @@ export default function AppNavigation() {
   return (
     <AutoLockView.ForAppNav
       style={{ flex: 1, backgroundColor: colors['neutral-bg-2'] }}>
-      <AppStatusBar __isTop__ />
+      <AppStatusBar />
       <GlobalBottomSheetModal />
       <GlobalBottomSheetModal2024 />
       {/* <GlobalAccountSwitcherStub /> */}
@@ -521,6 +552,20 @@ export default function AppNavigation() {
                   navigationBarColor: 'transparent',
                   freezeOnBlur: false,
                 }}
+                screenListeners={({ route }) => ({
+                  transitionStart: event => {
+                    autoUnlockPresentationPolicy.onTransitionStart({
+                      isUnlockRoute: route.name === RootNames.Unlock,
+                      closing: event.data.closing,
+                    });
+                  },
+                  transitionEnd: event => {
+                    autoUnlockPresentationPolicy.onTransitionEnd({
+                      isUnlockRoute: route.name === RootNames.Unlock,
+                      closing: event.data.closing,
+                    });
+                  },
+                })}
                 initialRouteName={initialRouteName}>
                 <RootStack.Screen
                   name={RootNames.StackGetStarted}
@@ -529,7 +574,11 @@ export default function AppNavigation() {
                 <RootStack.Screen
                   name={RootNames.StackRoot}
                   component={HomeScreenNavigator}
-                  options={RootAnimOptions}
+                  options={{
+                    ...RootAnimOptions,
+                    // Hidden Home state updates should not compete with the pushed screen.
+                    freezeOnBlur: true,
+                  }}
                 />
                 <RootStack.Screen
                   name={RootNames.StackHomeNonTab}
@@ -542,7 +591,7 @@ export default function AppNavigation() {
                 />
                 <RootStack.Screen
                   name={RootNames.Unlock}
-                  component={UnlockScreen}
+                  component={RegressionUnlockScreen}
                   options={mergeScreenOptions({
                     title: '',
                     // another valid composition

@@ -92,6 +92,7 @@ export const formatNumber = (
   decimal = 2,
   opt = {} as BigNumber.Format,
   formatMillion = false,
+  decimalOverMillion = 0,
 ) => {
   const n = new BigNumber(num);
   const format = {
@@ -113,7 +114,7 @@ export const formatNumber = (
     if (formatMillion) {
       return `${n.div(1e6).toFormat(decimal, format)}M`;
     }
-    return n.decimalPlaces(0).toFormat(format);
+    return n.decimalPlaces(decimalOverMillion).toFormat(format);
   }
   return n.toFormat(decimal, format);
 };
@@ -153,6 +154,9 @@ export const formatUsdValue = (
 ) => {
   const bnValue = new BigNumber(value);
   if (bnValue.lt(0)) {
+    if (bnValue.gt(-0.01)) {
+      return `-<$0.01`;
+    }
     return `-$${formatNumber(
       Math.abs(Number(value)),
       decimal,

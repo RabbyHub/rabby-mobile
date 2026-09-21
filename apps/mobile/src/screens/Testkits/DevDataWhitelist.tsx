@@ -20,12 +20,16 @@ import { PillsSwitch } from '@/components2024/PillSwitch';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { toast } from '@/components2024/Toast';
 import RNHelpers from '@/core/native/RNHelpers';
-import { contactService } from '@/core/services';
+import {
+  getContactAliasMapSnapshot,
+  getContactAliasSnapshot,
+} from '@/core/serviceApi/contact';
 import { appStorage } from '@/core/storage/mmkv';
 import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { AccountInfoEntity } from '@/databases/entities/accountInfo';
-import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { useWhitelist } from '@/hooks/whitelist';
 import { makeAccountObject, findAccountByPriority } from '@/utils/account';
@@ -236,7 +240,7 @@ function DevDataWhitelist(): JSX.Element {
     );
   }, [accounts]);
 
-  const aliasMap = contactService.getAliasByMap();
+  const aliasMap = getContactAliasMapSnapshot();
   const aliasItems = Object.values(aliasMap).filter(
     (item): item is AddressAliasItem => !!item?.address && !!item?.alias,
   );
@@ -273,7 +277,7 @@ function DevDataWhitelist(): JSX.Element {
     return sortWhitelistRecords(whitelistRecords, resolvedAddedAtByAddress).map(
       record => {
         const address = record.address;
-        const alias = contactService.getAliasByAddress(address)?.alias || '-';
+        const alias = getContactAliasSnapshot(address)?.alias || '-';
         const matchedAccounts = (
           accountsByAddress[address.toLowerCase()] || []
         ).map(account => account.brandName || account.type);

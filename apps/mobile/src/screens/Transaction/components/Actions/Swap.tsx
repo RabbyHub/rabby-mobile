@@ -3,11 +3,11 @@ import { RcIconRightCC } from '@/assets/icons/common';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import { Dimensions, ScrollView, TouchableOpacity, View } from 'react-native';
-import { TransactionGroup } from '@/core/services/transactionHistory';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
 
 import RcIconSwitchArrow from '@/assets2024/icons/history/IconSwitchArrow.svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,11 +25,11 @@ import { naviPush } from '@/utils/navigation';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { openTxExternalUrl } from '@/utils/transaction';
 import { formatTokenAmount } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
-import {
-  ParsedTransactionActionData,
+import type {
   ReceiveTokenItem,
   SwapRequireData,
 } from '@rabby-wallet/rabby-action';
+import { ParsedTransactionActionData } from '@rabby-wallet/rabby-action';
 import { useMemoizedFn } from 'ahooks';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
@@ -42,7 +42,7 @@ import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/dist/types';
 import { findAccountByPriority } from '@/utils/account';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 import { HistoryItemTokenPrice } from '../HistoryItemTokenPrice';
 import { Media } from '@/components/Media';

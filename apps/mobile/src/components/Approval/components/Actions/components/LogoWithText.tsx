@@ -35,7 +35,6 @@ const LogoWithText = ({
   logoRadius?: number;
   logoSize?: number;
   textStyle?: TextStyle;
-  className?: string;
   textNode?: ReactNode;
 }) => {
   const colors = useThemeColors();

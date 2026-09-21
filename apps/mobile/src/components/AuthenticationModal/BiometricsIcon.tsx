@@ -3,6 +3,7 @@ import { SvgProps } from 'react-native-svg';
 
 import RcIconKeychainFaceIdCC from '@/assets2024/icons/common/fack_id.svg';
 import RcIconKeychainFingerprintCC from '@/assets2024/icons/common/fingerprint.svg';
+import RcIconLockCC from '@/assets2024/icons/common/lock-cc.svg';
 import { ColorOrVariant, pickColorVariants } from '@/core/theme';
 import { useBiometricsComputed } from '@/hooks/biometrics';
 import { useThemeStyles } from '@/hooks/theme';
@@ -46,11 +47,15 @@ export function BiometricsIcon({
 
   const { IconComp, svgColor } = useMemo(() => {
     return {
-      IconComp: bioComputed?.isFaceID
+      IconComp: bioComputed?.isUsingDevicePasscode
+        ? RcIconLockCC
+        : bioComputed?.isFaceID
         ? RcIconKeychainFaceIdCC
         : RcIconKeychainFingerprintCC,
       svgColor: pickColorVariants(
-        (bioComputed?.isFaceID ? faceIdColor : fingerprintColor) || color,
+        (bioComputed?.isFaceID && !bioComputed?.isUsingDevicePasscode
+          ? faceIdColor
+          : fingerprintColor) || color,
         isLight,
       ),
     };

@@ -448,8 +448,13 @@ build_cache_hash_git_files() {
   rm -f "$tmp_file"
 }
 
+build_cache_resolve_react_native_architecture() {
+  node "$RABBY_MOBILE_REPO_ROOT/apps/mobile/scripts/react-native-architecture.cjs"
+}
+
 build_cache_compute_gradle_cache_key() {
   repo_root="$RABBY_MOBILE_REPO_ROOT"
+  react_native_arch=$(build_cache_resolve_react_native_architecture) || return $?
   files_hash=$(
     build_cache_hash_git_files "$repo_root" \
       apps/mobile/android/build.gradle \
@@ -463,6 +468,7 @@ build_cache_compute_gradle_cache_key() {
 
   printf '%s\n' \
     "platform=$(build_cache_platform_fingerprint)" \
+    "react_native_arch=$react_native_arch" \
     "java=$(java -version 2>&1 | head -n 1)" \
     "files=$files_hash" \
     | build_cache_sha256 | awk '{print $1}'

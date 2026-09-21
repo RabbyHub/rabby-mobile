@@ -1,23 +1,30 @@
 import { useMemo } from 'react';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { getTop10MyAccounts } from '@/core/apis/account';
-import { keyringService } from '@/core/services';
+import { bindKeyringEvent, keyringServiceApi } from '@/core/serviceApi/keyring';
+import type { Account } from '@/types/account';
 import { perfEvents } from '@/core/utils/perf';
 import { MMKV_FILE_NAMES } from '@/core/storage/mmkvConstants';
 import { balance24hMMKV } from '@/core/storage/mmkvInstances';
+import type { AccountsBalanceState } from './balance';
 import {
-  AccountsBalanceState,
   accountsBalanceEvents,
   balanceAccountsStore,
+  getSelectedBalanceAddressesSnapshot,
 } from './balance';
+import { isHomeAssetSelectionExperimentEnabled } from '@/hooks/appSettings';
 import { formatSmallUsdValue } from './curveShared';
 import { formatUsdValue } from '@/utils/number';
 import { debounce, isEqual } from 'lodash';
 import PQueue from 'p-queue';
 import { useShallow } from 'zustand/react/shallow';
 import { BaseStore } from './_base';
-import { ResourceBaseStore, ResourceFlowState } from './_resourceBase';
-import { ResourceLocalTarget } from './_resourceFlowDebug';
+import {
+  buildResourceFlowState,
+  type ResourceFlowState,
+} from './_resourceBase';
+import { ResourceBaseStore } from './_resourceBase';
+import type { ResourceLocalTarget } from './_resourceFlowDebug';
 import addressBalanceStore, { type AddressBalanceSnapshot } from './balance';
 import {
   fetch24hBalance,
@@ -25,6 +32,9 @@ import {
   type IBalance24hData,
   setBalance24hCache,
 } from '@/utils/24hBalanceCache';
+import { markStartupPerf } from '@/core/utils/startupPerfMarks';
+import { computeBalanceChange } from '@/core/utils/balanceChange';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 export type Address24hBalanceValue = IBalance24hData['data'] & {
   updateTime: IBalance24hData['updateTime'];
@@ -132,6 +142,15 @@ const build24hTraceDetail = (
   };
 };
 
+async function getSelectedBalanceAddressesOrTop10Fallback() {
+  const selectedAddresses = getSelectedBalanceAddressesSnapshot();
+  if (selectedAddresses.length || isHomeAssetSelectionExperimentEnabled()) {
+    return selectedAddresses;
+  }
+
+  return (await getTop10MyAccounts()).top10Addresses;
+}
+
 class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
   constructor() {
     super('address24hBalance');
@@ -202,7 +221,15 @@ class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
   };
 
   initStore = async () => {
-    balance24hMMKV.getAllKeys().forEach(key => {
+    const startedAt = Date.now();
+    const keys = balance24hMMKV.getAllKeys();
+    let hydratedCount = 0;
+
+    markStartupPerf('balance24hStore', 'initStore_start', {
+      keyCount: keys.length,
+    });
+
+    keys.forEach(key => {
       const lowerAddress = this.normalizeAddress(key);
       if (!lowerAddress) {
         return;
@@ -237,6 +264,13 @@ class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
           },
         },
       );
+      hydratedCount += 1;
+    });
+
+    markStartupPerf('balance24hStore', 'initStore_end', {
+      elapsedMs: Date.now() - startedAt,
+      keyCount: keys.length,
+      hydratedCount,
     });
   };
 
@@ -293,7 +327,14 @@ class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
   };
 
   refreshAddress24hBalance = makeSWRKeyAsyncFunc(
-    async (address: string, force = false, trace?: Balance24hTraceContext) => {
+    async (
+      address: string,
+      force = false,
+      trace?: Balance24hTraceContext,
+      options?: {
+        cacheAlreadyHydrated?: boolean;
+      },
+    ) => {
       const lowerAddress = this.normalizeAddress(address);
       if (!lowerAddress) {
         return undefined;
@@ -303,7 +344,9 @@ class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
       let requestId: string | undefined;
 
       try {
-        const cacheData = this.hydrateAddress24hBalanceFromCache(lowerAddress);
+        const cacheData = options?.cacheAlreadyHydrated
+          ? getBalance24hCache(lowerAddress)
+          : this.hydrateAddress24hBalanceFromCache(lowerAddress);
 
         if (cacheData?.data && !force && !cacheData.isExpired) {
           return {
@@ -428,7 +471,13 @@ export function useAddress24hChangeFlowState(
   },
 ) {
   const normalizedAddress = address?.toLowerCase() || '';
-  const flow = balance24hStore.useAddress24hBalanceFlowState(normalizedAddress);
+  const meta = useActivityStore(
+    balance24hStore.useStore,
+    state => state.metaMap[normalizedAddress],
+    Object.is,
+    { storeLabel: 'address-24h-balance' },
+  );
+  const flow = useMemo(() => buildResourceFlowState(meta), [meta]);
 
   return useMemo(() => {
     return buildAddress24hChangeFlowState(
@@ -759,7 +808,7 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
     async (scene: BalanceScene, options?: FetchTotalBalanceOptions) => {
       let { addresses, force = false, reason } = options || {};
       if (!addresses?.length) {
-        addresses = (await getTop10MyAccounts()).top10Addresses;
+        addresses = await getSelectedBalanceAddressesOrTop10Fallback();
       }
 
       const normalizedAddresses = normalizeAddressesForCompare(
@@ -825,11 +874,18 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
           queue.add(async () => {
             this.setSceneAddrLoading(scene, address, true);
             try {
-              await balance24hStore.refreshAddress24hBalance(address, force, {
-                scene,
-                requester: 'Scene24hBalanceStore.refreshCombinedDataForScene',
-                endpoint: 'openapi.get24hTotalBalance',
-              });
+              await balance24hStore.refreshAddress24hBalance(
+                address,
+                force,
+                {
+                  scene,
+                  requester: 'Scene24hBalanceStore.refreshCombinedDataForScene',
+                  endpoint: 'openapi.get24hTotalBalance',
+                },
+                {
+                  cacheAlreadyHydrated: true,
+                },
+              );
             } catch (error) {
               console.error('Fetch curve error', error);
             } finally {
@@ -875,7 +931,7 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
       addresses ||
       (balanceAccounts && Object.keys(balanceAccounts).length
         ? Object.keys(balanceAccounts)
-        : (await getTop10MyAccounts()).top10Addresses);
+        : await getSelectedBalanceAddressesOrTop10Fallback());
 
     const lastTop10Addresses = this.lastTop10AddressesRef.current;
     this.lastTop10AddressesRef.current =
@@ -901,9 +957,10 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
     }
     this.hasStartedLifecycle = true;
 
-    keyringService.on('removedAccount', async account => {
-      const lowerAddress = account.address.toLowerCase();
-      const addresses = await keyringService.getAllAddresses();
+    void bindKeyringEvent('removedAccount', async account => {
+      const removedAccount = account as Account;
+      const lowerAddress = removedAccount.address.toLowerCase();
+      const addresses = await keyringServiceApi.getAllAddresses();
       const stillExists = addresses.some(item => {
         return item.address.toLowerCase() === lowerAddress;
       });
@@ -916,7 +973,7 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
         source: 'keyringService.removedAccount',
         reason: 'address_deleted',
       });
-    });
+    }).catch(console.error);
 
     balance24hStore.subscribe(() => {
       const addresses = this.getState().addresses.Home;
@@ -1189,9 +1246,11 @@ export function computeCombined24hBalanceData(input: {
   }, 0);
   const canShowCurrentBalance = availableCurrentAddresses.length > 0;
   const canShowChange = comparableAddresses.length > 0;
-  const assetsChange = canShowChange
-    ? totalComparableEvmBalance - total24hBalance
-    : 0;
+  const balanceChange = computeBalanceChange(
+    totalComparableEvmBalance,
+    total24hBalance,
+  );
+  const assetsChange = canShowChange ? balanceChange.assetsChange : 0;
   const rawNetWorth = canShowCurrentBalance ? totalCurrentBalance : 0;
 
   return {
@@ -1200,11 +1259,7 @@ export function computeCombined24hBalanceData(input: {
     netWorth: formatSmallUsdValue(totalCurrentBalance || 0),
     rawChange: assetsChange,
     change: `${formatUsdValue(Math.abs(assetsChange))}`,
-    changePercent: canShowChange
-      ? total24hBalance !== 0
-        ? `${Math.abs((assetsChange * 100) / total24hBalance).toFixed(2)}%`
-        : `${totalComparableEvmBalance === 0 ? '0' : '100.00'}%`
-      : '',
+    changePercent: canShowChange ? balanceChange.changePercent : '',
     isLoss: canShowChange ? assetsChange < 0 : false,
     isEmptyAssets:
       canShowCurrentBalance &&

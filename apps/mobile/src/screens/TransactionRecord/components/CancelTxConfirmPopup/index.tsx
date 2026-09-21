@@ -6,7 +6,7 @@ import { Tip } from '@/components/Tip';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { CANCEL_TX_TYPE } from '@/constant';
-import { TransactionHistoryItem } from '@/core/services/transactionHistory';
+import type { TransactionHistoryItem } from '@/core/services/transactionHistory';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';

@@ -1,5 +1,12 @@
 export * from './types';
 
-export { KeyringEventAccount, KeyringService, KeyringService as default } from './keyringService';
+export { KeyringService, KeyringService as default } from './keyringService';
+export type {
+  KeyringEventAccount,
+  KeyringAuthTransition,
+  KeyringPasswordOrigin,
+  KeyringPasswordState,
+  KeyringPasswordUpdateOptions,
+} from './keyringService';
 export type { EncryptorAdapter } from './utils/encryptor';
 export { SIGN_HELPER_EVENTS } from '@rabby-wallet/keyring-utils';

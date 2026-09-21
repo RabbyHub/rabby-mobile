@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { useDappsHome } from '@/hooks/useDappsHome';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -14,8 +14,9 @@ import LinearGradient from 'react-native-linear-gradient';
 import { debounce } from 'lodash';
 import { RootNames } from '@/constant/layout';
 import { Text } from '@/components/Typography';
+import { withBrowserDappServices } from '@/hooks/browser/browserServiceDependencies';
 
-export function FavoriteDappsScreen(): JSX.Element {
+function FavoriteDappsScreenContent(): JSX.Element {
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const { favoriteApps } = useDappsHome();
 
@@ -45,10 +46,10 @@ export function FavoriteDappsScreen(): JSX.Element {
   >;
   const handleOpenURL = useMemoizedFn(
     (url: string, options?: OpenUrlAsDappOptions) => {
-      openUrlAsDapp(url, {
+      void openUrlAsDapp(url, {
         ...options,
         dappsWebViewFromRoute: RootNames.FavoriteDapps,
-      });
+      }).catch(console.error);
       // @ts-expect-error code has been expired due to biz changes, whole file could be removed later
       setBrowserHistory(safeGetOrigin(url));
     },
@@ -79,6 +80,10 @@ export function FavoriteDappsScreen(): JSX.Element {
     </LinearGradient>
   );
 }
+
+export const FavoriteDappsScreen = withBrowserDappServices(
+  FavoriteDappsScreenContent,
+);
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   page: {

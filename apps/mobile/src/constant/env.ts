@@ -1,7 +1,9 @@
+import { NativeModules } from 'react-native';
 import {
   DEV_CONSOLE_URL as DEV_CONSOLE_URL_,
   RABBY_MOBILE_E2E_SILENT_LOGS as RABBY_MOBILE_E2E_SILENT_LOGS_,
   RABBY_MOBILE_FE_SERVICE_URL as RABBY_MOBILE_FE_SERVICE_URL_,
+  RABBY_MOBILE_WALLETCONNECT_PROJECT_ID as RABBY_MOBILE_WALLETCONNECT_PROJECT_ID_,
 } from '@env';
 
 export const APP_RUNTIME_ENV = __DEV__
@@ -18,21 +20,40 @@ export const IS_E2E_SILENT_LOGS =
   RABBY_MOBILE_E2E_SILENT_LOGS_ === 'true' ||
   process.env.RABBY_MOBILE_E2E_SILENT_LOGS === 'true';
 
-const INPUT_BUILD_GIT_INFO =
-  typeof process.env.BUILD_GIT_INFO === 'object'
-    ? process.env.BUILD_GIT_INFO
-    : JSON.parse(process.env.BUILD_GIT_INFO || '{}');
-export const BUILD_GIT_INFO: {
+type AppBuildGitInfo = {
   BUILD_GIT_HASH: string;
   BUILD_GIT_HASH_TIME?: string;
   BUILD_GIT_COMMITOR?: string;
   BUILD_TIME?: string;
-} = {
+  METRO_CACHE_ENABLED?: boolean;
+};
+
+function getNativeBuildInfo(): Partial<AppBuildGitInfo> {
+  const legacyBuildInfo = NativeModules?.RNHelpers?.buildInfo;
+  if (legacyBuildInfo) {
+    return legacyBuildInfo as Partial<AppBuildGitInfo>;
+  }
+
+  try {
+    const nativeRNHelpers = require('@/core/native/specs/NativeRNHelpers')
+      .default as
+      | { getConstants?: () => { buildInfo?: Partial<AppBuildGitInfo> } }
+      | undefined;
+
+    return nativeRNHelpers?.getConstants?.().buildInfo || {};
+  } catch {
+    return {};
+  }
+}
+
+const nativeBuildInfo = getNativeBuildInfo();
+
+export const BUILD_GIT_INFO: AppBuildGitInfo = {
   BUILD_GIT_HASH: 'unknown',
   BUILD_GIT_HASH_TIME: undefined,
   BUILD_GIT_COMMITOR: undefined,
   BUILD_TIME: undefined,
-  ...INPUT_BUILD_GIT_INFO,
+  ...nativeBuildInfo,
 };
 
 export function getSentryEnv() {
@@ -48,7 +69,14 @@ export const IS_CONSOLE_STRIPPED =
 export const appIsProd = process.env.NODE_ENV === 'production';
 export const appIsDev = __DEV__;
 export const IS_ROZENITE_ENABLED = process.env.WITH_ROZENITE === 'true';
+export const IS_METRO_CACHE_ENABLED =
+  BUILD_GIT_INFO.METRO_CACHE_ENABLED === true;
 export const DEFAULT_RABBY_MOBILE_CODE = 'RABBY_MOBILE_CODE_DEV';
 
 export const RABBY_MOBILE_FE_SERVICE_URL =
   RABBY_MOBILE_FE_SERVICE_URL_ || process.env.RABBY_MOBILE_FE_SERVICE_URL || '';
+
+export const RABBY_MOBILE_WALLETCONNECT_PROJECT_ID =
+  RABBY_MOBILE_WALLETCONNECT_PROJECT_ID_ ||
+  process.env.RABBY_MOBILE_WALLETCONNECT_PROJECT_ID ||
+  '';

@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler';
 import React from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
@@ -33,6 +33,8 @@ import { useTranslation } from 'react-i18next';
 import { PerpsOriginScreen } from '../Perps/index';
 import { PerpsMarketDetailScreen } from '../PerpsMarketDetail';
 import { PerpsHistoryScreen } from '../PerpsHistory';
+import { PerpsProHistoryScreen } from '../PerpsProHistory';
+import { PerpsProHistoryHeader } from '../PerpsProHistory/components/PerpsProHistoryHeader';
 import { PerpsSearchScreen } from '../PerpsSearch';
 import LendingHistory from '../Lending/components/LendingHistory';
 import LendingScreen from '../Lending';
@@ -41,11 +43,35 @@ import { PredictionScreenWithPreload } from '../InnerDapp/InnerDappPreloadScreen
 import { useInnerDappPreloadStrategy } from '@/config/innerDappPreloadStrategy';
 import { Text } from '@/components/Typography';
 import { createGetStyles2024 } from '@/utils/styles';
+import { IS_IOS } from '@/core/native/utils';
+import { withRegressionScenario } from '@/devtools/regressionScenarios/react';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
 
 const CONVERT_DUST_HEADER_HEIGHT = 58;
+const SEND_IOS_HEADER_ICON_OFFSET = 6;
+const RegressionSendScreen = withRegressionScenario(SendScreen, {
+  screen: 'Send',
+});
+const RegressionMultiSendScreen = withRegressionScenario(
+  SendScreen.ForMultipleAddress,
+  {
+    screen: 'Send',
+  },
+);
+const RegressionSwapBridgeScreen = withRegressionScenario(SwapBridgeScreen, {
+  screen: 'SwapBridge',
+});
+const RegressionReceiveScreen = withRegressionScenario(ReceiveScreen, {
+  screen: 'Receive',
+});
+const RegressionMultiSwapBridgeScreen = withRegressionScenario(
+  SwapBridgeScreen.ForMultipleAddress,
+  {
+    screen: 'SwapBridge',
+  },
+);
 
 function ConvertDustHeader({
   title,
@@ -89,6 +115,15 @@ export default function TransactionNavigator() {
     innerDappStrategy === 'screen'
       ? PredictionScreenWithPreload
       : PredictionScreen;
+  const renderSendHeaderLeft = React.useCallback(
+    ({ tintColor }: { tintColor?: string }) => (
+      <HeaderBackPressable
+        tintColor={tintColor}
+        style={transactionNavigatorStyles.sendHeaderIconOffset}
+      />
+    ),
+    [],
+  );
 
   return (
     <TransactionStack.Navigator
@@ -101,7 +136,7 @@ export default function TransactionNavigator() {
       })}>
       <TransactionStack.Screen
         name={RootNames.Send}
-        component={SendScreen}
+        component={RegressionSendScreen}
         options={mergeScreenOptions({
           title: 'Send',
           headerTitleStyle: {
@@ -110,11 +145,12 @@ export default function TransactionNavigator() {
             fontFamily: 'SF Pro Rounded',
             fontSize: 20,
           },
+          headerLeft: renderSendHeaderLeft,
         })}
       />
       <TransactionStack.Screen
         name={RootNames.MultiSend}
-        component={SendScreen.ForMultipleAddress}
+        component={RegressionMultiSendScreen}
         options={mergeScreenOptions({
           title: 'Send',
           headerTitleStyle: {
@@ -123,6 +159,7 @@ export default function TransactionNavigator() {
             fontFamily: 'SF Pro Rounded',
             fontSize: 20,
           },
+          headerLeft: renderSendHeaderLeft,
         })}
       />
       <TransactionStack.Screen
@@ -140,7 +177,7 @@ export default function TransactionNavigator() {
       />
       <TransactionStack.Screen
         name={RootNames.Receive}
-        component={ReceiveScreen}
+        component={RegressionReceiveScreen}
         options={mergeScreenOptions({
           title: 'Receive',
           headerTitleStyle: {
@@ -264,7 +301,7 @@ export default function TransactionNavigator() {
       {/* SwapBridgeScreen */}
       <TransactionStack.Screen
         name={RootNames.SwapBridge}
-        component={SwapBridgeScreen}
+        component={RegressionSwapBridgeScreen}
         options={mergeScreenOptions2024([
           {
             title: '',
@@ -275,7 +312,7 @@ export default function TransactionNavigator() {
 
       <TransactionStack.Screen
         name={RootNames.MultiSwapBridge}
-        component={SwapBridgeScreen.ForMultipleAddress}
+        component={RegressionMultiSwapBridgeScreen}
         options={mergeScreenOptions2024([
           {
             title: '',
@@ -288,7 +325,7 @@ export default function TransactionNavigator() {
         name={RootNames.Approvals}
         component={ApprovalsScreen}
         options={mergeScreenOptions({
-          title: 'Approvals',
+          title: t('page.approvals.title'),
           ...headerPresets.withBgCard2_2024,
         })}
       />
@@ -297,7 +334,7 @@ export default function TransactionNavigator() {
         name={RootNames.BatchRevoke}
         component={BatchRevokeScreen}
         options={mergeScreenOptions({
-          title: 'Batch Revoke',
+          title: t('page.batchRevoke.title'),
           ...headerPresets.withBgCard2_2024,
           headerStyle: {},
         })}
@@ -344,6 +381,7 @@ export default function TransactionNavigator() {
         name={RootNames.Perps}
         component={PerpsOriginScreen}
         options={mergeScreenOptions({
+          headerShown: false,
           title: t('page.home.services.perps'),
           // ...headerPresets.withBgCard1_2024,
           // headerStyle: {
@@ -391,6 +429,16 @@ export default function TransactionNavigator() {
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
           },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.PerpsProHistory}
+        component={PerpsProHistoryScreen}
+        options={mergeScreenOptions({
+          title: t('page.perps.pro.history.title'),
+          header: () => (
+            <PerpsProHistoryHeader title={t('page.perps.pro.history.title')} />
+          ),
         })}
       />
 
@@ -485,3 +533,9 @@ const getConvertDustHeaderStyle = createGetStyles2024(({ colors2024 }) => ({
     minWidth: 0,
   },
 }));
+
+const transactionNavigatorStyles = StyleSheet.create({
+  sendHeaderIconOffset: {
+    transform: [{ translateY: IS_IOS ? SEND_IOS_HEADER_ICON_OFFSET : 0 }],
+  },
+});

@@ -32,6 +32,11 @@ import {
   RcScreenshotReport,
   RcIconCurrency,
   RcNotification,
+  RcWalletConnect,
+  RcAutolock,
+  RcDataAnalysis,
+  RcBugReport,
+  RcManageWallet,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -41,6 +46,7 @@ import {
   BUILD_GIT_INFO,
   IS_CONSOLE_STRIPPED,
   IS_HERMES_ENABLED,
+  IS_METRO_CACHE_ENABLED,
 } from '@/constant/env';
 import { E2E_ID } from '@/constant/e2e';
 import { isNonPublicProductionEnv, NEED_DEVSETTINGBLOCKS } from '@/constant';
@@ -58,7 +64,7 @@ import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 
 import { SwitchBiometricsAuthentication } from './components/SwitchBiometricsAuthentication';
 
-import { toast } from '@/components2024/Toast';
+import { toast, toastLoading } from '@/components2024/Toast';
 import {
   APP_FEATURE_SWITCH,
   APP_URLS,
@@ -86,6 +92,7 @@ import {
 import { SelectAutolockTimeBottomSheetModal } from './components/SelectAutolockTimeBottomSheetModal';
 import { AutoLockSettingLabel } from './components/LockAbout';
 import { sheetModalRefsNeedLock, useSetPasswordFirst } from '@/hooks/useLock';
+import { SwitchAppLaunchLock } from './components/SwitchAppLaunchLock';
 import { AuthenticationModal2024 } from '@/components/AuthenticationModal/AuthenticationModal2024';
 import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
 import ThemeSelectorModal, {
@@ -93,7 +100,6 @@ import ThemeSelectorModal, {
 } from './sheetModals/ThemeSelector';
 import { RABBY_GENESIS_NFT_DATA } from '../SendNFT/testData';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
-import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DevForceLocalVersionSelector, {
   useLocalVersionSelectorModalVisible,
@@ -125,13 +131,17 @@ import {
   dropAppDataSourceAndQuitApp,
 } from '@/databases/imports';
 import { AppCacheSizeText } from './components/SpecialText';
-import { IS_IOS } from '@/core/native/utils';
+import * as apisKeychain from '@/core/apis/keychain';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { abortAllSyncTasks } from '@/databases/sync/_task';
 import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { ClearPendingPopup } from './components/ClearPendingPopup';
 import { OpenApiPopup } from './components/OpenApiPopup';
-import { perpsService, preferenceService } from '@/core/services';
+import {
+  getFallbackAccountSnapshot,
+  setUserBehaviorTrackingOptOutSync,
+} from '@/core/serviceApi/preference';
 import { useClearBrowserData } from '@/hooks/browser/useClearBrowserData';
 import { useMultiPress } from '@/hooks/tap';
 import {
@@ -140,6 +150,7 @@ import {
 } from './Modals/DevModalDevServer';
 import {
   FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
+  toggleFeedbackHistoryVisible,
   useScreenshotToReportEnabled,
 } from '@/components/Screenshot/hooks';
 import { SwitchScreenshotToReport } from './components/SwitchScreenshotToReport';
@@ -147,14 +158,16 @@ import {
   CurrencySelectorPopup,
   useCurrentCurrencyVisible,
 } from './sheetModals/CurrencySelectorPopup';
+import { isOnlineWorkerThreadEnabled } from '@/core/config/online';
 import { isWorkerThreadRunning } from '@/perfs/thread';
 import {
   setEnableTransactionNofification,
   useAppNotificationEnabled,
 } from '@/hooks/appNotification';
+import type { SwitchToggleType } from '@/components/customized/Switch2024';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
-import { SupportedLang } from '@/utils/i18n';
-import { CurrencyItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { SupportedLang } from '@/utils/i18n';
+import type { CurrencyItem } from '@rabby-wallet/rabby-api/dist/types';
 import {
   trackSettingsCurrency,
   trackSettingsFaceId,
@@ -167,10 +180,25 @@ import { Text } from '@/components/Typography';
 import { useAppSecurityChain } from '@/hooks/global';
 import { useToggleShowUnlockStatusBar } from '@/hooks/appSettings';
 import { SwitchShowFloatingUnlockStatusBar } from './components/SwitchFloatingView';
+import {
+  SwitchDataAnalysis,
+  SwitchUserBehaviorTrackingOptOut,
+} from './components/SwitchUserBehaviorTrackingOptOut';
+import { sleep } from '@/utils/async';
+import { CustomSkeleton } from '@/components2024/CustomSkeleton';
+import { getUserBehaviorTrackingOptOut } from '@/utils/trackingOptOut';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
+import { promptLocalStorageArchiveShare } from '@/utils/promptLocalStorageArchive';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
 };
+const CLEAR_APP_CACHE_EXIT_DELAY_MS = 2000;
 
 const isIOS = Platform.OS === 'ios';
 
@@ -209,11 +237,117 @@ function getInnerDappPreloadStrategyLabel(strategy: string) {
   }
 }
 
-function AlertBuildInfo({
+function getBuildInfoErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (
+    error &&
+    typeof error === 'object' &&
+    'message' in error &&
+    typeof error.message === 'string'
+  ) {
+    return error.message;
+  }
+
+  return String(error);
+}
+
+function formatBuildInfoBoolean(value: boolean | null | undefined) {
+  if (typeof value !== 'boolean') {
+    return 'unknown';
+  }
+
+  return value ? 'Yes' : 'No';
+}
+
+function formatAndroidAuthenticatorCapability(
+  capability: apisKeychain.AndroidAuthenticatorCapability | null | undefined,
+) {
+  if (!capability) {
+    return 'unknown';
+  }
+
+  const statusLabel = capability.statusLabel || 'unknown';
+  return `${capability.available ? 'Yes' : 'No'} (${statusLabel})`;
+}
+
+async function getAndroidBiometricsBuildInfoLines() {
+  if (!IS_ANDROID) {
+    return [];
+  }
+
+  try {
+    const keychainState = await apisKeychain.getKeychainDebugState();
+
+    if (keychainState.platform !== 'android') {
+      return [];
+    }
+
+    const hardware = keychainState.androidBiometricHardware;
+    const capabilities = keychainState.androidAuthenticatorCapabilities;
+
+    return [
+      'Android Biometrics:',
+      `  Supported Type: ${keychainState.supportedBiometryType || '-'}`,
+      `  Face Hardware: ${formatBuildInfoBoolean(hardware?.face)}`,
+      `  Fingerprint Hardware: ${formatBuildInfoBoolean(
+        hardware?.fingerprint,
+      )}`,
+      `  Legacy Fingerprint Hardware: ${formatBuildInfoBoolean(
+        hardware?.legacyFingerprintHardwareDetected,
+      )}`,
+      `  Legacy Fingerprint Enrolled: ${formatBuildInfoBoolean(
+        hardware?.legacyFingerprintEnrolled,
+      )}`,
+      `  Biometric Permission Gate: ${formatBuildInfoBoolean(
+        hardware?.permissionsGranted,
+      )}`,
+      `  AndroidX Strong/Weak Status: ${
+        hardware?.androidXStrongStatusCode ?? 'unknown'
+      }/${hardware?.androidXWeakStatusCode ?? 'unknown'}`,
+      `  Effective Strong: ${formatBuildInfoBoolean(
+        hardware?.effectiveStrongAvailable,
+      )} (${hardware?.effectiveStrongSource || 'unknown'})`,
+      `  API 29 Fingerprint Prompt Probe: ${formatBuildInfoBoolean(
+        hardware?.api29FingerprintPromptProbeEligible,
+      )}`,
+      `  Iris Hardware: ${formatBuildInfoBoolean(hardware?.iris)}`,
+      `  BIOMETRIC_STRONG: ${formatAndroidAuthenticatorCapability(
+        capabilities?.biometricStrong,
+      )}`,
+      `  BIOMETRIC_WEAK: ${formatAndroidAuthenticatorCapability(
+        capabilities?.biometricWeak,
+      )}`,
+      `  STRONG_OR_CREDENTIAL: ${formatAndroidAuthenticatorCapability(
+        capabilities?.biometricStrongOrDeviceCredential,
+      )}`,
+      `  DEVICE_CREDENTIAL: ${formatAndroidAuthenticatorCapability(
+        capabilities?.deviceCredential,
+      )}`,
+      `  Prompt Gate: ${
+        capabilities?.apiLevel === 29
+          ? hardware?.effectiveStrongAvailable ||
+            hardware?.api29FingerprintPromptProbeEligible
+            ? 'BIOMETRIC_STRONG -> DEVICE_CREDENTIAL fallback'
+            : 'DEVICE_CREDENTIAL'
+          : 'BIOMETRIC_STRONG + DEVICE_CREDENTIAL'
+      }`,
+    ];
+  } catch (error) {
+    return [
+      `Android Biometrics: unavailable (${getBuildInfoErrorMessage(error)})`,
+    ];
+  }
+}
+
+async function AlertBuildInfo({
   rabbitCodeLen,
 }: {
   rabbitCodeLen?: number | null;
 } = {}) {
+  const androidBiometricsInfos = await getAndroidBiometricsBuildInfoLines();
   const commonInfos = [
     `Build Channel: ${BUILD_CHANNEL}`,
     `Runtime Env: ${APP_RUNTIME_ENV}`,
@@ -226,7 +360,12 @@ function AlertBuildInfo({
     '   ',
     `Hermes Engine: ${IS_HERMES_ENABLED ? 'Enabled' : 'Disabled'}`,
     `Strip Console: ${IS_CONSOLE_STRIPPED ? 'Enabled' : 'Disabled'}`,
-    `Worker Thread: ${isWorkerThreadRunning() ? 'Enabled' : 'Disabled'}`,
+    `Worker Thread Switch: ${
+      isOnlineWorkerThreadEnabled() ? 'Enabled' : 'Disabled'
+    }`,
+    `Worker Thread Running: ${isWorkerThreadRunning() ? 'Yes' : 'No'}`,
+    androidBiometricsInfos.length > 0 && '   ',
+    ...androidBiometricsInfos,
   ];
 
   if (isNonPublicProductionEnv) {
@@ -260,8 +399,139 @@ function AlertBuildInfo({
 }
 
 const { switchBiometricsRef, selectAutolockTimeRef } = sheetModalRefsNeedLock;
+type CustomSettingItem = {
+  key: string;
+  render: () => React.ReactNode;
+};
+type SettingBlock = Omit<SettingConfBlock, 'items'> & {
+  items: Array<SettingConfBlock['items'][number] | CustomSettingItem>;
+};
+function isCustomSettingItem(
+  item: SettingBlock['items'][number],
+): item is CustomSettingItem {
+  return 'render' in item;
+}
+
+function ClearAppCacheSettingItem() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
+  const [isClearing, setIsClearing] = useState(false);
+
+  const handleClearIOSAppCache = useCallback(async () => {
+    if (isClearing) {
+      return;
+    }
+    setIsClearing(true);
+    try {
+      abortAllSyncTasks('clear-app-cache-ios');
+      resetUpdateHistoryTime();
+      await clearAppDataSource();
+      Alert.alert(
+        t('page.settingModal.clearAppCache.iOSToastTitle'),
+        t('page.settingModal.clearAppCache.iOSToastDesc'),
+        [],
+      );
+    } finally {
+      setIsClearing(false);
+    }
+  }, [isClearing, t]);
+
+  const handleClearAndroidAppCache = useCallback(async () => {
+    if (isClearing) {
+      return;
+    }
+    setIsClearing(true);
+    const hideLoading = toastLoading(
+      t('page.settingModal.clearAppCache.clearingToast'),
+      {
+        blockInteraction: true,
+      },
+    );
+
+    try {
+      await sleep(50);
+      abortAllSyncTasks('clear-app-cache-android');
+      resetUpdateHistoryTime();
+      await dropAppDataSourceAndQuitApp({
+        exitDelayMs: CLEAR_APP_CACHE_EXIT_DELAY_MS,
+      });
+      hideLoading();
+      toast.success(t('page.settingModal.clearAppCache.clearDoneQuitToast'), {
+        duration: CLEAR_APP_CACHE_EXIT_DELAY_MS,
+        hideOnPress: false,
+        position: toast.positions.CENTER,
+      });
+    } catch (error) {
+      hideLoading();
+      setIsClearing(false);
+      console.error('[Settings] clear app cache failed', error);
+      toast.error(String(error || 'Clear cache failed'));
+    }
+  }, [isClearing, t]);
+
+  const handlePress = useCallback(() => {
+    if (isClearing) {
+      return;
+    }
+    Alert.alert(
+      t('page.settingModal.clearAppCache.title'),
+      t('page.settingModal.clearAppCache.clearAppCacheDesc'),
+      [
+        { text: t('common.dialog.button.cancel'), onPress: () => {} },
+        IS_IOS
+          ? {
+              text: t('page.settingModal.clearAppCache.button.clear'),
+              style: 'destructive',
+              onPress: handleClearIOSAppCache,
+            }
+          : {
+              text: t('page.settingModal.clearAppCache.button.clear_and_quit'),
+              style: 'destructive',
+              onPress: handleClearAndroidAppCache,
+            },
+      ],
+    );
+  }, [handleClearAndroidAppCache, handleClearIOSAppCache, isClearing, t]);
+
+  return (
+    <Block.Item
+      label={t('page.setting.appCache')}
+      icon={RcClearPending}
+      disabled={isClearing}
+      rightNode={
+        IS_IOS
+          ? undefined
+          : ({ rightIconNode }) => {
+              return (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  {isClearing ? (
+                    <CustomSkeleton
+                      width={64}
+                      height={16}
+                      style={{ borderRadius: 8, marginRight: 8 }}
+                    />
+                  ) : (
+                    <AppCacheSizeText
+                      style={{
+                        ...styles.rightText,
+                        paddingRight: 8,
+                      }}
+                    />
+                  )}
+                  {rightIconNode}
+                </View>
+              );
+            }
+      }
+      onPress={handlePress}
+    />
+  );
+}
+
 function SettingsBlocks() {
-  const { colors, styles } = useTheme2024({ getStyle: getStyles });
+  const { colors, styles, isLight, colors2024 } = useTheme2024({
+    getStyle: getStyles,
+  });
 
   const [isShowClearPendingPopup, setIsShowClearPendingPopup] = useState(false);
 
@@ -292,7 +562,7 @@ function SettingsBlocks() {
   const { localVersion, remoteVersion, triggerCheckVersion } = useUpgradeInfo();
 
   const {
-    computed: { couldSetupBiometrics, isFaceID },
+    computed: { isFaceID },
     fetchBiometrics,
   } = useBiometrics({ autoFetch: true });
 
@@ -307,18 +577,6 @@ function SettingsBlocks() {
 
   const { currency, setIsShowCurrencyPopup } = useCurrentCurrencyVisible();
 
-  const disabledBiometrics =
-    !couldSetupBiometrics || !APP_FEATURE_SWITCH.biometricsAuth;
-
-  const startSwitchBiometrics = useCallback(() => {
-    if (
-      shouldRedirectToSetPasswordBefore({ onSettingsAction: 'setBiometrics' })
-    ) {
-      return;
-    }
-    switchBiometricsRef.current?.toggle();
-  }, [shouldRedirectToSetPasswordBefore]);
-
   const { setThemeSelectorModalVisible } = useThemeSelectorModalVisible();
   const { appTheme } = useAppTheme();
   const { t } = useTranslation();
@@ -331,6 +589,33 @@ function SettingsBlocks() {
   const navigation = useRabbyAppNavigation();
 
   const biometricsComputed = useBiometricsComputed();
+  const { couldSetupBiometrics, isUsingDevicePasscodeForSettings } =
+    biometricsComputed;
+  const biometricsUnavailableForSettings =
+    !couldSetupBiometrics && !isUsingDevicePasscodeForSettings;
+  const disabledBiometrics = !APP_FEATURE_SWITCH.biometricsAuth;
+
+  const showBiometricsUnavailableToast = useCallback(() => {
+    toast.show('Please enable biometric permissions in the system settings.');
+  }, []);
+
+  const startSwitchBiometrics = useCallback(() => {
+    if (biometricsUnavailableForSettings) {
+      showBiometricsUnavailableToast();
+      return;
+    }
+
+    if (
+      shouldRedirectToSetPasswordBefore({ onSettingsAction: 'setBiometrics' })
+    ) {
+      return;
+    }
+    switchBiometricsRef.current?.toggle();
+  }, [
+    biometricsUnavailableForSettings,
+    shouldRedirectToSetPasswordBefore,
+    showBiometricsUnavailableToast,
+  ]);
 
   const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
 
@@ -344,6 +629,10 @@ function SettingsBlocks() {
   }, []);
 
   const handleTransactionNotificationToggle = useCallback(async () => {
+    if (!APP_FEATURE_SWITCH.transactionNotification) {
+      return;
+    }
+
     const finalValue = await setEnableTransactionNofification(prev => !prev);
     if (typeof finalValue !== 'boolean') {
       return;
@@ -382,30 +671,106 @@ function SettingsBlocks() {
     });
   }, []);
 
-  const settingsBlocks: Record<string, SettingConfBlock> = (() => {
+  const allowAppLaunchLockToggle = useCallback(
+    (nextEnabled: boolean) =>
+      !nextEnabled ||
+      !shouldRedirectToSetPasswordBefore({
+        onSettingsAction: 'setAppLaunchLock',
+      }),
+    [shouldRedirectToSetPasswordBefore],
+  );
+
+  const toggleDataAnalysisRef = useRef<SwitchToggleType>(null);
+  const switchAppLaunchLockRef = useRef<SwitchToggleType>(null);
+
+  const modalRef =
+    useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>(undefined);
+
+  const handleWalletsListPress = useCallback(() => {
+    if (modalRef.current) {
+      removeGlobalBottomSheetModal2024(modalRef.current);
+    }
+
+    modalRef.current = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.ADDRESS_LiST,
+      variant: 'manage',
+      subTitle: t('page.settings.chooseWallet'),
+      onAddAddressPress: () => {
+        if (modalRef.current) {
+          removeGlobalBottomSheetModal2024(modalRef.current);
+        }
+        apiGlobalModal.showAddSelectMethodModal();
+      },
+      bottomSheetModalProps: {
+        handleStyle: {
+          backgroundColor: isLight
+            ? colors2024['neutral-bg-0']
+            : colors2024['neutral-bg-1'],
+        },
+      },
+      onDone: () => {
+        removeGlobalBottomSheetModal2024(modalRef.current, { duration: 0 });
+        modalRef.current = undefined;
+      },
+    });
+  }, [colors2024, isLight, t]);
+
+  const settingsBlocks: Record<string, SettingBlock> = (() => {
     return {
+      features: {
+        label: t('page.setting.features'),
+        items: [
+          {
+            label: t('page.setting.manageWallets'),
+            icon: RcManageWallet,
+            onPress: () => {
+              handleWalletsListPress();
+            },
+          },
+          {
+            label: 'WalletConnect',
+            icon: RcWalletConnect,
+            onPress: () => {
+              navigation.dispatch(
+                StackActions.push(RootNames.StackSettings, {
+                  screen: RootNames.WalletConnect,
+                }),
+              );
+            },
+          },
+        ],
+      },
       settings: {
         label: t('page.setting.screenTitle'),
         items: [
           {
-            label: biometricsComputed.defaultTypeLabel,
-            icon: isFaceID ? RcFaceId : RcFingerprint,
+            label: biometricsComputed.systemAuthSettingsLabel,
+            icon: isUsingDevicePasscodeForSettings
+              ? RcAutolock
+              : isFaceID
+              ? RcFaceId
+              : RcFingerprint,
             rightNode: (
               <SwitchBiometricsAuthentication
                 ref={switchBiometricsRef}
                 onToggleSuccess={handleBiometricsToggleSuccess}
+                onUnavailablePress={showBiometricsUnavailableToast}
               />
             ),
             onPress: () => {
               startSwitchBiometrics();
             },
-            disabled: disabledBiometrics,
+            onDisabledPress: biometricsUnavailableForSettings
+              ? showBiometricsUnavailableToast
+              : undefined,
+            disabled: disabledBiometrics || biometricsUnavailableForSettings,
             visible: APP_FEATURE_SWITCH.biometricsAuth,
           },
           {
             label: t('page.setting.transactionNotification'),
             icon: RcNotification,
             rightNode: <TrackedTransactionNotificationSwitch />,
+            visible: APP_FEATURE_SWITCH.transactionNotification,
             onPress: () => {
               handleTransactionNotificationToggle();
             },
@@ -419,10 +784,16 @@ function SettingsBlocks() {
             rightTextNode: <AutoLockSettingLabel style={styles.rightText} />,
           },
           {
-            label: t('page.setting.lockWallet'),
-            icon: RcNewLock,
+            label: t('page.setting.appLaunchLock'),
+            icon: RcAutolock,
+            rightNode: (
+              <SwitchAppLaunchLock
+                ref={switchAppLaunchLockRef}
+                onBeforeToggle={allowAppLaunchLockToggle}
+              />
+            ),
             onPress: () => {
-              startLockWallet();
+              switchAppLaunchLockRef.current?.toggle();
             },
             visible: APP_FEATURE_SWITCH.customizePassword,
           },
@@ -504,6 +875,27 @@ function SettingsBlocks() {
             visible: !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
           },
           {
+            label: t('page.setting.bugReportChat'),
+            icon: RcBugReport,
+            onPress: () => {
+              toggleFeedbackHistoryVisible(true);
+            },
+            // visible: !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
+          },
+          {
+            label: t('page.setting.dataAnalysis'),
+            icon: RcDataAnalysis,
+            onPress: () => {
+              toggleDataAnalysisRef?.current?.toggle();
+            },
+            rightNode: (
+              <SwitchDataAnalysis
+                ref={toggleDataAnalysisRef}
+                onPress={evt => evt.stopPropagation()}
+              />
+            ),
+          },
+          {
             label: t('page.setting.clearPending'),
             icon: RcClearPending,
             onPress: () => {
@@ -523,6 +915,7 @@ function SettingsBlocks() {
                 <View style={{ flexDirection: 'row' }}>
                   <Text style={styles.rightText}>
                     {localVersion || APP_VERSIONS.fromJs}
+                    {IS_METRO_CACHE_ENABLED ? ' · MC' : ''}
                   </Text>
                   {remoteVersion.couldUpgrade && (
                     <Text
@@ -540,13 +933,13 @@ function SettingsBlocks() {
             },
             onPress: triggerCheckVersion,
           },
-          {
-            label: t('page.setting.feedback'),
-            icon: RcFeedback,
-            onPress: () => {
-              Linking.openURL('https://discord.gg/AvYmaTjrBu');
-            },
-          },
+          // {
+          //   label: t('page.setting.feedback'),
+          //   icon: RcFeedback,
+          //   onPress: () => {
+          //     Linking.openURL('https://discord.gg/AvYmaTjrBu');
+          //   },
+          // },
           // TODO: in the future
           // {
           //   label: 'Support Chains',
@@ -580,57 +973,16 @@ function SettingsBlocks() {
         label: '',
         items: [
           {
-            label: t('page.setting.appCache'),
-            icon: RcClearPending,
-            rightNode: IS_IOS
-              ? undefined
-              : ({ rightIconNode }) => {
-                  return (
-                    <View style={{ flexDirection: 'row' }}>
-                      <AppCacheSizeText
-                        style={{
-                          ...styles.rightText,
-                          paddingRight: 8,
-                        }}
-                      />
-                      {rightIconNode}
-                    </View>
-                  );
-                },
+            label: t('page.setting.lockWallet'),
+            icon: RcNewLock,
             onPress: () => {
-              Alert.alert(
-                t('page.settingModal.clearAppCache.title'),
-                t('page.settingModal.clearAppCache.clearAppCacheDesc'),
-                [
-                  { text: t('common.dialog.button.cancel'), onPress: () => {} },
-                  IS_IOS
-                    ? {
-                        text: t('page.settingModal.clearAppCache.button.clear'),
-                        style: 'destructive',
-                        onPress: async () => {
-                          abortAllSyncTasks();
-                          resetUpdateHistoryTime();
-                          await clearAppDataSource();
-                          Alert.alert(
-                            t('page.settingModal.clearAppCache.iOSToastTitle'),
-                            t('page.settingModal.clearAppCache.iOSToastDesc'),
-                            [],
-                          );
-                        },
-                      }
-                    : {
-                        text: t(
-                          'page.settingModal.clearAppCache.button.clear_and_quit',
-                        ),
-                        style: 'destructive',
-                        onPress: async () => {
-                          resetUpdateHistoryTime();
-                          await dropAppDataSourceAndQuitApp();
-                        },
-                      },
-                ],
-              );
+              startLockWallet();
             },
+            visible: APP_FEATURE_SWITCH.customizePassword,
+          },
+          {
+            key: 'clear-app-cache',
+            render: () => <ClearAppCacheSettingItem />,
           },
           // {
           //   label: t('page.setting.clearBrowserData'),
@@ -674,6 +1026,14 @@ function SettingsBlocks() {
                 },
             ]}>
             {block.items.map((item, idx_l2) => {
+              if (isCustomSettingItem(item)) {
+                return (
+                  <React.Fragment key={`${l1key}-${item.key}-${idx_l2}`}>
+                    {item.render()}
+                  </React.Fragment>
+                );
+              }
+
               return (
                 <Block.Item
                   key={`${l1key}-${item.label}-${idx_l2}`}
@@ -747,10 +1107,46 @@ function DevSettingsBlocks({
   const { setDevCapabilityPlaygroundModalVisible } =
     useDevCapabilityPlaygroundModalVisible();
 
+  const openLogVerificationScreen = useCallback(
+    (
+      screen:
+        | typeof RootNames.DebugLogViewer
+        | typeof RootNames.StartupPerformanceLogViewer,
+    ) => {
+      navigation.dispatch(
+        StackActions.push(RootNames.StackTestkits, {
+          screen,
+        }),
+      );
+    },
+    [navigation],
+  );
+
+  const showLogVerificationPicker = useCallback(() => {
+    Alert.alert('Log Verification', 'Choose a log type to inspect.', [
+      {
+        text: 'App File Logs',
+        onPress: () => openLogVerificationScreen(RootNames.DebugLogViewer),
+      },
+      {
+        text: 'Startup Performance Logs',
+        onPress: () =>
+          openLogVerificationScreen(RootNames.StartupPerformanceLogViewer),
+      },
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+    ]);
+  }, [openLogVerificationScreen]);
+
   const [isShowOpenApiPopup, setIsShowOpenApiPopup] = useState(false);
   const { setDevServerSettingsModalVisible } = useDevServerModalVisible();
-  const currentAccount = preferenceService.getFallbackAccount();
+  const currentAccount = getFallbackAccountSnapshot();
   const { toggleShowUnlockStatusBar } = useToggleShowUnlockStatusBar();
+  const toggleUserBehaviorTrackingOptOut = useCallback(() => {
+    setUserBehaviorTrackingOptOutSync(!getUserBehaviorTrackingOptOut());
+  }, []);
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -768,6 +1164,19 @@ function DevSettingsBlocks({
                 </Text>
               ),
               // TODO: only show in non-production mode
+              visible: NEED_DEVSETTINGBLOCKS,
+            },
+            {
+              label: 'User Behavior Tracking Opt-out',
+              icon: RcPrivacyPolicy,
+              onPress: () => {
+                toggleUserBehaviorTrackingOptOut();
+              },
+              rightNode: (
+                <SwitchUserBehaviorTrackingOptOut
+                  onPress={evt => evt.stopPropagation()}
+                />
+              ),
               visible: NEED_DEVSETTINGBLOCKS,
             },
             {
@@ -858,6 +1267,11 @@ function DevSettingsBlocks({
               },
             },
             {
+              label: 'Export Local Storage Archive',
+              icon: RcCode,
+              onPress: promptLocalStorageArchiveShare,
+            },
+            {
               label: 'Capability Playground',
               icon: RcCode,
               onPress: () => {
@@ -865,15 +1279,20 @@ function DevSettingsBlocks({
               },
             },
             {
-              label: 'App Log Verification',
+              label: 'WalletConnect Log',
               icon: RcCode,
               onPress: () => {
                 navigation.dispatch(
                   StackActions.push(RootNames.StackTestkits, {
-                    screen: RootNames.DebugLogViewer,
+                    screen: RootNames.DevUIWalletConnect,
                   }),
                 );
               },
+            },
+            {
+              label: 'Log Verification',
+              icon: RcCode,
+              onPress: showLogVerificationPicker,
             },
           ],
         },
@@ -1050,7 +1469,7 @@ export default function SettingsScreen(): JSX.Element {
   const { rabbitCode } = useAppSecurityChain();
   const rabbitCodeLen = rabbitCode?.length ?? null;
   const handleShowBuildInfo = useCallback(() => {
-    AlertBuildInfo({ rabbitCodeLen });
+    void AlertBuildInfo({ rabbitCodeLen });
   }, [rabbitCodeLen]);
 
   useFocusEffect(
@@ -1077,7 +1496,6 @@ export default function SettingsScreen(): JSX.Element {
           paddingBottom: safeSizes.containerPaddingBottom,
         },
       ]}>
-      <ScreenSpecificStatusBar screenName={RootNames.Settings} />
       <ScrollView
         style={[styles.scrollableView]}
         contentContainerStyle={[

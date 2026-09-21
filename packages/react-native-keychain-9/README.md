@@ -11,14 +11,12 @@ This library provides access to the Keychain (iOS) and Keystore (Android) for se
 - [Documentation](#documentation)
 - [Changelog](#changelog)
 - [Maintainers](#maintainers)
+- [Used By](#used-by)
 - [License](#license)
 
 ## Installation
 
 1. Run `yarn add react-native-keychain`
-
-   1 a. **Only for React Native <= 0.59**: `$ react-native link react-native-keychain` and check `MainApplication.java` to verify the package was added. See manual installation below if you have issues with `react-native link`.
-
 2. Run `pod install` in `ios/` directory to install iOS dependencies.
 3. If you want to support FaceID, add a `NSFaceIDUsageDescription` entry in your `Info.plist`.
 4. Re-build your Android and iOS projects.
@@ -84,6 +82,14 @@ Check the [GitHub Releases page](https://github.com/oblador/react-native-keychai
     </tr>
   <tbody>
 </table>
+
+## Used By
+
+This library is used by several projects, including:
+
+- [Rainbow Wallet](https://github.com/rainbow-me/rainbow)
+- [MetaMask Mobile](https://github.com/MetaMask/metamask-mobile)
+- [BlueWallet](https://github.com/bluewallet/bluewallet)
 
 ## License
 

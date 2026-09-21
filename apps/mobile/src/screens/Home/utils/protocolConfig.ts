@@ -8,47 +8,19 @@ import {
   isSameAccount,
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
-import { CustomMarket } from '@/screens/Lending/config/market';
+import {
+  isAave3Portfolio,
+  keyToMarketKey,
+  marketKeyToProtocolId,
+} from '@/screens/Lending/config/protocol';
 import { SvgProps } from 'react-native-svg';
-import { switchPerpsAccountBeforeNavigate } from '@/hooks/perps/usePerpsStore';
+import { navigateToPreferredPerps } from '@/hooks/perps/navigation/navigateToPreferredPerps';
 import { useSelectedMarket } from '@/screens/Lending/hooks';
 import { clearLendingActionPopupState } from '@/screens/Lending/utils/actionPopup';
 import { IProtocolPortfolio } from '@/store/protocols';
 import { matomoRequestEvent } from '@/utils/analytics';
 
-export const keyToMarketKey: Record<string, CustomMarket> = {
-  aave3: CustomMarket.proto_mainnet_v3,
-  op_aave3: CustomMarket.proto_optimism_v3,
-  avax_aave3: CustomMarket.proto_avalanche_v3,
-  matic_aave3: CustomMarket.proto_polygon_v3,
-  arb_aave3: CustomMarket.proto_arbitrum_v3,
-  base_aave3: CustomMarket.proto_base_v3,
-  bsc_aave3: CustomMarket.proto_bnb_v3,
-  scrl_aave3: CustomMarket.proto_scroll_v3,
-  plasma_aave3: CustomMarket.proto_plasma_v3,
-  ink_aave3: CustomMarket.proto_ink_v3,
-  era_aave3: CustomMarket.proto_zksync_v3,
-  linea_aave3: CustomMarket.proto_linea_v3,
-  sonic_aave3: CustomMarket.proto_sonic_v3,
-  celo_aave3: CustomMarket.proto_celo_v3,
-  xdai_aave3: CustomMarket.proto_gnosis_v3,
-  megaeth_aave3: CustomMarket.proto_megaeth_v3,
-  mnt_aave3: CustomMarket.proto_mantle_v3,
-  xlayer_aave3: CustomMarket.proto_xlayer_v3,
-};
-
-export const isAave3Portfolio = (project_id?: string) => {
-  if (!project_id) {
-    return false;
-  }
-  return !!keyToMarketKey[project_id];
-};
-
-export const marketKeyToProtocolId = (marketKey?: CustomMarket) => {
-  return Object.keys(keyToMarketKey).find(
-    key => keyToMarketKey[key] === marketKey,
-  );
-};
+export { isAave3Portfolio, keyToMarketKey, marketKeyToProtocolId };
 
 export type TonTokenManageAction = (
   account?: KeyringAccountWithAlias,
@@ -76,7 +48,7 @@ interface ProtocolConfigItemType {
 export const useProtocolConfig = () => {
   const { navigation } = useSafeSetNavigationOptions();
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const { accounts } = useMyAccounts();
+  const { accounts } = useMyAccounts({ disableAutoFetch: true });
   const { setMarketKey } = useSelectedMarket();
 
   const generateAAVEConfig = useCallback(
@@ -169,32 +141,32 @@ export const useProtocolConfig = () => {
           const isNavigateDetail =
             !!item?._originPortfolio?.detail?.position_token?.name;
 
-          switchPerpsAccountBeforeNavigate(account);
           if (isNavigateDetail) {
             matomoRequestEvent({
               category: 'Rabby Perps',
               action: 'Perps_ManageToPosition',
             });
-            return navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.PerpsMarketDetail,
-              params: {
-                market:
-                  item?._originPortfolio?.detail?.position_token?.name || '',
-              },
+            const positionToken =
+              item?._originPortfolio?.detail?.position_token;
+            const market = positionToken?.symbol || '';
+            await navigateToPreferredPerps({
+              account,
+              marketCandidates: [market, positionToken?.name || ''],
+              navigation,
+              simpleDetail: { market },
+              source: 'defi-manage-position',
             });
-          } else {
-            matomoRequestEvent({
-              category: 'Rabby Perps',
-              action: 'Perps_ManageToPerps',
-            });
-            return navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.Perps,
-              params: {
-                dappId: 'hyperliquid',
-                account,
-              },
-            });
+            return;
           }
+          matomoRequestEvent({
+            category: 'Rabby Perps',
+            action: 'Perps_ManageToPerps',
+          });
+          await navigateToPreferredPerps({
+            account,
+            navigation,
+            source: 'defi-manage-root',
+          });
         },
       },
     };

@@ -94,10 +94,11 @@ const RNKeychainDebugManager: KeychainDebugModule | undefined =
 function sortKeychainStorageTypes(
   storages: KeychainStorageType[],
 ): KeychainStorageType[] {
-  const order = [
+  const order: KeychainStorageType[] = [
     KEYCHAIN_STORAGE_TYPES.RSA,
     KEYCHAIN_STORAGE_TYPES.AES,
     KEYCHAIN_STORAGE_TYPES.AES_GCM,
+    KEYCHAIN_STORAGE_TYPES.AES_GCM_NO_AUTH,
     KEYCHAIN_STORAGE_TYPES.KC,
   ];
 

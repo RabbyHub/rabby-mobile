@@ -1,6 +1,6 @@
 import { Text } from '@/components/Typography';
 import dappList from '@/constant/hot-dapp.json';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { useDapps } from '@/hooks/useDapps';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
@@ -8,14 +8,10 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  FlatList as RNFlatList,
-  FlatListProps,
-  GestureResponderEvent,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { GestureDetector, NativeGesture } from 'react-native-gesture-handler';
+import type { FlatListProps, GestureResponderEvent } from 'react-native';
+import { FlatList as RNFlatList, TouchableOpacity, View } from 'react-native';
+import type { NativeGesture } from 'react-native-gesture-handler';
+import { GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   runOnUI,
   scrollTo,

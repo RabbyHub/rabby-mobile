@@ -2,11 +2,15 @@ import React from 'react';
 import { CancelItem } from './CancelItem';
 import { useTranslation } from 'react-i18next';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
-import { notificationService } from '@/core/services';
+import {
+  blockCurrentNotificationDappSync,
+  getNotificationApprovalCountSnapshot,
+  rejectAllNotificationApprovalsSync,
+} from '@/core/serviceApi/notification';
 import { StyleSheet, View } from 'react-native';
 import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
-import { AppColorsVariants } from '@/constant/theme';
+import type { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import AutoLockView from '@/components/AutoLockView';
 import { Text } from '@/components/Typography';
@@ -36,17 +40,17 @@ export const CancelApproval = () => {
   const { t } = useTranslation();
 
   React.useEffect(() => {
-    setPendingApprovalCount(notificationService.approvals.length);
+    setPendingApprovalCount(getNotificationApprovalCountSnapshot());
   }, [displayBlockedRequestApproval, displayCancelAllApproval]);
 
   const handleCancelAll = () => {
-    notificationService.rejectAllApprovals();
+    rejectAllNotificationApprovalsSync();
     handleCancel();
   };
 
   const handleBlockedRequestApproval = () => {
     closePopup();
-    notificationService.blockedDapp();
+    blockCurrentNotificationDappSync();
     onCancel();
   };
 

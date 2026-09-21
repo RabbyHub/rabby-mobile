@@ -1,5 +1,14 @@
 import RNHelpers from '@/core/native/RNHelpers';
 import { DataSource, DataSourceOptions } from 'typeorm/browser';
+import RNFS from '@rabby-wallet/react-native-fs';
+import { getRabbyAppDbPath } from './constant';
+import {
+  ensureAppDataSourceLoaderStarted,
+  getAppDataSourceRegistrySnapshot,
+  resetAppDataSourceLoaderState,
+} from './registry';
+import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
+import { initializeConfiguredDataSource } from './dataSourceLifecycle';
 // import * as Sentry from '@sentry/react-native';
 
 const appDataSourceInitRef = {
@@ -14,51 +23,25 @@ export async function initializeAppDataSource(
   dbOptions?: DataSourceOptions,
 ) {
   if (dbOptions) {
-    const appDataSource = new DataSource({ ...dbOptions });
-
-    appDataSourceInitRef.current = appDataSource.initialize();
-    appDataSourceInitRef.current = appDataSourceInitRef.current.then(
-      async as => {
-        console.debug(
-          `[initializeAppDataSource] initialized, will runMigrations`,
-        );
-        await as
-          .runMigrations({
-            transaction: 'each',
-            fake: false,
-          })
-          .then(migrations => {
-            console.debug(
-              `[initializeAppDataSource] runMigrations finish: ${migrations.length}`,
-            );
-          })
-          .catch(error => {
-            console.error(
-              '[initializeAppDataSource] runMigrations error',
-              error,
-            );
-          });
-
-        try {
-          // don't drop database, if schema was changed, we need migrate rather than drop
-          await as.synchronize(false);
-        } catch (error) {
-          console.error('[initializeAppDataSource] error', error);
-          throw error;
-        }
-
-        // enable WAL mode
-        appDataSource.query('PRAGMA journal_mode=WAL');
-
-        return as;
-      },
-    );
+    appDataSourceInitRef.current = initializeConfiguredDataSource(dbOptions);
   } else if (!appDataSourceInitRef.current) {
-    const errMsg =
-      'initializeAppDataSource: app data source has not start initialization';
-    const err = new Error(errMsg);
-    throw err;
-    // Sentry.captureException(err)
+    const startedAt = Date.now();
+    traceStartupDiagnostic('db', 'app_data_source_loader_start', {
+      registry: getAppDataSourceRegistrySnapshot(),
+    });
+    await ensureAppDataSourceLoaderStarted('initialize_without_options');
+    traceStartupDiagnostic('db', 'app_data_source_loader_end', {
+      durationMs: Date.now() - startedAt,
+      registry: getAppDataSourceRegistrySnapshot(),
+    });
+
+    if (!appDataSourceInitRef.current) {
+      const errMsg =
+        'initializeAppDataSource: app data source loader did not start initialization';
+      const err = new Error(errMsg);
+      throw err;
+      // Sentry.captureException(err)
+    }
   }
 
   await appDataSourceInitRef.current;
@@ -103,13 +86,55 @@ export async function clearAppDataSource() {
   await appDataSource.query('VACUUM');
 }
 
-export async function dropAppDataSourceAndQuitApp() {
-  const appDataSource = await prepareAppDataSource();
+async function removeAppDbFilesBestEffort() {
+  const dbPath = getRabbyAppDbPath();
+  await Promise.allSettled(
+    [dbPath, `${dbPath}-shm`, `${dbPath}-wal`].map(async filePath => {
+      if (await RNFS.exists(filePath)) {
+        await RNFS.unlink(filePath);
+      }
+    }),
+  );
+}
 
-  await appDataSource.dropDatabase();
-  await appDataSource.query('VACUUM');
-  // it will cause crash on iOS production
-  RNHelpers.forceExitApp();
+function forceExitAppSoon(delayMs = 100) {
+  setTimeout(() => {
+    RNHelpers.forceExitApp();
+  }, delayMs);
+}
+
+export async function dropAppDataSourceAndQuitApp({
+  exitDelayMs = 100,
+}: {
+  exitDelayMs?: number;
+} = {}) {
+  let appDataSource: DataSource | null = null;
+
+  try {
+    appDataSource = await prepareAppDataSource();
+    await appDataSource.dropDatabase();
+    await appDataSource.query('VACUUM');
+  } catch (error) {
+    console.error('[dropAppDataSourceAndQuitApp] clear database failed', error);
+  } finally {
+    try {
+      if (appDataSource?.isInitialized) {
+        await appDataSource.destroy();
+      }
+    } catch (error) {
+      console.error('[dropAppDataSourceAndQuitApp] destroy failed', error);
+    }
+    appDataSourceInitRef.current = null;
+    resetAppDataSourceLoaderState();
+    removeAppDbFilesBestEffort().catch(error => {
+      console.error(
+        '[dropAppDataSourceAndQuitApp] remove db files failed',
+        error,
+      );
+    });
+    // it will cause crash on iOS production
+    forceExitAppSoon(exitDelayMs);
+  }
 }
 
 export async function exp_dropAndResyncDataSource(

@@ -1,0 +1,6 @@
+{
+  "main": "../src/dropdown-menu/index.tsx",
+  "module": "../src/dropdown-menu/index.tsx",
+  "react-native": "../src/dropdown-menu/index.tsx",
+  "types": "../src/dropdown-menu/index.tsx"
+}
