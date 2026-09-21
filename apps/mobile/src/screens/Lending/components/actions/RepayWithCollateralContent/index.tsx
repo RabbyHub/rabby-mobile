@@ -21,6 +21,7 @@ import { Pressable, View } from 'react-native';
 
 import { apiProvider } from '@/core/apis';
 import { useTheme2024 } from '@/hooks/theme';
+import { useAuthFormGuard } from '@/hooks/useAuthFormGuard';
 import { toast } from '@/components2024/Toast';
 import { Button } from '@/components2024/Button';
 import { useMiniSigner } from '@/hooks/useSigner';
@@ -227,12 +228,36 @@ export default function RepayWithCollateral({
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
   );
+  const authForm = useAuthFormGuard(
+    {
+      amount: repayAmount,
+      account: currentAccount?.address,
+      accountType: currentAccount?.type,
+      accountBrand: currentAccount?.brandName,
+      chain: chainEnum,
+      market: selectedMarketData?.market,
+      repayToken: repayToken.underlyingAddress,
+      collateralToken: selectedCollateralToken?.underlyingAddress,
+      slippage,
+      displaySlippage,
+      autoSlippage,
+      isCustomSlippage,
+      riskChecked,
+    },
+    () => toast.info(t('page.bridge.formChangedAmount')),
+  );
 
   const handleOpenFromTokenSelect = useCallback(() => {
+    if (authForm.blockInput()) {
+      return;
+    }
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.COLLATERAL_TOKEN_SELECT,
       excludeTokenAddress: repayToken.underlyingAddress,
       onChange: (token: SwappableToken) => {
+        if (authForm.blockInput()) {
+          return;
+        }
         setSelectedCollateralToken(token);
         setCollateralAmount('');
         setQuote(null);
@@ -251,7 +276,7 @@ export default function RepayWithCollateral({
         },
       },
     });
-  }, [repayToken.underlyingAddress, isLight, colors2024]);
+  }, [authForm, repayToken.underlyingAddress, isLight, colors2024]);
 
   const clearQuoteExpiredTimer = useCallback(() => {
     if (quoteExpiredTimerRef.current) {
@@ -268,6 +293,9 @@ export default function RepayWithCollateral({
 
   const onInputChange = useCallback(
     (text: string) => {
+      if (authForm.blockInput()) {
+        return;
+      }
       const formatted = formatTokenAmountInput(text, repayToken.decimals);
       if (!/^\d*(\.\d*)?$/.test(formatted)) {
         return;
@@ -286,7 +314,7 @@ export default function RepayWithCollateral({
 
       setRepayAmount(displayAmountStr);
     },
-    [debtBalance, repayToken.decimals],
+    [authForm, debtBalance, repayToken.decimals],
   );
 
   useEffect(() => {
@@ -1042,7 +1070,12 @@ export default function RepayWithCollateral({
               {(!repayAmount || BigNumber(repayAmount || '0').lte(0)) && (
                 <Pressable
                   style={styles.maxButtonWrapper}
-                  onPress={() => setRepayAmount(debtBalance.toString(10))}>
+                  onPress={() => {
+                    if (authForm.blockInput()) {
+                      return;
+                    }
+                    setRepayAmount(debtBalance.toString(10));
+                  }}>
                   <Text style={styles.maxButtonText}>MAX</Text>
                 </Pressable>
               )}
@@ -1164,11 +1197,26 @@ export default function RepayWithCollateral({
             <BridgeSlippage
               value={slippage}
               displaySlippage={displaySlippage}
-              onChange={setSlippage}
+              onChange={value => {
+                if (authForm.blockInput()) {
+                  return;
+                }
+                setSlippage(value);
+              }}
               autoSlippage={autoSlippage}
               isCustomSlippage={isCustomSlippage}
-              setAutoSlippage={setAutoSlippage}
-              setIsCustomSlippage={setIsCustomSlippage}
+              setAutoSlippage={value => {
+                if (authForm.blockInput()) {
+                  return;
+                }
+                setAutoSlippage(value);
+              }}
+              setIsCustomSlippage={value => {
+                if (authForm.blockInput()) {
+                  return;
+                }
+                setIsCustomSlippage(value);
+              }}
               type="swap"
               loading={isQuoteLoading}
             />
@@ -1239,6 +1287,9 @@ export default function RepayWithCollateral({
           <Pressable
             style={styles.riskContainer}
             onPress={() => {
+              if (authForm.blockInput()) {
+                return;
+              }
               setRiskChecked(!riskChecked);
             }}>
             <CheckBoxRect checked={riskChecked} size={16} />
@@ -1256,7 +1307,10 @@ export default function RepayWithCollateral({
             title={t('page.Lending.repayWithCollateral.button.repay')}
             height={BOTTOM_BUTTON_SINGLE_HEIGHT}
             titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
-            onFinished={() => handleRepay()}
+            onBeforeAuth={authForm.onBeforeAuth}
+            onCancel={authForm.onCancel}
+            onAuthModalDismiss={authForm.onAuthModalDismiss}
+            onFinished={() => authForm.onFinished(() => handleRepay())}
             disabled={buttonDisabled || !!ctx?.disabledProcess}
             type="aave"
             iconColor={colors2024['neutral-contrast']}

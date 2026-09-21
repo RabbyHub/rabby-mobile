@@ -82,6 +82,7 @@ import { naviPush } from '@/utils/navigation';
 import { isUserCancelledError } from '../../utils/error';
 import { ellipsisSymbol } from '../../utils/format';
 import { useMode } from '../../hooks/useMode';
+import { useAuthFormGuard } from '@/hooks/useAuthFormGuard';
 
 type SupplyActionPopupProps = PopupDetailProps & {
   onBeforeSwapNavigate?: () => void;
@@ -121,6 +122,18 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
     [currentAccount?.type],
   );
   const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
+  const authForm = useAuthFormGuard(
+    {
+      amount,
+      account: currentAccount?.address,
+      accountType: currentAccount?.type,
+      accountBrand: currentAccount?.brandName,
+      chain: chainEnum,
+      market: selectedMarketData?.market,
+      token: activeUnderlyingAsset,
+    },
+    () => toast.info(t('page.bridge.formChangedAmount')),
+  );
   const approveRequestIdRef = useRef(0);
   const buildTransactionsRequestIdRef = useRef(0);
 
@@ -159,7 +172,10 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
 
   const handleChangeActiveUnderlyingAsset = useCallback(
     (underlyingAsset: string) => {
-      if (directSignBtnRef.current?.isAuthInProgress()) {
+      if (
+        authForm.blockInput() ||
+        directSignBtnRef.current?.isAuthInProgress()
+      ) {
         return;
       }
       if (isSameAddress(underlyingAsset, activeUnderlyingAsset)) {
@@ -168,7 +184,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
       resetTokenScopedState();
       setActiveUnderlyingAsset(underlyingAsset);
     },
-    [activeUnderlyingAsset, resetTokenScopedState],
+    [activeUnderlyingAsset, authForm, resetTokenScopedState],
   );
 
   const afterHF = useMemo(() => {
@@ -627,7 +643,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
               onClose?.();
             }
             if (error === MINI_SIGN_ERROR.PREFETCH_FAILURE) {
-              handleSupply(true);
+              await handleSupply(true);
             }
             return;
           }
@@ -778,13 +794,19 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
         <TokenAmountInput
           value={amount}
           onChange={v => {
-            if (directSignBtnRef.current?.isAuthInProgress()) {
+            if (
+              authForm.blockInput() ||
+              directSignBtnRef.current?.isAuthInProgress()
+            ) {
               return;
             }
             setAmount(v);
           }}
           symbol={displaySymbol}
           handleClickMaxButton={() => {
+            if (authForm.blockInput()) {
+              return;
+            }
             setAmount(supplyAmount.amount || '0');
           }}
           tokenAmount={Number(supplyAmount.amount || '0')}
@@ -850,7 +872,10 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
               title={`${t(
                 'page.Lending.supplyDetail.actions',
               )} ${displaySymbol}`}
-              onFinished={() => handleSupply()}
+              onBeforeAuth={authForm.onBeforeAuth}
+              onCancel={authForm.onCancel}
+              onAuthModalDismiss={authForm.onAuthModalDismiss}
+              onFinished={() => authForm.onFinished(() => handleSupply())}
               disabled={
                 !amount ||
                 isZeroAmount(amount) ||
