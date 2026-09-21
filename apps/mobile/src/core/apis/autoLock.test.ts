@@ -28,14 +28,12 @@ function loadAutoLockModule({
   jest.doMock('@/constant/autoLock', () => ({
     DEFAULT_AUTO_LOCK_MINUTES: 5,
   }));
-  jest.doMock('../services', () => ({
-    keyringService: {
-      isUnlocked: mockIsUnlocked,
-    },
-    preferenceService: {
-      getPreference: (...args: unknown[]) => mockGetPreference(...args),
-      setPreference: (...args: unknown[]) => mockSetPreference(...args),
-    },
+  jest.doMock('@/core/serviceApi/keyring', () => ({
+    isKeyringUnlockedSnapshot: mockIsUnlocked,
+  }));
+  jest.doMock('@/core/serviceApi/preference', () => ({
+    getPreferenceSnapshot: (...args: unknown[]) => mockGetPreference(...args),
+    setPreferenceSync: (...args: unknown[]) => mockSetPreference(...args),
   }));
 
   const autoLockModule = require('./autoLock') as typeof import('./autoLock');

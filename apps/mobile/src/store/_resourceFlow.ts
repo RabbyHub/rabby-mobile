@@ -7,6 +7,7 @@ import {
   serializeResourceFlowError,
   upsertResourceFlowResourceSnapshot,
 } from './_resourceFlowDebug';
+import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 
 export type ObservableResourceValueSource = 'hydrate' | 'remote';
 export type ObservableResourcePersistStatus =
@@ -49,6 +50,19 @@ type ResourceLifecycleOptions = {
   localTargets?: ResourceLocalTarget[];
   detail?: Record<string, unknown>;
 };
+
+function pickPersistDiagnosticDetail(options?: ResourceLifecycleOptions) {
+  const detail = options?.detail || {};
+  return {
+    requestId: options?.requestId,
+    source: detail.source,
+    force: detail.force,
+    reason: detail.reason,
+    scene: detail.scene,
+    requester: detail.requester,
+    endpoint: detail.endpoint,
+  };
+}
 
 function createDefaultMeta(
   family: string,
@@ -603,18 +617,41 @@ export class ObservableResourceStore<TValue> extends BaseStore<
     persist: () => Promise<void> | void,
     options?: ResourceLifecycleOptions,
   ) => {
+    const startedAt = Date.now();
+    traceStartupDiagnostic('resource', 'persist_queued', {
+      family: this.family,
+      ...pickPersistDiagnosticDetail(options),
+    });
     this.queuePersist(resourceKey, options);
 
     return Promise.resolve()
       .then(() => {
+        traceStartupDiagnostic('resource', 'persist_start', {
+          family: this.family,
+          queuedMs: Date.now() - startedAt,
+          ...pickPersistDiagnosticDetail(options),
+        });
         this.markPersistStarted(resourceKey, options);
         return persist();
       })
       .then(() => {
         this.markPersistSucceeded(resourceKey, options);
+        traceStartupDiagnostic('resource', 'persist_end', {
+          family: this.family,
+          status: 'success',
+          durationMs: Date.now() - startedAt,
+          ...pickPersistDiagnosticDetail(options),
+        });
       })
       .catch(error => {
         this.markError(resourceKey, 'persist', error, options);
+        traceStartupDiagnostic('resource', 'persist_end', {
+          family: this.family,
+          status: 'error',
+          durationMs: Date.now() - startedAt,
+          error: error instanceof Error ? error.message : String(error),
+          ...pickPersistDiagnosticDetail(options),
+        });
       });
   };
 

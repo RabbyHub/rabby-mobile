@@ -14,7 +14,7 @@ import {
   marketKeyToProtocolId,
 } from '@/screens/Lending/config/protocol';
 import { SvgProps } from 'react-native-svg';
-import { switchPerpsAccountBeforeNavigate } from '@/hooks/perps/usePerpsStore';
+import { navigateToPreferredPerps } from '@/hooks/perps/navigation/navigateToPreferredPerps';
 import { useSelectedMarket } from '@/screens/Lending/hooks';
 import { clearLendingActionPopupState } from '@/screens/Lending/utils/actionPopup';
 import { IProtocolPortfolio } from '@/store/protocols';
@@ -48,7 +48,7 @@ interface ProtocolConfigItemType {
 export const useProtocolConfig = () => {
   const { navigation } = useSafeSetNavigationOptions();
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const { accounts } = useMyAccounts();
+  const { accounts } = useMyAccounts({ disableAutoFetch: true });
   const { setMarketKey } = useSelectedMarket();
 
   const generateAAVEConfig = useCallback(
@@ -141,32 +141,32 @@ export const useProtocolConfig = () => {
           const isNavigateDetail =
             !!item?._originPortfolio?.detail?.position_token?.name;
 
-          switchPerpsAccountBeforeNavigate(account);
           if (isNavigateDetail) {
             matomoRequestEvent({
               category: 'Rabby Perps',
               action: 'Perps_ManageToPosition',
             });
-            return navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.PerpsMarketDetail,
-              params: {
-                market:
-                  item?._originPortfolio?.detail?.position_token?.symbol || '',
-              },
+            const positionToken =
+              item?._originPortfolio?.detail?.position_token;
+            const market = positionToken?.symbol || '';
+            await navigateToPreferredPerps({
+              account,
+              marketCandidates: [market, positionToken?.name || ''],
+              navigation,
+              simpleDetail: { market },
+              source: 'defi-manage-position',
             });
-          } else {
-            matomoRequestEvent({
-              category: 'Rabby Perps',
-              action: 'Perps_ManageToPerps',
-            });
-            return navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.Perps,
-              params: {
-                dappId: 'hyperliquid',
-                account,
-              },
-            });
+            return;
           }
+          matomoRequestEvent({
+            category: 'Rabby Perps',
+            action: 'Perps_ManageToPerps',
+          });
+          await navigateToPreferredPerps({
+            account,
+            navigation,
+            source: 'defi-manage-root',
+          });
         },
       },
     };

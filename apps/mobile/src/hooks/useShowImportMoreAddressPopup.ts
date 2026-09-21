@@ -10,6 +10,18 @@ import { useMemoizedFn } from 'ahooks';
 import { Keyboard } from 'react-native';
 import { KeyringAccountWithAlias } from './account';
 
+export async function dismissImportMoreAddressPopup(
+  modalId?: ReturnType<typeof createGlobalBottomSheetModal2024>,
+) {
+  if (!modalId) {
+    return;
+  }
+
+  await removeGlobalBottomSheetModal2024(modalId, {
+    waitForDismiss: true,
+  });
+}
+
 export const useShowImportMoreAddressPopup = () => {
   const modalRef =
     useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>(undefined);
@@ -36,10 +48,8 @@ export const useShowImportMoreAddressPopup = () => {
             modalRef.current = undefined;
           },
         },
-        onCancel: () => {
-          if (modalRef.current) {
-            removeGlobalBottomSheetModal2024(modalRef.current);
-          }
+        onCancel: async () => {
+          await dismissImportMoreAddressPopup(modalRef.current);
         },
       });
     },

@@ -270,9 +270,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   hfContainer: {
     gap: 6,
   },
-  hidden: {
-    display: 'none',
-  },
   hfValue: {
     fontSize: 17,
     lineHeight: 22,

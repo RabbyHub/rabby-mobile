@@ -1,4 +1,5 @@
 const mockAppStateListeners = new Set<(state: string) => void>();
+const mockCaptureException = jest.fn();
 const mockAppState = {
   isAvailable: true,
   currentState: 'active',
@@ -59,6 +60,10 @@ jest.mock('@/core/apis/readOnlyRpc', () => ({
   requestReadOnlyETHRpc: jest.fn(),
 }));
 
+jest.mock('@sentry/react-native', () => ({
+  captureException: (...args: unknown[]) => mockCaptureException(...args),
+}));
+
 jest.mock('react-native', () => ({
   AppState: mockAppState,
 }));
@@ -95,8 +100,11 @@ jest.mock('./sessions', () => ({
   getWalletConnectSession: jest.fn(() => session),
   getWalletConnectSessionOrigin: jest.fn(() => 'https://example.com'),
   isWalletConnectMethodApproved: jest.fn(() => true),
-  resolveWalletConnectAccount: jest.fn(() => account),
   syncWalletConnectSessionsFromClient: jest.fn(),
+}));
+
+jest.mock('./sessionAccountResolution', () => ({
+  resolveWalletConnectAccount: jest.fn(() => account),
 }));
 
 const { sendRequest } =
@@ -113,6 +121,8 @@ const { getWalletConnectSession } =
   require('./sessions') as typeof import('./sessions');
 const { isWalletConnectMethodApproved } =
   require('./sessions') as typeof import('./sessions');
+const { resolveWalletConnectAccount } =
+  require('./sessionAccountResolution') as typeof import('./sessionAccountResolution');
 
 function makeEvent(method: string, params: unknown[] = []) {
   return {
@@ -153,6 +163,7 @@ const readOnlyRpcCases: Array<[string, unknown[]]> = [
 
 describe('walletconnect request bridge', () => {
   beforeEach(() => {
+    mockCaptureException.mockClear();
     jest.mocked(sendRequest).mockReset();
     jest.mocked(requestReadOnlyETHRpc).mockReset();
     walletKit.getActiveSessions.mockClear();
@@ -161,6 +172,8 @@ describe('walletconnect request bridge', () => {
     jest.mocked(getWalletConnectSession).mockReturnValue(session as never);
     jest.mocked(getWalletConnectApprovedChains).mockReturnValue(['eip155:1']);
     jest.mocked(isWalletConnectMethodApproved).mockReturnValue(true);
+    jest.mocked(resolveWalletConnectAccount).mockReset();
+    jest.mocked(resolveWalletConnectAccount).mockReturnValue(account as never);
     jest.mocked(maybeRedirectToDapp).mockReset();
     jest.mocked(maybeRedirectToDapp).mockResolvedValue(false);
     mockAppState.currentState = 'active';
@@ -447,12 +460,31 @@ describe('walletconnect request bridge', () => {
     });
 
     expect(sendRequest).not.toHaveBeenCalled();
+    expect(mockCaptureException).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Unsupported WalletConnect method requested',
+      }),
+      {
+        tags: {
+          scene: 'walletconnect_request',
+          source: 'walletconnect',
+        },
+        extra: {
+          dappName: 'Example dapp',
+          dappOrigin: 'https://example.com',
+          appScheme: '',
+          method: 'wallet_addEthereumChain',
+          chainId: 'eip155:1',
+        },
+      },
+    );
     expect(walletKit.respondSessionRequest).toHaveBeenCalledWith({
       topic: 'topic-1',
       response: {
         id: 1,
         jsonrpc: '2.0',
         error: expect.objectContaining({
+          code: -32601,
           message:
             'WalletConnect method is not supported: wallet_addEthereumChain',
         }),
@@ -496,6 +528,69 @@ describe('walletconnect request bridge', () => {
         id: 1,
         jsonrpc: '2.0',
         result: '0xsigned',
+      },
+    });
+  });
+
+  it('rejects a signing request when the session disappears after foreground wait', async () => {
+    jest.mocked(getWalletConnectSession).mockReturnValueOnce(session as never);
+    jest
+      .mocked(getWalletConnectSession)
+      .mockReturnValueOnce(undefined as never);
+    mockAppState.currentState = 'background';
+
+    const requestPromise = handleWalletConnectSessionRequest({
+      walletKit: walletKit as never,
+      event: makeEvent('eth_sendTransaction') as never,
+    });
+
+    await Promise.resolve();
+    mockAppState.currentState = 'active';
+    mockAppStateListeners.forEach(listener => listener('active'));
+
+    await requestPromise;
+
+    expect(sendRequest).not.toHaveBeenCalled();
+    expect(walletKit.respondSessionRequest).toHaveBeenCalledWith({
+      topic: 'topic-1',
+      response: {
+        id: 1,
+        jsonrpc: '2.0',
+        error: expect.objectContaining({
+          message: 'WalletConnect session not found.',
+        }),
+      },
+    });
+  });
+
+  it('rejects a signing request when the account disappears after foreground wait', async () => {
+    jest
+      .mocked(resolveWalletConnectAccount)
+      .mockReturnValueOnce(account as never)
+      .mockReturnValueOnce(null as never);
+    mockAppState.currentState = 'background';
+
+    const requestPromise = handleWalletConnectSessionRequest({
+      walletKit: walletKit as never,
+      event: makeEvent('eth_sendTransaction') as never,
+    });
+
+    await Promise.resolve();
+    mockAppState.currentState = 'active';
+    mockAppStateListeners.forEach(listener => listener('active'));
+
+    await requestPromise;
+
+    expect(sendRequest).not.toHaveBeenCalled();
+    expect(walletKit.respondSessionRequest).toHaveBeenCalledWith({
+      topic: 'topic-1',
+      response: {
+        id: 1,
+        jsonrpc: '2.0',
+        error: expect.objectContaining({
+          message:
+            'No Rabby account is available for this WalletConnect session.',
+        }),
       },
     });
   });

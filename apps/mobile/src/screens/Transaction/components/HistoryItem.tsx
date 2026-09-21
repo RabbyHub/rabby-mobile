@@ -198,7 +198,11 @@ export const HistoryItem = React.memo(
                   flexDirection: 'row',
                   alignItems: 'center',
                 }}>
-                <Text style={styles.describeText}>{ToText}</Text>
+                <Text
+                  style={[styles.describeText, { flexShrink: 0 }]}
+                  numberOfLines={1}>
+                  {ToText}
+                </Text>
                 <FastImage
                   source={{ uri: cexInfo.logo_url }}
                   style={{
@@ -208,7 +212,15 @@ export const HistoryItem = React.memo(
                     marginHorizontal: 4,
                   }}
                 />
-                <Text style={styles.describeText}>
+                <Text
+                  style={[
+                    styles.describeText,
+                    {
+                      flexShrink: 1,
+                      minWidth: 0,
+                    },
+                  ]}
+                  numberOfLines={1}>
                   {getAliasName(addr, { keepEmptyIfNotFound: true }) ||
                     ellipsisAddress(addr)}
                 </Text>

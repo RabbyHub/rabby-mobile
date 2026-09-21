@@ -1,21 +1,14 @@
 import RcIconStarFull from '@/assets/icons/dapp/icon-star-mini-full.svg';
 import hotDappList from '@/constant/hot-dapp.json';
 import { HighlightText } from '@/components2024/HighlightText';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { createGetStyles2024 } from '@/utils/styles';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import React from 'react';
-import {
-  GestureResponderEvent,
-  Image,
-  Platform,
-  StyleProp,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
+import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
+import { Image, Platform, TouchableOpacity, View } from 'react-native';
 // import { TouchableOpacity } from 'react-native-gesture-handler';
 import { Text } from '@/components/Typography';
 

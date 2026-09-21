@@ -5,16 +5,18 @@ import { APP_VERSIONS, APPLICATION_ID } from '@/constant';
 import { BUILD_GIT_INFO } from '@/constant/env';
 import { getAllAccounts } from '@/core/apis/address';
 import { getLatestNavigationName } from '@/utils/navigation';
-import { UserFeedbackItem } from '@rabby-wallet/rabby-api/dist/types';
-import { gasAccountService, preferenceService } from '@/core/services';
+import type { UserFeedbackItem } from '@rabby-wallet/rabby-api/dist/types';
+import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
+import { gasAccountServiceApi } from '@/core/serviceApi/gasAccount';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import {
+import type {
   AccountSwitcherScene,
   SceneAccounts,
 } from '@/hooks/sceneAccountInfoAtom';
 import { appJsonStore } from '@/core/storage/mmkv';
 import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import { apisPerps } from '@/core/apis';
+import type { Account } from '@/types/account';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -27,12 +29,15 @@ function runTryCatch<T extends (...args: any[]) => any>(
   }
 }
 
-function getGasAccountFeedbackAddress(sceneAddress?: string | null) {
-  const { accountId } = gasAccountService.getGasAccountSig();
+async function getGasAccountFeedbackAddress(sceneAddress?: string | null) {
+  const [gasAccountSig, pendingHardwareAccount] = await Promise.all([
+    gasAccountServiceApi.getGasAccountSig(),
+    gasAccountServiceApi.getPendingHardwareAccount(),
+  ]);
 
   return (
-    accountId ||
-    gasAccountService.getPendingHardwareAccount()?.address ||
+    gasAccountSig.accountId ||
+    pendingHardwareAccount?.address ||
     sceneAddress ||
     null
   );
@@ -49,6 +54,8 @@ export async function getSceneAddresses() {
   const values = Object.entries(accounts).reduce((acc, [key, value]) => {
     if (!key.startsWith('@')) {
       acc[key as AccountSwitcherScene] = value?.currentAccount?.address || null;
+      acc[(key + 'AccountType') as AccountSwitcherScene] =
+        value?.currentAccount?.type || null;
     }
     return acc;
   }, {} as { [K in AccountSwitcherScene]: string | null });
@@ -59,8 +66,9 @@ export async function getSceneAddresses() {
 
   return {
     ...values,
-    GasAccount: getGasAccountFeedbackAddress(values.GasAccount),
+    GasAccount: await getGasAccountFeedbackAddress(values.GasAccount),
     Perps: perpsInfo?.address || perpsInfo,
+    PerpsAccountType: perpsInfo?.type,
   };
 }
 
@@ -91,7 +99,7 @@ export async function getScreenshotFeedbackExtra({
   const appBuildRevision = BUILD_GIT_INFO.BUILD_GIT_HASH;
 
   const myAccountList = await getAllAccounts();
-  let myFirstCallableAddress = '';
+  let myFirstCallableAccount: Account | undefined;
   const {
     callables: myCallableAddressCount,
     uncallables: myUncallableAddressCount,
@@ -101,7 +109,7 @@ export async function getScreenshotFeedbackExtra({
         item.type !== KEYRING_TYPE.WatchAddressKeyring &&
         item.type !== KEYRING_TYPE.GnosisKeyring
       ) {
-        myFirstCallableAddress = myFirstCallableAddress || item.address;
+        myFirstCallableAccount = myFirstCallableAccount || item;
         acc.callables += 1;
       } else {
         acc.uncallables += 1;
@@ -110,7 +118,7 @@ export async function getScreenshotFeedbackExtra({
     },
     { callables: 0, uncallables: 0 },
   );
-  const myCurrentAddress = preferenceService.getFallbackAccount()?.address;
+  const myCurrentAccount = getFallbackAccountSnapshot();
 
   return {
     totalBalanceText,
@@ -122,8 +130,10 @@ export async function getScreenshotFeedbackExtra({
     applicationId: APPLICATION_ID,
     myCallableAddressCount,
     myUncallableAddressCount,
-    myFirstAddress: myFirstCallableAddress,
-    myCurrentAddress,
+    myFirstAddress: myFirstCallableAccount?.address,
+    myFirstAddressType: myFirstCallableAccount?.type,
+    myCurrentAddress: myCurrentAccount?.address,
+    myCurrentAddressType: myCurrentAccount?.type,
     mySceneAddresses: await runTryCatch(async () => await getSceneAddresses()),
 
     systemName: runTryCatch(() => DeviceInfo.getSystemName()),

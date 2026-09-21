@@ -19,6 +19,7 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useLendingService } from '../../hooks/useLendingService';
 import { Text } from '@/components/Typography';
+import { withLendingService } from '../../lendingServiceDependencies';
 
 interface SummaryItemProps {
   netWorth: string;
@@ -276,12 +277,14 @@ const SummaryItem: React.FC<SummaryItemProps> = ({
   );
 };
 
-export default SummaryItem;
+export default withLendingService(SummaryItem);
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: isLight
+      ? 'rgba(255, 255, 255, 0.9)'
+      : colors2024['neutral-bg-2'],
     paddingTop: 0,
     paddingBottom: 16,
   },
@@ -370,48 +373,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-  },
-  sectionHeader: {
-    color: colors2024['neutral-foot'],
-    fontSize: 12,
-    lineHeight: 14,
-    fontFamily: 'SF Pro Rounded',
-  },
-  hfTipsContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  hfTipsContentText: {
-    flex: 1,
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-InvertHighlight'],
-  },
-  moreContainer: {
-    height: 14,
-  },
-  moreText: {
-    fontSize: 14,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['brand-default'],
-  },
-  closeButton: {},
-  parentWrapperStyle: {
-    width: '100%',
-    flex: 1,
-    gap: 6,
-  },
-  contentStyle: {
-    paddingHorizontal: 12,
-    paddingRight: 19,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    height: 54,
   },
   extraContainer: {
     position: 'relative',

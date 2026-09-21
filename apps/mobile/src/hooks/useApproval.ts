@@ -1,15 +1,28 @@
-import { notificationService } from '@/core/services';
-import { Approval } from '@/core/services/notification';
+import type { Approval } from '@/core/services/notification';
+import {
+  getNotificationWindowIdSnapshot,
+  notificationServiceApi,
+} from '@/core/serviceApi/notification';
 import { eventBus, EVENT_ACTIVE_WINDOW } from '@/utils/events';
 import React, { useCallback } from 'react';
 import { useApprovalPopup } from './useApprovalPopup';
 import { useDeviceConnect } from './useDeviceConnect';
+import { ApprovalIdentityContext } from './approvalIdentity';
 
-export const useApproval = () => {
+export const useApproval = (security?: { canResolve: () => boolean }) => {
+  const identity = React.useContext(ApprovalIdentityContext);
+  const bound = !!security;
   const getApproval: () => Promise<Approval | null> = useCallback(async () => {
-    const approval = notificationService.getApproval();
+    const approval = await notificationServiceApi.getApproval();
+    if (
+      bound &&
+      (!identity ||
+        approval?.id !== identity.id ||
+        approval.data.approvalComponent !== identity.component)
+    )
+      return null;
     return approval;
-  }, []);
+  }, [bound, identity]);
   const { showPopup, enablePopup, closePopup } = useApprovalPopup();
   const deviceConnect = useDeviceConnect();
 
@@ -19,6 +32,7 @@ export const useApproval = () => {
     forceReject = false,
     approvalId?: string,
   ) => {
+    if (security && (!identity || !security.canResolve())) return;
     // handle connect
     if (!deviceConnect(data)) {
       return;
@@ -26,14 +40,27 @@ export const useApproval = () => {
 
     const approval = await getApproval();
 
+    if (
+      security &&
+      (!approval ||
+        approval.id !== identity?.id ||
+        approval.data.approvalComponent !== identity.component ||
+        !security.canResolve())
+    )
+      return;
+
     if (approval) {
-      notificationService.resolveApproval(data, forceReject, approvalId);
+      await notificationServiceApi.resolveApproval(
+        data,
+        forceReject,
+        security ? identity?.id : approvalId,
+      );
     }
     if (stay) {
       return;
     }
 
-    let currentNotificationId = notificationService.notifyWindowId;
+    let currentNotificationId = getNotificationWindowIdSnapshot();
 
     setTimeout(() => {
       if (data && enablePopup(data.type)) {
@@ -46,7 +73,7 @@ export const useApproval = () => {
   };
 
   const rejectApproval = async (err?, stay = false, isInternal = false) => {
-    let currentNotificationId = notificationService.notifyWindowId;
+    let currentNotificationId = getNotificationWindowIdSnapshot();
 
     closePopup();
     const approval = await getApproval();
@@ -55,7 +82,7 @@ export const useApproval = () => {
     }
 
     if (approval) {
-      await notificationService.rejectApproval(err, stay, isInternal);
+      await notificationServiceApi.rejectApproval(err, stay, isInternal);
     }
     if (!stay) {
       eventBus.emit(EVENT_ACTIVE_WINDOW, currentNotificationId);

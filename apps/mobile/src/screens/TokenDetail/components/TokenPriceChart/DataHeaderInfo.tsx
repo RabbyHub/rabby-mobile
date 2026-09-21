@@ -179,26 +179,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 46,
     fontWeight: '900',
   },
-  pinBadge: {
-    // paddingHorizontal: 6,
-    // paddingVertical: 4,
-    // gap: 4,
-    borderRadius: 6,
-    backgroundColor: colors2024['brand-light-1'],
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 33,
-    height: 20,
-    flexWrap: 'nowrap',
-  },
-  pinText: {
-    fontSize: 14,
-    lineHeight: 18,
-    color: colors2024['brand-default'],
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-  },
   percent: {
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
@@ -206,31 +186,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 22,
     fontWeight: '700',
     position: 'relative',
-  },
-  green: {
-    color: colors2024['green-default'],
-  },
-  red: {
-    color: colors2024['red-default'],
-  },
-  disconnectWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  disconnectText: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 13,
-    color: colors2024['neutral-body'],
-    textAlign: 'center',
-  },
-  noAssetsText: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 15,
-    color: colors2024['neutral-body'],
-    textAlign: 'center',
-    width: '100%',
-    marginTop: 80,
   },
   skeleton: {
     borderRadius: 8,

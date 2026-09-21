@@ -59,7 +59,7 @@ export interface Props {
     account?: KeyringAccountWithAlias;
     brandName: string;
   };
-  onCancel: () => void;
+  onCancel: () => void | Promise<void>;
 }
 
 const useGetAliasByAddress = () => {
@@ -405,13 +405,26 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
 
     if (params.type === KEYRING_TYPE.HdKeyring) {
       setTimeout(() => {
-        activeAndPersistAccountsByMnemonics(
-          params.mnemonics!,
-          params.passphrase || '',
-          selectedAccounts,
-          true,
-        )
-          .then(() => {
+        (async () => {
+          let imported = false;
+          try {
+            await activeAndPersistAccountsByMnemonics(
+              params.mnemonics!,
+              params.passphrase || '',
+              selectedAccounts,
+              true,
+            );
+            imported = true;
+          } catch (err: any) {
+            console.error(err);
+            toast.show(err.message);
+          } finally {
+            importToastHiddenRef.current?.();
+            setImporting(false);
+            await onCancel();
+          }
+
+          if (imported) {
             resetNavigationOnTopOfHome(RootNames.StackAddress, {
               screen: RootNames.ImportSuccess2024,
               params: {
@@ -424,26 +437,31 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
                 isExistedKR: params.isExistedKR,
               },
             });
-          })
-          .catch((err: any) => {
-            console.error(err);
-            toast.show(err.message);
-          })
-          .finally(() => {
-            importToastHiddenRef.current?.();
-            setImporting(false);
-            onCancel();
-          });
+          }
+        })().catch(err => {
+          console.error(err);
+        });
       });
 
       return;
     }
 
+    let imported = false;
     try {
       for (const acc of selectedAccounts) {
         await apiHD?.importAddress(acc.index - 1);
       }
+      imported = true;
+    } catch (err: any) {
+      console.error(err);
+      toast.show(err.message);
+    } finally {
+      importToastHiddenRef.current?.();
+      setImporting(false);
+      await onCancel();
+    }
 
+    if (imported) {
       resetNavigationOnTopOfHome(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess2024,
         params: {
@@ -452,14 +470,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
           address: selectedAccounts.map(a => a.address),
         },
       });
-    } catch (err: any) {
-      console.error(err);
-      toast.show(err.message);
-    } finally {
-      onCancel();
-      importToastHiddenRef.current?.();
     }
-    setImporting(false);
   }, [
     params.type,
     params.mnemonics,

@@ -2,7 +2,7 @@ import { AppBottomSheetModal } from '@/components';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
@@ -14,7 +14,6 @@ import { Text } from '@/components/Typography';
 import {
   BOTTOM_BUTTON_DOUBLE_HEIGHT,
   BOTTOM_BUTTON_GAP,
-  BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
   BOTTOM_BUTTON_TEXT_SIZE,
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
@@ -208,6 +207,5 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     fontSize: BOTTOM_BUTTON_TEXT_SIZE,
     fontStyle: 'normal',
     fontWeight: '600',
-    lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
   },
 }));

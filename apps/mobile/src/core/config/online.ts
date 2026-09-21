@@ -3,28 +3,39 @@ import axios from 'axios';
 import { merge } from 'lodash';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { APP_FILE_LOGGING_ONLINE_SWITCH } from '@/utils/logging/policy';
-
-function sleep(ms = 0) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+import { appMMKV } from '../storage/mmkvInstances';
 
 const BASE_URL = isNonPublicProductionEnv
   ? 'https://download.rabby.io/downloads/wallet-mobile-config-reg'
   : 'https://download.rabby.io/downloads/wallet-mobile-config';
 // const CONFIG_URL = `${BASE_URL}/${Platform.OS === 'android' ? 'android' : 'ios'}.json`;
 const CONFIG_URL = `${BASE_URL}/rabby-mobile.json`;
+export const ONLINE_SWITCH_ENABLE_WORKER_THREAD =
+  '20251226.enable_worker_thread' as const;
+export const ONLINE_SWITCH_DISABLE_DB_PREPARED_UPSERT_V2 =
+  '20260903.disable_db_prepared_upsert_v2' as const;
+const ONLINE_CONFIG_CACHE_KEY = '@OnlineConfigCacheV1';
+const ONLINE_CONFIG_CACHE_MAX_AGE_MS = 3 * 24 * 60 * 60 * 1000;
 
 type OnlineConfig = {
   ['switches']?: {
     ['20250820.reportSentry_slowQuery']?: boolean;
     ['20250924.android_webview_always_treat_as_reload']?: boolean;
-    ['20251226.enable_worker_thread']?: boolean;
+    [ONLINE_SWITCH_ENABLE_WORKER_THREAD]?: boolean;
     /** @deprecated keep it disabled online, or the insertions will be error on old version */
     ['20260105.disable_db_prepared_upsert']?: boolean;
     ['20260116.allow_short_auto_lock_time_on_bootstrap']?: boolean;
+    /** @deprecated prepared upsert is enabled by default in current versions */
     ['20260122.enable_db_prepared_upsert']?: boolean;
+    [ONLINE_SWITCH_DISABLE_DB_PREPARED_UPSERT_V2]?: boolean;
     [APP_FILE_LOGGING_ONLINE_SWITCH]?: boolean;
   };
+};
+
+type CachedOnlineConfig = {
+  version: 1;
+  updateTime: number;
+  config: Partial<OnlineConfig>;
 };
 
 function getDefaultOnlineConfig(): OnlineConfig {
@@ -32,16 +43,56 @@ function getDefaultOnlineConfig(): OnlineConfig {
     switches: {
       '20250820.reportSentry_slowQuery': false,
       '20250924.android_webview_always_treat_as_reload': true,
-      '20251226.enable_worker_thread': false,
+      [ONLINE_SWITCH_ENABLE_WORKER_THREAD]: false,
       '20260105.disable_db_prepared_upsert': false,
       '20260116.allow_short_auto_lock_time_on_bootstrap': false,
       '20260122.enable_db_prepared_upsert': false,
+      [ONLINE_SWITCH_DISABLE_DB_PREPARED_UPSERT_V2]: false,
       [APP_FILE_LOGGING_ONLINE_SWITCH]: false,
     },
   };
 }
 
-const configRef = { current: getDefaultOnlineConfig() };
+function readCachedOnlineConfig(): Partial<OnlineConfig> | undefined {
+  const raw = appMMKV.getString(ONLINE_CONFIG_CACHE_KEY);
+  if (!raw) {
+    return undefined;
+  }
+
+  const cached = stringUtils.safeParseJSON<CachedOnlineConfig>(raw, {
+    defaultValue: null,
+  });
+  if (!cached?.config || cached.version !== 1) {
+    appMMKV.delete(ONLINE_CONFIG_CACHE_KEY);
+    return undefined;
+  }
+
+  if (Date.now() - cached.updateTime > ONLINE_CONFIG_CACHE_MAX_AGE_MS) {
+    appMMKV.delete(ONLINE_CONFIG_CACHE_KEY);
+    return undefined;
+  }
+
+  return cached.config;
+}
+
+function writeCachedOnlineConfig(config: Partial<OnlineConfig> | undefined) {
+  if (!config) {
+    return;
+  }
+
+  appMMKV.set(
+    ONLINE_CONFIG_CACHE_KEY,
+    JSON.stringify({
+      version: 1,
+      updateTime: Date.now(),
+      config,
+    } satisfies CachedOnlineConfig),
+  );
+}
+
+const configRef = {
+  current: merge(getDefaultOnlineConfig(), readCachedOnlineConfig()),
+};
 const listeners = new Set<() => void>();
 
 function notifyOnlineConfigUpdated() {
@@ -57,17 +108,33 @@ export async function fetchConfigOnBootstrap() {
       : response.data;
 
   configRef.current = merge(configRef.current, json);
+  writeCachedOnlineConfig(json);
   notifyOnlineConfigUpdated();
 
   return json as Partial<OnlineConfig> | undefined;
 }
 
-const firstFetchPromise = Promise.race([
-  fetchConfigOnBootstrap().catch(() => {
-    console.warn('Failed to fetch online config');
-  }),
-  sleep(5000),
-]);
+async function fetchFirstOnlineConfig() {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<void>(resolve => {
+    timeoutId = setTimeout(resolve, 5000);
+  });
+
+  try {
+    return await Promise.race([
+      fetchConfigOnBootstrap().catch(() => {
+        console.warn('Failed to fetch online config');
+      }),
+      timeoutPromise,
+    ]);
+  } finally {
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+    }
+  }
+}
+
+const firstFetchPromise = fetchFirstOnlineConfig();
 
 export function startSyncOnlineConfig() {
   firstFetchPromise;
@@ -81,6 +148,10 @@ export function startSyncOnlineConfig() {
 
 export function getOnlineConfig() {
   return configRef.current;
+}
+
+export function isOnlineWorkerThreadEnabled(config = configRef.current) {
+  return !!config.switches?.[ONLINE_SWITCH_ENABLE_WORKER_THREAD];
 }
 
 export function subscribeOnlineConfig(listener: () => void) {

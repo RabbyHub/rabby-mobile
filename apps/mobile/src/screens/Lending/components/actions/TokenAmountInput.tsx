@@ -24,7 +24,6 @@ interface TokenAmountInputProps {
   onChange?(amount: string): void;
   handleClickMaxButton?: () => Promise<void> | void;
   inlinePrize?: boolean;
-  className?: string;
   placeholder?: string;
   isEstimatingGas?: boolean;
   onClickToken?: () => void;
@@ -243,30 +242,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       marginHorizontal: 12,
     },
 
-    rightToken: {},
-    rightInner: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: 4,
-      backgroundColor: colors2024['neutral-line'],
-      borderRadius: 12,
-    },
-    rightTokenInfo: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-    },
-    rightArrow: {
-      marginLeft: 2,
-    },
-    rightTokenSymbol: {
-      color: colors2024['neutral-title-1'],
-      fontSize: 16,
-      fontWeight: '700',
-      lineHeight: 20,
-      fontFamily: 'SF Pro Rounded',
-    },
-
     leftInputContainer: {
       flex: 1,
       paddingLeft: PADDING,
@@ -319,7 +294,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       lineHeight: 18,
       fontFamily: 'SF Pro Rounded',
     },
-    maxButtonLoading: { width: 30, height: '100%', marginLeft: 2 },
     skeleton: {
       marginTop: 16,
       marginBottom: 10,

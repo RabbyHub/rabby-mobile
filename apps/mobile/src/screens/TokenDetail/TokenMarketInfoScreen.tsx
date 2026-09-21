@@ -14,12 +14,13 @@ import {
 import { openapi } from '@/core/request';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
-import { AbstractProject } from '@/screens/Home/types';
+import type { AbstractProject } from '@/screens/Home/types';
 import { getMarketTabToSwapPageAction } from '@/screens/Market/analytics';
-import { findChain } from '@/utils/chain';
+import { findChain, findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
+import { mergeTokenSecurityFields } from '@/utils/tokenSecurityFlags';
 import { CHAINS_ENUM } from '@debank/common';
-import { preferenceService } from '@/core/services';
+import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
@@ -35,13 +36,14 @@ import {
   RefreshControl,
 } from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
-import { TokenChartRef, TokenPriceChart } from './components/TokenPriceChart';
+import type { TokenChartRef } from './components/TokenPriceChart';
+import { TokenPriceChart } from './components/TokenPriceChart';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
-import { GetRootScreenNavigationProps } from '@/navigation-type';
+import type { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
+import type { GetRootScreenNavigationProps } from '@/navigation-type';
 import { TokenChainAndContract } from './components/TokenChainAndContract';
 import { IssuerAndListSite } from './components/IssuerAndListSite';
 import RcIconWarningCC from '@/assets2024/icons/common/warning-circle-cc.svg';
@@ -60,16 +62,15 @@ import { Tabs } from 'react-native-collapsible-tab-view';
 import { DynamicCustomMaterialTabBar } from './components/CustomTabBar';
 import CustomLabel from './components/CustomLabel';
 import { CandlePeriod } from '@/components2024/TradingViewCandleChart/type';
-import TradingViewCandleChart, {
-  TradingViewChartRef,
-} from '@/components2024/TradingViewCandleChart';
+import type { TradingViewChartRef } from '@/components2024/TradingViewCandleChart';
+import TradingViewCandleChart from '@/components2024/TradingViewCandleChart';
 import TimePanel from './components/TimePanel';
 import MarketInfo from './components/MarketInfo';
 import { atomByMMKV } from '@/core/storage/mmkv';
 import ActivityAndHolders from './components/Market/ActivityAndHolders';
 import { scrollEndCallBack } from './components/Market/hooks';
 import { every10sEvent, useEvery10sEvent } from './event';
-import { ITokenItem } from '@/store/tokens';
+import type { ITokenItem } from '@/store/tokens';
 import { formatAmountValueKMB } from './util';
 import { Text } from '@/components/Typography';
 
@@ -79,6 +80,7 @@ const currentIntervalAtom = atomByMMKV<CandlePeriod>(
 );
 
 const isAndroid = Platform.OS === 'android';
+const TOKEN_MARKET_TAB_BAR_HEIGHT = 30;
 
 export type TokenFromAddressItem = {
   address: string;
@@ -143,8 +145,12 @@ export const TokenMarketInfoScreen = () => {
 
   const { safeOffBottom } = useSafeSizes();
 
+  const isCustomTestnet = useMemo(() => {
+    return token.chain && !!findChainByServerID(token.chain)?.isTestnet;
+  }, [token]);
+
   const finalAccount = useMemo(() => {
-    return account || accounts[0] || preferenceService.getFallbackAccount();
+    return account || accounts[0] || getFallbackAccountSnapshot();
   }, [account, accounts]);
 
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
@@ -155,6 +161,9 @@ export const TokenMarketInfoScreen = () => {
     loading: tokenWithAmountLoading,
   } = useRequest(
     async () => {
+      if (!token || !token.id || isCustomTestnet) {
+        return;
+      }
       const res = await openapi.getToken(
         finalAccount!.address,
         token.chain,
@@ -166,6 +175,7 @@ export const TokenMarketInfoScreen = () => {
         usd_value: res?.usd_value,
         price: res?.price,
         support_market_data: res?.support_market_data,
+        ...mergeTokenSecurityFields(token, res),
       } as ITokenItem;
     },
     {
@@ -179,7 +189,7 @@ export const TokenMarketInfoScreen = () => {
     refreshAsync: refreshTokenEntity,
   } = useRequest(
     async () => {
-      if (!token || !token.id) {
+      if (!token || !token.id || isCustomTestnet) {
         return;
       }
 
@@ -212,7 +222,7 @@ export const TokenMarketInfoScreen = () => {
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const getHeaderRight = useCallback(() => {
-    return (
+    return isCustomTestnet ? null : (
       <RightMore
         token={token}
         triggerUpdate={() =>
@@ -227,7 +237,7 @@ export const TokenMarketInfoScreen = () => {
         refreshTags={refreshTag}
       />
     );
-  }, [token, refreshTag, finalAccount?.address]);
+  }, [isCustomTestnet, token, refreshTag, finalAccount?.address]);
 
   useFocusEffect(
     useCallback(() => {
@@ -384,7 +394,7 @@ export const TokenMarketInfoScreen = () => {
           },
           {
             x: 120,
-            width: 120,
+            width: 160,
           },
         ]}
         initPaddingLeft={styles.tabsBarContainer?.paddingLeft ?? 0}
@@ -394,9 +404,11 @@ export const TokenMarketInfoScreen = () => {
     [externalContent, styles.indicator, styles.tabBar, styles.tabsBarContainer],
   );
 
+  const securityToken = tokenWithAmount || token;
   const riskInfo = useMemo(() => {
-    const hasRisk = token.is_verified === false || token.is_suspicious;
-    const isDanger = token.is_verified === false;
+    const hasRisk =
+      securityToken.is_verified === false || securityToken.is_suspicious;
+    const isDanger = securityToken.is_verified === false;
     return {
       hasRisk,
       isDanger,
@@ -418,8 +430,8 @@ export const TokenMarketInfoScreen = () => {
   }, [
     colors2024,
     styles.riskContainer,
-    token.is_suspicious,
-    token.is_verified,
+    securityToken.is_suspicious,
+    securityToken.is_verified,
   ]);
 
   const renderMarketDataLabel = useCallback(
@@ -537,7 +549,7 @@ export const TokenMarketInfoScreen = () => {
 
       <Tabs.Container
         renderTabBar={renderTabBar}
-        tabBarHeight={30}
+        tabBarHeight={TOKEN_MARKET_TAB_BAR_HEIGHT}
         containerStyle={styles.container}
         headerContainerStyle={styles.tabBarWrap}
         pagerProps={{ scrollEnabled: !isAndroid }}>
@@ -546,7 +558,11 @@ export const TokenMarketInfoScreen = () => {
             onScroll={handleScroll}
             scrollEventThrottle={200}
             refreshControl={
-              <RefreshControl refreshing={false} onRefresh={handleRefresh} />
+              <RefreshControl
+                refreshing={false}
+                onRefresh={handleRefresh}
+                progressViewOffset={isAndroid ? TOKEN_MARKET_TAB_BAR_HEIGHT : 0}
+              />
             }
             style={styles.innerContainer}>
             {!!account && (
@@ -628,7 +644,11 @@ export const TokenMarketInfoScreen = () => {
         <Tabs.Tab label={renderTokenSecurityLabel} name="tokenSecurity">
           <ScrollView
             refreshControl={
-              <RefreshControl refreshing={false} onRefresh={handleRefresh} />
+              <RefreshControl
+                refreshing={false}
+                onRefresh={handleRefresh}
+                progressViewOffset={isAndroid ? TOKEN_MARKET_TAB_BAR_HEIGHT : 0}
+              />
             }
             style={styles.innerContainer}>
             {riskInfo.content}
@@ -710,7 +730,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderRadius: 16,
       position: 'relative',
       marginTop: 12,
-      marginHorizontal: 16,
+      marginHorizontal: 12,
       padding: 12,
     },
     riskContainer: {
@@ -722,7 +742,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     innerContainer: {
       height: '100%',
-      paddingTop: 30,
+      paddingTop: TOKEN_MARKET_TAB_BAR_HEIGHT,
     },
     buttonGroup: {
       backgroundColor: isLight
@@ -804,7 +824,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderBottomColor: colors2024['neutral-line'],
     },
     tabBar: {
-      height: 30,
+      height: TOKEN_MARKET_TAB_BAR_HEIGHT,
       width: 'auto',
       flexShrink: 0,
       flex: 0,
@@ -815,12 +835,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       display: 'flex',
       paddingLeft: 20,
       position: 'relative',
-      height: 30,
+      height: TOKEN_MARKET_TAB_BAR_HEIGHT,
       overflow: 'hidden',
     },
     indicator: {
       backgroundColor: colors2024['neutral-body'],
-      height: 4,
+      height: 3,
       borderRadius: 100,
     },
     skeleton: {

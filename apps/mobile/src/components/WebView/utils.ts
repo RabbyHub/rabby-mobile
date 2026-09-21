@@ -7,14 +7,22 @@ import {
   protocolAllowList,
   trustedProtocolToDeeplink,
 } from '@/constant/dappView';
+import {
+  isRabbyWalletConnectDeeplink,
+  parseWalletConnectUriFromLink,
+} from '@/core/walletconnect/uri';
 import { Alert } from 'react-native';
+import { pairWalletConnectUri } from '@/core/walletconnect';
 
 /**
  *  Function that allows custom handling of any web view requests.
  *  Return `true` to continue loading the request and `false` to stop loading.
  */
 export function checkShouldStartLoadingWithRequestForDappWebView(
-  evt: Pick<ShouldStartLoadRequestEvent, 'url'>,
+  evt: Pick<ShouldStartLoadRequestEvent, 'url'> & {
+    sourceDocumentURL?: string;
+  },
+  options?: { enforceWalletConnectOrigin?: boolean },
 ): boolean /* should allow */ {
   const url = evt.url;
   const { protocol = '' } = urlUtils.safeParseURL(url) || {};
@@ -26,6 +34,23 @@ export function checkShouldStartLoadingWithRequestForDappWebView(
   // and stop the webview from loading it.
   if (trustedProtocolToDeeplink.includes(protocol)) {
     allowLinkOpen(url);
+    return false;
+  }
+
+  if (isRabbyWalletConnectDeeplink(url)) {
+    const shouldCheckOrigin = options?.enforceWalletConnectOrigin === true;
+    if (shouldCheckOrigin && !evt.sourceDocumentURL) {
+      return false;
+    }
+    const uri = parseWalletConnectUriFromLink(url);
+    if (!uri) {
+      return false;
+    }
+    pairWalletConnectUri({
+      uri,
+      source: 'inner-webview',
+      browserOrigin: shouldCheckOrigin ? evt.sourceDocumentURL : undefined,
+    }).catch(() => {});
     return false;
   }
 

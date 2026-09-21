@@ -2,19 +2,23 @@
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTheme2024 } from '@/hooks/theme';
-import { transactionHistoryService } from '@/core/services';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { AbstractPortfolioToken } from './types';
+import type { AbstractPortfolioToken } from './types';
 import { useTranslation } from 'react-i18next';
 import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { useSingleHomeAccount, apisSingleHome } from './hooks/singleHome';
 import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
 import { naviPush } from '@/utils/navigation';
 import { HeaderRightHistoryButton } from './components/HeaderRightHistoryButton';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { scheduleSingleAddressHistoryBadgeWarmup } from './singleAddressSecondaryDataWarmup';
+import type { StartupTaskHandle } from '@/core/utils/startupScheduler';
 
 const hitSlop = {
   top: 10,
@@ -44,7 +48,12 @@ export function setRefreshHistoryId(valOrFunc: UpdaterOrPartials<number>) {
 
 export function useRefreshHistoryId() {
   return {
-    refreshHistoryId: refreshHistoryIdState(s => s.refreshId),
+    refreshHistoryId: useActivityStore(
+      refreshHistoryIdState,
+      state => state.refreshId,
+      Object.is,
+      { storeLabel: 'single-address-history-refresh' },
+    ),
     setRefreshHistoryId,
   };
 }
@@ -56,6 +65,14 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
 }) => {
   const [pendingTxCount, setPendingTxCount] = useState(0);
   const timeRef = useRef<null | ReturnType<typeof setInterval>>(null);
+  const scheduledInitialLoadRef = useRef<StartupTaskHandle | null>(null);
+  const initialLoadStartedForRef = useRef<string | null>(null);
+  const isFocusedRef = useRef(false);
+  const activeRequestKeyRef = useRef<string | null>(null);
+  const inFlightRequestRef = useRef<{
+    key: string;
+    promise: Promise<void>;
+  } | null>(null);
   const { navigation } = useSafeSetNavigationOptions();
   const [historyCount, setHistoryCount] = useState<{
     success: number;
@@ -64,51 +81,121 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const { currentAccount } = useSingleHomeAccount();
+  const accountAddress = currentAccount?.address ?? null;
+  const currentAddress = accountAddress?.toLowerCase() ?? null;
+  const isTokenHistory = !!tokenItem;
+  const requestKey = currentAddress
+    ? `${currentAddress}:${isTokenHistory ? 'token' : 'account'}`
+    : null;
+  activeRequestKeyRef.current = requestKey;
 
   const fetchHistory = useCallback(() => {
-    if (!currentAccount) {
-      return;
+    if (!accountAddress || !requestKey) {
+      return Promise.resolve();
     }
 
-    const failCount = transactionHistoryService.getFailedCount(
-      currentAccount.address,
+    if (inFlightRequestRef.current?.key === requestKey) {
+      return inFlightRequestRef.current.promise;
+    }
+
+    const address = accountAddress;
+    const request = (async () => {
+      const [failCount, successCount] = await Promise.all([
+        transactionHistoryServiceApi.getFailedCount(address),
+        transactionHistoryServiceApi.getSucceedCount(address),
+      ]);
+      if (activeRequestKeyRef.current !== requestKey || !isFocusedRef.current) {
+        return;
+      }
+
+      setHistoryCount({
+        success: successCount,
+        fail: failCount,
+      });
+
+      if (isTokenHistory) {
+        // A single-token history has no pending transaction badge.
+        return;
+      }
+
+      const { pendingsLength } =
+        await transactionHistoryServiceApi.getPendingsAddresses([address]);
+      if (activeRequestKeyRef.current !== requestKey || !isFocusedRef.current) {
+        return;
+      }
+
+      setPendingTxCount(pendingsLength);
+      if (timeRef.current) {
+        clearInterval(timeRef.current);
+      }
+      timeRef.current = pendingsLength
+        ? setInterval(() => {
+            void fetchHistory().catch(console.error);
+          }, 5000)
+        : null;
+    })();
+    const trackedRequest = { key: requestKey, promise: request };
+    inFlightRequestRef.current = trackedRequest;
+    request.then(
+      () => {
+        if (inFlightRequestRef.current === trackedRequest) {
+          inFlightRequestRef.current = null;
+        }
+      },
+      () => {
+        if (inFlightRequestRef.current === trackedRequest) {
+          inFlightRequestRef.current = null;
+        }
+      },
     );
-    const successCount = transactionHistoryService.getSucceedCount(
-      currentAccount.address,
-    );
-    setHistoryCount({
-      success: successCount,
-      fail: failCount,
-    });
 
-    if (tokenItem) {
-      // single token no pending tx
-      return;
-    }
+    return request;
+  }, [accountAddress, isTokenHistory, requestKey]);
 
-    if (!currentAccount) {
-      return;
-    }
-    const addresses = [currentAccount.address];
-    const { pendingsLength } =
-      transactionHistoryService.getPendingsAddresses(addresses);
-    setPendingTxCount(pendingsLength);
-    timeRef.current && clearInterval(timeRef.current);
-    timeRef.current = pendingsLength ? setInterval(fetchHistory, 5000) : null;
-  }, [currentAccount, tokenItem]);
-
-  const refreshId = refreshHistoryIdState(s => s.refreshId);
+  const refreshId = useActivityStore(
+    refreshHistoryIdState,
+    state => state.refreshId,
+    Object.is,
+    { storeLabel: 'single-address-history-refresh' },
+  );
+  const observedRefreshIdRef = useRef(refreshId);
   useEffect(() => {
-    if (refreshId > 0) {
-      fetchHistory();
+    if (refreshId !== observedRefreshIdRef.current) {
+      observedRefreshIdRef.current = refreshId;
+      scheduledInitialLoadRef.current?.cancel();
+      scheduledInitialLoadRef.current = null;
+      initialLoadStartedForRef.current = currentAddress;
+      void fetchHistory().catch(console.error);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshId]);
+  }, [currentAddress, fetchHistory, refreshId]);
 
   useFocusEffect(
     useCallback(() => {
-      fetchHistory();
-    }, [fetchHistory]),
+      isFocusedRef.current = true;
+      if (currentAddress) {
+        if (initialLoadStartedForRef.current === currentAddress) {
+          void fetchHistory().catch(console.error);
+        } else {
+          const scheduledAddress = currentAddress;
+          scheduledInitialLoadRef.current =
+            scheduleSingleAddressHistoryBadgeWarmup(async () => {
+              scheduledInitialLoadRef.current = null;
+              initialLoadStartedForRef.current = scheduledAddress;
+              await fetchHistory();
+            }) ?? null;
+        }
+      }
+
+      return () => {
+        isFocusedRef.current = false;
+        scheduledInitialLoadRef.current?.cancel();
+        scheduledInitialLoadRef.current = null;
+        if (timeRef.current) {
+          clearInterval(timeRef.current);
+          timeRef.current = null;
+        }
+      };
+    }, [currentAddress, fetchHistory]),
   );
 
   const openHistory = useCallback(async () => {

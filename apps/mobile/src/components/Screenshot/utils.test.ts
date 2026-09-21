@@ -50,11 +50,12 @@ jest.mock('@/core/apis', () => ({
   },
 }));
 
-jest.mock('@/core/services', () => ({
-  preferenceService: {
-    getFallbackAccount: jest.fn(() => null),
-  },
-  gasAccountService: {
+jest.mock('@/core/serviceApi/preference', () => ({
+  getFallbackAccountSnapshot: jest.fn(() => null),
+}));
+
+jest.mock('@/core/serviceApi/gasAccount', () => ({
+  gasAccountServiceApi: {
     getGasAccountSig: (...args: unknown[]) => mockGetGasAccountSig(...args),
     getPendingHardwareAccount: (...args: unknown[]) =>
       mockGetPendingHardwareAccount(...args),

@@ -141,9 +141,7 @@ export const Button = ({
       },
       aave: {
         bg: isLight ? '#131416' : '#fff',
-        currentColor: isLight
-          ? colors2024['neutral-InvertHighlight']
-          : '#192945',
+        currentColor: colors2024['neutral-contrast'],
       },
     };
     return {
@@ -176,7 +174,10 @@ export const Button = ({
     return StyleSheet.flatten([
       { color: currentColor },
       styles.title,
-      typeof height === 'number' && styles.titleWithLeading,
+      // 默认行高 = 按钮高度：固定 22 行高下 CJK 字体（PingFang / Noto Sans CJK）
+      // 的 ascent/descent 不对称，中文标题会整体偏上。titleStyle 里显式写的
+      // lineHeight 优先（多行标题需要小行高时用）
+      typeof height === 'number' && { lineHeight: height },
       passedTitleStyle,
       disabled && disabledTitleStyle,
     ]);
@@ -184,7 +185,6 @@ export const Button = ({
     currentColor,
     styles.title,
     height,
-    styles.titleWithLeading,
     passedTitleStyle,
     disabled,
     disabledTitleStyle,
@@ -382,9 +382,6 @@ const getStyle = createGetStyles2024(ctx => ({
     paddingVertical: 1,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
-  },
-  titleWithLeading: {
-    // lineHeight: 22,
   },
   cjkTitleRow: {
     flexDirection: 'row',

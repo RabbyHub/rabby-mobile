@@ -1,5 +1,7 @@
-import { Keyboard, ScrollView, useWindowDimensions, View } from 'react-native';
-import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
+import type { ScrollView } from 'react-native';
+import { Keyboard, useWindowDimensions, View } from 'react-native';
+import type { AccountSwitcherAopProps } from './hooks';
+import { useAccountSceneVisible } from './hooks';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { AccountsPanelInModal } from './AccountsPanel';
@@ -11,14 +13,19 @@ import {
   useMemo,
   useRef,
 } from 'react';
-import { useDappCurrentAccount } from '@/hooks/useDapps';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import React from 'react';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import { ITokenItem } from '@/store/tokens';
+import type { ITokenItem } from '@/store/tokens';
+import {
+  withDappAccountSwitcherServices,
+  type DappAccountSwitcherServiceInjectedProps,
+} from './dappAccountSwitcherServices';
+import type { Account } from '@/types/account';
+import { RenderActivityBoundary } from '@/hooks/storeActivity/RenderActivityBoundary';
 
 export function AccountSwitcherModal({
   forScene,
@@ -86,13 +93,17 @@ export function AccountSwitcherModal({
       <BottomSheetScrollView ref={scrollViewRef}>
         <AutoLockView style={[styles.container]}>
           <View style={[styles.panelContainer]}>
-            <AccountsPanelInModal
-              linearContainerProps={panelLinearGradientProps}
-              forScene={forScene}
-              scrollToBottom={scrollToBottom}
-              token={token}
-              getAccountDisabledTips={getAccountDisabledTips}
-            />
+            <RenderActivityBoundary
+              active={!!isVisible}
+              label={`account-switcher-modal-${forScene}`}>
+              <AccountsPanelInModal
+                linearContainerProps={panelLinearGradientProps}
+                forScene={forScene}
+                scrollToBottom={scrollToBottom}
+                token={token}
+                getAccountDisabledTips={getAccountDisabledTips}
+              />
+            </RenderActivityBoundary>
           </View>
         </AutoLockView>
       </BottomSheetScrollView>
@@ -120,16 +131,20 @@ const getModalStyle = createGetStyles2024(ctx => {
   };
 });
 
-export function AccountSwitcherModalInDappWebView({
-  activeDappId,
-  __IS_IN_SHEET_MODAL__ = false,
-}: {
+type AccountSwitcherModalInDappWebViewProps = {
   // activeDapp: DappInfo | null;
   activeDappId?: DappInfo['origin'];
   /** @deprecated */
   forScene?: AccountSwitcherAopProps['forScene'];
   __IS_IN_SHEET_MODAL__?: boolean;
-}) {
+};
+
+function AccountSwitcherModalInDappWebViewImpl({
+  activeDappId,
+  __IS_IN_SHEET_MODAL__ = false,
+  coreServices,
+}: AccountSwitcherModalInDappWebViewProps &
+  DappAccountSwitcherServiceInjectedProps) {
   const { isVisible, toggleSceneVisible } = useAccountSceneVisible(
     '@ActiveDappWebViewModal',
   );
@@ -148,7 +163,20 @@ export function AccountSwitcherModalInDappWebView({
     };
   }, [toggleSceneVisible]);
 
-  const { setDappCurrentAccount } = useDappCurrentAccount();
+  const setDappCurrentAccount = useCallback(
+    (id: DappInfo['origin'], currentAccount: Account) => {
+      if (!coreServices.dappService.getDapp(id)) {
+        throw new Error('dapp not found');
+      }
+
+      coreServices.dappService.patchDapps({
+        [id]: {
+          currentAccount,
+        },
+      });
+    },
+    [coreServices.dappService],
+  );
 
   const onCancel = useCallback(() => {
     toggleSceneVisible('@ActiveDappWebViewModal', false);
@@ -186,24 +214,31 @@ export function AccountSwitcherModalInDappWebView({
       <BottomSheetScrollView ref={scrollViewRef}>
         <AutoLockView style={[styles.container]}>
           <View style={[styles.panelContainer]}>
-            <AccountsPanelInModal
-              allowNullCurrentAccount={false}
-              forScene={'@ActiveDappWebViewModal'}
-              onSwitchSceneAccount={async ctx => {
-                if (!activeDappId) {
-                  return;
-                }
-                setDappCurrentAccount(activeDappId, ctx.sceneAccount);
-                await ctx.switchAction();
-              }}
-              scrollToBottom={scrollToBottom}
-            />
+            <RenderActivityBoundary
+              active={!!isVisible}
+              label="account-switcher-modal-active-dapp">
+              <AccountsPanelInModal
+                allowNullCurrentAccount={false}
+                forScene={'@ActiveDappWebViewModal'}
+                onSwitchSceneAccount={async ctx => {
+                  if (!activeDappId) {
+                    return;
+                  }
+                  setDappCurrentAccount(activeDappId, ctx.sceneAccount);
+                  await ctx.switchAction();
+                }}
+                scrollToBottom={scrollToBottom}
+              />
+            </RenderActivityBoundary>
           </View>
         </AutoLockView>
       </BottomSheetScrollView>
     </AppBottomSheetModal>
   );
 }
+
+export const AccountSwitcherModalInDappWebView =
+  withDappAccountSwitcherServices(AccountSwitcherModalInDappWebViewImpl);
 
 const getModalInDappWebViewStyle = createGetStyles2024(ctx => {
   return {

@@ -17,7 +17,6 @@ export function Block({
   children,
 }: React.PropsWithChildren<{
   label: string;
-  className?: string;
   style?: React.ComponentProps<typeof View>['style'];
 }>) {
   const { colors2024, isLight } = useTheme2024();
@@ -211,6 +210,7 @@ export type SettingConfBlock = {
     | 'rightNode'
     | 'disabled'
     | 'onDisabledPress'
+    | 'visible'
     | 'testID'
     | 'accessibilityLabel'
   >[];

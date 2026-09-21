@@ -1,5 +1,9 @@
 import { findChain, findChainByServerID } from '@/utils/chain';
-import { gasAccountService, transactionHistoryService } from '../services';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import {
+  gasAccountServiceApi,
+  setGasAccountLastDepositAccount,
+} from '@/core/serviceApi/gasAccount';
 import { sendToken } from './token';
 import { openapi } from '../request';
 import * as Sentry from '@sentry/react-native';
@@ -131,7 +135,7 @@ export const topUpGasAccount = async ({
     throw new Error(t('background.error.noCurrentAccount'));
   }
 
-  const { sig, accountId } = gasAccountService.getGasAccountSig();
+  const { sig, accountId } = await gasAccountServiceApi.getGasAccountSig();
 
   if (!sig || !accountId) {
     throw new Error('please login first');
@@ -180,19 +184,19 @@ export const afterTopUpGasAccount = async ({
   if (!account) {
     throw new Error(t('background.error.noCurrentAccount'));
   }
-  const { sig, accountId } = gasAccountService.getGasAccountSig();
+  const { sig, accountId } = await gasAccountServiceApi.getGasAccountSig();
 
   if (!sig || !accountId) {
     throw new Error('please login first');
   }
 
-  const nonce = await transactionHistoryService.getNonceByChain(
+  const nonce = await transactionHistoryServiceApi.getNonceByChain(
     account.address,
     chain!.id,
   );
 
   if (tx) {
-    gasAccountService.setLastDepositAccount(account);
+    await setGasAccountLastDepositAccount(account);
 
     openapi.rechargeGasAccount({
       sig,
@@ -239,13 +243,13 @@ export const afterBridgeTopUpGasAccount = async ({
     throw new Error(t('background.error.noCurrentAccount'));
   }
 
-  const { sig, accountId } = gasAccountService.getGasAccountSig();
+  const { sig, accountId } = await gasAccountServiceApi.getGasAccountSig();
 
   if (!sig || !accountId) {
     throw new Error('please login first');
   }
 
-  gasAccountService.setLastDepositAccount(account);
+  await setGasAccountLastDepositAccount(account);
 
   return openapi.createGasAccountBridgeRecharge({
     sig,
@@ -352,7 +356,7 @@ export const buildTopUpGasAccount = async ({
     throw new Error(t('background.error.noCurrentAccount'));
   }
 
-  const { sig, accountId } = gasAccountService.getGasAccountSig();
+  const { sig, accountId } = await gasAccountServiceApi.getGasAccountSig();
 
   if (!sig || !accountId) {
     throw new Error('please login first');

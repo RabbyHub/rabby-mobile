@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 import { zCreate } from '@/core/utils/reexports';
 import { runDevIIFEFunc } from '@/core/utils/store';
@@ -10,6 +11,7 @@ type ModalGateState = {
 export const MODAL_GATE_IDS = {
   screenshotFeedback: 'screenshot-feedback',
   rateGuide: 'rate-guide',
+  upgradePrompt: 'upgrade-prompt',
   swapModal: 'swap-modal',
   securityTip: 'security-tip',
   biometricsStub: 'biometrics-stub',
@@ -24,11 +26,16 @@ export const MODAL_GATE_IDS = {
   syncExtensionNoNewAddresses: 'sync-extension-no-new-addresses',
   gasAccountSwitchLoginAddress: 'gas-account-switch-login-address',
   gasAccountDepositTokenAlert: 'gas-account-deposit-token-alert',
+  gasAccountHeaderMenu: 'gas-account-header-menu',
   perpsAgentsLimit: 'perps-agents-limit',
   perpsDepositToken: 'perps-deposit-token',
   perpsEditTpSlPrice: 'perps-edit-tp-sl-price',
   perpsGuideEntry: 'perps-guide-entry',
   perpsAutoClose: 'perps-auto-close',
+  perpsProCancelConfirmation: 'perps-pro-cancel-confirmation',
+  perpsProCloseAllConfirmation: 'perps-pro-close-all-confirmation',
+  perpsProCloseConfirmation: 'perps-pro-close-confirmation',
+  perpsProFieldExplanation: 'perps-pro-field-explanation',
   swapLowCredit: 'swap-low-credit',
   swapTokenInfo: 'swap-token-info',
   gnosisSameMessage: 'gnosis-same-message',
@@ -89,7 +96,9 @@ export function hasVisibleBlockingModal(options?: { excludeIds?: string[] }) {
 }
 
 export function useVisibleBlockingModalIds() {
-  return modalGateStore(s => Object.keys(s.blockingModalCountMap).sort());
+  return modalGateStore(
+    useShallow(s => Object.keys(s.blockingModalCountMap).sort()),
+  );
 }
 
 export type ModalGateDebugSnapshot = {

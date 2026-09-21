@@ -11,14 +11,14 @@ import type {
 } from '@rabby-wallet/rabby-logger';
 
 class MemoryFS implements LoggingFileSystemAdapter {
-  private readonly files = new Map<
+  protected readonly files = new Map<
     string,
     {
       contents: Buffer;
       mtimeMs: number;
     }
   >();
-  private clock = 1;
+  protected clock = 1;
 
   async mkdir(_path: string) {}
 
@@ -97,6 +97,69 @@ class MemoryFS implements LoggingFileSystemAdapter {
 
   listPaths() {
     return Array.from(this.files.keys()).sort();
+  }
+}
+
+class NativeBytesMemoryFS extends MemoryFS {
+  readFileCalls = 0;
+  writeFileCalls = 0;
+  appendFileCalls = 0;
+  readFileBytesCalls = 0;
+  writeFileBytesCalls = 0;
+  appendFileBytesCalls = 0;
+
+  resetStats() {
+    this.readFileCalls = 0;
+    this.writeFileCalls = 0;
+    this.appendFileCalls = 0;
+    this.readFileBytesCalls = 0;
+    this.writeFileBytesCalls = 0;
+    this.appendFileBytesCalls = 0;
+  }
+
+  override async readFile(path: string, encoding: 'base64') {
+    this.readFileCalls += 1;
+    return super.readFile(path, encoding);
+  }
+
+  override async writeFile(path: string, contents: string, encoding: 'base64') {
+    this.writeFileCalls += 1;
+    return super.writeFile(path, contents, encoding);
+  }
+
+  override async appendFile(
+    path: string,
+    contents: string,
+    encoding: 'base64',
+  ) {
+    this.appendFileCalls += 1;
+    return super.appendFile(path, contents, encoding);
+  }
+
+  async readFileBytes(path: string) {
+    this.readFileBytesCalls += 1;
+    return new Uint8Array(this.read(path));
+  }
+
+  async writeFileBytes(path: string, contents: Uint8Array) {
+    this.writeFileBytesCalls += 1;
+    this.files.set(path, {
+      contents: Buffer.from(contents),
+      mtimeMs: this.clock++,
+    });
+  }
+
+  async appendFileBytes(path: string, contents: Uint8Array) {
+    this.appendFileBytesCalls += 1;
+    const current = this.files.get(path);
+    const next = Buffer.concat([
+      current?.contents || Buffer.alloc(0),
+      Buffer.from(contents),
+    ]);
+    this.files.set(path, {
+      contents: next,
+      mtimeMs: this.clock++,
+    });
   }
 }
 
@@ -269,6 +332,86 @@ describe('rolling zip log writer', () => {
     const entries = readArchiveEntries(fs, archivePath as string);
     expect(Object.keys(entries)).toHaveLength(2);
     expect(Object.values(entries)).toEqual(['12345\n', 'xx\n']);
+  });
+
+  it('uses native byte file methods when they are available', async () => {
+    const fs = new NativeBytesMemoryFS();
+    const seedWriter = new RollingZipLogWriter({
+      fs,
+      rootDir: '/applogs',
+      archivePrefix: 'test-log',
+      maxEntryBytes: 64,
+      now: makeNowSequence(
+        '2026-04-09T14:15:00.000Z',
+        '2026-04-09T14:15:00.001Z',
+      ),
+    });
+
+    await seedWriter.writeLine('line-01\n');
+    const seedArchivePath = await seedWriter.finalizeArchive();
+    fs.resetStats();
+
+    const writer = new RollingZipLogWriter({
+      fs,
+      rootDir: '/applogs',
+      archivePrefix: 'test-log',
+      maxEntryBytes: 64,
+      now: makeNowSequence(
+        '2026-04-09T14:16:00.000Z',
+        '2026-04-09T14:16:00.001Z',
+      ),
+    });
+
+    await writer.writeLine('line-02\n');
+    const archivePath = await writer.finalizeArchive();
+
+    expect(archivePath).toBe(seedArchivePath);
+    expect(fs.readFileBytesCalls).toBeGreaterThan(0);
+    expect(fs.writeFileBytesCalls).toBeGreaterThan(0);
+    expect(fs.appendFileBytesCalls).toBeGreaterThan(0);
+    expect(fs.readFileCalls).toBe(0);
+    expect(fs.writeFileCalls).toBe(0);
+    expect(fs.appendFileCalls).toBe(0);
+
+    const entries = readArchiveEntries(fs, archivePath as string);
+    expect(Object.values(entries)).toEqual(['line-01\nline-02\n']);
+  });
+
+  it('can start a new archive without restoring the latest finalized zip', async () => {
+    const fs = new MemoryFS();
+    const seedWriter = new RollingZipLogWriter({
+      fs,
+      rootDir: '/applogs',
+      archivePrefix: 'test-log',
+      maxEntryBytes: 64,
+      now: makeNowSequence('2026-04-09T14:20:00.000Z'),
+    });
+
+    await seedWriter.writeLine('line-01\n');
+    const seedArchivePath = await seedWriter.finalizeArchive();
+    const readFileSpy = jest.spyOn(fs, 'readFile');
+
+    const writer = new RollingZipLogWriter({
+      fs,
+      rootDir: '/applogs',
+      archivePrefix: 'test-log',
+      maxEntryBytes: 64,
+      restoreLatestArchive: false,
+      now: makeNowSequence('2026-04-09T14:25:00.000Z'),
+    });
+
+    await writer.writeLine('line-02\n');
+    const archivePath = await writer.finalizeArchive();
+
+    expect(archivePath).not.toBe(seedArchivePath);
+    expect(readFileSpy).not.toHaveBeenCalledWith(seedArchivePath, 'base64');
+
+    expect(
+      Object.values(readArchiveEntries(fs, seedArchivePath as string)),
+    ).toEqual(['line-01\n']);
+    expect(
+      Object.values(readArchiveEntries(fs, archivePath as string)),
+    ).toEqual(['line-02\n']);
   });
 });
 

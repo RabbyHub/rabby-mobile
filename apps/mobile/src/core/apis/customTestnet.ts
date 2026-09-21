@@ -1,8 +1,10 @@
 import { matomoRequestEvent } from '@/utils/analytics';
+import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
+import type { CustomTestnetService } from '@/core/services/customTestnetService';
 import {
-  customTestnetService,
-  transactionHistoryService,
-} from '../services/shared';
+  getTransactionHistoryTransactions,
+  transactionHistoryServiceApi,
+} from '@/core/serviceApi/transactionHistory';
 
 import { findChain } from '@/utils/chain';
 import BigNumber from 'bignumber.js';
@@ -10,7 +12,7 @@ import { openapi } from '../request';
 
 class ApiCustomTestnet {
   addCustomTestnet = async (
-    chain: Parameters<typeof customTestnetService.add>[0],
+    chain: Parameters<CustomTestnetService['add']>[0],
     ctx?: {
       ga?: {
         source?: string;
@@ -19,7 +21,7 @@ class ApiCustomTestnet {
   ) => {
     const source = ctx?.ga?.source || 'setting';
 
-    const res = await customTestnetService.add(chain);
+    const res = await customTestnetServiceApi.add(chain);
     if (!('error' in res)) {
       matomoRequestEvent({
         category: 'Custom Network',
@@ -29,10 +31,9 @@ class ApiCustomTestnet {
     }
     return res;
   };
-  updateCustomTestnet = customTestnetService.update;
-  removeCustomTestnet = customTestnetService.remove;
-  getCustomTestnetList = customTestnetService.getList;
-  initCustomTestnetService = customTestnetService.initFromStorage;
+  updateCustomTestnet = customTestnetServiceApi.update;
+  removeCustomTestnet = customTestnetServiceApi.remove;
+  getCustomTestnetList = customTestnetServiceApi.getList;
 
   getCustomTestnetNonce = async ({
     address,
@@ -41,38 +42,38 @@ class ApiCustomTestnet {
     address: string;
     chainId: number;
   }) => {
-    const count = await customTestnetService.getTransactionCount({
+    const count = await customTestnetServiceApi.getTransactionCount({
       address,
       chainId,
       blockTag: 'latest',
     });
     const localNonce =
-      (await transactionHistoryService.getNonceByChain(address, chainId)) || 0;
+      (await transactionHistoryServiceApi.getNonceByChain(address, chainId)) ||
+      0;
     return BigNumber.max(count, localNonce).toNumber();
   };
 
-  estimateCustomTestnetGas = customTestnetService.estimateGas;
+  estimateCustomTestnetGas = customTestnetServiceApi.estimateGas;
 
-  getCustomTestnetGasPrice = customTestnetService.getGasPrice;
+  getCustomTestnetGasPrice = customTestnetServiceApi.getGasPrice;
 
-  getCustomTestnetGasMarket = customTestnetService.getGasMarket;
+  getCustomTestnetGasMarket = customTestnetServiceApi.getGasMarket;
 
-  getCustomTestnetToken = customTestnetService.getToken;
-  removeCustomTestnetToken = customTestnetService.removeToken;
-  addCustomTestnetToken = customTestnetService.addToken;
-  getCustomTestnetTokenList = customTestnetService.getTokenList;
-  isAddedCustomTestnetToken = customTestnetService.hasToken;
-  getCustomTestnetTx = customTestnetService.getTx;
-  getCustomTestnetTxReceipt = customTestnetService.getTransactionReceipt;
-  // getCustomTestnetTokenListWithBalance = customTestnetService.getTokenListWithBalance;
+  getCustomTestnetToken = customTestnetServiceApi.getToken;
+  removeCustomTestnetToken = customTestnetServiceApi.removeToken;
+  addCustomTestnetToken = customTestnetServiceApi.addToken;
+  getCustomTestnetTokenList = customTestnetServiceApi.getTokenList;
+  isAddedCustomTestnetToken = customTestnetServiceApi.hasToken;
+  getCustomTestnetTx = customTestnetServiceApi.getTx;
+  getCustomTestnetTxReceipt = customTestnetServiceApi.getTransactionReceipt;
+  // getCustomTestnetTokenListWithBalance = customTestnetServiceApi.getTokenListWithBalance;
 
   getUsedCustomTestnetChainList = async () => {
     const ids = new Set<number>();
-    Object.values(transactionHistoryService.store.transactions).forEach(
-      item => {
-        ids.add(item.chainId);
-      },
-    );
+    const transactions = await getTransactionHistoryTransactions();
+    transactions.forEach(item => {
+      ids.add(item.chainId);
+    });
     const chainList = Array.from(ids).filter(
       id =>
         !findChain({

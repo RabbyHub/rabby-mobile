@@ -13,7 +13,6 @@ import {
 import TokenIcon from '../TokenIcon';
 import IsolatedTag from '../IsolatedTag';
 import { useLendingSummary, useSelectedMarket } from '../../hooks';
-import { getSupplyCapData } from '../../utils/supply';
 import { CollateralSwitch } from '../CollateralSwitch';
 import { formatApy, formatListNetWorth } from '../../utils/format';
 import { useToggleCollateralModal } from '../../modals/ToggleCollateralModal';
@@ -104,10 +103,8 @@ const SupplyItem: React.FC<SupplyItemProps> = ({
     if (!reserve) {
       return false;
     }
-    const { supplyCapReached } = getSupplyCapData(reserve);
     return userSummary
-      ? !supplyCapReached &&
-          reserve.reserve.reserveLiquidationThreshold !== '0' &&
+      ? reserve.reserve.reserveLiquidationThreshold !== '0' &&
           ((!reserve.reserve.isIsolated && !userSummary.isInIsolationMode) ||
             userSummary.isolatedReserve?.underlyingAsset ===
               reserve.underlyingAsset ||
@@ -191,17 +188,19 @@ const SupplyItem: React.FC<SupplyItemProps> = ({
                     chain={reserve.chain}
                     onChange={onChangeActiveUnderlyingAsset}
                   />
-                  <View style={styles.suppliedBadge}>
-                    <Text style={styles.suppliedBadgeText}>
-                      {t('page.Lending.supplyDetail.supplied')}
-                    </Text>
-                  </View>
-                  {isIsolated ? <IsolatedTag /> : null}
                 </View>
               </View>
             </View>
-            <View style={styles.apyTag}>
-              <Text style={styles.apyTagText}>{`Apy ${apyText}`}</Text>
+            <View style={styles.badgeContainer}>
+              <View style={styles.suppliedBadge}>
+                <Text style={styles.suppliedBadgeText}>
+                  {t('page.Lending.supplyDetail.supplied')}
+                </Text>
+              </View>
+              <View style={styles.apyTag}>
+                <Text style={styles.apyTagText}>{`Apy ${apyText}`}</Text>
+              </View>
+              {isIsolated ? <IsolatedTag /> : null}
             </View>
           </View>
           <View style={styles.amountArea}>
@@ -249,7 +248,7 @@ const SupplyItem: React.FC<SupplyItemProps> = ({
 
 export default SupplyItem;
 
-const getStyle = createGetStyles2024(({ colors2024 }) => {
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   const cardBgColor = colors2024['neutral-bg-2'];
   const wrapperTokenCardBgColor = colord(cardBgColor).alpha(0.5).toRgbString();
 
@@ -259,7 +258,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       paddingVertical: 14,
       paddingHorizontal: 0,
       marginTop: 12,
-      backgroundColor: cardBgColor,
+      backgroundColor: isLight ? 'rgba(255, 255, 255, 0.9)' : cardBgColor,
       position: 'relative',
       borderWidth: 1,
       borderColor: colors2024['neutral-bg-1'],
@@ -311,13 +310,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       gap: 4,
       flexShrink: 1,
     },
-    symbol: {
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '700',
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-    },
     apyTag: {
       paddingHorizontal: 4,
       paddingVertical: 1,
@@ -331,23 +323,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       color: colors2024['green-default'],
       fontFamily: 'SF Pro Rounded',
     },
-    isolatedTag: {
-      paddingHorizontal: 4.8,
-      paddingVertical: 2.8,
-      borderRadius: 6,
-      borderWidth: 0.8,
-      borderColor: colors2024['orange-light-2'],
-      backgroundColor: colors2024['orange-light-1'],
+    badgeContainer: {
+      display: 'flex',
       flexDirection: 'row',
-      alignItems: 'center',
-      gap: 2,
-    },
-    isolatedTagText: {
-      fontSize: 12,
-      lineHeight: 16,
-      fontWeight: '500',
-      color: colors2024['orange-default'],
-      fontFamily: 'SF Pro Rounded',
+      gap: 4,
     },
     amountArea: {
       alignItems: 'flex-end',
@@ -355,14 +334,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       gap: 5,
     },
     amountUsd: {
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '700',
+      fontSize: 18,
+      lineHeight: 22,
+      fontWeight: '500',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
     },
     amountToken: {
-      fontSize: 14,
+      fontSize: 13,
       lineHeight: 18,
       fontWeight: '500',
       color: colors2024['neutral-secondary'],
@@ -414,21 +393,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       lineHeight: 18,
       fontWeight: '700',
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-    },
-    buttonPrimary: {
-      flex: 1,
-      height: 32,
-      borderRadius: 8,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors2024['brand-light-1'],
-    },
-    buttonPrimaryText: {
-      fontSize: 14,
-      lineHeight: 18,
-      fontWeight: '700',
-      color: colors2024['brand-default'],
       fontFamily: 'SF Pro Rounded',
     },
     suppliedBadge: {

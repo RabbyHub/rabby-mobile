@@ -37,7 +37,15 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, Platform, TouchableOpacity, View } from 'react-native';
+import {
+  Keyboard,
+  Platform,
+  TouchableOpacity,
+  View,
+  type StyleProp,
+  type TextStyle,
+  type TextInputProps,
+} from 'react-native';
 import { Text } from '@/components/Typography';
 import { IS_ANDROID } from '@/core/native/utils';
 import { PerpsWithdrawSelectTokenPopup } from './PerpsWithdrawSelectTokenPopup';
@@ -59,13 +67,23 @@ type SelectChainType =
 
 export const PerpsWithdrawPopup: React.FC<{
   visible?: boolean;
+  inputTextStyle?: StyleProp<TextStyle>;
+  inputColorProps?: Pick<TextInputProps, 'cursorColor' | 'selectionColor'>;
+  tooltipTextStyle?: StyleProp<TextStyle>;
   onClose?(): void;
   onWithdraw?(
     amount: string,
     isHypeWithdraw: boolean,
     targetAsset: keyof typeof HYPE_SEND_ASSET_TOKEN_MAP,
   ): void;
-}> = ({ visible, onClose, onWithdraw }) => {
+}> = ({
+  visible,
+  onClose,
+  onWithdraw,
+  inputTextStyle,
+  inputColorProps,
+  tooltipTextStyle,
+}) => {
   const hypeMarkPx = perpsStore(s => s.marketDataMap?.HYPE?.markPx);
   const modalRef = useRef<AppBottomSheetModal>(null);
 
@@ -320,6 +338,7 @@ export const PerpsWithdrawPopup: React.FC<{
                   <Tip
                     isVisible={activationTipVisible}
                     onClose={() => setActivationTipVisible(false)}
+                    contentTextStyle={tooltipTextStyle}
                     content={t(
                       'page.perps.PerpsWithdrawPopup.hypeActivationFeeTooltip',
                       {
@@ -354,11 +373,14 @@ export const PerpsWithdrawPopup: React.FC<{
             <View style={styles.inputContainer}>
               <View style={styles.inputWrapper}>
                 <BottomSheetTextInput
+                  cursorColor={inputColorProps?.cursorColor}
+                  selectionColor={inputColorProps?.selectionColor}
                   value={amount}
                   onChangeText={setAmount}
                   keyboardType="numeric"
                   style={[
                     styles.input,
+                    inputTextStyle,
                     !amountValidation.isValid && amount !== ''
                       ? styles.inputError
                       : null,
@@ -430,6 +452,7 @@ export const PerpsWithdrawPopup: React.FC<{
             <Tip
               isVisible={tipVisible}
               onClose={hideTip}
+              contentTextStyle={tooltipTextStyle}
               topAdjustment={IS_ANDROID ? -10 : 10}
               content={
                 isHypeWithdraw

@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
-import { PopupDetailProps } from '../../type';
+import type { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import { TokenAmountInput } from './TokenAmountInput';
 import SupplyActionOverView from './SupplyActionOverView';
@@ -26,17 +26,15 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { buildSupplyTx, optimizedPath } from '../../poolService';
-import {
-  DirectSignBtn,
-  DirectSignBtnMethods,
-} from '@/components2024/DirectSignBtn';
+import type { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
+import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { approveToken } from '@/core/apis/approvals';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { debounce, last, noop } from 'lodash';
 import { isAccountSupportMiniApproval } from '@/utils/account';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { parseUnits } from 'ethers/lib/utils';
 import { toast } from '@/components2024/Toast';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
@@ -50,7 +48,7 @@ import {
   LendingReportType,
   LendingSignType,
 } from '@/screens/Transaction/components/type';
-import { transactionHistoryService } from '@/core/services';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { useRefreshHistoryId } from '../../hooks';
 import wrapperToken from '../../config/wrapperToken';
 import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
@@ -81,6 +79,9 @@ import {
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
+import { isUserCancelledError } from '../../utils/error';
+import { ellipsisSymbol } from '../../utils/format';
+import { useMode } from '../../hooks/useMode';
 
 type SupplyActionPopupProps = PopupDetailProps & {
   onBeforeSwapNavigate?: () => void;
@@ -92,7 +93,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
   onClose,
   onBeforeSwapNavigate,
 }) => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [amount, setAmount] = useState<string | undefined>(undefined);
   const [activeUnderlyingAsset, setActiveUnderlyingAsset] = useState(
     reserve.underlyingAsset,
@@ -113,6 +114,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
   const { isMainnet, chainInfo, chainEnum, selectedMarketData } =
     useSelectedMarket();
   const { pools } = usePoolDataProviderContract();
+  const { eModes } = useMode();
   const { t } = useTranslation();
   const canShowDirectSubmit = useMemo(
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
@@ -190,11 +192,13 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
       BigNumber(amount).multipliedBy(
         targetPool.formattedPriceInMarketReferenceCurrency,
       ),
+      eModes,
     ).toString();
   }, [
     amount,
     currentReserve.chain,
     currentReserve.underlyingAsset,
+    eModes,
     formattedPoolReservesAndIncentives,
     userSummary,
   ]);
@@ -649,7 +653,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
         }
         const txId = last(results);
         if (txId && txsForMiniApproval[0]?.chainId) {
-          transactionHistoryService.setCustomTxItem(
+          await transactionHistoryServiceApi.setCustomTxItem(
             currentAccount.address,
             txsForMiniApproval[0].chainId,
             txId,
@@ -687,6 +691,10 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
         setAmount(undefined);
         onClose?.();
       } catch (error) {
+        console.error('Handle supply error:', error);
+        if (forceFullSign && isUserCancelledError(error)) {
+          await buildTransactions();
+        }
       } finally {
         setIsLoading(false);
       }
@@ -703,6 +711,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
       t,
       onClose,
       openDirect,
+      buildTransactions,
     ],
   );
 
@@ -729,6 +738,10 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
   ]);
 
   const emptyAmount = !supplyAmount.amount || supplyAmount.amount === '0';
+  const displaySymbol = useMemo(
+    () => ellipsisSymbol(currentReserve.reserve.symbol),
+    [currentReserve.reserve.symbol],
+  );
 
   return (
     <SignatureInstanceProvider instance={miniSignInstance}>
@@ -746,9 +759,9 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
               style={[
                 styles.amountValueDescription,
                 emptyAmount && styles.amountValueDescriptionDanger,
-              ]}>{`${formatTokenAmount(supplyAmount.amount || '0')}${
-              currentReserve.reserve.symbol
-            }($${
+              ]}>{`${formatTokenAmount(
+              supplyAmount.amount || '0',
+            )}${displaySymbol}($${
               supplyAmount.isLteZero
                 ? '0'
                 : formatAmountValueKMB(supplyAmount.usdValue || '0')
@@ -770,7 +783,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
             }
             setAmount(v);
           }}
-          symbol={currentReserve.reserve.symbol}
+          symbol={displaySymbol}
           handleClickMaxButton={() => {
             setAmount(supplyAmount.amount || '0');
           }}
@@ -789,7 +802,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
                 triggerVariant="pill"
                 activeUnderlyingAsset={activeUnderlyingAsset}
                 options={tokenOptions as BalancePositionTokenOption[]}
-                symbol={currentReserve.reserve.symbol}
+                symbol={displaySymbol}
                 chain={currentReserve.chain}
                 onChange={handleChangeActiveUnderlyingAsset}
               />
@@ -834,9 +847,9 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
               showTextOnLoading
               wrapperStyle={styles.directSignBtn}
               authTitle={t('page.Lending.supplyDetail.actions')}
-              title={`${t('page.Lending.supplyDetail.actions')} ${
-                currentReserve.reserve.symbol
-              }`}
+              title={`${t(
+                'page.Lending.supplyDetail.actions',
+              )} ${displaySymbol}`}
               onFinished={() => handleSupply()}
               disabled={
                 !amount ||
@@ -849,9 +862,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
               type="aave"
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
               titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
-              iconColor={
-                isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
-              }
+              iconColor={colors2024['neutral-contrast']}
               syncUnlockTime
               account={currentAccount}
               showHardWalletProcess
@@ -937,16 +948,6 @@ const getStyles = createGetStyles2024(ctx => ({
   amountInput: {
     marginTop: 12,
   },
-  card: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
-    padding: 12,
-    borderRadius: 16,
-    width: '100%',
-  },
-  contentContainer: {
-    paddingHorizontal: 16,
-    width: '100%',
-  },
   bottomSheetScrollView: {
     width: '100%',
   },
@@ -956,18 +957,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   gasPreContainer: {
     paddingHorizontal: 8,
-  },
-  poolInfoContainer: {
-    marginTop: 16,
-  },
-  userInfoContainer: {
-    marginTop: 12,
-    gap: 24,
-  },
-  tokenInfos: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
   },
   reserveErrorTip: {
     marginTop: 30,
@@ -980,14 +969,6 @@ const getStyles = createGetStyles2024(ctx => ({
     textAlign: 'center',
     marginTop: 0,
     fontFamily: 'SF Pro Rounded',
-  },
-  sectionContainer: {
-    paddingBottom: 32,
-    width: '100%',
-  },
-  section: {
-    marginTop: 28,
-    lineHeight: 24,
   },
   buttonContainer: {
     height:
@@ -1009,17 +990,5 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   directSignBtn: {
     width: '100%',
-  },
-  button: {
-    flex: 1,
-  },
-  leftTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  repayButton: {
-    borderWidth: 0,
-    backgroundColor: ctx.colors2024['neutral-line'],
   },
 }));

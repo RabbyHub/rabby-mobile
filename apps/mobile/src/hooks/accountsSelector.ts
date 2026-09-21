@@ -1,4 +1,4 @@
-import type { Account, IPinAddress } from '@/core/services/preference';
+import type { Account, IPinAddress } from '@/core/startupServices/preference';
 import { useAccounts, usePinAddresses } from './account';
 import { useCallback, useMemo } from 'react';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';

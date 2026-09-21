@@ -1,12 +1,13 @@
+import { SecurityEngineScopeProvider } from '../../hooks/useApprovalSecurityEngine';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
-import { Result } from '@rabby-wallet/rabby-security-engine';
-import { ExplainTxResponse } from '@rabby-wallet/rabby-api/dist/types';
-import { Chain } from '@/constant/chains';
+import type { Result } from '@rabby-wallet/rabby-security-engine';
+import type { ExplainTxResponse } from '@rabby-wallet/rabby-api/dist/types';
+import type { Chain } from '@/constant/chains';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BalanceChangeWrapper } from '../TxComponents/BalanceChangeWrapper';
 import { useTheme2024 } from '@/hooks/theme';
-import {
+import type {
   ActionRequireData,
   ParsedActionData,
   ParsedTransactionActionData,
@@ -25,7 +26,7 @@ import useCommonStyle from '../../hooks/useCommonStyle';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { getActionTypeText } from './utils';
 import { TransactionActionList } from './components/TransactionActionList';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import type { MultiActionProps } from '../TypedDataActions';
 import { getActionsStyle } from './styles';
 import { Text } from '@/components/Typography';
@@ -75,11 +76,7 @@ const ActionItem = ({
           ...styles.actionHeader,
           ...(isUnknown ? styles.isUnknown : {}),
         }}>
-        <View
-          style={StyleSheet.flatten({
-            flexDirection: 'row',
-            alignItems: 'center',
-          })}>
+        <View style={styles.leftContainer}>
           {isSpeedUp && (
             <Tip placement="bottom" content={t('page.signTx.speedUpTooltip')}>
               <IconSpeedUp style={styles.speedUpIcon} />
@@ -211,18 +208,21 @@ const Actions = ({
       </Card>
       {isMultiAction && multiAction ? (
         (multiAction.actionList as ParsedActionData[]).map((action, index) => (
-          <ActionItem
+          <SecurityEngineScopeProvider
             key={index}
-            data={action}
-            requireData={multiAction.requireDataList[index]}
-            chain={chain}
-            engineResults={multiAction.engineResultList[index]}
-            raw={raw}
-            account={account}
-            txDetail={txDetail}
-            onChange={onChange}
-            isSpeedUp={isSpeedUp}
-          />
+            scope={multiAction.securityScopes?.[index]}>
+            <ActionItem
+              data={action}
+              requireData={multiAction.requireDataList[index]}
+              chain={chain}
+              engineResults={multiAction.engineResultList[index] || []}
+              raw={raw}
+              account={account}
+              txDetail={txDetail}
+              onChange={onChange}
+              isSpeedUp={isSpeedUp}
+            />
+          </SecurityEngineScopeProvider>
         ))
       ) : (
         <ActionItem

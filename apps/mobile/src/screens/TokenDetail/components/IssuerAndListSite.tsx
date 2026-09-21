@@ -118,7 +118,7 @@ const ExpandableDescription = ({
   const tagNamesContent = useMemo(() => {
     return tags?.length && tags?.length > 0 ? (
       <View style={[styles.tagContainer, { marginTop: description ? 16 : 0 }]}>
-        {tags?.map(item => {
+        {[...tags].sort().map(item => {
           return (
             <Text style={styles.tagText} key={item}>
               {item}
@@ -475,7 +475,7 @@ export const IssuerAndListSite: React.FC<Props> = ({
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     // marginLeft: 0,
-    marginHorizontal: 20,
+    marginHorizontal: 12,
     marginTop: 20,
     gap: 12,
     display: 'flex',
@@ -513,6 +513,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 18,
     lineHeight: 22,
     fontWeight: '900',
+    marginLeft: 8,
   },
 
   header: {
@@ -588,46 +589,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
     fontWeight: '500',
   },
-  token: {
-    // display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  tokenSymbol: {
-    flexShrink: 1,
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    lineHeight: 22,
-    fontWeight: '700',
-    flexWrap: 'nowrap',
-  },
-  contract: {
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  titleTexet: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-  },
-  contentText: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 17,
-    lineHeight: 22,
-    fontWeight: '700',
-  },
   externalLink: {
     display: 'flex',
     flexDirection: 'row',
@@ -651,9 +612,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 14,
     height: 14,
   },
-  iconJump: {
-    // marginLeft: 6,
-  },
   descriptionContainer: {
     width: '100%',
     paddingVertical: 16,
@@ -665,12 +623,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'flex-start',
     width: '100%',
   },
-  moreButton: {
-    alignSelf: 'flex-end',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    marginTop: 8,
-  },
   moreButtonText: {
     color: colors2024['brand-default'],
     fontFamily: 'SF Pro Rounded',
@@ -678,35 +630,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
     fontWeight: '700',
   },
-  textWithMoreContainer: {
-    position: 'relative',
-    width: '100%',
-  },
-  inlineMoreButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-    paddingLeft: 4,
-  },
   loadingPlaceholder: {
     width: '100%',
     height: 40,
-  },
-  loadingLine1: {
-    height: 14,
-    backgroundColor: colors2024['neutral-line'],
-    borderRadius: 4,
-    marginBottom: 8,
-    width: '100%',
-  },
-  loadingLine2: {
-    height: 14,
-    backgroundColor: colors2024['neutral-line'],
-    borderRadius: 4,
-    width: '75%',
   },
   tagContainer: {
     flexDirection: 'row',

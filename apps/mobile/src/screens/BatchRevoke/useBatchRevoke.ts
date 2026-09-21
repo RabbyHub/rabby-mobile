@@ -2,15 +2,15 @@ import { RootNames } from '@/constant/layout';
 import { apiApprovals } from '@/core/apis';
 import { naviPush } from '@/utils/navigation';
 import React from 'react';
-import {
+import type {
   ApprovalSpenderItemToBeRevoked,
   AssetApprovalSpender,
-  useApprovalsPage,
 } from '../Approvals/useApprovalsPage';
+import { useApprovalsPage } from '../Approvals/useApprovalsPage';
 import { useApprovalAlertCounts } from '../Home/hooks/approvals';
 import { useRevokeOne } from './useRevokeOne';
 import { findIndexRevokeList } from './utils';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 
 export const useBatchRevoke = ({

@@ -1,4 +1,3 @@
-import { RootNames } from '@/constant/layout';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
 import { trackGasAccountActiveStatusOncePerDay } from '@/utils/gasAccountAnalytics';
 import { autoLoginGasAccountIfNeeded } from '@/utils/autoLoginGasAccount';
@@ -9,7 +8,15 @@ import { AppState, View } from 'react-native';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import * as apisAccount from '@/core/apis/account';
-import { browserService, preferenceService } from '@/core/services';
+import {
+  browserServiceApi,
+  getBrowserBookmarks,
+} from '@/core/serviceApi/browser';
+import {
+  getPinnedTokenSnapshot,
+  getPreferenceSnapshot,
+  setPreference,
+} from '@/core/serviceApi/preference';
 import {
   resetHomeStartupReady,
   scheduleHomeStartupReady,
@@ -19,7 +26,6 @@ import {
 import { apisHomeTabIndex, resetNavigationTo } from '@/hooks/navigation';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { getReadyNavigationInstance } from '@/utils/navigation';
-import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
 import { useTrack0331HomeActiveSnapshots } from '@/utils/analytics0331';
@@ -30,25 +36,67 @@ import { setIsFoldMultiChart } from '../Address/components/MultiAssets/RenderRow
 import { TabsMultiAssets } from '../Address/components/MultiAssets/TabsMultiAssets';
 import { useInitDetectDBAssets } from '../Search/useAssets';
 import { TmpHomeRefresher } from './components/TmpHomeRefresher';
-import { storeApiGasAccount } from '../GasAccount/hooks/atom';
-import { useHomePortfolioStore } from './hooks/useHomePortfolioSummary';
 import { storeApiAccounts } from '@/hooks/account';
-import { startInitReadableAccountStores } from '@/setup-app-before-render';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
+import { scheduleStartupTask } from '@/core/utils/startupScheduler';
+import { markHomeContentReady } from '@/core/utils/homeStartupMilestones';
+import {
+  useHome24hProjection,
+  useHomeContentReadinessProjection,
+} from '@/store/homePortfolio';
 
-let hasStartedInitReadableAccountStoresOnHomeMount = false;
+let hasStartedInitReadableAccountStoresIdleWarmup = false;
+let hasStartedHomeSceneDerivedDataActivation = false;
+const HOME_DB_STARTUP_CRITICAL_REASON = 'home_startup';
 
-async function startInitReadableAccountStoresOnHomeMount() {
-  if (hasStartedInitReadableAccountStoresOnHomeMount) {
+function cancelStartupTaskHandle(
+  handle: ReturnType<typeof scheduleStartupTask> | undefined,
+) {
+  if (handle && typeof handle === 'object' && 'cancel' in handle) {
+    const maybeCancelable = handle as { cancel?: unknown };
+    if (typeof maybeCancelable.cancel === 'function') {
+      maybeCancelable.cancel();
+    }
+  }
+}
+
+async function startInitReadableAccountStoresIdleWarmup() {
+  if (hasStartedInitReadableAccountStoresIdleWarmup) {
     return;
   }
 
   const accounts = await storeApiAccounts.fetchAccounts();
-  if (!accounts.length || hasStartedInitReadableAccountStoresOnHomeMount) {
+  if (!accounts.length || hasStartedInitReadableAccountStoresIdleWarmup) {
     return;
   }
 
-  hasStartedInitReadableAccountStoresOnHomeMount = true;
-  await startInitReadableAccountStores();
+  hasStartedInitReadableAccountStoresIdleWarmup = true;
+  try {
+    const { startInitReadableAccountStores } = await import(
+      '@/setup-app-before-render'
+    );
+    await startInitReadableAccountStores('all', 'home_idle_fallback');
+  } catch (error) {
+    hasStartedInitReadableAccountStoresIdleWarmup = false;
+    throw error;
+  }
+}
+
+async function startHomeSceneDerivedDataActivationWarmup() {
+  if (hasStartedHomeSceneDerivedDataActivation) {
+    return;
+  }
+
+  hasStartedHomeSceneDerivedDataActivation = true;
+  try {
+    const { startHomeSceneDerivedDataActivation } = await import(
+      '@/store/homeSceneActivation'
+    );
+    await startHomeSceneDerivedDataActivation('home_post_startup_ready');
+  } catch (error) {
+    hasStartedHomeSceneDerivedDataActivation = false;
+    throw error;
+  }
 }
 
 const detectHasAccounts = async () => {
@@ -65,6 +113,66 @@ const detectHasAccounts = async () => {
   return result;
 };
 
+function startHomeDbLowPriorityHold() {
+  let disposed = false;
+  let isCriticalActive = false;
+  let releaseHandle: ReturnType<typeof scheduleStartupTask> | undefined;
+  let setCriticalMode: ((active: boolean, reason: string) => void) | null =
+    null;
+
+  const releaseCriticalMode = () => {
+    if (!isCriticalActive) {
+      return;
+    }
+
+    isCriticalActive = false;
+    traceHomeStartupReady('home_db_low_priority_release', {
+      reason: HOME_DB_STARTUP_CRITICAL_REASON,
+    });
+
+    if (setCriticalMode) {
+      setCriticalMode(false, HOME_DB_STARTUP_CRITICAL_REASON);
+      return;
+    }
+
+    import('@/databases/sync/scheduler')
+      .then(({ setSyncSchedulerCriticalMode }) => {
+        setSyncSchedulerCriticalMode(false, HOME_DB_STARTUP_CRITICAL_REASON);
+      })
+      .catch(error => {
+        console.error('release Home DB low priority hold failed', error);
+      });
+  };
+
+  import('@/databases/sync/scheduler')
+    .then(({ setSyncSchedulerCriticalMode }) => {
+      if (disposed) {
+        return;
+      }
+
+      setCriticalMode = setSyncSchedulerCriticalMode;
+      isCriticalActive = true;
+      traceHomeStartupReady('home_db_low_priority_hold', {
+        reason: HOME_DB_STARTUP_CRITICAL_REASON,
+      });
+      setSyncSchedulerCriticalMode(true, HOME_DB_STARTUP_CRITICAL_REASON);
+
+      releaseHandle = scheduleStartupTask(
+        releaseCriticalMode,
+        STARTUP_TASKS.homeDbLowPriorityRelease,
+      );
+    })
+    .catch(error => {
+      console.error('start Home DB low priority hold failed', error);
+    });
+
+  return () => {
+    disposed = true;
+    cancelStartupTaskHandle(releaseHandle);
+    releaseCriticalMode();
+  };
+}
+
 function HomeDeferredLifecycle() {
   useInitDetectDBAssets();
   useTrack0331HomeActiveSnapshots();
@@ -76,12 +184,71 @@ function HomeStartupReadyScheduler() {
   useEffect(() => {
     resetHomeStartupReady();
     traceHomeStartupReady('home_mount');
-    startInitReadableAccountStoresOnHomeMount().catch(error => {
-      console.error('startInitReadableAccountStoresOnHomeMount::error', error);
-    });
+    const stopHomeDbLowPriorityHold = startHomeDbLowPriorityHold();
+    const stopHomeStartupReady = scheduleHomeStartupReady();
 
-    return scheduleHomeStartupReady();
+    return () => {
+      stopHomeStartupReady();
+      stopHomeDbLowPriorityHold();
+    };
   }, []);
+
+  return null;
+}
+
+function HomeContentReadyScheduler() {
+  const homePostStartupReady = useHomePostStartupReady();
+  const hasSettledFirstContent = useHomeContentReadinessProjection(
+    state => state.isReady,
+  );
+
+  useEffect(() => {
+    if (!homePostStartupReady || !hasSettledFirstContent) {
+      return;
+    }
+    markHomeContentReady('portfolio_first_content_settled');
+  }, [hasSettledFirstContent, homePostStartupReady]);
+
+  return null;
+}
+
+function HomeReadableAccountStoresBootstrap() {
+  const homePostStartupReady = useHomePostStartupReady();
+
+  useEffect(() => {
+    if (!homePostStartupReady) {
+      return;
+    }
+
+    const homeSceneHandle = scheduleStartupTask(
+      () =>
+        startHomeSceneDerivedDataActivationWarmup().catch(error => {
+          console.error(
+            'startHomeSceneDerivedDataActivationWarmup::error',
+            error,
+          );
+          throw error;
+        }),
+      STARTUP_TASKS.homeSceneDerivedDataActivation,
+    );
+
+    const readableAccountHandle = scheduleStartupTask(
+      () =>
+        startInitReadableAccountStoresIdleWarmup().catch(error => {
+          console.error(
+            'startInitReadableAccountStoresIdleWarmup::error',
+            error,
+          );
+          throw error;
+        }),
+      STARTUP_TASKS.readableAccountStoresIdleWarmup,
+    );
+
+    return () => {
+      cancelStartupTaskHandle(homeSceneHandle);
+      cancelStartupTaskHandle(readableAccountHandle);
+    };
+  }, [homePostStartupReady]);
 
   return null;
 }
@@ -153,12 +320,27 @@ function HomePostStartupEffects({
         return;
       }
 
-      storeApiGasAccount.scheduleSnapshotRefresh({
-        reason: 'home_focus',
-      });
-      autoLoginGasAccountIfNeeded().catch(error => {
-        console.error('autoLoginGasAccountIfNeeded error', error);
-      });
+      let cancelled = false;
+      import('../GasAccount/hooks/atom')
+        .then(({ storeApiGasAccount }) => {
+          if (cancelled) {
+            return;
+          }
+
+          storeApiGasAccount.scheduleSnapshotRefresh({
+            reason: 'home_focus',
+          });
+          autoLoginGasAccountIfNeeded().catch(error => {
+            console.error('autoLoginGasAccountIfNeeded error', error);
+          });
+        })
+        .catch(error => {
+          console.error('load gas account store api error', error);
+        });
+
+      return () => {
+        cancelled = true;
+      };
     }, [homePostStartupReady]),
   );
 
@@ -178,36 +360,38 @@ function HomePostStartupEffects({
       return;
     }
 
-    const lastReportTime =
-      preferenceService.getPreference('lastReportTime') || 0;
+    const lastReportTime = getPreferenceSnapshot('lastReportTime') || 0;
     if (!lastReportTime || !dayjs(lastReportTime).isToday()) {
-      preferenceService.setPreference({
-        lastReportTime: Date.now(),
-      });
+      void Promise.all([
+        browserServiceApi.getBrowserTabs(),
+        getBrowserBookmarks(),
+      ])
+        .then(([browserTabs, browserBookmarks]) => {
+          matomoRequestEvent({
+            category: 'Websites Usage',
+            action: 'Website_LikeStatus',
+            label: `LikeDapp:${browserBookmarks.ids.length}`,
+          });
 
-      matomoRequestEvent({
-        category: 'Websites Usage',
-        action: 'Website_LikeStatus',
-        label: `LikeDapp:${
-          browserService.bookmark.getState().ids?.length || 0
-        }`,
-      });
+          matomoRequestEvent({
+            category: 'Websites Usage',
+            action: 'Website_TabStatus',
+            label: `TabNumber:${browserTabs.tabs.length}`,
+          });
 
-      matomoRequestEvent({
-        category: 'Websites Usage',
-        action: 'Website_TabStatus',
-        label: `TabNumber:${
-          browserService.getBrowserTabs()?.tabs?.length || 0
-        }`,
-      });
+          matomoRequestEvent({
+            category: 'Watchlist Usage',
+            action: 'Watchlist_LikeStatus',
+            label: `LikeToken:${getPinnedTokenSnapshot().length}`,
+          });
 
-      matomoRequestEvent({
-        category: 'Watchlist Usage',
-        action: 'Watchlist_LikeStatus',
-        label: `LikeToken:${
-          preferenceService.getPreference('pinedQueue')?.length || 0
-        }`,
-      });
+          return setPreference({
+            lastReportTime: Date.now(),
+          });
+        })
+        .catch(error => {
+          console.error('[Home] report daily local state failed', error);
+        });
     }
   }, [homePostStartupReady]);
 
@@ -228,7 +412,7 @@ function MultiAddressHome(): JSX.Element {
     getStyle,
   });
   const appThemeConfig = useAppThemeConfig();
-  const isLoss = useHomePortfolioStore(state => state.changeData.isLoss);
+  const isLoss = useHome24hProjection(state => !!state.value?.isLoss);
   useRendererDetect({ name: 'MultiAddressHome' });
 
   const trackGasAccountActive = useCallback(() => {
@@ -259,8 +443,6 @@ function MultiAddressHome(): JSX.Element {
         end: { x: 0.5, y: 0.26 },
       }}
       overwriteStyle={styles.screenContainer}>
-      <ScreenSpecificStatusBar screenName={RootNames.Home} />
-
       <View
         style={[styles.paddingContainer]}
         onTouchStart={() => {
@@ -270,6 +452,8 @@ function MultiAddressHome(): JSX.Element {
       </View>
 
       <HomeStartupReadyScheduler />
+      <HomeContentReadyScheduler />
+      <HomeReadableAccountStoresBootstrap />
       <HomePostStartupEffects
         appThemeConfig={appThemeConfig}
         trackGasAccountActive={trackGasAccountActive}

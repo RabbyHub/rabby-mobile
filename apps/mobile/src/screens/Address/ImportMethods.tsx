@@ -34,17 +34,17 @@ import {
   useNavigation,
   useRoute,
 } from '@react-navigation/native';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
+import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useSetPasswordFirst } from '@/hooks/useLock';
 import { trigger } from 'react-native-haptic-feedback';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTranslation } from 'react-i18next';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamsList } from '@/navigation-type';
-import { preferenceService } from '@/core/services';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { RootStackParamsList } from '@/navigation-type';
+import { setReportActionTs } from '@/core/serviceApi/preference';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { IS_IOS } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
 import { E2E_ID } from '@/constant/e2e';
@@ -131,9 +131,9 @@ function ImportMethods(): JSX.Element {
                 );
 
                 !state?.isNotNewUserProc &&
-                  preferenceService.setReportActionTs(
+                  void setReportActionTs(
                     REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_SEED_PHRASE,
-                  );
+                  ).catch(console.error);
               }}>
               <SeedPhraseIcon style={styles.icon} />
               <Text style={styles.importType}>
@@ -162,9 +162,9 @@ function ImportMethods(): JSX.Element {
                 );
 
                 !state?.isNotNewUserProc &&
-                  preferenceService.setReportActionTs(
+                  void setReportActionTs(
                     REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_PRIVATE_KEY,
-                  );
+                  ).catch(console.error);
               }}>
               <PrivateKeyIcon style={styles.icon} />
               <Text style={styles.importType}>
@@ -220,9 +220,9 @@ function ImportMethods(): JSX.Element {
                       }),
                     );
 
-                    preferenceService.setReportActionTs(
+                    void setReportActionTs(
                       REPORT_TIMEOUT_ACTION_KEY.CLICK_SCAN_SYNC_EXTENSION,
-                    );
+                    ).catch(console.error);
                   }}>
                   <IconSyncRabby style={styles.icon} />
                   <Text style={styles.importType}>
@@ -297,9 +297,9 @@ function ImportMethods(): JSX.Element {
                     }),
                   );
 
-                  preferenceService.setReportActionTs(
+                  void setReportActionTs(
                     REPORT_TIMEOUT_ACTION_KEY.CLICK_CONNECT_HARDWARE,
-                  );
+                  ).catch(console.error);
                 }}>
                 <Image source={HardWareIcon} style={styles.icon} />
                 <Text style={styles.importType}>

@@ -1,4 +1,4 @@
-import { PreparedStatement } from '@op-engineering/op-sqlite';
+import { PreparedStatement, Scalar } from '@op-engineering/op-sqlite';
 import { KEYRING_TYPE, KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { KeyringEventAccount } from '@rabby-wallet/service-keyring';
 import 'reflect-metadata';
@@ -34,6 +34,8 @@ export abstract class EntityAddressAssetBase extends EntityBaseWithoutId {
    * bind parameters for upsert operation
    */
   bindUpsertParams?(stm: PreparedStatement): PreparedStatement;
+
+  getUpsertParams?(): Scalar[];
 }
 
 export abstract class EntityAccountBase extends BaseEntity {

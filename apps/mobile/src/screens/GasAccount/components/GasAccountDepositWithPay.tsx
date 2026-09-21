@@ -13,7 +13,7 @@ import { useRequest } from 'ahooks';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, View } from 'react-native';
-import { ErrorCode, PurchaseError, requestPurchase } from 'react-native-iap';
+import { isUserCancelledError, requestPurchase } from 'react-native-iap';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { gasAccountProducts } from '@/constant/iap';
 import {
@@ -111,18 +111,23 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
       }
       const [purchase] = await Promise.all([
         waitPurchaseUpdated(),
-        requestPurchase(
-          Platform.select({
+        requestPurchase({
+          request: Platform.select({
             ios: {
-              sku: product.id,
-              appAccountToken: data.account.uuid,
+              apple: {
+                sku: product.id,
+                appAccountToken: data.account.uuid,
+              },
             },
             android: {
-              skus: [product.id],
-              obfuscatedAccountIdAndroid: targetGasAccountAddress,
+              google: {
+                skus: [product.id],
+                obfuscatedAccountId: targetGasAccountAddress,
+              },
             },
           })!,
-        ),
+          type: 'in-app',
+        }),
       ]);
 
       if (onWaitDepositResult) {
@@ -166,10 +171,7 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
       onError(e: any) {
         console.error(e);
         Sentry.captureException(e);
-        if (
-          e instanceof PurchaseError &&
-          e.code === ErrorCode.E_USER_CANCELLED
-        ) {
+        if (isUserCancelledError(e)) {
           toast.error(t('page.gasAccount.depositPayPopup.depositCanceled'), {
             position: toast.positions.CENTER,
           });

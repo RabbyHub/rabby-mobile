@@ -32,10 +32,18 @@ import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useHomeStartupReady } from '@/core/utils/homeStartupReady';
 import { Text, AnimateableText } from '@/components/Typography';
-import { useHomePortfolioStore } from '@/screens/Home/hooks/useHomePortfolioSummary';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { useShallow } from 'zustand/react/shallow';
 import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerText';
+import {
+  EMPTY_HOME_CURVE_LIST,
+  getHomeCurveProjectionList,
+  isHomeProjectionWaitingForValue,
+  useHome24hProjection,
+  useHomeAccountProjection,
+  useHomeBalanceProjection,
+  useHomeCurveProjection,
+} from '@/store/homePortfolio';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedSVG = Animated.createAnimatedComponent(Svg);
@@ -43,7 +51,13 @@ const CHART_HORIZONTAL_INSET = 66;
 
 const MAX_NETWORTH_FS = 38;
 const MIN_NETWORTH_FS = 24;
-const NETWORTH_FIT_LEN = 7;
+const NETWORTH_FIT_LEN = 9;
+
+const EMPTY_CHANGE_DATA = {
+  rawChange: 0,
+  changePercent: '',
+  isLoss: false,
+};
 
 const svIsFoldMultiChart = makeMutable(true);
 
@@ -142,35 +156,42 @@ export const MultiChart = memo(function MultiChart({
   onPressWalletList?: () => void;
 } & RNViewProps) {
   const { styles } = useTheme2024({ getStyle });
-  const {
-    curveList,
-    changeData,
-    totalBalance,
-    matteredAccountLength,
-    isPendingMatteredAccountLength,
-    showBalanceLoadingWithoutLocal,
-    showChangeLoadingWithoutLocal,
-    isCurveAnyAddrLoading,
-  } = useHomePortfolioStore(
+  const { curveAvailability, curveList } = useHomeCurveProjection(
     useShallow(state => ({
-      curveList: state.curveList,
-      changeData: state.changeData,
-      totalBalance: state.totalBalance,
-      matteredAccountLength: state.matteredAccountLength,
-      isPendingMatteredAccountLength: state.isPendingMatteredAccountLength,
-      showBalanceLoadingWithoutLocal: state.showBalanceLoadingWithoutLocal,
-      showChangeLoadingWithoutLocal: state.showChangeLoadingWithoutLocal,
-      isCurveAnyAddrLoading: state.isCurveAnyAddrLoading,
+      curveAvailability: state.availability,
+      curveList: getHomeCurveProjectionList(state),
+    })),
+  );
+  const { matteredAccountLength, isPendingMatteredAccountLength } =
+    useHomeAccountProjection(
+      useShallow(state => ({
+        matteredAccountLength: state.matteredAccountLength,
+        isPendingMatteredAccountLength: state.isPendingMatteredAccountLength,
+      })),
+    );
+  const { balanceAvailability, totalBalance } = useHomeBalanceProjection(
+    useShallow(state => ({
+      balanceAvailability: state.availability,
+      totalBalance: state.value?.totalBalance || 0,
+    })),
+  );
+  const { changeAvailability, changeData } = useHome24hProjection(
+    useShallow(state => ({
+      changeAvailability: state.availability,
+      changeData: state.value || EMPTY_CHANGE_DATA,
     })),
   );
   const startupReady = useHomeStartupReady();
 
   useRendererDetect({ name: 'MultiAssets-MultiChart' });
 
-  const chartsData = startupReady ? curveList : [];
-  const showBalanceLoading = !startupReady || showBalanceLoadingWithoutLocal;
-  const showChangeLoading = !startupReady || showChangeLoadingWithoutLocal;
-  const isCurveLoading = !startupReady || isCurveAnyAddrLoading;
+  const chartsData = startupReady ? curveList : EMPTY_HOME_CURVE_LIST;
+  const showBalanceLoading =
+    !startupReady || isHomeProjectionWaitingForValue(balanceAvailability);
+  const showChangeLoading =
+    !startupReady || isHomeProjectionWaitingForValue(changeAvailability);
+  const isCurveLoading =
+    !startupReady || isHomeProjectionWaitingForValue(curveAvailability);
 
   return (
     <View
@@ -396,8 +417,9 @@ const ChartHeader = React.memo(
             {...makeTestIDProps(E2E_ID.home.portfolioBalanceValue)}>
             <RefreshNudgedTickerText
               value={formatNetWorth}
+              animateWidth={false}
               maxLength={24}
-              lineHeight={46}
+              lineHeight={42}
               duration={320}
               style={[
                 styles.netWorth,
@@ -414,7 +436,7 @@ const ChartHeader = React.memo(
           <Skeleton
             {...makeTestIDProps(E2E_ID.home.portfolioBalanceLoading)}
             width={181}
-            height={44}
+            height={42}
             style={[
               styles.skeletonNetWorth,
               !showNetWorthLoading && styles.hidden,
@@ -449,8 +471,8 @@ const ChartHeader = React.memo(
           <Skeleton
             {...makeTestIDProps(E2E_ID.home.portfolioChangeLoading)}
             width={100}
-            height={22}
-            style={styles.skeletonNetWorth}
+            height={18}
+            style={styles.skeletonChange}
             LinearGradientComponent={LoadingLinear}
           />
         ) : (
@@ -516,15 +538,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'column',
     width: '100%',
     maxWidth: '100%',
-    gap: 4,
+    gap: 2,
     // ...makeDebugBorder('blue'),
-  },
-  skeleton: {
-    marginTop: 20,
-    borderRadius: 8,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
   },
   skeletonNetWorth: {
     borderRadius: 8,
@@ -532,9 +547,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
   },
+  skeletonChange: {
+    borderRadius: 8,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+  },
   netWorth: {
-    lineHeight: 46,
-    fontWeight: '800',
+    lineHeight: 42,
+    fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
@@ -544,24 +565,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'flex-start',
   },
-  changeValue: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-  },
   changePercent: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '600',
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
   },
   changeTime: {
-    fontSize: 16,
-    fontWeight: '400',
-    lineHeight: 20,
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 18,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     marginLeft: 4,
@@ -577,23 +591,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     // ...makeDebugBorder('red'),
   },
   chartContainer: {},
-  globalWarning: {
-    marginHorizontal: 16,
-    marginBottom: 13,
-  },
   loading: {
     width: '100%',
     height: 114,
     paddingHorizontal: 0,
   },
   relative: { position: 'relative' },
-  bg: {
-    position: 'absolute',
-    left: 0,
-    width: '100%',
-    height: 32,
-    zIndex: -100,
-  },
   balanceOpacity: {
     opacity: 0.2,
   },
@@ -602,7 +605,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     // ...makeDebugBorder('orange'),
-    lineHeight: 46,
+    lineHeight: 42,
   },
   netWorthTextContainer: {
     flex: 1,

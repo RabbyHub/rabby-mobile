@@ -1,4 +1,7 @@
-import { preferenceService } from '@/core/services';
+import {
+  getPreferenceSnapshot,
+  setPreference,
+} from '@/core/serviceApi/preference';
 import {
   BALANCE_HIDE_TYPE as BALANCE_HIDE_TYPE_CONST,
   type BALANCE_HIDE_TYPE as BalanceHideType,
@@ -12,8 +15,7 @@ const baseHideTypeAtom = atom<BALANCE_HIDE_TYPE>(BALANCE_HIDE_TYPE.SHOW);
 
 baseHideTypeAtom.onMount = setAtom => {
   const hideType =
-    preferenceService.getPreference('balanceHideType') ||
-    BALANCE_HIDE_TYPE.SHOW;
+    getPreferenceSnapshot('balanceHideType') || BALANCE_HIDE_TYPE.SHOW;
   setAtom(hideType);
 };
 
@@ -29,9 +31,9 @@ const hideTypeAtom = atom<
     const nextValue =
       typeof update === 'function' ? update(get(baseHideTypeAtom)) : update;
     set(baseHideTypeAtom, nextValue);
-    preferenceService.setPreference({
+    void setPreference({
       balanceHideType: nextValue,
-    });
+    }).catch(console.error);
   },
 );
 

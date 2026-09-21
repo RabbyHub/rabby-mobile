@@ -14,12 +14,15 @@ Use this note when working on any of these:
 
 ## Historical Patch Source
 
-The older `8.2.0` Yarn patch was deleted from the worktree, but it is still available in git history.
+The older `8.2.0` Yarn patch and local runtime package were deleted from the
+worktree, but the patch is still available in git history.
 
 Use this command to inspect it:
 
 ```bash
-git show HEAD:.yarn/patches/react-native-keychain-npm-8.2.0-ff8c16b501.patch
+commit=$(git rev-list --all -- \
+  .yarn/patches/react-native-keychain-npm-8.2.0-ff8c16b501.patch | tail -n 1)
+git show "$commit":.yarn/patches/react-native-keychain-npm-8.2.0-ff8c16b501.patch
 ```
 
 Do not rely on memory. Re-read the patch before assuming which behavior came from upstream and which came from Rabby.
@@ -117,18 +120,19 @@ Implication:
 
 Today this repo uses two keychain lines:
 
-1. Business path:
-   [`@rabby-wallet/react-native-keychain`](../../../packages/react-native-keychain)
+1. Default business path:
+   [`@rabby-wallet/react-native-keychain-9`](../../../packages/react-native-keychain-9)
 
-2. Default keychain probe/debug path:
-   [`react-native-keychain@9.x`](../src/core/apis/keychain.ts)
+2. Future migration and non-production comparison path:
+   [`react-native-keychain@10.x`](../src/core/apis/keychain.ts), maintained as
+   a Yarn patch in
+   [`.yarn/patches`](../../../.yarn/patches/react-native-keychain-npm-10.0.0-rabby.patch)
 
-Business code still imports the local fork explicitly as `v8_2_0`, for example:
+Production stays on v9. Regression and development builds can switch the
+current facade between v9 and v10 from the Keychain testkit. A persisted v8
+selection is coerced to v9; v8 is no longer linked into either native app.
 
-- [`src/core/apis/keychainV8_2_0.ts`](../src/core/apis/keychainV8_2_0.ts)
-- [`src/hooks/biometrics.ts`](../src/hooks/biometrics.ts)
-
-If you rename Android package classes in the local fork, also keep:
+If you rename Android package classes in either line, also keep:
 
 - [`apps/mobile/react-native.config.js`](../react-native.config.js)
 

@@ -1,9 +1,9 @@
 import { AddressViewer } from '@/components/AddressViewer';
 import { Tip } from '@/components/Tip';
 import { TruncatedText } from '@/components/TruncatedText';
-import { Chain } from '@/constant/chains';
-import { contactService } from '@/core/services';
-import { Account } from '@/core/services/preference';
+import type { Chain } from '@/constant/chains';
+import { getContactAliasSnapshot } from '@/core/serviceApi/contact';
+import type { Account } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { splitNumberByStep } from '@/utils/number';
@@ -35,8 +35,8 @@ export const AccountInfo: React.FC<Props> = ({
   const { t } = useTranslation();
   const { styles, isLight } = useTheme2024({ getStyle });
 
-  const init = async () => {
-    const result = await contactService.getAliasByAddress(
+  const init = () => {
+    const result = getContactAliasSnapshot(
       account?.address?.toLowerCase() || '',
     );
     if (result) {

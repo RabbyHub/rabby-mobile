@@ -3,7 +3,7 @@ import { useThemeStyles } from '@/hooks/theme';
 import { useFindChain } from '@/hooks/useFindChain';
 import { useSwitch } from '@/hooks/useSwitch';
 import { Chain } from '@debank/common';
-import { memo, ReactNode, useMemo } from 'react';
+import { memo, ReactNode, useEffect, useMemo } from 'react';
 import { Image, ImageStyle, StyleSheet, View, ViewStyle } from 'react-native';
 import FastImage, { FastImageProps } from 'react-native-fast-image';
 import { TestnetChainLogo } from './Chain/TestnetChainLogo';
@@ -59,7 +59,13 @@ export const AssetAvatar = memo(
     innerChainStyle,
   }: AssetAvatarProps) => {
     const { styles, isLight } = useThemeStyles(getStyles);
-    const { on, turnOn } = useSwitch();
+    const { on, turnOn, turnOff } = useSwitch();
+
+    // A load failure marks `on` for this instance's lifetime; clear it when
+    // the url changes so a late-arriving/corrected logo gets a fresh attempt.
+    useEffect(() => {
+      turnOff();
+    }, [logo, turnOff]);
 
     const chainInfo = useFindChain({
       serverId: chain || null,

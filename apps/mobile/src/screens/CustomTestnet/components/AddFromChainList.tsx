@@ -1,29 +1,28 @@
 import { apiCustomTestnet } from '@/core/apis';
 import { openapi } from '@/core/request';
-import {
-  TestnetChain,
-  createTestnetChain,
-} from '@/core/services/customTestnetService';
+import type { TestnetChain } from '@/core/services/customTestnetService';
+import { createTestnetChain } from '@/core/utils/customTestnetChain';
 import { useDebounce, useInfiniteScroll, useRequest } from 'ahooks';
 // import { TooltipWithMagnetArrow } from '@/ui/component/Tooltip/TooltipWithMagnetArrow';
 import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
 import RcIconBack from '@/assets/icons/header/back-cc.svg';
 import { AppBottomSheetModalTitle, Tip } from '@/components';
-import { AppColorsVariants } from '@/constant/theme';
+import type { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
 import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
 import { Input } from '@rneui/themed';
 import { range, sortBy } from 'lodash';
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { StyleProp, ViewStyle } from 'react-native';
 import {
   Dimensions,
-  StyleProp,
+  Keyboard,
   StyleSheet,
+  TouchableWithoutFeedback,
   useWindowDimensions,
   View,
-  ViewStyle,
 } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import Animated, {
@@ -156,78 +155,93 @@ export const AddFromChainList = ({
       transform: [{ translateX: left.value }],
     };
   });
+  const handleClose = useCallback(() => {
+    Keyboard.dismiss();
+    onClose?.();
+  }, [onClose]);
+  const handleSelect = useCallback(
+    (chain: TestnetChain) => {
+      Keyboard.dismiss();
+      onSelect?.(chain);
+    },
+    [onSelect],
+  );
 
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        { transform: [{ translateX: windowWidth }] },
-        containerStyle,
-      ]}>
-      <View style={styles.header}>
-        <View style={styles.navbar}>
-          <View style={styles.navbarLeft}>
-            <TouchableOpacity onPress={onClose} hitSlop={6}>
-              <RcIconBack
-                color={colors['neutral-body']}
-                width={24}
-                height={24}
-              />
-            </TouchableOpacity>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <Animated.View
+        style={[
+          styles.container,
+          { transform: [{ translateX: windowWidth }] },
+          containerStyle,
+        ]}>
+        <View style={styles.header}>
+          <View style={styles.navbar}>
+            <View style={styles.navbarLeft}>
+              <TouchableOpacity onPress={handleClose} hitSlop={6}>
+                <RcIconBack
+                  color={colors['neutral-body']}
+                  width={24}
+                  height={24}
+                />
+              </TouchableOpacity>
+            </View>
+            <AppBottomSheetModalTitle
+              style={{ paddingTop: ModalLayouts.titleTopOffset }}
+              title={t('page.customTestnet.AddFromChainList.title')}
+            />
           </View>
-          <AppBottomSheetModalTitle
-            style={{ paddingTop: ModalLayouts.titleTopOffset }}
-            title={t('page.customTestnet.AddFromChainList.title')}
+          <Input
+            leftIcon={
+              <RcIconSearch
+                color={colors['neutral-foot']}
+                width={20}
+                height={20}
+              />
+            }
+            containerStyle={[styles.inputContainer, styles.innerBlock]}
+            inputContainerStyle={[
+              styles.inputContainerStyle,
+              isFocus ? styles.searchInputContainerFocus : null,
+            ]}
+            style={styles.searchInput}
+            placeholder={t('page.customTestnet.AddFromChainList.search')}
+            value={_search}
+            onChangeText={text => {
+              setSearch(text);
+            }}
+            onFocus={() => {
+              setIsFocus(true);
+            }}
+            onBlur={() => {
+              setIsFocus(false);
+            }}
           />
         </View>
-        <Input
-          leftIcon={
-            <RcIconSearch
-              color={colors['neutral-foot']}
-              width={20}
-              height={20}
+        <View style={styles.listContainer}>
+          {isLoading ? (
+            <View style={styles.skeletonContainer}>
+              {range(0, 4).map(i => {
+                return <SkeletonCard key={i} />;
+              })}
+            </View>
+          ) : isEmpty ? (
+            <Empty
+              description={t('page.customTestnet.AddFromChainList.empty')}
             />
-          }
-          containerStyle={[styles.inputContainer, styles.innerBlock]}
-          inputContainerStyle={[
-            styles.inputContainerStyle,
-            isFocus ? styles.searchInputContainerFocus : null,
-          ]}
-          style={styles.searchInput}
-          placeholder={t('page.customTestnet.AddFromChainList.search')}
-          value={_search}
-          onChangeText={text => {
-            setSearch(text);
-          }}
-          onFocus={() => {
-            setIsFocus(true);
-          }}
-          onBlur={() => {
-            setIsFocus(false);
-          }}
-        />
-      </View>
-      <View style={styles.listContainer}>
-        {isLoading ? (
-          <View style={styles.skeletonContainer}>
-            {range(0, 4).map(i => {
-              return <SkeletonCard key={i} />;
-            })}
-          </View>
-        ) : isEmpty ? (
-          <Empty description={t('page.customTestnet.AddFromChainList.empty')} />
-        ) : (
-          <CustomTestnetList
-            list={list}
-            usedList={usedList || []}
-            loading={loading}
-            loadingMore={loadingMore}
-            loadMore={loadMore}
-            onSelect={onSelect}
-          />
-        )}
-      </View>
-    </Animated.View>
+          ) : (
+            <CustomTestnetList
+              list={list}
+              usedList={usedList || []}
+              loading={loading}
+              loadingMore={loadingMore}
+              loadMore={loadMore}
+              onSelect={handleSelect}
+            />
+          )}
+        </View>
+      </Animated.View>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -266,6 +280,8 @@ const CustomTestnetList = ({
       // keyExtractor={item => item.id.toString()}
       onEndReached={loadMore}
       onEndReachedThreshold={50}
+      onScrollBeginDrag={Keyboard.dismiss}
+      keyboardShouldPersistTaps="handled"
       stickyHeaderHiddenOnScroll
       renderItem={({ item, index, section }) => {
         const chain = findChain({ id: item.id });

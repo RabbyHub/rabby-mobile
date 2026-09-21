@@ -1,39 +1,197 @@
 import { BaseEntity } from 'typeorm/browser';
-import PQueue from 'p-queue';
-import { ClassOf } from '@rabby-wallet/base-utils';
+import type { SQLBatchTuple, Scalar } from '@op-engineering/op-sqlite';
 
 import { type EntityAddressAssetBase } from '../entities/base';
 import { appOrmEvents, SyncTaskOptions } from './_event';
-import { runSqliteSyncWorklet } from '@/core/databases/perf';
+import { resolveDriverAndConnectionFromRepo } from '@/core/databases/typeormConnection';
 import {
-  resolveDriverAndConnectionFromEntity,
-  resolveDriverAndConnectionFromRepo,
-} from '@/core/databases/op-sqlite/typeorm';
-import { getOnlineConfig } from '@/core/config/online';
+  getOnlineConfig,
+  ONLINE_SWITCH_DISABLE_DB_PREPARED_UPSERT_V2,
+} from '@/core/config/online';
 import { logger } from '@/utils/logger';
-
-async function sleep(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-const keyVaryUpsertQueue: Record<string, PQueue> = {};
-
-function makeTaskKey(
-  taskFor: SyncTaskOptions['taskFor'],
-  owner_addr: string,
-): `${SyncTaskOptions['taskFor']}-${string}` {
-  return `${taskFor}-${owner_addr}`;
-}
+import { isNonPublicProductionEnv } from '@/constant';
+import { getSqliteVariableBatchSize } from '@/core/databases/sqliteVariableLimit';
+import {
+  beginDbSyncTask,
+  endDbSyncTask,
+  markDbSyncTaskBatch,
+  markDbSyncTaskStage,
+  withOpSqliteDiagnosticContext,
+} from '@/core/utils/startupDiagnostics';
+import {
+  inferSyncTaskPriority,
+  isSyncTaskAbortError,
+  makeSyncTaskKey,
+  submitSyncTask,
+  SyncTaskAbortError,
+  type SyncTaskPriority,
+} from './scheduler';
+import { notifySyncAbortHandlers } from './abort';
+import { isNonProductionDiagnosticsEnabled } from '@/core/utils/diagnosticEnv';
+import { shouldDisablePreparedUpsert } from './preparedUpsertPolicy';
 
 /**
  * @description In most cases, you don't need call it manually,
  * if you want to do that, make sure you know what you are doing.
  */
 export const syncAbortControllers: {
-  [P in ReturnType<typeof makeTaskKey>]?: AbortController | null;
+  [P in ReturnType<typeof makeSyncTaskKey>]?: AbortController | null;
 } = {};
+const activeSyncAbortControllers = new Set<AbortController>();
 
-export function abortAllSyncTasks() {
+export type DbSyncWritePolicy = {
+  maxBatchSize?: number;
+  minDelayBetweenTasks?: number;
+  maxDelayBetweenTasks?: number;
+};
+
+export type DbSyncWritePolicyOverride = Partial<DbSyncWritePolicy>;
+
+const DEFAULT_DB_SYNC_WRITE_POLICIES: Partial<
+  Record<SyncTaskOptions['taskFor'], DbSyncWritePolicy>
+> = {
+  token: {
+    maxBatchSize: 120,
+    minDelayBetweenTasks: 16,
+  },
+  'all-history': {
+    maxBatchSize: 50,
+    maxDelayBetweenTasks: 32,
+  },
+};
+
+const runtimeDbSyncWritePolicyOverrides: Partial<
+  Record<SyncTaskOptions['taskFor'], DbSyncWritePolicyOverride>
+> = {};
+
+function normalizePositiveInt(value: unknown, max: number) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return undefined;
+  }
+
+  const normalized = Math.trunc(value);
+  if (normalized <= 0) {
+    return undefined;
+  }
+
+  return Math.min(normalized, max);
+}
+
+function normalizeNonNegativeInt(value: unknown, max: number) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return undefined;
+  }
+
+  const normalized = Math.trunc(value);
+  if (normalized < 0) {
+    return undefined;
+  }
+
+  return Math.min(normalized, max);
+}
+
+function sanitizeDbSyncWritePolicyOverride(
+  override: DbSyncWritePolicyOverride,
+) {
+  const sanitized: DbSyncWritePolicyOverride = {};
+  const maxBatchSize = normalizePositiveInt(override.maxBatchSize, 2000);
+  const minDelayBetweenTasks = normalizeNonNegativeInt(
+    override.minDelayBetweenTasks,
+    60 * 1000,
+  );
+  const maxDelayBetweenTasks = normalizeNonNegativeInt(
+    override.maxDelayBetweenTasks,
+    60 * 1000,
+  );
+
+  if (typeof maxBatchSize === 'number') {
+    sanitized.maxBatchSize = maxBatchSize;
+  }
+  if (typeof minDelayBetweenTasks === 'number') {
+    sanitized.minDelayBetweenTasks = minDelayBetweenTasks;
+  }
+  if (typeof maxDelayBetweenTasks === 'number') {
+    sanitized.maxDelayBetweenTasks = maxDelayBetweenTasks;
+  }
+
+  return sanitized;
+}
+
+function getDbSyncWritePolicy(taskFor: SyncTaskOptions['taskFor']) {
+  const defaultPolicy = DEFAULT_DB_SYNC_WRITE_POLICIES[taskFor];
+  const runtimeOverride = isNonPublicProductionEnv
+    ? runtimeDbSyncWritePolicyOverrides[taskFor]
+    : undefined;
+
+  if (!defaultPolicy && !runtimeOverride) {
+    return null;
+  }
+
+  return {
+    policy: {
+      ...(defaultPolicy || {}),
+      ...(runtimeOverride || {}),
+    },
+    defaultPolicy,
+    runtimeOverride,
+  };
+}
+
+export function setDbSyncWritePolicyOverride(
+  taskFor: SyncTaskOptions['taskFor'],
+  override: DbSyncWritePolicyOverride,
+) {
+  if (!isNonPublicProductionEnv) {
+    return null;
+  }
+
+  const sanitized = sanitizeDbSyncWritePolicyOverride(override);
+  if (!Object.keys(sanitized).length) {
+    delete runtimeDbSyncWritePolicyOverrides[taskFor];
+    return getDbSyncWritePolicyDebugSnapshot(taskFor);
+  }
+
+  runtimeDbSyncWritePolicyOverrides[taskFor] = sanitized;
+  return getDbSyncWritePolicyDebugSnapshot(taskFor);
+}
+
+export function clearDbSyncWritePolicyOverride(
+  taskFor: SyncTaskOptions['taskFor'],
+) {
+  if (!isNonPublicProductionEnv) {
+    return null;
+  }
+
+  delete runtimeDbSyncWritePolicyOverrides[taskFor];
+  return getDbSyncWritePolicyDebugSnapshot(taskFor);
+}
+
+export function getDbSyncWritePolicyDebugSnapshot(
+  taskFor: SyncTaskOptions['taskFor'],
+) {
+  const resolved = getDbSyncWritePolicy(taskFor);
+  if (!resolved) {
+    return {
+      taskFor,
+      defaultPolicy: null,
+      runtimeOverride: null,
+      effectivePolicy: null,
+    };
+  }
+
+  return {
+    taskFor,
+    defaultPolicy: resolved.defaultPolicy || null,
+    runtimeOverride: resolved.runtimeOverride || null,
+    effectivePolicy: resolved.policy,
+  };
+}
+
+export function abortAllSyncTasks(reason = 'manual') {
+  notifySyncAbortHandlers(reason);
+  activeSyncAbortControllers.forEach(controller => {
+    controller.abort();
+  });
   Object.entries(syncAbortControllers).forEach(([taskKey, controller]) => {
     logger.warn('[debug] abortAllSyncTasks::will abort', taskKey);
     controller?.abort();
@@ -43,9 +201,165 @@ export function abortAllSyncTasks() {
 export type BeforeEmitFn = (
   payload: Parameters<typeof appOrmEvents.emit>[1],
 ) => void;
-/**
- * @warning the `data` list would be mutated internally for performance consideration
- */
+
+type AfterBatchesFn = (ctx: {
+  owner_addr: string;
+  taskFor: SyncTaskOptions['taskFor'] | '@unknown';
+  signal: AbortSignal;
+  totalRows: number;
+  batchSize: number;
+  totalBatches: number;
+}) => Promise<void> | void;
+
+function resolveUpsertMethod<T extends typeof EntityAddressAssetBase>(
+  entityCls: T & typeof BaseEntity,
+) {
+  const disablePreparedUpsert = shouldDisablePreparedUpsert({
+    isDev: __DEV__,
+    isNonPublicProductionEnv,
+    onlineDisablePreparedUpsert:
+      getOnlineConfig().switches?.[ONLINE_SWITCH_DISABLE_DB_PREPARED_UPSERT_V2],
+  });
+  const enablePreparedUpsert = !disablePreparedUpsert;
+  const hasStatementSql =
+    'getStatementSql' in entityCls &&
+    typeof entityCls.getStatementSql === 'function';
+  const hasBindUpsertParams =
+    'bindUpsertParams' in entityCls.prototype &&
+    typeof entityCls.prototype.bindUpsertParams === 'function';
+  const hasGetUpsertParams =
+    'getUpsertParams' in entityCls.prototype &&
+    typeof entityCls.prototype.getUpsertParams === 'function';
+  const supportedBulkUpsert =
+    !disablePreparedUpsert && hasStatementSql && hasGetUpsertParams;
+  const stmSql = !supportedBulkUpsert
+    ? ''
+    : entityCls.getStatementSql?.('upsert') ?? '';
+
+  return {
+    method:
+      supportedBulkUpsert && stmSql
+        ? 'op_sqlite_execute_batch'
+        : 'typeorm_upsert',
+    enablePreparedUpsert,
+    disablePreparedUpsert,
+    hasStatementSql,
+    hasBindUpsertParams,
+    hasGetUpsertParams,
+    hasStatementSqlText: !!stmSql,
+    supportedBulkUpsert: !!(supportedBulkUpsert && stmSql),
+    stmSql,
+  };
+}
+
+function ensureNotAborted(signal?: AbortSignal) {
+  if (signal?.aborted) {
+    throw new SyncTaskAbortError();
+  }
+}
+
+function resolveDbSyncWritePolicy(options: {
+  taskFor: SyncTaskOptions['taskFor'];
+  batchSize: number;
+  delayBetweenTasks: number;
+}) {
+  const resolvedPolicy = getDbSyncWritePolicy(options.taskFor);
+  if (!resolvedPolicy) {
+    return {
+      batchSize: options.batchSize,
+      delayBetweenTasks: options.delayBetweenTasks,
+      didApplyPolicy: false,
+    };
+  }
+  const { policy, defaultPolicy, runtimeOverride } = resolvedPolicy;
+
+  const batchSize = Math.max(
+    1,
+    Math.min(options.batchSize, policy.maxBatchSize || options.batchSize),
+  );
+  let delayBetweenTasks = Math.max(
+    options.delayBetweenTasks,
+    policy.minDelayBetweenTasks || 0,
+  );
+  if (typeof policy.maxDelayBetweenTasks === 'number') {
+    delayBetweenTasks = Math.min(
+      delayBetweenTasks,
+      policy.maxDelayBetweenTasks,
+    );
+  }
+
+  return {
+    batchSize,
+    delayBetweenTasks,
+    didApplyPolicy:
+      batchSize !== options.batchSize ||
+      delayBetweenTasks !== options.delayBetweenTasks,
+    requestedBatchSize: options.batchSize,
+    requestedDelayBetweenTasks: options.delayBetweenTasks,
+    defaultPolicy,
+    runtimeOverride,
+  };
+}
+
+function sleep(ms: number, signal?: AbortSignal) {
+  if (ms <= 0) {
+    return Promise.resolve();
+  }
+
+  return new Promise<void>((resolve, reject) => {
+    let settled = false;
+    const timeoutId = setTimeout(() => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    const onAbort = () => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      clearTimeout(timeoutId);
+      reject(new SyncTaskAbortError());
+    };
+
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
+function estimateParamsPayload(paramsRows: Scalar[][]) {
+  if (!isNonProductionDiagnosticsEnabled) {
+    return null;
+  }
+
+  let stringChars = 0;
+  let maxStringChars = 0;
+  let valueCount = 0;
+
+  paramsRows.forEach(row => {
+    row.forEach(value => {
+      valueCount += 1;
+      if (typeof value !== 'string') {
+        return;
+      }
+
+      stringChars += value.length;
+      maxStringChars = Math.max(maxStringChars, value.length);
+    });
+  });
+
+  return {
+    columnCount: paramsRows[0]?.length || 0,
+    valueCount,
+    stringChars,
+    maxStringChars,
+  };
+}
+
 export async function batchSaveWithPQueueAndTransaction<
   T extends typeof EntityAddressAssetBase,
 >(
@@ -57,209 +371,474 @@ export async function batchSaveWithPQueueAndTransaction<
     delayBetweenTasks?: number;
     noNeedAbort?: boolean;
     printLog?: boolean;
-    // signal?: AbortSignal;
     waitTaskDoneReturn?: boolean;
     beforeEmit?: BeforeEmitFn;
+    afterBatches?: AfterBatchesFn;
+    priority?: SyncTaskPriority;
+    skipEmit?: boolean;
   },
 ) {
   const {
-    batchSize = 50,
+    batchSize: requestedBatchSize = 50,
     concurrency = 2,
-    delayBetweenTasks = 1 * 1e3,
+    delayBetweenTasks: requestedDelayBetweenTasks = 1 * 1e3,
     owner_addr,
     taskFor,
     printLog = __DEV__,
     noNeedAbort = false,
-    // signal = syncAbortControllers[taskFor],
     waitTaskDoneReturn = false,
     beforeEmit,
+    afterBatches,
+    priority = inferSyncTaskPriority(taskFor),
+    skipEmit = false,
   } = options;
+  const writePolicy = resolveDbSyncWritePolicy({
+    taskFor,
+    batchSize: requestedBatchSize,
+    delayBetweenTasks: requestedDelayBetweenTasks,
+  });
+  const { batchSize, delayBetweenTasks } = writePolicy;
 
-  const taskKey = makeTaskKey(taskFor, owner_addr);
+  const taskKey = makeSyncTaskKey(taskFor, owner_addr);
   const curAbortController = new AbortController();
   if (syncAbortControllers[taskKey] && !noNeedAbort) {
-    syncAbortControllers[taskKey].abort();
+    syncAbortControllers[taskKey]?.abort();
   }
   syncAbortControllers[taskKey] = curAbortController;
+  activeSyncAbortControllers.add(curAbortController);
 
   const currentSignal = curAbortController.signal;
-
   const loggerPrefix = !owner_addr
     ? ''
     : `[batchSaveWithPQueueAndTransaction::${taskKey}] `;
   const logBatch = (
     level: 'debug' | 'warn' | 'error',
     message: string,
-    ...data: unknown[]
+    ...payload: unknown[]
   ) => {
-    logger[level](`${loggerPrefix}${message}`, ...data);
+    logger[level](`${loggerPrefix}${message}`, ...payload);
   };
-
-  if (taskKey && keyVaryUpsertQueue[taskKey]) {
-    keyVaryUpsertQueue[taskKey].clear();
-    delete keyVaryUpsertQueue[taskKey];
-  }
-
-  const thisTickUpsertQueue = (keyVaryUpsertQueue[taskKey] = new PQueue({
-    concurrency: 20,
-  }));
 
   const repo = entityCls.getRepository();
   const totalLen = data.length;
-  const totalRound = Math.ceil(data.length / batchSize);
-  let waitAllTasksCreated = Promise.resolve();
-
-  const cursors = {
-    dataIdx: 0,
-  };
-  // for (let cursors.dataIdx = 0; cursors.dataIdx < totalLen; cursors.dataIdx += batchSize) {
-  // const curBatch = data.slice(cursors.dataIdx, cursors.dataIdx + batchSize);
-  while (cursors.dataIdx < totalLen && data.length) {
-    // splice from data
-    const curBatch = data.splice(0, batchSize);
-    const curIndex = cursors.dataIdx;
-
-    if (currentSignal.aborted) {
-      printLog && logBatch('warn', 'Batch upsertion was aborted.');
-      break;
+  const totalRound = Math.ceil(totalLen / batchSize);
+  const effectiveConcurrency = 1;
+  const diagTaskId = beginDbSyncTask({
+    taskFor: taskFor || '@unknown',
+    entityName: entityCls.name,
+    totalRows: totalLen,
+    batchSize,
+    totalBatches: totalRound,
+    requestedConcurrency: concurrency,
+    effectiveConcurrency,
+    waitTaskDoneReturn,
+    delayBetweenTasks,
+  });
+  if (writePolicy.didApplyPolicy) {
+    markDbSyncTaskStage(
+      diagTaskId,
+      'write_policy',
+      {
+        requestedBatchSize: writePolicy.requestedBatchSize,
+        effectiveBatchSize: batchSize,
+        requestedDelayBetweenTasks: writePolicy.requestedDelayBetweenTasks,
+        effectiveDelayBetweenTasks: delayBetweenTasks,
+        defaultPolicy: writePolicy.defaultPolicy,
+        runtimeOverride: writePolicy.runtimeOverride,
+      },
+      true,
+    );
+  }
+  let didFinishDiagTask = false;
+  let diagTaskHadError = false;
+  const finishDiagTask = (
+    status: 'success' | 'error' | 'aborted',
+    detail: Record<string, unknown> = {},
+  ) => {
+    if (didFinishDiagTask) {
+      return;
     }
 
-    waitAllTasksCreated = waitAllTasksCreated.then(async () => {
-      await sleep(delayBetweenTasks);
-      if (currentSignal.aborted) {
-        printLog &&
-          logBatch(
-            'warn',
-            '[waitAllTasksCreated] Batch upsertion was aborted before.',
-          );
-        thisTickUpsertQueue.clear();
-        return;
-      }
+    didFinishDiagTask = true;
+    endDbSyncTask(diagTaskId, status, detail);
+  };
 
-      thisTickUpsertQueue.add(async () => {
-        const round = Math.floor(curIndex / batchSize);
-        const roundText = `${round + 1}`;
-        const roundPercent = `${roundText} / ${totalRound}`;
-        printLog &&
-          logBatch('debug', `Batch ${roundPercent} upsertion started.`);
+  const eventPayloadBase = {
+    entityCls,
+    owner_addr,
+    taskFor: taskFor || '@unknown',
+  };
 
-        const eventPayload = {
-          entityCls,
-          owner_addr,
-          taskFor: taskFor || '@unknown',
-          syncDetails: {
-            // items: batch,
+  const makeEmit = (
+    success: boolean,
+    syncDetails: {
+      count: number;
+      total: number;
+      round: number;
+      batchSize: number;
+    },
+  ) => {
+    if (currentSignal.aborted || skipEmit) {
+      return;
+    }
+
+    const payload = {
+      ...eventPayloadBase,
+      syncDetails,
+      success,
+    };
+    beforeEmit?.(payload);
+    appOrmEvents.emit('onRemoteDataUpserted', payload);
+  };
+
+  const { taskId: schedulerTaskId, promise: schedulerPromise } = submitSyncTask(
+    {
+      key: taskKey,
+      taskFor,
+      owner: owner_addr,
+      entityName: entityCls.name,
+      rowCount: totalLen,
+      batchSize,
+      totalBatches: totalRound,
+      priority,
+      signal: currentSignal,
+      replaceQueuedDuplicates: !noNeedAbort,
+      runner: async ctx => {
+        markDbSyncTaskStage(
+          diagTaskId,
+          'running',
+          {
+            schedulerTaskId,
+            queuedByScheduler: true,
+          },
+          true,
+        );
+        ensureNotAborted(currentSignal);
+
+        const upsertMethod = resolveUpsertMethod(entityCls);
+        ctx.setMethod(upsertMethod.method);
+        markDbSyncTaskStage(diagTaskId, 'upsert_method', {
+          schedulerTaskId,
+          method: upsertMethod.method,
+          enablePreparedUpsert: upsertMethod.enablePreparedUpsert,
+          disablePreparedUpsert: upsertMethod.disablePreparedUpsert,
+          hasStatementSql: upsertMethod.hasStatementSql,
+          hasBindUpsertParams: upsertMethod.hasBindUpsertParams,
+          hasGetUpsertParams: upsertMethod.hasGetUpsertParams,
+          hasStatementSqlText: upsertMethod.hasStatementSqlText,
+          legacyDelayBetweenTasksMs: delayBetweenTasks,
+          legacyConcurrency: concurrency,
+        });
+
+        const { connection } = resolveDriverAndConnectionFromRepo(repo);
+        const db = connection.getDb();
+        let dataIdx = 0;
+
+        while (dataIdx < totalLen) {
+          await ctx.waitIfPaused();
+          ensureNotAborted(currentSignal);
+
+          const curBatch = data.slice(dataIdx, dataIdx + batchSize);
+          const round = Math.floor(dataIdx / batchSize);
+          const roundText = `${round + 1}`;
+          const roundPercent = `${roundText} / ${totalRound}`;
+          const batchStartedAt = Date.now();
+          const syncDetails = {
             count: curBatch.length,
             total: totalLen,
-            round: round,
+            round,
             batchSize,
-          },
-        };
+          };
 
-        const makeEmit = (success: boolean) => {
-          if (currentSignal.aborted) return;
-
-          // // leave here for debug
-          // if (__DEV__) {
-          //   console.debug(
-          //     `[debug] will make emit: ${eventPayload.taskFor}:${eventPayload.owner_addr}`,
-          //   );
-          // }
-          beforeEmit?.({ ...eventPayload, success });
-          appOrmEvents.emit('onRemoteDataUpserted', {
-            ...eventPayload,
-            success,
+          printLog &&
+            logBatch('debug', `Batch ${roundPercent} upsertion started.`);
+          ctx.setStage('batch_start', {
+            round,
+            count: curBatch.length,
+            totalRound,
           });
-        };
 
-        try {
-          const disablePreparedUpsert =
-            !__DEV__ &&
-            !getOnlineConfig().switches?.['20260122.enable_db_prepared_upsert'];
-          const supportedPreparedStatement =
-            !disablePreparedUpsert &&
-            'getStatementSql' in entityCls &&
-            typeof entityCls.getStatementSql === 'function' &&
-            'bindUpsertParams' in entityCls.prototype &&
-            typeof entityCls.prototype.bindUpsertParams === 'function';
-          const stmSql = !supportedPreparedStatement
-            ? ''
-            : entityCls.getStatementSql?.('upsert') ?? '';
+          try {
+            let paramsBuildMs = 0;
+            let executeMs = 0;
+            let paramsPayload: ReturnType<typeof estimateParamsPayload> = null;
+            if (upsertMethod.supportedBulkUpsert && upsertMethod.stmSql) {
+              const paramsBuildStartedAt = Date.now();
+              ctx.setStage('params_build', {
+                round,
+                count: curBatch.length,
+                totalRound,
+              });
+              markDbSyncTaskStage(
+                diagTaskId,
+                'params_build',
+                {
+                  schedulerTaskId,
+                  round,
+                  count: curBatch.length,
+                  totalRound,
+                  method: upsertMethod.method,
+                },
+                true,
+              );
+              const paramsRows = curBatch.map(item => {
+                const getUpsertParams = item.getUpsertParams;
+                if (typeof getUpsertParams !== 'function') {
+                  throw new Error(
+                    `${entityCls.name} does not support getUpsertParams`,
+                  );
+                }
+                return getUpsertParams.call(item) as Scalar[];
+              });
+              paramsPayload = estimateParamsPayload(paramsRows);
+              paramsBuildMs = Date.now() - paramsBuildStartedAt;
+              markDbSyncTaskStage(diagTaskId, 'params_built', {
+                schedulerTaskId,
+                round,
+                count: curBatch.length,
+                durationMs: paramsBuildMs,
+                ...(paramsPayload || {}),
+              });
 
-          if (supportedPreparedStatement && stmSql) {
-            const { connection } = resolveDriverAndConnectionFromRepo(repo);
-            const db = connection.getDb();
-            const stm = db.prepareStatement(stmSql);
-
-            for (const item of curBatch) {
-              item.bindUpsertParams!(stm);
-              try {
-                const result = await stm.execute();
-                // console.debug(`${loggerPrefix}[perf] upserted row:`, item, result);
-              } catch (error) {
-                logBatch('error', 'Error upserting row:', error, item);
+              const commands: SQLBatchTuple[] = [
+                [upsertMethod.stmSql, paramsRows],
+              ];
+              const executeStartedAt = Date.now();
+              ctx.setStage('execute_batch', {
+                round,
+                count: curBatch.length,
+                totalRound,
+                paramsBuildMs,
+              });
+              markDbSyncTaskStage(
+                diagTaskId,
+                'execute_batch',
+                {
+                  schedulerTaskId,
+                  round,
+                  count: curBatch.length,
+                  totalRound,
+                  paramsBuildMs,
+                  method: upsertMethod.method,
+                },
+                true,
+              );
+              await withOpSqliteDiagnosticContext(
+                {
+                  dbSyncTaskId: diagTaskId,
+                  schedulerTaskId,
+                  taskFor: taskFor || '@unknown',
+                  entityName: entityCls.name,
+                  round,
+                  count: curBatch.length,
+                  totalRound,
+                  method: upsertMethod.method,
+                },
+                () => db.executeBatch(commands),
+              );
+              executeMs = Date.now() - executeStartedAt;
+            } else {
+              const executeStartedAt = Date.now();
+              const variablesPerRow = Math.max(1, repo.metadata.columns.length);
+              const typeormBatchSize = getSqliteVariableBatchSize({
+                variablesPerItem: variablesPerRow,
+                requestedBatchSize: curBatch.length,
+              });
+              const typeormBatchCount = Math.ceil(
+                curBatch.length / typeormBatchSize,
+              );
+              ctx.setStage('typeorm_upsert', {
+                round,
+                count: curBatch.length,
+                totalRound,
+                typeormBatchSize,
+                typeormBatchCount,
+              });
+              markDbSyncTaskStage(
+                diagTaskId,
+                'typeorm_upsert',
+                {
+                  schedulerTaskId,
+                  round,
+                  count: curBatch.length,
+                  totalRound,
+                  method: upsertMethod.method,
+                  variablesPerRow,
+                  typeormBatchSize,
+                  typeormBatchCount,
+                },
+                true,
+              );
+              for (
+                let typeormBatchIndex = 0;
+                typeormBatchIndex < curBatch.length;
+                typeormBatchIndex += typeormBatchSize
+              ) {
+                ensureNotAborted(currentSignal);
+                await repo.manager.upsert(
+                  entityCls,
+                  curBatch.slice(
+                    typeormBatchIndex,
+                    typeormBatchIndex + typeormBatchSize,
+                  ),
+                  {
+                    conflictPaths: ['_db_id'],
+                  },
+                );
               }
+              executeMs = Date.now() - executeStartedAt;
             }
 
-            logBatch('debug', '[perf] upserted rows', curBatch, stmSql);
-          } else {
-            await repo.manager.upsert(entityCls, curBatch, {
-              conflictPaths: ['_db_id'],
+            printLog &&
+              logBatch(
+                'debug',
+                `Batch ${roundPercent} upsertion successfully.`,
+              );
+
+            makeEmit(true, syncDetails);
+            const durationMs = Date.now() - batchStartedAt;
+            ctx.markBatch({
+              round,
+              count: curBatch.length,
+              durationMs,
             });
+            markDbSyncTaskBatch(diagTaskId, {
+              round,
+              totalRound,
+              count: curBatch.length,
+              durationMs,
+              paramsBuildMs,
+              executeMs,
+              method: upsertMethod.method,
+              ...(paramsPayload || {}),
+            });
+          } catch (error) {
+            makeEmit(false, syncDetails);
+            diagTaskHadError = true;
+            const errorMessage =
+              error instanceof Error ? error.message : String(error);
+            markDbSyncTaskStage(diagTaskId, 'batch_error', {
+              schedulerTaskId,
+              round,
+              count: curBatch.length,
+              durationMs: Date.now() - batchStartedAt,
+              error: errorMessage,
+            });
+            printLog &&
+              logBatch('error', `Error inserting batch ${roundText}:`, error);
+
+            logger.error(`upsert ${taskKey}`, error);
+            throw error;
           }
 
-          printLog &&
-            logBatch('debug', `Batch ${roundPercent} upsertion successfully.`);
-
-          makeEmit(true);
-        } catch (error) {
-          makeEmit(false);
-          printLog &&
-            logBatch('error', `Error inserting batch ${roundText}:`, error);
-
-          logger.error(`upsert ${taskKey}`, error);
-          // Re-throw the error to rollback the transaction
-          throw error;
+          dataIdx += curBatch.length;
+          if (dataIdx < totalLen && delayBetweenTasks > 0) {
+            ctx.setStage('batch_delay', {
+              delayMs: delayBetweenTasks,
+              nextRound: Math.floor(dataIdx / batchSize),
+              totalRound,
+            });
+            markDbSyncTaskStage(diagTaskId, 'batch_delay', {
+              schedulerTaskId,
+              delayMs: delayBetweenTasks,
+              nextRound: Math.floor(dataIdx / batchSize),
+              totalRound,
+            });
+            await sleep(delayBetweenTasks, currentSignal);
+          }
         }
-      });
-    });
-    cursors.dataIdx += batchSize;
-  }
 
-  if (currentSignal) {
-    const abortListener = () => {
-      printLog && logBatch('warn', 'Batch upsertion was aborted.');
-      thisTickUpsertQueue.clear();
-    };
+        if (afterBatches) {
+          await ctx.waitIfPaused();
+          ensureNotAborted(currentSignal);
+          const afterBatchesStartedAt = Date.now();
+          markDbSyncTaskStage(diagTaskId, 'after_batches_start', {
+            schedulerTaskId,
+          });
+          await afterBatches({
+            owner_addr,
+            taskFor: taskFor || '@unknown',
+            signal: currentSignal,
+            totalRows: totalLen,
+            batchSize,
+            totalBatches: totalRound,
+          });
+          markDbSyncTaskStage(diagTaskId, 'after_batches_end', {
+            schedulerTaskId,
+            durationMs: Date.now() - afterBatchesStartedAt,
+          });
+        }
 
-    currentSignal.addEventListener('abort', abortListener);
+        markDbSyncTaskStage(diagTaskId, 'tasks_created', {
+          schedulerTaskId,
+          queuedByScheduler: true,
+        });
+      },
+    },
+  );
+  markDbSyncTaskStage(
+    diagTaskId,
+    'queued',
+    {
+      schedulerTaskId,
+      queuedByScheduler: true,
+      priority,
+    },
+    true,
+  );
 
-    try {
-      await waitAllTasksCreated;
-      if (!currentSignal.aborted) {
-        printLog &&
-          logBatch(
-            'debug',
-            `Started to upsert ${totalLen} records with total ${totalRound} batches(size: ${batchSize}, concurrency: ${concurrency})`,
-          );
-      }
-    } catch (error) {
-      printLog && logBatch('error', 'Wait batch upsertion failed:', error);
-    } finally {
-      currentSignal.removeEventListener('abort', abortListener);
+  const unregisterAbortController = () => {
+    activeSyncAbortControllers.delete(curAbortController);
+    if (syncAbortControllers[taskKey] === curAbortController) {
+      syncAbortControllers[taskKey] = null;
     }
-  } else {
-    await waitAllTasksCreated;
-    printLog && logBatch('debug', 'All batches have been processed.');
-  }
+  };
+
+  const finalizePromise = schedulerPromise
+    .then(() => {
+      finishDiagTask(diagTaskHadError ? 'error' : 'success', {
+        waitedForIdle: waitTaskDoneReturn,
+        schedulerTaskId,
+      });
+      return true;
+    })
+    .catch(error => {
+      const aborted = currentSignal.aborted || isSyncTaskAbortError(error);
+      finishDiagTask(aborted ? 'aborted' : 'error', {
+        waitedForIdle: waitTaskDoneReturn,
+        schedulerTaskId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      if (aborted) {
+        printLog && logBatch('warn', 'Batch upsertion was aborted.');
+        return false;
+      }
+
+      throw error;
+    })
+    .finally(unregisterAbortController);
 
   if (waitTaskDoneReturn) {
-    await thisTickUpsertQueue.onIdle();
+    const queueCompleted = await finalizePromise;
+    return {
+      taskKey,
+      taskSignal: currentSignal,
+      queueCompleted,
+    };
   }
+
+  void finalizePromise.catch(error => {
+    logger.error(`upsert ${taskKey}`, error);
+  });
+  markDbSyncTaskStage(diagTaskId, 'tasks_created', {
+    schedulerTaskId,
+    queuedByScheduler: true,
+  });
 
   return {
     taskKey,
     taskSignal: currentSignal,
-    queueCompleted: waitTaskDoneReturn && !currentSignal?.aborted,
+    queueCompleted: false,
   };
 }

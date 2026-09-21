@@ -1,5 +1,7 @@
-import createPersistStore, {
+import cloneDeep from 'lodash/cloneDeep';
+import {
   StorageAdapaterOptions,
+  StoreServiceBase,
 } from '@rabby-wallet/persist-store';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { isNonPublicProductionEnv } from '@/constant';
@@ -8,37 +10,34 @@ export type OfflineChainStore = {
   closeTipsChains: string[];
 };
 
-export class OfflineChainService {
-  store: OfflineChainStore = {
-    closeTipsChains: [],
-  };
-
+export class OfflineChainService extends StoreServiceBase<
+  OfflineChainStore,
+  APP_STORE_NAMES.offlineChain
+> {
   constructor(options?: StorageAdapaterOptions) {
-    const storage = createPersistStore<OfflineChainStore>(
+    super(
+      APP_STORE_NAMES.offlineChain,
+      { closeTipsChains: [] },
       {
-        name: APP_STORE_NAMES.offlineChain,
-        template: {
-          closeTipsChains: [],
-        },
-      },
-      {
-        storage: options?.storageAdapter,
+        storageAdapter: options?.storageAdapter,
       },
     );
-
-    this.store = storage || this.store;
   }
 
   getCloseTipsChains = () => {
-    return this.store.closeTipsChains;
+    return this.getStoreFieldSnapshot('closeTipsChains');
   };
 
   setCloseTipsChains = (chains: string[]) => {
-    this.store.closeTipsChains = [...this.store.closeTipsChains, ...chains];
+    this.mutateStore(draft => {
+      draft.closeTipsChains.push(...chains);
+    });
   };
 
   mockClearCloseTipsChains = () => {
     if (!isNonPublicProductionEnv) return;
-    this.store.closeTipsChains = [];
+    this.mutateStore(draft => {
+      draft.closeTipsChains = [];
+    });
   };
 }

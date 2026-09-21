@@ -54,12 +54,18 @@ describe('store/balance24h scene', () => {
     jest.doMock('@/hooks/useCurve', () => ({
       formatSmallUsdValue: jest.fn(() => '$123'),
     }));
+    jest.doMock('@/hooks/appSettings', () => ({
+      isHomeAssetSelectionExperimentEnabled: jest.fn(() => false),
+    }));
     jest.doMock('@/utils/number', () => ({
       formatUsdValue: jest.fn(() => '$1'),
     }));
     jest.doMock('@/core/apis/account', () => ({
       getTop10MyAccounts: (...args: unknown[]) =>
         mockGetTop10MyAccounts(...args),
+    }));
+    jest.doMock('@/hooks/appSettings', () => ({
+      isHomeAssetSelectionExperimentEnabled: jest.fn(() => false),
     }));
     jest.doMock('@/core/services', () => ({
       keyringService: {

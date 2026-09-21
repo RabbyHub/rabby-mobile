@@ -48,14 +48,38 @@ export const serviceMigrations: {
 
 export function migrateServices(services: STORE_SERVICE_MAP) {
   for (const [serviceName, migration] of Object.entries(serviceMigrations)) {
-    processMigrateService(
+    const service = services[serviceName as MIGRATABLE_STORE_SERVICE];
+    if (!service) {
+      continue;
+    }
+    migrateService(
       serviceName as MIGRATABLE_STORE_SERVICE,
-      migration as IServiceMigrationsByVersion<STORE_BASED_SERVICE>,
-      {
-        service: services[serviceName],
-        services,
-        loggerPrefix: `[MigrateService::${serviceName}]`,
-      },
+      service as STORE_BASED_SERVICE,
+      services,
     );
   }
+}
+
+export function migrateService<U extends MIGRATABLE_STORE_SERVICE>(
+  serviceName: U,
+  service: GET_SERVICE_BY_NAME<U>,
+  services: Partial<STORE_SERVICE_MAP> = {},
+) {
+  const migration = serviceMigrations[serviceName];
+  if (!migration) {
+    return;
+  }
+
+  return processMigrateService(
+    serviceName,
+    migration as IServiceMigrationsByVersion<GET_SERVICE_BY_NAME<U>>,
+    {
+      service,
+      services: {
+        ...services,
+        [serviceName]: service,
+      } as STORE_SERVICE_MAP,
+      loggerPrefix: `[MigrateService::${serviceName}]`,
+    },
+  );
 }

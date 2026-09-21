@@ -57,7 +57,7 @@ function loadAutoDisconnectPolicy(
   jest.doMock('./debugLog', () => ({
     addWalletConnectLog: jest.fn(),
   }));
-  jest.doMock('./accountSelection', () => ({
+  jest.doMock('./accountPersistence', () => ({
     forgetWalletConnectAccountForTopic: jest.fn(),
   }));
   jest.doMock('./sessions', () => ({
@@ -80,7 +80,7 @@ describe('walletconnect auto disconnect policy', () => {
     jest.dontMock('@/core/storage/mmkv');
     jest.dontMock('@walletconnect/utils');
     jest.dontMock('./debugLog');
-    jest.dontMock('./accountSelection');
+    jest.dontMock('./accountPersistence');
     jest.dontMock('./sessions');
   });
 
@@ -148,8 +148,9 @@ describe('walletconnect auto disconnect policy', () => {
 
   it('disconnects restored sessions on startup when enabled', async () => {
     const policy = loadAutoDisconnectPolicy();
-    const { forgetWalletConnectAccountForTopic } =
-      jest.requireMock('./accountSelection');
+    const { forgetWalletConnectAccountForTopic } = jest.requireMock(
+      './accountPersistence',
+    );
     const walletKit = makeWalletKit(['topic-1', 'topic-2']);
 
     await policy.disconnectRestoredWalletConnectSessionsForAutoDisconnect(
@@ -169,8 +170,9 @@ describe('walletconnect auto disconnect policy', () => {
 
   it('replaces older sessions after a new session is approved', async () => {
     const policy = loadAutoDisconnectPolicy();
-    const { forgetWalletConnectAccountForTopic } =
-      jest.requireMock('./accountSelection');
+    const { forgetWalletConnectAccountForTopic } = jest.requireMock(
+      './accountPersistence',
+    );
     const walletKit = makeWalletKit(['old-topic', 'new-topic']);
 
     await policy.replaceWalletConnectSessionsForAutoDisconnect(
@@ -197,8 +199,9 @@ describe('walletconnect auto disconnect policy', () => {
     const policy = loadAutoDisconnectPolicy({
       defaultInactiveMinutes: ONE_SECOND_IN_MINUTES,
     });
-    const { forgetWalletConnectAccountForTopic } =
-      jest.requireMock('./accountSelection');
+    const { forgetWalletConnectAccountForTopic } = jest.requireMock(
+      './accountPersistence',
+    );
     const walletKit = makeWalletKit(['topic-1']);
 
     policy.recordWalletConnectSessionActivity(walletKit as never, 'topic-1');

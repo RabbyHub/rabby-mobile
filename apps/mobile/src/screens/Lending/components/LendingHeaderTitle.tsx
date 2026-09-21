@@ -3,7 +3,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React, { useEffect } from 'react';
 import { View } from 'react-native';
 
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 import { HeaderBackPressable, useRabbyAppNavigation } from '@/hooks/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

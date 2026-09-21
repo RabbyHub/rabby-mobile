@@ -8,7 +8,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useRoute } from '@react-navigation/native';
 import { useMemoizedFn } from 'ahooks';
 import { sortBy } from 'lodash';
-import { IS_IOS } from '@/core/native/utils';
 import React, {
   useCallback,
   useEffect,
@@ -47,6 +46,10 @@ import { RootNames, getBottomButtonBottomOffset } from '@/constant/layout';
 import { PerpsAddPositionPopup } from './components/PerpsAddPositionPopup';
 import { PerpsLimitOrdersForCoin } from './components/PerpsLimitOrdersForCoin';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
+import {
+  toCanonicalPerpsCandleInterval,
+  toSimplePerpsCandleInterval,
+} from '@/hooks/perps/candles/interval';
 import { showToast } from '@/hooks/perps/showToast';
 import { PerpsAgentsLimitModal } from '../Perps/components/PerpsAgentsLimitModal';
 import { PerpsPositionSkeletonLoader } from '../Perps/components/PerpsSkeletonLoader';
@@ -55,7 +58,6 @@ import { stats } from '@/utils/stats';
 import { getStatsReportSide, isLimitOrder } from '@/utils/perps';
 import { APP_VERSIONS } from '@/constant';
 import { Text } from '@/components/Typography';
-import { PerpsGuideEntryPopup } from './components/PerpsGuideEntryPopup';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
 import { withWalletUnlock } from '@/utils/walletUnlockGuard';
 
@@ -106,49 +108,24 @@ export const PerpsMarketDetailScreen = () => {
   const [selectedInterval, setSelectedIntervalState] =
     React.useState<CANDLE_MENU_KEY_V2>(CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES);
   useEffect(() => {
+    let active = true;
     apisPerps.getSelectedKlineInterval().then(v => {
-      if (v) {
-        setSelectedIntervalState(v);
+      if (active) {
+        setSelectedIntervalState(toSimplePerpsCandleInterval(v));
       }
     });
+    return () => {
+      active = false;
+    };
   }, []);
   const setSelectedInterval = useMemoizedFn((v: CANDLE_MENU_KEY_V2) => {
     setSelectedIntervalState(v);
-    apisPerps.setSelectedKlineInterval(v);
+    apisPerps.setSelectedKlineInterval(toCanonicalPerpsCandleInterval(v));
   });
-  const [showGuideEntryPopup, setShowGuideEntryPopup] = useState(false);
   const coinNameRef = useRef(coin);
   useEffect(() => {
     coinNameRef.current = coin;
   }, [coin]);
-
-  // Pre-fetch guide popup status on mount, then use synchronously in beforeRemove
-  const hasShownGuideRef = useRef(true);
-  useEffect(() => {
-    if (IS_IOS || fromSource !== 'homePagePositionList') {
-      return;
-    }
-    apisPerps.getHasShownPerpsGuidePopup().then(hasShown => {
-      hasShownGuideRef.current = hasShown;
-    });
-  }, [fromSource]);
-
-  // Intercept back navigation to show guide popup for homePagePositionList users
-  // iOS: native-stack's swipe-back gesture ignores e.preventDefault() visually
-  // but keeps the route in the stack, causing subsequent pushes to be blocked.
-  useEffect(() => {
-    if (IS_IOS || fromSource !== 'homePagePositionList') {
-      return;
-    }
-    const unsubscribe = navigation.addListener('beforeRemove', e => {
-      if (hasShownGuideRef.current) {
-        return;
-      }
-      e.preventDefault();
-      setShowGuideEntryPopup(true);
-    });
-    return unsubscribe;
-  }, [navigation, fromSource]);
 
   // useEffect(() => {
   //   const needDepositFirst =
@@ -165,7 +142,8 @@ export const PerpsMarketDetailScreen = () => {
   //   // eslint-disable-next-line react-hooks/exhaustive-deps
   // }, []);
 
-  const { activeAssetCtx, activeAssetData } = useActiveAssetSubscription(coin);
+  const { activeAssetCtx, activeAssetData, refreshActiveAssetData } =
+    useActiveAssetSubscription(coin);
 
   const [positionDirection, setPositionDirection] = React.useState<
     'Long' | 'Short'
@@ -494,7 +472,7 @@ export const PerpsMarketDetailScreen = () => {
 
   return (
     <>
-      <NormalScreenContainer2024 type={'bg1'}>
+      <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
         {!hasPermission ? <PerpsRegionAlert /> : null}
         <ScrollView
           style={styles.container}
@@ -662,6 +640,8 @@ export const PerpsMarketDetailScreen = () => {
       />
       <PerpsOpenPositionPopup
         activeAssetCtx={activeAssetCtx}
+        activeAssetData={activeAssetData}
+        refreshActiveAssetData={refreshActiveAssetData}
         currentAssetCtx={currentAssetCtx}
         marketDataItem={currentAssetCtx}
         visible={openPositionVisible}
@@ -707,11 +687,13 @@ export const PerpsMarketDetailScreen = () => {
           direction={positionData?.direction as 'Long' | 'Short'}
           positionSize={positionData?.size.toString() || '0'}
           pnl={positionData?.pnl || 0}
+          szDecimals={currentAssetCtx?.szDecimals || 0}
+          quoteAsset={currentAssetCtx?.quoteAsset}
           onCancel={() => setClosePositionVisible(false)}
           onConfirm={() => {
             setClosePositionVisible(false);
           }}
-          handleClosePosition={async (closePercent: number) => {
+          handleClosePosition={async ({ closePercent, orderType, limitPx }) => {
             let sizeStr = '0';
             if (closePercent < 100) {
               const size = (positionData?.size * closePercent) / 100;
@@ -723,19 +705,29 @@ export const PerpsMarketDetailScreen = () => {
               coin,
               size: sizeStr,
               direction: positionData?.direction as 'Long' | 'Short',
-              price: (activeAssetCtx?.markPx as unknown as string) || '0',
+              price: activeAssetCtx?.markPx || currentAssetCtx?.markPx || '0',
+              orderType,
+              limitPx,
             });
-            setCurrentTpOrSl({
-              tpPrice: undefined,
-              slPrice: undefined,
-            });
+            // A resting limit close leaves the position open, so existing
+            // TP/SL orders stay attached — clear only on market close or a
+            // marketable limit close that filled immediately.
+            if (orderType === 'market' || (res && !res.resting)) {
+              setCurrentTpOrSl({
+                tpPrice: undefined,
+                slPrice: undefined,
+              });
+            }
             if (res) {
               const { avgPx, totalSz } = res;
               const isBuy = positionData?.direction === 'Long';
               stats.report('perpsTradeHistory', {
                 created_at: new Date().getTime(),
                 user_addr: currentPerpsAccount?.address || '',
-                trade_type: 'close position',
+                trade_type:
+                  orderType === 'limit'
+                    ? 'close position limit'
+                    : 'close position',
                 leverage: positionData?.leverage.toString(),
                 trade_side: getStatsReportSide(!isBuy, true),
                 margin_mode:
@@ -756,6 +748,7 @@ export const PerpsMarketDetailScreen = () => {
       {positionData ? (
         <PerpsAddPositionPopup
           visible={addPositionVisible}
+          providerFee={providerFee}
           availableBalance={Number(availableBalance || 0)}
           pnl={Number(positionData?.pnl || 0)}
           pnlPercent={Number(positionData?.pnlPercent || 0)}
@@ -772,6 +765,8 @@ export const PerpsMarketDetailScreen = () => {
           markPrice={markPrice}
           direction={positionData?.direction as 'Long' | 'Short'}
           positionSize={positionData?.size.toString() || '0'}
+          entryPrice={positionData?.entryPrice || 0}
+          positionValue={positionData?.positionValue || 0}
           szDecimals={currentAssetCtx?.szDecimals || 0}
           pxDecimals={currentAssetCtx?.pxDecimals || 2}
           leverage={positionData?.leverage || 1}
@@ -823,15 +818,6 @@ export const PerpsMarketDetailScreen = () => {
         />
       ) : null}
 
-      <PerpsGuideEntryPopup
-        visible={showGuideEntryPopup}
-        onClose={() => {
-          apisPerps.setHasShownPerpsGuidePopup(true);
-          setShowGuideEntryPopup(false);
-          hasShownGuideRef.current = true;
-          navigation.goBack();
-        }}
-      />
       <EnableUnifiedAccountPopup
         visible={isShowEnableUnifiedPopup}
         onClose={() => setIsShowEnableUnifiedPopup(false)}
@@ -864,7 +850,7 @@ const getStyles = createGetStyles2024(ctx => {
       position: 'relative',
     },
     scrollContent: {
-      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+      // paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     },
     header: {
       display: 'flex',
@@ -873,7 +859,9 @@ const getStyles = createGetStyles2024(ctx => {
       marginBottom: 30,
     },
     chart: {
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
       height: 322,
       borderRadius: 20,
     },

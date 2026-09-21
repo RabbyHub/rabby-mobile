@@ -18,7 +18,10 @@ import { CurveLoader } from '@/screens/TokenDetail/components/TokenPriceChart/Cu
 import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 import { useCurrency } from '@/hooks/useCurrency';
-import { formatSmallCurrencyValueParts } from '@/utils/currency';
+import {
+  formatCurrencyValueParts,
+  formatSmallCurrencyValueParts,
+} from '@/utils/currency';
 import {
   FOLD_ASSETS_HEADER_HEIGHT,
   UNFOLD_ASSETS_HEADER_HEIGHT,
@@ -34,6 +37,7 @@ import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { AnimateableText } from '@/components/Typography';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerText';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -92,6 +96,7 @@ export const HomeTopChart = memo(function Chart({
   const {
     isLoadingChartData,
     balanceLoadingWithoutLocal,
+    changeLoading,
     selectData: data,
     balance,
     evmBalance,
@@ -140,7 +145,7 @@ export const HomeTopChart = memo(function Chart({
     });
   }, [balance, currentAddress, evmBalance]);
 
-  const heightAnim = useSharedValue(0);
+  const heightAnim = useSharedValue(FOLD_ASSETS_HEADER_HEIGHT);
   const opacityAnim = useSharedValue(0);
 
   useEffect(() => {
@@ -193,37 +198,44 @@ export const HomeTopChart = memo(function Chart({
               LinearGradientComponent={LoadingLinear}
             />
           ) : (
-            <ChartHeader animOpacityStyle={animOpacityStyle} />
+            <ChartHeader
+              loading={balanceLoadingWithoutLocal}
+              changeLoading={changeLoading}
+              selectData={data}
+              balance={balance}
+            />
           )}
-          <Animated.View style={[animOpacityStyle]}>
-            {isOffline ||
-            isNoAssets ||
-            !chartData.length ? null : !isLoadingChartData ? (
-              <LineChart
-                height={104}
-                width={ScreenWidth - 32}
-                shape={d3Shape.curveCatmullRom}
-                style={styles.chart}>
-                <LineChart.Path
-                  showInactivePath={false}
-                  color={pathColor}
-                  width={2}>
-                  <LineChart.Gradient color={pathColor} />
-                </LineChart.Path>
-                <LineChart.CursorLine color={colors['neutral-line']} />
-                <LineChart.CursorCrosshair
-                  color={pathColor}
-                  outerSize={12}
-                  size={8}
+          {!fold ? (
+            <Animated.View style={[animOpacityStyle]}>
+              {isOffline ||
+              isNoAssets ||
+              !chartData.length ? null : !isLoadingChartData ? (
+                <LineChart
+                  height={104}
+                  width={ScreenWidth - 32}
+                  shape={d3Shape.curveCatmullRom}
+                  style={styles.chart}>
+                  <LineChart.Path
+                    showInactivePath={false}
+                    color={pathColor}
+                    width={2}>
+                    <LineChart.Gradient color={pathColor} />
+                  </LineChart.Path>
+                  <LineChart.CursorLine color={colors['neutral-line']} />
+                  <LineChart.CursorCrosshair
+                    color={pathColor}
+                    outerSize={12}
+                    size={8}
+                  />
+                </LineChart>
+              ) : (
+                <CurveLoader
+                  {...makeTestIDProps(E2E_ID.home.singleCurveLoading)}
+                  style={styles.loading}
                 />
-              </LineChart>
-            ) : (
-              <CurveLoader
-                {...makeTestIDProps(E2E_ID.home.singleCurveLoading)}
-                style={styles.loading}
-              />
-            )}
-          </Animated.View>
+              )}
+            </Animated.View>
+          ) : null}
         </LineChart.Provider>
       </View>
     </Animated.View>
@@ -231,25 +243,27 @@ export const HomeTopChart = memo(function Chart({
 });
 
 interface IHeaderProps {
-  animOpacityStyle: ReturnType<typeof useAnimatedStyle>;
+  loading: boolean;
+  changeLoading: boolean;
+  selectData: ReturnType<typeof useSingleHomeHomeTopChart>['selectData'];
+  balance: number | null;
 }
-const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
+const ChartHeader = ({
+  loading,
+  changeLoading,
+  selectData,
+  balance,
+}: IHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { currentIndex } = LineChart.useChart();
   const [isInitialized, setIsInitialized] = useState(false);
   const { currency } = useCurrency();
 
-  const {
-    balanceLoadingWithoutLocal: loading,
-    changeLoading,
-    selectData,
-    balance,
-  } = useSingleHomeHomeTopChart();
-
   const rawNetWorth = balance || 0;
   const changePercent = selectData.changePercent;
   const isLoss = selectData.isLoss;
   const _data = selectData.list;
+  const debouncedRawChange = useDebouncedValue(selectData.rawChange, 300);
 
   const netWorth = useMemo(() => {
     return formatSmallCurrencyValueParts(rawNetWorth, {
@@ -258,6 +272,12 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
       decimalOverMillion: 2,
     }).text;
   }, [rawNetWorth, currency]);
+
+  const change = useMemo(() => {
+    return formatCurrencyValueParts(Math.abs(debouncedRawChange), {
+      currency,
+    }).text;
+  }, [currency, debouncedRawChange]);
 
   const data = useMemo(() => {
     return (
@@ -301,13 +321,17 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
     const formatLoss = isActiveIndexData
       ? data?.[currentIndex.value]?.isLoss ?? false
       : isLoss;
+    const formatChangeValue = isActiveIndexData
+      ? data?.[currentIndex.value]?.change || ''
+      : change;
+    const sign = formatLoss ? '-' : '+';
     if (changePercent === '0%') {
       return changePercent;
     }
     return `${
-      formatChangePercent ? (formatLoss ? '-' : '+') : ''
-    }${formatChangePercent}`;
-  }, [data, currentIndex.value, changePercent, isLoss, isInitialized]);
+      formatChangePercent ? sign : ''
+    }${formatChangePercent}(${sign}${formatChangeValue})`;
+  }, [data, currentIndex.value, changePercent, isLoss, isInitialized, change]);
 
   const dateTime = useDerivedValue(() => {
     // 如果还没初始化，返回默认值
@@ -330,6 +354,12 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
 
     return data?.[currentIndex?.value]?.netWorth || netWorth;
   }, [data, currentIndex, netWorth, isInitialized]);
+
+  const arrowStrokeProps = useAnimatedProps(() => {
+    return {
+      stroke: colors2024['neutral-secondary'],
+    };
+  }, [isLoss, data, currentIndex, colors2024]);
 
   const lossStyleProps = useAnimatedStyle(() => {
     // 如果还没初始化，使用默认样式
@@ -402,8 +432,9 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
       <View style={styles.leftContainer}>
         <RefreshNudgedTickerText
           value={formatNetWorth}
+          animateWidth={false}
           maxLength={16}
-          lineHeight={46}
+          lineHeight={42}
           duration={320}
           style={styles.netWorth}
           fontSizeByLength={{
@@ -412,10 +443,6 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
             threshold: NETWORTH_FIT_LEN,
           }}
           containerProps={makeTestIDProps(E2E_ID.home.singleBalanceValue)}
-        />
-        <AnimateableText
-          style={[styles.changeTime, animOpacityStyle]}
-          animatedProps={dateTimeAnimatedProps}
         />
       </View>
       <Pressable
@@ -437,6 +464,10 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
               style={lossStyleProps}
               animatedProps={percentChangeAnimatedProps}
             />
+            <AnimateableText
+              style={[styles.changeTime]}
+              animatedProps={dateTimeAnimatedProps}
+            />
             <View>
               <Svg
                 style={{
@@ -453,7 +484,7 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
                   strokeWidth={2}
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  animatedProps={lossStyleProps}
+                  animatedProps={arrowStrokeProps}
                 />
               </Svg>
             </View>
@@ -464,12 +495,6 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
   );
 };
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  center: {
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    width: '100%',
-    marginLeft: -16,
-  },
   skeleton: {
     marginTop: 7,
     marginLeft: 8,
@@ -486,18 +511,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       : colors2024['neutral-bg-2'],
   },
   charHeader: {
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flexDirection: 'row',
+    //alignItems: 'center',
+    //justifyContent: 'space-between',
+    flexDirection: 'column',
     paddingLeft: 8,
+    gap: 2,
     width: ScreenWidth - 32,
   },
   leftContainer: {
     flexDirection: 'column',
     alignItems: 'flex-start',
     justifyContent: 'center',
-    marginRight: 24,
-    flexShrink: 1,
+    height: 42,
     minWidth: 0,
   },
   percentChangeContainer: {
@@ -505,43 +530,29 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'flex-end',
     alignSelf: 'flex-start',
-    marginTop: 16,
+    height: 18,
     flexShrink: 0,
-    // ...makeDebugBorder(),
   },
   netWorth: {
-    lineHeight: 46,
+    lineHeight: 42,
     // textAlign: 'center',
-    fontWeight: '900',
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
-  changeSection: {
-    flexDirection: 'row',
-    gap: 2,
-    marginTop: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  changeValue: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-  },
   changePercent: {
-    fontSize: 16,
-    lineHeight: 20,
-    marginLeft: 8,
+    fontSize: 14,
+    lineHeight: 18,
+    marginLeft: 0,
     marginRight: 4,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
   },
   changeTime: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     lineHeight: 18,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
@@ -551,7 +562,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     overflow: 'hidden',
   },
   chartContainer: {
-    paddingLeft: 16,
+    paddingLeft: 14,
   },
   loading: {
     width: ScreenWidth - 32,

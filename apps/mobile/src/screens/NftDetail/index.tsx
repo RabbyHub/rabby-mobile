@@ -6,7 +6,7 @@ import BigNumber from 'bignumber.js';
 import { getCHAIN_ID_LIST } from '@/constant/projectLists';
 import { useTheme2024 } from '@/hooks/theme';
 import { Text } from '@/components';
-import { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Media } from '@/components/Media';
 import { IconDefaultNFT, IconNumberNFT } from '@/assets/icons/nft';
 import { CHAINS_ENUM } from '@/constant/chains';
@@ -19,7 +19,7 @@ import {
 } from '@/constant/layout';
 import { useRoute } from '@react-navigation/native';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { GetRootScreenRouteProp } from '@/navigation-type';
+import type { GetRootScreenRouteProp } from '@/navigation-type';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -35,8 +35,7 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useLoadAssets } from '../Search/useAssets';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { ellipsisAddress } from '@/utils/address';
-import { useTriggerTagAssets } from '../Home/hooks/refresh';
-import { preferenceService } from '@/core/services';
+import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 
 const ListItem = (props: {
   title: string;
@@ -137,7 +136,7 @@ export const NFTDetailScreen = () => {
   );
 
   // todo check this
-  const currentAccount = preferenceService.getFallbackAccount();
+  const currentAccount = getFallbackAccountSnapshot();
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
@@ -267,7 +266,7 @@ export const NFTDetailScreen = () => {
     (type: KEYRING_TYPE, aliasName: string, address?: string) => {
       return (
         <View style={styles.accountBox}>
-          <View className="relative">
+          <View style={styles.relative}>
             <WalletIcon
               type={type as KEYRING_TYPE}
               address={address}
@@ -282,7 +281,7 @@ export const NFTDetailScreen = () => {
         </View>
       );
     },
-    [styles.accountBox, styles.titleText, styles.walletIcon],
+    [styles.accountBox, styles.relative, styles.titleText, styles.walletIcon],
   );
 
   const renderSingeleNft = useCallback(
@@ -445,6 +444,9 @@ const getStyle = createGetStyles2024(
       height: 18,
       borderRadius: 4,
     },
+    relative: {
+      position: 'relative',
+    },
     buttonContainer: {
       width: '100%',
       paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
@@ -470,9 +472,6 @@ const getStyle = createGetStyles2024(
       gap: 8,
       alignItems: 'center',
     },
-    assetIcon: {
-      borderRadius: 8,
-    },
     tokenSymbol: {
       flexShrink: 1,
       color: colors2024['neutral-title-1'],
@@ -494,18 +493,19 @@ const getStyle = createGetStyles2024(
       // height: 'auto',
     },
     avator: {
-      width: 40,
-      height: 40,
-      borderColor: 'red',
+      width: 44,
+      height: 44,
       position: 'relative',
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     chainIcon: {
       width: 16,
       height: 16,
       borderRadius: 16,
       position: 'absolute',
-      bottom: -2,
-      right: -2,
+      bottom: 0,
+      right: 0,
     },
     imagesAvatar: {
       width: '100%',

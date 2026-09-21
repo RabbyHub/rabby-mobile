@@ -6,11 +6,8 @@ import React, {
   useState,
 } from 'react';
 import { Image, InteractionManager, StyleSheet, View } from 'react-native';
-import {
-  PanGestureHandler,
-  PanGestureHandlerStateChangeEvent,
-  State,
-} from 'react-native-gesture-handler';
+import type { PanGestureHandlerStateChangeEvent } from 'react-native-gesture-handler';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
 
 import {
   DappFrameAccountHeader_LAYOUT,
@@ -20,11 +17,12 @@ import { RootNames } from '@/constant/layout';
 import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
 import { useCurrentRouteName } from '@/hooks/navigation';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { WebViewProps } from 'react-native-webview';
+import type { WebViewProps } from 'react-native-webview';
 import ViewShot from 'react-native-view-shot';
 import { useTranslation } from 'react-i18next';
 
-import DappWebViewCore, { DappWebViewProgressState } from './DappWebViewCore';
+import type { DappWebViewProgressState } from './DappWebViewCore';
+import DappWebViewCore from './DappWebViewCore';
 import { useAppUnlocked } from '@/hooks/useLock';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useInnerDappLastUrl } from '@/hooks/useInnerDappLastUrl';
@@ -40,7 +38,11 @@ import {
 import { openapi } from '@/core/request';
 import RcIconGlobeCC from '@/assets2024/icons/common/globe-cc.svg';
 import { useTheme2024 } from '@/hooks/theme';
-import { dappService } from '@/core/services';
+import {
+  serviceDependency,
+  withCoreServices,
+} from '@/core/serviceApi/serviceDependencies';
+import type { CoreServiceInjectedProps } from '@/core/serviceApi/serviceDependencies';
 import { createGetStyles2024 } from '@/utils/styles';
 import { IS_ANDROID } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
@@ -66,6 +68,57 @@ const DEFAULT_LENDING_ID = INNER_DAPP_LIST.LENDING[0]?.id ?? 'aave';
 const DEFAULT_PERPS_ID = INNER_DAPP_LIST.PERPS[0]?.id ?? 'hyperliquid';
 const DEFAULT_PREDICTION_ID = INNER_DAPP_LIST.PREDICTION[0]?.id ?? 'polymarket';
 
+const DAPP_PERMISSION_SERVICE_DEPENDENCIES = [
+  serviceDependency('dappService'),
+] as const;
+
+type DappPermissionResolverProps = {
+  dappId: string;
+  url: string;
+  onResolved: (allowed: boolean) => void;
+} & CoreServiceInjectedProps<typeof DAPP_PERMISSION_SERVICE_DEPENDENCIES>;
+
+const DappPermissionResolverImpl = ({
+  coreServices,
+  dappId,
+  url,
+  onResolved,
+}: DappPermissionResolverProps) => {
+  useEffect(() => {
+    let cancelled = false;
+    const dappOrigin = safeGetOrigin(url);
+    const dappInfo = coreServices.dappService.getDapp(dappOrigin);
+
+    openapi
+      .getDappPermission({
+        dapp: dappId,
+        id: dappInfo?.currentAccount?.address,
+      })
+      .then(result => {
+        if (!cancelled) {
+          onResolved(result.has_permission);
+        }
+      })
+      .catch(error => {
+        if (!cancelled) {
+          onResolved(false);
+        }
+        console.error('getDappPermission', error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [coreServices.dappService, dappId, onResolved, url]);
+
+  return null;
+};
+
+const DappPermissionResolver = withCoreServices(
+  DAPP_PERMISSION_SERVICE_DEPENDENCIES,
+  DappPermissionResolverImpl,
+);
+
 export default function InnerDappWebViewPreloadLayer({
   offscreenPreload = false,
 }: InnerDappWebViewPreloadLayerProps) {
@@ -89,7 +142,6 @@ export default function InnerDappWebViewPreloadLayer({
     Record<string, DappWebViewProgressState>
   >({});
   const [dappPermission, setDappPermission] = useState(true);
-  const permissionRequestIdRef = useRef(0);
 
   const isTargetRoute =
     currentRouteName === RootNames.Lending ||
@@ -209,50 +261,20 @@ export default function InnerDappWebViewPreloadLayer({
     setRetainedKeys(prev => prev.slice(0, resolvedMaxRetained));
   }, [resolvedMaxRetained]);
 
-  useEffect(() => {
-    if (!activeKey) {
-      setDappPermission(true);
-      return;
+  const permissionCheckItem = useMemo(() => {
+    if (!activeKey || !isAppUnlocked) {
+      return null;
     }
-    if (!isAppUnlocked) {
-      setDappPermission(true);
-      return;
-    }
-
     const activeItem = preloadItemsByKey[activeKey];
     if (!activeItem?.url || ['aave', 'hyperliquid'].includes(activeItem.id)) {
-      setDappPermission(true);
-      return;
+      return null;
     }
-    const dappOrigin = safeGetOrigin(activeItem.url);
-    const requestId = ++permissionRequestIdRef.current;
-    const dappInfo = dappService.getDapp(dappOrigin);
-    let cancelled = false;
-    setDappPermission(true);
-
-    openapi
-      .getDappPermission({
-        dapp: activeItem.id,
-        id: dappInfo?.currentAccount?.address,
-      })
-      .then(result => {
-        if (cancelled || requestId !== permissionRequestIdRef.current) {
-          return;
-        }
-
-        setDappPermission(result.has_permission);
-      })
-      .catch(error => {
-        if (!cancelled) {
-          setDappPermission(false);
-        }
-        console.error('getDappPermission', error);
-      });
-
-    return () => {
-      cancelled = true;
-    };
+    return activeItem;
   }, [activeKey, isAppUnlocked, preloadItemsByKey]);
+
+  useEffect(() => {
+    setDappPermission(true);
+  }, [activeKey, isAppUnlocked]);
 
   const keysToRender = useMemo(() => {
     const limit = resolvedMaxRetained;
@@ -465,6 +487,14 @@ export default function InnerDappWebViewPreloadLayer({
           top: top + DappFrameAccountHeader_LAYOUT.height,
         },
       ]}>
+      {permissionCheckItem?.url ? (
+        <DappPermissionResolver
+          key={`${activeKey}-${permissionCheckItem.id}`}
+          dappId={permissionCheckItem.id}
+          url={permissionCheckItem.url}
+          onResolved={setDappPermission}
+        />
+      ) : null}
       {preloadItems.map(item => {
         if (!item.url) {
           return null;

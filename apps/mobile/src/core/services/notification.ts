@@ -97,7 +97,7 @@ export class NotificationService extends Events {
   isLocked = false;
   currentRequestDeferFn?: (isRetry?: boolean) => void;
   statsData: StatsData | undefined;
-  preferenceService: import('./preference').PreferenceService;
+  preferenceService: import('../startupServices/preference').PreferenceService;
   transactionHistoryService: import('./transactionHistory').TransactionHistoryService;
 
   get approvals() {

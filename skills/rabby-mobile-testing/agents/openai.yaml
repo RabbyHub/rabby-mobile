@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Rabby Mobile Testing'
+  short_description: 'Classify and write reliable Rabby Mobile tests'
+  default_prompt: 'Choose the correct Rabby Mobile test layer and implement it with stable boundaries.'

@@ -73,7 +73,7 @@ const TokenListItemComponent = ({
           {/* Token Chain Logo */}
           <AssetAvatar
             logo={item.logo_url}
-            size={46}
+            size={40}
             chain={item.chain}
             chainSize={showChainLogo ? 18 : 0}
             innerChainStyle={showChainLogo ? styles.chainLogo : undefined}
@@ -157,7 +157,7 @@ export const TokenItemSkeleton = () => {
 
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   tokenItem: {
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 4,
     gap: 8,
     display: 'flex',
@@ -185,14 +185,14 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 4,
   },
   tokenFdv: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     lineHeight: 18,
   },
   tokenFdvSeparator: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     color: colors2024['neutral-line'],
     fontFamily: 'SF Pro Rounded',
@@ -222,32 +222,11 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'center',
   },
   priceText: {
-    fontWeight: '700',
-    fontSize: 14,
-    lineHeight: 18,
+    fontWeight: '500',
+    fontSize: 17,
+    lineHeight: 22,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-  },
-  changeText: {
-    fontWeight: '700',
-    fontSize: 14,
-    lineHeight: 18,
-    color: colors2024['neutral-InvertHighlight'],
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'center',
-    width: 60,
-  },
-  changeTextPositive: {
-    color: colors2024['red-default'],
-  },
-  trendChartContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    //paddingHorizontal: 6.5,
-    paddingVertical: 6,
-    borderRadius: 6,
-    width: 60,
-    alignItems: 'flex-end',
   },
   leftSlot: {
     width: 24,
@@ -272,16 +251,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   skeletonItem: {
     backgroundColor: 'transparent',
-  },
-  trendChartWrapper: {
-    height: 30,
-    marginTop: -10,
-    marginBottom: 10,
-  },
-  lpTokenIconContainer: {
-    marginLeft: 0,
-    flexShrink: 0,
-    justifyContent: 'flex-start',
   },
   tokenAssetContainer: {
     flexDirection: 'row',

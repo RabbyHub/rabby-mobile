@@ -6,21 +6,18 @@ import { gasAccountProducts } from '@/constant/iap';
 import { openapi } from '@/core/request';
 import { eventBus, EVENTS } from '@/utils/events';
 import * as Sentry from '@sentry/react-native';
-import { useMemoizedFn } from 'ahooks';
 import {
+  fetchProducts,
   finishTransaction,
-  flushFailedPurchasesCachedAsPendingAndroid,
-  getProducts,
   initConnection,
-  Purchase,
-  PurchaseError,
   purchaseErrorListener,
   purchaseUpdatedListener,
 } from 'react-native-iap';
+import type { Purchase } from 'react-native-iap';
 
 const handlePurchase = async (purchase: Purchase) => {
   devLog('purchaseUpdatedListener -> 1', purchase);
-  const receipt = purchase.transactionReceipt;
+  const receipt = purchase.id;
   if (receipt) {
     try {
       try {
@@ -63,23 +60,18 @@ export const useIAPListener = () => {
     const init = async () => {
       try {
         await initConnection();
-        getProducts({
+        fetchProducts({
           skus: gasAccountProducts.map(item => item.id),
         });
 
         devLog('init IAP listener');
-        if (Platform.OS === 'android') {
-          flushFailedPurchasesCachedAsPendingAndroid();
-        }
         purchaseUpdateSubscription = purchaseUpdatedListener(handlePurchase);
 
-        purchaseErrorSubscription = purchaseErrorListener(
-          (error: PurchaseError) => {
-            // payment error
-            error;
-            devLog('purchaseErrorListener', error);
-          },
-        );
+        purchaseErrorSubscription = purchaseErrorListener(error => {
+          // payment error
+          devLog('purchaseErrorListener', error);
+          eventBus.emit(EVENTS.PURCHASE_UPDATED, { error });
+        });
       } catch (error: any) {
         devLog('initConnection error', error);
         Sentry.captureException(error);

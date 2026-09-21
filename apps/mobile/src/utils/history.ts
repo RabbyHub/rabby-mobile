@@ -2,13 +2,13 @@ import type {
   TokenItem,
   TxHistoryItem,
 } from '@rabby-wallet/rabby-api/dist/types';
+import type { TransactionHistoryItem } from '@/core/services/transactionHistory';
 import {
   GAS_ACCOUNT_RECEIVED_ADDRESS,
   GAS_ACCOUNT_WITHDRAWED_ADDRESS,
   L2_DEPOSIT_ADDRESS_MAP,
 } from '@/constant/gas-account';
 import { HistoryItemCateType } from '@/types/history';
-import { transactionHistoryService } from '@/core/services/shared';
 import { findChain } from './chain';
 
 export const isNFTTokenId = (tokenId: string) => {
@@ -18,24 +18,30 @@ export const isNFTTokenId = (tokenId: string) => {
 export const checkIsGasDepositTx = ({
   chainId,
   hash,
+  transactions,
 }: {
   chainId?: number;
   hash: string;
+  transactions: readonly TransactionHistoryItem[];
 }) => {
   if (!hash || !chainId) {
     return false;
   }
 
-  return !!transactionHistoryService.store.transactions.find(item => {
+  return transactions.some(item => {
     return item.chainId === chainId && item.hash === hash && item.isGasDeposit;
   });
 };
 
-export function getHistoryItemType(data: TxHistoryItem): HistoryItemCateType {
+export function getHistoryItemType(
+  data: TxHistoryItem,
+  transactions: readonly TransactionHistoryItem[],
+): HistoryItemCateType {
   if (
     checkIsGasDepositTx({
       chainId: findChain({ serverId: data.chain })?.id,
       hash: data.id,
+      transactions,
     })
   ) {
     return HistoryItemCateType.GAS_DEPOSIT;

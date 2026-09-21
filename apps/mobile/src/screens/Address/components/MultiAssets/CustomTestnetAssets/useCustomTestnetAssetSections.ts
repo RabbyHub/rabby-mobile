@@ -1,8 +1,11 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import PQueue from 'p-queue';
 
 import { apiCustomTestnet } from '@/core/apis';
-import { useCustomTestnetAssetSectionsData } from '@/store/customTestnet';
+import {
+  useCustomTestnetAssetSectionsData,
+  useCustomTestnetHydrationState,
+} from '@/store/customTestnet';
 import { customTestnetTokenToTokenItem } from '@/utils/token';
 
 import type {
@@ -13,6 +16,7 @@ import type {
 import { makeMetadataTokenItem } from './utils';
 import type { ITokenItem } from '@/types/assets';
 import type { TestnetChain } from '@/types/customTestnet';
+import { withTimeoutFallback } from '@/utils/async';
 
 const EMPTY_ADDRESSES: string[] = [];
 const CUSTOM_TESTNET_TOKEN_REQUEST_TIMEOUT = 8000;
@@ -23,26 +27,6 @@ const customTestnetTokenListQueue = new PQueue({
   interval: 1000,
 });
 
-let hasInitializedCustomTestnetServiceForAssetList = false;
-
-const withTimeoutFallback = async <T>(promise: Promise<T>, fallback: T) => {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  try {
-    return await Promise.race([
-      promise,
-      new Promise<T>(resolve => {
-        timer = setTimeout(() => {
-          resolve(fallback);
-        }, CUSTOM_TESTNET_TOKEN_REQUEST_TIMEOUT);
-      }),
-    ]);
-  } finally {
-    if (timer) {
-      clearTimeout(timer);
-    }
-  }
-};
-
 const makeFallbackTokenItem = (
   chain: TestnetChain,
   token: CustomTestnetAssetSectionToken,
@@ -51,15 +35,8 @@ const makeFallbackTokenItem = (
 
 // for multi-address
 export function useCustomTestnetAssetSections(addresses: string[]) {
-  useEffect(() => {
-    if (hasInitializedCustomTestnetServiceForAssetList) {
-      return;
-    }
-    hasInitializedCustomTestnetServiceForAssetList = true;
-    apiCustomTestnet.initCustomTestnetService();
-  }, []);
-
   const sections = useCustomTestnetAssetSectionsData(addresses);
+  const hydrationState = useCustomTestnetHydrationState();
 
   const loadTokenItems = useCallback(
     async (
@@ -76,6 +53,7 @@ export function useCustomTestnetAssetSections(addresses: string[]) {
               chainId: token.chainId,
               tokenId: token.id,
             }),
+            CUSTOM_TESTNET_TOKEN_REQUEST_TIMEOUT,
             null,
           );
 
@@ -135,6 +113,7 @@ export function useCustomTestnetAssetSections(addresses: string[]) {
 
   return {
     sections,
+    hydrationState,
     loadTokens,
     loadToken,
   };

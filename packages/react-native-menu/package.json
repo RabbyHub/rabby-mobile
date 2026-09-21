@@ -1,0 +1,50 @@
+{
+  "name": "@rabby-wallet/react-native-menu",
+  "version": "2.0.0-rabby.0",
+  "private": true,
+  "description": "UIMenu component for react-native",
+  "keywords": [
+    "react-native",
+    "ios",
+    "android"
+  ],
+  "homepage": "https://github.com/react-native-menu/menu#readme",
+  "bugs": {
+    "url": "https://github.com/react-native-menu/menu/issues"
+  },
+  "repository": "https://github.com/react-native-menu/menu",
+  "license": "MIT",
+  "author": "Jesse Katsumata <jesse.katsumata@gmail.com> (https://github.com/Naturalclar)",
+  "main": "./src/index.tsx",
+  "module": "./src/index.tsx",
+  "source": "./src/index.tsx",
+  "react-native": "./src/index.tsx",
+  "types": "./src/index.tsx",
+  "files": [
+    "src",
+    "android",
+    "ios",
+    "cpp",
+    "react-native-menu.podspec",
+    "!**/__tests__",
+    "!**/__fixtures__",
+    "!**/__mocks__"
+  ],
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "codegenConfig": {
+    "name": "RNMenuViewSpec",
+    "type": "components",
+    "jsSrcsDir": "src",
+    "ios": {
+      "componentProvider": {
+        "MenuView": "MenuView"
+      }
+    }
+  }
+}

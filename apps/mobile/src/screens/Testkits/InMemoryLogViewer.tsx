@@ -1,13 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Platform, ScrollView, TouchableOpacity, View } from 'react-native';
-import RNFS from 'react-native-fs';
+import RNFS from '@rabby-wallet/react-native-fs';
 import dayjs from 'dayjs';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { Text } from '@/components/Typography';
 import { toast } from '@/components2024/Toast';
-import debugLogService, {
-  DebugLogEntry,
-} from '@/core/services/debugLogService';
+import type { DebugLogEntry } from '@/core/utils/debugLogService';
+import debugLogService from '@/core/utils/debugLogService';
 import { useTheme2024 } from '@/hooks/theme';
 import { shareLocalFile } from '@/utils/shareLocalFile';
 import { createGetStyles2024 } from '@/utils/styles';

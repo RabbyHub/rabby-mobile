@@ -56,7 +56,7 @@ export default function ChainItem({
       <View style={styles.contentContainer}>
         <View style={styles.leftBasic}>
           <Text style={styles.nameText}>{chainItem?.name}</Text>
-          {!!data.total && (
+          {!data.isAppended ? (
             <View style={styles.chainSummary}>
               <View style={styles.selectChainItemBalance}>
                 <Text style={styles.usdValueText}>
@@ -67,7 +67,7 @@ export default function ChainItem({
                 </Text>
               </View>
             </View>
-          )}
+          ) : null}
         </View>
         <View style={styles.rightArea}>
           {isSelected ? <RcIconChecked /> : null}

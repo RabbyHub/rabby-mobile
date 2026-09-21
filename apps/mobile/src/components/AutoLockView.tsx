@@ -4,15 +4,15 @@ import { Keyboard, PanResponder, View, ViewProps } from 'react-native';
 import * as apisAutoLock from '@/core/apis/autoLock';
 import { getLatestNavigationName } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import { keyringService } from '@/core/services';
+import { bindKeyringEvent } from '@/core/serviceApi/keyring';
 import { throttle } from 'lodash';
 import { autoLockEvent } from '@/core/apis/autoLock';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
-import {
+import type {
   AsName,
   MakePropsByAsMap,
-  useComponentByAsProp,
 } from '@/hooks/common/useComponentAsProp';
+import { useComponentByAsProp } from '@/hooks/common/useComponentAsProp';
 import { perfEvents } from '@/core/utils/perf';
 
 const implUiRefreshTimeout = throttle(
@@ -78,10 +78,18 @@ export default function AutoLockView<
 function ForAppNav(props: Props<'View'>) {
   React.useEffect(() => {
     const subUnlock = perfEvents.subscribe(
-      'USER_MANUALLY_UNLOCK',
+      'WALLET_AUTH_UNLOCKED',
       apisAutoLock.handleUnlock,
     );
-    keyringService.on('lock', apisAutoLock.handleLock);
+    let removeKeyringLockListener: null | (() => void) = null;
+    let effectDisposed = false;
+    void bindKeyringEvent('lock', apisAutoLock.handleLock).then(remove => {
+      if (effectDisposed) {
+        remove();
+        return;
+      }
+      removeKeyringLockListener = remove;
+    });
 
     const hideEvent = Keyboard.addListener(
       'keyboardDidHide',
@@ -94,8 +102,9 @@ function ForAppNav(props: Props<'View'>) {
 
     // release event listeners on destruction
     return () => {
+      effectDisposed = true;
       subUnlock.remove();
-      keyringService.off('lock', apisAutoLock.handleLock);
+      removeKeyringLockListener?.();
 
       hideEvent.remove();
       showEvent.remove();

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { RefreshControl, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
@@ -8,7 +8,6 @@ import {
   MODAL_NAMES,
 } from '@/components2024/GlobalBottomSheetModal/types';
 import {
-  useFetchLendingData,
   useLendingIsLoading,
   useLendingRemoteData,
   useLendingSummary,
@@ -64,7 +63,6 @@ export const LendingSupplyListContent: React.FC<
   const { displayPoolReserves, iUserSummary, getTargetReserve } =
     useLendingSummary();
   const { t } = useTranslation();
-  const { fetchData } = useFetchLendingData();
   const [search, setSearch] = useState('');
   const [isInputActive, setIsInputActive] = useState(false);
   const [selectedTokenByGroup, setSelectedTokenByGroup] = useState<
@@ -342,6 +340,7 @@ export const LendingSupplyListContent: React.FC<
           )}
           <View style={styles.left}>
             <TokenIcon
+              size={40}
               tokenSymbol={activeData.reserve.symbol}
               chainSize={0}
               chain={chainEnum || CHAINS_ENUM.ETH}
@@ -464,12 +463,6 @@ export const LendingSupplyListContent: React.FC<
         data={loading ? [] : dataList}
         style={styles.list}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={false}
-            onRefresh={() => fetchData(true)}
-          />
-        }
         keyExtractor={keyExtractor}
         ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={loading ? <PoolListLoading /> : null}
@@ -559,9 +552,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     apy: {
       width: 80,
       textAlign: 'right',
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '700',
+      fontSize: 17,
+      lineHeight: 22,
+      fontWeight: '500',
       color: colors2024['green-default'],
       fontFamily: 'SF Pro Rounded',
     },
@@ -572,7 +565,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     },
     tvl: {
       width: 80,
-      fontSize: 14,
+      fontSize: 13,
       lineHeight: 18,
       fontWeight: '500',
       textAlign: 'left',
@@ -602,39 +595,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       overflow: 'hidden',
       textAlign: 'left',
     },
-    yourSupplied: {
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '700',
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      textAlign: 'right',
-    },
-    zeroSupplied: {
-      color: colors2024['neutral-info'],
-    },
-    yourBalanceContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 2,
-    },
-    walletIcon: {
-      width: 16,
-      height: 16,
-      color: colors2024['neutral-secondary'],
-      marginTop: -2,
-    },
-    yourBalance: {
-      fontSize: 14,
-      lineHeight: 18,
-      fontWeight: '500',
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      textAlign: 'right',
-    },
     listHeader: {
       paddingVertical: 2,
-      paddingHorizontal: 8,
+      paddingHorizontal: 4,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
@@ -658,6 +621,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
+      paddingLeft: 4,
       gap: 4,
     },
     headerTvl: {
@@ -674,16 +638,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       lineHeight: 18,
       color: colors2024['neutral-secondary'],
       width: 80,
+      paddingRight: 4,
       textAlign: 'right',
       flex: 0,
-    },
-    headerMySupplies: {
-      fontSize: 14,
-      lineHeight: 18,
-      color: colors2024['neutral-secondary'],
-      flex: 0,
-      marginLeft: 10,
-      width: 80,
     },
     absoluteContainer: {
       position: 'absolute',

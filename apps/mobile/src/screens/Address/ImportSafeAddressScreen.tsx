@@ -1,5 +1,5 @@
 import RcSafeLogo from '@/assets/icons/address/icon-safe.svg';
-import { FocusAwareStatusBar, Text } from '@/components';
+import { Text } from '@/components';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 import { RootNames } from '@/constant/layout';
@@ -190,7 +190,6 @@ export const ImportSafeAddressScreen = () => {
         title="Next"
         onPress={handleNext}
       />
-      <FocusAwareStatusBar backgroundColor={colors['blue-default']} />
     </RootScreenContainer>
   );
 };

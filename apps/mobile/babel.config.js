@@ -1,6 +1,8 @@
-const child_process = require('child_process');
 const pkg = require('./package.json');
 const loadableAliases = require('./scripts/loadables-aliases.generated.cjs');
+const {
+  resolveStartupProfilerWorkerDeferral,
+} = require('./scripts/react-native-architecture.cjs');
 
 /** @type {import('@babel/core').ConfigFunction} */
 module.exports = api => {
@@ -11,6 +13,7 @@ module.exports = api => {
       ? callerDev
       : process.env.BABEL_ENV === 'development' ||
         process.env.NODE_ENV === 'development';
+  const isJestTransform = callerName === 'babel-jest';
 
   const { version } = pkg;
   const inputBuildEnv = process.env.RABBY_MOBILE_BUILD_ENV;
@@ -25,7 +28,21 @@ module.exports = api => {
   const shouldStripConsole =
     inputBuildEnv === 'production' ||
     (!inputBuildEnv && ['appstore', 'selfhost'].includes(resolvedBuildChannel));
-  const loadableImplExt = isDevTransform ? 'dev' : 'prod';
+  const moduleLoadingMode =
+    process.env.RABBY_MOBILE_MODULE_LOADING_MODE || 'lazy';
+  if (!['eager', 'lazy'].includes(moduleLoadingMode)) {
+    throw new Error(
+      `Unsupported RABBY_MOBILE_MODULE_LOADING_MODE: ${moduleLoadingMode}`,
+    );
+  }
+  const shouldInlineDevDynamicImports =
+    isDevTransform && moduleLoadingMode === 'lazy';
+  const shouldDeferStartupProfilerWorker =
+    resolveStartupProfilerWorkerDeferral();
+  const regressionScenarioImplExt =
+    isDevTransform || resolvedBuildChannel === 'selfhost-reg'
+      ? 'nonprod'
+      : 'prod';
 
   api.cache.using(() =>
     JSON.stringify({
@@ -34,53 +51,13 @@ module.exports = api => {
       dotenvEnv: process.env.APP_ENV || '',
       callerName,
       isDevTransform,
+      moduleLoadingMode,
+      regressionScenarioImplExt,
       shouldEnableRozenite,
+      shouldDeferStartupProfilerWorker,
+      shouldInlineDevDynamicImports,
     }),
   );
-
-  const buildGitInfo = (function getBuildEnvVars() {
-    const NORMAL_GET_GIT_HASH = `git log --format="%H" -n1`;
-    const BUILD_GIT_HASH_RAW = child_process
-      .execSync(NORMAL_GET_GIT_HASH)
-      .toString()
-      .trim();
-    const SHOULD_MARK_GIT_DIRTY =
-      !!process.env.LOCAL_PACK &&
-      !process.env.CI &&
-      child_process.execSync('git status --porcelain').toString().trim()
-        .length > 0;
-
-    const BUILD_GIT_HASH = `${BUILD_GIT_HASH_RAW.slice(0, 8)}${
-      SHOULD_MARK_GIT_DIRTY ? '-dirty' : ''
-    }`;
-
-    const BUILD_GIT_HASH_TIME =
-      process.platform === 'win32'
-        ? ''
-        : child_process
-            .execSync(
-              `git show --quiet --date='format-local:%Y-%m-%dT%H:%M:%S+00:00' --format="%cd"`,
-              { env: { ...process.env, TZ: 'UTC0' } },
-            )
-            .toString()
-            .trim();
-
-    const BUILD_TIME = new Date().toISOString();
-    const BUILD_GIT_COMMITOR =
-      resolvedBuildChannel !== 'selfhost-reg'
-        ? ''
-        : child_process
-            .execSync('git show --quiet --format="%cn"')
-            .toString()
-            .trim();
-
-    return {
-      BUILD_GIT_HASH,
-      BUILD_GIT_HASH_TIME,
-      BUILD_TIME,
-      BUILD_GIT_COMMITOR,
-    };
-  })();
 
   return {
     presets: [
@@ -97,19 +74,15 @@ module.exports = api => {
         'transform-define',
         {
           'process.env.APP_VERSION': version,
-          'process.env.BUILD_TIME':
-            process.env.ZERO_AR_DATE || buildGitInfo.BUILD_TIME,
           'process.env.RABBY_MOBILE_BUILD_ENV': resolvedBuildEnv,
           'process.env.RABBY_MOBILE_STRIP_CONSOLE': shouldStripConsole
             ? 'true'
             : 'false',
+          'process.env.RABBY_MOBILE_MODULE_LOADING_MODE': moduleLoadingMode,
+          'process.env.RABBY_STARTUP_PROFILER_DEFER_WORKER':
+            shouldDeferStartupProfilerWorker ? 'true' : 'false',
           'process.env.WITH_ROZENITE': shouldEnableRozenite ? 'true' : 'false',
           'process.env.buildchannel': resolvedBuildChannel,
-          'process.env.BUILD_GIT_INFO': JSON.stringify({
-            BUILD_GIT_HASH: buildGitInfo.BUILD_GIT_HASH,
-            BUILD_GIT_HASH_TIME: buildGitInfo.BUILD_GIT_HASH_TIME,
-            BUILD_GIT_COMMITOR: buildGitInfo.BUILD_GIT_COMMITOR,
-          }),
           'process.env.RABBY_MOBILE_FE_SERVICE_URL':
             process.env.RABBY_MOBILE_FE_SERVICE_URL || '',
         },
@@ -129,7 +102,13 @@ module.exports = api => {
             '.ios.tsx',
           ],
           alias: {
-            ...(loadableAliases[loadableImplExt] || {}),
+            '^@/devtools/regressionScenarios/entry$': `./src/devtools/regressionScenarios/entry.${regressionScenarioImplExt}`,
+            '^@/devtools/regressionScenarios/runtime$': `./src/devtools/regressionScenarios/runtime.${regressionScenarioImplExt}`,
+            '^@/devtools/regressionScenarios/react$': `./src/devtools/regressionScenarios/react.${regressionScenarioImplExt}`,
+            '^@/hooks/useFeatureActivationDiagnostics$': `./src/hooks/useFeatureActivationDiagnostics.${regressionScenarioImplExt}`,
+            '^@/startup/moduleLoading/launchTaskLoaders$': `./src/startup/moduleLoading/launchTaskLoaders.${moduleLoadingMode}`,
+            '^@/startup/moduleLoading/setupRuntimeLoaders$': `./src/startup/moduleLoading/setupRuntimeLoaders.${moduleLoadingMode}`,
+            ...(loadableAliases[moduleLoadingMode] || {}),
             '@': './src',
             'styled-components/native': 'styled-components/native',
             'styled-components': 'styled-components/native',
@@ -139,9 +118,11 @@ module.exports = api => {
       ['@babel/plugin-transform-export-namespace-from'],
 
       ['module:react-native-dotenv', { moduleName: '@env' }],
-      ['nativewind/babel', {}],
       ['@babel/plugin-proposal-decorators', { legacy: true }],
       ['@babel/plugin-transform-class-static-block'],
+      ...(isJestTransform || shouldInlineDevDynamicImports
+        ? ['@babel/plugin-transform-dynamic-import']
+        : []),
       ['react-native-reanimated/plugin'],
     ],
     ...(shouldStripConsole

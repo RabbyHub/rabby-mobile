@@ -1,0 +1,7 @@
+diff --git a/RNFastImage.podspec b/RNFastImage.podspec
+index db0fada63fc06191f8620d336d244edde6c3dba3..864ff0d9e8466a3274f4dd79211da9d76be362dc 100644
+--- a/RNFastImage.podspec
++++ b/RNFastImage.podspec
+@@ -19 +19 @@ Pod::Spec.new do |s|
+-  s.dependency 'SDWebImage', '~> 5.11.1'
++  s.dependency 'SDWebImage', '~> 5.18.6'

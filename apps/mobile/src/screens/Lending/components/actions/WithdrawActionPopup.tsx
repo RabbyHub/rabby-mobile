@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
-import { PopupDetailProps } from '../../type';
+import type { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import { TokenAmountInput } from './TokenAmountInput';
 import { calculateHFAfterWithdraw } from '../../utils/hfUtils';
@@ -22,17 +22,15 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { buildWithdrawTx, optimizedPath } from '../../poolService';
-import {
-  DirectSignBtn,
-  DirectSignBtnMethods,
-} from '@/components2024/DirectSignBtn';
+import type { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
+import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { approveToken } from '@/core/apis/approvals';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { last, noop } from 'lodash';
 import { isAccountSupportMiniApproval } from '@/utils/account';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { toast } from '@/components2024/Toast';
 import WithdrawActionOverView from './WithdrawActionOverView';
 import {
@@ -45,7 +43,7 @@ import { CheckBoxRect } from '@/components2024/CheckBox';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { formatTokenAmount } from '@/utils/number';
 import { useTranslation } from 'react-i18next';
-import { transactionHistoryService } from '@/core/services/shared';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
@@ -62,7 +60,7 @@ import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureMana
 import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
 import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { CHAINS_ENUM } from '@debank/common';
-import { ReserveDataHumanized } from '@aave/contract-helpers';
+import type { ReserveDataHumanized } from '@aave/contract-helpers';
 import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
 import { Text } from '@/components/Typography';
@@ -85,6 +83,9 @@ import {
   getNativeWithdrawRequiredAllowance,
   isNativeWithdrawApprovalRequired,
 } from '../../utils/withdrawApproval';
+import { isUserCancelledError } from '../../utils/error';
+import { ellipsisSymbol } from '../../utils/format';
+import { useMode } from '../../hooks/useMode';
 
 export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -92,7 +93,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   onClose,
   source,
 }) => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [_amount, setAmount] = useState<string | undefined>(undefined);
   const [activeUnderlyingAsset, setActiveUnderlyingAsset] = useState(
     reserve.underlyingAsset,
@@ -104,7 +105,8 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   const [isChecked, setIsChecked] = useState(false);
   const { refresh } = useRefreshHistoryId();
   const { t } = useTranslation();
-  const assetsBlockingWithdraw = useZeroLTVBlockingWithdraw();
+  const { eModes } = useMode();
+  const assetsBlockingWithdraw = useZeroLTVBlockingWithdraw(eModes);
 
   const {
     displayPoolReserves,
@@ -161,9 +163,6 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   );
 
   const withdrawAmount = useMemo(() => {
-    if (!userSummary.totalBorrowsUSD || userSummary.totalBorrowsUSD === '0') {
-      return Number(currentReserve.underlyingBalance || '0');
-    }
     const targetPool = formattedPoolReservesAndIncentives.find(item => {
       return isSameAddress(currentReserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
         ? isSameAddress(
@@ -173,18 +172,18 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         : isSameAddress(item.underlyingAsset, currentReserve.underlyingAsset);
     });
     if (!targetPool) {
-      return 0;
+      return new BigNumber(0);
     }
     return calculateMaxWithdrawAmount(
       userSummary,
       currentReserve,
       targetPool,
       MAX_CLICK_WITHDRAW_HF_THRESHOLD,
-    ).toNumber();
+    );
   }, [currentReserve, formattedPoolReservesAndIncentives, userSummary]);
 
   const amount = useMemo(() => {
-    return _amount === '-1' ? withdrawAmount.toString() : _amount;
+    return _amount === '-1' ? withdrawAmount.toString(10) : _amount;
   }, [_amount, withdrawAmount]);
 
   const isNativeToken = useMemo(() => {
@@ -500,7 +499,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
 
         const txId = last(results);
         if (txId && activeTxs[0]?.chainId) {
-          transactionHistoryService.setCustomTxItem(
+          await transactionHistoryServiceApi.setCustomTxItem(
             currentAccount.address,
             activeTxs[0].chainId,
             txId,
@@ -554,6 +553,10 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         setAmount(undefined);
         onClose?.();
       } catch (error) {
+        console.error('Handle withdraw error:', error);
+        if (forceFullSign && isUserCancelledError(error)) {
+          await buildTransactions();
+        }
       } finally {
         setIsLoading(false);
       }
@@ -573,6 +576,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       currentReserve.chain,
       source,
       isZeroLTVWithdrawBlocked,
+      buildTransactions,
     ],
   );
 
@@ -584,10 +588,10 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       const maxSelected = value === '-1';
       if (maxSelected) {
         // 提取所有资产
-        if (BigNumber(withdrawAmount).eq(currentReserve.underlyingBalance)) {
+        if (withdrawAmount.eq(currentReserve.underlyingBalance)) {
           setAmount('-1');
         } else {
-          setAmount(withdrawAmount.toString());
+          setAmount(withdrawAmount.toString(10));
         }
       } else {
         setAmount(value);
@@ -625,6 +629,10 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   const actionTitle = needApprove
     ? t('page.Lending.withdrawDetail.approveAndWithdraw')
     : t('page.Lending.withdrawDetail.actions');
+  const displaySymbol = useMemo(
+    () => ellipsisSymbol(currentReserve.reserve.symbol),
+    [currentReserve.reserve.symbol],
+  );
 
   return (
     <SignatureInstanceProvider instance={instance}>
@@ -638,9 +646,9 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
             {t('page.Lending.popup.amount')}
           </Text>
           <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
-            withdrawAmount.toString() || '0',
-          )}${currentReserve.reserve.symbol}($${formatAmountValueKMB(
-            BigNumber(withdrawAmount)
+            withdrawAmount.toString(10) || '0',
+          )}${displaySymbol}($${formatAmountValueKMB(
+            withdrawAmount
               .multipliedBy(
                 BigNumber(
                   currentReserve.reserve
@@ -653,11 +661,11 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         <TokenAmountInput
           value={amount}
           onChange={handleChangeAmount}
-          symbol={currentReserve.reserve.symbol}
+          symbol={displaySymbol}
           handleClickMaxButton={() => {
             handleChangeAmount('-1');
           }}
-          tokenAmount={withdrawAmount}
+          tokenAmount={withdrawAmount.toNumber()}
           tokenDecimals={currentReserve.reserve.decimals}
           price={Number(
             currentReserve.reserve.formattedPriceInMarketReferenceCurrency ||
@@ -671,7 +679,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
                 triggerVariant="pill"
                 activeUnderlyingAsset={activeUnderlyingAsset}
                 options={tokenOptions as BasicPositionTokenOption[]}
-                symbol={currentReserve.reserve.symbol}
+                symbol={displaySymbol}
                 chain={currentReserve.chain}
                 onChange={handleChangeActiveUnderlyingAsset}
               />
@@ -765,9 +773,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
               type="aave"
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
               titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
-              iconColor={
-                isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
-              }
+              iconColor={colors2024['neutral-contrast']}
               syncUnlockTime
               account={currentAccount}
               showHardWalletProcess
@@ -834,16 +840,6 @@ const getStyles = createGetStyles2024(ctx => ({
   amountInput: {
     marginTop: 12,
   },
-  card: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
-    padding: 12,
-    borderRadius: 16,
-    width: '100%',
-  },
-  contentContainer: {
-    paddingHorizontal: 16,
-    width: '100%',
-  },
   bottomSheetScrollView: {
     width: '100%',
   },
@@ -853,13 +849,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   gasPreContainer: {
     paddingHorizontal: 8,
-  },
-  poolInfoContainer: {
-    marginTop: 16,
-  },
-  userInfoContainer: {
-    marginTop: 12,
-    gap: 24,
   },
   title: {
     color: ctx.colors2024['neutral-title-1'],
@@ -885,18 +874,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   directSignBtn: {
     width: '100%',
-  },
-  button: {
-    flex: 1,
-  },
-  leftTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  repayButton: {
-    borderWidth: 0,
-    backgroundColor: ctx.colors2024['neutral-line'],
   },
   checkbox: {
     display: 'flex',

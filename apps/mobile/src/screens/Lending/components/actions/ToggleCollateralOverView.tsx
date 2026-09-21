@@ -115,28 +115,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
   },
-  availableValueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    flex: 1,
-  },
-  availableValue: {
-    textAlign: 'right',
-    flex: 1,
-    color: colors2024['neutral-title-1'],
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-  },
-  apy: {
-    color: colors2024['neutral-title-1'],
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-  },
   hfContainer: {
     gap: 6,
     marginTop: 24,

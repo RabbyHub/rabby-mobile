@@ -1,4 +1,4 @@
-import { makeJsEEClass } from '@/core/services/_utils';
+import { makeJsEEClass } from '@/core/utils/makeJsEEClass';
 
 export type OpenApiDebugEventBusListeners = {
   OPENAPI_HTTP_ERROR_DEBUG: (detail: {

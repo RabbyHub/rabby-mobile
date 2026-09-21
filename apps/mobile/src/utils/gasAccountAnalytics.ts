@@ -1,6 +1,6 @@
 import { openapi } from '@/core/request';
 import type { Account } from '@/types/account';
-import { gasAccountService } from '@/core/services/shared';
+import { gasAccountServiceApi } from '@/core/serviceApi/gasAccount';
 import { matomoRequestEvent } from '@/utils/analytics';
 
 const fireGasAccountStatusEvent = (hasBalance: boolean) => {
@@ -8,7 +8,12 @@ const fireGasAccountStatusEvent = (hasBalance: boolean) => {
     category: 'Gas Account',
     action: `GasAccount_On_${hasBalance ? 'True' : 'False'}`,
   });
-  gasAccountService.markGa4ActiveTracked();
+  void gasAccountServiceApi.markGa4ActiveTracked().catch(error => {
+    console.error(
+      '[gasAccountAnalytics] persist active tracking failed',
+      error,
+    );
+  });
 };
 
 const getGasAccountHasBalance = async (sig: string, accountId: string) => {
@@ -31,7 +36,7 @@ const syncGasAccountBalanceState = async (sig: string, accountId: string) => {
     return undefined;
   }
 
-  gasAccountService.setCurrentBalanceState(accountId, hasBalance);
+  await gasAccountServiceApi.setCurrentBalanceState(accountId, hasBalance);
   return hasBalance;
 };
 
@@ -39,16 +44,17 @@ export const handleGasAccountLoginSuccess = async (
   signature: string,
   account: Account,
 ) => {
-  const previousSig = gasAccountService.getGasAccountSig();
-  const previousBalanceState = gasAccountService.getCurrentBalanceState();
+  const previousSig = await gasAccountServiceApi.getGasAccountSig();
+  const previousBalanceState =
+    await gasAccountServiceApi.getCurrentBalanceState();
   const wasLoggedIn = !!previousSig.sig && !!previousSig.accountId;
   const hadBalance =
     previousBalanceState.accountId === previousSig.accountId
       ? previousBalanceState.hasBalance
       : undefined;
-  const isFirstLogin = gasAccountService.markLoggedIn();
+  const isFirstLogin = await gasAccountServiceApi.markLoggedIn();
 
-  gasAccountService.setGasAccountSig(signature, account);
+  await gasAccountServiceApi.setGasAccountSig(signature, account);
 
   if (isFirstLogin) {
     matomoRequestEvent({
@@ -71,7 +77,7 @@ export const handleGasAccountLoginSuccess = async (
 };
 
 const trackGasAccountActiveStatus = async () => {
-  const { sig, accountId } = gasAccountService.getGasAccountSig();
+  const { sig, accountId } = await gasAccountServiceApi.getGasAccountSig();
 
   if (!sig || !accountId) {
     return false;
@@ -87,7 +93,7 @@ const trackGasAccountActiveStatus = async () => {
 };
 
 export const trackGasAccountActiveStatusOncePerDay = async () => {
-  if (gasAccountService.hasTrackedGa4ActiveToday()) {
+  if (await gasAccountServiceApi.hasTrackedGa4ActiveToday()) {
     return false;
   }
 

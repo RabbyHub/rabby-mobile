@@ -53,6 +53,7 @@ import { IconRightCC } from './components/IconRightCC';
 import { TokenDetailWalletCard } from './components/TokenDetailWalletCard';
 import { findChainByServerID } from '@/utils/chain';
 import { customTestnetTokenToTokenItem } from '@/utils/token';
+import { mergeTokenSecurityFields } from '@/utils/tokenSecurityFlags';
 export type { RelatedDeFiType, TokenFromAddressItem } from './types';
 
 const isAndroid = Platform.OS === 'android';
@@ -159,6 +160,7 @@ const TokenDetailContent = () => {
       price_24h_change: res?.price_24h_change,
       usd_value: res?.usd_value,
       price: res?.price,
+      ...mergeTokenSecurityFields(token, res),
     } as ITokenItem;
   }, [effectiveAccount?.address, isCustomTestnetToken, token]);
 
@@ -177,7 +179,9 @@ const TokenDetailContent = () => {
       if (!effectiveAccount?.address) {
         return;
       }
-      return refreshBaseTokenInfo();
+      return refreshBaseTokenInfo().finally(() => {
+        setManualBaseTokenRefreshing(false);
+      });
     },
     { wait: 200 },
   );
@@ -530,13 +534,6 @@ const getStyle = createGetStyles2024(ctx => {
     },
     listHeader: {
       marginHorizontal: -12,
-    },
-    headerRightContent: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    headerAccountSwitcher: {
-      marginRight: 12,
     },
     bottomContainer: {
       width: '100%',

@@ -2,12 +2,12 @@ import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { DEX, ETH_USDT_CONTRACT, SWAP_FEE_ADDRESS } from '@/constant/swap';
 import { getERC20Allowance, getRecommendNonce } from '@/core/apis/provider';
 import { openapi } from '@/core/request';
-import { swapService } from '@/core/services';
 import { formatUsdValue } from '@/utils/number';
 import { stats } from '@/utils/stats';
+import * as Sentry from '@sentry/react-native';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import {
+import type {
   ExplainTxResponse,
   GasLevel,
   TokenItem,
@@ -15,24 +15,24 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import {
   DEX_ENUM,
-  DEX_ROUTER_WHITELIST,
-  DEX_SPENDER_WHITELIST,
-  UNI_NATIVE_TO_ADDRESSES,
-  WrapTokenAddressMap,
+  getRouter as getSwapRouter,
+  getSpender,
+  verifySdk,
 } from '@rabby-wallet/rabby-swap';
-import {
-  DecodeCalldataResult,
-  QuoteResult,
-  decodeCalldata,
-  getQuote,
-} from '@rabby-wallet/rabby-swap/dist/quote';
+import type { QuoteResult } from '@rabby-wallet/rabby-swap/dist/quote';
+import { getQuote } from '@rabby-wallet/rabby-swap/dist/quote';
 import BigNumber from 'bignumber.js';
 import pRetry from 'p-retry';
 import React, { useRef } from 'react';
-import { useSwapSupportedDexList } from './settings';
-import { findChain, findChainByEnum } from '@/utils/chain';
+import { useSwapSettings, useSwapSupportedDexList } from './settings';
+import { findChainByEnum } from '@/utils/chain';
 import { apiProvider } from '@/core/apis';
-import { Account, ChainGas } from '@/core/services/preference';
+import type { Account, ChainGas } from '@/core/startupServices/preference';
+import {
+  getSwapChainId,
+  getSwapNativeTokenAddress,
+  isSwapWrapToken,
+} from '../utils';
 
 const { isSameAddress } = addressUtils;
 
@@ -45,6 +45,7 @@ export interface validSlippageParams {
 
 export const useQuoteMethods = () => {
   const walletOpenapi = openapi;
+  const { swapViewList } = useSwapSettings();
   const validSlippage = React.useCallback(
     async ({
       chain,
@@ -90,6 +91,7 @@ export const useQuoteMethods = () => {
       // receiveRawAmount,
       slippage,
       dexId,
+      feeRate,
       txId,
       quote,
       tx,
@@ -105,6 +107,7 @@ export const useQuoteMethods = () => {
           slippage: new BigNumber(slippage).div(100).toNumber(),
         },
         dex_id: dexId,
+        fee_rate: Number(feeRate),
         tx_id: txId,
         tx,
       }),
@@ -149,10 +152,15 @@ export const useQuoteMethods = () => {
         return [true, false];
       }
 
+      const spender = getSpender(dexId, chain);
+      if (!spender) {
+        return [true, false];
+      }
+
       const allowance = await getERC20Allowance(
         chainInfo.serverId,
         payToken.id,
-        getSpender(dexId, chain),
+        spender,
         userAddress,
         account,
       );
@@ -413,7 +421,6 @@ export const useQuoteMethods = () => {
         recommendNonceTask?: Promise<string>;
       };
     }): Promise<TDexQuoteData> => {
-      const isOpenOcean = dexId === DEX_ENUM.OPENOCEAN;
       const chainInfo = findChainByEnum(chain) || CHAINS[chain];
       const recommendNonceTask = !inSufficient
         ? sharedTasks?.recommendNonceTask ??
@@ -446,12 +453,9 @@ export const useQuoteMethods = () => {
                 .toFixed(0, 1),
               userAddress,
               slippage: Number(slippage),
-              feeRate:
-                feeAfterDiscount === '0' && isOpenOcean
-                  ? undefined
-                  : Number(feeAfterDiscount) || 0,
+              feeRate: Number(feeAfterDiscount),
               chain,
-              fee: true,
+              fee: Number(feeAfterDiscount) > 0,
               chainServerId: chainInfo.serverId,
               nativeTokenAddress: chainInfo.nativeTokenAddress,
               insufficient: inSufficient,
@@ -471,7 +475,13 @@ export const useQuoteMethods = () => {
 
         let preExecResult;
         if (data) {
-          const { isSdkDataPass } = verifySdk({
+          const {
+            isSdkDataPass,
+            routerPass,
+            spenderPass,
+            callDataPass,
+            receiverPass,
+          } = verifySdk({
             chain,
             dexId,
             slippage,
@@ -483,9 +493,32 @@ export const useQuoteMethods = () => {
                 .toFixed(0, 1),
               toToken: receiveToken?.id,
             },
-            payToken,
-            receiveToken,
+            payTokenId: payToken.id,
+            receiveTokenId: receiveToken.id,
+            userAddress,
+            nativeTokenAddress: getSwapNativeTokenAddress(chain),
+            chainId: getSwapChainId(chain),
           });
+          if (!isSdkDataPass) {
+            const failed = [
+              ...(!routerPass ? ['router'] : []),
+              ...(!spenderPass ? ['spender'] : []),
+              ...(!callDataPass ? ['calldata'] : []),
+              ...(!receiverPass ? ['receiver'] : []),
+            ];
+            const failedKey = failed.join(',') || 'unknown';
+
+            Sentry.captureException(new Error('swap isSdkDataPass false'), {
+              level: 'warning',
+              tags: {
+                swap_dex: dexId,
+                swap_chain: chain,
+                swap_verify_failed: failedKey,
+                swap_token_pair: `${payToken.id}/${receiveToken.id}`,
+              },
+              fingerprint: ['swap-verify-sdk', String(dexId), failedKey],
+            });
+          }
           if (inSufficient) {
             const quote: TDexQuoteData = {
               data,
@@ -621,8 +654,6 @@ export const useQuoteMethods = () => {
       walletOpenapi,
     ],
   );
-
-  const swapViewList = swapService.getSwapViewList();
 
   const [supportedDEXList] = useSwapSupportedDexList();
 
@@ -764,6 +795,7 @@ export interface postSwapParams {
   // receiveRawAmount: string;
   slippage: string;
   dexId: string;
+  feeRate: string;
   txId: string;
   quote: QuoteResult;
   tx: Tx;
@@ -775,29 +807,13 @@ interface getTokenParams {
   tokenId: string;
 }
 
+export { getSpender, isSwapWrapToken };
+
 export const getRouter = (
   dexId: DEX_ENUM,
   chain: CHAINS_ENUM,
   payTokenId: string,
-) => {
-  const list = DEX_ROUTER_WHITELIST[dexId as keyof typeof DEX_ROUTER_WHITELIST];
-  const payTokenIsNativeToken =
-    findChainByEnum(chain)?.nativeTokenAddress === payTokenId;
-
-  if (dexId === DEX_ENUM.UNI && payTokenIsNativeToken) {
-    return UNI_NATIVE_TO_ADDRESSES[chain];
-  }
-  return list[chain as keyof typeof list];
-};
-
-export const getSpender = (dexId: DEX_ENUM, chain: CHAINS_ENUM) => {
-  if (dexId === DEX_ENUM.WRAPTOKEN) {
-    return '';
-  }
-  const list =
-    DEX_SPENDER_WHITELIST[dexId as keyof typeof DEX_SPENDER_WHITELIST];
-  return list[chain as keyof typeof list];
-};
+) => getSwapRouter(dexId, chain, payTokenId, getSwapNativeTokenAddress(chain));
 
 // const INTERNAL_REQUEST_ORIGIN = window.location.origin;
 
@@ -867,25 +883,6 @@ export type TDexQuoteData = {
   isBest?: boolean;
 };
 
-export function isSwapWrapToken(
-  payTokenId: string,
-  receiveId: string,
-  chain: CHAINS_ENUM,
-) {
-  const wrapTokens = [
-    WrapTokenAddressMap[chain as keyof typeof WrapTokenAddressMap],
-    findChainByEnum(chain)?.nativeTokenAddress ||
-      CHAINS[chain].nativeTokenAddress,
-  ];
-  return (
-    !!payTokenId &&
-    !!receiveId &&
-    payTokenId !== receiveId &&
-    !!wrapTokens.find(token => isSameAddress(payTokenId, token)) &&
-    !!wrapTokens.find(token => isSameAddress(receiveId, token))
-  );
-}
-
 export type QuoteProvider = {
   name: string;
   error?: boolean;
@@ -901,143 +898,4 @@ export type QuoteProvider = {
   activeTx?: string;
   actualReceiveAmount: string | number;
   gasUsd?: string;
-};
-
-// import { findChain } from '@/utils/chain';
-// import { CHAINS, CHAINS_ENUM } from '@debank/common';
-// import { addressUtils } from '@rabby-wallet/base-utils';
-// import { DEX_ENUM } from '@rabby-wallet/rabby-swap';
-// import {
-//   decodeCalldata,
-//   DecodeCalldataResult,
-//   QuoteResult,
-// } from '@rabby-wallet/rabby-swap/dist/quote';
-// import BigNumber from 'bignumber.js';
-// import { getRouter, getSpender, isSwapWrapToken } from './quote';
-
-// const { isSameAddress } = addressUtils;
-
-type ValidateTokenParam = {
-  id: string;
-  symbol: string;
-  decimals: number;
-};
-
-export const verifyRouterAndSpender = (
-  chain: CHAINS_ENUM,
-  dexId: DEX_ENUM,
-  router?: string,
-  spender?: string,
-  payTokenId?: string,
-  receiveTokenId?: string,
-) => {
-  if (dexId === DEX_ENUM.WRAPTOKEN) {
-    return [true, true];
-  }
-  if (!dexId || !router || !spender || !payTokenId || !receiveTokenId) {
-    return [true, true];
-  }
-  const routerWhitelist = getRouter(dexId, chain, payTokenId);
-  const spenderWhitelist = getSpender(dexId, chain);
-  const isNativeToken = isSameAddress(
-    payTokenId,
-    findChainByEnum(chain)?.nativeTokenAddress ||
-      CHAINS[chain].nativeTokenAddress,
-  );
-  const isWrapTokens = isSwapWrapToken(payTokenId, receiveTokenId, chain);
-
-  return [
-    isSameAddress(routerWhitelist, router),
-    isNativeToken || isWrapTokens
-      ? true
-      : isSameAddress(spenderWhitelist, spender),
-  ];
-};
-
-const isNativeToken = (chain: CHAINS_ENUM, tokenId: string) =>
-  isSameAddress(
-    tokenId,
-    findChainByEnum(chain)?.nativeTokenAddress ||
-      CHAINS[chain].nativeTokenAddress,
-  );
-
-export const verifyCalldata = <T extends Parameters<typeof decodeCalldata>[1]>(
-  data: QuoteResult | null,
-  dexId: DEX_ENUM | null,
-  slippage: string | number,
-  tx?: T,
-) => {
-  let callDataResult: DecodeCalldataResult | null = null;
-  if (dexId && dexId !== DEX_ENUM.WRAPTOKEN && tx) {
-    try {
-      callDataResult = decodeCalldata(dexId, tx) as DecodeCalldataResult;
-    } catch (error) {
-      callDataResult = null;
-    }
-  }
-
-  let result = true;
-  if (slippage && callDataResult && data && tx) {
-    const estimateMinReceive = new BigNumber(data.toTokenAmount).times(
-      new BigNumber(1).minus(slippage),
-    );
-    const chain = findChain({
-      id: tx.chainId,
-    });
-
-    if (!chain) {
-      result = true;
-    } else {
-      result =
-        isSameAddress(callDataResult.fromToken, data.fromToken) &&
-        callDataResult.fromTokenAmount === data.fromTokenAmount &&
-        isSameAddress(callDataResult.toToken, data.toToken) &&
-        new BigNumber(callDataResult.minReceiveToTokenAmount)
-          .minus(estimateMinReceive)
-          .div(estimateMinReceive)
-          .abs()
-          .lte(0.05);
-    }
-  }
-  return result;
-};
-
-type VerifySdkParams<T extends ValidateTokenParam> = {
-  chain: CHAINS_ENUM;
-  dexId: DEX_ENUM;
-  slippage: string | number;
-  data: QuoteResult | null;
-  payToken: T;
-  receiveToken: T;
-};
-
-export const verifySdk = <T extends ValidateTokenParam>(
-  p: VerifySdkParams<T>,
-) => {
-  const { chain, dexId, slippage, data, payToken, receiveToken } = p;
-
-  const isWrapTokens = isSwapWrapToken(payToken.id, receiveToken.id, chain);
-  const actualDexId = isWrapTokens ? DEX_ENUM.WRAPTOKEN : dexId;
-
-  const [routerPass, spenderPass] = verifyRouterAndSpender(
-    chain,
-    actualDexId,
-    data?.tx?.to,
-    data?.spender,
-    payToken?.id,
-    receiveToken?.id,
-  );
-
-  const callDataPass = verifyCalldata(
-    data,
-    actualDexId,
-    new BigNumber(slippage).div(100).toFixed(),
-    data?.tx
-      ? { ...data?.tx, chainId: findChainByEnum(chain)?.id || CHAINS[chain].id }
-      : undefined,
-  );
-
-  return {
-    isSdkDataPass: routerPass && spenderPass && callDataPass,
-  };
 };

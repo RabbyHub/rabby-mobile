@@ -3,4 +3,4 @@ assets/pages/*
 **/*.min.js
 src/core/bridges/InpageBridgeWeb3.js
 src/perfs/loadables/*.ts
-!src/perfs/loadables/*.prod.ts
+!src/perfs/loadables/*.lazy.ts

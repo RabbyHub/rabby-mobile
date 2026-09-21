@@ -6,6 +6,7 @@ import type {
 } from '@/screens/GasAccount/hooks/state';
 
 type GasAccountStoreApiBridge = {
+  ensureRuntimeReady: () => Promise<void>;
   getSession: () => { sig?: string; account?: GasAccountSessionAccount };
   setAccountsWithGasAccountBalance: (
     accounts: GasAccountBalanceAccount[],

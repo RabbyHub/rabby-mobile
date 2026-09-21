@@ -22,7 +22,7 @@ export const ChainInitialBadge = memo(
   },
 );
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) =>
+const getStyle = createGetStyles2024(({ colors2024 }) =>
   StyleSheet.create({
     chainInitialBadge: {
       alignItems: 'center',
@@ -31,7 +31,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) =>
       overflow: 'hidden',
     },
     chainInitialText: {
-      color: isLight ? colors2024['neutral-InvertHighlight'] : 'black',
+      color: colors2024['neutral-contrast'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 6.8,
       lineHeight: 9,

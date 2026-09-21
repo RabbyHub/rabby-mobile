@@ -1,11 +1,8 @@
 import DeviceUtils from '@/core/utils/device';
 import { zustandByMMKV } from '@/core/storage/mmkv';
 import { isNonPublicProductionEnv } from '@/constant';
-import {
-  resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
-} from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
@@ -16,24 +13,29 @@ import {
   coerceKeychainStorageType,
   type KeychainStorageType,
 } from '@/core/apis/keychainCommon';
-import { preferenceService } from '@/core/services';
+import {
+  CURRENT_KEYCHAIN_VERSION_VALUES,
+  DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD,
+  DEFAULT_CURRENT_KEYCHAIN_VERSION,
+  coerceCurrentKeychainVersion,
+  type CurrentKeychainVersion,
+} from '@/core/apis/keychainVersionShared';
+import { setPreference } from '@/core/serviceApi/preference';
 import { useCallback, useMemo } from 'react';
+import {
+  coerceHomeAssetTopN,
+  DEFAULT_HOME_ASSET_TOP_N,
+  type HomeAssetTopN,
+} from '@/constant/homeAssetSelection';
+
+export {
+  CURRENT_KEYCHAIN_VERSION_VALUES,
+  DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD,
+};
+export type { CurrentKeychainVersion };
 
 const isIOS = DeviceUtils.isIOS();
 
-export const CURRENT_KEYCHAIN_VERSION_VALUES = [
-  '8.2.0-fork',
-  '9.0.0',
-  '10.0.0',
-] as const;
-
-export type CurrentKeychainVersion =
-  (typeof CURRENT_KEYCHAIN_VERSION_VALUES)[number];
-
-export const DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD =
-  'debugCurrentKeychainVersion20260602' as const;
-
-const DEFAULT_CURRENT_KEYCHAIN_VERSION: CurrentKeychainVersion = '9.0.0';
 const DEFAULT_DEBUG_KEYCHAIN_STORAGE: KeychainStorageType =
   DEFAULT_KEYCHAIN_STORAGE_TYPE;
 export const WIDE_SCREEN_DEBUG_PANEL_DEFAULT_MIN_WIDTH = 700;
@@ -68,16 +70,6 @@ export const DAPP_SIGN_AUTH_SESSION_INTERVAL_OPTIONS = [
 export type DappSignAuthSessionIntervalMs =
   (typeof DAPP_SIGN_AUTH_SESSION_INTERVAL_OPTIONS)[number]['value'];
 
-function coerceCurrentKeychainVersion(
-  version: unknown,
-): CurrentKeychainVersion {
-  return CURRENT_KEYCHAIN_VERSION_VALUES.includes(
-    version as CurrentKeychainVersion,
-  )
-    ? (version as CurrentKeychainVersion)
-    : DEFAULT_CURRENT_KEYCHAIN_VERSION;
-}
-
 function coerceWideScreenDebugPanelMinWidth(value: unknown) {
   const width = typeof value === 'number' ? value : Number(value);
 
@@ -106,7 +98,6 @@ type DebugKeychainStorageByVersion = Record<
 
 function makeDefaultDebugKeychainStorageByVersion(): DebugKeychainStorageByVersion {
   return {
-    '8.2.0-fork': DEFAULT_DEBUG_KEYCHAIN_STORAGE,
     '9.0.0': DEFAULT_DEBUG_KEYCHAIN_STORAGE,
     '10.0.0': DEFAULT_DEBUG_KEYCHAIN_STORAGE,
   };
@@ -121,7 +112,6 @@ function coerceDebugKeychainStorageByVersion(
       : null;
 
   return {
-    '8.2.0-fork': coerceKeychainStorageType(raw?.['8.2.0-fork']),
     '9.0.0': coerceKeychainStorageType(raw?.['9.0.0']),
     '10.0.0': coerceKeychainStorageType(raw?.['10.0.0']),
   };
@@ -134,6 +124,7 @@ type ScreenshotSettings = {
   timeTipAboutSeedPhraseAndPrivateKey: 'copy' | 'pasted' | 'none';
   blockSubmitIfFormChangedOnAuth: boolean;
   toastOpenApiHttpErrorStatus: boolean;
+  toastOpenApiHttpErrorStatusDefaultEnabledV1: boolean;
   debugSwapHistorySkipLocalLookup: boolean;
   wideScreenDebugPanelEnabled: boolean;
   wideScreenDebugPanelMinWidth: number;
@@ -141,6 +132,9 @@ type ScreenshotSettings = {
   [DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD]: CurrentKeychainVersion;
   debugKeychainStorageByVersion: DebugKeychainStorageByVersion;
   enablePerpsWatchAddress: boolean;
+  homeAssetTopN: HomeAssetTopN;
+  includeWatchAddressesInHomeAssetSelection: boolean;
+  screenE2EEnabled: boolean;
 };
 const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
   '@ExperimentalSettings',
@@ -157,6 +151,7 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     timeTipAboutSeedPhraseAndPrivateKey: 'copy',
     blockSubmitIfFormChangedOnAuth: false,
     toastOpenApiHttpErrorStatus: false,
+    toastOpenApiHttpErrorStatusDefaultEnabledV1: false,
     debugSwapHistorySkipLocalLookup: false,
     wideScreenDebugPanelEnabled: false,
     wideScreenDebugPanelMinWidth: WIDE_SCREEN_DEBUG_PANEL_DEFAULT_MIN_WIDTH,
@@ -165,8 +160,22 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     [DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD]: DEFAULT_CURRENT_KEYCHAIN_VERSION,
     debugKeychainStorageByVersion: makeDefaultDebugKeychainStorageByVersion(),
     enablePerpsWatchAddress: false,
+    homeAssetTopN: DEFAULT_HOME_ASSET_TOP_N,
+    includeWatchAddressesInHomeAssetSelection: false,
+    screenE2EEnabled: false,
   },
 );
+
+if (
+  isNonPublicProductionEnv &&
+  !experimentalSettingsStore.getState()
+    .toastOpenApiHttpErrorStatusDefaultEnabledV1
+) {
+  experimentalSettingsStore.setState({
+    toastOpenApiHttpErrorStatus: true,
+    toastOpenApiHttpErrorStatusDefaultEnabledV1: true,
+  });
+}
 
 export const storeApiExpSettingData = {
   set: setExpSettingData,
@@ -174,6 +183,22 @@ export const storeApiExpSettingData = {
   getCurrentKeychainVersion,
   getDebugKeychainStorageByVersion,
   getShouldBlockSubmitIfFormChangedOnAuth,
+  getHomeAssetSelectionSettings,
+  setHomeAssetTopN,
+  setIncludeWatchAddressesInHomeAssetSelection,
+  getScreenE2EEnabled: () =>
+    isNonPublicProductionEnv &&
+    experimentalSettingsStore.getState().screenE2EEnabled,
+  setScreenE2EEnabled: (enabled: boolean) => {
+    if (!isNonPublicProductionEnv) {
+      return false;
+    }
+    setExpSettingData(prev => ({
+      ...prev,
+      screenE2EEnabled: enabled,
+    }));
+    return enabled;
+  },
   getTimeTipAboutSeedPhraseAndPrivateKey: () => {
     if (!__DEV__) {
       return 'pasted';
@@ -183,6 +208,138 @@ export const storeApiExpSettingData = {
       .timeTipAboutSeedPhraseAndPrivateKey;
   },
 };
+
+export function useScreenE2EEnabled() {
+  const screenE2EEnabled = experimentalSettingsStore(
+    state => state.screenE2EEnabled,
+  );
+
+  const setScreenE2EEnabled = useCallback((enabled: boolean) => {
+    return storeApiExpSettingData.setScreenE2EEnabled(enabled);
+  }, []);
+
+  return {
+    screenE2EEnabled: isNonPublicProductionEnv && screenE2EEnabled,
+    setScreenE2EEnabled,
+  };
+}
+
+export type HomeAssetSelectionSettings = {
+  topN: HomeAssetTopN;
+  includeWatchAddresses: boolean;
+};
+
+/**
+ * This is deliberately a non-production test policy.  Production always uses
+ * the legacy Top 10 owned-address selection, regardless of persisted values.
+ */
+export function getHomeAssetSelectionSettings(): HomeAssetSelectionSettings {
+  if (!isNonPublicProductionEnv) {
+    return {
+      topN: DEFAULT_HOME_ASSET_TOP_N,
+      includeWatchAddresses: false,
+    };
+  }
+
+  const state = experimentalSettingsStore.getState();
+  return {
+    topN: coerceHomeAssetTopN(state.homeAssetTopN),
+    includeWatchAddresses: !!state.includeWatchAddressesInHomeAssetSelection,
+  };
+}
+
+export function isHomeAssetSelectionExperimentEnabled(
+  settings = getHomeAssetSelectionSettings(),
+) {
+  return (
+    isNonPublicProductionEnv &&
+    (settings.topN !== DEFAULT_HOME_ASSET_TOP_N ||
+      settings.includeWatchAddresses)
+  );
+}
+
+export function getHomeAssetSelectionSettingsKey(
+  settings = getHomeAssetSelectionSettings(),
+) {
+  return `${settings.topN}:${settings.includeWatchAddresses ? 1 : 0}`;
+}
+
+export function setHomeAssetTopN(value: unknown) {
+  if (!isNonPublicProductionEnv) {
+    return DEFAULT_HOME_ASSET_TOP_N;
+  }
+
+  const topN = coerceHomeAssetTopN(value);
+  setExpSettingData(prev => ({
+    ...prev,
+    homeAssetTopN: topN,
+  }));
+  return topN;
+}
+
+export function setIncludeWatchAddressesInHomeAssetSelection(enabled: boolean) {
+  if (!isNonPublicProductionEnv) {
+    return false;
+  }
+
+  setExpSettingData(prev => ({
+    ...prev,
+    includeWatchAddressesInHomeAssetSelection: enabled,
+  }));
+  return enabled;
+}
+
+export function subscribeHomeAssetSelectionSettings(
+  listener: (settings: HomeAssetSelectionSettings) => void,
+) {
+  if (!isNonPublicProductionEnv) {
+    return () => undefined;
+  }
+
+  let previous = getHomeAssetSelectionSettings();
+  return experimentalSettingsStore.subscribe(() => {
+    const next = getHomeAssetSelectionSettings();
+    if (
+      next.topN === previous.topN &&
+      next.includeWatchAddresses === previous.includeWatchAddresses
+    ) {
+      return;
+    }
+    previous = next;
+    listener(next);
+  });
+}
+
+export function useHomeAssetSelectionSettings() {
+  const persistedTopN = experimentalSettingsStore(state => state.homeAssetTopN);
+  const persistedIncludeWatchAddresses = experimentalSettingsStore(
+    state => state.includeWatchAddressesInHomeAssetSelection,
+  );
+
+  const setTopN = useCallback((value: HomeAssetTopN) => {
+    return setHomeAssetTopN(value);
+  }, []);
+  const setIncludeWatchAddresses = useCallback((enabled: boolean) => {
+    return setIncludeWatchAddressesInHomeAssetSelection(enabled);
+  }, []);
+
+  const topN = isNonPublicProductionEnv
+    ? coerceHomeAssetTopN(persistedTopN)
+    : DEFAULT_HOME_ASSET_TOP_N;
+  const includeWatchAddresses =
+    isNonPublicProductionEnv && persistedIncludeWatchAddresses;
+
+  return {
+    topN,
+    includeWatchAddresses,
+    isExperimentEnabled: isHomeAssetSelectionExperimentEnabled({
+      topN,
+      includeWatchAddresses,
+    }),
+    setTopN,
+    setIncludeWatchAddresses,
+  };
+}
 
 function setExpSettingData(valOrFunc: UpdaterOrPartials<ScreenshotSettings>) {
   experimentalSettingsStore.setState(prev => {
@@ -315,6 +472,20 @@ export function getExpScreenCapture(
       iosForceAllowScreenRecord,
     }),
   };
+}
+
+export function setSensitiveSceneProtectionEnabled(enabled: boolean) {
+  if (!isNonPublicProductionEnv) {
+    return true;
+  }
+
+  setExpSettingData(prev => ({
+    ...prev,
+    [KEY]: !enabled,
+    ...(isIOS ? { iosForceDisableAlertForSensitiveScene: !enabled } : {}),
+  }));
+
+  return enabled;
 }
 
 export function useIosForceDisableAlertForSensitiveScene() {
@@ -475,10 +646,17 @@ function setAutoLockMinutes(valOrFunc: UpdaterOrPartials<number>) {
   });
 }
 
-runIIFEFunc(() => {
+let appSettingsAutoLockHydrationStarted = false;
+
+export function startAppSettingsAutoLockHydration() {
+  if (appSettingsAutoLockHydrationStarted) {
+    return;
+  }
+
+  appSettingsAutoLockHydrationStarted = true;
   const times = apisAutoLock.getPersistedAutoLockTimes();
   setAutoLockMinutes(times.minutes);
-});
+}
 
 export function useAutoLockTimeMinites() {
   const autoLockMinutes = autoLockState(s => s.minutes);
@@ -489,9 +667,9 @@ export function useAutoLockTimeMinites() {
 const onAutoLockTimeMsChange = (ms: number) => {
   const minutes = apisAutoLock.coerceAutoLockTimeout(ms).minutes;
   setAutoLockMinutes(minutes);
-  preferenceService.setPreference({
+  void setPreference({
     autoLockTime: minutes,
-  });
+  }).catch(console.error);
   apisAutoLock.refreshAutolockTimeout();
 };
 export function useAutoLockTimeMs() {

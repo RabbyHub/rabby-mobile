@@ -1,3 +1,20 @@
+if (!gradle.extensions.extraProperties.has("rabbyReactNativeArchitecture")) {
+    throw new GradleException(
+        "[react-native-architecture] settings.gradle did not resolve the architecture before project configuration.",
+    )
+}
+def resolvedReactNativeArchitecture = gradle.extensions.extraProperties.get(
+    "rabbyReactNativeArchitecture",
+).toString()
+def requestedNewArchitecture = resolvedReactNativeArchitecture == "new"
+
+// settings.gradle resolves and validates the architecture before autolinking.
+// Mirror that value into the Android Gradle property before applying the React
+// plugin so native source selection uses the same dependency graph as Metro.
+def normalizedNewArchitecture = requestedNewArchitecture.toString()
+rootProject.extensions.extraProperties.set("newArchEnabled", normalizedNewArchitecture)
+project.extensions.extraProperties.set("newArchEnabled", normalizedNewArchitecture)
+
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
@@ -5,8 +22,13 @@ apply plugin: "com.google.gms.google-services"
 
 def metroMaxWorkers = System.getenv("RABBY_MOBILE_METRO_MAX_WORKERS")
 def metroNodeMaxOldSpaceSize = System.getenv("RABBY_MOBILE_METRO_NODE_MAX_OLD_SPACE_SIZE")
+def metroBundleCli = file("../../scripts/metro-bundle-cli.js")
 def metroNodeExecutableAndArgs = ["node"]
 def metroExtraPackagerArgs = []
+
+def isNewArchitectureEnabled() {
+    return rootProject.hasProperty("newArchEnabled") && rootProject.getProperty("newArchEnabled").toString().toBoolean()
+}
 
 if (metroNodeMaxOldSpaceSize) {
     metroNodeExecutableAndArgs += ["--max-old-space-size=${metroNodeMaxOldSpaceSize}"]
@@ -29,7 +51,7 @@ react {
     //   The folder where the react-native Codegen package is. Default is ../../node_modules/@react-native/codegen
     // codegenDir = file("../../node_modules/@react-native/codegen")
     //   The cli.js file which is the React Native CLI entrypoint. Default is ../../node_modules/react-native/cli.js
-    // cliFile = file("../../node_modules/react-native/cli.js")
+    cliFile = metroBundleCli
 
     /* Variants */
     //   The list of variants to that are debuggable. For those we're going to
@@ -72,10 +94,65 @@ react {
     autolinkLibrariesWithApp()
 }
 
+def mobileProjectDir = rootProject.projectDir.parentFile
+def workspaceProjectDir = mobileProjectDir.parentFile.parentFile
+def buildInfoScript = new File(mobileProjectDir, "scripts/resolve-build-info.js")
+def buildInfoJson = providers.exec {
+    workingDir workspaceProjectDir
+    commandLine "node", buildInfoScript.absolutePath
+}.standardOutput.asText.get().trim()
+def generatedBuildInfoAssetsDir = layout.buildDirectory.dir("generated/rabbyBuildInfo/assets")
+def generatedBuildInfoFile = generatedBuildInfoAssetsDir.map {
+    it.file("rabby-build-info.json")
+}
+def generateRabbyBuildInfo = tasks.register("generateRabbyBuildInfo") {
+    inputs.property("rabbyBuildInfo", buildInfoJson)
+    outputs.file(generatedBuildInfoFile)
+
+    doLast {
+        def outputFile = generatedBuildInfoFile.get().asFile
+        outputFile.parentFile.mkdirs()
+        outputFile.text = "${buildInfoJson}\n"
+    }
+}
+def workspaceBundleInputs = files(
+    fileTree(new File(workspaceProjectDir, "packages")) {
+        include "**/*.js", "**/*.jsx", "**/*.json", "**/*.ts", "**/*.tsx"
+        exclude "**/.cxx/**", "**/android/build/**", "**/ios/build/**", "**/node_modules/**"
+    },
+    fileTree(new File(workspaceProjectDir, ".yarn/patches")) {
+        include "**/*.patch"
+    },
+    fileTree(mobileProjectDir) {
+        include ".env", ".env.*"
+    },
+    new File(mobileProjectDir, "babel.config.js"),
+    new File(mobileProjectDir, "metro.config.js"),
+    new File(mobileProjectDir, "package.json"),
+    new File(workspaceProjectDir, "package.json"),
+    new File(workspaceProjectDir, "yarn.lock")
+)
+
+tasks.withType(com.facebook.react.tasks.BundleHermesCTask).configureEach {
+    inputs.files(workspaceBundleInputs)
+        .withPropertyName("rabbyWorkspaceBundleInputs")
+        .withPathSensitivity(org.gradle.api.tasks.PathSensitivity.RELATIVE)
+    inputs.property("rabbyAppEnvironment", System.getenv("APP_ENV") ?: "")
+    inputs.property(
+        "rabbyMobileBuildEnvironment",
+        System.getenv("RABBY_MOBILE_BUILD_ENV") ?: ""
+    )
+}
+
 /**
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
  */
 def enableProguardInReleaseBuilds = true
+
+def reactNativeArchitectures() {
+    def value = project.getProperties().get("reactNativeArchitectures")
+    return value ? value.split(",").collect { it.trim() }.findAll { it } : ["armeabi-v7a", "arm64-v8a"]
+}
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
@@ -107,9 +184,12 @@ android {
         applicationId "com.debank.rabbymobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 100225
-        versionName "0.6.77"
+        versionCode 100249
+        versionName "0.6.90"
         missingDimensionStrategy "store", "play"
+        ndk {
+          abiFilters (*reactNativeArchitectures())
+        }
         externalNativeBuild {
           cmake {
             arguments "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
@@ -165,7 +245,7 @@ android {
             // Caution! In production, you need to generate your own keystore file.
             // see https://reactnative.dev/docs/signed-apk-android.
             signingConfig signingConfigs.release
-            // shrinkResources enableProguardInReleaseBuilds
+            shrinkResources enableProguardInReleaseBuilds
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
@@ -182,12 +262,26 @@ android {
         }
     }
     buildTypes.each {
-		  it.buildConfigField 'String', 'rabbitCode', "\"$System.env.RABBY_MOBILE_CODE\""
+        it.buildConfigField 'String', 'rabbitCode', "\"$System.env.RABBY_MOBILE_CODE\""
     }
     sourceSets {
         main {
-            java.srcDirs += ["src/oldarch"]
+            assets.srcDir generatedBuildInfoAssetsDir
+            if (isNewArchitectureEnabled()) {
+                java.srcDirs += [
+                    "src/newarch",
+                    "${project.buildDir}/generated/source/codegen/java",
+                ]
+            } else {
+                java.srcDirs += ["src/oldarch"]
+            }
         }
+    }
+}
+
+tasks.configureEach {
+    if (name == "preBuild" || (name.startsWith("merge") && name.endsWith("Assets"))) {
+        dependsOn(generateRabbyBuildInfo)
     }
 }
 
@@ -225,9 +319,7 @@ dependencies {
         implementation jscFlavor
     }
 
-    implementation project(':react-native-splash-screen')
     // implementation project(':isudaji_react-native-install-apk')
 
     implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.29'
-    implementation 'com.android.billingclient:billing:7.0.0'
 }

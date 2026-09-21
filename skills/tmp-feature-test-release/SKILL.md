@@ -1,6 +1,6 @@
 ---
 name: tmp-feature-test-release
-description: Promote one or more committed changes onto the Friday tmp branch, push the result without disturbing the current worktree, and dispatch the Feature Test GitHub Actions workflow. Use when Codex needs to merge a fix into `tmp/YYYYMMDD`, especially the current Friday tmp branch, and start a feature test build with explicit runner or cache settings.
+description: Promote one or more committed changes onto the Thursday tmp branch, push the result without disturbing the current worktree, and dispatch the Feature Test GitHub Actions workflow. Use when Codex needs to merge a fix into `tmp/YYYYMMDD`, especially the current Thursday tmp branch, and start a feature test build with explicit runner or cache settings.
 ---
 
 # Tmp Feature Test Release
@@ -15,19 +15,19 @@ Follow these rules:
 
 - Start from committed changes only. Do not try to release uncommitted workspace state.
 - Keep the user's main worktree untouched. Use the script's isolated worktree flow instead of switching branches in place.
-- Default to the upcoming Friday tmp branch in `Asia/Shanghai` unless the user names a different `tmp/*` branch.
-- Assume the release target is `origin/develop` when the tmp branch does not exist yet. The script mirrors `.github/workflows/create_tmp_friday_branch.yml` and creates the remote tmp branch from `origin/develop`.
+- Default to the upcoming Thursday tmp branch in `Asia/Shanghai` unless the user names a different `tmp/*` branch.
+- Assume the release target is `origin/develop` when the tmp branch does not exist yet. The script mirrors `.github/workflows/create_tmp_release_branch.yml` and creates the remote tmp branch from `origin/develop`.
 - Default Feature Test inputs to the release-friendly path used most often here: `mobile-local`, pod cache enabled, node_modules cache enabled, gradle cache enabled, and `REALLY_UPLOAD=true`.
 - Re-read [.github/workflows/feature_test.yml](../../.github/workflows/feature_test.yml) before editing the script if the workflow inputs may have changed.
-- Re-read [.github/workflows/create_tmp_friday_branch.yml](../../.github/workflows/create_tmp_friday_branch.yml) before editing branch-creation logic.
+- Re-read [.github/workflows/create_tmp_release_branch.yml](../../.github/workflows/create_tmp_release_branch.yml) before editing branch-creation logic.
 
 Use these examples as the default entry points:
 
 ```bash
-# Release the current HEAD commit to this Friday's tmp branch and trigger Feature Test
+# Release the current HEAD commit to this Thursday's tmp branch and trigger Feature Test
 skills/tmp-feature-test-release/scripts/promote_to_tmp_feature_test.sh
 
-# Release a specific fix commit to the current Friday tmp branch
+# Release a specific fix commit to the current Thursday tmp branch
 skills/tmp-feature-test-release/scripts/promote_to_tmp_feature_test.sh --commit 2dd2daa6b
 
 # Override the tmp branch or runner

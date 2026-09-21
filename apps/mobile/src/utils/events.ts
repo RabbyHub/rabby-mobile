@@ -2,16 +2,14 @@ import { SIGN_HELPER_EVENTS } from '@rabby-wallet/service-keyring';
 import { makeEEClass } from '@/core/apis/event';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 
-import { type Purchase } from 'react-native-iap';
+import type { Purchase, PurchaseError } from 'react-native-iap';
 import { DB } from '@op-engineering/op-sqlite';
 
 export type AssetsRefresthState = {
   singleTokenNonce: number;
   singleDeFiNonce: number;
-  singleNFTNonce: number;
   tokenNonce: number;
   deFiNonce: number;
-  nftNonce: number;
 };
 export type EventBusListeners = {
   [EVENTS.TX_COMPLETED]: (txDetail: {
@@ -20,8 +18,8 @@ export type EventBusListeners = {
     gasUsed?: number;
   }) => void;
   [EVENTS.PURCHASE_UPDATED]: (detail: {
-    data: Purchase;
-    error?: Error;
+    data?: Purchase;
+    error?: Error | PurchaseError;
   }) => void;
   [EVENTS.QRHARDWARE.ACQUIRE_MEMSTORE_SUCCEED]: (detail: {
     request: any;
@@ -63,6 +61,10 @@ export const EVENT_MINI_APPROVAL_START_SIGN = 'EVENT_MINI_APPROVAL_START_SIGN';
 
 export const EVENT_ONEKEY_REQUEST_PASSPHRASE_ON_DEVICE =
   'ONEKEY_REQUEST_PASSPHRASE_ON_DEVICE';
+
+export const EVENT_ONEKEY_CLOSE_UI_PIN_WINDOW = 'ONEKEY_CLOSE_UI_PIN_WINDOW';
+
+export const EVENT_ONEKEY_REQUEST_BUTTON = 'ONEKEY_REQUEST_BUTTON';
 
 export const EVENT_PAY_GAS_BY_GAS_ACCOUNT_AND_NOT_CAN_PAY =
   'EVENT_PAY_GAS_BY_GAS_ACCOUNT_AND_NOT_CAN_PAY';

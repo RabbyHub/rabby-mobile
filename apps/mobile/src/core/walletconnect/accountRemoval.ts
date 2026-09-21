@@ -8,7 +8,7 @@ import {
   getWalletConnectAccountForTopic,
   isSameWalletConnectAccount,
   type WalletConnectAccountIdentity,
-} from './accountSelection';
+} from './accountPersistence';
 import { getWalletConnectClient } from './client';
 import { addWalletConnectLog } from './debugLog';
 import {

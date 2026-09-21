@@ -1,4 +1,6 @@
 import {
+  EVENT_ONEKEY_CLOSE_UI_PIN_WINDOW,
+  EVENT_ONEKEY_REQUEST_BUTTON,
   EVENT_ONEKEY_REQUEST_PASSPHRASE_ON_DEVICE,
   eventBus,
   EVENTS,
@@ -38,6 +40,12 @@ export default class OneKeyBridge implements OneKeyBridgeInterface {
           break;
         case UI_REQUEST.REQUEST_PASSPHRASE_ON_DEVICE:
           eventBus.emit(EVENT_ONEKEY_REQUEST_PASSPHRASE_ON_DEVICE, e);
+          break;
+        case UI_REQUEST.REQUEST_BUTTON:
+          eventBus.emit(EVENT_ONEKEY_REQUEST_BUTTON, e);
+          break;
+        case UI_REQUEST.CLOSE_UI_PIN_WINDOW:
+          eventBus.emit(EVENT_ONEKEY_CLOSE_UI_PIN_WINDOW, e);
           break;
         case UI_REQUEST.CLOSE_UI_WINDOW:
           eventBus.emit(EVENTS.ONEKEY.CLOSE_UI_WINDOW, e);

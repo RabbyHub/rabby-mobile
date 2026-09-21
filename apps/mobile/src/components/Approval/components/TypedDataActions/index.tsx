@@ -1,8 +1,9 @@
-import { Result } from '@rabby-wallet/rabby-security-engine';
+import { SecurityEngineScopeProvider } from '../../hooks/useApprovalSecurityEngine';
+import type { Result } from '@rabby-wallet/rabby-security-engine';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import ViewRawModal from '../TxComponents/ViewRawModal';
-import {
+import type {
   ApproveTokenRequireData,
   ContractRequireData,
   MultiSigRequireData,
@@ -27,7 +28,7 @@ import BatchPermit2 from './BatchPermit2';
 import { NoActionAlert } from '../NoActionAlert/NoActionAlert';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import IconQuestionMark from '@/assets/icons/sign/question-mark-24-cc.svg';
-import { Chain } from '@/constant/chains';
+import type { Chain } from '@/constant/chains';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Tip } from '@/components';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
@@ -48,18 +49,21 @@ import RevokePermit2 from '../Actions/RevokePermit2';
 import { getActionTypeText } from './utils';
 import { TransactionActionList } from '../Actions/components/TransactionActionList';
 import { noop } from 'lodash';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { Account } from '@/core/services/preference';
-import { ParseCommonResponse } from '@rabby-wallet/rabby-api/dist/types';
+import type { Account } from '@/core/startupServices/preference';
+import type { ParseCommonResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { CHAINS } from '@debank/common';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { BalanceChangeWrapper } from '../TxComponents/BalanceChangeWrapper';
 import { Text } from '@/components/Typography';
+import type { SignMessageHighlightToken } from '../signMessageTokenizer';
+import type { SignMessageAddressDataMap } from '../signMessageAddressData';
+import { SignMessageCard } from '../TextActions/SignMessageCard';
 
 export interface MultiActionProps {
   actionList: ParsedTypedDataActionData[] | ParsedTransactionActionData[];
   requireDataList: ActionRequireData[];
   engineResultList: Result[][];
+  securityScopes?: string[];
 }
 const ActionItem = ({
   raw,
@@ -107,11 +111,7 @@ const ActionItem = ({
           ...actionStyles.actionHeader,
           ...(isUnknown ? actionStyles.isUnknown : {}),
         }}>
-        <View
-          style={StyleSheet.flatten({
-            flexDirection: 'row',
-            alignItems: 'center',
-          })}>
+        <View style={actionStyles.leftContainer}>
           <Text
             style={StyleSheet.flatten({
               ...actionStyles.leftText,
@@ -317,28 +317,34 @@ const Actions = ({
   chain = CHAINS[CHAINS_ENUM.ETH],
   engineResults,
   raw,
+  copyMessage,
   message,
   origin,
   originLogo,
   typedDataActionData,
   account,
   multiAction,
+  messageTokens,
+  addressData,
+  approvalViewportHeight,
 }: {
   data: ParsedTypedDataActionData | null;
   requireData: ActionRequireData;
   chain?: Chain;
   engineResults: Result[];
   raw: Record<string, any>;
+  copyMessage: string;
   message: string;
   origin: string;
   originLogo?: string;
   typedDataActionData?: ParseCommonResponse | null;
   account: Account;
   multiAction?: MultiActionProps;
+  messageTokens?: SignMessageHighlightToken[];
+  addressData?: SignMessageAddressDataMap;
+  approvalViewportHeight: number;
 }) => {
   const { t } = useTranslation();
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getMessageStyles(colors), [colors]);
   const { styles: actionStyles } = useTheme2024({ getStyle: getActionsStyle });
 
   const isMultiAction = useMemo(() => {
@@ -367,17 +373,20 @@ const Actions = ({
         {isMultiAction && multiAction ? (
           (multiAction.actionList as ParsedTypedDataActionData[]).map(
             (action, index) => (
-              <ActionItem
+              <SecurityEngineScopeProvider
                 key={index}
-                data={action}
-                requireData={multiAction.requireDataList[index]}
-                chain={chain}
-                engineResults={multiAction.engineResultList[index]}
-                raw={raw}
-                message={message}
-                account={account}
-                origin={origin}
-              />
+                scope={multiAction.securityScopes?.[index]}>
+                <ActionItem
+                  data={action}
+                  requireData={multiAction.requireDataList[index]}
+                  chain={chain}
+                  engineResults={multiAction.engineResultList[index] || []}
+                  raw={raw}
+                  message={message}
+                  account={account}
+                  origin={origin}
+                />
+              </SecurityEngineScopeProvider>
             ),
           )
         ) : (
@@ -394,32 +403,17 @@ const Actions = ({
         )}
       </View>
 
-      <Card style={styles.messageCard}>
-        <BottomSheetScrollView
-          nestedScrollEnabled
-          style={StyleSheet.flatten([
-            styles.messageContent,
-            data ? {} : styles.noAction,
-          ])}>
-          <View style={styles.messageTitle}>
-            <Text
-              style={styles.dashLine}
-              ellipsizeMode="clip"
-              accessible={false}
-              numberOfLines={1}>
-              - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-              - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-              - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-              - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-            </Text>
-
-            <Text style={styles.messageTitleText}>
-              {t('page.signTx.typedDataMessage')}
-            </Text>
-          </View>
-          <Text style={styles.messageText}>{message}</Text>
-        </BottomSheetScrollView>
-      </Card>
+      <SignMessageCard
+        title={t('page.signTx.typedDataMessage')}
+        message={message}
+        copyMessage={copyMessage}
+        hasAction={!!data}
+        messageTokens={messageTokens}
+        chain={chain}
+        addressData={addressData}
+        account={account}
+        approvalViewportHeight={approvalViewportHeight}
+      />
     </View>
   );
 };

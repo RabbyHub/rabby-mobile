@@ -7,10 +7,10 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { MiniLedgerHardwareWaiting } from './MiniLedgerHardwareWaiting';
 import { MiniPrivatekeyWaiting } from './MiniPrivatekeyWaiting';
-import { BatchSignTxTaskType } from './useBatchSignTxTask';
+import type { BatchSignTxTaskType } from './useBatchSignTxTask';
 import { MiniOneKeyHardwareWaiting } from './MiniOneKeyHardwareWaiting';
 import { useMemoizedFn } from 'ahooks';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 
 export const MiniWaiting = ({
   visible,
@@ -69,6 +69,11 @@ export const MiniWaiting = ({
     handleCancelOnce(error?.description);
   });
 
+  const handleRetry = useMemoizedFn(() => {
+    cancelHandledRef.current = true;
+    onRetry?.();
+  });
+
   return (
     <AppBottomSheetModal
       ref={sheetModalRef}
@@ -90,21 +95,21 @@ export const MiniWaiting = ({
                 error={error}
                 onCancel={handleCancel}
                 onDone={onDone}
-                onRetry={onRetry}
+                onRetry={handleRetry}
               />
             ) : currentAccount?.type === KEYRING_TYPE.OneKeyKeyring ? (
               <MiniOneKeyHardwareWaiting
                 error={error}
                 onCancel={handleCancel}
                 onDone={onDone}
-                onRetry={onRetry}
+                onRetry={handleRetry}
               />
             ) : (
               <MiniPrivatekeyWaiting
                 error={error}
                 onCancel={handleCancel}
                 onDone={onDone}
-                onRetry={onRetry}
+                onRetry={handleRetry}
               />
             )}
           </>

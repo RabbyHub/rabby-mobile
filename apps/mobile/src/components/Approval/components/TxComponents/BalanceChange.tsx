@@ -1,9 +1,10 @@
 import React, { useCallback } from 'react';
-import { View, StyleSheet, ViewProps } from 'react-native';
+import type { ViewProps } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import BigNumber from 'bignumber.js';
-import { CHAINS_ENUM } from '@/constant/chains';
-import {
+import type { CHAINS_ENUM } from '@/constant/chains';
+import type {
   BalanceChange as IBalanceChange,
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -21,7 +22,7 @@ import { useTokenDetailSheetModalOnApprovals } from '@/components/TokenDetailPop
 import NoBalanceSVG from '@/assets/icons/sign/no-balance-cc.svg';
 import NFTDefaultSVG from '@/assets/nft-default.svg';
 import TouchableText from '@/components/Touchable/TouchableText';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Text } from '@/components/Typography';
 

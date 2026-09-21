@@ -23,12 +23,13 @@ import RcIconEmptyToken from '@/assets2024/singleHome/empty-token.svg';
 import RcIconEmptyTokenDark from '@/assets2024/singleHome/empty-token-dark.svg';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useBatchRevoke } from '@/screens/BatchRevoke/useBatchRevoke';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useEIP7702Approvals } from '../useEIP7702Approvals';
 import { Text } from '@/components/Typography';
 import {
   BOTTOM_BUTTON_BOTTOM_OFFSET,
   BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
@@ -436,7 +437,7 @@ const getBottomSheetModalFooterButtonStyles = createGetStyles(colors => {
     footerText: {
       color: colors['neutral-title2'],
       fontSize: BOTTOM_BUTTON_TITLE_STYLE.fontSize,
-      lineHeight: BOTTOM_BUTTON_TITLE_STYLE.lineHeight,
+      lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
       fontWeight: BOTTOM_BUTTON_TITLE_STYLE.fontWeight,
     },
     disabledFooterText: {

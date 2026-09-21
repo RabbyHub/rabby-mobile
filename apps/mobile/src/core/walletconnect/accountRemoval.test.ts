@@ -4,7 +4,7 @@ import { clearWalletConnectAutoDisconnectTopic } from './autoDisconnect';
 import {
   forgetWalletConnectAccountForTopic,
   getWalletConnectAccountForTopic,
-} from './accountSelection';
+} from './accountPersistence';
 import { getWalletConnectClient } from './client';
 import { addWalletConnectLog } from './debugLog';
 import {
@@ -23,7 +23,7 @@ jest.mock('./autoDisconnect', () => ({
   clearWalletConnectAutoDisconnectTopic: jest.fn(),
 }));
 
-jest.mock('./accountSelection', () => ({
+jest.mock('./accountPersistence', () => ({
   forgetWalletConnectAccountForTopic: jest.fn(),
   getWalletConnectAccountForTopic: jest.fn(),
   isSameWalletConnectAccount: jest.fn(

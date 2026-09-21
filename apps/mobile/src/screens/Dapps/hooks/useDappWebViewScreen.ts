@@ -1,13 +1,13 @@
 import { createRef, useCallback, useMemo, useRef } from 'react';
 import { atom, useAtom, useAtomValue } from 'jotai';
 
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useDapps } from '@/hooks/useDapps';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { createDappBySession, syncBasicDappInfo } from '@/core/apis/dapp';
 import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
+import type { ActiveDappState } from '@/core/bridges/state';
 import {
-  ActiveDappState,
   activeDappStateEvents,
   getActiveDappState,
   globalSetActiveDappState,
@@ -28,9 +28,19 @@ import {
 } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
-import { HomeNavigatorParamsList } from '@/navigation-type';
-import { preferenceService } from '@/core/services';
-import { apisDapp } from '@/core/apis';
+import type { HomeNavigatorParamsList } from '@/navigation-type';
+import { toggleAllowNotifyAccountsChangedSync } from '@/core/serviceApi/preference';
+import {
+  runWithCoreServices,
+  serviceDependency,
+} from '@/core/serviceApi/serviceDependencies';
+import { BroadcastEvent } from '@/constant/event';
+
+const OPEN_DAPP_WEBVIEW_DEPENDENCIES = [
+  serviceDependency('dappService'),
+  serviceDependency('preferenceService'),
+  serviceDependency('sessionService'),
+] as const;
 
 const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
 activeDappTabIdAtom.onMount = set => {
@@ -161,7 +171,7 @@ export type DappWebViewHideContext = {
   latestUrl?: string;
 };
 export function useDappWebViewScreen() {
-  const { dapps, addDapp } = useDapps();
+  const { dapps } = useDapps();
   const [activeDappOrigin, _setActiveDappOrigin] =
     useAtom(activeDappOriginAtom);
 
@@ -175,7 +185,7 @@ export function useDappWebViewScreen() {
       _setActiveDappOrigin(origin);
 
       if (!origin) {
-        preferenceService.toggleAllowNotifyAccountsChanged(false);
+        toggleAllowNotifyAccountsChangedSync(false);
         inactivate();
       }
     },
@@ -267,7 +277,7 @@ export function useDappWebViewScreen() {
   );
 
   const openUrlAsDapp = useCallback(
-    (
+    async (
       dappUrl: DappInfo['origin'] | OpenedDappItem,
       options?: {
         /** @default {true} */
@@ -305,104 +315,122 @@ export function useDappWebViewScreen() {
 
       item.origin = targetOrigin;
 
-      if (!dapps[item.origin]) {
-        addDapp(
-          createDappBySession({
-            origin: item.origin,
-            name: '',
-            icon: '',
-          }),
-        );
-      }
+      return runWithCoreServices(
+        OPEN_DAPP_WEBVIEW_DEPENDENCIES,
+        ({ dappService, preferenceService, sessionService }) => {
+          let dappInfo = dappService.getDapp(item.origin);
+          if (!dappInfo) {
+            dappService.addDapp(
+              createDappBySession({
+                origin: item.origin,
+                name: '',
+                icon: '',
+              }),
+            );
+            dappInfo = dappService.getDapp(item.origin);
+          }
 
-      // this will change data in dapps backend, maybe not sync with dappInfo, but we don't need basic info later
-      syncBasicDappInfo(item.origin);
+          if (!dappInfo) {
+            throw new Error(`Failed to create dapp: ${item.origin}`);
+          }
 
-      const dappInfo: DappInfo = dapps[item.origin];
-      if (!dappInfo.currentAccount) {
-        const account = apisDapp.setCurrentAccountForDapp(item.origin);
-        dappInfo.currentAccount = account;
-      }
+          if (!dappInfo.currentAccount) {
+            const account = preferenceService.getFallbackAccount();
+            dappService.patchDapps({
+              [item.origin]: { currentAccount: account || null },
+            });
+            dappInfo = dappService.getDapp(item.origin) || dappInfo;
+            if (dappInfo.isConnected) {
+              sessionService.broadcastEvent(
+                BroadcastEvent.accountsChanged,
+                !dappInfo.currentAccount
+                  ? []
+                  : [dappInfo.currentAccount.address.toLowerCase()],
+                dappInfo.origin,
+              );
+            }
+          }
 
-      const needTriggerWebViewReload =
-        forceReopen || item.$openParams?.initialUrl !== newUrl;
+          void syncBasicDappInfo(item.origin).catch(console.error);
 
-      const $openParams = { ...item.$openParams };
-      if (needTriggerWebViewReload) {
-        $openParams.initialUrl = item.$openParams?.initialUrl || newUrl;
-        item.$openParams = $openParams;
-      }
+          const needTriggerWebViewReload =
+            forceReopen || item.$openParams?.initialUrl !== newUrl;
 
-      setOpenedOriginsDapps(prev => {
-        const itemIdx = prev.findIndex(
-          prevItem => prevItem.origin === item.origin,
-        );
-        if (itemIdx === -1) {
-          return [...prev, item];
-        }
+          const $openParams = { ...item.$openParams };
+          if (needTriggerWebViewReload) {
+            $openParams.initialUrl = item.$openParams?.initialUrl || newUrl;
+            item.$openParams = $openParams;
+          }
 
-        prev[itemIdx] = {
-          ...prev[itemIdx],
-          openTime: Date.now(),
-        };
+          setOpenedOriginsDapps(prev => {
+            const itemIdx = prev.findIndex(
+              prevItem => prevItem.origin === item.origin,
+            );
+            if (itemIdx === -1) {
+              return [...prev, item];
+            }
 
-        if (
-          useLatestWebViewId &&
-          prev[itemIdx].lastOpenWebViewId === prev[itemIdx].dappTabId
-        ) {
-          // call to open active id
-          setActiveDappOrigin(item.origin);
-          console.debug(
-            `[dapp webview - ${prev[itemIdx].dappTabId}] just show webview.`,
-          );
-        } else {
-          prev[itemIdx] = {
-            ...prev[itemIdx],
-            $openParams: {
-              ...prev[itemIdx].$openParams,
-              ...$openParams,
-            },
-          };
-          console.debug(
-            `[dapp webview - ${prev[itemIdx].dappTabId}] will redirect webview.`,
-          );
-        }
+            prev[itemIdx] = {
+              ...prev[itemIdx],
+              openTime: Date.now(),
+            };
 
-        return [...prev];
-      });
+            if (
+              useLatestWebViewId &&
+              prev[itemIdx].lastOpenWebViewId === prev[itemIdx].dappTabId
+            ) {
+              setActiveDappOrigin(item.origin);
+              console.debug(
+                `[dapp webview - ${prev[itemIdx].dappTabId}] just show webview.`,
+              );
+            } else {
+              prev[itemIdx] = {
+                ...prev[itemIdx],
+                $openParams: {
+                  ...prev[itemIdx].$openParams,
+                  ...$openParams,
+                },
+              };
+              console.debug(
+                `[dapp webview - ${prev[itemIdx].dappTabId}] will redirect webview.`,
+              );
+            }
 
-      if (isActiveDapp) {
-        setActiveDappOrigin(item.origin);
-      }
+            return [...prev];
+          });
 
-      preferenceService.toggleAllowNotifyAccountsChanged(true);
+          if (isActiveDapp) {
+            setActiveDappOrigin(item.origin);
+          }
 
-      activate(dappInfo);
+          preferenceService.toggleAllowNotifyAccountsChanged(true);
+          activate(dappInfo);
 
-      const routeName = getLatestNavigationName();
-      const needRedirect =
-        routeName && routeName !== RootNames.DappWebViewStubOnHome;
-      if (needRedirect) {
-        /**
-         * @description always push here, because we put RootNames.DappWebViewStubOnHome
-         * at top level home-navigator (which's bottom-tabs-navigator)
-         **/
-        naviPush(RootNames.StackRoot, {
-          screen: RootNames.DappWebViewStubOnHome,
-          params: {
-            dappsWebViewFromRoute,
-            // nextOpenDappInfo: dapps[item.origin],
-          },
-        });
-        // try trigger notify again
-        setTimeout(() => activate(dapps[item.origin]), 1 * 1e3);
-      } else {
-        activate(dapps[item.origin]);
-      }
+          const routeName = getLatestNavigationName();
+          const needRedirect =
+            routeName && routeName !== RootNames.DappWebViewStubOnHome;
+          if (needRedirect) {
+            naviPush(RootNames.StackRoot, {
+              screen: RootNames.DappWebViewStubOnHome,
+              params: {
+                dappsWebViewFromRoute,
+              },
+            });
+            setTimeout(() => {
+              const latestDappInfo = dappService.getDapp(item.origin);
+              if (latestDappInfo) {
+                activate(latestDappInfo);
+              }
+            }, 1 * 1e3);
+          } else {
+            activate(dappInfo);
+          }
 
-      return true;
+          return true;
+        },
+      );
     },
-    [dapps, setOpenedOriginsDapps, addDapp, setActiveDappOrigin, activate],
+    [setOpenedOriginsDapps, setActiveDappOrigin, activate],
   );
 
   const removeOpenedDapp = useCallback(

@@ -1,21 +1,23 @@
-import type { Account, IPinAddress } from '@/core/services/preference';
+import type { Account, IPinAddress } from '@/core/startupServices/preference';
 import { storeApiAccounts, useAccounts, usePinAddresses } from './account';
 import React, { useCallback, useMemo } from 'react';
-import { useAtom } from 'jotai';
-import { KEYRING_CLASS, KeyringAccount } from '@rabby-wallet/keyring-utils';
-import cloneDeep from 'lodash/cloneDeep';
-import { RootNames } from '@/constant/layout';
+import type { KeyringAccount } from '@rabby-wallet/keyring-utils';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import type { RootNames } from '@/constant/layout';
 import { Platform } from 'react-native';
 import { sortAccountList } from '@/utils/sortAccountList';
 import { isSameAccount } from '@/utils/isSameAccount';
-import {
+import type {
   AccountSwitcherScene,
-  makeSceneAccount,
   SceneAccountInfo,
+} from './sceneAccountInfoAtom';
+import {
+  makeSceneAccount,
   sceneAccountInfoStore,
   zResetSceneAccountInfo,
   zSetSceneAccountInfo,
 } from './sceneAccountInfoAtom';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 export { isSameAccount };
 
@@ -215,8 +217,6 @@ export async function switchSceneSigningAccount(
 }
 
 export function useSwitchSceneCurrentAccount() {
-  const sceneAccountInfo = sceneAccountInfoStore(s => s);
-
   return {
     /** @deprecated use global switchSceneCurrentAccount instead */
     switchSceneCurrentAccount,
@@ -316,8 +316,11 @@ export function useSceneAccountInfo(options: {
   const { accounts } = useAccounts({ disableAutoFetch: true });
 
   const { forScene } = options || {};
-  const sceneAccountInfo = sceneAccountInfoStore(s =>
-    !forScene ? null : s[forScene],
+  const sceneAccountInfo = useActivityStore(
+    sceneAccountInfoStore,
+    state => (!forScene ? null : state[forScene]),
+    Object.is,
+    { storeLabel: 'account-switcher-scene' },
   );
 
   const { pinAddresses } = usePinAddresses({

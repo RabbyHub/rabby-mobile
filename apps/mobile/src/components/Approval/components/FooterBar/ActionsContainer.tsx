@@ -1,9 +1,12 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Chain } from '@/constant/chains';
-import { Account } from '@/core/services/preference';
+import type { Chain } from '@/constant/chains';
+import type { Account } from '@/core/startupServices/preference';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
-import { notificationService } from '@/core/services';
+import {
+  getShouldDisplayBlockedRequestApprovalSnapshot,
+  getShouldDisplayCancelAllApprovalSnapshot,
+} from '@/core/serviceApi/notification';
 import { View } from 'react-native';
 import ArrowDownCC from '@/assets/icons/common/arrow-down-cc.svg';
 import { useTheme2024 } from '@/hooks/theme';
@@ -70,11 +73,9 @@ export const ActionsContainer: React.FC<
 
   React.useEffect(() => {
     setDisplayBlockedRequestApproval(
-      notificationService.checkNeedDisplayBlockedRequestApproval(),
+      getShouldDisplayBlockedRequestApprovalSnapshot(),
     );
-    setDisplayCancelAllApproval(
-      notificationService.checkNeedDisplayCancelAllApproval(),
-    );
+    setDisplayCancelAllApproval(getShouldDisplayCancelAllApprovalSnapshot());
   }, []);
 
   const displayPopup =

@@ -31,8 +31,8 @@ describe('core/apis/balance', () => {
         (args: unknown[], _key: string, _force: boolean) =>
           fn(...args),
     }));
-    jest.doMock('../services', () => ({
-      keyringService: mockKeyringService,
+    jest.doMock('@/core/serviceApi/keyring', () => ({
+      keyringServiceApi: mockKeyringService,
     }));
     jest.doMock('../request', () => ({
       testOpenapi: {

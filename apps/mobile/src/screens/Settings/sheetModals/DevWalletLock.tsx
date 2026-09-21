@@ -15,12 +15,13 @@ import {
   RcLockWallet,
   RcManagePassword,
 } from '@/assets/icons/settings';
-import { DevTestItem, makeNoop, GeneralTestItem } from './testDevUtils';
+import type { DevTestItem } from './testDevUtils';
+import { makeNoop, GeneralTestItem } from './testDevUtils';
 import { useManagePasswordOnSettings } from '@/screens/ManagePassword/hooks';
 import { requestLockWalletAndBackToUnlockScreen } from '@/hooks/navigation';
 import { LastUnlockTimeLabel } from '../components/LockAbout';
 import { APP_FEATURE_SWITCH } from '@/constant';
-import { keyringService } from '@/core/services/shared';
+import { getUnencryptedKeyringDataForDev } from '@/core/serviceApi/keyring';
 import {
   setGenericPassword,
   resetGenericPassword,
@@ -148,8 +149,7 @@ export default function WalletLockTestItemModal({
         label: 'Check unencryptedKeyringData',
         icon: <RcIconCheckmark style={styles.labelIcon} />,
         onPress: async () => {
-          const keyringData =
-            await keyringService.DEV_GET_UNENCRYPTED_KEYRING_DATA();
+          const keyringData = await getUnencryptedKeyringDataForDev();
           Alert.alert('Unencrypted Keyring Data', JSON.stringify(keyringData));
         },
       },

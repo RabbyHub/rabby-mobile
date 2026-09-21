@@ -49,10 +49,10 @@ function loadBrowserServiceModule({
   jest.resetModules();
 
   const mockCaptureException = jest.fn();
-  const mockCopyFile = jest.fn();
   const mockExists = jest.fn();
   const mockGetItem = jest.fn((key: string) => legacyStores[key]);
   const mockGetViewShotFilePath = jest.fn((name: string) => `/doc/${name}`);
+  const mockPersistFile = jest.fn();
   const mockUnlink = jest.fn();
 
   class MockStoreServiceBase {
@@ -68,6 +68,22 @@ function loadBrowserServiceModule({
       },
     ) {
       this.store = options.storageAdapter?.store || template;
+    }
+
+    protected mutateStore(recipe: (draft: BrowserStore) => void) {
+      recipe(this.store);
+      return this.store;
+    }
+
+    getStoreSnapshot() {
+      return JSON.parse(JSON.stringify(this.store)) as BrowserStore;
+    }
+
+    getStoreFieldSnapshot<K extends keyof BrowserStore>(key: K) {
+      const value = this.store[key];
+      return (
+        value === undefined ? value : JSON.parse(JSON.stringify(value))
+      ) as BrowserStore[K];
     }
   }
 
@@ -93,10 +109,10 @@ function loadBrowserServiceModule({
       }
     },
   }));
-  jest.doMock('react-native-fs', () => ({
+  jest.doMock('@rabby-wallet/react-native-fs', () => ({
     DocumentDirectoryPath: '/doc',
-    copyFile: (...args: unknown[]) => mockCopyFile(...args),
     exists: (...args: unknown[]) => mockExists(...args),
+    persistFile: (...args: unknown[]) => mockPersistFile(...args),
     unlink: (...args: unknown[]) => mockUnlink(...args),
   }));
   jest.doMock('@/utils/browser', () => ({
@@ -118,10 +134,10 @@ function loadBrowserServiceModule({
     BrowserService,
     mocks: {
       mockCaptureException,
-      mockCopyFile,
       mockExists,
       mockGetItem,
       mockGetViewShotFilePath,
+      mockPersistFile,
       mockUnlink,
     },
     storageAdapter: {
@@ -279,7 +295,7 @@ describe('core/services/browserService', () => {
     });
   });
 
-  it('replaces tab screenshots by deleting old files and copying the new one', async () => {
+  it('replaces tab screenshots by deleting old files and persisting the new one', async () => {
     jest.spyOn(Date, 'now').mockReturnValue(123);
     const { BrowserService, mocks, storageAdapter } = loadBrowserServiceModule({
       initialStore: createBrowserStore({
@@ -301,7 +317,13 @@ describe('core/services/browserService', () => {
       Promise.resolve(path === '/doc/old-shot.jpg'),
     );
     mocks.mockUnlink.mockResolvedValue(undefined);
-    mocks.mockCopyFile.mockResolvedValue(undefined);
+    mocks.mockPersistFile.mockResolvedValue({
+      bytesWritten: 100,
+      durationMs: 1,
+      mode: 'copy',
+      sourcePath: '/tmp/new.jpg',
+      targetPath: '/doc/screenshot-tab-1-123.jpg',
+    });
     const service = new BrowserService({
       storageAdapter: storageAdapter as never,
     });
@@ -315,9 +337,14 @@ describe('core/services/browserService', () => {
 
     expect(mocks.mockGetViewShotFilePath).toHaveBeenCalledWith('old-shot.jpg');
     expect(mocks.mockUnlink).toHaveBeenCalledWith('/doc/old-shot.jpg');
-    expect(mocks.mockCopyFile).toHaveBeenCalledWith(
+    expect(mocks.mockPersistFile).toHaveBeenCalledWith(
       '/tmp/new.jpg',
       '/doc/screenshot-tab-1-123.jpg',
+      {
+        ensureParent: true,
+        mode: 'copy',
+        overwrite: true,
+      },
     );
   });
 });

@@ -24,8 +24,8 @@ function loadRecommendNonceModule() {
       nonceManager: '0xnonce',
     },
   }));
-  jest.doMock('@/core/services', () => ({
-    transactionHistoryService: {
+  jest.doMock('@/core/serviceApi/transactionHistory', () => ({
+    transactionHistoryServiceApi: {
       getNonceByChain: (...args: unknown[]) => mockGetNonceByChain(...args),
     },
   }));

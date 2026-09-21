@@ -1,4 +1,4 @@
-import React, { useCallback, useLayoutEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -19,7 +19,7 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { ellipsisAddress } from '@/utils/address';
 import { RcIconLockCC, RcIconSwitchCC } from '@/assets/icons/send';
 import { useWhitelist } from '@/hooks/whitelist';
-import { AddrDescResponse, Cex } from '@rabby-wallet/rabby-api/dist/types';
+import type { Cex } from '@rabby-wallet/rabby-api/dist/types';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import {
   createGlobalBottomSheetModal2024,
@@ -38,20 +38,28 @@ import { RcIconTipRightCC } from '../icons';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { Text } from '@/components/Typography';
+import { useCexSupportList } from '@/hooks/useCexSupportList';
+import { normalizeCex } from '@/utils/cex';
+
+type CachedCex = {
+  address: string;
+  cex?: Cex;
+};
 
 export const ToAccountEntry = React.memo(function ToAccountEntry({
   account,
   isSelectingAccount = false,
   onPress,
   style,
-  addrDesc,
+  displayCex,
   inWhiteList,
 }: {
   account: KeyringAccountWithAlias;
   isSelectingAccount: boolean;
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
-  addrDesc?: AddrDescResponse['desc'] | null;
+  /** undefined allows the filtered local-cache fallback; null forces the default avatar. */
+  displayCex?: Cex | null;
   inWhiteList?: boolean;
   disableMenu?: boolean;
   isMyImported?: boolean;
@@ -59,11 +67,16 @@ export const ToAccountEntry = React.memo(function ToAccountEntry({
 }) {
   const { styles, colors2024 } = useTheme2024({ getStyle: getToItemStyles });
   const { t } = useTranslation();
-  const [cacheCexDes, setCacheCexDes] = useState<Cex | null>(null);
-  const cexDes = useMemo(
-    () => addrDesc?.cex || cacheCexDes,
-    [addrDesc?.cex, cacheCexDes],
+  const [cachedCex, setCachedCex] = useState<CachedCex>();
+  const cachedCexForAddress = useMemo(
+    () =>
+      cachedCex?.address.toLowerCase() === account.address.toLowerCase()
+        ? cachedCex.cex
+        : undefined,
+    [account.address, cachedCex],
   );
+  const cexDes =
+    displayCex === undefined ? cachedCexForAddress : displayCex || undefined;
   const { adderssAlias } = useAlias2(account.address, { autoFetch: true });
   const { formatName } = useMemo(() => {
     const ellipisName = ellipsisAddress(account.address);
@@ -73,16 +86,29 @@ export const ToAccountEntry = React.memo(function ToAccountEntry({
     };
   }, [account.address, account.aliasName, adderssAlias]);
 
-  useLayoutEffect(() => {
-    if (cexDes) return;
+  useEffect(() => {
+    const address = account.address;
+    if (!address || displayCex !== undefined) {
+      return;
+    }
 
-    setCacheCexDes(null);
-    getCexWithLocalCache(account.address, false, true).then(res => {
-      if (res?.id) {
-        setCacheCexDes(res);
-      }
-    });
-  }, [cexDes, account.address]);
+    let disposed = false;
+    getCexWithLocalCache(address, false, true)
+      .then(cex => {
+        if (!disposed) {
+          setCachedCex({ address, cex });
+        }
+      })
+      .catch(() => {
+        if (!disposed) {
+          setCachedCex({ address, cex: undefined });
+        }
+      });
+
+    return () => {
+      disposed = true;
+    };
+  }, [account.address, displayCex]);
 
   const isEmptyAddress = !account.address;
   const handleCardPress = useCallback(
@@ -413,6 +439,7 @@ const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
 function ToAddressControl2024({ style }: React.PropsWithChildren<RNViewProps>) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { isAddrOnWhitelist } = useWhitelist();
+  const { list: supportedCexList } = useCexSupportList();
   const addrDesc = useSendTokenScreenStateSelector(state => state.toAddrDesc);
   const { handleFieldChange, toAccount, toAddressPositiveTips } =
     useSendTokenInternalShallowSelector(ctx => ({
@@ -425,6 +452,17 @@ function ToAddressControl2024({ style }: React.PropsWithChildren<RNViewProps>) {
 
   const [isSelectingAccount, setIsSelectingAccount] = useState(false);
   const toAccountAddress = toAccount?.address || '';
+  const displayCex = useMemo<Cex | null | undefined>(() => {
+    if (
+      !addrDesc?.id ||
+      !toAccountAddress ||
+      addrDesc.id.toLowerCase() !== toAccountAddress.toLowerCase()
+    ) {
+      return undefined;
+    }
+
+    return normalizeCex(addrDesc.cex, supportedCexList) || null;
+  }, [addrDesc?.cex, addrDesc?.id, supportedCexList, toAccountAddress]);
   const toAccountInWhitelist = useMemo(
     () => !!toAccountAddress && isAddrOnWhitelist(toAccountAddress),
     [isAddrOnWhitelist, toAccountAddress],
@@ -482,7 +520,7 @@ function ToAddressControl2024({ style }: React.PropsWithChildren<RNViewProps>) {
         isSelectingAccount={isSelectingAccount}
         onPress={handleOpenAccountSelector}
         account={toAccount}
-        addrDesc={addrDesc}
+        displayCex={displayCex}
         inWhiteList={toAccountInWhitelist}
       />
       <SheetModalSelectAccountSend

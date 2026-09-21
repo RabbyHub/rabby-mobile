@@ -20,7 +20,7 @@ export type MarketSlippageProps = {
   rowStyle?: StyleProp<ViewStyle>;
 };
 
-/** Est. Slippage row (value colored <1% neutral / 1%~5% amber / >=5% red) plus a switch-to-limit banner over threshold. */
+/** Est. Slippage row plus a switch-to-limit banner over threshold. Visibility (sticky >2% rule) is driven by useMarketSlippage's `shouldShow`. */
 export const MarketSlippage: React.FC<MarketSlippageProps> = ({
   slippage,
   onSwitchToLimit,

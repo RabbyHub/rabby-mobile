@@ -3,8 +3,8 @@ import { getAllAccountsToDisplay } from '@/core/apis/account';
 import {
   getWalletConnectSessionOrigin,
   isWalletConnectMethodApproved,
-  resolveWalletConnectAccount,
 } from './sessions';
+import { resolveWalletConnectAccount } from './sessionAccountResolution';
 
 jest.mock('@/core/apis/account', () => ({
   getAllAccountsToDisplay: jest.fn(),
@@ -20,7 +20,7 @@ jest.mock('./chainAccount', () => ({
   getMethodsFromNamespaces: jest.fn(() => []),
 }));
 
-jest.mock('./accountSelection', () => ({
+jest.mock('./accountPersistence', () => ({
   getWalletConnectAccountForTopic: jest.fn(() => null),
   isSameWalletConnectAccount: jest.fn(
     (
@@ -43,8 +43,8 @@ jest.mock('./state', () => ({
 }));
 
 const { getWalletConnectAccountForTopic } = jest.requireMock(
-  './accountSelection',
-) as typeof import('./accountSelection');
+  './accountPersistence',
+) as typeof import('./accountPersistence');
 
 function createSession({
   url,

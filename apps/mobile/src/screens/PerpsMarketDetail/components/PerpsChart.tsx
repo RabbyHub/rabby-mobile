@@ -464,7 +464,9 @@ export const PerpsChart: React.FC<{
           style={isReady ? null : styles.opacity0}
           ref={chartWebViewRef}
           height={Dimensions.get('screen').width - 128}
-          backGroundColor={colors2024['neutral-bg-1']}
+          backGroundColor={
+            isLight ? colors2024['neutral-bg-0'] : colors2024['neutral-bg-1']
+          }
           onChartReady={handleChartReady}
         />
       </View>
@@ -548,7 +550,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 40,
     lineHeight: 40,
-    fontWeight: '900',
+    fontWeight: '700',
     color: colors2024['neutral-title-1'],
   },
   changeText: {

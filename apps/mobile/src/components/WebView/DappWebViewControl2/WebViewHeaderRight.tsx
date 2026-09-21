@@ -5,7 +5,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { RcWalletCC } from '@/assets/icons/common';
 import { useAccountSceneVisible } from '@/components/AccountSwitcher/hooks';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 

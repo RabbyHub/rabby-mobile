@@ -42,7 +42,13 @@ export const DuplicateAddressModal: React.FC = () => {
   const [account] = useAtom(accountAtom);
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const { accounts } = useAccounts();
+  const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
+
+  React.useEffect(() => {
+    if (visible) {
+      fetchAccounts();
+    }
+  }, [fetchAccounts, visible]);
 
   const currentAccount = React.useMemo(() => {
     if (!account) {

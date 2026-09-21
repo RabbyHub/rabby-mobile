@@ -1,0 +1,711 @@
+import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
+import { ThemeColors2024 } from '@/constant/theme';
+let mockThemeMode: 'light' | 'dark' | undefined;
+beforeEach(() => {
+  mockThemeMode = undefined;
+});
+jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react-native';
+import React from 'react';
+import { Keyboard, StyleSheet, View } from 'react-native';
+import { perpsProKeyboardSession } from '../common/perpsProKeyboardSession';
+
+jest.mock('@/core/native/utils', () => ({ IS_ANDROID: true }));
+jest.mock('react-native-reanimated', () => ({
+  useAnimatedReaction: jest.fn(),
+}));
+
+const mockOpenFieldExplanation = jest.fn();
+const mockUsePerpsLatestTrade = jest.fn();
+const mockSliderHapticComplete = jest.fn();
+const mockSliderHapticStart = jest.fn();
+const mockSliderHapticValueChange = jest.fn();
+const mockUseSliderHaptics = jest.fn();
+let mockLatestTradePrice = '60001';
+let mockLatestTradeStatus: 'ready' | 'stale' = 'ready';
+
+jest.mock('@/assets2024/icons/perps/PerpsProCloseOrderTypeSwitch.svg', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return (props: object) => ReactModule.createElement(View, props);
+});
+
+jest.mock('@/components/AutoLockView', () => require('react-native').View);
+jest.mock('@/components/Typography', () => ({
+  Text: require('react-native').Text,
+}));
+
+jest.mock('@/components/customized/BottomSheet', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    AppBottomSheetModal: ReactModule.forwardRef(
+      (props: Record<string, unknown>, ref: React.Ref<unknown>) => {
+        ReactModule.useImperativeHandle(ref, () => ({
+          close: jest.fn(),
+          present: jest.fn(),
+        }));
+        return ReactModule.createElement(
+          View,
+          { ...props, testID: 'close-position-sheet' },
+          ReactModule.createElement(props.backgroundComponent, {
+            style: props.backgroundStyle,
+            testID: 'dialog-background',
+          }),
+          props.children,
+        );
+      },
+    ),
+  };
+});
+
+jest.mock('@/components2024/Button', () => {
+  const ReactModule = require('react');
+  const { Pressable, Text } = require('react-native');
+  return {
+    Button: ({ disabled, loading, onPress, title, type }: any) =>
+      ReactModule.createElement(
+        Pressable,
+        {
+          accessibilityState: { disabled },
+          disabled,
+          loading,
+          onPress,
+          testID: 'close-confirm-button',
+          type,
+        },
+        ReactModule.createElement(Text, null, title),
+      ),
+  };
+});
+
+// Keep the real background factory and renderer; only the native gradient is stubbed.
+jest.mock('react-native-linear-gradient', () => require('react-native').View);
+
+jest.mock('@/hooks/perps/subscriptions/usePerpsLatestTrade', () => ({
+  usePerpsLatestTrade: (options: object) => {
+    mockUsePerpsLatestTrade(options);
+    return {
+      error: null,
+      identity: 'BTC',
+      status: mockLatestTradeStatus,
+      trade: { price: mockLatestTradePrice },
+    };
+  },
+}));
+
+jest.mock('@/hooks/theme', () => ({
+  useTheme2024: ({
+    getStyle,
+  }: { getStyle?: (input: object) => object } = {}) => {
+    const colors2024 = mockThemeMode
+      ? require('@/constant/theme').ThemeColors2024[mockThemeMode]
+      : new Proxy({}, { get: (_target, key) => String(key) });
+    return {
+      colors2024,
+      isLight: mockThemeMode !== 'dark',
+      styles: getStyle?.({
+        colors2024,
+        isLight: mockThemeMode !== 'dark',
+        safeAreaInsets: { bottom: 0 },
+      }),
+    };
+  },
+}));
+
+jest.mock('@/utils/styles', () => ({
+  createGetStyles2024: (getStyle: unknown) => getStyle,
+}));
+
+jest.mock('@gorhom/bottom-sheet', () => ({
+  ANIMATION_STATUS: { STOPPED: 2 },
+  SCROLLABLE_STATUS: { UNLOCKED: 1 },
+  useBottomSheetInternal: () => ({
+    animatedAnimationState: { value: { status: 2 } },
+    animatedScrollableStatus: { value: 1 },
+  }),
+  BottomSheetScrollView: require('react-native').ScrollView,
+  BottomSheetTextInput: require('react-native').TextInput,
+  BottomSheetView: require('react-native').View,
+}));
+
+jest.mock('../../scene/usePerpsProPositionMark', () => ({
+  usePerpsProPositionMark: () => ({
+    displayBase: 'BTC',
+    displayPair: 'BTCUSDC',
+    markPrice: '60000',
+    pxDecimals: 0,
+    quoteAsset: 'USDC',
+    sourceTag: null,
+  }),
+}));
+
+jest.mock('../common/PerpsProDottedUnderlineText', () => {
+  const ReactModule = require('react');
+  const { Pressable, Text } = require('react-native');
+  return {
+    PerpsProDottedUnderlineText: ({
+      accessibilityLabel,
+      children,
+      onPress,
+      style,
+    }: any) =>
+      onPress
+        ? ReactModule.createElement(
+            Pressable,
+            { accessibilityLabel, accessibilityRole: 'button', onPress },
+            ReactModule.createElement(Text, { style }, children),
+          )
+        : ReactModule.createElement(Text, { style }, children),
+  };
+});
+
+jest.mock('../common/PerpsProFieldExplanationContext', () => ({
+  usePerpsProFieldExplanation: () => mockOpenFieldExplanation,
+}));
+
+jest.mock('../common/usePerpsProDismissKeyboard', () => ({
+  usePerpsProDismissKeyboard: () => (action: () => void) => action(),
+}));
+
+jest.mock('../common/usePerpsProSliderHaptics', () => ({
+  usePerpsProSliderHaptics: (options: object) => {
+    mockUseSliderHaptics(options);
+    return {
+      onSlidingComplete: mockSliderHapticComplete,
+      onSlidingStart: mockSliderHapticStart,
+      onValueChange: mockSliderHapticValueChange,
+    };
+  },
+}));
+
+jest.mock('../common/PerpsProSlider', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    PerpsProSlider: (props: Record<string, unknown>) =>
+      ReactModule.createElement(View, {
+        ...props,
+        testID: 'close-position-slider',
+      }),
+  };
+});
+
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) =>
+      ({
+        'global.confirm': 'Confirm',
+        'page.perps.pro.positions.amount': 'Amount',
+        'page.perps.pro.positions.closePosition': 'Close Position',
+        'page.perps.pro.positions.entry': 'Entry Price',
+        'page.perps.pro.positions.estimatedPnl': 'Estimated PnL',
+        'page.perps.pro.positions.limit': 'Limit',
+        'page.perps.pro.positions.long': 'Long',
+        'page.perps.pro.positions.mark': 'Mark Price',
+        'page.perps.pro.positions.market': 'Market',
+        'page.perps.pro.positions.marketPrice': 'Market Price',
+        'page.perps.pro.positions.positionAmount': 'Position Amount',
+        'page.perps.pro.positions.price': 'Price',
+      }[key] ?? key),
+  }),
+}));
+
+import type { PerpsPositionViewModel } from '../../model/position';
+import { PerpsProClosePositionSheet } from './PerpsProClosePositionSheet';
+
+const position = {
+  baseSize: '1',
+  coin: 'BTC',
+  direction: 'long',
+  entryPrice: '59000',
+  key: 'BTC',
+  leverage: 5,
+} as PerpsPositionViewModel;
+const market = {
+  displayBase: 'BTC',
+  displayPair: 'BTCUSDC',
+  markPrice: '60000',
+  midPrice: '60000',
+  pxDecimals: 0,
+  quoteAsset: 'USDC',
+  sourceTag: 'XYZ',
+  szDecimals: 4,
+};
+
+describe('PerpsProClosePositionSheet', () => {
+  it.each(['light', 'dark'] as const)(
+    'renders distinct %s sheet, card and field backgrounds in Market and Limit',
+    mode => {
+      mockThemeMode = mode;
+      render(
+        <PerpsProClosePositionSheet
+          amountUnit="base"
+          market={market}
+          position={position}
+          onClose={jest.fn()}
+          onReview={jest.fn()}
+          visible
+        />,
+      );
+      const colors = ThemeColors2024[mode];
+      const cardColor =
+        colors[mode === 'light' ? 'neutral-bg-1' : 'neutral-bg-2'];
+      const fieldColor =
+        colors[mode === 'light' ? 'neutral-bg-0' : 'neutral-bg-5'];
+      for (const orderType of ['market', 'limit'] as const) {
+        expect(screen.getByLabelText('Amount').props).toMatchObject({
+          cursorColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+          selectionColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+        });
+        if (orderType === 'limit') {
+          fireEvent.press(
+            screen.getByTestId('perps-pro-close-market-price-field'),
+          );
+          expect(screen.getByLabelText('Price').props).toMatchObject({
+            cursorColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+            selectionColor: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+          });
+        }
+        const background = StyleSheet.flatten(
+          screen.getByTestId('dialog-background').props.style,
+        ).backgroundColor;
+        expect(background).toBe(colors['neutral-bg-0']);
+        expect(
+          StyleSheet.flatten(
+            screen.getByTestId('close-position-sheet').props.handleStyle,
+          ).backgroundColor,
+        ).toBe(background);
+        const cards = screen
+          .UNSAFE_getAllByType(View)
+          .map(view => StyleSheet.flatten(view.props.style))
+          .filter(style => style?.borderRadius === 12);
+        expect(cards).toHaveLength(2);
+        for (const card of cards) {
+          expect(card.backgroundColor).toBe(cardColor);
+          expect(card.backgroundColor).not.toBe(background);
+        }
+        const fields = screen
+          .UNSAFE_getAllByType(View)
+          .map(view => StyleSheet.flatten(view.props.style))
+          .filter(style => style?.borderRadius === 6);
+        expect(fields).toHaveLength(3);
+        for (const field of fields) {
+          expect(field.backgroundColor).toBe(fieldColor);
+          expect(field.backgroundColor).not.toBe(cardColor);
+        }
+      }
+    },
+  );
+
+  it('keeps Android Amount editing mounted while reserving the Done bar', () => {
+    const show = jest.fn();
+    const listener = jest
+      .spyOn(Keyboard, 'addListener')
+      .mockImplementation((event, callback) => {
+        if (event === 'keyboardDidShow') {
+          show.mockImplementation(callback);
+        }
+        return { remove: jest.fn() };
+      });
+    perpsProKeyboardSession.setEnabled(true);
+    const view = render(
+      <PerpsProClosePositionSheet
+        amountUnit="base"
+        market={market}
+        position={position}
+        onClose={jest.fn()}
+        onReview={jest.fn()}
+        visible
+      />,
+    );
+    const input = screen.getByLabelText('Amount');
+    fireEvent(input, 'focus');
+    const owner = perpsProKeyboardSession.getSnapshot();
+    fireEvent.changeText(input, '0.5');
+    act(() => show({ endCoordinates: { height: 300, screenY: 500 } }));
+    expect(screen.getByTestId('close-position-sheet').props.snapPoints).toEqual(
+      [598],
+    );
+    expect(perpsProKeyboardSession.getSnapshot()?.id).toBe(owner?.id);
+    expect(owner?.sheetId).toBeDefined();
+    expect(screen.getByLabelText('Amount').props.value).toBe('0.5');
+    expect(StyleSheet.flatten(input.props.style)).toMatchObject({
+      height: 40,
+      fontSize: 14,
+      includeFontPadding: false,
+      textAlignVertical: 'center',
+    });
+    expect(StyleSheet.flatten(input.props.style).lineHeight).toBeUndefined();
+    view.unmount();
+    perpsProKeyboardSession.setEnabled(false);
+    listener.mockRestore();
+  });
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockLatestTradePrice = '60001';
+    mockLatestTradeStatus = 'ready';
+  });
+  it('uses the 550px sheet, switches the price field to Limit, and seeds latest trade', async () => {
+    const onReview = jest.fn();
+    render(
+      <PerpsProClosePositionSheet
+        amountUnit="base"
+        market={market}
+        onClose={jest.fn()}
+        onReview={onReview}
+        position={position}
+        visible
+      />,
+    );
+
+    expect(screen.getByTestId('close-position-sheet').props.snapPoints).toEqual(
+      [550],
+    );
+    expect(screen.getByTestId('close-position-sheet').props).toMatchObject({
+      enableDynamicSizing: false,
+      keyboardBehavior: 'interactive',
+      keyboardBlurBehavior: 'restore',
+    });
+    expect(screen.getByTestId('close-confirm-button').props.type).toBe(
+      'primary',
+    );
+    expect(screen.getByText('xyz')).toBeTruthy();
+    const sourceTagStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-close-market-tag').props.style,
+    );
+    expect(sourceTagStyle).toMatchObject({
+      backgroundColor: 'neutral-bg-5',
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    });
+    expect(sourceTagStyle.borderColor).toBeUndefined();
+    expect(sourceTagStyle.borderWidth).toBeUndefined();
+    const directionTagStyle = StyleSheet.flatten(
+      screen.getByText('Long 5x').parent?.parent?.props.style,
+    );
+    expect(directionTagStyle).toMatchObject({
+      backgroundColor: 'green-light-1',
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    });
+    expect(directionTagStyle.borderColor).toBeUndefined();
+    expect(directionTagStyle.borderWidth).toBeUndefined();
+    expect(
+      StyleSheet.flatten(screen.getByText('Long 5x').props.style),
+    ).toMatchObject({
+      color: 'green-default',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+    });
+    expect(screen.getByText('Entry Price (USDC)')).toBeTruthy();
+    expect(screen.getByText('Mark Price (USDC)')).toBeTruthy();
+    expect(screen.getByDisplayValue('100% (≈1.0000)')).toBeTruthy();
+    expect(screen.getByTestId('close-position-slider').props).toMatchObject({
+      minimumValue: 0,
+      pointCount: 5,
+      appearance: 'order-dialog',
+      tone: 'neutral',
+      value: 100,
+    });
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-close-position-footer').props.style,
+      ),
+    ).toMatchObject({ paddingBottom: 36, paddingTop: 24 });
+    for (const testID of [
+      'perps-pro-close-position-header',
+      'perps-pro-close-position-summary',
+    ]) {
+      expect(
+        StyleSheet.flatten(screen.getByTestId(testID).props.style),
+      ).not.toHaveProperty('borderBottomWidth');
+    }
+
+    fireEvent.press(screen.getByTestId('perps-pro-close-market-price-field'));
+    await waitFor(() =>
+      expect(screen.getByLabelText('Price').props.value).toBe('60001'),
+    );
+
+    fireEvent.press(screen.getByTestId('close-confirm-button'));
+    expect(onReview).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inputSource: 'slider',
+        limitPrice: '60001',
+        orderType: 'limit',
+        percent: 100,
+        size: '1',
+      }),
+    );
+  });
+
+  it('preserves a Limit price zero run while editing and accepts the replacement prefix', async () => {
+    render(
+      <PerpsProClosePositionSheet
+        amountUnit="base"
+        market={market}
+        onClose={jest.fn()}
+        onReview={jest.fn()}
+        position={position}
+        visible
+      />,
+    );
+
+    fireEvent.press(screen.getByTestId('perps-pro-close-market-price-field'));
+    await waitFor(() =>
+      expect(screen.getByLabelText('Price').props.value).toBe('60001'),
+    );
+    fireEvent.changeText(screen.getByLabelText('Price'), '0000');
+    expect(screen.getByLabelText('Price').props.value).toBe('0000');
+    fireEvent.changeText(screen.getByLabelText('Price'), '50000');
+    expect(screen.getByLabelText('Price').props.value).toBe('50000');
+  });
+
+  it('omits the source tag for native markets', () => {
+    render(
+      <PerpsProClosePositionSheet
+        amountUnit="base"
+        market={{ ...market, sourceTag: null }}
+        onClose={jest.fn()}
+        onReview={jest.fn()}
+        position={position}
+        visible
+      />,
+    );
+
+    expect(screen.getByText('BTCUSDC')).toBeTruthy();
+    expect(screen.queryByText('Perp')).toBeNull();
+    expect(screen.queryByTestId('perps-pro-close-market-tag')).toBeNull();
+  });
+
+  it('switches to independent manual amount input without mutating slider percent', () => {
+    const onReview = jest.fn();
+    render(
+      <PerpsProClosePositionSheet
+        amountUnit="base"
+        market={market}
+        onClose={jest.fn()}
+        onReview={onReview}
+        position={position}
+        visible
+      />,
+    );
+
+    const amount = screen.getByLabelText('Amount');
+    expect(amount.props).toMatchObject({
+      maxFontSizeMultiplier: 1.2,
+      multiline: false,
+      numberOfLines: 1,
+      scrollEnabled: true,
+    });
+    expect(amount.props.style).toEqual(
+      expect.objectContaining({
+        includeFontPadding: false,
+        textAlignVertical: 'center',
+      }),
+    );
+    fireEvent(amount, 'focus');
+    expect(screen.getByLabelText('Amount').props.selection).toBeUndefined();
+    fireEvent(screen.getByTestId('close-position-slider'), 'valueChange', 50);
+    expect(screen.getByLabelText('Amount').props.value).toBe('50% (≈0.5000)');
+    fireEvent(screen.getByLabelText('Amount'), 'pressIn');
+    expect(screen.getByLabelText('Amount').props.value).toBe('');
+    expect(screen.getByTestId('close-position-slider').props.value).toBe(0);
+    fireEvent.changeText(amount, '0.25');
+    expect(screen.getByTestId('close-position-slider').props.value).toBe(0);
+    fireEvent.press(screen.getByTestId('close-confirm-button'));
+    expect(onReview).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inputSource: 'manual',
+        percent: 50,
+        size: '0.25',
+      }),
+    );
+  });
+
+  it('wires the percentage slider lifecycle to local step haptics', () => {
+    render(
+      <PerpsProClosePositionSheet
+        amountUnit="base"
+        market={market}
+        onClose={jest.fn()}
+        onReview={jest.fn()}
+        position={position}
+        visible
+      />,
+    );
+
+    const slider = screen.getByTestId('close-position-slider');
+    fireEvent(slider, 'slidingStart', 100);
+    fireEvent(slider, 'valueChange', 99);
+    fireEvent(slider, 'slidingComplete', 99);
+
+    expect(mockSliderHapticStart).toHaveBeenCalledWith(100);
+    expect(mockSliderHapticValueChange).toHaveBeenCalledWith(99);
+    expect(mockSliderHapticComplete).toHaveBeenCalledTimes(1);
+    expect(mockUseSliderHaptics).toHaveBeenCalledWith({
+      disabled: false,
+      maximumValue: 100,
+      minimumValue: 0,
+      step: 1,
+      value: expect.any(Number),
+    });
+  });
+
+  it('clears a focused slider value when Backspace starts manual editing', () => {
+    render(
+      <PerpsProClosePositionSheet
+        amountUnit="base"
+        market={market}
+        onClose={jest.fn()}
+        onReview={jest.fn()}
+        position={position}
+        visible
+      />,
+    );
+
+    fireEvent(screen.getByLabelText('Amount'), 'focus');
+    fireEvent(screen.getByTestId('close-position-slider'), 'valueChange', 50);
+    const amount = screen.getByLabelText('Amount');
+    fireEvent(amount, 'keyPress', { nativeEvent: { key: 'Backspace' } });
+    fireEvent.changeText(amount, '50% (≈0.500)');
+
+    expect(screen.getByLabelText('Amount').props.value).toBe('');
+    expect(screen.getByTestId('close-position-slider').props.value).toBe(0);
+
+    fireEvent.changeText(screen.getByLabelText('Amount'), '0.2');
+    expect(screen.getByLabelText('Amount').props.value).toBe('0.2');
+
+    fireEvent(screen.getByTestId('close-position-slider'), 'valueChange', 40);
+    fireEvent.changeText(screen.getByLabelText('Amount'), '40% (≈0.400)');
+    expect(screen.getByLabelText('Amount').props.value).toBe('');
+  });
+
+  it('does not clear an existing manual amount on repeated focus or press', () => {
+    render(
+      <PerpsProClosePositionSheet
+        amountUnit="base"
+        market={market}
+        onClose={jest.fn()}
+        onReview={jest.fn()}
+        position={position}
+        visible
+      />,
+    );
+
+    const amount = screen.getByLabelText('Amount');
+    fireEvent(amount, 'focus');
+    fireEvent.changeText(amount, '0.25');
+    fireEvent(screen.getByLabelText('Amount'), 'pressIn');
+    fireEvent(screen.getByLabelText('Amount'), 'focus');
+
+    expect(screen.getByLabelText('Amount').props.value).toBe('0.25');
+  });
+
+  it('stays mounted but pauses interaction and realtime work while review covers it', () => {
+    render(
+      <PerpsProClosePositionSheet
+        amountUnit="base"
+        coveredByReview
+        market={market}
+        onClose={jest.fn()}
+        onReview={jest.fn()}
+        position={position}
+        visible
+      />,
+    );
+
+    expect(mockUsePerpsLatestTrade).toHaveBeenLastCalledWith(
+      expect.objectContaining({ enabled: false }),
+    );
+    expect(
+      screen.getByTestId('close-position-sheet').props.backdropComponent({})
+        .props.pressBehavior,
+    ).toBe('none');
+    expect(screen.getByTestId('close-position-sheet').props).toMatchObject({
+      backdropComponent: expect.any(Function),
+      enablePanDownToClose: false,
+    });
+    expect(
+      screen.getByTestId('close-confirm-button').props.accessibilityState,
+    ).toEqual(expect.objectContaining({ disabled: true }));
+    expect(mockUseSliderHaptics).toHaveBeenCalledWith(
+      expect.objectContaining({ disabled: true }),
+    );
+  });
+
+  it('freezes the reviewed Limit price while the confirmation covers the editor', async () => {
+    const props = {
+      amountUnit: 'base' as const,
+      market,
+      onClose: jest.fn(),
+      onReview: jest.fn(),
+      position,
+      visible: true,
+    };
+    const view = render(<PerpsProClosePositionSheet {...props} />);
+
+    fireEvent.press(screen.getByTestId('perps-pro-close-market-price-field'));
+    await waitFor(() =>
+      expect(screen.getByLabelText('Price').props.value).toBe('60001'),
+    );
+    fireEvent.press(screen.getByTestId('close-confirm-button'));
+
+    mockLatestTradePrice = '60002';
+    view.rerender(<PerpsProClosePositionSheet {...props} coveredByReview />);
+    view.rerender(<PerpsProClosePositionSheet {...props} />);
+
+    expect(screen.getByLabelText('Price').props.value).toBe('60001');
+  });
+
+  it('does not seed a Limit price from a stale cached latest trade', async () => {
+    mockLatestTradeStatus = 'stale';
+    const props = {
+      amountUnit: 'base' as const,
+      market,
+      onClose: jest.fn(),
+      onReview: jest.fn(),
+      position,
+      visible: true,
+    };
+    const view = render(<PerpsProClosePositionSheet {...props} />);
+
+    fireEvent.press(screen.getByTestId('perps-pro-close-market-price-field'));
+    expect(screen.getByLabelText('Price').props.value).toBe('');
+
+    mockLatestTradeStatus = 'ready';
+    view.rerender(
+      <PerpsProClosePositionSheet {...props} market={{ ...market }} />,
+    );
+    await waitFor(() =>
+      expect(screen.getByLabelText('Price').props.value).toBe('60001'),
+    );
+  });
+
+  it('opens the Estimated PnL explanation without reviewing the order', () => {
+    const onReview = jest.fn();
+    render(
+      <PerpsProClosePositionSheet
+        amountUnit="base"
+        market={market}
+        onClose={jest.fn()}
+        onReview={onReview}
+        position={position}
+        visible
+      />,
+    );
+
+    fireEvent.press(screen.getByLabelText('Estimated PnL'));
+    expect(mockOpenFieldExplanation).toHaveBeenCalledWith('estimatedPnl');
+    expect(onReview).not.toHaveBeenCalled();
+  });
+});

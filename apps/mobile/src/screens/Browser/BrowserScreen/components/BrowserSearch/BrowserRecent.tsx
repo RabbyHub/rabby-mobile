@@ -4,7 +4,7 @@ import { TouchableOpacity, View } from 'react-native';
 import { RcIconDynamicArrowDownCC } from '@/assets/icons/dapp';
 import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
 import RcIconEmpty from '@/assets/icons/dapp/dapp-history-empty.svg';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';

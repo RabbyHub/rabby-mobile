@@ -6,12 +6,11 @@ import React, {
   useImperativeHandle,
   type Ref,
 } from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
 import {
   FlatList,
   Platform,
-  StyleProp,
   View,
-  ViewStyle,
   type FlatListProps,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
@@ -20,7 +19,7 @@ import { RefreshControl } from 'react-native-gesture-handler';
 import { HistoryItem } from './HistoryItem';
 import { SkeletonCard } from './SkeletonCard';
 import { TransactionItem } from '@/screens/TransactionRecord/components/TransactionItem2025';
-import { TransactionGroup } from '@/core/services/transactionHistory';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
 import type { HistoryDisplayItem } from '@/types/history';
 import { Empty } from '../components/Empty';
 import { formatTimestamp } from '@/utils/time';
@@ -31,7 +30,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGetCexList } from '../hook';
 import { useMemoizedFn } from 'ahooks';
 import { Text } from '@/components/Typography';
-import { Account } from '@/types/account';
+import type { Account } from '@/types/account';
 
 const isIOS = Platform.OS === 'ios';
 

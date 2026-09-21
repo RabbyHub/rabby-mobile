@@ -3,15 +3,16 @@ import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
 import { ScrollView, TouchableOpacity, View } from 'react-native';
 
-import { TransactionGroup } from '@/core/services/transactionHistory';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
 
-import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
-import { ApproveNFTRequireData } from '@rabby-wallet/rabby-action';
+import type { ApproveNFTRequireData } from '@rabby-wallet/rabby-action';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { HistoryItemIcon } from '../HistoryItemIcon';
@@ -20,7 +21,7 @@ import { RevokeNFTCollectionBtn } from './components/RevokeNFTCollectionBtn';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { findAccountByPriority } from '@/utils/account';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 import {
   ActionDetailItem,

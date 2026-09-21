@@ -122,24 +122,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
   },
-  selectChainItemBalance: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  percentageText: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '500',
-    color: colors2024['neutral-foot'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  walletIcon: {
-    color: colors2024['neutral-foot'],
-    width: 14,
-    height: 14,
-    marginRight: 6,
-  },
   usdValueText: {
     fontSize: 16,
     fontWeight: '500',
@@ -158,11 +140,5 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     right: 0,
     backgroundColor: colors2024['green-default'],
     borderColor: colors2024['neutral-title-2'],
-  },
-  chainSummary: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
   },
 }));

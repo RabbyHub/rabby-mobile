@@ -14,6 +14,14 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 ## iOS
 
+### ios appstore_signing_preflight
+
+```sh
+[bundle exec] fastlane ios appstore_signing_preflight
+```
+
+Preflight iOS appstore signing assets
+
 ### ios adhoc
 
 ```sh

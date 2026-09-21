@@ -1,7 +1,8 @@
-import { EVENT_NAMES, MODAL_ID } from './types';
+import type { MODAL_ID } from './types';
+import { EVENT_NAMES } from './types';
 import { globalSheetModalEvents } from './event';
-import { apisAppWin2024 } from '@/core/services2024/appWin';
-import { keyringService } from '@/core/services/shared';
+import { apisAppWin2024 } from '@/core/serviceApi/appWin';
+import { bindKeyringEventAfterRegistration } from '@/core/serviceApi/keyring';
 import { uiRefreshTimeout } from '@/core/apis/autoLock';
 
 class IdSet<T = any> extends Set<T> {
@@ -21,7 +22,7 @@ globalSheetModalEvents.on(EVENT_NAMES.CREATE, (id: MODAL_ID) => {
 globalSheetModalEvents.on(EVENT_NAMES.REMOVE, (id: MODAL_ID) => {
   allIds.delete(id);
 });
-keyringService.on('lock', () => {
+bindKeyringEventAfterRegistration('lock', () => {
   allIds.forEach(id => {
     apisAppWin2024.removeGlobalBottomSheetModal(id, { waitMaxtime: 0 });
   });

@@ -1,216 +1,84 @@
-import {
-  loadJavaScriptBeforeContentLoadedOnBoot,
-  subscribeUnlockToFetchAccounts,
-} from './hooks/useBootstrap';
-import { InteractionManager } from 'react-native';
+import { runStartupTask } from './core/utils/startupScheduler';
+import { STARTUP_TASKS } from './core/utils/startupTaskManifest';
+import { traceAndroidInstant } from './core/utils/androidTrace';
 
-import { runIIFEFunc } from './core/utils/store';
-import { startSubscribeLangChange } from './hooks/lang';
-import { connectPushServerOnBootstrap } from './core/notifications';
-import { startRestoreWalletConnectSessions } from './core/walletconnect/client';
-
-import { startManageAccountStoreLifecycle } from './hooks/account';
-
-import {
-  loadLockInfoOnBootstrap,
-  startSubscribeAppStateChange,
-} from './hooks/useLock';
-import { startSyncDefaultRPCs } from './hooks/defaultRPCs';
-import { startSubscribePerpsOnAppState } from './hooks/perps/usePerpsStore';
-import { storeApiGasAccount } from './screens/GasAccount/hooks/atom';
-import { startSubscribeOnekeyDevices } from './core/apis/onekey';
-import { startSubscribeTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
-import { startFetchOnceTop5TokensForAllAccounts } from './components/AccountSwitcher/hooks';
-import { startSyncOnlineConfig } from './core/config/online';
-import { loadVersionInfoOnBootstrap } from './hooks/version';
-import { autoGoogleSignIfPreviousSignedOnBoot } from './hooks/cloudStorage';
-import {
-  screenshotModalStartSyncNetworth,
-  startSubscribeUserDidTakeScreenshot,
-} from './components/Screenshot/hooks';
-import {
-  enableIOSAppSwitcherBlur,
-  startSubscribeIOSAppSwitcherBlur,
-  startSubscribeWhetherPreventScreenshot,
-} from './hooks/native/security';
-import {
-  startSubscribeAtSensitiveScene,
-  startSubscribeIOSJustScreenshotted,
-  startSubscribeIOSScreenRecording,
-  startSubscribeRemoteNotification,
-} from './hooks/navigation';
-import { startComputationThread } from './perfs/thread';
-import { rateModalStartSyncNetworth } from './components/RateModal/hooks';
-import { trimNoLongerSupportsOnUnlock } from './components2024/NoLongerSupports/useNoLongerSupports';
-import { startCheckClearAction } from './utils/clipboard';
-import { startSubscribeOpenApiHttpErrorDebugToast } from './utils/openapiDebugToast';
-import tokenListStore from './store/tokens';
-import {
-  balance24hStore,
-  hydrateCachedHome24hBalanceScene,
-  scene24hBalanceStore,
-} from './store/balance24h';
-import {
-  hydrateCachedHomeDayCurve,
-  initCurve24hStore,
-  startProcessMultiCurveEvents,
-} from './store/curve24h';
-import useProtocolListStore from './store/protocols';
-import { useAppChainStore } from './store/appchain';
-import addressBalanceStore from './store/balance';
-import {
-  ensureAccountBalanceSelectionLifecycle,
-  startProcessAccountBalanceEvents,
-} from './store/balanceAccountSelection';
-import * as apisAutoLock from './core/apis/autoLock';
-import { isUnlockSessionValid } from './core/apis/lock';
-import { startWatchLayoutChange } from './hooks/useAppLayout';
-import { startCareAppNotificationPermissions } from './hooks/appNotification';
-import nftListStore from './store/nfts';
-import { keyringService } from './core/services';
-
-const UNLOCKED_STORES_AFTER_UNLOCK_DELAY_MS = 800;
-
-startComputationThread();
-startSubscribeLangChange();
-
-connectPushServerOnBootstrap();
-
-startManageAccountStoreLifecycle();
-loadLockInfoOnBootstrap();
-apisAutoLock.setupAutoLockChecker();
-startFetchOnceTop5TokensForAllAccounts();
-subscribeUnlockToFetchAccounts();
-startSubscribeAppStateChange();
-
-startSyncOnlineConfig();
-loadVersionInfoOnBootstrap();
-
-loadJavaScriptBeforeContentLoadedOnBoot();
-
-startSubscribeOnekeyDevices();
-startSubscribeTrezorConnectOnUrl();
-
-autoGoogleSignIfPreviousSignedOnBoot();
-startSyncDefaultRPCs();
-runIIFEFunc(() => {
-  storeApiGasAccount.fetchGasAccountInfo();
-});
-startSubscribePerpsOnAppState();
-startWatchLayoutChange();
-
-startSubscribeUserDidTakeScreenshot();
-startSubscribeAtSensitiveScene();
-startSubscribeIOSJustScreenshotted();
-startSubscribeIOSAppSwitcherBlur();
-enableIOSAppSwitcherBlur();
-startSubscribeWhetherPreventScreenshot();
-startSubscribeIOSScreenRecording();
-
-rateModalStartSyncNetworth();
-screenshotModalStartSyncNetworth();
-
-startProcessAccountBalanceEvents();
-scene24hBalanceStore.startProcessScene24hBalanceEvents();
-hydrateCachedHome24hBalanceScene();
-startProcessMultiCurveEvents();
-
-trimNoLongerSupportsOnUnlock();
-
-startCheckClearAction();
-startSubscribeOpenApiHttpErrorDebugToast();
-
-startCareAppNotificationPermissions();
-startSubscribeRemoteNotification();
-
-async function initPersistedStores() {
-  console.time('initPersistedStores');
-  await useAppChainStore.getState().initStore();
-  await Promise.all([
-    addressBalanceStore.initStore(),
-    balance24hStore.initStore(),
-    initCurve24hStore(),
-  ]);
-  hydrateCachedHome24hBalanceScene();
-  hydrateCachedHomeDayCurve();
-  console.timeEnd('initPersistedStores');
-}
-
-export async function initReadableAccountStores() {
-  console.time('initReadableAccountStores');
-  await tokenListStore.getState().initStore();
-  await nftListStore.getState().initStore();
-  await useProtocolListStore.getState().initStore();
-  console.timeEnd('initReadableAccountStores');
-}
-
-const initPersistedStoresStateRef = {
-  promise: null as Promise<void> | null,
-};
-export const startInitPersistedStores = async () => {
-  if (initPersistedStoresStateRef.promise) {
-    return initPersistedStoresStateRef.promise;
-  }
-  const promise = initPersistedStores();
-  initPersistedStoresStateRef.promise = promise;
-  await promise;
+const deferredStartupTasksRegisteredRef = {
+  current: false,
 };
 
-export async function startReadableAccountBootstrapWarmups() {
-  const results = await Promise.allSettled([
-    startInitPersistedStores(),
-    ensureAccountBalanceSelectionLifecycle(),
-  ]);
-
-  results.forEach(result => {
-    if (result.status === 'rejected') {
-      console.error(
-        'startReadableAccountBootstrapWarmups::error',
-        result.reason,
-      );
-    }
-  });
-}
-
-export async function startUnlockScreenBootstrapWarmups() {
-  return startReadableAccountBootstrapWarmups();
-}
-
-const startInitStores = async () => {
-  await startInitPersistedStores();
-};
-
-function startInitStoresAfterUnlockInteractions(reason: string) {
-  const interactionHandle = InteractionManager.runAfterInteractions(() => {
-    setTimeout(() => {
-      startInitStores().catch(error => {
-        console.error(`startInitStoresOnUnlock::${reason}::error`, error);
-      });
-    }, UNLOCKED_STORES_AFTER_UNLOCK_DELAY_MS);
-  });
-
-  return interactionHandle;
-}
-
-function startInitStoresOnUnlock() {
-  if (keyringService.isUnlocked()) {
-    startInitStoresAfterUnlockInteractions('already_unlocked');
+export function registerSetupAppBeforeRenderDeferredTasks(reason = 'unknown') {
+  if (deferredStartupTasksRegisteredRef.current) {
+    traceAndroidInstant('startup.setup_before_render.register_skipped', {
+      reason,
+    });
     return;
   }
 
-  keyringService.once('unlock', () => {
-    startInitStoresAfterUnlockInteractions('unlock_event');
+  deferredStartupTasksRegisteredRef.current = true;
+  traceAndroidInstant('startup.setup_before_render.register', {
+    reason,
   });
+
+  runStartupTask(async () => {
+    const { startSetupRuntimeCoreLifecycle } = await import(
+      './startup/deferredTasks/setupRuntimeCoreLifecycle'
+    );
+    startSetupRuntimeCoreLifecycle();
+  }, STARTUP_TASKS.setupRuntimeCoreLifecycle);
+
+  runStartupTask(async () => {
+    const { startSetupRuntimeRemoteWarmups } = await import(
+      './startup/deferredTasks/setupRuntimeRemoteWarmups'
+    );
+    startSetupRuntimeRemoteWarmups();
+  }, STARTUP_TASKS.setupRuntimeRemoteWarmups);
+
+  runStartupTask(async () => {
+    const { startSetupRuntimeHardwareSubscriptions } = await import(
+      './startup/deferredTasks/setupRuntimeHardwareSubscriptions'
+    );
+    startSetupRuntimeHardwareSubscriptions();
+  }, STARTUP_TASKS.setupRuntimeHardwareSubscriptions);
+
+  runStartupTask(async () => {
+    const { storeApiGasAccount } = await import(
+      './screens/GasAccount/hooks/atom'
+    );
+    await storeApiGasAccount.fetchGasAccountInfo();
+  }, STARTUP_TASKS.setupGasAccountInfoFetch);
+
+  runStartupTask(async () => {
+    const { startSetupRuntimePerpsAppStateSubscription } = await import(
+      './startup/deferredTasks/setupRuntimePerpsAppStateSubscription'
+    );
+    startSetupRuntimePerpsAppStateSubscription();
+  }, STARTUP_TASKS.setupRuntimePerpsAppStateSubscription);
+
+  runStartupTask(async () => {
+    const { startPerpsProAffinityWarmup } = await import(
+      './startup/deferredTasks/perpsProAffinityWarmup'
+    );
+    await startPerpsProAffinityWarmup();
+  }, STARTUP_TASKS.perpsProAffinityWarmup);
+
+  runStartupTask(async () => {
+    const { startSetupRuntimeScreenshotFeedbackSubscription } = await import(
+      './startup/deferredTasks/setupRuntimeScreenshotFeedbackSubscription'
+    );
+    startSetupRuntimeScreenshotFeedbackSubscription();
+  }, STARTUP_TASKS.setupRuntimeScreenshotFeedbackSubscription);
+
+  runStartupTask(async () => {
+    const { startSetupRuntimeNotificationBootstrap } = await import(
+      './startup/deferredTasks/setupRuntimeNotificationBootstrap'
+    );
+    startSetupRuntimeNotificationBootstrap();
+  }, STARTUP_TASKS.setupRuntimeNotificationBootstrap);
+
+  runStartupTask(async () => {
+    const { startSetupRuntimeUnlockPolicies } = await import(
+      './startup/deferredTasks/setupRuntimeUnlockPolicies'
+    );
+    startSetupRuntimeUnlockPolicies();
+  }, STARTUP_TASKS.setupRuntimeUnlockPolicies);
 }
-
-startInitStoresOnUnlock();
-
-function startWalletConnectStartupPolicy() {
-  if (keyringService.isUnlocked() || isUnlockSessionValid()) {
-    startRestoreWalletConnectSessions();
-  }
-
-  keyringService.on('unlock', startRestoreWalletConnectSessions);
-}
-
-startWalletConnectStartupPolicy();

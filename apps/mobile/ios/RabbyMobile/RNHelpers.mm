@@ -7,6 +7,27 @@
 // To export a module named RNHelpers
 RCT_EXPORT_MODULE();
 
++ (BOOL)requiresMainQueueSetup {
+    return NO;
+}
+
+- (NSDictionary *)constantsToExport {
+    NSURL *buildInfoURL = [[NSBundle mainBundle] URLForResource:@"rabby-build-info" withExtension:@"json"];
+    NSDictionary *buildInfo = @{};
+
+    if (buildInfoURL != nil) {
+        NSData *buildInfoData = [NSData dataWithContentsOfURL:buildInfoURL];
+        if (buildInfoData != nil) {
+            id decodedBuildInfo = [NSJSONSerialization JSONObjectWithData:buildInfoData options:0 error:nil];
+            if ([decodedBuildInfo isKindOfClass:[NSDictionary class]]) {
+                buildInfo = decodedBuildInfo;
+            }
+        }
+    }
+
+    return @{ @"buildInfo": buildInfo };
+}
+
 #pragma mark - Public API
 RCT_EXPORT_METHOD(forceExitApp) {
     exit(0);

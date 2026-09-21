@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Dimensions, TouchableOpacity } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -17,7 +17,8 @@ import {
   RootNames,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
-import { keyringService, preferenceService } from '@/core/services';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { setReportActionTs } from '@/core/serviceApi/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { navigateDeprecated } from '@/utils/navigation';
 import { Button } from '@/components2024/Button';
@@ -34,12 +35,13 @@ import {
 import { isNonPublicProductionEnv } from '@/constant';
 import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { Text } from '@/components/Typography';
 import ChevronRightSmallCC from '@/assets/icons/common/chevron-right-small-cc.svg';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+import { promptLocalStorageArchiveShare } from '@/utils/promptLocalStorageArchive';
 
 import StartScreenAnimation from '@/assets2024/animations/start-screen-animation.min.json';
 import StartScreenAnimationDark from '@/assets2024/animations/start-screen-animation-dark.min.json';
@@ -52,21 +54,54 @@ import logoDark from '@/assets/images/get-started/logo-dark.png';
 
 // Lottie animation dimensions
 const HERO_ASPECT_RATIO = 452 / 393;
+const LOCAL_STORAGE_EXPORT_TAP_COUNT = 20;
+const LOCAL_STORAGE_EXPORT_TAP_INTERVAL_MS = 500;
 
 // Hero illustration component using Lottie animation
 const HeroIllustration = ({ isLight }: { isLight: boolean }) => {
   const { styles } = useTheme2024({ getStyle });
+  const animationCompletedRef = useRef(false);
+  const rapidTapRef = useRef({ count: 0, lastTappedAt: 0 });
 
   const heroHeight = Math.ceil(SCREEN_WIDTH * HERO_ASPECT_RATIO);
 
+  const handleAnimationTap = useCallback(() => {
+    if (!isNonPublicProductionEnv || !animationCompletedRef.current) {
+      return;
+    }
+
+    const now = Date.now();
+    const isRapidTap =
+      now - rapidTapRef.current.lastTappedAt <=
+      LOCAL_STORAGE_EXPORT_TAP_INTERVAL_MS;
+    const count = isRapidTap ? rapidTapRef.current.count + 1 : 1;
+
+    rapidTapRef.current = { count, lastTappedAt: now };
+
+    if (count < LOCAL_STORAGE_EXPORT_TAP_COUNT) {
+      return;
+    }
+
+    rapidTapRef.current = { count: 0, lastTappedAt: 0 };
+    promptLocalStorageArchiveShare();
+  }, []);
+
   return (
     <View style={[styles.heroContainer, { height: heroHeight }]}>
-      <Lottie
-        source={isLight ? StartScreenAnimation : StartScreenAnimationDark}
-        style={[styles.heroBackground, { height: heroHeight }]}
-        loop={false}
-        autoPlay
-      />
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={handleAnimationTap}
+        disabled={!isNonPublicProductionEnv}>
+        <Lottie
+          source={isLight ? StartScreenAnimation : StartScreenAnimationDark}
+          style={[styles.heroBackground, { height: heroHeight }]}
+          loop={false}
+          autoPlay
+          onAnimationFinish={() => {
+            animationCompletedRef.current = true;
+          }}
+        />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -112,9 +147,9 @@ function NewUserGetStartedScreen() {
     }
 
     startCreateAddressProc(ProcDataType.Seed, '');
-    preferenceService.setReportActionTs(
+    void setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.CLICK_CREATE_NEW_ADDRESS,
-    );
+    ).catch(console.error);
     navigateDeprecated(RootNames.SetupWallet);
   }, [getStarted.processedInit, startCreateAddressProc]);
 
@@ -122,8 +157,8 @@ function NewUserGetStartedScreen() {
     if (!getStarted.processedInit) {
       return;
     }
-    preferenceService.setReportActionTs(
-      REPORT_TIMEOUT_ACTION_KEY.CLICK_HAVE_ADDRESS,
+    void setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_HAVE_ADDRESS).catch(
+      console.error,
     );
     navigateDeprecated(RootNames.SelectImportMethod);
   }, [getStarted.processedInit]);
@@ -134,15 +169,15 @@ function NewUserGetStartedScreen() {
     }
 
     navigateDeprecated(RootNames.ImportRabbyWallet);
-    preferenceService.setReportActionTs(
+    void setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.CLICK_SCAN_SYNC_EXTENSION,
-    );
+    ).catch(console.error);
   }, [getStarted.processedInit]);
 
   const initAccounts = useMemoizedFn(async () => {
     setGetStarted(prev => ({ ...prev, processedInit: false }));
     try {
-      const accounts = await keyringService.getAllVisibleAccountsArray();
+      const accounts = await keyringServiceApi.getAllVisibleAccountsArray();
       setGetStarted(prev => ({ ...prev, localHasAccounts: !!accounts.length }));
       if (accounts?.length) {
         resetNavigationTo(navigation, 'Home');

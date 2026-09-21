@@ -1,7 +1,7 @@
 import { getRabbyAppDbDir } from '@/databases/constant';
 import { Platform } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
-import RNFS from 'react-native-fs';
+import RNFS from '@rabby-wallet/react-native-fs';
 
 const FORCE_MEMORY_TEMP_STORE_UNTIL_ANDROID_API_LEVEL = 32;
 

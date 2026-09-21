@@ -7,22 +7,18 @@ import React, {
   useCallback,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Image,
-  Keyboard,
+import type {
   NativeSyntheticEvent,
-  Pressable,
-  StyleSheet,
   TextInputChangeEventData,
-  View,
 } from 'react-native';
+import { Image, Keyboard, Pressable, StyleSheet, View } from 'react-native';
 import {
   BottomSheetScrollView,
   BottomSheetTextInput,
 } from '@gorhom/bottom-sheet';
 import { useMemoizedFn } from 'ahooks';
-import { GasLevel, Tx } from '@rabby-wallet/rabby-api/dist/types';
-import { Account } from '@/core/services/preference';
+import type { GasLevel, Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { Account } from '@/core/startupServices/preference';
 import { apiProvider } from '@/core/apis';
 import { INPUT_NUMBER_RE } from '@/constant/regexp';
 import { calcMaxPriorityFee } from '@/utils/transaction';

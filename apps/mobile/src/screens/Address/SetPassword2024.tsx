@@ -12,7 +12,7 @@ import {
 import * as Yup from 'yup';
 import { RootNames } from '@/constant/layout';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
+import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -37,10 +37,14 @@ import {
   useImportAddressProc,
 } from '@/hooks/address/useNewUser';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { AddressNavigatorParamList } from '@/navigation-type';
-import { preferenceService } from '@/core/services';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
-import { Text, TextInput } from '@/components/Typography';
+import type { AddressNavigatorParamList } from '@/navigation-type';
+import {
+  setReportActionTs,
+  setUserBehaviorTrackingOptOutSync,
+} from '@/core/serviceApi/preference';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
+import type { TextInput } from '@/components/Typography';
+import { Text } from '@/components/Typography';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
@@ -108,7 +112,7 @@ function useSetupPasswordForm(
         return;
       }
 
-      preferenceService.setUserBehaviorTrackingOptOut(false);
+      setUserBehaviorTrackingOptOutSync(false);
 
       const toastHide = toastWithIcon(() => (
         <ActivityIndicator style={{ marginRight: 6 }} />
@@ -171,9 +175,9 @@ function useSetupPasswordForm(
       } finally {
         toastHide();
 
-        preferenceService.setReportActionTs(
+        void setReportActionTs(
           REPORT_TIMEOUT_ACTION_KEY.SET_PASSWORD_DONE,
-        );
+        ).catch(console.error);
       }
     },
   });

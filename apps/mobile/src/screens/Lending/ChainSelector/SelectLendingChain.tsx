@@ -24,7 +24,17 @@ import {
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
 
-const marketList: MarketDataType[] = Object.values(marketsData);
+const MARKETS_HIDDEN_FROM_SELECTOR = new Set<CustomMarket>([
+  CustomMarket.proto_sonic_v3,
+  CustomMarket.proto_soneium_v3,
+  CustomMarket.proto_scroll_v3,
+  CustomMarket.proto_zksync_v3,
+  CustomMarket.proto_metis_v3,
+]);
+
+const marketList: MarketDataType[] = Object.values(marketsData).filter(
+  item => !MARKETS_HIDDEN_FROM_SELECTOR.has(item.market),
+);
 const EMPTY_PROTOCOLS: IProtocolItem[] = [];
 const getProtocolLendingNetWorth = (protocol: IProtocolItem) => {
   return protocol._portfolios.reduce((sum, portfolio) => {
@@ -257,48 +267,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   titleTextWrapper: {
     flex: 1,
   },
-  netSwitchTabs: {
-    marginBottom: 20,
-  },
-  innerBlock: {
-    paddingHorizontal: 0,
-  },
-  inputContainerStyle: {
-    height: 46,
-    borderRadius: 12,
-    paddingHorizontal: 20,
-    borderBottomWidth: 0,
-  },
-  inputText: {
-    color: colors2024['neutral-title-1'],
-    marginLeft: 7,
-    fontSize: 17,
-    fontWeight: '400',
-    paddingTop: 0,
-    paddingBottom: 0,
-    fontFamily: 'SF Pro Rounded',
-  },
 
   chainListWrapper: {
     flexShrink: 1,
     height: '100%',
-  },
-
-  emptyDataWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-    maxHeight: 400,
-    // ...makeDebugBorder()
-  },
-
-  emptyText: {
-    paddingTop: 21,
-    textAlign: 'center',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    color: colors2024['neutral-info'],
   },
 
   titleView: {
@@ -307,19 +279,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     alignItems: 'center',
     marginBottom: 12,
-  },
-
-  inputWrapper: {
-    marginRight: 15,
-    flex: 1,
-    overflow: 'hidden',
-  },
-
-  cancelText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro',
-    fontSize: 17,
-    lineHeight: 22,
   },
 
   titleViewWithText: {
