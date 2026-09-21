@@ -1,9 +1,10 @@
 import RNFS from '@rabby-wallet/react-native-fs';
 
-import { isNonPublicProductionEnv } from '@/constant';
+import { IS_LOCAL_STORAGE_EXPORT_ENABLED } from '@/constant/env';
 import { getRabbyAppDbName, getRabbyAppDbPath } from '@/databases/constant';
 import { APP_DOCUMENT_LIKE_PATH, MMKV_ROOT_PATH } from '@/core/utils/appFS';
 import { shareLocalFile } from '@/utils/shareLocalFile';
+import { prepareLatestAppLogArchiveForSharing } from '@/utils/logging/archiveShare';
 import { ALL_KNOWN_MMKV_INSTANCES, keyringMMKV } from './mmkvInstances';
 
 const ARCHIVE_ROOT_DIR_NAME = 'rabby-local-storage-export';
@@ -278,18 +279,17 @@ export type LocalStorageArchiveShareResult = {
   mmkvDumpCount: number;
   mmkvDumpKeyCount: number;
   keyringStartupDiagnosticFileCount: number;
+  appLogArchiveCount: number;
 };
 
 /**
- * Non-production, user-confirmed export of the raw MMKV and SQLite files.
+ * User-confirmed export available only in diagnostic-enabled builds.
  * The archive intentionally includes SQLite WAL companions and every current
  * MMKV-root file so native storage type corruption can be inspected offline.
  */
 export async function shareCurrentLocalStorageArchive(): Promise<LocalStorageArchiveShareResult> {
-  if (!isNonPublicProductionEnv) {
-    throw new Error(
-      'Local storage export is unavailable in production builds.',
-    );
+  if (!IS_LOCAL_STORAGE_EXPORT_ENABLED) {
+    throw new Error('Local storage export is unavailable in this build.');
   }
 
   if (!isNativeZipArchiveAvailable()) {
@@ -317,15 +317,29 @@ export async function shareCurrentLocalStorageArchive(): Promise<LocalStorageArc
   const fileName = `rabby-local-storage-${timestamp}.zip`;
   const archivePath = `${archiveDir}/${fileName}`;
   let rawMMKVDumpPaths: string[] = [];
-
-  await RNFS.mkdir(archiveDir, {
-    NSURLIsExcludedFromBackupKey: true,
-  });
+  let appLogCleanupPaths: string[] = [];
 
   try {
+    const latestAppLogArchive = await prepareLatestAppLogArchiveForSharing();
+    appLogCleanupPaths = latestAppLogArchive?.cleanupPaths || [];
+    const appLogEntries = latestAppLogArchive
+      ? [
+          {
+            sourcePath: latestAppLogArchive.path,
+            archivePath: `app-logs/${latestAppLogArchive.name}`,
+          },
+        ]
+      : [];
+    await RNFS.mkdir(archiveDir, {
+      NSURLIsExcludedFromBackupKey: true,
+    });
     const rawMMKVDumps = await writeRawMMKVDumps({ archiveDir, timestamp });
     rawMMKVDumpPaths = rawMMKVDumps.cleanupPaths;
-    const archiveEntries = [...entries, ...rawMMKVDumps.entries];
+    const archiveEntries = [
+      ...entries,
+      ...rawMMKVDumps.entries,
+      ...appLogEntries,
+    ];
     await RNFS.createZipArchive(archivePath, archiveEntries);
 
     const archiveResult = await shareLocalFile({
@@ -334,8 +348,7 @@ export async function shareCurrentLocalStorageArchive(): Promise<LocalStorageArc
       mimeType: ARCHIVE_MIME_TYPE,
       title: 'Share local storage archive',
       subject: fileName,
-      message: 'Rabby local MMKV and SQLite diagnostic archive',
-      cleanupPaths: [archivePath, ...rawMMKVDumpPaths],
+      message: 'Rabby local storage and app log diagnostic archive',
     });
 
     return {
@@ -344,10 +357,13 @@ export async function shareCurrentLocalStorageArchive(): Promise<LocalStorageArc
       mmkvDumpCount: rawMMKVDumps.storageCount,
       mmkvDumpKeyCount: rawMMKVDumps.totalKeyCount,
       keyringStartupDiagnosticFileCount: keyringStartupDiagnosticEntries.length,
+      appLogArchiveCount: appLogEntries.length,
     };
-  } catch (error) {
-    await cleanupExistingPaths([archivePath, ...rawMMKVDumpPaths]);
-
-    throw error;
+  } finally {
+    await cleanupExistingPaths([
+      archivePath,
+      ...rawMMKVDumpPaths,
+      ...appLogCleanupPaths,
+    ]);
   }
 }
