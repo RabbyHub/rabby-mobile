@@ -1,4 +1,5 @@
 import { openapi } from '@/core/request';
+import type { AssetDataLoadDiagnosticTrace } from '@/core/utils/assetDataLoadDiagnostics';
 import { zCreate } from '@/core/utils/reexports';
 import { AppChainEntity } from '@/databases/entities/appchain';
 import { batchSaveWithPQueueAndTransaction } from '@/databases/sync/_task';
@@ -40,7 +41,11 @@ interface AppChainState {
   isLoadingByAddress: Record<string, boolean>;
 
   initStore(): Promise<void>;
-  batchGetAppChains(addresses: string[], force?: boolean): Promise<void>;
+  batchGetAppChains(
+    addresses: string[],
+    force?: boolean,
+    diagnostic?: AssetDataLoadDiagnosticTrace,
+  ): Promise<void>;
   getAppChains(
     address: string,
     force?: boolean,
@@ -410,7 +415,7 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
     await promise;
   },
 
-  async batchGetAppChains(addresses, force = false) {
+  async batchGetAppChains(addresses, force = false, diagnostic) {
     const lowerAddresses = Array.from(
       new Set(addresses.map(item => item.toLowerCase())),
     );
@@ -457,6 +462,10 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
       fetchList.push(address);
     }
 
+    diagnostic?.mark('app-chain-fetch-targets-resolved', {
+      fetchAddressCount: fetchList.length,
+    });
+
     // 先设置缓存数据和加载状态
     set(state => ({
       appChainMap: {
@@ -473,6 +482,16 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
       return;
     }
 
+    const queuedAt = Date.now();
+    const queueSizeAtStart = getAppChainQueue.size;
+    const queuePendingAtStart = getAppChainQueue.pending;
+    const queueWaits: number[] = [];
+    const requestDurations: number[] = [];
+    diagnostic?.mark('app-chain-remote-requests-started', {
+      queueSizeAtStart,
+      queuePendingAtStart,
+    });
+
     // 并发请求
     const results = await Promise.allSettled(
       fetchList.map(address =>
@@ -480,6 +499,8 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
           address: string;
           appChains: AppChainItem[];
         }>(async () => {
+          queueWaits.push(Date.now() - queuedAt);
+          const requestStartedAt = Date.now();
           const requestId = appChainResourceStore.startRemoteFetchFor(address, {
             trigger: 'batchGetAppChains',
             force,
@@ -514,12 +535,34 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
               },
             );
             throw error;
+          } finally {
+            requestDurations.push(Date.now() - requestStartedAt);
           }
         }),
       ),
     );
 
+    const getAverage = (values: number[]) =>
+      values.length
+        ? Math.round(
+            values.reduce((total, value) => total + value, 0) / values.length,
+          )
+        : 0;
+    const succeededCount = results.filter(
+      result => result.status === 'fulfilled',
+    ).length;
+    diagnostic?.mark('app-chain-remote-requests-settled', {
+      fetchAddressCount: fetchList.length,
+      succeededCount,
+      failedCount: fetchList.length - succeededCount,
+      queueWaitAverageMs: getAverage(queueWaits),
+      queueWaitMaxMs: Math.max(0, ...queueWaits),
+      requestAverageMs: getAverage(requestDurations),
+      requestMaxMs: Math.max(0, ...requestDurations),
+    });
+
     // 处理结果
+    const applyStartedAt = Date.now();
     const latestMap: AppChainListMap = {};
     const finishedLoadingMap: Record<string, boolean> = {};
 
@@ -545,6 +588,9 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
         ...finishedLoadingMap,
       },
     }));
+    diagnostic?.mark('app-chain-remote-values-applied', {
+      elapsedMs: Date.now() - applyStartedAt,
+    });
   },
 
   async getAppChains(address, force = false) {

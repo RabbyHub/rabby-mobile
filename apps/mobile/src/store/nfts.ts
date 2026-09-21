@@ -6,6 +6,7 @@ import { syncRemoteNFTs } from '@/databases/sync/assets';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
 import type { DisplayNftItem } from '@/types/assets';
 import { getSelectedBalanceAddressesSnapshot } from './balance';
+import { isHomeAssetSelectionExperimentEnabled } from '@/hooks/appSettings';
 import { ResourceBaseStore } from './_resourceBase';
 import type { ObservableResourceValueSource } from './_resourceFlow';
 import {
@@ -60,6 +61,15 @@ export {
 
 const normalizeAddresses = (addresses: string[]) =>
   Array.from(new Set(addresses.map(address => address.toLowerCase())));
+
+async function getSelectedBalanceAddressesOrTop10Fallback() {
+  const selectedAddresses = getSelectedBalanceAddressesSnapshot();
+  if (selectedAddresses.length || isHomeAssetSelectionExperimentEnabled()) {
+    return selectedAddresses;
+  }
+
+  return (await getTop10MyAccounts()).top10Addresses;
+}
 
 type NftListComputedState = {
   multiNftsIndexCache: Record<string, NftAssetsIndexResult>;
@@ -677,6 +687,11 @@ const restoreNftProjectionIfEmpty = (
           },
         },
   );
+  const trace = beginAssetDataLoadDiagnostic(
+    'asset-projection-nft-restore',
+    scene,
+    { addressCount: addresses.length },
+  );
 
   const request = (async () => {
     const restored = await restoreAssetProjection({
@@ -685,8 +700,10 @@ const restoreNftProjectionIfEmpty = (
       scene,
     });
     if (!restored) {
+      trace.finish({ reason: 'projection-missing' });
       return;
     }
+    trace.mark('projection-restored', { itemCount: restored.rows.length });
 
     const requiredNftIds = new Set<NftEntityId>();
     restored.rows.forEach(row => {
@@ -697,8 +714,16 @@ const restoreNftProjectionIfEmpty = (
     restored.groups.forEach(group => {
       group.memberIds.forEach(id => requiredNftIds.add(id as NftEntityId));
     });
-    if (requiredNftIds.size) {
-      const cachedNfts = await NFTItemEntity.batchMultAddressNFTs(addresses);
+    const missingNftIds = Array.from(requiredNftIds).filter(
+      nftId => !nftEntityResourceStore.getValue(nftId),
+    );
+    trace.mark('entity-selection-ready', { itemCount: requiredNftIds.size });
+    if (missingNftIds.length) {
+      trace.mark('entity-query-started', { itemCount: missingNftIds.length });
+      const cachedNfts = await NFTItemEntity.batchMultiAddressNFTsByResourceIds(
+        missingNftIds,
+      );
+      trace.mark('entity-query-finished', { itemCount: cachedNfts.length });
       const latestParamsBeforeHydrate =
         scene === 'single-address'
           ? singleNftsCacheParams.get(key)
@@ -713,6 +738,7 @@ const restoreNftProjectionIfEmpty = (
         resultBeforeHydrate !== startedResult ||
         nftListStore.getState().nftsMap !== startedSourceMap
       ) {
+        trace.finish({ reason: 'state-changed-before-entity-publish' });
         return;
       }
       const missingNfts = cachedNfts
@@ -728,10 +754,12 @@ const restoreNftProjectionIfEmpty = (
           );
         }) as CombinedNftItem[];
       nftEntityResourceStore.upsertNfts(missingNfts, 'hydrate');
+      trace.mark('entities-published', { itemCount: missingNfts.length });
     }
 
     const projection = buildRestoredNftProjection(restored);
     if (!projection) {
+      trace.finish({ reason: 'projection-invalid' });
       return;
     }
 
@@ -749,6 +777,7 @@ const restoreNftProjectionIfEmpty = (
       currentResult !== startedResult ||
       nftListStore.getState().nftsMap !== startedSourceMap
     ) {
+      trace.finish({ reason: 'state-changed-before-projection-publish' });
       return;
     }
 
@@ -784,8 +813,10 @@ const restoreNftProjectionIfEmpty = (
         },
       }));
     }
+    trace.finish({ itemCount: projection.result.rows.length });
   })()
     .catch(error => {
+      trace.fail({ reason: 'restore-error' });
       console.error('[nftProjection] restore failed', error);
     })
     .finally(() => {
@@ -1475,7 +1506,8 @@ const nftListStore = zCreate<NFTListState>((set, get) => ({
     const invocationRevision = nftAddressRequests.issueRevision();
     const isCurrentRequest = () => multiAddressNftRequests.isCurrent(requestId);
     const addresses = normalizeAddresses(
-      options?.realTimeAddresses || (await getTop10MyAccounts()).top10Addresses,
+      options?.realTimeAddresses ||
+        (await getSelectedBalanceAddressesOrTop10Fallback()),
     );
     const addressTickets = new Map(
       addresses.map(address => [
@@ -1573,7 +1605,8 @@ const nftListStore = zCreate<NFTListState>((set, get) => ({
 
   async getCacheTop10NFTs(options) {
     const addresses =
-      options?.realTimeAddresses || (await getTop10MyAccounts()).top10Addresses;
+      options?.realTimeAddresses ||
+      (await getSelectedBalanceAddressesOrTop10Fallback());
 
     get().clearUnusedNFTs(addresses);
 

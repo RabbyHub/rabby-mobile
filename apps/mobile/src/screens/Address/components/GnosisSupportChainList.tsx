@@ -8,7 +8,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 
 type RNViewProps = {
   style?: import('react').ComponentProps<typeof View>['style'];
-  className?: string;
 };
 
 export const GnosisSupportChainList = ({

@@ -1,3 +1,5 @@
+import { WalletUnlockCancelledError } from '@/utils/walletUnlockError';
+
 describe('accountStore pinned address hydration', () => {
   const persistedAddress = {
     address: '0xAbCd000000000000000000000000000000001234',
@@ -6,6 +8,9 @@ describe('accountStore pinned address hydration', () => {
 
   const mockGetPinnedAddresses = jest.fn();
   const mockUpdatePinnedAddresses = jest.fn();
+  const mockGetAllAccounts = jest.fn();
+  const mockRemoveAddress = jest.fn();
+  const mockFetchAllAccounts = jest.fn();
   let resolvePinnedAddresses:
     | ((addresses: (typeof persistedAddress)[]) => void)
     | null;
@@ -23,6 +28,8 @@ describe('accountStore pinned address hydration', () => {
         }),
     );
     mockUpdatePinnedAddresses.mockResolvedValue(undefined);
+    mockRemoveAddress.mockResolvedValue(undefined);
+    mockFetchAllAccounts.mockResolvedValue([]);
 
     jest.doMock('react-native', () => ({
       InteractionManager: {
@@ -39,15 +46,15 @@ describe('accountStore pinned address hydration', () => {
     });
     jest.doMock('@/core/apis/account', () => ({
       accountEvents: { emit: jest.fn(), on: jest.fn() },
-      fetchAllAccounts: jest.fn(),
+      fetchAllAccounts: (...args: unknown[]) => mockFetchAllAccounts(...args),
       invalidateFetchAllAccountsCache: jest.fn(),
     }));
     jest.doMock('@/core/apis/mnemonic', () => ({
       getMnemonicAddressInfo: jest.fn(),
     }));
     jest.doMock('@/core/apis/address', () => ({
-      getAllAccounts: jest.fn(),
-      removeAddress: jest.fn(),
+      getAllAccounts: () => mockGetAllAccounts(),
+      removeAddress: (...args: unknown[]) => mockRemoveAddress(...args),
     }));
     jest.doMock('@/databases/entities/accountInfo', () => ({
       AccountInfoEntity: {
@@ -133,5 +140,45 @@ describe('accountStore pinned address hydration', () => {
     expect(mockGetPinnedAddresses).toHaveBeenCalledTimes(1);
     expect(mockUpdatePinnedAddresses).toHaveBeenCalledWith([persistedAddress]);
     expect(accountStore.getState().pinnedAddresses).toEqual([persistedAddress]);
+  });
+
+  it.each([
+    new WalletUnlockCancelledError(),
+    new Error('Account removal failed'),
+  ])('preserves the pin and account when removal rejects: %s', async error => {
+    const account = { ...persistedAddress, type: 'Ledger Hardware' as const };
+    mockGetAllAccounts.mockResolvedValue([account]);
+    mockGetPinnedAddresses.mockResolvedValue([persistedAddress]);
+    mockRemoveAddress.mockRejectedValue(error);
+    await accountStore.ensurePinnedAddressesHydrated();
+    accountStore.setAccounts([account]);
+
+    await expect(accountStore.removeAccount(account)).rejects.toBe(error);
+
+    expect(accountStore.getState().accounts).toEqual([account]);
+    expect(accountStore.getState().pinnedAddresses).toEqual([persistedAddress]);
+    expect(mockUpdatePinnedAddresses).not.toHaveBeenCalled();
+    expect(mockFetchAllAccounts).not.toHaveBeenCalled();
+  });
+
+  it('unpins and refreshes the account list after successful removal', async () => {
+    const account = { ...persistedAddress, type: 'Ledger Hardware' as const };
+    mockGetAllAccounts.mockResolvedValue([account]);
+    mockGetPinnedAddresses.mockResolvedValue([persistedAddress]);
+    await accountStore.ensurePinnedAddressesHydrated();
+    accountStore.setAccounts([account]);
+    mockRemoveAddress.mockImplementationOnce(async () => {
+      expect(accountStore.getState().pinnedAddresses).toEqual([
+        persistedAddress,
+      ]);
+      expect(mockUpdatePinnedAddresses).not.toHaveBeenCalled();
+    });
+
+    await accountStore.removeAccount(account);
+
+    expect(mockUpdatePinnedAddresses).toHaveBeenCalledWith([]);
+    expect(accountStore.getState().pinnedAddresses).toEqual([]);
+    expect(mockFetchAllAccounts).toHaveBeenCalledWith({ force: true });
+    expect(accountStore.getState().accounts).toEqual([]);
   });
 });

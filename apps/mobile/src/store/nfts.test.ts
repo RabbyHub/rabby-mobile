@@ -1,8 +1,9 @@
 import type { DisplayNftItem } from '@/types/assets';
 
-jest.mock('@/core/apis/account', () => ({
-  getTop10MyAccounts: jest.fn(async () => ({ top10Addresses: [] })),
-}));
+const mockGetSelectedBalanceAddressesSnapshot = jest.fn(() => [] as string[]);
+const mockGetTop10MyAccounts = jest.fn();
+const mockIsHomeAssetSelectionExperimentEnabled = jest.fn(() => false);
+
 jest.mock('react-native-haptic-feedback', () => ({
   trigger: jest.fn(),
 }));
@@ -14,11 +15,20 @@ jest.mock('@/databases/sync/assets', () => ({
 }));
 jest.mock('@/databases/entities/nftItem', () => ({
   NFTItemEntity: {
+    batchMultiAddressNFTsByResourceIds: jest.fn(async () => []),
     batchMultAddressNFTs: jest.fn(async () => []),
   },
 }));
 jest.mock('@/store/balance', () => ({
-  getSelectedBalanceAddressesSnapshot: jest.fn(() => []),
+  getSelectedBalanceAddressesSnapshot: (...args: unknown[]) =>
+    mockGetSelectedBalanceAddressesSnapshot(...args),
+}));
+jest.mock('@/core/apis/account', () => ({
+  getTop10MyAccounts: (...args: unknown[]) => mockGetTop10MyAccounts(...args),
+}));
+jest.mock('@/hooks/appSettings', () => ({
+  isHomeAssetSelectionExperimentEnabled: (...args: unknown[]) =>
+    mockIsHomeAssetSelectionExperimentEnabled(...args),
 }));
 jest.mock('@/core/utils/assetDataLoadDiagnostics', () => ({
   beginAssetDataLoadDiagnostic: jest.fn(() => ({
@@ -43,7 +53,10 @@ import nftListStore, {
   nftEntityResourceStore,
   useNftListComputedStore,
 } from './nfts';
-import { scheduleAssetProjectionPersistence } from './assetProjectionPersistence';
+import {
+  restoreAssetProjection,
+  scheduleAssetProjectionPersistence,
+} from './assetProjectionPersistence';
 
 const mockedSyncNFTs = jest.mocked(syncNFTs);
 const mockedNftEntity = jest.mocked(NFTItemEntity);
@@ -51,6 +64,7 @@ const mockedSyncRemoteNFTs = jest.mocked(syncRemoteNFTs);
 const mockedScheduleAssetProjectionPersistence = jest.mocked(
   scheduleAssetProjectionPersistence,
 );
+const mockedRestoreAssetProjection = jest.mocked(restoreAssetProjection);
 const ADDRESS = '0xabc';
 const cachedNft = {
   id: 'cached',
@@ -96,11 +110,21 @@ describe('NFT list refresh semantics', () => {
 
   beforeEach(() => {
     mockedSyncNFTs.mockReset();
+    mockedNftEntity.batchMultiAddressNFTsByResourceIds.mockReset();
+    mockedNftEntity.batchMultiAddressNFTsByResourceIds.mockResolvedValue([]);
     mockedNftEntity.batchMultAddressNFTs.mockReset();
     mockedNftEntity.batchMultAddressNFTs.mockResolvedValue([]);
     mockedSyncRemoteNFTs.mockReset();
     mockedSyncRemoteNFTs.mockResolvedValue(undefined);
     mockedScheduleAssetProjectionPersistence.mockClear();
+    mockGetSelectedBalanceAddressesSnapshot.mockReset();
+    mockGetSelectedBalanceAddressesSnapshot.mockReturnValue([]);
+    mockGetTop10MyAccounts.mockReset();
+    mockGetTop10MyAccounts.mockResolvedValue({
+      top10Addresses: [],
+    });
+    mockIsHomeAssetSelectionExperimentEnabled.mockReset();
+    mockIsHomeAssetSelectionExperimentEnabled.mockReturnValue(false);
     clearResourceStore(nftEntityResourceStore);
     clearResourceStore(nftCollectionResourceStore);
     useNftListComputedStore.setState({
@@ -122,6 +146,47 @@ describe('NFT list refresh semantics', () => {
 
   afterEach(() => {
     consoleError.mockRestore();
+  });
+
+  it('restores a persisted projection through exact NFT resources only', async () => {
+    const restored = {
+      ...cachedNft,
+      collection: {},
+      collection_id: 'collection-restored',
+      id: 'restored',
+      inner_id: 'restored-inner',
+    } as DisplayNftItem;
+    const nftId = buildNftEntityId(restored);
+    mockedRestoreAssetProjection.mockResolvedValueOnce({
+      rows: [{ type: 'nft', id: nftId }],
+      groups: [],
+      metadata: { defaultVisibleRowCount: 1 },
+    } as never);
+    mockedNftEntity.batchMultiAddressNFTsByResourceIds.mockResolvedValueOnce([
+      restored,
+    ] as never);
+    nftListStore.setState({
+      nftsMap: {},
+      sourceSnapshotReadyByAddress: {},
+    });
+
+    const key = useNftListComputedStore.getState().registerSingleNfts(ADDRESS);
+
+    await waitFor(
+      () =>
+        mockedNftEntity.batchMultiAddressNFTsByResourceIds.mock.calls.length >
+        0,
+    );
+    await waitFor(
+      () =>
+        useNftListComputedStore.getState().singleNftsIndexCache[key]?.rows
+          .length === 1,
+    );
+
+    expect(
+      mockedNftEntity.batchMultiAddressNFTsByResourceIds,
+    ).toHaveBeenCalledWith([nftId]);
+    expect(mockedNftEntity.batchMultAddressNFTs).not.toHaveBeenCalled();
   });
 
   it('clears stale NFTs after a successful empty snapshot', async () => {
@@ -287,6 +352,69 @@ describe('NFT list refresh semantics', () => {
     expect(nftListStore.getState().nftsMap[ADDRESS]).toEqual([newerNft]);
     expect(mockedSyncRemoteNFTs).toHaveBeenCalledTimes(1);
     expect(mockedSyncRemoteNFTs).toHaveBeenCalledWith(ADDRESS, [newerNft]);
+  });
+
+  it('uses the active balance selection for multi-address refreshes', async () => {
+    const selectedAddresses = ['0xselected-a', '0xselected-b'];
+    mockGetSelectedBalanceAddressesSnapshot.mockReturnValue(selectedAddresses);
+    mockedSyncNFTs.mockResolvedValue({
+      status: 'snapshot',
+      nfts: [],
+      remoteNfts: [],
+    });
+
+    await nftListStore.getState().batchGetNFTList(true);
+
+    expect(mockedSyncNFTs).toHaveBeenCalledTimes(selectedAddresses.length);
+    expect(mockedSyncNFTs.mock.calls.map(([address]) => address)).toEqual(
+      selectedAddresses,
+    );
+  });
+
+  it('retains the legacy Top-10 fallback until normal selection resolves', async () => {
+    mockGetTop10MyAccounts.mockResolvedValue({
+      top10Addresses: ['0xlegacy'],
+    });
+    mockedSyncNFTs.mockResolvedValue({
+      status: 'snapshot',
+      nfts: [],
+      remoteNfts: [],
+    });
+
+    await nftListStore.getState().batchGetNFTList(true);
+
+    expect(mockGetTop10MyAccounts).toHaveBeenCalledTimes(1);
+    expect(mockedSyncNFTs.mock.calls[0]?.[0]).toBe('0xlegacy');
+  });
+
+  it('does not fall back to Top-10 while an experimental selection is unresolved', async () => {
+    mockIsHomeAssetSelectionExperimentEnabled.mockReturnValue(true);
+
+    await nftListStore.getState().batchGetNFTList(true);
+
+    expect(mockGetTop10MyAccounts).not.toHaveBeenCalled();
+    expect(mockedSyncNFTs).not.toHaveBeenCalled();
+  });
+
+  it('uses the active balance selection for short cache hydration', async () => {
+    const selectedAddresses = ['0xselected-a', '0xselected-b'];
+    mockGetSelectedBalanceAddressesSnapshot.mockReturnValue(selectedAddresses);
+    nftListStore.setState({
+      nftsMap: {},
+      shortCache: false,
+    });
+
+    await nftListStore.getState().getCacheTop10NFTs({ maxNFTLength: 5 });
+    await new Promise(resolve => setTimeout(resolve, 0));
+    await waitFor(
+      () => mockedNftEntity.batchMultAddressNFTs.mock.calls.length === 1,
+    );
+
+    expect(mockedNftEntity.batchMultAddressNFTs).toHaveBeenCalledWith(
+      selectedAddresses,
+      undefined,
+      5,
+    );
   });
 
   it('contains a rejected background persistence task', async () => {

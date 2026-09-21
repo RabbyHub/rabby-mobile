@@ -1,0 +1,167 @@
+import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
+import { Text, TextInput } from '@/components/Typography';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import React from 'react';
+import { View } from 'react-native';
+
+import {
+  sanitizePerpsProPriceEditingInput,
+  sanitizePerpsProPriceInput,
+} from '../../model/trade';
+import { resolvePerpsProDialogFieldBackground } from '../common/perpsProDialogVisual';
+import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
+import { PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE } from '../common/perpsProSingleLineInput';
+
+const OpenOrderBottomSheetTextInput = React.forwardRef<
+  TextInput,
+  React.ComponentProps<typeof TextInput>
+>((props, forwardedRef) => (
+  <BottomSheetTextInput
+    {...props}
+    ref={
+      forwardedRef as React.Ref<React.ElementRef<typeof BottomSheetTextInput>>
+    }
+  />
+));
+
+OpenOrderBottomSheetTextInput.displayName = 'OpenOrderBottomSheetTextInput';
+
+export const PerpsProOpenOrderEditInput: React.FC<{
+  accessibilityLabel: string;
+  currentValue?: string | null;
+  disabled?: boolean;
+  label?: string;
+  maxDecimals: number;
+  onChangeText: (value: string) => void;
+  onFocus?: () => void;
+  priceSzDecimals?: number;
+  testID?: string;
+  unit?: string;
+  value: string;
+}> = React.memo(
+  ({
+    accessibilityLabel,
+    currentValue,
+    disabled = false,
+    label,
+    maxDecimals,
+    onChangeText,
+    onFocus,
+    priceSzDecimals,
+    testID,
+    unit,
+    value,
+  }) => {
+    const { styles } = useTheme2024({ getStyle });
+    const normalizePriceValue = React.useCallback(
+      (nextValue: string) =>
+        sanitizePerpsProPriceEditingInput(nextValue, priceSzDecimals ?? 0),
+      [priceSzDecimals],
+    );
+    const canonicalizePriceValue = React.useCallback(
+      (nextValue: string) =>
+        sanitizePerpsProPriceInput(nextValue, priceSzDecimals ?? 0),
+      [priceSzDecimals],
+    );
+    if (disabled) {
+      return (
+        <View style={[styles.field, styles.disabled]} testID={testID}>
+          <Text style={styles.disabledText}>{value}</Text>
+        </View>
+      );
+    }
+    return (
+      <View style={styles.field} testID={testID}>
+        {label ? (
+          <Text numberOfLines={1} style={styles.label}>
+            <Text style={styles.labelTitle}>{label} </Text>
+            {currentValue ? (
+              <Text style={PERPS_PRO_NUMBER_STYLE}>{`(${currentValue})`}</Text>
+            ) : null}
+          </Text>
+        ) : null}
+        <PerpsProDecimalTextInput
+          accessibilityLabel={accessibilityLabel}
+          inputComponent={OpenOrderBottomSheetTextInput}
+          maxDecimals={maxDecimals}
+          normalizeValue={
+            priceSzDecimals == null ? undefined : normalizePriceValue
+          }
+          onChangeText={onChangeText}
+          onFocus={onFocus}
+          canonicalizeValueOnBlur={
+            priceSzDecimals == null ? undefined : canonicalizePriceValue
+          }
+          preserveIntegerZeroRun={priceSzDecimals != null}
+          style={[styles.input, unit ? styles.inputWithUnit : null]}
+          value={value}
+        />
+        {unit ? (
+          <Text pointerEvents="none" style={styles.unit}>
+            {unit}
+          </Text>
+        ) : null}
+      </View>
+    );
+  },
+);
+
+PerpsProOpenOrderEditInput.displayName = 'PerpsProOpenOrderEditInput';
+
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  field: {
+    backgroundColor: resolvePerpsProDialogFieldBackground(colors2024, isLight),
+    borderRadius: 6,
+    height: 40,
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    position: 'relative',
+  },
+  disabled: { alignItems: 'center' },
+  label: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 10,
+    lineHeight: 12,
+    position: 'absolute',
+    top: 4,
+    left: 12,
+    right: 12,
+  },
+  labelTitle: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+  },
+  input: {
+    ...PERPS_PRO_NUMBER_STYLE,
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '500',
+    height: 40,
+    lineHeight: 18,
+    padding: 0,
+    paddingTop: 13,
+    ...PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE,
+  },
+  inputWithUnit: { paddingRight: 72 },
+  unit: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 18,
+    position: 'absolute',
+    right: 12,
+  },
+  disabledText: {
+    ...PERPS_PRO_NUMBER_STYLE,
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+}));

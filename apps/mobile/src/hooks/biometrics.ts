@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { BIOMETRY_TYPE } from '@rabby-wallet/react-native-keychain';
 import { toast, toastLoading } from '@/components2024/Toast';
 import * as apisKeychain from '@/core/apis/keychain';
 import {
   KEYCHAIN_AUTH_TYPES,
+  KEYCHAIN_BIOMETRY_TYPES,
   RequestGenericPurpose,
   getAuthenticationType,
   isAuthenticatedByBiometrics,
   parseKeychainError,
-  type KeychainDebugState,
+  type KeychainEntryState,
   type KeychainSupportedBiometryType,
 } from '@/core/apis/keychain';
 import { useTranslation } from 'react-i18next';
@@ -194,16 +194,53 @@ export function useBiometricsSystemAuthDebugMock() {
   };
 }
 
+const SYSTEM_AUTH_AVAILABILITY_CACHE_MS = 5_000;
+let systemAuthAvailabilityPromise: Promise<BiometricsSystemAuthAvailability> | null =
+  null;
+let latestSystemAuthAvailability: {
+  value: BiometricsSystemAuthAvailability;
+  resolvedAt: number;
+} | null = null;
+
 async function fetchSystemAuthAvailability() {
-  const [supportedBiometryType, devicePasscodeAvailable] = await Promise.all([
+  const now = Date.now();
+  if (
+    latestSystemAuthAvailability &&
+    now - latestSystemAuthAvailability.resolvedAt <
+      SYSTEM_AUTH_AVAILABILITY_CACHE_MS
+  ) {
+    return applyBiometricsSystemAuthDebugMock(
+      latestSystemAuthAvailability.value,
+    );
+  }
+
+  if (systemAuthAvailabilityPromise) {
+    return systemAuthAvailabilityPromise;
+  }
+
+  const nextPromise = Promise.all([
     apisKeychain.getSupportedBiometryType().catch(() => null),
     getDevicePasscodeAvailable(),
-  ]);
+  ])
+    .then(([supportedBiometryType, devicePasscodeAvailable]) => {
+      const value = {
+        supportedBiometryType,
+        devicePasscodeAvailable,
+      };
+      latestSystemAuthAvailability = {
+        value,
+        resolvedAt: Date.now(),
+      };
+      return applyBiometricsSystemAuthDebugMock(value);
+    })
+    .finally(() => {
+      if (systemAuthAvailabilityPromise === nextPromise) {
+        systemAuthAvailabilityPromise = null;
+      }
+    });
 
-  return applyBiometricsSystemAuthDebugMock({
-    supportedBiometryType,
-    devicePasscodeAvailable,
-  });
+  systemAuthAvailabilityPromise = nextPromise;
+  return nextPromise;
 }
 
 let systemAuthAvailabilityHydrationStarted = false;
@@ -219,11 +256,7 @@ export function startBiometricsSystemAuthAvailabilityHydration() {
   });
 }
 
-function isPrimaryAndroidBiometricsEntryReady(state: KeychainDebugState) {
-  if (state.platform !== 'android' || !state.debugSupported) {
-    return true;
-  }
-
+function isPrimaryAndroidBiometricsEntryReady(state: KeychainEntryState) {
   return state.hasEntry && state.hasUsername && state.hasPassword;
 }
 
@@ -233,23 +266,15 @@ async function checkAndroidBiometricsEntryReady() {
   }
 
   try {
-    const debugState = await apisKeychain.getKeychainDebugState();
-    const ready = isPrimaryAndroidBiometricsEntryReady(debugState);
+    const entryState = await apisKeychain.getKeychainEntryState();
+    const ready = isPrimaryAndroidBiometricsEntryReady(entryState);
 
     if (!ready) {
       logger.warn('[biometrics] Android keychain entry is unavailable', {
-        sourceLabel: debugState.sourceLabel,
-        hasEntry: debugState.hasEntry,
-        hasUsername: debugState.hasUsername,
-        hasPassword: debugState.hasPassword,
-        resolvedCipherStorageName:
-          debugState.platform === 'android'
-            ? debugState.resolvedCipherStorageName
-            : undefined,
-        hasKeystoreAlias:
-          debugState.platform === 'android'
-            ? debugState.hasKeystoreAlias
-            : undefined,
+        sourceLabel: entryState.sourceLabel,
+        hasEntry: entryState.hasEntry,
+        hasUsername: entryState.hasUsername,
+        hasPassword: entryState.hasPassword,
       });
     }
 
@@ -378,7 +403,7 @@ export function computeBiometricsState({
   t: (key: string) => string;
   isIOS?: boolean;
 }) {
-  const isFaceID = supportedBiometryType === BIOMETRY_TYPE.FACE_ID;
+  const isFaceID = supportedBiometryType === KEYCHAIN_BIOMETRY_TYPES.FACE_ID;
   const isBiometricsOrPasscode =
     authType === KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE;
   const canAuthTypeFallbackToDevicePasscode =
@@ -596,8 +621,13 @@ const toggleBiometrics = async <T extends boolean>(
         nextEnabled,
         ...getBiometricsDiagnosticData(),
       });
+      const shouldRequireBiometricProof =
+        authenticationType !== KEYCHAIN_AUTH_TYPES.PASSCODE &&
+        !!(await fetchSystemAuthAvailability()).supportedBiometryType &&
+        apisKeychain.shouldRequireBiometricProofForSetup();
       const requestResult = await apisKeychain.requestGenericPassword({
         purpose: RequestGenericPurpose.VERIFY,
+        androidRequireBiometricProof: shouldRequireBiometricProof,
       });
       recordAuthReadinessDiagnostic('biometrics-keychain-verified', {
         operationId,

@@ -25,9 +25,9 @@ import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import { Text } from '@/components/Typography';
 import { apisTheme, useTheme2024 } from '@/hooks/theme';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
+import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
-import { formatAmount } from '@/utils/number';
 import i18n from '@/utils/i18n';
 
 import type {
@@ -247,7 +247,7 @@ const CustomTestnetTokenRow = memo(
             <TokenBalanceSkeleton />
           ) : (
             <Text numberOfLines={1} style={styles.tokenBalance}>
-              {formatAmount(row.token.amount, 4, true)}
+              {formatAmountValueKMB(row.token.amount, 4, true)}
             </Text>
           )}
         </View>

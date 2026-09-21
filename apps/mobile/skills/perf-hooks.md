@@ -145,6 +145,35 @@ For Home, audit the overview and all asset tabs. Position cards, balances,
 24-hour changes, badges, selectors, and hidden tab content can each retain a
 broad subscription even after the main list is optimized.
 
+#### Bottom Sheet And Render-Gate Boundaries
+
+For a mounted Bottom Sheet or Portal subtree, default to pausing global Store
+publication, not freezing the whole component's props.
+
+- Prefer `StoreActivityBoundary` plus `useActivityStore` for expensive Store
+  consumers. Well-designed parents and modal hosts should not subscribe to or
+  reshape high-frequency Store data merely to pass it into a hidden child.
+- Keep control-plane state outside any render gate: controlled `visible`,
+  native `onChange`/`onDismiss`, Android back handling, imperative refs,
+  navigation focus cleanup, and synchronous Portal destruction must continue
+  converging while the sheet is hidden.
+- Use `RenderActivityBoundary` only after measurement shows that parent-driven
+  props still create meaningful hidden rendering and those props are safe to
+  retain as an inactive snapshot. Wrap the expensive render/data region, not
+  the Bottom Sheet host or its lifecycle owner.
+- If native sheet visibility and controlled React visibility settle at
+  different times, do not freeze between those transitions. Keep the render
+  gate active until both sources reach the final closed state, or use a
+  Store-only boundary.
+- A stale BackHandler closure can consume every Android back gesture while iOS
+  navigation still appears correct. Validate `native close -> delayed
+controlled close -> Android back bubbles`, followed by reopen and close.
+
+The TokenSelector regression in issue 921 is the reference failure mode: a
+native close deactivated a whole-subtree render gate before delayed
+`visible=false` reached the child, leaving its Android BackHandler permanently
+captured with `visible=true`.
+
 ### 6. Collapse Derived Computation Into One Pass
 
 - When multiple flags, counters, and totals come from the same input list, derive them in one pass whenever practical.

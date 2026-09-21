@@ -17,7 +17,6 @@ import {
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
 import { createGetStyles2024 } from '@/utils/styles';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
-import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { NextInput } from '@/components2024/Form/Input';
 import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
@@ -197,7 +196,7 @@ export const ImportWatchAddressScreen2024 = () => {
 
   return (
     <FooterButtonScreenContainer
-      as="View"
+      as="KeyboardAvoidingView"
       buttonProps={{
         title: t('global.Confirm'),
         onPress: handleDone,
@@ -210,12 +209,6 @@ export const ImportWatchAddressScreen2024 = () => {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <View style={styles.container}>
           <View style={styles.topContent}>
-            <WalletIcon
-              type={KEYRING_TYPE.WatchAddressKeyring}
-              width={40}
-              height={40}
-              style={styles.icon}
-            />
             <View>
               <NextInput.TextArea
                 style={styles.textContainer}
@@ -341,10 +334,6 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-body'],
     marginVertical: 12,
     marginHorizontal: 8,
-  },
-  icon: {
-    width: 40,
-    height: 40,
   },
   itemAddressWrap: {
     flexDirection: 'row',

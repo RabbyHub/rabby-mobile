@@ -1,4 +1,5 @@
 import { perfEvents } from '@/core/utils/perf';
+import { markBootSplashExited } from '@/core/utils/bootSplashExit';
 import { navigationRef } from '@/utils/navigation';
 import React from 'react';
 import {
@@ -44,6 +45,7 @@ function AnimatedBootSplashImpl() {
   const exitTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const exitScheduledRef = React.useRef(false);
   const fadeStartedRef = React.useRef(false);
+  const exitReportedRef = React.useRef(false);
 
   const startExitIfReady = React.useCallback(() => {
     const nativeHandoffAt = nativeHandoffAtRef.current;
@@ -131,6 +133,15 @@ function AnimatedBootSplashImpl() {
       opacity.stopAnimation();
     };
   }, [markNativeHandoffComplete, opacity, startExitIfReady]);
+
+  React.useEffect(() => {
+    if (visible || !fadeStartedRef.current || exitReportedRef.current) {
+      return;
+    }
+
+    exitReportedRef.current = true;
+    markBootSplashExited();
+  }, [visible]);
 
   if (!visible) {
     return null;

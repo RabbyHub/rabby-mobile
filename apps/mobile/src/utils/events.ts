@@ -2,7 +2,7 @@ import { SIGN_HELPER_EVENTS } from '@rabby-wallet/service-keyring';
 import { makeEEClass } from '@/core/apis/event';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 
-import { type Purchase } from 'react-native-iap';
+import type { Purchase, PurchaseError } from 'react-native-iap';
 import { DB } from '@op-engineering/op-sqlite';
 
 export type AssetsRefresthState = {
@@ -18,8 +18,8 @@ export type EventBusListeners = {
     gasUsed?: number;
   }) => void;
   [EVENTS.PURCHASE_UPDATED]: (detail: {
-    data: Purchase;
-    error?: Error;
+    data?: Purchase;
+    error?: Error | PurchaseError;
   }) => void;
   [EVENTS.QRHARDWARE.ACQUIRE_MEMSTORE_SUCCEED]: (detail: {
     request: any;

@@ -364,7 +364,6 @@ export const AddAsset = ({
     return (
       <View style={styles.tokenNotFound}>
         <View style={styles.tokenNotFoundMain}>
-          {/* <img src={IconWarning} className="icon icon-warning" /> */}
           <RcIconInfoFillCC color={colors['neutral-line']} />
           <Text style={styles.tokenNotFoundText}>
             {t('page.addToken.tokenNotFound')}

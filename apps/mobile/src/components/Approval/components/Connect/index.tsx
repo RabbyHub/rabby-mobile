@@ -667,7 +667,7 @@ ConnectProps) => {
                   {connectBtnStatus.cancelBtnText}
                 </Text>
                 {displayBlockedRequestApproval && (
-                  <ArrowDownSVG className="w-16" />
+                  <ArrowDownSVG width={16} height={16} />
                 )}
               </View>
             }

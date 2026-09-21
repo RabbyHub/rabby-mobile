@@ -11,6 +11,13 @@ export function setDefaultAddressAlias(
   account: KeyringAccount,
   contactService?: ContactBookService,
 ) {
+  setDefaultAddressAliases([account], contactService);
+}
+
+export function setDefaultAddressAliases(
+  accounts: KeyringAccount[],
+  contactService?: ContactBookService,
+) {
   if (!contactService) {
     if (__DEV__) {
       console.warn('contactService is not provided, skip setting alias');
@@ -18,9 +25,13 @@ export function setDefaultAddressAlias(
     return;
   }
 
-  const existingAlias = contactService.getAliasByAddress(account.address);
-  contactService.setAlias({
-    address: account.address,
-    alias: existingAlias?.alias || ellipsisAddress(account.address),
-  });
+  contactService.setAlias(
+    accounts.map(account => {
+      const existingAlias = contactService.getAliasByAddress(account.address);
+      return {
+        address: account.address,
+        alias: existingAlias?.alias || ellipsisAddress(account.address),
+      };
+    }),
+  );
 }

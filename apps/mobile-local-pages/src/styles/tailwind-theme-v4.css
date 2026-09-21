@@ -42,6 +42,7 @@
   --color-light-neutral-bg-4: rgba(235, 237, 240, 1);
   --color-light-neutral-bg-5: rgba(224, 229, 236, 0.5);
   --color-light-neutral-line: rgba(224, 229, 236, 1);
+  --color-light-neutral-sheet-handle: rgba(209, 212, 219, 1);
   --color-light-neutral-title-1: rgba(25, 41, 69, 1);
   --color-light-neutral-title-2: rgba(255, 255, 255, 1);
   --color-light-neutral-card-1: rgba(255, 255, 255, 1);
@@ -91,6 +92,7 @@
   --color-dark-neutral-bg-4: rgba(56, 59, 65, 1);
   --color-dark-neutral-bg-5: rgba(47, 49, 53, 0.5);
   --color-dark-neutral-line: rgba(47, 49, 53, 1);
+  --color-dark-neutral-sheet-handle: rgba(47, 49, 53, 1);
   --color-dark-neutral-title-1: rgba(247, 250, 252, 1);
   --color-dark-neutral-title-2: rgba(255, 255, 255, 1);
   --color-dark-neutral-card-1: rgba(255, 255, 255, 0.06);
@@ -142,6 +144,7 @@
   --color-neutral-bg-4: rgba(235, 237, 240, 1);
   --color-neutral-bg-5: rgba(224, 229, 236, 0.5);
   --color-neutral-line: rgba(224, 229, 236, 1);
+  --color-neutral-sheet-handle: rgba(209, 212, 219, 1);
   --color-neutral-title-1: rgba(25, 41, 69, 1);
   --color-neutral-title-2: rgba(255, 255, 255, 1);
   --color-neutral-card-1: rgba(255, 255, 255, 1);
@@ -195,6 +198,7 @@
       --color-neutral-bg-4: rgba(56, 59, 65, 1);
       --color-neutral-bg-5: rgba(47, 49, 53, 0.5);
       --color-neutral-line: rgba(47, 49, 53, 1);
+      --color-neutral-sheet-handle: rgba(47, 49, 53, 1);
       --color-neutral-title-1: rgba(247, 250, 252, 1);
       --color-neutral-title-2: rgba(255, 255, 255, 1);
       --color-neutral-card-1: rgba(255, 255, 255, 0.06);

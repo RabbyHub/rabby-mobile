@@ -184,6 +184,9 @@ export function compactRegressionScenarioPerformanceSummary(
     heartbeatMs: summary.heartbeatMs,
     stallThresholdMs: summary.stallThresholdMs,
     jsGaps: summary.jsGaps,
+    largestJsGaps: [...summary.jsGapDetails]
+      .sort((left, right) => right.gapMs - left.gapMs)
+      .slice(0, 8),
     estimatedJsStallMs: summary.estimatedJsStallMs,
     phaseMarks: summary.phaseMarks,
     phaseGaps: phaseOrder.map(phase => {

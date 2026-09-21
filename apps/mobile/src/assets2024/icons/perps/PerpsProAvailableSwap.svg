@@ -1,0 +1,10 @@
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g transform="matrix(0 1 1 0 7.63301 2.375)">
+    <path d="M8.39348 3.94588H3.94588C2.11181 3.94588 0.625 2.45907 0.625 0.625" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" />
+    <path d="M7.37715 2.19651L9.03039 3.84975L7.37715 5.50299" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+  <g transform="matrix(0 -1 -1 0 9.50299 13.625)">
+    <path d="M8.39348 3.94588H3.94588C2.11181 3.94588 0.625 2.45907 0.625 0.625" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" />
+    <path d="M7.37715 2.19651L9.03039 3.84975L7.37715 5.50299" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+</svg>

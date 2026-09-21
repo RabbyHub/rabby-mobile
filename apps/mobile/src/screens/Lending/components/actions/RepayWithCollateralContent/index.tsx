@@ -150,7 +150,11 @@ export default function RepayWithCollateral({
     maxInputAmountWithSlippage?: string;
   }>({});
 
-  const [currentTxs, setCurrentTxs] = useState<Tx[]>([]);
+  const [builtTxs, setBuiltTxs] = useState<{
+    txs: Tx[];
+    build: () => Promise<Tx[]>;
+    slippage: string;
+  } | null>(null);
 
   const lastQuoteParamsRef = useRef<{
     rawAmount: string;
@@ -663,6 +667,33 @@ export default function RepayWithCollateral({
     isFlashLoanDisabled,
   ]);
 
+  // Only expose transactions built for the current inputs and quote.
+  const currentTxs = useMemo(() => {
+    if (
+      builtTxs?.build !== buildRepayWithCollateralTxs ||
+      builtTxs.slippage !== displaySlippage ||
+      repayAmount !== debouncedRepayAmount ||
+      !new BigNumber(swapRate.outputAmount || 0).eq(
+        normalizeBN(repayAmount || '0', -1 * repayToken.decimals),
+      ) ||
+      isQuoteLoading ||
+      noQuote
+    ) {
+      return [];
+    }
+    return builtTxs.txs;
+  }, [
+    builtTxs,
+    buildRepayWithCollateralTxs,
+    displaySlippage,
+    repayAmount,
+    debouncedRepayAmount,
+    swapRate.outputAmount,
+    repayToken.decimals,
+    isQuoteLoading,
+    noQuote,
+  ]);
+
   useEffect(() => {
     let cancelled = false;
     const buildTxs = async () => {
@@ -682,7 +713,7 @@ export default function RepayWithCollateral({
         isFlashLoanDisabled
       ) {
         if (!cancelled) {
-          setCurrentTxs([]);
+          setBuiltTxs(null);
         }
         return;
       }
@@ -690,11 +721,15 @@ export default function RepayWithCollateral({
       try {
         const txs = await buildRepayWithCollateralTxs();
         if (!cancelled) {
-          setCurrentTxs(txs.filter(tx => !!tx));
+          setBuiltTxs({
+            txs: txs.filter(tx => !!tx),
+            build: buildRepayWithCollateralTxs,
+            slippage: displaySlippage,
+          });
         }
       } catch (error) {
         if (!cancelled) {
-          setCurrentTxs([]);
+          setBuiltTxs(null);
         }
       }
     };
@@ -704,6 +739,7 @@ export default function RepayWithCollateral({
     };
   }, [
     buildRepayWithCollateralTxs,
+    displaySlippage,
     currentAccount?.address,
     collateralReserve,
     pools?.provider,
@@ -926,6 +962,7 @@ export default function RepayWithCollateral({
   const buttonDisabled = useMemo(() => {
     return (
       !canRepay ||
+      !currentTxs.length ||
       (isRisky && !riskChecked) ||
       isLiquidatable ||
       collateralNotEnough ||
@@ -934,6 +971,7 @@ export default function RepayWithCollateral({
     );
   }, [
     canRepay,
+    currentTxs.length,
     collateralNotEnough,
     isFlashLoanDisabled,
     isInsufficientLiquidity,

@@ -48,6 +48,16 @@ function getNativeTraceGlobal() {
 }
 
 function getNativeModuleTrace() {
+  try {
+    const nativeRNHelpers = require('@/core/native/specs/NativeRNHelpers')
+      .default as NativeModuleTrace | undefined;
+    if (nativeRNHelpers) {
+      return nativeRNHelpers;
+    }
+  } catch {
+    // Some Jest mocks do not provide TurboModuleRegistry. Fall back below.
+  }
+
   return NativeModules.RNHelpers as NativeModuleTrace | undefined;
 }
 

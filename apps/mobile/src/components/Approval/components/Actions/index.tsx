@@ -1,3 +1,4 @@
+import { SecurityEngineScopeProvider } from '../../hooks/useApprovalSecurityEngine';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import type { Result } from '@rabby-wallet/rabby-security-engine';
 import type { ExplainTxResponse } from '@rabby-wallet/rabby-api/dist/types';
@@ -207,18 +208,21 @@ const Actions = ({
       </Card>
       {isMultiAction && multiAction ? (
         (multiAction.actionList as ParsedActionData[]).map((action, index) => (
-          <ActionItem
+          <SecurityEngineScopeProvider
             key={index}
-            data={action}
-            requireData={multiAction.requireDataList[index]}
-            chain={chain}
-            engineResults={multiAction.engineResultList[index]}
-            raw={raw}
-            account={account}
-            txDetail={txDetail}
-            onChange={onChange}
-            isSpeedUp={isSpeedUp}
-          />
+            scope={multiAction.securityScopes?.[index]}>
+            <ActionItem
+              data={action}
+              requireData={multiAction.requireDataList[index]}
+              chain={chain}
+              engineResults={multiAction.engineResultList[index] || []}
+              raw={raw}
+              account={account}
+              txDetail={txDetail}
+              onChange={onChange}
+              isSpeedUp={isSpeedUp}
+            />
+          </SecurityEngineScopeProvider>
         ))
       ) : (
         <ActionItem

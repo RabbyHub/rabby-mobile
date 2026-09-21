@@ -57,6 +57,7 @@ const INPAGE_INPUTS = [
   'apps/mobile/react-native.config.js',
   'apps/mobile/scripts/fns.sh',
   'apps/mobile/scripts/postinstall.sh',
+  'apps/mobile/scripts/verify-local-page-assets.cjs',
   'apps/mobile/assets/fonts',
   'apps/mobile-local-pages/package.json',
   'apps/mobile-local-pages/scripts',
@@ -73,7 +74,10 @@ const INPAGE_OUTPUTS = [
   'apps/mobile/assets/custom/InpageBridgeWeb3.js',
   'apps/mobile/src/core/bridges/InpageBridgeWeb3.js',
   'apps/mobile/assets/android/builtin-pages/pages/index.html',
+  'apps/mobile/assets/android/builtin-pages/pages/tradingview-candle-chart.html',
   'apps/mobile/assets/ios/builtin-pages/pages/index.html',
+  'apps/mobile/assets/ios/builtin-pages/pages/tradingview-candle-chart.html',
+  'apps/mobile/android/app/src/main/assets/custom/builtin-pages/pages/tradingview-candle-chart.html',
 ];
 
 const DEVTOOLS_INPUTS = [
@@ -99,6 +103,10 @@ function run(command, args, options = {}) {
     cwd: options.cwd || MOBILE_DIR,
     env: process.env,
     stdio: 'inherit',
+    // Windows requires shell to execute .cmd files (Node CVE-2024-27980 fix)
+    shell:
+      process.platform === 'win32' &&
+      path.extname(command).toLowerCase() === '.cmd',
   });
 
   if (result.error) {
@@ -268,6 +276,7 @@ ensureArtifact({
   state,
   yarnScript: 'build-inpage',
 });
+runYarn('verify:local-pages');
 
 if (profile.rozeniteEnabled) {
   ensureArtifact({

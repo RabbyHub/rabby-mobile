@@ -15,10 +15,10 @@ import {
   getRabbyLockInfo,
   isUnlockSessionValid,
   PasswordStatus,
+  setAppLaunchLockEnabled,
 } from '@/core/apis/lock';
 import { getPwdStatus } from './useLock';
 import {
-  ALLOWED_UL_DOMAINS,
   UL_MATCH_PREFIX,
   WALLETCONNECT_REDIRECT_PATH,
 } from '@/constant/universalLink';
@@ -46,6 +46,27 @@ import {
   parseRegressionScenarioLink,
   sanitizeLinkForLogging,
 } from '@/devtools/regressionScenarios/runtime';
+import {
+  canResetRootToHome,
+  getRabbyGoTargetNestedRoute,
+  isAllowedUniversalLinkUrl,
+  makeOpenHomeRootState,
+  parseOpenDappAction,
+  parseOpenHomeAction,
+  parseRabbyGoTargetAction,
+  type RabbyGoTarget,
+} from '@/utils/universalLinkOpenHome';
+import { apisHomeTabIndex, UnlockUIManager } from './navigation';
+import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
+import { switchSceneCurrentAccount } from './accountsSwitcher';
+import {
+  setCurrentKeychainVersion,
+  setSensitiveSceneProtectionEnabled,
+  type CurrentKeychainVersion,
+} from './appSettings';
+import { IS_IOS } from '@/core/native/utils';
+import { parseKeychainVersionDeepLinkValue } from '@/core/apis/keychainVersionShared';
+import RNHelpers from '@/core/native/RNHelpers';
 
 const nextAppLinkRef = {
   current: '' as string,
@@ -65,6 +86,7 @@ function setNextAppLink(linkOrSetter: string | ((prev: string) => string)) {
 
 type OnParseUrlAndProcessAction = (payload: {
   type:
+    | 'open-target'
     | 'open-dapp'
     | 'walletconnect-uri'
     | 'walletconnect-redirect'
@@ -74,6 +96,7 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'debug-db-sync-policy'
     | 'debug-lending'
     | 'regression-scenario';
+  target?: RabbyGoTarget;
   dappUrl?: string;
   uri?: string;
   testkitScreen?:
@@ -82,9 +105,13 @@ type OnParseUrlAndProcessAction = (payload: {
     | typeof RootNames.DebugLogViewer
     | typeof RootNames.StartupPerformanceLogViewer
     | typeof RootNames.DevDataSQLite
+    | typeof RootNames.DevDataKeychain
     | typeof RootNames.DevSwitches;
   testkitParams?: {
     tab?: 'overview' | 'debug';
+    appLaunchLock?: boolean;
+    sensitiveSceneProtection?: boolean;
+    keychainVersion?: CurrentKeychainVersion;
   };
   debugDbSyncPolicy?: {
     resetWritePolicyOverride?: boolean;
@@ -104,6 +131,7 @@ const NON_PRODUCTION_TESTKIT_SCREENS = {
   DebugLogViewer: RootNames.DebugLogViewer,
   StartupPerformanceLogViewer: RootNames.StartupPerformanceLogViewer,
   DevDataSQLite: RootNames.DevDataSQLite,
+  DevDataKeychain: RootNames.DevDataKeychain,
   DevSwitches: RootNames.DevSwitches,
 } as const;
 
@@ -151,12 +179,46 @@ function parseNonProductionTestkitLink(appLink: string) {
   }
 
   const tabRaw = urlInfo.searchParams.get('tab');
+  const appLaunchLockRaw = urlInfo.searchParams.get('appLaunchLock');
+  const appLaunchLock =
+    appLaunchLockRaw === 'enabled'
+      ? true
+      : appLaunchLockRaw === 'disabled'
+      ? false
+      : undefined;
+  const sensitiveSceneProtectionRaw = urlInfo.searchParams.get(
+    'sensitiveSceneProtection',
+  );
+  const sensitiveSceneProtection =
+    sensitiveSceneProtectionRaw === 'enabled'
+      ? true
+      : sensitiveSceneProtectionRaw === 'disabled'
+      ? false
+      : undefined;
+  const keychainVersion = parseKeychainVersionDeepLinkValue(
+    urlInfo.searchParams.get('keychainVersion'),
+  );
 
   return {
     type: 'open-testkit-screen',
     testkitScreen: screen,
     testkitParams:
-      tabRaw === 'debug' || tabRaw === 'overview' ? { tab: tabRaw } : undefined,
+      tabRaw === 'debug' ||
+      tabRaw === 'overview' ||
+      appLaunchLock !== undefined ||
+      sensitiveSceneProtection !== undefined ||
+      keychainVersion !== null
+        ? {
+            ...(tabRaw === 'debug' || tabRaw === 'overview'
+              ? { tab: tabRaw }
+              : {}),
+            ...(appLaunchLock !== undefined ? { appLaunchLock } : {}),
+            ...(sensitiveSceneProtection !== undefined
+              ? { sensitiveSceneProtection }
+              : {}),
+            ...(keychainVersion ? { keychainVersion } : {}),
+          }
+        : undefined,
   } satisfies Parameters<OnParseUrlAndProcessAction>[0];
 }
 
@@ -348,7 +410,7 @@ function isWalletConnectRedirectLink(appLink: string) {
     return target === WALLETCONNECT_REDIRECT_PATH || target === 'wc';
   }
 
-  if (!ALLOWED_UL_DOMAINS.some(domain => appLink.startsWith(domain))) {
+  if (!isAllowedUniversalLinkUrl(urlInfo)) {
     return false;
   }
 
@@ -389,22 +451,27 @@ function parseActionAndProcessLink(
     return;
   }
 
-  if (!ALLOWED_UL_DOMAINS.some(domain => appLink.startsWith(domain))) {
+  const targetAction = parseRabbyGoTargetAction(appLink);
+  if (targetAction) {
+    onActions?.(targetAction);
+    return;
+  }
+
+  const openHomeAction = parseOpenHomeAction(appLink);
+  if (openHomeAction) {
+    onActions?.(openHomeAction);
     return;
   }
 
   const urlInfo = urlUtils.safeParseURL(appLink);
-  if (!urlInfo) {
+  if (!urlInfo || !isAllowedUniversalLinkUrl(urlInfo)) {
     return;
   }
   const rabbyGoCmd = urlInfo.searchParams.get('_cmd');
-  if (!rabbyGoCmd) {
-    return;
-  }
 
   if (rabbyGoCmd === 'open-dapp') {
     const dappUrlRaw = urlInfo.searchParams.get('dapp');
-    const dappUrl = dappUrlRaw ? decodeURIComponent(dappUrlRaw) : '';
+    const dappUrl = dappUrlRaw || '';
     if (!dappUrl) {
       console.warn(
         '[useUniversalLinkOnTop] No dapp URL found in link:',
@@ -413,11 +480,15 @@ function parseActionAndProcessLink(
       return;
     }
 
-    console.debug('[useUniversalLinkOnTop] Opening dapp URL:', dappUrl);
-    onActions?.({
-      type: 'open-dapp',
-      dappUrl,
-    });
+    const openDappAction = parseOpenDappAction(dappUrl);
+    if (openDappAction.type === 'open-dapp') {
+      console.debug('[useUniversalLinkOnTop] Opening dapp URL:', dappUrl);
+    }
+    onActions?.(openDappAction);
+    return;
+  }
+
+  if (rabbyGoCmd) {
     return;
   }
 }
@@ -497,13 +568,13 @@ async function debugSyncAllHistoryFromLink(
   }
 }
 
-function dispatchWhenNavigationReady(
-  action: ReturnType<typeof StackActions.push>,
+function runWhenNavigationReady(
+  run: () => void,
   actionName: string,
   retryCount = 0,
 ) {
   if (navigationRef.isReady()) {
-    navigationRef.dispatch(action);
+    run();
     return;
   }
 
@@ -515,12 +586,81 @@ function dispatchWhenNavigationReady(
   }
 
   setTimeout(() => {
-    dispatchWhenNavigationReady(action, actionName, retryCount + 1);
+    runWhenNavigationReady(run, actionName, retryCount + 1);
   }, 100);
+}
+
+function dispatchWhenNavigationReady(
+  action: ReturnType<typeof StackActions.push>,
+  actionName: string,
+) {
+  runWhenNavigationReady(() => navigationRef.dispatch(action), actionName);
+}
+
+function resetExistingHomeFlowToOverview() {
+  const rootState = navigationRef.getRootState();
+  if (!canResetRootToHome(rootState)) {
+    return false;
+  }
+
+  const activeRootRoute = rootState.routes[rootState.index];
+  if (
+    rootState.routes.length !== 1 ||
+    activeRootRoute?.name !== RootNames.StackRoot ||
+    navigationRef.getCurrentRoute()?.name !== RootNames.Home
+  ) {
+    navigationRef.resetRoot(makeOpenHomeRootState());
+  }
+
+  apisHomeTabIndex.setTabIndex(0);
+  return true;
+}
+
+async function openRabbyGoTarget(target: RabbyGoTarget) {
+  if (!resetExistingHomeFlowToOverview()) {
+    return;
+  }
+
+  const nestedRoute = getRabbyGoTargetNestedRoute(target);
+  if (!nestedRoute) {
+    return;
+  }
+
+  if (target === 'swap' || target === 'bridge') {
+    const currentAccount = getFallbackAccountSnapshot();
+    if (!currentAccount) {
+      return;
+    }
+    await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
+  }
+
+  navigationRef.dispatch(
+    StackActions.push(RootNames.StackTransaction, nestedRoute),
+  );
 }
 
 const handleActions: OnParseUrlAndProcessAction = payload => {
   switch (payload.type) {
+    case 'open-target': {
+      const target = payload.target || 'home';
+      runWhenNavigationReady(() => {
+        const rootState = navigationRef.getRootState();
+        const activeRootRoute = rootState.routes[rootState.index];
+        if (activeRootRoute?.name === RootNames.Unlock) {
+          UnlockUIManager.queueResetNaviOnTopOfHomeWhenUnlock(
+            async ({ defaultAction }) => {
+              await defaultAction?.();
+              await openRabbyGoTarget(target);
+            },
+            { forceWaitUnlock: true },
+          );
+          return;
+        }
+
+        void openRabbyGoTarget(target);
+      }, `open-${target}`);
+      break;
+    }
     case 'open-dapp':
       if (!payload.dappUrl) {
         return;
@@ -545,6 +685,47 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
       break;
     case 'open-testkit-screen':
       if (!payload.testkitScreen) {
+        return;
+      }
+      if (
+        isNonPublicProductionEnv &&
+        typeof payload.testkitParams?.appLaunchLock === 'boolean'
+      ) {
+        setAppLaunchLockEnabled(payload.testkitParams.appLaunchLock);
+        console.info('[useUniversalLinkOnTop] App Launch Lock set by testkit', {
+          enabled: payload.testkitParams.appLaunchLock,
+        });
+      }
+      if (
+        isNonPublicProductionEnv &&
+        typeof payload.testkitParams?.sensitiveSceneProtection === 'boolean'
+      ) {
+        setSensitiveSceneProtectionEnabled(
+          payload.testkitParams.sensitiveSceneProtection,
+        );
+        console.info(
+          '[useUniversalLinkOnTop] Sensitive Scene Protection set by testkit',
+          {
+            enabled: payload.testkitParams.sensitiveSceneProtection,
+            restartRequired: IS_IOS,
+          },
+        );
+      }
+      if (
+        isNonPublicProductionEnv &&
+        payload.testkitScreen === RootNames.DevDataKeychain &&
+        payload.testkitParams?.keychainVersion
+      ) {
+        const appliedVersion = setCurrentKeychainVersion(
+          payload.testkitParams.keychainVersion,
+        );
+        console.info(
+          '[useUniversalLinkOnTop] Keychain version set for next cold start',
+          { appliedVersion },
+        );
+        setTimeout(() => {
+          RNHelpers.forceExitApp();
+        }, 100);
         return;
       }
       dispatchWhenNavigationReady(

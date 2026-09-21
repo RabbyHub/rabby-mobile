@@ -9,6 +9,7 @@ import { zCreate } from '@/core/utils/reexports';
 import type { UpdaterOrPartials } from '@/core/utils/store';
 import { resolveValFromUpdater } from '@/core/utils/store';
 import { filterCustomTestnetUserTokenSettings } from '@/utils/favoriteToken';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 type UserTokenSettingsState = UserTokenSettings;
 
@@ -87,15 +88,24 @@ export function toggleUserTokenPinned<T extends { id: string; chain: string }>(
 export function useIsUserTokenPinned<T extends { id: string; chain: string }>(
   token: T,
 ) {
-  return userTokenSettingsStore(state =>
-    state.pinedQueue.some(
-      pinned => pinned.chainId === token.chain && pinned.tokenId === token.id,
-    ),
+  return useActivityStore(
+    userTokenSettingsStore,
+    state =>
+      state.pinedQueue.some(
+        pinned => pinned.chainId === token.chain && pinned.tokenId === token.id,
+      ),
+    Object.is,
+    { storeLabel: 'user-token-pinned' },
   );
 }
 
 export const useUserTokenSettings = () => {
-  const userTokenSettings = userTokenSettingsStore(s => s);
+  const userTokenSettings = useActivityStore(
+    userTokenSettingsStore,
+    state => state,
+    Object.is,
+    { storeLabel: 'user-token-settings' },
+  );
 
   return {
     userTokenSettings,

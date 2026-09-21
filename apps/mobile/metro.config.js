@@ -7,10 +7,15 @@ const { withRozenite } = require('@rozenite/metro');
 const {
   wrapWithReanimatedMetroConfig,
 } = require('react-native-reanimated/metro-config');
+const { createWardenSerializer } = require('warden.rn');
 
 const {
   createI18nLivePreviewSerializer,
 } = require('./scripts/i18n-live-preview/metro-serializer');
+const {
+  isLegacyReactNativeArchitecture,
+  resolveReactNativeArchitecture,
+} = require('./scripts/react-native-architecture.cjs');
 
 const withI18nLivePreview = config => {
   if (!['1', 'true'].includes(process.env.I18N_LIVE_PREVIEW || '')) {
@@ -28,11 +33,37 @@ const withI18nLivePreview = config => {
   };
 };
 
+const withWarden = config => ({
+  ...config,
+  serializer: {
+    ...config.serializer,
+    customSerializer: createWardenSerializer(
+      config.serializer?.customSerializer,
+      {
+        dev: false,
+        harden: false,
+        hardenDynamicCode: false,
+        protectModuleImports: false,
+        trustedRuntimePackages: [
+          'react-native-gesture-handler',
+          'react-native-reanimated',
+        ],
+        rootDir: './',
+        sourceRoot: './src',
+        policyDir: './Warden-RN',
+      },
+    ),
+  },
+});
+
 const defaultConfig = getDefaultConfig(__dirname);
 const { assetExts, sourceExts } = defaultConfig.resolver;
 
 const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, '../..');
+const reactNativeArchitecture = resolveReactNativeArchitecture();
+const isLegacyArchitecture = isLegacyReactNativeArchitecture();
+const legacyMMKVPackageName = 'react-native-mmkv-legacy';
 const babelTransformEnvironmentKeys = [
   'APP_ENV',
   'BABEL_ENV',
@@ -41,11 +72,13 @@ const babelTransformEnvironmentKeys = [
   'RABBY_MOBILE_BUILD_CHANNEL',
   'RABBY_MOBILE_BUILD_ENV',
   'RABBY_MOBILE_E2E_SILENT_LOGS',
-  'RABBY_MOBILE_ENABLE_LOCAL_STORAGE_EXPORT',
   'RABBY_MOBILE_FE_SERVICE_URL',
   'RABBY_MOBILE_KR_PWD',
   'RABBY_MOBILE_MODULE_LOADING_MODE',
+  'RABBY_STARTUP_PROFILER_DEFER_WORKER',
   'RABBY_MOBILE_WALLETCONNECT_PROJECT_ID',
+  'RCT_NEW_ARCH_ENABLED',
+  'ORG_GRADLE_PROJECT_newArchEnabled',
   'WITH_ROZENITE',
   'buildchannel',
 ];
@@ -53,6 +86,7 @@ const babelTransformInputFiles = [
   path.resolve(projectRoot, 'babel.config.js'),
   path.resolve(projectRoot, 'package.json'),
   path.resolve(projectRoot, 'scripts/loadables-aliases.generated.cjs'),
+  path.resolve(projectRoot, 'scripts/react-native-architecture.cjs'),
   path.resolve(workspaceRoot, 'package.json'),
   path.resolve(workspaceRoot, 'yarn.lock'),
   ...fs
@@ -99,6 +133,46 @@ const resolveMobileReactRuntimeModule = moduleName => {
   return require.resolve(moduleName, {
     paths: [projectRoot],
   });
+};
+const resolveLegacyMMKVModule = moduleName => {
+  if (
+    !isLegacyArchitecture ||
+    (moduleName !== 'react-native-mmkv' &&
+      !moduleName.startsWith('react-native-mmkv/'))
+  ) {
+    return undefined;
+  }
+
+  const legacyModuleName = moduleName.replace(
+    'react-native-mmkv',
+    legacyMMKVPackageName,
+  );
+
+  try {
+    if (moduleName === 'react-native-mmkv') {
+      const packageJsonPath = require.resolve(
+        `${legacyMMKVPackageName}/package.json`,
+        { paths: [projectRoot] },
+      );
+      const legacyPackage = require(packageJsonPath);
+      const reactNativeEntry =
+        legacyPackage['react-native'] ||
+        legacyPackage.module ||
+        legacyPackage.main;
+
+      return require.resolve(
+        path.resolve(path.dirname(packageJsonPath), reactNativeEntry),
+      );
+    }
+
+    return require.resolve(legacyModuleName, {
+      paths: [projectRoot],
+    });
+  } catch (error) {
+    throw new Error(
+      `[metro] Legacy Architecture requires ${legacyMMKVPackageName}. Run yarn install before bundling. ${error.message}`,
+    );
+  }
 };
 // Keep these exceptions explicit so resolution stays deterministic and cacheable.
 // Resolve lazily because not every bundle target installs or consumes every alias.
@@ -330,7 +404,7 @@ const withPackageExportsDisabled = config => {
  * @type {import('metro-config').MetroConfig}
  */
 const config = {
-  cacheVersion: `${defaultConfig.cacheVersion}:${babelTransformCacheVersion}`,
+  cacheVersion: `${defaultConfig.cacheVersion}:${babelTransformCacheVersion}:react-native-architecture=${reactNativeArchitecture}`,
   projectRoot,
   transformer: {
     babelTransformerPath: require.resolve('./webview-raw-transformer'),
@@ -364,6 +438,14 @@ const config = {
       'react-native': path.resolve(projectRoot, 'node_modules/react-native'),
     },
     resolveRequest: (context, moduleName, platform) => {
+      const legacyMMKVModule = resolveLegacyMMKVModule(moduleName);
+      if (legacyMMKVModule) {
+        return {
+          filePath: legacyMMKVModule,
+          type: 'sourceFile',
+        };
+      }
+
       const mobileReactRuntimeModule =
         resolveMobileReactRuntimeModule(moduleName);
       if (mobileReactRuntimeModule) {
@@ -407,7 +489,7 @@ const mergedConfig = compose(
 
 const rozeniteEnabled = process.env.WITH_ROZENITE === 'true';
 
-module.exports = rozeniteEnabled
+const configWithRozenite = rozeniteEnabled
   ? withRozenite(mergedConfig, {
       enabled: true,
       include: [
@@ -418,3 +500,5 @@ module.exports = rozeniteEnabled
       ],
     })
   : mergedConfig;
+
+module.exports = withWarden(configWithRozenite);

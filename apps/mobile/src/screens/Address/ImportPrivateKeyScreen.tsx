@@ -75,6 +75,7 @@ export const ImportPrivateKeyScreen = () => {
 
   React.useEffect(() => {
     if (scanner.text) {
+      setError(undefined);
       setPrivateKey(scanner.text);
       scanner.clear();
     }

@@ -2,6 +2,7 @@ import BootSplash from '@rabby-wallet/react-native-bootsplash';
 import React from 'react';
 
 import { perfEvents } from '@/core/utils/perf';
+import { markBootSplashExited } from '@/core/utils/bootSplashExit';
 import { navigationRef } from '@/utils/navigation';
 
 const SPLASH_EXIT_FALLBACK_MS = 8000;
@@ -16,9 +17,11 @@ export function AnimatedBootSplash() {
       }
 
       hideRequested = true;
-      BootSplash.hide({ fade: false }).catch(error => {
-        console.error('AnimatedBootSplash::hideNativeSplash::error', error);
-      });
+      BootSplash.hide({ fade: false })
+        .then(markBootSplashExited)
+        .catch(error => {
+          console.error('AnimatedBootSplash::hideNativeSplash::error', error);
+        });
     };
 
     const navigationReadySub = perfEvents.subscribe(

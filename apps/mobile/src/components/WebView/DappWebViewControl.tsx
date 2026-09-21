@@ -68,7 +68,6 @@ function BottomSheetMoreLayout({ children }: React.PropsWithChildren) {
   // if (Platform.OS !== 'ios') {
   //   return (
   //     <View
-  //       className={clsx('absolute left-[0] h-[100%] w-[100%]')}
   //       style={{
   //         // BottomSheetModalProvider is provided isolated from the main app below, the start point on vertical axis is
   //         // the parent of this component
@@ -349,7 +348,7 @@ const DappWebViewControl = ({
         webviewRef={webviewRef}
         webviewIdRef={webviewIdRef}
         siteInfoRefs={{ urlRef, titleRef, iconRef }}>
-        {({ onLoadStart, onMessage: onBridgeMessage }) => {
+        {({ bridgeHardenScript, onLoadStart, onMessage: onBridgeMessage }) => {
           if (!entryScriptWeb3Loaded) {
             return null;
           }
@@ -383,6 +382,9 @@ const DappWebViewControl = ({
               injectedJavaScriptBeforeContentLoadedBuiltinScriptIds={
                 beforeContentLoadedBuiltinScriptIds
               }
+              injectedJavaScriptBeforeContentLoaded={`${bridgeHardenScript}\n${
+                webviewProps?.injectedJavaScriptBeforeContentLoaded ?? ''
+              }`}
               injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
               injectedJavaScriptBuiltinScriptIds={documentEndBuiltinScriptIds}
               onNavigationStateChange={webviewActions.onNavigationStateChange}

@@ -308,6 +308,7 @@ export const ImportSeedPhraseScreen2024 = () => {
 
   React.useEffect(() => {
     if (scanner.text) {
+      setError(undefined);
       setMnemonics(scanner.text);
       scanner.clear();
     }
@@ -321,7 +322,7 @@ export const ImportSeedPhraseScreen2024 = () => {
 
   return (
     <FooterButtonScreenContainer
-      as="View"
+      as="KeyboardAvoidingView"
       buttonProps={{
         title: t('global.Confirm'),
         onPress: handleConfirm,

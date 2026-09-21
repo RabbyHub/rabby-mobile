@@ -99,6 +99,13 @@ export const DevDataSQLite = registerAppScreen<
   name: TESTKITS_PRELOAD_SCREENS.DevDataSQLite,
 });
 
+export const DevWatchAddressFixtureImport = registerAppScreen<
+  typeof import('@/screens/Testkits/DevWatchAddressFixtureImport').default
+>({
+  loader: () => import('@/screens/Testkits/DevWatchAddressFixtureImport'),
+  name: TESTKITS_PRELOAD_SCREENS.DevWatchAddressFixtureImport,
+});
+
 export const DevDataKeychain = registerAppScreen<
   typeof import('@/screens/Testkits/DevDataKeychain').default
 >({

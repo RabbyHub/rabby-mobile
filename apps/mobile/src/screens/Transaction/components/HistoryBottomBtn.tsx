@@ -29,7 +29,6 @@ import { HistoryItemCateType } from './type';
 
 interface ItemProps {
   status: number;
-  className?: string;
   type: HistoryItemCateType;
   chain: string;
   receives: HistoryDisplayItem['receives'];

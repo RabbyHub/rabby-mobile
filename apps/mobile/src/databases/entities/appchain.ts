@@ -4,6 +4,7 @@ import {
   PortfolioItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { Entity, Column, In } from 'typeorm/browser';
+import type { DataSource } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import { jsonTransformer } from './_helpers';
 import { prepareAppDataSource } from '../imports';
@@ -18,6 +19,7 @@ import {
 
 // AppChain 数据过期时间：10分钟
 export const APPCHAIN_EXPIRED_TIME = 10 * 60 * 1000;
+const PROJECTION_RESOURCE_QUERY_BATCH_SIZE = 200;
 
 @ParseEntity()
 @Entity(ORM_TABLE_NAMES.cache_appchain)
@@ -224,6 +226,66 @@ export class AppChainEntity extends EntityAddressAssetBase {
       };
       grouped[e.owner_addr]!.push(appChainItem);
     }
+
+    return grouped;
+  }
+
+  static async queryByProtocolResourceIds(
+    resourceIds: string[],
+    dataSource?: DataSource,
+  ): Promise<Record<string, AppChainItem[]>> {
+    const repo = dataSource
+      ? dataSource.getRepository(AppChainEntity)
+      : (await prepareAppDataSource(), this.getRepository());
+
+    const normalizedResourceIds = Array.from(
+      new Set(resourceIds.map(resourceId => resourceId.toLowerCase())),
+    ).filter(Boolean);
+    if (!normalizedResourceIds.length) {
+      return {};
+    }
+
+    const resourceIdExpression = [
+      "LOWER(COALESCE(appchain.owner_addr, ''))",
+      "LOWER('RABBY_APP_CHAIN_' || COALESCE(appchain.id, ''))",
+      "LOWER(COALESCE(appchain.id, ''))",
+    ].join(" || ':' || ");
+    const entities: AppChainEntity[] = [];
+
+    for (
+      let start = 0;
+      start < normalizedResourceIds.length;
+      start += PROJECTION_RESOURCE_QUERY_BATCH_SIZE
+    ) {
+      const resourceIdChunk = normalizedResourceIds.slice(
+        start,
+        start + PROJECTION_RESOURCE_QUERY_BATCH_SIZE,
+      );
+      const rows = await repo
+        .createQueryBuilder('appchain')
+        .where(`${resourceIdExpression} IN (:...resourceIds)`, {
+          resourceIds: resourceIdChunk,
+        })
+        .getMany();
+      entities.push(...rows);
+    }
+
+    const grouped: Record<string, AppChainItem[]> = {};
+    entities.forEach(entity => {
+      const owner = entity.owner_addr.toLowerCase();
+      if (!grouped[owner]) {
+        grouped[owner] = [];
+      }
+      grouped[owner].push({
+        id: entity.id,
+        name: entity.name,
+        site_url: entity.site_url,
+        logo_url: entity.logo_url,
+        is_support_portfolio: entity.is_support_portfolio,
+        is_visible: entity.is_visible,
+        portfolio_item_list: entity.portfolio_item_list,
+      });
+    });
 
     return grouped;
   }

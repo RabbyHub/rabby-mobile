@@ -16,8 +16,16 @@ export const PRELOAD_NAVIGATORS = {
   [RootNames.SingleAddressStack]: RootNames.SingleAddressStack,
 };
 
-async function preloadNamedComponent(name?: string) {
-  if (__DEV__ || loadablesAreEager || !name || isCached(name)) {
+async function preloadNamedComponent(
+  name?: string,
+  { allowInDev = false }: { allowInDev?: boolean } = {},
+) {
+  if (
+    (__DEV__ && !allowInDev) ||
+    loadablesAreEager ||
+    !name ||
+    isCached(name)
+  ) {
     return;
   }
 
@@ -54,6 +62,19 @@ export async function preloadTransactionHotNavigator() {
   await preloadNamedComponent(PRELOAD_NAVIGATORS[RootNames.StackTransaction]);
 }
 
+/**
+ * Resolve the lazy TransactionNavigator before an explicit Perps route push.
+ *
+ * General startup preloads remain disabled in development, but entering Perps
+ * must not transition to bundle-splitter's null Suspense fallback while the
+ * shared navigator is still loading.
+ */
+export async function prepareTransactionNavigatorForPerpsNavigation() {
+  await preloadNamedComponent(PRELOAD_NAVIGATORS[RootNames.StackTransaction], {
+    allowInDev: true,
+  });
+}
+
 export async function preloadSingleAddressNavigator() {
   await preloadNamedComponent(PRELOAD_SCREENS[RootNames.SingleAddressHome]);
 }
@@ -77,6 +98,7 @@ export const TESTKITS_PRELOAD_SCREENS: { [P in AppRootName]?: P } = {
   [RootNames.DevCapabilityFile]: 'DevCapabilityFile',
   [RootNames.DevUIBuiltInPages]: 'DevUIBuiltInPages',
   [RootNames.DevDataSQLite]: 'DevDataSQLite',
+  [RootNames.DevWatchAddressFixtureImport]: 'DevWatchAddressFixtureImport',
   [RootNames.DevDataKeychain]: 'DevDataKeychain',
   [RootNames.DevDataKeyringVault]: 'DevDataKeyringVault',
   [RootNames.DevDataContactService]: 'DevDataContactService',

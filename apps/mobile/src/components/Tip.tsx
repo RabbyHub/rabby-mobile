@@ -1,5 +1,11 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { StyleSheet, View, PressableProps } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  PressableProps,
+  type StyleProp,
+  type TextStyle,
+} from 'react-native';
 import { Platform, StatusBar, Pressable } from 'react-native';
 import Tooltip, { TooltipProps } from 'react-native-walkthrough-tooltip';
 import { colord } from 'colord';
@@ -17,6 +23,7 @@ type PressableComProps<T extends PressableComponent> = T extends 'RNPressable'
 type TipProps<T extends PressableComponent> = Omit<TooltipProps, 'content'> & {
   as?: T;
   content: string | TooltipProps['content'];
+  contentTextStyle?: StyleProp<TextStyle>;
   hideArrow?: boolean;
   isLight?: boolean;
   pressableProps?: Omit<PressableComProps<T>, 'onPress'> & {
@@ -67,6 +74,7 @@ function destroyTips() {
 const TipBase = <T extends PressableComponent = 'RNPressable'>({
   as: propAs = 'RNPressable' as T,
   content,
+  contentTextStyle,
   tooltipStyle,
   pressableProps,
   contentStyle,
@@ -101,6 +109,7 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
         <Text
           style={StyleSheet.flatten([
             styles.contentText,
+            contentTextStyle,
             isLight && {
               color: colors['neutral-black'],
             },
@@ -111,7 +120,14 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
     ) : (
       content
     );
-  }, [content, isLight, colors, styles.content, styles.contentText]);
+  }, [
+    colors,
+    content,
+    contentTextStyle,
+    isLight,
+    styles.content,
+    styles.contentText,
+  ]);
 
   const controlled = useMemo(
     () => typeof rest.isVisible !== 'undefined',

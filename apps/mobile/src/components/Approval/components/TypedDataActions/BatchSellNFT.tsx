@@ -121,7 +121,7 @@ const BatchSellNFT = ({
             </Text>
           </Row>
           <Row>
-            <View className="relative">
+            <View style={styles.relative}>
               <LogoWithText
                 logo={actionData.receive_token.logo_url}
                 text={
@@ -311,3 +311,9 @@ const BatchSellNFT = ({
 };
 
 export default BatchSellNFT;
+
+const styles = StyleSheet.create({
+  relative: {
+    position: 'relative',
+  },
+});

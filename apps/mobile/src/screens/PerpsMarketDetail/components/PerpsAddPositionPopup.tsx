@@ -26,7 +26,11 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { PerpsSlider } from './PerpsSlider';
-import { PERPS_MAX_NTL_VALUE, PERPS_MINI_USD_VALUE } from '@/constant/perps';
+import {
+  PERPS_EXCHANGE_FEE_NUMBER,
+  PERPS_MAX_NTL_VALUE,
+  PERPS_MINI_USD_VALUE,
+} from '@/constant/perps';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
@@ -37,12 +41,12 @@ import BigNumber from 'bignumber.js';
 import { calLiquidationPrice, formatPerpsCoin } from '@/utils/perps';
 import { AssetPriceInfo } from './PerpsPriceInfo';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
-import { MarketData, perpsStore } from '@/hooks/perps/usePerpsStore';
+import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { useUsdInput } from '@/hooks/useUsdInput';
 import { AssetAvatar } from '@/components';
 import { DistanceToLiquidationTag } from '@/screens/Perps/components/PerpsPositionSection/DistanceToLiquidationTag';
-import { useShallow } from 'zustand/react/shallow';
-import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
+import { resolvePerpsProProjectedTradeRisk } from '@/screens/PerpsPro/model/tradeRisk';
+import { useCrossMarginAvailableAfterMaintenance } from '../hooks/useCrossMarginAvailable';
 import { Text } from '@/components/Typography';
 import { PerpsDisplayCoinName } from '@/screens/Perps/components/PerpsDisplayCoinName';
 
@@ -52,11 +56,14 @@ export const PerpsAddPositionPopup: React.FC<{
   visible?: boolean;
   coin: string;
   coinLogo: string;
+  providerFee: number;
   availableBalance: number;
   activeAssetCtx: WsActiveAssetCtx['ctx'] | null;
   currentAssetCtx: MarketData | null;
   direction: 'Long' | 'Short';
   positionSize: string;
+  entryPrice: number;
+  positionValue: number;
   szDecimals: number;
   pxDecimals: number;
   marginMode: 'cross' | 'isolated';
@@ -78,11 +85,14 @@ export const PerpsAddPositionPopup: React.FC<{
   visible,
   coin,
   coinLogo,
+  providerFee,
   activeAssetCtx,
   currentAssetCtx,
   leverage,
   direction,
   positionSize,
+  entryPrice,
+  positionValue,
   marginMode,
   marginUsed,
   liquidationPx,
@@ -131,17 +141,35 @@ export const PerpsAddPositionPopup: React.FC<{
     }
   });
 
+  const bothFee = React.useMemo(() => {
+    return providerFee + PERPS_EXCHANGE_FEE_NUMBER;
+  }, [providerFee]);
+
+  // Adding consumes margin plus taker fees charged on the notional
+  // (margin × leverage), and the availableToTrade snapshot can be slightly
+  // stale by fill time — margin set to the full balance gets rejected by the
+  // exchange with "insufficient margin". Reserve the fee cost plus a small
+  // drift cushion, so the slider's 100% maps to a margin that still clears.
+  const maxSliderMargin = React.useMemo(() => {
+    return BigNumber.max(
+      new BigNumber(availableBalance)
+        .div(1 + bothFee * leverage + 0.001)
+        .decimalPlaces(2, BigNumber.ROUND_DOWN),
+      0,
+    ).toNumber();
+  }, [availableBalance, bothFee, leverage]);
+
   // Calculate slider percentage
   const sliderPercentage = React.useMemo(() => {
-    if (addMargin === 0 || availableBalance === 0) {
+    if (addMargin === 0 || maxSliderMargin === 0) {
       return 0;
     }
-    return Math.min((addMargin / availableBalance) * 100, 100);
-  }, [addMargin, availableBalance]);
+    return Math.min((addMargin / maxSliderMargin) * 100, 100);
+  }, [addMargin, maxSliderMargin]);
 
   // Handle slider change
   const handleSliderChange = useMemoizedFn((value: number) => {
-    const newMargin = (availableBalance * value) / 100;
+    const newMargin = (maxSliderMargin * value) / 100;
     setMargin(
       new BigNumber(newMargin).decimalPlaces(2, BigNumber.ROUND_DOWN).toFixed(),
     );
@@ -229,30 +257,55 @@ export const PerpsAddPositionPopup: React.FC<{
     }
   }, [visible, setMargin]);
 
-  const { accountValue, crossMaintenanceMarginUsed } = usePerpsAccount();
+  // 对齐 Pro:全仓可用保证金按账户模式(unified/标准/PM)解析;
+  // 弹窗隐藏时冻结订阅,避免热数据帧唤醒隐藏子树
+  const crossMarginAvailableAfterMaintenance =
+    useCrossMarginAvailableAfterMaintenance({
+      dexId: currentAssetCtx?.dexId ?? '',
+      quoteAsset,
+      enabled: !!visible,
+    });
 
-  const crossMargin = React.useMemo(() => {
-    return Number(accountValue) - Number(crossMaintenanceMarginUsed || 0);
-  }, [accountValue, crossMaintenanceMarginUsed]);
-
-  // 计算预估清算价格
+  // 计算预估清算价格;全仓分支复用 Pro 的组合仓位推导。
+  // 无法得出有效估算(未输入金额、账户数据未就绪、无正清算价)时返回 null,展示为 "-"
   const estimatedLiquidationPrice = React.useMemo(() => {
-    if (!markPrice || !leverage) {
-      return 0;
+    if (!visible || !markPrice || !leverage) {
+      return null;
     }
     const maxLeverage = leverageRang[1];
-    return calLiquidationPrice(
+    if (marginMode === 'cross') {
+      const risk = resolvePerpsProProjectedTradeRisk({
+        baseSize: tradeSize,
+        calculateLiquidationPrice: calLiquidationPrice,
+        crossMarginAvailableAfterMaintenance,
+        currentPosition: {
+          entryPx: String(entryPrice),
+          marginUsed: String(marginUsed),
+          positionValue: String(positionValue),
+          szi: direction === 'Long' ? positionSize : `-${positionSize}`,
+        },
+        entryPrice: String(markPrice),
+        leverage,
+        marginMode: 'cross',
+        markPrice: String(markPrice),
+        maxLeverage,
+        pxDecimals,
+        side: direction === 'Long' ? 'buy' : 'sell',
+      });
+      return risk?.liquidationPrice ?? null;
+    }
+    const liqPrice = calLiquidationPrice(
       markPrice,
-      marginMode === 'cross' ? crossMargin : Number(addMargin + marginUsed),
+      Number(addMargin + marginUsed),
       direction,
       Number(tradeSize) + Number(positionSize),
-      marginMode === 'cross'
-        ? Number(tradeAmount)
-        : Number(tradeAmount) + Number(positionSize) * Number(markPrice),
+      Number(tradeAmount) + Number(positionSize) * Number(markPrice),
       maxLeverage,
-    ).toFixed(pxDecimals);
+    );
+    return liqPrice > 0 ? liqPrice.toFixed(pxDecimals) : null;
   }, [
-    crossMargin,
+    visible,
+    crossMarginAvailableAfterMaintenance,
     marginMode,
     markPrice,
     leverage,
@@ -264,6 +317,8 @@ export const PerpsAddPositionPopup: React.FC<{
     tradeAmount,
     positionSize,
     marginUsed,
+    entryPrice,
+    positionValue,
   ]);
 
   const { height } = useWindowDimensions();
@@ -502,7 +557,9 @@ export const PerpsAddPositionPopup: React.FC<{
               </TouchableOpacity>
               <View>
                 <Text style={styles.value}>
-                  ${splitNumberByStep(Number(estimatedLiquidationPrice))}
+                  {estimatedLiquidationPrice
+                    ? `$${splitNumberByStep(Number(estimatedLiquidationPrice))}`
+                    : '-'}
                 </Text>
               </View>
             </View>

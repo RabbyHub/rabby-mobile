@@ -1,10 +1,14 @@
+import type { PerpsCandleInterval } from '@/constant/perps';
+
 export interface CandleStick {
   time: number;
   open: number;
   high: number;
   low: number;
   close: number;
-  volume: number;
+  volume?: number;
+  trades?: number | null;
+  quoteTurnover?: number | null;
 }
 
 export enum CandlePeriod {
@@ -26,9 +30,23 @@ export enum CandlePeriod {
 
 export interface CandleData {
   coin: string;
-  interval: CandlePeriod;
+  interval: CandlePeriod | PerpsCandleInterval;
+  identity?: string;
+  revision?: number;
   showVolume?: boolean;
   fitContent?: boolean;
   noTime?: boolean;
+  proConfig?: PerpsProCandleChartConfig;
+  preserveVisibleRange?: boolean;
   candles: CandleStick[];
+}
+
+export interface PerpsProCandleChartConfig {
+  baseAsset: string;
+  initialVisibleBars: number;
+  interval: PerpsCandleInterval;
+  maPeriods: readonly [7, 25, 99];
+  priceDecimals: number;
+  quoteAsset: string;
+  variant: 'perps-pro';
 }

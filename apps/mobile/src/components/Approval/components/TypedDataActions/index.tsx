@@ -1,3 +1,4 @@
+import { SecurityEngineScopeProvider } from '../../hooks/useApprovalSecurityEngine';
 import type { Result } from '@rabby-wallet/rabby-security-engine';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -62,6 +63,7 @@ export interface MultiActionProps {
   actionList: ParsedTypedDataActionData[] | ParsedTransactionActionData[];
   requireDataList: ActionRequireData[];
   engineResultList: Result[][];
+  securityScopes?: string[];
 }
 const ActionItem = ({
   raw,
@@ -371,17 +373,20 @@ const Actions = ({
         {isMultiAction && multiAction ? (
           (multiAction.actionList as ParsedTypedDataActionData[]).map(
             (action, index) => (
-              <ActionItem
+              <SecurityEngineScopeProvider
                 key={index}
-                data={action}
-                requireData={multiAction.requireDataList[index]}
-                chain={chain}
-                engineResults={multiAction.engineResultList[index]}
-                raw={raw}
-                message={message}
-                account={account}
-                origin={origin}
-              />
+                scope={multiAction.securityScopes?.[index]}>
+                <ActionItem
+                  data={action}
+                  requireData={multiAction.requireDataList[index]}
+                  chain={chain}
+                  engineResults={multiAction.engineResultList[index] || []}
+                  raw={raw}
+                  message={message}
+                  account={account}
+                  origin={origin}
+                />
+              </SecurityEngineScopeProvider>
             ),
           )
         ) : (

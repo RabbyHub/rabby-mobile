@@ -3,6 +3,7 @@ import type { IProtocolItem } from '@/types/assets';
 
 jest.mock('@/databases/entities/portocolItem', () => ({
   ProtocolItemEntity: {
+    batchMultiAddressProtocolsByResourceIds: jest.fn(async () => []),
     batchQueryProtocols: jest.fn(async () => []),
     getDefaultProtocolsByAddresses: jest.fn(async () => ({})),
     isExpired: jest.fn(async () => true),
@@ -10,6 +11,7 @@ jest.mock('@/databases/entities/portocolItem', () => ({
 }));
 jest.mock('@/databases/entities/appchain', () => ({
   AppChainEntity: {
+    queryByProtocolResourceIds: jest.fn(async () => ({})),
     queryByOwners: jest.fn(async () => ({})),
   },
 }));
@@ -66,12 +68,16 @@ import {
   syncRemoteProtocolsForAddresses,
 } from '@/databases/sync/assets';
 import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
+import { AppChainEntity } from '@/databases/entities/appchain';
 import useProtocolListStore, {
   buildProtocolEntityId,
   protocolEntityResourceStore,
   useProtocolListComputedStore,
 } from './protocols';
-import { scheduleAssetProjectionPersistence } from './assetProjectionPersistence';
+import {
+  restoreAssetProjection,
+  scheduleAssetProjectionPersistence,
+} from './assetProjectionPersistence';
 
 const ADDRESS = '0xAbCd';
 const NORMALIZED_ADDRESS = ADDRESS.toLowerCase();
@@ -86,6 +92,8 @@ const mockedProtocolItemEntity = jest.mocked(ProtocolItemEntity);
 const mockedScheduleAssetProjectionPersistence = jest.mocked(
   scheduleAssetProjectionPersistence,
 );
+const mockedRestoreAssetProjection = jest.mocked(restoreAssetProjection);
+const mockedAppChainEntity = jest.mocked(AppChainEntity);
 
 const createProtocol = (id: string, netWorth: number): IProtocolItem =>
   ({
@@ -143,6 +151,47 @@ describe('protocol list request freshness', () => {
     });
   });
 
+  it('restores a persisted projection through exact protocol resources only', async () => {
+    const restored = createProtocol('restored-projection', 20);
+    const protocolId = buildProtocolEntityId(restored);
+    mockedRestoreAssetProjection.mockResolvedValueOnce({
+      rows: [{ type: 'protocol', id: protocolId }],
+      groups: [],
+      metadata: {
+        defaultVisibleProtocolCount: 1,
+        foldedProtocolUsdValue: '',
+      },
+    } as never);
+    mockedProtocolItemEntity.batchMultiAddressProtocolsByResourceIds.mockResolvedValueOnce(
+      [restored] as never,
+    );
+
+    const key = useProtocolListComputedStore
+      .getState()
+      .registerSingleProtocols(ADDRESS);
+
+    await waitFor(
+      () =>
+        mockedProtocolItemEntity.batchMultiAddressProtocolsByResourceIds.mock
+          .calls.length > 0,
+    );
+    await waitFor(
+      () =>
+        useProtocolListComputedStore.getState().singleProtocolsIndexCache[key]
+          ?.protocolIds.length === 1,
+    );
+
+    expect(
+      mockedProtocolItemEntity.batchMultiAddressProtocolsByResourceIds,
+    ).toHaveBeenCalledWith([protocolId]);
+    expect(
+      mockedProtocolItemEntity.getDefaultProtocolsByAddresses,
+    ).not.toHaveBeenCalled();
+    expect(
+      mockedAppChainEntity.queryByProtocolResourceIds,
+    ).toHaveBeenCalledWith([protocolId]);
+  });
+
   it('does not let a late multi-address response overwrite a newer single-address response', async () => {
     const cached = createProtocol('cached', 1);
     const stale = createProtocol('stale', 2);
@@ -181,6 +230,36 @@ describe('protocol list request freshness', () => {
       latestRemote,
     ]);
     expect(mockedSyncRemoteProtocolsForAddresses).not.toHaveBeenCalled();
+  });
+
+  it('shares an in-flight multi-address refresh with a later manual force refresh', async () => {
+    const pendingRemote = deferred<{
+      protocolMap: Record<string, IProtocolItem[]>;
+      remoteProtocolMap: Record<string, ComplexProtocol[]>;
+    }>();
+    mockedLoadProtocolsForAddresses.mockReturnValueOnce(pendingRemote.promise);
+
+    const initialRequest = useProtocolListStore
+      .getState()
+      .batchGetProtocols([ADDRESS], false);
+    await waitFor(
+      () => mockedLoadProtocolsForAddresses.mock.calls.length === 1,
+    );
+
+    const manualRefresh = useProtocolListStore
+      .getState()
+      .batchGetProtocols([ADDRESS], true);
+
+    expect(mockedLoadProtocolsForAddresses).toHaveBeenCalledTimes(1);
+    pendingRemote.resolve({
+      protocolMap: { [NORMALIZED_ADDRESS]: [createProtocol('fresh', 1)] },
+      remoteProtocolMap: {
+        [NORMALIZED_ADDRESS]: [createRemoteProtocol('fresh')],
+      },
+    });
+    await Promise.all([initialRequest, manualRefresh]);
+
+    expect(mockedLoadProtocolsForAddresses).toHaveBeenCalledTimes(1);
   });
 
   it('does not cancel active remote work when a newer call only uses fresh memory', async () => {

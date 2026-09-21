@@ -37,14 +37,19 @@ export const SubmitActions: React.FC<PropsWithAuthSession> = ({
   const { t } = useTranslation();
   const [isSign, setIsSign] = React.useState(false);
 
+  React.useEffect(() => {
+    if (disabledProcess) setIsSign(false);
+  }, [disabledProcess]);
+
   const handleClickSign = React.useCallback(() => {
+    if (disabledProcess) return;
     setIsSign(true);
 
     isSwap &&
       void setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN, {
         chain: chain?.serverId as string,
       });
-  }, [chain, isSwap]);
+  }, [chain, isSwap, disabledProcess]);
   const colors = useThemeColors();
   const { styles } = useTheme2024({ getStyle: getStyles2024 });
   const [pressedConfirm, setPressedConfirm] = React.useState(false);
@@ -52,6 +57,7 @@ export const SubmitActions: React.FC<PropsWithAuthSession> = ({
     useLastUnlockedAuth,
   });
   const handlePress = React.useCallback(() => {
+    if (disabledProcess || pressedConfirm) return;
     setPressedConfirm(true);
     globalBottomSheetModalAddListener(
       EVENT_NAMES.DISMISS,
@@ -61,7 +67,7 @@ export const SubmitActions: React.FC<PropsWithAuthSession> = ({
       true,
     );
     onPress(onSubmit, () => setPressedConfirm(false));
-  }, [onSubmit, setPressedConfirm, onPress]);
+  }, [onSubmit, setPressedConfirm, onPress, disabledProcess, pressedConfirm]);
 
   return (
     <ActionsContainer onCancel={onCancel} isMiniSignTx={isMiniSignTx}>

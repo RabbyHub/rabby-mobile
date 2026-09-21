@@ -38,6 +38,7 @@ async function sendMessage({
   platform = 'android',
   isFastBuild = false,
   downloadURL = '',
+  larkDriveURL = '',
   actionsJobUrl = '',
   gitCommitURL = '',
   gitRefURL = '',
@@ -123,6 +124,10 @@ async function sendMessage({
             platform === 'android' && [
               { tag: 'text', text: `下载链接: ` },
               { tag: 'a', href: downloadURL, text: downloadURL },
+            ],
+            larkDriveURL && [
+              { tag: 'text', text: `Lark Drive: ` },
+              { tag: 'a', href: larkDriveURL, text: larkDriveURL },
             ],
             isFastBuild && [
               { tag: 'text', text: `📢📢📢 注意: ` },
@@ -218,6 +223,7 @@ if (!process.env.CI && args[0] === 'get-token') {
       : '';
   sendMessage({
     downloadURL: args[0],
+    larkDriveURL: process.env.RABBY_MOBILE_LARK_DRIVE_URL || '',
     platform: args[1],
     isFastBuild: args[2] === 'true',
     actionsJobUrl: process.env.GIT_ACTIONS_JOB_URL,

@@ -2,6 +2,7 @@ import { getChainList } from '@/constant/chains';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { EVENT_UPDATE_CHAIN_LIST, eventBus } from '@/utils/events';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
 type ChainListState = {
   mainnetList: ReturnType<typeof getChainList>;
@@ -34,11 +35,19 @@ eventBus.on(EVENT_UPDATE_CHAIN_LIST, v => {
 });
 
 export const useChainList = () => {
-  const chainList = chainListStore(s => s);
+  const chainList = useActivityStore(
+    chainListStore,
+    state => state,
+    Object.is,
+    { storeLabel: 'chain-list' },
+  );
 
   return {
     ...chainList,
   };
 };
 
-export const useMainnetChainList = () => chainListStore(s => s.mainnetList);
+export const useMainnetChainList = () =>
+  useActivityStore(chainListStore, state => state.mainnetList, Object.is, {
+    storeLabel: 'mainnet-chain-list',
+  });

@@ -1,6 +1,7 @@
 import {
   completeAddressListSnapshots,
   createAddressListSnapshotHydrator,
+  getAddressesWithoutListSnapshot,
   mergeAddressListSnapshots,
 } from './_addressListSnapshot';
 
@@ -43,6 +44,15 @@ describe('address list snapshots', () => {
       '0xmulti': ['new'],
       '0xempty': [],
     });
+  });
+
+  it('treats an empty in-memory list as a reusable snapshot', () => {
+    expect(
+      getAddressesWithoutListSnapshot(['0xA', '0xB', '0xC'], {
+        '0xa': ['token'],
+        '0xb': [],
+      }),
+    ).toEqual(['0xc']);
   });
 
   it('deduplicates overlapping address hydrations', async () => {

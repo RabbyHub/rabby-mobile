@@ -7,6 +7,6 @@ module.exports = {
     '\\.integration\\.test\\.[jt]sx?$',
   ],
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|react-native-root-toast|react-native-root-siblings|p-queue|p-timeout|eventemitter3)/)',
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|react-native-root-toast|react-native-root-siblings|@rabby-wallet/rabby-security-engine|p-queue|p-timeout|eventemitter3)/)',
   ],
 };

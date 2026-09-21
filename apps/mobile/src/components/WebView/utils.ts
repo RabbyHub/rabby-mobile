@@ -19,7 +19,10 @@ import { pairWalletConnectUri } from '@/core/walletconnect';
  *  Return `true` to continue loading the request and `false` to stop loading.
  */
 export function checkShouldStartLoadingWithRequestForDappWebView(
-  evt: Pick<ShouldStartLoadRequestEvent, 'url'>,
+  evt: Pick<ShouldStartLoadRequestEvent, 'url'> & {
+    sourceDocumentURL?: string;
+  },
+  options?: { enforceWalletConnectOrigin?: boolean },
 ): boolean /* should allow */ {
   const url = evt.url;
   const { protocol = '' } = urlUtils.safeParseURL(url) || {};
@@ -35,13 +38,18 @@ export function checkShouldStartLoadingWithRequestForDappWebView(
   }
 
   if (isRabbyWalletConnectDeeplink(url)) {
+    const shouldCheckOrigin = options?.enforceWalletConnectOrigin === true;
+    if (shouldCheckOrigin && !evt.sourceDocumentURL) {
+      return false;
+    }
     const uri = parseWalletConnectUriFromLink(url);
     if (!uri) {
       return false;
     }
     pairWalletConnectUri({
-      uri: uri,
+      uri,
       source: 'inner-webview',
+      browserOrigin: shouldCheckOrigin ? evt.sourceDocumentURL : undefined,
     }).catch(() => {});
     return false;
   }

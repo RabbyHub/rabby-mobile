@@ -250,7 +250,12 @@ export function setCurrentAccount(
 }
 
 export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
-  const accounts = useAccountStore(s => s.accounts);
+  const accounts = useActivityStore(
+    accountStore.useStore,
+    state => state.accounts,
+    Object.is,
+    { storeLabel: 'accounts' },
+  );
 
   const { disableAutoFetch = false } = opts || {};
 
@@ -283,7 +288,12 @@ export const storeApiAccounts = {
 };
 
 export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
-  const allAccounts = useAccountStore(s => s.accounts);
+  const allAccounts = useActivityStore(
+    accountStore.useStore,
+    state => state.accounts,
+    Object.is,
+    { storeLabel: 'my-accounts' },
+  );
 
   const { disableAutoFetch = false } = opts || {};
 
@@ -305,7 +315,12 @@ export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
 
 export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
   const { disableAutoFetch = false } = opts || {};
-  const pinAddresses = useAccountStore(s => s.pinnedAddresses);
+  const pinAddresses = useActivityStore(
+    accountStore.useStore,
+    state => state.pinnedAddresses,
+    Object.is,
+    { storeLabel: 'pinned-addresses' },
+  );
 
   const getPinAddressesAsync = useCallback(
     () => accountStore.refreshPinnedAddresses(),

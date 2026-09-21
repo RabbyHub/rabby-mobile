@@ -37,11 +37,11 @@ import { toast } from '@/components2024/Toast';
 import {
   apisKeychain,
   apisKeychainDebug,
-  apisKeychainV8_2_0,
   apisKeychainV9_0_0,
   apisKeychainV10_0_0,
 } from '@/core/apis';
 import { IS_ANDROID } from '@/core/native/utils';
+import RNHelpers from '@/core/native/RNHelpers';
 import {
   useCurrentKeychainVersion,
   useDebugKeychainStorage,
@@ -62,7 +62,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 
 const TAB_OPTIONS = [
   { key: 'current', label: 'Current' },
-  { key: '8.2.0-fork', label: '8.2.0' },
   { key: '9.0.0', label: '9.2.3' },
   { key: '10.0.0', label: '10.0.0' },
 ] as const;
@@ -73,12 +72,6 @@ const PAGE_TAB_CONTENT_TOP_PADDING =
   PAGE_TAB_BAR_HEIGHT + PAGE_TAB_CONTENT_TOP_GAP;
 
 const KEYCHAIN_VERSION_OPTIONS = [
-  {
-    key: '8.2.0-fork',
-    label: '8.2.0-fork',
-    sourceLabel: apisKeychainV8_2_0.KEYCHAIN_SOURCE_LABEL,
-    description: 'Local fork that matches the current business path.',
-  },
   {
     key: '9.0.0',
     label: '9.2.3',
@@ -130,9 +123,8 @@ const KEYCHAIN_VERSION_META: Record<
   CurrentKeychainVersion,
   (typeof KEYCHAIN_VERSION_OPTIONS)[number]
 > = {
-  '8.2.0-fork': KEYCHAIN_VERSION_OPTIONS[0],
-  '9.0.0': KEYCHAIN_VERSION_OPTIONS[1],
-  '10.0.0': KEYCHAIN_VERSION_OPTIONS[2],
+  '9.0.0': KEYCHAIN_VERSION_OPTIONS[0],
+  '10.0.0': KEYCHAIN_VERSION_OPTIONS[1],
 };
 
 const ANDROID_AUTH_PROMPT_POLICY_OPTIONS = [
@@ -204,7 +196,7 @@ const SYSTEM_AUTH_DEBUG_MOCK_OPTIONS = [
 ] as const;
 
 const LEGACY_SIMULATION = {
-  service: apisKeychainV8_2_0.KEYCHAIN_DEFAULT_SERVICE,
+  service: apisKeychain.KEYCHAIN_DEFAULT_SERVICE,
   action: 'drop-current-cipher-storage-marker-only',
   rewritesCredentialBlobs: false,
   notes: [
@@ -221,16 +213,12 @@ const REPEAT_DECRYPT_TEST_STEPS = [
 ] as const;
 
 const REPEAT_DECRYPT_EXPECTATIONS: Record<CurrentKeychainVersion, string[]> = {
-  '8.2.0-fork': [
+  '9.0.0': [
     'Expected: both Unlock Request taps prompt biometrics.',
     'Regression signal: a later tap succeeds without a fresh biometric prompt.',
   ],
-  '9.0.0': [
-    'Expected: both Unlock Request taps prompt biometrics, matching 8.2.0-fork.',
-    'Regression signal: a later tap succeeds without a fresh biometric prompt.',
-  ],
   '10.0.0': [
-    'Expected: both Unlock Request taps prompt biometrics, matching 8.2.0-fork and 9.2.3.',
+    'Expected: both Unlock Request taps prompt biometrics, matching 9.2.3.',
     'Regression signal: a later tap succeeds without a fresh biometric prompt.',
   ],
 };
@@ -416,7 +404,6 @@ type KeychainDebugExportPayload = {
     };
   };
   versions: {
-    v8_2_0: KeychainVersionExportState;
     v9_0_0: KeychainVersionExportState;
     v10_0_0: KeychainVersionExportState;
   };
@@ -601,7 +588,7 @@ function maskSecret(secret?: string | null) {
 }
 
 function getReadableErrorMessage(error: unknown) {
-  const parsed = apisKeychainV8_2_0.parseKeychainError(error);
+  const parsed = apisKeychain.parseKeychainError(error);
 
   return (
     parsed.sysMessage ||
@@ -1329,10 +1316,8 @@ function getBusinessApi(version: CurrentKeychainVersion) {
     case '10.0.0':
       return apisKeychainV10_0_0;
     case '9.0.0':
-      return apisKeychainV9_0_0;
-    case '8.2.0-fork':
     default:
-      return apisKeychainV8_2_0;
+      return apisKeychainV9_0_0;
   }
 }
 
@@ -1423,14 +1408,12 @@ export default function DevDataKeychain(): JSX.Element {
   const [businessStates, setBusinessStates] = useState<
     Record<CurrentKeychainVersion, BusinessVersionState>
   >({
-    '8.2.0-fork': makeInitialBusinessVersionState(),
     '9.0.0': makeInitialBusinessVersionState(),
     '10.0.0': makeInitialBusinessVersionState(),
   });
   const [businessPasswordVisibility, setBusinessPasswordVisibility] = useState<
     Record<CurrentKeychainVersion, PromptPolicyState<boolean>>
   >({
-    '8.2.0-fork': makePromptPolicyState(() => false),
     '9.0.0': makePromptPolicyState(() => false),
     '10.0.0': makePromptPolicyState(() => false),
   });
@@ -1480,7 +1463,6 @@ export default function DevDataKeychain(): JSX.Element {
     useState(false);
   const [supportedStorageTypesByVersion, setSupportedStorageTypesByVersion] =
     useState<Record<CurrentKeychainVersion, KeychainStorageType[]>>({
-      '8.2.0-fork': [apisKeychain.DEFAULT_KEYCHAIN_STORAGE_TYPE],
       '9.0.0': [apisKeychain.DEFAULT_KEYCHAIN_STORAGE_TYPE],
       '10.0.0': [apisKeychain.DEFAULT_KEYCHAIN_STORAGE_TYPE],
     });
@@ -1501,13 +1483,6 @@ export default function DevDataKeychain(): JSX.Element {
   const effectiveStorageByVersion = useMemo(
     () =>
       ({
-        '8.2.0-fork': (() => {
-          const supported = supportedStorageTypesByVersion['8.2.0-fork'];
-          const configured = debugKeychainStorageByVersion['8.2.0-fork'];
-          return supported.includes(configured)
-            ? configured
-            : supported[0] || apisKeychain.DEFAULT_KEYCHAIN_STORAGE_TYPE;
-        })(),
         '9.0.0': (() => {
           const supported = supportedStorageTypesByVersion['9.0.0'];
           const configured = debugKeychainStorageByVersion['9.0.0'];
@@ -1611,20 +1586,20 @@ export default function DevDataKeychain(): JSX.Element {
   const refreshState = useCallback(async () => {
     setIsLoading(true);
     try {
+      const canReadV9State = !IS_ANDROID || currentKeychainVersion === '9.0.0';
       const canReadOfficialV10State =
         !IS_ANDROID || currentKeychainVersion === '10.0.0';
       const [
-        v8State,
         v9State,
         v10State,
         nextV10DefaultState,
         nextV10ProbeState,
-        nextV8SupportedStorageTypes,
         nextV9SupportedStorageTypes,
         nextV10SupportedStorageTypes,
       ] = await Promise.all([
-        apisKeychainV8_2_0.getKeychainDebugState(),
-        apisKeychainV9_0_0.getKeychainDebugState(),
+        canReadV9State
+          ? apisKeychainV9_0_0.getKeychainDebugState()
+          : Promise.resolve(null),
         canReadOfficialV10State
           ? apisKeychainV10_0_0.getKeychainDebugState()
           : Promise.resolve(null),
@@ -1638,24 +1613,23 @@ export default function DevDataKeychain(): JSX.Element {
               apisKeychainDebug.KEYCHAIN_PROBE_SERVICE,
             )
           : Promise.resolve(null),
-        apisKeychainV8_2_0.getSupportedStorageTypes(),
         apisKeychainV9_0_0.getSupportedStorageTypes(),
         apisKeychainV10_0_0.getSupportedStorageTypes(),
       ]);
 
-      if (!canReadOfficialV10State) {
+      if (!canReadV9State || !canReadOfficialV10State) {
         logger.info(
-          '[keychain-debug] skipped official v10 state refresh to avoid Android DataStore migration',
-          { currentKeychainVersion },
+          '[keychain-debug] skipped inactive Android keychain state refresh to avoid concurrent DataStore access',
+          {
+            currentKeychainVersion,
+            skippedV9: !canReadV9State,
+            skippedV10: !canReadOfficialV10State,
+          },
         );
       }
 
       setBusinessStates(prev => ({
         ...prev,
-        '8.2.0-fork': {
-          ...prev['8.2.0-fork'],
-          debugState: v8State,
-        },
         '9.0.0': {
           ...prev['9.0.0'],
           debugState: v9State,
@@ -1668,7 +1642,6 @@ export default function DevDataKeychain(): JSX.Element {
       setV9DefaultState(nextV10DefaultState);
       setV9ProbeState(nextV10ProbeState);
       setSupportedStorageTypesByVersion({
-        '8.2.0-fork': nextV8SupportedStorageTypes,
         '9.0.0': nextV9SupportedStorageTypes,
         '10.0.0': nextV10SupportedStorageTypes,
       });
@@ -1935,9 +1908,6 @@ export default function DevDataKeychain(): JSX.Element {
           ),
           currentState: makeSafeKeychainDebugLogState(
             businessStates[currentKeychainVersion]?.debugState ?? null,
-          ),
-          legacyV8State: makeSafeKeychainDebugLogState(
-            businessStates['8.2.0-fork']?.debugState ?? null,
           ),
         });
 
@@ -2611,16 +2581,18 @@ export default function DevDataKeychain(): JSX.Element {
   );
 
   const handleChangeCurrentVersion = useCallback(
-    async (nextVersion: CurrentKeychainVersion) => {
+    (nextVersion: CurrentKeychainVersion) => {
       if (nextVersion === currentKeychainVersion) {
         return;
       }
 
       setCurrentKeychainVersion(nextVersion);
-      toast.success(`Current keychain switched to ${nextVersion}`);
-      await refreshState();
+      toast.success(`Keychain ${nextVersion} applies after restart`);
+      setTimeout(() => {
+        RNHelpers.forceExitApp();
+      }, 100);
     },
-    [currentKeychainVersion, refreshState, setCurrentKeychainVersion],
+    [currentKeychainVersion, setCurrentKeychainVersion],
   );
 
   const handleChangeVersionStorage = useCallback(
@@ -2734,11 +2706,6 @@ export default function DevDataKeychain(): JSX.Element {
         },
       },
       versions: {
-        v8_2_0: sanitizeBusinessVersionStateForExport(
-          KEYCHAIN_VERSION_META['8.2.0-fork'].sourceLabel,
-          businessStates['8.2.0-fork'],
-          includeSecretFieldsInExport,
-        ),
         v9_0_0: sanitizeBusinessVersionStateForExport(
           KEYCHAIN_VERSION_META['9.0.0'].sourceLabel,
           businessStates['9.0.0'],
@@ -3364,7 +3331,7 @@ export default function DevDataKeychain(): JSX.Element {
               </Text>
               <Text style={styles.sheetListLine}>
                 {canSwitchCurrentKeychainVersion
-                  ? 'This build can switch between 8.2.0-fork, 9.2.3, and 10.0.0 for migration testing.'
+                  ? 'This build can switch between 9.2.3 and 10.0.0 for migration testing.'
                   : 'Public builds ignore this selector and stay pinned to the default business path.'}
               </Text>
               <Text style={styles.sheetListLine}>
@@ -3829,11 +3796,7 @@ export default function DevDataKeychain(): JSX.Element {
       !!businessStates[actionsBusinessVersion].debugState?.hasEntry;
     const useCurrentFacadeForBusinessActions =
       actionsBusinessVersion === currentKeychainVersion;
-    const hasLegacyRecoverableBusinessEntry =
-      useCurrentFacadeForBusinessActions &&
-      !!businessStates['8.2.0-fork'].debugState?.hasEntry;
-    const canTryBusinessDecrypt =
-      hasBusinessEntry || hasLegacyRecoverableBusinessEntry;
+    const canTryBusinessDecrypt = hasBusinessEntry;
     const businessActionApiLabel = useCurrentFacadeForBusinessActions
       ? 'current app facade'
       : `${versionMeta.label} raw wrapper`;

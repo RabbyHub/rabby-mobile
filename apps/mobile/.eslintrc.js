@@ -7,6 +7,19 @@ module.exports = {
     'react/react-in-jsx-scope': 'off',
     'react-hooks/exhaustive-deps': 'error',
     '@typescript-eslint/no-unused-vars': 'warn',
+    'no-restricted-syntax': [
+      'error',
+      {
+        selector: "JSXAttribute[name.name='className']",
+        message:
+          'Do not use className in the React Native app. Use style, containerStyle, or a typed variant prop instead.',
+      },
+      {
+        selector: "TSPropertySignature[key.name='className']",
+        message:
+          'Do not expose className props in the React Native app. Use style, containerStyle, or a typed variant prop instead.',
+      },
+    ],
     'no-runtime-service-imports': 'error',
     'no-floating-deferred-service-api-calls': 'error',
     'no-persist-store-direct-mutation': 'error',
@@ -74,12 +87,12 @@ module.exports = {
           {
             name: 'zeego/context-menu',
             message:
-              "Use the Rabby ContextMenuView boundary instead of importing an unscoped context-menu runtime",
+              'Use the Rabby ContextMenuView boundary instead of importing an unscoped context-menu runtime',
           },
           {
             name: '@react-native-menu/menu',
             message:
-              "Use the Rabby ContextMenuView boundary instead of importing an unscoped native menu runtime",
+              'Use the Rabby ContextMenuView boundary instead of importing an unscoped native menu runtime',
           },
         ],
       },

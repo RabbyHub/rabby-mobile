@@ -28,8 +28,25 @@ type AppBuildGitInfo = {
   METRO_CACHE_ENABLED?: boolean;
 };
 
-const nativeBuildInfo = (NativeModules?.RNHelpers?.buildInfo ||
-  {}) as Partial<AppBuildGitInfo>;
+function getNativeBuildInfo(): Partial<AppBuildGitInfo> {
+  const legacyBuildInfo = NativeModules?.RNHelpers?.buildInfo;
+  if (legacyBuildInfo) {
+    return legacyBuildInfo as Partial<AppBuildGitInfo>;
+  }
+
+  try {
+    const nativeRNHelpers = require('@/core/native/specs/NativeRNHelpers')
+      .default as
+      | { getConstants?: () => { buildInfo?: Partial<AppBuildGitInfo> } }
+      | undefined;
+
+    return nativeRNHelpers?.getConstants?.().buildInfo || {};
+  } catch {
+    return {};
+  }
+}
+
+const nativeBuildInfo = getNativeBuildInfo();
 
 export const BUILD_GIT_INFO: AppBuildGitInfo = {
   BUILD_GIT_HASH: 'unknown',
@@ -48,8 +65,6 @@ export const SENTRY_DEBUG = APP_RUNTIME_ENV !== 'production';
 export const IS_HERMES_ENABLED = !!(global as any).HermesInternal;
 export const IS_CONSOLE_STRIPPED =
   process.env.RABBY_MOBILE_STRIP_CONSOLE === 'true';
-export const IS_LOCAL_STORAGE_EXPORT_ENABLED =
-  process.env.RABBY_MOBILE_ENABLE_LOCAL_STORAGE_EXPORT === 'true';
 
 export const appIsProd = process.env.NODE_ENV === 'production';
 export const appIsDev = __DEV__;

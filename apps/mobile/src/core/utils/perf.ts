@@ -11,6 +11,8 @@ export type PerfEventBusListeners = {
 
   APP_NAVIGATION_READY: (ctx: { readyRootName: string }) => void;
 
+  BOOT_SPLASH_EXITED: () => void;
+
   CONTACTS_ALIASES_UPDATE: (ctx: {
     nextState: ContactBookStore['aliases'];
   }) => void;

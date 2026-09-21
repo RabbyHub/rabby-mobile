@@ -181,7 +181,10 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevUIScreenContainerShowCase]?: {};
   [RootNames.DevUIDapps]?: {};
   [RootNames.DevDataSQLite]?: {};
-  [RootNames.DevDataKeychain]?: {};
+  [RootNames.DevWatchAddressFixtureImport]?: {};
+  [RootNames.DevDataKeychain]?: {
+    keychainVersion?: import('@/core/apis/keychainVersionShared').CurrentKeychainVersion;
+  };
   [RootNames.DevDataKeyringVault]?: {};
   [RootNames.DevDataContactService]?: {};
   [RootNames.DevDataWhitelist]?: {};
@@ -191,7 +194,9 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevCapabilityFile]?: {
     tab?: 'overview' | 'debug';
   };
-  [RootNames.DevSwitches]?: {};
+  [RootNames.DevSwitches]?: {
+    appLaunchLock?: boolean;
+  };
   [RootNames.DevPerf]?: {};
   [RootNames.DebugLogViewer]?: {};
   [RootNames.StartupPerformanceLogViewer]?: {};
@@ -403,12 +408,17 @@ export type TransactionNavigatorParamList = {
     account?: KeyringAccountWithAlias;
     fromName?: string;
     dappId?: string;
+    market?: string;
+    marketCandidates?: string[];
     /** set when this screen is the underlay pushed beneath the market detail page */
     fromSource?: 'homePagePositionList';
   };
   [RootNames.PerpsMarketList]?: {};
   [RootNames.PerpsHistory]?: {
     coin?: string;
+  };
+  [RootNames.PerpsProHistory]?: {
+    initialTab?: 'orders' | 'trade' | 'transaction' | 'funding';
   };
   [RootNames.PerpsMarketDetail]: {
     market: string;
@@ -459,7 +469,11 @@ export type SettingNavigatorParamList = {
     | {
         actionAfterSetup: 'testkits:fromSettings';
         // actionType: (SettingNavigatorParamList['Settings'] & object)['enterActionType'];
-        actionType: 'setBiometrics' | 'setAutoLockExpireTime' | 'lockWallet';
+        actionType:
+          | 'setBiometrics'
+          | 'setAutoLockExpireTime'
+          | 'setAppLaunchLock'
+          | 'lockWallet';
       };
   [RootNames.SetBiometricsAuthentication]: {};
   [RootNames.CustomTestnet]?: {};

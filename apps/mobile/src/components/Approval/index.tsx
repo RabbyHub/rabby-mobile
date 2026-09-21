@@ -1,4 +1,5 @@
 import { useApproval } from '@/hooks/useApproval';
+import { ApprovalIdentityContext } from '@/hooks/approvalIdentity';
 import {
   eventBus,
   EVENT_ACTIVE_WINDOW,
@@ -130,11 +131,15 @@ const ApprovalContent = () => {
     ApprovalComponent[approvalComponent] ?? ApprovalComponent.Unknown;
 
   return (
-    <CurrentApprovalComponent
-      params={params}
-      origin={origin}
-      account={account}
-    />
+    <ApprovalIdentityContext.Provider
+      key={approval.id}
+      value={{ id: approval.id, component: approvalComponent }}>
+      <CurrentApprovalComponent
+        params={params}
+        origin={origin}
+        account={account}
+      />
+    </ApprovalIdentityContext.Provider>
   );
 };
 

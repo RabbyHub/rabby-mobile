@@ -830,23 +830,9 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
   );
 
   const keyExtractor = useCallback(getTokenListItemKey, []);
-  const ListRenderSeparator = useCallback(() => {
-    return <View style={{ height: SPACING_HEIGHT }} />;
-  }, []);
-  const ListRenderSectionSeparator = useCallback(
-    ({
-      leadingSection,
-      trailingSection,
-    }: {
-      leadingSection?: unknown;
-      trailingSection?: unknown;
-    }) => {
-      return leadingSection && trailingSection ? (
-        <View style={{ height: SPACING_HEIGHT }} />
-      ) : null;
-    },
-    [],
-  );
+  const ListSeparator = useCallback(() => {
+    return <View style={styles.spacing} />;
+  }, [styles.spacing]);
 
   const ListRenderFooter = useCallback(() => {
     return <View style={{ height: FOOTER_HEIGHT }} />;
@@ -884,8 +870,8 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
         updateCellsBatchingPeriod={TOKEN_LIST_BATCHING_PERIOD_MS}
         removeClippedSubviews={IS_ANDROID}
         maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
-        ItemSeparatorComponent={ListRenderSeparator}
-        SectionSeparatorComponent={ListRenderSectionSeparator}
+        ItemSeparatorComponent={ListSeparator}
+        renderSectionFooter={ListSeparator}
         stickySectionHeadersEnabled={false}
         ListFooterComponent={ListRenderFooter}
         showsVerticalScrollIndicator={showScrollIndicator}
@@ -934,6 +920,9 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-bg-gray'],
     // paddingRight: 8,
     height: ASSETS_SECTION_HEADER,
+  },
+  spacing: {
+    height: SPACING_HEIGHT,
   },
   buttonHeader: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],

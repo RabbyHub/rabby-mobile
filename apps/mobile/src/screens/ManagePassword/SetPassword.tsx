@@ -135,6 +135,8 @@ function useSetupPasswordForm() {
                 sheetModalRefsNeedLock.switchBiometricsRef.current?.toggle();
               } else if (navParams.actionType === 'setAutoLockExpireTime') {
                 sheetModalRefsNeedLock.selectAutolockTimeRef.current?.present();
+              } else if (navParams.actionType === 'setAppLaunchLock') {
+                apisLock.setAppLaunchLockEnabled(true);
               } else if (navParams.actionType === 'lockWallet') {
                 await requestLockWalletAndBackToUnlockScreen();
                 break;

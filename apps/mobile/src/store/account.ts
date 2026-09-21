@@ -227,8 +227,8 @@ class AccountStore extends BaseStore<AccountStoreState> {
   removeAccount = async (account: KeyringAccountWithAlias) => {
     const accounts = await getAllAccounts();
 
-    await this.togglePinAddressAsync({ ...account, nextPinned: false });
     await removeAddress(account);
+    await this.togglePinAddressAsync({ ...account, nextPinned: false });
     invalidateFetchAllAccountsCache();
     await this.fetchAccounts({ force: true });
 

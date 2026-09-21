@@ -24,9 +24,9 @@ const PerpsMarketHomeListComponent: React.FC<Props> = ({ onItemPress }) => {
 
   return (
     <>
-      {visibleHome.map((cat, catIdx) => (
+      {visibleHome.map(cat => (
         <View key={cat.id}>
-          <PerpsCategorySectionHeader cfg={cat.cfg} showSearch={catIdx === 0} />
+          <PerpsCategorySectionHeader cfg={cat.cfg} />
           <View style={styles.card}>
             {cat.items.map((item, i) => (
               <PerpsMarketItem

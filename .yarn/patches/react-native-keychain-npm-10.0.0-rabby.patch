@@ -1,3 +1,16 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index f1e2f0ff9e121d790d574ad2a3effc36a2853585..ab5cb28877a4c1763cde37e9ac01d3f90c40a3ba 100755
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -81,6 +81,8 @@ dependencies {
+
+   // Used to store encrypted data
+   implementation("androidx.datastore:datastore-preferences:1.1.1")
++
++  testImplementation 'junit:junit:4.13.2'
+ }
+
+ if (isNewArchitectureEnabled()) {
 diff --git a/android/src/main/java/com/oblador/keychain/DataStorePrefsStorage.kt b/android/src/main/java/com/oblador/keychain/DataStorePrefsStorage.kt
 index 70912a95a36d1e1b2998916cb3f9604eda435bbd..781ba911f2cca3ae2a1f652b369450e9c0a1c4bf 100644
 --- a/android/src/main/java/com/oblador/keychain/DataStorePrefsStorage.kt
@@ -126,11 +139,209 @@ index 70912a95a36d1e1b2998916cb3f9604eda435bbd..781ba911f2cca3ae2a1f652b369450e9
 +    }
 +  }
  }
+diff --git a/android/src/main/java/com/oblador/keychain/DeviceAvailability.kt b/android/src/main/java/com/oblador/keychain/DeviceAvailability.kt
+index a4e7b3d5a20eaaeca3b7b63e8b5dab7f73cdb2eb..4d4cc94b0fe987e6fa3605125931f9cd858eb5ba 100644
+--- a/android/src/main/java/com/oblador/keychain/DeviceAvailability.kt
++++ b/android/src/main/java/com/oblador/keychain/DeviceAvailability.kt
+@@ -6,6 +6,7 @@ import android.content.Context
+ import android.content.pm.PackageManager
+ import android.os.Build
+ import androidx.biometric.BiometricManager
++import androidx.core.hardware.fingerprint.FingerprintManagerCompat
+
+ /**
+  * @see
+@@ -13,6 +14,18 @@ import androidx.biometric.BiometricManager
+  */
+ @Suppress("deprecation")
+ object DeviceAvailability {
++  data class StrongBiometricAvailability(
++    val androidXStatusCode: Int,
++    val androidXWeakStatusCode: Int,
++    val permissionsGranted: Boolean,
++    val legacyFingerprintHardwareDetected: Boolean,
++    val legacyFingerprintEnrolled: Boolean,
++    val api29FingerprintFallbackEligible: Boolean,
++    val api29FingerprintPromptProbeEligible: Boolean,
++    val available: Boolean,
++    val promptProbeAvailable: Boolean,
++    val source: String
++  )
+
+   fun isStrongboxAvailable(context: Context): Boolean {
+     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+@@ -23,9 +36,137 @@ object DeviceAvailability {
+   }
+
+   fun isStrongBiometricAuthAvailable(context: Context): Boolean {
+-    return BiometricManager.from(context)
+-      .canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) ==
+-      BiometricManager.BIOMETRIC_SUCCESS
++    return getStrongBiometricAuthAvailability(context).available
++  }
++
++  fun getStrongBiometricAuthAvailability(context: Context): StrongBiometricAvailability {
++    val androidXStatusCode =
++      runCatching {
++          BiometricManager.from(context)
++            .canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)
++        }
++        .getOrDefault(BiometricManager.BIOMETRIC_STATUS_UNKNOWN)
++    val androidXWeakStatusCode =
++      if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
++        runCatching {
++            BiometricManager.from(context)
++              .canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK)
++          }
++          .getOrDefault(BiometricManager.BIOMETRIC_STATUS_UNKNOWN)
++      } else {
++        BiometricManager.BIOMETRIC_STATUS_UNKNOWN
++      }
++    val permissionsGranted = runCatching { isPermissionsGranted(context) }.getOrDefault(false)
++    val hasFingerprintFeature = isFingerprintAuthAvailable(context)
++    val shouldProbeLegacyFingerprint =
++      Build.VERSION.SDK_INT == Build.VERSION_CODES.Q &&
++        permissionsGranted &&
++        hasFingerprintFeature &&
++        androidXStatusCode != BiometricManager.BIOMETRIC_SUCCESS
++    val fingerprintManager =
++      if (shouldProbeLegacyFingerprint) FingerprintManagerCompat.from(context) else null
++    val legacyFingerprintHardwareDetected =
++      fingerprintManager?.let { runCatching { it.isHardwareDetected }.getOrDefault(false) } ?: false
++    val legacyFingerprintEnrolled =
++      fingerprintManager?.let { runCatching { it.hasEnrolledFingerprints() }.getOrDefault(false) }
++        ?: false
++    val api29FingerprintFallbackEligible =
++      shouldUseApi29FingerprintFallback(
++        apiLevel = Build.VERSION.SDK_INT,
++        androidXStrongStatusCode = androidXStatusCode,
++        androidXWeakStatusCode = androidXWeakStatusCode,
++        permissionsGranted = permissionsGranted,
++        hasFingerprintFeature = hasFingerprintFeature,
++        legacyFingerprintHardwareDetected = legacyFingerprintHardwareDetected,
++        legacyFingerprintEnrolled = legacyFingerprintEnrolled
++      )
++    val api29FingerprintPromptProbeEligible =
++      shouldAllowApi29FingerprintPromptProbe(
++        apiLevel = Build.VERSION.SDK_INT,
++        androidXStrongStatusCode = androidXStatusCode,
++        androidXWeakStatusCode = androidXWeakStatusCode,
++        permissionsGranted = permissionsGranted,
++        hasFingerprintFeature = hasFingerprintFeature,
++        legacyFingerprintHardwareDetected = legacyFingerprintHardwareDetected,
++        legacyFingerprintEnrolled = legacyFingerprintEnrolled
++      )
++    val androidXStrongAvailable = androidXStatusCode == BiometricManager.BIOMETRIC_SUCCESS
++    val available = androidXStrongAvailable || api29FingerprintFallbackEligible
++
++    return StrongBiometricAvailability(
++      androidXStatusCode = androidXStatusCode,
++      androidXWeakStatusCode = androidXWeakStatusCode,
++      permissionsGranted = permissionsGranted,
++      legacyFingerprintHardwareDetected = legacyFingerprintHardwareDetected,
++      legacyFingerprintEnrolled = legacyFingerprintEnrolled,
++      api29FingerprintFallbackEligible = api29FingerprintFallbackEligible,
++      api29FingerprintPromptProbeEligible = api29FingerprintPromptProbeEligible,
++      available = available,
++      promptProbeAvailable = available || api29FingerprintPromptProbeEligible,
++      source =
++        when {
++          androidXStrongAvailable -> STRONG_BIOMETRIC_SOURCE_ANDROIDX
++          api29FingerprintFallbackEligible -> STRONG_BIOMETRIC_SOURCE_FINGERPRINT_API_29
++          else -> STRONG_BIOMETRIC_SOURCE_UNAVAILABLE
++        }
++    )
++  }
++
++  internal fun shouldUseApi29FingerprintFallback(
++    apiLevel: Int,
++    androidXStrongStatusCode: Int,
++    androidXWeakStatusCode: Int,
++    permissionsGranted: Boolean,
++    hasFingerprintFeature: Boolean,
++    legacyFingerprintHardwareDetected: Boolean,
++    legacyFingerprintEnrolled: Boolean
++  ): Boolean {
++    if (
++      apiLevel != Build.VERSION_CODES.Q ||
++        androidXStrongStatusCode == BiometricManager.BIOMETRIC_SUCCESS ||
++        !permissionsGranted ||
++        !hasFingerprintFeature
++    ) {
++      return false
++    }
++
++    val legacyFingerprintConfirmed =
++      legacyFingerprintHardwareDetected && legacyFingerprintEnrolled
++    return when (androidXStrongStatusCode) {
++      BiometricManager.BIOMETRIC_STATUS_UNKNOWN,
++      BiometricManager.BIOMETRIC_ERROR_UNSUPPORTED,
++      BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED,
++      BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> legacyFingerprintConfirmed
++      else -> false
++    }
++  }
++
++  /**
++   * Android 10 devices can report a usable strong fingerprint prompt as UNKNOWN/WEAK even when
++   * FingerprintManagerCompat cannot observe enrollment. This signal is only permission to try a
++   * BIOMETRIC_STRONG prompt; it must never be treated as confirmed enrollment or remove a device
++   * credential fallback.
++   */
++  internal fun shouldAllowApi29FingerprintPromptProbe(
++    apiLevel: Int,
++    androidXStrongStatusCode: Int,
++    androidXWeakStatusCode: Int,
++    permissionsGranted: Boolean,
++    hasFingerprintFeature: Boolean,
++    legacyFingerprintHardwareDetected: Boolean,
++    legacyFingerprintEnrolled: Boolean
++  ): Boolean {
++    if (
++      apiLevel != Build.VERSION_CODES.Q ||
++        androidXStrongStatusCode != BiometricManager.BIOMETRIC_STATUS_UNKNOWN ||
++        androidXWeakStatusCode != BiometricManager.BIOMETRIC_SUCCESS ||
++        !permissionsGranted ||
++        !hasFingerprintFeature
++    ) {
++      return false
++    }
++
++    return !(legacyFingerprintHardwareDetected && legacyFingerprintEnrolled)
+   }
+
+   fun isDevicePasscodeAvailable(context: Context): Boolean {
+@@ -33,6 +174,9 @@ object DeviceAvailability {
+       BiometricManager.from(context)
+         .canAuthenticate(BiometricManager.Authenticators.DEVICE_CREDENTIAL) ==
+         BiometricManager.BIOMETRIC_SUCCESS
++    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
++      val keyguardManager = context.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
++      keyguardManager.isDeviceSecure
+     } else {
+       false
+     }
+@@ -66,4 +210,8 @@ object DeviceAvailability {
+
+     // before api28
+   }
++
++  const val STRONG_BIOMETRIC_SOURCE_ANDROIDX = "androidx-strong"
++  const val STRONG_BIOMETRIC_SOURCE_FINGERPRINT_API_29 = "fingerprint-api29-fallback"
++  const val STRONG_BIOMETRIC_SOURCE_UNAVAILABLE = "unavailable"
+ }
 diff --git a/android/src/main/java/com/oblador/keychain/KeychainModule.kt b/android/src/main/java/com/oblador/keychain/KeychainModule.kt
-index 722a5ed990c2a1baa15546351d36928ec2b6d268..981865874c478c3e1180adad65e38900d448b42d 100644
+index 722a5ed990c2a1baa15546351d36928ec2b6d268..48e402889dd8e325e40ff99110bec60ba9ed90fe 100644
 --- a/android/src/main/java/com/oblador/keychain/KeychainModule.kt
 +++ b/android/src/main/java/com/oblador/keychain/KeychainModule.kt
-@@ -12,6 +12,7 @@ import com.facebook.react.bridge.ReactApplicationContext
+@@ -1,5 +1,6 @@
+ package com.oblador.keychain
+
++import android.content.Context
+ import android.os.Build
+ import android.text.TextUtils
+ import android.util.Log
+@@ -12,6 +13,7 @@ import com.facebook.react.bridge.ReactApplicationContext
  import com.facebook.react.bridge.ReactContextBaseJavaModule
  import com.facebook.react.bridge.ReactMethod
  import com.facebook.react.bridge.ReadableMap
@@ -138,7 +349,7 @@ index 722a5ed990c2a1baa15546351d36928ec2b6d268..981865874c478c3e1180adad65e38900
  import com.facebook.react.module.annotations.ReactModule
  import com.oblador.keychain.cipherStorage.CipherCache
  import com.oblador.keychain.cipherStorage.CipherStorage
-@@ -77,6 +78,9 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+@@ -77,6 +79,9 @@ class KeychainModule(reactContext: ReactApplicationContext) :
        const val ACCESS_CONTROL = "accessControl"
        const val ACCESS_GROUP = "accessGroup"
        const val ACCESSIBLE = "accessible"
@@ -148,8 +359,23 @@ index 722a5ed990c2a1baa15546351d36928ec2b6d268..981865874c478c3e1180adad65e38900
        const val AUTH_PROMPT = "authenticationPrompt"
        const val AUTH_TYPE = "authenticationType"
        const val SERVICE = "service"
-@@ -260,7 +264,7 @@ class KeychainModule(reactContext: ReactApplicationContext) :
-           val promptInfo = getPromptInfo(options, usePasscode, useBiometry)
+@@ -190,7 +195,8 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+           val usePasscode = getUsePasscode(accessControl) && isPasscodeAvailable
+           val useBiometry =
+             getUseBiometry(accessControl) && (isFingerprintAuthAvailable || isFaceAuthAvailable || isIrisAuthAvailable)
+-          val promptInfo = getPromptInfo(options, usePasscode, useBiometry)
++          val promptInfo =
++            getPromptInfo(options, usePasscode, useBiometry, reactApplicationContext)
+           val result =
+             encryptToResult(alias, storage, username, password, level, promptInfo)
+           prefsStorage.storeEncryptedEntry(alias, result)
+@@ -257,10 +263,11 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+           val usePasscode = getUsePasscode(accessControl) && isPasscodeAvailable
+           val useBiometry =
+             getUseBiometry(accessControl) && (isFingerprintAuthAvailable || isFaceAuthAvailable || isIrisAuthAvailable)
+-          val promptInfo = getPromptInfo(options, usePasscode, useBiometry)
++          val promptInfo =
++            getPromptInfo(options, usePasscode, useBiometry, reactApplicationContext)
            val cipher = getCipherStorageByName(storageName)
            val decryptionResult =
 -            decryptCredentials(alias, cipher!!, resultSet, promptInfo)
@@ -157,10 +383,75 @@ index 722a5ed990c2a1baa15546351d36928ec2b6d268..981865874c478c3e1180adad65e38900
            val credentials = Arguments.createMap()
            credentials.putString(Maps.SERVICE, alias)
            credentials.putString(Maps.USERNAME, decryptionResult.username)
-@@ -426,6 +430,110 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+@@ -405,17 +412,38 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+   fun getSupportedBiometryType(promise: Promise) {
+     try {
+       var reply: String? = null
+-      if (!DeviceAvailability.isStrongBiometricAuthAvailable(reactApplicationContext)) {
++      val strongAvailability =
++        DeviceAvailability.getStrongBiometricAuthAvailability(reactApplicationContext)
++      if (!strongAvailability.promptProbeAvailable) {
+         reply = null
+       } else {
+-        if (isFingerprintAuthAvailable) {
++        if (DeviceAvailability.isFingerprintAuthAvailable(reactApplicationContext)) {
+           reply = FINGERPRINT_SUPPORTED_NAME
+-        } else if (isFaceAuthAvailable) {
++        } else if (DeviceAvailability.isFaceAuthAvailable(reactApplicationContext)) {
+           reply = FACE_SUPPORTED_NAME
+-        } else if (isIrisAuthAvailable) {
++        } else if (DeviceAvailability.isIrisAuthAvailable(reactApplicationContext)) {
+           reply = IRIS_SUPPORTED_NAME
+         }
+       }
++      if (
++        strongAvailability.androidXStatusCode != BiometricManager.BIOMETRIC_SUCCESS ||
++          strongAvailability.api29FingerprintFallbackEligible ||
++          strongAvailability.api29FingerprintPromptProbeEligible
++      ) {
++        Log.i(
++          KEYCHAIN_MODULE,
++          "Strong biometric availability: api=${Build.VERSION.SDK_INT}, " +
++            "androidXStatus=${strongAvailability.androidXStatusCode}, " +
++            "androidXWeakStatus=${strongAvailability.androidXWeakStatusCode}, " +
++            "permissionsGranted=${strongAvailability.permissionsGranted}, " +
++            "legacyFingerprintHardwareDetected=" +
++            "${strongAvailability.legacyFingerprintHardwareDetected}, " +
++            "legacyFingerprintEnrolled=${strongAvailability.legacyFingerprintEnrolled}, " +
++            "promptProbeEligible=" +
++            "${strongAvailability.api29FingerprintPromptProbeEligible}, " +
++            "source=${strongAvailability.source}"
++        )
++      }
+       promise.resolve(reply)
+     } catch (e: Exception) {
+       Log.e(KEYCHAIN_MODULE, e.message, e)
+@@ -426,6 +454,245 @@ class KeychainModule(reactContext: ReactApplicationContext) :
      }
    }
 
++  @ReactMethod
++  fun getAndroidBiometricPromptOptimization(promise: Promise) {
++    try {
++      val strongAvailability =
++        DeviceAvailability.getStrongBiometricAuthAvailability(reactApplicationContext)
++      val result = Arguments.createMap()
++      result.putBoolean(
++        "api29FingerprintFallbackEligible",
++        strongAvailability.api29FingerprintFallbackEligible
++      )
++      result.putBoolean(
++        "api29FingerprintPromptProbeEligible",
++        strongAvailability.api29FingerprintPromptProbeEligible
++      )
++      result.putString("effectiveStrongSource", strongAvailability.source)
++      promise.resolve(result)
++    } catch (fail: Throwable) {
++      Log.e(KEYCHAIN_MODULE, fail.message, fail)
++      promise.reject(Errors.E_UNKNOWN_ERROR, fail)
++    }
++  }
++
 +  @ReactMethod
 +  fun debugGetGenericPasswordStateForOptions(options: ReadableMap?, promise: Promise) {
 +    try {
@@ -173,6 +464,8 @@ index 722a5ed990c2a1baa15546351d36928ec2b6d268..981865874c478c3e1180adad65e38900
 +      val result = Arguments.createMap()
 +
 +      result.putString(Maps.SERVICE, debugEntry.service)
++      result.putMap("androidBiometricHardware", buildAndroidBiometricHardware())
++      result.putMap("androidAuthenticatorCapabilities", buildAndroidAuthenticatorCapabilities())
 +      result.putBoolean("hasEntry", debugEntry.hasEntry)
 +      result.putBoolean("hasUsername", debugEntry.hasUsername)
 +      result.putBoolean("hasPassword", debugEntry.hasPassword)
@@ -254,6 +547,117 @@ index 722a5ed990c2a1baa15546351d36928ec2b6d268..981865874c478c3e1180adad65e38900
 +    }
 +  }
 +
++  private fun buildAndroidBiometricHardware(): WritableMap {
++    val result = Arguments.createMap()
++    val strongAvailability =
++      DeviceAvailability.getStrongBiometricAuthAvailability(reactApplicationContext)
++    result.putBoolean(
++      "fingerprint",
++      DeviceAvailability.isFingerprintAuthAvailable(reactApplicationContext)
++    )
++    result.putBoolean(
++      "face",
++      DeviceAvailability.isFaceAuthAvailable(reactApplicationContext)
++    )
++    result.putBoolean(
++      "iris",
++      DeviceAvailability.isIrisAuthAvailable(reactApplicationContext)
++    )
++    result.putBoolean("permissionsGranted", strongAvailability.permissionsGranted)
++    result.putInt("androidXStrongStatusCode", strongAvailability.androidXStatusCode)
++    result.putInt("androidXWeakStatusCode", strongAvailability.androidXWeakStatusCode)
++    result.putBoolean(
++      "legacyFingerprintHardwareDetected",
++      strongAvailability.legacyFingerprintHardwareDetected
++    )
++    result.putBoolean(
++      "legacyFingerprintEnrolled",
++      strongAvailability.legacyFingerprintEnrolled
++    )
++    result.putBoolean(
++      "api29FingerprintFallbackEligible",
++      strongAvailability.api29FingerprintFallbackEligible
++    )
++    result.putBoolean(
++      "api29FingerprintPromptProbeEligible",
++      strongAvailability.api29FingerprintPromptProbeEligible
++    )
++    result.putBoolean("effectiveStrongAvailable", strongAvailability.available)
++    result.putString("effectiveStrongSource", strongAvailability.source)
++    return result
++  }
++
++  private fun buildAndroidAuthenticatorCapabilities(): WritableMap {
++    val result = Arguments.createMap()
++    result.putInt("apiLevel", Build.VERSION.SDK_INT)
++    putAndroidAuthenticatorCapability(
++      result,
++      "biometricStrong",
++      "BIOMETRIC_STRONG",
++      BiometricManager.Authenticators.BIOMETRIC_STRONG
++    )
++    putAndroidAuthenticatorCapability(
++      result,
++      "deviceCredential",
++      "DEVICE_CREDENTIAL",
++      BiometricManager.Authenticators.DEVICE_CREDENTIAL
++    )
++    putAndroidAuthenticatorCapability(
++      result,
++      "biometricStrongOrDeviceCredential",
++      "BIOMETRIC_STRONG | DEVICE_CREDENTIAL",
++      BiometricManager.Authenticators.BIOMETRIC_STRONG or
++        BiometricManager.Authenticators.DEVICE_CREDENTIAL
++    )
++    putAndroidAuthenticatorCapability(
++      result,
++      "biometricWeak",
++      "BIOMETRIC_WEAK",
++      BiometricManager.Authenticators.BIOMETRIC_WEAK
++    )
++    return result
++  }
++
++  private fun putAndroidAuthenticatorCapability(
++    result: WritableMap,
++    key: String,
++    name: String,
++    authenticators: Int
++  ) {
++    val capability = Arguments.createMap()
++    capability.putString("name", name)
++    capability.putInt("authenticators", authenticators)
++
++    try {
++      val statusCode =
++        BiometricManager.from(reactApplicationContext).canAuthenticate(authenticators)
++      capability.putInt("statusCode", statusCode)
++      capability.putString("statusLabel", getAndroidAuthenticatorStatusLabel(statusCode))
++      capability.putBoolean("available", statusCode == BiometricManager.BIOMETRIC_SUCCESS)
++      capability.putNull("errorMessage")
++    } catch (fail: Throwable) {
++      capability.putNull("statusCode")
++      capability.putString("statusLabel", "ERROR")
++      capability.putBoolean("available", false)
++      capability.putString("errorMessage", fail.message ?: fail.javaClass.simpleName)
++    }
++
++    result.putMap(key, capability)
++  }
++
++  private fun getAndroidAuthenticatorStatusLabel(statusCode: Int): String {
++    return when (statusCode) {
++      0 -> "BIOMETRIC_SUCCESS"
++      1 -> "BIOMETRIC_ERROR_HW_UNAVAILABLE"
++      11 -> "BIOMETRIC_ERROR_NONE_ENROLLED"
++      12 -> "BIOMETRIC_ERROR_NO_HARDWARE"
++      15 -> "BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED"
++      -1 -> "BIOMETRIC_STATUS_UNKNOWN"
++      -2 -> "BIOMETRIC_ERROR_UNSUPPORTED"
++      else -> "BIOMETRIC_STATUS_$statusCode"
++    }
++  }
++
 +  @ReactMethod
 +  fun debugRemoveCipherStorageMarkerForOptions(options: ReadableMap?, promise: Promise) {
 +    try {
@@ -268,7 +672,7 @@ index 722a5ed990c2a1baa15546351d36928ec2b6d268..981865874c478c3e1180adad65e38900
    @ReactMethod
    fun getSecurityLevel(options: ReadableMap?, promise: Promise) {
      val accessControl = getAccessControlOrDefault(options)
-@@ -434,6 +542,22 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+@@ -434,6 +701,22 @@ class KeychainModule(reactContext: ReactApplicationContext) :
      promise.resolve(getSecurityLevel(useBiometry, usePasscode).name)
    }
 
@@ -291,7 +695,7 @@ index 722a5ed990c2a1baa15546351d36928ec2b6d268..981865874c478c3e1180adad65e38900
    private fun addCipherStorageToMap(cipherStorage: CipherStorage) {
      cipherStorageMap[cipherStorage.getCipherStorageName()] = cipherStorage
    }
-@@ -447,14 +571,15 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+@@ -447,14 +730,15 @@ class KeychainModule(reactContext: ReactApplicationContext) :
      alias: String,
      current: CipherStorage,
      resultSet: PrefsStorageBase.ResultSet,
@@ -309,7 +713,7 @@ index 722a5ed990c2a1baa15546351d36928ec2b6d268..981865874c478c3e1180adad65e38900
      }
 
      // The encrypted data is encrypted using an older CipherStorage, so we need to decrypt the data
-@@ -467,7 +592,7 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+@@ -467,7 +751,7 @@ class KeychainModule(reactContext: ReactApplicationContext) :
          )
 
      // decrypt using the older cipher storage
@@ -318,7 +722,7 @@ index 722a5ed990c2a1baa15546351d36928ec2b6d268..981865874c478c3e1180adad65e38900
      return decryptionResult
    }
 
-@@ -477,15 +602,18 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+@@ -477,15 +761,18 @@ class KeychainModule(reactContext: ReactApplicationContext) :
      alias: String,
      storage: CipherStorage,
      resultSet: PrefsStorageBase.ResultSet,
@@ -340,7 +744,7 @@ index 722a5ed990c2a1baa15546351d36928ec2b6d268..981865874c478c3e1180adad65e38900
      )
      CryptoFailedException.reThrowOnError(handler.error)
      if (null == handler.decryptionResult) {
-@@ -679,6 +807,20 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+@@ -679,6 +966,20 @@ class KeychainModule(reactContext: ReactApplicationContext) :
        return storageName
      }
 
@@ -361,6 +765,73 @@ index 722a5ed990c2a1baa15546351d36928ec2b6d268..981865874c478c3e1180adad65e38900
      /** Get access control value from options or fallback to [AccessControl.NONE]. */
      @AccessControl
      private fun getAccessControlOrDefault(options: ReadableMap?): String {
+@@ -742,8 +1043,23 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+     private fun getPromptInfo(
+       options: ReadableMap?,
+       usePasscode: Boolean,
+-      useBiometry: Boolean
++      useBiometry: Boolean,
++      context: Context
+     ): PromptInfo {
++      val api29FingerprintFallbackEligible =
++        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q && useBiometry) {
++          DeviceAvailability.getStrongBiometricAuthAvailability(context)
++            .api29FingerprintFallbackEligible
++        } else {
++          false
++        }
++      val promptAuthenticatorPolicy =
++        PromptAuthenticatorPolicyResolver.resolve(
++          apiLevel = Build.VERSION.SDK_INT,
++          useBiometry = useBiometry,
++          usePasscode = usePasscode,
++          api29FingerprintFallbackEligible = api29FingerprintFallbackEligible
++        )
+       val promptInfoOptionsMap =
+         if (options != null && options.hasKey(Maps.AUTH_PROMPT)) options.getMap(Maps.AUTH_PROMPT)
+         else null
+@@ -759,22 +1075,33 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+         promptInfoBuilder.setDescription(it)
+       }
+
+-      val allowedAuthenticators = when {
+-        usePasscode && useBiometry ->
+-          BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
++      val allowedAuthenticators = promptAuthenticatorPolicy.allowedAuthenticators
+
+-        usePasscode ->
+-          BiometricManager.Authenticators.DEVICE_CREDENTIAL
++      if (promptAuthenticatorPolicy.usesApi29FingerprintFallback) {
++        Log.i(
++          KEYCHAIN_MODULE,
++          "Using API 29 fingerprint prompt fallback with BIOMETRIC_STRONG"
++        )
++      }
+
+-        else ->
+-          null
++      if (promptAuthenticatorPolicy.usesApi29LegacyDeviceCredentialApi) {
++        Log.i(
++          KEYCHAIN_MODULE,
++          "Using API 29 legacy device-credential-compatible prompt"
++        )
++        @Suppress("DEPRECATION")
++        promptInfoBuilder.setDeviceCredentialAllowed(true)
+       }
+
+       if (allowedAuthenticators != null) {
+         promptInfoBuilder.setAllowedAuthenticators(allowedAuthenticators)
+       }
+
+-      if (!usePasscode) {
++      if (
++        !promptAuthenticatorPolicy.usesApi29LegacyDeviceCredentialApi &&
++          allowedAuthenticators != null &&
++          (allowedAuthenticators and BiometricManager.Authenticators.DEVICE_CREDENTIAL) == 0
++      ) {
+         promptInfoOptionsMap?.getString(AuthPromptOptions.CANCEL)?.let {
+           promptInfoBuilder.setNegativeButtonText(it)
+         }
 diff --git a/android/src/main/java/com/oblador/keychain/PrefsStorageBase.kt b/android/src/main/java/com/oblador/keychain/PrefsStorageBase.kt
 index d165f3ef7cc97937b9b3b9e0babc6c190fda72f8..8c1033c2281a8ca33096c5f95e1ffe0c9ef56b6d 100644
 --- a/android/src/main/java/com/oblador/keychain/PrefsStorageBase.kt
@@ -399,6 +870,57 @@ index d165f3ef7cc97937b9b3b9e0babc6c190fda72f8..8c1033c2281a8ca33096c5f95e1ffe0c
    /**
     * List all types of cipher which are involved in en/decryption of the data stored herein.
     *
+diff --git a/android/src/main/java/com/oblador/keychain/PromptAuthenticatorPolicy.kt b/android/src/main/java/com/oblador/keychain/PromptAuthenticatorPolicy.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..d1956c7965ab5ef7c5236dbcec68a7eaf1b6ae03
+--- /dev/null
++++ b/android/src/main/java/com/oblador/keychain/PromptAuthenticatorPolicy.kt
+@@ -0,0 +1,45 @@
++package com.oblador.keychain
++
++import android.os.Build
++import androidx.biometric.BiometricManager
++
++internal data class PromptAuthenticatorPolicy(
++  val allowedAuthenticators: Int?,
++  val usesApi29FingerprintFallback: Boolean,
++  val usesApi29LegacyDeviceCredentialApi: Boolean
++)
++
++internal object PromptAuthenticatorPolicyResolver {
++  fun resolve(
++    apiLevel: Int,
++    useBiometry: Boolean,
++    usePasscode: Boolean,
++    api29FingerprintFallbackEligible: Boolean
++  ): PromptAuthenticatorPolicy {
++    val usesApi29LegacyDeviceCredentialApi =
++      apiLevel == Build.VERSION_CODES.Q &&
++        usePasscode
++    val usesApi29FingerprintFallback =
++      apiLevel == Build.VERSION_CODES.Q &&
++        useBiometry &&
++        !usePasscode &&
++        api29FingerprintFallbackEligible
++
++    val allowedAuthenticators =
++      when {
++        usesApi29LegacyDeviceCredentialApi -> null
++        useBiometry && usePasscode ->
++          BiometricManager.Authenticators.BIOMETRIC_STRONG or
++            BiometricManager.Authenticators.DEVICE_CREDENTIAL
++        useBiometry -> BiometricManager.Authenticators.BIOMETRIC_STRONG
++        usePasscode -> BiometricManager.Authenticators.DEVICE_CREDENTIAL
++        else -> null
++      }
++
++    return PromptAuthenticatorPolicy(
++      allowedAuthenticators = allowedAuthenticators,
++      usesApi29FingerprintFallback = usesApi29FingerprintFallback,
++      usesApi29LegacyDeviceCredentialApi = usesApi29LegacyDeviceCredentialApi
++    )
++  }
++}
 diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorage.kt b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorage.kt
 index 2be22861c76ab0064040660bc91933ae4706330f..bce8de63a9f94b8447bf46bcda3c689c89ff33c8 100644
 --- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorage.kt
@@ -729,6 +1251,199 @@ index fc8ebf18c60c1efb5f2b44ec7d8e0762c519213c..16aa2c4c58c639a0409ae69d70d4c1a1
          } catch (ex: UserNotAuthenticatedException) {
              Log.d(LOG_TAG, "Unlock of keystore is needed. Error: ${ex.message}", ex)
 
+diff --git a/android/src/test/java/com/oblador/keychain/DeviceAvailabilityTest.kt b/android/src/test/java/com/oblador/keychain/DeviceAvailabilityTest.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..a0639c017629bc587697b1069db86180dd4ea539
+--- /dev/null
++++ b/android/src/test/java/com/oblador/keychain/DeviceAvailabilityTest.kt
+@@ -0,0 +1,120 @@
++package com.oblador.keychain
++
++import androidx.biometric.BiometricManager
++import org.junit.Assert.assertFalse
++import org.junit.Assert.assertTrue
++import org.junit.Test
++
++class DeviceAvailabilityTest {
++  @Test
++  fun allowsApi29LegacyFingerprintWhenAndroidXStrongCannotResolveIt() {
++    assertTrue(
++      DeviceAvailability.shouldUseApi29FingerprintFallback(
++        apiLevel = 29,
++        androidXStrongStatusCode = BiometricManager.BIOMETRIC_STATUS_UNKNOWN,
++        androidXWeakStatusCode = BiometricManager.BIOMETRIC_STATUS_UNKNOWN,
++        permissionsGranted = true,
++        hasFingerprintFeature = true,
++        legacyFingerprintHardwareDetected = true,
++        legacyFingerprintEnrolled = true
++      )
++    )
++  }
++
++  @Test
++  fun weakBiometricSignalDoesNotBecomeConfirmedFingerprintFallback() {
++    assertFalse(
++      DeviceAvailability.shouldUseApi29FingerprintFallback(
++        apiLevel = 29,
++        androidXStrongStatusCode = BiometricManager.BIOMETRIC_STATUS_UNKNOWN,
++        androidXWeakStatusCode = BiometricManager.BIOMETRIC_SUCCESS,
++        permissionsGranted = true,
++        hasFingerprintFeature = true,
++        legacyFingerprintHardwareDetected = false,
++        legacyFingerprintEnrolled = false
++      )
++    )
++    assertTrue(
++      DeviceAvailability.shouldAllowApi29FingerprintPromptProbe(
++        apiLevel = 29,
++        androidXStrongStatusCode = BiometricManager.BIOMETRIC_STATUS_UNKNOWN,
++        androidXWeakStatusCode = BiometricManager.BIOMETRIC_SUCCESS,
++        permissionsGranted = true,
++        hasFingerprintFeature = true,
++        legacyFingerprintHardwareDetected = false,
++        legacyFingerprintEnrolled = false
++      )
++    )
++  }
++
++  @Test
++  fun hardwareUnavailableNeverActivatesFingerprintFallbackOrProbe() {
++    assertFalse(
++      DeviceAvailability.shouldUseApi29FingerprintFallback(
++        apiLevel = 29,
++        androidXStrongStatusCode = BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE,
++        androidXWeakStatusCode = BiometricManager.BIOMETRIC_SUCCESS,
++        permissionsGranted = true,
++        hasFingerprintFeature = true,
++        legacyFingerprintHardwareDetected = true,
++        legacyFingerprintEnrolled = true
++      )
++    )
++    assertFalse(
++      DeviceAvailability.shouldAllowApi29FingerprintPromptProbe(
++        apiLevel = 29,
++        androidXStrongStatusCode = BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE,
++        androidXWeakStatusCode = BiometricManager.BIOMETRIC_SUCCESS,
++        permissionsGranted = true,
++        hasFingerprintFeature = true,
++        legacyFingerprintHardwareDetected = false,
++        legacyFingerprintEnrolled = false
++      )
++    )
++  }
++
++  @Test
++  fun doesNotOverrideSecurityUpdateRequired() {
++    assertFalse(
++      DeviceAvailability.shouldUseApi29FingerprintFallback(
++        apiLevel = 29,
++        androidXStrongStatusCode = 15,
++        androidXWeakStatusCode = BiometricManager.BIOMETRIC_SUCCESS,
++        permissionsGranted = true,
++        hasFingerprintFeature = true,
++        legacyFingerprintHardwareDetected = true,
++        legacyFingerprintEnrolled = true
++      )
++    )
++  }
++
++  @Test
++  fun doesNotApplyFallbackOutsideApi29() {
++    assertFalse(
++      DeviceAvailability.shouldUseApi29FingerprintFallback(
++        apiLevel = 30,
++        androidXStrongStatusCode = BiometricManager.BIOMETRIC_STATUS_UNKNOWN,
++        androidXWeakStatusCode = BiometricManager.BIOMETRIC_SUCCESS,
++        permissionsGranted = true,
++        hasFingerprintFeature = true,
++        legacyFingerprintHardwareDetected = true,
++        legacyFingerprintEnrolled = true
++      )
++    )
++  }
++
++  @Test
++  fun weakBiometricHeuristicStillRequiresFingerprintHardwareFeature() {
++    assertFalse(
++      DeviceAvailability.shouldAllowApi29FingerprintPromptProbe(
++        apiLevel = 29,
++        androidXStrongStatusCode = BiometricManager.BIOMETRIC_STATUS_UNKNOWN,
++        androidXWeakStatusCode = BiometricManager.BIOMETRIC_SUCCESS,
++        permissionsGranted = true,
++        hasFingerprintFeature = false,
++        legacyFingerprintHardwareDetected = false,
++        legacyFingerprintEnrolled = false
++      )
++    )
++  }
++}
+diff --git a/android/src/test/java/com/oblador/keychain/PromptAuthenticatorPolicyTest.kt b/android/src/test/java/com/oblador/keychain/PromptAuthenticatorPolicyTest.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..1eb51d62b80060ca458e90a1edb3633a3cb04695
+--- /dev/null
++++ b/android/src/test/java/com/oblador/keychain/PromptAuthenticatorPolicyTest.kt
+@@ -0,0 +1,61 @@
++package com.oblador.keychain
++
++import androidx.biometric.BiometricManager
++import org.junit.Assert.assertEquals
++import org.junit.Assert.assertFalse
++import org.junit.Assert.assertTrue
++import org.junit.Test
++
++class PromptAuthenticatorPolicyTest {
++  @Test
++  fun api29PasscodeCapableAccessPreservesDeviceCredentialFallback() {
++    val policy =
++      PromptAuthenticatorPolicyResolver.resolve(
++        apiLevel = 29,
++        useBiometry = true,
++        usePasscode = true,
++        api29FingerprintFallbackEligible = true
++      )
++
++    assertEquals(null, policy.allowedAuthenticators)
++    assertFalse(policy.usesApi29FingerprintFallback)
++    assertTrue(policy.usesApi29LegacyDeviceCredentialApi)
++  }
++
++  @Test
++  fun modernAndroidKeepsStrongBiometricAndDeviceCredentialCombination() {
++    val policy =
++      PromptAuthenticatorPolicyResolver.resolve(
++        apiLevel = 30,
++        useBiometry = true,
++        usePasscode = true,
++        api29FingerprintFallbackEligible = true
++      )
++
++    assertEquals(
++      BiometricManager.Authenticators.BIOMETRIC_STRONG or
++        BiometricManager.Authenticators.DEVICE_CREDENTIAL,
++      policy.allowedAuthenticators
++    )
++    assertFalse(policy.usesApi29FingerprintFallback)
++    assertFalse(policy.usesApi29LegacyDeviceCredentialApi)
++  }
++
++  @Test
++  fun biometricOnlyAlwaysUsesStrongAuthenticator() {
++    val policy =
++      PromptAuthenticatorPolicyResolver.resolve(
++        apiLevel = 29,
++        useBiometry = true,
++        usePasscode = false,
++        api29FingerprintFallbackEligible = true
++      )
++
++    assertEquals(
++      BiometricManager.Authenticators.BIOMETRIC_STRONG,
++      policy.allowedAuthenticators
++    )
++    assertTrue(policy.usesApi29FingerprintFallback)
++    assertFalse(policy.usesApi29LegacyDeviceCredentialApi)
++  }
++}
 diff --git a/ios/RNKeychainManager/RNKeychainManager.m b/ios/RNKeychainManager/RNKeychainManager.m
 index 6888ff0d7ab0dbcef57452f3b0575570f0c1d3fe..a97747b8835607d35fad4ec4452f1ab07a8a94d4 100644
 --- a/ios/RNKeychainManager/RNKeychainManager.m
@@ -954,7 +1669,7 @@ index 6888ff0d7ab0dbcef57452f3b0575570f0c1d3fe..a97747b8835607d35fad4ec4452f1ab0
                    withUsername:(NSString *)username
                    withPassword:(NSString *)password
 diff --git a/lib/commonjs/enums.js b/lib/commonjs/enums.js
-index f70993a89fc1f9707f8294c7f9beea53c69e9416..1cb6b5901eac289b4a9be01a04eda1fa88983c3f 100644
+index f70993a89fc1f9707f8294c7f9beea53c69e9416..887610fe912373e8b338577cb6cb2f8b133edd9b 100644
 --- a/lib/commonjs/enums.js
 +++ b/lib/commonjs/enums.js
 @@ -3,7 +3,7 @@
@@ -982,8 +1697,9 @@ index f70993a89fc1f9707f8294c7f9beea53c69e9416..1cb6b5901eac289b4a9be01a04eda1fa
 +  return SECURITY_RULES;
 +}({});
  //# sourceMappingURL=enums.js.map
+\ No newline at end of file
 diff --git a/lib/commonjs/index.js b/lib/commonjs/index.js
-index da7ccb9c56950200bd41fd9c33cdf1b256c6c05f..1d2d182613dc20d5523e7abdf883d23a9d45369a 100644
+index da7ccb9c56950200bd41fd9c33cdf1b256c6c05f..9e91d07a05b21fcc16ad4c9be17dc3b906d5afa4 100644
 --- a/lib/commonjs/index.js
 +++ b/lib/commonjs/index.js
 @@ -364,6 +364,7 @@ var _default = exports.default = {
@@ -995,7 +1711,7 @@ index da7ccb9c56950200bd41fd9c33cdf1b256c6c05f..1d2d182613dc20d5523e7abdf883d23a
    canImplyAuthentication,
    getSupportedBiometryType,
 diff --git a/lib/module/enums.js b/lib/module/enums.js
-index e0d6a76fa397ea0bc7b32602826f871aaf146233..0575d22e73d530dbfdb98fec5601661c60524e09 100644
+index e0d6a76fa397ea0bc7b32602826f871aaf146233..ac304528b5a720f0bbf0bf76dd011fdb9cd0d1c7 100644
 --- a/lib/module/enums.js
 +++ b/lib/module/enums.js
 @@ -89,4 +89,15 @@ export let STORAGE_TYPE = /*#__PURE__*/function (STORAGE_TYPE) {
@@ -1014,8 +1730,9 @@ index e0d6a76fa397ea0bc7b32602826f871aaf146233..0575d22e73d530dbfdb98fec5601661c
 +  return SECURITY_RULES;
 +}({});
  //# sourceMappingURL=enums.js.map
+\ No newline at end of file
 diff --git a/lib/module/index.js b/lib/module/index.js
-index b4f2bb6e8e1326094a960f648582db03f0234c3e..8526bbfeb7ae5e3b817c85a337139ac4d5c810c0 100644
+index b4f2bb6e8e1326094a960f648582db03f0234c3e..9aef23e65b6f8c7e75545647a5d21e5317a3d497 100644
 --- a/lib/module/index.js
 +++ b/lib/module/index.js
 @@ -1,7 +1,7 @@
@@ -1036,7 +1753,7 @@ index b4f2bb6e8e1326094a960f648582db03f0234c3e..8526bbfeb7ae5e3b817c85a337139ac4
    canImplyAuthentication,
    getSupportedBiometryType,
 diff --git a/lib/typescript/enums.d.ts b/lib/typescript/enums.d.ts
-index e465f91f2544bc22073f614041b0201a3e5de3fa..7f0a77dce44f1d6dd564c7d394237bf7565b9829 100644
+index e465f91f2544bc22073f614041b0201a3e5de3fa..d5a2a1f324af1b8ffce826aa972a9632af43490e 100644
 --- a/lib/typescript/enums.d.ts
 +++ b/lib/typescript/enums.d.ts
 @@ -126,4 +126,16 @@ export declare enum STORAGE_TYPE {
@@ -1056,8 +1773,9 @@ index e465f91f2544bc22073f614041b0201a3e5de3fa..7f0a77dce44f1d6dd564c7d394237bf7
 +    AUTOMATIC_UPGRADE = "automaticUpgradeToMoreSecuredStorage"
 +}
  //# sourceMappingURL=enums.d.ts.map
+\ No newline at end of file
 diff --git a/lib/typescript/index.d.ts b/lib/typescript/index.d.ts
-index b86889949b46e3350f3ba8984632e3a4da9acff3..bf1793f341d25742ca985f97e7cde358d5401828 100644
+index b86889949b46e3350f3ba8984632e3a4da9acff3..1039f1ed24f8c5bc266ae4299237bf1bdb7ee0b0 100644
 --- a/lib/typescript/index.d.ts
 +++ b/lib/typescript/index.d.ts
 @@ -1,4 +1,4 @@
@@ -1075,7 +1793,7 @@ index b86889949b46e3350f3ba8984632e3a4da9acff3..bf1793f341d25742ca985f97e7cde358
      canImplyAuthentication: typeof canImplyAuthentication;
      getSupportedBiometryType: typeof getSupportedBiometryType;
 diff --git a/lib/typescript/types.d.ts b/lib/typescript/types.d.ts
-index ff6a12e2667e152bcc2a4fcd6eb0c10a1e61372f..a106bbb130d7e36844e8c27f0146bf8592b42e89 100644
+index ff6a12e2667e152bcc2a4fcd6eb0c10a1e61372f..f5e6fff1b2558f1ea426be0b6f3294d9121d9bf3 100644
 --- a/lib/typescript/types.d.ts
 +++ b/lib/typescript/types.d.ts
 @@ -1,4 +1,4 @@

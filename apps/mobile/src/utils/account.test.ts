@@ -37,6 +37,11 @@ function loadAccountModule() {
       KeystoneKeyring: 'KeystoneKeyring',
       GnosisKeyring: 'GnosisKeyring',
     },
+    HARDWARE_KEYRING_TYPES: {
+      Ledger: { type: 'LEDGER', brandName: 'Ledger' },
+      OneKey: { type: 'ONEKEY', brandName: 'OneKey' },
+      Keystone: { type: 'KEYSTONE', brandName: 'Keystone' },
+    },
   }));
 
   return require('./account') as typeof import('./account');
@@ -118,5 +123,27 @@ describe('account utils', () => {
     expect(account.aliasName).toBe('0xabc...def');
     expect(account.brandName).toBe('CUSTOM');
     expect(mockEllipsisAddress).toHaveBeenCalledWith('0xabc');
+  });
+
+  it.each([
+    ['MNEMONIC', true],
+    ['PRIVATE_KEY', true],
+    ['GNOSIS', true],
+    ['LEDGER', true],
+    ['ONEKEY', true],
+    ['KEYSTONE', true],
+    ['WATCH', false],
+    ['WALLETCONNECT', false],
+  ])('classifies %s database history support', (type, expected) => {
+    const { isSupportDBAccount } = loadAccountModule();
+
+    expect(isSupportDBAccount({ type } as any)).toBe(expected);
+  });
+
+  it('does not support database history without an account', () => {
+    const { isSupportDBAccount } = loadAccountModule();
+
+    expect(isSupportDBAccount()).toBe(false);
+    expect(isSupportDBAccount(null)).toBe(false);
   });
 });
