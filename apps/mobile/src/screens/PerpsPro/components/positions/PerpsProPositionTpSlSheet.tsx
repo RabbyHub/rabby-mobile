@@ -35,6 +35,7 @@ import {
   getPerpsProPositionTpSlFormMinimumHeight,
   getPerpsProPositionTpSlSnapPoint,
   type PerpsProPositionTpSlFormPresentation,
+  type PerpsProPositionTpSlPage,
 } from '../../model/layout';
 import type { PerpsPositionViewModel } from '../../model/position';
 import type {
@@ -49,8 +50,14 @@ import {
   PerpsProPositionTpSlHeader,
   PerpsProPositionTpSlPageHeader,
 } from './PerpsProPositionTpSlHeader';
-import { PerpsProPositionTpSlOrderList } from './PerpsProPositionTpSlOrderList';
-import { getPerpsProDialogStyles } from '../common/perpsProDialogVisual';
+import {
+  PerpsProPositionTpSlOrderList,
+  PerpsProPositionTpSlAddRow,
+} from './PerpsProPositionTpSlOrderList';
+import {
+  getPerpsProDialogStyles,
+  resolvePerpsProDialogCardBackground,
+} from '../common/perpsProDialogVisual';
 import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
@@ -118,6 +125,12 @@ export const PerpsProPositionTpSlSheet: React.FC<{
     const openFieldExplanation = usePerpsProFieldExplanation();
     const [tab, setTab] = useState<'partial' | 'position'>(defaultTab);
     const [partialPage, setPartialPage] = useState<PartialPage>('list');
+    const [positionPage, setPositionPage] = useState<'list' | 'modify'>('list');
+    const [formLayout, setFormLayout] = useState<{
+      key: string;
+      height: number;
+    } | null>(null);
+    const pendingFormLayoutRef = useRef<typeof formLayout>(null);
     const [editingOrder, setEditingOrder] =
       useState<PerpsPositionTpSlOrderViewModel | null>(null);
     const liveMarket = usePerpsProPositionMark(position.coin);
@@ -151,9 +164,20 @@ export const PerpsProPositionTpSlSheet: React.FC<{
         returnToPartialList();
         return;
       }
+      if (tab === 'position' && positionPage === 'modify') {
+        Keyboard.dismiss();
+        setPositionPage('list');
+        return;
+      }
       Keyboard.dismiss();
       modalRef.current?.dismiss();
-    }, [interactionLocked, partialPage, returnToPartialList, tab]);
+    }, [
+      interactionLocked,
+      partialPage,
+      positionPage,
+      returnToPartialList,
+      tab,
+    ]);
     usePerpsProSheetNavigationRegistration({
       active: visible,
       dismiss: requestDismiss,
@@ -165,6 +189,7 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       if (visible) {
         setTab(defaultTab);
         setPartialPage('list');
+        setPositionPage('list');
         setEditingOrder(null);
         modalRef.current?.present();
       } else {
@@ -184,6 +209,7 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       Keyboard.dismiss();
       setEditingOrder(null);
       setPartialPage('list');
+      setPositionPage('list');
       setTab(settlement.scope);
     }, [settlement, visible]);
 
@@ -199,6 +225,7 @@ export const PerpsProPositionTpSlSheet: React.FC<{
         Keyboard.dismiss();
         setTab(next);
         setPartialPage('list');
+        setPositionPage('list');
         setEditingOrder(null);
       },
       [interactionLocked],
@@ -252,10 +279,55 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       tab === 'partial' && partialPage === 'list' && hasPartialOrders;
     const isInlineEmpty =
       tab === 'partial' && partialPage === 'list' && !hasPartialOrders;
+    const positionCounts = positionFormOrders.reduce(
+      (counts, order) => {
+        counts[order.kind] += 1;
+        return counts;
+      },
+      { takeProfit: 0, stopLoss: 0 },
+    );
+    const isPositionList =
+      tab === 'position' &&
+      positionPage === 'list' &&
+      positionFormOrders.length > 0 &&
+      positionCounts.takeProfit <= 1 &&
+      positionCounts.stopLoss <= 1;
+    const isOrderList = isPartialList || isPositionList;
+    const isSubpage =
+      tab === 'partial' ? partialPage !== 'list' : positionPage === 'modify';
+    const page: PerpsProPositionTpSlPage = isOrderList
+      ? 'list'
+      : tab === 'position'
+      ? isSubpage
+        ? 'position-modify'
+        : 'form'
+      : partialPage === 'list'
+      ? 'form'
+      : partialPage;
+    const formLayoutKey = `${position.key}:${tab}:${page}:${
+      editingOrder?.oid ?? ''
+    }`;
+    const handleFormContentHeightChange = useCallback(
+      (height: number) => {
+        if (!Number.isFinite(height) || height <= 0) return;
+        const next = { key: formLayoutKey, height };
+        pendingFormLayoutRef.current = next;
+        if (!keyboardSessionActiveRef.current) {
+          setFormLayout(current =>
+            current?.key === next.key && current.height === next.height
+              ? current
+              : next,
+          );
+        }
+      },
+      [formLayoutKey],
+    );
     const snapPoint = getPerpsProPositionTpSlSnapPoint({
-      page: isPartialList ? 'list' : 'form',
+      page,
       topInset: insets.top,
       windowHeight: stableWindowHeight,
+      formContentHeight:
+        formLayout?.key === formLayoutKey ? formLayout.height : 0,
     });
     const getFormMinimumHeight = useCallback(
       (presentation: PerpsProPositionTpSlFormPresentation) =>
@@ -280,6 +352,14 @@ export const PerpsProPositionTpSlSheet: React.FC<{
         scrollFrameRef.current = requestAnimationFrame(() => {
           scrollFrameRef.current = null;
           scrollViewRef.current?.scrollToEnd({ animated });
+          // Apply natural-content changes only after the existing keyboard restore.
+          const next = pendingFormLayoutRef.current;
+          if (next)
+            setFormLayout(current =>
+              current?.key === next.key && current.height === next.height
+                ? current
+                : next,
+            );
         });
       },
       [cancelScheduledScroll],
@@ -380,12 +460,53 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       visible,
     ]);
 
+    const tabs = (
+      <View style={styles.tabCard}>
+        <View style={styles.tabs} testID="perps-pro-position-tpsl-tabs">
+          <TabButton
+            active={tab === 'partial'}
+            label={t('page.perps.pro.positions.tpsl')}
+            onPress={() => switchTab('partial')}
+          />
+          <TabButton
+            active={tab === 'position'}
+            label={t('page.perps.pro.positions.positionTpsl')}
+            onPress={() => switchTab('position')}
+          />
+        </View>
+      </View>
+    );
+    const header = (
+      <PerpsProPositionTpSlHeader
+        markPrice={liveMarket.markPrice}
+        market={market}
+        position={visiblePosition}
+        title={
+          isPositionList
+            ? t('page.perps.pro.positions.positionTpsl')
+            : undefined
+        }
+        variant={isInlineEmpty ? 'empty' : 'main'}
+      />
+    );
+    const openPositionModify = () => {
+      if (!interactionLocked) setPositionPage('modify');
+    };
+    const presentation: PerpsProPositionTpSlFormPresentation =
+      tab === 'position'
+        ? isSubpage
+          ? 'position-modify'
+          : 'tab'
+        : isSubpage
+        ? 'subpage'
+        : 'inline-empty';
+
     return (
       <AppBottomSheetModal
         ref={modalRef}
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: 'bg1',
+          linearGradientType: 'bg0',
         })}
         android_keyboardInputMode="adjustPan"
         animatedPosition={animatedSheetPosition}
@@ -407,132 +528,121 @@ export const PerpsProPositionTpSlSheet: React.FC<{
               onReadyChange={keyboard.onSheetReadyChange}
             />
           ) : null}
-          <BottomSheetScrollView
-            ref={scrollViewRef}
-            {...(IS_ANDROID
-              ? {
-                  style: { marginBottom: keyboard.accessoryInset },
-                  onLayout: keyboard.ensureInputVisible,
-                  onContentSizeChange: keyboard.ensureInputVisible,
-                  onScrollBeginDrag: keyboard.cancelMeasurement,
-                }
-              : {})}
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}>
-            <AutoLockView style={styles.page}>
-              {tab === 'partial' && partialPage !== 'list' ? (
-                <>
-                  <PerpsProPositionTpSlPageHeader
-                    onBack={requestDismiss}
-                    title={t(
-                      partialPage === 'add'
-                        ? 'page.perps.pro.positionTpsl.addTitle'
-                        : 'page.perps.pro.positionTpsl.modifyTitle',
-                    )}
+          {isOrderList ? (
+            <AutoLockView style={styles.listPage}>
+              {header}
+              <View style={styles.listCard}>
+                {tabs}
+                {isPartialList ? (
+                  <PerpsProPositionTpSlAddRow
+                    pending={interactionLocked}
+                    onAdd={() => {
+                      if (!interactionLocked) setPartialPage('add');
+                    }}
                   />
-                  <PerpsProPositionTpSlHeader
-                    markPrice={liveMarket.markPrice}
-                    market={market}
-                    position={visiblePosition}
-                    variant="summary"
-                  />
-                  <PerpsProPositionTpSlForm
-                    key={`${position.key}:${partialPage}:${
-                      editingOrder?.oid || 'new'
-                    }`}
+                ) : null}
+                <BottomSheetScrollView
+                  ref={scrollViewRef}
+                  style={styles.orderScroll}
+                  contentContainerStyle={styles.orderScrollContent}
+                  showsVerticalScrollIndicator={false}
+                  testID="perps-pro-position-tpsl-order-scroll">
+                  <PerpsProPositionTpSlOrderList
+                    scope={isPositionList ? 'position' : 'partial'}
                     amountUnit={amountUnit}
                     cancelingOids={cancelingOids}
-                    initialOrder={editingOrder}
                     markPrice={liveMarket.markPrice}
                     market={market}
-                    minimumHeight={getFormMinimumHeight('subpage')}
-                    mode={partialPage === 'add' ? 'add' : 'modify'}
+                    onAdd={openPositionModify}
                     onCancelOrder={onCancelOrder}
-                    onReview={onReview}
-                    pending={interactionLocked}
-                    presentation="subpage"
-                    position={visiblePosition}
-                  />
-                </>
-              ) : (
-                <>
-                  <PerpsProPositionTpSlHeader
-                    markPrice={liveMarket.markPrice}
-                    market={market}
-                    position={visiblePosition}
-                    variant={isInlineEmpty ? 'empty' : 'main'}
-                  />
-                  <View
-                    style={[
-                      styles.tabs,
-                      isInlineEmpty ? styles.inlineEmptyTabs : null,
-                    ]}
-                    testID="perps-pro-position-tpsl-tabs">
-                    <TabButton
-                      active={tab === 'partial'}
-                      label={t('page.perps.pro.positions.tpsl')}
-                      onPress={() => switchTab('partial')}
-                    />
-                    <TabButton
-                      active={tab === 'position'}
-                      label={t('page.perps.pro.positions.positionTpsl')}
-                      onPress={() => switchTab('position')}
-                    />
-                  </View>
-                  {tab === 'position' ? (
-                    <PerpsProPositionTpSlForm
-                      key={`${position.key}:position:${positionFormResetSignature}`}
-                      amountUnit={amountUnit}
-                      cancelingOids={cancelingOids}
-                      markPrice={liveMarket.markPrice}
-                      market={market}
-                      minimumHeight={getFormMinimumHeight('tab')}
-                      mode="position"
-                      onCancelOrder={onCancelOrder}
-                      onReview={onReview}
-                      pending={interactionLocked}
-                      presentation="tab"
-                      position={positionFormPosition}
-                    />
-                  ) : isInlineEmpty ? (
-                    <PerpsProPositionTpSlForm
-                      key={`${position.key}:partial:inline-empty`}
-                      amountUnit={amountUnit}
-                      cancelingOids={cancelingOids}
-                      markPrice={liveMarket.markPrice}
-                      market={market}
-                      minimumHeight={getFormMinimumHeight('inline-empty')}
-                      mode="add"
-                      onCancelOrder={onCancelOrder}
-                      onReview={onReview}
-                      pending={interactionLocked}
-                      presentation="inline-empty"
-                      position={visiblePosition}
-                    />
-                  ) : (
-                    <PerpsProPositionTpSlOrderList
-                      amountUnit={amountUnit}
-                      cancelingOids={cancelingOids}
-                      markPrice={liveMarket.markPrice}
-                      market={market}
-                      onAdd={() => setPartialPage('add')}
-                      onCancelOrder={onCancelOrder}
-                      onModify={order => {
+                    onModify={order => {
+                      if (interactionLocked) return;
+                      if (isPositionList) openPositionModify();
+                      else {
                         setEditingOrder(order);
                         setPartialPage('modify');
-                      }}
-                      onOpenEstimatedPnlExplanation={
-                        openEstimatedPnlExplanation
                       }
-                      pending={interactionLocked}
-                      position={visiblePosition}
-                    />
-                  )}
-                </>
-              )}
+                    }}
+                    onOpenEstimatedPnlExplanation={openEstimatedPnlExplanation}
+                    pending={interactionLocked}
+                    position={
+                      isPositionList ? positionFormPosition : visiblePosition
+                    }
+                  />
+                </BottomSheetScrollView>
+              </View>
             </AutoLockView>
-          </BottomSheetScrollView>
+          ) : (
+            <BottomSheetScrollView
+              ref={scrollViewRef}
+              {...(IS_ANDROID
+                ? {
+                    style: { marginBottom: keyboard.accessoryInset },
+                    onLayout: keyboard.ensureInputVisible,
+                    onContentSizeChange: keyboard.ensureInputVisible,
+                    onScrollBeginDrag: keyboard.cancelMeasurement,
+                  }
+                : {})}
+              contentContainerStyle={styles.scrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}>
+              <AutoLockView style={styles.page}>
+                {isSubpage ? (
+                  <>
+                    <PerpsProPositionTpSlPageHeader
+                      onBack={requestDismiss}
+                      title={t(
+                        page === 'add'
+                          ? 'page.perps.pro.positions.tpsl'
+                          : 'page.perps.pro.positionTpsl.modifyTitle',
+                      )}
+                    />
+                    <PerpsProPositionTpSlHeader
+                      markPrice={liveMarket.markPrice}
+                      market={market}
+                      position={visiblePosition}
+                      variant="summary"
+                    />
+                  </>
+                ) : (
+                  <>
+                    {header}
+                    <View style={styles.formTabs}>{tabs}</View>
+                  </>
+                )}
+                <PerpsProPositionTpSlForm
+                  key={
+                    tab === 'position'
+                      ? `${position.key}:position:${positionFormResetSignature}`
+                      : `${position.key}:${partialPage}:${
+                          editingOrder?.oid || 'new'
+                        }`
+                  }
+                  amountUnit={amountUnit}
+                  cancelingOids={cancelingOids}
+                  initialOrder={tab === 'partial' ? editingOrder : null}
+                  markPrice={liveMarket.markPrice}
+                  market={market}
+                  minimumHeight={getFormMinimumHeight(presentation)}
+                  onContentHeightChange={handleFormContentHeightChange}
+                  mode={
+                    tab === 'position'
+                      ? 'position'
+                      : partialPage === 'modify'
+                      ? 'modify'
+                      : 'add'
+                  }
+                  onCancelOrder={onCancelOrder}
+                  onReview={onReview}
+                  pending={interactionLocked}
+                  presentation={presentation}
+                  position={
+                    tab === 'position' ? positionFormPosition : visiblePosition
+                  }
+                />
+              </AutoLockView>
+            </BottomSheetScrollView>
+          )}
         </PerpsProKeyboardSheetContext.Provider>
       </AppBottomSheetModal>
     );
@@ -567,31 +677,39 @@ const getStyle = createGetStyles2024(
       safeAreaInsets.bottom,
       isLight,
     );
-    // Keep the existing surface contrast with the TP/SL fields.
     return {
       ...dialog,
-      background: {
-        ...dialog.background,
-        backgroundColor: colors2024['neutral-bg-1'],
-      },
-      handle: { ...dialog.handle, backgroundColor: colors2024['neutral-bg-1'] },
       scrollContent: { flexGrow: 1 },
       page: { flexGrow: 1 },
+      listPage: { flex: 1 },
+      listCard: { flex: 1, marginHorizontal: 16, marginTop: 8 },
+      orderScroll: { flex: 1 },
+      orderScrollContent: {
+        paddingBottom: Math.max(12, safeAreaInsets.bottom),
+      },
+      formTabs: { marginHorizontal: 16, marginTop: 8 },
+      tabCard: {
+        backgroundColor: resolvePerpsProDialogCardBackground(
+          colors2024,
+          isLight,
+        ),
+        borderTopLeftRadius: 12,
+        borderTopRightRadius: 12,
+        paddingTop: 4,
+      },
       tabs: {
         borderBottomColor: colors2024['neutral-bg-5'],
         borderBottomWidth: 1,
         flexDirection: 'row',
         gap: 12,
         height: 34,
-        marginHorizontal: 16,
-        marginTop: 12,
+        paddingHorizontal: 16,
       },
-      inlineEmptyTabs: { marginTop: 16 },
       tab: {
         alignItems: 'center',
         borderBottomColor: 'transparent',
-        borderBottomWidth: 2,
-        height: 34,
+        borderBottomWidth: 3,
+        height: 33,
         justifyContent: 'center',
         paddingHorizontal: 2,
       },
@@ -600,13 +718,14 @@ const getStyle = createGetStyles2024(
         color: colors2024['neutral-secondary'],
         fontFamily: 'SF Pro Rounded',
         fontSize: 14,
+        fontWeight: '500',
         lineHeight: 18,
       },
       activeTabText: {
         color: colors2024['neutral-title-1'],
         fontFamily: 'SF Pro Rounded',
         fontSize: 14,
-        fontWeight: '500',
+        fontWeight: '700',
         lineHeight: 18,
       },
     };
