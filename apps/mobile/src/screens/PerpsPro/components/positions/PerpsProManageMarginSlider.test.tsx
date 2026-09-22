@@ -105,6 +105,33 @@ describe('PerpsProManageMarginSlider', () => {
     });
   });
 
+  it('preserves decimal width across tail-zero and integer transitions', () => {
+    const onValueChange = jest.fn();
+    render(
+      <PerpsProManageMarginSlider
+        maximum="30"
+        minimum="0"
+        onValueChange={onValueChange}
+        value="12"
+      />,
+    );
+    for (const [value, expected] of [
+      [12.09, '12.09'],
+      [12.1, '12.10'],
+      [12.11, '12.11'],
+      [9.99, '9.99'],
+      [10, '10.00'],
+      [0.1, '0.10'],
+    ] as const) {
+      fireEvent(
+        screen.getByTestId('native-margin-slider'),
+        'valueChange',
+        value,
+      );
+      expect(onValueChange).toHaveBeenLastCalledWith(expected);
+    }
+  });
+
   it('normalizes emitted values and disables a zero-width range', () => {
     const onValueChange = jest.fn();
     const { rerender } = render(
@@ -232,6 +259,6 @@ describe('PerpsProManageMarginSlider', () => {
     });
     screen.getByTestId('native-margin-slider').props.onValueChange(10.4);
     expect(mockSliderHapticValueChange.mock.lastCall?.[0]).toBeCloseTo(80);
-    expect(onValueChange).toHaveBeenLastCalledWith('10.4');
+    expect(onValueChange).toHaveBeenLastCalledWith('10.40');
   });
 });

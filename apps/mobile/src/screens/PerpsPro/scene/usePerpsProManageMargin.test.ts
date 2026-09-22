@@ -169,7 +169,7 @@ describe('usePerpsProManageMargin', () => {
     const hook = renderHook(() => usePerpsProManageMargin());
 
     act(() => hook.result.current.open(position));
-    expect(hook.result.current.draft).toBe('20');
+    expect(hook.result.current.draft).toBe('20.00');
     expect(hook.result.current.view).toMatchObject({
       displayPair: 'BTC-USDC',
       markPrice: '100',
@@ -180,6 +180,25 @@ describe('usePerpsProManageMargin', () => {
     act(() => hook.result.current.close());
     act(() => hook.result.current.open({ ...position, marginMode: 'cross' }));
     expect(hook.result.current.editor).toBeNull();
+  });
+
+  it('normalizes external targets but keeps raw manual editing', () => {
+    const hook = renderHook(() => usePerpsProManageMargin());
+    act(() => hook.result.current.open(position));
+    for (const [input, expected] of [
+      ['25', '25.00'],
+      ['10.1', '10.10'],
+      ['12.09', '12.09'],
+      ['12.1', '12.10'],
+      ['12.11', '12.11'],
+    ]) {
+      act(() => hook.result.current.selectTarget(input!));
+      expect(hook.result.current.draft).toBe(expected);
+    }
+    for (const input of ['1', '1.', '1.2', '']) {
+      act(() => hook.result.current.changeDraft(input));
+      expect(hook.result.current.draft).toBe(input);
+    }
   });
 
   it('uses unreserved spot quote balance instead of maintenance availability for unified accounts', () => {
@@ -282,14 +301,14 @@ describe('usePerpsProManageMargin', () => {
       replaceRawPosition('21');
       hook.rerender({});
     });
-    expect(hook.result.current.draft).toBe('21');
+    expect(hook.result.current.draft).toBe('21.00');
 
     act(() => hook.result.current.beginEditing());
     act(() => {
       replaceRawPosition('22');
       hook.rerender({});
     });
-    expect(hook.result.current.draft).toBe('21');
+    expect(hook.result.current.draft).toBe('21.00');
   });
 
   it('approves, revalidates, submits the latest signed delta command, and closes', async () => {
