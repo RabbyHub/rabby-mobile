@@ -50,11 +50,23 @@ export function resolveUpgradePrompt(
   return hasInvalidEntry ? undefined : false;
 }
 
+function bypassCachedUrl(url: string) {
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}_=${Date.now()}`;
+}
+
 async function readUpgradePromptDocument(url: string): Promise<unknown> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
   try {
-    const response = await fetch(url, { signal: controller.signal });
+    const response = await fetch(bypassCachedUrl(url), {
+      signal: controller.signal,
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache',
+        Pragma: 'no-cache',
+      },
+    });
     if (!response.ok || typeof response.json !== 'function') {
       return undefined;
     }
