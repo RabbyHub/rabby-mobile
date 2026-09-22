@@ -111,14 +111,25 @@ describe('fetchUpgradePrompt', () => {
       fetchUpgradePrompt(PROMPT_URL, 'ios', '0.6.92'),
     ).resolves.toBeUndefined();
     expect(global.fetch).toHaveBeenCalledTimes(1);
+    const [requestUrl, requestInit] = (global.fetch as jest.Mock).mock.calls[0];
+    expect(String(requestUrl)).toContain(`${PROMPT_URL}?_=`);
+    expect(requestInit).toEqual(
+      expect.objectContaining({
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          Pragma: 'no-cache',
+        },
+      }),
+    );
   });
 
   it('treats a valid file that omits this version as false', async () => {
     global.fetch = jest.fn().mockResolvedValue(jsonResponse({})) as never;
 
-    await expect(
-      fetchUpgradePrompt(PROMPT_URL, 'ios', '0.6.92'),
-    ).resolves.toBe(false);
+    await expect(fetchUpgradePrompt(PROMPT_URL, 'ios', '0.6.92')).resolves.toBe(
+      false,
+    );
   });
 
   it('returns undefined for a non-object body, an HTML body, or a failed request', async () => {
