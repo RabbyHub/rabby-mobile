@@ -9,9 +9,13 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useUnmountedRef } from '@/hooks/common/useMount';
 import { SELF_HOST_BASE, SELF_HOST_BASE_PROD } from '@/utils/version';
 import { UpgradePromptDialog } from '@/components/Upgrade/UpgradePromptDialog';
+import { APP_VERSIONS } from '@/constant';
 import { UPGRADE_PROMPT_URL } from '@/constant/upgradePrompt';
+import { parseMarkdown } from '@/components/Markdown/parseMarkdown';
+import { useLastPromptedUpgradeVersion } from '@/components/Upgrade/useUpgradePrompt';
 import {
   fetchUpgradePrompt,
+  getAutoUpgradePromptDecision,
   resolveUpgradePrompt,
 } from '@/utils/upgradePrompt';
 import { toast } from '@/components2024/Toast';
@@ -42,6 +46,51 @@ const PROMPT_FIXTURES = [
   { version: '0.6.94', label: 'Missing' },
 ];
 const platform = Platform.OS === 'android' ? 'android' : 'ios';
+const localUpgradeVersion = APP_VERSIONS.forCheckUpgrade;
+
+type PromptCheck = {
+  label: string;
+  detail: string;
+  passed: boolean;
+};
+
+function buildPromptChecks(input: {
+  version: string;
+  couldUpgrade: boolean;
+  alreadyPrompted: boolean;
+  autoPrompt: boolean | undefined;
+  changelogValid: boolean;
+}): PromptCheck[] {
+  return [
+    {
+      label: '高于本机版本',
+      detail: input.couldUpgrade
+        ? `${input.version} > ${localUpgradeVersion}`
+        : `${input.version} 不高于 ${localUpgradeVersion}`,
+      passed: input.couldUpgrade,
+    },
+    {
+      label: '未处理过',
+      detail: input.alreadyPrompted ? '这个版本已经处理过' : '没有处理记录',
+      passed: !input.alreadyPrompted,
+    },
+    {
+      label: '配置开启',
+      detail:
+        input.autoPrompt === true
+          ? 'true'
+          : input.autoPrompt === false
+          ? 'false'
+          : '没有有效配置',
+      passed: input.autoPrompt === true,
+    },
+    {
+      label: '更新说明可展示',
+      detail: input.changelogValid ? '可以解析' : '为空或无法解析',
+      passed: input.changelogValid,
+    },
+  ];
+}
 
 export function useShowMarkdownInWebVIewTester() {
   const openedModalIdRef = useRef<string>('');
@@ -68,6 +117,8 @@ export function MarkdownInWebViewInner() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [policyResult, setPolicyResult] = useState('');
+  const [checks, setChecks] = useState<PromptCheck[]>([]);
+  const lastPromptedVersion = useLastPromptedUpgradeVersion();
   const [preview, setPreview] = useState<{
     version: string;
     changelog: string;
@@ -91,6 +142,7 @@ export function MarkdownInWebViewInner() {
           ? 'Automatic update prompt: disabled by config.'
           : 'Automatic update prompt: disabled (no valid config).';
       setPolicyResult(`v${requestedVersion}: ${message}`);
+      setChecks([]);
       toast.info(message, { duration: 4000 });
       setPreview(
         !simulateAutoPrompt || autoPrompt === true
@@ -121,6 +173,7 @@ export function MarkdownInWebViewInner() {
     const timeout = setTimeout(() => controller.abort(), 20000);
 
     try {
+      let changelog = '';
       const sources = [...new Set([SELF_HOST_BASE, SELF_HOST_BASE_PROD])];
       for (const base of sources) {
         try {
@@ -134,34 +187,63 @@ export function MarkdownInWebViewInner() {
           ) {
             continue;
           }
-          const changelog = await response.text();
-          if (!changelog.trim()) {
+          const text = await response.text();
+          if (!text.trim()) {
             continue;
           }
-          if (unmountedRef.current || controller.signal.aborted) {
-            return;
-          }
-          const autoPrompt = await fetchUpgradePrompt(
-            UPGRADE_PROMPT_URL,
-            platform,
-            requestedVersion,
-          );
-          if (controller.signal.aborted) {
-            throw new Error('Request timed out.');
-          }
-          if (!unmountedRef.current && !controller.signal.aborted) {
-            previewChangelog(requestedVersion, changelog, autoPrompt);
-          }
-          return;
+          changelog = text;
+          break;
         } catch (fetchError) {
           if (controller.signal.aborted) {
             throw fetchError;
           }
         }
       }
-      throw new Error(
-        `Could not load ${platform} release notes for v${requestedVersion}.`,
+      if (unmountedRef.current || controller.signal.aborted) {
+        return;
+      }
+      const autoPrompt = await fetchUpgradePrompt(
+        UPGRADE_PROMPT_URL,
+        platform,
+        requestedVersion,
       );
+      if (controller.signal.aborted) {
+        throw new Error('Request timed out.');
+      }
+      if (unmountedRef.current) {
+        return;
+      }
+      const couldUpgrade =
+        !!semver.valid(localUpgradeVersion) &&
+        semver.gt(requestedVersion, localUpgradeVersion);
+      const alreadyPrompted = lastPromptedVersion === requestedVersion;
+      const changelogValid = parseMarkdown(changelog).success;
+      const decision = getAutoUpgradePromptDecision({
+        couldUpgrade,
+        alreadyPrompted,
+        autoPrompt,
+        changelogValid,
+      });
+      const message = decision.willShow
+        ? `v${requestedVersion} 会主动弹出`
+        : `v${requestedVersion} 不会主动弹出`;
+      setPolicyResult(message);
+      setChecks(
+        buildPromptChecks({
+          version: requestedVersion,
+          couldUpgrade,
+          alreadyPrompted,
+          autoPrompt,
+          changelogValid,
+        }),
+      );
+      if (decision.willShow) {
+        toast.success(message, { duration: 4000 });
+        setPreview({ version: requestedVersion, changelog });
+      } else {
+        toast.info(message, { duration: 4000 });
+        setPreview(null);
+      }
     } catch (fetchError) {
       if (!unmountedRef.current) {
         setError(
@@ -179,7 +261,7 @@ export function MarkdownInWebViewInner() {
         setLoading(false);
       }
     }
-  }, [version, unmountedRef, previewChangelog]);
+  }, [version, unmountedRef, lastPromptedVersion]);
 
   return (
     <>
@@ -210,7 +292,6 @@ export function MarkdownInWebViewInner() {
             </Pressable>
           ))}
         </View>
-        {!!policyResult && <Text style={styles.label}>{policyResult}</Text>}
         <Text style={styles.label}>Version</Text>
         <FormInput
           as="BottomSheetTextInput"
@@ -230,6 +311,17 @@ export function MarkdownInWebViewInner() {
             onSubmitEditing: handleConfirm,
           }}
         />
+        {!!policyResult && <Text style={styles.result}>{policyResult}</Text>}
+        {checks.map(check => (
+          <Text
+            key={check.label}
+            style={[
+              styles.check,
+              check.passed ? styles.checkPass : styles.checkFail,
+            ]}>
+            {check.passed ? '通过' : '不通过'} · {check.label}：{check.detail}
+          </Text>
+        ))}
         <View
           style={[
             styles.footer,
@@ -275,6 +367,24 @@ const getStyles = createGetStyles(colors => ({
     color: colors['neutral-body'],
     fontSize: 14,
     marginBottom: 8,
+  },
+  result: {
+    color: colors['neutral-title1'],
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  check: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 4,
+  },
+  checkPass: {
+    color: colors['green-default'],
+  },
+  checkFail: {
+    color: colors['red-default'],
   },
   fixtures: {
     flexDirection: 'row',

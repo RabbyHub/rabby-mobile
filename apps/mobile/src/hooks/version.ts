@@ -21,6 +21,7 @@ import { useUnmountedRef } from './common/useMount';
 import { zCreate } from '@/core/utils/reexports';
 import { RefLikeObject } from '@/utils/type';
 import {
+  hasUpgradePromptReceipt,
   isUpgradePromptVisible,
   requestAutoUpgradePrompt,
   showUpgradePrompt,
@@ -60,15 +61,22 @@ const loadRemoteVersion = async () => {
 export function loadVersionInfoOnBootstrap() {
   loadRemoteVersion()
     .then(async result => {
-      if (!result.finalRemoteInfo.couldUpgrade) {
+      if (
+        !result.finalRemoteInfo?.couldUpgrade ||
+        hasUpgradePromptReceipt(result.finalRemoteInfo.version)
+      ) {
         return;
       }
-      const autoPrompt = await fetchUpgradePrompt(
-        UPGRADE_PROMPT_URL,
-        Platform.OS === 'android' ? 'android' : 'ios',
-        result.finalRemoteInfo.version,
-      );
-      requestAutoUpgradePrompt({ ...result.finalRemoteInfo, autoPrompt });
+      try {
+        const autoPrompt = await fetchUpgradePrompt(
+          UPGRADE_PROMPT_URL,
+          Platform.OS === 'android' ? 'android' : 'ios',
+          result.finalRemoteInfo.version,
+        );
+        requestAutoUpgradePrompt({ ...result.finalRemoteInfo, autoPrompt });
+      } catch (error) {
+        console.error('Load upgrade prompt config failed', error);
+      }
     })
     .catch(error => {
       console.error('Load remote version info failed', error);

@@ -1,6 +1,5 @@
 import { APP_RUNTIME_ENV, BUILD_CHANNEL } from './env';
 
-// Placeholder URLs: replace these after the configuration files are published.
 export const UPGRADE_PROMPT_URLS = {
   production:
     'https://download.rabby.io/downloads/wallet-mobile-config/upgrade-prompt.json',

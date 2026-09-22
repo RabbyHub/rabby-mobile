@@ -1,6 +1,7 @@
 import { zustandByMMKV } from '@/core/storage/mmkv';
 import { zCreate } from '@/core/utils/reexports';
 import { parseMarkdown } from '@/components/Markdown/parseMarkdown';
+import { getAutoUpgradePromptDecision } from '@/utils/upgradePrompt';
 
 type UpgradePromptInfo = {
   version: string;
@@ -32,24 +33,23 @@ function hasPromptedVersion(version: string) {
   return lastPromptedVersion === version;
 }
 
+export function hasUpgradePromptReceipt(version: string) {
+  return !!version && hasPromptedVersion(version);
+}
+
 // 自动检查完成后先缓存，等待进入首页时再展示。
 export function requestAutoUpgradePrompt(info: UpgradePromptInfo) {
-  if (!info.couldUpgrade || hasPromptedVersion(info.version)) {
-    return;
-  }
-
-  if (info.autoPrompt !== true) {
+  const decision = getAutoUpgradePromptDecision({
+    couldUpgrade: info.couldUpgrade,
+    alreadyPrompted: hasPromptedVersion(info.version),
+    autoPrompt: info.autoPrompt,
+    changelogValid: parseMarkdown(info.changelog).success,
+  });
+  if (!decision.willShow) {
     // 缺失或请求失败不落处理记录，允许后续补配置或网络恢复后重新判断。
-    if (info.autoPrompt === false) {
+    if (decision.reason === 'config-off') {
       upgradePromptReceiptStore.setState({ lastPromptedVersion: info.version });
     }
-    return;
-  }
-
-  if (
-    typeof info.changelog !== 'string' ||
-    !parseMarkdown(info.changelog).success
-  ) {
     return;
   }
 
