@@ -30,7 +30,7 @@ export const PerpsProPositionTpSlPageHeader: React.FC<{
       <Pressable
         accessibilityLabel={title}
         accessibilityRole="button"
-        hitSlop={8}
+        hitSlop={{ right: 8 }}
         onPress={onBack}
         style={styles.backButton}
         testID="perps-pro-position-tpsl-back">
@@ -40,9 +40,11 @@ export const PerpsProPositionTpSlPageHeader: React.FC<{
           width={24}
         />
       </Pressable>
-      <Text numberOfLines={1} style={styles.pageTitle}>
-        {title}
-      </Text>
+      <View pointerEvents="none" style={styles.pageTitleContainer}>
+        <Text numberOfLines={1} style={styles.pageTitle}>
+          {title}
+        </Text>
+      </View>
     </View>
   );
 });
@@ -149,12 +151,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   backButton: {
     alignItems: 'center',
-    height: 40,
+    height: 56,
     justifyContent: 'center',
     left: 0,
     position: 'absolute',
+    paddingBottom: 16,
+    paddingRight: 16,
     top: 0,
-    width: 40,
+    width: 56,
+  },
+  pageTitleContainer: {
+    alignItems: 'center',
+    paddingHorizontal: 64,
+    width: '100%',
   },
   pageTitle: {
     ...PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
