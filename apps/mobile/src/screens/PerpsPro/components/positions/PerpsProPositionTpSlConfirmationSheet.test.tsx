@@ -134,8 +134,8 @@ jest.mock('react-i18next', () => ({
         'page.perps.pro.positionTpsl.volume': 'Volume',
         'page.perps.pro.positionTpsl.symbol': 'Symbol',
         'page.perps.pro.positions.entry': 'Entry Price',
-        'page.perps.pro.positions.skipLimitConfirmation':
-          "Don't display double confirmation for Limit Order again.",
+        'page.perps.pro.positionTpsl.skipConfirmation':
+          "Don't show this TP/SL confirmation again.",
       }[key] || key),
   }),
 }));
@@ -203,6 +203,55 @@ const review = (
 });
 
 describe('PerpsProPositionTpSlConfirmationSheet', () => {
+  it.each(['partial', 'position'] as const)(
+    'uses signed PNL and frozen size for every %s leg, independently of its kind',
+    scope => {
+      for (const direction of ['long', 'short'] as const) {
+        for (const kind of ['takeProfit', 'stopLoss'] as const) {
+          for (const [triggerPrice, expected, color] of [
+            [
+              direction === 'long' ? '110' : '90',
+              '+5.00 USDC',
+              'green-default',
+            ],
+            [direction === 'long' ? '90' : '110', '-5.00 USDC', 'red-default'],
+            ['100', '0.00 USDC', 'neutral-title-1'],
+            ['', '- USDC', 'neutral-title-1'],
+          ]) {
+            const frozen = review(scope);
+            frozen.command.direction = direction;
+            frozen.command.expectedPositionSize = '0.5';
+            frozen.command.legs = [
+              {
+                kind,
+                replaceOid: 7,
+                size: scope === 'partial' ? '0.5' : null,
+                triggerPrice,
+              },
+            ];
+            const view = render(
+              <PerpsProPositionTpSlConfirmationSheet
+                amountUnit="base"
+                market={market}
+                onClose={jest.fn()}
+                onConfirm={jest.fn()}
+                onToggleSkipConfirmation={jest.fn()}
+                pending={false}
+                position={{ ...position, direction, baseSize: '2' }}
+                review={frozen}
+                skipConfirmation={false}
+              />,
+            );
+            expect(
+              StyleSheet.flatten(screen.getByText(expected!).props.style).color,
+            ).toBe(color);
+            view.unmount();
+          }
+        }
+      }
+    },
+  );
+
   it.each(['light', 'dark'] as const)(
     'renders the real %s surface for both scopes and single or dual legs',
     mode => {
@@ -365,7 +414,7 @@ describe('PerpsProPositionTpSlConfirmationSheet', () => {
       expect(screen.getByText('Stop Loss')).toBeTruthy();
       expect(screen.getAllByText('Volume (BTC)')).toHaveLength(2);
       expect(screen.getAllByText('0.5(50.00%)')).toHaveLength(2);
-      expect(screen.getByText(/Limit Order/)).toBeTruthy();
+      expect(screen.getByText(/TP\/SL confirmation/)).toBeTruthy();
       fireEvent.press(screen.getAllByLabelText('Estimated PnL')[0]!);
       expect(mockOpenFieldExplanation).toHaveBeenCalledWith('estimatedPnl');
       const checkbox = screen.getByTestId(
@@ -379,9 +428,8 @@ describe('PerpsProPositionTpSlConfirmationSheet', () => {
       });
       expect(
         StyleSheet.flatten(
-          screen.getByText(
-            "Don't display double confirmation for Limit Order again.",
-          ).props.style,
+          screen.getByText("Don't show this TP/SL confirmation again.").props
+            .style,
         ),
       ).toMatchObject({ color: 'neutral-foot', flexShrink: 1 });
       expect(checkbox.props.accessibilityState).toMatchObject({
@@ -527,7 +575,7 @@ describe('PerpsProPositionTpSlConfirmationSheet', () => {
 
     expect(screen.getByText('Confirm Position TP/SL')).toBeTruthy();
     expect(screen.queryByText(/^Volume/)).toBeNull();
-    expect(screen.getByText(/Limit Order/)).toBeTruthy();
+    expect(screen.getByText(/TP\/SL confirmation/)).toBeTruthy();
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-confirmation-footer').props

@@ -232,6 +232,7 @@ jest.mock('./PerpsProPositionTpSlForm', () => {
 
 import type { PerpsPositionViewModel } from '../../model/position';
 import type { PerpsPositionTpSlOrderViewModel } from '../../model/positionTpSl';
+import { PerpsProPositionTpSlOrderList } from './PerpsProPositionTpSlOrderList';
 import { PerpsProPositionTpSlSheet } from './PerpsProPositionTpSlSheet';
 
 const order = (
@@ -281,6 +282,60 @@ const market = {
 };
 
 describe('PerpsProPositionTpSlSheet', () => {
+  it.each(['partial', 'position'] as const)(
+    'colors %s list PNL by profit with its own size source',
+    scope => {
+      for (const direction of ['long', 'short'] as const) {
+        for (const kind of ['takeProfit', 'stopLoss'] as const) {
+          for (const [triggerPrice, expected, color] of [
+            [direction === 'long' ? '110' : '90', '+5.00', 'green-default'],
+            [direction === 'long' ? '90' : '110', '-5.00', 'red-default'],
+            ['100', '0.00', 'neutral-title-1'],
+            ['', '-', 'neutral-title-1'],
+          ]) {
+            const item = {
+              ...order(
+                7,
+                triggerPrice!,
+                scope === 'position' ? '0' : '0.5',
+                scope,
+              ),
+              kind,
+            };
+            const view = render(
+              <PerpsProPositionTpSlOrderList
+                scope={scope}
+                amountUnit="base"
+                cancelingOids={[]}
+                markPrice="120"
+                market={market}
+                onAdd={jest.fn()}
+                onCancelOrder={jest.fn()}
+                onModify={jest.fn()}
+                onOpenEstimatedPnlExplanation={jest.fn()}
+                pending={false}
+                position={{
+                  ...position,
+                  direction,
+                  baseSize: scope === 'position' ? '0.5' : '2',
+                  tpslOrders: [item],
+                }}
+              />,
+            );
+            const row = screen.getByTestId('perps-pro-position-tpsl-order-7');
+            const values = within(row).getAllByText(expected!);
+            expect(
+              values.some(
+                value => StyleSheet.flatten(value.props.style).color === color,
+              ),
+            ).toBe(true);
+            view.unmount();
+          }
+        }
+      }
+    },
+  );
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockAndroid = false;

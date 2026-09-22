@@ -2377,12 +2377,14 @@
           "positionAmount": "포지션 수량",
           "estimatedPnl": "예상 PnL",
           "skipLimitConfirmation": "지정가 주문에 대한 이중 확인을 다시 표시하지 않기",
+          "skipMarketCloseConfirmation": "이 시장가 포지션 종료 확인을 다시 표시하지 않기",
           "closeSubmitted": "종료 주문을 제출했습니다",
           "closeFailed": "포지션 종료에 실패했습니다",
           "minimumCloseAmount": "최소 종료 금액은 $10입니다",
           "closeContextChanged": "포지션 또는 계정이 변경되었습니다. 다시 검토하세요."
         },
         "positionTpsl": {
+          "skipConfirmation": "이 TP/SL 확인을 다시 표시하지 않기",
           "addButton": "TP/SL 추가",
           "addTitle": "TP/SL 추가",
           "cancelFailed": "TP/SL 주문 취소에 실패했습니다",

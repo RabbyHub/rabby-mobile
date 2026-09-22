@@ -2377,12 +2377,14 @@
           "positionAmount": "Pozisyon Miktarı",
           "estimatedPnl": "Tahmini PnL",
           "skipLimitConfirmation": "Limit Emirleri için çift onayı bir daha gösterme.",
+          "skipMarketCloseConfirmation": "Piyasa emriyle pozisyon kapatma onayını bir daha gösterme.",
           "closeSubmitted": "Kapatma emri gönderildi",
           "closeFailed": "Pozisyon kapatılamadı",
           "minimumCloseAmount": "Minimum kapatma tutarı 10 $",
           "closeContextChanged": "Pozisyon veya hesap değişti. Tekrar inceleyin."
         },
         "positionTpsl": {
+          "skipConfirmation": "Bu TP/SL onayını bir daha gösterme.",
           "addButton": "TP/SL Ekle",
           "addTitle": "TP/SL Ekle",
           "cancelFailed": "TP/SL emri iptal edilemedi",

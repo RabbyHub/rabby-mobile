@@ -2552,12 +2552,14 @@
           "positionAmount": "ขนาดโพซิชัน",
           "estimatedPnl": "PnL โดยประมาณ",
           "skipLimitConfirmation": "ไม่ต้องแสดงการยืนยันสองครั้งสำหรับคำสั่ง Limit อีก",
+          "skipMarketCloseConfirmation": "ไม่ต้องแสดงการยืนยันการปิดสถานะด้วยคำสั่ง Market นี้อีก",
           "closeSubmitted": "ส่งคำสั่งปิดแล้ว",
           "closeFailed": "ปิดโพซิชันไม่สำเร็จ",
           "minimumCloseAmount": "จำนวนขั้นต่ำในการปิดคือ $10",
           "closeContextChanged": "โพซิชันหรือบัญชีเปลี่ยนไปแล้ว โปรดตรวจสอบอีกครั้ง"
         },
         "positionTpsl": {
+          "skipConfirmation": "ไม่ต้องแสดงการยืนยัน TP/SL นี้อีก",
           "addButton": "เพิ่ม TP/SL",
           "addTitle": "เพิ่ม TP/SL",
           "cancelFailed": "ยกเลิกคำสั่ง TP/SL ไม่สำเร็จ",

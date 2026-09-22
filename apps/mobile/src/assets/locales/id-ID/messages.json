@@ -2377,12 +2377,14 @@
           "positionAmount": "Ukuran Posisi",
           "estimatedPnl": "Estimasi PnL",
           "skipLimitConfirmation": "Jangan tampilkan lagi konfirmasi ganda untuk Order Limit",
+          "skipMarketCloseConfirmation": "Jangan tampilkan lagi konfirmasi penutupan posisi dengan order pasar ini.",
           "closeSubmitted": "Order penutupan dikirim",
           "closeFailed": "Gagal menutup posisi",
           "minimumCloseAmount": "Jumlah penutupan minimum adalah $10",
           "closeContextChanged": "Posisi atau akun telah berubah. Tinjau kembali."
         },
         "positionTpsl": {
+          "skipConfirmation": "Jangan tampilkan lagi konfirmasi TP/SL ini.",
           "addButton": "Tambah TP/SL",
           "addTitle": "Tambah TP/SL",
           "cancelFailed": "Gagal membatalkan order TP/SL",

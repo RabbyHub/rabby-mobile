@@ -2411,7 +2411,6 @@
           "loadingMore": "Loading more history"
         },
         "positions": {
-          "__skip_translation": ["skipMarketCloseConfirmation"],
           "empty": "You have no positions",
           "closeAll": "Close All",
           "closeAllConfirmTitle": "Confirm Close All Positions",
@@ -2471,6 +2470,7 @@
           "closeContextChanged": "Position or account changed. Please review again."
         },
         "positionTpsl": {
+          "skipConfirmation": "Don't show this TP/SL confirmation again.",
           "addButton": "Add TP/SL",
           "addTitle": "Add TP/SL",
           "cancelFailed": "Failed to cancel TP/SL order",

@@ -27,12 +27,13 @@ import { useTranslation } from 'react-i18next';
 import type { PerpsPositionViewModel } from '../../model/position';
 import {
   calculatePositionTpSlEstimatedPnl,
+  getPositionTpSlValueTone,
   type PerpsPositionTpSlMarketSnapshot,
 } from '../../model/positionTpSl';
 import type { PerpsProTradeAmountUnit } from '../../model/trade';
 import type { PerpsProPositionTpSlReviewState } from '../../scene/usePerpsProPositionTpSl';
 import {
-  formatPerpsProDecimal,
+  formatPerpsProSignedDecimal,
   formatPerpsProPrice,
   formatPerpsProVariableDecimal,
 } from '../../utils/format';
@@ -220,10 +221,12 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
                         {t('page.perps.pro.positionTpsl.estimatedPnl')}
                       </PerpsProDottedUnderlineText>
                     }
-                    tone={leg.kind === 'takeProfit' ? 'positive' : 'negative'}
-                    value={`${formatPerpsProDecimal(estimatedPnl, 2)} ${
-                      market.quoteAsset
-                    }`}
+                    tone={getPositionTpSlValueTone(estimatedPnl)}
+                    value={`${
+                      estimatedPnl == null
+                        ? '-'
+                        : formatPerpsProSignedDecimal(estimatedPnl, 2)
+                    } ${market.quoteAsset}`}
                   />
                 </View>
               );
@@ -241,7 +244,7 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
                 checkColor={colors2024['neutral-InvertHighlight']}
               />
               <Text style={styles.checkboxText}>
-                {t('page.perps.pro.positions.skipLimitConfirmation')}
+                {t('page.perps.pro.positionTpsl.skipConfirmation')}
               </Text>
             </Pressable>
 

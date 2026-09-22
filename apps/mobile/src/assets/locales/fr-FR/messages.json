@@ -2386,12 +2386,14 @@
           "positionAmount": "Quantité de la position",
           "estimatedPnl": "PnL estimé",
           "skipLimitConfirmation": "Ne plus afficher la double confirmation pour les ordres limites.",
+          "skipMarketCloseConfirmation": "Ne plus afficher cette confirmation de clôture au marché.",
           "closeSubmitted": "Ordre de clôture envoyé",
           "closeFailed": "Échec de la clôture de la position",
           "minimumCloseAmount": "Le montant minimal de clôture est de 10 $",
           "closeContextChanged": "La position ou le compte a changé. Vérifiez à nouveau."
         },
         "positionTpsl": {
+          "skipConfirmation": "Ne plus afficher cette confirmation TP/SL.",
           "addButton": "Ajouter un TP/SL",
           "addTitle": "Ajouter un TP/SL",
           "cancelFailed": "Échec de l’annulation de l’ordre TP/SL",
