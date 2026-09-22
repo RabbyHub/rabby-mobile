@@ -10,7 +10,6 @@ import { devLog } from './logger';
 import { AppBuildChannel, BUILD_CHANNEL } from '@/constant/env';
 import { PROD_APPLICATION_ID, APP_URLS, APP_VERSIONS } from '@/constant';
 import { sleep } from './async';
-import { parseUpgradeChangelog } from './upgradeChangelog';
 
 export type RemoteVersionRes = {
   version?: string;
@@ -25,7 +24,6 @@ export type MergedRemoteVersion = {
   storeUrl: string | null;
   externalUrlToOpen?: string;
   changelog: string;
-  autoPrompt: boolean;
   source: AppBuildChannel;
   couldUpgrade: boolean;
 };
@@ -144,7 +142,6 @@ export async function getUpgradeInfo(options?: { forceLocalVersion?: string }) {
     source: BUILD_CHANNEL,
     couldUpgrade: false,
     changelog: '',
-    autoPrompt: false,
   };
 
   switch (BUILD_CHANNEL) {
@@ -207,11 +204,6 @@ export async function getUpgradeInfo(options?: { forceLocalVersion?: string }) {
     console.error('fetch changelog failed', error);
     finalRemoteInfo.changelog = '';
   }
-
-  Object.assign(
-    finalRemoteInfo,
-    parseUpgradeChangelog(finalRemoteInfo.changelog),
-  );
 
   return {
     localVersion,

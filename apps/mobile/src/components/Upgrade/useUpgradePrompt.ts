@@ -9,7 +9,7 @@ type UpgradePromptInfo = {
   changelog: string;
 };
 
-// 按版本记录已展示或已确认不提示的更新，新版本仍可再次提示。
+// 按版本记录已展示或配置明确不提示的更新，新版本仍可再次判断。
 const upgradePromptReceiptStore = zustandByMMKV<{
   lastPromptedVersion: string;
 }>('@UpgradePromptReceiptMMKV', {
@@ -34,17 +34,22 @@ function hasPromptedVersion(version: string) {
 
 // 自动检查完成后先缓存，等待进入首页时再展示。
 export function requestAutoUpgradePrompt(info: UpgradePromptInfo) {
-  if (
-    !info.couldUpgrade ||
-    hasPromptedVersion(info.version) ||
-    typeof info.changelog !== 'string' ||
-    !parseMarkdown(info.changelog).success
-  ) {
+  if (!info.couldUpgrade || hasPromptedVersion(info.version)) {
     return;
   }
 
-  if (!info.autoPrompt) {
-    upgradePromptReceiptStore.setState({ lastPromptedVersion: info.version });
+  if (info.autoPrompt !== true) {
+    // 缺失或请求失败不落处理记录，允许后续补配置或网络恢复后重新判断。
+    if (info.autoPrompt === false) {
+      upgradePromptReceiptStore.setState({ lastPromptedVersion: info.version });
+    }
+    return;
+  }
+
+  if (
+    typeof info.changelog !== 'string' ||
+    !parseMarkdown(info.changelog).success
+  ) {
     return;
   }
 

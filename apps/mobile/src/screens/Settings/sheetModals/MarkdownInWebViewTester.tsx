@@ -9,7 +9,11 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useUnmountedRef } from '@/hooks/common/useMount';
 import { SELF_HOST_BASE, SELF_HOST_BASE_PROD } from '@/utils/version';
 import { UpgradePromptDialog } from '@/components/Upgrade/UpgradePromptDialog';
-import { parseUpgradeChangelog } from '@/utils/upgradeChangelog';
+import { UPGRADE_PROMPT_URL } from '@/constant/upgradePrompt';
+import {
+  fetchUpgradePrompt,
+  resolveUpgradePrompt,
+} from '@/utils/upgradePrompt';
 import { toast } from '@/components2024/Toast';
 import { FormInput } from '@/components/Form/Input';
 import { Button } from '@/components2024/Button';
@@ -26,17 +30,18 @@ import {
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import AutoLockView from '@/components/AutoLockView';
 import { Text } from '@/components/Typography';
+import upgradePromptFixture from './fixtures/upgrade-prompt.json';
 
 const FIXTURE_BODY =
   '### Features\n\n- Fixed some bugs and optimized user experience';
-const AUTO_PROMPT_FIXTURES = [
-  { label: 'ON', markdown: `<!-- rabby:auto-prompt=on -->\n\n${FIXTURE_BODY}` },
-  {
-    label: 'OFF',
-    markdown: `<!-- rabby:auto-prompt=off -->\n\n${FIXTURE_BODY}`,
-  },
-  { label: 'No marker', markdown: FIXTURE_BODY },
+const PROMPT_FIXTURES = [
+  { version: '0.6.90', label: 'Both ON' },
+  { version: '0.6.91', label: 'Both OFF' },
+  { version: '0.6.92', label: 'iOS ON' },
+  { version: '0.6.93', label: 'Android ON' },
+  { version: '0.6.94', label: 'Missing' },
 ];
+const platform = Platform.OS === 'android' ? 'android' : 'ios';
 
 export function useShowMarkdownInWebVIewTester() {
   const openedModalIdRef = useRef<string>('');
@@ -62,6 +67,7 @@ export function MarkdownInWebViewInner() {
   const [version, setVersion] = useState(() => getVersion());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [policyResult, setPolicyResult] = useState('');
   const [preview, setPreview] = useState<{
     version: string;
     changelog: string;
@@ -74,18 +80,20 @@ export function MarkdownInWebViewInner() {
   const previewChangelog = useCallback(
     (
       requestedVersion: string,
-      markdown: string,
+      changelog: string,
+      autoPrompt: boolean | undefined,
       simulateAutoPrompt = false,
     ) => {
-      const { autoPrompt, changelog } = parseUpgradeChangelog(markdown);
-      toast.info(
-        autoPrompt
+      const message =
+        autoPrompt === true
           ? 'Automatic update prompt: enabled.'
-          : 'Automatic update prompt: disabled.',
-        { duration: 4000 },
-      );
+          : autoPrompt === false
+          ? 'Automatic update prompt: disabled by config.'
+          : 'Automatic update prompt: disabled (no valid config).';
+      setPolicyResult(`v${requestedVersion}: ${message}`);
+      toast.info(message, { duration: 4000 });
       setPreview(
-        !simulateAutoPrompt || autoPrompt
+        !simulateAutoPrompt || autoPrompt === true
           ? { version: requestedVersion, changelog }
           : null,
       );
@@ -95,7 +103,9 @@ export function MarkdownInWebViewInner() {
 
   const closePreview = useCallback(() => setPreview(null), []);
   const handleConfirm = useCallback(async () => {
-    if (requestRef.current) return;
+    if (requestRef.current) {
+      return;
+    }
 
     const requestedVersion = semver.valid(version.trim());
     if (!requestedVersion) {
@@ -109,7 +119,6 @@ export function MarkdownInWebViewInner() {
     const controller = new AbortController();
     requestRef.current = controller;
     const timeout = setTimeout(() => controller.abort(), 20000);
-    const platform = Platform.OS === 'android' ? 'android' : 'ios';
 
     try {
       const sources = [...new Set([SELF_HOST_BASE, SELF_HOST_BASE_PROD])];
@@ -126,13 +135,28 @@ export function MarkdownInWebViewInner() {
             continue;
           }
           const changelog = await response.text();
-          if (!changelog.trim()) continue;
+          if (!changelog.trim()) {
+            continue;
+          }
+          if (unmountedRef.current || controller.signal.aborted) {
+            return;
+          }
+          const autoPrompt = await fetchUpgradePrompt(
+            UPGRADE_PROMPT_URL,
+            platform,
+            requestedVersion,
+          );
+          if (controller.signal.aborted) {
+            throw new Error('Request timed out.');
+          }
           if (!unmountedRef.current && !controller.signal.aborted) {
-            previewChangelog(requestedVersion, changelog);
+            previewChangelog(requestedVersion, changelog, autoPrompt);
           }
           return;
         } catch (fetchError) {
-          if (controller.signal.aborted) throw fetchError;
+          if (controller.signal.aborted) {
+            throw fetchError;
+          }
         }
       }
       throw new Error(
@@ -151,7 +175,9 @@ export function MarkdownInWebViewInner() {
     } finally {
       clearTimeout(timeout);
       requestRef.current = null;
-      if (!unmountedRef.current) setLoading(false);
+      if (!unmountedRef.current) {
+        setLoading(false);
+      }
     }
   }, [version, unmountedRef, previewChangelog]);
 
@@ -159,22 +185,32 @@ export function MarkdownInWebViewInner() {
     <>
       <AutoLockView as="BottomSheetView" style={styles.container}>
         <Text style={styles.title}>Upgrade Prompt Preview</Text>
-        <Text style={styles.label}>Local auto-prompt fixtures</Text>
+        <Text style={styles.label}>Local JSON fixtures ({platform})</Text>
         <View style={styles.fixtures}>
-          {AUTO_PROMPT_FIXTURES.map(fixture => (
+          {PROMPT_FIXTURES.map(fixture => (
             <Pressable
-              key={fixture.label}
+              key={fixture.version}
               accessibilityRole="button"
               disabled={loading}
               style={styles.fixture}
               onPress={() => {
                 Keyboard.dismiss();
-                previewChangelog('0.0.0', fixture.markdown, true);
+                previewChangelog(
+                  fixture.version,
+                  FIXTURE_BODY,
+                  resolveUpgradePrompt(
+                    upgradePromptFixture,
+                    platform,
+                    fixture.version,
+                  ),
+                  true,
+                );
               }}>
               <Text style={styles.fixtureText}>{fixture.label}</Text>
             </Pressable>
           ))}
         </View>
+        {!!policyResult && <Text style={styles.label}>{policyResult}</Text>}
         <Text style={styles.label}>Version</Text>
         <FormInput
           as="BottomSheetTextInput"
@@ -240,11 +276,15 @@ const getStyles = createGetStyles(colors => ({
     fontSize: 14,
     marginBottom: 8,
   },
-  fixtures: { flexDirection: 'row', gap: 8, marginBottom: 20 },
+  fixtures: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
   fixture: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     borderRadius: 8,
     backgroundColor: colors['neutral-card1'],
   },
