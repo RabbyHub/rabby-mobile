@@ -49,7 +49,7 @@ const mockEnglishTranslations: Record<string, string> = {
 };
 let mockTranslations = mockEnglishTranslations;
 
-jest.mock('@/assets2024/icons/perps/IconPerpEdit.svg', () => {
+jest.mock('@/assets2024/icons/perps/PerpsProEdit.svg', () => {
   const ReactModule = require('react');
   const { View: NativeView } = require('react-native');
   return (props: object) => ReactModule.createElement(NativeView, props);
@@ -553,8 +553,8 @@ describe('PerpsProPositionCard', () => {
     expect(StyleSheet.flatten(leverageAction.props.style)).toMatchObject({
       borderRadius: 6,
       flex: 1,
-      minHeight: 26,
-      paddingVertical: 4,
+      minHeight: 34,
+      paddingVertical: 8,
     });
     expect(
       StyleSheet.flatten(leverageAction.props.style).height,
@@ -564,11 +564,13 @@ describe('PerpsProPositionCard', () => {
     ).toMatchObject({ flexShrink: 1, textAlign: 'center' });
     const actions = screen.UNSAFE_getAllByType(View).find(view => {
       const style = StyleSheet.flatten(view.props.style);
-      return style?.flexDirection === 'row' && style.gap === 12;
+      return (
+        style?.flexDirection === 'row' && style.gap === 8 && !style.position
+      );
     })!;
     expect(StyleSheet.flatten(actions.props.style)).toMatchObject({
       flexDirection: 'row',
-      gap: 12,
+      gap: 8,
     });
   });
 
@@ -673,7 +675,7 @@ describe('PerpsProPositionCard', () => {
       StyleSheet.flatten(
         screen.getByRole('button', { name: 'Apalancamiento' }).props.style,
       ),
-    ).toMatchObject({ minHeight: 26, paddingVertical: 4 });
+    ).toMatchObject({ minHeight: 34, paddingVertical: 8 });
   });
 
   it('does not re-render the card when fitting measurements confirm compact mode', () => {
@@ -1119,8 +1121,8 @@ describe('PerpsProPositionCard', () => {
         screen.getByTestId('perps-pro-position-BTC').props.style,
       ),
     ).toMatchObject({
-      borderBottomColor: 'neutral-bg-5',
-      borderBottomWidth: 1,
+      marginLeft: 16,
+      marginRight: 14,
     });
     fireEvent.press(screen.getByText('Size (USDC)'));
     expect(screen.getByText('Size (BTC)')).toBeTruthy();

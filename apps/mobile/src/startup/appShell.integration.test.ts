@@ -58,6 +58,10 @@ function createBoundaryLoaders(events: string[]): LaunchTaskLoaderCatalog {
     lockUnlockEventBridge: async () => ({
       startLockUnlockEventBridge: () => events.push('launch:lock-bridge'),
     }),
+    setupRuntimeSecuritySubscriptions: async () => ({
+      startSetupRuntimeSecuritySubscriptions: () =>
+        events.push('launch:security'),
+    }),
     bootstrapI18nReady: async () => ({
       startSubscribeLangChange: () => events.push('launch:i18n'),
     }),
@@ -180,6 +184,7 @@ describe('minimal App shell integration', () => {
         expect.arrayContaining([
           'performance:integration_app_shell',
           'launch:lock-bridge',
+          'launch:security',
           'launch:i18n',
           'launch:auto-lock',
           'launch:home-local',

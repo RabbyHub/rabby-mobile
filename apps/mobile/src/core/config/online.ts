@@ -12,6 +12,8 @@ const BASE_URL = isNonPublicProductionEnv
 const CONFIG_URL = `${BASE_URL}/rabby-mobile.json`;
 export const ONLINE_SWITCH_ENABLE_WORKER_THREAD =
   '20251226.enable_worker_thread' as const;
+export const ONLINE_SWITCH_DISABLE_DB_PREPARED_UPSERT_V2 =
+  '20260903.disable_db_prepared_upsert_v2' as const;
 const ONLINE_CONFIG_CACHE_KEY = '@OnlineConfigCacheV1';
 const ONLINE_CONFIG_CACHE_MAX_AGE_MS = 3 * 24 * 60 * 60 * 1000;
 
@@ -23,7 +25,9 @@ type OnlineConfig = {
     /** @deprecated keep it disabled online, or the insertions will be error on old version */
     ['20260105.disable_db_prepared_upsert']?: boolean;
     ['20260116.allow_short_auto_lock_time_on_bootstrap']?: boolean;
+    /** @deprecated prepared upsert is enabled by default in current versions */
     ['20260122.enable_db_prepared_upsert']?: boolean;
+    [ONLINE_SWITCH_DISABLE_DB_PREPARED_UPSERT_V2]?: boolean;
     [APP_FILE_LOGGING_ONLINE_SWITCH]?: boolean;
   };
 };
@@ -43,6 +47,7 @@ function getDefaultOnlineConfig(): OnlineConfig {
       '20260105.disable_db_prepared_upsert': false,
       '20260116.allow_short_auto_lock_time_on_bootstrap': false,
       '20260122.enable_db_prepared_upsert': false,
+      [ONLINE_SWITCH_DISABLE_DB_PREPARED_UPSERT_V2]: false,
       [APP_FILE_LOGGING_ONLINE_SWITCH]: false,
     },
   };

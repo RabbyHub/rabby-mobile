@@ -1,3 +1,4 @@
+import { PERPS_PRO_INPUT_COLOR_PROPS } from '../common/perpsProInputVisual';
 import RcNextCloseCircleDark from '@/assets/icons/common/next-close-circle-dark.svg';
 import RcNextCloseCircle from '@/assets/icons/common/next-close-circle.svg';
 import RcNextSearchCC from '@/assets/icons/common/next-search-cc.svg';
@@ -118,17 +119,16 @@ const PerpsProMarketSearchBarComponent = forwardRef<
   const commonInputProps: React.ComponentProps<
     typeof PerpsProNativeSearchInput
   > = {
+    ...PERPS_PRO_INPUT_COLOR_PROPS,
     inputAccessoryViewID,
     accessibilityLabel: placeholder,
     accessible: !isResting,
     allowFontScaling: false,
     autoCorrect: false,
-    cursorColor: colors2024['brand-default'],
     onBlur: handleBlur,
     onChangeText,
     onFocus: handleFocus,
     returnKeyType: 'done',
-    selectionColor: colors2024['brand-default'],
     spellCheck: false,
     style: styles.input,
     testID: 'market-search',

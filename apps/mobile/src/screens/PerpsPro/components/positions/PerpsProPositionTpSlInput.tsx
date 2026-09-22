@@ -117,7 +117,6 @@ export const PerpsProPositionTpSlInput: React.FC<{
           ) : null}
           <PerpsProDecimalTextInput
             accessibilityLabel={accessibilityLabel}
-            cursorColor={colors2024['brand-default']}
             editable={!disabled}
             focusCursorAtEnd
             focusCursorAtEndMode="initialFocus"
@@ -136,7 +135,6 @@ export const PerpsProPositionTpSlInput: React.FC<{
             preserveIntegerZeroRun={priceSzDecimals != null}
             pointerEvents={focused ? 'auto' : 'none'}
             ref={inputRef}
-            selectionColor={colors2024['brand-default']}
             style={[
               styles.input,
               !focused && value ? styles.hiddenInput : null,

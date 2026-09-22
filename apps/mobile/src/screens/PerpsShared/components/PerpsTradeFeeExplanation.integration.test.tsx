@@ -86,6 +86,7 @@ const TipsPopupStateProbe = () => {
             )}:${descVariant ?? 'none'}`
           : 'closed'}
       </Text>
+      <Text testID="fee-explanation-presentation">{`${state.retainContentOnClose}:${state.buttonTitle}`}</Text>
     </View>
   );
 };
@@ -110,6 +111,9 @@ describe('Perps Trade Fee explanation integration', () => {
     );
 
     fireEvent.press(screen.getByTestId('open-fee-explanation'));
+    expect(
+      screen.getByTestId('fee-explanation-presentation'),
+    ).toHaveTextContent('true:page.perps.pro.funding.gotIt');
     expect(screen.getByTestId('fee-explanation-state')).toHaveTextContent(
       'page.perps.historyDetail.feeTitle:hyperliquid:true:default',
     );
@@ -125,6 +129,9 @@ describe('Perps Trade Fee explanation integration', () => {
     render(<FeeExplanationHarness />);
 
     fireEvent.press(screen.getByTestId('open-owned-fee-explanation'));
+    expect(
+      screen.getByTestId('fee-explanation-presentation'),
+    ).toHaveTextContent('true:page.perps.pro.funding.gotIt');
     expect(screen.getByTestId('owned-fee-visibility')).toHaveTextContent(
       'true:false',
     );

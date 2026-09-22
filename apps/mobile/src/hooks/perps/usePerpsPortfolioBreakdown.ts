@@ -3,10 +3,21 @@ import { useMemoizedFn } from 'ahooks';
 import { useShallow } from 'zustand/react/shallow';
 
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
-import { computeSpotPortfolioValue } from '@/screens/PerpsPro/model/accountPricing';
+import {
+  computeSpotPortfolioValue,
+  computeStakingValue,
+  getStakedHypeAmount,
+} from '@/screens/PerpsPro/model/accountPricing';
 import { perpsStore } from './usePerpsStore';
 
 export type PerpsBreakdownMode = 'manual' | 'unified' | 'portfolioMargin';
+
+export type PerpsPortfolioBreakdownValues = {
+  perpsValue: number;
+  secondaryValue: number;
+  /** Manual mode only, null when the staking account is empty. */
+  stakingValue: number | null;
+};
 
 /**
  * Amounts for the "Portfolio Value" breakdown popup (spec 2026-08-25).
@@ -20,7 +31,11 @@ export type PerpsBreakdownMode = 'manual' | 'unified' | 'portfolioMargin';
  *
  * Second row: manual "Spot" = USD value of all spot assets; unified /
  * portfolio margin ("Other Assets" / "Net Other Assets") = Portfolio Value −
- * Perps, so the two rows always sum to the displayed PV.
+ * Perps, so the rows always sum to the displayed PV.
+ *
+ * Third row (manual only): "Staking" = staking-account HYPE at the spot
+ * mark, shown when non-zero so Perps + Spot + Staking still sums to the PV.
+ * The spot-collateral modes fold it into their remainder row.
  *
  * Values are computed lazily from a store snapshot at press time: subscribing
  * to spotAssetCtxs would re-render the card on every spot price tick just to
@@ -29,12 +44,20 @@ export type PerpsBreakdownMode = 'manual' | 'unified' | 'portfolioMargin';
 export const computePortfolioBreakdownValues = (
   mode: PerpsBreakdownMode,
   portfolioValue: number,
-): { perpsValue: number; secondaryValue: number } => {
+): PerpsPortfolioBreakdownValues => {
   const state = perpsStore.getState();
   const perpsValue =
     Number(state.currentClearinghouseState?.marginSummary?.accountValue) || 0;
 
   if (mode === 'manual') {
+    const stakingValue =
+      Number(
+        computeStakingValue(
+          getStakedHypeAmount(state.stakingSummary),
+          state.spotAssetCtxs,
+          state.spotMeta,
+        ).value,
+      ) || 0;
     return {
       perpsValue,
       secondaryValue:
@@ -45,19 +68,26 @@ export const computePortfolioBreakdownValues = (
             state.spotMeta,
           ).value,
         ) || 0,
+      stakingValue: stakingValue > 0 ? stakingValue : null,
     };
   }
 
-  return { perpsValue, secondaryValue: portfolioValue - perpsValue };
+  return {
+    perpsValue,
+    secondaryValue: portfolioValue - perpsValue,
+    stakingValue: null,
+  };
 };
 
 export const usePerpsPortfolioBreakdown = () => {
-  // Icon visibility only needs "does any spot asset exist" — a boolean that
+  // Icon visibility only needs "does any spot or staking asset exist" — a boolean that
   // flips on balance changes, not on price ticks — plus the account mode.
   const { hasNonPerpsAssets, userAbstraction } = useActivityStore(
     perpsStore,
     useShallow(s => ({
-      hasNonPerpsAssets: s.spotState.rawBalances.some(b => Number(b.total) > 0),
+      hasNonPerpsAssets:
+        s.spotState.rawBalances.some(b => Number(b.total) > 0) ||
+        Number(getStakedHypeAmount(s.stakingSummary)) > 0,
       userAbstraction: s.userAbstraction,
     })),
     Object.is,

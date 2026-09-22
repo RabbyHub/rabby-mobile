@@ -4,7 +4,12 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text, TextInput } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import { BOTTOM_BUTTON_COMPACT_HEIGHT } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_BOTTOM_OFFSET,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -20,19 +25,22 @@ import { useTranslation } from 'react-i18next';
 
 import { PerpsProSlider } from '../common/PerpsProSlider';
 import {
-  getPerpsProBottomSheetChromeStyles,
-  PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
-  PERPS_PRO_CONFIRM_BUTTON_STYLE,
-  resolvePerpsProFieldBackground,
-} from '../common/perpsProVisual';
+  getPerpsProDialogStyles,
+  resolvePerpsProDialogCardBackground,
+} from '../common/perpsProDialogVisual';
+import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
+import RcLeverageMinus from '@/assets2024/icons/perps/PerpsProLeverageMinus.svg';
+import RcLeveragePlus from '@/assets2024/icons/perps/PerpsProLeveragePlus.svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 import { usePerpsProSliderHaptics } from '../common/usePerpsProSliderHaptics';
 import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
 import { PerpsProKeyboardSheetContext } from '../common/PerpsProKeyboardSheetContext';
 import { usePerpsProSheetKeyboard } from '../common/usePerpsProSheetKeyboard';
 import { PerpsProSheetKeyboardAnimation } from '../common/PerpsProSheetKeyboardAnimation';
+import { PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE } from '../common/perpsProSingleLineInput';
 
-const SHEET_HEIGHT = 296;
+const SHEET_HEIGHT = 362;
 const SheetContent = IS_ANDROID ? BottomSheetScrollView : BottomSheetView;
 
 const PerpsProLeverageBottomSheetTextInput = React.forwardRef<
@@ -65,16 +73,15 @@ export const PerpsProLeverageSheet: React.FC<{
     const keyboard = usePerpsProSheetKeyboard({ visible, scrollViewRef });
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
+    const { bottom } = useSafeAreaInsets();
+    const safeBottomExtra =
+      getBottomButtonBottomOffset(bottom) - BOTTOM_BUTTON_BOTTOM_OFFSET;
     const safeMax = Math.max(1, Math.floor(maxLeverage));
     const safeCurrent = Math.min(
       safeMax,
       Math.max(1, Math.round(currentLeverage)),
     );
     const [draft, setDraft] = useState(String(safeCurrent));
-    const valueInputWidth = Math.max(
-      28,
-      Math.max(draft.length, String(safeMax).length) * 9 + 8,
-    );
     usePerpsProSheetNavigationRegistration({
       active: visible,
       dismiss: onClose,
@@ -154,13 +161,14 @@ export const PerpsProLeverageSheet: React.FC<{
         ref={modalRef}
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: 'bg1',
+          linearGradientType: 'bg0',
         })}
+        backdropComponent={PerpsProDialogBackdrop}
         backgroundStyle={styles.background}
         handleIndicatorStyle={styles.handleIndicator}
         handleStyle={styles.handle}
         onDismiss={onClose}
-        snapPoints={[SHEET_HEIGHT + keyboard.accessoryInset]}
+        snapPoints={[SHEET_HEIGHT + safeBottomExtra + keyboard.accessoryInset]}
         style={styles.modal}>
         <PerpsProKeyboardSheetContext.Provider value={keyboard.sheetId}>
           {IS_ANDROID && visible ? (
@@ -199,32 +207,52 @@ export const PerpsProLeverageSheet: React.FC<{
                   onPress={decrement}
                   style={styles.stepButton}
                   testID="perps-pro-leverage-decrement">
-                  <View style={styles.minus} />
+                  <RcLeverageMinus
+                    color={colors2024['neutral-title-1']}
+                    width={16}
+                    height={16}
+                  />
                 </Pressable>
                 <Pressable
                   accessible={false}
                   onPress={() => inputRef.current?.focus()}
                   style={styles.valueEditor}>
-                  <PerpsProDecimalTextInput
-                    accessibilityLabel={t(
-                      'page.perps.pro.positions.adjustLeverage',
-                    )}
-                    cursorColor={colors2024['brand-default']}
-                    editable={!pending}
-                    focusCursorAtEnd
-                    focusCursorAtEndMode="initialFocus"
-                    inputComponent={PerpsProLeverageBottomSheetTextInput}
-                    inputMode="numeric"
-                    keyboardType="number-pad"
-                    maxDecimals={0}
-                    normalizeValue={normalizeLeverageInput}
-                    onChangeText={setDraft}
-                    ref={inputRef}
-                    selectionColor={colors2024['brand-default']}
-                    style={[styles.valueInput, { width: valueInputWidth }]}
-                    testID="perps-pro-leverage-input"
-                    value={draft}
-                  />
+                  <View
+                    style={styles.valueInputViewport}
+                    testID="perps-pro-leverage-input-viewport">
+                    <Text
+                      accessible={false}
+                      accessibilityElementsHidden
+                      importantForAccessibility="no-hide-descendants"
+                      pointerEvents="none"
+                      style={[styles.valueInput, styles.valueInputMeasure]}
+                      testID="perps-pro-leverage-input-measure">
+                      {draft || '0'}
+                    </Text>
+                    <PerpsProDecimalTextInput
+                      accessibilityLabel={t(
+                        'page.perps.pro.positions.adjustLeverage',
+                      )}
+                      editable={!pending}
+                      focusCursorAtEnd
+                      focusCursorAtEndMode="initialFocus"
+                      inputComponent={PerpsProLeverageBottomSheetTextInput}
+                      inputMode="numeric"
+                      keyboardType="number-pad"
+                      maxDecimals={0}
+                      normalizeValue={normalizeLeverageInput}
+                      onChangeText={setDraft}
+                      ref={inputRef}
+                      style={[
+                        styles.valueInput,
+                        styles.valueInputOverlay,
+                        // Clear lineHeight after the style factory's JSON copy.
+                        PERPS_PRO_ANDROID_SINGLE_LINE_INPUT_STYLE,
+                      ]}
+                      testID="perps-pro-leverage-input"
+                      value={draft}
+                    />
+                  </View>
                   <Text pointerEvents="none" style={styles.valueSuffix}>
                     x
                   </Text>
@@ -235,8 +263,11 @@ export const PerpsProLeverageSheet: React.FC<{
                   onPress={increment}
                   style={styles.stepButton}
                   testID="perps-pro-leverage-increment">
-                  <View style={styles.plusHorizontal} />
-                  <View style={styles.plusVertical} />
+                  <RcLeveragePlus
+                    color={colors2024['neutral-title-1']}
+                    width={16}
+                    height={16}
+                  />
                 </Pressable>
               </View>
               <View
@@ -244,6 +275,7 @@ export const PerpsProLeverageSheet: React.FC<{
                 style={styles.sliderSection}
                 testID="perps-pro-leverage-slider-section">
                 <PerpsProSlider
+                  appearance="leverage-dialog"
                   disabled={pending}
                   dimWhenDisabled={false}
                   maximumValue={safeMax}
@@ -264,13 +296,18 @@ export const PerpsProLeverageSheet: React.FC<{
               </View>
               <View style={styles.footer} testID="perps-pro-leverage-footer">
                 <Button
-                  buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
+                  buttonStyle={[
+                    styles.button,
+                    (pending || !isDraftValid) && styles.buttonDisabled,
+                  ]}
                   disabled={pending || !isDraftValid}
-                  height={BOTTOM_BUTTON_COMPACT_HEIGHT}
+                  height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                   loading={pending}
+                  loadingProps={{ color: styles.buttonDisabledTitle.color }}
                   onPress={confirm}
                   title={t('global.confirm')}
-                  titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
+                  titleStyle={styles.buttonTitle}
+                  disabledTitleStyle={styles.buttonDisabledTitle}
                   testID="perps-pro-leverage-confirm"
                   type="primary"
                 />
@@ -287,75 +324,51 @@ PerpsProLeverageSheet.displayName = 'PerpsProLeverageSheet';
 
 const getStyle = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
-    ...getPerpsProBottomSheetChromeStyles(colors2024),
-    sheetView: {
-      height: '100%',
-    },
+    ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
+    sheetView: { height: '100%' },
     scrollContent: { flexGrow: 1 },
     container: {
       ...(IS_ANDROID
-        ? { minHeight: SHEET_HEIGHT - 40, flexGrow: 1 }
+        ? {
+            minHeight:
+              SHEET_HEIGHT -
+              40 +
+              getBottomButtonBottomOffset(safeAreaInsets.bottom) -
+              BOTTOM_BUTTON_BOTTOM_OFFSET,
+            flexGrow: 1,
+          }
         : { height: '100%' }),
       paddingHorizontal: 15,
       paddingTop: 8,
     },
-    titleGroup: {
-      gap: 8,
-    },
-    title: {
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      fontWeight: '700',
-      lineHeight: 20,
-    },
+    titleGroup: { gap: 8, alignItems: 'center' },
     maximum: {
       ...PERPS_PRO_NUMBER_STYLE,
-      color: colors2024['neutral-body'],
+      color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      fontWeight: '500',
-      lineHeight: 16,
+      fontSize: 16,
+      fontWeight: '400',
+      lineHeight: 20,
     },
     inputRow: {
+      alignSelf: 'center',
       alignItems: 'center',
-      backgroundColor: resolvePerpsProFieldBackground({
-        darkBackground: colors2024['neutral-bg-5'],
-        isLight,
-      }),
-      borderRadius: 6,
+      backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
+      borderRadius: 12,
       flexDirection: 'row',
-      height: 40,
+      height: 54,
+      width: 202,
       justifyContent: 'space-between',
-      marginTop: 16,
+      marginTop: 24,
       paddingHorizontal: 8,
     },
     stepButton: {
       alignItems: 'center',
-      height: 24,
+      backgroundColor: colors2024['neutral-bg-5'],
+      borderRadius: 6,
+      height: 32,
+      width: 32,
       justifyContent: 'center',
-      position: 'relative',
-      width: 20,
-    },
-    minus: {
-      backgroundColor: colors2024['neutral-info'],
-      borderRadius: 1,
-      height: 1.5,
-      width: 10,
-    },
-    plusHorizontal: {
-      backgroundColor: colors2024['neutral-info'],
-      borderRadius: 1,
-      height: 1.5,
-      position: 'absolute',
-      width: 10,
-    },
-    plusVertical: {
-      backgroundColor: colors2024['neutral-info'],
-      borderRadius: 1,
-      height: 10,
-      position: 'absolute',
-      width: 1.5,
     },
     valueEditor: {
       alignItems: 'center',
@@ -367,27 +380,55 @@ const getStyle = createGetStyles2024(
       ...PERPS_PRO_NUMBER_STYLE,
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      fontWeight: '500',
-      height: 24,
-      lineHeight: 18,
+      fontSize: 36,
+      fontWeight: '700',
+      height: 42,
+      lineHeight: 42,
       margin: 0,
       padding: 0,
       textAlign: 'right',
     },
+    // Use the same font and draft to size the input, including tabular digits.
+    // The overlay keeps native input/cursor ownership and adds no measuring state.
+    valueInputMeasure: { opacity: 0 },
+    // Clip the cursor to the font size without shortening native text layout.
+    // Compensated side padding preserves digit width and leaves cursor room.
+    valueInputViewport: IS_ANDROID
+      ? {
+          height: 36,
+          marginHorizontal: -4,
+          overflow: 'hidden',
+          paddingHorizontal: 4,
+        }
+      : {},
+    valueInputOverlay: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      top: 0,
+      // Keep the natural line fully visible to Android's selection scrolling.
+      // Its center matches the 36-high clipping window and the unchanged x.
+      ...(IS_ANDROID
+        ? {
+            height: 54,
+            left: 4,
+            right: 4,
+            top: -9,
+          }
+        : {}),
+    },
     valueSuffix: {
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      fontWeight: '500',
-      lineHeight: 18,
+      fontSize: 36,
+      fontWeight: '700',
+      lineHeight: 42,
     },
-    sliderSection: {
-      marginTop: 8,
-    },
+    sliderSection: { marginTop: 24 },
     footer: {
-      marginTop: 32,
-      paddingBottom: Math.max(40, safeAreaInsets.bottom),
+      paddingHorizontal: 5,
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET * 2,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     },
   }),
 );

@@ -1,27 +1,29 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { ThemeColors2024 } from '@/constant/theme';
+import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
 
 const mockOpenFieldExplanation = jest.fn();
+let mockThemeMode: 'light' | 'dark' | undefined;
 
 jest.mock(
   '@/assets2024/icons/perps/PerpsProPrecisionCaret.svg',
   () => require('react-native').View,
 );
-jest.mock(
-  '@/assets2024/icons/common/checkbox-empty-cc.svg',
-  () => require('react-native').View,
-);
-jest.mock(
-  '@/assets2024/icons/common/checkbox-filled-brand.svg',
-  () => require('react-native').View,
-);
+jest.mock('@/assets2024/icons/perps/PerpsProInfoCheckboxChecked.svg', () => {
+  const ReactModule = require('react');
+  return (props: object) =>
+    ReactModule.createElement(require('react-native').View, props);
+});
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
-    const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
+    const colors2024 = mockThemeMode
+      ? require('@/constant/theme').ThemeColors2024[mockThemeMode]
+      : new Proxy({}, { get: (_target, key) => String(key) });
     return { colors2024, styles: getStyle({ colors2024 }) };
   },
 }));
@@ -70,7 +72,56 @@ import {
 describe('PerpsProTradePrimitives explanations', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockThemeMode = undefined;
   });
+
+  it.each(['light', 'dark'] as const)(
+    'uses the Position checkbox geometry and paints for both %s trade options',
+    mode => {
+      mockThemeMode = mode;
+      for (const label of ['TP/SL', 'Reduce Only']) {
+        const onPress = jest.fn();
+        const view = render(
+          <PerpsProTradeCheckbox label={label} onPress={onPress} />,
+        );
+        const empty = screen.getByTestId('perps-pro-trade-checkbox-icon');
+        expect(StyleSheet.flatten(empty.props.style)).toMatchObject({
+          width: 16,
+          height: 16,
+          borderRadius: 4,
+          borderWidth: 1.25,
+          borderColor: PERPS_PRO_DIALOG_TOKENS.checkboxBorder,
+        });
+        expect(
+          screen
+            .getByRole('checkbox')
+            .findAllByType(View)
+            .map(node => StyleSheet.flatten(node.props.style)),
+        ).toContainEqual(expect.objectContaining({ width: 20, height: 20 }));
+        fireEvent.press(screen.getByRole('checkbox'));
+        expect(onPress).toHaveBeenCalledTimes(1);
+        view.rerender(
+          <PerpsProTradeCheckbox
+            checked
+            disabled
+            label={label}
+            onPress={onPress}
+          />,
+        );
+        expect(
+          screen.getByTestId('perps-pro-trade-checkbox-icon').props,
+        ).toMatchObject({
+          width: 20,
+          height: 20,
+          color: PERPS_PRO_DIALOG_TOKENS.actionBackground,
+          fill2: ThemeColors2024[mode]['neutral-InvertHighlight'],
+        });
+        fireEvent.press(screen.getByRole('checkbox'));
+        expect(onPress).toHaveBeenCalledTimes(1);
+        view.unmount();
+      }
+    },
+  );
 
   it('keeps checkbox state changes separate from TP/SL explanation presses', () => {
     const onPress = jest.fn();

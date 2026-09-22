@@ -1,33 +1,42 @@
+import {
+  getPerpsProDialogStyles,
+  resolvePerpsProDialogCardBackground,
+  getPerpsProDialogCheckboxStyles,
+} from '../common/perpsProDialogVisual';
+import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
-import RcCheckboxEmptyCC from '@/assets2024/icons/common/checkbox-empty-cc.svg';
-import RcCheckboxFilledBrand from '@/assets2024/icons/common/checkbox-filled-brand.svg';
+import { PerpsProCheckboxIcon } from '../common/PerpsProCheckboxIcon';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import { BOTTOM_BUTTON_COMPACT_HEIGHT } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_BOTTOM_OFFSET,
+} from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useRegisterBlockingModal } from '@/utils/modalGate';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
-import React, { useEffect, useRef } from 'react';
+import {
+  BottomSheetView,
+  type BottomSheetBackdropProps,
+} from '@gorhom/bottom-sheet';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { getOpenOrderEditDisplayAmount } from '../../model/openOrderEdit';
-import {
-  getPerpsProBottomSheetChromeStyles,
-  PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE,
-  PERPS_PRO_CONFIRM_BUTTON_STYLE,
-} from '../common/perpsProVisual';
 import type {
   PerpsProOpenOrderEditEditorState,
   PerpsProOpenOrderEditReviewState,
 } from '../../scene/usePerpsProOpenOrderEdit';
 import { formatPerpsProDecimal, formatPerpsProPrice } from '../../utils/format';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
-import { PerpsProOpenOrderEditHeader } from './PerpsProOpenOrderEditHeader';
+import {
+  PerpsProOpenOrderEditHeader,
+  PerpsProOpenOrderEditDirection,
+} from './PerpsProOpenOrderEditHeader';
 
 const MODAL_ID = 'perps-pro-open-order-edit-confirmation';
 
@@ -52,6 +61,15 @@ export const PerpsProOpenOrderEditConfirmationSheet: React.FC<{
     const modalRef = useRef<AppBottomSheetModal>(null);
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
+    const renderBackdrop = useCallback(
+      (props: BottomSheetBackdropProps) => (
+        <PerpsProDialogBackdrop
+          {...props}
+          pressBehavior={pending ? 'none' : 'close'}
+        />
+      ),
+      [pending],
+    );
     usePerpsProSheetNavigationRegistration({
       active: !!review,
       dismiss: onClose,
@@ -67,7 +85,10 @@ export const PerpsProOpenOrderEditConfirmationSheet: React.FC<{
     if (!review || review.category !== editor.category) return null;
     const basic = review.category === 'basic';
     const triggerLimit = !basic && editor.order.editKind === 'triggerLimit';
-    const sheetHeight = basic ? 302 : 326;
+    const sheetHeight =
+      (basic ? 336 : 362) +
+      styles.content.paddingBottom -
+      BOTTOM_BUTTON_BOTTOM_OFFSET;
     const baseSize = basic
       ? review.command.replacement.baseSize
       : review.command.replacement.baseSize;
@@ -91,9 +112,9 @@ export const PerpsProOpenOrderEditConfirmationSheet: React.FC<{
         ref={modalRef}
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: 'bg1',
+          linearGradientType: 'bg0',
         })}
-        backdropProps={{ pressBehavior: pending ? 'none' : 'close' }}
+        backdropComponent={renderBackdrop}
         backgroundStyle={styles.background}
         enableDynamicSizing={false}
         enablePanDownToClose={!pending}
@@ -108,9 +129,14 @@ export const PerpsProOpenOrderEditConfirmationSheet: React.FC<{
             testID="perps-pro-open-order-edit-confirmation-content">
             <PerpsProOpenOrderEditHeader
               market={editor.market}
-              order={editor.order}
+              leverageConfiguration={
+                editor.category === 'basic'
+                  ? editor.leverageConfiguration
+                  : null
+              }
             />
             <View style={styles.details}>
+              <PerpsProOpenOrderEditDirection order={editor.order} />
               {basic ? (
                 <>
                   <DetailRow
@@ -172,15 +198,10 @@ export const PerpsProOpenOrderEditConfirmationSheet: React.FC<{
               onPress={onToggleSkipConfirmation}
               style={styles.checkboxRow}
               testID="perps-pro-open-order-edit-skip-confirmation">
-              {skipConfirmation ? (
-                <RcCheckboxFilledBrand height={20} width={20} />
-              ) : (
-                <RcCheckboxEmptyCC
-                  color={colors2024['neutral-secondary']}
-                  height={20}
-                  width={20}
-                />
-              )}
+              <PerpsProCheckboxIcon
+                checked={skipConfirmation}
+                checkColor={colors2024['neutral-InvertHighlight']}
+              />
               <Text style={styles.checkboxText}>
                 {t('page.perps.pro.openOrders.dontShowAgain')}
               </Text>
@@ -192,14 +213,16 @@ export const PerpsProOpenOrderEditConfirmationSheet: React.FC<{
               ]}
               testID="perps-pro-open-order-edit-confirmation-footer">
               <Button
-                buttonStyle={PERPS_PRO_CONFIRM_BUTTON_STYLE}
+                buttonStyle={[styles.button, pending && styles.buttonDisabled]}
+                disabledTitleStyle={styles.buttonDisabledTitle}
                 disabled={pending}
-                height={BOTTOM_BUTTON_COMPACT_HEIGHT}
+                height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                 loading={pending}
+                loadingProps={{ color: styles.buttonDisabledTitle.color }}
                 onPress={onConfirm}
                 testID="perps-pro-open-order-edit-final-confirm"
                 title={t('global.confirm')}
-                titleStyle={PERPS_PRO_COMPACT_BUTTON_TITLE_STYLE}
+                titleStyle={styles.buttonTitle}
                 type="primary"
               />
             </View>
@@ -228,65 +251,54 @@ const DetailRow: React.FC<{ label: string; value: string }> = ({
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  ...getPerpsProBottomSheetChromeStyles(colors2024),
-  container: {
-    paddingHorizontal: 15,
-    paddingTop: 8,
-    position: 'relative',
-  },
-  details: {
-    borderBottomColor: colors2024['neutral-bg-5'],
-    borderBottomWidth: 1,
-    gap: 8,
-    marginTop: 16,
-    paddingBottom: 12,
-  },
-  detailRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  detailLabel: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  detailValue: {
-    ...PERPS_PRO_NUMBER_STYLE,
-    color: colors2024['neutral-title-1'],
-    flexShrink: 1,
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
-    marginLeft: 16,
-    textAlign: 'right',
-  },
-  checkboxRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 4,
-    marginTop: 16,
-    minHeight: 20,
-  },
-  checkboxText: {
-    color: colors2024['neutral-body'],
-    flex: 1,
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  footer: {
-    left: 15,
-    position: 'absolute',
-    right: 15,
-  },
-  basicFooter: {
-    top: 186,
-  },
-  conditionalFooter: {
-    top: 210,
-  },
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    ...getPerpsProDialogStyles(colors2024, safeAreaInsets.bottom, isLight),
+    container: {
+      paddingHorizontal: 16,
+      paddingTop: 8,
+      position: 'relative',
+    },
+    details: {
+      backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
+      borderRadius: 12,
+      padding: 16,
+      gap: 10,
+      marginTop: 24,
+    },
+    detailRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    detailLabel: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      lineHeight: 16,
+    },
+    detailValue: {
+      ...PERPS_PRO_NUMBER_STYLE,
+      color: colors2024['neutral-title-1'],
+      flexShrink: 1,
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      fontWeight: '500',
+      lineHeight: 16,
+      marginLeft: 16,
+      textAlign: 'right',
+    },
+    ...getPerpsProDialogCheckboxStyles(colors2024),
+    footer: {
+      left: 20,
+      position: 'absolute',
+      right: 20,
+    },
+    basicFooter: {
+      top: 208,
+    },
+    conditionalFooter: {
+      top: 234,
+    },
+  }),
+);

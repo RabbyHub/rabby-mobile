@@ -764,6 +764,16 @@
         "desc": "Une faible valeur de crédit signale souvent un risque élevé, tel qu'un token honeypot ou une très faible liquidité."
       },
       "rabbyFee": {
+        "discountTitle": "Réduction des frais Rabby",
+        "case": "Condition",
+        "free": "Gratuit",
+        "cases": {
+          "wrap": "Wrap/Unwrap du token natif",
+          "stablecoins": "Stablecoins",
+          "lstLrt": "Token LST/LRT",
+          "million": "Vol. $1M+",
+          "hundredThousand": "Vol. $100k - $1M"
+        },
         "wallet": "Portefeuille",
         "title": "Frais Rabby",
         "button": "Compris",
@@ -2042,7 +2052,7 @@
         },
         "marketSelector": {
           "title": "Sélectionner un marché",
-          "search": "Rechercher",
+          "search": "Rechercher un token",
           "favorites": "Favoris",
           "all": "Tous",
           "name": "Nom",
@@ -2055,6 +2065,7 @@
         },
         "funding": {
           "title": "Taux de financement",
+          "gotIt": "J'ai compris",
           "summary": "Financement (1 h) / Compte à rebours",
           "openDetails": "Voir les détails du financement",
           "interval": "Intervalle",
@@ -2072,6 +2083,7 @@
           "explanation": "Le taux de financement sert à calculer les paiements périodiques entre les détenteurs de positions longues et courtes. Lorsqu’il est positif, les longs paient les shorts ; lorsqu’il est négatif, les shorts paient les longs. Le taux annualisé est calculé par annualisation simple."
         },
         "orderBook": {
+          "grouping": "Regroupement du carnet d’ordres",
           "price": "Prix",
           "pnl": "PnL",
           "roi": "ROI %",
@@ -2088,6 +2100,7 @@
           "market": "Marché",
           "conditional": "Conditionnel",
           "orderType": "Type d’ordre",
+          "direction": "Direction",
           "marginMode": "Mode de marge",
           "crossDescription": "Toutes les positions croisées utilisent la même marge croisée comme garantie. En cas de liquidation, votre solde de marge et les positions croisées ouvertes restantes dans ce mode peuvent être perdus.",
           "isolatedDescription": "Gérez le risque de chaque position en lui attribuant un montant de marge. Si le ratio de marge d’une position isolée atteint 100 %, la position est liquidée. Dans ce mode, vous pouvez ajouter ou retirer de la marge sur chaque position.",
@@ -2101,6 +2114,7 @@
           "liquidationPrice": "Prix de liquidation",
           "triggerPrice": "Prix de déclenchement",
           "amount": "Quantité",
+          "keyboardMinimum": "Min. {{amount}}",
           "available": "Disponible",
           "reduceOnly": "Réduction uniquement",
           "confirmationReduceOnly": "Réduction uniquement",
@@ -2501,7 +2515,8 @@
         "breakdownPerps": "Perps",
         "breakdownSpot": "Spot",
         "breakdownOtherAssets": "Autres actifs",
-        "breakdownNetOtherAssets": "Autres actifs nets"
+        "breakdownNetOtherAssets": "Autres actifs nets",
+        "breakdownStaking": "Staking"
       },
       "PerpsGuidePopup": {
         "step5Title": "Liquidation",

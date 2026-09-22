@@ -94,6 +94,8 @@ export const useShowPerpsTradeFeeExplanation = ({
           />
         ),
         buttonType: 'hyperliquid',
+        buttonTitle: t('page.perps.pro.funding.gotIt'),
+        retainContentOnClose: true,
         owner,
       });
     },

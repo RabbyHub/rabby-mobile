@@ -639,6 +639,16 @@
       "gas-fee-too-high": "가스 요금이 너무 높음",
       "need-to-approve-token-before-swap": "교환하기 전에 토큰을 승인해야 합니다.",
       "rabbyFee": {
+        "discountTitle": "Rabby 수수료 할인",
+        "case": "조건",
+        "free": "무료",
+        "cases": {
+          "wrap": "네이티브 토큰 랩핑/언랩",
+          "stablecoins": "스테이블코인",
+          "lstLrt": "LST/LRT 토큰",
+          "million": "거래량 $1M+",
+          "hundredThousand": "거래량 $100k - $1M"
+        },
         "rate": "수수료율",
         "wallet": "지갑",
         "button": "이해했습니다",
@@ -2033,7 +2043,7 @@
         },
         "marketSelector": {
           "title": "마켓 선택",
-          "search": "검색",
+          "search": "토큰 검색",
           "favorites": "즐겨찾기",
           "all": "전체",
           "name": "이름",
@@ -2046,6 +2056,7 @@
         },
         "funding": {
           "title": "펀딩 비율",
+          "gotIt": "알겠습니다",
           "summary": "펀딩(1시간) / 카운트다운",
           "openDetails": "펀딩 상세 보기",
           "interval": "간격",
@@ -2063,6 +2074,7 @@
           "explanation": "펀딩 비율은 롱 포지션 보유자와 숏 포지션 보유자 간의 정기 지급액을 계산하는 데 사용됩니다. 펀딩 비율이 양수이면 롱이 숏에 지급하고, 음수이면 숏이 롱에 지급합니다. 연환산 비율은 단리 방식으로 계산됩니다."
         },
         "orderBook": {
+          "grouping": "호가창 가격 단위",
           "price": "가격",
           "pnl": "PnL",
           "roi": "ROI%",
@@ -2079,6 +2091,7 @@
           "market": "시장가",
           "conditional": "조건부",
           "orderType": "주문 유형",
+          "direction": "방향",
           "marginMode": "마진 모드",
           "crossDescription": "모든 교차 포지션은 동일한 교차 마진을 담보로 공유합니다. 청산이 발생하면 이 모드의 마진 잔액과 남아 있는 교차 미결제 포지션을 잃을 수 있습니다.",
           "isolatedDescription": "각 포지션에 할당할 마진을 지정하여 개별 포지션의 위험을 관리합니다. 격리 포지션의 마진 비율이 100%에 도달하면 해당 포지션이 청산됩니다. 이 모드에서는 개별 포지션에 마진을 추가하거나 제거할 수 있습니다.",
@@ -2092,6 +2105,7 @@
           "liquidationPrice": "청산 가격",
           "triggerPrice": "트리거 가격",
           "amount": "수량",
+          "keyboardMinimum": "최소 {{amount}}",
           "available": "사용 가능",
           "reduceOnly": "감소 전용",
           "confirmationReduceOnly": "감소 전용",
@@ -2492,7 +2506,8 @@
         "breakdownPerps": "무기한 선물",
         "breakdownSpot": "현물",
         "breakdownOtherAssets": "기타 자산",
-        "breakdownNetOtherAssets": "기타 자산 순액"
+        "breakdownNetOtherAssets": "기타 자산 순액",
+        "breakdownStaking": "스테이킹"
       },
       "PerpsGuidePopup": {
         "step1Title": "무기한 선물 이해하기",

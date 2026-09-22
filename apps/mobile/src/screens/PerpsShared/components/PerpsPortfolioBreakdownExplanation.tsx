@@ -56,7 +56,8 @@ export const useShowPerpsPortfolioBreakdown = () => {
   }, [isFocused, hideTipsPopup]);
 
   const showPortfolioBreakdown = useMemoizedFn((portfolioValue: number) => {
-    const { perpsValue, secondaryValue } = getBreakdownValues(portfolioValue);
+    const { perpsValue, secondaryValue, stakingValue } =
+      getBreakdownValues(portfolioValue);
     const titleKey = {
       manual: 'page.perps.PerpsCard.manualAccount',
       unified: 'page.perps.PerpsCard.unifiedAccount',
@@ -72,6 +73,19 @@ export const useShowPerpsPortfolioBreakdown = () => {
       unified: 'page.perps.PerpsCard.breakdownOtherAssets',
       portfolioMargin: 'page.perps.PerpsCard.breakdownNetOtherAssets',
     }[breakdownMode];
+    const rows = [
+      {
+        label: t('page.perps.PerpsCard.breakdownPerps'),
+        value: perpsValue,
+      },
+      { label: t(secondaryLabelKey), value: secondaryValue },
+    ];
+    if (stakingValue != null && stakingValue > 0) {
+      rows.push({
+        label: t('page.perps.PerpsCard.breakdownStaking'),
+        value: stakingValue,
+      });
+    }
 
     showTipsPopup({
       title: t(titleKey),
@@ -79,16 +93,12 @@ export const useShowPerpsPortfolioBreakdown = () => {
       desc: (
         <PerpsPortfolioBreakdownExplanationContent
           desc={t(descKey)}
-          rows={[
-            {
-              label: t('page.perps.PerpsCard.breakdownPerps'),
-              value: perpsValue,
-            },
-            { label: t(secondaryLabelKey), value: secondaryValue },
-          ]}
+          rows={rows}
         />
       ),
       buttonType: 'hyperliquid',
+      buttonTitle: t('page.perps.pro.funding.gotIt'),
+      retainContentOnClose: true,
       enablePanDownToClose: true,
       owner: PERPS_PORTFOLIO_BREAKDOWN_TIPS_OWNER,
     });

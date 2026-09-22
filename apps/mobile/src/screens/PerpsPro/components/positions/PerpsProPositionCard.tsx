@@ -1,5 +1,5 @@
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
-import RcIconEdit from '@/assets2024/icons/perps/IconPerpEdit.svg';
+import RcIconEdit from '@/assets2024/icons/perps/PerpsProEdit.svg';
 import RcManageMargin from '@/assets2024/icons/perps/PerpsProAvailableAdd.svg';
 import RcIconSwitchUnit from '@/assets2024/icons/perps/PerpsProPositionUnitSwitch.svg';
 import { Text } from '@/components/Typography';
@@ -386,297 +386,307 @@ export const PerpsProPositionCard: React.FC<{
           </View>
         </View>
 
-        <View style={styles.pnlRow}>
-          <View style={styles.pairedMetric}>
-            <PerpsProDottedUnderlineText
-              accessibilityLabel={t('page.perps.pro.positions.pnl')}
-              onPress={() => openFieldExplanation('pnl')}
-              style={styles.label}>
-              {withOptionalUnit(
-                t('page.perps.pro.positions.pnl'),
-                market.quoteAsset,
-              )}
-            </PerpsProDottedUnderlineText>
-            <Text style={pnlStyle}>{displayPnl}</Text>
+        <View style={styles.metrics}>
+          <View style={styles.pnlRow}>
+            <View style={styles.pairedMetric}>
+              <PerpsProDottedUnderlineText
+                accessibilityLabel={t('page.perps.pro.positions.pnl')}
+                onPress={() => openFieldExplanation('pnl')}
+                style={styles.label}>
+                {withOptionalUnit(
+                  t('page.perps.pro.positions.pnl'),
+                  market.quoteAsset,
+                )}
+              </PerpsProDottedUnderlineText>
+              <Text style={pnlStyle}>{displayPnl}</Text>
+            </View>
+            <View style={styles.pairedMetricRight}>
+              <PerpsProDottedUnderlineText
+                accessibilityLabel={t('page.perps.pro.positions.roi')}
+                containerStyle={styles.rightDottedLabel}
+                onPress={() => openFieldExplanation('roi')}
+                style={styles.label}>
+                {t('page.perps.pro.positions.roi')}
+              </PerpsProDottedUnderlineText>
+              <Text style={roiStyle}>
+                {formatPerpsProPercent(roi, 2, true)}
+              </Text>
+            </View>
           </View>
-          <View style={styles.pairedMetricRight}>
-            <PerpsProDottedUnderlineText
-              accessibilityLabel={t('page.perps.pro.positions.roi')}
-              containerStyle={styles.rightDottedLabel}
-              onPress={() => openFieldExplanation('roi')}
-              style={styles.label}>
-              {t('page.perps.pro.positions.roi')}
-            </PerpsProDottedUnderlineText>
-            <Text style={roiStyle}>{formatPerpsProPercent(roi, 2, true)}</Text>
-          </View>
-        </View>
 
-        <View
-          onLayout={metricLayout.position.onRowLayout}
-          style={styles.threeColumns}
-          testID={`perps-pro-position-metrics-${position.key}`}>
           <View
-            style={[
-              styles.firstColumn,
-              metricLayout.expanded ? styles.expandedMetricColumn : null,
-            ]}>
-            <Pressable
-              accessibilityLabel={t('page.perps.pro.positions.switchSizeUnit')}
-              accessibilityRole="button"
-              accessibilityValue={{ text: sizeAsset || undefined }}
-              hitSlop={SIZE_UNIT_HIT_SLOP}
-              onPress={toggleSizeUnit}
-              style={styles.labelWithIcon}
-              testID={`perps-pro-position-unit-${position.key}`}>
-              <Text style={[styles.label, styles.shrinkableLabel]}>
-                {sizeLabel}
+            onLayout={metricLayout.position.onRowLayout}
+            style={styles.threeColumns}
+            testID={`perps-pro-position-metrics-${position.key}`}>
+            <View
+              style={[
+                styles.firstColumn,
+                metricLayout.expanded ? styles.expandedMetricColumn : null,
+              ]}>
+              <Pressable
+                accessibilityLabel={t(
+                  'page.perps.pro.positions.switchSizeUnit',
+                )}
+                accessibilityRole="button"
+                accessibilityValue={{ text: sizeAsset || undefined }}
+                hitSlop={SIZE_UNIT_HIT_SLOP}
+                onPress={toggleSizeUnit}
+                style={styles.labelWithIcon}
+                testID={`perps-pro-position-unit-${position.key}`}>
+                <Text style={[styles.label, styles.shrinkableLabel]}>
+                  {sizeLabel}
+                </Text>
+                <View pointerEvents="none" style={styles.unitSwitch}>
+                  <RcIconSwitchUnit
+                    color={colors2024['neutral-secondary']}
+                    height={16}
+                    testID={`perps-pro-position-unit-icon-${position.key}`}
+                    width={16}
+                  />
+                </View>
+              </Pressable>
+              <Text style={styles.value}>{displaySize}</Text>
+            </View>
+            <View
+              onLayout={metricLayout.position.onSecondColumnLayout}
+              style={[
+                styles.secondColumn,
+                metricLayout.expanded ? styles.expandedMetricColumn : null,
+              ]}
+              testID={`perps-pro-position-middle-metric-${position.key}`}>
+              <Text
+                onTextLayout={metricLayout.position.onMiddleTextLayout}
+                style={styles.label}>
+                {marginLabel}
               </Text>
-              <View pointerEvents="none" style={styles.unitSwitch}>
-                <RcIconSwitchUnit
-                  color={colors2024['neutral-secondary']}
-                  height={16}
-                  testID={`perps-pro-position-unit-icon-${position.key}`}
-                  width={16}
-                />
+              <View style={styles.marginValueRow}>
+                <Text style={styles.marginValue}>
+                  {formatPerpsProDecimal(position.margin, 2)}
+                </Text>
+                {position.marginMode === 'isolated' && onManageMargin ? (
+                  <Pressable
+                    accessibilityLabel={t(
+                      'page.perps.pro.positions.manageMargin',
+                    )}
+                    accessibilityRole="button"
+                    hitSlop={8}
+                    onPress={() => onManageMargin(position)}
+                    style={styles.marginButton}
+                    testID={`perps-pro-position-manage-margin-${position.key}`}>
+                    <RcManageMargin
+                      color={colors2024['neutral-body']}
+                      height={16}
+                      width={16}
+                    />
+                  </Pressable>
+                ) : null}
               </View>
-            </Pressable>
-            <Text style={styles.value}>{displaySize}</Text>
+            </View>
+            <View
+              style={[
+                styles.thirdColumn,
+                metricLayout.expanded ? styles.expandedMetricColumn : null,
+              ]}>
+              {position.marginMode === 'cross' ? (
+                <>
+                  <PerpsProDottedUnderlineText
+                    accessibilityLabel={marginRatioLabel}
+                    containerStyle={
+                      metricLayout.expanded
+                        ? styles.expandedRightDottedLabel
+                        : styles.rightDottedLabel
+                    }
+                    multiline
+                    onFirstLineLayout={metricLayout.position.onRightLineLayout}
+                    onPress={() => openFieldExplanation('marginRatio')}
+                    style={[
+                      styles.label,
+                      metricLayout.expanded ? styles.expandedRightLabel : null,
+                    ]}>
+                    {marginRatioLabel}
+                  </PerpsProDottedUnderlineText>
+                  <Text style={styles.value}>
+                    {formatPerpsProPercent(
+                      position.marginRatio == null
+                        ? null
+                        : Number(position.marginRatio),
+                      2,
+                      false,
+                    )}
+                  </Text>
+                </>
+              ) : metricLayout.expanded ? (
+                <>
+                  <PerpsProDottedUnderlineText
+                    accessibilityLabel={liquidationDistanceLabel}
+                    containerStyle={styles.expandedRightDottedLabel}
+                    multiline
+                    onPress={() => openFieldExplanation('liquidationDistance')}
+                    style={[styles.label, styles.expandedRightLabel]}>
+                    {liquidationDistanceLabel}
+                  </PerpsProDottedUnderlineText>
+                  <View style={styles.metricValueSpacer} />
+                </>
+              ) : (
+                <View style={styles.metricLabelSpacer} />
+              )}
+            </View>
+            {position.marginMode === 'isolated' ? (
+              <>
+                {metricLayout.expanded ? null : (
+                  <View
+                    pointerEvents="box-none"
+                    style={styles.rightMetricLabelOverlay}
+                    testID={`perps-pro-position-liquidation-distance-label-${position.key}`}>
+                    <PerpsProDottedUnderlineText
+                      accessibilityLabel={liquidationDistanceLabel}
+                      allowNaturalWidth
+                      containerStyle={styles.rightDottedLabel}
+                      onFirstLineLayout={
+                        metricLayout.position.onRightLineLayout
+                      }
+                      onPress={() =>
+                        openFieldExplanation('liquidationDistance')
+                      }
+                      style={styles.label}>
+                      {liquidationDistanceLabel}
+                    </PerpsProDottedUnderlineText>
+                  </View>
+                )}
+                <View
+                  pointerEvents="none"
+                  style={styles.liquidationDistanceValueOverlay}
+                  testID={`perps-pro-position-liquidation-distance-${position.key}`}>
+                  <Text
+                    numberOfLines={1}
+                    style={[styles.value, styles.liquidationDistanceValue]}>
+                    {displayLiquidationDistance}
+                  </Text>
+                </View>
+              </>
+            ) : null}
           </View>
+
           <View
-            onLayout={metricLayout.position.onSecondColumnLayout}
-            style={[
-              styles.secondColumn,
-              metricLayout.expanded ? styles.expandedMetricColumn : null,
-            ]}
-            testID={`perps-pro-position-middle-metric-${position.key}`}>
-            <Text
-              onTextLayout={metricLayout.position.onMiddleTextLayout}
-              style={styles.label}>
-              {marginLabel}
-            </Text>
-            <View style={styles.marginValueRow}>
-              <Text style={styles.marginValue}>
-                {formatPerpsProDecimal(position.margin, 2)}
+            onLayout={metricLayout.price.onRowLayout}
+            style={styles.threeColumns}
+            testID={`perps-pro-position-price-metrics-${position.key}`}>
+            <View
+              style={[
+                styles.firstColumn,
+                metricLayout.expanded ? styles.expandedMetricColumn : null,
+              ]}>
+              <Text style={styles.label}>{entryLabel}</Text>
+              <Text style={styles.value}>
+                {formatPerpsProPrice(position.entryPrice, market.pxDecimals)}
               </Text>
-              {position.marginMode === 'isolated' && onManageMargin ? (
-                <Pressable
-                  accessibilityLabel={t(
-                    'page.perps.pro.positions.manageMargin',
-                  )}
-                  accessibilityRole="button"
-                  hitSlop={8}
-                  onPress={() => onManageMargin(position)}
-                  style={styles.marginButton}
-                  testID={`perps-pro-position-manage-margin-${position.key}`}>
-                  <RcManageMargin
-                    color={colors2024['neutral-body']}
+            </View>
+            <View
+              onLayout={metricLayout.price.onSecondColumnLayout}
+              style={[
+                styles.secondColumn,
+                metricLayout.expanded ? styles.expandedMetricColumn : null,
+              ]}
+              testID={`perps-pro-position-middle-price-${position.key}`}>
+              <Text
+                onTextLayout={metricLayout.price.onMiddleTextLayout}
+                style={styles.label}>
+                {markLabel}
+              </Text>
+              <Text style={styles.value}>
+                {formatPerpsProPrice(market.markPrice, market.pxDecimals)}
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.thirdColumn,
+                metricLayout.expanded ? styles.expandedMetricColumn : null,
+              ]}>
+              {metricLayout.expanded ? (
+                <PerpsProDottedUnderlineText
+                  accessibilityLabel={t('page.perps.pro.positions.liquidation')}
+                  containerStyle={styles.expandedRightDottedLabel}
+                  multiline
+                  onPress={() => openFieldExplanation('liquidationPrice')}
+                  style={[styles.label, styles.expandedRightLabel]}>
+                  {liquidationLabel}
+                </PerpsProDottedUnderlineText>
+              ) : (
+                <View style={styles.metricLabelSpacer} />
+              )}
+              <Text style={styles.value}>{displayLiquidationPrice}</Text>
+            </View>
+            {metricLayout.expanded ? null : (
+              <View
+                pointerEvents="box-none"
+                style={styles.rightMetricLabelOverlay}
+                testID={`perps-pro-position-liquidation-label-${position.key}`}>
+                <PerpsProDottedUnderlineText
+                  accessibilityLabel={t('page.perps.pro.positions.liquidation')}
+                  allowNaturalWidth
+                  containerStyle={styles.rightDottedLabel}
+                  onFirstLineLayout={metricLayout.price.onRightLineLayout}
+                  onPress={() => openFieldExplanation('liquidationPrice')}
+                  style={styles.label}>
+                  {liquidationLabel}
+                </PerpsProDottedUnderlineText>
+              </View>
+            )}
+          </View>
+
+          {tpSlSummary.mode !== 'none' ? (
+            <Pressable
+              accessibilityLabel={t('page.perps.pro.positions.tpsl')}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !onEditTpSl }}
+              disabled={!onEditTpSl}
+              onPress={() => onEditTpSl?.(position, editDefaultTab)}
+              style={styles.tpslRow}
+              testID={`perps-pro-position-tpsl-edit-${position.key}`}>
+              <Text style={styles.tpslTitle}>
+                {tpSlSummary.mode === 'partial'
+                  ? `${t('page.perps.pro.positions.tpsl')}(${
+                      tpSlSummary.partialCount
+                    })`
+                  : t('page.perps.pro.positions.positionTpsl')}
+              </Text>
+              <View
+                style={styles.tpslValues}
+                testID={`perps-pro-position-tpsl-values-${position.key}`}>
+                <Text style={styles.takeProfit}>
+                  {takeProfitOrder
+                    ? formatPerpsProPrice(
+                        takeProfitOrder.triggerPrice,
+                        market.pxDecimals,
+                      )
+                    : '--'}
+                </Text>
+                <Text style={styles.separator}>/</Text>
+                <Text style={styles.stopLoss}>
+                  {stopLossOrder
+                    ? formatPerpsProPrice(
+                        stopLossOrder.triggerPrice,
+                        market.pxDecimals,
+                      )
+                    : '--'}
+                </Text>
+                {tpSlSummary.mode === 'mixed' ? (
+                  <Text style={styles.partialTpSlCount}>
+                    {t('page.perps.pro.positions.tpsl')}(
+                    {tpSlSummary.partialCount})
+                  </Text>
+                ) : null}
+                <View pointerEvents="none" style={styles.editIcon}>
+                  <RcIconEdit
+                    color={colors2024['neutral-secondary']}
                     height={16}
                     width={16}
                   />
-                </Pressable>
-              ) : null}
-            </View>
-          </View>
-          <View
-            style={[
-              styles.thirdColumn,
-              metricLayout.expanded ? styles.expandedMetricColumn : null,
-            ]}>
-            {position.marginMode === 'cross' ? (
-              <>
-                <PerpsProDottedUnderlineText
-                  accessibilityLabel={marginRatioLabel}
-                  containerStyle={
-                    metricLayout.expanded
-                      ? styles.expandedRightDottedLabel
-                      : styles.rightDottedLabel
-                  }
-                  multiline
-                  onFirstLineLayout={metricLayout.position.onRightLineLayout}
-                  onPress={() => openFieldExplanation('marginRatio')}
-                  style={[
-                    styles.label,
-                    metricLayout.expanded ? styles.expandedRightLabel : null,
-                  ]}>
-                  {marginRatioLabel}
-                </PerpsProDottedUnderlineText>
-                <Text style={styles.value}>
-                  {formatPerpsProPercent(
-                    position.marginRatio == null
-                      ? null
-                      : Number(position.marginRatio),
-                    2,
-                    false,
-                  )}
-                </Text>
-              </>
-            ) : metricLayout.expanded ? (
-              <>
-                <PerpsProDottedUnderlineText
-                  accessibilityLabel={liquidationDistanceLabel}
-                  containerStyle={styles.expandedRightDottedLabel}
-                  multiline
-                  onPress={() => openFieldExplanation('liquidationDistance')}
-                  style={[styles.label, styles.expandedRightLabel]}>
-                  {liquidationDistanceLabel}
-                </PerpsProDottedUnderlineText>
-                <View style={styles.metricValueSpacer} />
-              </>
-            ) : (
-              <View style={styles.metricLabelSpacer} />
-            )}
-          </View>
-          {position.marginMode === 'isolated' ? (
-            <>
-              {metricLayout.expanded ? null : (
-                <View
-                  pointerEvents="box-none"
-                  style={styles.rightMetricLabelOverlay}
-                  testID={`perps-pro-position-liquidation-distance-label-${position.key}`}>
-                  <PerpsProDottedUnderlineText
-                    accessibilityLabel={liquidationDistanceLabel}
-                    allowNaturalWidth
-                    containerStyle={styles.rightDottedLabel}
-                    onFirstLineLayout={metricLayout.position.onRightLineLayout}
-                    onPress={() => openFieldExplanation('liquidationDistance')}
-                    style={styles.label}>
-                    {liquidationDistanceLabel}
-                  </PerpsProDottedUnderlineText>
                 </View>
-              )}
-              <View
-                pointerEvents="none"
-                style={styles.liquidationDistanceValueOverlay}
-                testID={`perps-pro-position-liquidation-distance-${position.key}`}>
-                <Text
-                  numberOfLines={1}
-                  style={[styles.value, styles.liquidationDistanceValue]}>
-                  {displayLiquidationDistance}
-                </Text>
               </View>
-            </>
+            </Pressable>
           ) : null}
         </View>
-
-        <View
-          onLayout={metricLayout.price.onRowLayout}
-          style={styles.threeColumns}
-          testID={`perps-pro-position-price-metrics-${position.key}`}>
-          <View
-            style={[
-              styles.firstColumn,
-              metricLayout.expanded ? styles.expandedMetricColumn : null,
-            ]}>
-            <Text style={styles.label}>{entryLabel}</Text>
-            <Text style={styles.value}>
-              {formatPerpsProPrice(position.entryPrice, market.pxDecimals)}
-            </Text>
-          </View>
-          <View
-            onLayout={metricLayout.price.onSecondColumnLayout}
-            style={[
-              styles.secondColumn,
-              metricLayout.expanded ? styles.expandedMetricColumn : null,
-            ]}
-            testID={`perps-pro-position-middle-price-${position.key}`}>
-            <Text
-              onTextLayout={metricLayout.price.onMiddleTextLayout}
-              style={styles.label}>
-              {markLabel}
-            </Text>
-            <Text style={styles.value}>
-              {formatPerpsProPrice(market.markPrice, market.pxDecimals)}
-            </Text>
-          </View>
-          <View
-            style={[
-              styles.thirdColumn,
-              metricLayout.expanded ? styles.expandedMetricColumn : null,
-            ]}>
-            {metricLayout.expanded ? (
-              <PerpsProDottedUnderlineText
-                accessibilityLabel={t('page.perps.pro.positions.liquidation')}
-                containerStyle={styles.expandedRightDottedLabel}
-                multiline
-                onPress={() => openFieldExplanation('liquidationPrice')}
-                style={[styles.label, styles.expandedRightLabel]}>
-                {liquidationLabel}
-              </PerpsProDottedUnderlineText>
-            ) : (
-              <View style={styles.metricLabelSpacer} />
-            )}
-            <Text style={styles.value}>{displayLiquidationPrice}</Text>
-          </View>
-          {metricLayout.expanded ? null : (
-            <View
-              pointerEvents="box-none"
-              style={styles.rightMetricLabelOverlay}
-              testID={`perps-pro-position-liquidation-label-${position.key}`}>
-              <PerpsProDottedUnderlineText
-                accessibilityLabel={t('page.perps.pro.positions.liquidation')}
-                allowNaturalWidth
-                containerStyle={styles.rightDottedLabel}
-                onFirstLineLayout={metricLayout.price.onRightLineLayout}
-                onPress={() => openFieldExplanation('liquidationPrice')}
-                style={styles.label}>
-                {liquidationLabel}
-              </PerpsProDottedUnderlineText>
-            </View>
-          )}
-        </View>
-
-        {tpSlSummary.mode !== 'none' ? (
-          <Pressable
-            accessibilityLabel={t('page.perps.pro.positions.tpsl')}
-            accessibilityRole="button"
-            accessibilityState={{ disabled: !onEditTpSl }}
-            disabled={!onEditTpSl}
-            onPress={() => onEditTpSl?.(position, editDefaultTab)}
-            style={styles.tpslRow}
-            testID={`perps-pro-position-tpsl-edit-${position.key}`}>
-            <Text style={styles.tpslTitle}>
-              {tpSlSummary.mode === 'partial'
-                ? `${t('page.perps.pro.positions.tpsl')}(${
-                    tpSlSummary.partialCount
-                  })`
-                : t('page.perps.pro.positions.positionTpsl')}
-            </Text>
-            <View
-              style={styles.tpslValues}
-              testID={`perps-pro-position-tpsl-values-${position.key}`}>
-              <Text style={styles.takeProfit}>
-                {takeProfitOrder
-                  ? formatPerpsProPrice(
-                      takeProfitOrder.triggerPrice,
-                      market.pxDecimals,
-                    )
-                  : '--'}
-              </Text>
-              <Text style={styles.separator}> / </Text>
-              <Text style={styles.stopLoss}>
-                {stopLossOrder
-                  ? formatPerpsProPrice(
-                      stopLossOrder.triggerPrice,
-                      market.pxDecimals,
-                    )
-                  : '--'}
-              </Text>
-              {tpSlSummary.mode === 'mixed' ? (
-                <Text style={styles.partialTpSlCount}>
-                  {t('page.perps.pro.positions.tpsl')}(
-                  {tpSlSummary.partialCount})
-                </Text>
-              ) : null}
-            </View>
-            <View pointerEvents="none" style={styles.editIcon}>
-              <RcIconEdit
-                color={colors2024['neutral-secondary']}
-                height={16}
-                width={16}
-              />
-            </View>
-          </Pressable>
-        ) : null}
 
         <View style={styles.actions}>
           <PositionAction
@@ -706,11 +716,10 @@ PerpsProPositionCard.displayName = 'PerpsProPositionCard';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   row: {
-    borderBottomColor: colors2024['neutral-bg-5'],
-    borderBottomWidth: 1,
     gap: 12,
-    marginHorizontal: 15,
-    paddingVertical: 8,
+    marginLeft: 16,
+    marginRight: 14,
+    paddingBottom: 20,
   },
   titleRow: {
     alignItems: 'center',
@@ -755,6 +764,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'center',
   },
   sourceText: getPerpsProMetadataTagTextStyle(colors2024),
+  metrics: { gap: 8 },
   pnlRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -780,27 +790,27 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '700',
     lineHeight: 20,
-    marginTop: 2,
+    marginTop: 4,
   },
   positiveValue: {
     ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '700',
     lineHeight: 20,
-    marginTop: 2,
+    marginTop: 4,
   },
   negativeValue: {
     ...PERPS_PRO_NUMBER_STYLE,
     color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '700',
     lineHeight: 20,
-    marginTop: 2,
+    marginTop: 4,
   },
   threeColumns: {
     flexDirection: 'row',
@@ -830,7 +840,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 16,
   },
   metricValueSpacer: {
-    height: 18,
+    height: 20,
   },
   rightMetricLabelOverlay: {
     alignItems: 'flex-end',
@@ -870,7 +880,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
-    marginTop: 2,
+    marginTop: 4,
   },
   marginValueRow: {
     alignItems: 'center',
@@ -906,6 +916,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 0,
   },
   tpslRow: {
+    paddingVertical: 4,
     alignItems: 'center',
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -918,6 +929,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
   },
   tpslValues: {
+    gap: 2,
+    alignItems: 'center',
     flexDirection: 'row',
     flexShrink: 1,
     flexWrap: 'wrap',
@@ -962,7 +975,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   actions: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
   },
   action: {
     alignItems: 'center',
@@ -970,9 +983,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 6,
     flex: 1,
     justifyContent: 'center',
-    minHeight: 26,
-    paddingHorizontal: 4,
-    paddingVertical: 4,
+    minHeight: 34,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
   },
   actionPressed: {
     opacity: 0.8,

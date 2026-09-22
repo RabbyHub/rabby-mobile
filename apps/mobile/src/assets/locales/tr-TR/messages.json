@@ -766,6 +766,16 @@
     },
     "swap": {
       "rabbyFee": {
+        "discountTitle": "Rabby Ücret İndirimi",
+        "case": "Koşul",
+        "free": "Ücretsiz",
+        "cases": {
+          "wrap": "Yerel Token'ı Wrap/Unwrap Et",
+          "stablecoins": "Stablecoin'ler",
+          "lstLrt": "LST/LRT Token'ı",
+          "million": "Hac. $1M+",
+          "hundredThousand": "Hac. $100k - $1M"
+        },
         "wallet": "Cüzdan",
         "title": "Rabby ücreti",
         "bridgeDesc": "Rabby Wallet, önde gelen toplayıcılardan en iyi oranı bulur ve tekliflerin güvenilirliğini doğrular. Rabby, teklife otomatik olarak dahil edilen <1>%0,25</1> ücret alır.",
@@ -2033,7 +2043,7 @@
         },
         "marketSelector": {
           "title": "Piyasa Seç",
-          "search": "Ara",
+          "search": "Token ara",
           "favorites": "Favoriler",
           "all": "Tümü",
           "name": "Ad",
@@ -2046,6 +2056,7 @@
         },
         "funding": {
           "title": "Fonlama Oranı",
+          "gotIt": "Anladım",
           "summary": "Fonlama (1 sa.) / Geri Sayım",
           "openDetails": "Fonlama ayrıntılarını görüntüle",
           "interval": "Aralık",
@@ -2063,6 +2074,7 @@
           "explanation": "Fonlama oranı, long ve short pozisyon sahipleri arasındaki dönemsel ödemeleri hesaplamak için kullanılır. Fonlama oranı pozitif olduğunda longlar shortlara, negatif olduğunda shortlar longlara ödeme yapar. Yıllık oran basit yıllıklandırma yöntemiyle hesaplanır."
         },
         "orderBook": {
+          "grouping": "Emir defteri gruplama",
           "price": "Fiyat",
           "pnl": "PnL",
           "roi": "ROI%",
@@ -2079,6 +2091,7 @@
           "market": "Piyasa",
           "conditional": "Koşullu",
           "orderType": "Emir Türü",
+          "direction": "Yön",
           "marginMode": "Marjin Modu",
           "crossDescription": "Tüm çapraz pozisyonlar teminat olarak aynı çapraz marjini paylaşır. Likidasyon durumunda marjin bakiyeniz ve bu moddaki kalan açık çapraz pozisyonlarınız kaybedilebilir.",
           "isolatedDescription": "Her pozisyona marjin tahsis ederek pozisyonların riskini ayrı ayrı yönetin. İzole bir pozisyonun marjin oranı %100’e ulaşırsa pozisyon likide edilir. Bu modda pozisyonlara ayrı ayrı marjin eklenebilir veya pozisyonlardan marjin çıkarılabilir.",
@@ -2092,6 +2105,7 @@
           "liquidationPrice": "Likidasyon Fiyatı",
           "triggerPrice": "Tetikleme Fiyatı",
           "amount": "Miktar",
+          "keyboardMinimum": "Min. {{amount}}",
           "available": "Kullanılabilir",
           "reduceOnly": "Yalnızca Azalt",
           "confirmationReduceOnly": "Yalnızca Azalt",
@@ -2492,7 +2506,8 @@
         "breakdownPerps": "Perps",
         "breakdownSpot": "Spot",
         "breakdownOtherAssets": "Diğer Varlıklar",
-        "breakdownNetOtherAssets": "Net Diğer Varlıklar"
+        "breakdownNetOtherAssets": "Net Diğer Varlıklar",
+        "breakdownStaking": "Staking"
       },
       "PerpsGuidePopup": {
         "step4Title": "Kaldıraç Ayarlama",

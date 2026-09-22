@@ -1,3 +1,4 @@
+import { ThemeColors2024 } from '@/constant/theme';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -61,8 +62,11 @@ export const PerpsProOpenOrdersControls: React.FC<{
                 <Text style={selected ? styles.activeText : styles.text}>
                   {item === 'basic'
                     ? t('page.perps.pro.openOrders.basic')
-                    : t('page.perps.pro.openOrders.conditional')}{' '}
-                  ({count})
+                    : t('page.perps.pro.openOrders.conditional')}
+                  {'  '}
+                  <Text style={selected ? styles.activeCount : styles.count}>
+                    {count}
+                  </Text>
                 </Text>
               </Pressable>
             );
@@ -75,40 +79,63 @@ export const PerpsProOpenOrdersControls: React.FC<{
 
 PerpsProOpenOrdersControls.displayName = 'PerpsProOpenOrdersControls';
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   tabs: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 0,
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingBottom: 12,
   },
   tab: {
     alignItems: 'center',
-    borderRadius: 6,
-    height: 24,
+    borderRadius: 8,
+    height: 30,
     justifyContent: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
   },
   activeTab: {
     alignItems: 'center',
-    backgroundColor: colors2024['neutral-line'],
-    borderRadius: 6,
-    height: 24,
+    backgroundColor:
+      isLight === false
+        ? colors2024['neutral-title-1']
+        : ThemeColors2024.dark['neutral-bg-0'],
+    borderRadius: 8,
+    height: 30,
     justifyContent: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
   },
   text: {
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    fontWeight: '400',
-    lineHeight: 16,
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 18,
   },
   activeText: {
-    color: colors2024['neutral-body'],
+    color:
+      isLight === false
+        ? colors2024['neutral-bg-0']
+        : ThemeColors2024.dark['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
+  },
+  count: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    color: colors2024['neutral-info'],
+    fontWeight: '400',
+  },
+  activeCount: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    color:
+      isLight === false
+        ? ThemeColors2024.light['neutral-foot']
+        : ThemeColors2024.dark['neutral-foot'],
+    fontWeight: '400',
   },
 }));

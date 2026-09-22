@@ -50,7 +50,8 @@ import {
   PerpsProPositionTpSlPageHeader,
 } from './PerpsProPositionTpSlHeader';
 import { PerpsProPositionTpSlOrderList } from './PerpsProPositionTpSlOrderList';
-import { getPerpsProBottomSheetChromeStyles } from '../common/perpsProVisual';
+import { getPerpsProDialogStyles } from '../common/perpsProDialogVisual';
+import { PerpsProDialogBackdrop } from '../common/PerpsProDialogBackdrop';
 import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 import { PerpsProKeyboardSheetContext } from '../common/PerpsProKeyboardSheetContext';
@@ -121,6 +122,15 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       useState<PerpsPositionTpSlOrderViewModel | null>(null);
     const liveMarket = usePerpsProPositionMark(position.coin);
     const interactionLocked = pending || coveredByReview || reviewRequesting;
+    const renderBackdrop = useCallback(
+      (props: React.ComponentProps<typeof PerpsProDialogBackdrop>) => (
+        <PerpsProDialogBackdrop
+          {...props}
+          pressBehavior={interactionLocked ? 'none' : 'close'}
+        />
+      ),
+      [interactionLocked],
+    );
     const positionPresentationLocked =
       submissionPending || coveredByReview || reviewRequesting;
 
@@ -379,9 +389,7 @@ export const PerpsProPositionTpSlSheet: React.FC<{
         })}
         android_keyboardInputMode="adjustPan"
         animatedPosition={animatedSheetPosition}
-        backdropProps={{
-          pressBehavior: interactionLocked ? 'none' : 'close',
-        }}
+        backdropComponent={renderBackdrop}
         backgroundStyle={styles.background}
         enableDynamicSizing={false}
         enablePanDownToClose={!interactionLocked}
@@ -552,40 +560,55 @@ const TabButton: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  ...getPerpsProBottomSheetChromeStyles(colors2024),
-  scrollContent: { flexGrow: 1 },
-  page: { flexGrow: 1 },
-  tabs: {
-    borderBottomColor: colors2024['neutral-bg-5'],
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    gap: 12,
-    height: 34,
-    marginHorizontal: 15,
-    marginTop: 12,
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => {
+    const dialog = getPerpsProDialogStyles(
+      colors2024,
+      safeAreaInsets.bottom,
+      isLight,
+    );
+    // Keep the existing surface contrast with the TP/SL fields.
+    return {
+      ...dialog,
+      background: {
+        ...dialog.background,
+        backgroundColor: colors2024['neutral-bg-1'],
+      },
+      handle: { ...dialog.handle, backgroundColor: colors2024['neutral-bg-1'] },
+      scrollContent: { flexGrow: 1 },
+      page: { flexGrow: 1 },
+      tabs: {
+        borderBottomColor: colors2024['neutral-bg-5'],
+        borderBottomWidth: 1,
+        flexDirection: 'row',
+        gap: 12,
+        height: 34,
+        marginHorizontal: 16,
+        marginTop: 12,
+      },
+      inlineEmptyTabs: { marginTop: 16 },
+      tab: {
+        alignItems: 'center',
+        borderBottomColor: 'transparent',
+        borderBottomWidth: 2,
+        height: 34,
+        justifyContent: 'center',
+        paddingHorizontal: 2,
+      },
+      activeTab: { borderBottomColor: colors2024['neutral-title-1'] },
+      tabText: {
+        color: colors2024['neutral-secondary'],
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 14,
+        lineHeight: 18,
+      },
+      activeTabText: {
+        color: colors2024['neutral-title-1'],
+        fontFamily: 'SF Pro Rounded',
+        fontSize: 14,
+        fontWeight: '500',
+        lineHeight: 18,
+      },
+    };
   },
-  inlineEmptyTabs: { marginTop: 16 },
-  tab: {
-    alignItems: 'center',
-    borderBottomColor: 'transparent',
-    borderBottomWidth: 2,
-    height: 34,
-    justifyContent: 'center',
-    paddingHorizontal: 2,
-  },
-  activeTab: { borderBottomColor: colors2024['neutral-title-1'] },
-  tabText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-  },
-  activeTabText: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-}));
+);
