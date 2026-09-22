@@ -185,7 +185,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 100249
-        versionName "0.6.90"
+        versionName "0.6.89"
         missingDimensionStrategy "store", "play"
         ndk {
           abiFilters (*reactNativeArchitectures())
