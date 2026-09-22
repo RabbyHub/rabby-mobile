@@ -16,6 +16,7 @@ import type { PerpsPositionViewModel } from '../../model/position';
 import {
   calculatePartialTpSlCoverage,
   calculatePositionTpSlEstimatedPnl,
+  getPositionTpSlValueTone,
   sortPartialPositionTpSlOrders,
   type PerpsPositionTpSlKind,
   type PerpsPositionTpSlMarketSnapshot,
@@ -272,7 +273,7 @@ const OrderRow: React.FC<{
               {estimatedPnlLabel}
             </PerpsProDottedUnderlineText>
           }
-          tone={kind === 'takeProfit' ? 'positive' : 'negative'}
+          tone={getPositionTpSlValueTone(pnl)}
           value={pnl == null ? '-' : formatPerpsProSignedDecimal(pnl, 2)}
         />
         <OrderMetric

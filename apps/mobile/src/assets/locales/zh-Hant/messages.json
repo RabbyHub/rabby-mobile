@@ -2547,12 +2547,14 @@
           "positionAmount": "持倉數量",
           "estimatedPnl": "預計 PnL",
           "skipLimitConfirmation": "不再顯示限價單的二次確認",
+          "skipMarketCloseConfirmation": "不再顯示市價平倉確認視窗",
           "closeSubmitted": "平倉訂單已提交",
           "closeFailed": "平倉失敗",
           "minimumCloseAmount": "最低平倉金額為 $10",
           "closeContextChanged": "持倉或帳戶已變更，請重新檢查。"
         },
         "positionTpsl": {
+          "skipConfirmation": "不再顯示 TP/SL 確認視窗",
           "addButton": "新增 TP/SL",
           "addTitle": "新增 TP/SL",
           "cancelFailed": "取消 TP/SL 訂單失敗",

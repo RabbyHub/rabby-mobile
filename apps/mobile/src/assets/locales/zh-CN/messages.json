@@ -2524,12 +2524,14 @@
           "positionAmount": "仓位数量",
           "estimatedPnl": "预计 PnL",
           "skipLimitConfirmation": "不再显示限价单的二次确认",
+          "skipMarketCloseConfirmation": "不再显示市价平仓确认弹窗",
           "closeSubmitted": "平仓订单已提交",
           "closeFailed": "平仓失败",
           "minimumCloseAmount": "最低平仓金额为 $10",
           "closeContextChanged": "仓位或账户已发生变化，请重新检查。"
         },
         "positionTpsl": {
+          "skipConfirmation": "不再显示 TP/SL 确认弹窗",
           "addButton": "添加 TP/SL",
           "addTitle": "添加 TP/SL",
           "cancelFailed": "取消 TP/SL 订单失败",

@@ -209,6 +209,54 @@ const props = () => ({
 });
 
 describe('PerpsProPositionTpSlForm', () => {
+  describe.each(['pnl', 'roi'] as const)(
+    'price-derived %s input',
+    inputMode => {
+      it.each([
+        ['long', 'stopLoss', '120', '110', '5'],
+        ['short', 'stopLoss', '80', '90', '5'],
+        ['long', 'takeProfit', '80', '90', '−5'],
+        ['short', 'takeProfit', '120', '110', '−5'],
+        ['long', 'stopLoss', '120', '100', '0'],
+      ] as const)(
+        'preserves the signed price-derived input for %s %s at Mark %s and trigger %s',
+        (direction, kind, markPrice, trigger, expected) => {
+          mockPositionModes = { sl: inputMode, tp: inputMode };
+          const display =
+            inputMode === 'pnl'
+              ? expected
+              : expected === '0'
+              ? '0'
+              : expected.startsWith('−')
+              ? '−100'
+              : '100';
+          const initialOrder = order(kind, 7, trigger);
+          render(
+            <PerpsProPositionTpSlForm
+              {...props()}
+              initialOrder={initialOrder}
+              markPrice={markPrice}
+              mode="modify"
+              position={{ ...position([initialOrder]), direction }}
+            />,
+          );
+          const id = `perps-pro-position-tpsl-${kind}-mode-input`;
+          expect(screen.getByTestId(`${id}-formatted-value`)).toHaveTextContent(
+            display,
+          );
+          fireEvent(screen.getByTestId(id), 'focus');
+          expect(!!screen.queryByTestId(`${id}-negative-prefix`)).toBe(
+            expected.startsWith('−'),
+          );
+          fireEvent(screen.getByTestId(id), 'blur');
+          expect(
+            screen.getByTestId(`perps-pro-position-tpsl-${kind}-price`).props
+              .value,
+          ).toBe(trigger);
+        },
+      );
+    },
+  );
   beforeEach(() => {
     jest.clearAllMocks();
     mockPositionModes = { sl: 'pnl', tp: 'pnl' };

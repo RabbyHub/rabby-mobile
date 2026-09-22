@@ -2492,12 +2492,14 @@
           "positionAmount": "Khối lượng vị thế",
           "estimatedPnl": "PnL ước tính",
           "skipLimitConfirmation": "Không hiển thị lại xác nhận hai bước cho Lệnh giới hạn",
+          "skipMarketCloseConfirmation": "Không hiển thị lại xác nhận đóng vị thế theo giá thị trường này.",
           "closeSubmitted": "Đã gửi lệnh đóng",
           "closeFailed": "Không thể đóng vị thế",
           "minimumCloseAmount": "Số tiền đóng tối thiểu là 10 USD",
           "closeContextChanged": "Vị thế hoặc tài khoản đã thay đổi. Hãy kiểm tra lại."
         },
         "positionTpsl": {
+          "skipConfirmation": "Không hiển thị lại xác nhận TP/SL này.",
           "addButton": "Thêm TP/SL",
           "addTitle": "Thêm TP/SL",
           "cancelFailed": "Không thể hủy lệnh TP/SL",

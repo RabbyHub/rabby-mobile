@@ -2667,12 +2667,14 @@
           "positionAmount": "Positionsmenge",
           "estimatedPnl": "Geschätzter PnL",
           "skipLimitConfirmation": "Doppelte Bestätigung für Limit-Orders nicht erneut anzeigen.",
+          "skipMarketCloseConfirmation": "Diese Bestätigung zum Schließen einer Position per Marktorder nicht erneut anzeigen.",
           "closeSubmitted": "Schließungsorder übermittelt",
           "closeFailed": "Position konnte nicht geschlossen werden",
           "minimumCloseAmount": "Mindestbetrag zum Schließen: 10 $",
           "closeContextChanged": "Position oder Konto haben sich geändert. Prüfen Sie die Angaben erneut."
         },
         "positionTpsl": {
+          "skipConfirmation": "Diese TP/SL-Bestätigung nicht erneut anzeigen.",
           "addButton": "TP/SL hinzufügen",
           "addTitle": "TP/SL hinzufügen",
           "cancelFailed": "TP/SL-Order konnte nicht storniert werden",

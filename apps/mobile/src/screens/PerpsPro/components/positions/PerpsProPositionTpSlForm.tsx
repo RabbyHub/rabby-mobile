@@ -514,6 +514,7 @@ export const PerpsProPositionTpSlForm: React.FC<{
                       addMode={mode === 'add'}
                       disabled={pending}
                       kind={kind}
+                      inputSource={input.source}
                       market={market}
                       onChangeModeMagnitude={next =>
                         changeModeMagnitude(kind, next)

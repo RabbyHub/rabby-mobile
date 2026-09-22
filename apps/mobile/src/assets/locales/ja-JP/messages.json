@@ -2427,12 +2427,14 @@
           "positionAmount": "ポジション数量",
           "estimatedPnl": "推定PnL",
           "skipLimitConfirmation": "今後、指値注文の二重確認を表示しない",
+          "skipMarketCloseConfirmation": "今後、この成行決済の確認を表示しない",
           "closeSubmitted": "決済注文を送信しました",
           "closeFailed": "ポジションの決済に失敗しました",
           "minimumCloseAmount": "最小決済額は$10です",
           "closeContextChanged": "ポジションまたはアカウントが変更されました。もう一度確認してください。"
         },
         "positionTpsl": {
+          "skipConfirmation": "今後、このTP/SLの確認を表示しない",
           "addButton": "TP/SLを追加",
           "addTitle": "TP/SLを追加",
           "cancelFailed": "TP/SL注文のキャンセルに失敗しました",
