@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Keyboard, Platform, View } from 'react-native';
+import { Keyboard, Platform, Pressable, View } from 'react-native';
 import { getVersion } from 'react-native-device-info';
 import semver from 'semver';
 
@@ -9,7 +9,7 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useUnmountedRef } from '@/hooks/common/useMount';
 import { SELF_HOST_BASE, SELF_HOST_BASE_PROD } from '@/utils/version';
 import { UpgradePromptDialog } from '@/components/Upgrade/UpgradePromptDialog';
-import { hasMeaningfulChangelog } from '@/components/Upgrade/hasMeaningfulChangelog';
+import { parseUpgradeChangelog } from '@/utils/upgradeChangelog';
 import { toast } from '@/components2024/Toast';
 import { FormInput } from '@/components/Form/Input';
 import { Button } from '@/components2024/Button';
@@ -26,6 +26,17 @@ import {
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import AutoLockView from '@/components/AutoLockView';
 import { Text } from '@/components/Typography';
+
+const FIXTURE_BODY =
+  '### Features\n\n- Fixed some bugs and optimized user experience';
+const AUTO_PROMPT_FIXTURES = [
+  { label: 'ON', markdown: `<!-- rabby:auto-prompt=on -->\n\n${FIXTURE_BODY}` },
+  {
+    label: 'OFF',
+    markdown: `<!-- rabby:auto-prompt=off -->\n\n${FIXTURE_BODY}`,
+  },
+  { label: 'No marker', markdown: FIXTURE_BODY },
+];
 
 export function useShowMarkdownInWebVIewTester() {
   const openedModalIdRef = useRef<string>('');
@@ -59,6 +70,28 @@ export function MarkdownInWebViewInner() {
   const unmountedRef = useUnmountedRef();
 
   useEffect(() => () => requestRef.current?.abort(), []);
+
+  const previewChangelog = useCallback(
+    (
+      requestedVersion: string,
+      markdown: string,
+      simulateAutoPrompt = false,
+    ) => {
+      const { autoPrompt, changelog } = parseUpgradeChangelog(markdown);
+      toast.info(
+        autoPrompt
+          ? 'Automatic update prompt: enabled.'
+          : 'Automatic update prompt: disabled.',
+        { duration: 4000 },
+      );
+      setPreview(
+        !simulateAutoPrompt || autoPrompt
+          ? { version: requestedVersion, changelog }
+          : null,
+      );
+    },
+    [],
+  );
 
   const closePreview = useCallback(() => setPreview(null), []);
   const handleConfirm = useCallback(async () => {
@@ -95,13 +128,7 @@ export function MarkdownInWebViewInner() {
           const changelog = await response.text();
           if (!changelog.trim()) continue;
           if (!unmountedRef.current && !controller.signal.aborted) {
-            toast.info(
-              hasMeaningfulChangelog(changelog)
-                ? 'Changelog qualifies for an automatic update prompt.'
-                : 'Changelog will skip the automatic update prompt.',
-              { duration: 4000 },
-            );
-            setPreview({ version: requestedVersion, changelog });
+            previewChangelog(requestedVersion, changelog);
           }
           return;
         } catch (fetchError) {
@@ -126,12 +153,28 @@ export function MarkdownInWebViewInner() {
       requestRef.current = null;
       if (!unmountedRef.current) setLoading(false);
     }
-  }, [version, unmountedRef]);
+  }, [version, unmountedRef, previewChangelog]);
 
   return (
     <>
       <AutoLockView as="BottomSheetView" style={styles.container}>
         <Text style={styles.title}>Upgrade Prompt Preview</Text>
+        <Text style={styles.label}>Local auto-prompt fixtures</Text>
+        <View style={styles.fixtures}>
+          {AUTO_PROMPT_FIXTURES.map(fixture => (
+            <Pressable
+              key={fixture.label}
+              accessibilityRole="button"
+              disabled={loading}
+              style={styles.fixture}
+              onPress={() => {
+                Keyboard.dismiss();
+                previewChangelog('0.0.0', fixture.markdown, true);
+              }}>
+              <Text style={styles.fixtureText}>{fixture.label}</Text>
+            </Pressable>
+          ))}
+        </View>
         <Text style={styles.label}>Version</Text>
         <FormInput
           as="BottomSheetTextInput"
@@ -197,6 +240,15 @@ const getStyles = createGetStyles(colors => ({
     fontSize: 14,
     marginBottom: 8,
   },
+  fixtures: { flexDirection: 'row', gap: 8, marginBottom: 20 },
+  fixture: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: colors['neutral-card1'],
+  },
+  fixtureText: { color: colors['neutral-title1'], fontSize: 14 },
   input: { height: 52 },
   footer: { paddingTop: BOTTOM_BUTTON_TOP_OFFSET },
 }));

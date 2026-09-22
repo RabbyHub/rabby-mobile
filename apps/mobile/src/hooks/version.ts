@@ -35,6 +35,7 @@ const remoteVersionStore = zustandByMMKV<MergedRemoteVersion>(
     source: BUILD_CHANNEL,
     couldUpgrade: false,
     changelog: '',
+    autoPrompt: false,
   },
 );
 function setRemoteVersion(val: MergedRemoteVersion) {

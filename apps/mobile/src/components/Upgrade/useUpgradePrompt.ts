@@ -1,15 +1,15 @@
 import { zustandByMMKV } from '@/core/storage/mmkv';
 import { zCreate } from '@/core/utils/reexports';
 import { parseMarkdown } from '@/components/Markdown/parseMarkdown';
-import { hasMeaningfulChangelog } from './hasMeaningfulChangelog';
 
 type UpgradePromptInfo = {
   version: string;
   couldUpgrade: boolean;
+  autoPrompt?: boolean;
   changelog: string;
 };
 
-// 按版本记录已经展示过的更新，后续出现更高版本时仍可再次提示。
+// 按版本记录已展示或已确认不提示的更新，新版本仍可再次提示。
 const upgradePromptReceiptStore = zustandByMMKV<{
   lastPromptedVersion: string;
 }>('@UpgradePromptReceiptMMKV', {
@@ -26,7 +26,7 @@ const upgradePromptStore = zCreate<{
   pendingInfo: null,
 }));
 
-// 展示记录只和当前提示的版本号关联，新版本仍会再次提示。
+// 处理记录只和对应版本号关联，新版本仍会再次判断。
 function hasPromptedVersion(version: string) {
   const { lastPromptedVersion } = upgradePromptReceiptStore.getState();
   return lastPromptedVersion === version;
@@ -38,8 +38,13 @@ export function requestAutoUpgradePrompt(info: UpgradePromptInfo) {
     !info.couldUpgrade ||
     hasPromptedVersion(info.version) ||
     typeof info.changelog !== 'string' ||
-    !hasMeaningfulChangelog(info.changelog)
+    !parseMarkdown(info.changelog).success
   ) {
+    return;
+  }
+
+  if (!info.autoPrompt) {
+    upgradePromptReceiptStore.setState({ lastPromptedVersion: info.version });
     return;
   }
 
