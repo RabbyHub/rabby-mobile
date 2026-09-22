@@ -31,12 +31,33 @@ import {
 } from '../../model/positionTpSl';
 import type { PerpsProTradeAmountUnit } from '../../model/trade';
 import type { PerpsProPositionTpSlReviewState } from '../../scene/usePerpsProPositionTpSl';
-import { formatPerpsProDecimal, formatPerpsProPrice } from '../../utils/format';
+import {
+  formatPerpsProDecimal,
+  formatPerpsProPrice,
+  formatPerpsProVariableDecimal,
+} from '../../utils/format';
 import { usePerpsProSheetNavigationRegistration } from '../common/perpsProSheetNavigationRegistry';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
 import { usePerpsProFieldExplanation } from '../common/PerpsProFieldExplanationContext';
 
 const MODAL_ID = 'perps-pro-position-tpsl-confirmation';
+
+const formatPartialVolume = (
+  amount: string,
+  decimals: number,
+  size: string,
+  expectedPositionSize: string,
+) => {
+  const coverage = new BigNumber(size).dividedBy(expectedPositionSize);
+  const percentage = coverage.isFinite()
+    ? `${coverage.multipliedBy(100).toFixed(2, BigNumber.ROUND_HALF_UP)}%`
+    : '-';
+  const quantity = new BigNumber(amount).decimalPlaces(
+    decimals,
+    BigNumber.ROUND_HALF_UP,
+  );
+  return `${formatPerpsProVariableDecimal(quantity.toFixed())}(${percentage})`;
+};
 
 export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
   amountUnit: PerpsProTradeAmountUnit;
@@ -118,7 +139,10 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
               )}
             </Text>
             <View style={styles.summary}>
-              <Text style={styles.symbol}>{market.displayPair}</Text>
+              <DetailRow
+                label={t('page.perps.pro.positionTpsl.symbol')}
+                value={market.displayPair}
+              />
               <DetailRow
                 label={t('page.perps.pro.positions.entry')}
                 value={`${formatPerpsProPrice(
@@ -172,15 +196,17 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
                   />
                   {!isPosition ? (
                     <DetailRow
-                      label={t('page.perps.pro.positionTpsl.volume')}
-                      value={`${formatPerpsProDecimal(
-                        displayAmount,
-                        amountUnit === 'base' ? market.szDecimals : 2,
-                      )} ${
+                      label={`${t('page.perps.pro.positionTpsl.volume')} (${
                         amountUnit === 'base'
                           ? market.displayBase
                           : market.quoteAsset
-                      }`}
+                      })`}
+                      value={formatPartialVolume(
+                        displayAmount,
+                        amountUnit === 'base' ? market.szDecimals : 2,
+                        size,
+                        review.command.expectedPositionSize,
+                      )}
                     />
                   ) : null}
                   <DetailRow
@@ -292,13 +318,6 @@ const getStyle = createGetStyles2024(
         padding: 16,
         gap: 10,
         marginTop: 24,
-      },
-      symbol: {
-        color: colors2024['neutral-title-1'],
-        fontFamily: 'SF Pro Rounded',
-        fontSize: 16,
-        fontWeight: '700',
-        lineHeight: 20,
       },
       leg: {
         backgroundColor: resolvePerpsProDialogCardBackground(
