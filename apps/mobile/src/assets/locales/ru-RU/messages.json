@@ -2508,6 +2508,7 @@
           "duplicatePositionOrders": "На этой стороне существует несколько ордеров TP/SL позиции. Отмените их по отдельности или обновите данные перед изменением.",
           "estimatedLiquidation": "Расчётная цена ликвидации",
           "estimatedPnl": "Расчётный PnL",
+          "estimatedPnlDescription": "Расчётный PnL <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "Расчётный PnL",
           "invalidOrder": "Проверьте цену и объём TP/SL",
           "invalidTrigger": "Цена срабатывания недействительна для последней цены маркировки",

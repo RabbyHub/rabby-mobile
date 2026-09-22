@@ -2393,6 +2393,7 @@
           "duplicatePositionOrders": "이 방향에 포지션 TP/SL 주문이 여러 개 있습니다. 변경하기 전에 개별적으로 취소하거나 새로고침하세요.",
           "estimatedLiquidation": "예상 청산 가격",
           "estimatedPnl": "예상 PnL",
+          "estimatedPnlDescription": "예상 PnL <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "예상 PnL",
           "invalidOrder": "TP/SL 가격과 수량을 확인하세요",
           "invalidTrigger": "최신 마크 가격을 기준으로 트리거 가격이 유효하지 않습니다",

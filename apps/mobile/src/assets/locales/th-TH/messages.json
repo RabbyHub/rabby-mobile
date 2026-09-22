@@ -2568,6 +2568,7 @@
           "duplicatePositionOrders": "มีคำสั่ง TP/SL ของโพซิชันหลายรายการในฝั่งนี้ โปรดยกเลิกทีละรายการหรือรีเฟรชก่อนแก้ไข",
           "estimatedLiquidation": "ราคาชำระบัญชีโดยประมาณ",
           "estimatedPnl": "PnL โดยประมาณ",
+          "estimatedPnlDescription": "PnL โดยประมาณ <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "PnL โดยประมาณ",
           "invalidOrder": "ตรวจสอบราคาและจำนวน TP/SL",
           "invalidTrigger": "ราคาทริกเกอร์ไม่ถูกต้องสำหรับราคา Mark ล่าสุด",

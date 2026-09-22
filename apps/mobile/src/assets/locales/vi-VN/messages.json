@@ -2508,6 +2508,7 @@
           "duplicatePositionOrders": "Có nhiều lệnh TP/SL Vị thế ở phía này. Hãy hủy từng lệnh hoặc làm mới trước khi sửa.",
           "estimatedLiquidation": "Giá thanh lý ước tính",
           "estimatedPnl": "PnL ước tính",
+          "estimatedPnlDescription": "PnL ước tính <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "PnL ước tính",
           "invalidOrder": "Kiểm tra giá và số lượng TP/SL",
           "invalidTrigger": "Giá kích hoạt không hợp lệ với Giá đánh dấu mới nhất",
