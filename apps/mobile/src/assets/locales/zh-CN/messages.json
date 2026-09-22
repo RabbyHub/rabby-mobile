@@ -2540,6 +2540,7 @@
           "duplicatePositionOrders": "该方向存在多个仓位 TP/SL 订单。请逐笔取消，或刷新后再修改。",
           "estimatedLiquidation": "预计强平价格",
           "estimatedPnl": "预计 PnL",
+          "estimatedPnlDescription": "预计 PnL <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "预计 PnL",
           "invalidOrder": "请检查 TP/SL 价格和数量",
           "invalidTrigger": "按最新标记价格判断，该触发价格无效",

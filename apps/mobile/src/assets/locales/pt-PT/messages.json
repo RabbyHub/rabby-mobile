@@ -2683,6 +2683,7 @@
           "duplicatePositionOrders": "Existem várias ordens TP/SL de posição deste lado. Cancele-as individualmente ou atualize antes de modificar.",
           "estimatedLiquidation": "Preço de liquidação est.",
           "estimatedPnl": "PnL estimado",
+          "estimatedPnlDescription": "PnL estimado <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "PnL est.",
           "invalidOrder": "Reveja o preço e a quantidade de TP/SL",
           "invalidTrigger": "O preço de ativação é inválido para o preço de referência mais recente",

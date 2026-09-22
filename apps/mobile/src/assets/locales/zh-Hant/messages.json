@@ -2563,6 +2563,7 @@
           "duplicatePositionOrders": "此方向存在多個持倉 TP/SL 訂單。請逐筆取消，或更新後再修改。",
           "estimatedLiquidation": "預計強平價格",
           "estimatedPnl": "預計 PnL",
+          "estimatedPnlDescription": "預計 PnL <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "預計 PnL",
           "invalidOrder": "請檢查 TP/SL 價格和數量",
           "invalidTrigger": "依最新標記價格判斷，此觸發價格無效",

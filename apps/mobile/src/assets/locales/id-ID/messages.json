@@ -2393,6 +2393,7 @@
           "duplicatePositionOrders": "Ada beberapa order TP/SL Posisi di sisi ini. Batalkan satu per satu atau perbarui sebelum mengubahnya.",
           "estimatedLiquidation": "Estimasi Harga Likuidasi",
           "estimatedPnl": "Estimasi PnL",
+          "estimatedPnlDescription": "Estimasi PnL <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "Estimasi PnL",
           "invalidOrder": "Tinjau harga dan jumlah TP/SL",
           "invalidTrigger": "Harga pemicu tidak valid untuk Harga Acuan terbaru",

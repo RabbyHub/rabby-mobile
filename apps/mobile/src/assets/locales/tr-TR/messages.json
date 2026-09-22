@@ -2393,6 +2393,7 @@
           "duplicatePositionOrders": "Bu tarafta birden fazla Pozisyon TP/SL emri var. Değiştirmeden önce bunları tek tek iptal edin veya yenileyin.",
           "estimatedLiquidation": "Tahm. Likidasyon Fiyatı",
           "estimatedPnl": "Tahmini PnL",
+          "estimatedPnlDescription": "Tahmini PnL <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "Tahm. PnL",
           "invalidOrder": "TP/SL fiyatını ve miktarını inceleyin",
           "invalidTrigger": "Tetikleme fiyatı son işaret fiyatı için geçersiz",

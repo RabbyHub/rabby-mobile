@@ -2683,6 +2683,7 @@
           "duplicatePositionOrders": "Auf dieser Seite bestehen mehrere Positions-TP/SL-Orders. Stornieren Sie sie einzeln oder aktualisieren Sie vor einer Änderung.",
           "estimatedLiquidation": "Geschätzter Liquidationspreis",
           "estimatedPnl": "Geschätzter PnL",
+          "estimatedPnlDescription": "Geschätzter PnL <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "Geschätzter PnL",
           "invalidOrder": "Prüfen Sie TP/SL-Preis und -Menge",
           "invalidTrigger": "Der Auslösepreis ist für den aktuellen Markpreis ungültig",

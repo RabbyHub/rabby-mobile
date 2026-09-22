@@ -2443,6 +2443,7 @@
           "duplicatePositionOrders": "この側に複数のポジションTP/SL注文があります。変更する前に個別にキャンセルするか、更新してください。",
           "estimatedLiquidation": "推定清算価格",
           "estimatedPnl": "推定PnL",
+          "estimatedPnlDescription": "推定PnL <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "推定PnL",
           "invalidOrder": "TP/SLの価格と数量を確認してください",
           "invalidTrigger": "最新のマーク価格に対してトリガー価格が無効です",
