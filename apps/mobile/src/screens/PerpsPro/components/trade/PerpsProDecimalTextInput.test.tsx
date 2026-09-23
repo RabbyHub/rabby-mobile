@@ -10,6 +10,7 @@ import {
 import { PerpsProDecimalTextInput } from './PerpsProDecimalTextInput';
 
 const mockSetNativeProps = jest.fn();
+const mockSetSelection = jest.fn();
 
 jest.mock('@/components/Typography', () => {
   const ReactModule = require('react');
@@ -19,6 +20,7 @@ jest.mock('@/components/Typography', () => {
       (props: object, ref: React.Ref<unknown>) => {
         ReactModule.useImperativeHandle(ref, () => ({
           setNativeProps: mockSetNativeProps,
+          setSelection: mockSetSelection,
         }));
         return ReactModule.createElement(TextInput, props);
       },
@@ -38,27 +40,26 @@ const MockInputComponent = React.forwardRef<
 ));
 
 describe('PerpsProDecimalTextInput', () => {
-  it('prepares the latest raw end before focus without correcting the cursor after focus', () => {
+  it('queues one native end selection before revealing focus, then permits middle editing', () => {
     const onChangeText = jest.fn();
+    const onFocus = jest.fn(() => {
+      expect(mockSetSelection).toHaveBeenLastCalledWith(6, 6);
+    });
     const props = {
       focusCursorAtEnd: true,
-      focusCursorAtEndMode: 'beforeFocus' as const,
+      focusCursorAtEndMode: 'nativeFocus' as const,
       maxDecimals: 2,
       onChangeText,
+      onFocus,
       testID: 'decimal-input',
     };
     const view = render(<PerpsProDecimalTextInput {...props} value="12.34" />);
-    expect(screen.getByTestId('decimal-input').props.selection).toEqual({
-      start: 5,
-      end: 5,
-    });
     view.rerender(<PerpsProDecimalTextInput {...props} value="123.45" />);
-    expect(screen.getByTestId('decimal-input').props.selection).toEqual({
-      start: 6,
-      end: 6,
-    });
     const input = screen.getByTestId('decimal-input');
+    expect(input.props.selection).toBeUndefined();
     fireEvent(input, 'focus', { nativeEvent: {} });
+    expect(onFocus).toHaveBeenCalledTimes(1);
+    expect(mockSetSelection).toHaveBeenCalledTimes(1);
     expect(input.props.selection).toBeUndefined();
     expect(mockSetNativeProps).not.toHaveBeenCalled();
     fireEvent(input, 'selectionChange', {
@@ -67,41 +68,37 @@ describe('PerpsProDecimalTextInput', () => {
     fireEvent.changeText(input, '193.45');
     expect(onChangeText).toHaveBeenLastCalledWith('193.45');
     expect(input.props.selection).toBeUndefined();
+    expect(mockSetSelection).toHaveBeenCalledTimes(1);
     fireEvent(input, 'blur', { nativeEvent: {} });
-    expect(input.props.selection).toEqual({ start: 6, end: 6 });
-    fireEvent(input, 'focus', { nativeEvent: {} });
     expect(input.props.selection).toBeUndefined();
+    fireEvent(input, 'focus', { nativeEvent: {} });
+    expect(mockSetSelection).toHaveBeenCalledTimes(2);
   });
 
-  it('prepares the canonicalized price on blur and keeps empty selection semantics', () => {
-    const onChangeText = jest.fn();
+  it('uses the canonicalized price on refocus and keeps empty selection semantics', () => {
     render(
       <PerpsProDecimalTextInput
         focusCursorAtEnd
-        focusCursorAtEndMode="beforeFocus"
+        focusCursorAtEndMode="nativeFocus"
         maxDecimals={2}
         canonicalizeValueOnBlur={value => sanitizePerpsProPriceInput(value, 2)}
-        onChangeText={onChangeText}
+        onChangeText={jest.fn()}
         testID="decimal-input"
         value="001.20"
       />,
     );
     const input = screen.getByTestId('decimal-input');
-    expect(input.props.selection).toEqual({ start: 6, end: 6 });
     fireEvent(input, 'focus', { nativeEvent: {} });
+    expect(mockSetSelection).toHaveBeenLastCalledWith(6, 6);
     fireEvent(input, 'blur', { nativeEvent: {} });
     expect(input.props.value).toBe('1.20');
-    expect(input.props.selection).toEqual({ start: 4, end: 4 });
     fireEvent(input, 'focus', { nativeEvent: {} });
+    expect(mockSetSelection).toHaveBeenLastCalledWith(4, 4);
     fireEvent.changeText(input, '');
-    expect(input.props.selection).toBeUndefined();
     fireEvent(input, 'blur', { nativeEvent: {} });
-    expect(input.props.selection).toBeUndefined();
     fireEvent(input, 'focus', { nativeEvent: {} });
-    fireEvent.changeText(input, '0');
+    expect(mockSetSelection).toHaveBeenLastCalledWith(0, 0);
     expect(input.props.selection).toBeUndefined();
-    fireEvent(input, 'blur', { nativeEvent: {} });
-    expect(input.props.selection).toEqual({ start: 1, end: 1 });
   });
 
   it.each(['ios', 'android'] as const)(
@@ -149,6 +146,7 @@ describe('PerpsProDecimalTextInput', () => {
 
   beforeEach(() => {
     mockSetNativeProps.mockClear();
+    mockSetSelection.mockClear();
   });
 
   it('leaves an empty iOS value under native selection ownership', () => {
@@ -313,6 +311,7 @@ describe('PerpsProDecimalTextInput', () => {
       nativeEvent: { selection: { end: 1, start: 1 } },
     });
     mockSetNativeProps.mockClear();
+    mockSetSelection.mockClear();
     fireEvent.changeText(input, '0000');
 
     expect(onChangeText).toHaveBeenLastCalledWith('0000');
@@ -408,6 +407,7 @@ describe('PerpsProDecimalTextInput', () => {
     fireEvent(input, 'focus', { nativeEvent: {} });
     expect(input.props.selection).toEqual({ end: 2, start: 2 });
     mockSetNativeProps.mockClear();
+    mockSetSelection.mockClear();
 
     fireEvent(input, 'keyPress', { nativeEvent: { key: 'Backspace' } });
     fireEvent(input, 'selectionChange', {
@@ -441,6 +441,7 @@ describe('PerpsProDecimalTextInput', () => {
     fireEvent.changeText(input, '');
     expect(screen.getByTestId('decimal-input').props.selection).toBeUndefined();
     mockSetNativeProps.mockClear();
+    mockSetSelection.mockClear();
 
     fireEvent(input, 'keyPress', { nativeEvent: { key: '1' } });
     fireEvent(input, 'selectionChange', {
@@ -517,6 +518,7 @@ describe('PerpsProDecimalTextInput', () => {
     fireEvent(input, 'focus', { nativeEvent: {} });
     expect(input.props.selection).toEqual({ end: 2, start: 2 });
     mockSetNativeProps.mockClear();
+    mockSetSelection.mockClear();
 
     fireEvent(input, 'keyPress', { nativeEvent: { key: 'Backspace' } });
     fireEvent(input, 'selectionChange', {

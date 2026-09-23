@@ -129,6 +129,7 @@ const synchronizeSideInputDraft = (
 };
 
 export const usePerpsProPositionTpSlFormInputs = ({
+  sessionKey,
   direction,
   entryPrice,
   initialSize,
@@ -139,6 +140,7 @@ export const usePerpsProPositionTpSlFormInputs = ({
   sideSize,
   szDecimals,
 }: {
+  sessionKey?: string;
   direction: 'long' | 'short';
   entryPrice: string | null;
   initialSize: string;
@@ -174,6 +176,25 @@ export const usePerpsProPositionTpSlFormInputs = ({
       createContext('stopLoss', initialSize),
     ),
   );
+
+  const [previousSessionKey, setPreviousSessionKey] = useState(sessionKey);
+  if (previousSessionKey !== sessionKey) {
+    setPreviousSessionKey(sessionKey);
+    setTakeProfit(
+      createSideInputDraft(
+        preferredModes.tp,
+        initialTakeProfit,
+        createContext('takeProfit', initialSize),
+      ),
+    );
+    setStopLoss(
+      createSideInputDraft(
+        preferredModes.sl,
+        initialStopLoss,
+        createContext('stopLoss', initialSize),
+      ),
+    );
+  }
 
   useEffect(() => {
     setTakeProfit(current =>

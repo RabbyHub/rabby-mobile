@@ -49,621 +49,624 @@ import { usePerpsProTpSlModePreferences } from '../../scene/usePerpsProTpSlModeP
 
 type FormMode = 'add' | 'modify' | 'position';
 
-export const PerpsProPositionTpSlForm: React.FC<{
+type FormProps = {
   amountUnit: PerpsProTradeAmountUnit;
   cancelingOids: readonly number[];
   initialOrder?: PerpsPositionTpSlOrderViewModel | null;
   markPrice: string | null;
   market: PerpsPositionTpSlMarketSnapshot;
-  minimumHeight?: number;
+  sessionKey?: string;
   mode: FormMode;
   onCancelOrder: (order: PerpsPositionTpSlOrderViewModel) => void;
   onReview: (draft: PerpsPositionTpSlDraft) => void;
   pending: boolean;
   presentation?: PerpsProPositionTpSlFormPresentation;
   position: PerpsPositionViewModel;
-}> = React.memo(
-  ({
-    amountUnit,
-    cancelingOids,
-    initialOrder = null,
-    markPrice,
-    market,
-    minimumHeight,
-    mode,
-    onCancelOrder,
-    onReview,
-    pending,
-    presentation,
-    position,
-  }) => {
-    const { styles } = useTheme2024({ getStyle });
-    const { t } = useTranslation();
-    const tpSlModePreferences = usePerpsProTpSlModePreferences();
-    const dismissKeyboardThen = usePerpsProDismissKeyboard();
-    const resolvedPresentation =
-      presentation ?? (mode === 'position' ? 'tab' : 'subpage');
-    const isInlineEmpty = resolvedPresentation === 'inline-empty';
-    const isSubpage =
-      resolvedPresentation === 'subpage' ||
-      resolvedPresentation === 'position-modify';
-    const summary = useMemo(
-      () => buildPositionTpSlSummary(position.tpslOrders, markPrice),
-      [markPrice, position.tpslOrders],
-    );
-    const singlePositionTakeProfit =
-      summary.takeProfit.positionOrders.length === 1
-        ? summary.takeProfit.positionOrders[0]
-        : null;
-    const singlePositionStopLoss =
-      summary.stopLoss.positionOrders.length === 1
-        ? summary.stopLoss.positionOrders[0]
-        : null;
-    const initialTakeProfit =
-      mode === 'position'
-        ? singlePositionTakeProfit?.triggerPrice || ''
-        : initialOrder?.kind === 'takeProfit'
-        ? initialOrder.triggerPrice
-        : '';
-    const initialStopLoss =
-      mode === 'position'
-        ? singlePositionStopLoss?.triggerPrice || ''
-        : initialOrder?.kind === 'stopLoss'
-        ? initialOrder.triggerPrice
-        : '';
-    const initialSideSize =
-      mode === 'position'
-        ? position.baseSize
-        : initialOrder?.remainingSize || position.baseSize;
-    const [activeModeKind, setActiveModeKind] =
-      useState<PerpsPositionTpSlKind | null>(null);
-    const amountInputRef = useRef<TextInput>(null);
-    const displayAmountDecimals = amountUnit === 'base' ? market.szDecimals : 2;
-    const maximumDisplayAmount = useMemo(() => {
-      const positionSize = new BigNumber(position.baseSize || Number.NaN);
-      if (!positionSize.isFinite() || !positionSize.gt(0)) {
-        return '';
-      }
-      if (amountUnit === 'base') {
-        return positionSize
-          .decimalPlaces(market.szDecimals, BigNumber.ROUND_DOWN)
-          .toFixed();
-      }
-      const referencePrice = new BigNumber(
-        markPrice || market.markPrice || Number.NaN,
-      );
-      if (!referencePrice.isFinite() || !referencePrice.gt(0)) {
-        return '';
-      }
+};
+
+export const usePerpsProPositionTpSlForm = ({
+  amountUnit,
+  cancelingOids,
+  initialOrder = null,
+  markPrice,
+  market,
+  sessionKey,
+  mode,
+  onCancelOrder,
+  onReview,
+  pending,
+  presentation,
+  position,
+}: FormProps) => {
+  const { styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
+  const tpSlModePreferences = usePerpsProTpSlModePreferences();
+  const dismissKeyboardThen = usePerpsProDismissKeyboard();
+  const currentSessionKey = useRef(sessionKey);
+  currentSessionKey.current = sessionKey;
+  const resolvedPresentation =
+    presentation ?? (mode === 'position' ? 'tab' : 'subpage');
+  const isInlineEmpty = resolvedPresentation === 'inline-empty';
+  const isSubpage =
+    resolvedPresentation === 'subpage' ||
+    resolvedPresentation === 'position-modify';
+  const summary = useMemo(
+    () => buildPositionTpSlSummary(position.tpslOrders, markPrice),
+    [markPrice, position.tpslOrders],
+  );
+  const singlePositionTakeProfit =
+    summary.takeProfit.positionOrders.length === 1
+      ? summary.takeProfit.positionOrders[0]
+      : null;
+  const singlePositionStopLoss =
+    summary.stopLoss.positionOrders.length === 1
+      ? summary.stopLoss.positionOrders[0]
+      : null;
+  const initialTakeProfit =
+    mode === 'position'
+      ? singlePositionTakeProfit?.triggerPrice || ''
+      : initialOrder?.kind === 'takeProfit'
+      ? initialOrder.triggerPrice
+      : '';
+  const initialStopLoss =
+    mode === 'position'
+      ? singlePositionStopLoss?.triggerPrice || ''
+      : initialOrder?.kind === 'stopLoss'
+      ? initialOrder.triggerPrice
+      : '';
+  const initialSideSize =
+    mode === 'position'
+      ? position.baseSize
+      : initialOrder?.remainingSize || position.baseSize;
+  const [activeModeKind, setActiveModeKind] =
+    useState<PerpsPositionTpSlKind | null>(null);
+  const amountInputRef = useRef<TextInput>(null);
+  const displayAmountDecimals = amountUnit === 'base' ? market.szDecimals : 2;
+  const maximumDisplayAmount = useMemo(() => {
+    const positionSize = new BigNumber(position.baseSize || Number.NaN);
+    if (!positionSize.isFinite() || !positionSize.gt(0)) {
+      return '';
+    }
+    if (amountUnit === 'base') {
       return positionSize
-        .multipliedBy(referencePrice)
+        .decimalPlaces(market.szDecimals, BigNumber.ROUND_DOWN)
+        .toFixed();
+    }
+    const referencePrice = new BigNumber(
+      markPrice || market.markPrice || Number.NaN,
+    );
+    if (!referencePrice.isFinite() || !referencePrice.gt(0)) {
+      return '';
+    }
+    return positionSize
+      .multipliedBy(referencePrice)
+      .decimalPlaces(2, BigNumber.ROUND_DOWN)
+      .toFixed();
+  }, [
+    amountUnit,
+    markPrice,
+    market.markPrice,
+    market.szDecimals,
+    position.baseSize,
+  ]);
+  const [inputSource, setInputSource] = useState<'manual' | 'slider'>(
+    mode === 'add' ? 'slider' : 'manual',
+  );
+  const initialPercent = mode === 'modify' ? 0 : 100;
+  const [percent, setPercent] = useState(initialPercent);
+  const sliderHaptics = usePerpsProSliderHaptics({
+    disabled: pending || mode === 'position',
+    maximumValue: 100,
+    minimumValue: 0,
+    step: 1,
+    value: percent,
+  });
+  const initialAmountBase = initialOrder?.remainingSize || position.baseSize;
+  const initialAmount = !initialAmountBase
+    ? ''
+    : amountUnit === 'base'
+    ? initialAmountBase
+    : new BigNumber(initialAmountBase)
+        .multipliedBy(markPrice || market.markPrice)
         .decimalPlaces(2, BigNumber.ROUND_DOWN)
         .toFixed();
-    }, [
-      amountUnit,
-      markPrice,
-      market.markPrice,
-      market.szDecimals,
-      position.baseSize,
-    ]);
-    const [inputSource, setInputSource] = useState<'manual' | 'slider'>(
-      mode === 'add' ? 'slider' : 'manual',
-    );
-    const initialPercent = mode === 'modify' ? 0 : 100;
-    const [percent, setPercent] = useState(initialPercent);
-    const sliderHaptics = usePerpsProSliderHaptics({
-      disabled: pending || mode === 'position',
-      maximumValue: 100,
-      minimumValue: 0,
-      step: 1,
-      value: percent,
-    });
-    const initialAmountBase = initialOrder?.remainingSize || position.baseSize;
-    const initialAmount = !initialAmountBase
-      ? ''
-      : amountUnit === 'base'
-      ? initialAmountBase
-      : new BigNumber(initialAmountBase)
-          .multipliedBy(markPrice || market.markPrice)
-          .decimalPlaces(2, BigNumber.ROUND_DOWN)
-          .toFixed();
-    const [manualAmount, setManualAmount] = useState(initialAmount);
-    const [amountFocused, setAmountFocused] = useState(false);
-    const normalizeAmountInput = useCallback(
-      (value: string) => {
-        if (!value || !maximumDisplayAmount) {
-          return value;
-        }
-        const amount = new BigNumber(value);
-        const maximum = new BigNumber(maximumDisplayAmount);
-        return amount.isFinite() && maximum.isFinite() && amount.gt(maximum)
-          ? maximumDisplayAmount
-          : value;
-      },
-      [maximumDisplayAmount],
-    );
-    const beginManualAmountEntry = useCallback(() => {
-      if (inputSource !== 'slider') {
-        return;
+  const [manualAmount, setManualAmount] = useState(initialAmount);
+  const [amountFocused, setAmountFocused] = useState(false);
+  const normalizeAmountInput = useCallback(
+    (value: string) => {
+      if (!value || !maximumDisplayAmount) {
+        return value;
       }
-      setInputSource('manual');
-      setPercent(0);
-      setManualAmount('');
-    }, [inputSource]);
-    const handleAmountSliderTouchCapture = useCallback(() => {
-      amountInputRef.current?.blur();
-      Keyboard.dismiss();
-      return false;
-    }, []);
+      const amount = new BigNumber(value);
+      const maximum = new BigNumber(maximumDisplayAmount);
+      return amount.isFinite() && maximum.isFinite() && amount.gt(maximum)
+        ? maximumDisplayAmount
+        : value;
+    },
+    [maximumDisplayAmount],
+  );
+  const beginManualAmountEntry = useCallback(() => {
+    if (inputSource !== 'slider') {
+      return;
+    }
+    setInputSource('manual');
+    setPercent(0);
+    setManualAmount('');
+  }, [inputSource]);
+  const handleAmountSliderTouchCapture = useCallback(() => {
+    amountInputRef.current?.blur();
+    Keyboard.dismiss();
+    return false;
+  }, []);
 
-    const partialSize =
-      mode === 'position'
-        ? null
-        : resolvePerpsProCloseSize({
-            amountUnit,
-            inputSource,
-            manualAmount,
-            percent,
-            positionSize: position.baseSize,
-            referencePrice: markPrice || '',
-            szDecimals: market.szDecimals,
-          });
-    const displayAmount =
-      inputSource === 'manual'
-        ? manualAmount
-        : amountUnit === 'base'
-        ? partialSize
-        : partialSize && markPrice
-        ? new BigNumber(partialSize).multipliedBy(markPrice).toString()
-        : null;
-    const sideSize = mode === 'position' ? position.baseSize : partialSize;
-    const {
-      changeModeMagnitude,
-      changeTrigger,
-      selectMode,
-      stopLoss: stopLossInput,
-      takeProfit: takeProfitInput,
-    } = usePerpsProPositionTpSlFormInputs({
-      direction: position.direction,
-      entryPrice: position.entryPrice,
-      initialSize: initialSideSize,
-      initialStopLoss,
-      initialTakeProfit,
-      leverage: position.leverage,
-      preferredModes: tpSlModePreferences.position,
-      sideSize,
-      szDecimals: market.szDecimals,
-    });
-    const amountValidation =
-      mode === 'position'
-        ? null
-        : validatePartialPositionTpSlAmount({
-            amount: partialSize || '',
-            positionSize: position.baseSize,
-            szDecimals: market.szDecimals,
-          });
-    const visibleKinds: PerpsPositionTpSlKind[] =
-      mode === 'modify' && initialOrder
-        ? [initialOrder.kind]
-        : ['takeProfit', 'stopLoss'];
-    const partialAmountChanged =
-      mode === 'modify' && initialOrder && partialSize
-        ? !new BigNumber(partialSize).eq(initialOrder.remainingSize)
-        : mode === 'add';
+  // A page/order change starts a new draft without replacing the native
+  // scroll host. Review coverage and live market updates retain this key.
+  const [previousSessionKey, setPreviousSessionKey] = useState(sessionKey);
+  if (previousSessionKey !== sessionKey) {
+    setPreviousSessionKey(sessionKey);
+    setActiveModeKind(null);
+    setInputSource(mode === 'add' ? 'slider' : 'manual');
+    setPercent(initialPercent);
+    setManualAmount(initialAmount);
+    setAmountFocused(false);
+  }
 
-    const getSideInput = (kind: PerpsPositionTpSlKind) =>
-      kind === 'takeProfit' ? takeProfitInput : stopLossInput;
-
-    const getFullPositionTriggerError = (
-      validation: PerpsPositionTpSlFormTriggerValidation,
-    ) => {
-      if (validation.kind !== 'invalid') {
-        return null;
-      }
-      switch (validation.reason) {
-        case 'takeProfitBelowMark':
-          return t('page.perps.PerpsAutoCloseModal.takeProfitTipsLong');
-        case 'takeProfitAboveMark':
-          return t('page.perps.PerpsAutoCloseModal.takeProfitTipsShort');
-        case 'stopLossAboveMark':
-          return t('page.perps.PerpsAutoCloseModal.stopLossTipsLong');
-        case 'stopLossBelowMark':
-          return t('page.perps.PerpsAutoCloseModal.stopLossTipsShort');
-        case 'stopLossBelowLiquidation':
-          return t('page.perps.pro.positionTpsl.triggerHigherThanLiquidation', {
-            price: `$${formatPerpsProPrice(
-              validation.liquidationPrice,
-              market.pxDecimals,
-            )}`,
-          });
-        case 'stopLossAboveLiquidation':
-          return t('page.perps.pro.positionTpsl.triggerLowerThanLiquidation', {
-            price: `$${formatPerpsProPrice(
-              validation.liquidationPrice,
-              market.pxDecimals,
-            )}`,
-          });
-        case 'takeProfitDerivedInvalid':
-          return t('page.perps.pro.positionTpsl.tpTriggerInvalid');
-        case 'stopLossDerivedInvalid':
-          return t('page.perps.pro.positionTpsl.slTriggerInvalid');
-      }
-    };
-
-    const sideFacts = (kind: PerpsPositionTpSlKind) => {
-      const input = getSideInput(kind);
-      const value = input.triggerPrice;
-      const initial =
-        kind === 'takeProfit' ? initialTakeProfit : initialStopLoss;
-      const sideSummary =
-        kind === 'takeProfit' ? summary.takeProfit : summary.stopLoss;
-      const existing =
-        mode === 'position'
-          ? sideSummary.positionOrders.length === 1
-            ? sideSummary.positionOrders[0]!
-            : null
-          : initialOrder?.kind === kind
-          ? initialOrder
-          : null;
-      const duplicate =
-        mode === 'position' && sideSummary.duplicatePositionOrders;
-      const fullPositionValidation =
-        mode === 'position'
-          ? validateFullPositionTpSlFormTrigger({
-              direction: position.direction,
-              inputSource: input.source,
-              kind,
-              liquidationPrice: position.liquidationPrice,
-              markPrice,
-              rawMagnitude: input.rawMagnitude,
-              szDecimals: market.szDecimals,
-              triggerPrice: value,
-            })
-          : null;
-      const modeTriggerUnavailable =
-        mode !== 'position' &&
-        isPositionTpSlModeTriggerUnavailable({
-          inputSource: input.source,
-          rawMagnitude: input.rawMagnitude,
-          triggerPrice: value,
+  const partialSize =
+    mode === 'position'
+      ? null
+      : resolvePerpsProCloseSize({
+          amountUnit,
+          inputSource,
+          manualAmount,
+          percent,
+          positionSize: position.baseSize,
+          referencePrice: markPrice || '',
+          szDecimals: market.szDecimals,
         });
-      const validation =
-        fullPositionValidation ??
-        (modeTriggerUnavailable
-          ? ({ kind: 'invalid' } as const)
-          : validatePositionTpSlTrigger({
-              direction: position.direction,
-              kind,
-              markPrice,
-              szDecimals: market.szDecimals,
-              triggerPrice: value,
-            }));
-      return {
-        changed: value !== initial,
-        duplicate,
-        errorMessage: fullPositionValidation
-          ? getFullPositionTriggerError(fullPositionValidation)
-          : modeTriggerUnavailable
-          ? t(
-              kind === 'takeProfit'
-                ? 'page.perps.pro.positionTpsl.tpTriggerInvalid'
-                : 'page.perps.pro.positionTpsl.slTriggerInvalid',
-            )
-          : null,
-        existing,
-        modeTriggerUnavailable,
-        sideSummary,
-        validation,
-        value,
-      };
-    };
-    const factsByKind = visibleKinds.map(kind => ({
-      facts: sideFacts(kind),
-      kind,
-    }));
-    const changedLegs = factsByKind
-      .filter(({ facts }) =>
-        mode === 'position'
-          ? !facts.duplicate &&
-            facts.changed &&
-            facts.validation.kind === 'valid'
-          : facts.validation.kind === 'valid' &&
-            (mode === 'add' || facts.changed || partialAmountChanged),
-      )
-      .map(({ facts, kind }) => ({
-        kind,
-        replaceOid: facts.existing?.oid ?? null,
-        size: mode === 'position' ? null : partialSize,
-        triggerPrice:
-          facts.validation.kind === 'valid' ? facts.validation.normalized : '',
-      }));
-    const hasInvalidEnteredSide = factsByKind.some(
-      ({ facts }) => !facts.duplicate && facts.validation.kind === 'invalid',
-    );
-    const canReview =
-      !pending &&
-      changedLegs.length > 0 &&
-      !hasInvalidEnteredSide &&
-      (mode === 'position' || amountValidation?.kind === 'valid');
-    const hasAmountValue =
-      inputSource === 'manual'
-        ? !!manualAmount
-        : percent > 0 && !!displayAmount;
-    const showAmountFloatingLabel = amountFocused || hasAmountValue;
+  const displayAmount =
+    inputSource === 'manual'
+      ? manualAmount
+      : amountUnit === 'base'
+      ? partialSize
+      : partialSize && markPrice
+      ? new BigNumber(partialSize).multipliedBy(markPrice).toString()
+      : null;
+  const sideSize = mode === 'position' ? position.baseSize : partialSize;
+  const {
+    changeModeMagnitude,
+    changeTrigger,
+    selectMode,
+    stopLoss: stopLossInput,
+    takeProfit: takeProfitInput,
+  } = usePerpsProPositionTpSlFormInputs({
+    sessionKey,
+    direction: position.direction,
+    entryPrice: position.entryPrice,
+    initialSize: initialSideSize,
+    initialStopLoss,
+    initialTakeProfit,
+    leverage: position.leverage,
+    preferredModes: tpSlModePreferences.position,
+    sideSize,
+    szDecimals: market.szDecimals,
+  });
+  const amountValidation =
+    mode === 'position'
+      ? null
+      : validatePartialPositionTpSlAmount({
+          amount: partialSize || '',
+          positionSize: position.baseSize,
+          szDecimals: market.szDecimals,
+        });
+  const visibleKinds: PerpsPositionTpSlKind[] =
+    mode === 'modify' && initialOrder
+      ? [initialOrder.kind]
+      : ['takeProfit', 'stopLoss'];
+  const partialAmountChanged =
+    mode === 'modify' && initialOrder && partialSize
+      ? !new BigNumber(partialSize).eq(initialOrder.remainingSize)
+      : mode === 'add';
 
-    const submit = () => {
-      if (!canReview) {
-        return;
-      }
-      onReview({
-        legs: changedLegs.map(leg => ({
-          ...leg,
-          size: leg.size || null,
-        })),
-        mode,
-        scope: mode === 'position' ? 'position' : 'partial',
+  const getSideInput = (kind: PerpsPositionTpSlKind) =>
+    kind === 'takeProfit' ? takeProfitInput : stopLossInput;
+
+  const getFullPositionTriggerError = (
+    validation: PerpsPositionTpSlFormTriggerValidation,
+  ) => {
+    if (validation.kind !== 'invalid') {
+      return null;
+    }
+    switch (validation.reason) {
+      case 'takeProfitBelowMark':
+        return t('page.perps.PerpsAutoCloseModal.takeProfitTipsLong');
+      case 'takeProfitAboveMark':
+        return t('page.perps.PerpsAutoCloseModal.takeProfitTipsShort');
+      case 'stopLossAboveMark':
+        return t('page.perps.PerpsAutoCloseModal.stopLossTipsLong');
+      case 'stopLossBelowMark':
+        return t('page.perps.PerpsAutoCloseModal.stopLossTipsShort');
+      case 'stopLossBelowLiquidation':
+        return t('page.perps.pro.positionTpsl.triggerHigherThanLiquidation', {
+          price: `$${formatPerpsProPrice(
+            validation.liquidationPrice,
+            market.pxDecimals,
+          )}`,
+        });
+      case 'stopLossAboveLiquidation':
+        return t('page.perps.pro.positionTpsl.triggerLowerThanLiquidation', {
+          price: `$${formatPerpsProPrice(
+            validation.liquidationPrice,
+            market.pxDecimals,
+          )}`,
+        });
+      case 'takeProfitDerivedInvalid':
+        return t('page.perps.pro.positionTpsl.tpTriggerInvalid');
+      case 'stopLossDerivedInvalid':
+        return t('page.perps.pro.positionTpsl.slTriggerInvalid');
+    }
+  };
+
+  const sideFacts = (kind: PerpsPositionTpSlKind) => {
+    const input = getSideInput(kind);
+    const value = input.triggerPrice;
+    const initial = kind === 'takeProfit' ? initialTakeProfit : initialStopLoss;
+    const sideSummary =
+      kind === 'takeProfit' ? summary.takeProfit : summary.stopLoss;
+    const existing =
+      mode === 'position'
+        ? sideSummary.positionOrders.length === 1
+          ? sideSummary.positionOrders[0]!
+          : null
+        : initialOrder?.kind === kind
+        ? initialOrder
+        : null;
+    const duplicate =
+      mode === 'position' && sideSummary.duplicatePositionOrders;
+    const fullPositionValidation =
+      mode === 'position'
+        ? validateFullPositionTpSlFormTrigger({
+            direction: position.direction,
+            inputSource: input.source,
+            kind,
+            liquidationPrice: position.liquidationPrice,
+            markPrice,
+            rawMagnitude: input.rawMagnitude,
+            szDecimals: market.szDecimals,
+            triggerPrice: value,
+          })
+        : null;
+    const modeTriggerUnavailable =
+      mode !== 'position' &&
+      isPositionTpSlModeTriggerUnavailable({
+        inputSource: input.source,
+        rawMagnitude: input.rawMagnitude,
+        triggerPrice: value,
       });
+    const validation =
+      fullPositionValidation ??
+      (modeTriggerUnavailable
+        ? ({ kind: 'invalid' } as const)
+        : validatePositionTpSlTrigger({
+            direction: position.direction,
+            kind,
+            markPrice,
+            szDecimals: market.szDecimals,
+            triggerPrice: value,
+          }));
+    return {
+      changed: value !== initial,
+      duplicate,
+      errorMessage: fullPositionValidation
+        ? getFullPositionTriggerError(fullPositionValidation)
+        : modeTriggerUnavailable
+        ? t(
+            kind === 'takeProfit'
+              ? 'page.perps.pro.positionTpsl.tpTriggerInvalid'
+              : 'page.perps.pro.positionTpsl.slTriggerInvalid',
+          )
+        : null,
+      existing,
+      modeTriggerUnavailable,
+      sideSummary,
+      validation,
+      value,
     };
+  };
+  const factsByKind = visibleKinds.map(kind => ({
+    facts: sideFacts(kind),
+    kind,
+  }));
+  const changedLegs = factsByKind
+    .filter(({ facts }) =>
+      mode === 'position'
+        ? !facts.duplicate && facts.changed && facts.validation.kind === 'valid'
+        : facts.validation.kind === 'valid' &&
+          (mode === 'add' || facts.changed || partialAmountChanged),
+    )
+    .map(({ facts, kind }) => ({
+      kind,
+      replaceOid: facts.existing?.oid ?? null,
+      size: mode === 'position' ? null : partialSize,
+      triggerPrice:
+        facts.validation.kind === 'valid' ? facts.validation.normalized : '',
+    }));
+  const hasInvalidEnteredSide = factsByKind.some(
+    ({ facts }) => !facts.duplicate && facts.validation.kind === 'invalid',
+  );
+  const canReview =
+    !pending &&
+    changedLegs.length > 0 &&
+    !hasInvalidEnteredSide &&
+    (mode === 'position' || amountValidation?.kind === 'valid');
+  const hasAmountValue =
+    inputSource === 'manual' ? !!manualAmount : percent > 0 && !!displayAmount;
+  const showAmountFloatingLabel = amountFocused || hasAmountValue;
 
-    return (
+  const submit = () => {
+    if (!canReview) {
+      return;
+    }
+    onReview({
+      legs: changedLegs.map(leg => ({
+        ...leg,
+        size: leg.size || null,
+      })),
+      mode,
+      scope: mode === 'position' ? 'position' : 'partial',
+    });
+  };
+
+  const content = (
+    <View
+      style={[styles.container, isSubpage ? styles.subpageContainer : null]}
+      testID={`perps-pro-position-tpsl-form-${resolvedPresentation}`}>
       <View
         style={[
-          styles.container,
-          isSubpage ? styles.subpageContainer : null,
-          minimumHeight == null ? null : { minHeight: minimumHeight },
+          styles.card,
+          isSubpage ? styles.subpageCard : styles.tabCard,
+          isSubpage && mode === 'add' ? styles.addCard : null,
         ]}
-        testID={`perps-pro-position-tpsl-form-${resolvedPresentation}`}>
+        testID="perps-pro-position-tpsl-form-card">
         <View
           style={[
-            styles.card,
-            isSubpage ? styles.subpageCard : styles.tabCard,
-            isSubpage && mode === 'add' ? styles.addCard : null,
-          ]}
-          testID="perps-pro-position-tpsl-form-card">
-          <View
-            style={[
-              styles.sides,
-              resolvedPresentation === 'position-modify'
-                ? styles.positionModifySides
-                : null,
-            ]}>
-            {visibleKinds.map(kind => {
-              const facts = sideFacts(kind);
-              const orders = facts.sideSummary.positionOrders;
-              const input = getSideInput(kind);
-              return (
-                <View key={kind} style={styles.sideSection}>
-                  <View style={styles.sideHeading}>
-                    <View style={styles.sideTitleRow}>
-                      <View
-                        style={
-                          kind === 'takeProfit'
-                            ? styles.takeProfitBar
-                            : styles.stopLossBar
-                        }
-                      />
-                      <Text style={styles.sideTitle}>
-                        {t(
-                          kind === 'takeProfit'
-                            ? 'page.perps.pro.positionTpsl.takeProfit'
-                            : 'page.perps.pro.positionTpsl.stopLoss',
-                        )}
-                      </Text>
-                    </View>
-                    {mode === 'position' &&
-                    facts.existing &&
-                    !facts.duplicate ? (
-                      <PerpsProPositionTpSlCancelAction
-                        disabled={pending}
-                        loading={cancelingOids.includes(facts.existing.oid)}
-                        label={t('global.cancel')}
-                        onPress={() => onCancelOrder(facts.existing!)}
-                        textStyle={styles.cancelText}
-                      />
-                    ) : null}
-                  </View>
-
-                  {facts.duplicate ? (
-                    <View style={styles.duplicateBox}>
-                      <Text style={styles.warningText}>
-                        {t(
-                          'page.perps.pro.positionTpsl.duplicatePositionOrders',
-                        )}
-                      </Text>
-                      {orders.map(order => (
-                        <View key={order.key} style={styles.duplicateOrderRow}>
-                          <Text style={styles.duplicateOrderPrice}>
-                            {formatPerpsProPrice(
-                              order.triggerPrice,
-                              market.pxDecimals,
-                            )}{' '}
-                            {market.quoteAsset}
-                          </Text>
-                          <PerpsProPositionTpSlCancelAction
-                            disabled={pending}
-                            loading={cancelingOids.includes(order.oid)}
-                            label={t('global.cancel')}
-                            onPress={() => onCancelOrder(order)}
-                            textStyle={styles.cancelText}
-                          />
-                        </View>
-                      ))}
-                    </View>
-                  ) : (
-                    <PerpsProPositionTpSlSideInputs
-                      addMode={mode === 'add'}
-                      disabled={pending}
-                      kind={kind}
-                      inputSource={input.source}
-                      market={market}
-                      onChangeModeMagnitude={next =>
-                        changeModeMagnitude(kind, next)
+            styles.sides,
+            resolvedPresentation === 'position-modify'
+              ? styles.positionModifySides
+              : null,
+          ]}>
+          {visibleKinds.map(kind => {
+            const facts = sideFacts(kind);
+            const orders = facts.sideSummary.positionOrders;
+            const input = getSideInput(kind);
+            return (
+              <View key={kind} style={styles.sideSection}>
+                <View style={styles.sideHeading}>
+                  <View style={styles.sideTitleRow}>
+                    <View
+                      style={
+                        kind === 'takeProfit'
+                          ? styles.takeProfitBar
+                          : styles.stopLossBar
                       }
-                      onChangeTrigger={next => changeTrigger(kind, next)}
-                      onPressMode={() => {
-                        dismissKeyboardThen(() => setActiveModeKind(kind));
-                      }}
-                      position={position}
-                      rawMagnitude={input.rawMagnitude}
-                      selectedMode={input.mode}
-                      errorMessage={facts.errorMessage}
-                      highlightInvalidFields={
-                        mode === 'position' || facts.modeTriggerUnavailable
-                      }
-                      showEmptyDescription={
-                        mode === 'position' || facts.modeTriggerUnavailable
-                      }
-                      size={sideSize}
-                      validationKind={facts.validation.kind}
-                      value={input.triggerPrice}
                     />
-                  )}
+                    <Text style={styles.sideTitle}>
+                      {t(
+                        kind === 'takeProfit'
+                          ? 'page.perps.pro.positionTpsl.takeProfit'
+                          : 'page.perps.pro.positionTpsl.stopLoss',
+                      )}
+                    </Text>
+                  </View>
+                  {mode === 'position' && facts.existing && !facts.duplicate ? (
+                    <PerpsProPositionTpSlCancelAction
+                      disabled={pending}
+                      loading={cancelingOids.includes(facts.existing.oid)}
+                      label={t('global.cancel')}
+                      onPress={() => onCancelOrder(facts.existing!)}
+                      textStyle={styles.cancelText}
+                    />
+                  ) : null}
                 </View>
-              );
-            })}
-          </View>
 
-          {mode !== 'position' ? (
-            <View
-              style={styles.amountSection}
-              testID="perps-pro-position-tpsl-amount-section">
-              <View style={styles.inputShell}>
-                <Text
-                  style={
-                    showAmountFloatingLabel
-                      ? styles.floatingLabel
-                      : styles.amountPlaceholder
-                  }>
-                  {t('page.perps.pro.positions.amount')}
-                </Text>
-                {inputSource === 'slider' && hasAmountValue ? (
-                  <Text
-                    pointerEvents="none"
-                    style={styles.sliderAmountValue}
-                    testID="perps-pro-position-tpsl-slider-amount">
-                    {percent}% (≈
-                    {formatPerpsProDecimal(
-                      displayAmount,
-                      displayAmountDecimals,
-                    )}
-                    )
-                  </Text>
-                ) : null}
-                <PerpsProDecimalTextInput
-                  editable={!pending}
-                  inputComponent={PerpsProPositionTpSlBottomSheetTextInput}
-                  maxDecimals={displayAmountDecimals}
-                  normalizeValue={normalizeAmountInput}
-                  onChangeText={value => {
-                    setInputSource('manual');
-                    setPercent(0);
-                    setManualAmount(value);
-                  }}
-                  onBlur={() => setAmountFocused(false)}
-                  onFocus={() => {
-                    setAmountFocused(true);
-                    beginManualAmountEntry();
-                  }}
-                  onPressIn={beginManualAmountEntry}
-                  ref={amountInputRef}
-                  style={styles.input}
-                  testID="perps-pro-position-tpsl-amount"
-                  value={inputSource === 'manual' ? manualAmount : ''}
-                />
-                {hasAmountValue ? (
-                  <Text
-                    style={styles.inputUnit}
-                    testID="perps-pro-position-tpsl-amount-unit">
-                    {amountUnit === 'base'
-                      ? market.displayBase
-                      : market.quoteAsset}
-                  </Text>
-                ) : null}
+                {facts.duplicate ? (
+                  <View style={styles.duplicateBox}>
+                    <Text style={styles.warningText}>
+                      {t('page.perps.pro.positionTpsl.duplicatePositionOrders')}
+                    </Text>
+                    {orders.map(order => (
+                      <View key={order.key} style={styles.duplicateOrderRow}>
+                        <Text style={styles.duplicateOrderPrice}>
+                          {formatPerpsProPrice(
+                            order.triggerPrice,
+                            market.pxDecimals,
+                          )}{' '}
+                          {market.quoteAsset}
+                        </Text>
+                        <PerpsProPositionTpSlCancelAction
+                          disabled={pending}
+                          loading={cancelingOids.includes(order.oid)}
+                          label={t('global.cancel')}
+                          onPress={() => onCancelOrder(order)}
+                          textStyle={styles.cancelText}
+                        />
+                      </View>
+                    ))}
+                  </View>
+                ) : (
+                  <PerpsProPositionTpSlSideInputs
+                    addMode={mode === 'add'}
+                    disabled={pending}
+                    kind={kind}
+                    inputSource={input.source}
+                    market={market}
+                    onChangeModeMagnitude={next =>
+                      changeModeMagnitude(kind, next)
+                    }
+                    onChangeTrigger={next => changeTrigger(kind, next)}
+                    onPressMode={() => {
+                      dismissKeyboardThen(() => {
+                        if (currentSessionKey.current === sessionKey) {
+                          setActiveModeKind(kind);
+                        }
+                      });
+                    }}
+                    position={position}
+                    rawMagnitude={input.rawMagnitude}
+                    selectedMode={input.mode}
+                    errorMessage={facts.errorMessage}
+                    highlightInvalidFields={
+                      mode === 'position' || facts.modeTriggerUnavailable
+                    }
+                    showEmptyDescription={
+                      mode === 'position' || facts.modeTriggerUnavailable
+                    }
+                    size={sideSize}
+                    validationKind={facts.validation.kind}
+                    value={input.triggerPrice}
+                  />
+                )}
               </View>
-              <View
-                style={styles.slider}
-                onStartShouldSetResponderCapture={
-                  handleAmountSliderTouchCapture
-                }
-                testID="perps-pro-position-tpsl-amount-slider-section">
-                <PerpsProSlider
-                  appearance="order-dialog"
-                  dimWhenDisabled={false}
-                  disabled={pending}
-                  maximumValue={100}
-                  minimumValue={0}
-                  onSlidingComplete={sliderHaptics.onSlidingComplete}
-                  onSlidingStart={sliderHaptics.onSlidingStart}
-                  onValueChange={next => {
-                    const roundedNext = Math.round(next);
-                    sliderHaptics.onValueChange(roundedNext);
-                    setInputSource('slider');
-                    setPercent(roundedNext);
-                  }}
-                  pointCount={5}
-                  step={1}
-                  tone="neutral"
-                  value={inputSource === 'slider' ? percent : 0}
-                />
-              </View>
+            );
+          })}
+        </View>
+
+        {mode !== 'position' ? (
+          <View
+            style={styles.amountSection}
+            testID="perps-pro-position-tpsl-amount-section">
+            <View style={styles.inputShell}>
               <Text
-                accessibilityElementsHidden={isInlineEmpty && !hasAmountValue}
-                style={[
-                  styles.amountAvailable,
-                  isInlineEmpty && !hasAmountValue
-                    ? styles.hiddenAmountAvailable
-                    : null,
-                ]}>
-                {t('page.perps.pro.positionTpsl.positionAmount')}{' '}
-                {formatPerpsProDecimal(
-                  amountUnit === 'base'
-                    ? position.baseSize
-                    : new BigNumber(position.baseSize)
-                        .multipliedBy(markPrice || '0')
-                        .toString(),
-                  displayAmountDecimals,
-                )}{' '}
-                {amountUnit === 'base' ? market.displayBase : market.quoteAsset}
+                style={
+                  showAmountFloatingLabel
+                    ? styles.floatingLabel
+                    : styles.amountPlaceholder
+                }>
+                {t('page.perps.pro.positions.amount')}
               </Text>
+              {inputSource === 'slider' && hasAmountValue ? (
+                <Text
+                  pointerEvents="none"
+                  style={styles.sliderAmountValue}
+                  testID="perps-pro-position-tpsl-slider-amount">
+                  {percent}% (≈
+                  {formatPerpsProDecimal(displayAmount, displayAmountDecimals)})
+                </Text>
+              ) : null}
+              <PerpsProDecimalTextInput
+                editable={!pending}
+                inputComponent={PerpsProPositionTpSlBottomSheetTextInput}
+                maxDecimals={displayAmountDecimals}
+                normalizeValue={normalizeAmountInput}
+                onChangeText={value => {
+                  setInputSource('manual');
+                  setPercent(0);
+                  setManualAmount(value);
+                }}
+                onBlur={() => setAmountFocused(false)}
+                onFocus={() => {
+                  setAmountFocused(true);
+                  beginManualAmountEntry();
+                }}
+                onPressIn={beginManualAmountEntry}
+                ref={amountInputRef}
+                style={styles.input}
+                testID="perps-pro-position-tpsl-amount"
+                value={inputSource === 'manual' ? manualAmount : ''}
+              />
+              {hasAmountValue ? (
+                <Text
+                  style={styles.inputUnit}
+                  testID="perps-pro-position-tpsl-amount-unit">
+                  {amountUnit === 'base'
+                    ? market.displayBase
+                    : market.quoteAsset}
+                </Text>
+              ) : null}
             </View>
-          ) : null}
-        </View>
-        <View style={styles.footer} testID="perps-pro-position-tpsl-footer">
-          <Button
-            buttonStyle={[styles.button, !canReview && styles.buttonDisabled]}
-            disabledTitleStyle={styles.buttonDisabledTitle}
-            disabled={!canReview}
-            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-            onPress={submit}
-            testID="perps-pro-position-tpsl-review"
-            title={t('global.confirm')}
-            titleStyle={styles.buttonTitle}
-            type="primary"
-          />
-        </View>
-        <PerpsProTpSlModeSheet
-          allowedModes={['pnl', 'roi']}
-          onClose={() => setActiveModeKind(null)}
-          onSelect={nextMode => {
-            if (!activeModeKind || nextMode === 'price') {
-              return;
-            }
-            void tpSlModePreferences.setMode({
-              leg: activeModeKind === 'takeProfit' ? 'tp' : 'sl',
-              mode: nextMode,
-              surface: 'position',
-            });
-            selectMode(activeModeKind, nextMode);
-          }}
-          selected={activeModeKind ? getSideInput(activeModeKind).mode : 'pnl'}
-          visible={activeModeKind != null}
+            <View
+              style={styles.slider}
+              onStartShouldSetResponderCapture={handleAmountSliderTouchCapture}
+              testID="perps-pro-position-tpsl-amount-slider-section">
+              <PerpsProSlider
+                appearance="order-dialog"
+                dimWhenDisabled={false}
+                disabled={pending}
+                maximumValue={100}
+                minimumValue={0}
+                onSlidingComplete={sliderHaptics.onSlidingComplete}
+                onSlidingStart={sliderHaptics.onSlidingStart}
+                onValueChange={next => {
+                  const roundedNext = Math.round(next);
+                  sliderHaptics.onValueChange(roundedNext);
+                  setInputSource('slider');
+                  setPercent(roundedNext);
+                }}
+                pointCount={5}
+                step={1}
+                tone="neutral"
+                value={inputSource === 'slider' ? percent : 0}
+              />
+            </View>
+            <Text
+              accessibilityElementsHidden={isInlineEmpty && !hasAmountValue}
+              style={[
+                styles.amountAvailable,
+                isInlineEmpty && !hasAmountValue
+                  ? styles.hiddenAmountAvailable
+                  : null,
+              ]}>
+              {t('page.perps.pro.positionTpsl.positionAmount')}{' '}
+              {formatPerpsProDecimal(
+                amountUnit === 'base'
+                  ? position.baseSize
+                  : new BigNumber(position.baseSize)
+                      .multipliedBy(markPrice || '0')
+                      .toString(),
+                displayAmountDecimals,
+              )}{' '}
+              {amountUnit === 'base' ? market.displayBase : market.quoteAsset}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+      <PerpsProTpSlModeSheet
+        allowedModes={['pnl', 'roi']}
+        onClose={() => setActiveModeKind(null)}
+        onSelect={nextMode => {
+          if (!activeModeKind || nextMode === 'price') {
+            return;
+          }
+          void tpSlModePreferences.setMode({
+            leg: activeModeKind === 'takeProfit' ? 'tp' : 'sl',
+            mode: nextMode,
+            surface: 'position',
+          });
+          selectMode(activeModeKind, nextMode);
+        }}
+        selected={activeModeKind ? getSideInput(activeModeKind).mode : 'pnl'}
+        visible={activeModeKind != null}
+      />
+    </View>
+  );
+  return {
+    content,
+    footer: (
+      <View style={styles.footer} testID="perps-pro-position-tpsl-footer">
+        <Button
+          buttonStyle={[styles.button, !canReview && styles.buttonDisabled]}
+          disabledTitleStyle={styles.buttonDisabledTitle}
+          disabled={!canReview}
+          height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+          onPress={submit}
+          testID="perps-pro-position-tpsl-review"
+          title={t('global.confirm')}
+          titleStyle={styles.buttonTitle}
+          type="primary"
         />
       </View>
-    );
-  },
-);
-
-PerpsProPositionTpSlForm.displayName = 'PerpsProPositionTpSlForm';
+    ),
+  };
+};
 
 const getStyle = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
@@ -827,8 +830,8 @@ const getStyle = createGetStyles2024(
     },
     hiddenAmountAvailable: { opacity: 0 },
     footer: {
-      paddingHorizontal: 4,
-      marginTop: 'auto',
+      backgroundColor: colors2024['neutral-bg-0'],
+      paddingHorizontal: 20,
       paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
       paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
     },
