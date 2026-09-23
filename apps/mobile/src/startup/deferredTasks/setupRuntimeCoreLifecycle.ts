@@ -5,7 +5,6 @@ import {
   startSubscribeAppStateChange,
 } from '@/hooks/useLock';
 import { startProcessAccountBalanceEvents } from '@/store/balanceAccountSelection';
-import { startCheckClearAction } from '@/utils/clipboard';
 import { startSubscribeOpenApiHttpErrorDebugToast } from '@/utils/openapiDebugToast';
 import * as apisAutoLock from '@/core/apis/autoLock';
 import { startWatchLayoutChange } from '@/hooks/useAppLayout';
@@ -20,6 +19,5 @@ export function startSetupRuntimeCoreLifecycle() {
   startSubscribeAppStateChange();
   startWatchLayoutChange();
   startProcessAccountBalanceEvents();
-  startCheckClearAction();
   startSubscribeOpenApiHttpErrorDebugToast();
 }

@@ -2,9 +2,13 @@ package com.debank.rabbymobile;
 
 import android.app.Activity;
 import android.content.ClipData;
+import android.content.ClipDescription;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.os.PersistableBundle;
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 
@@ -153,6 +157,24 @@ public class RNHelpersModule extends NativeRNHelpersSpec {
         promise.reject("E_MOVE_TASK_TO_BACK", error);
       }
     });
+  }
+
+  @ReactMethod
+  @Override
+  public void setSensitiveClipboard(String text, Promise promise) {
+    try {
+      ClipData clip = ClipData.newPlainText(null, text);
+      PersistableBundle extras = new PersistableBundle();
+      extras.putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true);
+      clip.getDescription().setExtras(extras);
+      ClipboardManager clipboard =
+        (ClipboardManager) reactContext.getSystemService(Context.CLIPBOARD_SERVICE);
+      // Android 13+ handles expiry with a system-controlled timeout.
+      clipboard.setPrimaryClip(clip);
+      promise.resolve(null);
+    } catch (Exception error) {
+      promise.reject("E_CLIPBOARD", "Failed to copy sensitive content");
+    }
   }
 
   @ReactMethod
