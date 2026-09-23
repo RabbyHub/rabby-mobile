@@ -14,6 +14,7 @@ import { MaskContainer } from './components/MaskContainer';
 import { toast } from '@/components2024/Toast';
 import i18next from 'i18next';
 import { Text } from '@/components/Typography';
+import * as SecretVault from '@/core/utils/secretVault';
 
 const QR_CODE_WIDTH = Dimensions.get('window').width - 130;
 
@@ -86,7 +87,25 @@ export const BackupPrivateKeyScreen = () => {
     useRoute<
       GetNestedScreenRouteProp<'AddressNavigatorParamList', 'BackupPrivateKey'>
     >();
-  const { data } = route.params || {};
+  const { privateKeyVaultId } = route.params || {};
+
+  const [data, setData] = React.useState<string>();
+  const privateKeyFetchedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (privateKeyFetchedRef.current) {
+      return;
+    }
+    privateKeyFetchedRef.current = true;
+    const privateKey = privateKeyVaultId
+      ? SecretVault.retrieve(privateKeyVaultId)
+      : null;
+    if (!privateKey) {
+      toast.show('Backup session expired. Please try again.');
+      nav.goBack();
+      return;
+    }
+    setData(privateKey);
+  }, [privateKeyVaultId, nav]);
 
   const handleDone = React.useCallback(() => {
     nav.goBack();
