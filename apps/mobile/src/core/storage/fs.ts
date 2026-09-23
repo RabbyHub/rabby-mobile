@@ -15,7 +15,7 @@ const DIRS = {
 };
 
 export class AppScreenshotFS {
-  #dir = DIRS['SCREEN_SHOT_TMP'];
+  #initializationPromise?: Promise<void>;
   static getScreenshotDir() {
     return DIRS['SCREEN_SHOT_TMP'];
   }
@@ -32,15 +32,18 @@ export class AppScreenshotFS {
     }-${Date.now()}.${AppScreenshotFS.normalizeContentType(imageType).ext}`;
   }
 
-  constructor() {
-    this.#dir = DIRS['SCREEN_SHOT_TMP'];
+  /** Complete once before subscribing to native screenshot events. */
+  initializeBeforeCapture() {
+    if (!this.#initializationPromise) {
+      this.#initializationPromise = this._initializeBeforeCapture().catch(
+        error => {
+          this.#initializationPromise = undefined;
+          throw error;
+        },
+      );
+    }
 
-    this._cleanDirectoryOnBootstrap();
-    RNFS.mkdir(this.#dir, { NSURLIsExcludedFromBackupKey: false }).catch(
-      error => {
-        Sentry.captureException(error);
-      },
-    );
+    return this.#initializationPromise;
   }
 
   static #inst: AppScreenshotFS;
@@ -51,12 +54,20 @@ export class AppScreenshotFS {
     return AppScreenshotFS.#inst;
   }
 
-  private async _cleanDirectoryOnBootstrap() {
-    for (const dir of [this.#dir, DIRS.NATIVE_SCREEN_CAPTURE_TMP]) {
-      if (!(await RNFS.exists(dir))) continue;
-
-      await RNFS.unlink(dir).catch(() => undefined);
+  private async _initializeBeforeCapture() {
+    // Metro may evaluate this module on the first screenshot. Never clean
+    // directories from the constructor, when they can contain that capture.
+    for (const dir of Object.values(DIRS)) {
+      try {
+        if (await RNFS.exists(dir)) {
+          await RNFS.unlink(dir);
+        }
+      } catch (error) {
+        Sentry.captureException(error);
+      }
     }
+
+    await AppScreenshotFS.ensureScreenshotDir();
   }
 
   static normalizeFilePath(filePath: string) {
