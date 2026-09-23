@@ -65,7 +65,7 @@ export function registerSetupAppBeforeRenderDeferredTasks(reason = 'unknown') {
     const { startSetupRuntimeScreenshotFeedbackSubscription } = await import(
       './startup/deferredTasks/setupRuntimeScreenshotFeedbackSubscription'
     );
-    startSetupRuntimeScreenshotFeedbackSubscription();
+    await startSetupRuntimeScreenshotFeedbackSubscription();
   }, STARTUP_TASKS.setupRuntimeScreenshotFeedbackSubscription);
 
   runStartupTask(async () => {

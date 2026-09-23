@@ -448,15 +448,9 @@ export function debugShowSubmitFeedbackByScreenshotModal() {
   );
 }
 
-if (IS_ANDROID && !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT) {
-  RNScreenshotPrevent.startScreenCaptureDetection().then(() => {
-    console.debug(
-      '[info] RNScreenshotPrevent started screen capture detection on Android',
-    );
-  });
-}
+export async function startSubscribeUserDidTakeScreenshot() {
+  await appScreenshotFS.initializeBeforeCapture();
 
-export function startSubscribeUserDidTakeScreenshot() {
   const subscription = RNScreenshotPrevent.onUserDidTakeScreenshot(
     async params => {
       const eventAccepted =
@@ -528,6 +522,18 @@ export function startSubscribeUserDidTakeScreenshot() {
       }
     },
   );
+
+  if (IS_ANDROID && !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT) {
+    try {
+      await RNScreenshotPrevent.startScreenCaptureDetection();
+      console.debug(
+        '[info] RNScreenshotPrevent started screen capture detection on Android',
+      );
+    } catch (error) {
+      subscription.remove();
+      throw error;
+    }
+  }
 
   return subscription;
 }
