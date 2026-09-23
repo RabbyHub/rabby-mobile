@@ -27,6 +27,7 @@ export interface Spec extends TurboModule {
   androidTraceEndAsyncSection(name: string, cookie: number): void;
   androidTraceCounter(name: string, value: number): void;
   moveTaskToBack(): Promise<boolean>;
+  setSensitiveClipboard(text: string): Promise<void>;
   shareFile(options: ShareFileOptions): Promise<void>;
   iosExcludeFileFromBackup(filePath: string): Promise<boolean>;
 }

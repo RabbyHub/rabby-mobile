@@ -8,6 +8,7 @@ import {
   TextStyle,
 } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
+import RNHelpers from '@/core/native/RNHelpers';
 import { SvgProps } from 'react-native-svg';
 
 import RcIconCopyCC from '@/assets2024/icons/address/mcopy.svg';
@@ -25,6 +26,7 @@ type CopyHandler = (evt?: Parameters<ContainerOnPressProp>[0]) => void;
 
 type Props = {
   address?: string | null;
+  sensitive?: boolean;
   style?: SvgProps['style'];
   color?: string;
   onToastSuccess?: (ctx: { address: string }) => void;
@@ -47,6 +49,7 @@ export const CopyAddressIcon = ({
   style,
   // containerStyle,
   address,
+  sensitive = false,
   color,
   title,
   titleStyle,
@@ -57,22 +60,32 @@ export const CopyAddressIcon = ({
   const onToastSuccess = useCallback<Props['onToastSuccess'] & object>(
     ({ address }) => {
       if (propOnToastSucess) propOnToastSucess({ address });
+      else if (sensitive) toast.success(i18next.t('global.copied'));
       else {
         toastCopyAddressSuccess(address);
       }
     },
-    [propOnToastSucess],
+    [propOnToastSucess, sensitive],
   );
 
   const handleCopyAddress = useCallback<CopyHandler>(
-    (evt?) => {
+    async (evt?) => {
       if (!address) return null;
 
       evt?.stopPropagation();
-      Clipboard.setString(address);
+      if (sensitive) {
+        try {
+          await RNHelpers.setSensitiveClipboard(address);
+        } catch {
+          toast.error('Failed to copy');
+          return;
+        }
+      } else {
+        Clipboard.setString(address);
+      }
       onToastSuccess({ address });
     },
-    [address, onToastSuccess],
+    [address, onToastSuccess, sensitive],
   );
 
   useImperativeHandle(ref, () => ({

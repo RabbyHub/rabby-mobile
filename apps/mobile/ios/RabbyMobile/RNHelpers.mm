@@ -1,6 +1,7 @@
 // RNHelpers.mm
 #import "RNHelpers.h"
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
 @implementation RNHelpers
 
@@ -31,6 +32,18 @@ RCT_EXPORT_MODULE();
 #pragma mark - Public API
 RCT_EXPORT_METHOD(forceExitApp) {
     exit(0);
+}
+
+RCT_EXPORT_METHOD(setSensitiveClipboard:(NSString *)text
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[UIPasteboard generalPasteboard] setItems:@[@{@"public.utf8-plain-text": text}]
+                                          options:@{
+            UIPasteboardOptionExpirationDate: [NSDate dateWithTimeIntervalSinceNow:10 * 60]
+        }];
+        resolve(nil);
+    });
 }
 
 RCT_EXPORT_METHOD(iosExcludeFileFromBackup:
