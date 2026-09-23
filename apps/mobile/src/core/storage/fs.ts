@@ -9,6 +9,9 @@ const TMPDIR = RNFS.TemporaryDirectoryPath || RNFS.CachesDirectoryPath;
 
 const DIRS = {
   SCREEN_SHOT_TMP: `${stringUtils.unSuffix(TMPDIR)}/.screenshots`,
+  NATIVE_SCREEN_CAPTURE_TMP: `${stringUtils.unSuffix(
+    TMPDIR,
+  )}/rabby-screen-capture`,
 };
 
 export class AppScreenshotFS {
@@ -49,9 +52,11 @@ export class AppScreenshotFS {
   }
 
   private async _cleanDirectoryOnBootstrap() {
-    if (!(await RNFS.exists(this.#dir))) return;
+    for (const dir of [this.#dir, DIRS.NATIVE_SCREEN_CAPTURE_TMP]) {
+      if (!(await RNFS.exists(dir))) continue;
 
-    await RNFS.unlink(this.#dir);
+      await RNFS.unlink(dir).catch(() => undefined);
+    }
   }
 
   static normalizeFilePath(filePath: string) {
