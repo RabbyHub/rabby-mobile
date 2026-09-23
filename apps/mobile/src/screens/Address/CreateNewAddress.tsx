@@ -33,7 +33,6 @@ import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { Text } from '@/components/Typography';
 
-const MAX_ACCOUNT_COUNT = 50;
 const PROGRESS_BAR_STEP = {
   ONE: 1,
   TWO: 2,
@@ -70,32 +69,14 @@ function MainListBlocks() {
   }, [setNavigationOptions, getHeaderTitle, state?.title]);
 
   const { value, loading, error } = useAsync(async () => {
-    let seedPhrase = '';
     let accountsToCreate: any[] | undefined = [];
-    if (state?.mnemonics) {
-      seedPhrase = state?.mnemonics;
-      const currentAddressArr = state?.accounts;
-      const api = apiMnemonic.getKeyringByMnemonic(seedPhrase, '');
-      for (let i = 0; i < MAX_ACCOUNT_COUNT; i++) {
-        console.log('requestKeyring res find count', i);
-        const res = await api?.getAddresses(i, i + 1);
-        const idx = currentAddressArr?.findIndex(
-          item => item === res?.[0].address,
-        );
-        if (idx === -1) {
-          accountsToCreate = res;
-          break; // has find a address
-        }
-      }
-    } else {
-      // first create
-      seedPhrase = await apiMnemonic.generatePreMnemonic();
-      const Keyring = (await keyringServiceApi.getKeyringClassForType(
-        KEYRING_CLASS.MNEMONIC,
-      )) as any;
-      const keyring = new Keyring({ mnemonic: seedPhrase, passphrase: '' });
-      accountsToCreate = keyring?.getAddresses(0, 1);
-    }
+    // first create
+    const seedPhrase = await apiMnemonic.generatePreMnemonic();
+    const Keyring = (await keyringServiceApi.getKeyringClassForType(
+      KEYRING_CLASS.MNEMONIC,
+    )) as any;
+    const keyring = new Keyring({ mnemonic: seedPhrase, passphrase: '' });
+    accountsToCreate = keyring?.getAddresses(0, 1);
     const words = seedPhrase.split(' ');
     const address = accountsToCreate?.[0].address;
     setNewAddress(address);
@@ -158,7 +139,7 @@ function MainListBlocks() {
       alias: '',
     });
     await activeAndPersistAccountsByMnemonics(
-      state?.mnemonics || '',
+      '',
       '',
       value?.accountsToCreate || [],
       false,
@@ -170,13 +151,11 @@ function MainListBlocks() {
         brandName: KEYRING_CLASS.MNEMONIC,
         isFirstCreate: true,
         address: [newAddress],
-        mnemonics: state?.mnemonics,
-        passphrase: '',
         isExistedKR: false,
         alias: ellipsisAddress(newAddress),
       },
     });
-  }, [newAddress, state, value]);
+  }, [newAddress, value]);
 
   const currentProgressCount = React.useMemo(() => {
     return state?.useCurrentSeed

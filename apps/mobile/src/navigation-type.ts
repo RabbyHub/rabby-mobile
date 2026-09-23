@@ -213,7 +213,6 @@ export type AddressNavigatorParamList = {
   [RootNames.CreateNewAddress]?: {
     noSetupPassword?: boolean;
     useCurrentSeed?: boolean;
-    mnemonics?: string;
     title?: string;
     accounts?: string[];
     isFirstCreate?: boolean;
@@ -253,8 +252,7 @@ export type AddressNavigatorParamList = {
     isFirstCreate?: boolean;
     type: KEYRING_TYPE;
     supportChainList?: Chain[];
-    mnemonics?: string;
-    passphrase?: string;
+    mnemonicsVaultId?: string;
     keyringId?: number;
     alias?: string;
     isExistedKR?: boolean;
@@ -268,8 +266,7 @@ export type AddressNavigatorParamList = {
     isFirstCreate?: boolean;
     type: KEYRING_TYPE;
     supportChainList?: Chain[];
-    mnemonics?: string;
-    passphrase?: string;
+    mnemonicsVaultId?: string;
     keyringId?: number;
     alias?: string;
     isExistedKR?: boolean;
@@ -286,8 +283,7 @@ export type AddressNavigatorParamList = {
   [RootNames.ImportMoreAddress]?: {
     type: KEYRING_TYPE;
     brand?: string;
-    mnemonics?: string;
-    passphrase?: string;
+    mnemonicsVaultId?: string;
     keyringId?: number;
     isExistedKR?: boolean;
   };
@@ -302,7 +298,7 @@ export type AddressNavigatorParamList = {
   [RootNames.CreateMnemonicBackup]?: {};
   [RootNames.CreateMnemonicVerify]?: {};
   [RootNames.BackupPrivateKey]?: {
-    data: string;
+    privateKeyVaultId: string;
   };
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.WatchAddressList]?: {};

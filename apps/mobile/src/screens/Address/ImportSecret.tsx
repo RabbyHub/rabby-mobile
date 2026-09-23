@@ -285,8 +285,10 @@ export const ImportSecret = ({ route }: ScreenProps) => {
                   brandName: KEYRING_CLASS.MNEMONIC,
                   isFirstImport: true,
                   address: [firstAddress?.[0].address],
-                  mnemonics: cleanedMnemonic,
-                  passphrase: '',
+                  mnemonicsVaultId: SecretVault.storeMnemonicsPayload({
+                    mnemonics: cleanedMnemonic,
+                    passphrase: '',
+                  }),
                   keyringId: keyringId || undefined,
                   isExistedKR,
                 },
@@ -299,8 +301,10 @@ export const ImportSecret = ({ route }: ScreenProps) => {
           showImportMorePopup({
             type: KEYRING_TYPE.HdKeyring,
             brandName: KEYRING_CLASS.MNEMONIC,
-            mnemonics: cleanedMnemonic,
-            passphrase: '',
+            mnemonicsVaultId: SecretVault.storeMnemonicsPayload({
+              mnemonics: cleanedMnemonic,
+              passphrase: '',
+            }),
             keyringId: keyringId || undefined,
           });
         } catch (error) {

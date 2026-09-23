@@ -26,6 +26,7 @@ import { replaceToFirst } from '@/utils/navigation';
 import { toast } from '@/components2024/Toast';
 import { setAccountNeedsBackupReminder } from '@/hooks/account';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+import * as SecretVault from '@/core/utils/secretVault';
 
 function MainListBlocks() {
   const { t } = useTranslation();
@@ -80,8 +81,10 @@ function MainListBlocks() {
           brandName: KEYRING_CLASS.MNEMONIC,
           isFirstCreate: true,
           address: [address],
-          mnemonics: seedPhrase,
-          passphrase: '',
+          mnemonicsVaultId: SecretVault.storeMnemonicsPayload({
+            mnemonics: seedPhrase,
+            passphrase: '',
+          }),
           isExistedKR: false,
           alias: ellipsisAddress(address),
           showBackup: true,
