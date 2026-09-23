@@ -122,6 +122,7 @@ export const useDappAction = (
 
   useEffect(() => {
     if (!data || !chain) {
+      setValid(false);
       return;
     }
     try {
