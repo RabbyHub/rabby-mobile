@@ -63,12 +63,15 @@ const legacyMetadata = {
 };
 const strongerMetadata = {
   algorithm: 'PBKDF2' as const,
-  params: { iterations: 60000 as const },
+  params: { iterations: 600000 as const },
 };
 
 // Fixed independently using Python hashlib.pbkdf2_hmac('sha256', ..., 32)
 // and OpenSSL enc -aes-256-cbc with PKCS#7 padding. Salt is the UTF-8 base64
 // representation of hex random bytes, preserving the pre-existing wire format.
+// The 600k vector uses hashlib.pbkdf2_hmac('sha256', password.encode(),
+// salt.encode(), 600000, 32), then openssl enc -aes-256-cbc -K <key hex>
+// -iv 101112131415161718191a1b1c1d1e1f -base64 -A on JSON.stringify(vault).
 const fixtures = [
   {
     iterations: 5000,
@@ -81,11 +84,11 @@ const fixtures = [
     },
   },
   {
-    iterations: 60000,
-    key: '2db2cc4d505c53cf5f0ca43a5de1febef3207d8dc14ae7eb170ea643fc6332eb',
+    iterations: 600000,
+    key: 'f5c1f6ccd754b39c7c655759fc590d7cd7f966926906869cef9289975b28b8de',
     encrypted: {
       cipher:
-        'i+7pvdMtcU5CbuCyO6wSKteQUkusm805XbVhszcZ9UqnsSF8K2KWJ3qhwB7Q4Bfj',
+        'OrQXspVasgaoArLYMCh9KPM4OfQyFCarsZiLhglXpBs/x2EiKyJqS4oO6Qvbu7cX',
       iv,
       salt,
       keyMetadata: strongerMetadata,
@@ -98,14 +101,15 @@ const invalidMetadata = [
   {},
   [],
   'PBKDF2',
-  { algorithm: 'scrypt', params: { iterations: 60000 } },
+  { algorithm: 'scrypt', params: { iterations: 600000 } },
   { algorithm: 'PBKDF2' },
   { algorithm: 'PBKDF2', params: null },
   { algorithm: 'PBKDF2', params: {} },
-  { algorithm: 'PBKDF2', params: { iterations: '60000' } },
+  { algorithm: 'PBKDF2', params: { iterations: '600000' } },
   { algorithm: 'PBKDF2', params: { iterations: 0 } },
   { algorithm: 'PBKDF2', params: { iterations: 5000.5 } },
-  { algorithm: 'PBKDF2', params: { iterations: 60001 } },
+  { algorithm: 'PBKDF2', params: { iterations: 60000 } },
+  { algorithm: 'PBKDF2', params: { iterations: 600001 } },
   { algorithm: 'PBKDF2', params: { iterations: Number.MAX_SAFE_INTEGER } },
 ];
 
@@ -114,7 +118,7 @@ function exportedFixture(fixture: (typeof fixtures)[number]) {
     version: 1,
     salt,
     key: fixture.key,
-    ...(fixture.iterations === 60000 ? { keyMetadata: strongerMetadata } : {}),
+    ...(fixture.iterations === 600000 ? { keyMetadata: strongerMetadata } : {}),
   };
 }
 
@@ -149,7 +153,7 @@ describe('RNEncryptor PBKDF2 compatibility', () => {
     expect(Aes.randomKey).toHaveBeenNthCalledWith(2, 16);
   });
 
-  it('writes 60,000-iteration metadata only when explicitly configured', async () => {
+  it('writes 600,000-iteration metadata only when explicitly configured', async () => {
     jest
       .mocked(Aes.randomKey)
       .mockResolvedValueOnce(saltHex)
@@ -164,13 +168,13 @@ describe('RNEncryptor PBKDF2 compatibility', () => {
     expect(Aes.pbkdf2).toHaveBeenCalledWith(
       password,
       salt,
-      60000,
+      600000,
       256,
       'sha256',
     );
   });
 
-  describe.each([5000, 60000] as const)(
+  describe.each([5000, 600000] as const)(
     'with %i iterations configured for new encryption',
     configuredIterations => {
       it.each(fixtures)(
@@ -244,7 +248,7 @@ describe('RNEncryptor PBKDF2 compatibility', () => {
     const options = {
       keyDerivationOptions: {
         algorithm: 'PBKDF2' as const,
-        params: { iterations: 60000 as 5000 | 60000 },
+        params: { iterations: 600000 as 5000 | 600000 },
       },
     };
     const encryptor = new RNEncryptor(options);
@@ -253,7 +257,7 @@ describe('RNEncryptor PBKDF2 compatibility', () => {
     const encrypted = await encryptor.encrypt(password, vault);
 
     expect(JSON.parse(encrypted).keyMetadata).toEqual(strongerMetadata);
-    expect(jest.mocked(Aes.pbkdf2).mock.calls[0][2]).toBe(60000);
+    expect(jest.mocked(Aes.pbkdf2).mock.calls[0][2]).toBe(600000);
   });
 
   it.each(invalidMetadata)(
@@ -322,7 +326,7 @@ describe('RNEncryptor vault upgrades', () => {
       });
 
       expect(encryptor.isVaultUpdated(JSON.stringify(fixture.encrypted))).toBe(
-        fixture.iterations === 60000,
+        fixture.iterations === 600000,
       );
       expect(Aes.pbkdf2).not.toHaveBeenCalled();
     },
