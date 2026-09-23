@@ -69,7 +69,7 @@ const password = 'integration-only password 🔐';
 const privateKey = '11'.repeat(32);
 const strongerMetadata = {
   algorithm: 'PBKDF2' as const,
-  params: { iterations: 60000 as const },
+  params: { iterations: 600000 as const },
 };
 const legacyEncryptor = new RNEncryptor();
 const upgradedEncryptor = new RNEncryptor({
@@ -194,7 +194,7 @@ function pauseFirstUpgradedDerivation() {
   });
   let paused = false;
   jest.mocked(Aes.pbkdf2).mockImplementation(async (...args) => {
-    if (!paused && args[2] === 60000) {
+    if (!paused && args[2] === 600000) {
       paused = true;
       started();
       await released;
@@ -232,7 +232,7 @@ describe('password vault upgrade integration', () => {
     expect(commits).toEqual([]);
   });
 
-  it('commits both 60k credentials once and publishes a cached key valid after restart', async () => {
+  it('commits both 600k credentials once and publishes a cached key valid after restart', async () => {
     const { state, rawVault, address } = await createFixture();
     const { service, commits, readDurable, readCheckpoint } =
       openService(state);
@@ -248,8 +248,8 @@ describe('password vault upgrade integration', () => {
     expect(commits).toHaveLength(1);
     expect(readCheckpoint()).toEqual(state);
     const persisted = readDurable();
-    expectIterations(persisted.vault, 60000);
-    expectIterations(persisted.booted, 60000);
+    expectIterations(persisted.vault, 600000);
+    expectIterations(persisted.booted, 600000);
     expect(persisted.vault).not.toBe(state.vault);
     expect(persisted.booted).not.toBe(state.booted);
     expect(copy(service.store.getState())).toEqual(persisted);
@@ -344,7 +344,7 @@ describe('password vault upgrade integration', () => {
   );
 
   it.each(['vault', 'booted'] as const)(
-    'upgrades only the remaining legacy %s without rewriting the other 60k credential',
+    'upgrades only the remaining legacy %s without rewriting the other 600k credential',
     async legacyField => {
       const { state } = await createFixture({
         vaultEncryptor:
@@ -358,8 +358,8 @@ describe('password vault upgrade integration', () => {
 
       const persisted = readDurable();
       expect(commits).toHaveLength(1);
-      expectIterations(persisted.vault, 60000);
-      expectIterations(persisted.booted, 60000);
+      expectIterations(persisted.vault, 600000);
+      expectIterations(persisted.booted, 600000);
       const unchangedField = legacyField === 'vault' ? 'booted' : 'vault';
       expect(persisted[unchangedField]).toBe(state[unchangedField]);
       expect(persisted[legacyField]).not.toBe(state[legacyField]);
@@ -430,8 +430,8 @@ describe('password vault upgrade integration', () => {
         expect(persisted.booted).toBe(state.booted);
       } else {
         expect(commits).toHaveLength(1);
-        expectIterations(persisted.vault, 60000);
-        expectIterations(persisted.booted, 60000);
+        expectIterations(persisted.vault, 600000);
+        expectIterations(persisted.booted, 600000);
       }
     },
   );
@@ -568,7 +568,7 @@ describe('password vault upgrade integration', () => {
 
     expect(service.isUnlocked()).toBe(true);
     expect(commits).toHaveLength(1);
-    expectIterations(readDurable().vault, 60000);
+    expectIterations(readDurable().vault, 600000);
     await expect(service.verifyPassword(password)).resolves.toBeUndefined();
   });
 
