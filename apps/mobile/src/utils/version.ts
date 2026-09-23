@@ -29,22 +29,14 @@ export type MergedRemoteVersion = {
 };
 
 const isAndroid = Platform.OS === 'android';
-const isProductionChannel = [
-  /* must be android when 'selfhost' */
-  'selfhost',
-  'appstore',
-].includes(BUILD_CHANNEL);
+// Test and production packages both compare against the public store listing.
+const STORE_PACKAGE_NAME = isAndroid
+  ? 'com.debank.rabbymobile'
+  : 'com.debank.rabby-mobile';
 
 export const SELF_HOST_BASE_PROD = `https://download.rabby.io/downloads/wallet-mobile`;
-export const SELF_HOST_BASE = isProductionChannel
-  ? SELF_HOST_BASE_PROD
-  : `https://download.rabby.io/downloads/${
-      isAndroid ? 'wallet-mobile-reg' : `wallet-mobile-pretest`
-    }`;
+export const SELF_HOST_BASE = SELF_HOST_BASE_PROD;
 
-const PROD_RES_BASE_URL = `${SELF_HOST_BASE_PROD}/${
-  isAndroid ? 'android' : 'ios'
-}`;
 const RES_BASE_URL = `${SELF_HOST_BASE}/${isAndroid ? 'android' : 'ios'}`;
 const VERSION_JSON_URL = `${RES_BASE_URL}/version.json`;
 
@@ -107,14 +99,8 @@ export async function getUpgradeInfo(options?: { forceLocalVersion?: string }) {
   // allow store check failed, fallback to compare with version.json
   const storeVersion = await Promise.race([
     VersionCheck.getLatestVersion({
-      ...(isAndroid && {
-        provider: 'playStore',
-        packageName: PROD_APPLICATION_ID,
-      }),
-      // {
-      //   provider: 'appStore',
-      //   packageName: 'com.debank.rabby-mobile',
-      // },
+      provider: isAndroid ? 'playStore' : 'appStore',
+      packageName: STORE_PACKAGE_NAME,
       country: 'us',
     }).catch(() => null),
     // timeout 10s, if the network is not available, it will return null
@@ -131,7 +117,7 @@ export async function getUpgradeInfo(options?: { forceLocalVersion?: string }) {
   }
 
   const storeUrl = await VersionCheck.getStoreUrl({
-    packageName: PROD_APPLICATION_ID,
+    packageName: STORE_PACKAGE_NAME,
   }).catch(() => APP_URLS.STORE_URL);
 
   const finalRemoteInfo: MergedRemoteVersion = {
@@ -173,33 +159,11 @@ export async function getUpgradeInfo(options?: { forceLocalVersion?: string }) {
   );
 
   try {
-    finalRemoteInfo.changelog = await Promise.allSettled([
-      fetch(`${RES_BASE_URL}/${finalRemoteInfo.version}.md`),
-      isProductionChannel
-        ? Promise.resolve('')
-        : fetch(`${PROD_RES_BASE_URL}/${finalRemoteInfo.version}.md`),
-    ])
-      .then(([channelMdRes, prodMdRes]) => {
-        const channelMd =
-          channelMdRes.status === 'fulfilled' &&
-          channelMdRes.value.status === 200
-            ? channelMdRes.value.text()
-            : '';
-        if (channelMd) return channelMd;
-
-        if (prodMdRes.status === 'fulfilled') {
-          const prodMd =
-            typeof prodMdRes.value === 'string'
-              ? prodMdRes.value
-              : prodMdRes.value.status === 200
-              ? prodMdRes.value.text()
-              : '';
-          if (prodMd) return prodMd;
-        }
-
-        return '';
-      })
-      .catch(() => '');
+    const changelogResponse = await fetch(
+      `${RES_BASE_URL}/${finalRemoteInfo.version}.md`,
+    );
+    finalRemoteInfo.changelog =
+      changelogResponse.status === 200 ? await changelogResponse.text() : '';
   } catch (error) {
     console.error('fetch changelog failed', error);
     finalRemoteInfo.changelog = '';
