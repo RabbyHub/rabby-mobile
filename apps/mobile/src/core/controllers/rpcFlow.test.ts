@@ -3,6 +3,9 @@ const mockAutoConnect = jest.fn();
 const mockFindChain = jest.fn();
 const mockRequestApproval = jest.fn();
 const mockEthSendTransaction = jest.fn();
+const mockEthSignTypedData = jest.fn();
+const mockValidateTypedData = jest.fn();
+const mockWalletSwitchEthereumChain = jest.fn();
 const mockGetDapp = jest.fn();
 const mockGetConnectedDapp = jest.fn();
 const mockUpdateDapp = jest.fn();
@@ -102,6 +105,12 @@ jest.mock('./provider', () => ({
   __esModule: true,
   default: {
     ethSendTransaction: (...args: unknown[]) => mockEthSendTransaction(...args),
+    ethSignTypedData: (...args: unknown[]) => mockEthSignTypedData(...args),
+    ethSignTypedDataV1: (...args: unknown[]) => mockEthSignTypedData(...args),
+    ethSignTypedDataV3: (...args: unknown[]) => mockEthSignTypedData(...args),
+    ethSignTypedDataV4: (...args: unknown[]) => mockEthSignTypedData(...args),
+    walletSwitchEthereumChain: (...args: unknown[]) =>
+      mockWalletSwitchEthereumChain(...args),
   },
 }));
 
@@ -171,6 +180,8 @@ jest.mock('@/utils/walletUnlockError', () => ({
 }));
 
 import rpcFlow from './rpcFlow';
+import type { ProviderRequest } from './type';
+import { INTERNAL_REQUEST_ORIGIN } from '@/constant/internalRequest';
 
 const account = {
   address: '0x1111111111111111111111111111111111111111',
@@ -355,5 +366,166 @@ describe('rpcFlow SignTx chain guard', () => {
     expect(mockSyncCustomTestnetChainList).not.toHaveBeenCalled();
     expect(mockRequestApproval).toHaveBeenCalled();
     expect(mockCaptureException).not.toHaveBeenCalled();
+  });
+});
+
+describe('rpcFlow typed-data chain pinning', () => {
+  let originalGetMetadata: unknown;
+  const makeRequest = (
+    method = 'eth_signTypedData_v4',
+    domainChainId?: number,
+  ): ProviderRequest => ({
+    data: {
+      method,
+      params: /^eth_signTypedData(_v1)?$/.test(method)
+        ? [
+            [{ name: 'message', type: 'string', value: 'test' }],
+            account.address,
+          ]
+        : [
+            account.address,
+            JSON.stringify({ domain: { chainId: domainChainId }, message: {} }),
+          ],
+    },
+    session: { origin: 'https://example.com', name: 'Example', icon: '' },
+    account,
+  });
+
+  beforeAll(() => {
+    originalGetMetadata = (Reflect as any).getMetadata;
+    (Reflect as any).getMetadata = jest.fn((key, _target, propertyKey) => {
+      if (key !== 'APPROVAL') return undefined;
+      if (propertyKey.startsWith('ethSignTypedData')) {
+        return ['SignTypedData', mockValidateTypedData];
+      }
+      if (propertyKey === 'walletSwitchEthereumChain') {
+        return ['SwitchChain', () => true];
+      }
+      return undefined;
+    });
+  });
+
+  afterAll(() => {
+    if (originalGetMetadata) {
+      (Reflect as any).getMetadata = originalGetMetadata;
+    } else {
+      delete (Reflect as any).getMetadata;
+    }
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetCustomTestnetList.mockReturnValue([]);
+    mockGetTestnetChainList.mockReturnValue([]);
+    mockGetDapp.mockReturnValue(undefined);
+    mockGetConnectedDapp.mockReturnValue({ chainId: 'eth' });
+    mockFindChain.mockImplementation(({ enum: chainEnum }) =>
+      chainEnum === 'eth' ? { id: 1, enum: 'eth' } : null,
+    );
+    mockValidateTypedData.mockReturnValue(undefined);
+    mockRequestApproval.mockResolvedValue({});
+    mockEthSignTypedData.mockResolvedValue('0xsignature');
+    mockWalletSwitchEthereumChain.mockResolvedValue(null);
+  });
+
+  it.each<[string, number | undefined]>([
+    ['eth_signTypedData', undefined],
+    ['eth_signTypedData_v1', undefined],
+    ['eth_signTypedData_v3', 1],
+    ['eth_signTypedData_v4', 1],
+    ['eth_signTypedData_v3', undefined],
+    ['eth_signTypedData_v4', undefined],
+  ])(
+    'pins %s with domain chain %s before validation and approval',
+    async (method, chainId) => {
+      mockValidateTypedData.mockImplementation(request => {
+        expect(request.requestContext.chainId).toBe(1);
+      });
+      const approvalOpened = new Promise<() => void>(resolve => {
+        mockRequestApproval.mockImplementation(
+          () => new Promise(approve => resolve(() => approve({}))),
+        );
+      });
+      const signing = rpcFlow(makeRequest(method, chainId));
+      const approve = await Promise.race([
+        approvalOpened,
+        signing.then(() => {
+          throw new Error('Signing completed before approval');
+        }),
+      ]);
+
+      expect(mockValidateTypedData).toHaveBeenCalledWith(
+        expect.objectContaining({
+          requestContext: expect.objectContaining({ chainId: 1 }),
+        }),
+      );
+      const approval = mockRequestApproval.mock.calls[0][0];
+      expect(approval.params.requestContext.chainId).toBe(1);
+
+      mockGetConnectedDapp.mockReturnValue({ chainId: 'bsc' });
+      expect(approval.params.requestContext.chainId).toBe(1);
+      approve();
+
+      await expect(signing).resolves.toBe('0xsignature');
+      expect(mockEthSignTypedData).toHaveBeenCalledWith(
+        expect.objectContaining({
+          requestContext: expect.objectContaining({ chainId: 1 }),
+        }),
+      );
+    },
+  );
+
+  it.each<['walletconnect' | 'internal', number | undefined]>([
+    ['walletconnect', 56],
+    ['internal', undefined],
+    ['internal', 137],
+  ])('preserves the %s request chain %s', async (source, chainId) => {
+    const request = makeRequest();
+    if (source === 'walletconnect') {
+      request.requestContext = {
+        source,
+        origin: request.session.origin,
+        chainId,
+      };
+    } else {
+      request.session.origin = INTERNAL_REQUEST_ORIGIN;
+      request.data.$ctx = { chainId };
+    }
+
+    await expect(rpcFlow(request)).resolves.toBe('0xsignature');
+    expect(
+      mockRequestApproval.mock.calls[0][0].params.requestContext,
+    ).toMatchObject({
+      source,
+      chainId,
+    });
+    expect(mockGetConnectedDapp).not.toHaveBeenCalled();
+  });
+
+  it('rejects an unknown dapp chain before validation or approval', async () => {
+    mockGetConnectedDapp.mockReturnValue({ chainId: 'unknown' });
+
+    await expect(rpcFlow(makeRequest())).rejects.toMatchObject({
+      code: -32602,
+      message: 'Unsupported chainId for typed data',
+    });
+    expect(mockValidateTypedData).not.toHaveBeenCalled();
+    expect(mockRequestApproval).not.toHaveBeenCalled();
+    expect(mockEthSignTypedData).not.toHaveBeenCalled();
+  });
+
+  it('does not pin or open an approval for a promptless chain switch', async () => {
+    const request = makeRequest();
+    request.data = {
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: '0x38' }],
+    };
+
+    await expect(rpcFlow(request)).resolves.toBeNull();
+    expect(
+      mockWalletSwitchEthereumChain.mock.calls[0][0].requestContext.chainId,
+    ).toBeUndefined();
+    expect(mockGetConnectedDapp).not.toHaveBeenCalled();
+    expect(mockRequestApproval).not.toHaveBeenCalled();
   });
 });

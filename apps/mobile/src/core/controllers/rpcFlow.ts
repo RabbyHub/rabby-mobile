@@ -235,6 +235,24 @@ const flowContext = flow
     const [approvalType, condition, options = {}] =
       Reflect.getMetadata('APPROVAL', providerController, mapMethod) || [];
 
+    // Keep admission, analysis and signing on the same chain while approval waits.
+    if (
+      approvalType === 'SignTypedData' &&
+      ctx.request.requestContext?.source === 'dapp' &&
+      ctx.request.requestContext.chainId == null
+    ) {
+      const chain = findChain({
+        enum: getConnectedDappSnapshot(origin)?.chainId,
+      });
+      if (!chain) {
+        throw ethErrors.rpc.invalidParams('Unsupported chainId for typed data');
+      }
+      ctx.request.requestContext = {
+        ...ctx.request.requestContext,
+        chainId: chain.id,
+      };
+    }
+
     let windowHeight = 800;
     // TODO: remove this
     if ('height' in options) {
