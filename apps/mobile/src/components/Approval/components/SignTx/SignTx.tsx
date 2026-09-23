@@ -378,7 +378,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     isSwap,
     isBridge,
     swapPreferMEVGuarded,
-    isViewGnosisSafe,
+    isViewGnosisSafe: requestedViewGnosisSafe,
     reqId,
     safeTxGas,
     authorizationList,
@@ -405,6 +405,10 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       stripTopLevelData: true,
     });
   }, [chain.serverId, params.data]);
+
+  // Only the internal Safe queue has already built a transaction to sign.
+  const isViewGnosisSafe =
+    origin === INTERNAL_REQUEST_ORIGIN && requestedViewGnosisSafe === true;
 
   const is7702 = is7702Tx({ authorizationList } as any);
 
@@ -861,9 +865,11 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     } // do not overwrite nonce if from === to(cancel transaction)
 
     const explainNonce = (updateNonce ? recommendNonce : tx.nonce) || '0x1';
-    const delegateCall = isGnosisAccount
-      ? !!params?.data?.[0]?.operation
-      : false;
+    // New Safe transactions are built as CALL; only queued ones can delegate.
+    const delegateCall =
+      isGnosisAccount &&
+      isViewGnosisSafe &&
+      Number(params?.data?.[0]?.operation) === 1;
     const parseTxPromise = openapi.parseTx({
       chainId: chain.serverId,
       tx: omit(
