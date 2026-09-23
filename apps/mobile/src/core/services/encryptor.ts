@@ -5,10 +5,10 @@ const algorithms = 'aes-256-cbc';
 const algorithms_pbkdf2 = 'sha256';
 
 const LEGACY_PBKDF2_ITERATIONS = 5_000;
-const UPGRADED_PBKDF2_ITERATIONS = 60_000;
+const UPGRADED_PBKDF2_ITERATIONS = 600_000;
 
 // Controls the encryption target. Existing ciphertext selects its own KDF.
-const ENABLE_PBKDF2_60000 = false;
+const ENABLE_PBKDF2_600000 = false;
 
 export type KeyDerivationOptions = {
   algorithm: 'PBKDF2';
@@ -149,7 +149,7 @@ export default class RNEncryptor implements EncryptorAdapter {
     keyDerivationOptions = {
       algorithm: 'PBKDF2',
       params: {
-        iterations: ENABLE_PBKDF2_60000
+        iterations: ENABLE_PBKDF2_600000
           ? UPGRADED_PBKDF2_ITERATIONS
           : LEGACY_PBKDF2_ITERATIONS,
       },
