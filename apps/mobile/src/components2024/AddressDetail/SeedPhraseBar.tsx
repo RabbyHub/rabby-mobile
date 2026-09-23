@@ -14,6 +14,7 @@ import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { Text } from '@/components/Typography';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+import * as SecretVault from '@/core/utils/secretVault';
 
 interface Props {
   account: KeyringAccountWithAlias;
@@ -43,8 +44,10 @@ export const SeedPhraseBar: React.FC<Props> = ({ account, onCancel }) => {
       name: MODAL_NAMES.IMPORT_MORE_ADDRESS,
       params: {
         type: KEYRING_TYPE.HdKeyring,
-        mnemonics,
-        passphrase,
+        mnemonicsVaultId: SecretVault.storeMnemonicsPayload({
+          mnemonics,
+          passphrase: passphrase || '',
+        }),
         keyringId: keyringId || undefined,
         isExistedKR: result.isExistedKR,
         account,

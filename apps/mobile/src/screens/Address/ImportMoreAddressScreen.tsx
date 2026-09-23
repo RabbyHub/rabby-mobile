@@ -31,9 +31,10 @@ import { useTranslation } from 'react-i18next';
 import { Spin } from '@/components/Spin';
 import { Skeleton } from '@rneui/themed';
 import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
-import { useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
+import * as SecretVault from '@/core/utils/secretVault';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { AddressAndCopy } from '@/components/Address/AddressAndCopy';
@@ -140,6 +141,26 @@ export const ImportMoreAddressScreen = () => {
     throw new Error('[ImportMoreAddressScreen] state is undefined');
   }
 
+  const navigation = useNavigation();
+  const mnemonicsPayloadRef =
+    React.useRef<SecretVault.MnemonicsVaultPayload | null>(null);
+  const mnemonicsPayloadFetchedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (mnemonicsPayloadFetchedRef.current) {
+      return;
+    }
+    mnemonicsPayloadFetchedRef.current = true;
+    if (state.mnemonicsVaultId) {
+      mnemonicsPayloadRef.current = SecretVault.retrieveMnemonicsPayload(
+        state.mnemonicsVaultId,
+      );
+    }
+    if (state.type === KEYRING_TYPE.HdKeyring && !mnemonicsPayloadRef.current) {
+      toast.show('Import session expired. Please try again.');
+      navigation.goBack();
+    }
+  }, [state.mnemonicsVaultId, state.type, navigation]);
+
   const apiHD = React.useMemo(() => {
     switch (state.type) {
       case KEYRING_TYPE.LedgerKeyring:
@@ -201,17 +222,18 @@ export const ImportMoreAddressScreen = () => {
     ReturnType<typeof apiMnemonic.getKeyringByMnemonic> | undefined
   >(undefined);
   const getMnemonicKeyring = React.useCallback(() => {
-    if (state.type === KEYRING_TYPE.HdKeyring && state.mnemonics) {
+    const mnemonicsPayload = mnemonicsPayloadRef.current;
+    if (state.type === KEYRING_TYPE.HdKeyring && mnemonicsPayload) {
       if (!mnemonicKeyringRef.current) {
         mnemonicKeyringRef.current = apiMnemonic.getKeyringByMnemonic(
-          state.mnemonics!,
-          state.passphrase!,
+          mnemonicsPayload.mnemonics,
+          mnemonicsPayload.passphrase,
         );
       }
       return mnemonicKeyringRef.current;
     }
     return undefined;
-  }, [state.mnemonics, state.passphrase, state.type]);
+  }, [state.type]);
 
   const loadAddress = React.useCallback(
     async (index: number) => {
@@ -374,10 +396,11 @@ export const ImportMoreAddressScreen = () => {
     });
 
     if (state.type === KEYRING_TYPE.HdKeyring) {
+      const mnemonicsPayload = mnemonicsPayloadRef.current;
       setTimeout(() => {
         activeAndPersistAccountsByMnemonics(
-          state.mnemonics!,
-          state.passphrase || '',
+          mnemonicsPayload!.mnemonics,
+          mnemonicsPayload?.passphrase || '',
           selectedAccounts as any,
           true,
         )
@@ -424,15 +447,7 @@ export const ImportMoreAddressScreen = () => {
       importToastHiddenRef.current?.();
     }
     setImporting(false);
-  }, [
-    apiHD,
-    hdBrandName,
-    hdType,
-    selectedAccounts,
-    state.mnemonics,
-    state.passphrase,
-    state.type,
-  ]);
+  }, [apiHD, hdBrandName, hdType, selectedAccounts, state.type]);
 
   React.useEffect(() => {
     return () => {

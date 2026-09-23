@@ -81,3 +81,41 @@ export function retrieve(vaultId: string): string | null {
 export function clearAll(): void {
   vault.clear();
 }
+
+export type MnemonicsVaultPayload = {
+  mnemonics: string;
+  passphrase: string;
+};
+
+/**
+ * Stores a mnemonics + passphrase pair in the vault as a single secret.
+ *
+ * @returns A unique vault ID that can be used to retrieve the payload once
+ */
+export function storeMnemonicsPayload(payload: MnemonicsVaultPayload): string {
+  return store(JSON.stringify(payload));
+}
+
+/**
+ * Retrieves a mnemonics + passphrase payload from the vault by its ID.
+ * The payload is IMMEDIATELY removed from the vault after retrieval (single-use).
+ *
+ * @returns The payload if found and well-formed, null otherwise
+ */
+export function retrieveMnemonicsPayload(
+  vaultId: string,
+): MnemonicsVaultPayload | null {
+  const raw = retrieve(vaultId);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed.mnemonics === 'string') {
+      return {
+        mnemonics: parsed.mnemonics,
+        passphrase:
+          typeof parsed.passphrase === 'string' ? parsed.passphrase : '',
+      };
+    }
+  } catch {}
+  return null;
+}
