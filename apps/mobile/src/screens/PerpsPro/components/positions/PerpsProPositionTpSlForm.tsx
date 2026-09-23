@@ -16,7 +16,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import BigNumber from 'bignumber.js';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { Keyboard, Pressable, View } from 'react-native';
+import { Keyboard, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsPositionViewModel } from '../../model/position';
@@ -42,6 +42,7 @@ import { PerpsProSlider } from '../common/PerpsProSlider';
 import { usePerpsProDismissKeyboard } from '../common/usePerpsProDismissKeyboard';
 import { usePerpsProSliderHaptics } from '../common/usePerpsProSliderHaptics';
 import { PerpsProPositionTpSlBottomSheetTextInput } from './PerpsProPositionTpSlBottomSheetTextInput';
+import { PerpsProPositionTpSlCancelAction } from './PerpsProPositionTpSlCancelAction';
 import { PerpsProPositionTpSlSideInputs } from './PerpsProPositionTpSlSideInputs';
 import { usePerpsProPositionTpSlFormInputs } from './usePerpsProPositionTpSlFormInputs';
 import { usePerpsProTpSlModePreferences } from '../../scene/usePerpsProTpSlModePreferences';
@@ -452,16 +453,13 @@ export const PerpsProPositionTpSlForm: React.FC<{
                     {mode === 'position' &&
                     facts.existing &&
                     !facts.duplicate ? (
-                      <Pressable
-                        accessibilityRole="button"
-                        disabled={
-                          pending || cancelingOids.includes(facts.existing.oid)
-                        }
-                        onPress={() => onCancelOrder(facts.existing!)}>
-                        <Text style={styles.cancelText}>
-                          {t('global.cancel')}
-                        </Text>
-                      </Pressable>
+                      <PerpsProPositionTpSlCancelAction
+                        disabled={pending}
+                        loading={cancelingOids.includes(facts.existing.oid)}
+                        label={t('global.cancel')}
+                        onPress={() => onCancelOrder(facts.existing!)}
+                        textStyle={styles.cancelText}
+                      />
                     ) : null}
                   </View>
 
@@ -481,16 +479,13 @@ export const PerpsProPositionTpSlForm: React.FC<{
                             )}{' '}
                             {market.quoteAsset}
                           </Text>
-                          <Pressable
-                            accessibilityRole="button"
-                            disabled={
-                              pending || cancelingOids.includes(order.oid)
-                            }
-                            onPress={() => onCancelOrder(order)}>
-                            <Text style={styles.cancelText}>
-                              {t('global.cancel')}
-                            </Text>
-                          </Pressable>
+                          <PerpsProPositionTpSlCancelAction
+                            disabled={pending}
+                            loading={cancelingOids.includes(order.oid)}
+                            label={t('global.cancel')}
+                            onPress={() => onCancelOrder(order)}
+                            textStyle={styles.cancelText}
+                          />
                         </View>
                       ))}
                     </View>

@@ -6,7 +6,12 @@ import {
   within,
 } from '@testing-library/react-native';
 import React from 'react';
-import { Keyboard, Platform, StyleSheet } from 'react-native';
+import {
+  ActivityIndicator,
+  Keyboard,
+  Platform,
+  StyleSheet,
+} from 'react-native';
 import { perpsProKeyboardSession } from '../common/perpsProKeyboardSession';
 import { ThemeColors2024 } from '@/constant/theme';
 
@@ -303,6 +308,53 @@ const market = {
 };
 
 describe('PerpsProPositionTpSlSheet', () => {
+  it.each(['partial', 'position'] as const)(
+    'keeps %s cancel loading local to its OID and retains the list button color',
+    scope => {
+      const first = order(1, '110', '0.5', scope);
+      const second = order(2, '120', '0.5', scope);
+      const onCancelOrder = jest.fn();
+      const list = (pending: boolean, cancelingOids: number[]) => (
+        <PerpsProPositionTpSlOrderList
+          scope={scope}
+          amountUnit="base"
+          cancelingOids={cancelingOids}
+          markPrice="100"
+          market={market}
+          onAdd={jest.fn()}
+          onCancelOrder={onCancelOrder}
+          onModify={jest.fn()}
+          onOpenEstimatedPnlExplanation={jest.fn()}
+          pending={pending}
+          position={{ ...position, tpslOrders: [first, second] }}
+        />
+      );
+      const view = render(list(true, [2]));
+      const cancelButton = (oid: number) =>
+        within(
+          screen.getByTestId(`perps-pro-position-tpsl-order-${oid}`),
+        ).getByRole('button', { name: 'Cancel' });
+      expect(cancelButton(1).props.accessibilityState).toMatchObject({
+        busy: false,
+        disabled: true,
+      });
+      expect(cancelButton(2).props.accessibilityState).toMatchObject({
+        busy: true,
+        disabled: true,
+      });
+      expect(screen.UNSAFE_getAllByType(ActivityIndicator)).toHaveLength(1);
+      expect(screen.UNSAFE_getByType(ActivityIndicator).props.color).toBe(
+        'neutral-title-1',
+      );
+      fireEvent.press(cancelButton(2));
+      expect(onCancelOrder).not.toHaveBeenCalled();
+      view.rerender(list(false, []));
+      expect(screen.UNSAFE_queryByType(ActivityIndicator)).toBeNull();
+      fireEvent.press(cancelButton(2));
+      expect(onCancelOrder).toHaveBeenCalledWith(second);
+    },
+  );
+
   it.each(['partial', 'position'] as const)(
     'colors %s list PNL by profit with its own size source',
     scope => {

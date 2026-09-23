@@ -12,6 +12,7 @@ import {
   resolvePerpsProDialogCardBackground,
 } from '../common/perpsProDialogVisual';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
+import { PerpsProPositionTpSlCancelAction } from './PerpsProPositionTpSlCancelAction';
 
 import type { PerpsPositionViewModel } from '../../model/position';
 import {
@@ -308,13 +309,14 @@ const OrderRow: React.FC<{
             {t('page.perps.pro.positionTpsl.modify')}
           </Text>
         </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          disabled={pending || canceling}
+        <PerpsProPositionTpSlCancelAction
+          disabled={pending}
+          loading={canceling}
+          label={t('global.cancel')}
           onPress={onCancel}
-          style={[styles.orderAction, styles.halfAction]}>
-          <Text style={styles.orderActionText}>{t('global.cancel')}</Text>
-        </Pressable>
+          style={[styles.orderAction, styles.halfAction]}
+          textStyle={styles.orderActionText}
+        />
       </View>
     </View>
   );
