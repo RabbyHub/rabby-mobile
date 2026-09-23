@@ -42,6 +42,7 @@ import { resetNavigationOnTopOfHome } from '@/hooks/navigation';
 import i18next from 'i18next';
 import { Text } from '@/components/Typography';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+import * as SecretVault from '@/core/utils/secretVault';
 
 const { isSameAddress } = addressUtils;
 
@@ -51,8 +52,7 @@ const MAX_STEP_COUNT = 10;
 export interface Props {
   params: {
     type: KEYRING_TYPE;
-    mnemonics?: string;
-    passphrase?: string;
+    mnemonicsVaultId?: string;
     keyringId?: number;
     /** @deprecated */
     isExistedKR?: boolean;
@@ -179,21 +179,44 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
         : 1;
   }, [params.type, setting.hdPath]);
 
+  const mnemonicsPayloadRef =
+    React.useRef<SecretVault.MnemonicsVaultPayload | null>(null);
+  const mnemonicsPayloadFetchedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (mnemonicsPayloadFetchedRef.current) {
+      return;
+    }
+    mnemonicsPayloadFetchedRef.current = true;
+    if (params.mnemonicsVaultId) {
+      mnemonicsPayloadRef.current = SecretVault.retrieveMnemonicsPayload(
+        params.mnemonicsVaultId,
+      );
+    }
+    if (
+      params.type === KEYRING_TYPE.HdKeyring &&
+      !mnemonicsPayloadRef.current
+    ) {
+      toast.show('Import session expired. Please try again.');
+      onCancel();
+    }
+  }, [params.mnemonicsVaultId, params.type, onCancel]);
+
   const mnemonicKeyringRef = React.useRef<
     ReturnType<typeof apiMnemonic.getKeyringByMnemonic> | undefined
   >(undefined);
   const getMnemonicKeyring = React.useCallback(() => {
-    if (params.type === KEYRING_TYPE.HdKeyring && params.mnemonics) {
+    const mnemonicsPayload = mnemonicsPayloadRef.current;
+    if (params.type === KEYRING_TYPE.HdKeyring && mnemonicsPayload) {
       if (!mnemonicKeyringRef.current) {
         mnemonicKeyringRef.current = apiMnemonic.getKeyringByMnemonic(
-          params.mnemonics!,
-          params.passphrase!,
+          mnemonicsPayload.mnemonics,
+          mnemonicsPayload.passphrase,
         );
       }
       return mnemonicKeyringRef.current;
     }
     return undefined;
-  }, [params.mnemonics, params.passphrase, params.type]);
+  }, [params.type]);
 
   const loadAddress = React.useCallback(
     async (index: number) => {
@@ -404,13 +427,14 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     );
 
     if (params.type === KEYRING_TYPE.HdKeyring) {
+      const mnemonicsPayload = mnemonicsPayloadRef.current;
       setTimeout(() => {
         (async () => {
           let imported = false;
           try {
             await activeAndPersistAccountsByMnemonics(
-              params.mnemonics!,
-              params.passphrase || '',
+              mnemonicsPayload!.mnemonics,
+              mnemonicsPayload?.passphrase || '',
               selectedAccounts,
               true,
             );
@@ -431,8 +455,9 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
                 type: hdType,
                 brandName: hdBrandName,
                 address: selectedAccounts.map(a => a.address),
-                mnemonics: params.mnemonics,
-                passphrase: params.passphrase,
+                mnemonicsVaultId: mnemonicsPayload
+                  ? SecretVault.storeMnemonicsPayload(mnemonicsPayload)
+                  : undefined,
                 keyringId: params.keyringId,
                 isExistedKR: params.isExistedKR,
               },
@@ -473,8 +498,6 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     }
   }, [
     params.type,
-    params.mnemonics,
-    params.passphrase,
     params.keyringId,
     params.isExistedKR,
     selectedAccounts,
@@ -511,16 +534,14 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
       ...(params.type
         ? {
             keyringId: params.keyringId,
-            mnemonics: params.mnemonics,
-            passphrase: params.passphrase,
+            mnemonics: mnemonicsPayloadRef.current?.mnemonics,
+            passphrase: mnemonicsPayloadRef.current?.passphrase,
           }
         : {}),
     });
   }, [
     params.brandName,
     params.keyringId,
-    params.mnemonics,
-    params.passphrase,
     params.type,
     settingModalName,
     onCancel,

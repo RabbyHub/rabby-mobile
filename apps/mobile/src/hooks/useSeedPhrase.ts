@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { ellipsisAddress } from '@/utils/address';
 import { contactServiceApi } from '@/core/serviceApi/contact';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+import * as SecretVault from '@/core/utils/secretVault';
 
 const useGetHdKeys = () => {
   return useAsync(async () => {
@@ -48,8 +49,10 @@ export const useSeedPhrase = () => {
           screen: RootNames.ImportMoreAddress,
           params: {
             type: KEYRING_TYPE.HdKeyring,
-            mnemonics: data.mnemonic!,
-            passphrase: data.passphrase!,
+            mnemonicsVaultId: SecretVault.storeMnemonicsPayload({
+              mnemonics: data.mnemonic!,
+              passphrase: data.passphrase || '',
+            }),
             keyringId,
           },
         });
@@ -107,8 +110,10 @@ export const useSeedPhrase = () => {
           brandName: KEYRING_CLASS.MNEMONIC,
           isFirstCreate: true,
           address: [newAddress],
-          mnemonics,
-          passphrase,
+          mnemonicsVaultId: SecretVault.storeMnemonicsPayload({
+            mnemonics,
+            passphrase,
+          }),
           isExistedKR: false,
           alias: ellipsisAddress(newAddress),
         },

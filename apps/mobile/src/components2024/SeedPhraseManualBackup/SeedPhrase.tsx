@@ -46,6 +46,7 @@ import {
 import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 import { onCopiedSensitiveData } from '@/utils/clipboard';
 import { Text } from '@/components/Typography';
+import * as SecretVault from '@/core/utils/secretVault';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tipsWrapper: {
@@ -547,8 +548,10 @@ export const SeedPhrase: React.FC<Props> = ({
             isFirstImport: true,
             isFirstCreate: true,
             address: [address],
-            mnemonics,
-            passphrase,
+            mnemonicsVaultId: SecretVault.storeMnemonicsPayload({
+              mnemonics,
+              passphrase,
+            }),
             isExistedKR: false,
             alias,
           },

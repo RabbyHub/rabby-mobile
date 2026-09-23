@@ -30,6 +30,7 @@ import {
   isWalletUnlockRequired,
   withWalletUnlock,
 } from '@/utils/walletUnlockGuard';
+import * as SecretVault from '@/core/utils/secretVault';
 
 const getMnemonicKeyrings = () =>
   getKeyringInstancesSnapshot() as unknown as HdKeyring[];
@@ -541,8 +542,10 @@ export const addMnemonicKeyringAndGotoSuccessScreen = async (
         brandName: KEYRING_CLASS.MNEMONIC,
         isFirstImport: true,
         address: addresses,
-        mnemonics: arr[0],
-        passphrase,
+        mnemonicsVaultId: SecretVault.storeMnemonicsPayload({
+          mnemonics: arr[0],
+          passphrase,
+        }),
         keyringId: currentAddressInfo.keyringId || undefined,
         isExistedKR: currentAddressInfo.isExistedKR,
       },
@@ -616,7 +619,6 @@ export const addMnemonicKeyringAndGotoSuccessScreen2024 = async (
         brandName: KEYRING_CLASS.MNEMONIC,
         isFirstImport: true,
         address: addresses,
-        passphrase,
         keyringId: currentAddressInfo.keyringId || undefined,
         isExistedKR: currentAddressInfo.isExistedKR,
       },
