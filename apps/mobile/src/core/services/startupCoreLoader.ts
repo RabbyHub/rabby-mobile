@@ -28,10 +28,13 @@ import {
   keyringCheckpointMMKV,
   keyringMMKVInstance,
   normalizeKeyringState,
-  persistKeyringState,
 } from '../storage/mmkv';
 import { APP_MMKV_KEYS } from '../storage/mmkvConstants';
 import { inspectPersistedKeyringState } from '../storage/keyringStateMigration';
+import {
+  createKeyringStatePersistence,
+  getKeyringStateSummary,
+} from '../storage/keyringStatePersistence';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 import { PreferenceService } from '../startupServices/preference';
 import { openapi } from '../request';
@@ -71,34 +74,6 @@ function capturePreferenceStorageIssue(
       new Error(`Failed to get preference from appStorage: ${error}`),
     );
   }
-}
-
-function getKeyringStateSummary(value: unknown) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return { valueType: Array.isArray(value) ? 'array' : typeof value };
-  }
-
-  const state = value as Record<string, unknown>;
-  const publicAccountSnapshot = state.publicAccountSnapshot;
-  const accounts =
-    publicAccountSnapshot &&
-    typeof publicAccountSnapshot === 'object' &&
-    !Array.isArray(publicAccountSnapshot)
-      ? (publicAccountSnapshot as Record<string, unknown>).accounts
-      : undefined;
-
-  return {
-    valueType: 'record',
-    hasBooted: typeof state.booted === 'string',
-    hasVault: typeof state.vault === 'string',
-    hasEncryptedKeyringData: state.hasEncryptedKeyringData === true,
-    hasPasswordState:
-      !!state.passwordState && typeof state.passwordState === 'object',
-    unencryptedKeyringCount: Array.isArray(state.unencryptedKeyringData)
-      ? state.unencryptedKeyringData.length
-      : null,
-    publicAccountCount: Array.isArray(accounts) ? accounts.length : null,
-  };
 }
 
 function recordKeyringStorageDiagnostic(
@@ -188,8 +163,16 @@ export function loadStartupCoreServices() {
   });
   migrateService(APP_STORE_NAMES.contactBook, contactService);
 
+  const keyringPersistence = createKeyringStatePersistence({
+    key: APP_MMKV_KEYS.LEGACY_KEYRING_STATE,
+    keyringStorage: keyringMMKVInstance,
+    checkpointStorage: keyringCheckpointMMKV,
+    initialBlocked: normalizedKeyringState.persistenceBlocked === true,
+    onDiagnostic: recordKeyringStorageDiagnostic,
+  });
   const keyringService = new KeyringService({
     encryptor: new RNEncryptor(),
+    onPersistVaultUpgrade: keyringPersistence.persistVaultUpgrade,
     keyringClasses,
     onSetAddressAlias,
     onSetAddressAliases,
@@ -215,51 +198,7 @@ export function loadStartupCoreServices() {
     input: getKeyringStateSummary(keyringState || {}),
   });
 
-  let keyringPersistSequence = 0;
-  let keyringPersistenceBlocked =
-    normalizedKeyringState.persistenceBlocked === true;
-  keyringService.store.subscribe(value => {
-    const sequence = ++keyringPersistSequence;
-    const summary = getKeyringStateSummary(value);
-    recordKeyringStorageDiagnostic('persist.request', {
-      sequence,
-      state: summary,
-    });
-
-    if (keyringPersistenceBlocked) {
-      recordKeyringStorageDiagnostic('persist.blocked', {
-        sequence,
-        state: summary,
-        reason: 'recovery-or-verification-required',
-      });
-      return;
-    }
-
-    try {
-      const persistence = persistKeyringState({
-        key: APP_MMKV_KEYS.LEGACY_KEYRING_STATE,
-        keyringStorage: keyringMMKVInstance,
-        checkpointStorage: keyringCheckpointMMKV,
-        value,
-      });
-      recordKeyringStorageDiagnostic('persist.complete', {
-        sequence,
-        state: summary,
-        persistence,
-      });
-    } catch (error) {
-      keyringPersistenceBlocked = true;
-      recordKeyringStorageDiagnostic('persist.error', {
-        sequence,
-        state: summary,
-        error:
-          error instanceof Error
-            ? error.message.slice(0, 160)
-            : String(error).slice(0, 160),
-      });
-      throw error;
-    }
-  });
+  keyringService.store.subscribe(keyringPersistence.onStoreUpdate);
 
   const preferenceService = new PreferenceService({
     storageAdapter: appStorage,

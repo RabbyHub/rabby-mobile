@@ -6,6 +6,11 @@ export type EncryptorDecryptDetail = {
   salt?: string;
 };
 
+export type EncryptorEncryptDetail = {
+  vault: string;
+  exportedKeyString: string;
+};
+
 export type EncryptorAdapter = {
   encrypt: (password: string, object: any) => Promise<string>;
   decrypt: (password: string, encryptedString: string) => Promise<any>;
@@ -17,6 +22,12 @@ export type EncryptorAdapter = {
     encryptedVault: string,
     exportedKeyString: string,
   ) => Promise<any>;
+  /** True when the stored KDF is at least as strong as the write policy. */
+  isVaultUpdated?: (encryptedString: string) => boolean;
+  encryptWithDetail?: (
+    password: string,
+    object: any,
+  ) => Promise<EncryptorEncryptDetail>;
 };
 
 export const nodeEncryptor = {
