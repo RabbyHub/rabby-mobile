@@ -76,6 +76,19 @@ jest.mock('@/databases/sync/_event', () => ({
 const account = { address: '0xabc', type: 'HD Key Tree', brandName: '' };
 const token = { id: 'token-a', chain: 'eth' };
 const row = (id: string, time_at = 100) => ({ id, time_at, is_scam: false });
+const apiRow = (id: string, time_at = 100) => ({
+  id,
+  chain: 'eth',
+  time_at,
+  is_scam: false,
+  receives: [],
+  sends: [],
+});
+const apiResult = (history_list: ReturnType<typeof apiRow>[]) => ({
+  history_list,
+  project_dict: {},
+  token_dict: {},
+});
 const props = { finalAccount: account, token } as any;
 const deferred = <T,>() => {
   let resolve!: (value: T) => void;
@@ -372,6 +385,263 @@ describe('TokenDetailHistoryList resource flow', () => {
       40,
     );
     expect(mockListProps.list).toHaveLength(40);
+  });
+
+  it('revalidates a Watch window with capped pages and preserves its next cursor', async () => {
+    const rows = Array.from({ length: 40 }, (_, index) =>
+      apiRow(`row-${index}`, 100 - index),
+    );
+    mockReadApiHistory
+      .mockResolvedValueOnce(apiResult(rows.slice(0, 20)))
+      .mockResolvedValueOnce(apiResult(rows.slice(20)))
+      .mockResolvedValueOnce(apiResult(rows.slice(0, 20)))
+      .mockResolvedValueOnce(apiResult(rows.slice(20)))
+      .mockResolvedValueOnce(apiResult([apiRow('older', 50)]));
+    const watchProps = {
+      ...props,
+      finalAccount: { ...account, type: 'Watch Address' },
+    } as any;
+    const view = render(<TokenDetailHistoryList {...watchProps} />);
+    await flush();
+    await act(async () => mockListProps.loadMore());
+    await flush();
+    expect(mockListProps.list).toHaveLength(40);
+
+    mockIsFocused = false;
+    view.rerender(<TokenDetailHistoryList {...watchProps} />);
+    await flush();
+    mockIsFocused = true;
+    view.rerender(<TokenDetailHistoryList {...watchProps} />);
+    await flush();
+
+    expect(
+      mockReadApiHistory.mock.calls.slice(2, 4).map(call => call[0]),
+    ).toEqual([
+      {
+        id: '0xabc',
+        start_time: 0,
+        page_count: 20,
+        chain_id: 'eth',
+        token_id: 'token-a',
+      },
+      {
+        id: '0xabc',
+        start_time: 81,
+        page_count: 20,
+        chain_id: 'eth',
+        token_id: 'token-a',
+      },
+    ]);
+    expect(mockListProps.list).toHaveLength(40);
+
+    await act(async () => mockListProps.loadMore());
+    await flush();
+    expect(mockReadApiHistory).toHaveBeenLastCalledWith({
+      id: '0xabc',
+      start_time: 61,
+      page_count: 20,
+      chain_id: 'eth',
+      token_id: 'token-a',
+    });
+    expect(mockListProps.list).toHaveLength(41);
+  });
+
+  it('does not request another Watch page for a one-page window revalidation', async () => {
+    const rows = Array.from({ length: 20 }, (_, index) =>
+      apiRow(`row-${index}`, 100 - index),
+    );
+    mockReadApiHistory.mockResolvedValue(apiResult(rows));
+    const watchProps = {
+      ...props,
+      finalAccount: { ...account, type: 'Watch Address' },
+    } as any;
+    const view = render(<TokenDetailHistoryList {...watchProps} />);
+    await flush();
+    mockIsFocused = false;
+    view.rerender(<TokenDetailHistoryList {...watchProps} />);
+    await flush();
+    mockIsFocused = true;
+    view.rerender(<TokenDetailHistoryList {...watchProps} />);
+    await flush();
+
+    expect(mockReadApiHistory).toHaveBeenCalledTimes(2);
+    expect(mockReadApiHistory.mock.calls[1][0].page_count).toBe(20);
+    expect(mockListProps.list).toHaveLength(20);
+  });
+
+  it('finishes an empty Watch revalidation that supersedes its initial request', async () => {
+    const initialRequest = deferred<ReturnType<typeof apiResult>>();
+    mockReadApiHistory
+      .mockReturnValueOnce(initialRequest.promise)
+      .mockResolvedValueOnce(apiResult([]));
+    const watchProps = {
+      ...props,
+      finalAccount: { ...account, type: 'Watch Address' },
+    } as any;
+    const view = render(<TokenDetailHistoryList {...watchProps} />);
+    await flush();
+
+    mockIsFocused = false;
+    view.rerender(<TokenDetailHistoryList {...watchProps} />);
+    await flush();
+    mockIsFocused = true;
+    view.rerender(<TokenDetailHistoryList {...watchProps} />);
+    await flush();
+
+    expect(mockReadApiHistory).toHaveBeenCalledTimes(2);
+    expect(mockListProps.list).toEqual([]);
+    expect(mockListProps.refreshLoading).toBeFalsy();
+    expect(mockListProps.emptyComponent).not.toBeNull();
+
+    await act(async () =>
+      initialRequest.resolve(apiResult([apiRow('stale-initial')])),
+    );
+    expect(mockListProps.list).toEqual([]);
+    expect(mockListProps.emptyComponent).not.toBeNull();
+  });
+
+  it('keeps the Watch window and retry cursor when a later revalidation page fails', async () => {
+    const rows = Array.from({ length: 40 }, (_, index) =>
+      apiRow(`row-${index}`, 100 - index),
+    );
+    mockReadApiHistory
+      .mockResolvedValueOnce(apiResult(rows.slice(0, 20)))
+      .mockResolvedValueOnce(apiResult(rows.slice(20)))
+      .mockResolvedValueOnce(apiResult(rows.slice(0, 20)))
+      .mockRejectedValueOnce(new Error('revalidation page failed'))
+      .mockResolvedValueOnce(apiResult([apiRow('older', 50)]));
+    const watchProps = {
+      ...props,
+      finalAccount: { ...account, type: 'Watch Address' },
+    } as any;
+    const view = render(<TokenDetailHistoryList {...watchProps} />);
+    await flush();
+    await act(async () => mockListProps.loadMore());
+    await flush();
+    mockIsFocused = false;
+    view.rerender(<TokenDetailHistoryList {...watchProps} />);
+    await flush();
+    mockIsFocused = true;
+    view.rerender(<TokenDetailHistoryList {...watchProps} />);
+    await flush();
+
+    expect(mockListProps.list).toHaveLength(40);
+    expect(mockListProps.refreshLoading).toBeFalsy();
+    expect(mockToastError).toHaveBeenCalledTimes(1);
+    await act(async () => mockListProps.loadMore());
+    await flush();
+    expect(mockReadApiHistory).toHaveBeenLastCalledWith(
+      expect.objectContaining({ start_time: 61, page_count: 20 }),
+    );
+    expect(mockListProps.list).toHaveLength(41);
+  });
+
+  it('keeps the Watch window when capped revalidation cannot rebuild it', async () => {
+    const rows = Array.from({ length: 40 }, (_, index) =>
+      apiRow(`row-${index}`, 100 - index),
+    );
+    mockReadApiHistory
+      .mockResolvedValueOnce(apiResult(rows.slice(0, 20)))
+      .mockResolvedValueOnce(apiResult(rows.slice(20)))
+      .mockResolvedValueOnce(apiResult(rows.slice(0, 20)))
+      .mockResolvedValueOnce(apiResult(rows.slice(20, 30)))
+      .mockResolvedValueOnce(apiResult([apiRow('older', 50)]));
+    const watchProps = {
+      ...props,
+      finalAccount: { ...account, type: 'Watch Address' },
+    } as any;
+    const view = render(<TokenDetailHistoryList {...watchProps} />);
+    await flush();
+    await act(async () => mockListProps.loadMore());
+    await flush();
+    mockIsFocused = false;
+    view.rerender(<TokenDetailHistoryList {...watchProps} />);
+    await flush();
+    mockIsFocused = true;
+    view.rerender(<TokenDetailHistoryList {...watchProps} />);
+    await flush();
+
+    expect(mockListProps.list).toHaveLength(40);
+    expect(mockListProps.refreshLoading).toBeFalsy();
+    expect(mockToastError).not.toHaveBeenCalled();
+    await act(async () => mockListProps.loadMore());
+    await flush();
+    expect(mockReadApiHistory).toHaveBeenLastCalledWith(
+      expect.objectContaining({ start_time: 61, page_count: 20 }),
+    );
+    expect(mockListProps.list).toHaveLength(41);
+  });
+
+  it('does not continue an old Watch revalidation after the token changes', async () => {
+    const rows = Array.from({ length: 40 }, (_, index) =>
+      apiRow(`row-${index}`, 100 - index),
+    );
+    const staleFirstPage = deferred<ReturnType<typeof apiResult>>();
+    mockReadApiHistory
+      .mockResolvedValueOnce(apiResult(rows.slice(0, 20)))
+      .mockResolvedValueOnce(apiResult(rows.slice(20)))
+      .mockReturnValueOnce(staleFirstPage.promise)
+      .mockResolvedValueOnce(apiResult([apiRow('new-token', 200)]));
+    const watchProps = {
+      ...props,
+      finalAccount: { ...account, type: 'Watch Address' },
+    } as any;
+    const view = render(<TokenDetailHistoryList {...watchProps} />);
+    await flush();
+    await act(async () => mockListProps.loadMore());
+    await flush();
+    mockIsFocused = false;
+    view.rerender(<TokenDetailHistoryList {...watchProps} />);
+    await flush();
+    mockIsFocused = true;
+    view.rerender(<TokenDetailHistoryList {...watchProps} />);
+    await flush();
+
+    view.rerender(
+      <TokenDetailHistoryList
+        {...watchProps}
+        token={{ ...token, id: 'token-b' } as any}
+      />,
+    );
+    await flush();
+    await act(async () => staleFirstPage.resolve(apiResult(rows.slice(0, 20))));
+
+    expect(mockReadApiHistory).toHaveBeenCalledTimes(4);
+    expect(mockListProps.list.map((item: any) => item.id)).toEqual([
+      'new-token',
+    ]);
+    expect(mockToastError).not.toHaveBeenCalled();
+  });
+
+  it('keeps API overflow rows without issuing an unnecessary revalidation page', async () => {
+    const rows = Array.from({ length: 21 }, (_, index) =>
+      apiRow(`row-${index}`, 100 - Math.min(index, 19)),
+    );
+    mockReadApiHistory
+      .mockResolvedValueOnce(apiResult(rows))
+      .mockResolvedValueOnce(apiResult(rows))
+      .mockResolvedValueOnce(apiResult([]));
+    const watchProps = {
+      ...props,
+      finalAccount: { ...account, type: 'Watch Address' },
+    } as any;
+    const view = render(<TokenDetailHistoryList {...watchProps} />);
+    await flush();
+    mockIsFocused = false;
+    view.rerender(<TokenDetailHistoryList {...watchProps} />);
+    await flush();
+    mockIsFocused = true;
+    view.rerender(<TokenDetailHistoryList {...watchProps} />);
+    await flush();
+
+    expect(mockReadApiHistory).toHaveBeenCalledTimes(2);
+    expect(mockListProps.list).toHaveLength(21);
+
+    await act(async () => mockListProps.loadMore());
+    await flush();
+    expect(mockReadApiHistory).toHaveBeenLastCalledWith(
+      expect.objectContaining({ start_time: 81, page_count: 20 }),
+    );
   });
 
   it('does not reread DB for hidden screens and catches up when focused again', async () => {

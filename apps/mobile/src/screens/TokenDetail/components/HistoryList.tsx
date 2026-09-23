@@ -236,6 +236,7 @@ const TokenDetailHistoryListContent = ({
     requestKey,
     enabled: requestEnabled,
     pageSize: PAGE_COUNT,
+    maxPageSize: isMyAddress ? undefined : PAGE_COUNT,
     fetchPage: fetchHistoryPage,
   });
   const noMore = !requestEnabled || (firstFetchDone && !hasMore);

@@ -24,11 +24,14 @@ export function useTokenHistoryResource<T extends HistoryRow>({
   requestKey,
   enabled,
   pageSize,
+  maxPageSize,
   fetchPage,
 }: {
   requestKey: string;
   enabled: boolean;
   pageSize: number;
+  /** Maximum rows one transport request can ask for while revalidating. */
+  maxPageSize?: number;
   fetchPage: (cursor: number, count: number) => Promise<HistoryPage<T>>;
 }) {
   const fetchPageRef = useRef(fetchPage);
@@ -83,31 +86,86 @@ export function useTokenHistoryResource<T extends HistoryRow>({
         error: undefined,
       });
       try {
-        // A background DB upsert should not collapse a scrolled list to one
-        // page. Re-read its current window, including an updated oldest cursor.
+        // Revalidation should not collapse a scrolled list to one page. Re-read
+        // its current window, including an updated oldest cursor.
         const count =
           mode === 'revalidate'
             ? Math.max(pageSize, previous.list.length)
             : pageSize;
-        const page = await fetchPageRef.current(
-          mode === 'append' ? previous.cursor : 0,
-          count,
-        );
-        if (!context.active || context.sequence !== sequence) return;
+        const fetchPageForRequest = fetchPageRef.current;
+        const firstCursor = mode === 'append' ? previous.cursor : 0;
+        const hasPageSizeCap =
+          mode === 'revalidate' &&
+          typeof maxPageSize === 'number' &&
+          maxPageSize > 0;
+        const revalidationPageSize = hasPageSizeCap
+          ? Math.max(1, Math.floor(maxPageSize))
+          : count;
+        const pageBudget =
+          mode === 'revalidate' ? Math.ceil(count / revalidationPageSize) : 1;
+        const fetchedRows = new Map<string, T>();
+        let nextCursor = firstCursor;
+        let page: HistoryPage<T> = { list: [], last: 0 };
+        let lastRequestCursor = firstCursor;
+        let lastRequestCount = Math.min(count, revalidationPageSize);
+        let lastPageLength = 0;
+
+        for (let pageIndex = 0; pageIndex < pageBudget; pageIndex += 1) {
+          const remaining = Math.max(1, count - fetchedRows.size);
+          lastRequestCount = Math.min(remaining, revalidationPageSize);
+          lastRequestCursor = nextCursor;
+          page = await fetchPageForRequest(lastRequestCursor, lastRequestCount);
+          if (!context.active || context.sequence !== sequence) return;
+
+          page.list.forEach(item => fetchedRows.set(item.key, item));
+          lastPageLength = page.list.length;
+
+          const cursorAdvanced =
+            page.last > 0 &&
+            (lastRequestCursor === 0 || page.last < lastRequestCursor);
+          if (
+            fetchedRows.size >= count ||
+            lastPageLength < lastRequestCount ||
+            !cursorAdvanced
+          ) {
+            break;
+          }
+          nextCursor = page.last;
+        }
+
+        const fetchedList = Array.from(fetchedRows.values());
+        // API history is append-only for this resource. If a capped
+        // revalidation cannot rebuild the already displayed window, retain
+        // the previous atomic snapshot instead of publishing a partial one.
+        const finalCursorAdvanced =
+          page.last > 0 &&
+          (lastRequestCursor === 0 || page.last < lastRequestCursor);
+        const incompleteCappedRevalidation =
+          hasPageSizeCap &&
+          previous.list.length > 0 &&
+          (fetchedList.length < previous.list.length ||
+            (previous.hasMore && !finalCursorAdvanced));
+        if (incompleteCappedRevalidation) {
+          publish({
+            ...previous,
+            loading: false,
+            loadingMore: false,
+            error: undefined,
+          });
+          return;
+        }
 
         // History is append-only here. An empty refresh is not evidence that
         // previously displayed transactions were deleted (e.g. DB sync in flight).
         const preserve =
-          mode !== 'append' && !page.list.length && !!previous.list.length;
+          mode !== 'append' && !fetchedList.length && !!previous.list.length;
         const rows = new Map<string, T>();
         if (mode === 'append' || preserve) {
           previous.list.forEach(item => rows.set(item.key, item));
         }
-        page.list.forEach(item => rows.set(item.key, item));
+        fetchedList.forEach(item => rows.set(item.key, item));
         const hasMore =
-          page.list.length >= count &&
-          page.last > 0 &&
-          (mode !== 'append' || page.last < previous.cursor);
+          lastPageLength >= lastRequestCount && finalCursorAdvanced;
         publish({
           list: Array.from(rows.values()).sort((a, b) => b.time_at - a.time_at),
           cursor: preserve ? previous.cursor : page.last,
@@ -130,7 +188,7 @@ export function useTokenHistoryResource<T extends HistoryRow>({
         });
       }
     },
-    [context, enabled, pageSize],
+    [context, enabled, maxPageSize, pageSize],
   );
 
   const refresh = useCallback(() => request('replace'), [request]);
