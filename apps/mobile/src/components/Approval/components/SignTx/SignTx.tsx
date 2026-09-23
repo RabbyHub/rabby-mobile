@@ -865,11 +865,8 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     } // do not overwrite nonce if from === to(cancel transaction)
 
     const explainNonce = (updateNonce ? recommendNonce : tx.nonce) || '0x1';
-    // New Safe transactions are built as CALL; only queued ones can delegate.
     const delegateCall =
-      isGnosisAccount &&
-      isViewGnosisSafe &&
-      Number(params?.data?.[0]?.operation) === 1;
+      isGnosisAccount && Number(params?.data?.[0]?.operation) === 1;
     const parseTxPromise = openapi.parseTx({
       chainId: chain.serverId,
       tx: omit(
