@@ -29,7 +29,7 @@ import { CHAINS_ENUM } from '@debank/common';
 import { findChain } from '@/utils/chain';
 import RcExpandCC from '@/assets/icons/home/defi-expand.svg';
 import {
-  buildActionCalldata,
+  parseActionAbi,
   isBlacklistMethodName,
   isWhitelistSpender,
 } from '../DappActions/hook';
@@ -213,7 +213,7 @@ export const FullDefiRenderItem = ({
           continue; // 需要 approve 但不在白名单内，直接跳过
         }
         try {
-          const { abi } = buildActionCalldata(action.func, action.str_params);
+          const abi = parseActionAbi(action.func);
           if (isBlacklistMethodName(abi.name)) {
             continue;
           }

@@ -95,9 +95,13 @@ export const getMethodDesc = (fncName: string) => {
   return `function ${normalizedName.split(')(')[0] + ')'}`;
 };
 
-export const buildActionCalldata = (func: string, strParams?: string[]) => {
+export const parseActionAbi = (func: string) => {
   const normalizedFunc = getMethodDesc(func);
-  const abi = parseAbiItem(normalizedFunc) as AbiFunction;
+  return parseAbiItem(normalizedFunc) as AbiFunction;
+};
+
+export const buildActionCalldata = (func: string, strParams?: string[]) => {
+  const abi = parseActionAbi(func);
   const calldata = encodeFunctionData({
     abi: [abi],
     functionName: abi.name,
@@ -122,6 +126,7 @@ export const useDappAction = (
 
   useEffect(() => {
     if (!data || !chain) {
+      setValid(false);
       return;
     }
     try {
