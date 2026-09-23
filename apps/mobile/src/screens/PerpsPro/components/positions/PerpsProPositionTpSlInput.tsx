@@ -125,8 +125,9 @@ export const PerpsProPositionTpSlInput: React.FC<{
           <PerpsProDecimalTextInput
             accessibilityLabel={accessibilityLabel}
             editable={!disabled}
+            caretHidden={IS_ANDROID ? !focused : undefined}
             focusCursorAtEnd
-            focusCursorAtEndMode={IS_ANDROID ? 'beforeFocus' : 'initialFocus'}
+            focusCursorAtEndMode={IS_ANDROID ? 'nativeFocus' : 'initialFocus'}
             inputComponent={PerpsProPositionTpSlBottomSheetTextInput}
             maxFontSizeMultiplier={1.2}
             maxDecimals={maxDecimals}

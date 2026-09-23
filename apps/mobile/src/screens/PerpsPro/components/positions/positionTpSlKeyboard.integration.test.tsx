@@ -55,6 +55,7 @@ jest.mock('@gorhom/bottom-sheet', () => ({
   }),
 }));
 
+const mockSetSelection = jest.fn();
 let mockNextNode = 0;
 jest.mock('react-native-gesture-handler', () => {
   const ReactModule = require('react');
@@ -69,6 +70,7 @@ jest.mock('react-native-gesture-handler', () => {
           focus: jest.fn(),
           blur: jest.fn(),
           setNativeProps: jest.fn(),
+          setSelection: mockSetSelection,
         };
       }
       ReactModule.useImperativeHandle(ref, () => host.current);
@@ -265,7 +267,7 @@ describe('Android TP/SL keyboard ownership', () => {
     expect(mockNodes.current).toEqual(new Set([2]));
   });
 
-  it('prepares the raw caret before focus and releases it for middle editing', () => {
+  it('hides the mirror caret until one native end command and releases middle editing', () => {
     const onChange = jest.fn();
     render(
       <PerpsProPositionTpSlInput
@@ -281,12 +283,16 @@ describe('Android TP/SL keyboard ownership', () => {
       { wrapper },
     );
     expect(screen.getByText('−1,234.5')).toBeTruthy();
-    expect(screen.getByTestId('input').props.selection).toEqual({
-      start: 6,
-      end: 6,
+    expect(screen.getByTestId('input').props.caretHidden).toBe(true);
+    mockSetSelection.mockImplementationOnce(() => {
+      expect(screen.getByTestId('input').props.caretHidden).toBe(true);
+      expect(screen.getByText('−1,234.5')).toBeTruthy();
     });
     focus('input', 1);
     flushUI();
+    expect(mockSetSelection).toHaveBeenLastCalledWith(6, 6);
+    expect(screen.getByTestId('input').props.caretHidden).toBe(false);
+    expect(screen.queryByText('−1,234.5')).toBeNull();
     expect(screen.getByTestId('input').props.selection).toBeUndefined();
     fireEvent(screen.getByTestId('input'), 'selectionChange', {
       nativeEvent: { selection: { start: 2, end: 2 } },
@@ -298,9 +304,9 @@ describe('Android TP/SL keyboard ownership', () => {
     blur('input', 1);
     act(flushUI);
     expect(mockState).toMatchObject({ status: 'HIDDEN', target: undefined });
-    expect(screen.getByTestId('input').props.selection).toEqual({
-      start: 7,
-      end: 7,
-    });
+    expect(screen.getByTestId('input').props.caretHidden).toBe(true);
+    expect(screen.getByTestId('input').props.selection).toBeUndefined();
+    focus('input', 1);
+    expect(mockSetSelection).toHaveBeenLastCalledWith(7, 7);
   });
 });
