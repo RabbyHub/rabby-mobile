@@ -166,7 +166,7 @@ jest.mock('./PerpsProPositionTpSlHeader', () => ({
 }));
 
 jest.mock('./PerpsProPositionTpSlForm', () => ({
-  PerpsProPositionTpSlForm: () => null,
+  usePerpsProPositionTpSlForm: () => ({ content: null, footer: null }),
 }));
 
 import type { PerpsPositionViewModel } from '../../model/position';

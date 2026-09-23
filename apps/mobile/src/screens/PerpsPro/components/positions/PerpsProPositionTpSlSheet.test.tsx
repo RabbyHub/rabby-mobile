@@ -34,9 +34,8 @@ const mockOpenFieldExplanation = jest.fn();
 const mockScrollToEnd = jest.fn();
 const mockScrollTo = jest.fn();
 const mockSnapToIndex = jest.fn();
-const mockDefaultScrollHandler = jest.fn();
-let mockScrollHandler: (event: any, context: never) => void;
 const mockKeyboardListeners = new Map<string, () => void>();
+const mockNativeKeyboard = { value: { status: 0 } };
 let mockAnimationFrameCallback: FrameRequestCallback | null = null;
 let mockNextFormInstanceId = 0;
 let mockAnimatedReactions: Array<{
@@ -119,12 +118,20 @@ jest.mock('@gorhom/bottom-sheet', () => {
         ...props,
         testID: 'tpsl-backdrop',
       }),
+    BottomSheetFooterContainer: ({ footerComponent }: any) =>
+      ReactModule.createElement(footerComponent, {
+        animatedFooterPosition: { value: 0 },
+      }),
+    KEYBOARD_STATUS: { SHOWN: 1 },
     ANIMATION_STATUS: { STOPPED: 2 },
     SCROLLABLE_STATUS: { UNLOCKED: 1 },
-    useScrollEventsHandlersDefault: () => ({
-      handleOnScroll: mockDefaultScrollHandler,
-    }),
+    BottomSheetFooter: (props: any) =>
+      ReactModule.createElement(View, {
+        ...props,
+        testID: 'tpsl-native-footer',
+      }),
     useBottomSheetInternal: () => ({
+      animatedKeyboardState: mockNativeKeyboard,
       animatedAnimationState: { value: { status: 2 } },
       animatedScrollableStatus: { value: 1 },
       animatedPosition: { value: 94 },
@@ -139,10 +146,7 @@ jest.mock('@gorhom/bottom-sheet', () => {
           scrollToEnd: mockScrollToEnd,
           scrollTo: mockScrollTo,
         }));
-        mockScrollHandler = props.scrollEventsHandlersHook(
-          ref,
-          ReactModule.useRef({ value: 0 }).current,
-        ).handleOnScroll;
+
         return ReactModule.createElement(
           View,
           { ...props, testID: 'tpsl-scroll' },
@@ -241,18 +245,25 @@ jest.mock('../common/PerpsProFieldExplanationContext', () => ({
 jest.mock('./PerpsProPositionTpSlForm', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
+  const Fields = (props: any) => {
+    const [instanceId] = ReactModule.useState(() => ++mockNextFormInstanceId);
+    const sheetId = ReactModule.useContext(
+      require('../common/PerpsProKeyboardSheetContext')
+        .PerpsProKeyboardSheetContext,
+    );
+    mockFormProps({ ...props, instanceId, sheetId });
+    return ReactModule.createElement(View, {
+      testID: `tpsl-form-${props.mode}`,
+    });
+  };
   return {
-    PerpsProPositionTpSlForm: (props: any) => {
-      const [instanceId] = ReactModule.useState(() => ++mockNextFormInstanceId);
-      const sheetId = ReactModule.useContext(
-        require('../common/PerpsProKeyboardSheetContext')
-          .PerpsProKeyboardSheetContext,
-      );
-      mockFormProps({ ...props, instanceId, sheetId });
-      return ReactModule.createElement(View, {
-        testID: `tpsl-form-${props.mode}`,
-      });
-    },
+    usePerpsProPositionTpSlForm: (props: any) => ({
+      content: ReactModule.createElement(Fields, {
+        ...props,
+        key: props.sessionKey,
+      }),
+      footer: ReactModule.createElement(View, { testID: 'tpsl-form-footer' }),
+    }),
   };
 });
 
@@ -565,8 +576,8 @@ describe('PerpsProPositionTpSlSheet', () => {
         visible
       />,
     );
-    const { sheetId, instanceId, minimumHeight } =
-      mockFormProps.mock.lastCall?.[0];
+    const { sheetId, instanceId } = mockFormProps.mock.lastCall?.[0];
+    mockNativeKeyboard.value.status = 1;
     const snapPoints = mockBottomSheetProps.mock.lastCall?.[0].snapPoints;
     act(() => {
       perpsProKeyboardSession.focus({
@@ -592,15 +603,32 @@ describe('PerpsProPositionTpSlSheet', () => {
     });
     expect(
       StyleSheet.flatten(screen.getByTestId('tpsl-scroll').props.style),
-    ).toMatchObject({ marginBottom: 48 });
+    ).toMatchObject({ marginBottom: 182 });
     expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual(
       snapPoints,
     );
     expect(mockFormProps.mock.lastCall?.[0]).toMatchObject({
       sheetId,
       instanceId,
-      minimumHeight,
     });
+    const footer = screen.getByTestId('tpsl-native-footer');
+    expect(StyleSheet.flatten(footer.props.style)).toEqual({ top: -48 });
+    mockNativeKeyboard.value.status = 0;
+    act(() => {
+      jest
+        .mocked(Keyboard.addListener)
+        .mock.calls.forEach(([event, callback]) => {
+          if (event === 'keyboardDidHide') {
+            callback({} as never);
+          }
+        });
+    });
+    expect(screen.getByTestId('tpsl-native-footer')).toBe(footer);
+    expect(StyleSheet.flatten(footer.props.style)).toEqual({ top: 0 });
+    expect(
+      StyleSheet.flatten(screen.getByTestId('tpsl-scroll').props.style),
+    ).toMatchObject({ marginBottom: 134 });
+    expect(mockScrollToEnd).not.toHaveBeenCalled();
     view.unmount();
     perpsProKeyboardSession.setEnabled(false);
   });
@@ -661,117 +689,37 @@ describe('PerpsProPositionTpSlSheet', () => {
     expect(mockOpenFieldExplanation).toHaveBeenCalledWith('estimatedPnl');
   });
 
-  it('scrolls the form to the bottom only after a completed keyboard session', () => {
-    const { rerender } = render(
-      <PerpsProPositionTpSlSheet
-        amountUnit="base"
-        cancelingOids={[]}
-        confirmedCancelledOids={[]}
-        coveredByReview={false}
-        defaultTab="position"
-        market={market}
-        onCancelOrder={jest.fn()}
-        onClose={jest.fn()}
-        onReview={jest.fn()}
-        pending={false}
-        position={position}
-        visible
-      />,
-    );
-
-    act(() => {
-      mockKeyboardListeners.get('keyboardDidHide')?.();
-    });
-    expect(mockAnimationFrameCallback).toBeNull();
-    expect(mockScrollToEnd).not.toHaveBeenCalled();
-
-    act(() => {
-      mockKeyboardListeners.get('keyboardDidShow')?.();
-      mockKeyboardListeners.get('keyboardDidHide')?.();
-    });
-    expect(mockScrollToEnd).not.toHaveBeenCalled();
-    act(() => {
-      mockAnimationFrameCallback?.(0);
-    });
-    expect(mockScrollToEnd).toHaveBeenCalledTimes(1);
-    expect(mockScrollToEnd).toHaveBeenCalledWith({ animated: true });
-
-    act(() => {
-      mockKeyboardListeners.get('keyboardDidHide')?.();
-    });
-    expect(mockScrollToEnd).toHaveBeenCalledTimes(1);
-
-    act(() => {
-      mockKeyboardListeners.get('keyboardDidShow')?.();
-      mockKeyboardListeners.get('keyboardDidHide')?.();
-    });
-    rerender(
-      <PerpsProPositionTpSlSheet
-        amountUnit="base"
-        cancelingOids={[]}
-        confirmedCancelledOids={[]}
-        coveredByReview={false}
-        defaultTab="position"
-        market={market}
-        onCancelOrder={jest.fn()}
-        onClose={jest.fn()}
-        onReview={jest.fn()}
-        pending={false}
-        position={position}
-        visible={false}
-      />,
-    );
-    expect(cancelAnimationFrame).toHaveBeenCalledWith(1);
-    expect(mockKeyboardListeners.size).toBe(0);
-  });
-
-  it('waits for the Android sheet to restore before scrolling Confirm into view', () => {
-    Object.defineProperty(Platform, 'OS', {
-      configurable: true,
-      value: 'android',
-    });
-    render(
-      <PerpsProPositionTpSlSheet
-        amountUnit="base"
-        cancelingOids={[]}
-        confirmedCancelledOids={[]}
-        coveredByReview={false}
-        defaultTab="position"
-        market={market}
-        onCancelOrder={jest.fn()}
-        onClose={jest.fn()}
-        onReview={jest.fn()}
-        pending={false}
-        position={position}
-        visible
-      />,
-    );
-
-    const sheetProps = mockBottomSheetProps.mock.lastCall?.[0];
-    act(() => {
-      sheetProps.onChange(0, 100);
-      mockKeyboardListeners.get('keyboardDidShow')?.();
-      mockKeyboardListeners.get('keyboardDidHide')?.();
-    });
-    const reaction = mockAnimatedReactions.at(-1)!;
-    act(() => {
-      sheetProps.animatedPosition.value = 99;
-      reaction.react(reaction.prepare());
-    });
-    expect(mockAnimationFrameCallback).toBeNull();
-    expect(mockScrollToEnd).not.toHaveBeenCalled();
-
-    act(() => {
-      sheetProps.animatedPosition.value = 100;
-      reaction.react(reaction.prepare());
-    });
-    expect(mockScrollToEnd).not.toHaveBeenCalled();
-    act(() => {
-      mockAnimationFrameCallback?.(0);
-    });
-    expect(mockScrollToEnd).toHaveBeenCalledTimes(1);
-    expect(mockScrollToEnd).toHaveBeenCalledWith({ animated: false });
-  });
+  it.each([
+    ['ios', false],
+    ['ios', true],
+    ['android', false],
+    ['android', true],
+  ] as const)(
+    'keeps Confirm fixed on %s with existing orders=%s without a post-hide scroll',
+    (platform, hasOrders) => {
+      mockAndroid = platform === 'android';
+      const props = {
+        ...makeSheetProps(hasOrders ? position.tpslOrders : []),
+        defaultTab: 'partial' as const,
+      };
+      render(<PerpsProPositionTpSlSheet {...props} />);
+      if (hasOrders) {
+        fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
+      }
+      const scroll = screen.getByTestId('tpsl-scroll');
+      expect(within(scroll).queryByTestId('tpsl-form-footer')).toBeNull();
+      expect(
+        within(screen.getByTestId('tpsl-native-footer')).getByTestId(
+          'tpsl-form-footer',
+        ),
+      ).toBeTruthy();
+      act(() => mockKeyboardListeners.get('keyboardDidShow')?.());
+      act(() => mockKeyboardListeners.get('keyboardDidHide')?.());
+      act(() => mockAnimationFrameCallback?.(0));
+      expect(screen.getByTestId('tpsl-scroll')).toBe(scroll);
+      expect(mockScrollToEnd).not.toHaveBeenCalled();
+    },
+  );
 
   it('keeps the right-aligned Unfilled column single-line so long content extends left', () => {
     render(
@@ -879,7 +827,6 @@ describe('PerpsProPositionTpSlSheet', () => {
     fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
     expect(screen.getByTestId('tpsl-form-add')).toBeTruthy();
     expect(mockFormProps.mock.lastCall?.[0]).toMatchObject({
-      minimumHeight: 426,
       presentation: 'subpage',
     });
     expect(screen.getByText('TP/SL')).toBeTruthy();
@@ -900,7 +847,6 @@ describe('PerpsProPositionTpSlSheet', () => {
     fireEvent.press(screen.getByText('Position TP/SL'));
     expect(screen.getByTestId('tpsl-form-position')).toBeTruthy();
     expect(mockFormProps.mock.lastCall?.[0]).toMatchObject({
-      minimumHeight: 486,
       presentation: 'tab',
     });
   });
@@ -1128,7 +1074,6 @@ describe('PerpsProPositionTpSlSheet', () => {
       variant: 'empty',
     });
     expect(mockFormProps.mock.lastCall?.[0]).toMatchObject({
-      minimumHeight: 486,
       mode: 'add',
       presentation: 'inline-empty',
     });
@@ -1339,13 +1284,7 @@ describe('PerpsProPositionTpSlSheet', () => {
     expect(mockScrollToEnd).not.toHaveBeenCalled();
     expect(scroll.props.bounces).toBe(false);
     expect(scroll.props.overScrollMode).toBe('never');
-    const edge = screen.getByTestId('perps-pro-position-tpsl-top-edge');
-    expect(edge.props.pointerEvents).toBe('none');
-    expect(StyleSheet.flatten(edge.props.style)).toMatchObject({
-      height: 16,
-      position: 'absolute',
-      opacity: 1,
-    });
+    expect(screen.queryByTestId('perps-pro-position-tpsl-top-edge')).toBeNull();
   });
 
   it.each(['ios', 'android'])(
@@ -1396,34 +1335,6 @@ describe('PerpsProPositionTpSlSheet', () => {
       expect(mockScrollToEnd).not.toHaveBeenCalled();
     },
   );
-  it('composes the native scroll handler and hides the mint edge away from the top', () => {
-    const props = {
-      ...makeSheetProps(position.tpslOrders),
-      defaultTab: 'partial' as const,
-    };
-    const view = render(<PerpsProPositionTpSlSheet {...props} />);
-    const event = { contentOffset: { y: 24 } };
-    act(() => mockScrollHandler(event, {} as never));
-    expect(mockDefaultScrollHandler).toHaveBeenCalledWith(event, {});
-    view.rerender(
-      <PerpsProPositionTpSlSheet {...props} position={{ ...props.position }} />,
-    );
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-position-tpsl-top-edge').props.style,
-      ).opacity,
-    ).toBe(0);
-    act(() => mockScrollHandler({ contentOffset: { y: 0 } }, {} as never));
-    view.rerender(
-      <PerpsProPositionTpSlSheet {...props} position={{ ...props.position }} />,
-    );
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-position-tpsl-top-edge').props.style,
-      ).opacity,
-    ).toBe(1);
-  });
-
   it('restores a skipped-confirmation settlement even when the empty main page has not changed size', () => {
     const props = { ...makeSheetProps([]), defaultTab: 'partial' as const };
     const view = render(<PerpsProPositionTpSlSheet {...props} />);

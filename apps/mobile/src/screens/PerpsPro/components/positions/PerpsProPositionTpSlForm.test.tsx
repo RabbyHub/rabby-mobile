@@ -148,7 +148,7 @@ import type {
   PerpsPositionTpSlOrderViewModel,
 } from '../../model/positionTpSl';
 import { PerpsProPositionTpSlBottomSheetTextInput } from './PerpsProPositionTpSlBottomSheetTextInput';
-import { PerpsProPositionTpSlForm } from './PerpsProPositionTpSlForm';
+import { usePerpsProPositionTpSlForm } from './PerpsProPositionTpSlForm';
 
 const order = (
   kind: PerpsPositionTpSlKind,
@@ -207,6 +207,18 @@ const props = () => ({
   onReview: jest.fn(),
   pending: false,
 });
+
+const PerpsProPositionTpSlForm = (
+  formProps: Parameters<typeof usePerpsProPositionTpSlForm>[0],
+) => {
+  const { content, footer } = usePerpsProPositionTpSlForm(formProps);
+  return (
+    <>
+      {content}
+      {footer}
+    </>
+  );
+};
 
 describe('PerpsProPositionTpSlForm', () => {
   it.each(['legs', 'duplicates'] as const)(
@@ -788,7 +800,7 @@ describe('PerpsProPositionTpSlForm', () => {
         screen.getByTestId('perps-pro-position-tpsl-footer').props.style,
       ),
     ).toMatchObject({
-      paddingHorizontal: 4,
+      paddingHorizontal: 20,
       paddingBottom: 36,
       paddingTop: 12,
     });
@@ -803,7 +815,7 @@ describe('PerpsProPositionTpSlForm', () => {
         screen.getByTestId('perps-pro-position-tpsl-footer').props.style,
       ),
     ).toMatchObject({
-      paddingHorizontal: 4,
+      paddingHorizontal: 20,
       paddingBottom: 36,
       paddingTop: 12,
     });
@@ -826,11 +838,10 @@ describe('PerpsProPositionTpSlForm', () => {
     });
   });
 
-  it('keeps the Position form in the exact remaining Figma sheet height and bottom-anchors its footer', () => {
+  it('separates the natural-height fields from the constant-height footer', () => {
     render(
       <PerpsProPositionTpSlForm
         {...props()}
-        minimumHeight={486}
         mode="position"
         position={position()}
       />,
@@ -840,14 +851,13 @@ describe('PerpsProPositionTpSlForm', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-form-tab').props.style,
       ),
-    ).toMatchObject({ minHeight: 486, paddingHorizontal: 16 });
+    ).toMatchObject({ paddingHorizontal: 16 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-footer').props.style,
       ),
     ).toMatchObject({
-      marginTop: 'auto',
-      paddingHorizontal: 4,
+      paddingHorizontal: 20,
       paddingBottom: 36,
       paddingTop: 12,
     });

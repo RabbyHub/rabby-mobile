@@ -25,8 +25,6 @@ const PERPS_PRO_POSITION_TPSL_DESIGN_HEIGHTS = {
   modify: 604,
   'position-modify': 598,
 } as const;
-const PERPS_PRO_POSITION_TPSL_SUBPAGE_CHROME_HEIGHT = 186;
-const PERPS_PRO_POSITION_TPSL_TAB_CHROME_HEIGHT = 232;
 export type PerpsProPositionTpSlPage =
   keyof typeof PERPS_PRO_POSITION_TPSL_DESIGN_HEIGHTS;
 
@@ -181,25 +179,5 @@ export const getPerpsProPositionTpSlSnapPoint = ({
   return Math.min(
     availableHeight,
     PERPS_PRO_POSITION_TPSL_DESIGN_HEIGHTS[page],
-  );
-};
-
-export const getPerpsProPositionTpSlFormMinimumHeight = ({
-  presentation,
-  snapPoint,
-}: {
-  presentation: PerpsProPositionTpSlFormPresentation;
-  snapPoint: number;
-}) => {
-  const safeSnapPoint =
-    Number.isFinite(snapPoint) && snapPoint > 0 ? snapPoint : 0;
-  const chromeHeight =
-    presentation === 'subpage' || presentation === 'position-modify'
-      ? PERPS_PRO_POSITION_TPSL_SUBPAGE_CHROME_HEIGHT
-      : PERPS_PRO_POSITION_TPSL_TAB_CHROME_HEIGHT;
-
-  return Math.max(
-    0,
-    safeSnapPoint - PERPS_PRO_BOTTOM_SHEET_HANDLE_HEIGHT - chromeHeight,
   );
 };
