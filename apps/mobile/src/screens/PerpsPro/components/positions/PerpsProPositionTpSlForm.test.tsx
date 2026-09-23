@@ -810,6 +810,14 @@ describe('PerpsProPositionTpSlForm', () => {
       paddingBottom: 36,
       paddingTop: 12,
     });
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-form-card').props.onLayout,
+    ).toBeUndefined();
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-form-tab').props.style,
+      ).flexGrow,
+    ).toBeUndefined();
   });
 
   it('defaults Position to PnL, hides Price, persists the leg, and limits input to two decimals', () => {

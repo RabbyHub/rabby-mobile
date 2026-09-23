@@ -6,10 +6,18 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
+  ANIMATION_STATUS,
+  SCROLLABLE_STATUS,
+  useBottomSheetInternal,
+  useScrollEventsHandlersDefault,
+  type ScrollEventsHandlersHookType,
   BottomSheetScrollView,
   type BottomSheetScrollViewMethods,
 } from '@gorhom/bottom-sheet';
 import React, {
+  createContext,
+  useContext,
+  useLayoutEffect,
   useCallback,
   useEffect,
   useMemo,
@@ -23,11 +31,14 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import {
+import Animated, {
+  type SharedValue,
+  useAnimatedStyle,
   runOnJS,
   useAnimatedReaction,
   useSharedValue,
 } from 'react-native-reanimated';
+import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -107,6 +118,18 @@ export const PerpsProPositionTpSlSheet: React.FC<{
     const modalRef = useRef<AppBottomSheetModal>(null);
     const scrollViewRef = useRef<BottomSheetScrollViewMethods>(null);
     const handledSettlementRevisionRef = useRef(0);
+    const [keyboardVisible, setKeyboardVisible] = useState(false);
+    const [restoring, setRestoring] = useState(false);
+    const wasCoveredRef = useRef(coveredByReview);
+    const [laidOutPage, setLaidOutPage] = useState<string | null>(null);
+    const scrollOffset = useSharedValue(0);
+    const keyboardPageRef = useRef<string | null>(null);
+    const pageStateRef = useRef({
+      key: '',
+      isOrderList: false,
+      coveredByReview,
+      visible,
+    });
     const keyboardSessionActiveRef = useRef(false);
     const scrollFrameRef = useRef<number | null>(null);
     const restingSheetPositionRef = useRef<number | null>(null);
@@ -115,8 +138,10 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       visible: visible && !coveredByReview,
       scrollViewRef,
     });
+    const { cancelMeasurement, ensureInputVisible } = keyboard;
     const restingSheetPosition = useSharedValue(Number.NaN);
     const androidScrollAfterKeyboardRestore = useSharedValue(false);
+    const keyboardRestorePage = useSharedValue('');
     const { height: windowHeight } = useWindowDimensions();
     const stableWindowHeight = useRef(windowHeight).current;
     const insets = useSafeAreaInsets();
@@ -126,15 +151,18 @@ export const PerpsProPositionTpSlSheet: React.FC<{
     const [tab, setTab] = useState<'partial' | 'position'>(defaultTab);
     const [partialPage, setPartialPage] = useState<PartialPage>('list');
     const [positionPage, setPositionPage] = useState<'list' | 'modify'>('list');
-    const [formLayout, setFormLayout] = useState<{
-      key: string;
-      height: number;
-    } | null>(null);
-    const pendingFormLayoutRef = useRef<typeof formLayout>(null);
     const [editingOrder, setEditingOrder] =
       useState<PerpsPositionTpSlOrderViewModel | null>(null);
     const liveMarket = usePerpsProPositionMark(position.coin);
-    const interactionLocked = pending || coveredByReview || reviewRequesting;
+    const settlementPending =
+      !!settlement &&
+      settlement.revision > handledSettlementRevisionRef.current;
+    const interactionLocked =
+      pending ||
+      coveredByReview ||
+      reviewRequesting ||
+      settlementPending ||
+      restoring;
     const renderBackdrop = useCallback(
       (props: React.ComponentProps<typeof PerpsProDialogBackdrop>) => (
         <PerpsProDialogBackdrop
@@ -205,13 +233,15 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       ) {
         return;
       }
-      handledSettlementRevisionRef.current = settlement.revision;
       Keyboard.dismiss();
+      if (coveredByReview || keyboardVisible) return;
+      handledSettlementRevisionRef.current = settlement.revision;
+      setRestoring(true);
       setEditingOrder(null);
       setPartialPage('list');
       setPositionPage('list');
       setTab(settlement.scope);
-    }, [settlement, visible]);
+    }, [coveredByReview, keyboardVisible, settlement, visible]);
 
     const handleDismiss = useCallback(() => {
       Keyboard.dismiss();
@@ -304,30 +334,27 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       : partialPage === 'list'
       ? 'form'
       : partialPage;
-    const formLayoutKey = `${position.key}:${tab}:${page}:${
+    const pageIdentity = `${visible}:${position.key}:${tab}:${page}:${
       editingOrder?.oid ?? ''
     }`;
-    const handleFormContentHeightChange = useCallback(
-      (height: number) => {
-        if (!Number.isFinite(height) || height <= 0) return;
-        const next = { key: formLayoutKey, height };
-        pendingFormLayoutRef.current = next;
-        if (!keyboardSessionActiveRef.current) {
-          setFormLayout(current =>
-            current?.key === next.key && current.height === next.height
-              ? current
-              : next,
-          );
-        }
-      },
-      [formLayoutKey],
-    );
+    const pageSession = useRef({ identity: pageIdentity, revision: 0 });
+    if (pageSession.current.identity !== pageIdentity) {
+      pageSession.current = {
+        identity: pageIdentity,
+        revision: pageSession.current.revision + 1,
+      };
+    }
+    const pageKey = `${pageIdentity}:${pageSession.current.revision}`;
+    pageStateRef.current = {
+      key: pageKey,
+      isOrderList,
+      coveredByReview,
+      visible,
+    };
     const snapPoint = getPerpsProPositionTpSlSnapPoint({
       page,
       topInset: insets.top,
       windowHeight: stableWindowHeight,
-      formContentHeight:
-        formLayout?.key === formLayoutKey ? formLayout.height : 0,
     });
     const getFormMinimumHeight = useCallback(
       (presentation: PerpsProPositionTpSlFormPresentation) =>
@@ -347,19 +374,28 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       scrollFrameRef.current = null;
     }, []);
     const scheduleScrollToEnd = useCallback(
-      (animated: boolean) => {
+      (animated: boolean, ownerKey = pageStateRef.current.key) => {
         cancelScheduledScroll();
+        const owner = pageStateRef.current;
+        const scrollView = scrollViewRef.current;
+        if (
+          owner.key !== ownerKey ||
+          owner.isOrderList ||
+          owner.coveredByReview ||
+          !owner.visible
+        )
+          return;
         scrollFrameRef.current = requestAnimationFrame(() => {
           scrollFrameRef.current = null;
-          scrollViewRef.current?.scrollToEnd({ animated });
-          // Apply natural-content changes only after the existing keyboard restore.
-          const next = pendingFormLayoutRef.current;
-          if (next)
-            setFormLayout(current =>
-              current?.key === next.key && current.height === next.height
-                ? current
-                : next,
-            );
+          const current = pageStateRef.current;
+          if (
+            current.key !== owner.key ||
+            current.coveredByReview ||
+            !current.visible ||
+            scrollView !== scrollViewRef.current
+          )
+            return;
+          scrollView?.scrollToEnd({ animated });
         });
       },
       [cancelScheduledScroll],
@@ -395,6 +431,7 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       () => ({
         current: animatedSheetPosition.value,
         pending: androidScrollAfterKeyboardRestore.value,
+        pageKey: keyboardRestorePage.value,
         resting: restingSheetPosition.value,
       }),
       state => {
@@ -404,7 +441,7 @@ export const PerpsProPositionTpSlSheet: React.FC<{
           state.current === state.resting
         ) {
           androidScrollAfterKeyboardRestore.value = false;
-          runOnJS(scheduleScrollToEnd)(false);
+          runOnJS(scheduleScrollToEnd)(false, state.pageKey);
         }
       },
       [scheduleScrollToEnd],
@@ -424,6 +461,8 @@ export const PerpsProPositionTpSlSheet: React.FC<{
         'keyboardDidShow',
         () => {
           keyboardSessionActiveRef.current = true;
+          setKeyboardVisible(true);
+          keyboardPageRef.current = pageStateRef.current.key;
           androidScrollAfterKeyboardRestore.value = false;
           cancelScheduledScroll();
         },
@@ -431,11 +470,19 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       const keyboardHideSubscription = Keyboard.addListener(
         'keyboardDidHide',
         () => {
-          if (!keyboardSessionActiveRef.current) {
-            return;
-          }
+          const wasActive = keyboardSessionActiveRef.current;
           keyboardSessionActiveRef.current = false;
+          setKeyboardVisible(false);
+          const current = pageStateRef.current;
+          if (
+            !wasActive ||
+            keyboardPageRef.current !== current.key ||
+            current.isOrderList ||
+            current.coveredByReview
+          )
+            return;
           if (Platform.OS === 'android') {
+            keyboardRestorePage.value = current.key;
             androidScrollAfterKeyboardRestore.value = true;
             return;
           }
@@ -457,8 +504,58 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       cancelScheduledScroll,
       restingSheetPosition,
       scheduleScrollToEnd,
+      keyboardRestorePage,
       visible,
     ]);
+
+    useLayoutEffect(() => {
+      cancelScheduledScroll();
+      cancelMeasurement();
+      androidScrollAfterKeyboardRestore.value = false;
+      keyboardPageRef.current = null;
+      scrollOffset.value = 0;
+      scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+    }, [
+      pageKey,
+      cancelScheduledScroll,
+      cancelMeasurement,
+      androidScrollAfterKeyboardRestore,
+      scrollOffset,
+    ]);
+    useLayoutEffect(() => {
+      if (wasCoveredRef.current && !coveredByReview && visible) {
+        Keyboard.dismiss();
+        setRestoring(true);
+      }
+      wasCoveredRef.current = coveredByReview;
+      if (coveredByReview || !visible) {
+        cancelScheduledScroll();
+        androidScrollAfterKeyboardRestore.value = false;
+        keyboardPageRef.current = null;
+      }
+    }, [
+      coveredByReview,
+      visible,
+      cancelScheduledScroll,
+      androidScrollAfterKeyboardRestore,
+    ]);
+    const handlePageLayout = useCallback(() => {
+      if (pageStateRef.current.key !== pageKey) return;
+      setLaidOutPage(pageKey);
+      ensureInputVisible();
+    }, [pageKey, ensureInputVisible]);
+    const restoreLayoutReady =
+      restoring &&
+      !settlementPending &&
+      laidOutPage === pageKey &&
+      !coveredByReview &&
+      !keyboardVisible;
+    useEffect(() => {
+      if (restoreLayoutReady) modalRef.current?.snapToIndex(0);
+    }, [restoreLayoutReady, snapPoint]);
+    const handleRestored = useCallback(() => {
+      if (restoreLayoutReady) setRestoring(false);
+    }, [restoreLayoutReady]);
 
     const tabs = (
       <View style={styles.tabCard}>
@@ -528,121 +625,146 @@ export const PerpsProPositionTpSlSheet: React.FC<{
               onReadyChange={keyboard.onSheetReadyChange}
             />
           ) : null}
-          {isOrderList ? (
-            <AutoLockView style={styles.listPage}>
-              {header}
-              <View style={styles.listCard}>
-                {tabs}
-                {isPartialList ? (
-                  <PerpsProPositionTpSlAddRow
-                    pending={interactionLocked}
-                    onAdd={() => {
-                      if (!interactionLocked) setPartialPage('add');
-                    }}
-                  />
-                ) : null}
-                <BottomSheetScrollView
-                  ref={scrollViewRef}
-                  style={styles.orderScroll}
-                  contentContainerStyle={styles.orderScrollContent}
-                  showsVerticalScrollIndicator={false}
-                  testID="perps-pro-position-tpsl-order-scroll">
-                  <PerpsProPositionTpSlOrderList
-                    scope={isPositionList ? 'position' : 'partial'}
-                    amountUnit={amountUnit}
-                    cancelingOids={cancelingOids}
-                    markPrice={liveMarket.markPrice}
-                    market={market}
-                    onAdd={openPositionModify}
-                    onCancelOrder={onCancelOrder}
-                    onModify={order => {
-                      if (interactionLocked) return;
-                      if (isPositionList) openPositionModify();
-                      else {
-                        setEditingOrder(order);
-                        setPartialPage('modify');
-                      }
-                    }}
-                    onOpenEstimatedPnlExplanation={openEstimatedPnlExplanation}
-                    pending={interactionLocked}
-                    position={
-                      isPositionList ? positionFormPosition : visiblePosition
-                    }
-                  />
-                </BottomSheetScrollView>
-              </View>
-            </AutoLockView>
-          ) : (
-            <BottomSheetScrollView
-              ref={scrollViewRef}
-              {...(IS_ANDROID
-                ? {
-                    style: { marginBottom: keyboard.accessoryInset },
-                    onLayout: keyboard.ensureInputVisible,
-                    onContentSizeChange: keyboard.ensureInputVisible,
-                    onScrollBeginDrag: keyboard.cancelMeasurement,
-                  }
-                : {})}
-              contentContainerStyle={styles.scrollContent}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}>
-              <AutoLockView style={styles.page}>
-                {isSubpage ? (
-                  <>
-                    <PerpsProPositionTpSlPageHeader
-                      onBack={requestDismiss}
-                      title={t(
-                        page === 'add'
-                          ? 'page.perps.pro.positions.tpsl'
-                          : 'page.perps.pro.positionTpsl.modifyTitle',
-                      )}
-                    />
-                    <PerpsProPositionTpSlHeader
-                      markPrice={liveMarket.markPrice}
-                      market={market}
-                      position={visiblePosition}
-                      variant="summary"
-                    />
-                  </>
-                ) : (
-                  <>
-                    {header}
-                    <View style={styles.formTabs}>{tabs}</View>
-                  </>
-                )}
-                <PerpsProPositionTpSlForm
-                  key={
-                    tab === 'position'
-                      ? `${position.key}:position:${positionFormResetSignature}`
-                      : `${position.key}:${partialPage}:${
-                          editingOrder?.oid || 'new'
-                        }`
-                  }
-                  amountUnit={amountUnit}
-                  cancelingOids={cancelingOids}
-                  initialOrder={tab === 'partial' ? editingOrder : null}
-                  markPrice={liveMarket.markPrice}
-                  market={market}
-                  minimumHeight={getFormMinimumHeight(presentation)}
-                  onContentHeightChange={handleFormContentHeightChange}
-                  mode={
-                    tab === 'position'
-                      ? 'position'
-                      : partialPage === 'modify'
-                      ? 'modify'
-                      : 'add'
-                  }
-                  onCancelOrder={onCancelOrder}
-                  onReview={onReview}
+          {restoreLayoutReady ? (
+            <RestoredSheetObserver
+              onRestored={handleRestored}
+              targetHeight={snapPoint}
+            />
+          ) : null}
+          <AutoLockView style={styles.listPage}>
+            {isOrderList ? header : null}
+            <View style={isOrderList ? styles.listCard : styles.listPage}>
+              {isOrderList ? tabs : null}
+              {isPartialList ? (
+                <PerpsProPositionTpSlAddRow
                   pending={interactionLocked}
-                  presentation={presentation}
-                  position={
-                    tab === 'position' ? positionFormPosition : visiblePosition
-                  }
+                  onAdd={() => {
+                    if (!interactionLocked) setPartialPage('add');
+                  }}
                 />
-              </AutoLockView>
-            </BottomSheetScrollView>
-          )}
+              ) : null}
+              <View
+                style={styles.listPage}
+                pointerEvents={interactionLocked ? 'none' : 'auto'}>
+                <ScrollOffsetContext.Provider value={scrollOffset}>
+                  <BottomSheetScrollView
+                    ref={scrollViewRef}
+                    style={[
+                      styles.orderScroll,
+                      !isOrderList &&
+                        IS_ANDROID && { marginBottom: keyboard.accessoryInset },
+                    ]}
+                    contentContainerStyle={
+                      isOrderList ? styles.orderScrollContent : undefined
+                    }
+                    bounces={!isOrderList}
+                    overScrollMode="never"
+                    scrollEnabled={!interactionLocked}
+                    scrollEventsHandlersHook={useTpSlScrollEvents}
+                    onLayout={ensureInputVisible}
+                    onContentSizeChange={ensureInputVisible}
+                    onScrollBeginDrag={cancelMeasurement}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                    testID="perps-pro-position-tpsl-scroll">
+                    <View
+                      key={pageKey}
+                      onLayout={handlePageLayout}
+                      testID="perps-pro-position-tpsl-page-content">
+                      {isOrderList ? (
+                        <PerpsProPositionTpSlOrderList
+                          scope={isPositionList ? 'position' : 'partial'}
+                          amountUnit={amountUnit}
+                          cancelingOids={cancelingOids}
+                          markPrice={liveMarket.markPrice}
+                          market={market}
+                          onAdd={openPositionModify}
+                          onCancelOrder={onCancelOrder}
+                          onModify={order => {
+                            if (interactionLocked) return;
+                            if (isPositionList) openPositionModify();
+                            else {
+                              setEditingOrder(order);
+                              setPartialPage('modify');
+                            }
+                          }}
+                          onOpenEstimatedPnlExplanation={
+                            openEstimatedPnlExplanation
+                          }
+                          pending={interactionLocked}
+                          position={
+                            isPositionList
+                              ? positionFormPosition
+                              : visiblePosition
+                          }
+                        />
+                      ) : (
+                        <>
+                          {isSubpage ? (
+                            <>
+                              <PerpsProPositionTpSlPageHeader
+                                onBack={requestDismiss}
+                                title={t(
+                                  page === 'add'
+                                    ? 'page.perps.pro.positions.tpsl'
+                                    : 'page.perps.pro.positionTpsl.modifyTitle',
+                                )}
+                              />
+                              <PerpsProPositionTpSlHeader
+                                markPrice={liveMarket.markPrice}
+                                market={market}
+                                position={visiblePosition}
+                                variant="summary"
+                              />
+                            </>
+                          ) : (
+                            <>
+                              {header}
+                              <View style={styles.formTabs}>{tabs}</View>
+                            </>
+                          )}
+                          <PerpsProPositionTpSlForm
+                            key={
+                              tab === 'position'
+                                ? `${position.key}:position:${positionFormResetSignature}`
+                                : `${position.key}:${partialPage}:${
+                                    editingOrder?.oid || 'new'
+                                  }`
+                            }
+                            amountUnit={amountUnit}
+                            cancelingOids={cancelingOids}
+                            initialOrder={
+                              tab === 'partial' ? editingOrder : null
+                            }
+                            markPrice={liveMarket.markPrice}
+                            market={market}
+                            minimumHeight={getFormMinimumHeight(presentation)}
+                            mode={
+                              tab === 'position'
+                                ? 'position'
+                                : partialPage === 'modify'
+                                ? 'modify'
+                                : 'add'
+                            }
+                            onCancelOrder={onCancelOrder}
+                            onReview={onReview}
+                            pending={interactionLocked}
+                            presentation={presentation}
+                            position={
+                              tab === 'position'
+                                ? positionFormPosition
+                                : visiblePosition
+                            }
+                          />
+                        </>
+                      )}
+                    </View>
+                  </BottomSheetScrollView>
+                </ScrollOffsetContext.Provider>
+                {isOrderList ? <ListTopEdge offset={scrollOffset} /> : null}
+              </View>
+            </View>
+          </AutoLockView>
         </PerpsProKeyboardSheetContext.Provider>
       </AppBottomSheetModal>
     );
@@ -650,6 +772,81 @@ export const PerpsProPositionTpSlSheet: React.FC<{
 );
 
 PerpsProPositionTpSlSheet.displayName = 'PerpsProPositionTpSlSheet';
+
+const ScrollOffsetContext = createContext<SharedValue<number> | null>(null);
+const useTpSlScrollEvents: ScrollEventsHandlersHookType = (ref, offset) => {
+  const observedOffset = useContext(ScrollOffsetContext);
+  const handlers = useScrollEventsHandlersDefault(ref, offset);
+  const defaultOnScroll = handlers.handleOnScroll;
+  const handleOnScroll = useCallback<NonNullable<typeof defaultOnScroll>>(
+    (event, context) => {
+      'worklet';
+      defaultOnScroll?.(event, context);
+      if (observedOffset) observedOffset.value = event.contentOffset.y;
+    },
+    [defaultOnScroll, observedOffset],
+  );
+  return { ...handlers, handleOnScroll };
+};
+
+const ListTopEdge = ({ offset }: { offset: SharedValue<number> }) => {
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: offset.value <= 0 ? 1 : 0,
+  }));
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        { position: 'absolute', top: 0, left: 0, right: 0, height: 16 },
+        animatedStyle,
+      ]}
+      testID="perps-pro-position-tpsl-top-edge">
+      <LinearGradient
+        colors={['rgba(35, 192, 176, 0.12)', 'rgba(35, 192, 176, 0)']}
+        style={{ flex: 1 }}
+      />
+    </Animated.View>
+  );
+};
+
+/** Observe native readiness; never write the library's internal gesture state. */
+const RestoredSheetObserver = ({
+  onRestored,
+  targetHeight,
+}: {
+  onRestored: () => void;
+  targetHeight: number;
+}) => {
+  const {
+    animatedAnimationState,
+    animatedScrollableStatus,
+    animatedPosition,
+    animatedDetentsState,
+    animatedSheetHeight,
+  } = useBottomSheetInternal();
+  const mounted = useRef(false);
+  useLayoutEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  const publish = useCallback(() => {
+    if (mounted.current) onRestored();
+  }, [onRestored]);
+  useAnimatedReaction(
+    () =>
+      animatedAnimationState.value.status === ANIMATION_STATUS.STOPPED &&
+      animatedScrollableStatus.value === SCROLLABLE_STATUS.UNLOCKED &&
+      Math.abs(animatedSheetHeight.value - targetHeight) < 0.5 &&
+      animatedPosition.value === animatedDetentsState.value.detents?.[0],
+    (ready, previous) => {
+      if (ready && !previous) runOnJS(publish)();
+    },
+    [publish, targetHeight],
+  );
+  return null;
+};
 
 const TabButton: React.FC<{
   active: boolean;
@@ -679,8 +876,6 @@ const getStyle = createGetStyles2024(
     );
     return {
       ...dialog,
-      scrollContent: { flexGrow: 1 },
-      page: { flexGrow: 1 },
       listPage: { flex: 1 },
       listCard: { flex: 1, marginHorizontal: 16, marginTop: 8 },
       orderScroll: { flex: 1 },

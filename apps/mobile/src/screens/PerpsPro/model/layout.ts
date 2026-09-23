@@ -20,7 +20,7 @@ const PERPS_PRO_MARKET_SELECTOR_DESIGN_TOP = 104;
 const PERPS_PRO_MARKET_SELECTOR_MIN_HEIGHT = 320;
 const PERPS_PRO_POSITION_TPSL_DESIGN_HEIGHTS = {
   form: 758,
-  list: 755,
+  list: 758,
   add: 652,
   modify: 604,
   'position-modify': 598,
@@ -166,12 +166,10 @@ export const getPerpsProPositionTpSlSnapPoint = ({
   page,
   topInset,
   windowHeight,
-  formContentHeight = 0,
 }: {
   page: PerpsProPositionTpSlPage;
   topInset: number;
   windowHeight: number;
-  formContentHeight?: number;
 }) => {
   const safeTopInset = Number.isFinite(topInset) && topInset > 0 ? topInset : 0;
   const safeWindowHeight =
@@ -180,19 +178,9 @@ export const getPerpsProPositionTpSlSnapPoint = ({
     0,
     safeWindowHeight - safeTopInset - PERPS_PRO_SHEET_TOP_SAFE_GAP,
   );
-  const chromeHeight =
-    page === 'form'
-      ? PERPS_PRO_POSITION_TPSL_TAB_CHROME_HEIGHT
-      : PERPS_PRO_POSITION_TPSL_SUBPAGE_CHROME_HEIGHT;
-  const contentHeight =
-    page !== 'list' &&
-    Number.isFinite(formContentHeight) &&
-    formContentHeight > 0
-      ? formContentHeight + chromeHeight + PERPS_PRO_BOTTOM_SHEET_HANDLE_HEIGHT
-      : 0;
   return Math.min(
     availableHeight,
-    Math.max(PERPS_PRO_POSITION_TPSL_DESIGN_HEIGHTS[page], contentHeight),
+    PERPS_PRO_POSITION_TPSL_DESIGN_HEIGHTS[page],
   );
 };
 

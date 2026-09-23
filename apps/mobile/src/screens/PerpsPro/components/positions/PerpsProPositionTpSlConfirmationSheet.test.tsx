@@ -1,5 +1,6 @@
 import { PerpsProCheckboxIcon } from '../common/PerpsProCheckboxIcon';
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -11,6 +12,7 @@ import { ThemeColors2024 } from '@/constant/theme';
 import { PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE } from '../common/perpsProDialogVisual';
 
 const mockOpenFieldExplanation = jest.fn();
+const mockClose = jest.fn();
 let mockThemeMode: 'light' | 'dark' | undefined;
 beforeEach(() => {
   mockThemeMode = undefined;
@@ -40,7 +42,7 @@ jest.mock('@/components/customized/BottomSheet', () => {
     AppBottomSheetModal: ReactModule.forwardRef(
       (props: any, ref: React.Ref<unknown>) => {
         ReactModule.useImperativeHandle(ref, () => ({
-          close: jest.fn(),
+          close: mockClose,
           present: jest.fn(),
         }));
         return ReactModule.createElement(
@@ -203,6 +205,39 @@ const review = (
 });
 
 describe('PerpsProPositionTpSlConfirmationSheet', () => {
+  it('retains the closing confirmation and releases its owner only on native dismissal', () => {
+    const props = {
+      amountUnit: 'base' as const,
+      market,
+      position,
+      review: review('partial'),
+      onClose: jest.fn(),
+      onConfirm: jest.fn(),
+      onToggleSkipConfirmation: jest.fn(),
+      onPresented: jest.fn(),
+      onDismissed: jest.fn(),
+      pending: false,
+      skipConfirmation: false,
+    };
+    const view = render(<PerpsProPositionTpSlConfirmationSheet {...props} />);
+    expect(props.onPresented).toHaveBeenCalledTimes(1);
+    view.rerender(
+      <PerpsProPositionTpSlConfirmationSheet {...props} review={null} />,
+    );
+    expect(screen.getByText('Confirm TP/SL')).toBeTruthy();
+    expect(mockClose).toHaveBeenCalled();
+    expect(props.onDismissed).not.toHaveBeenCalled();
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-confirm'));
+    expect(props.onConfirm).not.toHaveBeenCalled();
+    expect(
+      screen.getByTestId('tpsl-confirmation-sheet').props.enablePanDownToClose,
+    ).toBe(false);
+    act(() => screen.getByTestId('tpsl-confirmation-sheet').props.onDismiss());
+    expect(screen.queryByText('Confirm TP/SL')).toBeNull();
+    expect(props.onDismissed).toHaveBeenCalledTimes(1);
+    expect(props.onClose).not.toHaveBeenCalled();
+  });
+
   it.each(['partial', 'position'] as const)(
     'uses signed PNL and frozen size for every %s leg, independently of its kind',
     scope => {

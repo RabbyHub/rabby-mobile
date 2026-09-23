@@ -90,14 +90,14 @@ describe('Perps Pro layout model', () => {
     ).toBe(716);
   });
 
-  it('uses the Figma list and form top offsets for Position TP/SL', () => {
+  it('keeps both main TP/SL tabs at the same safe capped height', () => {
     expect(
       getPerpsProPositionTpSlSnapPoint({
         page: 'list',
         topInset: 47,
         windowHeight: 852,
       }),
-    ).toBe(755);
+    ).toBe(758);
     expect(
       getPerpsProPositionTpSlSnapPoint({
         page: 'form',
@@ -153,23 +153,5 @@ describe('Perps Pro layout model', () => {
         windowHeight: 500,
       }),
     ).toBe(437);
-  });
-  it('grows for the error line but clamps long content to the safe viewport', () => {
-    expect(
-      getPerpsProPositionTpSlSnapPoint({
-        page: 'form',
-        topInset: 47,
-        windowHeight: 852,
-        formContentHeight: 502,
-      }),
-    ).toBe(774);
-    expect(
-      getPerpsProPositionTpSlSnapPoint({
-        page: 'form',
-        topInset: 47,
-        windowHeight: 852,
-        formContentHeight: 1500,
-      }),
-    ).toBe(789);
   });
 });

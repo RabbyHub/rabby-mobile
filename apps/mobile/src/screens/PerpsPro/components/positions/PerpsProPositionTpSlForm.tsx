@@ -55,7 +55,6 @@ export const PerpsProPositionTpSlForm: React.FC<{
   markPrice: string | null;
   market: PerpsPositionTpSlMarketSnapshot;
   minimumHeight?: number;
-  onContentHeightChange?: (height: number) => void;
   mode: FormMode;
   onCancelOrder: (order: PerpsPositionTpSlOrderViewModel) => void;
   onReview: (draft: PerpsPositionTpSlDraft) => void;
@@ -70,7 +69,6 @@ export const PerpsProPositionTpSlForm: React.FC<{
     markPrice,
     market,
     minimumHeight,
-    onContentHeightChange,
     mode,
     onCancelOrder,
     onReview,
@@ -415,19 +413,6 @@ export const PerpsProPositionTpSlForm: React.FC<{
         ]}
         testID={`perps-pro-position-tpsl-form-${resolvedPresentation}`}>
         <View
-          onLayout={
-            onContentHeightChange
-              ? event =>
-                  onContentHeightChange(
-                    event.nativeEvent.layout.height +
-                      (isSubpage ? 8 : 0) +
-                      (isSubpage && mode === 'add' ? 0 : 12) +
-                      BOTTOM_BUTTON_SINGLE_HEIGHT +
-                      BOTTOM_BUTTON_TOP_OFFSET +
-                      styles.footer.paddingBottom,
-                  )
-              : undefined
-          }
           style={[
             styles.card,
             isSubpage ? styles.subpageCard : styles.tabCard,
@@ -689,7 +674,6 @@ const getStyle = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
     ...getPerpsProDialogActionStyles(colors2024),
     container: {
-      flexGrow: 1,
       paddingHorizontal: 16,
     },
     subpageContainer: { paddingTop: 8 },

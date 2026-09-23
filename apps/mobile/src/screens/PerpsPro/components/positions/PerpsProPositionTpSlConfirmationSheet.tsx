@@ -21,7 +21,13 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useRegisterBlockingModal } from '@/utils/modalGate';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import BigNumber from 'bignumber.js';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -64,6 +70,8 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
   amountUnit: PerpsProTradeAmountUnit;
   market: PerpsPositionTpSlMarketSnapshot;
   onClose: () => void;
+  onPresented?: () => void;
+  onDismissed?: () => void;
   onConfirm: () => void;
   onToggleSkipConfirmation: () => void;
   pending: boolean;
@@ -75,6 +83,8 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
     amountUnit,
     market,
     onClose,
+    onPresented,
+    onDismissed,
     onConfirm,
     onToggleSkipConfirmation,
     pending,
@@ -82,6 +92,25 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
     review,
     skipConfirmation,
   }) => {
+    const [retainedReview, setRetainedReview] =
+      useState<PerpsProPositionTpSlReviewState | null>(review);
+    const retainedDetails = useRef<{
+      amountUnit: PerpsProTradeAmountUnit;
+      market: PerpsPositionTpSlMarketSnapshot;
+      position: PerpsPositionViewModel;
+      skipConfirmation: boolean;
+    } | null>(null);
+    if (review)
+      retainedDetails.current = {
+        amountUnit,
+        market,
+        position,
+        skipConfirmation,
+      };
+    const displayedDetails = retainedDetails.current;
+    const displayedReview = review ?? retainedReview;
+    const closing = !review;
+    const interactionLocked = pending || closing;
     const modalRef = useRef<AppBottomSheetModal>(null);
     const { colors2024, styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
@@ -90,30 +119,39 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
       (props: React.ComponentProps<typeof PerpsProDialogBackdrop>) => (
         <PerpsProDialogBackdrop
           {...props}
-          pressBehavior={pending ? 'none' : 'close'}
+          pressBehavior={interactionLocked ? 'none' : 'close'}
         />
       ),
-      [pending],
+      [interactionLocked],
     );
     usePerpsProSheetNavigationRegistration({
-      active: !!review,
+      active: !!displayedReview,
       dismiss: onClose,
-      dismissible: !pending,
+      dismissible: !interactionLocked,
     });
-    useRegisterBlockingModal(MODAL_ID, !!review);
+    useRegisterBlockingModal(MODAL_ID, !!displayedReview);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
       if (review) {
-        modalRef.current?.present();
-      } else {
-        modalRef.current?.close();
+        setRetainedReview(review);
+        onPresented?.();
       }
+    }, [onPresented, review]);
+    useEffect(() => {
+      if (review) modalRef.current?.present();
+      else modalRef.current?.close();
     }, [review]);
+    const handleDismiss = useCallback(() => {
+      setRetainedReview(null);
+      retainedDetails.current = null;
+      // Programmatic close has already updated the controller. A native
+      // backdrop/pan dismissal still needs to close its current review.
+      if (review === displayedReview && review) onClose();
+      onDismissed?.();
+    }, [displayedReview, onClose, onDismissed, review]);
 
-    if (!review) {
-      return null;
-    }
-    const isPosition = review.command.scope === 'position';
+    if (!displayedReview || !displayedDetails) return null;
+    const isPosition = displayedReview.command.scope === 'position';
 
     return (
       <AppBottomSheetModal
@@ -125,10 +163,10 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
         backdropComponent={renderBackdrop}
         backgroundStyle={styles.background}
         enableDynamicSizing
-        enablePanDownToClose={!pending}
+        enablePanDownToClose={!interactionLocked}
         handleIndicatorStyle={styles.handleIndicator}
         handleStyle={styles.handle}
-        onDismiss={onClose}
+        onDismiss={handleDismiss}
         style={styles.modal}>
         <BottomSheetView>
           <AutoLockView style={styles.container}>
@@ -142,35 +180,37 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
             <View style={styles.summary}>
               <DetailRow
                 label={t('page.perps.pro.positionTpsl.symbol')}
-                value={market.displayPair}
+                value={displayedDetails.market.displayPair}
               />
               <DetailRow
                 label={t('page.perps.pro.positions.entry')}
                 value={`${formatPerpsProPrice(
-                  position.entryPrice,
-                  market.pxDecimals,
-                )} ${market.quoteAsset}`}
+                  displayedDetails.position.entryPrice,
+                  displayedDetails.market.pxDecimals,
+                )} ${displayedDetails.market.quoteAsset}`}
               />
             </View>
 
-            {review.command.legs.map(leg => {
+            {displayedReview.command.legs.map(leg => {
               const shouldBeAbove =
-                (position.direction === 'long' && leg.kind === 'takeProfit') ||
-                (position.direction === 'short' && leg.kind === 'stopLoss');
+                (displayedDetails.position.direction === 'long' &&
+                  leg.kind === 'takeProfit') ||
+                (displayedDetails.position.direction === 'short' &&
+                  leg.kind === 'stopLoss');
               const size = isPosition
-                ? review.command.expectedPositionSize
+                ? displayedReview.command.expectedPositionSize
                 : leg.size || '0';
               const estimatedPnl = calculatePositionTpSlEstimatedPnl({
-                direction: position.direction,
-                entryPrice: position.entryPrice,
+                direction: displayedDetails.position.direction,
+                entryPrice: displayedDetails.position.entryPrice,
                 size,
                 triggerPrice: leg.triggerPrice,
               });
               const displayAmount =
-                amountUnit === 'base'
+                displayedDetails.amountUnit === 'base'
                   ? size
                   : new BigNumber(size)
-                      .multipliedBy(review.markPrice)
+                      .multipliedBy(displayedReview.markPrice)
                       .toString();
               return (
                 <View key={leg.kind} style={styles.leg}>
@@ -192,21 +232,23 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
                       shouldBeAbove ? '≥' : '≤'
                     } ${formatPerpsProPrice(
                       leg.triggerPrice,
-                      market.pxDecimals,
-                    )} ${market.quoteAsset}`}
+                      displayedDetails.market.pxDecimals,
+                    )} ${displayedDetails.market.quoteAsset}`}
                   />
                   {!isPosition ? (
                     <DetailRow
                       label={`${t('page.perps.pro.positionTpsl.volume')} (${
-                        amountUnit === 'base'
-                          ? market.displayBase
-                          : market.quoteAsset
+                        displayedDetails.amountUnit === 'base'
+                          ? displayedDetails.market.displayBase
+                          : displayedDetails.market.quoteAsset
                       })`}
                       value={formatPartialVolume(
                         displayAmount,
-                        amountUnit === 'base' ? market.szDecimals : 2,
+                        displayedDetails.amountUnit === 'base'
+                          ? displayedDetails.market.szDecimals
+                          : 2,
                         size,
-                        review.command.expectedPositionSize,
+                        displayedReview.command.expectedPositionSize,
                       )}
                     />
                   ) : null}
@@ -226,7 +268,7 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
                       estimatedPnl == null
                         ? '-'
                         : formatPositionTpSlSignedValue(estimatedPnl)
-                    } ${market.quoteAsset}`}
+                    } ${displayedDetails.market.quoteAsset}`}
                   />
                 </View>
               );
@@ -235,12 +277,12 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
             <Pressable
               accessibilityRole="checkbox"
               accessibilityState={{ checked: skipConfirmation }}
-              disabled={pending}
-              onPress={onToggleSkipConfirmation}
+              disabled={interactionLocked}
+              onPress={interactionLocked ? undefined : onToggleSkipConfirmation}
               style={styles.checkboxRow}
               testID="perps-pro-position-tpsl-skip-confirmation">
               <PerpsProCheckboxIcon
-                checked={skipConfirmation}
+                checked={displayedDetails.skipConfirmation}
                 checkColor={colors2024['neutral-InvertHighlight']}
               />
               <Text style={styles.checkboxText}>
@@ -254,11 +296,11 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
               <Button
                 buttonStyle={[styles.button, pending && styles.buttonDisabled]}
                 disabledTitleStyle={styles.buttonDisabledTitle}
-                disabled={pending}
+                disabled={interactionLocked}
                 height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                 loading={pending}
                 loadingProps={{ color: styles.buttonDisabledTitle.color }}
-                onPress={onConfirm}
+                onPress={interactionLocked ? undefined : onConfirm}
                 testID="perps-pro-position-tpsl-confirm"
                 title={t('global.confirm')}
                 titleStyle={styles.buttonTitle}
