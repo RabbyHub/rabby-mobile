@@ -26,6 +26,7 @@ jest.mock('@/hooks/theme', () => ({
 jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
 }));
+jest.mock('react-native-reanimated', () => ({ runOnUI: jest.fn() }));
 jest.mock('../trade/PerpsProDecimalTextInput', () => {
   const ReactModule = require('react');
   const { TextInput } = require('react-native');

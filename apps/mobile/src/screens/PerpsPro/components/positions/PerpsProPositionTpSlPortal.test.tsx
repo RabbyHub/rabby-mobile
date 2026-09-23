@@ -2,11 +2,16 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { PortalProvider } from '@gorhom/portal';
 import React from 'react';
 
+jest.mock('react-native-linear-gradient', () => require('react-native').View);
+
 jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
 
 jest.mock('react-native-reanimated', () => {
   const ReactModule = require('react');
   return {
+    default: { View: require('react-native').View },
+    __esModule: true,
+    useAnimatedStyle: (fn: () => unknown) => fn(),
     runOnJS: (callback: (...args: unknown[]) => unknown) => callback,
     useAnimatedReaction: jest.fn(),
     useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
@@ -44,7 +49,18 @@ jest.mock('@/components/customized/BottomSheet', () => {
 });
 
 jest.mock('@gorhom/bottom-sheet', () => ({
-  BottomSheetScrollView: require('react-native').View,
+  BottomSheetScrollView: require('react').forwardRef(
+    ({ children, ...props }: any, ref: any) => {
+      require('react').useImperativeHandle(ref, () => ({
+        scrollTo: jest.fn(),
+      }));
+      return require('react').createElement(
+        require('react-native').View,
+        props,
+        children,
+      );
+    },
+  ),
 }));
 
 jest.mock('react-native-safe-area-context', () => ({

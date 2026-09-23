@@ -31,7 +31,7 @@ type PerpsProDecimalTextInputProps = Omit<
   keyboardMinimum?: string | null;
   keyboardScrollTrade?: boolean;
   focusCursorAtEnd?: boolean;
-  focusCursorAtEndMode?: 'initialFocus' | 'untilChange';
+  focusCursorAtEndMode?: 'beforeFocus' | 'initialFocus' | 'untilChange';
   inputComponent?: React.ElementType<
     TextInputProps & React.RefAttributes<TextInput>
   >;
@@ -88,6 +88,9 @@ export const PerpsProDecimalTextInput = React.memo(
         scrollTrade: keyboardScrollTrade,
       });
       const isFocusedRef = useRef(false);
+      const [preparingFocus, setPreparingFocus] = useState(true);
+      const prepareCursorBeforeFocus =
+        focusCursorAtEnd && focusCursorAtEndMode === 'beforeFocus';
       React.useImperativeHandle(forwardedRef, () => inputRef.current!);
       const selectionRef = useRef({ start: value.length, end: value.length });
       const shouldForceCursorAtEndRef = useRef(false);
@@ -174,8 +177,15 @@ export const PerpsProDecimalTextInput = React.memo(
       const handleFocus = useCallback<NonNullable<TextInputProps['onFocus']>>(
         event => {
           isFocusedRef.current = true;
+          if (prepareCursorBeforeFocus) {
+            setPreparingFocus(false);
+          }
           onKeyboardFocus();
-          if (focusCursorAtEnd && inputValue.length > 0) {
+          if (
+            focusCursorAtEnd &&
+            !prepareCursorBeforeFocus &&
+            inputValue.length > 0
+          ) {
             const end = inputValue.length;
             const endSelection = { end, start: end };
             shouldForceCursorAtEndRef.current = true;
@@ -192,6 +202,7 @@ export const PerpsProDecimalTextInput = React.memo(
         },
         [
           focusCursorAtEnd,
+          prepareCursorBeforeFocus,
           inputValue.length,
           onFocus,
           releaseForcedCursor,
@@ -202,6 +213,9 @@ export const PerpsProDecimalTextInput = React.memo(
       const handleBlur = useCallback<NonNullable<TextInputProps['onBlur']>>(
         event => {
           isFocusedRef.current = false;
+          if (prepareCursorBeforeFocus) {
+            setPreparingFocus(true);
+          }
           onKeyboardBlur();
           releaseForcedCursor();
           const canonicalValue = canonicalizeValueOnBlur
@@ -216,6 +230,7 @@ export const PerpsProDecimalTextInput = React.memo(
         },
         [
           canonicalizeValueOnBlur,
+          prepareCursorBeforeFocus,
           onKeyboardBlur,
           inputValue,
           onBlur,
@@ -287,7 +302,9 @@ export const PerpsProDecimalTextInput = React.memo(
         onTouchStart: handleTouchStart,
         scrollEnabled: true,
         selection:
-          shouldForceCursorAtEnd && inputValue.length > 0
+          (shouldForceCursorAtEnd ||
+            (prepareCursorBeforeFocus && preparingFocus)) &&
+          inputValue.length > 0
             ? { end: inputValue.length, start: inputValue.length }
             : inputValue.length === 0
             ? resolvePerpsProEmptyInputSelection()

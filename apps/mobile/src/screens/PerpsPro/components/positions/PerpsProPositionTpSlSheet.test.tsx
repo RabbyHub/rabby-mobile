@@ -6,7 +6,12 @@ import {
   within,
 } from '@testing-library/react-native';
 import React from 'react';
-import { Keyboard, Platform, StyleSheet } from 'react-native';
+import {
+  ActivityIndicator,
+  Keyboard,
+  Platform,
+  StyleSheet,
+} from 'react-native';
 import { perpsProKeyboardSession } from '../common/perpsProKeyboardSession';
 import { ThemeColors2024 } from '@/constant/theme';
 
@@ -27,6 +32,10 @@ const mockFormProps = jest.fn();
 const mockHeaderProps = jest.fn();
 const mockOpenFieldExplanation = jest.fn();
 const mockScrollToEnd = jest.fn();
+const mockScrollTo = jest.fn();
+const mockSnapToIndex = jest.fn();
+const mockDefaultScrollHandler = jest.fn();
+let mockScrollHandler: (event: any, context: never) => void;
 const mockKeyboardListeners = new Map<string, () => void>();
 let mockAnimationFrameCallback: FrameRequestCallback | null = null;
 let mockNextFormInstanceId = 0;
@@ -38,6 +47,9 @@ let mockAnimatedReactions: Array<{
 jest.mock('react-native-reanimated', () => {
   const ReactModule = require('react');
   return {
+    default: { View: require('react-native').View },
+    __esModule: true,
+    useAnimatedStyle: (fn: () => unknown) => fn(),
     runOnJS: (callback: (...args: unknown[]) => unknown) => callback,
     useAnimatedReaction: (
       prepare: () => unknown,
@@ -75,6 +87,7 @@ jest.mock('@/components/customized/BottomSheet', () => {
         ReactModule.useImperativeHandle(ref, () => ({
           close: jest.fn(),
           dismiss: mockDismiss,
+          snapToIndex: mockSnapToIndex,
           present: jest.fn(),
         }));
         return ReactModule.createElement(
@@ -108,15 +121,28 @@ jest.mock('@gorhom/bottom-sheet', () => {
       }),
     ANIMATION_STATUS: { STOPPED: 2 },
     SCROLLABLE_STATUS: { UNLOCKED: 1 },
+    useScrollEventsHandlersDefault: () => ({
+      handleOnScroll: mockDefaultScrollHandler,
+    }),
     useBottomSheetInternal: () => ({
       animatedAnimationState: { value: { status: 2 } },
       animatedScrollableStatus: { value: 1 },
+      animatedPosition: { value: 94 },
+      animatedSheetHeight: {
+        value: mockBottomSheetProps.mock.lastCall?.[0].snapPoints[0],
+      },
+      animatedDetentsState: { value: { detents: [94] } },
     }),
     BottomSheetScrollView: ReactModule.forwardRef(
       ({ children, ...props }: any, ref: React.Ref<unknown>) => {
         ReactModule.useImperativeHandle(ref, () => ({
           scrollToEnd: mockScrollToEnd,
+          scrollTo: mockScrollTo,
         }));
+        mockScrollHandler = props.scrollEventsHandlersHook(
+          ref,
+          ReactModule.useRef({ value: 0 }).current,
+        ).handleOnScroll;
         return ReactModule.createElement(
           View,
           { ...props, testID: 'tpsl-scroll' },
@@ -283,6 +309,53 @@ const market = {
 
 describe('PerpsProPositionTpSlSheet', () => {
   it.each(['partial', 'position'] as const)(
+    'keeps %s cancel loading local to its OID and retains the list button color',
+    scope => {
+      const first = order(1, '110', '0.5', scope);
+      const second = order(2, '120', '0.5', scope);
+      const onCancelOrder = jest.fn();
+      const list = (pending: boolean, cancelingOids: number[]) => (
+        <PerpsProPositionTpSlOrderList
+          scope={scope}
+          amountUnit="base"
+          cancelingOids={cancelingOids}
+          markPrice="100"
+          market={market}
+          onAdd={jest.fn()}
+          onCancelOrder={onCancelOrder}
+          onModify={jest.fn()}
+          onOpenEstimatedPnlExplanation={jest.fn()}
+          pending={pending}
+          position={{ ...position, tpslOrders: [first, second] }}
+        />
+      );
+      const view = render(list(true, [2]));
+      const cancelButton = (oid: number) =>
+        within(
+          screen.getByTestId(`perps-pro-position-tpsl-order-${oid}`),
+        ).getByRole('button', { name: 'Cancel' });
+      expect(cancelButton(1).props.accessibilityState).toMatchObject({
+        busy: false,
+        disabled: true,
+      });
+      expect(cancelButton(2).props.accessibilityState).toMatchObject({
+        busy: true,
+        disabled: true,
+      });
+      expect(screen.UNSAFE_getAllByType(ActivityIndicator)).toHaveLength(1);
+      expect(screen.UNSAFE_getByType(ActivityIndicator).props.color).toBe(
+        'neutral-title-1',
+      );
+      fireEvent.press(cancelButton(2));
+      expect(onCancelOrder).not.toHaveBeenCalled();
+      view.rerender(list(false, []));
+      expect(screen.UNSAFE_queryByType(ActivityIndicator)).toBeNull();
+      fireEvent.press(cancelButton(2));
+      expect(onCancelOrder).toHaveBeenCalledWith(second);
+    },
+  );
+
+  it.each(['partial', 'position'] as const)(
     'colors %s list PNL by profit with its own size source',
     scope => {
       for (const direction of ['long', 'short'] as const) {
@@ -348,15 +421,22 @@ describe('PerpsProPositionTpSlSheet', () => {
       configurable: true,
       value: 'ios',
     });
+    const keyboardSubscriptions = new Map<string, Set<(event: any) => void>>();
     jest
       .spyOn(Keyboard, 'addListener')
       .mockImplementation((eventName, listener) => {
-        mockKeyboardListeners.set(eventName, listener as () => void);
+        const listeners = keyboardSubscriptions.get(eventName) ?? new Set();
+        keyboardSubscriptions.set(eventName, listeners);
+        listeners.add(listener);
+        mockKeyboardListeners.set(eventName, () => {
+          listeners.forEach(callback =>
+            callback({ endCoordinates: { height: 300, screenY: 500 } }),
+          );
+        });
         return {
           remove: jest.fn(() => {
-            if (mockKeyboardListeners.get(eventName) === listener) {
-              mockKeyboardListeners.delete(eventName);
-            }
+            listeners.delete(listener);
+            if (!listeners.size) mockKeyboardListeners.delete(eventName);
           }),
         } as ReturnType<typeof Keyboard.addListener>;
       });
@@ -423,7 +503,7 @@ describe('PerpsProPositionTpSlSheet', () => {
           disappearsOnIndex: -1,
         });
       };
-      expectShell(755);
+      expectShell(758);
       expect(
         StyleSheet.flatten(
           screen.getByTestId('perps-pro-position-tpsl-tabs').props.style,
@@ -443,6 +523,15 @@ describe('PerpsProPositionTpSlSheet', () => {
         );
         expectShell(758, true);
         view.rerender(<PerpsProPositionTpSlSheet {...props} />);
+        if (lock === 'coveredByReview') {
+          fireEvent(
+            screen.getByTestId('perps-pro-position-tpsl-page-content'),
+            'layout',
+            {},
+          );
+          const observer = mockAnimatedReactions.at(-1)!;
+          act(() => observer.react(observer.prepare()));
+        }
         expectShell(758);
       }
       fireEvent.press(screen.getByText('TP/SL'));
@@ -503,7 +592,7 @@ describe('PerpsProPositionTpSlSheet', () => {
     });
     expect(
       StyleSheet.flatten(screen.getByTestId('tpsl-scroll').props.style),
-    ).toEqual({ marginBottom: 48 });
+    ).toMatchObject({ marginBottom: 48 });
     expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual(
       snapPoints,
     );
@@ -968,7 +1057,7 @@ describe('PerpsProPositionTpSlSheet', () => {
 
     expect(screen.queryByTestId('tpsl-form-add')).toBeNull();
     expect(screen.getByTestId('perps-pro-position-tpsl-order-3')).toBeTruthy();
-    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([755]);
+    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([758]);
   });
 
   it('uses Figma heights and removes a confirmed canceled item in-place', () => {
@@ -989,7 +1078,7 @@ describe('PerpsProPositionTpSlSheet', () => {
       />,
     );
 
-    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([755]);
+    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([758]);
     expect(screen.getByTestId('perps-pro-position-tpsl-order-1')).toBeTruthy();
 
     rerender(
@@ -1211,7 +1300,7 @@ describe('PerpsProPositionTpSlSheet', () => {
     expect(mockFormProps.mock.lastCall?.[0].initialOrder.oid).toBe(100);
   });
 
-  it('defers natural-content growth until the keyboard restore without remounting the form', () => {
+  it('keeps deterministic form geometry through a keyboard session', () => {
     render(
       <PerpsProPositionTpSlSheet
         {...makeSheetProps([])}
@@ -1219,18 +1308,162 @@ describe('PerpsProPositionTpSlSheet', () => {
       />,
     );
     const original = mockFormProps.mock.lastCall?.[0];
-    act(() => original.onContentHeightChange(486));
+    expect(original.onContentHeightChange).toBeUndefined();
     act(() => mockKeyboardListeners.get('keyboardDidShow')?.());
-    act(() => original.onContentHeightChange(502));
+
     expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([758]);
     expect(mockFormProps.mock.lastCall?.[0].instanceId).toBe(
       original.instanceId,
     );
     act(() => mockKeyboardListeners.get('keyboardDidHide')?.());
     act(() => mockAnimationFrameCallback?.(0));
-    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([774]);
+    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([758]);
     expect(mockFormProps.mock.lastCall?.[0].instanceId).toBe(
       original.instanceId,
     );
+  });
+  it('keeps one scroll host and discards the old form keyboard restore after returning to the list', () => {
+    const props = {
+      ...makeSheetProps(position.tpslOrders),
+      defaultTab: 'partial' as const,
+    };
+    render(<PerpsProPositionTpSlSheet {...props} />);
+    const scroll = screen.getByTestId('tpsl-scroll');
+    fireEvent.press(screen.getAllByText('Modify')[0]!);
+    expect(screen.getByTestId('tpsl-scroll')).toBe(scroll);
+    act(() => mockKeyboardListeners.get('keyboardDidShow')?.());
+    act(() => mockSheetRegistration.mock.lastCall?.[0].dismiss());
+    act(() => mockKeyboardListeners.get('keyboardDidHide')?.());
+    act(() => mockAnimationFrameCallback?.(0));
+    expect(screen.getByTestId('tpsl-scroll')).toBe(scroll);
+    expect(mockScrollToEnd).not.toHaveBeenCalled();
+    expect(scroll.props.bounces).toBe(false);
+    expect(scroll.props.overScrollMode).toBe('never');
+    const edge = screen.getByTestId('perps-pro-position-tpsl-top-edge');
+    expect(edge.props.pointerEvents).toBe('none');
+    expect(StyleSheet.flatten(edge.props.style)).toMatchObject({
+      height: 16,
+      position: 'absolute',
+      opacity: 1,
+    });
+  });
+
+  it.each(['ios', 'android'])(
+    'on %s waits for confirmation dismissal, keyboard hide, layout and scroll readiness',
+    platform => {
+      Object.defineProperty(Platform, 'OS', {
+        configurable: true,
+        value: platform,
+      });
+      mockAndroid = platform === 'android';
+      const props = {
+        ...makeSheetProps(position.tpslOrders),
+        defaultTab: 'partial' as const,
+      };
+      const view = render(<PerpsProPositionTpSlSheet {...props} />);
+      fireEvent.press(screen.getAllByText('Modify')[0]!);
+      act(() => mockKeyboardListeners.get('keyboardDidShow')?.());
+      const settled = { revision: 1, scope: 'partial' as const };
+      view.rerender(
+        <PerpsProPositionTpSlSheet
+          {...props}
+          coveredByReview
+          settlement={settled}
+        />,
+      );
+      expect(mockFormProps.mock.lastCall?.[0].mode).toBe('modify');
+      expect(screen.getByTestId('tpsl-scroll').props.scrollEnabled).toBe(false);
+      view.rerender(
+        <PerpsProPositionTpSlSheet {...props} settlement={settled} />,
+      );
+      expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([604]);
+      act(() => mockKeyboardListeners.get('keyboardDidHide')?.());
+      expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([758]);
+      expect(screen.getByTestId('tpsl-scroll').props.scrollEnabled).toBe(false);
+      fireEvent(
+        screen.getByTestId('perps-pro-position-tpsl-page-content'),
+        'layout',
+        {},
+      );
+      expect(mockSnapToIndex).toHaveBeenCalledWith(0);
+      expect(screen.getByTestId('tpsl-scroll').props.scrollEnabled).toBe(false);
+      const observer = mockAnimatedReactions.at(-1)!;
+      act(() => observer.react(observer.prepare()));
+      expect(screen.getByTestId('tpsl-scroll').props.scrollEnabled).toBe(true);
+      expect(mockBottomSheetProps.mock.lastCall?.[0].enablePanDownToClose).toBe(
+        true,
+      );
+      expect(mockScrollToEnd).not.toHaveBeenCalled();
+    },
+  );
+  it('composes the native scroll handler and hides the mint edge away from the top', () => {
+    const props = {
+      ...makeSheetProps(position.tpslOrders),
+      defaultTab: 'partial' as const,
+    };
+    const view = render(<PerpsProPositionTpSlSheet {...props} />);
+    const event = { contentOffset: { y: 24 } };
+    act(() => mockScrollHandler(event, {} as never));
+    expect(mockDefaultScrollHandler).toHaveBeenCalledWith(event, {});
+    view.rerender(
+      <PerpsProPositionTpSlSheet {...props} position={{ ...props.position }} />,
+    );
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-top-edge').props.style,
+      ).opacity,
+    ).toBe(0);
+    act(() => mockScrollHandler({ contentOffset: { y: 0 } }, {} as never));
+    view.rerender(
+      <PerpsProPositionTpSlSheet {...props} position={{ ...props.position }} />,
+    );
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-top-edge').props.style,
+      ).opacity,
+    ).toBe(1);
+  });
+
+  it('restores a skipped-confirmation settlement even when the empty main page has not changed size', () => {
+    const props = { ...makeSheetProps([]), defaultTab: 'partial' as const };
+    const view = render(<PerpsProPositionTpSlSheet {...props} />);
+    fireEvent(
+      screen.getByTestId('perps-pro-position-tpsl-page-content'),
+      'layout',
+      {},
+    );
+    view.rerender(
+      <PerpsProPositionTpSlSheet
+        {...props}
+        settlement={{ revision: 1, scope: 'partial' }}
+      />,
+    );
+    expect(mockSnapToIndex).toHaveBeenCalledWith(0);
+    const observer = mockAnimatedReactions.at(-1)!;
+    act(() => observer.react(observer.prepare()));
+    expect(screen.getByTestId('tpsl-scroll').props.scrollEnabled).toBe(true);
+  });
+
+  it('keeps the edited form instance on review cancellation and unlocks it after restoration', () => {
+    const props = {
+      ...makeSheetProps(position.tpslOrders),
+      defaultTab: 'partial' as const,
+    };
+    const view = render(<PerpsProPositionTpSlSheet {...props} />);
+    fireEvent.press(screen.getAllByText('Modify')[0]!);
+    const instance = mockFormProps.mock.lastCall?.[0].instanceId;
+    fireEvent(
+      screen.getByTestId('perps-pro-position-tpsl-page-content'),
+      'layout',
+      {},
+    );
+    view.rerender(<PerpsProPositionTpSlSheet {...props} coveredByReview />);
+    view.rerender(<PerpsProPositionTpSlSheet {...props} />);
+    expect(mockFormProps.mock.lastCall?.[0].instanceId).toBe(instance);
+    expect(mockFormProps.mock.lastCall?.[0].pending).toBe(true);
+    const observer = mockAnimatedReactions.at(-1)!;
+    act(() => observer.react(observer.prepare()));
+    expect(mockFormProps.mock.lastCall?.[0].pending).toBe(false);
+    expect(mockFormProps.mock.lastCall?.[0].instanceId).toBe(instance);
   });
 });

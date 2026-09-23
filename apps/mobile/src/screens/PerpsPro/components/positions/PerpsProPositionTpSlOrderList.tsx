@@ -1,3 +1,4 @@
+import { formatPositionTpSlSignedValue } from '../../utils/positionTpSlFormatting';
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
@@ -11,6 +12,7 @@ import {
   resolvePerpsProDialogCardBackground,
 } from '../common/perpsProDialogVisual';
 import { PerpsProDottedUnderlineText } from '../common/PerpsProDottedUnderlineText';
+import { PerpsProPositionTpSlCancelAction } from './PerpsProPositionTpSlCancelAction';
 
 import type { PerpsPositionViewModel } from '../../model/position';
 import {
@@ -27,7 +29,6 @@ import {
   formatPerpsProDecimal,
   formatPerpsProPercent,
   formatPerpsProPrice,
-  formatPerpsProSignedDecimal,
 } from '../../utils/format';
 
 export const PerpsProPositionTpSlOrderList: React.FC<{
@@ -274,7 +275,7 @@ const OrderRow: React.FC<{
             </PerpsProDottedUnderlineText>
           }
           tone={getPositionTpSlValueTone(pnl)}
-          value={pnl == null ? '-' : formatPerpsProSignedDecimal(pnl, 2)}
+          value={pnl == null ? '-' : formatPositionTpSlSignedValue(pnl)}
         />
         <OrderMetric
           flex={1}
@@ -308,13 +309,14 @@ const OrderRow: React.FC<{
             {t('page.perps.pro.positionTpsl.modify')}
           </Text>
         </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          disabled={pending || canceling}
+        <PerpsProPositionTpSlCancelAction
+          disabled={pending}
+          loading={canceling}
+          label={t('global.cancel')}
           onPress={onCancel}
-          style={[styles.orderAction, styles.halfAction]}>
-          <Text style={styles.orderActionText}>{t('global.cancel')}</Text>
-        </Pressable>
+          style={[styles.orderAction, styles.halfAction]}
+          textStyle={styles.orderActionText}
+        />
       </View>
     </View>
   );

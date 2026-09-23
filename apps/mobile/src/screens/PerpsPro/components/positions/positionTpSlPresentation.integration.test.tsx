@@ -17,8 +17,89 @@ import { registerService } from '@/core/services/serviceRegistry';
 import type { PerpsPositionViewModel } from '../../model/position';
 import type { PerpsPositionTpSlOrderViewModel } from '../../model/positionTpSl';
 
+jest.mock('react-i18next', () => ({
+  initReactI18next: { type: '3rdParty', init: () => undefined },
+  useTranslation: () => ({
+    i18n: { language: 'en' },
+    ready: true,
+    t: (key: string) => key,
+  }),
+  Trans: ({ values }: any) =>
+    require('react').createElement(
+      require('react-native').Text,
+      null,
+      `${values?.pnl} ${values?.quoteAsset} ${values?.roi}`,
+    ),
+}));
 jest.mock('@ledgerhq/react-native-hw-transport-ble', () => ({}));
-jest.mock('@gorhom/bottom-sheet', () => require('@gorhom/bottom-sheet/mock'));
+// Native animation/gesture boundary: the test controls completion separately
+// from the controller's settlement and the React layout event.
+const mockNativeReactions: Array<{
+  prepare: () => any;
+  react: (value: any) => void;
+}> = [];
+const mockNativeSheetState = {
+  animatedAnimationState: { value: { status: 2 } },
+  animatedScrollableStatus: { value: 1 },
+  animatedPosition: { value: 94 },
+  animatedSheetHeight: { value: 758 },
+  animatedDetentsState: { value: { detents: [94] } },
+};
+jest.mock('react-native-reanimated', () => {
+  const base = require('react-native-reanimated/mock');
+  return {
+    ...base,
+    useSharedValue: (value: unknown) =>
+      require('react').useRef({ value }).current,
+    useAnimatedReaction: (prepare: () => any, react: (value: any) => void) => {
+      mockNativeReactions.push({ prepare, react });
+    },
+    runOnJS: (callback: unknown) => callback,
+  };
+});
+jest.mock('@gorhom/bottom-sheet', () => {
+  const ReactModule = require('react');
+  const { View } = require('react-native');
+  return {
+    ...require('@gorhom/bottom-sheet/mock'),
+    ANIMATION_STATUS: { STOPPED: 2 },
+    SCROLLABLE_STATUS: { UNLOCKED: 1 },
+    useBottomSheetInternal: () => mockNativeSheetState,
+    BottomSheetModal: ReactModule.forwardRef((props: any, ref: any) => {
+      const [closing, setClosing] = ReactModule.useState(false);
+      if (!props.enableDynamicSizing)
+        mockNativeSheetState.animatedSheetHeight.value = props.snapPoints[0];
+      ReactModule.useImperativeHandle(ref, () => ({
+        present: () => setClosing(false),
+        close: () => setClosing(true),
+        dismiss: () => setClosing(true),
+        snapToIndex: () => undefined,
+      }));
+      return ReactModule.createElement(
+        View,
+        {
+          ...props,
+          closing,
+          testID: props.enableDynamicSizing
+            ? typeof props.enablePanDownToClose === 'boolean'
+              ? 'native-confirmation-sheet'
+              : 'native-other-sheet'
+            : 'native-main-sheet',
+        },
+        props.children,
+      );
+    }),
+    BottomSheetScrollView: ReactModule.forwardRef(
+      ({ children, ...props }: any, ref: any) => {
+        ReactModule.useImperativeHandle(ref, () => ({
+          scrollTo: () => undefined,
+          scrollToEnd: () => undefined,
+        }));
+        return ReactModule.createElement(View, props, children);
+      },
+    ),
+  };
+});
 jest.mock('@rneui/themed', () => ({
   ...jest.requireActual('@rneui/themed'),
   Slider: require('react-native').View,
@@ -73,6 +154,8 @@ jest.mock(
 );
 jest.mock('react-native-linear-gradient', () => require('react-native').View);
 jest.useFakeTimers();
+const { PerpsProPositionTpSlSheets } =
+  require('./PerpsProPositionTpSlSheets') as typeof import('./PerpsProPositionTpSlSheets');
 const { PerpsProPositionTpSlForm } =
   require('./PerpsProPositionTpSlForm') as typeof import('./PerpsProPositionTpSlForm');
 
@@ -165,6 +248,157 @@ describe('position TP/SL input source integration', () => {
   afterAll(() => {
     unregister();
     jest.useRealTimers();
+  });
+
+  it('keeps the real editor locked until the closing confirmation and native restoration complete', async () => {
+    const initial = order('partial');
+    const props: React.ComponentProps<typeof PerpsProPositionTpSlSheets> = {
+      amountUnit: 'base',
+      cancelingOids: [],
+      confirmedCancelledOids: [],
+      defaultTab: 'partial',
+      market,
+      onCancelOrder: jest.fn(),
+      onClose: jest.fn(),
+      onCloseReview: jest.fn(),
+      onReview: jest.fn(),
+      onConfirm: jest.fn(),
+      onToggleSkipConfirmation: jest.fn(),
+      pending: false,
+      position: { ...position, tpslOrders: [initial] },
+      review: null,
+      skipConfirmation: false,
+      visible: true,
+    };
+    const view = render(<PerpsProPositionTpSlSheets {...props} />, { wrapper });
+    await act(async () => {});
+    const scroll = screen.getByTestId('perps-pro-position-tpsl-scroll');
+    fireEvent.press(screen.getByText('page.perps.pro.positionTpsl.modify'));
+    await act(async () => {});
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-form-subpage'),
+    ).toBeTruthy();
+    const frozen: NonNullable<typeof props.review> = {
+      command: {
+        accountAddress: '0x1',
+        coin: 'BTC',
+        direction: 'long',
+        expectedPositionSize: '1',
+        type: 'positionTpSl',
+        scope: 'partial',
+        markPrice: '120',
+        legs: [
+          { kind: 'stopLoss', replaceOid: 7, size: '0.5', triggerPrice: '108' },
+        ],
+      },
+      draft: { mode: 'modify', scope: 'partial', legs: [] },
+      markPrice: '120',
+    };
+    view.rerender(<PerpsProPositionTpSlSheets {...props} review={frozen} />);
+    expect(scroll.props.scrollEnabled).toBe(false);
+    const settlement = { revision: 1, scope: 'partial' as const };
+    view.rerender(
+      <PerpsProPositionTpSlSheets {...props} settlement={settlement} />,
+    );
+    expect(screen.getByTestId('native-confirmation-sheet').props.closing).toBe(
+      true,
+    );
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-form-subpage'),
+    ).toBeTruthy();
+    expect(screen.getByTestId('perps-pro-position-tpsl-scroll')).toBe(scroll);
+    fireEvent(screen.getByTestId('native-confirmation-sheet'), 'dismiss');
+    expect(screen.queryByTestId('native-confirmation-sheet')).toBeNull();
+    expect(
+      screen.queryByTestId('perps-pro-position-tpsl-form-subpage'),
+    ).toBeNull();
+    expect(screen.getByTestId('perps-pro-position-tpsl-add')).toBeTruthy();
+    expect(scroll.props.scrollEnabled).toBe(false);
+    fireEvent(
+      screen.getByTestId('perps-pro-position-tpsl-page-content'),
+      'layout',
+      {},
+    );
+    const observer = mockNativeReactions.at(-1)!;
+    mockNativeSheetState.animatedScrollableStatus.value = 0;
+    act(() => observer.react(observer.prepare()));
+    expect(scroll.props.scrollEnabled).toBe(false);
+    mockNativeSheetState.animatedScrollableStatus.value = 1;
+    mockNativeSheetState.animatedAnimationState.value.status = 1;
+    act(() => observer.react(observer.prepare()));
+    expect(scroll.props.scrollEnabled).toBe(false);
+    mockNativeSheetState.animatedAnimationState.value.status = 2;
+    mockNativeSheetState.animatedPosition.value = 93;
+    act(() => observer.react(observer.prepare()));
+    expect(scroll.props.scrollEnabled).toBe(false);
+    mockNativeSheetState.animatedPosition.value = 94;
+    act(() => observer.react(observer.prepare()));
+    expect(scroll.props.scrollEnabled).toBe(true);
+    expect(screen.getByTestId('perps-pro-position-tpsl-scroll')).toBe(scroll);
+    expect(props.onConfirm).not.toHaveBeenCalled();
+  });
+
+  it('reopens a 0.01 PnL order without truncation or a focus/blur price rewrite', async () => {
+    const initial = {
+      ...order('partial'),
+      kind: 'takeProfit' as const,
+      triggerPrice: '86247',
+      originalSize: '0.00014',
+      remainingSize: '0.00014',
+    };
+    const onReview = jest.fn();
+    render(
+      <PerpsProPositionTpSlForm
+        amountUnit="base"
+        cancelingOids={[]}
+        initialOrder={initial}
+        markPrice="86008"
+        market={{ ...market, szDecimals: 5, pxDecimals: 0 }}
+        mode="modify"
+        presentation="subpage"
+        onCancelOrder={jest.fn()}
+        onReview={onReview}
+        pending={false}
+        position={{
+          ...position,
+          entryPrice: '86176',
+          baseSize: '0.00014',
+          leverage: 22,
+          tpslOrders: [initial],
+        }}
+      />,
+      { wrapper },
+    );
+    await act(async () => {});
+    const pnlId = 'perps-pro-position-tpsl-takeProfit-mode-input';
+    const triggerId = 'perps-pro-position-tpsl-takeProfit-price';
+    expect(screen.getByTestId(`${pnlId}-formatted-value`)).toHaveTextContent(
+      '0.01',
+    );
+    expect(screen.getByText(/\+0.01/)).toBeTruthy();
+    fireEvent(screen.getByTestId(pnlId), 'focus');
+    fireEvent(screen.getByTestId(pnlId), 'blur');
+    expect(screen.getByTestId(triggerId).props.value).toBe('86247');
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+    act(() => jest.advanceTimersByTime(20));
+    expect(onReview).not.toHaveBeenCalled();
+    // Raw mode input is a target; its protocol-normalized price remains canonical.
+    fireEvent.changeText(screen.getByTestId(pnlId), '0.02');
+    expect(screen.getByTestId(pnlId).props.value).toBe('0.02');
+    expect(screen.getByTestId(triggerId).props.value).toBe('86318');
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+    act(() => jest.advanceTimersByTime(20));
+    expect(onReview).toHaveBeenCalledWith(
+      expect.objectContaining({
+        legs: [
+          expect.objectContaining({
+            triggerPrice: '86318',
+            replaceOid: 7,
+            size: '0.00014',
+          }),
+        ],
+      }),
+    );
   });
 
   it.each(['partial', 'position'] as const)(

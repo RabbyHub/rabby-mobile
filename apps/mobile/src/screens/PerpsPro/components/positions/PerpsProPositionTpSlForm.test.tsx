@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { Keyboard, StyleSheet } from 'react-native';
+import { ActivityIndicator, Keyboard, StyleSheet } from 'react-native';
 import { colord } from 'colord';
 import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
 
@@ -209,6 +209,47 @@ const props = () => ({
 });
 
 describe('PerpsProPositionTpSlForm', () => {
+  it.each(['legs', 'duplicates'] as const)(
+    'shows waiting only on the canceled order and restores cancellation after failure (%s)',
+    scenario => {
+      const first = order('takeProfit', 1, '110', 'position');
+      const second = order(
+        scenario === 'duplicates' ? 'takeProfit' : 'stopLoss',
+        2,
+        scenario === 'duplicates' ? '120' : '90',
+        'position',
+      );
+      const input = props();
+      const form = (pending: boolean, cancelingOids: number[]) => (
+        <PerpsProPositionTpSlForm
+          {...input}
+          pending={pending}
+          cancelingOids={cancelingOids}
+          mode="position"
+          position={position([first, second])}
+        />
+      );
+      const view = render(form(true, [2]));
+      const buttons = screen.getAllByRole('button', { name: 'global.cancel' });
+      expect(buttons.map(button => button.props.accessibilityState)).toEqual([
+        { busy: false, disabled: true },
+        { busy: true, disabled: true },
+      ]);
+      expect(screen.UNSAFE_getAllByType(ActivityIndicator)).toHaveLength(1);
+      expect(screen.UNSAFE_getByType(ActivityIndicator).props.color).toBe(
+        PERPS_PRO_DIALOG_TOKENS.actionBackground,
+      );
+      fireEvent.press(buttons[1]!);
+      expect(input.onCancelOrder).not.toHaveBeenCalled();
+      view.rerender(form(false, []));
+      expect(screen.UNSAFE_queryByType(ActivityIndicator)).toBeNull();
+      fireEvent.press(
+        screen.getAllByRole('button', { name: 'global.cancel' })[1]!,
+      );
+      expect(input.onCancelOrder).toHaveBeenCalledWith(second);
+    },
+  );
+
   describe.each(['pnl', 'roi'] as const)(
     'price-derived %s input',
     inputMode => {
@@ -810,6 +851,14 @@ describe('PerpsProPositionTpSlForm', () => {
       paddingBottom: 36,
       paddingTop: 12,
     });
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-form-card').props.onLayout,
+    ).toBeUndefined();
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-form-tab').props.style,
+      ).flexGrow,
+    ).toBeUndefined();
   });
 
   it('defaults Position to PnL, hides Price, persists the leg, and limits input to two decimals', () => {
