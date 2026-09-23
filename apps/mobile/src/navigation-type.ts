@@ -213,9 +213,7 @@ export type AddressNavigatorParamList = {
   // [RootNames.MultiAddressHome]?: {};
   [RootNames.CreateNewAddress]?: {
     noSetupPassword?: boolean;
-    useCurrentSeed?: boolean;
     title?: string;
-    accounts?: string[];
     isFirstCreate?: boolean;
   };
   [RootNames.SetPassword2024]?: {
