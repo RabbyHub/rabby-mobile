@@ -409,6 +409,30 @@ export type KeychainDebugState =
   | AndroidKeychainDebugState
   | IOSKeychainDebugState;
 
+export type SafeKeychainDebugState = Omit<
+  Partial<KeychainDebugState>,
+  'storedUsernameBase64' | 'storedPasswordBase64'
+> & {
+  hasStoredUsernameBase64?: boolean;
+  hasStoredPasswordBase64?: boolean;
+};
+
+export function summarizeKeychainDebugState(
+  state: KeychainDebugState,
+): SafeKeychainDebugState {
+  const { storedUsernameBase64, storedPasswordBase64, ...safeState } =
+    state as KeychainDebugState & {
+      storedUsernameBase64?: string | null;
+      storedPasswordBase64?: string | null;
+    };
+
+  return {
+    ...safeState,
+    hasStoredUsernameBase64: !!storedUsernameBase64,
+    hasStoredPasswordBase64: !!storedPasswordBase64,
+  };
+}
+
 function makeKeychainDebugStateBase(
   service: string,
   supportedBiometryType: KeychainSupportedBiometryType,
@@ -1035,7 +1059,7 @@ export function createBusinessKeychainApi({
       KEYCHAIN_ERROR_CODES.BROKEN_BIOMETRICS_ENTRY,
       BROKEN_BIOMETRICS_ENTRY_MESSAGE,
       {
-        debugState,
+        debugState: summarizeKeychainDebugState(debugState),
         nativeMessage: message,
       },
     );
