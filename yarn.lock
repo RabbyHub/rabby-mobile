@@ -19461,38 +19461,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bn.js@npm:4.11.6":
-  version: 4.11.6
-  resolution: "bn.js@npm:4.11.6::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fbn.js%2F-%2Fbn.js-4.11.6.tgz"
-  checksum: 10/22741b015c9fff60fce32fc9988331b298eb9b6db5bfb801babb23b846eaaf894e440e0d067b2b3ae4e46aab754e90972f8f333b31bf94a686bbcb054bfa7b14
+"bn.js@npm:4.12.5, bn.js@npm:^4.0.0, bn.js@npm:^4.1.0, bn.js@npm:^4.11.0, bn.js@npm:^4.11.8, bn.js@npm:^4.11.9, bn.js@npm:^4.12.0":
+  version: 4.12.5
+  resolution: "bn.js@npm:4.12.5"
+  checksum: 10/be6afe3e31e812e240983a6661e4c8f31f7f5a28e6fc4fbd8ea04d18c887ce4a5089c4bd28d8495a535411deda84d1125f72bcfa253f223067d15f743d8e65a8
   languageName: node
   linkType: hard
 
-"bn.js@npm:^4.0.0, bn.js@npm:^4.1.0, bn.js@npm:^4.11.9, bn.js@npm:^4.12.0":
-  version: 4.12.0
-  resolution: "bn.js@npm:4.12.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fbn.js%2F-%2Fbn.js-4.12.0.tgz"
-  checksum: 10/10f8db196d3da5adfc3207d35d0a42aa29033eb33685f20ba2c36cadfe2de63dad05df0a20ab5aae01b418d1c4b3d4d205273085262fa020d17e93ff32b67527
-  languageName: node
-  linkType: hard
-
-"bn.js@npm:^4.11.0, bn.js@npm:^4.11.8":
-  version: 4.12.0
-  resolution: "bn.js@npm:4.12.0"
-  checksum: 10/10f8db196d3da5adfc3207d35d0a42aa29033eb33685f20ba2c36cadfe2de63dad05df0a20ab5aae01b418d1c4b3d4d205273085262fa020d17e93ff32b67527
-  languageName: node
-  linkType: hard
-
-"bn.js@npm:^5.0.0, bn.js@npm:^5.1.2, bn.js@npm:^5.2.0, bn.js@npm:^5.2.1":
-  version: 5.2.1
-  resolution: "bn.js@npm:5.2.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fbn.js%2F-%2Fbn.js-5.2.1.tgz"
-  checksum: 10/7a7e8764d7a6e9708b8b9841b2b3d6019cc154d2fc23716d0efecfe1e16921b7533c6f7361fb05471eab47986c4aa310c270f88e3507172104632ac8df2cfd84
-  languageName: node
-  linkType: hard
-
-"bn.js@npm:^5.2.2":
-  version: 5.2.2
-  resolution: "bn.js@npm:5.2.2"
-  checksum: 10/51ebb2df83b33e5d8581165206e260d5e9c873752954616e5bf3758952b84d7399a9c6d00852815a0aeefb1150a7f34451b62d4287342d457fa432eee869e83e
+"bn.js@npm:^5.0.0, bn.js@npm:^5.1.2, bn.js@npm:^5.2.0, bn.js@npm:^5.2.1, bn.js@npm:^5.2.2":
+  version: 5.2.5
+  resolution: "bn.js@npm:5.2.5"
+  checksum: 10/10b1ac91e76fd828c1187cf65a9f1a0374e7afb9acd167e19c2d7c4108f6216841007c1e3aef145fa95cc7b3d07f705236a707184af1537667362b3a842d01ac
   languageName: node
   linkType: hard
 
@@ -37579,7 +37558,6 @@ __metadata:
     react-native-qrcode-svg: "npm:^6.2.0"
     react-native-quick-base64: "npm:3.0.1"
     react-native-quick-crypto: "npm:1.1.6"
-    react-native-randombytes: "npm:^3.6.1"
     react-native-reanimated: "npm:3.19.5"
     react-native-root-toast: "npm:4.0.1"
     react-native-safe-area-context: "npm:5.6.2"
@@ -38580,7 +38558,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-randombytes@npm:^3.5.1, react-native-randombytes@npm:^3.6.1":
+"react-native-randombytes@npm:^3.5.1":
   version: 3.6.1
   resolution: "react-native-randombytes@npm:3.6.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-randombytes%2F-%2Freact-native-randombytes-3.6.1.tgz"
   dependencies:
