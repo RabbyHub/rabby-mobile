@@ -1,3 +1,4 @@
+import { formatPositionTpSlSignedValue } from '../../utils/positionTpSlFormatting';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -16,7 +17,6 @@ import {
   type PerpsPositionTpSlMarketSnapshot,
 } from '../../model/positionTpSl';
 import { getPerpsProPriceInputMaxDecimals } from '../../model/trade';
-import { formatPerpsProSignedDecimal } from '../../utils/format';
 import { PerpsProPositionTpSlInput } from './PerpsProPositionTpSlInput';
 
 export const PerpsProPositionTpSlSideInputs: React.FC<{
@@ -159,12 +159,12 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
                     pnl:
                       !value || estimatedPnl == null
                         ? '--'
-                        : formatPerpsProSignedDecimal(estimatedPnl, 2),
+                        : formatPositionTpSlSignedValue(estimatedPnl),
                     quoteAsset: market.quoteAsset,
                     roi:
                       !value || derivedRoi == null
                         ? '--'
-                        : formatPerpsProSignedDecimal(derivedRoi, 2),
+                        : formatPositionTpSlSignedValue(derivedRoi),
                   }}
                 />
               </Text>

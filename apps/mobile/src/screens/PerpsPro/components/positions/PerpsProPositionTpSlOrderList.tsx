@@ -1,3 +1,4 @@
+import { formatPositionTpSlSignedValue } from '../../utils/positionTpSlFormatting';
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
@@ -27,7 +28,6 @@ import {
   formatPerpsProDecimal,
   formatPerpsProPercent,
   formatPerpsProPrice,
-  formatPerpsProSignedDecimal,
 } from '../../utils/format';
 
 export const PerpsProPositionTpSlOrderList: React.FC<{
@@ -274,7 +274,7 @@ const OrderRow: React.FC<{
             </PerpsProDottedUnderlineText>
           }
           tone={getPositionTpSlValueTone(pnl)}
-          value={pnl == null ? '-' : formatPerpsProSignedDecimal(pnl, 2)}
+          value={pnl == null ? '-' : formatPositionTpSlSignedValue(pnl)}
         />
         <OrderMetric
           flex={1}

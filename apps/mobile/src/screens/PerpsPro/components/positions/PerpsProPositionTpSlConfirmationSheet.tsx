@@ -1,3 +1,4 @@
+import { formatPositionTpSlSignedValue } from '../../utils/positionTpSlFormatting';
 import {
   getPerpsProDialogCheckboxStyles,
   getPerpsProDialogStyles,
@@ -33,7 +34,6 @@ import {
 import type { PerpsProTradeAmountUnit } from '../../model/trade';
 import type { PerpsProPositionTpSlReviewState } from '../../scene/usePerpsProPositionTpSl';
 import {
-  formatPerpsProSignedDecimal,
   formatPerpsProPrice,
   formatPerpsProVariableDecimal,
 } from '../../utils/format';
@@ -225,7 +225,7 @@ export const PerpsProPositionTpSlConfirmationSheet: React.FC<{
                     value={`${
                       estimatedPnl == null
                         ? '-'
-                        : formatPerpsProSignedDecimal(estimatedPnl, 2)
+                        : formatPositionTpSlSignedValue(estimatedPnl)
                     } ${market.quoteAsset}`}
                   />
                 </View>
