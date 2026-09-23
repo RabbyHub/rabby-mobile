@@ -38,6 +38,72 @@ const MockInputComponent = React.forwardRef<
 ));
 
 describe('PerpsProDecimalTextInput', () => {
+  it('prepares the latest raw end before focus without correcting the cursor after focus', () => {
+    const onChangeText = jest.fn();
+    const props = {
+      focusCursorAtEnd: true,
+      focusCursorAtEndMode: 'beforeFocus' as const,
+      maxDecimals: 2,
+      onChangeText,
+      testID: 'decimal-input',
+    };
+    const view = render(<PerpsProDecimalTextInput {...props} value="12.34" />);
+    expect(screen.getByTestId('decimal-input').props.selection).toEqual({
+      start: 5,
+      end: 5,
+    });
+    view.rerender(<PerpsProDecimalTextInput {...props} value="123.45" />);
+    expect(screen.getByTestId('decimal-input').props.selection).toEqual({
+      start: 6,
+      end: 6,
+    });
+    const input = screen.getByTestId('decimal-input');
+    fireEvent(input, 'focus', { nativeEvent: {} });
+    expect(input.props.selection).toBeUndefined();
+    expect(mockSetNativeProps).not.toHaveBeenCalled();
+    fireEvent(input, 'selectionChange', {
+      nativeEvent: { selection: { start: 1, end: 2 } },
+    });
+    fireEvent.changeText(input, '193.45');
+    expect(onChangeText).toHaveBeenLastCalledWith('193.45');
+    expect(input.props.selection).toBeUndefined();
+    fireEvent(input, 'blur', { nativeEvent: {} });
+    expect(input.props.selection).toEqual({ start: 6, end: 6 });
+    fireEvent(input, 'focus', { nativeEvent: {} });
+    expect(input.props.selection).toBeUndefined();
+  });
+
+  it('prepares the canonicalized price on blur and keeps empty selection semantics', () => {
+    const onChangeText = jest.fn();
+    render(
+      <PerpsProDecimalTextInput
+        focusCursorAtEnd
+        focusCursorAtEndMode="beforeFocus"
+        maxDecimals={2}
+        canonicalizeValueOnBlur={value => sanitizePerpsProPriceInput(value, 2)}
+        onChangeText={onChangeText}
+        testID="decimal-input"
+        value="001.20"
+      />,
+    );
+    const input = screen.getByTestId('decimal-input');
+    expect(input.props.selection).toEqual({ start: 6, end: 6 });
+    fireEvent(input, 'focus', { nativeEvent: {} });
+    fireEvent(input, 'blur', { nativeEvent: {} });
+    expect(input.props.value).toBe('1.20');
+    expect(input.props.selection).toEqual({ start: 4, end: 4 });
+    fireEvent(input, 'focus', { nativeEvent: {} });
+    fireEvent.changeText(input, '');
+    expect(input.props.selection).toBeUndefined();
+    fireEvent(input, 'blur', { nativeEvent: {} });
+    expect(input.props.selection).toBeUndefined();
+    fireEvent(input, 'focus', { nativeEvent: {} });
+    fireEvent.changeText(input, '0');
+    expect(input.props.selection).toBeUndefined();
+    fireEvent(input, 'blur', { nativeEvent: {} });
+    expect(input.props.selection).toEqual({ start: 1, end: 1 });
+  });
+
   it.each(['ios', 'android'] as const)(
     'passes the action mint to both %s native input hosts',
     platform => {

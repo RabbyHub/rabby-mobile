@@ -1,6 +1,7 @@
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text, TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
+import { IS_ANDROID } from '@/core/native/utils';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
@@ -125,7 +126,7 @@ export const PerpsProPositionTpSlInput: React.FC<{
             accessibilityLabel={accessibilityLabel}
             editable={!disabled}
             focusCursorAtEnd
-            focusCursorAtEndMode="initialFocus"
+            focusCursorAtEndMode={IS_ANDROID ? 'beforeFocus' : 'initialFocus'}
             inputComponent={PerpsProPositionTpSlBottomSheetTextInput}
             maxFontSizeMultiplier={1.2}
             maxDecimals={maxDecimals}
