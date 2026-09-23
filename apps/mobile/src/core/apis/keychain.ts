@@ -30,6 +30,7 @@ import {
   isBrokenBiometricsEntryError,
   makeKeyChainError,
   parseKeychainError,
+  summarizeKeychainDebugState,
   type DebugDecryptedKeychainPayload,
   type DebugGenericPasswordDecryptResult,
   type KeychainBusinessApi,
@@ -37,6 +38,7 @@ import {
   type KeychainDebugState,
   type KeychainEntryState,
   type KeychainSupportedBiometryType,
+  type SafeKeychainDebugState,
   type SecureKeyChainInstance,
 } from './keychainCommon';
 import { keychainMMKV } from '../storage/mmkvInstances';
@@ -87,14 +89,6 @@ function getKeychainApiByVersion(version: CurrentKeychainVersion) {
 }
 
 const isAndroid = Platform.OS === 'android';
-
-type SafeKeychainDebugState = Omit<
-  Partial<KeychainDebugState>,
-  'storedUsernameBase64' | 'storedPasswordBase64'
-> & {
-  hasStoredUsernameBase64?: boolean;
-  hasStoredPasswordBase64?: boolean;
-};
 
 type KeychainBiometricsFailureDiagnostic = {
   recordedAt: number;
@@ -151,22 +145,6 @@ function getErrorCode(error: unknown) {
 
 function getErrorName(error: unknown) {
   return error instanceof Error ? error.name : undefined;
-}
-
-function summarizeKeychainDebugState(
-  state: KeychainDebugState,
-): SafeKeychainDebugState {
-  const { storedUsernameBase64, storedPasswordBase64, ...safeState } =
-    state as KeychainDebugState & {
-      storedUsernameBase64?: string | null;
-      storedPasswordBase64?: string | null;
-    };
-
-  return {
-    ...safeState,
-    hasStoredUsernameBase64: !!storedUsernameBase64,
-    hasStoredPasswordBase64: !!storedPasswordBase64,
-  };
 }
 
 async function getSafeKeychainDebugState(
