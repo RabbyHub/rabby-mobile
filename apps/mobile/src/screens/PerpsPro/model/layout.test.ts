@@ -1,6 +1,7 @@
 import {
   getPerpsProColumnLayout,
   getPerpsProMarketSelectorSnapPoint,
+  getPerpsProPositionTpSlFormMinimumHeight,
   getPerpsProPositionTpSlSnapPoint,
   getPerpsProPrecisionSheetLayout,
 } from './layout';
@@ -113,6 +114,26 @@ describe('Perps Pro layout model', () => {
     ).toBe(686);
   });
 
+  it('reserves the exact remaining 758px sheet height for every TP/SL form presentation', () => {
+    expect(
+      getPerpsProPositionTpSlFormMinimumHeight({
+        presentation: 'subpage',
+        snapPoint: 758,
+      }),
+    ).toBe(532);
+    expect(
+      getPerpsProPositionTpSlFormMinimumHeight({
+        presentation: 'tab',
+        snapPoint: 758,
+      }),
+    ).toBe(486);
+    expect(
+      getPerpsProPositionTpSlFormMinimumHeight({
+        presentation: 'inline-empty',
+        snapPoint: 758,
+      }),
+    ).toBe(486);
+  });
   it.each([
     ['add', 652],
     ['modify', 604],
