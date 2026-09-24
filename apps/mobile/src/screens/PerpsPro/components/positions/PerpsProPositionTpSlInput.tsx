@@ -3,7 +3,7 @@ import { Text, TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import {
@@ -34,6 +34,7 @@ export const PerpsProPositionTpSlInput: React.FC<{
   onChangeText: (value: string) => void;
   onPressMode?: () => void;
   priceSzDecimals?: number;
+  registerKeyboardRevealInput?: (input: TextInput) => (() => void) | undefined;
   testID: string;
   unit?: string;
   value: string;
@@ -49,12 +50,18 @@ export const PerpsProPositionTpSlInput: React.FC<{
     onChangeText,
     onPressMode,
     priceSzDecimals,
+    registerKeyboardRevealInput,
     testID,
     unit,
     value,
   }) => {
     const { colors2024, styles } = useTheme2024({ getStyle });
     const inputRef = React.useRef<TextInput>(null);
+    useLayoutEffect(() => {
+      if (IS_ANDROID && inputRef.current) {
+        return registerKeyboardRevealInput?.(inputRef.current);
+      }
+    }, [registerKeyboardRevealInput]);
     const [focused, setFocused] = useState(false);
     const normalizePriceValue = React.useCallback(
       (nextValue: string) =>

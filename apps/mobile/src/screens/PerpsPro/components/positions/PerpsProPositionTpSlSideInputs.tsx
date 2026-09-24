@@ -1,8 +1,9 @@
 import { formatPositionTpSlSignedValue } from '../../utils/positionTpSlFormatting';
-import { Text } from '@/components/Typography';
+import { Text, type TextInput } from '@/components/Typography';
+import { IS_ANDROID } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
+import React, { useCallback, useRef } from 'react';
 import { View } from 'react-native';
 import { Trans, useTranslation } from 'react-i18next';
 
@@ -18,6 +19,7 @@ import {
 } from '../../model/positionTpSl';
 import { getPerpsProPriceInputMaxDecimals } from '../../model/trade';
 import { PerpsProPositionTpSlInput } from './PerpsProPositionTpSlInput';
+import type { PerpsProSheetKeyboardRevealGroup } from '../common/usePerpsProSheetKeyboard';
 
 export const PerpsProPositionTpSlSideInputs: React.FC<{
   addMode: boolean;
@@ -25,6 +27,7 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
   errorMessage?: string | null;
   highlightInvalidFields?: boolean;
   kind: PerpsPositionTpSlKind;
+  keyboardReveal?: PerpsProSheetKeyboardRevealGroup;
   inputSource: 'mode' | 'trigger';
   market: PerpsPositionTpSlMarketSnapshot;
   onChangeModeMagnitude: (value: string) => void;
@@ -44,6 +47,7 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
     errorMessage = null,
     highlightInvalidFields = false,
     kind,
+    keyboardReveal,
     inputSource,
     market,
     onChangeModeMagnitude,
@@ -59,6 +63,11 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
   }) => {
     const { styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
+    const revealRef = useRef<View>(null);
+    const registerInput = useCallback(
+      (input: TextInput) => keyboardReveal?.registerInput(input, revealRef),
+      [keyboardReveal],
+    );
     const derivedRoi = calculatePositionTpSlRoi({
       direction: position.direction,
       entryPrice: position.entryPrice,
@@ -108,10 +117,13 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
     const showError =
       validationKind === 'invalid' && (!!value || !!errorMessage);
 
-    return (
+    const content = (
       <>
         <View style={styles.sideInputs}>
           <PerpsProPositionTpSlInput
+            registerKeyboardRevealInput={
+              keyboardReveal ? registerInput : undefined
+            }
             accessibilityLabel={triggerLabel}
             disabled={disabled}
             invalid={highlightInvalidFields && showError}
@@ -130,6 +142,9 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
             value={value}
           />
           <PerpsProPositionTpSlInput
+            registerKeyboardRevealInput={
+              keyboardReveal ? registerInput : undefined
+            }
             accessibilityLabel={modeLabel}
             disabled={disabled}
             invalid={highlightInvalidFields && showError}
@@ -179,12 +194,27 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
         ) : null}
       </>
     );
+    // Keep the original iOS host tree. Android opts into measured input + hint
+    // bounds; the same 8px gap previously belonged to the parent sideSection.
+    return IS_ANDROID && keyboardReveal ? (
+      <View
+        ref={revealRef}
+        collapsable={false}
+        onLayout={keyboardReveal.onLayout}
+        style={styles.revealGroup}
+        testID={`perps-pro-position-tpsl-${kind}-reveal-group`}>
+        {content}
+      </View>
+    ) : (
+      content
+    );
   },
 );
 
 PerpsProPositionTpSlSideInputs.displayName = 'PerpsProPositionTpSlSideInputs';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  revealGroup: { gap: 8 },
   sideInputs: { flexDirection: 'row', gap: 8 },
   fieldHintRow: { marginTop: 2 },
   fieldHint: {

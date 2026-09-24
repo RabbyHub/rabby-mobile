@@ -25,6 +25,15 @@ const mockSliderHapticComplete = jest.fn();
 const mockSliderHapticStart = jest.fn();
 const mockSliderHapticValueChange = jest.fn();
 const mockUseSliderHaptics = jest.fn();
+let mockAndroid = false;
+jest.mock('@/core/native/utils', () => ({
+  get IS_ANDROID() {
+    return mockAndroid;
+  },
+  get IS_IOS() {
+    return !mockAndroid;
+  },
+}));
 
 jest.mock(
   '@/assets2024/icons/perps/PerpsProTpSlSelectCaret.svg',
@@ -209,6 +218,54 @@ const props = () => ({
 });
 
 describe('PerpsProPositionTpSlForm', () => {
+  it.each(['add', 'modify', 'position'] as const)(
+    'opts in only the Android %s TP/SL fields, leaving Amount and iOS alone',
+    mode => {
+      const original = order(
+        'takeProfit',
+        1,
+        '110',
+        mode === 'position' ? 'position' : 'partial',
+      );
+      const unregister = jest.fn();
+      const keyboardReveal = {
+        registerInput: jest.fn(() => unregister),
+        onLayout: jest.fn(),
+      };
+      for (const android of [false, true]) {
+        mockAndroid = android;
+        const view = render(
+          <PerpsProPositionTpSlForm
+            {...props()}
+            initialOrder={mode === 'modify' ? original : null}
+            mode={mode}
+            position={position(mode === 'position' ? [original] : [])}
+            keyboardReveal={keyboardReveal}
+          />,
+        );
+        const legs = mode === 'modify' ? 1 : 2;
+        expect(screen.queryAllByTestId(/-reveal-group$/)).toHaveLength(
+          android ? legs : 0,
+        );
+        expect(keyboardReveal.registerInput).toHaveBeenCalledTimes(
+          android ? legs * 2 : 0,
+        );
+        if (android) {
+          fireEvent(
+            screen.getByTestId(
+              'perps-pro-position-tpsl-takeProfit-reveal-group',
+            ),
+            'layout',
+            {},
+          );
+          expect(keyboardReveal.onLayout).toHaveBeenCalledTimes(1);
+        }
+        view.unmount();
+        expect(unregister).toHaveBeenCalledTimes(android ? legs * 2 : 0);
+      }
+      mockAndroid = false;
+    },
+  );
   it.each(['legs', 'duplicates'] as const)(
     'shows waiting only on the canceled order and restores cancellation after failure (%s)',
     scenario => {
@@ -300,6 +357,7 @@ describe('PerpsProPositionTpSlForm', () => {
   );
   beforeEach(() => {
     jest.clearAllMocks();
+    mockAndroid = false;
     mockPositionModes = { sl: 'pnl', tp: 'pnl' };
   });
 

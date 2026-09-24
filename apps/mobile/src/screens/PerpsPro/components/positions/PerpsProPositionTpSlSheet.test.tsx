@@ -811,6 +811,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         fireEvent.press(screen.getAllByText('Modify')[0]!);
       }
       expect(screen.getByTestId('tpsl-scroll')).toBe(scroll);
+      expect(mockFormProps.mock.lastCall?.[0].keyboardReveal).toBeUndefined();
       const height = mockBottomSheetProps.mock.lastCall![0].snapPoints[0];
       const finalHeight = height - 40 - 56;
       // Matching the old full content height is insufficient: the header is fixed.
@@ -826,6 +827,34 @@ describe('PerpsProPositionTpSlSheet', () => {
       runNativeReactions();
       flushScrollFrame();
       expect(mockScrollToEnd).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it.each(['add', 'modify', 'position-modify'] as const)(
+    'connects Android %s feedback to the existing keyboard scroll owner',
+    page => {
+      mockAndroid = true;
+      render(
+        <PerpsProPositionTpSlSheet
+          {...makeSheetProps([
+            ...position.tpslOrders,
+            order(3, '110', '0', 'position'),
+          ])}
+          defaultTab="partial"
+        />,
+      );
+      if (page === 'add') {
+        fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
+      } else if (page === 'modify') {
+        fireEvent.press(screen.getAllByText('Modify')[0]!);
+      } else {
+        fireEvent.press(screen.getByText('Position TP/SL'));
+        fireEvent.press(screen.getAllByText('Modify')[0]!);
+      }
+      expect(mockFormProps.mock.lastCall?.[0].keyboardReveal).toEqual({
+        registerInput: expect.any(Function),
+        onLayout: expect.any(Function),
+      });
     },
   );
 

@@ -802,6 +802,9 @@ export const PerpsProPositionTpSlSheet: React.FC<{
                             initialOrder={
                               tab === 'partial' ? editingOrder : null
                             }
+                            keyboardReveal={
+                              IS_ANDROID ? keyboard.inputReveal : undefined
+                            }
                             markPrice={liveMarket.markPrice}
                             market={market}
                             minimumHeight={getFormMinimumHeight(presentation)}
