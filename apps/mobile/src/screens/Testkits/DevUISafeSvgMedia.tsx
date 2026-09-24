@@ -6,6 +6,7 @@ import RNFS, {
 } from '@rabby-wallet/react-native-fs';
 
 import { Media, MEDIA_TYPE } from '@/components/Media';
+import NFTAvatar from '@/components/NFTAvatar';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
@@ -204,18 +205,14 @@ export default function DevUISafeSvgMedia(): JSX.Element {
           </Text>
           <View style={styles.previewRow}>
             <View style={styles.previewColumn}>
-              <Text style={styles.previewLabel}>thumbnail policy</Text>
+              <Text style={styles.previewLabel}>NFT list avatar</Text>
               <View
                 style={styles.thumbnailPreview}
                 {...makeTestIDProps(E2E_ID.playground.safeSvgThumbnail)}>
-                <Media
+                <NFTAvatar
                   key={`thumbnail-${renderKey}`}
-                  type={MEDIA_TYPE.IMAGE_URL}
-                  src={activeUrl}
-                  safeSvgVariant="thumbnail"
-                  style={styles.previewImage}
-                  mediaStyle={styles.previewImage}
-                  failedPlaceholder={failedPlaceholder}
+                  nftImageUrl={activeUrl}
+                  size={40}
                 />
               </View>
             </View>
@@ -341,6 +338,8 @@ const getStyles = createGetStyles2024(ctx => ({
   thumbnailPreview: {
     width: 112,
     height: 112,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: ctx.colors2024['neutral-bg-2'],
