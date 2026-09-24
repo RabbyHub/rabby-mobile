@@ -105,7 +105,7 @@ describe('PerpsProPositionTpSlInput', () => {
     );
     expect(mockDecimalProps.mock.lastCall?.[0]).toMatchObject({
       focusCursorAtEnd: true,
-      focusCursorAtEndMode: 'initialFocus',
+      focusCursorAtEndMode: 'nativeFocus',
       pointerEvents: 'none',
     });
   });

@@ -127,6 +127,7 @@ const blur = (id: string, node: number) =>
 
 describe('Android TP/SL keyboard ownership', () => {
   beforeEach(() => {
+    mockSetSelection.mockClear();
     mockNextNode = 0;
     mockUIQueue.length = 0;
     mockNodes.current.clear();
@@ -294,6 +295,9 @@ describe('Android TP/SL keyboard ownership', () => {
     expect(screen.getByTestId('input').props.caretHidden).toBe(false);
     expect(screen.queryByText('−1,234.5')).toBeNull();
     expect(screen.getByTestId('input').props.selection).toBeUndefined();
+    expect(
+      screen.getByTestId('input-focus-proxy').props.accessibilityState.disabled,
+    ).toBe(false);
     fireEvent(screen.getByTestId('input'), 'selectionChange', {
       nativeEvent: { selection: { start: 2, end: 2 } },
     });
@@ -308,5 +312,29 @@ describe('Android TP/SL keyboard ownership', () => {
     expect(screen.getByTestId('input').props.selection).toBeUndefined();
     focus('input', 1);
     expect(mockSetSelection).toHaveBeenLastCalledWith(7, 7);
+  });
+
+  it('preserves the Android empty focus command and native host', () => {
+    render(
+      <PerpsProPositionTpSlInput
+        accessibilityLabel="Price"
+        disabled={false}
+        label="Price"
+        maxDecimals={2}
+        onChangeText={jest.fn()}
+        testID="input"
+        value=""
+      />,
+      { wrapper },
+    );
+    const input = screen.getByTestId('input');
+    focus('input', 1);
+    expect(mockSetSelection).toHaveBeenCalledTimes(1);
+    expect(mockSetSelection).toHaveBeenLastCalledWith(0, 0);
+    expect(input.props.selection).toEqual({ start: 0, end: 0 });
+    expect(screen.getByTestId('input')).toBe(input);
+    expect(
+      screen.getByTestId('input-focus-proxy').props.accessibilityState.disabled,
+    ).toBe(false);
   });
 });

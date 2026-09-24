@@ -74,6 +74,17 @@ jest.mock('@gorhom/bottom-sheet', () => {
   const { View } = require('react-native');
   return {
     ...require('@gorhom/bottom-sheet/mock'),
+    BottomSheetTextInput: ReactModule.forwardRef((props: any, ref: any) => {
+      ReactModule.useImperativeHandle(ref, () => ({
+        focus: jest.fn(),
+        setNativeProps: jest.fn(),
+        setSelection: jest.fn(),
+      }));
+      return ReactModule.createElement(
+        require('react-native').TextInput,
+        props,
+      );
+    }),
     ANIMATION_STATUS: { STOPPED: 2 },
     SCROLLABLE_STATUS: { UNLOCKED: 1 },
     KEYBOARD_STATUS: { HIDDEN: 2 },
@@ -307,8 +318,19 @@ describe('position TP/SL input source integration', () => {
         if (entry === 'add')
           fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
         await act(async () => {});
-        const height = entry === 'add' ? 704 : 758;
-        const expectedViewport = height - 40;
+        expect(screen.getByTestId('perps-pro-position-tpsl-scroll')).toBe(
+          scroll,
+        );
+        if (entry === 'add') {
+          expect(
+            screen.getByTestId('perps-pro-position-tpsl-page-header'),
+          ).toBeTruthy();
+          expect(
+            within(scroll).queryByTestId('perps-pro-position-tpsl-page-header'),
+          ).toBeNull();
+        }
+        const height = entry === 'add' ? 720 : 758;
+        const expectedViewport = height - 40 - (entry === 'add' ? 72 : 0);
         expect(
           screen.getByTestId('native-main-sheet').props.snapPoints,
         ).toEqual([height]);

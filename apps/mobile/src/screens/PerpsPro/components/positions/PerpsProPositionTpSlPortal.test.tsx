@@ -3,6 +3,9 @@ import { PortalProvider } from '@gorhom/portal';
 import React from 'react';
 
 jest.mock('react-native-linear-gradient', () => require('react-native').View);
+jest.mock('react-native-gesture-handler', () => ({
+  State: { ACTIVE: 4 },
+}));
 
 jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
 
@@ -15,6 +18,7 @@ jest.mock('react-native-reanimated', () => {
     runOnJS: (callback: (...args: unknown[]) => unknown) => callback,
     useAnimatedReaction: jest.fn(),
     useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
+    useAnimatedRef: () => ReactModule.useRef(null),
   };
 });
 

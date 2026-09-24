@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { PerpsPositionViewModel } from '../../model/position';
 import type { PerpsPositionTpSlMarketSnapshot } from '../../model/positionTpSl';
+import { PERPS_PRO_POSITION_TPSL_PAGE_HEADER_HEIGHT } from '../../model/layout';
 import { formatPerpsProPrice } from '../../utils/format';
 import {
   getPerpsProTintedTagContainerStyle,
@@ -21,16 +22,22 @@ import {
 } from '../common/perpsProDialogVisual';
 
 export const PerpsProPositionTpSlPageHeader: React.FC<{
+  backButtonRef?: React.Ref<View>;
+  disabled?: boolean;
   onBack: () => void;
   title: string;
-}> = React.memo(({ onBack, title }) => {
+}> = React.memo(({ backButtonRef, disabled = false, onBack, title }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
   return (
-    <View style={styles.pageHeader}>
+    <View
+      style={styles.pageHeader}
+      testID="perps-pro-position-tpsl-page-header">
       <Pressable
+        ref={backButtonRef}
+        collapsable={false}
         accessibilityLabel={title}
         accessibilityRole="button"
-        hitSlop={{ right: 8 }}
+        disabled={disabled}
         onPress={onBack}
         style={styles.backButton}
         testID="perps-pro-position-tpsl-back">
@@ -144,25 +151,26 @@ const Metric: React.FC<{ label: string; value: string }> = ({
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   pageHeader: {
     alignItems: 'center',
-    height: 56,
-    paddingBottom: 16,
+    height: PERPS_PRO_POSITION_TPSL_PAGE_HEADER_HEIGHT,
+    flexShrink: 0,
+    paddingBottom: 24,
     justifyContent: 'center',
     position: 'relative',
   },
   backButton: {
     alignItems: 'center',
-    height: 56,
+    height: PERPS_PRO_POSITION_TPSL_PAGE_HEADER_HEIGHT,
     justifyContent: 'center',
     left: 0,
     position: 'absolute',
-    paddingBottom: 16,
-    paddingRight: 16,
+    paddingBottom: 24,
+    paddingRight: 24,
     top: 0,
-    width: 56,
+    width: PERPS_PRO_POSITION_TPSL_PAGE_HEADER_HEIGHT,
   },
   pageTitleContainer: {
     alignItems: 'center',
-    paddingHorizontal: 64,
+    paddingHorizontal: 80,
     width: '100%',
   },
   pageTitle: {

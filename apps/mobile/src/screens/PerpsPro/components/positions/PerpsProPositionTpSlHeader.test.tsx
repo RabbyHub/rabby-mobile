@@ -151,14 +151,14 @@ describe('PerpsProPositionTpSlHeader', () => {
       });
       const back = screen.getByTestId('perps-pro-position-tpsl-back');
       expect(StyleSheet.flatten(back.props.style)).toMatchObject({
-        height: 56,
-        width: 56,
-        paddingBottom: 16,
-        paddingRight: 16,
+        height: 72,
+        width: 72,
+        paddingBottom: 24,
+        paddingRight: 24,
         left: 0,
         top: 0,
       });
-      expect(back.props.hitSlop).toEqual({ right: 8 });
+      expect(back.props.hitSlop).toBeUndefined();
       expect(screen.getByTestId('back-glyph').props).toMatchObject({
         height: 24,
         width: 24,
@@ -168,7 +168,7 @@ describe('PerpsProPositionTpSlHeader', () => {
         .find(node => node.props.pointerEvents === 'none')!;
       expect(titleContainer.props.pointerEvents).toBe('none');
       expect(StyleSheet.flatten(titleContainer.props.style)).toMatchObject({
-        paddingHorizontal: 64,
+        paddingHorizontal: 80,
         width: '100%',
       });
       expect(screen.getByText(title).props.numberOfLines).toBe(1);

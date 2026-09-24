@@ -1,7 +1,7 @@
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text, TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
-import { IS_ANDROID } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
@@ -82,7 +82,7 @@ export const PerpsProPositionTpSlInput: React.FC<{
         testID={`${testID}-field`}>
         <Pressable
           accessible={false}
-          disabled={disabled}
+          disabled={disabled || (IS_IOS && focused)}
           onPress={() => {
             if (!focused) {
               inputRef.current?.focus();
@@ -127,7 +127,7 @@ export const PerpsProPositionTpSlInput: React.FC<{
             editable={!disabled}
             caretHidden={IS_ANDROID ? !focused : undefined}
             focusCursorAtEnd
-            focusCursorAtEndMode={IS_ANDROID ? 'nativeFocus' : 'initialFocus'}
+            focusCursorAtEndMode="nativeFocus"
             inputComponent={PerpsProPositionTpSlBottomSheetTextInput}
             maxFontSizeMultiplier={1.2}
             maxDecimals={maxDecimals}
