@@ -57,6 +57,7 @@ interface NativeModulesStatic {
     androidTraceEndAsyncSection?(name: string, cookie: number): void;
     androidTraceCounter?(name: string, value: number): void;
     moveTaskToBack?(): Promise<boolean>;
+    setSensitiveClipboard(text: string): Promise<void>;
     shareFile?(options: {
       filePath: string;
       mimeType?: string;
