@@ -6,7 +6,14 @@ import {
   render,
   screen,
 } from '@testing-library/react-native';
-import { Platform, TextInput as NativeTextInput, View } from 'react-native';
+import {
+  Keyboard,
+  Platform,
+  StatusBar,
+  UIManager,
+  TextInput as NativeTextInput,
+  View,
+} from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import type { TextInput } from '@/components/Typography';
 
@@ -14,6 +21,14 @@ import type { TextInput } from '@/components/Typography';
 // animation scheduling are substituted. A synchronous SharedValue mock would
 // hide the lost keyboard update this suite is intended to prevent.
 jest.mock('@ledgerhq/react-native-hw-transport-ble', () => ({}));
+jest.mock('react-native/Libraries/ReactNative/UIManager', () => ({
+  __esModule: true,
+  default: {
+    ...require('react-native/jest/mocks/UIManager').default,
+    measureInWindow: jest.fn(),
+    measureLayout: jest.fn(),
+  },
+}));
 
 type KeyboardState = {
   status: 'SHOWN' | 'HIDDEN';
@@ -69,6 +84,15 @@ jest.mock('react-native-gesture-handler', () => {
           _nativeTag: ++mockNextNode,
           focus: jest.fn(),
           blur: jest.fn(),
+          isFocused: () => true,
+          measureInWindow: (
+            callback: (
+              x: number,
+              y: number,
+              width: number,
+              height: number,
+            ) => void,
+          ) => callback(0, 370, 160, 40),
           setNativeProps: jest.fn(),
           setSelection: mockSetSelection,
         };
@@ -90,6 +114,14 @@ const { PerpsProPositionTpSlBottomSheetTextInput } =
   require('./PerpsProPositionTpSlBottomSheetTextInput') as typeof import('./PerpsProPositionTpSlBottomSheetTextInput');
 const { PerpsProPositionTpSlInput } =
   require('./PerpsProPositionTpSlInput') as typeof import('./PerpsProPositionTpSlInput');
+const { PerpsProPositionTpSlSideInputs } =
+  require('./PerpsProPositionTpSlSideInputs') as typeof import('./PerpsProPositionTpSlSideInputs');
+const { usePerpsProSheetKeyboard } =
+  require('../common/usePerpsProSheetKeyboard') as typeof import('../common/usePerpsProSheetKeyboard');
+const { PerpsProKeyboardSheetContext } =
+  require('../common/PerpsProKeyboardSheetContext') as typeof import('../common/PerpsProKeyboardSheetContext');
+const { perpsProKeyboardSession } =
+  require('../common/perpsProKeyboardSession') as typeof import('../common/perpsProKeyboardSession');
 afterAll(() =>
   Object.defineProperty(Platform, 'OS', {
     configurable: true,
@@ -336,5 +368,220 @@ describe('Android TP/SL keyboard ownership', () => {
     expect(
       screen.getByTestId('input-focus-proxy').props.accessibilityState.disabled,
     ).toBe(false);
+  });
+
+  describe('input and feedback visibility through the real keyboard session', () => {
+    const listeners = new Map<string, (...args: any[]) => void>();
+    const frames = new Map<number, FrameRequestCallback>();
+    let nextFrame = 0;
+    const scrollTo = jest.fn();
+    const scrollViewRef = {
+      current: {
+        getScrollableNode: () => 10,
+        getInnerViewNode: () => 11,
+        scrollTo,
+      },
+    } as unknown as React.RefObject<
+      import('@gorhom/bottom-sheet').BottomSheetScrollViewMethods
+    >;
+    const flushFrames = () =>
+      act(() => {
+        const pending = [...frames.values()];
+        frames.clear();
+        pending.forEach(callback => callback(0));
+      });
+    const Harness = ({
+      entry,
+      error = false,
+    }: {
+      entry: string;
+      error?: boolean;
+    }) => {
+      const keyboard = usePerpsProSheetKeyboard({
+        visible: true,
+        scrollViewRef,
+      });
+      const { onSheetReadyChange } = keyboard;
+      React.useLayoutEffect(
+        () => onSheetReadyChange(true),
+        [onSheetReadyChange],
+      );
+      const [value, setValue] = React.useState(entry === 'add' ? '' : '120');
+      return (
+        <PerpsProKeyboardSheetContext.Provider value={keyboard.sheetId}>
+          <PerpsProPositionTpSlSideInputs
+            addMode={entry === 'add'}
+            disabled={false}
+            kind="takeProfit"
+            keyboardReveal={keyboard.inputReveal}
+            inputSource="trigger"
+            market={{
+              displayBase: 'BTC',
+              displayPair: 'BTCUSDC',
+              markPrice: '100',
+              pxDecimals: 2,
+              quoteAsset: 'USDC',
+              sourceTag: null,
+              szDecimals: 3,
+            }}
+            position={
+              {
+                direction: 'long',
+                entryPrice: '100',
+                leverage: 10,
+              } as import('../../model/position').PerpsPositionViewModel
+            }
+            onChangeTrigger={setValue}
+            onChangeModeMagnitude={jest.fn()}
+            onPressMode={jest.fn()}
+            rawMagnitude="20"
+            selectedMode="pnl"
+            size="1"
+            value={value}
+            validationKind={error ? 'invalid' : value ? 'valid' : 'empty'}
+            errorMessage={
+              error
+                ? 'A long validation message that wraps below the PnL'
+                : null
+            }
+          />
+        </PerpsProKeyboardSheetContext.Provider>
+      );
+    };
+    beforeEach(() => {
+      listeners.clear();
+      frames.clear();
+      scrollTo.mockClear();
+      Object.defineProperty(StatusBar, 'currentHeight', {
+        configurable: true,
+        value: 24,
+      });
+      jest.spyOn(Keyboard, 'metrics').mockReturnValue(undefined);
+      jest
+        .spyOn(Keyboard, 'addListener')
+        .mockImplementation((event, callback) => {
+          listeners.set(event, callback);
+          return {
+            remove: () => {
+              listeners.delete(event);
+            },
+          };
+        });
+      jest
+        .spyOn(global, 'requestAnimationFrame')
+        .mockImplementation(callback => {
+          frames.set(++nextFrame, callback);
+          return nextFrame;
+        });
+      jest.spyOn(global, 'cancelAnimationFrame').mockImplementation(id => {
+        frames.delete(id);
+      });
+      jest
+        .spyOn(UIManager, 'measureInWindow')
+        .mockImplementation((_node, callback) => callback(0, 100, 393, 400));
+      jest
+        .spyOn(UIManager, 'measureLayout')
+        .mockImplementation((_node, _parent, _failure, callback) =>
+          callback(0, 600, 160, 40),
+        );
+      perpsProKeyboardSession.setEnabled(true);
+    });
+    afterEach(() => {
+      act(() => perpsProKeyboardSession.setEnabled(false));
+      Object.defineProperty(StatusBar, 'currentHeight', {
+        configurable: true,
+        value: undefined,
+      });
+    });
+    it.each([
+      ['add', 'price', 1],
+      ['add', 'mode-input', 2],
+      ['modify', 'price', 1],
+      ['modify', 'mode-input', 2],
+      ['position-modify', 'price', 1],
+      ['position-modify', 'mode-input', 2],
+    ] as const)(
+      'reveals %s %s feedback and its later wrapped error without changing the caret strategy',
+      (entry, field, node) => {
+        let height = entry === 'add' ? 40 : 66;
+        const measureGroup = jest.fn(
+          (
+            callback: (
+              x: number,
+              y: number,
+              width: number,
+              height: number,
+            ) => void,
+          ) => callback(0, 370, 329, height),
+        );
+        const view = render(<Harness entry={entry} />, {
+          wrapper,
+        });
+        const groupHost = screen.UNSAFE_root.findAll(
+          candidate =>
+            candidate.props.testID ===
+              'perps-pro-position-tpsl-takeProfit-reveal-group' &&
+            candidate.instance &&
+            typeof candidate.instance.measureInWindow === 'function',
+        )[0];
+        jest
+          .spyOn(groupHost.instance, 'measureInWindow')
+          .mockImplementation(measureGroup);
+        const id = `perps-pro-position-tpsl-takeProfit-${field}`;
+        const input = screen.getByTestId(id);
+        focus(id, node);
+        act(() =>
+          listeners.get('keyboardDidShow')?.({
+            endCoordinates: { height: 300, screenY: 500 },
+          }),
+        );
+        flushFrames();
+        if (entry === 'add') {
+          expect(scrollTo).not.toHaveBeenCalled();
+          fireEvent.changeText(
+            screen.getByTestId('perps-pro-position-tpsl-takeProfit-price'),
+            '120',
+          );
+          height = 66;
+          fireEvent(
+            screen.getByTestId(
+              'perps-pro-position-tpsl-takeProfit-reveal-group',
+            ),
+            'layout',
+            {},
+          );
+          flushFrames();
+        }
+        expect(perpsProKeyboardSession.getSnapshot()?.input).toBeTruthy();
+        expect(UIManager.measureInWindow).toHaveBeenCalled();
+        expect(measureGroup).toHaveBeenCalled();
+        expect(scrollTo).toHaveBeenLastCalledWith({ animated: false, y: 346 });
+        expect(screen.getByTestId(id)).toBe(input);
+        expect(mockSetSelection).toHaveBeenCalledTimes(1);
+        view.rerender(<Harness entry={entry} error />);
+        height = 98;
+        fireEvent(
+          screen.getByTestId('perps-pro-position-tpsl-takeProfit-reveal-group'),
+          'layout',
+          {},
+        );
+        flushFrames();
+        expect(scrollTo).toHaveBeenLastCalledWith({ animated: false, y: 378 });
+        expect(screen.getByTestId(id).props.selection).toBeUndefined();
+        expect(mockSetSelection).toHaveBeenCalledTimes(1);
+        const calls = scrollTo.mock.calls.length;
+        act(() => listeners.get('keyboardDidHide')?.());
+        fireEvent(
+          screen.getByTestId('perps-pro-position-tpsl-takeProfit-reveal-group'),
+          'layout',
+          {},
+        );
+        flushFrames();
+        expect(scrollTo).toHaveBeenCalledTimes(calls);
+        view.unmount();
+        flushFrames();
+        expect(perpsProKeyboardSession.getSnapshot()).toBeNull();
+      },
+    );
   });
 });

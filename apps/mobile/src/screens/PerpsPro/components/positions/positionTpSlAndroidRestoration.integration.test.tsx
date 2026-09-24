@@ -318,16 +318,16 @@ describe('Android TP/SL restoration with installed Gorhom handlers (JS/native bo
   });
 
   it.each([
-    ['add', 720, 0],
-    ['modify', 620, 0],
-    ['position-modify', 614, 0],
-    ['modify-safe-area', 654, 34],
+    ['add', 704, 0],
+    ['modify', 604, 0],
+    ['position-modify', 598, 0],
+    ['modify-safe-area', 638, 34],
     ['small-screen', 437, 0],
   ] as const)(
     'restores %s with a fixed header and errors without a second scroll after settling',
     (pageKey, targetHeight, bottomExtra) => {
-      render(tree({ pageKey, targetHeight, fixedHeaderHeight: 72 }));
-      const finalHeight = targetHeight - 40 - 72;
+      render(tree({ pageKey, targetHeight, fixedHeaderHeight: 56 }));
+      const finalHeight = targetHeight - 40 - 56;
       // Scrolling content includes normal hints, both errors and a wrapped hint.
       mockGeometry.contentHeight = 680 + bottomExtra;
       openKeyboard(60);

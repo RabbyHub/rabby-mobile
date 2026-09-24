@@ -120,7 +120,7 @@ describe('Perps Pro layout model', () => {
         presentation: 'subpage',
         snapPoint: 758,
       }),
-    ).toBe(516);
+    ).toBe(532);
     expect(
       getPerpsProPositionTpSlFormMinimumHeight({
         presentation: 'tab',
@@ -135,9 +135,9 @@ describe('Perps Pro layout model', () => {
     ).toBe(486);
   });
   it.each([
-    ['add', 720],
-    ['modify', 620],
-    ['position-modify', 614],
+    ['add', 704],
+    ['modify', 604],
+    ['position-modify', 598],
   ] as const)('sizes the %s page to its approved content', (page, height) => {
     expect(
       getPerpsProPositionTpSlSnapPoint({
@@ -155,9 +155,9 @@ describe('Perps Pro layout model', () => {
     ).toBe(437);
   });
   it.each([
-    ['subpage', 720, 478],
-    ['subpage', 620, 378],
-    ['position-modify', 614, 372],
+    ['subpage', 704, 478],
+    ['subpage', 604, 378],
+    ['position-modify', 598, 372],
   ] as const)(
     'preserves the %s form budget at height %s after moving the header outside scrolling',
     (presentation, snapPoint, minimumHeight) => {
@@ -175,15 +175,15 @@ describe('Perps Pro layout model', () => {
           presentation,
           snapPoint: 437,
         }),
-      ).toBe(195);
+      ).toBe(211);
     },
   );
   it('budgets both normal PnL hints and only the actual form bottom-padding increment', () => {
     for (const [page, base] of [
       ['form', 758],
-      ['add', 720],
-      ['modify', 620],
-      ['position-modify', 614],
+      ['add', 704],
+      ['modify', 604],
+      ['position-modify', 598],
     ] as const) {
       expect(
         getPerpsProPositionTpSlSnapPoint({
@@ -220,7 +220,7 @@ describe('Perps Pro layout model', () => {
           topInset: 24,
           windowHeight: 900,
         }),
-      ).toBe(720);
+      ).toBe(704);
     }
   });
 });

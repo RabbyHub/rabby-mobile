@@ -46,6 +46,7 @@ import { PerpsProPositionTpSlCancelAction } from './PerpsProPositionTpSlCancelAc
 import { PerpsProPositionTpSlSideInputs } from './PerpsProPositionTpSlSideInputs';
 import { usePerpsProPositionTpSlFormInputs } from './usePerpsProPositionTpSlFormInputs';
 import { usePerpsProTpSlModePreferences } from '../../scene/usePerpsProTpSlModePreferences';
+import type { PerpsProSheetKeyboardRevealGroup } from '../common/usePerpsProSheetKeyboard';
 
 type FormMode = 'add' | 'modify' | 'position';
 
@@ -53,6 +54,7 @@ export const PerpsProPositionTpSlForm: React.FC<{
   amountUnit: PerpsProTradeAmountUnit;
   cancelingOids: readonly number[];
   initialOrder?: PerpsPositionTpSlOrderViewModel | null;
+  keyboardReveal?: PerpsProSheetKeyboardRevealGroup;
   markPrice: string | null;
   market: PerpsPositionTpSlMarketSnapshot;
   minimumHeight?: number;
@@ -67,6 +69,7 @@ export const PerpsProPositionTpSlForm: React.FC<{
     amountUnit,
     cancelingOids,
     initialOrder = null,
+    keyboardReveal,
     markPrice,
     market,
     minimumHeight,
@@ -494,6 +497,7 @@ export const PerpsProPositionTpSlForm: React.FC<{
                       addMode={mode === 'add'}
                       disabled={pending}
                       kind={kind}
+                      keyboardReveal={keyboardReveal}
                       inputSource={input.source}
                       market={market}
                       onChangeModeMagnitude={next =>

@@ -18,14 +18,14 @@ const PERPS_PRO_SHEET_MIN_TOP_OFFSET = 24;
 const PERPS_PRO_SHEET_TOP_SAFE_GAP = 16;
 const PERPS_PRO_MARKET_SELECTOR_DESIGN_TOP = 104;
 const PERPS_PRO_MARKET_SELECTOR_MIN_HEIGHT = 320;
-export const PERPS_PRO_POSITION_TPSL_PAGE_HEADER_HEIGHT = 72;
+export const PERPS_PRO_POSITION_TPSL_PAGE_HEADER_HEIGHT = 56;
 const PERPS_PRO_POSITION_TPSL_DESIGN_HEIGHTS = {
   form: 758,
   list: 758,
   // Include both normal 26px PnL hints before the keyboard ever opens.
-  add: 720,
-  modify: 620,
-  'position-modify': 614,
+  add: 704,
+  modify: 604,
+  'position-modify': 598,
 } as const;
 const PERPS_PRO_POSITION_TPSL_SUBPAGE_CHROME_HEIGHT =
   PERPS_PRO_POSITION_TPSL_PAGE_HEADER_HEIGHT + 130;
