@@ -1,4 +1,9 @@
-import { getPerpsProDialogActionStyles } from '../common/perpsProDialogVisual';
+import {
+  getPerpsProDialogActionStyles,
+  resolvePerpsProDialogCardBackground,
+  resolvePerpsProDialogFieldBackground,
+  PERPS_PRO_DIALOG_TOKENS,
+} from '../common/perpsProDialogVisual';
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text, TextInput } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
@@ -11,11 +16,10 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import BigNumber from 'bignumber.js';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { Keyboard, Pressable, View } from 'react-native';
+import { Keyboard, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsPositionViewModel } from '../../model/position';
-import { resolvePerpsProFieldBackground } from '../common/perpsProVisual';
 import type { PerpsProPositionTpSlFormPresentation } from '../../model/layout';
 import {
   buildPositionTpSlSummary,
@@ -38,9 +42,11 @@ import { PerpsProSlider } from '../common/PerpsProSlider';
 import { usePerpsProDismissKeyboard } from '../common/usePerpsProDismissKeyboard';
 import { usePerpsProSliderHaptics } from '../common/usePerpsProSliderHaptics';
 import { PerpsProPositionTpSlBottomSheetTextInput } from './PerpsProPositionTpSlBottomSheetTextInput';
+import { PerpsProPositionTpSlCancelAction } from './PerpsProPositionTpSlCancelAction';
 import { PerpsProPositionTpSlSideInputs } from './PerpsProPositionTpSlSideInputs';
 import { usePerpsProPositionTpSlFormInputs } from './usePerpsProPositionTpSlFormInputs';
 import { usePerpsProTpSlModePreferences } from '../../scene/usePerpsProTpSlModePreferences';
+import type { PerpsProSheetKeyboardRevealGroup } from '../common/usePerpsProSheetKeyboard';
 
 type FormMode = 'add' | 'modify' | 'position';
 
@@ -48,6 +54,7 @@ export const PerpsProPositionTpSlForm: React.FC<{
   amountUnit: PerpsProTradeAmountUnit;
   cancelingOids: readonly number[];
   initialOrder?: PerpsPositionTpSlOrderViewModel | null;
+  keyboardReveal?: PerpsProSheetKeyboardRevealGroup;
   markPrice: string | null;
   market: PerpsPositionTpSlMarketSnapshot;
   minimumHeight?: number;
@@ -62,6 +69,7 @@ export const PerpsProPositionTpSlForm: React.FC<{
     amountUnit,
     cancelingOids,
     initialOrder = null,
+    keyboardReveal,
     markPrice,
     market,
     minimumHeight,
@@ -79,6 +87,9 @@ export const PerpsProPositionTpSlForm: React.FC<{
     const resolvedPresentation =
       presentation ?? (mode === 'position' ? 'tab' : 'subpage');
     const isInlineEmpty = resolvedPresentation === 'inline-empty';
+    const isSubpage =
+      resolvedPresentation === 'subpage' ||
+      resolvedPresentation === 'position-modify';
     const summary = useMemo(
       () => buildPositionTpSlSummary(position.tpslOrders, markPrice),
       [markPrice, position.tpslOrders],
@@ -138,8 +149,14 @@ export const PerpsProPositionTpSlForm: React.FC<{
       market.szDecimals,
       position.baseSize,
     ]);
-    const [inputSource, setInputSource] = useState<'manual' | 'slider'>(
-      mode === 'add' ? 'slider' : 'manual',
+    const [inputSource, setInputSource] = useState<
+      'order' | 'manual' | 'slider'
+    >(
+      mode === 'modify' && initialOrder
+        ? 'order'
+        : mode === 'add'
+        ? 'slider'
+        : 'manual',
     );
     const initialPercent = mode === 'modify' ? 0 : 100;
     const [percent, setPercent] = useState(initialPercent);
@@ -188,9 +205,13 @@ export const PerpsProPositionTpSlForm: React.FC<{
       return false;
     }, []);
 
+    // A rounded quote prefill is presentation, not a new amount instruction.
+    // Keep the server size until an Amount edit or Slider change takes over.
     const partialSize =
       mode === 'position'
         ? null
+        : inputSource === 'order'
+        ? initialOrder?.remainingSize ?? null
         : resolvePerpsProCloseSize({
             amountUnit,
             inputSource,
@@ -201,7 +222,7 @@ export const PerpsProPositionTpSlForm: React.FC<{
             szDecimals: market.szDecimals,
           });
     const displayAmount =
-      inputSource === 'manual'
+      inputSource !== 'slider'
         ? manualAmount
         : amountUnit === 'base'
         ? partialSize
@@ -378,16 +399,10 @@ export const PerpsProPositionTpSlForm: React.FC<{
       !hasInvalidEnteredSide &&
       (mode === 'position' || amountValidation?.kind === 'valid');
     const hasAmountValue =
-      inputSource === 'manual'
+      inputSource !== 'slider'
         ? !!manualAmount
         : percent > 0 && !!displayAmount;
     const showAmountFloatingLabel = amountFocused || hasAmountValue;
-    const isPristineInlineEmpty =
-      isInlineEmpty &&
-      !takeProfitInput.triggerPrice &&
-      !takeProfitInput.rawMagnitude &&
-      !stopLossInput.triggerPrice &&
-      !stopLossInput.rawMagnitude;
 
     const submit = () => {
       if (!canReview) {
@@ -407,213 +422,230 @@ export const PerpsProPositionTpSlForm: React.FC<{
       <View
         style={[
           styles.container,
-          resolvedPresentation === 'subpage'
-            ? styles.subpageContainer
-            : styles.tabContainer,
+          isSubpage ? styles.subpageContainer : null,
           minimumHeight == null ? null : { minHeight: minimumHeight },
         ]}
         testID={`perps-pro-position-tpsl-form-${resolvedPresentation}`}>
-        <View style={styles.sides}>
-          {visibleKinds.map(kind => {
-            const facts = sideFacts(kind);
-            const orders = facts.sideSummary.positionOrders;
-            const input = getSideInput(kind);
-            return (
-              <View key={kind} style={styles.sideSection}>
-                <View style={styles.sideHeading}>
-                  <View style={styles.sideTitleRow}>
-                    <View
-                      style={
-                        kind === 'takeProfit'
-                          ? styles.takeProfitBar
-                          : styles.stopLossBar
-                      }
-                    />
-                    <Text style={styles.sideTitle}>
-                      {t(
-                        kind === 'takeProfit'
-                          ? 'page.perps.pro.positionTpsl.takeProfit'
-                          : 'page.perps.pro.positionTpsl.stopLoss',
-                      )}
-                    </Text>
-                  </View>
-                  {mode === 'position' && facts.existing && !facts.duplicate ? (
-                    <Pressable
-                      accessibilityRole="button"
-                      disabled={
-                        pending || cancelingOids.includes(facts.existing.oid)
-                      }
-                      onPress={() => onCancelOrder(facts.existing!)}>
-                      <Text style={styles.cancelText}>
-                        {t('global.cancel')}
-                      </Text>
-                    </Pressable>
-                  ) : null}
-                </View>
-
-                {facts.duplicate ? (
-                  <View style={styles.duplicateBox}>
-                    <Text style={styles.warningText}>
-                      {t('page.perps.pro.positionTpsl.duplicatePositionOrders')}
-                    </Text>
-                    {orders.map(order => (
-                      <View key={order.key} style={styles.duplicateOrderRow}>
-                        <Text style={styles.duplicateOrderPrice}>
-                          {formatPerpsProPrice(
-                            order.triggerPrice,
-                            market.pxDecimals,
-                          )}{' '}
-                          {market.quoteAsset}
-                        </Text>
-                        <Pressable
-                          accessibilityRole="button"
-                          disabled={
-                            pending || cancelingOids.includes(order.oid)
-                          }
-                          onPress={() => onCancelOrder(order)}>
-                          <Text style={styles.cancelText}>
-                            {t('global.cancel')}
-                          </Text>
-                        </Pressable>
-                      </View>
-                    ))}
-                  </View>
-                ) : (
-                  <PerpsProPositionTpSlSideInputs
-                    addMode={mode === 'add'}
-                    disabled={pending}
-                    kind={kind}
-                    market={market}
-                    onChangeModeMagnitude={next =>
-                      changeModeMagnitude(kind, next)
-                    }
-                    onChangeTrigger={next => changeTrigger(kind, next)}
-                    onPressMode={() => {
-                      dismissKeyboardThen(() => setActiveModeKind(kind));
-                    }}
-                    position={position}
-                    rawMagnitude={input.rawMagnitude}
-                    selectedMode={input.mode}
-                    errorMessage={facts.errorMessage}
-                    highlightInvalidFields={
-                      mode === 'position' || facts.modeTriggerUnavailable
-                    }
-                    showEmptyDescription={
-                      mode === 'position' || facts.modeTriggerUnavailable
-                    }
-                    size={sideSize}
-                    validationKind={facts.validation.kind}
-                    value={input.triggerPrice}
-                  />
-                )}
-              </View>
-            );
-          })}
-        </View>
-
-        {mode !== 'position' ? (
-          <View
-            style={styles.amountSection}
-            testID="perps-pro-position-tpsl-amount-section">
-            <View style={styles.inputShell}>
-              <Text
-                style={
-                  showAmountFloatingLabel
-                    ? styles.floatingLabel
-                    : styles.amountPlaceholder
-                }>
-                {t('page.perps.pro.positions.amount')}
-              </Text>
-              {inputSource === 'slider' && hasAmountValue ? (
-                <Text
-                  pointerEvents="none"
-                  style={styles.sliderAmountValue}
-                  testID="perps-pro-position-tpsl-slider-amount">
-                  {percent}% (≈
-                  {formatPerpsProDecimal(displayAmount, displayAmountDecimals)})
-                </Text>
-              ) : null}
-              <PerpsProDecimalTextInput
-                editable={!pending}
-                inputComponent={PerpsProPositionTpSlBottomSheetTextInput}
-                maxDecimals={displayAmountDecimals}
-                normalizeValue={normalizeAmountInput}
-                onChangeText={value => {
-                  setInputSource('manual');
-                  setPercent(0);
-                  setManualAmount(value);
-                }}
-                onBlur={() => setAmountFocused(false)}
-                onFocus={() => {
-                  setAmountFocused(true);
-                  beginManualAmountEntry();
-                }}
-                onPressIn={beginManualAmountEntry}
-                ref={amountInputRef}
-                style={styles.input}
-                testID="perps-pro-position-tpsl-amount"
-                value={inputSource === 'manual' ? manualAmount : ''}
-              />
-              {hasAmountValue ? (
-                <Text
-                  style={styles.inputUnit}
-                  testID="perps-pro-position-tpsl-amount-unit">
-                  {amountUnit === 'base'
-                    ? market.displayBase
-                    : market.quoteAsset}
-                </Text>
-              ) : null}
-            </View>
-            <View
-              onStartShouldSetResponderCapture={handleAmountSliderTouchCapture}
-              testID="perps-pro-position-tpsl-amount-slider-section">
-              <PerpsProSlider
-                dimWhenDisabled={false}
-                disabled={pending}
-                maximumValue={100}
-                minimumValue={0}
-                onSlidingComplete={sliderHaptics.onSlidingComplete}
-                onSlidingStart={sliderHaptics.onSlidingStart}
-                onValueChange={next => {
-                  const roundedNext = Math.round(next);
-                  sliderHaptics.onValueChange(roundedNext);
-                  setInputSource('slider');
-                  setPercent(roundedNext);
-                }}
-                pointCount={5}
-                step={1}
-                tone="neutral"
-                value={inputSource === 'slider' ? percent : 0}
-              />
-            </View>
-            <Text
-              accessibilityElementsHidden={isInlineEmpty && !hasAmountValue}
-              style={[
-                styles.amountAvailable,
-                isInlineEmpty && !hasAmountValue
-                  ? styles.hiddenAmountAvailable
-                  : null,
-              ]}>
-              {t('page.perps.pro.positionTpsl.positionAmount')}{' '}
-              {formatPerpsProDecimal(
-                amountUnit === 'base'
-                  ? position.baseSize
-                  : new BigNumber(position.baseSize)
-                      .multipliedBy(markPrice || '0')
-                      .toString(),
-                displayAmountDecimals,
-              )}{' '}
-              {amountUnit === 'base' ? market.displayBase : market.quoteAsset}
-            </Text>
-          </View>
-        ) : null}
-
         <View
           style={[
-            styles.footer,
-            isPristineInlineEmpty ? styles.pristineInlineEmptyFooter : null,
+            styles.card,
+            isSubpage ? styles.subpageCard : styles.tabCard,
+            isSubpage && mode === 'add' ? styles.addCard : null,
           ]}
-          testID="perps-pro-position-tpsl-footer">
+          testID="perps-pro-position-tpsl-form-card">
+          <View
+            style={[
+              styles.sides,
+              resolvedPresentation === 'position-modify'
+                ? styles.positionModifySides
+                : null,
+            ]}>
+            {visibleKinds.map(kind => {
+              const facts = sideFacts(kind);
+              const orders = facts.sideSummary.positionOrders;
+              const input = getSideInput(kind);
+              return (
+                <View key={kind} style={styles.sideSection}>
+                  <View style={styles.sideHeading}>
+                    <View style={styles.sideTitleRow}>
+                      <View
+                        style={
+                          kind === 'takeProfit'
+                            ? styles.takeProfitBar
+                            : styles.stopLossBar
+                        }
+                      />
+                      <Text style={styles.sideTitle}>
+                        {t(
+                          kind === 'takeProfit'
+                            ? 'page.perps.pro.positionTpsl.takeProfit'
+                            : 'page.perps.pro.positionTpsl.stopLoss',
+                        )}
+                      </Text>
+                    </View>
+                    {mode === 'position' &&
+                    facts.existing &&
+                    !facts.duplicate ? (
+                      <PerpsProPositionTpSlCancelAction
+                        disabled={pending}
+                        loading={cancelingOids.includes(facts.existing.oid)}
+                        label={t('global.cancel')}
+                        onPress={() => onCancelOrder(facts.existing!)}
+                        textStyle={styles.cancelText}
+                      />
+                    ) : null}
+                  </View>
+
+                  {facts.duplicate ? (
+                    <View style={styles.duplicateBox}>
+                      <Text style={styles.warningText}>
+                        {t(
+                          'page.perps.pro.positionTpsl.duplicatePositionOrders',
+                        )}
+                      </Text>
+                      {orders.map(order => (
+                        <View key={order.key} style={styles.duplicateOrderRow}>
+                          <Text style={styles.duplicateOrderPrice}>
+                            {formatPerpsProPrice(
+                              order.triggerPrice,
+                              market.pxDecimals,
+                            )}{' '}
+                            {market.quoteAsset}
+                          </Text>
+                          <PerpsProPositionTpSlCancelAction
+                            disabled={pending}
+                            loading={cancelingOids.includes(order.oid)}
+                            label={t('global.cancel')}
+                            onPress={() => onCancelOrder(order)}
+                            textStyle={styles.cancelText}
+                          />
+                        </View>
+                      ))}
+                    </View>
+                  ) : (
+                    <PerpsProPositionTpSlSideInputs
+                      addMode={mode === 'add'}
+                      disabled={pending}
+                      kind={kind}
+                      keyboardReveal={keyboardReveal}
+                      inputSource={input.source}
+                      market={market}
+                      onChangeModeMagnitude={next =>
+                        changeModeMagnitude(kind, next)
+                      }
+                      onChangeTrigger={next => changeTrigger(kind, next)}
+                      onPressMode={() => {
+                        dismissKeyboardThen(() => setActiveModeKind(kind));
+                      }}
+                      position={position}
+                      rawMagnitude={input.rawMagnitude}
+                      selectedMode={input.mode}
+                      errorMessage={facts.errorMessage}
+                      highlightInvalidFields={
+                        mode === 'position' || facts.modeTriggerUnavailable
+                      }
+                      showEmptyDescription={
+                        mode === 'position' || facts.modeTriggerUnavailable
+                      }
+                      size={sideSize}
+                      validationKind={facts.validation.kind}
+                      value={input.triggerPrice}
+                    />
+                  )}
+                </View>
+              );
+            })}
+          </View>
+
+          {mode !== 'position' ? (
+            <View
+              style={styles.amountSection}
+              testID="perps-pro-position-tpsl-amount-section">
+              <View style={styles.inputShell}>
+                <Text
+                  style={
+                    showAmountFloatingLabel
+                      ? styles.floatingLabel
+                      : styles.amountPlaceholder
+                  }>
+                  {t('page.perps.pro.positions.amount')}
+                </Text>
+                {inputSource === 'slider' && hasAmountValue ? (
+                  <Text
+                    pointerEvents="none"
+                    style={styles.sliderAmountValue}
+                    testID="perps-pro-position-tpsl-slider-amount">
+                    {percent}% (≈
+                    {formatPerpsProDecimal(
+                      displayAmount,
+                      displayAmountDecimals,
+                    )}
+                    )
+                  </Text>
+                ) : null}
+                <PerpsProDecimalTextInput
+                  editable={!pending}
+                  inputComponent={PerpsProPositionTpSlBottomSheetTextInput}
+                  maxDecimals={displayAmountDecimals}
+                  normalizeValue={normalizeAmountInput}
+                  onChangeText={value => {
+                    if (inputSource !== 'slider' && value === manualAmount) {
+                      return;
+                    }
+                    setInputSource('manual');
+                    setPercent(0);
+                    setManualAmount(value);
+                  }}
+                  onBlur={() => setAmountFocused(false)}
+                  onFocus={() => {
+                    setAmountFocused(true);
+                    beginManualAmountEntry();
+                  }}
+                  onPressIn={beginManualAmountEntry}
+                  ref={amountInputRef}
+                  style={styles.input}
+                  testID="perps-pro-position-tpsl-amount"
+                  value={inputSource !== 'slider' ? manualAmount : ''}
+                />
+                {hasAmountValue ? (
+                  <Text
+                    style={styles.inputUnit}
+                    testID="perps-pro-position-tpsl-amount-unit">
+                    {amountUnit === 'base'
+                      ? market.displayBase
+                      : market.quoteAsset}
+                  </Text>
+                ) : null}
+              </View>
+              <View
+                style={styles.slider}
+                onStartShouldSetResponderCapture={
+                  handleAmountSliderTouchCapture
+                }
+                testID="perps-pro-position-tpsl-amount-slider-section">
+                <PerpsProSlider
+                  appearance="order-dialog"
+                  dimWhenDisabled={false}
+                  disabled={pending}
+                  maximumValue={100}
+                  minimumValue={0}
+                  onSlidingComplete={sliderHaptics.onSlidingComplete}
+                  onSlidingStart={sliderHaptics.onSlidingStart}
+                  onValueChange={next => {
+                    const roundedNext = Math.round(next);
+                    sliderHaptics.onValueChange(roundedNext);
+                    setInputSource('slider');
+                    setPercent(roundedNext);
+                  }}
+                  pointCount={5}
+                  step={1}
+                  tone="neutral"
+                  value={inputSource === 'slider' ? percent : 0}
+                />
+              </View>
+              <Text
+                accessibilityElementsHidden={isInlineEmpty && !hasAmountValue}
+                style={[
+                  styles.amountAvailable,
+                  isInlineEmpty && !hasAmountValue
+                    ? styles.hiddenAmountAvailable
+                    : null,
+                ]}>
+                {t('page.perps.pro.positionTpsl.positionAmount')}{' '}
+                {formatPerpsProDecimal(
+                  amountUnit === 'base'
+                    ? position.baseSize
+                    : new BigNumber(position.baseSize)
+                        .multipliedBy(markPrice || '0')
+                        .toString(),
+                  displayAmountDecimals,
+                )}{' '}
+                {amountUnit === 'base' ? market.displayBase : market.quoteAsset}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+        <View style={styles.footer} testID="perps-pro-position-tpsl-footer">
           <Button
             buttonStyle={[styles.button, !canReview && styles.buttonDisabled]}
             disabledTitleStyle={styles.buttonDisabledTitle}
@@ -654,14 +686,23 @@ const getStyle = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
     ...getPerpsProDialogActionStyles(colors2024),
     container: {
-      flexGrow: 1,
       paddingHorizontal: 16,
     },
-    subpageContainer: { paddingTop: 16 },
-    tabContainer: { paddingTop: 24 },
-    sides: { gap: 24 },
+    subpageContainer: { paddingTop: 8 },
+    card: {
+      backgroundColor: resolvePerpsProDialogCardBackground(colors2024, isLight),
+      padding: 16,
+      marginBottom: 12,
+      borderBottomLeftRadius: 12,
+      borderBottomRightRadius: 12,
+    },
+    subpageCard: { borderTopLeftRadius: 12, borderTopRightRadius: 12 },
+    tabCard: { paddingTop: 20 },
+    addCard: { marginBottom: 0 },
+    sides: { gap: 20 },
+    positionModifySides: { gap: 36 },
     sideSection: {
-      gap: 12,
+      gap: 8,
     },
     sideHeading: {
       alignItems: 'center',
@@ -672,13 +713,13 @@ const getStyle = createGetStyles2024(
     takeProfitBar: {
       backgroundColor: colors2024['green-default'],
       borderRadius: 2,
-      height: 18,
+      height: 14,
       width: 4,
     },
     stopLossBar: {
       backgroundColor: colors2024['red-default'],
       borderRadius: 2,
-      height: 18,
+      height: 14,
       width: 4,
     },
     sideTitle: {
@@ -689,17 +730,17 @@ const getStyle = createGetStyles2024(
       lineHeight: 18,
     },
     cancelText: {
-      color: colors2024['blue-default'],
+      color: PERPS_PRO_DIALOG_TOKENS.actionBackground,
       fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
+      fontSize: 14,
       fontWeight: '500',
-      lineHeight: 16,
+      lineHeight: 18,
     },
     inputShell: {
-      backgroundColor: resolvePerpsProFieldBackground({
-        darkBackground: colors2024['neutral-bg-2'],
+      backgroundColor: resolvePerpsProDialogFieldBackground(
+        colors2024,
         isLight,
-      }),
+      ),
       borderRadius: 6,
       flex: 1,
       height: 40,
@@ -712,7 +753,7 @@ const getStyle = createGetStyles2024(
       fontFamily: 'SF Pro Rounded',
       fontSize: 10,
       fontWeight: '500',
-      left: 8,
+      left: 12,
       lineHeight: 12,
       position: 'absolute',
       top: 4,
@@ -722,7 +763,7 @@ const getStyle = createGetStyles2024(
       fontFamily: 'SF Pro Rounded',
       fontSize: 10,
       fontWeight: '500',
-      left: 8,
+      left: 12,
       lineHeight: 12,
       position: 'absolute',
       top: 14,
@@ -737,7 +778,7 @@ const getStyle = createGetStyles2024(
       includeFontPadding: false,
       lineHeight: 18,
       paddingBottom: 0,
-      paddingHorizontal: 8,
+      paddingHorizontal: 12,
       paddingRight: 72,
       paddingTop: 12,
       textAlignVertical: 'center',
@@ -749,8 +790,8 @@ const getStyle = createGetStyles2024(
       fontWeight: '500',
       lineHeight: 18,
       position: 'absolute',
-      right: 8,
-      top: 18,
+      right: 12,
+      top: 11,
     },
     duplicateBox: {
       backgroundColor: colors2024['orange-light-1'],
@@ -779,7 +820,8 @@ const getStyle = createGetStyles2024(
       fontSize: 12,
       lineHeight: 16,
     },
-    amountSection: { gap: 8, marginTop: 24 },
+    amountSection: { marginTop: 20 },
+    slider: { marginTop: 10 },
     sliderAmountValue: {
       ...PERPS_PRO_NUMBER_STYLE,
       right: 72,
@@ -787,14 +829,15 @@ const getStyle = createGetStyles2024(
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '500',
-      left: 8,
+      left: 12,
       lineHeight: 18,
       position: 'absolute',
       top: 18,
     },
     amountAvailable: {
+      marginTop: 8,
       ...PERPS_PRO_NUMBER_STYLE,
-      color: colors2024['neutral-secondary'],
+      color: colors2024['neutral-foot'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       lineHeight: 16,
@@ -803,17 +846,8 @@ const getStyle = createGetStyles2024(
     footer: {
       paddingHorizontal: 4,
       marginTop: 'auto',
-      paddingBottom: Math.max(
-        40,
-        getBottomButtonBottomOffset(safeAreaInsets.bottom),
-      ),
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
       paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
-    },
-    pristineInlineEmptyFooter: {
-      paddingBottom: Math.max(
-        44,
-        getBottomButtonBottomOffset(safeAreaInsets.bottom),
-      ),
     },
   }),
 );

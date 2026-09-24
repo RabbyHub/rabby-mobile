@@ -2377,12 +2377,14 @@
           "positionAmount": "Pozisyon Miktarı",
           "estimatedPnl": "Tahmini PnL",
           "skipLimitConfirmation": "Limit Emirleri için çift onayı bir daha gösterme.",
+          "skipMarketCloseConfirmation": "Piyasa emriyle pozisyon kapatma onayını bir daha gösterme.",
           "closeSubmitted": "Kapatma emri gönderildi",
           "closeFailed": "Pozisyon kapatılamadı",
           "minimumCloseAmount": "Minimum kapatma tutarı 10 $",
           "closeContextChanged": "Pozisyon veya hesap değişti. Tekrar inceleyin."
         },
         "positionTpsl": {
+          "skipConfirmation": "Bu TP/SL onayını bir daha gösterme.",
           "addButton": "TP/SL Ekle",
           "addTitle": "TP/SL Ekle",
           "cancelFailed": "TP/SL emri iptal edilemedi",
@@ -2393,6 +2395,7 @@
           "duplicatePositionOrders": "Bu tarafta birden fazla Pozisyon TP/SL emri var. Değiştirmeden önce bunları tek tek iptal edin veya yenileyin.",
           "estimatedLiquidation": "Tahm. Likidasyon Fiyatı",
           "estimatedPnl": "Tahmini PnL",
+          "estimatedPnlDescription": "Tahmini PnL <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "Tahm. PnL",
           "invalidOrder": "TP/SL fiyatını ve miktarını inceleyin",
           "invalidTrigger": "Tetikleme fiyatı son işaret fiyatı için geçersiz",

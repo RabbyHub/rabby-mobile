@@ -2492,12 +2492,14 @@
           "positionAmount": "Объём позиции",
           "estimatedPnl": "Расчётный PnL",
           "skipLimitConfirmation": "Больше не показывать двойное подтверждение для лимитного ордера.",
+          "skipMarketCloseConfirmation": "Больше не показывать это подтверждение закрытия позиции по рынку.",
           "closeSubmitted": "Ордер на закрытие отправлен",
           "closeFailed": "Не удалось закрыть позицию",
           "minimumCloseAmount": "Минимальная сумма закрытия — $10",
           "closeContextChanged": "Позиция или аккаунт изменились. Проверьте ещё раз."
         },
         "positionTpsl": {
+          "skipConfirmation": "Больше не показывать это подтверждение TP/SL.",
           "addButton": "Добавить TP/SL",
           "addTitle": "Добавить TP/SL",
           "cancelFailed": "Не удалось отменить ордер TP/SL",
@@ -2508,6 +2510,7 @@
           "duplicatePositionOrders": "На этой стороне существует несколько ордеров TP/SL позиции. Отмените их по отдельности или обновите данные перед изменением.",
           "estimatedLiquidation": "Расчётная цена ликвидации",
           "estimatedPnl": "Расчётный PnL",
+          "estimatedPnlDescription": "Расчётный PnL <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "Расчётный PnL",
           "invalidOrder": "Проверьте цену и объём TP/SL",
           "invalidTrigger": "Цена срабатывания недействительна для последней цены маркировки",

@@ -2524,12 +2524,14 @@
           "positionAmount": "仓位数量",
           "estimatedPnl": "预计 PnL",
           "skipLimitConfirmation": "不再显示限价单的二次确认",
+          "skipMarketCloseConfirmation": "不再显示市价平仓确认弹窗",
           "closeSubmitted": "平仓订单已提交",
           "closeFailed": "平仓失败",
           "minimumCloseAmount": "最低平仓金额为 $10",
           "closeContextChanged": "仓位或账户已发生变化，请重新检查。"
         },
         "positionTpsl": {
+          "skipConfirmation": "不再显示 TP/SL 确认弹窗",
           "addButton": "添加 TP/SL",
           "addTitle": "添加 TP/SL",
           "cancelFailed": "取消 TP/SL 订单失败",
@@ -2540,6 +2542,7 @@
           "duplicatePositionOrders": "该方向存在多个仓位 TP/SL 订单。请逐笔取消，或刷新后再修改。",
           "estimatedLiquidation": "预计强平价格",
           "estimatedPnl": "预计 PnL",
+          "estimatedPnlDescription": "预计 PnL <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "预计 PnL",
           "invalidOrder": "请检查 TP/SL 价格和数量",
           "invalidTrigger": "按最新标记价格判断，该触发价格无效",
