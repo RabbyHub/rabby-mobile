@@ -158,6 +158,8 @@ describe('Perps Pro layout model', () => {
     for (const [page, base] of [
       ['form', 758],
       ['add', 704],
+      ['modify', 604],
+      ['position-modify', 598],
     ] as const) {
       expect(
         getPerpsProPositionTpSlSnapPoint({
@@ -176,11 +178,7 @@ describe('Perps Pro layout model', () => {
         }),
       ).toBe(617);
     }
-    for (const [page, height] of [
-      ['list', 758],
-      ['modify', 604],
-      ['position-modify', 598],
-    ] as const) {
+    for (const [page, height] of [['list', 758]] as const) {
       expect(
         getPerpsProPositionTpSlSnapPoint({
           page,

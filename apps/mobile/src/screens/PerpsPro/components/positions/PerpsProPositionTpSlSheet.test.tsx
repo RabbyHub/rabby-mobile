@@ -27,6 +27,9 @@ jest.mock('react-native/Libraries/ReactNative/UIManager', () => ({
 }));
 jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
 jest.mock('react-native-linear-gradient', () => require('react-native').View);
+jest.mock('react-native-gesture-handler', () => ({
+  State: { ACTIVE: 4 },
+}));
 jest.mock('@/core/native/utils', () => ({
   get IS_ANDROID() {
     return mockAndroid;
@@ -74,6 +77,7 @@ jest.mock('react-native-reanimated', () => {
       mockAnimatedReactions.push({ prepare, react });
     },
     useSharedValue: (value: unknown) => ReactModule.useRef({ value }).current,
+    useAnimatedRef: () => ReactModule.useRef(null),
   };
 });
 
@@ -713,7 +717,7 @@ describe('PerpsProPositionTpSlSheet', () => {
       mockKeyboardListeners.get('keyboardDidHide')?.();
     });
 
-  it.each(['ios', 'android'])(
+  it.each(['ios'])(
     'on %s waits for the native gate AND the final viewport, then reveals an overflow once',
     platform => {
       mockAndroid = platform === 'android';
@@ -769,6 +773,22 @@ describe('PerpsProPositionTpSlSheet', () => {
       expect(mockScrollToEnd).toHaveBeenCalledTimes(1);
     },
   );
+
+  it('installs the Android UI scroll handler and never starts the late JS restoration', () => {
+    mockAndroid = true;
+    render(<PerpsProPositionTpSlSheet {...makeSheetProps([])} />);
+    const scroll = screen.getByTestId('tpsl-scroll');
+    expect(scroll.props.scrollEventsHandlersHook).toBe(
+      require('./usePositionTpSlAndroidScrollRestoration')
+        .usePositionTpSlAndroidScrollRestoration,
+    );
+    layoutViewport(mockBottomSheetProps.mock.lastCall![0].snapPoints[0] - 40);
+    completeKeyboardSession();
+    runNativeReactions();
+    flushScrollFrame();
+    expect(UIManager.measureInWindow).not.toHaveBeenCalled();
+    expect(mockScrollToEnd).not.toHaveBeenCalled();
+  });
 
   it.each([
     ['content fits', 718, 100],
@@ -1438,7 +1458,9 @@ describe('PerpsProPositionTpSlSheet', () => {
       view.rerender(
         <PerpsProPositionTpSlSheet {...props} settlement={settled} />,
       );
-      expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([604]);
+      expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([
+        platform === 'android' ? 638 : 604,
+      ]);
       act(() => mockKeyboardListeners.get('keyboardDidHide')?.());
       expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([758]);
       expect(screen.getByTestId('tpsl-scroll').props.scrollEnabled).toBe(false);

@@ -182,8 +182,7 @@ export const getPerpsProPositionTpSlSnapPoint = ({
     safeWindowHeight - safeTopInset - PERPS_PRO_SHEET_TOP_SAFE_GAP,
   );
   const extraBottomPadding =
-    (page === 'form' || page === 'add') &&
-    Number.isFinite(formBottomPaddingExtra)
+    page !== 'list' && Number.isFinite(formBottomPaddingExtra)
       ? Math.max(0, formBottomPaddingExtra)
       : 0;
   return Math.min(
