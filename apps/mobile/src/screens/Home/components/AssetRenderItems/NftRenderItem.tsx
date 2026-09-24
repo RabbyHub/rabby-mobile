@@ -77,6 +77,7 @@ export const NftRow = memo(
         setFailedPrimaryNftImageUrl(primaryNftImageUrl);
       }
     }, [distinctFallbackNftImageUrl, nftImageUrl, primaryNftImageUrl]);
+    const placeholder = <IconDefaultNFT width="100%" height="100%" />;
 
     return (
       <TouchableOpacity onPress={onPress} style={[styles.wrpper, style]}>
@@ -93,9 +94,8 @@ export const NftRow = memo(
               <Media
                 key={nftImageUrl}
                 handleError={handleImageError}
-                failedPlaceholder={
-                  <IconDefaultNFT width="100%" height="100%" />
-                }
+                failedPlaceholder={placeholder}
+                loadingPlaceholder={placeholder}
                 type="image_url"
                 src={nftImageUrl}
                 thumbnail={nftImageUrl}

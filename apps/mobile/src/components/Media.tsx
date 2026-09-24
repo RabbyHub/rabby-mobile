@@ -43,6 +43,8 @@ interface MediaProps {
   poster?: string;
   type?: MEDIA_TYPE | NFTItem['content_type'];
   failedPlaceholder?: ReactNode;
+  /** Keep compact previews steady while SVG media is being resolved. */
+  loadingPlaceholder?: ReactNode;
   style?: ViewStyle;
   mediaStyle?: ImageStyle;
   handleSuccess?(): void;
@@ -79,6 +81,7 @@ export const Media = ({
   src,
   poster,
   failedPlaceholder,
+  loadingPlaceholder,
   handleSuccess,
   handleError,
   style,
@@ -281,12 +284,18 @@ export const Media = ({
             ? failedPlaceholder
             : null}
           {safeSvgUrl && showSafeSvgSkeleton ? (
-            <Skeleton
-              animation="pulse"
-              width="100%"
-              height="100%"
-              style={styles.loading}
-            />
+            loadingPlaceholder != null ? (
+              <View pointerEvents="none" style={styles.loading}>
+                {loadingPlaceholder}
+              </View>
+            ) : (
+              <Skeleton
+                animation="pulse"
+                width="100%"
+                height="100%"
+                style={styles.loading}
+              />
+            )
           ) : null}
         </>
       ) : null}
