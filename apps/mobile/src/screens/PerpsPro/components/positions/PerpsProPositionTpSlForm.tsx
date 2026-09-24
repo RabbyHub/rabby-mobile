@@ -149,8 +149,14 @@ export const PerpsProPositionTpSlForm: React.FC<{
       market.szDecimals,
       position.baseSize,
     ]);
-    const [inputSource, setInputSource] = useState<'manual' | 'slider'>(
-      mode === 'add' ? 'slider' : 'manual',
+    const [inputSource, setInputSource] = useState<
+      'order' | 'manual' | 'slider'
+    >(
+      mode === 'modify' && initialOrder
+        ? 'order'
+        : mode === 'add'
+        ? 'slider'
+        : 'manual',
     );
     const initialPercent = mode === 'modify' ? 0 : 100;
     const [percent, setPercent] = useState(initialPercent);
@@ -199,9 +205,13 @@ export const PerpsProPositionTpSlForm: React.FC<{
       return false;
     }, []);
 
+    // A rounded quote prefill is presentation, not a new amount instruction.
+    // Keep the server size until an Amount edit or Slider change takes over.
     const partialSize =
       mode === 'position'
         ? null
+        : inputSource === 'order'
+        ? initialOrder?.remainingSize ?? null
         : resolvePerpsProCloseSize({
             amountUnit,
             inputSource,
@@ -212,7 +222,7 @@ export const PerpsProPositionTpSlForm: React.FC<{
             szDecimals: market.szDecimals,
           });
     const displayAmount =
-      inputSource === 'manual'
+      inputSource !== 'slider'
         ? manualAmount
         : amountUnit === 'base'
         ? partialSize
@@ -389,7 +399,7 @@ export const PerpsProPositionTpSlForm: React.FC<{
       !hasInvalidEnteredSide &&
       (mode === 'position' || amountValidation?.kind === 'valid');
     const hasAmountValue =
-      inputSource === 'manual'
+      inputSource !== 'slider'
         ? !!manualAmount
         : percent > 0 && !!displayAmount;
     const showAmountFloatingLabel = amountFocused || hasAmountValue;
@@ -559,6 +569,9 @@ export const PerpsProPositionTpSlForm: React.FC<{
                   maxDecimals={displayAmountDecimals}
                   normalizeValue={normalizeAmountInput}
                   onChangeText={value => {
+                    if (inputSource !== 'slider' && value === manualAmount) {
+                      return;
+                    }
                     setInputSource('manual');
                     setPercent(0);
                     setManualAmount(value);
@@ -572,7 +585,7 @@ export const PerpsProPositionTpSlForm: React.FC<{
                   ref={amountInputRef}
                   style={styles.input}
                   testID="perps-pro-position-tpsl-amount"
-                  value={inputSource === 'manual' ? manualAmount : ''}
+                  value={inputSource !== 'slider' ? manualAmount : ''}
                 />
                 {hasAmountValue ? (
                   <Text
