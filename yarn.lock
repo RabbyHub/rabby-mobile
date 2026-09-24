@@ -9739,13 +9739,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-bridge@npm:0.0.9":
-  version: 0.0.9
-  resolution: "@rabby-wallet/rabby-bridge@npm:0.0.9"
+"@rabby-wallet/rabby-bridge@npm:0.0.10":
+  version: 0.0.10
+  resolution: "@rabby-wallet/rabby-bridge@npm:0.0.10"
   peerDependencies:
     "@debank/common": ">=0.3.60"
     "@rabby-wallet/rabby-api": ">=0.9.58"
-  checksum: 10/8f37079c1a4299889f4f2d518e8f00291143eaf8c3bcd7437ce815d944a7de6871f68eb4cac53e9a379c4aa74b7f88c96998dfbb0e54205deaeefc89d9d24efc
+  checksum: 10/f1d4005b94c0d3276a1a917fc2a1d7a190d5140affae9ca5b4f9f3098a27559c0846469cfcc97edc53167d266bd2d43c30b1835f2cb8d6c8c00bffee24102288
   languageName: node
   linkType: hard
 
@@ -9787,9 +9787,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-swap@npm:0.0.86":
-  version: 0.0.86
-  resolution: "@rabby-wallet/rabby-swap@npm:0.0.86"
+"@rabby-wallet/rabby-swap@npm:0.0.87":
+  version: 0.0.87
+  resolution: "@rabby-wallet/rabby-swap@npm:0.0.87"
   dependencies:
     "@ethersproject/abi": "npm:^5.7.0"
     axios: "npm:^0.27.2"
@@ -9798,7 +9798,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ">=0.3.60"
     "@rabby-wallet/rabby-api": ">=0.6.28"
-  checksum: 10/3d4786891f1aecfc1bbe27c56da82574606b58ca8ddecb200e49248343b69024990b9bb4a533ee6bd84df6ca76ebf0b04857b7d51075534754f17d35a3006514
+  checksum: 10/e82c490699d5edb5f98f7c8e5bc5eb90873b5e26a764e4a4a33f85aca491ef4a2f4ac1fca6f7682433ed9de7cd7d3922de0087891cf0946e933d738381abad79
   languageName: node
   linkType: hard
 
@@ -37419,11 +37419,11 @@ __metadata:
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": "npm:0.1.16"
     "@rabby-wallet/rabby-api": "npm:0.9.66"
-    "@rabby-wallet/rabby-bridge": "npm:0.0.9"
+    "@rabby-wallet/rabby-bridge": "npm:0.0.10"
     "@rabby-wallet/rabby-logger": "npm:0.3.1"
     "@rabby-wallet/rabby-security-engine": "npm:2.0.12"
     "@rabby-wallet/rabby-sign-bvm": "npm:0.1.1"
-    "@rabby-wallet/rabby-swap": "npm:0.0.86"
+    "@rabby-wallet/rabby-swap": "npm:0.0.87"
     "@rabby-wallet/react-native-bootsplash": "workspace:^"
     "@rabby-wallet/react-native-fs": "workspace:^"
     "@rabby-wallet/react-native-ios-context-menu": "workspace:^"
@@ -37557,7 +37557,9 @@ __metadata:
     react-native-permissions: "npm:5.3.0"
     react-native-qrcode-svg: "npm:^6.2.0"
     react-native-quick-base64: "npm:3.0.1"
+    react-native-quick-base64-legacy: "npm:react-native-quick-base64@2.1.2"
     react-native-quick-crypto: "npm:1.1.6"
+    react-native-quick-crypto-legacy: "patch:react-native-quick-crypto@npm%3A0.7.13#../../.yarn/patches/react-native-quick-crypto-npm-0.7.13-2726ada4c8.patch"
     react-native-reanimated: "npm:3.19.5"
     react-native-root-toast: "npm:4.0.1"
     react-native-safe-area-context: "npm:5.6.2"
@@ -38510,6 +38512,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-quick-base64-legacy@npm:react-native-quick-base64@2.1.2, react-native-quick-base64@npm:^2.0.5":
+  version: 2.1.2
+  resolution: "react-native-quick-base64@npm:2.1.2"
+  dependencies:
+    base64-js: "npm:^1.5.1"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10/20b205612417a6c39452ad3ebd205d74fcfaa244832ec9e717b87ee075bf28076bf2445e8f690aad8cf0be6f3da89b4148eb8379d0b71d1c953bd06f66cc7c56
+  languageName: node
+  linkType: hard
+
 "react-native-quick-base64@npm:3.0.1, react-native-quick-base64@npm:^3.0.0":
   version: 3.0.1
   resolution: "react-native-quick-base64@npm:3.0.1"
@@ -38520,15 +38534,29 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-quick-base64@npm:^2.0.5":
-  version: 2.1.2
-  resolution: "react-native-quick-base64@npm:2.1.2"
+"react-native-quick-crypto-legacy@patch:react-native-quick-crypto@npm%3A0.7.13#../../.yarn/patches/react-native-quick-crypto-npm-0.7.13-2726ada4c8.patch::locator=rabby-mobile%40workspace%3Aapps%2Fmobile":
+  version: 0.7.13
+  resolution: "react-native-quick-crypto-legacy@patch:react-native-quick-crypto@npm%3A0.7.13#../../.yarn/patches/react-native-quick-crypto-npm-0.7.13-2726ada4c8.patch::version=0.7.13&hash=7ba00f&locator=rabby-mobile%40workspace%3Aapps%2Fmobile"
   dependencies:
-    base64-js: "npm:^1.5.1"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: 10/20b205612417a6c39452ad3ebd205d74fcfaa244832ec9e717b87ee075bf28076bf2445e8f690aad8cf0be6f3da89b4148eb8379d0b71d1c953bd06f66cc7c56
+    "@craftzdog/react-native-buffer": "npm:^6.0.5"
+    events: "npm:^3.3.0"
+    readable-stream: "npm:^4.5.2"
+    string_decoder: "npm:^1.3.0"
+    util: "npm:^0.12.5"
+  checksum: 10/52315c846c178305c07e0d8a9a2893c9000cd930c61170abf640adf09121a56918a69a8ace2217f6b3d36a10ad7e71230288471797f799dd6134d9c69dbe8c24
+  languageName: node
+  linkType: hard
+
+"react-native-quick-crypto@npm:0.7.13":
+  version: 0.7.13
+  resolution: "react-native-quick-crypto@npm:0.7.13"
+  dependencies:
+    "@craftzdog/react-native-buffer": "npm:^6.0.5"
+    events: "npm:^3.3.0"
+    readable-stream: "npm:^4.5.2"
+    string_decoder: "npm:^1.3.0"
+    util: "npm:^0.12.5"
+  checksum: 10/065ad3d8d539235a33b29ac7ba4beb9272bd8c9cb39633574ec7c702c9e538886a385de8557272444f982c05c226fb68f1f7066ae65b1192c5d7b4f11f31016d
   languageName: node
   linkType: hard
 
@@ -39343,7 +39371,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"readable-stream@npm:4.7.0":
+"readable-stream@npm:4.7.0, readable-stream@npm:^4.5.2":
   version: 4.7.0
   resolution: "readable-stream@npm:4.7.0"
   dependencies:

@@ -115,8 +115,7 @@ import { PerpsProCloseConfirmationSheet } from '../components/positions/PerpsPro
 import { PerpsProClosePositionSheet } from '../components/positions/PerpsProClosePositionSheet';
 import { PerpsProLeverageSheet } from '../components/positions/PerpsProLeverageSheet';
 import { PerpsProManageMarginSheet } from '../components/positions/PerpsProManageMarginSheet';
-import { PerpsProPositionTpSlConfirmationSheet } from '../components/positions/PerpsProPositionTpSlConfirmationSheet';
-import { PerpsProPositionTpSlSheet } from '../components/positions/PerpsProPositionTpSlSheet';
+import { PerpsProPositionTpSlSheets } from '../components/positions/PerpsProPositionTpSlSheets';
 import { PerpsProPositionsControls } from '../components/positions/PerpsProPositionsControls';
 import { PerpsProOrderConfirmationSheet } from '../components/trade/PerpsProOrderConfirmationSheet';
 import { PerpsProTradeForm } from '../components/trade/PerpsProTradeForm';
@@ -1638,11 +1637,10 @@ export const PerpsProScene: React.FC<{
         />
       ) : null}
       {positionTpSl.editor ? (
-        <PerpsProPositionTpSlSheet
+        <PerpsProPositionTpSlSheets
           amountUnit={positionTpSl.editor.amountUnit}
           cancelingOids={positionTpSl.cancelingOids}
           confirmedCancelledOids={positionTpSl.confirmedCancelledOids}
-          coveredByReview={!!positionTpSl.review}
           defaultTab={positionTpSl.editor.defaultTab}
           market={positionTpSl.editor.market}
           onCancelOrder={positionTpSl.cancelOrder}
@@ -1654,27 +1652,15 @@ export const PerpsProScene: React.FC<{
               position => position.key === positionTpSl.editor?.position.key,
             ) ?? positionTpSl.editor.position
           }
+          review={positionTpSl.review}
+          onCloseReview={positionTpSl.closeReview}
+          onConfirm={positionTpSl.confirm}
+          onToggleSkipConfirmation={positionTpSl.toggleSkipConfirmation}
+          skipConfirmation={positionTpSl.skipConfirmation}
           reviewRequesting={positionTpSl.reviewRequesting}
           settlement={positionTpSl.settlement}
           submissionPending={positionTpSl.submissionPending}
           visible
-        />
-      ) : null}
-      {positionTpSl.editor ? (
-        <PerpsProPositionTpSlConfirmationSheet
-          amountUnit={positionTpSl.editor.amountUnit}
-          market={positionTpSl.editor.market}
-          onClose={positionTpSl.closeReview}
-          onConfirm={positionTpSl.confirm}
-          onToggleSkipConfirmation={positionTpSl.toggleSkipConfirmation}
-          pending={positionTpSl.pending}
-          position={
-            info.positions.find(
-              position => position.key === positionTpSl.editor?.position.key,
-            ) ?? positionTpSl.editor.position
-          }
-          review={positionTpSl.review}
-          skipConfirmation={positionTpSl.skipConfirmation}
         />
       ) : null}
       {positionActions.closeEditor ? (

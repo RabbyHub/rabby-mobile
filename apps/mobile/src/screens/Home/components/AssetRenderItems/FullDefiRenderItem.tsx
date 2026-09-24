@@ -28,7 +28,11 @@ import { ensureDappServiceReady, patchDappsSync } from '@/core/serviceApi/dapp';
 import { CHAINS_ENUM } from '@debank/common';
 import { findChain } from '@/utils/chain';
 import RcExpandCC from '@/assets/icons/home/defi-expand.svg';
-import { isBlacklistMethod, isWhitelistSpender } from '../DappActions/hook';
+import {
+  parseActionAbi,
+  isBlacklistMethodName,
+  isWhitelistSpender,
+} from '../DappActions/hook';
 import type { IProtocolItem, IProtocolPortfolio } from '@/store/protocols';
 import { formatUsdValue } from '@/utils/number';
 import useProtocols from '@/store/protocols';
@@ -199,19 +203,27 @@ export const FullDefiRenderItem = ({
       const actions = item?._originPortfolio?.withdraw_actions || [];
       for (let k = 0; k < actions.length; k++) {
         const action = actions[k];
+        if (!action) {
+          continue;
+        }
         if (
-          action?.need_approve?.to &&
-          !isWhitelistSpender(action.need_approve?.to, data.chain)
+          action.need_approve?.to &&
+          !isWhitelistSpender(action.need_approve.to, data.chain)
         ) {
           continue; // 需要 approve 但不在白名单内，直接跳过
         }
-        if (action?.func && isBlacklistMethod(action?.func)) {
+        try {
+          const abi = parseActionAbi(action.func);
+          if (isBlacklistMethodName(abi.name)) {
+            continue;
+          }
+        } catch (error) {
           continue;
         }
-        if (action?.type && ['withdraw', 'queue'].includes(action?.type)) {
+        if (['withdraw', 'queue'].includes(action.type)) {
           result.add('Withdraw');
         }
-        if (action?.type === 'claim') {
+        if (action.type === 'claim') {
           result.add('Claim');
         }
       }

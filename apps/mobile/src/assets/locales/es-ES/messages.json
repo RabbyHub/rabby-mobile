@@ -2567,12 +2567,14 @@
           "positionAmount": "Cantidad de la posición",
           "estimatedPnl": "PnL estimado",
           "skipLimitConfirmation": "No volver a mostrar la doble confirmación para órdenes límite.",
+          "skipMarketCloseConfirmation": "No volver a mostrar esta confirmación de cierre a mercado.",
           "closeSubmitted": "Orden de cierre enviada",
           "closeFailed": "No se ha podido cerrar la posición",
           "minimumCloseAmount": "El importe mínimo de cierre es de 10 $",
           "closeContextChanged": "La posición o la cuenta han cambiado. Vuelve a revisarlo."
         },
         "positionTpsl": {
+          "skipConfirmation": "No volver a mostrar esta confirmación de TP/SL.",
           "addButton": "Añadir TP/SL",
           "addTitle": "Añadir TP/SL",
           "cancelFailed": "No se ha podido cancelar la orden TP/SL",
@@ -2583,6 +2585,7 @@
           "duplicatePositionOrders": "Existen varias órdenes TP/SL de posición en este lado. Cancélalas individualmente o actualiza antes de modificarlas.",
           "estimatedLiquidation": "Precio de liquidación est.",
           "estimatedPnl": "PnL estimado",
+          "estimatedPnlDescription": "PnL estimado <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "PnL est.",
           "invalidOrder": "Revisa el precio y la cantidad de TP/SL",
           "invalidTrigger": "El precio de activación no es válido para el precio de marca más reciente",

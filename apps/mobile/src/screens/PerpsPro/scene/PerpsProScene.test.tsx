@@ -272,7 +272,24 @@ jest.mock('react-native-gesture-handler', () => {
     return manualGesture;
   });
   return {
-    Gesture: { Manual: () => manualGesture, Pan: () => panGesture },
+    Gesture: {
+      Manual: () => manualGesture,
+      Pan: () => panGesture,
+      Tap: () => {
+        const tap: Record<string, jest.Mock> = {};
+        for (const method of [
+          'maxDistance',
+          'runOnJS',
+          'onBegin',
+          'onEnd',
+          'onFinalize',
+        ]) {
+          tap[method] = jest.fn(() => tap);
+        }
+        return tap;
+      },
+      Exclusive: (...gestures: unknown[]) => gestures,
+    },
     GestureDetector: ({ children }: { children: React.ReactNode }) => children,
   };
 });

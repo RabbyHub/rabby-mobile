@@ -276,6 +276,14 @@ export const REGRESSION_SCENARIO_METADATA = Object.freeze<
     description:
       'Verify the packaged computation worker starts and responds through the native thread bridge.',
   },
+  'crypto-compatibility': {
+    id: 'crypto-compatibility',
+    kind: 'focused',
+    screens: [],
+    requiresFixture: false,
+    description:
+      'Verify installed Base64 and password encryption against public test vectors without accessing wallet data.',
+  },
 });
 
 export function scenarioIncludesScreen(

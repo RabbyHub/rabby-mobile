@@ -1,16 +1,17 @@
 import { PERPS_PRO_NUMBER_STYLE } from '../common/perpsProNumberText';
 import { Text, TextInput } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import {
   sanitizePerpsProPriceEditingInput,
   sanitizePerpsProPriceInput,
 } from '../../model/trade';
-import { resolvePerpsProFieldBackground } from '../common/perpsProVisual';
-import { PerpsProSelectCaret } from '../common/PerpsProSelectCaret';
+import { resolvePerpsProDialogFieldBackground } from '../common/perpsProDialogVisual';
+import RcSelectCaret from '@/assets2024/icons/perps/PerpsProTpSlSelectCaret.svg';
 import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
 import { PerpsProPositionTpSlBottomSheetTextInput } from './PerpsProPositionTpSlBottomSheetTextInput';
 
@@ -27,11 +28,13 @@ export const PerpsProPositionTpSlInput: React.FC<{
   disabled: boolean;
   invalid?: boolean;
   label: string;
+  placeholder?: string;
   maxDecimals: number;
   negative?: boolean;
   onChangeText: (value: string) => void;
   onPressMode?: () => void;
   priceSzDecimals?: number;
+  registerKeyboardRevealInput?: (input: TextInput) => (() => void) | undefined;
   testID: string;
   unit?: string;
   value: string;
@@ -41,17 +44,24 @@ export const PerpsProPositionTpSlInput: React.FC<{
     disabled,
     invalid = false,
     label,
+    placeholder = label,
     maxDecimals,
     negative = false,
     onChangeText,
     onPressMode,
     priceSzDecimals,
+    registerKeyboardRevealInput,
     testID,
     unit,
     value,
   }) => {
     const { colors2024, styles } = useTheme2024({ getStyle });
     const inputRef = React.useRef<TextInput>(null);
+    useLayoutEffect(() => {
+      if (IS_ANDROID && inputRef.current) {
+        return registerKeyboardRevealInput?.(inputRef.current);
+      }
+    }, [registerKeyboardRevealInput]);
     const [focused, setFocused] = useState(false);
     const normalizePriceValue = React.useCallback(
       (nextValue: string) =>
@@ -71,11 +81,15 @@ export const PerpsProPositionTpSlInput: React.FC<{
 
     return (
       <View
-        style={[styles.field, invalid ? styles.invalidField : null]}
+        style={[
+          styles.field,
+          onPressMode ? styles.modeField : null,
+          invalid ? styles.invalidField : null,
+        ]}
         testID={`${testID}-field`}>
         <Pressable
           accessible={false}
-          disabled={disabled}
+          disabled={disabled || (IS_IOS && focused)}
           onPress={() => {
             if (!focused) {
               inputRef.current?.focus();
@@ -95,7 +109,7 @@ export const PerpsProPositionTpSlInput: React.FC<{
               pointerEvents="none"
               style={styles.centeredPlaceholder}
               testID={`${testID}-placeholder`}>
-              {label}
+              {placeholder}
             </Text>
           )}
           {!focused && value ? (
@@ -118,8 +132,9 @@ export const PerpsProPositionTpSlInput: React.FC<{
           <PerpsProDecimalTextInput
             accessibilityLabel={accessibilityLabel}
             editable={!disabled}
+            caretHidden={IS_ANDROID ? !focused : undefined}
             focusCursorAtEnd
-            focusCursorAtEndMode="initialFocus"
+            focusCursorAtEndMode="nativeFocus"
             inputComponent={PerpsProPositionTpSlBottomSheetTextInput}
             maxFontSizeMultiplier={1.2}
             maxDecimals={maxDecimals}
@@ -156,7 +171,9 @@ export const PerpsProPositionTpSlInput: React.FC<{
             <Text numberOfLines={1} style={styles.unit}>
               {unit}
             </Text>
-            <PerpsProSelectCaret
+            <RcSelectCaret
+              width={16}
+              height={16}
               color={colors2024['neutral-secondary']}
               testID={`${testID}-caret`}
             />
@@ -172,10 +189,7 @@ PerpsProPositionTpSlInput.displayName = 'PerpsProPositionTpSlInput';
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   field: {
     alignItems: 'center',
-    backgroundColor: resolvePerpsProFieldBackground({
-      darkBackground: colors2024['neutral-bg-2'],
-      isLight,
-    }),
+    backgroundColor: resolvePerpsProDialogFieldBackground(colors2024, isLight),
     borderRadius: 6,
     borderColor: 'transparent',
     borderWidth: 1,
@@ -184,8 +198,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 4,
     height: 40,
     minWidth: 0,
-    paddingHorizontal: 8,
+    // Include the 1px validation border in the Figma 12px inset.
+    paddingHorizontal: 11,
   },
+  modeField: { paddingRight: 7 },
   invalidField: { borderColor: colors2024['red-default'] },
   inputArea: {
     flex: 1,
@@ -205,10 +221,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     top: 4,
   },
   centeredPlaceholder: {
-    color: colors2024['neutral-info'],
+    color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '400',
     left: 0,
     lineHeight: 18,
     position: 'absolute',

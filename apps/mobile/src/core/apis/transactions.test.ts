@@ -183,6 +183,34 @@ describe('core/apis/transactions gas utilities', () => {
     });
   });
 
+  it.each([
+    ['exceeds the mapped single tx gas limit', 'LIMITED', '0xc351', '0x5208'],
+    ['equals the mapped single tx gas limit', 'LIMITED', '0xc350', '0xc350'],
+    ['exceeds the block gas limit', 'ETH', '0xf4241', '0x5208'],
+    ['equals the block gas limit', 'ETH', '0xf4240', '0xf4240'],
+    ['is not a number', 'ETH', '0x', '0x5208'],
+  ])(
+    'uses dapp tx.gas only within chain limits: tx.gas %s',
+    async (_, chainEnum, txGas, expectedGasLimit) => {
+      await expect(
+        calcGasLimit({
+          chain: { ...mainnetChain, enum: chainEnum } as never,
+          tx: { gas: txGas, value: '0' } as never,
+          gas: new BigNumber(21_000),
+          selectedGas: null,
+          nativeTokenBalance: '100000000000',
+          explainTx: { gas: { gas_ratio: 2 } } as never,
+          needRatio: false,
+          account: account as never,
+          preparedBlock: { gasLimit: '1000000' } as never,
+        }),
+      ).resolves.toEqual({
+        gasLimit: expectedGasLimit,
+        recommendGasLimitRatio: 1,
+      });
+    },
+  );
+
   it('loads native token gas balance through read-only RPC', async () => {
     mockRequestETHRpc.mockResolvedValue('0x10');
 

@@ -1,4 +1,4 @@
-import BigNumber from 'bignumber.js';
+import { formatPositionTpSlMagnitude } from '../../utils/positionTpSlFormatting';
 import { useCallback, useEffect, useState } from 'react';
 
 import type { PerpsProPositionTpSlMode } from '@/core/services/perpsService';
@@ -30,13 +30,6 @@ type SideInputCalculationContext = {
   szDecimals: number;
 };
 
-const formatDerivedMagnitude = (value: string | null) => {
-  const decimal = new BigNumber(value ?? Number.NaN);
-  return decimal.isFinite()
-    ? decimal.abs().decimalPlaces(2, BigNumber.ROUND_DOWN).toFixed()
-    : '';
-};
-
 const calculateModeMagnitude = (
   mode: PerpsProPositionTpSlMode,
   triggerPrice: string,
@@ -46,7 +39,7 @@ const calculateModeMagnitude = (
     return '';
   }
   if (mode === 'pnl') {
-    return formatDerivedMagnitude(
+    return formatPositionTpSlMagnitude(
       calculatePositionTpSlEstimatedPnl({
         direction: context.direction,
         entryPrice: context.entryPrice,
@@ -55,7 +48,7 @@ const calculateModeMagnitude = (
       }),
     );
   }
-  return formatDerivedMagnitude(
+  return formatPositionTpSlMagnitude(
     calculatePositionTpSlRoi({
       direction: context.direction,
       entryPrice: context.entryPrice,

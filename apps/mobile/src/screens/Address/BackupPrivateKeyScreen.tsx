@@ -13,7 +13,6 @@ import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import { MaskContainer } from './components/MaskContainer';
 import { toast } from '@/components2024/Toast';
 import i18next from 'i18next';
-import { onCopiedSensitiveData } from '@/utils/clipboard';
 import { Text } from '@/components/Typography';
 import * as SecretVault from '@/core/utils/secretVault';
 
@@ -155,11 +154,11 @@ export const BackupPrivateKeyScreen = () => {
             <>
               <Text style={styles.privateKeyContainerText}>{data}</Text>
               <CopyAddressIcon
+                sensitive
                 style={styles.copyButton}
                 address={data}
                 onToastSuccess={() => {
                   toast.success(i18next.t('global.copied'));
-                  onCopiedSensitiveData({ type: 'privateKey' });
                 }}
               />
             </>

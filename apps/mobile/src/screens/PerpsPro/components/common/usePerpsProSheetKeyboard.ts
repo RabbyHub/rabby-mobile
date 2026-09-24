@@ -1,17 +1,40 @@
 import type { TextInput } from '@/components/Typography';
 import { IS_ANDROID } from '@/core/native/utils';
 import type { BottomSheetScrollViewMethods } from '@gorhom/bottom-sheet';
-import { useCallback, useId, useLayoutEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import type { RefObject } from 'react';
-import { findNodeHandle, Keyboard, StatusBar, UIManager } from 'react-native';
+import {
+  findNodeHandle,
+  Keyboard,
+  StatusBar,
+  UIManager,
+  type View,
+} from 'react-native';
 
 import {
   PERPS_PRO_KEYBOARD_ACCESSORY_HEIGHT,
   perpsProKeyboardSession,
+  type PerpsProKeyboardInput,
 } from './perpsProKeyboardSession';
 
 const INPUT_GAP = 8;
 const ignoreMeasurementError = () => {};
+
+/** Opt in only when an input has feedback which must be revealed with it. */
+export type PerpsProSheetKeyboardRevealGroup = {
+  registerInput: (
+    input: PerpsProKeyboardInput,
+    target: RefObject<View | null>,
+  ) => () => void;
+  onLayout: () => void;
+};
 
 /** Android-only layout/scroll ownership for an already mounted Pro sheet. */
 export const usePerpsProSheetKeyboard = ({
@@ -30,6 +53,15 @@ export const usePerpsProSheetKeyboard = ({
   const sheetReadyRef = useRef(false);
   const frameRef = useRef<number | null>(null);
   const measurementVersionRef = useRef(0);
+  const revealTargets = useRef<WeakMap<
+    PerpsProKeyboardInput,
+    RefObject<View | null>
+  > | null>(null);
+  const getRevealTarget = useCallback(
+    (input: PerpsProKeyboardInput) =>
+      revealTargets.current?.get(input)?.current ?? input,
+    [],
+  );
 
   const cancelMeasurement = useCallback(() => {
     measurementVersionRef.current++;
@@ -58,12 +90,14 @@ export const usePerpsProSheetKeyboard = ({
         return;
       }
       const version = measurementVersionRef.current;
+      const revealTarget = getRevealTarget(focused.input);
       const isCurrent = () =>
         enabledRef.current &&
         sheetReadyRef.current &&
         version === measurementVersionRef.current &&
         perpsProKeyboardSession.getSnapshot()?.id === focused.id &&
         focused.input.isFocused() &&
+        getRevealTarget(focused.input) === revealTarget &&
         scrollViewRef.current === scrollView;
       const scrollNode = scrollView.getScrollableNode();
       if (scrollNode == null) {
@@ -80,51 +114,97 @@ export const usePerpsProSheetKeyboard = ({
               if (!isCurrent() || inputHeight <= 0) {
                 return;
               }
-              // Match the accessory's Android Paper window -> screen conversion.
-              const viewportTop = viewportY + (StatusBar.currentHeight ?? 0);
-              const inputTop = inputY + (StatusBar.currentHeight ?? 0);
-              const visibleBottom = Math.min(
-                viewportTop + viewportHeight,
-                keyboardY - PERPS_PRO_KEYBOARD_ACCESSORY_HEIGHT,
-              );
-              const visibleHeight = visibleBottom - viewportTop;
-              const below = inputTop + inputHeight + INPUT_GAP > visibleBottom;
-              const above = inputTop < viewportTop + INPUT_GAP;
-              if (visibleHeight <= 0 || (!below && !above)) {
-                return;
+              const reveal = (bottom: number) => {
+                if (!isCurrent()) {
+                  return;
+                }
+                // Match the accessory's Android Paper window -> screen conversion.
+                const viewportTop = viewportY + (StatusBar.currentHeight ?? 0);
+                const inputTop = inputY + (StatusBar.currentHeight ?? 0);
+                const visibleBottom = Math.min(
+                  viewportTop + viewportHeight,
+                  keyboardY - PERPS_PRO_KEYBOARD_ACCESSORY_HEIGHT,
+                );
+                const visibleHeight = visibleBottom - viewportTop;
+                const revealHeight = Math.max(inputHeight, bottom - inputY);
+                const below =
+                  inputTop + revealHeight + INPUT_GAP > visibleBottom;
+                const above = inputTop < viewportTop + INPUT_GAP;
+                if (visibleHeight <= 0 || (!below && !above)) {
+                  return;
+                }
+                const inputNode = findNodeHandle(focused.input as TextInput);
+                const contentNode = scrollView.getInnerViewNode();
+                if (inputNode == null || contentNode == null) {
+                  return;
+                }
+                // Measure relative to the existing content owner. No JS onScroll
+                // listener or second copy of the current scroll offset is needed.
+                UIManager.measureLayout(
+                  inputNode,
+                  contentNode,
+                  ignoreMeasurementError,
+                  (_left, top) => {
+                    if (!isCurrent()) {
+                      return;
+                    }
+                    const targetOffset = below
+                      ? top + revealHeight + INPUT_GAP - visibleHeight
+                      : top - INPUT_GAP;
+                    scrollView.scrollTo({
+                      animated: false,
+                      y: Math.max(
+                        0,
+                        // An unusually long message must not scroll the editor
+                        // itself out of view. The remainder stays scrollable.
+                        revealTarget === focused.input
+                          ? targetOffset
+                          : Math.min(targetOffset, top - INPUT_GAP),
+                      ),
+                    });
+                  },
+                );
+              };
+              if (revealTarget === focused.input) {
+                reveal(inputY + inputHeight);
+              } else {
+                revealTarget.measureInWindow(
+                  (_groupX, y, _groupWidth, height) => {
+                    reveal(height > 0 ? y + height : inputY + inputHeight);
+                  },
+                );
               }
-              const inputNode = findNodeHandle(focused.input as TextInput);
-              const contentNode = scrollView.getInnerViewNode();
-              if (inputNode == null || contentNode == null) {
-                return;
-              }
-              // Measure relative to the existing content owner. No JS onScroll
-              // listener or second copy of the current scroll offset is needed.
-              UIManager.measureLayout(
-                inputNode,
-                contentNode,
-                ignoreMeasurementError,
-                (_left, top) => {
-                  if (!isCurrent()) {
-                    return;
-                  }
-                  scrollView.scrollTo({
-                    animated: false,
-                    y: Math.max(
-                      0,
-                      below
-                        ? top + inputHeight + INPUT_GAP - visibleHeight
-                        : top - INPUT_GAP,
-                    ),
-                  });
-                },
-              );
             },
           );
         },
       );
     });
-  }, [cancelMeasurement, scrollViewRef, sheetId]);
+  }, [cancelMeasurement, getRevealTarget, scrollViewRef, sheetId]);
+
+  const registerInput = useCallback<
+    PerpsProSheetKeyboardRevealGroup['registerInput']
+  >(
+    (input, target) => {
+      if (!revealTargets.current) {
+        revealTargets.current = new WeakMap();
+      }
+      const targets = revealTargets.current;
+      targets.set(input, target);
+      return () => {
+        if (targets.get(input) === target) {
+          targets.delete(input);
+          if (perpsProKeyboardSession.getSnapshot()?.input === input) {
+            cancelMeasurement();
+          }
+        }
+      };
+    },
+    [cancelMeasurement],
+  );
+  const inputReveal = useMemo<PerpsProSheetKeyboardRevealGroup>(
+    () => ({ registerInput, onLayout: ensureInputVisible }),
+    [ensureInputVisible, registerInput],
+  );
 
   useLayoutEffect(() => {
     if (!enabled) {
@@ -182,6 +262,7 @@ export const usePerpsProSheetKeyboard = ({
     accessoryInset,
     cancelMeasurement,
     ensureInputVisible,
+    inputReveal,
     onSheetReadyChange,
     sheetId,
   };
