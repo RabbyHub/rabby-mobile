@@ -1,5 +1,6 @@
-# Keep New Architecture off by default; set RCT_NEW_ARCH_ENABLED=1 to validate it.
-ENV['RCT_NEW_ARCH_ENABLED'] = ENV.fetch('RCT_NEW_ARCH_ENABLED', '0')
+# New Architecture is the default for this branch; retain the environment flag
+# for explicit architecture validation.
+ENV['RCT_NEW_ARCH_ENABLED'] = ENV.fetch('RCT_NEW_ARCH_ENABLED', '1')
 
 def node_require(script)
   # Resolve script with node to allow for hoisting
