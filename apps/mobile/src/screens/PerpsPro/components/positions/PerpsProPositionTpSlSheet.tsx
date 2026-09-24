@@ -45,6 +45,7 @@ import { useTranslation } from 'react-i18next';
 import {
   getPerpsProPositionTpSlFormMinimumHeight,
   getPerpsProPositionTpSlSnapPoint,
+  PERPS_PRO_POSITION_TPSL_PAGE_HEADER_HEIGHT,
   type PerpsProPositionTpSlFormPresentation,
   type PerpsProPositionTpSlPage,
 } from '../../model/layout';
@@ -123,6 +124,7 @@ export const PerpsProPositionTpSlSheet: React.FC<{
   }) => {
     const modalRef = useRef<AppBottomSheetModal>(null);
     const scrollViewRef = useRef<BottomSheetScrollViewMethods>(null);
+    const backButtonRef = useRef<View>(null);
     const contentRef = useAnimatedRef<View>();
     const touchRevision = useSharedValue(0);
     const nextTouchRevision = useRef(0);
@@ -217,12 +219,6 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       returnToPartialList,
       tab,
     ]);
-    usePerpsProSheetNavigationRegistration({
-      active: visible,
-      dismiss: requestDismiss,
-      dismissible: !interactionLocked,
-      edgeDismissible: !interactionLocked,
-    });
 
     useEffect(() => {
       if (visible) {
@@ -356,6 +352,23 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       };
     }
     const pageKey = `${pageIdentity}:${pageSession.current.revision}`;
+    const backTarget = useMemo(
+      () =>
+        visible && isSubpage && !interactionLocked
+          ? { ref: backButtonRef, sessionKey: pageKey }
+          : null,
+      [interactionLocked, isSubpage, pageKey, visible],
+    );
+    usePerpsProSheetNavigationRegistration({
+      active: visible,
+      backTarget,
+      dismiss: requestDismiss,
+      dismissible: !interactionLocked,
+      edgeDismissible: !interactionLocked,
+    });
+    const fixedHeaderHeight = isSubpage
+      ? PERPS_PRO_POSITION_TPSL_PAGE_HEADER_HEIGHT
+      : 0;
     pageStateRef.current = {
       key: pageKey,
       isOrderList,
@@ -377,12 +390,14 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       () => ({
         contentRef,
         enabled: IS_ANDROID && visible && !isOrderList && !interactionLocked,
+        fixedHeaderHeight,
         pageKey,
         targetHeight: snapPoint,
         touchRevision,
       }),
       [
         contentRef,
+        fixedHeaderHeight,
         interactionLocked,
         isOrderList,
         pageKey,
@@ -660,6 +675,7 @@ export const PerpsProPositionTpSlSheet: React.FC<{
           ) : null}
           {keyboardRestoreRequest ? (
             <KeyboardRestorationObserver
+              fixedHeaderHeight={fixedHeaderHeight}
               request={keyboardRestoreRequest}
               onReadyChange={handleKeyboardRestoreReady}
               targetHeight={snapPoint}
@@ -675,6 +691,18 @@ export const PerpsProPositionTpSlSheet: React.FC<{
             value={androidScrollOptions}>
             <AutoLockView style={styles.listPage}>
               {isOrderList ? header : null}
+              {isSubpage ? (
+                <PerpsProPositionTpSlPageHeader
+                  backButtonRef={backButtonRef}
+                  disabled={interactionLocked}
+                  onBack={requestDismiss}
+                  title={t(
+                    page === 'add'
+                      ? 'page.perps.pro.positions.tpsl'
+                      : 'page.perps.pro.positionTpsl.modifyTitle',
+                  )}
+                />
+              ) : null}
               <View style={isOrderList ? styles.listCard : styles.listPage}>
                 {isOrderList ? tabs : null}
                 {isPartialList ? (
@@ -749,22 +777,12 @@ export const PerpsProPositionTpSlSheet: React.FC<{
                       ) : (
                         <>
                           {isSubpage ? (
-                            <>
-                              <PerpsProPositionTpSlPageHeader
-                                onBack={requestDismiss}
-                                title={t(
-                                  page === 'add'
-                                    ? 'page.perps.pro.positions.tpsl'
-                                    : 'page.perps.pro.positionTpsl.modifyTitle',
-                                )}
-                              />
-                              <PerpsProPositionTpSlHeader
-                                markPrice={liveMarket.markPrice}
-                                market={market}
-                                position={visiblePosition}
-                                variant="summary"
-                              />
-                            </>
+                            <PerpsProPositionTpSlHeader
+                              markPrice={liveMarket.markPrice}
+                              market={market}
+                              position={visiblePosition}
+                              variant="summary"
+                            />
                           ) : (
                             <>
                               {header}
@@ -822,10 +840,12 @@ PerpsProPositionTpSlSheet.displayName = 'PerpsProPositionTpSlSheet';
 
 /** Read the native keyboard/detent gate; content layout is checked separately. */
 const KeyboardRestorationObserver = ({
+  fixedHeaderHeight,
   request,
   onReadyChange,
   targetHeight,
 }: {
+  fixedHeaderHeight: number;
   request: KeyboardRestoreRequest;
   onReadyChange: (
     request: KeyboardRestoreRequest,
@@ -865,13 +885,13 @@ const KeyboardRestorationObserver = ({
         Math.abs(animatedSheetHeight.value - targetHeight) < 0.5 &&
         animatedPosition.value === animatedDetentsState.value.detents?.[0] &&
         handleHeight >= 0 &&
-        targetHeight > handleHeight;
-      return ready ? targetHeight - handleHeight : null;
+        targetHeight > handleHeight + fixedHeaderHeight;
+      return ready ? targetHeight - handleHeight - fixedHeaderHeight : null;
     },
     (height, previous) => {
       if (height !== previous) runOnJS(publish)(height);
     },
-    [publish, targetHeight],
+    [fixedHeaderHeight, publish, targetHeight],
   );
   return null;
 };

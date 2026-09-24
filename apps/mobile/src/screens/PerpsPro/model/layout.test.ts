@@ -120,7 +120,7 @@ describe('Perps Pro layout model', () => {
         presentation: 'subpage',
         snapPoint: 758,
       }),
-    ).toBe(532);
+    ).toBe(516);
     expect(
       getPerpsProPositionTpSlFormMinimumHeight({
         presentation: 'tab',
@@ -135,9 +135,9 @@ describe('Perps Pro layout model', () => {
     ).toBe(486);
   });
   it.each([
-    ['add', 704],
-    ['modify', 604],
-    ['position-modify', 598],
+    ['add', 720],
+    ['modify', 620],
+    ['position-modify', 614],
   ] as const)('sizes the %s page to its approved content', (page, height) => {
     expect(
       getPerpsProPositionTpSlSnapPoint({
@@ -154,12 +154,36 @@ describe('Perps Pro layout model', () => {
       }),
     ).toBe(437);
   });
+  it.each([
+    ['subpage', 720, 478],
+    ['subpage', 620, 378],
+    ['position-modify', 614, 372],
+  ] as const)(
+    'preserves the %s form budget at height %s after moving the header outside scrolling',
+    (presentation, snapPoint, minimumHeight) => {
+      expect(
+        getPerpsProPositionTpSlFormMinimumHeight({ presentation, snapPoint }),
+      ).toBe(minimumHeight);
+      expect(
+        getPerpsProPositionTpSlFormMinimumHeight({
+          presentation,
+          snapPoint: snapPoint + 34,
+        }),
+      ).toBe(minimumHeight + 34);
+      expect(
+        getPerpsProPositionTpSlFormMinimumHeight({
+          presentation,
+          snapPoint: 437,
+        }),
+      ).toBe(195);
+    },
+  );
   it('budgets both normal PnL hints and only the actual form bottom-padding increment', () => {
     for (const [page, base] of [
       ['form', 758],
-      ['add', 704],
-      ['modify', 604],
-      ['position-modify', 598],
+      ['add', 720],
+      ['modify', 620],
+      ['position-modify', 614],
     ] as const) {
       expect(
         getPerpsProPositionTpSlSnapPoint({
@@ -196,7 +220,7 @@ describe('Perps Pro layout model', () => {
           topInset: 24,
           windowHeight: 900,
         }),
-      ).toBe(704);
+      ).toBe(720);
     }
   });
 });

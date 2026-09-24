@@ -542,10 +542,10 @@ describe('PerpsProPositionTpSlSheet', () => {
         ),
       ).toMatchObject({ paddingHorizontal: 16 });
       fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
-      expectShell(704);
+      expectShell(720);
       fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-back'));
       fireEvent.press(screen.getAllByText('Modify')[0]!);
-      expectShell(604);
+      expectShell(620);
       fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-back'));
       fireEvent.press(screen.getByText('Position TP/SL'));
       expectShell(758);
@@ -789,6 +789,45 @@ describe('PerpsProPositionTpSlSheet', () => {
     expect(UIManager.measureInWindow).not.toHaveBeenCalled();
     expect(mockScrollToEnd).not.toHaveBeenCalled();
   });
+
+  it.each(['add', 'modify', 'position-modify'] as const)(
+    'restores the iOS %s viewport below the fixed header without moving Confirm twice',
+    page => {
+      const props = {
+        ...makeSheetProps([
+          ...position.tpslOrders,
+          order(3, '110', '0', 'position'),
+        ]),
+        defaultTab: 'partial' as const,
+      };
+      render(<PerpsProPositionTpSlSheet {...props} />);
+      const scroll = screen.getByTestId('tpsl-scroll');
+      if (page === 'add') {
+        fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
+      } else if (page === 'modify') {
+        fireEvent.press(screen.getAllByText('Modify')[0]!);
+      } else {
+        fireEvent.press(screen.getByText('Position TP/SL'));
+        fireEvent.press(screen.getAllByText('Modify')[0]!);
+      }
+      expect(screen.getByTestId('tpsl-scroll')).toBe(scroll);
+      const height = mockBottomSheetProps.mock.lastCall![0].snapPoints[0];
+      const finalHeight = height - 40 - 72;
+      // Matching the old full content height is insufficient: the header is fixed.
+      layoutViewport(height - 40);
+      completeKeyboardSession();
+      runNativeReactions();
+      flushScrollFrame();
+      expect(mockScrollToEnd).not.toHaveBeenCalled();
+      layoutViewport(finalHeight);
+      flushScrollFrame();
+      expect(mockScrollToEnd).toHaveBeenCalledTimes(1);
+      expect(mockScrollToEnd).toHaveBeenCalledWith({ animated: false });
+      runNativeReactions();
+      flushScrollFrame();
+      expect(mockScrollToEnd).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it.each([
     ['content fits', 718, 100],
@@ -1189,7 +1228,7 @@ describe('PerpsProPositionTpSlSheet', () => {
     expect(screen.getByTestId('perps-pro-position-tpsl-order-2')).toBeTruthy();
 
     fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
-    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([704]);
+    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([720]);
   });
 
   it('renders the 758px inline form and full position header when the TP/SL tab has no partial orders', () => {
@@ -1301,7 +1340,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         initialOrder: null,
         position: input.position,
       });
-      expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([598]);
+      expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([614]);
       fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-back'));
       expect(screen.getByText('All')).toBeTruthy();
       fireEvent.press(screen.getByText('Modify'));
@@ -1459,7 +1498,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         <PerpsProPositionTpSlSheet {...props} settlement={settled} />,
       );
       expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([
-        platform === 'android' ? 638 : 604,
+        platform === 'android' ? 654 : 620,
       ]);
       act(() => mockKeyboardListeners.get('keyboardDidHide')?.());
       expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([758]);

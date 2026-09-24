@@ -141,6 +141,7 @@ const options = (
 ) => ({
   contentRef,
   enabled: true,
+  fixedHeaderHeight: 0,
   pageKey: 'add:1',
   targetHeight: 680,
   touchRevision: touchRevision as any,
@@ -315,6 +316,39 @@ describe('Android TP/SL restoration with installed Gorhom handlers (JS/native bo
     expect(mockGeometry.offset).toBe(48);
     expect(frames.size).toBe(0);
   });
+
+  it.each([
+    ['add', 720, 0],
+    ['modify', 620, 0],
+    ['position-modify', 614, 0],
+    ['modify-safe-area', 654, 34],
+    ['small-screen', 437, 0],
+  ] as const)(
+    'restores %s with a fixed header and errors without a second scroll after settling',
+    (pageKey, targetHeight, bottomExtra) => {
+      render(tree({ pageKey, targetHeight, fixedHeaderHeight: 72 }));
+      const finalHeight = targetHeight - 40 - 72;
+      // Scrolling content includes normal hints, both errors and a wrapped hint.
+      mockGeometry.contentHeight = 680 + bottomExtra;
+      openKeyboard(60);
+      hideKeyboard();
+      restoreFrame(0.5, finalHeight);
+      const target = mockGeometry.contentHeight - finalHeight;
+      expect(mockGeometry.offset).toBeCloseTo(60 + (target - 60) * 0.5);
+      restoreFrame(1, finalHeight, 0.75);
+      expect(frames.size).toBe(1);
+      restoreFrame(1, finalHeight);
+      expect(mockGeometry.offset).toBe(target);
+      expect(mockSheet.animatedScrollableState.value.contentOffsetY).toBe(
+        target,
+      );
+      expect(frames.size).toBe(0);
+      const calls = mockScrollTo.mock.calls.length;
+      frame();
+      react();
+      expect(mockScrollTo).toHaveBeenCalledTimes(calls);
+    },
+  );
 
   it('starts in the scroll callback if a native layout event arrives before the keyboard reaction', () => {
     render(tree());

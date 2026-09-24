@@ -23,6 +23,7 @@ import {
 type Options = {
   contentRef: AnimatedRef<View>;
   enabled: boolean;
+  fixedHeaderHeight: number;
   pageKey: string;
   targetHeight: number;
   touchRevision: SharedValue<number>;
@@ -45,6 +46,7 @@ type Restoration = {
   offset: number;
   targetHeight: number;
   targetPosition: number;
+  fixedHeaderHeight: number;
 };
 
 const TOLERANCE = 1;
@@ -59,8 +61,14 @@ const progressBetween = (start: number, end: number, current: number) => {
 export const usePositionTpSlAndroidScrollRestoration: ScrollEventsHandlersHookType =
   (scrollableRef, contentOffsetY) => {
     const options = useContext(PositionTpSlAndroidScrollContext)!;
-    const { contentRef, enabled, pageKey, targetHeight, touchRevision } =
-      options;
+    const {
+      contentRef,
+      enabled,
+      fixedHeaderHeight,
+      pageKey,
+      targetHeight,
+      touchRevision,
+    } = options;
     const defaults = useScrollEventsHandlersDefault(
       scrollableRef,
       contentOffsetY,
@@ -86,7 +94,12 @@ export const usePositionTpSlAndroidScrollRestoration: ScrollEventsHandlersHookTy
     const nativeScrollRef = scrollableRef as AnimatedRef<
       NonNullable<typeof scrollableRef.current>
     >;
-    const configuration = useSharedValue({ enabled, pageKey, targetHeight });
+    const configuration = useSharedValue({
+      enabled,
+      fixedHeaderHeight,
+      pageKey,
+      targetHeight,
+    });
     const armed = useSharedValue<{
       target: number;
       touchRevision: number;
@@ -96,18 +109,36 @@ export const usePositionTpSlAndroidScrollRestoration: ScrollEventsHandlersHookTy
 
     useLayoutEffect(() => {
       runOnUI(() => {
-        configuration.value = { enabled, pageKey, targetHeight };
+        configuration.value = {
+          enabled,
+          fixedHeaderHeight,
+          pageKey,
+          targetHeight,
+        };
         armed.value = null;
         restoration.value = null;
       })();
       return () => {
         runOnUI(() => {
-          configuration.value = { enabled: false, pageKey, targetHeight };
+          configuration.value = {
+            enabled: false,
+            fixedHeaderHeight,
+            pageKey,
+            targetHeight,
+          };
           armed.value = null;
           restoration.value = null;
         })();
       };
-    }, [armed, configuration, enabled, pageKey, restoration, targetHeight]);
+    }, [
+      armed,
+      configuration,
+      enabled,
+      fixedHeaderHeight,
+      pageKey,
+      restoration,
+      targetHeight,
+    ]);
 
     const isRestoring = useCallback(() => {
       'worklet';
@@ -118,6 +149,7 @@ export const usePositionTpSlAndroidScrollRestoration: ScrollEventsHandlersHookTy
         config.enabled &&
         current.pageKey === config.pageKey &&
         current.targetHeight === config.targetHeight &&
+        current.fixedHeaderHeight === config.fixedHeaderHeight &&
         current.touchRevision === touchRevision.value &&
         animatedKeyboardState.value.status === KEYBOARD_STATUS.HIDDEN &&
         (animatedKeyboardState.value.target == null ||
@@ -164,7 +196,9 @@ export const usePositionTpSlAndroidScrollRestoration: ScrollEventsHandlersHookTy
         }
         const current = restoration.value!;
         const finalHeight =
-          current.targetHeight - animatedLayoutState.value.handleHeight;
+          current.targetHeight -
+          animatedLayoutState.value.handleHeight -
+          current.fixedHeaderHeight;
         const positionProgress = progressBetween(
           current.startPosition,
           current.targetPosition,
@@ -267,7 +301,7 @@ export const usePositionTpSlAndroidScrollRestoration: ScrollEventsHandlersHookTy
         !config.enabled ||
         targetPosition == null ||
         handleHeight < 0 ||
-        config.targetHeight <= handleHeight ||
+        config.targetHeight <= handleHeight + config.fixedHeaderHeight ||
         !viewport ||
         !content ||
         viewport.width <= 0 ||
@@ -288,6 +322,7 @@ export const usePositionTpSlAndroidScrollRestoration: ScrollEventsHandlersHookTy
         progress: 0,
         offset: Math.max(0, viewport.pageY - content.pageY),
         targetHeight: config.targetHeight,
+        fixedHeaderHeight: config.fixedHeaderHeight,
         targetPosition,
       };
       advance(sequence.value);
