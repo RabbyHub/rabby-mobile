@@ -217,6 +217,29 @@ const props = () => ({
   pending: false,
 });
 
+const precisionModifyProps = () => {
+  const initialOrder = {
+    ...order('takeProfit', 7, '453719'),
+    originalSize: '0.0002',
+    remainingSize: '0.0001',
+  };
+  return {
+    ...props(),
+    amountUnit: 'quote' as const,
+    initialOrder,
+    markPrice: '84076',
+    market: { ...market, markPrice: '84076', pxDecimals: 1, szDecimals: 5 },
+    mode: 'modify' as const,
+    position: {
+      ...position([initialOrder]),
+      baseSize: '0.00014',
+      entryPrice: '83719',
+      leverage: 37,
+      liquidationPrice: '82540',
+    },
+  };
+};
+
 describe('PerpsProPositionTpSlForm', () => {
   it.each(['add', 'modify', 'position'] as const)(
     'opts in only the Android %s TP/SL fields, leaving Amount and iOS alone',
@@ -405,6 +428,225 @@ describe('PerpsProPositionTpSlForm', () => {
     expect(
       screen.getByTestId('perps-pro-position-tpsl-amount-unit'),
     ).toHaveTextContent('BTC');
+  });
+
+  describe('Partial Modify quantities', () => {
+    describe.each(['base', 'quote'] as const)('%s unit', amountUnit => {
+      it.each([
+        ['long', 'takeProfit', '453719', '37', '+37.00'],
+        ['long', 'stopLoss', '80000', '0.37', '-0.37'],
+        ['short', 'takeProfit', '80000', '0.37', '+0.37'],
+        ['short', 'stopLoss', '453719', '37', '-37.00'],
+      ] as const)(
+        'preserves the remaining size for %s %s through focus, Mark ticks and price edits',
+        (direction, kind, triggerPrice, magnitude, pnl) => {
+          const input = precisionModifyProps();
+          const initialOrder = {
+            ...input.initialOrder,
+            kind,
+            side: direction === 'long' ? ('A' as const) : ('B' as const),
+            triggerPrice,
+          };
+          const formProps = {
+            ...input,
+            amountUnit,
+            initialOrder,
+            position: {
+              ...input.position,
+              direction,
+              tpslOrders: [initialOrder],
+            },
+          };
+          const { rerender } = render(
+            <PerpsProPositionTpSlForm {...formProps} />,
+          );
+          const amount = screen.getByTestId('perps-pro-position-tpsl-amount');
+          const prefill = amountUnit === 'base' ? '0.0001' : '8.4';
+          expect(amount.props.value).toBe(prefill);
+          fireEvent(amount, 'pressIn');
+          fireEvent(amount, 'focus');
+          fireEvent.changeText(amount, prefill);
+          fireEvent(amount, 'blur');
+          rerender(
+            <PerpsProPositionTpSlForm {...formProps} markPrice="84123" />,
+          );
+          expect(
+            screen.getByTestId(`perps-pro-position-tpsl-${kind}-mode-input`)
+              .props.value,
+          ).toBe(magnitude);
+          expect(mockTransProps.mock.lastCall?.[0].values.pnl).toBe(pnl);
+          expect(
+            screen.getByTestId('perps-pro-position-tpsl-review').props
+              .accessibilityState,
+          ).toEqual({ disabled: true });
+          fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+          expect(input.onReview).not.toHaveBeenCalled();
+          expect(mockSliderProps.mock.lastCall?.[0].value).toBe(0);
+
+          const nextTrigger = triggerPrice === '80000' ? '79000' : '454000';
+          fireEvent.changeText(
+            screen.getByTestId(`perps-pro-position-tpsl-${kind}-price`),
+            nextTrigger,
+          );
+          fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+          expect(input.onReview).toHaveBeenCalledWith({
+            mode: 'modify',
+            scope: 'partial',
+            legs: [
+              {
+                kind,
+                replaceOid: 7,
+                size: '0.0001',
+                triggerPrice: nextTrigger,
+              },
+            ],
+          });
+        },
+      );
+    });
+
+    it.each(['84000', '84076'])(
+      'keeps one lot and its PnL when the initial Mark is %s',
+      initialMark => {
+        const input = precisionModifyProps();
+        input.initialOrder.remainingSize = '0.00001';
+        const { rerender } = render(
+          <PerpsProPositionTpSlForm {...input} markPrice={initialMark} />,
+        );
+        rerender(<PerpsProPositionTpSlForm {...input} markPrice="84123" />);
+        expect(
+          screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input')
+            .props.value,
+        ).toBe('3.7');
+        expect(
+          screen.getByTestId('perps-pro-position-tpsl-review').props
+            .accessibilityState,
+        ).toEqual({ disabled: true });
+        fireEvent.changeText(
+          screen.getByTestId('perps-pro-position-tpsl-takeProfit-price'),
+          '454000',
+        );
+        fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+        expect(input.onReview.mock.lastCall?.[0].legs[0].size).toBe('0.00001');
+      },
+    );
+
+    it('uses the original quantity when the user changes only the PnL target', () => {
+      const input = precisionModifyProps();
+      const { rerender } = render(<PerpsProPositionTpSlForm {...input} />);
+      fireEvent.changeText(
+        screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input'),
+        '33',
+      );
+      rerender(<PerpsProPositionTpSlForm {...input} markPrice="85000" />);
+      expect(
+        screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input')
+          .props.value,
+      ).toBe('33');
+      expect(
+        screen.getByTestId('perps-pro-position-tpsl-takeProfit-price').props
+          .value,
+      ).toBe('413719');
+      expect(mockTransProps.mock.lastCall?.[0].values.pnl).toBe('+33.00');
+      fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+      expect(input.onReview.mock.lastCall?.[0].legs[0]).toMatchObject({
+        size: '0.0001',
+        triggerPrice: '413719',
+      });
+    });
+
+    it('uses the original quantity in ROI mode too', () => {
+      mockPositionModes.tp = 'roi';
+      const input = precisionModifyProps();
+      render(<PerpsProPositionTpSlForm {...input} />);
+      expect(
+        screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input')
+          .props.value,
+      ).toBe('16352.32');
+      expect(mockTransProps.mock.lastCall?.[0].values.pnl).toBe('+37.00');
+      fireEvent.changeText(
+        screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input'),
+        '100',
+      );
+      fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+      expect(input.onReview.mock.lastCall?.[0].legs[0].size).toBe('0.0001');
+    });
+
+    it('switches to manual conversion after a real edit, including retyping the prefill', () => {
+      const input = precisionModifyProps();
+      const { rerender } = render(<PerpsProPositionTpSlForm {...input} />);
+      fireEvent.changeText(
+        screen.getByTestId('perps-pro-position-tpsl-amount'),
+        '',
+      );
+      expect(
+        screen.getByTestId('perps-pro-position-tpsl-review').props
+          .accessibilityState,
+      ).toEqual({ disabled: true });
+      fireEvent.changeText(
+        screen.getByTestId('perps-pro-position-tpsl-amount'),
+        '8.4',
+      );
+      expect(mockTransProps.mock.lastCall?.[0].values.pnl).toBe('+33.30');
+      fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+      expect(input.onReview.mock.lastCall?.[0].legs[0].size).toBe('0.00009');
+      // Manual quote amounts retain the existing live Mark conversion.
+      rerender(<PerpsProPositionTpSlForm {...input} markPrice="84000" />);
+      expect(mockTransProps.mock.lastCall?.[0].values.pnl).toBe('+37.00');
+      expect(
+        screen.getByTestId('perps-pro-position-tpsl-review').props
+          .accessibilityState,
+      ).toEqual({ disabled: true });
+    });
+
+    it('lets the Slider replace the order quantity and clears it on manual entry', () => {
+      const input = precisionModifyProps();
+      render(<PerpsProPositionTpSlForm {...input} />);
+      act(() => mockSliderProps.mock.lastCall?.[0].onValueChange(50));
+      expect(mockTransProps.mock.lastCall?.[0].values.pnl).toBe('+25.90');
+      fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+      expect(input.onReview.mock.lastCall?.[0].legs[0].size).toBe('0.00007');
+      fireEvent(screen.getByTestId('perps-pro-position-tpsl-amount'), 'focus');
+      expect(
+        screen.getByTestId('perps-pro-position-tpsl-amount').props.value,
+      ).toBe('');
+      expect(mockSliderProps.mock.lastCall?.[0].value).toBe(0);
+      expect(
+        screen.getByTestId('perps-pro-position-tpsl-review').props
+          .accessibilityState,
+      ).toEqual({ disabled: true });
+    });
+
+    it('blocks an oversized unchanged quantity after the position shrinks', () => {
+      const input = precisionModifyProps();
+      const { rerender } = render(<PerpsProPositionTpSlForm {...input} />);
+      fireEvent.changeText(
+        screen.getByTestId('perps-pro-position-tpsl-takeProfit-price'),
+        '454000',
+      );
+      rerender(
+        <PerpsProPositionTpSlForm
+          {...input}
+          position={{ ...input.position, baseSize: '0.00005' }}
+        />,
+      );
+      expect(
+        screen.getByTestId('perps-pro-position-tpsl-review').props
+          .accessibilityState,
+      ).toEqual({ disabled: true });
+      fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+      expect(input.onReview).not.toHaveBeenCalled();
+      // An explicit new amount is still clamped to the live position limit.
+      fireEvent.changeText(
+        screen.getByTestId('perps-pro-position-tpsl-amount'),
+        '10',
+      );
+      expect(
+        screen.getByTestId('perps-pro-position-tpsl-amount').props.value,
+      ).toBe('4.2');
+      fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+      expect(input.onReview.mock.lastCall?.[0].legs[0].size).toBe('0.00004');
+    });
   });
 
   it('colors the TP estimate by signed PnL instead of TP/SL kind', () => {

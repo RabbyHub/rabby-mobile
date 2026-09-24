@@ -18,6 +18,10 @@ import { registerService } from '@/core/services/serviceRegistry';
 /* eslint-enable no-runtime-service-imports */
 import type { PerpsPositionViewModel } from '../../model/position';
 import type { PerpsPositionTpSlOrderViewModel } from '../../model/positionTpSl';
+import { collectActivePositionTpSlOrders } from '../../model/positionTpSl';
+import { buildPerpsOpenOrderTopology } from '../../model/openOrderTopology';
+import type { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
+import type { PositionTpSlDependencies } from '@/hooks/perps/actions/positionTpSl';
 
 jest.mock('react-native/Libraries/ReactNative/UIManager', () => ({
   __esModule: true,
@@ -180,10 +184,14 @@ jest.mock(
 );
 jest.mock('react-native-linear-gradient', () => require('react-native').View);
 jest.useFakeTimers();
+const { buildPerpsPositionTpSlCommand, executePerpsPositionTpSl } =
+  require('@/hooks/perps/actions/positionTpSl') as typeof import('@/hooks/perps/actions/positionTpSl');
 const { PerpsProPositionTpSlSheets } =
   require('./PerpsProPositionTpSlSheets') as typeof import('./PerpsProPositionTpSlSheets');
 const { PerpsProPositionTpSlForm } =
   require('./PerpsProPositionTpSlForm') as typeof import('./PerpsProPositionTpSlForm');
+const { PerpsProPositionTpSlOrderList } =
+  require('./PerpsProPositionTpSlOrderList') as typeof import('./PerpsProPositionTpSlOrderList');
 
 const wrapper: React.FC<React.PropsWithChildren> = ({ children }) => (
   <SafeAreaProvider
@@ -274,6 +282,212 @@ describe('position TP/SL input source integration', () => {
   afterAll(() => {
     unregister();
     jest.useRealTimers();
+  });
+
+  it('preserves the submitted quantity and PnL through list, repeated Modify and a new PnL target', async () => {
+    const precisionMarket = {
+      ...market,
+      markPrice: '84076',
+      pxDecimals: 1,
+      szDecimals: 5,
+    };
+    const precisionPosition = {
+      ...position,
+      baseSize: '0.00014',
+      entryPrice: '83719',
+      leverage: 37,
+      liquidationPrice: '82540',
+    };
+    const account = {
+      address: '0x0000000000000000000000000000000000000547',
+      type: 'PrivateKey' as const,
+    };
+    let remoteOrders: OpenOrder[] = [];
+    let nextOid = 7;
+    const placements: Parameters<
+      PositionTpSlDependencies['placePartial']
+    >[0][] = [];
+    const cancellations: number[] = [];
+    const response = (statuses: unknown[]) => ({
+      status: 'ok',
+      response: { data: { statuses } },
+    });
+    // Stateful exchange boundary only: no signer or real SDK/network request.
+    // Form, precision rules, command/executor, projection and list stay real.
+    const exchange: PositionTpSlDependencies = {
+      getCurrentAccount: () => account,
+      getLiveMark: () => precisionMarket.markPrice,
+      getLiveSignedSize: () => precisionPosition.baseSize,
+      getLiveOpenOrders: () => remoteOrders,
+      resolveDex: () => '',
+      cancelOrder: async (_coin, oid) => {
+        cancellations.push(oid);
+        remoteOrders = remoteOrders.filter(item => item.oid !== oid);
+        return response(['success']);
+      },
+      placePartial: async params => {
+        placements.push(params);
+        const oid = nextOid++;
+        remoteOrders.push({
+          coin: params.coin,
+          isPositionTpsl: false,
+          isTrigger: true,
+          reduceOnly: params.reduceOnly,
+          oid,
+          orderType:
+            params.tpsl === 'tp' ? 'Take Profit Market' : 'Stop Market',
+          origSz: params.size,
+          sz: params.size,
+          limitPx: params.triggerPx,
+          side: params.isBuy ? 'B' : 'A',
+          tif: null,
+          timestamp: oid,
+          triggerCondition: '',
+          triggerPx: params.triggerPx,
+        });
+        return response([{ resting: { oid } }]);
+      },
+      placePosition: async () => {
+        throw new Error('Partial orders must not use position placement');
+      },
+      refresh: async () => undefined,
+    };
+    const onReview = jest.fn();
+    const formProps = {
+      amountUnit: 'quote' as const,
+      cancelingOids: [],
+      markPrice: precisionMarket.markPrice,
+      market: precisionMarket,
+      onCancelOrder: jest.fn(),
+      onReview,
+      pending: false,
+      position: precisionPosition,
+    };
+    const executeDraft = async () => {
+      const draft = onReview.mock.lastCall![0];
+      const command = buildPerpsPositionTpSlCommand({
+        account,
+        coin: 'BTC',
+        direction: 'long',
+        expectedPositionSize: precisionPosition.baseSize,
+        legs: draft.legs,
+        markPrice: precisionMarket.markPrice,
+        pxDecimals: precisionMarket.pxDecimals,
+        scope: draft.scope,
+        szDecimals: precisionMarket.szDecimals,
+      });
+      expect(command.legs[0].size).toBe('0.00007');
+      expect((await executePerpsPositionTpSl(command, exchange)).kind).toBe(
+        'success',
+      );
+      onReview.mockClear();
+    };
+    const readOrders = () =>
+      collectActivePositionTpSlOrders(
+        'BTC',
+        'long',
+        buildPerpsOpenOrderTopology(remoteOrders),
+      );
+
+    const add = render(<PerpsProPositionTpSlForm {...formProps} mode="add" />, {
+      wrapper,
+    });
+    await act(async () => {});
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-amount'),
+      '5.89',
+    );
+    fireEvent.changeText(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input'),
+      '33',
+    );
+    expect(
+      screen.getByTestId('perps-pro-position-tpsl-takeProfit-hint'),
+    ).toHaveTextContent(/\+33\.00/);
+    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+    expect(onReview.mock.lastCall?.[0].legs[0]).toMatchObject({
+      size: '0.00007',
+      triggerPrice: '555140',
+    });
+    await executeDraft();
+    add.unmount();
+
+    for (let reopen = 0; reopen < 2; reopen += 1) {
+      const orders = readOrders();
+      const onModify = jest.fn();
+      const list = render(
+        <PerpsProPositionTpSlOrderList
+          {...formProps}
+          position={{ ...precisionPosition, tpslOrders: orders }}
+          onAdd={jest.fn()}
+          onModify={onModify}
+          onOpenEstimatedPnlExplanation={jest.fn()}
+        />,
+        { wrapper },
+      );
+      expect(screen.getByText('+33.00')).toBeTruthy();
+      fireEvent.press(screen.getByText('page.perps.pro.positionTpsl.modify'));
+      expect(onModify).toHaveBeenCalledWith(orders[0]);
+      list.unmount();
+
+      const modify = render(
+        <PerpsProPositionTpSlForm
+          {...formProps}
+          mode="modify"
+          initialOrder={orders[0]}
+          position={{ ...precisionPosition, tpslOrders: orders }}
+        />,
+        { wrapper },
+      );
+      await act(async () => {});
+      const amount = screen.getByTestId('perps-pro-position-tpsl-amount');
+      expect(amount.props.value).toBe('5.88');
+      fireEvent(amount, 'focus');
+      fireEvent(amount, 'blur');
+      expect(screen.getByTestId('perps-pro-position-tpsl-amount')).toBe(amount);
+      expect(
+        screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input')
+          .props.value,
+      ).toBe('33');
+      expect(
+        screen.getByTestId('perps-pro-position-tpsl-takeProfit-hint'),
+      ).toHaveTextContent(/\+33\.00/);
+      fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+      expect(onReview).not.toHaveBeenCalled();
+      expect(placements).toHaveLength(1);
+      expect(cancellations).toEqual([]);
+
+      if (reopen === 1) {
+        fireEvent.changeText(
+          screen.getByTestId('perps-pro-position-tpsl-takeProfit-mode-input'),
+          '30',
+        );
+        expect(
+          screen.getByTestId('perps-pro-position-tpsl-takeProfit-hint'),
+        ).toHaveTextContent(/\+30\.00/);
+        fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+        await executeDraft();
+      }
+      modify.unmount();
+    }
+    expect(
+      placements.map(({ size, triggerPx }) => ({ size, triggerPx })),
+    ).toEqual([
+      { size: '0.00007', triggerPx: '555140' },
+      { size: '0.00007', triggerPx: '512290' },
+    ]);
+    expect(cancellations).toEqual([7]);
+    render(
+      <PerpsProPositionTpSlOrderList
+        {...formProps}
+        position={{ ...precisionPosition, tpslOrders: readOrders() }}
+        onAdd={jest.fn()}
+        onModify={jest.fn()}
+        onOpenEstimatedPnlExplanation={jest.fn()}
+      />,
+      { wrapper },
+    );
+    expect(screen.getByText('+30.00')).toBeTruthy();
   });
 
   it.each(['first', 'add'] as const)(
