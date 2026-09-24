@@ -71,7 +71,8 @@
     "time": {
       "hour": "{{t}} giờ",
       "hours": "{{t}} giờ",
-      "mins": "{{t}} phút"
+      "mins": "{{t}} phút",
+      "ago": "{{time}} trước"
     },
     "Deleted": "đã xóa",
     "WalletCreated": "Đã tạo Wallet",
@@ -142,7 +143,8 @@
     "SavedSeedPhrase": "Tôi đã lưu cụm từ khôi phục.",
     "from": "Từ",
     "to": "Đến",
-    "copiedSuccessfully": "Sao chép thành công"
+    "copiedSuccessfully": "Sao chép thành công",
+    "failed": "Thất bại"
   },
   "page": {
     "transactions": {
@@ -1241,7 +1243,8 @@
         },
         "scan": {
           "title": "Quét Keystone để kết nối",
-          "description": "Quét mã QR trên ví Keystone của bạn"
+          "description": "Quét mã QR trên ví Keystone của bạn",
+          "invalidQRCode": "Mã QR không hợp lệ. Vui lòng quét mã QR đồng bộ của ví phần cứng."
         }
       },
       "ledger": {

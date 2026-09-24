@@ -98,7 +98,8 @@ export const GasAccountTips: React.FC<{
   } else if (shouldSignWithPendingHardware) {
     tip = t('page.signFooterBar.gasAccount.signWithHardwareWalletToUse', {
       brand:
-        pendingHardwareBrandLabel || t('page.home.addAddress.hardwareWallet'),
+        pendingHardwareBrandLabel ||
+        t('page.nextComponent.addAddress.hardwareWallet'),
     });
     button = {
       text: t('page.signFooterBar.signAndSubmitButton'),

@@ -238,7 +238,8 @@
     "time": {
       "mins": "{{t}} min",
       "hours": "{{t}} horas",
-      "hour": "{{t}} hora"
+      "hour": "{{t}} hora",
+      "ago": "há {{time}}"
     },
     "Deleted": "Eliminado",
     "WalletCreated": "Carteira criada",
@@ -317,7 +318,8 @@
     "SavedSeedPhrase": "Guardei a frase-semente.",
     "from": "De",
     "to": "Para",
-    "copiedSuccessfully": "Copiado com sucesso"
+    "copiedSuccessfully": "Copiado com sucesso",
+    "failed": "Falhou"
   },
   "page": {
     "getStart": {
@@ -1339,7 +1341,8 @@
       "keystone": {
         "scan": {
           "description": "Digitalize o código QR na sua carteira Keystone",
-          "title": "Digitalizar Keystone para Ligar"
+          "title": "Digitalizar Keystone para Ligar",
+          "invalidQRCode": "Código QR inválido. Digitalize o código QR de sincronização da carteira de hardware."
         },
         "camera": {
           "title": "Ligar Keystone",

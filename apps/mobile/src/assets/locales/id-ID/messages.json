@@ -1207,7 +1207,8 @@
         },
         "scan": {
           "title": "Pindai Keystone untuk Terhubung",
-          "description": "Pindai kode QR di dompet Keystone Anda"
+          "description": "Pindai kode QR di dompet Keystone Anda",
+          "invalidQRCode": "Kode QR tidak valid. Silakan pindai kode QR sinkronisasi dompet perangkat keras."
         }
       },
       "hd": {
@@ -3460,7 +3461,8 @@
     "time": {
       "mins": "{{t}} menit",
       "hour": "{{t}} jam",
-      "hours": "{{t}} jam"
+      "hours": "{{t}} jam",
+      "ago": "{{time}} yang lalu"
     },
     "themeMode": {
       "option_Dark": "Gelap",
@@ -3554,7 +3556,8 @@
     "SavedSeedPhrase": "Saya telah menyimpan frasa benih",
     "from": "Dari",
     "to": "Ke",
-    "copiedSuccessfully": "Berhasil disalin"
+    "copiedSuccessfully": "Berhasil disalin",
+    "failed": "Gagal"
   },
   "background": {
     "error": {

@@ -1415,7 +1415,8 @@
       "keystone": {
         "scan": {
           "title": "Keystone를 스캔하여 연결하기",
-          "description": "Keystone 지갑에서 QR 코드를 스캔하세요."
+          "description": "Keystone 지갑에서 QR 코드를 스캔하세요.",
+          "invalidQRCode": "유효하지 않은 QR 코드입니다. 하드웨어 월렛의 동기화 QR 코드를 스캔하세요."
         },
         "camera": {
           "title": "Keystone 연결",
@@ -3290,7 +3291,8 @@
     "time": {
       "hour": "{{t}} 시간",
       "hours": "{{t}} 시간",
-      "mins": "{{t}}분"
+      "mins": "{{t}}분",
+      "ago": "{{time}} 전"
     },
     "appDescription": "Ethereum과 EVM을 위한 필수 지갑",
     "folded": "접힘",
@@ -3364,7 +3366,8 @@
     "SavedSeedPhrase": "시드 구문을 저장했습니다",
     "from": "보내는 주소",
     "to": "받는 주소",
-    "copiedSuccessfully": "복사되었습니다"
+    "copiedSuccessfully": "복사되었습니다",
+    "failed": "실패했습니다"
   },
   "native": {
     "biometrics": {
