@@ -178,6 +178,7 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevUIFormShowCase]?: {};
   [RootNames.DevUIAccountShowCase]?: {};
   [RootNames.DevUIComponents2024ShowCase]?: {};
+  [RootNames.DevUISafeSvgMedia]?: {};
   [RootNames.DevUIScreenContainerShowCase]?: {};
   [RootNames.DevUIDapps]?: {};
   [RootNames.DevDataSQLite]?: {};
