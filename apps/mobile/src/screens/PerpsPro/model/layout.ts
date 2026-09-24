@@ -21,10 +21,13 @@ const PERPS_PRO_MARKET_SELECTOR_MIN_HEIGHT = 320;
 const PERPS_PRO_POSITION_TPSL_DESIGN_HEIGHTS = {
   form: 758,
   list: 758,
-  add: 652,
+  // Include both normal 26px PnL hints before the keyboard ever opens.
+  add: 704,
   modify: 604,
   'position-modify': 598,
 } as const;
+const PERPS_PRO_POSITION_TPSL_SUBPAGE_CHROME_HEIGHT = 186;
+const PERPS_PRO_POSITION_TPSL_TAB_CHROME_HEIGHT = 232;
 export type PerpsProPositionTpSlPage =
   keyof typeof PERPS_PRO_POSITION_TPSL_DESIGN_HEIGHTS;
 
@@ -161,10 +164,12 @@ export const getPerpsProMarketSelectorSnapPoint = ({
 };
 
 export const getPerpsProPositionTpSlSnapPoint = ({
+  formBottomPaddingExtra = 0,
   page,
   topInset,
   windowHeight,
 }: {
+  formBottomPaddingExtra?: number;
   page: PerpsProPositionTpSlPage;
   topInset: number;
   windowHeight: number;
@@ -176,8 +181,33 @@ export const getPerpsProPositionTpSlSnapPoint = ({
     0,
     safeWindowHeight - safeTopInset - PERPS_PRO_SHEET_TOP_SAFE_GAP,
   );
+  const extraBottomPadding =
+    (page === 'form' || page === 'add') &&
+    Number.isFinite(formBottomPaddingExtra)
+      ? Math.max(0, formBottomPaddingExtra)
+      : 0;
   return Math.min(
     availableHeight,
-    PERPS_PRO_POSITION_TPSL_DESIGN_HEIGHTS[page],
+    PERPS_PRO_POSITION_TPSL_DESIGN_HEIGHTS[page] + extraBottomPadding,
+  );
+};
+
+export const getPerpsProPositionTpSlFormMinimumHeight = ({
+  presentation,
+  snapPoint,
+}: {
+  presentation: PerpsProPositionTpSlFormPresentation;
+  snapPoint: number;
+}) => {
+  const safeSnapPoint =
+    Number.isFinite(snapPoint) && snapPoint > 0 ? snapPoint : 0;
+  const chromeHeight =
+    presentation === 'subpage' || presentation === 'position-modify'
+      ? PERPS_PRO_POSITION_TPSL_SUBPAGE_CHROME_HEIGHT
+      : PERPS_PRO_POSITION_TPSL_TAB_CHROME_HEIGHT;
+
+  return Math.max(
+    0,
+    safeSnapPoint - PERPS_PRO_BOTTOM_SHEET_HANDLE_HEIGHT - chromeHeight,
   );
 };

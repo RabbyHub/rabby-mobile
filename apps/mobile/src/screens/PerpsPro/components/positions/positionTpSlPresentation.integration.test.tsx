@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import React from 'react';
+import { Keyboard, UIManager } from 'react-native';
 import {
   act,
   cleanupAsync,
@@ -9,7 +10,6 @@ import {
   within,
 } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { PortalProvider } from '@gorhom/portal';
 import type { StorageAdapater } from '@rabby-wallet/persist-store';
 // Instantiate the actual preference service at its storage boundary.
 /* eslint-disable no-runtime-service-imports */
@@ -19,6 +19,13 @@ import { registerService } from '@/core/services/serviceRegistry';
 import type { PerpsPositionViewModel } from '../../model/position';
 import type { PerpsPositionTpSlOrderViewModel } from '../../model/positionTpSl';
 
+jest.mock('react-native/Libraries/ReactNative/UIManager', () => ({
+  __esModule: true,
+  default: {
+    ...require('react-native/jest/mocks/UIManager').default,
+    measureInWindow: jest.fn(),
+  },
+}));
 jest.mock('react-i18next', () => ({
   initReactI18next: { type: '3rdParty', init: () => undefined },
   useTranslation: () => ({
@@ -40,13 +47,15 @@ const mockNativeReactions: Array<{
   prepare: () => any;
   react: (value: any) => void;
 }> = [];
+const mockNativeScrollToEnd = jest.fn();
 const mockNativeSheetState = {
-  animatedKeyboardState: { value: { status: 0 } },
   animatedAnimationState: { value: { status: 2 } },
   animatedScrollableStatus: { value: 1 },
   animatedPosition: { value: 94 },
   animatedSheetHeight: { value: 758 },
   animatedDetentsState: { value: { detents: [94] } },
+  animatedKeyboardState: { value: { status: 2 } },
+  animatedLayoutState: { value: { handleHeight: 40 } },
 };
 jest.mock('react-native-reanimated', () => {
   const base = require('react-native-reanimated/mock');
@@ -65,18 +74,12 @@ jest.mock('@gorhom/bottom-sheet', () => {
   const { View } = require('react-native');
   return {
     ...require('@gorhom/bottom-sheet/mock'),
-    BottomSheetFooter: View,
-    BottomSheetFooterContainer: ({ footerComponent }: any) =>
-      ReactModule.createElement(footerComponent, {
-        animatedFooterPosition: { value: 0 },
-      }),
-    KEYBOARD_STATUS: { SHOWN: 1 },
     ANIMATION_STATUS: { STOPPED: 2 },
     SCROLLABLE_STATUS: { UNLOCKED: 1 },
+    KEYBOARD_STATUS: { HIDDEN: 2 },
     useBottomSheetInternal: () => mockNativeSheetState,
     BottomSheetModal: ReactModule.forwardRef((props: any, ref: any) => {
       const [closing, setClosing] = ReactModule.useState(false);
-      const portalName = ReactModule.useId();
       if (!props.enableDynamicSizing)
         mockNativeSheetState.animatedSheetHeight.value = props.snapPoints[0];
       ReactModule.useImperativeHandle(ref, () => ({
@@ -86,37 +89,26 @@ jest.mock('@gorhom/bottom-sheet', () => {
         snapToIndex: () => undefined,
       }));
       return ReactModule.createElement(
-        require('@gorhom/portal').Portal,
-        { name: portalName },
-        ReactModule.createElement(
-          props.containerComponent || ReactModule.Fragment,
-          null,
-          ReactModule.createElement(
-            View,
-            {
-              ...props,
-              closing,
-              testID: props.enableDynamicSizing
-                ? typeof props.enablePanDownToClose === 'boolean'
-                  ? 'native-confirmation-sheet'
-                  : 'native-other-sheet'
-                : 'native-main-sheet',
-            },
-            props.children,
-            props.footerComponent
-              ? ReactModule.createElement(props.footerComponent, {
-                  animatedFooterPosition: { value: 0 },
-                })
-              : null,
-          ),
-        ),
+        View,
+        {
+          ...props,
+          closing,
+          testID: props.enableDynamicSizing
+            ? typeof props.enablePanDownToClose === 'boolean'
+              ? 'native-confirmation-sheet'
+              : 'native-other-sheet'
+            : 'native-main-sheet',
+        },
+        props.children,
       );
     }),
     BottomSheetScrollView: ReactModule.forwardRef(
       ({ children, ...props }: any, ref: any) => {
         ReactModule.useImperativeHandle(ref, () => ({
           scrollTo: () => undefined,
-          scrollToEnd: () => undefined,
+          scrollToEnd: mockNativeScrollToEnd,
+          getScrollableNode: () => 1001,
+          getInnerViewNode: () => 1002,
         }));
         return ReactModule.createElement(View, props, children);
       },
@@ -177,14 +169,9 @@ jest.mock(
 );
 jest.mock('react-native-linear-gradient', () => require('react-native').View);
 jest.useFakeTimers();
-const { perpsStore } =
-  require('@/hooks/perps/usePerpsStore') as typeof import('@/hooks/perps/usePerpsStore');
-const initialMarketDataMap = perpsStore.getState().marketDataMap;
-const { PerpsProPositionTpSlSheet } =
-  require('./PerpsProPositionTpSlSheet') as typeof import('./PerpsProPositionTpSlSheet');
 const { PerpsProPositionTpSlSheets } =
   require('./PerpsProPositionTpSlSheets') as typeof import('./PerpsProPositionTpSlSheets');
-const { usePerpsProPositionTpSlForm } =
+const { PerpsProPositionTpSlForm } =
   require('./PerpsProPositionTpSlForm') as typeof import('./PerpsProPositionTpSlForm');
 
 const wrapper: React.FC<React.PropsWithChildren> = ({ children }) => (
@@ -193,21 +180,9 @@ const wrapper: React.FC<React.PropsWithChildren> = ({ children }) => (
       frame: { x: 0, y: 0, width: 393, height: 852 },
       insets: { top: 0, left: 0, right: 0, bottom: 0 },
     }}>
-    <PortalProvider>{children}</PortalProvider>
+    {children}
   </SafeAreaProvider>
 );
-const PerpsProPositionTpSlForm = (
-  props: Parameters<typeof usePerpsProPositionTpSlForm>[0],
-) => {
-  const { content, footer } = usePerpsProPositionTpSlForm(props);
-  return (
-    <>
-      {content}
-      {footer}
-    </>
-  );
-};
-
 const market = {
   displayBase: 'BTC',
   displayPair: 'BTCUSDC',
@@ -280,39 +255,9 @@ describe('position TP/SL input source integration', () => {
       }),
     );
   });
-  beforeEach(() => {
-    jest.clearAllTimers();
-    perpsStore.setState({
-      marketDataMap: {
-        BTC: {
-          index: 0,
-          logoUrl: '',
-          name: 'BTC',
-          displayName: 'BTC',
-          quoteAsset: 'USDC',
-          maxLeverage: 50,
-          minLeverage: 1,
-          maxUsdValueSize: '1000000',
-          maintenanceMarginTiers: [],
-          szDecimals: market.szDecimals,
-          pxDecimals: market.pxDecimals,
-          dayBaseVlm: '0',
-          dayNtlVlm: '0',
-          funding: '0',
-          markPx: market.markPrice,
-          midPx: market.markPrice,
-          openInterest: '0',
-          oraclePx: market.markPrice,
-          premium: '0',
-          prevDayPx: '100',
-          dexId: '',
-        },
-      },
-    });
-  });
+  beforeEach(() => jest.clearAllTimers());
   afterEach(async () => {
     await cleanupAsync();
-    perpsStore.setState({ marketDataMap: initialMarketDataMap });
     jest.clearAllTimers();
   });
   afterAll(() => {
@@ -320,112 +265,131 @@ describe('position TP/SL input source integration', () => {
     jest.useRealTimers();
   });
 
-  it.each([false, true])(
-    'submits the live draft from a fixed footer with existing orders=%s and resets on page change',
-    async hasOrders => {
-      const onReview = jest.fn();
-      const props: React.ComponentProps<typeof PerpsProPositionTpSlSheet> = {
-        amountUnit: 'base',
-        cancelingOids: [],
-        confirmedCancelledOids: [],
-        coveredByReview: false,
-        defaultTab: 'partial',
-        market,
-        onCancelOrder: jest.fn(),
-        onClose: jest.fn(),
-        onReview,
-        pending: false,
-        position: {
-          ...position,
-          tpslOrders: hasOrders ? [order('partial')] : [],
-        },
-        visible: true,
-      };
-      const view = render(<PerpsProPositionTpSlSheet {...props} />, {
-        wrapper,
-      });
-      await act(async () => {});
-      const scroll = screen.getByTestId('perps-pro-position-tpsl-scroll');
-      if (hasOrders) {
-        fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
-      }
-      const footer = screen.getByTestId('perps-pro-position-tpsl-footer');
-      expect(
-        within(scroll).queryByTestId('perps-pro-position-tpsl-footer'),
-      ).toBeNull();
-      const triggerId = 'perps-pro-position-tpsl-takeProfit-price';
-      const confirm = () =>
-        screen.getByTestId('perps-pro-position-tpsl-review');
-      fireEvent.press(confirm());
-      act(() => jest.advanceTimersByTime(20));
-      expect(onReview).not.toHaveBeenCalled();
-      fireEvent.changeText(screen.getByTestId(triggerId), '130');
-      fireEvent.changeText(
-        screen.getByTestId('perps-pro-position-tpsl-amount'),
-        '0.25',
-      );
-      expect(screen.getByTestId('perps-pro-position-tpsl-footer')).toBe(footer);
-      expect(screen.getByTestId('perps-pro-position-tpsl-scroll')).toBe(scroll);
-      fireEvent.press(confirm());
-      act(() => jest.advanceTimersByTime(20));
-      expect(onReview).toHaveBeenLastCalledWith({
-        mode: 'add',
-        scope: 'partial',
-        legs: [
-          {
-            kind: 'takeProfit',
-            replaceOid: null,
-            size: '0.25',
-            triggerPrice: '130',
+  it.each(['first', 'add'] as const)(
+    'keeps the %s editor draft and inline Confirm stable while normal hints appear and the keyboard restores',
+    async entry => {
+      const listeners = new Map<string, Set<(event: any) => void>>();
+      const subscription = jest
+        .spyOn(Keyboard, 'addListener')
+        .mockImplementation((name, callback) => {
+          const group = listeners.get(name) ?? new Set();
+          listeners.set(name, group);
+          group.add(callback);
+          return { remove: () => group.delete(callback) };
+        });
+      const measure = jest.spyOn(UIManager, 'measureInWindow');
+      try {
+        mockNativeScrollToEnd.mockClear();
+        const props: React.ComponentProps<typeof PerpsProPositionTpSlSheets> = {
+          amountUnit: 'base',
+          cancelingOids: [],
+          confirmedCancelledOids: [],
+          defaultTab: 'partial',
+          market,
+          onCancelOrder: jest.fn(),
+          onClose: jest.fn(),
+          onCloseReview: jest.fn(),
+          onReview: jest.fn(),
+          onConfirm: jest.fn(),
+          onToggleSkipConfirmation: jest.fn(),
+          pending: false,
+          position: {
+            ...position,
+            tpslOrders: entry === 'add' ? [order('partial')] : [],
           },
-        ],
-      });
-
-      // Review cancellation retains the draft, and the fixed button follows
-      // the same lock/restoration contract as the fields.
-      view.rerender(<PerpsProPositionTpSlSheet {...props} coveredByReview />);
-      onReview.mockClear();
-      fireEvent.press(confirm());
-      act(() => jest.advanceTimersByTime(20));
-      expect(onReview).not.toHaveBeenCalled();
-      view.rerender(<PerpsProPositionTpSlSheet {...props} />);
-      fireEvent(
-        screen.getByTestId('perps-pro-position-tpsl-page-content'),
-        'layout',
-        {},
-      );
-      const observer = mockNativeReactions.at(-1)!;
-      act(() => observer.react(observer.prepare()));
-      expect(screen.getByTestId(triggerId).props.value).toBe('130');
-      fireEvent.press(confirm());
-      act(() => jest.advanceTimersByTime(20));
-      expect(onReview.mock.lastCall?.[0].legs[0].size).toBe('0.25');
-
-      if (hasOrders) {
-        fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-back'));
+          review: null,
+          skipConfirmation: false,
+          visible: true,
+        };
+        render(<PerpsProPositionTpSlSheets {...props} />, { wrapper });
+        await act(async () => {});
+        const scroll = screen.getByTestId('perps-pro-position-tpsl-scroll');
+        if (entry === 'add')
+          fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
+        await act(async () => {});
+        const height = entry === 'add' ? 704 : 758;
+        const expectedViewport = height - 40;
         expect(
-          screen.queryByTestId('perps-pro-position-tpsl-footer'),
-        ).toBeNull();
-        fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
-      } else {
-        fireEvent.press(
-          screen.getByText('page.perps.pro.positions.positionTpsl'),
-        );
-        fireEvent.press(
-          within(screen.getByTestId('perps-pro-position-tpsl-tabs')).getByText(
-            'page.perps.pro.positions.tpsl',
+          screen.getByTestId('native-main-sheet').props.snapPoints,
+        ).toEqual([height]);
+        expect(
+          within(scroll).getByTestId('perps-pro-position-tpsl-review'),
+        ).toBeTruthy();
+        const emit = (name: string) =>
+          act(() => {
+            listeners
+              .get(name)
+              ?.forEach(callback =>
+                callback({ endCoordinates: { height: 300, screenY: 500 } }),
+              );
+          });
+        emit('keyboardDidShow');
+        for (const [kind, price] of [
+          ['takeProfit', '130'],
+          ['stopLoss', '90'],
+        ]) {
+          fireEvent.changeText(
+            screen.getByTestId(`perps-pro-position-tpsl-${kind}-price`),
+            price,
+          );
+          expect(
+            screen.getByTestId(`perps-pro-position-tpsl-${kind}-hint`),
+          ).toBeTruthy();
+          expect(
+            screen.getByTestId('native-main-sheet').props.snapPoints,
+          ).toEqual([height]);
+        }
+        let actualViewport = expectedViewport - 120;
+        measure.mockImplementation((node, callback) =>
+          callback(
+            0,
+            100,
+            393,
+            node === 1001 ? actualViewport : expectedViewport,
           ),
         );
+        fireEvent(scroll, 'layout', {
+          nativeEvent: {
+            layout: { x: 0, y: 0, width: 393, height: actualViewport },
+          },
+        });
+        emit('keyboardDidHide');
+        const observer = mockNativeReactions.at(-1)!;
+        act(() => observer.react(observer.prepare()));
+        act(() => jest.advanceTimersByTime(30));
+        expect(mockNativeScrollToEnd).not.toHaveBeenCalled();
+        actualViewport = expectedViewport;
+        fireEvent(scroll, 'layout', {
+          nativeEvent: {
+            layout: { x: 0, y: 0, width: 393, height: actualViewport },
+          },
+        });
+        act(() => jest.advanceTimersByTime(30));
+        expect(measure).toHaveBeenCalledTimes(2);
+        expect(mockNativeScrollToEnd).not.toHaveBeenCalled();
+        expect(
+          screen.getByTestId('native-main-sheet').props.snapPoints,
+        ).toEqual([height]);
+        expect(screen.getByTestId('perps-pro-position-tpsl-scroll')).toBe(
+          scroll,
+        );
+        expect(
+          screen.getByTestId('perps-pro-position-tpsl-takeProfit-price').props
+            .value,
+        ).toBe('130');
+        expect(
+          screen.getByTestId('perps-pro-position-tpsl-stopLoss-price').props
+            .value,
+        ).toBe('90');
+        expect(
+          within(scroll).getByTestId('perps-pro-position-tpsl-review'),
+        ).toBeTruthy();
+        expect(props.onReview).not.toHaveBeenCalled();
+      } finally {
+        await cleanupAsync();
+        subscription.mockRestore();
+        measure.mockRestore();
       }
-      expect(screen.getByTestId('perps-pro-position-tpsl-scroll')).toBe(scroll);
-      expect(screen.getByTestId(triggerId).props.value).toBe('');
-      expect(
-        screen.getByTestId('perps-pro-position-tpsl-slider-amount'),
-      ).toHaveTextContent(/100%/);
-      onReview.mockClear();
-      fireEvent.press(confirm());
-      act(() => jest.advanceTimersByTime(20));
-      expect(onReview).not.toHaveBeenCalled();
     },
   );
 
