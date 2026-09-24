@@ -11,6 +11,7 @@ import {
 const mockSetPage = jest.fn();
 const mockSetPageWithoutAnimation = jest.fn();
 const mockCancelAnimation = jest.fn();
+const mockScrollTo = jest.fn();
 const mockWithTiming = jest.fn((target: number, _config?: object) => target);
 let mockQueueRunOnJS = false;
 const mockRunOnJSQueue: Array<() => unknown> = [];
@@ -67,6 +68,10 @@ jest.mock('react-native-reanimated', () => {
       createAnimatedComponent: (Component: React.ComponentType) => Component,
     },
     cancelAnimation: (value: unknown) => mockCancelAnimation(value),
+    scrollTo: (...args: unknown[]) => {
+      expect(mockIsOnUI).toBe(true);
+      mockScrollTo(...args);
+    },
     dispatchCommand: (
       ref: { current: Record<string, (...args: unknown[]) => void> },
       name: string,
@@ -370,6 +375,79 @@ describe('PerpsProInfoPager', () => {
       'openOrders',
       expect.any(Number),
     );
+    expect(mockScrollTo).not.toHaveBeenCalled();
+  });
+
+  it('prepares Android offsets once after horizontal authorization without forging actual offsets', () => {
+    const scrollBridge = createScrollBridge([300, 125, 0]);
+    scrollBridge.touchSessionId.value = 1;
+    scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.pending;
+    const onActivateOffset = jest.fn();
+    renderPager({
+      authorizeNativePageGestures: true,
+      onActivateOffset,
+      scrollBridge,
+    });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'dragging' },
+    });
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { position: 0, offset: 0.2 },
+    });
+    expect(mockScrollTo).not.toHaveBeenCalled();
+    scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.horizontal;
+    scrollBridge.horizontalTouchSessionId.value = 1;
+    mockQueueRunOnJS = true;
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { position: 0, offset: 0.4 },
+    });
+    fireEvent(pager, 'pageScroll', {
+      nativeEvent: { position: 0, offset: 0.8 },
+    });
+    expect(mockScrollTo.mock.calls).toEqual([
+      [scrollBridge.targets[1].ref, 0, 300, false],
+      [scrollBridge.targets[2].ref, 0, 300, false],
+    ]);
+    // This native stub deliberately sends no scroll event.
+    expect(scrollBridge.targets.map(target => target.offset.value)).toEqual([
+      300, 125, 0,
+    ]);
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    act(flushMockRunOnJSQueue);
+    expect(onActivateOffset).toHaveBeenCalledWith(125);
+    expect(mockScrollTo).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps unauthorized Android selections from preparing any vertical list', () => {
+    const scrollBridge = createScrollBridge([300, 125, 0]);
+    scrollBridge.touchSessionId.value = 1;
+    scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.pending;
+    renderPager({ authorizeNativePageGestures: true, scrollBridge });
+    const pager = screen.getByTestId('perps-pro-info-pager');
+    fireEvent(pager, 'pageScrollStateChanged', {
+      nativeEvent: { pageScrollState: 'dragging' },
+    });
+    scrollBridge.touchIntent.value = PERPS_PRO_INFO_TOUCH_INTENT.vertical;
+    fireEvent(pager, 'pageSelected', { nativeEvent: { position: 1 } });
+    expect(mockScrollTo).not.toHaveBeenCalled();
+    expect(scrollBridge.activeIndex.value).toBe(0);
+    expect(mockSetPageWithoutAnimation).toHaveBeenCalledWith(0);
+  });
+
+  it('prepares an Android programmatic page on UI before issuing the pager command', () => {
+    const scrollBridge = createScrollBridge([300, 125, 0]);
+    const ref = React.createRef<PerpsProInfoPagerHandle>();
+    renderPager({ authorizeNativePageGestures: true, ref, scrollBridge });
+    mockQueueRunOnUI = true;
+    mockSetPage.mockImplementation(() => {
+      expect(mockScrollTo).toHaveBeenCalledTimes(2);
+    });
+    act(() => ref.current?.setPage('openOrders'));
+    expect(mockScrollTo).not.toHaveBeenCalled();
+    expect(mockSetPage).not.toHaveBeenCalled();
+    act(flushMockRunOnUIQueue);
+    expect(mockSetPage).toHaveBeenCalledWith(1);
   });
 
   it('previews the nearest tab at the midpoint only during a real drag', () => {

@@ -1,4 +1,5 @@
 import { TextInput } from '@/components/Typography';
+import { IS_IOS } from '@/core/native/utils';
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import type {
   NativeSyntheticEvent,
@@ -31,7 +32,7 @@ type PerpsProDecimalTextInputProps = Omit<
   keyboardMinimum?: string | null;
   keyboardScrollTrade?: boolean;
   focusCursorAtEnd?: boolean;
-  focusCursorAtEndMode?: 'initialFocus' | 'untilChange';
+  focusCursorAtEndMode?: 'nativeFocus' | 'initialFocus' | 'untilChange';
   inputComponent?: React.ElementType<
     TextInputProps & React.RefAttributes<TextInput>
   >;
@@ -175,7 +176,19 @@ export const PerpsProDecimalTextInput = React.memo(
         event => {
           isFocusedRef.current = true;
           onKeyboardFocus();
-          if (focusCursorAtEnd && inputValue.length > 0) {
+          if (focusCursorAtEnd && focusCursorAtEndMode === 'nativeFocus') {
+            // Initialize once, then leave selection entirely to native editing.
+            // iOS empty inputs must not queue a zero selection over the first
+            // typed character. Android retains its existing empty anchor.
+            const end = inputValue.length;
+            const endSelection = { end, start: end };
+            if (!IS_IOS || end > 0) {
+              inputRef.current?.setSelection(end, end);
+            }
+            selectionRef.current = endSelection;
+            setSelection(endSelection);
+            releaseForcedCursor();
+          } else if (focusCursorAtEnd && inputValue.length > 0) {
             const end = inputValue.length;
             const endSelection = { end, start: end };
             shouldForceCursorAtEndRef.current = true;
@@ -192,6 +205,7 @@ export const PerpsProDecimalTextInput = React.memo(
         },
         [
           focusCursorAtEnd,
+          focusCursorAtEndMode,
           inputValue.length,
           onFocus,
           releaseForcedCursor,

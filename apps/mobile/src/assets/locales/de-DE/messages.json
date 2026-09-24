@@ -2667,12 +2667,14 @@
           "positionAmount": "Positionsmenge",
           "estimatedPnl": "Geschätzter PnL",
           "skipLimitConfirmation": "Doppelte Bestätigung für Limit-Orders nicht erneut anzeigen.",
+          "skipMarketCloseConfirmation": "Diese Bestätigung zum Schließen einer Position per Marktorder nicht erneut anzeigen.",
           "closeSubmitted": "Schließungsorder übermittelt",
           "closeFailed": "Position konnte nicht geschlossen werden",
           "minimumCloseAmount": "Mindestbetrag zum Schließen: 10 $",
           "closeContextChanged": "Position oder Konto haben sich geändert. Prüfen Sie die Angaben erneut."
         },
         "positionTpsl": {
+          "skipConfirmation": "Diese TP/SL-Bestätigung nicht erneut anzeigen.",
           "addButton": "TP/SL hinzufügen",
           "addTitle": "TP/SL hinzufügen",
           "cancelFailed": "TP/SL-Order konnte nicht storniert werden",
@@ -2683,6 +2685,7 @@
           "duplicatePositionOrders": "Auf dieser Seite bestehen mehrere Positions-TP/SL-Orders. Stornieren Sie sie einzeln oder aktualisieren Sie vor einer Änderung.",
           "estimatedLiquidation": "Geschätzter Liquidationspreis",
           "estimatedPnl": "Geschätzter PnL",
+          "estimatedPnlDescription": "Geschätzter PnL <2>{{pnl}} {{quoteAsset}}(ROI: {{roi}}%)</2>",
           "estimatedPnlShort": "Geschätzter PnL",
           "invalidOrder": "Prüfen Sie TP/SL-Preis und -Menge",
           "invalidTrigger": "Der Auslösepreis ist für den aktuellen Markpreis ungültig",

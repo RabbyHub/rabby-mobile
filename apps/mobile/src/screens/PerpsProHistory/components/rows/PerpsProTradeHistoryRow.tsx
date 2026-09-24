@@ -8,7 +8,10 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { PerpsProTradeHistoryRow } from '../../types';
-import { formatPerpsProHistoryAssetAmount } from '../historyRowFormatters';
+import {
+  formatPerpsProHistoryAssetAmount,
+  getPerpsProHistorySignedTone,
+} from '../historyRowFormatters';
 import { PerpsProHistoryRowLayout } from '../PerpsProHistoryRowPrimitives';
 
 export const PerpsProTradeHistoryRowView: React.FC<{
@@ -56,6 +59,7 @@ export const PerpsProTradeHistoryRowView: React.FC<{
           label: `${t('page.perps.pro.history.fields.realizedPnl')} (${
             row.market.quoteAsset
           })`,
+          tone: getPerpsProHistorySignedTone(row.netRealizedPnl),
           value: formatPerpsProDecimal(
             row.netRealizedPnl,
             isPerpsProStableAsset(row.market.quoteAsset) ? 2 : 8,

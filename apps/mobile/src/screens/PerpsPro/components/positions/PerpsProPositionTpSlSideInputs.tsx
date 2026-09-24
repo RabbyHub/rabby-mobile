@@ -1,10 +1,11 @@
-import { Text } from '@/components/Typography';
+import { formatPositionTpSlSignedValue } from '../../utils/positionTpSlFormatting';
+import { Text, type TextInput } from '@/components/Typography';
+import { IS_ANDROID } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
+import React, { useCallback, useRef } from 'react';
 import { View } from 'react-native';
 import { Trans, useTranslation } from 'react-i18next';
-import BigNumber from 'bignumber.js';
 
 import type { PerpsProPositionTpSlMode } from '@/core/services/perpsService';
 
@@ -12,15 +13,13 @@ import type { PerpsPositionViewModel } from '../../model/position';
 import {
   calculatePositionTpSlEstimatedPnl,
   calculatePositionTpSlRoi,
+  getPositionTpSlValueTone,
   type PerpsPositionTpSlKind,
   type PerpsPositionTpSlMarketSnapshot,
 } from '../../model/positionTpSl';
 import { getPerpsProPriceInputMaxDecimals } from '../../model/trade';
-import {
-  formatPerpsProPrice,
-  formatPerpsProSignedDecimal,
-} from '../../utils/format';
 import { PerpsProPositionTpSlInput } from './PerpsProPositionTpSlInput';
+import type { PerpsProSheetKeyboardRevealGroup } from '../common/usePerpsProSheetKeyboard';
 
 export const PerpsProPositionTpSlSideInputs: React.FC<{
   addMode: boolean;
@@ -28,6 +27,8 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
   errorMessage?: string | null;
   highlightInvalidFields?: boolean;
   kind: PerpsPositionTpSlKind;
+  keyboardReveal?: PerpsProSheetKeyboardRevealGroup;
+  inputSource: 'mode' | 'trigger';
   market: PerpsPositionTpSlMarketSnapshot;
   onChangeModeMagnitude: (value: string) => void;
   onChangeTrigger: (value: string) => void;
@@ -46,6 +47,8 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
     errorMessage = null,
     highlightInvalidFields = false,
     kind,
+    keyboardReveal,
+    inputSource,
     market,
     onChangeModeMagnitude,
     onChangeTrigger,
@@ -60,6 +63,11 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
   }) => {
     const { styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
+    const revealRef = useRef<View>(null);
+    const registerInput = useCallback(
+      (input: TextInput) => keyboardReveal?.registerInput(input, revealRef),
+      [keyboardReveal],
+    );
     const derivedRoi = calculatePositionTpSlRoi({
       direction: position.direction,
       entryPrice: position.entryPrice,
@@ -72,13 +80,22 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
       size: size || '',
       triggerPrice: value,
     });
-    const estimatedPnlValue = new BigNumber(estimatedPnl ?? 0);
+    const pnlTone = getPositionTpSlValueTone(estimatedPnl);
     const estimatedPnlTone =
-      !estimatedPnl || estimatedPnlValue.isZero()
+      pnlTone === 'neutral'
         ? styles.fieldHintEmphasis
-        : estimatedPnlValue.isPositive()
+        : pnlTone === 'positive'
         ? styles.fieldHintPositive
         : styles.fieldHintNegative;
+    // Price-owned drafts keep their actual sign. Direct SL magnitude input
+    // deliberately returns to the existing loss-side price calculation.
+    const negative =
+      inputSource === 'mode'
+        ? kind === 'stopLoss' &&
+          getPositionTpSlValueTone(rawMagnitude) === 'positive'
+        : getPositionTpSlValueTone(
+            selectedMode === 'pnl' ? estimatedPnl : derivedRoi,
+          ) === 'negative';
     const triggerLabel = addMode
       ? t(
           kind === 'takeProfit'
@@ -96,20 +113,28 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
     const modeUnit = selectedMode === 'roi' ? '%' : market.quoteAsset;
     const showDescription =
       (value && validationKind !== 'empty') ||
-      (!value &&
-        showEmptyDescription &&
-        (validationKind === 'empty' || !!rawMagnitude));
+      (!value && showEmptyDescription && !!rawMagnitude);
     const showError =
       validationKind === 'invalid' && (!!value || !!errorMessage);
 
-    return (
+    const content = (
       <>
         <View style={styles.sideInputs}>
           <PerpsProPositionTpSlInput
+            registerKeyboardRevealInput={
+              keyboardReveal ? registerInput : undefined
+            }
             accessibilityLabel={triggerLabel}
             disabled={disabled}
             invalid={highlightInvalidFields && showError}
-            label={triggerLabel}
+            label={`${t('page.perps.pro.positionTpsl.triggerPrice')} (${
+              market.quoteAsset
+            })`}
+            placeholder={t(
+              kind === 'takeProfit'
+                ? 'page.perps.pro.positionTpsl.takeProfitTrigger'
+                : 'page.perps.pro.positionTpsl.stopLossTrigger',
+            )}
             maxDecimals={getPerpsProPriceInputMaxDecimals(market.szDecimals)}
             onChangeText={onChangeTrigger}
             priceSzDecimals={market.szDecimals}
@@ -117,12 +142,15 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
             value={value}
           />
           <PerpsProPositionTpSlInput
+            registerKeyboardRevealInput={
+              keyboardReveal ? registerInput : undefined
+            }
             accessibilityLabel={modeLabel}
             disabled={disabled}
             invalid={highlightInvalidFields && showError}
             label={modeLabel}
             maxDecimals={2}
-            negative={kind === 'stopLoss'}
+            negative={negative}
             onChangeText={onChangeModeMagnitude}
             onPressMode={onPressMode}
             testID={`perps-pro-position-tpsl-${kind}-mode-input`}
@@ -138,24 +166,20 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
               <Text style={styles.fieldHint}>
                 <Trans
                   components={{
-                    1: <Text style={styles.fieldHintEmphasis} />,
                     2: <Text style={estimatedPnlTone} />,
                   }}
-                  i18nKey="page.perps.pro.positionTpsl.triggerDescription"
+                  i18nKey="page.perps.pro.positionTpsl.estimatedPnlDescription"
                   t={t}
                   values={{
                     pnl:
                       !value || estimatedPnl == null
                         ? '--'
-                        : formatPerpsProSignedDecimal(estimatedPnl, 2),
+                        : formatPositionTpSlSignedValue(estimatedPnl),
                     quoteAsset: market.quoteAsset,
                     roi:
                       !value || derivedRoi == null
                         ? '--'
-                        : formatPerpsProSignedDecimal(derivedRoi, 2),
-                    trigger: value
-                      ? formatPerpsProPrice(value, market.pxDecimals)
-                      : '--',
+                        : formatPositionTpSlSignedValue(derivedRoi),
                   }}
                 />
               </Text>
@@ -170,14 +194,29 @@ export const PerpsProPositionTpSlSideInputs: React.FC<{
         ) : null}
       </>
     );
+    // Keep the original iOS host tree. Android opts into measured input + hint
+    // bounds; the same 8px gap previously belonged to the parent sideSection.
+    return IS_ANDROID && keyboardReveal ? (
+      <View
+        ref={revealRef}
+        collapsable={false}
+        onLayout={keyboardReveal.onLayout}
+        style={styles.revealGroup}
+        testID={`perps-pro-position-tpsl-${kind}-reveal-group`}>
+        {content}
+      </View>
+    ) : (
+      content
+    );
   },
 );
 
 PerpsProPositionTpSlSideInputs.displayName = 'PerpsProPositionTpSlSideInputs';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  sideInputs: { flexDirection: 'row', gap: 4 },
-  fieldHintRow: { gap: 4, minHeight: 32 },
+  revealGroup: { gap: 8 },
+  sideInputs: { flexDirection: 'row', gap: 8 },
+  fieldHintRow: { marginTop: 2 },
   fieldHint: {
     color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',

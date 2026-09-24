@@ -1,9 +1,16 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE } from '../common/perpsProDialogVisual';
 
-jest.mock('@/assets/icons/header/back-cc.svg', () => () => null);
+jest.mock(
+  '@/assets/icons/header/back-cc.svg',
+  () => (props: object) =>
+    require('react').createElement(require('react-native').View, {
+      ...props,
+      testID: 'back-glyph',
+    }),
+);
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
@@ -55,7 +62,6 @@ describe('PerpsProPositionTpSlHeader', () => {
 
     const header = screen.getByTestId('perps-pro-position-tpsl-header-main');
     expect(StyleSheet.flatten(header.props.style)).toMatchObject({
-      height: 146,
       paddingHorizontal: 16,
       paddingTop: 8,
     });
@@ -63,12 +69,12 @@ describe('PerpsProPositionTpSlHeader', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-pair-main').props.style,
       ),
-    ).toMatchObject({ marginTop: 12 });
+    ).toMatchObject({ alignItems: 'flex-start', gap: 4 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-metrics-main').props.style,
       ),
-    ).toMatchObject({ gap: 8, marginTop: 16 });
+    ).toMatchObject({ gap: 10, marginTop: 10 });
     expect(screen.getByText('BTCUSDC')).toBeTruthy();
     expect(
       StyleSheet.flatten(screen.getByText('tpsl').props.style),
@@ -122,33 +128,68 @@ describe('PerpsProPositionTpSlHeader', () => {
     expect(screen.getByText('80.00')).toBeTruthy();
   });
 
-  it('renders a 56px subpage header and delegates back', () => {
-    const onBack = jest.fn();
-    render(
-      <PerpsProPositionTpSlPageHeader onBack={onBack} title="Add TP/SL" />,
-    );
+  it.each([
+    'TP/SL',
+    'Modify Order',
+    '修改仓位止盈止损订单',
+    'Take-Profit-/Stop-Loss-Order ändern',
+  ])(
+    'reserves a full header-height back target beside the non-interactive title: %s',
+    title => {
+      const onBack = jest.fn();
+      render(<PerpsProPositionTpSlPageHeader onBack={onBack} title={title} />);
 
-    expect(screen.getByText('Add TP/SL')).toBeTruthy();
-    expect(
-      StyleSheet.flatten(screen.getByText('Add TP/SL').props.style),
-    ).toMatchObject({
-      ...PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
-      fontSize: 20,
-      lineHeight: 24,
-      textAlign: 'center',
-      maxWidth: 260,
-    });
-    const back = screen.getByTestId('perps-pro-position-tpsl-back');
-    expect(StyleSheet.flatten(back.props.style)).toMatchObject({
-      height: 40,
-      width: 40,
-      left: 0,
-      top: 8,
-    });
-    expect(back.props.hitSlop).toBe(8);
-    fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-back'));
-    expect(onBack).toHaveBeenCalledTimes(1);
-  });
+      expect(screen.getByText(title)).toBeTruthy();
+      expect(
+        StyleSheet.flatten(screen.getByText(title).props.style),
+      ).toMatchObject({
+        ...PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
+        fontSize: 20,
+        lineHeight: 24,
+        textAlign: 'center',
+        maxWidth: 260,
+      });
+      const back = screen.getByTestId('perps-pro-position-tpsl-back');
+      expect(StyleSheet.flatten(back.props.style)).toMatchObject({
+        height: 56,
+        width: 72,
+        paddingBottom: 16,
+        paddingRight: 32,
+        left: 0,
+        top: 0,
+      });
+      expect(back.props.hitSlop).toBeUndefined();
+      const headerStyle = StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-page-header').props.style,
+      );
+      const backStyle = StyleSheet.flatten(back.props.style);
+      // Figma: handle 40 + title offset 8, title 24, then gap 24.
+      const titleTop =
+        (headerStyle.height - headerStyle.paddingBottom - 24) / 2;
+      expect(40 + titleTop).toBe(48);
+      expect(headerStyle.height - titleTop - 24).toBe(24);
+      expect(40 + headerStyle.height).toBe(96);
+      // The entire real target fits its parent; no clipped outside hitSlop.
+      expect(backStyle.height).toBeLessThanOrEqual(headerStyle.height);
+      expect((backStyle.width - backStyle.paddingRight - 24) / 2).toBe(8);
+      expect((backStyle.height - backStyle.paddingBottom - 24) / 2).toBe(8);
+      expect(screen.getByTestId('back-glyph').props).toMatchObject({
+        height: 24,
+        width: 24,
+      });
+      const titleContainer = screen
+        .UNSAFE_getAllByType(View)
+        .find(node => node.props.pointerEvents === 'none')!;
+      expect(titleContainer.props.pointerEvents).toBe('none');
+      expect(StyleSheet.flatten(titleContainer.props.style)).toMatchObject({
+        paddingHorizontal: 80,
+        width: '100%',
+      });
+      expect(screen.getByText(title).props.numberOfLines).toBe(1);
+      fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-back'));
+      expect(onBack).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it('keeps the pair information in the no-order header', () => {
     render(
@@ -165,7 +206,6 @@ describe('PerpsProPositionTpSlHeader', () => {
         screen.getByTestId('perps-pro-position-tpsl-header-empty').props.style,
       ),
     ).toMatchObject({
-      height: 146,
       paddingHorizontal: 16,
       paddingTop: 8,
     });
@@ -173,12 +213,12 @@ describe('PerpsProPositionTpSlHeader', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-metrics-empty').props.style,
       ),
-    ).toMatchObject({ gap: 8, marginTop: 16 });
+    ).toMatchObject({ gap: 10, marginTop: 10 });
     expect(
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-position-tpsl-pair-empty').props.style,
       ),
-    ).toMatchObject({ marginTop: 12 });
+    ).toMatchObject({ alignItems: 'flex-start', gap: 4 });
     expect(screen.getByText('BTCUSDC')).toBeTruthy();
     expect(screen.getByText('xyz')).toBeTruthy();
     expect(screen.getByText('long 10x')).toBeTruthy();

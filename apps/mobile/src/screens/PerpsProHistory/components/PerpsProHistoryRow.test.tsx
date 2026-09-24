@@ -103,6 +103,30 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
     onShowFeeExplanation.mockClear();
   });
 
+  it.each([
+    ['12.5', '0.5', '12.00', 'green-default'],
+    ['0.1', '0.5', '-0.40', 'red-default'],
+    ['0', '0.5', '-0.50', 'red-default'],
+    ['0', '-0.5', '0.50', 'green-default'],
+    ['0.5', '0.5', '0.00', 'neutral-title-1'],
+  ])(
+    'colors net realized PnL after fees (%s minus %s)',
+    (closedPnl, fee, value, color) => {
+      render(
+        <PerpsProHistoryRowView
+          amountUnit="base"
+          onShowFeeExplanation={onShowFeeExplanation}
+          row={mapPerpsProTradeHistoryFact({ ...fill, closedPnl, fee }, {})}
+        />,
+      );
+      // Realized PnL follows Fee, which can have the same formatted value.
+      const values = screen.getAllByText(value);
+      expect(
+        StyleSheet.flatten(values[values.length - 1]!.props.style).color,
+      ).toBe(color);
+    },
+  );
+
   it('keeps history cards distinct from the page surface in both themes', () => {
     expect(ThemeColors2024.light['neutral-card-1']).not.toBe(
       ThemeColors2024.light['neutral-bg-0'],
