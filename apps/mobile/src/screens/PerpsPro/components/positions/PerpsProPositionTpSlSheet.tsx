@@ -1,4 +1,8 @@
 import AutoLockView from '@/components/AutoLockView';
+import {
+  BOTTOM_BUTTON_BOTTOM_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { IS_ANDROID } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
@@ -7,6 +11,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   ANIMATION_STATUS,
+  KEYBOARD_STATUS,
   SCROLLABLE_STATUS,
   useBottomSheetInternal,
   BottomSheetScrollView,
@@ -22,16 +27,13 @@ import React, {
 } from 'react';
 import {
   Keyboard,
-  Platform,
+  UIManager,
+  type LayoutChangeEvent,
   Pressable,
   useWindowDimensions,
   View,
 } from 'react-native';
-import {
-  runOnJS,
-  useAnimatedReaction,
-  useSharedValue,
-} from 'react-native-reanimated';
+import { runOnJS, useAnimatedReaction } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -70,6 +72,8 @@ import { usePerpsProSheetKeyboard } from '../common/usePerpsProSheetKeyboard';
 import { PerpsProSheetKeyboardAnimation } from '../common/PerpsProSheetKeyboardAnimation';
 
 type PartialPage = 'add' | 'list' | 'modify';
+type KeyboardRestoreRequest = { pageKey: string };
+const LAYOUT_TOLERANCE = 1;
 
 export const PerpsProPositionTpSlSheet: React.FC<{
   amountUnit: PerpsProTradeAmountUnit;
@@ -121,19 +125,22 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       isOrderList: false,
       coveredByReview,
       visible,
+      interactionLocked: false,
+      accessoryInset: 0,
     });
     const keyboardSessionActiveRef = useRef(false);
     const scrollFrameRef = useRef<number | null>(null);
-    const restingSheetPositionRef = useRef<number | null>(null);
-    const animatedSheetPosition = useSharedValue(Number.NaN);
+    const [keyboardRestoreRequest, setKeyboardRestoreRequest] =
+      useState<KeyboardRestoreRequest | null>(null);
+    const pendingKeyboardRestore = useRef<KeyboardRestoreRequest | null>(null);
+    const restoredViewportHeight = useRef<number | null>(null);
+    const viewportHeight = useRef(0);
+    const scrollMeasurementVersion = useRef(0);
     const keyboard = usePerpsProSheetKeyboard({
       visible: visible && !coveredByReview,
       scrollViewRef,
     });
     const { cancelMeasurement, ensureInputVisible } = keyboard;
-    const restingSheetPosition = useSharedValue(Number.NaN);
-    const androidScrollAfterKeyboardRestore = useSharedValue(false);
-    const keyboardRestorePage = useSharedValue('');
     const { height: windowHeight } = useWindowDimensions();
     const stableWindowHeight = useRef(windowHeight).current;
     const insets = useSafeAreaInsets();
@@ -342,12 +349,18 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       isOrderList,
       coveredByReview,
       visible,
+      interactionLocked,
+      accessoryInset: keyboard.accessoryInset,
     };
     const snapPoint = getPerpsProPositionTpSlSnapPoint({
       page,
+      formBottomPaddingExtra:
+        getBottomButtonBottomOffset(insets.bottom) -
+        BOTTOM_BUTTON_BOTTOM_OFFSET,
       topInset: insets.top,
       windowHeight: stableWindowHeight,
     });
+    const snapPoints = useMemo(() => [snapPoint], [snapPoint]);
     const getFormMinimumHeight = useCallback(
       (presentation: PerpsProPositionTpSlFormPresentation) =>
         getPerpsProPositionTpSlFormMinimumHeight({
@@ -356,161 +369,164 @@ export const PerpsProPositionTpSlSheet: React.FC<{
         }),
       [snapPoint],
     );
-    const previousSnapPointRef = useRef(snapPoint);
-
     const cancelScheduledScroll = useCallback(() => {
-      if (scrollFrameRef.current === null) {
-        return;
+      scrollMeasurementVersion.current++;
+      if (scrollFrameRef.current !== null) {
+        cancelAnimationFrame(scrollFrameRef.current);
+        scrollFrameRef.current = null;
       }
-      cancelAnimationFrame(scrollFrameRef.current);
-      scrollFrameRef.current = null;
     }, []);
-    const scheduleScrollToEnd = useCallback(
-      (animated: boolean, ownerKey = pageStateRef.current.key) => {
-        cancelScheduledScroll();
-        const owner = pageStateRef.current;
-        const scrollView = scrollViewRef.current;
-        if (
-          owner.key !== ownerKey ||
-          owner.isOrderList ||
-          owner.coveredByReview ||
-          !owner.visible
-        )
-          return;
-        scrollFrameRef.current = requestAnimationFrame(() => {
-          scrollFrameRef.current = null;
-          const current = pageStateRef.current;
-          if (
-            current.key !== owner.key ||
-            current.coveredByReview ||
-            !current.visible ||
-            scrollView !== scrollViewRef.current
-          )
-            return;
-          scrollView?.scrollToEnd({ animated });
-        });
-      },
-      [cancelScheduledScroll],
-    );
-    const handleSheetChange = useCallback(
-      (index: number, sheetPosition: number) => {
-        if (index !== 0 || keyboardSessionActiveRef.current) {
-          return;
-        }
-        const nextRestingPosition = sheetPosition;
-        restingSheetPositionRef.current = nextRestingPosition;
-        restingSheetPosition.value = nextRestingPosition;
-      },
-      [restingSheetPosition],
-    );
-
-    useEffect(() => {
-      const previousSnapPoint = previousSnapPointRef.current;
-      previousSnapPointRef.current = snapPoint;
+    const cancelKeyboardRestore = useCallback(() => {
+      cancelScheduledScroll();
+      pendingKeyboardRestore.current = null;
+      restoredViewportHeight.current = null;
+      setKeyboardRestoreRequest(null);
+    }, [cancelScheduledScroll]);
+    const revealFormBottom = useCallback(() => {
+      cancelScheduledScroll();
+      const request = pendingKeyboardRestore.current;
+      const expectedHeight = restoredViewportHeight.current;
+      const scrollView = scrollViewRef.current;
+      const isCurrent = () => {
+        const current = pageStateRef.current;
+        return (
+          request !== null &&
+          pendingKeyboardRestore.current === request &&
+          request.pageKey === current.key &&
+          !current.isOrderList &&
+          !current.interactionLocked &&
+          current.visible &&
+          current.accessoryInset === 0 &&
+          !keyboardSessionActiveRef.current &&
+          restoredViewportHeight.current === expectedHeight &&
+          scrollViewRef.current === scrollView
+        );
+      };
+      // The sheet position and its independently animated content viewport
+      // must both be restored. Layout events retry this check, never a timer.
       if (
-        previousSnapPoint === snapPoint ||
-        restingSheetPositionRef.current === null
+        !isCurrent() ||
+        !scrollView ||
+        expectedHeight == null ||
+        Math.abs(viewportHeight.current - expectedHeight) > LAYOUT_TOLERANCE
       ) {
         return;
       }
-      const nextRestingPosition =
-        restingSheetPositionRef.current + previousSnapPoint - snapPoint;
-      restingSheetPositionRef.current = nextRestingPosition;
-      restingSheetPosition.value = nextRestingPosition;
-    }, [restingSheetPosition, snapPoint]);
-
-    useAnimatedReaction(
-      () => ({
-        current: animatedSheetPosition.value,
-        pending: androidScrollAfterKeyboardRestore.value,
-        pageKey: keyboardRestorePage.value,
-        resting: restingSheetPosition.value,
-      }),
-      state => {
-        if (
-          state.pending &&
-          Number.isFinite(state.resting) &&
-          state.current === state.resting
-        ) {
-          androidScrollAfterKeyboardRestore.value = false;
-          runOnJS(scheduleScrollToEnd)(false, state.pageKey);
-        }
-      },
-      [scheduleScrollToEnd],
-    );
-
-    useEffect(() => {
-      if (!visible) {
-        keyboardSessionActiveRef.current = false;
-        androidScrollAfterKeyboardRestore.value = false;
-        restingSheetPositionRef.current = null;
-        restingSheetPosition.value = Number.NaN;
-        cancelScheduledScroll();
-        return;
-      }
-
-      const keyboardShowSubscription = Keyboard.addListener(
-        'keyboardDidShow',
-        () => {
-          keyboardSessionActiveRef.current = true;
-          setKeyboardVisible(true);
-          keyboardPageRef.current = pageStateRef.current.key;
-          androidScrollAfterKeyboardRestore.value = false;
-          cancelScheduledScroll();
-        },
-      );
-      const keyboardHideSubscription = Keyboard.addListener(
-        'keyboardDidHide',
-        () => {
-          const wasActive = keyboardSessionActiveRef.current;
-          keyboardSessionActiveRef.current = false;
-          setKeyboardVisible(false);
-          const current = pageStateRef.current;
+      const version = scrollMeasurementVersion.current;
+      const measurementIsCurrent = () =>
+        version === scrollMeasurementVersion.current && isCurrent();
+      scrollFrameRef.current = requestAnimationFrame(() => {
+        scrollFrameRef.current = null;
+        if (!measurementIsCurrent()) return;
+        const viewportNode = scrollView.getScrollableNode();
+        const contentNode = scrollView.getInnerViewNode();
+        if (viewportNode == null || contentNode == null) return;
+        UIManager.measureInWindow(viewportNode, (_x, top, width, height) => {
           if (
-            !wasActive ||
-            keyboardPageRef.current !== current.key ||
-            current.isOrderList ||
-            current.coveredByReview
-          )
-            return;
-          if (Platform.OS === 'android') {
-            keyboardRestorePage.value = current.key;
-            androidScrollAfterKeyboardRestore.value = true;
+            !measurementIsCurrent() ||
+            width <= 0 ||
+            height <= 0 ||
+            Math.abs(height - expectedHeight) > LAYOUT_TOLERANCE
+          ) {
             return;
           }
-          scheduleScrollToEnd(true);
-        },
-      );
+          UIManager.measureInWindow(
+            contentNode,
+            (_contentX, contentTop, contentWidth, contentHeight) => {
+              if (
+                !measurementIsCurrent() ||
+                contentWidth <= 0 ||
+                contentHeight <= 0
+              ) {
+                return;
+              }
+              // These measurements share window coordinates, including the
+              // native scroll offset. Already-visible content needs no scroll.
+              const clipped =
+                contentTop + contentHeight > top + height + LAYOUT_TOLERANCE;
+              cancelKeyboardRestore();
+              if (clipped) scrollView.scrollToEnd({ animated: false });
+            },
+          );
+        });
+      });
+    }, [cancelKeyboardRestore, cancelScheduledScroll]);
+    const handleKeyboardRestoreReady = useCallback(
+      (request: KeyboardRestoreRequest, height: number | null) => {
+        if (pendingKeyboardRestore.current !== request) return;
+        restoredViewportHeight.current = height;
+        revealFormBottom();
+      },
+      [revealFormBottom],
+    );
+    const handleScrollLayout = useCallback(
+      (event: LayoutChangeEvent) => {
+        viewportHeight.current = event.nativeEvent.layout.height;
+        ensureInputVisible();
+        revealFormBottom();
+      },
+      [ensureInputVisible, revealFormBottom],
+    );
+    const handleContentSizeChange = useCallback(() => {
+      ensureInputVisible();
+      revealFormBottom();
+    }, [ensureInputVisible, revealFormBottom]);
+    const handleScrollBeginDrag = useCallback(() => {
+      cancelMeasurement();
+      cancelKeyboardRestore();
+    }, [cancelMeasurement, cancelKeyboardRestore]);
 
+    useEffect(() => {
+      if (!visible) return;
+      const show = Keyboard.addListener('keyboardDidShow', () => {
+        keyboardSessionActiveRef.current = true;
+        setKeyboardVisible(true);
+        keyboardPageRef.current = pageStateRef.current.key;
+        cancelKeyboardRestore();
+      });
+      const hide = Keyboard.addListener('keyboardDidHide', () => {
+        const wasActive = keyboardSessionActiveRef.current;
+        keyboardSessionActiveRef.current = false;
+        setKeyboardVisible(false);
+        const current = pageStateRef.current;
+        if (
+          !wasActive ||
+          keyboardPageRef.current !== current.key ||
+          current.isOrderList ||
+          current.interactionLocked ||
+          !current.visible
+        ) {
+          return;
+        }
+        const request = { pageKey: current.key };
+        pendingKeyboardRestore.current = request;
+        setKeyboardRestoreRequest(request);
+      });
       return () => {
         keyboardSessionActiveRef.current = false;
-        androidScrollAfterKeyboardRestore.value = false;
-        restingSheetPositionRef.current = null;
-        restingSheetPosition.value = Number.NaN;
-        keyboardShowSubscription.remove();
-        keyboardHideSubscription.remove();
+        pendingKeyboardRestore.current = null;
+        restoredViewportHeight.current = null;
+        show.remove();
+        hide.remove();
         cancelScheduledScroll();
       };
-    }, [
-      androidScrollAfterKeyboardRestore,
-      cancelScheduledScroll,
-      restingSheetPosition,
-      scheduleScrollToEnd,
-      keyboardRestorePage,
-      visible,
-    ]);
+    }, [cancelKeyboardRestore, cancelScheduledScroll, visible]);
 
     useLayoutEffect(() => {
-      cancelScheduledScroll();
+      cancelKeyboardRestore();
       cancelMeasurement();
-      androidScrollAfterKeyboardRestore.value = false;
       keyboardPageRef.current = null;
       scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+    }, [pageKey, cancelKeyboardRestore, cancelMeasurement]);
+    useLayoutEffect(() => {
+      if (interactionLocked || !visible) cancelKeyboardRestore();
+      else revealFormBottom();
     }, [
-      pageKey,
-      cancelScheduledScroll,
-      cancelMeasurement,
-      androidScrollAfterKeyboardRestore,
+      interactionLocked,
+      visible,
+      keyboard.accessoryInset,
+      cancelKeyboardRestore,
+      revealFormBottom,
     ]);
     useLayoutEffect(() => {
       if (wasCoveredRef.current && !coveredByReview && visible) {
@@ -518,17 +534,8 @@ export const PerpsProPositionTpSlSheet: React.FC<{
         setRestoring(true);
       }
       wasCoveredRef.current = coveredByReview;
-      if (coveredByReview || !visible) {
-        cancelScheduledScroll();
-        androidScrollAfterKeyboardRestore.value = false;
-        keyboardPageRef.current = null;
-      }
-    }, [
-      coveredByReview,
-      visible,
-      cancelScheduledScroll,
-      androidScrollAfterKeyboardRestore,
-    ]);
+      if (coveredByReview || !visible) keyboardPageRef.current = null;
+    }, [coveredByReview, visible]);
     const handlePageLayout = useCallback(() => {
       if (pageStateRef.current.key !== pageKey) return;
       setLaidOutPage(pageKey);
@@ -596,7 +603,6 @@ export const PerpsProPositionTpSlSheet: React.FC<{
           linearGradientType: 'bg0',
         })}
         android_keyboardInputMode="adjustPan"
-        animatedPosition={animatedSheetPosition}
         backdropComponent={renderBackdrop}
         backgroundStyle={styles.background}
         enableDynamicSizing={false}
@@ -605,14 +611,20 @@ export const PerpsProPositionTpSlSheet: React.FC<{
         handleStyle={styles.handle}
         keyboardBehavior="interactive"
         keyboardBlurBehavior="restore"
-        onChange={handleSheetChange}
         onDismiss={handleDismiss}
-        snapPoints={[snapPoint]}
+        snapPoints={snapPoints}
         style={styles.modal}>
         <PerpsProKeyboardSheetContext.Provider value={keyboard.sheetId}>
           {IS_ANDROID && visible && !coveredByReview ? (
             <PerpsProSheetKeyboardAnimation
               onReadyChange={keyboard.onSheetReadyChange}
+            />
+          ) : null}
+          {keyboardRestoreRequest ? (
+            <KeyboardRestorationObserver
+              request={keyboardRestoreRequest}
+              onReadyChange={handleKeyboardRestoreReady}
+              targetHeight={snapPoint}
             />
           ) : null}
           {restoreLayoutReady ? (
@@ -649,9 +661,10 @@ export const PerpsProPositionTpSlSheet: React.FC<{
                   bounces={!isOrderList}
                   overScrollMode="never"
                   scrollEnabled={!interactionLocked}
-                  onLayout={ensureInputVisible}
-                  onContentSizeChange={ensureInputVisible}
-                  onScrollBeginDrag={cancelMeasurement}
+                  onLayout={handleScrollLayout}
+                  onContentSizeChange={handleContentSizeChange}
+                  onScrollBeginDrag={handleScrollBeginDrag}
+                  onTouchStart={cancelKeyboardRestore}
                   keyboardShouldPersistTaps="handled"
                   showsVerticalScrollIndicator={false}
                   testID="perps-pro-position-tpsl-scroll">
@@ -756,6 +769,62 @@ export const PerpsProPositionTpSlSheet: React.FC<{
 );
 
 PerpsProPositionTpSlSheet.displayName = 'PerpsProPositionTpSlSheet';
+
+/** Read the native keyboard/detent gate; content layout is checked separately. */
+const KeyboardRestorationObserver = ({
+  request,
+  onReadyChange,
+  targetHeight,
+}: {
+  request: KeyboardRestoreRequest;
+  onReadyChange: (
+    request: KeyboardRestoreRequest,
+    height: number | null,
+  ) => void;
+  targetHeight: number;
+}) => {
+  const {
+    animatedAnimationState,
+    animatedScrollableStatus,
+    animatedPosition,
+    animatedDetentsState,
+    animatedSheetHeight,
+    animatedKeyboardState,
+    animatedLayoutState,
+  } = useBottomSheetInternal();
+  const mounted = useRef(false);
+  useLayoutEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  const publish = useCallback(
+    (height: number | null) => {
+      if (mounted.current) onReadyChange(request, height);
+    },
+    [onReadyChange, request],
+  );
+  useAnimatedReaction(
+    () => {
+      const handleHeight = animatedLayoutState.value.handleHeight;
+      const ready =
+        animatedKeyboardState.value.status === KEYBOARD_STATUS.HIDDEN &&
+        animatedAnimationState.value.status === ANIMATION_STATUS.STOPPED &&
+        animatedScrollableStatus.value === SCROLLABLE_STATUS.UNLOCKED &&
+        Math.abs(animatedSheetHeight.value - targetHeight) < 0.5 &&
+        animatedPosition.value === animatedDetentsState.value.detents?.[0] &&
+        handleHeight >= 0 &&
+        targetHeight > handleHeight;
+      return ready ? targetHeight - handleHeight : null;
+    },
+    (height, previous) => {
+      if (height !== previous) runOnJS(publish)(height);
+    },
+    [publish, targetHeight],
+  );
+  return null;
+};
 
 /** Observe native readiness; never write the library's internal gesture state. */
 const RestoredSheetObserver = ({

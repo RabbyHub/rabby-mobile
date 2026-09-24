@@ -21,7 +21,8 @@ const PERPS_PRO_MARKET_SELECTOR_MIN_HEIGHT = 320;
 const PERPS_PRO_POSITION_TPSL_DESIGN_HEIGHTS = {
   form: 758,
   list: 758,
-  add: 652,
+  // Include both normal 26px PnL hints before the keyboard ever opens.
+  add: 704,
   modify: 604,
   'position-modify': 598,
 } as const;
@@ -163,10 +164,12 @@ export const getPerpsProMarketSelectorSnapPoint = ({
 };
 
 export const getPerpsProPositionTpSlSnapPoint = ({
+  formBottomPaddingExtra = 0,
   page,
   topInset,
   windowHeight,
 }: {
+  formBottomPaddingExtra?: number;
   page: PerpsProPositionTpSlPage;
   topInset: number;
   windowHeight: number;
@@ -178,9 +181,14 @@ export const getPerpsProPositionTpSlSnapPoint = ({
     0,
     safeWindowHeight - safeTopInset - PERPS_PRO_SHEET_TOP_SAFE_GAP,
   );
+  const extraBottomPadding =
+    (page === 'form' || page === 'add') &&
+    Number.isFinite(formBottomPaddingExtra)
+      ? Math.max(0, formBottomPaddingExtra)
+      : 0;
   return Math.min(
     availableHeight,
-    PERPS_PRO_POSITION_TPSL_DESIGN_HEIGHTS[page],
+    PERPS_PRO_POSITION_TPSL_DESIGN_HEIGHTS[page] + extraBottomPadding,
   );
 };
 
