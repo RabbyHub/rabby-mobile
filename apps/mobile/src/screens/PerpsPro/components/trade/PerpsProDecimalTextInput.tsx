@@ -1,4 +1,5 @@
 import { TextInput } from '@/components/Typography';
+import { IS_IOS } from '@/core/native/utils';
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import type {
   NativeSyntheticEvent,
@@ -176,12 +177,14 @@ export const PerpsProDecimalTextInput = React.memo(
           isFocusedRef.current = true;
           onKeyboardFocus();
           if (focusCursorAtEnd && focusCursorAtEndMode === 'nativeFocus') {
-            // Android's unfocused formatted mirror keeps the caret hidden.
-            // Queue the native selection command before onFocus reveals the
-            // raw buffer/caret. No controlled selection survives this event.
+            // Initialize once, then leave selection entirely to native editing.
+            // iOS empty inputs must not queue a zero selection over the first
+            // typed character. Android retains its existing empty anchor.
             const end = inputValue.length;
             const endSelection = { end, start: end };
-            inputRef.current?.setSelection(end, end);
+            if (!IS_IOS || end > 0) {
+              inputRef.current?.setSelection(end, end);
+            }
             selectionRef.current = endSelection;
             setSelection(endSelection);
             releaseForcedCursor();

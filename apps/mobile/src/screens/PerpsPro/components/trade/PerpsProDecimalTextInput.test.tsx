@@ -96,8 +96,9 @@ describe('PerpsProDecimalTextInput', () => {
     expect(mockSetSelection).toHaveBeenLastCalledWith(4, 4);
     fireEvent.changeText(input, '');
     fireEvent(input, 'blur', { nativeEvent: {} });
+    mockSetSelection.mockClear();
     fireEvent(input, 'focus', { nativeEvent: {} });
-    expect(mockSetSelection).toHaveBeenLastCalledWith(0, 0);
+    expect(mockSetSelection).not.toHaveBeenCalled();
     expect(input.props.selection).toBeUndefined();
   });
 

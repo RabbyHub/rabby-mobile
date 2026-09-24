@@ -74,6 +74,17 @@ jest.mock('@gorhom/bottom-sheet', () => {
   const { View } = require('react-native');
   return {
     ...require('@gorhom/bottom-sheet/mock'),
+    BottomSheetTextInput: ReactModule.forwardRef((props: any, ref: any) => {
+      ReactModule.useImperativeHandle(ref, () => ({
+        focus: jest.fn(),
+        setNativeProps: jest.fn(),
+        setSelection: jest.fn(),
+      }));
+      return ReactModule.createElement(
+        require('react-native').TextInput,
+        props,
+      );
+    }),
     ANIMATION_STATUS: { STOPPED: 2 },
     SCROLLABLE_STATUS: { UNLOCKED: 1 },
     KEYBOARD_STATUS: { HIDDEN: 2 },
