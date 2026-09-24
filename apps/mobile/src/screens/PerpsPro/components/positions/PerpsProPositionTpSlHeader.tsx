@@ -153,7 +153,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     height: PERPS_PRO_POSITION_TPSL_PAGE_HEADER_HEIGHT,
     flexShrink: 0,
-    paddingBottom: 24,
+    paddingBottom: 16,
     justifyContent: 'center',
     position: 'relative',
   },
@@ -163,10 +163,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'center',
     left: 0,
     position: 'absolute',
-    paddingBottom: 24,
-    paddingRight: 24,
+    paddingBottom: 16,
+    paddingRight: 32,
     top: 0,
-    width: PERPS_PRO_POSITION_TPSL_PAGE_HEADER_HEIGHT,
+    // Use the empty horizontal space without increasing the header's height.
+    width: 72,
   },
   pageTitleContainer: {
     alignItems: 'center',

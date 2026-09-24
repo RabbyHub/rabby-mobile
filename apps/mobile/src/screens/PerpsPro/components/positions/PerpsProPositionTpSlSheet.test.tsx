@@ -542,10 +542,10 @@ describe('PerpsProPositionTpSlSheet', () => {
         ),
       ).toMatchObject({ paddingHorizontal: 16 });
       fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
-      expectShell(720);
+      expectShell(704);
       fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-back'));
       fireEvent.press(screen.getAllByText('Modify')[0]!);
-      expectShell(620);
+      expectShell(604);
       fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-back'));
       fireEvent.press(screen.getByText('Position TP/SL'));
       expectShell(758);
@@ -812,7 +812,7 @@ describe('PerpsProPositionTpSlSheet', () => {
       }
       expect(screen.getByTestId('tpsl-scroll')).toBe(scroll);
       const height = mockBottomSheetProps.mock.lastCall![0].snapPoints[0];
-      const finalHeight = height - 40 - 72;
+      const finalHeight = height - 40 - 56;
       // Matching the old full content height is insufficient: the header is fixed.
       layoutViewport(height - 40);
       completeKeyboardSession();
@@ -1228,7 +1228,7 @@ describe('PerpsProPositionTpSlSheet', () => {
     expect(screen.getByTestId('perps-pro-position-tpsl-order-2')).toBeTruthy();
 
     fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-add'));
-    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([720]);
+    expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([704]);
   });
 
   it('renders the 758px inline form and full position header when the TP/SL tab has no partial orders', () => {
@@ -1340,7 +1340,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         initialOrder: null,
         position: input.position,
       });
-      expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([614]);
+      expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([598]);
       fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-back'));
       expect(screen.getByText('All')).toBeTruthy();
       fireEvent.press(screen.getByText('Modify'));
@@ -1498,7 +1498,7 @@ describe('PerpsProPositionTpSlSheet', () => {
         <PerpsProPositionTpSlSheet {...props} settlement={settled} />,
       );
       expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([
-        platform === 'android' ? 654 : 620,
+        platform === 'android' ? 638 : 604,
       ]);
       act(() => mockKeyboardListeners.get('keyboardDidHide')?.());
       expect(mockBottomSheetProps.mock.lastCall?.[0].snapPoints).toEqual([758]);

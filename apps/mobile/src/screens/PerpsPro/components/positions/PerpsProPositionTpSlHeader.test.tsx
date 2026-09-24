@@ -151,14 +151,28 @@ describe('PerpsProPositionTpSlHeader', () => {
       });
       const back = screen.getByTestId('perps-pro-position-tpsl-back');
       expect(StyleSheet.flatten(back.props.style)).toMatchObject({
-        height: 72,
+        height: 56,
         width: 72,
-        paddingBottom: 24,
-        paddingRight: 24,
+        paddingBottom: 16,
+        paddingRight: 32,
         left: 0,
         top: 0,
       });
       expect(back.props.hitSlop).toBeUndefined();
+      const headerStyle = StyleSheet.flatten(
+        screen.getByTestId('perps-pro-position-tpsl-page-header').props.style,
+      );
+      const backStyle = StyleSheet.flatten(back.props.style);
+      // Figma: handle 40 + title offset 8, title 24, then gap 24.
+      const titleTop =
+        (headerStyle.height - headerStyle.paddingBottom - 24) / 2;
+      expect(40 + titleTop).toBe(48);
+      expect(headerStyle.height - titleTop - 24).toBe(24);
+      expect(40 + headerStyle.height).toBe(96);
+      // The entire real target fits its parent; no clipped outside hitSlop.
+      expect(backStyle.height).toBeLessThanOrEqual(headerStyle.height);
+      expect((backStyle.width - backStyle.paddingRight - 24) / 2).toBe(8);
+      expect((backStyle.height - backStyle.paddingBottom - 24) / 2).toBe(8);
       expect(screen.getByTestId('back-glyph').props).toMatchObject({
         height: 24,
         width: 24,
