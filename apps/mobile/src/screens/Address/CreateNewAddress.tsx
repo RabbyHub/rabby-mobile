@@ -9,31 +9,27 @@ import {
   Keyboard,
 } from 'react-native';
 import { RootNames } from '@/constant/layout';
-import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ProgressBar } from '@/components2024/progressBar';
 import { Button } from '@/components2024/Button';
 import { apiMnemonic } from '@/core/apis';
-import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
 import useAsync from 'react-use/lib/useAsync';
 import { ellipsisAddress } from '@/utils/address';
 import { keyringServiceApi } from '@/core/serviceApi/keyring';
-import { contactServiceApi } from '@/core/serviceApi/contact';
 import { Skeleton } from '@rneui/themed';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { StackActions, useRoute } from '@react-navigation/native';
 import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import LinearGradient from 'react-native-linear-gradient';
-import { replaceToFirst } from '@/utils/navigation';
 import { useCreateAddressProc } from '@/hooks/address/useNewUser';
 import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { Text } from '@/components/Typography';
 
-const MAX_ACCOUNT_COUNT = 50;
 const PROGRESS_BAR_STEP = {
   ONE: 1,
   TWO: 2,
@@ -70,32 +66,14 @@ function MainListBlocks() {
   }, [setNavigationOptions, getHeaderTitle, state?.title]);
 
   const { value, loading, error } = useAsync(async () => {
-    let seedPhrase = '';
     let accountsToCreate: any[] | undefined = [];
-    if (state?.mnemonics) {
-      seedPhrase = state?.mnemonics;
-      const currentAddressArr = state?.accounts;
-      const api = apiMnemonic.getKeyringByMnemonic(seedPhrase, '');
-      for (let i = 0; i < MAX_ACCOUNT_COUNT; i++) {
-        console.log('requestKeyring res find count', i);
-        const res = await api?.getAddresses(i, i + 1);
-        const idx = currentAddressArr?.findIndex(
-          item => item === res?.[0].address,
-        );
-        if (idx === -1) {
-          accountsToCreate = res;
-          break; // has find a address
-        }
-      }
-    } else {
-      // first create
-      seedPhrase = await apiMnemonic.generatePreMnemonic();
-      const Keyring = (await keyringServiceApi.getKeyringClassForType(
-        KEYRING_CLASS.MNEMONIC,
-      )) as any;
-      const keyring = new Keyring({ mnemonic: seedPhrase, passphrase: '' });
-      accountsToCreate = keyring?.getAddresses(0, 1);
-    }
+    // first create
+    const seedPhrase = await apiMnemonic.generatePreMnemonic();
+    const Keyring = (await keyringServiceApi.getKeyringClassForType(
+      KEYRING_CLASS.MNEMONIC,
+    )) as any;
+    const keyring = new Keyring({ mnemonic: seedPhrase, passphrase: '' });
+    accountsToCreate = keyring?.getAddresses(0, 1);
     const words = seedPhrase.split(' ');
     const address = accountsToCreate?.[0].address;
     setNewAddress(address);
@@ -152,39 +130,9 @@ function MainListBlocks() {
     }
   }, [newAddress, value, navigation, state, storeSeedPharse, storeAddressList]);
 
-  const handleDone = useCallback(async () => {
-    await contactServiceApi.setAlias({
-      address: newAddress,
-      alias: '',
-    });
-    await activeAndPersistAccountsByMnemonics(
-      state?.mnemonics || '',
-      '',
-      value?.accountsToCreate || [],
-      false,
-    );
-    replaceToFirst(RootNames.StackAddress, {
-      screen: RootNames.ImportSuccess2024,
-      params: {
-        type: KEYRING_TYPE.HdKeyring,
-        brandName: KEYRING_CLASS.MNEMONIC,
-        isFirstCreate: true,
-        address: [newAddress],
-        mnemonics: state?.mnemonics,
-        passphrase: '',
-        isExistedKR: false,
-        alias: ellipsisAddress(newAddress),
-      },
-    });
-  }, [newAddress, state, value]);
-
-  const currentProgressCount = React.useMemo(() => {
-    return state?.useCurrentSeed
-      ? PROGRESS_BAR_STEP.THREE
-      : state?.noSetupPassword
-      ? PROGRESS_BAR_STEP.TWO
-      : PROGRESS_BAR_STEP.ONE;
-  }, [state]);
+  const currentProgressCount = state?.noSetupPassword
+    ? PROGRESS_BAR_STEP.TWO
+    : PROGRESS_BAR_STEP.ONE;
 
   return (
     <TouchableWithoutFeedback
@@ -224,7 +172,7 @@ function MainListBlocks() {
           containerStyle={styles.btnContainer}
           type="primary"
           title={t('page.nextComponent.createNewAddress.Continue')}
-          onPress={state?.useCurrentSeed ? handleDone : handleContinue}
+          onPress={handleContinue}
         />
       </View>
     </TouchableWithoutFeedback>

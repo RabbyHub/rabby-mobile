@@ -29,8 +29,7 @@ export const useShowImportMoreAddressPopup = () => {
   const showImportMorePopup = useMemoizedFn(
     (params: {
       type: KEYRING_TYPE;
-      mnemonics?: string;
-      passphrase?: string;
+      mnemonicsVaultId?: string;
       keyringId?: number;
       account?: KeyringAccountWithAlias;
       brandName: string;
