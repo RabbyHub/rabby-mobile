@@ -72,7 +72,8 @@ export const GasLessNotEnough: React.FC<{
     onLoggedIn: onChangeGasAccount,
   });
   const signWithHardwareBrand =
-    pendingHardwareBrandLabel || t('page.home.addAddress.hardwareWallet');
+    pendingHardwareBrandLabel ||
+    t('page.nextComponent.addAddress.hardwareWallet');
   const signWithHardwareTip = t(
     'page.signFooterBar.gasAccount.signWithHardwareWalletToUse',
     {

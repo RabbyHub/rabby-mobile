@@ -1207,7 +1207,8 @@
         },
         "scan": {
           "description": "Keystone cüzdanınızdaki QR kodunu tarayın.",
-          "title": "Keystone'ı Bağlamak İçin Tara"
+          "title": "Keystone'ı Bağlamak İçin Tara",
+          "invalidQRCode": "Geçersiz QR kodu. Lütfen donanım cüzdanının senkronizasyon QR kodunu tarayın."
         }
       },
       "hd": {
@@ -3460,7 +3461,8 @@
     "time": {
       "hour": "{{t}} saat",
       "hours": "{{t}} saat",
-      "mins": "{{t}} dk"
+      "mins": "{{t}} dk",
+      "ago": "{{time}} önce"
     },
     "themeMode": {
       "option_Dark": "Karanlık",
@@ -3554,7 +3556,8 @@
     "SavedSeedPhrase": "Kurtarma ifadesini kaydettim.",
     "from": "Kimden",
     "to": "Kime",
-    "copiedSuccessfully": "Başarıyla kopyalandı"
+    "copiedSuccessfully": "Başarıyla kopyalandı",
+    "failed": "Başarısız"
   },
   "background": {
     "error": {

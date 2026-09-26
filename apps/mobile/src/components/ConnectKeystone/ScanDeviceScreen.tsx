@@ -80,11 +80,7 @@ export const ScanDeviceScreen: React.FC<{ onScanFinish: () => void }> = ({
             result.cbor.toString('hex'),
           );
         } else {
-          setErrorMessage(
-            t(
-              'Invalid QR code. Please scan the sync QR code of the hardware wallet.',
-            ),
-          );
+          setErrorMessage(t('page.newAddress.keystone.scan.invalidQRCode'));
           return;
         }
 
@@ -93,11 +89,7 @@ export const ScanDeviceScreen: React.FC<{ onScanFinish: () => void }> = ({
     } catch (e) {
       console.error(e);
       scannedRef.current = false;
-      setErrorMessage(
-        t(
-          'Invalid QR code. Please scan the sync QR code of the hardware wallet.',
-        ),
-      );
+      setErrorMessage(t('page.newAddress.keystone.scan.invalidQRCode'));
     }
   };
 

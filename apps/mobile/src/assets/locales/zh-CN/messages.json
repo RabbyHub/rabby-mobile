@@ -71,7 +71,8 @@
     "time": {
       "mins": "{{t}} 分钟",
       "hours": "{{t}} 小时",
-      "hour": "{{t}} 小时"
+      "hour": "{{t}} 小时",
+      "ago": "{{time}}前"
     },
     "Deleted": "已删除",
     "WalletCreated": "钱包已创建",
@@ -142,7 +143,8 @@
     "Imported": "已导入",
     "from": "从",
     "to": "到",
-    "copiedSuccessfully": "已复制"
+    "copiedSuccessfully": "已复制",
+    "failed": "失败"
   },
   "constant": {
     "IMPORTED_HD_KEYRING": "通过助记词导入",
@@ -1253,7 +1255,8 @@
       "keystone": {
         "scan": {
           "description": "扫描您 Keystone 钱包上的二维码",
-          "title": "扫描 Keystone 以连接"
+          "title": "扫描 Keystone 以连接",
+          "invalidQRCode": "二维码无效。请扫描硬件钱包的同步二维码。"
         },
         "camera": {
           "title": "连接 Keystone",

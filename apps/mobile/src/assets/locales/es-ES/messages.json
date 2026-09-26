@@ -1318,7 +1318,8 @@
       "keystone": {
         "scan": {
           "title": "Escanear Keystone para conectar",
-          "description": "Escanea el código QR en tu monedero Keystone"
+          "description": "Escanea el código QR en tu monedero Keystone",
+          "invalidQRCode": "Código QR no válido. Escanea el código QR de sincronización de la cartera de hardware."
         },
         "camera": {
           "description": "Habilita el acceso a la cámara y escanea tu Keystone",
@@ -3484,7 +3485,8 @@
     "time": {
       "mins": "{{t}} min",
       "hour": "{{t}} hora",
-      "hours": "{{t}} horas"
+      "hours": "{{t}} horas",
+      "ago": "hace {{time}}"
     },
     "copied": "Copiado",
     "cancelButton": "Cancelar",
@@ -3555,7 +3557,8 @@
     "SavedSeedPhrase": "He guardado la frase semilla",
     "from": "Desde",
     "to": "Hacia",
-    "copiedSuccessfully": "Copiado con éxito"
+    "copiedSuccessfully": "Copiado con éxito",
+    "failed": "Fallido"
   },
   "bluetooth": {
     "powered_off_alert": {
