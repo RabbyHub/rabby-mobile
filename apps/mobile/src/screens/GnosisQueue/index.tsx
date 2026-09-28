@@ -1,7 +1,9 @@
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { PillsSwitch } from '@/components2024/PillSwitch';
-import { useGnosisQueueTotalPending } from '@/hooks/gnosis/useGnosisQueueTotalPending';
+import { useGnosisNetworks } from '@/hooks/gnosis/useGnosisNetworks';
+import { useGnosisPendingMessages } from '@/hooks/gnosis/useGnosisPendingMessages';
+import { useGnosisPendingTxs } from '@/hooks/gnosis/useGnosisPendingTxs';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -10,8 +12,9 @@ import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GnosisMessageQueue } from './components/GnosisMessageQueue';
 import { GnosisTransactionQueue } from './components/GnosisTransactionQueue';
-import { useRoute } from '@react-navigation/native';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
+import { useIsFocused, useRoute } from '@react-navigation/native';
+import { useRequest } from 'ahooks';
+import type { GetNestedScreenRouteProp } from '@/navigation-type';
 
 export const GnosisQueueScreen = () => {
   const route =
@@ -29,22 +32,93 @@ export const GnosisQueueScreen = () => {
 
   const { bottom } = useSafeAreaInsets();
 
-  const { messages, pendingTxs, total } = useGnosisQueueTotalPending({
-    address: account?.address,
+  const isFocused = useIsFocused();
+  const { data: networks, syncNetworks } = useGnosisNetworks({
+    address: account.address,
+    active: isFocused,
   });
+  const networksKey = networks?.join(',');
+  const pendingOptions = {
+    ready: isFocused && networks !== undefined,
+    refreshDeps: [account.address, networksKey],
+    staleTime: 0,
+  };
+  const {
+    data: pendingTxs,
+    loading: transactionsLoading,
+    refresh: refreshTransactions,
+    cancel: cancelTransactions,
+  } = useGnosisPendingTxs(
+    { address: account.address },
+    {
+      ...pendingOptions,
+      cacheKey: `gnosis-queue-transactions-${account.address.toLowerCase()}-${networksKey}`,
+    },
+  );
+  const {
+    data: messages,
+    loading: messagesLoading,
+    refresh: refreshMessages,
+    cancel: cancelMessages,
+  } = useGnosisPendingMessages(
+    { address: account.address },
+    {
+      ...pendingOptions,
+      cacheKey: `gnosis-queue-messages-${account.address.toLowerCase()}-${networksKey}`,
+    },
+  );
+  const {
+    run: handleRefresh,
+    loading: refreshing,
+    cancel: cancelRefresh,
+  } = useRequest(
+    async () => {
+      await syncNetworks();
+      // A topology change can supersede these requests through refreshDeps.
+      // Track the latest requests' loading state, not their canceled Promises.
+      refreshTransactions();
+      refreshMessages();
+    },
+    { manual: true },
+  );
+  useEffect(() => {
+    if (!isFocused) {
+      cancelTransactions();
+      cancelMessages();
+      cancelRefresh();
+    }
+  }, [cancelMessages, cancelRefresh, cancelTransactions, isFocused]);
+
+  const { transactionsCount, messagesCount } = useMemo(() => {
+    const currentNetworks = new Set(networks);
+    return {
+      transactionsCount: (pendingTxs?.results || []).reduce(
+        (count, item) =>
+          count + (currentNetworks.has(item.networkId) ? item.txs.length : 0),
+        0,
+      ),
+      messagesCount: (messages?.results || []).reduce(
+        (count, item) =>
+          count +
+          (currentNetworks.has(item.networkId) ? item.messages.length : 0),
+        0,
+      ),
+    };
+  }, [messages, networks, pendingTxs]);
+  const total = transactionsCount + messagesCount;
 
   const tabs = useMemo(() => {
     return [
       {
-        label: `Transaction (${pendingTxs?.total || 0})`,
+        label: `Transaction (${transactionsCount})`,
         key: 'transaction' as const,
       },
       {
-        label: `Message (${messages?.total || 0})`,
+        label: `Message (${messagesCount})`,
         key: 'message' as const,
       },
     ];
-  }, [pendingTxs?.total, messages?.total]);
+  }, [transactionsCount, messagesCount]);
 
   const [activeKey, setActiveKey] = useState<'transaction' | 'message'>(
     tabs[0]?.key,
@@ -75,9 +149,25 @@ export const GnosisQueueScreen = () => {
       </View>
       <View style={styles.body}>
         {activeKey === 'transaction' ? (
-          <GnosisTransactionQueue account={account} />
+          <GnosisTransactionQueue
+            account={account}
+            networks={networks}
+            pendingTxs={pendingTxs?.results}
+            loading={transactionsLoading}
+            reload={refreshTransactions}
+            refreshing={refreshing || transactionsLoading || messagesLoading}
+            onRefresh={handleRefresh}
+          />
         ) : (
-          <GnosisMessageQueue account={account} />
+          <GnosisMessageQueue
+            account={account}
+            networks={networks}
+            messages={messages?.results}
+            loading={messagesLoading}
+            reload={refreshMessages}
+            refreshing={refreshing || transactionsLoading || messagesLoading}
+            onRefresh={handleRefresh}
+          />
         )}
       </View>
     </NormalScreenContainer>

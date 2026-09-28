@@ -9,7 +9,7 @@ import { Button } from '@/components2024/Button';
 import { createGetStyles2024 } from '@/utils/styles';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import Clipboard from '@react-native-clipboard/clipboard';
-import { useRoute } from '@react-navigation/native';
+import { useIsFocused, useRoute } from '@react-navigation/native';
 import React, {
   useCallback,
   useEffect,
@@ -63,12 +63,14 @@ function ReceiveScreen(): JSX.Element {
     >();
 
   const account = route.params.account;
+  const isFocused = useIsFocused();
 
   const isSafe = useMemo(() => {
     return account?.type === KEYRING_TYPE.GnosisKeyring;
   }, [account]);
   const { data: safeNetworks } = useGnosisNetworks({
     address: isSafe ? account?.address : undefined,
+    active: isFocused,
   });
   const safeChains = useMemo(() => {
     if (!safeNetworks || safeNetworks.length <= 0) {
@@ -218,6 +220,17 @@ function ReceiveScreen(): JSX.Element {
       setSelectedChain(navState.chainEnum);
     }
   }, [navState]);
+
+  useEffect(() => {
+    if (
+      isSafe &&
+      safeNetworks &&
+      selectedChain &&
+      !safeChains.some(chain => chain.enum === selectedChain)
+    ) {
+      setSelectedChain(null);
+    }
+  }, [isSafe, safeNetworks, safeChains, selectedChain]);
 
   const handleSelectChain = () => {
     const id = createGlobalBottomSheetModal2024({

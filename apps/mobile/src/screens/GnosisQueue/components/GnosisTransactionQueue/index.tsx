@@ -1,7 +1,5 @@
-import { useGnosisNetworks } from '@/hooks/gnosis/useGnosisNetworks';
-import { useGnosisPendingTxs } from '@/hooks/gnosis/useGnosisPendingTxs';
 import { useThemeColors } from '@/hooks/theme';
-import { findChain, findChainByEnum } from '@/utils/chain';
+import { findChain } from '@/utils/chain';
 import { createGetStyles } from '@/utils/styles';
 import type { CHAINS_ENUM } from '@debank/common';
 import { TouchableOpacity } from '@gorhom/bottom-sheet';
@@ -10,10 +8,8 @@ import dayjs from 'dayjs';
 import { sortBy } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { RefreshControl, ScrollView, View } from 'react-native';
 import { GnosisTransactionQueueList } from './GnosisTransactionQueueList';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { apisSafe } from '@/core/apis/safe';
 import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 
@@ -50,24 +46,29 @@ const getTabs = (
 
 export const GnosisTransactionQueue: React.FC<{
   account: Account;
-}> = ({ account }) => {
+  networks?: string[];
+  pendingTxs?: { networkId: string; txs: SafeTransactionItem[] }[];
+  loading: boolean;
+  refreshing: boolean;
+  reload(): void;
+  onRefresh(): void;
+}> = ({
+  account,
+  networks,
+  pendingTxs,
+  loading,
+  refreshing,
+  reload,
+  onRefresh,
+}) => {
   const themeColors = useThemeColors();
   const styles = useMemo(() => getStyles(themeColors), [themeColors]);
   const { t } = useTranslation();
 
-  const { data: networks } = useGnosisNetworks({ address: account?.address });
-  const {
-    data: pendingTxs,
-    loading,
-    refreshAsync,
-  } = useGnosisPendingTxs({
-    address: account?.address,
-  });
-
   const tabs = useMemo(() => {
     return getTabs(
       networks || [],
-      (pendingTxs?.results || []).reduce((res, item) => {
+      (pendingTxs || []).reduce((res, item) => {
         res[item.networkId] = item.txs;
         return res;
       }, {} as Record<string, SafeTransactionItem[]>),
@@ -79,27 +80,19 @@ export const GnosisTransactionQueue: React.FC<{
   );
 
   const activeData = useMemo(() => {
-    return tabs.find(item => item?.chain?.enum === activeKey);
+    return tabs.find(item => item?.key === activeKey) || tabs[0];
   }, [tabs, activeKey]);
 
   useEffect(() => {
-    setActiveKey(tabs[0]?.key || null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tabs[0]?.key]);
-
-  // useEffect(() => {
-  //   if (account?.address) {
-  //     apisSafe.syncGnosisNetworks(account?.address);
-  //   }
-  // }, [account?.address]);
-  const { bottom } = useSafeAreaInsets();
+    setActiveKey(activeData?.key || null);
+  }, [activeData?.key]);
 
   return (
     <View style={[styles.container]}>
       <View style={[styles.tabsContainer]}>
         <View style={styles.tabs}>
           {tabs?.map(tab => {
-            const isActive = tab?.key === activeKey;
+            const isActive = tab?.key === activeData?.key;
             return (
               <TouchableOpacity
                 onPress={() => {
@@ -118,15 +111,31 @@ export const GnosisTransactionQueue: React.FC<{
           })}
         </View>
       </View>
-      {activeKey && findChainByEnum(activeKey) && (
+      {activeData ? (
         <GnosisTransactionQueueList
           account={account}
           pendingTxs={activeData?.txs}
-          usefulChain={activeKey}
-          key={activeKey}
+          usefulChain={activeData.key}
+          key={activeData.key}
           loading={loading}
-          reload={refreshAsync}
+          reload={reload}
+          onRefresh={onRefresh}
+          refreshing={refreshing}
         />
+      ) : (
+        <ScrollView
+          contentContainerStyle={styles.empty}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }>
+          <Text style={styles.emptyText}>
+            {t(
+              networks === undefined
+                ? 'page.safeQueue.loading'
+                : 'page.safeQueue.noData',
+            )}
+          </Text>
+        </ScrollView>
       )}
     </View>
   );
@@ -136,6 +145,15 @@ const getStyles = createGetStyles(colors => ({
   container: {
     flexDirection: 'column',
     height: '100%',
+  },
+  empty: {
+    flexGrow: 1,
+    alignItems: 'center',
+    paddingTop: 200,
+  },
+  emptyText: {
+    color: colors['neutral-body'],
+    fontSize: 13,
   },
   tabsContainer: {
     paddingHorizontal: 20,
