@@ -73,13 +73,15 @@ export const GnosisTransactionItem = ({
   }
   if (ago.hour < 24) {
     if (ago.hour > 0) {
-      agoText += `${ago.hour} ${t('hour')}`;
+      agoText += t(ago.hour === 1 ? 'global.time.hour' : 'global.time.hours', {
+        t: ago.hour,
+      });
     }
     if (ago.minute > 0) {
       if (agoText) agoText += ' ';
-      agoText += `${ago.minute} ${t('min')}`;
+      agoText += t('global.time.mins', { t: ago.minute });
     }
-    agoText += ` ${t('ago')}`;
+    agoText = t('global.time.ago', { time: agoText });
   } else {
     const date = dayjs(data.submissionDate);
     agoText = date.format('YYYY/MM/DD');

@@ -1273,7 +1273,8 @@
       "keystone": {
         "scan": {
           "title": "Scannez Keystone pour vous connecter",
-          "description": "Scannez le code QR sur votre portefeuille Keystone"
+          "description": "Scannez le code QR sur votre portefeuille Keystone",
+          "invalidQRCode": "Code QR invalide. Veuillez scanner le code QR de synchronisation du portefeuille matériel."
         },
         "camera": {
           "title": "Connecter Keystone",
@@ -3516,7 +3517,8 @@
     "time": {
       "hours": "{{t}} heures",
       "hour": "{{t}} heure",
-      "mins": "{{t}} min"
+      "mins": "{{t}} min",
+      "ago": "il y a {{time}}"
     },
     "themeMode": {
       "option_System": "Système",
@@ -3584,7 +3586,8 @@
     "SavedSeedPhrase": "J’ai enregistré la phrase de récupération.",
     "from": "De",
     "to": "À",
-    "copiedSuccessfully": "Copié avec succès"
+    "copiedSuccessfully": "Copié avec succès",
+    "failed": "Échoué"
   },
   "background": {
     "transactionWatcher": {

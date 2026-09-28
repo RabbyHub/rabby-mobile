@@ -32,7 +32,7 @@ export const GnosisTransactionConfirmations = React.memo(
         <View style={styles.txConfirmHead}>
           {confirmations.length >= threshold ? (
             <Text style={styles.txConfirmTitle}>
-              {t('Enough signature collected')}
+              {t('page.signTx.enoughSafeSigCollected')}
             </Text>
           ) : (
             <Text style={styles.txConfirmTitle}>
