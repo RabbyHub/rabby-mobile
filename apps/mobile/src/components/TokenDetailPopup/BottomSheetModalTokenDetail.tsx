@@ -619,7 +619,7 @@ export const BottomSheetModalTokenDetail = ({
       }
 
       try {
-        const res: TxHistoryResult = await openapi.listTxHisotry({
+        const res: TxHistoryResult = await openapi.listTxHistory({
           id: finalAccount?.address,
           chain_id: token?.chain,
           start_time: lastEarliestTime ?? undefined,

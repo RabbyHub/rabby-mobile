@@ -17,12 +17,28 @@ const historyLoadingStore = zustandByMMKV<Record<string, boolean>>(
 export const updateHistoryTimeSingleAddress = (add: string, time?: number) => {
   historyTimeStore.setState(prev => ({
     ...prev,
-    [add.toLowerCase()]: time || Date.now(),
+    // 0 means reset, so the next sync is not throttled
+    [add.toLowerCase()]: time ?? Date.now(),
+  }));
+};
+
+// last time (ms) the recent tx count was compared with the server, per address
+export const historyTxCountCheckStore = zustandByMMKV<Record<string, number>>(
+  '@HistoryTxCountCheckTime',
+  {},
+  { storage: MMKVStorageStrategy.compatJson },
+);
+
+export const markHistoryTxCountChecked = (add: string) => {
+  historyTxCountCheckStore.setState(prev => ({
+    ...prev,
+    [add.toLowerCase()]: Date.now(),
   }));
 };
 
 export const resetUpdateHistoryTime = () => {
   historyTimeStore.setState({}, true);
+  historyTxCountCheckStore.setState({}, true);
 };
 
 export const setHistoryLoading = (

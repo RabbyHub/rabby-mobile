@@ -35,7 +35,11 @@ import { toast } from '@/components2024/Toast';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { Empty } from '@/screens/Transaction/components/Empty';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
-import { HistoryItemEntity } from '@/databases/entities/historyItem';
+import {
+  HistoryItemEntity,
+  toHistoryPageCursor,
+  type HistoryPageCursor,
+} from '@/databases/entities/historyItem';
 import type { ITokenItem } from '@/store/tokens';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import {
@@ -45,6 +49,8 @@ import {
 
 interface IFetchHistory {
   last: number;
+  // keyset cursor for local DB pages; `last` stays the remote API start_time
+  dbCursor?: HistoryPageCursor;
   list: HistoryDisplayItem[];
 }
 
@@ -81,7 +87,7 @@ const TokenDetailHistoryListContent = ({
 
   const isReady = useRef(false);
   const lastMap = useRef<Record<string, number>>({});
-  const dbLastCursorRef = useRef<number>(0);
+  const dbCursorRef = useRef<HistoryPageCursor | null>(null);
   const hasMoreMap = useRef<Record<string, boolean>>({});
 
   const [historySuccessList, setHistorySuccessList] = useState<string[]>(
@@ -104,6 +110,7 @@ const TokenDetailHistoryListContent = ({
     chain_id: string,
     token_id: string,
     isMyAddress?: boolean,
+    dbCursor: HistoryPageCursor | null = null,
   ): Promise<IFetchHistory> => {
     if (!address) {
       throw new Error('no account');
@@ -114,7 +121,7 @@ const TokenDetailHistoryListContent = ({
         const historyList =
           await HistoryItemEntity.getTokenHistoryItemSortedByTime(
             address,
-            startTime,
+            dbCursor,
             token_id,
             chain_id,
             PAGE_COUNT,
@@ -127,13 +134,15 @@ const TokenDetailHistoryListContent = ({
             isShowSuccess: false,
           } as HistoryDisplayItem;
         });
+        const lastItem = last(historyList);
         return {
-          last: last(historyList)?.time_at || 0,
+          last: lastItem?.time_at || 0,
+          dbCursor: lastItem ? toHistoryPageCursor(lastItem) : undefined,
           list,
         };
       } else {
         const [res, transactions] = await Promise.all([
-          openapi.listTxHisotry({
+          openapi.listTxHistory({
             id: address,
             start_time: startTime,
             page_count: PAGE_COUNT,
@@ -227,6 +236,7 @@ const TokenDetailHistoryListContent = ({
       tokenItem.chain,
       tokenItem.id,
       isMyAddress,
+      dbCursorRef.current,
     );
     if (result.list.length < PAGE_COUNT) {
       hasMoreMap.current[addr] = false;
@@ -234,6 +244,9 @@ const TokenDetailHistoryListContent = ({
       hasMoreMap.current[addr] = true;
     }
     lastMap.current[addr] = result.last || 0;
+    if (result.dbCursor) {
+      dbCursorRef.current = result.dbCursor;
+    }
     list.push(
       ...result.list.map(item => {
         return {
@@ -268,6 +281,7 @@ const TokenDetailHistoryListContent = ({
   const refresh = useMemoizedFn(() => {
     lastMap.current = {};
     hasMoreMap.current = {};
+    dbCursorRef.current = null;
     if (!disableHistoryRequest) {
       reloadAsync();
     }
@@ -283,7 +297,7 @@ const TokenDetailHistoryListContent = ({
   }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
 
   const batchFetchDataFromDbUpsert = useMemoizedFn(async () => {
-    dbLastCursorRef.current = 0;
+    dbCursorRef.current = null;
     reloadAsync();
   });
 
