@@ -82,7 +82,8 @@
     "time": {
       "hour": "{{t}} 小時",
       "mins": "{{t}} 分鐘",
-      "hours": "{{t}} 小時"
+      "hours": "{{t}} 小時",
+      "ago": "{{time}}前"
     },
     "ok": "OK",
     "themeMode": {
@@ -151,7 +152,8 @@
     "SavedSeedPhrase": "我已儲存助記詞",
     "from": "從",
     "to": "至",
-    "copiedSuccessfully": "複製成功"
+    "copiedSuccessfully": "複製成功",
+    "failed": "失敗"
   },
   "background": {
     "transactionWatcher": {
@@ -1350,7 +1352,8 @@
         },
         "scan": {
           "title": "掃描 Keystone 以連接",
-          "description": "掃描您 Keystone 錢包上的 QR 碼"
+          "description": "掃描您 Keystone 錢包上的 QR 碼",
+          "invalidQRCode": "QR 碼無效。請掃描硬體錢包的同步 QR 碼。"
         }
       },
       "privateKey": {

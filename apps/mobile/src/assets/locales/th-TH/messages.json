@@ -1411,7 +1411,8 @@
       "keystone": {
         "scan": {
           "title": "สแกน Keystone เพื่อเชื่อมต่อ",
-          "description": "สแกนคิวอาร์โค้ดบนกระเป๋า Keystone ของคุณ"
+          "description": "สแกนคิวอาร์โค้ดบนกระเป๋า Keystone ของคุณ",
+          "invalidQRCode": "คิวอาร์โค้ดไม่ถูกต้อง โปรดสแกนคิวอาร์โค้ดสำหรับซิงค์ของฮาร์ดแวร์วอลเล็ต"
         },
         "camera": {
           "title": "เชื่อมต่อ Keystone",
@@ -3473,7 +3474,8 @@
     "time": {
       "hours": "{{t}} ชั่วโมง",
       "mins": "{{t}} นาที",
-      "hour": "{{t}} ชั่วโมง"
+      "hour": "{{t}} ชั่วโมง",
+      "ago": "{{time}}ที่แล้ว"
     },
     "Cancel": "ยกเลิก",
     "appName": "Rabby Wallet",
@@ -3554,7 +3556,8 @@
     "SavedSeedPhrase": "ฉันได้บันทึก seed phrase เรียบร้อยแล้ว",
     "from": "จาก",
     "to": "ถึง",
-    "copiedSuccessfully": "คัดลอกสำเร็จ"
+    "copiedSuccessfully": "คัดลอกสำเร็จ",
+    "failed": "ล้มเหลว"
   },
   "background": {
     "transactionWatcher": {

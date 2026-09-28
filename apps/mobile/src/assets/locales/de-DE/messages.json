@@ -66,7 +66,8 @@
     "time": {
       "hour": "{{t}} Stunde",
       "mins": "{{t}} Min.",
-      "hours": "{{t}} Stunden"
+      "hours": "{{t}} Stunden",
+      "ago": "vor {{time}}"
     },
     "refresh": "Aktualisieren",
     "copied": "Kopiert",
@@ -142,7 +143,8 @@
     "SavedSeedPhrase": "Ich habe die Seed-Phrase gespeichert.",
     "from": "Von",
     "to": "An",
-    "copiedSuccessfully": "Erfolgreich kopiert"
+    "copiedSuccessfully": "Erfolgreich kopiert",
+    "failed": "Fehlgeschlagen"
   },
   "component": {
     "accountSwitcher": {
@@ -1417,7 +1419,8 @@
       "keystone": {
         "scan": {
           "title": "Keystone scannen, um zu verbinden",
-          "description": "Scannen Sie den QR-Code auf Ihrem Keystone-Wallet."
+          "description": "Scannen Sie den QR-Code auf Ihrem Keystone-Wallet.",
+          "invalidQRCode": "Ungültiger QR-Code. Bitte scannen Sie den Synchronisierungs-QR-Code der Hardware-Wallet."
         },
         "camera": {
           "description": "Kamerazugriff aktivieren und Ihren Keystone scannen",

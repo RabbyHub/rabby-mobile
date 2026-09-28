@@ -70,7 +70,8 @@
     "time": {
       "hours": "{{t}} часов",
       "hour": "{{t}} час",
-      "mins": "{{t}} минут"
+      "mins": "{{t}} минут",
+      "ago": "{{time}} назад"
     },
     "appDescription": "Ваш основной кошелёк для Ethereum и EVM-сетей",
     "Deleted": "Удалено",
@@ -142,7 +143,8 @@
     "SavedSeedPhrase": "Я сохранил сид-фразу",
     "from": "От",
     "to": "Кому",
-    "copiedSuccessfully": "Успешно скопировано"
+    "copiedSuccessfully": "Успешно скопировано",
+    "failed": "Не удалось"
   },
   "page": {
     "getStart": {
@@ -1157,7 +1159,8 @@
         },
         "scan": {
           "title": "Сканируйте Keystone для подключения",
-          "description": "Отсканируйте QR-код на вашем кошельке Keystone"
+          "description": "Отсканируйте QR-код на вашем кошельке Keystone",
+          "invalidQRCode": "Недействительный QR-код. Отсканируйте QR-код синхронизации аппаратного кошелька."
         }
       },
       "privateKey": {

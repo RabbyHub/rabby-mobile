@@ -1254,7 +1254,8 @@
         },
         "scan": {
           "title": "Scan Keystone to Connect",
-          "description": "Scan the QR-code on your Keystone wallet"
+          "description": "Scan the QR-code on your Keystone wallet",
+          "invalidQRCode": "Invalid QR code. Please scan the sync QR code of the hardware wallet."
         }
       },
       "hd": {
@@ -3554,7 +3555,8 @@
     "time": {
       "hour": "{{t}} hour",
       "hours": "{{t}} hours",
-      "mins": "{{t}} mins"
+      "mins": "{{t}} mins",
+      "ago": "{{time}} ago"
     },
     "Unknown": "Unknown",
     "themeMode": {
@@ -3614,7 +3616,8 @@
       }
     },
     "from": "From",
-    "to": "To"
+    "to": "To",
+    "failed": "Failed"
   },
   "background": {
     "error": {

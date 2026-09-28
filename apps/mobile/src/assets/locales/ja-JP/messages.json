@@ -1264,7 +1264,8 @@
         },
         "scan": {
           "title": "Keystoneをスキャンして接続",
-          "description": "KeystoneウォレットのQRコードをスキャンしてください。"
+          "description": "KeystoneウォレットのQRコードをスキャンしてください。",
+          "invalidQRCode": "無効なQRコードです。ハードウェアウォレットの同期用QRコードをスキャンしてください。"
         }
       },
       "ledger": {
@@ -3344,7 +3345,8 @@
     "time": {
       "mins": "{{t}} 分",
       "hours": "{{t}} 時間",
-      "hour": "{{t}} 時間"
+      "hour": "{{t}} 時間",
+      "ago": "{{time}}前"
     },
     "Nonce": "ノンス",
     "Cancel": "キャンセル",
@@ -3414,7 +3416,8 @@
     "SavedSeedPhrase": "シードフレーズを保存しました",
     "from": "送信元",
     "to": "送信先",
-    "copiedSuccessfully": "コピーしました"
+    "copiedSuccessfully": "コピーしました",
+    "failed": "失敗しました"
   },
   "bluetooth": {
     "powered_off_alert": {
