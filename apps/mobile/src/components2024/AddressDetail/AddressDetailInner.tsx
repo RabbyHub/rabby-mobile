@@ -25,6 +25,7 @@ interface AddressInfoProps {
   onCancel: () => void;
   onDelete?: () => void;
   showQRcode?: boolean;
+  active?: boolean;
 }
 
 const AddressDetailInnerContent: React.FC<
@@ -32,7 +33,13 @@ const AddressDetailInnerContent: React.FC<
     __IN_SHEET_MODAL__?: boolean;
   }
 > = props => {
-  const { account, onCancel, onDelete, __IN_SHEET_MODAL__ = false } = props;
+  const {
+    account,
+    active,
+    onCancel,
+    onDelete,
+    __IN_SHEET_MODAL__ = false,
+  } = props;
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { isAddrOnWhitelist, addWhitelist, removeWhitelist } = useWhitelist();
   const inWhiteList = useMemo(
@@ -98,7 +105,11 @@ const AddressDetailInnerContent: React.FC<
           <Text style={styles.subTitle}>
             {t('page.addressDetail.basicInfo')}
           </Text>
-          <AddressAssetsItem onCancel={onCancel} account={account} />
+          <AddressAssetsItem
+            active={active}
+            onCancel={onCancel}
+            account={account}
+          />
         </View>
         {showBackUp ? (
           <View style={styles.group}>
