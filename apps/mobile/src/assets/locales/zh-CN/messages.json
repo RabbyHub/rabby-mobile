@@ -1904,6 +1904,7 @@
       "price": "价格",
       "headerTokenValueText": "代币价值",
       "copyCA": "代币合约地址已复制",
+      "copyCAWarning": "这是代币合约地址，不能用于接收资产。",
       "wallet": "钱包",
       "customTestnetNotSupported": "不支持该链上的代币"
     },
