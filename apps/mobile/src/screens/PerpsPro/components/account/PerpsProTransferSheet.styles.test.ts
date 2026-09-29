@@ -36,7 +36,7 @@ describe('PerpsProTransferSheet Figma styles', () => {
     expect(StyleSheet.flatten(styles.title)).toMatchObject({
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
-      fontWeight: '800',
+      fontWeight: '900',
       lineHeight: 24,
     });
     expect(StyleSheet.flatten(styles.directionCard)).toMatchObject({

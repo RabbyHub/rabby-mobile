@@ -4,14 +4,12 @@ import {
   BOTTOM_BUTTON_TITLE_STYLE,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
-import { IS_ANDROID } from '@/core/native/utils';
 import { getPerpsProBottomSheetChromeStyles } from './perpsProVisual';
 
-// mutateStyles selects the bundled Android Heavy face with 900; iOS uses
-// SF Pro Rounded's native Heavy weight (800). Keep the family unprocessed here.
+// Use the project Heavy weight so mutateStyles selects the bundled Android face.
 export const PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE = {
   fontFamily: 'SF Pro Rounded',
-  fontWeight: IS_ANDROID ? ('900' as const) : ('800' as const),
+  fontWeight: '900' as const,
 };
 
 /** Exact Figma paints approved for Pro only (cNPc4bz8P8QBjkPk2huEml).

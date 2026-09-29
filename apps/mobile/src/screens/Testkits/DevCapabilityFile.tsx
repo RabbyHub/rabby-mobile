@@ -2762,7 +2762,7 @@ const getStyles = createGetStyles2024(ctx =>
     summaryBadgeText: {
       fontSize: 12,
       lineHeight: 16,
-      fontWeight: '600',
+      fontWeight: '500',
       color: ctx.colors2024['neutral-title-1'],
     },
     statusRow: {
@@ -2784,7 +2784,7 @@ const getStyles = createGetStyles2024(ctx =>
     statusLabel: {
       fontSize: 15,
       lineHeight: 18,
-      fontWeight: '600',
+      fontWeight: '500',
       color: ctx.colors2024['neutral-title-1'],
     },
     statusHint: {
@@ -2923,7 +2923,7 @@ const getStyles = createGetStyles2024(ctx =>
     fileScope: {
       fontSize: 12,
       lineHeight: 16,
-      fontWeight: '600',
+      fontWeight: '500',
       color: ctx.colors2024['neutral-secondary'],
     },
     filePath: {

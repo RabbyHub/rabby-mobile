@@ -2020,7 +2020,7 @@ const getStyles = createGetStyles2024(ctx =>
     },
     heroTitle: {
       fontSize: 28,
-      fontWeight: '800',
+      fontWeight: '900',
       color: ctx.colors2024['neutral-title-1'],
     },
     heroDescription: {

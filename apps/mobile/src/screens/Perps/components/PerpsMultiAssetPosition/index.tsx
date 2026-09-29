@@ -645,7 +645,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 13,
     lineHeight: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   pnlPctUp: {
     color: colors2024['green-default'],

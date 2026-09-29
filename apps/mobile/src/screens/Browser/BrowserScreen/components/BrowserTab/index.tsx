@@ -30,7 +30,6 @@ import { perpsServiceApi } from '@/core/serviceApi/perps';
 import { getDappSnapshot } from '@/core/serviceApi/dapp';
 import { setHasShowAsterPopup } from '@/core/serviceApi/preference';
 import type { Tab } from '@/core/services/browserService';
-import { FontNames } from '@/core/utils/fonts';
 import {
   useBrowser,
   useBrowserActiveTabState,
@@ -1119,8 +1118,8 @@ const getStyles = createGetStyles2024(ctx =>
     },
     HeadTitleOrigin: {
       fontSize: 20,
-      fontFamily: FontNames.sf_pro_rounded_bold,
-      fontWeight: '800',
+      fontFamily: 'SF Pro Rounded',
+      fontWeight: '900',
       textAlign: 'center',
       color: ctx.colors['neutral-title-1'],
       lineHeight: 24,

@@ -135,7 +135,7 @@ const getStyle = createGetStyles2024(ctx =>
       marginTop: 6,
       fontSize: 22,
       lineHeight: 28,
-      fontWeight: '800',
+      fontWeight: '900',
       color: ctx.colors2024['neutral-title-1'],
     },
     description: {

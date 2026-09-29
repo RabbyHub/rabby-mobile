@@ -8,21 +8,9 @@ function normalize(number: number, factor = 0.25) {
   return moderateScale(number + 0.5, factor);
 }
 
-// Fontweight reference
-// https://gist.github.com/knowbody/c5cdf26073b874eae86ba96e7cf3a540
-
-// { fontWeight: '100' }, // Thin
-// { fontWeight: '200' }, // Ultra Light
-// { fontWeight: '300' }, // Light
-// { fontWeight: '400' }, // Regular
-// { fontWeight: '500' }, // Medium
-// { fontWeight: '600' }, // Semibold
-// { fontWeight: '700' }, // Bold
-// { fontWeight: '800' }, // Heavy
-// { fontWeight: '900' }, // Black
-
-// android use Roboto
-// use '500' in stand for semibold
+// Business styles use 400/500/700/900; legacy system-font semibold uses 500.
+// See skills/rabby-mobile-typography/SKILL.md for family-specific rules.
+// Keep the Android fallback below for legacy callers passing unsupported weights.
 
 //https://github.com/facebook/react-native/issues/29259#issuecomment-963763400
 //https://gist.github.com/parshap/cf9cf0388d55a044004e5e78fa317b39

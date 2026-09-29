@@ -849,7 +849,7 @@ function AccountNavigator() {
         },
         headerTitleStyle: {
           color: colors['neutral-title-1'],
-          fontWeight: 'normal',
+          fontWeight: '400',
         },
       })}>
       <AccountStack.Screen

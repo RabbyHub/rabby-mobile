@@ -24,7 +24,7 @@ const headerStyles = StyleSheet.create({
   },
   text: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '500',
   },
 });
 
@@ -67,7 +67,7 @@ const sectionStyles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 24,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   sectionDescription: {
     marginTop: 8,
