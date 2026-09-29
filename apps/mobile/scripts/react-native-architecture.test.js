@@ -5,8 +5,8 @@ const {
 } = require('./react-native-architecture.cjs');
 
 describe('resolveReactNativeArchitecture', () => {
-  it('enables the new architecture by default', () => {
-    expect(resolveReactNativeArchitecture({})).toBe('new');
+  it('keeps the legacy architecture by default', () => {
+    expect(resolveReactNativeArchitecture({})).toBe('legacy');
   });
 
   it.each(['1', 'true', 'yes', 'on'])(
@@ -37,13 +37,13 @@ describe('resolveReactNativeArchitecture', () => {
 });
 
 describe('resolveGradleReactNativeArchitecture', () => {
-  it('accepts a Gradle-project-only new architecture build', () => {
-    expect(
+  it('rejects a Gradle-project-only new architecture build', () => {
+    expect(() =>
       resolveGradleReactNativeArchitecture({
         environment: {},
         projectProperty: 'true',
       }),
-    ).toBe('new');
+    ).toThrow('cannot select the architecture by itself');
   });
 
   it('accepts a redundant Gradle project property when JavaScript agrees', () => {
