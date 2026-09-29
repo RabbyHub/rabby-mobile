@@ -118,8 +118,29 @@ export const PerpsProPositionTpSlForm: React.FC<{
       mode === 'position'
         ? position.baseSize
         : initialOrder?.remainingSize || position.baseSize;
-    const [activeModeKind, setActiveModeKind] =
-      useState<PerpsPositionTpSlKind | null>(null);
+    const positionResetKeys =
+      mode === 'position'
+        ? {
+            tp: summary.takeProfit.positionOrders
+              .map(order => `${order.oid}:${order.triggerPrice}`)
+              .sort()
+              .join('|'),
+            sl: summary.stopLoss.positionOrders
+              .map(order => `${order.oid}:${order.triggerPrice}`)
+              .sort()
+              .join('|'),
+          }
+        : undefined;
+    const [activeMode, setActiveMode] = useState<{
+      kind: PerpsPositionTpSlKind;
+      resetKey: string | undefined;
+    } | null>(null);
+    const getResetKey = (kind: PerpsPositionTpSlKind) =>
+      positionResetKeys?.[kind === 'takeProfit' ? 'tp' : 'sl'];
+    if (activeMode && activeMode.resetKey !== getResetKey(activeMode.kind)) {
+      setActiveMode(null);
+    }
+    const activeModeKind = activeMode?.kind ?? null;
     const amountInputRef = useRef<TextInput>(null);
     const displayAmountDecimals = amountUnit === 'base' ? market.szDecimals : 2;
     const maximumDisplayAmount = useMemo(() => {
@@ -244,6 +265,7 @@ export const PerpsProPositionTpSlForm: React.FC<{
       initialTakeProfit,
       leverage: position.leverage,
       preferredModes: tpSlModePreferences.position,
+      resetKeys: positionResetKeys,
       sideSize,
       szDecimals: market.szDecimals,
     });
@@ -515,7 +537,9 @@ export const PerpsProPositionTpSlForm: React.FC<{
                       }
                       onChangeTrigger={next => changeTrigger(kind, next)}
                       onPressMode={() => {
-                        dismissKeyboardThen(() => setActiveModeKind(kind));
+                        dismissKeyboardThen(() =>
+                          setActiveMode({ kind, resetKey: getResetKey(kind) }),
+                        );
                       }}
                       position={position}
                       rawMagnitude={input.rawMagnitude}
@@ -660,7 +684,7 @@ export const PerpsProPositionTpSlForm: React.FC<{
         </View>
         <PerpsProTpSlModeSheet
           allowedModes={['pnl', 'roi']}
-          onClose={() => setActiveModeKind(null)}
+          onClose={() => setActiveMode(null)}
           onSelect={nextMode => {
             if (!activeModeKind || nextMode === 'price') {
               return;

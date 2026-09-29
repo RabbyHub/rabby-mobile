@@ -5,7 +5,7 @@ import RcNextSearchCC from '@/assets/icons/common/next-search-cc.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { PerpsProBottomSheetTextInput } from '../common/PerpsProBottomSheetTextInput';
 import React, {
   forwardRef,
   useCallback,
@@ -52,7 +52,7 @@ const PerpsProMarketSearchBarComponent = forwardRef<
   const nativeInputRef =
     useRef<React.ElementRef<typeof PerpsProNativeSearchInput>>(null);
   const bottomSheetInputRef =
-    useRef<React.ElementRef<typeof BottomSheetTextInput>>(null);
+    useRef<React.ElementRef<typeof PerpsProBottomSheetTextInput>>(null);
   const {
     onFocus: onKeyboardFocus,
     onBlur: onKeyboardBlur,
@@ -166,7 +166,7 @@ const PerpsProMarketSearchBarComponent = forwardRef<
               ref={nativeInputRef}
             />
           ) : (
-            <BottomSheetTextInput
+            <PerpsProBottomSheetTextInput
               {...commonInputProps}
               ref={bottomSheetInputRef}
               selection={

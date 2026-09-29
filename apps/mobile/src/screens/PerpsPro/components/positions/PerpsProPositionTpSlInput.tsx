@@ -257,7 +257,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingTop: 12,
     textAlignVertical: 'center',
   },
-  hiddenInput: { color: 'transparent' },
+  // Android Fabric treats transparent black (ARGB 0) as an unset text color.
+  // Keep alpha zero with nonzero RGB, preserving the native view's opacity.
+  hiddenInput: { color: IS_ANDROID ? 'rgba(255,255,255,0)' : 'transparent' },
   inputWithNegative: { paddingLeft: 9 },
   negativePrefix: {
     color: colors2024['neutral-title-1'],

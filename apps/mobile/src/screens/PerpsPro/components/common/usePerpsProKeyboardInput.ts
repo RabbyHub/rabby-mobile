@@ -32,10 +32,10 @@ export const usePerpsProKeyboardInput = (
   useLayoutEffect(() => {
     perpsProKeyboardSession.updateMinimum(id, getMinimum ?? minimum);
   }, [getMinimum, id, minimum]);
-  useLayoutEffect(() => () => perpsProKeyboardSession.blur(id), [id]);
+  useLayoutEffect(() => () => perpsProKeyboardSession.unregister(id), [id]);
   useLayoutEffect(() => {
     if (!enabled) {
-      perpsProKeyboardSession.blur(id);
+      perpsProKeyboardSession.unregister(id);
     }
   }, [enabled, id]);
   const onFocus = useCallback(() => {
