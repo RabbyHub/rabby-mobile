@@ -1,12 +1,11 @@
 import { useCallback, useContext, useId, useLayoutEffect, useRef } from 'react';
-import { Platform } from 'react-native';
 import type { RefObject } from 'react';
 import {
-  PERPS_PRO_KEYBOARD_ACCESSORY_ID,
   perpsProKeyboardSession,
   type PerpsProKeyboardInput,
 } from './perpsProKeyboardSession';
 import { PerpsProKeyboardSheetContext } from './PerpsProKeyboardSheetContext';
+import { getPerpsProKeyboardAccessoryID } from './perpsProKeyboardAccessoryBinding';
 
 export const usePerpsProKeyboardInput = (
   inputRef: RefObject<PerpsProKeyboardInput | null | undefined>,
@@ -53,8 +52,7 @@ export const usePerpsProKeyboardInput = (
   }, [enabled, id, inputRef, scrollTrade, sheetId]);
   const onBlur = useCallback(() => perpsProKeyboardSession.blur(id), [id]);
   return {
-    inputAccessoryViewID:
-      Platform.OS === 'ios' ? PERPS_PRO_KEYBOARD_ACCESSORY_ID : undefined,
+    inputAccessoryViewID: getPerpsProKeyboardAccessoryID(id),
     onBlur,
     onFocus,
   };
