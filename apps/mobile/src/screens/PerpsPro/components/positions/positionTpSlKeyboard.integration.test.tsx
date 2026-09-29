@@ -84,6 +84,7 @@ jest.mock('react-native-gesture-handler', () => {
           _nativeTag: ++mockNextNode,
           focus: jest.fn(),
           blur: jest.fn(),
+          clear: jest.fn(),
           isFocused: () => true,
           measureInWindow: (
             callback: (
@@ -97,6 +98,11 @@ jest.mock('react-native-gesture-handler', () => {
           setSelection: mockSetSelection,
         };
       }
+      host.current.blur.mockImplementation(() => {
+        (props as any).onBlur?.({
+          nativeEvent: { target: host.current._nativeTag },
+        });
+      });
       ReactModule.useImperativeHandle(ref, () => host.current);
       return ReactModule.createElement(Host, props);
     }),
@@ -110,6 +116,8 @@ Object.defineProperty(Platform, 'OS', {
   configurable: true,
   value: 'android',
 });
+const { PerpsProMarketSearchBar } =
+  require('../market/PerpsProMarketSearchBar') as typeof import('../market/PerpsProMarketSearchBar');
 const { PerpsProPositionTpSlBottomSheetTextInput } =
   require('./PerpsProPositionTpSlBottomSheetTextInput') as typeof import('./PerpsProPositionTpSlBottomSheetTextInput');
 const { PerpsProPositionTpSlInput } =
@@ -209,6 +217,66 @@ describe('Android TP/SL keyboard ownership', () => {
         duration: 0,
       });
       expect(onBlur).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it.each(['hide-first', 'blur-first'] as const)(
+    'restores market search after Cancel with %s native scheduling',
+    ordering => {
+      const onChange = jest.fn();
+      const onFocusChange = jest.fn();
+      const Harness = () => {
+        const [value, setValue] = React.useState('BTC');
+        return (
+          <PerpsProMarketSearchBar
+            value={value}
+            placeholder="Search"
+            onFocusChange={onFocusChange}
+            onChangeText={next => {
+              onChange(next);
+              setValue(next);
+            }}
+          />
+        );
+      };
+      const dismiss = jest
+        .spyOn(Keyboard, 'dismiss')
+        .mockImplementation(() => undefined);
+      render(<Harness />, { wrapper });
+      focus('market-search', 1);
+      flushUI();
+      expect(mockState.target).toBe(1);
+      expect(mockNodes.current).toEqual(new Set([1]));
+      if (ordering === 'hide-first') {
+        queueHide();
+      }
+      fireEvent.press(screen.getByTestId('market-search-cancel'));
+      if (ordering === 'blur-first') {
+        queueHide();
+      }
+      expect(onChange).toHaveBeenLastCalledWith('');
+      expect(onFocusChange.mock.calls.map(([value]) => value)).toEqual([
+        true,
+        false,
+      ]);
+      expect(dismiss).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('market-search').props.value).toBe('');
+      expect(
+        screen.getByTestId('perps-pro-market-search-focus-mask'),
+      ).toBeTruthy();
+      flushUI();
+      expect(mockState).toEqual({
+        status: 'HIDDEN',
+        target: undefined,
+        height: 278,
+        heightWithinContainer: 278,
+        duration: 0,
+      });
+      // The input remains registered for the next search session.
+      expect(mockNodes.current).toEqual(new Set([1]));
+      focus('market-search', 1);
+      flushUI();
+      expect(mockState.target).toBe(1);
     },
   );
 
