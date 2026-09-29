@@ -111,7 +111,7 @@ const hostFor = (testID: string) => {
 };
 
 // JS integration proves the real composition/session contract. Setting the
-// renderer flag does not execute UIKit: device validation is documented in README.
+// renderer flag does not execute UIKit: native attachment still needs device validation.
 describe('Pro iOS accessory binding across renderers', () => {
   beforeEach(() => {
     Platform.OS = 'ios';
