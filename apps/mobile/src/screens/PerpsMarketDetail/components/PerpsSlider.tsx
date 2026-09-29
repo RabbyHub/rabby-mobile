@@ -145,7 +145,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   sliderPercentage: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors2024['brand-default'],
     fontFamily: 'SF Pro Rounded',
     minWidth: 40,

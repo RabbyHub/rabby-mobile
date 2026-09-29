@@ -143,7 +143,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['blue-default'],
     fontFamily: PERPS_PRO_FONT_FAMILY,
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
     lineHeight: 18,
   },
   empty: {

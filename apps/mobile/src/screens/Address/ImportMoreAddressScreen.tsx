@@ -105,7 +105,7 @@ const getStyles = (colors: AppColorsVariants) =>
       lineHeight: 24,
     },
     footerButtonTitle: {
-      fontWeight: '600',
+      fontWeight: '500',
       fontSize: 18,
       lineHeight: 22,
     },

@@ -538,13 +538,7 @@ export const PerpsPosition: React.FC<{
                           'page.perpsDetail.PerpsPosition.fundingTipsBold'
                         }
                         components={{
-                          bold: (
-                            <Text
-                              style={{
-                                fontWeight: '800',
-                              }}
-                            />
-                          ),
+                          bold: <Text style={styles.fundingTextBold} />,
                         }}
                       />
                     </Text>
@@ -715,7 +709,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 17,
     lineHeight: 22,
-    fontWeight: '800',
+    fontWeight: '900',
     color: isLight ? colors2024['neutral-title-1'] : '#50D2C1',
   },
   unrealizedPnl: {
@@ -791,6 +785,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-secondary'],
     textAlign: 'center',
+  },
+  fundingTextBold: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '900',
   },
   listItem: {
     display: 'flex',

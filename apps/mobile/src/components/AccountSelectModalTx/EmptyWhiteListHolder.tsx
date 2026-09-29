@@ -67,7 +67,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     position: 'relative',
     color: colors2024['neutral-title-1'],
     fontSize: 18,
-    fontWeight: '800',
+    fontWeight: '900',
     fontFamily: 'SF Pro Rounded',
     lineHeight: 22,
   },
@@ -135,7 +135,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   footerBtnText: {
     fontFamily: 'SF Pro Rounded',
     color: colors2024['brand-default'],
-    fontWeight: '800',
+    fontWeight: '900',
     fontSize: 16,
     lineHeight: 24,
   },

@@ -81,7 +81,7 @@ const getNotMatchedHolderStyle = createGetStyles(colors => {
       marginTop: 12,
       fontSize: 15,
       color: colors['neutral-body'],
-      fontWeight: '600',
+      fontWeight: '500',
     },
   };
 });

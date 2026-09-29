@@ -322,7 +322,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   mutliBox: {
     width: '100%',
@@ -388,7 +388,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   headerTitleStyle: {
     color: colors2024['neutral-title-1'],
-    fontWeight: '800',
+    fontWeight: '900',
     fontSize: 20,
     fontFamily: 'SF Pro Rounded',
     lineHeight: 24,
