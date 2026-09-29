@@ -82,6 +82,10 @@ const measureOverlay = (windowY: number) => {
 
 // Unit/component coverage: native keyboard events and route focus are boundaries.
 describe('PerpsProKeyboardAccessory', () => {
+  const runtime = globalThis as typeof globalThis & {
+    nativeFabricUIManager?: unknown;
+  };
+  const initialFabric = runtime.nativeFabricUIManager;
   const platform = Platform.OS;
   const initialAppState = AppState.currentState;
   const statusBarHeight = StatusBar.currentHeight;
@@ -104,6 +108,9 @@ describe('PerpsProKeyboardAccessory', () => {
       }),
     );
   beforeEach(() => {
+    // This suite protects the existing Paper host and Android overlay.
+    // Fabric composition is covered by iosKeyboardAccessory.integration.test.tsx.
+    runtime.nativeFabricUIManager = undefined;
     AppState.currentState = 'active';
     StatusBar.currentHeight = 24;
     Platform.OS = 'ios';
@@ -128,6 +135,7 @@ describe('PerpsProKeyboardAccessory', () => {
       });
   });
   afterEach(() => {
+    runtime.nativeFabricUIManager = initialFabric;
     act(() => perpsProKeyboardSession.setEnabled(false));
     Platform.OS = platform;
     AppState.currentState = initialAppState;

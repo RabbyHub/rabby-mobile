@@ -27,6 +27,7 @@ import { useTranslation } from 'react-i18next';
 
 import { resolvePerpsProEmptyInputSelection } from '../common/perpsProInputSelection';
 import { usePerpsProKeyboardInput } from '../common/usePerpsProKeyboardInput';
+import { PerpsProInputAccessory } from '../common/PerpsProInputAccessory';
 import { PerpsProNativeSearchInput } from './PerpsProNativeSearchInput';
 
 export type PerpsProMarketSearchBarHandle = {
@@ -177,6 +178,7 @@ const PerpsProMarketSearchBarComponent = forwardRef<
               value={value}
             />
           )}
+          <PerpsProInputAccessory nativeID={inputAccessoryViewID} />
         </View>
         {!isResting && value ? (
           <TouchableOpacity

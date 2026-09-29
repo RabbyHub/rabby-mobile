@@ -179,15 +179,18 @@ describe('Perps Pro open order edit lifecycle integration', () => {
     const exchange = new ExchangeClient({
       agentPrivateKey,
       masterAddress: account.address,
+      // Inject before construction so the SDK cannot start a metadata request
+      // that outlives this test. Signing and wire conversion remain real.
+      symbolConversion: {
+        getAssetIndex: async (coin: string) => (coin === 'BTC' ? 0 : -1),
+      } as NonNullable<
+        ConstructorParameters<typeof ExchangeClient>[0]['symbolConversion']
+      >,
     });
     const sdkBoundaries = exchange as unknown as {
       httpClient: {
         exchange: (request: CapturedModifyRequest) => Promise<unknown>;
       };
-      symbolConversion: { getAssetIndex: (coin: string) => Promise<number> };
-    };
-    sdkBoundaries.symbolConversion = {
-      getAssetIndex: async coin => (coin === 'BTC' ? 0 : -1),
     };
     sdkBoundaries.httpClient = {
       exchange: async request => {
