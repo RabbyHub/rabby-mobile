@@ -373,14 +373,14 @@ export function AccountsPanelInSheetModal({
                       height={22}
                     />
                   </View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={styles.addWhitelistHintContent}>
                     <Text style={styles.addWhitelistHintText}>
                       {t(
                         'component.accountSelectModalTx.addTrustedAddress.desc',
                       )}
                     </Text>
                     <TouchableOpacity
-                      style={{ marginLeft: 8 }}
+                      style={styles.addWhitelistHintButton}
                       onPress={() => {
                         fnNavTo('add-new-whitelist-addr');
                       }}>
@@ -701,7 +701,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
 
     addWhitelistHintContainer: {
       marginTop: 12,
-      height: 106,
+      minHeight: 106,
       paddingHorizontal: 10,
       paddingVertical: 16,
       borderRadius: 20,
@@ -723,7 +723,21 @@ const getPanelStyle = createGetStyles2024(ctx => {
       backgroundColor: colors2024['green-light-1'],
       borderRadius: 12,
     },
+    addWhitelistHintContent: {
+      width: '100%',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      justifyContent: 'center',
+      columnGap: 8,
+      rowGap: 4,
+    },
+    addWhitelistHintButton: {
+      maxWidth: '100%',
+    },
     addWhitelistHintText: {
+      maxWidth: '100%',
+      textAlign: 'center',
       color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 16,
