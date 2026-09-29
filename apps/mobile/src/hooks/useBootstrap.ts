@@ -186,7 +186,9 @@ export function useInitializeAppOnTop() {
 
   React.useEffect(() => {
     const onUnlock = async () => {
-      apisSafe.syncAllGnosisNetworks();
+      void apisSafe.syncAllGnosisNetworks().catch(error => {
+        console.error('[useBootstrap] sync Safe networks failed', error);
+      });
       doInitializeApis();
     };
     const sub = perfEvents.subscribe('POST_UNLOCK_UI_READY', onUnlock);

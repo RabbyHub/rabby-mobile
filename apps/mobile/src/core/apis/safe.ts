@@ -16,17 +16,23 @@ import {
 } from '@rabby-wallet/eth-keyring-gnosis';
 import { EVENTS, eventBus } from '@/utils/events';
 import type { Account } from '@/types/account';
-import { isEqual, sortBy, uniq, without } from 'lodash';
+import { without } from 'lodash';
 import { toChecksumAddress } from '@ethereumjs/util';
 import { hashSafeMessage } from '@safe-global/protocol-kit/dist/src/utils/eip-712';
 import PQueue from 'p-queue';
 import type { SafeTransactionItem } from '@rabby-wallet/gnosis-sdk/dist/api';
 import { GNOSIS_SUPPORT_CHAINS } from '@rabby-wallet/gnosis-sdk/dist/api';
-import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import {
+  ensureKeyringRuntimeReadyForApi,
+  getKeyringByTypeSnapshot,
+  keyringServiceApi,
+} from '@/core/serviceApi/keyring';
 import {
   getFallbackAccountSnapshot,
   preferenceServiceApi,
 } from '@/core/serviceApi/preference';
+import { createSafeNetworkSync } from '@/core/utils/safeNetworkSync';
+import { publishGnosisNetworks } from '@/core/utils/safeNetworkEvents';
 
 const gnosisPQueue = new PQueue({
   interval: 1000,
@@ -63,6 +69,26 @@ export const createSafeService = async ({
 };
 
 class ApisSafe {
+  private readonly networkSync = createSafeNetworkSync<GnosisKeyring>({
+    getKeyring: async () => {
+      await ensureKeyringRuntimeReadyForApi('api.sync_safe_networks');
+      return getKeyringByTypeSnapshot(KEYRING_TYPE.GnosisKeyring) as
+        | GnosisKeyring
+        | undefined;
+    },
+    getSupportedNetworks: () =>
+      GNOSIS_SUPPORT_CHAINS.flatMap(chainEnum => {
+        const chain = findChain({ enum: chainEnum });
+        return chain ? [chain.network] : [];
+      }),
+    isSafe: async (address, networkId) => {
+      const safe = await createSafeService({ address, networkId });
+      return (await safe.getOwners()).length > 0;
+    },
+    persist: keyring => keyringServiceApi.persistKeyringsForKeyring(keyring),
+    publish: publishGnosisNetworks,
+  });
+
   fetchGnosisChainList = (address: string, excludeChains?: string[]) => {
     if (!isAddress(address)) {
       return Promise.reject(new Error(t('background.error.invalidAddress')));
@@ -121,54 +147,10 @@ class ApisSafe {
     });
     await preferenceServiceApi.initCurrentAccount();
   };
-  syncAllGnosisNetworks = async () => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
-    if (!keyring) {
-      return;
-    }
-    let isChanged = false;
-    Object.entries(keyring.networkIdsMap).forEach(
-      async ([address, networks]) => {
-        const chainList = await this.fetchGnosisChainList(
-          address,
-          networks.map(id => findChain({ networkId: id })?.enum || ''),
-        );
-        const nextNetworks = uniq(
-          (networks || []).concat(chainList.map(chain => chain.network)),
-        );
-        const isSame = isEqual(sortBy(networks), sortBy(nextNetworks));
-        if (isSame) {
-          return;
-        }
-        isChanged = true;
-        keyring.setNetworkIds(address, nextNetworks);
-      },
-    );
-    if (isChanged) {
-      await keyringServiceApi.persistKeyringsForKeyring(keyring);
-    }
-  };
+  syncAllGnosisNetworks = () => this.networkSync.syncAll();
 
-  syncGnosisNetworks = async (address: string) => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
-    if (!keyring) {
-      return;
-    }
-    const networks = keyring.networkIdsMap[address];
-    const chainList = await this.fetchGnosisChainList(
-      address,
-      (networks || []).map(id => findChain({ networkId: id })?.enum || ''),
-    );
-    const nextNetworks = uniq(
-      (networks || []).concat(chainList.map(chain => chain.network)),
-    );
-    const isSame = isEqual(sortBy(networks), sortBy(nextNetworks));
-    if (isSame) {
-      return;
-    }
-    keyring.setNetworkIds(address, nextNetworks);
-    await keyringServiceApi.persistKeyringsForKeyring(keyring);
-  };
+  syncGnosisNetworks = (address: string) =>
+    this.networkSync.syncAddress(address);
   getSafeVersion = async ({
     address,
     networkId,
@@ -308,7 +290,7 @@ class ApisSafe {
     if (!keyring) {
       throw new Error(t('background.error.notFoundGnosisKeyring'));
     }
-    const networks = keyring.networkIdsMap[address];
+    const networks = keyring.networkIdsMap[address.toLowerCase()];
     if (!networks || !networks.length) {
       return null;
     }
