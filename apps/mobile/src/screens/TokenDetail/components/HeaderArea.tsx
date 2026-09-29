@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Dimensions,
   StyleProp,
@@ -6,7 +6,10 @@ import {
   View,
   ViewStyle,
   TouchableOpacity,
+  Pressable,
+  StyleSheet,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -26,6 +29,9 @@ import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
 import { ellipsisAddress } from '@/utils/address';
 import Clipboard from '@react-native-clipboard/clipboard';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
+import { Button } from '@/components2024/Button';
+import { BOTTOM_BUTTON_DOUBLE_HEIGHT } from '@/constant/layout';
 
 const screenWidth = Dimensions.get('window').width;
 interface Props {
@@ -55,6 +61,10 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { refreshing } = useAssetsRefreshing();
   const { t } = useTranslation();
+  const [copyConfirmVisible, setCopyConfirmVisible] = useState(false);
+  const closeCopyConfirm = useCallback(() => setCopyConfirmVisible(false), []);
+
+  useFocusEffect(useCallback(() => closeCopyConfirm, [closeCopyConfirm]));
 
   const isNativeToken = useMemo(() => {
     const chain = findChain({ serverId: token?.chain });
@@ -118,7 +128,10 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
             {displayCopy && (
               <TouchableOpacity
                 style={styles.touchBox}
-                onPress={handleCopyAddress}>
+                onPress={evt => {
+                  evt.stopPropagation();
+                  setCopyConfirmVisible(true);
+                }}>
                 <Text style={styles.contractAddress}>
                   {ellipsisAddress(token.id)}
                 </Text>
@@ -129,11 +142,69 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
           {!disableRefresh && refreshing && <LoadingCircle />}
         </View>
       </View>
+      <TrackedModal
+        modalId="token-contract-copy-confirm"
+        visible={copyConfirmVisible}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={closeCopyConfirm}>
+        <View style={styles.copyConfirmOverlay}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={closeCopyConfirm}
+            accessible={false}
+          />
+          <View style={styles.copyConfirmDialog} accessibilityViewIsModal>
+            <Text style={styles.copyConfirmTitle}>
+              {t('page.tokenDetail.copyCAWarning')}
+            </Text>
+            <Button
+              title={t('global.confirm')}
+              height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+              titleStyle={styles.copyConfirmButtonTitle}
+              onPress={evt => {
+                closeCopyConfirm();
+                handleCopyAddress(evt);
+              }}
+            />
+          </View>
+        </View>
+      </TrackedModal>
     </View>
   );
 };
 
 const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
+  copyConfirmOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+  copyConfirmDialog: {
+    width: 352,
+    maxWidth: '100%',
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    gap: 24,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  copyConfirmTitle: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 18,
+    fontWeight: '700',
+    lineHeight: 22,
+    textAlign: 'center',
+    color: colors2024['neutral-title-1'],
+  },
+  copyConfirmButtonTitle: {
+    fontSize: 20,
+  },
   root: {
     width: screenWidth - 140,
   },

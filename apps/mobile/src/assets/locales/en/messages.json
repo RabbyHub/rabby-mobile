@@ -1770,6 +1770,7 @@
       "excludeBalanceTipsButton": "I Got It.",
       "price": "Price",
       "copyCA": "Token contract address copied",
+      "copyCAWarning": "This is a token contract address,\nCannot be used to receive assets.",
       "tabs": {
         "marketData": "Market data",
         "tokenSecurity": "Token Security"
