@@ -13,6 +13,7 @@ import { View } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
 import useCommonStyle from '../hooks/useCommonStyle';
 import { SubTable, SubCol, SubRow } from './Actions/components/SubTable';
+import { AddressMemoRow } from './Actions/components/AddressMemoRow';
 import BigNumber from 'bignumber.js';
 import { formatTokenAmount } from '@/utils/number';
 import {
@@ -243,16 +244,7 @@ export const CommonAction = ({
             </Row>
           </Col>
           <SubTable target={commonActionReceiverRef}>
-            <SubCol>
-              <SubRow isTitle>
-                <Text style={commonStyle.subRowTitleText}>
-                  {t('page.signTx.addressNote')}
-                </Text>
-              </SubRow>
-              <SubRow>
-                <Values.AddressMemo address={actionData.receiver} />
-              </SubRow>
-            </SubCol>
+            <AddressMemoRow address={actionData.receiver} />
 
             <SecurityListItem
               engineResult={engineResultMap['1139']}
