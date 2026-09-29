@@ -2,6 +2,7 @@ import BigNumber from 'bignumber.js';
 import type { OpenApiService } from '@rabby-wallet/rabby-api';
 import type { CHAINS_ENUM } from '@debank/common';
 import type { QuoteResult } from '@rabby-wallet/rabby-swap/dist/quote';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { findChain, findChainByEnum } from '@/utils/chain';
 import i18n from '@/utils/i18n';
 import type { AbiCoder } from 'web3-eth-abi';
@@ -266,7 +267,7 @@ export const dexSwap = async (
             ...addSwapTxHistoryObj,
             hash,
           };
-          if (hash) {
+          if (hash && account.type !== KEYRING_CLASS.GNOSIS) {
             await transactionHistoryServiceApi.addSwapTxHistory(
               swapTxHistoryObj,
             );
@@ -408,7 +409,7 @@ export const dexSwap = async (
             ...addSwapTxHistoryObj,
             hash,
           };
-          if (hash) {
+          if (hash && account.type !== KEYRING_CLASS.GNOSIS) {
             await transactionHistoryServiceApi.addSwapTxHistory(
               swapTxHistoryObj,
             );
