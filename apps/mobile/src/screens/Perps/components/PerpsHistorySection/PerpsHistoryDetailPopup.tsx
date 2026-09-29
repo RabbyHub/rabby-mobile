@@ -213,7 +213,11 @@ export const PerpsHistoryDetailPopup: React.FC<{
                       </Text>
                     </View>
                     <View style={styles.coinContainer}>
-                      <AssetAvatar size={24} logo={logoUrl} />
+                      <AssetAvatar
+                        size={24}
+                        logo={logoUrl}
+                        logoStyle={styles.coinIcon}
+                      />
                       <Text style={styles.value}>
                         {formatPerpsCoin(coin || '')} - {quoteAsset}
                       </Text>
@@ -446,6 +450,9 @@ const getStyle = createGetStyles2024(ctx => {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
+    },
+    coinIcon: {
+      backgroundColor: 'white',
     },
     green: {
       color: colors2024['green-default'],
