@@ -9,7 +9,9 @@ import {
 import {
   Keyboard,
   Platform,
+  processColor,
   StatusBar,
+  StyleSheet,
   UIManager,
   TextInput as NativeTextInput,
   View,
@@ -124,6 +126,8 @@ const { PerpsProPositionTpSlInput } =
   require('./PerpsProPositionTpSlInput') as typeof import('./PerpsProPositionTpSlInput');
 const { PerpsProPositionTpSlSideInputs } =
   require('./PerpsProPositionTpSlSideInputs') as typeof import('./PerpsProPositionTpSlSideInputs');
+const { usePerpsProPositionTpSlFormInputs } =
+  require('./usePerpsProPositionTpSlFormInputs') as typeof import('./usePerpsProPositionTpSlFormInputs');
 const { usePerpsProSheetKeyboard } =
   require('../common/usePerpsProSheetKeyboard') as typeof import('../common/usePerpsProSheetKeyboard');
 const { PerpsProKeyboardSheetContext } =
@@ -437,6 +441,122 @@ describe('Android TP/SL keyboard ownership', () => {
       screen.getByTestId('input-focus-proxy').props.accessibilityState.disabled,
     ).toBe(false);
   });
+
+  it.each([
+    ['takeProfit', 'pnl', '101'],
+    ['stopLoss', 'pnl', '99'],
+    ['takeProfit', 'roi', '100.1'],
+    ['stopLoss', 'roi', '99.9'],
+  ] as const)(
+    'keeps %s %s and its derived price transparent when blurred without hiding the native view',
+    (kind, mode, expectedPrice) => {
+      const Harness = () => {
+        const inputs = usePerpsProPositionTpSlFormInputs({
+          direction: 'long',
+          entryPrice: '100',
+          initialSize: '1',
+          initialStopLoss: '',
+          initialTakeProfit: '',
+          leverage: 10,
+          preferredModes: { tp: mode, sl: mode },
+          sideSize: '1',
+          szDecimals: 3,
+        });
+        const draft =
+          kind === 'takeProfit' ? inputs.takeProfit : inputs.stopLoss;
+        return (
+          <PerpsProPositionTpSlSideInputs
+            addMode={false}
+            disabled={false}
+            kind={kind}
+            inputSource={draft.source}
+            market={{
+              displayBase: 'BTC',
+              displayPair: 'BTCUSDC',
+              markPrice: '100',
+              pxDecimals: 2,
+              quoteAsset: 'USDC',
+              sourceTag: null,
+              szDecimals: 3,
+            }}
+            position={
+              {
+                direction: 'long',
+                entryPrice: '100',
+                leverage: 10,
+              } as import('../../model/position').PerpsPositionViewModel
+            }
+            onChangeTrigger={value => inputs.changeTrigger(kind, value)}
+            onChangeModeMagnitude={value =>
+              inputs.changeModeMagnitude(kind, value)
+            }
+            onPressMode={jest.fn()}
+            rawMagnitude={draft.rawMagnitude}
+            selectedMode={mode}
+            size="1"
+            value={draft.triggerPrice}
+            validationKind={draft.triggerPrice ? 'valid' : 'empty'}
+          />
+        );
+      };
+      render(<Harness />, { wrapper });
+      const priceId = `perps-pro-position-tpsl-${kind}-price`;
+      const modeId = `perps-pro-position-tpsl-${kind}-mode-input`;
+      const priceInput = screen.getByTestId(priceId);
+      const modeInput = screen.getByTestId(modeId);
+      const expectHiddenText = (id: string) => {
+        const input = screen.getByTestId(id);
+        const style = StyleSheet.flatten(input.props.style);
+        const color = processColor(style.color);
+        expect(typeof color).toBe('number');
+        // RN 0.81 Android Fabric treats ARGB 0 as UndefinedColor. Test the
+        // actual native color encoding, not just a transparent JS literal.
+        expect(color).not.toBe(0);
+        // eslint-disable-next-line no-bitwise -- Extract the native ARGB alpha byte.
+        expect((color as number) >>> 24).toBe(0);
+        expect(style.opacity ?? 1).toBe(1);
+        expect(input.props.accessibilityLabel).toBeTruthy();
+        expect(input.props.pointerEvents).toBe('none');
+        expect(input.props.caretHidden).toBe(true);
+        expect(screen.getByTestId(`${id}-formatted-value`)).toBeTruthy();
+      };
+
+      focus(modeId, 2);
+      fireEvent.changeText(modeInput, '1');
+      expect(modeInput.props.value).toBe('1');
+      expect(priceInput.props.value).toBe(expectedPrice);
+      expect(screen.queryByTestId(`${modeId}-formatted-value`)).toBeNull();
+      expectHiddenText(priceId);
+
+      blur(modeId, 2);
+      expectHiddenText(modeId);
+      expect(
+        screen.getByTestId(`${modeId}-formatted-value`).props.children,
+      ).toBe(kind === 'stopLoss' ? '−1' : '1');
+      focus(priceId, 1);
+      expect(screen.queryByTestId(`${priceId}-formatted-value`)).toBeNull();
+      expect(
+        // eslint-disable-next-line no-bitwise -- Extract the native ARGB alpha byte.
+        (processColor(
+          StyleSheet.flatten(priceInput.props.style).color,
+        ) as number) >>> 24,
+      ).toBe(255);
+      blur(priceId, 1);
+      expectHiddenText(priceId);
+      focus(modeId, 2);
+      expect(screen.queryByTestId(`${modeId}-formatted-value`)).toBeNull();
+      expect(modeInput.props.pointerEvents).toBe('auto');
+      expect(modeInput.props.selection).toBeUndefined();
+      expect(mockSetSelection).toHaveBeenLastCalledWith(1, 1);
+      fireEvent.changeText(modeInput, '');
+      expect(priceInput.props.value).toBe('');
+      expect(screen.queryByTestId(`${priceId}-formatted-value`)).toBeNull();
+      expect(screen.getByTestId(priceId)).toBe(priceInput);
+      expect(screen.getByTestId(modeId)).toBe(modeInput);
+      expect(mockNextNode).toBe(2);
+      act(flushUI);
+    },
+  );
 
   describe('input and feedback visibility through the real keyboard session', () => {
     const listeners = new Map<string, (...args: any[]) => void>();
