@@ -601,22 +601,6 @@ const Swap = ({
   }, []);
 
   // ===== 交易构建 =====
-  const currentIsCopyTrading = useMemo(() => {
-    if (navState?.type === 'Sell') {
-      return (
-        navState?.isFromCopyTrading &&
-        payToken?.id === navState?.tokenId &&
-        chain === navState.chainEnum
-      );
-    }
-
-    return (
-      navState?.isFromCopyTrading &&
-      receiveToken?.id === navState?.tokenId &&
-      chain === navState.chainEnum
-    );
-  }, [navState, receiveToken?.id, chain, payToken?.id]);
-
   const gotoSwap = useMemoizedFn(async () => {
     if (!inSufficient && payToken && receiveToken && activeProvider?.quote) {
       try {
@@ -644,10 +628,6 @@ const Swap = ({
           dexId: activeProvider?.name || 'WrapToken',
           createdAt: Date.now(),
           status: 'pending' as SwapTxHistoryItem['status'],
-          isFromCopyTrading: currentIsCopyTrading,
-          copyTradingExtra: {
-            type: navState?.type || 'Buy',
-          },
         };
         await dexSwap(
           {
@@ -1208,10 +1188,6 @@ const Swap = ({
             dexId: activeProvider?.name || 'WrapToken',
             createdAt,
             status: 'pending',
-            isFromCopyTrading: currentIsCopyTrading,
-            copyTradingExtra: {
-              type: navState?.type || 'Buy',
-            },
           });
           reportBroadcastSuccessRef.current({
             txHash,
@@ -1262,15 +1238,6 @@ const Swap = ({
           setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_CONFIRM, {
             chain: chainServerId,
           }).catch(console.error);
-          if (currentIsCopyTrading) {
-            matomoRequestEvent({
-              category: 'CopyTrading',
-              action:
-                navState?.type === 'Sell'
-                  ? 'CopyTrading_SellCreateSwap'
-                  : 'CopyTrading_BuyCreateSwap',
-            });
-          }
         }
       } catch (error: any) {
         console.log('swap mini sign error', error);
