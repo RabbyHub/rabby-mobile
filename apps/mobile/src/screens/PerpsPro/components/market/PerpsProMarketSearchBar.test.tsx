@@ -85,12 +85,12 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-jest.mock('@gorhom/bottom-sheet', () => {
+jest.mock('../common/PerpsProBottomSheetTextInput', () => {
   const ReactModule = require('react');
   const { TextInput } = require('react-native');
 
   return {
-    BottomSheetTextInput: ReactModule.forwardRef(
+    PerpsProBottomSheetTextInput: ReactModule.forwardRef(
       (props: Record<string, unknown>, ref: React.Ref<unknown>) => {
         mockBottomSheetInputProps(props);
         ReactModule.useImperativeHandle(ref, () => ({

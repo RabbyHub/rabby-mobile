@@ -272,11 +272,13 @@ describe('Android open order edit keyboard avoidance', () => {
   const showKeyboard = () =>
     act(() => {
       jest.spyOn(Keyboard, 'metrics').mockReturnValue(keyboardMetrics);
+      perpsProKeyboardSession.setAndroidKeyboardVisible(true);
       listeners.get('keyboardDidShow')?.({ endCoordinates: keyboardMetrics });
     });
   const hideKeyboard = () =>
     act(() => {
       jest.spyOn(Keyboard, 'metrics').mockReturnValue(undefined);
+      perpsProKeyboardSession.setAndroidKeyboardVisible(false);
       listeners.get('keyboardDidHide')?.();
     });
   const getInput = (field: string) =>

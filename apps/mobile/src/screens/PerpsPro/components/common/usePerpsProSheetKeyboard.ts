@@ -216,11 +216,12 @@ export const usePerpsProSheetKeyboard = ({
     let previousInputId: string | undefined;
     const sync = (keyboardChanged = false) => {
       const focused = perpsProKeyboardSession.getSnapshot();
+      const presentation = perpsProKeyboardSession.getAndroidPresentation();
       const inputId = focused?.sheetId === sheetId ? focused.id : undefined;
       const inputChanged = previousInputId !== inputId;
       previousInputId = inputId;
       setAccessoryInset(
-        inputId && keyboardYRef.current != null
+        presentation?.sheetId === sheetId && keyboardYRef.current != null
           ? PERPS_PRO_KEYBOARD_ACCESSORY_HEIGHT
           : 0,
       );

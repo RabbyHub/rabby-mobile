@@ -306,9 +306,6 @@ export const PerpsProPositionTpSlSheet: React.FC<{
       }),
       [positionFormOrders, visiblePosition],
     );
-    const positionFormResetSignature = positionFormOrders
-      .map(order => `${order.oid}:${order.triggerPrice}`)
-      .join('|');
     const hasPartialOrders = visiblePosition.tpslOrders.some(
       order => order.scope === 'partial',
     );
@@ -792,7 +789,7 @@ export const PerpsProPositionTpSlSheet: React.FC<{
                           <PerpsProPositionTpSlForm
                             key={
                               tab === 'position'
-                                ? `${position.key}:position:${positionFormResetSignature}`
+                                ? `${position.key}:position`
                                 : `${position.key}:${partialPage}:${
                                     editingOrder?.oid || 'new'
                                   }`

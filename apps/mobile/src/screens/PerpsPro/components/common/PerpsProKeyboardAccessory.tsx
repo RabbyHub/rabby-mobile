@@ -193,6 +193,11 @@ export const PerpsProKeyboardAccessory = () => {
     perpsProKeyboardSession.getSnapshot,
     perpsProKeyboardSession.getSnapshot,
   );
+  const presentation = useSyncExternalStore(
+    perpsProKeyboardSession.subscribe,
+    perpsProKeyboardSession.getAndroidPresentation,
+    perpsProKeyboardSession.getAndroidPresentation,
+  );
   const input = focused?.input;
   const inputId = focused?.id;
   const scrollTrade = focused?.scrollTrade;
@@ -222,15 +227,24 @@ export const PerpsProKeyboardAccessory = () => {
       setHostY(null);
       return;
     }
-    const show = (event: KeyboardEvent) =>
+    const show = (event: KeyboardEvent) => {
       setKeyboardY(
         event.endCoordinates.height > 0 ? event.endCoordinates.screenY : null,
       );
+      if (Platform.OS === 'android') {
+        perpsProKeyboardSession.setAndroidKeyboardVisible(
+          event.endCoordinates.height > 0,
+        );
+      }
+    };
     const subscriptions = [
       Keyboard.addListener('keyboardDidShow', show),
       Keyboard.addListener('keyboardDidHide', () => {
         setKeyboardY(null);
         setHostY(null);
+        if (Platform.OS === 'android') {
+          perpsProKeyboardSession.setAndroidKeyboardVisible(false);
+        }
       }),
     ];
     if (Platform.OS === 'ios') {
@@ -240,6 +254,11 @@ export const PerpsProKeyboardAccessory = () => {
     // cannot be lost between the input focusing and this owner becoming active.
     const metrics = Keyboard.metrics();
     setKeyboardY(metrics && metrics.height > 0 ? metrics.screenY : null);
+    if (Platform.OS === 'android') {
+      perpsProKeyboardSession.setAndroidKeyboardVisible(
+        !!metrics && metrics.height > 0,
+      );
+    }
     return () => subscriptions.forEach(subscription => subscription.remove());
   }, [enabled]);
   const measureHost = useCallback(() => {
@@ -291,6 +310,9 @@ export const PerpsProKeyboardAccessory = () => {
       current.input.blur();
       perpsProKeyboardSession.blur(current.id);
     }
+    if (Platform.OS === 'android') {
+      perpsProKeyboardSession.setAndroidKeyboardVisible(false);
+    }
     Keyboard.dismiss();
   }, []);
   if (Platform.OS === 'ios') {
@@ -306,14 +328,14 @@ export const PerpsProKeyboardAccessory = () => {
       </InputAccessoryView>
     );
   }
-  if (!enabled || !focused || keyboardY == null) {
+  if (!enabled || !presentation || keyboardY == null) {
     return null;
   }
   return (
     <Portal
-      key={focused.id}
+      key={presentation.key}
       hostName={hostName}
-      name={`perps-pro-keyboard-${focused.id}`}>
+      name={`perps-pro-keyboard-${presentation.key}`}>
       <View
         collapsable={false}
         pointerEvents="box-none"
@@ -332,7 +354,7 @@ export const PerpsProKeyboardAccessory = () => {
             },
           ]}>
           <AccessoryBar
-            minimum={focused.minimum}
+            minimum={focused?.minimum ?? null}
             onDone={done}
             width={dimensions.width}
           />
