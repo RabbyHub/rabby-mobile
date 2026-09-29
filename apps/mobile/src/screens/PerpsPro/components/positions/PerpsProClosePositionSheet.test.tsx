@@ -329,7 +329,10 @@ describe('PerpsProClosePositionSheet', () => {
     fireEvent(input, 'focus');
     const owner = perpsProKeyboardSession.getSnapshot();
     fireEvent.changeText(input, '0.5');
-    act(() => show({ endCoordinates: { height: 300, screenY: 500 } }));
+    act(() => {
+      perpsProKeyboardSession.setAndroidKeyboardVisible(true);
+      show({ endCoordinates: { height: 300, screenY: 500 } });
+    });
     expect(screen.getByTestId('close-position-sheet').props.snapPoints).toEqual(
       [598],
     );

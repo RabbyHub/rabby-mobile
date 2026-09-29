@@ -220,7 +220,10 @@ describe.each(['light', 'dark'] as const)(
         screen.getByTestId('perps-pro-leverage-input'),
         '12',
       );
-      act(() => show({ endCoordinates: { height: 300, screenY: 500 } }));
+      act(() => {
+        perpsProKeyboardSession.setAndroidKeyboardVisible(true);
+        show({ endCoordinates: { height: 300, screenY: 500 } });
+      });
       expect(screen.getByTestId('leverage-sheet').props.snapPoints).toEqual([
         410,
       ]);

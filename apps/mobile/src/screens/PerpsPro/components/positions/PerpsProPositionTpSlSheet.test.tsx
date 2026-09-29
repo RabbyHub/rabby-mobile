@@ -581,6 +581,7 @@ describe('PerpsProPositionTpSlSheet', () => {
   it('excludes Done from the Android TP/SL viewport without changing the form height or instance', () => {
     mockAndroid = true;
     perpsProKeyboardSession.setEnabled(true);
+    perpsProKeyboardSession.setAndroidKeyboardVisible(true);
     const view = render(
       <PerpsProPositionTpSlSheet
         amountUnit="base"
