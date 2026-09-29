@@ -314,7 +314,8 @@ const checkRecentTxCountAndRefetch = async (address: string) => {
     }
 
     const [{ tx_count }, localCount] = await Promise.all([
-      openapi.getTxCount({ id: address, from_ts: fromTs, to_ts: toTs }),
+      // the server's to_ts is exclusive, +1 keeps the newest local row in range
+      openapi.getTxCount({ id: address, from_ts: fromTs, to_ts: toTs + 1 }),
       HistoryItemEntity.countInTimeRange(address, fromTs, toTs),
     ]);
     console.debug('refetchRecentHistoryIfIncomplete', address.slice(-4), {

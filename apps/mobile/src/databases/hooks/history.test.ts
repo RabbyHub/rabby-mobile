@@ -206,13 +206,14 @@ describe('transaction history sync', () => {
 
       const [countParams] = mockedOpenapi.getTxCount.mock.calls[0];
       expect(countParams.id).toBe(ADDRESS);
-      expect(countParams.to_ts).toBe(latestTime);
+      // the server's to_ts is exclusive, so the newest local row needs +1
+      expect(countParams.to_ts).toBe(latestTime + 1);
       expect(countParams.from_ts).toBeGreaterThanOrEqual(now - DAY_SEC);
       expect(countParams.from_ts).toBeLessThanOrEqual(nowSec() - DAY_SEC);
       expect(mockedHistoryItemEntity.countInTimeRange).toHaveBeenCalledWith(
         ADDRESS,
         countParams.from_ts,
-        countParams.to_ts,
+        latestTime,
       );
 
       expect(mockedOpenapi.listTxHistory).toHaveBeenCalledTimes(2);
