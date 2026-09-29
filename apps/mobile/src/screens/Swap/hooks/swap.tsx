@@ -299,15 +299,6 @@ export const dexSwap = async (
               action: createSwapTxAction,
             });
           }
-          if (swapTxHistoryObj.isFromCopyTrading) {
-            matomoRequestEvent({
-              category: 'CopyTrading',
-              action:
-                swapTxHistoryObj.copyTradingExtra?.type === 'Sell'
-                  ? 'CopyTrading_SellCreateSwap'
-                  : 'CopyTrading_BuyCreateSwap',
-            });
-          }
         }
         navigationRef.dispatch(
           StackActions.replace(RootNames.StackRoot, {
@@ -439,15 +430,6 @@ export const dexSwap = async (
             matomoRequestEvent({
               category: 'Rabby Market',
               action: createSwapTxAction,
-            });
-          }
-          if (swapTxHistoryObj.isFromCopyTrading) {
-            matomoRequestEvent({
-              category: 'CopyTrading',
-              action:
-                swapTxHistoryObj.copyTradingExtra?.type === 'Sell'
-                  ? 'CopyTrading_SellCreateSwap'
-                  : 'CopyTrading_BuyCreateSwap',
             });
           }
         }
