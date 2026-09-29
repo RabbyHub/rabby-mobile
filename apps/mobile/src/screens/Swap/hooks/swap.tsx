@@ -258,7 +258,7 @@ export const dexSwap = async (
         account,
       }).then(async res => {
         const hash = res as string;
-        void setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN, {
+        setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN, {
           chain: chainObj.serverId as string,
         }).catch(console.error);
         if (addSwapTxHistoryObj) {
@@ -266,7 +266,11 @@ export const dexSwap = async (
             ...addSwapTxHistoryObj,
             hash,
           };
-          await transactionHistoryServiceApi.addSwapTxHistory(swapTxHistoryObj);
+          if (hash) {
+            await transactionHistoryServiceApi.addSwapTxHistory(
+              swapTxHistoryObj,
+            );
+          }
 
           const marketTab = from?.scene
             ? getMarketTabActionPrefix(from.scene)
@@ -396,7 +400,7 @@ export const dexSwap = async (
       .then(async res => {
         const hash = res as string;
         console.log('after swap  hash: ', hash);
-        void setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN, {
+        setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN, {
           chain: chainObj.serverId as string,
         }).catch(console.error);
         if (addSwapTxHistoryObj) {
@@ -404,7 +408,11 @@ export const dexSwap = async (
             ...addSwapTxHistoryObj,
             hash,
           };
-          await transactionHistoryServiceApi.addSwapTxHistory(swapTxHistoryObj);
+          if (hash) {
+            await transactionHistoryServiceApi.addSwapTxHistory(
+              swapTxHistoryObj,
+            );
+          }
 
           const marketTab = from?.scene
             ? getMarketTabActionPrefix(from.scene)
