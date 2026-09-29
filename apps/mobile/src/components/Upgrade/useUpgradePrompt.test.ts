@@ -24,7 +24,6 @@ describe('upgrade prompt exposure receipt', () => {
       const info = {
         version: '0.6.85',
         couldUpgrade: true,
-        autoPrompt: true,
         changelog: 'Upgrade prompt test',
       };
 
