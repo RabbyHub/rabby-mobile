@@ -302,16 +302,18 @@ export const NFTDetailScreen = () => {
           {type && aliasName
             ? renderAccountHeader(type, aliasName, address)
             : null}
-          <Media
-            failedPlaceholder={<IconDefaultNFT width={'100%'} height={360} />}
-            type={iToken?.content_type}
-            src={iToken?.content}
-            safeSvgVariant="detail"
-            style={styles.images}
-            mediaStyle={styles.innerImages}
-            playable={true}
-            poster={iToken?.content}
-          />
+          <View style={styles.imageContainer}>
+            <Media
+              failedPlaceholder={<IconDefaultNFT width={'100%'} height={360} />}
+              type={iToken?.content_type}
+              src={iToken?.content}
+              safeSvgVariant="detail"
+              style={styles.images}
+              mediaStyle={styles.innerImages}
+              playable={true}
+              poster={iToken?.content}
+            />
+          </View>
           <View style={styles.bottom}>
             <View style={styles.titleView}>
               <Text style={styles.title} numberOfLines={1}>
@@ -512,11 +514,16 @@ const getStyle = createGetStyles2024(
       height: '100%',
       borderRadius: 8,
     },
+    imageContainer: {
+      width: '100%',
+      // Keep page spacing outside Media so its absolute loading layer and
+      // normal-flow image/fallback share the same content bounds.
+      paddingHorizontal: 16,
+    },
     images: {
       width: '100%',
       height: 360,
       // flex: 1,
-      paddingHorizontal: 16,
       borderRadius: 0,
       resizeMode: 'cover',
       backgroundColor: 'transparent',
