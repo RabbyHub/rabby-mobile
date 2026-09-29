@@ -187,7 +187,7 @@ describe.each(['light', 'dark'] as const)(
         ),
       ).toMatchObject({
         fontSize: 20,
-        fontWeight: '800',
+        fontWeight: '900',
         lineHeight: 24,
       });
       expect(

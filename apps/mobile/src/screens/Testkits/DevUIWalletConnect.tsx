@@ -746,7 +746,7 @@ const styles = StyleSheet.create({
   valueText: {
     color: '#192945',
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '500',
     flexShrink: 1,
     textAlign: 'right',
   },

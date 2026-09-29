@@ -250,7 +250,7 @@ export const getAssetsApprovalRowStyles = createGetStyles2024(ctx => {
     floorValue: {
       color: colors['neutral-body'],
       fontSize: 13,
-      fontWeight: '600',
+      fontWeight: '500',
       position: 'relative',
     },
     floorValueWarn: {

@@ -167,7 +167,7 @@ const getPendingStatusStyles = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   statusBadge: {
     flexDirection: 'row',
@@ -1353,7 +1353,7 @@ const getItemStyles = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 15,
     lineHeight: 20,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   innerChainStyle: {
     width: 14,

@@ -973,7 +973,7 @@ function createProTooltipRow(
     isLast ? '' : 'margin-bottom:2px;'
   }"><span style="color:${
     chartState.colors?.tooltip.title
-  };min-width:0;overflow-wrap:anywhere;">${label}:</span><span style="color:${valueColor};min-width:0;flex-shrink:1;font-weight:600;text-align:right;overflow-wrap:anywhere;">${value}</span></div>`;
+  };min-width:0;overflow-wrap:anywhere;">${label}:</span><span style="color:${valueColor};min-width:0;flex-shrink:1;font-weight:700;text-align:right;overflow-wrap:anywhere;">${value}</span></div>`;
 }
 
 function renderPerpsProTooltip(candle: CandleStick, pointX: number) {

@@ -1805,7 +1805,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['blue-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
     lineHeight: 18,
   },
 }));

@@ -921,7 +921,7 @@ const getStyles = createGetStyles2024(ctx => {
       minWidth: 0,
       textAlign: 'right',
       fontSize: 13,
-      fontWeight: '600',
+      fontWeight: '500',
       color: ctx.colors2024['neutral-title-1'],
     },
     schedulerToggleText: {
