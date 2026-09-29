@@ -138,14 +138,7 @@ const SendHistoryContent = ({
       {/* <BottomSheetScrollView> */}
       <AppBottomSheetModalTitle
         title={title || t('page.sendPoly.SendHistory')}
-        style={{
-          paddingTop: ModalLayouts.titleTopOffset,
-          fontFamily: 'SF Pro Rounded',
-          fontWeight: '800',
-          fontSize: 20,
-          lineHeight: 24,
-          marginBottom: 10,
-        }}
+        style={styles.historyTitle}
       />
       {Boolean(!isForMultipleAddress && currentAccount) && (
         <AddressItem account={currentAccount!}>
@@ -203,6 +196,14 @@ export const SendHistory = (props: IProps) => {
 };
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
+  historyTitle: {
+    paddingTop: ModalLayouts.titleTopOffset,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '900',
+    fontSize: 20,
+    lineHeight: 24,
+    marginBottom: 10,
+  },
   container: {
     paddingHorizontal: 15,
   },

@@ -257,7 +257,7 @@ export function useBottomTabScreenConfig() {
         headerTitleStyle: {
           ...(headerPresets.onlyTitle.headerTitleStyle as object),
           color: colors2024['neutral-title-1'],
-          fontWeight: '800',
+          fontWeight: '900',
           fontFamily: 'SF Pro Rounded',
           fontSize: 20,
         },

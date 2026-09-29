@@ -351,7 +351,7 @@ const getStyles = createGetStyles(colors => {
     title2: {
       color: colors['neutral-title2'],
       fontSize: 15,
-      fontWeight: '600',
+      fontWeight: '500',
       textAlign: 'center',
       marginTop: 8,
     },

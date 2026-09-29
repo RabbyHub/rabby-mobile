@@ -61,7 +61,7 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   gasSelectorCardContentText: {
     color: colors2024['neutral-title-1'],
-    fontWeight: '600',
+    fontWeight: '500',
   },
   gasSelectorCardContentItem: {
     flexDirection: 'row',
@@ -208,7 +208,7 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
   cardContainerTitle: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    fontWeight: '800',
+    fontWeight: '900',
     lineHeight: 18,
     color: colors2024['neutral-title-1'],
     marginBottom: 8,
@@ -296,7 +296,7 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   gasPriceDescItem: {
     flexDirection: 'row',
@@ -315,7 +315,7 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    fontWeight: '800',
+    fontWeight: '900',
     lineHeight: 18,
     marginRight: 2,
   },
@@ -451,7 +451,7 @@ export const getStyles = (colors: AppColorsVariants) =>
     },
     gasSelectorCardContentText: {
       color: colors['neutral-title-1'],
-      fontWeight: '600',
+      fontWeight: '500',
     },
     gasSelectorCardContentItem: {
       flexDirection: 'row',

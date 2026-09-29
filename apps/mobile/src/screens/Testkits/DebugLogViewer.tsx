@@ -1801,7 +1801,7 @@ const getStyles = createGetStyles2024(ctx => {
     },
     heroTitle: {
       fontSize: 28,
-      fontWeight: '800',
+      fontWeight: '900',
       color: ctx.colors2024['neutral-title-1'],
     },
     heroDescription: {
@@ -1845,7 +1845,7 @@ const getStyles = createGetStyles2024(ctx => {
     },
     policyLabel: {
       fontSize: 14,
-      fontWeight: '600',
+      fontWeight: '500',
       color: ctx.colors2024['neutral-title-1'],
     },
     policyValue: {
@@ -1862,7 +1862,7 @@ const getStyles = createGetStyles2024(ctx => {
     },
     metaLabel: {
       fontSize: 12,
-      fontWeight: '600',
+      fontWeight: '500',
       color: ctx.colors2024['neutral-foot'],
       textTransform: 'uppercase',
       letterSpacing: 0.3,

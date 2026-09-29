@@ -568,13 +568,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   changePercent: {
     fontSize: 14,
     lineHeight: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
   },
   changeTime: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
     lineHeight: 18,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
