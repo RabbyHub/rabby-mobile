@@ -86,8 +86,7 @@ export const PerpsAccountCard: React.FC = () => {
     accountValue,
     isUnifiedAccount,
   } = usePerpsAccount();
-  const { hasNonPerpsAssets, showPortfolioBreakdown } =
-    useShowPerpsPortfolioBreakdown();
+  const { showPortfolioBreakdown } = useShowPerpsPortfolioBreakdown();
 
   const currentAddress = useActivityStore(
     perpsStore,
@@ -249,6 +248,9 @@ export const PerpsAccountCard: React.FC = () => {
   }));
 
   const canExpandChart = !!portfolioData && !isPortfolioEmpty;
+  // Hidden only when every asset is zero (also covers not-logged-in / loading,
+  // where there is no value yet).
+  const canShowBreakdown = (displayValue ?? 0) > 0;
 
   const isNewUser = useMemo(() => {
     return (
@@ -298,9 +300,10 @@ export const PerpsAccountCard: React.FC = () => {
               <View style={styles.headerLeft}>
                 <View style={styles.titleRow}>
                   {/* The breakdown sheet is reached by the dotted label
-                      itself; the label stays plain when there is nothing
-                      to break down. */}
-                  {hasNonPerpsAssets ? (
+                      itself. It also explains the account mode, so it shows
+                      even when spot / staking are empty; the label stays
+                      plain only when every asset is zero. */}
+                  {canShowBreakdown ? (
                     <PerpsProDottedUnderlineText
                       accessibilityLabel={portfolioValueLabel}
                       onPress={() => showPortfolioBreakdown(displayValue || 0)}

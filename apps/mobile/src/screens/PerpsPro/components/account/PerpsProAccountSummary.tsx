@@ -26,8 +26,7 @@ export const PerpsProAccountSummary: React.FC<PerpsProAccountSummaryProps> =
   React.memo(({ account, onDeposit, onWithdraw }) => {
     const { styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
-    const { hasNonPerpsAssets, showPortfolioBreakdown } =
-      useShowPerpsPortfolioBreakdown();
+    const { showPortfolioBreakdown } = useShowPerpsPortfolioBreakdown();
     const pnl = Number(account.unrealizedPnl);
     const portfolioValueLabel = t('page.perps.PerpsCard.portfolioValue');
 
@@ -37,7 +36,8 @@ export const PerpsProAccountSummary: React.FC<PerpsProAccountSummaryProps> =
           <View
             style={styles.summaryColumn}
             testID="perps-pro-account-portfolio-column">
-            {hasNonPerpsAssets ? (
+            {/* Hidden only when every asset is zero. */}
+            {Number(account.primaryValue) > 0 ? (
               <PerpsProDottedUnderlineText
                 accessibilityLabel={portfolioValueLabel}
                 onPress={() =>
