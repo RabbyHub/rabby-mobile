@@ -84,6 +84,7 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
         ignoreAndroidSystemSettings: false,
       });
       Clipboard.setString(token.id);
+      setCopyConfirmVisible(true);
       toastCopyAddressSuccess({
         title: t('page.tokenDetail.copyCA'),
       });
@@ -128,10 +129,7 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
             {displayCopy && (
               <TouchableOpacity
                 style={styles.touchBox}
-                onPress={evt => {
-                  evt.stopPropagation();
-                  setCopyConfirmVisible(true);
-                }}>
+                onPress={handleCopyAddress}>
                 <Text style={styles.contractAddress}>
                   {ellipsisAddress(token.id)}
                 </Text>
@@ -163,10 +161,7 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
               title={t('global.confirm')}
               height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
               titleStyle={styles.copyConfirmButtonTitle}
-              onPress={evt => {
-                closeCopyConfirm();
-                handleCopyAddress(evt);
-              }}
+              onPress={closeCopyConfirm}
             />
           </View>
         </View>
