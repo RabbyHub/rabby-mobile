@@ -1124,9 +1124,8 @@ describe('PerpsProPositionTpSlSheet', () => {
         position={{ ...position, tpslOrders: [refreshedPositionOrder] }}
       />,
     );
-    expect(mockFormProps.mock.lastCall?.[0].instanceId).not.toBe(
-      initialInstanceId,
-    );
+    // Live order changes now reset only the affected leg inside the form.
+    expect(mockFormProps.mock.lastCall?.[0].instanceId).toBe(initialInstanceId);
     expect(mockFormProps.mock.lastCall?.[0].position.tpslOrders).toEqual([
       refreshedPositionOrder,
     ]);
