@@ -422,10 +422,15 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
 >) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const indexDecimal = apisHomeTabIndex.svTabIndexDecimal;
+  const { tabsOpacity } = useHomeDrawerOpacityStyle();
 
+  // Keep the native sibling order stable while PagerView is settling. Changing
+  // zIndex here can detach/reinsert the pager under Fabric and stop its scroll.
+  // The transparent overlay must not consume touches outside its children.
   const containerStyle = useAnimatedStyle(() => {
     return {
-      zIndex: indexDecimal.value < 1 ? -1 : 10,
+      opacity: tabsOpacity.value,
+      pointerEvents: tabsOpacity.value < 0.1 ? 'none' : 'box-none',
     };
   });
 
@@ -441,13 +446,12 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
     measureSecondaryIndicator();
   }, [measureSecondaryIndicator]);
 
-  const { opacityStyle } = useHomeDrawerOpacityStyle();
   // const winWidth = Dimensions.get('window').width;
   const { width: winWidth } = useWindowDimensions();
 
   return (
     <Animated.View
-      style={[styles.container, opacityStyle, containerStyle]}
+      style={[styles.container, containerStyle]}
       // ref={homeGuidanceMultipleTabsTargetViewRef}
       // onLayout={() => {
       //   measureTabBarWrapper();
