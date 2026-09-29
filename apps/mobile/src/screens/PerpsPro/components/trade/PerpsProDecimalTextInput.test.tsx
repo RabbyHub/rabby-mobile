@@ -12,6 +12,12 @@ import { PerpsProDecimalTextInput } from './PerpsProDecimalTextInput';
 const mockSetNativeProps = jest.fn();
 const mockSetSelection = jest.fn();
 
+// These unit tests isolate decimal editing; the real accessory/registration
+// cooperation runs in iosKeyboardAccessory.integration.test.tsx.
+jest.mock('../common/PerpsProInputAccessory', () => ({
+  PerpsProInputAccessory: () => null,
+}));
+
 jest.mock('@/components/Typography', () => {
   const ReactModule = require('react');
   const { TextInput } = require('react-native');

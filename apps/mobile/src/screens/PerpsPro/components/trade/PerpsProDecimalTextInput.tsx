@@ -8,6 +8,7 @@ import type {
 } from 'react-native';
 
 import { usePerpsProKeyboardInput } from '../common/usePerpsProKeyboardInput';
+import { PerpsProInputAccessory } from '../common/PerpsProInputAccessory';
 import { sanitizePerpsProDecimalEditingInput } from '../../model/trade';
 import { resolvePerpsProEmptyInputSelection } from '../common/perpsProInputSelection';
 import { PERPS_PRO_INPUT_COLOR_PROPS } from '../common/perpsProInputVisual';
@@ -310,7 +311,12 @@ export const PerpsProDecimalTextInput = React.memo(
       };
 
       const input = <InputComponent {...textInputProps} ref={inputRef} />;
-      return renderInput ? renderInput(input, inputValue) : input;
+      return (
+        <>
+          {renderInput ? renderInput(input, inputValue) : input}
+          <PerpsProInputAccessory nativeID={inputAccessoryViewID} />
+        </>
+      );
     },
   ),
 );

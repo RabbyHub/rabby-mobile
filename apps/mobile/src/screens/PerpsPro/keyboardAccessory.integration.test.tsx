@@ -8,6 +8,16 @@ import { usePerpsProKeyboardInput } from './components/common/usePerpsProKeyboar
 import { PerpsProTradeAmountField } from './components/trade/PerpsProTradeAmountField';
 import { PerpsProKeyboardSheetContext } from './components/common/PerpsProKeyboardSheetContext';
 
+const wrapper: React.FC<React.PropsWithChildren> = ({ children }) => (
+  <SafeAreaProvider
+    initialMetrics={{
+      frame: { x: 0, y: 0, width: 393, height: 852 },
+      insets: { top: 0, left: 0, right: 0, bottom: 0 },
+    }}>
+    {children}
+  </SafeAreaProvider>
+);
+
 const SheetInput = ({ visible }: { visible: boolean }) => {
   const ref = useRef<TextInput>(null);
   const keyboard = usePerpsProKeyboardInput(ref, { enabled: visible });
@@ -55,7 +65,7 @@ describe('Pro native-input registration and decimal editing', () => {
         <Inputs minimum={minimum} />
       </PerpsProKeyboardSheetContext.Provider>
     );
-    const view = render(tree(null));
+    const view = render(tree(null), { wrapper });
     fireEvent(screen.getByTestId('amount'), 'focus');
     const owner = perpsProKeyboardSession.getSnapshot();
     expect(owner?.sheetId).toBe('tpsl-sheet');
@@ -122,7 +132,7 @@ describe('Pro native-input registration and decimal editing', () => {
   });
 
   it('keeps editing owned by the decimal input while switching hints between inputs', () => {
-    render(<Inputs />);
+    render(<Inputs />, { wrapper });
     const amount = screen.getByTestId('amount');
     fireEvent(amount, 'focus');
     expect(perpsProKeyboardSession.getSnapshot()?.minimum).toBe('15.35 USDC');
@@ -137,7 +147,7 @@ describe('Pro native-input registration and decimal editing', () => {
   });
 
   it('updates the focused hint without remounting or changing the native draft', () => {
-    const view = render(<Inputs />);
+    const view = render(<Inputs />, { wrapper });
     fireEvent(screen.getByTestId('amount'), 'focus');
     const id = perpsProKeyboardSession.getSnapshot()?.id;
     fireEvent.changeText(screen.getByTestId('amount'), '0.');
@@ -154,7 +164,7 @@ describe('Pro native-input registration and decimal editing', () => {
   });
 
   it('clears ownership on leaving Pro and rejects an inactive input focus', () => {
-    render(<Inputs />);
+    render(<Inputs />, { wrapper });
     fireEvent(screen.getByTestId('amount'), 'focus');
     act(() => perpsProKeyboardSession.setEnabled(false));
     expect(perpsProKeyboardSession.getSnapshot()).toBeNull();
