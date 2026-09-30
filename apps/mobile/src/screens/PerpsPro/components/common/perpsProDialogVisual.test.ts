@@ -103,7 +103,7 @@ describe('Pro dialog font mapping', () => {
             platform === 'ios' ? 'SF Pro Rounded' : 'SF-Pro-Rounded-Bold',
         });
         expect(styles.title.fontWeight).toBe(
-          platform === 'ios' ? '800' : undefined,
+          platform === 'ios' ? '900' : undefined,
         );
         expect(styles.buttonTitle.fontWeight).toBe(
           platform === 'ios' ? '700' : undefined,

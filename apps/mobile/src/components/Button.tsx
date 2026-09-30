@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
   primaryButtonTitle: {
     fontSize: 18,
     lineHeight: 22,
-    fontWeight: '600',
+    fontWeight: '500',
   },
 });
 

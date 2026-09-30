@@ -356,7 +356,7 @@ const getTokenDetailHeaderStyle = createGetStyles(colors => {
     tokenSymbol: {
       color: colors['neutral-title-1'],
       fontSize: 20,
-      fontWeight: '600',
+      fontWeight: '500',
     },
     smallTokenSymbol: {
       color: colors['neutral-title-1'],
@@ -1047,7 +1047,7 @@ const getStyles = createGetStyles(colors => {
     buttonTitle: {
       fontSize: 18,
       lineHeight: 22,
-      fontWeight: '600',
+      fontWeight: '500',
     },
     disabledTooltipContent: {
       borderRadius: 2,

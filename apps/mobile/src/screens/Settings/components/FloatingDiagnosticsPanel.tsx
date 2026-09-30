@@ -674,7 +674,7 @@ const getFloatingDiagnosticsPanelStyles = createGetStyles(colors => {
       color: colord('#ffffff').alpha(0.82).toRgbString(),
       fontSize: 13,
       lineHeight: 18,
-      fontWeight: '600',
+      fontWeight: '500',
     },
     row: {
       width: '100%',
@@ -695,7 +695,7 @@ const getFloatingDiagnosticsPanelStyles = createGetStyles(colors => {
     summaryText: {
       fontSize: 13,
       lineHeight: 18,
-      fontWeight: '600',
+      fontWeight: '500',
     },
     detailText: {
       marginTop: 6,

@@ -643,14 +643,14 @@ const getStyle = createGetStyles2024(ctx => {
       color: colors2024['neutral-title-1'],
       fontSize: 14,
       lineHeight: 18,
-      fontWeight: '800',
+      fontWeight: '900',
       fontFamily: 'SF Pro Rounded',
     },
     floatPriceChange: {
       color: colors2024['neutral-title-1'],
       fontSize: 14,
       lineHeight: 18,
-      fontWeight: '800',
+      fontWeight: '900',
       fontFamily: 'SF Pro Rounded',
     },
     noChangePriceChange: {

@@ -198,7 +198,7 @@ describe('PerpsProTransferSheet', () => {
         });
       } else {
         expect(style.lineHeight).toBe(42);
-        expect(style.fontWeight).toBe('800');
+        expect(style.fontWeight).toBe('900');
         expect(style.includeFontPadding).toBeUndefined();
         expect(style.textAlignVertical).toBeUndefined();
       }
