@@ -18,6 +18,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import * as bip39 from '@scure/bip39';
 import * as import_english from '@scure/bip39/wordlists/english';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+import * as SecretVault from '@/core/utils/secretVault';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -82,8 +83,10 @@ export const ImportSeedPhraseScreen = () => {
                 brandName: KEYRING_CLASS.MNEMONIC,
                 isFirstImport: true,
                 address: [firstAddress?.[0].address],
-                mnemonics,
-                passphrase,
+                mnemonicsVaultId: SecretVault.storeMnemonicsPayload({
+                  mnemonics,
+                  passphrase,
+                }),
                 keyringId: keyringId || undefined,
                 isExistedKR,
               },
@@ -96,8 +99,10 @@ export const ImportSeedPhraseScreen = () => {
           screen: RootNames.ImportMoreAddress,
           params: {
             type: KEYRING_TYPE.HdKeyring,
-            mnemonics,
-            passphrase,
+            mnemonicsVaultId: SecretVault.storeMnemonicsPayload({
+              mnemonics,
+              passphrase,
+            }),
             keyringId: keyringId || undefined,
             isExistedKR,
           },

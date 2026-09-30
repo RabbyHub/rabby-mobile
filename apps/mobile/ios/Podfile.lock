@@ -2412,8 +2412,6 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-randombytes (3.6.1):
-    - React-Core
   - react-native-safe-area-context (5.6.2):
     - React-Core
   - react-native-version-check (3.4.7):
@@ -3485,7 +3483,6 @@ DEPENDENCIES:
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-pager-view (from `../node_modules/react-native-pager-view`)
   - react-native-quick-crypto (from `../node_modules/react-native-quick-crypto-legacy`)
-  - react-native-randombytes (from `../node_modules/react-native-randombytes`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-version-check (from `../node_modules/react-native-version-check`)
   - react-native-video (from `../node_modules/react-native-video`)
@@ -3708,8 +3705,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-pager-view"
   react-native-quick-crypto:
     :path: "../node_modules/react-native-quick-crypto-legacy"
-  react-native-randombytes:
-    :path: "../node_modules/react-native-randombytes"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
   react-native-version-check:
@@ -3920,7 +3915,6 @@ SPEC CHECKSUMS:
   react-native-netinfo: b54effb58887516971e6c273ee0ff0dd853021d3
   react-native-pager-view: 10be7c7df9b34e57d56860892069261f11b2d946
   react-native-quick-crypto: 324688800acf6a351c53597d627684b0d3ac14fa
-  react-native-randombytes: 421f1c7d48c0af8dbcd471b0324393ebf8fe7846
   react-native-safe-area-context: e48706fb09fde89f82e12bfb49b140cfdcb761f7
   react-native-version-check: 6cd36aad4e30b8e3216747e3b4ddeb09e0647af8
   react-native-video: 7582bbe571c0332538d3b3ad3338fc1190bf962f

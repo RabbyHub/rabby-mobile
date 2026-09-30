@@ -448,21 +448,24 @@ export function debugShowSubmitFeedbackByScreenshotModal() {
   );
 }
 
-if (IS_ANDROID && !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT) {
-  RNScreenshotPrevent.startScreenCaptureDetection().then(() => {
-    console.debug(
-      '[info] RNScreenshotPrevent started screen capture detection on Android',
-    );
-  });
-}
+export async function startSubscribeUserDidTakeScreenshot() {
+  await appScreenshotFS.initializeBeforeCapture();
 
-export function startSubscribeUserDidTakeScreenshot() {
   const subscription = RNScreenshotPrevent.onUserDidTakeScreenshot(
     async params => {
-      if (!getShowFeedbackOnScreenshotCapture()) return;
-      if (!params?.captured) return;
+      const eventAccepted =
+        getShowFeedbackOnScreenshotCapture() &&
+        !!params?.captured &&
+        shouldToastFeedbackByScreenshot();
 
-      if (!shouldToastFeedbackByScreenshot()) return;
+      if (!eventAccepted) {
+        if (params?.path) {
+          await AppScreenshotFS.cleanupNativeScreenshotCaptureSource(
+            params.path,
+          );
+        }
+        return;
+      }
 
       const sizes = {
         height: coerceNumber(params?.height, 100),
@@ -519,6 +522,18 @@ export function startSubscribeUserDidTakeScreenshot() {
       }
     },
   );
+
+  if (IS_ANDROID && !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT) {
+    try {
+      await RNScreenshotPrevent.startScreenCaptureDetection();
+      console.debug(
+        '[info] RNScreenshotPrevent started screen capture detection on Android',
+      );
+    } catch (error) {
+      subscription.remove();
+      throw error;
+    }
+  }
 
   return subscription;
 }
