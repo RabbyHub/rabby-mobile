@@ -11,7 +11,6 @@ import {
   AppBottomSheetModal,
   AppBottomSheetModalTitle,
 } from '@/components/customized/BottomSheet';
-import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 import { FooterButtonGroup } from '@/components/FooterButton/FooterButtonGroup';
 import { useApprovalAlias } from '@/components/Approval/hooks/useApprovalAlias';
 import { Text } from '@/components/Typography';
@@ -26,12 +25,23 @@ const getStyles = (colors: AppColorsVariants) =>
       paddingHorizontal: 20,
       paddingTop: 4,
     },
+    container: {
+      width: '100%',
+    },
+    aliasRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+    },
     aliasText: {
       marginRight: 2,
+      flexShrink: 1,
+      minWidth: 0,
     },
     editIcon: {
       width: 13,
       height: 13,
+      flexShrink: 0,
     },
     errorText: {
       marginTop: 10,
@@ -56,7 +66,6 @@ const AddressMemo = ({
   const colors = useThemeColors();
   const styles = getStyles(colors);
   const modalRef = React.useRef<AppBottomSheetModal>(null);
-  const commonStyle = useCommonStyle();
 
   const handleConfirm = () => {
     if (!inputText) {
@@ -99,9 +108,9 @@ const AddressMemo = ({
   }, [inputText]);
 
   return (
-    <View>
+    <View style={styles.container}>
       <TouchableOpacity onPress={handleEditMemo}>
-        <View style={commonStyle.rowFlexCenterItem}>
+        <View style={styles.aliasRow}>
           <Text style={[styles.aliasText, textStyle]}>
             {addressAlias || '-'}
           </Text>
