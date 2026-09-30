@@ -21,9 +21,10 @@ import {
   isNFTTokenId,
 } from '@/utils/history';
 import type { IManageToken } from '@/types/assets';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import {
   GAS_ACCOUNT_RECEIVED_ADDRESS,
-  GAS_ACCOUNT_WITHDRAWED_ADDRESS,
+  GAS_ACCOUNT_WITHDRAWED_ADDRESSES,
   L2_DEPOSIT_ADDRESS_MAP,
 } from '@/constant/gas-account';
 import type {
@@ -314,7 +315,9 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
 
       if (receives?.length === 1 && sends?.length === 0) {
         if (
-          data?.tx_from_address.toLowerCase() === GAS_ACCOUNT_WITHDRAWED_ADDRESS
+          GAS_ACCOUNT_WITHDRAWED_ADDRESSES.some(addr =>
+            isSameAddress(data?.tx_from_address, addr),
+          )
         ) {
           return HistoryItemCateType.GAS_WITHDRAW;
         }
