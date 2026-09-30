@@ -1775,6 +1775,7 @@
       "headerTokenValueText": "토큰 가치",
       "headerBalanceText": "잔액",
       "copyCA": "토큰 계약 주소가 복사되었습니다.",
+      "copyCAWarning": "이것은 토큰 계약 주소입니다.\n자산을 받는 데 사용할 수 없습니다.",
       "wallet": "지갑",
       "customTestnetNotSupported": "이 체인의 토큰은 지원되지 않습니다"
     },

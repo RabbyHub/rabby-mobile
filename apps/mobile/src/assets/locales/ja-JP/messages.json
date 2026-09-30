@@ -1723,6 +1723,7 @@
       "headerTokenValueText": "トークン評価額",
       "headerBalanceText": "残高",
       "copyCA": "トークンコントラクトアドレスがコピーされました",
+      "copyCAWarning": "これはトークンコントラクトアドレスです。\n資産の受け取りには使用できません。",
       "wallet": "ウォレット",
       "customTestnetNotSupported": "このチェーン上のトークンはサポートされていません"
     },
