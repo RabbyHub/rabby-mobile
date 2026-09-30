@@ -157,6 +157,8 @@ export const GnosisTransactionQueueList = (props: {
   usefulChain: CHAINS_ENUM;
   pendingTxs?: SafeTransactionItem[];
   loading?: boolean;
+  refreshing?: boolean;
+  onRefresh?(): void;
   account: Account;
 }) => {
   const themeColors = useThemeColors();
@@ -362,6 +364,8 @@ export const GnosisTransactionQueueList = (props: {
   return (
     <View style={[styles.container]}>
       <FlatList
+        onRefresh={props.onRefresh}
+        refreshing={props.refreshing || false}
         data={list}
         style={styles.queueList}
         keyExtractor={item => item}
