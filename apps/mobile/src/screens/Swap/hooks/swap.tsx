@@ -179,6 +179,7 @@ export const dexSwap = async (
     accountType: account.type,
     txCount: 1 + Number(needApprove) + Number(shouldTwoStepApprove),
   });
+  const shouldRecordSwapPendingTx = account.type !== KEYRING_CLASS.GNOSIS;
   try {
     if (shouldBatchTempoSwap) {
       const txs: Tx[] = [];
@@ -267,7 +268,7 @@ export const dexSwap = async (
             ...addSwapTxHistoryObj,
             hash,
           };
-          if (hash && account.type !== KEYRING_CLASS.GNOSIS) {
+          if (shouldRecordSwapPendingTx) {
             await transactionHistoryServiceApi.addSwapTxHistory(
               swapTxHistoryObj,
             );
@@ -409,7 +410,7 @@ export const dexSwap = async (
             ...addSwapTxHistoryObj,
             hash,
           };
-          if (hash && account.type !== KEYRING_CLASS.GNOSIS) {
+          if (shouldRecordSwapPendingTx) {
             await transactionHistoryServiceApi.addSwapTxHistory(
               swapTxHistoryObj,
             );
