@@ -503,7 +503,7 @@ export const usePerpsPosition = () => {
           // closeAllPositions can span all dexes — refresh the full set so
           // sub-dex positions also reflect the close.
           fetchAllDexsClearinghouseStateHttp();
-          showToast('Closed all position successfully', 'success');
+          showToast('Closed all positions successfully', 'success');
           return filledResults;
         },
       );
