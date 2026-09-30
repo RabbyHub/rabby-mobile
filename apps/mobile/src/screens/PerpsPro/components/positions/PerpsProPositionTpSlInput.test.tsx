@@ -153,6 +153,17 @@ describe('PerpsProPositionTpSlInput', () => {
     expect(StyleSheet.flatten(screen.getByTestId('field').props.style)).toEqual(
       expect.objectContaining({ color: 'neutral-title-1' }),
     );
+
+    const input = screen.getByTestId('field');
+    fireEvent(input, 'blur');
+    expect(screen.getByTestId('field')).toBe(input);
+    expect(screen.getByText('1,234.5')).toBeTruthy();
+    expect(StyleSheet.flatten(input.props.style)).toMatchObject({
+      color: 'transparent',
+    });
+    expect(StyleSheet.flatten(input.props.style).opacity ?? 1).toBe(1);
+    expect(input.props.accessibilityLabel).toBe('ROI');
+    expect(input.props.pointerEvents).toBe('none');
   });
 
   it('shows a fixed negative sign for Stop Loss ROI/PnL magnitudes', () => {

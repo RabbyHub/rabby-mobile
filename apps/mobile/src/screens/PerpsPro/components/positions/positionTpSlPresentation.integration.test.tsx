@@ -186,6 +186,8 @@ jest.mock('react-native-linear-gradient', () => require('react-native').View);
 jest.useFakeTimers();
 const { buildPerpsPositionTpSlCommand, executePerpsPositionTpSl } =
   require('@/hooks/perps/actions/positionTpSl') as typeof import('@/hooks/perps/actions/positionTpSl');
+const { perpsStore } =
+  require('@/hooks/perps/usePerpsStore') as typeof import('@/hooks/perps/usePerpsStore');
 const { PerpsProPositionTpSlSheets } =
   require('./PerpsProPositionTpSlSheets') as typeof import('./PerpsProPositionTpSlSheets');
 const { PerpsProPositionTpSlForm } =
@@ -274,15 +276,132 @@ describe('position TP/SL input source integration', () => {
       }),
     );
   });
-  beforeEach(() => jest.clearAllTimers());
+  const originalMarketData = perpsStore.getState().marketDataMap;
+  beforeEach(() => {
+    jest.clearAllTimers();
+    perpsStore.setState({
+      marketDataMap: {
+        BTC: {
+          name: 'BTC',
+          markPx: '120',
+          szDecimals: 3,
+          pxDecimals: 2,
+        } as NonNullable<
+          ReturnType<typeof perpsStore.getState>['marketDataMap']['BTC']
+        >,
+      },
+    });
+  });
   afterEach(async () => {
     await cleanupAsync();
     jest.clearAllTimers();
   });
   afterAll(() => {
     unregister();
+    perpsStore.setState({ marketDataMap: originalMarketData });
     jest.useRealTimers();
   });
+
+  it.each(
+    (['takeProfit', 'stopLoss'] as const).flatMap(cancelledKind =>
+      (['price', 'mode-input'] as const).flatMap(source =>
+        (['confirmed', 'remote'] as const).map(projection => ({
+          cancelledKind,
+          source,
+          projection,
+        })),
+      ),
+    ),
+  )(
+    'preserves the peer $source draft when $cancelledKind cancellation arrives via $projection',
+    async ({ cancelledKind, source, projection }) => {
+      const peerKind =
+        cancelledKind === 'takeProfit' ? 'stopLoss' : 'takeProfit';
+      const existing = {
+        ...order('position'),
+        kind: cancelledKind,
+        triggerPrice: cancelledKind === 'takeProfit' ? '130' : '90',
+      };
+      const props: React.ComponentProps<typeof PerpsProPositionTpSlSheets> = {
+        amountUnit: 'base',
+        cancelingOids: [],
+        confirmedCancelledOids: [],
+        defaultTab: 'position',
+        market,
+        onCancelOrder: jest.fn(),
+        onClose: jest.fn(),
+        onCloseReview: jest.fn(),
+        onReview: jest.fn(),
+        onConfirm: jest.fn(),
+        onToggleSkipConfirmation: jest.fn(),
+        pending: false,
+        position: { ...position, tpslOrders: [existing] },
+        review: null,
+        skipConfirmation: false,
+        visible: true,
+      };
+      const view = render(<PerpsProPositionTpSlSheets {...props} />, {
+        wrapper,
+      });
+      await act(async () => {});
+      fireEvent.press(screen.getByText('page.perps.pro.positionTpsl.modify'));
+      const peerId = `perps-pro-position-tpsl-${peerKind}-${source}`;
+      const raw =
+        source === 'price'
+          ? peerKind === 'takeProfit'
+            ? '135'
+            : '95'
+          : peerKind === 'takeProfit'
+          ? '35.00'
+          : '5.00';
+      fireEvent.changeText(screen.getByTestId(peerId), raw);
+      fireEvent.press(screen.getByText('global.cancel'));
+      expect(props.onCancelOrder).toHaveBeenCalledWith(existing);
+      expect(screen.getByTestId(peerId).props.value).toBe(raw);
+      // Pending/failed cancellation cannot consume either draft.
+      view.rerender(
+        <PerpsProPositionTpSlSheets
+          {...props}
+          cancelingOids={[existing.oid]}
+        />,
+      );
+      view.rerender(<PerpsProPositionTpSlSheets {...props} />);
+      expect(screen.getByTestId(peerId).props.value).toBe(raw);
+      const settled = {
+        ...props,
+        confirmedCancelledOids:
+          projection === 'confirmed' ? [existing.oid] : [],
+        position:
+          projection === 'remote'
+            ? { ...position, tpslOrders: [] }
+            : props.position,
+      };
+      view.rerender(<PerpsProPositionTpSlSheets {...settled} />);
+      expect(screen.getByTestId(peerId).props.value).toBe(raw);
+      expect(
+        screen.getByTestId(`perps-pro-position-tpsl-${cancelledKind}-price`)
+          .props.value,
+      ).toBe('');
+      expect(
+        screen.getByTestId(
+          `perps-pro-position-tpsl-${cancelledKind}-mode-input`,
+        ).props.value,
+      ).toBe('');
+      // Server confirmation after optimistic removal must not reset the peer again.
+      view.rerender(
+        <PerpsProPositionTpSlSheets
+          {...settled}
+          position={{ ...position, tpslOrders: [] }}
+        />,
+      );
+      fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+      expect(props.onReview).toHaveBeenCalledWith(
+        expect.objectContaining({
+          legs: [expect.objectContaining({ kind: peerKind })],
+        }),
+      );
+    },
+  );
 
   it('preserves the submitted quantity and PnL through list, repeated Modify and a new PnL target', async () => {
     const precisionMarket = {
