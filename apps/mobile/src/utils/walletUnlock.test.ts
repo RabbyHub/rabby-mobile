@@ -12,6 +12,9 @@ describe('utils/walletUnlock', () => {
     jest.resetModules();
 
     jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.doMock('@/utils/logger', () => ({
+      logger: { info: jest.fn() },
+    }));
 
     const mockHideUnlockingToast = jest.fn();
     const mockToastUnlocking = jest.fn(() => mockHideUnlockingToast);

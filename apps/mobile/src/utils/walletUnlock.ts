@@ -17,6 +17,7 @@ import {
   finishWalletUnlockDiagnostics,
   markWalletUnlockDiagnosticStage,
   noteJoinedWalletUnlockRequest,
+  recordWalletUnlockDiagnosticFailure,
 } from '@/utils/walletUnlockDiagnostics';
 
 type PendingWalletUnlock = {
@@ -198,6 +199,7 @@ export async function ensureWalletUnlocked() {
     });
   } catch (error) {
     hideUnlockingToast();
+    recordWalletUnlockDiagnosticFailure(diagnosticsAttemptId, error);
     if (__DEV__) {
       console.error(error);
     }

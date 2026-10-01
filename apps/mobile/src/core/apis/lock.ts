@@ -36,6 +36,10 @@ import {
 import { logger } from '@/utils/logger';
 import { traceAndroidInstant } from '../utils/androidTrace';
 import { isNonProductionDiagnosticsEnabled } from '../utils/diagnosticEnv';
+import {
+  markWalletUnlockDiagnosticStage,
+  recordWalletUnlockDiagnosticFailure,
+} from '@/utils/walletUnlockDiagnostics';
 import { runAfterHomePostStartupReady } from '../utils/homeStartupReady';
 import { recordKeyringRuntimeConvergenceDiagnostic } from '../utils/startupDiagnostics';
 import type {
@@ -68,6 +72,7 @@ export const enum PasswordStatus {
 
 export type UIAuthType = 'none' | 'password' | 'biometrics';
 export type UnlockWalletOptions = {
+  walletUnlockDiagnosticsAttemptId?: string;
   trustedPassword?: boolean;
   trustedVaultKeyString?: string;
   onTrustedVaultKeyString?: (vaultKeyString: string) => void | Promise<void>;
@@ -576,6 +581,10 @@ async function unlockWallet(
     traceAndroidUnlockPerf('submit_password_start', {
       elapsedMs: Date.now() - startedAt,
     });
+    markWalletUnlockDiagnosticStage(
+      options.walletUnlockDiagnosticsAttemptId,
+      'submit_password',
+    );
     await submitKeyringPasswordForUnlock(password, {
       trustedPassword: options.trustedPassword,
       trustedVaultKeyString: options.trustedVaultKeyString,
@@ -588,6 +597,10 @@ async function unlockWallet(
     });
     resetMultipleFailed();
   } catch (err) {
+    recordWalletUnlockDiagnosticFailure(
+      options.walletUnlockDiagnosticsAttemptId,
+      err,
+    );
     traceAndroidUnlockPerf('submit_password_error', {
       elapsedMs: Date.now() - startedAt,
       error: err instanceof Error ? err.message : String(err),
