@@ -9,6 +9,9 @@ describe('utils/walletUnlockDiagnostics', () => {
     const mockRemoveAppStateListener = jest.fn();
     const mockCaptureMessage = jest.fn();
     const mockAddBreadcrumb = jest.fn();
+    const mockLogInfo = jest.fn();
+    const mockGetVersion = jest.fn(() => '0.6.92');
+    const mockGetBuildNumber = jest.fn(() => '100257');
 
     jest.doMock('react-native', () => ({
       AppState: {
@@ -36,6 +39,13 @@ describe('utils/walletUnlockDiagnostics', () => {
       addBreadcrumb: mockAddBreadcrumb,
       captureMessage: mockCaptureMessage,
     }));
+    jest.doMock('@/utils/logger', () => ({
+      logger: { info: mockLogInfo },
+    }));
+    jest.doMock('react-native-device-info', () => ({
+      getVersion: mockGetVersion,
+      getBuildNumber: mockGetBuildNumber,
+    }));
 
     const diagnostics =
       require('./walletUnlockDiagnostics') as typeof import('./walletUnlockDiagnostics');
@@ -45,6 +55,9 @@ describe('utils/walletUnlockDiagnostics', () => {
       mockCaptureMessage,
       mockAddBreadcrumb,
       mockRemoveAppStateListener,
+      mockLogInfo,
+      mockGetVersion,
+      mockGetBuildNumber,
       setAppState(nextState: string) {
         currentAppState = nextState;
         appStateListeners.forEach(listener => listener(nextState));
@@ -151,5 +164,122 @@ describe('utils/walletUnlockDiagnostics', () => {
 
     expect(mockCaptureMessage).not.toHaveBeenCalled();
     expect(mockRemoveAppStateListener).toHaveBeenCalledTimes(1);
+  });
+
+  it('records fixed failure metadata and native versions without serializing secrets', () => {
+    const { diagnostics, mockAddBreadcrumb, mockLogInfo } = setup();
+    const id = diagnostics.beginWalletUnlockDiagnostics({});
+    diagnostics.markWalletUnlockDiagnosticStage(id, 'decrypt_password_payload');
+    diagnostics.recordWalletUnlockPayloadDiagnostic(id, 1, 2, {
+      phase: 'envelope_json',
+      outcome: 'failed',
+      errorKind: 'syntax',
+      inputLength: 279,
+    });
+    diagnostics.recordWalletUnlockDiagnosticFailure(
+      id,
+      Object.assign(new Error('decrypt private-value'), {
+        code: 'unknown-private-code',
+        password: 'secret-password',
+        vaultKeyString: 'secret-vault-key',
+      }),
+    );
+    diagnostics.finishWalletUnlockDiagnostics(id, 'error');
+    expect(mockAddBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'wallet_unlock_failure',
+        data: expect.objectContaining({
+          stage: 'decrypt_password_payload',
+          appVersion: '0.6.92',
+          buildVersion: '100257',
+          errorCode: 'unclassified',
+          errorCategory: 'decryption',
+        }),
+      }),
+    );
+    expect(mockAddBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'wallet_unlock_payload',
+        data: expect.objectContaining({
+          phase: 'envelope_json',
+          candidateIndex: 1,
+          candidateCount: 2,
+        }),
+      }),
+    );
+    const output = JSON.stringify([
+      mockAddBreadcrumb.mock.calls,
+      mockLogInfo.mock.calls,
+    ]);
+    for (const secret of [
+      'private-value',
+      'unknown-private-code',
+      'secret-password',
+      'secret-vault-key',
+    ]) {
+      expect(output).not.toContain(secret);
+    }
+  });
+
+  it('keeps the final stage after a stall and ignores stale callbacks', () => {
+    const { diagnostics, mockCaptureMessage, mockAddBreadcrumb } = setup();
+    const old = diagnostics.beginWalletUnlockDiagnostics({});
+    const current = diagnostics.beginWalletUnlockDiagnostics({});
+    diagnostics.markWalletUnlockDiagnosticStage(current, 'system_auth_prompt');
+    jest.advanceTimersByTime(20_000);
+    expect(mockCaptureMessage).toHaveBeenCalledTimes(1);
+    diagnostics.markWalletUnlockDiagnosticStage(current, 'submit_password');
+    const count = mockAddBreadcrumb.mock.calls.length;
+    diagnostics.markWalletUnlockDiagnosticStage(old, 'plain_password_callback');
+    diagnostics.recordWalletUnlockDiagnosticFailure(
+      old,
+      new Error('old failure'),
+    );
+    diagnostics.recordWalletUnlockPayloadDiagnostic(old, 1, 1, {
+      phase: 'envelope_json',
+      outcome: 'failed',
+    });
+    diagnostics.finishWalletUnlockDiagnostics(old, 'success');
+    expect(mockAddBreadcrumb).toHaveBeenCalledTimes(count);
+    diagnostics.finishWalletUnlockDiagnostics(current, 'error');
+    expect(mockAddBreadcrumb).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        message: 'wallet_unlock_finished',
+        data: expect.objectContaining({
+          stage: 'submit_password',
+          outcome: 'error',
+        }),
+      }),
+    );
+    expect(jest.getTimerCount()).toBe(0);
+    jest.advanceTimersByTime(60_000);
+    expect(mockCaptureMessage).toHaveBeenCalledTimes(1);
+  });
+
+  it('isolates logger, telemetry and version failures and still cleans up', () => {
+    const {
+      diagnostics,
+      mockLogInfo,
+      mockAddBreadcrumb,
+      mockCaptureMessage,
+      mockRemoveAppStateListener,
+      mockGetBuildNumber,
+    } = setup();
+    const fail = () => {
+      throw new Error('diagnostic unavailable');
+    };
+    mockLogInfo.mockImplementation(fail);
+    mockAddBreadcrumb.mockImplementation(fail);
+    mockCaptureMessage.mockImplementation(fail);
+    mockGetBuildNumber.mockImplementation(fail);
+    const id = diagnostics.beginWalletUnlockDiagnostics({});
+    expect(() => jest.advanceTimersByTime(20_000)).not.toThrow();
+    expect(() => {
+      diagnostics.markWalletUnlockDiagnosticStage(id, 'submit_password');
+      diagnostics.recordWalletUnlockDiagnosticFailure(id, new Error('failure'));
+      diagnostics.finishWalletUnlockDiagnostics(id, 'error');
+    }).not.toThrow();
+    expect(mockRemoveAppStateListener).toHaveBeenCalledTimes(1);
+    expect(jest.getTimerCount()).toBe(0);
   });
 });
