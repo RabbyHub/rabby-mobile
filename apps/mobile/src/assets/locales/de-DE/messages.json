@@ -2009,6 +2009,7 @@
       "headerTokenValueText": "Token-Wert",
       "headerBalanceText": "Guthaben",
       "copyCA": "Token-Vertrag-Adresse kopiert",
+      "copyCAWarning": "Dies ist eine Token-Vertragsadresse.\nSie kann nicht zum Empfang von Vermögenswerten verwendet werden.",
       "wallet": "Wallet",
       "customTestnetNotSupported": "Der Token auf diesem Netzwerk wird nicht unterstützt"
     },

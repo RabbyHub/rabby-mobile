@@ -1729,6 +1729,7 @@
       "headerTokenValueText": "Valeur du token",
       "headerBalanceText": "Solde",
       "copyCA": "Adresse du contrat du token copiée",
+      "copyCAWarning": "Ceci est l’adresse du contrat d’un token.\nElle ne peut pas être utilisée pour recevoir des actifs.",
       "wallet": "Portefeuille",
       "customTestnetNotSupported": "Le token sur ce réseau n’est pas pris en charge"
     },

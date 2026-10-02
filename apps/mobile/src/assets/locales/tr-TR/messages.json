@@ -1778,6 +1778,7 @@
       "headerTokenValueText": "Token Değeri",
       "headerBalanceText": "Bakiyeniz",
       "copyCA": "Token sözleşmesi adresi kopyalandı",
+      "copyCAWarning": "Bu bir token sözleşmesi adresidir.\nVarlık almak için kullanılamaz.",
       "wallet": "Cüzdan",
       "customTestnetNotSupported": "Bu zincirdeki token desteklenmiyor"
     },
