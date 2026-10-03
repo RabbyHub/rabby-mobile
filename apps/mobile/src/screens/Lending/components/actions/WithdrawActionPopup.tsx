@@ -1,4 +1,5 @@
 import { useTheme2024 } from '@/hooks/theme';
+import { useAuthFormGuard } from '@/hooks/useAuthFormGuard';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, {
   useCallback,
@@ -148,20 +149,6 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       : undefined;
   }, [chainEnum, currentReserve, displayPoolReserves]);
 
-  const handleChangeActiveUnderlyingAsset = useCallback(
-    (underlyingAsset: string) => {
-      if (directSignBtnRef.current?.isAuthInProgress()) {
-        return;
-      }
-      if (isSameAddress(underlyingAsset, activeUnderlyingAsset)) {
-        return;
-      }
-      resetTokenScopedState();
-      setActiveUnderlyingAsset(underlyingAsset);
-    },
-    [activeUnderlyingAsset, resetTokenScopedState],
-  );
-
   const withdrawAmount = useMemo(() => {
     const targetPool = formattedPoolReservesAndIncentives.find(item => {
       return isSameAddress(currentReserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
@@ -193,6 +180,36 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
+  const authForm = useAuthFormGuard(
+    {
+      amount,
+      amountMode: _amount,
+      account: currentAccount?.address,
+      accountType: currentAccount?.type,
+      accountBrand: currentAccount?.brandName,
+      chain: chainEnum,
+      market: selectedMarketData?.market,
+      token: activeUnderlyingAsset,
+      riskChecked: isChecked,
+    },
+    () => toast.info(t('page.bridge.formChangedAmount')),
+  );
+  const handleChangeActiveUnderlyingAsset = useCallback(
+    (underlyingAsset: string) => {
+      if (
+        authForm.blockInput() ||
+        directSignBtnRef.current?.isAuthInProgress()
+      ) {
+        return;
+      }
+      if (isSameAddress(underlyingAsset, activeUnderlyingAsset)) {
+        return;
+      }
+      resetTokenScopedState();
+      setActiveUnderlyingAsset(underlyingAsset);
+    },
+    [activeUnderlyingAsset, authForm, resetTokenScopedState],
+  );
 
   const canShowDirectSubmit = useMemo(
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
@@ -472,7 +489,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
               onClose?.();
             }
             if (error === MINI_SIGN_ERROR.PREFETCH_FAILURE) {
-              handleWithdraw(true);
+              await handleWithdraw(true);
             }
             return;
           }
@@ -582,7 +599,10 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
 
   const handleChangeAmount = useCallback(
     (value: string) => {
-      if (directSignBtnRef.current?.isAuthInProgress()) {
+      if (
+        authForm.blockInput() ||
+        directSignBtnRef.current?.isAuthInProgress()
+      ) {
         return;
       }
       const maxSelected = value === '-1';
@@ -597,7 +617,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         setAmount(value);
       }
     },
-    [currentReserve.underlyingBalance, withdrawAmount],
+    [authForm, currentReserve.underlyingBalance, withdrawAmount],
   );
 
   useEffect(() => {
@@ -740,6 +760,9 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
               <TouchableOpacity
                 style={styles.checkbox}
                 onPress={() => {
+                  if (authForm.blockInput()) {
+                    return;
+                  }
                   setIsChecked(prev => !prev);
                 }}>
                 <CheckBoxRect size={16} checked={isChecked} />
@@ -759,7 +782,10 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
               wrapperStyle={styles.directSignBtn}
               authTitle={actionTitle}
               title={actionTitle}
-              onFinished={() => handleWithdraw()}
+              onBeforeAuth={authForm.onBeforeAuth}
+              onCancel={authForm.onCancel}
+              onAuthModalDismiss={authForm.onAuthModalDismiss}
+              onFinished={() => authForm.onFinished(() => handleWithdraw())}
               disabled={
                 !amount ||
                 isZeroAmount(amount) ||

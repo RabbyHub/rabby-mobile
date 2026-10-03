@@ -19,6 +19,7 @@ import type { PopulatedTransaction } from 'ethers';
 
 import { apiProvider } from '@/core/apis';
 import { useTheme2024 } from '@/hooks/theme';
+import { useAuthFormGuard } from '@/hooks/useAuthFormGuard';
 import { toast } from '@/components2024/Toast';
 import { Button } from '@/components2024/Button';
 import { useMiniSigner } from '@/hooks/useSigner';
@@ -220,6 +221,24 @@ export default function DebtSwapModal({
     [currentAccount?.type],
   );
   const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
+  const authForm = useAuthFormGuard(
+    {
+      amount: fromAmount,
+      account: currentAccount?.address,
+      accountType: currentAccount?.type,
+      accountBrand: currentAccount?.brandName,
+      chain: chainEnum,
+      market: selectedMarketData?.market,
+      fromToken: fromToken.underlyingAddress,
+      toToken: toToken?.underlyingAddress,
+      slippage,
+      displaySlippage,
+      autoSlippage,
+      isCustomSlippage,
+      riskChecked,
+    },
+    () => toast.info(t('page.bridge.formChangedAmount')),
+  );
 
   const clearQuoteExpiredTimer = useCallback(() => {
     if (quoteExpiredTimerRef.current) {
@@ -236,6 +255,9 @@ export default function DebtSwapModal({
 
   const onChangeSlider = useCallback(
     (v: number) => {
+      if (authForm.blockInput()) {
+        return;
+      }
       setSlider(v);
       if (v === 100) {
         setFromAmount(fromBalanceBn.toString(10));
@@ -249,12 +271,17 @@ export default function DebtSwapModal({
           : new BigNumber(newAmountBn.toFixed(4, 1)).toString(10),
       );
     },
-    [fromBalanceBn],
+    [authForm, fromBalanceBn],
   );
 
   const onInputChange = useCallback(
     (text: string) => {
-      if (directSignBtnRef.current?.isAuthInProgress()) return;
+      if (
+        authForm.blockInput() ||
+        directSignBtnRef.current?.isAuthInProgress()
+      ) {
+        return;
+      }
       const formatted = formatTokenAmountInput(text, fromToken.decimals);
       if (!/^\d*(\.\d*)?$/.test(formatted)) {
         return;
@@ -282,14 +309,20 @@ export default function DebtSwapModal({
       const clampedPercentage = Math.min(100, Math.max(0, percentage));
       setSlider(Math.round(clampedPercentage));
     },
-    [fromBalanceBn, fromToken.decimals],
+    [authForm, fromBalanceBn, fromToken.decimals],
   );
 
   const handleOpenTokenSelect = useCallback(() => {
+    if (authForm.blockInput()) {
+      return;
+    }
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.DEBT_TOKEN_SELECT,
       excludeTokenAddress: fromToken.underlyingAddress,
       onChange: (selectedToken: SwappableToken) => {
+        if (authForm.blockInput()) {
+          return;
+        }
         setToToken(selectedToken);
         setToAmount('');
         setQuote(null);
@@ -310,7 +343,7 @@ export default function DebtSwapModal({
         },
       },
     });
-  }, [fromToken.underlyingAddress, fromAmount, colors2024, isLight]);
+  }, [authForm, fromToken.underlyingAddress, fromAmount, colors2024, isLight]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1111,11 +1144,26 @@ export default function DebtSwapModal({
               <BridgeSlippage
                 value={slippage}
                 displaySlippage={displaySlippage}
-                onChange={setSlippage}
+                onChange={value => {
+                  if (authForm.blockInput()) {
+                    return;
+                  }
+                  setSlippage(value);
+                }}
                 autoSlippage={autoSlippage}
                 isCustomSlippage={isCustomSlippage}
-                setAutoSlippage={setAutoSlippage}
-                setIsCustomSlippage={setIsCustomSlippage}
+                setAutoSlippage={value => {
+                  if (authForm.blockInput()) {
+                    return;
+                  }
+                  setAutoSlippage(value);
+                }}
+                setIsCustomSlippage={value => {
+                  if (authForm.blockInput()) {
+                    return;
+                  }
+                  setIsCustomSlippage(value);
+                }}
                 type="swap"
                 loading={isQuoteLoading}
               />
@@ -1213,6 +1261,9 @@ export default function DebtSwapModal({
             <Pressable
               style={styles.riskContainer}
               onPress={() => {
+                if (authForm.blockInput()) {
+                  return;
+                }
                 setRiskChecked(!riskChecked);
               }}>
               <CheckBoxRect checked={riskChecked} size={16} />
@@ -1230,7 +1281,10 @@ export default function DebtSwapModal({
               title={t('page.Lending.debtSwap.button.swap')}
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
               titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
-              onFinished={() => handleSwap()}
+              onBeforeAuth={authForm.onBeforeAuth}
+              onCancel={authForm.onCancel}
+              onAuthModalDismiss={authForm.onAuthModalDismiss}
+              onFinished={() => authForm.onFinished(() => handleSwap())}
               disabled={buttonDisabled || !!ctx?.disabledProcess}
               type="aave"
               iconColor={colors2024['neutral-contrast']}
