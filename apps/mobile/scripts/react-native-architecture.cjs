@@ -9,6 +9,8 @@ const BOOLEAN_ENV_VALUES = new Map([
   ['off', false],
 ]);
 
+const DEFAULT_NEW_ARCH_ENABLED = true;
+
 const parseArchitectureFlag = (name, value) => {
   if (value === undefined || value === '') {
     return undefined;
@@ -44,7 +46,7 @@ const resolveReactNativeArchitecture = (environment = process.env) => {
     ],
   ].filter(([, value]) => value !== undefined);
 
-  const architectureEnabled = candidates[0]?.[1] ?? false;
+  const architectureEnabled = candidates[0]?.[1] ?? DEFAULT_NEW_ARCH_ENABLED;
   const mismatch = candidates.find(
     ([, value]) => value !== architectureEnabled,
   );
