@@ -234,7 +234,7 @@ const TokenDetailContent = () => {
   }, [baseTokenInfo, effectiveAccount, route.params, token]);
 
   const getHeaderRight = useCallback(() => {
-    if (isCustomTestnetToken) {
+    if (isCustomTestnetToken || isRemoved) {
       return null;
     }
 
@@ -253,7 +253,13 @@ const TokenDetailContent = () => {
         refreshTags={refreshTag}
       />
     );
-  }, [effectiveAccount?.address, isCustomTestnetToken, refreshTag, token]);
+  }, [
+    effectiveAccount?.address,
+    isCustomTestnetToken,
+    isRemoved,
+    refreshTag,
+    token,
+  ]);
 
   useFocusEffect(
     useCallback(() => {

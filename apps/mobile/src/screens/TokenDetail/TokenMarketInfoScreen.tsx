@@ -233,7 +233,7 @@ export const TokenMarketInfoScreen = () => {
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const getHeaderRight = useCallback(() => {
-    return isCustomTestnet ? null : (
+    return isCustomTestnet || isRemoved ? null : (
       <RightMore
         token={token}
         triggerUpdate={() =>
@@ -248,7 +248,7 @@ export const TokenMarketInfoScreen = () => {
         refreshTags={refreshTag}
       />
     );
-  }, [isCustomTestnet, token, refreshTag, finalAccount?.address]);
+  }, [isCustomTestnet, isRemoved, token, refreshTag, finalAccount?.address]);
 
   useFocusEffect(
     useCallback(() => {

@@ -3,7 +3,7 @@ import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import RcMore from '@/assets2024/icons/common/removed-token-more.svg';
+import RcMore from '@/assets/icons/home/more-cc.svg';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { TokenMoreSheet, type TokenMoreAction } from './TokenMoreSheet';
@@ -38,7 +38,7 @@ export function RestoreRemovedTokenActions({
   token: { chain: string; id: string };
   moreMenuActions: TokenMoreAction[];
 }) {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const removeRemovedToken = useRemovedTokens(
     state => state.removeRemovedToken,
@@ -77,7 +77,7 @@ export function RestoreRemovedTokenActions({
           accessibilityRole="button"
           accessibilityLabel={t('page.tokenDetail.removed.more')}
           onPress={() => moreSheetModalRef.current?.present()}>
-          <RcMore />
+          <RcMore width={18} height={18} color={colors2024['neutral-body']} />
         </Pressable>
       </View>
       <TokenMoreSheet modalRef={moreSheetModalRef} items={moreMenuActions} />

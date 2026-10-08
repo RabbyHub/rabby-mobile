@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import RcRemovedToken from '@/assets/icons/settings/removed-token.svg';
-import RcArrowRight from '@/assets/icons/settings/removed-token-arrow.svg';
+import RcArrowRight from '@/assets2024/icons/common/token-header-remove-arrow.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { useRemovedTokens } from '@/hooks/useRemovedTokens';
@@ -12,7 +12,7 @@ import { Block } from '../Block';
 import { RemovedTokenPopup } from './RemovedTokenPopup';
 
 export function RemovedTokenSettingItem() {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const count = useRemovedTokens(state => state.removedTokens.length);
   const [visible, setVisible] = useState(false);
@@ -32,13 +32,17 @@ export function RemovedTokenSettingItem() {
       <Block.Item
         icon={
           <View style={styles.icon}>
-            <RcRemovedToken />
+            <RcRemovedToken color={colors2024['brand-default']} />
           </View>
         }
         rightNode={
           <View style={styles.right}>
             <Text style={styles.count}>{count}</Text>
-            <RcArrowRight />
+            <RcArrowRight
+              width={16}
+              height={16}
+              color={colors2024['neutral-secondary']}
+            />
           </View>
         }
         onPress={() => setVisible(true)}>

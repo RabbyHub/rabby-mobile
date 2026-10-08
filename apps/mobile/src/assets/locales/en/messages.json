@@ -1743,7 +1743,9 @@
       "removed": {
         "restore": "Restore removed token",
         "restoreFailed": "Failed to restore token",
-        "more": "More"
+        "more": "More",
+        "confirmTitle": "Remove this token?",
+        "confirmDescription": "· This token will no longer appear in your Portfolio after removal.\n· You can restore it anytime in Settings >> Removed Token."
       },
       "TokenName": "Token Name",
       "Price": "Price",
