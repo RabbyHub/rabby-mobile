@@ -46,6 +46,15 @@ describe('resolveGradleReactNativeArchitecture', () => {
     ).toBe('new');
   });
 
+  it('accepts a Gradle-project-only legacy override', () => {
+    expect(
+      resolveGradleReactNativeArchitecture({
+        environment: {},
+        projectProperty: 'false',
+      }),
+    ).toBe('legacy');
+  });
+
   it('accepts a redundant Gradle project property when JavaScript agrees', () => {
     expect(
       resolveGradleReactNativeArchitecture({
@@ -61,7 +70,7 @@ describe('resolveGradleReactNativeArchitecture', () => {
         environment: { RCT_NEW_ARCH_ENABLED: '1' },
         projectProperty: 'false',
       }),
-    ).toThrow('does not match');
+    ).toThrow('resolve to different architectures');
   });
 });
 
