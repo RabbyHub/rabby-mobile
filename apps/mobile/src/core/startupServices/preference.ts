@@ -135,6 +135,7 @@ export interface PreferenceStore {
   blockedToken?: Token[];
   // manage token
   pinedQueue?: IManageToken[]; // maual always true
+  removedTokens?: IManageToken[];
   foldTokens?: IManageToken[];
   unfoldTokens?: IManageToken[];
   includeDefiAndTokens?: IDefiOrToken[];
@@ -293,6 +294,7 @@ export class PreferenceService extends StoreServiceBase<
         sendEnableTime: 0,
         customizedToken: [],
         blockedToken: [],
+        removedTokens: [],
         collectionStarred: [],
         reportActionTsSet: {} as Record<REPORT_TIMEOUT_ACTION_KEY, number>,
         currentReportActionStats: REPORT_TIMEOUT_ACTION_KEY.NONE,
@@ -332,7 +334,9 @@ export class PreferenceService extends StoreServiceBase<
         beforePersist(obj) {
           if (!obj) {
             const msg = `[preferenceService] preference set as nil value (${obj}), it's unexpected`;
-            if (__DEV__) console.error(msg);
+            if (__DEV__) {
+              console.error(msg);
+            }
             capturePreferenceException(new Error(msg));
           }
         },
@@ -1030,6 +1034,43 @@ export class PreferenceService extends StoreServiceBase<
   };
 
   /** =========toggle pinToken end =========== */
+
+  getRemovedTokens = (): IManageToken[] => {
+    return this.getStoreFieldSnapshot('removedTokens') || [];
+  };
+
+  isTokenRemoved = (token: IManageToken): boolean => {
+    return (this.store.removedTokens || []).some(
+      item =>
+        item.chainId.toLowerCase() === token.chainId.toLowerCase() &&
+        isSameAddress(item.tokenId, token.tokenId),
+    );
+  };
+
+  addRemovedToken = (token: IManageToken) => {
+    if (this.isTokenRemoved(token)) {
+      return;
+    }
+    this.mutateStore(draft => {
+      draft.removedTokens = [
+        { chainId: token.chainId, tokenId: token.tokenId },
+        ...(draft.removedTokens || []),
+      ];
+    });
+  };
+
+  removeRemovedToken = (token: IManageToken) => {
+    if (!this.isTokenRemoved(token)) {
+      return;
+    }
+    this.mutateStore(draft => {
+      draft.removedTokens = draft.removedTokens?.filter(
+        item =>
+          item.chainId.toLowerCase() !== token.chainId.toLowerCase() ||
+          !isSameAddress(item.tokenId, token.tokenId),
+      );
+    });
+  };
 
   /** =========toggle fold token start =========== */
   manualFoldToken = (token: IManageToken) => {
