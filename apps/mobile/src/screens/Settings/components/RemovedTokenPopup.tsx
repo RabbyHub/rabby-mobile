@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
 import { colord } from 'colord';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useRefreshAutoLockPanResponder } from '@/components/AutoLockView';
@@ -12,15 +13,17 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { RootNames } from '@/constant/layout';
 import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 import { openapi } from '@/core/request';
 import { useRemovedTokens } from '@/hooks/useRemovedTokens';
 import { useTheme2024 } from '@/hooks/theme';
 import type { IManageToken } from '@/types/assets';
 import { createGetStyles2024 } from '@/utils/styles';
-import { getTokenSymbol } from '@/utils/token';
+import { navigateDeprecated } from '@/utils/navigation';
+import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 
-type TokenInfo = { symbol: string; logoUrl: string };
+type TokenInfo = { symbol: string; logoUrl: string; token: TokenItem };
 const TOKEN_CARD_HEIGHT = 68;
 const TOKEN_CARD_RADIUS = 14;
 const getTokenKey = (token: IManageToken) =>
@@ -37,6 +40,7 @@ export function RemovedTokenPopup({ onClose }: { onClose(): void }) {
   const { bottom } = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const modalRef = useRef<AppBottomSheetModal>(null);
+  const selectedTokenRef = useRef<TokenItem | null>(null);
   const removedTokens = useRemovedTokens(state => state.removedTokens);
   const [tokenInfo, setTokenInfo] = useState<Map<string, TokenInfo>>(new Map());
   const { panResponder } = useRefreshAutoLockPanResponder();
@@ -83,6 +87,7 @@ export function RemovedTokenPopup({ onClose }: { onClose(): void }) {
             next.set(getTokenKey({ chainId: token.chain, tokenId: token.id }), {
               symbol: getTokenSymbol(token),
               logoUrl: token.logo_url || '',
+              token,
             });
           });
           return next;
@@ -100,7 +105,17 @@ export function RemovedTokenPopup({ onClose }: { onClose(): void }) {
   return (
     <AppBottomSheetModal
       ref={modalRef}
-      onDismiss={onClose}
+      onDismiss={() => {
+        const token = selectedTokenRef.current;
+        selectedTokenRef.current = null;
+        onClose();
+        if (token) {
+          navigateDeprecated(RootNames.TokenDetail, {
+            token: tokenItemToITokenItem(token, ''),
+            needUseCacheToken: true,
+          });
+        }
+      }}
       {...makeBottomSheetProps({
         colors: colors2024,
         linearGradientType: 'bg0',
@@ -138,7 +153,16 @@ export function RemovedTokenPopup({ onClose }: { onClose(): void }) {
             );
           }
           return (
-            <View style={styles.cardShadow}>
+            <Pressable
+              style={styles.cardShadow}
+              accessibilityRole="button"
+              onPress={() => {
+                if (selectedTokenRef.current) {
+                  return;
+                }
+                selectedTokenRef.current = info.token;
+                modalRef.current?.dismiss();
+              }}>
               <LinearGradient
                 useAngle
                 angle={49.5}
@@ -155,7 +179,7 @@ export function RemovedTokenPopup({ onClose }: { onClose(): void }) {
                   {info.symbol || item.tokenId}
                 </Text>
               </LinearGradient>
-            </View>
+            </Pressable>
           );
         }}
       />

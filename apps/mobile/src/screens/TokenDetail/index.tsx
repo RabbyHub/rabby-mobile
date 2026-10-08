@@ -26,16 +26,13 @@ import { TokenDetailHistoryList } from './components/HistoryList';
 import { isFromBackAtom } from '../Swap/hooks/atom';
 import BalanceOverview from './components/BalanceOverview';
 import { useSingleTokenBalance } from './hook';
-import {
-  BOTTOM_BUTTON_DOUBLE_HEIGHT,
-  BOTTOM_BUTTON_TOP_OFFSET,
-  RootNames,
-  getBottomButtonBottomOffset,
-} from '@/constant/layout';
+import { RootNames } from '@/constant/layout';
 import { navigateDeprecated } from '@/utils/navigation';
 import { RightMore } from './components/RightMore';
 import { useSetAtom } from 'jotai';
 import { TokenDetailBottomBtns } from './components/BottomBtns';
+import { RemovedTokenNotice } from './components/RemovedToken';
+import { useRemovedTokens } from '@/hooks/useRemovedTokens';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import {
   ScreenSceneAccountProvider,
@@ -74,6 +71,11 @@ const TokenDetailContent = () => {
     getStyle,
   });
   const { t } = useTranslation();
+  const isRemoved = useRemovedTokens(
+    state =>
+      !isCustomTestnetToken &&
+      state.isTokenRemoved({ chainId: token.chain, tokenId: token.id }),
+  );
 
   const setIsFromBack = useSetAtom(isFromBackAtom);
 
@@ -302,6 +304,7 @@ const TokenDetailContent = () => {
   const renderHeader = useCallback(() => {
     return (
       <View style={[styles.balanceOverviewContainer, styles.listHeader]}>
+        {isRemoved && <RemovedTokenNotice />}
         <AccountSwitcher
           forScene="TokenDetail"
           disableSwitch={isCustomTestnetToken}
@@ -417,6 +420,7 @@ const TokenDetailContent = () => {
     has24hChangeData,
     isCustomTestnetToken,
     is24hNoChange,
+    isRemoved,
     isLoss,
     percentChange,
     price,
@@ -483,14 +487,13 @@ const TokenDetailContent = () => {
         disableHistoryRequest={isCustomTestnetToken}
       />
 
-      <View style={styles.bottomContainer}>
-        <TokenDetailBottomBtns
-          token={token}
-          finalAccount={effectiveAccount}
-          tokenSelectType={tokenSelectType}
-          disableSwapBridge={isCustomTestnetToken}
-        />
-      </View>
+      <TokenDetailBottomBtns
+        token={token}
+        finalAccount={effectiveAccount}
+        tokenSelectType={tokenSelectType}
+        disableSwapBridge={isCustomTestnetToken}
+        isRemoved={isRemoved}
+      />
       <AccountSwitcherModal token={token} forScene="TokenDetail" inScreen />
     </NormalScreenContainer2024>
   );
@@ -513,7 +516,7 @@ export const TokenDetailScreen = () => {
 };
 
 const getStyle = createGetStyles2024(ctx => {
-  const { colors2024, isLight, safeAreaInsets } = ctx;
+  const { colors2024, isLight } = ctx;
   return {
     rootScreenContainer: {
       backgroundColor: isLight
@@ -534,18 +537,6 @@ const getStyle = createGetStyles2024(ctx => {
     },
     listHeader: {
       marginHorizontal: -12,
-    },
-    bottomContainer: {
-      width: '100%',
-      height:
-        BOTTOM_BUTTON_TOP_OFFSET +
-        BOTTOM_BUTTON_DOUBLE_HEIGHT +
-        getBottomButtonBottomOffset(safeAreaInsets.bottom),
-      backgroundColor: colors2024['neutral-bg-1'],
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
     },
     balanceOverviewContent: {
       display: 'flex',
