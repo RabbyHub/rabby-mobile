@@ -180,7 +180,10 @@ async function importFromPrivateKey(
   const Keyring = (await keyringServiceApi.getKeyringClassForType(
     KEYRING_CLASS.PRIVATE_KEY,
   )) as any;
-  const keyring = new Keyring([cleanedPrivateKey]);
+  // The constructor does not await deserialize, so initialize explicitly to
+  // observe failures before reading accounts from the temporary keyring.
+  const keyring = new Keyring();
+  await keyring.deserialize([cleanedPrivateKey]);
 
   // 3. Get the address from the temporary keyring
   const accounts = await keyring.getAccounts();

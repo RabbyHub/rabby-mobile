@@ -638,9 +638,27 @@ export class KeyringService extends RNEventEmitter {
    * @param opts
    * @deprecated use addKeyring as possible, it's only meanful for `Private Key & HD Keyring`
    */
-  addNewKeyring(type: KeyringTypeName, opts?: any): Promise<any> {
+  async addNewKeyring(type: KeyringTypeName, opts?: any): Promise<any> {
     const Keyring = this.getKeyringClassForType(type);
-    const keyring = new Keyring(opts);
+    const keyring =
+      type === KEYRING_TYPE.SimpleKeyring ? new Keyring() : new Keyring(opts);
+    if (type === KEYRING_TYPE.SimpleKeyring) {
+      // Its constructor does not await deserialize, so import failures must be
+      // observed before the instance can enter the runtime or vault.
+      await keyring.deserialize(opts);
+      if (Array.isArray(opts) && opts.length > 0) {
+        const accounts = await keyring.getAccounts();
+        if (
+          accounts.length === 0 ||
+          accounts.some(
+            address =>
+              typeof address !== 'string' || !ethUtil.isValidAddress(address),
+          )
+        ) {
+          throw new Error('Failed to derive a valid address from private key');
+        }
+      }
+    }
     // this._updateIndexIfHdKeyring(keyring);
     return this.addKeyring(keyring);
   }
