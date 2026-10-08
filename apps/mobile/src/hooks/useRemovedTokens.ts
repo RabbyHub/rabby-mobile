@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { addressUtils } from '@rabby-wallet/base-utils';
 
 import {
@@ -11,9 +11,21 @@ import { zCreate } from '@/core/utils/reexports';
 import type { IManageToken } from '@/types/assets';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 
-const removedTokensStore = zCreate<{
+type RemovedTokensState = {
   removedTokens: readonly IManageToken[];
-}>(() => ({ removedTokens: getRemovedTokensSnapshot() }));
+  addRemovedToken: typeof addRemovedToken;
+  removeRemovedToken: typeof removeRemovedToken;
+  isTokenRemoved: typeof isTokenRemoved;
+  getRemovedTokens: typeof getRemovedTokens;
+};
+
+const removedTokensStore = zCreate<RemovedTokensState>(() => ({
+  removedTokens: getRemovedTokensSnapshot(),
+  addRemovedToken,
+  removeRemovedToken,
+  isTokenRemoved,
+  getRemovedTokens,
+}));
 
 let storeBindingPromise: Promise<void> | null = null;
 let disposeStoreBinding: (() => void) | null = null;
@@ -64,26 +76,21 @@ function getRemovedTokens(): IManageToken[] {
     .removedTokens.map(token => ({ ...token }));
 }
 
-export function useRemovedTokens() {
+export function useRemovedTokens(): RemovedTokensState;
+export function useRemovedTokens<Selected>(
+  selector: (state: RemovedTokensState) => Selected,
+): Selected;
+export function useRemovedTokens<Selected>(
+  selector?: (state: RemovedTokensState) => Selected,
+) {
   useEffect(() => {
     ensureRemovedTokensBinding().catch(console.error);
   }, []);
 
-  const removedTokens = useActivityStore(
+  return useActivityStore<RemovedTokensState, RemovedTokensState | Selected>(
     removedTokensStore,
-    state => state.removedTokens,
+    state => (selector ? selector(state) : state),
     Object.is,
     { storeLabel: 'removed-tokens' },
-  );
-
-  return useMemo(
-    () => ({
-      removedTokens,
-      addRemovedToken,
-      removeRemovedToken,
-      isTokenRemoved: (token: IManageToken) => isTokenRemoved(token),
-      getRemovedTokens: () => getRemovedTokens(),
-    }),
-    [removedTokens],
   );
 }

@@ -29,7 +29,14 @@ import {
   ASSETS_SECTION_HEADER,
   RootNames,
 } from '@/constant/layout';
-import { useTheme2024 } from '@/hooks/theme';
+import { apisTheme, useTheme2024 } from '@/hooks/theme';
+import { useRemovedTokens } from '@/hooks/useRemovedTokens';
+import {
+  isUserTokenPinnedInMemory,
+  toggleUserTokenPinned,
+} from '@/hooks/useTokenSettings';
+import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
+import i18n from '@/utils/i18n';
 import { EmptyTokenRow } from './components/AssetRenderItems/EmptyToken';
 import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
 import { ItemLoader } from './components/Skeleton';
@@ -121,6 +128,7 @@ const TokenResourceRow = React.memo(
     loaderStyle?: ViewStyle;
     onTokenPress(token: ITokenItem): void;
   }) => {
+    const addRemovedToken = useRemovedTokens(state => state.addRemovedToken);
     const token = useActivityStore(
       tokenEntityResourceStore.useStore,
       state => state.valueMap[tokenId],
@@ -133,14 +141,65 @@ const TokenResourceRow = React.memo(
     }
 
     return (
-      <TokenRowV2
-        data={token}
-        style={tokenStyle}
-        onTokenPress={onTokenPress}
-        //logoSize={46}
-        //chainLogoSize={18}
-        scene="portfolio"
-      />
+      <ContextMenuView
+        getMenuConfig={() => {
+          const isPinned = isUserTokenPinnedInMemory(token);
+          const isDarkTheme = apisTheme.getBinaryMode() === 'dark';
+          return {
+            menuActions: [
+              {
+                title: isPinned
+                  ? i18n.t('page.tokenDetail.action.unfavorite')
+                  : i18n.t('page.tokenDetail.action.favorite'),
+                icon: isPinned
+                  ? isDarkTheme
+                    ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png')
+                    : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png')
+                  : isDarkTheme
+                  ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite_dark.png')
+                  : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite.png'),
+                key: 'favorite',
+                androidIconName: isPinned
+                  ? 'ic_rabby_menu_token_unfavorite'
+                  : 'ic_rabby_menu_token_favorite',
+                action() {
+                  toggleUserTokenPinned(token);
+                },
+              },
+              {
+                title: i18n.t('page.singleHome.tokenActions.remove'),
+                icon: isDarkTheme
+                  ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_delete_dark.png')
+                  : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_delete.png'),
+                key: 'remove',
+                androidIconName: 'ic_rabby_menu_delete',
+                destructive: true,
+                action() {
+                  addRemovedToken({
+                    chainId: token.chain,
+                    tokenId: token.id,
+                  }).catch(error => {
+                    console.error('Remove token failed:', error);
+                    toast.show(
+                      i18n.t('page.singleHome.tokenActions.removeFailed'),
+                    );
+                  });
+                },
+              },
+            ],
+          };
+        }}
+        preViewBorderRadius={14}
+        triggerProps={{ action: 'longPress' }}>
+        <View collapsable={false}>
+          <TokenRowV2
+            data={token}
+            style={tokenStyle}
+            onTokenPress={onTokenPress}
+            scene="portfolio"
+          />
+        </View>
+      </ContextMenuView>
     );
   },
 );

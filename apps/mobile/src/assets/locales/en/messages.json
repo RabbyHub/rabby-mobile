@@ -1860,6 +1860,10 @@
       "selectChainTitle": "Select Chain"
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "Remove",
+        "removeFailed": "Failed to remove token"
+      },
       "sectionHeader": {
         "Defi": "DeFi",
         "Nft": "NFT",
