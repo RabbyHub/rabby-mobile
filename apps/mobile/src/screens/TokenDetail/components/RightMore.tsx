@@ -67,6 +67,9 @@ export const RightMore: React.FC<{
                 width={20}
                 height={20}
                 color={colors2024['orange-default']}
+                fill={isPinned ? 'none' : 'currentColor'}
+                stroke={isPinned ? colors2024['orange-default'] : 'none'}
+                strokeWidth={1.5}
               />
             </Pressable>
             <Pressable

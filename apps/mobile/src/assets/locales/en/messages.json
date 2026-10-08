@@ -1745,7 +1745,7 @@
         "restoreFailed": "Failed to restore token",
         "more": "More",
         "confirmTitle": "Remove this token?",
-        "confirmDescription": "· This token will no longer appear in your Portfolio after removal.\n· You can restore it anytime in Settings >> Removed Token."
+        "confirmDescription": "· This token will no longer appear in your Portfolio after removal.\n· You can restore it anytime in Settings >> Removed Tokens."
       },
       "TokenName": "Token Name",
       "Price": "Price",
@@ -1924,7 +1924,7 @@
       "themeMode": "Theme Mode",
       "clearPending": "Clear Pending Locally",
       "removedToken": {
-        "title": "Removed Token",
+        "title": "Removed Tokens",
         "description": "Removed tokens will be hidden from your Portfolio across all your addresses, but still included in your balance calculation."
       },
       "aboutUs": "About Us",
