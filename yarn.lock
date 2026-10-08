@@ -9739,13 +9739,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-bridge@npm:0.0.10":
-  version: 0.0.10
-  resolution: "@rabby-wallet/rabby-bridge@npm:0.0.10"
+"@rabby-wallet/rabby-bridge@npm:0.0.11-alpha.2":
+  version: 0.0.11-alpha.2
+  resolution: "@rabby-wallet/rabby-bridge@npm:0.0.11-alpha.2"
   peerDependencies:
     "@debank/common": ">=0.3.60"
     "@rabby-wallet/rabby-api": ">=0.9.58"
-  checksum: 10/f1d4005b94c0d3276a1a917fc2a1d7a190d5140affae9ca5b4f9f3098a27559c0846469cfcc97edc53167d266bd2d43c30b1835f2cb8d6c8c00bffee24102288
+  checksum: 10/40522df2c09a43f3c4082bbf8f3469e97755579ba0678c14568a774c3fc663f8a987e9b0e1437ee1bd1a38bd43cde4c85ef4d4644acad7211905e864e4059a65
   languageName: node
   linkType: hard
 
@@ -37419,7 +37419,7 @@ __metadata:
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": "npm:0.1.16"
     "@rabby-wallet/rabby-api": "npm:0.9.68"
-    "@rabby-wallet/rabby-bridge": "npm:0.0.10"
+    "@rabby-wallet/rabby-bridge": "npm:0.0.11-alpha.2"
     "@rabby-wallet/rabby-logger": "npm:0.3.1"
     "@rabby-wallet/rabby-security-engine": "npm:2.0.12"
     "@rabby-wallet/rabby-sign-bvm": "npm:0.1.1"
