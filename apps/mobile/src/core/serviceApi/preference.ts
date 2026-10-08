@@ -7,7 +7,10 @@ import type {
   Token,
   TokenDisplayMode,
 } from '@/core/startupServices/preference';
-import { getRegisteredService } from '@/core/services/serviceRegistry';
+import {
+  getRegisteredService,
+  waitForCoreService,
+} from '@/core/services/serviceRegistry';
 import { createDeferredServiceApi } from './createDeferredServiceApi';
 import type { IManageToken } from '@/types/assets';
 
@@ -315,6 +318,20 @@ export async function isTokenRemoved(token: IManageToken): Promise<boolean> {
 
 export async function getRemovedTokens(): Promise<IManageToken[]> {
   return preferenceServiceApi.getRemovedTokens();
+}
+
+export function getRemovedTokensSnapshot(): IManageToken[] {
+  return getRegisteredService('preferenceService')?.getRemovedTokens() || [];
+}
+
+export async function bindRemovedTokensListener(
+  listener: (tokens: readonly IManageToken[]) => void,
+) {
+  const service = await waitForCoreService('preferenceService');
+  listener(service.getRemovedTokens());
+  return service.subscribeStoreField('removedTokens', tokens => {
+    return listener(tokens || []);
+  });
 }
 
 export async function dangerouslySetTokenManageSettingMapForDev(
