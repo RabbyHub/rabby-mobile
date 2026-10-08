@@ -1916,6 +1916,10 @@
       "modifyRPCURL": "Modify RPC URL",
       "themeMode": "Theme Mode",
       "clearPending": "Clear Pending Locally",
+      "removedToken": {
+        "title": "Removed Token",
+        "description": "Removed tokens will be hidden from your Portfolio across all your addresses, but still included in your balance calculation."
+      },
       "aboutUs": "About Us",
       "currentVersion": "Current Version",
       "feedback": "Feedback",
