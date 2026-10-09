@@ -4,6 +4,7 @@ import { Keyboard, Platform, TouchableOpacity, View } from 'react-native';
 
 import { ReactIconHome } from '@/assets2024/icons/browser';
 import { NextSearchBar } from '@/components2024/SearchBar';
+import { AppBottomSheetTextInput } from '@/components/customized/BottomSheetTextInput';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
@@ -267,7 +268,7 @@ export function BrowserSearch({
           />
         </TouchableOpacity> */}
         <NextSearchBar
-          as="BottomSheetTextInput"
+          inputComponent={AppBottomSheetTextInput}
           value={searchText}
           onChangeText={setSearchText}
           onCancel={handleCancel}
