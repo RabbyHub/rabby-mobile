@@ -324,6 +324,10 @@ export function getRemovedTokensSnapshot(): IManageToken[] {
   return getRegisteredService('preferenceService')?.getRemovedTokens() || [];
 }
 
+export function isRemovedTokensReadySnapshot(): boolean {
+  return !!getRegisteredService('preferenceService');
+}
+
 export async function bindRemovedTokensListener(
   listener: (tokens: readonly IManageToken[]) => void,
 ) {

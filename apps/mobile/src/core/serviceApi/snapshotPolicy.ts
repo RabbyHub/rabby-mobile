@@ -99,6 +99,7 @@ const preference = {
   getPinnedTokenSnapshot: 'startup-critical',
   getPreferenceSnapshot: 'startup-critical',
   getRemovedTokensSnapshot: 'reactive',
+  isRemovedTokensReadySnapshot: 'reactive',
   getTokenDisplayModeSnapshot: 'startup-critical',
   getUserTokenSettingsSnapshot: 'startup-critical',
   getWatchlistSkipSnapshot: 'startup-critical',

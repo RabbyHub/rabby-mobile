@@ -369,7 +369,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     state =>
       !!singleAssetsKey &&
       !!state.singleAssetsConfigByKey[singleAssetsKey] &&
-      !!state.singleAssetsResultByKey[singleAssetsKey],
+      !!state.singleDisplayAssetsResultByKey[singleAssetsKey],
     Object.is,
     { storeLabel: 'single-address-token-assets-index-readiness' },
   );
@@ -379,7 +379,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     useShallow(state => {
       const result =
         (singleAssetsKey
-          ? state.singleAssetsResultByKey[singleAssetsKey]
+          ? state.singleDisplayAssetsResultByKey[singleAssetsKey]
           : undefined) || EMPTY_TOKEN_ASSETS_INDEX_RESULT;
       return {
         additionalCoreUsdValue: result.additionalCoreUsdValue,
