@@ -4322,10 +4322,11 @@ tokenListStore.subscribe(state => {
 });
 
 tokenEntityResourceStore.subscribeTokenChanges(changedTokenIds => {
-  useTokenAssetsIndexStore
-    .getState()
-    .syncChangedTokenAssetsResults(changedTokenIds);
-  tokenDisplayExclusion.syncChangedTokens(changedTokenIds);
+  tokenDisplayExclusion.syncChangedTokens(changedTokenIds, () => {
+    useTokenAssetsIndexStore
+      .getState()
+      .syncChangedTokenAssetsResults(changedTokenIds);
+  });
 });
 
 export default tokenListStore;

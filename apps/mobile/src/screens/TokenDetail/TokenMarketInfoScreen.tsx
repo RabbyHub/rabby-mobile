@@ -40,7 +40,6 @@ import type { TokenChartRef } from './components/TokenPriceChart';
 import { TokenPriceChart } from './components/TokenPriceChart';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
-import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import type { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import type { GetRootScreenNavigationProps } from '@/navigation-type';
@@ -234,21 +233,9 @@ export const TokenMarketInfoScreen = () => {
 
   const getHeaderRight = useCallback(() => {
     return isCustomTestnet || isRemoved ? null : (
-      <RightMore
-        token={token}
-        triggerUpdate={() =>
-          finalAccount?.address &&
-          apisAddressBalance.triggerUpdate({
-            address: finalAccount?.address,
-            force: false,
-            fromScene: 'TokenDetail',
-          })
-        }
-        isMultiAddress={false}
-        refreshTags={refreshTag}
-      />
+      <RightMore token={token} refreshTags={refreshTag} />
     );
-  }, [isCustomTestnet, isRemoved, token, refreshTag, finalAccount?.address]);
+  }, [isCustomTestnet, isRemoved, token, refreshTag]);
 
   useFocusEffect(
     useCallback(() => {

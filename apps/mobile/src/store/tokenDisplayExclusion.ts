@@ -25,7 +25,7 @@ type Dependencies = {
 };
 type TokenDisplayExclusion = {
   ensureBinding(): void;
-  syncChangedTokens(tokenIds: TokenEntityId[]): void;
+  syncChangedTokens(tokenIds: TokenEntityId[], updateSource: () => void): void;
 };
 
 /** Adds removed-token display results to the existing Store without touching persistence. */
@@ -48,6 +48,8 @@ export function createTokenDisplayExclusion({
   >();
   let tokenDisplayBindingsStarted = false;
   let syncingTokenDisplayResults = false;
+  let sourceUpdateDepth = 0;
+  const pendingAddresses = new Set<string>();
   let matchedRemovedTokens: readonly IManageToken[] | undefined;
   let removedTokensByChain = new Map<string, string[]>();
 
@@ -191,7 +193,10 @@ export function createTokenDisplayExclusion({
       : result;
   }
 
-  function syncTokenDisplayResults(changedAddresses?: ReadonlySet<string>) {
+  function syncTokenDisplayResults(
+    changedAddresses?: ReadonlySet<string>,
+    changedKeys?: { single: ReadonlySet<string>; multi: ReadonlySet<string> },
+  ) {
     if (
       !tokenDisplayBindingsStarted ||
       syncingTokenDisplayResults ||
@@ -206,38 +211,6 @@ export function createTokenDisplayExclusion({
       updateRemovedTokenLookup(removedTokens);
       let singleResults = source.singleDisplayAssetsResultByKey;
       let multiResults = source.multiDisplayAssetsResultByKey;
-      const retainResults = (
-        results: Record<string, TokenAssetsIndexResult>,
-        rawResults: Record<string, TokenAssetsIndexResult>,
-        scene: 'single' | 'multi',
-      ) => {
-        let retained = results;
-        Object.keys(results).forEach(key => {
-          const configs =
-            scene === 'single'
-              ? source.singleAssetsConfigByKey
-              : source.multiAssetsConfigByKey;
-          if (rawResults[key] && configs[key]) {
-            return;
-          }
-          if (retained === results) {
-            retained = { ...results };
-          }
-          delete retained[key];
-          tokenDisplayProjectionCache.delete(`${scene}:${key}`);
-        });
-        return retained;
-      };
-      singleResults = retainResults(
-        singleResults,
-        source.singleAssetsResultByKey,
-        'single',
-      );
-      multiResults = retainResults(
-        multiResults,
-        source.multiAssetsResultByKey,
-        'multi',
-      );
       const project = (scene: 'single' | 'multi', key: string) => {
         const config =
           scene === 'single'
@@ -248,6 +221,18 @@ export function createTokenDisplayExclusion({
             ? source.singleAssetsResultByKey[key]
             : source.multiAssetsResultByKey[key];
         if (!config || !raw) {
+          if (scene === 'single' && singleResults[key]) {
+            if (singleResults === source.singleDisplayAssetsResultByKey) {
+              singleResults = { ...singleResults };
+            }
+            delete singleResults[key];
+          } else if (scene === 'multi' && multiResults[key]) {
+            if (multiResults === source.multiDisplayAssetsResultByKey) {
+              multiResults = { ...multiResults };
+            }
+            delete multiResults[key];
+          }
+          tokenDisplayProjectionCache.delete(`${scene}:${key}`);
           return;
         }
         const addresses =
@@ -341,12 +326,20 @@ export function createTokenDisplayExclusion({
           multiResults[key] = result;
         }
       };
-      Object.keys(source.singleAssetsConfigByKey).forEach(key =>
-        project('single', key),
-      );
-      Object.keys(source.multiAssetsConfigByKey).forEach(key =>
-        project('multi', key),
-      );
+      const singleKeys =
+        changedKeys?.single ||
+        new Set([
+          ...Object.keys(source.singleAssetsConfigByKey),
+          ...Object.keys(source.singleDisplayAssetsResultByKey),
+        ]);
+      const multiKeys =
+        changedKeys?.multi ||
+        new Set([
+          ...Object.keys(source.multiAssetsConfigByKey),
+          ...Object.keys(source.multiDisplayAssetsResultByKey),
+        ]);
+      singleKeys.forEach(key => project('single', key));
+      multiKeys.forEach(key => project('multi', key));
       if (
         singleResults !== source.singleDisplayAssetsResultByKey ||
         multiResults !== source.multiDisplayAssetsResultByKey
@@ -361,19 +354,67 @@ export function createTokenDisplayExclusion({
     }
   }
 
+  function collectChangedKeys(
+    next: Record<string, unknown>,
+    previous: Record<string, unknown>,
+    keys: Set<string>,
+  ) {
+    if (next === previous) {
+      return;
+    }
+    Object.keys(next).forEach(key => {
+      if (next[key] !== previous[key]) {
+        keys.add(key);
+      }
+    });
+    Object.keys(previous).forEach(key => {
+      if (!(key in next)) {
+        keys.add(key);
+      }
+    });
+  }
+
   // Initialize through the existing single/multi projection preparation entries.
   function ensureTokenDisplayExclusionBinding() {
     const isFirstDemand = !tokenDisplayBindingsStarted;
     if (isFirstDemand) {
       tokenDisplayBindingsStarted = true;
       assetsStore.subscribe((state, previous) => {
+        // The token-update wrapper flushes once after all raw results are ready.
         if (
-          state.singleAssetsResultByKey !== previous.singleAssetsResultByKey ||
-          state.multiAssetsResultByKey !== previous.multiAssetsResultByKey ||
-          state.singleAssetsConfigByKey !== previous.singleAssetsConfigByKey ||
-          state.multiAssetsConfigByKey !== previous.multiAssetsConfigByKey
+          sourceUpdateDepth ||
+          (state.singleAssetsResultByKey === previous.singleAssetsResultByKey &&
+            state.multiAssetsResultByKey === previous.multiAssetsResultByKey &&
+            state.singleAssetsConfigByKey ===
+              previous.singleAssetsConfigByKey &&
+            state.multiAssetsConfigByKey === previous.multiAssetsConfigByKey)
         ) {
-          syncTokenDisplayResults();
+          return;
+        }
+        const single = new Set<string>();
+        const multi = new Set<string>();
+        collectChangedKeys(
+          state.singleAssetsResultByKey,
+          previous.singleAssetsResultByKey,
+          single,
+        );
+        collectChangedKeys(
+          state.singleAssetsConfigByKey,
+          previous.singleAssetsConfigByKey,
+          single,
+        );
+        collectChangedKeys(
+          state.multiAssetsResultByKey,
+          previous.multiAssetsResultByKey,
+          multi,
+        );
+        collectChangedKeys(
+          state.multiAssetsConfigByKey,
+          previous.multiAssetsConfigByKey,
+          multi,
+        );
+        if (single.size || multi.size) {
+          syncTokenDisplayResults(undefined, { single, multi });
         }
       });
       removedTokensStore.subscribe((state, previous) => {
@@ -393,11 +434,22 @@ export function createTokenDisplayExclusion({
 
   return {
     ensureBinding: ensureTokenDisplayExclusionBinding,
-    syncChangedTokens(tokenIds) {
-      if (tokenDisplayBindingsStarted) {
-        syncTokenDisplayResults(
-          new Set(tokenIds.map(id => id.split(':', 1)[0]!)),
-        );
+    syncChangedTokens(tokenIds, updateSource) {
+      if (!tokenDisplayBindingsStarted) {
+        updateSource();
+        return;
+      }
+      tokenIds.forEach(id => pendingAddresses.add(id.split(':', 1)[0]!));
+      sourceUpdateDepth += 1;
+      try {
+        updateSource();
+      } finally {
+        sourceUpdateDepth -= 1;
+        if (!sourceUpdateDepth) {
+          const addresses = new Set(pendingAddresses);
+          pendingAddresses.clear();
+          syncTokenDisplayResults(addresses);
+        }
       }
     },
   };

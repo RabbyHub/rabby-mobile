@@ -19,7 +19,6 @@ import {
 } from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
-import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { formatPrice } from '@/utils/number';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
 import { TokenDetailHistoryList } from './components/HistoryList';
@@ -238,28 +237,8 @@ const TokenDetailContent = () => {
       return null;
     }
 
-    return (
-      <RightMore
-        token={token}
-        triggerUpdate={() =>
-          effectiveAccount?.address &&
-          apisAddressBalance.triggerUpdate({
-            address: effectiveAccount?.address,
-            force: false,
-            fromScene: 'TokenDetail',
-          })
-        }
-        isMultiAddress={false}
-        refreshTags={refreshTag}
-      />
-    );
-  }, [
-    effectiveAccount?.address,
-    isCustomTestnetToken,
-    isRemoved,
-    refreshTag,
-    token,
-  ]);
+    return <RightMore token={token} refreshTags={refreshTag} />;
+  }, [isCustomTestnetToken, isRemoved, refreshTag, token]);
 
   useFocusEffect(
     useCallback(() => {

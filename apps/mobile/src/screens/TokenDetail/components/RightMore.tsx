@@ -20,10 +20,7 @@ import { RemoveTokenConfirmPopup } from './RemoveTokenConfirmPopup';
 /** Token header actions with a confirmation before removal. */
 export const RightMore: React.FC<{
   token: ITokenItem;
-  isMultiAddress?: boolean;
-  triggerUpdate: () => void;
   refreshTags: () => void;
-  unHold?: boolean;
 }> = ({ token, refreshTags }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
