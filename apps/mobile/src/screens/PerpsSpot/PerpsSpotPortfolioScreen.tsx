@@ -2,9 +2,11 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  RefreshControl,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 import type { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 import { useTranslation } from 'react-i18next';
 import BigNumber from 'bignumber.js';
@@ -28,15 +30,19 @@ import {
   type SpotMarket,
   type SpotOpenOrderGroup,
 } from '@/hooks/perps/spot/spotMarkets';
+import type { SpotOrderHistoryItem } from '@/hooks/perps/spot/spotOrderHistory';
 import { usePerpsSpotData } from '@/hooks/perps/spot/usePerpsSpotData';
 import { useSpotOrderCancel } from '@/hooks/perps/spot/useSpotOrderCancel';
+import { useSpotOrderHistory } from '@/hooks/perps/spot/useSpotOrderHistory';
 import { useTheme2024 } from '@/hooks/theme';
 import { naviPush } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 
 import { SpotOpenOrderRow } from './components/SpotOpenOrderRow';
+import { SpotOrderHistoryRow } from './components/SpotOrderHistoryRow';
 
-type Tab = 'balances' | 'orders';
+type Tab = 'balances' | 'orders' | 'history';
+const TABS: Tab[] = ['balances', 'orders', 'history'];
 
 const openMarket = (market: SpotMarket, side?: 'buy' | 'sell') =>
   naviPush(RootNames.StackTransaction, {
@@ -130,12 +136,16 @@ const SpotOrderGroupCard: React.FC<{
   );
 });
 
-/** Spot balances and every open spot order of the current Perps account. */
+/**
+ * Spot balances, open spot orders (polled, cancellable) and closed orders
+ * (fetched when the tab is shown) of the current Perps account.
+ */
 export const PerpsSpotPortfolioScreen: React.FC = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const navigation = useRabbyAppNavigation();
   const [tab, setTab] = useState<Tab>('orders');
+  const isFocused = useIsFocused();
   const [cancellingAll, setCancellingAll] = useState(false);
   const cancelAllLockRef = useRef(false);
   const { markets, account, currentPerpsAccount, refresh } = usePerpsSpotData({
@@ -145,6 +155,12 @@ export const PerpsSpotPortfolioScreen: React.FC = () => {
     currentPerpsAccount,
     refresh,
   );
+
+  const history = useSpotOrderHistory({
+    address: currentPerpsAccount?.address,
+    markets,
+    enabled: isFocused && tab === 'history' && markets.length > 0,
+  });
 
   const orderItems = useMemo(
     () => buildSpotOpenOrderItems(account?.openOrders, markets),
@@ -209,6 +225,12 @@ export const PerpsSpotPortfolioScreen: React.FC = () => {
     ),
     [logos, cancellingOid, cancelDisabled, handleCancel],
   );
+  const renderHistoryItem = useCallback(
+    ({ item }: { item: SpotOrderHistoryItem }) => (
+      <SpotOrderHistoryRow item={item} onPress={openMarket} />
+    ),
+    [],
+  );
   const renderBalance = useCallback(
     ({ item }: { item: SpotBalanceItem }) => (
       <SpotBalanceRow item={item} logo={logos[item.balance.coin] || ''} />
@@ -247,7 +269,7 @@ export const PerpsSpotPortfolioScreen: React.FC = () => {
             </Text>
           </View>
           <View style={styles.tabs}>
-            {(['balances', 'orders'] as const).map(item => {
+            {TABS.map(item => {
               const active = item === tab;
               return (
                 <TouchableOpacity
@@ -258,9 +280,11 @@ export const PerpsSpotPortfolioScreen: React.FC = () => {
                     style={[styles.tabText, active && styles.tabTextActive]}>
                     {item === 'balances'
                       ? t('page.perpsSpot.tabBalances')
-                      : t('page.perpsSpot.tabOrders', {
+                      : item === 'orders'
+                      ? t('page.perpsSpot.tabOrders', {
                           count: orderItems.length,
-                        })}
+                        })
+                      : t('page.perpsSpot.tabHistory')}
                   </Text>
                 </TouchableOpacity>
               );
@@ -299,6 +323,39 @@ export const PerpsSpotPortfolioScreen: React.FC = () => {
                 </View>
               }
             />
+          ) : tab === 'history' ? (
+            history.isError ? (
+              <View style={styles.center}>
+                <Text style={styles.mutedText}>
+                  {t('page.perpsSpot.historyLoadError')}
+                </Text>
+              </View>
+            ) : history.isLoading ? (
+              <View style={styles.center}>
+                <ActivityIndicator color={colors2024['neutral-foot']} />
+              </View>
+            ) : (
+              <FlatList
+                style={styles.list}
+                contentContainerStyle={styles.historyContent}
+                data={history.items}
+                keyExtractor={item => String(item.oid)}
+                renderItem={renderHistoryItem}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={history.isRefreshing}
+                    onRefresh={history.reload}
+                  />
+                }
+                ListEmptyComponent={
+                  <View style={styles.center}>
+                    <Text style={styles.mutedText}>
+                      {t('page.perpsSpot.noHistory')}
+                    </Text>
+                  </View>
+                }
+              />
+            )
           ) : (
             <FlatList
               style={styles.list}
@@ -355,7 +412,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tabs: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 18,
+    gap: 16,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
     borderBottomColor: colors2024['neutral-line'],
@@ -393,6 +450,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingBottom: 24,
     gap: 12,
   },
+  historyContent: { paddingHorizontal: 20, paddingBottom: 24 },
   center: { paddingTop: 120, alignItems: 'center' },
   mutedText: {
     fontFamily: 'SF Pro Rounded',

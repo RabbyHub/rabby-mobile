@@ -3031,6 +3031,16 @@
       "noBalances": "No spot balance",
       "lockedInOrders": "{{amount}} locked in orders",
       "availableAmount": "{{amount}} available",
+      "filledOf": "Filled {{filled}} / {{total}}",
+      "tabHistory": "History",
+      "noHistory": "No order history",
+      "historyLoadError": "Failed to load order history",
+      "avgSuffix": "avg",
+      "status": {
+        "filled": "Filled",
+        "canceled": "Canceled",
+        "rejected": "Rejected"
+      },
       "loginRequired": "Log in to Perps to trade spot",
       "error": {
         "invalidSize": "Enter an amount",

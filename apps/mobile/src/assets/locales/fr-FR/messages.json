@@ -2110,6 +2110,16 @@
       "noBalances": "Aucun solde spot",
       "lockedInOrders": "{{amount}} bloqué dans des ordres",
       "availableAmount": "{{amount}} disponible",
+      "filledOf": "Exécuté {{filled}} / {{total}}",
+      "tabHistory": "Historique",
+      "noHistory": "Aucun historique d'ordres",
+      "historyLoadError": "Impossible de charger l'historique des ordres",
+      "avgSuffix": "moy.",
+      "status": {
+        "filled": "Exécuté",
+        "canceled": "Annulé",
+        "rejected": "Rejeté"
+      },
       "loginRequired": "Connectez-vous à Perps pour trader en spot",
       "error": {
         "invalidSize": "Saisissez une quantité",
