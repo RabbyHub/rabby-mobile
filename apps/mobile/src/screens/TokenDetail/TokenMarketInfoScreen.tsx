@@ -40,7 +40,6 @@ import type { TokenChartRef } from './components/TokenPriceChart';
 import { TokenPriceChart } from './components/TokenPriceChart';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
-import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import type { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import type { GetRootScreenNavigationProps } from '@/navigation-type';
@@ -56,6 +55,12 @@ import {
   useTokenMarketInfo,
 } from './hook';
 import { RightMore } from './components/RightMore';
+import { RcIconSwap } from '@/assets2024/singleHome';
+import {
+  RemovedTokenNotice,
+  RestoreRemovedTokenActions,
+} from './components/RemovedToken';
+import { useRemovedTokens } from '@/hooks/useRemovedTokens';
 import HeaderBalanceCard from './components/HeaderBalanceCard';
 import { navigateDeprecated } from '@/utils/navigation';
 import { Tabs } from 'react-native-collapsible-tab-view';
@@ -148,6 +153,11 @@ export const TokenMarketInfoScreen = () => {
   const isCustomTestnet = useMemo(() => {
     return token.chain && !!findChainByServerID(token.chain)?.isTestnet;
   }, [token]);
+  const isRemoved = useRemovedTokens(
+    state =>
+      !isCustomTestnet &&
+      state.isTokenRemoved({ chainId: token.chain, tokenId: token.id }),
+  );
 
   const finalAccount = useMemo(() => {
     return account || accounts[0] || getFallbackAccountSnapshot();
@@ -222,22 +232,10 @@ export const TokenMarketInfoScreen = () => {
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const getHeaderRight = useCallback(() => {
-    return isCustomTestnet ? null : (
-      <RightMore
-        token={token}
-        triggerUpdate={() =>
-          finalAccount?.address &&
-          apisAddressBalance.triggerUpdate({
-            address: finalAccount?.address,
-            force: false,
-            fromScene: 'TokenDetail',
-          })
-        }
-        isMultiAddress={false}
-        refreshTags={refreshTag}
-      />
+    return isCustomTestnet || isRemoved ? null : (
+      <RightMore token={token} refreshTags={refreshTag} />
     );
-  }, [isCustomTestnet, token, refreshTag, finalAccount?.address]);
+  }, [isCustomTestnet, isRemoved, token, refreshTag]);
 
   useFocusEffect(
     useCallback(() => {
@@ -306,7 +304,7 @@ export const TokenMarketInfoScreen = () => {
           activeTab: 'swap',
           chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
           tokenId: token?.id,
-          type: tokenSelectType === 'swapTo' ? 'Buy' : type,
+          type,
           address,
           isFromSwap,
           from,
@@ -547,6 +545,11 @@ export const TokenMarketInfoScreen = () => {
         }}
       />
 
+      {isRemoved && (
+        <View style={styles.removedNoticeContainer}>
+          <RemovedTokenNotice />
+        </View>
+      )}
       <Tabs.Container
         renderTabBar={renderTabBar}
         tabBarHeight={TOKEN_MARKET_TAB_BAR_HEIGHT}
@@ -662,57 +665,83 @@ export const TokenMarketInfoScreen = () => {
           </ScrollView>
         </Tabs.Tab>
       </Tabs.Container>
-      <View
-        style={[
-          styles.buttonGroup,
-          { paddingBottom: getBottomButtonBottomOffset(safeOffBottom) },
-        ]}>
-        {isTransactionTo ? (
-          <Button
-            title={t('global.Confirm')}
-            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
-            containerStyle={StyleSheet.flatten([styles.btnContainer])}
-            onPress={() => {
-              if (isSwapTo) {
-                handleSwap('Buy', finalAccount?.address, finalAccount?.type);
-                return;
-              }
-              if (isBridgeTo) {
-                handleBridgeTo(finalAccount?.address, finalAccount?.type);
-                return;
-              }
-            }}
-            buttonStyle={styles.btnInnerContainer}
-          />
-        ) : (
-          <>
+      {isRemoved ? (
+        <RestoreRemovedTokenActions
+          token={token}
+          moreMenuActions={[
+            {
+              key: 'Buy',
+              title: t('page.tokenDetail.action.Buy'),
+              Icon: RcIconSwap,
+              onPress: () =>
+                handleSwap('Buy', finalAccount?.address, finalAccount?.type),
+            },
+            {
+              key: 'Sell',
+              title: t('page.tokenDetail.action.Sell'),
+              Icon: RcIconSwap,
+              onPress: () =>
+                handleSwap('Sell', finalAccount?.address, finalAccount?.type),
+            },
+          ]}
+        />
+      ) : (
+        <View
+          style={[
+            styles.buttonGroup,
+            { paddingBottom: getBottomButtonBottomOffset(safeOffBottom) },
+          ]}>
+          {isTransactionTo ? (
             <Button
-              type="ghost"
-              title={t('page.tokenDetail.action.Buy')}
-              height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+              title={t('global.Confirm')}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
               titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               containerStyle={StyleSheet.flatten([styles.btnContainer])}
-              buttonStyle={[styles.btnInnerContainer, styles.ghostBtn]}
-              onPress={() =>
-                handleSwap('Buy', finalAccount?.address, finalAccount?.type)
-              }
+              onPress={() => {
+                if (isSwapTo) {
+                  handleSwap('Buy', finalAccount?.address, finalAccount?.type);
+                  return;
+                }
+                if (isBridgeTo) {
+                  handleBridgeTo(finalAccount?.address, finalAccount?.type);
+                  return;
+                }
+              }}
+              buttonStyle={styles.btnInnerContainer}
             />
-            <View style={styles.btnContainer}>
+          ) : (
+            <>
               <Button
-                title={t('page.tokenDetail.action.Sell')}
+                type="ghost"
+                title={t('page.tokenDetail.action.Buy')}
                 height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
                 titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
                 containerStyle={StyleSheet.flatten([styles.btnContainer])}
+                buttonStyle={[styles.btnInnerContainer, styles.ghostBtn]}
                 onPress={() =>
-                  handleSwap('Sell', finalAccount?.address, finalAccount?.type)
+                  handleSwap('Buy', finalAccount?.address, finalAccount?.type)
                 }
-                buttonStyle={styles.btnInnerContainer}
               />
-            </View>
-          </>
-        )}
-      </View>
+              <View style={styles.btnContainer}>
+                <Button
+                  title={t('page.tokenDetail.action.Sell')}
+                  height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+                  titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+                  containerStyle={StyleSheet.flatten([styles.btnContainer])}
+                  onPress={() =>
+                    handleSwap(
+                      'Sell',
+                      finalAccount?.address,
+                      finalAccount?.type,
+                    )
+                  }
+                  buttonStyle={styles.btnInnerContainer}
+                />
+              </View>
+            </>
+          )}
+        </View>
+      )}
     </NormalScreenContainer2024>
   );
 };
@@ -723,6 +752,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
         ? colors2024['neutral-bg-0']
         : colors2024['neutral-bg-1'],
     },
+    removedNoticeContainer: { marginHorizontal: 12 },
     chartContainer: {
       backgroundColor: isLight
         ? colors2024['neutral-bg-1']
