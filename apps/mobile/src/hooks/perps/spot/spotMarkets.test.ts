@@ -3,6 +3,7 @@ import type { SpotMeta } from '@rabby-wallet/hyperliquid-sdk';
 import {
   buildSpotMarkets,
   filterSpotMarkets,
+  formatSpotLimitPrice,
   formatSpotPrice,
   formatSpotSize,
   getSpotMarketOrderPrice,
@@ -99,6 +100,13 @@ describe('formatSpotPrice', () => {
   });
 });
 
+describe('formatSpotLimitPrice', () => {
+  it('rounds toward the passive side', () => {
+    expect(formatSpotLimitPrice('12345.6', 'buy', 2)).toBe('12345');
+    expect(formatSpotLimitPrice('12345.2', 'sell', 2)).toBe('12346');
+  });
+});
+
 describe('getSpotMarketOrderPrice', () => {
   it('crosses the mid by the slippage without exceeding it', () => {
     expect(getSpotMarketOrderPrice('38.5', 'buy', 2)).toBe('40.425');
@@ -141,6 +149,51 @@ describe('validateSpotOrder', () => {
     );
     expect(
       validateSpotOrder({ ...base, side: 'sell', baseAvailable: '1' }),
+    ).toBeNull();
+  });
+});
+
+describe('validateSpotOrder price guards', () => {
+  const draft = {
+    side: 'buy' as const,
+    size: '1',
+    szDecimals: 2,
+    baseAvailable: '10',
+    quoteAvailable: '1000',
+    midPx: '38.5',
+  };
+
+  it('refuses limits crossing the mid by more than the market slippage', () => {
+    expect(
+      validateSpotOrder({ ...draft, orderType: 'limit', price: '41' }),
+    ).toBe('priceFarFromMarket');
+    expect(
+      validateSpotOrder({
+        ...draft,
+        side: 'sell',
+        orderType: 'limit',
+        price: '36',
+      }),
+    ).toBe('priceFarFromMarket');
+    expect(
+      validateSpotOrder({ ...draft, orderType: 'limit', price: '30' }),
+    ).toBeNull();
+    expect(
+      validateSpotOrder({
+        ...draft,
+        side: 'sell',
+        orderType: 'limit',
+        price: '50',
+      }),
+    ).toBeNull();
+  });
+
+  it('refuses market prices that do not cross the mid', () => {
+    expect(
+      validateSpotOrder({ ...draft, orderType: 'market', price: '38.5' }),
+    ).toBe('invalidPrice');
+    expect(
+      validateSpotOrder({ ...draft, orderType: 'market', price: '40.425' }),
     ).toBeNull();
   });
 });

@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { RcIconRightCC } from '@/assets/icons/common';
+import RcIconRightCC from '@/assets/icons/common/arrow-right-cc.svg';
 import { Text } from '@/components/Typography';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';

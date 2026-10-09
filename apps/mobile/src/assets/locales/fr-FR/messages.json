@@ -2069,7 +2069,9 @@
         "invalidSize": "Saisissez une quantité",
         "invalidPrice": "Saisissez un prix",
         "belowMinNotional": "La valeur minimale d'un ordre est de {{min}} {{quote}}",
-        "insufficientBalance": "Solde insuffisant"
+        "insufficientBalance": "Solde insuffisant",
+        "priceFarFromMarket": "Le prix limite est trop éloigné du prix du marché",
+        "stalePrice": "Prix obsolète, actualisation en cours… réessayez"
       }
     },
     "perps": {

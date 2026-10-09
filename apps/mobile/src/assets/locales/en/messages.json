@@ -2990,7 +2990,9 @@
         "invalidSize": "Enter an amount",
         "invalidPrice": "Enter a price",
         "belowMinNotional": "Minimum order value is {{min}} {{quote}}",
-        "insufficientBalance": "Insufficient balance"
+        "insufficientBalance": "Insufficient balance",
+        "priceFarFromMarket": "Limit price is too far from the market price",
+        "stalePrice": "Price is outdated, refreshing… try again"
       }
     },
     "devUIBuiltInPages": {

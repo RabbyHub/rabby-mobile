@@ -129,6 +129,18 @@ export const formatSpotPrice = (
   return sigRounded.decimalPlaces(maxDecimals, roundingMode).toFixed();
 };
 
+/** Round a user limit price toward the passive side of the book. */
+export const formatSpotLimitPrice = (
+  price: BigNumber.Value,
+  side: SpotOrderSide,
+  szDecimals: number,
+) =>
+  formatSpotPrice(
+    price,
+    szDecimals,
+    side === 'buy' ? BigNumber.ROUND_DOWN : BigNumber.ROUND_UP,
+  );
+
 /** Limit price used to send a market order as an aggressive IOC. */
 export const getSpotMarketOrderPrice = (
   midPx: BigNumber.Value,
@@ -150,7 +162,12 @@ export type SpotOrderValidationError =
   | 'invalidSize'
   | 'invalidPrice'
   | 'belowMinNotional'
-  | 'insufficientBalance';
+  | 'insufficientBalance'
+  | 'priceFarFromMarket'
+  | 'stalePrice';
+
+// Market orders are refused when the last mid is older than this.
+export const SPOT_PRICE_MAX_AGE_MS = 15_000;
 
 export type SpotOrderDraft = {
   side: SpotOrderSide;
@@ -160,6 +177,10 @@ export type SpotOrderDraft = {
   szDecimals: number;
   baseAvailable: BigNumber.Value;
   quoteAvailable: BigNumber.Value;
+  /** Current mid; when set, limits crossing it by more than the market
+   * slippage are refused and market prices must cross it. */
+  midPx?: BigNumber.Value | null;
+  orderType?: SpotOrderType;
 };
 
 export const validateSpotOrder = (
@@ -172,6 +193,26 @@ export const validateSpotOrder = (
   const price = new BigNumber(draft.price);
   if (!price.isFinite() || price.lte(0)) {
     return 'invalidPrice';
+  }
+  const mid = new BigNumber(draft.midPx ?? NaN);
+  if (mid.isFinite() && mid.gt(0)) {
+    const isBuy = draft.side === 'buy';
+    if (draft.orderType === 'market') {
+      // Rounding can push the IOC price back across the mid on very small
+      // tick sizes; such an order could never fill.
+      if (isBuy ? price.lte(mid) : price.gte(mid)) {
+        return 'invalidPrice';
+      }
+    } else {
+      // A limit that crosses the book this far behaves like an uncapped
+      // market order on thin spot pairs.
+      const bound = mid.times(
+        isBuy ? 1 + SPOT_MARKET_SLIPPAGE : 1 - SPOT_MARKET_SLIPPAGE,
+      );
+      if (isBuy ? price.gt(bound) : price.lt(bound)) {
+        return 'priceFarFromMarket';
+      }
+    }
   }
   const notional = size.times(price);
   if (notional.lt(SPOT_MIN_ORDER_NOTIONAL)) {
@@ -195,7 +236,7 @@ export const getSpotMaxSize = ({
   szDecimals,
   baseAvailable,
   quoteAvailable,
-}: Omit<SpotOrderDraft, 'size'>): string => {
+}: Omit<SpotOrderDraft, 'size' | 'midPx' | 'orderType'>): string => {
   if (side === 'sell') {
     return formatSpotSize(baseAvailable, szDecimals);
   }

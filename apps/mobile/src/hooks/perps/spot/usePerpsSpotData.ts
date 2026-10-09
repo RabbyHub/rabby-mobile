@@ -35,6 +35,9 @@ export const usePerpsSpotData = ({ withAccount }: { withAccount: boolean }) => {
   );
   const address = currentPerpsAccount?.address;
   const [mids, setMids] = useState<Record<string, string> | null>(null);
+  // When the mids were last fetched; a failed poll keeps the old prices, so
+  // order code must check freshness before pricing a market order.
+  const [midsUpdatedAt, setMidsUpdatedAt] = useState(0);
   const [account, setAccount] = useState<SpotAccountSnapshot | null>(null);
   const inFlightRef = useRef(false);
 
@@ -56,6 +59,7 @@ export const usePerpsSpotData = ({ withAccount }: { withAccount: boolean }) => {
       ]);
       if (nextMids) {
         setMids(nextMids);
+        setMidsUpdatedAt(Date.now());
       }
       if (withAccount && address && (spotState || openOrders)) {
         setAccount(current => {
@@ -93,6 +97,7 @@ export const usePerpsSpotData = ({ withAccount }: { withAccount: boolean }) => {
 
   return {
     markets,
+    midsUpdatedAt,
     isLoading: !spotMeta || !mids,
     isError: spotMetaStatus === 'error' && !spotMeta,
     // Never surface a previous account's balances after an account switch.

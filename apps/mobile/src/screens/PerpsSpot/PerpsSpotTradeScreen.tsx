@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Keyboard,
@@ -27,6 +27,7 @@ import {
   executePerpsSpotOrder,
 } from '@/hooks/perps/spot/spotActions';
 import {
+  formatSpotLimitPrice,
   formatSpotPrice,
   formatSpotSize,
   getSpotMarketDisplayName,
@@ -34,6 +35,7 @@ import {
   getSpotMaxSize,
   SPOT_MARKET_SLIPPAGE,
   SPOT_MIN_ORDER_NOTIONAL,
+  SPOT_PRICE_MAX_AGE_MS,
   validateSpotOrder,
   type SpotOrderSide,
   type SpotOrderType,
@@ -64,8 +66,14 @@ export const PerpsSpotTradeScreen: React.FC = () => {
   const navigation = useRabbyAppNavigation();
   const { bottom } = useSafeAreaInsets();
 
-  const { markets, isLoading, account, currentPerpsAccount, refresh } =
-    usePerpsSpotData({ withAccount: true });
+  const {
+    markets,
+    midsUpdatedAt,
+    isLoading,
+    account,
+    currentPerpsAccount,
+    refresh,
+  } = usePerpsSpotData({ withAccount: true });
   const market = useMemo(
     () => markets.find(item => item.pairIndex === pairIndex) ?? null,
     [markets, pairIndex],
@@ -77,6 +85,12 @@ export const PerpsSpotTradeScreen: React.FC = () => {
   const [limitPx, setLimitPx] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [cancellingOid, setCancellingOid] = useState<number | null>(null);
+  // Mid timestamp a market order was refused at; cleared by the next poll.
+  const [stalePriceAt, setStalePriceAt] = useState<number | null>(null);
+  // Synchronous locks: state updates land a render late, so a fast double tap
+  // would otherwise sign two orders.
+  const submitLockRef = useRef(false);
+  const cancelLockRef = useRef(false);
 
   const szDecimals = market?.szDecimals ?? 0;
   const midPx = market?.midPx ?? null;
@@ -101,7 +115,7 @@ export const PerpsSpotTradeScreen: React.FC = () => {
   // the slippage-bounded limit so a buy never exceeds the available quote.
   const checkPrice = useMemo(() => {
     if (orderType === 'limit') {
-      return limitPx ? formatSpotPrice(limitPx, szDecimals) : '0';
+      return limitPx ? formatSpotLimitPrice(limitPx, side, szDecimals) : '0';
     }
     return midPx ? getSpotMarketOrderPrice(midPx, side, szDecimals) : '0';
   }, [orderType, limitPx, midPx, side, szDecimals]);
@@ -121,10 +135,26 @@ export const PerpsSpotTradeScreen: React.FC = () => {
             szDecimals,
             baseAvailable,
             quoteAvailable,
+            midPx,
+            orderType,
           })
         : null,
-    [size, side, checkPrice, szDecimals, baseAvailable, quoteAvailable],
+    [
+      size,
+      side,
+      checkPrice,
+      szDecimals,
+      baseAvailable,
+      quoteAvailable,
+      midPx,
+      orderType,
+    ],
   );
+  const orderError =
+    validationError ??
+    (stalePriceAt !== null && stalePriceAt === midsUpdatedAt
+      ? 'stalePrice'
+      : null);
 
   const handleMax = useCallback(() => {
     const max = getSpotMaxSize({
@@ -138,10 +168,19 @@ export const PerpsSpotTradeScreen: React.FC = () => {
   }, [side, checkPrice, szDecimals, baseAvailable, quoteAvailable]);
 
   const handleSubmit = useCallback(async () => {
-    if (!market || validationError || !size) {
+    if (!market || validationError || !size || submitLockRef.current) {
+      return;
+    }
+    if (
+      orderType === 'market' &&
+      Date.now() - midsUpdatedAt > SPOT_PRICE_MAX_AGE_MS
+    ) {
+      setStalePriceAt(midsUpdatedAt);
+      refresh();
       return;
     }
     Keyboard.dismiss();
+    submitLockRef.current = true;
     setSubmitting(true);
     try {
       const result = await executePerpsSpotOrder(currentPerpsAccount, {
@@ -156,12 +195,14 @@ export const PerpsSpotTradeScreen: React.FC = () => {
         refresh();
       }
     } finally {
+      submitLockRef.current = false;
       setSubmitting(false);
     }
   }, [
     market,
     validationError,
     size,
+    midsUpdatedAt,
     currentPerpsAccount,
     side,
     orderType,
@@ -172,9 +213,10 @@ export const PerpsSpotTradeScreen: React.FC = () => {
 
   const handleCancel = useCallback(
     async (oid: number) => {
-      if (!market) {
+      if (!market || cancelLockRef.current) {
         return;
       }
+      cancelLockRef.current = true;
       setCancellingOid(oid);
       try {
         const ok = await cancelPerpsSpotOrder(currentPerpsAccount, {
@@ -185,6 +227,7 @@ export const PerpsSpotTradeScreen: React.FC = () => {
           refresh();
         }
       } finally {
+        cancelLockRef.current = false;
         setCancellingOid(null);
       }
     },
@@ -219,8 +262,8 @@ export const PerpsSpotTradeScreen: React.FC = () => {
         market.quoteName
       }`
     : `${formatSpotSize(baseAvailable, szDecimals)} ${market.baseName}`;
-  const errorText = validationError
-    ? t(`page.perpsSpot.error.${validationError}`, {
+  const errorText = orderError
+    ? t(`page.perpsSpot.error.${orderError}`, {
         min: SPOT_MIN_ORDER_NOTIONAL,
         quote: market.quoteName,
       })
@@ -303,6 +346,17 @@ export const PerpsSpotTradeScreen: React.FC = () => {
               placeholder="0"
               placeholderTextColor={colors2024['neutral-info']}
               value={limitPx}
+              onBlur={() => {
+                // Show the price that will actually be sent.
+                if (limitPx) {
+                  const rounded = formatSpotLimitPrice(
+                    limitPx,
+                    side,
+                    szDecimals,
+                  );
+                  setLimitPx(rounded === '0' ? '' : rounded);
+                }
+              }}
               onChangeText={text => {
                 const next = sanitizeDecimalInput(text);
                 if (next !== null) {
@@ -323,7 +377,7 @@ export const PerpsSpotTradeScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
           <TextInput
-            style={[styles.input, !!validationError && styles.inputError]}
+            style={[styles.input, !!orderError && styles.inputError]}
             keyboardType="decimal-pad"
             placeholder="0"
             placeholderTextColor={colors2024['neutral-info']}
@@ -418,7 +472,7 @@ export const PerpsSpotTradeScreen: React.FC = () => {
           disabled={
             !currentPerpsAccount ||
             !size ||
-            !!validationError ||
+            !!orderError ||
             submitting ||
             !account
           }
