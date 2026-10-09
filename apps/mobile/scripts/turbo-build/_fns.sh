@@ -625,7 +625,7 @@ turbo_compute_cocoapods_cache_key() {
 
   printf '%s\n' \
     "platform=$(turbo_platform_fingerprint)" \
-    "react_native_arch=${RCT_NEW_ARCH_ENABLED:-0}" \
+    "react_native_arch=${RCT_NEW_ARCH_ENABLED:-1}" \
     "xcode=$(xcodebuild -version 2>/dev/null | tr '\n' '|')" \
     "ruby=$(ruby -v 2>/dev/null)" \
     "cocoapods=$(turbo_bundle_pod --version 2>/dev/null || pod --version 2>/dev/null)" \
@@ -965,7 +965,7 @@ turbo_cocoapods_ready() {
   pods_manifest_lock="$project_dir/ios/Pods/Manifest.lock"
   xcworkspace_data="$project_dir/ios/RabbyMobile.xcworkspace/contents.xcworkspacedata"
   architecture_stamp="$project_dir/ios/Pods/.rabby-react-native-architecture"
-  expected_architecture="${RCT_NEW_ARCH_ENABLED:-0}"
+  expected_architecture="${RCT_NEW_ARCH_ENABLED:-1}"
 
   [ -d "$project_dir/ios/Pods" ] || return 1
   [ -f "$podfile_lock" ] || return 1
@@ -977,7 +977,7 @@ turbo_cocoapods_ready() {
 }
 
 turbo_mark_cocoapods_architecture() {
-  printf '%s' "${RCT_NEW_ARCH_ENABLED:-0}" >"$project_dir/ios/Pods/.rabby-react-native-architecture"
+  printf '%s' "${RCT_NEW_ARCH_ENABLED:-1}" >"$project_dir/ios/Pods/.rabby-react-native-architecture"
 }
 
 turbo_gradle_wrapper_version() {
@@ -1036,7 +1036,7 @@ turbo_compute_ios_derived_data_key() {
   printf '%s\n' \
     "platform=$(turbo_platform_fingerprint)" \
     "xcode=$(xcodebuild -version 2>/dev/null | tr '\n' '|')" \
-    "react_native_arch=${RCT_NEW_ARCH_ENABLED:-0}" \
+    "react_native_arch=${RCT_NEW_ARCH_ENABLED:-1}" \
     "files=$files_hash" \
     | turbo_sha256 | awk '{print $1}'
 }
