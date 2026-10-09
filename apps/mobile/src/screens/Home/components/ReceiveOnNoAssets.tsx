@@ -1,128 +1,73 @@
-import { View } from 'react-native';
-import QRCode from 'react-native-qrcode-svg';
+import React, { useCallback, useState } from 'react';
+import { ScrollView } from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { trigger } from 'react-native-haptic-feedback';
+import { useTranslation } from 'react-i18next';
 
+import type { Account } from '@/types/account';
+import type { CHAINS_ENUM } from '@/constant/chains';
+import {
+  BOTTOM_BUTTON_DOUBLE_HEIGHT,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-
-import type { Account } from '@/core/startupServices/preference';
-import { RNTouchableOpacity } from '@/components/customized/reexports';
-
-import IconBtnCopyCC from '@/assets2024/icons/address/mcopy-cc.svg';
-
-import Clipboard from '@react-native-clipboard/clipboard';
-import { touchedFeedback } from '@/utils/touch';
-import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
-import { useTranslation } from 'react-i18next';
-import { Text } from '@/components/Typography';
-
-const SIZES = {
-  qrCodeSize: 163,
-  qrCodeWrapperPadding: 8,
-};
+import { ReceiveAddressCard } from '@/components2024/ReceiveAddressCard';
+import { toast } from '@/components2024/Toast';
 
 export function ReceiveOnNoAssets({ account }: { account?: Account | null }) {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const [selectedChain, setSelectedChain] = useState<CHAINS_ENUM | null>(null);
 
-  if (!account?.address) return null;
+  const handleCopy = useCallback(() => {
+    if (!account?.address) {
+      return;
+    }
+
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
+    toast.success(t('global.copiedSuccessfully'));
+    Clipboard.setString(account.address);
+  }, [account?.address, t]);
+
+  if (!account?.address) {
+    return null;
+  }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.card}>
-        <Text style={styles.title}>
-          {t('page.address.receiveAssets.title')}
-        </Text>
-
-        <View style={styles.qrCodeWrapper}>
-          <QRCode size={SIZES.qrCodeSize} value={account.address} />
-        </View>
-
-        <RNTouchableOpacity
-          style={styles.btnCopyAddress}
-          onPress={() => {
-            touchedFeedback();
-            Clipboard.setString(account.address);
-            toastCopyAddressSuccess(account.address);
-          }}>
-          <IconBtnCopyCC width={20} height={20} style={styles.btnCopyIcon} />
-          <Text style={styles.btnText}>
-            {t('page.address.receiveAssets.btnCopyAddress')}
-          </Text>
-        </RNTouchableOpacity>
-      </View>
-    </View>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+      contentInsetAdjustmentBehavior="never"
+      automaticallyAdjustContentInsets={false}>
+      <ReceiveAddressCard
+        account={account}
+        selectedChain={selectedChain}
+        onSelectChainChange={setSelectedChain}
+        onCopy={handleCopy}
+      />
+    </ScrollView>
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
-  return {
-    container: {
-      flex: 1,
-      width: '100%',
-      paddingHorizontal: 16,
-    },
-    card: {
-      width: '100%',
-      padding: 16,
-      paddingVertical: 24,
-      borderRadius: 16,
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 12,
-    },
-    title: {
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 18,
-      fontStyle: 'normal',
-      fontWeight: '900',
-      lineHeight: 22,
-      textAlign: 'center',
-    },
-    qrCodeWrapper: {
-      padding: SIZES.qrCodeWrapperPadding,
-      justifyContent: 'center',
-      alignItems: 'center',
-      width: SIZES.qrCodeSize + SIZES.qrCodeWrapperPadding * 2,
-      height: SIZES.qrCodeSize + SIZES.qrCodeWrapperPadding * 2,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: colors2024['neutral-line'],
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
-      overflow: 'hidden',
-    },
-    btnCopyAddress: {
-      width: 185,
-      borderRadius: 12,
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-2']
-        : colors2024['neutral-bg-5'],
-      paddingVertical: 14,
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-      alignSelf: 'center',
-    },
-    btnCopyIcon: {
-      width: 23,
-      height: 23,
-      color: colors2024['neutral-title-1'],
-      marginRight: 4,
-    },
-    btnText: {
-      color: colors2024['neutral-title-1'],
-      textAlign: 'center',
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 17,
-      fontStyle: 'normal',
-      fontWeight: 700,
-      lineHeight: 22,
-    },
-  };
-});
+const getStyle = createGetStyles2024(({ safeAreaInsets }) => ({
+  container: {
+    flex: 1,
+    width: '100%',
+  },
+  content: {
+    paddingHorizontal: 24,
+    paddingBottom:
+      BOTTOM_BUTTON_TOP_OFFSET +
+      BOTTOM_BUTTON_DOUBLE_HEIGHT +
+      getBottomButtonBottomOffset(safeAreaInsets.bottom),
+  },
+  copyButton: {
+    marginTop: BOTTOM_BUTTON_TOP_OFFSET,
+  },
+}));
