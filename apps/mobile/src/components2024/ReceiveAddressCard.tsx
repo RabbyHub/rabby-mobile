@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { useTranslation } from 'react-i18next';
@@ -45,6 +45,14 @@ export function ReceiveAddressCard({
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const isSafe = account.type === KEYRING_TYPE.GnosisKeyring;
+  const [addressLayout, setAddressLayout] = useState<{
+    address: string;
+    firstLineLength: number;
+  } | null>(null);
+  const firstLineLength =
+    addressLayout?.address === account.address
+      ? addressLayout.firstLineLength
+      : account.address.length - 14;
 
   const selectedChainInfo = useMemo(() => {
     if (!selectedChain) {
@@ -58,12 +66,12 @@ export function ReceiveAddressCard({
       return [];
     }
     const prefix = account.address.slice(0, 8);
-    const firstLineMiddle = account.address.slice(8, -14);
-    const secondLineMiddle = account.address.slice(-14, -6);
+    const firstLineMiddle = account.address.slice(8, firstLineLength);
+    const secondLineMiddle = account.address.slice(firstLineLength, -6);
     const suffix = account.address.slice(-6);
 
     return [prefix, firstLineMiddle, secondLineMiddle, suffix];
-  }, [account.address]);
+  }, [account.address, firstLineLength]);
   const handleSelectChain = () => {
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY,
@@ -168,8 +176,35 @@ export function ReceiveAddressCard({
       <View style={styles.addressDetailContainer}>
         {showAddress ? (
           <>
+            <View
+              style={styles.addressMeasure}
+              pointerEvents="none"
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants">
+              <Text
+                key={account.address}
+                style={styles.qrCardAddress}
+                onTextLayout={({ nativeEvent }) => {
+                  const length = nativeEvent.lines[0]?.text.length;
+                  if (!length) {
+                    return;
+                  }
+
+                  setAddressLayout(previous =>
+                    previous?.address === account.address &&
+                    previous.firstLineLength === length
+                      ? previous
+                      : { address: account.address, firstLineLength: length },
+                  );
+                }}>
+                <Text style={styles.highlightAddrPart}>
+                  {account.address.slice(0, 8)}
+                </Text>
+                {account.address.slice(8, -14)}
+              </Text>
+            </View>
             <Pressable style={styles.addressFirstLine} onPress={onCopy}>
-              <Text style={styles.qrCardAddress}>
+              <Text style={styles.qrCardAddress} numberOfLines={1}>
                 <Text style={styles.highlightAddrPart}>{addressSplit[0]}</Text>
                 {addressSplit[1]}
               </Text>
@@ -240,6 +275,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   addressFirstLine: {
     width: '100%',
+  },
+  addressMeasure: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    opacity: 0,
   },
   addressSecondLine: {
     flexDirection: 'row',
