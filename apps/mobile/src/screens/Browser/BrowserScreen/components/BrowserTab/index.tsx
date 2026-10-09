@@ -6,6 +6,7 @@ import React, {
   useRef,
   useState,
   useImperativeHandle,
+  useLayoutEffect,
 } from 'react';
 import type { Ref } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
@@ -31,6 +32,7 @@ import { getDappSnapshot } from '@/core/serviceApi/dapp';
 import { setHasShowAsterPopup } from '@/core/serviceApi/preference';
 import type { Tab } from '@/core/services/browserService';
 import {
+  canBrowserTabOpenExternalUrl,
   useBrowser,
   useBrowserActiveTabState,
 } from '@/hooks/browser/useBrowser';
@@ -127,6 +129,17 @@ export const BrowserTab = ({
   const { browserState, setPartialBrowserState } = useBrowser();
   const debounceProgress = useDebounce(progress, { wait: 500 });
   const [, setBrowserActiveTabState] = useBrowserActiveTabState();
+  const mountedRef = useRef(false);
+  useLayoutEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+  const canOpenExternalUrl = useCallback(
+    () => mountedRef.current && canBrowserTabOpenExternalUrl(tabId),
+    [tabId],
+  );
 
   const {
     webviewRef,
@@ -341,6 +354,7 @@ export const BrowserTab = ({
   });
 
   const handleOpenInBrowser = useMemoizedFn(() => {
+    if (!canOpenExternalUrl()) return;
     Linking.openURL(webviewState.resolvedUrl);
   });
 
@@ -377,7 +391,7 @@ export const BrowserTab = ({
     (syntheticEvent: { nativeEvent: { targetUrl: string } }) => {
       const { nativeEvent } = syntheticEvent;
       const { targetUrl } = nativeEvent;
-      if (!targetUrl) {
+      if (!targetUrl || !canOpenExternalUrl()) {
         return;
       }
 
@@ -767,6 +781,7 @@ export const BrowserTab = ({
                           // }
                         }}
                         onFileDownload={e => {
+                          if (!canOpenExternalUrl()) return;
                           Linking.openURL(e.nativeEvent.downloadUrl);
                         }}
                         onShouldStartLoadWithRequest={nativeEvent => {
@@ -786,6 +801,7 @@ export const BrowserTab = ({
                             nativeEvent,
                             {
                               enforceWalletConnectOrigin: true,
+                              canOpenExternalUrl,
                             },
                           );
                         }}
