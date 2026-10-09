@@ -2089,7 +2089,6 @@
       "max": "Max",
       "estReceive": "Vous recevez (est.)",
       "maxSlippage": "Slippage max",
-      "marketOrderTip": "Les ordres au marché sont exécutés immédiatement avec jusqu'à {{slippage}} % de slippage.",
       "submitBuy": "Acheter {{base}}",
       "submitSell": "Vendre {{base}}",
       "submitBuySize": "Acheter {{size}} {{base}}",

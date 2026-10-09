@@ -3010,7 +3010,6 @@
       "max": "Max",
       "estReceive": "You receive (est.)",
       "maxSlippage": "Max slippage",
-      "marketOrderTip": "Market orders execute immediately with up to {{slippage}}% slippage.",
       "submitBuy": "Buy {{base}}",
       "submitSell": "Sell {{base}}",
       "submitBuySize": "Buy {{size}} {{base}}",
