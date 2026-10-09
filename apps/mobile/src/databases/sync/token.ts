@@ -6,10 +6,10 @@ import { eventBus, EVENT_PATCH_SINGLE_TOKEN } from '@/utils/events';
 
 export async function patchSingleToken(address: string, token: TokenItem) {
   const tokenItem = new TokenItemEntity();
-  TokenItemEntity.fillEntity(tokenItem, address, token);
+  TokenItemEntity.fillEntity(tokenItem, address.toLowerCase(), token);
   await prepareAppDataSource();
   await batchSaveWithPQueueAndTransaction(TokenItemEntity, [tokenItem], {
-    owner_addr: address,
+    owner_addr: address.toLowerCase(),
     taskFor: 'token',
     batchSize: 100,
     concurrency: 1,
