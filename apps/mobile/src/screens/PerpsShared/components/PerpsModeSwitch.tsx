@@ -6,13 +6,22 @@ import React from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+/**
+ * Tabs of the Perps header: the two persisted view modes plus Spot, a
+ * navigation shortcut to the spot screens that never changes the saved mode.
+ */
+export type PerpsHeaderMode = PerpsViewMode | 'spot';
+
 export type PerpsModeSwitchProps = {
-  activeMode: PerpsViewMode;
+  activeMode: PerpsHeaderMode;
   disabled?: boolean;
+  /** Let the last tab own the remaining header width as its press target. */
   extendProHitAreaRight?: boolean;
   onPressInMode?: (viewMode: PerpsViewMode) => void;
   onPressOutMode?: (viewMode: PerpsViewMode) => void;
   onSelectMode: (viewMode: PerpsViewMode) => void;
+  /** Opens the spot screens; the tab is hidden when absent. */
+  onSelectSpot?: () => void;
   showProNewBadge?: boolean;
 };
 
@@ -24,6 +33,8 @@ const MODE_OPTIONS: ReadonlyArray<{
   { label: 'Pro', value: 'pro' },
 ];
 
+const SPOT_OPTION = { label: 'Spot', value: 'spot' } as const;
+
 export const PerpsModeSwitch: React.FC<PerpsModeSwitchProps> = ({
   activeMode,
   disabled = false,
@@ -31,10 +42,14 @@ export const PerpsModeSwitch: React.FC<PerpsModeSwitchProps> = ({
   onPressInMode,
   onPressOutMode,
   onSelectMode,
+  onSelectSpot,
   showProNewBadge = false,
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const options: ReadonlyArray<{ label: string; value: PerpsHeaderMode }> =
+    onSelectSpot ? [...MODE_OPTIONS, SPOT_OPTION] : MODE_OPTIONS;
+  const lastValue = options[options.length - 1].value;
 
   return (
     <View
@@ -43,9 +58,13 @@ export const PerpsModeSwitch: React.FC<PerpsModeSwitchProps> = ({
         extendProHitAreaRight ? styles.extendedContainer : null,
       ]}
       testID="perps-mode-switch">
-      {MODE_OPTIONS.map(option => {
+      {options.map(option => {
         const selected = option.value === activeMode;
         const optionDisabled = disabled || selected;
+        // Spot is a navigation shortcut; only the two saved modes reach the
+        // mode callbacks.
+        const modeValue: PerpsViewMode | null =
+          option.value === 'spot' ? null : option.value;
         return (
           <Pressable
             key={option.value}
@@ -56,12 +75,14 @@ export const PerpsModeSwitch: React.FC<PerpsModeSwitchProps> = ({
               selected,
             }}
             disabled={optionDisabled}
-            onPress={() => onSelectMode(option.value)}
-            onPressIn={() => onPressInMode?.(option.value)}
-            onPressOut={() => onPressOutMode?.(option.value)}
+            onPress={() =>
+              modeValue ? onSelectMode(modeValue) : onSelectSpot?.()
+            }
+            onPressIn={() => modeValue && onPressInMode?.(modeValue)}
+            onPressOut={() => modeValue && onPressOutMode?.(modeValue)}
             style={[
               styles.optionTarget,
-              option.value === 'pro' && extendProHitAreaRight
+              option.value === lastValue && extendProHitAreaRight
                 ? styles.extendedProTarget
                 : null,
             ]}

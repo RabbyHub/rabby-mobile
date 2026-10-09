@@ -201,4 +201,50 @@ describe('PerpsModeSwitch', () => {
     expect(onSelectMode).toHaveBeenCalledTimes(1);
     expect(onSelectMode).toHaveBeenCalledWith('pro');
   });
+
+  it('adds a Spot tab that navigates instead of switching the saved mode', () => {
+    const onSelectMode = jest.fn();
+    const onSelectSpot = jest.fn();
+    const screen = render(
+      <PerpsModeSwitch
+        activeMode="simple"
+        extendProHitAreaRight
+        onSelectMode={onSelectMode}
+        onSelectSpot={onSelectSpot}
+      />,
+    );
+
+    expect(screen.getByText('Spot')).toBeTruthy();
+    fireEvent.press(screen.getByTestId('perps-mode-spot'));
+    expect(onSelectSpot).toHaveBeenCalledTimes(1);
+    expect(onSelectMode).not.toHaveBeenCalled();
+    // The last tab owns the remaining corridor, not Pro.
+    expect(
+      StyleSheet.flatten(screen.getByTestId('perps-mode-spot').props.style),
+    ).toMatchObject({ flex: 1 });
+    expect(
+      StyleSheet.flatten(screen.getByTestId('perps-mode-pro').props.style),
+    ).not.toHaveProperty('flex');
+  });
+
+  it('hides the Spot tab without a handler and disables it when active', () => {
+    expect(
+      render(
+        <PerpsModeSwitch activeMode="simple" onSelectMode={jest.fn()} />,
+      ).queryByTestId('perps-mode-spot'),
+    ).toBeNull();
+    const screen = render(
+      <PerpsModeSwitch
+        activeMode="spot"
+        onSelectMode={jest.fn()}
+        onSelectSpot={jest.fn()}
+      />,
+    );
+    expect(
+      screen.getByTestId('perps-mode-spot').props.accessibilityState,
+    ).toEqual({ disabled: true, selected: true });
+    expect(
+      screen.getByTestId('perps-mode-simple').props.accessibilityState,
+    ).toEqual({ disabled: false, selected: false });
+  });
 });

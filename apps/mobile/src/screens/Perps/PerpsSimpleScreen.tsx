@@ -32,6 +32,7 @@ import {
   PerpsRegionAlert,
 } from './components/PerpsRegionAlert';
 import { PerpsSimpleHeader } from './components/PerpsHeaderTitle';
+import { openPerpsSpotMarkets } from '../PerpsSpot/openSpotMarkets';
 import {
   BOTTOM_BUTTON_DOUBLE_HEIGHT,
   BOTTOM_BUTTON_GAP,
@@ -276,6 +277,7 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
           onPressInPro={onPressInPro}
           onPressOutPro={onPressOutPro}
           onSwitchToPro={onSwitchToPro}
+          onSelectSpot={hasPermission ? openPerpsSpotMarkets : undefined}
           showProNewBadge={showProNewBadge}
         />
         {!hasPermission ? (
