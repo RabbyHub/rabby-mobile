@@ -32,7 +32,7 @@ export const txDonePatchTokenAmountInDb = async (
     const receiveTokenList = tx.explain?.balance_change?.receive_token_list;
     const tokenList = [...(sendTokenList || []), ...(receiveTokenList || [])];
 
-    void Promise.allSettled(
+    Promise.allSettled(
       tokenList.map(async token => {
         try {
           const tokenRes = (await openapi.getToken(
