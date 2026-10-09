@@ -2995,8 +2995,18 @@
         "stalePrice": "Price is outdated, refreshing… try again"
       },
       "ordersEntry": "Orders",
-      "ordersTitle": "Spot orders ({{count}})",
-      "filledOf": "Filled {{filled}} / {{total}}"
+      "filledOf": "Filled {{filled}} / {{total}}",
+      "ordersScreenTitle": "Spot orders",
+      "openTab": "Open ({{count}})",
+      "historyTab": "History",
+      "noHistory": "No order history",
+      "historyLoadError": "Failed to load order history",
+      "avgSuffix": "avg",
+      "status": {
+        "filled": "Filled",
+        "canceled": "Canceled",
+        "rejected": "Rejected"
+      }
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Build-In Page"
