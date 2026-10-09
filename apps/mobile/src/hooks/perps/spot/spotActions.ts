@@ -79,6 +79,44 @@ export const executePerpsSpotOrder = (
     },
   );
 
+const isCancelStatusOk = (status: unknown) =>
+  status === 'success' ||
+  (!!status &&
+    typeof status === 'object' &&
+    !!(status as { success?: boolean }).success);
+
+const getCancelStatusError = (status: unknown) =>
+  status && typeof status === 'object'
+    ? (status as { error?: string }).error
+    : undefined;
+
+/** Cancel several spot orders in one signed action; true when all succeed. */
+export const cancelAllPerpsSpotOrders = (
+  account: Account | null,
+  params: { pairIndex: number; oid: number }[],
+) =>
+  runPerpsAction<boolean>(
+    {
+      fallback: false,
+      label: 'spot cancel all',
+      context: { count: params.length },
+    },
+    async () => {
+      if (!params.length) {
+        return true;
+      }
+      await assertActionAccount(account);
+      const response = await getExchange().cancelSpotOrders(params);
+      const statuses: unknown[] = response?.response?.data?.statuses ?? [];
+      const failed = statuses.find(status => !isCancelStatusOk(status));
+      if (statuses.length === params.length && !failed) {
+        showToast('Orders cancelled', 'success');
+        return true;
+      }
+      throw new Error(getCancelStatusError(failed) || 'Cancel failed');
+    },
+  );
+
 export const cancelPerpsSpotOrder = (
   account: Account | null,
   params: { pairIndex: number; oid: number },

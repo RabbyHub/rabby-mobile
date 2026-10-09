@@ -1,4 +1,9 @@
-import type { OpenOrder, SpotMeta } from '@rabby-wallet/hyperliquid-sdk';
+import type {
+  OpenOrder,
+  SpotAssetCtx,
+  SpotClearinghouseState,
+  SpotMeta,
+} from '@rabby-wallet/hyperliquid-sdk';
 import BigNumber from 'bignumber.js';
 
 // Hyperliquid spot pairs are addressed as asset id 10000 + universe index. The
@@ -25,7 +30,13 @@ export type SpotMarket = {
   szDecimals: number;
   isCanonical: boolean;
   midPx: string | null;
+  /** Price 24h ago; null until the pair context has loaded. */
+  prevDayPx: string | null;
+  /** 24h notional volume in the quote token; null until loaded. */
+  dayNtlVlm: string | null;
 };
+
+export type SpotBalance = SpotClearinghouseState['balances'][number];
 
 export type SpotOrderSide = 'buy' | 'sell';
 export type SpotOrderType = 'market' | 'limit';
@@ -34,9 +45,17 @@ export const getSpotMarketDisplayName = (
   market: Pick<SpotMarket, 'baseName' | 'quoteName'>,
 ) => `${market.baseName}/${market.quoteName}`;
 
+const toPositiveOrNull = (value: string | null | undefined) =>
+  value != null && Number(value) > 0 ? value : null;
+
+/**
+ * Build the market list from the spot universe. Prices come from the pair
+ * contexts when given (mid, 24h data), else from the plain mids map.
+ */
 export const buildSpotMarkets = (
   spotMeta: SpotMeta | null | undefined,
   mids: Record<string, string> | null | undefined,
+  ctxs?: SpotAssetCtx[] | null,
 ): SpotMarket[] => {
   if (!spotMeta?.tokens || !spotMeta.universe) {
     return [];
@@ -44,6 +63,7 @@ export const buildSpotMarkets = (
   const tokensByIndex = new Map(
     spotMeta.tokens.map(token => [token.index, token]),
   );
+  const ctxByCoin = new Map((ctxs ?? []).map(ctx => [ctx.coin, ctx]));
   const markets: SpotMarket[] = [];
   for (const pair of spotMeta.universe) {
     const base = tokensByIndex.get(pair.tokens[0]);
@@ -51,6 +71,7 @@ export const buildSpotMarkets = (
     if (!base || !quote) {
       continue;
     }
+    const ctx = ctxByCoin.get(pair.name);
     markets.push({
       pairIndex: pair.index,
       coin: pair.name,
@@ -60,25 +81,92 @@ export const buildSpotMarkets = (
       quoteTokenIndex: quote.index,
       szDecimals: base.szDecimals ?? 0,
       isCanonical: !!pair.isCanonical,
-      midPx: mids?.[pair.name] ?? null,
+      midPx:
+        toPositiveOrNull(ctx?.midPx) ??
+        toPositiveOrNull(ctx?.markPx) ??
+        mids?.[pair.name] ??
+        null,
+      prevDayPx: toPositiveOrNull(ctx?.prevDayPx),
+      dayNtlVlm: ctx?.dayNtlVlm != null ? ctx.dayNtlVlm : null,
     });
   }
   return markets;
 };
 
+/** 24h price change as a ratio (0.05 = +5%); null without both prices. */
+export const getSpotMarket24hChange = (
+  market: Pick<SpotMarket, 'midPx' | 'prevDayPx'>,
+): number | null => {
+  const mid = Number(market.midPx);
+  const prev = Number(market.prevDayPx);
+  if (!(mid > 0) || !(prev > 0)) {
+    return null;
+  }
+  return mid / prev - 1;
+};
+
+export type SpotMarketSort = 'name' | 'volume';
+
 /**
  * Markets that can be traded from the UI: priced pairs, canonical first, then
- * by base name. Unpriced pairs have no liquidity and are dropped.
+ * by base name, or by 24h volume (highest first). Unpriced pairs have no
+ * liquidity and are dropped.
  */
-export const sortSpotMarkets = (markets: SpotMarket[]): SpotMarket[] =>
+export const sortSpotMarkets = (
+  markets: SpotMarket[],
+  sort: SpotMarketSort = 'name',
+): SpotMarket[] =>
   markets
     .filter(market => Number(market.midPx) > 0)
     .sort((a, b) => {
+      if (sort === 'volume') {
+        const diff = Number(b.dayNtlVlm || 0) - Number(a.dayNtlVlm || 0);
+        if (diff !== 0) {
+          return diff;
+        }
+      }
       if (a.isCanonical !== b.isCanonical) {
         return a.isCanonical ? -1 : 1;
       }
       return a.baseName.localeCompare(b.baseName);
     });
+
+export type SpotMarketFilter = 'all' | 'holdings' | 'favorites';
+
+/** Key stored in the shared Perps favorites list for a spot pair. */
+export const getSpotFavoriteKey = (market: Pick<SpotMarket, 'coin'>) =>
+  `SPOT:${market.coin}`.toUpperCase();
+
+export const isSpotMarketFavorite = (
+  favoriteMarkets: ReadonlyArray<string>,
+  market: Pick<SpotMarket, 'coin'>,
+) => {
+  const key = getSpotFavoriteKey(market);
+  return favoriteMarkets.some(item => item.toUpperCase() === key);
+};
+
+export const filterSpotMarketsByTab = (
+  markets: SpotMarket[],
+  tab: SpotMarketFilter,
+  {
+    heldTokenIndexes,
+    favoriteMarkets,
+  }: {
+    heldTokenIndexes: ReadonlySet<number>;
+    favoriteMarkets: ReadonlyArray<string>;
+  },
+): SpotMarket[] => {
+  if (tab === 'holdings') {
+    return markets.filter(market =>
+      heldTokenIndexes.has(market.baseTokenIndex),
+    );
+  }
+  if (tab === 'favorites') {
+    const keys = new Set(favoriteMarkets.map(key => key.toUpperCase()));
+    return markets.filter(market => keys.has(getSpotFavoriteKey(market)));
+  }
+  return markets;
+};
 
 export const filterSpotMarkets = (
   markets: SpotMarket[],
@@ -276,4 +364,228 @@ export const buildSpotOpenOrderItems = (
     }
   }
   return items.sort((a, b) => b.order.timestamp - a.order.timestamp);
+};
+
+export type SpotTokenBalance = {
+  total: string;
+  /** Amount locked in open orders. */
+  hold: string;
+  available: string;
+};
+
+const ZERO_BALANCE: SpotTokenBalance = {
+  total: '0',
+  hold: '0',
+  available: '0',
+};
+
+export const getSpotTokenBalance = (
+  balances: ReadonlyArray<SpotBalance> | null | undefined,
+  tokenIndex: number | undefined,
+): SpotTokenBalance => {
+  const balance = balances?.find(item => item.token === tokenIndex);
+  if (!balance) {
+    return ZERO_BALANCE;
+  }
+  const total = new BigNumber(balance.total || 0);
+  const hold = new BigNumber(balance.hold || 0);
+  const available = total.minus(hold);
+  return {
+    total: total.gt(0) ? total.toFixed() : '0',
+    hold: hold.gt(0) ? hold.toFixed() : '0',
+    available: available.gt(0) ? available.toFixed() : '0',
+  };
+};
+
+/** Token indexes the account holds any amount of. */
+export const getSpotHeldTokenIndexes = (
+  balances: ReadonlyArray<SpotBalance> | null | undefined,
+): Set<number> => {
+  const held = new Set<number>();
+  for (const balance of balances ?? []) {
+    if (Number(balance.total) > 0) {
+      held.add(balance.token);
+    }
+  }
+  return held;
+};
+
+const SPOT_QUOTE_STABLE = 'USDC';
+
+/**
+ * USDC price of a spot token: 1 for USDC, else the mid of its USDC pair.
+ * Null when the token has no priced USDC pair.
+ */
+export const getSpotTokenUsdPrice = (
+  balance: Pick<SpotBalance, 'coin' | 'token'>,
+  markets: ReadonlyArray<SpotMarket>,
+): string | null => {
+  if (balance.coin === SPOT_QUOTE_STABLE) {
+    return '1';
+  }
+  const market = markets.find(
+    item =>
+      item.baseTokenIndex === balance.token &&
+      item.quoteName === SPOT_QUOTE_STABLE,
+  );
+  return market?.midPx ?? null;
+};
+
+export type SpotBalanceItem = {
+  balance: SpotBalance;
+  /** USDC pair of the token, when one exists; opens the detail screen. */
+  market: SpotMarket | null;
+  usdValue: string | null;
+};
+
+/** Held balances with their USDC value, largest value first. */
+export const buildSpotBalanceItems = (
+  balances: ReadonlyArray<SpotBalance> | null | undefined,
+  markets: ReadonlyArray<SpotMarket>,
+): SpotBalanceItem[] => {
+  const items: SpotBalanceItem[] = [];
+  for (const balance of balances ?? []) {
+    if (!(Number(balance.total) > 0)) {
+      continue;
+    }
+    const price = getSpotTokenUsdPrice(balance, markets);
+    const market =
+      markets.find(
+        item =>
+          item.baseTokenIndex === balance.token &&
+          item.quoteName === SPOT_QUOTE_STABLE,
+      ) ?? null;
+    items.push({
+      balance,
+      market,
+      usdValue: price
+        ? new BigNumber(balance.total).times(price).toFixed()
+        : null,
+    });
+  }
+  return items.sort(
+    (a, b) => Number(b.usdValue ?? -1) - Number(a.usdValue ?? -1),
+  );
+};
+
+/** Total USDC value of the priced balances. */
+export const getSpotPortfolioValue = (
+  items: ReadonlyArray<SpotBalanceItem>,
+): string =>
+  items
+    .reduce(
+      (sum, item) => (item.usdValue ? sum.plus(item.usdValue) : sum),
+      new BigNumber(0),
+    )
+    .toFixed();
+
+/** Filled share of an open order in percent (0-100). */
+export const getSpotOrderFillPct = (
+  order: Pick<OpenOrder, 'origSz' | 'sz'>,
+): number => {
+  const orig = new BigNumber(order.origSz || 0);
+  if (!orig.gt(0)) {
+    return 0;
+  }
+  const pct = orig
+    .minus(order.sz || 0)
+    .div(orig)
+    .times(100)
+    .toNumber();
+  return Math.min(100, Math.max(0, pct));
+};
+
+/** Signed distance of a limit price from the mid, as a ratio. */
+export const getSpotOrderDistanceFromMid = (
+  order: Pick<OpenOrder, 'limitPx'>,
+  midPx: string | null,
+): number | null => {
+  const limit = Number(order.limitPx);
+  const mid = Number(midPx);
+  if (!(limit > 0) || !(mid > 0)) {
+    return null;
+  }
+  return limit / mid - 1;
+};
+
+export type SpotOpenOrderGroup = {
+  market: SpotMarket;
+  orders: OpenOrder[];
+};
+
+/** Open orders grouped by pair, groups in order of their newest order. */
+export const groupSpotOpenOrders = (
+  items: ReadonlyArray<SpotOpenOrderItem>,
+): SpotOpenOrderGroup[] => {
+  const groups = new Map<string, SpotOpenOrderGroup>();
+  for (const item of items) {
+    const group = groups.get(item.market.coin);
+    if (group) {
+      group.orders.push(item.order);
+    } else {
+      groups.set(item.market.coin, {
+        market: item.market,
+        orders: [item.order],
+      });
+    }
+  }
+  return Array.from(groups.values());
+};
+
+export type SpotAmountUnit = 'base' | 'quote';
+
+/**
+ * Base size for an amount typed in `unit`. Quote amounts are converted at
+ * `price` and rounded down to the base precision; a missing price gives '0'.
+ */
+export const getSpotSizeFromAmount = ({
+  amount,
+  unit,
+  price,
+  szDecimals,
+}: {
+  amount: string;
+  unit: SpotAmountUnit;
+  price: string | null;
+  szDecimals: number;
+}): string => {
+  if (unit === 'base') {
+    return formatSpotSize(amount || 0, szDecimals);
+  }
+  const px = new BigNumber(price ?? NaN);
+  if (!px.isFinite() || px.lte(0)) {
+    return '0';
+  }
+  return formatSpotSize(new BigNumber(amount || 0).div(px), szDecimals);
+};
+
+/** Quote-side maximum: the quote balance for buys, base value for sells. */
+export const getSpotMaxQuoteAmount = ({
+  side,
+  price,
+  baseAvailable,
+  quoteAvailable,
+}: {
+  side: SpotOrderSide;
+  price: string | null;
+  baseAvailable: BigNumber.Value;
+  quoteAvailable: BigNumber.Value;
+}): string => {
+  if (side === 'buy') {
+    return formatSpotQuoteAmount(quoteAvailable);
+  }
+  const px = new BigNumber(price ?? NaN);
+  if (!px.isFinite() || px.lte(0)) {
+    return '0';
+  }
+  return formatSpotQuoteAmount(new BigNumber(baseAvailable).times(px));
+};
+
+/** Round a quote amount down to cents, without trailing zeros. */
+export const formatSpotQuoteAmount = (value: BigNumber.Value): string => {
+  const bn = new BigNumber(value);
+  if (!bn.isFinite() || bn.lte(0)) {
+    return '0';
+  }
+  return bn.decimalPlaces(2, BigNumber.ROUND_DOWN).toFixed();
 };

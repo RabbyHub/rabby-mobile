@@ -90,3 +90,66 @@ index 7ba37d802da1fff38aa3839a323f4cb4d3545738..c5ab8492422230e56ed7dda8ab61adab
      }
  }
  exports.ExchangeClient = ExchangeClient;
+diff --git a/dist/client/info-client.d.ts b/dist/client/info-client.d.ts
+index 1111111111111111111111111111111111111111..2222222222222222222222222222222222222222 100644
+--- a/dist/client/info-client.d.ts
++++ b/dist/client/info-client.d.ts
+@@ -70,6 +70,12 @@ export declare class InfoClient {
+      * Used to map a held token name -> its spot pair key ('@index') for spot pricing.
+      */
+     getSpotMeta(): Promise<SpotMeta>;
++    /**
++     * Spot metadata plus the 24h context of every spot pair (mid/mark price,
++     * previous day price, day notional volume). Global, no user.
++     * The ctxs array is aligned with `meta.universe`; each ctx names its pair.
++     */
++    getSpotMetaAndAssetCtxs(): Promise<[SpotMeta, import('../types').SpotAssetCtx[]]>;
+     getFrontendOpenOrders(address?: string, dex?: string): Promise<OpenOrder[]>;
+     getUserNonFundingLedgerUpdates(address?: string, startTime?: number, endTime?: number): Promise<UserNonFundingLedgerUpdates[]>;
+     /**
+diff --git a/dist/client/info-client.js b/dist/client/info-client.js
+index 3333333333333333333333333333333333333333..4444444444444444444444444444444444444444 100644
+--- a/dist/client/info-client.js
++++ b/dist/client/info-client.js
+@@ -248,6 +248,16 @@ class InfoClient {
+             });
+         });
+     }
++    /**
++     * Spot metadata plus the 24h context of every spot pair.
++     */
++    getSpotMetaAndAssetCtxs() {
++        return __awaiter(this, void 0, void 0, function* () {
++            return this.httpClient.info({
++                type: 'spotMetaAndAssetCtxs',
++            });
++        });
++    }
+     // frontendOpenOrders
+     getFrontendOpenOrders(address, dex) {
+         return __awaiter(this, void 0, void 0, function* () {
+diff --git a/dist/types/index.d.ts b/dist/types/index.d.ts
+index 5555555555555555555555555555555555555555..6666666666666666666666666666666666666666 100644
+--- a/dist/types/index.d.ts
++++ b/dist/types/index.d.ts
+@@ -681,6 +681,20 @@ export interface SpotMeta {
+     tokens: SpotMetaToken[];
+     universe: SpotMetaUniverseItem[];
+ }
++/**
++ * 24h context of one spot pair, as returned by `spotMetaAndAssetCtxs`.
++ * `coin` is the pair's universe name ('PURR/USDC' | '@107').
++ */
++export interface SpotAssetCtx {
++    coin: string;
++    midPx: string | null;
++    markPx: string;
++    prevDayPx: string;
++    dayNtlVlm: string;
++    dayBaseVlm?: string;
++    circulatingSupply?: string;
++    totalSupply?: string;
++}
+ export interface FFastAssetCtx {
+     markPx?: string;
+     midPx?: string;

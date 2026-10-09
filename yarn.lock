@@ -9557,7 +9557,7 @@ __metadata:
 
 "@rabby-wallet/hyperliquid-sdk@patch:@rabby-wallet/hyperliquid-sdk@npm%3A1.1.19#./.yarn/patches/@rabby-wallet-hyperliquid-sdk-npm-1.1.19-f1a24de441.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 1.1.19
-  resolution: "@rabby-wallet/hyperliquid-sdk@patch:@rabby-wallet/hyperliquid-sdk@npm%3A1.1.19#./.yarn/patches/@rabby-wallet-hyperliquid-sdk-npm-1.1.19-f1a24de441.patch::version=1.1.19&hash=0f05e6&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "@rabby-wallet/hyperliquid-sdk@patch:@rabby-wallet/hyperliquid-sdk@npm%3A1.1.19#./.yarn/patches/@rabby-wallet-hyperliquid-sdk-npm-1.1.19-f1a24de441.patch::version=1.1.19&hash=f457a1&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@ethereumjs/util": "npm:9.0.0"
     "@metamask/eth-sig-util": "npm:5.1.0"
@@ -9565,7 +9565,7 @@ __metadata:
     "@noble/hashes": "npm:1.8.0"
     ethereum-cryptography: "npm:2.2.1"
     fflate: "npm:0.8.2"
-  checksum: 10/6fb3a12bdc66f59f4f90d885a2323014e9c5dc22108335513ffa6492c28fe1b626eab9ff411d856473428f94e648308461c5849956bf67667f419a2ee478a5c6
+  checksum: 10/db8a5b0c6fcb3c41977a6d720c9c91da9dcf2aaf0ae72e10647930a2432f631346d32b1b25c782e7bb4d8c8cab1648f4f8137612e5b137b3d732416d80ce9af4
   languageName: node
   linkType: hard
 

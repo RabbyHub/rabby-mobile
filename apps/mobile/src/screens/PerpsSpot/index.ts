@@ -1,3 +1,3 @@
 export { PerpsSpotMarketsScreen } from './PerpsSpotMarketsScreen';
-export { PerpsSpotTradeScreen } from './PerpsSpotTradeScreen';
-export { PerpsSpotOrdersScreen } from './PerpsSpotOrdersScreen';
+export { PerpsSpotDetailScreen } from './PerpsSpotDetailScreen';
+export { PerpsSpotPortfolioScreen } from './PerpsSpotPortfolioScreen';

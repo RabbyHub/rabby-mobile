@@ -3,14 +3,27 @@ import type { SpotMeta } from '@rabby-wallet/hyperliquid-sdk';
 import type { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 
 import {
+  buildSpotBalanceItems,
   buildSpotMarkets,
   buildSpotOpenOrderItems,
   filterSpotMarkets,
+  filterSpotMarketsByTab,
   formatSpotLimitPrice,
   formatSpotPrice,
   formatSpotSize,
+  getSpotFavoriteKey,
+  getSpotMarket24hChange,
   getSpotMarketOrderPrice,
+  getSpotMaxQuoteAmount,
   getSpotMaxSize,
+  getSpotOrderDistanceFromMid,
+  getSpotOrderFillPct,
+  getSpotPortfolioValue,
+  getSpotSizeFromAmount,
+  getSpotTokenBalance,
+  getSpotHeldTokenIndexes,
+  groupSpotOpenOrders,
+  isSpotMarketFavorite,
   isSpotOpenOrder,
   sortSpotMarkets,
   validateSpotOrder,
@@ -48,6 +61,8 @@ describe('buildSpotMarkets', () => {
       szDecimals: 2,
       isCanonical: false,
       midPx: '38.5',
+      prevDayPx: null,
+      dayNtlVlm: null,
     });
   });
 
@@ -258,5 +273,210 @@ describe('buildSpotOpenOrderItems', () => {
 
   it('returns nothing without orders', () => {
     expect(buildSpotOpenOrderItems(undefined, [])).toEqual([]);
+  });
+});
+
+describe('buildSpotMarkets with pair contexts', () => {
+  const ctxs = [
+    {
+      coin: 'PURR/USDC',
+      midPx: '0.2',
+      markPx: '0.21',
+      prevDayPx: '0.16',
+      dayNtlVlm: '1000',
+    },
+    // No mid: falls back to the mark price.
+    {
+      coin: '@107',
+      midPx: null,
+      markPx: '38.5',
+      prevDayPx: '40',
+      dayNtlVlm: '5000',
+    },
+  ];
+
+  it('prefers context prices over the mids map and keeps 24h data', () => {
+    const markets = buildSpotMarkets(spotMeta, { 'PURR/USDC': '0.3' }, ctxs);
+    const purr = markets.find(m => m.coin === 'PURR/USDC')!;
+    expect(purr.midPx).toBe('0.2');
+    expect(purr.prevDayPx).toBe('0.16');
+    expect(purr.dayNtlVlm).toBe('1000');
+    expect(getSpotMarket24hChange(purr)).toBeCloseTo(0.25);
+    const hype = markets.find(m => m.coin === '@107')!;
+    expect(hype.midPx).toBe('38.5');
+    expect(getSpotMarket24hChange(hype)).toBeCloseTo(-0.0375);
+    const dead = markets.find(m => m.coin === '@300')!;
+    expect(dead.midPx).toBeNull();
+    expect(getSpotMarket24hChange(dead)).toBeNull();
+  });
+
+  it('sorts by 24h volume when asked', () => {
+    const markets = buildSpotMarkets(spotMeta, null, ctxs);
+    expect(sortSpotMarkets(markets, 'volume').map(m => m.coin)).toEqual([
+      '@107',
+      'PURR/USDC',
+    ]);
+    expect(sortSpotMarkets(markets).map(m => m.coin)).toEqual([
+      'PURR/USDC',
+      '@107',
+    ]);
+  });
+});
+
+describe('filterSpotMarketsByTab / favorites', () => {
+  const markets = buildSpotMarkets(spotMeta, mids);
+
+  it('keys favorites with a SPOT prefix so perp favorites stay apart', () => {
+    expect(getSpotFavoriteKey({ coin: '@107' })).toBe('SPOT:@107');
+    expect(isSpotMarketFavorite(['BTC', 'spot:@107'], { coin: '@107' })).toBe(
+      true,
+    );
+    expect(isSpotMarketFavorite(['BTC'], { coin: '@107' })).toBe(false);
+  });
+
+  it('filters holdings by base token and favorites by key', () => {
+    const options = {
+      heldTokenIndexes: new Set([150]),
+      favoriteMarkets: ['SPOT:PURR/USDC'],
+    };
+    expect(filterSpotMarketsByTab(markets, 'all', options)).toHaveLength(3);
+    expect(
+      filterSpotMarketsByTab(markets, 'holdings', options).map(m => m.coin),
+    ).toEqual(['@107']);
+    expect(
+      filterSpotMarketsByTab(markets, 'favorites', options).map(m => m.coin),
+    ).toEqual(['PURR/USDC']);
+  });
+});
+
+describe('spot balances', () => {
+  const balances = [
+    { coin: 'USDC', token: 0, total: '1337.5', hold: '87.5', entryNtl: '0' },
+    { coin: 'PURR', token: 1, total: '620', hold: '0', entryNtl: '0' },
+    { coin: 'HYPE', token: 150, total: '12.5', hold: '5', entryNtl: '0' },
+    { coin: 'DEAD', token: 200, total: '0', hold: '0', entryNtl: '0' },
+  ];
+  const markets = buildSpotMarkets(spotMeta, mids);
+
+  it('splits total, hold and available', () => {
+    expect(getSpotTokenBalance(balances, 0)).toEqual({
+      total: '1337.5',
+      hold: '87.5',
+      available: '1250',
+    });
+    expect(getSpotTokenBalance(balances, 999)).toEqual({
+      total: '0',
+      hold: '0',
+      available: '0',
+    });
+    expect(Array.from(getSpotHeldTokenIndexes(balances))).toEqual([0, 1, 150]);
+  });
+
+  it('values balances at the USDC pair mid, largest first', () => {
+    const items = buildSpotBalanceItems(balances, markets);
+    expect(items.map(item => item.balance.coin)).toEqual([
+      'USDC',
+      'HYPE',
+      'PURR',
+    ]);
+    expect(items[0].usdValue).toBe('1337.5');
+    expect(items[1].usdValue).toBe('481.25');
+    expect(items[1].market?.coin).toBe('@107');
+    expect(items[2].usdValue).toBe('124');
+    expect(getSpotPortfolioValue(items)).toBe('1942.75');
+  });
+});
+
+describe('open order helpers', () => {
+  const makeOrder = (overrides: Partial<OpenOrder>): OpenOrder =>
+    ({
+      coin: 'PURR/USDC',
+      side: 'B',
+      limitPx: '0.175',
+      sz: '380',
+      origSz: '500',
+      oid: 1,
+      timestamp: 1,
+      ...overrides,
+    } as OpenOrder);
+
+  it('computes the filled share and distance from mid', () => {
+    expect(getSpotOrderFillPct(makeOrder({}))).toBeCloseTo(24);
+    expect(getSpotOrderFillPct(makeOrder({ origSz: '0' }))).toBe(0);
+    expect(getSpotOrderDistanceFromMid(makeOrder({}), '0.2')).toBeCloseTo(
+      -0.125,
+    );
+    expect(getSpotOrderDistanceFromMid(makeOrder({}), null)).toBeNull();
+  });
+
+  it('groups orders by pair in newest-first order', () => {
+    const markets = buildSpotMarkets(spotMeta, mids);
+    const items = buildSpotOpenOrderItems(
+      [
+        makeOrder({ oid: 1, timestamp: 1 }),
+        makeOrder({ oid: 2, coin: '@107', timestamp: 3 }),
+        makeOrder({ oid: 3, timestamp: 2 }),
+      ],
+      markets,
+    );
+    const groups = groupSpotOpenOrders(items);
+    expect(groups.map(g => g.market.coin)).toEqual(['@107', 'PURR/USDC']);
+    expect(groups[1].orders.map(o => o.oid)).toEqual([3, 1]);
+  });
+});
+
+describe('amount unit conversion', () => {
+  it('converts quote amounts to a rounded base size', () => {
+    expect(
+      getSpotSizeFromAmount({
+        amount: '100',
+        unit: 'quote',
+        price: '0.3',
+        szDecimals: 0,
+      }),
+    ).toBe('333');
+    expect(
+      getSpotSizeFromAmount({
+        amount: '1.239',
+        unit: 'base',
+        price: null,
+        szDecimals: 2,
+      }),
+    ).toBe('1.23');
+    expect(
+      getSpotSizeFromAmount({
+        amount: '100',
+        unit: 'quote',
+        price: null,
+        szDecimals: 0,
+      }),
+    ).toBe('0');
+  });
+
+  it('caps quote amounts at the balance side being spent', () => {
+    expect(
+      getSpotMaxQuoteAmount({
+        side: 'buy',
+        price: '0.2',
+        baseAvailable: '10',
+        quoteAvailable: '123.456',
+      }),
+    ).toBe('123.45');
+    expect(
+      getSpotMaxQuoteAmount({
+        side: 'sell',
+        price: '0.2',
+        baseAvailable: '10',
+        quoteAvailable: '123.456',
+      }),
+    ).toBe('2');
+    expect(
+      getSpotMaxQuoteAmount({
+        side: 'sell',
+        price: null,
+        baseAvailable: '10',
+        quoteAvailable: '1',
+      }),
+    ).toBe('0');
   });
 });

@@ -1,4 +1,5 @@
 import { ExchangeClient } from '@rabby-wallet/hyperliquid-sdk/dist/client/exchange-client';
+import { InfoClient } from '@rabby-wallet/hyperliquid-sdk/dist/client/info-client';
 
 // Guards the yarn patch that adds spot trading to the Hyperliquid SDK: the
 // wire format must address spot pairs as asset 10000 + universe index.
@@ -70,5 +71,18 @@ describe('hyperliquid-sdk spot patch', () => {
       { type: 'cancel', cancels: [{ a: 10107, o: 42 }] },
       expect.any(Number),
     );
+  });
+
+  it('requests spot meta and pair contexts in one info call', async () => {
+    const client = Object.create(InfoClient.prototype) as InfoClient;
+    const info = jest
+      .fn()
+      .mockResolvedValue([{ tokens: [], universe: [] }, []]);
+    Object.assign(client, { httpClient: { info } });
+    await expect(client.getSpotMetaAndAssetCtxs()).resolves.toEqual([
+      { tokens: [], universe: [] },
+      [],
+    ]);
+    expect(info).toHaveBeenCalledWith({ type: 'spotMetaAndAssetCtxs' });
   });
 });
