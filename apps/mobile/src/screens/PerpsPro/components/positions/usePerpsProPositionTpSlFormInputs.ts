@@ -136,6 +136,7 @@ export const usePerpsProPositionTpSlFormInputs = ({
   initialTakeProfit,
   leverage,
   preferredModes,
+  resetKeys,
   sideSize,
   szDecimals,
 }: {
@@ -146,6 +147,7 @@ export const usePerpsProPositionTpSlFormInputs = ({
   initialTakeProfit: string;
   leverage: number;
   preferredModes: Record<'sl' | 'tp', PerpsProPositionTpSlMode>;
+  resetKeys?: Record<'sl' | 'tp', string>;
   sideSize: string | null;
   szDecimals: number;
 }) => {
@@ -174,6 +176,34 @@ export const usePerpsProPositionTpSlFormInputs = ({
       createContext('stopLoss', initialSize),
     ),
   );
+
+  const [previousResetKeys, setPreviousResetKeys] = useState(resetKeys);
+  if (
+    previousResetKeys?.tp !== resetKeys?.tp ||
+    previousResetKeys?.sl !== resetKeys?.sl
+  ) {
+    // Adjust before children commit: live order facts and their draft must
+    // agree in the same render. A peer cancellation must not reset this leg.
+    setPreviousResetKeys(resetKeys);
+    if (previousResetKeys?.tp !== resetKeys?.tp) {
+      setTakeProfit(
+        createSideInputDraft(
+          preferredModes.tp,
+          initialTakeProfit,
+          createContext('takeProfit', initialSize),
+        ),
+      );
+    }
+    if (previousResetKeys?.sl !== resetKeys?.sl) {
+      setStopLoss(
+        createSideInputDraft(
+          preferredModes.sl,
+          initialStopLoss,
+          createContext('stopLoss', initialSize),
+        ),
+      );
+    }
+  }
 
   useEffect(() => {
     setTakeProfit(current =>

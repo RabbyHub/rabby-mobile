@@ -36,7 +36,6 @@ import {
 } from '@/databases/sync/history';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { updateExpiredTime } from '@/databases/sync/utils';
-import { matomoRequestEvent } from '@/utils/analytics';
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
@@ -136,10 +135,6 @@ export interface SwapTxHistoryItem {
   hash: string;
   createdAt: number;
   completedAt?: number;
-  isFromCopyTrading?: boolean;
-  copyTradingExtra?: {
-    type: 'Buy' | 'Sell';
-  };
 }
 
 export interface SendTxHistoryItem {
@@ -517,7 +512,6 @@ export class TransactionHistoryService extends StoreServiceBase<
       chainId,
     });
 
-    const copyTradingActions: Array<'Buy' | 'Sell'> = [];
     this.mutateStore(draft => {
       const histories = [
         draft.swapTxHistory,
@@ -545,22 +539,6 @@ export class TransactionHistoryService extends StoreServiceBase<
           item.status = status;
           item.completedAt = Date.now();
         }
-
-        if ('isFromCopyTrading' in item && item.isFromCopyTrading) {
-          copyTradingActions.push(
-            item.copyTradingExtra?.type === 'Sell' ? 'Sell' : 'Buy',
-          );
-        }
-      });
-    });
-
-    copyTradingActions.forEach(copyTradingAction => {
-      matomoRequestEvent({
-        category: 'CopyTrading',
-        action:
-          copyTradingAction === 'Sell'
-            ? 'CopyTrading_SellFinishSwap'
-            : 'CopyTrading_BuyFinishSwap',
       });
     });
   }

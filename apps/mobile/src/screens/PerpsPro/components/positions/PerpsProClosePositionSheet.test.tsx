@@ -13,7 +13,13 @@ import {
   waitFor,
 } from '@testing-library/react-native';
 import React from 'react';
-import { Keyboard, StyleSheet, View } from 'react-native';
+import {
+  InputAccessoryView,
+  Keyboard,
+  Platform,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { perpsProKeyboardSession } from '../common/perpsProKeyboardSession';
 
 jest.mock('@/core/native/utils', () => ({ IS_ANDROID: true }));
@@ -240,6 +246,48 @@ const market = {
 };
 
 describe('PerpsProClosePositionSheet', () => {
+  it('gives the direct amount input and later limit price distinct Fabric hosts', () => {
+    const runtime = globalThis as typeof globalThis & {
+      nativeFabricUIManager?: unknown;
+    };
+    const previousFabric = runtime.nativeFabricUIManager;
+    const previousPlatform = Platform.OS;
+    Platform.OS = 'ios';
+    runtime.nativeFabricUIManager = {};
+    try {
+      const view = render(
+        <PerpsProClosePositionSheet
+          amountUnit="base"
+          market={market}
+          position={position}
+          onClose={jest.fn()}
+          onReview={jest.fn()}
+          visible
+        />,
+      );
+      const amount = screen.getByLabelText('Amount');
+      const amountHost = screen.UNSAFE_getByType(InputAccessoryView);
+      expect(amountHost.props.nativeID).toBe(amount.props.inputAccessoryViewID);
+      fireEvent.press(screen.getByTestId('perps-pro-close-market-price-field'));
+      const price = screen.getByLabelText('Price');
+      const hosts = screen.UNSAFE_getAllByType(InputAccessoryView);
+      expect(hosts).toHaveLength(2);
+      expect(hosts).toContain(amountHost);
+      expect(price.props.inputAccessoryViewID).not.toBe(
+        amount.props.inputAccessoryViewID,
+      );
+      expect(
+        hosts.some(
+          host => host.props.nativeID === price.props.inputAccessoryViewID,
+        ),
+      ).toBe(true);
+      view.unmount();
+    } finally {
+      runtime.nativeFabricUIManager = previousFabric;
+      Platform.OS = previousPlatform;
+    }
+  });
+
   it.each(['light', 'dark'] as const)(
     'renders distinct %s sheet, card and field backgrounds in Market and Limit',
     mode => {
@@ -329,7 +377,10 @@ describe('PerpsProClosePositionSheet', () => {
     fireEvent(input, 'focus');
     const owner = perpsProKeyboardSession.getSnapshot();
     fireEvent.changeText(input, '0.5');
-    act(() => show({ endCoordinates: { height: 300, screenY: 500 } }));
+    act(() => {
+      perpsProKeyboardSession.setAndroidKeyboardVisible(true);
+      show({ endCoordinates: { height: 300, screenY: 500 } });
+    });
     expect(screen.getByTestId('close-position-sheet').props.snapPoints).toEqual(
       [598],
     );

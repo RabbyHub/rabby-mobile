@@ -9362,7 +9362,7 @@ __metadata:
   resolution: "@rabby-wallet/eth-keyring-gnosis@workspace:packages/eth-keyring-gnosis"
   dependencies:
     "@metamask/auto-changelog": "npm:^3.4.3"
-    "@rabby-wallet/gnosis-sdk": "npm:1.4.9"
+    "@rabby-wallet/gnosis-sdk": "npm:1.4.10"
     "@rabby-wallet/keyring-utils": "workspace:^"
     "@safe-global/protocol-kit": "npm:5.0.3"
     "@safe-global/types-kit": "npm:1.0.4"
@@ -9520,9 +9520,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/gnosis-sdk@npm:1.4.9":
-  version: 1.4.9
-  resolution: "@rabby-wallet/gnosis-sdk@npm:1.4.9"
+"@rabby-wallet/gnosis-sdk@npm:1.4.10":
+  version: 1.4.10
+  resolution: "@rabby-wallet/gnosis-sdk@npm:1.4.10"
   dependencies:
     "@ethersproject/bignumber": "npm:5.5.0"
     "@ethersproject/bytes": "npm:5.5.0"
@@ -9531,13 +9531,13 @@ __metadata:
     "@ethersproject/solidity": "npm:5.5.0"
     "@safe-global/api-kit": "npm:4.0.0"
     "@safe-global/protocol-kit": "npm:5.2.1"
-    "@safe-global/safe-deployments": "npm:1.37.55"
+    "@safe-global/safe-deployments": "npm:1.37.63"
     "@safe-global/types-kit": "npm:1.0.2"
     axios: "npm:0.24.0"
     ethereumjs-util: "npm:7.1.3"
     ethers: "npm:5.5.1"
     semver: "npm:7.5.4"
-  checksum: 10/1bc1ae4d624965d57ca8d3e08b1df416ee16013a3ba2aeedf9e1b47efd71736d1532224f47d7c954a738cd9e12fc6954358e94858a4bc82d61576188548aaf5e
+  checksum: 10/2e9f50029bfa00c5df0fc2d58ed408bdabdc42b07897edbc8b530ea8d6f192a13332541273257fedea1ee474c246cf818d5a2d8ffe1b3e3e0055f206481f4115
   languageName: node
   linkType: hard
 
@@ -9722,9 +9722,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.9.66":
-  version: 0.9.66
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.66"
+"@rabby-wallet/rabby-api@npm:0.9.68":
+  version: 0.9.68
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.68"
   dependencies:
     "@rabby-wallet/rabby-sign": "npm:0.4.0"
     axios: "npm:^0.27.2"
@@ -9735,7 +9735,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 10/c96633308a41477fd4ca5745d833ee72b97a713fee6a5a3e9d50b65014f604dec3ec82016fe92828b132ac6f162736fd13dba929d1db33b26ba8df523e5b7550
+  checksum: 10/ebd521de98c25fbc1f917569507c19228937df02e11535bd7924745f7eaf456d2728b71ddfbf902ee51956834dbc10456919e9d74d9a4dce0d1cd71b72d60642
   languageName: node
   linkType: hard
 
@@ -12481,12 +12481,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@safe-global/safe-deployments@npm:1.37.55":
-  version: 1.37.55
-  resolution: "@safe-global/safe-deployments@npm:1.37.55"
+"@safe-global/safe-deployments@npm:1.37.63":
+  version: 1.37.63
+  resolution: "@safe-global/safe-deployments@npm:1.37.63"
   dependencies:
     semver: "npm:^7.6.2"
-  checksum: 10/be5ce80d1f505a50a23613de6c36d76d5d8a16fe760a2ce2ccaed94203319531d277ef1b8da3c6aebad3b4e1e31ed526380f6f9b99381cd19f628f107dfdcf64
+  checksum: 10/b53c258238ad68de304d24d8561c9e4aa40451630b88f3aaeed9918799c957136c2a77e5d8c77612f5354c3c5764d2260b862135f679bf59ea02bbf49dcd3156
   languageName: node
   linkType: hard
 
@@ -19461,38 +19461,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bn.js@npm:4.11.6":
-  version: 4.11.6
-  resolution: "bn.js@npm:4.11.6::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fbn.js%2F-%2Fbn.js-4.11.6.tgz"
-  checksum: 10/22741b015c9fff60fce32fc9988331b298eb9b6db5bfb801babb23b846eaaf894e440e0d067b2b3ae4e46aab754e90972f8f333b31bf94a686bbcb054bfa7b14
+"bn.js@npm:4.12.5, bn.js@npm:^4.0.0, bn.js@npm:^4.1.0, bn.js@npm:^4.11.0, bn.js@npm:^4.11.8, bn.js@npm:^4.11.9, bn.js@npm:^4.12.0":
+  version: 4.12.5
+  resolution: "bn.js@npm:4.12.5"
+  checksum: 10/be6afe3e31e812e240983a6661e4c8f31f7f5a28e6fc4fbd8ea04d18c887ce4a5089c4bd28d8495a535411deda84d1125f72bcfa253f223067d15f743d8e65a8
   languageName: node
   linkType: hard
 
-"bn.js@npm:^4.0.0, bn.js@npm:^4.1.0, bn.js@npm:^4.11.9, bn.js@npm:^4.12.0":
-  version: 4.12.0
-  resolution: "bn.js@npm:4.12.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fbn.js%2F-%2Fbn.js-4.12.0.tgz"
-  checksum: 10/10f8db196d3da5adfc3207d35d0a42aa29033eb33685f20ba2c36cadfe2de63dad05df0a20ab5aae01b418d1c4b3d4d205273085262fa020d17e93ff32b67527
-  languageName: node
-  linkType: hard
-
-"bn.js@npm:^4.11.0, bn.js@npm:^4.11.8":
-  version: 4.12.0
-  resolution: "bn.js@npm:4.12.0"
-  checksum: 10/10f8db196d3da5adfc3207d35d0a42aa29033eb33685f20ba2c36cadfe2de63dad05df0a20ab5aae01b418d1c4b3d4d205273085262fa020d17e93ff32b67527
-  languageName: node
-  linkType: hard
-
-"bn.js@npm:^5.0.0, bn.js@npm:^5.1.2, bn.js@npm:^5.2.0, bn.js@npm:^5.2.1":
-  version: 5.2.1
-  resolution: "bn.js@npm:5.2.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fbn.js%2F-%2Fbn.js-5.2.1.tgz"
-  checksum: 10/7a7e8764d7a6e9708b8b9841b2b3d6019cc154d2fc23716d0efecfe1e16921b7533c6f7361fb05471eab47986c4aa310c270f88e3507172104632ac8df2cfd84
-  languageName: node
-  linkType: hard
-
-"bn.js@npm:^5.2.2":
-  version: 5.2.2
-  resolution: "bn.js@npm:5.2.2"
-  checksum: 10/51ebb2df83b33e5d8581165206e260d5e9c873752954616e5bf3758952b84d7399a9c6d00852815a0aeefb1150a7f34451b62d4287342d457fa432eee869e83e
+"bn.js@npm:^5.0.0, bn.js@npm:^5.1.2, bn.js@npm:^5.2.0, bn.js@npm:^5.2.1, bn.js@npm:^5.2.2":
+  version: 5.2.5
+  resolution: "bn.js@npm:5.2.5"
+  checksum: 10/10b1ac91e76fd828c1187cf65a9f1a0374e7afb9acd167e19c2d7c4108f6216841007c1e3aef145fa95cc7b3d07f705236a707184af1537667362b3a842d01ac
   languageName: node
   linkType: hard
 
@@ -37434,12 +37413,12 @@ __metadata:
     "@rabby-wallet/eth-keyring-onekey": "workspace:^"
     "@rabby-wallet/eth-keyring-watch": "workspace:^"
     "@rabby-wallet/eth-simple-keyring": "npm:5.1.2"
-    "@rabby-wallet/gnosis-sdk": "npm:1.4.9"
+    "@rabby-wallet/gnosis-sdk": "npm:1.4.10"
     "@rabby-wallet/hyperliquid-sdk": "npm:1.1.19"
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": "npm:0.1.16"
-    "@rabby-wallet/rabby-api": "npm:0.9.66"
+    "@rabby-wallet/rabby-api": "npm:0.9.68"
     "@rabby-wallet/rabby-bridge": "npm:0.0.10"
     "@rabby-wallet/rabby-logger": "npm:0.3.1"
     "@rabby-wallet/rabby-security-engine": "npm:2.0.12"
@@ -37581,7 +37560,6 @@ __metadata:
     react-native-quick-base64-legacy: "npm:react-native-quick-base64@2.1.2"
     react-native-quick-crypto: "npm:1.1.6"
     react-native-quick-crypto-legacy: "patch:react-native-quick-crypto@npm%3A0.7.13#../../.yarn/patches/react-native-quick-crypto-npm-0.7.13-2726ada4c8.patch"
-    react-native-randombytes: "npm:^3.6.1"
     react-native-reanimated: "npm:3.19.5"
     react-native-root-toast: "npm:4.0.1"
     react-native-safe-area-context: "npm:5.6.2"
@@ -38608,7 +38586,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-randombytes@npm:^3.5.1, react-native-randombytes@npm:^3.6.1":
+"react-native-randombytes@npm:^3.5.1":
   version: 3.6.1
   resolution: "react-native-randombytes@npm:3.6.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-randombytes%2F-%2Freact-native-randombytes-3.6.1.tgz"
   dependencies:

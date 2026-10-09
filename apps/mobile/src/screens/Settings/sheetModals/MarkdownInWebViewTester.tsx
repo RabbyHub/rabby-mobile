@@ -360,7 +360,7 @@ const getStyles = createGetStyles(colors => ({
     color: colors['neutral-title1'],
     textAlign: 'center',
     fontSize: 24,
-    fontWeight: '600',
+    fontWeight: '500',
     marginBottom: 24,
   },
   label: {
@@ -371,7 +371,7 @@ const getStyles = createGetStyles(colors => ({
   result: {
     color: colors['neutral-title1'],
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
     marginTop: 16,
     marginBottom: 8,
   },

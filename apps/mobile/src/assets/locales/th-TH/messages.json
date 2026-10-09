@@ -1950,6 +1950,7 @@
       "headerBalanceText": "ยอดเงิน",
       "headerTokenValueText": "ค่าโทเค็น",
       "copyCA": "ที่อยู่สัญญาโทเค็นได้ถูกคัดลอกแล้ว",
+      "copyCAWarning": "นี่คือที่อยู่สัญญาโทเค็น\nไม่สามารถใช้รับสินทรัพย์ได้",
       "wallet": "กระเป๋าสตางค์",
       "customTestnetNotSupported": "ไม่รองรับโทเค็นบนเชนนี้"
     },

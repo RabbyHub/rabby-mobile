@@ -1821,6 +1821,7 @@
       "headerBalanceText": "餘額",
       "headerTokenValueText": "代幣價值",
       "copyCA": "代幣合約地址已複製",
+      "copyCAWarning": "這是代幣合約地址，\n不能用於接收資產。",
       "wallet": "錢包",
       "customTestnetNotSupported": "不支援該鏈上的代幣"
     },

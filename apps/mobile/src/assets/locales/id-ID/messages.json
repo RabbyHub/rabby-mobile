@@ -1778,6 +1778,7 @@
       "price": "Harga",
       "headerTokenValueText": "Nilai Token",
       "copyCA": "Alamat kontrak token telah disalin",
+      "copyCAWarning": "Ini adalah alamat kontrak token.\nTidak dapat digunakan untuk menerima aset.",
       "wallet": "Dompet",
       "customTestnetNotSupported": "Token pada rantai ini tidak didukung"
     },

@@ -121,7 +121,7 @@ type TextStyleInput = {
   fontFamily?: TextStyle['fontFamily'];
 } & (StyleProp<
   Pick<TextStyle, 'fontFamily' | 'fontSize' | 'fontWeight'> & {
-    color?: string;
+    color?: TextStyle['color'];
   }
 > &
   object);

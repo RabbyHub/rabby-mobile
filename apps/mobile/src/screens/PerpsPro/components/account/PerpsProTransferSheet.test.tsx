@@ -8,7 +8,7 @@ jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
 
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { InputAccessoryView, Platform, StyleSheet } from 'react-native';
 
 const ReactNative = jest.requireActual('react-native');
 
@@ -111,6 +111,38 @@ jest.mock('react-i18next', () => ({
 import { PerpsProTransferSheet } from './PerpsProTransferSheet';
 
 describe('PerpsProTransferSheet', () => {
+  it('pairs the direct transfer input with a stable Fabric accessory', () => {
+    const runtime = globalThis as typeof globalThis & {
+      nativeFabricUIManager?: unknown;
+    };
+    const previousFabric = runtime.nativeFabricUIManager;
+    const previousPlatform = Platform.OS;
+    Platform.OS = 'ios';
+    runtime.nativeFabricUIManager = {};
+    try {
+      const view = render(
+        <PerpsProTransferSheet
+          available="10"
+          onClose={jest.fn()}
+          onConfirm={jest.fn()}
+          pending={false}
+          visible
+        />,
+      );
+      const input = screen.getByTestId('perps-pro-transfer-amount');
+      const host = screen.UNSAFE_getByType(InputAccessoryView);
+      expect(host.props.nativeID).toBe(input.props.inputAccessoryViewID);
+      fireEvent.changeText(input, '1.25');
+      expect(screen.UNSAFE_getByType(InputAccessoryView)).toBe(host);
+      expect(screen.getByTestId('perps-pro-transfer-amount')).toBe(input);
+      expect(input.props.value).toBe('1.25');
+      view.unmount();
+    } finally {
+      runtime.nativeFabricUIManager = previousFabric;
+      Platform.OS = previousPlatform;
+    }
+  });
+
   it.each(['android', 'ios'] as const)(
     'preserves %s amount metrics through focus, typing, clearing, and shortcuts',
     platform => {
@@ -166,7 +198,7 @@ describe('PerpsProTransferSheet', () => {
         });
       } else {
         expect(style.lineHeight).toBe(42);
-        expect(style.fontWeight).toBe('800');
+        expect(style.fontWeight).toBe('900');
         expect(style.includeFontPadding).toBeUndefined();
         expect(style.textAlignVertical).toBeUndefined();
       }

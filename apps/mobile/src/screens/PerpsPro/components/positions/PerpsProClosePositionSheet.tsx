@@ -64,6 +64,7 @@ import { PerpsProSlider } from '../common/PerpsProSlider';
 import { usePerpsProDismissKeyboard } from '../common/usePerpsProDismissKeyboard';
 import { usePerpsProSliderHaptics } from '../common/usePerpsProSliderHaptics';
 import { usePerpsProKeyboardInput } from '../common/usePerpsProKeyboardInput';
+import { PerpsProInputAccessory } from '../common/PerpsProInputAccessory';
 import { PerpsProDecimalTextInput } from '../trade/PerpsProDecimalTextInput';
 import { PerpsProCloseMarketTag } from './PerpsProCloseMarketTag';
 import { getPerpsProClosePositionSheetStyles } from './PerpsProClosePositionSheet.styles';
@@ -553,6 +554,9 @@ export const PerpsProClosePositionSheet: React.FC<{
                       value={
                         inputSource === 'slider' ? sliderDisplay : manualAmount
                       }
+                    />
+                    <PerpsProInputAccessory
+                      nativeID={amountKeyboard.inputAccessoryViewID}
                     />
                     <Text pointerEvents="none" style={styles.amountUnit}>
                       {displayUnit}

@@ -52,6 +52,7 @@ const flushFrame = () =>
   });
 const showKeyboard = (screenY = 500) =>
   act(() => {
+    perpsProKeyboardSession.setAndroidKeyboardVisible(true);
     listeners.get('keyboardDidShow')?.({
       endCoordinates: { height: 300, screenY },
     });
@@ -144,11 +145,35 @@ describe('Android sheet keyboard viewport (native geometry boundary)', () => {
     jest
       .spyOn(Keyboard, 'metrics')
       .mockReturnValue({ height: 300, screenY: 500, screenX: 0, width: 393 });
+    perpsProKeyboardSession.setAndroidKeyboardVisible(true);
     const { result } = renderHook(() =>
       usePerpsProSheetKeyboard({ visible: true, scrollViewRef }),
     );
     focus(result.current.sheetId);
     expect(result.current.accessoryInset).toBe(48);
+  });
+
+  it('keeps the sheet inset across separate blur/focus turns and releases it on Done or owner removal', () => {
+    const { result, rerender } = mountSheet();
+    act(() => perpsProKeyboardSession.blur('amount'));
+    expect(perpsProKeyboardSession.getSnapshot()).toBeNull();
+    expect(result.current.accessoryInset).toBe(48);
+    flushFrame();
+    expect(UIManager.measureInWindow).not.toHaveBeenCalled();
+    focus(result.current.sheetId, 'pnl');
+    expect(result.current.accessoryInset).toBe(48);
+    act(() => perpsProKeyboardSession.unregister('amount'));
+    expect(result.current.accessoryInset).toBe(48);
+    act(() => perpsProKeyboardSession.setAndroidKeyboardVisible(false));
+    expect(result.current.accessoryInset).toBe(0);
+    showKeyboard();
+    expect(result.current.accessoryInset).toBe(48);
+    act(() => perpsProKeyboardSession.unregister('pnl'));
+    expect(result.current.accessoryInset).toBe(0);
+    rerender({ visible: false });
+    expect(result.current.accessoryInset).toBe(0);
+    expect(perpsProKeyboardSession.getAndroidPresentation()).toBeNull();
+    expect(perpsProKeyboardSession.getSnapshot()).toBeNull();
   });
 
   it('scrolls the full Amount field plus gap above Done after a warning grows the content', () => {

@@ -1792,6 +1792,7 @@
       "headerTokenValueText": "Giá trị Token",
       "headerBalanceText": "Số dư",
       "copyCA": "Địa chỉ hợp đồng Token đã được sao chép",
+      "copyCAWarning": "Đây là địa chỉ hợp đồng Token,\nkhông thể dùng để nhận tài sản.",
       "wallet": "Ví",
       "customTestnetNotSupported": "Token trên chuỗi này không được hỗ trợ"
     },

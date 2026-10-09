@@ -45,6 +45,7 @@ import {
 } from '../GlobalBottomSheetModal';
 import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 import { Text } from '@/components/Typography';
+import * as SecretVault from '@/core/utils/secretVault';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tipsWrapper: {
@@ -317,7 +318,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     fontStyle: 'normal',
-    fontWeight: '800',
+    fontWeight: '900',
     lineHeight: 24,
     marginTop: 8,
   },
@@ -546,8 +547,10 @@ export const SeedPhrase: React.FC<Props> = ({
             isFirstImport: true,
             isFirstCreate: true,
             address: [address],
-            mnemonics,
-            passphrase,
+            mnemonicsVaultId: SecretVault.storeMnemonicsPayload({
+              mnemonics,
+              passphrase,
+            }),
             isExistedKR: false,
             alias,
           },

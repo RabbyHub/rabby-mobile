@@ -384,6 +384,116 @@ describe('PerpsProPositionTpSlForm', () => {
     mockPositionModes = { sl: 'pnl', tp: 'pnl' };
   });
 
+  it.each(['pnl', 'roi'] as const)(
+    'synchronizes only the changed leg and preserves the peer raw %s target and mode picker',
+    selectedMode => {
+      mockPositionModes = { tp: selectedMode, sl: selectedMode };
+      const tp = order('takeProfit', 7, '130', 'position');
+      const sl = order('stopLoss', 8, '90', 'position');
+      const input = props();
+      const view = render(
+        <PerpsProPositionTpSlForm
+          {...input}
+          mode="position"
+          position={position([tp, sl])}
+        />,
+      );
+      const tpId = 'perps-pro-position-tpsl-takeProfit-mode-input';
+      const slId = 'perps-pro-position-tpsl-stopLoss-mode-input';
+      fireEvent.changeText(screen.getByTestId(tpId), '35.00');
+      fireEvent.changeText(screen.getByTestId(slId), '5.00');
+      fireEvent.press(screen.getByTestId(`${slId}-mode`));
+      view.rerender(
+        <PerpsProPositionTpSlForm
+          {...input}
+          mode="position"
+          position={position([sl])}
+        />,
+      );
+      expect(screen.getByTestId(tpId).props.value).toBe('');
+      expect(screen.getByTestId(slId).props.value).toBe('5.00');
+      expect(mockModeSheetProps.mock.lastCall?.[0]).toMatchObject({
+        visible: true,
+        selected: selectedMode,
+      });
+      // Quantity/mark derivation must still use the retained mode source.
+      view.rerender(
+        <PerpsProPositionTpSlForm
+          {...input}
+          mode="position"
+          position={{ ...position([sl]), baseSize: '2' }}
+        />,
+      );
+      expect(screen.getByTestId(slId).props.value).toBe('5.00');
+      const replacement = {
+        ...sl,
+        oid: 9,
+        key: 'position:9',
+        triggerPrice: '80',
+      };
+      view.rerender(
+        <PerpsProPositionTpSlForm
+          {...input}
+          mode="position"
+          position={position([replacement])}
+        />,
+      );
+      expect(
+        screen.getByTestId('perps-pro-position-tpsl-stopLoss-price').props
+          .value,
+      ).toBe('80');
+      expect(screen.getByTestId(slId).props.value).not.toBe('5.00');
+      expect(mockModeSheetProps.mock.lastCall?.[0].visible).toBe(false);
+      fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-review'));
+      expect(input.onReview).not.toHaveBeenCalled();
+    },
+  );
+
+  it('discards only the duplicated leg and does not reset on order reordering', () => {
+    const tp = order('takeProfit', 7, '130', 'position');
+    const sl = order('stopLoss', 8, '90', 'position');
+    const input = props();
+    const view = render(
+      <PerpsProPositionTpSlForm
+        {...input}
+        mode="position"
+        position={position([tp, sl])}
+      />,
+    );
+    const tpId = 'perps-pro-position-tpsl-takeProfit-price';
+    const slId = 'perps-pro-position-tpsl-stopLoss-price';
+    fireEvent.changeText(screen.getByTestId(tpId), '135');
+    fireEvent.changeText(screen.getByTestId(slId), '95');
+    view.rerender(
+      <PerpsProPositionTpSlForm
+        {...input}
+        mode="position"
+        position={position([sl, tp])}
+      />,
+    );
+    expect(screen.getByTestId(tpId).props.value).toBe('135');
+    expect(screen.getByTestId(slId).props.value).toBe('95');
+    const duplicate = order('takeProfit', 9, '140', 'position');
+    view.rerender(
+      <PerpsProPositionTpSlForm
+        {...input}
+        mode="position"
+        position={position([tp, duplicate, sl])}
+      />,
+    );
+    expect(screen.queryByTestId(tpId)).toBeNull();
+    expect(screen.getByTestId(slId).props.value).toBe('95');
+    view.rerender(
+      <PerpsProPositionTpSlForm
+        {...input}
+        mode="position"
+        position={position([tp, sl])}
+      />,
+    );
+    expect(screen.getByTestId(tpId).props.value).toBe('130');
+    expect(screen.getByTestId(slId).props.value).toBe('95');
+  });
+
   it('keeps Modify disabled until a valid field changes, then builds cancel-and-recreate intent', () => {
     const initialOrder = order('takeProfit', 7, '110');
     const input = props();

@@ -108,7 +108,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     lineHeight: 22,
-    fontWeight: '800',
+    fontWeight: '900',
     color: colors2024['neutral-title-1'],
   },
   card: {

@@ -25,7 +25,7 @@ export function Block({
     <View style={style}>
       <Text
         style={{
-          fontWeight: 'normal',
+          fontWeight: '400',
           fontSize: 16,
           color: colors2024['neutral-secondary'],
           fontFamily: 'SF Pro Rounded',
@@ -191,7 +191,7 @@ const getBlockItemStyles = createGetStyles2024(colors => {
     },
     defaultRightText: {
       color: colors['neutral-title-1'],
-      fontWeight: 'normal',
+      fontWeight: '400',
       fontSize: 14,
     },
   };

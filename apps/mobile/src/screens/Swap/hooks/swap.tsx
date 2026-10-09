@@ -2,6 +2,7 @@ import BigNumber from 'bignumber.js';
 import type { OpenApiService } from '@rabby-wallet/rabby-api';
 import type { CHAINS_ENUM } from '@debank/common';
 import type { QuoteResult } from '@rabby-wallet/rabby-swap/dist/quote';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { findChain, findChainByEnum } from '@/utils/chain';
 import i18n from '@/utils/i18n';
 import type { AbiCoder } from 'web3-eth-abi';
@@ -178,6 +179,7 @@ export const dexSwap = async (
     accountType: account.type,
     txCount: 1 + Number(needApprove) + Number(shouldTwoStepApprove),
   });
+  const shouldRecordSwapPendingTx = account.type !== KEYRING_CLASS.GNOSIS;
   try {
     if (shouldBatchTempoSwap) {
       const txs: Tx[] = [];
@@ -258,7 +260,7 @@ export const dexSwap = async (
         account,
       }).then(async res => {
         const hash = res as string;
-        void setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN, {
+        setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN, {
           chain: chainObj.serverId as string,
         }).catch(console.error);
         if (addSwapTxHistoryObj) {
@@ -266,7 +268,11 @@ export const dexSwap = async (
             ...addSwapTxHistoryObj,
             hash,
           };
-          await transactionHistoryServiceApi.addSwapTxHistory(swapTxHistoryObj);
+          if (shouldRecordSwapPendingTx) {
+            await transactionHistoryServiceApi.addSwapTxHistory(
+              swapTxHistoryObj,
+            );
+          }
 
           const marketTab = from?.scene
             ? getMarketTabActionPrefix(from.scene)
@@ -293,15 +299,6 @@ export const dexSwap = async (
             matomoRequestEvent({
               category: 'Rabby Market',
               action: createSwapTxAction,
-            });
-          }
-          if (swapTxHistoryObj.isFromCopyTrading) {
-            matomoRequestEvent({
-              category: 'CopyTrading',
-              action:
-                swapTxHistoryObj.copyTradingExtra?.type === 'Sell'
-                  ? 'CopyTrading_SellCreateSwap'
-                  : 'CopyTrading_BuyCreateSwap',
             });
           }
         }
@@ -396,7 +393,7 @@ export const dexSwap = async (
       .then(async res => {
         const hash = res as string;
         console.log('after swap  hash: ', hash);
-        void setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN, {
+        setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN, {
           chain: chainObj.serverId as string,
         }).catch(console.error);
         if (addSwapTxHistoryObj) {
@@ -404,7 +401,11 @@ export const dexSwap = async (
             ...addSwapTxHistoryObj,
             hash,
           };
-          await transactionHistoryServiceApi.addSwapTxHistory(swapTxHistoryObj);
+          if (shouldRecordSwapPendingTx) {
+            await transactionHistoryServiceApi.addSwapTxHistory(
+              swapTxHistoryObj,
+            );
+          }
 
           const marketTab = from?.scene
             ? getMarketTabActionPrefix(from.scene)
@@ -431,15 +432,6 @@ export const dexSwap = async (
             matomoRequestEvent({
               category: 'Rabby Market',
               action: createSwapTxAction,
-            });
-          }
-          if (swapTxHistoryObj.isFromCopyTrading) {
-            matomoRequestEvent({
-              category: 'CopyTrading',
-              action:
-                swapTxHistoryObj.copyTradingExtra?.type === 'Sell'
-                  ? 'CopyTrading_SellCreateSwap'
-                  : 'CopyTrading_BuyCreateSwap',
             });
           }
         }

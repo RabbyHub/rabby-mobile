@@ -1877,6 +1877,7 @@
       "price": "Precio",
       "headerBalanceText": "Saldo",
       "copyCA": "Dirección del contrato del token copiada",
+      "copyCAWarning": "Esta es la dirección del contrato de un token.\nNo se puede usar para recibir activos.",
       "wallet": "Cartera",
       "customTestnetNotSupported": "El token de esta red no es compatible"
     },

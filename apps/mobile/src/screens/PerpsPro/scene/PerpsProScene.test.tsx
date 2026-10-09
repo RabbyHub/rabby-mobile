@@ -337,7 +337,6 @@ jest.mock(
   '@/screens/PerpsShared/components/PerpsPortfolioBreakdownExplanation',
   () => ({
     useShowPerpsPortfolioBreakdown: () => ({
-      hasNonPerpsAssets: false,
       showPortfolioBreakdown: jest.fn(),
     }),
   }),
