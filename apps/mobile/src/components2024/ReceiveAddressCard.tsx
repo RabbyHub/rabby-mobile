@@ -169,10 +169,7 @@ export function ReceiveAddressCard({
         {showAddress ? (
           <>
             <Pressable style={styles.addressFirstLine} onPress={onCopy}>
-              <Text
-                style={styles.qrCardAddress}
-                numberOfLines={1}
-                adjustsFontSizeToFit>
+              <Text style={styles.qrCardAddress}>
                 <Text style={styles.highlightAddrPart}>{addressSplit[0]}</Text>
                 {addressSplit[1]}
               </Text>
