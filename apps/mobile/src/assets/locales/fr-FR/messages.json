@@ -551,7 +551,6 @@
         "notEnough": "Pas assez de gas. Solde de gas : {{usd}}"
       },
       "cancelAll": "Annuler toutes les {{count}} demandes de DApp",
-      "cancelAllConfirmMessage": "Tous vos ordres spot ouverts seront annulés",
       "ledger": {
         "txRejectedByLedger": "La transaction est rejetée sur votre Ledger.",
         "resent": "Renvoyer",
@@ -2098,6 +2097,7 @@
       "noOpenOrders": "Aucun ordre ouvert",
       "cancel": "Annuler",
       "cancelAll": "Tout annuler",
+      "cancelAllConfirmMessage": "Tous vos ordres spot ouverts seront annulés",
       "buyOrder": "Achat · {{size}} {{base}}",
       "sellOrder": "Vente · {{size}} {{base}}",
       "filledProgress": "{{filled}} / {{total}}",
