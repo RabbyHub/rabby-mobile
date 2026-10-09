@@ -431,6 +431,11 @@ export type TransactionNavigatorParamList = {
     direction?: 'Long' | 'Short';
     autoFocus?: boolean;
   };
+  [RootNames.PerpsSpot]?: undefined;
+  [RootNames.PerpsSpotTrade]: {
+    pairIndex: number;
+    side?: 'buy' | 'sell';
+  };
   [RootNames.Lending]?: {
     tokenAddress?: string;
     direction?: 'supply' | 'borrow';

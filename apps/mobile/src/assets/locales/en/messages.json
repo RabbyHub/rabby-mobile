@@ -2962,6 +2962,37 @@
     "perpsHistory": {
       "title": "History"
     },
+    "perpsSpot": {
+      "title": "Spot",
+      "entry": "Spot markets",
+      "entryDesc": "Trade Hyperliquid spot tokens",
+      "searchPlaceholder": "Search token",
+      "empty": "No spot market found",
+      "loadError": "Failed to load spot markets",
+      "price": "Price",
+      "buy": "Buy",
+      "sell": "Sell",
+      "market": "Market",
+      "limit": "Limit",
+      "limitPrice": "Limit price ({{quote}})",
+      "amount": "Amount ({{base}})",
+      "available": "Available",
+      "max": "Max",
+      "orderValue": "Order value",
+      "marketOrderTip": "Market orders execute immediately with up to {{slippage}}% slippage.",
+      "submitBuy": "Buy {{base}}",
+      "submitSell": "Sell {{base}}",
+      "openOrders": "Open orders",
+      "noOpenOrders": "No open orders",
+      "cancel": "Cancel",
+      "loginRequired": "Log in to Perps to trade spot",
+      "error": {
+        "invalidSize": "Enter an amount",
+        "invalidPrice": "Enter a price",
+        "belowMinNotional": "Minimum order value is {{min}} {{quote}}",
+        "insufficientBalance": "Insufficient balance"
+      }
+    },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Build-In Page"
     },

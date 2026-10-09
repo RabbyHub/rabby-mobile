@@ -24,6 +24,7 @@ import { useMemoizedFn, useRequest } from 'ahooks';
 import type { Account } from '@/core/startupServices/preference';
 import { usePerpsDeposit } from './hooks/usePerpsDeposit';
 import { PerpsMarketHomeList } from './components/PerpsMarketSection/PerpsMarketHomeList';
+import { PerpsSpotEntry } from '../PerpsSpot/PerpsSpotEntry';
 import { PerpsPositionSection } from './components/PerpsPositionSection';
 import { PerpsLimitOrdersSection } from './components/PerpsLimitOrdersSection';
 import { PerpsPopupGroup } from './components/PerpsPopupGroup';
@@ -347,6 +348,7 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
                 handleActionApproveStatus={handleActionApproveStatus}
               />
 
+              <PerpsSpotEntry />
               <PerpsMarketHomeList onItemPress={handleHomeItemPress} />
               <View style={styles.emptyPadding} />
             </ScrollView>
