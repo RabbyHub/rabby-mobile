@@ -27,6 +27,7 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import type { Account } from '@/core/startupServices/preference';
@@ -87,6 +88,8 @@ export const SpotOrderSheet: React.FC<{
   balances: ReadonlyArray<SpotBalance> | null;
   midsUpdatedAt: number;
   currentPerpsAccount: Account | null;
+  /** False when the region gate or login forbids trading. */
+  canTrade: boolean;
   onClose: () => void;
   onSubmitted: () => void;
   refreshPrices: () => void;
@@ -97,6 +100,7 @@ export const SpotOrderSheet: React.FC<{
   balances,
   midsUpdatedAt,
   currentPerpsAccount,
+  canTrade,
   onClose,
   onSubmitted,
   refreshPrices,
@@ -126,6 +130,28 @@ export const SpotOrderSheet: React.FC<{
     balances,
     market.quoteTokenIndex,
   ).available;
+  // Latest inputs for the order built after the agent approval, which can
+  // take minutes on a hardware wallet while the mid keeps moving.
+  const latestRef = useRef({
+    midPx,
+    midsUpdatedAt,
+    baseAvailable,
+    quoteAvailable,
+    amount,
+    unit,
+    limitPx,
+    orderType,
+  });
+  latestRef.current = {
+    midPx,
+    midsUpdatedAt,
+    baseAvailable,
+    quoteAvailable,
+    amount,
+    unit,
+    limitPx,
+    orderType,
+  };
 
   useEffect(() => {
     if (visible) {
@@ -149,16 +175,18 @@ export const SpotOrderSheet: React.FC<{
     return midPx ? getSpotMarketOrderPrice(midPx, side, szDecimals) : '0';
   }, [orderType, limitPx, midPx, side, szDecimals]);
   const hasCheckPrice = Number(checkPrice) > 0;
+  // Conversion / display price: the mid for market orders (the IOC usually
+  // fills near it), the limit otherwise. `checkPrice` stays the worst case
+  // used for balance checks and the sent limit.
+  const displayPrice =
+    orderType === 'limit' ? (hasCheckPrice ? checkPrice : null) : midPx;
 
   const size = getSpotSizeFromAmount({
     amount,
     unit,
-    price: hasCheckPrice ? checkPrice : null,
+    price: displayPrice,
     szDecimals,
   });
-  // Display price: the mid for market orders, the limit otherwise.
-  const displayPrice =
-    orderType === 'limit' ? (hasCheckPrice ? checkPrice : null) : midPx;
   const quoteValue =
     displayPrice && Number(size) > 0
       ? new BigNumber(size).times(displayPrice)
@@ -208,15 +236,17 @@ export const SpotOrderSheet: React.FC<{
           })
         : getSpotMaxQuoteAmount({
             side,
-            price: hasCheckPrice ? checkPrice : null,
+            price: displayPrice,
             baseAvailable,
             quoteAvailable,
+            slippage: orderType === 'market' ? SPOT_MARKET_SLIPPAGE : 0,
           }),
     [
       unit,
       side,
       checkPrice,
-      hasCheckPrice,
+      displayPrice,
+      orderType,
       szDecimals,
       baseAvailable,
       quoteAvailable,
@@ -281,13 +311,58 @@ export const SpotOrderSheet: React.FC<{
     submitLockRef.current = true;
     setSubmitting(true);
     try {
-      const result = await executePerpsSpotOrder(currentPerpsAccount, {
-        pairIndex: market.pairIndex,
-        side,
-        type: orderType,
-        size,
-        limitPx: checkPrice,
-      });
+      // Re-price and re-validate from the latest poll right before signing:
+      // the approval step may have taken a while.
+      const buildParams = () => {
+        const latest = latestRef.current;
+        if (
+          latest.orderType === 'market' &&
+          Date.now() - latest.midsUpdatedAt > SPOT_PRICE_MAX_AGE_MS
+        ) {
+          setStalePriceAt(latest.midsUpdatedAt);
+          refreshPrices();
+          return null;
+        }
+        const price =
+          latest.orderType === 'limit'
+            ? formatSpotLimitPrice(latest.limitPx, side, szDecimals)
+            : latest.midPx
+            ? getSpotMarketOrderPrice(latest.midPx, side, szDecimals)
+            : '0';
+        const conversionPrice =
+          latest.orderType === 'limit' ? price : latest.midPx;
+        const nextSize = getSpotSizeFromAmount({
+          amount: latest.amount,
+          unit: latest.unit,
+          price: Number(conversionPrice) > 0 ? conversionPrice : null,
+          szDecimals,
+        });
+        const error = validateSpotOrder({
+          side,
+          size: nextSize,
+          price,
+          szDecimals,
+          baseAvailable: latest.baseAvailable,
+          quoteAvailable: latest.quoteAvailable,
+          midPx: latest.midPx,
+          orderType: latest.orderType,
+        });
+        if (error) {
+          return null;
+        }
+        return {
+          pairIndex: market.pairIndex,
+          side,
+          type: latest.orderType,
+          size: nextSize,
+          limitPx: price,
+        };
+      };
+      const result = await executePerpsSpotOrder(
+        currentPerpsAccount,
+        market.pairIndex,
+        buildParams,
+      );
       if (result) {
         onSubmitted();
         onClose();
@@ -306,7 +381,7 @@ export const SpotOrderSheet: React.FC<{
     currentPerpsAccount,
     market.pairIndex,
     side,
-    checkPrice,
+    szDecimals,
     onSubmitted,
     onClose,
   ]);
@@ -570,6 +645,7 @@ export const SpotOrderSheet: React.FC<{
             loading={submitting}
             disabled={
               !currentPerpsAccount ||
+              !canTrade ||
               !amount ||
               !!orderError ||
               submitting ||
@@ -763,7 +839,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   footer: {
     paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
     backgroundColor: colors2024['neutral-bg-1'],
   },
 }));

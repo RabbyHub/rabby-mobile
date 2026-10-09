@@ -93,6 +93,9 @@ export const PerpsSpotDetailScreen: React.FC = () => {
   const marketList = useMemo(() => (market ? [market] : []), [market]);
   const logos = useSpotTokenLogos(marketList);
   const favoriteMarkets = perpsStore(s => s.favoriteMarkets);
+  // Same backend region gate as perps trading.
+  const hasPermission = perpsStore(s => s.hasPermission);
+  const canTrade = !!currentPerpsAccount && hasPermission;
   const isFavorite = !!market && isSpotMarketFavorite(favoriteMarkets, market);
 
   const [range, setRange] = useState<SpotSparklineRange>('1d');
@@ -101,6 +104,7 @@ export const PerpsSpotDetailScreen: React.FC = () => {
   const [sheetSide, setSheetSide] = useState<SpotOrderSide | null>(
     initialSide ?? null,
   );
+  const sheetVisible = sheetSide !== null && canTrade;
   const { cancel, cancellingOid } = useSpotOrderCancel(
     currentPerpsAccount,
     refresh,
@@ -316,7 +320,7 @@ export const PerpsSpotDetailScreen: React.FC = () => {
                 order={order}
                 market={market}
                 cancelling={cancellingOid === order.oid}
-                cancelDisabled={cancellingOid !== null}
+                cancelDisabled={cancellingOid !== null || !canTrade}
                 onCancel={handleCancel}
               />
             ))}
@@ -351,11 +355,15 @@ export const PerpsSpotDetailScreen: React.FC = () => {
             </Text>
           </View>
         </View>
-        {!currentPerpsAccount && (
+        {!currentPerpsAccount ? (
           <Text style={styles.errorText}>
             {t('page.perpsSpot.loginRequired')}
           </Text>
-        )}
+        ) : !hasPermission ? (
+          <Text style={styles.errorText}>
+            {t('page.perps.regionNotSupport')}
+          </Text>
+        ) : null}
       </ScrollView>
 
       <View
@@ -369,7 +377,7 @@ export const PerpsSpotDetailScreen: React.FC = () => {
             height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
             titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
             title={t('page.perpsSpot.buy')}
-            disabled={!currentPerpsAccount}
+            disabled={!canTrade}
             onPress={() => setSheetSide('buy')}
           />
         </View>
@@ -379,19 +387,20 @@ export const PerpsSpotDetailScreen: React.FC = () => {
             height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
             titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
             title={t('page.perpsSpot.sell')}
-            disabled={!currentPerpsAccount}
+            disabled={!canTrade}
             onPress={() => setSheetSide('sell')}
           />
         </View>
       </View>
 
       <SpotOrderSheet
-        visible={sheetSide !== null}
+        visible={sheetVisible}
         side={sheetSide ?? 'buy'}
         market={market}
         balances={account?.balances ?? null}
         midsUpdatedAt={midsUpdatedAt}
         currentPerpsAccount={currentPerpsAccount}
+        canTrade={canTrade}
         onClose={closeSheet}
         onSubmitted={refresh}
         refreshPrices={refresh}

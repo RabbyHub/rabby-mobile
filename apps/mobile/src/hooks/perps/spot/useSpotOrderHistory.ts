@@ -13,7 +13,12 @@ type HistorySnapshot = {
   address: string;
   history: UserHistoricalOrders[];
   fills: WsFill[];
+  loadedAt: number;
 };
+
+// Both endpoints return up to 2000 rows; a refocus within this window reuses
+// the snapshot, pull-to-refresh always reloads.
+const HISTORY_FRESH_MS = 60_000;
 
 /**
  * Closed spot orders, fetched once when `enabled` turns on and on `reload`.
@@ -48,7 +53,12 @@ export const useSpotOrderHistory = ({
         sdk.info.getUserFills(address).catch(() => [] as WsFill[]),
       ]);
       if (requestId === requestIdRef.current) {
-        setSnapshot({ address, history: history ?? [], fills: fills ?? [] });
+        setSnapshot({
+          address,
+          history: history ?? [],
+          fills: fills ?? [],
+          loadedAt: Date.now(),
+        });
       }
     } catch (error) {
       console.error('[perpsSpot] order history fetch failed', error);
@@ -62,13 +72,20 @@ export const useSpotOrderHistory = ({
     }
   }, [address]);
 
+  const current = snapshot && snapshot.address === address ? snapshot : null;
+  const currentRef = useRef(current);
+  currentRef.current = current;
+
   useEffect(() => {
-    if (enabled) {
+    const existing = currentRef.current;
+    if (
+      enabled &&
+      (!existing || Date.now() - existing.loadedAt > HISTORY_FRESH_MS)
+    ) {
       reload();
     }
   }, [enabled, reload]);
 
-  const current = snapshot && snapshot.address === address ? snapshot : null;
   const items = useMemo(
     () =>
       current

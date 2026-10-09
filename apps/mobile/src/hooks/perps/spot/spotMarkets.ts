@@ -79,7 +79,10 @@ export const buildSpotMarkets = (
       quoteName: quote.name,
       baseTokenIndex: base.index,
       quoteTokenIndex: quote.index,
-      szDecimals: base.szDecimals ?? 0,
+      // Meta is remote data; a non-integer here would crash BigNumber math.
+      szDecimals: Number.isInteger(base.szDecimals)
+        ? (base.szDecimals as number)
+        : 0,
       isCanonical: !!pair.isCanonical,
       midPx:
         toPositiveOrNull(ctx?.midPx) ??
@@ -274,13 +277,13 @@ export type SpotOrderDraft = {
 export const validateSpotOrder = (
   draft: SpotOrderDraft,
 ): SpotOrderValidationError | null => {
-  const size = new BigNumber(formatSpotSize(draft.size, draft.szDecimals));
-  if (!size.isFinite() || size.lte(0)) {
-    return 'invalidSize';
-  }
   const price = new BigNumber(draft.price);
   if (!price.isFinite() || price.lte(0)) {
     return 'invalidPrice';
+  }
+  const size = new BigNumber(formatSpotSize(draft.size, draft.szDecimals));
+  if (!size.isFinite() || size.lte(0)) {
+    return 'invalidSize';
   }
   const mid = new BigNumber(draft.midPx ?? NaN);
   if (mid.isFinite() && mid.gt(0)) {
@@ -443,18 +446,20 @@ export const buildSpotBalanceItems = (
   balances: ReadonlyArray<SpotBalance> | null | undefined,
   markets: ReadonlyArray<SpotMarket>,
 ): SpotBalanceItem[] => {
+  const usdcMarketByToken = new Map<number, SpotMarket>();
+  for (const market of markets) {
+    if (market.quoteName === SPOT_QUOTE_STABLE) {
+      usdcMarketByToken.set(market.baseTokenIndex, market);
+    }
+  }
   const items: SpotBalanceItem[] = [];
   for (const balance of balances ?? []) {
     if (!(Number(balance.total) > 0)) {
       continue;
     }
-    const price = getSpotTokenUsdPrice(balance, markets);
-    const market =
-      markets.find(
-        item =>
-          item.baseTokenIndex === balance.token &&
-          item.quoteName === SPOT_QUOTE_STABLE,
-      ) ?? null;
+    const market = usdcMarketByToken.get(balance.token) ?? null;
+    const price =
+      balance.coin === SPOT_QUOTE_STABLE ? '1' : market?.midPx ?? null;
     items.push({
       balance,
       market,
@@ -565,14 +570,20 @@ export const getSpotMaxQuoteAmount = ({
   price,
   baseAvailable,
   quoteAvailable,
+  slippage = 0,
 }: {
   side: SpotOrderSide;
+  /** Conversion price (the mid for market orders, else the limit). */
   price: string | null;
   baseAvailable: BigNumber.Value;
   quoteAvailable: BigNumber.Value;
+  /** Headroom kept on buys so the slippage-bounded notional still fits. */
+  slippage?: number;
 }): string => {
   if (side === 'buy') {
-    return formatSpotQuoteAmount(quoteAvailable);
+    return formatSpotQuoteAmount(
+      new BigNumber(quoteAvailable).div(1 + slippage),
+    );
   }
   const px = new BigNumber(price ?? NaN);
   if (!px.isFinite() || px.lte(0)) {
@@ -588,4 +599,35 @@ export const formatSpotQuoteAmount = (value: BigNumber.Value): string => {
     return '0';
   }
   return bn.decimalPlaces(2, BigNumber.ROUND_DOWN).toFixed();
+};
+
+export type SpotCancelIntent = { pairIndex: number; oid: number };
+
+/**
+ * Cancel targets go straight into a signed action: drop duplicates and
+ * refuse ids or pair indexes that are not non-negative safe integers.
+ */
+export const normalizeSpotCancelIntents = (
+  intents: ReadonlyArray<SpotCancelIntent>,
+): SpotCancelIntent[] => {
+  const seen = new Set<number>();
+  const result: SpotCancelIntent[] = [];
+  for (const intent of intents) {
+    if (
+      !Number.isSafeInteger(intent.oid) ||
+      intent.oid < 0 ||
+      !Number.isSafeInteger(intent.pairIndex) ||
+      intent.pairIndex < 0
+    ) {
+      throw new Error('Invalid spot cancel order');
+    }
+    if (!seen.has(intent.oid)) {
+      seen.add(intent.oid);
+      result.push({ pairIndex: intent.pairIndex, oid: intent.oid });
+    }
+  }
+  if (!result.length) {
+    throw new Error('At least one spot order is required');
+  }
+  return result;
 };

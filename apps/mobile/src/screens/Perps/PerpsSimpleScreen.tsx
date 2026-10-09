@@ -348,7 +348,7 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
                 handleActionApproveStatus={handleActionApproveStatus}
               />
 
-              <PerpsSpotEntry />
+              {hasPermission && <PerpsSpotEntry />}
               <PerpsMarketHomeList onItemPress={handleHomeItemPress} />
               <View style={styles.emptyPadding} />
             </ScrollView>

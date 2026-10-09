@@ -497,6 +497,7 @@
       "detectedMultipleRequestsFromThisDapp": "Detected multiple requests from this DApp",
       "cancelCurrentTransaction": "Cancel current transaction",
       "cancelAll": "Cancel all {{count}} requests from DApp",
+      "cancelAllConfirmMessage": "All your open spot orders will be canceled",
       "blockDappFromSendingRequests": "Block DApp from sending requests for 1 min",
       "cancelConnection": "Cancel connection",
       "cancelCurrentConnection": "Cancel current connection",
@@ -3047,6 +3048,7 @@
         "belowMinNotional": "Minimum order value is {{min}} {{quote}}",
         "insufficientBalance": "Insufficient balance",
         "priceFarFromMarket": "Limit price is too far from the market price",
+        "contextChanged": "Market moved during approval, please try again",
         "stalePrice": "Price is outdated, refreshing… try again"
       }
     },

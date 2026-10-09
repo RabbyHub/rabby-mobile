@@ -43,12 +43,14 @@ export const useSpotSparkline = (
       return;
     }
     const key = `${coin}:${range}`;
+    // Any fetch still in flight for a previous range must not win later.
+    const generation = ++generationRef.current;
     const cached = cache.get(key);
     if (cached && Date.now() - cached.loadedAt < CACHE_TTL_MS) {
       setState({ key, closes: cached.closes });
+      setIsLoading(false);
       return;
     }
-    const generation = ++generationRef.current;
     setIsLoading(true);
     try {
       const { interval, candleCount } = RANGE_SOURCE[range];

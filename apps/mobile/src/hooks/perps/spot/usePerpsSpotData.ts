@@ -43,6 +43,8 @@ export const usePerpsSpotData = ({ withAccount }: { withAccount: boolean }) => {
   );
   const address = currentPerpsAccount?.address;
   const [snapshot, setSnapshot] = useState<SpotMarketSnapshot | null>(null);
+  const snapshotRef = useRef<SpotMarketSnapshot | null>(null);
+  snapshotRef.current = snapshot;
   // When the pair contexts were last fetched; a failed poll keeps the old
   // prices, so order code must check freshness before pricing a market order.
   const [midsUpdatedAt, setMidsUpdatedAt] = useState(0);
@@ -91,8 +93,11 @@ export const usePerpsSpotData = ({ withAccount }: { withAccount: boolean }) => {
 
   useFocusEffect(
     useCallback(() => {
-      // Cached meta lets the list render while the first poll is in flight.
-      fetchSpotMeta();
+      // Cached meta lets the list render while the first poll is in flight;
+      // once a snapshot exists the poll carries its own meta.
+      if (!snapshotRef.current) {
+        fetchSpotMeta();
+      }
       refresh();
       const timer = setInterval(() => {
         if (AppState.currentState === 'active') {

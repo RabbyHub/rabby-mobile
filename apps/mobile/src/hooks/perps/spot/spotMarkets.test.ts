@@ -25,6 +25,7 @@ import {
   groupSpotOpenOrders,
   isSpotMarketFavorite,
   isSpotOpenOrder,
+  normalizeSpotCancelIntents,
   sortSpotMarkets,
   validateSpotOrder,
 } from './spotMarkets';
@@ -464,6 +465,15 @@ describe('amount unit conversion', () => {
     ).toBe('123.45');
     expect(
       getSpotMaxQuoteAmount({
+        side: 'buy',
+        price: '0.2',
+        baseAvailable: '10',
+        quoteAvailable: '105',
+        slippage: 0.05,
+      }),
+    ).toBe('100');
+    expect(
+      getSpotMaxQuoteAmount({
         side: 'sell',
         price: '0.2',
         baseAvailable: '10',
@@ -478,5 +488,43 @@ describe('amount unit conversion', () => {
         quoteAvailable: '1',
       }),
     ).toBe('0');
+  });
+});
+
+describe('normalizeSpotCancelIntents', () => {
+  it('dedupes by oid and rejects malformed ids', () => {
+    expect(
+      normalizeSpotCancelIntents([
+        { pairIndex: 107, oid: 2 },
+        { pairIndex: 107, oid: 2 },
+        { pairIndex: 0, oid: 1 },
+      ]),
+    ).toEqual([
+      { pairIndex: 107, oid: 2 },
+      { pairIndex: 0, oid: 1 },
+    ]);
+    expect(() =>
+      normalizeSpotCancelIntents([{ pairIndex: 0, oid: 1.5 }]),
+    ).toThrow('Invalid spot cancel order');
+    expect(() =>
+      normalizeSpotCancelIntents([{ pairIndex: -1, oid: 1 }]),
+    ).toThrow('Invalid spot cancel order');
+    expect(() => normalizeSpotCancelIntents([])).toThrow(
+      'At least one spot order is required',
+    );
+  });
+
+  it('falls back to zero size decimals when meta is malformed', () => {
+    const markets = buildSpotMarkets(
+      {
+        tokens: [
+          { name: 'USDC', index: 0, szDecimals: 8 },
+          { name: 'BAD', index: 1, szDecimals: 'x' as unknown as number },
+        ],
+        universe: [{ name: '@1', index: 1, tokens: [1, 0] }],
+      },
+      null,
+    );
+    expect(markets[0].szDecimals).toBe(0);
   });
 });

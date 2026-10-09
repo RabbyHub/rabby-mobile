@@ -5,8 +5,14 @@ import { ensurePerpsActionApproval } from '@/hooks/perps/actions/perpsActionAppr
 import { runPerpsAction } from '@/hooks/perps/perpsActionError';
 import { showToast } from '@/hooks/perps/showToast';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import i18n from '@/utils/i18n';
 
-import type { SpotOrderSide, SpotOrderType } from './spotMarkets';
+import {
+  normalizeSpotCancelIntents,
+  type SpotCancelIntent,
+  type SpotOrderSide,
+  type SpotOrderType,
+} from './spotMarkets';
 
 export type PerpsSpotOrderParams = {
   pairIndex: number;
@@ -22,10 +28,19 @@ export type PerpsSpotOrderResult =
   | { status: 'filled'; totalSz: string; avgPx: string; oid: number }
   | { status: 'resting'; oid: number };
 
+// Same backend region gate as perps trading; checked before and after the
+// approval step, which can await the network and the user.
+const assertPermission = () => {
+  if (!perpsStore.getState().hasPermission) {
+    throw new Error(i18n.t('page.perps.regionNotSupport'));
+  }
+};
+
 const assertActionAccount = async (account: Account | null) => {
   if (!account) {
     throw new Error('No current Perps account');
   }
+  assertPermission();
   // Spot orders carry no builder field, only the agent must be approved.
   await ensurePerpsActionApproval(account, { builderFee: false });
   if (
@@ -36,6 +51,7 @@ const assertActionAccount = async (account: Account | null) => {
   ) {
     throw new Error('Perps account changed');
   }
+  assertPermission();
 };
 
 const getExchange = () => {
@@ -46,18 +62,28 @@ const getExchange = () => {
   return exchange;
 };
 
+/**
+ * Place a spot order. `buildParams` runs after the agent approval (which can
+ * take a while) so the price, size and balance checks reflect the latest
+ * market; returning null aborts without signing.
+ */
 export const executePerpsSpotOrder = (
   account: Account | null,
-  params: PerpsSpotOrderParams,
+  pairIndex: number,
+  buildParams: () => PerpsSpotOrderParams | null,
 ) =>
   runPerpsAction<PerpsSpotOrderResult | null>(
     {
       fallback: null,
       label: 'spot trade',
-      context: params,
+      context: { pairIndex },
     },
     async () => {
       await assertActionAccount(account);
+      const params = buildParams();
+      if (!params) {
+        throw new Error(i18n.t('page.perpsSpot.error.contextChanged'));
+      }
       const response = await getExchange().spotOrder({
         pairIndex: params.pairIndex,
         isBuy: params.side === 'buy',
@@ -93,18 +119,19 @@ const getCancelStatusError = (status: unknown) =>
 /** Cancel several spot orders in one signed action; true when all succeed. */
 export const cancelAllPerpsSpotOrders = (
   account: Account | null,
-  params: { pairIndex: number; oid: number }[],
+  intents: SpotCancelIntent[],
 ) =>
   runPerpsAction<boolean>(
     {
       fallback: false,
       label: 'spot cancel all',
-      context: { count: params.length },
+      context: { count: intents.length },
     },
     async () => {
-      if (!params.length) {
+      if (!intents.length) {
         return true;
       }
+      const params = normalizeSpotCancelIntents(intents);
       await assertActionAccount(account);
       const response = await getExchange().cancelSpotOrders(params);
       const statuses: unknown[] = response?.response?.data?.statuses ?? [];
@@ -119,17 +146,18 @@ export const cancelAllPerpsSpotOrders = (
 
 export const cancelPerpsSpotOrder = (
   account: Account | null,
-  params: { pairIndex: number; oid: number },
+  intent: SpotCancelIntent,
 ) =>
   runPerpsAction<boolean>(
     {
       fallback: false,
       label: 'spot cancel',
-      context: params,
+      context: intent,
     },
     async () => {
+      const params = normalizeSpotCancelIntents([intent]);
       await assertActionAccount(account);
-      const response = await getExchange().cancelSpotOrders([params]);
+      const response = await getExchange().cancelSpotOrders(params);
       // The API answers "success" as a bare string; the SDK types it as an
       // object, so accept both shapes.
       const status: unknown = response?.response?.data?.statuses?.[0];

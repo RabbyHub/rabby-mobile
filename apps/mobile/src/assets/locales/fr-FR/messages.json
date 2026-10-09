@@ -551,6 +551,7 @@
         "notEnough": "Pas assez de gas. Solde de gas : {{usd}}"
       },
       "cancelAll": "Annuler toutes les {{count}} demandes de DApp",
+      "cancelAllConfirmMessage": "Tous vos ordres spot ouverts seront annulés",
       "ledger": {
         "txRejectedByLedger": "La transaction est rejetée sur votre Ledger.",
         "resent": "Renvoyer",
@@ -2126,6 +2127,7 @@
         "belowMinNotional": "La valeur minimale d'un ordre est de {{min}} {{quote}}",
         "insufficientBalance": "Solde insuffisant",
         "priceFarFromMarket": "Le prix limite est trop éloigné du prix du marché",
+        "contextChanged": "Le marché a bougé pendant l'approbation, veuillez réessayer",
         "stalePrice": "Prix obsolète, actualisation en cours… réessayez"
       }
     },

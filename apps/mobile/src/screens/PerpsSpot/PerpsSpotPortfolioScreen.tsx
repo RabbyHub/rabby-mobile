@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   RefreshControl,
   TouchableOpacity,
@@ -34,6 +35,7 @@ import type { SpotOrderHistoryItem } from '@/hooks/perps/spot/spotOrderHistory';
 import { usePerpsSpotData } from '@/hooks/perps/spot/usePerpsSpotData';
 import { useSpotOrderCancel } from '@/hooks/perps/spot/useSpotOrderCancel';
 import { useSpotOrderHistory } from '@/hooks/perps/spot/useSpotOrderHistory';
+import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { naviPush } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -155,6 +157,8 @@ export const PerpsSpotPortfolioScreen: React.FC = () => {
     currentPerpsAccount,
     refresh,
   );
+  // Same backend region gate as perps trading.
+  const hasPermission = perpsStore(s => s.hasPermission);
 
   const history = useSpotOrderHistory({
     address: currentPerpsAccount?.address,
@@ -189,30 +193,45 @@ export const PerpsSpotPortfolioScreen: React.FC = () => {
       cancel(market.pairIndex, order.oid),
     [cancel],
   );
-  const handleCancelAll = useCallback(async () => {
+  const cancelAllOrders = useCallback(async () => {
     if (cancelAllLockRef.current || !orderItems.length) {
       return;
     }
     cancelAllLockRef.current = true;
     setCancellingAll(true);
     try {
-      const ok = await cancelAllPerpsSpotOrders(
+      await cancelAllPerpsSpotOrders(
         currentPerpsAccount,
         orderItems.map(item => ({
           pairIndex: item.market.pairIndex,
           oid: item.order.oid,
         })),
       );
-      if (ok) {
-        refresh();
-      }
     } finally {
+      // A partial failure still cancelled some orders: always re-sync.
+      refresh();
       cancelAllLockRef.current = false;
       setCancellingAll(false);
     }
   }, [orderItems, currentPerpsAccount, refresh]);
+  // Same confirmation as cancelling every perps limit order.
+  const handleCancelAll = useCallback(() => {
+    Alert.alert(
+      t('page.perps.cancelAllOrdersConfirmTitle'),
+      t('page.perpsSpot.cancelAllConfirmMessage'),
+      [
+        { text: t('global.cancel'), style: 'default' },
+        {
+          text: t('global.confirm'),
+          style: 'default',
+          onPress: cancelAllOrders,
+        },
+      ],
+    );
+  }, [t, cancelAllOrders]);
 
-  const cancelDisabled = cancellingOid !== null || cancellingAll;
+  const cancelDisabled =
+    cancellingOid !== null || cancellingAll || !hasPermission;
   const renderGroup = useCallback(
     ({ item }: { item: SpotOpenOrderGroup }) => (
       <SpotOrderGroupCard
