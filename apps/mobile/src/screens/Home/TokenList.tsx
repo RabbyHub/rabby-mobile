@@ -29,7 +29,14 @@ import {
   ASSETS_SECTION_HEADER,
   RootNames,
 } from '@/constant/layout';
-import { useTheme2024 } from '@/hooks/theme';
+import { apisTheme, useTheme2024 } from '@/hooks/theme';
+import { useRemovedTokens } from '@/hooks/useRemovedTokens';
+import {
+  isUserTokenPinnedInMemory,
+  toggleUserTokenPinned,
+} from '@/hooks/useTokenSettings';
+import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
+import i18n from '@/utils/i18n';
 import { EmptyTokenRow } from './components/AssetRenderItems/EmptyToken';
 import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
 import { ItemLoader } from './components/Skeleton';
@@ -109,18 +116,22 @@ type TokenListExtraItem =
 
 type TokenListItem = TokenProjectionSectionItem<TokenListExtraItem>;
 
-const TokenResourceRow = React.memo(
+type TokenResourceRowProps = {
+  tokenId: TokenEntityId;
+  tokenStyle?: ViewStyle;
+  loaderStyle?: ViewStyle;
+  onTokenPress(token: ITokenItem): void;
+};
+
+const TOKEN_MENU_TRIGGER_PROPS = { action: 'longPress' } as const;
+
+const TokenResourceRowContent = React.memo(
   ({
     tokenId,
     tokenStyle,
     loaderStyle,
     onTokenPress,
-  }: {
-    tokenId: TokenEntityId;
-    tokenStyle?: ViewStyle;
-    loaderStyle?: ViewStyle;
-    onTokenPress(token: ITokenItem): void;
-  }) => {
+  }: TokenResourceRowProps) => {
     const token = useActivityStore(
       tokenEntityResourceStore.useStore,
       state => state.valueMap[tokenId],
@@ -137,10 +148,83 @@ const TokenResourceRow = React.memo(
         data={token}
         style={tokenStyle}
         onTokenPress={onTokenPress}
-        //logoSize={46}
-        //chainLogoSize={18}
         scene="portfolio"
       />
+    );
+  },
+);
+
+const TokenResourceRow = React.memo(
+  ({
+    onRemoveToken,
+    ...rowProps
+  }: TokenResourceRowProps & {
+    onRemoveToken(token: ITokenItem): void;
+  }) => {
+    const { tokenId, loaderStyle } = rowProps;
+    // Balance/price updates belong to the content, not the native menu host.
+    const hasToken = useActivityStore(
+      tokenEntityResourceStore.useStore,
+      state => !!state.valueMap[tokenId],
+      Object.is,
+      { storeLabel: 'single-address-token-entities' },
+    );
+    const getMenuConfig = useCallback(() => {
+      const token = tokenEntityResourceStore.getValue(tokenId);
+      if (!token) {
+        return { menuActions: [] };
+      }
+      const isPinned = isUserTokenPinnedInMemory(token);
+      const isDarkTheme = apisTheme.getBinaryMode() === 'dark';
+      return {
+        menuActions: [
+          {
+            title: isPinned
+              ? i18n.t('page.tokenDetail.action.unfavorite')
+              : i18n.t('page.tokenDetail.action.favorite'),
+            icon: isPinned
+              ? isDarkTheme
+                ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png')
+                : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png')
+              : isDarkTheme
+              ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite_dark.png')
+              : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite.png'),
+            key: 'favorite',
+            androidIconName: isPinned
+              ? 'ic_rabby_menu_token_unfavorite'
+              : 'ic_rabby_menu_token_favorite',
+            action() {
+              toggleUserTokenPinned(token);
+            },
+          },
+          {
+            title: i18n.t('page.singleHome.tokenActions.remove'),
+            icon: isDarkTheme
+              ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_delete_dark.png')
+              : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_delete.png'),
+            key: 'remove',
+            androidIconName: 'ic_rabby_menu_delete',
+            destructive: true,
+            action() {
+              onRemoveToken(token);
+            },
+          },
+        ],
+      };
+    }, [onRemoveToken, tokenId]);
+
+    if (!hasToken) {
+      return <ItemLoader style={loaderStyle} />;
+    }
+
+    const content = <TokenResourceRowContent {...rowProps} />;
+    return (
+      <ContextMenuView
+        getMenuConfig={getMenuConfig}
+        preViewBorderRadius={14}
+        triggerProps={TOKEN_MENU_TRIGGER_PROPS}>
+        {IS_ANDROID ? <View collapsable={false}>{content}</View> : content}
+      </ContextMenuView>
     );
   },
 );
@@ -196,6 +280,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     getStyle: getStyles,
   });
   const { t } = useTranslation();
+  const addRemovedToken = useRemovedTokens(state => state.addRemovedToken);
   const { currentAccount } = useSingleHomeAccount();
   const { selectedChain } = useSingleHomeChain();
 
@@ -284,7 +369,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     state =>
       !!singleAssetsKey &&
       !!state.singleAssetsConfigByKey[singleAssetsKey] &&
-      !!state.singleAssetsResultByKey[singleAssetsKey],
+      !!state.singleDisplayAssetsResultByKey[singleAssetsKey],
     Object.is,
     { storeLabel: 'single-address-token-assets-index-readiness' },
   );
@@ -294,7 +379,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     useShallow(state => {
       const result =
         (singleAssetsKey
-          ? state.singleAssetsResultByKey[singleAssetsKey]
+          ? state.singleDisplayAssetsResultByKey[singleAssetsKey]
           : undefined) || EMPTY_TOKEN_ASSETS_INDEX_RESULT;
       return {
         additionalCoreUsdValue: result.additionalCoreUsdValue,
@@ -679,6 +764,18 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     }
   }, [currentAddress, getTokenList, onRefresh]);
 
+  const handleRemoveToken = useCallback(
+    (token: ITokenItem) => {
+      addRemovedToken({ chainId: token.chain, tokenId: token.id }).catch(
+        error => {
+          console.error('Remove token failed:', error);
+          toast.show(i18n.t('page.singleHome.tokenActions.removeFailed'));
+        },
+      );
+    },
+    [addRemovedToken],
+  );
+
   const renderTokenItem = useCallback(
     (item: Extract<TokenAssetsIndexRow, { type: 'token' }>) => (
       <View style={styles.rowWrap}>
@@ -687,10 +784,17 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
           tokenStyle={tokenRowStyle}
           loaderStyle={styles.removeLeft}
           onTokenPress={handleOpenTokenDetail}
+          onRemoveToken={handleRemoveToken}
         />
       </View>
     ),
-    [handleOpenTokenDetail, styles.removeLeft, styles.rowWrap, tokenRowStyle],
+    [
+      handleOpenTokenDetail,
+      handleRemoveToken,
+      styles.removeLeft,
+      styles.rowWrap,
+      tokenRowStyle,
+    ],
   );
 
   const renderAdditionalHeaderItem = useCallback(

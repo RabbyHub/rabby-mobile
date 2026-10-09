@@ -7,8 +7,12 @@ import type {
   Token,
   TokenDisplayMode,
 } from '@/core/startupServices/preference';
-import { getRegisteredService } from '@/core/services/serviceRegistry';
+import {
+  getRegisteredService,
+  waitForCoreService,
+} from '@/core/services/serviceRegistry';
 import { createDeferredServiceApi } from './createDeferredServiceApi';
+import type { IManageToken } from '@/types/assets';
 
 export type PreferenceServiceApiContract = PreferenceService;
 export const preferenceServiceApi = createDeferredServiceApi<
@@ -298,6 +302,40 @@ export async function removePinnedUserToken(
   token: Parameters<PreferenceService['removePinedToken']>[0],
 ) {
   await preferenceServiceApi.removePinedToken(token);
+}
+
+export async function addRemovedToken(token: IManageToken) {
+  await preferenceServiceApi.addRemovedToken(token);
+}
+
+export async function removeRemovedToken(token: IManageToken) {
+  await preferenceServiceApi.removeRemovedToken(token);
+}
+
+export async function isTokenRemoved(token: IManageToken): Promise<boolean> {
+  return preferenceServiceApi.isTokenRemoved(token);
+}
+
+export async function getRemovedTokens(): Promise<IManageToken[]> {
+  return preferenceServiceApi.getRemovedTokens();
+}
+
+export function getRemovedTokensSnapshot(): IManageToken[] {
+  return getRegisteredService('preferenceService')?.getRemovedTokens() || [];
+}
+
+export function isRemovedTokensReadySnapshot(): boolean {
+  return !!getRegisteredService('preferenceService');
+}
+
+export async function bindRemovedTokensListener(
+  listener: (tokens: readonly IManageToken[]) => void,
+) {
+  const service = await waitForCoreService('preferenceService');
+  listener(service.getRemovedTokens());
+  return service.subscribeStoreField('removedTokens', tokens => {
+    return listener(tokens || []);
+  });
 }
 
 export async function dangerouslySetTokenManageSettingMapForDev(

@@ -327,11 +327,12 @@ export const TokenList = () => {
     useTokenAssetsIndexStore,
     useShallow(state => {
       const result =
-        state.multiAssetsResultByKey[multiAssetsKey] ||
+        state.multiDisplayAssetsResultByKey[multiAssetsKey] ||
         EMPTY_TOKEN_ASSETS_INDEX_RESULT;
       return {
-        availability:
-          state.multiAssetsAvailabilityByKey[multiAssetsKey] || 'unresolved',
+        availability: state.multiDisplayAssetsResultByKey[multiAssetsKey]
+          ? state.multiAssetsAvailabilityByKey[multiAssetsKey] || 'unresolved'
+          : 'unresolved',
         additionalCoreUsdValue: result.additionalCoreUsdValue,
         lowValueTokenPreviewLogoUrls: result.lowValueTokenPreviewLogoUrls,
         lpLowValueTokenPreviewLogoUrls: result.lpLowValueTokenPreviewLogoUrls,

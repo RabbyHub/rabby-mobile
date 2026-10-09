@@ -486,7 +486,7 @@ fileprivate extension RNIContextMenuView {
   };
 
   /// configure target preview based on `previewConfig`
-  func makeTargetedPreview() -> UITargetedPreview {
+  func makeTargetedPreview() -> UITargetedPreview? {
     // alias to variable
     let previewConfig = self._previewConfig;
 
@@ -524,6 +524,8 @@ fileprivate extension RNIContextMenuView {
     if let targetNode = previewConfig.targetViewNode,
        let targetView = self.bridge.uiManager.view(forReactTag: targetNode) {
 
+      guard targetView.window != nil else { return nil };
+
       // A - Targeted preview provided....
       return UITargetedPreview(
         view: targetView,
@@ -531,6 +533,10 @@ fileprivate extension RNIContextMenuView {
       );
 
     } else {
+      // UIKit may request a dismissal preview after a list row is detached.
+      // UITargetedPreview(view:parameters:) throws when the view has no window.
+      guard self.window != nil else { return nil };
+
       // B - No targeted preview provided....
       return UITargetedPreview(
         view: self,

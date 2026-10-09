@@ -138,6 +138,7 @@ import { abortAllSyncTasks } from '@/databases/sync/_task';
 import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { ClearPendingPopup } from './components/ClearPendingPopup';
+import { RemovedTokenSettingItem } from './components/RemovedTokenSettingItem';
 import { OpenApiPopup } from './components/OpenApiPopup';
 import {
   getFallbackAccountSnapshot,
@@ -848,6 +849,10 @@ function SettingsBlocks() {
           //     );
           //   },
           // },
+          {
+            key: 'removed-token',
+            render: () => <RemovedTokenSettingItem />,
+          },
           {
             visible: SHOULD_SUPPORT_DARK_MODE,
             label: t('page.setting.themeMode'),
