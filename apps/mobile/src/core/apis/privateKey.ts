@@ -8,7 +8,7 @@ import { withWalletUnlock } from '@/utils/walletUnlockGuard';
 
 /**
  * Validates and cleans a private key string.
- * Strips hex prefix, removes whitespace/newlines, and validates the key format.
+ * Strips the hex prefix, removes line breaks, trims, and validates the key format.
  * @param privateKey - The raw private key string (with or without 0x prefix)
  * @returns The cleaned private key string
  * @throws Error if the private key is invalid
@@ -20,9 +20,10 @@ export function validateAndCleanPrivateKey(privateKey: string): string {
     .replace(/\r/g, '')
     .trim();
 
-  const buffer = Buffer.from(cleanedPrivateKey, 'hex');
-
-  if (!ethUtil.isValidPrivate(buffer)) {
+  if (
+    !/^[0-9a-fA-F]{64}$/.test(cleanedPrivateKey) ||
+    !ethUtil.isValidPrivate(Buffer.from(cleanedPrivateKey, 'hex'))
+  ) {
     throw new Error(t('background.error.invalidPrivateKey'));
   }
 
