@@ -2072,7 +2072,10 @@
         "insufficientBalance": "Solde insuffisant",
         "priceFarFromMarket": "Le prix limite est trop éloigné du prix du marché",
         "stalePrice": "Prix obsolète, actualisation en cours… réessayez"
-      }
+      },
+      "ordersEntry": "Ordres",
+      "ordersTitle": "Ordres spot ({{count}})",
+      "filledOf": "Exécuté {{filled}} / {{total}}"
     },
     "perps": {
       "pro": {

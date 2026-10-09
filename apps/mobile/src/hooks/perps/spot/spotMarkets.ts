@@ -249,3 +249,31 @@ export const getSpotMaxSize = ({
 
 export const isSpotOpenOrder = (order: Pick<OpenOrder, 'coin'>) =>
   order.coin.startsWith('@') || order.coin.includes('/');
+
+export type SpotOpenOrderItem = {
+  order: OpenOrder;
+  market: SpotMarket;
+};
+
+/**
+ * Open spot orders across all pairs, newest first. Orders whose pair is not
+ * in the market list are dropped: without its pair index they can't be
+ * cancelled from the app.
+ */
+export const buildSpotOpenOrderItems = (
+  orders: OpenOrder[] | null | undefined,
+  markets: SpotMarket[],
+): SpotOpenOrderItem[] => {
+  if (!orders?.length) {
+    return [];
+  }
+  const marketsByCoin = new Map(markets.map(market => [market.coin, market]));
+  const items: SpotOpenOrderItem[] = [];
+  for (const order of orders) {
+    const market = marketsByCoin.get(order.coin);
+    if (market) {
+      items.push({ order, market });
+    }
+  }
+  return items.sort((a, b) => b.order.timestamp - a.order.timestamp);
+};

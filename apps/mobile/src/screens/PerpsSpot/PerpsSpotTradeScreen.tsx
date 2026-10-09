@@ -22,10 +22,7 @@ import {
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
-import {
-  cancelPerpsSpotOrder,
-  executePerpsSpotOrder,
-} from '@/hooks/perps/spot/spotActions';
+import { executePerpsSpotOrder } from '@/hooks/perps/spot/spotActions';
 import {
   formatSpotLimitPrice,
   formatSpotPrice,
@@ -41,9 +38,12 @@ import {
   type SpotOrderType,
 } from '@/hooks/perps/spot/spotMarkets';
 import { usePerpsSpotData } from '@/hooks/perps/spot/usePerpsSpotData';
+import { useSpotOrderCancel } from '@/hooks/perps/spot/useSpotOrderCancel';
 import { useTheme2024 } from '@/hooks/theme';
 import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { createGetStyles2024 } from '@/utils/styles';
+
+import { SpotOpenOrderRow } from './components/SpotOpenOrderRow';
 
 const DECIMAL_INPUT_RE = /^\d*\.?\d*$/;
 
@@ -84,13 +84,15 @@ export const PerpsSpotTradeScreen: React.FC = () => {
   const [size, setSize] = useState('');
   const [limitPx, setLimitPx] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [cancellingOid, setCancellingOid] = useState<number | null>(null);
   // Mid timestamp a market order was refused at; cleared by the next poll.
   const [stalePriceAt, setStalePriceAt] = useState<number | null>(null);
-  // Synchronous locks: state updates land a render late, so a fast double tap
+  // Synchronous lock: state updates land a render late, so a fast double tap
   // would otherwise sign two orders.
   const submitLockRef = useRef(false);
-  const cancelLockRef = useRef(false);
+  const { cancel, cancellingOid } = useSpotOrderCancel(
+    currentPerpsAccount,
+    refresh,
+  );
 
   const szDecimals = market?.szDecimals ?? 0;
   const midPx = market?.midPx ?? null;
@@ -212,26 +214,9 @@ export const PerpsSpotTradeScreen: React.FC = () => {
   ]);
 
   const handleCancel = useCallback(
-    async (oid: number) => {
-      if (!market || cancelLockRef.current) {
-        return;
-      }
-      cancelLockRef.current = true;
-      setCancellingOid(oid);
-      try {
-        const ok = await cancelPerpsSpotOrder(currentPerpsAccount, {
-          pairIndex: market.pairIndex,
-          oid,
-        });
-        if (ok) {
-          refresh();
-        }
-      } finally {
-        cancelLockRef.current = false;
-        setCancellingOid(null);
-      }
-    },
-    [market, currentPerpsAccount, refresh],
+    (target: { pairIndex: number }, order: { oid: number }) =>
+      cancel(target.pairIndex, order.oid),
+    [cancel],
   );
 
   const marketOrders = useMemo(
@@ -426,31 +411,14 @@ export const PerpsSpotTradeScreen: React.FC = () => {
           </Text>
         ) : (
           marketOrders.map(order => (
-            <View key={order.oid} style={styles.orderRow}>
-              <View>
-                <Text
-                  style={[
-                    styles.orderSide,
-                    order.side === 'B' ? styles.buyText : styles.sellText,
-                  ]}>
-                  {t(`page.perpsSpot.${order.side === 'B' ? 'buy' : 'sell'}`)}
-                </Text>
-                <Text style={styles.mutedText}>
-                  {`${order.sz} ${market.baseName} @ ${order.limitPx}`}
-                </Text>
-              </View>
-              <TouchableOpacity
-                disabled={cancellingOid !== null}
-                onPress={() => handleCancel(order.oid)}>
-                {cancellingOid === order.oid ? (
-                  <ActivityIndicator color={colors2024['neutral-foot']} />
-                ) : (
-                  <Text style={styles.cancelText}>
-                    {t('page.perpsSpot.cancel')}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </View>
+            <SpotOpenOrderRow
+              key={order.oid}
+              order={order}
+              market={market}
+              cancelling={cancellingOid === order.oid}
+              cancelDisabled={cancellingOid !== null}
+              onCancel={handleCancel}
+            />
           ))
         )}
       </ScrollView>
@@ -602,29 +570,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
-  },
-  orderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: colors2024['neutral-line'],
-  },
-  orderSide: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-  },
-  buyText: { color: colors2024['green-default'] },
-  sellText: { color: colors2024['red-default'] },
-  cancelText: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '600',
-    color: colors2024['brand-default'],
   },
   footer: {
     paddingHorizontal: 20,

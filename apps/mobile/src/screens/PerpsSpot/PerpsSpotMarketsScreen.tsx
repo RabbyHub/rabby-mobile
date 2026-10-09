@@ -15,6 +15,7 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 import { RootNames } from '@/constant/layout';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import {
+  buildSpotOpenOrderItems,
   filterSpotMarkets,
   formatSpotPrice,
   getSpotMarketDisplayName,
@@ -49,9 +50,12 @@ export const PerpsSpotMarketsScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useRabbyAppNavigation();
   const [search, setSearch] = useState('');
-  const { markets, isLoading, isError } = usePerpsSpotData({
-    withAccount: false,
-  });
+  const { markets, isLoading, isError, account, currentPerpsAccount } =
+    usePerpsSpotData({ withAccount: true });
+  const openOrderCount = useMemo(
+    () => buildSpotOpenOrderItems(account?.openOrders, markets).length,
+    [account?.openOrders, markets],
+  );
 
   const sortedMarkets = useMemo(() => sortSpotMarkets(markets), [markets]);
   const list = useMemo(
@@ -70,6 +74,11 @@ export const PerpsSpotMarketsScreen: React.FC = () => {
       screen: RootNames.PerpsSpotTrade,
       params: { pairIndex: market.pairIndex },
     });
+  }, []);
+
+  const handleOpenOrders = useCallback(() => {
+    Keyboard.dismiss();
+    naviPush(RootNames.StackTransaction, { screen: RootNames.PerpsSpotOrders });
   }, []);
 
   const renderItem = useCallback(
@@ -93,6 +102,21 @@ export const PerpsSpotMarketsScreen: React.FC = () => {
           onCancel={() => setSearch('')}
           returnKeyType="done"
         />
+        {!!currentPerpsAccount && (
+          <TouchableOpacity
+            style={styles.ordersBtn}
+            hitSlop={8}
+            onPress={handleOpenOrders}>
+            <Text style={styles.ordersBtnText}>
+              {t('page.perpsSpot.ordersEntry')}
+            </Text>
+            {openOrderCount > 0 && (
+              <View style={styles.ordersBadge}>
+                <Text style={styles.ordersBadgeText}>{openOrderCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        )}
       </View>
       {isLoading ? (
         <View style={styles.center}>
@@ -135,6 +159,30 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
   },
   searchBar: { flex: 1 },
+  ordersBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  ordersBtnText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+  },
+  ordersBadge: {
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 5,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors2024['brand-default'],
+  },
+  ordersBadgeText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '700',
+    color: colors2024['neutral-bg-1'],
+  },
   list: { flex: 1 },
   listContent: { paddingHorizontal: 16, paddingBottom: 24 },
   center: { paddingTop: 120, alignItems: 'center' },

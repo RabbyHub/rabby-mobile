@@ -436,6 +436,7 @@ export type TransactionNavigatorParamList = {
     pairIndex: number;
     side?: 'buy' | 'sell';
   };
+  [RootNames.PerpsSpotOrders]?: undefined;
   [RootNames.Lending]?: {
     tokenAddress?: string;
     direction?: 'supply' | 'borrow';

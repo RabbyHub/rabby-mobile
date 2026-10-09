@@ -36,7 +36,11 @@ import { PerpsHistoryScreen } from '../PerpsHistory';
 import { PerpsProHistoryScreen } from '../PerpsProHistory';
 import { PerpsProHistoryHeader } from '../PerpsProHistory/components/PerpsProHistoryHeader';
 import { PerpsSearchScreen } from '../PerpsSearch';
-import { PerpsSpotMarketsScreen, PerpsSpotTradeScreen } from '../PerpsSpot';
+import {
+  PerpsSpotMarketsScreen,
+  PerpsSpotOrdersScreen,
+  PerpsSpotTradeScreen,
+} from '../PerpsSpot';
 import LendingHistory from '../Lending/components/LendingHistory';
 import LendingScreen from '../Lending';
 import PredictionScreen from '../Prediction';
@@ -466,6 +470,16 @@ export default function TransactionNavigator() {
       <TransactionStack.Screen
         name={RootNames.PerpsSpotTrade}
         component={PerpsSpotTradeScreen}
+        options={mergeScreenOptions({
+          headerShown: false,
+          headerStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+          },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.PerpsSpotOrders}
+        component={PerpsSpotOrdersScreen}
         options={mergeScreenOptions({
           headerShown: false,
           headerStyle: {

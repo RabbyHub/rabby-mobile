@@ -2993,7 +2993,10 @@
         "insufficientBalance": "Insufficient balance",
         "priceFarFromMarket": "Limit price is too far from the market price",
         "stalePrice": "Price is outdated, refreshing… try again"
-      }
+      },
+      "ordersEntry": "Orders",
+      "ordersTitle": "Spot orders ({{count}})",
+      "filledOf": "Filled {{filled}} / {{total}}"
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Build-In Page"

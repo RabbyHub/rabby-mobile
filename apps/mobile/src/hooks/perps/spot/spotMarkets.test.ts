@@ -1,7 +1,10 @@
 import type { SpotMeta } from '@rabby-wallet/hyperliquid-sdk';
 
+import type { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
+
 import {
   buildSpotMarkets,
+  buildSpotOpenOrderItems,
   filterSpotMarkets,
   formatSpotLimitPrice,
   formatSpotPrice,
@@ -230,5 +233,30 @@ describe('isSpotOpenOrder', () => {
     expect(isSpotOpenOrder({ coin: 'PURR/USDC' })).toBe(true);
     expect(isSpotOpenOrder({ coin: 'BTC' })).toBe(false);
     expect(isSpotOpenOrder({ coin: 'xyz:TSLA' })).toBe(false);
+  });
+});
+
+describe('buildSpotOpenOrderItems', () => {
+  const order = (coin: string, oid: number, timestamp: number) =>
+    ({ coin, oid, timestamp, side: 'B', sz: '1', limitPx: '1' } as OpenOrder);
+
+  it('keeps spot orders of known pairs, newest first', () => {
+    const markets = buildSpotMarkets(spotMeta, mids);
+    const items = buildSpotOpenOrderItems(
+      [
+        order('@107', 1, 100),
+        order('BTC', 2, 300),
+        order('PURR/USDC', 3, 200),
+        order('@999', 4, 400),
+      ],
+      markets,
+    );
+    expect(items.map(item => item.order.oid)).toEqual([3, 1]);
+    expect(items[0].market.pairIndex).toBe(0);
+    expect(items[1].market.pairIndex).toBe(107);
+  });
+
+  it('returns nothing without orders', () => {
+    expect(buildSpotOpenOrderItems(undefined, [])).toEqual([]);
   });
 });
