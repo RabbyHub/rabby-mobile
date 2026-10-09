@@ -8,13 +8,14 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { RcNextLeftCC } from '@/assets/icons/common';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { Text } from '@/components/Typography';
 import { NextSearchBar } from '@/components2024/SearchBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RootNames } from '@/constant/layout';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
+import type { PerpsViewMode } from '@/core/services/perpsService';
+import { navBack } from '@/hooks/navigation';
+import { perpsViewModeController } from '@/hooks/perps/viewMode/perpsViewModeController';
 import { useSpotTokenLogos } from '@/hooks/perps/spot/spotLogos';
 import {
   buildSpotOpenOrderItems,
@@ -32,14 +33,17 @@ import { useTheme2024 } from '@/hooks/theme';
 import { naviPush } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 
+import { PerpsHeader } from '../PerpsShared/components/PerpsHeader';
 import { SpotMarketRow } from './components/SpotMarketRow';
+
+// The Spot tab is the active one here; the switch keeps it disabled.
+const noop = () => {};
 
 const FILTERS: SpotMarketFilter[] = ['all', 'holdings', 'favorites'];
 
 export const PerpsSpotMarketsScreen: React.FC = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const navigation = useRabbyAppNavigation();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<SpotMarketFilter>('all');
   const [sort, setSort] = useState<SpotMarketSort>('volume');
@@ -82,10 +86,13 @@ export const PerpsSpotMarketsScreen: React.FC = () => {
     [sortedMarkets, filter, heldTokenIndexes, favoriteMarkets, search],
   );
 
-  const handleGoBack = useCallback(() => {
+  // Perps / Pro tabs: the Perps container below this screen follows the
+  // saved view mode, so set it and pop back to it.
+  const handleSelectMode = useCallback((viewMode: PerpsViewMode) => {
     Keyboard.dismiss();
-    navigation.goBack();
-  }, [navigation]);
+    void perpsViewModeController.setViewMode(viewMode);
+    navBack();
+  }, []);
 
   const handleSelect = useCallback((market: SpotMarket) => {
     Keyboard.dismiss();
@@ -114,27 +121,30 @@ export const PerpsSpotMarketsScreen: React.FC = () => {
 
   return (
     <NormalScreenContainer2024 noHeader type="bg1">
-      <View style={styles.header}>
-        <TouchableOpacity hitSlop={12} onPress={handleGoBack}>
-          <RcNextLeftCC color={colors2024['neutral-title-1']} width={24} />
-        </TouchableOpacity>
-        <Text style={styles.title}>{t('page.perpsSpot.title')}</Text>
-        {!!currentPerpsAccount && (
-          <TouchableOpacity
-            style={styles.ordersBtn}
-            hitSlop={8}
-            onPress={handleOpenPortfolio}>
-            <Text style={styles.ordersBtnText}>
-              {t('page.perpsSpot.portfolioEntry')}
-            </Text>
-            {openOrderCount > 0 && (
-              <View style={styles.ordersBadge}>
-                <Text style={styles.ordersBadgeText}>{openOrderCount}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        )}
-      </View>
+      <PerpsHeader
+        activeMode="spot"
+        isModeSwitching={false}
+        onSelectMode={handleSelectMode}
+        onSelectSpot={noop}
+        rightAccessory={
+          currentPerpsAccount ? (
+            <TouchableOpacity
+              style={styles.ordersBtn}
+              hitSlop={8}
+              onPress={handleOpenPortfolio}>
+              <Text style={styles.ordersBtnText}>
+                {t('page.perpsSpot.portfolioEntry')}
+              </Text>
+              {openOrderCount > 0 && (
+                <View style={styles.ordersBadge}>
+                  <Text style={styles.ordersBadgeText}>{openOrderCount}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          ) : null
+        }
+        showBottomDivider={false}
+      />
       <NextSearchBar
         style={styles.searchBar}
         placeholder={t('page.perpsSpot.searchPlaceholder')}
@@ -216,25 +226,7 @@ export const PerpsSpotMarketsScreen: React.FC = () => {
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  header: {
-    paddingHorizontal: 20,
-    paddingLeft: 14,
-    paddingTop: 6,
-    paddingBottom: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: colors2024['neutral-bg-1'],
-  },
-  title: {
-    flex: 1,
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '900',
-    color: colors2024['neutral-title-1'],
-  },
-  searchBar: { marginHorizontal: 20, marginBottom: 10 },
+  searchBar: { marginHorizontal: 20, marginTop: 4, marginBottom: 10 },
   ordersBtn: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -167,9 +167,6 @@ jest.mock('./components/PerpsAccountCard', () => ({
 jest.mock('./components/PerpsMarketSection/PerpsMarketHomeList', () => ({
   PerpsMarketHomeList: () => null,
 }));
-jest.mock('../PerpsSpot/PerpsSpotEntry', () => ({
-  PerpsSpotEntry: () => null,
-}));
 jest.mock('./components/PerpsPositionSection', () => ({
   PerpsPositionSection: () => null,
 }));

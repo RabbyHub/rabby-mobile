@@ -24,7 +24,6 @@ import { useMemoizedFn, useRequest } from 'ahooks';
 import type { Account } from '@/core/startupServices/preference';
 import { usePerpsDeposit } from './hooks/usePerpsDeposit';
 import { PerpsMarketHomeList } from './components/PerpsMarketSection/PerpsMarketHomeList';
-import { PerpsSpotEntry } from '../PerpsSpot/PerpsSpotEntry';
 import { PerpsPositionSection } from './components/PerpsPositionSection';
 import { PerpsLimitOrdersSection } from './components/PerpsLimitOrdersSection';
 import { PerpsPopupGroup } from './components/PerpsPopupGroup';
@@ -33,6 +32,7 @@ import {
   PerpsRegionAlert,
 } from './components/PerpsRegionAlert';
 import { PerpsSimpleHeader } from './components/PerpsHeaderTitle';
+import { openPerpsSpotMarkets } from '../PerpsSpot/openSpotMarkets';
 import {
   BOTTOM_BUTTON_DOUBLE_HEIGHT,
   BOTTOM_BUTTON_GAP,
@@ -277,6 +277,7 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
           onPressInPro={onPressInPro}
           onPressOutPro={onPressOutPro}
           onSwitchToPro={onSwitchToPro}
+          onSelectSpot={hasPermission ? openPerpsSpotMarkets : undefined}
           showProNewBadge={showProNewBadge}
         />
         {!hasPermission ? (
@@ -348,7 +349,6 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
                 handleActionApproveStatus={handleActionApproveStatus}
               />
 
-              {hasPermission && <PerpsSpotEntry />}
               <PerpsMarketHomeList onItemPress={handleHomeItemPress} />
               <View style={styles.emptyPadding} />
             </ScrollView>
