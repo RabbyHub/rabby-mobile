@@ -416,27 +416,48 @@ export const getSpotHeldTokenIndexes = (
 const SPOT_QUOTE_STABLE = 'USDC';
 
 /**
- * USDC price of a spot token: 1 for USDC, else the mid of its USDC pair.
- * Null when the token has no priced USDC pair.
+ * USDC price of every priceable spot token, by token index: 1 for USDC, the
+ * mid of the token's USDC pair, else its mid on a pair whose quote token is
+ * itself priced in USDC (UXPL/USDH through USDH/USDC).
  */
-export const getSpotTokenUsdPrice = (
-  balance: Pick<SpotBalance, 'coin' | 'token'>,
+export const getSpotTokenUsdPrices = (
   markets: ReadonlyArray<SpotMarket>,
-): string | null => {
-  if (balance.coin === SPOT_QUOTE_STABLE) {
-    return '1';
+): Map<number, string> => {
+  const prices = new Map<number, string>();
+  for (const market of markets) {
+    if (market.quoteName === SPOT_QUOTE_STABLE) {
+      prices.set(market.quoteTokenIndex, '1');
+    }
   }
-  const market = markets.find(
-    item =>
-      item.baseTokenIndex === balance.token &&
-      item.quoteName === SPOT_QUOTE_STABLE,
-  );
-  return market?.midPx ?? null;
+  for (const market of markets) {
+    if (
+      market.quoteName === SPOT_QUOTE_STABLE &&
+      Number(market.midPx) > 0 &&
+      !prices.has(market.baseTokenIndex)
+    ) {
+      prices.set(market.baseTokenIndex, market.midPx as string);
+    }
+  }
+  for (const market of markets) {
+    const quotePrice = prices.get(market.quoteTokenIndex);
+    if (
+      market.quoteName !== SPOT_QUOTE_STABLE &&
+      quotePrice &&
+      Number(market.midPx) > 0 &&
+      !prices.has(market.baseTokenIndex)
+    ) {
+      prices.set(
+        market.baseTokenIndex,
+        new BigNumber(market.midPx as string).times(quotePrice).toFixed(),
+      );
+    }
+  }
+  return prices;
 };
 
 export type SpotBalanceItem = {
   balance: SpotBalance;
-  /** USDC pair of the token, when one exists; opens the detail screen. */
+  /** Pair of the token (its USDC pair first); opens the detail screen. */
   market: SpotMarket | null;
   usdValue: string | null;
 };
@@ -446,20 +467,29 @@ export const buildSpotBalanceItems = (
   balances: ReadonlyArray<SpotBalance> | null | undefined,
   markets: ReadonlyArray<SpotMarket>,
 ): SpotBalanceItem[] => {
-  const usdcMarketByToken = new Map<number, SpotMarket>();
+  const marketByToken = new Map<number, SpotMarket>();
   for (const market of markets) {
-    if (market.quoteName === SPOT_QUOTE_STABLE) {
-      usdcMarketByToken.set(market.baseTokenIndex, market);
+    if (!(Number(market.midPx) > 0)) {
+      continue;
+    }
+    const current = marketByToken.get(market.baseTokenIndex);
+    if (
+      !current ||
+      (market.quoteName === SPOT_QUOTE_STABLE &&
+        current.quoteName !== SPOT_QUOTE_STABLE)
+    ) {
+      marketByToken.set(market.baseTokenIndex, market);
     }
   }
+  const usdPrices = getSpotTokenUsdPrices(markets);
   const items: SpotBalanceItem[] = [];
   for (const balance of balances ?? []) {
     if (!(Number(balance.total) > 0)) {
       continue;
     }
-    const market = usdcMarketByToken.get(balance.token) ?? null;
-    const price =
-      balance.coin === SPOT_QUOTE_STABLE ? '1' : market?.midPx ?? null;
+    const isStable = balance.coin === SPOT_QUOTE_STABLE;
+    const market = isStable ? null : marketByToken.get(balance.token) ?? null;
+    const price = isStable ? '1' : usdPrices.get(balance.token) ?? null;
     items.push({
       balance,
       market,
@@ -564,26 +594,49 @@ export const getSpotSizeFromAmount = ({
   return formatSpotSize(new BigNumber(amount || 0).div(px), szDecimals);
 };
 
+/**
+ * Price an amount typed in `unit` is converted to a base size at. Market buys
+ * typed in the quote token convert at the IOC limit, so the typed amount caps
+ * the spend even if the order fills at the worst allowed price. Other market
+ * orders convert at the mid, limit orders at their limit.
+ */
+export const getSpotAmountConversionPrice = ({
+  orderType,
+  side,
+  unit,
+  midPx,
+  orderPrice,
+}: {
+  orderType: SpotOrderType;
+  side: SpotOrderSide;
+  unit: SpotAmountUnit;
+  midPx: string | null;
+  /** Price the order is signed at: the IOC limit or the rounded limit. */
+  orderPrice: string;
+}): string | null => {
+  const hasOrderPrice = Number(orderPrice) > 0;
+  if (orderType === 'limit' || (side === 'buy' && unit === 'quote')) {
+    return hasOrderPrice ? orderPrice : null;
+  }
+  return Number(midPx) > 0 ? midPx : null;
+};
+
 /** Quote-side maximum: the quote balance for buys, base value for sells. */
 export const getSpotMaxQuoteAmount = ({
   side,
   price,
   baseAvailable,
   quoteAvailable,
-  slippage = 0,
 }: {
   side: SpotOrderSide;
   /** Conversion price (the mid for market orders, else the limit). */
   price: string | null;
   baseAvailable: BigNumber.Value;
   quoteAvailable: BigNumber.Value;
-  /** Headroom kept on buys so the slippage-bounded notional still fits. */
-  slippage?: number;
 }): string => {
   if (side === 'buy') {
-    return formatSpotQuoteAmount(
-      new BigNumber(quoteAvailable).div(1 + slippage),
-    );
+    // Quote buys convert at the signed price, so the whole balance is usable.
+    return formatSpotQuoteAmount(quoteAvailable);
   }
   const px = new BigNumber(price ?? NaN);
   if (!px.isFinite() || px.lte(0)) {

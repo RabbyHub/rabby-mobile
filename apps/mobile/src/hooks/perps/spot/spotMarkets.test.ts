@@ -11,6 +11,7 @@ import {
   formatSpotLimitPrice,
   formatSpotPrice,
   formatSpotSize,
+  getSpotAmountConversionPrice,
   getSpotFavoriteKey,
   getSpotMarket24hChange,
   getSpotMarketOrderPrice,
@@ -21,6 +22,7 @@ import {
   getSpotPortfolioValue,
   getSpotSizeFromAmount,
   getSpotTokenBalance,
+  getSpotTokenUsdPrices,
   getSpotHeldTokenIndexes,
   groupSpotOpenOrders,
   isSpotMarketFavorite,
@@ -386,6 +388,49 @@ describe('spot balances', () => {
     expect(items[2].usdValue).toBe('124');
     expect(getSpotPortfolioValue(items)).toBe('1942.75');
   });
+
+  it('values tokens without a USDC pair through their quote token', () => {
+    const crossMeta: SpotMeta = {
+      tokens: [
+        { name: 'USDC', index: 0, szDecimals: 8 },
+        { name: 'USDH', index: 360, szDecimals: 2 },
+        { name: 'UXPL', index: 400, szDecimals: 1 },
+        { name: 'ORPH', index: 500, szDecimals: 1 },
+      ],
+      universe: [
+        { name: '@230', index: 230, tokens: [360, 0] },
+        { name: '@240', index: 240, tokens: [400, 360] },
+        // Quote token with no USDC price: stays unpriced.
+        { name: '@250', index: 250, tokens: [500, 400] },
+      ],
+    };
+    const crossMarkets = buildSpotMarkets(crossMeta, {
+      '@230': '0.999',
+      '@240': '2',
+    });
+    expect(Object.fromEntries(getSpotTokenUsdPrices(crossMarkets))).toEqual({
+      0: '1',
+      360: '0.999',
+      400: '1.998',
+    });
+
+    const items = buildSpotBalanceItems(
+      [
+        { coin: 'USDC', token: 0, total: '10', hold: '0', entryNtl: '0' },
+        { coin: 'UXPL', token: 400, total: '50', hold: '0', entryNtl: '0' },
+        { coin: 'ORPH', token: 500, total: '3', hold: '0', entryNtl: '0' },
+      ],
+      crossMarkets,
+    );
+    expect(items.map(item => [item.balance.coin, item.usdValue])).toEqual([
+      ['UXPL', '99.9'],
+      ['USDC', '10'],
+      ['ORPH', null],
+    ]);
+    expect(items[0].market?.coin).toBe('@240');
+    expect(items[1].market).toBeNull();
+    expect(getSpotPortfolioValue(items)).toBe('109.9');
+  });
 });
 
 describe('open order helpers', () => {
@@ -465,15 +510,6 @@ describe('amount unit conversion', () => {
     ).toBe('123.45');
     expect(
       getSpotMaxQuoteAmount({
-        side: 'buy',
-        price: '0.2',
-        baseAvailable: '10',
-        quoteAvailable: '105',
-        slippage: 0.05,
-      }),
-    ).toBe('100');
-    expect(
-      getSpotMaxQuoteAmount({
         side: 'sell',
         price: '0.2',
         baseAvailable: '10',
@@ -488,6 +524,87 @@ describe('amount unit conversion', () => {
         quoteAvailable: '1',
       }),
     ).toBe('0');
+  });
+});
+
+describe('getSpotAmountConversionPrice', () => {
+  const base = { midPx: '100', orderPrice: '105' };
+
+  it('converts quote market buys at the signed IOC price', () => {
+    expect(
+      getSpotAmountConversionPrice({
+        ...base,
+        orderType: 'market',
+        side: 'buy',
+        unit: 'quote',
+      }),
+    ).toBe('105');
+    expect(
+      getSpotAmountConversionPrice({
+        ...base,
+        orderPrice: '0',
+        orderType: 'market',
+        side: 'buy',
+        unit: 'quote',
+      }),
+    ).toBeNull();
+  });
+
+  it('converts other market orders at the mid and limits at the limit', () => {
+    expect(
+      getSpotAmountConversionPrice({
+        midPx: '100',
+        orderPrice: '95',
+        orderType: 'market',
+        side: 'sell',
+        unit: 'quote',
+      }),
+    ).toBe('100');
+    expect(
+      getSpotAmountConversionPrice({
+        midPx: '100',
+        orderPrice: '98',
+        orderType: 'limit',
+        side: 'buy',
+        unit: 'quote',
+      }),
+    ).toBe('98');
+  });
+
+  it('keeps a quote market buy within the typed amount at the worst fill', () => {
+    const szDecimals = 2;
+    const midPx = '100';
+    const amount = '100';
+    const orderPrice = getSpotMarketOrderPrice(midPx, 'buy', szDecimals);
+    expect(orderPrice).toBe('105');
+    const size = getSpotSizeFromAmount({
+      amount,
+      unit: 'quote',
+      price: getSpotAmountConversionPrice({
+        orderType: 'market',
+        side: 'buy',
+        unit: 'quote',
+        midPx,
+        orderPrice,
+      }),
+      szDecimals,
+    });
+    expect(size).toBe('0.95');
+    const worstSpend = Number(size) * Number(orderPrice);
+    expect(worstSpend).toBeLessThanOrEqual(Number(amount));
+    // The whole balance stays usable: no slippage headroom needed.
+    expect(
+      validateSpotOrder({
+        side: 'buy',
+        size,
+        price: orderPrice,
+        szDecimals,
+        baseAvailable: '0',
+        quoteAvailable: amount,
+        midPx,
+        orderType: 'market',
+      }),
+    ).toBeNull();
   });
 });
 

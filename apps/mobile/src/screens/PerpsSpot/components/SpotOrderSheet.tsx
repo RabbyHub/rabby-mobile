@@ -37,6 +37,7 @@ import {
   formatSpotPrice,
   formatSpotQuoteAmount,
   formatSpotSize,
+  getSpotAmountConversionPrice,
   getSpotMarketOrderPrice,
   getSpotMaxQuoteAmount,
   getSpotMaxSize,
@@ -175,16 +176,25 @@ export const SpotOrderSheet: React.FC<{
     return midPx ? getSpotMarketOrderPrice(midPx, side, szDecimals) : '0';
   }, [orderType, limitPx, midPx, side, szDecimals]);
   const hasCheckPrice = Number(checkPrice) > 0;
-  // Conversion / display price: the mid for market orders (the IOC usually
-  // fills near it), the limit otherwise. `checkPrice` stays the worst case
-  // used for balance checks and the sent limit.
+  // Display price: the mid for market orders (the IOC usually fills near
+  // it), the limit otherwise. `checkPrice` stays the worst case used for
+  // balance checks and the sent limit.
   const displayPrice =
     orderType === 'limit' ? (hasCheckPrice ? checkPrice : null) : midPx;
+  // Quote amounts on market buys convert at the IOC limit so the typed
+  // amount is a hard spend cap.
+  const quoteConversionPrice = getSpotAmountConversionPrice({
+    orderType,
+    side,
+    unit: 'quote',
+    midPx,
+    orderPrice: checkPrice,
+  });
 
   const size = getSpotSizeFromAmount({
     amount,
     unit,
-    price: displayPrice,
+    price: quoteConversionPrice,
     szDecimals,
   });
   const quoteValue =
@@ -239,14 +249,12 @@ export const SpotOrderSheet: React.FC<{
             price: displayPrice,
             baseAvailable,
             quoteAvailable,
-            slippage: orderType === 'market' ? SPOT_MARKET_SLIPPAGE : 0,
           }),
     [
       unit,
       side,
       checkPrice,
       displayPrice,
-      orderType,
       szDecimals,
       baseAvailable,
       quoteAvailable,
@@ -279,16 +287,16 @@ export const SpotOrderSheet: React.FC<{
   const toggleUnit = useCallback(() => {
     const nextUnit: SpotAmountUnit = unit === 'base' ? 'quote' : 'base';
     // Carry the typed amount over at the current price.
-    if (amount && displayPrice) {
+    if (amount && quoteConversionPrice) {
       const converted =
         nextUnit === 'quote'
-          ? new BigNumber(amount).times(displayPrice)
-          : new BigNumber(amount).div(displayPrice);
+          ? new BigNumber(amount).times(quoteConversionPrice)
+          : new BigNumber(amount).div(quoteConversionPrice);
       const rounded = roundAmount(converted, nextUnit, szDecimals);
       setAmount(Number(rounded) > 0 ? rounded : '');
     }
     setUnit(nextUnit);
-  }, [unit, amount, displayPrice, szDecimals]);
+  }, [unit, amount, quoteConversionPrice, szDecimals]);
 
   const handleSubmit = useCallback(async () => {
     if (
@@ -329,12 +337,16 @@ export const SpotOrderSheet: React.FC<{
             : latest.midPx
             ? getSpotMarketOrderPrice(latest.midPx, side, szDecimals)
             : '0';
-        const conversionPrice =
-          latest.orderType === 'limit' ? price : latest.midPx;
         const nextSize = getSpotSizeFromAmount({
           amount: latest.amount,
           unit: latest.unit,
-          price: Number(conversionPrice) > 0 ? conversionPrice : null,
+          price: getSpotAmountConversionPrice({
+            orderType: latest.orderType,
+            side,
+            unit: latest.unit,
+            midPx: latest.midPx,
+            orderPrice: price,
+          }),
           szDecimals,
         });
         const error = validateSpotOrder({
