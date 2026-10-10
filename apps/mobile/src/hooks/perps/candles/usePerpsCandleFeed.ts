@@ -1,7 +1,7 @@
 import type { Candle } from '@rabby-wallet/hyperliquid-sdk';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { PerpsCandleInterval } from '@/constant/perps';
+import type { PerpsCandleDataInterval } from '@/constant/perps';
 import { apisPerps } from '@/core/apis/perps';
 
 import {
@@ -46,7 +46,7 @@ export type PerpsCandleFeed = PerpsCandleFeedSnapshot & {
 const createIdentity = (
   enabled: boolean,
   coin: string,
-  interval: PerpsCandleInterval,
+  interval: PerpsCandleDataInterval,
 ) => (enabled && coin ? `${coin}:${interval}` : 'disabled');
 
 const toCandleMap = (candles: ReadonlyArray<PerpsCandle>) =>
@@ -86,7 +86,7 @@ export const usePerpsCandleFeed = ({
   coin: string;
   enabled: boolean;
   initialSourceCandles?: ReadonlyArray<PerpsCandle>;
-  interval: PerpsCandleInterval;
+  interval: PerpsCandleDataInterval;
 }) => {
   const initialSourceCandlesRef = useRef(initialSourceCandles);
   initialSourceCandlesRef.current = initialSourceCandles;

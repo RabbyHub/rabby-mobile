@@ -1,4 +1,4 @@
-import type { PerpsCandleInterval } from '@/constant/perps';
+import type { PerpsCandleDataInterval } from '@/constant/perps';
 import { apisPerps } from '@/core/apis/perps';
 
 import { parsePerpsCandles, type PerpsCandle } from './candle';
@@ -20,7 +20,7 @@ const pendingSnapshots = new Map<string, Promise<PerpsCandleSourceSnapshot>>();
 
 export const getPerpsCandleSourceIdentity = (
   coin: string,
-  interval: PerpsCandleInterval,
+  interval: PerpsCandleDataInterval,
 ) => `${coin}:${interval}`;
 
 export const isPerpsCandleSourceSnapshotFresh = (
@@ -58,7 +58,7 @@ export const loadPerpsCandleSourcePage = async ({
   candleCount: number;
   coin: string;
   endTime: number;
-  interval: PerpsCandleInterval;
+  interval: PerpsCandleDataInterval;
 }): Promise<PerpsCandle[]> => {
   const sdk = apisPerps.getPerpsSDK();
   const { sourceInterval, sourceIntervalMs } = getPerpsCandleSource(interval);
@@ -80,7 +80,7 @@ export const loadPerpsCandleSourceSnapshot = ({
 }: {
   coin: string;
   forceRefresh?: boolean;
-  interval: PerpsCandleInterval;
+  interval: PerpsCandleDataInterval;
 }): Promise<PerpsCandleSourceSnapshot> => {
   const identity = getPerpsCandleSourceIdentity(coin, interval);
   const pending = pendingSnapshots.get(identity);
