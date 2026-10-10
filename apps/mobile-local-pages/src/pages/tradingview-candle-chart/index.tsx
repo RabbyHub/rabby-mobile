@@ -1,4 +1,5 @@
 import '../../imports';
+import { createSimpleChart } from './perps-simple';
 
 import {
   createChart as LcCreateChart,
@@ -254,6 +255,8 @@ chartState.colors = { ...getChartColors() };
 chartState.description = { ...defaultDescription };
 
 const PERPS_PRO_KLINE_PROTOCOL_VERSION = 3;
+const PERPS_SIMPLE_KLINE_PROTOCOL_VERSION = 1;
+let simpleChart: ReturnType<typeof createSimpleChart> | null = null;
 const candleByTime = new Map<number, TradingViewCandlestickData>();
 const movingAverageByTime: Record<7 | 25 | 99, Map<number, number>> = {
   7: new Map(),
@@ -1622,6 +1625,7 @@ function createChart() {
       candleDataAppliedAck: true,
       olderCandleRequest: true,
       perpsProKlineProtocolVersion: PERPS_PRO_KLINE_PROTOCOL_VERSION,
+      perpsSimpleKlineProtocolVersion: PERPS_SIMPLE_KLINE_PROTOCOL_VERSION,
     },
   });
 }
@@ -2093,6 +2097,59 @@ function handleUpdateTheme(colors: ChartColors, description: ChartDescription) {
 // Handle messages from RN
 function handleMessage(event: CustomEvent) {
   const message = event.detail as DuplexReceive;
+  if (
+    message.type === 'TRADINGVIEW_MESSAGE' &&
+    message.data.type === 'PERPS_SIMPLE_CHART'
+  ) {
+    if (!simpleChart) {
+      if (message.data.action !== 'configure') return;
+      chartState.chart?.remove();
+      chartState.chart = null;
+      chartState.candlestickSeries = null;
+      containerEl.replaceChildren();
+      simpleChart = createSimpleChart(containerEl, postMessageToRN);
+      containerEl.append(loadingOverlay, emptyOverlay);
+      ensurePerpsProFontsLoaded();
+      void perpsProFontLoadPromise?.then(() => simpleChart?.refreshFonts());
+    }
+    if (!simpleChart.handle(message.data)) return;
+    if (message.data.action === 'configure') {
+      const { colors, labels } = message.data.config;
+      containerEl.style.background = colors.background;
+      updateLoadingSkeletonTheme({
+        ...(chartState.colors || getChartColors()),
+        background: colors.background,
+        border: colors.grid,
+      });
+      updateEmptyStateTheme(
+        {
+          ...(chartState.colors || getChartColors()),
+          background: colors.background,
+          secondaryText: colors.secondary,
+        },
+        {
+          ...(chartState.description || defaultDescription),
+          empty: labels.empty,
+        },
+      );
+    } else if (message.data.action === 'data') {
+      setOverlayState(
+        message.data.candles.length
+          ? 'hidden'
+          : message.data.state === 'empty'
+          ? 'empty'
+          : 'loading',
+      );
+    } else if (message.data.action === 'update') setOverlayState('hidden');
+    return;
+  }
+  if (simpleChart) {
+    if (message.type === 'GOT_RUNTIME_INFO') {
+      ensurePerpsProFontsLoaded();
+      void perpsProFontLoadPromise?.then(() => simpleChart?.refreshFonts());
+    }
+    return;
+  }
 
   switch (message.type) {
     case 'GOT_RUNTIME_INFO': {
@@ -2241,6 +2298,7 @@ function init() {
 // Cleanup on page unload
 window.addEventListener('beforeunload', () => {
   isPageUnloading = true;
+  simpleChart?.destroy();
   cancelPendingPerpsProCrosshairMarker();
   if (visibleLogicalRangeFrameId != null) {
     window.cancelAnimationFrame(visibleLogicalRangeFrameId);
