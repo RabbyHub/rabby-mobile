@@ -159,8 +159,13 @@ describe('HomeCustomMaterialTabBar presentation contract', () => {
       // whole overlay when index < 1.
       const indicatorControls = screen
         .UNSAFE_getAllByType(View)
-        .filter(node => node.props.hitSlop?.top === 50);
+        .filter(node => node.props.hitSlop != null);
       expect(indicatorControls).toHaveLength(2);
+      for (const control of indicatorControls) {
+        // A 50pt upward expansion used to cover the header's eye/add buttons.
+        // Keep both indicator hit regions close to the visible bar.
+        expect(control.props.hitSlop.top).toBe(4);
+      }
     }
   });
 

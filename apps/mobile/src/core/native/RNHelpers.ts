@@ -11,6 +11,7 @@ const buildInfo =
 
 const RNHelpers = Object.freeze({
   forceExitApp: nativeModule.forceExitApp,
+  measureViewRelativeTo: nativeModule.measureViewRelativeTo,
   buildInfo,
   setSensitiveClipboard: nativeModule.setSensitiveClipboard,
   moveTaskToBack: wrapPlatformOnlyMethod({

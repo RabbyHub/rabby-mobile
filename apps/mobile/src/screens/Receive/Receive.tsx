@@ -18,7 +18,8 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Pressable, ScrollView, Dimensions } from 'react-native';
+import { View, ScrollView, Dimensions } from 'react-native';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { trigger } from 'react-native-haptic-feedback';
 import { default as RcIconMCopy } from '@/assets2024/icons/address/mcopy-cc.svg';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
@@ -115,7 +116,8 @@ function ReceiveScreen(): JSX.Element {
         ) : (
           <Text style={styles.titleText}>******</Text>
         )}
-        <Pressable
+        <CustomTouchableOpacity
+          as="RNGHTouchableOpacity"
           style={styles.headerIconEye}
           onPress={() => setShowName(e => !e)}>
           {showName ? (
@@ -131,7 +133,7 @@ function ReceiveScreen(): JSX.Element {
               color={colors2024['neutral-title-1']}
             />
           )}
-        </Pressable>
+        </CustomTouchableOpacity>
       </View>
     ),
     [

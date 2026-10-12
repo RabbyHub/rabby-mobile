@@ -6,6 +6,7 @@ import RcMore from '@/assets/icons/home/more-cc.svg';
 import RcFavorite from '@/assets2024/icons/browser/favorite-cc.svg';
 import RcRemoveArrow from '@/assets2024/icons/common/token-header-remove-arrow.svg';
 import { Tip } from '@/components/Tip';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -93,14 +94,15 @@ export const RightMore: React.FC<{
             </Pressable>
           </View>
         }>
-        <Pressable
+        <CustomTouchableOpacity
+          as="RNGHTouchableOpacity"
           style={styles.trigger}
           accessibilityRole="button"
           accessibilityLabel={t('page.tokenDetail.removed.more')}
           hitSlop={10}
           onPress={() => setVisible(true)}>
           <RcMore color={colors2024['neutral-body']} />
-        </Pressable>
+        </CustomTouchableOpacity>
       </Tip>
       {confirmVisible && (
         <RemoveTokenConfirmPopup

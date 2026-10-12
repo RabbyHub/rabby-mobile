@@ -92,6 +92,7 @@ export const usePulldownRefreshGesture = <
     Gesture.Pan()
       .shouldCancelWhenOutside(false)
       .activeOffsetY([-8, 8])
+      .failOffsetX([-24, 24])
       .maxPointers(1)
       .onStart(event => {
         startValues.value.startedAtTop = scrollViewYValue.value <= 5;
@@ -144,6 +145,20 @@ export const usePulldownRefreshGesture = <
             startValues.value.hasImpactOnPanup = false;
           }
         }
+      })
+      .onFinalize(() => {
+        // CANCELLED/FAILED gestures do not necessarily reach onEnd. Never
+        // leave their placeholder visible, or interrupt an active refresh.
+        if (!svIsRefreshing.value) {
+          setPulldownRefreshStage({
+            state: 'finished',
+            svIsRefreshing,
+            svIsManualRefreshing,
+            pullDistance,
+            indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+          });
+        }
+        startValues.value.hasImpactOnPanup = false;
       }),
   );
 
