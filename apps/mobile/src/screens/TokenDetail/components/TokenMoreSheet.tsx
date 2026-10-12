@@ -8,6 +8,7 @@ import AutoLockView from '@/components/AutoLockView';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import {
+  BOTTOM_BUTTON_BOTTOM_OFFSET,
   BOTTOM_BUTTON_DOUBLE_HEIGHT,
   BOTTOM_BUTTON_GAP,
   BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
@@ -36,17 +37,20 @@ export function TokenMoreSheet({
 }) {
   const { styles } = useTheme2024({ getStyle });
   const hasButtons = items.some(item => item.buttonType);
+  const sheetHeight = hasButtons
+    ? 20 +
+      styles.list.paddingTop +
+      BOTTOM_BUTTON_DOUBLE_HEIGHT * items.length +
+      BOTTOM_BUTTON_GAP * (items.length - 1) +
+      BOTTOM_BUTTON_BOTTOM_OFFSET
+    : 80 + 70 * items.length;
 
   return (
     <BSheetModal
       ref={modalRef}
       backgroundStyle={styles.sheetModal}
       handleStyle={styles.sheetModal}
-      snapPoints={[
-        80 +
-          (hasButtons ? BOTTOM_BUTTON_DOUBLE_HEIGHT + BOTTOM_BUTTON_GAP : 70) *
-            items.length,
-      ]}>
+      snapPoints={[sheetHeight]}>
       <AutoLockView
         as="BottomSheetView"
         style={[styles.list, hasButtons && styles.buttonList]}>
@@ -106,7 +110,10 @@ export function TokenMoreSheet({
 const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   sheetModal: { backgroundColor: colors2024['neutral-bg-1'] },
   list: { gap: 40, paddingTop: 16, paddingHorizontal: 20 },
-  buttonList: { gap: BOTTOM_BUTTON_GAP },
+  buttonList: {
+    gap: BOTTOM_BUTTON_GAP,
+    paddingBottom: BOTTOM_BUTTON_BOTTOM_OFFSET,
+  },
   button: { borderRadius: 10 },
   buttonTitle: {
     fontFamily: 'SF Pro Rounded',
