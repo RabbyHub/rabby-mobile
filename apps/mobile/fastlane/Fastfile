@@ -162,7 +162,8 @@ platform :ios do
       skip_build_archive: ios_adhoc_skip_build_archive?,
       derived_data_path: turbo_build_enabled? ? turbo_ios_derived_data_path : nil,
       destination: "generic/platform=iOS",
-      clean: ios_adhoc_skip_build_archive? ? false : !turbo_build_enabled?,
+      # Allow local native incremental builds without enabling Turbo cache restore.
+      clean: !(ios_adhoc_skip_build_archive? || turbo_build_enabled? || ENV['RABBY_MOBILE_IOS_INCREMENTAL_BUILD'] == 'true'),
       ## if you wanna output log to stdout, uncomment below 2 lines
       # xcodebuild_formatter: '',
       # suppress_xcode_output: false,
