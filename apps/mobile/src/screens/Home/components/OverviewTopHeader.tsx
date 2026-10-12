@@ -3,9 +3,9 @@ import {
   GestureResponderEvent,
   Pressable,
   StyleSheet,
-  TouchableOpacity,
   View,
 } from 'react-native';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import usePrevious from 'react-use/lib/usePrevious';
 
@@ -105,16 +105,18 @@ export function TabsTopHeader(): JSX.Element {
   const { remoteVersion } = useUpgradeInfo();
 
   const [hideType, setHideType] = useHideBalance();
-  const handleHideTypeChange = useMemoizedFn((event: GestureResponderEvent) => {
-    event.stopPropagation();
-    if (hideType === 'HALF_HIDE') {
-      setHideType('HIDE');
-    } else if (hideType === 'HIDE') {
-      setHideType('SHOW');
-    } else {
-      setHideType('HALF_HIDE');
-    }
-  });
+  const handleHideTypeChange = useMemoizedFn(
+    (event?: GestureResponderEvent) => {
+      event?.stopPropagation?.();
+      if (hideType === 'HALF_HIDE') {
+        setHideType('HIDE');
+      } else if (hideType === 'HIDE') {
+        setHideType('SHOW');
+      } else {
+        setHideType('HALF_HIDE');
+      }
+    },
+  );
   const { currency } = useCurrency();
   const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
   const setTokenDisplayMode = useTokenList(s => s.setTokenDisplayMode);
@@ -317,7 +319,13 @@ export function TabsTopHeader(): JSX.Element {
 
       <Pressable
         style={styles.rightArea}
-        onPress={() => handleSwitchToTokenTab(1)}>
+        onPress={event => {
+          // RNGH header buttons do not stop RN responder bubbling. Only the
+          // empty header area should switch tabs, never Add Wallet / Feedback.
+          if (event.target === event.currentTarget) {
+            handleSwitchToTokenTab(1);
+          }
+        }}>
         {showRightArea ? (
           <>
             {focusedTab === HomeTabName.overview ? (

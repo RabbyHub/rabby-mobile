@@ -170,9 +170,11 @@ const Indicator = ({
 
 const indicatorMarginTop = 0;
 const indicatorHeight = HOME_TOP_HEADER_SIZES.headerIndicatorHeight;
-const leftHitSlopTop = 50;
+// Keep the indicator hit regions below the header's eye/action buttons.
+// Expanding 50pt upward overlaps those controls under Fabric hit testing.
+const leftHitSlopTop = 4;
 const leftHitSlopBottom = 4;
-const rightHitSlopTop = 50;
+const rightHitSlopTop = 4;
 const rightHitSlopBottom = 4;
 
 const indicatorStyles = createGetStyles2024(

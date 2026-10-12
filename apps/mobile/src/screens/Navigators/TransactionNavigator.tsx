@@ -401,7 +401,9 @@ export default function TransactionNavigator() {
         name={RootNames.PerpsMarketDetail}
         component={PerpsMarketDetailScreen}
         options={mergeScreenOptions({
-          // title: t('page.home.services.perpsMarketDetail'),
+          // The screen installs its market header after mounting. Do not flash
+          // the internal route name while the native header is being attached.
+          title: '',
           // ...headerPresets.withBgCard1_2024,
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
@@ -457,7 +459,7 @@ export default function TransactionNavigator() {
         name={RootNames.Lending}
         component={LendingScreen}
         options={mergeScreenOptions({
-          title: t('page.home.services.lending'),
+          title: '',
           ...headerPresets.withBgCard1_2024,
           headerTitle: ctx => {
             return (

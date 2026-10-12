@@ -169,12 +169,25 @@ export const ImportSuccessScreen2024 = () => {
     }
   });
 
+  const resolveImportAddresses = React.useCallback(() => {
+    const addresses = Array.isArray(state.address)
+      ? state.address
+      : [state.address];
+    return addresses.map(address => ({
+      address,
+      aliasName:
+        state.alias ||
+        getContactAliasSnapshot(address)?.alias ||
+        ellipsisAddress(address || '') ||
+        '',
+    }));
+  }, [state.address, state.alias]);
   const [importAddresses, setImportAddresses] = React.useState<
     {
       address: string;
       aliasName: string;
     }[]
-  >([]);
+  >(resolveImportAddresses);
 
   const saveFirstAddressAlias = React.useCallback(() => {
     return Promise.all(
@@ -218,16 +231,7 @@ export const ImportSuccessScreen2024 = () => {
     const addresses = Array.isArray(state?.address)
       ? state?.address
       : [state?.address];
-    setImportAddresses(
-      addresses.map(address => ({
-        address,
-        aliasName:
-          state?.alias ||
-          getContactAliasSnapshot(address)?.alias ||
-          ellipsisAddress(address || '') ||
-          '',
-      })),
-    );
+    setImportAddresses(resolveImportAddresses());
 
     matomoRequestEvent({
       category: 'Import Address',
@@ -253,7 +257,7 @@ export const ImportSuccessScreen2024 = () => {
       syncMultiAddressesHistory(syncAddresses);
       eventBus.emit('PERPS_ADD_ADDRESSES', syncAddresses);
     }
-  }, [state, t]);
+  }, [state, t, resolveImportAddresses]);
   React.useEffect(() => {
     setTimeout(() => fetchAccounts(), 0);
   }, [fetchAccounts]);

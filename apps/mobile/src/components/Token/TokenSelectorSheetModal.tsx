@@ -587,20 +587,32 @@ const TokenSelectorSheetModalContent = ({
     route.name === RootNames.SwapBridge ||
     route.name === RootNames.MultiSwapBridge;
 
-  if (isSwapTo && swapToTokenDetail && visible && isFocused && isSwapRoute) {
+  useEffect(() => {
+    if (
+      !isSwapTo ||
+      !swapToTokenDetail ||
+      !visible ||
+      !isFocused ||
+      !isSwapRoute
+    ) {
+      return;
+    }
+    // Native sheet dismissal must not run during a concurrent render. Preserve
+    // the hidden detail-return state until the sheet is actually dismissed.
+    if (route.params?.isSwapToTokenDetail) {
+      toggleNativeSheetModal('destroy');
+      return;
+    }
     setSwapToTokenDetail(false);
-  }
-
-  if (
-    isSwapTo &&
-    isSwapRoute &&
-    route.params?.isSwapToTokenDetail &&
-    swapToTokenDetail &&
-    visible &&
-    isFocused
-  ) {
-    toggleNativeSheetModal('destroy');
-  }
+  }, [
+    isSwapTo,
+    swapToTokenDetail,
+    visible,
+    isFocused,
+    isSwapRoute,
+    route.params?.isSwapToTokenDetail,
+    toggleNativeSheetModal,
+  ]);
 
   const currentRoute = getLatestNavigationName();
   const isInInitialRoute = useMemo(() => {

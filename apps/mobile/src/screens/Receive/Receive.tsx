@@ -19,6 +19,7 @@ import React, {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Pressable, Image, ScrollView, Dimensions } from 'react-native';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { trigger } from 'react-native-haptic-feedback';
 import QRCode from 'react-native-qrcode-svg';
 import { default as RcIconMCopy } from '@/assets2024/icons/address/mcopy-cc.svg';
@@ -140,7 +141,8 @@ function ReceiveScreen(): JSX.Element {
         ) : (
           <Text style={styles.titleText}>******</Text>
         )}
-        <Pressable
+        <CustomTouchableOpacity
+          as="RNGHTouchableOpacity"
           style={styles.headerIconEye}
           onPress={() => setShowName(e => !e)}>
           {showName ? (
@@ -156,7 +158,7 @@ function ReceiveScreen(): JSX.Element {
               color={colors2024['neutral-title-1']}
             />
           )}
-        </Pressable>
+        </CustomTouchableOpacity>
       </View>
     ),
     [
