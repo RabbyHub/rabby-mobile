@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import RcMore from '@/assets/icons/home/more-cc.svg';
@@ -37,6 +37,7 @@ export const RightMore: React.FC<{
   return (
     <>
       <Tip
+        disableShadow={Platform.OS !== 'ios'}
         hideArrow
         noPressable
         placement="bottom"
@@ -123,13 +124,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     padding: 4,
     borderRadius: 16,
     backgroundColor: colors2024['neutral-bg-1'],
+    ...Platform.select({ android: { elevation: 0 } }),
   },
   popupShadow: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      // Override Tip's shared tooltip shadow on Android.
+      android: { shadowOpacity: 0 },
+    }),
   },
   menu: { width: 192 },
   menuItem: {

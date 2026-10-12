@@ -1,5 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -49,7 +55,11 @@ export function RemovedTokenPopup({ onClose }: { onClose(): void }) {
     [bottom, styles.content],
   );
   const cardColors = useMemo(() => {
-    const color = colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-2'];
+    if (!isLight) {
+      const color = colors2024['neutral-bg-2'];
+      return [color, color];
+    }
+    const color = colors2024['neutral-bg-1'];
     return [
       colord(color).alpha(0.9).toRgbString(),
       colord(color).alpha(0.54).toRgbString(),
@@ -118,7 +128,7 @@ export function RemovedTokenPopup({ onClose }: { onClose(): void }) {
       }}
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: 'bg0',
+        linearGradientType: isLight ? 'bg0' : 'bg1',
       })}
       handleIndicatorStyle={styles.handleIndicator}
       enableDynamicSizing
@@ -209,16 +219,20 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   cardShadow: {
     borderRadius: TOKEN_CARD_RADIUS,
-    shadowColor: '#37383F',
-    shadowOffset: { width: 0, height: 18 },
-    shadowOpacity: 0.04,
-    shadowRadius: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#37383F',
+        shadowOffset: { width: 0, height: 18 },
+        shadowOpacity: isLight ? 0.04 : 0,
+        shadowRadius: 20,
+      },
+    }),
   },
   card: {
     height: TOKEN_CARD_HEIGHT,
     borderRadius: TOKEN_CARD_RADIUS,
     borderWidth: 1,
-    borderColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-2'],
+    borderColor: colors2024[isLight ? 'neutral-bg-1' : 'neutral-bg-5'],
     paddingHorizontal: 11,
     flexDirection: 'row',
     alignItems: 'center',
