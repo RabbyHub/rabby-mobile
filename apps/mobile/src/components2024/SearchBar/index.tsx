@@ -39,6 +39,7 @@ export interface Props extends Omit<TextInputProps, 'style'> {
   alwaysShowCancel?: boolean;
   inputStyle?: StyleProp<TextStyle>;
   as?: 'TextInput' | 'BottomSheetTextInput';
+  inputComponent?: React.ComponentType<React.ComponentProps<typeof TextInput>>;
 }
 
 export type NextSearchBarMethods = {
@@ -62,6 +63,7 @@ export const NextSearchBar = ({
   onCancel,
   noCancel,
   as = 'TextInput',
+  inputComponent,
   ...rest
 }: Props & { ref?: Ref<NextSearchBarMethods> }) => {
   const { t } = useTranslation();
@@ -81,7 +83,8 @@ export const NextSearchBar = ({
     onFocus?.(e);
   });
 
-  const InputComponent = as === 'TextInput' ? TextInput : BottomSheetTextInput;
+  const InputComponent =
+    inputComponent || (as === 'TextInput' ? TextInput : BottomSheetTextInput);
 
   useImperativeHandle(ref, () => {
     return {
