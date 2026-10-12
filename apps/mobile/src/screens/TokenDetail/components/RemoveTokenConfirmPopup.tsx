@@ -177,6 +177,8 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
     fontSize: 20,
+    lineHeight: 24,
+    paddingVertical: 0,
   },
   cancelButton: { borderRadius: 12, backgroundColor: 'transparent' },
   removeButton: {

@@ -11,6 +11,7 @@ import { toast } from '@/components2024/Toast';
 import {
   BOTTOM_BUTTON_GAP,
   BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
@@ -65,7 +66,7 @@ export function RestoreRemovedTokenActions({
           type="primary"
           title={t('page.tokenDetail.removed.restore')}
           height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-          titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+          titleStyle={[BOTTOM_BUTTON_TITLE_STYLE, styles.restoreTitle]}
           containerStyle={styles.restoreContainer}
           buttonStyle={styles.restoreButton}
           loading={restoring}
@@ -116,6 +117,10 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
       getBottomButtonBottomOffset(safeAreaInsets.bottom) + BOTTOM_BUTTON_GAP,
   },
   restoreContainer: { flex: 1 },
+  restoreTitle: {
+    lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
+    paddingVertical: 0,
+  },
   restoreButton: { borderRadius: 10 },
   more: {
     width: BOTTOM_BUTTON_SINGLE_HEIGHT,
