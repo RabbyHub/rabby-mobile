@@ -55,7 +55,6 @@ import {
   useTokenMarketInfo,
 } from './hook';
 import { RightMore } from './components/RightMore';
-import { RcIconSwap } from '@/assets2024/singleHome';
 import {
   RemovedTokenNotice,
   RestoreRemovedTokenActions,
@@ -672,14 +671,14 @@ export const TokenMarketInfoScreen = () => {
             {
               key: 'Buy',
               title: t('page.tokenDetail.action.Buy'),
-              Icon: RcIconSwap,
+              buttonType: 'ghost',
               onPress: () =>
                 handleSwap('Buy', finalAccount?.address, finalAccount?.type),
             },
             {
               key: 'Sell',
               title: t('page.tokenDetail.action.Sell'),
-              Icon: RcIconSwap,
+              buttonType: 'primary',
               onPress: () =>
                 handleSwap('Sell', finalAccount?.address, finalAccount?.type),
             },
