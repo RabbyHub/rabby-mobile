@@ -15,7 +15,7 @@ import {
   Pressable,
   StyleSheet,
 } from 'react-native';
-import { NavigationContext } from '@react-navigation/native';
+import { NavigationContext, useFocusEffect } from '@react-navigation/native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -70,17 +70,6 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
   const { t } = useTranslation();
   const [copyConfirmVisible, setCopyConfirmVisible] = useState(false);
   const closeCopyConfirm = useCallback(() => setCopyConfirmVisible(false), []);
-
-  // This presentation component is also rendered in the account-switcher
-  // portal, outside the screen's navigation context.
-  const navigation = useContext(NavigationContext);
-  useEffect(() => {
-    const unsubscribe = navigation?.addListener('blur', closeCopyConfirm);
-    return () => {
-      unsubscribe?.();
-      closeCopyConfirm();
-    };
-  }, [navigation, closeCopyConfirm]);
 
   const isNativeToken = useMemo(() => {
     const chain = findChain({ serverId: token?.chain });
@@ -155,35 +144,48 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
           {!disableRefresh && refreshing && <LoadingCircle />}
         </View>
       </View>
-      <TrackedModal
-        modalId="token-contract-copy-confirm"
-        visible={copyConfirmVisible}
-        transparent
-        animationType="fade"
-        statusBarTranslucent
-        onRequestClose={closeCopyConfirm}>
-        <View style={styles.copyConfirmOverlay}>
-          <Pressable
-            style={StyleSheet.absoluteFill}
-            onPress={closeCopyConfirm}
-            accessible={false}
-          />
-          <View style={styles.copyConfirmDialog} accessibilityViewIsModal>
-            <Text style={styles.copyConfirmTitle}>
-              {t('page.tokenDetail.copyCAWarning')}
-            </Text>
-            <Button
-              title={t('global.confirm')}
-              height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
-              titleStyle={styles.copyConfirmButtonTitle}
+      {displayCopy && (
+        <CopyConfirmModal
+          modalId="token-contract-copy-confirm"
+          visible={copyConfirmVisible}
+          transparent
+          animationType="fade"
+          statusBarTranslucent
+          onClose={closeCopyConfirm}>
+          <View style={styles.copyConfirmOverlay}>
+            <Pressable
+              style={StyleSheet.absoluteFill}
               onPress={closeCopyConfirm}
+              accessible={false}
             />
+            <View style={styles.copyConfirmDialog} accessibilityViewIsModal>
+              <Text style={styles.copyConfirmTitle}>
+                {t('page.tokenDetail.copyCAWarning')}
+              </Text>
+              <Button
+                title={t('global.confirm')}
+                height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+                titleStyle={styles.copyConfirmButtonTitle}
+                onPress={closeCopyConfirm}
+              />
+            </View>
           </View>
-        </View>
-      </TrackedModal>
+        </CopyConfirmModal>
+      )}
     </View>
   );
 };
+
+function CopyConfirmModal({
+  onClose,
+  ...props
+}: React.ComponentProps<typeof TrackedModal> & {
+  onClose: () => void;
+}) {
+  useFocusEffect(useCallback(() => onClose, [onClose]));
+
+  return <TrackedModal {...props} onRequestClose={onClose} />;
+}
 
 const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   copyConfirmOverlay: {
