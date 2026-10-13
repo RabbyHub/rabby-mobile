@@ -761,10 +761,14 @@ export const SignTestnetTx = ({
           onCancel={handleCancel}
           onSubmit={() => handleAllow()}
           onIgnoreAllRules={() => {}}
-          enableTooltip={isWatchAddr || !!signingError}
+          enableTooltip={
+            isWatchAddr || (checkErrors[0]?.code !== 3001 && !!signingError)
+          }
           tooltipContent={
             isWatchAddr
               ? t('page.signTx.canOnlyUseImportedAddress')
+              : checkErrors[0]?.code === 3001
+              ? undefined
               : signingError
           }
           disabledProcess={
