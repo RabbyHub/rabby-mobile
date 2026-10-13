@@ -32,6 +32,7 @@ import type { Account } from '@/core/startupServices/preference';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import type { TextInput } from '@/components/Typography';
 import { Text } from '@/components/Typography';
+import { ensureCustomTestnetStoreHydrated } from '@/core/serviceApi/customTestnet';
 const useChainSelectorList = ({
   supportChains,
   netTabKey,
@@ -44,6 +45,20 @@ const useChainSelectorList = ({
   account?: Account;
 }) => {
   const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    if (netTabKey !== 'testnet') {
+      return;
+    }
+    try {
+      ensureCustomTestnetStoreHydrated();
+    } catch (error) {
+      console.error(
+        '[SelectChainWithSummary] hydrate custom networks failed',
+        error,
+      );
+    }
+  }, [netTabKey]);
 
   const {
     testnetMatteredChainBalances,
