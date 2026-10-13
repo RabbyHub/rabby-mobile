@@ -1,6 +1,8 @@
 import React from 'react';
 import { act, render } from '@testing-library/react-native';
-import { View } from 'react-native';
+// Inspect the dependency's actual native host to drive its presentation event.
+// eslint-disable-next-line no-restricted-imports
+import { Modal, View } from 'react-native';
 import Tooltip from 'react-native-walkthrough-tooltip';
 import { constrainGeometryToViewport } from 'react-native-walkthrough-tooltip/src/geom';
 
@@ -76,7 +78,7 @@ it('ignores a pending native measurement after close', async () => {
 it('recovers from an unmounted native anchor without falling back to incorrect shadow coordinates', async () => {
   const ref = React.createRef<any>();
   const measureAnchor = jest.fn().mockRejectedValue(new Error('not mounted'));
-  render(
+  const view = render(
     <Tooltip
       ref={ref}
       isVisible
@@ -91,7 +93,7 @@ it('recovers from an unmounted native anchor without falling back to incorrect s
   expect(ref.current.isMeasuringChild).toBe(false);
   expect(ref.current.state.measurementsFinished).toBe(false);
   measureAnchor.mockResolvedValueOnce({ x: 320, y: 16, width: 24, height: 24 });
-  await act(async () => ref.current.measureChildRect());
+  await act(async () => view.UNSAFE_getByType(Modal).props.onShow?.());
   expect(ref.current.state.childRect).toEqual({
     x: 320,
     y: 16,
@@ -99,6 +101,76 @@ it('recovers from an unmounted native anchor without falling back to incorrect s
     height: 24,
   });
 });
+
+it('supersedes an in-flight pre-show measurement when the modal becomes mounted', async () => {
+  const ref = React.createRef<any>();
+  let failFirst!: (error: Error) => void;
+  const measureAnchor = jest
+    .fn()
+    .mockImplementationOnce(
+      () =>
+        new Promise((_, reject) => {
+          failFirst = reject;
+        }),
+    )
+    .mockResolvedValue({ x: 300, y: 20, width: 24, height: 24 });
+  const view = render(
+    <Tooltip
+      ref={ref}
+      isVisible
+      content={<View />}
+      measureAnchor={measureAnchor}>
+      <View />
+    </Tooltip>,
+  );
+  ref.current.childWrapper.current = {};
+  ref.current.viewport.current = {};
+  await act(async () => ref.current.measureChildRect());
+  await act(async () => view.UNSAFE_getByType(Modal).props.onShow?.());
+  await act(async () => failFirst(new Error('pre-show viewport not mounted')));
+  expect(measureAnchor).toHaveBeenCalledTimes(2);
+  expect(ref.current.state.childRect).toEqual({
+    x: 300,
+    y: 20,
+    width: 24,
+    height: 24,
+  });
+  expect(ref.current.isMeasuringChild).toBe(false);
+});
+
+it.each(['reject', 'empty', 'non-finite'])(
+  'closes a presented overlay after %s measurement instead of trapping touches',
+  async failure => {
+    const ref = React.createRef<any>();
+    const onClose = jest.fn();
+    const measureAnchor =
+      failure === 'reject'
+        ? jest.fn().mockRejectedValue(new Error('unavailable'))
+        : jest.fn().mockResolvedValue({
+            x: failure === 'non-finite' ? NaN : 0,
+            y: 0,
+            width: failure === 'empty' ? 0 : 24,
+            height: 24,
+          });
+    const view = render(
+      <Tooltip
+        ref={ref}
+        isVisible
+        content={<View />}
+        measureAnchor={measureAnchor}
+        onClose={onClose}>
+        <View />
+      </Tooltip>,
+    );
+    ref.current.childWrapper.current = {};
+    ref.current.viewport.current = {};
+    await act(async () => ref.current.measureChildRect());
+    expect(onClose).not.toHaveBeenCalled();
+    await act(async () => view.UNSAFE_getByType(Modal).props.onShow?.());
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(ref.current.isMeasuringChild).toBe(false);
+  },
+);
 
 it.each(['top', 'bottom', 'left', 'right', 'center'])(
   'keeps the whole %s bubble inside the overlay for edge anchors and oversized content',

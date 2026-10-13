@@ -6,6 +6,10 @@
 @implementation RNScreenshotPrevent {
     BOOL hasListeners;
     NSUInteger listenerCount;
+    BOOL legacyObservationRequested;
+    BOOL codegenEventEmitterReady;
+    BOOL notificationObserversInvalidated;
+    NSUInteger screenshotCaptureConsumers;
     BOOL enabled;
     BOOL appSwitcherBlurEnabled;
     UIImageView *obfuscatingView;
@@ -37,18 +41,37 @@ RCT_EXPORT_MODULE();
 }
 
 #if RCT_NEW_ARCH_ENABLED
+- (void)setEventEmitterCallback:(EventEmitterCallbackWrapper *)eventEmitterCallbackWrapper {
+    @synchronized (self) {
+        if (notificationObserversInvalidated) {
+            return;
+        }
+        [super setEventEmitterCallback:eventEmitterCallbackWrapper];
+        // Codegen subscriptions do not call the legacy addListener: method.
+        codegenEventEmitterReady = YES;
+    }
+    [self synchronizeNotificationObservers];
+}
+
 - (void)addListener:(NSString *)eventType {
     (void)eventType;
-    listenerCount += 1;
-    if (listenerCount == 1) {
-        [self startObserving];
+    @synchronized (self) {
+        if (notificationObserversInvalidated) {
+            return;
+        }
+        listenerCount += 1;
+        if (listenerCount == 1) {
+            [self startObserving];
+        }
     }
 }
 
 - (void)removeListeners:(double)count {
-    listenerCount = count >= listenerCount ? 0 : listenerCount - (NSUInteger)count;
-    if (listenerCount == 0) {
-        [self stopObserving];
+    @synchronized (self) {
+        listenerCount = count >= listenerCount ? 0 : listenerCount - (NSUInteger)count;
+        if (listenerCount == 0) {
+            [self stopObserving];
+        }
     }
 }
 #endif
@@ -61,15 +84,91 @@ RCT_EXPORT_MODULE();
 #pragma mark - Lifecycle
 
 - (void) startObserving {
+    @synchronized (self) {
+        if (notificationObserversInvalidated) {
+            return;
+        }
+        legacyObservationRequested = YES;
+    }
+    [self synchronizeNotificationObservers];
+}
+
+- (void) stopObserving {
+    @synchronized (self) {
+        legacyObservationRequested = NO;
+    }
+    [self synchronizeNotificationObservers];
+}
+
+- (void)synchronizeNotificationObservers {
+    __weak RNScreenshotPrevent *weakSelf = self;
+    RCTExecuteOnMainQueue(^{
+        RNScreenshotPrevent *strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        @synchronized (strongSelf) {
+            // Re-read demand on the main queue: a queued start must not revive
+            // a module that was invalidated before this block could run.
+            BOOL shouldObserve = !strongSelf->notificationObserversInvalidated &&
+                (strongSelf->legacyObservationRequested || strongSelf->codegenEventEmitterReady);
+            if (shouldObserve) {
+                [strongSelf startNotificationObserversIfNeeded];
+            } else {
+                [strongSelf stopNotificationObservers];
+                if (strongSelf->notificationObserversInvalidated) {
+                    [strongSelf clearOwnedObfuscatingView];
+                }
+            }
+        }
+    });
+}
+
+- (BOOL)canHandleNotification {
+    @synchronized (self) {
+        return hasListeners && !notificationObserversInvalidated;
+    }
+}
+
+- (BOOL)canCaptureScreenshot {
+    @synchronized (self) {
+        return [self canHandleNotification] && screenshotCaptureConsumers > 0 && !enabled;
+    }
+}
+
+- (void)invalidate {
+    @synchronized (self) {
+        notificationObserversInvalidated = YES;
+        screenshotCaptureConsumers = 0;
+    }
+    [self synchronizeNotificationObservers];
+#if !RCT_NEW_ARCH_ENABLED
+    [super invalidate];
+#endif
+}
+
+- (void)dealloc {
+    // Notification cleanup is thread-safe; the owned view is removed on main
+    // without capturing the deallocating module in the queued block.
+    [self stopNotificationObservers];
+    [self clearOwnedObfuscatingView];
+}
+
+- (void)clearOwnedObfuscatingView {
+    UIImageView *view = obfuscatingView;
+    obfuscatingView = nil;
+    RCTExecuteOnMainQueue(^{
+        [view removeFromSuperview];
+    });
+}
+
+- (void)startNotificationObserversIfNeeded {
     if (hasListeners) {
         return;
     }
 
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     NSOperationQueue *mainQueue = [NSOperationQueue mainQueue];
-
-    // TODO: allow configure that
-    BOOL getScreenShotPath = TRUE;
 
     // handle inactive event
     [center addObserver:self selector:@selector(handleAppStateResignActive)
@@ -86,11 +185,19 @@ RCT_EXPORT_MODULE();
     //                         // queue:mainQueue
     //                         object:nil];
 
+    __weak RNScreenshotPrevent *weakSelf = self;
     screenshotObserver = [center addObserverForName:UIApplicationUserDidTakeScreenshotNotification
                                                object:nil
                                                 queue:mainQueue
                                            usingBlock:^(NSNotification *notification) {
-      if (self->hasListeners && getScreenShotPath) {
+      RNScreenshotPrevent *strongSelf = weakSelf;
+      if (![strongSelf canHandleNotification]) {
+          return;
+      }
+      // A Codegen emitter can exist before JS has subscribed. Capture files
+      // only after the feedback owner explicitly confirms its cleanup is ready.
+      // Other listeners still receive the screenshot signal without an image.
+      if ([strongSelf canCaptureScreenshot]) {
           NSMutableDictionary *result = [@{
             @"path": @"Error retrieving file",
             @"name": @"",
@@ -100,15 +207,15 @@ RCT_EXPORT_MODULE();
             @"imageType": @"",
             @"captured": @FALSE
           } mutableCopy];
-          UIImage *image = [self convertVisibleWindowsToImage];
+          UIImage *image = [strongSelf convertVisibleWindowsToImage];
           if (!image) {
               UIViewController *presentedViewController = RCTPresentedViewController();
               UIView *fallbackView = presentedViewController.view.superview ?: presentedViewController.view;
-              image = [self convertViewToImage:fallbackView];
+              image = [strongSelf convertViewToImage:fallbackView];
           }
           NSData *data = UIImagePNGRepresentation(image);
           if (!data) {
-              [self emitUserDidTakeScreenshotEvent:result];
+              [strongSelf emitUserDidTakeScreenshotEvent:result];
             // reject(@"error", @"Failed to convert image to PNG", nil);
             return;
           }
@@ -120,7 +227,7 @@ RCT_EXPORT_MODULE();
             attributes:nil
             error:nil];
           if (!directoryReady) {
-              [self emitUserDidTakeScreenshotEvent:result];
+              [strongSelf emitUserDidTakeScreenshotEvent:result];
               return;
           }
 
@@ -136,9 +243,14 @@ RCT_EXPORT_MODULE();
             [result setObject:@"png" forKey:@"imageType"];
             [result setObject:@TRUE forKey:@"captured"];
           }
-          [self emitUserDidTakeScreenshotEvent:result];
-      } else if (self->hasListeners) {
-          [self emitUserDidTakeScreenshotEvent:nil];
+          BOOL emitted = [strongSelf emitUserDidTakeScreenshotEvent:result];
+          if (success && !emitted) {
+              // Invalidation can race image capture. JS cannot clean up a file
+              // whose event was not emitted, so remove only this capture.
+              [[NSFileManager defaultManager] removeItemAtPath:filePath error:nil];
+          }
+      } else {
+          [strongSelf emitUserDidTakeScreenshotEvent:nil];
       }
     }];
 
@@ -149,7 +261,7 @@ RCT_EXPORT_MODULE();
     hasListeners = TRUE;
 }
 
-- (void) stopObserving {
+- (void)stopNotificationObservers {
     if (!hasListeners) {
         return;
     }
@@ -173,40 +285,68 @@ RCT_EXPORT_MODULE();
     }
 }
 
-- (void)emitUserDidTakeScreenshotEvent:(NSDictionary *)body {
+- (BOOL)emitUserDidTakeScreenshotEvent:(NSDictionary *)body {
+    @synchronized (self) {
+        if (![self canHandleNotification]) {
+            return NO;
+        }
+        if ([body[@"captured"] boolValue] && ![self canCaptureScreenshot]) {
+            return NO;
+        }
 #if RCT_NEW_ARCH_ENABLED
-    [self emitUserDidTakeScreenshot:body ?: @{}];
+        [self emitUserDidTakeScreenshot:body ?: @{}];
 #else
-    [self sendEventWithName:@"userDidTakeScreenshot" body:body];
+        [self sendEventWithName:@"userDidTakeScreenshot" body:body];
 #endif
+        // This reports invocation only, not acknowledgement by a JS consumer.
+        return YES;
+    }
 }
 
 - (void)emitAppSwitcherBlurChangedEvent:(NSDictionary *)body {
+    @synchronized (self) {
+        if (![self canHandleNotification]) {
+            return;
+        }
 #if RCT_NEW_ARCH_ENABLED
-    [self emitAppSwitcherBlurChanged:body];
+        [self emitAppSwitcherBlurChanged:body];
 #else
-    [self sendEventWithName:@"appSwitcherBlurChanged" body:body];
+        [self sendEventWithName:@"appSwitcherBlurChanged" body:body];
 #endif
+    }
 }
 
 - (void)emitScreenCapturedChangedEvent:(NSDictionary *)body {
+    @synchronized (self) {
+        if (![self canHandleNotification]) {
+            return;
+        }
 #if RCT_NEW_ARCH_ENABLED
-    [self emitScreenCapturedChanged:body];
+        [self emitScreenCapturedChanged:body];
 #else
-    [self sendEventWithName:@"screenCapturedChanged" body:body];
+        [self sendEventWithName:@"screenCapturedChanged" body:body];
 #endif
+    }
 }
 
 - (void)emitPreventScreenshotChangedEvent:(NSDictionary *)body {
+    @synchronized (self) {
+        if (![self canHandleNotification]) {
+            return;
+        }
 #if RCT_NEW_ARCH_ENABLED
-    [self emitPreventScreenshotChanged:body];
+        [self emitPreventScreenshotChanged:body];
 #else
-    [self sendEventWithName:@"preventScreenshotChanged" body:body];
+        [self sendEventWithName:@"preventScreenshotChanged" body:body];
 #endif
+    }
 }
 
 /** displays blurry view when app becomes inactive */
 - (void)handleAppStateResignActive {
+    if (![self canHandleNotification]) {
+        return;
+    }
     if (!(self->enabled || self->appSwitcherBlurEnabled)) {
         return;
     }
@@ -241,10 +381,7 @@ RCT_EXPORT_MODULE();
 
 /** removes blurry view when app becomes active */
 - (void)handleAppStateActive {
-    if (self->obfuscatingView) {
-        [self->obfuscatingView removeFromSuperview];
-        self->obfuscatingView = nil;
-    }
+    [self clearOwnedObfuscatingView];
 
     // Mirror the resign-active signal so JS can hide the app-switcher overlay
     // without relying on the RN AppState transition timing.
@@ -491,6 +628,29 @@ CGSize CGSizeAspectFill(const CGSize aspectRatio, const CGSize minimumSize)
     return @(isCaptured);
 }
 
+- (void)beginScreenshotCapture:(RCTPromiseResolveBlock)resolve
+                       reject:(RCTPromiseRejectBlock)reject {
+    @synchronized (self) {
+        if (notificationObserversInvalidated) {
+            reject(@"E_SCREENSHOT_INVALIDATED", @"Screenshot module is invalidated", nil);
+            return;
+        }
+        // Each started feedback subscription owns one demand. A delayed stop
+        // from an older subscription must not disable a newer subscription.
+        screenshotCaptureConsumers += 1;
+    }
+    resolve(nil);
+}
+
+- (void)endScreenshotCapture:(RCTPromiseResolveBlock)resolve {
+    @synchronized (self) {
+        if (screenshotCaptureConsumers > 0) {
+            screenshotCaptureConsumers -= 1;
+        }
+    }
+    resolve(nil);
+}
+
 #if RCT_NEW_ARCH_ENABLED
 - (void)scanScreenshotDirectory {
     // Android-only API. Keep the cross-platform TurboModule contract a no-op on iOS.
@@ -498,14 +658,13 @@ CGSize CGSizeAspectFill(const CGSize aspectRatio, const CGSize minimumSize)
 
 - (void)startScreenCaptureDetection:(RCTPromiseResolveBlock)resolve
                              reject:(RCTPromiseRejectBlock)reject {
-    (void)reject;
-    resolve(nil);
+    [self beginScreenshotCapture:resolve reject:reject];
 }
 
 - (void)stopScreenCaptureDetection:(RCTPromiseResolveBlock)resolve
                             reject:(RCTPromiseRejectBlock)reject {
     (void)reject;
-    resolve(nil);
+    [self endScreenshotCapture:resolve];
 }
 
 - (void)togglePreventScreenshot:(BOOL)isPrevent {
@@ -539,6 +698,17 @@ CGSize CGSizeAspectFill(const CGSize aspectRatio, const CGSize minimumSize)
     return std::make_shared<facebook::react::NativeRNScreenshotPreventSpecJSI>(params);
 }
 #else
+RCT_EXPORT_METHOD(startScreenCaptureDetection:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    [self beginScreenshotCapture:resolve reject:reject];
+}
+
+RCT_EXPORT_METHOD(stopScreenCaptureDetection:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    (void)reject;
+    [self endScreenshotCapture:resolve];
+}
+
 RCT_EXPORT_METHOD(togglePreventScreenshot:(BOOL)isPrevent) {
     [self applyPreventScreenshot:isPrevent];
 }

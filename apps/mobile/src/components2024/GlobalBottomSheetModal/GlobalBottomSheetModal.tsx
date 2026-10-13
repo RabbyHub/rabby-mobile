@@ -39,11 +39,13 @@ let globalRemoveAllModals: ((params?: RemoveParams) => void) | null = null;
 export const GlobalBottomSheetModal2024 = () => {
   const modalRefs = React.useRef<Record<string, ModalData['ref']>>({});
   const waitForDismissIdsRef = React.useRef(new Set<MODAL_ID>());
+  const pendingCreateTokensRef = React.useRef(new Map<MODAL_ID, symbol>());
   const pendingPresentIdsRef = React.useRef(new Set<MODAL_ID>());
   const presentedIdsRef = React.useRef(new Set<MODAL_ID>());
   const [modals, setModals] = React.useState<ModalData[]>([]);
 
   const removeAllModals = React.useCallback((params?: RemoveParams) => {
+    pendingCreateTokensRef.current.clear();
     pendingPresentIdsRef.current.clear();
     presentedIdsRef.current.clear();
     // Close all current modals
@@ -61,8 +63,10 @@ export const GlobalBottomSheetModal2024 = () => {
   }, []);
 
   React.useEffect(() => {
+    const pendingCreates = pendingCreateTokensRef.current;
     globalRemoveAllModals = removeAllModals;
     return () => {
+      pendingCreates.clear();
       globalRemoveAllModals = null;
     };
   }, [removeAllModals]);
@@ -110,7 +114,24 @@ export const GlobalBottomSheetModal2024 = () => {
     GlobalSheetModalListeners[EVENT_NAMES.CREATE]
   >(
     async (id, params) => {
-      const _approval = await getApproval();
+      // REMOVE, clear-all, or host unmount may happen while approval lookup
+      // is pending. A stale request must not recreate a dismissed sheet or
+      // mark its security state after its owner has gone away.
+      const createToken = Symbol(id);
+      pendingCreateTokensRef.current.set(id, createToken);
+      let _approval: Awaited<ReturnType<typeof getApproval>>;
+      try {
+        _approval = await getApproval();
+      } catch (error) {
+        if (pendingCreateTokensRef.current.get(id) === createToken) {
+          pendingCreateTokensRef.current.delete(id);
+        }
+        throw error;
+      }
+      if (pendingCreateTokensRef.current.get(id) !== createToken) {
+        return;
+      }
+      pendingCreateTokensRef.current.delete(id);
       const approvalComponent = _approval?.data
         ?.approvalComponent as APPROVAL_MODAL_NAMES;
 
@@ -162,6 +183,7 @@ export const GlobalBottomSheetModal2024 = () => {
   );
 
   const finalizeRemove = React.useCallback((key: MODAL_ID) => {
+    pendingCreateTokensRef.current.delete(key);
     pendingPresentIdsRef.current.delete(key);
     presentedIdsRef.current.delete(key);
     delete modalRefs.current[key];

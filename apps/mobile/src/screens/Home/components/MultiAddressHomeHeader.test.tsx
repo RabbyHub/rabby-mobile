@@ -1,0 +1,102 @@
+import React from 'react';
+import { render, screen } from '@testing-library/react-native';
+import { StyleSheet, View } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import { MultiAddressHomeHeader } from './MultiAddressHomeHeader';
+
+// Component contract only. The native Paper/Fabric interop border composition
+// still requires visual validation on iOS; the gradient is an external boundary.
+let mockIsLight = true;
+jest.mock('react-native-linear-gradient', () => {
+  const ReactModule = require('react');
+  return (props: object) =>
+    ReactModule.createElement(require('react-native').View, props);
+});
+jest.mock('react-native-reanimated', () => ({
+  __esModule: true,
+  default: { View: require('react-native').View },
+  Easing: { out: (fn: unknown) => fn, cubic: () => undefined },
+  FadeInUp: { duration: () => ({ easing: () => undefined }) },
+}));
+jest.mock('@react-native-community/blur', () => ({
+  BlurView: require('react-native').View,
+}));
+jest.mock('@/hooks/theme', () => ({
+  useTheme2024: ({ getStyle }: { getStyle: (theme: object) => object }) => {
+    const theme = {
+      isLight: mockIsLight,
+      colors2024: { 'neutral-black': '#000000' },
+    };
+    return { ...theme, styles: getStyle(theme) };
+  },
+}));
+jest.mock('@/utils/styles', () => ({
+  createGetStyles2024: (fn: unknown) => fn,
+}));
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
+jest.mock('@/hooks/account', () => ({ usePinnedAccountList: () => [] }));
+jest.mock('@/hooks/useGlobalStatus', () => ({
+  useGlobalStatus: () => ({ isDisConnect: false }),
+}));
+jest.mock('@/utils/analytics', () => ({ matomoRequestEvent: jest.fn() }));
+jest.mock('@/components2024/GlobalWarning/Warining', () => ({
+  GlobalWarning: () => null,
+}));
+jest.mock('../hooks/useHideBalance', () => ({
+  useHideBalance: () => ['SHOW'],
+}));
+jest.mock('./HomeAddressItem', () => ({ HomeAddressItem: () => null }));
+jest.mock(
+  '@/screens/Address/components/MultiAssets/RenderRow/CurveChart',
+  () => ({
+    MultiChart: () => null,
+    setIsFoldMultiChart: jest.fn(),
+  }),
+);
+jest.mock('@/components2024/GlobalBottomSheetModal', () => ({
+  createGlobalBottomSheetModal2024: jest.fn(),
+  removeGlobalBottomSheetModal2024: jest.fn(),
+}));
+jest.mock('@/components2024/GlobalBottomSheetModal/types', () => ({
+  MODAL_NAMES: {},
+}));
+jest.mock('@/components2024/GlobalBottomSheetModal/apiGlobalModal', () => ({
+  apiGlobalModal: {},
+}));
+jest.mock('@/hooks/navigation', () => ({ apisHomeTabIndex: {} }));
+jest.mock('@/store/balance24h', () => ({ balance24hStore: {} }));
+jest.mock('@/store/homePortfolio/consistency', () => ({
+  buildPortfolioAddressChange: jest.fn(),
+}));
+jest.mock('@/hooks/storeActivity/useActivityStore', () => ({
+  useActivityStore: jest.fn(),
+}));
+
+it.each([true, false])(
+  'keeps the balance-card border and clipping on one RN view (light=%s)',
+  isLight => {
+    mockIsLight = isLight;
+    render(<MultiAddressHomeHeader />);
+    const gradient = screen.UNSAFE_getByType(LinearGradient);
+    const gradientStyle = StyleSheet.flatten(gradient.props.style);
+    expect(gradientStyle.borderWidth).toBeUndefined();
+    expect(gradientStyle.borderRadius).toBeUndefined();
+    const frames = screen.UNSAFE_getAllByType(View).filter(view => {
+      const style = StyleSheet.flatten(view.props.style);
+      return style?.borderWidth === 1 && style?.overflow === 'hidden';
+    });
+    expect(frames).toHaveLength(1);
+    expect(StyleSheet.flatten(frames[0].props.style)).toMatchObject({
+      borderRadius: 20,
+      borderColor: isLight ? 'rgba(255, 255, 255, 1)' : 'rgba(35, 36, 40, 1)',
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+    });
+    expect(frames[0].findByType(LinearGradient)).toBe(gradient);
+  },
+);

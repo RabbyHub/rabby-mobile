@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { Platform, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -205,17 +205,20 @@ export function MultiAddressHomeHeader(
             // loading && styles.curveBoxLoading,
             {},
           ]}>
-          <RNLinearGradient
-            pointerEvents="none"
-            colors={
-              isLight
-                ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, .54)']
-                : ['rgba(0, 0, 0, 0.10)', '#232428']
-            }
-            start={isLight ? { x: 0.25, y: 0.5 } : { x: 1.07, y: 0.42 }}
-            end={isLight ? { x: 0.75, y: 0.5 } : { x: -0.14, y: 0.59 }}
-            style={styles.curveCardGradientBg}
-          />
+          {/* Keep the border on one Fabric view: the legacy gradient forwards
+              border props to both its interop wrapper and its inset Paper view. */}
+          <View pointerEvents="none" style={styles.curveCardGradientBg}>
+            <RNLinearGradient
+              colors={
+                isLight
+                  ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, .54)']
+                  : ['rgba(0, 0, 0, 0.10)', '#232428']
+              }
+              start={isLight ? { x: 0.25, y: 0.5 } : { x: 1.07, y: 0.42 }}
+              end={isLight ? { x: 0.75, y: 0.5 } : { x: -0.14, y: 0.59 }}
+              style={StyleSheet.absoluteFill}
+            />
+          </View>
           <View
             style={[
               styles.curveCard,
@@ -329,6 +332,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       left: 0,
       right: 0,
       borderRadius: SIZES.cardContentRadius,
+      overflow: 'hidden',
       borderWidth: 1,
       borderColor: isLight ? 'rgba(255, 255, 255, 1)' : 'rgba(35, 36, 40, 1)',
     },

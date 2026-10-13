@@ -86,6 +86,8 @@ const TokenDetailHistoryListContent = ({
   const currentAddress = finalAccount?.address;
 
   const isReady = useRef(false);
+  const requestPendingRef = useRef(false);
+  const requestSequenceRef = useRef(0);
   const lastMap = useRef<Record<string, number>>({});
   const dbCursorRef = useRef<HistoryPageCursor | null>(null);
   const hasMoreMap = useRef<Record<string, boolean>>({});
@@ -207,6 +209,7 @@ const TokenDetailHistoryListContent = ({
   }, [finalAccount]);
 
   const batchFetchData = useMemoizedFn(async () => {
+    const requestSequence = ++requestSequenceRef.current;
     const list: HistoryDisplayItem[] = [];
     if (disableHistoryRequest) {
       return {
@@ -238,6 +241,12 @@ const TokenDetailHistoryListContent = ({
       isMyAddress,
       dbCursorRef.current,
     );
+    if (requestSequence !== requestSequenceRef.current) {
+      // ahooks cancels request callbacks, but useInfiniteScroll publishes its
+      // service result before that cancellation check. Do not fulfill a page
+      // superseded by a refresh, or it can overwrite the refreshed list/cursor.
+      throw new Error('Superseded token history page');
+    }
     if (result.list.length < PAGE_COUNT) {
       hasMoreMap.current[addr] = false;
     } else {
@@ -275,10 +284,18 @@ const TokenDetailHistoryListContent = ({
     cancel,
   } = useInfiniteScroll(() => batchFetchData(), {
     isNoMore: d => disableHistoryRequest || (d ? !d.hasMore : false),
-    onSuccess() {},
+    // Native lists can report their end repeatedly before React commits the
+    // loading flags. Reserve the request synchronously as well.
+    onBefore() {
+      requestPendingRef.current = true;
+    },
+    onFinally() {
+      requestPendingRef.current = false;
+    },
   });
 
   const refresh = useMemoizedFn(() => {
+    cancel();
     lastMap.current = {};
     hasMoreMap.current = {};
     dbCursorRef.current = null;
@@ -372,8 +389,13 @@ const TokenDetailHistoryListContent = ({
       onScroll={handleScroll}
       scrollEventThrottle={16}
       loadMore={() => {
-        // avoid exec multi times loadMore
-        if (loadingMore || noMore) {
+        if (
+          requestPendingRef.current ||
+          loading ||
+          loadingMore ||
+          noMore ||
+          !fetchApiData?.hasMore
+        ) {
           return;
         }
         loadMore();
@@ -383,8 +405,24 @@ const TokenDetailHistoryListContent = ({
   );
 };
 
+const TokenDetailHistoryListForScope = (
+  props: React.ComponentProps<typeof TokenDetailHistoryListContent>,
+) => {
+  // Pagination and in-flight completions belong to exactly one account/token
+  // scope. Remount that local state instead of publishing an old scope's page
+  // into the next one when its DB/API request resolves late.
+  const requestKey = JSON.stringify([
+    props.finalAccount?.address.toLowerCase(),
+    props.finalAccount?.type,
+    props.token.chain,
+    props.token.id,
+    !!props.disableHistoryRequest,
+  ]);
+  return <TokenDetailHistoryListContent key={requestKey} {...props} />;
+};
+
 export const TokenDetailHistoryList = withTransactionHistoryService(
-  TokenDetailHistoryListContent,
+  TokenDetailHistoryListForScope,
 );
 
 const getStyle = createGetStyles2024(ctx => ({
