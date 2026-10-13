@@ -139,6 +139,7 @@ import { getCexInfo } from '@/hooks/useCexSupportList';
 import { MultiActionProps } from '../TypedDataActions';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 import { calcGasLimit } from '@/core/apis/transactions';
+import { isHyperEvmChain } from '@/utils/hyperEvm';
 import { getEIP7702MiniGasLimit } from '@/utils/7702';
 import { Text } from '@/components/Typography';
 import { checkGasAccountLevelValidation } from './useGasAccountLevelValidation';
@@ -899,14 +900,18 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       chainId: tx.chainId,
     });
 
-    const blockPromise = apiProvider.requestETHRpc(
-      {
-        method: 'eth_getBlockByNumber',
-        params: ['latest', false],
-      },
-      chain.serverId,
-      currentAccount,
-    );
+    const blockPromise =
+      isHyperEvmChain(chain.id) &&
+      currentAccount.type !== KEYRING_TYPE.GnosisKeyring
+        ? Promise.resolve(null)
+        : apiProvider.requestETHRpc(
+            {
+              method: 'eth_getBlockByNumber',
+              params: ['latest', false],
+            },
+            chain.serverId,
+            currentAccount,
+          );
 
     const preExecPromise = openapi
       .preExecTx({
