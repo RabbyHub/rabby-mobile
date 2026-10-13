@@ -95,3 +95,81 @@ export interface CandleData {
   preserveVisibleRange?: boolean;
   candles: CandleStick[];
 }
+
+/** Simple is an opt-in protocol; legacy and Pro messages keep their contracts. */
+export type SimpleChartConfig = {
+  style: 'candle' | 'area';
+  range: '1D' | '1W' | '1M' | '1Y' | 'ALL' | null;
+  interval: string;
+  priceDecimals: number;
+  colors: {
+    background: string;
+    text: string;
+    grid: string;
+    secondary: string;
+    entry: string;
+    entryBackground: string;
+    entryText: string;
+    up: string;
+    down: string;
+    accent: string;
+    areaTop: string;
+    areaBottom: string;
+    contrast: string;
+    liquidation: string;
+  };
+  labels: {
+    entry: string;
+    tp: string;
+    sl: string;
+    liq: string;
+    buy: string;
+    sell: string;
+    empty: string;
+  };
+};
+export type SimpleChartFill = { time: number; side: string };
+export type SimpleChartMessage = {
+  type: 'PERPS_SIMPLE_CHART';
+  identity: string;
+  sequence: number;
+} & (
+  | { action: 'configure'; config: SimpleChartConfig }
+  | { action: 'replace'; config: SimpleChartConfig; candles: CandleStick[] }
+  | {
+      action: 'data';
+      candles: CandleStick[];
+      preserve: boolean;
+      state: 'idle' | 'loading' | 'ready' | 'empty' | 'stale' | 'error';
+    }
+  | { action: 'activity'; active: boolean }
+  | { action: 'update'; candle: CandleStick }
+  | {
+      action: 'overlays';
+      accountKey: string;
+      fills: SimpleChartFill[];
+      prices: {
+        entryPrice?: number;
+        liquidationPrice?: number;
+        tpPrice?: number;
+        slPrice?: number;
+      };
+    }
+  | { action: 'historyComplete'; outcome: 'loaded' | 'exhausted' | 'retry' }
+  | { action: 'reset' | 'latest' | 'clearSelection' }
+);
+export type SimpleChartEvent = {
+  type: 'PERPS_SIMPLE_EVENT';
+  identity: string;
+} & (
+  | { event: 'applied'; sequence: number }
+  | { event: 'selection'; candle: CandleStick | null }
+  | {
+      event: 'viewport';
+      resetVisible: boolean;
+      latestVisible: boolean;
+      paneWidth: number;
+      paneHeight: number;
+    }
+  | { event: 'history' }
+);

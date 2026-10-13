@@ -1,0 +1,678 @@
+import {
+  createChart,
+  CandlestickSeries,
+  AreaSeries,
+  ColorType,
+  CrosshairMode,
+  LineStyle,
+  TrackingModeExitMode,
+  type UTCTimestamp,
+  type Time,
+} from 'lightweight-charts/standalone';
+import { formatTime, formatYTime } from './chart-logic';
+import { PERPS_PRO_FONT_FAMILY } from './perps-pro-font';
+import {
+  avoidSimpleLabelOverlap,
+  simpleDefaultRange,
+  simpleFillMarkers,
+  simpleHistoryShift,
+  visibleLastCandle,
+} from './perps-simple-logic';
+import type {
+  CandleStick,
+  SimpleChartMessage,
+  SimpleChartConfig,
+  SimpleChartEvent,
+  SimpleChartFill,
+} from './types';
+
+export function createSimpleChart(
+  container: HTMLElement,
+  publish: (event: SimpleChartEvent) => void,
+) {
+  const host = document.createElement('div');
+  Object.assign(host.style, {
+    position: 'absolute',
+    inset: '12px 12px 8px',
+    touchAction: 'pan-y',
+  });
+  container.appendChild(host);
+  const chart = createChart(host, {
+    autoSize: true,
+    layout: {
+      fontFamily: PERPS_PRO_FONT_FAMILY,
+      fontSize: 11,
+      attributionLogo: false,
+    },
+    grid: {
+      vertLines: { style: LineStyle.Dashed },
+      horzLines: { style: LineStyle.Dashed },
+    },
+    rightPriceScale: {
+      borderVisible: false,
+      minimumWidth: 44,
+      scaleMargins: { top: 0.08, bottom: 0.08 },
+    },
+    timeScale: {
+      borderVisible: false,
+      timeVisible: true,
+      secondsVisible: false,
+      minBarSpacing: 0.1,
+      barSpacing: 10,
+      rightOffset: 0,
+      fixLeftEdge: true,
+      fixRightEdge: true,
+      tickMarkFormatter: (time: number, type: number) =>
+        formatYTime(time, type),
+    },
+    localization: {
+      timeFormatter: (time: Time) =>
+        formatTime(typeof time === 'string' ? Date.parse(time) / 1000 : time),
+    },
+    crosshair: {
+      mode: CrosshairMode.Magnet,
+      horzLine: { visible: false, labelVisible: false },
+      vertLine: { labelVisible: true },
+    },
+    trackingMode: { exitMode: TrackingModeExitMode.OnTouchEnd },
+    handleScroll: { vertTouchDrag: false },
+  });
+  const candleSeries = chart.addSeries(CandlestickSeries, {
+    borderVisible: false,
+    priceLineVisible: false,
+    lastValueVisible: false,
+  });
+  const areaSeries = chart.addSeries(AreaSeries, {
+    visible: false,
+    lineWidth: 2,
+    priceLineVisible: false,
+    lastValueVisible: false,
+    crosshairMarkerRadius: 4,
+  });
+  const overlay = document.createElement('div');
+  Object.assign(overlay.style, {
+    position: 'absolute',
+    inset: '0',
+    pointerEvents: 'none',
+    overflow: 'hidden',
+    zIndex: '3',
+    fontFamily: PERPS_PRO_FONT_FAMILY,
+  });
+  host.appendChild(overlay);
+  let identity = '';
+  let sequence = -1;
+  let config: SimpleChartConfig | null = null;
+  let active = true;
+  let candles: CandleStick[] = [];
+  let fills: SimpleChartFill[] = [];
+  const candleByTime = new Map<number, CandleStick>();
+  let prices: Extract<SimpleChartMessage, { action: 'overlays' }>['prices'] =
+    {};
+  let markers: ReturnType<typeof simpleFillMarkers> = [];
+  let dirty = false;
+  let defaultViewport: { from: number; to: number } | null = null;
+  let userViewportChanged = false;
+  let applying = false;
+  let historyPending = false;
+  let exhausted = false;
+  let historyRetryBlocked = false;
+  let frame: number | null = null;
+  let viewportState = '';
+  let selectedTime: number | null = null;
+  let contact = false;
+  let disposed = false;
+  const activeSeries = () =>
+    config?.style === 'area' ? areaSeries : candleSeries;
+  const priceText = (price: number) =>
+    price.toLocaleString('en-US', {
+      minimumFractionDigits: config?.priceDecimals ?? 2,
+      maximumFractionDigits: config?.priceDecimals ?? 2,
+    });
+  const emit = (event: Omit<SimpleChartEvent, 'type' | 'identity'>) =>
+    publish({
+      type: 'PERPS_SIMPLE_EVENT',
+      identity,
+      ...event,
+    } as SimpleChartEvent);
+  const clearSelection = () => {
+    chart.clearCrosshairPosition();
+    if (selectedTime !== null) {
+      selectedTime = null;
+      emit({ event: 'selection', candle: null } as Omit<
+        SimpleChartEvent,
+        'type' | 'identity'
+      >);
+    }
+  };
+  function schedule() {
+    if (frame !== null || disposed) return;
+    frame = requestAnimationFrame(() => {
+      frame = null;
+      render();
+    });
+  }
+  function applyDefault() {
+    if (!config) return;
+    const range = simpleDefaultRange(
+      candles,
+      config,
+      chart.timeScale().width(),
+    );
+    if (!range) return;
+    applying = true;
+    activeSeries().priceScale().applyOptions({ autoScale: true });
+    chart.timeScale().setVisibleLogicalRange(range);
+    // fixRightEdge and pixel/bar constraints may clamp the requested range.
+    defaultViewport = chart.timeScale().getVisibleLogicalRange();
+    applying = false;
+    dirty = false;
+    userViewportChanged = false;
+    schedule();
+  }
+  function render() {
+    overlay.replaceChildren();
+    if (!config) return;
+    const { up: GREEN, down: RED, accent: AREA } = config.colors;
+    const range = chart.timeScale().getVisibleLogicalRange();
+    const defaultRange = defaultViewport;
+    if (!userViewportChanged) defaultViewport = range;
+    dirty =
+      userViewportChanged &&
+      !!range &&
+      !!defaultRange &&
+      (Math.abs(range.from - defaultRange.from) > 0.1 ||
+        Math.abs(range.to - defaultRange.to) > 0.1 ||
+        !activeSeries().priceScale().options().autoScale);
+    const last = candles[candles.length - 1];
+    const visible = visibleLastCandle(candles, range);
+    const lastVisible =
+      !!last &&
+      !!range &&
+      range.to >= candles.length - 1 &&
+      range.from <= candles.length - 1;
+    const paneWidth = chart.timeScale().width();
+    const paneHeight = chart.panes()[0].getHeight();
+    const state = `${identity}:${dirty}:${
+      !lastVisible && !!last
+    }:${paneWidth}:${paneHeight}`;
+    if (state !== viewportState) {
+      viewportState = state;
+      emit({
+        event: 'viewport',
+        resetVisible: dirty,
+        latestVisible: !lastVisible && !!last,
+        paneWidth,
+        paneHeight,
+      } as Omit<SimpleChartEvent, 'type' | 'identity'>);
+    }
+    if (!last || !range) return;
+    const series = activeSeries();
+    const tags: Array<{
+      price: number;
+      color: string;
+      background: string;
+      text: string;
+      title?: string;
+      outline?: boolean;
+    }> = [];
+    const latestColor =
+      config.style === 'area' ? AREA : last.close >= last.open ? GREEN : RED;
+    tags.push({
+      price: last.close,
+      color: latestColor,
+      background: latestColor,
+      text: config.colors.contrast,
+    });
+    if (!lastVisible && visible) {
+      const color =
+        config.style === 'area'
+          ? AREA
+          : visible.close >= visible.open
+          ? GREEN
+          : RED;
+      tags.push({
+        price: visible.close,
+        color,
+        background: config.colors.background,
+        text: color,
+        outline: true,
+      });
+    }
+    const selected =
+      selectedTime === null ? null : candleByTime.get(selectedTime);
+    if (selected && selected.time !== last.time) {
+      const color =
+        config.style === 'area'
+          ? AREA
+          : selected.close >= selected.open
+          ? GREEN
+          : RED;
+      tags.push({
+        price: selected.close,
+        color,
+        background: color,
+        text: config.colors.contrast,
+      });
+    }
+    if (config.style === 'candle') {
+      const lines = [
+        {
+          price: prices.entryPrice,
+          color: config.colors.entry,
+          background: config.colors.entryBackground,
+          text: config.colors.entryText,
+          title: config.labels.entry,
+        },
+        {
+          price: prices.tpPrice,
+          color: GREEN,
+          background: GREEN,
+          text: config.colors.contrast,
+          title: config.labels.tp,
+        },
+        {
+          price: prices.slPrice,
+          color: RED,
+          background: RED,
+          text: config.colors.contrast,
+          title: config.labels.sl,
+        },
+        {
+          price: prices.liquidationPrice,
+          color: config.colors.liquidation,
+          background: config.colors.liquidation,
+          text: config.colors.contrast,
+          title: config.labels.liq,
+        },
+      ];
+      for (const line of lines)
+        if (Number.isFinite(line.price) && line.price! > 0)
+          tags.push({ ...line, price: line.price! });
+    }
+    const visibleTags = tags
+      .map(tag => ({ ...tag, y: series.priceToCoordinate(tag.price) }))
+      .filter(
+        tag =>
+          tag.y !== null &&
+          (tag.title === undefined || (tag.y >= 0 && tag.y <= paneHeight)),
+      );
+    const tagY = avoidSimpleLabelOverlap(
+      visibleTags.map(tag => tag.y!),
+      paneHeight,
+    );
+    visibleTags.forEach((tag, i) => {
+      const y = tag.y!;
+      if (y >= 0 && y <= paneHeight) {
+        const line = document.createElement('div');
+        Object.assign(line.style, {
+          position: 'absolute',
+          left: '0',
+          top: `${y}px`,
+          width: `${paneWidth}px`,
+          borderTop: `1px dashed ${tag.color}`,
+        });
+        overlay.appendChild(line);
+        if (tag.title) {
+          const title = document.createElement('span');
+          title.textContent = tag.title;
+          Object.assign(title.style, {
+            position: 'absolute',
+            left: '0',
+            top: `${Math.max(0, y - 16)}px`,
+            color: tag.color,
+            fontSize: '10px',
+            lineHeight: '16px',
+            background: config!.colors.background,
+          });
+          overlay.appendChild(title);
+        }
+      }
+      const label = document.createElement('span');
+      label.textContent = priceText(tag.price);
+      Object.assign(label.style, {
+        position: 'absolute',
+        right: '0',
+        top: `${tagY[i] - 7}px`,
+        padding: '0 3px',
+        borderRadius: '4px',
+        fontSize: '10px',
+        lineHeight: '14px',
+        color: tag.text,
+        background: tag.background,
+        border: `1px solid ${tag.color}`,
+        boxSizing: 'border-box',
+        whiteSpace: 'nowrap',
+      });
+      const labelRow = document.createElement('div');
+      Object.assign(labelRow.style, {
+        position: 'absolute',
+        left: `${paneWidth}px`,
+        right: '0',
+        top: `${tagY[i] - 8}px`,
+        height: '16px',
+        background: config!.colors.background,
+      });
+      label.style.top = '1px';
+      labelRow.appendChild(label);
+      overlay.appendChild(labelRow);
+    });
+    const firstVisibleTime = candles[Math.max(0, Math.floor(range.from))]?.time;
+    const lastVisibleTime =
+      candles[Math.min(candles.length - 1, Math.ceil(range.to))]?.time;
+    for (const marker of markers) {
+      if (marker.time < firstVisibleTime || marker.time > lastVisibleTime)
+        continue;
+      const x = chart.timeScale().timeToCoordinate(marker.time as UTCTimestamp);
+      if (x === null || x < 0 || x > paneWidth) continue;
+      const candle = candleByTime.get(marker.time);
+      if (!candle) continue;
+      const buy = marker.side === 'B';
+      const y = series.priceToCoordinate(
+        config.style === 'area' ? candle.close : buy ? candle.low : candle.high,
+      );
+      if (y === null || y < 0 || y > paneHeight) continue;
+      const label = document.createElement('span');
+      label.textContent = buy ? 'B' : 'S';
+      label.setAttribute(
+        'aria-label',
+        buy ? config.labels.buy : config.labels.sell,
+      );
+      Object.assign(label.style, {
+        position: 'absolute',
+        left: `${x - 6}px`,
+        top: `${Math.max(0, Math.min(paneHeight - 12, y + (buy ? 4 : -16)))}px`,
+        width: '12px',
+        height: '12px',
+        borderRadius: buy ? '3px' : '4px',
+        color: config.colors.contrast,
+        background: buy ? GREEN : RED,
+        fontSize: '9px',
+        lineHeight: '12px',
+        fontWeight: '700',
+        textAlign: 'center',
+      });
+      overlay.appendChild(label);
+    }
+    if (
+      active &&
+      range.from < 5 &&
+      !historyPending &&
+      !exhausted &&
+      !historyRetryBlocked &&
+      !applying
+    ) {
+      historyPending = true;
+      emit({ event: 'history' });
+    }
+  }
+  chart.timeScale().subscribeVisibleLogicalRangeChange(schedule);
+  chart.subscribeCrosshairMove(event => {
+    if (!active || !contact || event.time === undefined) return;
+    const candle = candleByTime.get(Number(event.time));
+    if (!candle || selectedTime === candle.time) return;
+    selectedTime = candle.time;
+    schedule();
+    emit({ event: 'selection', candle } as Omit<
+      SimpleChartEvent,
+      'type' | 'identity'
+    >);
+  });
+  const start = () => {
+    contact = true;
+  };
+  const move = () => {
+    if (contact && selectedTime === null) {
+      userViewportChanged = true;
+      historyRetryBlocked = false;
+    }
+    schedule();
+  };
+  const end = () => {
+    contact = false;
+    clearSelection();
+    schedule();
+  };
+  const wheel = () => {
+    userViewportChanged = true;
+    historyRetryBlocked = false;
+    schedule();
+  };
+  host.addEventListener('touchstart', start, { passive: true });
+  host.addEventListener('touchmove', move, { passive: true });
+  host.addEventListener('touchend', end);
+  host.addEventListener('touchcancel', end);
+  host.addEventListener('mousedown', start);
+  host.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', end);
+  host.addEventListener('wheel', wheel, { passive: true });
+  const resize = new ResizeObserver(() => {
+    if (!dirty) applyDefault();
+    else schedule();
+  });
+  resize.observe(host);
+  return {
+    handle(message: SimpleChartMessage) {
+      if (message.sequence <= sequence) return false;
+      if (
+        identity &&
+        message.action !== 'replace' &&
+        message.identity !== identity
+      )
+        return false;
+      sequence = message.sequence;
+      if (message.action === 'configure' || message.action === 'replace') {
+        const changed =
+          identity !== message.identity || message.action === 'replace';
+        const styleChanged = config?.style !== message.config.style;
+        const range = chart.timeScale().getVisibleLogicalRange();
+        identity = message.identity;
+        config = message.config;
+        if (changed) {
+          clearSelection();
+          candles = [];
+          fills = [];
+          markers = [];
+          prices = {};
+          candleByTime.clear();
+          historyPending = false;
+          exhausted = false;
+          historyRetryBlocked = false;
+          dirty = false;
+          defaultViewport = null;
+          userViewportChanged = false;
+          if (message.action !== 'replace') {
+            candleSeries.setData([]);
+            areaSeries.setData([]);
+          }
+        }
+        host.style.background = config.colors.background;
+        document.body.style.background = config.colors.background;
+        const priceFormat = {
+          type: 'price' as const,
+          precision: config.priceDecimals,
+          minMove: 10 ** -config.priceDecimals,
+        };
+        candleSeries.applyOptions({
+          visible: config.style === 'candle',
+          priceFormat,
+          upColor: config.colors.up,
+          downColor: config.colors.down,
+          wickUpColor: config.colors.up,
+          wickDownColor: config.colors.down,
+        });
+        areaSeries.applyOptions({
+          visible: config.style === 'area',
+          priceFormat,
+          lineColor: config.colors.accent,
+          topColor: config.colors.areaTop,
+          bottomColor: config.colors.areaBottom,
+        });
+        chart.applyOptions({
+          layout: {
+            background: {
+              type: ColorType.Solid,
+              color: config.colors.background,
+            },
+            textColor: config.colors.secondary,
+          },
+          grid: {
+            vertLines: { color: config.colors.grid },
+            horzLines: { color: config.colors.grid },
+          },
+          crosshair: {
+            vertLine: {
+              color: config.colors.secondary,
+              labelBackgroundColor: config.colors.entry,
+            },
+          },
+        });
+        if (!changed && styleChanged && range)
+          chart.timeScale().setVisibleLogicalRange(range);
+        schedule();
+        if (message.action === 'configure') return true;
+      }
+      if (message.action === 'data' || message.action === 'replace') {
+        const range = chart.timeScale().getVisibleLogicalRange();
+        const followedLatest = !!range && range.to >= candles.length - 1;
+        const previousLatestTime = candles.at(-1)?.time;
+        const shift = simpleHistoryShift(candles, message.candles);
+        const hadData = candles.length > 0;
+        candles = message.candles;
+        candleByTime.clear();
+        candles.forEach(candle => candleByTime.set(candle.time, candle));
+        candleSeries.setData(
+          candles.map(item => ({ ...item, time: item.time as UTCTimestamp })),
+        );
+        areaSeries.setData(
+          candles.map(item => ({
+            time: item.time as UTCTimestamp,
+            value: item.close,
+          })),
+        );
+        markers = simpleFillMarkers(candles, fills, config!.interval);
+        if (message.action === 'data' && message.preserve && hadData && range) {
+          if (defaultViewport)
+            defaultViewport = {
+              from: defaultViewport.from + shift,
+              to: defaultViewport.to + shift,
+            };
+          if (!dirty && config?.range === 'ALL') applyDefault();
+          else if (
+            followedLatest &&
+            previousLatestTime !== undefined &&
+            (candles.at(-1)?.time ?? previousLatestTime) > previousLatestTime
+          ) {
+            // A reconnect or a bounded tail trim may deliver several new bars
+            // at once. Preserve zoom and the user's existing realtime follow.
+            const to = candles.length - 0.5;
+            chart.timeScale().setVisibleLogicalRange({
+              from: to - (range.to - range.from),
+              to,
+            });
+          } else
+            chart.timeScale().setVisibleLogicalRange({
+              from: range.from + shift,
+              to: range.to + shift,
+            });
+        } else applyDefault();
+        if (message.action === 'replace') {
+          const appliedIdentity = identity;
+          requestAnimationFrame(() => {
+            if (!disposed && identity === appliedIdentity)
+              emit({ event: 'applied', sequence: message.sequence } as Omit<
+                SimpleChartEvent,
+                'type' | 'identity'
+              >);
+          });
+        }
+        if (!candles.length) clearSelection();
+        else if (selectedTime !== null) {
+          const selected = candleByTime.get(selectedTime);
+          if (selected)
+            emit({ event: 'selection', candle: selected } as Omit<
+              SimpleChartEvent,
+              'type' | 'identity'
+            >);
+          else clearSelection();
+        }
+      } else if (message.action === 'activity') {
+        active = message.active;
+        host.style.pointerEvents = active ? 'auto' : 'none';
+        if (!active) {
+          contact = false;
+          clearSelection();
+          historyPending = false;
+        } else historyRetryBlocked = false;
+      } else if (message.action === 'update') {
+        const candle = message.candle;
+        const last = candles[candles.length - 1];
+        if (!last || candle.time < last.time) return false;
+        candleByTime.set(candle.time, candle);
+        const range = chart.timeScale().getVisibleLogicalRange();
+        const follow = range && range.to >= candles.length - 1;
+        const appended = candle.time > last.time;
+        if (appended) candles.push(candle);
+        else candles[candles.length - 1] = candle;
+        candleSeries.update({ ...candle, time: candle.time as UTCTimestamp });
+        areaSeries.update({
+          time: candle.time as UTCTimestamp,
+          value: candle.close,
+        });
+        if (selectedTime === candle.time)
+          emit({ event: 'selection', candle } as Omit<
+            SimpleChartEvent,
+            'type' | 'identity'
+          >);
+        if (appended) {
+          if (defaultViewport)
+            defaultViewport = {
+              from: defaultViewport.from + 1,
+              to: defaultViewport.to + 1,
+            };
+          markers = simpleFillMarkers(candles, fills, config!.interval);
+          if (!dirty) applyDefault();
+          else if (follow && range)
+            chart.timeScale().setVisibleLogicalRange({
+              from: range.from + 1,
+              to: range.to + 1,
+            });
+        }
+      } else if (message.action === 'overlays') {
+        prices = message.prices;
+        fills = message.fills;
+        markers = simpleFillMarkers(candles, fills, config!.interval);
+      } else if (message.action === 'historyComplete') {
+        historyPending = false;
+        exhausted = message.outcome === 'exhausted';
+        historyRetryBlocked = message.outcome === 'retry';
+        // Retry only after another user gesture, not an immediate failure loop.
+        if (historyRetryBlocked) return true;
+      } else if (message.action === 'reset') {
+        clearSelection();
+        applyDefault();
+      } else if (message.action === 'latest') {
+        clearSelection();
+        const range = chart.timeScale().getVisibleLogicalRange();
+        if (range)
+          chart.timeScale().setVisibleLogicalRange({
+            from: candles.length - 0.5 - (range.to - range.from),
+            to: candles.length - 0.5,
+          });
+      } else if (message.action === 'clearSelection') clearSelection();
+      schedule();
+      return true;
+    },
+    refreshFonts() {
+      chart.applyOptions({ layout: { fontFamily: PERPS_PRO_FONT_FAMILY } });
+      schedule();
+    },
+    destroy() {
+      disposed = true;
+      if (frame !== null) cancelAnimationFrame(frame);
+      resize.disconnect();
+      window.removeEventListener('mouseup', end);
+      chart.remove();
+      host.remove();
+    },
+  };
+}

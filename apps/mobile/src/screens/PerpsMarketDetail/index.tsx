@@ -24,6 +24,7 @@ import BigNumber from 'bignumber.js';
 import { PerpsHistorySection } from '../Perps/components/PerpsHistorySection';
 import { usePerpsDeposit } from '../Perps/hooks/usePerpsDeposit';
 import { PerpsChart } from './components/PerpsChart';
+import { PerpsSimpleChartSource } from './components/chart/PerpsSimpleChartSource';
 import { PerpsClosePositionPopup } from './components/PerpsClosePositionPopup';
 import { PerpsDepositCard } from './components/PerpsDepositCard';
 import { PerpsFooter } from './components/PerpsFooter';
@@ -35,7 +36,7 @@ import { PerpsPosition } from './components/PerpsPosition';
 import { usePerpsPosition } from './hooks/usePerpsPosition';
 import { useActiveAssetSubscription } from './hooks/useActiveAssetSubscription';
 import { toast } from '@/components2024/Toast';
-import { CANDLE_MENU_KEY_V2, PERPS_MAX_NTL_VALUE } from '@/constant/perps';
+import { PERPS_MAX_NTL_VALUE } from '@/constant/perps';
 import { PerpsRegionAlert } from '../Perps/components/PerpsRegionAlert';
 
 import { usePerpsPopupState } from '../Perps/hooks/usePerpsPopupState';
@@ -46,10 +47,6 @@ import { RootNames, getBottomButtonBottomOffset } from '@/constant/layout';
 import { PerpsAddPositionPopup } from './components/PerpsAddPositionPopup';
 import { PerpsLimitOrdersForCoin } from './components/PerpsLimitOrdersForCoin';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
-import {
-  toCanonicalPerpsCandleInterval,
-  toSimplePerpsCandleInterval,
-} from '@/hooks/perps/candles/interval';
 import { showToast } from '@/hooks/perps/showToast';
 import { PerpsAgentsLimitModal } from '../Perps/components/PerpsAgentsLimitModal';
 import { PerpsPositionSkeletonLoader } from '../Perps/components/PerpsSkeletonLoader';
@@ -105,28 +102,6 @@ export const PerpsMarketDetailScreen = () => {
   const currentAssetCtx = perpsStore(s => s.marketDataMap[coin]);
   // const hasPermission = true;
   const [showRiskPopup, setShowRiskPopup] = useState(false);
-  const [selectedInterval, setSelectedIntervalState] =
-    React.useState<CANDLE_MENU_KEY_V2>(CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES);
-  useEffect(() => {
-    let active = true;
-    apisPerps.getSelectedKlineInterval().then(v => {
-      if (active) {
-        setSelectedIntervalState(toSimplePerpsCandleInterval(v));
-      }
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
-  const setSelectedInterval = useMemoizedFn((v: CANDLE_MENU_KEY_V2) => {
-    setSelectedIntervalState(v);
-    apisPerps.setSelectedKlineInterval(toCanonicalPerpsCandleInterval(v));
-  });
-  const coinNameRef = useRef(coin);
-  useEffect(() => {
-    coinNameRef.current = coin;
-  }, [coin]);
-
   // useEffect(() => {
   //   const needDepositFirst =
   //     Number(accountValue) === 0 && Number(availableBalance) === 0;
@@ -237,16 +212,16 @@ export const PerpsMarketDetailScreen = () => {
 
   const lineTagInfo = useMemo(() => {
     return {
-      tpPrice: Number(currentTpOrSl.tpPrice || 0),
-      slPrice: Number(currentTpOrSl.slPrice || 0),
+      tpPrice: Number(tpPrice || 0),
+      slPrice: Number(slPrice || 0),
       liquidationPrice: Number(currentPosition?.position.liquidationPx || 0),
       entryPrice: Number(currentPosition?.position.entryPx || 0),
     };
   }, [
     currentPosition?.position.entryPx,
     currentPosition?.position.liquidationPx,
-    currentTpOrSl.slPrice,
-    currentTpOrSl.tpPrice,
+    slPrice,
+    tpPrice,
   ]);
 
   const singleCoinHistoryList = useMemo(() => {
@@ -480,14 +455,12 @@ export const PerpsMarketDetailScreen = () => {
           contentContainerStyle={styles.scrollContent}>
           <View style={styles.header}>
             <PerpsChart
-              selectedInterval={selectedInterval}
-              setSelectedInterval={setSelectedInterval}
-              coinNameRef={coinNameRef}
               marketName={coin}
-              markPrice={markPrice}
               activeAssetCtx={activeAssetCtx}
               currentAssetCtx={currentAssetCtx}
               lineTagInfo={lineTagInfo}
+              accountKey={currentPerpsAccount?.address.toLowerCase() || ''}
+              history={singleCoinHistoryList}
             />
             {isLogin && isInitialized && !hasPosition ? (
               <PerpsDepositCard
@@ -559,6 +532,7 @@ export const PerpsMarketDetailScreen = () => {
             historyList={singleCoinHistoryList}
           />
           {(hasPosition || hasLimitOrders) && <PerpsAbout coin={coin} />}
+          <PerpsSimpleChartSource />
         </ScrollView>
         {isLogin ? (
           <PerpsFooter

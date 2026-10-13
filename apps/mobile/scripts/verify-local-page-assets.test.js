@@ -15,6 +15,9 @@ const CHART_BUNDLE = [
   'PERPS_PRO_PRICE_SCALE_AUTO_SCALE_CHANGED',
   'candleDataAppliedAck',
   'perpsProKlineProtocolVersion',
+  'perpsSimpleKlineProtocolVersion',
+  'PERPS_SIMPLE_CHART',
+  'PERPS_SIMPLE_EVENT',
 ].join(' ');
 
 function writeFile(root, relativePath, content) {
@@ -31,12 +34,12 @@ function createFixture(repoDir) {
   writeFile(
     repoDir,
     'apps/mobile/src/components2024/TradingViewCandleChart/index.tsx',
-    'const PERPS_PRO_KLINE_PROTOCOL_VERSION = 1;',
+    'const PERPS_PRO_KLINE_PROTOCOL_VERSION = 1; const PERPS_SIMPLE_KLINE_PROTOCOL_VERSION = 1;',
   );
   writeFile(
     repoDir,
     'apps/mobile-local-pages/src/pages/tradingview-candle-chart/index.tsx',
-    'const PERPS_PRO_KLINE_PROTOCOL_VERSION = 1;',
+    'const PERPS_PRO_KLINE_PROTOCOL_VERSION = 1; const PERPS_SIMPLE_KLINE_PROTOCOL_VERSION = 1;',
   );
 
   const androidRoot = path.join(
@@ -86,6 +89,7 @@ describe('verify-local-page-assets', () => {
 
     expect(verifyLocalPageAssets(fixture.repoDir)).toEqual({
       protocolVersion: 1,
+      simpleProtocolVersion: 1,
     });
   });
 
@@ -112,6 +116,30 @@ describe('verify-local-page-assets', () => {
 
     expect(() => verifyLocalPageAssets(fixture.repoDir)).toThrow(
       'native v1, local page v2',
+    );
+  });
+
+  it('rejects a Simple protocol mismatch without changing the Pro contract', () => {
+    const fixture = createFixture(fixtureRoot);
+    writeFile(
+      fixture.repoDir,
+      'apps/mobile-local-pages/src/pages/tradingview-candle-chart/index.tsx',
+      'const PERPS_PRO_KLINE_PROTOCOL_VERSION = 1; const PERPS_SIMPLE_KLINE_PROTOCOL_VERSION = 2;',
+    );
+    expect(() => verifyLocalPageAssets(fixture.repoDir)).toThrow(
+      'Perps Simple K-line protocol mismatch',
+    );
+  });
+
+  it('rejects a linked bundle that lacks the Simple protocol', () => {
+    const fixture = createFixture(fixtureRoot);
+    writeFile(
+      fixture.androidRoot,
+      'assets/chart.js',
+      CHART_BUNDLE.replace('PERPS_SIMPLE_CHART', ''),
+    );
+    expect(() => verifyLocalPageAssets(fixture.repoDir)).toThrow(
+      'PERPS_SIMPLE_CHART',
     );
   });
 
