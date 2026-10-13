@@ -182,8 +182,27 @@ diff --git a/src/tooltip.js b/src/tooltip.js
      this.setState(
        {
          childRect: rect,
-@@ -266,6 +275,56 @@
+@@ -266,6 +275,76 @@
  
++  onModalShow = () => {
++    if (!this.props.measureAnchor || !this.props.isVisible) return;
++    // Layout may fire before the Modal has joined its native window. Replace
++    // any pre-show measurement rather than leaving an invisible busy overlay.
++    this.modalShownVersion = ++this.measurementVersion;
++    this.isMeasuringChild = false;
++    this.measureChildRect();
++  };
++
++  onNativeMeasurementFailure = (version) => {
++    if (version !== this.measurementVersion) return;
++    this.isMeasuringChild = false;
++    // A presented but unmeasurable tooltip must not retain an invisible
++    // full-screen Modal. Pre-show failures wait for the one onShow retry.
++    if (this.props.isVisible && this.modalShownVersion === version) {
++      this.props.onClose();
++    }
++  };
++
    measureChildRect = () => {
      const doMeasurement = () => {
 +      if (this.props.measureAnchor) {
@@ -228,11 +247,12 @@ diff --git a/src/tooltip.js b/src/tooltip.js
 +                  rect.height,
 +                ),
 +              );
++            } else {
++              this.onNativeMeasurementFailure(version);
 +            }
 +          })
 +          .catch(() => {
-+            if (version === this.measurementVersion)
-+              this.isMeasuringChild = false;
++            this.onNativeMeasurementFailure(version);
 +          });
 +        return;
 +      }
@@ -313,7 +333,15 @@ diff --git a/src/tooltip.js b/src/tooltip.js
  
      const hasChildren = React.Children.count(children) > 0;
      const showTooltip = isVisible && !this.state.waitingForInteractions;
-@@ -483,6 +549,7 @@
+@@ -472,6 +551,7 @@
+           <ModalComponent
+             transparent
+             visible={showTooltip}
++            onShow={this.onModalShow}
+             onRequestClose={this.props.onClose}
+             supportedOrientations={this.props.supportedOrientations}
+           >
+@@ -483,6 +559,7 @@
          {hasChildren ? (
            <View
              ref={this.childWrapper}

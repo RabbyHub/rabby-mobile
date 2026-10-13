@@ -3,13 +3,22 @@ import { usePulldownRefreshGesture } from './RefreshPlaceholderIOS';
 
 const mockCallbacks: Record<string, (...args: any[]) => void> = {};
 const mockFailOffsetX = jest.fn();
+const mockJsRefreshTasks: Promise<void>[] = [];
 jest.mock('react-native-reanimated', () => ({
   __esModule: true,
   default: { createAnimatedComponent: (component: unknown) => component },
   useSharedValue: (value: unknown) =>
     require('react').useRef({ value }).current,
   withTiming: (value: unknown) => value,
-  runOnJS: (fn: unknown) => fn,
+  runOnJS:
+    (fn: (...args: any[]) => unknown) =>
+    (...args: any[]) => {
+      const task = fn(...args);
+      if (task instanceof Promise) {
+        mockJsRefreshTasks.push(task);
+      }
+      return task;
+    },
   Easing: { inOut: (fn: unknown) => fn, quad: (x: number) => x },
 }));
 jest.mock('react-native-gesture-handler', () => ({
@@ -50,6 +59,10 @@ jest.mock('@/constant/home', () => ({
   SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING: true,
 }));
 
+beforeEach(() => {
+  mockJsRefreshTasks.length = 0;
+});
+
 it('returns a cancelled pull to zero and leaves horizontal intent to the pager', () => {
   const onRefresh = jest.fn(async () => undefined);
   const { result } = renderHook(() =>
@@ -69,18 +82,85 @@ it('returns a cancelled pull to zero and leaves horizontal intent to the pager',
   expect(mockFailOffsetX).toHaveBeenCalledWith([-24, 24]);
 });
 
-it('does not cancel a refresh already started by onEnd', () => {
+it('preserves a pending refresh on finalize, then finishes without a loading-state effect', async () => {
+  let finishRefresh!: () => void;
+  const refresh = new Promise<void>(resolve => {
+    finishRefresh = resolve;
+  });
   const { result } = renderHook(() =>
     usePulldownRefreshGesture({
       scrollViewYValue: { value: 0 } as any,
+      onJsPulldownRefresh: ({ svIsManualRefreshing }) => {
+        svIsManualRefreshing.value = true;
+        return refresh;
+      },
     }),
   );
   act(() => {
     mockCallbacks.onStart({});
     mockCallbacks.onUpdate({ translationY: 300 });
-    mockCallbacks.onEnd();
+    mockCallbacks.onEnd({}, true);
     mockCallbacks.onFinalize();
   });
   expect(result.current.svs.svIsRefreshing.value).toBe(true);
+  expect(result.current.svs.svIsManualRefreshing.value).toBe(true);
   expect(result.current.svs.pullDistance.value).toBe(56);
+  await act(async () => {
+    finishRefresh();
+    await mockJsRefreshTasks[0];
+  });
+  expect(result.current.svs.svIsRefreshing.value).toBe(false);
+  expect(result.current.svs.svIsManualRefreshing.value).toBe(false);
+  expect(result.current.svs.pullDistance.value).toBe(0);
+});
+
+it('releases the placeholder when refresh rejects without swallowing the error', async () => {
+  let failRefresh!: (error: Error) => void;
+  const refresh = new Promise<void>((_, reject) => {
+    failRefresh = reject;
+  });
+  const { result } = renderHook(() =>
+    usePulldownRefreshGesture({
+      scrollViewYValue: { value: 0 } as any,
+      onJsPulldownRefresh: ({ svIsManualRefreshing }) => {
+        svIsManualRefreshing.value = true;
+        return refresh;
+      },
+    }),
+  );
+  act(() => {
+    mockCallbacks.onStart({});
+    mockCallbacks.onUpdate({ translationY: 300 });
+    mockCallbacks.onEnd({}, true);
+  });
+  const error = new Error('Refresh failed');
+  await act(async () => {
+    failRefresh(error);
+    await expect(mockJsRefreshTasks[0]).rejects.toBe(error);
+  });
+  expect(result.current.svs.svIsRefreshing.value).toBe(false);
+  expect(result.current.svs.svIsManualRefreshing.value).toBe(false);
+  expect(result.current.svs.pullDistance.value).toBe(0);
+});
+
+it('does not refresh when an active pull is cancelled after crossing the threshold', () => {
+  const onRefresh = jest.fn(async () => undefined);
+  const { result } = renderHook(() =>
+    usePulldownRefreshGesture({
+      scrollViewYValue: { value: 0 } as any,
+      onJsPulldownRefresh: onRefresh,
+    }),
+  );
+
+  act(() => {
+    mockCallbacks.onStart({});
+    mockCallbacks.onUpdate({ translationY: 300 });
+    // RNGH reports an active gesture cancellation to onEnd before finalize.
+    mockCallbacks.onEnd({}, false);
+    mockCallbacks.onFinalize({}, false);
+  });
+
+  expect(onRefresh).not.toHaveBeenCalled();
+  expect(result.current.svs.svIsRefreshing.value).toBe(false);
+  expect(result.current.svs.pullDistance.value).toBe(0);
 });

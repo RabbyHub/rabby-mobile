@@ -80,7 +80,19 @@ export const usePulldownRefreshGesture = <
     useIOSPulldownRefreshStates();
 
   const onJsPulldownRefresh = useMemoizedFn(async () => {
-    await prop_onJsPulldownRefresh?.({ svIsManualRefreshing });
+    try {
+      await prop_onJsPulldownRefresh?.({ svIsManualRefreshing });
+    } finally {
+      // Completing the gesture's request must not depend on a consumer
+      // observing a separate loading-state transition.
+      setPulldownRefreshStage({
+        state: 'finished',
+        svIsRefreshing,
+        svIsManualRefreshing,
+        pullDistance,
+        indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+      });
+    }
   });
 
   const startValues = useSharedValue({
@@ -113,7 +125,10 @@ export const usePulldownRefreshGesture = <
           }
         }
       })
-      .onEnd(() => {
+      .onEnd((_event, success) => {
+        // An ACTIVE gesture cancelled by navigation or another handler still
+        // reaches onEnd. Only a completed pull should start a refresh.
+        if (!success) return;
         pullRefresh: {
           const hasImpactOnPanup = startValues.value.hasImpactOnPanup;
           if (
@@ -147,8 +162,8 @@ export const usePulldownRefreshGesture = <
         }
       })
       .onFinalize(() => {
-        // CANCELLED/FAILED gestures do not necessarily reach onEnd. Never
-        // leave their placeholder visible, or interrupt an active refresh.
+        // Reset failed/cancelled pulls, including those that never activated,
+        // without interrupting an already pending refresh.
         if (!svIsRefreshing.value) {
           setPulldownRefreshStage({
             state: 'finished',

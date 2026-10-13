@@ -1,11 +1,6 @@
 import React from 'react';
-import {
-  View,
-  RefreshControl,
-  Platform,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { View, Platform, TouchableOpacity, StyleSheet } from 'react-native';
+import { CollapsibleRefreshControl } from '@/components/customized/ScrollViewLike/CollapsibleRefreshControl';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 
 import {
@@ -324,7 +319,7 @@ export default function EIP7702RevokeList() {
         contentContainerStyle={styles.listContainer}
         ListEmptyComponent={ListEmptyComponent}
         refreshControl={
-          <RefreshControl
+          <CollapsibleRefreshControl
             {...(isIOS && {
               progressViewOffset: -12,
             })}
