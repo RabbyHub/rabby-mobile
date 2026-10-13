@@ -45,9 +45,7 @@ export function PerpsSimpleChartLoading({
   }, [busy, visible, rotation]);
   if (!visible) return null;
   return (
-    <View
-      pointerEvents="box-none"
-      style={[styles.host, hasData && styles.retained]}>
+    <View pointerEvents="box-none" style={styles.host}>
       <Pressable
         style={styles.button}
         onPress={onRetry}
@@ -95,11 +93,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  retained: {
-    alignItems: 'flex-start',
-    justifyContent: 'flex-start',
-    padding: 12,
   },
   button: {
     width: 44,
