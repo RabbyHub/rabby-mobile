@@ -102,6 +102,7 @@ export function createSimpleChart(
   let identity = '';
   let sequence = -1;
   let config: SimpleChartConfig | null = null;
+  let active = true;
   let candles: CandleStick[] = [];
   let fills: SimpleChartFill[] = [];
   const candleByTime = new Map<number, CandleStick>();
@@ -393,6 +394,7 @@ export function createSimpleChart(
       overlay.appendChild(label);
     }
     if (
+      active &&
       range.from < 5 &&
       !historyPending &&
       !exhausted &&
@@ -405,7 +407,7 @@ export function createSimpleChart(
   }
   chart.timeScale().subscribeVisibleLogicalRangeChange(schedule);
   chart.subscribeCrosshairMove(event => {
-    if (!contact || event.time === undefined) return;
+    if (!active || !contact || event.time === undefined) return;
     const candle = candleByTime.get(Number(event.time));
     if (!candle || selectedTime === candle.time) return;
     selectedTime = candle.time;
@@ -451,11 +453,16 @@ export function createSimpleChart(
   return {
     handle(message: SimpleChartMessage) {
       if (message.sequence <= sequence) return false;
-      if (message.action !== 'configure' && message.identity !== identity)
+      if (
+        identity &&
+        message.action !== 'replace' &&
+        message.identity !== identity
+      )
         return false;
       sequence = message.sequence;
-      if (message.action === 'configure') {
-        const changed = identity !== message.identity;
+      if (message.action === 'configure' || message.action === 'replace') {
+        const changed =
+          identity !== message.identity || message.action === 'replace';
         const styleChanged = config?.style !== message.config.style;
         const range = chart.timeScale().getVisibleLogicalRange();
         identity = message.identity;
@@ -473,8 +480,10 @@ export function createSimpleChart(
           dirty = false;
           defaultViewport = null;
           userViewportChanged = false;
-          candleSeries.setData([]);
-          areaSeries.setData([]);
+          if (message.action !== 'replace') {
+            candleSeries.setData([]);
+            areaSeries.setData([]);
+          }
         }
         host.style.background = config.colors.background;
         document.body.style.background = config.colors.background;
@@ -520,10 +529,12 @@ export function createSimpleChart(
         if (!changed && styleChanged && range)
           chart.timeScale().setVisibleLogicalRange(range);
         schedule();
-        return true;
+        if (message.action === 'configure') return true;
       }
-      if (message.action === 'data') {
+      if (message.action === 'data' || message.action === 'replace') {
         const range = chart.timeScale().getVisibleLogicalRange();
+        const followedLatest = !!range && range.to >= candles.length - 1;
+        const previousLatestTime = candles.at(-1)?.time;
         const shift = simpleHistoryShift(candles, message.candles);
         const hadData = candles.length > 0;
         candles = message.candles;
@@ -539,19 +550,41 @@ export function createSimpleChart(
           })),
         );
         markers = simpleFillMarkers(candles, fills, config!.interval);
-        if (message.preserve && hadData && range) {
+        if (message.action === 'data' && message.preserve && hadData && range) {
           if (defaultViewport)
             defaultViewport = {
               from: defaultViewport.from + shift,
               to: defaultViewport.to + shift,
             };
           if (!dirty && config?.range === 'ALL') applyDefault();
-          else
+          else if (
+            followedLatest &&
+            previousLatestTime !== undefined &&
+            (candles.at(-1)?.time ?? previousLatestTime) > previousLatestTime
+          ) {
+            // A reconnect or a bounded tail trim may deliver several new bars
+            // at once. Preserve zoom and the user's existing realtime follow.
+            const to = candles.length - 0.5;
+            chart.timeScale().setVisibleLogicalRange({
+              from: to - (range.to - range.from),
+              to,
+            });
+          } else
             chart.timeScale().setVisibleLogicalRange({
               from: range.from + shift,
               to: range.to + shift,
             });
         } else applyDefault();
+        if (message.action === 'replace') {
+          const appliedIdentity = identity;
+          requestAnimationFrame(() => {
+            if (!disposed && identity === appliedIdentity)
+              emit({ event: 'applied', sequence: message.sequence } as Omit<
+                SimpleChartEvent,
+                'type' | 'identity'
+              >);
+          });
+        }
         if (!candles.length) clearSelection();
         else if (selectedTime !== null) {
           const selected = candleByTime.get(selectedTime);
@@ -562,6 +595,14 @@ export function createSimpleChart(
             >);
           else clearSelection();
         }
+      } else if (message.action === 'activity') {
+        active = message.active;
+        host.style.pointerEvents = active ? 'auto' : 'none';
+        if (!active) {
+          contact = false;
+          clearSelection();
+          historyPending = false;
+        } else historyRetryBlocked = false;
       } else if (message.action === 'update') {
         const candle = message.candle;
         const last = candles[candles.length - 1];

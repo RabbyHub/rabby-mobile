@@ -20,10 +20,12 @@ export const PerpsSimpleChartToolbar = React.memo(
     preference,
     onChange,
     onInterval,
+    onPrefetch,
   }: {
     preference: SimpleChartPreference;
     onChange: (value: SimpleChartPreference) => void;
     onInterval: () => void;
+    onPrefetch: (interval: SimpleChartPreference['interval']) => void;
   }) {
     const { styles, colors2024 } = useTheme2024({ getStyle });
     const { t } = useTranslation();
@@ -58,6 +60,7 @@ export const PerpsSimpleChartToolbar = React.memo(
               ]}
               accessibilityRole="button"
               accessibilityState={{ selected: preference.range === range }}
+              onPressIn={() => onPrefetch(SIMPLE_RANGE_INTERVAL[range])}
               onPress={() =>
                 onChange({
                   ...preference,

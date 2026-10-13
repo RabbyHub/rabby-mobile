@@ -90,12 +90,14 @@ export type SimpleChartMessage = {
   sequence: number;
 } & (
   | { action: 'configure'; config: SimpleChartConfig }
+  | { action: 'replace'; config: SimpleChartConfig; candles: CandleStick[] }
   | {
       action: 'data';
       candles: CandleStick[];
       preserve: boolean;
       state: 'idle' | 'loading' | 'ready' | 'empty' | 'stale' | 'error';
     }
+  | { action: 'activity'; active: boolean }
   | { action: 'update'; candle: CandleStick }
   | {
       action: 'overlays';
@@ -115,6 +117,7 @@ export type SimpleChartEvent = {
   type: 'PERPS_SIMPLE_EVENT';
   identity: string;
 } & (
+  | { event: 'applied'; sequence: number }
   | { event: 'selection'; candle: CandleStick | null }
   | {
       event: 'viewport';

@@ -29,11 +29,13 @@ export const PerpsSimpleCandleIntervalSheet = React.memo(
     selected,
     onClose,
     onConfirm,
+    onPrefetch,
   }: {
     visible: boolean;
     selected: PerpsCandleDataInterval;
     onClose: () => void;
     onConfirm: (interval: PerpsCandleDataInterval) => void;
+    onPrefetch?: (interval: PerpsCandleDataInterval) => void;
   }) {
     const modal = useRef<AppBottomSheetModal>(null);
     const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -107,7 +109,10 @@ export const PerpsSimpleCandleIntervalSheet = React.memo(
                           styles.option,
                           draft === interval && styles.selected,
                         ]}
-                        onPress={() => setDraft(interval)}>
+                        onPress={() => {
+                          setDraft(interval);
+                          onPrefetch?.(interval);
+                        }}>
                         <Text style={styles.optionText}>
                           {interval.endsWith('d') || interval.endsWith('w')
                             ? interval.toUpperCase()

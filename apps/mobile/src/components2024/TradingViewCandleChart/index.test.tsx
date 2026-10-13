@@ -133,7 +133,7 @@ describe('TradingViewCandleChart protocol compatibility', () => {
         variant="perps-simple"
       />,
     );
-    markChartReady({ perpsSimpleKlineProtocolVersion: 1 });
+    markChartReady({ perpsSimpleKlineProtocolVersion: 2 });
     act(() => chartRef.current?.sendSimpleMessage(command));
     expect(mockSendMessage).toHaveBeenLastCalledWith({
       type: 'TRADINGVIEW_MESSAGE',
@@ -155,7 +155,7 @@ describe('TradingViewCandleChart protocol compatibility', () => {
     markChartReady();
     expect(mockReload).toHaveBeenCalledTimes(1);
     expect(ready).not.toHaveBeenCalled();
-    markChartReady({ perpsSimpleKlineProtocolVersion: 1 });
+    markChartReady({ perpsSimpleKlineProtocolVersion: 2 });
     expect(ready).toHaveBeenCalledTimes(1);
     const selection = {
       type: 'PERPS_SIMPLE_EVENT',

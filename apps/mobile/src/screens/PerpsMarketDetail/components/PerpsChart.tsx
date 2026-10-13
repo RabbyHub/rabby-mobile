@@ -19,6 +19,7 @@ import { PerpsSimpleCandleIntervalSheet } from './chart/PerpsSimpleCandleInterva
 import { usePerpsSimpleChart } from './chart/usePerpsSimpleChart';
 import { projectSimpleFills } from './chart/model';
 import { SIMPLE_CHART_COLORS } from './chart/visual';
+import { PerpsSimpleChartLoading } from './chart/PerpsSimpleChartLoading';
 
 export const PerpsChart = React.memo(function PerpsChart({
   marketName,
@@ -93,7 +94,11 @@ export const PerpsChart = React.memo(function PerpsChart({
       next.range === chart.preference.range
     )
       chart.reset();
-    chart.updatePreference(next);
+    chart.updatePreference(
+      next.style !== chart.preference.style
+        ? { ...chart.requestedPreference, style: next.style }
+        : next,
+    );
   });
   const confirmInterval = useMemoizedFn((interval: PerpsCandleDataInterval) => {
     if (
@@ -129,11 +134,22 @@ export const PerpsChart = React.memo(function PerpsChart({
         <TradingViewCandleChart
           ref={chart.chartRef}
           variant="perps-simple"
+          style={!chart.hasAppliedData ? styles.hidden : undefined}
           height={248}
           backGroundColor={colors2024['neutral-bg-0']}
           onChartReady={chart.onChartReady}
+          onChartLoading={chart.onChartLoading}
+          onChartError={chart.onChartError}
           onSimpleEvent={chart.onSimpleEvent}
         />
+        {chart.active && chart.loading && <View style={styles.touchGuard} />}
+        {chart.active && chart.loading && (
+          <PerpsSimpleChartLoading
+            busy={chart.loadingBusy}
+            hasData={chart.hasAppliedData}
+            onRetry={chart.retry}
+          />
+        )}
         {chart.resetVisible && (
           <Pressable
             style={[
@@ -169,10 +185,12 @@ export const PerpsChart = React.memo(function PerpsChart({
         preference={chart.preference}
         onChange={changePreference}
         onInterval={openSheet}
+        onPrefetch={chart.prefetch}
       />
       <PerpsSimpleCandleIntervalSheet
         visible={sheetVisible}
-        selected={chart.preference.interval}
+        selected={chart.requestedPreference.interval}
+        onPrefetch={chart.prefetch}
         onClose={closeSheet}
         onConfirm={confirmInterval}
       />
@@ -182,6 +200,8 @@ export const PerpsChart = React.memo(function PerpsChart({
 const getStyle = createGetStyles2024(() => ({
   root: { marginHorizontal: -12, gap: 8 },
   chart: { height: 248 },
+  hidden: { opacity: 0 },
+  touchGuard: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   chartButton: {
     position: 'absolute',
     width: 20,

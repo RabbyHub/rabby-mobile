@@ -34,6 +34,7 @@ import {
 interface ChartProps {
   height: number;
   onChartReady?: () => void;
+  onChartLoading?: () => void;
   onChartError?: () => void;
   onDataApplied?: (data: CandleDataApplied) => void;
   onPriceScaleAutoScaleChange?: (autoScale: boolean) => void;
@@ -62,6 +63,7 @@ interface TPSLPriceLines {
 }
 
 export interface TradingViewChartRef {
+  reloadSimple: () => void;
   sendSimpleMessage: (message: SimpleChartMessage) => void;
   clearCrosshair: () => void;
   completeOlderCandlesRequest: (
@@ -74,7 +76,7 @@ export interface TradingViewChartRef {
 }
 
 const PERPS_PRO_KLINE_PROTOCOL_VERSION = 3;
-const PERPS_SIMPLE_KLINE_PROTOCOL_VERSION = 1;
+const PERPS_SIMPLE_KLINE_PROTOCOL_VERSION = 2;
 const PERPS_PRO_KLINE_PROTOCOL_ERROR =
   'Perps Pro K-line resource protocol mismatch';
 
@@ -128,6 +130,7 @@ const TradingViewCandleChart = ({
   style,
   height,
   onChartReady,
+  onChartLoading,
   onSimpleEvent,
   onChartError,
   onDataApplied,
@@ -547,6 +550,15 @@ const TradingViewCandleChart = ({
   );
 
   useImperativeHandle(ref, () => ({
+    reloadSimple: () => {
+      if (variant !== 'perps-simple') return;
+      setWebViewError(null);
+      setIsChartReady(false);
+      protocolReloadAttemptedRef.current = false;
+      protocolErrorReportedRef.current = false;
+      onChartLoading?.();
+      localWebViewRef.current?.reload();
+    },
     sendSimpleMessage,
     clearCrosshair: handleClearCrosshair,
     completeOlderCandlesRequest: handleCompleteOlderCandlesRequest,
@@ -618,6 +630,7 @@ const TradingViewCandleChart = ({
         { height, width: '100%', minHeight: height },
       ]}>
       <LocalWebView
+        onLoadStart={variant === 'perps-simple' ? onChartLoading : undefined}
         key={webViewKey}
         ref={localWebViewRef}
         entryPath="/pages/tradingview-candle-chart.html"

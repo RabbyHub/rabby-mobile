@@ -7,7 +7,10 @@ import { PerpsService } from '@/core/services/perpsService';
 import { registerService } from '@/core/services/serviceRegistry';
 /* eslint-enable no-runtime-service-imports */
 import { apisPerps } from '@/core/apis/perps';
-import { resetPerpsCandleSourceSnapshotCacheForTests } from '@/hooks/perps/candles/sourceSnapshot';
+import {
+  loadPerpsCandleSourceSnapshot,
+  resetPerpsCandleSourceSnapshotCacheForTests,
+} from '@/hooks/perps/candles/sourceSnapshot';
 import type {
   SimpleChartConfig,
   SimpleChartMessage,
@@ -162,7 +165,18 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
     );
     // Native WebView bridge boundary: collect messages, preserving the real controller protocol.
     hook.result.current.chartRef.current = {
-      sendSimpleMessage: message => messages.push(message),
+      sendSimpleMessage: message => {
+        messages.push(message);
+        if (message.action === 'replace')
+          void Promise.resolve().then(() =>
+            hook.result.current.onSimpleEvent({
+              type: 'PERPS_SIMPLE_EVENT',
+              event: 'applied',
+              identity: message.identity,
+              sequence: message.sequence,
+            }),
+          );
+      },
     } as TradingViewChartRef;
     act(() => hook.result.current.onChartReady());
     return hook;
@@ -174,9 +188,9 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
     await settle();
     expect(hook.result.current.feed.status).toBe('ready');
     expect(requests).toEqual([{ coin: 'BTC', interval: '15m' }]);
-    const baseline = messages.filter(m => m.action === 'data').at(-1);
+    const baseline = messages.filter(m => m.action === 'replace').at(-1);
     expect(baseline).toMatchObject({
-      action: 'data',
+      action: 'replace',
       candles: [{ time: 1700000000, close: 105 }],
     });
     messages.length = 0;
@@ -283,11 +297,197 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
     messages.length = 0;
     act(() => hook.result.current.onChartReady());
     await settle();
-    expect(messages.map(m => m.action)).toEqual([
-      'configure',
-      'data',
-      'overlays',
-    ]);
+    expect(messages.filter(m => m.action === 'replace')).toHaveLength(1);
+    expect(messages.at(-1)).toMatchObject({ action: 'activity', active: true });
     expect(messages[0].identity).not.toBe(previousIdentity);
+  });
+  it('retains the displayed period until the latest requested snapshot commits', async () => {
+    const hook = mount();
+    await settle();
+    const pending = new Map<string, (candles: Candle[]) => void>();
+    fetchCandles = (_coin, interval) =>
+      new Promise(resolve => pending.set(interval, resolve));
+    messages.length = 0;
+    act(() =>
+      hook.result.current.updatePreference({
+        version: 1,
+        style: 'candle',
+        range: null,
+        interval: '1h',
+      }),
+    );
+    await settle();
+    expect(hook.result.current.preference.interval).toBe('15m');
+    expect(hook.result.current.hasAppliedData).toBe(true);
+    expect(hook.result.current.loading).toBe(true);
+    expect(
+      messages.filter(
+        message => message.action === 'replace' || message.action === 'data',
+      ),
+    ).toHaveLength(0);
+    act(() =>
+      hook.result.current.updatePreference({
+        version: 1,
+        style: 'candle',
+        range: null,
+        interval: '4h',
+      }),
+    );
+    await settle();
+    await act(async () => pending.get('4h')!([raw('BTC', '4h', '108')]));
+    await settle();
+    expect(hook.result.current.preference).toMatchObject({
+      interval: '4h',
+      range: null,
+    });
+    expect(hook.result.current.loading).toBe(false);
+    await act(async () => pending.get('1h')!([raw('BTC', '1h', '99')]));
+    await settle();
+    expect(hook.result.current.feed.latestCandle?.close).toBe(108);
+    expect(
+      messages.filter(message => message.action === 'replace'),
+    ).toHaveLength(1);
+  });
+
+  it('renders the shared preload while accuracy refresh waits, and retains it through failure and reload', async () => {
+    await loadPerpsCandleSourceSnapshot({ coin: 'BTC', interval: '15m' });
+    let reject!: (error: Error) => void;
+    fetchCandles = () =>
+      new Promise((_resolve, fail) => {
+        reject = fail;
+      });
+    const hook = mount();
+    await settle();
+    expect(hook.result.current.hasAppliedData).toBe(true);
+    expect(hook.result.current.loading).toBe(false);
+    await act(async () => reject(new Error('offline')));
+    await settle();
+    expect(hook.result.current.feed.status).toBe('error');
+    expect(hook.result.current.hasAppliedData).toBe(true);
+    expect(hook.result.current.loadingBusy).toBe(false);
+    messages.length = 0;
+    act(() => hook.result.current.onChartLoading());
+    act(() => hook.result.current.onChartReady());
+    await settle();
+    expect(hook.result.current.hasAppliedData).toBe(true);
+    expect(
+      messages.find(message => message.action === 'replace'),
+    ).toMatchObject({ candles: [{ close: 105 }] });
+    fetchCandles = async () => [raw('BTC', '15m', '110')];
+    act(() => hook.result.current.retry());
+    await settle();
+    expect(hook.result.current.feed.status).toBe('ready');
+    expect(hook.result.current.loading).toBe(false);
+    expect(hook.result.current.feed.latestCandle?.close).toBe(110);
+  });
+
+  it('never exposes the previous coin while the next coin has no cached data', async () => {
+    const hook = mount();
+    await settle();
+    fetchCandles = () => new Promise(() => {});
+    hook.rerender({ name: 'ETH', owner: 'account-a', chartConfig: config });
+    await settle();
+    expect(hook.result.current.hasAppliedData).toBe(false);
+    expect(hook.result.current.feed.candles).toHaveLength(0);
+    expect(hook.result.current.loading).toBe(true);
+  });
+  it('keeps the chart through socket loss and refreshes it without resetting the viewport', async () => {
+    const handlers = new Map<string, () => void>();
+    const ws = apisPerps.getPerpsSDK().ws;
+    jest.spyOn(ws, 'on').mockImplementation((event, callback) => {
+      handlers.set(event, callback as () => void);
+    });
+    jest.spyOn(ws, 'off').mockImplementation(event => {
+      handlers.delete(event);
+    });
+    const hook = mount();
+    await settle();
+    messages.length = 0;
+    act(() => handlers.get('close')!());
+    await settle();
+    expect(hook.result.current.feed.status).toBe('stale');
+    expect(hook.result.current.hasAppliedData).toBe(true);
+    expect(
+      messages.some(
+        message => message.action === 'data' || message.action === 'replace',
+      ),
+    ).toBe(false);
+    fetchCandles = async () => [raw('BTC', '15m', '112')];
+    act(() => handlers.get('open')!());
+    await settle();
+    expect(hook.result.current.loading).toBe(false);
+    expect(messages.find(message => message.action === 'data')).toMatchObject({
+      preserve: true,
+      candles: [{ close: 112 }],
+    });
+    expect(messages.some(message => message.action === 'replace')).toBe(false);
+  });
+
+  it('recovers a cold failed baseline when the SDK connection opens', async () => {
+    const handlers = new Map<string, () => void>();
+    jest
+      .spyOn(apisPerps.getPerpsSDK().ws, 'on')
+      .mockImplementation((event, callback) => {
+        handlers.set(event, callback as () => void);
+      });
+    fetchCandles = async () => {
+      throw new Error('offline');
+    };
+    const hook = mount();
+    await settle();
+    expect(hook.result.current.hasAppliedData).toBe(false);
+    expect(hook.result.current.loadingBusy).toBe(false);
+    fetchCandles = async () => [raw()];
+    act(() => handlers.get('open')!());
+    await settle();
+    expect(hook.result.current.loading).toBe(false);
+    expect(hook.result.current.hasAppliedData).toBe(true);
+  });
+  it('invalidates pending history across blur without blocking the resumed chart', async () => {
+    const hook = mount();
+    await settle();
+    let resolveOld!: (candles: Candle[]) => void;
+    fetchCandles = () =>
+      requests.length === 2
+        ? new Promise(resolve => {
+            resolveOld = resolve;
+          })
+        : Promise.resolve([raw()]);
+    const identity = messages.at(-1)!.identity;
+    act(() =>
+      hook.result.current.onSimpleEvent({
+        type: 'PERPS_SIMPLE_EVENT',
+        identity,
+        event: 'history',
+      }),
+    );
+    await settle();
+    expect(requests).toHaveLength(2);
+    mockFocused = false;
+    hook.rerender({ name: 'BTC', owner: 'account-a', chartConfig: config });
+    await settle();
+    expect(messages.at(-1)).toMatchObject({
+      action: 'activity',
+      active: false,
+    });
+    mockFocused = true;
+    hook.rerender({ name: 'BTC', owner: 'account-a', chartConfig: config });
+    await settle();
+    expect(requests).toHaveLength(3);
+    act(() =>
+      hook.result.current.onSimpleEvent({
+        type: 'PERPS_SIMPLE_EVENT',
+        identity,
+        event: 'history',
+      }),
+    );
+    await settle();
+    expect(requests).toHaveLength(4);
+    messages.length = 0;
+    await act(async () => resolveOld([raw('BTC', '15m', '99')]));
+    await settle();
+    expect(messages.some(message => message.action === 'historyComplete')).toBe(
+      false,
+    );
   });
 });

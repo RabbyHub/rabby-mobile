@@ -255,7 +255,7 @@ chartState.colors = { ...getChartColors() };
 chartState.description = { ...defaultDescription };
 
 const PERPS_PRO_KLINE_PROTOCOL_VERSION = 3;
-const PERPS_SIMPLE_KLINE_PROTOCOL_VERSION = 1;
+const PERPS_SIMPLE_KLINE_PROTOCOL_VERSION = 2;
 let simpleChart: ReturnType<typeof createSimpleChart> | null = null;
 const candleByTime = new Map<number, TradingViewCandlestickData>();
 const movingAverageByTime: Record<7 | 25 | 99, Map<number, number>> = {
@@ -2102,7 +2102,11 @@ function handleMessage(event: CustomEvent) {
     message.data.type === 'PERPS_SIMPLE_CHART'
   ) {
     if (!simpleChart) {
-      if (message.data.action !== 'configure') return;
+      if (
+        message.data.action !== 'configure' &&
+        message.data.action !== 'replace'
+      )
+        return;
       chartState.chart?.remove();
       chartState.chart = null;
       chartState.candlestickSeries = null;
@@ -2113,7 +2117,10 @@ function handleMessage(event: CustomEvent) {
       void perpsProFontLoadPromise?.then(() => simpleChart?.refreshFonts());
     }
     if (!simpleChart.handle(message.data)) return;
-    if (message.data.action === 'configure') {
+    if (
+      message.data.action === 'configure' ||
+      message.data.action === 'replace'
+    ) {
       const { colors, labels } = message.data.config;
       containerEl.style.background = colors.background;
       updateLoadingSkeletonTheme({
@@ -2132,13 +2139,16 @@ function handleMessage(event: CustomEvent) {
           empty: labels.empty,
         },
       );
+    }
+    if (message.data.action === 'replace') {
+      setOverlayState(message.data.candles.length ? 'hidden' : 'empty');
     } else if (message.data.action === 'data') {
       setOverlayState(
         message.data.candles.length
           ? 'hidden'
           : message.data.state === 'empty'
           ? 'empty'
-          : 'loading',
+          : 'hidden',
       );
     } else if (message.data.action === 'update') setOverlayState('hidden');
     return;
