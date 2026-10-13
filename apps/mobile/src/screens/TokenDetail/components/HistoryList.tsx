@@ -118,85 +118,77 @@ const TokenDetailHistoryListContent = ({
       throw new Error('no account');
     }
 
-    try {
-      if (isMyAddress) {
-        const historyList =
-          await HistoryItemEntity.getTokenHistoryItemSortedByTime(
-            address,
-            dbCursor,
-            token_id,
-            chain_id,
-            PAGE_COUNT,
-          );
-        const list = historyList.map(item => {
-          return {
-            ...ensureHistoryListItemFromDb(item),
-            // hidden small and scam no need this prop
-            isSmallUsdTx: false,
-            isShowSuccess: false,
-          } as HistoryDisplayItem;
-        });
-        const lastItem = last(historyList);
+    if (isMyAddress) {
+      const historyList =
+        await HistoryItemEntity.getTokenHistoryItemSortedByTime(
+          address,
+          dbCursor,
+          token_id,
+          chain_id,
+          PAGE_COUNT,
+        );
+      const list = historyList.map(item => {
         return {
-          last: lastItem?.time_at || 0,
-          dbCursor: lastItem ? toHistoryPageCursor(lastItem) : undefined,
-          list,
-        };
-      } else {
-        const [res, transactions] = await Promise.all([
-          openapi.listTxHistory({
-            id: address,
-            start_time: startTime,
-            page_count: PAGE_COUNT,
-            chain_id,
-            token_id,
-          }),
-          getTransactionHistoryTransactions(),
-        ]);
-
-        const { project_dict, history_list: list } = res;
-        const token_dict = (res as TxHistoryResult).token_dict;
-        const token_uuid_dict = (res as unknown as TxAllHistoryResult)
-          .token_uuid_dict;
-        const tokenDict = token_dict || token_uuid_dict;
-
-        const displayList = list
-          .map(item => ({
-            ...item,
-            address,
-            key: `${address}_${item.chain}_${item.id}`,
-            project_item: project_dict[item.project_id || ''] || null,
-            token_approve: item.token_approve
-              ? {
-                  ...item.token_approve,
-                  token: fetchHistoryTokenItem(
-                    item.token_approve?.token_id || '',
-                    item.chain,
-                    tokenDict,
-                  ),
-                }
-              : null,
-            receives: item.receives.map(e => ({
-              ...e,
-              token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
-            })),
-            sends: item.sends.map(e => ({
-              ...e,
-              token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
-            })),
-            historyType: getHistoryItemType(item, transactions),
-          }))
-          .sort((v1, v2) => v2.time_at - v1.time_at);
-        return {
-          last: last(displayList)?.time_at || 0,
-          list: displayList,
-        };
-      }
-    } catch (e) {
-      toast.error(`${address} fetch failed, ${e}`);
+          ...ensureHistoryListItemFromDb(item),
+          // hidden small and scam no need this prop
+          isSmallUsdTx: false,
+          isShowSuccess: false,
+        } as HistoryDisplayItem;
+      });
+      const lastItem = last(historyList);
       return {
-        last: 0,
-        list: [],
+        last: lastItem?.time_at || 0,
+        dbCursor: lastItem ? toHistoryPageCursor(lastItem) : undefined,
+        list,
+      };
+    } else {
+      const [res, transactions] = await Promise.all([
+        openapi.listTxHistory({
+          id: address,
+          start_time: startTime,
+          page_count: PAGE_COUNT,
+          chain_id,
+          token_id,
+        }),
+        getTransactionHistoryTransactions(),
+      ]);
+
+      const { project_dict, history_list: list } = res;
+      const token_dict = (res as TxHistoryResult).token_dict;
+      const token_uuid_dict = (res as unknown as TxAllHistoryResult)
+        .token_uuid_dict;
+      const tokenDict = token_dict || token_uuid_dict;
+
+      const displayList = list
+        .map(item => ({
+          ...item,
+          address,
+          key: `${address}_${item.chain}_${item.id}`,
+          project_item: project_dict[item.project_id || ''] || null,
+          token_approve: item.token_approve
+            ? {
+                ...item.token_approve,
+                token: fetchHistoryTokenItem(
+                  item.token_approve?.token_id || '',
+                  item.chain,
+                  tokenDict,
+                ),
+              }
+            : null,
+          receives: item.receives.map(e => ({
+            ...e,
+            token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
+          })),
+          sends: item.sends.map(e => ({
+            ...e,
+            token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
+          })),
+          historyType: getHistoryItemType(item, transactions),
+        }))
+        .sort((v1, v2) => v2.time_at - v1.time_at);
+      return {
+        last: last(displayList)?.time_at || 0,
+        list: displayList,
       };
     }
   };
@@ -208,7 +200,7 @@ const TokenDetailHistoryListContent = ({
     );
   }, [finalAccount]);
 
-  const batchFetchData = useMemoizedFn(async () => {
+  const batchFetchData = useMemoizedFn(async (isReload: boolean) => {
     const requestSequence = ++requestSequenceRef.current;
     const list: HistoryDisplayItem[] = [];
     if (disableHistoryRequest) {
@@ -226,7 +218,7 @@ const TokenDetailHistoryListContent = ({
       };
     }
     const addr = account.address.toLowerCase();
-    if (addr in hasMoreMap.current && !hasMoreMap.current[addr]) {
+    if (!isReload && hasMoreMap.current[addr] === false) {
       return {
         list: [],
         hasMore: false,
@@ -235,11 +227,11 @@ const TokenDetailHistoryListContent = ({
 
     const result = await fetchData(
       addr,
-      lastMap.current[addr] || 0,
+      isReload ? 0 : lastMap.current[addr] || 0,
       tokenItem.chain,
       tokenItem.id,
       isMyAddress,
-      dbCursorRef.current,
+      isReload ? null : dbCursorRef.current,
     );
     if (requestSequence !== requestSequenceRef.current) {
       // ahooks cancels request callbacks, but useInfiniteScroll publishes its
@@ -253,9 +245,7 @@ const TokenDetailHistoryListContent = ({
       hasMoreMap.current[addr] = true;
     }
     lastMap.current[addr] = result.last || 0;
-    if (result.dbCursor) {
-      dbCursorRef.current = result.dbCursor;
-    }
+    dbCursorRef.current = result.dbCursor ?? null;
     list.push(
       ...result.list.map(item => {
         return {
@@ -280,9 +270,9 @@ const TokenDetailHistoryListContent = ({
     loadingMore,
     loadMore,
     noMore,
-    reloadAsync,
+    reload,
     cancel,
-  } = useInfiniteScroll(() => batchFetchData(), {
+  } = useInfiniteScroll(lastData => batchFetchData(!lastData), {
     isNoMore: d => disableHistoryRequest || (d ? !d.hasMore : false),
     // Native lists can report their end repeatedly before React commits the
     // loading flags. Reserve the request synchronously as well.
@@ -292,15 +282,19 @@ const TokenDetailHistoryListContent = ({
     onFinally() {
       requestPendingRef.current = false;
     },
+    onError(error) {
+      // Only the current request reports failures. Rejecting the page leaves
+      // the visible rows intact; cancellation suppresses stale error toasts.
+      toast.error(`${currentAddress} fetch failed, ${error}`);
+    },
   });
 
   const refresh = useMemoizedFn(() => {
     cancel();
-    lastMap.current = {};
-    hasMoreMap.current = {};
-    dbCursorRef.current = null;
     if (!disableHistoryRequest) {
-      reloadAsync();
+      // Read the first page without discarding committed cursors. A failed
+      // refresh must still allow appending/retrying from the displayed window.
+      reload();
     }
     onRefresh?.();
   });
@@ -314,8 +308,7 @@ const TokenDetailHistoryListContent = ({
   }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
 
   const batchFetchDataFromDbUpsert = useMemoizedFn(async () => {
-    dbCursorRef.current = null;
-    reloadAsync();
+    reload();
   });
 
   const throttleBatchFetchData = useMemo(
