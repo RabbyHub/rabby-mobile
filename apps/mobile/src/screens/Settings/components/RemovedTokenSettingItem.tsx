@@ -54,7 +54,7 @@ export function RemovedTokenSettingItem() {
 }
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  icon: { marginRight: 8 },
+  icon: { marginRight: 12 },
   right: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   label: {
     fontFamily: 'SF Pro Rounded',

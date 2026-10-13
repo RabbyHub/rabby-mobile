@@ -16,7 +16,7 @@ import {
 import type { ITokenItem } from '@/store/tokens';
 import { createGetStyles2024 } from '@/utils/styles';
 import { MODAL_GATE_IDS } from '@/utils/modalGate';
-import { RemoveTokenConfirmPopup } from './RemoveTokenConfirmPopup';
+import { createRemoveTokenConfirmPopup } from '@/components2024/RemoveTokenConfirmPopup';
 
 /** Token header actions with a confirmation before removal. */
 export const RightMore: React.FC<{
@@ -27,7 +27,6 @@ export const RightMore: React.FC<{
   const { t } = useTranslation();
   const isPinned = useIsUserTokenPinned(token);
   const [visible, setVisible] = useState(false);
-  const [confirmVisible, setConfirmVisible] = useState(false);
 
   const handleFavorite = () => {
     setVisible(false);
@@ -36,81 +35,71 @@ export const RightMore: React.FC<{
   };
 
   return (
-    <>
-      <Tip
-        disableShadow={Platform.OS !== 'ios'}
-        hideArrow
-        noPressable
-        placement="bottom"
-        isVisible={visible}
-        modalGateId={MODAL_GATE_IDS.tokenDetailHeaderMenu}
-        onClose={() => setVisible(false)}
-        closeOnContentInteraction={false}
-        displayInsets={{ top: 12, bottom: 12, left: 12, right: 12 }}
-        contentStyle={styles.popup}
-        tooltipStyle={styles.popupShadow}
-        content={
-          <View style={styles.menu}>
-            <Pressable
-              style={styles.menuItem}
-              accessibilityRole="button"
-              onPress={handleFavorite}>
-              <Text style={styles.favoriteText}>
-                {t(
-                  isPinned
-                    ? 'page.tokenDetail.action.unfavorite'
-                    : 'page.tokenDetail.action.favorite',
-                )}
-              </Text>
-              <RcFavorite
-                width={20}
-                height={20}
-                color={colors2024['orange-default']}
-                fill={isPinned ? 'none' : 'currentColor'}
-                stroke={isPinned ? colors2024['orange-default'] : 'none'}
-                strokeWidth={1.5}
-              />
-            </Pressable>
-            <Pressable
-              style={styles.menuItem}
-              accessibilityRole="button"
-              onPress={() => {
-                setVisible(false);
-                setConfirmVisible(true);
-              }}>
-              {({ pressed }) => (
-                <>
-                  <Text
-                    style={[styles.removeText, pressed && styles.pressedText]}>
-                    {t('page.singleHome.tokenActions.remove')}
-                  </Text>
-                  <RcRemoveArrow
-                    color={
-                      colors2024[pressed ? 'brand-default' : 'neutral-foot']
-                    }
-                  />
-                </>
+    <Tip
+      disableShadow={Platform.OS !== 'ios'}
+      hideArrow
+      noPressable
+      placement="bottom"
+      isVisible={visible}
+      modalGateId={MODAL_GATE_IDS.tokenDetailHeaderMenu}
+      onClose={() => setVisible(false)}
+      closeOnContentInteraction={false}
+      displayInsets={{ top: 12, bottom: 12, left: 12, right: 12 }}
+      contentStyle={styles.popup}
+      tooltipStyle={styles.popupShadow}
+      content={
+        <View style={styles.menu}>
+          <Pressable
+            style={styles.menuItem}
+            accessibilityRole="button"
+            onPress={handleFavorite}>
+            <Text style={styles.favoriteText}>
+              {t(
+                isPinned
+                  ? 'page.tokenDetail.action.unfavorite'
+                  : 'page.tokenDetail.action.favorite',
               )}
-            </Pressable>
-          </View>
-        }>
-        <CustomTouchableOpacity
-          as="RNGHTouchableOpacity"
-          style={styles.trigger}
-          accessibilityRole="button"
-          accessibilityLabel={t('page.tokenDetail.removed.more')}
-          hitSlop={10}
-          onPress={() => setVisible(true)}>
-          <RcMore color={colors2024['neutral-body']} />
-        </CustomTouchableOpacity>
-      </Tip>
-      {confirmVisible && (
-        <RemoveTokenConfirmPopup
-          token={token}
-          onClose={() => setConfirmVisible(false)}
-        />
-      )}
-    </>
+            </Text>
+            <RcFavorite
+              width={20}
+              height={20}
+              color={colors2024['orange-default']}
+              fill={isPinned ? 'none' : 'currentColor'}
+              stroke={isPinned ? colors2024['orange-default'] : 'none'}
+              strokeWidth={1.5}
+            />
+          </Pressable>
+          <Pressable
+            style={styles.menuItem}
+            accessibilityRole="button"
+            onPress={() => {
+              setVisible(false);
+              createRemoveTokenConfirmPopup(token);
+            }}>
+            {({ pressed }) => (
+              <>
+                <Text
+                  style={[styles.removeText, pressed && styles.pressedText]}>
+                  {t('page.singleHome.tokenActions.remove')}
+                </Text>
+                <RcRemoveArrow
+                  color={colors2024[pressed ? 'brand-default' : 'neutral-foot']}
+                />
+              </>
+            )}
+          </Pressable>
+        </View>
+      }>
+      <CustomTouchableOpacity
+        as="RNGHTouchableOpacity"
+        style={styles.trigger}
+        accessibilityRole="button"
+        accessibilityLabel={t('page.tokenDetail.removed.more')}
+        hitSlop={10}
+        onPress={() => setVisible(true)}>
+        <RcMore color={colors2024['neutral-body']} />
+      </CustomTouchableOpacity>
+    </Tip>
   );
 };
 

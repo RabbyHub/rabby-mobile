@@ -2,9 +2,7 @@ import React, { memo, useCallback, type ReactElement } from 'react';
 import { View } from 'react-native';
 import { IS_ANDROID } from '@/core/native/utils';
 import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
-import { toast } from '@/components2024/Toast';
 import { apisTheme } from '@/hooks/theme';
-import { useRemovedTokens } from '@/hooks/useRemovedTokens';
 import {
   isUserTokenPinnedInMemory,
   toggleUserTokenPinned,
@@ -26,22 +24,6 @@ type Props = (
   children: ReactElement;
   onRemoveToken(token: ITokenItem): void;
 };
-
-// Use once at list level; rows do not subscribe to removed-token preferences.
-export function useRemoveTokenAction() {
-  const addRemovedToken = useRemovedTokens(state => state.addRemovedToken);
-  return useCallback(
-    (token: ITokenItem) => {
-      addRemovedToken({ chainId: token.chain, tokenId: token.id }).catch(
-        error => {
-          console.error('Remove token failed:', error);
-          toast.show(i18n.t('page.singleHome.tokenActions.removeFailed'));
-        },
-      );
-    },
-    [addRemovedToken],
-  );
-}
 
 /** Stable menu host; resolve the latest token and action state only on opening. */
 export const TokenRowContextMenu = memo(

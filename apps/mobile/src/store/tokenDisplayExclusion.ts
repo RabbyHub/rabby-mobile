@@ -10,6 +10,7 @@ import type {
   TokenEntityId,
   useTokenAssetsIndexStore,
   tokenEntityResourceStore,
+  tokenGroupResourceStore,
   buildSingleAssetsIndexFromTokenIds,
   buildMultiAssetsIndexFromTokenIds,
 } from './tokens';
@@ -20,11 +21,13 @@ type Dependencies = {
     typeof tokenEntityResourceStore,
     'getValue' | 'getAddressVersion'
   >;
+  tokenGroups: Pick<typeof tokenGroupResourceStore, 'getValue'>;
   buildSingleAssetsIndex: typeof buildSingleAssetsIndexFromTokenIds;
   buildMultiAssetsIndex: typeof buildMultiAssetsIndexFromTokenIds;
 };
 type TokenDisplayExclusion = {
   ensureBinding(): void;
+  syncRestoredMultiResult(key: string): void;
   syncChangedTokens(tokenIds: TokenEntityId[], updateSource: () => void): void;
 };
 
@@ -32,6 +35,7 @@ type TokenDisplayExclusion = {
 export function createTokenDisplayExclusion({
   assetsStore,
   tokenEntities,
+  tokenGroups,
   buildSingleAssetsIndex,
   buildMultiAssetsIndex,
 }: Dependencies): TokenDisplayExclusion {
@@ -264,18 +268,18 @@ export function createTokenDisplayExclusion({
           (!config.chainServerId ||
             removedTokensByChain.has(config.chainServerId.toLowerCase()))
         ) {
-          const tokenIds =
+          const cachedTokenIds = Object.values(raw.segments).flatMap(segment =>
             scene === 'single'
-              ? Array.from(
-                  new Set(
-                    config.tokenIds.concat(
-                      Object.values(raw.segments).flatMap(
-                        segment => segment.tokenIds,
-                      ),
-                    ),
-                  ),
-                )
-              : config.tokenIds;
+              ? segment.tokenIds
+              : segment.rows.flatMap((row, index) =>
+                  row.type === 'group'
+                    ? tokenGroups.getValue(row.groupId)?.memberTokenIds || []
+                    : [segment.tokenIds[index]!],
+                ),
+          );
+          const tokenIds = Array.from(
+            new Set(config.tokenIds.concat(cachedTokenIds)),
+          );
           if (tokenIds.some(isRemovedEntity)) {
             const includeToken = (token: ITokenItem) =>
               !isRemoved(token.chain, token.id);
@@ -434,6 +438,17 @@ export function createTokenDisplayExclusion({
 
   return {
     ensureBinding: ensureTokenDisplayExclusionBinding,
+    syncRestoredMultiResult(key) {
+      if (!removedTokensStore.getState().removedTokens.length) {
+        return;
+      }
+      // Group restoration can change members without changing raw row identities.
+      tokenDisplayProjectionCache.delete(`multi:${key}`);
+      syncTokenDisplayResults(undefined, {
+        single: new Set(),
+        multi: new Set([key]),
+      });
+    },
     syncChangedTokens(tokenIds, updateSource) {
       if (!tokenDisplayBindingsStarted) {
         updateSource();

@@ -4,6 +4,7 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import { BackgroundComponent } from './BackgroundComponent';
 import { CreateParams, MODAL_NAMES } from './types';
+import { getRemoveTokenConfirmModalProps } from '@/components2024/RemoveTokenConfirmPopup';
 
 export function makeBottomSheetProps({
   colors,
@@ -75,5 +76,7 @@ export function makeBottomSheetProps({
     }),
   };
 
-  return baseProps;
+  return createParams?.name === MODAL_NAMES.REMOVE_TOKEN_CONFIRM
+    ? { ...baseProps, ...getRemoveTokenConfirmModalProps(colors) }
+    : baseProps;
 }
