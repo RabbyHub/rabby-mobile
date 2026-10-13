@@ -14,6 +14,7 @@ import { getPerpsCandleSource } from './interval';
 import {
   loadPerpsCandleSourcePage,
   loadPerpsCandleSourceSnapshot,
+  readPerpsCandleSourceSnapshot,
 } from './sourceSnapshot';
 
 export type PerpsCandleFeedStatus =
@@ -41,6 +42,7 @@ export type PerpsCandleHistoryLoadResult =
 
 export type PerpsCandleFeed = PerpsCandleFeedSnapshot & {
   loadOlder: () => Promise<PerpsCandleHistoryLoadResult>;
+  retry: () => void;
 };
 
 const createIdentity = (
@@ -82,16 +84,21 @@ export const usePerpsCandleFeed = ({
   enabled,
   initialSourceCandles,
   interval,
+  simplePresentation = false,
 }: {
   coin: string;
   enabled: boolean;
   initialSourceCandles?: ReadonlyArray<PerpsCandle>;
   interval: PerpsCandleDataInterval;
+  /** Simple-only warm start/recovery; default callers retain their preload contract. */
+  simplePresentation?: boolean;
 }) => {
   const initialSourceCandlesRef = useRef(initialSourceCandles);
   initialSourceCandlesRef.current = initialSourceCandles;
   const identity = createIdentity(enabled, coin, interval);
   const generationRef = useRef(0);
+  const [retryEpoch, setRetryEpoch] = useState(0);
+  const retryRef = useRef<() => void>(() => {});
   const loadOlderRef = useRef<() => Promise<PerpsCandleHistoryLoadResult>>(() =>
     Promise.resolve('ignored'),
   );
@@ -117,8 +124,11 @@ export const usePerpsCandleFeed = ({
     });
 
     if (identity === 'disabled') {
+      retryRef.current = () => {};
       return;
     }
+
+    retryRef.current = () => setRetryEpoch(epoch => epoch + 1);
 
     let sdk: ReturnType<typeof apisPerps.getPerpsSDK>;
     try {
@@ -138,7 +148,13 @@ export const usePerpsCandleFeed = ({
     const { historyPageCandleCount, maximumSourceCandleCount, sourceInterval } =
       getPerpsCandleSource(interval);
     let sourceCandles = limitCandleMap(
-      toCandleMap(initialSourceCandlesRef.current ?? []),
+      toCandleMap(
+        initialSourceCandlesRef.current ??
+          (simplePresentation
+            ? readPerpsCandleSourceSnapshot(coin, interval)?.candles
+            : undefined) ??
+          [],
+      ),
       maximumSourceCandleCount,
     );
     let latestSourceTime = getLatestCandleTime(sourceCandles);
@@ -230,7 +246,7 @@ export const usePerpsCandleFeed = ({
         if (!isCurrent() || request !== baselineRequest) {
           return;
         }
-        if (preserveVisible && sourceCandles.size > 0) {
+        if (preserveVisible && sourceCandles.size > 0 && !simplePresentation) {
           sourceCandles = limitCandleMap(
             toCandleMap(
               mergePerpsCandles(
@@ -254,6 +270,10 @@ export const usePerpsCandleFeed = ({
           );
         }
       }
+    };
+
+    retryRef.current = () => {
+      if (isCurrent() && !baselineLoading) void loadBaseline();
     };
 
     loadOlderRef.current = () => {
@@ -370,7 +390,10 @@ export const usePerpsCandleFeed = ({
       setNonReady('stale');
     };
     const handleOpen = () => {
-      if (!waitingForReconnect) {
+      if (
+        !waitingForReconnect &&
+        !(simplePresentation && !baselineReady && !baselineLoading)
+      ) {
         return;
       }
       waitingForReconnect = false;
@@ -404,6 +427,7 @@ export const usePerpsCandleFeed = ({
       }
       void loadBaseline({ preserveVisible: hasPreloadedBaseline });
     } catch (error) {
+      retryRef.current = () => setRetryEpoch(epoch => epoch + 1);
       setNonReady(
         'error',
         toError(error, 'Failed to subscribe to Perps candles'),
@@ -412,6 +436,7 @@ export const usePerpsCandleFeed = ({
 
     return () => {
       generationRef.current += 1;
+      retryRef.current = () => {};
       loadOlderRef.current = () => Promise.resolve('ignored');
       baselineRequest += 1;
       sdk.ws.off('close', handleConnectionLoss);
@@ -424,7 +449,7 @@ export const usePerpsCandleFeed = ({
         console.error('[usePerpsCandleFeed] unsubscribe failed', error);
       }
     };
-  }, [coin, identity, interval]);
+  }, [coin, identity, interval, retryEpoch, simplePresentation]);
 
   const visibleSnapshot = useMemo<PerpsCandleFeedSnapshot>(
     () =>
@@ -441,9 +466,10 @@ export const usePerpsCandleFeed = ({
     [identity, snapshot],
   );
   const loadOlder = useCallback(() => loadOlderRef.current(), []);
+  const retry = useCallback(() => retryRef.current(), []);
 
   return useMemo<PerpsCandleFeed>(
-    () => ({ ...visibleSnapshot, loadOlder }),
-    [loadOlder, visibleSnapshot],
+    () => ({ ...visibleSnapshot, loadOlder, retry }),
+    [loadOlder, retry, visibleSnapshot],
   );
 };

@@ -27,6 +27,19 @@ export const isPerpsCandleSourceSnapshotFresh = (
   snapshot: PerpsCandleSourceSnapshot,
 ) => Date.now() - snapshot.loadedAt <= PERPS_CANDLE_PRELOAD_TTL_MS;
 
+/** Read without starting a request. Stale snapshots are never used as a new baseline. */
+export const readPerpsCandleSourceSnapshot = (
+  coin: string,
+  interval: PerpsCandleDataInterval,
+) => {
+  const snapshot = snapshotCache.get(
+    getPerpsCandleSourceIdentity(coin, interval),
+  );
+  return snapshot && isPerpsCandleSourceSnapshotFresh(snapshot)
+    ? snapshot
+    : null;
+};
+
 const pruneSnapshotCache = () => {
   snapshotCache.forEach((snapshot, identity) => {
     if (!isPerpsCandleSourceSnapshotFresh(snapshot)) {

@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { View } from 'react-native';
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
+import { useSimpleChartPreload } from '@/hooks/perps/candles/useSimpleChartPreload';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { PerpsCategoryId } from '../../Perps/constants/perpsCategories';
 import { PerpsMarketItem } from '../../Perps/components/PerpsMarketSection/PerpsMarketItem';
@@ -14,6 +15,10 @@ export const PerpsSearchTabContent: React.FC<{
   onSelect: (coin: string) => void;
 }> = ({ categoryId, items, showRank, onSelect }) => {
   const { styles } = useTheme2024({ getStyle });
+  const focusedTab = useFocusedTab();
+  const onViewableItemsChanged = useSimpleChartPreload(
+    focusedTab === categoryId,
+  );
 
   const renderItem = useCallback(
     ({ item, index }: { item: MarketData; index: number }) => (
@@ -28,6 +33,7 @@ export const PerpsSearchTabContent: React.FC<{
 
   return (
     <Tabs.FlatList
+      onViewableItemsChanged={onViewableItemsChanged}
       data={items}
       keyExtractor={item => `${categoryId}-${item.name}`}
       renderItem={renderItem}
