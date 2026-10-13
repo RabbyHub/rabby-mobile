@@ -2516,7 +2516,7 @@ const restoreTokenAssetsProjectionIfEmpty = (
       );
     };
 
-    void (async () => {
+    (async () => {
       await yieldTokenProjectionEntityRestore();
       let restoredCount = 0;
       for (
@@ -2575,6 +2575,10 @@ const restoreTokenAssetsProjectionIfEmpty = (
           stagedMetadata,
         },
       );
+      if (scene === 'multi-address' && completeResult) {
+        // Recheck display exclusions after deferred group members become available.
+        tokenDisplayExclusion.syncRestoredMultiResult(key);
+      }
       backgroundTrace.finish({
         itemCount: remainingTokenIds.length,
         restoredEntityCount: restoredCount,
@@ -3179,6 +3183,7 @@ export const useTokenAssetsIndexStore = zCreate(
 const tokenDisplayExclusion = createTokenDisplayExclusion({
   assetsStore: useTokenAssetsIndexStore,
   tokenEntities: tokenEntityResourceStore,
+  tokenGroups: tokenGroupResourceStore,
   buildSingleAssetsIndex: buildSingleAssetsIndexFromTokenIds,
   buildMultiAssetsIndex: buildMultiAssetsIndexFromTokenIds,
 });
