@@ -102,7 +102,14 @@ export const SubmitActions: React.FC<PropsWithAuthSession> = ({
           }}>
           {/* @ts-ignore */}
           <Tip content={enableTooltip ? tooltipContent : undefined}>
-            <View style={styles.buttonWrapper}>
+            <View
+              style={styles.buttonWrapper}
+              // Let the surrounding Tip receive taps on the disabled button.
+              pointerEvents={
+                disabledProcess && enableTooltip && tooltipContent
+                  ? 'none'
+                  : 'auto'
+              }>
               <GasLessAnimatedWrapper
                 isGasNotEnough={isGasNotEnough}
                 gasLessThemeColor={gasLessThemeColor}

@@ -18,7 +18,6 @@ import {
 import type { GasLevel, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { isHexString } from 'ethereumjs-util';
-import type { ReactNode } from 'react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { WaitingSignComponent } from '../map';
@@ -37,6 +36,7 @@ import { normalizeTxParams } from '../SignTx/util';
 import type { GasSelectorResponse } from '../TxComponents/GasSelector/GasSelectorHeader';
 import { GasSelectorHeader } from '../TxComponents/GasSelector/GasSelectorHeader';
 import { FooterBar } from '../FooterBar/FooterBar';
+import { FooterTip } from '../FooterBar/FooterTip';
 import { SignAdvancedSettings } from '../SignAdvancedSettings';
 import { TestnetActions } from '../TestnetActions';
 import { Card } from '@/components/Card';
@@ -247,11 +247,7 @@ export const SignTestnetTx = ({
   const [isHardware, setIsHardware] = useState(false);
   const [nativeTokenBalance, setNativeTokenBalance] = useState('0x0');
   const [canProcess, setCanProcess] = useState(true);
-  const [cantProcessReason, setCantProcessReason] =
-    useState<ReactNode | null>();
-  const [currentAccountType, setCurrentAccountType] = useState<
-    undefined | string
-  >();
+  const [cantProcessReason, setCantProcessReason] = useState('');
 
   let updateNonce = true;
   if (isCancel || isSpeedUp || (nonce && from === to) || nonceChanged) {
@@ -360,7 +356,6 @@ export const SignTestnetTx = ({
     //     item => item.type === currentAccount.type,
     //   ),
     // );
-    setCurrentAccountType(currentAccount.type);
 
     matomoRequestEvent({
       category: 'Transaction',
@@ -646,6 +641,16 @@ export const SignTestnetTx = ({
     nativeTokenBalance,
     recommendGasLimitRatio: 1.5,
   });
+  const isWatchAddr = currentAccount.type === KEYRING_TYPE.WatchAddressKeyring;
+  const forbiddenError = checkErrors.find(item => item.level === 'forbidden');
+  const signingError =
+    (!canProcess && cantProcessReason) ||
+    forbiddenError?.msg ||
+    ((isGnosisAccount || isCoboArugsAccount) &&
+      t('page.signTx.multiSigChainNotMatch')) ||
+    ((!selectedGas || selectedGas.price < 0) &&
+      t('page.signTx.failToFetchGasCost')) ||
+    undefined;
 
   if (!chain) {
     return null;
@@ -699,50 +704,55 @@ export const SignTestnetTx = ({
       {isReady && (
         <FooterBar
           Header={
-            <GasSelectorHeader
-              tx={tx}
-              disabled={false}
-              isReady={isReady}
-              gasLimit={gasLimit}
-              noUpdate={isCancel || isSpeedUp}
-              gasList={gasList || []}
-              selectedGas={selectedGas}
-              version={'v0'}
-              gas={{
-                error: null,
-                success: true,
-                gasCostUsd: 0,
-                gasCostAmount: new BigNumber(selectedGas?.price || 0)
-                  .multipliedBy(gasUsed || 0)
-                  .div(1e18),
-              }}
-              gasCalcMethod={async price => {
-                return {
-                  gasCostAmount: new BigNumber(price || 0)
+            <>
+              <GasSelectorHeader
+                tx={tx}
+                disabled={false}
+                isReady={isReady}
+                gasLimit={gasLimit}
+                noUpdate={isCancel || isSpeedUp}
+                gasList={gasList || []}
+                selectedGas={selectedGas}
+                version={'v0'}
+                gas={{
+                  error: null,
+                  success: true,
+                  gasCostUsd: 0,
+                  gasCostAmount: new BigNumber(selectedGas?.price || 0)
                     .multipliedBy(gasUsed || 0)
                     .div(1e18),
-                  gasCostUsd: new BigNumber(0),
-                };
-              }}
-              recommendGasLimit={gasUsed || ''}
-              recommendNonce={recommendNonce || ''}
-              chainId={chainId}
-              onChange={handleGasChange}
-              nonce={realNonce || tx.nonce}
-              disableNonce={isSpeedUp || isCancel}
-              isSpeedUp={isSpeedUp}
-              isCancel={isCancel}
-              is1559={false}
-              isHardware={isHardware}
-              manuallyChangeGasLimit={false}
-              errors={checkErrors}
-              engineResults={[]}
-              nativeTokenBalance={nativeTokenBalance}
-              gasPriceMedian={null}
-              account={currentAccount}
-            />
+                }}
+                gasCalcMethod={async price => {
+                  return {
+                    gasCostAmount: new BigNumber(price || 0)
+                      .multipliedBy(gasUsed || 0)
+                      .div(1e18),
+                    gasCostUsd: new BigNumber(0),
+                  };
+                }}
+                recommendGasLimit={gasUsed || ''}
+                recommendNonce={recommendNonce || ''}
+                chainId={chainId}
+                onChange={handleGasChange}
+                nonce={realNonce || tx.nonce}
+                disableNonce={isSpeedUp || isCancel}
+                isSpeedUp={isSpeedUp}
+                isCancel={isCancel}
+                is1559={false}
+                isHardware={isHardware}
+                manuallyChangeGasLimit={false}
+                errors={checkErrors}
+                engineResults={[]}
+                nativeTokenBalance={nativeTokenBalance}
+                gasPriceMedian={null}
+                account={currentAccount}
+              />
+              {!isWatchAddr && signingError && (
+                <FooterTip message={signingError} showArrow={false} />
+              )}
+            </>
           }
-          isWatchAddr={currentAccountType === KEYRING_TYPE.WatchAddressKeyring}
+          isWatchAddr={isWatchAddr}
           origin={origin}
           originLogo={site?.icon}
           gnosisAccount={isGnosis ? params.account : undefined}
@@ -751,22 +761,20 @@ export const SignTestnetTx = ({
           onCancel={handleCancel}
           onSubmit={() => handleAllow()}
           onIgnoreAllRules={() => {}}
-          enableTooltip={
-            !canProcess ||
-            !!checkErrors.find(item => item.level === 'forbidden')
-          }
+          enableTooltip={isWatchAddr || !!signingError}
           tooltipContent={
-            cantProcessReason ||
-            checkErrors.find(item => item.level === 'forbidden')?.msg ||
-            ''
+            isWatchAddr
+              ? t('page.signTx.canOnlyUseImportedAddress')
+              : signingError
           }
           disabledProcess={
             !isReady ||
+            isWatchAddr ||
             (selectedGas ? selectedGas.price < 0 : true) ||
             isGnosisAccount ||
             isCoboArugsAccount ||
             !canProcess ||
-            !!checkErrors.find(item => item.level === 'forbidden')
+            !!forbiddenError
           }
           account={currentAccount}
         />
