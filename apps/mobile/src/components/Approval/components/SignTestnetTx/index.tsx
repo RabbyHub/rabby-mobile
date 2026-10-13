@@ -41,6 +41,7 @@ import { SignAdvancedSettings } from '../SignAdvancedSettings';
 import { TestnetActions } from '../TestnetActions';
 import { Card } from '@/components/Card';
 import { TestnetTag } from '../TestnetTag';
+import { getInternalGasLimit } from './getInternalGasLimit';
 
 const checkGasAndNonce = ({
   recommendGasLimitRatio,
@@ -232,7 +233,10 @@ export const SignTestnetTx = ({
   const chain = useFindChain({ id: chainId });
 
   const [realNonce, setRealNonce] = useState('');
-  const [gasLimit, setGasLimit] = useState<string | undefined>(undefined);
+  // Keep the gas limit already reserved by an internal send.
+  const [gasLimit, setGasLimit] = useState<string | undefined>(() =>
+    getInternalGasLimit({ origin, gas: gas || params.data[0].gasLimit }),
+  );
   const [selectedGas, setSelectedGas] = useState<GasLevel | null>(null);
   const [isGnosisAccount, setIsGnosisAccount] = useState(false);
   const [isCoboArugsAccount, setIsCoboArugsAccount] = useState(false);
@@ -301,21 +305,19 @@ export const SignTestnetTx = ({
           chainId: chainId,
           tx: tx,
         });
-        if (!gasLimit) {
-          setGasLimit(
+        setGasLimit(
+          currentGasLimit =>
+            currentGasLimit ||
             `0x${new BigNumber(res)
               .multipliedBy(1.5)
               .integerValue()
               .toString(16)}`,
-          );
-        }
+        );
         return `0x${new BigNumber(res).integerValue().toString(16)}`;
       } catch (e) {
         console.error(e);
         const fallback = intToHex(2000000);
-        if (!gasLimit) {
-          setGasLimit(fallback);
-        }
+        setGasLimit(currentGasLimit => currentGasLimit || fallback);
         return fallback;
       }
     },
