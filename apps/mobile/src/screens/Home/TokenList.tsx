@@ -64,10 +64,8 @@ import { apiCustomTestnet } from '@/core/apis';
 import { toast } from '@/components2024/Toast';
 import { isWatchOrSafeAccount } from '@/utils/account';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
-import {
-  TokenRowContextMenu,
-  useRemoveTokenAction,
-} from './components/TokenRowContextMenu';
+import { TokenRowContextMenu } from './components/TokenRowContextMenu';
+import { createRemoveTokenConfirmPopup } from '@/components2024/RemoveTokenConfirmPopup';
 import {
   useRegressionScenario,
   useRegressionScenarioAssertion,
@@ -229,7 +227,6 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     getStyle: getStyles,
   });
   const { t } = useTranslation();
-  const handleRemoveToken = useRemoveTokenAction();
   const { currentAccount } = useSingleHomeAccount();
   const { selectedChain } = useSingleHomeChain();
 
@@ -721,17 +718,11 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
           tokenStyle={tokenRowStyle}
           loaderStyle={styles.removeLeft}
           onTokenPress={handleOpenTokenDetail}
-          onRemoveToken={handleRemoveToken}
+          onRemoveToken={createRemoveTokenConfirmPopup}
         />
       </View>
     ),
-    [
-      handleOpenTokenDetail,
-      handleRemoveToken,
-      styles.removeLeft,
-      styles.rowWrap,
-      tokenRowStyle,
-    ],
+    [handleOpenTokenDetail, styles.removeLeft, styles.rowWrap, tokenRowStyle],
   );
 
   const renderAdditionalHeaderItem = useCallback(

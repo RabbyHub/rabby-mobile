@@ -76,10 +76,8 @@ import { apiCustomTestnet } from '@/core/apis';
 import { toast } from '@/components2024/Toast';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
-import {
-  TokenRowContextMenu,
-  useRemoveTokenAction,
-} from '@/screens/Home/components/TokenRowContextMenu';
+import { TokenRowContextMenu } from '@/screens/Home/components/TokenRowContextMenu';
+import { createRemoveTokenConfirmPopup } from '@/components2024/RemoveTokenConfirmPopup';
 import { IS_ANDROID } from '@/core/native/utils';
 import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
 import { formatNetworth } from '@/utils/math';
@@ -249,7 +247,6 @@ const LOADING_ITEMS: TokenListExtraItem[] = Array.from(
 );
 
 export const TokenList = () => {
-  const handleRemoveToken = useRemoveTokenAction();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const regressionScenario = useRegressionScenario<'Home'>();
@@ -919,7 +916,7 @@ export const TokenList = () => {
                 getAccountByAddress={getAccountByAddress}
                 onTokenPress={handleTokenPress}
                 onGroupPress={handleGroupPress}
-                onRemoveToken={handleRemoveToken}
+                onRemoveToken={createRemoveTokenConfirmPopup}
                 style={styles.renderItemWrapper}
                 hideChainLogo={tokenDisplayMode === 'bySymbol'}
               />
@@ -993,7 +990,6 @@ export const TokenList = () => {
       handleCustomTestnetTokenGroupPress,
       renderCustomTestnetAccount,
       handleTokenPress,
-      handleRemoveToken,
       handleLpTokenEnabledChange,
       handleToggleAdditionalTokens,
       additionalTokenUsdValue,
