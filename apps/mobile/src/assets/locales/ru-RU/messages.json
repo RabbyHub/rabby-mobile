@@ -2860,7 +2860,7 @@
         "stopLoss": "Стоп-лосс",
         "liquidation": "Цена ликвидации",
         "all": "ВСЁ",
-        "source": "Работает на базе Hyperliquid. График цены предоставлен TradingView.",
+        "source": "Работает на базе Hyperliquid. График цены предоставлен <tradingview>TradingView.</tradingview>",
         "resetChart": "Сбросить график",
         "backToLatest": "К последним данным",
         "switchToArea": "Переключить на график с областями",

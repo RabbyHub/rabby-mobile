@@ -2916,7 +2916,7 @@
         "stopLoss": "ตัดขาดทุน",
         "liquidation": "ราคาบังคับปิดสถานะ",
         "all": "ทั้งหมด",
-        "source": "ให้บริการโดย Hyperliquid กราฟราคาให้บริการโดย TradingView",
+        "source": "ให้บริการโดย Hyperliquid กราฟราคาให้บริการโดย <tradingview>TradingView</tradingview>",
         "resetChart": "รีเซ็ตกราฟ",
         "backToLatest": "กลับไปยังข้อมูลล่าสุด",
         "switchToArea": "เปลี่ยนเป็นกราฟพื้นที่",

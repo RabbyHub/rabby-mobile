@@ -2858,7 +2858,7 @@
         "stopLoss": "Cắt lỗ",
         "liquidation": "Giá thanh lý",
         "all": "TẤT CẢ",
-        "source": "Được hỗ trợ bởi Hyperliquid. Biểu đồ giá do TradingView cung cấp.",
+        "source": "Được hỗ trợ bởi Hyperliquid. Biểu đồ giá do <tradingview>TradingView</tradingview> cung cấp.",
         "resetChart": "Đặt lại biểu đồ",
         "backToLatest": "Về dữ liệu mới nhất",
         "switchToArea": "Chuyển sang biểu đồ vùng",

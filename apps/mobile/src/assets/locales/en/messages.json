@@ -2827,7 +2827,7 @@
         "stopLoss": "Stop loss",
         "liquidation": "Liquidation",
         "all": "ALL",
-        "source": "Powered by Hyperliquid. Price chart powered by TradingView.",
+        "source": "Powered by Hyperliquid. Price chart powered by <tradingview>TradingView.</tradingview>",
         "resetChart": "Reset chart",
         "backToLatest": "Back to latest",
         "switchToArea": "Switch to area chart",

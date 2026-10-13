@@ -2890,7 +2890,7 @@
         "stopLoss": "止损",
         "liquidation": "强平价",
         "all": "全部",
-        "source": "由 Hyperliquid 提供支持，价格图表由 TradingView 提供。",
+        "source": "由 Hyperliquid 提供支持，价格图表由 <tradingview>TradingView</tradingview> 提供。",
         "resetChart": "重置图表",
         "backToLatest": "回到最新行情",
         "switchToArea": "切换为面积图",

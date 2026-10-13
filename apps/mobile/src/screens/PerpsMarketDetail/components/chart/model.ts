@@ -62,9 +62,10 @@ export function simpleSelectionTime(time: number) {
     'Dec',
   ];
   const pad = (value: number) => String(value).padStart(2, '0');
-  return `${days[date.getDay()]} ${pad(date.getDate())} ${
+  const hours = date.getHours();
+  return `${days[date.getDay()]},${
     months[date.getMonth()]
-  } '${String(date.getFullYear()).slice(-2)} ${pad(date.getHours())}:${pad(
-    date.getMinutes(),
-  )}`;
+  } ${date.getDate()} at ${hours % 12 || 12}:${pad(date.getMinutes())}${
+    hours < 12 ? 'AM' : 'PM'
+  }`;
 }

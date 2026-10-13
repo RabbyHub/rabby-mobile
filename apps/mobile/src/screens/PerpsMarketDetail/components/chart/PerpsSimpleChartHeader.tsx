@@ -89,10 +89,15 @@ export const PerpsSimpleChartHeader = React.memo(
                 </View>
               ))}
             </View>
-            <View style={styles.changeRow}>
+            <View style={styles.selectedChangeRow}>
               <ChangeIcon color={color} />
-              <Text style={[styles.change, { color }]}>{changeText}</Text>
-              <Text style={[styles.description, styles.time]}>
+              <Text
+                style={[styles.change, styles.selectedChange, { color }]}
+                numberOfLines={1}
+                adjustsFontSizeToFit>
+                {changeText}
+              </Text>
+              <Text style={[styles.description, styles.time]} numberOfLines={1}>
                 {simpleSelectionTime(selection.time)}
               </Text>
             </View>
@@ -110,7 +115,9 @@ export const PerpsSimpleChartHeader = React.memo(
               </View>
             </View>
             {selection ? (
-              <Text style={[styles.description, styles.areaTime]}>
+              <Text
+                style={[styles.description, styles.areaTime]}
+                numberOfLines={1}>
                 {simpleSelectionTime(selection.time)}
               </Text>
             ) : (
@@ -202,6 +209,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
   },
-  time: { marginLeft: 'auto' },
-  areaTime: { textAlign: 'right', maxWidth: 110 },
+  selectedChangeRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  selectedChange: { flexShrink: 1 },
+  time: { marginLeft: 'auto', flexShrink: 0 },
+  areaTime: { textAlign: 'right', flexShrink: 0 },
 }));

@@ -2751,7 +2751,7 @@
         "stopLoss": "Stop-loss",
         "liquidation": "Prix de liquidation",
         "all": "TOUT",
-        "source": "Service fourni par Hyperliquid. Graphique des prix fourni par TradingView.",
+        "source": "Service fourni par Hyperliquid. Graphique des prix fourni par <tradingview>TradingView.</tradingview>",
         "resetChart": "Réinitialiser le graphique",
         "backToLatest": "Revenir aux dernières données",
         "switchToArea": "Passer au graphique en aires",

@@ -3033,7 +3033,7 @@
         "stopLoss": "Stop-Loss",
         "liquidation": "Liquidationspreis",
         "all": "ALLE",
-        "source": "Bereitgestellt von Hyperliquid. Kurschart bereitgestellt von TradingView.",
+        "source": "Bereitgestellt von Hyperliquid. Kurschart bereitgestellt von <tradingview>TradingView.</tradingview>",
         "resetChart": "Chart zurücksetzen",
         "backToLatest": "Zu den neuesten Daten",
         "switchToArea": "Zum Flächenchart wechseln",

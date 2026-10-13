@@ -2741,7 +2741,7 @@
         "stopLoss": "Zarar durdur",
         "liquidation": "Likidasyon fiyatı",
         "all": "TÜMÜ",
-        "source": "Hyperliquid tarafından sağlanır. Fiyat grafiği TradingView tarafından sağlanır.",
+        "source": "Hyperliquid tarafından sağlanır. Fiyat grafiği <tradingview>TradingView</tradingview> tarafından sağlanır.",
         "resetChart": "Grafiği sıfırla",
         "backToLatest": "En güncel verilere dön",
         "switchToArea": "Alan grafiğine geç",

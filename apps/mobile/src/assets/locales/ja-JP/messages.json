@@ -2791,7 +2791,7 @@
         "stopLoss": "損切り",
         "liquidation": "強制決済価格",
         "all": "全期間",
-        "source": "Hyperliquid がサービスを提供し、TradingView が価格チャートを提供しています。",
+        "source": "Hyperliquid がサービスを提供し、<tradingview>TradingView</tradingview> が価格チャートを提供しています。",
         "resetChart": "チャートをリセット",
         "backToLatest": "最新の時点に戻る",
         "switchToArea": "エリアチャートに切り替え",

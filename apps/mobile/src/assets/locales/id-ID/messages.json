@@ -2741,7 +2741,7 @@
         "stopLoss": "Stop loss",
         "liquidation": "Harga likuidasi",
         "all": "SEMUA",
-        "source": "Didukung oleh Hyperliquid. Grafik harga disediakan oleh TradingView.",
+        "source": "Didukung oleh Hyperliquid. Grafik harga disediakan oleh <tradingview>TradingView.</tradingview>",
         "resetChart": "Atur ulang grafik",
         "backToLatest": "Kembali ke data terbaru",
         "switchToArea": "Beralih ke grafik area",

@@ -2913,7 +2913,7 @@
         "stopLoss": "止蝕",
         "liquidation": "強制平倉價",
         "all": "全部",
-        "source": "由 Hyperliquid 提供支援，價格圖表由 TradingView 提供。",
+        "source": "由 Hyperliquid 提供支援，價格圖表由 <tradingview>TradingView</tradingview> 提供。",
         "resetChart": "重設圖表",
         "backToLatest": "返回最新行情",
         "switchToArea": "切換至面積圖",

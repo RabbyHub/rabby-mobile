@@ -2,10 +2,21 @@ import {
   projectSimpleFills,
   simplePriceChange,
   simplePriceText,
+  simpleSelectionTime,
   toSimpleChartCandle,
 } from './model';
 
 describe('Simple chart price semantics', () => {
+  it('uses the design date order and twelve-hour clock in local display time', () => {
+    const at = (hour: number, minute = 0) =>
+      new Date(2026, 8, 14, hour, minute).getTime() / 1000;
+    expect(simpleSelectionTime(at(23))).toBe('Mon,Sep 14 at 11:00PM');
+    expect(simpleSelectionTime(at(0, 5))).toBe('Mon,Sep 14 at 12:05AM');
+    expect(simpleSelectionTime(at(12))).toBe('Mon,Sep 14 at 12:00PM');
+    expect(
+      simpleSelectionTime(new Date(2026, 0, 1, 9, 7).getTime() / 1000),
+    ).toBe('Thu,Jan 1 at 9:07AM');
+  });
   it('converts feed milliseconds exactly once at the native/Web boundary', () => {
     expect(
       toSimpleChartCandle({
