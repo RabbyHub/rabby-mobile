@@ -48,6 +48,7 @@ export const PerpsSimpleChartToolbar = React.memo(
               fill={colors2024['red-default']}
             />
             <Text
+              numberOfLines={1}
               style={[
                 styles.label,
                 styles.intervalLabel,
@@ -158,10 +159,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: SIMPLE_CHART_COLORS.accent,
   },
   manualLabel: { fontFamily: 'SF Pro Rounded', fontWeight: '700' },
-  intervalLabel: { width: 24 },
+  // At 12pt, "30m" is wider than 24pt in both Medium and Bold.
+  intervalLabel: { width: 32, flexShrink: 0 },
   pressed: { opacity: 0.6 },
   interval: {
-    width: 76,
+    width: 84,
+    flexShrink: 0,
     borderRadius: 6,
     flexDirection: 'row',
     alignItems: 'center',
