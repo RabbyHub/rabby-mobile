@@ -1,4 +1,4 @@
-import type { PerpsCandleInterval } from '@/constant/perps';
+import type { PerpsCandleDataInterval } from '@/constant/perps';
 import { apisPerps } from '@/core/apis/perps';
 
 import { parsePerpsCandles, type PerpsCandle } from './candle';
@@ -20,12 +20,25 @@ const pendingSnapshots = new Map<string, Promise<PerpsCandleSourceSnapshot>>();
 
 export const getPerpsCandleSourceIdentity = (
   coin: string,
-  interval: PerpsCandleInterval,
+  interval: PerpsCandleDataInterval,
 ) => `${coin}:${interval}`;
 
 export const isPerpsCandleSourceSnapshotFresh = (
   snapshot: PerpsCandleSourceSnapshot,
 ) => Date.now() - snapshot.loadedAt <= PERPS_CANDLE_PRELOAD_TTL_MS;
+
+/** Read without starting a request. Stale snapshots are never used as a new baseline. */
+export const readPerpsCandleSourceSnapshot = (
+  coin: string,
+  interval: PerpsCandleDataInterval,
+) => {
+  const snapshot = snapshotCache.get(
+    getPerpsCandleSourceIdentity(coin, interval),
+  );
+  return snapshot && isPerpsCandleSourceSnapshotFresh(snapshot)
+    ? snapshot
+    : null;
+};
 
 const pruneSnapshotCache = () => {
   snapshotCache.forEach((snapshot, identity) => {
@@ -58,7 +71,7 @@ export const loadPerpsCandleSourcePage = async ({
   candleCount: number;
   coin: string;
   endTime: number;
-  interval: PerpsCandleInterval;
+  interval: PerpsCandleDataInterval;
 }): Promise<PerpsCandle[]> => {
   const sdk = apisPerps.getPerpsSDK();
   const { sourceInterval, sourceIntervalMs } = getPerpsCandleSource(interval);
@@ -80,7 +93,7 @@ export const loadPerpsCandleSourceSnapshot = ({
 }: {
   coin: string;
   forceRefresh?: boolean;
-  interval: PerpsCandleInterval;
+  interval: PerpsCandleDataInterval;
 }): Promise<PerpsCandleSourceSnapshot> => {
   const identity = getPerpsCandleSourceIdentity(coin, interval);
   const pending = pendingSnapshots.get(identity);

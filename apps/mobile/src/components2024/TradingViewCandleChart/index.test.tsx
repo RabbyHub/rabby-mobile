@@ -65,9 +65,11 @@ const TradingViewCandleChart = require('./index')
 const markChartReady = ({
   perpsProKlineProtocolVersion = 3,
   supportsDataAppliedAck = true,
+  perpsSimpleKlineProtocolVersion,
 }: {
   perpsProKlineProtocolVersion?: number | null;
   supportsDataAppliedAck?: boolean;
+  perpsSimpleKlineProtocolVersion?: number;
 } = {}) => {
   const props = mockLocalWebViewProps.mock.calls.at(-1)?.[0];
   act(() => {
@@ -76,6 +78,7 @@ const markChartReady = ({
         data: JSON.stringify({
           type: 'CHART_READY',
           capabilities: {
+            perpsSimpleKlineProtocolVersion,
             ...(supportsDataAppliedAck ? { candleDataAppliedAck: true } : {}),
             ...(perpsProKlineProtocolVersion == null
               ? {}
@@ -104,6 +107,72 @@ describe('TradingViewCandleChart protocol compatibility', () => {
     jest.clearAllMocks();
     mockIsLight = false;
   });
+
+  it('gates Simple commands on both the variant and compatible ready resource', () => {
+    const chartRef = React.createRef<TradingViewChartRef>();
+    const { rerender } = render(
+      <TradingViewCandleChart ref={chartRef} height={248} />,
+    );
+    const command = {
+      type: 'PERPS_SIMPLE_CHART',
+      identity: 'simple:BTC',
+      sequence: 1,
+      action: 'reset',
+    } as const;
+    markChartReady();
+    act(() => chartRef.current?.sendSimpleMessage(command));
+    expect(
+      mockSendMessage.mock.calls.some(
+        call => call[0].data?.type === 'PERPS_SIMPLE_CHART',
+      ),
+    ).toBe(false);
+    rerender(
+      <TradingViewCandleChart
+        ref={chartRef}
+        height={248}
+        variant="perps-simple"
+      />,
+    );
+    markChartReady({ perpsSimpleKlineProtocolVersion: 3 });
+    act(() => chartRef.current?.sendSimpleMessage(command));
+    expect(mockSendMessage).toHaveBeenLastCalledWith({
+      type: 'TRADINGVIEW_MESSAGE',
+      data: command,
+    });
+  });
+
+  it.each([undefined, 2])(
+    'rejects incompatible Simple protocol %s and recovers when the matching page is ready',
+    version => {
+      const ready = jest.fn();
+      const event = jest.fn();
+      render(
+        <TradingViewCandleChart
+          height={248}
+          variant="perps-simple"
+          onChartReady={ready}
+          onSimpleEvent={event}
+        />,
+      );
+      markChartReady({ perpsSimpleKlineProtocolVersion: version });
+      expect(mockReload).toHaveBeenCalledTimes(1);
+      expect(ready).not.toHaveBeenCalled();
+      markChartReady({ perpsSimpleKlineProtocolVersion: 3 });
+      expect(ready).toHaveBeenCalledTimes(1);
+      const selection = {
+        type: 'PERPS_SIMPLE_EVENT',
+        identity: 'simple:BTC',
+        event: 'selection',
+        candle: null,
+      };
+      act(() =>
+        mockLocalWebViewProps.mock.calls
+          .at(-1)?.[0]
+          .onMessage({ nativeEvent: { data: JSON.stringify(selection) } }),
+      );
+      expect(event).toHaveBeenCalledWith(selection);
+    },
+  );
 
   it('sends the approved dark Pro crosshair label colors', () => {
     render(<TradingViewCandleChart height={184} variant="perps-pro" />);

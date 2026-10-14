@@ -1,3 +1,7 @@
+import {
+  normalizeSimpleChartPreference,
+  type SimpleChartPreference,
+} from '@/constant/perpsSimpleChart';
 import cloneDeep from 'lodash/cloneDeep';
 import {
   StoreServiceBase,
@@ -325,6 +329,7 @@ export interface PerpsServiceStore {
   };
   favoriteMarkets: string[];
   selectedKlineInterval: PerpsCandleInterval;
+  simpleChartPreference?: SimpleChartPreference;
   marginModeByCoin: Record<string, 'cross' | 'isolated'>;
   // Account abstraction mode per (lowercased) master address. It changes only
   // when the user opts into Unified Account / Portfolio Margin, so the cached
@@ -1208,6 +1213,19 @@ export class PerpsService extends StoreServiceBase<
 
   getHasClosedLearnMoreCard = async () => {
     return this.store.hasClosedLearnMoreCard;
+  };
+
+  getSimpleChartPreference = async () => {
+    if (!this.store) throw new Error('PerpsService not initialized');
+    return normalizeSimpleChartPreference(this.store.simpleChartPreference);
+  };
+
+  setSimpleChartPreference = async (value: SimpleChartPreference) => {
+    if (!this.store) throw new Error('PerpsService not initialized');
+    const normalized = normalizeSimpleChartPreference(value);
+    this.mutateStore(draft => {
+      draft.simpleChartPreference = normalized;
+    });
   };
 
   setSelectedKlineInterval = async (value: PerpsCandleInterval) => {
