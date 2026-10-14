@@ -455,7 +455,7 @@ export function createSimpleChart(
         titleIndex >= 0 && Math.abs(titleY[titleIndex] + 9 - y) > 0.5
           ? {
               right: titleWidths[titleIndex] + 2,
-              bottom: titleY[titleIndex] + 8,
+              bottom: titleY[titleIndex] + 9,
             }
           : undefined;
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');

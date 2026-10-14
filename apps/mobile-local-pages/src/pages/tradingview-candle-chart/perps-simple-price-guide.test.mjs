@@ -11,7 +11,7 @@ const segments = path =>
     values: values.trim().split(/\s+/).map(Number),
   }));
 
-test('displaced titles replace the old straight extension in a single continuous guide', () => {
+test('displaced guides start below the title before curving into the true price', () => {
   const path = simplePriceGuidePath({
     priceY: 101,
     labelX: 300,
@@ -21,13 +21,14 @@ test('displaced titles replace the old straight extension in a single continuous
   const parts = segments(path);
   assert.deepEqual(
     parts.map(part => part.command),
-    ['M', 'C', 'H', 'C'],
+    ['M', 'H', 'C', 'H', 'C'],
   );
-  assert.deepEqual(parts[0].values, [52, 120]);
-  assert.equal(parts[1].values.at(-1), 101);
-  assert.equal(parts[3].values[1], 101);
-  assert.deepEqual(parts[3].values.slice(-2), [300, 117]);
-  assert.ok(!path.includes('M 0 '));
+  assert.deepEqual(parts[0].values, [0, 120]);
+  assert.deepEqual(parts[1].values, [52]);
+  assert.equal(parts[2].values.at(-1), 101);
+  assert.equal(parts[4].values[1], 101);
+  assert.deepEqual(parts[4].values.slice(-2), [300, 117]);
+  assert.equal(path.match(/M/g).length, 1);
 });
 
 test('straight and right-only guides preserve the true price and do not restart dashes', () => {
@@ -49,7 +50,7 @@ test('straight and right-only guides preserve the true price and do not restart 
 
 test('both curves remain monotonic and tangent to their endpoints on narrow plots', () => {
   for (const width of [1, 8, 24, 50, 300]) {
-    for (const leftOffset of [-100, -20, -0.1, 0.1, 20, 100]) {
+    for (const leftOffset of [-100, -20, -0.1, 0, 0.1, 20, 100]) {
       for (const rightOffset of [-100, -20, -0.1, 0, 0.1, 20, 100]) {
         const parts = segments(
           simplePriceGuidePath({
@@ -60,7 +61,11 @@ test('both curves remain monotonic and tangent to their endpoints on narrow plot
           }),
         );
         let [x, y] = parts[0].values;
-        for (const part of parts.slice(1)) {
+        assert.deepEqual([x, y], [0, 120 + leftOffset]);
+        assert.deepEqual(parts[1], { command: 'H', values: [52] });
+        // Only this title-relative segment may leave the real price y.
+        x = 52;
+        for (const part of parts.slice(2)) {
           if (part.command === 'H') {
             assert.equal(y, 120);
             assert.ok(part.values[0] >= x);

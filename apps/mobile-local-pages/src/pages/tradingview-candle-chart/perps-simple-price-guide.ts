@@ -34,8 +34,11 @@ export function simplePriceGuidePath({
   const scale = Math.min(1, (endX - startX) / (leftWidth + rightWidth || 1));
   const leftJoin = startX + leftWidth * scale;
   const rightJoin = Math.max(leftJoin, endX - rightWidth * scale);
-  const commands = [`M ${startX} ${startY}`];
-  if (title) commands.push(curveTo(startX, startY, leftJoin, priceY));
+  const commands = [`M 0 ${startY}`];
+  if (title) {
+    // Keep the same underline as an undisplaced title, then bend into priceY.
+    commands.push(`H ${startX}`, curveTo(startX, startY, leftJoin, priceY));
+  }
   commands.push(`H ${rightJoin}`);
   if (rightWidth) commands.push(curveTo(rightJoin, priceY, endX, labelY));
   return commands.join(' ');
