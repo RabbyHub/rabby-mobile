@@ -110,6 +110,7 @@ jest.mock('@/components/Chain/TestnetChainLogo', () => ({
   TestnetChainLogo: () => null,
 }));
 jest.mock('@/assets/icons/common', () => ({ RcArrowRightCC: () => null }));
+jest.mock('@/assets2024/singleHome/copy.svg', () => () => null);
 jest.mock('react-native-qrcode-svg', () => () => null);
 jest.mock('react-native-haptic-feedback', () => ({ trigger: jest.fn() }));
 jest.mock('@react-native-clipboard/clipboard', () => ({

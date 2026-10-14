@@ -90,7 +90,10 @@ const Permit = ({
                 flexDirection: 'row',
                 gap: 4,
               })}>
-              <Values.TokenAmount value={tokenBalance} />
+              <Values.TokenAmount
+                style={commonStyle.subRowText}
+                value={tokenBalance}
+              />
               <Text style={commonStyle.subRowText}>
                 {ellipsisTokenSymbol(getTokenSymbol(actionData.token))}
               </Text>
