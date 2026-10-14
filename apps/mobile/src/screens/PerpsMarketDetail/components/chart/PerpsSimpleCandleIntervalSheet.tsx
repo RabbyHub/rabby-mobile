@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { BackHandler, Pressable, View } from 'react-native';
 import {
   BottomSheetBackdrop,
@@ -40,13 +40,11 @@ export const PerpsSimpleCandleIntervalSheet = React.memo(
     const modal = useRef<AppBottomSheetModal>(null);
     const { styles, colors2024 } = useTheme2024({ getStyle });
     const { t } = useTranslation();
-    const [draft, setDraft] = useState(selected);
     useEffect(() => {
       if (visible) {
-        setDraft(selected);
         modal.current?.present();
       } else modal.current?.close();
-    }, [visible, selected]);
+    }, [visible]);
     useEffect(() => {
       if (!visible) return;
       const sub = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -104,14 +102,15 @@ export const PerpsSimpleCandleIntervalSheet = React.memo(
                       <Pressable
                         key={interval}
                         accessibilityRole="radio"
-                        accessibilityState={{ checked: draft === interval }}
+                        accessibilityState={{ checked: selected === interval }}
                         style={[
                           styles.option,
-                          draft === interval && styles.selected,
+                          selected === interval && styles.selected,
                         ]}
+                        onPressIn={() => onPrefetch?.(interval)}
                         onPress={() => {
-                          setDraft(interval);
-                          onPrefetch?.(interval);
+                          onConfirm(interval);
+                          onClose();
                         }}>
                         <Text style={styles.optionText}>
                           {interval.endsWith('d') || interval.endsWith('w')
@@ -127,14 +126,11 @@ export const PerpsSimpleCandleIntervalSheet = React.memo(
           </View>
           <View style={styles.footer}>
             <Button
-              title={t('global.confirm')}
+              title={t('global.closeButton')}
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
               titleStyle={[BOTTOM_BUTTON_TITLE_STYLE, styles.buttonTitle]}
               buttonStyle={styles.button}
-              onPress={() => {
-                onConfirm(draft);
-                onClose();
-              }}
+              onPress={onClose}
             />
           </View>
         </BottomSheetView>
