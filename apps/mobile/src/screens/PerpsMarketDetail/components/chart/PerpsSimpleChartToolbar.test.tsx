@@ -3,6 +3,7 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { trigger } from 'react-native-haptic-feedback';
 import { DEFAULT_SIMPLE_CHART_PREFERENCE } from '@/constant/perpsSimpleChart';
 import { PerpsSimpleChartToolbar } from './PerpsSimpleChartToolbar';
+import { StyleSheet, View } from 'react-native';
 
 jest.mock('react-native-haptic-feedback', () => ({ trigger: jest.fn() }));
 jest.mock(
@@ -75,4 +76,45 @@ it('gives one light haptic on each toolbar press, never on prefetch', () => {
     style: 'area',
   });
   expect(trigger).toHaveBeenCalledTimes(3);
+});
+
+it('keeps the applied range selected while exposing immediate pending feedback in real 40px targets', () => {
+  const change = jest.fn();
+  const view = render(
+    <PerpsSimpleChartToolbar
+      preference={DEFAULT_SIMPLE_CHART_PREFERENCE}
+      requestedPreference={{
+        ...DEFAULT_SIMPLE_CHART_PREFERENCE,
+        range: '1W',
+        interval: '4h',
+      }}
+      onChange={change}
+      onInterval={() => {}}
+      onPrefetch={() => {}}
+    />,
+  );
+  const requested = view.getByRole('button', { name: '1W' });
+  const applied = view.getByRole('button', { name: '1D' });
+  expect(requested.props.accessibilityState).toMatchObject({
+    selected: false,
+    busy: true,
+  });
+  expect(applied.props.accessibilityState.selected).toBe(true);
+  expect(StyleSheet.flatten(requested.props.style).height).toBe(40);
+  expect(
+    view
+      .UNSAFE_getAllByType(View)
+      .some(node => StyleSheet.flatten(node.props.style)?.opacity === 0.6),
+  ).toBe(true);
+  fireEvent.press(
+    view.getByRole('button', {
+      name: 'page.perpsDetail.simpleChart.switchToArea',
+    }),
+  );
+  expect(change).toHaveBeenCalledWith({
+    ...DEFAULT_SIMPLE_CHART_PREFERENCE,
+    style: 'area',
+    range: '1W',
+    interval: '4h',
+  });
 });

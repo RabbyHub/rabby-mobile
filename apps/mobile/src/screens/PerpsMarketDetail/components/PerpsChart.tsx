@@ -200,6 +200,7 @@ export const PerpsChart = React.memo(function PerpsChart({
       </View>
       <PerpsSimpleChartToolbar
         preference={chart.preference}
+        requestedPreference={chart.requestedPreference}
         onChange={changePreference}
         onInterval={openSheet}
         onPrefetch={chart.prefetch}
@@ -215,7 +216,9 @@ export const PerpsChart = React.memo(function PerpsChart({
   );
 });
 const getStyle = createGetStyles2024(() => ({
-  root: { marginHorizontal: -12, gap: 8 },
+  // Keep the full 40px toolbar inside this parent's touch bounds while using
+  // the surrounding whitespace; the visible 24px controls keep their position.
+  root: { marginHorizontal: -12, marginBottom: -8, gap: 8 },
   chart: { height: SIMPLE_CHART_HEIGHT },
   hidden: { opacity: 0 },
   touchGuard: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },

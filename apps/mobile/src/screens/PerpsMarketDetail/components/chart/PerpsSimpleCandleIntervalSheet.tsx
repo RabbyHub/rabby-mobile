@@ -104,9 +104,10 @@ export const PerpsSimpleCandleIntervalSheet = React.memo(
                         key={interval}
                         accessibilityRole="radio"
                         accessibilityState={{ checked: selected === interval }}
-                        style={[
+                        style={({ pressed }) => [
                           styles.option,
                           selected === interval && styles.selected,
+                          pressed && styles.pressed,
                         ]}
                         onPressIn={() => onPrefetch?.(interval)}
                         onPress={() => {
@@ -206,6 +207,7 @@ const getStyle = createGetStyles2024(
       backgroundColor: SIMPLE_CHART_COLORS.selected,
       borderColor: SIMPLE_CHART_COLORS.selectedBorder,
     },
+    pressed: { opacity: 0.6 },
     optionText: {
       fontFamily: 'SF Pro Rounded',
       fontWeight: '500',
