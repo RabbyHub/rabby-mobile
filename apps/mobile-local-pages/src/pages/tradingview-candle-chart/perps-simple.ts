@@ -17,11 +17,10 @@ import {
   simpleDefaultRange,
   simpleFillMarkers,
   simpleHistoryShift,
-  simpleLabelCurve,
-  simpleLeaderWidth,
   simpleRangeReference,
   visibleLastCandle,
 } from './perps-simple-logic';
+import { appendSimplePriceGuide } from './perps-simple-price-guide';
 import type {
   CandleStick,
   SimpleChartMessage,
@@ -451,8 +450,14 @@ export function createSimpleChart(
         (tag.id === 'selection' || Math.abs(y - areaCrosshair.y) < 0.5)
       )
         return;
-      // Only the label connector bends; the horizontal guide keeps the price y.
-      const joinX = Math.max(0, labelLeft - simpleLeaderWidth(tagY[i] - y));
+      const titleIndex = titledTags.indexOf(tag);
+      const displacedTitle =
+        titleIndex >= 0 && Math.abs(titleY[titleIndex] + 9 - y) > 0.5
+          ? {
+              right: titleWidths[titleIndex] + 2,
+              bottom: titleY[titleIndex] + 8,
+            }
+          : undefined;
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       svg.dataset.simplePriceLine = '';
       svg.dataset.priceKind = tag.id;
@@ -463,54 +468,18 @@ export function createSimpleChart(
         height: `${paneHeight}px`,
         overflow: 'hidden',
       });
-      const path = document.createElementNS(
-        'http://www.w3.org/2000/svg',
-        'path',
+      appendSimplePriceGuide(
+        svg,
+        {
+          priceY: y,
+          labelX: labelLeft,
+          labelY: tagY[i],
+          title: displacedTitle,
+        },
+        tag.color,
+        '4 2',
       );
-      path.setAttribute(
-        'd',
-        `M 0 ${y} H ${joinX} ${simpleLabelCurve(joinX, y, labelLeft, tagY[i])}`,
-      );
-      path.setAttribute('fill', 'none');
-      path.setAttribute('stroke', tag.color);
-      path.setAttribute('stroke-width', '1');
-      path.setAttribute('stroke-dasharray', '4 2');
-      svg.appendChild(path);
       overlay.appendChild(svg);
-      // Finish the dashed line at the edge even when the dash phase ends in a gap.
-      const connector = document.createElement('div');
-      Object.assign(connector.style, {
-        position: 'absolute',
-        left: `${Math.max(0, labelLeft - 2)}px`,
-        top: `${tagY[i]}px`,
-        width: '2px',
-        borderTop: `1px solid ${tag.color}`,
-      });
-      overlay.appendChild(connector);
-      if (tag.title) {
-        const titleIndex = titledTags.indexOf(tag);
-        const anchorY = titleY[titleIndex] + 9;
-        if (Math.abs(anchorY - y) > 0.5) {
-          const leader = document.createElementNS(
-            'http://www.w3.org/2000/svg',
-            'path',
-          );
-          const titleRight = Math.min(labelLeft, titleWidths[titleIndex] + 2);
-          leader.setAttribute(
-            'd',
-            simpleLabelCurve(
-              titleRight,
-              anchorY - 1,
-              Math.min(labelLeft, titleRight + simpleLeaderWidth(anchorY - y)),
-              y,
-            ),
-          );
-          leader.setAttribute('fill', 'none');
-          leader.setAttribute('stroke', tag.color);
-          leader.setAttribute('stroke-width', '1');
-          svg.appendChild(leader);
-        }
-      }
     });
     if (areaCrosshair) {
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -528,28 +497,16 @@ export function createSimpleChart(
           tag.id === (selected?.time === last.time ? 'latest' : 'selection'),
       );
       const axisY = selectedIndex >= 0 ? tagY[selectedIndex] : areaCrosshair.y;
-      const path = document.createElementNS(
-        'http://www.w3.org/2000/svg',
-        'path',
-      );
-      const joinX = Math.max(
-        0,
-        labelLeft - simpleLeaderWidth(axisY - areaCrosshair.y),
+      const path = appendSimplePriceGuide(
+        svg,
+        { priceY: areaCrosshair.y, labelX: labelLeft, labelY: axisY },
+        config.colors.entry,
+        '1 1',
       );
       path.setAttribute(
         'd',
-        `M 0 ${areaCrosshair.y} H ${joinX} ${simpleLabelCurve(
-          joinX,
-          areaCrosshair.y,
-          labelLeft,
-          axisY,
-        )} M ${areaCrosshair.x} 4 V ${paneHeight}`,
+        `${path.getAttribute('d')} M ${areaCrosshair.x} 4 V ${paneHeight}`,
       );
-      path.setAttribute('fill', 'none');
-      path.setAttribute('stroke', config.colors.entry);
-      path.setAttribute('stroke-width', '1');
-      path.setAttribute('stroke-dasharray', '1 1');
-      svg.appendChild(path);
       // This is a data-positioned chart marker, not a static UI icon.
       for (const [radius, opacity] of [
         [4.5, 0.15],
