@@ -78,6 +78,7 @@ jest.mock('@/utils/token', () => ({
 }));
 jest.mock('@/utils/number', () => ({
   formatAmount: (amount: number) => String(amount),
+  formatNumber: (amount: string | number) => String(amount),
 }));
 jest.mock('@/utils/navigation', () => ({ navigateDeprecated: jest.fn() }));
 
