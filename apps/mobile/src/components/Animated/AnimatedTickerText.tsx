@@ -489,7 +489,7 @@ const AnimatedTickerText = ({
     const { isRtl, isOverflow, fontSize } = textState.value;
 
     return {
-      display: isRtl || isOverflow ? 'flex' : 'none',
+      display: !animate || isRtl || isOverflow ? 'flex' : 'none',
       ...(fontSize ? { fontSize } : {}),
     };
   });
@@ -512,7 +512,11 @@ const AnimatedTickerText = ({
       {!animate ? (
         <AnimateableText
           {...textProps}
-          style={[style, { lineHeight, height: lineHeight }]}
+          style={[
+            style,
+            fitWidth && fallbackStyle,
+            { lineHeight, height: lineHeight },
+          ]}
           animatedProps={fallbackAnimatedProps}
         />
       ) : (

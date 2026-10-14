@@ -23,7 +23,7 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import { apisHomeTabIndex } from '@/hooks/navigation';
+import { apisHomeTabIndex, HomeTabName } from '@/hooks/navigation';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
 import { balance24hStore } from '@/store/balance24h';
@@ -244,6 +244,7 @@ export function MultiAddressHomeHeader(
               // !pinnedAccountList.length && styles.noAddressCard,
             ]}>
             <MultiChart
+              tabName={HomeTabName.overview}
               hideType={hideType}
               onPressNetWorth={() => {
                 apisHomeTabIndex.homeTabScrollerRef.current?.setIndex(1);

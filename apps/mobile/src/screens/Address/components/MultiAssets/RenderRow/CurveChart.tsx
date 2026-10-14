@@ -34,7 +34,7 @@ import { useHomeStartupReady } from '@/core/utils/homeStartupReady';
 import { Text, AnimateableText } from '@/components/Typography';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { useShallow } from 'zustand/react/shallow';
-import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerText';
+import TabFocusedTickerText from '@/components/Animated/TabFocusedTickerText';
 import {
   EMPTY_HOME_CURVE_LIST,
   getHomeCurveProjectionList,
@@ -52,6 +52,11 @@ const CHART_HORIZONTAL_INSET = 66;
 const MAX_NETWORTH_FS = 38;
 const MIN_NETWORTH_FS = 24;
 const NETWORTH_FIT_LEN = 9;
+const NETWORTH_FONT_SIZE_OPTIONS = {
+  maxFontSize: MAX_NETWORTH_FS,
+  minFontSize: MIN_NETWORTH_FS,
+  threshold: NETWORTH_FIT_LEN,
+};
 
 const EMPTY_CHANGE_DATA = {
   rawChange: 0,
@@ -146,11 +151,13 @@ const ChartContent = memo(function ChartContent({
 });
 
 export const MultiChart = memo(function MultiChart({
+  tabName,
   hideType,
   style,
   onPressNetWorth,
   onPressWalletList,
 }: {
+  tabName: string;
   hideType: BALANCE_HIDE_TYPE;
   onPressNetWorth?: () => void;
   onPressWalletList?: () => void;
@@ -206,6 +213,7 @@ export const MultiChart = memo(function MultiChart({
         ]}>
         <LineChart.Provider data={chartsData}>
           <ChartHeader
+            tabName={tabName}
             rawNetWorth={totalBalance}
             rawChange={changeData.rawChange}
             changePercent={changeData.changePercent}
@@ -234,6 +242,7 @@ export const MultiChart = memo(function MultiChart({
 });
 
 interface IHeaderProps {
+  tabName: string;
   rawNetWorth: number;
   rawChange: number;
   changePercent: string;
@@ -249,6 +258,7 @@ interface IHeaderProps {
 }
 const ChartHeader = React.memo(
   ({
+    tabName,
     rawNetWorth,
     rawChange,
     changePercent: _changePercent,
@@ -404,6 +414,13 @@ const ChartHeader = React.memo(
     const isHidden = useMemo(() => {
       return hideType === 'HIDE';
     }, [hideType]);
+    const netWorthTickerStyle = useMemo(
+      () => [
+        styles.netWorth,
+        hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
+      ],
+      [hideType, styles.balanceOpacity, styles.netWorth],
+    );
 
     return (
       <Animated.View style={styles.charHeader}>
@@ -415,35 +432,28 @@ const ChartHeader = React.memo(
             ]}
             onPress={onPressNetWorth}
             {...makeTestIDProps(E2E_ID.home.portfolioBalanceValue)}>
-            <RefreshNudgedTickerText
+            <TabFocusedTickerText
+              tabName={tabName}
               value={formatNetWorth}
               animateWidth={false}
               fitWidth
               maxLength={24}
               lineHeight={42}
               duration={320}
-              style={[
-                styles.netWorth,
-                hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
-              ]}
-              fontSizeByLength={{
-                maxFontSize: MAX_NETWORTH_FS,
-                minFontSize: MIN_NETWORTH_FS,
-                threshold: NETWORTH_FIT_LEN,
-              }}
+              style={netWorthTickerStyle}
+              fontSizeByLength={NETWORTH_FONT_SIZE_OPTIONS}
             />
           </Pressable>
 
-          <Skeleton
-            {...makeTestIDProps(E2E_ID.home.portfolioBalanceLoading)}
-            width={181}
-            height={42}
-            style={[
-              styles.skeletonNetWorth,
-              !showNetWorthLoading && styles.hidden,
-            ]}
-            LinearGradientComponent={LoadingLinear}
-          />
+          {showNetWorthLoading && (
+            <Skeleton
+              {...makeTestIDProps(E2E_ID.home.portfolioBalanceLoading)}
+              width={181}
+              height={42}
+              style={styles.skeletonNetWorth}
+              LinearGradientComponent={LoadingLinear}
+            />
+          )}
 
           <Pressable
             style={({ pressed }) => [
