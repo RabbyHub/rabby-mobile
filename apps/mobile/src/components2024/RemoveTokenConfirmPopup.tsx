@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
-import type { BottomSheetModalProps } from '@gorhom/bottom-sheet';
-import LinearGradient from 'react-native-linear-gradient';
 import { useTranslation } from 'react-i18next';
 
 import { AssetAvatar } from '@/components/AssetAvatar';
@@ -13,7 +11,6 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import type { AppColors2024Variants } from '@/constant/theme';
 import {
   BOTTOM_BUTTON_GAP,
   getBottomButtonBottomOffset,
@@ -39,33 +36,6 @@ export function createRemoveTokenConfirmPopup(token: ITokenItem) {
     },
   });
   return modalId;
-}
-
-export function getRemoveTokenConfirmModalProps(
-  colors2024: AppColors2024Variants,
-): Pick<
-  BottomSheetModalProps,
-  'handleStyle' | 'handleIndicatorStyle' | 'backgroundComponent'
-> {
-  return {
-    handleStyle: {
-      height: 36,
-      paddingTop: 18,
-      backgroundColor: 'transparent',
-    },
-    handleIndicatorStyle: {
-      width: 50,
-      height: 6,
-      backgroundColor: colors2024['neutral-sheet-handle'],
-    },
-    backgroundComponent: props => (
-      <LinearGradient
-        style={props.style}
-        colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
-        locations={[0.07453, 0.22418]}
-      />
-    ),
-  };
 }
 
 /** Confirms removal before updating the shared removed-token list. */
