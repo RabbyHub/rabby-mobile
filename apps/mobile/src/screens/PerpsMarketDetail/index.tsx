@@ -456,6 +456,7 @@ export const PerpsMarketDetailScreen = () => {
           <View style={styles.header}>
             <PerpsChart
               marketName={coin}
+              markPrice={markPrice}
               activeAssetCtx={activeAssetCtx}
               currentAssetCtx={currentAssetCtx}
               lineTagInfo={lineTagInfo}

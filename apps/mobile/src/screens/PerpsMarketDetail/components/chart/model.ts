@@ -44,7 +44,7 @@ export function projectSimpleFills(
 }
 
 // Keep the existing chart's English date labels and local display timezone.
-export function simpleSelectionTime(time: number) {
+export function simpleSelectionTime(time: number, now = new Date()) {
   const date = new Date(time * 1000);
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const months = [
@@ -63,9 +63,11 @@ export function simpleSelectionTime(time: number) {
   ];
   const pad = (value: number) => String(value).padStart(2, '0');
   const hours = date.getHours();
-  return `${days[date.getDay()]},${
-    months[date.getMonth()]
-  } ${date.getDate()} at ${hours % 12 || 12}:${pad(date.getMinutes())}${
-    hours < 12 ? 'AM' : 'PM'
-  }`;
+  const prefix =
+    date.getFullYear() === now.getFullYear()
+      ? days[date.getDay()]
+      : date.getFullYear();
+  return `${prefix},${months[date.getMonth()]} ${date.getDate()} at ${
+    hours % 12 || 12
+  }:${pad(date.getMinutes())}${hours < 12 ? 'AM' : 'PM'}`;
 }

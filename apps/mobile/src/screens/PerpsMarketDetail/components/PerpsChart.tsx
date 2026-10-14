@@ -28,6 +28,7 @@ const EMPTY_FILLS: SimpleChartFill[] = [];
 
 export const PerpsChart = React.memo(function PerpsChart({
   marketName,
+  markPrice,
   currentAssetCtx,
   activeAssetCtx,
   lineTagInfo,
@@ -35,6 +36,7 @@ export const PerpsChart = React.memo(function PerpsChart({
   history,
 }: {
   marketName: string;
+  markPrice: number;
   currentAssetCtx?: MarketData;
   activeAssetCtx?: WsActiveAssetCtx['ctx'] | null;
   lineTagInfo: {
@@ -125,13 +127,8 @@ export const PerpsChart = React.memo(function PerpsChart({
     <View style={styles.root}>
       <PerpsSimpleChartHeader
         key={marketName}
-        coin={marketName}
         active={chart.active}
-        candleClose={
-          chart.feed.status === 'ready'
-            ? chart.feed.latestCandle?.close ?? null
-            : null
-        }
+        markPrice={markPrice}
         decimals={decimals}
         range={chart.preference.range}
         rangeReference={chart.rangeReference}

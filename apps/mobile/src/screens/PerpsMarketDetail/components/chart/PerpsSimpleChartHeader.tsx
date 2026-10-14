@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Skeleton } from '@rneui/themed';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
@@ -6,7 +6,6 @@ import type { SimpleChartRange } from '@/constant/perpsSimpleChart';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
 import type { CandleStick } from '@/components2024/TradingViewCandleChart/type';
-import { usePerpsLatestTrade } from '@/hooks/perps/subscriptions/usePerpsLatestTrade';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatUsdValueKMB } from '@/screens/Home/utils/price';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -21,9 +20,8 @@ import {
 
 export const PerpsSimpleChartHeader = React.memo(
   function PerpsSimpleChartHeader({
-    coin,
     active,
-    candleClose,
+    markPrice,
     decimals,
     prevDayPx,
     range,
@@ -35,9 +33,8 @@ export const PerpsSimpleChartHeader = React.memo(
     selection,
     style,
   }: {
-    coin: string;
     active: boolean;
-    candleClose: number | null;
+    markPrice: number | null;
     decimals: number;
     prevDayPx: number;
     range: SimpleChartRange | null;
@@ -51,19 +48,7 @@ export const PerpsSimpleChartHeader = React.memo(
   }) {
     const { t } = useTranslation();
     const { styles, colors2024 } = useTheme2024({ getStyle });
-    const trade = usePerpsLatestTrade({ coin, enabled: active });
-    const seenTrade = useRef({ coin, seen: false });
-    if (seenTrade.current.coin !== coin)
-      seenTrade.current = { coin, seen: false };
-    if (trade.identity === coin && trade.trade) seenTrade.current.seen = true;
-    // Reuse the subscription's bounded stale cache. Candle fallback is bootstrap-only.
-    const rawPrice =
-      trade.identity === coin && trade.trade
-        ? Number(trade.trade.price)
-        : !seenTrade.current.seen
-        ? candleClose
-        : null;
-    const candidate = selection?.close ?? rawPrice;
+    const candidate = selection?.close ?? markPrice;
     const price =
       candidate !== null && Number.isFinite(candidate) && candidate > 0
         ? candidate
@@ -96,7 +81,11 @@ export const PerpsSimpleChartHeader = React.memo(
         )}%)`
       : '—';
     return (
-      <View style={styles.header}>
+      <View
+        style={[
+          styles.header,
+          selection && style === 'area' && styles.areaHeader,
+        ]}>
         {selection && style === 'candle' ? (
           <View style={styles.selected}>
             <View style={styles.ohlc}>
@@ -146,7 +135,8 @@ export const PerpsSimpleChartHeader = React.memo(
                     : `$${simplePriceText(price, decimals)}`}
                 </Text>
               )}
-              <View style={styles.changeRow}>
+              <View
+                style={[styles.changeRow, selection && styles.areaChangeRow]}>
                 {changeLoading ? (
                   <Skeleton
                     width={144}
@@ -170,15 +160,16 @@ export const PerpsSimpleChartHeader = React.memo(
                     </Text>
                   </>
                 )}
+                {selection && (
+                  <Text
+                    style={[styles.description, styles.time, styles.areaTime]}
+                    numberOfLines={1}>
+                    {simpleSelectionTime(selection.time)}
+                  </Text>
+                )}
               </View>
             </View>
-            {selection ? (
-              <Text
-                style={[styles.description, styles.areaTime]}
-                numberOfLines={1}>
-                {simpleSelectionTime(selection.time)}
-              </Text>
-            ) : (
+            {!selection && (
               <Pressable
                 style={styles.metric}
                 accessibilityRole="button"
@@ -221,6 +212,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 8,
   },
   priceColumn: { flex: 1, minWidth: 0, gap: 2 },
+  areaHeader: { paddingRight: 12 },
+  areaChangeRow: { gap: 4 },
   pricePlaceholder: { height: 36, justifyContent: 'center' },
   skeleton: {
     borderRadius: 4,
