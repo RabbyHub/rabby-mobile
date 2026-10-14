@@ -54,9 +54,10 @@ export interface PerpsProCandleChartConfig {
 /** Simple is an opt-in protocol; legacy and Pro messages keep their contracts. */
 export type SimpleChartConfig = {
   style: 'candle' | 'area';
-  range: '1D' | '1W' | '1M' | '1Y' | 'ALL' | null;
+  range: '1D' | '1W' | '1M' | '3M' | '1Y' | null;
   interval: string;
   priceDecimals: number;
+  showTradeMarkers?: boolean;
   colors: {
     background: string;
     text: string;
@@ -117,7 +118,8 @@ export type SimpleChartEvent = {
   type: 'PERPS_SIMPLE_EVENT';
   identity: string;
 } & (
-  | { event: 'applied'; sequence: number }
+  | { event: 'applied'; sequence: number; referencePrice: number | null }
+  | { event: 'rangeReference'; referencePrice: number | null }
   | { event: 'selection'; candle: CandleStick | null }
   | {
       event: 'viewport';

@@ -9,6 +9,7 @@ import {
   type UTCTimestamp,
   type Time,
 } from 'lightweight-charts/standalone';
+import { attachSimplePriceAxis } from './perps-simple-axis';
 import { formatTime, formatYTime } from './chart-logic';
 import { PERPS_PRO_FONT_FAMILY } from './perps-pro-font';
 import {
@@ -16,6 +17,7 @@ import {
   simpleDefaultRange,
   simpleFillMarkers,
   simpleHistoryShift,
+  simpleRangeReference,
   visibleLastCandle,
 } from './perps-simple-logic';
 import type {
@@ -33,7 +35,7 @@ export function createSimpleChart(
   const host = document.createElement('div');
   Object.assign(host.style, {
     position: 'absolute',
-    inset: '12px 12px 8px',
+    inset: '12px 0 8px 12px',
     touchAction: 'pan-y',
   });
   container.appendChild(host);
@@ -50,7 +52,7 @@ export function createSimpleChart(
     },
     rightPriceScale: {
       borderVisible: false,
-      minimumWidth: 44,
+      minimumWidth: 0,
       scaleMargins: { top: 0.08, bottom: 0.08 },
     },
     timeScale: {
@@ -109,6 +111,24 @@ export function createSimpleChart(
   let prices: Extract<SimpleChartMessage, { action: 'overlays' }>['prices'] =
     {};
   let markers: ReturnType<typeof simpleFillMarkers> = [];
+  let referencePrice: number | null = null;
+  let awaitingApplied = false;
+  let replacementSequence = -1;
+  function updateReference() {
+    const next = config ? simpleRangeReference(candles, config) : null;
+    if (next === referencePrice) return;
+    referencePrice = next;
+    if (active && !awaitingApplied)
+      emit({ event: 'rangeReference', referencePrice } as Omit<
+        SimpleChartEvent,
+        'type' | 'identity'
+      >);
+  }
+  function updateMarkers() {
+    markers = config?.showTradeMarkers
+      ? simpleFillMarkers(candles, fills, config.interval)
+      : [];
+  }
   let dirty = false;
   let defaultViewport: { from: number; to: number } | null = null;
   let userViewportChanged = false;
@@ -152,6 +172,7 @@ export function createSimpleChart(
     });
   }
   function applyDefault() {
+    priceAxis.cancel();
     if (!config) return;
     const range = simpleDefaultRange(
       candles,
@@ -169,6 +190,20 @@ export function createSimpleChart(
     userViewportChanged = false;
     schedule();
   }
+  const priceAxis = attachSimplePriceAxis(host, {
+    isActive: () => active && !!candles.length && !disposed,
+    getRange: () => activeSeries().priceScale().getVisibleRange(),
+    setRange: range => {
+      activeSeries().priceScale().setVisibleRange(range);
+      userViewportChanged = true;
+      dirty = true;
+      schedule();
+    },
+    onStart: () => {
+      contact = false;
+      clearSelection();
+    },
+  });
   function render() {
     overlay.replaceChildren();
     if (!config) return;
@@ -192,6 +227,7 @@ export function createSimpleChart(
       range.from <= candles.length - 1;
     const paneWidth = chart.timeScale().width();
     const paneHeight = chart.panes()[0].getHeight();
+    priceAxis.layout(paneWidth, paneHeight);
     const state = `${identity}:${dirty}:${
       !lastVisible && !!last
     }:${paneWidth}:${paneHeight}`;
@@ -300,61 +336,85 @@ export function createSimpleChart(
       visibleTags.map(tag => tag.y!),
       paneHeight,
     );
-    visibleTags.forEach((tag, i) => {
-      const y = tag.y!;
-      if (y >= 0 && y <= paneHeight) {
-        const line = document.createElement('div');
-        Object.assign(line.style, {
-          position: 'absolute',
-          left: '0',
-          top: `${y}px`,
-          width: `${paneWidth}px`,
-          borderTop: `1px dashed ${tag.color}`,
-        });
-        overlay.appendChild(line);
-        if (tag.title) {
-          const title = document.createElement('span');
-          title.textContent = tag.title;
-          Object.assign(title.style, {
-            position: 'absolute',
-            left: '0',
-            top: `${Math.max(0, y - 16)}px`,
-            color: tag.color,
-            fontSize: '10px',
-            lineHeight: '16px',
-            background: config!.colors.background,
-          });
-          overlay.appendChild(title);
-        }
-      }
+    // Append all labels, read their actual bounds together, then draw lines.
+    // No opaque full-axis row: only the 14px label covers chart content.
+    const labels = visibleTags.map((tag, i) => {
       const label = document.createElement('span');
       label.textContent = priceText(tag.price);
+      label.dataset.simplePriceLabel = '';
       Object.assign(label.style, {
         position: 'absolute',
-        right: '0',
+        right: '12px',
         top: `${tagY[i] - 7}px`,
+        height: '14px',
         padding: '0 3px',
         borderRadius: '4px',
         fontSize: '10px',
         lineHeight: '14px',
         color: tag.text,
         background: tag.background,
-        border: `1px solid ${tag.color}`,
+        boxShadow: tag.outline ? `inset 0 0 0 1px ${tag.color}` : 'none',
         boxSizing: 'border-box',
         whiteSpace: 'nowrap',
+        zIndex: '2',
       });
-      const labelRow = document.createElement('div');
-      Object.assign(labelRow.style, {
+      overlay.appendChild(label);
+      return label;
+    });
+    const hostLeft = overlay.getBoundingClientRect().left;
+    const labelLefts = labels.map(
+      label => label.getBoundingClientRect().left - hostLeft,
+    );
+    visibleTags.forEach((tag, i) => {
+      const y = tag.y!;
+      if (y < 0 || y > paneHeight) return;
+      const labelLeft = Math.max(0, labelLefts[i]);
+      // Keep the true price y in the plot; a short elbow joins a displaced label.
+      const joinX = Math.min(paneWidth, labelLeft);
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.dataset.simplePriceLine = '';
+      Object.assign(svg.style, {
         position: 'absolute',
-        left: `${paneWidth}px`,
-        right: '0',
-        top: `${tagY[i] - 8}px`,
-        height: '16px',
-        background: config!.colors.background,
+        inset: '0',
+        width: '100%',
+        height: `${paneHeight}px`,
+        overflow: 'hidden',
       });
-      label.style.top = '1px';
-      labelRow.appendChild(label);
-      overlay.appendChild(labelRow);
+      const path = document.createElementNS(
+        'http://www.w3.org/2000/svg',
+        'path',
+      );
+      path.setAttribute('d', `M 0 ${y} H ${joinX} V ${tagY[i]} H ${labelLeft}`);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', tag.color);
+      path.setAttribute('stroke-width', '1');
+      path.setAttribute('stroke-dasharray', '4 2');
+      svg.appendChild(path);
+      overlay.appendChild(svg);
+      // Finish the dashed line at the edge even when the dash phase ends in a gap.
+      const connector = document.createElement('div');
+      Object.assign(connector.style, {
+        position: 'absolute',
+        left: `${Math.max(0, labelLeft - 2)}px`,
+        top: `${tagY[i]}px`,
+        width: '2px',
+        borderTop: `1px solid ${tag.color}`,
+      });
+      overlay.appendChild(connector);
+      if (tag.title) {
+        const title = document.createElement('span');
+        title.textContent = tag.title;
+        Object.assign(title.style, {
+          position: 'absolute',
+          left: '0',
+          top: `${Math.max(0, y - 16)}px`,
+          color: tag.color,
+          fontSize: '10px',
+          lineHeight: '16px',
+          background: config!.colors.background,
+        });
+        overlay.appendChild(title);
+      }
     });
     const firstVisibleTime = candles[Math.max(0, Math.floor(range.from))]?.time;
     const lastVisibleTime =
@@ -467,11 +527,17 @@ export function createSimpleChart(
         const range = chart.timeScale().getVisibleLogicalRange();
         identity = message.identity;
         config = message.config;
+        if (message.action === 'replace') {
+          awaitingApplied = true;
+          replacementSequence = message.sequence;
+        }
+        if (changed || styleChanged) priceAxis.cancel();
         if (changed) {
           clearSelection();
           candles = [];
           fills = [];
           markers = [];
+          referencePrice = null;
           prices = {};
           candleByTime.clear();
           historyPending = false;
@@ -526,6 +592,7 @@ export function createSimpleChart(
             },
           },
         });
+        updateMarkers();
         if (!changed && styleChanged && range)
           chart.timeScale().setVisibleLogicalRange(range);
         schedule();
@@ -549,15 +616,14 @@ export function createSimpleChart(
             value: item.close,
           })),
         );
-        markers = simpleFillMarkers(candles, fills, config!.interval);
+        updateMarkers();
         if (message.action === 'data' && message.preserve && hadData && range) {
           if (defaultViewport)
             defaultViewport = {
               from: defaultViewport.from + shift,
               to: defaultViewport.to + shift,
             };
-          if (!dirty && config?.range === 'ALL') applyDefault();
-          else if (
+          if (
             followedLatest &&
             previousLatestTime !== undefined &&
             (candles.at(-1)?.time ?? previousLatestTime) > previousLatestTime
@@ -575,14 +641,22 @@ export function createSimpleChart(
               to: range.to + shift,
             });
         } else applyDefault();
+        updateReference();
         if (message.action === 'replace') {
           const appliedIdentity = identity;
           requestAnimationFrame(() => {
-            if (!disposed && identity === appliedIdentity)
-              emit({ event: 'applied', sequence: message.sequence } as Omit<
-                SimpleChartEvent,
-                'type' | 'identity'
-              >);
+            if (
+              !disposed &&
+              identity === appliedIdentity &&
+              replacementSequence === message.sequence
+            ) {
+              awaitingApplied = false;
+              emit({
+                event: 'applied',
+                sequence: message.sequence,
+                referencePrice,
+              } as Omit<SimpleChartEvent, 'type' | 'identity'>);
+            }
           });
         }
         if (!candles.length) clearSelection();
@@ -599,6 +673,7 @@ export function createSimpleChart(
         active = message.active;
         host.style.pointerEvents = active ? 'auto' : 'none';
         if (!active) {
+          priceAxis.cancel();
           contact = false;
           clearSelection();
           historyPending = false;
@@ -624,12 +699,13 @@ export function createSimpleChart(
             'type' | 'identity'
           >);
         if (appended) {
+          updateReference();
           if (defaultViewport)
             defaultViewport = {
               from: defaultViewport.from + 1,
               to: defaultViewport.to + 1,
             };
-          markers = simpleFillMarkers(candles, fills, config!.interval);
+          updateMarkers();
           if (!dirty) applyDefault();
           else if (follow && range)
             chart.timeScale().setVisibleLogicalRange({
@@ -639,8 +715,8 @@ export function createSimpleChart(
         }
       } else if (message.action === 'overlays') {
         prices = message.prices;
-        fills = message.fills;
-        markers = simpleFillMarkers(candles, fills, config!.interval);
+        fills = config?.showTradeMarkers ? message.fills : [];
+        updateMarkers();
       } else if (message.action === 'historyComplete') {
         historyPending = false;
         exhausted = message.outcome === 'exhausted';
@@ -670,6 +746,7 @@ export function createSimpleChart(
       disposed = true;
       if (frame !== null) cancelAnimationFrame(frame);
       resize.disconnect();
+      priceAxis.destroy();
       window.removeEventListener('mouseup', end);
       chart.remove();
       host.remove();

@@ -60,32 +60,47 @@ jest.mock('react-i18next', () => ({
 
 import { PerpsSimpleCandleIntervalSheet } from './PerpsSimpleCandleIntervalSheet';
 
-describe('Simple interval sheet draft (component unit)', () => {
-  it('applies only the confirmed draft, and discards an unconfirmed draft on reopen', () => {
+describe('Simple interval sheet (component unit)', () => {
+  it('selects immediately, closes, and distinguishes minutes from months', () => {
     const confirm = jest.fn();
     const close = jest.fn();
-    const props = {
-      visible: true,
-      selected: '15m' as const,
-      onConfirm: confirm,
-      onClose: close,
-    };
-    const view = render(<PerpsSimpleCandleIntervalSheet {...props} />);
-    expect(view.getAllByRole('radio')).toHaveLength(12);
-    fireEvent.press(view.getByText('3D'));
-    expect(confirm).not.toHaveBeenCalled();
-    view.rerender(
-      <PerpsSimpleCandleIntervalSheet {...props} visible={false} />,
+    const prefetch = jest.fn();
+    const view = render(
+      <PerpsSimpleCandleIntervalSheet
+        visible
+        selected="30m"
+        onConfirm={confirm}
+        onClose={close}
+        onPrefetch={prefetch}
+      />,
     );
-    view.rerender(<PerpsSimpleCandleIntervalSheet {...props} />);
-    fireEvent.press(view.getByText('global.confirm'));
-    expect(confirm).toHaveBeenLastCalledWith('15m');
+    expect(view.getAllByRole('radio')).toHaveLength(12);
+    fireEvent(view.getByText('3D'), 'pressIn');
+    expect(prefetch).toHaveBeenCalledWith('3d');
+    expect(confirm).not.toHaveBeenCalled();
+    fireEvent.press(view.getByText('3D'));
+    expect(confirm).toHaveBeenLastCalledWith('3d');
     expect(close).toHaveBeenCalledTimes(1);
     fireEvent.press(view.getByText('1M'));
-    fireEvent.press(view.getByText('global.confirm'));
     expect(confirm).toHaveBeenLastCalledWith('1M');
     fireEvent.press(view.getByText('1m'));
-    fireEvent.press(view.getByText('global.confirm'));
     expect(confirm).toHaveBeenLastCalledWith('1m');
+    expect(close).toHaveBeenCalledTimes(3);
+  });
+  it('the Close button dismisses without applying an interval', () => {
+    const confirm = jest.fn();
+    const close = jest.fn();
+    const view = render(
+      <PerpsSimpleCandleIntervalSheet
+        visible
+        selected="4h"
+        onConfirm={confirm}
+        onClose={close}
+      />,
+    );
+    expect(view.getByRole('radio', { checked: true })).toHaveTextContent('4h');
+    fireEvent.press(view.getByText('global.closeButton'));
+    expect(close).toHaveBeenCalledTimes(1);
+    expect(confirm).not.toHaveBeenCalled();
   });
 });

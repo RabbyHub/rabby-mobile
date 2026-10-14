@@ -33,6 +33,29 @@ function subtractCalendar(time: number, months: number) {
   return date.getTime() / 1000;
 }
 
+/** One window for the default viewport and its price-change reference. */
+function simpleRangeWindow(
+  candles: readonly CandleStick[],
+  config: Pick<SimpleChartConfig, 'range' | 'interval'>,
+) {
+  if (!candles.length || config.range === null) return null;
+  const last = candles.length - 1;
+  const end = candleEnd(candles[last].time, config.interval);
+  const start =
+    config.range === '1D'
+      ? end - DAY
+      : config.range === '1W'
+      ? end - 7 * DAY
+      : subtractCalendar(
+          end,
+          config.range === '1M' ? 1 : config.range === '3M' ? 3 : 12,
+        );
+  const first = candles.findIndex(
+    candle => candleEnd(candle.time, config.interval) > start,
+  );
+  return { start, first };
+}
+
 /** Rolling range ending at the current candle. Month/year use calendar arithmetic. */
 export function simpleDefaultRange(
   candles: readonly CandleStick[],
@@ -41,20 +64,31 @@ export function simpleDefaultRange(
 ) {
   if (!candles.length) return null;
   const last = candles.length - 1;
-  if (config.range === 'ALL') return { from: -0.5, to: last + 0.5 };
-  if (config.range === null)
-    return { from: last + 0.5 - Math.max(2, width / 10), to: last + 0.5 };
-  const end = candleEnd(candles[last].time, config.interval);
-  const start =
-    config.range === '1D'
-      ? end - DAY
-      : config.range === '1W'
-      ? end - 7 * DAY
-      : subtractCalendar(end, config.range === '1M' ? 1 : 12);
-  const first = candles.findIndex(
-    candle => candleEnd(candle.time, config.interval) > start,
-  );
-  return { from: Math.max(0, first) - 0.5, to: last + 0.5 };
+  const window = simpleRangeWindow(candles, config);
+  return {
+    from: window
+      ? Math.max(0, window.first) - 0.5
+      : last + 0.5 - Math.max(2, width / 10),
+    to: last + 0.5,
+  };
+}
+
+/** Daily/manual change uses asset-context prevDayPx in RN, not a candle approximation. */
+export function simpleRangeReference(
+  candles: readonly CandleStick[],
+  config: Pick<SimpleChartConfig, 'range' | 'interval'>,
+) {
+  if (config.range === null || config.range === '1D') return null;
+  const window = simpleRangeWindow(candles, config);
+  if (!window || candles[0].time > window.start || window.first < 0)
+    return null;
+  const first = candles[window.first];
+  // A gap or a newly listed market must not masquerade as a full range.
+  return first.time <= window.start &&
+    Number.isFinite(first.open) &&
+    first.open > 0
+    ? first.open
+    : null;
 }
 
 export function visibleLastCandle(

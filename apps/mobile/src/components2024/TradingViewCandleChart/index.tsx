@@ -76,7 +76,7 @@ export interface TradingViewChartRef {
 }
 
 const PERPS_PRO_KLINE_PROTOCOL_VERSION = 3;
-const PERPS_SIMPLE_KLINE_PROTOCOL_VERSION = 2;
+const PERPS_SIMPLE_KLINE_PROTOCOL_VERSION = 3;
 const PERPS_PRO_KLINE_PROTOCOL_ERROR =
   'Perps Pro K-line resource protocol mismatch';
 

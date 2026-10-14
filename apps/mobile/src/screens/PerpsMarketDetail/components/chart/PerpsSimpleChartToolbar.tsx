@@ -33,7 +33,13 @@ export const PerpsSimpleChartToolbar = React.memo(
       <View style={styles.toolbar}>
         {preference.style === 'candle' && (
           <Pressable
-            style={styles.interval}
+            style={({ pressed }) => [
+              styles.interval,
+              preference.range === null && styles.selected,
+              pressed && styles.pressed,
+            ]}
+            hitSlop={{ top: 8, bottom: 8 }}
+            accessibilityState={{ selected: preference.range === null }}
             accessibilityRole="button"
             accessibilityLabel={t('page.perpsDetail.simpleChart.intervalTitle')}
             onPress={onInterval}>
@@ -41,7 +47,12 @@ export const PerpsSimpleChartToolbar = React.memo(
               color={colors2024['green-default']}
               fill={colors2024['red-default']}
             />
-            <Text style={styles.label}>
+            <Text
+              style={[
+                styles.label,
+                styles.intervalLabel,
+                preference.range === null && styles.manualLabel,
+              ]}>
               {preference.interval.endsWith('d') ||
               preference.interval.endsWith('w')
                 ? preference.interval.toUpperCase()
@@ -54,10 +65,12 @@ export const PerpsSimpleChartToolbar = React.memo(
           {SIMPLE_CHART_RANGES.map(range => (
             <Pressable
               key={range}
-              style={[
+              style={({ pressed }) => [
                 styles.range,
                 preference.range === range && styles.selected,
+                pressed && styles.pressed,
               ]}
+              hitSlop={{ top: 8, bottom: 8 }}
               accessibilityRole="button"
               accessibilityState={{ selected: preference.range === range }}
               onPressIn={() => onPrefetch(SIMPLE_RANGE_INTERVAL[range])}
@@ -73,15 +86,14 @@ export const PerpsSimpleChartToolbar = React.memo(
                   styles.label,
                   preference.range === range && styles.selectedLabel,
                 ]}>
-                {range === 'ALL'
-                  ? t('page.perpsDetail.simpleChart.all')
-                  : range}
+                {range}
               </Text>
             </Pressable>
           ))}
         </View>
         <Pressable
-          style={styles.icon}
+          style={({ pressed }) => [styles.icon, pressed && styles.pressed]}
+          hitSlop={{ top: 8, bottom: 8 }}
           accessibilityRole="button"
           accessibilityLabel={t(
             `page.perpsDetail.simpleChart.${
@@ -138,10 +150,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 16,
     fontWeight: '500',
     textAlign: 'center',
-    color: colors2024['neutral-body'],
+    color: colors2024['neutral-title-1'],
   },
-  selectedLabel: { fontWeight: '700', color: SIMPLE_CHART_COLORS.accent },
+  selectedLabel: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+    color: SIMPLE_CHART_COLORS.accent,
+  },
+  manualLabel: { fontFamily: 'SF Pro Rounded', fontWeight: '700' },
+  intervalLabel: { width: 24 },
+  pressed: { opacity: 0.6 },
   interval: {
+    width: 76,
+    borderRadius: 6,
     flexDirection: 'row',
     alignItems: 'center',
     height: 24,

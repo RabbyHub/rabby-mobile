@@ -134,6 +134,10 @@ export function usePerpsSimpleChart({
   };
   const [applied, setApplied] = useState<Presentation | null>(null);
   const pendingApplied = useRef<Presentation | null>(null);
+  const [rangeReference, setRangeReference] = useState<{
+    identity: string;
+    referencePrice: number | null;
+  } | null>(null);
   // One bounded presentation snapshot, not a second market-data store.
   const lastGood = useRef<{
     coin: string;
@@ -317,25 +321,6 @@ export function usePerpsSimpleChart({
       });
     return result;
   });
-  useEffect(() => {
-    if (preference.range !== 'ALL' || feed.status !== 'ready' || !active)
-      return;
-    let cancelled = false;
-    const owner = identity;
-    void (async () => {
-      // The feed caps source history at 5000 daily candles; never run an unbounded backfill.
-      for (
-        let page = 0;
-        page < 6 && !cancelled && currentIdentity.current === owner;
-        page++
-      ) {
-        if ((await loadOlder()) !== 'loaded') break;
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [identity, preference.range, feed.status, active, loadOlder]);
   const onSimpleEvent = useMemoizedFn((event: SimpleChartEvent) => {
     if (!active) return;
     if (event.event === 'applied') {
@@ -347,6 +332,10 @@ export function usePerpsSimpleChart({
         pending.sequence === event.sequence
       ) {
         setApplied(pending);
+        setRangeReference({
+          identity: event.identity,
+          referencePrice: event.referencePrice,
+        });
       }
       return;
     }
@@ -361,7 +350,19 @@ export function usePerpsSimpleChart({
         paneWidth: event.paneWidth,
         paneHeight: event.paneHeight,
       });
-    else if (preference.range !== 'ALL') void loadOlder();
+    else if (event.event === 'rangeReference') {
+      if (
+        applied?.identity !== event.identity ||
+        pendingApplied.current?.sequence !== applied.sequence
+      )
+        return;
+      setRangeReference(previous =>
+        previous?.identity === event.identity &&
+        previous.referencePrice === event.referencePrice
+          ? previous
+          : { identity: event.identity, referencePrice: event.referencePrice },
+      );
+    } else if (event.event === 'history') void loadOlder();
   });
   const onChartReady = useCallback(() => {
     setWebFailed(false);
@@ -388,6 +389,15 @@ export function usePerpsSimpleChart({
     updatePreference,
     prefetch,
     hasAppliedData,
+    rangeReference:
+      hasAppliedData && rangeReference?.identity === applied.identity
+        ? rangeReference.referencePrice
+        : null,
+    referenceLoading:
+      !hasAppliedData &&
+      !webFailed &&
+      feed.status !== 'error' &&
+      feed.status !== 'empty',
     loading: !hasAppliedData || !targetReady || applied?.identity !== identity,
     retry: () => {
       if (!active) return;
