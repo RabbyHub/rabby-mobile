@@ -130,8 +130,6 @@ export function bindOneKeyEvents(keyring: KeyringInstance | OneKeyKeyring) {
   }
   boundOneKeyKeyrings.add(oneKeyKeyring);
 
-  oneKeyKeyring.init();
-
   eventBus.on(EVENT_ONEKEY_CLOSE_UI_PIN_WINDOW, closeDeviceInputModals);
   eventBus.on(EVENT_ONEKEY_REQUEST_BUTTON, closeDeviceInputModals);
 

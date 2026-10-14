@@ -2,6 +2,7 @@ function setupApiOneKeyModule() {
   jest.resetModules();
 
   const mockKeyring = {
+    init: jest.fn(async () => undefined),
     bridge: {
       searchDevices: jest.fn(async () => ({
         success: true,
@@ -125,6 +126,27 @@ describe('core/apis/onekey', () => {
 
     expect(mockBindOneKeyEvents).toHaveBeenCalledWith(mockKeyring);
     expect(mockKeyring.bridge.searchDevices).toHaveBeenCalled();
+  });
+
+  it('waits for SDK initialization before scanning and retries a failed initialization', async () => {
+    const { searchDevices, mockKeyring } = setupApiOneKeyModule();
+    mockKeyring.init.mockRejectedValueOnce(new Error('Initialization failed'));
+    await expect(searchDevices()).rejects.toThrow('Initialization failed');
+    expect(mockKeyring.bridge.searchDevices).not.toHaveBeenCalled();
+
+    let ready!: () => void;
+    mockKeyring.init.mockImplementationOnce(
+      () =>
+        new Promise<void>(resolve => {
+          ready = resolve;
+        }),
+    );
+    const scan = searchDevices();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(mockKeyring.bridge.searchDevices).not.toHaveBeenCalled();
+    ready();
+    await expect(scan).resolves.toEqual({ success: true, payload: [] });
   });
 
   it('binds OneKey events before unlocking the device', async () => {

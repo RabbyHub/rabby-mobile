@@ -343,13 +343,13 @@ describe('bindOneKeyEvents', () => {
     expect(keyring.bridge.cancel).toHaveBeenCalledWith('connect-id');
   });
 
-  it('binds each OneKey keyring instance once', () => {
+  it('binds events without eagerly initializing the SDK', () => {
     const { bindOneKeyEvents } = setupOneKeyEventsModule();
     const keyring = createKeyring();
 
     bindOneKeyEvents(keyring);
     bindOneKeyEvents(keyring);
 
-    expect(keyring.init).toHaveBeenCalledTimes(1);
+    expect(keyring.init).not.toHaveBeenCalled();
   });
 });
