@@ -312,6 +312,8 @@ export interface TokenSelectorProps<
   scamTokensList?: ITokenItem[];
   isLoading?: boolean;
   onOpened?: () => void;
+  /** Native close completion, not the request to start closing. */
+  onClosed?: () => void;
   onConfirm(item: ITokenItem): void;
   onCancel(): void;
   type?: T;
@@ -442,6 +444,7 @@ const TokenSelectorSheetModalContent = ({
   disabledTips,
   isLoading,
   onOpened,
+  onClosed,
   headerTitle: customHeaderTitle,
   searchPlaceholder,
   disableItemCheck,
@@ -1360,11 +1363,13 @@ const TokenSelectorSheetModalContent = ({
       onDismiss={() => {
         isSheetMountedRef.current = false;
         onActivityVisibleChange(false);
+        onClosed?.();
       }}
       onChange={idx => {
         if (idx < 0) {
           onActivityVisibleChange(false);
           onCancel();
+          onClosed?.();
           return;
         }
         onActivityVisibleChange(true);

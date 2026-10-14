@@ -1,6 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
 import { ImportSuccessScreen2024 } from './ImportSuccessScreen2024';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 jest.mock('@/constant', () => ({ isNonPublicProductionEnv: false }));
 jest.mock('@/utils/events', () => ({ eventBus: { emit: jest.fn() } }));
 
@@ -34,6 +35,7 @@ jest.mock('@/components2024/WalletSuccessCard', () => ({
 jest.mock('@/components2024/Button', () => ({
   Button: (props: any) => mockButton(props),
 }));
+jest.mock('@/assets/icons/common/right-2-cc.svg', () => () => null);
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: mockT }) }));
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0 }),
@@ -73,18 +75,35 @@ jest.mock('@/core/apis/account', () => ({
 }));
 jest.mock('@/core/utils/secretVault', () => ({}));
 
-it('has the single imported address and View Wallet action on its first render', () => {
-  jest.useFakeTimers();
-  try {
-    render(<ImportSuccessScreen2024 />);
-    expect(mockCard.mock.calls[0][0].addresses).toHaveLength(1);
-    expect(mockCard.mock.calls[0][0].title).toBe(
-      'page.importSuccess.titleImported',
+it.each([
+  [KEYRING_TYPE.WatchAddressKeyring, 1, 'page.importSuccess.viewAddress'],
+  [KEYRING_TYPE.HdKeyring, 1, 'page.importSuccess.viewAddress'],
+  [KEYRING_TYPE.HdKeyring, 2, 'global.Done'],
+  [KEYRING_TYPE.LedgerKeyring, 1, 'page.importSuccess.viewAddress'],
+  [KEYRING_TYPE.TrezorKeyring, 1, 'page.importSuccess.viewAddress'],
+])(
+  'renders %s with %s addresses and the correct action immediately',
+  (type, count, title) => {
+    mockCard.mockClear();
+    mockButton.mockClear();
+    mockParams.type = type;
+    mockParams.brandName = type;
+    mockParams.address = Array.from(
+      { length: count },
+      (_, index) => `0x${String(index + 1).padStart(40, '0')}`,
     );
-    expect(mockButton.mock.calls[0][0].title).toBe(
-      'page.importSuccess.viewAddress',
-    );
-  } finally {
-    jest.useRealTimers();
-  }
-});
+    jest.useFakeTimers();
+    try {
+      render(<ImportSuccessScreen2024 />);
+      expect(mockCard.mock.calls[0][0].addresses).toHaveLength(count);
+      expect(mockCard.mock.calls[0][0].title).toBe(
+        count === 1
+          ? 'page.importSuccess.titleImported'
+          : 'page.importSuccess.titleMultiple',
+      );
+      expect(mockButton.mock.calls[0][0].title).toBe(title);
+    } finally {
+      jest.useRealTimers();
+    }
+  },
+);

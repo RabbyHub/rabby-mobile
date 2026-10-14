@@ -21,7 +21,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import { AnimateableText, AnimatedText } from '@/components/Typography';
 import { getFontSizeByLength } from '@/utils/fontSize';
-import { getRequiredTickerColumnCount } from './AnimatedTickerText.utils';
+import {
+  getFittedTickerFontSize,
+  getRequiredTickerColumnCount,
+} from './AnimatedTickerText.utils';
 
 type AnimatedStringValue = {
   value: string;
@@ -46,6 +49,8 @@ type AnimatedTickerTextProps = {
   containerProps?: ViewProps;
   fontSizeByLength?: FontSizeByLengthOptions;
   animateWidth?: boolean;
+  /** Fit animated columns into their measured row without changing the value. */
+  fitWidth?: boolean;
 };
 
 type TickerTextState = {
@@ -211,14 +216,26 @@ const getCharWidthUnit = (char: string) => {
   }
 };
 
-const getTextFontSize = (text: string, options?: FontSizeByLengthOptions) => {
+const getTextFontSize = (
+  text: string,
+  options?: FontSizeByLengthOptions,
+  availableWidth = 0,
+) => {
   'worklet';
 
   if (!options) {
     return undefined;
   }
 
-  return getFontSizeByLength(text?.length ?? 0, options);
+  const fontSize = getFontSizeByLength(text?.length ?? 0, options);
+  if (availableWidth <= 0 || hasRtlText(text)) {
+    return fontSize;
+  }
+  let widthUnits = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    widthUnits += getCharWidthUnit(text.charAt(index));
+  }
+  return getFittedTickerFontSize(fontSize, widthUnits, availableWidth);
 };
 
 const AnimatedTickerColumn = memo(
@@ -414,7 +431,17 @@ const AnimatedTickerText = ({
   containerProps,
   fontSizeByLength,
   animateWidth = true,
+  fitWidth = false,
 }: AnimatedTickerTextProps) => {
+  const availableWidth = useSharedValue(0);
+  const callerOnLayout = containerProps?.onLayout;
+  const handleLayout = useCallback<NonNullable<ViewProps['onLayout']>>(
+    event => {
+      availableWidth.value = event.nativeEvent.layout.width;
+      callerOnLayout?.(event);
+    },
+    [availableWidth, callerOnLayout],
+  );
   const [columnCount, setColumnCount] = useState(() =>
     getRequiredTickerColumnCount(value.value || '', maxLength),
   );
@@ -444,9 +471,13 @@ const AnimatedTickerText = ({
       text,
       isRtl: hasRtlText(text),
       isOverflow: text.length > maxLength,
-      fontSize: getTextFontSize(text, fontSizeByLength),
+      fontSize: getTextFontSize(
+        text,
+        fontSizeByLength,
+        fitWidth && text.length <= maxLength ? availableWidth.value : 0,
+      ),
     };
-  }, [fontSizeByLength, maxLength]);
+  }, [fitWidth, fontSizeByLength, maxLength]);
 
   const fallbackAnimatedProps = useAnimatedProps(() => {
     return {
@@ -474,7 +505,10 @@ const AnimatedTickerText = ({
   const initialFontSize = getTextFontSize(value.value || '', fontSizeByLength);
 
   return (
-    <View {...containerProps} style={[styles.row, containerStyle]}>
+    <View
+      {...containerProps}
+      onLayout={fitWidth ? handleLayout : callerOnLayout}
+      style={[styles.row, containerStyle]}>
       {!animate ? (
         <AnimateableText
           {...textProps}

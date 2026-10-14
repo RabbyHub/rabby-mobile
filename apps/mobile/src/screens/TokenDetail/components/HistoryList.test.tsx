@@ -11,6 +11,21 @@ import { TokenDetailHistoryList } from './HistoryList';
 const mockGetTokenHistory = jest.fn();
 const mockListTxHistory = jest.fn();
 const mockHistoryList = jest.fn();
+let mockIsFocused = true;
+let mockOnHistorySynced: (ctx: {
+  owner_addr: string;
+  success: boolean;
+}) => void;
+jest.mock('@react-navigation/native', () => ({
+  useIsFocused: () => mockIsFocused,
+}));
+jest.mock('@/databases/sync/_event', () => ({
+  useAppOrmSyncEvents: (options: {
+    onRemoteDataUpserted: typeof mockOnHistorySynced;
+  }) => {
+    mockOnHistorySynced = options.onRemoteDataUpserted;
+  },
+}));
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: () => ({ styles: {} }),
 }));
@@ -117,6 +132,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockGetTokenHistory.mockReset();
   mockListTxHistory.mockReset();
+  mockIsFocused = true;
 });
 
 afterEach(() => {
@@ -246,7 +262,7 @@ it('retains loaded rows and the committed DB cursor when a refresh fails', async
     null,
     'token-a',
     'eth',
-    20,
+    40,
   );
   fireEvent.press(screen.getByTestId('load-more'));
   await act(async () => undefined);
@@ -341,6 +357,66 @@ it('retains API-backed history and its remote cursor after a failed refresh', as
   expect(screen.getByText('next-0')).toBeVisible();
 });
 
+it.each([KEYRING_CLASS.WATCH, KEYRING_CLASS.GNOSIS])(
+  'keeps remote reloads at one 20-row page and can append after loading two pages: %s',
+  async type => {
+    const response = (prefix: string, count: number, timeOffset = 0) => ({
+      history_list: rows(prefix, count).map(row => ({
+        ...row,
+        time_at: row.time_at - timeOffset,
+        chain: 'eth',
+        sends: [],
+        receives: [],
+      })),
+      project_dict: {},
+      token_dict: {},
+    });
+    mockListTxHistory
+      .mockResolvedValueOnce(response('remote', 20))
+      .mockResolvedValueOnce(response('older', 20, 20))
+      .mockResolvedValueOnce(response('refreshed', 20))
+      .mockResolvedValueOnce(response('next', 1, 20));
+    render(
+      <TokenDetailHistoryList
+        finalAccount={{ ...account, type }}
+        token={token}
+      />,
+    );
+    await act(async () => undefined);
+    fireEvent.press(screen.getByTestId('load-more'));
+    await act(async () => undefined);
+    expect(screen.getByText('remote-0')).toBeVisible();
+    expect(screen.getByText('older-19')).toBeVisible();
+
+    fireEvent.press(screen.getByTestId('refresh'));
+    await act(async () => undefined);
+    expect(mockListTxHistory).toHaveBeenNthCalledWith(3, {
+      id: '0xa',
+      start_time: 0,
+      page_count: 20,
+      chain_id: 'eth',
+      token_id: 'token-a',
+    });
+    expect(screen.getByText('refreshed-19')).toBeVisible();
+    expect(screen.queryByText('older-19')).toBeNull();
+
+    // A full remote page is not exhausted just because the old local window
+    // contained 40 rows. Its cursor must still permit the next API request.
+    fireEvent.press(screen.getByTestId('load-more'));
+    await act(async () => undefined);
+    expect(mockListTxHistory).toHaveBeenCalledTimes(4);
+    expect(mockListTxHistory).toHaveBeenLastCalledWith({
+      id: '0xa',
+      start_time: 81,
+      page_count: 20,
+      chain_id: 'eth',
+      token_id: 'token-a',
+    });
+    expect(screen.getByText('next-0')).toBeVisible();
+    expect(mockGetTokenHistory).not.toHaveBeenCalled();
+  },
+);
+
 it('does not show a stale request error after a newer refresh succeeds', async () => {
   const olderPage = deferredRows();
   mockGetTokenHistory
@@ -425,4 +501,91 @@ it('does not show an old account error in the newly selected account', async () 
   );
   expect(screen.getByText('current-0')).toBeVisible();
   expect(toast.error).not.toHaveBeenCalled();
+});
+
+it('refreshes an initially empty token history after its account sync commits', async () => {
+  mockGetTokenHistory
+    .mockResolvedValueOnce([])
+    .mockResolvedValueOnce(rows('synced'));
+  render(<TokenDetailHistoryList finalAccount={account} token={token} />);
+  await act(async () => undefined);
+  expect(screen.queryByText('synced-0')).toBeNull();
+  await act(async () =>
+    mockOnHistorySynced({ owner_addr: '0xA', success: true }),
+  );
+  expect(screen.getByText('synced-0')).toBeVisible();
+});
+
+it('ignores failed syncs and syncs belonging to other accounts', async () => {
+  mockGetTokenHistory.mockResolvedValue(rows('initial'));
+  render(<TokenDetailHistoryList finalAccount={account} token={token} />);
+  await act(async () => undefined);
+  await act(async () => {
+    mockOnHistorySynced({ owner_addr: '0xb', success: true });
+    mockOnHistorySynced({ owner_addr: '0xa', success: false });
+  });
+  expect(mockGetTokenHistory).toHaveBeenCalledTimes(1);
+});
+
+it('catches up once on focus without revalidating inactive token history', async () => {
+  mockGetTokenHistory
+    .mockResolvedValueOnce([])
+    .mockResolvedValueOnce(rows('resumed'));
+  const view = render(
+    <TokenDetailHistoryList finalAccount={account} token={token} />,
+  );
+  await act(async () => undefined);
+  mockIsFocused = false;
+  view.rerender(
+    <TokenDetailHistoryList finalAccount={account} token={token} />,
+  );
+  await act(async () =>
+    mockOnHistorySynced({ owner_addr: '0xa', success: true }),
+  );
+  expect(mockGetTokenHistory).toHaveBeenCalledTimes(1);
+  mockIsFocused = true;
+  view.rerender(
+    <TokenDetailHistoryList finalAccount={account} token={token} />,
+  );
+  await act(async () => undefined);
+  expect(mockGetTokenHistory).toHaveBeenCalledTimes(2);
+  expect(screen.getByText('resumed-0')).toBeVisible();
+});
+
+it('preserves the loaded history window and keyset cursor during sync revalidation', async () => {
+  const first = rows('initial', 20);
+  const second = rows('next', 20).map(row => ({
+    ...row,
+    time_at: row.time_at - 20,
+  }));
+  mockGetTokenHistory
+    .mockResolvedValueOnce(first)
+    .mockResolvedValueOnce(second)
+    .mockResolvedValueOnce([...first, ...second])
+    .mockResolvedValueOnce(rows('last'));
+  render(<TokenDetailHistoryList finalAccount={account} token={token} />);
+  await act(async () => undefined);
+  fireEvent.press(screen.getByTestId('load-more'));
+  await act(async () => undefined);
+  await act(async () =>
+    mockOnHistorySynced({ owner_addr: '0xa', success: true }),
+  );
+  expect(mockGetTokenHistory).toHaveBeenNthCalledWith(
+    3,
+    '0xa',
+    null,
+    'token-a',
+    'eth',
+    40,
+  );
+  expect(screen.getByText('next-19')).toBeVisible();
+  fireEvent.press(screen.getByTestId('load-more'));
+  await act(async () => undefined);
+  expect(mockGetTokenHistory).toHaveBeenLastCalledWith(
+    '0xa',
+    { id: 'next-19', timeAt: 61 },
+    'token-a',
+    'eth',
+    20,
+  );
 });

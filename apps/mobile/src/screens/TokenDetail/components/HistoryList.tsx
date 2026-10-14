@@ -42,6 +42,8 @@ import {
 } from '@/databases/entities/historyItem';
 import type { ITokenItem } from '@/store/tokens';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
+import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import {
   useTransactionHistoryServiceReady,
   withTransactionHistoryService,
@@ -77,6 +79,7 @@ const TokenDetailHistoryListContent = ({
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const isFocused = useIsFocused();
 
   const { isSceneUsingAllAccounts, sceneCurrentAccountDepKey } =
     useSceneAccountInfo({
@@ -91,6 +94,7 @@ const TokenDetailHistoryListContent = ({
   const lastMap = useRef<Record<string, number>>({});
   const dbCursorRef = useRef<HistoryPageCursor | null>(null);
   const hasMoreMap = useRef<Record<string, boolean>>({});
+  const loadedWindowSizeRef = useRef(PAGE_COUNT);
 
   const [historySuccessList, setHistorySuccessList] = useState<string[]>(
     getTransactionHistorySucceedListSnapshot(),
@@ -113,6 +117,7 @@ const TokenDetailHistoryListContent = ({
     token_id: string,
     isMyAddress?: boolean,
     dbCursor: HistoryPageCursor | null = null,
+    pageCount = PAGE_COUNT,
   ): Promise<IFetchHistory> => {
     if (!address) {
       throw new Error('no account');
@@ -125,7 +130,7 @@ const TokenDetailHistoryListContent = ({
           dbCursor,
           token_id,
           chain_id,
-          PAGE_COUNT,
+          pageCount,
         );
       const list = historyList.map(item => {
         return {
@@ -225,6 +230,10 @@ const TokenDetailHistoryListContent = ({
       };
     }
 
+    // Only local DB revalidation preserves the loaded window. Remote history
+    // retains its fixed API page size, including manual refreshes.
+    const pageCount =
+      isMyAddress && isReload ? loadedWindowSizeRef.current : PAGE_COUNT;
     const result = await fetchData(
       addr,
       isReload ? 0 : lastMap.current[addr] || 0,
@@ -232,6 +241,7 @@ const TokenDetailHistoryListContent = ({
       tokenItem.id,
       isMyAddress,
       isReload ? null : dbCursorRef.current,
+      pageCount,
     );
     if (requestSequence !== requestSequenceRef.current) {
       // ahooks cancels request callbacks, but useInfiniteScroll publishes its
@@ -239,7 +249,7 @@ const TokenDetailHistoryListContent = ({
       // superseded by a refresh, or it can overwrite the refreshed list/cursor.
       throw new Error('Superseded token history page');
     }
-    if (result.list.length < PAGE_COUNT) {
+    if (result.list.length < pageCount) {
       hasMoreMap.current[addr] = false;
     } else {
       hasMoreMap.current[addr] = true;
@@ -289,6 +299,12 @@ const TokenDetailHistoryListContent = ({
     },
   });
 
+  // A sync revalidation must not collapse a paginated window back to page one.
+  loadedWindowSizeRef.current = Math.max(
+    PAGE_COUNT,
+    fetchApiData?.list.length ?? 0,
+  );
+
   const refresh = useMemoizedFn(() => {
     cancel();
     if (!disableHistoryRequest) {
@@ -308,6 +324,10 @@ const TokenDetailHistoryListContent = ({
   }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
 
   const batchFetchDataFromDbUpsert = useMemoizedFn(async () => {
+    if (!isFocused || !isMyAddress || disableHistoryRequest) {
+      return;
+    }
+    cancel();
     reload();
   });
 
@@ -325,6 +345,32 @@ const TokenDetailHistoryListContent = ({
       throttleBatchFetchData.cancel();
     };
   }, [throttleBatchFetchData]);
+
+  useAppOrmSyncEvents({
+    taskFor: 'all-history',
+    onRemoteDataUpserted: ctx => {
+      if (
+        isFocused &&
+        isMyAddress &&
+        !disableHistoryRequest &&
+        ctx.success &&
+        ctx.owner_addr.toLowerCase() === currentAddress?.toLowerCase()
+      ) {
+        throttleBatchFetchData();
+      }
+    },
+  });
+
+  const wasFocusedRef = useRef(isFocused);
+  useEffect(() => {
+    if (isFocused && !wasFocusedRef.current) {
+      void batchFetchDataFromDbUpsert();
+    }
+    if (!isFocused) {
+      throttleBatchFetchData.cancel();
+    }
+    wasFocusedRef.current = isFocused;
+  }, [isFocused, batchFetchDataFromDbUpsert, throttleBatchFetchData]);
 
   useEffect(() => {
     if (!transactionHistoryReady || hasConsumedLocalStatusRef.current) {

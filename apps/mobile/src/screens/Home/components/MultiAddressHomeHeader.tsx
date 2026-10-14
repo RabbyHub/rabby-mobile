@@ -31,6 +31,7 @@ import { buildPortfolioAddressChange } from '@/store/homePortfolio/consistency';
 import Animated, { Easing, FadeInUp } from 'react-native-reanimated';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { useShallow } from 'zustand/react/shallow';
+import { useNavigation } from '@react-navigation/native';
 
 const PINNED_ADDRESS_LIST_ENTERING = FadeInUp.duration(460).easing(
   Easing.out(Easing.cubic),
@@ -142,12 +143,20 @@ export function MultiAddressHomeHeader(
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { isDisConnect } = useGlobalStatus();
+  const navigation = useNavigation();
 
   const pinnedAccountList = usePinnedAccountList();
   const [hideType] = useHideBalance();
 
   const modalRef =
     useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>(undefined);
+
+  useEffect(
+    () => () => {
+      modalRef.current = undefined;
+    },
+    [],
+  );
 
   const handleWalletsListPress = useCallback(() => {
     setIsFoldMultiChart(true);
@@ -158,15 +167,23 @@ export function MultiAddressHomeHeader(
       category: 'Click_Header',
       action: 'Click_Address',
     });
-    modalRef.current = createGlobalBottomSheetModal2024({
+    let addAddressRequested = false;
+    const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.ADDRESS_LiST,
       onAddAddressPress: () => {
-        if (modalRef.current) {
-          removeGlobalBottomSheetModal2024(modalRef.current);
-        }
-        apiGlobalModal.showAddSelectMethodModal();
+        if (modalRef.current !== modalId || addAddressRequested) return;
+        addAddressRequested = true;
+        // Do not start a stack transition while the address sheet is sliding.
+        removeGlobalBottomSheetModal2024(modalId, { waitForDismiss: true });
       },
       bottomSheetModalProps: {
+        onDismiss: () => {
+          if (modalRef.current !== modalId) return;
+          modalRef.current = undefined;
+          if (addAddressRequested && navigation.isFocused()) {
+            apiGlobalModal.showAddSelectMethodModal();
+          }
+        },
         handleStyle: {
           backgroundColor: isLight
             ? colors2024['neutral-bg-0']
@@ -178,7 +195,8 @@ export function MultiAddressHomeHeader(
         modalRef.current = undefined;
       },
     });
-  }, [colors2024, isLight]);
+    modalRef.current = modalId;
+  }, [colors2024, isLight, navigation]);
 
   return (
     <View style={[styles.container, style]}>

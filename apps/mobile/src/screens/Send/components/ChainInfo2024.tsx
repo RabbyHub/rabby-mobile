@@ -17,6 +17,7 @@ import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { useTranslation } from 'react-i18next';
 import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
+import { useNavigation } from '@react-navigation/native';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
@@ -84,6 +85,26 @@ export function ChainInfo2024({
   });
 
   const modalRef = React.useRef<MODAL_ID>(undefined);
+  const navigation = useNavigation();
+  const accountIdentity = JSON.stringify([
+    account?.type,
+    account?.address?.toLowerCase(),
+    account?.brandName,
+  ]);
+  const latestPropsRef = React.useRef({
+    accountIdentity,
+    chainEnum,
+    disabled,
+    onChange,
+  });
+  latestPropsRef.current = { accountIdentity, chainEnum, disabled, onChange };
+
+  React.useEffect(
+    () => () => {
+      modalRef.current = undefined;
+    },
+    [],
+  );
 
   const removeChainModal = React.useCallback(() => {
     if (modalRef.current) {
@@ -93,11 +114,19 @@ export function ChainInfo2024({
 
   const createChainModal = React.useCallback(() => {
     removeChainModal();
-    modalRef.current = createGlobalBottomSheetModal2024({
+    const openedFor = latestPropsRef.current;
+    let closing = false;
+    let selectedChain: CHAINS_ENUM | undefined;
+    const close = () => {
+      if (modalRef.current !== modalId || closing) return;
+      closing = true;
+      removeGlobalBottomSheetModal2024(modalId, { waitForDismiss: true });
+    };
+    const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY,
       account,
       value: chainEnum,
-      onClose: removeChainModal,
+      onClose: close,
       supportChains,
       unsupportedChainMode,
       disabledTips,
@@ -107,12 +136,32 @@ export function ChainInfo2024({
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
         rootViewType: 'View',
+        onDismiss: () => {
+          if (modalRef.current !== modalId) return;
+          modalRef.current = undefined;
+          const latest = latestPropsRef.current;
+          // A new account/chain intent can arrive while native close is running.
+          if (
+            selectedChain &&
+            navigation.isFocused() &&
+            !openedFor.disabled &&
+            !latest.disabled &&
+            latest.accountIdentity === openedFor.accountIdentity &&
+            latest.chainEnum === openedFor.chainEnum
+          ) {
+            latest.onChange?.(selectedChain);
+          }
+        },
       },
       onChange: chain => {
-        removeChainModal();
-        onChange?.(chain);
+        if (modalRef.current !== modalId || closing) return;
+        selectedChain = chain;
+        // Keep the sheet mounted through its native close animation before
+        // switching chain, which can invalidate a large portion of the form.
+        close();
       },
     });
+    modalRef.current = modalId;
   }, [
     account,
     chainEnum,
@@ -123,7 +172,7 @@ export function ChainInfo2024({
     hideMainnetTab,
     hideTestnetTab,
     t,
-    onChange,
+    navigation,
   ]);
 
   return (

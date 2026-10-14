@@ -601,7 +601,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingBottom: 8,
     paddingLeft: 12,
     paddingRight: 6,
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-4'],
     alignItems: 'center',
     marginBottom: 20,
     width: 'auto',

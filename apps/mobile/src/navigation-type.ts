@@ -315,7 +315,8 @@ export type AccountNavigatorParamList = {
 
 export type SingleAddressNavigatorParamList = {
   [RootNames.SingleAddressHome]: {
-    // account: Account;
+    account?: Account;
+    navigationId?: number;
   };
 };
 

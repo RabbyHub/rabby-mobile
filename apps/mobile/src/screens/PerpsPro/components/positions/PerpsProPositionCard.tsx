@@ -13,6 +13,7 @@ import {
   type TextLayoutEvent,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { Pressable as GesturePressable } from 'react-native-gesture-handler';
 
 import {
   calculateSignedLiquidationDistance,
@@ -178,7 +179,7 @@ const PositionAction: React.FC<{
   const { styles } = useTheme2024({ getStyle });
   const disabled = !onPress;
   return (
-    <Pressable
+    <GesturePressable
       accessibilityRole="button"
       accessibilityState={{ disabled }}
       disabled={disabled}
@@ -191,7 +192,7 @@ const PositionAction: React.FC<{
       <Text style={disabled ? styles.disabledActionText : styles.actionText}>
         {label}
       </Text>
-    </Pressable>
+    </GesturePressable>
   );
 };
 
@@ -635,7 +636,7 @@ export const PerpsProPositionCard: React.FC<{
           </View>
 
           {tpSlSummary.mode !== 'none' ? (
-            <Pressable
+            <GesturePressable
               accessibilityLabel={t('page.perps.pro.positions.tpsl')}
               accessibilityRole="button"
               accessibilityState={{ disabled: !onEditTpSl }}
@@ -684,7 +685,7 @@ export const PerpsProPositionCard: React.FC<{
                   />
                 </View>
               </View>
-            </Pressable>
+            </GesturePressable>
           ) : null}
         </View>
 

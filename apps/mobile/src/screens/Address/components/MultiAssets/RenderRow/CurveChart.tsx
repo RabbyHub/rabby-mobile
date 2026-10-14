@@ -418,6 +418,7 @@ const ChartHeader = React.memo(
             <RefreshNudgedTickerText
               value={formatNetWorth}
               animateWidth={false}
+              fitWidth
               maxLength={24}
               lineHeight={42}
               duration={320}
