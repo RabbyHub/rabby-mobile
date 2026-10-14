@@ -23,7 +23,9 @@ const detectIsRainbowKit = (callback: () => void) => {
         retries: 10,
         delay: 300,
       },
-    ).then(callback);
+    )
+      .then(callback)
+      .catch(() => {});
   }
 };
 
