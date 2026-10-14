@@ -3,6 +3,7 @@
 Agent guidance for this repository:
 
 - Read `CLAUDE.md` for the main repo workflow and architecture notes.
+- When adding, changing, or reviewing address comparisons or address-keyed business storage outside account management in `apps/mobile` or `packages`, read `apps/mobile/skills/address-handling.md`; use `isSameAddress` for business address equality and lowercase business keys consistently across writes, reads, updates, and deletes. Exclude account objects and identity management, keyring internals, EIP-55 validation and checksum format contracts, and SDK/contract call parameters; preserve their existing identity and address-format conventions.
 - When reviewing a Rabby Mobile pull request and publishing outbound findings, read `skills/rabby-mobile-code-review/SKILL.md`; use `skills/mobile-pr-ready-watch/SKILL.md` instead for making a PR ready or handling incoming review feedback.
 - Consider runtime performance for every Rabby Mobile change. During review, read `skills/rabby-mobile-performance-review/SKILL.md` and perform its impact classification even when no benchmark is required and no public performance comment is warranted.
 - When changing startup stages, module loading, lock/unlock routing, keyring readiness, visible/current account state, or first-Home readiness, read `skills/rabby-mobile-startup-governance/SKILL.md`. If safety or performance remains uncertain after review, request `@richardo2016x` review as described by the performance Review Skill.
