@@ -66,6 +66,14 @@ const EMPTY_CHANGE_DATA = {
   isLoss: false,
 };
 
+const BALANCE_TICKER_FONT_SIZE = {
+  maxFontSize: 18,
+  minFontSize: 18,
+  threshold: 16,
+} satisfies NonNullable<
+  React.ComponentProps<typeof RefreshNudgedTickerText>['fontSizeByLength']
+>;
+
 const HeaderHeight = 30;
 const handleSwitchToTokenTab = (index: number) => {
   apisHomeTabIndex.setTabIndex(index, true);
@@ -284,11 +292,7 @@ export function TabsTopHeader(): JSX.Element {
                 lineHeight={22}
                 duration={320}
                 style={styles.balanceTextBox}
-                fontSizeByLength={{
-                  maxFontSize: 18,
-                  minFontSize: 18,
-                  threshold: 16,
-                }}
+                fontSizeByLength={BALANCE_TICKER_FONT_SIZE}
               />
             )}
             {!showBalanceLoadingWithoutLocal && changePercent ? (

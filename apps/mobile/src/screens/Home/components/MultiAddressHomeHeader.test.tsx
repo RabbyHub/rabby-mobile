@@ -8,6 +8,7 @@ import { MultiAddressHomeHeader } from './MultiAddressHomeHeader';
 // still requires visual validation on iOS; the gradient is an external boundary.
 let mockIsLight = true;
 let mockWalletsPress: () => void;
+let mockChartTabName: string;
 let mockModalParams: any;
 let mockIsFocused = true;
 let mockModalSequence = 0;
@@ -61,8 +62,9 @@ jest.mock('./HomeAddressItem', () => ({ HomeAddressItem: () => null }));
 jest.mock(
   '@/screens/Address/components/MultiAssets/RenderRow/CurveChart',
   () => ({
-    MultiChart: ({ onPressWalletList }: any) => {
+    MultiChart: ({ onPressWalletList, tabName }: any) => {
       mockWalletsPress = onPressWalletList;
+      mockChartTabName = tabName;
       return null;
     },
     setIsFoldMultiChart: jest.fn(),
@@ -82,7 +84,10 @@ jest.mock('@/components2024/GlobalBottomSheetModal/types', () => ({
 jest.mock('@/components2024/GlobalBottomSheetModal/apiGlobalModal', () => ({
   apiGlobalModal: { showAddSelectMethodModal: () => mockShowAddWallet() },
 }));
-jest.mock('@/hooks/navigation', () => ({ apisHomeTabIndex: {} }));
+jest.mock('@/hooks/navigation', () => ({
+  apisHomeTabIndex: {},
+  HomeTabName: { overview: 'overview' },
+}));
 jest.mock('@/store/balance24h', () => ({ balance24hStore: {} }));
 jest.mock('@/store/homePortfolio/consistency', () => ({
   buildPortfolioAddressChange: jest.fn(),
@@ -96,6 +101,7 @@ it.each([true, false])(
   isLight => {
     mockIsLight = isLight;
     render(<MultiAddressHomeHeader />);
+    expect(mockChartTabName).toBe('overview');
     const gradient = screen.UNSAFE_getByType(LinearGradient);
     const gradientStyle = StyleSheet.flatten(gradient.props.style);
     expect(gradientStyle.borderWidth).toBeUndefined();
