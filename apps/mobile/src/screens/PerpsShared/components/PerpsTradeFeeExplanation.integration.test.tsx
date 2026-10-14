@@ -8,6 +8,7 @@ import {
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { Pressable, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useShowPerpsTradeFeeExplanation } from './PerpsTradeFeeExplanation';
 
@@ -87,17 +88,22 @@ const TipsPopupStateProbe = () => {
           : 'closed'}
       </Text>
       <Text testID="fee-explanation-presentation">{`${state.retainContentOnClose}:${state.buttonTitle}`}</Text>
+      {state.visible && React.isValidElement(state.desc) ? state.desc : null}
     </View>
   );
 };
 
 const FeeExplanationHarness = () => (
-  <View>
+  <SafeAreaProvider
+    initialMetrics={{
+      frame: { x: 0, y: 0, width: 390, height: 844 },
+      insets: { top: 0, right: 0, bottom: 0, left: 0 },
+    }}>
     <FeeExplanationTrigger />
     <ScopedTipsControls />
     <OwnedVisibilityProbe />
     <TipsPopupStateProbe />
-  </View>
+  </SafeAreaProvider>
 );
 
 describe('Perps Trade Fee explanation integration', () => {
@@ -119,6 +125,9 @@ describe('Perps Trade Fee explanation integration', () => {
     );
     expect(triggerRenderCount).toBe(1);
 
+    expect(screen.getByText('0.04%')).toBeTruthy();
+    expect(screen.queryByText('0.02%')).toBeNull();
+    expect(screen.queryByTestId('perps-trade-fee-rabby-discount')).toBeNull();
     fireEvent.press(screen.getByTestId('close-fee-explanation'));
     expect(screen.getByTestId('fee-explanation-state')).toHaveTextContent(
       'closed',
@@ -129,6 +138,8 @@ describe('Perps Trade Fee explanation integration', () => {
     render(<FeeExplanationHarness />);
 
     fireEvent.press(screen.getByTestId('open-owned-fee-explanation'));
+    expect(screen.getByText('0.04%')).toBeTruthy();
+    expect(screen.queryByTestId('perps-trade-fee-rabby-discount')).toBeNull();
     expect(
       screen.getByTestId('fee-explanation-presentation'),
     ).toHaveTextContent('true:page.perps.pro.funding.gotIt');

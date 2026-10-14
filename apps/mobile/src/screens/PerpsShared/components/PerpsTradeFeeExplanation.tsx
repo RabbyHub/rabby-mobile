@@ -1,6 +1,7 @@
 import RcIconRabby from '@/assets2024/icons/common/rabby-wallet.svg';
 import RcIconHyper from '@/assets2024/icons/perps/IconHyper.svg';
 import { Text } from '@/components/Typography';
+import { PERPS_EXCHANGE_FEE_NUMBER } from '@/constant/perps';
 import { useTheme2024 } from '@/hooks/theme';
 import { useShowTipsPopup } from '@/hooks/useTipsPopup';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -59,14 +60,8 @@ export const PerpsTradeFeeExplanationContent: React.FC<
             <View
               style={styles.feeRowRight}
               testID="perps-trade-fee-rabby-right">
-              <View style={styles.feeRowValueRow}>
-                <Text style={styles.feeRowValue}>0.02%</Text>
-                <Text style={styles.feeRowValueOrigin}>0.04%</Text>
-              </View>
-              <Text
-                style={styles.feeRowDiscount}
-                testID="perps-trade-fee-rabby-discount">
-                {t('page.perps.historyDetail.feeRabbyDiscount')}
+              <Text style={styles.feeRowValue}>
+                {`${PERPS_EXCHANGE_FEE_NUMBER * 100}%`}
               </Text>
             </View>
           </View>
@@ -163,32 +158,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   feeRowRight: {
     alignItems: 'flex-end',
     flex: 1,
-    gap: 2,
     marginLeft: 12,
     minWidth: 0,
-  },
-  feeRowValueRow: {
-    alignItems: 'center',
-    alignSelf: 'flex-end',
-    flexDirection: 'row',
-    gap: 6,
-  },
-  feeRowValueOrigin: {
-    color: colors2024['neutral-foot'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-    textDecorationLine: 'line-through',
-  },
-  feeRowDiscount: {
-    alignSelf: 'stretch',
-    color: colors2024['neutral-foot'],
-    flexShrink: 1,
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    fontWeight: '400',
-    lineHeight: 14,
-    textAlign: 'right',
   },
 }));

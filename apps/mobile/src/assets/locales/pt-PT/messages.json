@@ -2851,7 +2851,6 @@
         "feeHyperliquid": "Hyperliquid",
         "feeTitle": "Taxa",
         "feeRabby": "Rabby Wallet",
-        "feeRabbyDiscount": "Desconto temporário nas taxas de negociação",
         "feeDesc": "Quando os utilizadores fazem operações, aplicam-se <1>taxas de negociação</1> e <2>taxas do builder</2>.",
         "amount": "Montante",
         "asset": "Ativo",

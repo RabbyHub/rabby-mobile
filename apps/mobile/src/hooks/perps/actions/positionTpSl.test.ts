@@ -129,6 +129,7 @@ describe('Perps position TP/SL action', () => {
         return cancelled();
       }),
       placePartial: jest.fn(async params => {
+        expect(params.builder.fee).toBe(40);
         callOrder.push('create');
         expect(params).toMatchObject({
           coin: 'BTC',
@@ -334,6 +335,7 @@ describe('Perps position TP/SL action', () => {
     const result = await executePerpsPositionTpSl(full, deps);
     expect(deps.placePosition).toHaveBeenCalledWith(
       expect.objectContaining({
+        builder: expect.objectContaining({ fee: 40 }),
         isBuy: true,
         slTriggerPx: '90',
         slippage: 0.08,

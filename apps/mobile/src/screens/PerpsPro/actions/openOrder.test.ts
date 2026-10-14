@@ -318,7 +318,7 @@ describe('Perps Pro open order action', () => {
     );
 
     expect(deps.conditionalMarket).toHaveBeenCalledWith({
-      builder: expect.any(Object),
+      builder: expect.objectContaining({ fee: 40 }),
       coin: 'BTC',
       isBuy: true,
       reduceOnly: false,
@@ -335,7 +335,11 @@ describe('Perps Pro open order action', () => {
     await executePerpsProOpenOrder(build(), deps);
 
     expect(deps.marketOrder).toHaveBeenCalledWith(
-      expect.objectContaining({ midPx: '62000', size: '0.001' }),
+      expect.objectContaining({
+        builder: expect.objectContaining({ fee: 40 }),
+        midPx: '62000',
+        size: '0.001',
+      }),
     );
   });
 
@@ -361,7 +365,7 @@ describe('Perps Pro open order action', () => {
     );
 
     expect(deps.conditionalLimit).toHaveBeenCalledWith({
-      builder: expect.any(Object),
+      builder: expect.objectContaining({ fee: 40 }),
       coin: 'BTC',
       isBuy: true,
       limitPx: '64100',
@@ -393,7 +397,11 @@ describe('Perps Pro open order action', () => {
       kind: 'failed',
     });
     expect(deps.limitOrder).toHaveBeenCalledWith(
-      expect.objectContaining({ limitPx: '63000', tif: 'Alo' }),
+      expect.objectContaining({
+        builder: expect.objectContaining({ fee: 40 }),
+        limitPx: '63000',
+        tif: 'Alo',
+      }),
     );
   });
 

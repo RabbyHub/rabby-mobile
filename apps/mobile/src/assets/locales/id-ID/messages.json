@@ -2579,7 +2579,6 @@
         "sizeTips": "Nilai total atau jumlah perdagangan Anda, ditentukan oleh margin dan leverage.",
         "gotItBtn": "Saya mengerti",
         "feeRabby": "Rabby Wallet",
-        "feeRabbyDiscount": "Diskon biaya trading untuk waktu terbatas",
         "feeTitle": "Biaya",
         "feeHyperliquid": "Hyperliquid",
         "feeDesc": "Saat pengguna melakukan perdagangan, <1>biaya trading</1> dan <2>biaya builder</2> akan berlaku.",

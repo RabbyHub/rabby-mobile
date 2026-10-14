@@ -2729,7 +2729,6 @@
         "perps": "永续合约",
         "feeHyperliquid": "Hyperliquid",
         "feeRabby": "Rabby 钱包",
-        "feeRabbyDiscount": "限时交易手续费折扣",
         "feeDesc": "交易时会产生<1>交易手续费</1>和<2>构建者费用</2>。",
         "feeTitle": "费用",
         "amount": "金额",
