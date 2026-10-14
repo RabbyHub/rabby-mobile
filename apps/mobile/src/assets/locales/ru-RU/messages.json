@@ -2698,7 +2698,6 @@
         "feeHyperliquid": "Hyperliquid",
         "feeTitle": "Комиссия",
         "feeRabby": "Rabby Wallet",
-        "feeRabbyDiscount": "Ограниченная по времени скидка на торговую комиссию",
         "feeDesc": "При совершении сделок взимаются <1>торговая комиссия</1> и <2>комиссия билдера</2>.",
         "amount": "Сумма",
         "asset": "Актив",
