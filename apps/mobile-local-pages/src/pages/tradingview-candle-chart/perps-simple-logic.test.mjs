@@ -117,8 +117,24 @@ test('markers use returned 3d bucket boundaries, deduplicate each direction, and
 test('labels separate at both edges without changing their underlying price values', () => {
   const values = [205, 203, 1, 2, 100, 100];
   const result = avoidSimpleLabelOverlap(values, 208).sort((a, b) => a - b);
-  assert.ok(result[0] >= 8 && result.at(-1) <= 200);
+  assert.ok(result[0] >= 7 && result.at(-1) <= 201);
   for (let i = 1; i < result.length; i++)
-    assert.ok(result[i] - result[i - 1] >= 16);
+    assert.ok(result[i] - result[i - 1] >= 17);
   assert.deepEqual(values, [205, 203, 1, 2, 100, 100]);
+});
+test('entry, TP, SL and liquidation titles retain stable order and 3px gaps when crowded', () => {
+  for (const values of [
+    [0, 0, 0, 0],
+    [208, 208, 208, 208],
+    [100, 100, 100, 100],
+    [95.5, 94.56, 96.42, 97.34],
+  ]) {
+    const result = avoidSimpleLabelOverlap(values, 208, 16);
+    const order = values
+      .map((y, index) => ({ y, index }))
+      .sort((a, b) => a.y - b.y || a.index - b.index);
+    assert.ok(result.every(y => y >= 8 && y <= 200));
+    for (let i = 1; i < order.length; i++)
+      assert.ok(result[order[i].index] - result[order[i - 1].index] >= 19);
+  }
 });

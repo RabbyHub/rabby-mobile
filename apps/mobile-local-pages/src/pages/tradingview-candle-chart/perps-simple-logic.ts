@@ -112,15 +112,17 @@ export function simpleHistoryShift(
   return removed >= 0 ? -removed : 0;
 }
 
-/** Keep line prices fixed; only move the small axis labels inside the available height. */
+/** Return label centers, leaving a gap while keeping the real price coordinates unchanged. */
 export function avoidSimpleLabelOverlap(
   values: readonly number[],
   height: number,
-  labelHeight = 16,
+  labelHeight = 14,
+  gap = 3,
 ) {
+  const spacing = labelHeight + gap;
   const sorted = values
     .map((y, index) => ({ y, index }))
-    .sort((a, b) => a.y - b.y);
+    .sort((a, b) => a.y - b.y || a.index - b.index);
   const result: number[] = [];
   const top = labelHeight / 2;
   const bottom = Math.max(top, height - top);
@@ -128,13 +130,13 @@ export function avoidSimpleLabelOverlap(
     result[index] = Math.max(
       top,
       Math.min(bottom, item.y),
-      index ? result[index - 1] + labelHeight : top,
+      index ? result[index - 1] + spacing : top,
     );
   });
   for (let i = result.length - 1; i >= 0; i--) {
     result[i] = Math.min(
       result[i],
-      i === result.length - 1 ? bottom : result[i + 1] - labelHeight,
+      i === result.length - 1 ? bottom : result[i + 1] - spacing,
     );
   }
   const ordered: number[] = [];
