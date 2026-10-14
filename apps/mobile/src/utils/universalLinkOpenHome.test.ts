@@ -50,6 +50,15 @@ describe('parseOpenHomeAction', () => {
 });
 
 describe('parseRabbyGoTargetAction', () => {
+  it.each([allowedHttpDomain, allowedAppDomain])(
+    'leaves the Trezor callback on %s to its hardware owner',
+    domain => {
+      const callbackUrl = `${domain}${UL_MATCH_PREFIX}connect-trezor?session=test-session`;
+      expect(parseRabbyGoTargetAction(callbackUrl)).toBeNull();
+      expect(parseOpenHomeAction(callbackUrl)).toBeNull();
+    },
+  );
+
   it.each([
     ['home', 'home'],
     ['perps', 'perps'],

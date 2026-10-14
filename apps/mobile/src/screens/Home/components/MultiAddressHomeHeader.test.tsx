@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react-native';
+import { act, render, screen } from '@testing-library/react-native';
 import { StyleSheet, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { MultiAddressHomeHeader } from './MultiAddressHomeHeader';
@@ -7,6 +7,16 @@ import { MultiAddressHomeHeader } from './MultiAddressHomeHeader';
 // Component contract only. The native Paper/Fabric interop border composition
 // still requires visual validation on iOS; the gradient is an external boundary.
 let mockIsLight = true;
+let mockWalletsPress: () => void;
+let mockModalParams: any;
+let mockIsFocused = true;
+let mockModalSequence = 0;
+const mockRemoveModal = jest.fn();
+const mockShowAddWallet = jest.fn();
+const mockNavigation = { isFocused: () => mockIsFocused };
+jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => mockNavigation,
+}));
 jest.mock('react-native-linear-gradient', () => {
   const ReactModule = require('react');
   return (props: object) =>
@@ -51,19 +61,26 @@ jest.mock('./HomeAddressItem', () => ({ HomeAddressItem: () => null }));
 jest.mock(
   '@/screens/Address/components/MultiAssets/RenderRow/CurveChart',
   () => ({
-    MultiChart: () => null,
+    MultiChart: ({ onPressWalletList }: any) => {
+      mockWalletsPress = onPressWalletList;
+      return null;
+    },
     setIsFoldMultiChart: jest.fn(),
   }),
 );
 jest.mock('@/components2024/GlobalBottomSheetModal', () => ({
-  createGlobalBottomSheetModal2024: jest.fn(),
-  removeGlobalBottomSheetModal2024: jest.fn(),
+  createGlobalBottomSheetModal2024: (params: any) => {
+    mockModalParams = params;
+    return `wallets-${++mockModalSequence}`;
+  },
+  removeGlobalBottomSheetModal2024: (...args: any[]) =>
+    mockRemoveModal(...args),
 }));
 jest.mock('@/components2024/GlobalBottomSheetModal/types', () => ({
   MODAL_NAMES: {},
 }));
 jest.mock('@/components2024/GlobalBottomSheetModal/apiGlobalModal', () => ({
-  apiGlobalModal: {},
+  apiGlobalModal: { showAddSelectMethodModal: () => mockShowAddWallet() },
 }));
 jest.mock('@/hooks/navigation', () => ({ apisHomeTabIndex: {} }));
 jest.mock('@/store/balance24h', () => ({ balance24hStore: {} }));
@@ -100,3 +117,46 @@ it.each([true, false])(
     expect(frames[0].findByType(LinearGradient)).toBe(gradient);
   },
 );
+
+describe('wallet sheet to add-wallet navigation', () => {
+  beforeEach(() => {
+    mockIsFocused = true;
+    mockRemoveModal.mockClear();
+    mockShowAddWallet.mockClear();
+  });
+
+  it('waits for native dismissal and consumes repeated add taps once', () => {
+    render(<MultiAddressHomeHeader />);
+    act(() => mockWalletsPress());
+    act(() => {
+      mockModalParams.onAddAddressPress();
+      mockModalParams.onAddAddressPress();
+    });
+    expect(mockShowAddWallet).not.toHaveBeenCalled();
+    expect(mockRemoveModal).toHaveBeenCalledTimes(1);
+    expect(mockRemoveModal).toHaveBeenCalledWith(expect.any(String), {
+      waitForDismiss: true,
+    });
+    act(() => mockModalParams.bottomSheetModalProps.onDismiss());
+    expect(mockShowAddWallet).toHaveBeenCalledTimes(1);
+    act(() => mockModalParams.bottomSheetModalProps.onDismiss());
+    expect(mockShowAddWallet).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['backdrop', 'blur', 'unmount', 'new-sheet'])(
+    'does not open add-wallet after %s',
+    reason => {
+      const view = render(<MultiAddressHomeHeader />);
+      act(() => mockWalletsPress());
+      const previous = mockModalParams;
+      if (reason !== 'backdrop') {
+        act(() => previous.onAddAddressPress());
+      }
+      if (reason === 'blur') mockIsFocused = false;
+      if (reason === 'unmount') view.unmount();
+      if (reason === 'new-sheet') act(() => mockWalletsPress());
+      act(() => previous.bottomSheetModalProps.onDismiss?.());
+      expect(mockShowAddWallet).not.toHaveBeenCalled();
+    },
+  );
+});

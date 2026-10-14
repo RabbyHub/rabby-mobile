@@ -40,6 +40,9 @@ const EnabledEmodeInfo = ({
       <View style={[styles.inner, styles.enabledInner]}>
         <LightingIcon width={18} height={18} />
         <MaskedView
+          // The hardware layer can retain a black text-mask rectangle while
+          // Fabric scrolls/re-attaches this badge. Keep the gradient design.
+          androidRenderingMode="software"
           maskElement={
             <Text numberOfLines={1} ellipsizeMode="tail" style={styles.text}>
               {title}

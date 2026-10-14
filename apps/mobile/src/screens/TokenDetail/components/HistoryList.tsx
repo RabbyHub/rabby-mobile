@@ -42,6 +42,8 @@ import {
 } from '@/databases/entities/historyItem';
 import type { ITokenItem } from '@/store/tokens';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
+import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import {
   useTransactionHistoryServiceReady,
   withTransactionHistoryService,
@@ -77,6 +79,7 @@ const TokenDetailHistoryListContent = ({
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const isFocused = useIsFocused();
 
   const { isSceneUsingAllAccounts, sceneCurrentAccountDepKey } =
     useSceneAccountInfo({
@@ -91,6 +94,7 @@ const TokenDetailHistoryListContent = ({
   const lastMap = useRef<Record<string, number>>({});
   const dbCursorRef = useRef<HistoryPageCursor | null>(null);
   const hasMoreMap = useRef<Record<string, boolean>>({});
+  const loadedWindowSizeRef = useRef(PAGE_COUNT);
 
   const [historySuccessList, setHistorySuccessList] = useState<string[]>(
     getTransactionHistorySucceedListSnapshot(),
@@ -113,90 +117,83 @@ const TokenDetailHistoryListContent = ({
     token_id: string,
     isMyAddress?: boolean,
     dbCursor: HistoryPageCursor | null = null,
+    pageCount = PAGE_COUNT,
   ): Promise<IFetchHistory> => {
     if (!address) {
       throw new Error('no account');
     }
 
-    try {
-      if (isMyAddress) {
-        const historyList =
-          await HistoryItemEntity.getTokenHistoryItemSortedByTime(
-            address,
-            dbCursor,
-            token_id,
-            chain_id,
-            PAGE_COUNT,
-          );
-        const list = historyList.map(item => {
-          return {
-            ...ensureHistoryListItemFromDb(item),
-            // hidden small and scam no need this prop
-            isSmallUsdTx: false,
-            isShowSuccess: false,
-          } as HistoryDisplayItem;
-        });
-        const lastItem = last(historyList);
+    if (isMyAddress) {
+      const historyList =
+        await HistoryItemEntity.getTokenHistoryItemSortedByTime(
+          address,
+          dbCursor,
+          token_id,
+          chain_id,
+          pageCount,
+        );
+      const list = historyList.map(item => {
         return {
-          last: lastItem?.time_at || 0,
-          dbCursor: lastItem ? toHistoryPageCursor(lastItem) : undefined,
-          list,
-        };
-      } else {
-        const [res, transactions] = await Promise.all([
-          openapi.listTxHistory({
-            id: address,
-            start_time: startTime,
-            page_count: PAGE_COUNT,
-            chain_id,
-            token_id,
-          }),
-          getTransactionHistoryTransactions(),
-        ]);
-
-        const { project_dict, history_list: list } = res;
-        const token_dict = (res as TxHistoryResult).token_dict;
-        const token_uuid_dict = (res as unknown as TxAllHistoryResult)
-          .token_uuid_dict;
-        const tokenDict = token_dict || token_uuid_dict;
-
-        const displayList = list
-          .map(item => ({
-            ...item,
-            address,
-            key: `${address}_${item.chain}_${item.id}`,
-            project_item: project_dict[item.project_id || ''] || null,
-            token_approve: item.token_approve
-              ? {
-                  ...item.token_approve,
-                  token: fetchHistoryTokenItem(
-                    item.token_approve?.token_id || '',
-                    item.chain,
-                    tokenDict,
-                  ),
-                }
-              : null,
-            receives: item.receives.map(e => ({
-              ...e,
-              token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
-            })),
-            sends: item.sends.map(e => ({
-              ...e,
-              token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
-            })),
-            historyType: getHistoryItemType(item, transactions),
-          }))
-          .sort((v1, v2) => v2.time_at - v1.time_at);
-        return {
-          last: last(displayList)?.time_at || 0,
-          list: displayList,
-        };
-      }
-    } catch (e) {
-      toast.error(`${address} fetch failed, ${e}`);
+          ...ensureHistoryListItemFromDb(item),
+          // hidden small and scam no need this prop
+          isSmallUsdTx: false,
+          isShowSuccess: false,
+        } as HistoryDisplayItem;
+      });
+      const lastItem = last(historyList);
       return {
-        last: 0,
-        list: [],
+        last: lastItem?.time_at || 0,
+        dbCursor: lastItem ? toHistoryPageCursor(lastItem) : undefined,
+        list,
+      };
+    } else {
+      const [res, transactions] = await Promise.all([
+        openapi.listTxHistory({
+          id: address,
+          start_time: startTime,
+          page_count: PAGE_COUNT,
+          chain_id,
+          token_id,
+        }),
+        getTransactionHistoryTransactions(),
+      ]);
+
+      const { project_dict, history_list: list } = res;
+      const token_dict = (res as TxHistoryResult).token_dict;
+      const token_uuid_dict = (res as unknown as TxAllHistoryResult)
+        .token_uuid_dict;
+      const tokenDict = token_dict || token_uuid_dict;
+
+      const displayList = list
+        .map(item => ({
+          ...item,
+          address,
+          key: `${address}_${item.chain}_${item.id}`,
+          project_item: project_dict[item.project_id || ''] || null,
+          token_approve: item.token_approve
+            ? {
+                ...item.token_approve,
+                token: fetchHistoryTokenItem(
+                  item.token_approve?.token_id || '',
+                  item.chain,
+                  tokenDict,
+                ),
+              }
+            : null,
+          receives: item.receives.map(e => ({
+            ...e,
+            token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
+          })),
+          sends: item.sends.map(e => ({
+            ...e,
+            token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
+          })),
+          historyType: getHistoryItemType(item, transactions),
+        }))
+        .sort((v1, v2) => v2.time_at - v1.time_at);
+      return {
+        last: last(displayList)?.time_at || 0,
+        list: displayList,
       };
     }
   };
@@ -208,7 +205,7 @@ const TokenDetailHistoryListContent = ({
     );
   }, [finalAccount]);
 
-  const batchFetchData = useMemoizedFn(async () => {
+  const batchFetchData = useMemoizedFn(async (isReload: boolean) => {
     const requestSequence = ++requestSequenceRef.current;
     const list: HistoryDisplayItem[] = [];
     if (disableHistoryRequest) {
@@ -226,20 +223,25 @@ const TokenDetailHistoryListContent = ({
       };
     }
     const addr = account.address.toLowerCase();
-    if (addr in hasMoreMap.current && !hasMoreMap.current[addr]) {
+    if (!isReload && hasMoreMap.current[addr] === false) {
       return {
         list: [],
         hasMore: false,
       };
     }
 
+    // Only local DB revalidation preserves the loaded window. Remote history
+    // retains its fixed API page size, including manual refreshes.
+    const pageCount =
+      isMyAddress && isReload ? loadedWindowSizeRef.current : PAGE_COUNT;
     const result = await fetchData(
       addr,
-      lastMap.current[addr] || 0,
+      isReload ? 0 : lastMap.current[addr] || 0,
       tokenItem.chain,
       tokenItem.id,
       isMyAddress,
-      dbCursorRef.current,
+      isReload ? null : dbCursorRef.current,
+      pageCount,
     );
     if (requestSequence !== requestSequenceRef.current) {
       // ahooks cancels request callbacks, but useInfiniteScroll publishes its
@@ -247,15 +249,13 @@ const TokenDetailHistoryListContent = ({
       // superseded by a refresh, or it can overwrite the refreshed list/cursor.
       throw new Error('Superseded token history page');
     }
-    if (result.list.length < PAGE_COUNT) {
+    if (result.list.length < pageCount) {
       hasMoreMap.current[addr] = false;
     } else {
       hasMoreMap.current[addr] = true;
     }
     lastMap.current[addr] = result.last || 0;
-    if (result.dbCursor) {
-      dbCursorRef.current = result.dbCursor;
-    }
+    dbCursorRef.current = result.dbCursor ?? null;
     list.push(
       ...result.list.map(item => {
         return {
@@ -280,9 +280,9 @@ const TokenDetailHistoryListContent = ({
     loadingMore,
     loadMore,
     noMore,
-    reloadAsync,
+    reload,
     cancel,
-  } = useInfiniteScroll(() => batchFetchData(), {
+  } = useInfiniteScroll(lastData => batchFetchData(!lastData), {
     isNoMore: d => disableHistoryRequest || (d ? !d.hasMore : false),
     // Native lists can report their end repeatedly before React commits the
     // loading flags. Reserve the request synchronously as well.
@@ -292,15 +292,25 @@ const TokenDetailHistoryListContent = ({
     onFinally() {
       requestPendingRef.current = false;
     },
+    onError(error) {
+      // Only the current request reports failures. Rejecting the page leaves
+      // the visible rows intact; cancellation suppresses stale error toasts.
+      toast.error(`${currentAddress} fetch failed, ${error}`);
+    },
   });
+
+  // A sync revalidation must not collapse a paginated window back to page one.
+  loadedWindowSizeRef.current = Math.max(
+    PAGE_COUNT,
+    fetchApiData?.list.length ?? 0,
+  );
 
   const refresh = useMemoizedFn(() => {
     cancel();
-    lastMap.current = {};
-    hasMoreMap.current = {};
-    dbCursorRef.current = null;
     if (!disableHistoryRequest) {
-      reloadAsync();
+      // Read the first page without discarding committed cursors. A failed
+      // refresh must still allow appending/retrying from the displayed window.
+      reload();
     }
     onRefresh?.();
   });
@@ -314,8 +324,11 @@ const TokenDetailHistoryListContent = ({
   }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
 
   const batchFetchDataFromDbUpsert = useMemoizedFn(async () => {
-    dbCursorRef.current = null;
-    reloadAsync();
+    if (!isFocused || !isMyAddress || disableHistoryRequest) {
+      return;
+    }
+    cancel();
+    reload();
   });
 
   const throttleBatchFetchData = useMemo(
@@ -332,6 +345,32 @@ const TokenDetailHistoryListContent = ({
       throttleBatchFetchData.cancel();
     };
   }, [throttleBatchFetchData]);
+
+  useAppOrmSyncEvents({
+    taskFor: 'all-history',
+    onRemoteDataUpserted: ctx => {
+      if (
+        isFocused &&
+        isMyAddress &&
+        !disableHistoryRequest &&
+        ctx.success &&
+        ctx.owner_addr.toLowerCase() === currentAddress?.toLowerCase()
+      ) {
+        throttleBatchFetchData();
+      }
+    },
+  });
+
+  const wasFocusedRef = useRef(isFocused);
+  useEffect(() => {
+    if (isFocused && !wasFocusedRef.current) {
+      void batchFetchDataFromDbUpsert();
+    }
+    if (!isFocused) {
+      throttleBatchFetchData.cancel();
+    }
+    wasFocusedRef.current = isFocused;
+  }, [isFocused, batchFetchDataFromDbUpsert, throttleBatchFetchData]);
 
   useEffect(() => {
     if (!transactionHistoryReady || hasConsumedLocalStatusRef.current) {

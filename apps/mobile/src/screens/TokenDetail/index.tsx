@@ -6,7 +6,7 @@ import { openapi } from '@/core/request';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
-import { useDebounceFn, useRequest } from 'ahooks';
+import { useDebounceFn } from 'ahooks';
 import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -50,6 +50,10 @@ import { TokenDetailWalletCard } from './components/TokenDetailWalletCard';
 import { findChainByServerID } from '@/utils/chain';
 import { customTestnetTokenToTokenItem } from '@/utils/token';
 import { mergeTokenSecurityFields } from '@/utils/tokenSecurityFlags';
+import {
+  getTokenDetailRequestKey,
+  useTokenDetailTokenInfo,
+} from './useTokenDetailTokenInfo';
 export type { RelatedDeFiType, TokenFromAddressItem } from './types';
 
 const isAndroid = Platform.OS === 'android';
@@ -63,6 +67,7 @@ const TokenDetailContent = () => {
     account,
     tokenSelectType,
     isCustomTestnetToken = false,
+    needUseCacheToken = false,
   } = route.params || {};
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
 
@@ -165,10 +170,27 @@ const TokenDetailContent = () => {
     } as ITokenItem;
   }, [effectiveAccount?.address, isCustomTestnetToken, token]);
 
-  const { data: baseTokenInfo, refreshAsync: refreshBaseTokenInfo } =
-    useRequest(fetchBaseTokenInfo, {
-      manual: true,
-    });
+  const {
+    tokenInfo: baseTokenInfo,
+    refreshAsync: refreshBaseTokenInfo,
+    initialLoading: baseTokenInitialLoading,
+  } = useTokenDetailTokenInfo({
+    requestKey: getTokenDetailRequestKey({
+      address: effectiveAccount?.address,
+      chain: token.chain,
+      tokenId: token.id,
+      isCustomTestnetToken,
+    }),
+    fetchToken: fetchBaseTokenInfo,
+  });
+  // History/search entry points pass amount: 0 as a placeholder, not as a
+  // fetched balance. Normal asset-list entries keep showing their real cache.
+  const balanceStatus =
+    needUseCacheToken && !baseTokenInfo
+      ? baseTokenInitialLoading
+        ? 'loading'
+        : 'unavailable'
+      : 'ready';
   const [manualBaseTokenRefreshing, setManualBaseTokenRefreshing] =
     React.useState(false);
 
@@ -295,7 +317,11 @@ const TokenDetailContent = () => {
           disableSwitch={isCustomTestnetToken}
         />
         <View style={styles.balanceOverviewContent}>
-          <BalanceOverview usdValue={usdValue} amount={amountSum || 0} />
+          <BalanceOverview
+            usdValue={usdValue}
+            amount={amountSum || 0}
+            status={balanceStatus}
+          />
           {!baseTokenInfo ? null : (
             <Pressable
               style={[
@@ -398,6 +424,7 @@ const TokenDetailContent = () => {
     );
   }, [
     amountSum,
+    balanceStatus,
     baseTokenInfo,
     colors2024,
     effectiveAccount,

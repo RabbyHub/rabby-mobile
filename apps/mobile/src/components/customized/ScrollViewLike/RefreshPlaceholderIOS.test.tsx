@@ -1,5 +1,8 @@
 import { act, renderHook } from '@testing-library/react-native';
-import { usePulldownRefreshGesture } from './RefreshPlaceholderIOS';
+import {
+  usePulldownRefreshGesture,
+  usePulldownRefreshStyles,
+} from './RefreshPlaceholderIOS';
 
 const mockCallbacks: Record<string, (...args: any[]) => void> = {};
 const mockFailOffsetX = jest.fn();
@@ -9,6 +12,19 @@ jest.mock('react-native-reanimated', () => ({
   default: { createAnimatedComponent: (component: unknown) => component },
   useSharedValue: (value: unknown) =>
     require('react').useRef({ value }).current,
+  useAnimatedStyle: (callback: () => object) => callback(),
+  interpolate: (
+    value: number,
+    [inputStart, inputEnd]: number[],
+    [outputStart, outputEnd]: number[],
+  ) => {
+    const progress = Math.min(
+      1,
+      Math.max(0, (value - inputStart) / (inputEnd - inputStart)),
+    );
+    return outputStart + progress * (outputEnd - outputStart);
+  },
+  Extrapolate: { CLAMP: 'clamp' },
   withTiming: (value: unknown) => value,
   runOnJS:
     (fn: (...args: any[]) => unknown) =>
@@ -55,7 +71,11 @@ jest.mock('@/hooks/reanimated', () => ({
 }));
 jest.mock('@/utils/common', () => ({ triggerImpact: jest.fn() }));
 jest.mock('@/constant/home', () => ({
-  HOME_TOP_HEADER_SIZES: { scrollableListTopOffset: 56 },
+  HOME_TOP_HEADER_SIZES: {
+    scrollableListTopOffset: 56,
+    tabInnerHomeTopOffset: 72,
+    headerOffsetAfterTabItem: 12,
+  },
   SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING: true,
 }));
 
@@ -163,4 +183,56 @@ it('does not refresh when an active pull is cancelled after crossing the thresho
   expect(onRefresh).not.toHaveBeenCalled();
   expect(result.current.svs.svIsRefreshing.value).toBe(false);
   expect(result.current.svs.pullDistance.value).toBe(0);
+});
+
+it('bounds the visible spacer without changing the raw pull threshold or pending refresh', async () => {
+  let finishRefresh!: () => void;
+  const refresh = new Promise<void>(resolve => {
+    finishRefresh = resolve;
+  });
+  const onRefresh = jest.fn(() => refresh);
+  const scrollY = { value: 0 } as any;
+  const { result, rerender } = renderHook(() => {
+    const gesture = usePulldownRefreshGesture({
+      scrollViewYValue: scrollY,
+      onJsPulldownRefresh: onRefresh,
+    });
+    const styles = usePulldownRefreshStyles({
+      states: gesture.svs,
+      indicatorSpaceHeight: 56,
+    });
+    return { ...gesture, styles };
+  });
+
+  expect(result.current.styles.scrollTopStyle.height).toBe(0);
+  act(() => {
+    mockCallbacks.onStart({});
+    mockCallbacks.onUpdate({ translationY: 300 });
+  });
+  rerender({});
+  expect(result.current.svs.pullDistance.value).toBe(300);
+  expect(result.current.styles.scrollTopStyle.height).toBe(56);
+  expect(onRefresh).not.toHaveBeenCalled();
+
+  act(() => {
+    mockCallbacks.onEnd({}, true);
+    mockCallbacks.onFinalize();
+    // Further touches cannot expand the spacer or restart an in-flight refresh.
+    mockCallbacks.onStart({});
+    mockCallbacks.onUpdate({ translationY: 500 });
+    mockCallbacks.onEnd({}, true);
+    mockCallbacks.onFinalize();
+  });
+  rerender({});
+  expect(onRefresh).toHaveBeenCalledTimes(1);
+  expect(result.current.svs.svIsRefreshing.value).toBe(true);
+  expect(result.current.styles.scrollTopStyle.height).toBe(56);
+
+  await act(async () => {
+    finishRefresh();
+    await mockJsRefreshTasks[0];
+  });
+  rerender({});
+  expect(result.current.svs.svIsRefreshing.value).toBe(false);
+  expect(result.current.styles.scrollTopStyle.height).toBe(0);
 });

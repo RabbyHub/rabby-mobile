@@ -206,7 +206,6 @@ export const usePulldownRefreshStyles = ({
   indicatorSpaceHeight,
   pullDistanceMaxValue = 56,
 }: HooksInputs) => {
-  const scrHeight = Dimensions.get('screen').height;
   const { pullDistance, svIsRefreshing, svIsManualRefreshing } = states;
 
   // rotate deg based on pullDistance, max rotate 360deg
@@ -226,8 +225,11 @@ export const usePulldownRefreshStyles = ({
     return {
       height: interpolate(
         pullDistance.value,
-        [0, scrHeight * 0.5 - HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset],
-        [0, scrHeight * 0.5 - HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset],
+        // The raw gesture distance still controls activation and feedback.
+        // Reserve only the indicator's space, not half the screen, while
+        // pulling; a long pull must not push the asset rows out of view.
+        [0, indicatorSpaceHeight],
+        [0, indicatorSpaceHeight],
         Extrapolate.CLAMP,
       ),
       // paddingTop: 0,

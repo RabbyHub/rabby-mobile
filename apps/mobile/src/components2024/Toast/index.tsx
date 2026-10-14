@@ -298,7 +298,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       alignItems: 'center',
       justifyContent: 'center',
       paddingHorizontal: 12,
-      maxHeight: '100%',
       minHeight: TOAST_MIN_H,
       paddingVertical: IS_IOS ? 10 : 8,
       // ...makeDevOnlyStyle({
@@ -311,6 +310,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     },
     text: {
       // ...makeDebugBorder(),
+      flexShrink: 1,
       color: ThemeColors2024.light['neutral-InvertHighlight'],
       fontSize: 15,
       fontWeight: '700',
