@@ -1,10 +1,11 @@
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { AppColors2024Variants } from '@/constant/theme';
+import type { BottomSheetModalProps } from '@gorhom/bottom-sheet';
 import React from 'react';
 import { StyleSheet } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { BackgroundComponent } from './BackgroundComponent';
 import { CreateParams, MODAL_NAMES } from './types';
-import { getRemoveTokenConfirmModalProps } from '@/components2024/RemoveTokenConfirmPopup';
 
 export function makeBottomSheetProps({
   colors,
@@ -79,4 +80,31 @@ export function makeBottomSheetProps({
   return createParams?.name === MODAL_NAMES.REMOVE_TOKEN_CONFIRM
     ? { ...baseProps, ...getRemoveTokenConfirmModalProps(colors) }
     : baseProps;
+}
+
+function getRemoveTokenConfirmModalProps(
+  colors2024: AppColors2024Variants,
+): Pick<
+  BottomSheetModalProps,
+  'handleStyle' | 'handleIndicatorStyle' | 'backgroundComponent'
+> {
+  return {
+    handleStyle: {
+      height: 36,
+      paddingTop: 18,
+      backgroundColor: 'transparent',
+    },
+    handleIndicatorStyle: {
+      width: 50,
+      height: 6,
+      backgroundColor: colors2024['neutral-sheet-handle'],
+    },
+    backgroundComponent: props => (
+      <LinearGradient
+        style={props.style}
+        colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
+        locations={[0.07453, 0.22418]}
+      />
+    ),
+  };
 }
