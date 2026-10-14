@@ -1,7 +1,12 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import { trigger } from 'react-native-haptic-feedback';
-import { DEFAULT_SIMPLE_CHART_PREFERENCE } from '@/constant/perpsSimpleChart';
+import {
+  DEFAULT_SIMPLE_CHART_PREFERENCE,
+  SIMPLE_CHART_RANGES,
+  SIMPLE_RANGE_INTERVAL,
+  type SimpleChartPreference,
+} from '@/constant/perpsSimpleChart';
 import { PerpsSimpleChartToolbar } from './PerpsSimpleChartToolbar';
 import { StyleSheet, View } from 'react-native';
 
@@ -25,15 +30,77 @@ jest.mock(
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
-jest.mock('@/utils/styles', () => ({
-  createGetStyles2024: (fn: unknown) => fn,
-}));
 jest.mock('@/hooks/theme', () => ({
-  useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
+  useTheme2024: ({ getStyle }: any) => {
     const colors2024 = require('@/constant/theme').ThemeColors2024.dark;
-    return { colors2024, styles: getStyle({ colors2024, isLight: false }) };
+    return {
+      colors2024,
+      styles: getStyle.getStyles({ colors2024, isLight: false }),
+    };
   },
 }));
+
+it('keeps each rounded background native before pending or first selection', () => {
+  const props = {
+    onChange: jest.fn(),
+    onInterval: jest.fn(),
+    onPrefetch: jest.fn(),
+  };
+  const initial = DEFAULT_SIMPLE_CHART_PREFERENCE;
+  const view = render(
+    <PerpsSimpleChartToolbar {...props} preference={initial} />,
+  );
+  const names = [
+    ...SIMPLE_CHART_RANGES,
+    'page.perpsDetail.simpleChart.intervalTitle',
+  ];
+  const background = (name: string) =>
+    view
+      .getAllByRole('button', { name })
+      // The manual 1d interval also displays "1D"; its explicit label identifies
+      // the interval entry, while range buttons are named by their text.
+      .find(button =>
+        name === 'page.perpsDetail.simpleChart.intervalTitle'
+          ? button.props.accessibilityLabel === name
+          : !button.props.accessibilityLabel,
+      )!
+      .findAllByType(View)
+      .find(node => StyleSheet.flatten(node.props.style)?.borderRadius === 6)!;
+  const hosts = names.map(name => {
+    const host = background(name);
+    expect(host.props.collapsable).toBe(false);
+    return host;
+  });
+  const selections: SimpleChartPreference[] = [
+    ...SIMPLE_CHART_RANGES.map(range => ({
+      ...initial,
+      range,
+      interval: SIMPLE_RANGE_INTERVAL[range],
+    })),
+    { ...initial, range: null, interval: '1h' },
+  ];
+  for (const selection of selections) {
+    // Pending opacity previously promoted an incomplete layout-only host.
+    view.rerender(
+      <PerpsSimpleChartToolbar
+        {...props}
+        preference={initial}
+        requestedPreference={selection}
+      />,
+    );
+    view.rerender(
+      <PerpsSimpleChartToolbar {...props} preference={selection} />,
+    );
+    names.forEach((name, index) => {
+      expect(background(name)).toBe(hosts[index]);
+      expect(background(name).props.collapsable).toBe(false);
+    });
+    const selectedName = selection.range ?? names[names.length - 1];
+    expect(
+      StyleSheet.flatten(background(selectedName).props.style).backgroundColor,
+    ).toBeTruthy();
+  }
+});
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));

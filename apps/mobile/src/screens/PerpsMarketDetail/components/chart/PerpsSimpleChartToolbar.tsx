@@ -52,6 +52,8 @@ export const PerpsSimpleChartToolbar = React.memo(
             }}>
             {({ pressed }) => (
               <View
+                // Keep the radius on the native host before its first background.
+                collapsable={false}
                 style={[
                   styles.interval,
                   preference.range === null && styles.selected,
@@ -101,6 +103,7 @@ export const PerpsSimpleChartToolbar = React.memo(
               }}>
               {({ pressed }) => (
                 <View
+                  collapsable={false}
                   style={[
                     styles.range,
                     preference.range === range && styles.selected,
