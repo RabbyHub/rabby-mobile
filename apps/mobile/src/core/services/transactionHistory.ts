@@ -636,7 +636,7 @@ export class TransactionHistoryService extends StoreServiceBase<
       }
       const group = groups.find(
         g =>
-          g.address === tx.address &&
+          isSameAddress(g.address, tx.address) &&
           g.nonce === tx.nonce &&
           g.chainId === tx.chainId,
       );
