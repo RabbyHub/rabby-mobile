@@ -133,7 +133,7 @@ describe('TradingViewCandleChart protocol compatibility', () => {
         variant="perps-simple"
       />,
     );
-    markChartReady({ perpsSimpleKlineProtocolVersion: 2 });
+    markChartReady({ perpsSimpleKlineProtocolVersion: 3 });
     act(() => chartRef.current?.sendSimpleMessage(command));
     expect(mockSendMessage).toHaveBeenLastCalledWith({
       type: 'TRADINGVIEW_MESSAGE',
@@ -141,35 +141,38 @@ describe('TradingViewCandleChart protocol compatibility', () => {
     });
   });
 
-  it('rejects resources without the Simple protocol and recovers when the matching page is ready', () => {
-    const ready = jest.fn();
-    const event = jest.fn();
-    render(
-      <TradingViewCandleChart
-        height={248}
-        variant="perps-simple"
-        onChartReady={ready}
-        onSimpleEvent={event}
-      />,
-    );
-    markChartReady();
-    expect(mockReload).toHaveBeenCalledTimes(1);
-    expect(ready).not.toHaveBeenCalled();
-    markChartReady({ perpsSimpleKlineProtocolVersion: 2 });
-    expect(ready).toHaveBeenCalledTimes(1);
-    const selection = {
-      type: 'PERPS_SIMPLE_EVENT',
-      identity: 'simple:BTC',
-      event: 'selection',
-      candle: null,
-    };
-    act(() =>
-      mockLocalWebViewProps.mock.calls
-        .at(-1)?.[0]
-        .onMessage({ nativeEvent: { data: JSON.stringify(selection) } }),
-    );
-    expect(event).toHaveBeenCalledWith(selection);
-  });
+  it.each([undefined, 2])(
+    'rejects incompatible Simple protocol %s and recovers when the matching page is ready',
+    version => {
+      const ready = jest.fn();
+      const event = jest.fn();
+      render(
+        <TradingViewCandleChart
+          height={248}
+          variant="perps-simple"
+          onChartReady={ready}
+          onSimpleEvent={event}
+        />,
+      );
+      markChartReady({ perpsSimpleKlineProtocolVersion: version });
+      expect(mockReload).toHaveBeenCalledTimes(1);
+      expect(ready).not.toHaveBeenCalled();
+      markChartReady({ perpsSimpleKlineProtocolVersion: 3 });
+      expect(ready).toHaveBeenCalledTimes(1);
+      const selection = {
+        type: 'PERPS_SIMPLE_EVENT',
+        identity: 'simple:BTC',
+        event: 'selection',
+        candle: null,
+      };
+      act(() =>
+        mockLocalWebViewProps.mock.calls
+          .at(-1)?.[0]
+          .onMessage({ nativeEvent: { data: JSON.stringify(selection) } }),
+      );
+      expect(event).toHaveBeenCalledWith(selection);
+    },
+  );
 
   it('sends the approved dark Pro crosshair label colors', () => {
     render(<TradingViewCandleChart height={184} variant="perps-pro" />);

@@ -6,7 +6,10 @@ import { useMemoizedFn } from 'ahooks';
 import type { PerpsCandleDataInterval } from '@/constant/perps';
 import type { SimpleChartPreference } from '@/constant/perpsSimpleChart';
 import TradingViewCandleChart from '@/components2024/TradingViewCandleChart';
-import type { SimpleChartConfig } from '@/components2024/TradingViewCandleChart/type';
+import type {
+  SimpleChartConfig,
+  SimpleChartFill,
+} from '@/components2024/TradingViewCandleChart/type';
 import type { MarketData } from '@/hooks/perps/usePerpsStore';
 import type { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 import { useTheme2024 } from '@/hooks/theme';
@@ -20,6 +23,8 @@ import { usePerpsSimpleChart } from './chart/usePerpsSimpleChart';
 import { projectSimpleFills } from './chart/model';
 import { SIMPLE_CHART_COLORS } from './chart/visual';
 import { PerpsSimpleChartLoading } from './chart/PerpsSimpleChartLoading';
+
+const EMPTY_FILLS: SimpleChartFill[] = [];
 
 export const PerpsChart = React.memo(function PerpsChart({
   marketName,
@@ -49,6 +54,7 @@ export const PerpsChart = React.memo(function PerpsChart({
   >(
     () => ({
       priceDecimals: decimals,
+      showTradeMarkers: false,
       colors: {
         background: colors2024['neutral-bg-0'],
         text: colors2024['neutral-title-1'],
@@ -77,7 +83,10 @@ export const PerpsChart = React.memo(function PerpsChart({
     }),
     [colors2024, decimals, t],
   );
-  const fills = useMemo(() => projectSimpleFills(history), [history]);
+  const fills = useMemo(
+    () => (config.showTradeMarkers ? projectSimpleFills(history) : EMPTY_FILLS),
+    [config.showTradeMarkers, history],
+  );
   const chart = usePerpsSimpleChart({
     coin: marketName,
     config,
@@ -124,6 +133,15 @@ export const PerpsChart = React.memo(function PerpsChart({
             : null
         }
         decimals={decimals}
+        range={chart.preference.range}
+        rangeReference={chart.rangeReference}
+        referenceLoading={chart.referenceLoading}
+        marketLoading={
+          chart.loadingBusy &&
+          (chart.feed.status === 'idle' ||
+            chart.feed.status === 'loading' ||
+            !ctx)
+        }
         prevDayPx={Number(ctx?.prevDayPx)}
         openInterest={Number(ctx?.openInterest) * Number(ctx?.markPx)}
         volume={Number(ctx?.dayNtlVlm)}

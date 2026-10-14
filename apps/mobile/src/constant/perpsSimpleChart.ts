@@ -1,11 +1,18 @@
 import { PERPS_CANDLE_INTERVALS, type PerpsCandleDataInterval } from './perps';
 
-export const SIMPLE_CHART_RANGES = ['1D', '1W', '1M', '1Y', 'ALL'] as const;
+export const SIMPLE_CHART_RANGES = ['1D', '1W', '1M', '3M', '1Y'] as const;
 export type SimpleChartRange = (typeof SIMPLE_CHART_RANGES)[number];
 export const SIMPLE_RANGE_INTERVAL: Record<
   SimpleChartRange,
   PerpsCandleDataInterval
 > = {
+  '1D': '30m',
+  '1W': '4h',
+  '1M': '12h',
+  '3M': '1d',
+  '1Y': '1w',
+};
+const LEGACY_RANGE_INTERVAL: Record<string, string> = {
   '1D': '15m',
   '1W': '1h',
   '1M': '1d',
@@ -13,16 +20,16 @@ export const SIMPLE_RANGE_INTERVAL: Record<
   ALL: '1M',
 };
 export type SimpleChartPreference = {
-  version: 1;
+  version: 2;
   style: 'candle' | 'area';
   range: SimpleChartRange | null;
   interval: PerpsCandleDataInterval;
 };
 export const DEFAULT_SIMPLE_CHART_PREFERENCE: SimpleChartPreference = {
-  version: 1,
+  version: 2,
   style: 'candle',
   range: '1D',
-  interval: '15m',
+  interval: '30m',
 };
 export const SIMPLE_INTERVAL_GROUPS = [
   { key: 'minutes', values: ['1m', '5m', '15m', '30m'] },
@@ -35,16 +42,34 @@ export function normalizeSimpleChartPreference(
 ): SimpleChartPreference {
   if (!value || typeof value !== 'object')
     return { ...DEFAULT_SIMPLE_CHART_PREFERENCE };
-  const v = value as Partial<SimpleChartPreference>;
+  const v = value as Record<string, unknown>;
   if (
-    v.version !== 1 ||
+    (v.version !== 1 && v.version !== 2) ||
     (v.style !== 'candle' && v.style !== 'area') ||
-    ![...PERPS_CANDLE_INTERVALS, '3d'].includes(v.interval as string) ||
-    (v.range !== null &&
-      (!SIMPLE_CHART_RANGES.includes(v.range as SimpleChartRange) ||
-        SIMPLE_RANGE_INTERVAL[v.range as SimpleChartRange] !== v.interval))
+    ![...PERPS_CANDLE_INTERVALS, '3d'].includes(v.interval as string)
   ) {
     return { ...DEFAULT_SIMPLE_CHART_PREFERENCE };
   }
-  return { version: 1, style: v.style, range: v.range!, interval: v.interval! };
+  if (v.range === null)
+    return {
+      version: 2,
+      style: v.style,
+      range: null,
+      interval: v.interval as PerpsCandleDataInterval,
+    };
+  const mapping =
+    v.version === 1 ? LEGACY_RANGE_INTERVAL : SIMPLE_RANGE_INTERVAL;
+  if (
+    typeof v.range !== 'string' ||
+    !Object.prototype.hasOwnProperty.call(mapping, v.range) ||
+    mapping[v.range as keyof typeof mapping] !== v.interval
+  )
+    return { ...DEFAULT_SIMPLE_CHART_PREFERENCE };
+  const range = (v.range === 'ALL' ? '1D' : v.range) as SimpleChartRange;
+  return {
+    version: 2,
+    style: v.style,
+    range,
+    interval: SIMPLE_RANGE_INTERVAL[range],
+  };
 }

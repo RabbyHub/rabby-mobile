@@ -55,7 +55,7 @@ const config: Omit<SimpleChartConfig, 'range' | 'style' | 'interval'> = {
 };
 const prices = { entryPrice: 100 };
 const fills = [{ time: 1700000000, side: 'B' }];
-const raw = (coin = 'BTC', interval = '15m', close = '105'): Candle => ({
+const raw = (coin = 'BTC', interval = '30m', close = '105'): Candle => ({
   t: 1700000000000,
   T: 1700000899999,
   s: coin,
@@ -174,6 +174,7 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
               event: 'applied',
               identity: message.identity,
               sequence: message.sequence,
+              referencePrice: message.config.range === '1W' ? 90 : null,
             }),
           );
       },
@@ -187,14 +188,14 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
     const hook = mount();
     await settle();
     expect(hook.result.current.feed.status).toBe('ready');
-    expect(requests).toEqual([{ coin: 'BTC', interval: '15m' }]);
+    expect(requests).toEqual([{ coin: 'BTC', interval: '30m' }]);
     const baseline = messages.filter(m => m.action === 'replace').at(-1);
     expect(baseline).toMatchObject({
       action: 'replace',
       candles: [{ time: 1700000000, close: 105 }],
     });
     messages.length = 0;
-    act(() => candleCallbacks.at(-1)!(raw('BTC', '15m', '110')));
+    act(() => candleCallbacks.at(-1)!(raw('BTC', '30m', '110')));
     expect(messages).toEqual([
       expect.objectContaining({
         action: 'update',
@@ -203,7 +204,7 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
     ]);
     act(() =>
       hook.result.current.updatePreference({
-        version: 1,
+        version: 2,
         style: 'area',
         range: null,
         interval: '3d',
@@ -217,6 +218,120 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
     });
     expect(await service.getSelectedKlineInterval()).toBe('4h');
     expect(requests.at(-1)).toEqual({ coin: 'BTC', interval: '3d' });
+  });
+
+  it('commits the range reference with the displayed snapshot and rejects stale summaries without bridge fan-out', async () => {
+    const hook = mount();
+    await settle();
+    const previousIdentity = messages
+      .filter(m => m.action === 'replace')
+      .at(-1)!.identity;
+    let resolve!: (candles: Candle[]) => void;
+    fetchCandles = () =>
+      new Promise(done => {
+        resolve = done;
+      });
+    act(() =>
+      hook.result.current.updatePreference({
+        version: 2,
+        style: 'candle',
+        range: '1W',
+        interval: '4h',
+      }),
+    );
+    await settle();
+    expect(hook.result.current.preference.range).toBe('1D');
+    expect(hook.result.current.rangeReference).toBeNull();
+    await act(async () => resolve([raw('BTC', '4h')]));
+    await settle();
+    expect(hook.result.current.preference.range).toBe('1W');
+    expect(hook.result.current.rangeReference).toBe(90);
+    const identity = messages
+      .filter(m => m.action === 'replace')
+      .at(-1)!.identity;
+    messages.length = 0;
+    act(() =>
+      hook.result.current.onSimpleEvent({
+        type: 'PERPS_SIMPLE_EVENT',
+        event: 'rangeReference',
+        identity: previousIdentity,
+        referencePrice: 1,
+      }),
+    );
+    expect(hook.result.current.rangeReference).toBe(90);
+    act(() =>
+      hook.result.current.onSimpleEvent({
+        type: 'PERPS_SIMPLE_EVENT',
+        event: 'rangeReference',
+        identity,
+        referencePrice: 95,
+      }),
+    );
+    expect(hook.result.current.rangeReference).toBe(95);
+    expect(messages).toHaveLength(0);
+    act(() =>
+      hook.result.current.onSimpleEvent({
+        type: 'PERPS_SIMPLE_EVENT',
+        event: 'rangeReference',
+        identity,
+        referencePrice: null,
+      }),
+    );
+    expect(hook.result.current.rangeReference).toBeNull();
+    expect(messages).toHaveLength(0);
+  });
+
+  it('keeps the retained range reference while a same-identity recovery replacement awaits drawing', async () => {
+    const hook = mount();
+    await settle();
+    let resolve!: (candles: Candle[]) => void;
+    fetchCandles = () =>
+      new Promise(done => {
+        resolve = done;
+      });
+    act(() =>
+      hook.result.current.updatePreference({
+        version: 2,
+        style: 'candle',
+        range: '1W',
+        interval: '4h',
+      }),
+    );
+    await settle();
+    act(() => hook.result.current.onChartReady());
+    await settle();
+    expect(hook.result.current.preference.range).toBe('1D');
+    const retained = messages.filter(m => m.action === 'replace').at(-1)!;
+    // Keep the external WebView acknowledgement pending while real HTTP resolves.
+    hook.result.current.chartRef.current = {
+      sendSimpleMessage: message => messages.push(message),
+    } as TradingViewChartRef;
+    await act(async () => resolve([raw('BTC', '4h')]));
+    await settle();
+    const replacement = messages.filter(m => m.action === 'replace').at(-1)!;
+    expect(replacement.identity).toBe(retained.identity);
+    expect(replacement.sequence).not.toBe(retained.sequence);
+    act(() =>
+      hook.result.current.onSimpleEvent({
+        type: 'PERPS_SIMPLE_EVENT',
+        event: 'rangeReference',
+        identity: replacement.identity,
+        referencePrice: 90,
+      }),
+    );
+    expect(hook.result.current.preference.range).toBe('1D');
+    expect(hook.result.current.rangeReference).toBeNull();
+    act(() =>
+      hook.result.current.onSimpleEvent({
+        type: 'PERPS_SIMPLE_EVENT',
+        event: 'applied',
+        identity: replacement.identity,
+        sequence: replacement.sequence,
+        referencePrice: 90,
+      }),
+    );
+    expect(hook.result.current.preference.range).toBe('1W');
+    expect(hook.result.current.rangeReference).toBe(90);
   });
 
   it('switches style/theme without refetching or resetting the view', async () => {
@@ -260,7 +375,7 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
     await settle();
     expect(messages.at(-1)!.identity).not.toBe(oldIdentity);
     act(() => {
-      staleCandle(raw('BTC', '15m', '119'));
+      staleCandle(raw('BTC', '30m', '119'));
       hook.result.current.onSimpleEvent({
         type: 'PERPS_SIMPLE_EVENT',
         identity: oldIdentity,
@@ -310,14 +425,14 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
     messages.length = 0;
     act(() =>
       hook.result.current.updatePreference({
-        version: 1,
+        version: 2,
         style: 'candle',
         range: null,
         interval: '1h',
       }),
     );
     await settle();
-    expect(hook.result.current.preference.interval).toBe('15m');
+    expect(hook.result.current.preference.interval).toBe('30m');
     expect(hook.result.current.hasAppliedData).toBe(true);
     expect(hook.result.current.loading).toBe(true);
     expect(
@@ -327,7 +442,7 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
     ).toHaveLength(0);
     act(() =>
       hook.result.current.updatePreference({
-        version: 1,
+        version: 2,
         style: 'candle',
         range: null,
         interval: '4h',
@@ -350,7 +465,7 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
   });
 
   it('renders the shared preload while accuracy refresh waits, and retains it through failure and reload', async () => {
-    await loadPerpsCandleSourceSnapshot({ coin: 'BTC', interval: '15m' });
+    await loadPerpsCandleSourceSnapshot({ coin: 'BTC', interval: '30m' });
     let reject!: (error: Error) => void;
     fetchCandles = () =>
       new Promise((_resolve, fail) => {
@@ -373,7 +488,7 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
     expect(
       messages.find(message => message.action === 'replace'),
     ).toMatchObject({ candles: [{ close: 105 }] });
-    fetchCandles = async () => [raw('BTC', '15m', '110')];
+    fetchCandles = async () => [raw('BTC', '30m', '110')];
     act(() => hook.result.current.retry());
     await settle();
     expect(hook.result.current.feed.status).toBe('ready');
@@ -412,7 +527,7 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
         message => message.action === 'data' || message.action === 'replace',
       ),
     ).toBe(false);
-    fetchCandles = async () => [raw('BTC', '15m', '112')];
+    fetchCandles = async () => [raw('BTC', '30m', '112')];
     act(() => handlers.get('open')!());
     await settle();
     expect(hook.result.current.loading).toBe(false);
@@ -484,7 +599,7 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
     await settle();
     expect(requests).toHaveLength(4);
     messages.length = 0;
-    await act(async () => resolveOld([raw('BTC', '15m', '99')]));
+    await act(async () => resolveOld([raw('BTC', '30m', '99')]));
     await settle();
     expect(messages.some(message => message.action === 'historyComplete')).toBe(
       false,

@@ -1,5 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
+import { Skeleton } from '@rneui/themed';
+import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
+import type { SimpleChartRange } from '@/constant/perpsSimpleChart';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
 import type { CandleStick } from '@/components2024/TradingViewCandleChart/type';
@@ -23,6 +26,10 @@ export const PerpsSimpleChartHeader = React.memo(
     candleClose,
     decimals,
     prevDayPx,
+    range,
+    rangeReference,
+    referenceLoading,
+    marketLoading,
     openInterest,
     volume,
     selection,
@@ -33,6 +40,10 @@ export const PerpsSimpleChartHeader = React.memo(
     candleClose: number | null;
     decimals: number;
     prevDayPx: number;
+    range: SimpleChartRange | null;
+    rangeReference: number | null;
+    referenceLoading: boolean;
+    marketLoading: boolean;
     openInterest: number;
     volume: number;
     selection: CandleStick | null;
@@ -57,16 +68,27 @@ export const PerpsSimpleChartHeader = React.memo(
       candidate !== null && Number.isFinite(candidate) && candidate > 0
         ? candidate
         : null;
+    const daily = range === null || range === '1D';
+    const reference = daily ? prevDayPx : rangeReference;
     const change = simplePriceChange(
       price,
-      selection ? selection.open : prevDayPx,
+      selection ? selection.open : reference ?? NaN,
     );
     const [showVolume, setShowVolume] = useState(false);
-    const positive = !change || change.delta >= 0;
-    const color = colors2024[positive ? 'green-default' : 'red-default'];
+    const positive = change !== null && change.delta >= 0;
+    const color = change
+      ? colors2024[positive ? 'green-default' : 'red-default']
+      : colors2024['neutral-secondary'];
+    const priceLoading =
+      active && !selection && price === null && marketLoading;
+    const changeLoading =
+      active &&
+      !selection &&
+      change === null &&
+      (priceLoading || (daily ? marketLoading : referenceLoading));
     const ChangeIcon = positive ? Up : Down;
     const changeText = change
-      ? `${change.delta >= 0 ? '+' : '-'}${simplePriceText(
+      ? `${change.delta >= 0 ? '+' : '-'}$${simplePriceText(
           Math.abs(change.delta),
           decimals,
         )} (${change.percent >= 0 ? '+' : ''}${(change.percent * 100).toFixed(
@@ -90,7 +112,7 @@ export const PerpsSimpleChartHeader = React.memo(
               ))}
             </View>
             <View style={styles.selectedChangeRow}>
-              <ChangeIcon color={color} />
+              {change && <ChangeIcon color={color} />}
               <Text
                 style={[styles.change, styles.selectedChange, { color }]}
                 numberOfLines={1}
@@ -105,13 +127,49 @@ export const PerpsSimpleChartHeader = React.memo(
         ) : (
           <>
             <View style={styles.priceColumn}>
-              <Text style={styles.price} numberOfLines={1} adjustsFontSizeToFit>
-                {price === null ? '—' : `$${simplePriceText(price, decimals)}`}
-              </Text>
+              {priceLoading ? (
+                <View style={styles.pricePlaceholder}>
+                  <Skeleton
+                    width={160}
+                    height={28}
+                    style={styles.skeleton}
+                    LinearGradientComponent={LoadingLinear}
+                  />
+                </View>
+              ) : (
+                <Text
+                  style={styles.price}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit>
+                  {price === null
+                    ? '—'
+                    : `$${simplePriceText(price, decimals)}`}
+                </Text>
+              )}
               <View style={styles.changeRow}>
-                <ChangeIcon color={color} />
-                <Text style={[styles.change, { color }]}>{changeText}</Text>
-                {!selection && <Text style={styles.description}>24h</Text>}
+                {changeLoading ? (
+                  <Skeleton
+                    width={144}
+                    height={16}
+                    style={styles.skeleton}
+                    LinearGradientComponent={LoadingLinear}
+                  />
+                ) : (
+                  <>
+                    {change && <ChangeIcon color={color} />}
+                    <Text
+                      style={[styles.change, styles.changeValue, { color }]}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit>
+                      {changeText}
+                      {!selection && (
+                        <Text style={styles.description}>{` ${
+                          daily ? '24h' : range
+                        }`}</Text>
+                      )}
+                    </Text>
+                  </>
+                )}
               </View>
             </View>
             {selection ? (
@@ -162,7 +220,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     gap: 8,
   },
-  priceColumn: { flexShrink: 1, minWidth: 0, gap: 2 },
+  priceColumn: { flex: 1, minWidth: 0, gap: 2 },
+  pricePlaceholder: { height: 36, justifyContent: 'center' },
+  skeleton: {
+    borderRadius: 4,
+    backgroundColor: colors2024['neutral-bg-2'],
+    maxWidth: '100%',
+  },
+  changeValue: { flexShrink: 1 },
   price: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 28,
@@ -174,7 +239,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-    flexWrap: 'wrap',
+    minHeight: 16,
   },
   change: {
     fontFamily: 'SF Pro Rounded',
@@ -189,7 +254,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '400',
     color: colors2024['neutral-secondary'],
   },
-  metric: { alignItems: 'flex-end', gap: 2, flexShrink: 1 },
+  metric: { alignItems: 'flex-end', gap: 2, flexShrink: 0 },
   metricValue: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   amount: {
     fontFamily: 'SF Pro Rounded',

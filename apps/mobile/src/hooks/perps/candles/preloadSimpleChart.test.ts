@@ -37,6 +37,7 @@ describe('Simple chart intent prefetch scheduling', () => {
     preloadSimpleChart('BTC');
     await flush();
     expect(mockSnapshot).toHaveBeenCalledTimes(1);
+    expect(mockSnapshot.mock.calls[0].slice(0, 2)).toEqual(['BTC', '30m']);
     resolve([]);
     await flush();
     preloadSimpleChart('BTC');

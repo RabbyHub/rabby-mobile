@@ -22,9 +22,45 @@ describe('Simple chart preference boundary', () => {
       );
     }
   });
+  it.each([
+    ['1D', '15m', '1D', '30m'],
+    ['1W', '1h', '1W', '4h'],
+    ['1M', '1d', '1M', '12h'],
+    ['1Y', '1w', '1Y', '1w'],
+    ['ALL', '1M', '1D', '30m'],
+    [null, '3d', null, '3d'],
+    [null, '1M', null, '1M'],
+  ])(
+    'migrates v1 %s without losing the chart style',
+    (range, interval, nextRange, nextInterval) => {
+      expect(
+        normalizeSimpleChartPreference({
+          version: 1,
+          style: 'area',
+          range,
+          interval,
+        }),
+      ).toEqual({
+        version: 2,
+        style: 'area',
+        range: nextRange,
+        interval: nextInterval,
+      });
+    },
+  );
+  it.each([
+    { version: 1, style: 'area', range: '3M', interval: '1d' },
+    { version: 2, style: 'area', range: 'ALL', interval: '1M' },
+    { version: 2, style: 'area', range: '1D', interval: '15m' },
+    { version: 3, style: 'area', range: null, interval: '1M' },
+  ])('rejects invalid or future preferences %p', value => {
+    expect(normalizeSimpleChartPreference(value)).toEqual(
+      DEFAULT_SIMPLE_CHART_PREFERENCE,
+    );
+  });
   it('accepts independent manual 3d without widening the Pro preference or menu', () => {
     const preference = {
-      version: 1,
+      version: 2,
       style: 'area',
       range: null,
       interval: '3d',
@@ -42,13 +78,13 @@ describe('Simple chart preference boundary', () => {
       ),
     ).toBe(false);
   });
-  it('keeps month and minute distinct and excludes 6M', () => {
+  it('uses the five new range mappings and keeps month and minute distinct', () => {
     expect(SIMPLE_RANGE_INTERVAL).toEqual({
-      '1D': '15m',
-      '1W': '1h',
-      '1M': '1d',
+      '1D': '30m',
+      '1W': '4h',
+      '1M': '12h',
+      '3M': '1d',
       '1Y': '1w',
-      ALL: '1M',
     });
     expect(
       normalizeSimpleChartPreference({

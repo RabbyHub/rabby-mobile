@@ -6,10 +6,54 @@ import {
   simpleDefaultRange,
   simpleFillMarkers,
   simpleHistoryShift,
+  simpleRangeReference,
   visibleLastCandle,
 } from './perps-simple-logic.ts';
 
 const candle = time => ({ time, open: 100, high: 110, low: 90, close: 105 });
+test('3M clamps month ends and its change reference matches the default window', () => {
+  const candles = Array.from({ length: 130 }, (_, i) => ({
+    ...candle(Date.UTC(2024, 1, 1 + i) / 1000),
+    open: i + 100,
+  })).filter(c => c.time < Date.UTC(2024, 4, 31) / 1000);
+  const config = { range: '3M', interval: '1d' };
+  const range = simpleDefaultRange(candles, config, 325);
+  const first = candles[range.from + 0.5];
+  assert.equal(first.time, Date.UTC(2024, 1, 29) / 1000);
+  assert.equal(simpleRangeReference(candles, config), first.open);
+  assert.equal(simpleRangeReference(candles.slice(29), config), null);
+});
+test('references follow the range, not viewport width, and refuse missing history or invalid prices', () => {
+  const candles = Array.from({ length: 400 }, (_, i) => ({
+    ...candle(i * 86400),
+    open: i + 1,
+  }));
+  for (const range of ['1W', '1M', '3M', '1Y']) {
+    const config = { range, interval: '1d' };
+    const small = simpleDefaultRange(candles, config, 220);
+    assert.deepEqual(small, simpleDefaultRange(candles, config, 600));
+    assert.equal(
+      simpleRangeReference(candles, config),
+      candles[small.from + 0.5].open,
+    );
+    assert.equal(simpleRangeReference(candles.slice(-2), config), null);
+  }
+  assert.equal(
+    simpleRangeReference(candles, { range: '1D', interval: '1d' }),
+    null,
+  );
+  assert.equal(
+    simpleRangeReference(candles, { range: null, interval: '1d' }),
+    null,
+  );
+  assert.equal(
+    simpleRangeReference(
+      candles.map(c => ({ ...c, open: NaN })),
+      { range: '1W', interval: '1d' },
+    ),
+    null,
+  );
+});
 test('history prepends and bounded cache trims retain the same visible candles', () => {
   const previous = [candle(60), candle(120), candle(180)];
   assert.equal(simpleHistoryShift(previous, [candle(0), ...previous]), 1);
