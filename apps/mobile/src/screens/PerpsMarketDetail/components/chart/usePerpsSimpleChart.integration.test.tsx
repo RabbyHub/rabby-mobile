@@ -186,6 +186,163 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
     return hook;
   };
 
+  it('joins an in-flight entry preload after initial preference hydration', async () => {
+    let resolve!: (candles: Candle[]) => void;
+    fetchCandles = () =>
+      new Promise(done => {
+        resolve = done;
+      });
+    const preload = loadPerpsCandleSourceSnapshot({
+      coin: 'BTC',
+      interval: '30m',
+    });
+    await settle();
+    act(() => jest.advanceTimersByTime(100));
+    const hook = mount();
+    await settle();
+    expect(requests).toHaveLength(1);
+    await act(async () => {
+      resolve([raw()]);
+      await preload;
+    });
+    await settle();
+    expect(hook.result.current.loading).toBe(false);
+  });
+
+  it('recovers when the socket opens before the resumed HTTP baseline fails and merges the buffered latest candle', async () => {
+    const handlers = new Map<string, () => void>();
+    const ws = apisPerps.getPerpsSDK().ws;
+    jest.spyOn(ws, 'on').mockImplementation((event, callback) => {
+      handlers.set(event, callback as () => void);
+    });
+    const listeners: Array<(state: string) => void> = [];
+    jest
+      .spyOn(AppState, 'addEventListener')
+      .mockImplementation((_event, listener) => {
+        listeners.push(listener);
+        return {
+          remove: () => {
+            const i = listeners.indexOf(listener);
+            if (i >= 0) listeners.splice(i, 1);
+          },
+        };
+      });
+    const hook = mount();
+    await settle();
+    act(() => listeners.forEach(listener => listener('background')));
+    await settle();
+    act(() => jest.advanceTimersByTime(16000));
+    let fail!: (error: Error) => void;
+    fetchCandles = () =>
+      new Promise((_resolve, reject) => {
+        fail = reject;
+      });
+    act(() => listeners.forEach(listener => listener('active')));
+    await settle();
+    act(() => handlers.get('open')!());
+    await settle();
+    await act(async () => fail(new Error('Network request failed')));
+    await settle();
+    act(() => candleCallbacks.at(-1)!(raw('BTC', '30m', '115')));
+    await settle();
+    expect(hook.result.current.feed.status).toBe('error');
+    fetchCandles = async () => [raw('BTC', '30m', '108')];
+    act(() => jest.advanceTimersByTime(1000));
+    await settle();
+    expect(hook.result.current.feed.latestCandle?.close).toBe(115);
+    expect(hook.result.current.loading).toBe(false);
+    expect(
+      messages.filter(message => message.action === 'data').at(-1),
+    ).toMatchObject({
+      preserve: true,
+      candles: [expect.objectContaining({ close: 115 })],
+    });
+  });
+
+  it('drops the RN selection even when the inactive Web clear callback is ignored', async () => {
+    const hook = mount();
+    await settle();
+    const identity = messages
+      .filter(message => message.action === 'replace')
+      .at(-1)!.identity;
+    const selected = {
+      time: 1700000000,
+      open: 100,
+      high: 120,
+      low: 90,
+      close: 105,
+      volume: 10,
+    };
+    act(() =>
+      hook.result.current.onSimpleEvent({
+        type: 'PERPS_SIMPLE_EVENT',
+        identity,
+        event: 'selection',
+        candle: selected,
+      }),
+    );
+    expect(hook.result.current.selection?.close).toBe(105);
+    mockFocused = false;
+    hook.rerender({ name: 'BTC', owner: 'account-a', chartConfig: config });
+    await settle();
+    act(() =>
+      hook.result.current.onSimpleEvent({
+        type: 'PERPS_SIMPLE_EVENT',
+        identity,
+        event: 'selection',
+        candle: null,
+      }),
+    );
+    mockFocused = true;
+    hook.rerender({ name: 'BTC', owner: 'account-a', chartConfig: config });
+    await settle();
+    act(() => candleCallbacks.at(-1)!(raw('BTC', '30m', '115')));
+    await settle();
+    expect(hook.result.current.feed.latestCandle?.close).toBe(115);
+    expect(hook.result.current.selection).toBeNull();
+  });
+
+  it('invalidates only the optional display context on connection loss, retaining raw trading data', async () => {
+    const { useActiveAssetSubscription } =
+      require('@/hooks/perps/subscriptions/useActiveAssetSubscription') as typeof import('@/hooks/perps/subscriptions/useActiveAssetSubscription');
+    const { perpsStore } =
+      require('@/hooks/perps/usePerpsStore') as typeof import('@/hooks/perps/usePerpsStore');
+    perpsStore.setState({ currentPerpsAccount: null });
+    const ws = apisPerps.getPerpsSDK().ws;
+    const handlers = new Map<string, () => void>();
+    jest.spyOn(ws, 'on').mockImplementation((event, callback) => {
+      handlers.set(event, callback as () => void);
+    });
+    let publish!: Parameters<typeof ws.subscribeToActiveAssetCtx>[1];
+    jest
+      .spyOn(ws, 'subscribeToActiveAssetCtx')
+      .mockImplementation((_coin, callback) => {
+        publish = callback;
+        return { unsubscribe: () => {} };
+      });
+    const hook = renderHook(() =>
+      useActiveAssetSubscription('BTC', { trackContextFreshness: true }),
+    );
+    const ctx = {
+      markPx: '100',
+      prevDayPx: '90',
+      dayNtlVlm: '1000',
+      openInterest: '10',
+      oraclePx: '100',
+      funding: '0',
+      premium: '0',
+      midPx: '100',
+      impactPxs: ['99', '101'],
+    };
+    act(() => publish({ coin: 'BTC', ctx }));
+    expect(hook.result.current.displayAssetCtx?.markPx).toBe('100');
+    act(() => handlers.get('close')!());
+    expect(hook.result.current.activeAssetCtx?.markPx).toBe('100');
+    expect(hook.result.current.displayAssetCtx).toBeNull();
+    act(() => publish({ coin: 'BTC', ctx: { ...ctx, markPx: '115' } }));
+    expect(hook.result.current.displayAssetCtx?.markPx).toBe('115');
+  });
+
   it('keeps Pro preferences untouched, sends seconds, and publishes realtime tail updates', async () => {
     await service.setSelectedKlineInterval('4h');
     const hook = mount();

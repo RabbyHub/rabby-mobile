@@ -117,8 +117,12 @@ export const PerpsMarketDetailScreen = () => {
   //   // eslint-disable-next-line react-hooks/exhaustive-deps
   // }, []);
 
-  const { activeAssetCtx, activeAssetData, refreshActiveAssetData } =
-    useActiveAssetSubscription(coin);
+  const {
+    activeAssetCtx,
+    displayAssetCtx,
+    activeAssetData,
+    refreshActiveAssetData,
+  } = useActiveAssetSubscription(coin, { trackContextFreshness: true });
 
   const [positionDirection, setPositionDirection] = React.useState<
     'Long' | 'Short'
@@ -456,8 +460,7 @@ export const PerpsMarketDetailScreen = () => {
           <View style={styles.header}>
             <PerpsChart
               marketName={coin}
-              markPrice={markPrice}
-              activeAssetCtx={activeAssetCtx}
+              activeAssetCtx={displayAssetCtx}
               currentAssetCtx={currentAssetCtx}
               lineTagInfo={lineTagInfo}
               accountKey={currentPerpsAccount?.address.toLowerCase() || ''}

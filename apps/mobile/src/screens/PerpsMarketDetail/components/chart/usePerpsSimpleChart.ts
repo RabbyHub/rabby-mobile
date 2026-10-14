@@ -169,6 +169,12 @@ export function usePerpsSimpleChart({
   }, [identity, active, webReady, targetReady]);
 
   useEffect(() => {
+    // Web clears its selection while inactive, when its callbacks are ignored.
+    // RN must release its own selection too, before the same identity resumes.
+    setSelection(null);
+  }, [identity, active, webReady]);
+
+  useEffect(() => {
     if (!webReady || !active || !hydrated) return;
     const previous = sentData.current;
     if (!targetReady) {

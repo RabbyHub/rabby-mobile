@@ -29,7 +29,6 @@ const SIMPLE_CHART_HEIGHT = 320;
 
 export const PerpsChart = React.memo(function PerpsChart({
   marketName,
-  markPrice,
   currentAssetCtx,
   activeAssetCtx,
   lineTagInfo,
@@ -37,7 +36,6 @@ export const PerpsChart = React.memo(function PerpsChart({
   history,
 }: {
   marketName: string;
-  markPrice: number;
   currentAssetCtx?: MarketData;
   activeAssetCtx?: WsActiveAssetCtx['ctx'] | null;
   lineTagInfo: {
@@ -130,7 +128,9 @@ export const PerpsChart = React.memo(function PerpsChart({
       <PerpsSimpleChartHeader
         key={marketName}
         active={chart.active}
-        markPrice={markPrice}
+        markPrice={Number(
+          activeAssetCtx?.markPx || currentAssetCtx?.markPx || 0,
+        )}
         decimals={decimals}
         range={chart.preference.range}
         rangeReference={chart.rangeReference}
