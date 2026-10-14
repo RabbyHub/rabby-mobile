@@ -354,8 +354,11 @@ export class TransactionHistoryService extends StoreServiceBase<
   }
 
   getSucceedCount(address?: string) {
+    const normalizedAddress = address?.toLowerCase();
     return this.store.successList.filter(item =>
-      address ? item.startsWith(address) : true,
+      normalizedAddress
+        ? item.toLowerCase().startsWith(normalizedAddress)
+        : true,
     ).length;
   }
   getSucceedList() {
@@ -375,8 +378,11 @@ export class TransactionHistoryService extends StoreServiceBase<
   }
 
   getFailedCount(address?: string) {
+    const normalizedAddress = address?.toLowerCase();
     return this.store.failList.filter(item =>
-      address ? item.startsWith(address) : true,
+      normalizedAddress
+        ? item.toLowerCase().startsWith(normalizedAddress)
+        : true,
     ).length;
   }
 
@@ -572,15 +578,16 @@ export class TransactionHistoryService extends StoreServiceBase<
   }
 
   clearSuccessAndFailList(address?: string) {
+    const normalizedAddress = address?.toLowerCase();
     this.mutateStore(draft => {
-      if (address) {
+      if (normalizedAddress) {
         draft.successList = draft.successList.filter(
-          item => !item.startsWith(address),
+          item => !item.toLowerCase().startsWith(normalizedAddress),
         );
         draft.failList = draft.failList.filter(
-          item => !item.startsWith(address),
+          item => !item.toLowerCase().startsWith(normalizedAddress),
         );
-        draft.clearSuccessAndFailListTsObj[address.toLowerCase()] = Date.now();
+        draft.clearSuccessAndFailListTsObj[normalizedAddress] = Date.now();
         return;
       }
 
