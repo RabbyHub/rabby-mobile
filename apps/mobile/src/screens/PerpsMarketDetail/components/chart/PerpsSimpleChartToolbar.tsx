@@ -9,6 +9,7 @@ import {
 } from '@/constant/perpsSimpleChart';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { touchedFeedback } from '@/utils/touch';
 import Interval from '@/assets2024/icons/perps/PerpsSimpleChart/interval.svg';
 import Chevron from '@/assets2024/icons/perps/PerpsSimpleChart/chevron.svg';
 import Area from '@/assets2024/icons/perps/PerpsSimpleChart/area.svg';
@@ -42,7 +43,10 @@ export const PerpsSimpleChartToolbar = React.memo(
             accessibilityState={{ selected: preference.range === null }}
             accessibilityRole="button"
             accessibilityLabel={t('page.perpsDetail.simpleChart.intervalTitle')}
-            onPress={onInterval}>
+            onPress={() => {
+              touchedFeedback();
+              onInterval();
+            }}>
             <Interval
               color={colors2024['green-default']}
               fill={colors2024['red-default']}
@@ -75,13 +79,14 @@ export const PerpsSimpleChartToolbar = React.memo(
               accessibilityRole="button"
               accessibilityState={{ selected: preference.range === range }}
               onPressIn={() => onPrefetch(SIMPLE_RANGE_INTERVAL[range])}
-              onPress={() =>
+              onPress={() => {
+                touchedFeedback();
                 onChange({
                   ...preference,
                   range,
                   interval: SIMPLE_RANGE_INTERVAL[range],
-                })
-              }>
+                });
+              }}>
               <Text
                 style={[
                   styles.label,
@@ -101,12 +106,13 @@ export const PerpsSimpleChartToolbar = React.memo(
               preference.style === 'candle' ? 'switchToArea' : 'switchToCandle'
             }`,
           )}
-          onPress={() =>
+          onPress={() => {
+            touchedFeedback();
             onChange({
               ...preference,
               style: preference.style === 'candle' ? 'area' : 'candle',
-            })
-          }>
+            });
+          }}>
           {preference.style === 'candle' ? (
             <Area color={colors2024['green-default']} />
           ) : (

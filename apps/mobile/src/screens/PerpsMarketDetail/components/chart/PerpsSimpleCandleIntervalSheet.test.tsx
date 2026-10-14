@@ -1,5 +1,8 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
+import { trigger } from 'react-native-haptic-feedback';
+
+jest.mock('react-native-haptic-feedback', () => ({ trigger: jest.fn() }));
 
 jest.mock('@/core/apis/autoLock', () => ({ uiRefreshTimeout: jest.fn() }));
 jest.mock('@/components/Typography', () => ({
@@ -61,6 +64,7 @@ jest.mock('react-i18next', () => ({
 import { PerpsSimpleCandleIntervalSheet } from './PerpsSimpleCandleIntervalSheet';
 
 describe('Simple interval sheet (component unit)', () => {
+  beforeEach(() => jest.mocked(trigger).mockClear());
   it('selects immediately, closes, and distinguishes minutes from months', () => {
     const confirm = jest.fn();
     const close = jest.fn();
@@ -78,6 +82,7 @@ describe('Simple interval sheet (component unit)', () => {
     fireEvent(view.getByText('3D'), 'pressIn');
     expect(prefetch).toHaveBeenCalledWith('3d');
     expect(confirm).not.toHaveBeenCalled();
+    expect(trigger).not.toHaveBeenCalled();
     fireEvent.press(view.getByText('3D'));
     expect(confirm).toHaveBeenLastCalledWith('3d');
     expect(close).toHaveBeenCalledTimes(1);
@@ -86,6 +91,11 @@ describe('Simple interval sheet (component unit)', () => {
     fireEvent.press(view.getByText('1m'));
     expect(confirm).toHaveBeenLastCalledWith('1m');
     expect(close).toHaveBeenCalledTimes(3);
+    expect(trigger).toHaveBeenCalledTimes(3);
+    expect(trigger).toHaveBeenLastCalledWith('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
   });
   it('the Close button dismisses without applying an interval', () => {
     const confirm = jest.fn();
@@ -102,5 +112,6 @@ describe('Simple interval sheet (component unit)', () => {
     fireEvent.press(view.getByText('global.closeButton'));
     expect(close).toHaveBeenCalledTimes(1);
     expect(confirm).not.toHaveBeenCalled();
+    expect(trigger).not.toHaveBeenCalled();
   });
 });

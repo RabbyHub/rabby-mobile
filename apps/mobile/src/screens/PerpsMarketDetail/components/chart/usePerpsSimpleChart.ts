@@ -21,6 +21,7 @@ import { toSimpleChartCandle } from './model';
 import { preloadSimpleChart } from '@/hooks/perps/candles/preloadSimpleChart';
 import type { PerpsCandleDataInterval } from '@/constant/perps';
 import type { PerpsCandle } from '@/hooks/perps/candles/candle';
+import { touchedFeedback } from '@/utils/touch';
 
 let nextSession = 0;
 type Command = SimpleChartMessage extends infer Message
@@ -108,6 +109,8 @@ export function usePerpsSimpleChart({
   } | null>(null);
   const selection =
     selectionState?.identity === identity ? selectionState.candle : null;
+  // A hold can emit many selected candles before React commits a render.
+  const hapticSelectionIdentity = useRef<string | null>(null);
   const [viewport, setViewport] = useState({
     identity: '',
     resetVisible: false,
@@ -160,6 +163,10 @@ export function usePerpsSimpleChart({
   const targetReady =
     feed.identity === `${coin}:${preference.interval}` &&
     (feed.status === 'ready' || feed.status === 'empty');
+
+  useEffect(() => {
+    hapticSelectionIdentity.current = null;
+  }, [identity, active, webReady, targetReady]);
 
   useEffect(() => {
     if (!webReady || !active || !hydrated) return;
@@ -331,6 +338,11 @@ export function usePerpsSimpleChart({
         pending.identity === event.identity &&
         pending.sequence === event.sequence
       ) {
+        // Replace clears Web selection even when it retains the same identity.
+        if (applied?.sequence !== pending.sequence) {
+          hapticSelectionIdentity.current = null;
+          setSelection(null);
+        }
         setApplied(pending);
         setRangeReference({
           identity: event.identity,
@@ -340,9 +352,21 @@ export function usePerpsSimpleChart({
       return;
     }
     if (event.identity !== currentIdentity.current || !targetReady) return;
-    if (event.event === 'selection')
+    if (event.event === 'selection') {
+      if (
+        event.candle &&
+        (!webReady ||
+          !hasAppliedData ||
+          applied.identity !== event.identity ||
+          pendingApplied.current?.sequence !== applied.sequence)
+      )
+        return;
+      if (event.candle && hapticSelectionIdentity.current !== identity) {
+        hapticSelectionIdentity.current = identity;
+        touchedFeedback();
+      } else if (!event.candle) hapticSelectionIdentity.current = null;
       setSelection({ identity, candle: event.candle });
-    else if (event.event === 'viewport')
+    } else if (event.event === 'viewport')
       setViewport({
         identity,
         resetVisible: event.resetVisible,

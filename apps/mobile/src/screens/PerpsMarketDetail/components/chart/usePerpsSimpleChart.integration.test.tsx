@@ -1,5 +1,6 @@
 import { act, renderHook, cleanup } from '@testing-library/react-native';
 import { AppState } from 'react-native';
+import { trigger } from 'react-native-haptic-feedback';
 import type { Candle } from '@rabby-wallet/hyperliquid-sdk';
 import type { StorageAdapater } from '@rabby-wallet/persist-store';
 /* eslint-disable no-runtime-service-imports */
@@ -19,6 +20,7 @@ import type { TradingViewChartRef } from '@/components2024/TradingViewCandleChar
 import { usePerpsSimpleChart } from './usePerpsSimpleChart';
 
 jest.mock('@ledgerhq/react-native-hw-transport-ble', () => ({}));
+jest.mock('react-native-haptic-feedback', () => ({ trigger: jest.fn() }));
 let mockFocused = true;
 jest.mock('@react-navigation/native', () => ({
   useIsFocused: () => mockFocused,
@@ -83,6 +85,7 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
   let fetchCandles: (coin: string, interval: string) => Promise<Candle[]>;
 
   beforeEach(() => {
+    jest.mocked(trigger).mockClear();
     mockFocused = true;
     Object.defineProperty(AppState, 'currentState', {
       configurable: true,
@@ -218,6 +221,70 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
     });
     expect(await service.getSelectedKlineInterval()).toBe('4h');
     expect(requests.at(-1)).toEqual({ coin: 'BTC', interval: '3d' });
+  });
+
+  it('gives one haptic per hold, ignores old/inactive selections and never vibrates for reset/latest', async () => {
+    const hook = mount();
+    await settle();
+    const identity = messages
+      .filter(m => m.action === 'replace')
+      .at(-1)!.identity;
+    const candle = {
+      time: 1700000000,
+      open: 100,
+      close: 105,
+      high: 110,
+      low: 90,
+    };
+    const select = (value: typeof candle | null, eventIdentity = identity) =>
+      hook.result.current.onSimpleEvent({
+        type: 'PERPS_SIMPLE_EVENT',
+        identity: eventIdentity,
+        event: 'selection',
+        candle: value,
+      });
+    act(() => {
+      select(candle, 'old-identity');
+      hook.result.current.reset();
+      hook.result.current.latest();
+    });
+    expect(trigger).not.toHaveBeenCalled();
+    act(() => {
+      select(candle);
+      select({ ...candle, time: candle.time + 1800 });
+      select(candle);
+    });
+    expect(trigger).toHaveBeenCalledTimes(1);
+    expect(hook.result.current.selection).toEqual(candle);
+    const applied = messages.filter(m => m.action === 'replace').at(-1)!;
+    act(() =>
+      hook.result.current.onSimpleEvent({
+        type: 'PERPS_SIMPLE_EVENT',
+        identity,
+        event: 'applied',
+        sequence: applied.sequence,
+        referencePrice: null,
+      }),
+    );
+    act(() => select(candle));
+    expect(trigger).toHaveBeenCalledTimes(1);
+    act(() => {
+      select(null);
+      select(candle);
+    });
+    expect(trigger).toHaveBeenCalledTimes(2);
+    mockFocused = false;
+    hook.rerender({ name: 'BTC', owner: 'account-a', chartConfig: config });
+    act(() => select(candle));
+    expect(trigger).toHaveBeenCalledTimes(2);
+    mockFocused = true;
+    hook.rerender({ name: 'BTC', owner: 'account-a', chartConfig: config });
+    await settle();
+    act(() => select(candle));
+    expect(trigger).toHaveBeenCalledTimes(3);
+    act(() => hook.result.current.onChartLoading());
+    act(() => select(candle));
+    expect(trigger).toHaveBeenCalledTimes(3);
   });
 
   it('commits the range reference with the displayed snapshot and rejects stale summaries without bridge fan-out', async () => {

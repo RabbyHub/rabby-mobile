@@ -1,4 +1,5 @@
 import React from 'react';
+import { Pressable } from 'react-native';
 import { Trans } from 'react-i18next';
 import { openExternalUrl } from '@/core/utils/linking';
 import { Text } from '@/components/Typography';
@@ -9,20 +10,19 @@ export const PerpsSimpleChartSource = React.memo(
   function PerpsSimpleChartSource() {
     const { styles } = useTheme2024({ getStyle });
     return (
-      <Text style={styles.source}>
-        <Trans
-          i18nKey="page.perpsDetail.simpleChart.source"
-          components={{
-            tradingview: (
-              <Text
-                style={styles.link}
-                accessibilityRole="link"
-                onPress={() => openExternalUrl('https://www.tradingview.com')}
-              />
-            ),
-          }}
-        />
-      </Text>
+      <Pressable
+        accessibilityRole="link"
+        accessibilityLabel="TradingView"
+        onPress={() => openExternalUrl('https://www.tradingview.com')}>
+        <Text style={styles.source}>
+          <Trans
+            i18nKey="page.perpsDetail.simpleChart.source"
+            components={{
+              tradingview: <Text style={styles.link} />,
+            }}
+          />
+        </Text>
+      </Pressable>
     );
   },
 );

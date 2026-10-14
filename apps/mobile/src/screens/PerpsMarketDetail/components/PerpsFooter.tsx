@@ -9,7 +9,8 @@ import {
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useMemo } from 'react';
+import React from 'react';
+import { IS_ANDROID } from '@/core/native/utils';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -70,7 +71,7 @@ export const PerpsFooter: React.FC<{
             type="hyperliquid"
             title={t('page.perpsDetail.action.close')}
             onPress={onClosePress}
-            titleStyle={styles.titleFontsize}
+            titleStyle={[styles.titleFontsize, styles.singleTitle]}
             height={BOTTOM_BUTTON_SINGLE_HEIGHT}
           />
         )}
@@ -133,7 +134,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   titleFontsize: {
     fontSize: 18,
+    ...(IS_ANDROID
+      ? {
+          // Center the natural glyph metrics inside Button's 1px border.
+          // A full-button lineHeight plus font padding overflows this slot.
+          height: BOTTOM_BUTTON_DOUBLE_HEIGHT - 2,
+          lineHeight: undefined,
+          paddingVertical: 0,
+          includeFontPadding: false,
+          textAlignVertical: 'center' as const,
+        }
+      : {}),
   },
+  singleTitle: IS_ANDROID ? { height: BOTTOM_BUTTON_SINGLE_HEIGHT - 2 } : {},
   btnGroup: {
     display: 'flex',
     flexDirection: 'row',

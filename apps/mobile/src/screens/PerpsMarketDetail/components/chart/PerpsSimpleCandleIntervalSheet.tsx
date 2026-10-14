@@ -21,6 +21,7 @@ import type { PerpsCandleDataInterval } from '@/constant/perps';
 import { useTheme2024 } from '@/hooks/theme';
 import * as apisAutoLock from '@/core/apis/autoLock';
 import { createGetStyles2024 } from '@/utils/styles';
+import { touchedFeedback } from '@/utils/touch';
 import { SIMPLE_CHART_COLORS } from './visual';
 
 export const PerpsSimpleCandleIntervalSheet = React.memo(
@@ -109,6 +110,7 @@ export const PerpsSimpleCandleIntervalSheet = React.memo(
                         ]}
                         onPressIn={() => onPrefetch?.(interval)}
                         onPress={() => {
+                          touchedFeedback();
                           onConfirm(interval);
                           onClose();
                         }}>
@@ -162,7 +164,7 @@ const getStyle = createGetStyles2024(
       borderRadius: 3,
       backgroundColor: colors2024['neutral-sheet-handle'],
     },
-    content: { paddingHorizontal: 16, paddingTop: 8 },
+    content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 },
     title: {
       fontFamily: 'SF Pro Rounded',
       fontWeight: '900',
@@ -209,7 +211,7 @@ const getStyle = createGetStyles2024(
       fontWeight: '500',
       fontSize: 14,
       lineHeight: 18,
-      color: colors2024['neutral-title-1'],
+      color: colors2024['neutral-body'],
     },
     footer: {
       paddingHorizontal: 20,
