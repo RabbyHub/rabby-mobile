@@ -97,21 +97,35 @@ describe('PerpsTradeFeeExplanationContent', () => {
     );
   });
 
-  it('keeps the Simple trading and builder fee explanation for normal fills', () => {
-    render(<PerpsTradeFeeExplanationContent isLiquidation={false} />);
+  it.each(['default', 'pro'] as const)(
+    'shows the current fee without a promotion for %s',
+    variant => {
+      render(
+        <PerpsTradeFeeExplanationContent
+          isLiquidation={false}
+          variant={variant}
+        />,
+      );
 
-    expect(screen.getByText('page.perps.historyDetail.feeDesc')).toBeTruthy();
-    expect(
-      screen.getByText('page.perps.historyDetail.feeHyperliquid'),
-    ).toBeTruthy();
-    expect(screen.getByText('0.045%')).toBeTruthy();
-    expect(screen.getByText('page.perps.historyDetail.feeRabby')).toBeTruthy();
-    expect(screen.getByText('0.02%')).toBeTruthy();
-    expect(screen.getByText('0.04%')).toBeTruthy();
-    expect(
-      screen.getByText('page.perps.historyDetail.feeRabbyDiscount'),
-    ).toBeTruthy();
-  });
+      expect(screen.getByText('page.perps.historyDetail.feeDesc')).toBeTruthy();
+      expect(
+        screen.getByText('page.perps.historyDetail.feeHyperliquid'),
+      ).toBeTruthy();
+      expect(screen.getByText('0.045%')).toBeTruthy();
+      expect(
+        screen.getByText('page.perps.historyDetail.feeRabby'),
+      ).toBeTruthy();
+      expect(screen.queryByText('0.02%')).toBeNull();
+      expect(screen.getAllByText('0.04%')).toHaveLength(1);
+      expect(
+        StyleSheet.flatten(screen.getByText('0.04%').props.style)
+          .textDecorationLine,
+      ).toBeUndefined();
+      expect(
+        screen.queryByText('page.perps.historyDetail.feeRabbyDiscount'),
+      ).toBeNull();
+    },
+  );
 
   it('omits the Rabby builder fee for liquidation fills', () => {
     render(<PerpsTradeFeeExplanationContent isLiquidation />);
@@ -122,13 +136,7 @@ describe('PerpsTradeFeeExplanationContent', () => {
     expect(screen.queryByText('0.04%')).toBeNull();
   });
 
-  it('bounds and right-aligns long discount copy without truncating it', () => {
-    const longDiscountCopy =
-      'Diskon biaya trading untuk waktu terbatas yang tetap ditampilkan sepenuhnya';
-    mockTranslations = {
-      'page.perps.historyDetail.feeRabbyDiscount': longDiscountCopy,
-    };
-
+  it('keeps the rate within the right-aligned remaining row width', () => {
     render(<PerpsTradeFeeExplanationContent isLiquidation={false} />);
 
     expect(screen.getByTestId('perps-trade-fee-rabby-left')).toHaveStyle({
@@ -141,14 +149,6 @@ describe('PerpsTradeFeeExplanationContent', () => {
       minWidth: 0,
     });
 
-    const discount = screen.getByTestId('perps-trade-fee-rabby-discount');
-    expect(discount).toHaveTextContent(longDiscountCopy);
-    expect(discount).toHaveStyle({
-      alignSelf: 'stretch',
-      flexShrink: 1,
-      textAlign: 'right',
-    });
-    expect(discount.props.numberOfLines).toBeUndefined();
-    expect(discount.props.ellipsizeMode).toBeUndefined();
+    expect(screen.queryByTestId('perps-trade-fee-rabby-discount')).toBeNull();
   });
 });

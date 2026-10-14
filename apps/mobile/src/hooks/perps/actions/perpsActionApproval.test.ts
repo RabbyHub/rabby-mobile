@@ -89,6 +89,7 @@ describe('ensurePerpsActionApproval', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     invalidatePerpsActionApprovalCache();
+    mockState.currentPerpsAccount = mockAccount;
     mockState.accountNeedApproveAgent = false;
     mockState.accountNeedApproveBuilderFee = false;
     mockApplyPerpsSigner.mockResolvedValue({
@@ -103,7 +104,83 @@ describe('ensurePerpsActionApproval', () => {
         validUntil: Date.now() + 48 * 60 * 60 * 1000,
       },
     ]);
-    mockGetMaxBuilderFee.mockResolvedValue(10);
+    mockGetMaxBuilderFee.mockResolvedValue(100);
+  });
+
+  describe.each([false, true])('self-sign: %s', isSelfSign => {
+    beforeEach(() => {
+      mockApplyPerpsSigner.mockResolvedValue({
+        agentAddress: '0x0000000000000000000000000000000000000002',
+        isCreate: false,
+        isSelfSign,
+      });
+    });
+
+    it.each([0, 20, 39])(
+      'reauthorizes an insufficient limit of %s',
+      async fee => {
+        mockGetMaxBuilderFee.mockResolvedValue(fee);
+
+        await ensurePerpsActionApproval(mockAccount as never);
+
+        expect(mockPrepareApproveBuilderFee).toHaveBeenCalledTimes(1);
+        expect(mockSendApproveBuilderFee).toHaveBeenCalledTimes(1);
+        expect(mockPrepareApproveAgent).not.toHaveBeenCalled();
+        expect(mockSetApproveBuilderFee).toHaveBeenCalledWith(false);
+      },
+    );
+
+    it.each([40, 100])(
+      'keeps a sufficient limit of %s without signing',
+      async fee => {
+        mockGetMaxBuilderFee.mockResolvedValue(fee);
+
+        await ensurePerpsActionApproval(mockAccount as never);
+
+        expect(mockSignActions).not.toHaveBeenCalled();
+        expect(mockPrepareApproveBuilderFee).not.toHaveBeenCalled();
+      },
+    );
+
+    it('does not send an approval after the user cancels signing', async () => {
+      mockGetMaxBuilderFee.mockResolvedValue(20);
+      mockSignActions.mockRejectedValueOnce(new Error('Canceled'));
+
+      await expect(
+        ensurePerpsActionApproval(mockAccount as never),
+      ).rejects.toThrow('Canceled');
+      expect(mockSendApproveBuilderFee).not.toHaveBeenCalled();
+      expect(mockSetApproveBuilderFee).not.toHaveBeenCalledWith(false);
+    });
+
+    it('rejects an account change before preparing or sending approval', async () => {
+      mockGetMaxBuilderFee.mockImplementationOnce(async () => {
+        mockState.currentPerpsAccount = {
+          ...mockAccount,
+          address: '0xother',
+        } as typeof mockAccount;
+        return 20;
+      });
+
+      await expect(
+        ensurePerpsActionApproval(mockAccount as never),
+      ).rejects.toThrow('Perps account changed');
+      expect(mockPrepareApproveBuilderFee).not.toHaveBeenCalled();
+      expect(mockSendApproveBuilderFee).not.toHaveBeenCalled();
+    });
+
+    it('shares one insufficient-limit approval across concurrent actions', async () => {
+      mockGetMaxBuilderFee.mockResolvedValue(20);
+
+      await Promise.all([
+        ensurePerpsActionApproval(mockAccount as never),
+        ensurePerpsActionApproval(mockAccount as never),
+      ]);
+
+      expect(mockGetMaxBuilderFee).toHaveBeenCalledTimes(1);
+      expect(mockSignActions).toHaveBeenCalledTimes(1);
+      expect(mockSendApproveBuilderFee).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('does not request a signature when remote agent and builder approvals are current', async () => {
