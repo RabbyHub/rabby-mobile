@@ -17,6 +17,8 @@ import {
   simpleDefaultRange,
   simpleFillMarkers,
   simpleHistoryShift,
+  simpleLabelCurve,
+  simpleLeaderWidth,
   simpleRangeReference,
   visibleLastCandle,
 } from './perps-simple-logic';
@@ -344,7 +346,7 @@ export function createSimpleChart(
       // 16px title sits 1px above its undisplaced reference line.
       titledTags.map(tag => tag.y! - 9),
       paneHeight,
-      16,
+      18, // 16px text box plus 1px outside glyph stroke on each side.
     );
     // Append all labels, read their actual bounds together, then draw lines.
     // No opaque full-axis row: only the 14px label covers chart content.
@@ -376,18 +378,33 @@ export function createSimpleChart(
     });
     const titles = titledTags.map((tag, i) => {
       const title = document.createElement('span');
-      title.textContent = tag.title!;
+      // Separate stroke/fill layers preserve the glyph fill on older WebViews
+      // without depending on CSS paint-order support for text.
+      const outline = document.createElement('span');
+      outline.textContent = tag.title!;
+      outline.setAttribute('aria-hidden', 'true');
+      Object.assign(outline.style, {
+        position: 'absolute',
+        inset: '0',
+      });
+      outline.style.setProperty(
+        '-webkit-text-stroke',
+        `2px ${config!.colors.titleOutline ?? config!.colors.background}`,
+      );
+      const fill = document.createElement('span');
+      fill.textContent = tag.title!;
+      fill.style.position = 'relative';
+      title.append(outline, fill);
       title.dataset.simplePriceTitle = tag.id;
       Object.assign(title.style, {
         position: 'absolute',
-        left: '0',
+        left: '1px', // Keep the outside stroke within the clipped plot overlay.
         top: `${titleY[i] - 8}px`,
         height: '16px',
         color: tag.color,
         fontSize: '10px',
         lineHeight: '16px',
         whiteSpace: 'nowrap',
-        background: config!.colors.background,
         zIndex: '2',
       });
       overlay.appendChild(title);
@@ -434,8 +451,8 @@ export function createSimpleChart(
         (tag.id === 'selection' || Math.abs(y - areaCrosshair.y) < 0.5)
       )
         return;
-      // Keep the true price y in the plot; a short elbow joins a displaced label.
-      const joinX = Math.min(paneWidth, labelLeft);
+      // Only the label connector bends; the horizontal guide keeps the price y.
+      const joinX = Math.max(0, labelLeft - simpleLeaderWidth(tagY[i] - y));
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       svg.dataset.simplePriceLine = '';
       svg.dataset.priceKind = tag.id;
@@ -450,7 +467,10 @@ export function createSimpleChart(
         'http://www.w3.org/2000/svg',
         'path',
       );
-      path.setAttribute('d', `M 0 ${y} H ${joinX} V ${tagY[i]} H ${labelLeft}`);
+      path.setAttribute(
+        'd',
+        `M 0 ${y} H ${joinX} ${simpleLabelCurve(joinX, y, labelLeft, tagY[i])}`,
+      );
       path.setAttribute('fill', 'none');
       path.setAttribute('stroke', tag.color);
       path.setAttribute('stroke-width', '1');
@@ -475,10 +495,15 @@ export function createSimpleChart(
             'http://www.w3.org/2000/svg',
             'path',
           );
-          const titleRight = titleWidths[titleIndex];
+          const titleRight = Math.min(labelLeft, titleWidths[titleIndex] + 2);
           leader.setAttribute(
             'd',
-            `M ${titleRight} ${anchorY - 1} H ${titleRight + 3} V ${y}`,
+            simpleLabelCurve(
+              titleRight,
+              anchorY - 1,
+              Math.min(labelLeft, titleRight + simpleLeaderWidth(anchorY - y)),
+              y,
+            ),
           );
           leader.setAttribute('fill', 'none');
           leader.setAttribute('stroke', tag.color);
@@ -507,10 +532,18 @@ export function createSimpleChart(
         'http://www.w3.org/2000/svg',
         'path',
       );
-      const joinX = Math.min(paneWidth, labelLeft);
+      const joinX = Math.max(
+        0,
+        labelLeft - simpleLeaderWidth(axisY - areaCrosshair.y),
+      );
       path.setAttribute(
         'd',
-        `M 0 ${areaCrosshair.y} H ${joinX} V ${axisY} H ${labelLeft} M ${areaCrosshair.x} 4 V ${paneHeight}`,
+        `M 0 ${areaCrosshair.y} H ${joinX} ${simpleLabelCurve(
+          joinX,
+          areaCrosshair.y,
+          labelLeft,
+          axisY,
+        )} M ${areaCrosshair.x} 4 V ${paneHeight}`,
       );
       path.setAttribute('fill', 'none');
       path.setAttribute('stroke', config.colors.entry);

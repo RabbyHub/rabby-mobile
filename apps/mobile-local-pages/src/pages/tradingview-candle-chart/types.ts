@@ -105,6 +105,7 @@ export type SimpleChartConfig = {
   showTradeMarkers?: boolean;
   colors: {
     background: string;
+    titleOutline?: string;
     text: string;
     grid: string;
     secondary: string;

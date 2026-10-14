@@ -6,11 +6,31 @@ import {
   simpleDefaultRange,
   simpleFillMarkers,
   simpleHistoryShift,
+  simpleLabelCurve,
+  simpleLeaderWidth,
   simpleRangeReference,
   visibleLastCandle,
 } from './perps-simple-logic.ts';
 
 const candle = time => ({ time, open: 100, high: 110, low: 90, close: 105 });
+test('displaced labels use bounded curves with horizontal tangents, straight guides stay straight', () => {
+  assert.equal(simpleLabelCurve(10, 20, 30, 20), 'M 10 20 H 30');
+  for (const delta of [-100, -20, 20, 100]) {
+    const width = simpleLeaderWidth(delta);
+    assert.ok(width >= 12 && width <= 32);
+    const path = simpleLabelCurve(10, 120, 10 + width, 120 + delta);
+    const coordinates = path.match(/-?\d+(?:\.\d+)?/g).map(Number);
+    const [x, y, c1x, c1y, c2x, c2y, endX, endY] = coordinates;
+    assert.equal(c1y, y);
+    assert.equal(c2y, endY);
+    assert.ok(x <= c1x && c1x <= c2x && c2x <= endX);
+    assert.equal(endY, 120 + delta);
+    assert.ok(!path.includes(' V '));
+  }
+  const centers = avoidSimpleLabelOverlap([40, 40, 40, 40], 280, 18);
+  for (let i = 1; i < centers.length; i++)
+    assert.ok(centers[i] - centers[i - 1] >= 21);
+});
 test('3M clamps month ends and its change reference matches the default window', () => {
   const candles = Array.from({ length: 130 }, (_, i) => ({
     ...candle(Date.UTC(2024, 1, 1 + i) / 1000),

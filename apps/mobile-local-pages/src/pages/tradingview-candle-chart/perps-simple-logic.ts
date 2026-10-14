@@ -1,6 +1,22 @@
 import type { CandleStick, SimpleChartConfig, SimpleChartFill } from './types';
 
 const DAY = 86400;
+
+export const simpleLeaderWidth = (offset: number) =>
+  Math.min(32, Math.max(12, Math.abs(offset)));
+
+/** Horizontal endpoint tangents, with both control points inside the bounds. */
+export function simpleLabelCurve(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+) {
+  const middle = (x1 + x2) / 2;
+  return Math.abs(y2 - y1) < 0.5
+    ? `M ${x1} ${y1} H ${x2}`
+    : `M ${x1} ${y1} C ${middle} ${y1} ${middle} ${y2} ${x2} ${y2}`;
+}
 const DURATIONS: Record<string, number> = {
   '1m': 60,
   '5m': 300,
