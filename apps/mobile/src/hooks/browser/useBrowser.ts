@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { last, omit, sortBy } from 'lodash';
 import { v4 as uuid } from 'uuid';
 import type { ContentMode } from 'react-native-webview/lib/WebViewTypes';
@@ -176,6 +176,26 @@ const browserStateStore = zCreate<BrowserStateType>(() => ({
   trigger: '',
   isEditingFavorite: false,
 }));
+
+export function canBrowserTabOpenExternalUrl(tabId?: string): boolean {
+  if (!tabId || AppState.currentState !== 'active') return false;
+
+  // Read current snapshots: frozen WebViews can retain callbacks from when
+  // their tab was visible, including pending native dialogs and URL queries.
+  const browserState = browserStateStore.getState();
+  if (
+    !browserState.isShowBrowser ||
+    browserState.isShowSearch ||
+    browserState.isShowManage ||
+    browserState.isShowFavorite ||
+    browserState.isShowDappInfo
+  ) {
+    return false;
+  }
+
+  const { activeTabId, tabs } = tabsStore.getState();
+  return activeTabId === tabId && tabs.some(tab => tab.id === tabId);
+}
 
 export function setBrowserState(
   valOrFunc: UpdaterOrPartials<BrowserStateType>,
