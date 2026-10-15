@@ -43,6 +43,7 @@ import {
   getSpotMaxSize,
   getSpotSizeFromAmount,
   getSpotTokenBalance,
+  isSpotOrderIntentCurrent,
   SPOT_MARKET_SLIPPAGE,
   SPOT_MIN_ORDER_NOTIONAL,
   SPOT_PRICE_MAX_AGE_MS,
@@ -120,6 +121,10 @@ export const SpotOrderSheet: React.FC<{
   // Mid timestamp a market order was refused at; cleared by the next poll.
   const [stalePriceAt, setStalePriceAt] = useState<number | null>(null);
   const submitLockRef = useRef(false);
+  // Open-session counter: bumped whenever the sheet opens, closes or
+  // switches side, so an order tapped in one session is never signed after
+  // the user closed the sheet, even if it was reopened since.
+  const sessionRef = useRef(0);
 
   const { szDecimals, midPx } = market;
   const isBuy = side === 'buy';
@@ -154,6 +159,7 @@ export const SpotOrderSheet: React.FC<{
   };
 
   useEffect(() => {
+    sessionRef.current += 1;
     if (visible) {
       setOrderType('market');
       setUnit(isBuy ? 'quote' : 'base');
@@ -318,8 +324,10 @@ export const SpotOrderSheet: React.FC<{
     submitLockRef.current = true;
     setSubmitting(true);
     // The order the user confirmed. Inputs are locked while submitting, and
-    // the sheet closing or switching side aborts instead of signing.
+    // closing the sheet (even if reopened since) or switching side or pair
+    // aborts instead of signing.
     const intent = {
+      session: sessionRef.current,
       side,
       pairIndex: market.pairIndex,
       orderType,
@@ -333,9 +341,10 @@ export const SpotOrderSheet: React.FC<{
       const buildParams = () => {
         const latest = latestRef.current;
         if (
-          !latest.visible ||
-          latest.side !== intent.side ||
-          latest.pairIndex !== intent.pairIndex
+          !isSpotOrderIntentCurrent(intent, {
+            ...latest,
+            session: sessionRef.current,
+          })
         ) {
           return null;
         }

@@ -654,6 +654,29 @@ export const formatSpotQuoteAmount = (value: BigNumber.Value): string => {
   return bn.decimalPlaces(2, BigNumber.ROUND_DOWN).toFixed();
 };
 
+export type SpotOrderSession = {
+  /** Bumped every time the order sheet opens, closes or switches side. */
+  session: number;
+  side: SpotOrderSide;
+  pairIndex: number;
+};
+
+/**
+ * True when the order confirmed at the tap may still be signed: the sheet
+ * is visible and has stayed in the same open session (never closed or
+ * reopened since), on the same side and pair. Closing the sheet during the
+ * agent approval must abort the order even if it is reopened before the
+ * approval returns.
+ */
+export const isSpotOrderIntentCurrent = (
+  intent: SpotOrderSession,
+  latest: SpotOrderSession & { visible: boolean },
+) =>
+  latest.visible &&
+  latest.session === intent.session &&
+  latest.side === intent.side &&
+  latest.pairIndex === intent.pairIndex;
+
 export type SpotCancelIntent = { pairIndex: number; oid: number };
 
 /**

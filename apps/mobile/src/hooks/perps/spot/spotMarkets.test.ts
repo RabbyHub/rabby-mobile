@@ -30,6 +30,7 @@ import {
   normalizeSpotCancelIntents,
   sortSpotMarkets,
   validateSpotOrder,
+  isSpotOrderIntentCurrent,
 } from './spotMarkets';
 
 const spotMeta: SpotMeta = {
@@ -643,5 +644,36 @@ describe('normalizeSpotCancelIntents', () => {
       null,
     );
     expect(markets[0].szDecimals).toBe(0);
+  });
+});
+
+describe('isSpotOrderIntentCurrent', () => {
+  const intent = { session: 3, side: 'buy' as const, pairIndex: 107 };
+  const latest = { ...intent, visible: true };
+
+  it('allows signing while the sheet stayed open on the same order', () => {
+    expect(isSpotOrderIntentCurrent(intent, latest)).toBe(true);
+  });
+
+  it('aborts when the sheet was closed', () => {
+    expect(
+      isSpotOrderIntentCurrent(intent, { ...latest, visible: false }),
+    ).toBe(false);
+  });
+
+  it('aborts when the sheet was closed and reopened on the same side and pair', () => {
+    // Close then reopen bumps the session twice; side and pair match again.
+    expect(isSpotOrderIntentCurrent(intent, { ...latest, session: 5 })).toBe(
+      false,
+    );
+  });
+
+  it('aborts on a side or pair switch', () => {
+    expect(isSpotOrderIntentCurrent(intent, { ...latest, side: 'sell' })).toBe(
+      false,
+    );
+    expect(isSpotOrderIntentCurrent(intent, { ...latest, pairIndex: 0 })).toBe(
+      false,
+    );
   });
 });
