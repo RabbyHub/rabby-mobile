@@ -9,10 +9,10 @@ def commandLineGradleArchitecture = gradle.startParameter.projectProperties.get(
     "newArchEnabled",
 )
 def configuredGradleArchitecture = providers.gradleProperty("newArchEnabled").orNull
-def defaultLegacyArchitectureValues = ["0", "false", "no", "off"]
+def defaultNewArchitectureValues = ["1", "true", "yes", "on"]
 def gradleArchitectureToValidate = commandLineGradleArchitecture != null
     ? commandLineGradleArchitecture
-    : configuredGradleArchitecture != null && !defaultLegacyArchitectureValues.contains(
+    : configuredGradleArchitecture != null && !defaultNewArchitectureValues.contains(
         configuredGradleArchitecture.toString().toLowerCase(),
     )
         ? configuredGradleArchitecture

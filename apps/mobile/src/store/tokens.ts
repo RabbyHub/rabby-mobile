@@ -6,7 +6,10 @@ import {
   syncRemoteTokens,
   syncRemoteTokensForAddresses,
 } from '@/databases/sync/assets';
-import { registerSyncAbortHandler } from '@/databases/sync/abort';
+import {
+  getSyncAbortVersion,
+  registerSyncAbortHandler,
+} from '@/databases/sync/abort';
 import { eventBus, EVENT_PATCH_SINGLE_TOKEN } from '@/utils/events';
 import {
   commonTokenFilter,
@@ -423,6 +426,8 @@ export type TokenStaticIndexItem = {
 };
 
 export type TokenAssetsIndexResult = {
+  // In-memory restore provenance, not source completeness or freshness.
+  restoredAtSyncAbortVersion?: number;
   rows: TokenAssetsIndexRow[];
   tokenIds: TokenEntityId[];
   defaultVisibleTokenCount: number;
@@ -1830,6 +1835,43 @@ const getTokenAssetsProjectionAvailability = (
   });
 };
 
+const getRestoredTokenProjectionAddresses = (addresses: string[]) => {
+  const restoredAddresses = new Set<string>();
+  if (!addresses.length) {
+    return restoredAddresses;
+  }
+
+  const candidates = new Set(addresses);
+  const retainAddress = (address: string) => {
+    if (candidates.delete(address)) {
+      restoredAddresses.add(address);
+    }
+  };
+  const state = useTokenAssetsIndexStore.getState();
+  const syncAbortVersion = getSyncAbortVersion();
+  // Only inspect registered scene metadata once per cache response. Warm
+  // snapshots bypass this entirely; no token rows or entity maps are scanned.
+  for (const config of Object.values(state.singleAssetsConfigByKey)) {
+    const result = state.singleAssetsResultByKey[config.key];
+    if (result?.restoredAtSyncAbortVersion === syncAbortVersion) {
+      retainAddress(config.address);
+      if (!candidates.size) {
+        return restoredAddresses;
+      }
+    }
+  }
+  for (const config of Object.values(state.multiAssetsConfigByKey)) {
+    const result = state.multiAssetsResultByKey[config.key];
+    if (result?.restoredAtSyncAbortVersion === syncAbortVersion) {
+      config.addresses.forEach(retainAddress);
+      if (!candidates.size) {
+        return restoredAddresses;
+      }
+    }
+  }
+  return restoredAddresses;
+};
+
 const parsePersistedStringList = (value: unknown) => {
   if (
     !Array.isArray(value) ||
@@ -2253,7 +2295,10 @@ const buildRestoredTokenAssetsIndexResult = (
   };
 };
 
-const tokenProjectionRestoreRequests = new Map<string, Promise<boolean>>();
+const tokenProjectionRestoreRequests = new Map<
+  string,
+  { syncAbortVersion: number; promise: Promise<boolean> }
+>();
 
 const yieldTokenProjectionEntityRestore = () =>
   new Promise<void>(resolve => setTimeout(resolve, 0));
@@ -2272,9 +2317,12 @@ const restoreTokenAssetsProjectionIfEmpty = (
     return Promise.resolve(false);
   }
   const requestKey = `${scene}:${key}`;
+  const startedSyncAbortVersion = getSyncAbortVersion();
+  const isRestoreCurrent = () =>
+    getSyncAbortVersion() === startedSyncAbortVersion;
   const activeRequest = tokenProjectionRestoreRequests.get(requestKey);
-  if (activeRequest) {
-    return activeRequest;
+  if (activeRequest?.syncAbortVersion === startedSyncAbortVersion) {
+    return activeRequest.promise;
   }
 
   const startedState = useTokenAssetsIndexStore.getState();
@@ -2289,7 +2337,11 @@ const restoreTokenAssetsProjectionIfEmpty = (
   if (!startedConfig) {
     return Promise.resolve(false);
   }
-  if (startedResult?.rows.length) {
+  if (
+    startedResult?.rows.length &&
+    (startedResult.restoredAtSyncAbortVersion === undefined ||
+      startedResult.restoredAtSyncAbortVersion === startedSyncAbortVersion)
+  ) {
     return Promise.resolve(true);
   }
   const startedSourceMap = tokenListStore.getState().tokenListMap;
@@ -2359,6 +2411,7 @@ const restoreTokenAssetsProjectionIfEmpty = (
         ? beforeHydrate.singleAssetsConfigByKey[key]
         : beforeHydrate.multiAssetsConfigByKey[key];
     if (
+      !isRestoreCurrent() ||
       beforeHydrateConfig !== startedConfig ||
       beforeHydrateResult !== startedResult ||
       tokenListStore.getState().tokenListMap !== startedSourceMap
@@ -2399,6 +2452,7 @@ const restoreTokenAssetsProjectionIfEmpty = (
           ? latestBeforeEntityPublish.singleAssetsConfigByKey[key]
           : latestBeforeEntityPublish.multiAssetsConfigByKey[key];
       if (
+        !isRestoreCurrent() ||
         latestBeforeEntityConfig !== startedConfig ||
         latestBeforeEntityResult !== startedResult ||
         tokenListStore.getState().tokenListMap !== startedSourceMap
@@ -2445,6 +2499,7 @@ const restoreTokenAssetsProjectionIfEmpty = (
         ? latest.singleAssetsConfigByKey[key]
         : latest.multiAssetsConfigByKey[key];
     if (
+      !isRestoreCurrent() ||
       latestConfig !== startedConfig ||
       latestResult !== startedResult ||
       tokenListStore.getState().tokenListMap !== startedSourceMap
@@ -2453,6 +2508,7 @@ const restoreTokenAssetsProjectionIfEmpty = (
       return false;
     }
 
+    result.restoredAtSyncAbortVersion = startedSyncAbortVersion;
     useTokenAssetsIndexStore.setState(draft => {
       if (scene === 'single-address') {
         draft.singleAssetsResultByKey[key] = result;
@@ -2498,6 +2554,7 @@ const restoreTokenAssetsProjectionIfEmpty = (
           ? currentState.singleAssetsResultByKey[key]
           : currentState.multiAssetsResultByKey[key];
       return (
+        isRestoreCurrent() &&
         currentConfig === startedConfig &&
         currentResult === result &&
         tokenListStore.getState().tokenListMap === startedSourceMap
@@ -2580,6 +2637,9 @@ const restoreTokenAssetsProjectionIfEmpty = (
       return false;
     })
     .finally(() => {
+      if (tokenProjectionRestoreRequests.get(requestKey)?.promise !== request) {
+        return;
+      }
       tokenProjectionRestoreRequests.delete(requestKey);
       const state = useTokenAssetsIndexStore.getState();
       const availability =
@@ -2610,7 +2670,10 @@ const restoreTokenAssetsProjectionIfEmpty = (
       });
     });
 
-  tokenProjectionRestoreRequests.set(requestKey, request);
+  tokenProjectionRestoreRequests.set(requestKey, {
+    syncAbortVersion: startedSyncAbortVersion,
+    promise: request,
+  });
   return request;
 };
 
@@ -3587,14 +3650,22 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             trace.finish({ path: 'stale-after-cache' });
             return;
           }
-          const latestTokenListMap = get().tokenListMap;
-          const cacheApplicableAddresses = currentAddressesAfterCache.filter(
+          const latestTokenState = get();
+          const latestTokenListMap = latestTokenState.tokenListMap;
+          const addressesWithoutSnapshot = currentAddressesAfterCache.filter(
             address =>
-              cacheSucceededAddresses.has(address) &&
               !Object.prototype.hasOwnProperty.call(
                 latestTokenListMap,
                 address,
               ),
+          );
+          const restoredProjectionAddresses =
+            getRestoredTokenProjectionAddresses(addressesWithoutSnapshot);
+          const cacheApplicableAddresses = addressesWithoutSnapshot.filter(
+            address =>
+              cacheSucceededAddresses.has(address) &&
+              !latestTokenState.sourceSnapshotReadyByAddress[address] &&
+              !restoredProjectionAddresses.has(address),
           );
 
           if (cacheApplicableAddresses.length) {
@@ -3676,7 +3747,8 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
 
               if (
                 hasFailedChain &&
-                canRetainProjectionOnly &&
+                (canRetainProjectionOnly ||
+                  restoredProjectionAddresses.has(address)) &&
                 !hasMemorySnapshot
               ) {
                 // Projection-first Home restores do not populate the complete

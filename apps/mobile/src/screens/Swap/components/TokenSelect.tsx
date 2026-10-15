@@ -35,7 +35,7 @@ import { RootNames } from '@/constant/layout';
 import { isWatchOrSafeAccount } from '@/utils/account';
 import { useLongPressTokenAtom } from '../hooks';
 import { useMemoizedFn, useUnmount } from 'ahooks';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSelectTokens } from '../hooks/useSelectTokens';
 import { useSwitchNetTab } from '@/components2024/PillsSwitch/NetSwitchTabs';
 import { useSearchTestnetToken } from '@/hooks/chainAndToken/useSearchTestnetToken';
@@ -53,6 +53,8 @@ interface TokenSelectProps {
   token?: TokenItem;
   onChange?(amount: string): void;
   onTokenChange(token: TokenItem): void;
+  /** Runs once after a selection's native sheet close, never on cancellation. */
+  onTokenSelectionClosed?: () => void;
   accountInScreen?: Account | null;
   chainId: string;
   type?: ComponentProps<typeof TokenSelectorSheetModal>['type'];
@@ -91,6 +93,7 @@ const TokenSelect = ({
   token,
   onChange,
   onTokenChange,
+  onTokenSelectionClosed,
   accountInScreen,
   chainId,
   type = 'send',
@@ -104,6 +107,7 @@ const TokenSelect = ({
   deferModalMount = false,
   ref,
 }: TokenSelectProps & RNViewProps & { ref?: Ref<TokenSelectInst> }) => {
+  const navigation = useNavigation();
   const TokenSelectorModal = deferModalMount
     ? DeferredTokenSelectorSheetModal
     : TokenSelectorSheetModal;
@@ -121,7 +125,9 @@ const TokenSelect = ({
   const queryConds = useMemo(
     () => ({
       ..._queryConds,
-      keyword: debouncedKeyword,
+      // Clearing/reopening must not keep the previous search alive for another
+      // debounce interval while the sheet input already appears empty.
+      keyword: _queryConds.keyword ? debouncedKeyword : '',
     }),
     [_queryConds, debouncedKeyword],
   );
@@ -167,6 +173,30 @@ const TokenSelect = ({
     effectiveFavoriteFilterValue !== 'favorite' &&
     !shouldUseTokenRows;
 
+  const pendingSelectionClosedRef = useRef<(() => void) | undefined>(undefined);
+  const cancelPendingSelectionClosed = useCallback(() => {
+    pendingSelectionClosedRef.current = undefined;
+  }, []);
+  useLayoutEffect(
+    () => cancelPendingSelectionClosed,
+    [cancelPendingSelectionClosed, type, accountInScreen?.address, chainId],
+  );
+  useFocusEffect(
+    useCallback(
+      () => cancelPendingSelectionClosed,
+      [cancelPendingSelectionClosed],
+    ),
+  );
+  const handleTokenSelectorClosed = useCallback(() => {
+    const onSelectionClosed = pendingSelectionClosedRef.current;
+    cancelPendingSelectionClosed();
+    // A child's blur cleanup can synchronously destroy the native sheet before
+    // this parent's blur cleanup runs. Read navigation now, not a stale flag.
+    if (navigation.isFocused()) {
+      onSelectionClosed?.();
+    }
+  }, [cancelPendingSelectionClosed, navigation]);
+
   const {
     visible: tokenSelectorVisible,
     visibleRef: tokenSelectorVisibleRef,
@@ -174,6 +204,9 @@ const TokenSelect = ({
     setTokenSelectorVisible,
   } = useTokenSelectorModalVisible({
     onVisibleChanged: visible => {
+      if (visible) {
+        cancelPendingSelectionClosed();
+      }
       loadOnVisibleChanged(visible);
     },
   });
@@ -319,14 +352,27 @@ const TokenSelect = ({
   >(
     t => {
       onChange && onChange('');
-      onTokenChange(t);
+      pendingSelectionClosedRef.current = onTokenSelectionClosed;
+      try {
+        onTokenChange(t);
+      } catch (error) {
+        cancelPendingSelectionClosed();
+        throw error;
+      }
       // Close the modal without triggering state update
       // The state update will be handled by handleTokenSelectorClose (via onCancel)
       // when the modal finishes closing, which avoids a race condition
       setTokenSelectorVisible(false, { noTriggerRerender: true });
       setIsLpTokenEnabled(false);
     },
-    [onChange, onTokenChange, setTokenSelectorVisible, setIsLpTokenEnabled],
+    [
+      onChange,
+      onTokenChange,
+      onTokenSelectionClosed,
+      cancelPendingSelectionClosed,
+      setTokenSelectorVisible,
+      setIsLpTokenEnabled,
+    ],
   );
 
   const handleTokenSelectorClose = useCallback(() => {
@@ -342,12 +388,17 @@ const TokenSelect = ({
       const isSameQueryAccount =
         prev.account === accountInScreen ||
         isSameAccount(prev.account, accountInScreen);
-      if (prev.chainServerId === chainId && isSameQueryAccount) {
+      if (
+        prev.chainServerId === chainId &&
+        isSameQueryAccount &&
+        !prev.keyword
+      ) {
         return prev;
       }
 
       return {
         ...prev,
+        keyword: '',
         chainServerId: chainId,
         account: accountInScreen,
       };
@@ -571,6 +622,7 @@ const TokenSelect = ({
         onConfirm={handleCurrentTokenChange}
         onCancel={handleTokenSelectorClose}
         onOpened={handleTokenSelectorOpened}
+        onClosed={handleTokenSelectorClosed}
         onSearch={handleSearchTokens}
         isLoading={isCustomNetworkTab ? testnetTokenListLoading : isListLoading}
         showFavoriteFilter={!queryConds.keyword && !isCustomNetworkTab}

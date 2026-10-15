@@ -576,8 +576,10 @@ export default function AppNavigation() {
                   component={HomeScreenNavigator}
                   options={{
                     ...RootAnimOptions,
-                    // Hidden Home state updates should not compete with the pushed screen.
-                    freezeOnBlur: true,
+                    // Home keeps animated pagers mounted across nested add-wallet
+                    // routes. Fabric freezing detaches their animated views, so
+                    // returning from a second pushed screen can leave Home blank.
+                    freezeOnBlur: false,
                   }}
                 />
                 <RootStack.Screen

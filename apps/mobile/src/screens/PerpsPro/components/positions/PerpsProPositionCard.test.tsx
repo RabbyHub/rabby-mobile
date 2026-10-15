@@ -3,6 +3,11 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
 const mockOpenFieldExplanation = jest.fn();
+// The component contract exercises dispatch and disabled state, not native
+// gesture delivery. The latter still needs the iOS pager/scroll scenario.
+jest.mock('react-native-gesture-handler', () => ({
+  Pressable: require('react-native').Pressable,
+}));
 type MockPositionMarket = {
   displayBase: string;
   displayPair: string;
@@ -1064,6 +1069,35 @@ describe('PerpsProPositionCard', () => {
     expect(screen.queryByTestId('perps-pro-position-tpsl-edit-BTC')).toBeNull();
     fireEvent.press(screen.getByTestId('perps-pro-position-tpsl-action-BTC'));
     expect(onEditTpSl).toHaveBeenCalledWith(value, 'partial');
+  });
+
+  it('keeps both TP/SL gesture entries disabled until their editor handler is available', () => {
+    const onEditTpSl = jest.fn();
+    const value = createPosition({
+      tpslOrders: [triggerOrder('takeProfit', 1, '120', 'position')],
+    });
+    const view = render(
+      <PerpsProPositionCard accountIdentity="account-a" position={value} />,
+    );
+    const editId = 'perps-pro-position-tpsl-edit-BTC';
+    const actionId = 'perps-pro-position-tpsl-action-BTC';
+    expect(screen.getByTestId(editId)).toBeDisabled();
+    expect(screen.getByTestId(actionId)).toBeDisabled();
+    fireEvent.press(screen.getByTestId(editId));
+    fireEvent.press(screen.getByTestId(actionId));
+    expect(onEditTpSl).not.toHaveBeenCalled();
+    view.rerender(
+      <PerpsProPositionCard
+        accountIdentity="account-a"
+        onEditTpSl={onEditTpSl}
+        position={value}
+      />,
+    );
+    fireEvent.press(screen.getByTestId(editId));
+    expect(onEditTpSl).toHaveBeenLastCalledWith(value, 'position');
+    fireEvent.press(screen.getByTestId(actionId));
+    expect(onEditTpSl).toHaveBeenLastCalledWith(value, 'partial');
+    expect(onEditTpSl).toHaveBeenCalledTimes(2);
   });
 
   it('shows Position TP/SL prices and only the partial count for mixed orders', () => {

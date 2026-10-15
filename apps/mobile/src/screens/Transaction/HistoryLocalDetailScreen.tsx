@@ -32,7 +32,7 @@ import { Send } from './components/Actions/Send';
 import { Swap } from './components/Actions/Swap';
 import { UnknownAction } from './components/Actions/UnknownAction';
 import { HistoryItemCateType } from './components/type';
-import { Text } from '@/components/Typography';
+import { HistoryHeaderTitle } from './components/HistoryHeaderTitle';
 
 function HistoryLocalDetailScreen(): JSX.Element {
   const route =
@@ -85,14 +85,14 @@ function HistoryLocalDetailScreen(): JSX.Element {
       <ScreenHeaderAccountSwitcher
         forScene="HistoryDetail"
         titleText={
-          <Text style={styles.headerTitleStyle} numberOfLines={1}>
+          <HistoryHeaderTitle>
             {title || t('page.transactions.itemTitle.Default')}
-          </Text>
+          </HistoryHeaderTitle>
         }
         disableSwitch={true}
       />
     );
-  }, [styles.headerTitleStyle, title, t]);
+  }, [title, t]);
 
   useEffect(() => {
     if (!data.isPending) {
@@ -385,13 +385,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '700',
-  },
-  headerTitleStyle: {
-    color: colors2024['neutral-title-1'],
-    fontWeight: '900',
-    fontSize: 20,
-    fontFamily: 'SF Pro Rounded',
-    lineHeight: 24,
   },
 
   statuItemText: {

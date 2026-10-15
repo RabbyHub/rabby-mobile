@@ -10,7 +10,7 @@ describe('Perps Pro collection empty-state authority', () => {
     expect(resolvePerpsProInitialInfoTab(0)).toBe('account');
   });
 
-  it('waits for preferences before exposing any initial tab', () => {
+  it('keeps the Account loading panel reachable while preferences hydrate', () => {
     expect(
       resolvePerpsProInfoTabPresentation({
         accountFactsReady: true,
@@ -22,7 +22,7 @@ describe('Perps Pro collection empty-state authority', () => {
         preferencesHydrated: false,
         previousAutomaticSelection: null,
       }),
-    ).toEqual({ activeInfoTab: null, automaticSelection: null });
+    ).toEqual({ activeInfoTab: 'account', automaticSelection: null });
   });
 
   it.each(['account', 'positions', 'openOrders'] as const)(
@@ -88,7 +88,7 @@ describe('Perps Pro collection empty-state authority', () => {
     ).toBe('positions');
   });
 
-  it('waits for matching facts after an account switch', () => {
+  it('keeps the new account loading/error panel reachable without committing stale automatic selection', () => {
     const previousAutomaticSelection = {
       accountIdentity: '0x1:keyring',
       activeInfoTab: 'positions' as const,
@@ -105,7 +105,7 @@ describe('Perps Pro collection empty-state authority', () => {
         previousAutomaticSelection,
       }),
     ).toEqual({
-      activeInfoTab: null,
+      activeInfoTab: 'account',
       automaticSelection: previousAutomaticSelection,
     });
   });
@@ -122,7 +122,39 @@ describe('Perps Pro collection empty-state authority', () => {
         preferencesHydrated: true,
         previousAutomaticSelection: null,
       }).activeInfoTab,
-    ).toBeNull();
+    ).toBe('account');
+  });
+
+  it('replaces the pending Account panel with the authoritative automatic tab after baseline completion', () => {
+    const pending = resolvePerpsProInfoTabPresentation({
+      accountFactsReady: false,
+      accountIdentity: '0x1:keyring',
+      accountSelectionReady: true,
+      activeInfoTabPreference: 'account',
+      hasUserSelectedInfoTab: false,
+      positionCount: 0,
+      preferencesHydrated: true,
+      previousAutomaticSelection: null,
+    });
+    expect(pending).toEqual({
+      activeInfoTab: 'account',
+      automaticSelection: null,
+    });
+    const ready = resolvePerpsProInfoTabPresentation({
+      accountFactsReady: true,
+      accountIdentity: '0x1:keyring',
+      accountSelectionReady: true,
+      activeInfoTabPreference: 'account',
+      hasUserSelectedInfoTab: false,
+      positionCount: 1,
+      preferencesHydrated: true,
+      previousAutomaticSelection: pending.automaticSelection,
+    });
+    expect(ready.activeInfoTab).toBe('positions');
+    expect(ready.automaticSelection).toEqual({
+      accountIdentity: '0x1:keyring',
+      activeInfoTab: 'positions',
+    });
   });
 
   it('distinguishes unresolved, authoritative empty, filtered empty, and populated collections', () => {
