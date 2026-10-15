@@ -22,10 +22,23 @@ export const mapPerpsProTradeHistoryFact = (
   const fee = finiteDecimal(fill.fee);
   const closedPnl = finiteDecimal(fill.closedPnl);
   const feeToken = (fill as WsFill & { feeToken?: string }).feeToken;
+  const market = resolvePerpsProHistoryMarket(
+    fill.coin,
+    marketDataMap,
+    spotMeta,
+  );
 
   return {
     direction: fill.dir || (fill.side === 'B' ? 'Buy' : 'Sell'),
     fee: fee.toString(),
+    feeSnapshot: {
+      px: fill.px,
+      sz: fill.sz,
+      fee: fill.fee,
+      builderFee: fill.builderFee,
+      feeToken,
+      quoteAsset: market.quoteAsset,
+    },
     feeToken: feeToken || 'USDC',
     filledBase: size.toString(),
     filledQuote: price.multipliedBy(size).toString(),
@@ -33,7 +46,7 @@ export const mapPerpsProTradeHistoryFact = (
     isLiquidation: Boolean(fill.liquidation),
     key: getFillKey(fill),
     kind: 'trade',
-    market: resolvePerpsProHistoryMarket(fill.coin, marketDataMap, spotMeta),
+    market,
     netRealizedPnl: closedPnl.minus(fee).toString(),
     oid: fill.oid,
     price: price.toString(),

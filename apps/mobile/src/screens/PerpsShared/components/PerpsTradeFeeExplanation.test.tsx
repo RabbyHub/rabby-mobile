@@ -53,6 +53,8 @@ jest.mock('react-i18next', () => ({
 
 import { PerpsTradeFeeExplanationContent } from './PerpsTradeFeeExplanation';
 
+const feeRates = { builder: '0.02%', exchange: '0.05%' };
+
 describe('PerpsTradeFeeExplanationContent', () => {
   beforeEach(() => {
     mockTransComponents = {};
@@ -60,7 +62,12 @@ describe('PerpsTradeFeeExplanationContent', () => {
   });
 
   it('keeps the default emphasis on its inherited font family', () => {
-    render(<PerpsTradeFeeExplanationContent isLiquidation={false} />);
+    render(
+      <PerpsTradeFeeExplanationContent
+        feeRates={feeRates}
+        isLiquidation={false}
+      />,
+    );
 
     expect(StyleSheet.flatten(mockTransComponents['1'].props.style)).toEqual(
       expect.objectContaining({
@@ -79,7 +86,11 @@ describe('PerpsTradeFeeExplanationContent', () => {
 
   it('opts Pro emphasis into the explicit SF Pro Rounded family', () => {
     render(
-      <PerpsTradeFeeExplanationContent isLiquidation={false} variant="pro" />,
+      <PerpsTradeFeeExplanationContent
+        feeRates={feeRates}
+        isLiquidation={false}
+        variant="pro"
+      />,
     );
 
     expect(StyleSheet.flatten(mockTransComponents['1'].props.style)).toEqual(
@@ -98,10 +109,11 @@ describe('PerpsTradeFeeExplanationContent', () => {
   });
 
   it.each(['default', 'pro'] as const)(
-    'shows the current fee without a promotion for %s',
+    'shows the historical fee without a promotion for %s',
     variant => {
       render(
         <PerpsTradeFeeExplanationContent
+          feeRates={feeRates}
           isLiquidation={false}
           variant={variant}
         />,
@@ -111,14 +123,14 @@ describe('PerpsTradeFeeExplanationContent', () => {
       expect(
         screen.getByText('page.perps.historyDetail.feeHyperliquid'),
       ).toBeTruthy();
-      expect(screen.getByText('0.045%')).toBeTruthy();
+      expect(screen.getByText('0.05%')).toBeTruthy();
       expect(
         screen.getByText('page.perps.historyDetail.feeRabby'),
       ).toBeTruthy();
-      expect(screen.queryByText('0.02%')).toBeNull();
-      expect(screen.getAllByText('0.04%')).toHaveLength(1);
+      expect(screen.queryByText('0.04%')).toBeNull();
+      expect(screen.getAllByText('0.02%')).toHaveLength(1);
       expect(
-        StyleSheet.flatten(screen.getByText('0.04%').props.style)
+        StyleSheet.flatten(screen.getByText('0.02%').props.style)
           .textDecorationLine,
       ).toBeUndefined();
       expect(
@@ -128,16 +140,23 @@ describe('PerpsTradeFeeExplanationContent', () => {
   );
 
   it('omits the Rabby builder fee for liquidation fills', () => {
-    render(<PerpsTradeFeeExplanationContent isLiquidation />);
+    render(
+      <PerpsTradeFeeExplanationContent feeRates={feeRates} isLiquidation />,
+    );
 
-    expect(screen.getByText('0.045%')).toBeTruthy();
+    expect(screen.getByText('0.05%')).toBeTruthy();
     expect(screen.queryByTestId('rabby-fee-icon')).toBeNull();
     expect(screen.queryByText('0.02%')).toBeNull();
     expect(screen.queryByText('0.04%')).toBeNull();
   });
 
   it('keeps the rate within the right-aligned remaining row width', () => {
-    render(<PerpsTradeFeeExplanationContent isLiquidation={false} />);
+    render(
+      <PerpsTradeFeeExplanationContent
+        feeRates={feeRates}
+        isLiquidation={false}
+      />,
+    );
 
     expect(screen.getByTestId('perps-trade-fee-rabby-left')).toHaveStyle({
       flexShrink: 0,

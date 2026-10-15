@@ -2,6 +2,7 @@ import type {
   UserHistoricalOrders,
   UserNonFundingLedgerUpdates,
 } from '@rabby-wallet/hyperliquid-sdk';
+import type { PerpsFillFeeSnapshot } from '@/utils/perpsFillFee';
 
 export type PerpsProHistoryTab = 'orders' | 'trade' | 'transaction' | 'funding';
 
@@ -53,6 +54,7 @@ export interface PerpsProOrderHistoryRow {
 export interface PerpsProTradeHistoryRow {
   direction: string;
   fee: string;
+  feeSnapshot: PerpsFillFeeSnapshot;
   feeToken: string;
   filledBase: string;
   filledQuote: string;
