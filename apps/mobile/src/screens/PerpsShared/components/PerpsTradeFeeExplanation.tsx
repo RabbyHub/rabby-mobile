@@ -1,10 +1,13 @@
 import RcIconRabby from '@/assets2024/icons/common/rabby-wallet.svg';
 import RcIconHyper from '@/assets2024/icons/perps/IconHyper.svg';
 import { Text } from '@/components/Typography';
-import { PERPS_EXCHANGE_FEE_NUMBER } from '@/constant/perps';
 import { useTheme2024 } from '@/hooks/theme';
 import { useShowTipsPopup } from '@/hooks/useTipsPopup';
 import { createGetStyles2024 } from '@/utils/styles';
+import {
+  getRabbyFillFeeRate,
+  type PerpsFillFeeSnapshot,
+} from '@/utils/perpsFillFee';
 import React, { useCallback } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -12,6 +15,7 @@ import { View } from 'react-native';
 export type PerpsTradeFeeExplanationVariant = 'default' | 'pro';
 
 type PerpsTradeFeeExplanationContentProps = {
+  rabbyFeeRate: string;
   isLiquidation: boolean;
   variant?: PerpsTradeFeeExplanationVariant;
 };
@@ -23,7 +27,7 @@ type UseShowPerpsTradeFeeExplanationOptions = {
 
 export const PerpsTradeFeeExplanationContent: React.FC<
   PerpsTradeFeeExplanationContentProps
-> = ({ isLiquidation, variant = 'default' }) => {
+> = ({ rabbyFeeRate, isLiquidation, variant = 'default' }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const feeBoldStyle = variant === 'pro' ? styles.feeBoldPro : styles.feeBold;
@@ -60,9 +64,7 @@ export const PerpsTradeFeeExplanationContent: React.FC<
             <View
               style={styles.feeRowRight}
               testID="perps-trade-fee-rabby-right">
-              <Text style={styles.feeRowValue}>
-                {`${PERPS_EXCHANGE_FEE_NUMBER * 100}%`}
-              </Text>
+              <Text style={styles.feeRowValue}>{rabbyFeeRate}</Text>
             </View>
           </View>
         ) : null}
@@ -79,11 +81,12 @@ export const useShowPerpsTradeFeeExplanation = ({
   const showTipsPopup = useShowTipsPopup();
 
   return useCallback(
-    (isLiquidation: boolean) => {
+    (isLiquidation: boolean, fill: PerpsFillFeeSnapshot | null) => {
       showTipsPopup({
         title: t('page.perps.historyDetail.feeTitle'),
         desc: (
           <PerpsTradeFeeExplanationContent
+            rabbyFeeRate={getRabbyFillFeeRate(fill)}
             isLiquidation={isLiquidation}
             variant={variant}
           />
