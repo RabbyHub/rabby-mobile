@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { PerpsSimpleOhlc } from './PerpsSimpleOhlc';
 import { Pressable, View } from 'react-native';
 import { Skeleton } from '@rneui/themed';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
@@ -12,11 +13,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import Up from '@/assets2024/icons/perps/PerpsSimpleChart/up.svg';
 import Down from '@/assets2024/icons/perps/PerpsSimpleChart/down.svg';
 import Metric from '@/assets2024/icons/perps/PerpsSimpleChart/metric.svg';
-import {
-  simplePriceChange,
-  simplePriceText,
-  simpleSelectionTime,
-} from './model';
+import { simplePriceChange, simplePriceText } from './model';
 
 export const PerpsSimpleChartHeader = React.memo(
   function PerpsSimpleChartHeader({
@@ -26,11 +23,14 @@ export const PerpsSimpleChartHeader = React.memo(
     prevDayPx,
     range,
     rangeReference,
+    shortHistory = false,
     referenceLoading,
     marketLoading,
     openInterest,
     volume,
     selection,
+    selectionTimeText = '',
+    ohlcMeasureText = '',
     style,
   }: {
     active: boolean;
@@ -39,11 +39,14 @@ export const PerpsSimpleChartHeader = React.memo(
     prevDayPx: number;
     range: SimpleChartRange | null;
     rangeReference: number | null;
+    shortHistory?: boolean;
     referenceLoading: boolean;
     marketLoading: boolean;
     openInterest: number;
     volume: number;
     selection: CandleStick | null;
+    selectionTimeText?: string;
+    ohlcMeasureText?: string;
     style: 'candle' | 'area';
   }) {
     const { t } = useTranslation();
@@ -54,7 +57,7 @@ export const PerpsSimpleChartHeader = React.memo(
         ? candidate
         : null;
     const daily = range === null || range === '1D';
-    const reference = daily ? prevDayPx : rangeReference;
+    const reference = daily && !shortHistory ? prevDayPx : rangeReference;
     const change = simplePriceChange(
       price,
       selection ? selection.open : reference ?? NaN,
@@ -70,7 +73,8 @@ export const PerpsSimpleChartHeader = React.memo(
       active &&
       !selection &&
       change === null &&
-      (priceLoading || (daily ? marketLoading : referenceLoading));
+      (priceLoading ||
+        (daily && !shortHistory ? marketLoading : referenceLoading));
     const ChangeIcon = positive ? Up : Down;
     const changeText = change
       ? `${change.delta >= 0 ? '+' : '-'}$${simplePriceText(
@@ -88,18 +92,11 @@ export const PerpsSimpleChartHeader = React.memo(
         ]}>
         {selection && style === 'candle' ? (
           <View style={styles.selected}>
-            <View style={styles.ohlc}>
-              {(['open', 'low', 'high', 'close'] as const).map(key => (
-                <View key={key} style={styles.field}>
-                  <Text style={styles.description}>
-                    {t(`page.perpsDetail.simpleChart.${key}`)}
-                  </Text>
-                  <Text style={styles.fieldValue}>
-                    ${simplePriceText(selection[key], decimals)}
-                  </Text>
-                </View>
-              ))}
-            </View>
+            <PerpsSimpleOhlc
+              candle={selection}
+              decimals={decimals}
+              measureText={ohlcMeasureText}
+            />
             <View style={styles.selectedChangeRow}>
               {change && <ChangeIcon color={color} />}
               <Text
@@ -109,7 +106,7 @@ export const PerpsSimpleChartHeader = React.memo(
                 {changeText}
               </Text>
               <Text style={[styles.description, styles.time]} numberOfLines={1}>
-                {simpleSelectionTime(selection.time)}
+                {selectionTimeText}
               </Text>
             </View>
           </View>
@@ -164,7 +161,7 @@ export const PerpsSimpleChartHeader = React.memo(
                   <Text
                     style={[styles.description, styles.time, styles.areaTime]}
                     numberOfLines={1}>
-                    {simpleSelectionTime(selection.time)}
+                    {selectionTimeText}
                   </Text>
                 )}
               </View>
@@ -258,15 +255,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   metricLabel: { textAlign: 'right' },
   selected: { flex: 1, gap: 4 },
-  ohlc: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-  field: { flexShrink: 1, gap: 2 },
-  fieldValue: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-    color: colors2024['neutral-title-1'],
-  },
   selectedChangeRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   selectedChange: { flexShrink: 1 },
   time: { marginLeft: 'auto', flexShrink: 0 },

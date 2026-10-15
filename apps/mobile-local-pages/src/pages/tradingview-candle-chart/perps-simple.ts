@@ -19,6 +19,7 @@ import {
   simpleFillMarkers,
   simpleHistoryShift,
   simpleRangeReference,
+  simpleRangeCoverage,
   visibleLastCandle,
 } from './perps-simple-logic';
 import { appendSimplePriceGuide } from './perps-simple-price-guide';
@@ -28,6 +29,7 @@ import type {
   SimpleChartConfig,
   SimpleChartEvent,
   SimpleChartFill,
+  SimpleRangeCoverage,
 } from './types';
 
 export function createSimpleChart(
@@ -115,18 +117,33 @@ export function createSimpleChart(
     {};
   let markers: ReturnType<typeof simpleFillMarkers> = [];
   let referencePrice: number | null = null;
+  let sourceStartTime: number | undefined;
+  let coverage: SimpleRangeCoverage = { kind: 'unavailable', start: null };
   let awaitingApplied = false;
   let replacementSequence = -1;
   function updateReference() {
-    const next = config ? simpleRangeReference(candles, config) : null;
-    if (next === referencePrice) return;
+    const nextCoverage = config
+      ? simpleRangeCoverage(candles, config, sourceStartTime)
+      : { kind: 'unavailable' as const, start: null };
+    const next =
+      config && nextCoverage.kind === 'complete'
+        ? simpleRangeReference(candles, config)
+        : null;
+    if (
+      next === referencePrice &&
+      nextCoverage.kind === coverage.kind &&
+      nextCoverage.start === coverage.start
+    )
+      return;
     referencePrice = next;
+    coverage = nextCoverage;
     if (active && !awaitingApplied)
-      emit({ event: 'rangeReference', referencePrice } as Omit<
+      emit({ event: 'rangeReference', referencePrice, coverage } as Omit<
         SimpleChartEvent,
         'type' | 'identity'
       >);
   }
+
   function updateMarkers() {
     markers = config?.showTradeMarkers
       ? simpleFillMarkers(candles, fills, config.interval)
@@ -157,14 +174,17 @@ export function createSimpleChart(
       identity,
       ...event,
     } as SimpleChartEvent);
+  const emitSelection = (candle: CandleStick | null) =>
+    emit({
+      event: 'selection',
+      candle,
+      timeText: candle ? formatTime(candle.time) : '',
+    } as Omit<SimpleChartEvent, 'type' | 'identity'>);
   const clearSelection = () => {
     chart.clearCrosshairPosition();
     if (selectedTime !== null) {
       selectedTime = null;
-      emit({ event: 'selection', candle: null } as Omit<
-        SimpleChartEvent,
-        'type' | 'identity'
-      >);
+      emitSelection(null);
     }
   };
   function schedule() {
@@ -605,10 +625,7 @@ export function createSimpleChart(
     if (!candle || selectedTime === candle.time) return;
     selectedTime = candle.time;
     schedule();
-    emit({ event: 'selection', candle } as Omit<
-      SimpleChartEvent,
-      'type' | 'identity'
-    >);
+    emitSelection(candle);
   });
   const start = () => {
     contact = true;
@@ -676,6 +693,8 @@ export function createSimpleChart(
           fills = [];
           markers = [];
           referencePrice = null;
+          sourceStartTime = undefined;
+          coverage = { kind: 'unavailable', start: null };
           prices = {};
           candleByTime.clear();
           historyPending = false;
@@ -745,6 +764,7 @@ export function createSimpleChart(
         const shift = simpleHistoryShift(candles, message.candles);
         const hadData = candles.length > 0;
         candles = message.candles;
+        sourceStartTime = message.sourceStartTime;
         candleByTime.clear();
         candles.forEach(candle => candleByTime.set(candle.time, candle));
         candleSeries.setData(
@@ -795,6 +815,7 @@ export function createSimpleChart(
                 event: 'applied',
                 sequence: message.sequence,
                 referencePrice,
+                coverage,
               } as Omit<SimpleChartEvent, 'type' | 'identity'>);
             }
           });
@@ -802,11 +823,7 @@ export function createSimpleChart(
         if (!candles.length) clearSelection();
         else if (selectedTime !== null) {
           const selected = candleByTime.get(selectedTime);
-          if (selected)
-            emit({ event: 'selection', candle: selected } as Omit<
-              SimpleChartEvent,
-              'type' | 'identity'
-            >);
+          if (selected) emitSelection(selected);
           else clearSelection();
         }
       } else if (message.action === 'activity') {
@@ -836,11 +853,7 @@ export function createSimpleChart(
           time: candle.time as UTCTimestamp,
           value: candle.close,
         });
-        if (selectedTime === candle.time)
-          emit({ event: 'selection', candle } as Omit<
-            SimpleChartEvent,
-            'type' | 'identity'
-          >);
+        if (selectedTime === candle.time) emitSelection(candle);
         if (appended) {
           updateReference();
           if (defaultViewport)

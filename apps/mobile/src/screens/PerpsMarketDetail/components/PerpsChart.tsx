@@ -139,6 +139,7 @@ export const PerpsChart = React.memo(function PerpsChart({
         decimals={decimals}
         range={chart.preference.range}
         rangeReference={chart.rangeReference}
+        shortHistory={chart.shortHistory}
         referenceLoading={chart.referenceLoading}
         marketLoading={
           chart.loadingBusy &&
@@ -150,6 +151,8 @@ export const PerpsChart = React.memo(function PerpsChart({
         openInterest={Number(ctx?.openInterest) * Number(ctx?.markPx)}
         volume={Number(ctx?.dayNtlVlm)}
         selection={chart.selection}
+        selectionTimeText={chart.selectionTimeText}
+        ohlcMeasureText={chart.ohlcMeasureText}
         style={chart.preference.style}
       />
       <View style={styles.chart}>

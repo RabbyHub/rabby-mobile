@@ -7,10 +7,60 @@ import {
   simpleFillMarkers,
   simpleHistoryShift,
   simpleRangeReference,
+  simpleRangeCoverage,
   visibleLastCandle,
 } from './perps-simple-logic.ts';
 
 const candle = time => ({ time, open: 100, high: 110, low: 90, close: 105 });
+test('coverage distinguishes short history from gaps and retains the pre-aggregation boundary', () => {
+  const day = 86400;
+  const config = { range: '1W', interval: '1d' };
+  const full = Array.from({ length: 10 }, (_, i) => candle(i * day));
+  assert.deepEqual(simpleRangeCoverage(full, config, 0), {
+    kind: 'complete',
+    start: 3 * day,
+  });
+  assert.equal(
+    simpleRangeCoverage(full.slice(5), config, 5 * day).kind,
+    'short',
+  );
+  assert.equal(
+    simpleRangeCoverage(
+      full.filter(c => c.time !== 3 * day),
+      config,
+      0,
+    ).kind,
+    'gap',
+  );
+  assert.equal(
+    simpleRangeCoverage(full, config, undefined).kind,
+    'unavailable',
+  );
+  const weekly = [0, 7, 14, 21, 28].map(d => candle(d * day));
+  assert.equal(
+    simpleRangeReference(weekly, { range: '1M', interval: '1w' }),
+    100,
+  );
+  // The first week's Monday predates its actual first daily candle.
+  assert.equal(
+    simpleRangeCoverage(weekly, { range: '1M', interval: '1w' }, 6 * day).kind,
+    'short',
+  );
+  const partial = [candle(10 * day)];
+  assert.equal(
+    simpleRangeCoverage(partial, { range: '1D', interval: '30m' }, 10 * day)
+      .kind,
+    'short',
+  );
+  assert.equal(
+    simpleRangeCoverage(full, { range: '1D', interval: '1d' }, 0).kind,
+    'daily',
+  );
+  assert.equal(
+    simpleRangeCoverage(full, { range: null, interval: '1d' }, 0).kind,
+    'unavailable',
+  );
+});
 test('outside title strokes retain the minimum gap', () => {
   const centers = avoidSimpleLabelOverlap([40, 40, 40, 40], 280, 18);
   for (let i = 1; i < centers.length; i++)

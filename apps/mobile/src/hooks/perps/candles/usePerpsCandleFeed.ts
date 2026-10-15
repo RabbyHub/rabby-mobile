@@ -27,6 +27,8 @@ export type PerpsCandleFeedStatus =
 
 export type PerpsCandleFeedSnapshot = {
   candles: PerpsCandle[];
+  /** Simple range coverage uses the source boundary, before weekly aggregation. */
+  sourceStartTime?: number;
   error: Error | null;
   identity: string;
   latestCandle: PerpsCandle | null;
@@ -164,6 +166,7 @@ export const usePerpsCandleFeed = ({
       maximumSourceCandleCount,
     );
     let latestSourceTime = getLatestCandleTime(sourceCandles);
+    let sourceStartTime: number | undefined;
     let bufferedCandles = new Map<number, PerpsCandle>();
     let baselineReady = sourceCandles.size > 0;
     let baselineRequest = 0;
@@ -194,8 +197,21 @@ export const usePerpsCandleFeed = ({
         Array.from(sourceCandles.values()),
         interval,
       );
+      if (
+        simplePresentation &&
+        (updateType !== 'realtime' ||
+          sourceStartTime === undefined ||
+          !sourceCandles.has(sourceStartTime))
+      ) {
+        sourceStartTime = sourceCandles.size
+          ? Math.min(...sourceCandles.keys())
+          : undefined;
+      }
       setSnapshot({
         candles,
+        ...(simplePresentation && sourceStartTime !== undefined
+          ? { sourceStartTime }
+          : {}),
         error: null,
         identity,
         latestCandle: candles[candles.length - 1] ?? null,

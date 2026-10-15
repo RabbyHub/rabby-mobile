@@ -1,4 +1,9 @@
-import type { CandleStick, SimpleChartConfig, SimpleChartFill } from './types';
+import type {
+  CandleStick,
+  SimpleChartConfig,
+  SimpleChartFill,
+  SimpleRangeCoverage,
+} from './types';
 
 const DAY = 86400;
 
@@ -90,6 +95,28 @@ export function simpleRangeReference(
     first.open > 0
     ? first.open
     : null;
+}
+
+/** Missing local candles are only a candidate; RN verifies Hyper's daily history. */
+export function simpleRangeCoverage(
+  candles: readonly CandleStick[],
+  config: Pick<SimpleChartConfig, 'range' | 'interval'>,
+  sourceStartTime: number | undefined,
+): SimpleRangeCoverage {
+  const window = simpleRangeWindow(candles, config);
+  if (
+    !window ||
+    sourceStartTime === undefined ||
+    !Number.isFinite(sourceStartTime)
+  )
+    return { kind: 'unavailable', start: null };
+  if (sourceStartTime > window.start)
+    return { kind: 'short', start: window.start };
+  if (config.range === '1D') return { kind: 'daily', start: window.start };
+  return {
+    kind: simpleRangeReference(candles, config) === null ? 'gap' : 'complete',
+    start: window.start,
+  };
 }
 
 export function visibleLastCandle(

@@ -9,6 +9,7 @@ import type {
   SimpleChartEvent,
   SimpleChartMessage,
   SimpleChartFill,
+  SimpleRangeCoverage,
 } from '@/components2024/TradingViewCandleChart/type';
 import {
   DEFAULT_SIMPLE_CHART_PREFERENCE,
@@ -17,7 +18,8 @@ import {
 } from '@/constant/perpsSimpleChart';
 import { apisPerps } from '@/core/apis/perps';
 import { usePerpsCandleFeed } from '@/hooks/perps/candles/usePerpsCandleFeed';
-import { toSimpleChartCandle } from './model';
+import { simplePriceText, toSimpleChartCandle } from './model';
+import { loadFirstDailyCandle } from './firstDailyCandle';
 import { preloadSimpleChart } from '@/hooks/perps/candles/preloadSimpleChart';
 import type { PerpsCandleDataInterval } from '@/constant/perps';
 import type { PerpsCandle } from '@/hooks/perps/candles/candle';
@@ -108,6 +110,7 @@ export function usePerpsSimpleChart({
   const [selectionState, setSelection] = useState<{
     identity: string;
     candle: CandleStick | null;
+    timeText?: string;
   } | null>(null);
   const selection =
     selectionState?.identity === identity ? selectionState.candle : null;
@@ -145,17 +148,22 @@ export function usePerpsSimpleChart({
   const [rangeReference, setRangeReference] = useState<{
     identity: string;
     referencePrice: number | null;
+    coverage?: SimpleRangeCoverage;
   } | null>(null);
   // One bounded presentation snapshot, not a second market-data store.
   const lastGood = useRef<{
     coin: string;
     preference: SimpleChartPreference;
     candles: PerpsCandle[];
+    sourceStartTime?: number;
   } | null>(null);
+  const ohlcMaximum = useRef(0);
+  const [ohlcMeasureText, setOhlcMeasureText] = useState('');
   const sentData = useRef<{
     identity: string;
     first: number | undefined;
     count: number;
+    sourceStartTime?: number;
   } | null>(null);
   const hasAppliedData =
     webReady && applied?.coin === coin && applied.epoch === readyEpoch;
@@ -253,6 +261,7 @@ export function usePerpsSimpleChart({
             style: preference.style,
           },
           candles: retained.candles.map(toSimpleChartCandle),
+          sourceStartTime: retained.sourceStartTime,
         });
         pendingApplied.current = {
           coin,
@@ -266,7 +275,31 @@ export function usePerpsSimpleChart({
       return;
     }
     const candles = feed.candles;
-    lastGood.current = { coin, preference, candles };
+    const sourceStartTime =
+      feed.sourceStartTime === undefined
+        ? undefined
+        : feed.sourceStartTime / 1000;
+    lastGood.current = { coin, preference, candles, sourceStartTime };
+    const tailUpdate =
+      previous?.identity === identity &&
+      feed.updateType === 'realtime' &&
+      previous.sourceStartTime === sourceStartTime &&
+      previous.first === candles[0]?.time &&
+      previous.count > 0 &&
+      candles.length >= previous.count &&
+      candles.length <= previous.count + 1 &&
+      feed.latestCandle !== null;
+    ohlcMaximum.current = tailUpdate
+      ? Math.max(ohlcMaximum.current, feed.latestCandle!.high)
+      : candles.reduce((maximum, candle) => Math.max(maximum, candle.high), 0);
+    // Tabular digits share widths. Only a change in digit/grouping shape needs
+    // another native measurement; moving the crosshair never scans the feed.
+    setOhlcMeasureText(
+      `$${simplePriceText(ohlcMaximum.current, config.priceDecimals)}`.replace(
+        /\d/g,
+        '8',
+      ),
+    );
     if (
       previous?.identity !== identity ||
       pendingApplied.current?.identity !== applied?.identity
@@ -275,6 +308,7 @@ export function usePerpsSimpleChart({
         action: 'replace',
         config: { ...config, ...preference },
         candles: candles.map(toSimpleChartCandle),
+        sourceStartTime,
       });
       pendingApplied.current = {
         coin,
@@ -284,14 +318,7 @@ export function usePerpsSimpleChart({
         preference,
       };
       send({ action: 'overlays', accountKey, fills, prices });
-    } else if (
-      feed.updateType === 'realtime' &&
-      previous.first === candles[0]?.time &&
-      previous.count > 0 &&
-      candles.length >= previous.count &&
-      candles.length <= previous.count + 1 &&
-      feed.latestCandle
-    ) {
+    } else if (tailUpdate && feed.latestCandle) {
       send({
         action: 'update',
         candle: toSimpleChartCandle(feed.latestCandle),
@@ -301,6 +328,7 @@ export function usePerpsSimpleChart({
         action: 'data',
         state: feed.status,
         candles: candles.map(toSimpleChartCandle),
+        sourceStartTime,
         preserve: true,
       });
     }
@@ -308,12 +336,14 @@ export function usePerpsSimpleChart({
       identity,
       first: candles[0]?.time,
       count: candles.length,
+      sourceStartTime,
     };
     // Config/overlays have their own effect below; market ticks must not restart it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     identity,
     feed.candles,
+    feed.sourceStartTime,
     feed.latestCandle,
     feed.updateType,
     feed.status,
@@ -413,6 +443,7 @@ export function usePerpsSimpleChart({
         setRangeReference({
           identity: event.identity,
           referencePrice: event.referencePrice,
+          coverage: event.coverage,
         });
       }
       return;
@@ -431,7 +462,11 @@ export function usePerpsSimpleChart({
         hapticSelectionIdentity.current = identity;
         touchedFeedback();
       } else if (!event.candle) hapticSelectionIdentity.current = null;
-      setSelection({ identity, candle: event.candle });
+      setSelection({
+        identity,
+        candle: event.candle,
+        timeText: event.timeText,
+      });
     } else if (event.event === 'viewport')
       setViewport(previous =>
         previous.identity === identity &&
@@ -457,12 +492,53 @@ export function usePerpsSimpleChart({
         return;
       setRangeReference(previous =>
         previous?.identity === event.identity &&
-        previous.referencePrice === event.referencePrice
+        previous.referencePrice === event.referencePrice &&
+        previous.coverage?.kind === event.coverage?.kind &&
+        previous.coverage?.start === event.coverage?.start
           ? previous
-          : { identity: event.identity, referencePrice: event.referencePrice },
+          : {
+              identity: event.identity,
+              referencePrice: event.referencePrice,
+              coverage: event.coverage,
+            },
       );
     } else if (event.event === 'history') void loadOlder();
   });
+  const displayedReference =
+    hasAppliedData && rangeReference?.identity === applied.identity
+      ? rangeReference
+      : null;
+  const shortStart =
+    displayedReference?.coverage?.kind === 'short'
+      ? displayedReference.coverage.start
+      : null;
+  const [firstDay, setFirstDay] = useState<{
+    owner: string;
+    value: Awaited<ReturnType<typeof loadFirstDailyCandle>>;
+  } | null>(null);
+  // A successful replace owns both the curve and its statistic. An old request
+  // cannot resolve into a new coin/range, inactive screen or rebuilt WebView.
+  const referenceOwner = `${applied?.identity}:${applied?.sequence}:${shortStart}`;
+  useEffect(() => {
+    if (!active || !hasAppliedData || shortStart === null) return;
+    let cancelled = false;
+    void loadFirstDailyCandle(coin).then(value => {
+      if (!cancelled) setFirstDay({ owner: referenceOwner, value });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [coin, active, hasAppliedData, referenceOwner, shortStart]);
+  const firstDayReady = firstDay?.owner === referenceOwner;
+  const shortReference =
+    firstDayReady &&
+    firstDay.value &&
+    shortStart !== null &&
+    // Daily buckets start at midnight; the raw source boundary has already
+    // proved that the first intraday candle starts after this window's cutoff.
+    firstDay.value.time + 86400 > shortStart
+      ? firstDay.value.open
+      : null;
   const onChartReady = useCallback(() => {
     setWebFailed(false);
     setWebReady(true);
@@ -489,14 +565,16 @@ export function usePerpsSimpleChart({
     prefetch,
     hasAppliedData,
     rangeReference:
-      hasAppliedData && rangeReference?.identity === applied.identity
-        ? rangeReference.referencePrice
-        : null,
+      shortStart !== null
+        ? shortReference
+        : displayedReference?.referencePrice ?? null,
+    shortHistory: shortStart !== null,
     referenceLoading:
-      !hasAppliedData &&
-      !webFailed &&
-      feed.status !== 'error' &&
-      feed.status !== 'empty',
+      (active && hasAppliedData && shortStart !== null && !firstDayReady) ||
+      (!hasAppliedData &&
+        !webFailed &&
+        feed.status !== 'error' &&
+        feed.status !== 'empty'),
     loading: !hasAppliedData || !targetReady || applied?.identity !== identity,
     retry: () => {
       if (!active) return;
@@ -507,6 +585,9 @@ export function usePerpsSimpleChart({
     onChartLoading,
     onChartError,
     selection: active && targetReady ? selection : null,
+    ohlcMeasureText,
+    selectionTimeText:
+      active && targetReady && selection ? selectionState?.timeText ?? '' : '',
     onSimpleEvent,
     onChartReady,
     resetVisible:
