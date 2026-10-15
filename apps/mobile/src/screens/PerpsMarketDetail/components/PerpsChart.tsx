@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
+import type { NativeGesture } from 'react-native-gesture-handler';
+import { PerpsSimplePriceAxis } from './chart/PerpsSimplePriceAxis';
 import { useTranslation } from 'react-i18next';
 import { colord } from 'colord';
 import { useMemoizedFn } from 'ahooks';
@@ -29,6 +31,7 @@ const SIMPLE_CHART_HEIGHT = 320;
 
 export const PerpsChart = React.memo(function PerpsChart({
   marketName,
+  scrollGesture,
   currentAssetCtx,
   activeAssetCtx,
   lineTagInfo,
@@ -36,6 +39,7 @@ export const PerpsChart = React.memo(function PerpsChart({
   history,
 }: {
   marketName: string;
+  scrollGesture?: NativeGesture;
   currentAssetCtx?: MarketData;
   activeAssetCtx?: WsActiveAssetCtx['ctx'] | null;
   lineTagInfo: {
@@ -55,6 +59,7 @@ export const PerpsChart = React.memo(function PerpsChart({
   >(
     () => ({
       priceDecimals: decimals,
+      nativePriceAxis: Platform.OS === 'ios',
       showTradeMarkers: false,
       colors: {
         background: colors2024['neutral-bg-0'],
@@ -159,6 +164,16 @@ export const PerpsChart = React.memo(function PerpsChart({
           onChartError={chart.onChartError}
           onSimpleEvent={chart.onSimpleEvent}
         />
+        {scrollGesture && chart.priceAxisOwner && (
+          <PerpsSimplePriceAxis
+            key={chart.priceAxisOwner}
+            scrollGesture={scrollGesture}
+            owner={chart.priceAxisOwner}
+            paneWidth={chart.paneWidth}
+            paneHeight={chart.paneHeight}
+            onCommand={chart.onPriceAxisCommand}
+          />
+        )}
         {chart.active && chart.loading && <View style={styles.touchGuard} />}
         {chart.active && chart.loading && (
           <PerpsSimpleChartLoading

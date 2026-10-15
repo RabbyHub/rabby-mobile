@@ -154,7 +154,7 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
     jest.restoreAllMocks();
     jest.clearAllTimers();
   });
-  const mount = (coin = 'BTC') => {
+  const mount = (coin = 'BTC', chartConfig = config) => {
     const hook = renderHook(
       ({ name, owner, chartConfig }) =>
         usePerpsSimpleChart({
@@ -164,7 +164,7 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
           prices: owner ? prices : {},
           fills: owner ? fills : [],
         }),
-      { initialProps: { name: coin, owner: 'account-a', chartConfig: config } },
+      { initialProps: { name: coin, owner: 'account-a', chartConfig } },
     );
     // Native WebView bridge boundary: collect messages, preserving the real controller protocol.
     hook.result.current.chartRef.current = {
@@ -185,6 +185,157 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
     act(() => hook.result.current.onChartReady());
     return hook;
   };
+
+  const publishAxisViewport = (hook: ReturnType<typeof mount>, session = 1) => {
+    const replacement = messages
+      .filter(message => message.action === 'replace')
+      .at(-1)!;
+    act(() =>
+      hook.result.current.onSimpleEvent({
+        type: 'PERPS_SIMPLE_EVENT',
+        event: 'viewport',
+        identity: replacement.identity,
+        presentationSequence: replacement.sequence,
+        priceAxisSession: session,
+        style: hook.result.current.requestedPreference.style,
+        paneWidth: 310,
+        paneHeight: 274,
+        resetVisible: false,
+        latestVisible: false,
+      }),
+    );
+  };
+
+  it('enables the native axis only after current presentation geometry and only with explicit opt-in', async () => {
+    const hook = mount();
+    await settle();
+    publishAxisViewport(hook);
+    expect(hook.result.current.priceAxisOwner).toBeNull();
+    hook.rerender({
+      name: 'BTC',
+      owner: 'account-a',
+      chartConfig: { ...config, nativePriceAxis: true },
+    });
+    const owner = hook.result.current.priceAxisOwner!;
+    expect(owner).not.toBeNull();
+    act(() =>
+      hook.result.current.onPriceAxisCommand(owner, {
+        action: 'priceAxis',
+        phase: 'start',
+        gestureId: 1,
+        deltaY: 0,
+      }),
+    );
+    expect(messages.at(-1)).toMatchObject({
+      action: 'priceAxis',
+      phase: 'start',
+      session: 1,
+    });
+    publishAxisViewport(hook, 2);
+    const count = messages.length;
+    act(() =>
+      hook.result.current.onPriceAxisCommand(owner, {
+        action: 'priceAxis',
+        phase: 'move',
+        gestureId: 1,
+        deltaY: 20,
+      }),
+    );
+    expect(messages).toHaveLength(count);
+    publishAxisViewport(hook, 1);
+    expect(hook.result.current.priceAxisOwner).not.toBe(owner);
+    expect(trigger).not.toHaveBeenCalled();
+  });
+
+  it.each(['coin', 'interval', 'style', 'blur', 'background', 'reload'])(
+    'rejects queued native axis callbacks after %s invalidates their owner',
+    async boundary => {
+      const listeners: Array<(state: string) => void> = [];
+      jest
+        .spyOn(AppState, 'addEventListener')
+        .mockImplementation((_event, listener) => {
+          listeners.push(listener);
+          return { remove: jest.fn() };
+        });
+      const chartConfig = { ...config, nativePriceAxis: true };
+      const hook = mount('BTC', chartConfig);
+      await settle();
+      expect(hook.result.current.priceAxisOwner).toBeNull();
+      publishAxisViewport(hook);
+      const owner = hook.result.current.priceAxisOwner!;
+      expect(owner).not.toBeNull();
+      act(() =>
+        hook.result.current.onPriceAxisCommand(owner, {
+          action: 'priceAxis',
+          phase: 'start',
+          gestureId: 1,
+          deltaY: 0,
+        }),
+      );
+      act(() => {
+        if (boundary === 'coin')
+          hook.rerender({ name: 'ETH', owner: 'account-a', chartConfig });
+        else if (boundary === 'interval')
+          hook.result.current.updatePreference({
+            ...hook.result.current.requestedPreference,
+            range: null,
+            interval: '4h',
+          });
+        else if (boundary === 'style')
+          hook.result.current.updatePreference({
+            ...hook.result.current.requestedPreference,
+            style: 'area',
+          });
+        else if (boundary === 'blur') {
+          mockFocused = false;
+          hook.rerender({ name: 'BTC', owner: 'account-a', chartConfig });
+        } else if (boundary === 'background')
+          listeners.forEach(listener => listener('background'));
+        else hook.result.current.onChartLoading();
+      });
+      expect(hook.result.current.priceAxisOwner).toBeNull();
+      const count = messages.filter(
+        message => message.action === 'priceAxis',
+      ).length;
+      act(() => {
+        hook.result.current.onPriceAxisCommand(owner, {
+          action: 'priceAxis',
+          phase: 'move',
+          gestureId: 1,
+          deltaY: 30,
+        });
+        hook.result.current.onPriceAxisCommand(owner, {
+          action: 'priceAxis',
+          phase: 'cancel',
+          gestureId: 1,
+          deltaY: 30,
+        });
+      });
+      expect(
+        messages.filter(message => message.action === 'priceAxis'),
+      ).toHaveLength(count);
+      if (boundary === 'blur' || boundary === 'background') {
+        act(() => {
+          mockFocused = true;
+          listeners.forEach(listener => listener('active'));
+          hook.rerender({ name: 'BTC', owner: 'account-a', chartConfig });
+        });
+        await settle();
+        act(() =>
+          hook.result.current.onPriceAxisCommand(owner, {
+            action: 'priceAxis',
+            phase: 'start',
+            gestureId: 2,
+            deltaY: 0,
+          }),
+        );
+        expect(
+          messages.filter(message => message.action === 'priceAxis'),
+        ).toHaveLength(count);
+      }
+      await settle();
+    },
+  );
 
   it('joins an in-flight entry preload after initial preference hydration', async () => {
     let resolve!: (candles: Candle[]) => void;

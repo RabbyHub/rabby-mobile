@@ -10,6 +10,7 @@ import {
   type Time,
 } from 'lightweight-charts/standalone';
 import { attachSimplePriceAxis } from './perps-simple-axis';
+import { createSimpleNativePriceAxis } from './perps-simple-native-axis';
 import { formatTime, formatYTime } from './chart-logic';
 import { PERPS_PRO_FONT_FAMILY } from './perps-pro-font';
 import {
@@ -175,6 +176,7 @@ export function createSimpleChart(
   }
   function applyDefault() {
     priceAxis.cancel();
+    nativePriceAxis.cancel();
     if (!config) return;
     const range = simpleDefaultRange(
       candles,
@@ -193,7 +195,8 @@ export function createSimpleChart(
     schedule();
   }
   const priceAxis = attachSimplePriceAxis(host, {
-    isActive: () => active && !!candles.length && !disposed,
+    isActive: () =>
+      !config?.nativePriceAxis && active && !!candles.length && !disposed,
     getRange: () => activeSeries().priceScale().getVisibleRange(),
     setRange: range => {
       activeSeries().priceScale().setVisibleRange(range);
@@ -204,6 +207,27 @@ export function createSimpleChart(
     onStart: () => {
       contact = false;
       clearSelection();
+    },
+  });
+  const nativePriceAxis = createSimpleNativePriceAxis({
+    isActive: () =>
+      !!config?.nativePriceAxis &&
+      active &&
+      !!candles.length &&
+      !awaitingApplied &&
+      !disposed,
+    getRange: () => activeSeries().priceScale().getVisibleRange(),
+    getHeight: () => chart.panes()[0].getHeight(),
+    setRange: range => {
+      activeSeries().priceScale().setVisibleRange(range);
+      userViewportChanged = true;
+      dirty = true;
+      schedule();
+    },
+    onStart: () => {
+      contact = false;
+      clearSelection();
+      schedule();
     },
   });
   function render() {
@@ -230,13 +254,18 @@ export function createSimpleChart(
     const paneWidth = chart.timeScale().width();
     const paneHeight = chart.panes()[0].getHeight();
     priceAxis.layout(paneWidth, paneHeight);
-    const state = `${identity}:${dirty}:${
+    const state = `${identity}:${replacementSequence}:${
+      nativePriceAxis.session
+    }:${config.style}:${dirty}:${
       !lastVisible && !!last
     }:${paneWidth}:${paneHeight}`;
     if (state !== viewportState) {
       viewportState = state;
       emit({
         event: 'viewport',
+        presentationSequence: replacementSequence,
+        priceAxisSession: nativePriceAxis.session,
+        style: config.style,
         resetVisible: dirty,
         latestVisible: !lastVisible && !!last,
         paneWidth,
@@ -633,6 +662,8 @@ export function createSimpleChart(
         const changed =
           identity !== message.identity || message.action === 'replace';
         const styleChanged = config?.style !== message.config.style;
+        const axisModeChanged =
+          config?.nativePriceAxis !== message.config.nativePriceAxis;
         const range = chart.timeScale().getVisibleLogicalRange();
         identity = message.identity;
         config = message.config;
@@ -640,7 +671,10 @@ export function createSimpleChart(
           awaitingApplied = true;
           replacementSequence = message.sequence;
         }
-        if (changed || styleChanged) priceAxis.cancel();
+        if (changed || styleChanged || axisModeChanged) {
+          priceAxis.cancel();
+          nativePriceAxis.cancel();
+        }
         if (changed) {
           clearSelection();
           candles = [];
@@ -781,6 +815,7 @@ export function createSimpleChart(
           else clearSelection();
         }
       } else if (message.action === 'activity') {
+        if (active !== message.active) nativePriceAxis.cancel();
         active = message.active;
         host.style.pointerEvents = active ? 'auto' : 'none';
         if (!active) {
@@ -789,6 +824,8 @@ export function createSimpleChart(
           clearSelection();
           historyPending = false;
         } else historyRetryBlocked = false;
+      } else if (message.action === 'priceAxis') {
+        return nativePriceAxis.handle(message);
       } else if (message.action === 'update') {
         const candle = message.candle;
         const last = candles[candles.length - 1];
@@ -817,7 +854,7 @@ export function createSimpleChart(
               to: defaultViewport.to + 1,
             };
           updateMarkers();
-          if (!dirty) applyDefault();
+          if (!dirty && !nativePriceAxis.dragging) applyDefault();
           else if (follow && range)
             chart.timeScale().setVisibleLogicalRange({
               from: range.from + 1,
@@ -838,6 +875,7 @@ export function createSimpleChart(
         clearSelection();
         applyDefault();
       } else if (message.action === 'latest') {
+        nativePriceAxis.cancel();
         clearSelection();
         const range = chart.timeScale().getVisibleLogicalRange();
         if (range)
@@ -858,6 +896,7 @@ export function createSimpleChart(
       if (frame !== null) cancelAnimationFrame(frame);
       resize.disconnect();
       priceAxis.destroy();
+      nativePriceAxis.cancel();
       window.removeEventListener('mouseup', end);
       chart.remove();
       host.remove();

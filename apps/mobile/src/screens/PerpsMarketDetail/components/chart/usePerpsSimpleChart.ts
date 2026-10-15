@@ -22,8 +22,10 @@ import { preloadSimpleChart } from '@/hooks/perps/candles/preloadSimpleChart';
 import type { PerpsCandleDataInterval } from '@/constant/perps';
 import type { PerpsCandle } from '@/hooks/perps/candles/candle';
 import { touchedFeedback } from '@/utils/touch';
+import type { SimplePriceAxisCommand } from './simplePriceAxisDrag';
 
 let nextSession = 0;
+let nextAxisGeneration = 0;
 type Command = SimpleChartMessage extends infer Message
   ? Message extends SimpleChartMessage
     ? Omit<Message, 'type' | 'identity' | 'sequence'>
@@ -113,6 +115,9 @@ export function usePerpsSimpleChart({
   const hapticSelectionIdentity = useRef<string | null>(null);
   const [viewport, setViewport] = useState({
     identity: '',
+    presentationSequence: -1,
+    priceAxisSession: -1,
+    style: '' as string,
     resetVisible: false,
     latestVisible: false,
     paneWidth: 0,
@@ -163,6 +168,61 @@ export function usePerpsSimpleChart({
   const targetReady =
     feed.identity === `${coin}:${preference.interval}` &&
     (feed.status === 'ready' || feed.status === 'empty');
+
+  const axisGeneration = useMemo(
+    () =>
+      `${identity}:${active}:${webReady}:${targetReady}:${preference.style}:${
+        applied?.sequence
+      }:${viewport.priceAxisSession}:${++nextAxisGeneration}`,
+    [
+      active,
+      webReady,
+      targetReady,
+      identity,
+      preference.style,
+      applied?.sequence,
+      viewport.priceAxisSession,
+    ],
+  );
+  const priceAxisOwner =
+    config.nativePriceAxis &&
+    active &&
+    webReady &&
+    targetReady &&
+    feed.candles.length > 0 &&
+    applied?.identity === identity &&
+    pendingApplied.current?.sequence === applied.sequence &&
+    viewport.identity === identity &&
+    viewport.presentationSequence === applied.sequence &&
+    viewport.style === preference.style &&
+    viewport.priceAxisSession >= 0 &&
+    Number.isFinite(viewport.paneWidth) &&
+    viewport.paneWidth > 0 &&
+    Number.isFinite(viewport.paneHeight) &&
+    viewport.paneHeight > 0
+      ? axisGeneration
+      : null;
+  const axisOwner = useRef(priceAxisOwner);
+  axisOwner.current = priceAxisOwner;
+  const axisMounted = useRef(true);
+  useEffect(() => {
+    axisMounted.current = true;
+    return () => {
+      axisMounted.current = false;
+    };
+  }, []);
+  const onPriceAxisCommand = useMemoizedFn(
+    (owner: string, command: SimplePriceAxisCommand) => {
+      // Queued UI-thread callbacks must never acquire the next coin/style/session.
+      if (
+        !axisMounted.current ||
+        owner !== axisOwner.current ||
+        !priceAxisOwner
+      )
+        return;
+      send({ ...command, session: viewport.priceAxisSession });
+    },
+  );
 
   useEffect(() => {
     hapticSelectionIdentity.current = null;
@@ -373,13 +433,22 @@ export function usePerpsSimpleChart({
       } else if (!event.candle) hapticSelectionIdentity.current = null;
       setSelection({ identity, candle: event.candle });
     } else if (event.event === 'viewport')
-      setViewport({
-        identity,
-        resetVisible: event.resetVisible,
-        latestVisible: event.latestVisible,
-        paneWidth: event.paneWidth,
-        paneHeight: event.paneHeight,
-      });
+      setViewport(previous =>
+        previous.identity === identity &&
+        (event.presentationSequence < previous.presentationSequence ||
+          event.priceAxisSession < previous.priceAxisSession)
+          ? previous
+          : {
+              identity,
+              presentationSequence: event.presentationSequence,
+              priceAxisSession: event.priceAxisSession,
+              style: event.style,
+              resetVisible: event.resetVisible,
+              latestVisible: event.latestVisible,
+              paneWidth: event.paneWidth,
+              paneHeight: event.paneHeight,
+            },
+      );
     else if (event.event === 'rangeReference') {
       if (
         applied?.identity !== event.identity ||
@@ -452,6 +521,8 @@ export function usePerpsSimpleChart({
       viewport.latestVisible,
     paneWidth: viewport.paneWidth,
     paneHeight: viewport.paneHeight,
+    priceAxisOwner,
+    onPriceAxisCommand,
     reset: () => send({ action: 'reset' }),
     latest: () => send({ action: 'latest' }),
   };
