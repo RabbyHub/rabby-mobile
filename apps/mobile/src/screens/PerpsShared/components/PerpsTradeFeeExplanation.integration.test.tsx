@@ -165,7 +165,7 @@ describe('Perps Trade Fee explanation integration', () => {
     const view = render(<HistoryHarness fill={historicalFill} />);
     fireEvent.press(screen.getByLabelText('page.perps.historyDetail.feeTitle'));
     expect(screen.getByText('0.02%')).toBeTruthy();
-    expect(screen.getByText('0.05%')).toBeTruthy();
+    expect(screen.getByText('0.045%')).toBeTruthy();
     expect(screen.queryByText('0.04%')).toBeNull();
     expect(triggerRenderCount).toBe(1);
     expect(screen.getByTestId('owned-fee-visibility')).toHaveTextContent(
@@ -185,22 +185,36 @@ describe('Perps Trade Fee explanation integration', () => {
     expect(screen.queryByText('0.02%')).toBeNull();
     fireEvent.press(screen.getByTestId('close-owned-fee-explanation'));
 
-    view.rerender(
-      <HistoryHarness fill={{ ...currentFill, builderFee: '0', fee: '0' }} />,
-    );
-    fireEvent.press(screen.getByLabelText('page.perps.historyDetail.feeTitle'));
-    expect(screen.getAllByText('0.00%')).toHaveLength(2);
-    expect(screen.queryByText('0.04%')).toBeNull();
-    fireEvent.press(screen.getByTestId('close-owned-fee-explanation'));
-
-    view.rerender(
-      <HistoryHarness fill={{ ...currentFill, builderFee: undefined }} />,
-    );
-    fireEvent.press(screen.getByLabelText('page.perps.historyDetail.feeTitle'));
-    expect(screen.getByText('0.04%')).toBeTruthy();
-    expect(screen.getByText('-')).toBeTruthy();
-    fireEvent.press(screen.getByTestId('close-owned-fee-explanation'));
+    for (const builderFee of ['0', undefined, 'invalid', '3']) {
+      view.rerender(
+        <HistoryHarness fill={{ ...currentFill, builderFee, fee: '0' }} />,
+      );
+      fireEvent.press(
+        screen.getByLabelText('page.perps.historyDetail.feeTitle'),
+      );
+      expect(screen.getByText('0.04%')).toBeTruthy();
+      expect(screen.getByText('0.045%')).toBeTruthy();
+      expect(screen.queryByText('0.00%')).toBeNull();
+      expect(screen.queryByText('0.02%')).toBeNull();
+      expect(screen.queryByText('-')).toBeNull();
+      fireEvent.press(screen.getByTestId('close-owned-fee-explanation'));
+    }
   });
+
+  it.each(['0', '-10', 'invalid'])(
+    'keeps both displayed rates independent of total fee and its currency (%s)',
+    fee => {
+      render(
+        <HistoryHarness fill={{ ...historicalFill, fee, feeToken: 'HYPE' }} />,
+      );
+      fireEvent.press(
+        screen.getByLabelText('page.perps.historyDetail.feeTitle'),
+      );
+      expect(screen.getByText('0.02%')).toBeTruthy();
+      expect(screen.getByText('0.045%')).toBeTruthy();
+      fireEvent.press(screen.getByTestId('close-owned-fee-explanation'));
+    },
+  );
 
   it('publishes the shared explanation through the real Tips atom', () => {
     triggerRenderCount = 0;
@@ -221,6 +235,7 @@ describe('Perps Trade Fee explanation integration', () => {
     expect(triggerRenderCount).toBe(1);
 
     expect(screen.getByText('0.04%')).toBeTruthy();
+    expect(screen.getByText('0.045%')).toBeTruthy();
     expect(screen.queryByText('0.02%')).toBeNull();
     expect(screen.queryByTestId('perps-trade-fee-rabby-discount')).toBeNull();
     fireEvent.press(screen.getByTestId('close-fee-explanation'));

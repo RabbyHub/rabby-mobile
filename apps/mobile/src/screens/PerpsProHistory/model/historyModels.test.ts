@@ -97,10 +97,7 @@ describe('Trade fee snapshots', () => {
       expect(row.feeSnapshot).toEqual({
         px: 'invalid',
         sz: '-0.25',
-        fee: 'NaN',
         builderFee,
-        feeToken: undefined,
-        quoteAsset: 'USDC',
       });
       expect(row).toMatchObject({
         price: '0',
@@ -114,16 +111,22 @@ describe('Trade fee snapshots', () => {
     },
   );
 
-  it('retains the raw fee currency and resolved Spot quote currency', () => {
+  it('keeps fee amounts and Spot currencies outside the Rabby snapshot', () => {
     const row = mapPerpsProTradeHistoryFact(
       makeFill({ coin: '@107', feeToken: 'HYPE', builderFee: '0' }),
       {},
       spotMeta,
     );
-    expect(row.feeSnapshot).toMatchObject({
-      feeToken: 'HYPE',
-      quoteAsset: 'USDC',
+    expect(row.feeSnapshot).toEqual({
+      px: '2000',
+      sz: '0.25',
       builderFee: '0',
+    });
+    expect(row).toMatchObject({
+      fee: '0.5',
+      feeToken: 'HYPE',
+      netRealizedPnl: '12',
+      market: { quoteAsset: 'USDC' },
     });
   });
 });

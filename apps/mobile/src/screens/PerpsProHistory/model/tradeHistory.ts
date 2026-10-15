@@ -34,10 +34,7 @@ export const mapPerpsProTradeHistoryFact = (
     feeSnapshot: {
       px: fill.px,
       sz: fill.sz,
-      fee: fill.fee,
       builderFee: fill.builderFee,
-      feeToken,
-      quoteAsset: market.quoteAsset,
     },
     feeToken: feeToken || 'USDC',
     filledBase: size.toString(),

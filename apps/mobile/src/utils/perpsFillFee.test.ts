@@ -1,148 +1,99 @@
 import { PERPS_EXCHANGE_FEE_NUMBER } from '@/constant/perps';
 
-import {
-  getPerpsFillFeeRates,
-  type PerpsFillFeeSnapshot,
-} from './perpsFillFee';
+import { getRabbyFillFeeRate, type PerpsFillFeeSnapshot } from './perpsFillFee';
 
-const fill: PerpsFillFeeSnapshot = {
-  px: '10000',
-  sz: '1',
-  fee: '6.5',
-  builderFee: '2',
-  feeToken: 'USDC',
-  quoteAsset: 'USDC',
-};
+const fill: PerpsFillFeeSnapshot = { px: '10000', sz: '1', builderFee: '2' };
+const fallback = `${(PERPS_EXCHANGE_FEE_NUMBER * 100).toFixed(2)}%`;
 
-describe('getPerpsFillFeeRates', () => {
+describe('getRabbyFillFeeRate', () => {
   it.each([
-    ['old fee', {}, { builder: '0.02%', exchange: '0.05%' }],
-    [
-      'new fee',
-      { fee: '8.5', builderFee: '4' },
-      { builder: '0.04%', exchange: '0.05%' },
-    ],
-    [
-      'aggregated fills',
-      { px: '17500', sz: '4', fee: '57.5', builderFee: '26' },
-      { builder: '0.04%', exchange: '0.05%' },
-    ],
-    [
-      'explicit zero',
-      { fee: '0', builderFee: '0' },
-      { builder: '0.00%', exchange: '0.00%' },
-    ],
-    [
-      'signed size and rebate',
-      { sz: '-1', fee: '1' },
-      { builder: '0.02%', exchange: '-0.01%' },
-    ],
-    [
-      'negative total fee',
-      { fee: '-1', builderFee: '0' },
-      { builder: '0.00%', exchange: '-0.01%' },
-    ],
-    [
-      'negative zero after rounding',
-      { fee: '1.99' },
-      { builder: '0.02%', exchange: '0.00%' },
-    ],
-    [
-      'valid alternate quote',
-      { feeToken: 'USDH', quoteAsset: 'USDH' },
-      { builder: '0.02%', exchange: '0.05%' },
-    ],
-    [
-      'currency case and whitespace',
-      { feeToken: ' usdc ' },
-      { builder: '0.02%', exchange: '0.05%' },
-    ],
-    [
-      'legacy missing fee token',
-      { feeToken: undefined },
-      { builder: '0.02%', exchange: '0.05%' },
-    ],
-    [
-      'different fee currency',
-      { feeToken: 'HYPE' },
-      { builder: '-', exchange: '-' },
-    ],
-  ] as const)('calculates %s', (_name, overrides, expected) => {
-    expect(getPerpsFillFeeRates({ ...fill, ...overrides })).toEqual(expected);
+    ['2', '0.02%'],
+    ['4', '0.04%'],
+  ])('accepts the supported Rabby tier %s', (builderFee, expected) => {
+    expect(getRabbyFillFeeRate({ ...fill, builderFee })).toBe(expected);
   });
 
-  it.each([undefined, null, '', '   '])(
-    'uses the shared default only for a missing builder fee (%p)',
+  it('uses the supplied aggregate notional before display rounding', () => {
+    expect(
+      getRabbyFillFeeRate({ px: '17500', sz: '4', builderFee: '26' }),
+    ).toBe('0.04%');
+  });
+
+  it.each(['0', '-0', '1', '3', '6', '10', '100'])(
+    'uses the shared fallback for zero or an unsupported rate (%s)',
     builderFee => {
-      const expected = {
-        builder: `${(PERPS_EXCHANGE_FEE_NUMBER * 100).toFixed(2)}%`,
-        exchange: '-',
-      };
-      expect(getPerpsFillFeeRates({ ...fill, builderFee })).toEqual(expected);
-      expect(
-        getPerpsFillFeeRates({
-          ...fill,
-          builderFee,
-          px: '0',
-          feeToken: 'HYPE',
-        }),
-      ).toEqual(expected);
+      expect(getRabbyFillFeeRate({ ...fill, builderFee })).toBe(fallback);
+    },
+  );
+
+  it.each([undefined, null, '', ' ', 'invalid', 'NaN', 'Infinity', '-1'])(
+    'falls back for a missing or invalid builder fee (%p)',
+    builderFee => {
+      expect(getRabbyFillFeeRate({ ...fill, builderFee })).toBe(fallback);
     },
   );
 
   it.each([
-    { builderFee: 'invalid' },
-    { builderFee: 'NaN' },
-    { builderFee: 'Infinity' },
-    { builderFee: '-1' },
     { px: '0' },
     { px: '-1' },
-    { px: 'Infinity' },
     { px: '' },
+    { px: 'Infinity' },
     { sz: '0' },
     { sz: 'NaN' },
     { sz: 'Infinity' },
-  ])('does not turn invalid facts into zero or a default: %p', overrides => {
-    expect(getPerpsFillFeeRates({ ...fill, ...overrides })).toEqual({
-      builder: '-',
-      exchange: '-',
-    });
+  ])('falls back for an invalid notional (%p)', values => {
+    expect(getRabbyFillFeeRate({ ...fill, ...values })).toBe(fallback);
   });
 
-  it('tolerates a malformed non-string builder field without treating it as missing', () => {
-    expect(
-      getPerpsFillFeeRates({
-        ...fill,
-        builderFee: 0,
-      } as unknown as PerpsFillFeeSnapshot),
-    ).toEqual({ builder: '-', exchange: '-' });
-  });
-
-  it.each(['', ' ', 'NaN', 'Infinity'])(
-    'keeps the builder rate when the total fee is invalid (%p)',
-    fee => {
-      expect(getPerpsFillFeeRates({ ...fill, fee })).toEqual({
-        builder: '0.02%',
-        exchange: '-',
-      });
+  it.each([0, false, {}])(
+    'tolerates a malformed non-string builder field (%p)',
+    builderFee => {
+      expect(
+        getRabbyFillFeeRate({
+          ...fill,
+          builderFee,
+        } as unknown as PerpsFillFeeSnapshot),
+      ).toBe(fallback);
     },
   );
 
   it.each([
-    ['3.4999999', '0.03%'],
+    ['1.4999999', '0.04%'],
+    ['1.5', '0.02%'],
+    ['2.4999999', '0.02%'],
+    ['2.5', '0.04%'],
+    ['3.4999999', '0.04%'],
     ['3.5', '0.04%'],
-    ['3.9999999', '0.04%'],
-  ])('rounds %s only at final display precision', (builderFee, builder) => {
-    expect(getPerpsFillFeeRates({ ...fill, builderFee }).builder).toBe(builder);
-  });
-
-  it.each([undefined, null])(
-    'does not invent a fee without a fill (%p)',
-    value => {
-      expect(getPerpsFillFeeRates(value)).toEqual({
-        builder: '-',
-        exchange: '-',
-      });
+    ['4.4999999', '0.04%'],
+    ['4.5', '0.04%'],
+  ])(
+    'matches only after two-decimal half-up rounding (%s)',
+    (builderFee, expected) => {
+      expect(getRabbyFillFeeRate({ ...fill, builderFee })).toBe(expected);
     },
   );
+
+  it('supports signed size without mutating raw facts', () => {
+    const input = Object.freeze({ ...fill, sz: '-1' });
+    expect(getRabbyFillFeeRate(input)).toBe('0.02%');
+    expect(input).toEqual({ px: '10000', sz: '-1', builderFee: '2' });
+  });
+
+  it.each(['0', '-10', 'invalid'])(
+    'does not use total fee or its display currency (%s)',
+    fee => {
+      const input = Object.freeze({
+        ...fill,
+        fee,
+        feeToken: 'HYPE',
+        quoteAsset: 'USDC',
+      });
+      expect(getRabbyFillFeeRate(input)).toBe('0.02%');
+      expect(input.fee).toBe(fee);
+    },
+  );
+
+  it.each([undefined, null])('falls back for a missing record (%p)', record => {
+    expect(getRabbyFillFeeRate(record)).toBe(fallback);
+  });
 });

@@ -5,8 +5,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { useShowTipsPopup } from '@/hooks/useTipsPopup';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
-  getPerpsFillFeeRates,
-  type PerpsFillFeeRates,
+  getRabbyFillFeeRate,
   type PerpsFillFeeSnapshot,
 } from '@/utils/perpsFillFee';
 import React, { useCallback } from 'react';
@@ -16,7 +15,7 @@ import { View } from 'react-native';
 export type PerpsTradeFeeExplanationVariant = 'default' | 'pro';
 
 type PerpsTradeFeeExplanationContentProps = {
-  feeRates: PerpsFillFeeRates;
+  rabbyFeeRate: string;
   isLiquidation: boolean;
   variant?: PerpsTradeFeeExplanationVariant;
 };
@@ -28,7 +27,7 @@ type UseShowPerpsTradeFeeExplanationOptions = {
 
 export const PerpsTradeFeeExplanationContent: React.FC<
   PerpsTradeFeeExplanationContentProps
-> = ({ feeRates, isLiquidation, variant = 'default' }) => {
+> = ({ rabbyFeeRate, isLiquidation, variant = 'default' }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const feeBoldStyle = variant === 'pro' ? styles.feeBoldPro : styles.feeBold;
@@ -52,7 +51,7 @@ export const PerpsTradeFeeExplanationContent: React.FC<
               {t('page.perps.historyDetail.feeHyperliquid')}
             </Text>
           </View>
-          <Text style={styles.feeRowValue}>{feeRates.exchange}</Text>
+          <Text style={styles.feeRowValue}>0.045%</Text>
         </View>
         {!isLiquidation ? (
           <View style={styles.feeRow}>
@@ -65,7 +64,7 @@ export const PerpsTradeFeeExplanationContent: React.FC<
             <View
               style={styles.feeRowRight}
               testID="perps-trade-fee-rabby-right">
-              <Text style={styles.feeRowValue}>{feeRates.builder}</Text>
+              <Text style={styles.feeRowValue}>{rabbyFeeRate}</Text>
             </View>
           </View>
         ) : null}
@@ -87,7 +86,7 @@ export const useShowPerpsTradeFeeExplanation = ({
         title: t('page.perps.historyDetail.feeTitle'),
         desc: (
           <PerpsTradeFeeExplanationContent
-            feeRates={getPerpsFillFeeRates(fill)}
+            rabbyFeeRate={getRabbyFillFeeRate(fill)}
             isLiquidation={isLiquidation}
             variant={variant}
           />

@@ -4,57 +4,26 @@ import BigNumber from 'bignumber.js';
 import { PERPS_EXCHANGE_FEE_NUMBER } from '@/constant/perps';
 
 export type PerpsFillFeeSnapshot = Readonly<
-  Pick<WsFill, 'px' | 'sz' | 'fee'> & {
+  Pick<WsFill, 'px' | 'sz'> & {
     builderFee?: string | null;
-    feeToken?: string;
-    quoteAsset?: string;
   }
 >;
-
-export type PerpsFillFeeRates = Readonly<{
-  builder: string;
-  exchange: string;
-}>;
 
 const parseAmount = (value: unknown) =>
   typeof value === 'string' && value.trim()
     ? new BigNumber(value)
     : new BigNumber(NaN);
 
-const formatFeeRate = (amount: BigNumber, notional: BigNumber) => {
-  const percent = amount
-    .dividedBy(notional)
-    .times(100)
-    .toFixed(2, BigNumber.ROUND_HALF_UP);
-  return `${new BigNumber(percent).isZero() ? '0.00' : percent}%`;
-};
-
-export const getPerpsFillFeeRates = (
+// Match supported Rabby tiers after display rounding, using aggregates as supplied.
+// The fallback is a display policy, not proof of the fee actually charged.
+export const getRabbyFillFeeRate = (
   fill?: PerpsFillFeeSnapshot | null,
-): PerpsFillFeeRates => {
-  const unknown = { builder: '-', exchange: '-' };
+): string => {
+  const fallback = `${new BigNumber(PERPS_EXCHANGE_FEE_NUMBER)
+    .times(100)
+    .toFixed(2)}%`;
   if (!fill) {
-    return unknown;
-  }
-
-  // A missing builder fee uses the product default; it is not a measured rate.
-  if (
-    fill.builderFee == null ||
-    (typeof fill.builderFee === 'string' && !fill.builderFee.trim())
-  ) {
-    return {
-      builder: `${new BigNumber(PERPS_EXCHANGE_FEE_NUMBER)
-        .times(100)
-        .toFixed(2)}%`,
-      exchange: '-',
-    };
-  }
-
-  // Spot fills can pay fees in the base asset. Do not divide different units.
-  const feeToken = fill.feeToken?.trim().toUpperCase();
-  const quoteAsset = fill.quoteAsset?.trim().toUpperCase();
-  if (feeToken && quoteAsset && feeToken !== quoteAsset) {
-    return unknown;
+    return fallback;
   }
 
   const price = parseAmount(fill.px);
@@ -69,15 +38,13 @@ export const getPerpsFillFeeRates = (
     !builderFee.isFinite() ||
     builderFee.isNegative()
   ) {
-    return unknown;
+    return fallback;
   }
 
-  // Hyperliquid's total fee already includes the builder fee; rebates can be negative.
-  const totalFee = parseAmount(fill.fee);
-  return {
-    builder: formatFeeRate(builderFee, notional),
-    exchange: totalFee.isFinite()
-      ? formatFeeRate(totalFee.minus(builderFee), notional)
-      : '-',
-  };
+  const display = `${builderFee
+    .dividedBy(notional)
+    .times(100)
+    .toFixed(2, BigNumber.ROUND_HALF_UP)}%`;
+  // Do not infer the nearest tier or match the unrounded percentage.
+  return display === '0.02%' || display === '0.04%' ? display : fallback;
 };
