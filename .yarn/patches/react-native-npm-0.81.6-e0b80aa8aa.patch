@@ -1,7 +1,14 @@
 diff --git a/React/Fabric/Mounting/ComponentViews/ScrollView/RCTPullToRefreshViewComponentView.mm b/React/Fabric/Mounting/ComponentViews/ScrollView/RCTPullToRefreshViewComponentView.mm
 --- a/React/Fabric/Mounting/ComponentViews/ScrollView/RCTPullToRefreshViewComponentView.mm
 +++ b/React/Fabric/Mounting/ComponentViews/ScrollView/RCTPullToRefreshViewComponentView.mm
-@@ -209,5 +209,7 @@
+@@ -79,2 +79,5 @@
+-  const auto &oldConcreteProps = static_cast<const PullToRefreshViewProps &>(*_props);
++  // Initial layout replays cached new props against defaults. A subsequent
++  // Insert can pass null oldProps without recycling this view, so retain the
++  // stored snapshot only for that case, not for the initial layout replay.
++  const auto &oldConcreteProps = static_cast<const PullToRefreshViewProps &>(oldProps ? *oldProps : *_props);
+   const auto &newConcreteProps = static_cast<const PullToRefreshViewProps &>(*props);
+@@ -209,5 +212,7 @@
  - (void)beginRefreshingProgrammatically
  {
 -  if (!_scrollViewComponentView) {

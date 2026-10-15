@@ -36,6 +36,37 @@ function methodBody(signature: string) {
 }
 
 describe('Fabric iOS refresh lifecycle source contract', () => {
+  it('compares deferred initial props against the supplied old props', () => {
+    const update = methodBody('- (void)updateProps:');
+    // On initial layout, _props already contains the new values. Comparing
+    // against that member silently drops the initial offset, tint and title.
+    expect(update).toContain(
+      'const auto &oldConcreteProps = static_cast<const PullToRefreshViewProps &>(oldProps ? *oldProps : *_props);',
+    );
+    expect(update).not.toContain(
+      'const auto &oldConcreteProps = static_cast<const PullToRefreshViewProps &>(*_props);',
+    );
+    expect(methodBody('- (void)layoutSubviews')).toContain(
+      '[self updateProps:_props oldProps:PullToRefreshViewShadowNode::defaultSharedProps()]',
+    );
+    expect(update.indexOf('[self _updateProgressViewOffset:')).toBeLessThan(
+      update.indexOf('[self beginRefreshingProgrammatically]'),
+    );
+  });
+
+  it('retains the last snapshot when Fabric reinserts a laid-out view', () => {
+    // Insert can supply null oldProps without prepareForRecycle. Such a view
+    // has passed initial layout already, so unconditional *oldProps crashes.
+    const mountingSource = readFileSync(
+      resolve(packageRoot, 'React/Fabric/Mounting/RCTMountingManager.mm'),
+      'utf8',
+    );
+    expect(mountingSource).toContain('oldProps:nullptr');
+    expect(methodBody('- (void)updateProps:')).toContain(
+      'oldProps ? *oldProps : *_props',
+    );
+  });
+
   it('ignores active or detached refreshes before moving the list', () => {
     const body = methodBody('- (void)beginRefreshingProgrammatically');
     const guard = body.match(

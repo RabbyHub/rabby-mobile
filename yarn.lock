@@ -39024,7 +39024,7 @@ __metadata:
 
 "react-native@patch:react-native@npm%3A0.81.6#./.yarn/patches/react-native-npm-0.81.6-e0b80aa8aa.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 0.81.6
-  resolution: "react-native@patch:react-native@npm%3A0.81.6#./.yarn/patches/react-native-npm-0.81.6-e0b80aa8aa.patch::version=0.81.6&hash=cfb001&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "react-native@patch:react-native@npm%3A0.81.6#./.yarn/patches/react-native-npm-0.81.6-e0b80aa8aa.patch::version=0.81.6&hash=f78008&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@jest/create-cache-key-function": "npm:^29.7.0"
     "@react-native/assets-registry": "npm:0.81.6"
@@ -39068,7 +39068,7 @@ __metadata:
       optional: true
   bin:
     react-native: cli.js
-  checksum: 10/e5415ac46395c80e9adb3e83892f625e5b2ae0d1694f56a3cb0b5eed56b39262365a46f30f868bdee4274e4bea484f0aae02e4e0f938e22bca76a65cf49ee80d
+  checksum: 10/67695ad43828c6836836b85373bcc48c406de6cbd6714872e6fd41e75625208bc03756030e40f20e5dfc12cb18220b74ba64c852870d485cca4006833ecb6b4e
   languageName: node
   linkType: hard
 
