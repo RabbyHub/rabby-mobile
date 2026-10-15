@@ -15,6 +15,7 @@ import { formatTime, formatYTime } from './chart-logic';
 import { PERPS_PRO_FONT_FAMILY } from './perps-pro-font';
 import {
   avoidSimpleLabelOverlap,
+  layoutSimplePriceLabels,
   simpleDefaultRange,
   simpleFillMarkers,
   simpleHistoryShift,
@@ -323,7 +324,7 @@ export function createSimpleChart(
     }
     const selected =
       selectedTime === null ? null : candleByTime.get(selectedTime);
-    if (selected && selected.time !== last.time) {
+    if (selected && selected.close !== last.close) {
       tags.push({
         id: 'selection',
         price: selected.close,
@@ -378,9 +379,11 @@ export function createSimpleChart(
           tag.y !== null &&
           (tag.title === undefined || (tag.y >= 0 && tag.y <= paneHeight)),
       );
-    const tagY = avoidSimpleLabelOverlap(
+    const latestIndex = visibleTags.findIndex(tag => tag.id === 'latest');
+    const tagY = layoutSimplePriceLabels(
       visibleTags.map(tag => tag.y!),
       paneHeight,
+      latestIndex,
     );
     const titledTags = visibleTags.filter(tag => tag.title !== undefined);
     const titleY = avoidSimpleLabelOverlap(
@@ -488,8 +491,8 @@ export function createSimpleChart(
       if (
         crosshair &&
         (tag.id === 'selection' ||
-          ((tag.id === 'latest' || tag.id === 'viewport') &&
-            Math.abs(y - crosshair.y) < 0.5))
+          (tag.id === 'latest' && tag.price === selected?.close) ||
+          (tag.id === 'viewport' && Math.abs(y - crosshair.y) < 0.5))
       )
         return;
       const titleIndex = titledTags.indexOf(tag);
@@ -515,7 +518,8 @@ export function createSimpleChart(
         {
           priceY: y,
           labelX: labelLeft,
-          labelY: tagY[i],
+          // Edge clamping affects the badge rectangle, never the market line.
+          labelY: tag.id === 'latest' ? y : tagY[i],
           title: displacedTitle,
         },
         tag.color,
@@ -536,9 +540,12 @@ export function createSimpleChart(
       });
       const selectedIndex = visibleTags.findIndex(
         tag =>
-          tag.id === (selected?.time === last.time ? 'latest' : 'selection'),
+          tag.id === (selected?.close === last.close ? 'latest' : 'selection'),
       );
-      const axisY = selectedIndex >= 0 ? tagY[selectedIndex] : crosshair.y;
+      const axisY =
+        selectedIndex >= 0 && visibleTags[selectedIndex].id !== 'latest'
+          ? tagY[selectedIndex]
+          : crosshair.y;
       const path = appendSimplePriceGuide(
         svg,
         { priceY: crosshair.y, labelX: labelLeft, labelY: axisY },

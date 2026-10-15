@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   avoidSimpleLabelOverlap,
+  layoutSimplePriceLabels,
   candleEnd,
   simpleDefaultRange,
   simpleFillMarkers,
@@ -12,6 +13,32 @@ import {
 } from './perps-simple-logic.ts';
 
 const candle = time => ({ time, open: 100, high: 110, low: 90, close: 105 });
+test('latest badge is pinned while other labels keep gaps, bounds and preferred price sides', () => {
+  for (const anchor of [0, 1, 7, 100, 267, 273, 274]) {
+    const values = [
+      anchor,
+      anchor - 1,
+      anchor + 1,
+      anchor,
+      anchor + 2,
+      anchor - 2,
+    ];
+    const result = layoutSimplePriceLabels(values, 274, 0);
+    assert.equal(result[0], Math.max(7, Math.min(267, anchor)));
+    const sorted = [...result].sort((a, b) => a - b);
+    assert.ok(sorted[0] >= 7 && sorted.at(-1) <= 267);
+    for (let i = 1; i < sorted.length; i++)
+      assert.ok(sorted[i] - sorted[i - 1] >= 17);
+    if (anchor === 100) {
+      assert.ok(result[1] < anchor && result[5] < anchor);
+      assert.ok(result[2] > anchor && result[3] > anchor && result[4] > anchor);
+    }
+  }
+  assert.deepEqual(
+    layoutSimplePriceLabels([100, 99, 101, 102, 103], 274, 0),
+    [100, 83, 117, 134, 151],
+  );
+});
 test('coverage distinguishes short history from gaps and retains the pre-aggregation boundary', () => {
   const day = 86400;
   const config = { range: '1W', interval: '1d' };
