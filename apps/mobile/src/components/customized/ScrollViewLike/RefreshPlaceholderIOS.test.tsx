@@ -1,5 +1,8 @@
 import { act, renderHook } from '@testing-library/react-native';
+import { Dimensions } from 'react-native';
+import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import {
+  pulldownRefreshSizes,
   usePulldownRefreshGesture,
   usePulldownRefreshStyles,
 } from './RefreshPlaceholderIOS';
@@ -72,7 +75,7 @@ jest.mock('@/hooks/reanimated', () => ({
 jest.mock('@/utils/common', () => ({ triggerImpact: jest.fn() }));
 jest.mock('@/constant/home', () => ({
   HOME_TOP_HEADER_SIZES: {
-    scrollableListTopOffset: 56,
+    scrollableListTopOffset: 48,
     tabInnerHomeTopOffset: 72,
     headerOffsetAfterTabItem: 12,
   },
@@ -124,7 +127,9 @@ it('preserves a pending refresh on finalize, then finishes without a loading-sta
   });
   expect(result.current.svs.svIsRefreshing.value).toBe(true);
   expect(result.current.svs.svIsManualRefreshing.value).toBe(true);
-  expect(result.current.svs.pullDistance.value).toBe(56);
+  expect(result.current.svs.pullDistance.value).toBe(
+    pulldownRefreshSizes.homeHeaderHeight,
+  );
   await act(async () => {
     finishRefresh();
     await mockJsRefreshTasks[0];
@@ -185,7 +190,11 @@ it('does not refresh when an active pull is cancelled after crossing the thresho
   expect(result.current.svs.pullDistance.value).toBe(0);
 });
 
-it('bounds the visible spacer without changing the raw pull threshold or pending refresh', async () => {
+it('allows overpull, then settles to the indicator height until refresh finishes', async () => {
+  const indicatorHeight = pulldownRefreshSizes.homeHeaderHeight;
+  const maxPullHeight =
+    Dimensions.get('screen').height * 0.5 -
+    HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset;
   let finishRefresh!: () => void;
   const refresh = new Promise<void>(resolve => {
     finishRefresh = resolve;
@@ -199,7 +208,7 @@ it('bounds the visible spacer without changing the raw pull threshold or pending
     });
     const styles = usePulldownRefreshStyles({
       states: gesture.svs,
-      indicatorSpaceHeight: 56,
+      indicatorSpaceHeight: indicatorHeight,
     });
     return { ...gesture, styles };
   });
@@ -211,7 +220,24 @@ it('bounds the visible spacer without changing the raw pull threshold or pending
   });
   rerender({});
   expect(result.current.svs.pullDistance.value).toBe(300);
-  expect(result.current.styles.scrollTopStyle.height).toBe(56);
+  expect(result.current.styles.scrollTopStyle.height).toBe(
+    Math.min(300, maxPullHeight),
+  );
+  expect(result.current.styles.scrollTopStyle.height).toBeGreaterThan(
+    indicatorHeight,
+  );
+  expect(onRefresh).not.toHaveBeenCalled();
+
+  act(() => mockCallbacks.onUpdate({ translationY: 10000 }));
+  rerender({});
+  expect(result.current.styles.scrollTopStyle.height).toBe(maxPullHeight);
+
+  // Moving the finger back must reduce the space before release, too.
+  act(() => mockCallbacks.onUpdate({ translationY: 150 }));
+  rerender({});
+  expect(result.current.styles.scrollTopStyle.height).toBe(
+    Math.min(150, maxPullHeight),
+  );
   expect(onRefresh).not.toHaveBeenCalled();
 
   act(() => {
@@ -226,7 +252,7 @@ it('bounds the visible spacer without changing the raw pull threshold or pending
   rerender({});
   expect(onRefresh).toHaveBeenCalledTimes(1);
   expect(result.current.svs.svIsRefreshing.value).toBe(true);
-  expect(result.current.styles.scrollTopStyle.height).toBe(56);
+  expect(result.current.styles.scrollTopStyle.height).toBe(indicatorHeight);
 
   await act(async () => {
     finishRefresh();
@@ -234,5 +260,38 @@ it('bounds the visible spacer without changing the raw pull threshold or pending
   });
   rerender({});
   expect(result.current.svs.svIsRefreshing.value).toBe(false);
+  expect(result.current.styles.scrollTopStyle.height).toBe(0);
+});
+
+it('returns a below-threshold overpull to zero without starting a request', () => {
+  const onRefresh = jest.fn(async () => undefined);
+  const { result, rerender } = renderHook(() => {
+    const gesture = usePulldownRefreshGesture({
+      scrollViewYValue: { value: 0 } as any,
+      onJsPulldownRefresh: onRefresh,
+    });
+    const styles = usePulldownRefreshStyles({
+      states: gesture.svs,
+      indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+    });
+    return { ...gesture, styles };
+  });
+
+  act(() => {
+    mockCallbacks.onStart({});
+    mockCallbacks.onUpdate({
+      translationY: pulldownRefreshSizes.homeHeaderHeight + 1,
+    });
+  });
+  rerender({});
+  expect(result.current.styles.scrollTopStyle.height).toBeGreaterThan(
+    pulldownRefreshSizes.homeHeaderHeight,
+  );
+  act(() => {
+    mockCallbacks.onEnd({}, true);
+    mockCallbacks.onFinalize();
+  });
+  rerender({});
+  expect(onRefresh).not.toHaveBeenCalled();
   expect(result.current.styles.scrollTopStyle.height).toBe(0);
 });

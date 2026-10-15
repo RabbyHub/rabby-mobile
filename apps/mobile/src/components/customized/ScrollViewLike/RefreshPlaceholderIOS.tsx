@@ -225,11 +225,11 @@ export const usePulldownRefreshStyles = ({
     return {
       height: interpolate(
         pullDistance.value,
-        // The raw gesture distance still controls activation and feedback.
-        // Reserve only the indicator's space, not half the screen, while
-        // pulling; a long pull must not push the asset rows out of view.
-        [0, indicatorSpaceHeight],
-        [0, indicatorSpaceHeight],
+        // Keep overpull visible while dragging. The refreshing stage animates
+        // back to indicatorSpaceHeight on release; capping here at that height
+        // would pin the list before activation and hide the rebound animation.
+        [0, scrHeight * 0.5 - HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset],
+        [0, scrHeight * 0.5 - HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset],
         Extrapolate.CLAMP,
       ),
       // paddingTop: 0,
