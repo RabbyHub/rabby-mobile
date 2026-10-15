@@ -126,7 +126,7 @@ describe('TradingViewCandleChart protocol compatibility', () => {
           onChartLoading={onChartLoading}
         />,
       );
-      markChartReady({ perpsSimpleKlineProtocolVersion: 3 });
+      markChartReady({ perpsSimpleKlineProtocolVersion: 4 });
       mockSendMessage.mockClear();
       if (source === 'manual') {
         act(() => chartRef.current?.reloadSimple());
@@ -146,7 +146,7 @@ describe('TradingViewCandleChart protocol compatibility', () => {
       } as const;
       act(() => chartRef.current?.sendSimpleMessage(command));
       expect(mockSendMessage).not.toHaveBeenCalled();
-      markChartReady({ perpsSimpleKlineProtocolVersion: 3 });
+      markChartReady({ perpsSimpleKlineProtocolVersion: 4 });
       act(() => chartRef.current?.sendSimpleMessage(command));
       expect(mockSendMessage).toHaveBeenLastCalledWith({
         type: 'TRADINGVIEW_MESSAGE',
@@ -178,7 +178,7 @@ describe('TradingViewCandleChart protocol compatibility', () => {
           onChartReady={onChartReady}
         />,
       );
-      markChartReady({ perpsSimpleKlineProtocolVersion: 3 });
+      markChartReady({ perpsSimpleKlineProtocolVersion: 4 });
       const oldProps = mockLocalWebViewProps.mock.calls.at(-1)?.[0];
       act(() => changeState('background'));
       now += 10000;
@@ -204,7 +204,7 @@ describe('TradingViewCandleChart protocol compatibility', () => {
             nativeEvent: {
               data: JSON.stringify({
                 type: 'CHART_READY',
-                capabilities: { perpsSimpleKlineProtocolVersion: 3 },
+                capabilities: { perpsSimpleKlineProtocolVersion: 4 },
               }),
             },
           });
@@ -212,7 +212,7 @@ describe('TradingViewCandleChart protocol compatibility', () => {
         });
         expect(onChartReady).toHaveBeenCalledTimes(1);
         expect(mockSendMessage).not.toHaveBeenCalled();
-        markChartReady({ perpsSimpleKlineProtocolVersion: 3 });
+        markChartReady({ perpsSimpleKlineProtocolVersion: 4 });
         act(() => chartRef.current?.sendSimpleMessage(command));
         expect(onChartReady).toHaveBeenCalledTimes(2);
         expect(mockSendMessage).toHaveBeenLastCalledWith({
@@ -250,7 +250,7 @@ describe('TradingViewCandleChart protocol compatibility', () => {
         variant="perps-simple"
       />,
     );
-    markChartReady({ perpsSimpleKlineProtocolVersion: 3 });
+    markChartReady({ perpsSimpleKlineProtocolVersion: 4 });
     act(() => chartRef.current?.sendSimpleMessage(command));
     expect(mockSendMessage).toHaveBeenLastCalledWith({
       type: 'TRADINGVIEW_MESSAGE',
@@ -258,7 +258,7 @@ describe('TradingViewCandleChart protocol compatibility', () => {
     });
   });
 
-  it.each([undefined, 2])(
+  it.each([undefined, 2, 3])(
     'rejects incompatible Simple protocol %s and recovers when the matching page is ready',
     version => {
       const ready = jest.fn();
@@ -274,7 +274,7 @@ describe('TradingViewCandleChart protocol compatibility', () => {
       markChartReady({ perpsSimpleKlineProtocolVersion: version });
       expect(mockReload).toHaveBeenCalledTimes(1);
       expect(ready).not.toHaveBeenCalled();
-      markChartReady({ perpsSimpleKlineProtocolVersion: 3 });
+      markChartReady({ perpsSimpleKlineProtocolVersion: 4 });
       expect(ready).toHaveBeenCalledTimes(1);
       const selection = {
         type: 'PERPS_SIMPLE_EVENT',

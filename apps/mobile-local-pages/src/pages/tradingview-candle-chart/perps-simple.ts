@@ -10,6 +10,7 @@ import {
   type Time,
 } from 'lightweight-charts/standalone';
 import { attachSimplePriceAxis } from './perps-simple-axis';
+import { createSimpleNativePriceAxis } from './perps-simple-native-axis';
 import { formatTime, formatYTime } from './chart-logic';
 import { PERPS_PRO_FONT_FAMILY } from './perps-pro-font';
 import {
@@ -75,7 +76,7 @@ export function createSimpleChart(
     crosshair: {
       mode: CrosshairMode.Magnet,
       horzLine: { visible: false, labelVisible: false },
-      vertLine: { labelVisible: true },
+      vertLine: { visible: false, labelVisible: true },
     },
     trackingMode: { exitMode: TrackingModeExitMode.OnTouchEnd },
     handleScroll: { vertTouchDrag: false },
@@ -175,6 +176,7 @@ export function createSimpleChart(
   }
   function applyDefault() {
     priceAxis.cancel();
+    nativePriceAxis.cancel();
     if (!config) return;
     const range = simpleDefaultRange(
       candles,
@@ -193,7 +195,8 @@ export function createSimpleChart(
     schedule();
   }
   const priceAxis = attachSimplePriceAxis(host, {
-    isActive: () => active && !!candles.length && !disposed,
+    isActive: () =>
+      !config?.nativePriceAxis && active && !!candles.length && !disposed,
     getRange: () => activeSeries().priceScale().getVisibleRange(),
     setRange: range => {
       activeSeries().priceScale().setVisibleRange(range);
@@ -206,10 +209,31 @@ export function createSimpleChart(
       clearSelection();
     },
   });
+  const nativePriceAxis = createSimpleNativePriceAxis({
+    isActive: () =>
+      !!config?.nativePriceAxis &&
+      active &&
+      !!candles.length &&
+      !awaitingApplied &&
+      !disposed,
+    getRange: () => activeSeries().priceScale().getVisibleRange(),
+    getHeight: () => chart.panes()[0].getHeight(),
+    setRange: range => {
+      activeSeries().priceScale().setVisibleRange(range);
+      userViewportChanged = true;
+      dirty = true;
+      schedule();
+    },
+    onStart: () => {
+      contact = false;
+      clearSelection();
+      schedule();
+    },
+  });
   function render() {
     overlay.replaceChildren();
     if (!config) return;
-    const { up: GREEN, down: RED, accent: AREA } = config.colors;
+    const { up: GREEN, down: RED, accent: ACCENT } = config.colors;
     const range = chart.timeScale().getVisibleLogicalRange();
     const defaultRange = defaultViewport;
     if (!userViewportChanged) defaultViewport = range;
@@ -230,13 +254,18 @@ export function createSimpleChart(
     const paneWidth = chart.timeScale().width();
     const paneHeight = chart.panes()[0].getHeight();
     priceAxis.layout(paneWidth, paneHeight);
-    const state = `${identity}:${dirty}:${
+    const state = `${identity}:${replacementSequence}:${
+      nativePriceAxis.session
+    }:${config.style}:${dirty}:${
       !lastVisible && !!last
     }:${paneWidth}:${paneHeight}`;
     if (state !== viewportState) {
       viewportState = state;
       emit({
         event: 'viewport',
+        presentationSequence: replacementSequence,
+        priceAxisSession: nativePriceAxis.session,
+        style: config.style,
         resetVisible: dirty,
         latestVisible: !lastVisible && !!last,
         paneWidth,
@@ -254,39 +283,32 @@ export function createSimpleChart(
       title?: string;
       outline?: boolean;
     }> = [];
-    const latestColor =
-      config.style === 'area' ? AREA : last.close >= last.open ? GREEN : RED;
+    // Market price guides use the fixed accent, independently of candle direction.
     tags.push({
       id: 'latest',
       price: last.close,
-      color: latestColor,
-      background: latestColor,
+      color: ACCENT,
+      background: ACCENT,
       text: config.colors.contrast,
     });
     if (config.style === 'area' && !lastVisible && visible) {
       tags.push({
         id: 'viewport',
         price: visible.close,
-        color: AREA,
+        color: ACCENT,
         background: config.colors.background,
-        text: AREA,
+        text: ACCENT,
         outline: true,
       });
     }
     const selected =
       selectedTime === null ? null : candleByTime.get(selectedTime);
     if (selected && selected.time !== last.time) {
-      const color =
-        config.style === 'area'
-          ? AREA
-          : selected.close >= selected.open
-          ? GREEN
-          : RED;
       tags.push({
         id: 'selection',
         price: selected.close,
-        color,
-        background: color,
+        color: ACCENT,
+        background: ACCENT,
         text: config.colors.contrast,
       });
     }
@@ -423,15 +445,13 @@ export function createSimpleChart(
       label.style.width = `${labelWidth}px`;
     });
     const labelLeft = Math.max(0, overlayWidth - 12 - labelWidth);
-    const selectedX =
-      selected && config.style === 'area'
-        ? chart.timeScale().timeToCoordinate(selected.time as UTCTimestamp)
-        : null;
-    const selectedY =
-      selected && config.style === 'area'
-        ? series.priceToCoordinate(selected.close)
-        : null;
-    const areaCrosshair =
+    const selectedX = selected
+      ? chart.timeScale().timeToCoordinate(selected.time as UTCTimestamp)
+      : null;
+    const selectedY = selected
+      ? series.priceToCoordinate(selected.close)
+      : null;
+    const crosshair =
       selectedX !== null &&
       selectedY !== null &&
       selectedX >= 0 &&
@@ -443,11 +463,13 @@ export function createSimpleChart(
     visibleTags.forEach((tag, i) => {
       const y = tag.y!;
       if (y < 0 || y > paneHeight) return;
-      // The neutral Area crosshair owns the selected horizontal guide, even
-      // when the latest/viewport close coincides with the selected close.
+      // The neutral crosshair owns overlapping market price guides. Position
+      // guides keep their independent meaning even at the selected price.
       if (
-        areaCrosshair &&
-        (tag.id === 'selection' || Math.abs(y - areaCrosshair.y) < 0.5)
+        crosshair &&
+        (tag.id === 'selection' ||
+          ((tag.id === 'latest' || tag.id === 'viewport') &&
+            Math.abs(y - crosshair.y) < 0.5))
       )
         return;
       const titleIndex = titledTags.indexOf(tag);
@@ -481,9 +503,9 @@ export function createSimpleChart(
       );
       overlay.appendChild(svg);
     });
-    if (areaCrosshair) {
+    if (crosshair) {
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.dataset.simpleAreaCrosshair = '';
+      svg.dataset.simpleCrosshair = '';
       Object.assign(svg.style, {
         position: 'absolute',
         inset: '0',
@@ -496,32 +518,34 @@ export function createSimpleChart(
         tag =>
           tag.id === (selected?.time === last.time ? 'latest' : 'selection'),
       );
-      const axisY = selectedIndex >= 0 ? tagY[selectedIndex] : areaCrosshair.y;
+      const axisY = selectedIndex >= 0 ? tagY[selectedIndex] : crosshair.y;
       const path = appendSimplePriceGuide(
         svg,
-        { priceY: areaCrosshair.y, labelX: labelLeft, labelY: axisY },
+        { priceY: crosshair.y, labelX: labelLeft, labelY: axisY },
         config.colors.entry,
         '1 1',
       );
       path.setAttribute(
         'd',
-        `${path.getAttribute('d')} M ${areaCrosshair.x} 4 V ${paneHeight}`,
+        `${path.getAttribute('d')} M ${crosshair.x} 4 V ${paneHeight}`,
       );
       // This is a data-positioned chart marker, not a static UI icon.
-      for (const [radius, opacity] of [
-        [4.5, 0.15],
-        [2.5, 1],
-      ]) {
-        const dot = document.createElementNS(
-          'http://www.w3.org/2000/svg',
-          'circle',
-        );
-        dot.setAttribute('cx', String(areaCrosshair.x));
-        dot.setAttribute('cy', String(areaCrosshair.y));
-        dot.setAttribute('r', String(radius));
-        dot.setAttribute('fill', AREA);
-        dot.setAttribute('fill-opacity', String(opacity));
-        svg.appendChild(dot);
+      if (config.style === 'area') {
+        for (const [radius, opacity] of [
+          [4.5, 0.15],
+          [2.5, 1],
+        ]) {
+          const dot = document.createElementNS(
+            'http://www.w3.org/2000/svg',
+            'circle',
+          );
+          dot.setAttribute('cx', String(crosshair.x));
+          dot.setAttribute('cy', String(crosshair.y));
+          dot.setAttribute('r', String(radius));
+          dot.setAttribute('fill', ACCENT);
+          dot.setAttribute('fill-opacity', String(opacity));
+          svg.appendChild(dot);
+        }
       }
       overlay.appendChild(svg);
     }
@@ -633,6 +657,8 @@ export function createSimpleChart(
         const changed =
           identity !== message.identity || message.action === 'replace';
         const styleChanged = config?.style !== message.config.style;
+        const axisModeChanged =
+          config?.nativePriceAxis !== message.config.nativePriceAxis;
         const range = chart.timeScale().getVisibleLogicalRange();
         identity = message.identity;
         config = message.config;
@@ -640,7 +666,10 @@ export function createSimpleChart(
           awaitingApplied = true;
           replacementSequence = message.sequence;
         }
-        if (changed || styleChanged) priceAxis.cancel();
+        if (changed || styleChanged || axisModeChanged) {
+          priceAxis.cancel();
+          nativePriceAxis.cancel();
+        }
         if (changed) {
           clearSelection();
           candles = [];
@@ -696,7 +725,7 @@ export function createSimpleChart(
           },
           crosshair: {
             vertLine: {
-              visible: config.style === 'candle',
+              visible: false,
               labelVisible: config.style === 'candle',
               color: config.colors.secondary,
               labelBackgroundColor: config.colors.entry,
@@ -781,6 +810,7 @@ export function createSimpleChart(
           else clearSelection();
         }
       } else if (message.action === 'activity') {
+        if (active !== message.active) nativePriceAxis.cancel();
         active = message.active;
         host.style.pointerEvents = active ? 'auto' : 'none';
         if (!active) {
@@ -789,6 +819,8 @@ export function createSimpleChart(
           clearSelection();
           historyPending = false;
         } else historyRetryBlocked = false;
+      } else if (message.action === 'priceAxis') {
+        return nativePriceAxis.handle(message);
       } else if (message.action === 'update') {
         const candle = message.candle;
         const last = candles[candles.length - 1];
@@ -817,7 +849,7 @@ export function createSimpleChart(
               to: defaultViewport.to + 1,
             };
           updateMarkers();
-          if (!dirty) applyDefault();
+          if (!dirty && !nativePriceAxis.dragging) applyDefault();
           else if (follow && range)
             chart.timeScale().setVisibleLogicalRange({
               from: range.from + 1,
@@ -838,6 +870,7 @@ export function createSimpleChart(
         clearSelection();
         applyDefault();
       } else if (message.action === 'latest') {
+        nativePriceAxis.cancel();
         clearSelection();
         const range = chart.timeScale().getVisibleLogicalRange();
         if (range)
@@ -858,6 +891,7 @@ export function createSimpleChart(
       if (frame !== null) cancelAnimationFrame(frame);
       resize.disconnect();
       priceAxis.destroy();
+      nativePriceAxis.cancel();
       window.removeEventListener('mouseup', end);
       chart.remove();
       host.remove();

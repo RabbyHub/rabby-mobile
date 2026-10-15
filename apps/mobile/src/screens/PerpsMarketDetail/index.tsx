@@ -16,7 +16,9 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, View } from 'react-native';
+import { Platform, View } from 'react-native';
+import { Gesture } from 'react-native-gesture-handler';
+import { PerpsSimpleChartScrollView } from './components/chart/PerpsSimplePriceAxis';
 import { PerpsDepositPopup } from '../Perps/components/PerpsDepositPopup';
 import { EnableUnifiedAccountPopup } from '../Perps/components/EnableUnifiedAccountPopup';
 import { PerpsSpotSwapPopup } from '../Perps/components/PerpsSpotSwapPopup';
@@ -59,6 +61,10 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
 import { withWalletUnlock } from '@/utils/walletUnlockGuard';
 
 export const PerpsMarketDetailScreen = () => {
+  const scrollGesture = useMemo(
+    () => (Platform.OS === 'ios' ? Gesture.Native() : undefined),
+    [],
+  );
   const { t } = useTranslation();
 
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
@@ -453,12 +459,14 @@ export const PerpsMarketDetailScreen = () => {
     <>
       <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
         {!hasPermission ? <PerpsRegionAlert /> : null}
-        <ScrollView
+        <PerpsSimpleChartScrollView
+          scrollGesture={scrollGesture}
           style={styles.container}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}>
           <View style={styles.header}>
             <PerpsChart
+              scrollGesture={scrollGesture}
               marketName={coin}
               activeAssetCtx={displayAssetCtx}
               currentAssetCtx={currentAssetCtx}
@@ -537,7 +545,7 @@ export const PerpsMarketDetailScreen = () => {
           />
           {(hasPosition || hasLimitOrders) && <PerpsAbout coin={coin} />}
           <PerpsSimpleChartSource />
-        </ScrollView>
+        </PerpsSimpleChartScrollView>
         {isLogin ? (
           <PerpsFooter
             hasPermission={hasPermission}

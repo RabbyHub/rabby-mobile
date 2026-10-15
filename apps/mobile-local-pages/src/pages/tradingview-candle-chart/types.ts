@@ -103,6 +103,8 @@ export type SimpleChartConfig = {
   interval: string;
   priceDecimals: number;
   showTradeMarkers?: boolean;
+  /** Opt in only on iOS Simple, where a native gesture owns the price axis. */
+  nativePriceAxis?: boolean;
   colors: {
     background: string;
     titleOutline?: string;
@@ -145,6 +147,13 @@ export type SimpleChartMessage = {
       state: 'idle' | 'loading' | 'ready' | 'empty' | 'stale' | 'error';
     }
   | { action: 'activity'; active: boolean }
+  | {
+      action: 'priceAxis';
+      phase: 'start' | 'move' | 'end' | 'cancel';
+      session: number;
+      gestureId: number;
+      deltaY: number;
+    }
   | { action: 'update'; candle: CandleStick }
   | {
       action: 'overlays';
@@ -169,6 +178,9 @@ export type SimpleChartEvent = {
   | { event: 'selection'; candle: CandleStick | null }
   | {
       event: 'viewport';
+      presentationSequence: number;
+      priceAxisSession: number;
+      style: SimpleChartConfig['style'];
       resetVisible: boolean;
       latestVisible: boolean;
       paneWidth: number;

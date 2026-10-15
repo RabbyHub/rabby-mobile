@@ -255,7 +255,7 @@ chartState.colors = { ...getChartColors() };
 chartState.description = { ...defaultDescription };
 
 const PERPS_PRO_KLINE_PROTOCOL_VERSION = 3;
-const PERPS_SIMPLE_KLINE_PROTOCOL_VERSION = 3;
+const PERPS_SIMPLE_KLINE_PROTOCOL_VERSION = 4;
 let simpleChart: ReturnType<typeof createSimpleChart> | null = null;
 const candleByTime = new Map<number, TradingViewCandlestickData>();
 const movingAverageByTime: Record<7 | 25 | 99, Map<number, number>> = {
