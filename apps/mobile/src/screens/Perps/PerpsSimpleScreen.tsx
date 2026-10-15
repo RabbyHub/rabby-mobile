@@ -277,7 +277,7 @@ export const PerpsSimpleScreen: React.FC<PerpsSimpleScreenProps> = ({
           onPressInPro={onPressInPro}
           onPressOutPro={onPressOutPro}
           onSwitchToPro={onSwitchToPro}
-          onSelectSpot={hasPermission ? openPerpsSpotMarkets : undefined}
+          onSelectSpot={openPerpsSpotMarkets}
           showProNewBadge={showProNewBadge}
         />
         {!hasPermission ? (

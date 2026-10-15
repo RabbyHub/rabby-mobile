@@ -29,18 +29,25 @@ export type PerpsSpotOrderResult =
   | { status: 'resting'; oid: number };
 
 // Same backend region gate as perps trading; checked before and after the
-// approval step, which can await the network and the user.
+// approval step, which can await the network and the user. Only placing
+// orders is gated: like perps, cancels stay available so resting orders can
+// always be pulled after the region check flips.
 const assertPermission = () => {
   if (!perpsStore.getState().hasPermission) {
     throw new Error(i18n.t('page.perps.regionNotSupport'));
   }
 };
 
-const assertActionAccount = async (account: Account | null) => {
+const assertActionAccount = async (
+  account: Account | null,
+  { requirePermission }: { requirePermission: boolean },
+) => {
   if (!account) {
     throw new Error('No current Perps account');
   }
-  assertPermission();
+  if (requirePermission) {
+    assertPermission();
+  }
   // Spot orders carry no builder field, only the agent must be approved.
   await ensurePerpsActionApproval(account, { builderFee: false });
   if (
@@ -51,7 +58,9 @@ const assertActionAccount = async (account: Account | null) => {
   ) {
     throw new Error('Perps account changed');
   }
-  assertPermission();
+  if (requirePermission) {
+    assertPermission();
+  }
 };
 
 const getExchange = () => {
@@ -79,7 +88,7 @@ export const executePerpsSpotOrder = (
       context: { pairIndex },
     },
     async () => {
-      await assertActionAccount(account);
+      await assertActionAccount(account, { requirePermission: true });
       const params = buildParams();
       if (!params) {
         throw new Error(i18n.t('page.perpsSpot.error.contextChanged'));
@@ -132,7 +141,7 @@ export const cancelAllPerpsSpotOrders = (
         return true;
       }
       const params = normalizeSpotCancelIntents(intents);
-      await assertActionAccount(account);
+      await assertActionAccount(account, { requirePermission: false });
       const response = await getExchange().cancelSpotOrders(params);
       const statuses: unknown[] = response?.response?.data?.statuses ?? [];
       const failed = statuses.find(status => !isCancelStatusOk(status));
@@ -156,7 +165,7 @@ export const cancelPerpsSpotOrder = (
     },
     async () => {
       const params = normalizeSpotCancelIntents([intent]);
-      await assertActionAccount(account);
+      await assertActionAccount(account, { requirePermission: false });
       const response = await getExchange().cancelSpotOrders(params);
       // The API answers "success" as a bare string; the SDK types it as an
       // object, so accept both shapes.

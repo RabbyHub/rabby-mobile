@@ -320,7 +320,7 @@ export const PerpsSpotDetailScreen: React.FC = () => {
                 order={order}
                 market={market}
                 cancelling={cancellingOid === order.oid}
-                cancelDisabled={cancellingOid !== null || !canTrade}
+                cancelDisabled={cancellingOid !== null || !currentPerpsAccount}
                 onCancel={handleCancel}
               />
             ))}

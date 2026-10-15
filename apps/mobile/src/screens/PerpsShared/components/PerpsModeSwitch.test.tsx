@@ -218,12 +218,17 @@ describe('PerpsModeSwitch', () => {
     fireEvent.press(screen.getByTestId('perps-mode-spot'));
     expect(onSelectSpot).toHaveBeenCalledTimes(1);
     expect(onSelectMode).not.toHaveBeenCalled();
-    // The last tab owns the remaining corridor, not Pro.
-    expect(
-      StyleSheet.flatten(screen.getByTestId('perps-mode-spot').props.style),
-    ).toMatchObject({ flex: 1 });
+    // Pro stays last and keeps the remaining corridor; Spot sits before it.
+    expect(screen.getAllByRole('tab').map(tab => tab.props.testID)).toEqual([
+      'perps-mode-simple',
+      'perps-mode-spot',
+      'perps-mode-pro',
+    ]);
     expect(
       StyleSheet.flatten(screen.getByTestId('perps-mode-pro').props.style),
+    ).toMatchObject({ flex: 1 });
+    expect(
+      StyleSheet.flatten(screen.getByTestId('perps-mode-spot').props.style),
     ).not.toHaveProperty('flex');
   });
 

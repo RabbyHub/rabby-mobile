@@ -15,8 +15,6 @@ export const PerpsProHeader: React.FC<{
   onSwitchToSimple: () => void;
 }> = React.memo(({ isModeSwitching, onSwitchToSimple }) => {
   const account = perpsStore(state => state.currentPerpsAccount);
-  // Spot trading is gated by the same backend region permission as perps.
-  const hasPermission = perpsStore(state => state.hasPermission);
   const [popupState, setPopupState] = usePerpsPopupState();
 
   const contactAlias = useMemo(() => {
@@ -58,7 +56,7 @@ export const PerpsProHeader: React.FC<{
       isModeSwitching={isModeSwitching}
       onPressAccount={account ? handlePressAccount : undefined}
       onSelectMode={handleSelectMode}
-      onSelectSpot={hasPermission ? openPerpsSpotMarkets : undefined}
+      onSelectSpot={openPerpsSpotMarkets}
       showBottomDivider={false}
     />
   );

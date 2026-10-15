@@ -131,27 +131,26 @@ export const SpotOrderSheet: React.FC<{
     balances,
     market.quoteTokenIndex,
   ).available;
-  // Latest inputs for the order built after the agent approval, which can
-  // take minutes on a hardware wallet while the mid keeps moving.
+  // Live market state for the order built after the agent approval, which
+  // can take minutes on a hardware wallet while the mid keeps moving. What
+  // the user asked for (side, type, amount, price) is frozen at the tap.
   const latestRef = useRef({
+    visible,
+    side,
+    pairIndex: market.pairIndex,
     midPx,
     midsUpdatedAt,
     baseAvailable,
     quoteAvailable,
-    amount,
-    unit,
-    limitPx,
-    orderType,
   });
   latestRef.current = {
+    visible,
+    side,
+    pairIndex: market.pairIndex,
     midPx,
     midsUpdatedAt,
     baseAvailable,
     quoteAvailable,
-    amount,
-    unit,
-    limitPx,
-    orderType,
   };
 
   useEffect(() => {
@@ -318,13 +317,30 @@ export const SpotOrderSheet: React.FC<{
     Keyboard.dismiss();
     submitLockRef.current = true;
     setSubmitting(true);
+    // The order the user confirmed. Inputs are locked while submitting, and
+    // the sheet closing or switching side aborts instead of signing.
+    const intent = {
+      side,
+      pairIndex: market.pairIndex,
+      orderType,
+      amount,
+      unit,
+      limitPx,
+    };
     try {
       // Re-price and re-validate from the latest poll right before signing:
       // the approval step may have taken a while.
       const buildParams = () => {
         const latest = latestRef.current;
         if (
-          latest.orderType === 'market' &&
+          !latest.visible ||
+          latest.side !== intent.side ||
+          latest.pairIndex !== intent.pairIndex
+        ) {
+          return null;
+        }
+        if (
+          intent.orderType === 'market' &&
           Date.now() - latest.midsUpdatedAt > SPOT_PRICE_MAX_AGE_MS
         ) {
           setStalePriceAt(latest.midsUpdatedAt);
@@ -332,47 +348,47 @@ export const SpotOrderSheet: React.FC<{
           return null;
         }
         const price =
-          latest.orderType === 'limit'
-            ? formatSpotLimitPrice(latest.limitPx, side, szDecimals)
+          intent.orderType === 'limit'
+            ? formatSpotLimitPrice(intent.limitPx, intent.side, szDecimals)
             : latest.midPx
-            ? getSpotMarketOrderPrice(latest.midPx, side, szDecimals)
+            ? getSpotMarketOrderPrice(latest.midPx, intent.side, szDecimals)
             : '0';
         const nextSize = getSpotSizeFromAmount({
-          amount: latest.amount,
-          unit: latest.unit,
+          amount: intent.amount,
+          unit: intent.unit,
           price: getSpotAmountConversionPrice({
-            orderType: latest.orderType,
-            side,
-            unit: latest.unit,
+            orderType: intent.orderType,
+            side: intent.side,
+            unit: intent.unit,
             midPx: latest.midPx,
             orderPrice: price,
           }),
           szDecimals,
         });
         const error = validateSpotOrder({
-          side,
+          side: intent.side,
           size: nextSize,
           price,
           szDecimals,
           baseAvailable: latest.baseAvailable,
           quoteAvailable: latest.quoteAvailable,
           midPx: latest.midPx,
-          orderType: latest.orderType,
+          orderType: intent.orderType,
         });
         if (error) {
           return null;
         }
         return {
-          pairIndex: market.pairIndex,
-          side,
-          type: latest.orderType,
+          pairIndex: intent.pairIndex,
+          side: intent.side,
+          type: intent.orderType,
           size: nextSize,
           limitPx: price,
         };
       };
       const result = await executePerpsSpotOrder(
         currentPerpsAccount,
-        market.pairIndex,
+        intent.pairIndex,
         buildParams,
       );
       if (result) {
@@ -386,6 +402,8 @@ export const SpotOrderSheet: React.FC<{
   }, [
     validationError,
     amount,
+    unit,
+    limitPx,
     size,
     orderType,
     midsUpdatedAt,
@@ -487,6 +505,7 @@ export const SpotOrderSheet: React.FC<{
               return (
                 <TouchableOpacity
                   key={item}
+                  disabled={submitting}
                   style={[
                     styles.segmentItem,
                     active && styles.segmentItemActive,
@@ -517,7 +536,7 @@ export const SpotOrderSheet: React.FC<{
                 </Text>
                 <TouchableOpacity
                   hitSlop={8}
-                  disabled={!midPx}
+                  disabled={!midPx || submitting}
                   onPress={() =>
                     midPx && setLimitPx(formatSpotPrice(midPx, szDecimals))
                   }>
@@ -527,6 +546,7 @@ export const SpotOrderSheet: React.FC<{
               <View style={styles.inputBox}>
                 <BottomSheetTextInput
                   style={styles.limitInput}
+                  editable={!submitting}
                   keyboardType="decimal-pad"
                   placeholder="0"
                   placeholderTextColor={colors2024['neutral-info']}
@@ -567,6 +587,7 @@ export const SpotOrderSheet: React.FC<{
               style={[styles.inputBox, !!orderError && styles.inputBoxError]}>
               <BottomSheetTextInput
                 style={styles.amountInput}
+                editable={!submitting}
                 keyboardType="decimal-pad"
                 placeholder="0"
                 placeholderTextColor={colors2024['neutral-info']}
@@ -581,6 +602,7 @@ export const SpotOrderSheet: React.FC<{
               <TouchableOpacity
                 style={styles.unitToggle}
                 hitSlop={6}
+                disabled={submitting}
                 onPress={toggleUnit}
                 accessibilityLabel={t('page.perpsSpot.switchUnit', {
                   unit: otherUnitName,
@@ -599,7 +621,7 @@ export const SpotOrderSheet: React.FC<{
               value={sliderValue}
               onValueChange={applyPct}
               step={1}
-              disabled={!(Number(maxAmount) > 0)}
+              disabled={submitting || !(Number(maxAmount) > 0)}
             />
           </View>
           <View style={styles.pctRow}>
@@ -607,6 +629,7 @@ export const SpotOrderSheet: React.FC<{
               <TouchableOpacity
                 key={pct}
                 style={styles.pctChip}
+                disabled={submitting}
                 onPress={() => applyPct(pct)}>
                 <Text style={styles.pctChipText}>
                   {pct === 100 ? t('page.perpsSpot.max') : `${pct}%`}

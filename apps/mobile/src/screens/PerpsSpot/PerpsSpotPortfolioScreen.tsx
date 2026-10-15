@@ -35,7 +35,6 @@ import type { SpotOrderHistoryItem } from '@/hooks/perps/spot/spotOrderHistory';
 import { usePerpsSpotData } from '@/hooks/perps/spot/usePerpsSpotData';
 import { useSpotOrderCancel } from '@/hooks/perps/spot/useSpotOrderCancel';
 import { useSpotOrderHistory } from '@/hooks/perps/spot/useSpotOrderHistory';
-import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { naviPush } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -158,7 +157,6 @@ export const PerpsSpotPortfolioScreen: React.FC = () => {
     refresh,
   );
   // Same backend region gate as perps trading.
-  const hasPermission = perpsStore(s => s.hasPermission);
 
   const history = useSpotOrderHistory({
     address: currentPerpsAccount?.address,
@@ -230,8 +228,9 @@ export const PerpsSpotPortfolioScreen: React.FC = () => {
     );
   }, [t, cancelAllOrders]);
 
-  const cancelDisabled =
-    cancellingOid !== null || cancellingAll || !hasPermission;
+  // Cancels stay available without the region permission (orders only are
+  // gated), so resting orders can always be pulled.
+  const cancelDisabled = cancellingOid !== null || cancellingAll;
   const renderGroup = useCallback(
     ({ item }: { item: SpotOpenOrderGroup }) => (
       <SpotOrderGroupCard

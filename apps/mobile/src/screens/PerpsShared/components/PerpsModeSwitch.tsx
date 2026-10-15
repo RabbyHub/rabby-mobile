@@ -15,7 +15,7 @@ export type PerpsHeaderMode = PerpsViewMode | 'spot';
 export type PerpsModeSwitchProps = {
   activeMode: PerpsHeaderMode;
   disabled?: boolean;
-  /** Let the last tab own the remaining header width as its press target. */
+  /** Let Pro own the remaining header width as its press target. */
   extendProHitAreaRight?: boolean;
   onPressInMode?: (viewMode: PerpsViewMode) => void;
   onPressOutMode?: (viewMode: PerpsViewMode) => void;
@@ -33,7 +33,12 @@ const MODE_OPTIONS: ReadonlyArray<{
   { label: 'Pro', value: 'pro' },
 ];
 
-const SPOT_OPTION = { label: 'Spot', value: 'spot' } as const;
+// Spot sits between the two modes so Pro stays last and keeps the extended
+// right-side hit area (and its press-in prefetch) it had before Spot existed.
+const MODE_OPTIONS_WITH_SPOT: ReadonlyArray<{
+  label: string;
+  value: PerpsHeaderMode;
+}> = [MODE_OPTIONS[0], { label: 'Spot', value: 'spot' }, MODE_OPTIONS[1]];
 
 export const PerpsModeSwitch: React.FC<PerpsModeSwitchProps> = ({
   activeMode,
@@ -48,8 +53,7 @@ export const PerpsModeSwitch: React.FC<PerpsModeSwitchProps> = ({
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const options: ReadonlyArray<{ label: string; value: PerpsHeaderMode }> =
-    onSelectSpot ? [...MODE_OPTIONS, SPOT_OPTION] : MODE_OPTIONS;
-  const lastValue = options[options.length - 1].value;
+    onSelectSpot ? MODE_OPTIONS_WITH_SPOT : MODE_OPTIONS;
 
   return (
     <View
@@ -82,7 +86,7 @@ export const PerpsModeSwitch: React.FC<PerpsModeSwitchProps> = ({
             onPressOut={() => modeValue && onPressOutMode?.(modeValue)}
             style={[
               styles.optionTarget,
-              option.value === lastValue && extendProHitAreaRight
+              option.value === 'pro' && extendProHitAreaRight
                 ? styles.extendedProTarget
                 : null,
             ]}
