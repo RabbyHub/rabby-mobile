@@ -336,7 +336,10 @@ class RNIContextMenuView: UIView {
   };
 
   override func insertReactSubview(_ subview: UIView!, at atIndex: Int) {
-    super.insertSubview(subview, at: atIndex);
+    // Fabric's legacy interop mounts and removes by reactSubviews indices.
+    // Keep every child in that registry, including detached preview wrappers;
+    // UIKit's shorter visible-subview array is not the React child order.
+    super.insertReactSubview(subview, at: atIndex);
 
     if let wrapperView = subview as? RNIWrapperView,
        let nativeID    = subview.nativeID,
@@ -365,6 +368,19 @@ class RNIContextMenuView: UIView {
 
       wrapperView.removeFromSuperview();
       wrapperView.isMovingToParent = false;
+    };
+  };
+
+  override func didUpdateReactSubviews() {
+    for subview in self.reactSubviews() ?? [] {
+      if subview is RNIWrapperView,
+         let nativeID = subview.nativeID,
+         NativeIDKey(rawValue: nativeID) != nil {
+        // These children belong to the preview controllers, not the trigger.
+        continue;
+      };
+
+      super.addSubview(subview);
     };
   };
 

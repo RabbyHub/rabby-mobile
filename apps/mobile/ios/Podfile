@@ -70,8 +70,9 @@ target 'RabbyMobile' do
   )
 
   target 'RabbyMobileTests' do
-    inherit! :complete
-    # Pods for testing
+    # The host app already links the static Pods. Linking them into the test
+    # bundle again runs native module registration twice (for example Nitro).
+    inherit! :search_paths
   end
 
   pre_install do |installer|
