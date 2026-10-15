@@ -52,7 +52,6 @@ import { Text } from '@/components/Typography';
 import type { ProviderRequestContext } from '@/core/controllers/type';
 import { tokenizeSignMessageText } from './signMessageTokenizer';
 import { useSignMessageAddressData } from './useSignMessageAddressData';
-import { addSignMessageOriginFallback } from './signMessageOrigin';
 import { SignMessageTagProvider } from './SignMessageHighlighter';
 
 interface SignTextProps {
@@ -186,7 +185,6 @@ export const SignText = ({
       origin: session.origin,
     });
   }, [signText, session, params.requestContext?.chainId]);
-  const isUnparsedAction = textActionData?.action === null;
 
   const isViewGnosisSafe = params?.$ctx?.isViewGnosisSafe;
 
@@ -258,16 +256,8 @@ export const SignText = ({
     resolveApproval({});
   };
 
-  const withOriginFallback = (ctx: Parameters<typeof executeEngine>[0]) =>
-    addSignMessageOriginFallback(ctx, {
-      isUnparsedAction,
-      isInternalOrigin: session.origin === INTERNAL_REQUEST_ORIGIN,
-      message: signText,
-      origin: session.origin,
-    });
-
   const executeSecurityEngine = async () => {
-    const baseCtx = await formatSecurityEngineContext({
+    const ctx = await formatSecurityEngineContext({
       type: 'text',
       actionData: parsedActionData || ({} as any),
       origin: session.origin,
@@ -279,7 +269,7 @@ export const SignText = ({
         hasAddress: address => keyringServiceApi.hasAddress(address),
       },
     });
-    const result = await executeEngine(withOriginFallback(baseCtx));
+    const result = await executeEngine(ctx);
     setEngineResults(result);
   };
 
@@ -444,7 +434,7 @@ export const SignText = ({
       sender,
     });
     setParsedActionData(parsed);
-    const baseCtx = await formatSecurityEngineContext({
+    const ctx = await formatSecurityEngineContext({
       type: 'text',
       actionData: parsed,
       origin: params.session.origin,
@@ -456,7 +446,7 @@ export const SignText = ({
         hasAddress: address => keyringServiceApi.hasAddress(address),
       },
     });
-    const result = await executeEngine(withOriginFallback(baseCtx));
+    const result = await executeEngine(ctx);
     setEngineResults(result);
     setIsLoading(false);
   };
