@@ -87,6 +87,10 @@ export type SimpleChartConfig = {
     empty: string;
   };
 };
+export type SimpleRangeCoverage = {
+  kind: 'complete' | 'short' | 'gap' | 'unavailable' | 'daily';
+  start: number | null;
+};
 export type SimpleChartFill = { time: number; side: string };
 export type SimpleChartMessage = {
   type: 'PERPS_SIMPLE_CHART';
@@ -94,9 +98,15 @@ export type SimpleChartMessage = {
   sequence: number;
 } & (
   | { action: 'configure'; config: SimpleChartConfig }
-  | { action: 'replace'; config: SimpleChartConfig; candles: CandleStick[] }
+  | {
+      action: 'replace';
+      config: SimpleChartConfig;
+      candles: CandleStick[];
+      sourceStartTime?: number;
+    }
   | {
       action: 'data';
+      sourceStartTime?: number;
       candles: CandleStick[];
       preserve: boolean;
       state: 'idle' | 'loading' | 'ready' | 'empty' | 'stale' | 'error';
@@ -128,9 +138,18 @@ export type SimpleChartEvent = {
   type: 'PERPS_SIMPLE_EVENT';
   identity: string;
 } & (
-  | { event: 'applied'; sequence: number; referencePrice: number | null }
-  | { event: 'rangeReference'; referencePrice: number | null }
-  | { event: 'selection'; candle: CandleStick | null }
+  | {
+      event: 'applied';
+      sequence: number;
+      referencePrice: number | null;
+      coverage?: SimpleRangeCoverage;
+    }
+  | {
+      event: 'rangeReference';
+      referencePrice: number | null;
+      coverage?: SimpleRangeCoverage;
+    }
+  | { event: 'selection'; candle: CandleStick | null; timeText?: string }
   | {
       event: 'viewport';
       presentationSequence: number;

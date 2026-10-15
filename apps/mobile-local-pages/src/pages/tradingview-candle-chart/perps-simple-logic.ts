@@ -1,4 +1,9 @@
-import type { CandleStick, SimpleChartConfig, SimpleChartFill } from './types';
+import type {
+  CandleStick,
+  SimpleChartConfig,
+  SimpleChartFill,
+  SimpleRangeCoverage,
+} from './types';
 
 const DAY = 86400;
 
@@ -92,6 +97,28 @@ export function simpleRangeReference(
     : null;
 }
 
+/** Missing local candles are only a candidate; RN verifies Hyper's daily history. */
+export function simpleRangeCoverage(
+  candles: readonly CandleStick[],
+  config: Pick<SimpleChartConfig, 'range' | 'interval'>,
+  sourceStartTime: number | undefined,
+): SimpleRangeCoverage {
+  const window = simpleRangeWindow(candles, config);
+  if (
+    !window ||
+    sourceStartTime === undefined ||
+    !Number.isFinite(sourceStartTime)
+  )
+    return { kind: 'unavailable', start: null };
+  if (sourceStartTime > window.start)
+    return { kind: 'short', start: window.start };
+  if (config.range === '1D') return { kind: 'daily', start: window.start };
+  return {
+    kind: simpleRangeReference(candles, config) === null ? 'gap' : 'complete',
+    start: window.start,
+  };
+}
+
 export function visibleLastCandle(
   candles: readonly CandleStick[],
   range: { from: number; to: number } | null,
@@ -145,6 +172,56 @@ export function avoidSimpleLabelOverlap(
     ordered[item.index] = result[index];
   });
   return ordered;
+}
+
+/** Reserve the latest-price badge first. Other badges may cross to the roomier
+ * side at an edge; their guides still start at their unchanged price y. */
+export function layoutSimplePriceLabels(
+  values: readonly number[],
+  height: number,
+  anchorIndex: number,
+) {
+  if (anchorIndex < 0 || anchorIndex >= values.length)
+    return avoidSimpleLabelOverlap(values, height);
+  const half = 7;
+  const spacing = 17;
+  const bottom = Math.max(half, height - half);
+  const anchor = Math.max(half, Math.min(bottom, values[anchorIndex]));
+  const others = values
+    .map((y, index) => ({ y, index }))
+    .filter(item => item.index !== anchorIndex)
+    .sort((a, b) => a.y - b.y || a.index - b.index);
+  const aboveCapacity = Math.floor((anchor - half) / spacing);
+  const belowCapacity = Math.floor((bottom - anchor) / spacing);
+  const preferredAbove = others.filter(
+    item => item.y < values[anchorIndex],
+  ).length;
+  const split = Math.min(
+    aboveCapacity,
+    Math.max(others.length - belowCapacity, preferredAbove),
+  );
+  const above = others.slice(0, split);
+  const below = others.slice(split);
+  const result: number[] = [];
+  result[anchorIndex] = anchor;
+  const upper = avoidSimpleLabelOverlap(
+    above.map(item => item.y),
+    anchor - spacing + half,
+  );
+  above.forEach((item, index) => {
+    result[item.index] = upper[index];
+  });
+  // If the pane physically cannot fit every badge, allow clipping at the far
+  // edge rather than compressing text or displacing the latest-price anchor.
+  const lowerOrigin = anchor + spacing - half;
+  const lower = avoidSimpleLabelOverlap(
+    below.map(item => item.y - lowerOrigin),
+    Math.max(height - lowerOrigin, below.length * spacing - 3),
+  );
+  below.forEach((item, index) => {
+    result[item.index] = lower[index] + lowerOrigin;
+  });
+  return result;
 }
 
 export function simpleFillMarkers(

@@ -18,6 +18,7 @@ import type {
 } from '@/components2024/TradingViewCandleChart/type';
 import type { TradingViewChartRef } from '@/components2024/TradingViewCandleChart';
 import { usePerpsSimpleChart } from './usePerpsSimpleChart';
+import { resetFirstDailyCandleCacheForTests } from './firstDailyCandle';
 
 jest.mock('@ledgerhq/react-native-hw-transport-ble', () => ({}));
 jest.mock('react-native-haptic-feedback', () => ({ trigger: jest.fn() }));
@@ -96,6 +97,7 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
     releases = [];
     requests = [];
     resetPerpsCandleSourceSnapshotCacheForTests();
+    resetFirstDailyCandleCacheForTests();
     const values = new Map<string, string>();
     const storageAdapter: StorageAdapater = {
       getItem: key => values.get(String(key)) ?? null,
@@ -205,6 +207,130 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
       }),
     );
   };
+
+  const publishShortHistory = (
+    hook: ReturnType<typeof mount>,
+    start: number,
+  ) => {
+    const replacement = messages
+      .filter(message => message.action === 'replace')
+      .at(-1)!;
+    act(() =>
+      hook.result.current.onSimpleEvent({
+        type: 'PERPS_SIMPLE_EVENT',
+        event: 'rangeReference',
+        identity: replacement.identity,
+        referencePrice: null,
+        coverage: { kind: 'short', start },
+      }),
+    );
+  };
+
+  it('verifies short history via the same SDK, carries the source boundary and does not refetch on ticks', async () => {
+    const hook = mount();
+    await settle();
+    expect(
+      messages.find(message => message.action === 'replace'),
+    ).toMatchObject({ sourceStartTime: 1700000000 });
+    publishShortHistory(hook, 1699000000);
+    expect(hook.result.current.referenceLoading).toBe(true);
+    await settle();
+    expect(hook.result.current.rangeReference).toBe(100);
+    expect(hook.result.current.shortHistory).toBe(true);
+    expect(requests.filter(request => request.interval === '1d')).toHaveLength(
+      1,
+    );
+    for (let i = 0; i < 3; i++) {
+      act(() => candleCallbacks.at(-1)!(raw('BTC', '30m', String(106 + i))));
+      await settle();
+    }
+    expect(requests.filter(request => request.interval === '1d')).toHaveLength(
+      1,
+    );
+    expect(releases).toHaveLength(1);
+  });
+
+  it('keeps gaps and failed daily lookups unknown instead of taking the first local open', async () => {
+    const hook = mount();
+    await settle();
+    publishShortHistory(hook, 1800000000); // Daily history starts before the missing window boundary.
+    await settle();
+    expect(hook.result.current.rangeReference).toBeNull();
+    resetFirstDailyCandleCacheForTests();
+    fetchCandles = async () => {
+      throw new Error('offline');
+    };
+    publishShortHistory(hook, 1690000000);
+    await settle();
+    expect(hook.result.current.rangeReference).toBeNull();
+    expect(hook.result.current.referenceLoading).toBe(false);
+  });
+
+  it('accepts an earliest daily bucket containing the cutoff when raw intraday history starts later', async () => {
+    const hook = mount();
+    await settle();
+    fetchCandles = async (coin, interval) => [
+      { ...raw(coin, interval), t: 1699920000000, o: '95' },
+    ];
+    publishShortHistory(hook, 1699950000);
+    await settle();
+    expect(hook.result.current.rangeReference).toBe(95);
+  });
+
+  it.each(['coin', 'blur', 'reload'])(
+    'ignores a pending daily lookup after %s changes its owner',
+    async boundary => {
+      const hook = mount();
+      await settle();
+      let resolveDaily!: (value: Candle[]) => void;
+      fetchCandles = async (coin, interval) =>
+        interval === '1d'
+          ? new Promise(resolve => {
+              resolveDaily = resolve;
+            })
+          : [raw(coin, interval)];
+      publishShortHistory(hook, 1699000000);
+      await settle();
+      if (boundary === 'coin')
+        hook.rerender({ name: 'ETH', owner: 'account-a', chartConfig: config });
+      else if (boundary === 'blur') {
+        mockFocused = false;
+        hook.rerender({ name: 'BTC', owner: 'account-a', chartConfig: config });
+      } else act(() => hook.result.current.onChartLoading());
+      await settle();
+      await act(async () => resolveDaily([raw('BTC', '1d')]));
+      await settle();
+      expect(hook.result.current.rangeReference).toBeNull();
+    },
+  );
+
+  it('keeps the selected candle and the Web crosshair time text in one selection update', async () => {
+    const hook = mount();
+    await settle();
+    const replacement = messages
+      .filter(message => message.action === 'replace')
+      .at(-1)!;
+    act(() =>
+      hook.result.current.onSimpleEvent({
+        type: 'PERPS_SIMPLE_EVENT',
+        event: 'selection',
+        identity: replacement.identity,
+        candle: { time: 1700000000, open: 100, high: 120, low: 90, close: 105 },
+        timeText: "Tue 14 Nov '23 22:13",
+      }),
+    );
+    expect(hook.result.current.selectionTimeText).toBe("Tue 14 Nov '23 22:13");
+    expect(hook.result.current.selection?.time).toBe(1700000000);
+    act(() =>
+      hook.result.current.onSimpleEvent({
+        type: 'PERPS_SIMPLE_EVENT',
+        event: 'selection',
+        identity: replacement.identity,
+        candle: null,
+      }),
+    );
+    expect(hook.result.current.selectionTimeText).toBe('');
+  });
 
   it('enables the native axis only after current presentation geometry and only with explicit opt-in', async () => {
     const hook = mount();

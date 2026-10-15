@@ -238,7 +238,7 @@ describe('Simple chart native load and ready ordering', () => {
   const ready = () =>
     emitMessage({
       type: 'CHART_READY',
-      capabilities: { perpsSimpleKlineProtocolVersion: 4 },
+      capabilities: { perpsSimpleKlineProtocolVersion: 5 },
     });
   const applyReplacement = async () => {
     const message = mockCommands.filter(m => m.action === 'replace').at(-1)!;
