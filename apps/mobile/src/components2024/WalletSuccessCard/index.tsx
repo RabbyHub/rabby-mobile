@@ -52,8 +52,9 @@ export const WalletSuccessCard: React.FC<WalletSuccessCardProps> = ({
 }) => {
   const { styles } = useTheme2024({ getStyle });
 
-  const textProgress = useSharedValue(0);
-  const addressProgress = useSharedValue(0);
+  // Follow-up imports already have a result to show on their first frame.
+  const textProgress = useSharedValue(autoPlay ? 0 : 1);
+  const addressProgress = useSharedValue(autoPlay ? 0 : 1);
 
   const TEXT_START = animationConfig.INITIAL_DELAY;
   const ADDRESS_START =
@@ -63,7 +64,11 @@ export const WalletSuccessCard: React.FC<WalletSuccessCardProps> = ({
 
   useFocusEffect(
     useCallback(() => {
-      if (!autoPlay) return;
+      if (!autoPlay) {
+        textProgress.value = 1;
+        addressProgress.value = 1;
+        return;
+      }
 
       textProgress.value = 0;
       addressProgress.value = 0;

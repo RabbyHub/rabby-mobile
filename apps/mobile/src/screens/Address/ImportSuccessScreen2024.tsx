@@ -47,10 +47,8 @@ import {
 } from '@/constant/layout';
 import { GnosisSupportChainList } from './components/GnosisSupportChainList';
 import RcIconRightCC from '@/assets/icons/common/right-2-cc.svg';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
+import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
+import { dismissImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import addressBalanceStore from '@/store/balance';
 import { syncMultiAddressesHistory } from '@/databases/hooks/history';
@@ -311,6 +309,7 @@ export const ImportSuccessScreen2024 = () => {
         : undefined,
       keyringId: state.keyringId,
       brandName: state.brandName,
+      skipSuccessAnimation: true,
     };
 
     modalRef.current = createGlobalBottomSheetModal2024({
@@ -321,11 +320,7 @@ export const ImportSuccessScreen2024 = () => {
           modalRef.current = undefined;
         },
       },
-      onCancel: () => {
-        if (modalRef.current) {
-          removeGlobalBottomSheetModal2024(modalRef.current);
-        }
-      },
+      onCancel: () => dismissImportMoreAddressPopup(modalRef.current),
     });
   };
 
@@ -371,6 +366,7 @@ export const ImportSuccessScreen2024 = () => {
       <View style={[styles.container, { paddingTop: top }]}>
         <WalletSuccessCard
           style={{ flex: 1 }}
+          autoPlay={!state.skipSuccessAnimation}
           title={
             onlyFirstAccount
               ? t(
