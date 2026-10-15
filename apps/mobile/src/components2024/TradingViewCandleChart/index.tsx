@@ -285,6 +285,7 @@ const TradingViewCandleChart = ({
                 localWebViewRef.current?.reload
               ) {
                 protocolReloadAttemptedRef.current = true;
+                onChartLoading?.();
                 localWebViewRef.current.reload();
               } else {
                 setWebViewError(
@@ -388,6 +389,7 @@ const TradingViewCandleChart = ({
     [
       cancelPendingLegacyApplied,
       onChartReady,
+      onChartLoading,
       onChartError,
       onDataApplied,
       onPriceScaleAutoScaleChange,
@@ -589,6 +591,9 @@ const TradingViewCandleChart = ({
           supportsDataAppliedAckRef.current = false;
           protocolReloadAttemptedRef.current = false;
           protocolErrorReportedRef.current = false;
+          if (variant === 'perps-simple') {
+            onChartLoading?.();
+          }
           setWebViewKey(k => k + 1);
           setIsChartReady(false);
           if (variant === 'perps-pro') {
@@ -599,7 +604,12 @@ const TradingViewCandleChart = ({
       },
     );
     return () => subscription.remove();
-  }, [cancelPendingLegacyApplied, onPriceScaleAutoScaleChange, variant]);
+  }, [
+    cancelPendingLegacyApplied,
+    onChartLoading,
+    onPriceScaleAutoScaleChange,
+    variant,
+  ]);
 
   if (webViewError) {
     if (variant === 'perps-pro') {
@@ -621,6 +631,9 @@ const TradingViewCandleChart = ({
     );
   }
 
+  // Reset Simple readiness at explicit reload/remount sites above. Android's
+  // native onLoadStart can arrive after CHART_READY through a different queue;
+  // using it to invalidate readiness would leave a loaded chart waiting forever.
   return (
     <View
       style={[
@@ -630,7 +643,6 @@ const TradingViewCandleChart = ({
         { height, width: '100%', minHeight: height },
       ]}>
       <LocalWebView
-        onLoadStart={variant === 'perps-simple' ? onChartLoading : undefined}
         key={webViewKey}
         ref={localWebViewRef}
         entryPath="/pages/tradingview-candle-chart.html"

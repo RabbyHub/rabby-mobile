@@ -20,10 +20,6 @@ jest.mock(
   () => () => null,
 );
 
-const mockTrade = { identity: 'DOGE', trade: null as null | { price: string } };
-jest.mock('@/hooks/perps/subscriptions/usePerpsLatestTrade', () => ({
-  usePerpsLatestTrade: () => mockTrade,
-}));
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
 }));
@@ -54,11 +50,11 @@ jest.mock('react-i18next', () => ({
 }));
 
 import { PerpsSimpleChartHeader } from './PerpsSimpleChartHeader';
+import { simpleSelectionTime } from './model';
 
 const props: React.ComponentProps<typeof PerpsSimpleChartHeader> = {
-  coin: 'DOGE',
   active: true,
-  candleClose: 0.084561,
+  markPrice: 0.084561,
   decimals: 6,
   prevDayPx: 0.085057,
   range: '1D',
@@ -71,8 +67,53 @@ const props: React.ComponentProps<typeof PerpsSimpleChartHeader> = {
   style: 'candle',
 };
 describe('Simple header presentation (component unit)', () => {
-  beforeEach(() => {
-    mockTrade.trade = null;
+  it('returns to the live mark after holding an Area candle and shares the change row with its date', () => {
+    const selection = {
+      time: 1700000000,
+      open: 90,
+      close: 99,
+      high: 105,
+      low: 85,
+    };
+    const view = render(
+      <PerpsSimpleChartHeader
+        {...props}
+        markPrice={120}
+        prevDayPx={100}
+        decimals={2}
+        style="area"
+        selection={selection}
+      />,
+    );
+    expect(view.getByText('$99.00')).toBeTruthy();
+    const change = view.getByText('+$9.00 (+10.00%)');
+    const date = view.getByText(simpleSelectionTime(selection.time));
+    // The two texts share a layout row; this does not assert native pixel geometry.
+    const layoutParent = (node: typeof change) => {
+      let parent = node.parent;
+      while (parent && parent.type !== 'View') parent = parent.parent;
+      return parent;
+    };
+    expect(
+      layoutParent(change) !== null &&
+        layoutParent(change) === layoutParent(date),
+    ).toBe(true);
+    view.rerender(
+      <PerpsSimpleChartHeader
+        {...props}
+        markPrice={125}
+        prevDayPx={100}
+        decimals={2}
+        style="area"
+      />,
+    );
+    expect(view.getByText('$125.00')).toBeTruthy();
+    expect(view.getByText('+$25.00 (+25.00%) 24h')).toBeTruthy();
+    view.rerender(
+      <PerpsSimpleChartHeader {...props} markPrice={0} prevDayPx={100} />,
+    );
+    expect(view.queryByTestId('up')).toBeNull();
+    expect(view.queryByTestId('down')).toBeNull();
   });
   it('shows the full signed dollar change and daily suffix in one scalable text', () => {
     const view = render(<PerpsSimpleChartHeader {...props} />);
@@ -84,7 +125,7 @@ describe('Simple header presentation (component unit)', () => {
     const view = render(
       <PerpsSimpleChartHeader
         {...props}
-        candleClose={null}
+        markPrice={null}
         prevDayPx={NaN}
         marketLoading
       />,
@@ -104,7 +145,7 @@ describe('Simple header presentation (component unit)', () => {
       <PerpsSimpleChartHeader
         {...props}
         active={false}
-        candleClose={null}
+        markPrice={null}
         prevDayPx={NaN}
         marketLoading
       />,
@@ -112,11 +153,11 @@ describe('Simple header presentation (component unit)', () => {
     expect(view.queryByTestId('skeleton')).toBeNull();
   });
   it('uses the selected range reference, candle OHLC on hold, and 24h for manual periods', () => {
-    mockTrade.trade = { price: '120' };
     const view = render(
       <PerpsSimpleChartHeader
         {...props}
         decimals={2}
+        markPrice={120}
         range="1W"
         rangeReference={100}
       />,
@@ -133,6 +174,7 @@ describe('Simple header presentation (component unit)', () => {
       <PerpsSimpleChartHeader
         {...props}
         decimals={2}
+        markPrice={120}
         range="1W"
         rangeReference={100}
         selection={selection}
@@ -143,6 +185,7 @@ describe('Simple header presentation (component unit)', () => {
       <PerpsSimpleChartHeader
         {...props}
         decimals={2}
+        markPrice={120}
         range={null}
         prevDayPx={100}
       />,

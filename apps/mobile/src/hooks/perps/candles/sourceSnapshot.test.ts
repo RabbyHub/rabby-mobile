@@ -46,6 +46,44 @@ describe('Perps Candle source snapshot preload', () => {
     resetPerpsCandleSourceSnapshotCacheForTests();
   });
 
+  it('supersedes pre-resume requests without allowing a late response to replace the new cache', async () => {
+    const clock = jest.spyOn(Date, 'now').mockReturnValue(1000);
+    const old = deferred<CandleSnapshot>();
+    const fresh = deferred<CandleSnapshot>();
+    try {
+      mockCandleSnapshot
+        .mockReturnValueOnce(old.promise)
+        .mockReturnValueOnce(fresh.promise);
+      const first = loadPerpsCandleSourceSnapshot({
+        coin: 'BTC',
+        interval: '15m',
+      });
+      clock.mockReturnValue(121000);
+      // Default consumers retain in-flight deduplication.
+      expect(
+        loadPerpsCandleSourceSnapshot({
+          coin: 'BTC',
+          interval: '15m',
+          forceRefresh: true,
+        }),
+      ).toBe(first);
+      const second = loadPerpsCandleSourceSnapshot({
+        coin: 'BTC',
+        interval: '15m',
+        forceRefresh: true,
+        pendingNotBefore: Date.now(),
+      });
+      expect(second).not.toBe(first);
+      fresh.resolve([rawCandle(2000)]);
+      const latest = await second;
+      old.resolve([rawCandle(1000)]);
+      await first;
+      expect(readPerpsCandleSourceSnapshot('BTC', '15m')).toBe(latest);
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
   it('deduplicates in-flight requests and reuses the short-lived snapshot', async () => {
     const request = deferred<CandleSnapshot>();
     mockCandleSnapshot.mockReturnValueOnce(request.promise);

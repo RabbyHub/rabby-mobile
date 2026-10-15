@@ -20,6 +20,7 @@ import {
   simpleRangeReference,
   visibleLastCandle,
 } from './perps-simple-logic';
+import { appendSimplePriceGuide } from './perps-simple-price-guide';
 import type {
   CandleStick,
   SimpleChartMessage,
@@ -89,7 +90,8 @@ export function createSimpleChart(
     lineWidth: 2,
     priceLineVisible: false,
     lastValueVisible: false,
-    crosshairMarkerRadius: 4,
+    // Simple Area renders its crosshair and 9px/5px marker in one overlay.
+    crosshairMarkerVisible: false,
   });
   const overlay = document.createElement('div');
   Object.assign(overlay.style, {
@@ -244,6 +246,7 @@ export function createSimpleChart(
     if (!last || !range) return;
     const series = activeSeries();
     const tags: Array<{
+      id: string;
       price: number;
       color: string;
       background: string;
@@ -254,23 +257,19 @@ export function createSimpleChart(
     const latestColor =
       config.style === 'area' ? AREA : last.close >= last.open ? GREEN : RED;
     tags.push({
+      id: 'latest',
       price: last.close,
       color: latestColor,
       background: latestColor,
       text: config.colors.contrast,
     });
-    if (!lastVisible && visible) {
-      const color =
-        config.style === 'area'
-          ? AREA
-          : visible.close >= visible.open
-          ? GREEN
-          : RED;
+    if (config.style === 'area' && !lastVisible && visible) {
       tags.push({
+        id: 'viewport',
         price: visible.close,
-        color,
+        color: AREA,
         background: config.colors.background,
-        text: color,
+        text: AREA,
         outline: true,
       });
     }
@@ -284,6 +283,7 @@ export function createSimpleChart(
           ? GREEN
           : RED;
       tags.push({
+        id: 'selection',
         price: selected.close,
         color,
         background: color,
@@ -293,6 +293,7 @@ export function createSimpleChart(
     if (config.style === 'candle') {
       const lines = [
         {
+          id: 'entry',
           price: prices.entryPrice,
           color: config.colors.entry,
           background: config.colors.entryBackground,
@@ -300,6 +301,7 @@ export function createSimpleChart(
           title: config.labels.entry,
         },
         {
+          id: 'tp',
           price: prices.tpPrice,
           color: GREEN,
           background: GREEN,
@@ -307,6 +309,7 @@ export function createSimpleChart(
           title: config.labels.tp,
         },
         {
+          id: 'sl',
           price: prices.slPrice,
           color: RED,
           background: RED,
@@ -314,6 +317,7 @@ export function createSimpleChart(
           title: config.labels.sl,
         },
         {
+          id: 'liquidation',
           price: prices.liquidationPrice,
           color: config.colors.liquidation,
           background: config.colors.liquidation,
@@ -336,12 +340,20 @@ export function createSimpleChart(
       visibleTags.map(tag => tag.y!),
       paneHeight,
     );
+    const titledTags = visibleTags.filter(tag => tag.title !== undefined);
+    const titleY = avoidSimpleLabelOverlap(
+      // 16px title sits 1px above its undisplaced reference line.
+      titledTags.map(tag => tag.y! - 9),
+      paneHeight,
+      18, // 16px text box plus 1px outside glyph stroke on each side.
+    );
     // Append all labels, read their actual bounds together, then draw lines.
     // No opaque full-axis row: only the 14px label covers chart content.
     const labels = visibleTags.map((tag, i) => {
       const label = document.createElement('span');
       label.textContent = priceText(tag.price);
       label.dataset.simplePriceLabel = '';
+      label.dataset.priceKind = tag.id;
       Object.assign(label.style, {
         position: 'absolute',
         right: '12px',
@@ -351,6 +363,8 @@ export function createSimpleChart(
         borderRadius: '4px',
         fontSize: '10px',
         lineHeight: '14px',
+        fontVariantNumeric: 'tabular-nums',
+        textAlign: 'right',
         color: tag.text,
         background: tag.background,
         boxShadow: tag.outline ? `inset 0 0 0 1px ${tag.color}` : 'none',
@@ -361,18 +375,92 @@ export function createSimpleChart(
       overlay.appendChild(label);
       return label;
     });
-    const hostLeft = overlay.getBoundingClientRect().left;
-    const labelLefts = labels.map(
-      label => label.getBoundingClientRect().left - hostLeft,
+    const titles = titledTags.map((tag, i) => {
+      const title = document.createElement('span');
+      // Separate stroke/fill layers preserve the glyph fill on older WebViews
+      // without depending on CSS paint-order support for text.
+      const outline = document.createElement('span');
+      outline.textContent = tag.title!;
+      outline.setAttribute('aria-hidden', 'true');
+      Object.assign(outline.style, {
+        position: 'absolute',
+        inset: '0',
+      });
+      outline.style.setProperty(
+        '-webkit-text-stroke',
+        `2px ${config!.colors.titleOutline ?? config!.colors.background}`,
+      );
+      const fill = document.createElement('span');
+      fill.textContent = tag.title!;
+      fill.style.position = 'relative';
+      title.append(outline, fill);
+      title.dataset.simplePriceTitle = tag.id;
+      Object.assign(title.style, {
+        position: 'absolute',
+        left: '1px', // Keep the outside stroke within the clipped plot overlay.
+        top: `${titleY[i] - 8}px`,
+        height: '16px',
+        color: tag.color,
+        fontSize: '10px',
+        lineHeight: '16px',
+        whiteSpace: 'nowrap',
+        zIndex: '2',
+      });
+      overlay.appendChild(title);
+      return title;
+    });
+    // Batch layout reads before writes. Tabular digits alone do not equalize
+    // values with different digit counts (for example 99.90 and 100.10).
+    const overlayWidth = overlay.getBoundingClientRect().width;
+    const labelWidth = Math.max(
+      0,
+      ...labels.map(label => label.getBoundingClientRect().width),
     );
+    const titleWidths = titles.map(
+      title => title.getBoundingClientRect().width,
+    );
+    labels.forEach(label => {
+      label.style.width = `${labelWidth}px`;
+    });
+    const labelLeft = Math.max(0, overlayWidth - 12 - labelWidth);
+    const selectedX =
+      selected && config.style === 'area'
+        ? chart.timeScale().timeToCoordinate(selected.time as UTCTimestamp)
+        : null;
+    const selectedY =
+      selected && config.style === 'area'
+        ? series.priceToCoordinate(selected.close)
+        : null;
+    const areaCrosshair =
+      selectedX !== null &&
+      selectedY !== null &&
+      selectedX >= 0 &&
+      selectedX <= paneWidth &&
+      selectedY >= 0 &&
+      selectedY <= paneHeight
+        ? { x: selectedX, y: selectedY }
+        : null;
     visibleTags.forEach((tag, i) => {
       const y = tag.y!;
       if (y < 0 || y > paneHeight) return;
-      const labelLeft = Math.max(0, labelLefts[i]);
-      // Keep the true price y in the plot; a short elbow joins a displaced label.
-      const joinX = Math.min(paneWidth, labelLeft);
+      // The neutral Area crosshair owns the selected horizontal guide, even
+      // when the latest/viewport close coincides with the selected close.
+      if (
+        areaCrosshair &&
+        (tag.id === 'selection' || Math.abs(y - areaCrosshair.y) < 0.5)
+      )
+        return;
+      const titleIndex = titledTags.indexOf(tag);
+      const displacedTitle =
+        titleIndex >= 0 && Math.abs(titleY[titleIndex] + 9 - y) > 0.5
+          ? {
+              right: titleWidths[titleIndex] + 2,
+              bottom: titleY[titleIndex] + 9,
+            }
+          : undefined;
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       svg.dataset.simplePriceLine = '';
+      svg.dataset.priceKind = tag.id;
       Object.assign(svg.style, {
         position: 'absolute',
         inset: '0',
@@ -380,42 +468,63 @@ export function createSimpleChart(
         height: `${paneHeight}px`,
         overflow: 'hidden',
       });
-      const path = document.createElementNS(
-        'http://www.w3.org/2000/svg',
-        'path',
+      appendSimplePriceGuide(
+        svg,
+        {
+          priceY: y,
+          labelX: labelLeft,
+          labelY: tagY[i],
+          title: displacedTitle,
+        },
+        tag.color,
+        '4 2',
       );
-      path.setAttribute('d', `M 0 ${y} H ${joinX} V ${tagY[i]} H ${labelLeft}`);
-      path.setAttribute('fill', 'none');
-      path.setAttribute('stroke', tag.color);
-      path.setAttribute('stroke-width', '1');
-      path.setAttribute('stroke-dasharray', '4 2');
-      svg.appendChild(path);
       overlay.appendChild(svg);
-      // Finish the dashed line at the edge even when the dash phase ends in a gap.
-      const connector = document.createElement('div');
-      Object.assign(connector.style, {
-        position: 'absolute',
-        left: `${Math.max(0, labelLeft - 2)}px`,
-        top: `${tagY[i]}px`,
-        width: '2px',
-        borderTop: `1px solid ${tag.color}`,
-      });
-      overlay.appendChild(connector);
-      if (tag.title) {
-        const title = document.createElement('span');
-        title.textContent = tag.title;
-        Object.assign(title.style, {
-          position: 'absolute',
-          left: '0',
-          top: `${Math.max(0, y - 16)}px`,
-          color: tag.color,
-          fontSize: '10px',
-          lineHeight: '16px',
-          background: config!.colors.background,
-        });
-        overlay.appendChild(title);
-      }
     });
+    if (areaCrosshair) {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.dataset.simpleAreaCrosshair = '';
+      Object.assign(svg.style, {
+        position: 'absolute',
+        inset: '0',
+        width: '100%',
+        height: `${paneHeight}px`,
+        overflow: 'hidden',
+        zIndex: '1',
+      });
+      const selectedIndex = visibleTags.findIndex(
+        tag =>
+          tag.id === (selected?.time === last.time ? 'latest' : 'selection'),
+      );
+      const axisY = selectedIndex >= 0 ? tagY[selectedIndex] : areaCrosshair.y;
+      const path = appendSimplePriceGuide(
+        svg,
+        { priceY: areaCrosshair.y, labelX: labelLeft, labelY: axisY },
+        config.colors.entry,
+        '1 1',
+      );
+      path.setAttribute(
+        'd',
+        `${path.getAttribute('d')} M ${areaCrosshair.x} 4 V ${paneHeight}`,
+      );
+      // This is a data-positioned chart marker, not a static UI icon.
+      for (const [radius, opacity] of [
+        [4.5, 0.15],
+        [2.5, 1],
+      ]) {
+        const dot = document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'circle',
+        );
+        dot.setAttribute('cx', String(areaCrosshair.x));
+        dot.setAttribute('cy', String(areaCrosshair.y));
+        dot.setAttribute('r', String(radius));
+        dot.setAttribute('fill', AREA);
+        dot.setAttribute('fill-opacity', String(opacity));
+        svg.appendChild(dot);
+      }
+      overlay.appendChild(svg);
+    }
     const firstVisibleTime = candles[Math.max(0, Math.floor(range.from))]?.time;
     const lastVisibleTime =
       candles[Math.min(candles.length - 1, Math.ceil(range.to))]?.time;
@@ -587,6 +696,8 @@ export function createSimpleChart(
           },
           crosshair: {
             vertLine: {
+              visible: config.style === 'candle',
+              labelVisible: config.style === 'candle',
               color: config.colors.secondary,
               labelBackgroundColor: config.colors.entry,
             },
