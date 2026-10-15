@@ -32,6 +32,19 @@ buildscript {
 
 apply plugin: "com.facebook.react.rootproject"
 
+// Google Sign-In defines the same Java classes in different source roots for
+// old/new architecture. Treat an architecture switch as a non-file input change
+// so javac fully recompiles this library instead of incrementally dropping the
+// replacement classes. Same-architecture incremental builds and caching remain on.
+def rabbyReactNativeArchitecture = gradle.extensions.extraProperties.get("rabbyReactNativeArchitecture").toString()
+subprojects { dependency ->
+    if (dependency.name == "react-native-google-signin_google-signin") {
+        dependency.tasks.withType(org.gradle.api.tasks.compile.JavaCompile).configureEach {
+            inputs.property("rabbyReactNativeArchitecture", rabbyReactNativeArchitecture)
+        }
+    }
+}
+
 // plugins {
 //     id 'com.google.gms.google-services' version '4.4.2' apply false
 // }
