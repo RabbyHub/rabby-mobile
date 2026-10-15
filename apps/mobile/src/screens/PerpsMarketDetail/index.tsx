@@ -28,7 +28,6 @@ import { PerpsSimpleChartSource } from './components/chart/PerpsSimpleChartSourc
 import { PerpsClosePositionPopup } from './components/PerpsClosePositionPopup';
 import { PerpsDepositCard } from './components/PerpsDepositCard';
 import { PerpsFooter } from './components/PerpsFooter';
-import { PerpsHeaderTitle } from './components/PerpsHeaderTitle';
 import { PerpsInfo } from './components/PerpsInfo';
 import { PerpsAbout } from './components/PerpsAbout';
 import { PerpsOpenPositionPopup } from './components/PerpsOpenPositionPopup';
@@ -42,8 +41,7 @@ import { PerpsRegionAlert } from '../Perps/components/PerpsRegionAlert';
 import { usePerpsPopupState } from '../Perps/hooks/usePerpsPopupState';
 
 import Toast from 'react-native-root-toast';
-import { naviReplace } from '@/utils/navigation';
-import { RootNames, getBottomButtonBottomOffset } from '@/constant/layout';
+import { getBottomButtonBottomOffset } from '@/constant/layout';
 import { PerpsAddPositionPopup } from './components/PerpsAddPositionPopup';
 import { PerpsLimitOrdersForCoin } from './components/PerpsLimitOrdersForCoin';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
@@ -403,40 +401,6 @@ export const PerpsMarketDetailScreen = () => {
       }
     },
   );
-
-  const HeaderTitle = useCallback(() => {
-    return (
-      <PerpsHeaderTitle
-        // account={currentPerpsAccount}
-        popupIsOpen={false}
-        quoteCoin={currentAssetCtx?.quoteAsset}
-        displayName={currentAssetCtx?.displayName || coin}
-        coin={coin}
-        logoUrl={currentAssetCtx?.logoUrl}
-        onSelectCoin={() => {
-          naviReplace(RootNames.StackTransaction, {
-            screen: RootNames.PerpsSearch,
-            params: {
-              openFromSource: 'marketDetail',
-              initialTab: 'topVolume',
-            },
-          });
-        }}
-      />
-    );
-  }, [
-    coin,
-    currentAssetCtx?.logoUrl,
-    currentAssetCtx?.quoteAsset,
-    currentAssetCtx?.displayName,
-    // currentPerpsAccount,
-  ]);
-
-  useEffect(() => {
-    navigation.setOptions({
-      header: HeaderTitle,
-    });
-  }, [navigation, HeaderTitle]);
 
   // if (!market) {
   //   navigation.goBack();
