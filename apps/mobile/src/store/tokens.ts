@@ -2928,15 +2928,31 @@ export const useTokenAssetsIndexStore = zCreate(
         tokenDisplayMode,
       };
       const state = get();
+      const previousResult = state.multiAssetsResultByKey[key];
+      // A persisted scene is usable before the complete address indexes are
+      // hydrated. Re-entering that same scope (including an address reorder)
+      // must not replace it with an empty projection built from missing indexes.
+      // Real index/source updates still flow through syncMultiAssetsResult.
+      const canReuseRestoredProjection =
+        !!previousResult?.rows.length &&
+        previousResult.restoredAtSyncAbortVersion === getSyncAbortVersion() &&
+        normalizedAddresses.some(
+          address =>
+            !Object.prototype.hasOwnProperty.call(
+              tokenIndexState.addressTokenIds,
+              address,
+            ),
+        );
 
       // Registered projections are refreshed synchronously on entity changes;
       // this source key covers membership changes and makes mode reuse O(addresses).
       if (
-        state.multiAssetsResultByKey[key] &&
-        isMultiTokenAssetsIndexSourceSame(
-          state.multiAssetsConfigByKey[key],
-          sourceConfig,
-        )
+        previousResult &&
+        (canReuseRestoredProjection ||
+          isMultiTokenAssetsIndexSourceSame(
+            state.multiAssetsConfigByKey[key],
+            sourceConfig,
+          ))
       ) {
         const availability = getTokenAssetsProjectionAvailability(
           state.multiAssetsConfigByKey[key],

@@ -92,7 +92,7 @@ describe('TabFocusedTickerText', () => {
     );
     const view = render(tree(true, '$12.34'));
     const ticker = view.getByTestId('refresh-ticker');
-    expect(ticker.props.animate).toBe(true);
+    expect(ticker.props.active).toBe(true);
 
     view.rerender(tree(false, '$56.78'));
     const frozenParentRenderCount = parentRender.mock.calls.length;
@@ -101,9 +101,9 @@ describe('TabFocusedTickerText', () => {
     expect(ticker.props.value.value).toBe('$56.78');
 
     updateFocus({ tabName: 'token' });
-    expect(ticker.props.animate).toBe(false);
+    expect(ticker.props.active).toBe(false);
     updateFocus({ tabName: 'overview' });
-    expect(ticker.props.animate).toBe(true);
+    expect(ticker.props.active).toBe(true);
     expect(parentRender).toHaveBeenCalledTimes(frozenParentRenderCount);
     expect(ticker.props.value.value).toBe('$56.78');
     expect(ticker.props.fitWidth).toBe(true);
@@ -115,14 +115,14 @@ describe('TabFocusedTickerText', () => {
 
     view.rerender(tree(true, '$90.12'));
     expect(ticker.props.value.value).toBe('$90.12');
-    expect(ticker.props.animate).toBe(true);
+    expect(ticker.props.active).toBe(true);
     expect(mockTickerMount).toHaveBeenCalledTimes(1);
     view.unmount();
     expect(mockTickerUnmount).toHaveBeenCalledTimes(1);
     expect(mockFocusListeners.size).toBe(0);
   });
 
-  it('disables on screen blur and restores on refocus only for the matching tab', () => {
+  it('pauses on screen blur without disabling column layout and resumes only for the matching tab', () => {
     const view = render(
       <TabFocusedTickerText
         tabName="overview"
@@ -131,18 +131,19 @@ describe('TabFocusedTickerText', () => {
       />,
     );
     const ticker = view.getByTestId('refresh-ticker');
-    expect(ticker.props.animate).toBe(true);
+    expect(ticker.props.active).toBe(true);
 
     updateFocus({ screenFocused: false });
-    expect(ticker.props.animate).toBe(false);
-    updateFocus({ screenFocused: true });
+    expect(ticker.props.active).toBe(false);
     expect(ticker.props.animate).toBe(true);
+    updateFocus({ screenFocused: true });
+    expect(ticker.props.active).toBe(true);
     updateFocus({ tabName: 'token', screenFocused: false });
-    expect(ticker.props.animate).toBe(false);
+    expect(ticker.props.active).toBe(false);
     updateFocus({ screenFocused: true });
-    expect(ticker.props.animate).toBe(false);
+    expect(ticker.props.active).toBe(false);
     updateFocus({ tabName: 'overview' });
-    expect(ticker.props.animate).toBe(true);
+    expect(ticker.props.active).toBe(true);
     expect(mockTickerMount).toHaveBeenCalledTimes(1);
     expect(mockTickerUnmount).not.toHaveBeenCalled();
   });
@@ -164,5 +165,22 @@ describe('TabFocusedTickerText', () => {
     expect(ticker.props.animate).toBe(false);
     expect(mockTickerMount).toHaveBeenCalledTimes(1);
     expect(mockTickerUnmount).not.toHaveBeenCalled();
+  });
+
+  it('keeps caller-paused tickers paused even when their tab is focused', () => {
+    const view = render(
+      <TabFocusedTickerText
+        tabName="overview"
+        active={false}
+        value={{ value: '$12.34' }}
+        lineHeight={42}
+      />,
+    );
+    const ticker = view.getByTestId('refresh-ticker');
+    expect(ticker.props.active).toBe(false);
+    expect(ticker.props.animate).toBe(true);
+    updateFocus({ screenFocused: false });
+    updateFocus({ screenFocused: true });
+    expect(ticker.props.active).toBe(false);
   });
 });
