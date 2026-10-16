@@ -47,15 +47,15 @@ export const TokenRowContextMenu = memo(
               : i18n.t('page.tokenDetail.action.favorite'),
             icon: isPinned
               ? isDarkTheme
-                ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png')
-                : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png')
+                ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite_dark.png')
+                : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite.png')
               : isDarkTheme
-              ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite_dark.png')
-              : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite.png'),
+              ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png')
+              : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png'),
             key: 'favorite',
             androidIconName: isPinned
-              ? 'ic_rabby_menu_token_unfavorite'
-              : 'ic_rabby_menu_token_favorite',
+              ? 'ic_rabby_menu_token_favorite'
+              : 'ic_rabby_menu_token_unfavorite',
             action() {
               toggleUserTokenPinned(token);
             },
@@ -67,7 +67,6 @@ export const TokenRowContextMenu = memo(
               : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_remove.png'),
             key: 'remove',
             androidIconName: 'ic_rabby_menu_token_remove',
-            destructive: true,
             action() {
               onRemoveToken(token);
             },
