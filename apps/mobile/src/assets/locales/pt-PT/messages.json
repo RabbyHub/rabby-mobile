@@ -2915,7 +2915,7 @@
         "desc": "Está a terminar sessão da conta Perps atual. Pode restaurá-la a qualquer momento iniciando sessão novamente com este endereço."
       },
       "PerpsDepositCard": {
-        "availableToTrade": "Disponível para negociar:",
+        "availableToTrade": "Disponível:",
         "deposit": "Depositar",
         "swap": "Trocar"
       },

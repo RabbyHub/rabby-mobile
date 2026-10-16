@@ -2835,7 +2835,7 @@
         "desc": "Vas a cerrar sesión en la cuenta Perps actual. Puedes restaurarla en cualquier momento iniciando sesión de nuevo con esta dirección."
       },
       "PerpsDepositCard": {
-        "availableToTrade": "Disponible para comerciar:",
+        "availableToTrade": "Disponible:",
         "deposit": "Depósito",
         "swap": "Swap"
       },

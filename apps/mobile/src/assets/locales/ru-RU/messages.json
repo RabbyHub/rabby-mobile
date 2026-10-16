@@ -2763,7 +2763,7 @@
       },
       "PerpsDepositCard": {
         "deposit": "Депозит",
-        "availableToTrade": "Доступно для торговли:",
+        "availableToTrade": "Доступно:",
         "swap": "Обмен"
       },
       "PerpsAccountSelectorPopup": {

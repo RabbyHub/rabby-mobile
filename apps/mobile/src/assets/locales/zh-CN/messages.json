@@ -2794,7 +2794,7 @@
         "desc": "您正在退出当前永续合约账户。之后仍可使用此地址重新登录恢复。"
       },
       "PerpsDepositCard": {
-        "availableToTrade": "可交易余额：",
+        "availableToTrade": "可用：",
         "deposit": "充值",
         "swap": "兑换"
       },

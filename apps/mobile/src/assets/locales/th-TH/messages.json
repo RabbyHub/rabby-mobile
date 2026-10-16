@@ -2821,7 +2821,7 @@
       },
       "PerpsDepositCard": {
         "deposit": "ฝากเงิน",
-        "availableToTrade": "พร้อมให้เทรด:",
+        "availableToTrade": "พร้อมใช้งาน:",
         "swap": "สวอป"
       },
       "PerpsAccountSelectorPopup": {

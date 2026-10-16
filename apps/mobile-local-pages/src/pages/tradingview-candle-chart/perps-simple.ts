@@ -5,6 +5,7 @@ import {
   ColorType,
   CrosshairMode,
   LineStyle,
+  LineType,
   TrackingModeExitMode,
   type UTCTimestamp,
   type Time,
@@ -21,7 +22,7 @@ import {
   simpleHistoryShift,
   simpleRangeReference,
   simpleRangeCoverage,
-  visibleLastCandle,
+  simpleAreaRightEdgePrice,
 } from './perps-simple-logic';
 import { appendSimplePriceGuide } from './perps-simple-price-guide';
 import type {
@@ -92,6 +93,7 @@ export function createSimpleChart(
   const areaSeries = chart.addSeries(AreaSeries, {
     visible: false,
     lineWidth: 2,
+    lineType: LineType.Simple,
     priceLineVisible: false,
     lastValueVisible: false,
     // Simple Area renders its crosshair and 9px/5px marker in one overlay.
@@ -266,7 +268,6 @@ export function createSimpleChart(
         Math.abs(range.to - defaultRange.to) > 0.1 ||
         !activeSeries().priceScale().options().autoScale);
     const last = candles[candles.length - 1];
-    const visible = visibleLastCandle(candles, range);
     const lastVisible =
       !!last &&
       !!range &&
@@ -298,6 +299,23 @@ export function createSimpleChart(
     }
     if (!last || !range) return;
     const series = activeSeries();
+    const viewportPrice =
+      config.style === 'area'
+        ? simpleAreaRightEdgePrice(candles, paneWidth, {
+            // LWC's line renderer includes one point beyond the strict range.
+            // At subpixel spacing it can end before the edge: do not sample
+            // later data that the Area renderer has not drawn.
+            lastRenderedIndex: Math.min(
+              candles.length - 1,
+              Math.ceil(range.to) + 1,
+            ),
+            coordinateToLogical: x => chart.timeScale().coordinateToLogical(x),
+            timeToCoordinate: time =>
+              chart.timeScale().timeToCoordinate(time as UTCTimestamp),
+            priceToCoordinate: price => series.priceToCoordinate(price),
+            coordinateToPrice: y => series.coordinateToPrice(y),
+          })
+        : null;
     const tags: Array<{
       id: string;
       price: number;
@@ -315,10 +333,10 @@ export function createSimpleChart(
       background: ACCENT,
       text: config.colors.contrast,
     });
-    if (config.style === 'area' && !lastVisible && visible) {
+    if (viewportPrice !== null) {
       tags.push({
         id: 'viewport',
-        price: visible.close,
+        price: viewportPrice,
         color: ACCENT,
         background: config.colors.background,
         text: ACCENT,
