@@ -1,11 +1,12 @@
 import RcHeaderBackground from '@/assets2024/icons/perps/PerpsHeaderBackground.svg';
 import RcHeaderBack from '@/assets2024/icons/perps/PerpsHeaderBack.svg';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import type { PerpsViewMode } from '@/core/services/perpsService';
 import { navBack } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { View } from 'react-native';
 
 import { PERPS_HEADER_HEIGHT } from '../constants';
 import { PerpsAccountTrigger } from './PerpsAccountTrigger';
@@ -66,8 +67,7 @@ export const PerpsHeader: React.FC<PerpsHeaderProps> = React.memo(
           testID="perps-header-background-mark"
         />
         <View style={styles.left} testID="perps-header-left">
-          <TouchableOpacity
-            activeOpacity={0.8}
+          <CustomTouchableOpacity
             accessibilityRole="button"
             onPress={navBack}
             style={styles.backButton}
@@ -78,7 +78,7 @@ export const PerpsHeader: React.FC<PerpsHeaderProps> = React.memo(
               width={24}
               style={styles.backIcon}
             />
-          </TouchableOpacity>
+          </CustomTouchableOpacity>
           <View style={styles.identity} testID="perps-header-identity">
             <PerpsModeSwitch
               activeMode={activeMode}
