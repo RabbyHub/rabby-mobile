@@ -9555,6 +9555,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rabby-wallet/hyperliquid-sdk@patch:@rabby-wallet/hyperliquid-sdk@npm%3A1.1.19#./.yarn/patches/@rabby-wallet-hyperliquid-sdk-npm-1.1.19-f1a24de441.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 1.1.19
+  resolution: "@rabby-wallet/hyperliquid-sdk@patch:@rabby-wallet/hyperliquid-sdk@npm%3A1.1.19#./.yarn/patches/@rabby-wallet-hyperliquid-sdk-npm-1.1.19-f1a24de441.patch::version=1.1.19&hash=f457a1&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    "@ethereumjs/util": "npm:9.0.0"
+    "@metamask/eth-sig-util": "npm:5.1.0"
+    "@msgpack/msgpack": "npm:3.1.2"
+    "@noble/hashes": "npm:1.8.0"
+    ethereum-cryptography: "npm:2.2.1"
+    fflate: "npm:0.8.2"
+  checksum: 10/db8a5b0c6fcb3c41977a6d720c9c91da9dcf2aaf0ae72e10647930a2432f631346d32b1b25c782e7bb4d8c8cab1648f4f8137612e5b137b3d732416d80ce9af4
+  languageName: node
+  linkType: hard
+
 "@rabby-wallet/keyring-utils@workspace:^, @rabby-wallet/keyring-utils@workspace:packages/keyring-utils":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/keyring-utils@workspace:packages/keyring-utils"

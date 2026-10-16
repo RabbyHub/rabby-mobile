@@ -1,6 +1,7 @@
 import { apiContact } from '@/core/apis';
 import type { PerpsViewMode } from '@/core/services/perpsService';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import { openPerpsSpotMarkets } from '@/screens/PerpsSpot/openSpotMarkets';
 import React, { useCallback, useMemo } from 'react';
 
 import { usePerpsPopupState } from '../../../Perps/hooks/usePerpsPopupState';
@@ -55,6 +56,7 @@ export const PerpsProHeader: React.FC<{
       isModeSwitching={isModeSwitching}
       onPressAccount={account ? handlePressAccount : undefined}
       onSelectMode={handleSelectMode}
+      onSelectSpot={openPerpsSpotMarkets}
       showBottomDivider={false}
     />
   );
