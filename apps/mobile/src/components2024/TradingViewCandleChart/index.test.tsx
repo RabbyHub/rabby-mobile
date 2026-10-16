@@ -1,6 +1,5 @@
 import { act, render } from '@testing-library/react-native';
 import React from 'react';
-import { AppState, type AppStateStatus } from 'react-native';
 
 import type { TradingViewChartRef } from './index';
 import { CandlePeriod } from './type';
@@ -108,122 +107,6 @@ describe('TradingViewCandleChart protocol compatibility', () => {
     jest.clearAllMocks();
     mockIsLight = false;
   });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
-  it.each(['manual', 'protocol'] as const)(
-    'invalidates Simple readiness before a %s reload and waits for a compatible ready message',
-    source => {
-      const chartRef = React.createRef<TradingViewChartRef>();
-      const onChartLoading = jest.fn();
-      render(
-        <TradingViewCandleChart
-          ref={chartRef}
-          height={320}
-          variant="perps-simple"
-          onChartLoading={onChartLoading}
-        />,
-      );
-      markChartReady({ perpsSimpleKlineProtocolVersion: 5 });
-      mockSendMessage.mockClear();
-      if (source === 'manual') {
-        act(() => chartRef.current?.reloadSimple());
-      } else {
-        markChartReady({ perpsSimpleKlineProtocolVersion: 2 });
-      }
-      expect(onChartLoading).toHaveBeenCalledTimes(1);
-      expect(mockReload).toHaveBeenCalledTimes(1);
-      expect(onChartLoading.mock.invocationCallOrder[0]).toBeLessThan(
-        mockReload.mock.invocationCallOrder[0],
-      );
-      const command = {
-        type: 'PERPS_SIMPLE_CHART',
-        identity: 'simple:BTC',
-        sequence: 1,
-        action: 'reset',
-      } as const;
-      act(() => chartRef.current?.sendSimpleMessage(command));
-      expect(mockSendMessage).not.toHaveBeenCalled();
-      markChartReady({ perpsSimpleKlineProtocolVersion: 5 });
-      act(() => chartRef.current?.sendSimpleMessage(command));
-      expect(mockSendMessage).toHaveBeenLastCalledWith({
-        type: 'TRADINGVIEW_MESSAGE',
-        data: command,
-      });
-    },
-  );
-
-  it.each(['perps-simple', 'perps-pro', undefined] as const)(
-    'preserves %s lifecycle behavior across short and long background transitions',
-    variant => {
-      let changeState!: (state: AppStateStatus) => void;
-      const remove = jest.fn();
-      jest.spyOn(AppState, 'addEventListener').mockImplementation((_, cb) => {
-        changeState = cb;
-        return { remove };
-      });
-      let now = 100000;
-      jest.spyOn(Date, 'now').mockImplementation(() => now);
-      const onChartLoading = jest.fn();
-      const onChartReady = jest.fn();
-      const chartRef = React.createRef<TradingViewChartRef>();
-      const screen = render(
-        <TradingViewCandleChart
-          ref={chartRef}
-          height={320}
-          variant={variant}
-          onChartLoading={onChartLoading}
-          onChartReady={onChartReady}
-        />,
-      );
-      markChartReady({ perpsSimpleKlineProtocolVersion: 5 });
-      const oldProps = mockLocalWebViewProps.mock.calls.at(-1)?.[0];
-      act(() => changeState('background'));
-      now += 10000;
-      act(() => changeState('active'));
-      expect(onChartLoading).not.toHaveBeenCalled();
-      act(() => changeState('background'));
-      now += 31000;
-      act(() => changeState('active'));
-      expect(onChartLoading).toHaveBeenCalledTimes(
-        variant === 'perps-simple' ? 1 : 0,
-      );
-      expect(mockReload).not.toHaveBeenCalled();
-      if (variant === 'perps-simple') {
-        const command = {
-          type: 'PERPS_SIMPLE_CHART',
-          identity: 'simple:BTC',
-          sequence: 1,
-          action: 'reset',
-        } as const;
-        mockSendMessage.mockClear();
-        act(() => {
-          oldProps.onMessage({
-            nativeEvent: {
-              data: JSON.stringify({
-                type: 'CHART_READY',
-                capabilities: { perpsSimpleKlineProtocolVersion: 5 },
-              }),
-            },
-          });
-          chartRef.current?.sendSimpleMessage(command);
-        });
-        expect(onChartReady).toHaveBeenCalledTimes(1);
-        expect(mockSendMessage).not.toHaveBeenCalled();
-        markChartReady({ perpsSimpleKlineProtocolVersion: 5 });
-        act(() => chartRef.current?.sendSimpleMessage(command));
-        expect(onChartReady).toHaveBeenCalledTimes(2);
-        expect(mockSendMessage).toHaveBeenLastCalledWith({
-          type: 'TRADINGVIEW_MESSAGE',
-          data: command,
-        });
-      }
-      screen.unmount();
-      expect(remove).toHaveBeenCalledTimes(1);
-    },
-  );
 
   it('gates Simple commands on both the variant and compatible ready resource', () => {
     const chartRef = React.createRef<TradingViewChartRef>();

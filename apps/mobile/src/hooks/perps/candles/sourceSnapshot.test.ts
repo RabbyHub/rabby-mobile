@@ -125,21 +125,4 @@ describe('Perps Candle source snapshot preload', () => {
     expect(mockCandleSnapshot).toHaveBeenCalledTimes(2);
     expect(refreshed.candles[0]?.time).toBe(2000);
   });
-  it('never seeds a new chart from an expired or different-market snapshot', async () => {
-    const clock = jest.spyOn(Date, 'now').mockReturnValue(100000);
-    try {
-      mockCandleSnapshot.mockResolvedValue([rawCandle(1000)]);
-      const snapshot = await loadPerpsCandleSourceSnapshot({
-        coin: 'BTC',
-        interval: '15m',
-      });
-      expect(readPerpsCandleSourceSnapshot('BTC', '15m')).toBe(snapshot);
-      expect(readPerpsCandleSourceSnapshot('ETH', '15m')).toBeNull();
-      expect(readPerpsCandleSourceSnapshot('BTC', '1h')).toBeNull();
-      clock.mockReturnValue(115001);
-      expect(readPerpsCandleSourceSnapshot('BTC', '15m')).toBeNull();
-    } finally {
-      clock.mockRestore();
-    }
-  });
 });

@@ -253,11 +253,10 @@ describe('Simple chart native load and ready ordering', () => {
   };
 
   it.each(['start-first', 'ready-first'] as const)(
-    'applies the successful HTTP baseline with %s and continues streaming',
+    'waits for drawing with %s and survives a late load event while streaming',
     async order => {
       mountScreen();
       await settle();
-      expect(latest.hasAppliedData).toBe(false);
       if (order === 'start-first') {
         await start();
         await ready();
@@ -268,43 +267,22 @@ describe('Simple chart native load and ready ordering', () => {
       await act(async () => resolveCandles([raw()]));
       await settle();
       expect(latest.feed.status).toBe('ready');
-      expect(mockCommands.filter(m => m.action === 'replace')).toHaveLength(1);
-      // Native loading/ready must not stand in for the Web drawing confirmation.
+      expect(latest.hasAppliedData).toBe(false);
       expect(latest.loading).toBe(true);
       await applyReplacement();
-      expect(latest.hasAppliedData).toBe(true);
       expect(latest.loading).toBe(false);
+      await start();
       await act(async () => candleCallback(raw('115')));
       await settle();
+      expect(latest.hasAppliedData).toBe(true);
+      expect(latest.loading).toBe(false);
+      expect(mockCommands.filter(m => m.action === 'replace')).toHaveLength(1);
       expect(
         mockCommands.filter(m => m.action === 'update').at(-1),
       ).toMatchObject({
         candle: { close: 115 },
       });
-      expect(latest.loading).toBe(false);
       expect(mockReload).not.toHaveBeenCalled();
     },
   );
-
-  it('keeps an acknowledged chart visible after a late native loading event', async () => {
-    mountScreen();
-    await settle();
-    await ready();
-    await act(async () => resolveCandles([raw()]));
-    await settle();
-    await applyReplacement();
-    expect(latest.hasAppliedData).toBe(true);
-    await start();
-    await act(async () => candleCallback(raw('115')));
-    await settle();
-    expect(latest.hasAppliedData).toBe(true);
-    expect(latest.loading).toBe(false);
-    expect(mockCommands.filter(m => m.action === 'replace')).toHaveLength(1);
-    expect(
-      mockCommands.filter(m => m.action === 'update').at(-1),
-    ).toMatchObject({
-      candle: { close: 115 },
-    });
-    expect(mockReload).not.toHaveBeenCalled();
-  });
 });

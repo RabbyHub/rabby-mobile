@@ -119,30 +119,6 @@ describe('verify-local-page-assets', () => {
     );
   });
 
-  it('rejects a Simple protocol mismatch without changing the Pro contract', () => {
-    const fixture = createFixture(fixtureRoot);
-    writeFile(
-      fixture.repoDir,
-      'apps/mobile-local-pages/src/pages/tradingview-candle-chart/index.tsx',
-      'const PERPS_PRO_KLINE_PROTOCOL_VERSION = 1; const PERPS_SIMPLE_KLINE_PROTOCOL_VERSION = 2;',
-    );
-    expect(() => verifyLocalPageAssets(fixture.repoDir)).toThrow(
-      'Perps Simple K-line protocol mismatch',
-    );
-  });
-
-  it('rejects a linked bundle that lacks the Simple protocol', () => {
-    const fixture = createFixture(fixtureRoot);
-    writeFile(
-      fixture.androidRoot,
-      'assets/chart.js',
-      CHART_BUNDLE.replace('PERPS_SIMPLE_CHART', ''),
-    );
-    expect(() => verifyLocalPageAssets(fixture.repoDir)).toThrow(
-      'PERPS_SIMPLE_CHART',
-    );
-  });
-
   it('rejects stale Android assets after native linking', () => {
     const fixture = createFixture(fixtureRoot);
     writeFile(

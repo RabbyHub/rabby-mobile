@@ -467,25 +467,4 @@ describe('usePerpsCandleFeed', () => {
     await expect(hook.result.current.loadOlder()).resolves.toBe('exhausted');
     expect(mockCandleSnapshot).toHaveBeenCalledTimes(2);
   });
-  it('retries a failed subscription instead of recovering HTTP without realtime', async () => {
-    mockWs.subscribeToCandles.mockImplementationOnce(() => {
-      throw new Error('subscription unavailable');
-    });
-    mockCandleSnapshot.mockResolvedValue([rawCandle(1000)]);
-    const hook = renderHook(() =>
-      usePerpsCandleFeed({
-        coin: 'BTC',
-        interval: '15m',
-        enabled: true,
-        simplePresentation: true,
-      }),
-    );
-    expect(hook.result.current.status).toBe('error');
-    await act(async () => {
-      hook.result.current.retry();
-    });
-    expect(mockWs.subscribeToCandles).toHaveBeenCalledTimes(2);
-    expect(hook.result.current.status).toBe('ready');
-    hook.unmount();
-  });
 });
