@@ -119,13 +119,67 @@ export function simpleRangeCoverage(
   };
 }
 
-export function visibleLastCandle(
+/** Price where the straight Area segment meets the plot's right edge.
+ * Logical ranges describe bar slots, not the clipped line intersection. */
+export function simpleAreaRightEdgePrice(
   candles: readonly CandleStick[],
-  range: { from: number; to: number } | null,
+  width: number,
+  coordinates: {
+    lastRenderedIndex: number;
+    coordinateToLogical: (x: number) => number | null;
+    timeToCoordinate: (time: number) => number | null;
+    priceToCoordinate: (price: number) => number | null;
+    coordinateToPrice: (y: number) => number | null;
+  },
 ) {
-  if (!range || !candles.length) return null;
-  const index = Math.min(candles.length - 1, Math.floor(range.to));
-  return index >= Math.max(0, Math.ceil(range.from)) ? candles[index] : null;
+  if (candles.length < 2 || !Number.isFinite(width) || width <= 0) return null;
+  const lastX = coordinates.timeToCoordinate(candles[candles.length - 1].time);
+  // No historical crossing when the line ends at or before the right edge.
+  if (lastX === null || !Number.isFinite(lastX) || lastX <= width) return null;
+  const candidate = coordinates.coordinateToLogical(width);
+  if (candidate === null || !Number.isFinite(candidate)) return null;
+  const index = Math.max(
+    0,
+    Math.min(candles.length - 1, Math.round(candidate)),
+  );
+  const x = coordinates.timeToCoordinate(candles[index].time);
+  if (x === null || !Number.isFinite(x)) return null;
+  // Both series share the candle time indices. The API gives a nearby bar,
+  // so inspect its actual x before choosing the segment on either side.
+  const left = x < width ? index : index - 1;
+  if (
+    left < 0 ||
+    left + 1 >= candles.length ||
+    left + 1 > coordinates.lastRenderedIndex
+  )
+    return null;
+  const x0 =
+    left === index ? x : coordinates.timeToCoordinate(candles[left].time);
+  const x1 =
+    left === index ? coordinates.timeToCoordinate(candles[left + 1].time) : x;
+  if (
+    x0 === null ||
+    x1 === null ||
+    !Number.isFinite(x0) ||
+    !Number.isFinite(x1) ||
+    x0 > width ||
+    x1 < width ||
+    x1 <= x0
+  )
+    return null;
+  const y0 = coordinates.priceToCoordinate(candles[left].close);
+  const y1 = coordinates.priceToCoordinate(candles[left + 1].close);
+  if (
+    y0 === null ||
+    y1 === null ||
+    !Number.isFinite(y0) ||
+    !Number.isFinite(y1)
+  )
+    return null;
+  const y = y0 + ((width - x0) / (x1 - x0)) * (y1 - y0);
+  if (!Number.isFinite(y)) return null;
+  const price = coordinates.coordinateToPrice(y);
+  return price !== null && Number.isFinite(price) ? price : null;
 }
 
 /** Translate logical indices when history is prepended or the feed trims its cache. */

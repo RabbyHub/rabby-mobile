@@ -5,9 +5,109 @@ import {
   simpleDefaultRange,
   simpleRangeReference,
   simpleRangeCoverage,
+  simpleAreaRightEdgePrice,
 } from './perps-simple-logic.ts';
 
 const candle = time => ({ time, open: 100, high: 110, low: 90, close: 105 });
+test('Area edge uses the bracketing screen segment across zoom, direction and time gaps', () => {
+  for (const width of [240, 390])
+    for (const spacing of [0.1, 6, 10, 100])
+      for (const candidate of [0, 1])
+        for (const closes of [
+          [100, 400],
+          [400, 100],
+          [100, 100],
+        ]) {
+          const candles = closes.map((close, i) => ({
+            ...candle(i * 31 * 86400),
+            close,
+          }));
+          let reads = 0;
+          const coordinates = {
+            lastRenderedIndex: candles.length - 1,
+            coordinateToLogical: () => candidate,
+            timeToCoordinate: time => {
+              reads++;
+              return width + (time === 0 ? -0.25 : 0.75) * spacing;
+            },
+            priceToCoordinate: price => 500 - price,
+            coordinateToPrice: y => 500 - y,
+          };
+          const price = simpleAreaRightEdgePrice(candles, width, coordinates);
+          assert.ok(
+            Math.abs(price - (closes[0] * 0.75 + closes[1] * 0.25)) < 1e-8,
+          );
+          assert.ok(reads <= 3);
+        }
+  const candles = [100, 400].map((close, i) => ({ ...candle(i), close }));
+  // Interpolate the drawn y, not raw prices: this remains correct on a
+  // nonlinear price scale and keeps precision until label formatting.
+  assert.ok(
+    Math.abs(
+      simpleAreaRightEdgePrice(candles, 100, {
+        lastRenderedIndex: 1,
+        coordinateToLogical: () => 1,
+        timeToCoordinate: time => 90 + time * 20,
+        priceToCoordinate: Math.log,
+        coordinateToPrice: Math.exp,
+      }) - 200,
+    ) < 1e-9,
+  );
+});
+
+test('Area edge never extrapolates missing data or invalid coordinates', () => {
+  const candles = [candle(0), candle(1)];
+  const coordinates = {
+    lastRenderedIndex: 1,
+    coordinateToLogical: () => 1,
+    timeToCoordinate: time => 90 + time * 20,
+    priceToCoordinate: price => price,
+    coordinateToPrice: y => y,
+  };
+  for (const data of [[], candles.slice(0, 1)])
+    assert.equal(simpleAreaRightEdgePrice(data, 100, coordinates), null);
+  for (const width of [0, NaN, Infinity])
+    assert.equal(simpleAreaRightEdgePrice(candles, width, coordinates), null);
+  for (const override of [
+    { timeToCoordinate: () => null },
+    { timeToCoordinate: () => NaN },
+    { timeToCoordinate: time => 80 + time * 20 }, // Latest exactly at edge.
+    { timeToCoordinate: time => 75 + time * 20 }, // Latest still visible.
+    { timeToCoordinate: time => 110 + time * 20 }, // Entire segment to the right.
+    { timeToCoordinate: () => 110 }, // Degenerate segment.
+    { coordinateToLogical: () => null },
+    { coordinateToLogical: () => NaN },
+    { priceToCoordinate: () => null },
+    { priceToCoordinate: () => Infinity },
+    { coordinateToPrice: () => null },
+    { coordinateToPrice: () => NaN },
+  ])
+    assert.equal(
+      simpleAreaRightEdgePrice(candles, 100, { ...coordinates, ...override }),
+      null,
+    );
+  // Below one pixel per bar, the library's one-point overscan may stop
+  // short of the edge. Undrawn neighboring data must not create a badge.
+  assert.equal(
+    simpleAreaRightEdgePrice([0, 1, 2, 3, 4].map(candle), 100, {
+      ...coordinates,
+      lastRenderedIndex: 2,
+      coordinateToLogical: () => 4,
+      timeToCoordinate: time => [99.6, 99.7, 99.8, 99.9, 100.1][time],
+    }),
+    null,
+  );
+  assert.equal(
+    simpleAreaRightEdgePrice([0, 1, 2, 3, 4].map(candle), 100, {
+      ...coordinates,
+      lastRenderedIndex: 2,
+      coordinateToLogical: () => 2,
+      timeToCoordinate: time => [99.8, 99.9, 100, 100.1, 100.2][time],
+    }),
+    105,
+  );
+});
+
 test('latest badge is pinned while other labels keep price order and gaps at every edge', () => {
   for (const anchor of [0, 1, 7, 100, 267, 273, 274]) {
     const values = [
