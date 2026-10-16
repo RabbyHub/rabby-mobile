@@ -84,7 +84,33 @@ public class RNFSManager extends ReactContextBaseJavaModule {
 
   private native HybridData initHybrid();
 
-  private native void nativeInstall(long jsiPtr, CallInvokerHolderImpl jsCallInvokerHolder);
+  private native void nativeInstall(
+      long jsiPtr,
+      CallInvokerHolderImpl jsCallInvokerHolder,
+      String cacheDirectory);
+
+  private native void nativeCompleteSafeMediaDownload(
+      long requestId,
+      int code,
+      int httpStatus,
+      long bytesWritten);
+
+  @DoNotStrip
+  private void startSafeMediaDownload(
+      long requestId,
+      String url,
+      String destination,
+      long maxBytes,
+      int timeoutMs) {
+    SafeSvgDownloader.download(
+        url,
+        destination,
+        maxBytes,
+        timeoutMs,
+        (code, httpStatus, bytesWritten) ->
+            nativeCompleteSafeMediaDownload(
+                requestId, code, httpStatus, bytesWritten));
+  }
 
   private static String pathTail(String path) {
     if (path == null || path.length() <= RNFSPathTailMaxLength) {
@@ -122,7 +148,8 @@ public class RNFSManager extends ReactContextBaseJavaModule {
           jsContext.get(),
           jsCallInvokerHolder instanceof CallInvokerHolderImpl
               ? (CallInvokerHolderImpl) jsCallInvokerHolder
-              : null);
+              : null,
+          getReactApplicationContext().getCacheDir().getAbsolutePath());
       return true;
     } catch (Exception exception) {
       if (mHybridData != null) {

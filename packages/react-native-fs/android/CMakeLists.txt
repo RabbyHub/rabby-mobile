@@ -10,11 +10,53 @@ add_library(
   SHARED
   src/main/cpp/cpp-adapter.cpp
   ../cpp/RabbyNativeFS.cpp
+  ../cpp/RabbySafeMedia.cpp
 )
+
+find_program(BASH_EXECUTABLE bash REQUIRED)
+if(DEFINED ENV{CARGO} AND EXISTS "$ENV{CARGO}")
+  set(CARGO_EXECUTABLE "$ENV{CARGO}")
+else()
+  find_program(
+    CARGO_EXECUTABLE
+    cargo
+    HINTS "$ENV{CARGO_HOME}/bin" "$ENV{HOME}/.cargo/bin"
+    REQUIRED
+  )
+endif()
+
+set(SAFE_SVG_CRATE_DIR "${CMAKE_CURRENT_LIST_DIR}/../rust/safe-svg")
+set(SAFE_SVG_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/rust/${ANDROID_ABI}/librabby_safe_svg.a")
+add_custom_command(
+  OUTPUT "${SAFE_SVG_LIBRARY}"
+  COMMAND
+    ${CMAKE_COMMAND} -E env "CARGO=${CARGO_EXECUTABLE}"
+    "${BASH_EXECUTABLE}"
+    "${SAFE_SVG_CRATE_DIR}/scripts/build-rust.sh"
+    android
+    "${ANDROID_ABI}"
+    "${SAFE_SVG_LIBRARY}"
+  DEPENDS
+    "${SAFE_SVG_CRATE_DIR}/Cargo.toml"
+    "${SAFE_SVG_CRATE_DIR}/Cargo.lock"
+    "${SAFE_SVG_CRATE_DIR}/rust-toolchain.toml"
+    "${SAFE_SVG_CRATE_DIR}/src/lib.rs"
+    "${SAFE_SVG_CRATE_DIR}/include/rabby_safe_svg.h"
+    "${SAFE_SVG_CRATE_DIR}/scripts/build-rust.sh"
+  VERBATIM
+)
+add_custom_target(rabby_safe_svg_build DEPENDS "${SAFE_SVG_LIBRARY}")
+add_library(rabby_safe_svg STATIC IMPORTED GLOBAL)
+set_target_properties(
+  rabby_safe_svg
+  PROPERTIES IMPORTED_LOCATION "${SAFE_SVG_LIBRARY}"
+)
+add_dependencies(${PACKAGE_NAME} rabby_safe_svg_build)
 
 include_directories(
   src/main/cpp
   ../cpp
+  ../rust/safe-svg/include
 )
 
 find_library(LOG_LIB log)
@@ -26,6 +68,7 @@ target_link_libraries(
   "-Wl,-z,max-page-size=16384"
   ${LOG_LIB}
   android
+  rabby_safe_svg
   fbjni::fbjni
   ReactAndroid::jsi
 )
