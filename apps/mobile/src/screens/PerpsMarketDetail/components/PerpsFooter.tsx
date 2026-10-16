@@ -5,6 +5,7 @@ import {
   BOTTOM_BUTTON_GAP,
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TOP_OFFSET,
+  BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -150,7 +151,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
           includeFontPadding: false,
           textAlignVertical: 'center' as const,
         }
-      : {}),
+      : { lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT }),
   },
   singleTitle: IS_ANDROID ? { height: BOTTOM_BUTTON_SINGLE_HEIGHT - 2 } : {},
   btnGroup: {

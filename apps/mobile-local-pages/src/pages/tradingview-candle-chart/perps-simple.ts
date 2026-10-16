@@ -274,6 +274,9 @@ export function createSimpleChart(
       range.from <= candles.length - 1;
     const paneWidth = chart.timeScale().width();
     const paneHeight = chart.panes()[0].getHeight();
+    // The host also contains the time axis. Clip displaced badges at the plot
+    // edge so preserving price order cannot spill them into the date labels.
+    overlay.style.height = `${paneHeight}px`;
     priceAxis.layout(paneWidth, paneHeight);
     const state = `${identity}:${replacementSequence}:${
       nativePriceAxis.session
@@ -379,11 +382,19 @@ export function createSimpleChart(
           tag.y !== null &&
           (tag.title === undefined || (tag.y >= 0 && tag.y <= paneHeight)),
       );
-    const latestIndex = visibleTags.findIndex(tag => tag.id === 'latest');
-    const tagY = layoutSimplePriceLabels(
-      visibleTags.map(tag => tag.y!),
+    // Selection floats above the ordinary axis layout without moving its
+    // labels. At the exact latest price, reuse that badge for the held value.
+    const isSelectedTag = (id: string) =>
+      id === 'selection' || (id === 'latest' && selected?.close === last.close);
+    const layoutTags = visibleTags.filter(tag => tag.id !== 'selection');
+    const latestIndex = layoutTags.findIndex(tag => tag.id === 'latest');
+    const layoutY = layoutSimplePriceLabels(
+      layoutTags.map(tag => tag.y!),
       paneHeight,
       latestIndex,
+    );
+    const tagY = visibleTags.map(tag =>
+      isSelectedTag(tag.id) ? tag.y! : layoutY[layoutTags.indexOf(tag)],
     );
     const titledTags = visibleTags.filter(tag => tag.title !== undefined);
     const titleY = avoidSimpleLabelOverlap(
@@ -410,12 +421,16 @@ export function createSimpleChart(
         lineHeight: '14px',
         fontVariantNumeric: 'tabular-nums',
         textAlign: 'right',
-        color: tag.text,
-        background: tag.background,
+        color: isSelectedTag(tag.id)
+          ? config!.colors.selectionText ?? tag.text
+          : tag.text,
+        background: isSelectedTag(tag.id)
+          ? config!.colors.selectionBackground ?? tag.background
+          : tag.background,
         boxShadow: tag.outline ? `inset 0 0 0 1px ${tag.color}` : 'none',
         boxSizing: 'border-box',
         whiteSpace: 'nowrap',
-        zIndex: '2',
+        zIndex: isSelectedTag(tag.id) ? '4' : '2',
       });
       overlay.appendChild(label);
       return label;
@@ -536,19 +551,11 @@ export function createSimpleChart(
         width: '100%',
         height: `${paneHeight}px`,
         overflow: 'hidden',
-        zIndex: '1',
+        zIndex: '3',
       });
-      const selectedIndex = visibleTags.findIndex(
-        tag =>
-          tag.id === (selected?.close === last.close ? 'latest' : 'selection'),
-      );
-      const axisY =
-        selectedIndex >= 0 && visibleTags[selectedIndex].id !== 'latest'
-          ? tagY[selectedIndex]
-          : crosshair.y;
       const path = appendSimplePriceGuide(
         svg,
-        { priceY: crosshair.y, labelX: labelLeft, labelY: axisY },
+        { priceY: crosshair.y, labelX: labelLeft, labelY: crosshair.y },
         config.colors.entry,
         '1 1',
       );

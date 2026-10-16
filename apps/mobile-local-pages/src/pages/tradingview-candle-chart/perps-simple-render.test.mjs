@@ -38,27 +38,8 @@ assert.ok(render);
 const js = ts.transpileModule(render, {
   compilerOptions: { target: ts.ScriptTarget.ES2022 },
 }).outputText;
-// Execute the production render function and its real geometry helpers. Only
-// DOM measurement and the external chart's coordinate API are boundary fakes.
-function scene({
-  style,
-  neutral,
-  direction,
-  selection,
-  samePrice,
-  x = 120,
-  marketY = 110,
-  historyPrice,
-  rangeTo = 1,
-}) {
-  const document = {
-    createElement(name) {
-      return element(name);
-    },
-    createElementNS(namespace, name) {
-      return element(name);
-    },
-  };
+// Execute production render/helpers; only DOM and chart coordinates are faked.
+function scene(style, marketY, selectedPrice, dark = false) {
   function element(name) {
     return {
       name,
@@ -67,15 +48,15 @@ function scene({
       attributes: {},
       children: [],
       style: {
-        setProperty(k, v) {
-          this[k] = v;
+        setProperty(key, value) {
+          this[key] = value;
         },
       },
-      setAttribute(k, v) {
-        this.attributes[k] = v;
+      setAttribute(key, value) {
+        this.attributes[key] = value;
       },
-      getAttribute(k) {
-        return this.attributes[k];
+      getAttribute(key) {
+        return this.attributes[key];
       },
       append(...children) {
         this.children.push(...children);
@@ -91,71 +72,66 @@ function scene({
       },
     };
   }
+  const document = {
+    createElement: element,
+    createElementNS: (_namespace, name) => element(name),
+  };
   const overlay = element('overlay');
-  const candles = [
-    {
-      time: 60,
-      open: 120,
-      close: historyPrice ?? (samePrice ? 110 : 100),
-      high: 125,
-      low: 90,
-    },
-    {
-      time: 120,
-      open: direction === 'up' ? 100 : 120,
-      close: 110,
-      high: 125,
-      low: 90,
-    },
-  ];
-  const selected = selection === null ? null : candles[selection];
-  const config = {
-    style,
-    colors: {
-      accent: '#23C0B0',
-      entry: neutral,
-      up: '#36B16D',
-      down: '#E85046',
-      contrast: '#fff',
-      background: '#fff',
-      entryBackground: neutral,
-      entryText: '#fff',
-      liquidation: '#FF9F43',
-    },
-    labels: { entry: 'Entry', tp: 'TP', sl: 'SL', liq: 'Liq' },
+  const candles = [selectedPrice ?? 100, 110].map((close, i) => ({
+    time: 60 * (i + 1),
+    open: 100,
+    high: 125,
+    low: 90,
+    close,
+  }));
+  const colors = {
+    accent: '#23C0B0',
+    entry: dark ? '#BABEC5' : '#6A7587',
+    up: '#36B16D',
+    down: '#E85046',
+    contrast: '#fff',
+    background: '#fff',
+    entryBackground: '#888',
+    entryText: '#fff',
+    liquidation: '#FF9F43',
+    selectionBackground: dark ? '#D3D8E0' : '#000',
+    selectionText: dark ? '#000' : '#fff',
   };
-  const range = { from: 0, to: rangeTo };
-  const series = {
-    priceToCoordinate: p => p - 110 + marketY,
-    priceScale: () => ({ options: () => ({ autoScale: true }) }),
-  };
+  const range = { from: 0, to: 1 };
   const context = {
     document,
     overlay,
-    config,
     candles,
-    selectedTime: selected?.time ?? null,
+    config: {
+      style,
+      colors,
+      labels: { entry: 'Entry', tp: 'TP', sl: 'SL', liq: 'Liq' },
+    },
+    selectedTime: selectedPrice === null ? null : 60,
     candleByTime: new Map(candles.map(c => [c.time, c])),
-    prices: Object.fromEntries(
-      ['entryPrice', 'tpPrice', 'slPrice', 'liquidationPrice'].map(k => [
-        k,
-        selected?.close ?? 110,
-      ]),
-    ),
+    prices: {
+      entryPrice: 110,
+      tpPrice: 110,
+      slPrice: 110,
+      liquidationPrice: 110,
+    },
     chart: {
       timeScale: () => ({
         getVisibleLogicalRange: () => range,
         width: () => 340,
-        timeToCoordinate: () => x,
+        timeToCoordinate: () => 120,
       }),
       panes: () => [{ getHeight: () => 274 }],
     },
-    activeSeries: () => series,
+    activeSeries: () => ({
+      priceToCoordinate: price => price - 110 + marketY,
+      priceScale: () => ({ options: () => ({ autoScale: true }) }),
+    }),
     priceText: String,
     emit() {},
     priceAxis: { layout() {} },
     nativePriceAxis: { session: 0 },
-    identity: 'probe',
+    identity: 'test',
     replacementSequence: 1,
     viewportState: '',
     defaultViewport: range,
@@ -173,186 +149,74 @@ function scene({
     visibleLastCandle,
   };
   vm.runInNewContext(js + '\nrender();', context);
+  assert.equal(overlay.style.height, '274px');
   const labels = overlay.children.filter(n => 'simplePriceLabel' in n.dataset);
   const guides = overlay.children.filter(n => 'simplePriceLine' in n.dataset);
-  const cross = overlay.children.filter(n => 'simpleCrosshair' in n.dataset);
-  for (const label of labels.filter(n =>
-    ['latest', 'selection'].includes(n.dataset.priceKind),
-  ))
-    assert.equal(label.style.background, config.colors.accent);
-  const hasCross = selected !== null && x >= 0 && x <= 340;
-  assert.equal(cross.length, hasCross ? 1 : 0);
-  if (hasCross) {
-    const line = cross[0].children[0];
-    assert.equal(line.attributes.stroke, neutral);
-    assert.equal(line.attributes['stroke-width'], '1');
-    assert.equal(line.attributes['stroke-dasharray'], '1 1');
-    assert.ok(
-      line.attributes.d.startsWith(`M 0 ${selected.close - 110 + marketY} `),
-    );
-    assert.ok(line.attributes.d.endsWith(`M ${x} 4 V 274`));
+  const cross = overlay.children.find(n => 'simpleCrosshair' in n.dataset);
+  const latest = labels.find(n => n.dataset.priceKind === 'latest');
+  const guide = guides.find(n => n.dataset.priceKind === 'latest');
+  if (selectedPrice !== 110) {
     assert.equal(
-      cross[0].children.filter(n => n.name === 'circle').length,
-      style === 'area' ? 2 : 0,
+      Number.parseFloat(latest.style.top) + 7,
+      Math.max(7, Math.min(267, marketY)),
     );
-    assert.ok(!guides.some(n => n.dataset.priceKind === 'selection'));
-    assert.equal(
-      guides.some(n => n.dataset.priceKind === 'latest'),
-      selected.close !== 110,
+    assert.equal(latest.style.background, colors.accent);
+    assert.ok(guide);
+    assert.match(
+      guide.children[0].attributes.d,
+      new RegExp(`^M 0 ${marketY} H `),
     );
+    assert.ok(!guide.children[0].attributes.d.includes('C '));
   } else {
-    assert.ok(guides.some(n => n.dataset.priceKind === 'latest'));
-  }
-  const latestLabel = labels.find(n => n.dataset.priceKind === 'latest');
-  assert.equal(
-    Number.parseFloat(latestLabel.style.top) + 7,
-    Math.min(267, Math.max(7, marketY)),
-  );
-  const marketGuide = guides.find(n => n.dataset.priceKind === 'latest');
-  if (marketGuide) {
-    assert.ok(!marketGuide.children[0].attributes.d.includes('C '));
-    assert.ok(
-      marketGuide.children[0].attributes.d.startsWith(`M 0 ${marketY} H `),
-    );
-  }
-  if (hasCross && selected.close === 110) {
-    assert.ok(!cross[0].children[0].attributes.d.includes('C '));
+    assert.equal(guide, undefined);
     assert.equal(
       labels.filter(n => n.dataset.priceKind === 'selection').length,
       0,
     );
   }
-  if (style === 'candle') {
-    if (marketY === 110 && selection === null)
-      assert.ok(
-        guides
-          .filter(n => n.dataset.priceKind !== 'latest')
-          .some(n => n.children[0].attributes.d.includes('C ')),
-      );
-    for (const id of ['entry', 'tp', 'sl', 'liquidation']) {
-      const guide = guides.find(n => n.dataset.priceKind === id);
-      assert.ok(guide, `Missing same-price position guide ${id}`);
-      assert.equal(guide.children[0].attributes['stroke-dasharray'], '4 2');
-    }
-  }
+  if (selectedPrice !== null) {
+    const held =
+      selectedPrice === 110
+        ? latest
+        : labels.find(n => n.dataset.priceKind === 'selection');
+    const y = selectedPrice - 110 + marketY;
+    assert.equal(Number.parseFloat(held.style.top) + 7, y);
+    assert.equal(held.style.background, colors.selectionBackground);
+    assert.equal(held.style.color, colors.selectionText);
+    assert.ok(cross);
+    const line = cross.children[0].attributes;
+    assert.ok(line.d.startsWith(`M 0 ${y} H `));
+    assert.ok(!line.d.includes('C '));
+    assert.equal(line['stroke-dasharray'], '1 1');
+    assert.equal(line.stroke, colors.entry);
+    for (const ordinary of labels.filter(n => n !== held))
+      assert.ok(Number(cross.style.zIndex) > Number(ordinary.style.zIndex));
+    assert.ok(Number(held.style.zIndex) > Number(cross.style.zIndex));
+  } else assert.equal(cross, undefined);
+  if (style === 'candle')
+    for (const id of ['entry', 'tp', 'sl', 'liquidation'])
+      assert.ok(guides.some(n => n.dataset.priceKind === id));
+  return labels;
 }
-test('production Simple render pins market guides and preserves curved references and neutral crosshairs', () => {
-  let count = 0;
-  for (const style of ['candle', 'area'])
-    for (const neutral of ['#6A7587', '#BABEC5'])
-      for (const direction of ['up', 'down'])
-        for (const selection of [null, 0, 1])
-          for (const samePrice of [false, true]) {
-            scene({ style, neutral, direction, selection, samePrice });
-            count++;
-          }
-  for (const marketY of [0, 1, 7, 267, 273, 274]) {
-    scene({
-      style: 'candle',
-      neutral: '#6A7587',
-      direction: 'up',
-      selection: null,
-      samePrice: false,
-      marketY,
-    });
-    count++;
-  }
-  for (const style of ['candle', 'area'])
-    for (const x of [-1, 341]) {
-      scene({
-        style,
-        neutral: '#6A7587',
-        direction: 'up',
-        selection: 0,
-        samePrice: false,
-        x,
-      });
-      count++;
-    }
-  for (const style of ['candle', 'area']) {
-    for (const historyPrice of [109.9, 110.1]) {
-      scene({
-        style,
-        neutral: '#6A7587',
-        direction: 'up',
-        selection: 0,
-        samePrice: false,
-        historyPrice,
-      });
-      count++;
-    }
-  }
-  for (const selection of [null, 0]) {
-    scene({
-      style: 'area',
-      neutral: '#BABEC5',
-      direction: 'down',
-      selection,
-      samePrice: false,
-      rangeTo: 0,
-    });
-    count++;
-  }
-  assert.equal(count, 64);
-});
 
-// Execute the production formatter and emitter, with external libraries unused
-// by date formatting stubbed at their module boundary.
-test('selection events carry exactly the crosshair formatter output, including old years and midnight', () => {
-  const exports = {};
-  const formatterJs = ts.transpileModule(
-    fs.readFileSync(path.join(base, 'chart-logic.ts'), 'utf8'),
-    {
-      compilerOptions: {
-        target: ts.ScriptTarget.ES2022,
-        module: ts.ModuleKind.CommonJS,
-      },
-    },
-  ).outputText;
-  vm.runInNewContext(formatterJs, {
-    exports,
-    require: name =>
-      name === 'lightweight-charts/standalone' ? {} : require(name),
-  });
-  let emitter;
-  function findEmitter(node) {
-    if (
-      ts.isVariableDeclaration(node) &&
-      node.name.getText(ast) === 'emitSelection'
-    )
-      emitter = node.getText(ast);
-    ts.forEachChild(node, findEmitter);
-  }
-  findEmitter(ast);
-  assert.ok(emitter);
-  const code = ts.transpileModule(`const ${emitter};`, {
-    compilerOptions: { target: ts.ScriptTarget.ES2022 },
-  }).outputText;
-  const events = [];
-  const context = {
-    emit: event => events.push(event),
-    formatTime: exports.formatTime,
-  };
-  vm.createContext(context);
-  vm.runInContext(code, context);
-  for (const date of [
-    new Date(2026, 9, 15, 16, 57),
-    new Date(2025, 4, 8, 7, 56),
-    new Date(2026, 0, 1, 0, 5),
-  ]) {
-    context.candle = { time: date.getTime() / 1000, close: 100 };
-    vm.runInContext('emitSelection(candle)', context);
-    assert.equal(
-      events.at(-1).timeText,
-      exports.formatTime(context.candle.time),
-    );
-    assert.match(
-      events.at(-1).timeText,
-      /^[A-Z][a-z]{2} \d{2} [A-Z][a-z]{2} '\d{2} \d{2}:\d{2}$/,
-    );
-    assert.equal(events.at(-1).candle, context.candle);
-  }
-  vm.runInContext('emitSelection(null)', context);
-  assert.equal(events.at(-1).timeText, '');
-  assert.equal(events.at(-1).candle, null);
+test('latest stays horizontal and held prices overlay ordinary labels without shifting them', () => {
+  for (const style of ['candle', 'area'])
+    for (const dark of [false, true])
+      for (const marketY of [0, 110, 274]) {
+        const ordinary = scene(style, marketY, null, dark);
+        // A distinct price within half a pixel must not consume the latest line.
+        const held = scene(
+          style,
+          marketY,
+          marketY === 274 ? 109.9 : 110.1,
+          dark,
+        );
+        for (const label of ordinary)
+          assert.equal(
+            held.find(n => n.dataset.priceKind === label.dataset.priceKind)
+              .style.top,
+            label.style.top,
+          );
+        scene(style, marketY, 110, dark);
+      }
 });

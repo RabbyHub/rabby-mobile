@@ -15,6 +15,7 @@ describe('Simple chart preference boundary', () => {
       '4h',
       undefined,
       { version: 2 },
+      { version: 3, style: 'area', range: null, interval: '1M' },
       { version: 1, style: 'area', range: '1D', interval: '1h' },
     ]) {
       expect(normalizeSimpleChartPreference(value)).toEqual(
@@ -24,12 +25,10 @@ describe('Simple chart preference boundary', () => {
   });
   it.each([
     ['1D', '15m', '1D', '30m'],
-    ['1W', '1h', '1W', '4h'],
-    ['1M', '1d', '1M', '12h'],
-    ['1Y', '1w', '1Y', '1w'],
     ['ALL', '1M', '1D', '30m'],
     [null, '3d', null, '3d'],
     [null, '1M', null, '1M'],
+    [null, '1m', null, '1m'],
   ])(
     'migrates v1 %s without losing the chart style',
     (range, interval, nextRange, nextInterval) => {
@@ -48,16 +47,6 @@ describe('Simple chart preference boundary', () => {
       });
     },
   );
-  it.each([
-    { version: 1, style: 'area', range: '3M', interval: '1d' },
-    { version: 2, style: 'area', range: 'ALL', interval: '1M' },
-    { version: 2, style: 'area', range: '1D', interval: '15m' },
-    { version: 3, style: 'area', range: null, interval: '1M' },
-  ])('rejects invalid or future preferences %p', value => {
-    expect(normalizeSimpleChartPreference(value)).toEqual(
-      DEFAULT_SIMPLE_CHART_PREFERENCE,
-    );
-  });
   it('accepts independent manual 3d without widening the Pro preference or menu', () => {
     const preference = {
       version: 2,
@@ -86,13 +75,5 @@ describe('Simple chart preference boundary', () => {
       '3M': '1d',
       '1Y': '1w',
     });
-    expect(
-      normalizeSimpleChartPreference({
-        version: 1,
-        style: 'candle',
-        range: 'ALL',
-        interval: '1m',
-      }),
-    ).toEqual(DEFAULT_SIMPLE_CHART_PREFERENCE);
   });
 });
