@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Platform,
-  Pressable,
   StyleSheet,
+  TouchableOpacity,
   View,
   useWindowDimensions,
 } from 'react-native';
@@ -163,7 +163,7 @@ export function RemovedTokenPopup({ onClose }: { onClose(): void }) {
             );
           }
           return (
-            <Pressable
+            <TouchableOpacity
               style={styles.cardShadow}
               accessibilityRole="button"
               onPress={() => {
@@ -189,7 +189,7 @@ export function RemovedTokenPopup({ onClose }: { onClose(): void }) {
                   {info.symbol || item.tokenId}
                 </Text>
               </LinearGradient>
-            </Pressable>
+            </TouchableOpacity>
           );
         }}
       />
