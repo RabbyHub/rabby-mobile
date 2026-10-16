@@ -1770,6 +1770,10 @@
       "transactionSpeed": "Transaktionsgeschwindigkeit"
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "Entfernen",
+        "removeFailed": "Token konnte nicht entfernt werden"
+      },
       "sectionHeader": {
         "Nft": "NFT",
         "Token": "Token",
@@ -1908,6 +1912,13 @@
       }
     },
     "tokenDetail": {
+      "removed": {
+        "restore": "Entfernten Token wiederherstellen",
+        "restoreFailed": "Token konnte nicht wiederhergestellt werden",
+        "more": "Mehr",
+        "confirmTitle": "Diesen Token entfernen?",
+        "confirmDescription": "· Dieser Token wird nach dem Entfernen nicht mehr in Ihrem Portfolio angezeigt.\n· Sie können ihn jederzeit unter Einstellungen >> Entfernte Tokens wiederherstellen."
+      },
       "excludeBalanceTipsButton": "Verstanden",
       "excludeBalanceTips": "Dieser Vermögenswert wird für die Genauigkeit von Ihrem Gesamtguthaben ausgeschlossen. Sie können darauf tippen, um Details anzuzeigen und ihn bei Bedarf einzubeziehen.",
       "action": {
@@ -2014,6 +2025,10 @@
       "customTestnetNotSupported": "Der Token auf diesem Netzwerk wird nicht unterstützt"
     },
     "setting": {
+      "removedToken": {
+        "title": "Entfernte Tokens",
+        "description": "Entfernte Tokens werden für alle Ihre Adressen in Ihrem Portfolio ausgeblendet, aber weiterhin bei der Berechnung Ihres Guthabens berücksichtigt."
+      },
       "currentVersion": "Aktuelle Version",
       "modifyRPCURL": "RPC-URL ändern",
       "feedback": "Rückmeldung",

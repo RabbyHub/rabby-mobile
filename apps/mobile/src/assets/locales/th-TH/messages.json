@@ -1692,6 +1692,10 @@
       "fixedModeTag": "โหมดคงที่"
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "ลบ",
+        "removeFailed": "ลบโทเค็นไม่สำเร็จ"
+      },
       "sectionHeader": {
         "Defi": "DeFi",
         "Token": "Token",
@@ -1850,6 +1854,13 @@
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "เข้าใจแล้ว",
+      "removed": {
+        "restore": "กู้คืนโทเค็นที่ถูกลบ",
+        "restoreFailed": "กู้คืนโทเค็นไม่สำเร็จ",
+        "more": "เพิ่มเติม",
+        "confirmTitle": "ลบโทเค็นนี้หรือไม่?",
+        "confirmDescription": "· โทเค็นนี้จะไม่แสดงในพอร์ตของคุณอีกหลังจากลบ\n· คุณสามารถกู้คืนได้ทุกเมื่อใน การตั้งค่า >> โทเค็นที่ถูกลบ"
+      },
       "excludeBalanceTips": "สินทรัพย์นี้ถูกแยกออกจากยอดรวมของคุณเพื่อความแม่นยำ คุณสามารถแตะเพื่อดูรายละเอียดและเพิ่มเข้าไปได้หากต้องการ",
       "action": {
         "Sell": "ขาย",
@@ -1955,6 +1966,10 @@
       "customTestnetNotSupported": "ไม่รองรับโทเค็นบนเชนนี้"
     },
     "setting": {
+      "removedToken": {
+        "title": "โทเค็นที่ถูกลบ",
+        "description": "โทเค็นที่ถูกลบจะถูกซ่อนจากพอร์ตของคุณในทุกที่อยู่ แต่ยังคงรวมอยู่ในการคำนวณยอดคงเหลือ"
+      },
       "aboutUs": "เกี่ยวกับเรา",
       "modifyRPCURL": "แก้ไข RPC URL",
       "screenTitle": "การตั้งค่า",

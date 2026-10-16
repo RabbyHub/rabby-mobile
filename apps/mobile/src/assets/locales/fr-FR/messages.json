@@ -1502,6 +1502,10 @@
       "subtitle": "Choisissez un portefeuille pour recevoir vos cryptos."
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "Supprimer",
+        "removeFailed": "Impossible de supprimer le token"
+      },
       "sectionHeader": {
         "Token": "Token",
         "Nft": "NFT",
@@ -1628,6 +1632,13 @@
       "title": "GasAccount"
     },
     "tokenDetail": {
+      "removed": {
+        "restore": "Restaurer le token supprimé",
+        "restoreFailed": "Impossible de restaurer le token",
+        "more": "Plus",
+        "confirmTitle": "Supprimer ce token ?",
+        "confirmDescription": "· Ce token n’apparaîtra plus dans votre portefeuille après sa suppression.\n· Vous pouvez le restaurer à tout moment dans Paramètres >> Tokens supprimés."
+      },
       "excludeBalanceTips": "Cet actif est exclu de votre solde total pour plus de précision. Vous pouvez le toucher pour voir les détails et l'inclure si vous le souhaitez.",
       "action": {
         "Buy": "Acheter",
@@ -1789,6 +1800,10 @@
       }
     },
     "setting": {
+      "removedToken": {
+        "title": "Tokens supprimés",
+        "description": "Les tokens supprimés seront masqués dans votre portefeuille pour toutes vos adresses, mais resteront inclus dans le calcul de votre solde."
+      },
       "faceId": "Face ID",
       "policy": "Politique de confidentialité",
       "touchId": "Touch ID",
