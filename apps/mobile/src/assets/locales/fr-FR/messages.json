@@ -2654,7 +2654,7 @@
         "desc": "Vous allez vous déconnecter du compte Perps actuel. Vous pourrez le restaurer à tout moment en vous reconnectant avec cette adresse."
       },
       "PerpsDepositCard": {
-        "availableToTrade": "Disponible à trader :",
+        "availableToTrade": "Disponible :",
         "deposit": "Dépôt",
         "swap": "Échanger"
       },

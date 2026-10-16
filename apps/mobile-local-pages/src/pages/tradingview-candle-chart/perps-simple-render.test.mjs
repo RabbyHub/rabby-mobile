@@ -18,8 +18,9 @@ const base = path.join(
 const { appendSimplePriceGuide } = await import(
   pathToFileURL(path.join(base, 'perps-simple-price-guide.ts'))
 );
-const { avoidSimpleLabelOverlap, layoutSimplePriceLabels, visibleLastCandle } =
-  await import(pathToFileURL(path.join(base, 'perps-simple-logic.ts')));
+const logic = await import(
+  pathToFileURL(path.join(base, 'perps-simple-logic.ts'))
+);
 const source = fs.readFileSync(path.join(base, 'perps-simple.ts'), 'utf8');
 const ast = ts.createSourceFile(
   'chart.ts',
@@ -39,7 +40,7 @@ const js = ts.transpileModule(render, {
   compilerOptions: { target: ts.ScriptTarget.ES2022 },
 }).outputText;
 // Execute production render/helpers; only DOM and chart coordinates are faked.
-function scene(style, marketY, selectedPrice, dark = false) {
+function scene(style, marketY, selectedPrice, dark = false, viewport) {
   function element(name) {
     return {
       name,
@@ -77,13 +78,15 @@ function scene(style, marketY, selectedPrice, dark = false) {
     createElementNS: (_namespace, name) => element(name),
   };
   const overlay = element('overlay');
-  const candles = [selectedPrice ?? 100, 110].map((close, i) => ({
-    time: 60 * (i + 1),
-    open: 100,
-    high: 125,
-    low: 90,
-    close,
-  }));
+  const candles = (viewport?.closes ?? [selectedPrice ?? 100, 110]).map(
+    (close, i) => ({
+      time: 60 * (i + 1),
+      open: 100,
+      high: 125,
+      low: 90,
+      close,
+    }),
+  );
   const colors = {
     accent: '#23C0B0',
     entry: dark ? '#BABEC5' : '#6A7587',
@@ -97,7 +100,7 @@ function scene(style, marketY, selectedPrice, dark = false) {
     selectionBackground: dark ? '#D3D8E0' : '#000',
     selectionText: dark ? '#000' : '#fff',
   };
-  const range = { from: 0, to: 1 };
+  const range = viewport?.range ?? { from: 0, to: 1 };
   const context = {
     document,
     overlay,
@@ -119,12 +122,14 @@ function scene(style, marketY, selectedPrice, dark = false) {
       timeScale: () => ({
         getVisibleLogicalRange: () => range,
         width: () => 340,
-        timeToCoordinate: () => 120,
+        timeToCoordinate: time => (viewport ? viewport.x[time / 60 - 1] : 120),
+        coordinateToLogical: () => viewport?.candidate ?? 1,
       }),
       panes: () => [{ getHeight: () => 274 }],
     },
     activeSeries: () => ({
       priceToCoordinate: price => price - 110 + marketY,
+      coordinateToPrice: y => y + 110 - marketY,
       priceScale: () => ({ options: () => ({ autoScale: true }) }),
     }),
     priceText: String,
@@ -144,9 +149,7 @@ function scene(style, marketY, selectedPrice, dark = false) {
     historyRetryBlocked: false,
     applying: false,
     appendSimplePriceGuide,
-    avoidSimpleLabelOverlap,
-    layoutSimplePriceLabels,
-    visibleLastCandle,
+    ...logic,
   };
   vm.runInNewContext(js + '\nrender();', context);
   assert.equal(overlay.style.height, '274px');
@@ -196,16 +199,16 @@ function scene(style, marketY, selectedPrice, dark = false) {
   if (style === 'candle')
     for (const id of ['entry', 'tp', 'sl', 'liquidation'])
       assert.ok(guides.some(n => n.dataset.priceKind === id));
-  return labels;
+  return { labels, guides };
 }
 
 test('latest stays horizontal and held prices overlay ordinary labels without shifting them', () => {
   for (const style of ['candle', 'area'])
     for (const dark of [false, true])
       for (const marketY of [0, 110, 274]) {
-        const ordinary = scene(style, marketY, null, dark);
+        const { labels: ordinary } = scene(style, marketY, null, dark);
         // A distinct price within half a pixel must not consume the latest line.
-        const held = scene(
+        const { labels: held } = scene(
           style,
           marketY,
           marketY === 274 ? 109.9 : 110.1,
@@ -218,5 +221,38 @@ test('latest stays horizontal and held prices overlay ordinary labels without sh
             label.style.top,
           );
         scene(style, marketY, 110, dark);
+      }
+});
+
+test('Area history badge follows the clipped segment until the latest point enters the pane', () => {
+  for (const style of ['area', 'candle'])
+    for (const dark of [false, true])
+      for (const [to, x, candidate, expected] of [
+        [1, [324, 334, 344], 2, 106],
+        [0.99, [324.1, 334.1, 344.1], 2, 105.9],
+        [0.4, [330, 340, 350], 1, 100],
+        [1.9, [315, 325, 335], 2, null],
+        [1.4, [320, 330, 340], 2, null],
+      ]) {
+        const { labels, guides } = scene(style, 110, null, dark, {
+          closes: [90, 100, 110],
+          range: { from: -10, to },
+          x,
+          candidate,
+        });
+        const badge = labels.find(n => n.dataset.priceKind === 'viewport');
+        const guide = guides.find(n => n.dataset.priceKind === 'viewport');
+        if (style === 'candle' || expected === null) {
+          assert.equal(badge, undefined);
+          assert.equal(guide, undefined);
+        } else {
+          assert.ok(badge);
+          assert.ok(Math.abs(Number(badge.textContent) - expected) < 1e-9);
+          assert.equal(badge.style.boxShadow, 'inset 0 0 0 1px #23C0B0');
+          const priceY = Number(
+            guide.children[0].attributes.d.match(/^M 0 (\S+)/)[1],
+          );
+          assert.ok(Math.abs(priceY - expected) < 1e-9);
+        }
       }
 });

@@ -2938,7 +2938,7 @@
       },
       "PerpsDepositCard": {
         "deposit": "Einzahlen",
-        "availableToTrade": "Verfügbar zum Handel:",
+        "availableToTrade": "Verfügbar:",
         "swap": "Tauschen"
       },
       "PerpsAccountSelectorPopup": {
