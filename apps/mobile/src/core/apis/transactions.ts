@@ -108,12 +108,6 @@ export async function calcGasLimit({
 }) {
   const isHyperEvm =
     isHyperEvmChain(chain.id) && account.type !== KEYRING_TYPE.GnosisKeyring;
-  // HyperEVM's latest block alternates between small and big blocks.
-  // Use the sender's mode, retaining the small-block cap if the query fails.
-  const hyperEvmGasLimit = isHyperEvm
-    ? (await getHyperEvmGasLimit({ chain, from: tx.from, account })) ??
-      HYPER_EVM_SMALL_BLOCK_GAS_LIMIT
-    : undefined;
   let block: null | BlockInfo = null;
   try {
     block = !isHyperEvm && preparedBlock ? await preparedBlock : null;
@@ -157,6 +151,21 @@ export async function calcGasLimit({
     recommendGasLimit = new BigNumber(block.gasLimit).times(buffer).toFixed(0);
   }
 
+  const dappGasLimit = rawAmountToBn(tx.gas || 0);
+  let hyperEvmGasLimit = isHyperEvm
+    ? HYPER_EVM_SMALL_BLOCK_GAS_LIMIT
+    : undefined;
+  // Sender mode only affects gas limits above the small-block cap.
+  if (
+    isHyperEvm &&
+    (new BigNumber(recommendGasLimit).gt(HYPER_EVM_SMALL_BLOCK_GAS_LIMIT) ||
+      dappGasLimit.gt(HYPER_EVM_SMALL_BLOCK_GAS_LIMIT))
+  ) {
+    hyperEvmGasLimit =
+      (await getHyperEvmGasLimit({ chain, from: tx.from, account })) ??
+      HYPER_EVM_SMALL_BLOCK_GAS_LIMIT;
+  }
+
   const singleTxGasLimit =
     hyperEvmGasLimit ??
     (TX_GAS_LIMIT_CHAIN_MAPPING[chain.enum] || Number(recommendGasLimit));
@@ -168,7 +177,6 @@ export async function calcGasLimit({
 
   // dapp-provided gas beyond the block or single-tx limit can never be mined,
   // so fall back to our estimate instead of honoring it
-  const dappGasLimit = rawAmountToBn(tx.gas || 0);
   const dappGasLimitCap = BigNumber.min(
     block?.gasLimit ?? Infinity,
     hyperEvmGasLimit ?? (TX_GAS_LIMIT_CHAIN_MAPPING[chain.enum] || Infinity),

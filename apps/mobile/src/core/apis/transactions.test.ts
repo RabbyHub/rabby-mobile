@@ -294,6 +294,72 @@ describe('core/apis/transactions gas utilities', () => {
       );
     });
 
+    it.each([
+      [21_000, 0],
+      [3_000_000, 0],
+      [21_000, 3_000_000],
+      [3_000_000, 3_000_000],
+    ])(
+      'skips the sender mode query within the small limit: estimate=%s dappGas=%s',
+      async (estimatedGas, dappGas) => {
+        mockRequestETHRpc.mockResolvedValue(true);
+
+        await expect(
+          calculateGas({
+            tx: {
+              from: txFrom,
+              value: '0',
+              gas: `0x${dappGas.toString(16)}`,
+            } as never,
+            gas: new BigNumber(estimatedGas),
+            needRatio: false,
+          }),
+        ).resolves.toEqual({
+          gasLimit: `0x${Math.max(estimatedGas, dappGas).toString(16)}`,
+          recommendGasLimitRatio: 1,
+        });
+        expect(mockRequestETHRpc).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each([2_100_000, 2_500_000])(
+      'queries the sender mode when padding raises %s above the small limit',
+      async estimatedGas => {
+        mockRequestETHRpc.mockResolvedValue(true);
+
+        await expect(
+          calculateGas({ gas: new BigNumber(estimatedGas) }),
+        ).resolves.toEqual({
+          gasLimit: `0x${(estimatedGas * 1.5).toString(16)}`,
+          recommendGasLimitRatio: 1.5,
+        });
+        expect(mockRequestETHRpc).toHaveBeenCalledTimes(1);
+      },
+    );
+
+    it.each([
+      [1_600_000, 2, 3_200_000, 1],
+      [2_100_000, 1.2, 2_520_000, 0],
+    ])(
+      'uses the balance fallback ratio before querying: estimate=%s ratio=%s',
+      async (estimatedGas, gasRatio, expectedGas, expectedCalls) => {
+        mockRequestETHRpc.mockResolvedValue(true);
+
+        await expect(
+          calculateGas({
+            gas: new BigNumber(estimatedGas),
+            selectedGas: { price: 1 } as never,
+            nativeTokenBalance: '1',
+            explainTx: { gas: { gas_ratio: gasRatio } } as never,
+          }),
+        ).resolves.toEqual({
+          gasLimit: `0x${expectedGas.toString(16)}`,
+          recommendGasLimitRatio: gasRatio,
+        });
+        expect(mockRequestETHRpc).toHaveBeenCalledTimes(expectedCalls);
+      },
+    );
+
     it.each<[string, unknown, number, number]>([
       ['big blocks', true, 25_000_000, 30_000_000],
       ['small blocks', false, 8_300_000, 3_000_000],
@@ -342,14 +408,14 @@ describe('core/apis/transactions gas utilities', () => {
       }
     });
 
-    it.each<[boolean, number, number]>([
-      [true, 30_000_000, 30_000_000],
-      [true, 30_000_001, 21_000],
-      [false, 3_000_000, 3_000_000],
-      [false, 3_000_001, 21_000],
+    it.each<[boolean, number, number, number]>([
+      [true, 30_000_000, 30_000_000, 1],
+      [true, 30_000_001, 21_000, 1],
+      [false, 3_000_000, 3_000_000, 0],
+      [false, 3_000_001, 21_000, 1],
     ])(
       'honors dapp gas only within the sender limit: mode=%s gas=%s',
-      async (usingBigBlocks, dappGas, expectedGas) => {
+      async (usingBigBlocks, dappGas, expectedGas, expectedCalls) => {
         mockRequestETHRpc.mockResolvedValue(usingBigBlocks);
 
         await expect(
@@ -366,6 +432,7 @@ describe('core/apis/transactions gas utilities', () => {
           gasLimit: `0x${expectedGas.toString(16)}`,
           recommendGasLimitRatio: 1,
         });
+        expect(mockRequestETHRpc).toHaveBeenCalledTimes(expectedCalls);
       },
     );
 
