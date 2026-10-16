@@ -5,6 +5,7 @@ import { ImageSourcePropType } from 'react-native';
 import { IS_ANDROID } from '@/core/native/utils';
 import { Pressable } from 'react-native-gesture-handler';
 import { Text } from '@/components/Typography';
+import { useNativeMenuModalGate } from '@/utils/modalGate';
 
 export interface MenuAction {
   title: string;
@@ -34,13 +35,17 @@ export const DropdownMenuView: React.FC<Props> = ({
   avoidCollisions = true,
   side = 'top',
 }) => {
+  const { onOpenWillChange, onOpenChange } = useNativeMenuModalGate();
+
   return (
     <DropdownMenu.Root
       __unsafeIosProps={{
         previewConfig: {
           borderRadius: 30,
         },
-      }}>
+      }}
+      onOpenWillChange={onOpenWillChange}
+      onOpenChange={onOpenChange}>
       <DropdownMenu.Trigger>
         <Pressable hitSlop={5}>{children}</Pressable>
       </DropdownMenu.Trigger>

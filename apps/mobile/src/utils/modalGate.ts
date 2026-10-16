@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import { zCreate } from '@/core/utils/reexports';
@@ -44,6 +44,7 @@ export const MODAL_GATE_IDS = {
   devServerSettings: 'dev-server-settings',
   convertDustEntryGuide: 'convert-dust-entry-guide',
   convertDustStopSheet: 'convert-dust-stop-sheet',
+  nativeMenu: 'native-menu',
 } as const;
 
 const modalGateStore = zCreate<ModalGateState>(() => ({
@@ -139,18 +140,86 @@ export function subscribeModalGateDebugSnapshot(
   });
 }
 
+/**
+ * Imperatively mark a blocking surface visible. The returned release function
+ * is idempotent, so callers can invoke it from both a close callback and an
+ * unmount cleanup.
+ */
+export function acquireBlockingModal(id: string) {
+  markBlockingModalVisible(id, true);
+
+  let released = false;
+  return () => {
+    if (released) {
+      return;
+    }
+
+    released = true;
+    markBlockingModalVisible(id, false);
+  };
+}
+
 export function useRegisterBlockingModal(id: string, visible: boolean) {
   useEffect(() => {
     if (!visible) {
       return;
     }
 
-    markBlockingModalVisible(id, true);
-
-    return () => {
-      markBlockingModalVisible(id, false);
-    };
+    return acquireBlockingModal(id);
   }, [id, visible]);
+}
+
+/**
+ * On iOS, an open zeego menu is a view controller presented on the root view
+ * controller. UIKit rejects any RN `Modal` presented meanwhile, but RN keeps the
+ * empty full-screen modal host view mounted, which then swallows every touch.
+ * Spread the returned handlers onto a zeego menu `Root` so gated modals, such as
+ * screenshot feedback, wait until the menu has fully hidden.
+ *
+ * Uses a ref instead of state so opening a menu never re-renders its trigger.
+ * Android menus don't fire these callbacks, so this is a no-op there.
+ */
+export function useNativeMenuModalGate() {
+  const releaseRef = useRef<(() => void) | null>(null);
+
+  const release = useCallback(() => {
+    releaseRef.current?.();
+    releaseRef.current = null;
+  }, []);
+
+  const acquire = useCallback(() => {
+    if (!releaseRef.current) {
+      releaseRef.current = acquireBlockingModal(MODAL_GATE_IDS.nativeMenu);
+    }
+  }, []);
+
+  // The menu may unmount while open, in which case `onOpenChange(false)` never
+  // fires.
+  useEffect(() => release, [release]);
+
+  const onOpenWillChange = useCallback(
+    (willOpen: boolean) => {
+      if (willOpen) {
+        acquire();
+      }
+    },
+    [acquire],
+  );
+
+  // Release only once the menu has fully hidden: the menu view controller is
+  // still presented during the hide animation.
+  const onOpenChange = useCallback(
+    (isOpen: boolean) => {
+      if (isOpen) {
+        acquire();
+      } else {
+        release();
+      }
+    },
+    [acquire, release],
+  );
+
+  return { onOpenWillChange, onOpenChange };
 }
 
 runDevIIFEFunc(() => {

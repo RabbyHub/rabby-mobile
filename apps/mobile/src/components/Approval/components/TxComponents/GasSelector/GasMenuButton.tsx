@@ -20,6 +20,7 @@ import { Skeleton } from '@rneui/themed';
 import React from 'react';
 import * as DropdownMenu from '@rabby-wallet/zeego/dropdown-menu';
 import { Text } from '@/components/Typography';
+import { useNativeMenuModalGate } from '@/utils/modalGate';
 
 interface Props {
   gasList: GasLevel[];
@@ -68,6 +69,7 @@ export const GasMenuButton: React.FC<Props> = ({
     getStyle,
   });
   const { t } = useTranslation();
+  const { onOpenWillChange, onOpenChange } = useNativeMenuModalGate();
   const actions = React.useMemo(() => {
     const list = gasList.map(gas => {
       const gwei = new BigNumber(gas.price / 1e9).toFixed().slice(0, 8);
@@ -141,7 +143,9 @@ export const GasMenuButton: React.FC<Props> = ({
     return Content;
   }
   return (
-    <DropdownMenu.Root>
+    <DropdownMenu.Root
+      onOpenWillChange={onOpenWillChange}
+      onOpenChange={onOpenChange}>
       <DropdownMenu.Trigger action="press">{Content}</DropdownMenu.Trigger>
       <DropdownMenu.Content
         loop

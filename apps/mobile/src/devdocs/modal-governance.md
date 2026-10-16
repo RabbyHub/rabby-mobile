@@ -32,6 +32,19 @@ Android does not show the same severity in current repro paths.
 - If any other blocking modal is visible, screenshot feedback modal open is skipped.
 - Goal: avoid risky stacked native modal transitions.
 
+### Native menus (iOS)
+
+An open zeego context/dropdown menu is a view controller presented on the root
+view controller (`_UIContextMenuActionsOnlyViewController`). UIKit rejects any
+RN `Modal` presented meanwhile ("Attempt to present ... which is already
+presenting ..."), but the RN host view stays mounted full-screen with no
+content and swallows every touch until the app restarts.
+
+Every zeego menu `Root` must spread `useNativeMenuModalGate()` from
+`src/utils/modalGate.ts` (`ContextMenuView` and `DropDownMenuView` already do).
+It registers `MODAL_GATE_IDS.nativeMenu` from will-open until the menu has
+fully hidden, so gated modals open after the menu closes.
+
 ## Modal Types
 
 ### A) Blocking Native Modal (tracked)
