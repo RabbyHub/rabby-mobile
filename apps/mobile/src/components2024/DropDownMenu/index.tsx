@@ -33,7 +33,7 @@ export const DropDownMenuView: React.FC<Props> = ({
   avoidCollisions = true,
   triggerProps,
 }) => {
-  const { onOpenWillChange, onOpenChange } = useNativeMenuModalGate();
+  const nativeMenuGateProps = useNativeMenuModalGate();
 
   return (
     <DropdownMenu.Root
@@ -42,8 +42,7 @@ export const DropDownMenuView: React.FC<Props> = ({
           borderRadius: 30,
         },
       }}
-      onOpenWillChange={onOpenWillChange}
-      onOpenChange={onOpenChange}>
+      {...nativeMenuGateProps}>
       <DropdownMenu.Trigger {...triggerProps} isAnchoredToRight>
         {children}
       </DropdownMenu.Trigger>

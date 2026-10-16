@@ -43,7 +43,10 @@ content and swallows every touch until the app restarts.
 Every zeego menu `Root` must spread `useNativeMenuModalGate()` from
 `src/utils/modalGate.ts` (`ContextMenuView` and `DropDownMenuView` already do).
 It registers `MODAL_GATE_IDS.nativeMenu` from will-open until the menu has
-fully hidden, so gated modals open after the menu closes.
+fully hidden, so gated modals open after the menu closes. It also passes
+`iosMenuViewRef`, so `dismissOpenNativeMenus()` can close open menus. A
+screenshot taken while a menu is open does this, and its feedback modal opens
+once the menu has hidden.
 
 ## Modal Types
 

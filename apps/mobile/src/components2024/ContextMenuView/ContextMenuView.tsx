@@ -91,7 +91,7 @@ export const ContextMenuView: React.FC<Props> = ({
   androidLongPressDuration = 350,
 }) => {
   const androidMenuViewRef = useRef<MenuComponentRef>(null);
-  const { onOpenWillChange, onOpenChange } = useNativeMenuModalGate();
+  const nativeMenuGateProps = useNativeMenuModalGate();
 
   const androidShowMenu = useCallback(() => {
     // touchedFeedback();
@@ -132,8 +132,7 @@ export const ContextMenuView: React.FC<Props> = ({
         },
       }}
       androidMenuViewRef={androidMenuViewRef}
-      onOpenWillChange={onOpenWillChange}
-      onOpenChange={onOpenChange}>
+      {...nativeMenuGateProps}>
       <ContextMenu.Trigger
         action="longPress"
         {...triggerProps}

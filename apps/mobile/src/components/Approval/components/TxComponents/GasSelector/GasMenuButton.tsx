@@ -69,7 +69,7 @@ export const GasMenuButton: React.FC<Props> = ({
     getStyle,
   });
   const { t } = useTranslation();
-  const { onOpenWillChange, onOpenChange } = useNativeMenuModalGate();
+  const nativeMenuGateProps = useNativeMenuModalGate();
   const actions = React.useMemo(() => {
     const list = gasList.map(gas => {
       const gwei = new BigNumber(gas.price / 1e9).toFixed().slice(0, 8);
@@ -143,9 +143,7 @@ export const GasMenuButton: React.FC<Props> = ({
     return Content;
   }
   return (
-    <DropdownMenu.Root
-      onOpenWillChange={onOpenWillChange}
-      onOpenChange={onOpenChange}>
+    <DropdownMenu.Root {...nativeMenuGateProps}>
       <DropdownMenu.Trigger action="press">{Content}</DropdownMenu.Trigger>
       <DropdownMenu.Content
         loop

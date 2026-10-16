@@ -6,12 +6,21 @@ jest.mock('@/core/utils/reexports', () => ({
 
 import {
   acquireBlockingModal,
+  dismissOpenNativeMenus,
   getVisibleBlockingModalIds,
   MODAL_GATE_IDS,
   useNativeMenuModalGate,
 } from './modalGate';
 
 const NATIVE_MENU = MODAL_GATE_IDS.nativeMenu;
+
+function renderMenuGate() {
+  const dismissMenu = jest.fn(() => Promise.resolve());
+  const hook = renderHook(() => useNativeMenuModalGate());
+  hook.result.current.iosMenuViewRef.current = { dismissMenu };
+
+  return { ...hook, dismissMenu };
+}
 
 describe('acquireBlockingModal', () => {
   it('releases only once even when called repeatedly', () => {
@@ -75,5 +84,40 @@ describe('useNativeMenuModalGate', () => {
 
     first.unmount();
     second.unmount();
+  });
+});
+
+describe('dismissOpenNativeMenus', () => {
+  afterEach(() => {
+    expect(getVisibleBlockingModalIds()).toEqual([]);
+  });
+
+  it('dismisses only open menus and keeps blocking until did-hide', () => {
+    const open = renderMenuGate();
+    const closed = renderMenuGate();
+
+    act(() => open.result.current.onOpenWillChange(true));
+
+    dismissOpenNativeMenus();
+    expect(open.dismissMenu).toHaveBeenCalledTimes(1);
+    expect(closed.dismissMenu).not.toHaveBeenCalled();
+    expect(getVisibleBlockingModalIds()).toEqual([NATIVE_MENU]);
+
+    act(() => open.result.current.onOpenChange(false));
+    dismissOpenNativeMenus();
+    expect(open.dismissMenu).toHaveBeenCalledTimes(1);
+
+    open.unmount();
+    closed.unmount();
+  });
+
+  it('forgets menus that unmount while open', () => {
+    const menu = renderMenuGate();
+
+    act(() => menu.result.current.onOpenWillChange(true));
+    menu.unmount();
+
+    dismissOpenNativeMenus();
+    expect(menu.dismissMenu).not.toHaveBeenCalled();
   });
 });
