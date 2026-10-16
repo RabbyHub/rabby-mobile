@@ -1711,6 +1711,10 @@
       }
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "Eliminar",
+        "removeFailed": "No se pudo eliminar el token"
+      },
       "sectionHeader": {
         "Nft": "NFT",
         "Token": "Token",
@@ -1776,6 +1780,13 @@
       }
     },
     "tokenDetail": {
+      "removed": {
+        "restore": "Restaurar token eliminado",
+        "restoreFailed": "No se pudo restaurar el token",
+        "more": "Más",
+        "confirmTitle": "¿Eliminar este token?",
+        "confirmDescription": "· Este token dejará de aparecer en tu portfolio después de eliminarlo.\n· Puedes restaurarlo en cualquier momento en Configuración >> Tokens eliminados."
+      },
       "excludeBalanceTipsButton": "Entendido",
       "action": {
         "all": "Todo",
@@ -1882,6 +1893,10 @@
       "customTestnetNotSupported": "El token de esta red no es compatible"
     },
     "setting": {
+      "removedToken": {
+        "title": "Tokens eliminados",
+        "description": "Los tokens eliminados se ocultarán de tu portfolio en todas tus direcciones, pero seguirán incluidos en el cálculo de tu saldo."
+      },
       "feedback": "Comentarios",
       "screenTitle": "Configuración",
       "clearPending": "Borrar transacciones pendientes localmente",

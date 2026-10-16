@@ -1792,6 +1792,10 @@
       "title": "Adicionar rede personalizada à Rabby"
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "Remover",
+        "removeFailed": "Não foi possível remover o token"
+      },
       "sectionHeader": {
         "Defi": "DeFi",
         "Nft": "NFT",
@@ -1830,6 +1834,13 @@
       }
     },
     "tokenDetail": {
+      "removed": {
+        "restore": "Restaurar token removido",
+        "restoreFailed": "Não foi possível restaurar o token",
+        "more": "Mais",
+        "confirmTitle": "Remover este token?",
+        "confirmDescription": "· Este token deixará de aparecer no seu portefólio após a remoção.\n· Pode restaurá-lo a qualquer momento em Definições >> Tokens removidos."
+      },
       "excludeBalanceTipsButton": "Compreendi",
       "action": {
         "Sell": "Vender",
@@ -1984,6 +1995,10 @@
       }
     },
     "setting": {
+      "removedToken": {
+        "title": "Tokens removidos",
+        "description": "Os tokens removidos ficarão ocultos no seu portefólio em todos os seus endereços, mas continuarão a ser incluídos no cálculo do seu saldo."
+      },
       "faceId": "Face ID",
       "screenTitle": "Definições",
       "policy": "Política de privacidade",

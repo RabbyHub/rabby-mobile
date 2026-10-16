@@ -1576,6 +1576,10 @@
       "title": "授權"
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "移除",
+        "removeFailed": "移除代幣失敗"
+      },
       "sectionHeader": {
         "Defi": "DeFi",
         "Nft": "NFT",
@@ -1720,6 +1724,13 @@
       "subtitle": "選擇錢包以接收您的加密資產。"
     },
     "tokenDetail": {
+      "removed": {
+        "restore": "還原已移除的代幣",
+        "restoreFailed": "還原代幣失敗",
+        "more": "更多",
+        "confirmTitle": "移除此代幣？",
+        "confirmDescription": "· 移除後，此代幣將不再顯示在您的投資組合中。\n· 您可以隨時在設定 >> 已移除的代幣中還原。"
+      },
       "excludeBalanceTipsButton": "知道了",
       "action": {
         "less": "更少",
@@ -1941,6 +1952,10 @@
       "verify-password-before-backup": "在備份之前驗證您的 Rabby 密碼"
     },
     "setting": {
+      "removedToken": {
+        "title": "已移除的代幣",
+        "description": "已移除的代幣將在您所有地址的投資組合中隱藏，但仍會計入餘額。"
+      },
       "followUs": "關注我們",
       "tou": "使用條款",
       "fingerPrint": "指紋",
