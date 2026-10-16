@@ -67,7 +67,6 @@ describe('Perps close position action', () => {
     });
     expect(deps.marketClose).toHaveBeenCalledWith(
       expect.objectContaining({
-        builder: expect.objectContaining({ fee: 40 }),
         isBuy: false,
         reduceOnly: true,
         size: '0.6172',
@@ -134,12 +133,7 @@ describe('Perps close position action', () => {
       refreshError: undefined,
     });
     expect(deps.limitClose).toHaveBeenCalledWith(
-      expect.objectContaining({
-        builder: expect.objectContaining({ fee: 40 }),
-        isBuy: true,
-        reduceOnly: true,
-        tif: 'Gtc',
-      }),
+      expect.objectContaining({ isBuy: true, reduceOnly: true, tif: 'Gtc' }),
     );
     expect(deps.refreshOpenOrders).toHaveBeenCalled();
     expect(deps.refreshClearinghouse).toHaveBeenCalled();

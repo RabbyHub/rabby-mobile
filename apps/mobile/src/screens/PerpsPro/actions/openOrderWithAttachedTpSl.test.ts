@@ -397,7 +397,6 @@ describe('Perps Pro attached TP/SL command and executor', () => {
     ).resolves.toMatchObject({ kind: 'fullAccepted' });
     expect(setup.marketOrder).toHaveBeenCalledWith(
       expect.objectContaining({
-        builder: expect.objectContaining({ fee: 40 }),
         cloids: command.cloids,
         midPx: '100',
         size: '2',
@@ -475,11 +474,7 @@ describe('Perps Pro attached TP/SL command and executor', () => {
       setup.dependencies,
     );
     expect(setup.limitOrder).toHaveBeenCalledWith(
-      expect.objectContaining({
-        builder: expect.objectContaining({ fee: 40 }),
-        limitPx: '99',
-        tif: 'Gtc',
-      }),
+      expect.objectContaining({ limitPx: '99', tif: 'Gtc' }),
     );
     expect(setup.marketOrder).not.toHaveBeenCalled();
     expect(

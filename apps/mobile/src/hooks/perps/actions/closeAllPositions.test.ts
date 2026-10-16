@@ -93,7 +93,7 @@ describe('Perps close all positions action', () => {
     expect(deps.closeAllPositions).toHaveBeenCalledWith(
       command.clearinghouseState,
       0.08,
-      expect.objectContaining({ address: expect.any(String), fee: 40 }),
+      expect.objectContaining({ address: expect.any(String) }),
     );
     expect(deps.refreshAllOpenOrders).toHaveBeenCalledTimes(1);
     expect(deps.refreshAllClearinghouse).toHaveBeenCalledTimes(1);

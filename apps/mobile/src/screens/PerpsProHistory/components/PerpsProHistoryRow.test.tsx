@@ -89,7 +89,6 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
     crossed: true,
     dir: 'Close Long',
     fee: '0.5',
-    builderFee: '0.1',
     hash: '0xfill',
     oid: 8,
     px: '2000',

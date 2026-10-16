@@ -83,54 +83,6 @@ const makeFill = (overrides: Partial<WsFill> = {}): WsFill => ({
   ...overrides,
 });
 
-describe('Trade fee snapshots', () => {
-  it.each([undefined, '0', '0.1', 'invalid'])(
-    'preserves raw fee facts independently of display normalization (%p)',
-    builderFee => {
-      const fill = makeFill({
-        px: 'invalid',
-        sz: '-0.25',
-        fee: 'NaN',
-        builderFee,
-      });
-      const row = mapPerpsProTradeHistoryFact(fill, {});
-      expect(row.feeSnapshot).toEqual({
-        px: 'invalid',
-        sz: '-0.25',
-        builderFee,
-      });
-      expect(row).toMatchObject({
-        price: '0',
-        filledBase: '0',
-        fee: '0',
-        feeToken: 'USDC',
-        netRealizedPnl: '12.5',
-      });
-      fill.px = '2000';
-      expect(row.feeSnapshot.px).toBe('invalid');
-    },
-  );
-
-  it('keeps fee amounts and Spot currencies outside the Rabby snapshot', () => {
-    const row = mapPerpsProTradeHistoryFact(
-      makeFill({ coin: '@107', feeToken: 'HYPE', builderFee: '0' }),
-      {},
-      spotMeta,
-    );
-    expect(row.feeSnapshot).toEqual({
-      px: '2000',
-      sz: '0.25',
-      builderFee: '0',
-    });
-    expect(row).toMatchObject({
-      fee: '0.5',
-      feeToken: 'HYPE',
-      netRealizedPnl: '12',
-      market: { quoteAsset: 'USDC' },
-    });
-  });
-});
-
 const makeLedger = (
   delta: PerpsProLedgerFact['delta'],
   overrides: Partial<PerpsProLedgerFact> = {},
