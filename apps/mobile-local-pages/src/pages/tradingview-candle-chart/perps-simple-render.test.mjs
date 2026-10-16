@@ -173,6 +173,7 @@ function scene({
     visibleLastCandle,
   };
   vm.runInNewContext(js + '\nrender();', context);
+  assert.equal(overlay.style.height, '274px');
   const labels = overlay.children.filter(n => 'simplePriceLabel' in n.dataset);
   const guides = overlay.children.filter(n => 'simplePriceLine' in n.dataset);
   const cross = overlay.children.filter(n => 'simpleCrosshair' in n.dataset);

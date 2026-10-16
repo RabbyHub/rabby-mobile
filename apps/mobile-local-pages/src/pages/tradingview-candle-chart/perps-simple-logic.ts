@@ -174,8 +174,8 @@ export function avoidSimpleLabelOverlap(
   return ordered;
 }
 
-/** Reserve the latest-price badge first. Other badges may cross to the roomier
- * side at an edge; their guides still start at their unchanged price y. */
+/** Keep price order on both sides of the latest badge, even at pane edges.
+ * Overflow is clipped by the renderer, never moved across the market price. */
 export function layoutSimplePriceLabels(
   values: readonly number[],
   height: number,
@@ -191,35 +191,21 @@ export function layoutSimplePriceLabels(
     .map((y, index) => ({ y, index }))
     .filter(item => item.index !== anchorIndex)
     .sort((a, b) => a.y - b.y || a.index - b.index);
-  const aboveCapacity = Math.floor((anchor - half) / spacing);
-  const belowCapacity = Math.floor((bottom - anchor) / spacing);
-  const preferredAbove = others.filter(
-    item => item.y < values[anchorIndex],
-  ).length;
-  const split = Math.min(
-    aboveCapacity,
-    Math.max(others.length - belowCapacity, preferredAbove),
-  );
+  const split = others.filter(item => item.y < values[anchorIndex]).length;
   const above = others.slice(0, split);
   const below = others.slice(split);
   const result: number[] = [];
   result[anchorIndex] = anchor;
-  const upper = avoidSimpleLabelOverlap(
-    above.map(item => item.y),
-    anchor - spacing + half,
-  );
-  above.forEach((item, index) => {
-    result[item.index] = upper[index];
-  });
-  // If the pane physically cannot fit every badge, allow clipping at the far
-  // edge rather than compressing text or displacing the latest-price anchor.
-  const lowerOrigin = anchor + spacing - half;
-  const lower = avoidSimpleLabelOverlap(
-    below.map(item => item.y - lowerOrigin),
-    Math.max(height - lowerOrigin, below.length * spacing - 3),
-  );
-  below.forEach((item, index) => {
-    result[item.index] = lower[index] + lowerOrigin;
+  let previous = anchor;
+  for (let i = above.length - 1; i >= 0; i--) {
+    const item = above[i];
+    previous = Math.min(item.y, previous - spacing);
+    result[item.index] = previous;
+  }
+  previous = anchor;
+  below.forEach(item => {
+    previous = Math.max(item.y, previous + spacing);
+    result[item.index] = previous;
   });
   return result;
 }

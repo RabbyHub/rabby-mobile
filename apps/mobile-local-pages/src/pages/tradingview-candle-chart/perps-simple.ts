@@ -274,6 +274,9 @@ export function createSimpleChart(
       range.from <= candles.length - 1;
     const paneWidth = chart.timeScale().width();
     const paneHeight = chart.panes()[0].getHeight();
+    // The host also contains the time axis. Clip displaced badges at the plot
+    // edge so preserving price order cannot spill them into the date labels.
+    overlay.style.height = `${paneHeight}px`;
     priceAxis.layout(paneWidth, paneHeight);
     const state = `${identity}:${replacementSequence}:${
       nativePriceAxis.session

@@ -13,7 +13,7 @@ import {
 } from './perps-simple-logic.ts';
 
 const candle = time => ({ time, open: 100, high: 110, low: 90, close: 105 });
-test('latest badge is pinned while other labels keep gaps, bounds and preferred price sides', () => {
+test('latest badge is pinned while other labels keep price order and gaps at every edge', () => {
   for (const anchor of [0, 1, 7, 100, 267, 273, 274]) {
     const values = [
       anchor,
@@ -26,17 +26,23 @@ test('latest badge is pinned while other labels keep gaps, bounds and preferred 
     const result = layoutSimplePriceLabels(values, 274, 0);
     assert.equal(result[0], Math.max(7, Math.min(267, anchor)));
     const sorted = [...result].sort((a, b) => a - b);
-    assert.ok(sorted[0] >= 7 && sorted.at(-1) <= 267);
     for (let i = 1; i < sorted.length; i++)
       assert.ok(sorted[i] - sorted[i - 1] >= 17);
-    if (anchor === 100) {
-      assert.ok(result[1] < anchor && result[5] < anchor);
-      assert.ok(result[2] > anchor && result[3] > anchor && result[4] > anchor);
-    }
+    assert.ok(result[5] < result[1] && result[1] < result[0]);
+    assert.ok(result[0] < result[3] && result[3] < result[2]);
+    assert.ok(result[2] < result[4]);
   }
   assert.deepEqual(
     layoutSimplePriceLabels([100, 99, 101, 102, 103], 274, 0),
     [100, 83, 117, 134, 151],
+  );
+  assert.deepEqual(
+    layoutSimplePriceLabels([260, 261, 262, 263], 274, 0),
+    [260, 277, 294, 311],
+  );
+  assert.deepEqual(
+    layoutSimplePriceLabels([10, 9, 8, 7], 274, 0),
+    [10, -7, -24, -41],
   );
 });
 test('coverage distinguishes short history from gaps and retains the pre-aggregation boundary', () => {
