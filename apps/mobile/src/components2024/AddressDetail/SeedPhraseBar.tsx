@@ -6,15 +6,13 @@ import ArrowSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { TouchableOpacity } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '../GlobalBottomSheetModal';
+import { createGlobalBottomSheetModal2024 } from '../GlobalBottomSheetModal';
 import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { Text } from '@/components/Typography';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 import * as SecretVault from '@/core/utils/secretVault';
+import { dismissImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
 
 interface Props {
   account: KeyringAccountWithAlias;
@@ -53,8 +51,8 @@ export const SeedPhraseBar: React.FC<Props> = ({ account, onCancel }) => {
         account,
         brandName: KEYRING_CLASS.MNEMONIC,
       },
-      onCancel: () => {
-        removeGlobalBottomSheetModal2024(id);
+      onCancel: async () => {
+        await dismissImportMoreAddressPopup(id);
         onCancel();
       },
     });

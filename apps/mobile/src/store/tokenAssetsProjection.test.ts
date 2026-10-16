@@ -218,6 +218,33 @@ const restoreHomeProjection = async (
   return { key, visibleToken, visibleTokenId, expectedRows };
 };
 
+const restoreUnindexedHomeProjection = async () => {
+  const visibleToken = createToken('visible-token', { usd_value: 20 });
+  const visibleTokenId = buildTokenEntityId(visibleToken);
+  mockedRestoreAssetProjection.mockResolvedValueOnce(
+    createPersistedHomeProjection(visibleTokenId) as never,
+  );
+  mockedTokenItemEntity.batchMultiAddressTokensByResourceIds.mockResolvedValueOnce(
+    [visibleToken] as never,
+  );
+  const key = prepareMultiAddressTokenAssetsProjection({
+    addresses: [ADDRESS, SECOND_ADDRESS],
+    tokenDisplayMode: 'byAddress',
+  });
+  await waitFor(
+    () =>
+      useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]?.rows
+        .length === 1,
+  );
+  await waitForNextTask();
+  expect(useTokenIndexStore.getState().addressTokenIds).toEqual({});
+  expect(tokenListStore.getState().sourceSnapshotReadyByAddress).toEqual({});
+  return {
+    key,
+    result: useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key],
+  };
+};
+
 describe('single-address token assets projection', () => {
   beforeEach(() => {
     notifySyncAbortHandlers('token-assets-projection-test-reset');
@@ -237,16 +264,18 @@ describe('single-address token assets projection', () => {
     tokenEntityResourceStore.upsertTokens([], 'remote', {
       pruneMissing: true,
     });
-    useTokenIndexStore.setState({
-      addressTokenIds: {},
-      addressVersions: {},
-      tokenStaticMap: {},
-    });
     tokenListStore.setState({
       tokenListMap: {},
       sourceSnapshotReadyByAddress: {},
       isLoading: false,
       isLoadingByAddress: {},
+    });
+    // Clearing the source map synchronously updates its registered indexes.
+    // Reset those derived stores last so the next case starts unhydrated.
+    useTokenIndexStore.setState({
+      addressTokenIds: {},
+      addressVersions: {},
+      tokenStaticMap: {},
     });
   });
 
@@ -589,6 +618,145 @@ describe('single-address token assets projection', () => {
     expect(
       useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]?.rows,
     ).toEqual([{ type: 'token', tokenId: visibleTokenId }]);
+  });
+
+  it.each([
+    ['unchanged', [ADDRESS, SECOND_ADDRESS]],
+    ['reordered', [SECOND_ADDRESS, ADDRESS]],
+  ] as const)(
+    'retains a projection-only Home snapshot when the same address scope is %s',
+    async (_label, nextAddresses) => {
+      const { key, result: restoredResult } =
+        await restoreUnindexedHomeProjection();
+      const publishedRowCounts: number[] = [];
+      const unsubscribe = useTokenAssetsIndexStore.subscribe(state => {
+        publishedRowCounts.push(state.multiAssetsResultByKey[key].rows.length);
+      });
+
+      try {
+        const reusedKey = prepareMultiAddressTokenAssetsProjection({
+          addresses: [...nextAddresses],
+          tokenDisplayMode: 'byAddress',
+        });
+
+        expect(reusedKey).toBe(key);
+        expect(
+          useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key],
+        ).toBe(restoredResult);
+        expect(
+          useTokenAssetsIndexStore.getState().multiAssetsAvailabilityByKey[key],
+        ).toBe('ready');
+        expect(publishedRowCounts).not.toContain(0);
+        expect(mockedRestoreAssetProjection).toHaveBeenCalledTimes(1);
+        expect(
+          mockedTokenItemEntity.batchMultiAddressTokens,
+        ).not.toHaveBeenCalled();
+      } finally {
+        unsubscribe();
+      }
+    },
+  );
+
+  it.each([
+    { addresses: [SECOND_ADDRESS], tokenDisplayMode: 'byAddress' as const },
+    {
+      addresses: [ADDRESS, SECOND_ADDRESS],
+      chainServerId: 'matic',
+      tokenDisplayMode: 'byAddress' as const,
+    },
+    {
+      addresses: [ADDRESS, SECOND_ADDRESS],
+      tokenDisplayMode: 'byAsset' as const,
+    },
+  ])(
+    'does not reuse a restored Home projection for a different scope: %j',
+    async input => {
+      const { key, result } = await restoreUnindexedHomeProjection();
+
+      const nextKey = prepareMultiAddressTokenAssetsProjection(input);
+
+      expect(nextKey).not.toBe(key);
+      expect(
+        useTokenAssetsIndexStore.getState().multiAssetsResultByKey[nextKey]
+          .rows,
+      ).toEqual([]);
+      expect(
+        useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key],
+      ).toBe(result);
+    },
+  );
+
+  it('does not reuse a projection-only Home snapshot after cache invalidation', async () => {
+    const { key } = await restoreUnindexedHomeProjection();
+    notifySyncAbortHandlers('invalidate-restored-home-projection');
+
+    prepareMultiAddressTokenAssetsProjection({
+      addresses: [SECOND_ADDRESS, ADDRESS],
+      tokenDisplayMode: 'byAddress',
+    });
+
+    expect(
+      useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key].rows,
+    ).toEqual([]);
+  });
+
+  it('replaces a retained Home projection when all address sources become empty', async () => {
+    const { key } = await restoreUnindexedHomeProjection();
+    prepareMultiAddressTokenAssetsProjection({
+      addresses: [SECOND_ADDRESS, ADDRESS],
+      tokenDisplayMode: 'byAddress',
+    });
+
+    tokenListStore.setState({
+      tokenListMap: {
+        [NORMALIZED_ADDRESS]: [],
+        [NORMALIZED_SECOND_ADDRESS]: [],
+      },
+      sourceSnapshotReadyByAddress: {
+        [NORMALIZED_ADDRESS]: true,
+        [NORMALIZED_SECOND_ADDRESS]: true,
+      },
+    });
+    prepareMultiAddressTokenAssetsProjection({
+      addresses: [SECOND_ADDRESS, ADDRESS],
+      tokenDisplayMode: 'byAddress',
+    });
+
+    expect(
+      useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key].rows,
+    ).toEqual([]);
+    expect(
+      useTokenAssetsIndexStore.getState().multiAssetsAvailabilityByKey[key],
+    ).toBe('ready');
+    expect(useTokenIndexStore.getState().addressTokenIds).toEqual({
+      [NORMALIZED_ADDRESS]: [],
+      [NORMALIZED_SECOND_ADDRESS]: [],
+    });
+  });
+
+  it('does not freeze a refreshed address while another Home address is unindexed', async () => {
+    const { key } = await restoreUnindexedHomeProjection();
+    prepareMultiAddressTokenAssetsProjection({
+      addresses: [SECOND_ADDRESS, ADDRESS],
+      tokenDisplayMode: 'byAddress',
+    });
+    const updated = createToken('updated-token', { usd_value: 30 });
+
+    tokenListStore.setState({
+      tokenListMap: { [NORMALIZED_ADDRESS]: [updated] },
+      sourceSnapshotReadyByAddress: { [NORMALIZED_ADDRESS]: true },
+    });
+    prepareMultiAddressTokenAssetsProjection({
+      addresses: [SECOND_ADDRESS, ADDRESS],
+      tokenDisplayMode: 'byAddress',
+    });
+
+    expect(
+      useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key].rows,
+    ).toEqual([{ type: 'token', tokenId: buildTokenEntityId(updated) }]);
+    expect(
+      useTokenIndexStore.getState().addressTokenIds[NORMALIZED_SECOND_ADDRESS],
+    ).toBeUndefined();
   });
 
   it.each(['empty', 'outdated'] as const)(
