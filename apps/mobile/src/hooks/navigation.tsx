@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { Alert, AppState, StyleSheet, TouchableOpacity } from 'react-native';
+import { Alert, AppState, StyleSheet } from 'react-native';
 import { debounce, get, merge } from 'lodash';
 
 import type {
@@ -14,6 +14,7 @@ import {
   naviPush,
   naviReplace,
 } from '@/utils/navigation';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
 import type { AppRootName } from '@/constant/layout';
@@ -133,8 +134,7 @@ export function HeaderBackPressable({
   const themeMode = useGetBinaryMode();
   const { colors2024 } = apisTheme.getColors2024(themeMode);
   return (
-    <TouchableOpacity
-      activeOpacity={0.8}
+    <CustomTouchableOpacity
       {...touchableProps}
       style={[styles.backButtonStyle, style]}
       hitSlop={hitSlop}
@@ -144,7 +144,7 @@ export function HeaderBackPressable({
         height={24}
         color={tintColor || colors2024['neutral-body']}
       />
-    </TouchableOpacity>
+    </CustomTouchableOpacity>
   );
 }
 
@@ -172,8 +172,7 @@ export const useStackScreenConfig = () => {
         // headerTintColor: colors['neutral-bg-1'],
         headerTintColor: colors['neutral-title-1'],
         headerLeft: ({ tintColor }) => (
-          <TouchableOpacity
-            activeOpacity={0.8}
+          <CustomTouchableOpacity
             style={styles.backButtonStyle}
             hitSlop={24}
             onPress={navBack}>
@@ -182,7 +181,7 @@ export const useStackScreenConfig = () => {
               height={24}
               color={tintColor || colors['neutral-body']}
             />
-          </TouchableOpacity>
+          </CustomTouchableOpacity>
         ),
       };
 
