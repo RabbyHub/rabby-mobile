@@ -5,7 +5,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useIsFocused, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -13,8 +13,9 @@ import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { HeaderAccountSwitcher } from '@/components/AccountSwitcher/HeaderAccountSwitcher';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { Text } from '@/components/Typography';
+import RcIconHeaderBack from '@/assets/icons/header/back-cc.svg';
 import { RootNames } from '@/constant/layout';
-import { HeaderBackPressable } from '@/hooks/navigation';
+import { navBack } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import {
   type GetNestedScreenRouteProp,
@@ -152,14 +153,24 @@ function SwapBridgeNativeHeader({
   isScreenFocused: boolean;
   onTabPress: (tab: SwapBridgeTab) => void;
 }) {
-  const { styles } = useTheme2024({ getStyle });
+  const { colors2024, styles } = useTheme2024({ getStyle });
   const { top } = useSafeAreaInsets();
 
   return (
     <View style={[styles.headerOuter, { marginTop: top }]}>
       <View style={styles.headerInner}>
         <View style={styles.headerLeft}>
-          <HeaderBackPressable style={styles.headerBackButton} />
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={styles.headerBackButton}
+            hitSlop={10}
+            onPress={navBack}>
+            <RcIconHeaderBack
+              width={24}
+              height={24}
+              color={colors2024['neutral-body']}
+            />
+          </TouchableOpacity>
           <SwapBridgeHeaderTitle
             activeTab={activeTab}
             onTabPress={onTabPress}
@@ -426,6 +437,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexShrink: 0,
   },
   headerBackButton: {
+    alignItems: 'center',
+    flexDirection: 'row',
     marginLeft: 0,
     paddingLeft: 0,
   },
