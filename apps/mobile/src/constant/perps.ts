@@ -188,6 +188,8 @@ export const PERPS_CANDLE_INTERVALS = [
 ] as const;
 
 export type PerpsCandleInterval = (typeof PERPS_CANDLE_INTERVALS)[number];
+// Data-only extension. Keep the shared/Pro menu and persisted validator unchanged.
+export type PerpsCandleDataInterval = PerpsCandleInterval | '3d';
 
 export const DEFAULT_PERPS_CANDLE_INTERVAL: PerpsCandleInterval = '15m';
 

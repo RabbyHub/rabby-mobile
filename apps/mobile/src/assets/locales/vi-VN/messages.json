@@ -2763,7 +2763,7 @@
       },
       "PerpsDepositCard": {
         "deposit": "Nạp tiền",
-        "availableToTrade": "Có sẵn để giao dịch:",
+        "availableToTrade": "Khả dụng:",
         "swap": "Đổi"
       },
       "PerpsAccountSelectorPopup": {
@@ -2837,6 +2837,36 @@
       }
     },
     "perpsDetail": {
+      "simpleChart": {
+        "openInterest": "Hợp đồng mở",
+        "volume24h": "Khối lượng 24 giờ",
+        "intervalTitle": "Khung thời gian nến",
+        "intervalDescription": "Mỗi nến biểu thị khoảng thời gian đã chọn.",
+        "minutes": "Phút",
+        "hours": "Giờ",
+        "days": "Ngày",
+        "open": "Giá mở cửa",
+        "low": "Giá thấp nhất",
+        "high": "Giá cao nhất",
+        "close": "Giá đóng cửa",
+        "time": "Thời gian",
+        "change": "Biến động",
+        "changePercent": "Biến động (%)",
+        "averageEntry": "Giá vào lệnh TB",
+        "takeProfit": "Chốt lời",
+        "stopLoss": "Cắt lỗ",
+        "liquidation": "Giá thanh lý",
+        "all": "TẤT CẢ",
+        "source": "Được hỗ trợ bởi Hyperliquid. Biểu đồ giá do <tradingview>TradingView</tradingview> cung cấp.",
+        "resetChart": "Đặt lại biểu đồ",
+        "backToLatest": "Về dữ liệu mới nhất",
+        "switchToArea": "Chuyển sang biểu đồ vùng",
+        "switchToCandle": "Chuyển sang biểu đồ nến",
+        "showVolume": "Hiển thị khối lượng 24 giờ",
+        "showOpenInterest": "Hiển thị hợp đồng mở",
+        "buy": "Mua",
+        "sell": "Bán"
+      },
       "PerpEditLimitPriceTag": {
         "setLimitBuyPrice": "Đặt Giá Mua Giới Hạn",
         "setLimitSellPrice": "Đặt Giá Bán Giới Hạn",

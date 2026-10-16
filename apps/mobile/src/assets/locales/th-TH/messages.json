@@ -2821,7 +2821,7 @@
       },
       "PerpsDepositCard": {
         "deposit": "ฝากเงิน",
-        "availableToTrade": "พร้อมให้เทรด:",
+        "availableToTrade": "พร้อมใช้งาน:",
         "swap": "สวอป"
       },
       "PerpsAccountSelectorPopup": {
@@ -2895,6 +2895,36 @@
       }
     },
     "perpsDetail": {
+      "simpleChart": {
+        "openInterest": "มูลค่าสัญญาคงค้าง",
+        "volume24h": "ปริมาณซื้อขาย 24 ชม.",
+        "intervalTitle": "ช่วงเวลาแท่งเทียน",
+        "intervalDescription": "แท่งเทียนแต่ละแท่งแสดงช่วงเวลาที่เลือก",
+        "minutes": "นาที",
+        "hours": "ชั่วโมง",
+        "days": "วัน",
+        "open": "ราคาเปิด",
+        "low": "ราคาต่ำสุด",
+        "high": "ราคาสูงสุด",
+        "close": "ราคาปิด",
+        "time": "เวลา",
+        "change": "การเปลี่ยนแปลง",
+        "changePercent": "การเปลี่ยนแปลง (%)",
+        "averageEntry": "ราคาเข้าเฉลี่ย",
+        "takeProfit": "ทำกำไร",
+        "stopLoss": "ตัดขาดทุน",
+        "liquidation": "ราคาบังคับปิดสถานะ",
+        "all": "ทั้งหมด",
+        "source": "ให้บริการโดย Hyperliquid กราฟราคาให้บริการโดย <tradingview>TradingView</tradingview>",
+        "resetChart": "รีเซ็ตกราฟ",
+        "backToLatest": "กลับไปยังข้อมูลล่าสุด",
+        "switchToArea": "เปลี่ยนเป็นกราฟพื้นที่",
+        "switchToCandle": "เปลี่ยนเป็นกราฟแท่งเทียน",
+        "showVolume": "แสดงปริมาณซื้อขาย 24 ชั่วโมง",
+        "showOpenInterest": "แสดงมูลค่าสัญญาคงค้าง",
+        "buy": "ซื้อ",
+        "sell": "ขาย"
+      },
       "PerpEditLimitPriceTag": {
         "setLimitBuyPrice": "ตั้งราคา Limit สำหรับซื้อ",
         "setLimitSellPrice": "ตั้งราคา Limit สำหรับขาย",

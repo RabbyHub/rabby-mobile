@@ -203,18 +203,21 @@ export const PerpsPosition: React.FC<{
           )}
         </View>
         <View style={[styles.list, styles.pnlWrapper]}>
-          <Text style={styles.unrealizedPnlTitle}>
-            {t('page.perpsDetail.PerpsPosition.unrealizedPnl')}
-          </Text>
-          <Text
-            style={[
-              styles.unrealizedPnl,
-              positionData?.pnl >= 0 ? styles.green : styles.red,
-            ]}>
-            {positionData && positionData.pnl >= 0 ? '+' : '-'}$
-            {Math.abs(positionData?.pnl || 0).toFixed(2)}
-          </Text>
+          <View style={styles.pnlAmountGroup}>
+            <Text style={styles.unrealizedPnlTitle}>
+              {t('page.perpsDetail.PerpsPosition.unrealizedPnl')}
+            </Text>
+            <Text
+              style={[
+                styles.unrealizedPnl,
+                positionData?.pnl >= 0 ? styles.green : styles.red,
+              ]}>
+              {positionData && positionData.pnl >= 0 ? '+' : '-'}$
+              {Math.abs(positionData?.pnl || 0).toFixed(2)}
+            </Text>
+          </View>
           <View style={styles.positionValueWrapper}>
+            <View style={styles.positionValueDivider} />
             <TouchableOpacity
               onPress={() => {
                 showTipsPopup({
@@ -223,7 +226,7 @@ export const PerpsPosition: React.FC<{
                   buttonType: 'hyperliquid',
                 });
               }}>
-              <View style={styles.listItemMain}>
+              <View style={styles.positionValueLabel}>
                 <Text style={styles.label}>
                   {t('page.perpsDetail.PerpsPosition.size')}
                 </Text>
@@ -646,7 +649,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   header: {
-    paddingHorizontal: 4,
     alignItems: 'center',
     // marginBottom: 12,
     gap: 6,
@@ -682,8 +684,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
-    fontWeight: '500',
-    color: colors2024['neutral-foot'],
+    fontWeight: '700',
+    color: colors2024['neutral-body'],
     textAlign: 'center',
   },
   distanceCardWrapper: {
@@ -714,8 +716,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   unrealizedPnl: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 36,
-    lineHeight: 42,
+    fontSize: 28,
+    lineHeight: 36,
     fontWeight: '700',
     textAlign: 'center',
   },
@@ -726,8 +728,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     paddingTop: 16,
     marginTop: 16,
+  },
+  positionValueDivider: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     borderTopColor: colors2024['neutral-line'],
     borderTopWidth: 1,
+  },
+  positionValueLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   positionValueTitle: {
     fontFamily: 'SF Pro Rounded',
@@ -738,16 +751,20 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   positionValue: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
   },
   pnlWrapper: {
-    paddingVertical: 16,
+    paddingTop: 12,
+    paddingBottom: 16,
+    alignItems: 'flex-start',
+    paddingHorizontal: 12,
+  },
+  pnlAmountGroup: {
     alignItems: 'flex-start',
     gap: 4,
-    paddingHorizontal: 16,
   },
   list: {
     borderRadius: 16,

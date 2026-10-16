@@ -2758,7 +2758,7 @@
         "logout": "Log out"
       },
       "PerpsDepositCard": {
-        "availableToTrade": "Available to trade: ",
+        "availableToTrade": "Available: ",
         "deposit": "Deposit",
         "swap": "Swap"
       },
@@ -2806,6 +2806,36 @@
       }
     },
     "perpsDetail": {
+      "simpleChart": {
+        "openInterest": "Open interest",
+        "volume24h": "24h volume",
+        "intervalTitle": "Candle interval",
+        "intervalDescription": "Each candle represents the selected interval.",
+        "minutes": "Minutes",
+        "hours": "Hours",
+        "days": "Days",
+        "open": "Open",
+        "low": "Low",
+        "high": "High",
+        "close": "Close",
+        "time": "Time",
+        "change": "Change",
+        "changePercent": "Change (%)",
+        "averageEntry": "Avg. entry",
+        "takeProfit": "Take profit",
+        "stopLoss": "Stop loss",
+        "liquidation": "Liquidation",
+        "all": "ALL",
+        "source": "Powered by Hyperliquid. Price chart powered by <tradingview>TradingView.</tradingview>",
+        "resetChart": "Reset chart",
+        "backToLatest": "Back to latest",
+        "switchToArea": "Switch to area chart",
+        "switchToCandle": "Switch to candlestick chart",
+        "showVolume": "Show 24h volume",
+        "showOpenInterest": "Show open interest",
+        "buy": "Buy",
+        "sell": "Sell"
+      },
       "PerpsPosition": {
         "title": "Position",
         "unrealizedPnl": "Unrealized PNL",

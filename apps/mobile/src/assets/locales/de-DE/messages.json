@@ -2938,7 +2938,7 @@
       },
       "PerpsDepositCard": {
         "deposit": "Einzahlen",
-        "availableToTrade": "Verfügbar zum Handel:",
+        "availableToTrade": "Verfügbar:",
         "swap": "Tauschen"
       },
       "PerpsAccountSelectorPopup": {
@@ -3012,6 +3012,36 @@
       }
     },
     "perpsDetail": {
+      "simpleChart": {
+        "openInterest": "Offene Kontrakte",
+        "volume24h": "24h-Volumen",
+        "intervalTitle": "Kerzenintervall",
+        "intervalDescription": "Jede Kerze stellt das gewählte Zeitintervall dar.",
+        "minutes": "Minuten",
+        "hours": "Stunden",
+        "days": "Tage",
+        "open": "Eröffnung",
+        "low": "Tief",
+        "high": "Hoch",
+        "close": "Schluss",
+        "time": "Zeit",
+        "change": "Änderung",
+        "changePercent": "Änderung (%)",
+        "averageEntry": "Ø Einstiegspreis",
+        "takeProfit": "Take-Profit",
+        "stopLoss": "Stop-Loss",
+        "liquidation": "Liquidationspreis",
+        "all": "ALLE",
+        "source": "Bereitgestellt von Hyperliquid. Kurschart bereitgestellt von <tradingview>TradingView.</tradingview>",
+        "resetChart": "Chart zurücksetzen",
+        "backToLatest": "Zu den neuesten Daten",
+        "switchToArea": "Zum Flächenchart wechseln",
+        "switchToCandle": "Zum Kerzenchart wechseln",
+        "showVolume": "24h-Volumen anzeigen",
+        "showOpenInterest": "Offene Kontrakte anzeigen",
+        "buy": "Kauf",
+        "sell": "Verkauf"
+      },
       "PerpEditLimitPriceTag": {
         "setLimitBuyPrice": "Limit-Kaufpreis festlegen",
         "setLimitSellPrice": "Limit-Verkaufspreis festlegen",
