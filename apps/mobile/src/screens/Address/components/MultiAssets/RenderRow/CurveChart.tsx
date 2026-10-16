@@ -122,8 +122,7 @@ const ChartContent = memo(function ChartContent({
           shape={d3Shape.curveCatmullRom}
           style={[
             styles.relative,
-            (hideType === 'HIDE' || hideType === 'HALF_HIDE') &&
-              styles.balanceOpacity,
+            hideType === 'HIDE' && styles.balanceOpacity,
           ]}>
           <LineChart.Path showInactivePath={false} color={pathColor} width={2}>
             <LineChart.Gradient color={pathColor} />
@@ -199,11 +198,7 @@ export const MultiChart = memo(function MultiChart({
       onTouchStart={e => {
         e.stopPropagation();
       }}>
-      <View
-        style={[
-          styles.chartContainer,
-          hideType === 'HALF_HIDE' && styles.balanceOpacity,
-        ]}>
+      <View style={styles.chartContainer}>
         <LineChart.Provider data={chartsData}>
           <ChartHeader
             rawNetWorth={totalBalance}
@@ -421,10 +416,7 @@ const ChartHeader = React.memo(
               maxLength={24}
               lineHeight={42}
               duration={320}
-              style={[
-                styles.netWorth,
-                hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
-              ]}
+              style={styles.netWorth}
               fontSizeByLength={{
                 maxFontSize: MAX_NETWORTH_FS,
                 minFontSize: MIN_NETWORTH_FS,
@@ -491,10 +483,7 @@ const ChartHeader = React.memo(
             }}
             hitSlop={10}
             pressRetentionOffset={10}
-            style={[
-              styles.changeSection,
-              hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
-            ]}>
+            style={styles.changeSection}>
             {isHidden ? (
               <Text style={{ color: colors2024['neutral-title-1'] }}>***</Text>
             ) : (

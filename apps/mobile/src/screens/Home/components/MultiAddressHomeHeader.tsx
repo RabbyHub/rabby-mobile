@@ -108,11 +108,7 @@ function MultiPinnedAddressList({
   }, [addressListData?.length]);
 
   return (
-    <View
-      style={[
-        styles.accountList,
-        hideType === 'HALF_HIDE' ? styles.addressOpacity : null,
-      ]}>
+    <View style={styles.accountList}>
       <Animated.View
         entering={PINNED_ADDRESS_LIST_ENTERING}
         style={styles.accountListContent}>
@@ -375,9 +371,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flexDirection: 'column',
       gap: 8,
       width: '100%',
-    },
-    addressOpacity: {
-      opacity: 0.3,
     },
     hidden: {
       display: 'none',

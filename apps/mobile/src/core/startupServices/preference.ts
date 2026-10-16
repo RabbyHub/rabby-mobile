@@ -349,6 +349,10 @@ export class PreferenceService extends StoreServiceBase<
     this.mutateStore(draft => {
       delete draft.balanceMap;
       delete draft.testnetBalanceMap;
+      // Migrate the removed mode persisted by previous versions.
+      if ((draft.balanceHideType as string | undefined) === 'HALF_HIDE') {
+        draft.balanceHideType = BALANCE_HIDE_TYPE.HIDE;
+      }
       // Reset current account if the app did not close cleanly.
       if (draft.tempCurrentAccount) {
         draft.currentAccount = draft.tempCurrentAccount;
