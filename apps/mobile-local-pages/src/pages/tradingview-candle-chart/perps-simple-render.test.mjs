@@ -50,6 +50,8 @@ function scene({
   marketY = 110,
   historyPrice,
   rangeTo = 1,
+  positionPrice,
+  selectionColors = true,
 }) {
   const document = {
     createElement(name) {
@@ -121,6 +123,12 @@ function scene({
       entryBackground: neutral,
       entryText: '#fff',
       liquidation: '#FF9F43',
+      ...(selectionColors
+        ? {
+            selectionBackground: neutral === '#6A7587' ? '#000' : '#D3D8E0',
+            selectionText: neutral === '#6A7587' ? '#fff' : '#000',
+          }
+        : {}),
     },
     labels: { entry: 'Entry', tp: 'TP', sl: 'SL', liq: 'Liq' },
   };
@@ -139,7 +147,7 @@ function scene({
     prices: Object.fromEntries(
       ['entryPrice', 'tpPrice', 'slPrice', 'liquidationPrice'].map(k => [
         k,
-        selected?.close ?? 110,
+        positionPrice ?? selected?.close ?? 110,
       ]),
     ),
     chart: {
@@ -177,17 +185,46 @@ function scene({
   const labels = overlay.children.filter(n => 'simplePriceLabel' in n.dataset);
   const guides = overlay.children.filter(n => 'simplePriceLine' in n.dataset);
   const cross = overlay.children.filter(n => 'simpleCrosshair' in n.dataset);
-  for (const label of labels.filter(n =>
-    ['latest', 'selection'].includes(n.dataset.priceKind),
-  ))
-    assert.equal(label.style.background, config.colors.accent);
-  const hasCross = selected !== null && x >= 0 && x <= 340;
+  for (const label of labels) {
+    const isSelection =
+      label.dataset.priceKind === 'selection' ||
+      (label.dataset.priceKind === 'latest' && selected?.close === 110);
+    if (isSelection) {
+      assert.equal(
+        label.style.background,
+        config.colors.selectionBackground ?? config.colors.accent,
+      );
+      assert.equal(label.style.color, config.colors.selectionText ?? '#fff');
+      assert.equal(
+        Number.parseFloat(label.style.top) + 7,
+        selected.close - 110 + marketY,
+      );
+      assert.equal(label.style.height, '14px');
+      assert.equal(label.style.padding, '0 3px');
+      assert.equal(label.style.borderRadius, '4px');
+      assert.equal(label.style.fontSize, '10px');
+      assert.equal(label.style.lineHeight, '14px');
+      for (const other of labels.filter(n => n !== label))
+        assert.ok(Number(label.style.zIndex) > Number(other.style.zIndex));
+    } else if (label.dataset.priceKind === 'latest') {
+      assert.equal(label.style.background, config.colors.accent);
+    }
+  }
+  const hasCross =
+    selected !== null &&
+    x >= 0 &&
+    x <= 340 &&
+    selected.close - 110 + marketY >= 0 &&
+    selected.close - 110 + marketY <= 274;
   assert.equal(cross.length, hasCross ? 1 : 0);
   if (hasCross) {
     const line = cross[0].children[0];
     assert.equal(line.attributes.stroke, neutral);
     assert.equal(line.attributes['stroke-width'], '1');
     assert.equal(line.attributes['stroke-dasharray'], '1 1');
+    assert.ok(!line.attributes.d.includes('C '));
+    for (const label of labels.filter(n => n.style.zIndex === '2'))
+      assert.ok(Number(cross[0].style.zIndex) > Number(label.style.zIndex));
     assert.ok(
       line.attributes.d.startsWith(`M 0 ${selected.close - 110 + marketY} `),
     );
@@ -207,7 +244,7 @@ function scene({
   const latestLabel = labels.find(n => n.dataset.priceKind === 'latest');
   assert.equal(
     Number.parseFloat(latestLabel.style.top) + 7,
-    Math.min(267, Math.max(7, marketY)),
+    selected?.close === 110 ? marketY : Math.min(267, Math.max(7, marketY)),
   );
   const marketGuide = guides.find(n => n.dataset.priceKind === 'latest');
   if (marketGuide) {
@@ -236,6 +273,7 @@ function scene({
       assert.equal(guide.children[0].attributes['stroke-dasharray'], '4 2');
     }
   }
+  return { labels, guides, cross };
 }
 test('production Simple render pins market guides and preserves curved references and neutral crosshairs', () => {
   let count = 0;
@@ -295,6 +333,35 @@ test('production Simple render pins market guides and preserves curved reference
     count++;
   }
   assert.equal(count, 64);
+});
+
+test('held prices cover crowded labels without moving ordinary labels, including clipped edges', () => {
+  for (const style of ['candle', 'area'])
+    for (const neutral of ['#6A7587', '#BABEC5'])
+      for (const marketY of [0, 1, 7, 110, 267, 273, 274]) {
+        const options = {
+          style,
+          neutral,
+          direction: 'up',
+          samePrice: false,
+          marketY,
+          positionPrice: 110,
+        };
+        const ordinary = scene({ ...options, selection: null });
+        // Distinct prices closer than half a pixel must still have a straight
+        // selection guide above the fixed market guide and ordinary badges.
+        const held = scene({ ...options, selection: 0, historyPrice: 110.1 });
+        for (const label of held.labels.filter(
+          n => n.dataset.priceKind !== 'selection',
+        )) {
+          const original = ordinary.labels.find(
+            n => n.dataset.priceKind === label.dataset.priceKind,
+          );
+          assert.equal(label.style.top, original.style.top);
+        }
+        scene({ ...options, selection: 1 });
+        scene({ ...options, selection: 1, selectionColors: false });
+      }
 });
 
 // Execute the production formatter and emitter, with external libraries unused

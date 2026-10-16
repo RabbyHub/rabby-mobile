@@ -52,7 +52,7 @@ export const PerpsChart = React.memo(function PerpsChart({
   history: readonly { time: number; side: string }[];
 }) {
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const decimals = currentAssetCtx?.pxDecimals ?? 2;
   const config = useMemo<
     Omit<SimpleChartConfig, 'style' | 'range' | 'interval'>
@@ -64,6 +64,10 @@ export const PerpsChart = React.memo(function PerpsChart({
       colors: {
         background: colors2024['neutral-bg-0'],
         titleOutline: colors2024['neutral-bg-1'],
+        selectionBackground: isLight
+          ? colors2024['neutral-black']
+          : colors2024['neutral-body'],
+        selectionText: colors2024['neutral-contrast'],
         text: colors2024['neutral-title-1'],
         secondary: colors2024['neutral-secondary'],
         grid: colors2024['neutral-line'],
@@ -88,7 +92,7 @@ export const PerpsChart = React.memo(function PerpsChart({
         sell: t('page.perpsDetail.simpleChart.sell'),
       },
     }),
-    [colors2024, decimals, t],
+    [colors2024, decimals, isLight, t],
   );
   const fills = useMemo(
     () => (config.showTradeMarkers ? projectSimpleFills(history) : EMPTY_FILLS),

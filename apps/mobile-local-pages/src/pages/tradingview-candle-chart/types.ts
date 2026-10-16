@@ -108,6 +108,8 @@ export type SimpleChartConfig = {
   colors: {
     background: string;
     titleOutline?: string;
+    selectionBackground?: string;
+    selectionText?: string;
     text: string;
     grid: string;
     secondary: string;
