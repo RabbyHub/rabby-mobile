@@ -30,7 +30,6 @@ import {
   type PreparedSecurityActions,
 } from '../hooks/useActionSecurity';
 import { SecurityEngineError } from './SecurityEngine/SecurityEngineError';
-import type { ContextActionData } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import { apiKeyring, apiProvider, apiSecurityEngine } from '@/core/apis';
 import { parseSignTypedDataMessage } from './SignTypedDataExplain/parseSignTypedDataMessage';
 import { getDappSnapshot } from '@/core/serviceApi/dapp';
@@ -77,7 +76,6 @@ import {
   type SignMessageHighlightToken,
 } from './signMessageTokenizer';
 import { useSignMessageAddressData } from './useSignMessageAddressData';
-import { addSignMessageOriginFallback } from './signMessageOrigin';
 import { SignMessageTagProvider } from './SignMessageHighlighter';
 
 interface SignTypedDataProps {
@@ -348,7 +346,6 @@ export const SignTypedData = ({
     setPreparationError(false);
     retryParse();
   };
-  const isUnparsedAction = typedDataActionData?.action === null;
 
   if (error) {
     console.error('error', error);
@@ -572,14 +569,6 @@ export const SignTypedData = ({
     return requireData;
   };
 
-  const withOriginFallback = (ctx: ContextActionData) =>
-    addSignMessageOriginFallback(ctx, {
-      isUnparsedAction,
-      isInternalOrigin: params.session.origin === INTERNAL_REQUEST_ORIGIN,
-      message: parsedMessage,
-      origin: params.session.origin,
-    });
-
   const getSecurityEngineContext = async ({
     data,
     requireData,
@@ -593,7 +582,7 @@ export const SignTypedData = ({
         id: Number(data.chainId),
       })?.serverId;
     }
-    const baseCtx = await formatSecurityEngineContext({
+    return formatSecurityEngineContext({
       type: 'typed_data',
       actionData: data,
       requireData,
@@ -605,7 +594,6 @@ export const SignTypedData = ({
       },
       origin: params.session.origin,
     });
-    return withOriginFallback(baseCtx);
   };
 
   const handleIgnoreAllRules = () => {
