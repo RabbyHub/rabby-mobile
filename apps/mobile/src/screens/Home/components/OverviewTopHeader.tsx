@@ -21,7 +21,6 @@ import { matomoRequestEvent } from '@/utils/analytics';
 
 import RcIconEyeCC from '@/assets2024/icons/home/eye-cc.svg';
 import RcIconEyeCloseCC from '@/assets2024/icons/home/eye-close-cc.svg';
-import RcIconEyeHalfCloseCC from '@/assets2024/icons/home/eye-half-close-cc.svg';
 import { FeedbackHistoryHeaderEntry } from '@/components/Screenshot/FeedbackHistory/HeaderEntry';
 import {
   HOME_TOP_HEADER_SIZES,
@@ -107,13 +106,7 @@ export function TabsTopHeader(): JSX.Element {
   const [hideType, setHideType] = useHideBalance();
   const handleHideTypeChange = useMemoizedFn((event: GestureResponderEvent) => {
     event.stopPropagation();
-    if (hideType === 'HALF_HIDE') {
-      setHideType('HIDE');
-    } else if (hideType === 'HIDE') {
-      setHideType('SHOW');
-    } else {
-      setHideType('HALF_HIDE');
-    }
+    setHideType(hideType === 'HIDE' ? 'SHOW' : 'HIDE');
   });
   const { currency } = useCurrency();
   const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
@@ -240,13 +233,7 @@ export function TabsTopHeader(): JSX.Element {
           <TouchableOpacity
             style={[IS_ANDROID && { top: 2 }]}
             onPress={handleHideTypeChange}>
-            {hideType === 'HALF_HIDE' ? (
-              <RcIconEyeHalfCloseCC
-                color={colors2024['neutral-title-1']}
-                width={20}
-                height={20}
-              />
-            ) : hideType === 'HIDE' ? (
+            {hideType === 'HIDE' ? (
               <RcIconEyeCloseCC
                 color={colors2024['neutral-title-1']}
                 width={20}
