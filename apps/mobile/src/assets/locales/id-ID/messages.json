@@ -2647,7 +2647,7 @@
       },
       "PerpsDepositCard": {
         "deposit": "Setor",
-        "availableToTrade": "Tersedia untuk diperdagangkan:",
+        "availableToTrade": "Tersedia:",
         "swap": "Tukar"
       },
       "PerpsAccountSelectorPopup": {

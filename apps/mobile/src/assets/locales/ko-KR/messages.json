@@ -2646,7 +2646,7 @@
         "desc": "현재 무기한 선물 계정에서 로그아웃합니다. 이 주소로 다시 로그인하면 언제든지 복원할 수 있습니다."
       },
       "PerpsDepositCard": {
-        "availableToTrade": "거래 가능:",
+        "availableToTrade": "사용 가능:",
         "deposit": "입금",
         "swap": "스왑"
       },

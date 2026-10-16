@@ -2818,7 +2818,7 @@
         "desc": "你即將登出目前的永續合約帳戶，之後仍可使用此地址重新登入並恢復。"
       },
       "PerpsDepositCard": {
-        "availableToTrade": "可交易餘額：",
+        "availableToTrade": "可用：",
         "deposit": "入金",
         "swap": "兌換"
       },

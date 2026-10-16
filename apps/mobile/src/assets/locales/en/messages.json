@@ -2759,7 +2759,7 @@
         "logout": "Log out"
       },
       "PerpsDepositCard": {
-        "availableToTrade": "Available to trade: ",
+        "availableToTrade": "Available: ",
         "deposit": "Deposit",
         "swap": "Swap"
       },

@@ -2764,7 +2764,7 @@
       },
       "PerpsDepositCard": {
         "deposit": "Nạp tiền",
-        "availableToTrade": "Có sẵn để giao dịch:",
+        "availableToTrade": "Khả dụng:",
         "swap": "Đổi"
       },
       "PerpsAccountSelectorPopup": {

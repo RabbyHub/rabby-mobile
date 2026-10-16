@@ -2647,7 +2647,7 @@
       },
       "PerpsDepositCard": {
         "deposit": "Yatırma",
-        "availableToTrade": "Ticaret için mevcut:",
+        "availableToTrade": "Kullanılabilir:",
         "swap": "Takas"
       },
       "PerpsAccountSelectorPopup": {

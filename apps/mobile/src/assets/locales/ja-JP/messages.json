@@ -2696,7 +2696,7 @@
         "desc": "現在の無期限先物アカウントからログアウトします。このアドレスで再度ログインすれば、いつでも復元できます。"
       },
       "PerpsDepositCard": {
-        "availableToTrade": "取引可能:",
+        "availableToTrade": "利用可能:",
         "deposit": "入金",
         "swap": "スワップ"
       },
