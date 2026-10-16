@@ -1,4 +1,4 @@
-import { act, renderHook, cleanup } from '@testing-library/react-native';
+import { act, renderHook, cleanupAsync } from '@testing-library/react-native';
 import { AppState } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
 import type { Candle } from '@rabby-wallet/hyperliquid-sdk';
@@ -149,8 +149,8 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
         >;
       });
   });
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanupAsync();
     apisPerps.destroyPerpsSDK();
     unregister();
     jest.restoreAllMocks();
@@ -225,6 +225,187 @@ describe('Simple chart real preference/API/feed/controller integration', () => {
       }),
     );
   };
+
+  it.each(['loading', 'error'] as const)(
+    'hides viewport actions and ignores queued presses during Web %s',
+    async state => {
+      const hook = mount();
+      await settle();
+      const replacement = messages.filter(m => m.action === 'replace').at(-1)!;
+      act(() =>
+        hook.result.current.onSimpleEvent({
+          type: 'PERPS_SIMPLE_EVENT',
+          event: 'viewport',
+          identity: replacement.identity,
+          presentationSequence: replacement.sequence,
+          priceAxisSession: 1,
+          style: 'candle',
+          paneWidth: 310,
+          paneHeight: 274,
+          resetVisible: true,
+          latestVisible: true,
+        }),
+      );
+      expect(hook.result.current.resetVisible).toBe(true);
+      expect(hook.result.current.latestVisible).toBe(true);
+      const { reset, latest } = hook.result.current;
+      act(() => {
+        if (state === 'loading') hook.result.current.onChartLoading();
+        else hook.result.current.onChartError();
+      });
+      expect(hook.result.current.loading).toBe(true);
+      expect(hook.result.current.resetVisible).toBe(false);
+      expect(hook.result.current.latestVisible).toBe(false);
+      messages.length = 0;
+      act(() => {
+        reset();
+        latest();
+      });
+      expect(messages).toEqual([]);
+    },
+  );
+
+  it.each(['viewport-first', 'applied-first'])(
+    'waits for matching drawing and viewport without losing %s events',
+    async order => {
+      const hook = mount();
+      await settle();
+      hook.result.current.chartRef.current = {
+        sendSimpleMessage: message => messages.push(message),
+      } as TradingViewChartRef;
+      act(() => hook.result.current.onChartReady());
+      await settle();
+      const replacement = messages.filter(m => m.action === 'replace').at(-1)!;
+      const viewport = {
+        type: 'PERPS_SIMPLE_EVENT' as const,
+        event: 'viewport' as const,
+        identity: replacement.identity,
+        presentationSequence: replacement.sequence,
+        priceAxisSession: 1,
+        style: 'candle' as const,
+        paneWidth: 310,
+        paneHeight: 274,
+        resetVisible: true,
+        latestVisible: true,
+      };
+      const applied = {
+        type: 'PERPS_SIMPLE_EVENT' as const,
+        event: 'applied' as const,
+        identity: replacement.identity,
+        sequence: replacement.sequence,
+        referencePrice: null,
+      };
+      const events =
+        order === 'viewport-first' ? [viewport, applied] : [applied, viewport];
+      act(() => hook.result.current.onSimpleEvent(events[0]));
+      expect(hook.result.current.resetVisible).toBe(false);
+      expect(hook.result.current.latestVisible).toBe(false);
+      act(() => hook.result.current.onSimpleEvent(events[1]));
+      expect(hook.result.current.loading).toBe(false);
+      expect(hook.result.current.resetVisible).toBe(true);
+      expect(hook.result.current.latestVisible).toBe(true);
+      messages.length = 0;
+      act(() => {
+        hook.result.current.reset();
+        hook.result.current.latest();
+      });
+      expect(messages.map(m => m.action)).toEqual(['reset', 'latest']);
+      act(() =>
+        hook.result.current.onSimpleEvent({ ...viewport, resetVisible: false }),
+      );
+      expect(hook.result.current.resetVisible).toBe(false);
+      expect(hook.result.current.latestVisible).toBe(true);
+      act(() =>
+        hook.result.current.onSimpleEvent({
+          ...viewport,
+          latestVisible: false,
+        }),
+      );
+      expect(hook.result.current.resetVisible).toBe(true);
+      expect(hook.result.current.latestVisible).toBe(false);
+      act(() =>
+        hook.result.current.onSimpleEvent({
+          ...viewport,
+          presentationSequence: replacement.sequence - 1,
+        }),
+      );
+      expect(hook.result.current.latestVisible).toBe(false);
+      act(() =>
+        hook.result.current.onSimpleEvent({
+          ...viewport,
+          presentationSequence: replacement.sequence + 1,
+        }),
+      );
+      expect(hook.result.current.resetVisible).toBe(false);
+      expect(hook.result.current.latestVisible).toBe(false);
+    },
+  );
+
+  it('requires the current style and nonempty data, while daily lookup leaves chart actions available', async () => {
+    const hook = mount();
+    await settle();
+    const replacement = messages.filter(m => m.action === 'replace').at(-1)!;
+    const viewport = {
+      type: 'PERPS_SIMPLE_EVENT' as const,
+      event: 'viewport' as const,
+      identity: replacement.identity,
+      presentationSequence: replacement.sequence,
+      priceAxisSession: 1,
+      style: 'candle' as const,
+      paneWidth: 310,
+      paneHeight: 274,
+      resetVisible: true,
+      latestVisible: true,
+    };
+    act(() => hook.result.current.onSimpleEvent(viewport));
+    let resolveDaily!: (candles: Candle[]) => void;
+    fetchCandles = () =>
+      new Promise(resolve => {
+        resolveDaily = resolve;
+      });
+    publishShortHistory(hook, 1699000000);
+    await settle();
+    expect(hook.result.current.referenceLoading).toBe(true);
+    expect(hook.result.current.resetVisible).toBe(true);
+    expect(hook.result.current.latestVisible).toBe(true);
+    await act(async () => resolveDaily([raw('BTC', '1d')]));
+    act(() =>
+      hook.result.current.updatePreference({
+        ...hook.result.current.preference,
+        style: 'area',
+      }),
+    );
+    expect(hook.result.current.resetVisible).toBe(false);
+    act(() =>
+      hook.result.current.onSimpleEvent({ ...viewport, style: 'area' }),
+    );
+    expect(hook.result.current.resetVisible).toBe(true);
+    act(() =>
+      hook.result.current.onSimpleEvent({
+        ...viewport,
+        style: 'area',
+        paneHeight: 0,
+      }),
+    );
+    expect(hook.result.current.resetVisible).toBe(false);
+    hook.unmount();
+    resetPerpsCandleSourceSnapshotCacheForTests();
+    fetchCandles = async () => [];
+    const empty = mount('ETH');
+    await settle();
+    const emptyReplace = messages.filter(m => m.action === 'replace').at(-1)!;
+    act(() =>
+      empty.result.current.onSimpleEvent({
+        ...viewport,
+        identity: emptyReplace.identity,
+        presentationSequence: emptyReplace.sequence,
+        style: empty.result.current.preference.style,
+      }),
+    );
+    expect(empty.result.current.feed.status).toBe('empty');
+    expect(empty.result.current.resetVisible).toBe(false);
+    expect(empty.result.current.latestVisible).toBe(false);
+  });
 
   it('verifies short history via the same SDK, carries the source boundary and does not refetch on ticks', async () => {
     const hook = mount();

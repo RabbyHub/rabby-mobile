@@ -177,6 +177,29 @@ export function usePerpsSimpleChart({
     feed.identity === `${coin}:${preference.interval}` &&
     (feed.status === 'ready' || feed.status === 'empty');
 
+  // A ready feed can outlive its WebView. Retain early viewport events, but
+  // expose actions only once that exact presentation has been acknowledged.
+  const canUseViewport =
+    active &&
+    hasAppliedData &&
+    targetReady &&
+    feed.candles.length > 0 &&
+    applied?.identity === identity &&
+    pendingApplied.current?.sequence === applied.sequence &&
+    viewport.identity === identity &&
+    viewport.presentationSequence === applied.sequence &&
+    viewport.style === preference.style &&
+    Number.isFinite(viewport.paneWidth) &&
+    viewport.paneWidth > 0 &&
+    Number.isFinite(viewport.paneHeight) &&
+    viewport.paneHeight > 0;
+  const reset = useMemoizedFn(() => {
+    if (canUseViewport) send({ action: 'reset' });
+  });
+  const latest = useMemoizedFn(() => {
+    if (canUseViewport) send({ action: 'latest' });
+  });
+
   const axisGeneration = useMemo(
     () =>
       `${identity}:${active}:${webReady}:${targetReady}:${preference.style}:${
@@ -590,21 +613,13 @@ export function usePerpsSimpleChart({
       active && targetReady && selection ? selectionState?.timeText ?? '' : '',
     onSimpleEvent,
     onChartReady,
-    resetVisible:
-      active &&
-      targetReady &&
-      viewport.identity === identity &&
-      viewport.resetVisible,
-    latestVisible:
-      active &&
-      targetReady &&
-      viewport.identity === identity &&
-      viewport.latestVisible,
+    resetVisible: canUseViewport && viewport.resetVisible,
+    latestVisible: canUseViewport && viewport.latestVisible,
     paneWidth: viewport.paneWidth,
     paneHeight: viewport.paneHeight,
     priceAxisOwner,
     onPriceAxisCommand,
-    reset: () => send({ action: 'reset' }),
-    latest: () => send({ action: 'latest' }),
+    reset,
+    latest,
   };
 }
