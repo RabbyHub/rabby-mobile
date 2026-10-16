@@ -232,8 +232,9 @@ const INIT_PERPS_BUILD_FEE_RECEIVE_ADDRESS =
 export const PERPS_BUILD_FEE_RECEIVE_ADDRESS =
   INIT_PERPS_BUILD_FEE_RECEIVE_ADDRESS.toLowerCase();
 
-export const PERPS_BUILD_FEE = 20; // '0.02%'
-export const PERPS_EXCHANGE_FEE_NUMBER = 0.0002;
+// Hyperliquid builder fees use tenths of a basis point: 40 = 4 bps = 0.04%.
+export const PERPS_BUILD_FEE = 40;
+export const PERPS_EXCHANGE_FEE_NUMBER = PERPS_BUILD_FEE / 100000;
 
 export const PERPS_REFERENCE_CODE = 'RABBYWALLET';
 

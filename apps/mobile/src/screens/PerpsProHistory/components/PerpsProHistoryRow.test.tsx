@@ -168,7 +168,7 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
     ).toBeUndefined();
 
     fireEvent.press(screen.getByLabelText('page.perps.historyDetail.feeTitle'));
-    expect(onShowFeeExplanation).toHaveBeenCalledWith(false);
+    expect(onShowFeeExplanation).toHaveBeenCalledWith(false, row.feeSnapshot);
     expect(screen.queryByText('Perp')).toBeNull();
     expect(screen.getByText('S')).toBeTruthy();
     expect(screen.queryByText('page.perps.pro.history.sell')).toBeNull();
@@ -224,7 +224,7 @@ describe('PerpsProHistoryRowView Trade, Transaction and Funding', () => {
     );
     fireEvent.press(screen.getByLabelText('page.perps.historyDetail.feeTitle'));
 
-    expect(onShowFeeExplanation).toHaveBeenCalledWith(true);
+    expect(onShowFeeExplanation).toHaveBeenCalledWith(true, row.feeSnapshot);
   });
 
   it('renders Transaction Type and signed Amount without a navigation arrow', () => {

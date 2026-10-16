@@ -309,7 +309,9 @@ export const PerpsHistoryDetailPopup: React.FC<{
                   {fee ? (
                     <View style={styles.listItem}>
                       <TouchableOpacity
-                        onPress={() => showTradeFeeExplanation(isLiquidation)}>
+                        onPress={() =>
+                          showTradeFeeExplanation(isLiquidation, fill)
+                        }>
                         <View style={styles.listItemMain}>
                           <Text style={styles.label}>
                             {t('page.perps.historyDetail.fee')}

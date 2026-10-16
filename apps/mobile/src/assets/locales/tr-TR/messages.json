@@ -2579,7 +2579,6 @@
         "perps": "Perps",
         "sizeTips": "Ticaretinizin toplam değeri veya miktarı, teminat ve kaldıraç tarafından belirlenir.",
         "feeRabby": "Rabby Cüzdan",
-        "feeRabbyDiscount": "Sınırlı süreli işlem ücreti indirimi",
         "feeHyperliquid": "Hyperliquid",
         "feeTitle": "Ücret",
         "feeDesc": "İşlem yapıldığında hem <1>işlem ücretleri</1> hem de <2>builder ücretleri</2> uygulanır.",

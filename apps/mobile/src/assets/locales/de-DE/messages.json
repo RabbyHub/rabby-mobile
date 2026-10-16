@@ -2873,7 +2873,6 @@
         "feeHyperliquid": "Hyperliquid",
         "feeTitle": "Gebühr",
         "feeRabby": "Rabby Wallet",
-        "feeRabbyDiscount": "Zeitlich begrenzter Rabatt auf Handelsgebühren",
         "feeDesc": "Wenn Benutzer Trades platzieren, gelten sowohl <1>Handelsgebühren</1> als auch <2>Builder-Gebühren</2>.",
         "amount": "Betrag",
         "asset": "Vermögenswert",
