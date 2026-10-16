@@ -1,5 +1,8 @@
 import * as Sentry from '@sentry/react-native';
 import { AppState, Platform, type AppStateStatus } from 'react-native';
+import { getBuildNumber, getVersion } from 'react-native-device-info';
+import { logger } from '@/utils/logger';
+import type { DecryptDiagnosticEvent } from '@/core/utils/encryptorDiagnostics';
 
 export const WALLET_UNLOCK_STALL_THRESHOLD_MS = 20_000;
 
@@ -7,11 +10,13 @@ export type WalletUnlockDiagnosticStage =
   | 'unlock_capability_check'
   | 'keychain_instance_wait'
   | 'keychain_native_get'
+  | 'keychain_native_result'
   | 'system_auth_availability'
   | 'system_auth_prompt'
   | 'decrypt_password_payload'
   | 'plain_password_callback'
   | 'submit_password'
+  | 'unlock_state_check'
   | 'post_decrypt_keychain_rewrite'
   | 'password_modal'
   | 'ensure_keyring_runtime_ready';
@@ -24,6 +29,8 @@ type WalletUnlockDiagnosticData = {
   storage?: string;
   purpose?: number;
   runtimeReadyReason?: string;
+  hasStoredPasswordPayload?: boolean;
+  usedFallbackRabbitCode?: boolean;
 };
 
 type ActiveWalletUnlockAttempt = {
@@ -37,6 +44,7 @@ type ActiveWalletUnlockAttempt = {
   attemptData: WalletUnlockDiagnosticData;
   appState: AppStateStatus | null;
   joinedRequestCount: number;
+  version: { appVersion?: string; buildVersion?: string };
   reported: boolean;
   timer: ReturnType<typeof setTimeout> | null;
   appStateSubscription: { remove: () => void };
@@ -44,6 +52,28 @@ type ActiveWalletUnlockAttempt = {
 
 let nextAttemptId = 1;
 let activeAttempt: ActiveWalletUnlockAttempt | null = null;
+
+export function recordWalletUnlockPayloadDiagnostic(
+  attemptId: string | undefined,
+  candidateIndex: number,
+  candidateCount: number,
+  event: DecryptDiagnosticEvent,
+) {
+  if (!attemptId || activeAttempt?.id !== attemptId) return;
+  addUnlockBreadcrumb('wallet_unlock_payload', activeAttempt, {
+    candidateIndex,
+    candidateCount,
+    ...event,
+  });
+}
+
+function getAppVersionData() {
+  try {
+    return { appVersion: getVersion(), buildVersion: getBuildNumber() };
+  } catch {
+    return {};
+  }
+}
 
 function isAppActive(appState: AppStateStatus | null | undefined) {
   return appState === 'active';
@@ -54,14 +84,70 @@ function addUnlockBreadcrumb(
   attempt: ActiveWalletUnlockAttempt,
   data: Record<string, unknown> = {},
 ) {
-  Sentry.addBreadcrumb({
-    category: 'wallet.unlock',
-    level: 'info',
-    message,
-    data: {
-      unlockAttemptId: attempt.id,
-      ...data,
-    },
+  const metadata = {
+    unlockAttemptId: attempt.id,
+    stage: attempt.stage,
+    elapsedMs: Date.now() - attempt.startedAt,
+    platformVersion: Platform.Version,
+    ...attempt.version,
+    ...data,
+  };
+  try {
+    // The existing logger policy controls file output; never force logging on.
+    logger.info('[wallet-unlock-diagnostic]', { event: message, ...metadata });
+  } catch {
+    // Diagnostics must not change authentication results.
+  }
+  try {
+    Sentry.addBreadcrumb({
+      category: 'wallet.unlock',
+      level: 'info',
+      message,
+      data: metadata,
+    });
+  } catch {
+    // A telemetry failure must not interrupt unlock or attempt cleanup.
+  }
+}
+
+export function recordWalletUnlockDiagnosticFailure(
+  attemptId: string | undefined,
+  error: unknown,
+) {
+  const attempt = activeAttempt;
+  if (!attemptId || attempt?.id !== attemptId) {
+    return;
+  }
+  const code =
+    error && typeof error === 'object' && 'code' in error
+      ? error.code
+      : undefined;
+  const message = error instanceof Error ? error.message : '';
+  const knownCodes = [
+    'E_CRYPTO_FAILED',
+    'E_KEYSTORE_ACCESS_ERROR',
+    'E_KEYSTORE_ACCESS',
+    'E_AUTHENTICATION_FAILED',
+    'E_USER_CANCELLED',
+    'E_BIOMETRIC_CANCELLED',
+    'NIL_KEYCHAIN_OBJECT',
+    'BROKEN_BIOMETRICS_ENTRY',
+    'decrypt_fail',
+  ];
+  addUnlockBreadcrumb('wallet_unlock_failure', attempt, {
+    errorCode:
+      typeof code === 'string' && knownCodes.includes(code)
+        ? code
+        : 'unclassified',
+    errorCategory: /bad decrypt|padding|cipher|decrypt/i.test(message)
+      ? 'decryption'
+      : /keystore|invalidated|key permanently/i.test(message)
+      ? 'keystore'
+      : /cancel/i.test(message)
+      ? 'cancelled'
+      : /password/i.test(message)
+      ? 'password_or_vault'
+      : 'other',
   });
 }
 
@@ -87,26 +173,31 @@ function reportStalledAttempt(attempt: ActiveWalletUnlockAttempt, now: number) {
   }
 
   attempt.reported = true;
-  Sentry.captureMessage('wallet_unlock_stalled', {
-    level: 'warning',
-    fingerprint: ['wallet_unlock_stalled', attempt.stage],
-    tags: {
-      wallet_unlock_stage: attempt.stage,
-      platform: Platform.OS,
-    },
-    extra: {
-      unlockAttemptId: attempt.id,
-      currentStage: attempt.stage,
-      totalElapsedMs: now - attempt.startedAt,
-      stageElapsedMs: now - attempt.stageStartedAt,
-      stageActiveElapsedMs: attempt.stageActiveElapsedMs,
-      joinedRequestCount: attempt.joinedRequestCount,
-      appState: attempt.appState,
-      platformVersion: Platform.Version,
-      ...attempt.attemptData,
-      ...attempt.stageData,
-    },
-  });
+  try {
+    Sentry.captureMessage('wallet_unlock_stalled', {
+      level: 'warning',
+      fingerprint: ['wallet_unlock_stalled', attempt.stage],
+      tags: {
+        wallet_unlock_stage: attempt.stage,
+        platform: Platform.OS,
+      },
+      extra: {
+        unlockAttemptId: attempt.id,
+        currentStage: attempt.stage,
+        totalElapsedMs: now - attempt.startedAt,
+        stageElapsedMs: now - attempt.stageStartedAt,
+        stageActiveElapsedMs: attempt.stageActiveElapsedMs,
+        joinedRequestCount: attempt.joinedRequestCount,
+        appState: attempt.appState,
+        platformVersion: Platform.Version,
+        ...attempt.version,
+        ...attempt.attemptData,
+        ...attempt.stageData,
+      },
+    });
+  } catch {
+    // Reporting remains best-effort and at most once per attempt.
+  }
 }
 
 function scheduleAttemptWatchdog(attempt: ActiveWalletUnlockAttempt) {
@@ -180,6 +271,7 @@ export function beginWalletUnlockDiagnostics(data: WalletUnlockDiagnosticData) {
     attemptData: data,
     appState: AppState.currentState,
     joinedRequestCount: 0,
+    version: getAppVersionData(),
     reported: false,
     timer: null,
     appStateSubscription: { remove: () => {} },
@@ -204,7 +296,7 @@ export function markWalletUnlockDiagnosticStage(
   data: WalletUnlockDiagnosticData = {},
 ) {
   const attempt = activeAttempt;
-  if (!attemptId || !attempt || attempt.id !== attemptId || attempt.reported) {
+  if (!attemptId || !attempt || attempt.id !== attemptId) {
     return;
   }
 
