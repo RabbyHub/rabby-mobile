@@ -14,7 +14,10 @@ import {
   naviPush,
   naviReplace,
 } from '@/utils/navigation';
-import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
+import {
+  CustomTouchableOpacity,
+  type NativeViewAs,
+} from '@/components/CustomTouchableOpacity';
 
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
 import type { AppRootName } from '@/constant/layout';
@@ -127,14 +130,17 @@ export function navBack() {
 }
 
 export function HeaderBackPressable({
+  as,
   tintColor,
   style,
   ...touchableProps
-}: Pick<NativeStackHeaderLeftProps, 'tintColor'> & RNViewProps) {
+}: Pick<NativeStackHeaderLeftProps, 'tintColor'> &
+  RNViewProps & { as?: NativeViewAs }) {
   const themeMode = useGetBinaryMode();
   const { colors2024 } = apisTheme.getColors2024(themeMode);
   return (
     <CustomTouchableOpacity
+      as={as}
       {...touchableProps}
       style={[styles.backButtonStyle, style]}
       hitSlop={hitSlop}

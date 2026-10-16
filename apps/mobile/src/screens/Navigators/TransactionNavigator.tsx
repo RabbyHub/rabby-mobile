@@ -22,6 +22,7 @@ import { TransactionNavigatorParamList } from '@/navigation-type';
 import ApprovalsScreen from '../Approvals';
 import ReceiveScreen from '../Receive/Receive';
 import SwapBridgeScreen from '../SwapBridge';
+import { renderSwapBridgeHeader } from '../SwapBridge/SwapBridgeHeader';
 import { ConvertDustScreen } from '../ConvertDust';
 import { GasAccountScreen } from '../GasAccount';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
@@ -305,7 +306,7 @@ export default function TransactionNavigator() {
         options={mergeScreenOptions2024([
           {
             title: '',
-            headerTitle: () => null,
+            header: renderSwapBridgeHeader,
           },
         ])}
       />
@@ -316,7 +317,7 @@ export default function TransactionNavigator() {
         options={mergeScreenOptions2024([
           {
             title: '',
-            headerTitle: () => null,
+            header: renderSwapBridgeHeader,
           },
         ])}
       />
