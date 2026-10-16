@@ -1,28 +1,29 @@
-import { RcIconBridge } from '@/assets2024/singleHome';
-import { BSheetModal } from '@/components';
-import AutoLockView from '@/components/AutoLockView';
 import { toast } from '@/components2024/Toast';
 import {
   BOTTOM_BUTTON_DOUBLE_HEIGHT,
   BOTTOM_BUTTON_TOP_OFFSET,
   RootNames,
+  getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { RootStackParamsList } from '@/navigation-type';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { TokenMoreSheet, type TokenMoreAction } from './TokenMoreSheet';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { RcIconBridge, RcIconSend, RcIconSwap } from '@/assets2024/singleHome';
+import RcIconReceiveCC from '@/assets2024/singleHome/receive-cc.svg';
+import { RestoreRemovedTokenActions } from './RemovedToken';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React, { useCallback } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ColorValue, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import RcIconSendCC from '@/assets2024/singleHome/send.svg';
 import RcIconSwapCC from '@/assets2024/singleHome/swap.svg';
 import RcIconMoreCC from '@/assets/icons/home/more-cc.svg';
-import RcIconReceiveCC from '@/assets2024/singleHome/receive-cc.svg';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import { useSetAtom } from 'jotai';
 import { isFromBackAtom } from '@/screens/Swap/hooks/atom';
@@ -32,20 +33,18 @@ import { Text } from '@/components/Typography';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
-const MORE_SHEET_MODAL_SNAPPOINTS = (actionsNum: number) => [
-  80 + 70 * actionsNum,
-];
-
 export const TokenDetailBottomBtns = ({
   token,
   finalAccount,
   tokenSelectType,
   disableSwapBridge,
+  isRemoved = false,
 }: {
   token: ITokenItem;
   finalAccount: KeyringAccountWithAlias | null;
   tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
   disableSwapBridge?: boolean;
+  isRemoved?: boolean;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -59,20 +58,7 @@ export const TokenDetailBottomBtns = ({
   const isFromSwap =
     !!tokenSelectType && ['swapTo', 'swapFrom'].includes(tokenSelectType);
 
-  const toastDisabledAction = useCallback(() => {
-    toast.error(t('page.tokenDetail.customTestnetNotSupported'));
-  }, [t]);
-
-  const moreItems: {
-    title: string;
-    key: string;
-    Icon: React.ComponentType<import('react-native-svg').SvgProps>;
-    iconColor?: ColorValue;
-    onPress: () => void;
-    disabled?: boolean;
-    badge?: number;
-    badgeAlert?: boolean;
-  }[] = [
+  const moreItems: TokenMoreAction[] = [
     {
       key: 'Receive',
       title: t('page.home.services.receive'),
@@ -156,85 +142,107 @@ export const TokenDetailBottomBtns = ({
       },
     });
   };
-  const handleMore = () => {
-    moreSheetModalRef.current?.present();
-  };
+  if (isRemoved) {
+    return (
+      <RestoreRemovedTokenActions
+        token={token}
+        moreMenuActions={[
+          {
+            key: 'Send',
+            title: t('page.home.services.send'),
+            onPress: handleSend,
+            Icon: RcIconSend,
+          },
+          {
+            key: 'Swap',
+            title: t('page.home.services.swap'),
+            onPress: handleSwap,
+            Icon: RcIconSwap,
+            disabled: disableSwapBridge,
+          },
+          ...moreItems,
+        ]}
+      />
+    );
+  }
 
   return (
     <>
-      <View style={[styles.container]}>
-        <View style={styles.group}>
-          <View style={styles.leftActions}>
-            <Pressable style={styles.action} onPress={handleSend}>
-              <RcIconSendCC width={22} height={22} style={styles.actionIcon} />
-              <Text
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={[styles.actionText]}>
-                {t('page.home.services.send')}
-              </Text>
-            </Pressable>
+      <View style={styles.footer}>
+        <View style={styles.container}>
+          <View style={styles.group}>
+            <View style={styles.leftActions}>
+              <Pressable style={styles.action} onPress={handleSend}>
+                <RcIconSendCC
+                  width={22}
+                  height={22}
+                  style={styles.actionIcon}
+                />
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={[styles.actionText]}>
+                  {t('page.home.services.send')}
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[
+                  styles.action,
+                  styles.blueAction,
+                  disableSwapBridge && styles.disabledAction,
+                ]}
+                onPress={handleSwap}>
+                <RcIconSwapCC
+                  width={22}
+                  height={22}
+                  style={styles.actionIcon}
+                />
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={[styles.actionText]}>
+                  {t('page.home.services.swap')}
+                </Text>
+              </Pressable>
+            </View>
             <Pressable
-              style={[
-                styles.action,
-                styles.blueAction,
-                disableSwapBridge && styles.disabledAction,
-              ]}
-              onPress={handleSwap}>
-              <RcIconSwapCC width={22} height={22} style={styles.actionIcon} />
-              <Text
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={[styles.actionText]}>
-                {t('page.home.services.swap')}
-              </Text>
+              style={styles.moreAction}
+              accessibilityRole="button"
+              accessibilityLabel={t('page.tokenDetail.removed.more')}
+              onPress={() => moreSheetModalRef.current?.present()}>
+              <RcIconMoreCC
+                width={22}
+                height={22}
+                color={colors2024['neutral-body']}
+              />
             </Pressable>
           </View>
-          <Pressable style={[styles.moreAction]} onPress={handleMore}>
-            <RcIconMoreCC
-              width={22}
-              height={22}
-              color={colors2024['neutral-body']}
-            />
-          </Pressable>
         </View>
       </View>
-
-      <BSheetModal
-        ref={moreSheetModalRef}
-        backgroundStyle={styles.sheetModal}
-        handleStyle={styles.sheetModal}
-        snapPoints={MORE_SHEET_MODAL_SNAPPOINTS(moreItems.length)}>
-        <AutoLockView as="BottomSheetView" style={styles.list}>
-          {moreItems.map(item => (
-            <Pressable
-              style={[
-                styles.item,
-                styles.moreItem,
-                !!item?.disabled && styles.disabledAction,
-              ]}
-              onPress={
-                item.disabled
-                  ? toastDisabledAction
-                  : () => {
-                      moreSheetModalRef.current?.dismiss();
-                      item.onPress();
-                    }
-              }
-              key={item.key}>
-              <View style={[styles.sheetModalItemLeft]}>
-                <item.Icon width={40} height={40} color={item.iconColor} />
-                <Text style={styles.itemText}>{item.title}</Text>
-              </View>
-            </Pressable>
-          ))}
-        </AutoLockView>
-      </BSheetModal>
+      <TokenMoreSheet
+        modalRef={moreSheetModalRef}
+        items={moreItems}
+        onDisabledAction={() =>
+          toast.error(t('page.tokenDetail.customTestnetNotSupported'))
+        }
+      />
     </>
   );
 };
 
 const getStyles = createGetStyles2024(ctx => ({
+  footer: {
+    width: '100%',
+    height:
+      BOTTOM_BUTTON_TOP_OFFSET +
+      BOTTOM_BUTTON_DOUBLE_HEIGHT +
+      getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
   container: {
     position: 'relative',
     paddingHorizontal: 16,
@@ -268,21 +276,6 @@ const getStyles = createGetStyles2024(ctx => ({
   disabledAction: {
     opacity: 0.6,
   },
-  item: {
-    height: 40,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  moreItem: {
-    justifyContent: 'space-between',
-  },
-  sheetModalItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    flexShrink: 1,
-    width: '100%',
-  },
   actionIcon: {
     width: 22,
     height: 22,
@@ -295,23 +288,6 @@ const getStyles = createGetStyles2024(ctx => ({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: ctx.colors2024['neutral-line'],
-  },
-  itemText: {
-    marginLeft: 16,
-    color: ctx.colors2024['neutral-title-1'],
-
-    fontSize: 18,
-    lineHeight: 22,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-  },
-  list: {
-    gap: 40,
-    paddingTop: 16,
-    paddingHorizontal: 20,
-  },
-  sheetModal: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
   actionText: {
     color: ctx.colors2024['neutral-InvertHighlight'],
