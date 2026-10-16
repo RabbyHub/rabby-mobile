@@ -1,6 +1,6 @@
-import { fireEvent, render } from '@testing-library/react-native';
+import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, TouchableOpacity, UIManager } from 'react-native';
 import { navBack } from '@/hooks/navigation';
 
 import { PERPS_HEADER_HEIGHT } from '../constants';
@@ -167,5 +167,88 @@ describe('PerpsHeader', () => {
       position: 'absolute',
       right: 0,
     });
+  });
+
+  describe('back button touch handling', () => {
+    function touchEvent(pageX: number, pageY: number) {
+      let defaultPrevented = false;
+      const touch = { pageX, pageY };
+      return {
+        currentTarget: 1,
+        dispatchConfig: { registrationName: 'onResponderGrant' },
+        nativeEvent: { ...touch, touches: [touch], changedTouches: [touch] },
+        persist: jest.fn(),
+        preventDefault: () => {
+          defaultPrevented = true;
+        },
+        isDefaultPrevented: () => defaultPrevented,
+      };
+    }
+
+    function renderHeader() {
+      return render(
+        <PerpsHeader
+          activeMode="simple"
+          isModeSwitching={false}
+          onSelectMode={jest.fn()}
+          showBottomDivider={false}
+        />,
+      );
+    }
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+      jest.mocked(navBack).mockClear();
+      // Keep the real TouchableOpacity/Pressability, fixing only native layout.
+      jest
+        .spyOn(UIManager, 'measure')
+        .mockImplementation((_target, callback) => {
+          callback(0, 0, 24, 44, 20, 40);
+        });
+    });
+
+    afterEach(() => {
+      cleanup();
+      jest.clearAllTimers();
+      jest.useRealTimers();
+      jest.restoreAllMocks();
+    });
+
+    it('navigates once after an in-bounds 11-point movement and keeps its opacity', () => {
+      const screen = renderHeader();
+      const button = screen.getByTestId('perps-header-back');
+      const release = touchEvent(43, 62);
+
+      expect(
+        screen.UNSAFE_getByType(TouchableOpacity).props.activeOpacity,
+      ).toBe(0.8);
+      fireEvent(button, 'responderGrant', touchEvent(32, 62));
+      fireEvent(button, 'responderMove', release);
+      fireEvent(button, 'responderRelease', release);
+
+      expect(navBack).toHaveBeenCalledTimes(1);
+    });
+
+    it.each(['leaves the press region', 'loses the responder'])(
+      'cancels when the touch %s and accepts the next tap',
+      cancellation => {
+        const screen = renderHeader();
+        const button = screen.getByTestId('perps-header-back');
+
+        fireEvent(button, 'responderGrant', touchEvent(32, 62));
+        if (cancellation === 'leaves the press region') {
+          const outside = touchEvent(200, 200);
+          fireEvent(button, 'responderMove', outside);
+          fireEvent(button, 'responderRelease', outside);
+        } else {
+          fireEvent(button, 'responderTerminate', touchEvent(32, 62));
+        }
+        expect(navBack).not.toHaveBeenCalled();
+
+        fireEvent(button, 'responderGrant', touchEvent(32, 62));
+        fireEvent(button, 'responderRelease', touchEvent(32, 62));
+        expect(navBack).toHaveBeenCalledTimes(1);
+      },
+    );
   });
 });
