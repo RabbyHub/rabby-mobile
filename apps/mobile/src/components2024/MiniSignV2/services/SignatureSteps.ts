@@ -51,6 +51,8 @@ import { SUPPORT_1559_KEYRING_TYPE } from '@/constant/tx';
 import { normalizeTxParams } from '@/components/Approval/components/SignTx/util';
 import type { BlockInfo } from '@/core/apis/transactions';
 import { calcGasLimit } from '@/core/apis/transactions';
+import { isHyperEvmChain } from '@/utils/hyperEvm';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import {
   FailedCode,
   sendTransactionByMiniSignV2 as sendTransaction,
@@ -520,14 +522,17 @@ export class SignatureSteps {
       lastSelection: gasSelection?.lastSelection,
     });
 
-    const preparedBlock = requestETHRpc<BlockInfo>(
-      {
-        method: 'eth_getBlockByNumber',
-        params: ['latest', false],
-      },
-      chain.serverId,
-      account,
-    );
+    const preparedBlock =
+      isHyperEvmChain(chain.id) && account.type !== KEYRING_TYPE.GnosisKeyring
+        ? undefined
+        : requestETHRpc<BlockInfo>(
+            {
+              method: 'eth_getBlockByNumber',
+              params: ['latest', false],
+            },
+            chain.serverId,
+            account,
+          );
 
     const [
       _,
