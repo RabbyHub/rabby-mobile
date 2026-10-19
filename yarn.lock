@@ -45245,14 +45245,14 @@ __metadata:
 
 "warden.rn@patch:warden.rn@npm%3A2.2.1#~/.yarn/patches/warden.rn-npm-2.2.1-c1350e5489.patch":
   version: 2.2.1
-  resolution: "warden.rn@patch:warden.rn@npm%3A2.2.1#~/.yarn/patches/warden.rn-npm-2.2.1-c1350e5489.patch::version=2.2.1&hash=c7649d"
+  resolution: "warden.rn@patch:warden.rn@npm%3A2.2.1#~/.yarn/patches/warden.rn-npm-2.2.1-c1350e5489.patch::version=2.2.1&hash=669a5c"
   dependencies:
     "@babel/generator": "npm:7.28.5"
     "@babel/parser": "npm:7.28.5"
     "@babel/traverse": "npm:7.28.5"
     "@babel/types": "npm:7.28.5"
     metro-source-map: "npm:0.83.3"
-  checksum: 10/4cbe5907ced34a1bfebd0fd428204e522af63f43d145dc1efefb5ae3edbf1675bbe8975d204ac1f0bfd889240812b10ce37ea3d7d3a488a684def9668dc8c56b
+  checksum: 10/2f742bd64475691ca05067ad058caa2db505d0052bd8d4f06f4ddf8bd02e37343c0360da708bab19ac3cb428e6d85ed71b4a2316403fbae025354611d7ac44d6
   languageName: node
   linkType: hard
 
