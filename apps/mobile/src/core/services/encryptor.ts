@@ -8,6 +8,13 @@ import Aes from 'react-native-aes-crypto';
 // const AesForked = NativeModules.AesForked;
 
 import type { EncryptorAdapter } from '@rabby-wallet/service-keyring';
+import {
+  describeEncryptedEnvelope,
+  describeEncryptedInput,
+  emitDecryptDiagnostic,
+  type DecryptDiagnosticEvent,
+  type DecryptDiagnosticObserver,
+} from '../utils/encryptorDiagnostics';
 
 const algorithms = 'aes-256-cbc';
 const algorithms_pbkdf2 = 'sha256';
@@ -84,12 +91,59 @@ export default class RNEncryptor implements EncryptorAdapter {
    * @param {string} encryptedString - String to decrypt
    * @returns - Promise resolving to decrypted data object
    */
-  async decrypt(password: string, encryptedString: string) {
-    const encryptedData = JSON.parse(encryptedString);
-    const key = await _keyFromPassword(password, encryptedData.salt);
-    const data = await _decryptWithKey(encryptedData, key);
-
-    return JSON.parse(data);
+  async decrypt(
+    password: string,
+    encryptedString: string,
+    observer?: DecryptDiagnosticObserver,
+  ) {
+    if (!observer) {
+      const encryptedData = JSON.parse(encryptedString);
+      const key = await _keyFromPassword(password, encryptedData.salt);
+      const data = await _decryptWithKey(encryptedData, key);
+      return JSON.parse(data);
+    }
+    let phase: DecryptDiagnosticEvent['phase'] = 'envelope_json';
+    const emit = (outcome: DecryptDiagnosticEvent['outcome']) =>
+      emitDecryptDiagnostic(observer, () => ({ phase, outcome }));
+    emitDecryptDiagnostic(observer, () => ({
+      phase,
+      outcome: 'started',
+      ...describeEncryptedInput(encryptedString),
+    }));
+    try {
+      const encryptedData = JSON.parse(encryptedString);
+      emit('succeeded');
+      emitDecryptDiagnostic(observer, () => ({
+        phase: 'envelope_shape',
+        outcome: 'succeeded',
+        ...describeEncryptedEnvelope(encryptedData),
+      }));
+      phase = 'derive_key';
+      emit('started');
+      const key = await _keyFromPassword(password, encryptedData.salt);
+      emit('succeeded');
+      phase = 'decrypt_cipher';
+      emit('started');
+      const data = await _decryptWithKey(encryptedData, key);
+      emit('succeeded');
+      phase = 'plaintext_json';
+      emit('started');
+      const decrypted = JSON.parse(data);
+      emit('succeeded');
+      return decrypted;
+    } catch (error) {
+      emitDecryptDiagnostic(observer, () => ({
+        phase,
+        outcome: 'failed',
+        errorKind:
+          error instanceof SyntaxError
+            ? 'syntax'
+            : error instanceof TypeError
+            ? 'type'
+            : 'other',
+      }));
+      throw error;
+    }
   }
 
   async decryptWithDetail(password: string, encryptedString: string) {

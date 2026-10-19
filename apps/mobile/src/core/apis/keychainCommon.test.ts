@@ -36,16 +36,26 @@ function makeBrokenBiometricsNativeState() {
 
 function loadKeychainCommon({
   getGenericPasswordError,
+  decryptError,
+  promptError,
+  fallbackSucceeds = false,
   nativeDebugState = makeBrokenBiometricsNativeState(),
 }: {
-  getGenericPasswordError: Error;
+  getGenericPasswordError?: Error;
+  decryptError?: Error;
+  promptError?: Error;
+  fallbackSucceeds?: boolean;
   nativeDebugState?: Record<string, unknown>;
 }) {
   jest.resetModules();
 
   const keychainModule = {
     getGenericPassword: jest.fn(async () => {
-      throw getGenericPasswordError;
+      if (getGenericPasswordError) throw getGenericPasswordError;
+      return {
+        password: 'fixture-encrypted-payload',
+        storage: 'KeystoreAESGCM_NoAuth',
+      };
     }),
     setGenericPassword: jest.fn(async () => true),
     resetGenericPassword: jest.fn(async () => true),
@@ -66,6 +76,33 @@ function loadKeychainCommon({
     SECURITY_RULES: { AUTOMATIC_UPGRADE: 'automatic-upgrade' },
   };
   const toastShow = jest.fn();
+  const markStage = jest.fn();
+  const recordPayload = jest.fn();
+  const decrypt = jest.fn(
+    async (
+      _code: string,
+      _payload: string,
+      observer?: (event: {
+        phase: string;
+        outcome: string;
+        errorKind?: string;
+      }) => void,
+    ) => {
+      const fail =
+        decryptError && !(fallbackSucceeds && _code === 'RABBY_MOBILE_CODE');
+      observer?.({
+        phase: 'envelope_json',
+        outcome: fail ? 'failed' : 'succeeded',
+        ...(fail ? { errorKind: 'syntax' } : {}),
+      });
+      if (fail) throw decryptError;
+      return { password: 'fixture-plain-password' };
+    },
+  );
+  const simplePrompt = jest.fn(async () => {
+    if (promptError) throw promptError;
+    return { success: true };
+  });
 
   jest.doMock('react-native', () => ({
     Platform: { OS: 'android', Version: 34 },
@@ -79,7 +116,11 @@ function loadKeychainCommon({
   }));
   jest.doMock('react-native-biometrics', () => ({
     __esModule: true,
-    default: jest.fn(),
+    default: jest.fn(() => ({ simplePrompt })),
+  }));
+  jest.doMock('react-native-device-info', () => ({
+    __esModule: true,
+    default: { isPinOrFingerprintSet: jest.fn(async () => true) },
   }));
   jest.doMock('@/utils/i18n', () => ({
     __esModule: true,
@@ -103,7 +144,7 @@ function loadKeychainCommon({
   jest.doMock('@/core/serviceApi/appEncryptor', () => ({
     appEncryptorApi: {
       encrypt: jest.fn(async () => 'encrypted'),
-      decrypt: jest.fn(async () => ({})),
+      decrypt,
     },
   }));
   jest.doMock('@/core/serviceApi/preference', () => ({
@@ -123,7 +164,8 @@ function loadKeychainCommon({
     isNonProductionDiagnosticsEnabled: false,
   }));
   jest.doMock('@/utils/walletUnlockDiagnostics', () => ({
-    markWalletUnlockDiagnosticStage: jest.fn(),
+    markWalletUnlockDiagnosticStage: markStage,
+    recordWalletUnlockPayloadDiagnostic: recordPayload,
   }));
 
   let module: KeychainCommonModule | undefined;
@@ -131,10 +173,126 @@ function loadKeychainCommon({
     module = require('./keychainCommon');
   });
 
-  return { module: module!, keychainModule, toastShow };
+  return {
+    module: module!,
+    keychainModule,
+    toastShow,
+    markStage,
+    simplePrompt,
+    recordPayload,
+    decrypt,
+  };
 }
 
 describe('core/apis/keychainCommon', () => {
+  it.each([false, true])(
+    'keeps candidate order/result and records each candidate (fallback success: %s)',
+    async fallbackSucceeds => {
+      const failure = new SyntaxError('synthetic private error');
+      const { module, keychainModule, recordPayload, decrypt } =
+        loadKeychainCommon({
+          decryptError: failure,
+          fallbackSucceeds,
+        });
+      module.makeSecureKeyChainInstance({ salt: 'fixture-salt' });
+      const api = module.createBusinessKeychainApi({
+        keychainModule: keychainModule as unknown as Parameters<
+          KeychainCommonModule['createBusinessKeychainApi']
+        >[0]['keychainModule'],
+        debugNativeModuleName: DEBUG_MODULE_NAME,
+        sourceLabel: 'test',
+      });
+      const request = api.requestGenericPassword({
+        purpose: module.RequestGenericPurpose.DECRYPT_PWD,
+        walletUnlockDiagnosticsAttemptId: 'fixture-attempt',
+        shouldAttachTrustedVaultKeyString: false,
+        skipPostDecryptKeychainRewrite: true,
+      });
+      if (fallbackSucceeds)
+        await expect(request).resolves.toMatchObject({ actionSuccess: true });
+      else await expect(request).rejects.toBe(failure);
+      expect(decrypt.mock.calls.map(call => call[0])).toEqual([
+        'fixture-salt',
+        'RABBY_MOBILE_CODE',
+      ]);
+      expect(recordPayload).toHaveBeenCalledWith('fixture-attempt', 1, 2, {
+        phase: 'envelope_json',
+        outcome: 'failed',
+        errorKind: 'syntax',
+      });
+      expect(recordPayload).toHaveBeenCalledWith(
+        'fixture-attempt',
+        2,
+        2,
+        expect.objectContaining({
+          phase: 'envelope_json',
+          outcome: fallbackSucceeds ? 'succeeded' : 'failed',
+        }),
+      );
+      expect(JSON.stringify(recordPayload.mock.calls)).not.toContain(
+        'fixture-plain-password',
+      );
+      expect(JSON.stringify(recordPayload.mock.calls)).not.toContain(
+        'synthetic private error',
+      );
+      expect(keychainModule.setGenericPassword).not.toHaveBeenCalled();
+      expect(keychainModule.resetGenericPassword).not.toHaveBeenCalled();
+    },
+  );
+  it.each(['native', 'prompt', 'payload', 'wallet', 'success'] as const)(
+    'keeps diagnostics at the actual %s boundary without changing the request result',
+    async boundary => {
+      const failure = new Error('fixture failure');
+      const { module, keychainModule, markStage } = loadKeychainCommon({
+        getGenericPasswordError: boundary === 'native' ? failure : undefined,
+        promptError: boundary === 'prompt' ? failure : undefined,
+        decryptError: boundary === 'payload' ? failure : undefined,
+      });
+      module.makeSecureKeyChainInstance({ salt: 'fixture-salt' });
+      const api = module.createBusinessKeychainApi({
+        keychainModule: keychainModule as unknown as Parameters<
+          KeychainCommonModule['createBusinessKeychainApi']
+        >[0]['keychainModule'],
+        debugNativeModuleName: DEBUG_MODULE_NAME,
+        sourceLabel: 'test',
+      });
+      const onPlainPassword = jest.fn(async () => {
+        if (boundary === 'wallet') throw failure;
+      });
+      const request = api.requestGenericPassword({
+        purpose: module.RequestGenericPurpose.DECRYPT_PWD,
+        walletUnlockDiagnosticsAttemptId: 'fixture-attempt',
+        shouldAttachTrustedVaultKeyString: false,
+        skipPostDecryptKeychainRewrite: true,
+        onPlainPassword,
+      });
+      if (boundary === 'success') {
+        await expect(request).resolves.toMatchObject({ actionSuccess: true });
+      } else {
+        await expect(request).rejects.toBe(failure);
+      }
+      const finalStage = {
+        native: 'keychain_native_get',
+        prompt: 'system_auth_prompt',
+        payload: 'decrypt_password_payload',
+        wallet: 'plain_password_callback',
+        success: 'post_decrypt_keychain_rewrite',
+      }[boundary];
+      expect(markStage.mock.calls.at(-1)?.[1]).toBe(finalStage);
+      expect(
+        markStage.mock.calls.every(([id]) => id === 'fixture-attempt'),
+      ).toBe(true);
+      expect(JSON.stringify(markStage.mock.calls)).not.toContain(
+        'fixture-plain-password',
+      );
+      expect(JSON.stringify(markStage.mock.calls)).not.toContain(
+        'fixture-encrypted-payload',
+      );
+      expect(keychainModule.setGenericPassword).not.toHaveBeenCalled();
+      expect(keychainModule.resetGenericPassword).not.toHaveBeenCalled();
+    },
+  );
+
   it('summarizeKeychainDebugState strips stored credentials', () => {
     const { module } = loadKeychainCommon({
       getGenericPasswordError: new Error('unrelated'),
