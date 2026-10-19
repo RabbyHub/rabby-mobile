@@ -11,11 +11,17 @@ function createStorage() {
 }
 
 function loadLocalStorageArchive({
-  isNonPublicProductionEnv,
+  exportEnabled,
   writeFile = jest.fn(async () => undefined),
+  latestLogArchive = null,
 }: {
-  isNonPublicProductionEnv: boolean;
+  exportEnabled: boolean;
   writeFile?: jest.Mock;
+  latestLogArchive?: {
+    name: string;
+    path: string;
+    cleanupPaths: string[];
+  } | null;
 }) {
   jest.resetModules();
 
@@ -25,8 +31,17 @@ function loadLocalStorageArchive({
   const unlink = jest.fn(async () => undefined);
   const createZipArchive = jest.fn(async () => undefined);
   const shareLocalFile = jest.fn(async () => ({ dismissed: false }));
+  const mkdir = jest.fn(async () => undefined);
+  const prepareLatestAppLogArchiveForSharing = jest.fn(
+    async () => latestLogArchive,
+  );
 
-  jest.doMock('@/constant', () => ({ isNonPublicProductionEnv }));
+  jest.doMock('@/constant/env', () => ({
+    IS_LOCAL_STORAGE_EXPORT_ENABLED: exportEnabled,
+  }));
+  jest.doMock('@/utils/logging/archiveShare', () => ({
+    prepareLatestAppLogArchiveForSharing,
+  }));
   jest.doMock('@/databases/constant', () => ({
     getRabbyAppDbName: () => 'rabby.db',
     getRabbyAppDbPath: () => '/documents/rabby.db',
@@ -60,7 +75,7 @@ function loadLocalStorageArchive({
         : [],
     ),
     isNativeZipArchiveAvailable: jest.fn(() => true),
-    mkdir: jest.fn(async () => undefined),
+    mkdir,
     writeFile,
     createZipArchive,
     unlink,
@@ -73,7 +88,15 @@ function loadLocalStorageArchive({
 
   return {
     module: module as LocalStorageArchiveModule,
-    mocks: { createZipArchive, exists, shareLocalFile, unlink, writeFile },
+    mocks: {
+      createZipArchive,
+      exists,
+      mkdir,
+      prepareLatestAppLogArchiveForSharing,
+      shareLocalFile,
+      unlink,
+      writeFile,
+    },
   };
 }
 
@@ -83,17 +106,18 @@ describe('local storage archive', () => {
     jest.resetModules();
   });
 
-  it('rejects production exports before touching local storage', async () => {
+  it('rejects disabled exports before touching local storage or app logs', async () => {
     const { module, mocks } = loadLocalStorageArchive({
-      isNonPublicProductionEnv: false,
+      exportEnabled: false,
     });
 
     await expect(module.shareCurrentLocalStorageArchive()).rejects.toThrow(
-      'Local storage export is unavailable in production builds.',
+      'Local storage export is unavailable in this build.',
     );
     expect(mocks.exists).not.toHaveBeenCalled();
     expect(mocks.writeFile).not.toHaveBeenCalled();
     expect(mocks.shareLocalFile).not.toHaveBeenCalled();
+    expect(mocks.prepareLatestAppLogArchiveForSharing).not.toHaveBeenCalled();
   });
 
   it('removes every attempted raw MMKV dump when a write fails', async () => {
@@ -104,8 +128,13 @@ describe('local storage archive', () => {
       .mockResolvedValueOnce(undefined)
       .mockRejectedValueOnce(writeFailure);
     const { module, mocks } = loadLocalStorageArchive({
-      isNonPublicProductionEnv: true,
+      exportEnabled: true,
       writeFile,
+      latestLogArchive: {
+        name: 'snapshot.zip',
+        path: '/tmp/snapshot.zip',
+        cleanupPaths: ['/tmp/snapshot.zip'],
+      },
     });
 
     await expect(module.shareCurrentLocalStorageArchive()).rejects.toBe(
@@ -121,5 +150,77 @@ describe('local storage archive', () => {
     );
     expect(mocks.createZipArchive).not.toHaveBeenCalled();
     expect(mocks.shareLocalFile).not.toHaveBeenCalled();
+    expect(mocks.unlink).toHaveBeenCalledWith('/tmp/snapshot.zip');
+  });
+
+  it('includes the latest log zip and cleans generated files after sharing', async () => {
+    jest.spyOn(Date, 'now').mockReturnValue(123);
+    const { module, mocks } = loadLocalStorageArchive({
+      exportEnabled: true,
+      latestLogArchive: {
+        name: 'snapshot.zip',
+        path: '/tmp/snapshot.zip',
+        cleanupPaths: ['/tmp/snapshot.zip'],
+      },
+    });
+    const result = await module.shareCurrentLocalStorageArchive();
+    expect(result).toMatchObject({ appLogArchiveCount: 1, mmkvDumpCount: 2 });
+    expect(mocks.createZipArchive).toHaveBeenCalledWith(
+      '/tmp/rabby-local-storage-export/rabby-local-storage-123.zip',
+      expect.arrayContaining([
+        {
+          sourcePath: '/tmp/snapshot.zip',
+          archivePath: 'app-logs/snapshot.zip',
+        },
+      ]),
+    );
+    expect(mocks.unlink).toHaveBeenCalledWith('/tmp/snapshot.zip');
+    expect(mocks.unlink).toHaveBeenCalledWith(
+      '/tmp/rabby-local-storage-export/rabby-local-storage-123.zip',
+    );
+  });
+
+  it('can export storage when no app logs exist', async () => {
+    const { module, mocks } = loadLocalStorageArchive({ exportEnabled: true });
+    await expect(
+      module.shareCurrentLocalStorageArchive(),
+    ).resolves.toMatchObject({ appLogArchiveCount: 0 });
+    expect(mocks.shareLocalFile).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['mkdir', 'createZipArchive', 'shareLocalFile'] as const)(
+    'cleans the temporary log snapshot when %s fails',
+    async operation => {
+      const { module, mocks } = loadLocalStorageArchive({
+        exportEnabled: true,
+        latestLogArchive: {
+          name: 'snapshot.zip',
+          path: '/tmp/snapshot.zip',
+          cleanupPaths: ['/tmp/snapshot.zip'],
+        },
+      });
+      const error = new Error('export failed');
+      mocks[operation].mockRejectedValueOnce(error);
+      await expect(module.shareCurrentLocalStorageArchive()).rejects.toBe(
+        error,
+      );
+      expect(mocks.unlink).toHaveBeenCalledWith('/tmp/snapshot.zip');
+    },
+  );
+
+  it('does not remove a retained log archive after sharing is dismissed', async () => {
+    const { module, mocks } = loadLocalStorageArchive({
+      exportEnabled: true,
+      latestLogArchive: {
+        name: 'retained.zip',
+        path: '/applogs/retained.zip',
+        cleanupPaths: [],
+      },
+    });
+    mocks.shareLocalFile.mockResolvedValueOnce({ dismissed: true });
+    await expect(
+      module.shareCurrentLocalStorageArchive(),
+    ).resolves.toMatchObject({ dismissed: true });
+    expect(mocks.unlink).not.toHaveBeenCalledWith('/applogs/retained.zip');
   });
 });

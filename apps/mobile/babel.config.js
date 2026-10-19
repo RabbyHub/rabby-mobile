@@ -25,9 +25,26 @@ module.exports = api => {
   const resolvedBuildEnv = inputBuildEnv || 'production';
   const resolvedBuildChannel = inputBuildChannel || 'selfhost-reg';
   const shouldEnableRozenite = process.env.WITH_ROZENITE === 'true';
+  const localStorageExportInput =
+    process.env.RABBY_MOBILE_ENABLE_LOCAL_STORAGE_EXPORT;
+  if (
+    localStorageExportInput &&
+    !['true', 'false'].includes(localStorageExportInput)
+  ) {
+    throw new Error(
+      'RABBY_MOBILE_ENABLE_LOCAL_STORAGE_EXPORT must be true or false',
+    );
+  }
+  const shouldEnableLocalStorageExport = localStorageExportInput
+    ? localStorageExportInput === 'true'
+    : isDevTransform ||
+      resolvedBuildChannel === 'selfhost-reg' ||
+      resolvedBuildEnv !== 'production';
   const shouldStripConsole =
-    inputBuildEnv === 'production' ||
-    (!inputBuildEnv && ['appstore', 'selfhost'].includes(resolvedBuildChannel));
+    !shouldEnableLocalStorageExport &&
+    (inputBuildEnv === 'production' ||
+      (!inputBuildEnv &&
+        ['appstore', 'selfhost'].includes(resolvedBuildChannel)));
   const moduleLoadingMode =
     process.env.RABBY_MOBILE_MODULE_LOADING_MODE || 'lazy';
   if (!['eager', 'lazy'].includes(moduleLoadingMode)) {
@@ -54,6 +71,7 @@ module.exports = api => {
       moduleLoadingMode,
       regressionScenarioImplExt,
       shouldEnableRozenite,
+      shouldEnableLocalStorageExport,
       shouldDeferStartupProfilerWorker,
       shouldInlineDevDynamicImports,
     }),
@@ -79,6 +97,8 @@ module.exports = api => {
             ? 'true'
             : 'false',
           'process.env.RABBY_MOBILE_MODULE_LOADING_MODE': moduleLoadingMode,
+          'process.env.RABBY_MOBILE_ENABLE_LOCAL_STORAGE_EXPORT':
+            shouldEnableLocalStorageExport ? 'true' : 'false',
           'process.env.RABBY_STARTUP_PROFILER_DEFER_WORKER':
             shouldDeferStartupProfilerWorker ? 'true' : 'false',
           'process.env.WITH_ROZENITE': shouldEnableRozenite ? 'true' : 'false',

@@ -20,12 +20,23 @@ on:
         required: true
         type: boolean
         default: true
+      ENABLE_LOCAL_STORAGE_EXPORT:
+        description: 'Diagnostic build only: enable sensitive local-storage export and app logging'
+        required: true
+        type: boolean
+        default: false
       UPLOAD_TO_GOOGLE_PLAY_INTERNAL:
         description: 'Upload the appstore AAB to Google Play internal track as a draft release'
         required: true
         type: boolean
         default: false
   workflow_call:
+    inputs:
+      ENABLE_LOCAL_STORAGE_EXPORT:
+        description: 'Diagnostic build only: enable sensitive local-storage export and app logging'
+        type: boolean
+        required: false
+        default: false
     secrets:
       RABBY_MOBILE_ANDROID_KEY_STORE:
         required: true
@@ -141,6 +152,7 @@ jobs:
           RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64: ${{ secrets.RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64 }}
           buildchannel: ${{ inputs.buildchannel }}
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
+          RABBY_MOBILE_ENABLE_LOCAL_STORAGE_EXPORT: ${{ inputs.ENABLE_LOCAL_STORAGE_EXPORT && 'true' || 'false' }}
           # see more details on https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
           GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GITHUB_ACTOR: ${{ github.actor }}
