@@ -49,27 +49,38 @@ export const RightMore: React.FC<{
       content={
         <View style={styles.menu}>
           <Pressable
-            style={styles.menuItem}
+            style={({ pressed }) => [
+              styles.menuItem,
+              pressed && styles.menuItemPressed,
+            ]}
             accessibilityRole="button"
             onPress={handleFavorite}>
-            <Text style={styles.favoriteText}>
-              {t(
-                isPinned
-                  ? 'page.tokenDetail.action.unfavorite'
-                  : 'page.tokenDetail.action.favorite',
-              )}
-            </Text>
-            <RcFavorite
-              width={20}
-              height={20}
-              color={colors2024['orange-default']}
-              fill={isPinned ? 'currentColor' : 'none'}
-              stroke={isPinned ? 'none' : colors2024['orange-default']}
-              strokeWidth={1.5}
-            />
+            {({ pressed }) => (
+              <>
+                <Text
+                  style={[styles.favoriteText, pressed && styles.pressedText]}>
+                  {t(
+                    isPinned
+                      ? 'page.tokenDetail.action.unfavorite'
+                      : 'page.tokenDetail.action.favorite',
+                  )}
+                </Text>
+                <RcFavorite
+                  width={20}
+                  height={20}
+                  color={colors2024['orange-default']}
+                  fill={isPinned ? 'currentColor' : 'none'}
+                  stroke={isPinned ? 'none' : colors2024['orange-default']}
+                  strokeWidth={1.5}
+                />
+              </>
+            )}
           </Pressable>
           <Pressable
-            style={styles.menuItem}
+            style={({ pressed }) => [
+              styles.menuItem,
+              pressed && styles.menuItemPressed,
+            ]}
             accessibilityRole="button"
             onPress={() => {
               setVisible(false);
@@ -135,6 +146,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  menuItemPressed: {
+    backgroundColor: colors2024['neutral-bg-2'],
   },
   favoriteText: {
     color: isLight
