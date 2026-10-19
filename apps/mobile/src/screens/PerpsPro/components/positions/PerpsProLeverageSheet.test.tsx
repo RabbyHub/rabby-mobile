@@ -693,8 +693,7 @@ it.each(['android', 'ios'] as const)(
       }).props.style,
     );
     expect(inputStyle).toMatchObject({
-      fontFamily:
-        platform === 'android' ? 'SF-Pro-Rounded-Bold' : 'SF Pro Rounded',
+      fontFamily: platform === 'android' ? 'SF-Pro-Rounded-Bold' : 'ui-rounded',
       fontSize: 36,
       fontVariant: ['tabular-nums'],
       height: platform === 'android' ? 54 : 42,

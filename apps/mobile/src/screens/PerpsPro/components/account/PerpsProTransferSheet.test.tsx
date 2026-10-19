@@ -185,7 +185,7 @@ describe('PerpsProTransferSheet', () => {
       const style = StyleSheet.flatten(input.props.style);
       expect(style).toMatchObject({
         fontFamily:
-          platform === 'android' ? 'SF-Pro-Rounded-Heavy' : 'SF Pro Rounded',
+          platform === 'android' ? 'SF-Pro-Rounded-Heavy' : 'ui-rounded',
         fontSize: 36,
         height: 82,
         padding: 0,
@@ -198,7 +198,7 @@ describe('PerpsProTransferSheet', () => {
         });
       } else {
         expect(style.lineHeight).toBe(42);
-        expect(style.fontWeight).toBe('900');
+        expect(style.fontWeight).toBe('800');
         expect(style.includeFontPadding).toBeUndefined();
         expect(style.textAlignVertical).toBeUndefined();
       }

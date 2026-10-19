@@ -1,3 +1,4 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Platform,
@@ -571,10 +572,9 @@ const styles = StyleSheet.create({
   },
   videoTimeText: {
     minWidth: 38,
-    fontFamily: 'SF Pro Rounded',
+    ...RoundedFontStyles.medium,
     fontSize: 12,
     lineHeight: 14,
-    fontWeight: '500',
     color: '#fff',
     textAlign: 'center',
   },

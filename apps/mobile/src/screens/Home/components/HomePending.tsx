@@ -1,3 +1,4 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 /* eslint-disable react-native/no-inline-styles */
 import { View } from 'react-native';
 import { useEffect, useRef } from 'react';
@@ -45,10 +46,9 @@ export const HomePendingBadge = ({ number }: { number: number }) => {
           position: 'absolute',
           left: 9,
           top: 3,
-          fontFamily: 'SF Pro Rounded',
+          ...RoundedFontStyles.bold,
           fontSize: 12,
           lineHeight: 16,
-          fontWeight: '700',
         }}>
         {number}
       </Text>

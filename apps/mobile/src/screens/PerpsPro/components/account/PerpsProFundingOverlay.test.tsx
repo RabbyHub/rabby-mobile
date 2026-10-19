@@ -168,7 +168,7 @@ describe('PerpsProFundingOverlay', () => {
       expect(style).toMatchObject({
         fontSize: 28,
         fontFamily:
-          platform === 'android' ? 'SF-Pro-Rounded-Bold' : 'SF Pro Rounded',
+          platform === 'android' ? 'SF-Pro-Rounded-Bold' : 'ui-rounded',
         paddingTop: 0,
         paddingBottom: 0,
       });
@@ -183,7 +183,7 @@ describe('PerpsProFundingOverlay', () => {
       } else {
         expect(style).toEqual({
           ...base,
-          fontFamily: 'SF Pro Rounded',
+          fontFamily: 'ui-rounded',
           fontWeight: '700',
         });
       }

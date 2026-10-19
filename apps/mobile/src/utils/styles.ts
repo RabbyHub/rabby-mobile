@@ -1,10 +1,5 @@
 import { AppColorsVariants, AppColors2024Variants } from '@/constant/theme';
-import { IS_IOS } from '@/core/native/utils';
-import {
-  FontNames,
-  FontWeightEnum,
-  getFontWeightType,
-} from '@/core/utils/fonts';
+import { FontNames, getRoundedFontStyle } from '@/core/utils/fonts';
 import {
   ImageStyle,
   ScaledSize,
@@ -219,50 +214,10 @@ export function mutateStyles<T extends NamedStyles<any>>(input: T): T {
         console.debug(`[mutateStyles] ${key} fontFamily:`, tInput.fontFamily);
       }
 
-      const fwTypeResult = getFontWeightType(fontWeight);
-
       // like sf pro rounded
       if (lcFontFamily && /^sf(.?)pro(.?)rounded$/i.test(lcFontFamily)) {
-        switch (fwTypeResult.supertype) {
-          case FontWeightEnum.heavy: {
-            if (IS_IOS) {
-              tInput.fontFamily = 'SF Pro Rounded';
-            } else {
-              tInput.fontFamily = FontNames.sf_pro_rounded_heavy;
-              delete tInput.fontWeight;
-            }
-            break;
-          }
-          case FontWeightEnum.bold: {
-            if (IS_IOS) {
-              tInput.fontFamily = 'SF Pro Rounded';
-            } else {
-              tInput.fontFamily = FontNames.sf_pro_rounded_bold;
-              delete tInput.fontWeight;
-            }
-            break;
-          }
-          case FontWeightEnum.medium: {
-            if (IS_IOS) {
-              tInput.fontFamily = 'SF Pro Rounded';
-            } else {
-              tInput.fontFamily = FontNames.sf_pro_rounded_medium;
-              delete tInput.fontWeight;
-            }
-            break;
-          }
-          case FontWeightEnum.normal:
-          default: {
-            if (IS_IOS) {
-              tInput.fontFamily = 'SF Pro Rounded';
-            } else {
-              tInput.fontFamily = FontNames.sf_pro_rounded_regular;
-              delete tInput.fontWeight;
-            }
-            break;
-          }
-        }
-      } else if (lcFontFamily && /sf(.?)pro(.?)/i.test(lcFontFamily)) {
+        Object.assign(tInput, getRoundedFontStyle(fontWeight));
+      } else if (lcFontFamily && /^sf(.?)pro$/i.test(lcFontFamily)) {
         tInput.fontFamily = FontNames.sf_pro;
       }
 
