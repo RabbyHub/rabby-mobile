@@ -21,7 +21,7 @@ function createBridge() {
     searchDevices: jest.fn(),
     getPassphraseState: jest.fn(),
     evmGetPublicKey: jest.fn(),
-    getFeatures: jest.fn(),
+    getDeviceState: jest.fn(),
     receivePin: jest.fn(),
     receivePassphrase: jest.fn(),
     cancel: jest.fn(),
@@ -132,10 +132,10 @@ describe('OneKeyKeyring signTypedData', () => {
       resolveInit = resolve;
     });
     bridge.init.mockReturnValue(initPromise);
-    bridge.getFeatures.mockResolvedValue({
+    bridge.getDeviceState.mockResolvedValue({
       success: true,
       payload: {
-        device_id: 'device-id',
+        identity: { deviceId: 'device-id' },
       },
     });
     const keyring = new OneKeyKeyring({ bridge });
@@ -144,7 +144,7 @@ describe('OneKeyKeyring signTypedData', () => {
     const devicePromise = keyring.trySearchDevice();
     await Promise.resolve();
 
-    expect(bridge.getFeatures).not.toHaveBeenCalled();
+    expect(bridge.getDeviceState).not.toHaveBeenCalled();
 
     resolveInit();
 
@@ -152,7 +152,45 @@ describe('OneKeyKeyring signTypedData', () => {
       connectId: 'connect-id',
       deviceId: 'device-id',
     });
-    expect(bridge.getFeatures).toHaveBeenCalledWith('connect-id');
+    expect(bridge.getDeviceState).toHaveBeenCalledWith('connect-id');
+  });
+
+  it.each(['V1', 'V2'])(
+    'initializes a discovered %s device before requiring its identity',
+    async protocol => {
+      const bridge = createBridge();
+      bridge.searchDevices.mockResolvedValue({
+        success: true,
+        payload: [{ connectId: 'connect-id', deviceId: null }],
+      });
+      bridge.getDeviceState.mockResolvedValue({
+        success: true,
+        payload: { protocol, identity: { deviceId: 'device-id' } },
+      });
+      const keyring = new OneKeyKeyring({ bridge });
+
+      await expect(keyring.trySearchDevice()).resolves.toEqual({
+        connectId: 'connect-id',
+        deviceId: 'device-id',
+      });
+    },
+  );
+
+  it('rejects a failed identity read instead of using the connection id as device identity', async () => {
+    const bridge = createBridge();
+    bridge.searchDevices.mockResolvedValue({
+      success: true,
+      payload: [{ connectId: 'connect-id', deviceId: null }],
+    });
+    bridge.getDeviceState.mockResolvedValue({
+      success: false,
+      payload: { error: 'Device disconnected' },
+    });
+    const keyring = new OneKeyKeyring({ bridge });
+
+    await expect(keyring.trySearchDevice()).rejects.toThrow(
+      'Device disconnected',
+    );
   });
 
   it('rejects null typed-data fields with a readable error before hardware signing', async () => {

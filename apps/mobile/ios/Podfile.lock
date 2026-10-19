@@ -5,7 +5,7 @@ PODS:
   - AppAuth/Core (1.7.6)
   - AppAuth/ExternalUserAgent (1.7.6):
     - AppAuth/Core
-  - BleUtils (0.1.4):
+  - BleUtils (0.1.9):
     - boost
     - DoubleConversion
     - fast_float
@@ -3830,7 +3830,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   AppAuth: d4f13a8fe0baf391b2108511793e4b479691fb73
-  BleUtils: f228539f8c2f29e6488b523f933cad2d0f306856
+  BleUtils: f95cb912173ecf075f64258bad7ff0a23f62f1bb
   boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
   BVLinearGradient: 880f91a7854faff2df62518f0281afb1c60d49a3
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
