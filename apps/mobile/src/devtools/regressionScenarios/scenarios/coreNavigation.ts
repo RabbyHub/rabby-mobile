@@ -60,6 +60,7 @@ import {
   startMainRuntimeProfile,
   waitForScenarioAssertion,
 } from './utils';
+import { assertPublicSessionScenarioReady } from './publicSessionPrecondition';
 
 const DEFAULT_FUNDED_TEST_CHAIN = CHAINS_ENUM.POLYGON;
 const DEFAULT_BRIDGE_TO_CHAIN = CHAINS_ENUM.ARBITRUM;
@@ -2231,15 +2232,34 @@ export async function executeRegressionScenario(
 
   if (context.command.scenario === 'home-assets') {
     await context.waitForNavigation();
-    await ensureScenarioWalletUnlocked();
+    const access = assertPublicSessionScenarioReady('home-assets');
     context.report('precondition-ready', {
-      walletUnlocked: true,
+      ...access,
       accountCount: getSelectedBalanceAddressesSnapshot().length,
     });
     context.report('action-started', {
       action: context.command.action,
     });
     await openHomeAssets(context);
+    context.report('postcondition-ready', {
+      route: navigationRef.getCurrentRoute()?.name || null,
+    });
+    return;
+  }
+
+  if (context.command.scenario === 'token-detail') {
+    await context.waitForNavigation();
+    assertPublicSessionScenarioReady('token-detail');
+    const accounts = await getScenarioAccounts();
+    // Account metadata can load asynchronously; do not navigate if the
+    // authenticated browsing session expired while it was being prepared.
+    const access = assertPublicSessionScenarioReady('token-detail');
+    context.report('precondition-ready', {
+      ...access,
+      accountCount: accounts.length,
+    });
+    context.report('action-started', { action: context.command.action });
+    await openTokenDetail(context, accounts[0]!);
     context.report('postcondition-ready', {
       route: navigationRef.getCurrentRoute()?.name || null,
     });
@@ -2307,9 +2327,6 @@ export async function executeRegressionScenario(
       await openSingleAddress(context, singleAddressAccount);
       break;
     }
-    case 'token-detail':
-      await openTokenDetail(context, account);
-      break;
     case 'send-receive':
       await openSendReceive(context, account);
       break;
