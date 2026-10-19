@@ -52,6 +52,7 @@ import { customTestnetTokenToTokenItem } from '@/utils/token';
 import { mergeTokenSecurityFields } from '@/utils/tokenSecurityFlags';
 import {
   getTokenDetailRequestKey,
+  getTokenDetailBalanceStatus,
   useTokenDetailTokenInfo,
 } from './useTokenDetailTokenInfo';
 export type { RelatedDeFiType, TokenFromAddressItem } from './types';
@@ -185,12 +186,12 @@ const TokenDetailContent = () => {
   });
   // History/search entry points pass amount: 0 as a placeholder, not as a
   // fetched balance. Normal asset-list entries keep showing their real cache.
-  const balanceStatus =
-    needUseCacheToken && !baseTokenInfo
-      ? baseTokenInitialLoading
-        ? 'loading'
-        : 'unavailable'
-      : 'ready';
+  const balanceStatus = getTokenDetailBalanceStatus({
+    needUseCacheToken,
+    hasTokenInfo: !!baseTokenInfo,
+    initialLoading: baseTokenInitialLoading,
+    routeTokenAmount: token.amount,
+  });
   const [manualBaseTokenRefreshing, setManualBaseTokenRefreshing] =
     React.useState(false);
 

@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react-native';
 import type { ITokenItem } from '@/store/tokens';
 import {
+  getTokenDetailBalanceStatus,
   getTokenDetailRequestKey,
   useTokenDetailTokenInfo,
 } from './useTokenDetailTokenInfo';
@@ -27,6 +28,61 @@ it('normalizes the address but keeps token and chain identity in the key', () =>
       isCustomTestnetToken: false,
     }),
   ).not.toBe(requestKey());
+});
+
+it.each([
+  {
+    label: 'asset-list cached balance is ready immediately',
+    input: {
+      needUseCacheToken: true,
+      hasTokenInfo: false,
+      initialLoading: true,
+      routeTokenAmount: 12.5,
+    },
+    expected: 'ready',
+  },
+  {
+    label: 'history placeholder amount still shows loading',
+    input: {
+      needUseCacheToken: true,
+      hasTokenInfo: false,
+      initialLoading: true,
+      routeTokenAmount: 0,
+    },
+    expected: 'loading',
+  },
+  {
+    label: 'failed placeholder becomes unavailable',
+    input: {
+      needUseCacheToken: true,
+      hasTokenInfo: false,
+      initialLoading: false,
+      routeTokenAmount: 0,
+    },
+    expected: 'unavailable',
+  },
+  {
+    label: 'authoritative token info is ready',
+    input: {
+      needUseCacheToken: true,
+      hasTokenInfo: true,
+      initialLoading: true,
+      routeTokenAmount: 0,
+    },
+    expected: 'ready',
+  },
+  {
+    label: 'non-cache entry is ready',
+    input: {
+      needUseCacheToken: false,
+      hasTokenInfo: false,
+      initialLoading: true,
+      routeTokenAmount: 0,
+    },
+    expected: 'ready',
+  },
+] as const)('$label', ({ input, expected }) => {
+  expect(getTokenDetailBalanceStatus(input)).toBe(expected);
 });
 
 it.each([0, 12.5])('accepts a successful real balance of %s', async amount => {
