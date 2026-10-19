@@ -35,3 +35,206 @@ index 7d8f8e64fc0f53a730da8d3ffa4a7c1f85a53f28..aa26f6200e896d6c8b4453f4a7bab693
                  # Check if it contains the RCTNewArchEnabled key
                  if info_plist["RCTNewArchEnabled"] and info_plist["RCTNewArchEnabled"] == new_arch_enabled
                      next
+diff --git a/React/Views/RCTFont.h b/React/Views/RCTFont.h
+--- a/React/Views/RCTFont.h
++++ b/React/Views/RCTFont.h
+@@ -22,6 +22,21 @@ RCT_EXTERN void RCTSetDefaultFontHandler(RCTFontHandler handler);
+ RCT_EXTERN BOOL RCTHasFontHandlerSet(void);
+ RCT_EXTERN RCTFontWeight RCTGetFontWeight(UIFont *font);
+ 
++/**
++ * Resolve Rabby's historical SF font aliases through public system-font APIs.
++ * Returns nil for other families so their normal React Native resolution is unchanged.
++ * Both renderers share this resolver; no bundled Apple font or global default-font
++ * handler is required. An omitted weight preserves a single-weight alias's weight.
++ */
++RCT_EXTERN UIFont *RCTFontWithSystemFontAlias(
++    NSString *family,
++    CGFloat size,
++    RCTFontWeight weight,
++    BOOL hasExplicitWeight,
++    BOOL italic,
++    BOOL condensed,
++    NSArray<NSDictionary *> *features);
++
+ @interface RCTFont : NSObject
+ 
+ /**
+diff --git a/React/Views/RCTFont.mm b/React/Views/RCTFont.mm
+--- a/React/Views/RCTFont.mm
++++ b/React/Views/RCTFont.mm
+@@ -10,6 +10,104 @@
+ #import "RCTLog.h"
+ 
+ #import <CoreText/CoreText.h>
++#import <objc/runtime.h>
++
++static char RCTSystemFontAliasKey;
++
++UIFont *RCTFontWithSystemFontAlias(
++    NSString *family,
++    CGFloat size,
++    RCTFontWeight weight,
++    BOOL hasExplicitWeight,
++    BOOL italic,
++    BOOL condensed,
++    NSArray<NSDictionary *> *features)
++{
++  static NSDictionary<NSString *, NSNumber *> *singleWeightAliases;
++  static NSCache<NSArray *, UIFont *> *baseFontCache;
++  static dispatch_once_t onceToken;
++  dispatch_once(&onceToken, ^{
++    singleWeightAliases = @{
++      @"SFProRounded-Regular" : @(UIFontWeightRegular),
++      @"SFProRounded-Medium" : @(UIFontWeightMedium),
++      @"SFProRounded-Bold" : @(UIFontWeightBold),
++      @"SFProRounded-Heavy" : @(UIFontWeightHeavy),
++    };
++    baseFontCache = [NSCache new];
++    baseFontCache.countLimit = 256;
++  });
++
++  NSNumber *aliasWeight = family ? singleWeightAliases[family] : nil;
++  BOOL rounded = [family isEqualToString:@"SF Pro Rounded"] || aliasWeight != nil;
++  if (!rounded && ![family isEqualToString:@"SF Pro"]) {
++    return nil;
++  }
++
++  if (aliasWeight && !hasExplicitWeight) {
++    weight = aliasWeight.doubleValue;
++  }
++  if (rounded) {
++    // Match the four previously embedded fonts, rather than introducing new
++    // weights. In particular, Rabby's 900 means Heavy, not system Black.
++    const UIFontWeight availableWeights[] = {
++        UIFontWeightRegular, UIFontWeightMedium, UIFontWeightBold, UIFontWeightHeavy};
++    UIFontWeight closestWeight = availableWeights[0];
++    for (UIFontWeight candidate : availableWeights) {
++      if (fabs(candidate - weight) < fabs(closestWeight - weight)) {
++        closestWeight = candidate;
++      }
++    }
++    weight = closestWeight;
++  }
++
++  NSString *logicalFamily = rounded ? @"SF Pro Rounded" : @"SF Pro";
++  NSArray *cacheKey = @[logicalFamily, @(size), @(weight)];
++  UIFont *font = [baseFontCache objectForKey:cacheKey];
++  BOOL preservesRoundedDesign = rounded;
++  if (!font) {
++    font = [UIFont systemFontOfSize:size weight:weight];
++    if (rounded) {
++      UIFontDescriptor *descriptor =
++          [font.fontDescriptor fontDescriptorWithDesign:UIFontDescriptorSystemDesignRounded];
++      UIFont *roundedFont = descriptor ? [UIFont fontWithDescriptor:descriptor size:size] : nil;
++      preservesRoundedDesign = roundedFont != nil;
++      font = roundedFont ?: font;
++    }
++    if (!rounded || preservesRoundedDesign) {
++      [baseFontCache setObject:font forKey:cacheKey];
++    }
++  }
++
++  if (italic || condensed) {
++    UIFontDescriptorSymbolicTraits traits = font.fontDescriptor.symbolicTraits;
++    if (italic) {
++      traits |= UIFontDescriptorTraitItalic;
++    }
++    if (condensed) {
++      traits |= UIFontDescriptorTraitCondensed;
++    }
++    UIFontDescriptor *descriptor = [font.fontDescriptor fontDescriptorWithSymbolicTraits:traits];
++    if (descriptor) {
++      font = [UIFont fontWithDescriptor:descriptor size:size] ?: font;
++    }
++  }
++  if (features) {
++    UIFontDescriptor *descriptor = [font.fontDescriptor
++        fontDescriptorByAddingAttributes:@{UIFontDescriptorFeatureSettingsAttribute : features}];
++    font = [UIFont fontWithDescriptor:descriptor size:size] ?: font;
++  }
++
++  // UIFont.familyName is a system implementation detail. Keep the logical
++  // family on the final font, including trait/variant derivatives, so legacy
++  // updateFont:withSize:/withWeight: calls preserve the rounded design without
++  // recognizing private .SF family or PostScript names. Store the family, not
++  // a single-weight alias, so an explicit weight update survives later resizes.
++  // Do not mark shared default-system fonts, including a failed rounded-design fallback.
++  if (preservesRoundedDesign) {
++    objc_setAssociatedObject(font, &RCTSystemFontAliasKey, logicalFamily, OBJC_ASSOCIATION_RETAIN);
++  }
++  return font;
++}
+ 
+ RCTFontWeight RCTGetFontWeight(UIFont *font)
+ {
+@@ -398,7 +496,7 @@
+   BOOL isCondensed = NO;
+ 
+   if (font) {
+-    familyName = font.familyName ?: defaultFontFamily;
++    familyName = objc_getAssociatedObject(font, &RCTSystemFontAliasKey) ?: font.familyName ?: defaultFontFamily;
+     fontSize = font.pointSize ?: defaultFontSize;
+     fontWeight = RCTGetFontWeight(font);
+     isItalic = isItalicFont(font);
+@@ -415,6 +513,13 @@
+   fontWeight = weight ? [RCTConvert RCTFontWeight:weight] : fontWeight;
+   isCondensed = isCondensed || [familyName isEqualToString:@"SystemCondensed"];
+ 
++  NSArray *fontFeatures = variant ? [RCTConvert RCTFontVariantDescriptorArray:variant] : nil;
++  UIFont *systemAliasFont = RCTFontWithSystemFontAlias(
++      familyName, fontSize, fontWeight, weight != nil, isItalic, isCondensed, fontFeatures);
++  if (systemAliasFont) {
++    return systemAliasFont;
++  }
++
+   BOOL didFindFont = NO;
+ 
+   // Handle system font as special case. This ensures that we preserve
+@@ -488,7 +593,6 @@
+ 
+   // Apply font variants to font object
+   if (variant) {
+-    NSArray *fontFeatures = [RCTConvert RCTFontVariantDescriptorArray:variant];
+     UIFontDescriptor *fontDescriptor = [font.fontDescriptor
+         fontDescriptorByAddingAttributes:@{UIFontDescriptorFeatureSettingsAttribute : fontFeatures}];
+     font = [UIFont fontWithDescriptor:fontDescriptor size:fontSize];
+diff --git a/ReactCommon/react/renderer/textlayoutmanager/platform/ios/react/renderer/textlayoutmanager/RCTFontUtils.mm b/ReactCommon/react/renderer/textlayoutmanager/platform/ios/react/renderer/textlayoutmanager/RCTFontUtils.mm
+--- a/ReactCommon/react/renderer/textlayoutmanager/platform/ios/react/renderer/textlayoutmanager/RCTFontUtils.mm
++++ b/ReactCommon/react/renderer/textlayoutmanager/platform/ios/react/renderer/textlayoutmanager/RCTFontUtils.mm
+@@ -301,11 +301,27 @@
+ 
+ UIFont *RCTFontWithFontProperties(RCTFontProperties fontProperties)
+ {
++  // Preserve the distinction before resolution replaces an omitted weight with Regular.
++  BOOL hasExplicitWeight = !isnan(fontProperties.weight);
+   RCTFontProperties defaultFontProperties = RCTDefaultFontProperties();
+   fontProperties = RCTResolveFontProperties(fontProperties, defaultFontProperties);
+ 
+   assert(!isnan(fontProperties.sizeMultiplier));
+   CGFloat effectiveFontSize = fontProperties.sizeMultiplier * fontProperties.size;
++  NSArray *fontFeatures =
++      fontProperties.variant != RCTFontVariantDefault ? RCTFontFeatures(fontProperties.variant) : nil;
++  UIFont *systemAliasFont = RCTFontWithSystemFontAlias(
++      fontProperties.family,
++      effectiveFontSize,
++      fontProperties.weight,
++      hasExplicitWeight,
++      fontProperties.style == RCTFontStyleItalic,
++      NO,
++      fontFeatures);
++  if (systemAliasFont) {
++    return systemAliasFont;
++  }
++
+   UIFont *font;
+   UIFontDescriptorSystemDesign design = RCTGetFontDescriptorSystemDesign([fontProperties.family lowercaseString]);
+   if (design) {
+@@ -365,7 +381,6 @@
+ 
+   // Apply font variants to font object.
+   if (fontProperties.variant != RCTFontVariantDefault) {
+-    NSArray *fontFeatures = RCTFontFeatures(fontProperties.variant);
+     UIFontDescriptor *fontDescriptor = [font.fontDescriptor
+         fontDescriptorByAddingAttributes:@{UIFontDescriptorFeatureSettingsAttribute : fontFeatures}];
+     font = [UIFont fontWithDescriptor:fontDescriptor size:effectiveFontSize];

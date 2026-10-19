@@ -1724,22 +1724,12 @@ reset_builtin_assets() {
   local script_dir="$RABBY_FNS_SCRIPT_DIR"
   local project_dir=$(dirname $script_dir)
 
-  # local targets=(
-  #   # $project_dir/android/app/src/main/assets/fonts
-  #   $project_dir/ios/RabbyMobile/Resources/
-  # )
-  # for target in "${targets[@]}"
-  # do
-  #   echo "cleanup and copy fonts to $target..."
-  #   rm -rf $target && mkdir -p $target;
-  #   cp $project_dir/assets/fonts/* $target
-  # done
-
-  # iOS
-  local ios_target=$project_dir/ios/RabbyMobile/Resources/
-  echo "cleanup and copy fonts to $ios_target..."
-  rm -rf $ios_target && mkdir -p $ios_target;
-  cp $project_dir/assets/fonts/* $ios_target
+  # iOS resolves SF Pro Rounded through UIKit. Remove only the generated
+  # copies left by older builds; never copy Apple fonts into the iOS bundle.
+  local font_weight
+  for font_weight in Regular Medium Bold Heavy; do
+    rm -f "$project_dir/ios/RabbyMobile/Resources/SF-Pro-Rounded-$font_weight.otf"
+  done
 
   # Android
   mkdir -p $project_dir/android/app/src/main/assets/fonts && \
@@ -1764,7 +1754,6 @@ reset_builtin_assets() {
     echo "haven't build $project_dir/assets/android/builtin-pages/, skipped copy";
   fi
 
-  # rm -f $android_assets_target/sf_pro_all.ttf && cp $project_dir/assets/fonts/* $ios_target
 }
 
 ensure_inpage_bridge_assets() {

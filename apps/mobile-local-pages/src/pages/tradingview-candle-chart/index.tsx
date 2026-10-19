@@ -56,9 +56,9 @@ import {
   createPerpsProFontFaceCss,
   LIGHTWEIGHT_CHARTS_DEFAULT_FONT_FAMILY,
   PERPS_PRO_FONT_FACE_FAMILY,
-  PERPS_PRO_FONT_FAMILY,
   PERPS_PRO_FONT_STYLE_ELEMENT_ID,
   resolvePerpsProFontAssetUrls,
+  resolvePerpsProFontFamily,
 } from './perps-pro-font';
 import { ThemeColors2024 } from '@rabby-wallet/base-utils/src/isomorphic/theme-colors';
 
@@ -541,7 +541,7 @@ function ensurePerpsProFontsLoaded() {
     // Canvas labels can be measured before the async font load finishes.
     // Re-applying the same layout family invalidates them exactly once.
     chartState.chart.applyOptions({
-      layout: { fontFamily: PERPS_PRO_FONT_FAMILY },
+      layout: { fontFamily: resolvePerpsProFontFamily(getRuntimeInfo()) },
     });
   });
 }
@@ -556,11 +556,12 @@ function applyPerpsProFontMode(enabled: boolean) {
 
   if (enabled) {
     ensurePerpsProFontsLoaded();
+    const fontFamily = resolvePerpsProFontFamily(getRuntimeInfo());
     proDomElements.forEach(element => {
-      element.style.fontFamily = PERPS_PRO_FONT_FAMILY;
+      element.style.fontFamily = fontFamily;
       element.style.fontVariantNumeric = 'tabular-nums';
     });
-    emptyText.style.fontFamily = PERPS_PRO_FONT_FAMILY;
+    emptyText.style.fontFamily = fontFamily;
     return;
   }
 
@@ -1632,7 +1633,7 @@ function applyPerpsProChartOptions(config: PerpsProChartConfig) {
   }
   chartState.chart.applyOptions({
     layout: {
-      fontFamily: PERPS_PRO_FONT_FAMILY,
+      fontFamily: resolvePerpsProFontFamily(getRuntimeInfo()),
     },
     crosshair: {
       mode: CrosshairMode.Normal,
@@ -2125,7 +2126,10 @@ function handleMessage(event: CustomEvent) {
       };
       handleUpdateTheme(colors, description);
       if (chartState.proConfig) {
-        ensurePerpsProFontsLoaded();
+        applyPerpsProFontMode(true);
+        chartState.chart?.applyOptions({
+          layout: { fontFamily: resolvePerpsProFontFamily(getRuntimeInfo()) },
+        });
       }
       break;
     }
