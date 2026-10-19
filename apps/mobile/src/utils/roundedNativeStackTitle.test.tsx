@@ -106,7 +106,6 @@ describe('rounded native-stack title descriptors', () => {
   it.each<NativeStackNavigationOptions>([
     {},
     { headerTitleStyle: { fontFamily: 'System', fontWeight: '900' } },
-    { headerTitleStyle: roundedStyle, headerTitle: () => null },
     { headerTitleStyle: roundedStyle, header: () => null },
     { headerTitleStyle: roundedStyle, headerLargeTitle: true },
     { headerTitleStyle: [roundedStyle, { fontFamily: 'System' }] },
@@ -119,6 +118,45 @@ describe('rounded native-stack title descriptors', () => {
       );
     },
   );
+
+  it('keeps an existing title renderer but sanitizes its unused native font', () => {
+    const headerTitle = jest.fn(() => null);
+    const original = descriptor({
+      headerTitle,
+      title: 'Custom title fallback',
+      headerTitleStyle: roundedStyle,
+    });
+    const adapted = createRoundedNativeStackTitleAdapter('ios')(original);
+
+    expect(adapted.options.headerTitle).toBe(headerTitle);
+    expect(adapted.options.title).toBe('Custom title fallback');
+    expect(adapted.options.headerTitleStyle).toEqual({
+      ...roundedStyle,
+      fontFamily: 'System',
+    });
+    expect(headerTitle).not.toHaveBeenCalled();
+    expect(original.options.headerTitleStyle).toBe(roundedStyle);
+  });
+
+  it('leaves a hidden header untouched and adapts it when shown', () => {
+    const adapt = createRoundedNativeStackTitleAdapter('ios');
+    const hidden = descriptor({
+      headerShown: false,
+      headerTitleStyle: roundedStyle,
+    });
+    expect(adapt(hidden)).toBe(hidden);
+
+    const shown = {
+      ...hidden,
+      options: { ...hidden.options, headerShown: true },
+    };
+    const adapted = adapt(shown);
+    expect(adapted.options.headerTitleStyle).toEqual({
+      ...roundedStyle,
+      fontFamily: 'System',
+    });
+    expect(titleElement(adapted.options).props.style).toEqual(roundedStyle);
+  });
 
   it('does not change Android descriptors', () => {
     const original = descriptor({ headerTitleStyle: roundedStyle });

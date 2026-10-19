@@ -99,7 +99,7 @@ rg --files apps/mobile/assets/fonts
 
 - WebView HTML/CSS、`apps/mobile-local-pages`、SVG 文本由不同的字体解析路径处理，不能机械套用 RN Rounded 的规则；先查其 `@font-face`、实际资产或 SVG 字体依赖。
 - react-native-svg 和 react-native-screens 的原生导航标题仍可能使用旧 `RCTFont`，不能从 App 已启用 newArch 推断它们支持 `ui-rounded`。固定图标文字（例如 GAS）使用路径，不嵌入字体；iOS 普通圆角导航标题通过应用侧 RN Text 渲染，保留原生导航容器与已有自定义标题。新增大标题或其它原生文字组件时单独确认支持，不新增原生兼容补丁。
-- Pro/Simple K 线的 [perps-pro-font.ts](../../apps/mobile-local-pages/src/pages/tradingview-candle-chart/perps-pro-font.ts)：iOS 使用 CSS `ui-rounded`，不加载字体文件；Android 为 `Rabby SF Pro Rounded` 注册 `400 / 500 / 700`。十字光标标签用 `500`、Pro tooltip 强调用 `700`。不要写 `510`、`600` 或直接搬用原生的 `900`。同文件里的 legacy 图表分支与 demo 使用系统 Web 字体，其 `600` 不属于原生 Rounded 的缺档问题。
+- Pro K 线的 [perps-pro-font.ts](../../apps/mobile-local-pages/src/pages/tradingview-candle-chart/perps-pro-font.ts)：iOS 使用 CSS `ui-rounded`，不加载字体文件；Android 为 `Rabby SF Pro Rounded` 注册 `400 / 500 / 700`。十字光标标签用 `500`、Pro tooltip 强调用 `700`。不要写 `510`、`600` 或直接搬用原生的 `900`。同文件里的 legacy 图表分支与 demo 使用系统 Web 字体，其 `600` 不属于原生 Rounded 的缺档问题。
 - `System`、`Roboto`、`monospace`、`Menlo` 等系统/等宽字体不转换成 Rounded。普通业务字重仍遵循四档；确实需要其他系统或等宽字重时，保留有明确产品用途与目标平台字体支持证据的例外，并在代码附近说明。
 - 字体资产升级或新增字重需要同步检查 Android 资源和 iOS 系统字体解析，不能只增加一个 CSS 数字或枚举值。Xcode 的 `Check bundled system fonts` 阶段检查实际 `.app`；不要禁用该检查来绕过字体问题。
 

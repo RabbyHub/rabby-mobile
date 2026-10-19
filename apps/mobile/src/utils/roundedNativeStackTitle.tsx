@@ -24,10 +24,12 @@ export function createRoundedNativeStackTitleAdapter(platform: string) {
 
     if (
       titleStyle?.fontFamily !== 'ui-rounded' ||
-      typeof title === 'function' ||
       options.header != null ||
+      options.headerShown === false ||
       options.headerLargeTitle
     ) {
+      // A whole custom header owns these options; its native header is hidden.
+      // Screens skips native font resolution while hidden, so keep its styles.
       return descriptor;
     }
 
@@ -41,14 +43,17 @@ export function createRoundedNativeStackTitleAdapter(platform: string) {
         // getHeaderTitle also supplies native back-button/menu labels. Keep
         // its string result when headerTitle becomes a renderer function.
         ...(typeof title === 'string' ? { title } : {}),
-        headerTitle: ({ children }) => (
-          <HeaderTitle
-            allowFontScaling={false}
-            tintColor={options.headerTintColor}
-            style={titleStyle}>
-            {typeof title === 'string' ? title : children}
-          </HeaderTitle>
-        ),
+        headerTitle:
+          typeof title === 'function'
+            ? title
+            : ({ children }) => (
+                <HeaderTitle
+                  allowFontScaling={false}
+                  tintColor={options.headerTintColor}
+                  style={titleStyle}>
+                  {typeof title === 'string' ? title : children}
+                </HeaderTitle>
+              ),
       },
     };
   };

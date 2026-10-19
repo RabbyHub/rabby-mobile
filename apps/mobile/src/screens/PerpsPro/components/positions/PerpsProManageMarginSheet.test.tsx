@@ -1,4 +1,5 @@
 import { ThemeColors2024 } from '@/constant/theme';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { colord } from 'colord';
 import { PERPS_PRO_DIALOG_TOKENS } from '../common/perpsProDialogVisual';
 let mockThemeMode: 'light' | 'dark' | undefined;
@@ -398,9 +399,8 @@ describe('PerpsProManageMarginSheet', () => {
       StyleSheet.flatten(screen.getByText('xyz').props.style),
     ).toMatchObject({
       color: 'neutral-foot',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.medium,
       fontSize: 12,
-      fontWeight: '500',
       lineHeight: 16,
     });
 

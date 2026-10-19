@@ -291,10 +291,10 @@ describe('PerpsProFundingOverlay', () => {
           ? mockWithdrawPopupProps
           : mockSwapPopupProps;
       expect(popupProps?.inputTextStyle).toMatchObject({
-        fontFamily: expect.stringContaining('Rounded'),
+        fontFamily: 'ui-rounded',
       });
       expect(popupProps?.tooltipTextStyle).toMatchObject({
-        fontFamily: expect.stringContaining('Rounded'),
+        fontFamily: 'ui-rounded',
       });
     },
   );

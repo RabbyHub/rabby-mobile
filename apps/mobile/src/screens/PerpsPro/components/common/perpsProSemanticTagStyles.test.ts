@@ -1,4 +1,5 @@
 import type { AppColors2024Variants } from '@/constant/theme';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 
 import {
   getPerpsProMetadataTagContainerStyle,
@@ -32,9 +33,8 @@ describe('perpsProSemanticTagStyles', () => {
     });
     expect(text).toEqual({
       color: 'neutral-foot',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.medium,
       fontSize: 12,
-      fontWeight: '500',
       lineHeight: 16,
     });
     expect(container).not.toHaveProperty('borderColor');
@@ -59,9 +59,8 @@ describe('perpsProSemanticTagStyles', () => {
       });
       expect(text).toEqual({
         color,
-        fontFamily: 'SF Pro Rounded',
+        ...RoundedFontStyles.medium,
         fontSize: 12,
-        fontWeight: '500',
         lineHeight: 16,
       });
       expect(container).not.toHaveProperty('borderColor');
@@ -89,9 +88,8 @@ describe('perpsProSemanticTagStyles', () => {
       });
       expect(text).toEqual({
         color: 'neutral-InvertHighlight',
-        fontFamily: 'SF Pro Rounded',
+        ...RoundedFontStyles.bold,
         fontSize: 12,
-        fontWeight: '700',
         lineHeight: 16,
       });
       expect(container).not.toHaveProperty('borderColor');
