@@ -385,6 +385,9 @@ function useUnlockForm(
           );
           toast.show(result.toastError || result.error);
         } else {
+          // The Home transition starts inside checkUnlocked(). Hide the
+          // blocking toast before that so it cannot remain over the opened app.
+          hideToast?.();
           updateUnlockTime();
 
           await apisKeychain.migrateAndroidBiometricsToPasscode(

@@ -227,9 +227,11 @@ describe('MultiChart balance presentation', () => {
     const fontSizeByLength = ticker.props.fontSizeByLength;
     const visibleStyle = ticker.props.style;
 
-    view.rerender(tree({ hideType: 'HALF_HIDE' }));
-    expect(ticker.props.style).not.toBe(visibleStyle);
-    expect(StyleSheet.flatten(ticker.props.style).opacity).toBe(0.2);
+    // HALF_HIDE was removed from the product contract. A stale persisted
+    // value must not reintroduce the old dimmed presentation.
+    view.rerender(tree({ hideType: 'HALF_HIDE' as never }));
+    expect(ticker.props.style).toBe(visibleStyle);
+    expect(StyleSheet.flatten(ticker.props.style).opacity).toBeUndefined();
     expect(ticker.props.value.value).toBe('$1234');
     expect(ticker.props.value).toBe(initialValue);
     expect(ticker.props.fontSizeByLength).toBe(fontSizeByLength);

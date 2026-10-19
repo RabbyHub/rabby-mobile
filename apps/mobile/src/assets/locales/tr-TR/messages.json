@@ -1677,6 +1677,13 @@
       "title": "GasAccount"
     },
     "tokenDetail": {
+      "removed": {
+        "restore": "Kaldırılan tokenı geri yükle",
+        "restoreFailed": "Token geri yüklenemedi",
+        "more": "Daha Fazla",
+        "confirmTitle": "Bu token kaldırılsın mı?",
+        "confirmDescription": "· Bu token, kaldırıldıktan sonra Portföyünüzde görünmeyecek.\n· Ayarlar >> Kaldırılan Tokenlar bölümünden istediğiniz zaman geri yükleyebilirsiniz."
+      },
       "action": {
         "all": "Hepsi",
         "less": "Daha az",
@@ -1791,6 +1798,10 @@
       "subtitle": "Kripto almak için bir cüzdan seçin."
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "Kaldır",
+        "removeFailed": "Token kaldırılamadı"
+      },
       "sectionHeader": {
         "Defi": "DeFi",
         "NoData": "{{name}} yok",
@@ -1829,6 +1840,10 @@
       }
     },
     "setting": {
+      "removedToken": {
+        "title": "Kaldırılan Tokenlar",
+        "description": "Kaldırılan tokenlar, tüm adreslerinizin Portföy görünümünde gizlenir ancak bakiye hesaplamanıza dahil edilmeye devam eder."
+      },
       "screenTitle": "Ayarlar",
       "followUs": "Bizi Takip Edin",
       "faceId": "Yüz Tanıma",
@@ -2579,7 +2594,6 @@
         "perps": "Perps",
         "sizeTips": "Ticaretinizin toplam değeri veya miktarı, teminat ve kaldıraç tarafından belirlenir.",
         "feeRabby": "Rabby Cüzdan",
-        "feeRabbyDiscount": "Sınırlı süreli işlem ücreti indirimi",
         "feeHyperliquid": "Hyperliquid",
         "feeTitle": "Ücret",
         "feeDesc": "İşlem yapıldığında hem <1>işlem ücretleri</1> hem de <2>builder ücretleri</2> uygulanır.",
@@ -2647,7 +2661,7 @@
       },
       "PerpsDepositCard": {
         "deposit": "Yatırma",
-        "availableToTrade": "Ticaret için mevcut:",
+        "availableToTrade": "Kullanılabilir:",
         "swap": "Takas"
       },
       "PerpsAccountSelectorPopup": {
@@ -2721,6 +2735,36 @@
       }
     },
     "perpsDetail": {
+      "simpleChart": {
+        "openInterest": "Açık pozisyon",
+        "volume24h": "24 saatlik hacim",
+        "intervalTitle": "Mum aralığı",
+        "intervalDescription": "Her mum, seçilen zaman aralığını temsil eder.",
+        "minutes": "Dakika",
+        "hours": "Saat",
+        "days": "Gün",
+        "open": "Açılış",
+        "low": "En düşük",
+        "high": "En yüksek",
+        "close": "Kapanış",
+        "time": "Zaman",
+        "change": "Değişim",
+        "changePercent": "Değişim (%)",
+        "averageEntry": "Ort. giriş fiyatı",
+        "takeProfit": "Kâr al",
+        "stopLoss": "Zarar durdur",
+        "liquidation": "Likidasyon fiyatı",
+        "all": "TÜMÜ",
+        "source": "Hyperliquid tarafından sağlanır. Fiyat grafiği <tradingview>TradingView</tradingview> tarafından sağlanır.",
+        "resetChart": "Grafiği sıfırla",
+        "backToLatest": "En güncel verilere dön",
+        "switchToArea": "Alan grafiğine geç",
+        "switchToCandle": "Mum grafiğine geç",
+        "showVolume": "24 saatlik hacmi göster",
+        "showOpenInterest": "Açık pozisyonları göster",
+        "buy": "Alış",
+        "sell": "Satış"
+      },
       "PerpEditLimitPriceTag": {
         "setLimitBuyPrice": "Limit Alış Fiyatını Belirle",
         "setLimitSellPrice": "Limit Satış Fiyatını Belirle",

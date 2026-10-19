@@ -19,23 +19,19 @@ import {
 } from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
-import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { formatPrice } from '@/utils/number';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
 import { TokenDetailHistoryList } from './components/HistoryList';
 import { isFromBackAtom } from '../Swap/hooks/atom';
 import BalanceOverview from './components/BalanceOverview';
 import { useSingleTokenBalance } from './hook';
-import {
-  BOTTOM_BUTTON_DOUBLE_HEIGHT,
-  BOTTOM_BUTTON_TOP_OFFSET,
-  RootNames,
-  getBottomButtonBottomOffset,
-} from '@/constant/layout';
+import { RootNames } from '@/constant/layout';
 import { navigateDeprecated } from '@/utils/navigation';
 import { RightMore } from './components/RightMore';
 import { useSetAtom } from 'jotai';
 import { TokenDetailBottomBtns } from './components/BottomBtns';
+import { RemovedTokenNotice } from './components/RemovedToken';
+import { useRemovedTokens } from '@/hooks/useRemovedTokens';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import {
   ScreenSceneAccountProvider,
@@ -56,6 +52,7 @@ import { customTestnetTokenToTokenItem } from '@/utils/token';
 import { mergeTokenSecurityFields } from '@/utils/tokenSecurityFlags';
 import {
   getTokenDetailRequestKey,
+  getTokenDetailBalanceStatus,
   useTokenDetailTokenInfo,
 } from './useTokenDetailTokenInfo';
 export type { RelatedDeFiType, TokenFromAddressItem } from './types';
@@ -79,6 +76,11 @@ const TokenDetailContent = () => {
     getStyle,
   });
   const { t } = useTranslation();
+  const isRemoved = useRemovedTokens(
+    state =>
+      !isCustomTestnetToken &&
+      state.isTokenRemoved({ chainId: token.chain, tokenId: token.id }),
+  );
 
   const setIsFromBack = useSetAtom(isFromBackAtom);
 
@@ -184,12 +186,12 @@ const TokenDetailContent = () => {
   });
   // History/search entry points pass amount: 0 as a placeholder, not as a
   // fetched balance. Normal asset-list entries keep showing their real cache.
-  const balanceStatus =
-    needUseCacheToken && !baseTokenInfo
-      ? baseTokenInitialLoading
-        ? 'loading'
-        : 'unavailable'
-      : 'ready';
+  const balanceStatus = getTokenDetailBalanceStatus({
+    needUseCacheToken,
+    hasTokenInfo: !!baseTokenInfo,
+    initialLoading: baseTokenInitialLoading,
+    routeTokenAmount: token.amount,
+  });
   const [manualBaseTokenRefreshing, setManualBaseTokenRefreshing] =
     React.useState(false);
 
@@ -254,26 +256,12 @@ const TokenDetailContent = () => {
   }, [baseTokenInfo, effectiveAccount, route.params, token]);
 
   const getHeaderRight = useCallback(() => {
-    if (isCustomTestnetToken) {
+    if (isCustomTestnetToken || isRemoved) {
       return null;
     }
 
-    return (
-      <RightMore
-        token={token}
-        triggerUpdate={() =>
-          effectiveAccount?.address &&
-          apisAddressBalance.triggerUpdate({
-            address: effectiveAccount?.address,
-            force: false,
-            fromScene: 'TokenDetail',
-          })
-        }
-        isMultiAddress={false}
-        refreshTags={refreshTag}
-      />
-    );
-  }, [effectiveAccount?.address, isCustomTestnetToken, refreshTag, token]);
+    return <RightMore token={token} refreshTags={refreshTag} />;
+  }, [isCustomTestnetToken, isRemoved, refreshTag, token]);
 
   useFocusEffect(
     useCallback(() => {
@@ -324,6 +312,7 @@ const TokenDetailContent = () => {
   const renderHeader = useCallback(() => {
     return (
       <View style={[styles.balanceOverviewContainer, styles.listHeader]}>
+        {isRemoved && <RemovedTokenNotice />}
         <AccountSwitcher
           forScene="TokenDetail"
           disableSwitch={isCustomTestnetToken}
@@ -444,6 +433,7 @@ const TokenDetailContent = () => {
     has24hChangeData,
     isCustomTestnetToken,
     is24hNoChange,
+    isRemoved,
     isLoss,
     percentChange,
     price,
@@ -510,14 +500,13 @@ const TokenDetailContent = () => {
         disableHistoryRequest={isCustomTestnetToken}
       />
 
-      <View style={styles.bottomContainer}>
-        <TokenDetailBottomBtns
-          token={token}
-          finalAccount={effectiveAccount}
-          tokenSelectType={tokenSelectType}
-          disableSwapBridge={isCustomTestnetToken}
-        />
-      </View>
+      <TokenDetailBottomBtns
+        token={token}
+        finalAccount={effectiveAccount}
+        tokenSelectType={tokenSelectType}
+        disableSwapBridge={isCustomTestnetToken}
+        isRemoved={isRemoved}
+      />
       <AccountSwitcherModal token={token} forScene="TokenDetail" inScreen />
     </NormalScreenContainer2024>
   );
@@ -540,7 +529,7 @@ export const TokenDetailScreen = () => {
 };
 
 const getStyle = createGetStyles2024(ctx => {
-  const { colors2024, isLight, safeAreaInsets } = ctx;
+  const { colors2024, isLight } = ctx;
   return {
     rootScreenContainer: {
       backgroundColor: isLight
@@ -561,18 +550,6 @@ const getStyle = createGetStyles2024(ctx => {
     },
     listHeader: {
       marginHorizontal: -12,
-    },
-    bottomContainer: {
-      width: '100%',
-      height:
-        BOTTOM_BUTTON_TOP_OFFSET +
-        BOTTOM_BUTTON_DOUBLE_HEIGHT +
-        getBottomButtonBottomOffset(safeAreaInsets.bottom),
-      backgroundColor: colors2024['neutral-bg-1'],
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
     },
     balanceOverviewContent: {
       display: 'flex',

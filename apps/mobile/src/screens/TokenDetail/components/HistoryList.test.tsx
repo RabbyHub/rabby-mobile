@@ -151,6 +151,133 @@ it('does not request another first page when the native list reaches its end dur
   expect(screen.getByText('initial-0')).toBeVisible();
 });
 
+it('does not pull the list down for its initial history request', async () => {
+  const initial = deferredRows();
+  mockGetTokenHistory.mockReturnValue(initial.promise);
+  render(<TokenDetailHistoryList finalAccount={account} token={token} />);
+  expect(mockHistoryList.mock.calls.at(-1)![0].refreshLoading).toBeFalsy();
+  await act(async () => initial.resolve(rows('initial')));
+  expect(mockHistoryList.mock.calls.at(-1)![0].refreshLoading).toBeFalsy();
+});
+
+it('keeps sync revalidation silent while preserving the displayed rows', async () => {
+  const synced = deferredRows();
+  mockGetTokenHistory
+    .mockResolvedValueOnce(rows('initial'))
+    .mockReturnValueOnce(synced.promise);
+  render(<TokenDetailHistoryList finalAccount={account} token={token} />);
+  await act(async () => undefined);
+  act(() => mockOnHistorySynced({ owner_addr: '0xa', success: true }));
+  expect(mockGetTokenHistory).toHaveBeenCalledTimes(2);
+  expect(screen.getByText('initial-0')).toBeVisible();
+  expect(mockHistoryList.mock.calls.at(-1)![0].refreshLoading).toBeFalsy();
+  await act(async () => synced.resolve(rows('synced')));
+  expect(screen.getByText('synced-0')).toBeVisible();
+});
+
+it.each(['succeeds', 'fails'] as const)(
+  'shows the pull indicator only for a manual history refresh until it %s',
+  async outcome => {
+    const refreshed = deferredRows();
+    mockGetTokenHistory
+      .mockResolvedValueOnce(rows('initial'))
+      .mockReturnValueOnce(refreshed.promise);
+    const onRefresh = jest.fn();
+    render(
+      <TokenDetailHistoryList
+        finalAccount={account}
+        token={token}
+        onRefresh={onRefresh}
+      />,
+    );
+    await act(async () => undefined);
+    fireEvent.press(screen.getByTestId('refresh'));
+    expect(mockHistoryList.mock.calls.at(-1)![0].refreshLoading).toBe(true);
+    expect(onRefresh).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      if (outcome === 'succeeds') {
+        refreshed.resolve(rows('refreshed'));
+      } else {
+        refreshed.reject(new Error('Refresh failed'));
+      }
+    });
+    expect(mockHistoryList.mock.calls.at(-1)![0].refreshLoading).toBeFalsy();
+  },
+);
+
+it('keeps the manual token balance refresh visible after history settles', async () => {
+  mockGetTokenHistory.mockResolvedValue(rows('initial'));
+  const view = render(
+    <TokenDetailHistoryList
+      finalAccount={account}
+      token={token}
+      baseTokenRefreshing
+    />,
+  );
+  await act(async () => undefined);
+  expect(mockHistoryList.mock.calls.at(-1)![0].refreshLoading).toBe(true);
+  view.rerender(
+    <TokenDetailHistoryList
+      finalAccount={account}
+      token={token}
+      baseTokenRefreshing={false}
+    />,
+  );
+  expect(mockHistoryList.mock.calls.at(-1)![0].refreshLoading).toBeFalsy();
+});
+
+it('keeps a manual refresh active until its replacing sync request settles', async () => {
+  const manual = deferredRows();
+  const synced = deferredRows();
+  mockGetTokenHistory
+    .mockResolvedValueOnce(rows('initial'))
+    .mockReturnValueOnce(manual.promise)
+    .mockReturnValueOnce(synced.promise);
+  const onRefresh = jest.fn();
+  render(
+    <TokenDetailHistoryList
+      finalAccount={account}
+      token={token}
+      onRefresh={onRefresh}
+    />,
+  );
+  await act(async () => undefined);
+
+  fireEvent.press(screen.getByTestId('refresh'));
+  expect(mockHistoryList.mock.calls.at(-1)![0].refreshLoading).toBe(true);
+  act(() => mockOnHistorySynced({ owner_addr: '0xa', success: true }));
+  expect(mockGetTokenHistory).toHaveBeenCalledTimes(3);
+  expect(onRefresh).toHaveBeenCalledTimes(1);
+
+  await act(async () => manual.resolve(rows('superseded')));
+  expect(mockHistoryList.mock.calls.at(-1)![0].refreshLoading).toBe(true);
+  expect(screen.getByText('initial-0')).toBeVisible();
+  expect(screen.queryByText('superseded-0')).toBeNull();
+  expect(toast.error).not.toHaveBeenCalled();
+
+  await act(async () => synced.reject(new Error('Sync refresh failed')));
+  expect(mockHistoryList.mock.calls.at(-1)![0].refreshLoading).toBeFalsy();
+  expect(screen.getByText('initial-0')).toBeVisible();
+  expect(toast.error).toHaveBeenCalledTimes(1);
+});
+
+it('does not leave a manual history spinner running when history is disabled', async () => {
+  const onRefresh = jest.fn();
+  render(
+    <TokenDetailHistoryList
+      finalAccount={account}
+      token={token}
+      disableHistoryRequest
+      onRefresh={onRefresh}
+    />,
+  );
+  await act(async () => undefined);
+  fireEvent.press(screen.getByTestId('refresh'));
+  expect(onRefresh).toHaveBeenCalledTimes(1);
+  expect(mockGetTokenHistory).not.toHaveBeenCalled();
+  expect(mockHistoryList.mock.calls.at(-1)![0].refreshLoading).toBeFalsy();
+});
+
 it('starts a different token from its first page even when the previous token exhausted history', async () => {
   mockGetTokenHistory
     .mockResolvedValueOnce(rows('a'))
@@ -528,9 +655,10 @@ it('ignores failed syncs and syncs belonging to other accounts', async () => {
 });
 
 it('catches up once on focus without revalidating inactive token history', async () => {
+  const resumed = deferredRows();
   mockGetTokenHistory
     .mockResolvedValueOnce([])
-    .mockResolvedValueOnce(rows('resumed'));
+    .mockReturnValueOnce(resumed.promise);
   const view = render(
     <TokenDetailHistoryList finalAccount={account} token={token} />,
   );
@@ -549,6 +677,8 @@ it('catches up once on focus without revalidating inactive token history', async
   );
   await act(async () => undefined);
   expect(mockGetTokenHistory).toHaveBeenCalledTimes(2);
+  expect(mockHistoryList.mock.calls.at(-1)![0].refreshLoading).toBeFalsy();
+  await act(async () => resumed.resolve(rows('resumed')));
   expect(screen.getByText('resumed-0')).toBeVisible();
 });
 

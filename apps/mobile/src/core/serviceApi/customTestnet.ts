@@ -5,6 +5,8 @@ import type {
 import { appStorage } from '@/core/storage/mmkv';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { getLoadedCoreService } from '@/core/services/serviceRegistry';
+import { updateChainStore } from '@/constant/chains';
+import { createTestnetChain } from '@/core/utils/customTestnetChain';
 import {
   markCustomTestnetStoreHydrating,
   markCustomTestnetStoreHydrationFailed,
@@ -20,10 +22,10 @@ export const customTestnetServiceApi = createDeferredServiceApi<
 >('customTestnetService');
 
 /**
- * Publishes the persisted custom-network snapshot without activating the full
- * viem-backed service. Callers that need a final empty-state decision must
- * cross this boundary instead of treating the store's initial empty values as
- * data.
+ * Publishes the persisted custom-network snapshot and chain list without
+ * activating the full viem-backed service. Callers that need a final empty-state
+ * decision must cross this boundary instead of treating the store's initial
+ * empty values as data.
  */
 export function ensureCustomTestnetStoreHydrated() {
   if (useCustomTestnetStore.getState().hydrationState === 'ready') {
@@ -32,11 +34,21 @@ export function ensureCustomTestnetStoreHydrated() {
 
   markCustomTestnetStoreHydrating();
   try {
-    syncCustomTestnetStore(getCustomTestnetStoreSnapshot());
+    const snapshot = getCustomTestnetStoreSnapshot();
+    syncCustomTestnetChainList(snapshot.customTestnet);
+    syncCustomTestnetStore(snapshot);
   } catch (error) {
     markCustomTestnetStoreHydrationFailed();
     throw error;
   }
+}
+
+function syncCustomTestnetChainList(
+  customTestnet: CutsomTestnetServiceStore['customTestnet'],
+) {
+  updateChainStore({
+    testnetList: Object.values(customTestnet).map(createTestnetChain),
+  });
 }
 
 export function getCustomTestnetStoreSnapshot(): CutsomTestnetServiceStore {

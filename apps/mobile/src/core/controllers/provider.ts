@@ -81,6 +81,10 @@ import { PENDGING_TIME } from '@/constant/expireTime';
 import { isString } from 'lodash';
 import { updateExpiredTime } from '@/databases/sync/utils';
 import { assertProviderRequest } from '../utils/assertProviderRequest';
+import {
+  findShadowedBuiltinType,
+  parseTypedDataJson,
+} from '../utils/typedDataTypes';
 import type { ProviderRequest } from './type';
 import { hexToNumber, isAddress, toHex } from 'viem';
 import { getProviderRequestChain } from './requestContext';
@@ -499,11 +503,21 @@ const signTypedDataVlidation = (
     session,
     account,
   } = req;
-  let jsonData;
+  let parsed: ReturnType<typeof parseTypedDataJson>;
   try {
-    jsonData = JSON.parse(data);
+    parsed = parseTypedDataJson(data);
   } catch (e) {
     throw ethErrors.rpc.invalidParams('data is not a validate JSON string');
+  }
+  if (parsed.hasProtoKey) {
+    throw ethErrors.rpc.invalidParams('data should not contain __proto__ key');
+  }
+  const jsonData = parsed.json;
+  const shadowedType = findShadowedBuiltinType(jsonData?.types);
+  if (shadowedType) {
+    throw ethErrors.rpc.invalidParams(
+      `types should not redefine built-in type: ${shadowedType}`,
+    );
   }
   if (!isInternalDappSnapshot(session.origin)) {
     const currentChain =

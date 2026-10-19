@@ -1,3 +1,4 @@
+import { createTokenDisplayExclusion } from './tokenDisplayExclusion';
 import { queryTokensCache } from '@/core/apis/tokenCache';
 import { openapi } from '@/core/request';
 import { zCreate, zMutative } from '@/core/utils/reexports';
@@ -428,6 +429,9 @@ export type TokenStaticIndexItem = {
 export type TokenAssetsIndexResult = {
   // In-memory restore provenance, not source completeness or freshness.
   restoredAtSyncAbortVersion?: number;
+  // Display-only membership. Never populate the authoritative address index
+  // from a scene projection, which can omit hidden/filtered source tokens.
+  restoredTokenIdsByAddress?: Readonly<Record<string, TokenEntityId[]>>;
   rows: TokenAssetsIndexRow[];
   tokenIds: TokenEntityId[];
   defaultVisibleTokenCount: number;
@@ -1652,6 +1656,7 @@ export const buildMultiAssetsIndexFromTokenIds = (
   tokenDisplayMode?: TokenDisplayMode,
   listKey?: string,
   previousResult?: TokenAssetsIndexResult,
+  includeToken?: (token: ITokenItem) => boolean,
 ): TokenAssetsIndexResult => {
   if (!tokenIds.length) {
     return createEmptyAssetsIndexResult();
@@ -1659,7 +1664,10 @@ export const buildMultiAssetsIndexFromTokenIds = (
 
   const tokens = tokenIds
     .map(tokenId => tokenEntityResourceStore.getValue(tokenId))
-    .filter((token): token is ITokenItem => !!token);
+    .filter(
+      (token): token is ITokenItem =>
+        !!token && (!includeToken || includeToken(token)),
+    );
 
   return buildTokenAssetsIndexResult(
     computeMultiAssetsFromTokens(
@@ -1740,6 +1748,7 @@ export const buildSingleAssetsIndexFromTokenIds = (
   chainServerId?: string,
   isLpTokenEnabled?: boolean,
   previousResult?: TokenAssetsIndexResult,
+  includeToken?: (token: ITokenItem) => boolean,
 ): TokenAssetsIndexResult => {
   if (!tokenIds.length) {
     return createEmptyAssetsIndexResult();
@@ -1747,7 +1756,10 @@ export const buildSingleAssetsIndexFromTokenIds = (
 
   const tokens = tokenIds
     .map(tokenId => tokenEntityResourceStore.getValue(tokenId))
-    .filter((token): token is ITokenItem => !!token);
+    .filter(
+      (token): token is ITokenItem =>
+        !!token && (!includeToken || includeToken(token)),
+    );
 
   return buildTokenAssetsIndexResult(
     computeSingleAssetsFromTokens(tokens, chainServerId, isLpTokenEnabled),
@@ -1757,6 +1769,9 @@ export const buildSingleAssetsIndexFromTokenIds = (
 };
 
 type TokenAssetsIndexStoreState = {
+  // Keep full results for persistence; these display results only exclude removed tokens.
+  singleDisplayAssetsResultByKey: Record<string, TokenAssetsIndexResult>;
+  multiDisplayAssetsResultByKey: Record<string, TokenAssetsIndexResult>;
   singleAssetsResultByKey: Record<string, TokenAssetsIndexResult>;
   multiAssetsResultByKey: Record<string, TokenAssetsIndexResult>;
   singleAssetsAvailabilityByKey: Record<string, AssetProjectionAvailability>;
@@ -2077,6 +2092,77 @@ const collectRestoredTokenEntityIds = (
   });
 
   return tokenIds;
+};
+
+// Reader lifetime is local to this restore, never persisted as source readiness.
+const pendingMultiAssetsEntityRestores = new WeakSet<
+  NonNullable<TokenAssetsIndexResult['restoredTokenIdsByAddress']>
+>();
+
+const isMultiAssetsEntityRestorePending = (
+  result: TokenAssetsIndexResult | undefined,
+) =>
+  result?.restoredAtSyncAbortVersion === getSyncAbortVersion() &&
+  !!result.restoredTokenIdsByAddress &&
+  pendingMultiAssetsEntityRestores.has(result.restoredTokenIdsByAddress);
+
+const getMultiAssetsDisplayTokenIds = (
+  addresses: string[],
+  sourceTokenIds: TokenEntityId[],
+  previousResult: TokenAssetsIndexResult | undefined,
+) => {
+  if (!previousResult?.restoredTokenIdsByAddress) {
+    return sourceTokenIds;
+  }
+  const fallback =
+    previousResult.restoredAtSyncAbortVersion === getSyncAbortVersion()
+      ? previousResult.restoredTokenIdsByAddress
+      : undefined;
+  const indexes = useTokenIndexStore.getState().addressTokenIds;
+  return Array.from(
+    new Set(
+      addresses.flatMap(address =>
+        Object.prototype.hasOwnProperty.call(indexes, address)
+          ? indexes[address]
+          : fallback?.[address] || [],
+      ),
+    ),
+  );
+};
+
+const retainUnindexedTokenProjectionSources = (
+  result: TokenAssetsIndexResult,
+  previousResult: TokenAssetsIndexResult | undefined,
+  addresses: string[],
+): TokenAssetsIndexResult => {
+  const indexes = useTokenIndexStore.getState().addressTokenIds;
+  if (
+    previousResult?.restoredAtSyncAbortVersion !== getSyncAbortVersion() ||
+    !previousResult.restoredTokenIdsByAddress
+  ) {
+    return result;
+  }
+  if (
+    addresses.every(address =>
+      Object.prototype.hasOwnProperty.call(indexes, address),
+    )
+  ) {
+    if (!result.restoredTokenIdsByAddress) {
+      return result;
+    }
+    const complete = { ...result };
+    delete complete.restoredAtSyncAbortVersion;
+    delete complete.restoredTokenIdsByAddress;
+    return complete;
+  }
+  if (result === previousResult) {
+    return result;
+  }
+  return {
+    ...result,
+    restoredAtSyncAbortVersion: previousResult.restoredAtSyncAbortVersion,
+    restoredTokenIdsByAddress: previousResult.restoredTokenIdsByAddress,
+  };
 };
 
 const buildRestoredTokenAssetsIndexResult = (
@@ -2509,6 +2595,23 @@ const restoreTokenAssetsProjectionIfEmpty = (
     }
 
     result.restoredAtSyncAbortVersion = startedSyncAbortVersion;
+    if (scene === 'multi-address') {
+      result.restoredTokenIdsByAddress = Array.from(allTokenIds).reduce<
+        Record<string, TokenEntityId[]>
+      >((byAddress, tokenId) => {
+        const address = getTokenEntityIdAddress(tokenId);
+        (byAddress[address] ||= []).push(tokenId);
+        return byAddress;
+      }, {});
+    }
+    const remainingTokenIds = stagedMetadata
+      ? Array.from(allTokenIds).filter(
+          tokenId => !tokenEntityResourceStore.getValue(tokenId),
+        )
+      : [];
+    if (remainingTokenIds.length && result.restoredTokenIdsByAddress) {
+      pendingMultiAssetsEntityRestores.add(result.restoredTokenIdsByAddress);
+    }
     useTokenAssetsIndexStore.setState(draft => {
       if (scene === 'single-address') {
         draft.singleAssetsResultByKey[key] = result;
@@ -2528,9 +2631,6 @@ const restoreTokenAssetsProjectionIfEmpty = (
       return true;
     }
 
-    const remainingTokenIds = Array.from(allTokenIds).filter(
-      tokenId => !tokenEntityResourceStore.getValue(tokenId),
-    );
     if (!remainingTokenIds.length) {
       return true;
     }
@@ -2555,13 +2655,25 @@ const restoreTokenAssetsProjectionIfEmpty = (
           : currentState.multiAssetsResultByKey[key];
       return (
         isRestoreCurrent() &&
-        currentConfig === startedConfig &&
-        currentResult === result &&
-        tokenListStore.getState().tokenListMap === startedSourceMap
+        !!currentConfig &&
+        (scene === 'multi-address'
+          ? currentResult?.restoredTokenIdsByAddress ===
+            result.restoredTokenIdsByAddress
+          : currentConfig === startedConfig &&
+            currentResult === result &&
+            tokenListStore.getState().tokenListMap === startedSourceMap)
       );
     };
+    const hasPartialAddressSources = () =>
+      scene === 'multi-address' &&
+      addresses.some(address =>
+        Object.prototype.hasOwnProperty.call(
+          useTokenIndexStore.getState().addressTokenIds,
+          address,
+        ),
+      );
 
-    void (async () => {
+    (async () => {
       await yieldTokenProjectionEntityRestore();
       let restoredCount = 0;
       for (
@@ -2592,7 +2704,20 @@ const restoreTokenAssetsProjectionIfEmpty = (
         const batchIdSet = new Set(batchIds);
         const tokens = cachedTokens
           .map(token => tokenItemEntityToTokenItem(token))
-          .filter(token => batchIdSet.has(buildTokenEntityId(token)));
+          .filter(token => {
+            if (!batchIdSet.has(buildTokenEntityId(token))) {
+              return false;
+            }
+            // A partial refresh may have replaced/cleared this owner while
+            // another owner's staged display entities were still loading.
+            return (
+              scene !== 'multi-address' ||
+              !Object.prototype.hasOwnProperty.call(
+                useTokenIndexStore.getState().addressTokenIds,
+                normalizeAddress(token.owner_addr),
+              )
+            );
+          });
         tokenEntityResourceStore.upsertTokens(tokens, 'hydrate');
         restoredCount += tokens.length;
         backgroundTrace.mark('entity-batch-published', {
@@ -2609,26 +2734,48 @@ const restoreTokenAssetsProjectionIfEmpty = (
         });
         return;
       }
-      const completeResult = buildRestoredTokenAssetsIndexResult(
-        restored,
-        scene === 'multi-address'
-          ? (startedConfig as MultiTokenAssetsIndexConfig).tokenDisplayMode ||
-              'byAddress'
-          : 'byAddress',
-        {
-          requiredEntityIds: allTokenIds,
-          stagedMetadata,
-        },
-      );
+      const completeResult = hasPartialAddressSources()
+        ? useTokenAssetsIndexStore.getState().multiAssetsResultByKey[key]
+        : buildRestoredTokenAssetsIndexResult(
+            restored,
+            scene === 'multi-address'
+              ? (startedConfig as MultiTokenAssetsIndexConfig)
+                  .tokenDisplayMode || 'byAddress'
+              : 'byAddress',
+            {
+              requiredEntityIds: allTokenIds,
+              stagedMetadata,
+            },
+          );
+      if (scene === 'multi-address' && completeResult) {
+        // Recheck display exclusions after deferred group members become available.
+        tokenDisplayExclusion.syncRestoredMultiResult(key);
+      }
       backgroundTrace.finish({
         itemCount: remainingTokenIds.length,
         restoredEntityCount: restoredCount,
         groupsReady: !!completeResult,
       });
-    })().catch(error => {
-      backgroundTrace.fail({ reason: 'background-restore-error' });
-      console.error('[tokenProjection] background restore failed', error);
-    });
+    })()
+      .catch(error => {
+        backgroundTrace.fail({ reason: 'background-restore-error' });
+        console.error('[tokenProjection] background restore failed', error);
+      })
+      .finally(() => {
+        if (result.restoredTokenIdsByAddress) {
+          pendingMultiAssetsEntityRestores.delete(
+            result.restoredTokenIdsByAddress,
+          );
+        }
+        // Missing cache rows and failed queries are terminal too. Rebuild
+        // from available display entities plus explicit source indexes; never
+        // leave later authoritative updates waiting for an ended reader.
+        if (isBackgroundRestoreCurrent() && hasPartialAddressSources()) {
+          useTokenAssetsIndexStore
+            .getState()
+            .syncMultiAssetsResultsForAddresses(addresses);
+        }
+      });
     return true;
   })()
     .catch(error => {
@@ -2768,6 +2915,8 @@ const isMultiTokenAssetsIndexConfigSame = (
 
 export const useTokenAssetsIndexStore = zCreate(
   zMutative<TokenAssetsIndexStoreState>((set, get) => ({
+    singleDisplayAssetsResultByKey: {},
+    multiDisplayAssetsResultByKey: {},
     singleAssetsResultByKey: {},
     multiAssetsResultByKey: {},
     singleAssetsAvailabilityByKey: {},
@@ -2840,6 +2989,7 @@ export const useTokenAssetsIndexStore = zCreate(
       }
     },
     ensureSingleAssetsResult({ address, chainServerId, isLpTokenEnabled }) {
+      tokenDisplayExclusion.ensureBinding();
       const normalizedAddress = normalizeAddress(address);
       const key = getSingleAssetsCacheKey(
         normalizedAddress,
@@ -2887,6 +3037,7 @@ export const useTokenAssetsIndexStore = zCreate(
       isLpTokenEnabled,
       tokenDisplayMode,
     }) {
+      tokenDisplayExclusion.ensureBinding();
       const normalizedAddresses = normalizeAddresses(addresses);
       const key = getMultiAssetsCacheKey(
         normalizedAddresses,
@@ -3084,10 +3235,24 @@ export const useTokenAssetsIndexStore = zCreate(
       tokenDisplayMode,
     }) {
       const normalizedAddresses = normalizeAddresses(addresses);
+      const previousResult = get().multiAssetsResultByKey[key];
+      const displayTokenIds = getMultiAssetsDisplayTokenIds(
+        normalizedAddresses,
+        tokenIds,
+        previousResult,
+      );
+      // The active staged reader owns these remaining entity queries. Once
+      // it ends (including missing rows/failure), available entities may rebuild.
+      if (
+        isMultiAssetsEntityRestorePending(previousResult) &&
+        displayTokenIds.some(id => !tokenEntityResourceStore.getValue(id))
+      ) {
+        return;
+      }
       const nextConfig = {
         key,
         addresses: normalizedAddresses,
-        tokenIds,
+        tokenIds: displayTokenIds,
         sourceVersionKey: getMultiTokenAssetsSourceVersionKey(
           useTokenIndexStore.getState(),
           normalizedAddresses,
@@ -3097,7 +3262,6 @@ export const useTokenAssetsIndexStore = zCreate(
         tokenDisplayMode,
       };
       const previousConfig = get().multiAssetsConfigByKey[key];
-      const previousResult = get().multiAssetsResultByKey[key];
       const isConfigSame = isMultiTokenAssetsIndexConfigSame(
         previousConfig,
         nextConfig,
@@ -3116,13 +3280,17 @@ export const useTokenAssetsIndexStore = zCreate(
         return;
       }
 
-      const nextResult = buildMultiAssetsIndexFromTokenIds(
-        tokenIds,
-        chainServerId,
-        isLpTokenEnabled,
-        tokenDisplayMode,
-        key,
+      const nextResult = retainUnindexedTokenProjectionSources(
+        buildMultiAssetsIndexFromTokenIds(
+          displayTokenIds,
+          chainServerId,
+          isLpTokenEnabled,
+          tokenDisplayMode,
+          key,
+          previousResult,
+        ),
         previousResult,
+        normalizedAddresses,
       );
 
       set(draft => {
@@ -3180,13 +3348,28 @@ export const useTokenAssetsIndexStore = zCreate(
         }
 
         const previousResult = state.multiAssetsResultByKey[config.key];
-        const nextResult = buildMultiAssetsIndexFromTokenIds(
+        const displayTokenIds = getMultiAssetsDisplayTokenIds(
+          config.addresses,
           config.tokenIds,
-          config.chainServerId,
-          config.isLpTokenEnabled,
-          config.tokenDisplayMode,
-          config.key,
           previousResult,
+        );
+        if (
+          isMultiAssetsEntityRestorePending(previousResult) &&
+          displayTokenIds.some(id => !tokenEntityResourceStore.getValue(id))
+        ) {
+          return;
+        }
+        const nextResult = retainUnindexedTokenProjectionSources(
+          buildMultiAssetsIndexFromTokenIds(
+            displayTokenIds,
+            config.chainServerId,
+            config.isLpTokenEnabled,
+            config.tokenDisplayMode,
+            config.key,
+            previousResult,
+          ),
+          previousResult,
+          config.addresses,
         );
 
         if (previousResult !== nextResult) {
@@ -3199,6 +3382,7 @@ export const useTokenAssetsIndexStore = zCreate(
         if (config.sourceVersionKey !== sourceVersionKey) {
           multiConfigUpdates[config.key] = {
             ...config,
+            tokenIds: displayTokenIds,
             sourceVersionKey,
           };
         }
@@ -3238,6 +3422,14 @@ export const useTokenAssetsIndexStore = zCreate(
     },
   })),
 );
+
+const tokenDisplayExclusion = createTokenDisplayExclusion({
+  assetsStore: useTokenAssetsIndexStore,
+  tokenEntities: tokenEntityResourceStore,
+  tokenGroups: tokenGroupResourceStore,
+  buildSingleAssetsIndex: buildSingleAssetsIndexFromTokenIds,
+  buildMultiAssetsIndex: buildMultiAssetsIndexFromTokenIds,
+});
 
 export const prepareSingleAddressTokenAssetsProjection = (
   input: SingleTokenAssetsProjectionInput,
@@ -4387,9 +4579,11 @@ tokenListStore.subscribe(state => {
 });
 
 tokenEntityResourceStore.subscribeTokenChanges(changedTokenIds => {
-  useTokenAssetsIndexStore
-    .getState()
-    .syncChangedTokenAssetsResults(changedTokenIds);
+  tokenDisplayExclusion.syncChangedTokens(changedTokenIds, () => {
+    useTokenAssetsIndexStore
+      .getState()
+      .syncChangedTokenAssetsResults(changedTokenIds);
+  });
 });
 
 export default tokenListStore;

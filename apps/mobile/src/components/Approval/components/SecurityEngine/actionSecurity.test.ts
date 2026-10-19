@@ -42,6 +42,42 @@ describe('action security gate', () => {
       });
     }
   });
+  test.each([
+    [{}, false],
+    [
+      { verifyAddress: { allowOrigins: [], origin: 'https://dapp.test' } },
+      true,
+    ],
+    [
+      {
+        verifyAddress: {
+          allowOrigins: ['https://dapp.test'],
+          origin: 'https://dapp.test',
+        },
+      },
+      false,
+    ],
+  ] as const)(
+    'the actual origin rule preserves parsed risk for context %j',
+    async (ctx, shouldWarn) => {
+      const rule = defaultRules.find(item => item.id === '1088')!;
+      const engine = new Engine(
+        [rule],
+        {} as ConstructorParameters<typeof Engine>[1],
+      );
+      const results = await engine.run(ctx);
+      expect(results).toEqual(
+        shouldWarn
+          ? [expect.objectContaining({ id: '1088', level: Level.DANGER })]
+          : [],
+      );
+      expect(
+        getActionSecurityGate([{ scope: 'origin', results }], [], 'typedData')
+          .hasUnProcessSecurityResult,
+      ).toBe(shouldWarn);
+    },
+  );
+
   test('distinguishes a failed enabled rule from a completed empty evaluation', () => {
     expect(hasActionSecurityError([[], []])).toBe(false);
     expect(

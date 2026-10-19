@@ -127,8 +127,7 @@ const ChartContent = memo(function ChartContent({
           shape={d3Shape.curveCatmullRom}
           style={[
             styles.relative,
-            (hideType === 'HIDE' || hideType === 'HALF_HIDE') &&
-              styles.balanceOpacity,
+            hideType === 'HIDE' && styles.balanceOpacity,
           ]}>
           <LineChart.Path showInactivePath={false} color={pathColor} width={2}>
             <LineChart.Gradient color={pathColor} />
@@ -206,11 +205,7 @@ export const MultiChart = memo(function MultiChart({
       onTouchStart={e => {
         e.stopPropagation();
       }}>
-      <View
-        style={[
-          styles.chartContainer,
-          hideType === 'HALF_HIDE' && styles.balanceOpacity,
-        ]}>
+      <View style={styles.chartContainer}>
         <LineChart.Provider data={chartsData}>
           <ChartHeader
             tabName={tabName}
@@ -414,14 +409,6 @@ const ChartHeader = React.memo(
     const isHidden = useMemo(() => {
       return hideType === 'HIDE';
     }, [hideType]);
-    const netWorthTickerStyle = useMemo(
-      () => [
-        styles.netWorth,
-        hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
-      ],
-      [hideType, styles.balanceOpacity, styles.netWorth],
-    );
-
     return (
       <Animated.View style={styles.charHeader}>
         <View style={styles.netWorthContainer}>
@@ -440,7 +427,7 @@ const ChartHeader = React.memo(
               maxLength={24}
               lineHeight={42}
               duration={320}
-              style={netWorthTickerStyle}
+              style={styles.netWorth}
               fontSizeByLength={NETWORTH_FONT_SIZE_OPTIONS}
             />
           </Pressable>
@@ -502,10 +489,7 @@ const ChartHeader = React.memo(
             }}
             hitSlop={10}
             pressRetentionOffset={10}
-            style={[
-              styles.changeSection,
-              hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
-            ]}>
+            style={styles.changeSection}>
             {isHidden ? (
               <Text style={{ color: colors2024['neutral-title-1'] }}>***</Text>
             ) : (

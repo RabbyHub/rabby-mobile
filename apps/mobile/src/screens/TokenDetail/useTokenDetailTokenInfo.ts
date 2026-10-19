@@ -2,6 +2,31 @@ import { useRequest } from 'ahooks';
 import { useCallback, useEffect, useState } from 'react';
 import type { ITokenItem } from '@/store/tokens';
 
+export type TokenDetailBalanceStatus = 'ready' | 'loading' | 'unavailable';
+
+// History/search entry points deliberately pass amount: 0 as a placeholder.
+// Asset-list entries pass their real cached amount and should keep rendering
+// it while the authoritative refresh runs in the background.
+export function getTokenDetailBalanceStatus({
+  needUseCacheToken,
+  hasTokenInfo,
+  initialLoading,
+  routeTokenAmount,
+}: {
+  needUseCacheToken: boolean;
+  hasTokenInfo: boolean;
+  initialLoading: boolean;
+  routeTokenAmount?: number;
+}): TokenDetailBalanceStatus {
+  if (!needUseCacheToken || hasTokenInfo) {
+    return 'ready';
+  }
+  if (Number(routeTokenAmount) > 0) {
+    return 'ready';
+  }
+  return initialLoading ? 'loading' : 'unavailable';
+}
+
 export function getTokenDetailRequestKey({
   address,
   chain,

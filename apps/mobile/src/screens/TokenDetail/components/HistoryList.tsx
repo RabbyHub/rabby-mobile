@@ -95,6 +95,7 @@ const TokenDetailHistoryListContent = ({
   const dbCursorRef = useRef<HistoryPageCursor | null>(null);
   const hasMoreMap = useRef<Record<string, boolean>>({});
   const loadedWindowSizeRef = useRef(PAGE_COUNT);
+  const [manualHistoryRefreshing, setManualHistoryRefreshing] = useState(false);
 
   const [historySuccessList, setHistorySuccessList] = useState<string[]>(
     getTransactionHistorySucceedListSnapshot(),
@@ -291,6 +292,7 @@ const TokenDetailHistoryListContent = ({
     },
     onFinally() {
       requestPendingRef.current = false;
+      setManualHistoryRefreshing(false);
     },
     onError(error) {
       // Only the current request reports failures. Rejecting the page leaves
@@ -305,20 +307,26 @@ const TokenDetailHistoryListContent = ({
     fetchApiData?.list.length ?? 0,
   );
 
-  const refresh = useMemoizedFn(() => {
+  const reloadHistory = useMemoizedFn(() => {
     cancel();
     if (!disableHistoryRequest) {
       // Read the first page without discarding committed cursors. A failed
       // refresh must still allow appending/retrying from the displayed window.
       reload();
     }
+  });
+
+  const refresh = useMemoizedFn(() => {
+    // Native RefreshControl owns a visible scroll offset. Initial loads and
+    // background revalidation must not programmatically pull the list down.
+    setManualHistoryRefreshing(!disableHistoryRequest);
+    reloadHistory();
     onRefresh?.();
   });
 
   useEffect(() => {
     if (isReady.current) {
-      cancel();
-      refresh();
+      reloadHistory();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
@@ -404,7 +412,7 @@ const TokenDetailHistoryListContent = ({
       isNeedFetchFromApi={!isMyAddress}
       firstFetchDone={false}
       loadingMore={loadingMore}
-      refreshLoading={loading || baseTokenRefreshing}
+      refreshLoading={manualHistoryRefreshing || !!baseTokenRefreshing}
       isForMultipleAddress={false}
       account={finalAccount}
       appendBottom={300}
