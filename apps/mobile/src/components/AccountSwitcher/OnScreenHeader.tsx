@@ -6,7 +6,7 @@ import { Dimensions, View } from 'react-native';
 // caret-down-cc.svg
 import { default as RcCaretDownCircleCC } from './icons/caret-down-circle.svg';
 import { default as RcCaretDownCircleDarkCC } from './icons/caret-down-circle-dark.svg';
-import TouchableView from '../Touchable/TouchableView';
+import { CustomTouchableOpacity } from '../CustomTouchableOpacity';
 import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
 import {
   useSceneAccountInfo,
@@ -76,9 +76,12 @@ export function ScreenHeaderAccountSwitcher({
   const IconCom = isLight ? RcCaretDownCircleCC : RcCaretDownCircleDarkCC;
 
   return (
-    <TouchableView
+    <CustomTouchableOpacity
+      as="RNGHTouchableOpacity"
       style={styles.container}
       disabled={disableSwitch}
+      activeOpacity={1}
+      hitSlop={8}
       onPress={() => {
         const nextOpen = !isOpen;
         toggleSceneVisible(forScene, nextOpen);
@@ -141,7 +144,7 @@ export function ScreenHeaderAccountSwitcher({
           </>
         )}
       </View>
-    </TouchableView>
+    </CustomTouchableOpacity>
   );
 }
 

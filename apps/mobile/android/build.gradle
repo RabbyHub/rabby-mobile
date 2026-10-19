@@ -32,6 +32,18 @@ buildscript {
 
 apply plugin: "com.facebook.react.rootproject"
 
+// RN libraries (including Google Sign-In and Reanimated) can define the same
+// Java classes at different source paths for old/new architecture. Treat an
+// architecture switch as a non-file input change so javac rebuilds its class-to-
+// source mapping instead of incrementally dropping the replacement classes.
+// Same-architecture incremental builds, task caching and parallelism remain on.
+def rabbyReactNativeArchitecture = gradle.extensions.extraProperties.get("rabbyReactNativeArchitecture").toString()
+subprojects { dependency ->
+    dependency.tasks.withType(org.gradle.api.tasks.compile.JavaCompile).configureEach {
+        inputs.property("rabbyReactNativeArchitecture", rabbyReactNativeArchitecture)
+    }
+}
+
 // plugins {
 //     id 'com.google.gms.google-services' version '4.4.2' apply false
 // }

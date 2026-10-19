@@ -170,9 +170,11 @@ const Indicator = ({
 
 const indicatorMarginTop = 0;
 const indicatorHeight = HOME_TOP_HEADER_SIZES.headerIndicatorHeight;
-const leftHitSlopTop = 50;
+// Keep the indicator hit regions below the header's eye/action buttons.
+// Expanding 50pt upward overlaps those controls under Fabric hit testing.
+const leftHitSlopTop = 4;
 const leftHitSlopBottom = 4;
-const rightHitSlopTop = 50;
+const rightHitSlopTop = 4;
 const rightHitSlopBottom = 4;
 
 const indicatorStyles = createGetStyles2024(
@@ -422,10 +424,15 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
 >) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const indexDecimal = apisHomeTabIndex.svTabIndexDecimal;
+  const { tabsOpacity } = useHomeDrawerOpacityStyle();
 
+  // Keep the native sibling order stable while PagerView is settling. Changing
+  // zIndex here can detach/reinsert the pager under Fabric and stop its scroll.
+  // The transparent overlay must not consume touches outside its children.
   const containerStyle = useAnimatedStyle(() => {
     return {
-      zIndex: indexDecimal.value < 1 ? -1 : 10,
+      opacity: tabsOpacity.value,
+      pointerEvents: tabsOpacity.value < 0.1 ? 'none' : 'box-none',
     };
   });
 
@@ -441,13 +448,12 @@ export const HomeCustomMaterialTabBar = ({}: Partial<
     measureSecondaryIndicator();
   }, [measureSecondaryIndicator]);
 
-  const { opacityStyle } = useHomeDrawerOpacityStyle();
   // const winWidth = Dimensions.get('window').width;
   const { width: winWidth } = useWindowDimensions();
 
   return (
     <Animated.View
-      style={[styles.container, opacityStyle, containerStyle]}
+      style={[styles.container, containerStyle]}
       // ref={homeGuidanceMultipleTabsTargetViewRef}
       // onLayout={() => {
       //   measureTabBarWrapper();

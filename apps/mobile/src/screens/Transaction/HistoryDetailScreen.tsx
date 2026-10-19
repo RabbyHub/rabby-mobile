@@ -37,6 +37,7 @@ import { getApproveTokeName } from './components/utils';
 import { isAddress } from 'viem';
 import { getTokenSymbol } from '@/utils/token';
 import { ProjectItemInDetail } from './components/ProjectItemInDetail';
+import { HistoryHeaderTitle } from './components/HistoryHeaderTitle';
 
 function HistoryDetailScreen(): JSX.Element {
   const route =
@@ -56,14 +57,14 @@ function HistoryDetailScreen(): JSX.Element {
       <ScreenHeaderAccountSwitcher
         forScene="HistoryDetail"
         titleText={
-          <Text style={styles.headerTitleStyle} numberOfLines={1}>
+          <HistoryHeaderTitle>
             {title || t('page.transactions.itemTitle.Default')}
-          </Text>
+          </HistoryHeaderTitle>
         }
         disableSwitch={true}
       />
     );
-  }, [styles.headerTitleStyle, title, t]);
+  }, [title, t]);
 
   React.useEffect(() => {
     setNavigationOptions({
@@ -592,13 +593,6 @@ const getStyle = createGetStyles2024(
     },
     operationText: {
       textTransform: 'capitalize',
-    },
-    headerTitleStyle: {
-      color: colors2024['neutral-title-1'],
-      fontWeight: '900',
-      fontSize: 20,
-      fontFamily: 'SF Pro Rounded',
-      lineHeight: 24,
     },
     scamContainerWrapper: {
       paddingHorizontal: PADDING_HORIZONTAL,

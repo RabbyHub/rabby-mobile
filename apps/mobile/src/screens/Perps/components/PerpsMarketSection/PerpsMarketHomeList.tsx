@@ -2,6 +2,8 @@ import React from 'react';
 import { View } from 'react-native';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
+import { ScreenStoreActivityProvider } from '@/hooks/storeActivity/ScreenStoreActivityProvider';
+import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
 import { createGetStyles2024 } from '@/utils/styles';
 import { usePerpsGroupedMarketData } from '../../hooks/usePerpsGroupedMarketData';
 import { PerpsMarketItem } from './PerpsMarketItem';
@@ -13,9 +15,9 @@ type Props = {
 
 const PerpsMarketHomeListComponent: React.FC<Props> = ({ onItemPress }) => {
   const { styles } = useTheme2024({ getStyle });
-  const marketData = perpsStore(s => s.marketData);
-  const favoriteMarkets = perpsStore(s => s.favoriteMarkets);
-  const backendCategories = perpsStore(s => s.categories);
+  const marketData = useActivityStore(perpsStore, s => s.marketData);
+  const favoriteMarkets = useActivityStore(perpsStore, s => s.favoriteMarkets);
+  const backendCategories = useActivityStore(perpsStore, s => s.categories);
   const { visibleHome } = usePerpsGroupedMarketData({
     marketData,
     favoriteMarkets,
@@ -43,7 +45,15 @@ const PerpsMarketHomeListComponent: React.FC<Props> = ({ onItemPress }) => {
   );
 };
 
-export const PerpsMarketHomeList = React.memo(PerpsMarketHomeListComponent);
+export const PerpsMarketHomeList = React.memo(function PerpsMarketHomeList(
+  props: Props,
+) {
+  return (
+    <ScreenStoreActivityProvider label="perps-market-home-list">
+      <PerpsMarketHomeListComponent {...props} />
+    </ScreenStoreActivityProvider>
+  );
+});
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {

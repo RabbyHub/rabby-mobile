@@ -34,6 +34,7 @@ type ModalData = {
 export const GlobalBottomSheetModal = () => {
   const modalRefs = React.useRef<Record<string, ModalData['ref']>>({});
   const [modals, setModals] = React.useState<ModalData[]>([]);
+  const waitForDismissIdsRef = React.useRef(new Set<string>());
 
   const { colors, colors2024, isLight } = useTheme2024();
 
@@ -116,35 +117,50 @@ export const GlobalBottomSheetModal = () => {
     [getApproval, handlePresent],
   );
 
-  const handleRemove = React.useCallback<
-    GlobalSheetModalListeners[EVENT_NAMES.REMOVE]
-  >((key: string, params) => {
-    if (modalRefs.current[key]) {
-      // Empty object as props causes flash, undefined is preferred
-      modalRefs.current[key].current?.close(
-        Object.keys(params || {}).length ? { ...params } : undefined,
-      );
-    }
+  const finalizeRemove = React.useCallback((key: string) => {
+    waitForDismissIdsRef.current.delete(key);
     delete modalRefs.current[key];
-    // const modalInst = modals.find(modal => modal.id === key);
-    // modalInst?.params.onCancel?.();
-
-    setModals(prev => {
-      return prev.filter(modal => modal.id !== key);
-    });
-
+    setModals(prev => prev.filter(modal => modal.id !== key));
     globalSheetModalEvents.emit(EVENT_NAMES.CLOSED, key);
     globalSheetModalEvents.emit(EVENT_NAMES.DISMISS, key);
   }, []);
+
+  const handleRemove = React.useCallback<
+    GlobalSheetModalListeners[EVENT_NAMES.REMOVE]
+  >(
+    (key, params) => {
+      const { waitForDismiss, ...animationParams } = params || {};
+      const currentModal = modalRefs.current[key]?.current;
+      if (waitForDismiss && currentModal) {
+        waitForDismissIdsRef.current.add(key);
+        currentModal.close(
+          Object.keys(animationParams).length ? animationParams : undefined,
+        );
+        return;
+      }
+      if (currentModal) {
+        // Empty object as props causes flash, undefined is preferred.
+        currentModal.close(
+          Object.keys(animationParams).length ? animationParams : undefined,
+        );
+      }
+      finalizeRemove(key);
+    },
+    [finalizeRemove],
+  );
 
   const handleDismiss = React.useCallback<
     GlobalSheetModalListeners[EVENT_NAMES.DISMISS]
   >(
     (key: string) => {
+      if (waitForDismissIdsRef.current.delete(key)) {
+        finalizeRemove(key);
+        return;
+      }
       globalSheetModalEvents.emit(EVENT_NAMES.DISMISS, key);
       handleRemove(key);
     },
-    [handleRemove],
+    [finalizeRemove, handleRemove],
   );
 
   const handleSnapToIndex = React.useCallback<
@@ -172,6 +188,20 @@ export const GlobalBottomSheetModal = () => {
       globalSheetModalEvents.off(EVENT_NAMES.SNAP_TO_INDEX, handleSnapToIndex);
     };
   }, [handleCreate, handlePresent, handleRemove, handleSnapToIndex]);
+
+  React.useEffect(() => {
+    const waitForDismissIds = waitForDismissIdsRef.current;
+    return () => {
+      // A destroyed host cannot promise a later native onDismiss. Cancel queued
+      // results synchronously and settle only the close waiters it still owns.
+      globalSheetModalEvents.off(EVENT_NAMES.REMOVE, handleRemove);
+      for (const id of waitForDismissIds) {
+        globalSheetModalEvents.emit(EVENT_NAMES.REMOVE, id);
+        globalSheetModalEvents.emit(EVENT_NAMES.CLOSED, id);
+      }
+      waitForDismissIds.clear();
+    };
+  }, [handleRemove]);
 
   const height = useSafeAreaInsets();
 
@@ -209,6 +239,7 @@ export const GlobalBottomSheetModal = () => {
             topInset={height.top}
             // bottomInset={androidOnlyBottomOffset}
             enableContentPanningGesture={true}
+            enableDismissOnClose
             keyboardBlurBehavior="restore"
             snapPoints={modal.snapPoints}
             {...bottomSheetModalProps}

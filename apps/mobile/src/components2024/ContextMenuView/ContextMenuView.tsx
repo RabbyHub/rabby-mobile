@@ -4,7 +4,7 @@
 import * as ContextMenu from '@rabby-wallet/zeego/context-menu';
 import { MenuTriggerProps } from '@rabby-wallet/zeego/menu';
 import type { ContextMenuContentProps } from '@radix-ui/react-context-menu';
-import { ImageSourcePropType, Platform } from 'react-native';
+import { ImageSourcePropType, Platform, View } from 'react-native';
 import { IS_ANDROID } from '@/core/native/utils';
 import { apisTheme } from '@/hooks/theme';
 import { memo, useCallback, useMemo, useRef } from 'react';
@@ -148,7 +148,8 @@ const ContextMenuViewInner = ({
         })}>
         {longPressGesture ? (
           <GestureDetector gesture={longPressGesture}>
-            {children}
+            {/* Composite children may drop GestureDetector's collapsable prop. */}
+            <View collapsable={false}>{children}</View>
           </GestureDetector>
         ) : (
           children

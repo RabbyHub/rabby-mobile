@@ -58,6 +58,7 @@ export interface Props {
     isExistedKR?: boolean;
     account?: KeyringAccountWithAlias;
     brandName: string;
+    skipSuccessAnimation?: boolean;
   };
   onCancel: () => void | Promise<void>;
 }
@@ -460,6 +461,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
                   : undefined,
                 keyringId: params.keyringId,
                 isExistedKR: params.isExistedKR,
+                skipSuccessAnimation: params.skipSuccessAnimation,
               },
             });
           }
@@ -493,6 +495,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
           type: hdType,
           brandName: hdBrandName,
           address: selectedAccounts.map(a => a.address),
+          skipSuccessAnimation: params.skipSuccessAnimation,
         },
       });
     }
@@ -500,6 +503,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     params.type,
     params.keyringId,
     params.isExistedKR,
+    params.skipSuccessAnimation,
     selectedAccounts,
     hdType,
     hdBrandName,

@@ -30,6 +30,7 @@ import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 import { IS_ANDROID } from '@/core/native/utils';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 /** Toast position at the top of screen */
 const TOAST_POSITION_TOP = 30;
@@ -190,7 +191,9 @@ export const ImportSecret = ({ route }: ScreenProps) => {
   const TabToggle = useCallback(() => {
     return (
       <View style={styles.tabContainer}>
-        <Pressable
+        <CustomTouchableOpacity
+          as="RNGHTouchableOpacity"
+          activeOpacity={1}
           style={[styles.tab, activeTab === 'seedPhrase' && styles.tabActive]}
           onPress={() => handleTabChange('seedPhrase')}>
           <Text
@@ -200,8 +203,10 @@ export const ImportSecret = ({ route }: ScreenProps) => {
             ]}>
             {t('page.manageAddress.seed-phrase')}
           </Text>
-        </Pressable>
-        <Pressable
+        </CustomTouchableOpacity>
+        <CustomTouchableOpacity
+          as="RNGHTouchableOpacity"
+          activeOpacity={1}
           style={[styles.tab, activeTab === 'privateKey' && styles.tabActive]}
           onPress={() => handleTabChange('privateKey')}
           {...makeTestIDProps(E2E_ID.onboarding.privateKeyTab)}>
@@ -212,7 +217,7 @@ export const ImportSecret = ({ route }: ScreenProps) => {
             ]}>
             {t('page.manageAddress.private-key')}
           </Text>
-        </Pressable>
+        </CustomTouchableOpacity>
       </View>
     );
   }, [activeTab, handleTabChange, styles, t]);

@@ -116,6 +116,8 @@ export type RemoveParams = Partial<
   Parameters<BottomSheetMethods['close']>[0]
 > & {
   duration?: number;
+  /** Keep the React owner until the native sheet has dismissed its portal. */
+  waitForDismiss?: boolean;
 };
 
 export enum EVENT_NAMES {

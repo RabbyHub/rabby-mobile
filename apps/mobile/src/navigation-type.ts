@@ -269,6 +269,8 @@ export type AddressNavigatorParamList = {
     alias?: string;
     isExistedKR?: boolean;
     showBackup?: boolean;
+    /** Follow-up imports can show their result without replaying the entrance. */
+    skipSuccessAnimation?: boolean;
   };
   [RootNames.ImportWatchAddress]?: {};
   [RootNames.ImportSafeAddress]?: {};
@@ -315,7 +317,8 @@ export type AccountNavigatorParamList = {
 
 export type SingleAddressNavigatorParamList = {
   [RootNames.SingleAddressHome]: {
-    // account: Account;
+    account?: Account;
+    navigationId?: number;
   };
 };
 

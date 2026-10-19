@@ -312,6 +312,8 @@ export interface TokenSelectorProps<
   scamTokensList?: ITokenItem[];
   isLoading?: boolean;
   onOpened?: () => void;
+  /** Native close completion, not the request to start closing. */
+  onClosed?: () => void;
   onConfirm(item: ITokenItem): void;
   onCancel(): void;
   type?: T;
@@ -442,6 +444,7 @@ const TokenSelectorSheetModalContent = ({
   disabledTips,
   isLoading,
   onOpened,
+  onClosed,
   headerTitle: customHeaderTitle,
   searchPlaceholder,
   disableItemCheck,
@@ -587,20 +590,32 @@ const TokenSelectorSheetModalContent = ({
     route.name === RootNames.SwapBridge ||
     route.name === RootNames.MultiSwapBridge;
 
-  if (isSwapTo && swapToTokenDetail && visible && isFocused && isSwapRoute) {
+  useEffect(() => {
+    if (
+      !isSwapTo ||
+      !swapToTokenDetail ||
+      !visible ||
+      !isFocused ||
+      !isSwapRoute
+    ) {
+      return;
+    }
+    // Native sheet dismissal must not run during a concurrent render. Preserve
+    // the hidden detail-return state until the sheet is actually dismissed.
+    if (route.params?.isSwapToTokenDetail) {
+      toggleNativeSheetModal('destroy');
+      return;
+    }
     setSwapToTokenDetail(false);
-  }
-
-  if (
-    isSwapTo &&
-    isSwapRoute &&
-    route.params?.isSwapToTokenDetail &&
-    swapToTokenDetail &&
-    visible &&
-    isFocused
-  ) {
-    toggleNativeSheetModal('destroy');
-  }
+  }, [
+    isSwapTo,
+    swapToTokenDetail,
+    visible,
+    isFocused,
+    isSwapRoute,
+    route.params?.isSwapToTokenDetail,
+    toggleNativeSheetModal,
+  ]);
 
   const currentRoute = getLatestNavigationName();
   const isInInitialRoute = useMemo(() => {
@@ -1348,11 +1363,13 @@ const TokenSelectorSheetModalContent = ({
       onDismiss={() => {
         isSheetMountedRef.current = false;
         onActivityVisibleChange(false);
+        onClosed?.();
       }}
       onChange={idx => {
         if (idx < 0) {
           onActivityVisibleChange(false);
           onCancel();
+          onClosed?.();
           return;
         }
         onActivityVisibleChange(true);

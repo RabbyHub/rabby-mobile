@@ -22,6 +22,7 @@ import { TransactionNavigatorParamList } from '@/navigation-type';
 import ApprovalsScreen from '../Approvals';
 import ReceiveScreen from '../Receive/Receive';
 import SwapBridgeScreen from '../SwapBridge';
+import { renderSwapBridgeHeader } from '../SwapBridge/SwapBridgeHeader';
 import { ConvertDustScreen } from '../ConvertDust';
 import { GasAccountScreen } from '../GasAccount';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
@@ -32,12 +33,14 @@ import { BatchRevokeScreen } from '../BatchRevoke/BatchRevoke';
 import { useTranslation } from 'react-i18next';
 import { PerpsOriginScreen } from '../Perps/index';
 import { PerpsMarketDetailScreen } from '../PerpsMarketDetail';
+import { PerpsMarketDetailHeader } from '../PerpsMarketDetail/components/PerpsMarketDetailHeader';
 import { PerpsHistoryScreen } from '../PerpsHistory';
 import { PerpsProHistoryScreen } from '../PerpsProHistory';
 import { PerpsProHistoryHeader } from '../PerpsProHistory/components/PerpsProHistoryHeader';
 import { PerpsSearchScreen } from '../PerpsSearch';
 import LendingHistory from '../Lending/components/LendingHistory';
 import LendingScreen from '../Lending';
+import { renderLendingHeader } from '../Lending/components/LendingHeaderTitle';
 import PredictionScreen from '../Prediction';
 import { PredictionScreenWithPreload } from '../InnerDapp/InnerDappPreloadScreens';
 import { useInnerDappPreloadStrategy } from '@/config/innerDappPreloadStrategy';
@@ -305,7 +308,7 @@ export default function TransactionNavigator() {
         options={mergeScreenOptions2024([
           {
             title: '',
-            headerTitle: () => null,
+            header: renderSwapBridgeHeader,
           },
         ])}
       />
@@ -316,7 +319,7 @@ export default function TransactionNavigator() {
         options={mergeScreenOptions2024([
           {
             title: '',
-            headerTitle: () => null,
+            header: renderSwapBridgeHeader,
           },
         ])}
       />
@@ -400,17 +403,22 @@ export default function TransactionNavigator() {
       <TransactionStack.Screen
         name={RootNames.PerpsMarketDetail}
         component={PerpsMarketDetailScreen}
-        options={mergeScreenOptions({
-          // title: t('page.home.services.perpsMarketDetail'),
-          // ...headerPresets.withBgCard1_2024,
-          headerTintColor: colors['neutral-title-1'],
-          headerTitleStyle: {
-            fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
-            color: colors['neutral-title-1'],
-          },
-        })}
+        options={({ route }) =>
+          mergeScreenOptions({
+            title: '',
+            header: () => (
+              <PerpsMarketDetailHeader market={route.params.market} />
+            ),
+            // ...headerPresets.withBgCard1_2024,
+            headerTintColor: colors['neutral-title-1'],
+            headerTitleStyle: {
+              fontSize: 20,
+              fontWeight: '900',
+              fontFamily: 'SF Pro Rounded',
+              color: colors['neutral-title-1'],
+            },
+          })
+        }
       />
 
       <TransactionStack.Screen
@@ -457,16 +465,9 @@ export default function TransactionNavigator() {
         name={RootNames.Lending}
         component={LendingScreen}
         options={mergeScreenOptions({
-          title: t('page.home.services.lending'),
+          title: '',
           ...headerPresets.withBgCard1_2024,
-          headerTitle: ctx => {
-            return (
-              <ScreenHeaderAccountSwitcher
-                forScene="Lending"
-                titleText={ctx.children}
-              />
-            );
-          },
+          header: renderLendingHeader,
           headerTintColor: colors['neutral-title-1'],
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
