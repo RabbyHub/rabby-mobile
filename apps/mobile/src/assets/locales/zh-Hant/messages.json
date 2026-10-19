@@ -1576,6 +1576,10 @@
       "title": "授權"
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "移除",
+        "removeFailed": "移除代幣失敗"
+      },
       "sectionHeader": {
         "Defi": "DeFi",
         "Nft": "NFT",
@@ -1720,6 +1724,13 @@
       "subtitle": "選擇錢包以接收您的加密資產。"
     },
     "tokenDetail": {
+      "removed": {
+        "restore": "還原已移除的代幣",
+        "restoreFailed": "還原代幣失敗",
+        "more": "更多",
+        "confirmTitle": "移除此代幣？",
+        "confirmDescription": "· 移除後，此代幣將不再顯示在您的投資組合中。\n· 您可以隨時在設定 >> 已移除的代幣中還原。"
+      },
       "excludeBalanceTipsButton": "知道了",
       "action": {
         "less": "更少",
@@ -1941,6 +1952,10 @@
       "verify-password-before-backup": "在備份之前驗證您的 Rabby 密碼"
     },
     "setting": {
+      "removedToken": {
+        "title": "已移除的代幣",
+        "description": "已移除的代幣將在您所有地址的投資組合中隱藏，但仍會計入餘額。"
+      },
       "followUs": "關注我們",
       "tou": "使用條款",
       "fingerPrint": "指紋",
@@ -2751,7 +2766,6 @@
         "gotItBtn": "我知道了",
         "sizeTips": "交易的總價值或數量，由保證金和槓桿決定。",
         "feeRabby": "Rabby Wallet",
-        "feeRabbyDiscount": "限時交易手續費折扣",
         "feeHyperliquid": "Hyperliquid",
         "feeDesc": "交易時會產生<1>交易手續費</1>和<2>建構者費用</2>。",
         "feeTitle": "費用",
@@ -2818,7 +2832,7 @@
         "desc": "你即將登出目前的永續合約帳戶，之後仍可使用此地址重新登入並恢復。"
       },
       "PerpsDepositCard": {
-        "availableToTrade": "可交易餘額：",
+        "availableToTrade": "可用：",
         "deposit": "入金",
         "swap": "兌換"
       },
@@ -2893,6 +2907,36 @@
       }
     },
     "perpsDetail": {
+      "simpleChart": {
+        "openInterest": "未平倉量",
+        "volume24h": "24h 成交量",
+        "intervalTitle": "K 線週期",
+        "intervalDescription": "每根 K 線代表所選時間週期。",
+        "minutes": "分鐘",
+        "hours": "小時",
+        "days": "天",
+        "open": "開市價",
+        "low": "最低價",
+        "high": "最高價",
+        "close": "收市價",
+        "time": "時間",
+        "change": "升跌額",
+        "changePercent": "升跌幅 (%)",
+        "averageEntry": "平均開倉價",
+        "takeProfit": "止賺",
+        "stopLoss": "止蝕",
+        "liquidation": "強制平倉價",
+        "all": "全部",
+        "source": "由 Hyperliquid 提供支援，價格圖表由 <tradingview>TradingView</tradingview> 提供。",
+        "resetChart": "重設圖表",
+        "backToLatest": "返回最新行情",
+        "switchToArea": "切換至面積圖",
+        "switchToCandle": "切換至陰陽燭圖",
+        "showVolume": "顯示 24 小時成交量",
+        "showOpenInterest": "顯示未平倉量",
+        "buy": "買入",
+        "sell": "賣出"
+      },
       "PerpEditLimitPriceTag": {
         "setLimitBuyPrice": "設定限價買入價",
         "setLimitSellPrice": "設定限價賣出價",

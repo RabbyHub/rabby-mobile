@@ -22,6 +22,10 @@ jest.mock('@/core/apis/provider', () => ({
   fetchEstimatedL1Fee: (...args: unknown[]) => mockFetchEstimatedL1Fee(...args),
 }));
 
+jest.mock('@/core/apis/readOnlyRpc', () => ({
+  requestReadOnlyETHRpc: (...args: unknown[]) => mockRequestETHRpc(...args),
+}));
+
 jest.mock('@/utils/chain', () => ({
   findChain: (...args: unknown[]) => mockFindChain(...args),
 }));
@@ -33,6 +37,7 @@ jest.mock('@/utils/number', () => ({
 jest.mock('@/constant/txGasLimit', () => ({
   TX_GAS_LIMIT_CHAIN_MAPPING: {
     LIMITED: 50_000,
+    HYPER: 3_000_000,
   },
 }));
 
@@ -156,7 +161,7 @@ describe('core/apis/transactions gas utilities', () => {
     const limitedChain = {
       ...mainnetChain,
       enum: 'LIMITED',
-      id: 999,
+      id: 998,
     };
 
     await expect(
@@ -210,6 +215,237 @@ describe('core/apis/transactions gas utilities', () => {
       });
     },
   );
+
+  it.each(['rejects', 'resolves to null'])(
+    'fetches the latest block when the prepared block %s',
+    async preparedResult => {
+      mockRequestETHRpc.mockResolvedValue({ gasLimit: '50000' });
+      const preparedBlock =
+        preparedResult === 'rejects'
+          ? Promise.reject(new Error('block unavailable'))
+          : Promise.resolve(null);
+
+      await expect(
+        calcGasLimit({
+          chain: mainnetChain as never,
+          tx: { value: '0' } as never,
+          gas: new BigNumber(100_000),
+          selectedGas: null,
+          nativeTokenBalance: '100000000000',
+          explainTx: { gas: { gas_ratio: 2 } } as never,
+          needRatio: false,
+          account: account as never,
+          preparedBlock,
+        }),
+      ).resolves.toEqual({
+        gasLimit: `0x${(45_000).toString(16)}`,
+        recommendGasLimitRatio: 1,
+      });
+      expect(mockRequestETHRpc).toHaveBeenCalledWith(
+        {
+          method: 'eth_getBlockByNumber',
+          params: ['latest', false],
+        },
+        'eth',
+        account,
+      );
+    },
+  );
+
+  describe('HyperEVM sender gas limit', () => {
+    const hyperChain = {
+      ...mainnetChain,
+      id: 999,
+      enum: 'HYPER',
+      serverId: 'hyper',
+    };
+    const txFrom = '0xdef';
+    const calculateGas = (
+      overrides: Partial<Parameters<typeof calcGasLimit>[0]> = {},
+    ) =>
+      calcGasLimit({
+        chain: hyperChain as never,
+        tx: { from: txFrom, value: '0' } as never,
+        gas: new BigNumber(8_300_000),
+        selectedGas: null,
+        nativeTokenBalance: '100000000000000000000',
+        explainTx: { gas: { gas_ratio: 2 } } as never,
+        needRatio: true,
+        account: account as never,
+        preparedBlock: { gasLimit: '3000000' } as never,
+        ...overrides,
+      });
+
+    it('uses the transaction sender mode instead of the latest block size', async () => {
+      mockRequestETHRpc.mockResolvedValue(true);
+
+      await expect(calculateGas()).resolves.toEqual({
+        gasLimit: `0x${(12_450_000).toString(16)}`,
+        recommendGasLimitRatio: 1.5,
+      });
+      expect(mockRequestETHRpc).toHaveBeenCalledTimes(1);
+      expect(mockRequestETHRpc).toHaveBeenCalledWith(
+        {
+          method: 'eth_usingBigBlocks',
+          params: [txFrom],
+        },
+        'hyper',
+        account,
+      );
+    });
+
+    it.each([
+      [21_000, 0],
+      [3_000_000, 0],
+      [21_000, 3_000_000],
+      [3_000_000, 3_000_000],
+    ])(
+      'skips the sender mode query within the small limit: estimate=%s dappGas=%s',
+      async (estimatedGas, dappGas) => {
+        mockRequestETHRpc.mockResolvedValue(true);
+
+        await expect(
+          calculateGas({
+            tx: {
+              from: txFrom,
+              value: '0',
+              gas: `0x${dappGas.toString(16)}`,
+            } as never,
+            gas: new BigNumber(estimatedGas),
+            needRatio: false,
+          }),
+        ).resolves.toEqual({
+          gasLimit: `0x${Math.max(estimatedGas, dappGas).toString(16)}`,
+          recommendGasLimitRatio: 1,
+        });
+        expect(mockRequestETHRpc).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each([2_100_000, 2_500_000])(
+      'queries the sender mode when padding raises %s above the small limit',
+      async estimatedGas => {
+        mockRequestETHRpc.mockResolvedValue(true);
+
+        await expect(
+          calculateGas({ gas: new BigNumber(estimatedGas) }),
+        ).resolves.toEqual({
+          gasLimit: `0x${(estimatedGas * 1.5).toString(16)}`,
+          recommendGasLimitRatio: 1.5,
+        });
+        expect(mockRequestETHRpc).toHaveBeenCalledTimes(1);
+      },
+    );
+
+    it.each([
+      [1_600_000, 2, 3_200_000, 1],
+      [2_100_000, 1.2, 2_520_000, 0],
+    ])(
+      'uses the balance fallback ratio before querying: estimate=%s ratio=%s',
+      async (estimatedGas, gasRatio, expectedGas, expectedCalls) => {
+        mockRequestETHRpc.mockResolvedValue(true);
+
+        await expect(
+          calculateGas({
+            gas: new BigNumber(estimatedGas),
+            selectedGas: { price: 1 } as never,
+            nativeTokenBalance: '1',
+            explainTx: { gas: { gas_ratio: gasRatio } } as never,
+          }),
+        ).resolves.toEqual({
+          gasLimit: `0x${expectedGas.toString(16)}`,
+          recommendGasLimitRatio: gasRatio,
+        });
+        expect(mockRequestETHRpc).toHaveBeenCalledTimes(expectedCalls);
+      },
+    );
+
+    it.each<[string, unknown, number, number]>([
+      ['big blocks', true, 25_000_000, 30_000_000],
+      ['small blocks', false, 8_300_000, 3_000_000],
+      ['a string response', 'true', 8_300_000, 3_000_000],
+      ['a numeric response', 1, 8_300_000, 3_000_000],
+      ['a missing response', null, 8_300_000, 3_000_000],
+    ])(
+      'caps the estimate for %s',
+      async (_, rpcResult, estimatedGas, expectedGas) => {
+        mockRequestETHRpc.mockResolvedValue(rpcResult);
+
+        await expect(
+          calculateGas({ gas: new BigNumber(estimatedGas) }),
+        ).resolves.toEqual({
+          gasLimit: `0x${expectedGas.toString(16)}`,
+          recommendGasLimitRatio: 1.5,
+        });
+      },
+    );
+
+    it('falls back to the small sender limit when the RPC fails', async () => {
+      mockRequestETHRpc.mockRejectedValue(new Error('unsupported method'));
+
+      await expect(calculateGas()).resolves.toEqual({
+        gasLimit: `0x${(3_000_000).toString(16)}`,
+        recommendGasLimitRatio: 1.5,
+      });
+      expect(mockRequestETHRpc).toHaveBeenCalledTimes(1);
+    });
+
+    it('falls back after a five-second timeout', async () => {
+      jest.useFakeTimers();
+      try {
+        mockRequestETHRpc.mockReturnValue(new Promise(() => {}));
+        const result = calculateGas();
+
+        await jest.advanceTimersByTimeAsync(5_000);
+
+        await expect(result).resolves.toEqual({
+          gasLimit: `0x${(3_000_000).toString(16)}`,
+          recommendGasLimitRatio: 1.5,
+        });
+        expect(jest.getTimerCount()).toBe(0);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it.each<[boolean, number, number, number]>([
+      [true, 30_000_000, 30_000_000, 1],
+      [true, 30_000_001, 21_000, 1],
+      [false, 3_000_000, 3_000_000, 0],
+      [false, 3_000_001, 21_000, 1],
+    ])(
+      'honors dapp gas only within the sender limit: mode=%s gas=%s',
+      async (usingBigBlocks, dappGas, expectedGas, expectedCalls) => {
+        mockRequestETHRpc.mockResolvedValue(usingBigBlocks);
+
+        await expect(
+          calculateGas({
+            tx: {
+              from: txFrom,
+              value: '0',
+              gas: `0x${dappGas.toString(16)}`,
+            } as never,
+            gas: new BigNumber(21_000),
+            needRatio: false,
+          }),
+        ).resolves.toEqual({
+          gasLimit: `0x${expectedGas.toString(16)}`,
+          recommendGasLimitRatio: 1,
+        });
+        expect(mockRequestETHRpc).toHaveBeenCalledTimes(expectedCalls);
+      },
+    );
+
+    it('preserves the block-based calculation for Gnosis accounts', async () => {
+      await expect(
+        calculateGas({ account: { ...account, type: 'Gnosis' } as never }),
+      ).resolves.toEqual({
+        gasLimit: `0x${(2_850_000).toString(16)}`,
+        recommendGasLimitRatio: 1.5,
+      });
+      expect(mockRequestETHRpc).not.toHaveBeenCalled();
+    });
+  });
 
   it('loads native token gas balance through read-only RPC', async () => {
     mockRequestETHRpc.mockResolvedValue('0x10');

@@ -65,6 +65,8 @@ import { apiCustomTestnet } from '@/core/apis';
 import { toast } from '@/components2024/Toast';
 import { isWatchOrSafeAccount } from '@/utils/account';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { TokenRowContextMenu } from './components/TokenRowContextMenu';
+import { createRemoveTokenConfirmPopup } from '@/components2024/RemoveTokenConfirmPopup';
 import {
   useRegressionScenario,
   useRegressionScenarioAssertion,
@@ -110,18 +112,20 @@ type TokenListExtraItem =
 
 type TokenListItem = TokenProjectionSectionItem<TokenListExtraItem>;
 
-const TokenResourceRow = React.memo(
+type TokenResourceRowProps = {
+  tokenId: TokenEntityId;
+  tokenStyle?: ViewStyle;
+  loaderStyle?: ViewStyle;
+  onTokenPress(token: ITokenItem): void;
+};
+
+const TokenResourceRowContent = React.memo(
   ({
     tokenId,
     tokenStyle,
     loaderStyle,
     onTokenPress,
-  }: {
-    tokenId: TokenEntityId;
-    tokenStyle?: ViewStyle;
-    loaderStyle?: ViewStyle;
-    onTokenPress(token: ITokenItem): void;
-  }) => {
+  }: TokenResourceRowProps) => {
     const token = useActivityStore(
       tokenEntityResourceStore.useStore,
       state => state.valueMap[tokenId],
@@ -138,10 +142,37 @@ const TokenResourceRow = React.memo(
         data={token}
         style={tokenStyle}
         onTokenPress={onTokenPress}
-        //logoSize={46}
-        //chainLogoSize={18}
         scene="portfolio"
       />
+    );
+  },
+);
+
+const TokenResourceRow = React.memo(
+  ({
+    onRemoveToken,
+    ...rowProps
+  }: TokenResourceRowProps & {
+    onRemoveToken(token: ITokenItem): void;
+  }) => {
+    const { tokenId, loaderStyle } = rowProps;
+    // Balance/price updates belong to the content, not the native menu host.
+    const hasToken = useActivityStore(
+      tokenEntityResourceStore.useStore,
+      state => !!state.valueMap[tokenId],
+      Object.is,
+      { storeLabel: 'single-address-token-entities' },
+    );
+
+    if (!hasToken) {
+      return <ItemLoader style={loaderStyle} />;
+    }
+
+    const content = <TokenResourceRowContent {...rowProps} />;
+    return (
+      <TokenRowContextMenu tokenId={tokenId} onRemoveToken={onRemoveToken}>
+        {content}
+      </TokenRowContextMenu>
     );
   },
 );
@@ -285,7 +316,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     state =>
       !!singleAssetsKey &&
       !!state.singleAssetsConfigByKey[singleAssetsKey] &&
-      !!state.singleAssetsResultByKey[singleAssetsKey],
+      !!state.singleDisplayAssetsResultByKey[singleAssetsKey],
     Object.is,
     { storeLabel: 'single-address-token-assets-index-readiness' },
   );
@@ -295,7 +326,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
     useShallow(state => {
       const result =
         (singleAssetsKey
-          ? state.singleAssetsResultByKey[singleAssetsKey]
+          ? state.singleDisplayAssetsResultByKey[singleAssetsKey]
           : undefined) || EMPTY_TOKEN_ASSETS_INDEX_RESULT;
       return {
         additionalCoreUsdValue: result.additionalCoreUsdValue,
@@ -688,6 +719,7 @@ export const TokenList = ({ onForeground, onRefresh }: Props) => {
           tokenStyle={tokenRowStyle}
           loaderStyle={styles.removeLeft}
           onTokenPress={handleOpenTokenDetail}
+          onRemoveToken={createRemoveTokenConfirmPopup}
         />
       </View>
     ),

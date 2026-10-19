@@ -37,7 +37,6 @@ jest.mock('react-i18next', () => ({
 jest.mock('@/assets2024/icons/common/IconSetting.svg', () => () => null);
 jest.mock('@/assets2024/icons/home/eye-cc.svg', () => () => null);
 jest.mock('@/assets2024/icons/home/eye-close-cc.svg', () => () => null);
-jest.mock('@/assets2024/icons/home/eye-half-close-cc.svg', () => () => null);
 jest.mock('@/assets2024/icons/perps/icon-switch-mode.svg', () => () => null);
 jest.mock('@/core/native/utils', () => ({ IS_ANDROID: true }));
 jest.mock('@/components/AppStatusBar', () => ({

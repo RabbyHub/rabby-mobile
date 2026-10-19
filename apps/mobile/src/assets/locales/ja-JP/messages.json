@@ -1528,6 +1528,10 @@
       "title": "承認"
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "削除",
+        "removeFailed": "トークンの削除に失敗しました"
+      },
       "sectionHeader": {
         "Nft": "NFT",
         "Defi": "DeFi",
@@ -1623,6 +1627,13 @@
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "了解しました",
+      "removed": {
+        "restore": "削除したトークンを復元",
+        "restoreFailed": "トークンの復元に失敗しました",
+        "more": "その他",
+        "confirmTitle": "このトークンを削除しますか？",
+        "confirmDescription": "· 削除すると、このトークンはポートフォリオに表示されなくなります。\n· 設定 >> 削除済みトークンからいつでも復元できます。"
+      },
       "action": {
         "Buy": "購入する",
         "less": "少なく表示",
@@ -1830,6 +1841,10 @@
       "ConfirmPassword": "パスワードを確認"
     },
     "setting": {
+      "removedToken": {
+        "title": "削除済みトークン",
+        "description": "削除したトークンは、すべてのアドレスのポートフォリオで非表示になりますが、残高の計算には引き続き含まれます。"
+      },
       "screenTitle": "設定",
       "touchId": "Touch ID",
       "fingerPrint": "指紋",
@@ -2631,7 +2646,6 @@
         "feeTitle": "手数料",
         "feeHyperliquid": "Hyperliquid",
         "feeRabby": "Rabby Wallet",
-        "feeRabbyDiscount": "期間限定の取引手数料割引",
         "feeDesc": "取引を行う際は、\n<1>取引手数料</1>と<2>ビルダー手数料</2>が適用されます。",
         "amount": "金額",
         "asset": "資産",
@@ -2696,7 +2710,7 @@
         "desc": "現在の無期限先物アカウントからログアウトします。このアドレスで再度ログインすれば、いつでも復元できます。"
       },
       "PerpsDepositCard": {
-        "availableToTrade": "取引可能:",
+        "availableToTrade": "利用可能:",
         "deposit": "入金",
         "swap": "スワップ"
       },
@@ -2771,6 +2785,36 @@
       }
     },
     "perpsDetail": {
+      "simpleChart": {
+        "openInterest": "未決済建玉",
+        "volume24h": "24時間取引量",
+        "intervalTitle": "ローソク足の期間",
+        "intervalDescription": "各ローソク足は選択した時間間隔を表します。",
+        "minutes": "分",
+        "hours": "時間",
+        "days": "日",
+        "open": "始値",
+        "low": "安値",
+        "high": "高値",
+        "close": "終値",
+        "time": "日時",
+        "change": "変動額",
+        "changePercent": "変動率 (%)",
+        "averageEntry": "平均建値",
+        "takeProfit": "利確",
+        "stopLoss": "損切り",
+        "liquidation": "強制決済価格",
+        "all": "全期間",
+        "source": "Hyperliquid がサービスを提供し、<tradingview>TradingView</tradingview> が価格チャートを提供しています。",
+        "resetChart": "チャートをリセット",
+        "backToLatest": "最新の時点に戻る",
+        "switchToArea": "エリアチャートに切り替え",
+        "switchToCandle": "ローソク足チャートに切り替え",
+        "showVolume": "24時間取引量を表示",
+        "showOpenInterest": "未決済建玉を表示",
+        "buy": "買い",
+        "sell": "売り"
+      },
       "PerpEditLimitPriceTag": {
         "setLimitBuyPrice": "指値買い価格を設定",
         "setLimitSellPrice": "指値売り価格を設定",

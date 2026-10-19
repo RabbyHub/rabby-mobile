@@ -78,6 +78,48 @@ describe('usePerpsCandleFeed', () => {
     resetPerpsCandleSourceSnapshotCacheForTests();
   });
 
+  it.each([false, true])(
+    'bounds recovery retries and releases timers when disabled (Simple %s)',
+    async simplePresentation => {
+      jest.useFakeTimers();
+      mockCandleSnapshot.mockRejectedValue(new Error('offline'));
+      const hook = renderHook(
+        ({ enabled }) =>
+          usePerpsCandleFeed({
+            coin: 'BTC',
+            interval: '15m',
+            enabled,
+            simplePresentation,
+          }),
+        { initialProps: { enabled: true } },
+      );
+      try {
+        await act(async () => {});
+        for (const delay of [1000, 3000, 10000, 60000]) {
+          await act(async () => {
+            jest.advanceTimersByTime(delay);
+          });
+        }
+        expect(mockCandleSnapshot).toHaveBeenCalledTimes(
+          simplePresentation ? 4 : 1,
+        );
+        expect(hook.result.current.status).toBe('error');
+        act(() => hook.result.current.retry());
+        await act(async () => {});
+        const count = mockCandleSnapshot.mock.calls.length;
+        hook.rerender({ enabled: false });
+        await act(async () => {
+          jest.advanceTimersByTime(60000);
+        });
+        expect(mockCandleSnapshot).toHaveBeenCalledTimes(count);
+        expect(hook.result.current.status).toBe('idle');
+      } finally {
+        hook.unmount();
+        jest.useRealTimers();
+      }
+    },
+  );
+
   it('shows a preloaded baseline while HTTP refresh and WS convergence run', async () => {
     const request = deferred<CandleSnapshot>();
     mockCandleSnapshot.mockReturnValueOnce(request.promise);

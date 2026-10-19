@@ -60,7 +60,12 @@ describe('PerpsTradeFeeExplanationContent', () => {
   });
 
   it('keeps the default emphasis on its inherited font family', () => {
-    render(<PerpsTradeFeeExplanationContent isLiquidation={false} />);
+    render(
+      <PerpsTradeFeeExplanationContent
+        rabbyFeeRate="0.04%"
+        isLiquidation={false}
+      />,
+    );
 
     expect(StyleSheet.flatten(mockTransComponents['1'].props.style)).toEqual(
       expect.objectContaining({
@@ -79,7 +84,11 @@ describe('PerpsTradeFeeExplanationContent', () => {
 
   it('opts Pro emphasis into the explicit SF Pro Rounded family', () => {
     render(
-      <PerpsTradeFeeExplanationContent isLiquidation={false} variant="pro" />,
+      <PerpsTradeFeeExplanationContent
+        rabbyFeeRate="0.04%"
+        isLiquidation={false}
+        variant="pro"
+      />,
     );
 
     expect(StyleSheet.flatten(mockTransComponents['1'].props.style)).toEqual(
@@ -98,7 +107,12 @@ describe('PerpsTradeFeeExplanationContent', () => {
   });
 
   it('keeps the Simple trading and builder fee explanation for normal fills', () => {
-    render(<PerpsTradeFeeExplanationContent isLiquidation={false} />);
+    render(
+      <PerpsTradeFeeExplanationContent
+        rabbyFeeRate="0.04%"
+        isLiquidation={false}
+      />,
+    );
 
     expect(screen.getByText('page.perps.historyDetail.feeDesc')).toBeTruthy();
     expect(
@@ -106,49 +120,17 @@ describe('PerpsTradeFeeExplanationContent', () => {
     ).toBeTruthy();
     expect(screen.getByText('0.045%')).toBeTruthy();
     expect(screen.getByText('page.perps.historyDetail.feeRabby')).toBeTruthy();
-    expect(screen.getByText('0.02%')).toBeTruthy();
     expect(screen.getByText('0.04%')).toBeTruthy();
-    expect(
-      screen.getByText('page.perps.historyDetail.feeRabbyDiscount'),
-    ).toBeTruthy();
   });
 
   it('omits the Rabby builder fee for liquidation fills', () => {
-    render(<PerpsTradeFeeExplanationContent isLiquidation />);
+    render(
+      <PerpsTradeFeeExplanationContent rabbyFeeRate="0.04%" isLiquidation />,
+    );
 
     expect(screen.getByText('0.045%')).toBeTruthy();
     expect(screen.queryByTestId('rabby-fee-icon')).toBeNull();
     expect(screen.queryByText('0.02%')).toBeNull();
     expect(screen.queryByText('0.04%')).toBeNull();
-  });
-
-  it('bounds and right-aligns long discount copy without truncating it', () => {
-    const longDiscountCopy =
-      'Diskon biaya trading untuk waktu terbatas yang tetap ditampilkan sepenuhnya';
-    mockTranslations = {
-      'page.perps.historyDetail.feeRabbyDiscount': longDiscountCopy,
-    };
-
-    render(<PerpsTradeFeeExplanationContent isLiquidation={false} />);
-
-    expect(screen.getByTestId('perps-trade-fee-rabby-left')).toHaveStyle({
-      flexShrink: 0,
-    });
-    expect(screen.getByTestId('perps-trade-fee-rabby-right')).toHaveStyle({
-      alignItems: 'flex-end',
-      flex: 1,
-      marginLeft: 12,
-      minWidth: 0,
-    });
-
-    const discount = screen.getByTestId('perps-trade-fee-rabby-discount');
-    expect(discount).toHaveTextContent(longDiscountCopy);
-    expect(discount).toHaveStyle({
-      alignSelf: 'stretch',
-      flexShrink: 1,
-      textAlign: 'right',
-    });
-    expect(discount.props.numberOfLines).toBeUndefined();
-    expect(discount.props.ellipsizeMode).toBeUndefined();
   });
 });

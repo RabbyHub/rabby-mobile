@@ -33,7 +33,7 @@ export class RabbyPointsService extends StoreServiceBase<
   };
   clearSignatureByAddr = (addr: string) => {
     this.mutateStore(draft => {
-      delete draft.signatures[addr];
+      delete draft.signatures[addr.toLowerCase()];
     });
   };
   clearSignature = () => {

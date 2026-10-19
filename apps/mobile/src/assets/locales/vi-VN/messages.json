@@ -1501,6 +1501,10 @@
       }
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "Gỡ bỏ",
+        "removeFailed": "Không thể gỡ bỏ token"
+      },
       "sectionHeader": {
         "Defi": "DeFi",
         "Nft": "NFT",
@@ -1652,6 +1656,10 @@
       "title": "GasAccount"
     },
     "setting": {
+      "removedToken": {
+        "title": "Token đã gỡ bỏ",
+        "description": "Các token đã gỡ bỏ sẽ bị ẩn khỏi danh mục đầu tư trên tất cả các địa chỉ của bạn, nhưng vẫn được tính vào số dư."
+      },
       "aboutUs": "Về Chúng Tôi",
       "themeMode": "Chế độ giao diện",
       "fingerPrint": "Vân tay",
@@ -1692,6 +1700,13 @@
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "Tôi hiểu rồi",
+      "removed": {
+        "restore": "Khôi phục token đã gỡ bỏ",
+        "restoreFailed": "Không thể khôi phục token",
+        "more": "Thêm",
+        "confirmTitle": "Gỡ bỏ token này?",
+        "confirmDescription": "· Token này sẽ không còn xuất hiện trong danh mục đầu tư của bạn sau khi gỡ bỏ.\n· Bạn có thể khôi phục bất cứ lúc nào trong Cài đặt >> Token đã gỡ bỏ."
+      },
       "action": {
         "less": "Hiển thị ít hơn",
         "Buy": "Mua",
@@ -2697,7 +2712,6 @@
         "sizeTips": "Giá trị hoặc số lượng tổng thể của giao dịch của bạn, được xác định bởi ký quỹ và đòn bẩy.",
         "feeHyperliquid": "Hyperliquid",
         "feeRabby": "Rabby Wallet",
-        "feeRabbyDiscount": "Giảm phí giao dịch trong thời gian có hạn",
         "feeTitle": "Phí",
         "feeDesc": "Khi người dùng giao dịch, cả <1>phí giao dịch</1> và <2>phí builder</2> đều được áp dụng.",
         "amount": "Số tiền",
@@ -2764,7 +2778,7 @@
       },
       "PerpsDepositCard": {
         "deposit": "Nạp tiền",
-        "availableToTrade": "Có sẵn để giao dịch:",
+        "availableToTrade": "Khả dụng:",
         "swap": "Đổi"
       },
       "PerpsAccountSelectorPopup": {
@@ -2838,6 +2852,36 @@
       }
     },
     "perpsDetail": {
+      "simpleChart": {
+        "openInterest": "Hợp đồng mở",
+        "volume24h": "Khối lượng 24 giờ",
+        "intervalTitle": "Khung thời gian nến",
+        "intervalDescription": "Mỗi nến biểu thị khoảng thời gian đã chọn.",
+        "minutes": "Phút",
+        "hours": "Giờ",
+        "days": "Ngày",
+        "open": "Giá mở cửa",
+        "low": "Giá thấp nhất",
+        "high": "Giá cao nhất",
+        "close": "Giá đóng cửa",
+        "time": "Thời gian",
+        "change": "Biến động",
+        "changePercent": "Biến động (%)",
+        "averageEntry": "Giá vào lệnh TB",
+        "takeProfit": "Chốt lời",
+        "stopLoss": "Cắt lỗ",
+        "liquidation": "Giá thanh lý",
+        "all": "TẤT CẢ",
+        "source": "Được hỗ trợ bởi Hyperliquid. Biểu đồ giá do <tradingview>TradingView</tradingview> cung cấp.",
+        "resetChart": "Đặt lại biểu đồ",
+        "backToLatest": "Về dữ liệu mới nhất",
+        "switchToArea": "Chuyển sang biểu đồ vùng",
+        "switchToCandle": "Chuyển sang biểu đồ nến",
+        "showVolume": "Hiển thị khối lượng 24 giờ",
+        "showOpenInterest": "Hiển thị hợp đồng mở",
+        "buy": "Mua",
+        "sell": "Bán"
+      },
       "PerpEditLimitPriceTag": {
         "setLimitBuyPrice": "Đặt Giá Mua Giới Hạn",
         "setLimitSellPrice": "Đặt Giá Bán Giới Hạn",

@@ -19,7 +19,7 @@ import { AssetAvatar } from '@/components/AssetAvatar';
 import { Text } from '@/components/Typography';
 import { AccountOverview } from '@/screens/Home/components/AccountOverview';
 import { getTokenSymbol } from '@/utils/token';
-import { formatAmount } from '@/utils/number';
+import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
 
 const ROW_MARGIN_BOTTOM = 8;
@@ -81,7 +81,7 @@ const AmountOnlyTokenDistributionRow = memo(
             )}
           </View>
           <Text numberOfLines={1} style={styles.tokenBalance}>
-            {formatAmount(token.amount, 4, true)}
+            {formatAmountValueKMB(token.amount, 4, true)}
           </Text>
         </View>
       </TouchableOpacity>

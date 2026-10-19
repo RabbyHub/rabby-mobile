@@ -1,4 +1,5 @@
 import type { PerpsProTradeAmountUnit } from '@/core/services/perpsService';
+import type { PerpsFillFeeSnapshot } from '@/utils/perpsFillFee';
 import {
   formatPerpsProDecimal,
   formatPerpsProPrice,
@@ -16,7 +17,10 @@ import { PerpsProHistoryRowLayout } from '../PerpsProHistoryRowPrimitives';
 
 export const PerpsProTradeHistoryRowView: React.FC<{
   amountUnit: PerpsProTradeAmountUnit;
-  onShowFeeExplanation: (isLiquidation: boolean) => void;
+  onShowFeeExplanation: (
+    isLiquidation: boolean,
+    fill: PerpsFillFeeSnapshot,
+  ) => void;
   row: PerpsProTradeHistoryRow;
 }> = ({ amountUnit, onShowFeeExplanation, row }) => {
   const { t } = useTranslation();
@@ -49,7 +53,8 @@ export const PerpsProTradeHistoryRowView: React.FC<{
         {
           label: `${t('page.perps.pro.history.fields.fee')} (${row.feeToken})`,
           labelAccessibilityLabel: t('page.perps.historyDetail.feeTitle'),
-          onLabelPress: () => onShowFeeExplanation(row.isLiquidation),
+          onLabelPress: () =>
+            onShowFeeExplanation(row.isLiquidation, row.feeSnapshot),
           value: formatPerpsProDecimal(
             row.fee,
             isPerpsProStableAsset(row.feeToken) ? 2 : 8,
