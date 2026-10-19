@@ -1677,6 +1677,13 @@
       "title": "GasAccount"
     },
     "tokenDetail": {
+      "removed": {
+        "restore": "Kaldırılan tokenı geri yükle",
+        "restoreFailed": "Token geri yüklenemedi",
+        "more": "Daha Fazla",
+        "confirmTitle": "Bu token kaldırılsın mı?",
+        "confirmDescription": "· Bu token, kaldırıldıktan sonra Portföyünüzde görünmeyecek.\n· Ayarlar >> Kaldırılan Tokenlar bölümünden istediğiniz zaman geri yükleyebilirsiniz."
+      },
       "action": {
         "all": "Hepsi",
         "less": "Daha az",
@@ -1791,6 +1798,10 @@
       "subtitle": "Kripto almak için bir cüzdan seçin."
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "Kaldır",
+        "removeFailed": "Token kaldırılamadı"
+      },
       "sectionHeader": {
         "Defi": "DeFi",
         "NoData": "{{name}} yok",
@@ -1829,6 +1840,10 @@
       }
     },
     "setting": {
+      "removedToken": {
+        "title": "Kaldırılan Tokenlar",
+        "description": "Kaldırılan tokenlar, tüm adreslerinizin Portföy görünümünde gizlenir ancak bakiye hesaplamanıza dahil edilmeye devam eder."
+      },
       "screenTitle": "Ayarlar",
       "followUs": "Bizi Takip Edin",
       "faceId": "Yüz Tanıma",

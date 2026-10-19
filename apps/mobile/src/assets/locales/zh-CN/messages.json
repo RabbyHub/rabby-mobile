@@ -1611,6 +1611,10 @@
       "transactionSpeed": "交易速度"
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "移除",
+        "removeFailed": "移除代币失败"
+      },
       "sectionHeader": {
         "Nft": "NFT",
         "Defi": "DeFi",
@@ -1803,6 +1807,13 @@
       "subtitle": "选择钱包以接收您的加密资产。"
     },
     "tokenDetail": {
+      "removed": {
+        "restore": "恢复已移除的代币",
+        "restoreFailed": "恢复代币失败",
+        "more": "更多",
+        "confirmTitle": "移除此代币？",
+        "confirmDescription": "· 移除后，此代币将不再显示在您的投资组合中。\n· 您可以随时在设置 >> 已移除的代币中恢复。"
+      },
       "excludeBalanceTipsButton": "知道了",
       "action": {
         "Sell": "卖出",
@@ -1926,6 +1937,10 @@
       "unknownResult": "结果未知，因为安全引擎当前不可用"
     },
     "setting": {
+      "removedToken": {
+        "title": "已移除的代币",
+        "description": "已移除的代币将在您所有地址的投资组合中隐藏，但仍会计入余额。"
+      },
       "faceId": "Face ID",
       "themeMode": "主题模式",
       "feedback": "反馈",

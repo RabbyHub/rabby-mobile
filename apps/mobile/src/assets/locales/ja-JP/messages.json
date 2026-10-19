@@ -1528,6 +1528,10 @@
       "title": "承認"
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "削除",
+        "removeFailed": "トークンの削除に失敗しました"
+      },
       "sectionHeader": {
         "Nft": "NFT",
         "Defi": "DeFi",
@@ -1623,6 +1627,13 @@
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "了解しました",
+      "removed": {
+        "restore": "削除したトークンを復元",
+        "restoreFailed": "トークンの復元に失敗しました",
+        "more": "その他",
+        "confirmTitle": "このトークンを削除しますか？",
+        "confirmDescription": "· 削除すると、このトークンはポートフォリオに表示されなくなります。\n· 設定 >> 削除済みトークンからいつでも復元できます。"
+      },
       "action": {
         "Buy": "購入する",
         "less": "少なく表示",
@@ -1830,6 +1841,10 @@
       "ConfirmPassword": "パスワードを確認"
     },
     "setting": {
+      "removedToken": {
+        "title": "削除済みトークン",
+        "description": "削除したトークンは、すべてのアドレスのポートフォリオで非表示になりますが、残高の計算には引き続き含まれます。"
+      },
       "screenTitle": "設定",
       "touchId": "Touch ID",
       "fingerPrint": "指紋",

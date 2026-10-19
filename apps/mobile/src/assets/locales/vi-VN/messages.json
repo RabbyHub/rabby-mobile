@@ -1501,6 +1501,10 @@
       }
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "Gỡ bỏ",
+        "removeFailed": "Không thể gỡ bỏ token"
+      },
       "sectionHeader": {
         "Defi": "DeFi",
         "Nft": "NFT",
@@ -1652,6 +1656,10 @@
       "title": "GasAccount"
     },
     "setting": {
+      "removedToken": {
+        "title": "Token đã gỡ bỏ",
+        "description": "Các token đã gỡ bỏ sẽ bị ẩn khỏi danh mục đầu tư trên tất cả các địa chỉ của bạn, nhưng vẫn được tính vào số dư."
+      },
       "aboutUs": "Về Chúng Tôi",
       "themeMode": "Chế độ giao diện",
       "fingerPrint": "Vân tay",
@@ -1692,6 +1700,13 @@
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "Tôi hiểu rồi",
+      "removed": {
+        "restore": "Khôi phục token đã gỡ bỏ",
+        "restoreFailed": "Không thể khôi phục token",
+        "more": "Thêm",
+        "confirmTitle": "Gỡ bỏ token này?",
+        "confirmDescription": "· Token này sẽ không còn xuất hiện trong danh mục đầu tư của bạn sau khi gỡ bỏ.\n· Bạn có thể khôi phục bất cứ lúc nào trong Cài đặt >> Token đã gỡ bỏ."
+      },
       "action": {
         "less": "Hiển thị ít hơn",
         "Buy": "Mua",

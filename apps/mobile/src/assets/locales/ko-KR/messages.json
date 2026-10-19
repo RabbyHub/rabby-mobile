@@ -1364,6 +1364,10 @@
       "title": "승인"
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "제거",
+        "removeFailed": "토큰 제거에 실패했습니다"
+      },
       "sectionHeader": {
         "Token": "토큰",
         "Nft": "NFT",
@@ -1675,6 +1679,13 @@
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "이해했어요",
+      "removed": {
+        "restore": "제거된 토큰 복원",
+        "restoreFailed": "토큰 복원에 실패했습니다",
+        "more": "더 보기",
+        "confirmTitle": "이 토큰을 제거하시겠습니까?",
+        "confirmDescription": "· 제거하면 이 토큰은 포트폴리오에 더 이상 표시되지 않습니다.\n· 설정 >> 제거된 토큰에서 언제든지 복원할 수 있습니다."
+      },
       "excludeBalanceTips": "정확한 계산을 위해 이 자산은 총 잔액에서 제외됩니다. 탭하여 세부 정보를 확인하고 원하면 잔액에 포함할 수 있습니다.",
       "action": {
         "Buy": "구매하기",
@@ -1780,6 +1791,10 @@
       "customTestnetNotSupported": "이 체인의 토큰은 지원되지 않습니다"
     },
     "setting": {
+      "removedToken": {
+        "title": "제거된 토큰",
+        "description": "제거된 토큰은 모든 주소의 포트폴리오에서 숨겨지지만 잔액 계산에는 계속 포함됩니다."
+      },
       "screenTitle": "설정",
       "faceId": "Face ID",
       "autoLockTime": "자동 잠금 시간",
