@@ -1757,14 +1757,9 @@ export function useSendTokenForm({
         if (!isCurrent()) {
           return;
         }
-        if (
-          couldReserveGas &&
-          chainItem?.isTestnet &&
-          (!gasLevel || !Number.isFinite(gasLevel.price) || gasLevel.price < 0)
-        ) {
-          throw new Error('Gas price unavailable');
-        }
-        if (couldReserveGas && gasLevel && gasLevel.price >= 0) {
+        const hasUsableGasPrice =
+          !!gasLevel && Number.isFinite(gasLevel.price) && gasLevel.price >= 0;
+        if (couldReserveGas && gasLevel && hasUsableGasPrice) {
           putScreenState({ showGasReserved: true });
           const { gasNumber } = await estimateGasOnChain({
             chainItem,
@@ -1774,45 +1769,49 @@ export function useSendTokenForm({
           if (!isCurrent()) {
             return;
           }
-          if (gasNumber <= 0) {
-            throw new Error('Gas estimate unavailable');
-          }
-
-          let gasTokenAmount = onGasChange({
-            gasLevel,
-            updateTokenAmount: false,
-            gasLimit: gasNumber,
-          });
-          if (
-            chainItem &&
-            CAN_ESTIMATE_L1_FEE_CHAINS.includes(chainItem.enum)
-          ) {
-            const l1GasFee = await apiProvider.fetchEstimatedL1Fee(
-              {
-                txParams: {
-                  chainId: chainItem.id,
-                  from: currentAccount.address,
-                  to: to && isValidAddress(to) ? to : zeroAddress(),
-                  value: currentToken.raw_amount_hex_str,
-                  gas: intToHex(DEFAULT_NATIVE_TRANSFER_GAS_LIMIT),
-                  gasPrice: `0x${new BigNumber(gasLevel.price).toString(16)}`,
-                  data: '0x',
+          if (gasNumber > 0) {
+            let gasTokenAmount = onGasChange({
+              gasLevel,
+              updateTokenAmount: false,
+              gasLimit: gasNumber,
+            });
+            if (
+              chainItem &&
+              CAN_ESTIMATE_L1_FEE_CHAINS.includes(chainItem.enum)
+            ) {
+              const l1GasFee = await apiProvider.fetchEstimatedL1Fee(
+                {
+                  txParams: {
+                    chainId: chainItem.id,
+                    from: currentAccount.address,
+                    to: to && isValidAddress(to) ? to : zeroAddress(),
+                    value: currentToken.raw_amount_hex_str,
+                    gas: intToHex(DEFAULT_NATIVE_TRANSFER_GAS_LIMIT),
+                    gasPrice: `0x${new BigNumber(gasLevel.price).toString(16)}`,
+                    data: '0x',
+                  },
+                  account: currentAccount,
                 },
-                account: currentAccount,
-              },
-              chainItem.enum,
-            );
-            gasTokenAmount = gasTokenAmount
-              .plus(new BigNumber(l1GasFee).div(1e18))
-              .times(1.1);
-          }
-          if (!isCurrent()) {
-            return;
-          }
-          const tokenForSend = tokenBalance.minus(gasTokenAmount);
-          amount = tokenForSend.gt(0) ? tokenForSend.toFixed() : '0';
-          if (tokenForSend.lt(0)) {
+                chainItem.enum,
+              );
+              gasTokenAmount = gasTokenAmount
+                .plus(new BigNumber(l1GasFee).div(1e18))
+                .times(1.1);
+            }
+            if (!isCurrent()) {
+              return;
+            }
+            const tokenForSend = tokenBalance.minus(gasTokenAmount);
+            amount = tokenForSend.gt(0) ? tokenForSend.toFixed() : '0';
+            if (tokenForSend.lt(0)) {
+              putScreenState({ showGasReserved: false });
+            }
+          } else {
+            // Custom networks may not support the gas probe (or expose no
+            // usable gas price). MAX must still fill the balance like the
+            // online build; the submit-time gas check reports real failures.
             putScreenState({ showGasReserved: false });
+            amount = tokenBalance.toFixed();
           }
         }
         if (isCurrent()) {
