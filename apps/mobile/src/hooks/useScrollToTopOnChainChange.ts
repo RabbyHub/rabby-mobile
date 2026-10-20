@@ -14,6 +14,7 @@ export const useScrollToTopOnChainChange = ({
   isCurrentTab: boolean;
 }) => {
   const previousChainRef = useRef(chain);
+  const pendingScrollRef = useRef(false);
   const tabName = useTabNameContext();
   const { refMap } = useTabsContext();
   const scrollTo = useScroller();
@@ -22,9 +23,16 @@ export const useScrollToTopOnChainChange = ({
     const previousChain = previousChainRef.current;
     previousChainRef.current = chain;
 
-    if (previousChain === chain || !isCurrentTab) {
+    if (previousChain !== chain) {
+      pendingScrollRef.current = true;
+    }
+
+    // The chain selector is a sheet: the tab can be unfocused while the user
+    // picks a chain, so defer the scroll until the tab is current again.
+    if (!pendingScrollRef.current || !isCurrentTab) {
       return;
     }
+    pendingScrollRef.current = false;
 
     runOnUI(scrollTo)(
       refMap[tabName],

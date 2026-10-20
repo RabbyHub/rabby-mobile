@@ -52,15 +52,13 @@ export const AddressInfoItem: React.FC<AddressInfoProps> = props => {
             <TouchableOpacity style={styles.addressButton} onPress={onCopy}>
               <Text style={styles.addressText}>
                 {account.address.toLowerCase()}
-                <View style={styles.textIconWrapper}>
-                  <RcIconCopyCC
-                    style={styles.textCopyIcon}
-                    color={colors2024['neutral-secondary']}
-                    height={17}
-                    width={17}
-                  />
-                </View>
               </Text>
+              <RcIconCopyCC
+                style={styles.textCopyIcon}
+                color={colors2024['neutral-secondary']}
+                height={17}
+                width={17}
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -89,23 +87,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   addressButton: {
     flexDirection: 'row',
+    alignItems: 'flex-end',
   },
   addressText: {
+    flexShrink: 1,
     fontSize: 16,
     fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
     lineHeight: 20,
     color: colors2024['neutral-secondary'],
   },
-  textIconWrapper: {
-    width: 18,
-    height: 17,
-    position: 'relative',
-  },
   textCopyIcon: {
-    position: 'absolute',
-    left: 4,
-    top: 1,
+    marginLeft: 4,
+    marginBottom: 1,
   },
   nameButton: {
     flexDirection: 'row',
