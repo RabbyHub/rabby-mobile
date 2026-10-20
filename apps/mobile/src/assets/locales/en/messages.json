@@ -1740,6 +1740,13 @@
       "ShowMore": "Show more",
       "Fold": "Fold",
       "customTestnetNotSupported": "The token on this chain is not supported",
+      "removed": {
+        "restore": "Restore removed token",
+        "restoreFailed": "Failed to restore token",
+        "more": "More",
+        "confirmTitle": "Remove this token?",
+        "confirmDescription": "· This token will no longer appear in your Portfolio after removal.\n· You can restore it anytime in Settings >> Removed Tokens."
+      },
       "TokenName": "Token Name",
       "Price": "Price",
       "HoldingValue": "Holding Value",
@@ -1860,6 +1867,10 @@
       "selectChainTitle": "Select Chain"
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "Remove",
+        "removeFailed": "Failed to remove token"
+      },
       "sectionHeader": {
         "Defi": "DeFi",
         "Nft": "NFT",
@@ -1912,6 +1923,10 @@
       "modifyRPCURL": "Modify RPC URL",
       "themeMode": "Theme Mode",
       "clearPending": "Clear Pending Locally",
+      "removedToken": {
+        "title": "Removed Tokens",
+        "description": "Removed tokens will be hidden from your Portfolio across all your addresses, but still included in your balance calculation."
+      },
       "aboutUs": "About Us",
       "currentVersion": "Current Version",
       "feedback": "Feedback",
@@ -2758,7 +2773,7 @@
         "logout": "Log out"
       },
       "PerpsDepositCard": {
-        "availableToTrade": "Available to trade: ",
+        "availableToTrade": "Available: ",
         "deposit": "Deposit",
         "swap": "Swap"
       },
@@ -2806,6 +2821,36 @@
       }
     },
     "perpsDetail": {
+      "simpleChart": {
+        "openInterest": "Open interest",
+        "volume24h": "24h volume",
+        "intervalTitle": "Candle interval",
+        "intervalDescription": "Each candle represents the selected interval.",
+        "minutes": "Minutes",
+        "hours": "Hours",
+        "days": "Days",
+        "open": "Open",
+        "low": "Low",
+        "high": "High",
+        "close": "Close",
+        "time": "Time",
+        "change": "Change",
+        "changePercent": "Change (%)",
+        "averageEntry": "Avg. entry",
+        "takeProfit": "Take profit",
+        "stopLoss": "Stop loss",
+        "liquidation": "Liquidation",
+        "all": "ALL",
+        "source": "Powered by Hyperliquid. Price chart powered by <tradingview>TradingView.</tradingview>",
+        "resetChart": "Reset chart",
+        "backToLatest": "Back to latest",
+        "switchToArea": "Switch to area chart",
+        "switchToCandle": "Switch to candlestick chart",
+        "showVolume": "Show 24h volume",
+        "showOpenInterest": "Show open interest",
+        "buy": "Buy",
+        "sell": "Sell"
+      },
       "PerpsPosition": {
         "title": "Position",
         "unrealizedPnl": "Unrealized PNL",

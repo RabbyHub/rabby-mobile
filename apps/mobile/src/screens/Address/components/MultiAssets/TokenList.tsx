@@ -76,6 +76,8 @@ import { apiCustomTestnet } from '@/core/apis';
 import { toast } from '@/components2024/Toast';
 import { useRegressionScenario } from '@/devtools/regressionScenarios/react';
 import { useActivityStore } from '@/hooks/storeActivity/useActivityStore';
+import { TokenRowContextMenu } from '@/screens/Home/components/TokenRowContextMenu';
+import { createRemoveTokenConfirmPopup } from '@/components2024/RemoveTokenConfirmPopup';
 import { IS_ANDROID } from '@/core/native/utils';
 import { beginAssetDataLoadDiagnostic } from '@/core/utils/assetDataLoadDiagnostics';
 import { formatNetworth } from '@/utils/math';
@@ -101,7 +103,17 @@ const TOKEN_LIST_RENDER_BATCH_SIZE = 6;
 const TOKEN_LIST_WINDOW_SIZE = 7;
 const TOKEN_LIST_BATCHING_PERIOD_MS = 32;
 
-const TokenResourceRow = React.memo(
+type TokenResourceRowProps = {
+  row: TokenAssetsIndexRow;
+  tokenDisplayMode: string;
+  getAccountByAddress(address?: string): KeyringAccountWithAlias | undefined;
+  onTokenPress(token: ITokenItem): void;
+  onGroupPress(group: TokenGroupResourceValue): void;
+  style?: ViewStyle;
+  hideChainLogo?: boolean;
+};
+
+const TokenResourceRowContent = React.memo(
   ({
     row,
     tokenDisplayMode,
@@ -110,15 +122,7 @@ const TokenResourceRow = React.memo(
     onGroupPress,
     style,
     hideChainLogo,
-  }: {
-    row: TokenAssetsIndexRow;
-    tokenDisplayMode: string;
-    getAccountByAddress(address?: string): KeyringAccountWithAlias | undefined;
-    onTokenPress(token: ITokenItem): void;
-    onGroupPress(group: TokenGroupResourceValue): void;
-    style?: ViewStyle;
-    hideChainLogo?: boolean;
-  }) => {
+  }: TokenResourceRowProps) => {
     const tokenId = row.type === 'token' ? row.tokenId : undefined;
     const groupId = row.type === 'group' ? row.groupId : undefined;
     const token = useActivityStore(
@@ -165,6 +169,37 @@ const TokenResourceRow = React.memo(
         account={account}
         scene="portfolio"
       />
+    );
+  },
+);
+
+const TokenResourceRow = React.memo(
+  ({
+    onRemoveToken,
+    ...rowProps
+  }: TokenResourceRowProps & {
+    onRemoveToken(token: ITokenItem): void;
+  }) => {
+    const content = <TokenResourceRowContent {...rowProps} />;
+    if (
+      rowProps.tokenDisplayMode !== 'byAddress' &&
+      rowProps.tokenDisplayMode !== 'byAsset'
+    ) {
+      return content;
+    }
+    // The menu shell has no balance/group subscription; the child owns those updates.
+    return rowProps.row.type === 'group' ? (
+      <TokenRowContextMenu
+        groupId={rowProps.row.groupId}
+        onRemoveToken={onRemoveToken}>
+        {content}
+      </TokenRowContextMenu>
+    ) : (
+      <TokenRowContextMenu
+        tokenId={rowProps.row.tokenId}
+        onRemoveToken={onRemoveToken}>
+        {content}
+      </TokenRowContextMenu>
     );
   },
 );
@@ -327,11 +362,12 @@ export const TokenList = () => {
     useTokenAssetsIndexStore,
     useShallow(state => {
       const result =
-        state.multiAssetsResultByKey[multiAssetsKey] ||
+        state.multiDisplayAssetsResultByKey[multiAssetsKey] ||
         EMPTY_TOKEN_ASSETS_INDEX_RESULT;
       return {
-        availability:
-          state.multiAssetsAvailabilityByKey[multiAssetsKey] || 'unresolved',
+        availability: state.multiDisplayAssetsResultByKey[multiAssetsKey]
+          ? state.multiAssetsAvailabilityByKey[multiAssetsKey] || 'unresolved'
+          : 'unresolved',
         additionalCoreUsdValue: result.additionalCoreUsdValue,
         lowValueTokenPreviewLogoUrls: result.lowValueTokenPreviewLogoUrls,
         lpLowValueTokenPreviewLogoUrls: result.lpLowValueTokenPreviewLogoUrls,
@@ -880,6 +916,7 @@ export const TokenList = () => {
                 getAccountByAddress={getAccountByAddress}
                 onTokenPress={handleTokenPress}
                 onGroupPress={handleGroupPress}
+                onRemoveToken={createRemoveTokenConfirmPopup}
                 style={styles.renderItemWrapper}
                 hideChainLogo={tokenDisplayMode === 'bySymbol'}
               />

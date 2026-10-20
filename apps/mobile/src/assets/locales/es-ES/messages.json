@@ -1711,6 +1711,10 @@
       }
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "Eliminar",
+        "removeFailed": "No se pudo eliminar el token"
+      },
       "sectionHeader": {
         "Nft": "NFT",
         "Token": "Token",
@@ -1776,6 +1780,13 @@
       }
     },
     "tokenDetail": {
+      "removed": {
+        "restore": "Restaurar token eliminado",
+        "restoreFailed": "No se pudo restaurar el token",
+        "more": "Más",
+        "confirmTitle": "¿Eliminar este token?",
+        "confirmDescription": "· Este token dejará de aparecer en tu portfolio después de eliminarlo.\n· Puedes restaurarlo en cualquier momento en Configuración >> Tokens eliminados."
+      },
       "excludeBalanceTipsButton": "Entendido",
       "action": {
         "all": "Todo",
@@ -1882,6 +1893,10 @@
       "customTestnetNotSupported": "El token de esta red no es compatible"
     },
     "setting": {
+      "removedToken": {
+        "title": "Tokens eliminados",
+        "description": "Los tokens eliminados se ocultarán de tu portfolio en todas tus direcciones, pero seguirán incluidos en el cálculo de tu saldo."
+      },
       "feedback": "Comentarios",
       "screenTitle": "Configuración",
       "clearPending": "Borrar transacciones pendientes localmente",
@@ -2835,7 +2850,7 @@
         "desc": "Vas a cerrar sesión en la cuenta Perps actual. Puedes restaurarla en cualquier momento iniciando sesión de nuevo con esta dirección."
       },
       "PerpsDepositCard": {
-        "availableToTrade": "Disponible para comerciar:",
+        "availableToTrade": "Disponible:",
         "deposit": "Depósito",
         "swap": "Swap"
       },
@@ -2911,6 +2926,36 @@
       }
     },
     "perpsDetail": {
+      "simpleChart": {
+        "openInterest": "Interés abierto",
+        "volume24h": "Volumen en 24 h",
+        "intervalTitle": "Intervalo de las velas",
+        "intervalDescription": "Cada vela representa el intervalo seleccionado.",
+        "minutes": "Minutos",
+        "hours": "Horas",
+        "days": "Días",
+        "open": "Apertura",
+        "low": "Mínimo",
+        "high": "Máximo",
+        "close": "Cierre",
+        "time": "Hora",
+        "change": "Variación",
+        "changePercent": "Variación (%)",
+        "averageEntry": "Precio medio de entrada",
+        "takeProfit": "Toma de beneficios",
+        "stopLoss": "Stop loss",
+        "liquidation": "Precio de liquidación",
+        "all": "TODO",
+        "source": "Servicio ofrecido por Hyperliquid. Gráfico de precios proporcionado por <tradingview>TradingView.</tradingview>",
+        "resetChart": "Restablecer el gráfico",
+        "backToLatest": "Volver a los datos más recientes",
+        "switchToArea": "Cambiar a gráfico de áreas",
+        "switchToCandle": "Cambiar a gráfico de velas",
+        "showVolume": "Mostrar volumen en 24 h",
+        "showOpenInterest": "Mostrar interés abierto",
+        "buy": "Compra",
+        "sell": "Venta"
+      },
       "PerpEditLimitPriceTag": {
         "setLimitBuyPrice": "Establecer Precio de Compra Límite",
         "setLimitSellPrice": "Establecer Precio de Venta Límite",

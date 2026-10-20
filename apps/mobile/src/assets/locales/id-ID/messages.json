@@ -1677,6 +1677,13 @@
       "title": "GasAccount"
     },
     "tokenDetail": {
+      "removed": {
+        "restore": "Pulihkan token yang dihapus",
+        "restoreFailed": "Gagal memulihkan token",
+        "more": "Lebih banyak",
+        "confirmTitle": "Hapus token ini?",
+        "confirmDescription": "· Token ini tidak akan lagi muncul di Portofolio Anda setelah dihapus.\n· Anda dapat memulihkannya kapan saja melalui Pengaturan >> Token yang Dihapus."
+      },
       "action": {
         "all": "Semua",
         "less": "Kurang",
@@ -1791,6 +1798,10 @@
       "subtitle": "Pilih dompet untuk menerima kripto Anda."
     },
     "singleHome": {
+      "tokenActions": {
+        "remove": "Hapus",
+        "removeFailed": "Gagal menghapus token"
+      },
       "sectionHeader": {
         "Token": "Token",
         "Defi": "DeFi",
@@ -1829,6 +1840,10 @@
       }
     },
     "setting": {
+      "removedToken": {
+        "title": "Token yang Dihapus",
+        "description": "Token yang dihapus akan disembunyikan dari Portofolio di semua alamat Anda, tetapi tetap disertakan dalam perhitungan saldo Anda."
+      },
       "followUs": "Ikuti Kami",
       "touchId": "Touch ID",
       "faceId": "Face ID",
@@ -2646,7 +2661,7 @@
       },
       "PerpsDepositCard": {
         "deposit": "Setor",
-        "availableToTrade": "Tersedia untuk diperdagangkan:",
+        "availableToTrade": "Tersedia:",
         "swap": "Tukar"
       },
       "PerpsAccountSelectorPopup": {
@@ -2720,6 +2735,36 @@
       }
     },
     "perpsDetail": {
+      "simpleChart": {
+        "openInterest": "Open interest",
+        "volume24h": "Volume 24 jam",
+        "intervalTitle": "Interval lilin",
+        "intervalDescription": "Setiap lilin mewakili interval waktu yang dipilih.",
+        "minutes": "Menit",
+        "hours": "Jam",
+        "days": "Hari",
+        "open": "Harga buka",
+        "low": "Terendah",
+        "high": "Tertinggi",
+        "close": "Harga tutup",
+        "time": "Waktu",
+        "change": "Perubahan",
+        "changePercent": "Perubahan (%)",
+        "averageEntry": "Harga masuk rata-rata",
+        "takeProfit": "Ambil untung",
+        "stopLoss": "Stop loss",
+        "liquidation": "Harga likuidasi",
+        "all": "SEMUA",
+        "source": "Didukung oleh Hyperliquid. Grafik harga disediakan oleh <tradingview>TradingView.</tradingview>",
+        "resetChart": "Atur ulang grafik",
+        "backToLatest": "Kembali ke data terbaru",
+        "switchToArea": "Beralih ke grafik area",
+        "switchToCandle": "Beralih ke grafik lilin",
+        "showVolume": "Tampilkan volume 24 jam",
+        "showOpenInterest": "Tampilkan open interest",
+        "buy": "Beli",
+        "sell": "Jual"
+      },
       "PerpEditLimitPriceTag": {
         "setLimitBuyPrice": "Atur Harga Limit Beli",
         "setLimitSellPrice": "Atur Harga Limit Jual",

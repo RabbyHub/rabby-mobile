@@ -1,6 +1,6 @@
 import type { Candle } from '@rabby-wallet/hyperliquid-sdk';
 
-import type { PerpsCandleInterval } from '@/constant/perps';
+import type { PerpsCandleDataInterval } from '@/constant/perps';
 
 import { getUtcMonthStart, getUtcWeekStart } from './interval';
 
@@ -87,13 +87,13 @@ export const upsertPerpsCandle = (
 ) => mergePerpsCandles(candles, [candle]);
 
 const getAggregationBucket = (
-  interval: Extract<PerpsCandleInterval, '1w' | '1M'>,
+  interval: Extract<PerpsCandleDataInterval, '1w' | '1M'>,
   time: number,
 ) => (interval === '1w' ? getUtcWeekStart(time) : getUtcMonthStart(time));
 
 export const aggregateDailyPerpsCandles = (
   dailyCandles: ReadonlyArray<PerpsCandle>,
-  interval: Extract<PerpsCandleInterval, '1w' | '1M'>,
+  interval: Extract<PerpsCandleDataInterval, '1w' | '1M'>,
 ) => {
   const buckets = new Map<number, PerpsCandle>();
 
@@ -127,7 +127,7 @@ export const aggregateDailyPerpsCandles = (
 
 export const selectPerpsDisplayCandles = (
   sourceCandles: ReadonlyArray<PerpsCandle>,
-  interval: PerpsCandleInterval,
+  interval: PerpsCandleDataInterval,
 ) =>
   interval === '1w' || interval === '1M'
     ? aggregateDailyPerpsCandles(sourceCandles, interval)

@@ -1,4 +1,8 @@
-import { CANDLE_MENU_KEY_V2, type PerpsCandleInterval } from '@/constant/perps';
+import {
+  CANDLE_MENU_KEY_V2,
+  type PerpsCandleDataInterval,
+  type PerpsCandleInterval,
+} from '@/constant/perps';
 
 const MINUTE_MS = 60 * 1000;
 const DAY_MS = 24 * 60 * MINUTE_MS;
@@ -8,7 +12,7 @@ const HISTORY_PAGE_CANDLE_COUNT = 1000;
 const MONTHLY_INITIAL_SOURCE_CANDLE_COUNT = 1240;
 
 const INTERVAL_DURATION_MS: Record<
-  Exclude<PerpsCandleInterval, '1w' | '1M'>,
+  Exclude<PerpsCandleDataInterval, '1w' | '1M'>,
   number
 > = {
   '1m': MINUTE_MS,
@@ -20,6 +24,7 @@ const INTERVAL_DURATION_MS: Record<
   '8h': 8 * 60 * MINUTE_MS,
   '12h': 12 * 60 * MINUTE_MS,
   '1d': DAY_MS,
+  '3d': 3 * DAY_MS,
 };
 
 export const PERPS_PRO_CANDLE_INTERVAL_OPTIONS: ReadonlyArray<{
@@ -40,12 +45,12 @@ export const PERPS_PRO_CANDLE_INTERVAL_OPTIONS: ReadonlyArray<{
 ];
 
 export const getPerpsCandleSource = (
-  interval: PerpsCandleInterval,
+  interval: PerpsCandleDataInterval,
 ): {
   sourceCandleCount: number;
   maximumSourceCandleCount: number;
   historyPageCandleCount: number;
-  sourceInterval: Exclude<PerpsCandleInterval, '1w' | '1M'>;
+  sourceInterval: Exclude<PerpsCandleDataInterval, '1w' | '1M'>;
   sourceIntervalMs: number;
 } => {
   if (interval === '1w') {
@@ -76,7 +81,7 @@ export const getPerpsCandleSource = (
 };
 
 export const getPerpsCandleHistoryStartTime = (
-  interval: PerpsCandleInterval,
+  interval: PerpsCandleDataInterval,
   endTime: number,
 ) => {
   const { sourceCandleCount, sourceIntervalMs } =

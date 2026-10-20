@@ -1,3 +1,4 @@
+import { createTokenDisplayExclusion } from './tokenDisplayExclusion';
 import { queryTokensCache } from '@/core/apis/tokenCache';
 import { openapi } from '@/core/request';
 import { zCreate, zMutative } from '@/core/utils/reexports';
@@ -1647,6 +1648,7 @@ export const buildMultiAssetsIndexFromTokenIds = (
   tokenDisplayMode?: TokenDisplayMode,
   listKey?: string,
   previousResult?: TokenAssetsIndexResult,
+  includeToken?: (token: ITokenItem) => boolean,
 ): TokenAssetsIndexResult => {
   if (!tokenIds.length) {
     return createEmptyAssetsIndexResult();
@@ -1654,7 +1656,10 @@ export const buildMultiAssetsIndexFromTokenIds = (
 
   const tokens = tokenIds
     .map(tokenId => tokenEntityResourceStore.getValue(tokenId))
-    .filter((token): token is ITokenItem => !!token);
+    .filter(
+      (token): token is ITokenItem =>
+        !!token && (!includeToken || includeToken(token)),
+    );
 
   return buildTokenAssetsIndexResult(
     computeMultiAssetsFromTokens(
@@ -1735,6 +1740,7 @@ export const buildSingleAssetsIndexFromTokenIds = (
   chainServerId?: string,
   isLpTokenEnabled?: boolean,
   previousResult?: TokenAssetsIndexResult,
+  includeToken?: (token: ITokenItem) => boolean,
 ): TokenAssetsIndexResult => {
   if (!tokenIds.length) {
     return createEmptyAssetsIndexResult();
@@ -1742,7 +1748,10 @@ export const buildSingleAssetsIndexFromTokenIds = (
 
   const tokens = tokenIds
     .map(tokenId => tokenEntityResourceStore.getValue(tokenId))
-    .filter((token): token is ITokenItem => !!token);
+    .filter(
+      (token): token is ITokenItem =>
+        !!token && (!includeToken || includeToken(token)),
+    );
 
   return buildTokenAssetsIndexResult(
     computeSingleAssetsFromTokens(tokens, chainServerId, isLpTokenEnabled),
@@ -1752,6 +1761,9 @@ export const buildSingleAssetsIndexFromTokenIds = (
 };
 
 type TokenAssetsIndexStoreState = {
+  // Keep full results for persistence; these display results only exclude removed tokens.
+  singleDisplayAssetsResultByKey: Record<string, TokenAssetsIndexResult>;
+  multiDisplayAssetsResultByKey: Record<string, TokenAssetsIndexResult>;
   singleAssetsResultByKey: Record<string, TokenAssetsIndexResult>;
   multiAssetsResultByKey: Record<string, TokenAssetsIndexResult>;
   singleAssetsAvailabilityByKey: Record<string, AssetProjectionAvailability>;
@@ -2504,7 +2516,7 @@ const restoreTokenAssetsProjectionIfEmpty = (
       );
     };
 
-    void (async () => {
+    (async () => {
       await yieldTokenProjectionEntityRestore();
       let restoredCount = 0;
       for (
@@ -2563,6 +2575,10 @@ const restoreTokenAssetsProjectionIfEmpty = (
           stagedMetadata,
         },
       );
+      if (scene === 'multi-address' && completeResult) {
+        // Recheck display exclusions after deferred group members become available.
+        tokenDisplayExclusion.syncRestoredMultiResult(key);
+      }
       backgroundTrace.finish({
         itemCount: remainingTokenIds.length,
         restoredEntityCount: restoredCount,
@@ -2705,6 +2721,8 @@ const isMultiTokenAssetsIndexConfigSame = (
 
 export const useTokenAssetsIndexStore = zCreate(
   zMutative<TokenAssetsIndexStoreState>((set, get) => ({
+    singleDisplayAssetsResultByKey: {},
+    multiDisplayAssetsResultByKey: {},
     singleAssetsResultByKey: {},
     multiAssetsResultByKey: {},
     singleAssetsAvailabilityByKey: {},
@@ -2777,6 +2795,7 @@ export const useTokenAssetsIndexStore = zCreate(
       }
     },
     ensureSingleAssetsResult({ address, chainServerId, isLpTokenEnabled }) {
+      tokenDisplayExclusion.ensureBinding();
       const normalizedAddress = normalizeAddress(address);
       const key = getSingleAssetsCacheKey(
         normalizedAddress,
@@ -2824,6 +2843,7 @@ export const useTokenAssetsIndexStore = zCreate(
       isLpTokenEnabled,
       tokenDisplayMode,
     }) {
+      tokenDisplayExclusion.ensureBinding();
       const normalizedAddresses = normalizeAddresses(addresses);
       const key = getMultiAssetsCacheKey(
         normalizedAddresses,
@@ -3159,6 +3179,14 @@ export const useTokenAssetsIndexStore = zCreate(
     },
   })),
 );
+
+const tokenDisplayExclusion = createTokenDisplayExclusion({
+  assetsStore: useTokenAssetsIndexStore,
+  tokenEntities: tokenEntityResourceStore,
+  tokenGroups: tokenGroupResourceStore,
+  buildSingleAssetsIndex: buildSingleAssetsIndexFromTokenIds,
+  buildMultiAssetsIndex: buildMultiAssetsIndexFromTokenIds,
+});
 
 export const prepareSingleAddressTokenAssetsProjection = (
   input: SingleTokenAssetsProjectionInput,
@@ -4299,9 +4327,11 @@ tokenListStore.subscribe(state => {
 });
 
 tokenEntityResourceStore.subscribeTokenChanges(changedTokenIds => {
-  useTokenAssetsIndexStore
-    .getState()
-    .syncChangedTokenAssetsResults(changedTokenIds);
+  tokenDisplayExclusion.syncChangedTokens(changedTokenIds, () => {
+    useTokenAssetsIndexStore
+      .getState()
+      .syncChangedTokenAssetsResults(changedTokenIds);
+  });
 });
 
 export default tokenListStore;
