@@ -58,25 +58,6 @@ function getDefaultScreenStates(): {
     },
   };
 }
-function isDefaultScreenStates(
-  states: ReturnType<typeof getDefaultScreenStates>,
-) {
-  return (
-    !states.isScanning &&
-    states.currentScreen === 'default' &&
-    states.nextScanFor === null &&
-    states.viewingHistoryTxData === null &&
-    !states.nextInitValues['add-new-whitelist-addr'] &&
-    !states.nextInitValues['enter-addr'].inputValue
-  );
-}
-
-/**
- * Upper bound for showing the address list when the sheet never reports the
- * start of its open animation (e.g. it was already at the target index).
- */
-const LIST_READY_FALLBACK_MS = 400;
-
 const maxHeight = Dimensions.get('window').height - 120;
 // const SNAPSHOTS = [1, maxHeight];
 const SNAPSHOTS = [__DEV__ ? maxHeight : maxHeight];
@@ -97,30 +78,6 @@ export function SheetModalSelectAccountSend({
 
   const { sheetModalRef, toggleShowSheetModal } = useSheetModal(null);
   useRegisterBlockingModal(MODAL_GATE_IDS.accountSelectSheet, !!visible);
-
-  // The address list is the expensive part of this sheet. Mount it only after
-  // the sheet has started animating in, so a large wallet list can no longer
-  // delay the sheet itself from appearing.
-  const [listReady, setListReady] = useState(false);
-  useEffect(() => {
-    if (!visible) {
-      return;
-    }
-    const timer = setTimeout(() => {
-      setListReady(true);
-    }, LIST_READY_FALLBACK_MS);
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [visible]);
-  const handleSheetAnimate = useCallback(
-    (_fromIndex: number, toIndex: number) => {
-      if (toIndex >= 0) {
-        setListReady(true);
-      }
-    },
-    [],
-  );
 
   const mountRef = useRef(false);
   useEffect(() => {
@@ -165,12 +122,7 @@ export function SheetModalSelectAccountSend({
   const [screenStates, setScreenStates] = useState(getDefaultScreenStates());
 
   const resetScreenStates = useCallback(() => {
-    // Keep the same state object when nothing changed: this runs on every
-    // sheet index change (including the open itself), and a fresh object would
-    // re-render the whole sheet content for no reason.
-    setScreenStates(prev =>
-      isDefaultScreenStates(prev) ? prev : getDefaultScreenStates(),
-    );
+    setScreenStates(getDefaultScreenStates());
   }, []);
 
   const resetInitValues = useCallback(() => {
@@ -431,11 +383,7 @@ export function SheetModalSelectAccountSend({
       keyboardBlurBehavior="restore"
       android_keyboardInputMode="adjustPan"
       handleStyle={[screenStyles.handle].filter(Boolean)}
-      onAnimate={handleSheetAnimate}
       onChange={index => {
-        if (index < 0) {
-          setListReady(false);
-        }
         const isHidden = index <= 0;
         if (isHidden && !screenStates.isScanning) {
           resetScreenStates();
@@ -494,7 +442,6 @@ export function SheetModalSelectAccountSend({
               {currentScreen === 'default' && (
                 <AccountsPanelInSheetModal
                   parentVisible={!!visible}
-                  listReady={listReady}
                   scene="SendTo"
                 />
               )}
