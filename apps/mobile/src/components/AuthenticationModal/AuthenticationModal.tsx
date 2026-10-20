@@ -72,6 +72,8 @@ const DEFAULT_AUTH_TYPES: Exclude<apisLock.UIAuthType, 'none'>[] = [
 
 export interface AuthenticationModalProps extends ValidationBehaviorProps {
   confirmText?: string;
+  /** Visual type of the confirm button; destructive flows use `danger`. */
+  confirmButtonType?: 'primary' | 'danger';
   cancelText?: string;
   title: string;
   description?: string;
@@ -125,6 +127,7 @@ function FooterButtonGroup({
   bioActive,
   style,
   disabled,
+  confirmType = 'primary',
 }: {
   onCancel: () => void;
   onConfirm: () => void;
@@ -132,6 +135,7 @@ function FooterButtonGroup({
   bioActive?: boolean;
   style?: StyleProp<ViewStyle>;
   disabled?: boolean;
+  confirmType?: 'primary' | 'danger';
 }) {
   const { t } = useTranslation();
   const { styles: footerStyles, colors } = useThemeStyles(getFooterStyle);
@@ -158,6 +162,7 @@ function FooterButtonGroup({
         <>
           <View style={footerStyles.btnGap} />
           <Button
+            type={confirmType}
             icon={ctx =>
               authState.authType !== 'biometrics' ? null : (
                 <BiometricsIcon
@@ -224,7 +229,6 @@ const getFooterStyle = createGetStyles(colors => {
       // ...makeDebugBorder(),
     },
     confirmStyle: {
-      backgroundColor: colors['blue-default'],
       borderRadius: 8,
       width: '100%',
       height: '100%',
@@ -257,6 +261,7 @@ export const AuthenticationModal = ({
   checklist,
   disableValidation: requestedDisableValidation,
   authReadinessDiagnosticId = 0,
+  confirmButtonType = 'primary',
   $onUnmount,
   // disableValidation: propNoValidation = !validationHandler,
   authType: authTypes = DEFAULT_AUTH_TYPES,
@@ -594,6 +599,7 @@ export const AuthenticationModal = ({
       </View>
       <FooterButtonGroup
         authState={{ authType: currentAuthType }}
+        confirmType={confirmButtonType}
         // bioActive={bioAuthRef.current.stage !== BioAuthStage['idle']}
         style={StyleSheet.flatten([
           styles.footerButtonGroup,
