@@ -122,7 +122,8 @@ const TokenResourceRowContent = React.memo(
     onGroupPress,
     style,
     hideChainLogo,
-  }: TokenResourceRowProps) => {
+    hasContextMenu,
+  }: TokenResourceRowProps & { hasContextMenu: boolean }) => {
     const tokenId = row.type === 'token' ? row.tokenId : undefined;
     const groupId = row.type === 'group' ? row.groupId : undefined;
     const token = useActivityStore(
@@ -161,6 +162,7 @@ const TokenResourceRowContent = React.memo(
     return (
       <MemoizedTokenRow
         data={data}
+        hasContextMenu={hasContextMenu}
         onTokenPress={handlePress}
         logoSize={40}
         style={style}
@@ -180,11 +182,13 @@ const TokenResourceRow = React.memo(
   }: TokenResourceRowProps & {
     onRemoveToken(token: ITokenItem): void;
   }) => {
-    const content = <TokenResourceRowContent {...rowProps} />;
-    if (
-      rowProps.tokenDisplayMode !== 'byAddress' &&
-      rowProps.tokenDisplayMode !== 'byAsset'
-    ) {
+    const hasContextMenu =
+      rowProps.tokenDisplayMode === 'byAddress' ||
+      rowProps.tokenDisplayMode === 'byAsset';
+    const content = (
+      <TokenResourceRowContent {...rowProps} hasContextMenu={hasContextMenu} />
+    );
+    if (!hasContextMenu) {
       return content;
     }
     // The menu shell has no balance/group subscription; the child owns those updates.
