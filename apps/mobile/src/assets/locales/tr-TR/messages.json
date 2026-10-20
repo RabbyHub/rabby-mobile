@@ -2735,6 +2735,17 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "Marj",
+        "averageEntry": "Ort. giriş fiyatı",
+        "liquidationPriceGap": "Lik. fiyatı (mesafe)",
+        "tpSl": "TP/SL",
+        "takeProfitWhen": "Kâr alma fiyatı",
+        "stopLossWhen": "Zarar durdurma fiyatı",
+        "estimatedPnl": "Tahmini PNL",
+        "closePositionTitle": "{{coin}} Pozisyonunu Kapat",
+        "estimatedRealizedPnl": "Tahmini gerçekleşmiş PNL"
+      },
       "simpleChart": {
         "openInterest": "Açık pozisyon",
         "volume24h": "24 saatlik hacim",

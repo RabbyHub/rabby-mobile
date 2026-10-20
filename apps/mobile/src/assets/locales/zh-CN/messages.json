@@ -2884,6 +2884,17 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "保证金",
+        "averageEntry": "平均开仓价",
+        "liquidationPriceGap": "强平价（距离）",
+        "tpSl": "止盈/止损",
+        "takeProfitWhen": "止盈触发价",
+        "stopLossWhen": "止损触发价",
+        "estimatedPnl": "预计盈亏",
+        "closePositionTitle": "平掉 {{coin}} 仓位",
+        "estimatedRealizedPnl": "预计已实现盈亏"
+      },
       "simpleChart": {
         "openInterest": "未平仓量",
         "volume24h": "24h 成交量",
