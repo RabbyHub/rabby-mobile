@@ -3028,6 +3028,17 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "Margem",
+        "averageEntry": "Preço médio de entrada",
+        "liquidationPriceGap": "Preço de liq. (distância)",
+        "tpSl": "TP/SL",
+        "takeProfitWhen": "Realizar lucro em",
+        "stopLossWhen": "Limitar perda em",
+        "estimatedPnl": "PnL estimado",
+        "closePositionTitle": "Fechar posição de {{coin}}",
+        "estimatedRealizedPnl": "PnL realizado estimado"
+      },
       "simpleChart": {
         "openInterest": "Interesse em aberto",
         "volume24h": "Volume em 24 h",

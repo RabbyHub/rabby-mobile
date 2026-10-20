@@ -16,6 +16,8 @@ import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import IconPerpEdit from '@/assets2024/icons/perps/IconPerpEdit.svg';
+import PositionEdit from '@/assets2024/icons/perps/PerpsSimpleAccount/tpsl-edit.svg';
+import PositionCancel from '@/assets2024/icons/perps/PerpsSimpleAccount/tpsl-cancel.svg';
 import IconPerpDelete from '@/assets2024/icons/perps/IconTagClearCC.svg';
 import { toast } from '@/components2024/Toast';
 import { useSlTpUsdInput } from '@/hooks/useUsdInput';
@@ -33,6 +35,8 @@ import {
 } from '@/constant/layout';
 
 interface Props {
+  variant?: 'position';
+  estimatedPnl?: number | null;
   coin: string;
   handleActionApproveStatus?: () => Promise<void>;
   entryPrice?: number;
@@ -73,6 +77,8 @@ const PRICE_GAIN_QUICK_OPTIONS = [
 
 export const PerpEditTpSlPriceTag: React.FC<Props> = ({
   coin,
+  variant,
+  estimatedPnl,
   handleActionApproveStatus,
   entryPrice,
   markPrice,
@@ -306,10 +312,17 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalVisible]);
 
+  const EditIcon = variant === 'position' ? PositionEdit : IconPerpEdit;
+  const CancelIcon = variant === 'position' ? PositionCancel : IconPerpDelete;
+
   return (
     <>
       <TouchableOpacity
-        style={styles.tagContainer}
+        style={[
+          styles.tagContainer,
+          variant === 'position' && styles.positionTag,
+          variant === 'position' && !!initTpOrSlPrice && styles.positionSetTag,
+        ]}
         onPress={async () => {
           await handleActionApproveStatus?.();
           if (initTpOrSlPrice) {
@@ -323,21 +336,47 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
           }
           setModalVisible(true);
         }}>
-        <Text style={[styles.tagText, disableEdit && styles.tagTextDisabled]}>
-          {initTpOrSlPrice ? `$${splitNumberByStep(initTpOrSlPrice)}` : '-'}
-        </Text>
+        {variant === 'position' ? (
+          <View style={styles.positionContent}>
+            <Text style={[styles.tagText, styles.positionPrice]}>
+              {initTpOrSlPrice
+                ? `${splitNumberByStep(initTpOrSlPrice)} ${quoteAsset}`
+                : '-'}
+            </Text>
+            {!!initTpOrSlPrice && estimatedPnl != null && (
+              <Text style={styles.positionPnl}>
+                {t('page.perpsDetail.simpleAccount.estimatedPnl')}{' '}
+                <Text
+                  style={
+                    estimatedPnl >= 0
+                      ? styles.positionGreen
+                      : styles.positionRed
+                  }>
+                  {estimatedPnl >= 0 ? '+' : '-'}
+                  {formatUsdValue(Math.abs(estimatedPnl))}
+                </Text>
+              </Text>
+            )}
+          </View>
+        ) : (
+          <Text style={[styles.tagText, disableEdit && styles.tagTextDisabled]}>
+            {initTpOrSlPrice ? `$${splitNumberByStep(initTpOrSlPrice)}` : '-'}
+          </Text>
+        )}
         {initTpOrSlPrice ? (
-          <IconPerpDelete
+          <CancelIcon
             width={16}
             height={16}
             color={colors2024['neutral-secondary']}
           />
         ) : (
-          <IconPerpEdit
+          <EditIcon
             width={16}
             height={16}
             color={
-              disableEdit
+              variant === 'position'
+                ? colors2024['neutral-foot']
+                : disableEdit
                 ? 'rgba(80, 210, 193, .5)'
                 : isLight
                 ? colors2024['neutral-title-1']
@@ -582,6 +621,34 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  positionTag: {
+    paddingVertical: 1,
+    paddingLeft: 12,
+    paddingRight: 6,
+    backgroundColor: colors2024['neutral-bg-5'],
+    minHeight: 20,
+    flexShrink: 1,
+  },
+  positionSetTag: { borderRadius: 10, paddingVertical: 2, minHeight: 40 },
+  positionContent: { alignItems: 'flex-end', gap: 2, flexShrink: 1 },
+  positionPrice: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+    fontSize: 14,
+    lineHeight: 18,
+    color: colors2024['neutral-title-1'],
+    textAlign: 'right',
+  },
+  positionPnl: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '400',
+    fontSize: 10,
+    lineHeight: 16,
+    color: colors2024['neutral-foot'],
+    textAlign: 'right',
+  },
+  positionGreen: { color: colors2024['green-default'] },
+  positionRed: { color: colors2024['red-default'] },
   tagContainer: {
     borderRadius: 100,
     backgroundColor: 'rgba(80, 210, 193, 0.12)',

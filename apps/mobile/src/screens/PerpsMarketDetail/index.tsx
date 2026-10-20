@@ -1,3 +1,7 @@
+import {
+  createAccountHeaderPresentation,
+  type AccountHeaderHandle,
+} from './components/account/model';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { apisPerps } from '@/core/apis';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
@@ -11,6 +15,7 @@ import { sortBy } from 'lodash';
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -31,7 +36,6 @@ import { PerpsClosePositionPopup } from './components/PerpsClosePositionPopup';
 import { PerpsDepositCard } from './components/PerpsDepositCard';
 import { PerpsFooter } from './components/PerpsFooter';
 import { PerpsHeaderTitle } from './components/PerpsHeaderTitle';
-import { PerpsInfo } from './components/PerpsInfo';
 import { PerpsAbout } from './components/PerpsAbout';
 import { PerpsOpenPositionPopup } from './components/PerpsOpenPositionPopup';
 import { PerpsPosition } from './components/PerpsPosition';
@@ -414,9 +418,60 @@ export const PerpsMarketDetailScreen = () => {
     },
   );
 
+  const accountHeaderRef = useRef<AccountHeaderHandle>(null);
+  const headerPresentation = useMemo(
+    () =>
+      createAccountHeaderPresentation(snapshot =>
+        accountHeaderRef.current?.update(snapshot),
+      ),
+    [],
+  );
+  const chartContainerRef = useRef<View>(null);
+  const chartContainerY = useRef(0);
+  const priceNodeRef = useRef<View | null>(null);
+  const priceMeasureId = useRef(0);
+  const onPriceLayout = useCallback(
+    (node: View) => {
+      priceNodeRef.current = node;
+      const measureId = ++priceMeasureId.current;
+      const container = chartContainerRef.current;
+      if (container)
+        node.measureLayout(
+          container,
+          (_x, y, _width, height) => {
+            if (
+              measureId !== priceMeasureId.current ||
+              node !== priceNodeRef.current
+            )
+              return;
+            headerPresentation.layout(chartContainerY.current + y + height);
+          },
+          () => {},
+        );
+    },
+    [headerPresentation],
+  );
+  const onAccountScroll = useCallback(
+    (
+      event: import('react-native').NativeSyntheticEvent<
+        import('react-native').NativeScrollEvent
+      >,
+    ) => {
+      headerPresentation.scroll(event.nativeEvent.contentOffset.y);
+    },
+    [headerPresentation],
+  );
+  useLayoutEffect(() => {
+    headerPresentation.reset();
+    priceNodeRef.current = null;
+    priceMeasureId.current += 1;
+  }, [coin, headerPresentation]);
+
   const HeaderTitle = useCallback(() => {
     return (
       <PerpsHeaderTitle
+        ref={accountHeaderRef}
+        snapshotRef={headerPresentation.snapshot}
         // account={currentPerpsAccount}
         popupIsOpen={false}
         quoteCoin={currentAssetCtx?.quoteAsset}
@@ -439,6 +494,7 @@ export const PerpsMarketDetailScreen = () => {
     currentAssetCtx?.logoUrl,
     currentAssetCtx?.quoteAsset,
     currentAssetCtx?.displayName,
+    headerPresentation,
     // currentPerpsAccount,
   ]);
 
@@ -461,11 +517,22 @@ export const PerpsMarketDetailScreen = () => {
         {!hasPermission ? <PerpsRegionAlert /> : null}
         <PerpsSimpleChartScrollView
           scrollGesture={scrollGesture}
+          onScroll={onAccountScroll}
+          scrollEventThrottle={16}
           style={styles.container}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}>
-          <View style={styles.header}>
+          <View
+            ref={chartContainerRef}
+            collapsable={false}
+            style={styles.header}
+            onLayout={event => {
+              chartContainerY.current = event.nativeEvent.layout.y;
+              if (priceNodeRef.current) onPriceLayout(priceNodeRef.current);
+            }}>
             <PerpsChart
+              onPriceLayout={onPriceLayout}
+              onHeaderQuote={headerPresentation.quote}
               scrollGesture={scrollGesture}
               marketName={coin}
               activeAssetCtx={displayAssetCtx}
@@ -505,6 +572,8 @@ export const PerpsMarketDetailScreen = () => {
               activeAssetCtx={activeAssetCtx}
               currentAssetCtx={currentAssetCtx || null}
               positionData={positionData}
+              rawLiquidationPrice={currentPosition?.position.liquidationPx}
+              rawMarkPrice={activeAssetCtx?.markPx || currentAssetCtx?.markPx}
               coin={coin}
               coinLogo={currentAssetCtx?.logoUrl || ''}
               markPrice={markPrice}
@@ -537,7 +606,6 @@ export const PerpsMarketDetailScreen = () => {
             />
           )}
           {!hasPosition && !hasLimitOrders && <PerpsAbout coin={coin} />}
-          <PerpsInfo market={currentAssetCtx} activeAssetCtx={activeAssetCtx} />
 
           <PerpsHistorySection
             coin={coin}
@@ -664,6 +732,7 @@ export const PerpsMarketDetailScreen = () => {
       />
       {positionData ? (
         <PerpsClosePositionPopup
+          displayName={displayName}
           visible={closePositionVisible}
           coin={coin}
           marginUsed={positionData?.marginUsed || 0}

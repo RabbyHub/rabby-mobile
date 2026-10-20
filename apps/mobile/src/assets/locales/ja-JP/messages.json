@@ -2785,6 +2785,17 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "証拠金",
+        "averageEntry": "平均建値",
+        "liquidationPriceGap": "清算価格（乖離率）",
+        "tpSl": "利確/損切り",
+        "takeProfitWhen": "利確トリガー価格",
+        "stopLossWhen": "損切りトリガー価格",
+        "estimatedPnl": "予想損益",
+        "closePositionTitle": "{{coin}} ポジションを決済",
+        "estimatedRealizedPnl": "予想実現損益"
+      },
       "simpleChart": {
         "openInterest": "未決済建玉",
         "volume24h": "24時間取引量",

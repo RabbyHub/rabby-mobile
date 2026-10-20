@@ -3027,6 +3027,17 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "Margin",
+        "averageEntry": "Ø Einstiegspreis",
+        "liquidationPriceGap": "Liq.-Preis (Abstand)",
+        "tpSl": "TP/SL",
+        "takeProfitWhen": "Take-Profit bei",
+        "stopLossWhen": "Stop-Loss bei",
+        "estimatedPnl": "Gesch. PnL",
+        "closePositionTitle": "{{coin}}-Position schließen",
+        "estimatedRealizedPnl": "Gesch. realisierter PnL"
+      },
       "simpleChart": {
         "openInterest": "Offene Kontrakte",
         "volume24h": "24h-Volumen",

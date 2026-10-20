@@ -2910,6 +2910,17 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "มาร์จิ้น",
+        "averageEntry": "ราคาเข้าเฉลี่ย",
+        "liquidationPriceGap": "ราคาล้างพอร์ต (ระยะห่าง)",
+        "tpSl": "TP/SL",
+        "takeProfitWhen": "ทำกำไรเมื่อ",
+        "stopLossWhen": "หยุดขาดทุนเมื่อ",
+        "estimatedPnl": "PNL โดยประมาณ",
+        "closePositionTitle": "ปิดโพซิชัน {{coin}}",
+        "estimatedRealizedPnl": "PNL ที่เกิดขึ้นจริงโดยประมาณ"
+      },
       "simpleChart": {
         "openInterest": "มูลค่าสัญญาคงค้าง",
         "volume24h": "ปริมาณซื้อขาย 24 ชม.",
