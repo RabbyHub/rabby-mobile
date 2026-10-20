@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-  useEffect,
-} from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Linking, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import WebView, { WebViewProps } from 'react-native-webview';
 
@@ -23,11 +17,8 @@ import {
 import { useWebViewControl } from '@/components/WebView/hooks';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { checkShouldStartLoadingWithRequestForDappWebView } from './utils';
+import { useSyncActiveDappState } from './useSyncActiveDappState';
 import { getOnlineConfig } from '@/core/config/online';
-import {
-  getActiveDappState,
-  globalSetActiveDappState,
-} from '@/core/bridges/state';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import injectedAutoRunnerSource from '@/core/bridges/builtInScripts/innerDapp.webview.injected';
 import { BrowserProgressBar } from '@/screens/Browser/BrowserScreen/components/BrowserTab/BrowserProgressBar';
@@ -143,25 +134,12 @@ function DappWebViewCore({
     }
   }, [webviewRef]);
 
-  useEffect(() => {
-    const tabId = internalController.webviewIdRef.current;
-    const nextOrigin = safeGetOrigin(dappOrigin) || dappOrigin;
-
-    const activeState = getActiveDappState();
-    if (
-      activeState.tabId !== tabId ||
-      activeState.isScreenHide ||
-      activeState.dappOrigin !== nextOrigin
-    ) {
-      globalSetActiveDappState({
-        dappOrigin: nextOrigin,
-        tabId: offscreenPreload
-          ? 'innerGlobalTabId'
-          : internalController.webviewIdRef.current,
-        isScreenHide: !webviewActive,
-      });
-    }
-  }, [dappOrigin, internalController, offscreenPreload, webviewActive]);
+  useSyncActiveDappState({
+    dappOrigin,
+    webviewIdRef,
+    offscreenPreload,
+    webviewActive,
+  });
 
   const {
     entryScriptWeb3Loaded,
