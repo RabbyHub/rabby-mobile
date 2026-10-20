@@ -192,7 +192,7 @@ const getStyle = createGetStyles2024(ctx => {
     nameBox: {
       flexShrink: 1,
       minWidth: 0,
-      margin: 4,
+      marginHorizontal: 4,
     },
     address: {
       fontFamily: 'SF Pro Rounded',
@@ -200,6 +200,8 @@ const getStyle = createGetStyles2024(ctx => {
       lineHeight: 20,
       fontSize: 16,
       width: '100%',
+      includeFontPadding: false,
+      textAlignVertical: 'center',
       color: ctx.colors2024['neutral-foot'],
     },
     multipleAddress: {
@@ -209,6 +211,8 @@ const getStyle = createGetStyles2024(ctx => {
       fontWeight: '500',
       lineHeight: 20,
       fontSize: 16,
+      includeFontPadding: false,
+      textAlignVertical: 'center',
       color: ctx.colors2024['neutral-foot'],
     },
     addressCaretIcon: {

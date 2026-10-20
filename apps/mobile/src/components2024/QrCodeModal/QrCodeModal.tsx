@@ -15,10 +15,6 @@ export const QrCodeModal: React.FC = () => {
   const [visible, setVisible] = useAtom(visibleAtom);
   const [data] = useAtom(dataAtom);
 
-  if (!visible) {
-    return null;
-  }
-
   return (
     <TrackedModal
       modalId={MODAL_GATE_IDS.qrCode}
@@ -29,16 +25,18 @@ export const QrCodeModal: React.FC = () => {
       onRequestClose={() => {
         setVisible(false);
       }}>
-      <TouchableOpacity
-        onPress={() => setVisible(false)}
-        style={styles.overlay}>
-        <View style={styles.container}>
-          <QRCode value={data} size={DeviceUtils.getDeviceWidth() - 144} />
-        </View>
-        <View style={styles.closeButton}>
-          <CloseCircleSVG color={colors2024['neutral-InvertHighlight']} />
-        </View>
-      </TouchableOpacity>
+      {visible ? (
+        <TouchableOpacity
+          onPress={() => setVisible(false)}
+          style={styles.overlay}>
+          <View style={styles.container}>
+            <QRCode value={data} size={DeviceUtils.getDeviceWidth() - 144} />
+          </View>
+          <View style={styles.closeButton}>
+            <CloseCircleSVG color={colors2024['neutral-InvertHighlight']} />
+          </View>
+        </TouchableOpacity>
+      ) : null}
     </TrackedModal>
   );
 };
