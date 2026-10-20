@@ -16,10 +16,11 @@ import {
 import Clipboard from '@react-native-clipboard/clipboard';
 
 import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { RcIconAddWhitelist, RcIconCopy, RcIconQR } from './icons';
 import type { Account } from '@/core/startupServices/preference';
+import type { KeyringAccountWithAlias } from '@/types/account';
 import { trigger } from 'react-native-haptic-feedback';
 import { toast } from '@/components2024/Toast';
 import { useSortAccountOnSelector } from '@/hooks/accountsSelector';
@@ -37,13 +38,11 @@ import {
 import { useAnimatedRef } from 'react-native-reanimated';
 import Sortable from 'react-native-sortables';
 import { useWhitelistVariedAccounts } from '@/screens/Send/hooks/useWhiteListAddress';
-import type { RecentHistoryItem } from '@/screens/Send/hooks/useRecentSend';
 import { useRecentSend } from '@/screens/Send/hooks/useRecentSend';
 import { RecentUsedItem } from './RecentUsedItem';
 import { isAddrInWhitelist } from '@/hooks/whitelist';
 import { filterMyAccounts, makeAccountObject } from '@/utils/account';
 import { AddressItemInSheetModal } from './AddressItem';
-import EmptyWhiteListHolder from './EmptyWhiteListHolder';
 import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
 import { useAccountSelectModalCtx } from './hooks';
 import { touchedFeedback } from '@/utils/touch';
@@ -54,6 +53,8 @@ import { Text } from '@/components/Typography';
 import { SortableWhitelistSection } from './SortableWhitelistSection';
 
 const MY_ADDRESS_LIMIT = 3;
+// Roughly one screen of address rows (78px + 12px gap) inside the sheet.
+const INITIAL_ROWS_TO_RENDER = 10;
 
 const SIZES = {
   itemH: 78,
@@ -127,44 +128,241 @@ type AccountToSelect = ReturnType<typeof useSortAccountOnSelector>[
   | 'myAddresses'
   | 'safeAddresses'
   | 'watchAddresses'][number];
-type CombineDataInterface = {
-  title: TxAccountPannelSectionTitle;
-  data: AccountToSelect[];
-  type:
-    | 'myAddresses'
-    | 'safeAddresses'
-    | 'watchAddresses'
-    | 'whitelistAddresses'
-    | 'recent';
-  recentUsedAddresses?: RecentHistoryItem[];
-};
 export type SelectAccountSheetModalType = 'SendTo' | 'SendFrom';
 
-function extractMixedItem(item?: RecentHistoryItem | AccountToSelect | null) {
-  const ret = {
-    account: null as Account | null,
-    history: null as RecentHistoryItem | null,
-  };
+type AccountSectionTitle =
+  | TxAccountPannelSectionTitle.MyAddresses
+  | TxAccountPannelSectionTitle.WatchAddresses
+  | TxAccountPannelSectionTitle.SafeAddresses;
 
-  if (!item) return ret;
+/**
+ * One flat, virtualized row model for the whole panel.
+ *
+ * The panel used to render one outer row per section, each with a nested,
+ * non-virtualized FlatList. Opening the sheet therefore mounted every address
+ * row (20-30+ items, each with a native context menu) in the same commit that
+ * the sheet needed before it could start animating. Flattening lets the
+ * BottomSheetFlatList only mount the rows near the viewport.
+ */
+type PanelRow =
+  | {
+      kind: 'recent-title';
+      key: string;
+    }
+  | {
+      kind: 'recent';
+      key: string;
+      account: KeyringAccountWithAlias;
+      time: number;
+      inWhitelist: boolean;
+    }
+  | {
+      kind: 'whitelist';
+      key: string;
+    }
+  | {
+      /** keeps the gap an empty section list used to leave */
+      kind: 'spacer';
+      key: string;
+      size: number;
+    }
+  | {
+      kind: 'section-title';
+      key: string;
+      title: AccountSectionTitle;
+    }
+  | {
+      kind: 'account';
+      key: string;
+      title: AccountSectionTitle;
+      account: AccountToSelect;
+      isPinned: boolean;
+    };
 
-  if ('address' in item) {
-    ret.account = item;
-  } else if ('toAddress' in item) {
-    ret.history = item;
-  }
+const SectionTopSpace = React.memo(function SectionTopSpace({
+  size,
+}: {
+  size: number;
+}) {
+  return <View style={{ height: size }} />;
+});
 
-  return ret;
-}
+const RecentRow = React.memo(function RecentRow({
+  account,
+  time,
+  inWhitelist,
+  onSelect,
+}: {
+  account: KeyringAccountWithAlias;
+  time: number;
+  inWhitelist: boolean;
+  onSelect: (account: Account) => void;
+}) {
+  const { styles } = useTheme2024({ getStyle: getPanelStyle });
+  const onPress = useCallback(() => {
+    onSelect(account);
+  }, [account, onSelect]);
+
+  return (
+    <RecentUsedItem
+      account={account}
+      timeStamp={time}
+      inWhiteList={inWhitelist}
+      onPress={onPress}
+      style={styles.addressItemTopGap}
+    />
+  );
+});
+
+const AccountRow = React.memo(function AccountRow({
+  account,
+  title,
+  isPinned,
+  onSelect,
+  defaultPressAction,
+}: {
+  account: AccountToSelect;
+  title: AccountSectionTitle;
+  isPinned: boolean;
+  onSelect: (account: Account) => void;
+  defaultPressAction: React.ComponentProps<
+    typeof AddressItemInSheetModal
+  >['defaultPressAction'];
+}) {
+  const { styles } = useTheme2024({ getStyle: getPanelStyle });
+  const addressItemProps = useMemo(() => ({ account }), [account]);
+
+  return (
+    <View style={styles.accountRow}>
+      <AddressItemInSheetModal
+        ofTitleType={title}
+        recentAddressData={null}
+        addressItemProps={addressItemProps}
+        isPinned={isPinned}
+        onPressAccount={onSelect}
+        replaceNameWithAliasAddress={false}
+        isReceive={false}
+        showCopyAndQR={false}
+        defaultPressAction={defaultPressAction}
+      />
+    </View>
+  );
+});
+
+const WhitelistBlock = React.memo(function WhitelistBlock({
+  accounts,
+  myAccounts,
+  scrollableRef,
+  onReorder,
+  onSelect,
+  onNavTo,
+}: {
+  accounts: React.ComponentProps<typeof SortableWhitelistSection>['accounts'];
+  myAccounts: React.ComponentProps<
+    typeof SortableWhitelistSection
+  >['myAccounts'];
+  scrollableRef: React.ComponentProps<
+    typeof SortableWhitelistSection
+  >['scrollableRef'];
+  onReorder: React.ComponentProps<typeof SortableWhitelistSection>['onReorder'];
+  onSelect: (account: Account) => void;
+  onNavTo: ReturnType<typeof useAccountSelectModalCtx>['fnNavTo'];
+}) {
+  const { styles, colors2024 } = useTheme2024({ getStyle: getPanelStyle });
+  const { t } = useTranslation();
+
+  return (
+    <View style={{ marginTop: 20 }}>
+      <SectionCollapsableNav
+        title={t('component.accountSelectModalTx.whitelistAccounts')}
+        afterNode={
+          <TouchableOpacity
+            style={{ paddingRight: 8 }}
+            onPress={evt => {
+              evt.stopPropagation();
+              touchedFeedback();
+              onNavTo('add-new-whitelist-addr');
+            }}>
+            <RcIconAddWhitelist width={20} height={20} />
+          </TouchableOpacity>
+        }
+      />
+      {!accounts.length ? (
+        <View style={styles.addWhitelistHintContainer}>
+          <View style={styles.addWhitelistHintIcon}>
+            <RcIconUnknownAddressAvatarCC
+              style={{
+                width: 24,
+                height: 28,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+              color={colors2024['green-disable']}
+            />
+            <RcIconLockCC
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                right: 0,
+                transform: [{ translateX: 5 }, { translateY: 2 }],
+              }}
+              color={colors2024['green-default']}
+              surroundColor={colors2024['neutral-bg-1']}
+              width={22}
+              height={22}
+            />
+          </View>
+          <View style={styles.addWhitelistHintContent}>
+            <Text style={styles.addWhitelistHintText}>
+              {t('component.accountSelectModalTx.addTrustedAddress.desc')}
+            </Text>
+            <TouchableOpacity
+              style={styles.addWhitelistHintButton}
+              onPress={() => {
+                onNavTo('add-new-whitelist-addr');
+              }}>
+              <Text
+                style={[
+                  styles.addWhitelistHintText,
+                  {
+                    color: colors2024['brand-default'],
+                    fontWeight: 700,
+                  },
+                ]}>
+                {t('component.accountSelectModalTx.addTrustedAddress.addBtn')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : (
+        <SortableWhitelistSection
+          accounts={accounts}
+          myAccounts={myAccounts}
+          scrollableRef={scrollableRef}
+          onReorder={onReorder}
+          onSelect={onSelect}
+        />
+      )}
+    </View>
+  );
+});
 
 export function AccountsPanelInSheetModal({
   containerStyle,
   parentVisible = false,
-  scene,
+  listReady = true,
   defaultPressItemAction = 'asPress',
 }: {
   containerStyle?: StyleProp<ViewStyle>;
   parentVisible: boolean;
+  /**
+   * When false, only the search header is rendered. The sheet host flips this
+   * once its open animation has started so the address rows never block the
+   * sheet from appearing.
+   *
+   * @default true
+   */
+  listReady?: boolean;
   scene?: SelectAccountSheetModalType;
   defaultPressItemAction?: React.ComponentProps<
     typeof AddressItemInSheetModal
@@ -172,14 +370,14 @@ export function AccountsPanelInSheetModal({
 }) {
   const { fnNavTo, cbOnSelectedAccount } = useAccountSelectModalCtx();
   const { styles, colors2024 } = useTheme2024({ getStyle: getPanelStyle });
-  const scrollableRef = useAnimatedRef<FlatList<CombineDataInterface>>();
+  const scrollableRef = useAnimatedRef<FlatList<PanelRow>>();
   const setScrollableRef = useCallback(
     (instance: BottomSheetFlatListMethods | null) => {
       if (instance) {
         // BottomSheetFlatList forwards its underlying animated FlatList at
         // runtime, while its public ref type intentionally exposes only the
         // supported list methods.
-        scrollableRef(instance as FlatList<CombineDataInterface>);
+        scrollableRef(instance as FlatList<PanelRow>);
       }
     },
     [scrollableRef],
@@ -188,19 +386,18 @@ export function AccountsPanelInSheetModal({
   const { isPinnedAccount, myAddresses, safeAddresses, watchAddresses } =
     useSortAccountOnSelector();
 
-  // const scrollViewRef = React.useRef<typeof BottomSheetFlatList>(null);
-  // const scrollToBottom = useCallback(() => {
-  //   // scrollViewRef.current?.scrollToEnd({ animated: true });
-  // }, []);
-
   const [safeAddressNavCollapsed, setSafeAddressNavCollapsed] =
     React.useState(true);
   const [watchAddressNavCollapsed, setWatchAddressNavCollapsed] =
     React.useState(true);
   const { t } = useTranslation();
 
-  const { unionedRecentHistory, runAsync: fetchRecentHistory } = useRecentSend({
+  // `ready` gates the request: it runs once when the panel mounts visible and
+  // again whenever the sheet is re-shown, instead of auto-running on mount and
+  // then running a second time from a visibility effect.
+  const { unionedRecentHistory } = useRecentSend({
     useAllHistory: true,
+    ready: parentVisible,
   });
   const {
     list: whitelistAccounts,
@@ -210,59 +407,98 @@ export function AccountsPanelInSheetModal({
     updateWhitelistOrder,
   } = useWhitelistVariedAccounts();
 
-  useEffect(() => {
-    if (parentVisible) {
-      fetchRecentHistory();
-    }
-  }, [parentVisible, fetchRecentHistory]);
+  const onSelectAccount = useCallback(
+    (account: Account) => {
+      cbOnSelectedAccount?.(account);
+    },
+    [cbOnSelectedAccount],
+  );
 
-  const recentUsedAddresses = useMemo(() => {
-    return unionedRecentHistory.filter(
+  const rows = useMemo<PanelRow[]>(() => {
+    if (!listReady) {
+      return [];
+    }
+
+    const ret: PanelRow[] = [];
+
+    const recentUsedAddresses = unionedRecentHistory.filter(
       item => !isAddrInWhitelist(item.toAddress, whitelist),
     );
-  }, [unionedRecentHistory, whitelist]);
+    if (recentUsedAddresses.length) {
+      ret.push({ kind: 'recent-title', key: 'recent-title' });
+      recentUsedAddresses.forEach((history, index) => {
+        const { account, inWhitelist } = findAccountWithoutBalance(
+          history.toAddress,
+        );
+        ret.push({
+          kind: 'recent',
+          key: `recent-${history.toAddress}-${history.time}-${index}`,
+          account,
+          time: history.time,
+          inWhitelist,
+        });
+      });
+    } else {
+      ret.push({ kind: 'spacer', key: 'recent-empty', size: SIZES.itemGap });
+    }
 
-  // combine data for a entire Flatlist
-  const { combinedData } = useMemo(() => {
-    const ret = {
-      combinedData: [
-        {
-          title: TxAccountPannelSectionTitle.Recent,
-          // filter toAddress in whitelist
-          recentUsedAddresses,
-          data: [],
-          type: 'recent' as const,
-        },
-        {
-          title: TxAccountPannelSectionTitle.Whitelist,
-          data: whitelistAccounts,
-          type: 'whitelistAddresses' as const,
-        },
-        {
-          title: TxAccountPannelSectionTitle.MyAddresses,
-          data: myAddresses,
-          type: 'myAddresses' as const,
-        },
-        {
-          title: TxAccountPannelSectionTitle.WatchAddresses,
-          data: watchAddresses,
-          type: 'watchAddresses' as const,
-        },
-        {
-          title: TxAccountPannelSectionTitle.SafeAddresses,
-          data: safeAddresses,
-          type: 'safeAddresses' as const,
-        },
-      ],
+    ret.push({ kind: 'whitelist', key: 'whitelist' });
+
+    const pushAccountSection = (
+      title: AccountSectionTitle,
+      accounts: AccountToSelect[],
+      expanded: boolean,
+    ) => {
+      if (!accounts.length) {
+        return;
+      }
+      ret.push({ kind: 'section-title', key: `title-${title}`, title });
+      if (!expanded) {
+        return;
+      }
+      accounts.forEach((account, index) => {
+        ret.push({
+          kind: 'account',
+          key: `account-${title}-${account.address}-${account.type}-${account.brandName}-${index}`,
+          title,
+          account,
+          isPinned: isPinnedAccount(account),
+        });
+      });
     };
+
+    if (myAddresses.length) {
+      pushAccountSection(
+        TxAccountPannelSectionTitle.MyAddresses,
+        myAddresses,
+        true,
+      );
+    } else {
+      ret.push({ kind: 'spacer', key: 'my-empty', size: SIZES.itemGap });
+    }
+    pushAccountSection(
+      TxAccountPannelSectionTitle.WatchAddresses,
+      watchAddresses,
+      !watchAddressNavCollapsed,
+    );
+    pushAccountSection(
+      TxAccountPannelSectionTitle.SafeAddresses,
+      safeAddresses,
+      !safeAddressNavCollapsed,
+    );
 
     return ret;
   }, [
-    recentUsedAddresses,
-    whitelistAccounts,
+    listReady,
+    unionedRecentHistory,
+    whitelist,
+    findAccountWithoutBalance,
     myAddresses,
-    safeAddresses,
     watchAddresses,
+    safeAddresses,
+    watchAddressNavCollapsed,
+    safeAddressNavCollapsed,
+    isPinnedAccount,
   ]);
 
   const renderHeader = useCallback(
@@ -310,184 +546,121 @@ export function AccountsPanelInSheetModal({
     ],
   );
 
-  const renderEmpty = useCallback(
-    () => <EmptyWhiteListHolder onAddWhitelist={() => {}} />,
-    [
-      // handleGotoAddWhitelist
-    ],
-  );
-
-  const ListHeaderComponent = useCallback(
-    (title: TxAccountPannelSectionTitle) => {
+  const renderSectionTitle = useCallback(
+    (title: AccountSectionTitle) => {
       switch (title) {
-        case TxAccountPannelSectionTitle.Recent:
-          return (
-            !!recentUsedAddresses.length && (
-              <>
-                <View style={{ marginTop: 20 }} />
-                <SectionCollapsableNav
-                  title={t('component.accountSelectModalTx.recentAccounts')}
-                />
-              </>
-            )
-          );
-        case TxAccountPannelSectionTitle.Whitelist:
-          return (
-            <View style={{ marginTop: 20 }}>
-              <SectionCollapsableNav
-                title={t('component.accountSelectModalTx.whitelistAccounts')}
-                afterNode={
-                  <TouchableOpacity
-                    style={{ paddingRight: 8 }}
-                    onPress={evt => {
-                      evt.stopPropagation();
-                      touchedFeedback();
-                      fnNavTo('add-new-whitelist-addr');
-                    }}>
-                    <RcIconAddWhitelist width={20} height={20} />
-                  </TouchableOpacity>
-                }
-              />
-              {!whitelistAccounts.length && (
-                <View style={styles.addWhitelistHintContainer}>
-                  <View style={styles.addWhitelistHintIcon}>
-                    <RcIconUnknownAddressAvatarCC
-                      style={{
-                        width: 24,
-                        height: 28,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                      }}
-                      color={colors2024['green-disable']}
-                    />
-                    <RcIconLockCC
-                      style={{
-                        position: 'absolute',
-                        bottom: 0,
-                        right: 0,
-                        transform: [{ translateX: 5 }, { translateY: 2 }],
-                      }}
-                      color={colors2024['green-default']}
-                      surroundColor={colors2024['neutral-bg-1']}
-                      width={22}
-                      height={22}
-                    />
-                  </View>
-                  <View style={styles.addWhitelistHintContent}>
-                    <Text style={styles.addWhitelistHintText}>
-                      {t(
-                        'component.accountSelectModalTx.addTrustedAddress.desc',
-                      )}
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.addWhitelistHintButton}
-                      onPress={() => {
-                        fnNavTo('add-new-whitelist-addr');
-                      }}>
-                      <Text
-                        style={[
-                          styles.addWhitelistHintText,
-                          {
-                            color: colors2024['brand-default'],
-                            fontWeight: 700,
-                          },
-                        ]}>
-                        {t(
-                          'component.accountSelectModalTx.addTrustedAddress.addBtn',
-                        )}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              )}
-            </View>
-          );
         case TxAccountPannelSectionTitle.MyAddresses:
           return (
-            !!myAddresses.length && (
-              <>
-                <View style={{ marginTop: 20 }} />
-                <SectionCollapsableNav
-                  title={t('component.accountSelectModalTx.importedAccounts')}
-                />
-              </>
-            )
+            <>
+              <SectionTopSpace size={20} />
+              <SectionCollapsableNav
+                title={t('component.accountSelectModalTx.importedAccounts')}
+              />
+            </>
+          );
+        case TxAccountPannelSectionTitle.WatchAddresses:
+          return (
+            <>
+              <SectionTopSpace size={24} />
+              <SectionCollapsableNav
+                title={t(
+                  'page.addressDetail.addressListScreen.importWatchAddress',
+                )}
+                isCollapsed={watchAddressNavCollapsed}
+                onCollapsedChange={setWatchAddressNavCollapsed}
+              />
+            </>
           );
         case TxAccountPannelSectionTitle.SafeAddresses:
           return (
-            !!safeAddresses.length && (
-              <>
-                <View style={{ marginTop: 24 }} />
-                <SectionCollapsableNav
-                  title={t(
-                    'page.addressDetail.addressListScreen.importSafeAddress',
-                  )}
-                  isCollapsed={safeAddressNavCollapsed}
-                  onCollapsedChange={nextVal => {
-                    setSafeAddressNavCollapsed(nextVal);
-                  }}
-                />
-              </>
-            )
+            <>
+              <SectionTopSpace size={24} />
+              <SectionCollapsableNav
+                title={t(
+                  'page.addressDetail.addressListScreen.importSafeAddress',
+                )}
+                isCollapsed={safeAddressNavCollapsed}
+                onCollapsedChange={setSafeAddressNavCollapsed}
+              />
+            </>
           );
-
-        case TxAccountPannelSectionTitle.WatchAddresses:
-          return (
-            !!watchAddresses.length && (
-              <>
-                <View style={{ height: 24 }} />
-                <SectionCollapsableNav
-                  title={t(
-                    'page.addressDetail.addressListScreen.importWatchAddress',
-                  )}
-                  isCollapsed={watchAddressNavCollapsed}
-                  onCollapsedChange={nextVal => {
-                    setWatchAddressNavCollapsed(nextVal);
-                  }}
-                />
-              </>
-            )
-          );
-
         default:
-          break;
+          return null;
+      }
+    },
+    [t, watchAddressNavCollapsed, safeAddressNavCollapsed],
+  );
+
+  const renderItem = useCallback(
+    ({ item }: { item: PanelRow }) => {
+      switch (item.kind) {
+        case 'recent-title':
+          return (
+            <>
+              <SectionTopSpace size={20} />
+              <SectionCollapsableNav
+                title={t('component.accountSelectModalTx.recentAccounts')}
+              />
+            </>
+          );
+        case 'recent':
+          return (
+            <RecentRow
+              account={item.account}
+              time={item.time}
+              inWhitelist={item.inWhitelist}
+              onSelect={onSelectAccount}
+            />
+          );
+        case 'whitelist':
+          return (
+            <WhitelistBlock
+              accounts={whitelistAccounts}
+              myAccounts={myAccounts}
+              scrollableRef={scrollableRef}
+              onReorder={updateWhitelistOrder}
+              onSelect={onSelectAccount}
+              onNavTo={fnNavTo}
+            />
+          );
+        case 'spacer':
+          return <SectionTopSpace size={item.size} />;
+        case 'section-title':
+          return renderSectionTitle(item.title);
+        case 'account':
+          return (
+            <AccountRow
+              account={item.account}
+              title={item.title}
+              isPinned={item.isPinned}
+              onSelect={onSelectAccount}
+              defaultPressAction={defaultPressItemAction}
+            />
+          );
+        default:
+          return null;
       }
     },
     [
       t,
-      safeAddressNavCollapsed,
+      onSelectAccount,
+      whitelistAccounts,
+      myAccounts,
+      scrollableRef,
+      updateWhitelistOrder,
       fnNavTo,
-      colors2024,
-      styles,
-      // scrollToBottom,
-      myAddresses.length,
-      recentUsedAddresses.length,
-      whitelistAccounts.length,
-      watchAddresses.length,
-      safeAddresses.length,
-      watchAddressNavCollapsed,
+      renderSectionTitle,
+      defaultPressItemAction,
     ],
   );
 
-  const shouldShowDatalist = useCallback(
-    (title: TxAccountPannelSectionTitle) => {
-      switch (title) {
-        case TxAccountPannelSectionTitle.MyAddresses:
-        case TxAccountPannelSectionTitle.Recent:
-        case TxAccountPannelSectionTitle.Whitelist:
-          return true;
-        case TxAccountPannelSectionTitle.SafeAddresses:
-          return !safeAddressNavCollapsed;
-        case TxAccountPannelSectionTitle.WatchAddresses:
-          return !watchAddressNavCollapsed;
-        default:
-          return true;
-      }
-    },
-    [safeAddressNavCollapsed, watchAddressNavCollapsed],
-  );
+  const keyExtractor = useCallback((item: PanelRow) => item.key, []);
 
   const { safeOffBottom } = useSafeSizes();
+  const listFooter = useMemo(
+    () => <View style={{ height: 40 + safeOffBottom }} />,
+    [safeOffBottom],
+  );
 
   return (
     <View style={[styles.panel, containerStyle]}>
@@ -495,107 +668,16 @@ export function AccountsPanelInSheetModal({
           auto-scroll does not have to visually cancel the parent scroll. */}
       <Sortable.PortalProvider>
         <View style={styles.scrollViewContainer}>
-          <BottomSheetFlatList<CombineDataInterface>
+          <BottomSheetFlatList<PanelRow>
             ref={setScrollableRef}
             style={styles.scrollView}
-            data={combinedData}
-            // ref={scrollViewRef}
-            // contentContainerStyle={styles.scrollViewContentContainer}
+            data={rows}
             ListHeaderComponent={renderHeader}
-            ListEmptyComponent={renderEmpty}
-            renderItem={({
-              item: combinedItem,
-            }: {
-              item: CombineDataInterface;
-            }) => {
-              const isOfWhitelistSection =
-                combinedItem.title === TxAccountPannelSectionTitle.Whitelist;
-
-              return (
-                <View style={styles.section}>
-                  {ListHeaderComponent(combinedItem.title)}
-                  {shouldShowDatalist(combinedItem.title) &&
-                    (isOfWhitelistSection ? (
-                      <SortableWhitelistSection
-                        accounts={combinedItem.data}
-                        myAccounts={myAccounts}
-                        scrollableRef={scrollableRef}
-                        onReorder={updateWhitelistOrder}
-                        onSelect={cbOnSelectedAccount}
-                      />
-                    ) : (
-                      <FlatList<RecentHistoryItem | AccountToSelect>
-                        data={
-                          combinedItem.title ===
-                          TxAccountPannelSectionTitle.Recent
-                            ? combinedItem.recentUsedAddresses
-                            : combinedItem.data
-                        }
-                        style={styles.addressListContainer}
-                        renderItem={({ item, index }) => {
-                          const { account, history } = extractMixedItem(item);
-
-                          if (account) {
-                            return (
-                              <View
-                                key={`${account.address}-${account.type}-${account.brandName}-${index}`}
-                                style={[
-                                  { borderRadius: 16 },
-                                  index > 0 && styles.addressItemTopGap,
-                                ]}>
-                                <AddressItemInSheetModal
-                                  ofTitleType={combinedItem.title}
-                                  recentAddressData={null}
-                                  addressItemProps={{ account: account }}
-                                  isPinned={isPinnedAccount(account)}
-                                  onPressAccount={cbOnSelectedAccount}
-                                  replaceNameWithAliasAddress={false}
-                                  isReceive={false}
-                                  showCopyAndQR={false}
-                                  defaultPressAction={defaultPressItemAction}
-                                />
-                              </View>
-                            );
-                          } else if (history) {
-                            const { account, inWhitelist } =
-                              findAccountWithoutBalance(history.toAddress);
-
-                            return (
-                              <RecentUsedItem
-                                key={history.time}
-                                account={account}
-                                timeStamp={history.time}
-                                inWhiteList={inWhitelist}
-                                onPress={() => {
-                                  cbOnSelectedAccount?.(account);
-                                }}
-                                style={[index > 0 && styles.addressItemTopGap]}
-                              />
-                            );
-                          }
-
-                          return null;
-                        }}
-                        keyExtractor={(item, index) => {
-                          const { account, history } = extractMixedItem(item);
-
-                          if (account) {
-                            return `account-${account.address}-${account.brandName}-${index}`;
-                          } else if (history) {
-                            return `recent-${history.toAddress}-${history.time}-${index}`;
-                          }
-                          return `empty-${index}`;
-                        }}
-                        ListFooterComponent={null}
-                      />
-                    ))}
-                </View>
-              );
-            }}
-            keyExtractor={(item, index) => `${item.type}-${index}`}
-            ListFooterComponent={
-              <View style={{ height: 40 + safeOffBottom }} />
-            }
+            renderItem={renderItem}
+            keyExtractor={keyExtractor}
+            initialNumToRender={INITIAL_ROWS_TO_RENDER}
+            maxToRenderPerBatch={INITIAL_ROWS_TO_RENDER}
+            ListFooterComponent={listFooter}
           />
         </View>
       </Sortable.PortalProvider>
@@ -752,6 +834,10 @@ const getPanelStyle = createGetStyles2024(ctx => {
       width: '100%',
     },
     addressItemTopGap: {
+      marginTop: SIZES.itemGap,
+    },
+    accountRow: {
+      borderRadius: 16,
       marginTop: SIZES.itemGap,
     },
     bottomBarContainer: {

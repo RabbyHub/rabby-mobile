@@ -1,4 +1,4 @@
-import AutoLockView from '@/components/AutoLockView';
+import { useRefreshAutoLockPanResponder } from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { useAccountSelectorList } from '@/components2024/AccountSelector/useAccountSelectorList';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
@@ -8,11 +8,17 @@ import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { useAccounts, usePinAddresses } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { uniqBy } from 'lodash';
 import PQueue from 'p-queue';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useWindowDimensions, View } from 'react-native';
 import { PerpsAccountSelectorItem } from './PerpsAccountSelectorItem';
 import {
@@ -43,6 +49,21 @@ const portfolioFetchQueue = new PQueue({
   concurrency: PERPS_SELECTOR_PORTFOLIO_CONCURRENCY,
 });
 
+// Roughly one screen of account rows inside the sheet.
+const INITIAL_ROWS_TO_RENDER = 10;
+
+type PerpsAccountSelectorRow = ReturnType<
+  typeof buildPerpsAccountSelectorData
+>[number];
+
+const keyExtractor = (item: PerpsAccountSelectorRow) =>
+  item.account.address + item.account.type + item.account.brandName;
+
+// The list used to `.map()` every address into a ScrollView, mounting all rows
+// before the sheet could animate in. Virtualize it and memoize rows so a
+// per-row store update does not re-render its siblings.
+const MemoPerpsAccountSelectorItem = React.memo(PerpsAccountSelectorItem);
+
 export const PerpsAccountSelectorPopup: React.FC<{
   visible?: boolean;
   onClose?(): void;
@@ -63,6 +84,7 @@ export const PerpsAccountSelectorPopup: React.FC<{
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getModalStyle,
   });
+  const { panResponder } = useRefreshAutoLockPanResponder();
 
   const { height } = useWindowDimensions();
   const maxHeight = useMemo(() => {
@@ -219,6 +241,40 @@ export const PerpsAccountSelectorPopup: React.FC<{
     visible,
   ]);
 
+  const renderItem = useCallback(
+    ({ item }: { item: PerpsAccountSelectorRow }) => (
+      <MemoPerpsAccountSelectorItem
+        account={item.account}
+        tmpSelectAccount={tmpSelectAccount as KeyringAccountWithAlias}
+        info={item?.info}
+        currentPerpsAddress={currentPerpsAddress}
+        lastUsedAccount={lastUsedAccount as KeyringAccountWithAlias}
+        loading={loading}
+        onPress={handleSelect}
+        currentAccount={value as KeyringAccountWithAlias}
+        checkIconPosition={checkIconPosition}
+      />
+    ),
+    [
+      tmpSelectAccount,
+      currentPerpsAddress,
+      lastUsedAccount,
+      loading,
+      handleSelect,
+      value,
+      checkIconPosition,
+    ],
+  );
+
+  const listHeader = useMemo(
+    () => (
+      <View>
+        <Text style={styles.title}>{title || 'Select Account'}</Text>
+      </View>
+    ),
+    [styles.title, title],
+  );
+
   return (
     <AppBottomSheetModal
       ref={modalRef}
@@ -231,39 +287,17 @@ export const PerpsAccountSelectorPopup: React.FC<{
       enableDynamicSizing
       enableContentPanningGesture
       maxDynamicContentSize={maxHeight}>
-      <BottomSheetScrollView>
-        <AutoLockView style={[styles.container]}>
-          <View>
-            <Text style={styles.title}>{title || 'Select Account'}</Text>
-          </View>
-          {data.length ? (
-            <View style={styles.section}>
-              {data.map(item => {
-                return (
-                  <PerpsAccountSelectorItem
-                    key={
-                      item.account.address +
-                      item.account.type +
-                      item.account.brandName
-                    }
-                    account={item.account}
-                    tmpSelectAccount={
-                      tmpSelectAccount as KeyringAccountWithAlias
-                    }
-                    info={item?.info}
-                    currentPerpsAddress={currentPerpsAddress}
-                    lastUsedAccount={lastUsedAccount as KeyringAccountWithAlias}
-                    loading={loading}
-                    onPress={handleSelect}
-                    currentAccount={value as KeyringAccountWithAlias}
-                    checkIconPosition={checkIconPosition}
-                  />
-                );
-              })}
-            </View>
-          ) : null}
-        </AutoLockView>
-      </BottomSheetScrollView>
+      <BottomSheetFlatList<PerpsAccountSelectorRow>
+        {...panResponder.panHandlers}
+        style={styles.list}
+        contentContainerStyle={styles.container}
+        data={data}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        ListHeaderComponent={listHeader}
+        initialNumToRender={INITIAL_ROWS_TO_RENDER}
+        maxToRenderPerBatch={INITIAL_ROWS_TO_RENDER}
+      />
     </AppBottomSheetModal>
   );
 };
@@ -278,12 +312,15 @@ const getModalStyle = createGetStyles2024(ctx => {
       paddingTop: 10,
       height: 36,
     },
-    container: {
-      // height: '100%',
-      minHeight: 364,
+    list: {
+      flex: 1,
       backgroundColor: isLight
         ? colors2024['neutral-bg-0']
         : colors2024['neutral-bg-1'],
+    },
+    container: {
+      // height: '100%',
+      minHeight: 364,
       paddingHorizontal: 20,
       // display: 'flex',
       // flexDirection: 'column',

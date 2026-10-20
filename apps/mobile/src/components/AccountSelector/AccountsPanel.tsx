@@ -27,29 +27,6 @@ import { QrCircleCC } from '@/assets2024/icons/address';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { Text } from '@/components/Typography';
 
-interface CombineDataInterface {
-  title: AccountPannelSectionTitle;
-  data: ReturnType<typeof useSortAccountOnSelector>[
-    | 'myAddresses'
-    | 'safeAddresses'
-    | 'watchAddresses'];
-  type: string;
-}
-
-type ReceiveSheetListItem =
-  | {
-      kind: 'sectionHeader';
-      title: AccountPannelSectionTitle;
-      key: string;
-    }
-  | {
-      kind: 'account';
-      account: Account;
-      sectionIndex: number;
-      sectionTitle: AccountPannelSectionTitle;
-      key: string;
-    };
-
 const MY_ADDRESS_LIMIT = 3;
 
 const SIZES = {
@@ -411,6 +388,83 @@ const SectionCollapsableNav = function ({
   );
 };
 
+// Roughly one screen of address rows (78px + 12px gap).
+const INITIAL_ROWS_TO_RENDER = 10;
+const GAS_ACCOUNT_ITEM_STYLE: ViewStyle = { backgroundColor: 'transparent' };
+
+const PanelAddressRow = React.memo(function PanelAddressRow({
+  account,
+  isPinned,
+  isReceive,
+  isGasAccount,
+  withTopGap,
+  defaultPressAction,
+  onSelectAccount,
+}: {
+  account: Account;
+  isPinned: boolean;
+  isReceive: boolean;
+  isGasAccount: boolean;
+  withTopGap: boolean;
+  defaultPressAction: React.ComponentProps<
+    typeof AddressItemInSheetModal
+  >['defaultPressAction'];
+  onSelectAccount?: (account: Account | null) => void;
+}) {
+  const { styles } = useTheme2024({ getStyle: getPanelStyle });
+  const addressItemProps = useMemo(() => ({ account }), [account]);
+
+  const content = (
+    <AddressItemInSheetModal
+      addressItemProps={addressItemProps}
+      isPinned={isPinned}
+      onPressAccount={onSelectAccount}
+      replaceNameWithAliasAddress={isReceive}
+      isReceive={isReceive}
+      showCopyAndQR={!isGasAccount}
+      defaultPressAction={defaultPressAction}
+      style={isGasAccount ? GAS_ACCOUNT_ITEM_STYLE : undefined}
+    />
+  );
+
+  return (
+    <View
+      style={[
+        isReceive ? styles.receiveAddressRow : styles.addressRow,
+        withTopGap && styles.addressItemTopGap,
+      ]}>
+      {isReceive ? (
+        <AddressItemContextMenu account={account} actions={['copy', 'edit']}>
+          {content}
+        </AddressItemContextMenu>
+      ) : (
+        content
+      )}
+    </View>
+  );
+});
+
+/**
+ * One flat, virtualized row model shared by the receive screen and sheet.
+ *
+ * The screen variant used to render one outer row per section, each with a
+ * nested, non-virtualized FlatList, so opening it mounted every address row
+ * (each with a native context menu) at once.
+ */
+type PanelRow =
+  | {
+      kind: 'sectionHeader';
+      title: AccountPannelSectionTitle;
+      key: string;
+    }
+  | {
+      kind: 'account';
+      account: Account;
+      isPinned: boolean;
+      withTopGap: boolean;
+      key: string;
+    };
+
 export function AccountsPanelInSheetModal({
   containerStyle,
   onSelectAccount,
@@ -433,7 +487,7 @@ export function AccountsPanelInSheetModal({
   const { isPinnedAccount, myAddresses, safeAddresses, watchAddresses } =
     useSortAccountOnSelector();
 
-  const scrollViewRef = React.useRef<FlatList<CombineDataInterface>>(null);
+  const scrollViewRef = React.useRef<FlatList<PanelRow>>(null);
   const scrollToBottom = useCallback(() => {
     if (isReceiveSheet) {
       return;
@@ -441,6 +495,7 @@ export function AccountsPanelInSheetModal({
     scrollViewRef.current?.scrollToEnd({ animated: true });
   }, [isReceiveSheet]);
 
+  // NOTE: despite the name, `true` means the section list is shown.
   const [safeAddressNavCollapsed, setSafeAddressNavCollapsed] = React.useState(
     !isGasAccount && !isReceive,
   );
@@ -448,159 +503,76 @@ export function AccountsPanelInSheetModal({
     React.useState(!isGasAccount && !isReceive);
   const { t } = useTranslation();
 
-  // combine data for a entire Flatlist
-  const combinedData = [
-    {
-      title: AccountPannelSectionTitle.MyAddresses,
-      data: myAddresses,
-      type: 'myAddresses',
-    },
-    {
-      title: AccountPannelSectionTitle.SafeAddresses,
-      data: safeAddresses,
-      type: 'safeAddresses',
-    },
-    {
-      title: AccountPannelSectionTitle.WatchAddresses,
-      data: watchAddresses,
-      type: 'watchAddresses',
-    },
-  ] as CombineDataInterface[];
-
-  const ListHeaderComponent = useCallback(
+  const renderSectionHeader = useCallback(
     (title: AccountPannelSectionTitle) => {
       switch (title) {
-        case AccountPannelSectionTitle.MyAddresses:
+        case AccountPannelSectionTitle.SafeAddresses:
+          return (
+            <>
+              <View style={{ marginTop: 30 }} />
+              <SectionCollapsableNav
+                title={t(
+                  'page.addressDetail.addressListScreen.importSafeAddress',
+                )}
+                isCollapsed={safeAddressNavCollapsed}
+                onCollapsedChange={nextVal => {
+                  setSafeAddressNavCollapsed(nextVal);
+                  scrollToBottom();
+                }}
+              />
+            </>
+          );
+
+        case AccountPannelSectionTitle.WatchAddresses:
+          return (
+            <>
+              <View style={{ height: 30 }} />
+              <SectionCollapsableNav
+                title={t(
+                  'page.addressDetail.addressListScreen.importWatchAddress',
+                )}
+                isCollapsed={watchAddressNavCollapsed}
+                onCollapsedChange={nextVal => {
+                  setWatchAddressNavCollapsed(nextVal);
+                  scrollToBottom();
+                }}
+              />
+            </>
+          );
+
+        default:
           return null;
-        case AccountPannelSectionTitle.SafeAddresses:
-          return (
-            !!safeAddresses.length &&
-            !isGasAccount && (
-              <>
-                <View style={{ marginTop: 30 }} />
-                <SectionCollapsableNav
-                  title={t(
-                    'page.addressDetail.addressListScreen.importSafeAddress',
-                  )}
-                  isCollapsed={safeAddressNavCollapsed}
-                  onCollapsedChange={nextVal => {
-                    setSafeAddressNavCollapsed(nextVal);
-                    scrollToBottom();
-                  }}
-                />
-              </>
-            )
-          );
-
-        case AccountPannelSectionTitle.WatchAddresses:
-          return (
-            !!watchAddresses.length &&
-            !isGasAccount && (
-              <>
-                <View style={{ height: 30 }} />
-                <SectionCollapsableNav
-                  title={t(
-                    'page.addressDetail.addressListScreen.importWatchAddress',
-                  )}
-                  isCollapsed={watchAddressNavCollapsed}
-                  onCollapsedChange={nextVal => {
-                    setWatchAddressNavCollapsed(nextVal);
-                    scrollToBottom();
-                  }}
-                />
-              </>
-            )
-          );
-
-        default:
-          break;
       }
     },
-    [
-      t,
-      isGasAccount,
-      safeAddressNavCollapsed,
-      scrollToBottom,
-      watchAddresses,
-      safeAddresses,
-      watchAddressNavCollapsed,
-    ],
-  );
-
-  const shouldShowDatalist = useCallback(
-    (title: AccountPannelSectionTitle) => {
-      switch (title) {
-        case AccountPannelSectionTitle.MyAddresses:
-          return true;
-        case AccountPannelSectionTitle.SafeAddresses:
-          return safeAddressNavCollapsed && !isGasAccount;
-        case AccountPannelSectionTitle.WatchAddresses:
-          return watchAddressNavCollapsed && !isGasAccount;
-        default:
-          return true;
-      }
-    },
-    [safeAddressNavCollapsed, isGasAccount, watchAddressNavCollapsed],
+    [t, safeAddressNavCollapsed, scrollToBottom, watchAddressNavCollapsed],
   );
 
   const { safeOffBottom } = useSafeSizes();
 
-  const renderAddressItem = useCallback(
-    (item: Account, index: number, isReceiveSectionFirstItem = false) => {
-      const Content = (
-        <AddressItemInSheetModal
-          addressItemProps={{ account: item }}
-          isPinned={isPinnedAccount(item)}
-          onPressAccount={onSelectAccount}
-          replaceNameWithAliasAddress={isReceive}
-          isReceive={isReceive}
-          showCopyAndQR={!isGasAccount}
-          defaultPressAction={defaultPressItemAction}
-          style={isGasAccount ? { backgroundColor: 'transparent' } : {}}
-        />
-      );
+  const rows = useMemo<PanelRow[]>(() => {
+    const items: PanelRow[] = [];
 
-      return (
-        <View
-          key={`${item.address}-${item.type}-${item.brandName}-${index}`}
-          style={[
-            { borderRadius: isReceive ? 20 : 16 },
-            isReceiveSectionFirstItem && styles.receiveSectionFirstItemGap,
-            index > 0 && styles.addressItemTopGap,
-          ]}>
-          {isReceive ? (
-            <AddressItemContextMenu account={item} actions={['copy', 'edit']}>
-              {Content}
-            </AddressItemContextMenu>
-          ) : (
-            Content
-          )}
-        </View>
-      );
-    },
-    [
-      defaultPressItemAction,
-      isGasAccount,
-      isPinnedAccount,
-      isReceive,
-      onSelectAccount,
-      styles.receiveSectionFirstItemGap,
-      styles.addressItemTopGap,
-    ],
-  );
-
-  const receiveSheetData = useMemo<ReceiveSheetListItem[]>(() => {
-    const items: ReceiveSheetListItem[] = [];
-
-    myAddresses.forEach((account, index) => {
-      items.push({
-        kind: 'account',
-        account,
-        sectionIndex: index,
-        sectionTitle: AccountPannelSectionTitle.MyAddresses,
-        key: `myAddresses-${account.address}-${account.brandName}-${index}`,
+    const pushAccounts = (
+      sectionTitle: AccountPannelSectionTitle,
+      accounts: Account[],
+    ) => {
+      accounts.forEach((account, index) => {
+        // The screen spaces every section's first row from what is above it;
+        // the sheet has no gap before the very first address.
+        const withFirstGap = isReceiveSheet
+          ? sectionTitle !== AccountPannelSectionTitle.MyAddresses
+          : true;
+        items.push({
+          kind: 'account',
+          account,
+          isPinned: isPinnedAccount(account),
+          withTopGap: index > 0 || withFirstGap,
+          key: `${sectionTitle}-${account.address}-${account.type}-${account.brandName}-${index}`,
+        });
       });
-    });
+    };
+
+    pushAccounts(AccountPannelSectionTitle.MyAddresses, myAddresses);
 
     if (safeAddresses.length && !isGasAccount) {
       items.push({
@@ -608,17 +580,8 @@ export function AccountsPanelInSheetModal({
         title: AccountPannelSectionTitle.SafeAddresses,
         key: 'safeAddresses-section',
       });
-
-      if (shouldShowDatalist(AccountPannelSectionTitle.SafeAddresses)) {
-        safeAddresses.forEach((account, index) => {
-          items.push({
-            kind: 'account',
-            account,
-            sectionIndex: index,
-            sectionTitle: AccountPannelSectionTitle.SafeAddresses,
-            key: `safeAddresses-${account.address}-${account.brandName}-${index}`,
-          });
-        });
+      if (safeAddressNavCollapsed) {
+        pushAccounts(AccountPannelSectionTitle.SafeAddresses, safeAddresses);
       }
     }
 
@@ -628,59 +591,77 @@ export function AccountsPanelInSheetModal({
         title: AccountPannelSectionTitle.WatchAddresses,
         key: 'watchAddresses-section',
       });
-
-      if (shouldShowDatalist(AccountPannelSectionTitle.WatchAddresses)) {
-        watchAddresses.forEach((account, index) => {
-          items.push({
-            kind: 'account',
-            account,
-            sectionIndex: index,
-            sectionTitle: AccountPannelSectionTitle.WatchAddresses,
-            key: `watchAddresses-${account.address}-${account.brandName}-${index}`,
-          });
-        });
+      if (watchAddressNavCollapsed) {
+        pushAccounts(AccountPannelSectionTitle.WatchAddresses, watchAddresses);
       }
     }
 
     return items;
   }, [
+    isReceiveSheet,
     isGasAccount,
+    isPinnedAccount,
     myAddresses,
     safeAddresses,
-    shouldShowDatalist,
     watchAddresses,
+    safeAddressNavCollapsed,
+    watchAddressNavCollapsed,
   ]);
+
+  const renderItem = useCallback(
+    ({ item }: { item: PanelRow }) => {
+      if (item.kind === 'sectionHeader') {
+        return (
+          <View style={styles.section}>{renderSectionHeader(item.title)}</View>
+        );
+      }
+
+      return (
+        <PanelAddressRow
+          account={item.account}
+          isPinned={item.isPinned}
+          isReceive={isReceive}
+          isGasAccount={isGasAccount}
+          withTopGap={item.withTopGap}
+          defaultPressAction={defaultPressItemAction}
+          onSelectAccount={onSelectAccount}
+        />
+      );
+    },
+    [
+      styles.section,
+      renderSectionHeader,
+      isReceive,
+      isGasAccount,
+      defaultPressItemAction,
+      onSelectAccount,
+    ],
+  );
+
+  const keyExtractor = useCallback((item: PanelRow) => item.key, []);
+
+  const listFooter = useMemo(
+    () => <View style={{ height: 40 + safeOffBottom }} />,
+    [safeOffBottom],
+  );
 
   if (isReceiveSheet) {
     return (
       <View style={[styles.panel, styles.receiveSheetPanel, containerStyle]}>
         <View style={styles.scrollViewContainer}>
-          <BottomSheetFlatList<ReceiveSheetListItem>
+          <BottomSheetFlatList<PanelRow>
             style={styles.receiveSheetList}
             contentContainerStyle={[
               styles.receiveSheetListContentContainer,
               { paddingBottom: 40 + safeOffBottom },
             ]}
-            data={receiveSheetData}
+            data={rows}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
-            keyExtractor={item => item.key}
-            renderItem={({ item }) => {
-              if (item.kind === 'sectionHeader') {
-                return (
-                  <View style={styles.section}>
-                    {ListHeaderComponent(item.title)}
-                  </View>
-                );
-              }
-
-              return renderAddressItem(
-                item.account,
-                item.sectionIndex,
-                item.sectionIndex === 0 &&
-                  item.sectionTitle !== AccountPannelSectionTitle.MyAddresses,
-              );
-            }}
+            keyExtractor={keyExtractor}
+            renderItem={renderItem}
+            initialNumToRender={INITIAL_ROWS_TO_RENDER}
+            maxToRenderPerBatch={INITIAL_ROWS_TO_RENDER}
           />
         </View>
       </View>
@@ -690,36 +671,15 @@ export function AccountsPanelInSheetModal({
   return (
     <View style={[styles.panel, containerStyle]}>
       <View style={styles.scrollViewContainer}>
-        <FlatList
+        <FlatList<PanelRow>
           style={styles.scrollView}
-          data={combinedData}
+          data={rows}
           ref={scrollViewRef}
-          // contentContainerStyle={styles.scrollViewContentContainer}
-          ListHeaderComponent={null}
-          renderItem={({
-            item: combinedItem,
-          }: {
-            item: CombineDataInterface;
-          }) => (
-            <View style={styles.section}>
-              {ListHeaderComponent(combinedItem.title)}
-              {shouldShowDatalist(combinedItem.title) && (
-                <FlatList
-                  data={combinedItem.data}
-                  style={styles.addressListContainer}
-                  renderItem={({ item, index }) => {
-                    return renderAddressItem(item, index);
-                  }}
-                  keyExtractor={(account, index) =>
-                    `account-${account.address}-${account.brandName}-${index}`
-                  }
-                  ListFooterComponent={null}
-                />
-              )}
-            </View>
-          )}
-          keyExtractor={(item, index) => `${item.type}-${index}`}
-          ListFooterComponent={<View style={{ height: 40 + safeOffBottom }} />}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          initialNumToRender={INITIAL_ROWS_TO_RENDER}
+          maxToRenderPerBatch={INITIAL_ROWS_TO_RENDER}
+          ListFooterComponent={listFooter}
         />
       </View>
     </View>
@@ -789,8 +749,11 @@ const getPanelStyle = createGetStyles2024(ctx => {
     addressItemTopGap: {
       marginTop: SIZES.itemGap,
     },
-    receiveSectionFirstItemGap: {
-      marginTop: SIZES.itemGap,
+    addressRow: {
+      borderRadius: 16,
+    },
+    receiveAddressRow: {
+      borderRadius: 20,
     },
     bottomBarContainer: {
       width: '100%',
