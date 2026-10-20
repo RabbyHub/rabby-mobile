@@ -1,9 +1,11 @@
-import { Keyboard, useWindowDimensions } from 'react-native';
+import type { ScrollView } from 'react-native';
+import { Keyboard, useWindowDimensions, View } from 'react-native';
 import type { AccountSwitcherAopProps } from './hooks';
 import { useAccountSceneVisible } from './hooks';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { AccountsPanelInModal } from './AccountsPanel';
+import AutoLockView from '../AutoLockView';
 import {
   useCallback,
   useEffect,
@@ -14,6 +16,7 @@ import {
 import type { DappInfo } from '@/core/services/dappService';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { useSheetModals } from '@/hooks/useSheetModal';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import React from 'react';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import type { ITokenItem } from '@/store/tokens';
@@ -69,9 +72,16 @@ export function AccountSwitcherModal({
     return height - 200;
   }, [height]);
 
+  const snapPoints = useMemo(() => [Math.max(maxHeight, 400)], [maxHeight]);
+  const scrollViewRef = React.useRef<ScrollView>(null);
+  const scrollToBottom = useCallback(() => {
+    scrollViewRef.current?.scrollToEnd({ animated: true });
+  }, []);
+
   return (
     <AppBottomSheetModal
       ref={modalRef}
+      // snapPoints={snapPoints}
       {...makeBottomSheetProps({
         linearGradientType: 'linear',
         colors: colors2024,
@@ -80,18 +90,23 @@ export function AccountSwitcherModal({
       onDismiss={onCancel}
       enableDynamicSizing
       maxDynamicContentSize={maxHeight}>
-      {/* The panel owns the sheet's scrollable (a virtualized list), which
-          also reports the content height used by dynamic sizing. */}
-      <RenderActivityBoundary
-        active={!!isVisible}
-        label={`account-switcher-modal-${forScene}`}>
-        <AccountsPanelInModal
-          linearContainerProps={panelLinearGradientProps}
-          forScene={forScene}
-          token={token}
-          getAccountDisabledTips={getAccountDisabledTips}
-        />
-      </RenderActivityBoundary>
+      <BottomSheetScrollView ref={scrollViewRef}>
+        <AutoLockView style={[styles.container]}>
+          <View style={[styles.panelContainer]}>
+            <RenderActivityBoundary
+              active={!!isVisible}
+              label={`account-switcher-modal-${forScene}`}>
+              <AccountsPanelInModal
+                linearContainerProps={panelLinearGradientProps}
+                forScene={forScene}
+                scrollToBottom={scrollToBottom}
+                token={token}
+                getAccountDisabledTips={getAccountDisabledTips}
+              />
+            </RenderActivityBoundary>
+          </View>
+        </AutoLockView>
+      </BottomSheetScrollView>
     </AppBottomSheetModal>
   );
 }
@@ -104,6 +119,14 @@ const getModalStyle = createGetStyles2024(ctx => {
         : ctx.colors2024['neutral-bg-1'],
       paddingTop: 10,
       height: 36,
+    },
+    container: {
+      height: '100%',
+      minHeight: 364,
+    },
+    panelContainer: {
+      position: 'relative',
+      width: '100%',
     },
   };
 });
@@ -171,19 +194,11 @@ function AccountSwitcherModalInDappWebViewImpl({
     return height - 200;
   }, [height]);
 
-  const onSwitchSceneAccount = useCallback<
-    React.ComponentProps<typeof AccountsPanelInModal>['onSwitchSceneAccount'] &
-      object
-  >(
-    async ctx => {
-      if (!activeDappId) {
-        return;
-      }
-      setDappCurrentAccount(activeDappId, ctx.sceneAccount);
-      await ctx.switchAction();
-    },
-    [activeDappId, setDappCurrentAccount],
-  );
+  const snapPoints = useMemo(() => [Math.max(maxHeight, 400)], [maxHeight]);
+  const scrollViewRef = React.useRef<ScrollView>(null);
+  const scrollToBottom = useCallback(() => {
+    scrollViewRef.current?.scrollToEnd({ animated: true });
+  }, []);
 
   return (
     <AppBottomSheetModal
@@ -196,15 +211,28 @@ function AccountSwitcherModalInDappWebViewImpl({
       onDismiss={onCancel}
       enableDynamicSizing
       maxDynamicContentSize={maxHeight}>
-      <RenderActivityBoundary
-        active={!!isVisible}
-        label="account-switcher-modal-active-dapp">
-        <AccountsPanelInModal
-          allowNullCurrentAccount={false}
-          forScene={'@ActiveDappWebViewModal'}
-          onSwitchSceneAccount={onSwitchSceneAccount}
-        />
-      </RenderActivityBoundary>
+      <BottomSheetScrollView ref={scrollViewRef}>
+        <AutoLockView style={[styles.container]}>
+          <View style={[styles.panelContainer]}>
+            <RenderActivityBoundary
+              active={!!isVisible}
+              label="account-switcher-modal-active-dapp">
+              <AccountsPanelInModal
+                allowNullCurrentAccount={false}
+                forScene={'@ActiveDappWebViewModal'}
+                onSwitchSceneAccount={async ctx => {
+                  if (!activeDappId) {
+                    return;
+                  }
+                  setDappCurrentAccount(activeDappId, ctx.sceneAccount);
+                  await ctx.switchAction();
+                }}
+                scrollToBottom={scrollToBottom}
+              />
+            </RenderActivityBoundary>
+          </View>
+        </AutoLockView>
+      </BottomSheetScrollView>
     </AppBottomSheetModal>
   );
 }
@@ -214,6 +242,14 @@ export const AccountSwitcherModalInDappWebView =
 
 const getModalInDappWebViewStyle = createGetStyles2024(ctx => {
   return {
+    container: {
+      height: '100%',
+      minHeight: 364,
+    },
+    panelContainer: {
+      position: 'relative',
+      width: '100%',
+    },
     bgMask: {
       position: 'absolute',
       width: '100%',

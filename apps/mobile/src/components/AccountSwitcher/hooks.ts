@@ -175,6 +175,17 @@ const fetchTokensByAddresses = (addrs: string[], count = 5) => {
   });
 };
 
+function useTopTokensByAccount() {
+  const addressTop5Tokens = useActivityStore(
+    accountSwitchStore,
+    state => state.top5Tokens,
+    Object.is,
+    { storeLabel: 'account-switcher-top-tokens' },
+  );
+
+  return { addressTop5Tokens };
+}
+
 const fetchedRef = { current: false };
 export const fetchTop5TokensForAllAccountsOnce = () => {
   if (fetchedRef.current) return Promise.resolve();
@@ -200,66 +211,29 @@ export function startFetchOnceTop5TokensForAllAccounts() {
   const sub = perfEvents.subscribe('POST_UNLOCK_UI_READY', onUnlock);
 }
 
-/**
- * Rows mount in batches (a list window, a sheet opening), so collect the
- * addresses requested in the same tick and read them with one DB query instead
- * of one query per row.
- */
-const pendingTopTokenAddrs = new Set<string>();
-let pendingTopTokenFlush: ReturnType<typeof setTimeout> | null = null;
-function requestTopTokensForAddress(lowerAddr: string) {
-  pendingTopTokenAddrs.add(lowerAddr);
-  if (pendingTopTokenFlush) {
-    return;
-  }
-
-  pendingTopTokenFlush = setTimeout(() => {
-    pendingTopTokenFlush = null;
-    const addrs = [...pendingTopTokenAddrs];
-    pendingTopTokenAddrs.clear();
-    fetchTokensByAddresses(addrs).catch(error => {
-      console.error('[requestTopTokensForAddress] error', error);
-    });
-  }, 0);
-}
-
 export function useTopTokensForAddress(options?: {
   accountAddress?: string;
   count?: number;
 }) {
   const { count = 5, accountAddress } = options || {};
+  const { addressTop5Tokens } = useTopTokensByAccount();
 
   const lowerAddr = useMemo(
     () => accountAddress?.toLowerCase(),
     [accountAddress],
   );
   useEffect(() => {
-    if (!lowerAddr) {
-      return;
-    }
+    if (!lowerAddr) return;
 
-    requestTopTokensForAddress(lowerAddr);
-  }, [lowerAddr]);
-
-  // Subscribe to this address only: a row must not re-render when another
-  // address's tokens land in the shared map.
-  const addressTokens = useActivityStore(
-    accountSwitchStore,
-    state => (lowerAddr ? state.top5Tokens[lowerAddr] : undefined),
-    Object.is,
-    { storeLabel: 'account-switcher-top-tokens' },
-  );
+    fetchTokensByAddresses([lowerAddr], count);
+  }, [lowerAddr, count]);
 
   const tokenList = useMemo(() => {
-    if (!lowerAddr) {
-      return null;
-    }
-    return addressTokens && addressTokens.length > count
-      ? addressTokens.slice(0, count)
-      : addressTokens;
-  }, [addressTokens, lowerAddr, count]);
+    return lowerAddr ? addressTop5Tokens[lowerAddr]?.slice(0, count) : null;
+  }, [addressTop5Tokens, lowerAddr, count]);
 
   return {
+    addressTop5Tokens,
     tokenList,
   };
 }
