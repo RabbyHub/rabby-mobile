@@ -16,6 +16,7 @@ import type { ITokenItem } from '@/store/tokens';
 import { createGetStyles2024 } from '@/utils/styles';
 import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { createRemoveTokenConfirmPopup } from '@/components2024/RemoveTokenConfirmPopup';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 /** Token header actions with a confirmation before removal. */
 export const RightMore: React.FC<{
@@ -100,14 +101,15 @@ export const RightMore: React.FC<{
           </Pressable>
         </View>
       }>
-      <Pressable
+      <CustomTouchableOpacity
+        as="RNGHTouchableOpacity"
         style={styles.trigger}
         accessibilityRole="button"
         accessibilityLabel={t('page.tokenDetail.removed.more')}
         hitSlop={10}
         onPress={() => setVisible(true)}>
         <RcMore color={colors2024['neutral-body']} />
-      </Pressable>
+      </CustomTouchableOpacity>
     </Tip>
   );
 };

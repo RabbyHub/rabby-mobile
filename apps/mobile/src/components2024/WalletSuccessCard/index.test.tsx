@@ -71,7 +71,7 @@ it('shows the title and addresses on the first render when animation is skipped'
   expect(opacities).toEqual([1, 1]);
   expect(mockSharedValues.map(value => value.value)).toEqual([1, 1]);
   expect(mockWithDelay).not.toHaveBeenCalled();
-  expect(view.getByTestId('success-lottie').props.autoPlay).toBe(true);
+  expect(view.getByTestId('success-lottie').props.autoPlay).toBe(false);
 });
 
 it('keeps the first-import delayed entrance animation by default', () => {
@@ -90,4 +90,30 @@ it('does not hide the content again when a skipped-animation success screen remo
 
   expect(mockSharedValues.map(value => value.value)).toEqual([1, 1]);
   expect(mockWithDelay).not.toHaveBeenCalled();
+});
+
+it('does not replay the entrance when the same success result mounts twice', () => {
+  const remountProps = {
+    ...props,
+    addresses: [
+      {
+        address: '0x00000000000000000000000000000000000000aa',
+        brandName: 'test',
+      },
+    ],
+  };
+
+  const first = render(<WalletSuccessCard {...remountProps} />);
+  expect(mockWithDelay).toHaveBeenCalledTimes(2);
+  first.unmount();
+
+  mockWithDelay.mockClear();
+  mockWithTiming.mockClear();
+  mockSharedValues.length = 0;
+
+  const second = render(<WalletSuccessCard {...remountProps} />);
+  expect(mockWithDelay).not.toHaveBeenCalled();
+  expect(mockWithTiming).not.toHaveBeenCalled();
+  expect(mockSharedValues.map(value => value.value)).toEqual([1, 1]);
+  expect(second.getByTestId('success-lottie').props.autoPlay).toBe(false);
 });

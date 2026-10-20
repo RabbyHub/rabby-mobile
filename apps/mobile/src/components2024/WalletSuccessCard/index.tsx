@@ -19,6 +19,10 @@ import DefaultAnimation from '@/assets2024/animations/animation-create-success.m
 
 export const customEase = Easing.bezier(0.42, 0, 0.58, 1);
 
+/** A double-mounted success screen must not replay the same entrance. */
+const SUCCESS_ANIMATION_DEDUPE_MS = 10_000;
+const recentlyAnimatedSuccessAt = new Map<string, number>();
+
 export const DEFAULT_ANIMATION_CONFIG = {
   INITIAL_DELAY: 100,
   DURATION: 500,
@@ -51,10 +55,27 @@ export const WalletSuccessCard: React.FC<WalletSuccessCardProps> = ({
   animationConfig = DEFAULT_ANIMATION_CONFIG,
 }) => {
   const { styles } = useTheme2024({ getStyle });
+  const animationKey = React.useMemo(
+    () => `${title}|${addresses.map(item => item.address).join(',')}`,
+    [addresses, title],
+  );
+  const shouldAnimateRef = React.useRef<boolean | null>(null);
+  if (shouldAnimateRef.current === null) {
+    const now = Date.now();
+    const lastAnimatedAt = recentlyAnimatedSuccessAt.get(animationKey) || 0;
+    const shouldAnimate =
+      autoPlay && now - lastAnimatedAt > SUCCESS_ANIMATION_DEDUPE_MS;
+    if (shouldAnimate) {
+      recentlyAnimatedSuccessAt.set(animationKey, now);
+    }
+    shouldAnimateRef.current = shouldAnimate;
+  }
+  const shouldAnimate = shouldAnimateRef.current ?? false;
+  const hasPlayedRef = React.useRef(false);
 
   // Follow-up imports already have a result to show on their first frame.
-  const textProgress = useSharedValue(autoPlay ? 0 : 1);
-  const addressProgress = useSharedValue(autoPlay ? 0 : 1);
+  const textProgress = useSharedValue(shouldAnimate ? 0 : 1);
+  const addressProgress = useSharedValue(shouldAnimate ? 0 : 1);
 
   const TEXT_START = animationConfig.INITIAL_DELAY;
   const ADDRESS_START =
@@ -64,11 +85,12 @@ export const WalletSuccessCard: React.FC<WalletSuccessCardProps> = ({
 
   useFocusEffect(
     useCallback(() => {
-      if (!autoPlay) {
+      if (!shouldAnimate || hasPlayedRef.current) {
         textProgress.value = 1;
         addressProgress.value = 1;
         return;
       }
+      hasPlayedRef.current = true;
 
       textProgress.value = 0;
       addressProgress.value = 0;
@@ -94,7 +116,7 @@ export const WalletSuccessCard: React.FC<WalletSuccessCardProps> = ({
         cancelAnimation(addressProgress);
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [autoPlay]),
+    }, [shouldAnimate]),
   );
 
   const textAnimatedStyle = useAnimatedStyle(() => {
@@ -123,7 +145,7 @@ export const WalletSuccessCard: React.FC<WalletSuccessCardProps> = ({
           source={lottieSource}
           style={styles.lottie}
           loop={false}
-          autoPlay
+          autoPlay={shouldAnimate}
         />
       </View>
 
