@@ -3,6 +3,11 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Dimensions, TouchableOpacity, View } from 'react-native';
+import {
+  BottomSheetFlatList,
+  type BottomSheetFlatListMethods,
+} from '@gorhom/bottom-sheet';
+import { useRefreshAutoLockPanResponder } from '../AutoLockView';
 
 import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
 import TouchableView from '../Touchable/TouchableView';
@@ -82,6 +87,173 @@ const SectionCollapsableNav = function ({
   );
 };
 
+// Roughly one screen of address rows (78px + 12px gap) inside the sheet.
+const INITIAL_ROWS_TO_RENDER = 10;
+const PANEL_MIN_CONTENT_H = 364;
+
+type PanelSectionType = 'safe' | 'watch';
+
+/**
+ * One flat, virtualized row model for the whole panel.
+ *
+ * The panel used to `.map()` every address into a `BottomSheetScrollView`, so
+ * opening the switcher mounted all rows (each with a native context menu) in
+ * the same commit the sheet needed before it could animate in.
+ */
+type PanelRow =
+  | {
+      kind: 'account';
+      key: string;
+      account: Account;
+      /** only the "my addresses" rows honor the scene's hide-token flag */
+      isMyAddress: boolean;
+      isCurrent: boolean;
+      disabledTips?: string;
+      withTopGap: boolean;
+    }
+  | {
+      /** "not included in transactions" divider + collapse toggle */
+      kind: 'more-wallets';
+      key: string;
+    }
+  | {
+      kind: 'group-title';
+      key: string;
+      title: string;
+    }
+  | {
+      kind: 'collapsable-title';
+      key: string;
+      section: PanelSectionType;
+    };
+
+const PanelAccountRow = React.memo(function PanelAccountRow({
+  ItemRenderItem,
+  account,
+  isCurrent,
+  token,
+  isHideToken,
+  disabledTips,
+  withTopGap,
+  onPressAddress,
+}: {
+  ItemRenderItem:
+    | typeof AddressItemInPanel
+    | typeof AddressItemInPanelForTokenDetail;
+  account: Account;
+  isCurrent: boolean;
+  token?: ITokenItem;
+  isHideToken?: boolean;
+  disabledTips?: string;
+  withTopGap: boolean;
+  onPressAddress: (account: Account) => void;
+}) {
+  const { styles } = useTheme2024({ getStyle: getPanelStyle });
+  const addressItemProps = useMemo(() => ({ account }), [account]);
+
+  return (
+    <ItemRenderItem
+      token={token}
+      addressItemProps={addressItemProps}
+      isCurrent={isCurrent}
+      isHideToken={isHideToken}
+      disabledTips={disabledTips}
+      onPressAddress={onPressAddress}
+      style={withTopGap ? styles.addressItemWithTopGap : styles.addressItem}
+    />
+  );
+});
+
+const MoreWalletsToggle = React.memo(function MoreWalletsToggle({
+  avatarAccounts,
+  expanded,
+  onToggle,
+}: {
+  avatarAccounts: Account[];
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  const { styles, colors2024 } = useTheme2024({ getStyle: getPanelStyle });
+  const { t } = useTranslation();
+
+  return (
+    <View style={[styles.section, { marginTop: 30 }]}>
+      <View style={styles.moreWalletsHintContainer}>
+        <View style={styles.horizontalLine} />
+        <Text style={styles.moreWalletsHint}>
+          {t('page.addressDetail.addressListScreen.notIncludedInTransactions')}
+        </Text>
+        <View style={styles.horizontalLine} />
+      </View>
+      <TouchableOpacity
+        style={styles.moreWalletsButtonContent}
+        onPress={onToggle}>
+        <View
+          style={[
+            styles.moreWalletsButtonIcon,
+            {
+              marginLeft:
+                avatarAccounts.length === 2
+                  ? -20
+                  : avatarAccounts.length === 1
+                  ? -38
+                  : 0,
+            },
+          ]}>
+          {avatarAccounts.map((account, index) => {
+            const iconCount = avatarAccounts.length;
+            // calculate the total width of the icon group
+            const totalIconsWidth =
+              iconCount === 1 ? 22 : 22 + (iconCount - 1) * 16;
+            // container width
+            const containerWidth = 62;
+            // calculate the start offset, make the icon group centered, but slightly right
+            const startOffset = Math.max(
+              0,
+              containerWidth - totalIconsWidth - 4,
+            );
+
+            return (
+              <View
+                key={account.address}
+                style={[
+                  styles.stackedIcon,
+                  {
+                    zIndex: index + 1,
+                    left: startOffset + index * 16,
+                    top: -2,
+                  },
+                ]}>
+                <WalletIcon
+                  address={account.address}
+                  type={account.type}
+                  width={22}
+                  height={22}
+                  borderRadius={8}
+                />
+              </View>
+            );
+          })}
+        </View>
+        <Text style={styles.moreWalletsButtonText}>
+          {t('page.addressDetail.addressListScreen.moreWallets')}
+        </Text>
+        <RcCaretDownCC
+          style={[
+            { marginLeft: 4 },
+            expanded && {
+              transform: [{ rotate: '180deg' }],
+            },
+          ]}
+          width={18}
+          height={18}
+          color={colors2024['neutral-secondary']}
+        />
+      </TouchableOpacity>
+    </View>
+  );
+});
+
 export function AccountsPanelInModal({
   allowNullCurrentAccount,
   forScene,
@@ -89,11 +261,8 @@ export function AccountsPanelInModal({
   linearContainerProps,
   onSwitchSceneAccount,
   token,
-  scrollToBottom,
   getAccountDisabledTips,
-}: // isVisible = false,
-AccountSwitcherAopProps<{
-  // isVisible?: boolean;
+}: AccountSwitcherAopProps<{
   containerStyle?: StyleProp<ViewStyle>;
   linearContainerProps?: React.ComponentProps<typeof LinearGradientContainer>;
   onSwitchSceneAccount?: (ctx: {
@@ -101,21 +270,25 @@ AccountSwitcherAopProps<{
     sceneAccount: Account;
   }) => void;
   token?: ITokenItem;
-  scrollToBottom(): void;
   getAccountDisabledTips?: AccountDisabledTipsResolver;
 }>) {
-  const { styles, colors2024, isLight } = useTheme2024({
+  const { styles, isLight } = useTheme2024({
     getStyle: getPanelStyle,
   });
+  const { panResponder } = useRefreshAutoLockPanResponder();
+
+  const listRef = React.useRef<BottomSheetFlatListMethods>(null);
+  const scrollToBottom = useCallback(() => {
+    listRef.current?.scrollToEnd({ animated: true });
+  }, []);
 
   const { toggleSceneVisible } = useAccountSceneVisible(forScene);
 
-  const ItemRenderItem = useMemo(() => {
-    return token ? AddressItemInPanelForTokenDetail : AddressItemInPanel;
-  }, [token]);
+  const ItemRenderItem = token
+    ? AddressItemInPanelForTokenDetail
+    : AddressItemInPanel;
 
   const {
-    isPinnedAccount,
     sceneCurrentAccount,
     finalSceneCurrentAccount,
 
@@ -196,6 +369,10 @@ AccountSwitcherAopProps<{
     }
   }, [scrollToBottom, shouldRemainAddressesCollapsed]);
 
+  const toggleRemainAddresses = useCallback(() => {
+    setRemainAddressesCollapsed(prev => !prev);
+  }, []);
+
   const switchSceneAction = useCallback(
     async (account: Account | null) => {
       await switchSceneCurrentAccount(forScene, account);
@@ -204,10 +381,8 @@ AccountSwitcherAopProps<{
     [forScene, switchSceneCurrentAccount, toggleSceneVisible],
   );
 
-  const handlePressAccount = useCallback<
-    React.ComponentProps<typeof AddressItemInPanel>['onPressAddress'] & object
-  >(
-    async account => {
+  const handlePressAccount = useCallback(
+    async (account: Account) => {
       if (typeof onSwitchSceneAccount === 'function') {
         const switchAction = async () => {
           await switchSceneAction(account);
@@ -227,348 +402,233 @@ AccountSwitcherAopProps<{
 
   const { t } = useTranslation();
 
-  const renderRemainAddressesByType = useCallback(
-    (
-      accounts: ReturnType<typeof useSceneAccountInfo>['myAddresses'],
-      type: 'notTop10Accounts' | 'gnosisAccounts' | 'watchAccounts',
-      title: string,
-    ) => {
-      if (accounts.length === 0) {
-        return null;
-      }
-
-      return (
-        <>
-          <View style={styles.sectionTitleContainerNew}>
-            <Text style={styles.sectionTitle}>{title}</Text>
-          </View>
-          <>
-            {accounts.map((account, index) => {
-              const key = `account-${account.address}-${account.brandName}-${index}`;
-              const isCurrent =
-                !isSceneUsingAllAccounts &&
-                isSameAccount(account, finalSceneCurrentAccount);
-              return (
-                <ItemRenderItem
-                  key={key}
-                  addressItemProps={{ account }}
-                  isCurrent={isCurrent}
-                  token={token}
-                  disabledTips={getAccountDisabledTips?.(account)}
-                  // isPinned={false}
-                  onPressAddress={handlePressAccount}
-                  style={[
-                    styles.addressItem,
-                    index > 0 && styles.addressItemTopGap,
-                  ]}
-                />
-              );
-            })}
-          </>
-        </>
-      );
-    },
-    [
-      ItemRenderItem,
-      finalSceneCurrentAccount,
-      handlePressAccount,
-      getAccountDisabledTips,
-      isSceneUsingAllAccounts,
-      styles.addressItem,
-      styles.addressItemTopGap,
-      styles.sectionTitle,
-      styles.sectionTitleContainerNew,
-      token,
-    ],
-  );
-
   const notMatterAvatarList = useMemo(() => {
     return notMatterAddresses.slice(0, 3);
   }, [notMatterAddresses]);
 
-  const TransactionMoreWallets = useMemo(() => {
-    return notMatterAddresses.length ? (
-      <View style={[styles.section, { marginTop: 30 }]}>
-        <View style={styles.moreWalletsHintContainer}>
-          <View style={styles.horizontalLine} />
-          <Text style={styles.moreWalletsHint}>
-            {t(
-              'page.addressDetail.addressListScreen.notIncludedInTransactions',
-            )}
-          </Text>
-          <View style={styles.horizontalLine} />
-        </View>
-        <TouchableOpacity
-          style={styles.moreWalletsButtonContent}
-          onPress={() => {
-            setRemainAddressesCollapsed(!remainAddressesCollapsed);
-          }}>
-          <View
-            style={[
-              styles.moreWalletsButtonIcon,
-              {
-                marginLeft:
-                  notMatterAvatarList.length === 2
-                    ? -20
-                    : notMatterAvatarList.length === 1
-                    ? -38
-                    : 0,
-              },
-            ]}>
-            {notMatterAvatarList.map((account, index) => {
-              const iconCount = notMatterAvatarList.length;
-              // calculate the total width of the icon group
-              const totalIconsWidth =
-                iconCount === 1 ? 22 : 22 + (iconCount - 1) * 16;
-              // container width
-              const containerWidth = 62;
-              // calculate the start offset, make the icon group centered, but slightly right
-              const startOffset = Math.max(
-                0,
-                containerWidth - totalIconsWidth - 4,
-              );
-
-              return (
-                <View
-                  key={account.address}
-                  style={[
-                    styles.stackedIcon,
-                    {
-                      zIndex: index + 1,
-                      left: startOffset + index * 16,
-                      top: -2,
-                    },
-                  ]}>
-                  <WalletIcon
-                    address={account.address}
-                    type={account.type}
-                    width={22}
-                    height={22}
-                    borderRadius={8}
-                  />
-                </View>
-              );
-            })}
-          </View>
-          <Text style={styles.moreWalletsButtonText}>
-            {t('page.addressDetail.addressListScreen.moreWallets')}
-          </Text>
-          <RcCaretDownCC
-            style={[
-              { marginLeft: 4 },
-              remainAddressesCollapsed && {
-                transform: [{ rotate: '180deg' }],
-              },
-            ]}
-            width={18}
-            height={18}
-            color={colors2024['neutral-secondary']}
-          />
-        </TouchableOpacity>
-        {remainAddressesCollapsed && (
-          <View style={styles.addressListContainerNew}>
-            {renderRemainAddressesByType(
-              notTop10Accounts,
-              'notTop10Accounts',
-              t('page.addressDetail.notMatterAddressDialog.notTop10Address'),
-            )}
-            {renderRemainAddressesByType(
-              safeAddresses,
-              'gnosisAccounts',
-              t('page.addressDetail.notMatterAddressDialog.safeWallet'),
-            )}
-            {renderRemainAddressesByType(
-              watchAddresses,
-              'watchAccounts',
-              t('page.addressDetail.notMatterAddressDialog.watchOnlyWallet'),
-            )}
-          </View>
-        )}
-      </View>
-    ) : null;
-  }, [
-    notTop10Accounts,
-    safeAddresses,
-    watchAddresses,
-    colors2024,
-    styles,
-    t,
-    notMatterAddresses,
-    remainAddressesCollapsed,
-    notMatterAvatarList,
-    renderRemainAddressesByType,
-  ]);
-
-  const OtherWatchAndSafeWallets = useMemo(() => {
-    return (
-      <>
-        {!!safeAddresses.length && (
-          <View style={[styles.section, { marginTop: 30 }]}>
-            <SectionCollapsableNav
-              title={t(
-                'page.addressDetail.addressListScreen.importSafeAddress',
-              )}
-              isCollapsed={navsCollapsed.safe}
-              onCollapsedChange={nextVal => {
-                changeCollapsed('safe', nextVal);
-              }}
-            />
-            {!navsCollapsed.safe && (
-              <View style={styles.addressListContainer}>
-                {safeAddresses.map((account, index) => {
-                  const key = `account-${account.address}-${account.brandName}-${index}`;
-                  const isCurrent =
-                    !isSceneUsingAllAccounts &&
-                    isSameAccount(account, finalSceneCurrentAccount);
-
-                  return (
-                    <ItemRenderItem
-                      key={key}
-                      token={token}
-                      addressItemProps={{ account }}
-                      isCurrent={isCurrent}
-                      disabledTips={getAccountDisabledTips?.(account)}
-                      onPressAddress={handlePressAccount}
-                      style={[
-                        styles.addressItem,
-                        index > 0 && styles.addressItemTopGap,
-                      ]}
-                    />
-                  );
-                })}
-              </View>
-            )}
-          </View>
-        )}
-        {!!watchAddresses.length && (
-          <View style={[styles.section, { marginTop: 30 }]}>
-            <SectionCollapsableNav
-              title={t(
-                'page.addressDetail.addressListScreen.importWatchAddress',
-              )}
-              isCollapsed={navsCollapsed.watch}
-              onCollapsedChange={nextVal => {
-                changeCollapsed('watch', nextVal);
-              }}
-            />
-            {!navsCollapsed.watch && (
-              <View style={styles.addressListContainer}>
-                {watchAddresses.map((account, index) => {
-                  const key = `account-${account.address}-${account.brandName}-${index}`;
-                  const isCurrent =
-                    !isSceneUsingAllAccounts &&
-                    isSameAccount(account, finalSceneCurrentAccount);
-
-                  return (
-                    <ItemRenderItem
-                      key={key}
-                      token={token}
-                      addressItemProps={{ account }}
-                      isCurrent={isCurrent}
-                      disabledTips={getAccountDisabledTips?.(account)}
-                      onPressAddress={handlePressAccount}
-                      style={[
-                        styles.addressItem,
-                        index > 0 && styles.addressItemTopGap,
-                      ]}
-                    />
-                  );
-                })}
-              </View>
-            )}
-          </View>
-        )}
-      </>
-    );
-  }, [
-    safeAddresses,
-    styles.section,
-    styles.addressListContainer,
-    styles.addressItem,
-    styles.addressItemTopGap,
-    t,
-    navsCollapsed.safe,
-    navsCollapsed.watch,
-    watchAddresses,
-    changeCollapsed,
-    isSceneUsingAllAccounts,
-    finalSceneCurrentAccount,
-    ItemRenderItem,
-    token,
-    handlePressAccount,
-    getAccountDisabledTips,
-  ]);
-
   const myAddressesList = useCreationWithShallowCompare(() => {
     return isSceneSupportAllAccounts ? myAddresses.slice(0, 10) : myAddresses;
   }, [myAddresses, isSceneSupportAllAccounts]);
+
+  const rows = useMemo<PanelRow[]>(() => {
+    const ret: PanelRow[] = [];
+
+    const pushAccounts = (
+      group: string,
+      accounts: Account[],
+      currentAccount: Account | null,
+      firstWithTopGap: boolean,
+    ) => {
+      accounts.forEach((account, index) => {
+        ret.push({
+          kind: 'account',
+          key: `${group}-${account.address}-${account.type}-${account.brandName}-${index}`,
+          account,
+          isMyAddress: group === 'my',
+          isCurrent:
+            !isSceneUsingAllAccounts && isSameAccount(account, currentAccount),
+          disabledTips: getAccountDisabledTips?.(account),
+          withTopGap: index > 0 || firstWithTopGap,
+        });
+      });
+    };
+
+    pushAccounts('my', myAddressesList, finalCurrentAccount, false);
+
+    if (isSceneSupportAllAccounts) {
+      if (!notMatterAddresses.length) {
+        return ret;
+      }
+      ret.push({ kind: 'more-wallets', key: 'more-wallets' });
+      if (!remainAddressesCollapsed) {
+        return ret;
+      }
+      const pushGroup = (group: string, accounts: Account[], title: string) => {
+        if (!accounts.length) {
+          return;
+        }
+        ret.push({ kind: 'group-title', key: `title-${group}`, title });
+        pushAccounts(group, accounts, finalSceneCurrentAccount, false);
+      };
+      pushGroup(
+        'notTop10',
+        notTop10Accounts,
+        t('page.addressDetail.notMatterAddressDialog.notTop10Address'),
+      );
+      pushGroup(
+        'safe',
+        safeAddresses,
+        t('page.addressDetail.notMatterAddressDialog.safeWallet'),
+      );
+      pushGroup(
+        'watch',
+        watchAddresses,
+        t('page.addressDetail.notMatterAddressDialog.watchOnlyWallet'),
+      );
+      return ret;
+    }
+
+    const pushCollapsableSection = (
+      section: PanelSectionType,
+      accounts: Account[],
+    ) => {
+      if (!accounts.length) {
+        return;
+      }
+      ret.push({
+        kind: 'collapsable-title',
+        key: `collapsable-${section}`,
+        section,
+      });
+      if (!navsCollapsed[section]) {
+        pushAccounts(section, accounts, finalSceneCurrentAccount, true);
+      }
+    };
+    pushCollapsableSection('safe', safeAddresses);
+    pushCollapsableSection('watch', watchAddresses);
+
+    return ret;
+  }, [
+    t,
+    myAddressesList,
+    finalCurrentAccount,
+    finalSceneCurrentAccount,
+    isSceneSupportAllAccounts,
+    isSceneUsingAllAccounts,
+    notMatterAddresses.length,
+    remainAddressesCollapsed,
+    notTop10Accounts,
+    safeAddresses,
+    watchAddresses,
+    navsCollapsed,
+    getAccountDisabledTips,
+  ]);
+
+  const renderItem = useCallback(
+    ({ item }: { item: PanelRow }) => {
+      switch (item.kind) {
+        case 'account':
+          return (
+            <PanelAccountRow
+              ItemRenderItem={ItemRenderItem}
+              account={item.account}
+              isCurrent={item.isCurrent}
+              token={token}
+              isHideToken={item.isMyAddress ? isHideToken : undefined}
+              disabledTips={item.disabledTips}
+              withTopGap={item.withTopGap}
+              onPressAddress={handlePressAccount}
+            />
+          );
+        case 'more-wallets':
+          return (
+            <MoreWalletsToggle
+              avatarAccounts={notMatterAvatarList}
+              expanded={remainAddressesCollapsed}
+              onToggle={toggleRemainAddresses}
+            />
+          );
+        case 'group-title':
+          return (
+            <View style={styles.sectionTitleContainerNew}>
+              <Text style={styles.sectionTitle}>{item.title}</Text>
+            </View>
+          );
+        case 'collapsable-title':
+          return (
+            <View style={[styles.section, { marginTop: 30 }]}>
+              <SectionCollapsableNav
+                title={t(
+                  item.section === 'safe'
+                    ? 'page.addressDetail.addressListScreen.importSafeAddress'
+                    : 'page.addressDetail.addressListScreen.importWatchAddress',
+                )}
+                isCollapsed={navsCollapsed[item.section]}
+                onCollapsedChange={nextVal => {
+                  changeCollapsed(item.section, nextVal);
+                }}
+              />
+            </View>
+          );
+        default:
+          return null;
+      }
+    },
+    [
+      t,
+      ItemRenderItem,
+      token,
+      isHideToken,
+      handlePressAccount,
+      notMatterAvatarList,
+      remainAddressesCollapsed,
+      toggleRemainAddresses,
+      navsCollapsed,
+      changeCollapsed,
+      styles.section,
+      styles.sectionTitle,
+      styles.sectionTitleContainerNew,
+    ],
+  );
+
+  const keyExtractor = useCallback((item: PanelRow) => item.key, []);
+
+  const listHeader = useMemo(
+    () => (
+      <>
+        <View style={styles.header}>
+          <Text style={styles.title}>{t('global.Wallets')}</Text>
+        </View>
+        {isSceneSupportAllAccounts && (
+          <UseAllAccountsItemInPanel
+            style={{
+              marginBottom: AddressItemSizes.itemGap,
+              height: AddressItemSizes.useAllItemH,
+            }}
+            allAccounts={myAddresses}
+            onPress={handlePressUseAll}
+            isSelected={isSceneUsingAllAccounts}
+          />
+        )}
+        {!!token && (
+          <View style={styles.tokenHeader}>
+            <Text style={styles.headerBalanceText}>
+              {t('page.tokenDetail.headerBalanceText')}{' '}
+            </Text>
+            <Text style={styles.headerTokenValueText}>
+              {t('page.tokenDetail.headerTokenValueText')}
+            </Text>
+          </View>
+        )}
+      </>
+    ),
+    [
+      t,
+      styles,
+      isSceneSupportAllAccounts,
+      myAddresses,
+      handlePressUseAll,
+      isSceneUsingAllAccounts,
+      token,
+    ],
+  );
 
   return (
     <LinearGradientContainer
       type={isLight ? 'bg0' : 'bg1'}
       {...linearContainerProps}
       style={[styles.panel, containerStyle]}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{t('global.Wallets')}</Text>
-      </View>
-      <View style={styles.scrollViewContainer}>
-        <View
-          // ref={scrollViewRef}
-          style={styles.scrollView}
-          // contentContainerStyle={styles.scrollViewContentContainer}
-        >
-          <View style={styles.section}>
-            <View style={[styles.addressListContainer, { marginTop: 0 }]}>
-              {isSceneSupportAllAccounts && (
-                <UseAllAccountsItemInPanel
-                  style={{
-                    marginBottom: AddressItemSizes.itemGap,
-                    height: AddressItemSizes.useAllItemH,
-                  }}
-                  allAccounts={myAddresses}
-                  onPress={handlePressUseAll}
-                  isSelected={isSceneUsingAllAccounts}
-                />
-              )}
-              {!!token && (
-                <View style={styles.tokenHeader}>
-                  <Text style={styles.headerBalanceText}>
-                    {t('page.tokenDetail.headerBalanceText')}{' '}
-                  </Text>
-                  <Text style={styles.headerTokenValueText}>
-                    {t('page.tokenDetail.headerTokenValueText')}
-                  </Text>
-                </View>
-              )}
-              {myAddressesList.map((account, index) => {
-                const key = `account-${account.address}-${account.brandName}-${index}`;
-                const isCurrent =
-                  !isSceneUsingAllAccounts &&
-                  isSameAccount(account, finalCurrentAccount);
-
-                return (
-                  <ItemRenderItem
-                    key={key}
-                    token={token}
-                    addressItemProps={{ account }}
-                    isCurrent={isCurrent}
-                    isHideToken={isHideToken}
-                    disabledTips={getAccountDisabledTips?.(account)}
-                    onPressAddress={handlePressAccount}
-                    style={[
-                      styles.addressItem,
-                      index > 0 && styles.addressItemTopGap,
-                    ]}
-                  />
-                );
-              })}
-            </View>
-          </View>
-          {isSceneSupportAllAccounts
-            ? TransactionMoreWallets
-            : OtherWatchAndSafeWallets}
-        </View>
-      </View>
+      <BottomSheetFlatList<PanelRow>
+        {...panResponder.panHandlers}
+        ref={listRef}
+        data={rows}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        ListHeaderComponent={listHeader}
+        contentContainerStyle={styles.listContentContainer}
+        initialNumToRender={INITIAL_ROWS_TO_RENDER}
+        maxToRenderPerBatch={INITIAL_ROWS_TO_RENDER}
+      />
     </LinearGradientContainer>
   );
 }
@@ -632,10 +692,13 @@ const getPanelStyle = createGetStyles2024(ctx => {
     panel: {
       position: 'relative',
       width: '100%',
-      minHeight: '50%',
-      height: '100%',
+      flex: 1,
       flexDirection: 'column',
-      paddingBottom: 44,
+    },
+    listContentContainer: {
+      minHeight: PANEL_MIN_CONTENT_H,
+      paddingHorizontal: 16,
+      paddingBottom: 16 + 44,
     },
     header: {
       marginBottom: 24,
@@ -703,7 +766,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
           // borderStyle: 'solid',
           // borderColor: ctx.colors2024['neutral-line'],
         },
-    addressItemTopGap: {
+    addressItemWithTopGap: {
       marginTop: AddressItemSizes.itemGap,
     },
     bottomBarContainer: {
