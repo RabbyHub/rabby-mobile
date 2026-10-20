@@ -244,10 +244,15 @@ const SummaryItem: React.FC<SummaryItemProps> = ({
             {!!extraInfo && (
               <View style={[styles.extraContainer]}>
                 <View style={styles.extraLeft}>
-                  <Text style={styles.extraLeftText}>
+                  <Text
+                    numberOfLines={2}
+                    ellipsizeMode="tail"
+                    style={styles.extraLeftText}>
                     {t('page.Lending.summary.lq')}
                   </Text>
-                  <TouchableOpacity onPress={handleShowHFDescription}>
+                  <TouchableOpacity
+                    style={styles.extraMore}
+                    onPress={handleShowHFDescription}>
                     <Text style={styles.extraLeftMore}>
                       {t('page.Lending.summary.more')}
                     </Text>
@@ -383,28 +388,42 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingRight: 16,
+    paddingVertical: 10,
     marginHorizontal: 12,
-    height: 40,
+    minHeight: 40,
   },
   extraLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    flexShrink: 1,
     gap: 6,
   },
   extraLeftText: {
     fontSize: 12,
+    lineHeight: 16,
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-foot'],
+    flexShrink: 1,
+  },
+  extraMore: {
+    flexShrink: 0,
   },
   extraLeftMore: {
     fontSize: 12,
+    lineHeight: 16,
     fontWeight: '900',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
   },
   extraClose: {
     marginLeft: 8,
+    flexShrink: 0,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   triangle: {
     position: 'absolute',
