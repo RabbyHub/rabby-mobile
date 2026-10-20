@@ -2870,6 +2870,20 @@ export class KeyringService extends RNEventEmitter {
           },
         };
       }
+      // extension vault may carry repeated addresses; keep the first of each
+      if (Array.isArray(item.data?.accounts)) {
+        return {
+          ...item,
+          data: {
+            ...item.data,
+            accounts: item.data.accounts.filter(
+              (address: string, idx: number, arr: string[]) =>
+                arr.findIndex(e => addressUtils.isSameAddress(e, address)) ===
+                idx,
+            ),
+          },
+        };
+      }
       return item;
     });
 
@@ -2901,11 +2915,15 @@ export class KeyringService extends RNEventEmitter {
           const newAccounts = newDisplayKeyring.accounts;
 
           newAccounts?.forEach(newAccount => {
-            const newAccountExist = allAccounts?.some(
+            const newAccountExist = [
+              ...(allAccounts ?? []),
+              ...addedAccounts,
+            ].some(
               existAddr =>
-                newAccount?.address?.toLowerCase() ===
-                  existAddr?.address?.toLowerCase() &&
-                keyring.type === (existAddr.type || existAddr.brandName),
+                addressUtils.isSameAddress(
+                  newAccount?.address,
+                  existAddr?.address,
+                ) && keyring.type === (existAddr.type || existAddr.brandName),
             );
 
             if (!newAccountExist && newAccounts.length) {

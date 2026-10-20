@@ -533,6 +533,28 @@ describe('keyringService support eth-keyring-watch', () => {
       expect(spy.calledOnceWithExactly(addedAccounts[0])).toBe(true);
     });
 
+    it('dedupes repeated addresses from extension vault', async () => {
+      await keyringService.persistAllKeyrings();
+
+      const upperAddr = `0x${TEST_ADDR.slice(2).toUpperCase()}`;
+      const addedAccounts = await keyringService.syncExtensionData([
+        {
+          type: KEYRING_TYPE.WatchAddressKeyring,
+          data: { accounts: [TEST_ADDR, upperAddr, TEST_ADDR, TEST_ADDR_2] },
+        },
+        {
+          type: KEYRING_TYPE.WatchAddressKeyring,
+          data: { accounts: [TEST_ADDR] },
+        },
+      ] as any);
+
+      expect(addedAccounts.map(a => a.address)).toStrictEqual([
+        TEST_ADDR,
+        TEST_ADDR_2,
+      ]);
+      expect(await keyringService.getAllVisibleAccountsArray()).toHaveLength(2);
+    });
+
     it('rejects locked private key export', async () => {
       await keyringService.setLocked();
 
