@@ -20,6 +20,7 @@ import { zCreate } from '@/core/utils/reexports';
 import DeviceUtils from '@/core/utils/device';
 import { perfEvents } from '@/core/utils/perf';
 import {
+  dismissOpenNativeMenus,
   getVisibleBlockingModalIds,
   MODAL_GATE_IDS,
   subscribeModalGateDebugSnapshot,
@@ -429,6 +430,12 @@ const setLastScreenshot = (
         '[modal-gate] defer screenshot feedback modal open, blocking modals:',
         blockingModalIds,
       );
+
+    // Close an open native menu instead of waiting for the user to: the
+    // pending feedback opens once the menu has fully hidden.
+    if (blockingModalIds.includes(MODAL_GATE_IDS.nativeMenu)) {
+      dismissOpenNativeMenus();
+    }
 
     schedulePendingScreenshotFeedbackFlush();
     return;

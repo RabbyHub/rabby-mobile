@@ -14,6 +14,10 @@ import type { SFSymbol } from 'sf-symbols-typescript'
 type ViewStyle = React.ComponentProps<typeof View>['style']
 type TextStyle = React.ComponentProps<typeof Text>['style']
 
+export type IosMenuViewRef = {
+  dismissMenu: () => Promise<void>
+}
+
 export type MenuRootProps = {
   children: React.ReactNode
   style?: ViewStyle
@@ -30,6 +34,12 @@ export type MenuRootProps = {
    * @platform android
    */
   androidMenuViewRef?: React.RefObject<import('@rabby-wallet/react-native-menu').MenuComponentRef | null>;
+  /**
+   * Reference to the underlying native menu on iOS. Call `dismissMenu()` to close the menu if it is open.
+   *
+   * @platform ios
+   */
+  iosMenuViewRef?: React.RefObject<IosMenuViewRef | null>
 
   __unsafeIosProps?:
     | ComponentProps<typeof ContextMenuView>
