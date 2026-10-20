@@ -281,8 +281,6 @@ const indicatorStyles = createGetStyles2024(
     };
   },
 );
-const PLACE_HOLDER_STYLE = { width: 90, height: 32 };
-
 function SideChainSelector() {
   const { isLight, colors2024 } = useTheme2024();
 
@@ -337,10 +335,9 @@ function SideChainSelector() {
 
   const top3Chains = useTop3Chains();
 
-  if (!top3Chains.length && !selectedChainItem) {
-    return <View style={PLACE_HOLDER_STYLE} />;
-  }
-
+  // Render the filter even before the chain projection is ready: the sheet
+  // falls back to the full mainnet chain list, and waiting here left the
+  // control blank for seconds (QA 1145).
   return (
     <ChainSelector
       // top3Chains={chainAssets.map(item => item.chain).slice(0, 3)}
