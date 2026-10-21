@@ -14,6 +14,8 @@ import {
 import { View } from 'react-native';
 import { PerpsGestureSlider } from '@/components/perps/PerpsGestureSlider';
 import { Text } from '@/components/Typography';
+import { CircleSpinnerCC } from '@/components2024/CircleSpinner/CircleSpinnerCC';
+import PositionCancel from '@/assets2024/icons/perps/PerpsSimpleAccount/tpsl-cancel.svg';
 import {
   GestureDetector,
   PointerType,
@@ -284,6 +286,71 @@ it('uses the whole new price tag to cancel and preserves the default trigger pre
     MODAL_GATE_IDS.perpsEditTpSlPrice,
   );
   expect(cancel).toHaveBeenCalledTimes(2);
+});
+
+it('swaps only a set position tag X for the shared spinner while cancelling', () => {
+  const props = {
+    coin: 'ETH',
+    entryPrice: 100,
+    markPrice: 110,
+    initTpOrSlPrice: '120',
+    direction: 'Long' as const,
+    size: 1,
+    margin: 20,
+    leverage: 5,
+    liqPrice: 80,
+    pxDecimals: 2,
+    szDecimals: 3,
+    actionType: 'tp' as const,
+    quoteAsset: 'USDC',
+    type: 'hasPosition' as const,
+    handleSetAutoClose: jest.fn(async () => {}),
+    handleCancelAutoClose: jest.fn(async () => {}),
+  };
+  const ui = render(
+    safe(<PerpEditTpSlPriceTag {...props} variant="position" />),
+  );
+  // Every SVG shares one mock type here; the X is the 16pt icon passed
+  // width/height directly, while the spinner's icon is sized via style.
+  const xIcons = () =>
+    ui
+      .UNSAFE_queryAllByType(PositionCancel)
+      .filter(node => node.props.width === 16 && node.props.height === 16);
+  expect(xIcons()).toHaveLength(1);
+  const cancelColor = xIcons()[0].props.color;
+  expect(ui.UNSAFE_queryByType(CircleSpinnerCC)).toBeNull();
+
+  ui.rerender(
+    safe(
+      <PerpEditTpSlPriceTag
+        {...props}
+        variant="position"
+        actionPending
+        cancelPending
+      />,
+    ),
+  );
+  const spinner = ui.UNSAFE_getByType(CircleSpinnerCC);
+  // Same 16pt slot and colour as the X, so the tag geometry never shifts.
+  expect(spinner.props).toMatchObject({ size: 16, color: cancelColor });
+  expect(xIcons()).toHaveLength(0);
+  expect(ui.getByText('120 USDC')).toBeTruthy();
+  expect(ui.getByRole('button').props.accessibilityState).toEqual({
+    busy: true,
+    disabled: true,
+  });
+
+  // A set in flight (pending without cancel) keeps the X.
+  ui.rerender(
+    safe(<PerpEditTpSlPriceTag {...props} variant="position" actionPending />),
+  );
+  expect(ui.UNSAFE_queryByType(CircleSpinnerCC)).toBeNull();
+  expect(xIcons()).toHaveLength(1);
+
+  // Draft tags in the open popup never show it.
+  ui.rerender(safe(<PerpEditTpSlPriceTag {...props} cancelPending />));
+  expect(ui.UNSAFE_queryByType(CircleSpinnerCC)).toBeNull();
+  expect(xIcons()).toHaveLength(1);
 });
 
 // Close haptics are throttled like Perps Pro; drive a clock so each case

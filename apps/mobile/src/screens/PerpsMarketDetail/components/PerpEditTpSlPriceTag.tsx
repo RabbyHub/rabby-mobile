@@ -27,6 +27,7 @@ import {
   formatTpOrSlPrice,
 } from '@/utils/perps';
 import RcIconCloseCC from '@/assets2024/icons/perps/IconCloseCC.svg';
+import { CircleSpinnerCC } from '@/components2024/CircleSpinner/CircleSpinnerCC';
 import { Text, TextInput } from '@/components/Typography';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
@@ -54,6 +55,8 @@ interface Props {
   type: 'openPosition' | 'hasPosition';
   handleSetAutoClose: (price: string) => Promise<void | boolean>;
   actionPending?: boolean;
+  /** Position tags only: swap the X for the shared spinner while cancelling. */
+  cancelPending?: boolean;
   handleCancelAutoClose: () => Promise<void>;
 }
 
@@ -96,6 +99,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
   quoteAsset,
   handleSetAutoClose,
   actionPending = false,
+  cancelPending = false,
   handleCancelAutoClose,
 }) => {
   const [modalVisible, setModalVisible] = React.useState(false);
@@ -324,11 +328,18 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
 
   const EditIcon = variant === 'position' ? PositionEdit : IconPerpEdit;
   const CancelIcon = variant === 'position' ? PositionCancel : IconPerpDelete;
+  const showCancelSpinner =
+    variant === 'position' && cancelPending && !!initTpOrSlPrice;
 
   return (
     <>
       <TouchableOpacity
         disabled={actionPending}
+        accessibilityRole="button"
+        accessibilityState={{
+          busy: showCancelSpinner,
+          disabled: actionPending,
+        }}
         style={[
           styles.tagContainer,
           variant === 'position' && styles.positionTag,
@@ -389,7 +400,9 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
             {initTpOrSlPrice ? `$${splitNumberByStep(initTpOrSlPrice)}` : '-'}
           </Text>
         )}
-        {initTpOrSlPrice ? (
+        {showCancelSpinner ? (
+          <CircleSpinnerCC size={16} color={colors2024['neutral-secondary']} />
+        ) : initTpOrSlPrice ? (
           <CancelIcon
             width={16}
             height={16}

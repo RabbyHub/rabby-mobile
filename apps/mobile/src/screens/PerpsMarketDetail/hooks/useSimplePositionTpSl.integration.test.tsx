@@ -324,6 +324,8 @@ it('waits for confirmed orders after setting, deduplicates one leg and keeps bot
     tpPrice: '110',
     slPrice: undefined,
     slPending: true,
+    // Setting never shows the cancel spinner.
+    slCancelling: false,
   });
   await act(async () => {
     expect(await ui.result.current.handleSetAutoClose(setParams)).toBe(false);
@@ -368,7 +370,9 @@ it('keeps a cancelled leg visible until confirmation and never restores it on a 
   expect(ui.result.current).toMatchObject({
     tpPrice: '110',
     tpPending: true,
+    tpCancelling: true,
     slPrice: '90',
+    slCancelling: false,
   });
   await act(async () => {
     accepted.resolve(response(['success']));
@@ -386,6 +390,7 @@ it('keeps a cancelled leg visible until confirmation and never restores it on a 
     tpPrice: undefined,
     slPrice: '90',
     tpPending: false,
+    tpCancelling: false,
   });
   expect(sdk.exchange!.cancelOrder).toHaveBeenCalledWith([
     { oid: 1, coin: 'BTC' },
@@ -465,6 +470,7 @@ it('reports a partially rejected batch as failure and shows the remaining confir
     expect(ui.result.current).toMatchObject({
       tpPrice: '110',
       tpPending: false,
+      tpCancelling: false,
     });
   } finally {
     log.mockRestore();
