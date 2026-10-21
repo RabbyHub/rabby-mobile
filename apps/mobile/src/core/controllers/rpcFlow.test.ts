@@ -13,6 +13,7 @@ const mockUpdateDapp = jest.fn();
 const mockGetStatsData = jest.fn();
 const mockSetStatsData = jest.fn();
 const mockSetCurrentRequestDeferFn = jest.fn();
+let mockCurrentDeferFn: unknown;
 const mockUnLock = jest.fn();
 const mockEnsureNotificationServiceReady = jest.fn();
 const mockEnsureDappServiceReady = jest.fn();
@@ -525,6 +526,36 @@ describe('rpcFlow typed-data chain pinning', () => {
     } finally {
       process.off('unhandledRejection', onUnhandled);
     }
+  });
+
+  describe('Safe owner signing', () => {
+    const openSafeOwnerApproval = (registerDuringApproval?: () => void) => {
+      const { waitSignComponentAmounted } =
+        jest.requireMock('../utils/signEvent');
+      waitSignComponentAmounted.mockResolvedValue(undefined);
+      mockSetCurrentRequestDeferFn.mockImplementation(fn => {
+        mockCurrentDeferFn = fn;
+      });
+      mockRequestApproval
+        .mockImplementationOnce(async () => {
+          registerDuringApproval?.();
+          return { uiRequestComponent: 'PrivatekeyWaiting', isGnosis: true };
+        })
+        .mockReturnValueOnce(new Promise(() => {}));
+      void rpcFlow(makeRequest());
+      return new Promise(resolve => setImmediate(resolve));
+    };
+
+    it('keeps the retry fn the owner signing registered', async () => {
+      const ownerRetry = jest.fn();
+      mockCurrentDeferFn = jest.fn();
+
+      await openSafeOwnerApproval(() =>
+        mockSetCurrentRequestDeferFn(ownerRetry),
+      );
+
+      expect(mockCurrentDeferFn).toBe(ownerRetry);
+    });
   });
 
   it.each<['walletconnect' | 'internal', number | undefined]>([

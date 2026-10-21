@@ -492,7 +492,11 @@ const flowContext = flow
         });
     const requestDeferFn = createRequestDeferFn(approvalRes);
 
-    setCurrentRequestDeferFnSync(requestDeferFn);
+    // Safe owner signing registers its own retry fn
+    // (apisKeyring.signTypedDataWithUI); ours would only resolve undefined.
+    if (!approvalRes?.isGnosis) {
+      setCurrentRequestDeferFnSync(requestDeferFn);
+    }
     // Only the first attempt waits for the waiting UI to mount. Retries are
     // started from that mounted UI, which emits no further mount event.
     const requestDefer =
