@@ -12,7 +12,7 @@ jest.mock('@/utils/number', () => ({
 }));
 import React from 'react';
 import { act, fireEvent, render } from '@testing-library/react-native';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, View, StyleSheet } from 'react-native';
 import { Button } from '@/components2024/Button';
 import { PerpsClosePositionPopup } from './PerpsClosePositionPopup';
 
@@ -112,9 +112,17 @@ jest.mock('./PerpEditLimitPriceTag', () => ({
     }),
 }));
 jest.mock('../hooks/useMarketSlippage', () => ({
-  useMarketSlippage: () => ({ isReady: false, shouldShow: false }),
+  useMarketSlippage: () => mockSlippage,
 }));
-jest.mock('./MarketSlippage', () => ({ MarketSlippage: () => null }));
+jest.mock('./MarketSlippage', () => ({
+  MarketSlippage: (props: any) =>
+    props.visible
+      ? require('react').createElement(require('react-native').View, {
+          ...props,
+          testID: 'slippage',
+        })
+      : null,
+}));
 jest.mock('@/utils/perps', () => ({
   formatTpOrSlPrice: (v: number) => String(v),
   isMarketableLimit: () => false,
@@ -124,7 +132,17 @@ const mockBackgroundMount = jest.fn();
 const mockBackgroundUnmount = jest.fn();
 const mockFooterMount = jest.fn();
 const mockFooterUnmount = jest.fn();
-beforeEach(() => jest.clearAllMocks());
+const mockSlippage = {
+  isReady: false,
+  shouldShow: false,
+  slippage: 0.03,
+  depthInsufficient: false,
+};
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockSlippage.isReady = false;
+  mockSlippage.shouldShow = false;
+});
 
 const props: React.ComponentProps<typeof PerpsClosePositionPopup> = {
   visible: true,
@@ -192,69 +210,72 @@ it('keeps min-close guard and uses the typed limit price for PnL', async () => {
   });
 });
 
-it('reserves the warning space and keeps the background and footer mounted across drag and mode changes', () => {
+it('grows cards only for visible content and keeps the sheet, footer and outside spacer stable', () => {
   const ui = render(<PerpsClosePositionPopup {...props} />);
-  const warning = () =>
-    ui.getByText('page.perpsDetail.PerpsClosePositionPopup.minimumWarning', {
-      includeHiddenElements: true,
-    });
-  const initialWarning = warning();
+  const warningKey = 'page.perpsDetail.PerpsClosePositionPopup.minimumWarning';
   const initialConfirm = ui.getByTestId('confirm');
   const initialSnap = ui.getByTestId('sheet').props.snapPoints;
-  expect(warning()).toHaveStyle({ opacity: 0 });
+  expect(ui.queryByText(warningKey)).toBeNull();
+  const scrollStyle = StyleSheet.flatten(
+    ui.UNSAFE_getByType(ScrollView).props.contentContainerStyle,
+  );
+  expect(scrollStyle.flexGrow).toBe(1);
+  // The only flexible spacer is a sibling AFTER both cards, not an invisible
+  // error/limit row inside either card. Native Yoga dimensions need device QA.
+  const spacer = ui.UNSAFE_getAllByType(View).find(node => {
+    const style = StyleSheet.flatten(node.props.style);
+    return style?.flexGrow === 1 && Object.keys(style).length === 1;
+  });
+  expect(spacer).toBeTruthy();
+
   for (const value of [53, 0, 8, 100]) {
     act(() => ui.getByTestId('slider').props.onValueChange(value));
-    expect(warning()).toBe(initialWarning);
-    expect(warning().props.accessibilityElementsHidden).toBe(value >= 9);
-    expect(ui.getByTestId('sheet').props.snapPoints).toEqual(initialSnap);
+    expect(!!ui.queryByText(warningKey)).toBe(value < 9);
+    if (value < 9) {
+      const warning = ui.getByText(warningKey);
+      expect(warning).toHaveStyle({ marginTop: 4 });
+      let card = warning.parent!;
+      while (!card.findAllByProps({ testID: 'slider' }).length)
+        card = card.parent!;
+      const children = card.children;
+      const warningIndex = children.findIndex(
+        node =>
+          typeof node !== 'string' &&
+          node.findAllByProps({ children: warningKey }).length > 0,
+      );
+      const sliderIndex = children.findIndex(
+        node =>
+          typeof node !== 'string' &&
+          node.findAllByProps({ testID: 'slider' }).length > 0,
+      );
+      expect(warningIndex).toBeGreaterThanOrEqual(0);
+      expect(sliderIndex).toBeGreaterThan(warningIndex);
+    }
+    expect(ui.getByTestId('sheet').props.snapPoints).toBe(initialSnap);
     expect(ui.getByTestId('confirm')).toBe(initialConfirm);
   }
-  act(() => ui.getByTestId('slider').props.onSlidingComplete());
   fireEvent.press(
     ui.getByText('page.perpsDetail.PerpsOpenPositionPopup.orderTypeMarket'),
   );
-  expect(ui.getByTestId('sheet').props.snapPoints[0]).toBe(initialSnap[0] + 44);
+  expect(ui.getByTestId('limit-price')).toBeTruthy();
+  expect(ui.getByTestId('sheet').props.snapPoints).toBe(initialSnap);
+  act(() => ui.getByTestId('slider').props.onValueChange(0));
+  expect(ui.getByText(warningKey)).toBeTruthy();
+  expect(ui.getByTestId('sheet').props.snapPoints).toBe(initialSnap);
   fireEvent.press(
     ui.getByText('page.perpsDetail.PerpsOpenPositionPopup.orderTypeLimit'),
   );
-  expect(ui.getByTestId('sheet').props.snapPoints).toEqual(initialSnap);
+  expect(ui.queryByTestId('limit-price')).toBeNull();
+  expect(ui.getByTestId('sheet').props.snapPoints).toBe(initialSnap);
+  mockSlippage.isReady = true;
+  mockSlippage.shouldShow = true;
+  ui.rerender(<PerpsClosePositionPopup {...props} />);
+  expect(ui.getByTestId('slippage')).toBeTruthy();
+  expect(ui.getByTestId('sheet').props.snapPoints).toBe(initialSnap);
   expect(mockBackgroundMount).toHaveBeenCalledTimes(1);
   expect(mockFooterMount).toHaveBeenCalledTimes(1);
   expect(mockBackgroundUnmount).not.toHaveBeenCalled();
   expect(mockFooterUnmount).not.toHaveBeenCalled();
-});
-
-it('defers body height changes until drag release and measures footer space separately', () => {
-  const ui = render(<PerpsClosePositionPopup {...props} />);
-  const body = () =>
-    ui
-      .UNSAFE_getByType(ScrollView)
-      .findAllByType(View)
-      .find(node => node.props.onLayout);
-  const layoutBody = (height: number) =>
-    act(() =>
-      body()!.props.onLayout({
-        nativeEvent: { layout: { height } },
-      }),
-    );
-  layoutBody(385);
-  const initialSnap = ui.getByTestId('sheet').props.snapPoints[0];
-  act(() => ui.getByTestId('slider').props.onSlidingStart());
-  act(() => ui.getByTestId('slider').props.onValueChange(26));
-  layoutBody(403);
-  layoutBody(421);
-  expect(ui.getByTestId('sheet').props.snapPoints[0]).toBe(initialSnap);
-  act(() => ui.getByTestId('slider').props.onSlidingComplete());
-  expect(ui.getByTestId('sheet').props.snapPoints[0]).toBe(initialSnap + 36);
-  expect(
-    ui.UNSAFE_getByType(ScrollView).props.contentContainerStyle.paddingBottom,
-  ).toBe(initialSnap - 385 - 36);
-  // Track taps publish their value before slidingStart.
-  act(() => ui.getByTestId('slider').props.onValueChange(24));
-  layoutBody(403);
-  expect(ui.getByTestId('sheet').props.snapPoints[0]).toBe(initialSnap + 36);
-  act(() => ui.getByTestId('slider').props.onSlidingComplete());
-  expect(ui.getByTestId('sheet').props.snapPoints[0]).toBe(initialSnap + 18);
 });
 
 it('keeps the footer mounted while publishing loading and the latest submit guard', async () => {

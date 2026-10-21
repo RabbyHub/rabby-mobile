@@ -141,10 +141,9 @@ export const PerpsChart = React.memo(function PerpsChart({
     () =>
       accountHeaderQuote(
         Number(activeAssetCtx?.markPx || currentAssetCtx?.markPx || 0),
-        Number(ctx?.prevDayPx),
         decimals,
       ),
-    [activeAssetCtx?.markPx, currentAssetCtx?.markPx, ctx?.prevDayPx, decimals],
+    [activeAssetCtx?.markPx, currentAssetCtx?.markPx, decimals],
   );
   useEffect(() => {
     onHeaderQuote?.(headerQuote, chart.active);

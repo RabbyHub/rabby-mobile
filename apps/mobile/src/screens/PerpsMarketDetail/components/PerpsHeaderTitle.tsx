@@ -13,8 +13,6 @@ import { HeaderBackPressable } from '@/hooks/navigation';
 import { PerpsHeaderRight } from './PerpsHeaderRight';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import Up from '@/assets2024/icons/perps/PerpsSimpleChart/up.svg';
-import Down from '@/assets2024/icons/perps/PerpsSimpleChart/down.svg';
 import {
   EMPTY_ACCOUNT_QUOTE,
   sameAccountHeader,
@@ -67,14 +65,6 @@ export const PerpsHeaderTitle = React.memo(
       [],
     );
     const { compact, quote } = snapshot;
-    const changeColor =
-      colors2024[
-        quote.direction > 0
-          ? 'green-default'
-          : quote.direction < 0
-          ? 'red-default'
-          : 'neutral-secondary'
-      ];
 
     return (
       <View style={[styles.headerOuter, { marginTop: top }]}>
@@ -102,18 +92,6 @@ export const PerpsHeaderTitle = React.memo(
               <Text style={styles.price} numberOfLines={1}>
                 {quote.price}
               </Text>
-              <View style={styles.changeRow}>
-                {quote.direction !== 0 &&
-                  (quote.direction > 0 ? (
-                    <Up width={14} height={14} color={changeColor} />
-                  ) : (
-                    <Down width={14} height={14} color={changeColor} />
-                  ))}
-                <Text style={[styles.change, { color: changeColor }]}>
-                  {quote.change}
-                </Text>
-                <Text style={styles.period}>24h</Text>
-              </View>
             </View>
           ) : (
             <PerpsHeaderRight marketName={coin} />
@@ -165,26 +143,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   icon: { width: 26, height: 26, borderRadius: 1000, backgroundColor: 'white' },
   addressCaretIcon: { flexShrink: 0 },
   reverseCaret: { transform: [{ rotate: '180deg' }] },
-  quoteColumn: { alignItems: 'flex-end', gap: 2, flexShrink: 0 },
+  quoteColumn: { alignItems: 'flex-end', flexShrink: 0 },
   price: {
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
     fontSize: 18,
     lineHeight: 22,
     color: colors2024['neutral-title-1'],
-  },
-  changeRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  change: {
-    fontFamily: 'SF Pro Rounded',
-    fontWeight: '500',
-    fontSize: 10,
-    lineHeight: 16,
-  },
-  period: {
-    fontFamily: 'SF Pro Rounded',
-    fontWeight: '400',
-    fontSize: 10,
-    lineHeight: 16,
-    color: colors2024['neutral-secondary'],
   },
 }));

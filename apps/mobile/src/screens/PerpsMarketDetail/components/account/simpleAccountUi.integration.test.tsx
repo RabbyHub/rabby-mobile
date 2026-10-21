@@ -246,12 +246,13 @@ it('connects the real header to the page presenter and preserves coin selection/
   expect(ui.UNSAFE_queryAllByType(PerpsHeaderRight)).toHaveLength(1);
   fireEvent.press(ui.getByText('ETH/USDC'));
   act(() => {
-    presenter.quote(accountHeaderQuote(110, 100, 2), true);
+    presenter.quote(accountHeaderQuote(110, 2), true);
     presenter.layout(62);
     presenter.scroll(70);
   });
   expect(ui.getByText('$110.00')).toBeTruthy();
-  expect(ui.getByText('+10.00%')).toBeTruthy();
+  expect(ui.queryByText('+10.00%')).toBeNull();
+  expect(ui.queryByText('24h')).toBeNull();
   expect(ui.UNSAFE_queryAllByType(PerpsHeaderRight)).toHaveLength(0);
   fireEvent.press(ui.getByText('ETH/USDC'));
   expect(select).toHaveBeenCalledTimes(2);
@@ -443,3 +444,40 @@ it('handles track-tap ordering, controlled resets, and disabled close sliders', 
   expect(trigger).toHaveBeenCalledTimes(2);
   expect(change).toHaveBeenCalledTimes(before);
 });
+
+it.each([false, true, undefined])(
+  'keeps the editor open only for a rejected result (%s), preserving draft-mode void callbacks',
+  async result => {
+    const submit = jest.fn(async () => result);
+    const ui = render(
+      safe(
+        <PerpEditTpSlPriceTag
+          coin="ETH"
+          variant="position"
+          actionType="tp"
+          type="hasPosition"
+          entryPrice={100}
+          markPrice={110}
+          initTpOrSlPrice=""
+          direction="Long"
+          size={1}
+          margin={20}
+          leverage={5}
+          liqPrice={80}
+          pxDecimals={2}
+          szDecimals={3}
+          quoteAsset="USDC"
+          handleSetAutoClose={submit}
+          handleCancelAutoClose={async () => {}}
+        />,
+      ),
+    );
+    await act(async () => fireEvent.press(ui.getByText('-')));
+    fireEvent.changeText(ui.getByPlaceholderText('$0'), '120');
+    await act(async () => fireEvent.press(ui.getByText('global.confirm')));
+    expect(submit).toHaveBeenCalledWith('120');
+    expect(
+      getVisibleBlockingModalIds().includes(MODAL_GATE_IDS.perpsEditTpSlPrice),
+    ).toBe(result === false);
+  },
+);

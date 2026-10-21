@@ -2855,10 +2855,11 @@
       "simpleAccount": {
         "margin": "Ký quỹ",
         "averageEntry": "Giá vào trung bình",
-        "liquidationPriceGap": "Giá thanh lý (khoảng cách)",
+        "estimatedLiquidationPrice": "Giá thanh lý ước tính",
+        "estimatedLiquidationDistance": "Khoảng cách thanh lý ước tính",
         "tpSl": "TP/SL",
-        "takeProfitWhen": "Chốt lời khi",
-        "stopLossWhen": "Cắt lỗ khi",
+        "takeProfitPrice": "Giá chốt lời",
+        "stopLossPrice": "Giá cắt lỗ",
         "estimatedPnl": "PNL ước tính",
         "closePositionTitle": "Đóng vị thế {{coin}}",
         "estimatedRealizedPnl": "PNL đã thực hiện ước tính"
