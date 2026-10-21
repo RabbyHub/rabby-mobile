@@ -610,7 +610,16 @@ const getStyle = createGetStyles2024(ctx => {
       // fontFamily: 'SF Pro Rounded',
       fontSize: 36,
       paddingVertical: 0,
-      lineHeight: 42,
+      // Android applies lineHeight as a text span narrower than the 36/900
+      // glyph box, so each controlled slider update re-centers the digits.
+      // Keep natural metrics in a fixed 42 box there, as Perps Pro does.
+      ...(isAndroid
+        ? {
+            height: 42,
+            includeFontPadding: false,
+            textAlignVertical: 'center',
+          }
+        : { lineHeight: 42 }),
       fontWeight: '900',
       fontVariant: ['tabular-nums'],
       color: colors2024['neutral-title-1'],
