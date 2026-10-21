@@ -85,14 +85,15 @@ export const usePerpsPosition = () => {
 
   const handleCancelOrder = useMemoizedFn(
     async (
-      oid: number,
+      oids: readonly number[],
       coin: string,
       actionType: 'tp' | 'sl',
       isSceneCurrent?: () => boolean,
     ) => {
       const actionText = actionType === 'tp' ? 'Take profit' : 'Stop loss';
       const context = getPerpsAccountRuntimeContext();
-      if (!context.account || isSceneCurrent?.() === false) return false;
+      if (!oids.length || !context.account || isSceneCurrent?.() === false)
+        return false;
       const isCurrent = () =>
         getPerpsAccountRuntimeContext().generation === context.generation;
       return runPerpsAction(
@@ -102,22 +103,30 @@ export const usePerpsPosition = () => {
           getToastMessage: () => actionText + ' cancel error',
         },
         async () => {
+          let responded = false;
           try {
             const exchange = apisPerps.getPerpsSDK().exchange;
             if (!exchange)
               throw new Error('Hyperliquid exchange client unavailable');
-            const res = await exchange.cancelOrder([{ oid, coin }]);
+            // One batch removes duplicate same-side legs, so the X never
+            // reveals another hidden order with the same trigger.
+            const res = await exchange.cancelOrder(
+              oids.map(oid => ({ oid, coin })),
+            );
+            responded = true;
             if (!isCurrent()) return false;
             const statuses = res?.response?.data?.statuses;
             if (
               res?.status !== 'ok' ||
-              statuses?.length !== 1 ||
+              statuses?.length !== oids.length ||
               !statuses.every(item => (item as unknown) === 'success')
             ) {
               throw new Error(actionText + ' cancel error');
             }
           } catch (error) {
             if (!isCurrent() || isSceneCurrent?.() === false) return false;
+            // Some legs of an answered batch may be gone; show what remains.
+            if (responded) await refreshTpSlOrders(coin);
             throw error;
           }
           // An accepted mutation stays successful if its read-back fails; WS
