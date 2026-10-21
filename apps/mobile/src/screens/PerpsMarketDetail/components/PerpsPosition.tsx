@@ -31,7 +31,9 @@ export const PerpsPosition: React.FC<{
   showRiskPopup: boolean;
   setShowRiskPopup: (show: boolean) => void;
   handleActionApproveStatus: () => Promise<void>;
-  setCurrentTpOrSl: (params: { tpPrice?: string; slPrice?: string }) => void;
+  tpSlContextKey?: string;
+  tpPending?: boolean;
+  slPending?: boolean;
   positionData?: {
     pnl: number;
     positionValue: number;
@@ -75,7 +77,9 @@ export const PerpsPosition: React.FC<{
   showRiskPopup,
   setShowRiskPopup,
   handleActionApproveStatus,
-  setCurrentTpOrSl,
+  tpSlContextKey,
+  tpPending,
+  slPending,
   positionData,
   coin,
   coinLogo,
@@ -300,16 +304,22 @@ export const PerpsPosition: React.FC<{
             </View>
             <View style={styles.detailRow}>
               <Text style={styles.label}>
-                {t('page.perpsDetail.simpleAccount.liquidationPriceGap')}
+                {t('page.perpsDetail.simpleAccount.estimatedLiquidationPrice')}
               </Text>
               <Text style={styles.value}>
                 {hasPositivePrice(rawLiquidationPrice)
                   ? `$${splitNumberByStep(positionData.liquidationPrice)}`
                   : '--'}
-                <Text style={styles.gap}>
-                  {' '}
-                  ({simpleLiquidationGap(rawLiquidationPrice, rawMarkPrice)})
-                </Text>
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.label}>
+                {t(
+                  'page.perpsDetail.simpleAccount.estimatedLiquidationDistance',
+                )}
+              </Text>
+              <Text style={styles.value}>
+                {simpleLiquidationGap(rawLiquidationPrice, rawMarkPrice)}
               </Text>
             </View>
           </View>
@@ -325,10 +335,12 @@ export const PerpsPosition: React.FC<{
                 tpPrice ? styles.setRow : styles.emptyRow,
               ]}>
               <Text style={styles.label}>
-                {t('page.perpsDetail.simpleAccount.takeProfitWhen')}
+                {t('page.perpsDetail.simpleAccount.takeProfitPrice')}
               </Text>
               <PerpEditTpSlPriceTag
                 variant="position"
+                key={`${tpSlContextKey}:tp`}
+                actionPending={tpPending}
                 estimatedPnl={takeProfitExpectedPnl}
                 handleActionApproveStatus={handleActionApproveStatus}
                 coin={displayName}
@@ -355,10 +367,6 @@ export const PerpsPosition: React.FC<{
                     slTriggerPx: '',
                     direction: positionData?.direction as 'Long' | 'Short',
                   });
-                  res &&
-                    setCurrentTpOrSl({
-                      tpPrice: Number(price).toString(),
-                    });
                   if (res) {
                     const isBuy = positionData?.direction === 'Long';
                     stats.report('perpsTradeHistory', {
@@ -380,6 +388,7 @@ export const PerpsPosition: React.FC<{
                       address_type: currentPerpsAccount?.type || '',
                     });
                   }
+                  return res;
                 }}
               />
             </View>
@@ -389,10 +398,12 @@ export const PerpsPosition: React.FC<{
                 slPrice ? styles.setRow : styles.emptyRow,
               ]}>
               <Text style={styles.label}>
-                {t('page.perpsDetail.simpleAccount.stopLossWhen')}
+                {t('page.perpsDetail.simpleAccount.stopLossPrice')}
               </Text>
               <PerpEditTpSlPriceTag
                 variant="position"
+                key={`${tpSlContextKey}:sl`}
+                actionPending={slPending}
                 estimatedPnl={stopLossExpectedPnl}
                 leverage={positionData?.leverage}
                 coin={displayName}
@@ -419,10 +430,6 @@ export const PerpsPosition: React.FC<{
                     slTriggerPx: price,
                     direction: positionData?.direction as 'Long' | 'Short',
                   });
-                  res &&
-                    setCurrentTpOrSl({
-                      slPrice: Number(price).toString(),
-                    });
                   if (res) {
                     const isBuy = positionData?.direction === 'Long';
                     stats.report('perpsTradeHistory', {
@@ -444,6 +451,7 @@ export const PerpsPosition: React.FC<{
                       address_type: currentPerpsAccount?.type || '',
                     });
                   }
+                  return res;
                 }}
               />
             </View>
@@ -590,7 +598,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       textAlign: 'right',
       flexShrink: 1,
     },
-    gap: { ...text, fontWeight: '400', color: colors2024['neutral-foot'] },
     tpSlCard: {
       borderRadius: 16,
       backgroundColor: isLight
@@ -602,7 +609,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       ...text,
       fontWeight: '700',
       color: colors2024['neutral-body'],
-      marginBottom: 12,
+      paddingVertical: 6,
     },
     tpSlRows: { gap: 10 },
     tpSlRow: {

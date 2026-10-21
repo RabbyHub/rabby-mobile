@@ -4,6 +4,7 @@ import {
   fetchClearinghouseStateHttp,
   fetchPositionOpenOrdersHttp,
   getDexByCoin,
+  getPerpsAccountRuntimeContext,
   perpsStore,
 } from '@/hooks/perps/usePerpsStore';
 import { runPerpsAction } from '@/hooks/perps/perpsActionError';
@@ -33,6 +34,15 @@ import {
   executePerpsCancelOrders,
 } from '@/hooks/perps/actions/cancelOrders';
 
+const refreshTpSlOrders = async (coin: string) => {
+  try {
+    await fetchPositionOpenOrdersHttp(getDexByCoin(coin));
+  } catch (error) {
+    // Keep read-back failures separate from accepted exchange actions.
+    Sentry.captureException(error);
+  }
+};
+
 export const usePerpsPosition = () => {
   const currentPerpsAccount = perpsStore(s => s.currentPerpsAccount);
   const { t } = useTranslation();
@@ -44,36 +54,48 @@ export const usePerpsPosition = () => {
   };
 
   const handleCancelOrder = useMemoizedFn(
-    async (oid: number, coin: string, actionType: 'tp' | 'sl') => {
+    async (
+      oid: number,
+      coin: string,
+      actionType: 'tp' | 'sl',
+      isSceneCurrent?: () => boolean,
+    ) => {
       const actionText = actionType === 'tp' ? 'Take profit' : 'Stop loss';
+      const context = getPerpsAccountRuntimeContext();
+      if (!context.account || isSceneCurrent?.() === false) return false;
+      const isCurrent = () =>
+        getPerpsAccountRuntimeContext().generation === context.generation;
       return runPerpsAction(
         {
-          fallback: undefined,
+          fallback: false,
           label: actionText + ' cancel',
           getToastMessage: () => actionText + ' cancel error',
         },
         async () => {
-          const sdk = apisPerps.getPerpsSDK();
-          const res = await sdk.exchange?.cancelOrder([
-            {
-              oid,
-              coin,
-            },
-          ]);
-          if (
-            res?.response.data.statuses.every(
-              item => (item as unknown as string) === 'success',
-            )
-          ) {
-            showToast(actionText + ' canceled successfully', 'success');
-          } else {
-            showToast(actionText + ' cancel error', 'error');
-            Sentry.captureException(
-              new Error(
-                actionText + ' cancel error' + 'res: ' + JSON.stringify(res),
-              ),
-            );
+          try {
+            const exchange = apisPerps.getPerpsSDK().exchange;
+            if (!exchange)
+              throw new Error('Hyperliquid exchange client unavailable');
+            const res = await exchange.cancelOrder([{ oid, coin }]);
+            if (!isCurrent()) return false;
+            const statuses = res?.response?.data?.statuses;
+            if (
+              res?.status !== 'ok' ||
+              statuses?.length !== 1 ||
+              !statuses.every(item => (item as unknown) === 'success')
+            ) {
+              throw new Error(actionText + ' cancel error');
+            }
+          } catch (error) {
+            if (!isCurrent() || isSceneCurrent?.() === false) return false;
+            throw error;
           }
+          // An accepted mutation stays successful if its read-back fails; WS
+          // will converge the confirmed order projection. Never replay it.
+          await refreshTpSlOrders(coin);
+          if (!isCurrent() || isSceneCurrent?.() === false) return false;
+          showToast(actionText + ' canceled successfully', 'success');
+          return true;
         },
       );
     },
@@ -181,29 +203,57 @@ export const usePerpsPosition = () => {
   );
 
   const handleSetAutoClose = useMemoizedFn(
-    async (params: {
-      coin: string;
-      tpTriggerPx: string;
-      slTriggerPx: string;
-      direction: 'Long' | 'Short';
-    }) => {
+    async (
+      params: {
+        coin: string;
+        tpTriggerPx: string;
+        slTriggerPx: string;
+        direction: 'Long' | 'Short';
+      },
+      isSceneCurrent?: () => boolean,
+    ) => {
       const autoCloseText = params.tpTriggerPx ? 'Take profit' : 'Stop loss';
+      const context = getPerpsAccountRuntimeContext();
+      if (!context.account || isSceneCurrent?.() === false) return false;
+      const isCurrent = () =>
+        getPerpsAccountRuntimeContext().generation === context.generation;
       return runPerpsAction(
         { fallback: false, label: autoCloseText + ' set', context: params },
         async () => {
-          const sdk = apisPerps.getPerpsSDK();
-          const { coin, tpTriggerPx, slTriggerPx, direction } = params;
-          const formattedTpTriggerPx = formatTriggerPx(tpTriggerPx);
-          const formattedSlTriggerPx = formatTriggerPx(slTriggerPx);
-          const res = await sdk.exchange?.bindTpslByOrderId({
-            coin,
-            isBuy: direction === 'Long',
-            tpTriggerPx: formattedTpTriggerPx,
-            slTriggerPx: formattedSlTriggerPx,
-            builder: PERPS_BUILDER_INFO,
-          });
-
-          fetchPositionOpenOrdersHttp(getDexByCoin(coin));
+          try {
+            const exchange = apisPerps.getPerpsSDK().exchange;
+            if (!exchange)
+              throw new Error('Hyperliquid exchange client unavailable');
+            const { coin, tpTriggerPx, slTriggerPx, direction } = params;
+            const res = await exchange.bindTpslByOrderId({
+              coin,
+              isBuy: direction === 'Long',
+              tpTriggerPx: formatTriggerPx(tpTriggerPx),
+              slTriggerPx: formatTriggerPx(slTriggerPx),
+              builder: PERPS_BUILDER_INFO,
+            });
+            if (!isCurrent()) return false;
+            const statuses = res?.response?.data?.statuses;
+            if (
+              res?.status !== 'ok' ||
+              statuses?.length !==
+                Number(!!tpTriggerPx) + Number(!!slTriggerPx) ||
+              !statuses?.length ||
+              !statuses.every(
+                status => !status.error && (status.resting || status.filled),
+              )
+            ) {
+              throw new Error(
+                statuses?.find(status => status.error)?.error ||
+                  autoCloseText + ' set error',
+              );
+            }
+          } catch (error) {
+            if (!isCurrent() || isSceneCurrent?.() === false) return false;
+            throw error;
+          }
+          await refreshTpSlOrders(params.coin);
+          if (!isCurrent() || isSceneCurrent?.() === false) return false;
           showToast(autoCloseText + ' set successfully', 'success');
           return true;
         },

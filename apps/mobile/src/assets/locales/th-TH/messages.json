@@ -2913,10 +2913,11 @@
       "simpleAccount": {
         "margin": "มาร์จิ้น",
         "averageEntry": "ราคาเข้าเฉลี่ย",
-        "liquidationPriceGap": "ราคาล้างพอร์ต (ระยะห่าง)",
+        "estimatedLiquidationPrice": "ราคาล้างพอร์ตโดยประมาณ",
+        "estimatedLiquidationDistance": "ระยะห่างจากการล้างพอร์ตโดยประมาณ",
         "tpSl": "TP/SL",
-        "takeProfitWhen": "ทำกำไรเมื่อ",
-        "stopLossWhen": "หยุดขาดทุนเมื่อ",
+        "takeProfitPrice": "ราคาทำกำไร",
+        "stopLossPrice": "ราคาหยุดขาดทุน",
         "estimatedPnl": "PNL โดยประมาณ",
         "closePositionTitle": "ปิดโพซิชัน {{coin}}",
         "estimatedRealizedPnl": "PNL ที่เกิดขึ้นจริงโดยประมาณ"

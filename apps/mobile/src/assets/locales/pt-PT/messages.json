@@ -3031,10 +3031,11 @@
       "simpleAccount": {
         "margin": "Margem",
         "averageEntry": "Preço médio de entrada",
-        "liquidationPriceGap": "Preço de liq. (distância)",
+        "estimatedLiquidationPrice": "Preço de liq. estimado",
+        "estimatedLiquidationDistance": "Distância de liq. estimada",
         "tpSl": "TP/SL",
-        "takeProfitWhen": "Realizar lucro em",
-        "stopLossWhen": "Limitar perda em",
+        "takeProfitPrice": "Preço de realização de lucro",
+        "stopLossPrice": "Preço de stop loss",
         "estimatedPnl": "PnL estimado",
         "closePositionTitle": "Fechar posição de {{coin}}",
         "estimatedRealizedPnl": "PnL realizado estimado"

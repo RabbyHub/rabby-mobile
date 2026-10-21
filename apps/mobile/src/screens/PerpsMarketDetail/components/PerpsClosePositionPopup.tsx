@@ -50,6 +50,11 @@ import {
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 
+// Maximum single-line body: title + Amount (with warning) + order details
+// (limit price or market slippage) + minimum footer gap. Shorter states leave
+// the spare space BELOW the cards; translations/font scaling can scroll.
+const CLOSE_CONTENT_HEIGHT = 421;
+
 export const PerpsClosePositionPopup: React.FC<{
   visible?: boolean;
   coin: string;
@@ -233,10 +238,6 @@ export const PerpsClosePositionPopup: React.FC<{
     !isValidClosePercent || (orderType === 'limit' && !(Number(limitPx) > 0));
   const { height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const [contentHeights, setContentHeights] = useState({
-    market: 385,
-    limit: 429,
-  });
   const [footerHeight, setFooterHeight] = useState(
     BOTTOM_BUTTON_SINGLE_HEIGHT +
       BOTTOM_BUTTON_TOP_OFFSET +
@@ -246,10 +247,10 @@ export const PerpsClosePositionPopup: React.FC<{
     () => [
       Math.min(
         windowHeight - insets.top,
-        36 + contentHeights[orderType] + footerHeight,
+        36 + CLOSE_CONTENT_HEIGHT + footerHeight,
       ),
     ],
-    [windowHeight, insets.top, contentHeights, orderType, footerHeight],
+    [windowHeight, insets.top, footerHeight],
   );
 
   const footerRef = useRef<CloseFooterHandle>(null);
@@ -280,46 +281,6 @@ export const PerpsClosePositionPopup: React.FC<{
     [confirmClose, handleFooterHeight],
   );
 
-  const sliding = useRef(false);
-  const pendingHeight = useRef<{
-    mode: PerpsOpenOrderType;
-    height: number;
-  } | null>(null);
-  const publishHeight = useMemoizedFn(
-    (mode: PerpsOpenOrderType, height: number) => {
-      setContentHeights(previous =>
-        Math.abs(previous[mode] - height) < 0.5
-          ? previous
-          : { ...previous, [mode]: height },
-      );
-    },
-  );
-  const handleBodyHeight = useMemoizedFn((height: number) => {
-    if (sliding.current) {
-      pendingHeight.current = { mode: orderType, height };
-    } else {
-      publishHeight(orderType, height);
-    }
-  });
-  const handlePercentChange = useMemoizedFn((value: number) => {
-    // A track tap can publish a value before RNEUI announces slidingStart.
-    sliding.current = true;
-    setClosePercent(value);
-  });
-  const handleSlidingStart = useMemoizedFn(() => {
-    sliding.current = true;
-  });
-  const handleSlidingComplete = useMemoizedFn(() => {
-    sliding.current = false;
-    const pending = pendingHeight.current;
-    pendingHeight.current = null;
-    if (pending?.mode === orderType) publishHeight(orderType, pending.height);
-  });
-  useEffect(() => {
-    sliding.current = false;
-    pendingHeight.current = null;
-  }, [visible, orderType]);
-
   return (
     <AppBottomSheetModal
       ref={modalRef}
@@ -338,12 +299,11 @@ export const PerpsClosePositionPopup: React.FC<{
       <BottomSheetView style={styles.sheetView}>
         <AutoLockView style={styles.container}>
           <BottomSheetScrollView
-            contentContainerStyle={{ paddingBottom: footerHeight }}>
-            <View
-              style={styles.content}
-              onLayout={event =>
-                handleBodyHeight(event.nativeEvent.layout.height)
-              }>
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: footerHeight },
+            ]}>
+            <View style={styles.content}>
               <View>
                 <Text style={styles.title}>
                   {t('page.perpsDetail.simpleAccount.closePositionTitle', {
@@ -363,34 +323,25 @@ export const PerpsClosePositionPopup: React.FC<{
                   {splitNumberByStep(quantity.notional)} {quoteAsset} ={' '}
                   {quantity.quantity} {displayName}
                 </Text>
+                {!isValidClosePercent && (
+                  <Text style={styles.minimumWarning}>
+                    {t(
+                      'page.perpsDetail.PerpsClosePositionPopup.minimumWarning',
+                      {
+                        percent: minClosePercent,
+                      },
+                    )}
+                  </Text>
+                )}
                 <View style={styles.slider}>
                   <PerpsSlider
                     variant="close"
                     step={1}
                     value={closePercent}
-                    onValueChange={handlePercentChange}
-                    onSlidingStart={handleSlidingStart}
-                    onSlidingComplete={handleSlidingComplete}
+                    onValueChange={setClosePercent}
                     showPercentage={false}
                   />
                 </View>
-                <Text
-                  accessible={!isValidClosePercent}
-                  accessibilityElementsHidden={isValidClosePercent}
-                  importantForAccessibility={
-                    isValidClosePercent ? 'no-hide-descendants' : 'auto'
-                  }
-                  style={[
-                    styles.minimumWarning,
-                    isValidClosePercent && styles.hiddenWarning,
-                  ]}>
-                  {t(
-                    'page.perpsDetail.PerpsClosePositionPopup.minimumWarning',
-                    {
-                      percent: minClosePercent,
-                    },
-                  )}
-                </Text>
               </View>
               <View style={styles.orderTypeCard}>
                 <View pointerEvents="none" style={styles.cardBorder} />
@@ -446,18 +397,19 @@ export const PerpsClosePositionPopup: React.FC<{
                     {splitNumberByStep(Math.abs(closedPnl).toFixed(2))}
                   </Text>
                 </View>
+                <MarketSlippage
+                  rowStyle={styles.limitRow}
+                  visible={
+                    orderType === 'market' &&
+                    slippageReady &&
+                    Number(positionSize) > 0 &&
+                    shouldShowSlippage
+                  }
+                  slippage={slippage}
+                  depthInsufficient={depthInsufficient}
+                />
               </View>
-              <MarketSlippage
-                style={styles.slippageContainer}
-                visible={
-                  orderType === 'market' &&
-                  slippageReady &&
-                  Number(positionSize) > 0 &&
-                  shouldShowSlippage
-                }
-                slippage={slippage}
-                depthInsufficient={depthInsufficient}
-              />
+              <View style={styles.confirmSpacer} />
             </View>
           </BottomSheetScrollView>
         </AutoLockView>
@@ -541,7 +493,14 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => {
   return {
     sheetView: { height: '100%' },
     container: { flex: 1 },
-    content: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 24 },
+    scrollContent: { flexGrow: 1 },
+    content: {
+      flexGrow: 1,
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      paddingBottom: 24,
+    },
+    confirmSpacer: { flexGrow: 1 },
     handle: { width: 50.2, height: 6.3, borderRadius: 3.15 },
     footer: {
       backgroundColor: colors2024['neutral-bg-1'],
@@ -600,9 +559,8 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => {
       ...text,
       fontWeight: '500',
       color: colors2024['red-default'],
-      marginTop: 12,
+      marginTop: 4,
     },
-    hiddenWarning: { opacity: 0 },
     orderTypeCard: {
       borderRadius: 12,
       paddingHorizontal: 16,
@@ -645,13 +603,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => {
       flexShrink: 1,
       textAlign: 'right',
     },
-    slippageContainer: {
-      borderWidth: 1,
-      borderColor: colors2024['neutral-line'],
-      borderRadius: 16,
-      padding: 16,
-      marginTop: 12,
-    },
+
     red: { color: colors2024['red-default'] },
     green: { color: colors2024['green-default'] },
     confirmTitle: {

@@ -47,7 +47,7 @@ describe('Simple account display contracts', () => {
   it('publishes only visible changes, catches up on activation, and keeps the real anchor', () => {
     const publish = jest.fn();
     const ui = createAccountHeaderPresentation(publish);
-    const quote = accountHeaderQuote(110, 100, 2);
+    const quote = accountHeaderQuote(110, 2);
     ui.quote(quote, true);
     ui.layout(62);
     for (let y = 0; y < 62; y++) ui.scroll(y);
@@ -56,15 +56,15 @@ describe('Simple account display contracts', () => {
     expect(publish).toHaveBeenCalledTimes(1);
     expect(publish.mock.lastCall?.[0]).toMatchObject({
       compact: true,
-      quote: { change: '+10.00%' },
+      quote: { price: '$110.00' },
     });
     for (let y = 63; y < 120; y++) ui.scroll(y);
-    ui.quote(accountHeaderQuote(110.000001, 100, 2), true);
+    ui.quote(accountHeaderQuote(110.000001, 2), true);
     expect(publish).toHaveBeenCalledTimes(1);
-    ui.quote(accountHeaderQuote(120, 100, 2), false);
-    ui.quote(accountHeaderQuote(130, 100, 2), false);
+    ui.quote(accountHeaderQuote(120, 2), false);
+    ui.quote(accountHeaderQuote(130, 2), false);
     expect(publish).toHaveBeenCalledTimes(1);
-    ui.quote(accountHeaderQuote(130, 100, 2), true);
+    ui.quote(accountHeaderQuote(130, 2), true);
     expect(publish).toHaveBeenCalledTimes(2);
     ui.scroll(61);
     expect(publish.mock.lastCall?.[0].compact).toBe(false);

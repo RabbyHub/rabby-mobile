@@ -1,5 +1,5 @@
 import BigNumber from 'bignumber.js';
-import { simplePriceChange, simplePriceText } from '../chart/model';
+import { simplePriceText } from '../chart/model';
 
 type PriceInput = string | number | null | undefined;
 const finiteDecimal = (value: PriceInput): BigNumber | null => {
@@ -45,27 +45,17 @@ export function closeQuantitySummary(
 
 export type AccountHeaderQuote = {
   price: string;
-  change: string;
-  direction: -1 | 0 | 1;
 };
 export const EMPTY_ACCOUNT_QUOTE: AccountHeaderQuote = {
   price: '—',
-  change: '—',
-  direction: 0,
 };
 export function accountHeaderQuote(
   mark: number,
-  previous: number,
   decimals: number,
 ): AccountHeaderQuote {
   const price = Number.isFinite(mark) && mark > 0 ? mark : null;
-  const change = simplePriceChange(price, previous);
   return {
     price: price === null ? '—' : `$${simplePriceText(price, decimals)}`,
-    change: change
-      ? `${change.percent >= 0 ? '+' : ''}${(change.percent * 100).toFixed(2)}%`
-      : '—',
-    direction: change ? (change.delta > 0 ? 1 : change.delta < 0 ? -1 : 0) : 0,
   };
 }
 
@@ -91,11 +81,7 @@ export type AccountHeaderHandle = {
 export const sameAccountHeader = (
   a: AccountHeaderSnapshot,
   b: AccountHeaderSnapshot,
-) =>
-  a.compact === b.compact &&
-  a.quote.price === b.quote.price &&
-  a.quote.change === b.quote.change &&
-  a.quote.direction === b.quote.direction;
+) => a.compact === b.compact && a.quote.price === b.quote.price;
 
 /** One page-owned UI snapshot; no subscriptions or business data ownership. */
 export function createAccountHeaderPresentation(
