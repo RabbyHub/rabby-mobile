@@ -16,16 +16,20 @@ jest.mock('react-native-reanimated', () => ({
       fn(...args),
 }));
 
+const flushFrames = () =>
+  new Promise<void>(resolve => setTimeout(resolve, 350));
+
 describe('useScrollToTopOnChainChange', () => {
   beforeEach(() => mockScrollTo.mockClear());
 
-  it('scrolls to top when the chain changes on the current tab', () => {
+  it('scrolls to top when the chain changes on the current tab', async () => {
     const { rerender } = renderHook(
       props => useScrollToTopOnChainChange(props),
       { initialProps: { chain: undefined, isCurrentTab: true } },
     );
 
     rerender({ chain: 'eth', isCurrentTab: true });
+    await flushFrames();
 
     expect(mockScrollTo).toHaveBeenCalledTimes(1);
     expect(mockScrollTo).toHaveBeenCalledWith(
@@ -37,16 +41,18 @@ describe('useScrollToTopOnChainChange', () => {
     );
   });
 
-  it('defers the scroll while the tab is not current and runs on refocus', () => {
+  it('defers the scroll while the tab is not current and runs on refocus', async () => {
     const { rerender } = renderHook(
       props => useScrollToTopOnChainChange(props),
       { initialProps: { chain: undefined, isCurrentTab: true } },
     );
 
     rerender({ chain: 'eth', isCurrentTab: false });
+    await flushFrames();
     expect(mockScrollTo).not.toHaveBeenCalled();
 
     rerender({ chain: 'eth', isCurrentTab: true });
+    await flushFrames();
     expect(mockScrollTo).toHaveBeenCalledTimes(1);
   });
 });
