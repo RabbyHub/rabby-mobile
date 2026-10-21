@@ -15,10 +15,32 @@ import Animated, {
 import { useWindowDimensions } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
 import { Text } from '@/components/Typography';
+import { triggerImpact } from '@/utils/common';
 
 const isAndroid = Platform.OS === 'android';
 const sliderHapticTriggerNumbers = [0, 50, 100];
-const closeHapticTriggerNumbers = [0, 25, 50, 75, 100];
+// Matches Perps Pro: one light pulse per step change, throttled for flings.
+const CLOSE_HAPTIC_MIN_INTERVAL_MS = 80;
+
+const getCloseStepIndex = (
+  value: number,
+  minimum: number,
+  maximum: number,
+  step: number,
+) => {
+  const range = maximum - minimum;
+  if (
+    !Number.isFinite(value) ||
+    !Number.isFinite(range) ||
+    range <= 0 ||
+    !Number.isFinite(step) ||
+    step <= 0
+  ) {
+    return null;
+  }
+  const clamped = Math.max(minimum, Math.min(maximum, value));
+  return Math.round((clamped - minimum) / step);
+};
 
 interface PerpsSliderProps {
   variant?: 'close';
@@ -60,6 +82,7 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
   const controlledValue = useRef(value);
   controlledValue.current = value;
   const previousCloseValue = useRef<number | null>(null);
+  const lastCloseHapticAt = useRef(Number.NEGATIVE_INFINITY);
 
   useEffect(() => {
     previousCloseValue.current = null;
@@ -70,17 +93,33 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
       if (variant === 'close' && disabled) return;
       const triggerValues =
         hightLightTriggerValue || sliderHapticTriggerNumbers;
-      const previous = previousCloseValue.current ?? controlledValue.current;
-      const crossedClosePoint = closeHapticTriggerNumbers.some(point =>
-        v > previous
-          ? previous < point && point <= v
-          : v <= point && point < previous,
-      );
-      const shouldTrigger =
-        variant === 'close'
-          ? Number.isFinite(v) && Number.isFinite(previous) && crossedClosePoint
-          : v !== previousValue.current && triggerValues.includes(v);
-      if (shouldTrigger) {
+      if (variant === 'close') {
+        const previous = previousCloseValue.current ?? controlledValue.current;
+        const minimum = minValue || 0;
+        const maximum = maxValue || 100;
+        const unit = step ?? 1;
+        const previousIndex = getCloseStepIndex(
+          previous,
+          minimum,
+          maximum,
+          unit,
+        );
+        const nextIndex = getCloseStepIndex(v, minimum, maximum, unit);
+        const now = Date.now();
+        const elapsed = now - lastCloseHapticAt.current;
+        if (
+          previousIndex !== null &&
+          nextIndex !== null &&
+          previousIndex !== nextIndex &&
+          !(elapsed >= 0 && elapsed < CLOSE_HAPTIC_MIN_INTERVAL_MS)
+        ) {
+          lastCloseHapticAt.current = now;
+          triggerImpact({
+            enableVibrateFallback: false,
+            ignoreAndroidSystemSettings: false,
+          });
+        }
+      } else if (v !== previousValue.current && triggerValues.includes(v)) {
         trigger('impactLight', {
           enableVibrateFallback: true,
           ignoreAndroidSystemSettings: false,
@@ -90,7 +129,15 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
       previousCloseValue.current = v;
       onValueChange(v);
     },
-    [onValueChange, hightLightTriggerValue, variant, disabled],
+    [
+      onValueChange,
+      hightLightTriggerValue,
+      variant,
+      disabled,
+      minValue,
+      maxValue,
+      step,
+    ],
   );
 
   const handleSlidingStart = useCallback(

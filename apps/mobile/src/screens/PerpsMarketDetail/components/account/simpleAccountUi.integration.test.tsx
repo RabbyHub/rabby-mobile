@@ -286,7 +286,24 @@ it('uses the whole new price tag to cancel and preserves the default trigger pre
   expect(cancel).toHaveBeenCalledTimes(2);
 });
 
-it('keeps default slider haptics isolated and gives close a haptic at each quarter', () => {
+// Close haptics are throttled like Perps Pro; drive a clock so each case
+// decides how far apart native slider events arrive.
+let hapticClock = 0;
+const advanceHapticClock = (ms: number) => {
+  hapticClock += ms;
+};
+let dateNow: jest.SpyInstance | undefined;
+const startHapticClock = () => {
+  hapticClock = 1_000;
+  dateNow = jest.spyOn(Date, 'now').mockImplementation(() => hapticClock);
+};
+afterEach(() => {
+  dateNow?.mockRestore();
+  dateNow = undefined;
+});
+
+it('keeps default slider haptics isolated and gives close a haptic per step', () => {
+  startHapticClock();
   const trigger = require('react-native-haptic-feedback').trigger;
   trigger.mockClear();
   const change = jest.fn();
@@ -298,6 +315,7 @@ it('keeps default slider haptics isolated and gives close a haptic at each quart
   );
   act(() => {
     for (const value of [25, 50, 50, 75, 100]) {
+      advanceHapticClock(100);
       ui.getByTestId('native-slider').props.onValueChange(value);
     }
   });
@@ -312,32 +330,31 @@ it('keeps default slider haptics isolated and gives close a haptic at each quart
   const slider = ui.UNSAFE_getByType(PerpsGestureSlider);
   expect(slider.props.step).toBe(1);
   act(() => {
-    slider.props.onValueChange(25);
-    slider.props.onValueChange(50);
-    slider.props.onValueChange(50);
-    slider.props.onValueChange(75);
-    slider.props.onValueChange(100);
+    for (const value of [1, 2, 2, 3, 4]) {
+      advanceHapticClock(100);
+      slider.props.onValueChange(value);
+    }
   });
   expect(change).toHaveBeenCalledTimes(5);
   expect(trigger).toHaveBeenCalledTimes(4);
+  expect(trigger).toHaveBeenLastCalledWith('impactLight', {
+    enableVibrateFallback: false,
+    ignoreAndroidSystemSettings: false,
+  });
 });
 
 it.each([
   {
-    initial: 100,
-    values: [100, 76, 75, 75, 74, 51, 49, 26, 24, 1, 0],
-    pulses: [0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1],
-  },
-  {
     initial: 0,
-    values: [0, 24, 26, 49, 51, 74, 76, 99, 100],
-    pulses: [0, 0, 1, 0, 1, 0, 1, 0, 1],
+    values: [0, 1, 1, 2, 5, 4, 100, 99],
+    pulses: [0, 1, 0, 1, 1, 1, 1, 1],
   },
-  { initial: 51, values: [49, 50, 51, 49, 50, 50], pulses: [1, 1, 0, 1, 1, 0] },
-  { initial: 100, values: [1, 100], pulses: [1, 1] },
+  { initial: 0, values: [0.4, 0.6, 0.7, 1.4], pulses: [0, 1, 0, 0] },
+  { initial: 100, values: [100, 120, -5, 0], pulses: [0, 0, 1, 0] },
 ])(
-  'detects close mark crossings without relying on exact callback values: $initial/$values',
+  'pulses once per changed step without relying on exact values: $initial/$values',
   ({ initial, values, pulses }) => {
+    startHapticClock();
     const trigger = require('react-native-haptic-feedback').trigger;
     trigger.mockClear();
     const change = jest.fn();
@@ -356,18 +373,48 @@ it.each([
       ui.UNSAFE_getByType(PerpsGestureSlider).props.onSlidingStart(initial),
     );
     values.forEach((value, i) => {
+      advanceHapticClock(100);
       const before = trigger.mock.calls.length;
       act(() =>
         ui.UNSAFE_getByType(PerpsGestureSlider).props.onValueChange(value),
       );
-      // A single native event emits at most one pulse, even across several marks.
+      // A single native event emits at most one pulse, even across many steps.
       expect(trigger.mock.calls.length - before).toBe(pulses[i]);
     });
     expect(change.mock.calls.map(([value]) => value)).toEqual(values);
   },
 );
 
+it('throttles close step pulses to one per 80ms during a fast drag', () => {
+  startHapticClock();
+  const trigger = require('react-native-haptic-feedback').trigger;
+  trigger.mockClear();
+  const ui = render(
+    safe(
+      <PerpsSlider
+        variant="close"
+        value={0}
+        onValueChange={jest.fn()}
+        step={1}
+      />,
+    ),
+  );
+  const slider = ui.UNSAFE_getByType(PerpsGestureSlider);
+  act(() => slider.props.onSlidingStart(0));
+  act(() => slider.props.onValueChange(1));
+  expect(trigger).toHaveBeenCalledTimes(1);
+  for (const value of [2, 3, 4]) {
+    advanceHapticClock(20);
+    act(() => slider.props.onValueChange(value));
+  }
+  expect(trigger).toHaveBeenCalledTimes(1);
+  advanceHapticClock(20);
+  act(() => slider.props.onValueChange(5));
+  expect(trigger).toHaveBeenCalledTimes(2);
+});
+
 it('handles track-tap ordering, controlled resets, and disabled close sliders', () => {
+  startHapticClock();
   const trigger = require('react-native-haptic-feedback').trigger;
   trigger.mockClear();
   const change = jest.fn();
@@ -393,16 +440,19 @@ it('handles track-tap ordering, controlled resets, and disabled close sliders', 
   expect(complete).toHaveBeenCalledTimes(1);
   ui.rerender(safe(<PerpsSlider {...sliderProps} value={100} />));
   expect(trigger).toHaveBeenCalledTimes(1);
+  advanceHapticClock(100);
   act(() => ui.UNSAFE_getByType(PerpsGestureSlider).props.onValueChange(100));
   expect(trigger).toHaveBeenCalledTimes(1);
   act(() =>
     ui.UNSAFE_getByType(PerpsGestureSlider).props.onSlidingComplete(100),
   );
   ui.rerender(safe(<PerpsSlider {...sliderProps} value={51} />));
+  advanceHapticClock(100);
   act(() => ui.UNSAFE_getByType(PerpsGestureSlider).props.onValueChange(49));
   expect(trigger).toHaveBeenCalledTimes(2);
   ui.rerender(safe(<PerpsSlider {...sliderProps} value={49} disabled />));
   const before = change.mock.calls.length;
+  advanceHapticClock(100);
   act(() => ui.UNSAFE_getByType(PerpsGestureSlider).props.onValueChange(0));
   expect(trigger).toHaveBeenCalledTimes(2);
   expect(change).toHaveBeenCalledTimes(before);
