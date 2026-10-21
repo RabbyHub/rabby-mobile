@@ -15,11 +15,11 @@ import { render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
-jest.mock('@rneui/themed', () => {
+jest.mock('@/components/perps/PerpsGestureSlider', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
   return {
-    Slider: (props: object) =>
+    PerpsGestureSlider: (props: object) =>
       ReactModule.createElement(View, { ...props, testID: 'slider-input' }),
   };
 });

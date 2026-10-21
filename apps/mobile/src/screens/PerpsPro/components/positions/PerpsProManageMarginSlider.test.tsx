@@ -21,8 +21,8 @@ jest.mock('@/hooks/theme', () => ({
 jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (getStyle: unknown) => getStyle,
 }));
-jest.mock('@rneui/themed', () => ({
-  Slider: (props: object) => {
+jest.mock('@/components/perps/PerpsGestureSlider', () => ({
+  PerpsGestureSlider: (props: object) => {
     const ReactModule = require('react');
     return ReactModule.createElement(require('react-native').View, {
       ...props,

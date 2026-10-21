@@ -4,7 +4,7 @@ import UnselectedPoint from '@/assets2024/icons/perps/PerpsSimpleAccount/slider-
 import { BubbleWithText } from '@/screens/Swap/components/Slider';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Slider } from '@rneui/themed';
+import { PerpsGestureSlider as Slider } from '@/components/perps/PerpsGestureSlider';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Platform, View } from 'react-native';
 import Animated, {
@@ -93,7 +93,7 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
 
   const handleSlidingStart = useCallback(
     (start: number) => {
-      // RNEUI's touch-track value event can arrive before slidingStart.
+      // Seed crossing detection before the native gesture publishes its first value.
       previousCloseValue.current = start;
       onSlidingStart?.();
     },

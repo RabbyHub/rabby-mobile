@@ -220,10 +220,9 @@ export const PerpsProPositionTpSlForm: React.FC<{
       setPercent(0);
       setManualAmount('');
     }, [inputSource]);
-    const handleAmountSliderTouchCapture = useCallback(() => {
+    const dismissAmountInput = useCallback(() => {
       amountInputRef.current?.blur();
       Keyboard.dismiss();
-      return false;
     }, []);
 
     // A rounded quote prefill is presentation, not a new amount instruction.
@@ -623,9 +622,6 @@ export const PerpsProPositionTpSlForm: React.FC<{
               </View>
               <View
                 style={styles.slider}
-                onStartShouldSetResponderCapture={
-                  handleAmountSliderTouchCapture
-                }
                 testID="perps-pro-position-tpsl-amount-slider-section">
                 <PerpsProSlider
                   appearance="order-dialog"
@@ -634,7 +630,10 @@ export const PerpsProPositionTpSlForm: React.FC<{
                   maximumValue={100}
                   minimumValue={0}
                   onSlidingComplete={sliderHaptics.onSlidingComplete}
-                  onSlidingStart={sliderHaptics.onSlidingStart}
+                  onSlidingStart={value => {
+                    dismissAmountInput();
+                    sliderHaptics.onSlidingStart(value);
+                  }}
                   onValueChange={next => {
                     const roundedNext = Math.round(next);
                     sliderHaptics.onValueChange(roundedNext);
