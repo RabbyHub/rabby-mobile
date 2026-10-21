@@ -9,15 +9,11 @@ import {
 } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Slider } from '@rneui/themed';
+import { PerpsGestureSlider } from '@/components/perps/PerpsGestureSlider';
 import type { PerpsPositionViewModel } from '../../model/position';
 
 jest.mock('@ledgerhq/react-native-hw-transport-ble', () => ({}));
 jest.mock('@gorhom/bottom-sheet', () => require('@gorhom/bottom-sheet/mock'));
-jest.mock('@rneui/themed', () => ({
-  ...jest.requireActual('@rneui/themed'),
-  Slider: require('react-native').View,
-}));
 
 // Keep import-time startup tasks dormant. The source Store, margin controller,
 // formatter, slider adapter, amount row and decimal buffer remain real.
@@ -203,9 +199,7 @@ describe('margin target and real decimal buffer integration', () => {
     expectAmount('10.10');
     fireEvent.press(screen.getByTestId('perps-pro-manage-margin-max'));
     expectAmount('26.10');
-    const slider = screen
-      .UNSAFE_getAllByType(Slider)
-      .find(node => typeof node.props.onValueChange === 'function')!;
+    const slider = screen.UNSAFE_getByType(PerpsGestureSlider);
     for (const [value, text] of [
       [12.09, '12.09'],
       [12.1, '12.10'],

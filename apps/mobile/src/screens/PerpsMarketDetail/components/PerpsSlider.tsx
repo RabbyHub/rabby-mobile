@@ -1,7 +1,7 @@
 import { BubbleWithText } from '@/screens/Swap/components/Slider';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Slider } from '@rneui/themed';
+import { PerpsGestureSlider as Slider } from '@/components/perps/PerpsGestureSlider';
 import React, { useCallback, useMemo, useRef } from 'react';
 import { Platform, View } from 'react-native';
 import Animated, {
