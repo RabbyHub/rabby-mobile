@@ -2821,6 +2821,17 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "Margin",
+        "averageEntry": "Avg.entry",
+        "liquidationPriceGap": "Liq.Price (gap)",
+        "tpSl": "TP/SL",
+        "takeProfitWhen": "Take Profit When",
+        "stopLossWhen": "Stop Loss When",
+        "estimatedPnl": "Est.PNL",
+        "closePositionTitle": "Close {{coin}} Position",
+        "estimatedRealizedPnl": "Est. Realized PNL"
+      },
       "simpleChart": {
         "openInterest": "Open interest",
         "volume24h": "24h volume",

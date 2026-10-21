@@ -2907,6 +2907,17 @@
       }
     },
     "perpsDetail": {
+      "simpleAccount": {
+        "margin": "保證金",
+        "averageEntry": "平均開倉價",
+        "liquidationPriceGap": "強平價（距離）",
+        "tpSl": "止盈/止損",
+        "takeProfitWhen": "止盈觸發價",
+        "stopLossWhen": "止損觸發價",
+        "estimatedPnl": "預計盈虧",
+        "closePositionTitle": "平掉 {{coin}} 倉位",
+        "estimatedRealizedPnl": "預計已實現盈虧"
+      },
       "simpleChart": {
         "openInterest": "未平倉量",
         "volume24h": "24h 成交量",

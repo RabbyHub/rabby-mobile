@@ -4,10 +4,17 @@ import { RootNames } from '@/constant/layout';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { naviReplace } from '@/utils/navigation';
 import { PerpsHeaderTitle } from './PerpsHeaderTitle';
+import type {
+  AccountHeaderHandle,
+  AccountHeaderSnapshot,
+} from './account/model';
 
 // The navigator owns this header from the first descriptor. Its identity is
 // available from the route even before market metadata or positions load.
-export function PerpsMarketDetailHeader({ market }: { market: string }) {
+export const PerpsMarketDetailHeader = React.forwardRef<
+  AccountHeaderHandle,
+  { market: string; snapshotRef?: React.RefObject<AccountHeaderSnapshot> }
+>(function PerpsMarketDetailHeader({ market, snapshotRef }, ref) {
   const { displayName, logoUrl, quoteCoin } = perpsStore(
     useShallow(state => ({
       displayName: state.marketDataMap[market]?.displayName || market,
@@ -18,6 +25,8 @@ export function PerpsMarketDetailHeader({ market }: { market: string }) {
 
   return (
     <PerpsHeaderTitle
+      ref={ref}
+      snapshotRef={snapshotRef}
       popupIsOpen={false}
       coin={market}
       displayName={displayName}
@@ -34,4 +43,4 @@ export function PerpsMarketDetailHeader({ market }: { market: string }) {
       }}
     />
   );
-}
+});

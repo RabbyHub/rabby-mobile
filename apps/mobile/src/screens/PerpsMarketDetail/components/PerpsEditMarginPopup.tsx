@@ -106,6 +106,11 @@ export const PerpsEditMarginPopup: React.FC<{
   });
 
   const { t } = useTranslation();
+  const bottomSheetProps = useMemo(
+    () =>
+      makeBottomSheetProps({ colors: colors2024, linearGradientType: 'bg1' }),
+    [colors2024],
+  );
 
   const {
     value: margin,
@@ -289,10 +294,7 @@ export const PerpsEditMarginPopup: React.FC<{
     <>
       <AppBottomSheetModal
         ref={modalRef}
-        {...makeBottomSheetProps({
-          colors: colors2024,
-          linearGradientType: 'bg1',
-        })}
+        {...bottomSheetProps}
         onDismiss={onCancel}
         snapPoints={[maxHeight]}
         keyboardBehavior="interactive"
@@ -610,6 +612,7 @@ const getStyle = createGetStyles2024(ctx => {
       paddingVertical: 0,
       lineHeight: 42,
       fontWeight: '900',
+      fontVariant: ['tabular-nums'],
       color: colors2024['neutral-title-1'],
       flex: 1,
       textAlign: 'center',

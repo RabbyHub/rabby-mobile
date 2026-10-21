@@ -1,3 +1,4 @@
+import { accountHeaderQuote, type AccountHeaderQuote } from './account/model';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 import type { NativeGesture } from 'react-native-gesture-handler';
@@ -37,7 +38,11 @@ export const PerpsChart = React.memo(function PerpsChart({
   lineTagInfo,
   accountKey,
   history,
+  onPriceLayout,
+  onHeaderQuote,
 }: {
+  onPriceLayout?: (node: View) => void;
+  onHeaderQuote?: (quote: AccountHeaderQuote, active: boolean) => void;
   marketName: string;
   scrollGesture?: NativeGesture;
   currentAssetCtx?: MarketData;
@@ -132,10 +137,23 @@ export const PerpsChart = React.memo(function PerpsChart({
     if (!chart.active) setSheetVisible(false);
   }, [chart.active]);
   const ctx = activeAssetCtx ?? currentAssetCtx;
+  const headerQuote = useMemo(
+    () =>
+      accountHeaderQuote(
+        Number(activeAssetCtx?.markPx || currentAssetCtx?.markPx || 0),
+        Number(ctx?.prevDayPx),
+        decimals,
+      ),
+    [activeAssetCtx?.markPx, currentAssetCtx?.markPx, ctx?.prevDayPx, decimals],
+  );
+  useEffect(() => {
+    onHeaderQuote?.(headerQuote, chart.active);
+  }, [headerQuote, chart.active, onHeaderQuote]);
   return (
     <View style={styles.root}>
       <PerpsSimpleChartHeader
         key={marketName}
+        onPriceLayout={onPriceLayout}
         active={chart.active}
         markPrice={Number(
           activeAssetCtx?.markPx || currentAssetCtx?.markPx || 0,

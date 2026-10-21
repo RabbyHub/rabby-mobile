@@ -3,6 +3,7 @@ import { fireEvent, render } from '@testing-library/react-native';
 import type { NativeStackHeaderProps } from '@react-navigation/native-stack';
 import { RootNames } from '@/constant/layout';
 import TransactionNavigator from './TransactionNavigator';
+import { PerpsMarketDetailHeader } from '../PerpsMarketDetail/components/PerpsMarketDetailHeader';
 
 type CapturedScreen = {
   name: string;
@@ -158,8 +159,9 @@ function getInitialHeader(
   name:
     | typeof RootNames.SwapBridge
     | typeof RootNames.MultiSwapBridge
-    | typeof RootNames.Lending,
-  activeTab?: 'swap' | 'bridge',
+    | typeof RootNames.Lending
+    | typeof RootNames.PerpsMarketDetail,
+  params?: { activeTab: 'swap' | 'bridge' } | { market: string },
 ) {
   render(<TransactionNavigator />);
   const descriptor = mockScreens.get(name);
@@ -172,7 +174,7 @@ function getInitialHeader(
   const route = {
     key: `${name}-cold-entry`,
     name,
-    params: activeTab ? { activeTab } : undefined,
+    params,
   };
   const options =
     typeof descriptor!.options === 'function'
@@ -217,7 +219,9 @@ describe('SwapBridge initial route header', () => {
   it.each([RootNames.SwapBridge, RootNames.MultiSwapBridge] as const)(
     '%s honors an initial Bridge route without an intermediate Swap header',
     name => {
-      const { element, navigation } = getInitialHeader(name, 'bridge');
+      const { element, navigation } = getInitialHeader(name, {
+        activeTab: 'bridge',
+      });
       const screen = render(<>{element}</>);
 
       expect(screen.getAllByTestId('custom-header-back')).toHaveLength(1);
@@ -227,6 +231,20 @@ describe('SwapBridge initial route header', () => {
       expect(navigation.setParams).toHaveBeenCalledWith({ activeTab: 'swap' });
     },
   );
+});
+
+describe('Perps initial route header', () => {
+  beforeEach(() => mockScreens.clear());
+
+  it('declares the same market header before the page connects its presentation', () => {
+    const { element } = getInitialHeader(RootNames.PerpsMarketDetail, {
+      market: 'HYPE',
+    });
+    expect(element).toMatchObject({
+      type: PerpsMarketDetailHeader,
+      props: { market: 'HYPE' },
+    });
+  });
 });
 
 describe('Lending initial route header', () => {
