@@ -34,6 +34,8 @@ export const PerpsPosition: React.FC<{
   tpSlContextKey?: string;
   tpPending?: boolean;
   slPending?: boolean;
+  tpCancelling?: boolean;
+  slCancelling?: boolean;
   positionData?: {
     pnl: number;
     positionValue: number;
@@ -80,6 +82,8 @@ export const PerpsPosition: React.FC<{
   tpSlContextKey,
   tpPending,
   slPending,
+  tpCancelling,
+  slCancelling,
   positionData,
   coin,
   coinLogo,
@@ -341,6 +345,7 @@ export const PerpsPosition: React.FC<{
                 variant="position"
                 key={`${tpSlContextKey}:tp`}
                 actionPending={tpPending}
+                cancelPending={tpCancelling}
                 estimatedPnl={takeProfitExpectedPnl}
                 handleActionApproveStatus={handleActionApproveStatus}
                 coin={displayName}
@@ -404,6 +409,7 @@ export const PerpsPosition: React.FC<{
                 variant="position"
                 key={`${tpSlContextKey}:sl`}
                 actionPending={slPending}
+                cancelPending={slCancelling}
                 estimatedPnl={stopLossExpectedPnl}
                 leverage={positionData?.leverage}
                 coin={displayName}
