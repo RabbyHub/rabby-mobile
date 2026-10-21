@@ -2738,10 +2738,11 @@
       "simpleAccount": {
         "margin": "Margin",
         "averageEntry": "Harga masuk rata-rata",
-        "liquidationPriceGap": "Harga lik. (jarak)",
+        "estimatedLiquidationPrice": "Estimasi harga likuidasi",
+        "estimatedLiquidationDistance": "Estimasi jarak likuidasi",
         "tpSl": "TP/SL",
-        "takeProfitWhen": "Ambil Untung Saat",
-        "stopLossWhen": "Hentikan Rugi Saat",
+        "takeProfitPrice": "Harga ambil untung",
+        "stopLossPrice": "Harga hentikan rugi",
         "estimatedPnl": "Estimasi PNL",
         "closePositionTitle": "Tutup Posisi {{coin}}",
         "estimatedRealizedPnl": "Estimasi PNL Terealisasi"

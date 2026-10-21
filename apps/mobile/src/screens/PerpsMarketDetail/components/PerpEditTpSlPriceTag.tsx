@@ -52,7 +52,8 @@ interface Props {
   actionType: 'tp' | 'sl';
   quoteAsset: string;
   type: 'openPosition' | 'hasPosition';
-  handleSetAutoClose: (price: string) => Promise<void>;
+  handleSetAutoClose: (price: string) => Promise<void | boolean>;
+  actionPending?: boolean;
   handleCancelAutoClose: () => Promise<void>;
 }
 
@@ -94,9 +95,18 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
   type,
   quoteAsset,
   handleSetAutoClose,
+  actionPending = false,
   handleCancelAutoClose,
 }) => {
   const [modalVisible, setModalVisible] = React.useState(false);
+  const pressInFlight = React.useRef(false);
+  const mounted = React.useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
@@ -239,7 +249,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
     loading,
   } = useRequest(
     async () => {
-      await handleSetAutoClose(autoClosePrice);
+      return handleSetAutoClose(autoClosePrice);
     },
     {
       manual: true,
@@ -247,8 +257,8 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
         console.error('Failed to set auto close:', error);
         toast.error(error.message || 'Failed to set auto close');
       },
-      onSuccess() {
-        setModalVisible(false);
+      onSuccess(result) {
+        if (result !== false) setModalVisible(false);
       },
     },
   );
@@ -318,27 +328,43 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
   return (
     <>
       <TouchableOpacity
+        disabled={actionPending}
         style={[
           styles.tagContainer,
           variant === 'position' && styles.positionTag,
           variant === 'position' && !!initTpOrSlPrice && styles.positionSetTag,
         ]}
         onPress={async () => {
-          await handleActionApproveStatus?.();
-          if (initTpOrSlPrice) {
-            await handleCancelAutoClose();
+          if (
+            variant === 'position' &&
+            (actionPending || pressInFlight.current)
+          )
             return;
+          pressInFlight.current = true;
+          try {
+            await handleActionApproveStatus?.();
+            if (!mounted.current) return;
+            if (initTpOrSlPrice) {
+              await handleCancelAutoClose();
+              return;
+            }
+            if (disableEdit) {
+              toast.error(t('page.perps.PerpsAutoCloseModal.noPosition'));
+              return;
+            }
+            setModalVisible(true);
+          } finally {
+            pressInFlight.current = false;
           }
-
-          if (disableEdit) {
-            toast.error(t('page.perps.PerpsAutoCloseModal.noPosition'));
-            return;
-          }
-          setModalVisible(true);
         }}>
         {variant === 'position' ? (
           <View style={styles.positionContent}>
-            <Text style={[styles.tagText, styles.positionPrice]}>
+            <Text
+              style={[
+                styles.tagText,
+                styles.positionPrice,
+                !initTpOrSlPrice && styles.positionEmptyPrice,
+              ]}>
               {initTpOrSlPrice
                 ? `${splitNumberByStep(initTpOrSlPrice)} ${quoteAsset}`
                 : '-'}
@@ -639,10 +665,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
     textAlign: 'right',
   },
+  positionEmptyPrice: { color: colors2024['neutral-foot'] },
   positionPnl: {
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '400',
-    fontSize: 10,
+    fontWeight: '500',
+    fontSize: 12,
     lineHeight: 16,
     color: colors2024['neutral-foot'],
     textAlign: 'right',

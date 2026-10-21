@@ -79,7 +79,6 @@ const props: React.ComponentProps<typeof PerpsPosition> = {
   showRiskPopup: false,
   setShowRiskPopup: jest.fn(),
   handleActionApproveStatus: jest.fn(async () => {}),
-  setCurrentTpOrSl: jest.fn(),
   positionData: {
     pnl: 12,
     positionValue: 110,
@@ -120,7 +119,15 @@ it.each(['cross', 'isolated'] as const)(
       />,
     );
     expect(ui.getByText('+12.50%')).toBeTruthy();
-    expect(ui.getByText(/-100.00%/)).toBeTruthy();
+    expect(ui.getByText('-100.00%')).toHaveStyle({ color: 'neutral-title-1' });
+    expect(
+      ui.getByText('page.perpsDetail.simpleAccount.estimatedLiquidationPrice'),
+    ).toBeTruthy();
+    expect(
+      ui.getByText(
+        'page.perpsDetail.simpleAccount.estimatedLiquidationDistance',
+      ),
+    ).toBeTruthy();
     fireEvent.press(ui.getByText('page.perpsDetail.PerpsPosition.size'));
     expect(mockTips).toHaveBeenCalledWith(
       expect.objectContaining({

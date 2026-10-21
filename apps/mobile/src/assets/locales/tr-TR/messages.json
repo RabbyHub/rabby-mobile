@@ -2738,10 +2738,11 @@
       "simpleAccount": {
         "margin": "Marj",
         "averageEntry": "Ort. giriş fiyatı",
-        "liquidationPriceGap": "Lik. fiyatı (mesafe)",
+        "estimatedLiquidationPrice": "Tahmini lik. fiyatı",
+        "estimatedLiquidationDistance": "Tahmini lik. mesafesi",
         "tpSl": "TP/SL",
-        "takeProfitWhen": "Kâr alma fiyatı",
-        "stopLossWhen": "Zarar durdurma fiyatı",
+        "takeProfitPrice": "Kâr alma fiyatı",
+        "stopLossPrice": "Zarar durdurma fiyatı",
         "estimatedPnl": "Tahmini PNL",
         "closePositionTitle": "{{coin}} Pozisyonunu Kapat",
         "estimatedRealizedPnl": "Tahmini gerçekleşmiş PNL"

@@ -2857,10 +2857,11 @@
       "simpleAccount": {
         "margin": "Маржа",
         "averageEntry": "Средняя цена входа",
-        "liquidationPriceGap": "Цена ликв. (расстояние)",
+        "estimatedLiquidationPrice": "Расч. цена ликв.",
+        "estimatedLiquidationDistance": "Расч. расстояние до ликв.",
         "tpSl": "TP/SL",
-        "takeProfitWhen": "Тейк-профит при",
-        "stopLossWhen": "Стоп-лосс при",
+        "takeProfitPrice": "Цена тейк-профита",
+        "stopLossPrice": "Цена стоп-лосса",
         "estimatedPnl": "Расч. PnL",
         "closePositionTitle": "Закрыть позицию {{coin}}",
         "estimatedRealizedPnl": "Расч. реализованный PnL"

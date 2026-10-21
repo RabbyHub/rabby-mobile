@@ -143,7 +143,7 @@ it('keeps the initial navigator header mounted when the page attaches its latest
 
   // The page can publish before its ref is attached to the navigator's header.
   act(() => {
-    presenter.quote(accountHeaderQuote(110, 100, 2), true);
+    presenter.quote(accountHeaderQuote(110, 2), true);
     presenter.layout(62);
     presenter.scroll(70);
   });
@@ -159,15 +159,16 @@ it('keeps the initial navigator header mounted when the page attaches its latest
   expect(ui.UNSAFE_getByType(PerpsHeaderTitle)).toBe(initialTitle);
   expect(ui.getByText('ETH/USDC')).toBe(initialCoin);
   expect(ui.getByText('$110.00')).toBeTruthy();
-  expect(ui.getByText('+10.00%')).toBeTruthy();
+  expect(ui.queryByText('+10.00%')).toBeNull();
+  expect(ui.queryByText('24h')).toBeNull();
   expect(ui.UNSAFE_queryAllByType(PerpsHeaderRight)).toHaveLength(0);
 
-  act(() => presenter.quote(accountHeaderQuote(120, 100, 2), true));
+  act(() => presenter.quote(accountHeaderQuote(120, 2), true));
   expect(ui.getByText('$120.00')).toBeTruthy();
   expect(ui.UNSAFE_getByType(PerpsHeaderTitle)).toBe(initialTitle);
-  act(() => presenter.quote(accountHeaderQuote(130, 100, 2), false));
+  act(() => presenter.quote(accountHeaderQuote(130, 2), false));
   expect(ui.getByText('$120.00')).toBeTruthy();
-  act(() => presenter.quote(accountHeaderQuote(140, 100, 2), true));
+  act(() => presenter.quote(accountHeaderQuote(140, 2), true));
   expect(ui.getByText('$140.00')).toBeTruthy();
   act(() => presenter.scroll(0));
   expect(ui.UNSAFE_queryAllByType(PerpsHeaderRight)).toHaveLength(1);
@@ -301,12 +302,13 @@ it('connects the real header to the page presenter and preserves coin selection/
   expect(ui.UNSAFE_queryAllByType(PerpsHeaderRight)).toHaveLength(1);
   fireEvent.press(ui.getByText('ETH/USDC'));
   act(() => {
-    presenter.quote(accountHeaderQuote(110, 100, 2), true);
+    presenter.quote(accountHeaderQuote(110, 2), true);
     presenter.layout(62);
     presenter.scroll(70);
   });
   expect(ui.getByText('$110.00')).toBeTruthy();
-  expect(ui.getByText('+10.00%')).toBeTruthy();
+  expect(ui.queryByText('+10.00%')).toBeNull();
+  expect(ui.queryByText('24h')).toBeNull();
   expect(ui.UNSAFE_queryAllByType(PerpsHeaderRight)).toHaveLength(0);
   fireEvent.press(ui.getByText('ETH/USDC'));
   expect(select).toHaveBeenCalledTimes(2);
@@ -498,3 +500,40 @@ it('handles track-tap ordering, controlled resets, and disabled close sliders', 
   expect(trigger).toHaveBeenCalledTimes(2);
   expect(change).toHaveBeenCalledTimes(before);
 });
+
+it.each([false, true, undefined])(
+  'keeps the editor open only for a rejected result (%s), preserving draft-mode void callbacks',
+  async result => {
+    const submit = jest.fn(async () => result);
+    const ui = render(
+      safe(
+        <PerpEditTpSlPriceTag
+          coin="ETH"
+          variant="position"
+          actionType="tp"
+          type="hasPosition"
+          entryPrice={100}
+          markPrice={110}
+          initTpOrSlPrice=""
+          direction="Long"
+          size={1}
+          margin={20}
+          leverage={5}
+          liqPrice={80}
+          pxDecimals={2}
+          szDecimals={3}
+          quoteAsset="USDC"
+          handleSetAutoClose={submit}
+          handleCancelAutoClose={async () => {}}
+        />,
+      ),
+    );
+    await act(async () => fireEvent.press(ui.getByText('-')));
+    fireEvent.changeText(ui.getByPlaceholderText('$0'), '120');
+    await act(async () => fireEvent.press(ui.getByText('global.confirm')));
+    expect(submit).toHaveBeenCalledWith('120');
+    expect(
+      getVisibleBlockingModalIds().includes(MODAL_GATE_IDS.perpsEditTpSlPrice),
+    ).toBe(result === false);
+  },
+);

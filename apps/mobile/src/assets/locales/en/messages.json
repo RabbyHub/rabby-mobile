@@ -2823,11 +2823,12 @@
     "perpsDetail": {
       "simpleAccount": {
         "margin": "Margin",
-        "averageEntry": "Avg.entry",
-        "liquidationPriceGap": "Liq.Price (gap)",
+        "averageEntry": "Avg. Entry",
+        "estimatedLiquidationPrice": "Est. Liq. Price",
+        "estimatedLiquidationDistance": "Est. Liq. Distance",
         "tpSl": "TP/SL",
-        "takeProfitWhen": "Take Profit When",
-        "stopLossWhen": "Stop Loss When",
+        "takeProfitPrice": "Take Profit Price",
+        "stopLossPrice": "Stop Loss Price",
         "estimatedPnl": "Est.PNL",
         "closePositionTitle": "Close {{coin}} Position",
         "estimatedRealizedPnl": "Est. Realized PNL"
