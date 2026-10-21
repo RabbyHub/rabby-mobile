@@ -477,6 +477,33 @@ describe('rpcFlow typed-data chain pinning', () => {
     },
   );
 
+  it('leaves a failed signing to the waiting UI without rejecting', async () => {
+    const { waitSignComponentAmounted } =
+      jest.requireMock('../utils/signEvent');
+    const { eventBus } = jest.requireMock('@/utils/events');
+    waitSignComponentAmounted.mockResolvedValue(undefined);
+    mockRequestApproval
+      .mockResolvedValueOnce({ uiRequestComponent: 'PrivatekeyWaiting' })
+      .mockResolvedValueOnce('0xfromWaitingUi');
+    mockEthSignTypedData.mockRejectedValue(new Error('device busy'));
+    const unhandled: unknown[] = [];
+    const onUnhandled = (reason: unknown) => unhandled.push(reason);
+    process.on('unhandledRejection', onUnhandled);
+
+    try {
+      await expect(rpcFlow(makeRequest())).resolves.toBe('0xfromWaitingUi');
+      await new Promise(resolve => setImmediate(resolve));
+
+      expect(eventBus.emit).toHaveBeenCalledWith('SIGN_FINISHED', {
+        success: false,
+        errorMsg: 'device busy',
+      });
+      expect(unhandled).toEqual([]);
+    } finally {
+      process.off('unhandledRejection', onUnhandled);
+    }
+  });
+
   it.each<['walletconnect' | 'internal', number | undefined]>([
     ['walletconnect', 56],
     ['internal', undefined],
