@@ -264,7 +264,7 @@ export const PerpsPosition: React.FC<{
               </View>
             </View>
           </View>
-          <View style={styles.divider}>
+          <View style={styles.divider} testID="perps-position-divider">
             <View style={styles.dividerLine} />
           </View>
           <View style={styles.details}>
@@ -568,7 +568,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     marginValueRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     roiRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
     roi: { ...text, fontSize: 12, lineHeight: 16, fontWeight: '700' },
-    divider: { height: 0, marginVertical: 12, marginRight: 8 },
+    divider: { height: 0, marginVertical: 12 },
     dividerLine: {
       position: 'absolute',
       left: 0,
