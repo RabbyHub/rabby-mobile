@@ -50,6 +50,7 @@ type TipProps<T extends PressableComponent> = Omit<TooltipProps, 'content'> & {
   noPressable?: boolean;
   modalGateId?: string;
   modalGateBlocking?: boolean;
+  onModalDismiss?: () => void;
 };
 
 const destroyListeners = new Set<() => void>();
@@ -57,6 +58,7 @@ const destroyListeners = new Set<() => void>();
 const TipModalGateContext = React.createContext<{
   modalGateId: string;
   modalGateBlocking: boolean;
+  onModalDismiss?: () => void;
 } | null>(null);
 
 const TipModalWithGate = ({
@@ -73,7 +75,8 @@ const TipModalWithGate = ({
     <TrackedModal
       {...modalProps}
       modalId={modalGate.modalGateId}
-      blocking={modalGate.modalGateBlocking}>
+      blocking={modalGate.modalGateBlocking}
+      onDismiss={modalGate.onModalDismiss}>
       {children}
     </TrackedModal>
   );
@@ -99,6 +102,7 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
   noPressable = false,
   modalGateId,
   modalGateBlocking = true,
+  onModalDismiss,
   modalComponent,
   ...rest
 }: TipProps<T>) => {
@@ -159,9 +163,10 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
         ? {
             modalGateId,
             modalGateBlocking,
+            onModalDismiss,
           }
         : null,
-    [modalGateBlocking, modalGateId],
+    [modalGateBlocking, modalGateId, onModalDismiss],
   );
 
   const onPress = pressableProps?.onPress;

@@ -104,6 +104,10 @@ export function useVisibleBlockingModalIds() {
   );
 }
 
+export function resetModalGateForTests() {
+  modalGateStore.setState({ blockingModalCountMap: {} });
+}
+
 export type ModalGateDebugSnapshot = {
   visibleBlockingModalCount: number;
   visibleBlockingModalIds: string[];

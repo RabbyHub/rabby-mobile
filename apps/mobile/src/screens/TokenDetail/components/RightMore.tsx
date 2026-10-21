@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -27,12 +27,36 @@ export const RightMore: React.FC<{
   const { t } = useTranslation();
   const isPinned = useIsUserTokenPinned(token);
   const [visible, setVisible] = useState(false);
+  const pendingRemoveTokenRef = useRef<ITokenItem | null>(null);
 
   const handleFavorite = () => {
     setVisible(false);
     toggleUserTokenPinned(token);
     setTimeout(refreshTags, 0);
   };
+
+  const openPendingRemove = useCallback(() => {
+    const pending = pendingRemoveTokenRef.current;
+    if (!pending) {
+      return;
+    }
+    pendingRemoveTokenRef.current = null;
+    createRemoveTokenConfirmPopup(pending);
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS === 'ios' || visible) {
+      return;
+    }
+    // RN Modal onDismiss is iOS-only. On Android the gate releases as soon as
+    // visible flips, so open on the next tick instead of waiting forever.
+    const timer = setTimeout(openPendingRemove, 0);
+    return () => clearTimeout(timer);
+  }, [openPendingRemove, visible]);
+
+  const handleModalDismiss = useCallback(() => {
+    openPendingRemove();
+  }, [openPendingRemove]);
 
   return (
     <Tip
@@ -42,6 +66,7 @@ export const RightMore: React.FC<{
       placement="bottom"
       isVisible={visible}
       modalGateId={MODAL_GATE_IDS.tokenDetailHeaderMenu}
+      onModalDismiss={handleModalDismiss}
       onClose={() => setVisible(false)}
       closeOnContentInteraction={false}
       displayInsets={{ top: 12, bottom: 12, left: 12, right: 12 }}
@@ -84,8 +109,8 @@ export const RightMore: React.FC<{
             ]}
             accessibilityRole="button"
             onPress={() => {
+              pendingRemoveTokenRef.current = token;
               setVisible(false);
-              createRemoveTokenConfirmPopup(token);
             }}>
             <Text style={styles.removeText}>
               {t('page.singleHome.tokenActions.remove')}
