@@ -1961,20 +1961,39 @@ function handleSetCandlestickData(
         // allow one more request so RN can confirm the official boundary.
         lastOlderCandlesRequestKey = null;
       }
-      chartState.chart
-        .timeScale()
-        .setVisibleLogicalRange(
-          previousVisibleRange
-            ? shiftLogicalRangeForPrependedCandles(
-                previousVisibleRange,
-                prependedCount,
-              )
-            : getInitialVisibleLogicalRange(
-                message.data.length,
-                chartState.proConfig.initialVisibleBars,
-              ),
-        );
-      publishPerpsProPriceScaleAutoScale();
+      const nextRange = previousVisibleRange
+        ? shiftLogicalRangeForPrependedCandles(
+            previousVisibleRange,
+            prependedCount,
+          )
+        : getInitialVisibleLogicalRange(
+            message.data.length,
+            chartState.proConfig.initialVisibleBars,
+          );
+      const applyNextRange = () => {
+        if (
+          !chartState.chart ||
+          chartState.currentDataIdentity !== message.identity
+        ) {
+          return;
+        }
+        isApplyingVisibleLogicalRange = true;
+        try {
+          chartState.chart.timeScale().setVisibleLogicalRange(nextRange);
+        } finally {
+          isApplyingVisibleLogicalRange = false;
+        }
+        publishPerpsProPriceScaleAutoScale();
+      };
+      applyNextRange();
+      // `setData` updates the series/time-scale points asynchronously. In
+      // newArch/iOS the synchronous range call can land before that update;
+      // the series then keeps the old bar spacing and leaves the new candles
+      // stuck at the left edge. Re-apply once the data/layout has settled.
+      window.requestAnimationFrame(() => {
+        applyNextRange();
+        window.requestAnimationFrame(applyNextRange);
+      });
     } else if (message.fitContent) {
       chartState.chart.timeScale().fitContent();
     }
