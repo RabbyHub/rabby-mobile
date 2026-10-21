@@ -35,6 +35,7 @@ import {
 import useAsync from 'react-use/lib/useAsync';
 import { useUnmount } from 'ahooks';
 import { Text } from '@/components/Typography';
+import { useRetryMinPending } from '@/components/Approval/hooks/useRetryMinPending';
 
 interface ApprovalParams {
   address: string;
@@ -136,6 +137,8 @@ export const LedgerHardwareWaiting = ({
 
   const [isRetrying, setIsRetrying] = React.useState(false);
 
+  const { markRetryStarted, afterMinPending } = useRetryMinPending();
+
   const handleRetry = async (showToast = true) => {
     if (isRetrying) {
       return;
@@ -146,6 +149,7 @@ export const LedgerHardwareWaiting = ({
     }
     setIsRetrying(true);
     setConnectStatus(APPROVAL_STATUS_MAP.WAITING);
+    markRetryStarted();
     retryTxReset();
     if (params.nonce && params.chainId && params.from && account) {
       setRetryTxType(retryUpdateType);
@@ -274,8 +278,10 @@ export const LedgerHardwareWaiting = ({
         Sentry.captureException(
           new Error('Ledger sign error: ' + JSON.stringify(data)),
         );
-        setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
-        setErrorMessage(data.errorMsg);
+        afterMinPending(() => {
+          setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
+          setErrorMessage(data.errorMsg);
+        });
       }
     });
 

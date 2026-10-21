@@ -25,6 +25,7 @@ import { apisSafe } from '@/core/apis/safe';
 import { emitSignComponentAmounted } from '@/core/utils/signEvent';
 import { findChain } from '@/utils/chain';
 import { Text } from '@/components/Typography';
+import { useRetryMinPending } from '@/components/Approval/hooks/useRetryMinPending';
 
 interface ApprovalParams {
   address: string;
@@ -110,12 +111,15 @@ export const TrezorHardwareWaiting = ({
     rejectApproval('user cancel');
   };
 
+  const { markRetryStarted, afterMinPending } = useRetryMinPending();
+
   const handleRetry = async (showToast = true) => {
     if (connectStatus === APPROVAL_STATUS_MAP.SUBMITTING) {
       toast.success(t('page.signFooterBar.ledger.resubmited'));
       return;
     }
     setConnectStatus(APPROVAL_STATUS_MAP.WAITING);
+    markRetryStarted();
     // Fire and forget: this resolves only when signing ends, and a failed
     // attempt is reported through SIGN_FINISHED instead.
     void notificationServiceApi
@@ -221,8 +225,10 @@ export const TrezorHardwareWaiting = ({
         Sentry.captureException(
           new Error('Trezor sign error: ' + JSON.stringify(data)),
         );
-        setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
-        setErrorMessage(data.errorMsg);
+        afterMinPending(() => {
+          setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
+          setErrorMessage(data.errorMsg);
+        });
       }
     });
 
