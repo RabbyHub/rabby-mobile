@@ -392,8 +392,40 @@ it('keeps a cancelled leg visible until confirmation and never restores it on a 
   ]);
 });
 
-it('reports rejected/missing SDK results as failure, retains existing tags and never refreshes a failed mutation', async () => {
+it('accepts Hyperliquid trigger acknowledgements and rejects unknown statuses', async () => {
+  const ui = mount();
+  const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    for (const status of ['waitingForTrigger', 'waitingForFill']) {
+      jest
+        .mocked(sdk.exchange!.bindTpslByOrderId)
+        .mockResolvedValueOnce(response([status]) as never);
+      await act(async () =>
+        expect(await ui.result.current.handleSetAutoClose(setParams)).toBe(
+          true,
+        ),
+      );
+    }
+    for (const statuses of [['unexpected'], [{ resting: {} }], []]) {
+      jest
+        .mocked(sdk.exchange!.bindTpslByOrderId)
+        .mockResolvedValueOnce(response(statuses) as never);
+      await act(async () =>
+        expect(await ui.result.current.handleSetAutoClose(setParams)).toBe(
+          false,
+        ),
+      );
+    }
+    // Every answered request reads back confirmed orders, accepted or not.
+    expect(ordersHttp()).toHaveBeenCalledTimes(5);
+  } finally {
+    log.mockRestore();
+  }
+});
+
+it('reports rejected/missing SDK results as failure, retains existing tags and only reads back answered set requests', async () => {
   write({ openOrders: [order(1)] });
+  ordersHttp().mockResolvedValue([order(1)]);
   const ui = mount();
   const log = jest.spyOn(console, 'error').mockImplementation(() => {});
   const exchange = sdk.exchange;
@@ -413,7 +445,9 @@ it('reports rejected/missing SDK results as failure, retains existing tags and n
       expect(await ui.result.current.handleSetAutoClose(setParams)).toBe(false),
     );
     expect(ui.result.current.tpPrice).toBe('110');
-    expect(ordersHttp()).not.toHaveBeenCalled();
+    // Only the answered-but-rejected set reads back; cancel and missing
+    // exchange paths never refresh.
+    expect(ordersHttp()).toHaveBeenCalledTimes(1);
   } finally {
     sdk.exchange = exchange;
     log.mockRestore();
