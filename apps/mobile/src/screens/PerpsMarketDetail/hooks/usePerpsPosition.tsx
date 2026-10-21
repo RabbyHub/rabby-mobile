@@ -43,6 +43,36 @@ const refreshTpSlOrders = async (coin: string) => {
   }
 };
 
+// Hyperliquid acknowledges trigger orders with bare "waitingForTrigger" /
+// "waitingForFill" strings, which the SDK's OrderResponseStatus type omits.
+const isAcceptedOrderStatus = (status: unknown) => {
+  if (status === 'waitingForTrigger' || status === 'waitingForFill') {
+    return true;
+  }
+  if (!status || typeof status !== 'object') return false;
+  const value = status as {
+    error?: unknown;
+    filled?: { oid?: unknown };
+    resting?: { oid?: unknown };
+  };
+  return (
+    !value.error &&
+    (typeof value.resting?.oid === 'number' ||
+      typeof value.filled?.oid === 'number')
+  );
+};
+
+const getOrderStatusError = (statuses: readonly unknown[] | undefined) => {
+  for (const status of statuses ?? []) {
+    const error =
+      status && typeof status === 'object'
+        ? (status as { error?: unknown }).error
+        : undefined;
+    if (typeof error === 'string' && error) return error;
+  }
+  return undefined;
+};
+
 export const usePerpsPosition = () => {
   const currentPerpsAccount = perpsStore(s => s.currentPerpsAccount);
   const { t } = useTranslation();
@@ -220,6 +250,7 @@ export const usePerpsPosition = () => {
       return runPerpsAction(
         { fallback: false, label: autoCloseText + ' set', context: params },
         async () => {
+          let responded = false;
           try {
             const exchange = apisPerps.getPerpsSDK().exchange;
             if (!exchange)
@@ -232,24 +263,27 @@ export const usePerpsPosition = () => {
               slTriggerPx: formatTriggerPx(slTriggerPx),
               builder: PERPS_BUILDER_INFO,
             });
+            responded = true;
             if (!isCurrent()) return false;
-            const statuses = res?.response?.data?.statuses;
+            const statuses = res?.response?.data?.statuses as
+              | readonly unknown[]
+              | undefined;
             if (
               res?.status !== 'ok' ||
               statuses?.length !==
                 Number(!!tpTriggerPx) + Number(!!slTriggerPx) ||
               !statuses?.length ||
-              !statuses.every(
-                status => !status.error && (status.resting || status.filled),
-              )
+              !statuses.every(isAcceptedOrderStatus)
             ) {
               throw new Error(
-                statuses?.find(status => status.error)?.error ||
-                  autoCloseText + ' set error',
+                getOrderStatusError(statuses) || autoCloseText + ' set error',
               );
             }
           } catch (error) {
             if (!isCurrent() || isSceneCurrent?.() === false) return false;
+            // The exchange answered, so some legs may still rest; show the
+            // confirmed orders instead of inviting a duplicate retry.
+            if (responded) await refreshTpSlOrders(params.coin);
             throw error;
           }
           await refreshTpSlOrders(params.coin);
