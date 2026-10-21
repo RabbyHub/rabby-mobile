@@ -12,18 +12,20 @@ jest.mock('@/utils/number', () => ({
 }));
 import React from 'react';
 import { act, fireEvent, render } from '@testing-library/react-native';
+import { ScrollView, View } from 'react-native';
+import { Button } from '@/components2024/Button';
 import { PerpsClosePositionPopup } from './PerpsClosePositionPopup';
 
-jest.mock('@/hooks/theme', () => ({
-  useTheme2024: ({ getStyle }: any) => {
-    const colors2024 = new Proxy({}, { get: (_, key) => String(key) });
-    return {
+jest.mock('@/hooks/theme', () => {
+  const colors2024 = new Proxy({}, { get: (_, key) => String(key) });
+  return {
+    useTheme2024: ({ getStyle }: any) => ({
       colors2024,
       isLight: true,
       styles: getStyle({ colors2024, safeAreaInsets: { bottom: 0 } }),
-    };
-  },
-}));
+    }),
+  };
+});
 jest.mock('@/utils/styles', () => ({
   createGetStyles2024: (fn: unknown) => fn,
 }));
@@ -39,21 +41,53 @@ jest.mock('@/components/AutoLockView', () => ({
 }));
 jest.mock('@/components/customized/BottomSheet', () => ({
   AppBottomSheetModal: require('react').forwardRef(
-    ({ children }: any, ref: any) => {
+    (
+      {
+        children,
+        backgroundComponent: Background,
+        footerComponent: Footer,
+        ...p
+      }: any,
+      ref: any,
+    ) => {
       require('react').useImperativeHandle(ref, () => ({
         present: jest.fn(),
         close: jest.fn(),
       }));
-      return children;
+      return require('react').createElement(
+        require('react-native').View,
+        { ...p, testID: 'sheet' },
+        Background && require('react').createElement(Background),
+        children,
+        Footer && require('react').createElement(Footer),
+      );
     },
   ),
 }));
-jest.mock('@/components2024/GlobalBottomSheetModal/utils-help', () => ({
-  makeBottomSheetProps: () => ({}),
-}));
+// Keep makeBottomSheetProps real: it creates the background component type.
+jest.mock('react-native-linear-gradient', () => require('react-native').View);
+jest.mock(
+  '@/components2024/GlobalBottomSheetModal/BackgroundComponent',
+  () => ({
+    BackgroundComponent: () => {
+      require('react').useEffect(() => {
+        mockBackgroundMount();
+        return mockBackgroundUnmount;
+      }, []);
+      return null;
+    },
+  }),
+);
 jest.mock('@gorhom/bottom-sheet', () => ({
   BottomSheetView: require('react-native').View,
   BottomSheetScrollView: require('react-native').ScrollView,
+  BottomSheetFooter: ({ children }: any) => {
+    require('react').useEffect(() => {
+      mockFooterMount();
+      return mockFooterUnmount;
+    }, []);
+    return children;
+  },
 }));
 jest.mock('@/components2024/Button', () => ({
   Button: (p: any) =>
@@ -85,6 +119,12 @@ jest.mock('@/utils/perps', () => ({
   formatTpOrSlPrice: (v: number) => String(v),
   isMarketableLimit: () => false,
 }));
+
+const mockBackgroundMount = jest.fn();
+const mockBackgroundUnmount = jest.fn();
+const mockFooterMount = jest.fn();
+const mockFooterUnmount = jest.fn();
+beforeEach(() => jest.clearAllMocks());
 
 const props: React.ComponentProps<typeof PerpsClosePositionPopup> = {
   visible: true,
@@ -150,4 +190,98 @@ it('keeps min-close guard and uses the typed limit price for PnL', async () => {
     orderType: 'limit',
     limitPx: '120',
   });
+});
+
+it('reserves the warning space and keeps the background and footer mounted across drag and mode changes', () => {
+  const ui = render(<PerpsClosePositionPopup {...props} />);
+  const warning = () =>
+    ui.getByText('page.perpsDetail.PerpsClosePositionPopup.minimumWarning', {
+      includeHiddenElements: true,
+    });
+  const initialWarning = warning();
+  const initialConfirm = ui.getByTestId('confirm');
+  const initialSnap = ui.getByTestId('sheet').props.snapPoints;
+  expect(warning()).toHaveStyle({ opacity: 0 });
+  for (const value of [53, 0, 8, 100]) {
+    act(() => ui.getByTestId('slider').props.onValueChange(value));
+    expect(warning()).toBe(initialWarning);
+    expect(warning().props.accessibilityElementsHidden).toBe(value >= 9);
+    expect(ui.getByTestId('sheet').props.snapPoints).toEqual(initialSnap);
+    expect(ui.getByTestId('confirm')).toBe(initialConfirm);
+  }
+  act(() => ui.getByTestId('slider').props.onSlidingComplete());
+  fireEvent.press(
+    ui.getByText('page.perpsDetail.PerpsOpenPositionPopup.orderTypeMarket'),
+  );
+  expect(ui.getByTestId('sheet').props.snapPoints[0]).toBe(initialSnap[0] + 44);
+  fireEvent.press(
+    ui.getByText('page.perpsDetail.PerpsOpenPositionPopup.orderTypeLimit'),
+  );
+  expect(ui.getByTestId('sheet').props.snapPoints).toEqual(initialSnap);
+  expect(mockBackgroundMount).toHaveBeenCalledTimes(1);
+  expect(mockFooterMount).toHaveBeenCalledTimes(1);
+  expect(mockBackgroundUnmount).not.toHaveBeenCalled();
+  expect(mockFooterUnmount).not.toHaveBeenCalled();
+});
+
+it('defers body height changes until drag release and measures footer space separately', () => {
+  const ui = render(<PerpsClosePositionPopup {...props} />);
+  const body = () =>
+    ui
+      .UNSAFE_getByType(ScrollView)
+      .findAllByType(View)
+      .find(node => node.props.onLayout);
+  const layoutBody = (height: number) =>
+    act(() =>
+      body()!.props.onLayout({
+        nativeEvent: { layout: { height } },
+      }),
+    );
+  layoutBody(385);
+  const initialSnap = ui.getByTestId('sheet').props.snapPoints[0];
+  act(() => ui.getByTestId('slider').props.onSlidingStart());
+  act(() => ui.getByTestId('slider').props.onValueChange(26));
+  layoutBody(403);
+  layoutBody(421);
+  expect(ui.getByTestId('sheet').props.snapPoints[0]).toBe(initialSnap);
+  act(() => ui.getByTestId('slider').props.onSlidingComplete());
+  expect(ui.getByTestId('sheet').props.snapPoints[0]).toBe(initialSnap + 36);
+  expect(
+    ui.UNSAFE_getByType(ScrollView).props.contentContainerStyle.paddingBottom,
+  ).toBe(initialSnap - 385 - 36);
+  // Track taps publish their value before slidingStart.
+  act(() => ui.getByTestId('slider').props.onValueChange(24));
+  layoutBody(403);
+  expect(ui.getByTestId('sheet').props.snapPoints[0]).toBe(initialSnap + 36);
+  act(() => ui.getByTestId('slider').props.onSlidingComplete());
+  expect(ui.getByTestId('sheet').props.snapPoints[0]).toBe(initialSnap + 18);
+});
+
+it('keeps the footer mounted while publishing loading and the latest submit guard', async () => {
+  let resolve!: () => void;
+  const submit = jest.fn(
+    () =>
+      new Promise<void>(done => {
+        resolve = done;
+      }),
+  );
+  const ui = render(
+    <PerpsClosePositionPopup {...props} handleClosePosition={submit} />,
+  );
+  const press = ui.UNSAFE_getByType(Button).props.onPress;
+  act(() => ui.getByTestId('slider').props.onValueChange(0));
+  await act(async () => press());
+  expect(submit).not.toHaveBeenCalled();
+  act(() => ui.getByTestId('slider').props.onValueChange(53));
+  act(() => {
+    void press();
+  });
+  expect(ui.getByTestId('confirm')).toBeDisabled();
+  expect(ui.getByTestId('confirm').props.loading).toBe(true);
+  await act(async () => press());
+  expect(submit).toHaveBeenCalledTimes(1);
+  await act(async () => resolve());
+  expect(ui.getByTestId('confirm')).not.toBeDisabled();
+  expect(mockFooterMount).toHaveBeenCalledTimes(1);
+  expect(mockFooterUnmount).not.toHaveBeenCalled();
 });

@@ -5,7 +5,7 @@ import { BubbleWithText } from '@/screens/Swap/components/Slider';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Slider } from '@rneui/themed';
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Platform, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -17,6 +17,7 @@ import { Text } from '@/components/Typography';
 
 const isAndroid = Platform.OS === 'android';
 const sliderHapticTriggerNumbers = [0, 50, 100];
+const closeHapticTriggerNumbers = [0, 25, 50, 75, 100];
 
 interface PerpsSliderProps {
   variant?: 'close';
@@ -29,6 +30,8 @@ interface PerpsSliderProps {
   disabled?: boolean;
   minValue?: number;
   hightLightTriggerValue?: number[];
+  onSlidingStart?: () => void;
+  onSlidingComplete?: () => void;
 }
 
 export const PerpsSlider: React.FC<PerpsSliderProps> = ({
@@ -42,6 +45,8 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
   showPercentage = true,
   minValue,
   hightLightTriggerValue,
+  onSlidingStart,
+  onSlidingComplete,
 }) => {
   const { styles, colors2024 } = useTheme2024({
     getStyle,
@@ -50,23 +55,54 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
   const showBubbleValue = useSharedValue(false);
   const { width } = useWindowDimensions();
   const previousValue = useRef<number>(0);
+  const controlledValue = useRef(value);
+  controlledValue.current = value;
+  const previousCloseValue = useRef<number | null>(null);
+
+  useEffect(() => {
+    previousCloseValue.current = null;
+  }, [disabled, minValue, maxValue, step, variant]);
 
   const handleValueChange = useCallback(
     (v: number) => {
-      // Trigger haptic feedback when reaching specific values
+      if (variant === 'close' && disabled) return;
       const triggerValues =
         hightLightTriggerValue || sliderHapticTriggerNumbers;
-      if (v !== previousValue.current && triggerValues.includes(v)) {
+      const previous = previousCloseValue.current ?? controlledValue.current;
+      const crossedClosePoint = closeHapticTriggerNumbers.some(point =>
+        v > previous
+          ? previous < point && point <= v
+          : v <= point && point < previous,
+      );
+      const shouldTrigger =
+        variant === 'close'
+          ? Number.isFinite(v) && Number.isFinite(previous) && crossedClosePoint
+          : v !== previousValue.current && triggerValues.includes(v);
+      if (shouldTrigger) {
         trigger('impactLight', {
           enableVibrateFallback: true,
           ignoreAndroidSystemSettings: false,
         });
       }
       previousValue.current = v;
+      previousCloseValue.current = v;
       onValueChange(v);
     },
-    [onValueChange, hightLightTriggerValue],
+    [onValueChange, hightLightTriggerValue, variant, disabled],
   );
+
+  const handleSlidingStart = useCallback(
+    (start: number) => {
+      // RNEUI's touch-track value event can arrive before slidingStart.
+      previousCloseValue.current = start;
+      onSlidingStart?.();
+    },
+    [onSlidingStart],
+  );
+  const handleSlidingComplete = useCallback(() => {
+    previousCloseValue.current = null;
+    onSlidingComplete?.();
+  }, [onSlidingComplete]);
 
   const sliderStyle = useAnimatedStyle(
     () => ({
@@ -169,6 +205,8 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
           disabled={disabled}
           value={value}
           onValueChange={handleValueChange}
+          onSlidingStart={handleSlidingStart}
+          onSlidingComplete={handleSlidingComplete}
           minimumValue={minValue || 0}
           maximumValue={maxValue || 100}
           step={step}
