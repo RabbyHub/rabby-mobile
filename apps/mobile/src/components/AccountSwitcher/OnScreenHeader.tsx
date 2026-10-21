@@ -164,6 +164,11 @@ const getStyle = createGetStyles2024(ctx => {
       fontWeight: '900',
       lineHeight: 24,
       fontSize: 20,
+      // Fabric/Android keeps the platform font padding on the title, which
+      // pushed the account row below it; normalize the text box so the alias
+      // sits right under the title on both architectures (QA 1141).
+      includeFontPadding: false,
+      textAlignVertical: 'center',
       color: ctx.colors2024['neutral-title-1'],
     },
     wrapperAddressRow: {
@@ -171,6 +176,7 @@ const getStyle = createGetStyles2024(ctx => {
       alignItems: 'center',
       justifyContent: 'center',
       width: SCREEN_WIDTH - 140,
+      marginTop: -2,
     },
     addressRow: {
       flexDirection: 'row',

@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -39,27 +39,36 @@ const EnabledEmodeInfo = ({
       />
       <View style={[styles.inner, styles.enabledInner]}>
         <LightingIcon width={18} height={18} />
-        <MaskedView
-          // The hardware layer can retain a black text-mask rectangle while
-          // Fabric scrolls/re-attaches this badge. Keep the gradient design.
-          androidRenderingMode="software"
-          maskElement={
-            <Text numberOfLines={1} ellipsizeMode="tail" style={styles.text}>
-              {title}
-            </Text>
-          }>
-          <LinearGradient
-            colors={['#2FE0FF', '#D06BFF']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}>
-            <Text
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              style={[styles.text, styles.opacity0]}>
-              {title}
-            </Text>
-          </LinearGradient>
-        </MaskedView>
+        {Platform.OS === 'android' ? (
+          // MaskedView under Fabric leaves the mask text rendered as a black
+          // rectangle on Android. Use the badge's accent color directly so the
+          // label stays legible and clips inside the gradient border (1042).
+          <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={[styles.text, styles.androidText]}>
+            {title}
+          </Text>
+        ) : (
+          <MaskedView
+            maskElement={
+              <Text numberOfLines={1} ellipsizeMode="tail" style={styles.text}>
+                {title}
+              </Text>
+            }>
+            <LinearGradient
+              colors={['#2FE0FF', '#D06BFF']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={[styles.text, styles.opacity0]}>
+                {title}
+              </Text>
+            </LinearGradient>
+          </MaskedView>
+        )}
         <SettingIconCC
           width={18}
           height={18}
@@ -206,6 +215,10 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
     color: 'black',
+  },
+  androidText: {
+    color: '#8A6BFF',
+    flexShrink: 1,
   },
   disabledText: {
     fontSize: 12,
