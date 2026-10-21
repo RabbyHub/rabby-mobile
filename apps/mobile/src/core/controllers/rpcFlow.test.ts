@@ -6,12 +6,14 @@ const mockEthSendTransaction = jest.fn();
 const mockEthSignTypedData = jest.fn();
 const mockValidateTypedData = jest.fn();
 const mockWalletSwitchEthereumChain = jest.fn();
+const mockPersonalEcRecover = jest.fn();
 const mockGetDapp = jest.fn();
 const mockGetConnectedDapp = jest.fn();
 const mockUpdateDapp = jest.fn();
 const mockGetStatsData = jest.fn();
 const mockSetStatsData = jest.fn();
 const mockSetCurrentRequestDeferFn = jest.fn();
+let mockCurrentDeferFn: unknown;
 const mockUnLock = jest.fn();
 const mockEnsureNotificationServiceReady = jest.fn();
 const mockEnsureDappServiceReady = jest.fn();
@@ -111,6 +113,7 @@ jest.mock('./provider', () => ({
     ethSignTypedDataV4: (...args: unknown[]) => mockEthSignTypedData(...args),
     walletSwitchEthereumChain: (...args: unknown[]) =>
       mockWalletSwitchEthereumChain(...args),
+    personalEcRecover: (...args: unknown[]) => mockPersonalEcRecover(...args),
   },
 }));
 
@@ -475,6 +478,86 @@ describe('rpcFlow typed-data chain pinning', () => {
     },
   );
 
+  it('starts a retry from the mounted waiting UI without another mount event', async () => {
+    const { waitSignComponentAmounted } =
+      jest.requireMock('../utils/signEvent');
+    // Only the initial mount emits; a retry comes from the same mounted UI.
+    waitSignComponentAmounted
+      .mockResolvedValueOnce(undefined)
+      .mockReturnValue(new Promise(() => {}));
+    mockRequestApproval
+      .mockResolvedValueOnce({ uiRequestComponent: 'LedgerHardwareWaiting' })
+      .mockReturnValueOnce(new Promise(() => {}));
+    mockEthSignTypedData
+      .mockRejectedValueOnce(new Error('device busy'))
+      .mockResolvedValueOnce('0xretried');
+
+    void rpcFlow(makeRequest());
+    await new Promise(resolve => setImmediate(resolve));
+    expect(mockEthSignTypedData).toHaveBeenCalledTimes(1);
+
+    const retry = mockSetCurrentRequestDeferFn.mock.calls.at(-1)[0];
+    await expect(retry(true)).resolves.toBe('0xretried');
+    expect(mockEthSignTypedData).toHaveBeenCalledTimes(2);
+  });
+
+  it('leaves a failed signing to the waiting UI without rejecting', async () => {
+    const { waitSignComponentAmounted } =
+      jest.requireMock('../utils/signEvent');
+    const { eventBus } = jest.requireMock('@/utils/events');
+    waitSignComponentAmounted.mockResolvedValue(undefined);
+    mockRequestApproval
+      .mockResolvedValueOnce({ uiRequestComponent: 'PrivatekeyWaiting' })
+      .mockResolvedValueOnce('0xfromWaitingUi');
+    mockEthSignTypedData.mockRejectedValue(new Error('device busy'));
+    const unhandled: unknown[] = [];
+    const onUnhandled = (reason: unknown) => unhandled.push(reason);
+    process.on('unhandledRejection', onUnhandled);
+
+    try {
+      await expect(rpcFlow(makeRequest())).resolves.toBe('0xfromWaitingUi');
+      await new Promise(resolve => setImmediate(resolve));
+
+      expect(eventBus.emit).toHaveBeenCalledWith('SIGN_FINISHED', {
+        success: false,
+        errorMsg: 'device busy',
+      });
+      expect(unhandled).toEqual([]);
+    } finally {
+      process.off('unhandledRejection', onUnhandled);
+    }
+  });
+
+  describe('Safe owner signing', () => {
+    const openSafeOwnerApproval = (registerDuringApproval?: () => void) => {
+      const { waitSignComponentAmounted } =
+        jest.requireMock('../utils/signEvent');
+      waitSignComponentAmounted.mockResolvedValue(undefined);
+      mockSetCurrentRequestDeferFn.mockImplementation(fn => {
+        mockCurrentDeferFn = fn;
+      });
+      mockRequestApproval
+        .mockImplementationOnce(async () => {
+          registerDuringApproval?.();
+          return { uiRequestComponent: 'PrivatekeyWaiting', isGnosis: true };
+        })
+        .mockReturnValueOnce(new Promise(() => {}));
+      void rpcFlow(makeRequest());
+      return new Promise(resolve => setImmediate(resolve));
+    };
+
+    it('keeps the retry fn the owner signing registered', async () => {
+      const ownerRetry = jest.fn();
+      mockCurrentDeferFn = jest.fn();
+
+      await openSafeOwnerApproval(() =>
+        mockSetCurrentRequestDeferFn(ownerRetry),
+      );
+
+      expect(mockCurrentDeferFn).toBe(ownerRetry);
+    });
+  });
+
   it.each<['walletconnect' | 'internal', number | undefined]>([
     ['walletconnect', 56],
     ['internal', undefined],
@@ -527,5 +610,50 @@ describe('rpcFlow typed-data chain pinning', () => {
     ).toBeUndefined();
     expect(mockGetConnectedDapp).not.toHaveBeenCalled();
     expect(mockRequestApproval).not.toHaveBeenCalled();
+  });
+});
+
+describe('rpcFlow error propagation without an approval UI', () => {
+  let originalGetMetadata: unknown;
+  const request: ProviderRequest = {
+    data: { method: 'personal_ecRecover', params: ['0x00', '0x00'] },
+    session: { origin: 'https://example.com', name: 'Example', icon: '' },
+    account,
+  };
+
+  beforeAll(() => {
+    originalGetMetadata = (Reflect as any).getMetadata;
+    (Reflect as any).getMetadata = jest.fn(() => undefined);
+  });
+
+  afterAll(() => {
+    if (originalGetMetadata) {
+      (Reflect as any).getMetadata = originalGetMetadata;
+    } else {
+      delete (Reflect as any).getMetadata;
+    }
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetCustomTestnetList.mockReturnValue([]);
+    mockGetTestnetChainList.mockReturnValue([]);
+    mockGetStatsData.mockReturnValue(undefined);
+  });
+
+  it('rejects when the handler throws synchronously', async () => {
+    mockPersonalEcRecover.mockImplementation(() => {
+      throw new Error('Missing signature parameter');
+    });
+
+    await expect(rpcFlow(request)).rejects.toThrow(
+      'Missing signature parameter',
+    );
+  });
+
+  it('rejects when the handler returns a rejected promise', async () => {
+    mockPersonalEcRecover.mockRejectedValue(new Error('boom'));
+
+    await expect(rpcFlow(request)).rejects.toThrow('boom');
   });
 });

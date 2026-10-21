@@ -34,6 +34,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import useAsync from 'react-use/lib/useAsync';
 import { useUnmount } from 'ahooks';
 import { Text } from '@/components/Typography';
+import { useRetryMinPending } from '@/components/Approval/hooks/useRetryMinPending';
 
 interface ApprovalParams {
   address: string;
@@ -118,11 +119,14 @@ export const PrivatekeyWaiting = ({
 
   const account = params.isGnosis ? params.account! : $account;
 
+  const { markRetryStarted, afterMinPending } = useRetryMinPending();
+
   const handleRetry = async () => {
     if (connectStatus === APPROVAL_STATUS_MAP.SUBMITTING) {
       return;
     }
     setConnectStatus(APPROVAL_STATUS_MAP.SUBMITTING);
+    markRetryStarted();
     retryTxReset();
     if (params.nonce && params.chainId && params.from && account) {
       setRetryTxType(retryUpdateType);
@@ -135,9 +139,12 @@ export const PrivatekeyWaiting = ({
         });
       }
     }
-    await notificationServiceApi.callCurrentRequestDeferFn(true);
+    // Fire and forget: this resolves only when signing ends, and a failed
+    // attempt is reported through SIGN_FINISHED instead.
+    void notificationServiceApi
+      .callCurrentRequestDeferFn(true)
+      .catch(console.error);
     toast.success(t('page.signFooterBar.ledger.resent'));
-    emitSignComponentAmounted();
   };
 
   const cancelRef = useRef(false);
@@ -259,8 +266,10 @@ export const PrivatekeyWaiting = ({
           approvalId: approval.id,
         });
       } else {
-        setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
-        setErrorMessage(data.errorMsg);
+        afterMinPending(() => {
+          setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
+          setErrorMessage(data.errorMsg);
+        });
       }
     });
 
