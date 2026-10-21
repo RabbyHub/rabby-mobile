@@ -197,7 +197,7 @@ it('uses the whole new price tag to cancel and preserves the default trigger pre
   expect(cancel).toHaveBeenCalledTimes(2);
 });
 
-it('keeps slider defaults isolated from close visuals and retains the haptic thresholds', () => {
+it('keeps default slider haptics isolated and gives close a haptic at each quarter', () => {
   const trigger = require('react-native-haptic-feedback').trigger;
   trigger.mockClear();
   const change = jest.fn();
@@ -207,6 +207,14 @@ it('keeps slider defaults isolated from close visuals and retains the haptic thr
   expect(ui.getByTestId('native-slider').props.minimumTrackTintColor).toBe(
     '#50D2C1',
   );
+  act(() => {
+    for (const value of [25, 50, 50, 75, 100]) {
+      ui.getByTestId('native-slider').props.onValueChange(value);
+    }
+  });
+  expect(trigger).toHaveBeenCalledTimes(2);
+  trigger.mockClear();
+  change.mockClear();
   ui.rerender(
     safe(
       <PerpsSlider variant="close" value={0} onValueChange={change} step={1} />,
@@ -222,5 +230,85 @@ it('keeps slider defaults isolated from close visuals and retains the haptic thr
     slider.props.onValueChange(100);
   });
   expect(change).toHaveBeenCalledTimes(5);
+  expect(trigger).toHaveBeenCalledTimes(4);
+});
+
+it.each([
+  {
+    initial: 100,
+    values: [100, 76, 75, 75, 74, 51, 49, 26, 24, 1, 0],
+    pulses: [0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1],
+  },
+  {
+    initial: 0,
+    values: [0, 24, 26, 49, 51, 74, 76, 99, 100],
+    pulses: [0, 0, 1, 0, 1, 0, 1, 0, 1],
+  },
+  { initial: 51, values: [49, 50, 51, 49, 50, 50], pulses: [1, 1, 0, 1, 1, 0] },
+  { initial: 100, values: [1, 100], pulses: [1, 1] },
+])(
+  'detects close mark crossings without relying on exact callback values: $initial/$values',
+  ({ initial, values, pulses }) => {
+    const trigger = require('react-native-haptic-feedback').trigger;
+    trigger.mockClear();
+    const change = jest.fn();
+    const ui = render(
+      safe(
+        <PerpsSlider
+          variant="close"
+          value={initial}
+          onValueChange={change}
+          step={1}
+        />,
+      ),
+    );
+    expect(trigger).not.toHaveBeenCalled();
+    act(() => ui.getByTestId('native-slider').props.onSlidingStart(initial));
+    values.forEach((value, i) => {
+      const before = trigger.mock.calls.length;
+      act(() => ui.getByTestId('native-slider').props.onValueChange(value));
+      // A single native event emits at most one pulse, even across several marks.
+      expect(trigger.mock.calls.length - before).toBe(pulses[i]);
+    });
+    expect(change.mock.calls.map(([value]) => value)).toEqual(values);
+  },
+);
+
+it('handles track-tap ordering, controlled resets, and disabled close sliders', () => {
+  const trigger = require('react-native-haptic-feedback').trigger;
+  trigger.mockClear();
+  const change = jest.fn();
+  const start = jest.fn();
+  const complete = jest.fn();
+  const sliderProps = {
+    variant: 'close' as const,
+    onValueChange: change,
+    onSlidingStart: start,
+    onSlidingComplete: complete,
+    step: 1,
+  };
+  const ui = render(safe(<PerpsSlider {...sliderProps} value={100} />));
+  act(() => {
+    const slider = ui.getByTestId('native-slider');
+    slider.props.onValueChange(24);
+    slider.props.onSlidingStart(24);
+    slider.props.onValueChange(24);
+    slider.props.onSlidingComplete(24);
+  });
+  expect(trigger).toHaveBeenCalledTimes(1);
+  expect(start).toHaveBeenCalledTimes(1);
+  expect(complete).toHaveBeenCalledTimes(1);
+  ui.rerender(safe(<PerpsSlider {...sliderProps} value={100} />));
+  expect(trigger).toHaveBeenCalledTimes(1);
+  act(() => ui.getByTestId('native-slider').props.onValueChange(100));
+  expect(trigger).toHaveBeenCalledTimes(1);
+  act(() => ui.getByTestId('native-slider').props.onSlidingComplete(100));
+  ui.rerender(safe(<PerpsSlider {...sliderProps} value={51} />));
+  act(() => ui.getByTestId('native-slider').props.onValueChange(49));
   expect(trigger).toHaveBeenCalledTimes(2);
+  ui.rerender(safe(<PerpsSlider {...sliderProps} value={49} disabled />));
+  const before = change.mock.calls.length;
+  act(() => ui.getByTestId('native-slider').props.onValueChange(0));
+  expect(trigger).toHaveBeenCalledTimes(2);
+  expect(change).toHaveBeenCalledTimes(before);
 });

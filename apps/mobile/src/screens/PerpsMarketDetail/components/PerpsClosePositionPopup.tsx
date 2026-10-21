@@ -8,9 +8,22 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { useTheme2024 } from '@/hooks/theme';
 import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetView, BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetView,
+  BottomSheetScrollView,
+  BottomSheetFooter,
+  type BottomSheetFooterProps,
+} from '@gorhom/bottom-sheet';
 import { useMemoizedFn } from 'ahooks';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Platform,
@@ -79,6 +92,11 @@ export const PerpsClosePositionPopup: React.FC<{
   });
 
   const { t } = useTranslation();
+  const bottomSheetProps = useMemo(
+    () =>
+      makeBottomSheetProps({ colors: colors2024, linearGradientType: 'bg1' }),
+    [colors2024],
+  );
 
   const [loading, setLoading] = useState<boolean>(false);
   const [closePercent, setClosePercent] = useState<number>(100);
@@ -216,8 +234,8 @@ export const PerpsClosePositionPopup: React.FC<{
   const { height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [contentHeights, setContentHeights] = useState({
-    market: 355,
-    limit: 399,
+    market: 385,
+    limit: 429,
   });
   const [footerHeight, setFooterHeight] = useState(
     BOTTOM_BUTTON_SINGLE_HEIGHT +
@@ -234,13 +252,78 @@ export const PerpsClosePositionPopup: React.FC<{
     [windowHeight, insets.top, contentHeights, orderType, footerHeight],
   );
 
+  const footerRef = useRef<CloseFooterHandle>(null);
+  const footerSnapshot = useRef({ disabled, loading });
+  footerSnapshot.current = { disabled, loading };
+  useLayoutEffect(() => {
+    footerRef.current?.update(footerSnapshot.current);
+  }, [disabled, loading]);
+  const handleFooterHeight = useMemoizedFn((height: number) => {
+    setFooterHeight(previous =>
+      Math.abs(previous - height) < 0.5 ? previous : height,
+    );
+  });
+  const confirmClose = useMemoizedFn(() => {
+    if (!disabled && !loading) return closePosition();
+  });
+  // The component type must stay stable even when the button changes state.
+  const renderFooter = useCallback(
+    (props: BottomSheetFooterProps) => (
+      <ClosePositionFooter
+        {...props}
+        ref={footerRef}
+        snapshotRef={footerSnapshot}
+        onConfirm={confirmClose}
+        onHeight={handleFooterHeight}
+      />
+    ),
+    [confirmClose, handleFooterHeight],
+  );
+
+  const sliding = useRef(false);
+  const pendingHeight = useRef<{
+    mode: PerpsOpenOrderType;
+    height: number;
+  } | null>(null);
+  const publishHeight = useMemoizedFn(
+    (mode: PerpsOpenOrderType, height: number) => {
+      setContentHeights(previous =>
+        Math.abs(previous[mode] - height) < 0.5
+          ? previous
+          : { ...previous, [mode]: height },
+      );
+    },
+  );
+  const handleBodyHeight = useMemoizedFn((height: number) => {
+    if (sliding.current) {
+      pendingHeight.current = { mode: orderType, height };
+    } else {
+      publishHeight(orderType, height);
+    }
+  });
+  const handlePercentChange = useMemoizedFn((value: number) => {
+    // A track tap can publish a value before RNEUI announces slidingStart.
+    sliding.current = true;
+    setClosePercent(value);
+  });
+  const handleSlidingStart = useMemoizedFn(() => {
+    sliding.current = true;
+  });
+  const handleSlidingComplete = useMemoizedFn(() => {
+    sliding.current = false;
+    const pending = pendingHeight.current;
+    pendingHeight.current = null;
+    if (pending?.mode === orderType) publishHeight(orderType, pending.height);
+  });
+  useEffect(() => {
+    sliding.current = false;
+    pendingHeight.current = null;
+  }, [visible, orderType]);
+
   return (
     <AppBottomSheetModal
       ref={modalRef}
-      {...makeBottomSheetProps({
-        colors: colors2024,
-        linearGradientType: 'bg1',
-      })}
+      {...bottomSheetProps}
       handleIndicatorStyle={[
         styles.handle,
         {
@@ -250,161 +333,204 @@ export const PerpsClosePositionPopup: React.FC<{
         },
       ]}
       onDismiss={onCancel}
+      footerComponent={renderFooter}
       snapPoints={snapPoints}>
       <BottomSheetView style={styles.sheetView}>
         <AutoLockView style={styles.container}>
           <BottomSheetScrollView
-            contentContainerStyle={styles.content}
-            onContentSizeChange={(_width, height) =>
-              setContentHeights(previous =>
-                Math.abs(previous[orderType] - height) < 0.5
-                  ? previous
-                  : { ...previous, [orderType]: height },
-              )
-            }>
-            <View>
-              <Text style={styles.title}>
-                {t('page.perpsDetail.simpleAccount.closePositionTitle', {
-                  coin: displayName,
-                })}
-              </Text>
-            </View>
+            contentContainerStyle={{ paddingBottom: footerHeight }}>
+            <View
+              style={styles.content}
+              onLayout={event =>
+                handleBodyHeight(event.nativeEvent.layout.height)
+              }>
+              <View>
+                <Text style={styles.title}>
+                  {t('page.perpsDetail.simpleAccount.closePositionTitle', {
+                    coin: displayName,
+                  })}
+                </Text>
+              </View>
 
-            <View style={styles.amountSection}>
-              <View style={styles.amountHeader}>
-                <Text style={styles.amountLabel}>
-                  {t('page.perpsDetail.PerpsClosePositionPopup.amount')}
-                </Text>
-              </View>
-              <Text style={styles.percentageText}>{closePercent}%</Text>
-              <Text style={styles.quantity}>
-                {splitNumberByStep(quantity.notional)} {quoteAsset} ={' '}
-                {quantity.quantity} {displayName}
-              </Text>
-              <View style={styles.slider}>
-                <PerpsSlider
-                  variant="close"
-                  step={1}
-                  value={closePercent}
-                  onValueChange={setClosePercent}
-                  showPercentage={false}
-                />
-              </View>
-            </View>
-            {!isValidClosePercent && (
-              <Text style={styles.minimumWarning}>
-                {t('page.perpsDetail.PerpsClosePositionPopup.minimumWarning', {
-                  percent: minClosePercent,
-                })}
-              </Text>
-            )}
-            <View style={styles.orderTypeCard}>
-              <View pointerEvents="none" style={styles.cardBorder} />
-              <View style={styles.orderTypeItem}>
-                <Text style={styles.pnlLabel}>
-                  {t('page.perpsDetail.PerpsOpenPositionPopup.orderType')}
-                </Text>
-                <TouchableOpacity
-                  style={styles.orderTypeToggle}
-                  onPress={toggleOrderType}>
-                  <Text style={styles.orderTypeToggleText}>
-                    {orderType === 'market'
-                      ? t(
-                          'page.perpsDetail.PerpsOpenPositionPopup.orderTypeMarket',
-                        )
-                      : t(
-                          'page.perpsDetail.PerpsOpenPositionPopup.orderTypeLimit',
-                        )}
+              <View style={styles.amountSection}>
+                <View style={styles.amountHeader}>
+                  <Text style={styles.amountLabel}>
+                    {t('page.perpsDetail.PerpsClosePositionPopup.amount')}
                   </Text>
-                  <IconOrderTypeSwitch width={14} height={14} />
-                </TouchableOpacity>
-              </View>
-              {orderType === 'limit' ? (
-                <View style={[styles.orderTypeItem, styles.limitRow]}>
-                  <Text style={styles.pnlLabel}>
-                    {t('page.perpsDetail.PerpsOpenPositionPopup.limitPrice')}
-                  </Text>
-                  <PerpEditLimitPriceTag
+                </View>
+                <Text style={styles.percentageText}>{closePercent}%</Text>
+                <Text style={styles.quantity}>
+                  {splitNumberByStep(quantity.notional)} {quoteAsset} ={' '}
+                  {quantity.quantity} {displayName}
+                </Text>
+                <View style={styles.slider}>
+                  <PerpsSlider
                     variant="close"
-                    coin={coin}
-                    quoteAsset={quoteAsset}
-                    markPrice={markPrice}
-                    szDecimals={szDecimals}
-                    // Closing trades the opposite side: long -> limit sell.
-                    direction={direction === 'Long' ? 'Short' : 'Long'}
-                    initLimitPrice={limitPx}
-                    handleSetLimitPx={async (price: string) =>
-                      setLimitPx(price)
-                    }
+                    step={1}
+                    value={closePercent}
+                    onValueChange={handlePercentChange}
+                    onSlidingStart={handleSlidingStart}
+                    onSlidingComplete={handleSlidingComplete}
+                    showPercentage={false}
                   />
                 </View>
-              ) : null}
-              <View style={styles.orderTypeItem}>
-                <Text style={styles.pnlLabel}>
-                  {t('page.perpsDetail.simpleAccount.estimatedRealizedPnl')}
-                </Text>
                 <Text
+                  accessible={!isValidClosePercent}
+                  accessibilityElementsHidden={isValidClosePercent}
+                  importantForAccessibility={
+                    isValidClosePercent ? 'no-hide-descendants' : 'auto'
+                  }
                   style={[
-                    styles.pnlValue,
-                    closedPnl >= 0 ? styles.green : styles.red,
+                    styles.minimumWarning,
+                    isValidClosePercent && styles.hiddenWarning,
                   ]}>
-                  {closedPnl >= 0 ? '+' : '-'}$
-                  {splitNumberByStep(Math.abs(closedPnl).toFixed(2))}
+                  {t(
+                    'page.perpsDetail.PerpsClosePositionPopup.minimumWarning',
+                    {
+                      percent: minClosePercent,
+                    },
+                  )}
                 </Text>
               </View>
-            </View>
-            <MarketSlippage
-              style={styles.slippageContainer}
-              visible={
-                orderType === 'market' &&
-                slippageReady &&
-                Number(positionSize) > 0 &&
-                shouldShowSlippage
-              }
-              slippage={slippage}
-              depthInsufficient={depthInsufficient}
-            />
-          </BottomSheetScrollView>
-          <View
-            style={styles.footer}
-            onLayout={event => {
-              const height = event.nativeEvent.layout.height;
-              setFooterHeight(previous =>
-                Math.abs(previous - height) < 0.5 ? previous : height,
-              );
-            }}>
-            <View
-              style={!disabled && !loading ? styles.confirmShadow : undefined}>
-              <Button
-                type="hyperliquid"
-                title={t('page.perpsDetail.PerpsClosePositionPopup.confirm')}
-                height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-                titleStyle={StyleSheet.flatten([
-                  BOTTOM_BUTTON_TITLE_STYLE,
-                  styles.confirmTitle,
-                  !disabled && styles.confirmTitleActive,
-                  Platform.OS === 'android'
-                    ? {
-                        lineHeight: undefined,
-                        includeFontPadding: false,
-                        textAlignVertical: 'center',
+              <View style={styles.orderTypeCard}>
+                <View pointerEvents="none" style={styles.cardBorder} />
+                <View style={styles.orderTypeItem}>
+                  <Text style={styles.pnlLabel}>
+                    {t('page.perpsDetail.PerpsOpenPositionPopup.orderType')}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.orderTypeToggle}
+                    onPress={toggleOrderType}>
+                    <Text style={styles.orderTypeToggleText}>
+                      {orderType === 'market'
+                        ? t(
+                            'page.perpsDetail.PerpsOpenPositionPopup.orderTypeMarket',
+                          )
+                        : t(
+                            'page.perpsDetail.PerpsOpenPositionPopup.orderTypeLimit',
+                          )}
+                    </Text>
+                    <IconOrderTypeSwitch width={14} height={14} />
+                  </TouchableOpacity>
+                </View>
+                {orderType === 'limit' ? (
+                  <View style={[styles.orderTypeItem, styles.limitRow]}>
+                    <Text style={styles.pnlLabel}>
+                      {t('page.perpsDetail.PerpsOpenPositionPopup.limitPrice')}
+                    </Text>
+                    <PerpEditLimitPriceTag
+                      variant="close"
+                      coin={coin}
+                      quoteAsset={quoteAsset}
+                      markPrice={markPrice}
+                      szDecimals={szDecimals}
+                      // Closing trades the opposite side: long -> limit sell.
+                      direction={direction === 'Long' ? 'Short' : 'Long'}
+                      initLimitPrice={limitPx}
+                      handleSetLimitPx={async (price: string) =>
+                        setLimitPx(price)
                       }
-                    : { lineHeight: 22 },
-                ])}
-                buttonStyle={
-                  !disabled && !loading ? styles.confirmButton : undefined
+                    />
+                  </View>
+                ) : null}
+                <View style={styles.orderTypeItem}>
+                  <Text style={styles.pnlLabel}>
+                    {t('page.perpsDetail.simpleAccount.estimatedRealizedPnl')}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.pnlValue,
+                      closedPnl >= 0 ? styles.green : styles.red,
+                    ]}>
+                    {closedPnl >= 0 ? '+' : '-'}$
+                    {splitNumberByStep(Math.abs(closedPnl).toFixed(2))}
+                  </Text>
+                </View>
+              </View>
+              <MarketSlippage
+                style={styles.slippageContainer}
+                visible={
+                  orderType === 'market' &&
+                  slippageReady &&
+                  Number(positionSize) > 0 &&
+                  shouldShowSlippage
                 }
-                loading={loading}
-                disabled={disabled}
-                onPress={closePosition}
+                slippage={slippage}
+                depthInsufficient={depthInsufficient}
               />
             </View>
-          </View>
+          </BottomSheetScrollView>
         </AutoLockView>
       </BottomSheetView>
     </AppBottomSheetModal>
   );
 };
+
+type CloseFooterSnapshot = { disabled: boolean; loading: boolean };
+type CloseFooterHandle = { update: (state: CloseFooterSnapshot) => void };
+const ClosePositionFooter = React.forwardRef<
+  CloseFooterHandle,
+  BottomSheetFooterProps & {
+    snapshotRef: React.RefObject<CloseFooterSnapshot>;
+    onConfirm: () => void;
+    onHeight: (height: number) => void;
+  }
+>(function ClosePositionFooter(
+  { snapshotRef, onConfirm, onHeight, ...props },
+  ref,
+) {
+  const { styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
+  const [{ disabled, loading }, setSnapshot] = useState(
+    () => snapshotRef.current,
+  );
+  useImperativeHandle(
+    ref,
+    () => ({
+      update: next =>
+        setSnapshot(previous =>
+          previous.disabled === next.disabled &&
+          previous.loading === next.loading
+            ? previous
+            : next,
+        ),
+    }),
+    [],
+  );
+  return (
+    <BottomSheetFooter {...props}>
+      <AutoLockView
+        style={styles.footer}
+        onLayout={event => onHeight(event.nativeEvent.layout.height)}>
+        <View style={!disabled && !loading ? styles.confirmShadow : undefined}>
+          <Button
+            type="hyperliquid"
+            title={t('page.perpsDetail.PerpsClosePositionPopup.confirm')}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={StyleSheet.flatten([
+              BOTTOM_BUTTON_TITLE_STYLE,
+              styles.confirmTitle,
+              !disabled && styles.confirmTitleActive,
+              Platform.OS === 'android'
+                ? {
+                    lineHeight: undefined,
+                    includeFontPadding: false,
+                    textAlignVertical: 'center',
+                  }
+                : { lineHeight: 22 },
+            ])}
+            buttonStyle={
+              !disabled && !loading ? styles.confirmButton : undefined
+            }
+            loading={loading}
+            disabled={disabled}
+            onPress={onConfirm}
+          />
+        </View>
+      </AutoLockView>
+    </BottomSheetFooter>
+  );
+});
 
 const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => {
   const text = {
@@ -418,6 +544,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => {
     content: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 24 },
     handle: { width: 50.2, height: 6.3, borderRadius: 3.15 },
     footer: {
+      backgroundColor: colors2024['neutral-bg-1'],
       paddingHorizontal: 20,
       paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
       paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
@@ -458,11 +585,13 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => {
       fontSize: 36,
       lineHeight: 42,
       fontWeight: '900',
+      fontVariant: ['tabular-nums'],
       color: SIMPLE_ACCOUNT_COLORS.accent,
     },
     quantity: {
       ...text,
       fontWeight: '500',
+      fontVariant: ['tabular-nums'],
       color: colors2024['neutral-foot'],
       marginTop: 4,
     },
@@ -471,8 +600,9 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => {
       ...text,
       fontWeight: '500',
       color: colors2024['red-default'],
-      marginBottom: 12,
+      marginTop: 12,
     },
+    hiddenWarning: { opacity: 0 },
     orderTypeCard: {
       borderRadius: 12,
       paddingHorizontal: 16,
@@ -510,6 +640,7 @@ const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => {
     pnlValue: {
       ...text,
       fontWeight: '700',
+      fontVariant: ['tabular-nums'],
       color: colors2024['neutral-title-1'],
       flexShrink: 1,
       textAlign: 'right',
