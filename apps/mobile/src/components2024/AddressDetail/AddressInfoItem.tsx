@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { TextLayoutEvent, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { RcIconCopyCC } from '@/assets/icons/common';
 import { KeyringAccountWithAlias } from '@/hooks/account';
@@ -20,6 +20,10 @@ export const AddressInfoItem: React.FC<AddressInfoProps> = props => {
   const { account } = props;
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const editAliasName = useAliasNameEditModal();
+  const [addressTextLayout, setAddressTextLayout] = useState<{
+    lastLineWidth: number;
+    lineCount: number;
+  }>();
 
   const onCopy = useCallback(() => {
     trigger('impactLight', {
@@ -50,11 +54,33 @@ export const AddressInfoItem: React.FC<AddressInfoProps> = props => {
               />
             </TouchableOpacity>
             <TouchableOpacity style={styles.addressButton} onPress={onCopy}>
-              <Text style={styles.addressText}>
+              <Text
+                style={styles.addressText}
+                onTextLayout={(event: TextLayoutEvent) => {
+                  const lines = event.nativeEvent.lines;
+                  const lastLine = lines[lines.length - 1];
+                  if (!lastLine) {
+                    return;
+                  }
+                  setAddressTextLayout({
+                    lastLineWidth: lastLine.width,
+                    lineCount: lines.length,
+                  });
+                }}>
                 {account.address.toLowerCase()}
               </Text>
               <RcIconCopyCC
-                style={styles.textCopyIcon}
+                style={[
+                  styles.textCopyIcon,
+                  addressTextLayout
+                    ? {
+                        // Keep the icon immediately after the final wrapped
+                        // line, vertically centered on that line (1137).
+                        left: addressTextLayout.lastLineWidth + 4,
+                        top: (addressTextLayout.lineCount - 1) * 20 + 1.5,
+                      }
+                    : styles.textCopyIconHidden,
+                ]}
                 color={colors2024['neutral-secondary']}
                 height={17}
                 width={17}
@@ -87,10 +113,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   addressButton: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    position: 'relative',
   },
   addressText: {
-    flexShrink: 1,
+    flex: 1,
     fontSize: 16,
     fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
@@ -98,8 +124,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-secondary'],
   },
   textCopyIcon: {
-    marginLeft: 4,
-    marginBottom: 1,
+    position: 'absolute',
+    opacity: 1,
+  },
+  textCopyIconHidden: {
+    opacity: 0,
   },
   nameButton: {
     flexDirection: 'row',
