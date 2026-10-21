@@ -15,6 +15,7 @@ export type PerpsCandleSourceSnapshot = {
 
 const PERPS_CANDLE_PRELOAD_TTL_MS = 15_000;
 const PERPS_CANDLE_PRELOAD_CACHE_SIZE = 24;
+const PERPS_CANDLE_PREFETCH_CONCURRENCY = 2;
 const snapshotCache = new Map<string, PerpsCandleSourceSnapshot>();
 const pendingSnapshots = new Map<
   string,
@@ -155,6 +156,56 @@ export const loadPerpsCandleSourceSnapshot = ({
 
   pendingSnapshots.set(identity, { startedAt: endTime, promise: request });
   return request;
+};
+
+/**
+ * Best-effort warming for intervals the user is likely to select next.
+ * Fresh snapshots and in-flight requests are both reused. Failures stay silent
+ * because the visible feed still owns loading and error recovery.
+ */
+export const preloadPerpsCandleSourceSnapshots = async ({
+  coin,
+  intervals,
+  isActive = () => true,
+}: {
+  coin: string;
+  intervals: ReadonlyArray<PerpsCandleDataInterval>;
+  isActive?: () => boolean;
+}): Promise<void> => {
+  const queue = Array.from(new Set(intervals));
+  let cursor = 0;
+  let running = 0;
+
+  await new Promise<void>(resolve => {
+    const drain = () => {
+      if (!isActive()) {
+        if (running === 0) {
+          resolve();
+        }
+        return;
+      }
+      while (
+        running < PERPS_CANDLE_PREFETCH_CONCURRENCY &&
+        cursor < queue.length
+      ) {
+        const interval = queue[cursor++];
+        if (readPerpsCandleSourceSnapshot(coin, interval)) {
+          continue;
+        }
+        running += 1;
+        loadPerpsCandleSourceSnapshot({ coin, interval })
+          .catch(() => undefined)
+          .finally(() => {
+            running -= 1;
+            drain();
+          });
+      }
+      if (running === 0) {
+        resolve();
+      }
+    };
+    drain();
+  });
 };
 
 export const resetPerpsCandleSourceSnapshotCacheForTests = () => {
