@@ -1,10 +1,12 @@
 import React from 'react';
 import {
+  act,
   fireEvent,
   render,
   screen,
   waitFor,
 } from '@testing-library/react-native';
+import { Platform } from 'react-native';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { RightMore } from './RightMore';
 
@@ -29,6 +31,7 @@ jest.mock('react-native-gesture-handler', () => ({
 
 const mockTogglePinned = jest.fn();
 const mockRemoveToken = jest.fn();
+let mockTipProps: Record<string, any> = {};
 
 jest.mock('@/hooks/useTokenSettings', () => ({
   useIsUserTokenPinned: () => false,
@@ -39,14 +42,9 @@ jest.mock('@/components2024/RemoveTokenConfirmPopup', () => ({
     mockRemoveToken(...args),
 }));
 jest.mock('@/components/Tip', () => ({
-  Tip: ({
-    children,
-    content,
-    isVisible,
-  }: React.PropsWithChildren<{
-    content: React.ReactNode;
-    isVisible: boolean;
-  }>) => {
+  Tip: (props: any) => {
+    const { children, content, isVisible } = props;
+    mockTipProps = props;
     const { View } = require('react-native');
     return (
       <>
@@ -95,6 +93,13 @@ const token = {
 describe('RightMore native header trigger', () => {
   beforeEach(() => jest.clearAllMocks());
 
+  beforeAll(() => {
+    Object.defineProperty(Platform, 'OS', {
+      configurable: true,
+      value: 'ios',
+    });
+  });
+
   it('uses the RNGH host so the Fabric native-stack header receives presses', () => {
     render(<RightMore token={token} refreshTags={jest.fn()} />);
 
@@ -118,6 +123,25 @@ describe('RightMore native header trigger', () => {
 
     fireEvent.press(screen.getByTestId('token-header-more'));
     fireEvent.press(screen.getByText('page.singleHome.tokenActions.remove'));
+    expect(mockRemoveToken).not.toHaveBeenCalled();
+    act(() => mockTipProps.onModalDismiss());
     expect(mockRemoveToken).toHaveBeenCalledWith(token);
+  });
+
+  it('opens the remove confirmation only after the header menu modal dismisses', () => {
+    render(<RightMore token={token} refreshTags={jest.fn()} />);
+
+    fireEvent.press(screen.getByTestId('token-header-more'));
+    fireEvent.press(screen.getByText('page.singleHome.tokenActions.remove'));
+
+    expect(mockRemoveToken).not.toHaveBeenCalled();
+
+    act(() => mockTipProps.onModalDismiss());
+    expect(mockRemoveToken).toHaveBeenCalledTimes(1);
+    expect(mockRemoveToken).toHaveBeenCalledWith(token);
+
+    // A late duplicate dismiss must not open the confirmation twice.
+    act(() => mockTipProps.onModalDismiss());
+    expect(mockRemoveToken).toHaveBeenCalledTimes(1);
   });
 });
