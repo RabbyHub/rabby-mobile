@@ -6,6 +6,8 @@ import React, {
   type Ref,
 } from 'react';
 import {
+  LayoutChangeEvent,
+  Platform,
   StyleProp,
   StyleSheet,
   TextInputProps,
@@ -64,6 +66,9 @@ export const NextSearchBar = ({
   noCancel,
   as = 'TextInput',
   inputComponent,
+  placeholder,
+  placeholderTextColor,
+  onLayout,
   ...rest
 }: Props & { ref?: Ref<NextSearchBarMethods> }) => {
   const { t } = useTranslation();
@@ -73,7 +78,47 @@ export const NextSearchBar = ({
 
   const inputRef = useRef<any>(null);
   const isEmpty = !value;
+  const [inputLayout, setInputLayout] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
   const [isFocus, setIsFocus] = useState(false);
+
+  const flattenedInputStyle: TextStyle =
+    StyleSheet.flatten([styles.input as TextStyle, inputStyle]) ?? {};
+  const effectivePlaceholderColor =
+    placeholderTextColor ?? styles.placeholder.color;
+  // Fabric's iOS TextInput draws the native placeholder lower than the text
+  // baseline when the field has an explicit height (QA 1022/672). Keep the
+  // native placeholder for semantics but paint the visible one ourselves,
+  // centered against the same box as the input text.
+  const useManagedPlaceholder =
+    Platform.OS === 'ios' && !!placeholder && isEmpty;
+  const showManagedPlaceholder =
+    useManagedPlaceholder &&
+    !!inputLayout &&
+    inputLayout.width > 0 &&
+    inputLayout.height > 0;
+
+  const handleInputLayout = useMemoizedFn((event: LayoutChangeEvent) => {
+    const { x, y, width, height } = event.nativeEvent.layout;
+    setInputLayout(prev => {
+      if (
+        prev &&
+        prev.x === x &&
+        prev.y === y &&
+        prev.width === width &&
+        prev.height === height
+      ) {
+        return prev;
+      }
+      return { x, y, width, height };
+    });
+    onLayout?.(event);
+  });
+
   const handleBlur = useMemoizedFn(e => {
     setIsFocus(false);
     onBlur?.(e);
@@ -124,16 +169,59 @@ export const NextSearchBar = ({
             inputStyle,
             isEmpty ? styles.placeholder : null,
           ])}
-          placeholderTextColor={styles.placeholder.color}
+          placeholder={placeholder}
+          placeholderTextColor={
+            showManagedPlaceholder ? 'transparent' : effectivePlaceholderColor
+          }
           value={value}
           onChangeText={onChangeText}
           onChange={onChange}
           onBlur={handleBlur}
           onFocus={handleFocus}
+          onLayout={handleInputLayout}
           autoCorrect={false}
           spellCheck={false}
           {...rest}
         />
+        {showManagedPlaceholder ? (
+          <View
+            pointerEvents="none"
+            accessible={false}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={[
+              styles.placeholderOverlay,
+              {
+                left: inputLayout.x,
+                top: inputLayout.y,
+                width: inputLayout.width,
+                height: inputLayout.height,
+                paddingLeft:
+                  flattenedInputStyle?.paddingLeft ??
+                  flattenedInputStyle?.paddingHorizontal ??
+                  0,
+                paddingRight:
+                  flattenedInputStyle?.paddingRight ??
+                  flattenedInputStyle?.paddingHorizontal ??
+                  0,
+              },
+            ]}>
+            <Text
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={[
+                styles.placeholder,
+                {
+                  color: effectivePlaceholderColor,
+                  fontSize: flattenedInputStyle?.fontSize,
+                  lineHeight: flattenedInputStyle?.lineHeight,
+                  letterSpacing: flattenedInputStyle?.letterSpacing,
+                },
+              ]}>
+              {placeholder}
+            </Text>
+          </View>
+        ) : null}
         {!isEmpty ? (
           <TouchableWithoutFeedback
             hitSlop={8}
@@ -204,6 +292,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
+  },
+  placeholderOverlay: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
   },
   cancelText: {
     fontFamily: 'SF Pro Rounded',

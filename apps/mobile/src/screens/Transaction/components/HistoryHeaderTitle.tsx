@@ -22,5 +22,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     // Android's explicit LineHeightSpan clamps the first/last line to the
     // rounded Latin font's metrics, clipping taller fallback CJK glyphs.
     lineHeight: Platform.OS === 'android' ? undefined : 24,
+    // The default Android font padding makes this title taller than the
+    // header's two-line block allows, pushing the account row into the card
+    // below. Keep the native line metrics but drop the extra padding (1141).
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
 }));

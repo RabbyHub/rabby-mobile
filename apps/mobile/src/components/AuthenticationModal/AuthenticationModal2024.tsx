@@ -41,7 +41,6 @@ import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 const SIZES = {
   /* input height from Figma: 56px */
-  inputAndBioAreaHeight: 102 /* 56px input + 46px padding bottom */,
   inputHeight: 56,
   inputBioButtonHeight: 48,
   bioAuthContainerHeight: 64,
@@ -269,7 +268,11 @@ export const AuthenticationModal2024 = ({
   );
   const hasCheckFailed = checklistState.includes(false);
 
-  const [password, setPassword] = React.useState(APP_TEST_PWD);
+  // Keep the typed password in a ref: a per-keystroke state update re-renders
+  // the dynamically sized sheet, which re-measures while the keyboard is up
+  // and makes the sheet jitter (and the iOS keyboard briefly re-apply its
+  // input traits).
+  const passwordRef = React.useRef(APP_TEST_PWD);
   const [error, setError] = React.useState<string>();
 
   const onFinishedReturnBase = useMemo(
@@ -320,7 +323,7 @@ export const AuthenticationModal2024 = ({
 
     try {
       if (!disableValidation) {
-        await validationHandler?.(password);
+        await validationHandler?.(passwordRef.current);
         apisLock.updateUnlockTime();
       }
       if (!mountedRef.current) {
@@ -329,7 +332,7 @@ export const AuthenticationModal2024 = ({
       onFinished?.({
         ...onFinishedReturnBase,
         authType: 'password',
-        getValidatedPassword: () => password,
+        getValidatedPassword: () => passwordRef.current,
       });
     } catch (err: any) {
       console.error(err);
@@ -340,7 +343,6 @@ export const AuthenticationModal2024 = ({
     disableValidation,
     onFinishedReturnBase,
     onFinished,
-    password,
     validationHandler,
   ]);
 
@@ -356,10 +358,6 @@ export const AuthenticationModal2024 = ({
     },
     [setCurrentAuthType, setBioAuth],
   );
-
-  React.useEffect(() => {
-    setError('');
-  }, [password]);
 
   const handleAuthWithBiometrics = React.useCallback(async () => {
     if (hasCheckFailed || !mountedRef.current) {
@@ -501,13 +499,20 @@ export const AuthenticationModal2024 = ({
                   )}
                   iconColor={colors2024['neutral-title-1']}
                   inputProps={{
-                    value: password,
+                    // Uncontrolled on purpose: every keystroke must not
+                    // re-render/re-measure the sheet.
+                    defaultValue: passwordRef.current,
                     secureTextEntry: true,
                     inputMode: 'text',
                     returnKeyType: 'done',
                     returnKeyLabel: t('global.Confirm'),
                     placeholderTextColor: colors2024['neutral-foot'],
-                    onChangeText: setPassword,
+                    onChangeText: value => {
+                      passwordRef.current = value;
+                      if (error) {
+                        setError('');
+                      }
+                    },
                     ...makeTestIDProps(E2E_ID.authModal.passwordInput),
                   }}
                   style={StyleSheet.flatten([
@@ -518,7 +523,10 @@ export const AuthenticationModal2024 = ({
                   ])}
                   hasError={Boolean(error)}
                   fieldErrorContainerStyle={{ paddingLeft: 4, marginTop: 8 }}
-                  tipText={error}
+                  // Keep one line reserved for the error so the dynamically
+                  // sized sheet does not re-measure (and flicker) while the
+                  // user types.
+                  tipText={error || ' '}
                 />
                 {/* {__DEV__ && bioComputed.isBiometricsEnabled && (
                   <BioButton
@@ -687,8 +695,9 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => {
     },
     inputAreaWithPwd: {
       paddingTop: 0,
-      paddingBottom: 46,
-      height: SIZES.inputAndBioAreaHeight,
+      // Let the sheet hug its content: a fixed 102pt password area left a
+      // large empty gap under the button in the verify-password sheet.
+      paddingBottom: 0,
     },
     inputAreaWithBio: {
       height: 12,

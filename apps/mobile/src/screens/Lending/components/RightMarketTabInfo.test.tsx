@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 import MaskedView from '@react-native-masked-view/masked-view';
 import RightMarketTabInfo from './RightMarketTabInfo';
@@ -43,12 +43,24 @@ jest.mock('@react-native-masked-view/masked-view', () => {
   return (props: any) => <NativeView {...props} />;
 });
 
-// Native scroll/re-attachment rendering must still be checked on Android;
-// this only protects the selected layer mode and the existing action/design.
-it('uses the software mask while preserving the e-mode label and action', () => {
+it('renders the e-mode label directly on Android instead of the broken mask layer', () => {
+  jest.replaceProperty(Platform, 'OS', 'android');
+  try {
+    const view = render(<RightMarketTabInfo />);
+    expect(view.UNSAFE_queryByType(MaskedView)).toBeNull();
+    expect(view.getByText('USDe Stablecoins')).toBeTruthy();
+    fireEvent.press(view.getByText('USDe Stablecoins'));
+    expect(createGlobalBottomSheetModal2024).toHaveBeenCalledWith(
+      expect.objectContaining({ name: MODAL_NAMES.DISABLE_EMODE_OVERVIEW }),
+    );
+  } finally {
+    jest.restoreAllMocks();
+  }
+});
+
+it('keeps the gradient mask implementation on iOS', () => {
   const view = render(<RightMarketTabInfo />);
   const mask = view.UNSAFE_getByType(MaskedView);
-  expect(mask.props.androidRenderingMode).toBe('software');
   expect(mask.props.maskElement.props.children).toBe('USDe Stablecoins');
   expect(view.getByText('USDe Stablecoins')).toBeTruthy();
   fireEvent.press(view.getByText('USDe Stablecoins'));
