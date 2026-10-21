@@ -475,6 +475,29 @@ describe('rpcFlow typed-data chain pinning', () => {
     },
   );
 
+  it('starts a retry from the mounted waiting UI without another mount event', async () => {
+    const { waitSignComponentAmounted } =
+      jest.requireMock('../utils/signEvent');
+    // Only the initial mount emits; a retry comes from the same mounted UI.
+    waitSignComponentAmounted
+      .mockResolvedValueOnce(undefined)
+      .mockReturnValue(new Promise(() => {}));
+    mockRequestApproval
+      .mockResolvedValueOnce({ uiRequestComponent: 'LedgerHardwareWaiting' })
+      .mockReturnValueOnce(new Promise(() => {}));
+    mockEthSignTypedData
+      .mockRejectedValueOnce(new Error('device busy'))
+      .mockResolvedValueOnce('0xretried');
+
+    void rpcFlow(makeRequest());
+    await new Promise(resolve => setImmediate(resolve));
+    expect(mockEthSignTypedData).toHaveBeenCalledTimes(1);
+
+    const retry = mockSetCurrentRequestDeferFn.mock.calls.at(-1)[0];
+    await expect(retry(true)).resolves.toBe('0xretried');
+    expect(mockEthSignTypedData).toHaveBeenCalledTimes(2);
+  });
+
   it.each<['walletconnect' | 'internal', number | undefined]>([
     ['walletconnect', 56],
     ['internal', undefined],

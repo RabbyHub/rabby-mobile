@@ -116,11 +116,14 @@ export const TrezorHardwareWaiting = ({
       return;
     }
     setConnectStatus(APPROVAL_STATUS_MAP.WAITING);
-    await notificationServiceApi.callCurrentRequestDeferFn();
+    // Fire and forget: this resolves only when signing ends, and a failed
+    // attempt is reported through SIGN_FINISHED instead.
+    void notificationServiceApi
+      .callCurrentRequestDeferFn()
+      .catch(console.error);
     if (showToast) {
       toast.success(t('page.signFooterBar.ledger.resent'));
     }
-    emitSignComponentAmounted();
   };
 
   const init = async () => {

@@ -135,9 +135,12 @@ export const PrivatekeyWaiting = ({
         });
       }
     }
-    await notificationServiceApi.callCurrentRequestDeferFn(true);
+    // Fire and forget: this resolves only when signing ends, and a failed
+    // attempt is reported through SIGN_FINISHED instead.
+    void notificationServiceApi
+      .callCurrentRequestDeferFn(true)
+      .catch(console.error);
     toast.success(t('page.signFooterBar.ledger.resent'));
-    emitSignComponentAmounted();
   };
 
   const cancelRef = useRef(false);

@@ -402,18 +402,9 @@ const flowContext = flow
       (originApprovalRes: typeof approvalRes) =>
       async (isRetry = false) =>
         new Promise(async resolve => {
-          let waitSignComponentPromise = Promise.resolve();
-          if (
-            !isAutoPersonalSign &&
-            isSignApproval(approvalType) &&
-            uiRequestComponent
-          ) {
-            waitSignComponentPromise = waitSignComponentAmounted();
-          }
-
           if (originApprovalRes?.isGnosis) return resolve(undefined);
 
-          return waitSignComponentPromise.then(() => {
+          return Promise.resolve().then(() => {
             let _approvalRes = originApprovalRes;
 
             if (isRetry && mapMethod === 'ethSendTransaction') {
@@ -494,7 +485,15 @@ const flowContext = flow
     const requestDeferFn = createRequestDeferFn(approvalRes);
 
     setCurrentRequestDeferFnSync(requestDeferFn);
-    const requestDefer = requestDeferFn();
+    // Only the first attempt waits for the waiting UI to mount. Retries are
+    // started from that mounted UI, which emits no further mount event.
+    const requestDefer =
+      !approvalRes?.isGnosis &&
+      !isAutoPersonalSign &&
+      isSignApproval(approvalType) &&
+      uiRequestComponent
+        ? waitSignComponentAmounted().then(() => requestDeferFn())
+        : requestDeferFn();
     async function requestApprovalLoop({
       uiRequestComponent,
       $account,
