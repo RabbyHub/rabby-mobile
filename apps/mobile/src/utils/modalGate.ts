@@ -102,6 +102,10 @@ export function useVisibleBlockingModalIds() {
   );
 }
 
+export function resetModalGateForTests() {
+  modalGateStore.setState({ blockingModalCountMap: {} });
+}
+
 export type ModalGateDebugSnapshot = {
   visibleBlockingModalCount: number;
   visibleBlockingModalIds: string[];
@@ -138,6 +142,20 @@ export function subscribeModalGateDebugSnapshot(
   return modalGateStore.subscribe(() => {
     emitSnapshot();
   });
+}
+
+export function acquireBlockingModal(id: string) {
+  markBlockingModalVisible(id, true);
+
+  let released = false;
+  return () => {
+    if (released) {
+      return;
+    }
+
+    released = true;
+    markBlockingModalVisible(id, false);
+  };
 }
 
 export function useRegisterBlockingModal(id: string, visible: boolean) {
