@@ -25,8 +25,13 @@ export const QrCodeModal: React.FC = () => {
       onRequestClose={() => {
         setVisible(false);
       }}>
-      {visible ? (
+      {/* Keep the content mounted while the native modal dismisses; gating
+          on `visible` leaves an empty frame and causes the close flicker. */}
+      {data ? (
         <TouchableOpacity
+          // Default TouchableOpacity opacity feedback fades the QR itself
+          // before the modal closes, which QA sees as a flicker.
+          activeOpacity={1}
           onPress={() => setVisible(false)}
           style={styles.overlay}>
           <View style={styles.container}>
