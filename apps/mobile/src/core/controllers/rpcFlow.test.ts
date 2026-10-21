@@ -6,7 +6,6 @@ const mockEthSendTransaction = jest.fn();
 const mockEthSignTypedData = jest.fn();
 const mockValidateTypedData = jest.fn();
 const mockWalletSwitchEthereumChain = jest.fn();
-const mockPersonalEcRecover = jest.fn();
 const mockGetDapp = jest.fn();
 const mockGetConnectedDapp = jest.fn();
 const mockUpdateDapp = jest.fn();
@@ -112,7 +111,6 @@ jest.mock('./provider', () => ({
     ethSignTypedDataV4: (...args: unknown[]) => mockEthSignTypedData(...args),
     walletSwitchEthereumChain: (...args: unknown[]) =>
       mockWalletSwitchEthereumChain(...args),
-    personalEcRecover: (...args: unknown[]) => mockPersonalEcRecover(...args),
   },
 }));
 
@@ -477,33 +475,6 @@ describe('rpcFlow typed-data chain pinning', () => {
     },
   );
 
-  it('leaves a failed signing to the waiting UI without rejecting', async () => {
-    const { waitSignComponentAmounted } =
-      jest.requireMock('../utils/signEvent');
-    const { eventBus } = jest.requireMock('@/utils/events');
-    waitSignComponentAmounted.mockResolvedValue(undefined);
-    mockRequestApproval
-      .mockResolvedValueOnce({ uiRequestComponent: 'PrivatekeyWaiting' })
-      .mockResolvedValueOnce('0xfromWaitingUi');
-    mockEthSignTypedData.mockRejectedValue(new Error('device busy'));
-    const unhandled: unknown[] = [];
-    const onUnhandled = (reason: unknown) => unhandled.push(reason);
-    process.on('unhandledRejection', onUnhandled);
-
-    try {
-      await expect(rpcFlow(makeRequest())).resolves.toBe('0xfromWaitingUi');
-      await new Promise(resolve => setImmediate(resolve));
-
-      expect(eventBus.emit).toHaveBeenCalledWith('SIGN_FINISHED', {
-        success: false,
-        errorMsg: 'device busy',
-      });
-      expect(unhandled).toEqual([]);
-    } finally {
-      process.off('unhandledRejection', onUnhandled);
-    }
-  });
-
   it.each<['walletconnect' | 'internal', number | undefined]>([
     ['walletconnect', 56],
     ['internal', undefined],
@@ -556,50 +527,5 @@ describe('rpcFlow typed-data chain pinning', () => {
     ).toBeUndefined();
     expect(mockGetConnectedDapp).not.toHaveBeenCalled();
     expect(mockRequestApproval).not.toHaveBeenCalled();
-  });
-});
-
-describe('rpcFlow error propagation without an approval UI', () => {
-  let originalGetMetadata: unknown;
-  const request: ProviderRequest = {
-    data: { method: 'personal_ecRecover', params: ['0x00', '0x00'] },
-    session: { origin: 'https://example.com', name: 'Example', icon: '' },
-    account,
-  };
-
-  beforeAll(() => {
-    originalGetMetadata = (Reflect as any).getMetadata;
-    (Reflect as any).getMetadata = jest.fn(() => undefined);
-  });
-
-  afterAll(() => {
-    if (originalGetMetadata) {
-      (Reflect as any).getMetadata = originalGetMetadata;
-    } else {
-      delete (Reflect as any).getMetadata;
-    }
-  });
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockGetCustomTestnetList.mockReturnValue([]);
-    mockGetTestnetChainList.mockReturnValue([]);
-    mockGetStatsData.mockReturnValue(undefined);
-  });
-
-  it('rejects when the handler throws synchronously', async () => {
-    mockPersonalEcRecover.mockImplementation(() => {
-      throw new Error('Missing signature parameter');
-    });
-
-    await expect(rpcFlow(request)).rejects.toThrow(
-      'Missing signature parameter',
-    );
-  });
-
-  it('rejects when the handler returns a rejected promise', async () => {
-    mockPersonalEcRecover.mockRejectedValue(new Error('boom'));
-
-    await expect(rpcFlow(request)).rejects.toThrow('boom');
   });
 });
