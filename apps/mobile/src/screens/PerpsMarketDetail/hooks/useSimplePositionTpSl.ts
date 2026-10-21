@@ -25,20 +25,20 @@ export function useSimplePositionTpSl({
     isSceneCurrent: () => boolean,
   ) => Promise<boolean>;
   cancelOrder: (
-    oid: number,
+    oids: readonly number[],
     coin: string,
     side: Side,
     isSceneCurrent: () => boolean,
   ) => Promise<boolean>;
 }) {
   const projection = useMemo(() => {
-    let tp: OpenOrder | undefined;
-    let sl: OpenOrder | undefined;
+    const tp: OpenOrder[] = [];
+    const sl: OpenOrder[] = [];
     for (const order of orders ?? []) {
       if (!order.isTrigger || !order.isPositionTpsl || !order.reduceOnly)
         continue;
-      if (order.orderType === 'Take Profit Market') tp ??= order;
-      if (order.orderType === 'Stop Market') sl ??= order;
+      if (order.orderType === 'Take Profit Market') tp.push(order);
+      if (order.orderType === 'Stop Market') sl.push(order);
     }
     return { tp, sl };
   }, [orders]);
@@ -93,15 +93,16 @@ export function useSimplePositionTpSl({
     );
   });
   const handleCancelAutoClose = useMemoizedFn(async (side: Side) => {
-    const order = projection[side];
-    if (!order) return;
-    await run(side, isCurrent => cancelOrder(order.oid, coin, side, isCurrent));
+    // Cancel every confirmed same-side leg; the tag shows only the first.
+    const oids = projection[side].map(order => order.oid);
+    if (!oids.length) return;
+    await run(side, isCurrent => cancelOrder(oids, coin, side, isCurrent));
   });
 
   return {
     contextKey: `${coin}:${generation}`,
-    tpPrice: projection.tp?.triggerPx,
-    slPrice: projection.sl?.triggerPx,
+    tpPrice: projection.tp[0]?.triggerPx,
+    slPrice: projection.sl[0]?.triggerPx,
     tpPending: pending.tp === scene.current,
     slPending: pending.sl === scene.current,
     handleSetAutoClose,
