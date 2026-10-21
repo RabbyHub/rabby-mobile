@@ -2,6 +2,7 @@ import type { Candle, CandleSnapshot } from '@rabby-wallet/hyperliquid-sdk';
 
 import {
   loadPerpsCandleSourceSnapshot,
+  preloadPerpsCandleSourceSnapshots,
   readPerpsCandleSourceSnapshot,
   resetPerpsCandleSourceSnapshotCacheForTests,
 } from './sourceSnapshot';
@@ -124,5 +125,36 @@ describe('Perps Candle source snapshot preload', () => {
 
     expect(mockCandleSnapshot).toHaveBeenCalledTimes(2);
     expect(refreshed.candles[0]?.time).toBe(2000);
+  });
+
+  it('prefetches unique intervals once and reuses fresh snapshots', async () => {
+    mockCandleSnapshot.mockResolvedValue([rawCandle(1000)]);
+
+    await preloadPerpsCandleSourceSnapshots({
+      coin: 'BTC',
+      intervals: ['15m', '5m', '15m'],
+    });
+
+    expect(mockCandleSnapshot).toHaveBeenCalledTimes(2);
+
+    await preloadPerpsCandleSourceSnapshots({
+      coin: 'BTC',
+      intervals: ['15m', '5m'],
+    });
+
+    expect(mockCandleSnapshot).toHaveBeenCalledTimes(2);
+  });
+
+  it('stops prefetching when the sheet is no longer active', async () => {
+    mockCandleSnapshot.mockResolvedValue([rawCandle(1000)]);
+    let active = false;
+
+    await preloadPerpsCandleSourceSnapshots({
+      coin: 'BTC',
+      intervals: ['15m', '5m'],
+      isActive: () => active,
+    });
+
+    expect(mockCandleSnapshot).not.toHaveBeenCalled();
   });
 });
