@@ -75,17 +75,10 @@ export const RightMore: React.FC<{
               setVisible(false);
               createRemoveTokenConfirmPopup(token);
             }}>
-            {({ pressed }) => (
-              <>
-                <Text
-                  style={[styles.removeText, pressed && styles.pressedText]}>
-                  {t('page.singleHome.tokenActions.remove')}
-                </Text>
-                <RcRemoveArrow
-                  color={colors2024[pressed ? 'brand-default' : 'neutral-foot']}
-                />
-              </>
-            )}
+            <Text style={styles.removeText}>
+              {t('page.singleHome.tokenActions.remove')}
+            </Text>
+            <RcRemoveArrow color={colors2024['red-default']} />
           </Pressable>
         </View>
       }>
@@ -146,11 +139,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 20,
   },
   removeText: {
-    color: colors2024['neutral-title-1'],
+    color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
     fontSize: 16,
     lineHeight: 20,
   },
-  pressedText: { color: colors2024['brand-default'] },
 }));
