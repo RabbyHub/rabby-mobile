@@ -30,7 +30,7 @@ import RcUpgradeClose from '@/assets/icons/upgrade/close.svg';
 import RcUpgradeSliderThumbLight from '@/assets/icons/upgrade/slider-thumb-light.svg';
 import RcUpgradeSliderThumbDark from '@/assets/icons/upgrade/slider-thumb-dark.svg';
 import { useGetBinaryMode } from '@/hooks/theme';
-import { MODAL_GATE_IDS } from '@/utils/modalGate';
+import { MODAL_GATE_IDS, type ModalGateId } from '@/utils/modalGate';
 
 const CARD_WIDTH = 313;
 const CARD_HEIGHT = 426;
@@ -165,7 +165,7 @@ export function UpgradePromptDialog({
   remoteVersion: { version: string; changelog: string };
   onClose: () => void;
   onUpdate: () => void;
-  modalId?: string;
+  modalId?: ModalGateId;
 }) {
   const { t } = useTranslation();
   const isDark = useGetBinaryMode() === 'dark';

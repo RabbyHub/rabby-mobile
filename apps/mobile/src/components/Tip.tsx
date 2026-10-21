@@ -15,6 +15,7 @@ import { AppColorsVariants } from '@/constant/theme';
 import { RNGHPressable, RNGHPressableProps } from './customized/reexports';
 import { Text } from '@/components/Typography';
 import { TrackedModal } from './Modal/TrackedModal';
+import type { ModalGateId } from '@/utils/modalGate';
 
 type PressableComponent = 'RNPressable' | 'RNGHPressable';
 type PressableComProps<T extends PressableComponent> = T extends 'RNPressable'
@@ -34,7 +35,7 @@ type TipProps<T extends PressableComponent> = Omit<TooltipProps, 'content'> & {
     }) => void;
   };
   noPressable?: boolean;
-  modalGateId?: string;
+  modalGateId?: ModalGateId;
   modalGateBlocking?: boolean;
   onModalDismiss?: () => void;
 };
@@ -42,7 +43,7 @@ type TipProps<T extends PressableComponent> = Omit<TooltipProps, 'content'> & {
 const destroyListeners = new Set<() => void>();
 
 const TipModalGateContext = React.createContext<{
-  modalGateId: string;
+  modalGateId: ModalGateId;
   modalGateBlocking: boolean;
   onModalDismiss?: () => void;
 } | null>(null);

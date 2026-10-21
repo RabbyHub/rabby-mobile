@@ -28,6 +28,7 @@ export const MODAL_GATE_IDS = {
   gasAccountDepositTokenAlert: 'gas-account-deposit-token-alert',
   gasAccountHeaderMenu: 'gas-account-header-menu',
   tokenDetailHeaderMenu: 'token-detail-header-menu',
+  tokenContractCopyConfirm: 'token-contract-copy-confirm',
   perpsAgentsLimit: 'perps-agents-limit',
   perpsDepositToken: 'perps-deposit-token',
   perpsEditTpSlPrice: 'perps-edit-tp-sl-price',
@@ -43,15 +44,19 @@ export const MODAL_GATE_IDS = {
   hdKeystoneSwitchDevice: 'hd-keystone-switch-device',
   receiveWatchMode: 'receive-watch-mode',
   devServerSettings: 'dev-server-settings',
+  devUpgradePromptPreview: 'dev-upgrade-prompt-preview',
   convertDustEntryGuide: 'convert-dust-entry-guide',
   convertDustStopSheet: 'convert-dust-stop-sheet',
+  feedbackHistoryMediaPreview: 'feedback-history-media-preview',
 } as const;
+
+export type ModalGateId = (typeof MODAL_GATE_IDS)[keyof typeof MODAL_GATE_IDS];
 
 const modalGateStore = zCreate<ModalGateState>(() => ({
   blockingModalCountMap: {},
 }));
 
-function markBlockingModalVisible(id: string, visible: boolean) {
+function markBlockingModalVisible(id: ModalGateId, visible: boolean) {
   modalGateStore.setState(prev => {
     const currentCount = prev.blockingModalCountMap[id] || 0;
 
@@ -144,7 +149,7 @@ export function subscribeModalGateDebugSnapshot(
   });
 }
 
-export function acquireBlockingModal(id: string) {
+export function acquireBlockingModal(id: ModalGateId) {
   markBlockingModalVisible(id, true);
 
   let released = false;
@@ -158,7 +163,7 @@ export function acquireBlockingModal(id: string) {
   };
 }
 
-export function useRegisterBlockingModal(id: string, visible: boolean) {
+export function useRegisterBlockingModal(id: ModalGateId, visible: boolean) {
   useEffect(() => {
     if (!visible) {
       return;

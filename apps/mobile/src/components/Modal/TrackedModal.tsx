@@ -6,10 +6,10 @@ import {
   Platform,
 } from 'react-native';
 
-import { acquireBlockingModal } from '@/utils/modalGate';
+import { acquireBlockingModal, type ModalGateId } from '@/utils/modalGate';
 
 type TrackedModalProps = RNModalProps & {
-  modalId: string;
+  modalId: ModalGateId;
   blocking?: boolean;
 };
 
@@ -19,7 +19,7 @@ export function useTrackedModalGate({
   visible = false,
 }: {
   blocking?: boolean;
-  modalId: string;
+  modalId: ModalGateId;
   visible?: boolean;
 }) {
   const isIOS = Platform.OS === 'ios';
