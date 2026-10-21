@@ -32,7 +32,6 @@ import { waitSignComponentAmounted } from '../utils/signEvent';
 import { findChain } from '@/utils/chain';
 import { gnosisController } from './gnosisController';
 import { underline2Camelcase } from '../utils/common';
-import { find, reject } from 'lodash';
 import { getRetryTxRecommendNonce, getRetryTxType } from '@/utils/errorTxRetry';
 import { hexToNumber, isHex } from 'viem';
 import { intToHex } from '@/utils/number';
@@ -398,10 +397,15 @@ const flowContext = flow
         msgParams: ctx.request.data.params,
       });
 
+    // With an approval UI, the dapp gets its answer from that UI (which also
+    // owns retries); otherwise the caller awaits requestDefer directly and must
+    // see the error instead of a request that never settles.
+    const callerAwaitsRequestDefer = isAutoPersonalSign || !uiRequestComponent;
+
     const createRequestDeferFn =
       (originApprovalRes: typeof approvalRes) =>
       async (isRetry = false) =>
-        new Promise(async resolve => {
+        new Promise(async (resolve, reject) => {
           if (originApprovalRes?.isGnosis) return resolve(undefined);
 
           return Promise.resolve().then(() => {
@@ -443,12 +447,14 @@ const flowContext = flow
               }
             }
 
-            return Promise.resolve(
-              providerController[mapMethod]({
-                ...request,
-                approvalRes: _approvalRes,
-              }),
-            )
+            // .then() so a synchronous throw lands in .catch below
+            return Promise.resolve()
+              .then(() =>
+                providerController[mapMethod]({
+                  ...request,
+                  approvalRes: _approvalRes,
+                }),
+              )
               .then(result => {
                 if (isSignApproval(approvalType)) {
                   eventBus.emit(EVENTS.SIGN_FINISHED, {
@@ -478,7 +484,9 @@ const flowContext = flow
                 } else if (__DEV__) {
                   console.error(e);
                 }
-                reject(e);
+                if (callerAwaitsRequestDefer) {
+                  reject(e);
+                }
               });
           });
         });
