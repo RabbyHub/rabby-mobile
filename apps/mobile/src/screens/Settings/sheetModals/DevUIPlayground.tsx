@@ -119,7 +119,7 @@ export default function DevUIPlaygroundModal({
         },
       },
       {
-        label: 'Perps Pro Pager',
+        label: 'Swipable SubScreen',
         icon: <RcCode style={styles.labelIcon} />,
         onPress: () => {
           navigation.dispatch(

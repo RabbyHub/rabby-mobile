@@ -76,6 +76,7 @@ import { PerpsProHeader } from '../components/header/PerpsProHeader';
 import { PerpsProAccountSelectorLayer } from '../components/header/PerpsProAccountSelectorLayer';
 import { PERPS_PRO_HEADER_HEIGHT } from '../components/header/constants';
 import { PerpsProInfoTabs } from '../components/info/PerpsProInfoTabs';
+import { snapPerpsProTabIndicator } from '../components/common/PerpsProTabIndicator';
 import {
   PERPS_PRO_INFO_TABS,
   PerpsProInfoPager,
@@ -1145,6 +1146,15 @@ export const PerpsProScene: React.FC<{
   const settledInfoTab =
     info.activeInfoTab == null ? null : committedInfoTab ?? info.activeInfoTab;
   const displayedInfoTab = requestedInfoTab ?? previewInfoTab ?? settledInfoTab;
+  useEffect(() => {
+    if (!settledInfoTab) {
+      return;
+    }
+    snapPerpsProTabIndicator(
+      infoTabIndicatorPosition,
+      Math.max(PERPS_PRO_INFO_TABS.indexOf(settledInfoTab), 0),
+    );
+  }, [infoTabIndicatorPosition, settledInfoTab]);
   // Both native pagers can select or reattach a page before a conditionally
   // prepared FlatList is ready. Keep all three list refs stable so preparePages
   // can apply the shared offset before the page becomes active.
