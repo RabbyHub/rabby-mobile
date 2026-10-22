@@ -29,6 +29,7 @@ jest.mock('@/utils/number', () => ({
 import React from 'react';
 import { act, fireEvent, render } from '@testing-library/react-native';
 import { PerpsPosition } from './PerpsPosition';
+import { simpleLiquidationPriceText } from './account/model';
 
 const mockTips = jest.fn();
 jest.mock('@/hooks/useTipsPopup', () => ({
@@ -94,6 +95,7 @@ const props: React.ComponentProps<typeof PerpsPosition> = {
     fundingPayments: '0',
   },
   rawLiquidationPrice: '-20',
+  liquidationPriceText: '--',
   rawMarkPrice: '110',
   coin: 'ETH',
   coinLogo: '',
@@ -108,6 +110,29 @@ const props: React.ComponentProps<typeof PerpsPosition> = {
   handleCancelAutoClose: jest.fn(async () => {}),
   handleUpdateMargin: jest.fn(async () => {}),
 };
+
+it.each([
+  ['54321.6789', 0, '54,322'],
+  ['23.4500', 3, '23.45'],
+  ['23.4565', 3, '23.457'],
+] as const)(
+  'displays the shared liquidation text for %s without changing editor inputs',
+  (raw, decimals, expected) => {
+    const legacyPrice = Number(raw).toFixed(decimals || 2);
+    const ui = render(
+      <PerpsPosition
+        {...props}
+        rawLiquidationPrice={raw}
+        liquidationPriceText={simpleLiquidationPriceText(raw, decimals)}
+        positionData={{ ...props.positionData!, liquidationPrice: legacyPrice }}
+      />,
+    );
+    expect(ui.getByText(`$${expected}`)).toBeTruthy();
+    for (const tag of ui.getAllByTestId('tp-sl-tag')) {
+      expect(tag.props.liqPrice).toBe(Number(legacyPrice));
+    }
+  },
+);
 
 it.each(['cross', 'isolated'] as const)(
   'keeps gap and Size information in %s',

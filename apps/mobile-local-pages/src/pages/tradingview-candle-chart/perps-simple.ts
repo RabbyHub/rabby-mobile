@@ -425,7 +425,10 @@ export function createSimpleChart(
     // No opaque full-axis row: only the 14px label covers chart content.
     const labels = visibleTags.map((tag, i) => {
       const label = document.createElement('span');
-      label.textContent = priceText(tag.price);
+      label.textContent =
+        tag.id === 'liquidation'
+          ? prices.liquidationPriceText ?? priceText(tag.price)
+          : priceText(tag.price);
       label.dataset.simplePriceLabel = '';
       label.dataset.priceKind = tag.id;
       Object.assign(label.style, {

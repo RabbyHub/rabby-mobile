@@ -60,6 +60,7 @@ export const PerpsPosition: React.FC<{
   szDecimals: number;
   markPrice: number;
   rawLiquidationPrice?: string | number | null;
+  liquidationPriceText: string;
   rawMarkPrice?: string | number | null;
   activeAssetCtx: WsActiveAssetCtx['ctx'] | null;
   currentAssetCtx: MarketData | null;
@@ -92,6 +93,7 @@ export const PerpsPosition: React.FC<{
   slPrice,
   markPrice,
   rawLiquidationPrice,
+  liquidationPriceText,
   rawMarkPrice,
   availableBalance,
   pxDecimals,
@@ -312,7 +314,7 @@ export const PerpsPosition: React.FC<{
               </Text>
               <Text style={styles.value}>
                 {hasPositivePrice(rawLiquidationPrice)
-                  ? `$${splitNumberByStep(positionData.liquidationPrice)}`
+                  ? `$${liquidationPriceText}`
                   : '--'}
               </Text>
             </View>

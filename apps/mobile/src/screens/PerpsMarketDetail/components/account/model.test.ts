@@ -3,9 +3,36 @@ import {
   closeQuantitySummary,
   createAccountHeaderPresentation,
   simpleLiquidationGap,
+  simpleLiquidationPriceText,
 } from './model';
 
 describe('Simple account display contracts', () => {
+  it.each([
+    ['54321.6789', 0, '54,322'],
+    ['23.45678', 3, '23.457'],
+    ['23.4500', 3, '23.45'],
+    ['23.0000', 3, '23'],
+    ['23.4565', 3, '23.457'],
+    ['999.9995', 3, '1,000'],
+    ['0.00012345', 6, '0.000123'],
+    ['1000000.125', 2, '1,000,000.13'],
+    ['23.456', undefined, '23.46'],
+    ['23.456', null, '23.46'],
+    [null, 2, '--'],
+    [undefined, 2, '--'],
+    ['', 2, '--'],
+    ['  ', 2, '--'],
+    ['invalid', 2, '--'],
+    [Infinity, 2, '--'],
+    [0, 2, '--'],
+    [-20, 2, '--'],
+  ] as const)(
+    'formats liquidation %s at precision %s as %s',
+    (raw, decimals, expected) => {
+      expect(simpleLiquidationPriceText(raw, decimals)).toBe(expected);
+    },
+  );
+
   it.each([
     [90, 100, '-10.00%'],
     [120, 100, '+20.00%'],
