@@ -1,9 +1,9 @@
 import type { PerpsProInfoTab } from '@/core/services/perpsService';
 import {
-  SceneList,
+  ScenePagerList,
   type SceneListHandle,
 } from '@rabby-wallet/rn-collapsible-scene-view';
-import React, { useMemo } from 'react';
+import React, { useCallback } from 'react';
 import type {
   Animated,
   FlatList,
@@ -12,25 +12,23 @@ import type {
   StyleProp,
   ViewStyle,
 } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import {
-  runOnJS,
-  type AnimatedRef,
-  type SharedValue,
-} from 'react-native-reanimated';
+import type { AnimatedRef, SharedValue } from 'react-native-reanimated';
+import { PERPS_PRO_INFO_TABS } from './perpsProInfoTabOrder';
+
+const rowKey = (item: { key: string }) => item.key;
 
 export type PerpsProInfoSingleListHandle = SceneListHandle<unknown>;
 
 type Props<Row extends { key: string }> = {
   activeTab: PerpsProInfoTab;
   contentContainerStyle?: StyleProp<ViewStyle>;
-  data: readonly Row[];
+  rowsByTab: Record<PerpsProInfoTab, readonly Row[]>;
   listHeader: React.ReactElement;
   nativeRef: AnimatedRef<FlatList<unknown>>;
   nativeScrollY: Animated.Value;
   onContentSizeChange: (width: number, height: number) => void;
   onLayout: (event: LayoutChangeEvent) => void;
-  onSwipe: (direction: 'next' | 'prev') => void;
+  onTabChange: (tab: PerpsProInfoTab) => void;
   ref?: React.Ref<PerpsProInfoSingleListHandle>;
   renderItem: ListRenderItem<Row>;
   rowStartOffset: number;
@@ -41,18 +39,18 @@ type Props<Row extends { key: string }> = {
 
 /** One persistent native list. Only a gesture starting in its rows may change
  * tabs; trade/header vertical drags belong to the same native scroll surface.
- * Row-track previews and cross-level handoff are a subsequent phase.
+ * Only rows move horizontally; the same native owner scrolls the bounded preview.
  */
 export const PerpsProInfoSingleList = <Row extends { key: string }>({
   activeTab,
   contentContainerStyle,
-  data,
+  rowsByTab,
   listHeader,
   nativeRef,
   nativeScrollY,
   onContentSizeChange,
   onLayout,
-  onSwipe,
+  onTabChange,
   ref,
   renderItem,
   rowStartOffset,
@@ -60,52 +58,34 @@ export const PerpsProInfoSingleList = <Row extends { key: string }>({
   style,
   testID,
 }: Props<Row>) => {
-  const swipeGesture = useMemo(
-    () =>
-      Gesture.Pan()
-        .onTouchesDown((event, manager) => {
-          'worklet';
-          const touch = event.allTouches[0];
-          if (
-            event.numberOfTouches !== 1 ||
-            !touch ||
-            touch.y + Math.max(0, scrollOffset.value) < rowStartOffset
-          ) {
-            manager.fail();
-          }
-        })
-        .activeOffsetX([-20, 20])
-        .failOffsetY([-12, 12])
-        .onEnd((event, success) => {
-          'worklet';
-          if (success && Math.abs(event.translationX) >= 60) {
-            runOnJS(onSwipe)(event.translationX < 0 ? 'next' : 'prev');
-          }
-        }),
-    [onSwipe, rowStartOffset, scrollOffset],
+  const changeTab = useCallback(
+    (key: string) => onTabChange(key as PerpsProInfoTab),
+    [onTabChange],
   );
 
   return (
-    <GestureDetector gesture={swipeGesture}>
-      <SceneList
-        ListHeaderComponent={listHeader}
-        contentContainerStyle={contentContainerStyle}
-        contentInsetTop={0}
-        data={data}
-        keyExtractor={item => item.key}
-        keyboardShouldPersistTaps="handled"
-        nativeRef={nativeRef}
-        nativeScrollY={nativeScrollY}
-        onContentSizeChange={onContentSizeChange}
-        onLayout={onLayout}
-        ref={ref}
-        renderItem={renderItem}
-        scrollEnabled
-        scrollsToTop
-        style={style}
-        tabKey={activeTab}
-        testID={testID}
-      />
-    </GestureDetector>
+    <ScenePagerList
+      ListHeaderComponent={listHeader}
+      contentContainerStyle={contentContainerStyle}
+      contentInsetTop={0}
+      dataByKey={rowsByTab}
+      keys={PERPS_PRO_INFO_TABS}
+      onIndexChange={changeTab}
+      rowStartOffset={rowStartOffset}
+      scrollOffset={scrollOffset}
+      keyExtractor={rowKey}
+      keyboardShouldPersistTaps="handled"
+      nativeRef={nativeRef}
+      nativeScrollY={nativeScrollY}
+      onContentSizeChange={onContentSizeChange}
+      onLayout={onLayout}
+      ref={ref}
+      renderItem={renderItem}
+      scrollEnabled
+      scrollsToTop
+      style={style}
+      tabKey={activeTab}
+      testID={testID}
+    />
   );
 };

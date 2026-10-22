@@ -52,8 +52,18 @@ let mockRowTouchesDown:
     ) => void)
   | null = null;
 let mockRowSwipeEnd:
-  | ((event: { translationX: number }, success: boolean) => void)
+  | ((
+      event: { translationX: number; velocityX: number },
+      success: boolean,
+    ) => void)
   | null = null;
+let mockRowSwipeBegin: (() => void) | null = null;
+let mockRowSwipeStart: (() => void) | null = null;
+let mockRowSwipeUpdate:
+  | ((event: { translationX: number; velocityX: number }) => void)
+  | null = null;
+let mockRowSwipeFinalize: (() => void) | null = null;
+const mockPendingTimingCallbacks: ((finished: boolean) => void)[] = [];
 let mockTradeHasPermission = true;
 let mockTradeFocusedLeg: 'sl' | 'tp' | null = null;
 let mockOrderBookPriceIntent:
@@ -118,7 +128,16 @@ jest.mock('react-native-reanimated', () => {
     useScrollViewOffset: (_ref: unknown, offset: unknown) => offset,
     useSharedValue,
     withDecay: jest.fn(({ velocity }: { velocity: number }) => velocity),
-    withTiming: (target: number) => target,
+    withTiming: (
+      target: number,
+      _config: unknown,
+      callback?: (finished: boolean) => void,
+    ) => {
+      if (callback) {
+        mockPendingTimingCallbacks.push(callback);
+      }
+      return target;
+    },
   };
 });
 
@@ -198,39 +217,39 @@ jest.mock('react-native-screens', () => ({
 }));
 
 jest.mock('react-native-gesture-handler', () => {
-  const panGesture: Record<string, jest.Mock> = {};
-  [
-    'activeOffsetX',
-    'failOffsetY',
-    'manualActivation',
-    'maxPointers',
-    'runOnJS',
-    'shouldCancelWhenOutside',
-  ].forEach(method => {
-    panGesture[method] = jest.fn(() => panGesture);
-  });
-  [
-    'onEnd',
-    'onFinalize',
-    'onStart',
-    'onTouchesDown',
-    'onTouchesMove',
-    'onUpdate',
-  ].forEach(method => {
-    panGesture[method] = jest.fn(() => panGesture);
-  });
-  panGesture.onTouchesDown = jest.fn(callback => {
-    panGesture.__onTouchesDown = callback;
+  const createPan = () => {
+    const panGesture: Record<string, jest.Mock> = {};
+    [
+      'activeOffsetX',
+      'failOffsetY',
+      'manualActivation',
+      'maxPointers',
+      'runOnJS',
+      'shouldCancelWhenOutside',
+      'withTestId',
+    ].forEach(method => {
+      panGesture[method] = jest.fn(() => panGesture);
+    });
+    [
+      'onBegin',
+      'onEnd',
+      'onFinalize',
+      'onStart',
+      'onTouchesDown',
+      'onTouchesMove',
+      'onUpdate',
+    ].forEach(method => {
+      panGesture[method] = jest.fn(callback => {
+        panGesture[`__${method}`] = callback;
+        return panGesture;
+      });
+    });
     return panGesture;
-  });
-  panGesture.onEnd = jest.fn(callback => {
-    panGesture.__onEnd = callback;
-    return panGesture;
-  });
+  };
   return {
     Pressable: require('react-native').Pressable,
     Gesture: {
-      Pan: () => panGesture,
+      Pan: createPan,
       Tap: () => {
         const tap: Record<string, jest.Mock> = {};
         for (const method of [
@@ -251,11 +270,15 @@ jest.mock('react-native-gesture-handler', () => {
       gesture,
     }: {
       children: React.ReactElement<{ testID?: string }>;
-      gesture: typeof panGesture;
+      gesture: ReturnType<typeof createPan>;
     }) => {
-      if (children.props.testID === 'perps-pro-info-list') {
+      if (children.props.testID === 'perps-pro-info-list-pager') {
         mockRowTouchesDown = gesture.__onTouchesDown;
+        mockRowSwipeBegin = gesture.__onBegin;
+        mockRowSwipeStart = gesture.__onStart;
+        mockRowSwipeUpdate = gesture.__onUpdate;
         mockRowSwipeEnd = gesture.__onEnd;
+        mockRowSwipeFinalize = gesture.__onFinalize;
       }
       return children;
     },
@@ -806,6 +829,37 @@ const installOptimisticInfoPanelMock = (
   return persist;
 };
 
+const measureRowPager = () => {
+  fireEvent(screen.getByTestId('perps-pro-info-list-pager'), 'layout', {
+    nativeEvent: { layout: { height: 700, width: 400, x: 0, y: 0 } },
+  });
+};
+
+const dragRows = (translationX: number, velocityX = 0) => {
+  expect(mockRowSwipeBegin).not.toBeNull();
+  expect(mockRowSwipeStart).not.toBeNull();
+  expect(mockRowSwipeUpdate).not.toBeNull();
+  act(() => {
+    mockRowSwipeBegin!();
+    mockRowSwipeStart!();
+    mockRowSwipeUpdate!({ translationX, velocityX });
+  });
+};
+
+const releaseRows = (translationX: number, success = true, velocityX = 0) => {
+  expect(mockRowSwipeEnd).not.toBeNull();
+  expect(mockRowSwipeFinalize).not.toBeNull();
+  act(() => {
+    mockRowSwipeEnd!({ translationX, velocityX }, success);
+    mockRowSwipeFinalize!();
+  });
+};
+
+const finishRowSettle = () => {
+  expect(mockPendingTimingCallbacks).toHaveLength(1);
+  act(() => mockPendingTimingCallbacks.shift()!(true));
+};
+
 const createPositionActionsState = (
   overrides: Record<string, unknown> = {},
 ) => ({
@@ -846,7 +900,12 @@ describe('PerpsProScene market loading states', () => {
     mockOrderBookSelectionOutcome = 'accepted';
     mockTradeForm = { bboEnabled: false, orderType: 'market' };
     mockRowTouchesDown = null;
+    mockRowSwipeBegin = null;
+    mockRowSwipeStart = null;
+    mockRowSwipeUpdate = null;
     mockRowSwipeEnd = null;
+    mockRowSwipeFinalize = null;
+    mockPendingTimingCallbacks.length = 0;
     Object.defineProperty(AppState, 'currentState', {
       configurable: true,
       value: 'active',
@@ -1993,7 +2052,8 @@ describe('PerpsProScene market loading states', () => {
         screen.getByTestId('perps-pro-list-tabs-placeholder').props.style,
       ),
     ).toMatchObject({ height: 60 });
-    const header = screen.UNSAFE_getByType(FlatList).props.ListHeaderComponent;
+    const header = screen.UNSAFE_getByType(PerpsProInfoSingleList).props
+      .listHeader;
     expect(
       header.props.children.map(
         (child: React.ReactElement<{ testID?: string }>) => child.props.testID,
@@ -2159,23 +2219,39 @@ describe('PerpsProScene market loading states', () => {
       <PerpsProScene isModeSwitching={false} onSwitchToSimple={jest.fn()} />,
     );
     const list = screen.UNSAFE_getByType(FlatList);
+    measureRowPager();
     // Short drags and the Account end boundary do not commit another tab.
-    act(() => mockRowSwipeEnd?.({ translationX: 59 }, true));
-    act(() => mockRowSwipeEnd?.({ translationX: -80 }, true));
+    dragRows(59);
+    releaseRows(59);
+    finishRowSettle();
+    dragRows(-120);
+    releaseRows(-120);
+    finishRowSettle();
     expect(persist).not.toHaveBeenCalled();
 
-    act(() => mockRowSwipeEnd?.({ translationX: 80 }, true));
+    dragRows(120);
+    releaseRows(120);
+    expect(persist).not.toHaveBeenCalled();
+    expect(
+      screen.getByTestId('perps-pro-info-tab-account').props.accessibilityState,
+    ).toEqual({ selected: true });
+    finishRowSettle();
     expect(
       screen.getByTestId('perps-pro-open-orders-controls'),
     ).toBeOnTheScreen();
     expect(
       screen.UNSAFE_getByType(PerpsProTabIndicator).props.position.value,
     ).toBe(1);
-    act(() => mockRowSwipeEnd?.({ translationX: 80 }, true));
+    dragRows(120);
+    releaseRows(120);
+    expect(persist.mock.calls).toEqual([['openOrders']]);
+    finishRowSettle();
     expect(
       screen.getByTestId('perps-pro-positions-controls'),
     ).toBeOnTheScreen();
-    act(() => mockRowSwipeEnd?.({ translationX: 80 }, true));
+    dragRows(120);
+    releaseRows(120);
+    finishRowSettle();
     expect(persist.mock.calls).toEqual([['openOrders'], ['positions']]);
     expect(screen.UNSAFE_getAllByType(FlatList)).toEqual([list]);
     expect(
@@ -2196,7 +2272,10 @@ describe('PerpsProScene market loading states', () => {
     const list = screen.UNSAFE_getByType(FlatList);
     const data = list.props.data;
 
-    act(() => mockRowSwipeEnd?.({ translationX: 160 }, false));
+    measureRowPager();
+    dragRows(160);
+    releaseRows(160, false);
+    finishRowSettle();
 
     expect(persist).not.toHaveBeenCalled();
     expect(screen.UNSAFE_getByType(FlatList)).toBe(list);
@@ -2208,6 +2287,57 @@ describe('PerpsProScene market loading states', () => {
     expect(
       screen.UNSAFE_getByType(PerpsProTabIndicator).props.position.value,
     ).toBe(2);
+  });
+
+  it('renders a non-interactive neighbouring preview without committing or invoking trade actions', () => {
+    const persist = installOptimisticInfoPanelMock();
+    const switchToSimple = jest.fn();
+    mockUsePerpsProScene.mockReturnValue(createSceneState());
+    render(
+      <PerpsProScene
+        isModeSwitching={false}
+        onSwitchToSimple={switchToSimple}
+      />,
+    );
+    const list = screen.UNSAFE_getByType(FlatList);
+    const data = list.props.data;
+    measureRowPager();
+
+    dragRows(120);
+
+    const preview = screen.getByTestId('scene-pager-preview', {
+      includeHiddenElements: true,
+    });
+    expect(preview.props).toMatchObject({
+      accessibilityElementsHidden: true,
+      importantForAccessibility: 'no-hide-descendants',
+      pointerEvents: 'none',
+    });
+    expect(
+      within(preview).getByTestId('perps-pro-open-orders-controls', {
+        includeHiddenElements: true,
+      }),
+    ).toBeTruthy();
+    expect(screen.UNSAFE_getAllByType(FlatList)).toEqual([list]);
+    expect(list.props.data).toBe(data);
+    expect(list.props.removeClippedSubviews).toBe(false);
+    expect(persist).not.toHaveBeenCalled();
+    expect(mockConfirmCancelAll).not.toHaveBeenCalled();
+    expect(mockConfirmCancelOrder).not.toHaveBeenCalled();
+    expect(mockRequestCloseAll).not.toHaveBeenCalled();
+    expect(mockSelectOrderBookPrice).not.toHaveBeenCalled();
+    expect(mockEnsurePerpsActionApproval).not.toHaveBeenCalled();
+    expect(mockExecuteEnableUnified).not.toHaveBeenCalled();
+    expect(switchToSimple).not.toHaveBeenCalled();
+
+    releaseRows(120, false);
+    finishRowSettle();
+    expect(
+      screen.queryByTestId('scene-pager-preview', {
+        includeHiddenElements: true,
+      }),
+    ).toBeNull();
+    expect(persist).not.toHaveBeenCalled();
   });
 
   it('scrolls the same native list for keyboard overlap using the current tab bounds', () => {

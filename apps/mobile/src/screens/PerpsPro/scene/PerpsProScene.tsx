@@ -1079,19 +1079,6 @@ export const PerpsProScene: React.FC<{
     },
     [setActiveInfoTab, settledInfoTab],
   );
-  const swipeInfoTab = useCallback(
-    (direction: 'next' | 'prev') => {
-      if (!settledInfoTab) {
-        return;
-      }
-      const index = PERPS_PRO_INFO_TABS.indexOf(settledInfoTab);
-      const tab = PERPS_PRO_INFO_TABS[index + (direction === 'next' ? 1 : -1)];
-      if (tab) {
-        commitInfoTab(tab);
-      }
-    },
-    [commitInfoTab, settledInfoTab],
-  );
   const listContentHeightRef = useRef(0);
   const activeInfoTarget =
     infoScrollBridge.targets[
@@ -1162,13 +1149,13 @@ export const PerpsProScene: React.FC<{
             <PerpsProInfoSingleList
               activeTab={settledInfoTab}
               contentContainerStyle={scrollContentStyles[settledInfoTab]}
-              data={rowsByTab[settledInfoTab]}
+              rowsByTab={rowsByTab}
               listHeader={listHeader}
               nativeRef={activeInfoTarget.ref}
               nativeScrollY={nativeScrollY}
               onContentSizeChange={updateListContentSize}
               onLayout={updateScrollViewportHeight}
-              onSwipe={swipeInfoTab}
+              onTabChange={commitInfoTab}
               ref={infoListRef}
               renderItem={renderItem}
               rowStartOffset={contentInsetTop}
