@@ -71,22 +71,27 @@ export const PerpsProSlider: React.FC<{
     const neutralRailLeft = neutralRail.left;
     const neutralRailRight = neutralRail.right;
     const neutralRange = maximumValue - minimumValue;
-    const neutralInitialProgress =
-      Number.isFinite(neutralRange) &&
-      neutralRange > 0 &&
-      Number.isFinite(value)
-        ? Math.max(0, Math.min(1, (value - minimumValue) / neutralRange))
-        : 0;
-    // Seeded with the current value; afterwards the gesture owns it on the UI
-    // thread, so the artwork never waits for a JS render mid-drag.
-    const neutralProgressValue = useSharedValue(neutralInitialProgress);
+    // Raw slider value (not a 0..1 fraction), seeded with the controlled value.
+    // Afterwards the gesture owns it on the UI thread, so the artwork never
+    // waits for a JS render mid-drag.
+    const neutralProgressValue = useSharedValue(
+      Number.isFinite(value) ? value : minimumValue,
+    );
     const neutralWidthValue = useSharedValue(0);
+    const getNeutralFraction = () => {
+      'worklet';
+      if (!Number.isFinite(neutralRange) || neutralRange <= 0) {
+        return 0;
+      }
+      const raw = (neutralProgressValue.value - minimumValue) / neutralRange;
+      return Math.max(0, Math.min(1, Number.isFinite(raw) ? raw : 0));
+    };
     const neutralProgressStyle = useAnimatedStyle(() => ({
       width:
         Math.max(
           0,
           neutralWidthValue.value - neutralRailLeft - neutralRailRight,
-        ) * neutralProgressValue.value,
+        ) * getNeutralFraction(),
     }));
     const neutralThumbStyle = useAnimatedStyle(() => ({
       transform: [
@@ -95,7 +100,7 @@ export const PerpsProSlider: React.FC<{
             Math.max(
               0,
               neutralWidthValue.value - neutralRailLeft - neutralRailRight,
-            ) * neutralProgressValue.value,
+            ) * getNeutralFraction(),
         },
       ],
     }));

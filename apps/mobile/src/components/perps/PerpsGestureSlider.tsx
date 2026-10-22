@@ -27,10 +27,11 @@ type Props = {
   onSlidingComplete?: (value: number) => void;
   onValueChange?: (value: number) => void;
   /**
-   * Optional UI-thread mirror of the thumb position. Wrappers that draw their
-   * own visual thumb/progress (instead of the native one) can bind animated
-   * styles to this value so the geometry follows the finger on the UI thread
-   * instead of waiting for a JS re-render.
+   * Optional UI-thread mirror of the thumb position, in the slider's own value
+   * domain (not normalised). Wrappers that draw their own visual thumb/progress
+   * (instead of the native one) can bind animated styles to this value so the
+   * geometry follows the finger on the UI thread instead of waiting for a JS
+   * re-render.
    */
   progressValue?: SharedValue<number>;
   step?: number;
