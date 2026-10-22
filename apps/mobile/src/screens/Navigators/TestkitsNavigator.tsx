@@ -20,6 +20,7 @@ import {
   DevUIAnimatedTextAndView,
   DevUIBuiltInPages,
   DevUIComponents2024ShowCase,
+  DevUIPerpsProPager,
   DevUIWalletConnect,
   DevUIDapps,
   DevUIFontShowCase,
@@ -75,6 +76,10 @@ export function TestkitsNavigator() {
       <Stack.Screen
         name={RootNames.DevUIComponents2024ShowCase}
         component={DevUIComponents2024ShowCase}
+      />
+      <Stack.Screen
+        name={RootNames.DevUIPerpsProPager}
+        component={DevUIPerpsProPager}
       />
       <Stack.Screen
         name={RootNames.DevUIScreenContainerShowCase}
