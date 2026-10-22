@@ -9854,6 +9854,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@rabby-wallet/rn-collapsible-scene-view@workspace:^, @rabby-wallet/rn-collapsible-scene-view@workspace:packages/rn-collapsible-scene-view":
+  version: 0.0.0-use.local
+  resolution: "@rabby-wallet/rn-collapsible-scene-view@workspace:packages/rn-collapsible-scene-view"
+  peerDependencies:
+    react: ">=18"
+    react-native: ">=0.76"
+    react-native-gesture-handler: ">=2"
+    react-native-reanimated: ">=3"
+  languageName: unknown
+  linkType: soft
+
 "@rabby-wallet/rn-page-provider@workspace:packages/rn-page-provider":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/rn-page-provider@workspace:packages/rn-page-provider"
@@ -37429,6 +37440,7 @@ __metadata:
     "@rabby-wallet/react-native-ios-context-menu": "workspace:^"
     "@rabby-wallet/react-native-keychain-9": "workspace:^"
     "@rabby-wallet/react-native-menu": "workspace:^"
+    "@rabby-wallet/rn-collapsible-scene-view": "workspace:^"
     "@rabby-wallet/rozenite-resource-flow-plugin": "workspace:^"
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"

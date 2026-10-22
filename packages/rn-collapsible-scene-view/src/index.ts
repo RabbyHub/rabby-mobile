@@ -1,8 +1,11 @@
 export {
   CollapsibleSceneProvider,
+  useCollapsibleSceneController,
   useCollapsibleScene,
+  type CollapsibleSceneController,
   type CollapsibleSceneContextValue,
   type SceneTabKey,
+  type SceneTabScrollHandle,
 } from './context';
 export {
   CollapsibleHeaderLayer,
@@ -10,6 +13,11 @@ export {
   CollapsibleScrollingLayer,
   useCollapseProgress,
 } from './layers';
+export {
+  SceneList,
+  type SceneListHandle,
+  type SceneListProps,
+} from './SceneList';
 export {
   SceneScrollView,
   type SceneScrollViewHandle,

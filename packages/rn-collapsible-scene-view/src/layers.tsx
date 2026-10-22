@@ -50,22 +50,30 @@ export const CollapsibleHeaderLayer = ({
 };
 
 /**
- * Pins at the top after `baseTop` distance of scrolling:
- * `translateY = clamp(baseTop - scrollY, baseTop - baseTop, baseTop)`.
+ * Pins at `pinTop` after `baseTop` distance of scrolling:
+ * `translateY = max(pinTop, baseTop - scrollY)`.
+ *
+ * `pinTop` defaults to 0 (the top edge). A layer that must stack below another
+ * pinned layer passes that layer's bottom edge instead.
  */
 export const CollapsiblePinnedLayer = ({
   baseTop,
   children,
+  pinTop = 0,
   pointerEvents,
   style,
   testID,
-}: LayerProps & { baseTop: number }) => {
+}: LayerProps & { baseTop: number; pinTop?: number }) => {
   const { scrollY } = useCollapsibleScene();
   const animatedStyle = useAnimatedStyle(
     () => ({
-      transform: [{ translateY: baseTop - clamp(scrollY.value, 0, baseTop) }],
+      transform: [
+        {
+          translateY: Math.max(pinTop, baseTop - Math.max(scrollY.value, 0)),
+        },
+      ],
     }),
-    [baseTop],
+    [baseTop, pinTop],
   );
 
   return (

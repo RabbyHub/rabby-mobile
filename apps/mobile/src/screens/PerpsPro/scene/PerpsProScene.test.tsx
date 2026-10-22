@@ -156,35 +156,6 @@ jest.mock('react-native-reanimated', () => {
   };
 });
 
-jest.mock('./usePerpsProAndroidScenePresentation', () => ({
-  usePerpsProAndroidScenePresentation: ({
-    infoTabsAnchorY,
-    marketNaturalAnchorY,
-    sceneLeadInHeight,
-  }: {
-    infoTabsAnchorY: number;
-    marketNaturalAnchorY: number;
-    sceneLeadInHeight: number;
-  }) => ({
-    headerAnimatedStyle: {
-      opacity: 1,
-      transform: [{ translateY: 0 }],
-    },
-    infoTabsAnimatedStyle: {
-      transform: [{ translateY: infoTabsAnchorY }],
-    },
-    marketAnimatedStyle: {
-      transform: [{ translateY: marketNaturalAnchorY }],
-    },
-    regionAlertAnimatedStyle: {
-      transform: [{ translateY: marketNaturalAnchorY }],
-    },
-    tradeAnimatedStyle: {
-      transform: [{ translateY: sceneLeadInHeight }],
-    },
-  }),
-}));
-
 jest.mock('@/screens/Perps/components/PerpsRegionAlert', () => {
   const ReactModule = require('react');
   const { View } = require('react-native');
@@ -1930,7 +1901,7 @@ describe('PerpsProScene market loading states', () => {
     });
   });
 
-  it('keeps one fixed scroll owner and reserves stable overlay lead-in geometry', () => {
+  it('reserves the shared layers as list inset instead of lead-in content', () => {
     mockUsePerpsProScene.mockReturnValue(createSceneState());
 
     render(
@@ -1939,12 +1910,21 @@ describe('PerpsProScene market loading states', () => {
 
     const scroll = screen.getByTestId('perps-pro-scroll');
     const tradeSection = screen.getByTestId('perps-pro-trade-section');
-    // The tab strip is the list's sticky section header now.
+    // The header, market, trade and tab strip are siblings of the pager now.
     expect(screen.getByTestId('perps-pro-info-tabs-overlay')).toBeTruthy();
     expect(StyleSheet.flatten(scroll.props.style)?.transform).toBeUndefined();
     expect(StyleSheet.flatten(tradeSection.props.style)).toMatchObject({
       backgroundColor: 'neutral-bg-1',
     });
+    const tradeTranslateY = StyleSheet.flatten(tradeSection.props.style)
+      ?.transform?.[0]?.translateY as unknown as
+      | number
+      | { __getValue: () => number };
+    expect(
+      typeof tradeTranslateY === 'number'
+        ? tradeTranslateY
+        : tradeTranslateY.__getValue(),
+    ).toBe(96);
     expect(screen.getByTestId('pro-header').props).not.toHaveProperty(
       'showBottomDivider',
     );
@@ -1955,17 +1935,7 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-scroll').props.contentContainerStyle,
       ),
-    ).toMatchObject({ minHeight: 1202 });
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-header-lead-in-spacer').props.style,
-      ),
-    ).toMatchObject({ height: 56 });
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-market-lead-in-spacer').props.style,
-      ),
-    ).toMatchObject({ height: 40 });
+    ).toMatchObject({ minHeight: 1202, paddingTop: 580 });
     const marketOverlayStyle = StyleSheet.flatten(
       screen.getByTestId('perps-pro-market-overlay').props.style,
     );
@@ -1981,8 +1951,8 @@ describe('PerpsProScene market loading states', () => {
       StyleSheet.flatten(
         screen.getByTestId('perps-pro-info-tabs-spacer').props.style,
       ),
-    ).toMatchObject({ height: 60 });
-    // The tab strip is the list's sticky section header now.
+    ).toMatchObject({ height: 22 });
+    // The tab strip is a pinned layer below the market bar.
     expect(screen.getByTestId('perps-pro-info-tabs-overlay')).toBeTruthy();
     expect(screen.getAllByTestId('perps-pro-info-tab-account')).toHaveLength(1);
   });
@@ -2004,12 +1974,12 @@ describe('PerpsProScene market loading states', () => {
       expect(StyleSheet.flatten(divider.props.style)).toMatchObject({
         backgroundColor: isLight ? 'neutral-bg-0' : 'neutral-bg-2',
         height: 6,
-        bottom: 38,
+        bottom: 0,
         left: 0,
         right: 0,
       });
       expect(StyleSheet.flatten(spacer.props.style)).toMatchObject({
-        height: 60,
+        height: 22,
       });
     },
   );
@@ -2035,12 +2005,17 @@ describe('PerpsProScene market loading states', () => {
     expect(
       screen.getByTestId('perps-pro-info-pager').props.offscreenPageLimit,
     ).toBe(2);
-    // The trade panel is list content now; it carries no overlay transform.
+    // The trade panel is a shared scrolling layer driven by the same offset.
+    const tradeTranslateY = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-trade-section').props.style,
+    )?.transform?.[0]?.translateY as unknown as
+      | number
+      | { __getValue: () => number };
     expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-trade-section').props.style,
-      )?.transform,
-    ).toBeUndefined();
+      typeof tradeTranslateY === 'number'
+        ? tradeTranslateY
+        : tradeTranslateY.__getValue(),
+    ).toBe(96);
 
     view.unmount();
   });
@@ -2368,19 +2343,25 @@ describe('PerpsProScene market loading states', () => {
       />,
     );
 
-    expect(screen.getByTestId('perps-pro-region-alert-slot')).toBeTruthy();
     expect(screen.getByTestId('perps-pro-region-alert-overlay')).toBeTruthy();
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-region-alert-overlay').props.style,
-      ),
-    ).toMatchObject({
+    const readTranslateY = (style: unknown) => {
+      const translateY = StyleSheet.flatten(style)?.transform?.[0]
+        ?.translateY as unknown as number | { __getValue: () => number };
+      return typeof translateY === 'number'
+        ? translateY
+        : translateY.__getValue();
+    };
+    const regionAlertStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-region-alert-overlay').props.style,
+    );
+    expect(regionAlertStyle).toMatchObject({
       backgroundColor: 'neutral-bg-1',
       left: 0,
-      minHeight: 104,
       right: 0,
       zIndex: 4,
     });
+    // The alert collapses with the header from its natural position.
+    expect(readTranslateY(regionAlertStyle)).toBe(56);
     expect(screen.getByTestId('realtime-order-book')).toBeTruthy();
     expect(screen.getByTestId('trade-form')).toBeTruthy();
     expect(screen.getByTestId('pro-header').props).not.toHaveProperty(
@@ -2391,40 +2372,12 @@ describe('PerpsProScene market loading states', () => {
       4,
     );
     expect(screen.getByTestId('perps-region-alert').props.topSpacing).toBe(8);
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-region-alert-slot').props.style,
-      ),
-    ).toMatchObject({ height: 64 });
-    const getRestrictedOverlayGeometry = () => {
-      const restrictedSurfaceStyle = StyleSheet.flatten(
-        screen.getByTestId('perps-pro-region-alert-overlay').props.style,
-      );
-      const marketOverlayStyle = StyleSheet.flatten(
-        screen.getByTestId('perps-pro-market-overlay').props.style,
-      );
-      const restrictedSurfaceTranslateY = restrictedSurfaceStyle?.transform?.[0]
-        ?.translateY as unknown as number | { __getValue: () => number };
-      const surfaceTranslateY =
-        typeof restrictedSurfaceTranslateY === 'number'
-          ? restrictedSurfaceTranslateY
-          : restrictedSurfaceTranslateY.__getValue();
-      const marketTop = marketOverlayStyle?.top as number;
-      return {
-        effectiveMarketY: surfaceTranslateY + marketTop,
-        marketOverlayStyle,
-      };
-    };
-    expect(getRestrictedOverlayGeometry()).toEqual({
-      effectiveMarketY: 120,
-      marketOverlayStyle: expect.objectContaining({
-        height: 40,
-        top: 64,
-      }),
-    });
-    expect(
-      getRestrictedOverlayGeometry().marketOverlayStyle?.transform,
-    ).toBeUndefined();
+    const marketOverlayStyle = StyleSheet.flatten(
+      screen.getByTestId('perps-pro-market-overlay').props.style,
+    );
+    expect(marketOverlayStyle).toMatchObject({ height: 40 });
+    // Market starts below the alert and pins at the alert's bottom edge.
+    expect(readTranslateY(marketOverlayStyle)).toBe(120);
     fireEvent.press(screen.getByTestId('market-bar'));
     expect(mockMarketSelectorPresent).toHaveBeenCalledTimes(1);
 
@@ -2439,22 +2392,10 @@ describe('PerpsProScene market loading states', () => {
       },
     });
     expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-region-alert-overlay').props.style,
+      readTranslateY(
+        screen.getByTestId('perps-pro-market-overlay').props.style,
       ),
-    ).toMatchObject({ minHeight: 105 });
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('perps-pro-region-alert-slot').props.style,
-      ),
-    ).toMatchObject({ height: 65 });
-    expect(getRestrictedOverlayGeometry()).toEqual({
-      effectiveMarketY: 121,
-      marketOverlayStyle: expect.objectContaining({
-        height: 40,
-        top: 65,
-      }),
-    });
+    ).toBe(121);
   });
 
   it('uses the account restriction before the current market resolves', () => {
@@ -2479,22 +2420,18 @@ describe('PerpsProScene market loading states', () => {
       'showBottomDivider',
     );
     expect(screen.getByTestId('market-bar-skeleton')).toBeOnTheScreen();
-    const restrictedSurfaceStyle = StyleSheet.flatten(
-      screen.getByTestId('perps-pro-region-alert-overlay').props.style,
-    );
-    const restrictedSurfaceTranslateY = restrictedSurfaceStyle?.transform?.[0]
-      ?.translateY as unknown as number | { __getValue: () => number };
     const marketOverlayStyle = StyleSheet.flatten(
       screen.getByTestId('perps-pro-market-overlay').props.style,
     );
-    const surfaceTranslateY =
-      typeof restrictedSurfaceTranslateY === 'number'
-        ? restrictedSurfaceTranslateY
-        : restrictedSurfaceTranslateY.__getValue();
-    expect(restrictedSurfaceStyle).toMatchObject({ minHeight: 86 });
-    expect(marketOverlayStyle).toMatchObject({ height: 40, top: 46 });
-    expect(marketOverlayStyle?.transform).toBeUndefined();
-    expect(surfaceTranslateY + (marketOverlayStyle?.top as number)).toBe(102);
+    const marketTranslateY = marketOverlayStyle?.transform?.[0]
+      ?.translateY as unknown as number | { __getValue: () => number };
+    expect(marketOverlayStyle).toMatchObject({ height: 40 });
+    // header (56) + measured alert extent (8 + 34 + 4).
+    expect(
+      typeof marketTranslateY === 'number'
+        ? marketTranslateY
+        : marketTranslateY.__getValue(),
+    ).toBe(102);
   });
 
   it('waits for the restricted alert measurement before painting positioned overlays', () => {
@@ -2520,22 +2457,17 @@ describe('PerpsProScene market loading states', () => {
       },
     });
 
-    const restrictedSurfaceStyle = StyleSheet.flatten(
-      screen.getByTestId('perps-pro-region-alert-overlay').props.style,
-    );
-    const restrictedSurfaceTranslateY = restrictedSurfaceStyle?.transform?.[0]
-      ?.translateY as unknown as number | { __getValue: () => number };
     const marketOverlayStyle = StyleSheet.flatten(
       screen.getByTestId('perps-pro-market-overlay').props.style,
     );
-    const surfaceTranslateY =
-      typeof restrictedSurfaceTranslateY === 'number'
-        ? restrictedSurfaceTranslateY
-        : restrictedSurfaceTranslateY.__getValue();
-    expect(restrictedSurfaceStyle).toMatchObject({ minHeight: 104 });
-    expect(marketOverlayStyle).toMatchObject({ height: 40, top: 64 });
-    expect(marketOverlayStyle?.transform).toBeUndefined();
-    expect(surfaceTranslateY + (marketOverlayStyle?.top as number)).toBe(120);
+    const marketTranslateY = marketOverlayStyle?.transform?.[0]
+      ?.translateY as unknown as number | { __getValue: () => number };
+    expect(marketOverlayStyle).toMatchObject({ height: 40 });
+    expect(
+      typeof marketTranslateY === 'number'
+        ? marketTranslateY
+        : marketTranslateY.__getValue(),
+    ).toBe(120);
     expect(screen.getByTestId('perps-pro-info-tabs-overlay')).toBeOnTheScreen();
   });
 
@@ -2619,7 +2551,9 @@ describe('PerpsProScene market loading states', () => {
   it('stops the retained Candle Feed while the app is in background', () => {
     let onAppStateChange: ((state: AppStateStatus) => void) | undefined;
     jest.spyOn(AppState, 'addEventListener').mockImplementation((event, cb) => {
-      if (event === 'change') onAppStateChange = cb;
+      if (event === 'change') {
+        onAppStateChange = cb;
+      }
       return { remove: jest.fn() } as never;
     });
     mockUsePerpsProScene.mockReturnValue(

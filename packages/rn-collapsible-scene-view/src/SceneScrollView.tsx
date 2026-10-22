@@ -1,31 +1,44 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React from 'react';
 import {
   type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
+  ScrollView,
   type StyleProp,
+  type ScrollViewProps,
   type ViewStyle,
 } from 'react-native';
-import { ScrollView } from 'react-native-gesture-handler';
-import Animated, {
-  useAnimatedScrollHandler,
-  useSharedValue,
-} from 'react-native-reanimated';
+import Animated, { type AnimatedRef } from 'react-native-reanimated';
 
-import { useCollapsibleScene, type SceneTabKey } from './context';
+import { type SceneTabKey } from './context';
+import {
+  useSceneScrollSurface,
+  type SceneScrollSurfaceHandle,
+} from './useSceneScrollSurface';
 
-const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
+const AnimatedScrollView = Animated.createAnimatedComponent(
+  ScrollView,
+) as unknown as React.ComponentType<
+  ScrollViewProps & { ref?: React.Ref<ScrollView> }
+>;
 
-export type SceneScrollViewHandle = {
-  scrollTo: (offset: number, animated?: boolean) => void;
-};
+export type SceneScrollViewHandle = SceneScrollSurfaceHandle;
 
 export type SceneScrollViewProps = {
   children: React.ReactNode;
   contentContainerStyle?: StyleProp<ViewStyle>;
   contentInsetTop: number;
+  keyboardShouldPersistTaps?: ScrollViewProps['keyboardShouldPersistTaps'];
+  nativeRef?: AnimatedRef<any>;
+  onLayout?: (event: LayoutChangeEvent) => void;
+  onMomentumScrollEnd?: (
+    event: NativeSyntheticEvent<NativeScrollEvent>,
+  ) => void;
+  onScrollBeginDrag?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  onScrollEndDrag?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onContentSizeChange?: (height: number) => void;
   ref?: React.Ref<SceneScrollViewHandle>;
+  scrollEnabled?: boolean;
   tabKey: SceneTabKey;
   testID?: string;
 };
@@ -39,70 +52,24 @@ export const SceneScrollView = ({
   children,
   contentContainerStyle,
   contentInsetTop,
+  keyboardShouldPersistTaps,
+  nativeRef,
+  onLayout,
+  onMomentumScrollEnd,
   onContentSizeChange,
+  onScrollBeginDrag,
+  onScrollEndDrag,
   ref,
+  scrollEnabled = true,
   tabKey,
   testID,
 }: SceneScrollViewProps) => {
-  const internalRef = useRef<ScrollView | null>(null);
-  const { activeTabIndex, getSavedOffset, reportScroll, scrollY, tabs } =
-    useCollapsibleScene();
-  const lastReported = useSharedValue(-1);
-  const tabIndex = Math.max(tabs.indexOf(tabKey), 0);
+  const { resolvedRef, scrollHandler, scrollTo } = useSceneScrollSurface({
+    nativeRef,
+    tabKey,
+  });
 
-  // Publish straight to the scene's shared value on the UI thread. This is the
-  // whole point of the package: the layers read the same value in the same
-  // frame, and JS is not involved while scrolling.
-  const scrollHandler = useAnimatedScrollHandler(
-    {
-      onScroll: event => {
-        const offset = Math.max(0, event.contentOffset.y);
-        if (offset === lastReported.value) {
-          return;
-        }
-        lastReported.value = offset;
-        if (activeTabIndex.value === tabIndex) {
-          scrollY.value = offset;
-        }
-      },
-    },
-    [tabIndex],
-  );
-
-  const publish = useCallback(
-    (offset: number) => reportScroll(tabKey, offset),
-    [reportScroll, tabKey],
-  );
-
-  // Restore this tab's offset when it becomes active again.
-  useEffect(() => {
-    const offset = getSavedOffset(tabKey);
-    if (offset <= 0) {
-      return;
-    }
-    internalRef.current?.scrollTo({ animated: false, x: 0, y: offset });
-    publish(offset);
-  }, [getSavedOffset, publish, tabKey]);
-
-  const handleScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      publish(event.nativeEvent.contentOffset.y);
-    },
-    [publish],
-  );
-
-  const handleLayout = useCallback((_event: LayoutChangeEvent) => {}, []);
-
-  React.useImperativeHandle(
-    ref,
-    () => ({
-      scrollTo(offset: number, animated = true) {
-        internalRef.current?.scrollTo({ animated, x: 0, y: offset });
-        publish(offset);
-      },
-    }),
-    [publish],
-  );
+  React.useImperativeHandle(ref, () => ({ scrollTo }), [scrollTo]);
 
   return (
     <AnimatedScrollView
@@ -110,12 +77,15 @@ export const SceneScrollView = ({
         contentContainerStyle,
         { paddingTop: contentInsetTop },
       ]}
+      keyboardShouldPersistTaps={keyboardShouldPersistTaps}
       onContentSizeChange={(_w, h) => onContentSizeChange?.(h)}
-      onLayout={handleLayout}
+      onLayout={onLayout}
+      onMomentumScrollEnd={onMomentumScrollEnd}
       onScroll={scrollHandler}
-      onScrollEndDrag={handleScroll}
-      onMomentumScrollEnd={handleScroll}
-      ref={internalRef as never}
+      onScrollBeginDrag={onScrollBeginDrag}
+      onScrollEndDrag={onScrollEndDrag}
+      ref={resolvedRef as never}
+      scrollEnabled={scrollEnabled}
       scrollEventThrottle={16}
       showsVerticalScrollIndicator={false}
       testID={testID}>
