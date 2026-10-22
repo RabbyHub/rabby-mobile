@@ -23,6 +23,8 @@ type LatestTradeState = {
 let mockFastL2State: FastL2State;
 let mockLatestTradeState: LatestTradeState;
 let mockRenderedOrderBookProps: Record<string, any> | null;
+let mockRenderedFundingProps: Record<string, any> | null;
+const mockOrderBookRender = jest.fn();
 const mockPrewarmHttpSnapshot = jest.fn(() => Promise.resolve(true));
 const mockWaitForHttpSnapshot = jest.fn(() => Promise.resolve(true));
 
@@ -44,12 +46,18 @@ jest.mock('../components/orderbook/PerpsProOrderBook', () => ({
     const ReactModule = require('react');
     const { View } = require('react-native');
     mockRenderedOrderBookProps = props;
+    mockOrderBookRender(props);
     return ReactModule.createElement(View, { testID: 'order-book' });
   },
 }));
 
 jest.mock('../components/funding/PerpsProFundingDetailSheet', () => ({
-  PerpsProFundingDetailSheet: () => null,
+  PerpsProFundingDetailSheet: (props: Record<string, any>) => {
+    const ReactModule = require('react');
+    const { View } = require('react-native');
+    mockRenderedFundingProps = props;
+    return ReactModule.createElement(View, { testID: 'funding-detail-sheet' });
+  },
 }));
 
 const liveBook: L2Book = {
@@ -70,6 +78,22 @@ const market = {
   marketKey: 'perp:BTC',
 } as PerpsProMarket;
 
+const orderBook = (
+  overrides: Partial<
+    React.ComponentProps<typeof PerpsProRealtimeOrderBook>
+  > = {},
+) => (
+  <PerpsProRealtimeOrderBook
+    enabled
+    market={market}
+    onSelectTickOption={jest.fn()}
+    precision={{ mantissa: null, nSigFigs: 5 }}
+    selectedTickOption={null}
+    tickOptions={[]}
+    {...overrides}
+  />
+);
+
 describe('PerpsProRealtimeOrderBook reconnect display cache', () => {
   beforeEach(() => {
     mockFastL2State = {
@@ -83,8 +107,149 @@ describe('PerpsProRealtimeOrderBook reconnect display cache', () => {
       trade: liveTrade,
     };
     mockRenderedOrderBookProps = null;
+    mockRenderedFundingProps = null;
+    mockOrderBookRender.mockClear();
     mockPrewarmHttpSnapshot.mockReset().mockResolvedValue(true);
     mockWaitForHttpSnapshot.mockReset().mockResolvedValue(true);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('publishes the new server clock in the snapshot render without a second commit', () => {
+    const now = jest.spyOn(Date, 'now').mockReturnValue(1000);
+    const view = render(orderBook());
+
+    expect(mockOrderBookRender).toHaveBeenCalledTimes(1);
+    expect(mockRenderedOrderBookProps?.serverClock).toEqual({
+      marketKey: market.marketKey,
+      receivedAt: 1000,
+      serverTime: 101,
+    });
+
+    now.mockReturnValue(2000);
+    mockOrderBookRender.mockClear();
+    mockFastL2State = {
+      ...mockFastL2State,
+      book: { ...liveBook, time: 102 },
+    };
+    view.rerender(orderBook());
+
+    expect(mockOrderBookRender).toHaveBeenCalledTimes(1);
+    expect(mockOrderBookRender.mock.calls[0][0].serverClock).toEqual({
+      marketKey: market.marketKey,
+      receivedAt: 2000,
+      serverTime: 102,
+    });
+  });
+
+  it('preserves the clock identity and receivedAt when only snapshot data changes', () => {
+    const now = jest.spyOn(Date, 'now').mockReturnValue(1000);
+    const view = render(orderBook());
+    const firstClock = mockRenderedOrderBookProps?.serverClock;
+
+    now.mockReturnValue(2000);
+    mockFastL2State = {
+      ...mockFastL2State,
+      book: { ...liveBook, levels: [[], []], time: 101 },
+    };
+    view.rerender(orderBook({ market: { ...market } }));
+
+    expect(mockRenderedOrderBookProps?.serverClock).toBe(firstClock);
+    expect(mockRenderedOrderBookProps?.serverClock.receivedAt).toBe(1000);
+    expect(mockRenderedOrderBookProps?.hasBookSnapshot).toBe(true);
+  });
+
+  it('refreshes the clock for a later trade time and for a new market at the same time', () => {
+    const now = jest.spyOn(Date, 'now').mockReturnValue(1000);
+    const view = render(orderBook());
+    const firstClock = mockRenderedOrderBookProps?.serverClock;
+
+    now.mockReturnValue(2000);
+    mockLatestTradeState = {
+      ...mockLatestTradeState,
+      trade: { ...liveTrade, time: 102 },
+    };
+    view.rerender(orderBook());
+    const laterClock = mockRenderedOrderBookProps?.serverClock;
+    expect(laterClock).not.toBe(firstClock);
+    expect(laterClock).toEqual({
+      marketKey: market.marketKey,
+      receivedAt: 2000,
+      serverTime: 102,
+    });
+
+    now.mockReturnValue(3000);
+    const nextMarket = {
+      ...market,
+      canonicalCoin: 'ETH',
+      marketKey: 'perp:ETH',
+    };
+    mockFastL2State = {
+      ...mockFastL2State,
+      book: { ...liveBook, coin: 'ETH' },
+      identity: 'ETH:5:null',
+    };
+    mockLatestTradeState = {
+      ...mockLatestTradeState,
+      identity: 'ETH',
+      trade: { ...liveTrade, coin: 'ETH', time: 102 },
+    };
+    view.rerender(orderBook({ market: nextMarket }));
+
+    expect(mockRenderedOrderBookProps?.serverClock).not.toBe(laterClock);
+    expect(mockRenderedOrderBookProps?.serverClock).toEqual({
+      marketKey: nextMarket.marketKey,
+      receivedAt: 3000,
+      serverTime: 102,
+    });
+  });
+
+  it.each([null, 0, -1, Number.NaN, Number.POSITIVE_INFINITY])(
+    'clears the clock in the same render when the effective server time is %s',
+    time => {
+      const view = render(orderBook());
+      expect(mockRenderedOrderBookProps?.serverClock).not.toBeNull();
+      mockOrderBookRender.mockClear();
+      mockFastL2State = {
+        ...mockFastL2State,
+        book: time == null ? null : { ...liveBook, time },
+      };
+      mockLatestTradeState = { ...mockLatestTradeState, trade: null };
+
+      view.rerender(orderBook());
+
+      expect(mockOrderBookRender).toHaveBeenCalledTimes(1);
+      expect(mockOrderBookRender.mock.calls[0][0].serverClock).toBeNull();
+    },
+  );
+
+  it('keeps funding callbacks stable across snapshots and still opens and closes the sheet', () => {
+    const view = render(orderBook());
+    const openFunding = mockRenderedOrderBookProps?.onOpenFunding;
+    expect(mockRenderedFundingProps).toBeNull();
+
+    act(() => openFunding());
+    expect(mockRenderedFundingProps).not.toBeNull();
+    const closeFunding = mockRenderedFundingProps?.onClose;
+
+    mockFastL2State = {
+      ...mockFastL2State,
+      book: { ...liveBook, time: 102 },
+    };
+    view.rerender(orderBook());
+
+    expect(mockRenderedOrderBookProps?.onOpenFunding).toBe(openFunding);
+    expect(mockRenderedFundingProps?.onClose).toBe(closeFunding);
+    expect(mockRenderedFundingProps?.serverClock).toBe(
+      mockRenderedOrderBookProps?.serverClock,
+    );
+    act(() => closeFunding());
+    expect(view.queryByTestId('funding-detail-sheet')).toBeNull();
+
+    act(() => openFunding());
+    expect(mockRenderedFundingProps?.onClose).toBe(closeFunding);
   });
 
   it('keeps display caches visible but gates each price source by its own readiness', () => {

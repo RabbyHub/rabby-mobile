@@ -92,7 +92,7 @@ export const PerpsProOrderBook: React.FC<{
   selectedTickOption: PerpsTickOption | null;
   serverClock: PerpsServerClockSample | null;
   tickOptions: PerpsTickOption[];
-}> = ({
+}> = React.memo(function PerpsProOrderBook({
   amountUnit = 'quote',
   bookIdentity,
   book,
@@ -111,7 +111,7 @@ export const PerpsProOrderBook: React.FC<{
   selectedTickOption,
   serverClock,
   tickOptions,
-}) => {
+}) {
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const openFieldExplanation = usePerpsProFieldExplanation();
@@ -443,7 +443,7 @@ export const PerpsProOrderBook: React.FC<{
       ) : null}
     </View>
   );
-};
+});
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {

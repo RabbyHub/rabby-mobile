@@ -4,6 +4,7 @@ import { StyleSheet } from 'react-native';
 
 const mockCancelAnimation = jest.fn();
 const mockWithTiming = jest.fn((value: number) => value);
+const mockThemeRender = jest.fn();
 
 jest.mock('react-native-reanimated', () => {
   const ReactModule = require('react');
@@ -26,6 +27,7 @@ jest.mock('@/components/Typography', () => ({
 
 jest.mock('@/hooks/theme', () => ({
   useTheme2024: ({ getStyle }: { getStyle: (input: object) => object }) => {
+    mockThemeRender();
     const colors2024 = new Proxy({}, { get: (_target, key) => String(key) });
     return { colors2024, styles: getStyle({ colors2024 }) };
   },
@@ -88,6 +90,84 @@ describe('PerpsProOrderBookRow', () => {
   beforeEach(() => {
     mockCancelAnimation.mockClear();
     mockWithTiming.mockClear();
+    mockThemeRender.mockClear();
+  });
+
+  it('skips unchanged row props without retaining an obsolete press handler', () => {
+    const onSelectPrice = jest.fn();
+    const nextOnSelectPrice = jest.fn();
+    const props = {
+      level: {
+        price: '100',
+        priceNumber: 100,
+        size: 2,
+        total: 2,
+        totalUsd: 200,
+        usdSize: 200,
+      },
+      onSelectPrice,
+      priceDecimals: 2,
+      side: 'bid' as const,
+    };
+    const view = render(<PerpsProOrderBookRow {...props} />);
+    expect(mockThemeRender).toHaveBeenCalledTimes(1);
+
+    view.rerender(<PerpsProOrderBookRow {...props} />);
+    expect(mockThemeRender).toHaveBeenCalledTimes(1);
+
+    view.rerender(
+      <PerpsProOrderBookRow {...props} onSelectPrice={nextOnSelectPrice} />,
+    );
+    expect(mockThemeRender).toHaveBeenCalledTimes(2);
+    fireEvent.press(screen.getByTestId('perps-pro-order-book-row'));
+    expect(nextOnSelectPrice).toHaveBeenCalledTimes(1);
+    expect(onSelectPrice).not.toHaveBeenCalled();
+
+    view.rerender(
+      <PerpsProOrderBookRow {...props} onSelectPrice={undefined} />,
+    );
+    expect(mockThemeRender).toHaveBeenCalledTimes(3);
+    expect(
+      screen.getByTestId('perps-pro-order-book-row').props.accessibilityRole,
+    ).toBeUndefined();
+    fireEvent.press(screen.getByTestId('perps-pro-order-book-row'));
+    expect(nextOnSelectPrice).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips unchanged depth props but applies a new total and row position', () => {
+    const props = {
+      animationIdentity: 'BTC:5:null|both|6|content',
+      level: {
+        price: '100',
+        priceNumber: 100,
+        size: 2,
+        total: 2,
+        totalUsd: 200,
+        usdSize: 200,
+      },
+      maxTotal: 4,
+      rowIndex: 0,
+      side: 'bid' as const,
+    };
+    const view = render(<PerpsProOrderBookDepth {...props} />);
+    expect(mockThemeRender).toHaveBeenCalledTimes(1);
+    mockCancelAnimation.mockClear();
+
+    view.rerender(<PerpsProOrderBookDepth {...props} />);
+    expect(mockThemeRender).toHaveBeenCalledTimes(1);
+    expect(mockCancelAnimation).not.toHaveBeenCalled();
+    expect(mockWithTiming).not.toHaveBeenCalled();
+
+    view.rerender(
+      <PerpsProOrderBookDepth {...props} maxTotal={8} rowIndex={2} />,
+    );
+    expect(mockThemeRender).toHaveBeenCalledTimes(2);
+    expect(mockWithTiming).toHaveBeenCalledWith(25, expect.any(Object));
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId('perps-pro-order-book-depth').props.style,
+      ),
+    ).toMatchObject({ top: 40 });
   });
 
   it('renders a neutral placeholder and emits an invalid price attempt', () => {
