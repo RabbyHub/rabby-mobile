@@ -5,34 +5,45 @@ import {
   createPerpsProFontFaceCss,
   PERPS_PRO_FONT_FACE_FAMILY,
   resolvePerpsProFontAssetUrls,
+  resolvePerpsProFontFamily,
 } from './perps-pro-font.ts';
 
-test('resolves the existing iOS MainBundle path as local font assets', () => {
-  assert.deepEqual(
+test('does not request bundled Apple font files from an iOS MainBundle path', () => {
+  assert.equal(
     resolvePerpsProFontAssetUrls({
       platform: 'ios',
       runtimeBaseUrl: '/private/App/RabbyMobile.app/',
     }),
-    {
-      regular: 'file:///private/App/RabbyMobile.app/SF-Pro-Rounded-Regular.otf',
-      medium: 'file:///private/App/RabbyMobile.app/SF-Pro-Rounded-Medium.otf',
-      bold: 'file:///private/App/RabbyMobile.app/SF-Pro-Rounded-Bold.otf',
-    },
+    null,
   );
 });
 
-test('keeps an iOS file URL usable when runtime info already includes it', () => {
-  assert.deepEqual(
+test('does not request bundled Apple font files from an iOS file URL', () => {
+  assert.equal(
     resolvePerpsProFontAssetUrls({
       platform: 'ios',
       runtimeBaseUrl: 'file:///private/App/RabbyMobile.app/',
     }),
-    {
-      regular: 'file:///private/App/RabbyMobile.app/SF-Pro-Rounded-Regular.otf',
-      medium: 'file:///private/App/RabbyMobile.app/SF-Pro-Rounded-Medium.otf',
-      bold: 'file:///private/App/RabbyMobile.app/SF-Pro-Rounded-Bold.otf',
-    },
+    null,
   );
+});
+
+test('uses the system rounded family on iOS without a bundled family alias', () => {
+  const family = resolvePerpsProFontFamily({ platform: 'ios' });
+  assert.equal(
+    family,
+    'ui-rounded, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  );
+  assert.doesNotMatch(family, /Rabby SF Pro Rounded|SF Pro Rounded/);
+});
+
+test('preserves the Android asset family and its fallback ordering', () => {
+  const family = resolvePerpsProFontFamily({ platform: 'android' });
+  assert.equal(
+    family,
+    '"Rabby SF Pro Rounded", "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  );
+  assert.doesNotMatch(family, /ui-rounded/);
 });
 
 test('resolves the existing Android sibling font assets', () => {

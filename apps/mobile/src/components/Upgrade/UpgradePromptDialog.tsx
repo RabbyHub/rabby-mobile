@@ -1,3 +1,4 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import {
   LayoutChangeEvent,
@@ -299,9 +300,8 @@ const styles = StyleSheet.create({
     marginHorizontal: CONTENT_HORIZONTAL_PADDING,
     height: 45,
     color: '#192945',
-    fontFamily: 'SF Pro Rounded',
+    ...RoundedFontStyles.bold,
     fontSize: 36,
-    fontWeight: '700',
     lineHeight: 42,
   },
   titleDark: {
@@ -329,9 +329,8 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 10,
     color: '#C5C5CF',
-    fontFamily: 'SF Pro Rounded',
+    ...RoundedFontStyles.regular,
     fontSize: 12,
-    fontWeight: '400',
     lineHeight: 16,
     textAlign: 'center',
   },
@@ -364,9 +363,8 @@ const styles = StyleSheet.create({
   sliderLabel: {
     paddingLeft: 64,
     color: '#192945',
-    fontFamily: 'SF Pro Rounded',
+    ...RoundedFontStyles.bold,
     fontSize: 20,
-    fontWeight: '700',
     lineHeight: 24,
   },
   sliderLabelDark: {

@@ -5,7 +5,7 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
-import { FontNames } from '@/core/utils/fonts';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -82,7 +82,7 @@ function DevUIAccountShowCase(): JSX.Element {
                       styles.propertyDesc,
                       {
                         marginVertical: 12,
-                        fontFamily: FontNames.sf_pro_rounded_bold,
+                        ...RoundedFontStyles.bold,
                         fontSize: 14,
                       },
                     ]}>
@@ -164,7 +164,7 @@ function DevUIAccountShowCase(): JSX.Element {
                         styles.propertyDesc,
                         {
                           textAlign: 'center',
-                          fontFamily: FontNames.sf_pro_rounded_bold,
+                          ...RoundedFontStyles.bold,
                           fontSize: 16,
                         },
                       ]}>

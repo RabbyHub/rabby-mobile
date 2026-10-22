@@ -1,3 +1,4 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import type { Account } from '@/core/startupServices/preference';
 import { useApproval } from '@/hooks/useApproval';
@@ -77,9 +78,8 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     content: {
       fontSize: 20,
-      fontWeight: '900',
       lineHeight: 24,
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.heavy,
     },
     contentWrapper: {
       flexDirection: 'row',

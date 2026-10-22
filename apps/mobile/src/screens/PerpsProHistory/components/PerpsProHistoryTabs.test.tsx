@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import type { PerpsProHistoryTab } from '../types';
 
 type MockScrollEvent = Readonly<{
@@ -232,17 +233,15 @@ describe('PerpsProHistoryTabs', () => {
     expect(selectedTab.props.accessibilityState).toEqual({ selected: true });
     expect(StyleSheet.flatten(visuallyActiveLabel.props.style)).toMatchObject({
       color: 'neutral-contrast',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.bold,
       fontSize: 14,
-      fontWeight: '700',
       lineHeight: 18,
     });
     expect(StyleSheet.flatten(visuallyInactiveLabel.props.style)).toMatchObject(
       {
         color: 'neutral-secondary',
-        fontFamily: 'SF Pro Rounded',
+        ...RoundedFontStyles.medium,
         fontSize: 14,
-        fontWeight: '500',
         lineHeight: 18,
       },
     );
@@ -253,8 +252,7 @@ describe('PerpsProHistoryTabs', () => {
       })
       .find(node => StyleSheet.flatten(node.props.style)?.opacity === 0);
     expect(StyleSheet.flatten(hiddenOrdersLabel?.props.style)).toMatchObject({
-      fontFamily: 'SF Pro Rounded',
-      fontWeight: '700',
+      ...RoundedFontStyles.bold,
       opacity: 0,
     });
     expect(

@@ -1,3 +1,4 @@
+import { RoundedFontStyles } from '@/core/utils/fonts';
 import React from 'react';
 import { TextStyle } from 'react-native';
 
@@ -65,8 +66,7 @@ export function useAutoLockCountDown() {
   const countdownTextStyles = useAnimatedStyle(() => {
     return {
       fontSize: 16,
-      fontWeight: '400',
-      fontFamily: 'SF Pro Rounded',
+      ...RoundedFontStyles.regular,
       color:
         svDiffMs.value > 60 * 1e3
           ? colors2024['green-default']

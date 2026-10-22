@@ -68,7 +68,6 @@ export const getPerpsProTransferSheetStyles = createGetStyles2024(
     amountPrefix: {
       ...PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
       fontSize: 36,
       lineHeight: 42,
     },
@@ -76,7 +75,6 @@ export const getPerpsProTransferSheetStyles = createGetStyles2024(
       ...PERPS_PRO_DIALOG_HEAVY_TEXT_STYLE,
       color: colors2024['neutral-title-1'],
       flex: 1,
-      fontFamily: 'SF Pro Rounded',
       fontSize: 36,
       height: 82,
       lineHeight: 42,
