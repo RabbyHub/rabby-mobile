@@ -29,6 +29,20 @@ export function hasPositivePrice(value: PriceInput) {
   return finiteDecimal(value)?.gt(0) ?? false;
 }
 
+/** Shared display text for the position card and chart; never a trading input. */
+export function simpleLiquidationPriceText(
+  liquidation: PriceInput,
+  decimals: number | null | undefined,
+) {
+  const price = finiteDecimal(liquidation);
+  if (!price?.gt(0)) {
+    return '--';
+  }
+  return price
+    .decimalPlaces(decimals ?? 2, BigNumber.ROUND_HALF_UP)
+    .toFormat({ decimalSeparator: '.', groupSeparator: ',', groupSize: 3 });
+}
+
 /** Mirrors the existing submit precision, without feeding display values into the order. */
 export function closeQuantitySummary(
   size: string,
