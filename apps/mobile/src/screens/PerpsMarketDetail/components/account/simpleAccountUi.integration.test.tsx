@@ -12,6 +12,27 @@ import {
   type AccountHeaderHandle,
 } from './model';
 import { View } from 'react-native';
+import { PerpsGestureSlider } from '@/components/perps/PerpsGestureSlider';
+import { Text } from '@/components/Typography';
+import {
+  GestureDetector,
+  PointerType,
+  State,
+} from 'react-native-gesture-handler';
+
+jest.mock('react-native-reanimated', () => {
+  const nativeMock = require('react-native-reanimated/mock');
+  return {
+    ...nativeMock,
+    useSharedValue: (value: unknown) => {
+      const ref = require('react').useRef(null);
+      if (!ref.current) {
+        ref.current = nativeMock.useSharedValue(value);
+      }
+      return ref.current;
+    },
+  };
+});
 
 jest.mock('react-native-localize', () => ({
   getLocales: () => [{ languageCode: 'en', countryCode: 'US', isRTL: false }],
@@ -98,6 +119,73 @@ const safe = (child: React.ReactNode) => (
 afterEach(async () => {
   await cleanupAsync();
   jest.clearAllTimers();
+});
+
+it('connects close touch events through the real wrapper and controlled state', () => {
+  const changes: number[] = [];
+  function ControlledSlider() {
+    const [value, setValue] = React.useState(0);
+    const onChange = (next: number) => {
+      changes.push(next);
+      setValue(next);
+    };
+    return (
+      <View>
+        <Text testID="gesture-result">{String(value)}</Text>
+        <PerpsSlider
+          value={value}
+          onValueChange={onChange}
+          step={1}
+          variant="close"
+        />
+      </View>
+    );
+  }
+  const ui = render(safe(<ControlledSlider />));
+  const input = ui.UNSAFE_getByType(PerpsGestureSlider);
+  const host = input.findAllByType(View).find(node => node.props.onLayout)!;
+  act(() =>
+    host.props.onLayout({
+      nativeEvent: { layout: { width: 220, height: 40 } },
+    }),
+  );
+  const gesture = ui.UNSAFE_getByType(GestureDetector).props.gesture;
+  const stateEvent = {
+    handlerTag: 0,
+    state: State.ACTIVE,
+    oldState: State.BEGAN,
+    numberOfPointers: 1,
+    pointerType: PointerType.TOUCH,
+  };
+  const manager = {
+    handlerTag: 0,
+    begin: () => undefined,
+    activate: () => gesture.handlers.onStart(stateEvent),
+    end: () => gesture.handlers.onFinalize(stateEvent, true),
+    fail: () => gesture.handlers.onFinalize(stateEvent, false),
+  };
+  const touch = (x: number) => {
+    const point = { id: 1, x, y: 20, absoluteX: x + 50, absoluteY: 100 };
+    return {
+      handlerTag: 0,
+      state: State.ACTIVE,
+      eventType: 1,
+      numberOfTouches: 1,
+      pointerType: PointerType.TOUCH,
+      changedTouches: [point],
+      allTouches: [point],
+    };
+  };
+  const thumbWidth = 20;
+  const travel = 220 - thumbWidth;
+  act(() => gesture.handlers.onTouchesDown(touch(20 + travel / 4), manager));
+  act(() =>
+    gesture.handlers.onTouchesMove(touch(20 + (travel * 3) / 4), manager),
+  );
+  act(() => gesture.handlers.onTouchesMove(touch(500), manager));
+  act(() => gesture.handlers.onTouchesUp(touch(500), manager));
+  expect(changes).toEqual([25, 75, 100]);
+  expect(ui.getByTestId('gesture-result').props.children).toBe('100');
 });
 
 it('connects the real header to the page presenter and preserves coin selection/favorite restoration', async () => {
@@ -220,7 +308,7 @@ it('keeps default slider haptics isolated and gives close a haptic at each quart
       <PerpsSlider variant="close" value={0} onValueChange={change} step={1} />,
     ),
   );
-  const slider = ui.getByTestId('native-slider');
+  const slider = ui.UNSAFE_getByType(PerpsGestureSlider);
   expect(slider.props.step).toBe(1);
   act(() => {
     slider.props.onValueChange(25);
@@ -263,10 +351,14 @@ it.each([
       ),
     );
     expect(trigger).not.toHaveBeenCalled();
-    act(() => ui.getByTestId('native-slider').props.onSlidingStart(initial));
+    act(() =>
+      ui.UNSAFE_getByType(PerpsGestureSlider).props.onSlidingStart(initial),
+    );
     values.forEach((value, i) => {
       const before = trigger.mock.calls.length;
-      act(() => ui.getByTestId('native-slider').props.onValueChange(value));
+      act(() =>
+        ui.UNSAFE_getByType(PerpsGestureSlider).props.onValueChange(value),
+      );
       // A single native event emits at most one pulse, even across several marks.
       expect(trigger.mock.calls.length - before).toBe(pulses[i]);
     });
@@ -289,7 +381,7 @@ it('handles track-tap ordering, controlled resets, and disabled close sliders', 
   };
   const ui = render(safe(<PerpsSlider {...sliderProps} value={100} />));
   act(() => {
-    const slider = ui.getByTestId('native-slider');
+    const slider = ui.UNSAFE_getByType(PerpsGestureSlider);
     slider.props.onValueChange(24);
     slider.props.onSlidingStart(24);
     slider.props.onValueChange(24);
@@ -300,15 +392,17 @@ it('handles track-tap ordering, controlled resets, and disabled close sliders', 
   expect(complete).toHaveBeenCalledTimes(1);
   ui.rerender(safe(<PerpsSlider {...sliderProps} value={100} />));
   expect(trigger).toHaveBeenCalledTimes(1);
-  act(() => ui.getByTestId('native-slider').props.onValueChange(100));
+  act(() => ui.UNSAFE_getByType(PerpsGestureSlider).props.onValueChange(100));
   expect(trigger).toHaveBeenCalledTimes(1);
-  act(() => ui.getByTestId('native-slider').props.onSlidingComplete(100));
+  act(() =>
+    ui.UNSAFE_getByType(PerpsGestureSlider).props.onSlidingComplete(100),
+  );
   ui.rerender(safe(<PerpsSlider {...sliderProps} value={51} />));
-  act(() => ui.getByTestId('native-slider').props.onValueChange(49));
+  act(() => ui.UNSAFE_getByType(PerpsGestureSlider).props.onValueChange(49));
   expect(trigger).toHaveBeenCalledTimes(2);
   ui.rerender(safe(<PerpsSlider {...sliderProps} value={49} disabled />));
   const before = change.mock.calls.length;
-  act(() => ui.getByTestId('native-slider').props.onValueChange(0));
+  act(() => ui.UNSAFE_getByType(PerpsGestureSlider).props.onValueChange(0));
   expect(trigger).toHaveBeenCalledTimes(2);
   expect(change).toHaveBeenCalledTimes(before);
 });
