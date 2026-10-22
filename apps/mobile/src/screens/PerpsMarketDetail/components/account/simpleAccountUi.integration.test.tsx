@@ -114,6 +114,8 @@ const { PerpsProManageMarginSlider } =
   require('@/screens/PerpsPro/components/positions/PerpsProManageMarginSlider') as typeof import('@/screens/PerpsPro/components/positions/PerpsProManageMarginSlider');
 const { getVisibleBlockingModalIds, MODAL_GATE_IDS } =
   require('@/utils/modalGate') as typeof import('@/utils/modalGate');
+const { TrackedModal } =
+  require('@/components/Modal/TrackedModal') as typeof import('@/components/Modal/TrackedModal');
 
 const safe = (child: React.ReactNode) => (
   <SafeAreaProvider
@@ -702,8 +704,27 @@ it.each([false, true, undefined])(
     fireEvent.changeText(ui.getByPlaceholderText('$0'), '120');
     await act(async () => fireEvent.press(ui.getByText('global.confirm')));
     expect(submit).toHaveBeenCalledWith('120');
-    expect(
-      getVisibleBlockingModalIds().includes(MODAL_GATE_IDS.perpsEditTpSlPrice),
-    ).toBe(result === false);
+    // Assert the editor itself: when the modal gate is released (on hide, or
+    // only after the iOS dismiss animation) is TrackedModal's concern.
+    const editorOpen = result === false;
+    expect(ui.UNSAFE_getByType(TrackedModal).props.visible).toBe(editorOpen);
+    expect(ui.queryByPlaceholderText('$0') !== null).toBe(editorOpen);
+    if (editorOpen) {
+      expect(getVisibleBlockingModalIds()).toContain(
+        MODAL_GATE_IDS.perpsEditTpSlPrice,
+      );
+    } else {
+      // The Jest Modal mock never finishes a dismiss animation; finish it on
+      // the native Modal that TrackedModal renders.
+      const [nativeModal] = ui.UNSAFE_getByType(TrackedModal).children;
+      act(() =>
+        typeof nativeModal === 'string'
+          ? undefined
+          : nativeModal.props.onDismiss?.(),
+      );
+      expect(getVisibleBlockingModalIds()).not.toContain(
+        MODAL_GATE_IDS.perpsEditTpSlPrice,
+      );
+    }
   },
 );
